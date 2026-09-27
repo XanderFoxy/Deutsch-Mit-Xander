@@ -1424,3 +1424,28 @@ Sonden: neu 760 (alles grün); 645, 648, 673, 682, 747 grün. Deutsch-Fenster au
   - Ein Tipp zeigt drei Gründe nebeneinander: „Lösung falsch“, „Zwei passen“ und „Satz unklar“.
   - Meldet der Betreiber, ist die Aufgabe sofort aus dem Spiel; bei anderen Spielern ab zwei Meldungen. Solange man meldet, springt die Aufgabe nicht weiter; nach dem Dank kommt die nächste.
   - Die Zeile hat immer ihren festen Platz, damit beim Auflösen nichts springt (gemessen: Aufgabe vorher und nachher 245 px). Alle Knöpfe sind mindestens 32 px hoch.
+- **Nachtrag Durchsicht** (Präfixverben, Präpositionen, Relativsätze, 1.460 Aufgaben): 5 Treffer, alle echt, alle repariert:
+  - „___ des Regens sind wir spazieren gegangen“: „Während“ passte neben „Trotz“ und ist jetzt durch „Außerhalb“ ersetzt.
+  - „Bitte hör jetzt ___!“: „zu“ passte neben „auf“ und ist durch „um“ ersetzt.
+  - Zweimal „nachgeben/aufgeben“: „auf“ ist durch „um“ ersetzt.
+  - „Wessen Aussage widerlegt wird, ___ verliert …“: Die Lösung war falsch („dessen“), richtig ist „der“.
+  - Insgesamt sind rund 7.800 Aufgaben geprüft und 34 repariert.
+
+### Fassung 761 (Walkie 290: Rundenkampf „Faustkampf“ oder „Mit Ausrüstung“)
+Sonden: neu 761 (alles grün); 701, 722, 734, 747 grün. 669 hat 4 rote Punkte im Tower-Defense-Teil. Die waren schon vor 761 rot (Gegenprobe mit der Sicherung) und werden noch untersucht. Auswahl und Kampf auf 360 px angesehen.
+- XANDER (wörtlich, Walkie 290): „vorher ein Set von Waffen festlegen oder Eigenschaften Primärwaffen Sekundärwaffe die mir mitten im Kampf nehmen und wie machen wir das dass es dann trotzdem fair bleibt ich weiß ja nicht wie das in anderen Spielen ist oder wir machen halt zwei Versionen da ist eine normale … vielleicht ein Faustkampf und dann gibt es das mit mit Waffen“.
+- **Zwei Kampfarten** vor jedem Rundenkampf (gegen den Computer und bei Einladungen):
+  - **Faustkampf** (vorgewählt): wie bisher, nur Deutsch zählt.
+  - **Mit Ausrüstung**: Man legt vorher ein Set fest. Es wird gemerkt, und jeder bringt sein eigenes Set mit.
+- **Das Set**:
+  - **Primärwaffe** (bringt dem Angriff +0 bis +4 Schaden, je nach Stärke der Waffe; die Bazooka z. B. +4).
+  - **Zweitwaffe**: ein eigener Schlag mit 16 Schaden plus Waffenbonus, kostet 1 Stern.
+  - **Drei von sechs Eigenschaften**: Eisenhaut (jede Runde mit Rüstung 1), Sternenglück (jede Runde mit 1 Stern), Heilkunde (Heilen +18 statt +12), Schildwall (Schild +15 statt +10), Wut (unter halbem Leben +4 Schaden), Konterprofi (Konter prallt 15 % stärker zurück). Eine vierte geht erst, wenn man eine abwählt.
+  - Die Knöpfe im Kampf zeigen die echten Zahlen („Angriff 16 Schaden · Bazooka“). Unter der Bühne steht das Set; der Computer kämpft mit Armbrust, Schildwall, Heilkunde und Wut.
+- **Fair bleibt es**:
+  - Jede Aktion wirkt weiter nur mit richtiger Antwort.
+  - Die Waffe bringt höchstens +4.
+  - Alle können dieselben Eigenschaften wählen, und der Level-Ausgleich gilt weiter.
+  - Klassen-Waffen gehen nur in der passenden Klasse (757).
+  - Wer eingeladen wird, liest „mit Ausrüstung – dein Set aus dem Rundenkampf-Menü“.
+- **Noch offen aus Walkie 290**: Skins, Tiere im Set, Arena und Teams (zwei gegen einen, jemand schließt sich an).

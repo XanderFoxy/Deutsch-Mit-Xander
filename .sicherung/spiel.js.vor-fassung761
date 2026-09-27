@@ -13782,52 +13782,8 @@
        mein Leben schon total verbraucht ist das Schild ist doch da und das Leben zu schützen". Die Superkraft geht nicht
        mehr am Schild vorbei: sie zerschlägt es – das Schild fängt dabei noch die Hälfte ab und ist danach weg. So ist nie
        Leben weg, solange Schild da ist. */
-    super:   { name: "Superkraft", was: "26 Schaden · zerschlägt das Schild · 3 Sterne", sterne: 3 },
-    /* FASSUNG 761 — nur „Mit Ausrüstung" und mit gewählter Zweitwaffe */
-    zweit:   { name: "Zweitwaffe", was: "16 Schaden · 1 Stern", sterne: 1 }
+    super:   { name: "Superkraft", was: "26 Schaden · zerschlägt das Schild · 3 Sterne", sterne: 3 }
   };
-  /* FASSUNG 761 — Walkie 290. XANDER: „vorher ein Set von Waffen festlegen oder Eigenschaften Primärwaffen Sekundärwaffe
-     die mir mitten im Kampf nehmen und wie machen wir das dass es dann trotzdem fair bleibt … oder wir machen halt zwei
-     Versionen … eine normale … vielleicht ein Faustkampf und dann gibt es das mit Waffen". Zwei Kampfarten: „Faustkampf"
-     (wie bisher – nur Deutsch zählt) und „Mit Ausrüstung": man legt vorher Primärwaffe, Zweitwaffe und drei von sechs
-     Eigenschaften fest. Fair bleibt es, weil jede Aktion weiter nur mit richtiger Antwort wirkt, die Waffe höchstens +4
-     Schaden bringt und alle dieselben Eigenschaften wählen können. */
-  var ST_EIGEN = [
-    ["eisenhaut", "Eisenhaut", "jede Runde mit Rüstung 1"],
-    ["sternenglueck", "Sternenglück", "jede Runde mit 1 Stern"],
-    ["heilkunde", "Heilkunde", "Heilen +18 statt +12"],
-    ["schildwall", "Schildwall", "Schild +15 statt +10"],
-    ["wut", "Wut", "unter halbem Leben +4 Schaden"],
-    ["konterprofi", "Konterprofi", "Konter prallt 15 % stärker zurück"]
-  ];
-  function stratWaffenBonus(w) { return WAFFEN[w] ? Math.max(0, Math.min(4, Math.round((WAFFEN[w].schaden - 8) / 5))) : 0; }
-  function stratArt() { try { return localStorage.getItem("dma_strat_art") === "ausruestung" ? "ausruestung" : "faust"; } catch (e) { return "faust"; } }
-  function stratSetLesen() {
-    var roh = {}; try { roh = JSON.parse(localStorage.getItem("dma_strat_set") || "{}") || {}; } catch (e) {}
-    var hat = ((S.ich && S.ich.waffen) || []).filter(function (w) { return WAFFEN[w] && !klassenSperre(S.ich, w); });
-    var prim = hat.indexOf(roh.prim) >= 0 ? roh.prim : hat.indexOf(S.waffe) >= 0 ? S.waffe : hat.slice().sort(function (a, b) { return WAFFEN[b].schaden - WAFFEN[a].schaden; })[0] || "";
-    var sek = hat.indexOf(roh.sek) >= 0 && roh.sek !== prim ? roh.sek : "";
-    var eig = (Array.isArray(roh.eig) ? roh.eig : ["eisenhaut", "heilkunde", "schildwall"]).filter(function (e) { return ST_EIGEN.some(function (x) { return x[0] === e; }); }).slice(0, 3);
-    return { prim: prim, sek: sek, eig: eig, hat: hat };
-  }
-  function stratSetSchreiben(set) { try { localStorage.setItem("dma_strat_set", JSON.stringify({ prim: set.prim, sek: set.sek, eig: set.eig })); } catch (e) {} }
-  function stratHat(w, e) { return Boolean(w.set && w.set.eig && w.set.eig.indexOf(e) >= 0); }
-  /* Was die Eigenschaften zu Beginn jeder Runde geben. */
-  function stratSetStart(w) {
-    if (stratHat(w, "eisenhaut")) w.ruestung = Math.max(1, w.ruestung || 0);
-    if (stratHat(w, "sternenglueck")) w.sterne = Math.max(1, w.sterne || 0);
-  }
-  function stratSetHtml() {
-    var set = stratSetLesen(), wahl = function (feld, leer) {
-      return '<select data-set="' + feld + '">' + (leer ? '<option value="">– keine –</option>' : "") + set.hat.map(function (w) {
-        return '<option value="' + w + '"' + (set[feld] === w ? " selected" : "") + ">" + esc(WAFFEN[w].name) + " (+" + stratWaffenBonus(w) + ")</option>"; }).join("") + "</select>";
-    };
-    return '<div class="sp-st-set"' + (stratArt() === "ausruestung" ? "" : " hidden") + '>'
-      + '<label><span>Primärwaffe</span>' + wahl("prim", false) + '</label><label><span>Zweitwaffe</span>' + wahl("sek", true) + "</label>"
-      + '<div class="sp-st-eigen"><span class="sp-klein">Drei Eigenschaften:</span>' + ST_EIGEN.map(function (e) {
-        return '<button type="button" data-eig="' + e[0] + '" class="' + (set.eig.indexOf(e[0]) >= 0 ? "sp-an" : "") + '" title="' + esc(e[2]) + '"><b>' + e[1] + "</b><small>" + e[2] + "</small></button>"; }).join("") + "</div>"
-      + '<p class="sp-klein">Die Waffe bringt je nach Stärke +0 bis +4 Schaden auf den Angriff (die Zweitwaffe auf ihren eigenen Schlag, 1 Stern). Jede Aktion wirkt weiter nur mit richtiger Antwort.</p></div>';
-  }
   /* Richtig beantwortet: ein Stern (höchstens 3). „Rüstung erspielen durch
      irgendwelche Fragen": je 3 richtige hintereinander eine Stufe Rüstung
      (höchstens 3) – jede Stufe nimmt jedem Treffer 2 Schaden. Gibt true
@@ -13842,17 +13798,11 @@
   function stratWirkung(w, ak, fair) {
     if (ak === "donner") w.sterne -= 2;
     if (ak === "super") w.sterne -= 3;
-    if (ak === "konter" || ak === "zweit") { w.sterne -= 1; if (ak === "konter") w.konter = true; }
+    if (ak === "konter") { w.sterne -= 1; w.konter = true; }
     w.sterne = Math.max(0, w.sterne);
-    if (ak === "schild") w.schild = Math.min(ST_SCHILD_MAX, (w.schild || 0) + (stratHat(w, "schildwall") ? 15 : 10));
-    if (ak === "heilen") w.lp = Math.min(ST_LP, w.lp + (stratHat(w, "heilkunde") ? 18 : 12));
-    var grund = ak === "angriff" ? 12 : ak === "donner" ? 22 : ak === "super" ? 26 : ak === "zweit" ? 16 : 0;
-    /* FASSUNG 761 — Mit Ausrüstung: Waffenbonus (höchstens +4) und „Wut" */
-    if (w.set && grund) {
-      if (ak === "angriff") grund += stratWaffenBonus(w.set.prim);
-      if (ak === "zweit") grund += stratWaffenBonus(w.set.sek);
-      if (stratHat(w, "wut") && w.lp < ST_LP / 2) grund += 4;
-    }
+    if (ak === "schild") w.schild = Math.min(ST_SCHILD_MAX, (w.schild || 0) + 10);
+    if (ak === "heilen") w.lp = Math.min(ST_LP, w.lp + 12);
+    var grund = ak === "angriff" ? 12 : ak === "donner" ? 22 : ak === "super" ? 26 : 0;
     return grund ? Math.round(grund * fair) : 0;
   }
   /* Fairness: wer niedriger ist, trifft härter – wer höher ist, schwächer.
@@ -13916,31 +13866,14 @@
     var leute = []; try { leute = plaetze().filter(function (p) { return p && !p.leer && !p.ich && !istPuppe(p.id) && !/^sparring:/.test(p.id); }); } catch (e) {}
     inhalt.innerHTML = '<p class="sp-text">Du wählst eine Aktion – sie wirkt nur, wenn du die Deutsch-Frage richtig beantwortest. Jede richtige Antwort bringt einen Stern (höchstens 3), drei richtige hintereinander eine Stufe Rüstung. Treffer gehen erst durchs Schild, dann ans Leben. Eine falsche Antwort kostet auf jedem Niveau gleich viel – wer ein höheres Niveau wählt, bekommt mehr Punkte. Fair nach Level: wer niedriger ist, trifft härter.</p>'
       + '<div class="sp-st-modus"><button type="button" data-modus="zug" class="sp-an">Züge (wie Schach)</button><button type="button" data-modus="echtzeit">Echtzeit (beide zugleich)</button></div>'
-      /* FASSUNG 761 — Kampfart */
-      + '<div class="sp-st-modus sp-st-art"><button type="button" data-art="faust" class="' + (stratArt() === "faust" ? "sp-an" : "") + '">Faustkampf<small>nur Deutsch zählt</small></button>'
-      + '<button type="button" data-art="ausruestung" class="' + (stratArt() === "ausruestung" ? "sp-an" : "") + '">Mit Ausrüstung<small>Waffen und Eigenschaften</small></button></div>'
-      + stratSetHtml()
       + deutschVorwahlHtml()
       + '<div class="sp-st-orte"><span class="sp-klein">Schauplatz:</span>' + ST_ORTE.map(function (o) { return '<button type="button" data-ort="' + o[0] + '" class="' + (stratOrtWahl() === o[0] ? "sp-an" : "") + '">' + o[1] + "</button>"; }).join("")
       + '<label class="sp-st-gemeinsam"><input type="checkbox" data-ortgemeinsam="1"' + (stratOrtGemeinsam() ? " checked" : "") + '> für beide gleich (sonst sieht jeder seinen eigenen)</label></div>'
       + '<div class="sp-sm-liste"><button type="button" data-st="computer">Gegen Professor Grammatikus (Computer)</button>'
       + leute.map(function (p) { return '<button type="button" data-st="' + esc(p.id) + '" data-name="' + esc(p.name || "") + '">Gegen ' + esc(p.name || "?") + " (einladen)</button>"; }).join("") + "</div>";
     var modus = "zug";
-    inhalt.addEventListener("change", function (ev) {
-      var sel = ev.target.closest("[data-set]"); if (!sel) return;
-      var set = stratSetLesen(); set[sel.dataset.set] = sel.value;
-      if (set.sek === set.prim) set.sek = "";
-      stratSetSchreiben(set); var box = inhalt.querySelector(".sp-st-set"); if (box) box.outerHTML = stratSetHtml();
-    });
     inhalt.addEventListener("click", function (ev) {
       if (deutschVorwahlKlick(ev, inhalt)) return;
-      var ka = ev.target.closest("[data-art]");
-      if (ka) { try { localStorage.setItem("dma_strat_art", ka.dataset.art); } catch (e) {} inhalt.querySelectorAll("[data-art]").forEach(function (x) { x.classList.toggle("sp-an", x === ka); });
-        var sb = inhalt.querySelector(".sp-st-set"); if (sb) sb.hidden = ka.dataset.art !== "ausruestung"; ton("holzklopf", 0.15); return; }
-      var eg = ev.target.closest("[data-eig]");
-      if (eg) { var st = stratSetLesen(), i = st.eig.indexOf(eg.dataset.eig);
-        if (i >= 0) st.eig.splice(i, 1); else if (st.eig.length < 3) st.eig.push(eg.dataset.eig); else { hinweis("Höchstens drei Eigenschaften – erst eine abwählen."); return; }
-        stratSetSchreiben(st); inhalt.querySelectorAll("[data-eig]").forEach(function (x) { x.classList.toggle("sp-an", st.eig.indexOf(x.dataset.eig) >= 0); }); ton("holzklopf", 0.15); return; }
       var o = ev.target.closest("[data-ort]");
       if (o) { try { localStorage.setItem("dma_strat_ort", o.dataset.ort); } catch (e) {} inhalt.querySelectorAll("[data-ort]").forEach(function (x) { x.classList.toggle("sp-an", x === o); }); ton("holzklopf", 0.15); return; }
       var g = ev.target.closest("[data-ortgemeinsam]");
@@ -13948,11 +13881,11 @@
       var m = ev.target.closest("[data-modus]");
       if (m) { modus = m.dataset.modus; inhalt.querySelectorAll("[data-modus]").forEach(function (x) { x.classList.toggle("sp-an", x === m); }); return; }
       var b = ev.target.closest("[data-st]"); if (!b) return;
-      if (b.dataset.st === "computer") return stratBeginnen("computer", "Professor Grammatikus", true, "", modus, stratMeinLevel(), null, stratArt());
+      if (b.dataset.st === "computer") return stratBeginnen("computer", "Professor Grammatikus", true, "", modus, stratMeinLevel());
       var id = "st" + Date.now().toString(36);
       var ichName = ""; try { ichName = LC().lage().ichName || ""; } catch (e) {}
-      senden({ ereignis: "strat", typ: "einladung", an: b.dataset.st, partie: id, name: ichName, modus: modus, lv: stratMeinLevel(), ort: stratOrtGemeinsam() ? stratOrtWahl() : "", fig: stratMeineFigur(), kampfart: stratArt() });
-      ST.wartet = { id: id, an: b.dataset.st, name: b.dataset.name, modus: modus, kampfart: stratArt() };
+      senden({ ereignis: "strat", typ: "einladung", an: b.dataset.st, partie: id, name: ichName, modus: modus, lv: stratMeinLevel(), ort: stratOrtGemeinsam() ? stratOrtWahl() : "", fig: stratMeineFigur() });
+      ST.wartet = { id: id, an: b.dataset.st, name: b.dataset.name, modus: modus };
       hinweis("♟️ Einladung an " + (b.dataset.name || "") + " geschickt – warte auf die Antwort.");
     });
   }
@@ -14051,7 +13984,7 @@
     return '<div class="sp-sa-kaempfer sp-sa-' + seite + (f.k ? " sp-sa-kl-" + f.k : "") + '" data-fig="' + esc(JSON.stringify(f)) + '"><div class="sp-sa-bild">' + bild + "</div>" + stratKopfSvg(f)
       + '<div class="sp-sa-koerper">' + stratFigurSvg(f, seite) + "</div></div>";
   }
-  function stratBeginnen(gegner, gegnerName, ichZuerst, id, modus, seinLv, seineFigur, kampfart) {
+  function stratBeginnen(gegner, gegnerName, ichZuerst, id, modus, seinLv, seineFigur) {
     /* Erst den Rahmen (das schließt ein altes Fenster und damit eine alte Partie), dann die neue Partie. */
     var inhalt = extraRahmen("Rundenkampf gegen " + gegnerName, "sp-extra-strat");
     var ichName = "Du"; try { ichName = LC().lage().ichName || "Du"; } catch (e) {}
@@ -14064,22 +13997,14 @@
     var abstand = ST.er.lv - ST.ich.lv;
     if (abstand >= 5) ST.ich.sterne = Math.min(2, Math.floor(abstand / 5));
     if (-abstand >= 5) ST.er.sterne = Math.min(2, Math.floor(-abstand / 5));
-    /* FASSUNG 761 — Kampfart: im Faustkampf zählt nur Deutsch; mit Ausrüstung bringt jeder sein Set mit. Die eigenen
-       Eigenschaften rechnet jedes Gerät selbst (der Getroffene rechnet den Treffer); der Computer hat ein festes Set. */
-    ST.kampfart = kampfart === "ausruestung" ? "ausruestung" : "faust";
-    if (ST.kampfart === "ausruestung") {
-      var meinSet = stratSetLesen(); ST.ich.set = { prim: meinSet.prim, sek: meinSet.sek, eig: meinSet.eig };
-      if (gegner === "computer") ST.er.set = { prim: "armbrust", sek: "", eig: ["schildwall", "heilkunde", "wut"] };
-      stratSetStart(ST.ich); if (ST.er.set) stratSetStart(ST.er);
-    }
     var ichChat = meineChatId();
     inhalt.innerHTML = '<div class="sp-sa">'
       + '<div class="sp-sa-kopf"><div class="sp-sa-balken sp-sa-links"><b></b><span><i></i><em class="sp-sa-schildbalken"></em></span><small></small><u class="sp-sa-siege"></u></div><div class="sp-sa-mitte"><div class="sp-sa-ko">VS</div><small class="sp-sa-runde"></small></div><div class="sp-sa-balken sp-sa-rechts"><b></b><span><i></i><em class="sp-sa-schildbalken"></em></span><small></small><u class="sp-sa-siege"></u></div></div>'
       + '<div class="sp-sa-buehne">' + stratKaempferHtml("ich", ichChat, ST.ich.name) + stratKaempferHtml("er", gegner, gegnerName, seineFigur)
       + '<div class="sp-sa-boden"></div><button type="button" class="sp-sa-ortname" title="Schauplatz wechseln (nur bei dir)"></button></div>'
       + '<p class="sp-sa-fair"></p></div>'
-      + '<p class="sp-st-dran"></p><div class="sp-st-aktionen">' + Object.keys(ST_AKTIONEN).filter(function (k) { return k !== "zweit" || (ST.ich.set && ST.ich.set.sek); }).map(function (k) { var a = ST_AKTIONEN[k];
-        return '<button type="button" data-ak="' + k + '"><b>' + a.name + "</b><small>" + stratWas(k) + "</small></button>"; }).join("") + '</div><ol class="sp-st-log"></ol>';
+      + '<p class="sp-st-dran"></p><div class="sp-st-aktionen">' + Object.keys(ST_AKTIONEN).map(function (k) { var a = ST_AKTIONEN[k];
+        return '<button type="button" data-ak="' + k + '"><b>' + a.name + "</b><small>" + a.was + "</small></button>"; }).join("") + '</div><ol class="sp-st-log"></ol>';
     inhalt.querySelector(".sp-st-aktionen").addEventListener("click", function (ev) {
       var b = ev.target.closest("[data-ak]"); if (!b || b.disabled || !ST.ichDran || ST.ende || ST.frage || ST.pause) return;
       var ak = b.dataset.ak;
@@ -14105,16 +14030,6 @@
     stratAnsage("Runde 1", "Kampf!");
     if (!ichZuerst && gegner === "computer") setTimeout(stratComputer, 900);
     if (gegner === "computer" && ST.modus === "echtzeit") ST.computerUhr = setTimeout(stratComputer, 4000);
-  }
-  /* FASSUNG 761 — die Beschriftung zeigt, was die eigene Ausrüstung dazugibt. */
-  function stratWas(k) {
-    var a = ST_AKTIONEN[k], set = ST.ich && ST.ich.set;
-    if (!set) return a.was;
-    if (k === "angriff") return (12 + stratWaffenBonus(set.prim)) + " Schaden · " + (WAFFEN[set.prim] ? WAFFEN[set.prim].name : "Faust");
-    if (k === "zweit") return (16 + stratWaffenBonus(set.sek)) + " Schaden · " + (WAFFEN[set.sek] ? WAFFEN[set.sek].name : "") + " · 1 Stern";
-    if (k === "heilen" && stratHat(ST.ich, "heilkunde")) return "+18 LP";
-    if (k === "schild" && stratHat(ST.ich, "schildwall")) return "+15 Schild · höchstens 30";
-    return a.was;
   }
   /* Mein Zug: meine eigenen Werte rechne ICH; den Schaden rechnet der Getroffene
      (er kennt Schild und Konter) – er schickt seinen Stand zurück. */
@@ -14171,7 +14086,7 @@
   function stratKonterAnteil(lp) { return 0.5 * Math.max(0, Math.min(ST_LP, lp || 0)) / ST_LP; }
   function stratTreffer(seite, schaden, durch) {
     var w = seite === "ich" ? ST.ich : ST.er, zurueck = 0;
-    if (w.konter) { w.konter = false; zurueck = Math.round(schaden * Math.min(0.8, stratKonterAnteil(w.lp) + (stratHat(w, "konterprofi") ? 0.15 : 0))); schaden -= zurueck; }
+    if (w.konter) { w.konter = false; zurueck = Math.round(schaden * stratKonterAnteil(w.lp)); schaden -= zurueck; }
     if (w.ruestung > 0) schaden = Math.max(1, schaden - 2 * w.ruestung);
     var ab;
     if (durch) { ab = Math.min(w.schild, Math.ceil(schaden / 2)); w.schild = 0; }
@@ -14246,7 +14161,7 @@
   }
   function stratNeueRunde(sieger) {
     if (sieger) ST.runde++;
-    [ST.ich, ST.er].forEach(function (w) { w.lp = ST_LP; w.schild = 0; w.konter = false; stratSetStart(w); });
+    [ST.ich, ST.er].forEach(function (w) { w.lp = ST_LP; w.schild = 0; w.konter = false; });
     ST.pause = false; ST.pauseSieger = undefined; ST.bereitAb = 0; ST.frage = false;
     if (extraEl) {
       extraEl.querySelectorAll(".sp-sa-rundenbild").forEach(function (e) { e.remove(); });
@@ -14272,7 +14187,7 @@
   function stratLog(vonMir, ak, erfolg, schaden) {
     var wer = vonMir ? "Du" : ST.gegnerName, A = ST_AKTIONEN[ak] || { name: ak };
     ST.log.unshift(!erfolg ? wer + ": " + A.name + " – falsch beantwortet, verpufft."
-      : ak === "angriff" || ak === "donner" || ak === "zweit" ? wer + ": " + A.name + " – " + schaden + " Schaden."
+      : ak === "angriff" || ak === "donner" ? wer + ": " + A.name + " – " + schaden + " Schaden."
       : ak === "super" ? wer + ": Superkraft – " + schaden + " Schaden, das Schild zerbricht."
       : ak === "schild" ? wer + ": Schild (+10)." : ak === "konter" ? wer + ": Konterstellung." : wer + ": Heilen (+12 LP).");
   }
@@ -14284,7 +14199,7 @@
     var el = stratKaempfer(seite);
     if (!el) return;
     if (!erfolg) { stratKlasse(el, "sp-sa-stolpert", 700); stratText(seite, "Daneben!", "#ffd0d0"); ton("bonk", 0.35); return; }
-    if (ak === "angriff" || ak === "zweit") { stratKlasse(el, "sp-sa-schlag", 650); ton("swoosh", 0.35); setTimeout(function () { ton("boxen", 0.45); }, 260); }
+    if (ak === "angriff") { stratKlasse(el, "sp-sa-schlag", 650); ton("swoosh", 0.35); setTimeout(function () { ton("boxen", 0.45); }, 260); }
     else if (ak === "super") { stratKlasse(el, "sp-sa-ruft", 800); stratKlasse(el, "sp-sa-superkraft", 900); ton("gewitter", 0.5); setTimeout(function () { ton("boxen", 0.5); }, 300); }
     else if (ak === "donner") { stratKlasse(el, "sp-sa-ruft", 800); ton("gewitter", 0.45); var g = stratKaempfer(seite === "ich" ? "er" : "ich"); if (g) { var bl = document.createElement("div"); bl.className = "sp-sa-blitz"; bl.innerHTML = '<svg viewBox="0 0 40 90"><path d="M24 0 L8 40 H20 L12 90 L36 34 H23 L31 0 Z" fill="#fff7c2" stroke="#ffcf3a" stroke-width="2" stroke-linejoin="round"/></svg>'; g.appendChild(bl); setTimeout(function () { bl.remove(); }, 700); } }
     else if (ak === "schild") { stratKlasse(el, "sp-sa-block", 700); ton("hammerschlag", 0.4); }
@@ -14344,12 +14259,8 @@
     var rt = extraEl.querySelector(".sp-sa-runde"); if (rt) rt.textContent = ST.siege.ich === 1 && ST.siege.er === 1 && !ST.ende ? "Entscheidung" : "Runde " + Math.min(3, ST.runde);
     [["ich", ST.ich], ["er", ST.er]].forEach(function (q) { var k = stratKaempfer(q[0]); if (k) { k.classList.toggle("sp-sa-schild", q[1].schild > 0); k.classList.toggle("sp-sa-konter", q[1].konter); } });
     var fi = stratFair(ST.ich.lv, ST.er.lv), fe = stratFair(ST.er.lv, ST.ich.lv);
-    extraEl.querySelector(".sp-sa-fair").textContent = (Math.abs(fi - 1) < 0.01 ? "Fair: gleich stark" + (ST.modus === "echtzeit" ? " · Echtzeit" : " · Züge")
-      : "Fairness nach Level: du " + (fi > 1 ? "+" : "−") + Math.round(Math.abs(fi - 1) * 100 + 1e-6) + " % Schaden, " + ST.gegnerName + " " + (fe > 1 ? "+" : "−") + Math.round(Math.abs(fe - 1) * 100 + 1e-6) + " %" + (ST.modus === "echtzeit" ? " · Echtzeit" : " · Züge"))
-      /* FASSUNG 761 — die Kampfart und das eigene Set stehen dabei */
-      + (ST.kampfart === "ausruestung" && ST.ich.set ? " · Mit Ausrüstung: " + (WAFFEN[ST.ich.set.prim] ? WAFFEN[ST.ich.set.prim].name : "Faust")
-          + (WAFFEN[ST.ich.set.sek] ? " + " + WAFFEN[ST.ich.set.sek].name : "") + (ST.ich.set.eig.length ? " · " + ST.ich.set.eig.map(function (e) { return (ST_EIGEN.filter(function (x) { return x[0] === e; })[0] || [0, e])[1]; }).join(", ") : "")
-        : " · Faustkampf");
+    extraEl.querySelector(".sp-sa-fair").textContent = Math.abs(fi - 1) < 0.01 ? "Fair: gleich stark" + (ST.modus === "echtzeit" ? " · Echtzeit" : " · Züge")
+      : "Fairness nach Level: du " + (fi > 1 ? "+" : "−") + Math.round(Math.abs(fi - 1) * 100 + 1e-6) + " % Schaden, " + ST.gegnerName + " " + (fe > 1 ? "+" : "−") + Math.round(Math.abs(fe - 1) * 100 + 1e-6) + " %" + (ST.modus === "echtzeit" ? " · Echtzeit" : " · Züge");
     var rest = Math.max(0, Math.ceil((ST.bereitAb - Date.now()) / 1000));
     extraEl.querySelector(".sp-st-dran").textContent = ST.ende ? "Das Spiel ist aus." : ST.pause ? "Runde vorbei – gleich geht es weiter …" : ST.frage ? "Beantworte die Frage …"
       : ST.modus === "echtzeit" ? (rest ? "Gleich wieder bereit …" : "Los – wähle eine Aktion!") : ST.ichDran ? "Du bist dran – wähle eine Aktion." : ST.gegnerName + " ist dran …";
@@ -14364,7 +14275,7 @@
     if (n.typ === "einladung") {
       var box = document.createElement("div");
       box.className = "sp-frage";
-      box.innerHTML = '<div class="sp-frage-text">♟️ <b></b> lädt dich zum Rundenkampf ein (' + (n.modus === "echtzeit" ? "Echtzeit" : "Zug um Zug") + ", " + (n.kampfart === "ausruestung" ? "mit Ausrüstung – dein Set aus dem Rundenkampf-Menü" : "Faustkampf") + ', mit Deutsch-Fragen). Mitspielen?</div>'
+      box.innerHTML = '<div class="sp-frage-text">♟️ <b></b> lädt dich zum Rundenkampf ein (' + (n.modus === "echtzeit" ? "Echtzeit" : "Zug um Zug") + ', mit Deutsch-Fragen). Mitspielen?</div>'
         + '<div class="sp-frage-knoepfe"><button type="button" data-ja="1">Annehmen</button><button type="button" data-ja="0">Ablehnen</button></div>';
       box.querySelector("b").textContent = n.name || "Jemand";
       document.body.appendChild(box);
@@ -14373,13 +14284,13 @@
         var k = ev.target.closest("button"); if (!k) return;
         clearTimeout(weg); box.remove();
         var ichName = ""; try { ichName = LC().lage().ichName || ""; } catch (e) {}
-        if (k.dataset.ja === "1") { senden({ ereignis: "strat", typ: "ja", an: n.von, partie: n.partie, name: ichName, lv: stratMeinLevel(), fig: stratMeineFigur() }); ST_ORT_VORGABE = ST_ORTE.some(function (o) { return o[0] === n.ort; }) ? n.ort : ""; stratBeginnen(n.von, n.name || "Gegner", false, n.partie, n.modus, Number(n.lv) || 0, n.fig, n.kampfart); }
+        if (k.dataset.ja === "1") { senden({ ereignis: "strat", typ: "ja", an: n.von, partie: n.partie, name: ichName, lv: stratMeinLevel(), fig: stratMeineFigur() }); ST_ORT_VORGABE = ST_ORTE.some(function (o) { return o[0] === n.ort; }) ? n.ort : ""; stratBeginnen(n.von, n.name || "Gegner", false, n.partie, n.modus, Number(n.lv) || 0, n.fig); }
         else senden({ ereignis: "strat", typ: "nein", an: n.von, partie: n.partie, name: ichName });
       });
     } else if (n.typ === "ja" && ST.wartet && ST.wartet.id === n.partie) {
       var w = ST.wartet; ST.wartet = null;
       ST_ORT_VORGABE = stratOrtGemeinsam() ? stratOrtWahl() : "";
-      stratBeginnen(n.von, n.name || w.name || "Gegner", true, n.partie, w.modus, Number(n.lv) || 0, n.fig, w.kampfart);
+      stratBeginnen(n.von, n.name || w.name || "Gegner", true, n.partie, w.modus, Number(n.lv) || 0, n.fig);
     } else if (n.typ === "nein" && ST.wartet && ST.wartet.id === n.partie) {
       ST.wartet = null; hinweis("♟️ " + (n.name || "Die Person") + " möchte gerade nicht.");
     } else if (n.typ === "zug" && ST.id === n.partie) {
@@ -14445,7 +14356,7 @@
       setzen: function (o) { Object.keys(o || {}).forEach(function (k) { S[k] = o[k]; }); zeichnen(); },
       zeichnen: zeichnen, geschossZeigen: geschossZeigen, zahlZeigen: zahlZeigen, trefferZeigen: trefferZeigen,
       gegenwehrZeigen: gegenwehrZeigen, falleZeigen: falleZeigen, tippAufPlatz: tippAufPlatz, ringSvg: ringSvg,
-      extraOeffnen: extraOeffnen, extraSchliessen: extraSchliessen, td: function () { return TD; }, st: function () { return ST; }, stratWirkung: stratWirkung, stratTreffer: stratTreffer, stratEmpfangen: stratEmpfangen, stratEnde: function () { stratEndePruefen(); stratZeigen(); }, stratFigurSvg: stratFigurSvg,
+      extraOeffnen: extraOeffnen, extraSchliessen: extraSchliessen, td: function () { return TD; }, st: function () { return ST; }, stratEmpfangen: stratEmpfangen, stratEnde: function () { stratEndePruefen(); stratZeigen(); }, stratFigurSvg: stratFigurSvg,
       flugzeit: function (w) { return (WAFFEN[w] || {}).flug || 0; }, takt: function () { return { sparsam: takt.sparsam, lebend: teilchenLebend }; }, tierSignatur: tierSignatur,
       schnellZeichnen: schnellZeichnen, geschenkePruefen: geschenkePruefen, superkraft: superkraft,
       turmZeile: turmZeile, platzGewechselt: platzGewechselt, werkZeilenHtml: werkZeilenHtml, waffenSchaden: function (w) { return (WAFFEN[w] || {}).schaden; }, skills: function () { return SKILLS; },

@@ -2795,16 +2795,3 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-melden .sp-melden-knopf { background: none; border: 0; padding: 8px 4px 8px 0; min-height: 32px !important; font: 600 11px system-ui, sans-serif; color: #8a5a00; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .sp-melden-wahl button { flex: 0 0 auto; white-space: nowrap; font: 600 11px system-ui, sans-serif; padding: 7px 10px; min-height: 32px !important; border-radius: 12px; border: 1px solid #d8b43a; background: #fff8dc; color: #5a4300; }
 .sp-melden-dank { color: #2e7d32; font-weight: 600; }
-/* FASSUNG 761 — Rundenkampf: Kampfart und Ausrüstungs-Set (Walkie 290) */
-.sp-st-art button { display: flex; flex-direction: column; align-items: center; gap: 1px; }
-.sp-st-art button small { font: 500 10.5px system-ui, sans-serif; opacity: .8; }
-.sp-st-set { margin: 0 0 8px; padding: 8px; border-radius: 10px; background: rgba(255, 255, 255, .06); }
-.sp-st-set[hidden] { display: none; }
-.sp-st-set label { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font: 600 12px system-ui, sans-serif; color: #e8ecf4; }
-.sp-st-set label span { flex: 0 0 84px; }
-.sp-st-set select { flex: 1; min-width: 0; min-height: 32px; border-radius: 8px; border: 1px solid #4a5468; background: #1e2330; color: #fff; font: 500 12px system-ui, sans-serif; padding: 0 6px; }
-.sp-st-eigen { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; margin: 4px 0; }
-.sp-st-eigen > span { grid-column: 1 / -1; }
-.sp-st-eigen button { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; padding: 6px 8px; border: 1px solid #4a5468; border-radius: 9px; background: #262c3a; color: #fff; text-align: left; font: 700 12px system-ui, sans-serif; }
-.sp-st-eigen button small { font: 500 10.5px/1.25 system-ui, sans-serif; opacity: .8; }
-.sp-st-eigen button.sp-an { background: #3a8dde; border-color: #bfe0ff; }
