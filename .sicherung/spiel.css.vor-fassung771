@@ -2878,16 +2878,3 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-bahn-gaeste { margin-top: 4px; }
 .sp-bahn-knoepfe .sp-bahn-touristen { grid-column: 1 / -1; }
 .sp-bahn-knoepfe .sp-bahn-touristen > small { padding-left: 0; }
-
-/* FASSUNG 771 — Funk 195: Aussprache-Karte mit Niveau, Prozent-Balken und Lauten wie im Aussprachekurs.
-   Der Ergebnis-Platz ist fest hoch, damit nach dem Nachsprechen nichts springt. */
-.sp-sprech-niveau { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px; margin: 0 0 6px; }
-.sp-sprech-niveau span { font-size: 11px; font-weight: 700; color: #6a7382; text-transform: uppercase; letter-spacing: .05em; margin-right: 2px; }
-.sp-sprech-niveau button { min-width: 34px; min-height: 30px; padding: 2px 6px; border-radius: 8px; border: 1px solid #c9d2de; background: #fff; color: #1f2a38; font: 700 12px/1 system-ui, sans-serif; }
-.sp-sprech-niveau button.sp-an { background: #1b6ef3; border-color: #1b6ef3; color: #fff; }
-.sp-sprech .sp-erg-platz { min-height: 112px; max-height: 112px; overflow-y: auto; }
-.sp-sprech-balken { position: relative; height: 16px; margin: 5px 0 4px; border-radius: 8px; background: #dfe4ec; overflow: hidden; }
-.sp-sprech-balken i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px; transition: width .5s ease; }
-.sp-sprech-balken b { position: relative; display: block; font: 800 11px/16px system-ui, sans-serif; color: #1f2a38; text-align: center; }
-.sp-sprech-laute { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-bottom: 3px; }
-.sp-sprech-laut { display: inline-block; min-width: 22px; padding: 1px 5px; border: 2px solid; border-radius: 7px; background: #fff; font: 700 13px/1.3 system-ui, sans-serif; }

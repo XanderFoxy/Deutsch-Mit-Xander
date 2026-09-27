@@ -1566,3 +1566,32 @@ Sonden: neu 770 (alles grün); 711, 755, 765, 766, 768, 769 grün. Der Server is
   - Neu: „🏷️ Xander bietet 20 Brot je 2 P an – günstiger als beim Händler“ (höchstens einmal in 10 Minuten je Spieler).
   - Neu: „🏛️ … hat im Dorf Holstentor gebaut – Besucher willkommen“.
 - Walkies zu den offenen Fragen aus Funk 191/192: 300 (Bündnis, Überfall auf Abwesende), 301 (Geldfluss beim Tourismus), 302 (alte Schuhe verwerten).
+
+### Fassung 771 (Funk 195: Aussprache im Spiel mit Niveau und Prozent, Tafel-Ordner, Zungenbilder sch/st/sp/r)
+Sonden: neu 771 (alles grün); 725 und 753 angepasst und grün; 749, 766, runde53 grün. runde69 („Bildbauen einmal“) war schon vor 771 rot, das gleiche Ergebnis mit der Sicherung.
+- **Aussprache im Spiel** (XANDER: „Die Aussprache Übungen im Spiel hat kein Niveau und keine prozentuale Anzeige wie wir sie global auf der Webseite auch haben“).
+  - Oben in der Karte stehen die Niveaus A1–C2. Ein Tipp holt ein Wort auf diesem Niveau und merkt sich die Wahl.
+  - Nach dem Nachsprechen: ein Balken mit der Prozentzahl, darunter die Laute eingefärbt wie im Aussprachekurs (grün sitzt, gelb fast, rot daneben).
+  - Der Ergebnisplatz ist fest hoch, die Karte springt nicht.
+- **Tafel-Ordner** (XANDER: „beim Whiteboard hat man immer noch nicht die Auswahl im Ordner mit den Bilderwelten“).
+  - Gefunden auf 360 px:
+    - Die Ordner waren da, aber hinter zwei namenlosen Bildchen (🖼️, 📂).
+    - Der Ordner begann über dem oberen Bildschirmrand.
+    - Im Aussprache-Ordner waren die Bilder auf 0 Höhe gedrückt: leere Pillen.
+  - Jetzt:
+    - EIN Knopf mit gezeichnetem Ordner und dem Wort „Ordner“.
+    - Darin „Vom Gerät“, „Aussprache-Übungen“ und „Bilderwelten“, darunter die gesicherten Tafeln.
+    - Der Ordner steht in der Bildschirmmitte, die Kacheln zeigen Bild und Namen.
+  - Der Griff ⌄ stand fest 2,1 rem über dem Rand, mitten auf dem Schwamm. Jetzt misst die Tafel ihre Leiste und stellt den Griff darüber.
+- **Makroknopf** (XANDER: „schau auch dass das mit dem makroknopf richtig verlinkt ist“).
+  - Neue Felder „Aussprache-Bilder“ und „Bilderwelten“ (für Lehrer): Tafel auf und gleich der richtige Ordner.
+  - Wer seine Felder schon angepasst hat, bekommt „Aussprache-Bilder“ einmal angehängt.
+- **Zungenbilder** (XANDER: „bei ST SP oder … den ch an dem s c h auch die Stellung der Zunge verdeutlichen über diese Vektorgrafik … als Tipps und Tricks“).
+  - Neue Schnittbilder in derselben Bauart wie ng/ich/ach:
+    - sch: Lippen rund vor, Enge hinter dem Zahndamm.
+    - s zum Vergleich.
+    - st: erst sch, dann t.
+    - sp: erst sch, dann p.
+    - r: am Zäpfchen.
+  - Im Aussprachekurs sind sie neue Tricks: „SCH“ (mit s-Vergleich), „ST und SP am Wortanfang“; „R“ hat jetzt ein Bild. Auf der Tafel liegen sie im Aussprache-Ordner.
+  - Nebenbei korrigiert: „der Fenster“ → „das Fenster“.

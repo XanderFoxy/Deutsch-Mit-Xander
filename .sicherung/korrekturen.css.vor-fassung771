@@ -35080,18 +35080,3 @@ svg.lc-mini-echt .lc-sobri-blitz, svg.lc-mini-echt .lc-eimer-strahl { display: n
   animation: lcReifenrauch 1.3s ease-out forwards; }
 @keyframes lcReifenrauch { 0% { transform: translate(-50%, -50%) scale(.3); opacity: .95; } 100% { transform: translate(-50%, -80%) scale(1.8); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .lc-auftritt-front .lc-front-scanner { animation: none; } }
-
-/* FASSUNG 771 — Funk 195: EIN beschrifteter Ordner-Knopf an der Tafel (statt 🖼️ und 📂), und der Griff steht
-   immer über der Leiste – egal, in wie viele Zeilen sie umbricht. */
-.lc-tafel-knopf.lc-tafel-ordner { display: inline-flex; align-items: center; gap: .25rem; padding: .16rem .45rem .16rem .32rem; font-weight: 700; font-size: .78rem; color: #1b2740; }
-.lc-tafel-ordner svg { width: 1.15rem; height: 1.15rem; flex: 0 0 auto; }
-.lc-tafel-griff { bottom: calc(var(--lc-leiste-h, 1.8rem) + 4px); }
-.lc-tafel-ohne-werkzeug .lc-tafel-griff { bottom: .3rem; }
-/* FASSUNG 771 — die Vorschau-Kacheln im Aussprache-Ordner waren auf dem Handy leere Pillen: eine allgemeine
-   Knopfhöhe (20 px) drückte das Bild auf 0 zusammen. Die Kacheln wachsen jetzt mit ihrem Inhalt. */
-.lc-tafel-bildmappe .lc-tafel-bm-bild, .lc-tafel-bildmappe .lc-tafel-bm-ordner { height: auto; min-height: 44px; max-height: none; }
-.lc-tafel-bildmappe .lc-tafel-bm-laut svg { flex: 0 0 auto; }
-/* FASSUNG 771 — der Tafel-Ordner steht fest im sichtbaren Bildschirm, nicht mehr in der (höheren) Chatkarte. */
-body > .lc-tafel-mappe { position: fixed; inset: auto; left: 12px; right: 12px; top: max(10px, 8vh); max-height: 82vh; max-width: 560px; margin: 0 auto; z-index: 9000; }
-.lc-tafel-bildmappe .lc-tafel-bm-laut svg { width: 100%; height: 86px; margin: 0; padding: 0; border: 0; box-shadow: none; background: none; }
-.lc-tafel-bildmappe .lc-tafel-bm-bild.lc-tafel-bm-laut { height: 138px; overflow: hidden; justify-content: flex-start; }

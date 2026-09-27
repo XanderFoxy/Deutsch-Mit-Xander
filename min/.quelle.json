@@ -7,7 +7,6 @@
  "bildverwaltung.js": "7826bca845a279707c963d333a59e18d5796fd2e",
  "core.js": "1521d9738253b056eb446f3a68cd5b51f00f311a",
  "data-aussprache-ton.js": "1594c4f349abb3b44bad7af577c1d9a5ac573c85",
- "data-aussprache.js": "68c12c733a775e9178c9b03e93a866987f3334c1",
  "data-beitraege.js": "dc2277c6fd8b6b0f298bc59298b9968b828400ce",
  "data-dialekt.js": "d0957b47a3831db51dcad31a9ab849334d4471bf",
  "data-dialoge.js": "0990ba60d4d4a783f5c97ff690dd6e7dfbaab86f",
@@ -46,10 +45,11 @@
  "app-styles.css": "6dab2fca9a6556d99575f3337d82bf9d44c7b83a",
  "baukasten.js": "68a7fd488976c5e284185cbf3fa4d52e01379c6e",
  "data-geraeusche.js": "ccd3574681544074a3055b3060bf92461b4883f7",
- "korrekturen.css": "dd8ecbcded1057770e61c29d49ad422f3b5e092c",
  "livechat.js": "375b2530ef8ee05e283bbdbeba5a16b79ab7a0cd",
- "spiel.css": "a7a2e6e5acbfb5ca20183979cdd5f9b86b358709",
- "app.js": "f5da700e37bf3efff4f21e85bb92aa303ccc2b3c",
- "spiel.js": "4ba74e6b69c4c84f4e6e8f359dd0fb64f2151214",
- "data-werkstatt.js": "8df4a6baaea9a43cd2c90803ce8639f4f51c0bbc"
+ "data-aussprache.js": "5504f23f236025427e0dc8ad05f1739436691384",
+ "spiel.css": "0248481aa665e05edc236ef308fb511a9a8570d0",
+ "spiel.js": "2d37389ec8b2e3c631e2376d57a9256fe77288f9",
+ "app.js": "4ff9b4d700469ec68b3947e643bbd37bf1983bd5",
+ "korrekturen.css": "9b097a54980f820367716f1100fcae58f24b0506",
+ "data-werkstatt.js": "eff7e87ed8415d9851f36ce2c5f370c2a26ebcde"
 }

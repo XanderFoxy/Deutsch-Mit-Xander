@@ -161,91 +161,6 @@ window.DMA_AUSSPRACHE = (() => {
     + marke(248, 146, 124, 144, ["Zungenrücken hoch,", "aber nicht ganz zu"]),
     ["ach-Laut — dieselbe Luft, aber die Enge liegt hinten", "(Bach, Buch, doch, auch)"]);
 
-  /* FASSUNG 771 — XANDER (Funk 195): „vielleicht kannst du bei ST SP oder … den ch an dem s c h auch die Stellung
-     der Zunge verdeutlichen über diese Vektorgrafik … diese Grafiken diese dann global auf der Webseite vielleicht mit
-     implementierst als Beispiel als Tipps und Tricks". Dieselbe Bauart wie ng/ich/ach: Kopf im Schnitt, rechts die
-     Beschriftung. Das Gaumensegel ist bei allen oben (Nase zu). */
-  const SEGEL_OBEN = `<path d="M170,88 C182,86 190,78 192,66" fill="none" stroke="#8f6f4f" stroke-width="6" stroke-linecap="round"/>`;
-  // Die Zunge in sch-Stellung: Spitze und Zungenblatt hoch, knapp HINTER dem Zahndamm, dahinter eine breite Rille.
-  const ZUNGE_SCH = "M60,156 C57,140 57,122 61,111 C65,104 74,101 86,103 C102,107 114,115 134,117 C158,119 174,124 180,136 C166,148 100,158 60,156 Z";
-  // Die Lippen rund und weit nach vorn geschoben (wie beim Pusten in eine Flasche).
-  const LIPPEN_RUND = `<path d="M40,98 C22,104 20,142 40,148" fill="none" stroke="#c96a6a" stroke-width="5.5" stroke-linecap="round"/>`;
-  const ZUNGEN_PFEIL = `<defs><marker id="zungenpfeil" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
-        <path d="M0,0 L10,5 L0,10 z" fill="#8a4a3a"/></marker></defs>`;
-
-  // sch: breite Rille hinter dem Zahndamm, Lippen rund nach vorn.
-  const SVG_SCH = kopfSchnitt(`
-      ${SEGEL_OBEN}
-      <path d="${ZUNGE_SCH}" fill="#e8908f" stroke="#c06e6d" stroke-width="2"/>
-      ${LIPPEN_RUND}
-      <ellipse cx="80" cy="98" rx="15" ry="4.5" fill="none" stroke="#2f7fae" stroke-width="2" stroke-dasharray="4 4"/>
-      <path d="M196,178 C182,146 158,118 130,110 C110,104 94,98 78,97 C64,97 56,104 50,114 L20,120"
-            fill="none" stroke="#2f7fae" stroke-width="3" stroke-linecap="round" marker-end="url(#luftpfeil)"/>
-  `,
-    marke(248, 92, 80, 98, ["breite Rille, knapp", "hinter dem Zahndamm"])
-    + marke(248, 132, 24, 138, ["Lippen rund und", "weit nach vorn"])
-    + marke(248, 172, 62, 112, ["Zungenspitze hoch,", "sie berührt nichts"]),
-    ["sch — die Enge liegt hinter dem Zahndamm,", "die Lippen runden sich nach vorn (Schule, Tisch)"]);
-
-  // s zum Vergleich: die Enge liegt ganz vorn, die Lippen bleiben flach.
-  const SVG_S = kopfSchnitt(`
-      ${SEGEL_OBEN}
-      <path d="M58,156 C54,140 53,120 56,108 C62,104 76,108 96,114 C112,118 124,120 138,120 C160,121 175,126 180,136 C166,148 100,158 58,156 Z"
-            fill="#e8908f" stroke="#c06e6d" stroke-width="2"/>
-      <ellipse cx="58" cy="102" rx="8" ry="4.5" fill="none" stroke="#2f7fae" stroke-width="2" stroke-dasharray="3 3"/>
-      <path d="M196,178 C182,150 156,130 128,122 C104,114 78,104 64,102 C56,102 50,110 46,116 L20,116"
-            fill="none" stroke="#2f7fae" stroke-width="3" stroke-linecap="round" marker-end="url(#luftpfeil)"/>
-  `,
-    marke(248, 92, 58, 102, ["schmale Rille ganz vorn", "am Zahndamm"])
-    + marke(248, 140, 36, 124, ["Lippen breit,", "nicht gerundet"]),
-    ["s zum Vergleich — die Enge liegt ganz vorn,", "die Lippen bleiben flach (Haus, Glas)"]);
-
-  // st am Wortanfang: erst sch (gestrichelt), dann schlägt die Zungenspitze an den Zahndamm → t.
-  const SVG_ST = kopfSchnitt(`
-      ${ZUNGEN_PFEIL}
-      ${SEGEL_OBEN}
-      <path d="${ZUNGE_SCH}" fill="none" stroke="#c06e6d" stroke-width="1.6" stroke-dasharray="4 3"/>
-      <path d="M60,156 C56,136 55,110 58,97 C64,97 74,102 88,108 C104,114 116,118 134,119 C158,120 174,124 180,136 C166,148 100,158 60,156 Z"
-            fill="#e8908f" fill-opacity=".9" stroke="#c06e6d" stroke-width="2"/>
-      ${LIPPEN_RUND}
-      <path d="M82,101 C76,98 70,97 65,97" fill="none" stroke="#8a4a3a" stroke-width="2" marker-end="url(#zungenpfeil)"/>
-      <circle cx="60" cy="96" r="8" fill="none" stroke="#d94f4f" stroke-width="2.6"/>
-  `,
-    marke(248, 84, 60, 96, ["2. dann: Spitze an den", "Zahndamm — t"])
-    + marke(248, 132, 96, 106, ["1. erst sch: Zungenblatt", "hoch (gestrichelt)"])
-    + marke(248, 172, 24, 138, ["die Lippen bleiben", "vom sch noch rund"]),
-    ["st am Wortanfang klingt wie „scht“:", "erst sch, dann t (Stein, Straße, verstehen)"], true);
-
-  // sp am Wortanfang: die Zunge steht in sch-Stellung, dann schließen die Lippen → p.
-  const SVG_SP = kopfSchnitt(`
-      ${SEGEL_OBEN}
-      <path d="${ZUNGE_SCH}" fill="#e8908f" stroke="#c06e6d" stroke-width="2"/>
-      <path d="M40,98 C22,104 20,118 30,123" fill="none" stroke="#c96a6a" stroke-width="5.5" stroke-linecap="round"/>
-      <path d="M30,123 C20,128 22,142 40,148" fill="none" stroke="#c96a6a" stroke-width="5.5" stroke-linecap="round"/>
-      <circle cx="30" cy="123" r="8" fill="none" stroke="#d94f4f" stroke-width="2.6"/>
-      <ellipse cx="80" cy="98" rx="15" ry="4.5" fill="none" stroke="#2f7fae" stroke-width="2" stroke-dasharray="4 4"/>
-      <path d="M196,178 C182,146 158,118 130,110 C110,104 94,98 78,97 C64,97 54,106 44,118"
-            fill="none" stroke="#2f7fae" stroke-width="3" stroke-linecap="round" marker-end="url(#luftpfeil)"/>
-  `,
-    marke(248, 92, 80, 98, ["1. Zunge steht", "wie beim sch"])
-    + marke(248, 140, 30, 123, ["2. die Lippen schließen:", "Luft staut sich — p"]),
-    ["sp am Wortanfang klingt wie „schp“:", "erst sch, dann p (Sport, spielen, Spaß)"], true);
-
-  // r: hinten am Zäpfchen, die Zungenspitze bleibt unten.
-  const SVG_R = kopfSchnitt(`
-      <path d="M170,88 C178,88 184,90 186,95 C188,100 187,106 184,110" fill="none" stroke="#8f6f4f" stroke-width="5" stroke-linecap="round"/>
-      <circle cx="183" cy="112" r="4" fill="#b0584f"/>
-      <path d="M190,106 q4,5 0,10 M200,102 q7,9 0,18" fill="none" stroke="#b0584f" stroke-width="1.8" stroke-linecap="round"/>
-      <path d="M58,152 C92,148 124,142 146,132 C160,126 168,122 174,122 C180,130 178,142 170,148 C152,156 100,160 58,156 Z"
-            fill="#e8908f" stroke="#c06e6d" stroke-width="2"/>
-      <ellipse cx="178" cy="118" rx="9" ry="5" fill="none" stroke="#2f7fae" stroke-width="2" stroke-dasharray="3 3"/>
-      <path d="M196,178 C194,150 188,132 178,126 C140,122 96,124 58,126"
-            fill="none" stroke="#2f7fae" stroke-width="3" stroke-linecap="round" marker-end="url(#luftpfeil)"/>
-  `,
-    marke(248, 92, 186, 112, ["das Zäpfchen flattert —", "wie beim Gurgeln"])
-    + marke(248, 146, 58, 150, ["Zungenspitze bleibt unten", "hinter den Zähnen"]),
-    ["r — hinten am Zäpfchen, nicht mit der Zungenspitze", "(rot, Regen, Brot, Frau)"]);
-
   /* Lippen von vorn: drei Bilder nebeneinander — i, unterwegs, ü. */
   function lippenReihe(a, b, c, unterschrift) {
     const mund = (x, breite, hoehe, farbe, titel) => `
@@ -344,7 +259,7 @@ window.DMA_AUSSPRACHE = (() => {
     { schrift: "chs", gesprochen: "ks", wann: "wenn das s zum Wortstamm gehört", bsp: ["der Fuchs", "sechs", "wachsen"], hinweis: "Aber: „du machst“ = mach + st, dort bleibt der ach-Laut." },
     { schrift: "sch", gesprochen: "sch", wann: "immer", bsp: ["die Schule", "waschen", "der Tisch"], hinweis: "" },
     { schrift: "sp", gesprochen: "schp", wann: "am Wort- oder Silbenanfang", bsp: ["der Sport", "sprechen", "spät"], hinweis: "In der Mitte bleibt es sp: „die Wespe“, „knuspern“." },
-    { schrift: "st", gesprochen: "scht", wann: "am Wort- oder Silbenanfang", bsp: ["die Stadt", "das Stück", "verstehen"], hinweis: "In der Mitte und am Ende bleibt es st: „das Fenster“, „du bist“." },
+    { schrift: "st", gesprochen: "scht", wann: "am Wort- oder Silbenanfang", bsp: ["die Stadt", "das Stück", "verstehen"], hinweis: "In der Mitte und am Ende bleibt es st: „der Fenster“-Teil „-ster“, „du bist“." },
     { schrift: "ie", gesprochen: "langes i", wann: "fast immer", bsp: ["die Liebe", "spielen", "wieder", "das Bier"], hinweis: "Das e spricht man nicht — es macht das i nur lang. Ausnahme in Fremdwörtern: „die Fa-mi-li-e“." },
     { schrift: "ei / ai", gesprochen: "ai", wann: "immer", bsp: ["das Ei", "die Zeit", "der Mai"], hinweis: "Nie „e-i“ getrennt." },
     { schrift: "eu / äu", gesprochen: "oi", wann: "immer", bsp: ["heute", "neu", "die Häuser"], hinweis: "" },
@@ -660,42 +575,8 @@ window.DMA_AUSSPRACHE = (() => {
       ],
       probe: "Das schönste Paar: „der Kuchen“ (ach-Laut) und „das Kühchen“ (ich-Laut). Gleiche Buchstaben, zwei Laute.",
     },
-    /* FASSUNG 771 — Funk 195: „bei ST SP oder … den ch an dem s c h auch die Stellung der Zunge verdeutlichen". */
     {
-      id: "sch", titel: "SCH — Lippen rund, die Enge hinter dem Zahndamm", svg: SVG_SCH, svg2: SVG_S,
-      worum: "sch ist kein scharfes s und kein ch. Die Zunge sitzt ein Stück weiter hinten als beim s, und die Lippen gehen nach vorn.",
-      schritte: [
-        "Sag ein scharfes „ssss“ und achte darauf, wo die Zungenspitze ist: ganz vorn am Zahndamm.",
-        "Zieh die Zunge ein kleines Stück zurück, bis die Enge knapp HINTER dem Zahndamm liegt. Die Rille wird breiter.",
-        "Schieb die Lippen rund nach vorn, als wolltest du in eine Flasche pusten.",
-        "Jetzt rauscht es tiefer und dunkler: „schschsch“. Die Zungenspitze berührt dabei nichts.",
-      ],
-      beispiele: [
-        { wort: "die Schule", syl: "SCHU-le" }, { wort: "der Tisch", syl: "TISCH" },
-        { wort: "waschen", syl: "WA-schen" }, { wort: "schön", syl: "SCHÖN" },
-        { wort: "der Fisch", syl: "FISCH" }, { wort: "die Flasche", syl: "FLA-sche" },
-      ],
-      probe: "Gegenprobe mit dem zweiten Bild: „die Masse“ und „die Masche“, „wissen“ und „wischen“, „der Fleiß“ und „das Fleisch“. Nur die Zunge rückt ein Stück zurück und die Lippen gehen vor.",
-    },
-    {
-      id: "stsp", titel: "ST und SP am Wortanfang — erst sch, dann t oder p", svg: SVG_ST, svg2: SVG_SP,
-      worum: "Am Wort- oder Silbenanfang klingt st wie „scht“ und sp wie „schp“. Wer „s-tadt“ oder „es-port“ sagt, fällt sofort auf.",
-      schritte: [
-        "Stell die Zunge in die sch-Stellung, Lippen rund: „sch…“.",
-        "Für st: Schlag die Zungenspitze von dort an den Zahndamm — „scht“. Kein Vokal dazwischen.",
-        "Für sp: Die Zunge bleibt in der sch-Stellung, nur die Lippen schließen sich — „schp“.",
-        "Mitten im Wort und am Ende bleibt es s: „das Fenster“, „die Wespe“, „du bist“.",
-      ],
-      beispiele: [
-        { wort: "der Stein", syl: "STEIN", hinweis: "scht" }, { wort: "die Straße", syl: "STRA-ße", hinweis: "schtr" },
-        { wort: "verstehen", syl: "ver-STE-hen", hinweis: "Silbenanfang: scht" },
-        { wort: "der Sport", syl: "SPORT", hinweis: "schp" }, { wort: "spielen", syl: "SPIE-len", hinweis: "schp" },
-        { wort: "das Fenster", syl: "FENS-ter", hinweis: "mitten im Wort: st" },
-      ],
-      probe: "Sag „die Stadt“ und „die Stunde“ langsam: Hörst du am Anfang ein sch? Dann stimmt es. Ein kleines e davor („es-tadt“) darf nicht entstehen.",
-    },
-    {
-      id: "r", titel: "Das R sitzt hinten, nicht vorne", svg: SVG_R,
+      id: "r", titel: "Das R sitzt hinten, nicht vorne",
       worum: "Wer Spanisch, Russisch, Türkisch oder Arabisch spricht, rollt das r mit der Zungenspitze. Im Deutschen entsteht es ganz hinten.",
       schritte: [
         "Gurgle ohne Wasser und mach daraus einen Ton — das ist schon fast das deutsche r.",
@@ -1119,7 +1000,6 @@ window.DMA_AUSSPRACHE = (() => {
     ZUNGENBRECHER: { de: ZUNGENBRECHER_DE, it: ZUNGENBRECHER_IT },
     TEST: { de: TEST_DE, it: TEST_IT },
     // Einzelne Grafiken, die auch außerhalb eines Tricks gebraucht werden.
-    GRAFIK: { buendel: SVG_BUENDEL, laenge: SVG_LAENGE, dehnh: SVG_DEHNH, ng: SVG_NG, k: SVG_K, ich: SVG_ICH, ach: SVG_ACH, ue: SVG_UE, oe: SVG_OE,
-      sch: SVG_SCH, s: SVG_S, st: SVG_ST, sp: SVG_SP, r: SVG_R },
+    GRAFIK: { buendel: SVG_BUENDEL, laenge: SVG_LAENGE, dehnh: SVG_DEHNH, ng: SVG_NG, k: SVG_K, ich: SVG_ICH, ach: SVG_ACH, ue: SVG_UE, oe: SVG_OE },
   };
 })();

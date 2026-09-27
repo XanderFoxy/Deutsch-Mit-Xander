@@ -6797,7 +6797,6 @@
     if (tu === "sprechhoeren") return sprechHoeren();
     if (tu === "sprechen") return sprechAufnehmen();
     if (tu === "sprechneu") return sprechWortHolen(0);
-    if (tu === "sprechniveau") { S.niveau = k.dataset.n; try { localStorage.setItem("dma_spiel_niveau", S.niveau); } catch (e) {} return sprechWortHolen(0); }
   }
 
   /* FASSUNG 760 — XANDER: „bei den Fragen das kann man noch mal überarbeiten da ist doch viel Quatsch dabei der gar
@@ -6976,7 +6975,7 @@
            Information dass die Verbindung … zu der sauberen Stimme nicht aufgebaut werden kann". Fehlt das Vorsprechen,
            darf man trotzdem nachsprechen, sobald die Laut-Bewertung geht; „melde dich an" steht nur, wenn es stimmt. */
         var AP = window.AusspracheP, stand = AP && AP.zentralStandJetzt ? AP.zentralStandJetzt() : null;
-        S.sprech = { wort: r.wort, silben: r.silben, niveau: r.niveau || S.niveau, original: o && o.puffer ? o : null,
+        S.sprech = { wort: r.wort, silben: r.silben, original: o && o.puffer ? o : null,
                      hinweis: o && o.puffer ? "" : sprechBewertbar() ? "Vorsprechen geht gerade nicht – sprich das Wort trotzdem, bewertet wird Laut für Laut."
                        : stand && stand.nichtAngemeldet ? "Zum Vorsprechen und Bewerten bitte anmelden."
                        : "Die Aussprache-Stimme antwortet gerade nicht – tippe gleich noch einmal auf „Neues Wort“." };
@@ -7021,10 +7020,7 @@
               if (az && !az.fehler && typeof az.prozent === "number") {
                 var schlecht = null;
                 (az.woerter || []).forEach(function (w) { (w.laute || []).forEach(function (l) { if (l.note !== null && (!schlecht || l.note < schlecht.note)) schlecht = l; }); });
-                /* FASSUNG 771: die Laute mitnehmen – die Karte zeigt sie eingefärbt wie im Aussprachekurs. */
-                var laute = [];
-                (az.woerter || []).forEach(function (w) { (w.laute || []).forEach(function (l) { laute.push({ laut: l.laut, note: l.note }); }); });
-                return { prozent: Math.round(az.prozent), azure: true, laute: laute, tipp: schlecht && schlecht.note < 60 && AP.lautKlartext ? AP.lautKlartext(schlecht) : "" };
+                return { prozent: Math.round(az.prozent), azure: true, tipp: schlecht && schlecht.note < 60 && AP.lautKlartext ? AP.lautKlartext(schlecht) : "" };
               }
               return frei();
             }).catch(frei);
@@ -7036,7 +7032,7 @@
         return rpc("spiel_aussprache_fertig", { p_wort: sp.wort, p_prozent: prozent }).then(function (r) {
           sp.laeuft = false;
           if (r && r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-          sp.ergebnis = { prozent: prozent, gewonnen: (r && r.gewonnen) || 0, grenze: r && r.grenze, azure: Boolean(erg && erg.azure), tipp: (erg && erg.tipp) || "", laute: (erg && erg.laute) || [] };
+          sp.ergebnis = { prozent: prozent, gewonnen: (r && r.gewonnen) || 0, grenze: r && r.grenze, azure: Boolean(erg && erg.azure), tipp: (erg && erg.tipp) || "" };
           sp.hinweis = "";
           ton(sp.ergebnis.gewonnen > 0 ? "bling" : "gummi", 0.45);
           panelAuffrischen(); zeichnen(); schnellZeichnen();
@@ -7047,39 +7043,18 @@
       .then(function (g) { griff = g; setTimeout(auswerten, 4000); })
       .catch(function () { sp.laeuft = false; sp.hinweis = "Das Mikrofon ist nicht freigegeben."; panelAuffrischen(); });
   }
-  /* FASSUNG 771 — XANDER (Funk 195): „Die Aussprache Übungen im Spiel hat kein Niveau und keine prozentuale Anzeige
-     wie wir sie global auf der Webseite auch haben". Oben in der Karte stehen jetzt die Niveaus (ein Tipp holt ein Wort
-     auf diesem Niveau), nach dem Nachsprechen ein Balken mit der Prozentzahl und – wenn Azure Laut für Laut bewertet
-     hat – die Laute eingefärbt wie im Aussprachekurs (grün sitzt, gelb fast, rot daneben). */
-  function sprechNiveauHtml(sp) {
-    var jetzt = (sp && sp.niveau) || S.niveau;
-    return '<div class="sp-sprech-niveau"><span>Niveau</span>' + NIVEAUS.map(function (n) {
-      return '<button type="button" data-tu="sprechniveau" data-n="' + n + '" class="' + (jetzt === n ? "sp-an" : "") + '">' + n + "</button>";
-    }).join("") + "</div>";
-  }
-  function sprechProzentHtml(e) {
-    var AP = window.AusspracheP;
-    var farbe = function (n) { return AP && AP.noteFarbe ? AP.noteFarbe(n) : n >= 80 ? "#2e9e5b" : n >= 60 ? "#d9a326" : "#d94f4f"; };
-    var p = Math.max(0, Math.min(100, Number(e.prozent) || 0));
-    var chips = (e.laute || []).map(function (l) {
-      var name = AP && AP.lautName ? AP.lautName(l.laut) : l.laut;
-      return '<span class="sp-sprech-laut" style="border-color:' + farbe(l.note) + ";color:" + farbe(l.note) + '" title="' + esc(name + (l.note !== null && l.note !== undefined ? " · " + l.note + " von 100" : "")) + '">' + esc(l.laut) + "</span>";
-    }).join("");
-    return '<div class="sp-sprech-balken" role="img" aria-label="' + p + ' Prozent"><i style="width:' + p + "%;background:" + farbe(p) + '"></i><b>' + p + " %</b></div>"
-      + (chips ? '<div class="sp-sprech-laute">' + chips + "</div>" : "");
-  }
   function sprechKarte() {
     var sp = S.sprech;
-    if (!sp || sp.laedt) return '<div class="sp-sprech">' + sprechNiveauHtml(null) + '<div class="sp-sprech-wort">…</div></div>';
-    if (sp.fehler) return '<div class="sp-sprech">' + sprechNiveauHtml(null) + '<div class="sp-klein sp-rot">' + esc(sp.fehler) + '</div><div class="sp-knoepfe"><button type="button" data-tu="sprechneu">Neues Wort</button></div></div>';
+    if (!sp || sp.laedt) return '<div class="sp-sprech"><div class="sp-sprech-wort">…</div></div>';
+    if (sp.fehler) return '<div class="sp-sprech"><div class="sp-klein sp-rot">' + esc(sp.fehler) + '</div><div class="sp-knoepfe"><button type="button" data-tu="sprechneu">Neues Wort</button></div></div>';
     var e = sp.ergebnis;
-    return '<div class="sp-sprech">' + sprechNiveauHtml(sp) + '<div class="sp-sprech-wort">' + esc(sp.wort) + '</div><div class="sp-sprech-silben">' + esc(sp.silben || "") + "</div>"
+    return '<div class="sp-sprech"><div class="sp-sprech-wort">' + esc(sp.wort) + '</div><div class="sp-sprech-silben">' + esc(sp.silben || "") + "</div>"
       + '<div class="sp-knoepfe"><button type="button" data-tu="sprechhoeren"' + (sp.original ? "" : " disabled") + ">Anhören</button>"
       + '<button type="button" data-tu="sprechen" class="sp-sprech-mik' + (sp.laeuft ? " sp-an" : "") + '"' + (sp.laeuft || e || (!sp.original && !sprechBewertbar()) ? " disabled" : "") + ">" + (sp.laeuft ? "Ich höre …" : "Nachsprechen") + "</button>"
       + '<button type="button" data-tu="sprechneu">Neues Wort</button></div>'
       + '<div class="sp-erg-platz' + (e ? (e.gewonnen > 0 ? " sp-erg-gut" : " sp-erg-schlecht") : "") + '">'
       + (e ? '<div class="sp-erg-zeile"><b>' + e.prozent + (e.azure ? " / 100 · Laut für Laut</b>" : " % ähnlich</b>") + (e.gewonnen > 0 ? ' <span class="sp-gold">+' + e.gewonnen + " Punkte</span>" : "")
-          + '<button type="button" data-tu="sprechneu">Weiter</button></div>' + sprechProzentHtml(e) + '<div class="sp-erg-erkl">'
+          + '<button type="button" data-tu="sprechneu">Weiter</button></div><div class="sp-erg-erkl">'
           + (e.tipp ? esc(e.tipp) + " " : "") + (e.gewonnen > 0 ? "Gut gesprochen!" : e.grenze ? "Für diese Stunde sind die Aussprache-Punkte aufgebraucht." : "Ab 60 % gibt es Punkte – hör noch einmal hin und versuch das nächste Wort.") + "</div>"
         : '<div class="sp-erg-leer">' + esc(sp.hinweis || "Erst hören, dann nachsprechen.") + "</div>")
       + "</div></div>";

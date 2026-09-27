@@ -1,18 +1,14 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 753: KOMPASS OBEN LINKS, DEUTSCHE UHRZEIT, SICHTBARER
-   WALD, TAFEL-ORDNER MIT BEISPIELEN, SCHIFFE VERSENKEN IM MAKROKNOPF
+   SONDE — FASSUNG 771: FUNK 195
    ---------------------------------------------------------------------
-   XANDER (Funk 183): „der Kompass der … rechts unten ist der kann links
-   oben hin so dass er unten nicht den … Zugriff auf das Feld versperrt
-   und dann kann neben den Kompass … noch die deutsche Uhrzeit so haben
-   wir links die Uhrzeit rechts das Wetter und in der Mitte den Namen von
-   der Stadt", „wir brauchen noch einen sichtbaren Wald wo wir die Leute
-   hinschicken zum Jagen und Holzfällen", „diese Beispieldateien für die
-   Übungen wie man einen ng Sound erzeugt oder diese Bilderwelt … eigene
-   Kategorien bei den Ordner" und „dass du das Schiffe versenken auch
-   verlinkt ist".
-   Geprüft auf einem Android-Telefon (360 px, echte Fingertipps).
+   XANDER: „Die Aussprache Übungen im Spiel hat kein Niveau und keine
+   prozentuale Anzeige wie wir sie global auf der Webseite auch haben beim
+   Whiteboard hat man immer noch nicht die Auswahl im Ordner mit den
+   Bilderwelten … schau auch dass das mit dem makroknopf richtig verlinkt
+   ist … vielleicht kannst du bei ST SP oder … den ch an dem s c h auch die
+   Stellung der Zunge verdeutlichen über diese Vektorgrafik".
+   Android 360 px, Fingertipps.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -157,125 +153,128 @@ const sage = (gut, was, zusatz) => {
 
   const seite = (chat) => pg.evaluate((c) => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + c + '"] .lc-kreis'); if (!k) return null; const r = k.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; }, chat);
 
-
-  const meld = () => pg.evaluate(() => window.__hinweise.filter((h) => !/Tagesgeschenk|Übungen auf der Seite/.test(h)).slice(-1)[0] || "");
-
-
-  const zuletzt = () => pg.evaluate(() => window.__hinweise.slice(-1)[0] || "");
-
-  await pg.evaluate(() => {
-    const ich = window.__ich, jetzt = Date.now();
-    ich.level = 12; ich.punkte = 900;
-    ich.dorf = { muehle: { stufe: 2, lp: 40 }, baeckerei: { stufe: 2, lp: 40 }, schule: { stufe: 1, lp: 20 }, rathaus: { stufe: 3, lp: 60 }, schmiede: { stufe: 1, lp: 0 },
-                 kuhstall: { stufe: 1, lp: 20 }, brauerei: { stufe: 2, lp: 40 } };
-    ich.werk = {}; ich.volk = { arbeiter: 20, ritter: 0, quote: 80, berufe: { bauer: 2, mueller: 1 } };
-    ich.dorf_ab = new Date(jetzt - 3600000).toISOString();
-    window.__extra = Object.assign({}, window.__extra || {}, { spiel_markt_preise: () => ({ ok: true, preise: {} }), spiel_angebote_liste: () => ({ ok: true, angebote: [] }) });
-    ich.vorraete = Object.assign({}, ich.vorraete, { brot: 5, fisch: 1 });
-    const S = window.DMA_SPIEL.pruef.zustand(); S.ich = JSON.parse(JSON.stringify(ich)); S.schnellMenue = false; S.graben = false; S.dorfTeil = ""; S.dorfWahl = "";
-    try { localStorage.removeItem("dma_spiel_makro"); } catch (e) {}
-    window.__hinweise.length = 0;
-    window.DMA_SPIEL.pruef.schnellZeichnen(true);
-  });
-  /* Die Uhr der Seite verstellen: der Zug fährt nach Date.now(). */
-  await pg.evaluate(() => { const echt = Date.now.bind(Date); window.__echt = echt; window.__versatz = 0; Date.now = () => echt() + window.__versatz;
-    const S = window.DMA_SPIEL.pruef.zustand(); S.wetterTest = { code: 1, tag: true, temp: 18, ort: "Test" }; });
-  const setzeT = (z) => pg.evaluate((z) => { const echt = window.__echt(); window.__versatz = (z - (echt / 1000) % 60) * 1000; }, z);
-  const P = await pg.evaluate(() => window.DMA_SPIEL.pruef.bahn.plan());
-  const bahn = (sel) => pg.evaluate(() => {
-    const svg = document.querySelector("svg.sp-dl-bahn"); if (!svg) return null;
-    const zug = svg.querySelector(".sp-bz-zug"), lok = zug.querySelector(".sp-bz-f"), tr = lok.getAttribute("transform") || "";
-    const m = tr.match(/translate\(([-\d.]+) ([-\d.]+)\)/);
-    const rad = zug.querySelectorAll(".sp-bz-rad")[2], lr = zug.querySelector(".lc-lok-rad-2");
-    const rauch = [...svg.querySelectorAll(".sp-bz-rauch circle")].filter((c) => Number(c.getAttribute("r")) > 0 && Number(c.getAttribute("opacity")) > .02).length;
-    return { da: zug.style.display !== "none", x: m ? Number(m[1]) : null, y: m ? Number(m[2]) : null, rad: rad ? rad.getAttribute("transform") : "", lokRad: lr ? lr.style.transform : "", rauch: rauch, teile: zug.querySelectorAll(".sp-bz-f").length };
-  });
-  const toene = (ab) => pg.evaluate((ab) => window.DMA_TONLOG.filter((t) => t.wann >= ab).map((t) => [t.name, t.wann - ab]), ab);
-  const jetztMs = () => pg.evaluate(() => Math.round(performance.now()));
-
-  console.log("\nOBEN IM DORFBILD\n");
-  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.dorfTeil = ""; S.blick = "dorfblick"; S.schnellMenue = true; P.schnellZeichnen(true); });
-  await tick(1500);
-  const L = await pg.evaluate(() => {
-    const f = document.querySelector(".sp-dl-rahmen").getBoundingClientRect();
-    const r = (s) => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left - f.left, t: b.top - f.top, r: b.right - f.left, b: b.bottom - f.top, w: b.width, h: b.height }; };
-    const u = document.querySelector(".sp-dl-uhr");
-    return { W: f.width, H: f.height, k: r(".sp-dl-kompass"), u: r(".sp-dl-uhr"), o: r(".sp-dl-ortsschild b"), w: r(".sp-dw-schild"), text: u ? u.textContent : "",
-      obenK: (() => { const k = document.querySelector(".sp-dl-kompass").getBoundingClientRect(); const e = document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2); return !!(e && e.closest(".sp-dl-kompass")); })() };
-  });
-  sage(L.k && L.k.l < 10 && L.k.t < 10, "der Kompass sitzt oben links", JSON.stringify(L.k));
-  sage(L.k && L.k.b < L.H / 3, "unten ist frei: kein Kompass mehr über den Feldern");
-  sage(L.obenK, "der Kompass liegt obenauf (antippbar)");
-  const berlin = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }).format(new Date());
-  sage(/^\d\d:\d\d$/.test(L.text) && Math.abs(Number(L.text.slice(0, 2)) * 60 + Number(L.text.slice(3)) - (Number(berlin.slice(0, 2)) * 60 + Number(berlin.slice(3)))) <= 1, "neben dem Kompass die Uhrzeit in Deutschland", L.text + " (Berlin " + berlin + ")");
-  sage(L.u && L.k && L.u.l >= L.k.r && L.u.t < 12, "die Uhr steht rechts neben dem Kompass");
-  const smitte = L.o ? (L.o.l + L.o.r) / 2 : 0;
-  sage(L.o && Math.abs(smitte - L.W / 2) < 4 && L.o.t < 12, "in der Mitte das Ortsschild", JSON.stringify(L.o));
-  sage(L.w && L.w.r > L.W - 10 && L.w.t < 12, "rechts das Wetter");
-  sage(L.o && L.u && L.w && L.u.r <= L.o.l && L.o.r <= L.w.l, "Uhr, Schild und Wetter überlappen sich nicht", [L.u && L.u.r, L.o && L.o.l, L.o && L.o.r, L.w && L.w.l].map(Math.round).join(" / "));
-  await pg.evaluate(() => { const b = document.querySelector(".sp-dl-uhr b"); if (b) b.textContent = "--:--"; });
-  await tick(10600);
-  const nach = await pg.evaluate(() => { const b = document.querySelector(".sp-dl-uhr b"); return b ? b.textContent : ""; });
-  sage(/^\d\d:\d\d$/.test(nach), "die Uhr stellt sich selbst nach (ohne neues Bild)", nach);
-
-  console.log("\nDER WALD\n");
-  const W = await pg.evaluate(() => {
-    const c = document.querySelector("canvas.sp-dl-mal"), k = document.querySelector(".sp-dl-ort.sp-dl-wald");
-    if (!c || !k) return null;
-    const cb = c.getBoundingClientRect(), kb = k.getBoundingClientRect(), sx = c.width / cb.width, sy = c.height / cb.height;
-    const d = c.getContext("2d").getImageData(Math.round((kb.left - cb.left) * sx), Math.round((kb.top - cb.top) * sy - kb.height * sy * .5), Math.round(kb.width * sx), Math.round(kb.height * sy)).data;
-    let wald = 0, n = 0;
-    for (let i = 0; i < d.length; i += 4) { n++; const r = d[i], g = d[i + 1], b = d[i + 2]; if (g > r + 8 && g > b && g < 150 && r < 110) wald++; }
-    return { anteil: wald / n, knopf: [kb.left, kb.top, kb.width, kb.height].map(Math.round) };
-  });
-  sage(W && W.anteil > .3, "wo der Wald-Knopf liegt, ist dunkles Nadelwald-Grün gemalt", W ? Math.round(W.anteil * 100) + " % Waldgrün" : "kein Knopf");
-  await pg.evaluate(() => { const k = document.querySelector(".sp-dl-ort.sp-dl-wald"); k.scrollIntoView({ block: "center" }); });
-  await tick(300);
-  const wm = await mitte(".sp-dl-ort.sp-dl-wald");
-  await pg.touchscreen.tap(wm.x, wm.y); await tick(700);
-  const offen = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); return S.dorfWahl || (document.querySelector(".sp-dl-wald.sp-an") ? "wald" : ""); });
-  sage(offen === "wald", "ein Fingertipp auf den gemalten Wald öffnet Holzfäller und Jäger", offen);
-  if (process.env.BILD) await (await pg.$(".sp-dl-rahmen")).screenshot({ path: process.env.BILD });
-
-  console.log("\nDER TAFEL-ORDNER\n");
-  await pg.evaluate(() => { window.LiveChat.tafelSenden = () => {}; window.DMA_TAFEL({ t: "blick", z: 1, x: .5, y: .5 }, "Alex", "Alex"); Backend.getMyWhiteboards = async () => []; });
-  await tick(500);
   const klick = (sel) => pg.evaluate((s) => { const e = document.querySelector(s); if (!e) return false; e.click(); return true; }, sel);
-  sage(await klick('#lcTafel [data-tafel="mappe"]'), "die Tafel hat den Ordner-Knopf");
-  await tick(400);
-  const kat = await pg.evaluate(() => [...document.querySelectorAll("#lcTafelMappe .lc-mappe-kat span")].map((s) => s.textContent));
-  /* Seit Fassung 771 steht „Vom Gerät“ als erste Kategorie davor (der Bild-Knopf ging im Ordner auf). */
-  sage(kat.join("|") === "Vom Gerät|Aussprache-Übungen|Bilderwelten", "im Ordner stehen die Kategorien (Vom Gerät,) Aussprache-Übungen und Bilderwelten", kat.join(", "));
-  const emoji = await pg.evaluate(() => /\p{Extended_Pictographic}/u.test([...document.querySelectorAll("#lcTafelMappe .lc-mappe-kat")].map((b) => b.textContent).join("")));
-  sage(!emoji, "die Kategorien zeigen gezeichnete Ordner, keine Emoji");
-  await klick('#lcTafelMappe .lc-mappe-kat[data-kat="laute"]');
-  await pg.waitForFunction(() => document.querySelectorAll(".lc-tafel-bildmappe [data-mappe=laut]").length > 0, { timeout: 15000 }).catch(() => {});
-  const laute = await pg.evaluate(() => [...document.querySelectorAll(".lc-tafel-bildmappe [data-mappe=laut]")].map((b) => b.dataset.k));
-  sage(laute.indexOf("ng") >= 0, "Aussprache-Übungen öffnet die Bilder (mit NG)", laute.join(","));
-  await klick(".lc-tafel-bildmappe [data-mappe=zu]");
-  await klick('#lcTafel [data-tafel="mappe"]'); await tick(400);
-  await klick('#lcTafelMappe .lc-mappe-kat[data-kat="welten"]');
-  await pg.waitForFunction(() => document.querySelectorAll('.lc-tafel-bildmappe [data-o^="welten:"]').length > 2, { timeout: 20000 }).catch(() => {});
-  const themen = await pg.evaluate(() => document.querySelectorAll('.lc-tafel-bildmappe [data-o^="welten:"]').length);
-  sage(themen > 2, "Bilderwelten öffnet die Themen-Ordner", themen + " Themen");
 
-  console.log("\nDER MAKROKNOPF\n");
+  console.log("\nTAFEL: EIN BESCHRIFTETER ORDNER-KNOPF\n");
+  await pg.evaluate(() => { try { Backend.isOwner = () => true; Backend.canModerate = () => true; Backend.getMyWhiteboards = () => Promise.resolve([]); } catch (e) {}
+    window.__gesendet = []; window.LiveChat.tafelSenden = (d) => window.__gesendet.push(d);
+    window.DMA_TAFEL({ t: "blick", z: 1, x: .5, y: .5 }, "Alex", "Alex"); });
+  await tick(700);
+  let r = await pg.evaluate(() => {
+    const t = document.getElementById("lcTafel"), o = t && t.querySelector('[data-tafel="mappe"]');
+    return { tafel: !!t, bild: !!(t && t.querySelector('[data-tafel="bild"]')), ordner: !!o, svg: !!(o && o.querySelector("svg")), text: o ? o.textContent.trim() : "",
+      emoji: o ? /\p{Extended_Pictographic}/u.test(o.textContent) : true };
+  });
+  sage(r.tafel && r.ordner && r.svg && r.text === "Ordner" && !r.emoji && !r.bild, "Knopf „Ordner“ mit gezeichnetem Ordner, kein 🖼️/📂 mehr", JSON.stringify(r));
+  r = await pg.evaluate(() => {
+    const g = document.getElementById("lcTafelGriff").getBoundingClientRect();
+    const ueber = [...document.querySelectorAll("#lcTafel .lc-tafel-leiste button")].filter((b) => { const q = b.getBoundingClientRect(); return q.width && !(q.right <= g.left || q.left >= g.right || q.bottom <= g.top || q.top >= g.bottom); }).map((b) => b.dataset.tafel || b.className);
+    const l = document.querySelector("#lcTafel .lc-tafel-leiste").getBoundingClientRect();
+    return { ueber, griffUnten: Math.round(g.bottom), leisteOben: Math.round(l.top), leisteHoch: Math.round(l.height) };
+  });
+  sage(!r.ueber.length && r.griffUnten <= r.leisteOben, "der Griff ⌄ liegt über der Leiste, nicht auf dem Schwamm", JSON.stringify(r));
+  const klein = await pg.evaluate(() => [...document.querySelectorAll("#lcTafel .lc-tafel-leiste button")].filter((b) => { const q = b.getBoundingClientRect(); return q.width && (q.height < 26 || q.width < 26); }).map((b) => b.dataset.tafel || "farbe"));
+  if (process.env.BILD) await (await pg.$("#lcTafel")).screenshot({ path: process.env.BILD + "-tafel.png" });
+
+  await tippe('#lcTafel [data-tafel="mappe"]'); await tick(500);
+  r = await pg.evaluate(() => [...document.querySelectorAll("#lcTafelMappe .lc-mappe-kat span")].map((s) => s.textContent));
+  sage(JSON.stringify(r) === JSON.stringify(["Vom Gerät", "Aussprache-Übungen", "Bilderwelten"]), "im Ordner: Vom Gerät, Aussprache-Übungen, Bilderwelten", JSON.stringify(r));
+  if (process.env.BILD) await (await pg.$("#lcTafelMappe")).screenshot({ path: process.env.BILD + "-ordner.png" });
+  await pg.evaluate(() => { const d = document.getElementById("lcTafelDatei"); d.addEventListener("click", (e) => { window.__datei = true; e.preventDefault(); }, { once: true }); });
+  await tippe('#lcTafelMappe .lc-mappe-kat[data-kat="geraet"]'); await tick(300);
+  r = await pg.evaluate(() => ({ datei: !!window.__datei, zu: !document.getElementById("lcTafelMappe") }));
+  sage(r.datei && r.zu, "„Vom Gerät“ öffnet die Dateiauswahl", JSON.stringify(r));
+
+  await tippe('#lcTafel [data-tafel="mappe"]'); await tick(500);
+  await tippe('#lcTafelMappe .lc-mappe-kat[data-kat="laute"]');
+  await pg.waitForFunction(() => document.querySelectorAll(".lc-tafel-bildmappe [data-mappe=laut]").length > 8, { timeout: 15000 }).catch(() => {});
+  r = await pg.evaluate(() => [...document.querySelectorAll(".lc-tafel-bildmappe [data-mappe=laut]")].filter((b) => b.querySelector("svg")).map((b) => b.dataset.k));
+  sage(["ng", "ich", "ach", "sch", "s", "st", "sp", "r"].every((k) => r.indexOf(k) >= 0), "Aussprache-Ordner: ng, ich, ach und neu sch, s, st, sp, r (mit Vorschau)", r.join(","));
+  if (process.env.BILD) await (await pg.$(".lc-tafel-bildmappe")).screenshot({ path: process.env.BILD + "-laute.png" });
+  await klick('.lc-tafel-bildmappe [data-mappe="laut"][data-k="sch"]');
+  await pg.waitForFunction(() => window.__gesendet.some((d) => d.t === "bild"), { timeout: 10000 }).catch(() => {});
+  const hell = await pg.evaluate(() => new Promise((ok) => { const b = document.getElementById("lcTafelBild"); if (!b || !b.src) return ok(999); const i = new Image(); i.onload = () => { const c = document.createElement("canvas"); c.width = 60; c.height = 40; const g = c.getContext("2d"); g.drawImage(i, 0, 0, 60, 40); const d = g.getImageData(0, 0, 60, 40).data; let s = 0; for (let k = 0; k < d.length; k += 4) s += (d[k] + d[k + 1] + d[k + 2]) / 3; ok(Math.round(s / (d.length / 4))); }; i.src = b.src; }));
+  sage(hell < 248 && await pg.evaluate(() => window.__gesendet.some((d) => d.t === "bild")), "das sch-Bild liegt auf der Tafel und geht an alle", "Helligkeit " + hell);
+  /* zurück aus dem Laute-Ordner führt in den Ordner */
+  await pg.evaluate(() => window.DMA_TAFEL_ORDNER("laute")); await tick(300);
+  await klick('.lc-tafel-bildmappe [data-mappe="ordner"][data-o=""]'); await tick(500);
+  r = await pg.evaluate(() => ({ ordner: !!document.getElementById("lcTafelMappe"), bm: !!document.querySelector(".lc-tafel-bildmappe") }));
+  sage(r.ordner && !r.bm, "„‹ zurück“ aus Aussprache führt zurück in den Ordner", JSON.stringify(r));
+  await pg.evaluate(() => { const m = document.getElementById("lcTafelMappe"); if (m) m.remove(); });
+
+  console.log("\nMAKROKNOPF: DIREKT IN DIE ORDNER\n");
   const mk = await pg.evaluate(() => {
-    try { localStorage.removeItem("dma_magic_felder"); localStorage.removeItem("dma_magic_753"); } catch (e) {}
+    const a = window.DMA_MAGIC.aktionen();
+    localStorage.removeItem("dma_magic_felder"); localStorage.removeItem("dma_magic_771");
     const neu = window.DMA_MAGIC.felder();
-    localStorage.setItem("dma_magic_felder", JSON.stringify(["bilder", "spiele"])); localStorage.removeItem("dma_magic_753");
+    localStorage.setItem("dma_magic_felder", JSON.stringify(["bilder", "spiele"])); localStorage.setItem("dma_magic_753", "1"); localStorage.removeItem("dma_magic_771");
     const alt1 = window.DMA_MAGIC.felder();
     localStorage.setItem("dma_magic_felder", JSON.stringify(["bilder"]));
     const alt2 = window.DMA_MAGIC.felder();
-    localStorage.removeItem("dma_magic_felder");
-    return { neu, alt1, alt2 };
+    return { aktionen: Object.keys(a), neu, alt1, alt2 };
   });
-  sage(mk.neu.indexOf("versenken") >= 0, "Schiffe versenken ist von Anfang an ein Feld", mk.neu.join(","));
-  sage(mk.alt1.join(",") === "bilder,spiele,versenken", "eigene Felder bekommen es einmal hinten dazu", mk.alt1.join(","));
-  sage(mk.alt2.join(",") === "bilder", "wer es danach herausnimmt, dem bleibt es weg", mk.alt2.join(","));
+  sage(mk.aktionen.indexOf("ausspracheBilder") >= 0 && mk.aktionen.indexOf("bilderwelten") >= 0, "Makroknopf kennt „Aussprache-Bilder“ und „Bilderwelten“", mk.aktionen.join(","));
+  sage(mk.neu.indexOf("ausspracheBilder") >= 0 && mk.alt1.join(",") === "bilder,spiele,ausspracheBilder" && mk.alt2.join(",") === "bilder", "als Feld: neu dabei, eigenen Feldern einmal angehängt, danach nicht mehr aufgedrängt", JSON.stringify(mk));
+  await pg.evaluate(() => { try { window.LiveChat.schreiben("/tafel aus"); } catch (e) {} }); await tick(500);
+  for (const [feld, sel, name] of [["ausspracheBilder", ".lc-tafel-bildmappe [data-mappe=laut]", "Aussprache-Bilder"], ["bilderwelten", '.lc-tafel-bildmappe [data-o^="welten:"]', "Bilderwelten"]]) {
+    await pg.evaluate((f) => { localStorage.setItem("dma_magic_felder", JSON.stringify([f])); document.querySelectorAll("#lcPlatzMenue, .lc-tafel-bildmappe").forEach((x) => x.remove()); }, feld);
+    await pg.evaluate(() => document.querySelector('[data-lc="magic"]').click()); await tick(300);
+    const da = await pg.evaluate((f) => { const b = document.querySelector('#lcPlatzMenue .lc-magic-feld[data-feld="' + f + '"]'); if (b) b.click(); return !!b; }, feld);
+    await pg.waitForFunction((s) => document.querySelectorAll(s).length > 2, sel, { timeout: 20000 }).catch(() => {});
+    r = await pg.evaluate((s) => ({ tafel: !!(document.getElementById("lcTafel") && !document.getElementById("lcTafel").hidden), n: document.querySelectorAll(s).length }), sel);
+    sage(da && r.tafel && r.n > 2, "Makroknopf „" + name + "“: Tafel auf und gleich der Ordner", JSON.stringify(r));
+  }
+  await pg.evaluate(() => { document.querySelectorAll(".lc-tafel-bildmappe").forEach((x) => x.remove()); try { window.LiveChat.schreiben("/tafel aus"); } catch (e) {} }); await tick(400);
+
+  console.log("\nAUSSPRACHE IM SPIEL: NIVEAU UND PROZENT\n");
+  await pg.evaluate(() => {
+    const puffer = { length: 100, sampleRate: 16000, getChannelData: () => new Float32Array(100) };
+    window.DMA_AUSSPR_BRUECKE = { original: () => Promise.resolve({ puffer: puffer, art: "azure" }) };
+    window.AusspracheP = Object.assign({}, window.AusspracheP || {}, {
+      mikrofonDa: () => true,
+      aufnahmeStarten: (o) => { setTimeout(o.beiStille, 300); return Promise.resolve({ stoppen: () => Promise.resolve({ blob: new Blob(["x"]) }) }); },
+      tonLesen: () => Promise.resolve(puffer), alsWav: () => new Blob(["wav"]), stufe1Da: () => true,
+      stufe1Bewerten: () => Promise.resolve({ quelle: "azure", prozent: 73.2, woerter: [{ wort: "Schule", laute: [{ laut: "ʃ", note: 48 }, { laut: "uː", note: 92 }, { laut: "l", note: 81 }, { laut: "ə", note: 66 }] }] }),
+      lautKlartext: (l) => "Dein " + l.laut + " war noch zu weit vorn."
+    });
+    window.__wortArgs = [];
+    window.__extra = Object.assign({}, window.__extra || {}, {
+      spiel_aussprache_wort: (a) => { window.__wortArgs.push(a.p_niveau); return { ok: true, wort: "Schule", silben: "SCHU-le", niveau: a.p_niveau }; },
+      spiel_aussprache_fertig: (a, ich) => Object.assign({}, ich, { ok: true, gewonnen: 3 })
+    });
+    try { localStorage.setItem("dma_spiel_niveau", "A1"); } catch (e) {}
+    const S = window.DMA_SPIEL.pruef.zustand(); S.niveau = "A1"; S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true);
+    S.deutschWahl = true; window.DMA_SPIEL.menue("deutsch");
+  });
+  await tick(500);
+  await klick('#spPanel [data-tu="kategorie"][data-k="aussprache"]'); await tick(900);
+  r = await pg.evaluate(() => ({ chips: [...document.querySelectorAll("#spPanel .sp-sprech-niveau button")].map((b) => b.textContent + (b.classList.contains("sp-an") ? "*" : "")) }));
+  sage(r.chips.join(",") === "A1*,A2,B1,B2,C1,C2", "die Karte zeigt die Niveaus, A1 gewählt", r.chips.join(","));
+  await tippe('#spPanel .sp-sprech-niveau [data-n="B1"]'); await tick(900);
+  r = await pg.evaluate(() => ({ args: window.__wortArgs.slice(-1)[0], an: (document.querySelector("#spPanel .sp-sprech-niveau .sp-an") || {}).textContent, gemerkt: localStorage.getItem("dma_spiel_niveau") }));
+  sage(r.args === "B1" && r.an === "B1" && r.gemerkt === "B1", "Tipp auf B1 holt ein Wort auf B1 und merkt es sich", JSON.stringify(r));
+  const hoehe0 = await pg.evaluate(() => document.querySelector("#spPanel .sp-sprech").getBoundingClientRect().height);
+  await tippe('#spPanel [data-tu="sprechen"]'); await tick(1600);
+  r = await pg.evaluate(() => {
+    const b = document.querySelector("#spPanel .sp-sprech-balken"), i = b && b.querySelector("i");
+    return { balken: !!b, breite: i ? i.style.width : "", text: b ? b.textContent : "", laute: [...document.querySelectorAll("#spPanel .sp-sprech-laut")].map((l) => l.textContent + ":" + l.style.color),
+      hoehe: document.querySelector("#spPanel .sp-sprech").getBoundingClientRect().height };
+  });
+  sage(r.balken && r.breite === "73%" && /73 %/.test(r.text), "nach dem Nachsprechen: Balken mit 73 %", JSON.stringify(r).slice(0, 160));
+  sage(r.laute.length === 4 && /^ʃ:/.test(r.laute[0]) && new Set(r.laute.map((x) => x.split(":")[1])).size >= 2, "die Laute eingefärbt wie im Aussprachekurs (ʃ schwach, uː gut)", r.laute.join(" "));
+  sage(Math.abs(r.hoehe - hoehe0) < 2, "die Karte springt nicht (gleiche Höhe vorher/nachher)", Math.round(hoehe0) + " → " + Math.round(r.hoehe));
+  if (process.env.BILD) await (await pg.$("#spPanel .sp-sprech")).screenshot({ path: process.env.BILD + "-aussprache.png" });
+  const kleinSp = await pg.evaluate(() => [...document.querySelectorAll("#spPanel .sp-sprech button")].filter((b) => { const q = b.getBoundingClientRect(); return q.width && q.height < 26; }).map((b) => b.textContent));
+  sage(!kleinSp.length, "alle Knöpfe der Karte groß genug zum Tippen", kleinSp.join(","));
+
+  console.log("\nTIPPS UND TRICKS AUF DER SEITE\n");
+  r = await pg.evaluate(() => { const A = window.DMA_AUSSPRACHE; const t = A.TRICKS.de; const f = (id) => t.find((x) => x.id === id) || {};
+    return { sch: !!(f("sch").svg && f("sch").svg2), stsp: !!(f("stsp").svg && f("stsp").svg2), r: !!f("r").svg, grafik: ["sch", "s", "st", "sp", "r"].filter((k) => A.GRAFIK[k]).length }; });
+  sage(r.sch && r.stsp && r.r && r.grafik === 5, "Aussprachekurs: Tricks „SCH“ und „ST/SP“ mit je zwei Zungenbildern, „R“ mit Bild", JSON.stringify(r));
 
   sage(!konsolenFehler.length, "keine Seitenfehler", konsolenFehler.slice(0, 2).join(" | "));
+  if (klein.length) console.log("  (Hinweis: kleine Leistenknöpfe " + klein.join(",") + ")");
   await br.close(); srv.close();
-  console.log("\nFassung 753 (Kompass, Uhr, Wald, Tafel-Ordner, Makroknopf): " + (fehler ? fehler + " rot." : "alles grün."));
+  console.log("\nFassung 771 (Funk 195): " + (fehler ? fehler + " rot." : "alles grün."));
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });

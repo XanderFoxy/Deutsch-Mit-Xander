@@ -41,7 +41,9 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
   const klick = (sel) => pg.evaluate((s) => { const e = document.querySelector(s); if (!e) return false; e.click(); return true; }, sel);
 
   console.log("\nDIE MAPPE\n");
-  sage(await klick('#lcTafel [data-tafel="bild"]'), "die Tafel hat den Bild-Knopf");
+  /* Seit Fassung 771 gibt es den namenlosen Bild-Knopf nicht mehr (alles liegt im beschrifteten „Ordner“); dieselbe
+     Mappe öffnet jetzt der Makroknopf-Weg DMA_TAFEL_ORDNER. */
+  sage(await pg.evaluate(() => { if (!window.DMA_TAFEL_ORDNER) return false; window.DMA_TAFEL_ORDNER(""); return true; }), "die Bild-Mappe lässt sich öffnen");
   await tick(300);
   let r = await pg.evaluate(() => [...document.querySelectorAll(".lc-tafel-bildmappe .lc-tafel-bm-ordner span")].map((s) => s.textContent));
   sage(JSON.stringify(r) === JSON.stringify(["Vom Gerät", "Bilderwelten", "Aussprache"]), "drei Ordner: Vom Gerät, Bilderwelten, Aussprache", JSON.stringify(r));
@@ -61,7 +63,7 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
   sage(hell < 248, "das Bild zeigt die Zeichnung (nicht nur Weiß)", "mittlere Helligkeit " + hell);
 
   console.log("\nBILDERWELTEN: NACH THEMA, EINE SZENE AUF DIE TAFEL\n");
-  await klick('#lcTafel [data-tafel="bild"]'); await tick(200);
+  await pg.evaluate(() => window.DMA_TAFEL_ORDNER("")); await tick(200);
   await klick('.lc-tafel-bildmappe [data-o="welten"]');
   await pg.waitForFunction(() => document.querySelectorAll('.lc-tafel-bildmappe [data-o^="welten:"]').length > 2, { timeout: 20000 }).catch(() => {});
   r = await pg.evaluate(() => [...document.querySelectorAll('.lc-tafel-bildmappe [data-o^="welten:"]')].map((b) => b.dataset.o.slice(7)));

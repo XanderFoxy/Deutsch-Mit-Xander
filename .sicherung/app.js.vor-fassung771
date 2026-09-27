@@ -38576,6 +38576,7 @@
       + '<button type="button" class="lc-tafel-knopf lc-tafel-an" data-tafel="stift" title="Zeichnen">✏️</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="zeiger" title="Zeigen — die Markierung blinkt">🔦</button>'
       + '<span class="lc-tafel-farben" id="lcTafelFarben"></span>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="bild" title="Bild auf die Tafel: vom Gerät, aus den Bilderwelten oder der Aussprache">🖼️</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="rein" title="Heranholen">➕</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="raus" title="Wieder kleiner">➖</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="fein" title="Strich und Zeiger feiner oder dicker">●</button>'
@@ -38585,13 +38586,7 @@
       /* RUNDE 69: ins Profil sichern steht VOR dem Herunterladen —
          das ist jetzt der Normalfall, der andere die Ausnahme. */
       + '<button type="button" class="lc-tafel-knopf" data-tafel="profil" title="Ins Profil sichern — auf jedem Gerät da">💾</button>'
-      /* FASSUNG 771 — XANDER (Funk 195): „beim Whiteboard hat man immer noch nicht die Auswahl im Ordner mit den
-         Bilderwelten". Sie war da – aber hinter zwei namenlosen Bildchen (🖼️ und 📂), die auf dem Handy niemand
-         auseinanderhält. Jetzt gibt es EINEN Knopf mit gezeichnetem Ordner und dem Wort „Ordner“; darin stehen oben
-         „Vom Gerät“, „Aussprache-Übungen“ und „Bilderwelten“, darunter die gesicherten Tafeln. */
-      + '<button type="button" class="lc-tafel-knopf lc-tafel-ordner" data-tafel="mappe" title="Ordner: Bild vom Gerät, Aussprache-Übungen, Bilderwelten, gesicherte Tafeln">'
-      + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 6.5 C2.5 5.4 3.4 4.5 4.5 4.5 H9 L11 6.5 H19.5 C20.6 6.5 21.5 7.4 21.5 8.5 V18 C21.5 19.1 20.6 20 19.5 20 H4.5 C3.4 20 2.5 19.1 2.5 18 Z" fill="#f2c230" stroke="#b8901c" stroke-width="1.2"/><path d="M2.5 9.5 H21.5" stroke="#b8901c" stroke-width="1.2"/></svg>'
-      + '<span>Ordner</span></button>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="mappe" title="Meine gesicherten Tafeln">📂</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="sichern" title="Als Bild herunterladen">⬇️</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="leer" title="Alles wegwischen">🧽</button>'
       + '<button type="button" class="lc-tafel-knopf lc-tafel-zu" data-tafel="aus" title="Whiteboard zumachen">✕</button>'
@@ -38634,13 +38629,6 @@
       if (f) lcTafelBildLaden(f);
     });
     const griff = tafel.querySelector("#lcTafelGriff");
-    /* FASSUNG 771 — Funk 195 (Bildschirmfoto 360 px): Die Leiste bricht auf dem Handy in drei Zeilen um, der Griff
-       stand aber fest 2,1 rem über dem Rand – mitten auf dem Schwamm. Jetzt misst die Tafel die Leiste und stellt
-       den Griff immer knapp DARÜBER. */
-    const leiste = tafel.querySelector(".lc-tafel-leiste");
-    const griffStellen = () => { if (leiste && leiste.offsetHeight) tafel.style.setProperty("--lc-leiste-h", leiste.offsetHeight + "px"); };
-    griffStellen();
-    try { if (leiste && window.ResizeObserver) new ResizeObserver(griffStellen).observe(leiste); } catch (e) {}
     if (griff) griff.addEventListener("click", (e) => {
       e.preventDefault(); e.stopPropagation();
       const aus = tafel.classList.toggle("lc-tafel-ohne-werkzeug");
@@ -38683,10 +38671,7 @@
      Bilderwelten (nach Thema, jede Szene mit allen Teilen) und die Aussprache-Bilder (NG, K, ICH/ACH, Ü, Ö, lang/kurz,
      Dehnungs-h, Konsonanten am Stück). Ein Tipp legt das Bild auf die Tafel – für alle im Raum, wie ein eigenes Foto. */
   const LC_TAFEL_LAUTE = [["ng", "NG – die Zunge macht hinten zu"], ["k", "K – zum Vergleich"], ["ich", "ICH-Laut"], ["ach", "ACH-Laut"],
-    ["ue", "Ü holst du dir aus dem I"], ["oe", "Ö holst du dir aus dem E"], ["laenge", "Langer und kurzer Vokal"], ["dehnh", "Das Dehnungs-h"], ["buendel", "Konsonanten am Stück"],
-    /* FASSUNG 771 — Funk 195: die Zungenstellung bei sch, s, st, sp und r als eigene Bilder. */
-    ["sch", "SCH – Lippen rund, Zunge hinter dem Zahndamm"], ["s", "S – zum Vergleich: ganz vorn"], ["st", "ST am Anfang: erst sch, dann t"],
-    ["sp", "SP am Anfang: erst sch, dann p"], ["r", "R – hinten am Zäpfchen"]];
+    ["ue", "Ü holst du dir aus dem I"], ["oe", "Ö holst du dir aus dem E"], ["laenge", "Langer und kurzer Vokal"], ["dehnh", "Das Dehnungs-h"], ["buendel", "Konsonanten am Stück"]];
   function lcTafelMappeAuf(ordner) {
     const tafel = document.getElementById("lcTafel");
     if (!tafel) return;
@@ -38702,8 +38687,6 @@
         const a = k.dataset.mappe;
         if (a === "zu") { m.remove(); return; }
         if (a === "geraet") { m.remove(); const d = document.getElementById("lcTafelDatei"); if (d) d.click(); return; }
-        /* FASSUNG 771: „‹ zurück“ aus Aussprache oder Bilderwelten führt wieder in den Ordner, aus dem man kam. */
-        if (a === "ordner" && !k.dataset.o && document.querySelector('#lcTafel [data-tafel="mappe"]')) { m.remove(); lcTafelMappe(); return; }
         if (a === "ordner") { lcTafelMappeAuf(k.dataset.o || ""); return; }
         if (a === "szene") { lcTafelSzeneLegen(k.dataset.id, m); return; }
         if (a === "laut") { lcTafelLautLegen(k.dataset.k, m); return; }
@@ -38787,15 +38770,6 @@
     lcTafelSvgZuBild(svg, B, H).then((d) => lcTafelBildAusMappe(d, m, name))
       .catch((err) => { try { showToast("🚧 " + (err && err.message ? err.message : "Das ging nicht.")); } catch (e) {} });
   }
-
-  /* FASSUNG 771: Tafel auf (falls zu) und gleich einen Ordner darin – für den Makroknopf. */
-  function lcTafelOrdnerOeffnen(ordner) {
-    const karte = lcTafelKasten();
-    const offen = Boolean(karte && karte.classList.contains("lc-tafel-an") && document.getElementById("lcTafel"));
-    if (!offen) { try { LiveChat.schreiben("/tafel"); } catch (e) { lcTafelZeigen(true, ""); } }
-    setTimeout(() => { if (document.getElementById("lcTafel")) lcTafelMappeAuf(ordner); }, offen ? 0 : 450);
-  }
-  window.DMA_TAFEL_ORDNER = lcTafelOrdnerOeffnen;
 
   function lcTafelKnopf(was) {
     if (was === "stift" || was === "zeiger") return lcTafelWerkzeugSetzen(was);
@@ -39010,10 +38984,8 @@
        Ordner-Knopf zeigte allein die gesicherten Tafeln. Jetzt stehen im Ordner oben die Kategorien „Aussprache-Übungen"
        (NG, K, ICH/ACH, Ü, Ö …) und „Bilderwelten" – ein Tipp öffnet sie, ein Tipp auf ein Bild legt es auf die Tafel. */
     const ORDNER_ZEICHEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 6.5 C2.5 5.4 3.4 4.5 4.5 4.5 H9 L11 6.5 H19.5 C20.6 6.5 21.5 7.4 21.5 8.5 V18 C21.5 19.1 20.6 20 19.5 20 H4.5 C3.4 20 2.5 19.1 2.5 18 Z" fill="currentColor"/></svg>';
-    const GERAET_ZEICHEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="10" r="2" fill="currentColor"/><path d="M4 18 L10 12.5 L14 16 L17 13.5 L20.5 17" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
-    const kategorien = '<p class="lc-mappe-titel">Bild auf die Tafel</p><div class="lc-mappe-kategorien">'
-      + '<button type="button" class="lc-mappe-kat" data-kat="geraet">' + GERAET_ZEICHEN + '<span>Vom Gerät</span><small>Foto oder Bild</small></button>'
-      + '<button type="button" class="lc-mappe-kat" data-kat="laute">' + ORDNER_ZEICHEN + '<span>Aussprache-Übungen</span><small>NG, CH, SCH, ST/SP, R, Ü, Ö …</small></button>'
+    const kategorien = '<p class="lc-mappe-titel">Beispiele für den Unterricht</p><div class="lc-mappe-kategorien">'
+      + '<button type="button" class="lc-mappe-kat" data-kat="laute">' + ORDNER_ZEICHEN + '<span>Aussprache-Übungen</span><small>NG, K, ICH/ACH, Ü, Ö …</small></button>'
       + '<button type="button" class="lc-mappe-kat" data-kat="welten">' + ORDNER_ZEICHEN + '<span>Bilderwelten</span><small>alle Szenen nach Thema</small></button>'
       + '</div><p class="lc-mappe-titel">Meine gesicherten Tafeln</p>';
     if (!tafeln.length) {
@@ -39033,13 +39005,11 @@
         + "</div>"
         + '<button type="button" class="lc-mappe-zu">Schlie\u00dfen</button>';
     }
-    /* FASSUNG 771 — auf dem Handy (360 px) lag der Ordner in der Chatkarte und begann ÜBER dem Bildschirmrand:
-       „Vom Gerät“ war nicht zu erreichen. Jetzt steht er fest in der Mitte des Bildschirms. */
-    document.body.appendChild(kasten);
+    const karte = lcTafelKasten();
+    (karte || document.body).appendChild(kasten);
     kasten.addEventListener("click", async (e) => {
       if (e.target.closest(".lc-mappe-zu")) { kasten.remove(); return; }
       const kat = e.target.closest(".lc-mappe-kat");
-      if (kat && kat.dataset.kat === "geraet") { kasten.remove(); const d = document.getElementById("lcTafelDatei"); if (d) d.click(); return; }
       if (kat) { kasten.remove(); lcTafelMappeAuf(kat.dataset.kat); return; }
       const blatt = e.target.closest(".lc-mappe-blatt");
       if (!blatt) return;
@@ -55925,13 +55895,6 @@
     if (sp.aufgabe) a.aufgabe = { name: "Deutsch-Aufgabe", zeichen: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4 H15 L19 8 V20 H5 Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.5 12.5 L11 15 L15.5 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>', tun: () => { try { sp.aufgabe(); } catch (e) {} } };
     if (sp.menue) a.spielmenue = { name: "Spielmenü", zeichen: pad, tun: () => { try { sp.menue(); } catch (e) {} } };
     if (lehrer) a.tafel = { name: "Tafel", zeichen: LC_LK.tafel, tun: schreib("/tafel") };
-    /* FASSUNG 771 — XANDER (Funk 195): „schau auch dass das mit dem makroknopf richtig verlinkt ist". Zwei direkte
-       Felder: Tafel auf UND gleich den richtigen Ordner – die Aussprache-Bilder (ng, ch, sch, st/sp, r …) oder die
-       Bilderwelten. */
-    if (lehrer) {
-      a.ausspracheBilder = { name: "Aussprache-Bilder", zeichen: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20 V10 C4 5.6 7.6 3 12 3 C16.4 3 20 5.6 20 10 V13 L18 13 V20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 14 C9.5 11.5 13 11 16.5 12.5" fill="none" stroke="#e8908f" stroke-width="2.6" stroke-linecap="round"/><path d="M9 8.5 H15" stroke="#7fd4f5" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2 2"/></svg>', tun: () => { if (window.DMA_TAFEL_ORDNER) window.DMA_TAFEL_ORDNER("laute"); } };
-      a.bilderwelten = { name: "Bilderwelten", zeichen: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.8 17 L9 11.5 L13 15.5 L16 12.5 L20.2 16.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="16.5" cy="8.5" r="1.6" fill="#f2c230"/></svg>', tun: () => { if (window.DMA_TAFEL_ORDNER) window.DMA_TAFEL_ORDNER("welten"); } };
-    }
     if (chef) a.lehrer = { name: "Lehrer-Menü", zeichen: LC_LK.lehrer, tun: () => { const p = lcEigenerPlatz(); if (p) lcLehrerPanel(p); } };
     return a;
   }
@@ -55946,16 +55909,11 @@
     if (!Array.isArray(f)) {
       f = ["bilder", "lesetext", "spiele", "versenken"];
       if (a.tafel) f.push("tafel");
-      if (a.ausspracheBilder) f.push("ausspracheBilder");
       if (a.lehrer) f.push("lehrer");
     } else {
       let schon = true;
       try { schon = localStorage.getItem("dma_magic_753") === "1"; localStorage.setItem("dma_magic_753", "1"); } catch (e) {}
       if (!schon && f.indexOf("versenken") < 0 && f.length < LC_MAGIC_MAX) { f.push("versenken"); lcMagicFelderMerken(f); }
-      /* FASSUNG 771: dasselbe einmal für die Aussprache-Bilder – nur wo es sie gibt (Lehrer) und Platz ist. */
-      let schon771 = true;
-      try { schon771 = localStorage.getItem("dma_magic_771") === "1"; if (a.ausspracheBilder) localStorage.setItem("dma_magic_771", "1"); } catch (e) {}
-      if (!schon771 && a.ausspracheBilder && f.indexOf("ausspracheBilder") < 0 && f.length < LC_MAGIC_MAX) { f.push("ausspracheBilder"); lcMagicFelderMerken(f); }
     }
     return f.filter((k, i) => a[k] && f.indexOf(k) === i).slice(0, LC_MAGIC_MAX);
   }
