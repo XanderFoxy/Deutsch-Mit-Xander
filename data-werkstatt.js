@@ -49,24 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 740 — Postfach aufgeräumt, Profil-Navigation kompakt (Funk 153)",
+  stand: "Fassung 741 — Taschen erkennbar, Doppeltipp mit der Schaufel öffnet die Werkzeugwahl (Funk 152)",
 
   inArbeit: [
-    { seit: "2026-09-27T05:09",
-      text: "Funk 152 Reste: Taschen-Kachel verständlich, Doppeltipp mit Schaufel = Werkzeugmenü" },
-    { seit: "2026-09-27T05:09",
+    { seit: "2026-09-27T05:39",
       text: "Modulares Dorf, Verteidigung/Kaserne, Verträge – wartet auf Antworten zu den 15 Fragen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T05:09",
+    { seit: "2026-09-27T05:39",
+      text: "Taschen zeigen das Gerät, Namensschild beim Tippen, roter Schlüssel bei stumpf" },
+    { seit: "2026-09-27T05:39",
+      text: "Schaufel: Doppeltipp gräbt nicht, Werkzeugwahl geht auf" },
+    { seit: "2026-09-27T05:39",
       text: "Postfach: Titel, Nachrichten zuerst, Schreiben eingeklappt, Navigation 5×2" },
-    { seit: "2026-09-27T05:09",
+    { seit: "2026-09-27T05:39",
       text: "Magic Button: Farbwirbel, eigene Felder (+, ✕, austauschen)" },
-    { seit: "2026-09-27T05:09",
-      text: "Controller am Bild, Nur Mitspieler hören" },
-    { seit: "2026-09-27T05:09",
-      text: "Meldungen: Entdeckung, Unzufriedenheit, Touristen, Angebote, Verkauf" },
   ],
 };

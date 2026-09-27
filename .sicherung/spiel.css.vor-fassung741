@@ -2648,16 +2648,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-leise svg { right: -6%; top: -6%; }
 /* Die Zeile „Letzter Knopf" hatte sieben Knöpfe in einer Reihe – die Wörter liefen ineinander. Jetzt höchstens drei je Reihe. */
 .sp-schnell .sp-sm-makro button, .sp-schnell .sp-sm-zeigen button { flex: 1 1 30%; overflow-wrap: anywhere; }
-/* FASSUNG 741 — Taschen: das Gerät erkennbar auf hellem Grund, Namensschild beim Tippen, Schraubenschlüssel bei stumpf. */
-.sp-schnell .sp-s-slot { background: rgba(255, 255, 255, .16); }
-.sp-schnell .sp-s-slot svg { filter: drop-shadow(0 0 1px rgba(255, 255, 255, .75)); }
-.sp-schnell .sp-s-slot.sp-an svg { filter: none; }
-.sp-schnell .sp-s-kaputt { position: absolute; right: -3px; bottom: -3px; width: 13px; height: 13px; border-radius: 50%; background: #c62f2a;
-  display: flex; align-items: center; justify-content: center; pointer-events: none; }
-.sp-schnell .sp-s-kaputt svg { width: 9px !important; height: 9px !important; filter: none !important; }
-.sp-namenschild { position: fixed; z-index: 2147483000; transform: translate(-50%, -100%); white-space: nowrap; padding: 3px 8px; border-radius: 9px;
-  background: rgba(20, 24, 34, .94); color: #fff; font: 700 12px/1.3 system-ui, sans-serif; pointer-events: none;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, .35); opacity: 0; max-width: calc(100vw - 16px); overflow: hidden; text-overflow: ellipsis; }
-.sp-namenschild.sp-rot { background: #a42621; }
-.sp-namenschild.sp-an { animation: spNameBlitz 1.8s ease both; }
-@keyframes spNameBlitz { 0% { opacity: 0; transform: translate(-50%, calc(-100% + 4px)); } 10%, 80% { opacity: 1; transform: translate(-50%, -100%); } 100% { opacity: 0; transform: translate(-50%, -100%); } }

@@ -1145,21 +1145,12 @@
          ohnehin nicht doppelt gezählt. */
       var nrW = Number(knopf.dataset.lcPlatz), jetztW = Date.now();
       if (S.werkTipp && S.werkTipp.nr === nrW && jetztW - S.werkTipp.t < 450) {
-        if (S.werkTipp.uhr) clearTimeout(S.werkTipp.uhr);
         S.werkTipp = null; S.wwahl = true; S.rad = null; S.zrad = false; S.schnellMenue = false; S.radOffenSeit = jetztW;
         ton("zauberpuff", 0.25); schnellZeichnen(true);
         return true;
       }
       S.werkTipp = { nr: nrW, t: jetztW };
-      /* FASSUNG 741 — XANDER (Funk 152): „wenn man in dem Modus des umgrabens ist wo man die Schaufel benutzt und man macht
-         dann einen doppeltap soll beidem doppeltepp nicht die Schaufel reagieren und noch mal Umgraben sondern es soll sich
-         das Menü öffnen dass man dann das jeweilige andere Werkzeug aussuchen kann". Die Schaufel wartet deshalb einen
-         Augenblick (300 ms), ob ein zweiter Tipp kommt – dann gräbt sie gar nicht, sondern die Werkzeugwahl geht auf.
-         Sense, Saat, Axt und Angel arbeiten weiter sofort (schnelles Ernten). */
-      if (S.werkzeug === "schaufel") {
-        var tippW = S.werkTipp;
-        tippW.uhr = setTimeout(function () { tippW.uhr = null; if (S.graben && S.werkzeug === "schaufel") werkzeugNutzen(knopf, nrW, p); }, 300);
-      } else werkzeugNutzen(knopf, nrW, p);
+      werkzeugNutzen(knopf, nrW, p);
       return true;
     }
     /* FASSUNG 699 — eine bereite Klassenkraft gilt dem nächsten Gesicht
@@ -3525,30 +3516,7 @@
     var ich = S.ich || {}, hw = haltVon(ich, w), vr = WAFFEN[w] && WAFFEN[w].vorrat ? vorrat(ich, w) : -1;
     return '<button type="button" class="sp-s-waffe' + (S.waffe === w ? " sp-an" : "") + (hw === 0 ? " sp-stumpf" : "") + (extra || "") + '" data-s="waffe" data-w="' + w + '" title="'
       + esc(WAFFEN[w].name) + " · Schaden " + WAFFEN[w].schaden + (hw >= 0 ? " · hält " + hw + "/" + haltMax(ich, w) : "") + (vr >= 0 ? " · noch " + vr : "") + '">'
-      + taschenBild(w) + (vr >= 0 ? "<small>" + vr + "</small>" : "")
-      + (hw === 0 ? '<i class="sp-s-kaputt" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M13.5 2.5 a4 4 0 0 0 -4.8 5.3 L2.8 13.7 a1.8 1.8 0 0 0 2.5 2.5 L11.2 10.3 a4 4 0 0 0 5.3 -4.8 L14 8 L12 6 Z" fill="#fff"/></svg></i>' : "")
-      + "</button>";
-  }
-  /* FASSUNG 741 — XANDER (Funk 152): „Unten in der Tasche ist ein Symbol so hell angezeigt da passiert doch irgendwas wenn
-     ich da drauf klicke aber es ist nicht klar auf was ich drücke weil das Symbol nicht zu erkennen ist … man erkennt nicht
-     was der Inhalt dieser Kachel ist oder dieser Tasche ist und es passiert auch nicht wirklich etwas wenn man drauf
-     drückt". Die Tasche zeigte bisher das GESCHOSS (beim Maschinengewehr ein goldener Strich, bei der Spätzle-Kanone ein
-     grauer Wurm). Jetzt zeigt sie das GERÄT selbst – Gewehr, Bogen, Zwille, Kanone –, Wurfsachen (Kartoffel, Brezel …)
-     bleiben das Ding selbst. Jeder Tipp auf eine Tasche zeigt kurz ein Namensschild darüber; eine stumpfe Waffe (halber Schaden)
-     trägt einen roten Schraubenschlüssel und sagt, wie man sie repariert. */
-  function taschenBild(w) {
-    return HALT_FAMILIE[w] && HALT_FAMILIE[w] !== "kugel" ? waffeGeraetSvg(w, true) : geschossSvg(w, S.laserfarbe);
-  }
-  /* Das Schild hängt frei an der Seite (die Leiste scrollt quer und würde es abschneiden). */
-  function namenBlitzen(knopf, w) {
-    var el = document.getElementById("spNamenSchild");
-    if (!el) { el = document.createElement("div"); el.id = "spNamenSchild"; el.className = "sp-namenschild"; el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
-    var r = knopf.getBoundingClientRect(), stumpf = haltVon(S.ich || {}, w) === 0;
-    el.textContent = WAFFEN[w].name + (stumpf ? " – stumpf" : "");
-    el.classList.toggle("sp-rot", stumpf);
-    el.style.left = Math.round(r.left + r.width / 2) + "px";
-    el.style.top = Math.round(r.top - 8) + "px";
-    el.classList.remove("sp-an"); void el.offsetWidth; el.classList.add("sp-an");
+      + geschossSvg(w, S.laserfarbe) + (vr >= 0 ? "<small>" + vr + "</small>" : "") + "</button>";
   }
   /* FASSUNG 700 — das bestehende DOM an neues HTML angleichen, statt es zu
      ersetzen (Funk 144). Gleiche Stelle + gleicher Tag = dasselbe Element
@@ -4298,11 +4266,8 @@
          wechseln … ohne viel Text lesen zu müssen". Ein Tipp auf die
          angelegte Waffe öffnet das Waffenrad für diesen Platz; ein Tipp
          auf eine andere legt sie an. */
-      if (k.dataset.n != null && WAFFEN[k.dataset.w]) namenBlitzen(k, k.dataset.w);
-      var abgenutzt = haltVon(S.ich || {}, k.dataset.w) === 0;
       if (S.waffe === k.dataset.w && k.dataset.n != null) { S.rad = S.rad === Number(k.dataset.n) ? null : Number(k.dataset.n); S.schnellMenue = false; }
-      else { S.waffe = k.dataset.w; S.rad = null; hinweis(abgenutzt ? "🔧 " + WAFFEN[S.waffe].name + " ist stumpf – nur halber Schaden. Der Schraubenschlüssel unten repariert alle Waffen."
-        : "🎯 " + WAFFEN[S.waffe].name + " – tippe auf ein Gesicht. Nochmal auf die Waffe tippen: Waffenrad."); }
+      else { S.waffe = k.dataset.w; S.rad = null; hinweis("🎯 " + WAFFEN[S.waffe].name + " – tippe auf ein Gesicht. Nochmal auf die Waffe tippen: Waffenrad."); }
     } else if (s === "radwahl") {
       slotSetzen(Number(k.dataset.n) || 0, k.dataset.w); S.waffe = k.dataset.w; S.rad = null;
       ton("swoosh", 0.3);
@@ -11153,8 +11118,8 @@
   var HALT_FAMILIE = { zwille: "zwille", bogen: "bogen", armbrust: "bogen", laser: "gewehr", mg: "gewehr", zielfernrohr: "gewehr", lasersalve: "gewehr",
     doppellaser: "gewehr", streulaser: "gewehr", plasmastrahl: "plasma", bazooka: "rohr", eierwerfer: "rohr", huehnerwerfer: "rohr", kuckucksuhr: "rohr", kugelblitz: "kugel" };
   /* Das Gerät in der Hand: Griff links (x = 0), Mündung rechts (x = 40, y = 0). */
-  function waffeGeraetSvg(w, ohneHand) {
-    var f = HALT_FAMILIE[w] || "wurf", hand = ohneHand ? "" : '<ellipse cx="4.5" cy="1.5" rx="4" ry="3.4" fill="#e7b690" stroke="#8a5a3a" stroke-width=".8"/><path d="M2 -.5 H7 M2 1.5 H7.5 M2.2 3.4 H6.8" stroke="#b07a55" stroke-width=".6"/>';
+  function waffeGeraetSvg(w) {
+    var f = HALT_FAMILIE[w] || "wurf", hand = '<ellipse cx="4.5" cy="1.5" rx="4" ry="3.4" fill="#e7b690" stroke="#8a5a3a" stroke-width=".8"/><path d="M2 -.5 H7 M2 1.5 H7.5 M2.2 3.4 H6.8" stroke="#b07a55" stroke-width=".6"/>';
     var body = "";
     if (f === "zwille") body = '<path d="M4 1 L18 1 M18 1 L30 -7 M18 1 L30 9" stroke="#7a4a22" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M30 -7 Q38 1 30 9" stroke="#c23b3b" stroke-width="1.2" fill="none"/><circle cx="36" cy="1" r="2.4" fill="#8f8f8f"/>';
     else if (f === "bogen") body = w === "armbrust"
@@ -11166,7 +11131,7 @@
     else if (f === "rohr") body = '<rect x="2" y="-4.5" width="38" height="10" rx="4" fill="#556b3a"/><rect x="36" y="-5.5" width="4" height="12" rx="1.5" fill="#3a4a28"/><rect x="12" y="5" width="4" height="6" rx="1" fill="#3a4a28"/>';
     else if (f === "kugel") body = '<circle cx="30" cy="1" r="8" fill="#b9f2ff" opacity=".85"/><path d="M26 -3 L31 1 L27 3 L33 7" stroke="#fff" stroke-width="1.2" fill="none"/>';
     else body = '<svg x="18" y="-10" width="22" height="22" viewBox="-12 -12 24 24">' + geschossSvg(w).replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, "") + "</svg>";
-    return '<svg viewBox="' + (ohneHand ? "3 -14 40 28" : "0 -14 42 28") + '" aria-hidden="true">' + body + hand + "</svg>";
+    return '<svg viewBox="0 -14 42 28" aria-hidden="true">' + body + hand + "</svg>";
   }
   function haltenSetzen(w) {
     if (!WAFFEN[w]) return;

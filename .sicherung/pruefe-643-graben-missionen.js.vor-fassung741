@@ -151,8 +151,7 @@ const sage = (gut, was, zusatz) => {
     const vorher = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]').dataset.lcPlatz;
     const t0 = performance.now();
     const genommen = P.tippAufPlatz(knopf, { nummer: 7, leer: true }, null);
-    /* Seit 741 wartet die Schaufel 300 ms, ob ein zweiter Tipp kommt (Doppeltipp = Werkzeugwahl, Funk 152). */
-    await new Promise((r) => setTimeout(r, 340));
+    P.tippAufPlatz(knopf, { nummer: 7, leer: true }, null);
     const g = knopf.querySelector(".sp-grab"), kreis = knopf.querySelector(".lc-kreis");
     const kr = kreis.getBoundingClientRect(), gr = g ? g.getBoundingClientRect() : null;
     let fundZeit = 0;
@@ -167,25 +166,9 @@ const sage = (gut, was, zusatz) => {
              hinweis: window.__hinweise.slice(-1)[0] || "" };
   });
   sage(grab.genommen && grab.platzGleich, "der Tipp gräbt – man setzt sich NICHT um");
-  sage(grab.rufe.length === 1 && grab.rufe[0].p_platz === 7 && "p_raum" in grab.rufe[0], "ein Tipp: genau ein Loch, Platz 7 mit Raum", JSON.stringify(grab.rufe));
+  sage(grab.rufe.length === 1 && grab.rufe[0].p_platz === 7 && "p_raum" in grab.rufe[0], "genau ein Loch trotz Doppeltipp, Platz 7 mit Raum", JSON.stringify(grab.rufe));
   sage(grab.schaufel && grab.oben !== null && grab.oben > 0, "Schaufel sticht UNTER der Gesichtsmitte", grab.oben + " px unter der Mitte");
-  sage(grab.tonAbstand !== null && grab.tonAbstand >= 280 && grab.tonAbstand < 380, "Ton „graben“ startet mit der Schaufel (nach 300 ms Warten auf einen Doppeltipp)", grab.tonAbstand + " ms");
-  /* FASSUNG 741 — XANDER (Funk 152): „soll beidem doppeltepp nicht die Schaufel reagieren und noch mal Umgraben sondern es
-     soll sich das Menü öffnen". */
-  await tick(1200);
-  const doppel = await pg.evaluate(async () => {
-    const P = window.DMA_SPIEL.pruef, S = P.zustand();
-    window.__rufe = []; S.wwahl = false;
-    const knopf = document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="5"]');
-    P.tippAufPlatz(knopf, { nummer: 5, leer: true }, null);
-    await new Promise((r) => setTimeout(r, 160));
-    P.tippAufPlatz(knopf, { nummer: 5, leer: true }, null);
-    await new Promise((r) => setTimeout(r, 700));
-    const r = { rufe: window.__rufe.filter((x) => x.name === "spiel_graben").length, loch: Boolean(knopf.querySelector(".sp-grab")), wahl: Boolean(document.querySelector(".sp-werkzeugwahl")) };
-    S.wwahl = false; P.schnellZeichnen(true);
-    return r;
-  });
-  sage(doppel.rufe === 0 && !doppel.loch && doppel.wahl, "Doppeltipp mit der Schaufel: KEIN Graben, die Werkzeugwahl geht auf", JSON.stringify(doppel));
+  sage(grab.tonAbstand !== null && grab.tonAbstand < 60, "Ton „graben“ startet mit der Schaufel", grab.tonAbstand + " ms");
   sage(grab.fundZeit >= 850 && /Erz/.test(grab.fundText), "der Fund steigt nach der Schaufel auf (0,9 s)", grab.fundZeit + " ms · " + grab.fundText);
   sage(grab.erz === 5 && /Erz/.test(grab.hinweis), "Erz landet im Stand, Hinweis sagt wofür", grab.erz + " · " + grab.hinweis);
 
@@ -204,13 +187,13 @@ const sage = (gut, was, zusatz) => {
       window.__fund = "nichts";
       const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + nr + '"]');
       P.tippAufPlatz(k, { nummer: nr }, null);
-      await new Promise((r) => setTimeout(r, 1400));
+      await new Promise((r) => setTimeout(r, 1000));
       hinweise.push(window.__hinweise.slice(-1)[0]);
     }
     window.DMA_TONLOG = [];
     window.__fund = "schatz";
     P.tippAufPlatz(document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="6"]'), { nummer: 6 }, null);
-    await new Promise((r) => setTimeout(r, 1400));
+    await new Promise((r) => setTimeout(r, 1000));
     P.zeichnen();
     return { args: ruf && ruf.args, html, hinweise, schatzHinweis: window.__hinweise.slice(-1)[0], tone: window.DMA_TONLOG.map((t) => t.name).join(","),
              karte: P.missionHtml(S.ich) };
