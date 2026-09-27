@@ -2729,16 +2729,3 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
   background: #2b3242; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 1.5px #fff; pointer-events: none; }
 .sp-schnell .sp-s-graben .sp-s-tausch svg { width: 10px !important; height: 10px !important; }
 .sp-schnell .sp-s-graben.sp-offen { box-shadow: 0 0 0 2px #f2c230; }
-
-/* FASSUNG 753 — Funk 183: oben links Kompass und deutsche Uhrzeit, Mitte Ortsschild, rechts Wetter. Unten bleibt frei für die Felder;
-   die Karte (nah dran) rückt in die rechte untere Ecke, wo vorher der Kompass war. Die Anzeige-Wahl sitzt unter dem Kompass. */
-.sp-dl-kompass { left: 5px; top: 5px; right: auto; bottom: auto; width: 31px; height: 31px; }
-.sp-schnellmenue .sp-dl-kompass, .sp-schnellmenue .sp-dl-kompass.sp-an, .sp-schnellmenue .sp-dl-kompass:hover, .sp-schnellmenue .sp-dl-kompass:active { left: 5px; top: 5px; right: auto; bottom: auto; width: 31px; height: 31px; }
-.sp-dl-uhr { position: absolute; left: 39px; top: 6px; z-index: 7; pointer-events: none; padding: 1px 5px; border-radius: 9px; background: rgba(20, 24, 34, .55); color: #fff;
-  font: 700 10px/1.5 system-ui, sans-serif; font-variant-numeric: tabular-nums; }
-.sp-dl-uhr b { font-weight: 700; }
-.sp-dl-minikarte { right: 6px; }
-.sp-dl-anzeige { top: 42px; }
-.sp-schnell .sp-schnellmenue .sp-dl-rahmen .sp-dl-ortsschild, .sp-dl-ortsschild { max-width: calc(100% - 166px); }
-.sp-dl-ortsschild b { max-width: 100%; box-sizing: border-box; }
-.sp-dl-ortsschild-leer b { padding: 1px 6px; }

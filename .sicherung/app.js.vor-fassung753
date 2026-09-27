@@ -38946,23 +38946,13 @@
     const kasten = document.createElement("div");
     kasten.id = "lcTafelMappe";
     kasten.className = "lc-tafel-mappe";
-    /* FASSUNG 753 — XANDER (Funk 183): „bei unserer Tafel haben wir immer noch nicht diese Beispieldateien für die
-       Übungen wie man einen ng Sound erzeugt oder diese Bilderwelt damit eingebunden das sollten ja eigene Kategorien
-       bei den Ordner da sein die sind immer noch nicht da". Seit Fassung 725 lagen sie nur hinter dem Bild-Knopf; der
-       Ordner-Knopf zeigte allein die gesicherten Tafeln. Jetzt stehen im Ordner oben die Kategorien „Aussprache-Übungen"
-       (NG, K, ICH/ACH, Ü, Ö …) und „Bilderwelten" – ein Tipp öffnet sie, ein Tipp auf ein Bild legt es auf die Tafel. */
-    const ORDNER_ZEICHEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 6.5 C2.5 5.4 3.4 4.5 4.5 4.5 H9 L11 6.5 H19.5 C20.6 6.5 21.5 7.4 21.5 8.5 V18 C21.5 19.1 20.6 20 19.5 20 H4.5 C3.4 20 2.5 19.1 2.5 18 Z" fill="currentColor"/></svg>';
-    const kategorien = '<p class="lc-mappe-titel">Beispiele für den Unterricht</p><div class="lc-mappe-kategorien">'
-      + '<button type="button" class="lc-mappe-kat" data-kat="laute">' + ORDNER_ZEICHEN + '<span>Aussprache-Übungen</span><small>NG, K, ICH/ACH, Ü, Ö …</small></button>'
-      + '<button type="button" class="lc-mappe-kat" data-kat="welten">' + ORDNER_ZEICHEN + '<span>Bilderwelten</span><small>alle Szenen nach Thema</small></button>'
-      + '</div><p class="lc-mappe-titel">Meine gesicherten Tafeln</p>';
     if (!tafeln.length) {
-      kasten.innerHTML = kategorien + '<p class="lc-mappe-leer">Hier ist noch nichts.'
+      kasten.innerHTML = '<p class="lc-mappe-leer">Hier ist noch nichts.'
         + " Mit \ud83d\udcbe legst du eine Tafel ins Profil \u2014 dann liegt sie"
         + " auf jedem Ger\u00e4t bereit.</p>"
         + '<button type="button" class="lc-mappe-zu">Schlie\u00dfen</button>';
     } else {
-      kasten.innerHTML = kategorien + '<div class="lc-mappe-reihe">'
+      kasten.innerHTML = '<div class="lc-mappe-reihe">'
         + tafeln.map((t) => '<figure class="lc-mappe-blatt" data-id="'
             + escapeHtml(String(t.id || "")) + '">'
             + '<img alt="" src="' + escapeHtml(String(t.bild || "")) + '">'
@@ -38977,8 +38967,6 @@
     (karte || document.body).appendChild(kasten);
     kasten.addEventListener("click", async (e) => {
       if (e.target.closest(".lc-mappe-zu")) { kasten.remove(); return; }
-      const kat = e.target.closest(".lc-mappe-kat");
-      if (kat) { kasten.remove(); lcTafelMappeAuf(kat.dataset.kat); return; }
       const blatt = e.target.closest(".lc-mappe-blatt");
       if (!blatt) return;
       if (e.target.closest(".lc-mappe-weg")) {
@@ -55821,18 +55809,10 @@
     const a = lcMagicAktionen();
     let f = null;
     try { f = JSON.parse(localStorage.getItem("dma_magic_felder") || "null"); } catch (e) { f = null; }
-    /* FASSUNG 753 — XANDER (Funk 183): „der makrobaten in der Mitte von der Bühne hat glaube ich noch nicht alle
-       Verlinkungen schau mal dass du das Schiffe versenken auch verlinkt ist". Schiffe versenken steht jetzt von Anfang an
-       als eigenes Feld im Raster (nicht nur unter „Spiele"); wer seine Felder schon angepasst hat, bekommt es einmal
-       hinten angehängt, solange Platz ist – danach bleibt seine eigene Auswahl unangetastet. */
     if (!Array.isArray(f)) {
-      f = ["bilder", "lesetext", "spiele", "versenken"];
+      f = ["bilder", "lesetext", "spiele"];
       if (a.tafel) f.push("tafel");
       if (a.lehrer) f.push("lehrer");
-    } else {
-      let schon = true;
-      try { schon = localStorage.getItem("dma_magic_753") === "1"; localStorage.setItem("dma_magic_753", "1"); } catch (e) {}
-      if (!schon && f.indexOf("versenken") < 0 && f.length < LC_MAGIC_MAX) { f.push("versenken"); lcMagicFelderMerken(f); }
     }
     return f.filter((k, i) => a[k] && f.indexOf(k) === i).slice(0, LC_MAGIC_MAX);
   }

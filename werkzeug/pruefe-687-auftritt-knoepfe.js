@@ -65,7 +65,7 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   const m1 = await pg.evaluate(() => { const k = document.getElementById("lcPlatzMenue"); const r = k && k.getBoundingClientRect();
     return { da: Boolean(k), woerter: k ? [...k.querySelectorAll(".lc-platzmenue-wort")].map((w) => w.textContent).join(",") : "", imBild: r ? r.left >= 0 && r.right <= innerWidth && r.top >= 0 : false }; });
   if (B) await pg.screenshot({ path: B + "-magic-schueler.png" });
-  sage(m1.da && /^Bilder,Lesetext,Spiele(,Hinzufügen)?$/.test(m1.woerter) && m1.imBild, "Tipp auf die Mitte: Bilder, Lesetext, Spiele (kein Lehrer-Menü) – dazu „+ Hinzufügen“ (Fassung 739)", JSON.stringify(m1));
+  sage(m1.da && /^Bilder,Lesetext,Spiele,Schiffe versenken(,Hinzufügen)?$/.test(m1.woerter) && m1.imBild, "Tipp auf die Mitte: Bilder, Lesetext, Spiele, Schiffe versenken (ab 753, kein Lehrer-Menü) – dazu „+ Hinzufügen“ (Fassung 739)", JSON.stringify(m1));
   await tippe('#lcPlatzMenue .lc-platzmenue-knopf:nth-of-type(3)'); await tick(300);
   const sp = await pg.evaluate(() => [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-wort")].map((w) => w.textContent).join(","));
   sage(/Stadt, Land, Fluss/.test(sp) && /Schiffe versenken/.test(sp), "Spiele: Stadt, Land, Fluss · Schiffe versenken · Aufdecken", sp);
@@ -86,7 +86,7 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   const mm = await pg.evaluate(() => { const e = document.querySelector('[data-lc="magic"]'); const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
   await pg.mouse.move(mm.x, mm.y); await pg.mouse.down(); await tick(750); await pg.mouse.up(); await tick(300);
   let bl = await pg.evaluate(() => { const k = document.getElementById("lcPlatzMenue"); return { kopf: k ? k.querySelector(".lc-platzmenue-kopf").textContent : "", weg: k ? k.querySelectorAll(".lc-magic-weg").length : 0, bearbeiten: !!(k && k.classList.contains("lc-magic-bearbeiten")) }; });
-  sage(bl.kopf === "Anpassen" && bl.bearbeiten && bl.weg === 5, "lang drücken: „Anpassen“ – jedes Feld wackelt und hat ein ✕", JSON.stringify(bl));
+  sage(bl.kopf === "Anpassen" && bl.bearbeiten && bl.weg === 6, "lang drücken: „Anpassen“ – jedes Feld wackelt und hat ein ✕", JSON.stringify(bl));
   if (B) await pg.screenshot({ path: B + "-magic-anpassen.png" });
   /* ✕ nimmt „Bilder" heraus */
   await pg.evaluate(() => { const b = [...document.querySelectorAll("#lcPlatzMenue .lc-magic-feld")].find((x) => /Bilder/.test(x.textContent)); b.querySelector(".lc-magic-weg").click(); });
@@ -103,7 +103,7 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   const tausch = await pg.evaluate(() => (document.querySelector("#lcPlatzMenue .lc-platzmenue-kopf") || {}).textContent);
   await pg.evaluate(() => { const b = [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-knopf")].find((x) => /Stadt, Land, Fluss/.test(x.textContent)); b.click(); }); await tick(200);
   const felder = JSON.parse(await pg.evaluate(() => localStorage.getItem("dma_magic_felder")));
-  sage(tausch === "Austauschen gegen …" && felder.join(",") === "slf,spiele,tafel,lehrer,konfetti", "Antippen tauscht aus (Lesetext → Stadt, Land, Fluss), Konfetti ist hinten dazugekommen", JSON.stringify({ tausch, felder }));
+  sage(tausch === "Austauschen gegen …" && felder.join(",") === "slf,spiele,versenken,tafel,lehrer,konfetti", "Antippen tauscht aus (Lesetext → Stadt, Land, Fluss), Konfetti ist hinten dazugekommen", JSON.stringify({ tausch, felder }));
   await pg.evaluate(() => document.querySelector("#lcPlatzMenue .lc-magic-anpassen").click()); await tick(200);
   bl = await pg.evaluate(() => { const k = document.getElementById("lcPlatzMenue"); return { kopf: k ? k.querySelector(".lc-platzmenue-kopf").textContent : "", weg: k ? k.querySelectorAll(".lc-magic-weg").length : -1 }; });
   sage(bl.kopf === "Alles auf einen Griff" && bl.weg === 0, "„Fertig“: wieder das normale Menü", JSON.stringify(bl));

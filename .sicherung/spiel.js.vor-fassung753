@@ -9394,8 +9394,6 @@
       for (var bj = 0; bj < 7; bj++) { g.fillStyle = bf; g.globalAlpha = .8; g.beginPath(); g.arc(bx + (dmHash(bj, i, 166) - .5) * 5, by + (dmHash(bj, i, 167) - .5) * 2.4, .35, 0, 7); g.fill(); } }
     g.globalAlpha = 1;
     g.restore();
-    /* FASSUNG 753 — der Wald hinter der Strecke (vor der Bahn gemalt: der Zug fährt vor ihm vorbei). */
-    dmWald(g);
     /* FASSUNG 717 — die Bahnstrecke am hinteren Wiesenrand, VOR dem Waldrand gemalt: die Bäume stehen davor. */
     dmBahn(g, K, s);
     /* Waldrand an den Hügeln. */
@@ -9977,7 +9975,7 @@
          ganze Dorf mit Punkten für die Gebäude und einem Rahmen, wo man gerade ist – ein Tipp auf einen Punkt fährt hin.
          Das eigene Karten-Fenster (das dritte Bild) entfällt. */
       + '<button type="button" class="sp-dl-kompass sp-dl-lupe' + (nah ? " sp-an" : "") + '" data-s="dorfzoom" data-n="' + (nah ? "0" : "1") + '" aria-label="' + (nah ? "Lupe: ganzes Dorf" : "Lupe: näher ran") + '">' + kompassSvg()
-      + '<i class="sp-dl-lupe-zeichen">' + (nah ? "−" : "+") + "</i></button>" + dorfUhrHtml()
+      + '<i class="sp-dl-lupe-zeichen">' + (nah ? "−" : "+") + "</i></button>"
       + (nah ? dorfMiniKarteHtml(ich, sig) : "") + dorfOrtsschildHtml(ich) + "</div>"
       + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · die Lupe holt dich näher ran") + "</span>") + (wahl ? (besuch ? fremdStationHtml(besuch, wahl) : wahl === "bahnhof" ? bahnhofHtml(ich) : wahl === "wald" ? waldStationHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
   }
@@ -10106,23 +10104,6 @@
     return '<span class="sp-dw-schild" title="' + esc(artName + (quelle ? " · " + quelle : "") + (wi ? " · " + wi : "")) + '">' + sym + (w.temp != null ? " " + w.temp + "°" : "") + '<span class="sp-dw-art"> ' + artName + "</span>"
       + (w.ort && !benannt ? '<span class="sp-dw-art"> · ' + esc(w.ort) + "</span>" : "") + (wi ? "<small>" + wi + "</small>" : "") + "</span>";
   }
-  /* FASSUNG 753 — XANDER (Funk 183): „der Kompass der … rechts unten ist der kann links oben hin so dass er unten nicht den
-     … Zugriff auf das Feld versperrt und dann kann neben den Kompass oben rechts dann noch die deutsche Uhrzeit so haben wir
-     links die Uhrzeit rechts das Wetter und in der Mitte den Namen von der Stadt". Oben links Kompass und daneben die Uhrzeit
-     in Deutschland (Europe/Berlin, gleich wo das Gerät steht), in der Mitte das Ortsschild, rechts das Wetter. Die Uhr stellt
-     sich jede Minute selbst nach, ohne das Bild neu zu zeichnen. */
-  function dorfUhrzeit(wann) {
-    try { return new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }).format(wann || new Date()); }
-    catch (e) { var d = wann || new Date(); return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
-  }
-  var dorfUhrTakt = 0;
-  function dorfUhrHtml() {
-    if (!dorfUhrTakt) dorfUhrTakt = setInterval(function () {
-      var uhren = document.querySelectorAll(".sp-dl-uhr b"); if (!uhren.length) { clearInterval(dorfUhrTakt); dorfUhrTakt = 0; return; }
-      var t = dorfUhrzeit(); for (var i = 0; i < uhren.length; i++) if (uhren[i].textContent !== t) uhren[i].textContent = t;
-    }, 10000);
-    return '<span class="sp-dl-uhr" title="Uhrzeit in Deutschland"><b>' + dorfUhrzeit() + "</b></span>";
-  }
   function dorfOffen() { return !!(S.schnellMenue && S.blick === "dorfblick" && schnellEl && schnellEl.querySelector(".sp-dl-rahmen")); }
   /* ---------------------------------------------------------------
      FASSUNG 716 — DIE EISENBAHN IM DORF UND ANGELN AM SEE
@@ -10206,27 +10187,6 @@
   /* Der Waldrand an den Hügeln (eigene Funktion: die Zug-Maske braucht dieselben Bäume). */
   function dmWaldrand(g) {
     for (var i = 0; i < 26; i++) { var wx = dmHash(i, 1, 171) * 330 - 5, wy = 60 + dmHash(i, 2, 171) * 8 - (wx > 150 && wx < 250 ? 4 : 0); if (wx > 128 && wx < 186) continue; dmBaum(g, wx, wy, 3 + dmHash(i, 3, 171) * 1.6, i + 400, dmHash(i, 4, 171) > .45); }
-  }
-  /* FASSUNG 753 — XANDER (Funk 183): „wir brauchen noch einen sichtbaren Wald wo wir die Leute hinschicken zum Jagen und
-     Holzfällen der muss noch grafisch im Bild sein". Rechts vom Rathaus, zwischen Bergen und Strecke, steht jetzt ein dichter
-     Nadelwald in Reihen (hinten kleiner und dunkler), mit Waldboden darunter; der Wald-Knopf liegt genau auf ihm (WALD_FLAECHE).
-     Alle Stämme stehen hinter den Schienen, deshalb fährt der Zug vor dem Wald vorbei und braucht keine Aussparung. */
-  var WALD_FLAECHE = [190, 36, 260, 62];
-  function dmWald(g) {
-    var x0 = WALD_FLAECHE[0], x1 = WALD_FLAECHE[2];
-    var hinter = function (x) { var y = 62; try { y = bahnAn(bahnBeiX(x)).y; } catch (e) {} return y - 2.2; };
-    g.save();
-    g.fillStyle = "rgba(24,58,30,.45)"; g.beginPath(); g.ellipse((x0 + x1) / 2, hinter((x0 + x1) / 2) - 5, (x1 - x0) / 2 + 3, 8, 0, 0, 7); g.fill();
-    for (var reihe = 0; reihe < 5; reihe++) {
-      var rand = (4 - reihe) * 3, schritt = 4.4 + reihe * .35;
-      for (var wx = x0 + rand + (reihe % 2) * 2.2; wx <= x1 - rand; wx += schritt) {
-        var n = reihe * 40 + Math.round(wx), jx = wx + (dmHash(n, 1, 753) - .5) * 1.8;
-        var boden = hinter(jx), wy = Math.min(boden, 42 + reihe * 4.2 + (dmHash(n, 2, 753) - .5) * 1.6);
-        g.globalAlpha = reihe === 0 ? .8 : reihe === 1 ? .92 : 1;
-        dmBaum(g, jx, wy, 3.4 + reihe * .45 + dmHash(n, 3, 753) * .8, n + 7530, dmHash(n, 4, 753) > .08);
-      }
-    }
-    g.restore();
   }
   /* Die Maske der Zug-Ebene: überall sichtbar, nur dort nicht, wo etwas VOR der Strecke steht – die Bäume des Waldrands
      und die Gebäude, die bis über die Strecke hinaufragen (Mühle, Bergwerk, Rathausturm, Schulturm). Gemalt mit
@@ -10422,7 +10382,7 @@
     }
     var hy = bahnAn(bahnBeiX(98)).y, ich = S.ich || {};
     /* FASSUNG 727 — der Waldrand rechts vom Rathaus ist antippbar (Holzfäller und Jäger); See und Wald zeigen den Stand ihrer Trupps. */
-    return knopf("bahnhof", "dorfwahl", 74, hy - 24, 122, hy - 2, "Bahnhof") + knopf("wald", "dorfwald", WALD_FLAECHE[0], WALD_FLAECHE[1] + 8, WALD_FLAECHE[2], WALD_FLAECHE[3] + 2, "Wald", truppZeichen(ich, ["wald", "jagd"]))
+    return knopf("bahnhof", "dorfwahl", 74, hy - 24, 122, hy - 2, "Bahnhof") + knopf("wald", "dorfwald", 188, 50, 246, 66, "Wald", truppZeichen(ich, ["wald", "jagd"]))
       + knopf("see", "dorfsee", 199, 182, 262, 200, "See", truppZeichen(ich, ["see"])) + dorfFeldKnoepfe();
   }
   /* FASSUNG 723 — XANDER (Funk 169): „auf dem Feld kann man übrigens noch nicht ernten da muss man auch draufklicken
