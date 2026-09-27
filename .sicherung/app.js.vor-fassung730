@@ -33929,14 +33929,6 @@
     knopf("\ud83d\udd0d", "Gro\u00df zeigen", () => {
       try { LiveChat.grossZeigen(platz.dataset.lcId || ""); } catch (e) {}
     });
-    /* FASSUNG 730 — XANDER (Funk 176): „oder man geht auf ihr Profil und geht einfach in ihre Stadt und greift sie an aber
-       das muss aus jedem Menü heraus … möglich sein". Hat die Person ein Dorf, steht hier „Stadt ansehen". */
-    try {
-      const sp = window.DMA_SPIEL;
-      if (!eigen && sp && sp.dorfVon && sp.dorfVon(platz.dataset.lcId || "")) {
-        knopf(sp.dorfZeichen ? sp.dorfZeichen() : "", "Stadt ansehen", () => { try { sp.dorfBesuchen(platz.dataset.lcId || ""); } catch (e) {} });
-      }
-    } catch (e) {}
     /* =============================================================
        RUNDE 99 — DER HAKEN GANZ OBEN
        -------------------------------------------------------------

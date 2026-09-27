@@ -1162,3 +1162,10 @@ Sonden: 716 (neu: Angriff zuerst, „+1 weitere“, „Ansehen“ öffnet das Do
 - **Band oben** (`.sp-sprung`): fertige Werkstätten („4 Brot fertig in der Bäckerei“), heimgekehrte Trupps („Die Fischer sind zurück: 5 Fisch“), reife Äcker, volle Ställe (Milch, Eier) und Plünderungen („Bea hat deine Mühle geplündert“, rot, zuerst). Mehrere Meldungen: „+n weitere“, sie kommen nacheinander.
 - **„Ansehen“** öffnet das Dorfbild und gleich die betroffene Station (Mühle, Bäckerei, Wald …). ✕ schließt alle.
 - **Nur einmal**: jede Sache wird genau einmal gemeldet (gemerkt auf dem Gerät, auch nach dem Neuladen). Ist das Dorf gerade offen, kommt kein Band – man sieht es im Bild.
+
+### Fassung 730 (Funk 176: Städte als Kette durchblättern, aus dem Profil in die Stadt)
+Sonden: 716 (neu: Kette „‹ Dein Dorf · 1/2 ›“, › zu Beas Dorf mit ihrem Schild und ihren Häusern, Tipp auf ihre Mühle → „Plündern“, Plündern trifft sie, „Zurück zu meinem Dorf“, langer Druck auf Beas Bild → „Stadt ansehen“), 711, 686, 683, 709, 719 grün.
+- XANDER (wörtlich, Funk 176): „dass man sich durch andere stellte so nach links und rechts so durchklicken kann z.B von den Leuten die natürlich gerade da sind die Städte sollen in einer Kette aneinander sein und durchklickbar sein … oder man geht auf ihr Profil und geht einfach in ihre Stadt und greift sie an aber das muss aus jedem Menü heraus bzw ob aus dem Menü oder ob aus dem Bild direkt oder auf jede Weise hin und her in jede Richtung möglich sein“.
+- **Kette** über dem Dorfbild: ‹ Name · Stadt · Einwohner/Stärke/Level · n/m › – blättert durch die Dörfer aller, die gerade im Raum sind (das eigene zuerst, dann in Sitzreihenfolge).
+- **Fremdes Dorf**: gemalt wie das eigene (ihre Gebäude und Stufen), ihr Ortsschild (nicht umbenennbar), keine eigenen Orte (See, Wald, Äcker, Bahnhof). Tipp auf ein Haus: Stufe, Zustand, „Plündern“ (10 Mana; nicht, wenn sie nicht mitspielen, das Haus kaputt oder 4 h geschützt ist).
+- **Wege hinein**: ‹ › im Dorfbild, „Stadt ansehen“ in der Nachbarliste des Dorf-Menüs und im Profil (langer Druck auf das Bild der Person). „Mein Dorf“ in der Leiste führt immer ins eigene.

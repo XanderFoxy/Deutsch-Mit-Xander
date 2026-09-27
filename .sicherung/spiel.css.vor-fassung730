@@ -2570,12 +2570,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-sprung .sp-sprung-zu { flex: 0 0 auto; min-height: 0; margin: 0; padding: 4px 6px; border: 0; background: none; color: #fff; font: 700 15px/1 system-ui, sans-serif; opacity: .8; cursor: pointer; }
 @keyframes spSprungRein { from { opacity: 0; transform: translate(-50%, -12px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @media (prefers-reduced-motion: reduce) { .sp-sprung { animation: none; } }
-
-/* FASSUNG 730 — Städte als Kette (Funk 176) */
-.sp-dl-kette { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; }
-.sp-dl-kette > span { flex: 1 1 auto; min-width: 0; text-align: center; line-height: 1.2; }
-.sp-dl-kette b { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sp-dl-kette small { display: block; font-size: 11px; opacity: .75; }
-.sp-schnellmenue .sp-dl-kette button, .sp-dl-kette button { flex: 0 0 38px; width: 38px; height: 34px; min-height: 0; margin: 0; padding: 0; border-radius: 10px; font: 800 20px/1 system-ui, sans-serif; }
-.sp-nachbar .sp-nachbar-hin { min-height: 0; margin: 0 0 0 8px; padding: 3px 9px; border-radius: 10px; font-size: 12px; }
-.lc-platzmenue-zeichen svg { width: 1.2em; height: 1.2em; display: block; }

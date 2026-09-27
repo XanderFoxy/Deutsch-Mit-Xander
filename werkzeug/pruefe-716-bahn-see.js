@@ -394,6 +394,46 @@ const sage = (gut, was, zusatz) => {
   sage(await pg.evaluate(() => !document.querySelector(".sp-sprung")), "✕ schließt die Meldung", "");
   await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.blick = "dorfblick"; S.schnellMenue = true; P.schnellZeichnen(true); });
   await tick(500);
+  console.log("\nSTÄDTE ALS KETTE (Fassung 730, Funk 176)\n");
+  /* „dass man sich durch andere stellte so nach links und rechts so durchklicken kann … oder man geht auf ihr Profil und geht einfach in ihre Stadt und greift sie an" */
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(), beaId = "11111111-1111-4111-8111-111111111111";
+    const bea = Object.assign({}, S.stand[beaId] || {}, { id: beaId, name: "Bea", mitspielen: true, level: 6, dorf_name: "Beastadt",
+      dorf: { muehle: { stufe: 2, lp: 40 }, rathaus: { stufe: 1, lp: 20 }, baeckerei: { stufe: 1, lp: 20 } } });
+    window.__beaDorf = bea; S.stand[beaId] = bea;
+    window.__extra = Object.assign({}, window.__extra, { spiel_stand: () => [window.__ich, window.__beaDorf],
+      spiel_pluendern: (a) => { window.__pluenderArgs = a; return Object.assign(JSON.parse(JSON.stringify(window.__ich)), { ok: true, beute: { mehl: 2 }, gebaeude: a.p_gebaeude }); } });
+    S.dorfBesuch = ""; S.dorfWahl = ""; S.blick = "dorfblick"; S.schnellMenue = true; P.schnellZeichnen(true); });
+  await tick(500);
+  r = await pg.evaluate(() => ((document.querySelector(".sp-dl-kette") || {}).textContent || "").replace(/\s+/g, " "));
+  sage(/Dein Dorf/.test(r) && /1\/2/.test(r), "über dem Dorfbild steht die Kette: ‹ Dein Dorf · 1/2 ›", r);
+  await tippe('.sp-dl-kette [data-n="1"]'); await tick(900);
+  r = await pg.evaluate(() => ({ kette: ((document.querySelector(".sp-dl-kette") || {}).textContent || "").replace(/\s+/g, " "), schild: (document.querySelector(".sp-dl-ortsschild") || {}).tagName + ":" + ((document.querySelector(".sp-dl-ortsschild") || {}).textContent || ""),
+    see: !!document.querySelector(".sp-dl-see"), bahnhof: !!document.querySelector(".sp-dl-bahnhof"), gemalt: (document.querySelector("canvas.sp-dl-mal") || {}).dataset ? document.querySelector("canvas.sp-dl-mal").dataset.sig : "" }));
+  sage(/Bea · Beastadt/.test(r.kette) && /2\/2/.test(r.kette) && r.schild === "SPAN:Beastadt" && !r.see && !r.bahnhof && /^mue2\./.test(r.gemalt), "› blättert zu Beas Dorf: ihr Name, ihr Schild (nicht umbenennbar), ihre Häuser gemalt, keine eigenen Orte", JSON.stringify(r));
+  await tippe('.sp-dl-haus-gemalt[data-g="muehle"]'); await tick(600);
+  r = await pg.evaluate(() => { const st = document.querySelector(".sp-dl-station"); const k = st && st.querySelector('[data-s="pluendern"]'); return st ? { t: st.textContent.replace(/\s+/g, " ").slice(0, 80), pl: k ? !k.disabled : null } : null; });
+  sage(r && /Mühle/.test(r.t) && /Stufe 2/.test(r.t) && r.pl === true, "Tipp auf Beas Mühle: Stufe und „Plündern“", JSON.stringify(r));
+  await tippe('.sp-dl-station [data-s="pluendern"]'); await tick(900);
+  r = await pg.evaluate(() => window.__pluenderArgs);
+  sage(r && r.p_ziel === "11111111-1111-4111-8111-111111111111" && r.p_gebaeude === "muehle", "Plündern trifft Beas Mühle", JSON.stringify(r));
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.dorfWahl = ""; P.schnellZeichnen(true); });
+  await tippe('.sp-schnellmenue [data-s="dorfkette"][data-n="heim"]'); await tick(700);
+  r = await pg.evaluate(() => ({ besuch: window.DMA_SPIEL.pruef.zustand().dorfBesuch, see: !!document.querySelector(".sp-dl-see") }));
+  sage(r.besuch === "" && r.see, "„Zurück zu meinem Dorf“", JSON.stringify(r));
+  /* aus dem Profil: langer Druck auf Beas Bild → „Stadt ansehen" */
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.schnellMenue = false; S.blick = null; P.schnellZeichnen(true); });
+  await tick(300);
+  r = await pg.evaluate(() => { const pl = document.querySelector('#livechatKarte .lc-platz[data-lc-id="bea"]'); if (!pl) return "kein Platz";
+    pl.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    const m = document.getElementById("lcPlatzMenue"); if (!m) return "kein Menü";
+    const b = [...m.querySelectorAll(".lc-platzmenue-knopf")].find((x) => /Stadt ansehen/.test(x.textContent)); if (!b) return "kein Knopf: " + m.textContent.slice(0, 120);
+    b.click(); return "ok"; });
+  await tick(900);
+  const aufProfil = await pg.evaluate(() => ({ besuch: window.DMA_SPIEL.pruef.zustand().dorfBesuch, kette: ((document.querySelector(".sp-dl-kette") || {}).textContent || "").replace(/\s+/g, " ") }));
+  sage(r === "ok" && aufProfil.besuch === "11111111-1111-4111-8111-111111111111" && /Beastadt/.test(aufProfil.kette), "aus dem Profil: langer Druck → „Stadt ansehen“ öffnet Beas Dorf", r + " " + JSON.stringify(aufProfil));
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.dorfBesuch = ""; S.dorfWahl = ""; S.blick = "dorfblick"; S.schnellMenue = true; P.schnellZeichnen(true); });
+  await tick(500);
+
   const vis = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-rahmen").getBoundingClientRect(), w = document.querySelector(".sp-dw-schild"), b = document.querySelector(".sp-dl-bahnhof");
     if (!w || !b) return { fehlt: !w ? "wetter" : "bahnhof" }; const a = w.getBoundingClientRect(), c = b.getBoundingClientRect();
     return { rechts: a.right > f.right - 12, zeile: a.height < 20, ueberBahnhof: a.right > c.left && a.left < c.right && a.bottom > c.top && a.top < c.bottom }; });

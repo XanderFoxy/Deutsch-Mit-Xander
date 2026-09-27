@@ -49,26 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 729 — Meldungen oben mit Sprung ins Dorf (fertig, Trupps zurück, Ställe voll, geplündert)",
+  stand: "Fassung 730 — Städte als Kette: ‹ › durch die Dörfer im Raum, aus dem Profil in die Stadt, plündern",
 
   inArbeit: [
-    { seit: "2026-09-27T03:25",
-      text: "Dorf-Gesamtkonzept: alles, was du je zum Dorf gesagt hast, mit Vorschlag für das modulare System – Funk 177" },
-    { seit: "2026-09-27T03:25",
-      text: "Chat-Waffen halten und gerichtet feuern (Plasmakanone zum Ziel) – Funk 176" },
-    { seit: "2026-09-27T03:25",
-      text: "Städte als Kette durchblättern, aus dem Profil in die Stadt – Funk 176" },
+    { seit: "2026-09-27T03:32",
+      text: "Dorf-Gesamtkonzept – Funk 177" },
+    { seit: "2026-09-27T03:32",
+      text: "Waffen im Chat halten und gerichtet feuern (Design-Prüfung fertig, Umsetzung läuft) – Funk 176" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T03:25",
-      text: "Meldung oben, wenn etwas fertig ist – ein Tipp springt ins Dorf" },
-    { seit: "2026-09-27T03:25",
-      text: "Angriff: „… hat deine Mühle geplündert“ zuerst und rot" },
-    { seit: "2026-09-27T03:25",
-      text: "Jede Sache nur einmal gemeldet" },
-    { seit: "2026-09-27T03:25",
-      text: "Fassung 728: keine Lichtflecken mehr auf den Häusern, keine falschen Bahnhofsfenster" },
+    { seit: "2026-09-27T03:32",
+      text: "‹ › blättert durch die Dörfer aller im Raum" },
+    { seit: "2026-09-27T03:32",
+      text: "Fremdes Dorf gemalt, Tipp aufs Haus: Stufe und Plündern" },
+    { seit: "2026-09-27T03:32",
+      text: "Profil → „Stadt ansehen“, Nachbarliste → „Stadt ansehen“" },
+    { seit: "2026-09-27T03:32",
+      text: "Fassung 729: Meldungen oben mit Sprung ins Dorf" },
   ],
 };

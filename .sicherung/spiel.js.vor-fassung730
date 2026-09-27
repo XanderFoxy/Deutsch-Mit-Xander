@@ -4432,7 +4432,7 @@
       /* FASSUNG 711 — XANDER (Funk 158): „wenn man die Sachen einsammelt dass man die per Klick einfach automatisch einsammelt
          dort wo fertig steht … ohne dass man da extra noch diesen Knopf braucht". Steht an einem Haus „fertig" (oder liegen
          Eier/Milch bereit), sammelt ein Tipp darauf gleich ein; der nächste Tipp öffnet es wie gewohnt. */
-      if (!dorfBesuchStand() && dorfFertigSammeln(k.dataset.g)) { S.dorfTippWeg = true; return; }
+      if (dorfFertigSammeln(k.dataset.g)) { S.dorfTippWeg = true; return; }
       /* FASSUNG 686 — Tipp auf ein Gebäude im Dorfbild: seine Station öffnet sich im Bild. */
       S.dorfWahl = k.dataset.g && S.dorfWahl !== k.dataset.g ? k.dataset.g : ""; S.dorfTippWeg = true;
       if (S.dorfWahl === "bahnhof") bahnLaden();
@@ -4664,14 +4664,6 @@
     } else if (s === "abholen") {
       werkAbholen(k.dataset.g);
       return;
-    } else if (s === "dorfkette") {
-      /* FASSUNG 730 — ‹ › blättert durch die Dörfer im Raum; „heim" zurück ins eigene. */
-      var kette = dorfKette(), jetztK = dorfBesuchStand(), ik = jetztK ? kette.map(function (x) { return x.sid; }).indexOf(jetztK.sid) : 0;
-      var neuK = k.dataset.n === "heim" ? kette[0] : kette[(ik + Number(k.dataset.n) + kette.length) % kette.length];
-      S.dorfBesuch = neuK && !neuK.ich ? neuK.sid : ""; S.dorfWahl = "";
-      ton("swoosh", 0.25); schnellZeichnen(true); return;
-    } else if (s === "dorfbesuch") {
-      dorfBesuchen(k.dataset.c); return;
     } else if (s === "trupp") {
       truppSchicken(k.dataset.g); return;
     } else if (s === "trupphelfen") {
@@ -7883,69 +7875,6 @@
     return { einwohner: stufen * 4 + arbeiter + ritter, staerke: staerke, level: st.level || 1 };
   }
   function dorfKennzeile(st) { var z = dorfKennzahlen(st); return z.einwohner + " Einwohner · Stärke " + z.staerke + " · Lv " + z.level; }
-  /* ---------------------------------------------------------------
-     FASSUNG 730 — DIE STÄDTE ALS KETTE
-     XANDER (Funk 176): „dass man sich durch andere stellte so nach links und rechts so durchklicken kann z.B von den
-     Leuten die natürlich gerade da sind die Städte sollen in einer Kette aneinander sein und durchklickbar sein … oder man
-     geht auf ihr Profil und geht einfach in ihre Stadt und greift sie an aber das muss aus jedem Menü heraus bzw ob aus
-     dem Menü oder ob aus dem Bild direkt oder auf jede Weise hin und her in jede Richtung möglich sein".
-     Über dem Dorfbild steht eine Zeile ‹ Name · Stadt › – sie blättert durch die Dörfer aller, die gerade im Raum sind
-     (das eigene zuerst). Ein fremdes Dorf sieht man gemalt wie das eigene; ein Tipp auf ein Haus zeigt Stufe und Zustand
-     und – wenn es geht – „Plündern". Hinein kommt man auch über das Profil (langer Druck → „Stadt ansehen") und über
-     die Nachbarliste im Dorf-Menü.
-     --------------------------------------------------------------- */
-  function dorfKette() {
-    var k = [{ sid: S.uid || "ich", chat: meineChatId(), name: (S.ich && S.ich.name) || "Du", st: S.ich || {}, ich: true }];
-    plaetze().forEach(function (p) {
-      if (p.leer || p.ich || !p.id || istPuppe(p.id)) return;
-      var sid = spielIdVon(p.id), st = sid && S.stand[sid];
-      if (!st || !st.dorf || !Object.keys(st.dorf).some(function (x) { return st.dorf[x] && st.dorf[x].stufe > 0; })) return;
-      if (k.some(function (x) { return x.sid === sid; })) return;
-      k.push({ sid: sid, chat: p.id, name: p.name || st.name || "?", st: st, ich: false });
-    });
-    return k;
-  }
-  function dorfBesuchStand() {
-    if (!S.dorfBesuch) return null;
-    var e = dorfKette().filter(function (x) { return !x.ich && x.sid === S.dorfBesuch; })[0];
-    if (!e) { S.dorfBesuch = ""; return null; }
-    return e;
-  }
-  function dorfKetteHtml() {
-    var k = dorfKette();
-    if (k.length < 2) return "";
-    var jetzt = dorfBesuchStand(), i = jetzt ? k.map(function (x) { return x.sid; }).indexOf(jetzt.sid) : 0, e = k[i];
-    return '<div class="sp-dl-kette"><button type="button" data-s="dorfkette" data-n="-1" aria-label="vorige Stadt">‹</button>'
-      + "<span><b>" + (e.ich ? "Dein Dorf" : esc(e.name)) + (e.st.dorf_name ? " · " + esc(e.st.dorf_name) : "") + "</b><small>" + dorfKennzeile(e.st) + " · " + (i + 1) + "/" + k.length + "</small></span>"
-      + '<button type="button" data-s="dorfkette" data-n="1" aria-label="nächste Stadt">›</button></div>';
-  }
-  function dorfBesuchHtml(e) {
-    var st = e.st, szene = dorfBildHtml(st);
-    return dorfKetteHtml() + szene
-      + '<p class="sp-sm-klein">Das ist das Dorf von ' + esc(e.name) + ". Tippe auf ein Haus, um es anzusehen" + (st.mitspielen ? " oder zu plündern" : "") + ".</p>"
-      + '<div class="sp-sm-liste"><button type="button" data-s="dorfkette" data-n="heim">Zurück zu meinem Dorf</button></div>';
-  }
-  function fremdStationHtml(e, k) {
-    var st = e.st, D = DORF[k], g = (st.dorf || {})[k], stufe = g ? g.stufe : 0, lp = g ? g.lp : 0, mx = 20 * Math.max(1, stufe);
-    var gepl = g && g.gepl && Date.now() - Date.parse(g.gepl) < 4 * 3600000, kaputt = !(lp > 0);
-    var kann = stufe && PLUENDERBAR.indexOf(k) >= 0;
-    return '<div class="sp-dl-station" role="dialog" aria-label="' + esc(D.name) + '"><div class="sp-dl-st-kopf"><i>' + dorfHausGross(k, stufe || 1) + "</i><span><b>" + D.name + "</b>"
-      + "<small>" + (stufe ? "Stufe " + stufe + " · " + (kaputt ? "kaputt" : "hält " + lp + "/" + mx) : "noch nicht gebaut") + "</small></span>"
-      + '<button type="button" class="sp-dl-st-zu" data-s="dorfwahl" data-g="" aria-label="Station schließen">✕</button></div>'
-      + '<p class="sp-sm-klein">' + D.gibt + (gepl ? " · gerade geplündert (4 h Schutz)" : "") + "</p>"
-      + (kann ? '<div class="sp-sm-liste sp-dl-st-knoepfe"><button type="button" data-s="pluendern" data-z="' + esc(e.sid) + '" data-c="' + esc(e.chat) + '" data-g="' + k + '"'
-        + (kaputt || gepl || !st.mitspielen ? " disabled" : "") + ">Plündern <small>10 Mana</small></button></div>"
-        + (!st.mitspielen ? '<p class="sp-sm-klein">' + esc(e.name) + " spielt gerade nicht mit – dann ist das Dorf geschützt.</p>" : "") : "") + "</div>";
-  }
-  function dorfBesuchen(chatId) {
-    var sid = spielIdVon(chatId), st = sid && S.stand[sid];
-    if (!st || !st.dorf) { hinweis("Von dieser Person ist gerade kein Dorf zu sehen."); return false; }
-    S.dorfBesuch = sid; S.dorfWahl = "";
-    S.rad = null; S.zrad = false; S.langWahl = false; S.trankAuf = false;
-    S.blick = "dorfblick"; S.schnellMenue = true;
-    abrufen(true); ton("swoosh", 0.25); schnellZeichnen(true);
-    return true;
-  }
   function nachbarnHtml() {
     var zeilen = plaetze().filter(function (p) { return !p.leer && !p.ich && p.id && !istPuppe(p.id); }).map(function (p) {
       var sid = spielIdVon(p.id), st = sid && S.stand[sid];
@@ -7956,7 +7885,7 @@
           + (kaputt || gepl || !st.mitspielen ? " disabled" : "") + ' title="' + DORF[k].name + (gepl ? " – 4 h geschützt" : kaputt ? " – kaputt" : "") + '">'
           + dorfSvg(k, g.stufe || 1) + "<small>" + DORF[k].name + "</small></button>";
       }).join("");
-      return knoepfe ? '<div class="sp-nachbar"><b>' + esc(p.name || "?") + (st.dorf_name ? " · " + esc(st.dorf_name) : "") + '</b><button type="button" class="sp-nachbar-hin" data-s="dorfbesuch" data-c="' + esc(p.id) + '">Stadt ansehen</button><small>' + dorfKennzeile(st) + " · " + (st.mitspielen ? (st.ritter ? st.ritter + " Ritter" : "keine Ritter") : "spielt gerade nicht") + "</small>"
+      return knoepfe ? '<div class="sp-nachbar"><b>' + esc(p.name || "?") + (st.dorf_name ? " · " + esc(st.dorf_name) : "") + "</b><small>" + dorfKennzeile(st) + " · " + (st.mitspielen ? (st.ritter ? st.ritter + " Ritter" : "keine Ritter") : "spielt gerade nicht") + "</small>"
         + '<div class="sp-nachbar-reihe">' + knoepfe + "</div></div>" : "";
     }).join("");
     return '<div class="sp-sm-gruppe sp-nachbarn"><span>Nachbardörfer plündern · 10 Mana</span></div>'
@@ -7987,7 +7916,7 @@
     S.langWahl = false; S.trankAuf = false;
     if (r === "dorfblick" || r === "handelblick") {
       var auf = !(S.schnellMenue && S.blick === r);
-      S.blick = auf ? r : null; S.schnellMenue = auf; S.dorfWahl = ""; S.dorfBesuch = "";
+      S.blick = auf ? r : null; S.schnellMenue = auf; S.dorfWahl = "";
       if (auf) { handelLaden(false); abrufen(true); if (r === "dorfblick") dorfTakt(true); }
     } else {
       S.blick = null;
@@ -9395,8 +9324,7 @@
       var neu = document.createElement("canvas");
       var t0 = performance.now();
       var ds = lw.getAttribute("data-sig") || "";
-      var zeigDorf = (dorfBesuchStand() || { st: S.ich }).st.dorf || {};
-      var punkte = dorfMalen(neu, zeigDorf, DORF_LAGE, breite, /N$/.test(ds), /SN?$/.test(ds));
+      var punkte = dorfMalen(neu, S.ich.dorf || {}, DORF_LAGE, breite, /N$/.test(ds), /SN?$/.test(ds));
       DM.zeit = Math.round(performance.now() - t0);
       /* FASSUNG 728 — XANDER (Funk 177): „Beim Bahnhof … zwei Reihen Fenster individuell jeweils eine komplett links neben dem
          Haus eine komplett rechts neben dem Haus … in der Mitte vom Bahnhof … so ein übergroßes Fenster" und „es gibt immer
@@ -9405,7 +9333,7 @@
          ein zweites Mal als Licht, an falscher Stelle. Die Lichter werden jetzt VOR der Maske genommen, die Maske merkt nichts. */
       var licht = /N$/.test(ds) ? DM.licht : null;
       DM.licht = null;
-      fertig = DM.bilder[sig] = { bild: neu, punkte: punkte, maske: dmBahnMaske(zeigDorf, DORF_LAGE), licht: licht, s: breite / 320, dorf: zeigDorf };
+      fertig = DM.bilder[sig] = { bild: neu, punkte: punkte, maske: dmBahnMaske(S.ich.dorf || {}, DORF_LAGE), licht: licht, s: breite / 320 };
       var alle = Object.keys(DM.bilder); if (alle.length > 3) delete DM.bilder[alle[0]];
     }
     lw.width = fertig.bild.width; lw.height = fertig.bild.height;
@@ -9425,7 +9353,7 @@
       var h = "";
       Object.keys(fertig.punkte).forEach(function (k) {
         var p = fertig.punkte[k];
-        if (p.rauch && ((fertig.dorf || S.ich.dorf || {})[k] || {}).lp > 0) for (var i = 0; i < 3; i++) h += '<span class="sp-dl-qualm" style="left:' + (p.rauch[0] / 3.2).toFixed(2) + "%;top:" + (p.rauch[1] / 2).toFixed(2) + "%;animation-delay:-" + (i * 1.3).toFixed(1) + 's"></span>';
+        if (p.rauch && (S.ich.dorf[k] || {}).lp > 0) for (var i = 0; i < 3; i++) h += '<span class="sp-dl-qualm" style="left:' + (p.rauch[0] / 3.2).toFixed(2) + "%;top:" + (p.rauch[1] / 2).toFixed(2) + "%;animation-delay:-" + (i * 1.3).toFixed(1) + 's"></span>';
         if (p.fluegel) h += '<span class="sp-dl-fluegel" style="left:' + (p.fluegel[0] / 3.2).toFixed(2) + "%;top:" + (p.fluegel[1] / 2).toFixed(2) + "%;width:" + (34 * p.f / 3.2).toFixed(2) + '%"><svg viewBox="-20 -20 40 40" aria-hidden="true">'
           + [0, 90, 180, 270].map(function (a) { return '<g transform="rotate(' + a + ')"><path d="M-.6 -1 L-.6 -19 L3.6 -19 L3.6 -4 Z" fill="#efe6cf" opacity=".92"/><path d="M-.6 -1 V-19 M3.6 -19 V-4 M-.6 -6 H3.6 M-.6 -10.5 H3.6 M-.6 -15 H3.6 M1.5 -19 V-3" stroke="#6b4521" stroke-width=".6" fill="none"/></g>'; }).join("")
           + '<circle r="1.6" fill="#4a2f18"/></svg></span>';
@@ -9437,7 +9365,7 @@
   }
   /* Das Dorfbild in gemalter Form: eine Leinwand, darüber Tippflächen, Namen, Zeichen, Leute. */
   function dorfBildGemaltHtml(ich) {
-    var besuch = dorfBesuchStand(), d = ich.dorf || {}, lv = ich.level || 1, wahl = S.dorfWahl && (DORF[S.dorfWahl] || (!besuch && (S.dorfWahl === "bahnhof" || S.dorfWahl === "wald"))) ? S.dorfWahl : "", sig = dorfMalSig(ich);
+    var d = ich.dorf || {}, lv = ich.level || 1, wahl = S.dorfWahl && (DORF[S.dorfWahl] || S.dorfWahl === "bahnhof" || S.dorfWahl === "wald") ? S.dorfWahl : "", sig = dorfMalSig(ich);
     var haeuser = Object.keys(DORF_LAGE).sort(function (a, b) { return DORF_LAGE[a][1] - DORF_LAGE[b][1]; }).map(function (k) {
       if (!DORF[k]) return "";
       var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = DORF_LAGE[k], u = dmUmriss(k, st);
@@ -9460,7 +9388,7 @@
     /* FASSUNG 715 — Schnee auf den Dächern und der Wiese, wenn es draußen schneit (eigenes Bild: „S" in der Kennung). */
     var malSig = sig + (wetter.art === "schnee" ? "S" : "") + (wetter.tag ? "" : "N");
     return '<div class="sp-dl-rahmen ' + (nah ? "sp-dl-nah" : "sp-dl-ganz") + (dorfZeichen() ? " sp-dl-zeichen" : "") + (dorfNamen() ? " sp-dl-namen" : "") + (wetter.tag ? "" : " sp-dl-nacht") + '"><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + malSig + '" aria-hidden="true"></canvas><div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
-      + dorfNachtHtml(ich, wetter) + haeuser + (besuch ? "" : dorfBahnKnoepfe()) + dorfLeuteHtml(ich) + dorfBahnHtml(wetter) + "</div></div>" + dorfWetterHtml(wetter) + dorfWetterSchild(wetter)
+      + dorfNachtHtml(ich, wetter) + haeuser + dorfBahnKnoepfe() + dorfLeuteHtml(ich) + dorfBahnHtml(wetter) + "</div></div>" + dorfWetterHtml(wetter) + dorfWetterSchild(wetter)
       /* FASSUNG 721 — XANDER (Funk 159): „ich möchte dass das kleine Bild was wir haben schon den Kompass hat nicht dass
          das drei unterschiedliche Bilder sind … diese Lupe wie in den anderen Spielen mit den kleinen Punkten auf der Karte
          wo man hinkriegen kann … das kleine Miniatur Bild hat schon die Lupe und das kleine Miniatur ist von links nach
@@ -9471,7 +9399,7 @@
       + '<button type="button" class="sp-dl-kompass sp-dl-lupe' + (nah ? " sp-an" : "") + '" data-s="dorfzoom" data-n="' + (nah ? "0" : "1") + '" aria-label="' + (nah ? "Lupe: ganzes Dorf" : "Lupe: näher ran") + '">' + kompassSvg()
       + '<i class="sp-dl-lupe-zeichen">' + (nah ? "−" : "+") + "</i></button>"
       + (nah ? dorfMiniKarteHtml(ich, sig) : "") + dorfOrtsschildHtml(ich) + "</div>"
-      + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · die Lupe holt dich näher ran") + "</span>") + (wahl ? (besuch ? fremdStationHtml(besuch, wahl) : wahl === "bahnhof" ? bahnhofHtml(ich) : wahl === "wald" ? waldStationHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
+      + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · die Lupe holt dich näher ran") + "</span>") + (wahl ? (wahl === "bahnhof" ? bahnhofHtml(ich) : wahl === "wald" ? waldStationHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
   }
   /* ---------------------------------------------------------------
      FASSUNG 708 — DAS DORF LEBT MIT DEM ECHTEN WETTER
@@ -10472,8 +10400,6 @@
      Den Namen sehen auch die Nachbarn. */
   function dorfOrtsschildHtml(ich) {
     var n = (ich || {}).dorf_name;
-    /* FASSUNG 730 — im fremden Dorf: das Schild zeigt dessen Namen, umbenennen geht nur im eigenen. */
-    if (dorfBesuchStand()) return '<span class="sp-dl-ortsschild" title="' + esc((n || "Ohne Namen") + " · " + dorfKennzeile(ich)) + '"><b>' + esc(n || "Ohne Namen") + "</b></span>";
     return '<button type="button" class="sp-dl-ortsschild' + (n ? "" : " sp-dl-ortsschild-leer") + '" data-s="dorfname" title="' + (n ? esc(n) + " · " + dorfKennzeile(ich) + " · antippen zum Umbenennen" : "Stadt benennen") + '">'
       + (n ? "<b>" + esc(n) + "</b>" : "<b>Stadt benennen</b>") + "</button>";
   }
@@ -10616,11 +10542,9 @@
      dann ist auch wirklich nur das Layout von dem Dorf da und was in dem
      Dorf grad passiert". Die Dorf-Ansicht des Makroknopfs. */
   function dorfBlickHtml(ich) {
-    var besuch = dorfBesuchStand();
-    if (besuch) return dorfBesuchHtml(besuch);
     var d = ich.dorf || {}, ab = ich.dorf_ab ? Date.parse(ich.dorf_ab) : 0;
     var hat = Object.keys(d).length;
-    var szene = dorfKetteHtml() + dorfBildHtml(ich);
+    var szene = dorfBildHtml(ich);
     var ernte = hat ? (function () {
       var bis = ab ? ab + 4 * 3600000 - Date.now() : 0;
       return '<div class="sp-sm-liste"><button type="button" data-s="ernte"' + (bis > 0 ? ' class="sp-werk-wartet"' : "") + ">Dorf-Ernte <small>" + (bis > 0 ? "in " + Math.ceil(bis / 60000) + " min" : "bereit") + "</small></button>"
@@ -13078,9 +13002,6 @@
       return Boolean(s && s.mitspielen);
     },
     tippAufPlatz: tippAufPlatz, gesperrt: gesperrt, gesperrtGrund: gesperrtGrund, langAufEigen: langAufEigen, langAufLeer: langAufLeer,
-    /* FASSUNG 730 — fürs Platzmenü: hat die Person ein Dorf, gibt es „Stadt ansehen". */
-    dorfVon: function (chatId) { var sid = spielIdVon(chatId), st = sid && S.stand[sid]; return Boolean(S.bereit && st && st.dorf && Object.keys(st.dorf).length); },
-    dorfBesuchen: dorfBesuchen, dorfZeichen: function () { return dorfSvg("rathaus", 2); },
     empfangen: empfangen, dreckAbwehren: dreckAbwehren, platzGewechselt: platzGewechselt,
     lehrerNote: lehrerNote, kampfmodus: kampfmodus, anmeldungDa: anmeldungDa,
     waffeAblegen: function () { if (S.waffe) { S.waffe = ""; zeichnen(); } },
