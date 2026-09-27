@@ -47,7 +47,7 @@ const sage = (gut, was, zusatz) => {
   const pg = await br.newPage({ viewport: { width: 460, height: 900 } });
   const konsolenFehler = [];
   pg.on("pageerror", (e) => konsolenFehler.push(String(e.message || e)));
-  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
+  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); /* ab 754: Kampf-Symbol aus = die ganze Leiste offen (das Kampf-Symbol prüft Sonde 754) */ localStorage.setItem("dma_spiel_kampfsymbol", "0"); } catch (e) {} });
   await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
   await pg.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF && window.DMA_SPIEL, { timeout: 25000 });
 

@@ -49,28 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 754 — Kampf-Symbol in der Leiste (Funk 181)",
+  stand: "Fassung 755 — Plündern mit Folgen: Scheitern, Rache, Ticker (Walkie 294)",
 
   inArbeit: [
-    { seit: "2026-09-27T10:01",
+    { seit: "2026-09-27T10:35",
       text: "Berufe mit Ausbildung, Kaserne (Walkie 293)" },
-    { seit: "2026-09-27T10:01",
-      text: "Plündern: Scheitern, Rache, Ticker (Walkie 294)" },
-    { seit: "2026-09-27T10:01",
+    { seit: "2026-09-27T10:35",
       text: "Klassenname und mehrere Charaktere (Walkie 291/292)" },
-    { seit: "2026-09-27T10:01",
+    { seit: "2026-09-27T10:35",
+      text: "Einzug: Viper/KITT mit Kurve, Optimus Prime originalgetreu (Walkie 293)" },
+    { seit: "2026-09-27T10:35",
       text: "Aufgabenbank durchsehen (Funk 178)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T10:01",
-      text: "Leiste außerhalb des Kampfes: nur Kampf-Symbol und Dorf" },
-    { seit: "2026-09-27T10:01",
-      text: "Tipp auf Kampf: Taschen auf, Primärwaffe angelegt, Symbol rutscht neben das Menü" },
-    { seit: "2026-09-27T10:01",
-      text: "Nochmal tippen: Waffe eingesteckt, Taschen zu" },
-    { seit: "2026-09-27T10:01",
-      text: "Schwert-Klänge beim Ziehen und Einstecken" },
+    { seit: "2026-09-27T10:35",
+      text: "Plündern kann scheitern: Ritter wehren ab, Mana und Punkte weg" },
+    { seit: "2026-09-27T10:35",
+      text: "Rache: 24 Stunden einmal ohne Mana" },
+    { seit: "2026-09-27T10:35",
+      text: "Jede Plünderung im Laufband und bei allen im Raum" },
+    { seit: "2026-09-27T10:35",
+      text: "Kampf-Symbol mit Hinweispunkt" },
   ],
 };

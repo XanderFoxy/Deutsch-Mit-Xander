@@ -2759,17 +2759,3 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-kampfsymbol-wahl button { display: inline-flex; align-items: center; gap: 6px; text-align: left; }
 .sp-kampfsymbol-wahl svg { width: 20px; height: 20px; flex: none; border-radius: 5px; background: #5a2a22; padding: 1px; }
 @media (prefers-reduced-motion: reduce) { .sp-schnell .sp-s-kampfkopf.sp-kampf-hoch, .sp-schnell .sp-s-kampfsymbol.sp-kampf-runter { animation: none; } }
-
-/* FASSUNG 755 — Walkie 294: abgewehrtes Plündern. Der Schild springt in 0,12 s hoch und bebt – genau dann klirrt „schildblock“ (0,35 s). */
-.sp-abwehr { position: absolute; left: 50%; z-index: 12; width: 34px; height: 34px; margin-left: -17px; pointer-events: none; animation: spAbwehr 1.2s ease-out forwards; }
-.sp-abwehr svg { width: 100%; height: 100%; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .45)); }
-.sp-abwehr i { position: absolute; left: 50%; top: 30%; width: 4px; height: 4px; border-radius: 50%; background: #fff6c8; opacity: 0; animation: spPlFunke .45s ease-out forwards; }
-.sp-abwehr i:nth-of-type(1) { --fx: -14px; } .sp-abwehr i:nth-of-type(2) { --fx: 0px; } .sp-abwehr i:nth-of-type(3) { --fx: 14px; }
-@keyframes spAbwehr { 0% { opacity: 0; transform: translateY(8px) scale(.5); } 10% { opacity: 1; transform: translateY(-4px) scale(1.15); }
-  16% { transform: translate(-3px, -4px) scale(1.05); } 22% { transform: translate(3px, -4px) scale(1.05); } 28% { transform: translate(0, -4px) scale(1); }
-  75% { opacity: 1; transform: translateY(-4px); } 100% { opacity: 0; transform: translateY(-12px); } }
-.sp-nachbar .sp-rache { font-style: normal; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 8px; background: #b0172f; color: #fff; margin-left: 4px; }
-.sp-nachbar-rache { box-shadow: 0 0 0 1.5px #b0172f inset; border-radius: 10px; }
-@media (prefers-reduced-motion: reduce) { .sp-abwehr { animation-duration: .01s; } }
-.sp-schnell .sp-s-kampfsymbol { position: relative; }
-.sp-schnell .sp-s-kampfsymbol.sp-kampf-merk::after { content: ""; position: absolute; right: 3px; top: 3px; width: 8px; height: 8px; border-radius: 50%; background: #ffd84a; box-shadow: 0 0 0 1.5px #3a1a16; }

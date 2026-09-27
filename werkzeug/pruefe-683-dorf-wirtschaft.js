@@ -283,7 +283,7 @@ const sage = (gut, was, zusatz) => {
   sage(hz.ruf[0] === frei[0] && hz.ton && /\+2 Holz/.test(hz.meld) && /waechst/.test(hz.stumpf), "Tipp auf den Baum: Axt schlägt (Ton), +2 Holz, der Baum wächst nach", JSON.stringify(hz));
   const wwahl = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.wwahl = true; window.DMA_SPIEL.pruef.schnellZeichnen(true);
     const w = [...document.querySelectorAll('.sp-werkzeugwahl [data-s="werkzeugsetzen"]')].map((b) => b.dataset.w).join(","); S.wwahl = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); return w; });
-  sage(wwahl === "schaufel,sense,saat,duenger,axt,angel", "die Werkzeugwahl hat jetzt auch Axt und Angel", wwahl);
+  sage(wwahl === "schaufel,sense,saat,duenger,axt,angel,jagd,hacke", "die Werkzeugwahl hat jetzt auch Axt und Angel (ab 750 auch Jagen und Spitzhacke)", wwahl);
   await pg.evaluate(() => { window.DMA_SPIEL.pruef.werkzeugSetzen("angel"); });
   await tick(900);
   const teich = await pg.evaluate(() => ({ teich: document.querySelectorAll("#lcPlaetze .sp-acker-teich").length, uhrWeg: [...document.querySelectorAll("#lcPlaetze .sp-acker-teich .sp-acker-uhr")].every((u) => getComputedStyle(u).display === "none") }));

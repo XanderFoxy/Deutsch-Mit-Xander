@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 754: DAS KAMPF-SYMBOL IN DER LEISTE (Funk 181)
+   SONDE — FASSUNG 755: PLÜNDERN MIT FOLGEN (Walkie 294)
    ---------------------------------------------------------------------
-   XANDER (Funk 181): „das will im Prinzip eigentlich nur ein kampfsymbol
-   und ein Dorf Symbol haben ja dass wir wenn wir auf das kampfsymbol
-   Klicken sich diese Elemente erweitern in der Leiste … dann ist sofort
-   auch die primäre Wasser aktiv … das kampfsymbol rutscht … nach oben
-   rechts neben das bürgermenü so dass es praktisch die Überschrift
-   darstellt … und immer dann wenn man es noch mal klickt rutscht es
-   wieder nach unten und schließt diese Taschen".
-   Geprüft auf einem Android-Telefon (360 px, echte Fingertipps).
+   XANDER wählte alle drei: „Plündern kann scheitern – Wachen/Ritter wehren
+   ab, der Plünderer verliert Mana und Punkte", „Rache: 24 Stunden lang
+   kann man den Plünderer ohne Mana-Kosten zurückplündern", „Das ganze
+   Dorf sieht im Ticker, wer geplündert hat".
+   Der Würfel liegt auf dem Server (dort mit 40 Versuchen geprüft); hier
+   wird geprüft, was man sieht und hört: Schild und Klang zugleich, die
+   Meldungen für Plünderer, Verteidiger und alle anderen, der Rache-Knopf.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -190,93 +189,71 @@ const sage = (gut, was, zusatz) => {
   const toene = (ab) => pg.evaluate((ab) => window.DMA_TONLOG.filter((t) => t.wann >= ab).map((t) => [t.name, t.wann - ab]), ab);
   const jetztMs = () => pg.evaluate(() => Math.round(performance.now()));
 
-  const leiste = () => pg.evaluate(() => {
-    const r = document.querySelector(".sp-schnell .sp-s-reihe");
-    const k = [...(r ? r.children : [])].map((b) => (b.className.match(/sp-s-[a-z]+/) || [""])[0]);
-    const box = (s) => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, w: b.width }; };
+  const beaId = "11111111-1111-4111-8111-111111111111";
+  console.log("\nGESCHEITERT\n");
+  await pg.evaluate((beaId) => {
     const S = window.DMA_SPIEL.pruef.zustand();
-    return { k, waffe: S.waffe, kopf: box(".sp-s-kampfkopf"), burger: box(".sp-s-burger"), symbol: box(".sp-s-kampfsymbol"),
-      hoch: !!document.querySelector(".sp-s-kampfkopf.sp-kampf-hoch"), runter: !!document.querySelector(".sp-s-kampfsymbol.sp-kampf-runter"), slots: window.DMA_SPIEL.pruef.st ? 0 : 0 };
-  });
-  await pg.evaluate(() => { try { localStorage.removeItem("dma_spiel_kampfsymbol"); } catch (e) {} const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.waffe = ""; S.kampfLeiste = false; S.schnellMenue = false; S.graben = false; P.schnellZeichnen(true); });
-  await tick(400);
+    window.__extra = Object.assign({}, window.__extra || {}, { spiel_pluendern: (a, ich) => Object.assign({}, ich, { ok: true, gescheitert: true, rache: false, gebaeude: a.p_gebaeude, an: "Bea", strafe: 6, mana_weg: 10, fehl: 30, ritter: 3 }) });
+    window.__hinweise.length = 0; window.__raus.length = 0; window.DMA_TONLOG.length = 0;
+    window.__t0 = Math.round(performance.now());
+    window.DMA_SPIEL.pruef.pluendern(beaId, "bea", "baeckerei");
+  }, beaId);
+  await tick(150);
+  let R = await pg.evaluate(() => ({ meld: window.__hinweise.slice(-1)[0] || "", toene: window.DMA_TONLOG.map((t) => [t.name, t.wann - window.__t0]),
+    schild: !!document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .sp-abwehr svg'), raus: window.__raus.filter((r) => r.ereignis === "pluender_abgewehrt").map((r) => r.zielChat + ":" + r.strafe) }));
+  sage(/abgewehrt/.test(R.meld) && /−10 Mana/.test(R.meld) && /−6 Punkte an Bea/.test(R.meld) && /3 Ritter/.test(R.meld), "Meldung: Beas Ritter haben abgewehrt, −10 Mana, −6 Punkte an Bea", R.meld);
+  const s0 = R.toene.find((t) => t[0] === "schildblock");
+  sage(R.schild && s0 && s0[1] < 120, "Schild springt am Platz von Bea hoch, im selben Moment klirrt der Schlag", JSON.stringify(R.toene));
+  sage(R.raus.join() === "bea:6", "alle im Raum bekommen „abgewehrt“ geschickt", R.raus.join());
+  sage(!R.toene.some((t) => t[0] === "kasse"), "keine Beute-Kasse beim Scheitern");
+  const emo = await pg.evaluate(() => /\p{Extended_Pictographic}/u.test(document.querySelector(".sp-abwehr") ? document.querySelector(".sp-abwehr").textContent : ""));
+  sage(!emo, "der Schild ist gezeichnet, kein Emoji");
 
-  console.log("\nAUSSERHALB DES KAMPFES\n");
-  let L = await leiste();
-  sage(L.k.indexOf("sp-s-kampfsymbol") >= 0 && L.k.indexOf("sp-s-makro") >= 0, "in der Leiste: Kampf-Symbol und Dorf", L.k.join(" "));
-  sage(!L.k.some((x) => /sp-s-(waffe|heil|trank|super|faehig|repar)$/.test(x)), "die Kampf-Taschen sind zu (keine Waffen, Heilen, Tränke, Superkraft)", L.k.join(" "));
-  sage(L.k.indexOf("sp-s-kampfsymbol") < L.k.indexOf("sp-s-makro"), "das Dorf steht hinter dem Kampf-Symbol");
-  sage(!L.kopf, "oben neben ☰ steht noch nichts");
-  const sym = await pg.evaluate(() => { const b = document.querySelector(".sp-s-kampfsymbol"); const r = b.getBoundingClientRect(); const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return { svg: !!b.querySelector("svg"), oben: !!(e && e.closest(".sp-s-kampfsymbol")), emoji: /\p{Extended_Pictographic}/u.test(b.textContent) }; });
-  sage(sym.svg && !sym.emoji, "das Symbol ist gezeichnet (gekreuzte Schwerter), kein Emoji");
-  sage(sym.oben, "nichts liegt über dem Kampf-Symbol");
-  if (process.env.BILD) await (await pg.$(".sp-schnell")).screenshot({ path: process.env.BILD.replace(".png", "-zu.png") });
+  console.log("\nDIE ANDEREN SEHEN ES\n");
+  await pg.evaluate(() => { window.__hinweise.length = 0; window.DMA_SPIEL.empfangen({ ereignis: "pluender_abgewehrt", von: "bea", zielChat: "ich", gebaeude: "muehle", name: "Bea", an: "Alex", strafe: 4 }); });
+  await tick(100);
+  R = await pg.evaluate(() => window.__hinweise.find((h) => /Abgewehrt!/.test(h)) || "");
+  sage(/Abgewehrt!/.test(R) && /Bea/.test(R) && /4 Punkte/.test(R), "Verteidiger: „Abgewehrt! … du bekommst 4 Punkte“", R);
+  await pg.evaluate(() => { window.__hinweise.length = 0; window.DMA_SPIEL.empfangen({ ereignis: "gepluendert", von: "bea", zielChat: "cem", gebaeude: "baeckerei", beute: { brot: 2 }, name: "Bea", an: "Cem" }); });
+  await tick(100);
+  R = await pg.evaluate(() => window.__hinweise.slice(-1)[0] || "");
+  sage(/Bea plündert bei Cem/.test(R) && /Bäckerei/.test(R), "Zuschauer: „Bea plündert bei Cem: Bäckerei“", R);
+  await pg.evaluate(() => { window.__hinweise.length = 0; window.DMA_SPIEL.empfangen({ ereignis: "gepluendert", von: "bea", zielChat: "ich", gebaeude: "schmiede", beute: { erz: 1 }, name: "Bea", an: "Alex" }); });
+  await tick(100);
+  R = await pg.evaluate(() => window.__hinweise.slice(-1)[0] || "");
+  sage(/Rache: 24 Stunden/.test(R), "Geplünderter erfährt: Rache 24 Stunden ohne Mana", R);
 
-  console.log("\nKAMPF-SYMBOL ANTIPPEN\n");
-  await pg.evaluate(() => { window.DMA_TONLOG.length = 0; });
-  let m = await mitte(".sp-s-kampfsymbol");
-  const t0 = await jetztMs();
-  await pg.touchscreen.tap(m.x, m.y); await tick(120);
-  L = await leiste();
-  const erste = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); return (S.slots && S.slots[0]) || ""; });
-  sage(L.waffe && (!erste || L.waffe === erste), "die Primärwaffe ist sofort angelegt", L.waffe + " (erste Tasche " + (erste || "?") + ")");
-  sage(L.k.filter((x) => x === "sp-s-waffe").length >= 2 && L.k.indexOf("sp-s-heil") >= 0 && L.k.indexOf("sp-s-trank") >= 0, "die Kampf-Taschen sind offen: Primär, Sekundär, Heilen, Tränke", L.k.join(" "));
-  sage(L.k[L.k.length - 1] === "sp-s-makro" || L.k.slice(-2).indexOf("sp-s-makro") >= 0, "das Dorf ist trotzdem noch hinten da", L.k.join(" "));
-  sage(L.k.indexOf("sp-s-kampfsymbol") < 0, "das Symbol ist aus der Reihe verschwunden …");
-  sage(L.kopf && L.burger && Math.abs(L.kopf.t - L.burger.t) < 3 && L.kopf.l >= L.burger.r && L.kopf.l - L.burger.r < 12, "… und steht als Überschrift rechts neben ☰", JSON.stringify({ kopf: L.kopf, burger: L.burger }));
-  sage(L.hoch, "es rutscht hoch (Bewegung)");
-  const T1 = await toene(t0);
-  const auf = T1.find((x) => x[0] === "kampfauf");
-  sage(auf && auf[1] < 150, "Schwert-Klang beim Hochrutschen, sofort", JSON.stringify(T1));
-  const dauer = await pg.evaluate(() => { const e = document.querySelector(".sp-s-kampfkopf"); return e ? getComputedStyle(e).animationDuration : ""; });
-  sage(dauer === "0.4s", "die Bewegung dauert so lang wie der Klang (0,4 s)", dauer);
-  const frei = await pg.evaluate(() => { const b = document.querySelector(".sp-s-kampfkopf"); const r = b.getBoundingClientRect(); const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!(e && e.closest(".sp-s-kampfkopf")); });
-  await tick(500);
-  const frei2 = await pg.evaluate(() => { const b = document.querySelector(".sp-s-kampfkopf"); const r = b.getBoundingClientRect(); const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); const u = document.querySelector(".sp-s-burger").getBoundingClientRect(); return { oben: !!(e && e.closest(".sp-s-kampfkopf")), ueber: !(r.left >= u.right || r.right <= u.left || r.top >= u.bottom || r.bottom <= u.top), rechts: r.right <= window.innerWidth }; });
-  sage((frei || frei2.oben) && !frei2.ueber && frei2.rechts, "die Überschrift ist frei antippbar und überdeckt ☰ nicht", JSON.stringify(frei2));
-  if (process.env.BILD) await (await pg.$(".sp-schnell")).screenshot({ path: process.env.BILD.replace(".png", "-auf.png") });
-
-  console.log("\nNOCHMAL ANTIPPEN\n");
-  m = await mitte(".sp-s-kampfkopf");
-  const t1 = await jetztMs();
-  await pg.touchscreen.tap(m.x, m.y); await tick(120);
-  L = await leiste();
-  sage(!L.waffe, "die Waffe ist eingesteckt", L.waffe);
-  sage(L.k.indexOf("sp-s-kampfsymbol") >= 0 && !L.kopf && !L.k.some((x) => /sp-s-(waffe|heil|trank)$/.test(x)), "das Symbol rutscht zurück, die Taschen sind zu", L.k.join(" "));
-  sage(L.runter, "es rutscht nach unten (Bewegung)");
-  const T2 = await toene(t1);
-  sage(T2.some((x) => x[0] === "kampfzu" && x[1] < 150), "Klang beim Einstecken, sofort", JSON.stringify(T2));
-
-  console.log("\nWER SCHON KÄMPFT, SIEHT DIE TASCHEN\n");
-  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.kampfLeiste = false; S.waffe = "zwille"; P.schnellZeichnen(true); });
+  console.log("\nRACHE\n");
+  R = await pg.evaluate((beaId) => {
+    const P = window.DMA_SPIEL.pruef, S = P.zustand();
+    S.ich.dorf = Object.assign({}, S.ich.dorf, { baeckerei: { stufe: 2, lp: 30, gepl: new Date(Date.now() - 3600000).toISOString(), von: "Bea", von_id: beaId } });
+    const vorher = P.racheGegen(beaId), cem = P.racheGegen("22222222-2222-4222-8222-222222222222");
+    const d = document.createElement("div");
+    d.innerHTML = P.fremdStationHtml({ sid: beaId, chat: "bea", name: "Bea", st: Object.assign({}, S.stand[beaId], { mitspielen: true, dorf: { baeckerei: { stufe: 1, lp: 20 } } }) }, "baeckerei");
+    const knopf = d.querySelector('[data-s="pluendern"]');
+    S.stand[beaId] = Object.assign({}, S.stand[beaId], { dorf: { baeckerei: { stufe: 1, lp: 20 } } });
+    const n = document.createElement("div"); n.innerHTML = P.nachbarnHtml();
+    const alt = S.ich.dorf.baeckerei; S.ich.dorf.baeckerei = Object.assign({}, alt, { rache: new Date().toISOString() });
+    const danach = P.racheGegen(beaId);
+    S.ich.dorf.baeckerei = Object.assign({}, alt, { gepl: new Date(Date.now() - 25 * 3600000).toISOString() });
+    const alt25 = P.racheGegen(beaId);
+    return { vorher, cem, knopf: knopf ? knopf.textContent : "", nachbar: (n.querySelector(".sp-rache") || {}).textContent || "", danach, alt25 };
+  }, beaId);
+  sage(R.vorher && !R.cem, "Rache nur gegen den, der geplündert hat", JSON.stringify(R));
+  sage(/Rache/.test(R.knopf) && /ohne Mana/.test(R.knopf), "in Beas Dorf heißt der Knopf „Rache · ohne Mana“", R.knopf);
+  sage(/Rache/.test(R.nachbar), "in der Nachbarliste steht bei Bea „Rache · ohne Mana“", R.nachbar);
+  sage(!R.danach && !R.alt25, "nach der Rache oder nach 24 Stunden wieder normal (10 Mana)");
+  await pg.evaluate((beaId) => {
+    window.__extra.spiel_pluendern = (a, ich) => Object.assign({}, ich, { ok: true, rache: true, gebaeude: a.p_gebaeude, an: "Bea", beute: { brot: 2 }, mana: 0, punkte_beute: 0, mana_weg: 0, anteil: 20, schaden: 10 });
+    window.__hinweise.length = 0; window.__raus.length = 0;
+    window.DMA_SPIEL.pruef.pluendern(beaId, "bea", "baeckerei");
+  }, beaId);
   await tick(200);
-  L = await leiste();
-  sage(L.k.indexOf("sp-s-waffe") >= 0 && L.kopf, "mit angelegter Waffe (z. B. übers Rad) ist die Leiste offen", L.k.join(" "));
-
-  console.log("\nHINWEISPUNKT (ab 755)\n");
-  const punkt = await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.waffe = ""; S.kampfLeiste = false; const alt = S.ich.ladung, halt = S.ich.waffen_halt; S.ich.waffen_halt = {};
-    S.ich.ladung = 20; P.schnellZeichnen(true); const ohne = !!document.querySelector(".sp-s-kampfsymbol.sp-kampf-merk");
-    S.ich.ladung = 100; P.schnellZeichnen(true); const mit = !!document.querySelector(".sp-s-kampfsymbol.sp-kampf-merk");
-    S.ich.ladung = 20; S.ich.waffen_halt = halt; P.schnellZeichnen(true); const stumpf = !!document.querySelector(".sp-s-kampfsymbol.sp-kampf-merk"); S.ich.ladung = alt; P.schnellZeichnen(true); return { ohne, mit, stumpf }; });
-  sage(!punkt.ohne && punkt.mit && punkt.stumpf, "wartet in den Taschen etwas (Superkraft voll oder Waffe stumpf), trägt das Kampf-Symbol einen Punkt", JSON.stringify(punkt));
-
-  console.log("\nABSCHALTBAR\n");
-  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.waffe = ""; S.schnellMenue = true; S.blick = null; S.schnellReiter = "mehr"; P.schnellZeichnen(true); });
-  await tick(300);
-  const hat = await pg.evaluate(() => !!document.querySelector('[data-s="kampfsymbolan"]'));
-  sage(hat, "unter „Leiste unten ordnen“ gibt es den Schalter Kampf-Symbol");
-  await pg.evaluate(() => { const b = document.querySelector('[data-s="kampfsymbolan"]'); if (b) { b.scrollIntoView({ block: "center" }); } });
-  await tick(200);
-  m = await mitte('[data-s="kampfsymbolan"]');
-  if (m) { await pg.touchscreen.tap(m.x, m.y); await tick(250); }
-  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.schnellMenue = false; P.schnellZeichnen(true); });
-  await tick(200);
-  L = await leiste();
-  sage(L.k.indexOf("sp-s-kampfsymbol") < 0 && L.k.indexOf("sp-s-waffe") >= 0 && !L.kopf, "aus: alle Taschen immer offen wie früher, kein Symbol", L.k.join(" "));
-  await pg.evaluate(() => { try { localStorage.removeItem("dma_spiel_kampfsymbol"); } catch (e) {} });
+  R = await pg.evaluate(() => ({ meld: window.__hinweise.slice(-1)[0] || "", raus: window.__raus.filter((r) => r.ereignis === "gepluendert").map((r) => r.rache + ":" + r.an) }));
+  sage(/Rache!/.test(R.meld) && R.raus.join() === "true:Bea", "gelungene Rache: „Rache! Bäckerei von Bea geplündert“, die anderen erfahren es", JSON.stringify(R));
 
   sage(!konsolenFehler.length, "keine Seitenfehler", konsolenFehler.slice(0, 2).join(" | "));
   await br.close(); srv.close();
-  console.log("\nFassung 754 (Kampf-Symbol): " + (fehler ? fehler + " rot." : "alles grün."));
+  console.log("\nFassung 755 (Plündern mit Folgen): " + (fehler ? fehler + " rot." : "alles grün."));
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });

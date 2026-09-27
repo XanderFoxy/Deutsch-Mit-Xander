@@ -218,6 +218,7 @@ const GERAEUSCHE = [
      sein für so eine Spitzhacke gegen Stein"; (Funk 183): „Der Sound für das Kühe melken bzw für das Milch abholen könnte ein
      eigener sein z.B das Muhen von einer Kuh". */
   { name: "spitzhacke", dauer: 1.2, text: "A steel pickaxe striking hard rock in a mine: one bright metallic clink ringing on stone with small rock chips falling, close, no music, no voices" },
+  { name: "schildblock", dauer: 0.8, text: "A sword blow blocked by a raised heavy metal shield: one solid clang with a short metallic ring, close, no music, no voices" },
   { name: "kampfauf", dauer: 0.8, text: "A short steel sword being drawn quickly from a leather scabbard, crisp metallic ring at the end, close, no music, no voices" },
   { name: "kampfzu", dauer: 0.7, text: "A steel sword sliding back into a leather scabbard and clicking into place, short, close, no music, no voices" },
   { name: "kuhmuh", dauer: 2, text: "A single dairy cow mooing warmly in a barn, a long friendly moo, close microphone, no music, no voices" },

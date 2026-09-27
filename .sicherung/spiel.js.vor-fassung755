@@ -284,7 +284,7 @@
     "laserrot", "lasertreffer", "bonk", "krugklirr", "brezelknack", "wurstklatsch", "krautmatsch", "spaetzlesalve", "katapult4", "doenerklatsch",
     "mgsalve", "lasersalve", "monsterbiss", "drachenfeuer", "chihuahuaknurr", "bisszerren", "stachelstich", "fluegelschlag", "geschuetzfeuer",
     "zauberpuff", "zauberrad", "schmerzaumann", "schmerzaufrau", "schmerzautschmann", "schmerzautschfrau", "trankschluck", "gong", "geschenk", "kasse", "wischer", "explosion2", "eiknack", "huhnwurf", "huhntreffer", "axttreffer", "swoosh", "platsch",
-    "hundbellen", "fuchskeckern", "babyfuchs", "einhorn", "phoenix", "feenzauber", "monsterbiss2", "drachenpuste", "erdbeben", "orkan", "brezelknack", "muecken", "kaffeeklatsch", "hexenschuss", "gartenzwerg", "stempel", "spitzhacke", "kuhmuh", "kampfauf", "kampfzu", "schildblock"];
+    "hundbellen", "fuchskeckern", "babyfuchs", "einhorn", "phoenix", "feenzauber", "monsterbiss2", "drachenpuste", "erdbeben", "orkan", "brezelknack", "muecken", "kaffeeklatsch", "hexenschuss", "gartenzwerg", "stempel", "spitzhacke", "kuhmuh", "kampfauf", "kampfzu"];
   function klangKontext() {
     if (KLANG.ctx) return KLANG.ctx;
     var AC = window.AudioContext || window.webkitAudioContext;
@@ -992,18 +992,9 @@
         ton("hammerschlag", 0.45);
         var weg = Object.keys(n.beute || {}).map(function (w) { return n.beute[w] + " " + (WAREN[w] || w); }).join(", ");
         hinweis("⚔️ " + (n.name || "Jemand") + " hat deine " + ((DORF[n.gebaeude] || {}).name || "Gebäude") + " geplündert" + (weg ? " (" + weg + ")" : "")
-          + ". Sie steht noch – reparieren: Mein Dorf (1 Erz oder 2 Holz). Ritter schützen dich."
-          + (n.rache ? "" : " Rache: 24 Stunden lang plünderst du " + (n.name || "ihn") + " einmal ohne Mana."));
+          + ". Sie steht noch – reparieren: Mein Dorf (1 Erz oder 2 Holz). Ritter schützen dich.");
         abrufen(true);
-      } else if (spielSichtbar()) {
-        /* FASSUNG 755 — „Das ganze Dorf sieht … wer geplündert hat": alle anderen im Raum lesen es mit. */
-        hinweis("⚔️ " + (n.name || "Jemand") + (n.rache ? " rächt sich an " + (n.an || "?") + ": " : " plündert bei " + (n.an || "?") + ": ") + ((DORF[n.gebaeude] || {}).name || "ein Gebäude"));
       }
-    } else if (n.ereignis === "pluender_abgewehrt") {
-      /* FASSUNG 755 — der Plünderversuch ist gescheitert: Schild und Klang am Platz des Verteidigers, für alle. */
-      abwehrZeigen(n.zielChat); ton("schildblock", 0.45);
-      if (n.zielChat === meineChatId()) { hinweis("🛡️ Abgewehrt! " + (n.name || "Jemand") + " wollte deine " + ((DORF[n.gebaeude] || {}).name || "Gebäude") + " plündern – du bekommst " + (n.strafe || 0) + " Punkte."); abrufen(true); }
-      else if (spielSichtbar()) hinweis("🛡️ " + (n.an || "?") + " hat einen Plünderversuch von " + (n.name || "?") + " abgewehrt");
     } else if (n.ereignis === "ausgewichen") {
       zahlZeigen(n.zielChat, null, "ausgewichen");
     } else if (n.ereignis === "heilung") {
@@ -1939,7 +1930,6 @@
       if (!r || !r.ok) { hinweis("🐾 " + ((r && r.grund) || "ging nicht")); return; }
       S.faehig = { art: r.faehigkeit, bereitBis: Date.now() + (r.bereit_s || 0) * 1000 };
       tierLaut(art, "ruf", 0.45);
-      S.kampfLeiste = true;   /* FASSUNG 755 — der versprochene Knopf muss auch zu sehen sein: die Kampf-Taschen klappen auf. */
       hinweis("🐾 " + FAEHIG[art][0] + " ausgerüstet – der Knopf mit " + ((TIERE[art] || {}).name || art) + " steht jetzt in der Leiste.");
       schnellZeichnen(true); panelAuffrischen();
     }).catch(function (e) { hinweis("Ging nicht: " + (e && e.message ? e.message : e)); });
@@ -3831,9 +3821,7 @@
       leisteReihe().forEach(function (k) {
         if (!feld[k] || leisteWeg.indexOf(k) >= 0) return;
         if (!kampfAuf && KAMPF_TASCHEN.indexOf(k) >= 0) {
-          /* FASSUNG 755 — wartet in den Taschen etwas (Waffe stumpf, Superkraft voll), trägt das Symbol einen Punkt. */
-          var merk = reparaturNoetig(ich) || (ich.ladung || 0) >= 100;
-          if (!symbolDa) { symbolDa = true; teile.push('<button type="button" class="sp-s-kampfsymbol' + (frisch ? " sp-kampf-runter" : "") + (merk ? " sp-kampf-merk" : "") + '" data-s="kampfsymbol" title="Kampf – Taschen öffnen, Primärwaffe anlegen' + (merk ? " (darin wartet etwas)" : "") + '">' + kampfSymbolSvg() + "</button>"); }
+          if (!symbolDa) { symbolDa = true; teile.push('<button type="button" class="sp-s-kampfsymbol' + (frisch ? " sp-kampf-runter" : "") + '" data-s="kampfsymbol" title="Kampf – Taschen öffnen, Primärwaffe anlegen">' + kampfSymbolSvg() + "</button>"); }
           return;
         }
         teile.push(feld[k]);
@@ -4508,7 +4496,6 @@
         S.kampfBis = Date.now() + (r.klassen_bereit_s || 0) * 1000; S.kampfZiel = false;
         if (!r.kampfklasse) { ton("swoosh", 0.3); hinweis("⚔️ Klasse abgelegt – du kämpfst wieder ohne Klasse. Deine Stufen bleiben gespeichert."); schnellZeichnen(true); return; }
         ton("klasse-" + r.kampfklasse, 0.5);
-        S.kampfLeiste = true;
         hinweis("⚔️ Du kämpfst jetzt als " + KAMPF[r.kampfklasse].name + " – Kraft: " + KAMPF[r.kampfklasse].kraft + ". Der Knopf steht in der Leiste.");
         schnellZeichnen(true);
       }).catch(function () { hinweis("⚔️ Das ging gerade nicht."); });
@@ -8387,7 +8374,7 @@
       + '<button type="button" class="sp-dl-st-zu" data-s="dorfwahl" data-g="" aria-label="Station schließen">✕</button></div>'
       + '<p class="sp-sm-klein">' + D.gibt + (gepl ? " · gerade geplündert (4 h Schutz)" : "") + "</p>"
       + (kann ? '<div class="sp-sm-liste sp-dl-st-knoepfe"><button type="button" data-s="pluendern" data-z="' + esc(e.sid) + '" data-c="' + esc(e.chat) + '" data-g="' + k + '"'
-        + (kaputt || gepl || !st.mitspielen ? " disabled" : "") + ">" + pluenderKnopfText(e.sid) + "</button></div>"
+        + (kaputt || gepl || !st.mitspielen ? " disabled" : "") + ">Plündern <small>10 Mana</small></button></div>"
         + (!st.mitspielen ? '<p class="sp-sm-klein">' + esc(e.name) + " spielt gerade nicht mit – dann ist das Dorf geschützt.</p>" : "") : "") + "</div>";
   }
   function dorfBesuchen(chatId) {
@@ -8409,12 +8396,12 @@
           + (kaputt || gepl || !st.mitspielen ? " disabled" : "") + ' title="' + DORF[k].name + (gepl ? " – 4 h geschützt" : kaputt ? " – kaputt" : "") + '">'
           + dorfSvg(k, g.stufe || 1) + "<small>" + DORF[k].name + "</small></button>";
       }).join("");
-      return knoepfe ? '<div class="sp-nachbar' + (racheGegen(sid) ? " sp-nachbar-rache" : "") + '"><b>' + esc(p.name || "?") + (st.dorf_name ? " · " + esc(st.dorf_name) : "") + (racheGegen(sid) ? ' <em class="sp-rache">Rache · ohne Mana</em>' : "") + '</b><button type="button" class="sp-nachbar-hin" data-s="dorfbesuch" data-c="' + esc(p.id) + '">Stadt ansehen</button><small>' + dorfKennzeile(st) + " · " + (st.mitspielen ? (st.ritter ? st.ritter + " Ritter" : "keine Ritter") : "spielt gerade nicht") + "</small>"
+      return knoepfe ? '<div class="sp-nachbar"><b>' + esc(p.name || "?") + (st.dorf_name ? " · " + esc(st.dorf_name) : "") + '</b><button type="button" class="sp-nachbar-hin" data-s="dorfbesuch" data-c="' + esc(p.id) + '">Stadt ansehen</button><small>' + dorfKennzeile(st) + " · " + (st.mitspielen ? (st.ritter ? st.ritter + " Ritter" : "keine Ritter") : "spielt gerade nicht") + "</small>"
         + '<div class="sp-nachbar-reihe">' + knoepfe + "</div></div>" : "";
     }).join("");
     return '<div class="sp-sm-gruppe sp-nachbarn"><span>Nachbardörfer plündern · 10 Mana</span></div>'
       + (zeilen || '<p class="sp-sm-klein">Gerade kein Dorf im Raum.</p>')
-      + (zeilen ? '<p class="sp-sm-klein">Du nimmst 20 % der Vorräte (je Ritter +5 %, ihre Ritter −5 %). Es kann scheitern: 12 %, je Ritter dort +6 %, je eigener −4 % – dann sind die 10 Mana weg und 3 % deiner Punkte gehen an sie. Wer dich geplündert hat, plünderst du 24 Stunden lang einmal ohne Mana zurück (Rache). Das Gebäude bleibt stehen und ist nur beschädigt – der Besitzer repariert es mit Erz oder Holz. Danach 4 Stunden Schutz. Schule, Bibliothek und Krankenhaus plündert man nicht.</p>' : "");
+      + (zeilen ? '<p class="sp-sm-klein">Du nimmst 20 % der Vorräte (je Ritter +5 %, ihre Ritter −5 %). Das Gebäude bleibt stehen und ist nur beschädigt – der Besitzer repariert es mit Erz oder Holz. Danach 4 Stunden Schutz. Schule, Bibliothek und Krankenhaus plündert man nicht.</p>' : "");
   }
   var MAKROS = { dorf: "Mein Dorf", handel: "Markt & Handel", werkzeug: "Werkzeug", deutsch: "Deutsch-Aufgabe", tiere: "Tiere", heilen: "Heilen", zauber: "Zauber" };
   try { var makroMerk = localStorage.getItem("dma_spiel_makro"); if (MAKROS[makroMerk]) S.makro = makroMerk; } catch (e) {}
@@ -8466,30 +8453,6 @@
     el.appendChild(w);
     setTimeout(function () { w.remove(); }, 1500);
   }
-  /* ---------------------------------------------------------------
-     FASSUNG 755 — PLÜNDERN MIT FOLGEN (Walkie 294, Xander wählte alle drei)
-     „Plündern kann scheitern – Wachen/Ritter wehren ab, der Plünderer verliert Mana und Punkte", „Rache: 24 Stunden lang
-     kann man den Plünderer ohne Mana-Kosten zurückplündern", „Das ganze Dorf sieht im Ticker, wer geplündert hat".
-     Der Server würfelt: 12 % Grundchance zu scheitern, jeder Ritter des Verteidigers +6 %, jeder eigene −4 % (5–60 %).
-     Scheitert es, sind die 10 Mana weg und 3 % der Punkte (2 bis 20) gehen an den Verteidiger. Wer geplündert wurde, darf
-     den Plünderer 24 Stunden lang einmal ohne Mana zurückplündern (auch wenn der noch Anfängerschutz hat). Jede Plünderung
-     und jede Abwehr steht im Laufband der Seite (Tabelle activity) und als Meldung bei allen im Raum. */
-  function racheGegen(sid) {
-    var d = (S.ich || {}).dorf || {}, jetzt = Date.now();
-    return Object.keys(d).some(function (k) { var b = d[k]; return b && b.von_id === sid && !b.rache && b.gepl && jetzt - Date.parse(b.gepl) < 24 * 3600000; });
-  }
-  function pluenderKnopfText(sid) { return racheGegen(sid) ? "Rache <small>ohne Mana</small>" : "Plündern <small>10 Mana</small>"; }
-  function abwehrZeigen(chatId) {
-    var el = platzElVon(chatId);
-    if (!el) return;
-    var kreis = el.querySelector(".lc-kreis"), w = document.createElement("span");
-    w.className = "sp-abwehr";
-    w.innerHTML = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 L34 8 V19 C34 28 28 34 20 37 C12 34 6 28 6 19 V8 Z" fill="#8a9aae" stroke="#3a4656" stroke-width="2"/>'
-      + '<path d="M20 7 L30 10.5 V19 C30 25.5 26 30 20 32.5 Z" fill="#b8c6d6"/><path d="M13 14 H27 M20 10 V31" stroke="#c9302c" stroke-width="3"/></svg><i></i><i></i><i></i>';
-    w.style.top = Math.max(0, (kreis ? kreis.offsetTop : 0) - 6) + "px";
-    el.appendChild(w);
-    setTimeout(function () { w.remove(); }, 1300);
-  }
   function pluendern(sid, chatId, geb) {
     if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
     if (S.pluenderLaeuft) return;
@@ -8498,25 +8461,15 @@
       S.pluenderLaeuft = false;
       if (!r || r.ok === false) { hinweis("⚔️ " + ((r && r.grund) || "Das ging nicht.")); return; }
       S.ich = r; S.stand[r.id] = oeffentlich(r);
-      if (r.gescheitert) {
-        /* Ton und Bild zugleich: der Schild springt hoch, genau dann klirrt der Schlag. */
-        abwehrZeigen(chatId); ton("schildblock", 0.55);
-        hinweis("🛡️ " + (r.ritter ? r.an + "s " + r.ritter + " Ritter haben" : r.an + " hat") + " dich abgewehrt" + (r.rache ? " – die Rache ist vorbei" : "")
-          + ": " + (r.mana_weg ? "−" + r.mana_weg + " Mana, " : "") + "−" + r.strafe + " Punkte an " + r.an + ". (Chance zu scheitern: " + r.fehl + " %)");
-        senden({ ereignis: "pluender_abgewehrt", zielChat: chatId, gebaeude: geb, name: (S.ich || {}).name || "", an: r.an, strafe: r.strafe });
-        setTimeout(function () { abrufen(true); }, 400);
-        schnellZeichnen(true);
-        return;
-      }
       var beute = Object.keys(r.beute || {}).map(function (w) { return r.beute[w] + " " + (WAREN[w] || w); });
       if (r.mana) beute.push(r.mana + " Mana"); if (r.punkte_beute) beute.push(r.punkte_beute + " Punkte");
       /* Ton und Bild zusammen: das Gebäude wackelt beim Schlag, dann klingelt die Beute. */
       pluenderZeigen(chatId, geb);
       ton("hammerschlag", 0.5);
       if (beute.length) setTimeout(function () { ton("kasse", 0.4); }, 650);
-      hinweis("⚔️ " + (r.rache ? "Rache! " : "") + DORF[geb].name + " von " + r.an + " geplündert: " + (beute.join(", ") || "leer – nichts zu holen") + " (" + r.anteil + " %). Das Gebäude bleibt stehen – "
+      hinweis("⚔️ " + DORF[geb].name + " von " + r.an + " geplündert: " + (beute.join(", ") || "leer – nichts zu holen") + " (" + r.anteil + " %). Das Gebäude bleibt stehen – "
         + r.an + " kann es reparieren.");
-      senden({ ereignis: "gepluendert", zielChat: chatId, gebaeude: geb, beute: r.beute || {}, name: (S.ich || {}).name || "", an: r.an, rache: !!r.rache });
+      senden({ ereignis: "gepluendert", zielChat: chatId, gebaeude: geb, beute: r.beute || {}, name: (S.ich || {}).name || "" });
       setTimeout(function () { abrufen(true); }, 400);
       schnellZeichnen(true);
     }).catch(function () { S.pluenderLaeuft = false; hinweis("⚔️ Das ging gerade nicht."); });
@@ -14149,7 +14102,7 @@
       dorfJahr: dorfJahr, osterSonntag: osterSonntag, JAHR_VORSCHAU: JAHR_VORSCHAU,
       jahrVorschau: function (v, knopf) { S.jahrVorschau = v || ""; if (knopf != null) S.jahrVorschauTest = !!knopf; },
       jahrLichter: function () { return (DM.jahrLichter || []).length; }, dmZeit: function () { return DM.zeit; }, dmNeu: function () { DM.geht = null; DM.bilder = {}; },
-      leisteReihe: leisteReihe, racheGegen: racheGegen, nachbarnHtml: nachbarnHtml, fremdStationHtml: fremdStationHtml, dorfZoom: dorfZoom, dorfNah: dorfNah, DORF_ZEICHEN: DORF_ZEICHEN,
+      leisteReihe: leisteReihe, dorfZoom: dorfZoom, dorfNah: dorfNah, DORF_ZEICHEN: DORF_ZEICHEN,
       /* FASSUNG 724 */
       dorfLichterTakt: dorfLichterTakt, stadtWetterNeu: function () { SW.name = ""; SW.jetzt = null; SW.zeit = 0; SW.laeuft = false; },
       dorfWetter: dorfWetter, dorfBlitz: dorfBlitz, dorfVoegel: dorfVoegel, dorfTreiben: dorfTreiben, DW: DW, dorfWetterMelden: dorfWetterMelden,
