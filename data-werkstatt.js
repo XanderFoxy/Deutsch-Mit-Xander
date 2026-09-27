@@ -49,22 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 743 — Bonuspunkte für schnelle Antworten (Funk 139)",
+  stand: "Fassung 744 — Klasse wieder ablegen (Funk 162)",
 
   inArbeit: [
-    { seit: "2026-09-27T06:01",
+    { seit: "2026-09-27T06:15",
+      text: "Zwei Charaktere / neu anfangen (Funk 162) – Grundsatzfrage an Xander" },
+    { seit: "2026-09-27T06:15",
       text: "Modulares Dorf, Verteidigung/Kaserne, Verträge – wartet auf Antworten zu den 15 Fragen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T06:01",
+    { seit: "2026-09-27T06:15",
+      text: "Klasse und Kämpferklasse ablegen" },
+    { seit: "2026-09-27T06:15",
       text: "Schnell-Bonus: bis 6 s +50 %, bis 12 s +25 %" },
-    { seit: "2026-09-27T06:01",
+    { seit: "2026-09-27T06:15",
       text: "Tagesgeschenk als Meldung oben, im Menü „heute abgeholt · nächstes in …“" },
-    { seit: "2026-09-27T06:01",
-      text: "Taschen zeigen das Gerät, Namensschild beim Tippen, roter Schlüssel bei stumpf" },
-    { seit: "2026-09-27T06:01",
-      text: "Schaufel: Doppeltipp gräbt nicht, Werkzeugwahl geht auf" },
+    { seit: "2026-09-27T06:15",
+      text: "Taschen zeigen das Gerät, Namensschild beim Tippen" },
   ],
 };

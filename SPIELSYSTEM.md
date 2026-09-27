@@ -1261,3 +1261,10 @@ Server: Migration `spiel_743_schnell_bonus` (spiel_antwort). Geprüft mit Rollba
 - **Regel** (auf dem Server, nicht fälschbar): Die Zeit läuft ab dem Stellen der Aufgabe. Bis 6 s gibt es +50 %, bis 12 s +25 % der Punkte, mindestens 1. Bei „Stimmt der Satz?“ gibt es keinen Schnell-Bonus, weil man bei zwei Antworten blind schnell raten könnte. Die bestehende Sperre (frühestens nach 2 s antworten) bleibt.
 - **Anzeige**: In der Auswertung steht „⚡ +2 schnell“ (mit Sekunden beim Drüberfahren); im Deutsch-Menü steht „⚡ Schnell (bis 6 s) gibt es die Hälfte extra.“
 - **Mitbehoben**: Die Extras (Mut-Bonus, Mana, EP, Mission) schoben bei vielen Boni den „Weiter“-Knopf aus dem Bild. Jetzt stehen sie in einer Zeile, die sich notfalls mit „…“ kürzt; „Weiter“ bleibt immer sichtbar.
+
+### Fassung 744 (Funk 162: eine Klasse wieder ablegen)
+Server: Migrationen `spiel_744_klasse_ablegen` (spiel_klasse, spiel_kampfklasse_waehlen nehmen „keine“) und `spiel_744_ich_klasse_ab` (spiel_ich liefert klasse_ab). Geprüft mit Rollback als Xander: Deutsch-Klasse ablegen → frei; sofort neu wählen → „wechseln geht einmal am Tag“; einen Tag später → 50 Punkte; Kämpferklasse ablegen → frei; sofort neu → „alle 10 Minuten“; danach wieder möglich. Sonden 663, 699, 734 grün; Menü-Knöpfe im Browser geprüft.
+- XANDER (wörtlich, Funk 162): „Und was passiert dann wenn man das nicht mehr haben will kommt dass man dann jemals auf den Originalzustand zurück“.
+- **Deutsch-Klasse** (Menü → Mehr → Klasse): unten „Klasse ablegen – zurück zum Anfang“. Ablegen kostet nichts. Wer danach wieder eine Klasse will, zahlt wie beim Wechseln 50 Punkte, einmal am Tag – sonst könnte man die Wechselgebühr mit Ablegen umgehen.
+- **Kämpferklasse** (Menü → Mehr → Kämpferklasse): unten „Ohne Klasse kämpfen (ablegen)“. Dann gibt es keine Klassenkraft und keine Stärke, wie am Anfang. Die Stufen jeder Klasse bleiben gespeichert; nach 10 Minuten kann man wieder wählen.
+- Noch offen aus derselben Nachricht: „mit einem Charakter komplett neu anfangen … zwei Charaktere“ – das ist eine Grundsatzfrage (Punktewertung, Ranking) und steht bei den Fragen an Xander.

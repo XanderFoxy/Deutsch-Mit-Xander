@@ -2135,10 +2135,7 @@
           + '<small class="sp-kampf-balken" style="--anteil:' + anteil + '%" title="' + xp + " Klassen-Erfahrung" + (st < 10 ? " · Stufe " + (st + 1) + " ab " + bis : "") + '"></small>'
           + "<small>Kraft: <b>" + K.kraft + "</b> – " + esc(K.text) + "</small><small>Stärke: " + esc(K.passiv) + "</small></span>"
           + (ist ? '<strong class="sp-klasse-ist">du</strong>' : '<button type="button" data-s="kampfwahl" data-k="' + k + '">' + (jetzt ? "Wechseln" : "Wählen") + "</button>") + "</div>";
-      }).join("") + "</div>"
-      /* FASSUNG 744 — Funk 162: ablegen; die Erfahrung jeder Klasse bleibt gespeichert. */
-      + (jetzt ? '<div class="sp-sm-liste sp-klasse-weg"><button type="button" data-s="kampfwahl" data-k="keine">Ohne Klasse kämpfen (ablegen)</button></div>'
-        + '<p class="sp-sm-klein">Ablegen: keine Klassenkraft, keine Stärke – wie am Anfang. Die Stufen bleiben gespeichert; in 10 Minuten kannst du wieder wählen.</p>' : "");
+      }).join("") + "</div>";
   }
   function kampfKnopf() {
     var ich = S.ich || {}, k = ich.kampfklasse, K = KAMPF[k];
@@ -4401,7 +4398,6 @@
         if (!r || r.ok === false) { hinweis("⚔️ " + ((r && r.grund) || "Das ging nicht.") + (r && r.bereit_s ? " (noch " + Math.ceil(r.bereit_s / 60) + " min)" : "")); return; }
         S.ich = r; S.stand[r.id] = oeffentlich(r); senden({ ereignis: "stand", stand: oeffentlich(r) });
         S.kampfBis = Date.now() + (r.klassen_bereit_s || 0) * 1000; S.kampfZiel = false;
-        if (!r.kampfklasse) { ton("swoosh", 0.3); hinweis("⚔️ Klasse abgelegt – du kämpfst wieder ohne Klasse. Deine Stufen bleiben gespeichert."); schnellZeichnen(true); return; }
         ton("klasse-" + r.kampfklasse, 0.5);
         hinweis("⚔️ Du kämpfst jetzt als " + KAMPF[r.kampfklasse].name + " – Kraft: " + KAMPF[r.kampfklasse].kraft + ". Der Knopf steht in der Leiste.");
         schnellZeichnen(true);
@@ -4410,7 +4406,6 @@
       rpc("spiel_klasse", { p_klasse: k.dataset.k }).then(function (r) {
         if (!r || r.ok === false) { hinweis("🛡️ " + ((r && r.grund) || "Das ging nicht.")); return; }
         S.ich = r; S.stand[r.id] = oeffentlich(r); senden({ ereignis: "stand", stand: oeffentlich(r) });
-        if (!r.klasse) { ton("swoosh", 0.3); hinweis("🛡️ Klasse abgelegt – du bist wieder wie am Anfang."); schnellZeichnen(true); return; }
         ton("jubel", 0.5);
         hinweis("🛡️ Du bist jetzt " + KLASSEN[r.klasse].name + ": " + KLASSEN[r.klasse].plus + ".");
         schnellZeichnen(true);
@@ -6857,16 +6852,12 @@
   function klassenHtml(ich) {
     var lv = ich.level || 1, jetzt = ich.klasse || "";
     return '<p class="sp-sm-klein">' + (lv < 5 ? "Klassen gibt es ab <b>Level 5</b> – du bist Level " + lv + "."
-        : jetzt ? "Du bist <b>" + esc(KLASSEN[jetzt].name) + "</b>. Wechseln kostet 50 Punkte (einmal am Tag)."
-        : ich.klasse_ab ? "Du hast keine Klasse. Neu wählen kostet 50 Punkte (einmal am Tag)." : "Wähle deine Klasse – die erste Wahl ist frei.") + "</p>"
+        : jetzt ? "Du bist <b>" + esc(KLASSEN[jetzt].name) + "</b>. Wechseln kostet 50 Punkte (einmal am Tag)." : "Wähle deine Klasse – die erste Wahl ist frei.") + "</p>"
       + '<div class="sp-troph-liste">' + Object.keys(KLASSEN).map(function (k) {
         var K = KLASSEN[k], ist = k === jetzt;
         return '<div class="sp-troph sp-klasse' + (ist ? " sp-troph-hat" : "") + '"><i>' + klassenSvg(k) + "</i><span><b>" + K.name + "</b><small>stark in: " + esc(K.gut) + "</small><small>" + esc(K.plus) + "</small></span>"
-          + (ist ? '<strong class="sp-klasse-ist">du</strong>' : '<button type="button" data-s="klassewahl" data-k="' + k + '"' + (lv < 5 ? " disabled" : "") + ">" + (jetzt ? "Wechseln · 50" : ich.klasse_ab ? "Wählen · 50" : "Wählen") + "</button>") + "</div>";
-      }).join("") + "</div>"
-      /* FASSUNG 744 — XANDER (Funk 162): „was passiert dann wenn man das nicht mehr haben will kommt dass man dann jemals
-         auf den Originalzustand zurück". Ablegen ist frei; danach wieder wählen wie wechseln (50 Punkte, einmal am Tag). */
-      + (jetzt ? '<div class="sp-sm-liste sp-klasse-weg"><button type="button" data-s="klassewahl" data-k="keine">Klasse ablegen – zurück zum Anfang</button></div>' : "");
+          + (ist ? '<strong class="sp-klasse-ist">du</strong>' : '<button type="button" data-s="klassewahl" data-k="' + k + '"' + (lv < 5 ? " disabled" : "") + ">" + (jetzt ? "Wechseln · 50" : "Wählen") + "</button>") + "</div>";
+      }).join("") + "</div>";
   }
 
   var DORF = {
