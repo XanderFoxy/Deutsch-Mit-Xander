@@ -2692,14 +2692,6 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-vorwahl .sp-chips .sp-klein { color: #c9d2e3; min-width: 50px; }
 .sp-vorwahl .sp-chips button { padding: 4px 9px; font-size: 12px; border: 0; background: #2b3242; color: #fff; }
 .sp-vorwahl .sp-chips button.sp-an { background: #3a8dde; color: #fff; box-shadow: 0 0 0 2px #bfe0ff inset; }
-/* FASSUNG 762 — einklappbare Vorwahl (Tower Defense) */
-.sp-vorwahl-kurz { width: 100%; box-sizing: border-box; margin: 0; padding: 0 8px; }
-.sp-vorwahl-kurz summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; cursor: pointer; font-size: 12.5px; color: #c9d2e3; }
-.sp-vorwahl-kurz summary::-webkit-details-marker { display: none; }
-.sp-vorwahl-kurz summary b { color: #fff; }
-.sp-vorwahl-aendern { flex: 0 0 auto; padding: 3px 9px; border-radius: 8px; background: #2b3242; color: #fff; font-weight: 600; }
-.sp-vorwahl-kurz[open] .sp-vorwahl-aendern { background: #3a8dde; }
-.sp-vorwahl-kurz[open] { padding-bottom: 6px; }
 .sp-vorwahl p.sp-klein { margin: 4px 0 0; font-size: 11.5px; line-height: 1.35; color: #c9d2e3; }
 /* FASSUNG 750 — Walkie 293: Wild und Fels auf den Plätzen, Jagen mit der eigenen Waffe, Hauen mit Funken. */
 .sp-acker-jagd { box-shadow: inset 0 0 0 2px rgba(160, 97, 44, .65); }

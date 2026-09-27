@@ -13594,11 +13594,9 @@
   var TD_FEHLER = ["der Mädchen", "seid 3 Jahren", "das Auto fährt schneller wie", "wegen dem", "einzigste", "Standart", "Packet", "nähmlich", "Rhytmus", "wiederspiegeln", "garnicht", "Addresse", "Tipp-fehler", "dass Haus", "Poliezei"];
   function tdStarten() {
     var inhalt = extraRahmen("Fehlerteufel-Abwehr", "sp-extra-td");
-    /* FASSUNG 762 — das Feld richtet sich auch nach der Höhe, damit Feld und
-       Knöpfe zugleich zu sehen sind (Kopf, Vorwahl, Stand, Knöpfe ≈ 300 px). */
-    var breit = Math.min(340, window.innerWidth - 24), feld = Math.max(26, Math.floor(Math.min(breit / 9, (window.innerHeight - 300) / 11)));
+    var breit = Math.min(340, window.innerWidth - 24), feld = Math.floor(breit / 9);
     var rekord = 0; try { rekord = Number(localStorage.getItem("dma_td_rekord")) || 0; } catch (e) {}
-    inhalt.innerHTML = deutschVorwahlHtml(true) + '<div class="sp-td-stand"></div><canvas class="sp-td-feld" width="' + feld * 9 + '" height="' + feld * 11 + '"></canvas>'
+    inhalt.innerHTML = deutschVorwahlHtml() + '<div class="sp-td-stand"></div><canvas class="sp-td-feld" width="' + feld * 9 + '" height="' + feld * 11 + '"></canvas>'
       + '<div class="sp-td-knoepfe">' + Object.keys(TD_TUERME).map(function (k) { var t = TD_TUERME[k];
         return '<button type="button" data-td="' + k + '"><i style="background:' + t.farbe + '"></i>' + t.name + " <small>" + t.preis + " BP</small></button>"; }).join("")
       + '<button type="button" data-td="frage" class="sp-td-frage">Deutsch-Frage <small>+3 BP</small></button><button type="button" data-td="welle" class="sp-td-welle">Welle starten</button></div>'
@@ -13895,16 +13893,7 @@
      Vor dem Rundenkampf (Züge und Echtzeit) und vor der Fehlerteufel-Abwehr stehen jetzt Niveau und Fragen-Art zur Wahl –
      dieselbe Einstellung wie im Deutsch-Menü. Schaden ist auf jedem Niveau gleich (fair); höheres Niveau bringt mehr
      Punkte (Server: spiel_antwort und der „Mut“-Anteil in spiel_extra_lohn); Schwächen bringen +50 %. */
-  /* FASSUNG 762 — in der Tower Defense schob die Vorwahl (168 px) das Feld so
-     weit nach unten, dass „Deutsch-Frage" und „Welle starten" auf dem Telefon
-     unter dem Rand lagen. Mit kurz=true ist sie eine einklappbare Zeile. */
-  function deutschVorwahlKopf() {
-    var art = FRAGEN_ARTEN.filter(function (f) { return f[0] === fragenArt(); })[0];
-    return "Niveau <b>" + esc(S.niveau || "") + "</b> · <b>" + esc(art ? art[1] : "") + "</b>";
-  }
-  function deutschVorwahlHtml(kurz) {
-    if (kurz) return '<details class="sp-vorwahl sp-vorwahl-kurz"><summary><span class="sp-vorwahl-kopf">' + deutschVorwahlKopf() + '</span><span class="sp-vorwahl-aendern">ändern</span></summary>'
-      + deutschVorwahlHtml().replace(/^<div class="sp-vorwahl">/, "").replace(/<\/div>$/, "") + "</details>";
+  function deutschVorwahlHtml() {
     return '<div class="sp-vorwahl"><div class="sp-chips"><span class="sp-klein">Niveau:</span>' + NIVEAUS.map(function (n) {
         return '<button type="button" data-vw-niveau="' + n + '" class="' + (S.niveau === n ? "sp-an" : "") + '">' + n + "</button>"; }).join("") + "</div>"
       + '<div class="sp-chips"><span class="sp-klein">Fragen:</span>' + FRAGEN_ARTEN.map(function (f) {
@@ -13919,7 +13908,6 @@
     else return false;
     box.querySelectorAll("[data-vw-niveau]").forEach(function (x) { x.classList.toggle("sp-an", x.dataset.vwNiveau === S.niveau); });
     box.querySelectorAll("[data-vw-art]").forEach(function (x) { x.classList.toggle("sp-an", x.dataset.vwArt === fragenArt()); });
-    box.querySelectorAll(".sp-vorwahl-kopf").forEach(function (x) { x.innerHTML = deutschVorwahlKopf(); });
     ton("holzklopf", 0.15);
     return true;
   }

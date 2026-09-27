@@ -1449,3 +1449,9 @@ Sonden: neu 761 (alles grün); 701, 722, 734, 747 grün. 669 hat 4 rote Punkte i
   - Klassen-Waffen gehen nur in der passenden Klasse (757).
   - Wer eingeladen wird, liest „mit Ausrüstung – dein Set aus dem Rundenkampf-Menü“.
 - **Noch offen aus Walkie 290**: Skins, Tiere im Set, Arena und Teams (zwei gegen einen, jemand schließt sich an).
+
+### Fassung 762 (Tower Defense passt aufs Telefon; Sonde 669 wieder grün)
+Sonden: neu 762 (alles grün, 360×640 und 360×740); 669, 675, 747, 761 grün.
+- **Ursache der 4 roten Punkte in 669**: Seit Fassung 747 stand die Fragen-Vorwahl (168 px hoch) über dem Tower-Defense-Feld. Auf einem 360×740-Telefon lagen „Deutsch-Frage“ und „Welle starten“ dadurch 27 px unter dem Rand (oben bei 767 px). Der Fingertipp der Sonde ging ins Leere. Das war kein Fehler der Sonde: Auch ein Mensch musste mitten in einer Welle scrollen und sah dabei das Feld nicht.
+- **Vorwahl einklappbar**: In der Tower Defense ist die Vorwahl jetzt eine Zeile („Niveau A1 · Schwächen üben · ändern“, 32 px hoch). Ein Tipp klappt Niveau und Fragenart auf, ein zweiter klappt sie wieder zu. Die Zeile zeigt die Wahl sofort. Im Rundenkampf-Menü bleibt die Vorwahl offen wie bisher.
+- **Feld nach Höhe**: Das Feld richtet sich jetzt auch nach der Bildschirmhöhe (Reserve 300 px für Kopf, Vorwahl, Stand und Knöpfe; ein Kästchen ist mindestens 26 px groß). Bei 640 px Höhe liegt „Welle starten“ bei 594 px, bei 740 px Höhe bleibt das Feld so groß wie vorher.
