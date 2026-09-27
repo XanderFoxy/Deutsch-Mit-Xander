@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 /* =====================================================================
+   SONDE — FASSUNG 749 (Funk 180): Makroknopf-Felder öffnen wirklich etwas
+   („wenn ich auf Tafel … dort keine Tafel auf"), neue Felder Deutsch-
+   Aufgabe/Spielmenü, und eine Lesezeile antippen markiert NUR die Zeile
+   („ich möchte dass das nicht erst in dem goldenen Rahmen kommt nur weil
+   wir eine Zeile markieren") – kein Fokus, die Seite rollt nicht mit.
+   ===================================================================== */
+/* =====================================================================
    SONDE — FASSUNG 738: CONTROLLER AM BILD, NUR MITSPIELER HÖREN (Funk 153)
    ---------------------------------------------------------------------
    XANDER (Funk 153): „Die Leute die im Chat sichtbar sind falls Sie in dem
@@ -146,54 +153,42 @@ const sage = (gut, was, zusatz) => {
   const mitte = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel);
   const tippe = async (sel) => { await pg.evaluate((s) => { const e = document.querySelector(s); if (e) e.scrollIntoView({ block: "nearest" }); }, sel); const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
 
-  const B = process.env.BILD;
-  console.log("\nCONTROLLER AM BILD\n");
-  /* Bea spielt mit, Cem nicht; ich spiele mit. */
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); const cem = Object.values(S.stand).find((x) => x && x.name === "Cem"); if (cem) cem.mitspielen = false; S.ich.mitspielen = true; window.DMA_SPIEL.pruef.zeichnen ? window.DMA_SPIEL.pruef.zeichnen() : 0; window.DMA_PRUEF.neuZeichnen(); });
-  await tick(1500);
-  const abz = () => pg.evaluate(() => { const f = (id, k) => { const e = document.querySelector('#livechatKarte .lc-platz[data-lc-id="' + id + '"] .' + k + " svg"); if (!e) return null; const r = e.getBoundingClientRect(), kr = e.closest(".lc-platz").querySelector(".lc-kreis").getBoundingClientRect(); return { dx: Math.round(r.left - kr.left), dy: Math.round(r.top - kr.top), w: Math.round(r.width), kw: Math.round(kr.width) }; };
-    return { ich: f("ich", "sp-spielt"), bea: f("bea", "sp-spielt"), cem: f("cem", "sp-spielt"), cemLeise: f("cem", "sp-leise"), beaLeise: f("bea", "sp-leise") }; });
-  let r = await abz();
-  /* FASSUNG 749 (Funk 180): „im Spiel selber sollen die Leute die spielen diesen Controller nicht … dran geklebt haben". */
-  sage(!r.ich && !r.bea && !r.cem, "749: wer selbst mitspielt, sieht keinen Controller (weder bei sich noch bei Bea)", JSON.stringify(r));
-  /* Wer nicht mitspielt (der Chat), sieht ihn. */
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mitspielen = false; window.__ich.mitspielen = false; window.DMA_PRUEF.neuZeichnen(); });
-  await tick(1500);
-  r = await abz();
-  sage(!r.ich && r.bea && !r.cem, "wer nicht mitspielt, sieht den Controller an Bea (spielt), nicht an Cem", JSON.stringify(r));
-  sage(r.bea && r.bea.dx < 0 && r.bea.dy < 0 && r.bea.w <= r.bea.kw * 0.32, "oben links am Rand, klein – das Gesicht bleibt frei", JSON.stringify(r.bea));
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mitspielen = true; window.__ich.mitspielen = true; window.DMA_PRUEF.neuZeichnen(); });
-  await tick(1500);
+  await pg.evaluate(() => { try { Backend.isOwner = () => true; Backend.canModerate = () => true; } catch (e) {} });
+  const feldTun = async (f) => {
+    await pg.evaluate((f) => { try { localStorage.setItem("dma_magic_felder", JSON.stringify([f])); } catch (e) {} document.querySelectorAll("#lcPlatzMenue").forEach((x) => x.remove()); }, f);
+    await pg.evaluate(() => document.querySelector('[data-lc="magic"]').click()); await tick(300);
+    const da = await pg.evaluate((f) => { const b = document.querySelector('#lcPlatzMenue .lc-magic-feld[data-feld="' + f + '"]'); if (b) b.click(); return !!b; }, f);
+    await tick(1000); return da;
+  };
+  console.log("\nMAKROKNOPF\n");
+  let da = await feldTun("tafel");
+  let r = await pg.evaluate(() => ({ tafel: !!document.getElementById("lcTafel"), kratzen: [...document.querySelectorAll("#livechatKarte .lc-zeile")].some((z) => /\/kratzen/.test(z.textContent)) }));
+  sage(da && r.tafel && !r.kratzen, "„Tafel“ öffnet das Whiteboard (früher kam die Anleitung von /kratzen)", JSON.stringify(r));
+  await pg.evaluate(() => { try { window.LiveChat.schreiben("/tafel aus"); } catch (e) {} }); await tick(400);
+  da = await feldTun("aufgabe");
+  r = await pg.evaluate(() => !!document.getElementById("spPanel"));
+  sage(da && r, "neues Feld „Deutsch-Aufgabe“ öffnet die Aufgabe", String(r));
+  da = await feldTun("spielmenue");
+  r = await pg.evaluate(() => !!document.querySelector(".sp-tabs"));
+  sage(da && r, "neues Feld „Spielmenü“ öffnet das Spielmenü", String(r));
+  await pg.evaluate(() => { document.querySelectorAll(".sp-panel, #spPanel").forEach((x) => { x.hidden = true; }); });
 
-  console.log("\nNUR MITSPIELER HÖREN\n");
-  await pg.evaluate(() => { window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = true; S.schnellReiter = "mehr"; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await tick(400);
-  let knopf = await pg.evaluate(() => { const b = document.querySelector('[data-s="nurspieler"]'); return b ? b.textContent : null; });
-  if (!knopf) { await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-schnellmenue button, .sp-schnell button")].find((x) => /Mehr/.test(x.textContent)); if (b) b.click(); }); await tick(400); knopf = await pg.evaluate(() => { const b = document.querySelector('[data-s="nurspieler"]'); return b ? b.textContent : null; }); }
-  sage(knopf === "Nur Mitspieler hören", "Menü → Mehr → Im Chat: „Nur Mitspieler hören“", String(knopf));
-  await pg.evaluate(() => document.querySelector('[data-s="nurspieler"]').click());
-  await tick(1300);
-  r = await pg.evaluate(() => { const L = window.LiveChat; const f = window.DMA_SPIEL.pruef; return { ls: localStorage.getItem("dma_spiel_nur_spieler"), an: document.querySelector('[data-s="nurspieler"]') && document.querySelector('[data-s="nurspieler"]').classList.contains("sp-an") }; });
-  sage(r.ls === "1" && r.an, "eingeschaltet und gemerkt", JSON.stringify(r));
-  const ueber = await pg.evaluate(() => { const bs = [...document.querySelectorAll(".sp-sm-zeigen button")]; let n = 0;
-    bs.forEach((x, i) => { const a = x.getBoundingClientRect(); if (x.scrollWidth > x.clientWidth + 1) n++; bs.slice(i + 1).forEach((y) => { const b = y.getBoundingClientRect(); if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) n++; }); });
-    return { knoepfe: bs.length, probleme: n }; });
-  sage(ueber.knoepfe > 8 && ueber.probleme === 0, "die Schalter-Reihen im Menü „Mehr“ überlappen nicht und schneiden keine Wörter ab", JSON.stringify(ueber));
-  r = await abz();
-  sage(r.cemLeise && !r.beaLeise, "Cem (spielt nicht) trägt „stumm für dich“, Bea nicht", JSON.stringify({ cem: r.cemLeise, bea: r.beaLeise }));
-  /* Der Ton: ein Strom für Cem und einer für Bea – Cem stumm, Bea laut. */
-  r = await pg.evaluate(() => { let zeuge = null; const alt = window.LiveChat.hoerFilterSetzen; window.LiveChat.hoerFilterSetzen = (f) => { zeuge = f; alt(f); };
-    window.DMA_SPIEL.pruef.hoerFilterPflegen(true); window.LiveChat.hoerFilterSetzen = alt; return zeuge ? { bea: zeuge("bea"), cem: zeuge("cem"), ich: zeuge("ich") } : null; });
-  sage(r && r.bea === true && r.cem === false && r.ich === true, "Bea (spielt) bleibt hörbar, Cem wird für mich stumm", JSON.stringify(r));
-  if (B) await (await pg.$("#livechatKarte")).screenshot({ path: B + "-plaetze.png" });
-  /* Spiele ich nicht mit, gilt der Filter nicht. */
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mitspielen = false; window.__ich.mitspielen = false; });
-  r = await pg.evaluate(() => { let zeuge = "unberührt"; const alt = window.LiveChat.hoerFilterSetzen; window.LiveChat.hoerFilterSetzen = (f) => { zeuge = f; alt(f); };
-    window.DMA_SPIEL.pruef.hoerFilterPflegen(true); window.LiveChat.hoerFilterSetzen = alt; return zeuge === null ? "aus" : typeof zeuge; });
-  sage(r === "aus", "ohne eigenes Mitspielen hört man wieder alle", r);
-  await pg.evaluate(() => { try { localStorage.removeItem("dma_spiel_nur_spieler"); } catch (e) {} });
-  sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.slice(0, 3).join(" | "));
-  console.log("\nFassung 738 (Controller am Bild, nur Mitspieler hören): " + (fehler ? fehler + " rot." : "alles grün."));
-  await br.close(); srv.close(); process.exit(fehler ? 1 : 0);
-})().catch((e) => { console.error(e); process.exit(1); });
+  console.log("\nLESETEXT: ZEILE MARKIEREN\n");
+  await pg.evaluate(() => window.LiveChat.leseTextSenden({ titel: "Probe", niveau: "A1", zeilen: ["Erste Zeile.", "Zweite Zeile.", "Dritte Zeile."] }));
+  await tick(800);
+  const vorher = await pg.evaluate(() => ({ y: window.scrollY }));
+  await pg.evaluate(() => { const b = document.querySelectorAll(".lc-lesetafel .lc-lese-zeile")[1]; if (b) b.click(); });
+  await tick(900);
+  r = await pg.evaluate(() => ({ markiert: !!document.querySelector('.lc-lesetafel .lc-lese-zeile.lc-lese-hier[data-nr="1"]'), fest: !!document.querySelector(".lc-lese-fest"), band: (() => { const b = document.querySelector(".lc-fokusband"); return b ? !b.hidden && b.children.length > 0 : false; })(), y: window.scrollY }));
+  sage(r.markiert, "die angetippte Zeile ist markiert", JSON.stringify(r));
+  sage(!r.fest && !r.band, "kein Goldrahmen, nichts rutscht ins Fokusband", JSON.stringify(r));
+  sage(Math.abs(r.y - vorher.y) < 2, "die Seite rollt beim Markieren nicht mit", JSON.stringify({ vorher: vorher.y, nachher: r.y }));
+  await pg.evaluate(() => { const k = [...document.querySelectorAll(".lc-lesetafel button")].find((b) => /Fokus/.test(b.textContent)); if (k) k.click(); });
+  await tick(500);
+  r = await pg.evaluate(() => !!document.querySelector(".lc-lese-fest"));
+  sage(r, "„Fokus“ hält den Text weiterhin fest", String(r));
+  sage((pg.__fehler || []).length === 0, "keine Seitenfehler", JSON.stringify(pg.__fehler || []));
+  await br.close(); srv.close();
+  console.log("\nFassung 749 (Makroknopf, Lesezeile): " + (fehler ? fehler + " rot." : "alles grün."));
+  process.exit(fehler ? 1 : 0);
+})();

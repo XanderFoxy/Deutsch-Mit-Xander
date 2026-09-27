@@ -49,32 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 748 — Postfach: „Neue Nachricht“ oben, Knopfreihe, Punkte-Knopf, kleine Sticker (Walkie 295/297/298)",
+  stand: "Fassung 749 — Controller nur für den Chat, Makroknopf (Tafel, neue Felder, Siri-Wirbel), Lesezeile ohne Goldrahmen (Funk 180)",
 
   inArbeit: [
-    { seit: "2026-09-27T08:17",
-      text: "Funk 180: Controller nur im Chat, Makroknopf-Links, Lesetext ohne Goldrahmen" },
-    { seit: "2026-09-27T08:17",
+    { seit: "2026-09-27T08:31",
       text: "Walkie 293: zweiter Mitjagen-Knopf, überlappende Zeile, Berufe mit Ausbildung, Kaserne" },
-    { seit: "2026-09-27T08:17",
+    { seit: "2026-09-27T08:31",
       text: "Plündern: Scheitern, Rache, Ticker (Walkie 294)" },
-    { seit: "2026-09-27T08:17",
+    { seit: "2026-09-27T08:31",
       text: "Klassenname und mehrere Charaktere (Walkie 291/292)" },
-    { seit: "2026-09-27T08:17",
+    { seit: "2026-09-27T08:31",
       text: "Aufgabenbank durchsehen – „viel Quatsch dabei“ (Funk 178)" },
-    { seit: "2026-09-27T08:17",
+    { seit: "2026-09-27T08:31",
       text: "Einzug: Viper/KITT von vorn, Optimus Prime originalgetreu" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T08:17",
-      text: "Postfach: „Neue Nachricht schreiben“ ganz oben" },
-    { seit: "2026-09-27T08:17",
-      text: "Postfach: Knopfreihe Bild · Datei · Sticker · Fuchs" },
-    { seit: "2026-09-27T08:17",
-      text: "Postfach: 🎁 Punkte als Knopf neben Senden" },
-    { seit: "2026-09-27T08:17",
-      text: "Postfach: Sticker klein im Raster, ohne Scrollen" },
+    { seit: "2026-09-27T08:31",
+      text: "Controller-Abzeichen nur noch für die, die nicht mitspielen" },
+    { seit: "2026-09-27T08:31",
+      text: "Makroknopf: „Tafel“ öffnet wieder das Whiteboard" },
+    { seit: "2026-09-27T08:31",
+      text: "Makroknopf: neue Felder Deutsch-Aufgabe und Spielmenü, kräftiger Siri-Wirbel" },
+    { seit: "2026-09-27T08:31",
+      text: "Lesetext: Zeile markieren ohne Goldrahmen, Chat bleibt stehen" },
   ],
 };

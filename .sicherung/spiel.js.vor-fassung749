@@ -5107,11 +5107,7 @@
       var kreis = el.querySelector(".lc-kreis");
       if (kreis) {
         var spielt = Boolean(chatId && spieltChat(chatId));
-        /* FASSUNG 749 — XANDER (Funk 180): „Der Game Controller der den chat-leuten implizieren soll dass die Leute
-           gerade im Spiel sind soll nur beim Chat zu sehen sein … im Spiel selber sollen die Leute die spielen diesen
-           Controller nicht im Hintergrund dran geklebt haben … die wissen ja dass sie im Spiel sind". Wer selbst
-           mitspielt, sieht keinen Controller mehr; nur wer nicht mitspielt, sieht ihn an den Spielern. */
-        schmuck(el, "sp-spielt", spielt && !spielSichtbar(), kreis, SPIELT_SVG);
+        schmuck(el, "sp-spielt", spielt, kreis, SPIELT_SVG);
         var sp = el.querySelector(".sp-spielt"); if (sp) sp.title = (s && s.name ? s.name + " spielt" : "spielt") + " gerade mit";
         var leise = Boolean(chatId && S.nurSpieler && spielSichtbar() && chatId !== meineChatId() && !spielt && !istPuppe(chatId) && !/^sparring:/.test(chatId));
         schmuck(el, "sp-leise", leise, kreis, LEISE_SVG);

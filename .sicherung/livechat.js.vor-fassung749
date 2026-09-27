@@ -12592,14 +12592,8 @@ window.LiveChat = (function () {
 
     /* Kurzform oder Langform — beides gilt, wie damals auch. */
     var art = null;
-    /* FASSUNG 749 — XANDER (Funk 180): „wenn ich auf Tafel … dort keine Tafel auf". Gewann bisher der LETZTE Treffer:
-       „kratzen" hat die Kurzform „tafel" und steht weiter hinten – /tafel zeigte darum die Anleitung von /kratzen statt
-       des Whiteboards. Der volle Befehlsname geht jetzt immer vor einer Kurzform. */
     BEFEHLE.forEach(function (b) {
-      if (!art && b.kurz && b.kurz === wort) art = b.w;
-    });
-    BEFEHLE.forEach(function (b) {
-      if (b.w === wort) art = b.w;
+      if (b.w === wort || (b.kurz && b.kurz === wort)) art = b.w;
     });
     if (!art) {
       var gleich = KURZ;

@@ -35028,35 +35028,3 @@ svg.lc-mini-echt .lc-sobri-blitz, svg.lc-mini-echt .lc-eimer-strahl { display: n
 #inboxArea .inbox-liste > .order-toggle { display: flex; flex-wrap: nowrap; gap: 6px; margin-bottom: 10px !important; }
 #inboxArea .inbox-liste > .order-toggle > .order-pill { flex: 1 1 auto; min-width: 0; padding: 7px 8px; font-size: .76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #inboxArea .inbox-row-compact { padding: 8px 12px !important; gap: 2px !important; min-height: 0 !important; }
-
-/* FASSUNG 749 — XANDER (Funk 180): „der makrobaten den wir gemacht haben zu wenig Animationen könnte man noch schicker
-   machen so Siri Style mäßig dass die Animationen mehr Kontrast mehr mehr Sättigung mehr mehr Action hat dass die richtig
-   geil aussieht also wirklich Profi Level". Kräftigere Farben (Magenta, Violett, Cyan, Blau, Orange), weniger Weichzeichner,
-   schnellerer Wirbel, dazu ein zweiter, gegenläufiger Wirbel und ein farbig pulsierender Lichtkranz. */
-.lc-leiste .lc-rundknopf.lc-lk.lc-magic {
-  background: radial-gradient(circle at 50% 45%, #1b0b33, #07030f);
-  animation: lcSiriKranz 4.8s linear infinite;
-}
-.lc-leiste .lc-rundknopf.lc-lk.lc-magic::after {
-  inset: -34%; opacity: 1;
-  background: conic-gradient(from 0deg, #ff1f8f, #a21cff, #00e0ff, #2563ff, #ff7a00, #ff1f8f);
-  filter: blur(4px) saturate(1.6) contrast(1.15);
-  animation: lcSiriDreh 3.2s linear infinite;
-}
-.lc-leiste .lc-rundknopf.lc-lk.lc-magic::before {
-  inset: 10%;
-  background: conic-gradient(from 180deg, rgba(0, 224, 255, .0), rgba(0, 224, 255, .85), rgba(255, 31, 143, .0), rgba(162, 28, 255, .85), rgba(0, 224, 255, 0));
-  mix-blend-mode: screen; filter: blur(3px);
-  animation: lcSiriGegen 2.2s linear infinite, lcSiriAtmen 2.6s ease-in-out infinite;
-}
-.lc-leiste .lc-rundknopf.lc-lk.lc-magic svg { filter: drop-shadow(0 0 3px rgba(0, 0, 0, .7)) drop-shadow(0 0 6px rgba(255, 255, 255, .35)); }
-@keyframes lcSiriGegen { to { rotate: -360deg; } }
-@keyframes lcSiriKranz {
-  0%, 100% { box-shadow: 0 1px 1px rgba(255, 255, 255, .4) inset, 0 0 12px 2px rgba(255, 31, 143, .75); }
-  25% { box-shadow: 0 1px 1px rgba(255, 255, 255, .4) inset, 0 0 14px 3px rgba(162, 28, 255, .8); }
-  50% { box-shadow: 0 1px 1px rgba(255, 255, 255, .4) inset, 0 0 16px 3px rgba(0, 224, 255, .8); }
-  75% { box-shadow: 0 1px 1px rgba(255, 255, 255, .4) inset, 0 0 14px 3px rgba(37, 99, 255, .8); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lc-leiste .lc-rundknopf.lc-lk.lc-magic { animation: none; }
-}
