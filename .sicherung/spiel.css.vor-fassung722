@@ -2446,13 +2446,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-namedialog-karte span { display: flex; gap: 8px; justify-content: flex-end; }
 .sp-namedialog-karte button { min-height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid #3a2410; background: #fff; color: #3a2410; font: 700 14px/1 system-ui, sans-serif; }
 .sp-namedialog-karte button[type="submit"] { background: #5a3a1e; color: #fff8e6; }
-
-/* FASSUNG 722 — Funk 167: „der blaue Wagen liegt über dem eigentlichen roten bzw
-   grünen was die Lebensanzeige darstellt ja wenn sie schwächer wird wird sie gelb" */
-.sp-sa-balken span { position: relative; }
-.sp-sa-balken i { background: linear-gradient(180deg, #8df07a, #2fa33a); transition: width .45s ease-out, background-color .3s; }
-.sp-sa-balken i.sp-sa-gelb { background: linear-gradient(180deg, #ffe86a, #f2a60b); }
-.sp-sa-schildbalken { position: absolute; left: 0; top: 0; height: 42%; width: 0; background: linear-gradient(180deg, rgba(150, 205, 255, .95), rgba(40, 110, 230, .9));
-  box-shadow: 0 1px 0 rgba(0, 0, 0, .35); transition: width .45s ease-out; pointer-events: none; }
-.sp-sa-superkraft .sp-sa-bild { box-shadow: 0 0 0 3px #ffe27a, 0 0 18px 6px rgba(255, 200, 60, .8); }
-.sp-sa-balken small { white-space: normal; line-height: 1.25; }

@@ -129,32 +129,7 @@ async function fenster(br, port, wer) {
   await zug(B, "konter");
   await zug(A, "angriff", null, 2000);
   a = await zustand(A); b = await zustand(B);
-  /* FASSUNG 722 — Bea hat jetzt 3 richtige hintereinander (Schild, Angriff, Konter): Rüstung 1 nimmt 2 weg → 4 − 2 = 2. */
-  sage(b.ich === 44 && a.er === 44 && a.ich === 40 && b.er === 40, "Konter: Bea steckt die Hälfte ein (4, mit Rüstung 1 nur 2), Alex bekommt 4 zurück – auf beiden Geräten gleich", JSON.stringify({ bea: [b.ich, a.er], alex: [a.ich, b.er] }));
-  const ruest = [await B.evaluate(() => window.DMA_SPIEL.pruef.st().ich.ruestung), await A.evaluate(() => window.DMA_SPIEL.pruef.st().er.ruestung)];
-  sage(ruest[0] === 1 && ruest[1] === 1, "722: drei richtige hintereinander → Rüstung 1 (auf beiden Geräten)", JSON.stringify(ruest));
-
-  console.log("\nFASSUNG 722: HÖCHSTWERTE, SCHILD ZUERST, SUPERKRAFT (Funk 167)\n");
-  /* „das darf nicht endlos Sterne haben … Maximalwert" */
-  await B.evaluate(() => { window.DMA_SPIEL.pruef.st().ich.schild = 25; });
-  await zug(B, "schild");
-  const nachSchild = [await B.evaluate(() => { const S = window.DMA_SPIEL.pruef.st(); return [S.ich.sterne, S.ich.schild]; }), await A.evaluate(() => { const S = window.DMA_SPIEL.pruef.st(); return [S.er.sterne, S.er.schild]; })];
-  sage(JSON.stringify(nachSchild) === "[[3,30],[3,30]]", "Sterne höchstens 3, Schild höchstens 30 – auf beiden Geräten", JSON.stringify(nachSchild));
-  const anzeige = await A.evaluate(() => ({ text: document.querySelector(".sp-sa-rechts small").textContent, schild: document.querySelector(".sp-sa-rechts .sp-sa-schildbalken").style.width }));
-  sage(/Schild 3\/3/.test(anzeige.text) && /★★★/.test(anzeige.text) && /Rüstung 1/.test(anzeige.text) && anzeige.schild === "100%", "Anzeige: blauer Schildbalken voll, ★★★, Schild 3/3, Rüstung 1", JSON.stringify(anzeige));
-  /* Alex hat drei Angriffe richtig beantwortet: 3 Sterne (nicht mehr) – die Superkraft ist frei. */
-  const knopf = await A.evaluate(() => ({ sterne: window.DMA_SPIEL.pruef.st().ich.sterne, zu: document.querySelector('.sp-st-aktionen [data-ak="super"]').disabled }));
-  sage(knopf.sterne === 3 && knopf.zu === false, "Alex hat 3 Sterne (Obergrenze) – Superkraft ist frei", JSON.stringify(knopf));
-  await zug(A, "super");
-  a = await zustand(A); b = await zustand(B);
-  const schildDanach = await B.evaluate(() => window.DMA_SPIEL.pruef.st().ich.schild);
-  /* 26 × 0,69 = 18, Rüstung 1 → 16, am Schild vorbei: 44 − 16 = 28, Schild bleibt 30. */
-  sage(b.ich === 28 && a.er === 28 && schildDanach === 30, "Superkraft (26 × 0,69 = 18, Rüstung −2) geht durchs Schild: Bea 28 auf beiden Geräten, Schild bleibt 30", JSON.stringify({ a: a.er, b: b.ich, schild: schildDanach }));
-  const farbe = await A.evaluate(() => { const i = document.querySelector(".sp-sa-rechts i"); return { gelb: i.classList.contains("sp-sa-gelb"), rot: i.classList.contains("sp-sa-knapp"), bg: getComputedStyle(i).backgroundImage.slice(0, 60) }; });
-  const gruen = await A.evaluate(() => { const i = document.querySelector(".sp-sa-links i"); return { gelb: i.classList.contains("sp-sa-gelb"), bg: getComputedStyle(i).backgroundImage }; });
-  sage(farbe.gelb && !farbe.rot && !gruen.gelb && /141, 240, 122/.test(gruen.bg), "Lebensbalken: grün, unter der Hälfte gelb (Bea 28/60)", JSON.stringify({ farbe, gruen: gruen.bg.slice(0, 60) }));
-  const sterneA = await A.evaluate(() => window.DMA_SPIEL.pruef.st().ich.sterne);
-  sage(sterneA === 1, "Superkraft kostet 3 Sterne, die richtige Antwort bringt einen zurück", String(sterneA));
+  sage(b.ich === 42 && a.er === 42 && a.ich === 40 && b.er === 40, "Konter: Bea steckt die Hälfte ein (4), Alex bekommt 4 zurück – auf beiden Geräten gleich", JSON.stringify({ bea: [b.ich, a.er], alex: [a.ich, b.er] }));
   if (process.env.BILD) await A.screenshot({ path: process.env.BILD + "-zuege.png" });
 
   console.log("\nECHTZEIT: BEIDE ZUGLEICH, BIS ZUM K.O.\n");

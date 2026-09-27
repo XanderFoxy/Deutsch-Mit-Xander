@@ -46,10 +46,10 @@
  "werkstatt.js": "6b16574f10d08259b581e0e9f4d0c0e0cbdbf42d",
  "data-geraeusche.js": "ed2494bb6bf9dfed6b43fd69905837622ba4b1b4",
  "livechat.js": "b700c8965eef703c70800c756bdff09bcfb65db8",
- "app.js": "e14b2739e051aa018e94c73f6dbdd3282bb22fe6",
  "korrekturen.css": "d19c98ca71992d0c9b96e0521e24ed000c5e90b4",
- "spiel.css": "ffcb9e6f4a569f772494cd960a31ca1303860415",
- "spiel.js": "ca68806356d9364e3f2e21eaf71fe3793c9e6beb",
- "data-werkstatt.js": "aa6d0c391d0d75b0428dd90a5db918640ff7b362",
- "rueckfrage.js": "e9d3b0a3c88d9de9de3fd3c6a3a9e8c3988e8632"
+ "rueckfrage.js": "e9d3b0a3c88d9de9de3fd3c6a3a9e8c3988e8632",
+ "app.js": "bc59760c1e656cb9934bea21c24e58cf0b3831e9",
+ "spiel.js": "616aa0176df60e83d51c56cee59bd89fb4a91029",
+ "spiel.css": "6a27a5a1d55de135dcb2d9e848a23f289e323c6e",
+ "data-werkstatt.js": "f17b9a5deda032123937edd117311b0427d73e58"
 }

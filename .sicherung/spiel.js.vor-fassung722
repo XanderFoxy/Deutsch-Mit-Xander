@@ -6045,12 +6045,7 @@
          und die Aufgaben und die Mission auch in Griffweite". Wieder wie
          zuerst: Niveau, Arten, Aufgabe, Mission. */
       var wahl = '<div class="sp-deutsch-wahl' + (S.deutschWahl || !hatAufgabe ? " sp-offen" : "") + '"><div class="sp-klein sp-wahl-titel">Niveau und Art wählen – die Aufgabe kommt sofort:</div>'
-        + '<div class="sp-chips">' + chips + "</div>" + arten
-        + '<div class="sp-chips sp-fragenart"><span class="sp-klein">Fragen:</span>' + FRAGEN_ARTEN.map(function (f) {
-            var n = f[0] === "gemischt" ? 0 : fragenArten(f[0]).length;
-            return '<button type="button" data-tu="fragenart" data-f="' + f[0] + '" class="' + (fragenArt() === f[0] ? "sp-an" : "") + '" title="'
-              + (f[0] === "gemischt" ? "aus allen Arten" : n ? n + " Arten aus deinen Einstellungen" : "In den Einstellungen der Seite ist noch nichts als " + f[0] + " markiert") + '">' + f[1] + (f[0] !== "gemischt" ? " (" + n + ")" : "") + "</button>";
-          }).join("") + "</div></div>";
+        + '<div class="sp-chips">' + chips + "</div>" + arten + "</div>";
       return teil + (hatAufgabe && !(a && a.frage && !a.ergebnis && !a.hinweis) ? deutschKnoepfe() : "") + missionTeil + wahl + regel;
     }
     if (reiter === "koennen") {
@@ -6285,7 +6280,6 @@
     if (tu === "neuwahl") { S.deutschWahl = !S.deutschWahl; panelAuffrischen();
       if (S.deutschWahl) { var wz = panel.querySelector(".sp-deutsch-wahl"); if (wz) try { wz.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {} }
       return; }
-    if (tu === "fragenart") { S.fragenArt = k.dataset.f; try { localStorage.setItem("dma_spiel_fragenart", S.fragenArt); } catch (e) {} ton("holzklopf", 0.2); aufgabeHolen(false); return; }
     if (tu === "niveau") { S.niveau = k.dataset.n; try { localStorage.setItem("dma_spiel_niveau", S.niveau); } catch (e) {} deutschNachOben(); aufgabeHolen(false); return; }
     if (tu === "aufgabe") return aufgabeHolen(false);
     if (tu === "missionsaufgabe") return aufgabeHolen(true);
@@ -6343,7 +6337,7 @@
   }
 
   function aufgabeHolen(mission) {
-    rpc("spiel_aufgabe", { p_niveau: S.niveau, p_mission: Boolean(mission), p_kategorie: fragenKategorie() }).then(function (a) {
+    rpc("spiel_aufgabe", { p_niveau: S.niveau, p_mission: Boolean(mission), p_kategorie: S.kategorie || null }).then(function (a) {
       if (!a || a.ok === false) { S.aufgabe = { frage: "", hinweis: (a && a.grund) || "Keine Aufgabe" }; }
       else S.aufgabe = a;
       reiter = "deutsch"; panelAuffrischen();
@@ -8888,19 +8882,13 @@
     DM.nachtJetzt = !!nacht; DM.schneeJetzt = !!schnee;
     dmLandschaft(g, K, s); if (!nacht) dmWolken(g);
     var punkte = {};
-    /* FASSUNG 722 — XANDER (Funk 167): „immer eine Laterne die hinter deinem Haus steht die die Zeit irgendwie übers Haus
-       obwohl man sieht dass sie hinter hinter dem Haus gestellt gemeint ist". Die Laternen wurden NACH allen Häusern
-       gemalt – eine, die weiter hinten steht, lag dadurch über dem Haus davor. Jetzt kommen Häuser und Laternen zusammen
-       in eine Reihe und werden von hinten nach vorn (nach ihrem Fußpunkt) gemalt. */
-    var orte = dmLaternenOrte(dorf, lage), reihe = [];
-    Object.keys(lage).forEach(function (k) { reihe.push({ y: lage[k][1], haus: k }); });
-    orte.forEach(function (o) { reihe.push({ y: o.y, laterne: o }); });
-    reihe.sort(function (a, b) { return a.y - b.y; }).forEach(function (e) {
-      if (e.laterne) { dmLaternen(g, [e.laterne]); return; }
-      var k = e.haus, q = lage[k], d = (dorf || {})[k], st = d && d.stufe > 0 ? d.stufe : 0;
+    Object.keys(lage).sort(function (a, b) { return lage[a][1] - lage[b][1]; }).forEach(function (k) {
+      var q = lage[k], d = (dorf || {})[k], st = d && d.stufe > 0 ? d.stufe : 0;
       if (st) punkte[k] = dmGebaeude(g, K, s, k, q[0], q[1], st, !(d.lp > 0));
       else dmBauplatz(g, K, s, q[0], q[1]);
     });
+    var orte = dmLaternenOrte(dorf, lage);
+    dmLaternen(g, orte);
     dmPinsel(leinwand, s);
     if (nacht) {
       var tag = null;
@@ -11862,37 +11850,12 @@
   }
   /* Eine Deutschfrage im Spiel: holt eine echte Aufgabe, zeigt sie über dem
      Spiel, schickt die Antwort an den Server und meldet richtig/falsch. */
-  /* FASSUNG 722 — XANDER (Funk 167): „dass diese Fragen eher vorgeschlagen werden dass die Leute gezwungen sind in dem
-     Bereichen zu üben wo sie nicht gut sind und in dem Spiel können Sie aber auch einstellen ob sie ihr jetzt die leichten
-     Sachen nehmen oder halt das dass sie wirklich lernen weil es auf diesen Einstellungen passiert wo sie gesagt haben wo
-     sie ihre Stärken wo sie ihre Schwächen haben das soll aber beides möglich sein". Drei Wege (Menü → Deutsch):
-     „Schwächen üben" (ab Werk: drei von vier Fragen aus den Arten, die man in den Einstellungen als schwach markiert hat),
-     „Stärken" (aus den starken Arten – leichter) und „Gemischt". Hat man eine Art selbst gewählt, gilt die. */
-  var FRAGEN_ARTEN = [["schwach", "Schwächen üben"], ["stark", "Stärken (leichter)"], ["gemischt", "Gemischt"]];
-  var SPIEL_FRAGE_ARTEN = ["richtig-falsch", "jedesto", "artikel", "relativsatz", "lueckentext", "praefixverben", "konnektoren", "als-wie", "nebensatz", "das-dass",
-    "kennen-wissen", "betonung", "ss-eszett", "wortpaare", "faelle", "wenn-ob", "sinn-trainer", "praepositionen", "infinitivsatz", "fragen", "funktionsverben",
-    "verneinung", "modalverben", "konjunktiv", "wortstellung", "essen", "partizip", "reflexiv", "wortbildung", "modalpartikeln", "possessiv", "tiere", "passiv",
-    "werkzeug", "koerper", "stil", "homophone", "deutschland"];
-  function fragenArt() {
-    if (!S.fragenArt) { try { S.fragenArt = localStorage.getItem("dma_spiel_fragenart") || "schwach"; } catch (e) { S.fragenArt = "schwach"; } }
-    return S.fragenArt;
-  }
-  function lernprofil() { try { var b = window.DMA_SPIEL_BRUECKE; return (b && b.lernprofil && b.lernprofil()) || {}; } catch (e) { return {}; } }
-  function fragenArten(wert) { var p = lernprofil(); return Object.keys(p).filter(function (k) { return p[k] === wert && SPIEL_FRAGE_ARTEN.indexOf(k) >= 0; }); }
-  function fragenKategorie() {
-    if (S.kategorie && S.kategorie !== "aussprache") return S.kategorie;
-    var art = fragenArt();
-    if (art === "gemischt") return null;
-    var l = fragenArten(art);
-    if (!l.length || (art === "schwach" && Math.random() < 0.25)) return null;
-    return l[Math.floor(Math.random() * l.length)];
-  }
   function deutschFrage(fertig) {
     var box = document.createElement("div");
     box.className = "sp-extra-frage";
     box.innerHTML = '<p class="sp-extra-frage-text">Einen Moment …</p><div class="sp-extra-frage-knoepfe"></div>';
     (extraEl || document.body).appendChild(box);
-    rpc("spiel_aufgabe", { p_niveau: S.niveau, p_mission: false, p_kategorie: fragenKategorie() }).then(function (a) {
+    rpc("spiel_aufgabe", { p_niveau: S.niveau, p_mission: false, p_kategorie: null }).then(function (a) {
       if (!a || a.ok === false || !a.frage) { box.remove(); hinweis((a && a.grund) || "Gerade keine Aufgabe – gleich noch einmal."); fertig(false, true); return; }
       box.querySelector(".sp-extra-frage-text").textContent = a.frage;
       var kn = box.querySelector(".sp-extra-frage-knoepfe");
@@ -12039,7 +12002,7 @@
   function extraLohn(art, seit, ergebnis) {
     if (!seit) return;
     rpc("spiel_extra_lohn", { p_art: art, p_seit: new Date(seit).toISOString(), p_ergebnis: ergebnis || 0 }).then(function (r) {
-      if (r && r.ok) { ton("kasse", 0.4); hinweis("🪙 Lohn für das Spiel: +" + r.lohn + " Punkte (" + r.richtig + " richtige Antworten" + (r.mut > 0 ? ", davon +" + r.mut + " fürs höhere Niveau" : "") + ") – zählt auch im Ranking."); abrufen(true); }
+      if (r && r.ok) { ton("kasse", 0.4); hinweis("🪙 Lohn für das Spiel: +" + r.lohn + " Punkte (" + r.richtig + " richtige Antworten) – zählt auch im Ranking."); abrufen(true); }
       else if (r && r.grund) hinweis("🪙 " + r.grund + ".");
     }).catch(function () {});
   }
@@ -12098,42 +12061,13 @@
      2,5 s wiederholt; doppelt Angekommenes wird erkannt. */
   var ST = { id: "", gegner: "" };
   var ST_LP = 60;
-  /* FASSUNG 722 — XANDER (Funk 167): „das Schild was man sich aufbaut das darf
-     nicht endlos Sterne haben … Maximalwert … die Schilde müssen auch eine
-     Funktion haben dass man erst durch die Schilde kämpfen muss und dann das
-     Leben angreift". Jetzt: höchstens 3 Sterne, Schild höchstens 30 (drei
-     Schilde), jeder Treffer geht erst durchs Schild. */
-  var ST_STERNE_MAX = 3, ST_SCHILD_MAX = 30, ST_RUESTUNG_MAX = 3;
   var ST_AKTIONEN = {
     angriff: { name: "Angriff", was: "12 Schaden", sterne: 0 },
-    schild:  { name: "Schild",  was: "+10 Schild · höchstens 30", sterne: 0 },
+    schild:  { name: "Schild",  was: "fängt 10 ab", sterne: 0 },
     heilen:  { name: "Heilen",  was: "+12 LP", sterne: 0 },
     konter:  { name: "Konter",  was: "nächster Angriff prallt zur Hälfte zurück · 1 Stern", sterne: 1 },
-    donner:  { name: "Donnerwort", was: "22 Schaden · 2 Sterne", sterne: 2 },
-    /* „super Power mit dazu erspielen" */
-    super:   { name: "Superkraft", was: "26 Schaden durch jedes Schild · 3 Sterne", sterne: 3 }
+    donner:  { name: "Donnerwort", was: "22 Schaden · 2 Sterne", sterne: 2 }
   };
-  /* Richtig beantwortet: ein Stern (höchstens 3). „Rüstung erspielen durch
-     irgendwelche Fragen": je 3 richtige hintereinander eine Stufe Rüstung
-     (höchstens 3) – jede Stufe nimmt jedem Treffer 2 Schaden. Gibt true
-     zurück, wenn gerade eine Stufe dazukam. */
-  function stratRichtig(w) {
-    w.sterne = Math.min(ST_STERNE_MAX, (w.sterne || 0) + 1);
-    w.serie = (w.serie || 0) + 1;
-    if (w.serie % 3 === 0 && (w.ruestung || 0) < ST_RUESTUNG_MAX) { w.ruestung = (w.ruestung || 0) + 1; return true; }
-    return false;
-  }
-  /* Die Wirkung einer gelungenen Aktion auf die eigenen Werte; gibt den Schaden zurück. */
-  function stratWirkung(w, ak, fair) {
-    if (ak === "donner") w.sterne -= 2;
-    if (ak === "super") w.sterne -= 3;
-    if (ak === "konter") { w.sterne -= 1; w.konter = true; }
-    w.sterne = Math.max(0, w.sterne);
-    if (ak === "schild") w.schild = Math.min(ST_SCHILD_MAX, (w.schild || 0) + 10);
-    if (ak === "heilen") w.lp = Math.min(ST_LP, w.lp + 12);
-    var grund = ak === "angriff" ? 12 : ak === "donner" ? 22 : ak === "super" ? 26 : 0;
-    return grund ? Math.round(grund * fair) : 0;
-  }
   /* Fairness: wer niedriger ist, trifft härter – wer höher ist, schwächer.
      Je Level Abstand 3,5 %, höchstens ±40 %. Höher bleibt gefährlich. */
   function stratFair(meinLv, seinLv) { return Math.max(0.6, Math.min(1.4, 1 + 0.035 * ((seinLv || 1) - (meinLv || 1)))); }
@@ -12148,7 +12082,7 @@
   function stratWahl() {
     var inhalt = extraRahmen("Rundenkampf", "sp-extra-strat");
     var leute = []; try { leute = plaetze().filter(function (p) { return p && !p.leer && !p.ich && !istPuppe(p.id) && !/^sparring:/.test(p.id); }); } catch (e) {}
-    inhalt.innerHTML = '<p class="sp-text">Du wählst eine Aktion – sie wirkt nur, wenn du die Deutsch-Frage richtig beantwortest. Jede richtige Antwort bringt einen Stern (höchstens 3), drei richtige hintereinander eine Stufe Rüstung. Treffer gehen erst durchs Schild, dann ans Leben. Eine falsche Antwort kostet auf jedem Niveau gleich viel – wer ein höheres Niveau wählt, bekommt mehr Punkte. Fair nach Level: wer niedriger ist, trifft härter.</p>'
+    inhalt.innerHTML = '<p class="sp-text">Du wählst eine Aktion – sie wirkt nur, wenn du die Deutsch-Frage richtig beantwortest. Jede richtige Antwort bringt einen Stern. Fair nach Level: wer niedriger ist, trifft härter.</p>'
       + '<div class="sp-st-modus"><button type="button" data-modus="zug" class="sp-an">Züge (wie Schach)</button><button type="button" data-modus="echtzeit">Echtzeit (beide zugleich)</button></div>'
       + '<div class="sp-sm-liste"><button type="button" data-st="computer">Gegen Professor Grammatikus (Computer)</button>'
       + leute.map(function (p) { return '<button type="button" data-st="' + esc(p.id) + '" data-name="' + esc(p.name || "") + '">Gegen ' + esc(p.name || "?") + " (einladen)</button>"; }).join("") + "</div>";
@@ -12171,14 +12105,14 @@
     var ichName = "Du"; try { ichName = LC().lage().ichName || "Du"; } catch (e) {}
     ST = { start: Date.now(), id: id || ("c" + Date.now()), gegner: gegner, gegnerName: gegnerName, modus: modus === "echtzeit" ? "echtzeit" : "zug", zug: 0, meinNr: 0, seinNr: 0,
            ichDran: modus === "echtzeit" ? true : ichZuerst, ende: false, log: [], offen: null, bereitAb: 0,
-           ich: { lp: ST_LP, schild: 0, sterne: 0, konter: false, serie: 0, ruestung: 0, lv: stratMeinLevel(), name: ichName }, er: { lp: ST_LP, schild: 0, sterne: 0, konter: false, serie: 0, ruestung: 0, lv: seinLv || stratMeinLevel(), name: gegnerName } };
+           ich: { lp: ST_LP, schild: 0, sterne: 0, konter: false, lv: stratMeinLevel(), name: ichName }, er: { lp: ST_LP, schild: 0, sterne: 0, konter: false, lv: seinLv || stratMeinLevel(), name: gegnerName } };
     /* Wer deutlich niedriger ist, startet mit Sternen (je 5 Level einer, höchstens 2). */
     var abstand = ST.er.lv - ST.ich.lv;
     if (abstand >= 5) ST.ich.sterne = Math.min(2, Math.floor(abstand / 5));
     if (-abstand >= 5) ST.er.sterne = Math.min(2, Math.floor(-abstand / 5));
     var ichChat = meineChatId();
     inhalt.innerHTML = '<div class="sp-sa">'
-      + '<div class="sp-sa-kopf"><div class="sp-sa-balken sp-sa-links"><b></b><span><i></i><em class="sp-sa-schildbalken"></em></span><small></small></div><div class="sp-sa-ko">VS</div><div class="sp-sa-balken sp-sa-rechts"><b></b><span><i></i><em class="sp-sa-schildbalken"></em></span><small></small></div></div>'
+      + '<div class="sp-sa-kopf"><div class="sp-sa-balken sp-sa-links"><b></b><span><i></i></span><small></small></div><div class="sp-sa-ko">VS</div><div class="sp-sa-balken sp-sa-rechts"><b></b><span><i></i></span><small></small></div></div>'
       + '<div class="sp-sa-buehne"><div class="sp-sa-kaempfer sp-sa-ich"><div class="sp-sa-bild">' + stratBild(ichChat, ST.ich.name) + '</div><div class="sp-sa-koerper"></div></div>'
       + '<div class="sp-sa-kaempfer sp-sa-er"><div class="sp-sa-bild">' + (gegner === "computer" ? '<span class="sp-sa-ini" style="background:#6b4a9c;color:#fff">G</span>' : stratBild(gegner, gegnerName)) + '</div><div class="sp-sa-koerper"></div></div>'
       + '<div class="sp-sa-boden"></div></div>'
@@ -12209,29 +12143,24 @@
     ST.meinNr++;
     var nr = ST.meinNr, schaden = 0;
     if (erfolg) {
-      schaden = stratWirkung(ST.ich, ak, stratFair(ST.ich.lv, ST.er.lv));
-      if (stratRichtig(ST.ich)) setTimeout(function () { stratText("ich", "Rüstung " + ST.ich.ruestung, "#d9e4ff"); }, 500);
-    } else ST.ich.serie = 0;
+      ST.ich.sterne += 1;
+      if (ak === "donner") ST.ich.sterne -= 2;
+      if (ak === "konter") { ST.ich.sterne -= 1; ST.ich.konter = true; }
+      if (ak === "schild") ST.ich.schild += 10;
+      if (ak === "heilen") ST.ich.lp = Math.min(ST_LP, ST.ich.lp + 12);
+      if (ak === "angriff" || ak === "donner") schaden = Math.round((ak === "donner" ? 22 : 12) * stratFair(ST.ich.lv, ST.er.lv));
+    }
     stratLog(true, ak, erfolg, schaden);
     stratBild_zeigen("ich", ak, erfolg);
     if (ST.modus === "zug") ST.ichDran = false; else ST.bereitAb = Date.now() + 2500;
     var z = { ereignis: "strat", typ: "zug", an: ST.gegner, partie: ST.id, nr: nr, aktion: ak, erfolg: erfolg, schaden: schaden, stand: stratEigen() };
-    if (ST.gegner === "computer") { if (schaden) stratTreffer("er", schaden, ak === "super"); stratEndePruefen(); stratZeigen(); if (!ST.ende && ST.modus === "zug") setTimeout(stratComputer, 1300); return; }
+    if (ST.gegner === "computer") { if (schaden) stratTreffer("er", schaden); stratEndePruefen(); stratZeigen(); if (!ST.ende && ST.modus === "zug") setTimeout(stratComputer, 1300); return; }
     /* Das Bild des Einschlags sofort (die echten Zahlen kommen mit der Quittung). */
-    if (schaden) { var abV = ak === "super" ? 0 : Math.min(ST.er.schild, schaden); stratEinschlag("er", schaden - abV, abV, 0); }
+    if (schaden) stratEinschlag("er", Math.max(0, schaden - Math.min(ST.er.schild, schaden)), Math.min(ST.er.schild, schaden), 0);
     ST.offen = z; senden(z); stratNachsenden();
     stratZeigen();
   }
-  function stratEigen() { return { lp: ST.ich.lp, schild: ST.ich.schild, sterne: ST.ich.sterne, konter: ST.ich.konter, ruestung: ST.ich.ruestung || 0, serie: ST.ich.serie || 0 }; }
-  /* Stand des anderen übernehmen – mit denselben Obergrenzen (ein altes Gerät schickt vielleicht mehr). */
-  function stratStandUebernehmen(st) {
-    ST.er.lp = Math.max(0, Math.min(ST_LP, Number(st.lp) || 0));
-    ST.er.schild = Math.max(0, Math.min(ST_SCHILD_MAX, Number(st.schild) || 0));
-    ST.er.sterne = Math.max(0, Math.min(ST_STERNE_MAX, Number(st.sterne) || 0));
-    ST.er.konter = Boolean(st.konter);
-    ST.er.ruestung = Math.max(0, Math.min(ST_RUESTUNG_MAX, Number(st.ruestung) || 0));
-    ST.er.serie = Number(st.serie) || 0;
-  }
+  function stratEigen() { return { lp: ST.ich.lp, schild: ST.ich.schild, sterne: ST.ich.sterne, konter: ST.ich.konter }; }
   /* Bis die Quittung da ist, alle 2,5 s noch einmal (höchstens 10-mal). */
   function stratNachsenden() {
     clearTimeout(ST.nachUhr);
@@ -12246,13 +12175,11 @@
       }, 2500);
     })();
   }
-  /* Ein Treffer auf eine Seite: Konter, dann Rüstung, dann Schild, dann LP.
-     „durch" (Superkraft) geht am Schild vorbei. Gibt zurück, was zurückprallt. */
-  function stratTreffer(seite, schaden, durch) {
+  /* Ein Treffer auf eine Seite: Konter, dann Schild, dann LP. Gibt zurück, was zurückprallt. */
+  function stratTreffer(seite, schaden) {
     var w = seite === "ich" ? ST.ich : ST.er, zurueck = 0;
     if (w.konter) { w.konter = false; zurueck = Math.round(schaden / 2); schaden -= zurueck; }
-    if (w.ruestung > 0) schaden = Math.max(1, schaden - 2 * w.ruestung);
-    var ab = durch ? 0 : Math.min(w.schild, schaden); w.schild -= ab; w.lp = Math.max(0, w.lp - (schaden - ab));
+    var ab = Math.min(w.schild, schaden); w.schild -= ab; w.lp = Math.max(0, w.lp - (schaden - ab));
     stratEinschlag(seite, schaden - ab, ab, zurueck);
     /* Gegen den Computer rechnet dieses Gerät beide Seiten; gegen Menschen zieht
        sich der Angreifer den Rückprall selbst ab (er bekommt ihn mit der Quittung). */
@@ -12264,10 +12191,10 @@
     var nr = Number(n.nr) || 0;
     if (nr > ST.seinNr) {
       ST.seinNr = nr;
-      if (n.stand) stratStandUebernehmen(n.stand);
+      if (n.stand) { ST.er.lp = n.stand.lp; ST.er.schild = n.stand.schild; ST.er.sterne = n.stand.sterne; ST.er.konter = Boolean(n.stand.konter); }
       stratLog(false, n.aktion, Boolean(n.erfolg), Number(n.schaden) || 0);
       stratBild_zeigen("er", n.aktion, Boolean(n.erfolg));
-      var zurueck = n.erfolg && n.schaden > 0 ? stratTreffer("ich", Math.min(40, Number(n.schaden)), n.aktion === "super") : 0;
+      var zurueck = n.erfolg && n.schaden > 0 ? stratTreffer("ich", Number(n.schaden)) : 0;
       ST.rueck = ST.rueck || {}; ST.rueck[nr] = zurueck;
       if (ST.modus === "zug") ST.ichDran = true;
       stratEndePruefen();
@@ -12292,7 +12219,6 @@
     var wer = vonMir ? "Du" : ST.gegnerName, A = ST_AKTIONEN[ak] || { name: ak };
     ST.log.unshift(!erfolg ? wer + ": " + A.name + " – falsch beantwortet, verpufft."
       : ak === "angriff" || ak === "donner" ? wer + ": " + A.name + " – " + schaden + " Schaden."
-      : ak === "super" ? wer + ": Superkraft – " + schaden + " Schaden, durch jedes Schild."
       : ak === "schild" ? wer + ": Schild (+10)." : ak === "konter" ? wer + ": Konterstellung." : wer + ": Heilen (+12 LP).");
   }
   /* --- Bild und Ton: Anlauf, Schlag, Einschlag – „wie bei Street Fighter" --- */
@@ -12304,7 +12230,6 @@
     if (!el) return;
     if (!erfolg) { stratKlasse(el, "sp-sa-stolpert", 700); stratText(seite, "Daneben!", "#ffd0d0"); ton("bonk", 0.35); return; }
     if (ak === "angriff") { stratKlasse(el, "sp-sa-schlag", 650); ton("swoosh", 0.35); setTimeout(function () { ton("boxen", 0.45); }, 260); }
-    else if (ak === "super") { stratKlasse(el, "sp-sa-ruft", 800); stratKlasse(el, "sp-sa-superkraft", 900); ton("gewitter", 0.5); setTimeout(function () { ton("boxen", 0.5); }, 300); }
     else if (ak === "donner") { stratKlasse(el, "sp-sa-ruft", 800); ton("gewitter", 0.45); var g = stratKaempfer(seite === "ich" ? "er" : "ich"); if (g) { var bl = document.createElement("div"); bl.className = "sp-sa-blitz"; bl.innerHTML = '<svg viewBox="0 0 40 90"><path d="M24 0 L8 40 H20 L12 90 L36 34 H23 L31 0 Z" fill="#fff7c2" stroke="#ffcf3a" stroke-width="2" stroke-linejoin="round"/></svg>'; g.appendChild(bl); setTimeout(function () { bl.remove(); }, 700); } }
     else if (ak === "schild") { stratKlasse(el, "sp-sa-block", 700); ton("hammerschlag", 0.4); }
     else if (ak === "heilen") { stratKlasse(el, "sp-sa-heilt", 900); ton("zauberpuff", 0.4); stratText(seite, "+12", "#9dffb0"); }
@@ -12330,13 +12255,19 @@
   function stratComputer() {
     clearTimeout(ST.computerUhr);
     if (ST.ende || ST.gegner !== "computer" || !extraEl) return;
-    var er = ST.er, ak = er.sterne >= 3 && (ST.ich.schild >= 10 || Math.random() < 0.6) ? "super" : er.sterne >= 2 && Math.random() < 0.55 ? "donner" : er.sterne >= 1 && !er.konter && Math.random() < 0.15 ? "konter" : er.lp < 25 && Math.random() < 0.5 ? "heilen" : er.schild < 10 && Math.random() < 0.2 ? "schild" : "angriff";
+    var er = ST.er, ak = er.sterne >= 2 && Math.random() < 0.55 ? "donner" : er.sterne >= 1 && !er.konter && Math.random() < 0.15 ? "konter" : er.lp < 25 && Math.random() < 0.5 ? "heilen" : er.schild === 0 && Math.random() < 0.2 ? "schild" : "angriff";
     var erfolg = Math.random() < 0.7, schaden = 0;
-    if (erfolg) { schaden = stratWirkung(er, ak, stratFair(er.lv, ST.ich.lv)); stratRichtig(er); }
-    else er.serie = 0;
+    if (erfolg) {
+      er.sterne += 1;
+      if (ak === "donner") er.sterne -= 2;
+      if (ak === "konter") { er.sterne -= 1; er.konter = true; }
+      if (ak === "schild") er.schild += 10;
+      if (ak === "heilen") er.lp = Math.min(ST_LP, er.lp + 12);
+      if (ak === "angriff" || ak === "donner") schaden = Math.round((ak === "donner" ? 22 : 12) * stratFair(er.lv, ST.ich.lv));
+    }
     stratLog(false, ak, erfolg, schaden);
     stratBild_zeigen("er", ak, erfolg);
-    if (schaden) stratTreffer("ich", schaden, ak === "super");
+    if (schaden) stratTreffer("ich", schaden);
     if (ST.modus === "zug") ST.ichDran = true;
     stratEndePruefen(); stratZeigen();
     if (!ST.ende && ST.modus === "echtzeit") ST.computerUhr = setTimeout(stratComputer, 3500 + Math.random() * 2500);
@@ -12346,16 +12277,9 @@
     var balken = function (sel, w) {
       var el = extraEl.querySelector(sel); if (!el) return;
       el.querySelector("b").textContent = w.name + " · Lv " + w.lv;
-      /* „der blaue Wagen liegt über dem eigentlichen roten bzw grünen was die
-         Lebensanzeige darstellt ja wenn sie schwächer wird wird sie gelb" */
-      var lp = el.querySelector("i"), anteil = w.lp / ST_LP;
-      lp.style.width = Math.round(anteil * 100) + "%";
-      lp.classList.toggle("sp-sa-gelb", anteil <= 0.5 && anteil > 0.25);
-      lp.classList.toggle("sp-sa-knapp", anteil <= 0.25);
-      var sb = el.querySelector(".sp-sa-schildbalken"); if (sb) sb.style.width = Math.round(Math.min(ST_SCHILD_MAX, w.schild) / ST_SCHILD_MAX * 100) + "%";
-      var sterne = Math.min(ST_STERNE_MAX, w.sterne || 0);
-      el.querySelector("small").textContent = w.lp + " LP" + (w.schild ? " · Schild " + Math.ceil(w.schild / 10) + "/3" : "") + " · " + "★".repeat(sterne) + "☆".repeat(ST_STERNE_MAX - sterne)
-        + (w.ruestung ? " · Rüstung " + w.ruestung : "") + (w.konter ? " · Konter" : "");
+      el.querySelector("i").style.width = Math.round(w.lp / ST_LP * 100) + "%";
+      el.querySelector("i").classList.toggle("sp-sa-knapp", w.lp <= 15);
+      el.querySelector("small").textContent = w.lp + " LP" + (w.schild ? " · Schild " + w.schild : "") + " · " + (w.sterne ? "★".repeat(w.sterne) : "–") + (w.konter ? " · Konter" : "");
     };
     balken(".sp-sa-links", ST.ich); balken(".sp-sa-rechts", ST.er);
     [["ich", ST.ich], ["er", ST.er]].forEach(function (q) { var k = stratKaempfer(q[0]); if (k) { k.classList.toggle("sp-sa-schild", q[1].schild > 0); k.classList.toggle("sp-sa-konter", q[1].konter); } });
@@ -12401,7 +12325,7 @@
       /* Mein Angriff traf einen Konter: den Rückprall ziehe ich mir selbst ab – je Zug einmal. */
       if (n.zurueck > 0 && (ST.rueckAb || 0) < Number(n.nr)) { ST.rueckAb = Number(n.nr); ST.ich.lp = Math.max(0, ST.ich.lp - Number(n.zurueck)); stratEinschlag("ich", Number(n.zurueck), 0, 0);
         senden({ ereignis: "strat", typ: "stand", an: ST.gegner, partie: ST.id, nr: 0, stand: stratEigen() }); }
-      if (n.stand) stratStandUebernehmen(n.stand);
+      if (n.stand) { ST.er.lp = n.stand.lp; ST.er.schild = n.stand.schild; ST.er.sterne = n.stand.sterne; ST.er.konter = Boolean(n.stand.konter); }
       stratEndePruefen(); stratZeigen();
     } else if (n.typ === "ende" && ST.id === n.partie && !ST.ende) {
       extraLohn("strat", ST.start, 10);

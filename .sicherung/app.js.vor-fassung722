@@ -96629,10 +96629,6 @@ An einem Morgen lief ein kleiner Fuchs los…
         } catch (e) { fertig("Ton ging nicht: " + (e && e.message ? e.message : e)); }
       }),
       toast: (text) => { try { showToast(text); } catch (e) {} },
-      /* FASSUNG 722 — XANDER (Funk 167): „in Interaktion mit dem System was wir in den Einstellungen haben global auf der
-         Webseite in welchen Bereichen wir gut oder nicht so gut sind". Das Spiel liest die Selbsteinschätzung
-         (stark · mittel · schwach je Übungsart) aus dem Konto. */
-      lernprofil: () => { try { return getLearningProfile(); } catch (e) { return {}; } },
       /* FASSUNG 645 — das Spiel spielt seine Töne selbst (Web Audio) und
          fragt hier nur, ob die Töne an sind. */
       toeneAn: () => { try { return lcToeneAn(); } catch (e) { return true; } },
