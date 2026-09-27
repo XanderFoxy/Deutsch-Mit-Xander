@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 759 — Einzug in der Kurve, Optimus Prime",
+  stand: "Fassung 760 — Aufgabenbank durchgesehen, Aufgaben melden",
 
   inArbeit: [
-    { seit: "2026-09-27T17:49",
-      text: "Aufgabenbank durchsehen (Funk 178)" },
-    { seit: "2026-09-27T17:49",
+    { seit: "2026-09-27T18:08",
       text: "Skins, Ausrüstungs-Sets, Arena (Walkie 290)" },
-    { seit: "2026-09-27T17:49",
+    { seit: "2026-09-27T18:08",
       text: "Stadt selbst gestalten, echte Stadt/Wetter (Funk 168–170)" },
+    { seit: "2026-09-27T18:08",
+      text: "Walkie 282/283/285/296 beantworten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T17:49",
-      text: "Viper und KITT: quietschend um die Kurve, dann von vorn mit Licht, man steigt aus (Walkie 293)" },
-    { seit: "2026-09-27T17:49",
-      text: "Optimus Prime nach dem G1-Original neu gezeichnet – als Truck und als Roboter" },
-    { seit: "2026-09-27T17:49",
-      text: "Neues Geräusch: Reifenquietschen" },
+    { seit: "2026-09-27T18:08",
+      text: "Aufgabenbank: rund 7.800 Aufgaben Satz für Satz geprüft, 29 mit zwei passenden Antworten repariert" },
+    { seit: "2026-09-27T18:08",
+      text: "Neu: „Stimmt was nicht? Melden“ unter jeder aufgelösten Aufgabe" },
+    { seit: "2026-09-27T18:08",
+      text: "Doppelte Namen in Sätzen („hat Tom …“) durch er/sie ersetzt" },
   ],
 };

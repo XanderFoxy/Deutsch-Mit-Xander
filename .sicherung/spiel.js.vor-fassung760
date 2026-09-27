@@ -6410,8 +6410,6 @@
               + '<div class="sp-erg-erkl">' + esc(a.ergebnis.erklaerung || "") + "</div>"
             : a.hinweis ? '<div class="sp-klein sp-rot">' + esc(a.hinweis) + "</div>" : deutschKnoepfe())
           + "</div>"
-          /* FASSUNG 760 — die Meldezeile hat immer ihren Platz (auch leer), damit beim Auflösen nichts springt. */
-          + meldenHtml(a)
           + "</div>";
       } else {
         teil = '<div class="sp-knoepfe"><button type="button" data-tu="aufgabe">📚 Aufgabe holen</button></div>';
@@ -6709,8 +6707,6 @@
     if (tu === "aufgabe") return aufgabeHolen(false);
     if (tu === "missionsaufgabe") return aufgabeHolen(true);
     if (tu === "antwort") return antworten(k.dataset.o);
-    if (tu === "melden") { if (S.aufgabe) { S.aufgabe.melden = "wahl"; panelAuffrischen(); } return; }
-    if (tu === "meldegrund") return aufgabeMelden(k.dataset.g);
     if (tu === "anlegen" && klassenSperre(S.ich, k.dataset.w)) { hinweis("🔒 " + WAFFEN[k.dataset.w].name + ": " + klassenSperre(S.ich, k.dataset.w) + "."); return; }
     if (tu === "anlegen") { S.waffe = k.dataset.w; hinweis("🎯 " + WAFFEN[S.waffe].name + " angelegt – tippe auf ein Gesicht."); schliessen(); zeichnen(); return; }
     if (tu === "ablegen") { S.waffe = ""; zeichnen(); panelAuffrischen(); return; }
@@ -6764,27 +6760,6 @@
     if (tu === "sprechneu") return sprechWortHolen(0);
   }
 
-  /* FASSUNG 760 — XANDER: „bei den Fragen das kann man noch mal überarbeiten da ist doch viel Quatsch dabei der gar
-     nicht funktioniert". Nach der Auflösung kann jeder eine Aufgabe melden: meldet der Betreiber, ist sie sofort
-     aus dem Spiel, sonst ab zwei Meldungen. Solange man meldet, schaltet die Aufgabe nicht von selbst weiter. */
-  var MELDEGRUENDE = [["loesung", "Lösung falsch"], ["zwei", "Zwei passen"], ["satz", "Satz unklar"]];
-  function meldenHtml(a) {
-    if (!a || !a.ergebnis || !a.id) return '<div class="sp-melden"></div>';
-    if (a.gemeldet) return '<div class="sp-melden sp-melden-dank">' + esc(a.gemeldet) + "</div>";
-    if (a.melden === "wahl") return '<div class="sp-melden sp-melden-wahl">'
-      + MELDEGRUENDE.map(function (g) { return '<button type="button" data-tu="meldegrund" data-g="' + g[0] + '">' + g[1] + "</button>"; }).join("") + "</div>";
-    return '<div class="sp-melden"><button type="button" class="sp-melden-knopf" data-tu="melden">Stimmt was nicht? Melden</button></div>';
-  }
-  function aufgabeMelden(grund) {
-    var a = S.aufgabe;
-    if (!a || !a.id) return;
-    rpc("spiel_aufgabe_melden", { p_id: a.id, p_grund: grund }).then(function (r) {
-      if (!r || r.ok === false) { hinweis("Melden ging nicht: " + ((r && r.grund) || "")); return; }
-      a.melden = ""; a.gemeldet = r.gesperrt ? "Danke! Die Aufgabe ist jetzt aus dem Spiel." : "Danke! Wird geprüft – ab zwei Meldungen fliegt sie raus.";
-      ton("bling", 0.3); panelAuffrischen();
-      setTimeout(function () { if (S.aufgabe === a && panel && !panel.hidden && reiter === "deutsch") aufgabeHolen(false); }, 1800);
-    }).catch(function () { hinweis("Melden ging gerade nicht."); });
-  }
   function aufgabeHolen(mission) {
     rpc("spiel_aufgabe", { p_niveau: S.niveau, p_mission: Boolean(mission), p_kategorie: fragenKategorie() }).then(function (a) {
       if (!a || a.ok === false) { S.aufgabe = { frage: "", hinweis: (a && a.grund) || "Keine Aufgabe" }; }
@@ -6818,7 +6793,7 @@
          nach 3,5 s — Zeit genug, die richtige Lösung zu lesen. */
       var diese = a;
       setTimeout(function () {
-        if (S.aufgabe === diese && !diese.melden && !diese.gemeldet && panel && !panel.hidden && reiter === "deutsch") aufgabeHolen(false);
+        if (S.aufgabe === diese && panel && !panel.hidden && reiter === "deutsch") aufgabeHolen(false);
       }, r.richtig ? 1600 : 3500);
     }).catch(function (e) { hinweis("Antwort ging nicht: " + (e && e.message ? e.message : e)); });
   }
@@ -14368,7 +14343,7 @@
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, schmerzStimme: schmerzStimme, chatWaffeZeigen: chatWaffeZeigen, tierReagiert: tierReagiert, tiereSpielen: tiereSpielen, handelLaden: handelLaden, erinnerungPruefen: erinnerungPruefen, schmerz: function () { return SCHMERZ; }, ernten: ernten, saeen: saeen, werkzeugSetzen: werkzeugSetzen, ackerPflegen: ackerPflegen, ackerStand: ackerStand, werkHtml: werkHtml, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,
       abrufen: abrufen, eierPflegen: eierPflegen, makroAusloesen: makroAusloesen, dorfBlickHtml: dorfBlickHtml, stallBereit: stallBereit, baumStand: baumStand, pluendern: pluendern, holzen: holzen, angeln: angeln,
-      trophaeenHolen: trophaeenHolen, dorfHtml: dorfHtml, klassenHtml: klassenHtml, KAMPF: KAMPF, kampfHtml: kampfHtml, figurenHtml: figurenHtml, meldenHtml: meldenHtml, figurName: figurName, kampfStufe: kampfStufe, kampfZeigen: kampfZeigen, kampfKnopf: kampfKnopf, kampfFrei: kampfFrei, kampfSvg: kampfSvg, vorposten: vorposten, mauerSvg: mauerSvg, trophaeFeier: trophaeFeier, fundPflegen: fundPflegen, fundHeben: fundHeben,
+      trophaeenHolen: trophaeenHolen, dorfHtml: dorfHtml, klassenHtml: klassenHtml, KAMPF: KAMPF, kampfHtml: kampfHtml, figurenHtml: figurenHtml, figurName: figurName, kampfStufe: kampfStufe, kampfZeigen: kampfZeigen, kampfKnopf: kampfKnopf, kampfFrei: kampfFrei, kampfSvg: kampfSvg, vorposten: vorposten, mauerSvg: mauerSvg, trophaeFeier: trophaeFeier, fundPflegen: fundPflegen, fundHeben: fundHeben,
       zauberZeigen: zauberZeigen, zaubern: zaubern, daemonAusbruch: daemonAusbruch, uebungZaubern: uebungZaubern, geschuetzSvg: geschuetzSvg, kugelnFliegen: kugelnFliegen, radHtml: radHtml, zauberRadHtml: zauberRadHtml, ZAUBER: ZAUBER,
       menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
       zone: function (dx, dy) {

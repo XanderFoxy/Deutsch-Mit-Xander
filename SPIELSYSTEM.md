@@ -1403,3 +1403,24 @@ Sonden: neu 759 (alles grün). 696 (Viper und KITT kommen jetzt in 5,4 s statt 3
   - Rote Schultern mit den Auspuffrohren dahinter, graue Oberarme, rote Unterarme mit Rillen, graue Fäuste.
   - Graue Oberschenkel, blaue Schienbeine mit hellblauem Fenster, Chromtank außen und Rad an der Wade, blaue Füße.
   - Die Verwandlung, das Absetzen des Bildes mit beiden Händen und das Weggehen laufen unverändert.
+
+### Fassung 760 (Walkie 290: „viel Quatsch dabei“ – Aufgabenbank durchgesehen, Aufgaben melden)
+Server: Migration `spiel_760_aufgabe_melden`: neue Tabelle `spiel_aufgabe_meldungen` mit RLS (man liest nur die eigenen Meldungen) und die Funktion spiel_aufgabe_melden. Servertest in einer zurückgerollten Transaktion:
+- Emy meldet: 1 Meldung, die Aufgabe bleibt. Meldet sie noch einmal, zählt es nicht doppelt. Ein unbekannter Grund wird abgelehnt.
+- Xander meldet: Die Aufgabe ist sofort aus dem Spiel, mit dem Sperrgrund „Meldung 760 (Betreiber): Lösung ist falsch“.
+Sonden: neu 760 (alles grün); 645, 648, 673, 682, 747 grün. Deutsch-Fenster auf 360 px angesehen.
+- XANDER (wörtlich, Walkie 290): „bei den Fragen das kann man noch mal überarbeiten da ist doch viel Quatsch dabei der gar nicht funktioniert“.
+- **Durchsicht**: Aktiv sind 14.609 Aufgaben, gesperrt waren schon 2.079.
+  - Die fehleranfälligen Kategorien hat je ein Prüfer Satz für Satz gelesen, zusammen rund 7.800 Aufgaben: richtig/falsch A1–C2, ß/ss, Wortpaare, Sinn, Konnektoren, Nebensätze, wenn/ob, kennen/wissen, Possessiv, das/dass, als/wie, Modalverben, Präfixverben, Präpositionen, Relativsätze. Jeder Treffer wurde von Hand nachgeprüft.
+  - Maschinell zusätzlich geprüft: leere Felder, kaputte Zeichen, fehlende Lücken und doppelte Antworten. Dabei kam nichts Echtes heraus; die Treffer bei „Betonung“ unterscheiden sich nur in der Großschreibung, und das ist dort gewollt.
+- **Gefunden und repariert** (statt gesperrt, damit die Übungen bleiben):
+  - 26 Nebensatz-Aufgaben, bei denen „als“ ebenso passte wie „nachdem“ (z. B. „Als der Film zu Ende war, sind alle nach Hause gegangen“ ist richtig). Die zweite passende Antwort ist jetzt „ob“.
+  - Bei „Tom/Lea zögerte noch, ___ die Frist bereits abgelaufen war“ passten auch „nachdem“ und „während“ (im Sinn von „wohingegen“). Sie sind jetzt durch „damit“ und „bevor“ ersetzt.
+  - In 17 Sätzen stand der Name doppelt („Nachdem Tom gegessen hatte, hat Tom die Küche aufgeräumt“). Jetzt heißt es „hat er …“ bzw. „hat sie …“.
+  - „Ein juristischer ___ kann sehr teuer werden“: „Vertrag“ und „Termin“ passten neben „Prozess“ ebenfalls. Jetzt stehen dort „Prozeß“, „Kessel“ und „Schirm“.
+  - Zwei Meldungen der Prüfer habe ich verworfen: „bei Ihren Wagen“ ist als Mehrzahl richtig, und „seine Nachbarn“ ist Mehrzahl.
+- **Aufgabe melden** (neu, damit Fehler künftig sofort rausfliegen):
+  - Unter jeder aufgelösten Aufgabe steht klein „Stimmt was nicht? Melden“. Vorher steht dort nichts, weil man die Lösung noch nicht kennt.
+  - Ein Tipp zeigt drei Gründe nebeneinander: „Lösung falsch“, „Zwei passen“ und „Satz unklar“.
+  - Meldet der Betreiber, ist die Aufgabe sofort aus dem Spiel; bei anderen Spielern ab zwei Meldungen. Solange man meldet, springt die Aufgabe nicht weiter; nach dem Dank kommt die nächste.
+  - Die Zeile hat immer ihren festen Platz, damit beim Auflösen nichts springt (gemessen: Aufgabe vorher und nachher 245 px). Alle Knöpfe sind mindestens 32 px hoch.

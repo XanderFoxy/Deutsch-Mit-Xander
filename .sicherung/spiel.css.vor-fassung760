@@ -2790,8 +2790,3 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-figur-neu > i { animation: sp-figur-dreh .5s ease-out both; }
 @keyframes sp-figur-rein { from { transform: translateX(-24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes sp-figur-dreh { from { transform: rotateY(90deg) scale(.6); } to { transform: none; } }
-/* FASSUNG 760 — Aufgabe melden (unter der Auflösung, klein und ruhig) */
-.sp-melden { margin-top: 2px; min-height: 34px; display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; align-items: center; gap: 5px; font: 500 11px system-ui, sans-serif; color: #6b7280; }
-.sp-melden .sp-melden-knopf { background: none; border: 0; padding: 8px 4px 8px 0; min-height: 32px !important; font: 600 11px system-ui, sans-serif; color: #8a5a00; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
-.sp-melden-wahl button { flex: 0 0 auto; white-space: nowrap; font: 600 11px system-ui, sans-serif; padding: 7px 10px; min-height: 32px !important; border-radius: 12px; border: 1px solid #d8b43a; background: #fff8dc; color: #5a4300; }
-.sp-melden-dank { color: #2e7d32; font-weight: 600; }
