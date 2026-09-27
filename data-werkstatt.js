@@ -49,26 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 756 — Berufe mit Ausbildung und Kaserne (Walkie 293)",
+  stand: "Fassung 757 — Gründer und Klassen-Waffen",
 
   inArbeit: [
-    { seit: "2026-09-27T10:55",
-      text: "Klassenname und mehrere Charaktere (Walkie 291/292)" },
-    { seit: "2026-09-27T10:55",
-      text: "Einzug: Viper/KITT mit Kurve, Optimus Prime originalgetreu (Walkie 293)" },
-    { seit: "2026-09-27T10:55",
+    { seit: "2026-09-27T17:06",
+      text: "758: mehrere Charaktere (bis zu fünf, einer je Klasse, umschaltbar)" },
+    { seit: "2026-09-27T17:06",
+      text: "Einzug: Viper/KITT mit Kurve von vorn, Optimus Prime originalgetreu" },
+    { seit: "2026-09-27T17:06",
       text: "Aufgabenbank durchsehen (Funk 178)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T10:55",
-      text: "Fischer, Holzfäller, Jäger, Bergleute als Berufe mit Ausbildung" },
-    { seit: "2026-09-27T10:55",
-      text: "Ausgebildete bringen mehr je Fahrt" },
-    { seit: "2026-09-27T10:55",
-      text: "Kaserne im Dorf: Ritter nur noch dort, 2 je Stufe" },
-    { seit: "2026-09-27T10:55",
-      text: "Sonde 704 wieder grün" },
+    { seit: "2026-09-27T17:06",
+      text: "Grundklasse heißt jetzt „Gründer“ (Walkie 291)" },
+    { seit: "2026-09-27T17:06",
+      text: "Klassen-Waffen im Laden: „benötigt Magier-Klasse“ (Walkie 292)" },
+    { seit: "2026-09-27T17:06",
+      text: "Waffenbild bei drei Knöpfen nicht mehr zusammengedrückt" },
   ],
 };

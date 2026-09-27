@@ -96,7 +96,8 @@ const bildpunkteAnders = (a, b) => { const A = PNG.sync.read(a), B = PNG.sync.re
   await pg.evaluate(() => { window.__beta = true; });
   await menue("mehr"); await tick(200);
   r = await pg.evaluate(() => ({ menue: (document.querySelector('[data-s="kampfklasse"]') || {}).textContent || "" }));
-  sage(/Kämpferklasse/.test(r.menue) && /wählen/.test(r.menue), "Schalter an (Beta): Menüpunkt „Kämpferklasse · wählen“", r.menue);
+  /* Seit Fassung 757 (Walkie 291) heißt die Grundklasse „Gründer“ – der Menüpunkt zeigt sie statt „wählen“. */
+  sage(/Kämpferklasse/.test(r.menue) && /Gründer/.test(r.menue), "Schalter an (Beta): Menüpunkt „Kämpferklasse · Gründer“", r.menue);
   r = await pg.evaluate(() => { const K = window.DMA_SPIEL.pruef.KAMPF; return Object.keys(K); });
   sage(r.join() === "magier,dieb,titan,heiler,ingenieur,gelehrter", "alle sechs Klassen", r.join(", "));
 
@@ -105,7 +106,8 @@ const bildpunkteAnders = (a, b) => { const A = PNG.sync.read(a), B = PNG.sync.re
   r = await pg.evaluate(() => { const z = [...document.querySelectorAll(".sp-kampf-zeile")];
     return { n: z.length, titan: (z.find((e) => /Titan/.test(e.textContent)) || {}).textContent || "", knoepfe: document.querySelectorAll('[data-s="kampfwahl"]').length,
       breit: z.every((e) => e.scrollWidth <= e.clientWidth + 1) }; });
-  sage(r.n === 6 && r.knoepfe === 6, "sechs Zeilen, jede mit „Wählen“", r.n + " Zeilen, " + r.knoepfe + " Knöpfe");
+  /* Seit 757 steht „Gründer“ als siebte Zeile oben (ohne Knopf, weil man es gerade ist). */
+  sage(r.n === 7 && r.knoepfe === 6, "Gründer oben, dazu sechs Klassen, jede mit „Wählen“", r.n + " Zeilen, " + r.knoepfe + " Knöpfe");
   sage(/Stufe 3/.test(r.titan) && /Bollwerk/.test(r.titan) && /Stärke:/.test(r.titan), "Titan mit 70 Erfahrung steht auf Stufe 3 (wie spiel_kampf_stufe)", r.titan.slice(0, 120));
   sage(r.breit, "Android 360 px: kein Text läuft aus der Zeile");
   const stufen = await pg.evaluate(() => [0, 14, 15, 59, 60, 135, 1215, 9999].map((x) => window.DMA_SPIEL.pruef.kampfStufe(x)));

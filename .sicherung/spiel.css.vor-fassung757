@@ -114,7 +114,7 @@ button:disabled { opacity: .45; cursor: default; }
 .sp-zeile { display: flex; align-items: center; gap: 10px; justify-content: space-between; background: #fff; border-radius: 10px; padding: 7px 9px; margin: 5px 0; }
 .sp-zeile > span:nth-child(2) { flex: 1; }
 .sp-zeile small { color: #5a6270; }
-.sp-bild { width: 38px; flex-shrink: 0; height: 20px; display: inline-flex; align-items: center; justify-content: center; }
+.sp-bild { width: 38px; height: 20px; display: inline-flex; align-items: center; justify-content: center; }
 .sp-bild svg { width: 100%; height: 100%; }
 .sp-aufgabe { background: #fff; border-radius: 12px; padding: 10px; margin: 6px 0; }
 .sp-frage-satz { font-size: 16px; margin-bottom: 8px; }
@@ -2773,8 +2773,3 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 @media (prefers-reduced-motion: reduce) { .sp-abwehr { animation-duration: .01s; } }
 .sp-schnell .sp-s-kampfsymbol { position: relative; }
 .sp-schnell .sp-s-kampfsymbol.sp-kampf-merk::after { content: ""; position: absolute; right: 3px; top: 3px; width: 8px; height: 8px; border-radius: 50%; background: #ffd84a; box-shadow: 0 0 0 1.5px #3a1a16; }
-
-/* FASSUNG 757 — Walkie 291/292: Grundklasse „Gründer“ und die Sperre für Klassen-Waffen im Laden. */
-.sp-kampf-zeile.sp-gruender { border-left: 3px solid #6b8e3a; }
-.sp-klassen-sperre { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 11px; }
-.sp-klassen-sperre svg { width: 16px; height: 16px; flex: none; }
