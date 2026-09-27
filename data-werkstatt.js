@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 771: Aussprache im Spiel mit Niveau und Prozent, Tafel-Ordner beschriftet, Makroknopf-Links, Zungenbilder sch/st/sp/r",
+  stand: "Fassung 772: Spiel-Aussprache mit Kreisel, Automatik und Punkten nach Niveau; persönliches Aussprache-Wörterbuch (ab 95 %, sauber geschnitten)",
 
   inArbeit: [
-    { seit: "2026-09-27T23:05",
-      text: "772: Sequenzen für gezeichnete Chat-Wege (Funk 196); persönliches Aussprache-Wörterbuch; Walkies 282/283/285/296/299–302" },
+    { seit: "2026-09-27T23:33",
+      text: "Lehrer-Freigabe im Chat fürs Aussprache-Wörterbuch; Sequenzen für gezeichnete Wege (Funk 196); Diktat startet nicht im Samsung-Browser (Funk 197); Walkies 282/283/285/296/299–302" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T23:05",
-      text: "771: Niveau-Wahl und Prozent-Balken mit Lauten in der Spiel-Aussprache; Tafel-Ordner mit Vom Gerät/Aussprache/Bilderwelten; Griff nicht mehr auf dem Schwamm; Makroknopf Aussprache-Bilder/Bilderwelten; neue Zungenbilder" },
+    { seit: "2026-09-27T23:33",
+      text: "772: C2 gibt jetzt bis 12 statt 3 Punkte; runder Kreisel in der Spielkarte; Wort wird automatisch vorgesprochen und bewertet; ab 95 % ins eigene Aussprache-Wörterbuch, Meine Stimme anhören, Liste im Trainer" },
   ],
 };

@@ -13453,15 +13453,6 @@
           <button type="button" class="btn btn-ghost" data-ausspr-spiel="original">🔊 So klingt es richtig</button>
           <button type="button" class="btn btn-ghost" data-ausspr-spiel="eigene" ${aussprLetzteEigene ? "" : "disabled"}>🎧 So hast du es gesagt</button>
         </div>
-        ${(() => {
-          /* FASSUNG 772 — Funk 190/198: ab 95 % (Laut-Bewertung) das Angebot fürs persönliche Aussprache-Wörterbuch,
-             und „Meine Stimme anhören", wenn das Wort schon darin liegt. */
-          const E = window.DMA_EIGENE_AUSSPRACHE, wAkt = s.woerter && s.woerter[s.index];
-          if (!E || !wAkt) return "";
-          const t = aussprSprechtext(wAkt), pz = b.quelle === "azure" ? b.prozent : 0;
-          if (aussprLetzteEigene && aussprLetzteEigene.puffer) E.merken(t, aussprLetzteEigene.puffer, pz, "trainer");
-          return E.knoepfeHtml(t, pz);
-        })()}
         <p class="empty-note" style="text-align:center; font-size:0.7rem;">
           ${b.quelle === "azure"
             ? "Gemessen mit der Laut-Bewertung von Azure. Vorgesprochen wird mit derselben neuronalen Stimme."
@@ -13689,180 +13680,6 @@
       return Promise.resolve(AP.zentralStand()).catch(() => null);
     }
   };
-
-  /* =================================================================
-     FASSUNG 772 — DAS PERSÖNLICHE AUSSPRACHE-WÖRTERBUCH
-     -----------------------------------------------------------------
-     XANDER (Funk 190): „das eine perfekt erkannte Aussprache die mindestens über 95% liegt da gekoppt wird und als
-     Vorschlag kommt ob sie in ihr persönliches Aussprache Wörterbuch das übernehmen wollen damit sie sich selber mit
-     dieser perfekten Aussprache auch hören".
-     XANDER (Funk 198): „das Audio das ist halt ein sauberen Staat und Endpunkt hat dass das Wort sauber ausgeschnitten
-     ist und auch entrauscht dass das in bester Qualität da zu hören ist … das System soll ja seitenweit gelten".
-
-     Was mit der Aufnahme geschieht, bevor sie gespeichert wird (alles im Gerät):
-       1. Brummen und Gleichanteil weg (Hochpass ~80 Hz).
-       2. Rauschboden messen (leisestes Fünftel der 10-ms-Stücke), Schwelle darüber.
-       3. Anfang und Ende des Wortes suchen – Atempausen, Räuspern davor und Stille danach fallen weg
-          (80 ms Luft vorn, 140 ms hinten, damit kein Laut angeschnitten wird).
-       4. Entrauschen: ein weiches Rauschtor senkt alles, was nur Grundrauschen ist.
-       5. Weich ein- und ausblenden, auf gleiche Lautstärke bringen.
-     Gespeichert wird eine kleine WAV (16 kHz, mono) am eigenen Konto – nur man selbst hört sie. */
-  window.DMA_EIGENE_AUSSPRACHE = (function () {
-    const SCHWELLE = 95;
-    let liste = null, laedt = null, letzter = null;
-    const toene = {};
-    const schluessel = (w) => String(w || "").trim().toLowerCase();
-    /* Backend ist eine globale Konstante aus backend.js, KEINE Eigenschaft von window. */
-    function klient() { try { return (typeof Backend !== "undefined" && Backend.zugang && Backend.zugang()) || null; } catch (e) { return null; } }
-    function angemeldet() { try { return Boolean(Backend.currentUser && Backend.currentUser() && Backend.currentUser().id); } catch (e) { return false; } }
-    function rpc(name, args) {
-      const k = klient();
-      if (!k) return Promise.reject(new Error("Bitte anmelden – das Wörterbuch gehört zu deinem Konto."));
-      return k.rpc(name, args || {}).then((r) => { if (r && r.error) throw r.error; return r ? r.data : null; });
-    }
-
-    function schneiden(puffer) {
-      if (!puffer || !puffer.getChannelData) return null;
-      const sr = puffer.sampleRate || 16000, kanaele = puffer.numberOfChannels || 1, n = puffer.length || puffer.getChannelData(0).length;
-      const roh = new Float32Array(n);
-      for (let c = 0; c < kanaele; c++) { const d = puffer.getChannelData(c); for (let i = 0; i < n; i++) roh[i] += d[i] / kanaele; }
-      /* 1. Hochpass (ein Pol, ~80 Hz) */
-      const a = Math.exp(-2 * Math.PI * 80 / sr);
-      let vx = 0, vy = 0;
-      for (let i = 0; i < n; i++) { const x = roh[i]; const y = a * (vy + x - vx); vx = x; vy = y; roh[i] = y; }
-      /* 2. Rahmen-Pegel */
-      const R = Math.max(1, Math.round(sr * 0.01)), m = Math.floor(n / R);
-      if (m < 8) return null;
-      const pegel = new Float32Array(m);
-      let spitze = 0;
-      for (let f = 0; f < m; f++) { let s = 0; for (let i = f * R; i < (f + 1) * R; i++) s += roh[i] * roh[i]; pegel[f] = Math.sqrt(s / R); if (pegel[f] > spitze) spitze = pegel[f]; }
-      if (spitze < 0.004) return null;
-      const sortiert = Array.from(pegel).sort((x, y) => x - y);
-      const boden = sortiert[Math.floor(m * 0.2)] || 0;
-      const schwelle = Math.max(boden * 3.2, spitze * 0.07);
-      /* 3. Anfang/Ende: drei Rahmen am Stück über der Schwelle (ein Klick allein zählt nicht) */
-      let anf = -1, ende = -1;
-      for (let f = 0; f + 2 < m; f++) if (pegel[f] > schwelle && pegel[f + 1] > schwelle && pegel[f + 2] > schwelle) { anf = f; break; }
-      for (let f = m - 1; f - 2 >= 0; f--) if (pegel[f] > schwelle && pegel[f - 1] > schwelle && pegel[f - 2] > schwelle) { ende = f; break; }
-      if (anf < 0 || ende <= anf) return null;
-      const von = Math.max(0, (anf - 8) * R), bis = Math.min(n, (ende + 15) * R);
-      const aus = roh.slice(von, bis);
-      /* 4. weiches Rauschtor, je Rahmen geglättet */
-      const unten = boden * 1.4, oben = Math.max(unten * 1.01, schwelle);
-      let g = 0;
-      for (let f = 0; f * R < aus.length; f++) {
-        const q = pegel[Math.min(m - 1, Math.floor(von / R) + f)];
-        const ziel = Math.max(0.06, Math.min(1, (q - unten) / (oben - unten)));
-        const ende2 = Math.min(aus.length, (f + 1) * R);
-        for (let i = f * R; i < ende2; i++) { g += (ziel - g) * (ziel > g ? 0.02 : 0.004); aus[i] *= g; }
-      }
-      /* 5. Ein-/Ausblenden und Lautstärke */
-      const ein = Math.round(sr * 0.012), ausb = Math.round(sr * 0.04);
-      for (let i = 0; i < ein && i < aus.length; i++) aus[i] *= i / ein;
-      for (let i = 0; i < ausb && i < aus.length; i++) aus[aus.length - 1 - i] *= i / ausb;
-      let sp = 0; for (let i = 0; i < aus.length; i++) sp = Math.max(sp, Math.abs(aus[i]));
-      if (sp > 0) { const v = 0.89 / sp; for (let i = 0; i < aus.length; i++) aus[i] *= v; }
-      return { daten: aus, rate: sr, dauerMs: Math.round(aus.length / sr * 1000), vorn: Math.round(von / sr * 1000), hinten: Math.round((n - bis) / sr * 1000) };
-    }
-    function alsDataUrl(schnitt) {
-      const AP = window.AusspracheP;
-      if (!AP || !AP.alsWav) return Promise.reject(new Error("Die Tonbearbeitung ist nicht geladen."));
-      const blob = AP.alsWav({ numberOfChannels: 1, sampleRate: schnitt.rate, length: schnitt.daten.length, getChannelData: () => schnitt.daten });
-      return new Promise((fertig, fehler) => { const r = new FileReader(); r.onload = () => fertig(String(r.result)); r.onerror = () => fehler(new Error("lesen")); r.readAsDataURL(blob); });
-    }
-
-    function listeLaden(frisch) {
-      if (!angemeldet()) { liste = []; return Promise.resolve(liste); }
-      if (liste && !frisch) return Promise.resolve(liste);
-      if (laedt && !frisch) return laedt;
-      laedt = rpc("aussprache_eigen_liste").then((l) => { liste = Array.isArray(l) ? l : []; laedt = null; return liste; })
-        .catch(() => { laedt = null; liste = liste || []; return liste; });
-      return laedt;
-    }
-    function hat(wort) { return Boolean(liste && liste.some((e) => schluessel(e.wort) === schluessel(wort))); }
-
-    /* Die letzte gute Aufnahme merken – der Knopf „Übernehmen" holt sie sich hier ab. */
-    function merken(wort, puffer, prozent, quelle) {
-      if (!wort || !puffer) return;
-      if (letzter && letzter.puffer === puffer && letzter.wort === wort) return;
-      letzter = { wort: String(wort), puffer: puffer, prozent: Math.round(Number(prozent) || 0), quelle: quelle || "trainer", gespeichert: false };
-    }
-    function bietetAn(wort, prozent) {
-      return Boolean(letzter && schluessel(letzter.wort) === schluessel(wort) && Math.round(Number(prozent) || 0) >= SCHWELLE && !letzter.gespeichert);
-    }
-    function uebernehmen(wort, prozent, puffer, quelle) {
-      const p = puffer || (letzter && schluessel(letzter.wort) === schluessel(wort) ? letzter.puffer : null);
-      const schnitt = schneiden(p);
-      if (!schnitt) return Promise.reject(new Error("In der Aufnahme war kein Wort zu finden."));
-      return alsDataUrl(schnitt).then((url) => rpc("aussprache_eigen_speichern", {
-        p_wort: String(wort).trim(), p_prozent: Math.round(Number(prozent) || 0), p_audio: url, p_dauer: schnitt.dauerMs, p_quelle: quelle || (letzter && letzter.quelle) || "trainer"
-      })).then((r) => {
-        if (!r || !r.ok) throw new Error((r && r.grund) || "Das Speichern ging nicht.");
-        if (letzter && schluessel(letzter.wort) === schluessel(wort)) letzter.gespeichert = true;
-        delete toene[schluessel(wort)];
-        return listeLaden(true).then(() => {
-          try { window.dispatchEvent(new CustomEvent("dma-eigen-geaendert", { detail: { wort: wort } })); } catch (e) {}
-          return Object.assign({ schnitt: { dauer: schnitt.dauerMs, vorn: schnitt.vorn, hinten: schnitt.hinten } }, r);
-        });
-      });
-    }
-    function tonHolen(wort) {
-      const k = schluessel(wort);
-      if (toene[k]) return Promise.resolve(toene[k]);
-      return rpc("aussprache_eigen_ton", { p_wort: wort }).then((r) => { if (!r || !r.ok || !r.audio) throw new Error("Für dieses Wort ist noch keine eigene Aufnahme da."); toene[k] = r.audio; return r.audio; });
-    }
-    let spielt = null;
-    function spielen(wort) {
-      return tonHolen(wort).then((url) => {
-        try { if (spielt) spielt.pause(); } catch (e) {}
-        spielt = new Audio(url);
-        return spielt.play();
-      });
-    }
-    function loeschen(id) {
-      return rpc("aussprache_eigen_loeschen", { p_id: id }).then((r) => listeLaden(true).then(() => r));
-    }
-
-    /* Knöpfe für jede Aussprache-Karte der Seite: „Meine Stimme" (wenn schon gespeichert) und das Angebot ab 95 %. */
-    function knoepfeHtml(wort, prozent) {
-      const w = escapeHtml(String(wort || ""));
-      let h = "";
-      if (hat(wort)) h += '<button type="button" class="btn btn-ghost eigen-knopf" data-eigen="hoeren" data-wort="' + w + '">Meine Stimme anhören</button>';
-      if (bietetAn(wort, prozent)) h += '<button type="button" class="btn eigen-knopf eigen-angebot" data-eigen="uebernehmen" data-wort="' + w + '" data-prozent="' + Math.round(prozent) + '">'
-        + (hat(wort) ? "Diese Aufnahme ins Wörterbuch (ersetzt die alte)" : "In mein Aussprache-Wörterbuch übernehmen") + "</button>";
-      return h ? '<div class="eigen-knoepfe">' + h + (bietetAn(wort, prozent) ? '<p class="eigen-erkl">Sehr gut (' + Math.round(prozent) + ' %)! Sauber ausgeschnitten und entrauscht – danach hörst du dich selbst als Vorbild.</p>' : "") + "</div>" : "";
-    }
-    document.addEventListener("click", (e) => {
-      const k = e.target.closest && e.target.closest("[data-eigen]");
-      if (!k) return;
-      e.preventDefault();
-      const wort = k.dataset.wort || "";
-      if (k.dataset.eigen === "hoeren") { spielen(wort).catch((x) => { try { showToast(x.message); } catch (y) {} }); return; }
-      if (k.dataset.eigen === "uebernehmen") {
-        k.disabled = true; k.textContent = "Wird geschnitten und gespeichert …";
-        uebernehmen(wort, Number(k.dataset.prozent) || 0, null, null).then((r) => {
-          k.textContent = "✓ In deinem Aussprache-Wörterbuch";
-          k.classList.add("eigen-fertig");
-          try { showToast("„" + wort + "“ liegt jetzt mit deiner Stimme in deinem Wörterbuch (" + (r.schnitt ? (r.schnitt.dauer / 1000).toFixed(2).replace(".", ",") + " s" : "") + ")."); } catch (y) {}
-        }).catch((x) => { k.disabled = false; k.textContent = "Nochmal versuchen"; try { showToast(x.message || "Das ging nicht."); } catch (y) {} });
-      }
-      if (k.dataset.eigen === "weg") {
-        k.disabled = true;
-        loeschen(Number(k.dataset.id)).then(() => { const z = k.closest(".eigen-zeile"); if (z) z.remove(); }).catch(() => { k.disabled = false; });
-      }
-    });
-
-    /* Die Liste für den privaten Bereich. */
-    function listeHtml(l) {
-      if (!angemeldet()) return '<p class="empty-note">Melde dich an – dann sammelt sich hier deine eigene, geprüfte Aussprache.</p>';
-      if (!l || !l.length) return '<p class="empty-note">Noch leer. Sprichst du ein Wort mit mindestens ' + SCHWELLE + ' %, bietet dir die Seite an, es mit deiner Stimme hierher zu übernehmen.</p>';
-      return '<div class="eigen-liste">' + l.map((e) => '<div class="eigen-zeile"><b>' + escapeHtml(e.wort) + '</b><span class="eigen-note">' + (e.prozent != null ? e.prozent + " %" : "") + "</span>"
-        + '<button type="button" class="btn btn-ghost" data-eigen="hoeren" data-wort="' + escapeHtml(e.wort) + '">Anhören</button>'
-        + '<button type="button" class="btn btn-ghost" data-eigen="weg" data-id="' + e.id + '" title="Aus dem Wörterbuch nehmen">Löschen</button></div>').join("") + "</div>";
-    }
-
-    return { SCHWELLE, schneiden, merken, bietetAn, uebernehmen, spielen, hat, listeLaden, knoepfeHtml, listeHtml, get liste() { return liste; } };
-  })();
 
   /* --- Die Laut-Anzeige. Das ist der Kern der ganzen Sache. ---
      Wort für Wort, und in jedem Wort Laut für Laut. Eingefärbt,
@@ -14197,16 +14014,6 @@
   function renderAussprache() {
     const area = document.getElementById("ausspracheArea");
     if (!area) return;
-    /* FASSUNG 772: das persönliche Aussprache-Wörterbuch einmal laden (für „Meine Stimme" und die Liste). */
-    if (window.DMA_EIGENE_AUSSPRACHE && DMA_EIGENE_AUSSPRACHE.liste === null && !renderAussprache.eigenLaedt) {
-      renderAussprache.eigenLaedt = true;
-      DMA_EIGENE_AUSSPRACHE.listeLaden().then(() => {
-        const l = document.getElementById("eigenListe");
-        if (l) l.innerHTML = DMA_EIGENE_AUSSPRACHE.listeHtml(DMA_EIGENE_AUSSPRACHE.liste);
-        const k = document.querySelector("#eigenBereich summary");
-        if (k) k.textContent = "Mein Aussprache-Wörterbuch (" + DMA_EIGENE_AUSSPRACHE.liste.length + ")";
-      });
-    }
     /* Steht der zentrale Schlüssel zur Verfügung? Das entscheidet,
        welche Stufe angezeigt wird und mit welcher Stimme
        vorgesprochen wird — also wird es EINMAL geholt und die
@@ -14263,12 +14070,6 @@
             <button type="button" class="btn btn-ghost" id="ausspracheZumWoerterbuch" style="margin-top:8px;">📖 Zum Wörterbuch</button>`
           : `<p class="empty-note" style="margin-bottom:12px;">${liste.length.toLocaleString("de-DE")} Wörter stehen bereit — eine Runde geht über ${Math.min(AUSSPRACHE_RUNDEN, liste.length)}.</p>
              <button type="button" class="btn btn-coffee" id="ausspracheStart" ${liste.length ? "" : "disabled"}>🎤 Runde starten</button>`}
-          ${window.DMA_EIGENE_AUSSPRACHE ? `
-          <details class="eigen-bereich" id="eigenBereich">
-            <summary>Mein Aussprache-Wörterbuch${DMA_EIGENE_AUSSPRACHE.liste ? " (" + DMA_EIGENE_AUSSPRACHE.liste.length + ")" : ""}</summary>
-            <p class="empty-note">Hier liegen die Wörter, die du mit mindestens ${DMA_EIGENE_AUSSPRACHE.SCHWELLE} % gesprochen und übernommen hast – mit deiner eigenen Stimme, sauber ausgeschnitten. Nur du hörst sie.</p>
-            <div id="eigenListe">${DMA_EIGENE_AUSSPRACHE.liste ? DMA_EIGENE_AUSSPRACHE.listeHtml(DMA_EIGENE_AUSSPRACHE.liste) : '<p class="empty-note">Einen Moment …</p>'}</div>
-          </details>` : ""}
           <p class="eyebrow" style="margin-top:16px;">WAS HIER GEMESSEN WIRD</p>
           <div class="ausspr-stufen-erklaerung">
             <p><span class="ausspr-stufe ausspr-stufe-1">Stufe 1</span>

@@ -2891,30 +2891,3 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-sprech-balken b { position: relative; display: block; font: 800 11px/16px system-ui, sans-serif; color: #1f2a38; text-align: center; }
 .sp-sprech-laute { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-bottom: 3px; }
 .sp-sprech-laut { display: inline-block; min-width: 22px; padding: 1px 5px; border: 2px solid; border-radius: 7px; background: #fff; font: 700 13px/1.3 system-ui, sans-serif; }
-
-/* FASSUNG 772 — Funk 198: der runde Kreisel wie im Aussprachetrainer der Seite, der automatische Ablauf und das
-   persönliche Aussprache-Wörterbuch in der Spielkarte. */
-.sp-sprech .sp-erg-platz { min-height: 150px; max-height: 150px; }
-.sp-sprech-erg { display: flex; align-items: flex-start; gap: 8px; text-align: left; }
-.sp-sprech-kreisel { flex: 0 0 78px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.sp-sprech-kreisel .kreisel { width: 78px; height: 78px; }
-.sp-sprech-kreisel .kreisel svg { width: 78px; height: 78px; }
-.sp-sprech-kreisel .kreisel-zahl { font-size: 1.1rem !important; }
-.sp-sprech-kreisel .kreisel-schild { font-size: 8px; }
-.sp-sprech-erg-rechts { flex: 1 1 auto; min-width: 0; }
-.sp-sprech-erg .sp-sprech-laute { justify-content: flex-start; }
-.sp-sprech-auto, .sp-sprech-meine { display: block; margin: 0 auto 6px; min-height: 30px; padding: 3px 10px; border-radius: 15px; border: 1px solid #c9d2de; background: #fff; color: #4a5260; font: 600 11.5px/1.2 system-ui, sans-serif; }
-.sp-sprech-auto.sp-an { border-color: #2e9e5b; color: #1f7a45; background: #eaf7ef; }
-.sp-sprech-meine { border-color: #7a4fd0; color: #5a36a8; background: #f3eefd; }
-.sp-sprech .eigen-knoepfe { margin: 4px 0 2px; }
-.sp-sprech .eigen-knopf { min-height: 30px; padding: 3px 10px; border-radius: 15px; font: 700 11.5px/1.2 system-ui, sans-serif; border: 1px solid #7a4fd0; background: #7a4fd0; color: #fff; }
-.sp-sprech .eigen-knopf.btn-ghost { background: #f3eefd; color: #5a36a8; }
-.sp-sprech .eigen-knopf.eigen-fertig { background: #2e9e5b; border-color: #2e9e5b; }
-.sp-sprech .eigen-erkl { margin: 3px 0 0; font-size: 10.5px; line-height: 1.3; color: #5a36a8; }
-.sp-sprech-erg .sp-erg-zeile { flex-wrap: wrap; row-gap: 2px; }
-.sp-sprech-erg .sp-erg-zeile button { min-height: 30px; }
-.sp-sprech-erg .sp-sprech-laute { margin: 3px 0; }
-.sp-sprech .eigen-knopf { white-space: normal; max-width: 100%; text-align: center; }
-.sp-sprech .eigen-knoepfe { display: flex; flex-direction: column; align-items: stretch; gap: 3px; }
-.sp-sprech .eigen-erkl { text-align: left; }
-.sp-sprech-erg .sp-erg-erkl { -webkit-line-clamp: 2; }

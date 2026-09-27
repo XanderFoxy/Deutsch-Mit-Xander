@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 771: FUNK 195
+   SONDE — FASSUNG 772: FUNK 198 (UND 190)
    ---------------------------------------------------------------------
-   XANDER: „Die Aussprache Übungen im Spiel hat kein Niveau und keine
-   prozentuale Anzeige wie wir sie global auf der Webseite auch haben beim
-   Whiteboard hat man immer noch nicht die Auswahl im Ordner mit den
-   Bilderwelten … schau auch dass das mit dem makroknopf richtig verlinkt
-   ist … vielleicht kannst du bei ST SP oder … den ch an dem s c h auch die
-   Stellung der Zunge verdeutlichen über diese Vektorgrafik".
-   Android 360 px, Fingertipps.
+   XANDER: „man kriegt dort offenbar nur drei Punkte auf Stufe C2 außerdem
+   wird immer noch nicht diese kreisrunde Prozentanzeige angezeigt … dass
+   wir das Wort automatisch vorgelesen bekommen und direkt nachsprechen
+   können und direkt bewertet bekommen dann soll uns bei einer sehr guten
+   Bewertung der Vorschlag gemacht werden ob wir … diese Aussprache … in
+   unser persönliches Aussprache Wörterbuch übernehmen wollen … dass das
+   Wort sauber ausgeschnitten ist und auch entrauscht".
+   (Die Punkte prüft der Server-Test in SPIELSYSTEM.md, Fassung 772.)
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -42,7 +43,7 @@ const sage = (gut, was, zusatz) => {
   const pg = await ctx.newPage();
   const konsolenFehler = [];
   pg.on("pageerror", (e) => konsolenFehler.push(String(e.message || e)));
-  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); localStorage.setItem("dma_spiel_sprech_auto", "0"); /* seit 772: hier von Hand */ } catch (e) {} });
+  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
   await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
   await pg.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF && window.DMA_SPIEL, { timeout: 25000 });
 
@@ -155,128 +156,103 @@ const sage = (gut, was, zusatz) => {
 
   const klick = (sel) => pg.evaluate((s) => { const e = document.querySelector(s); if (!e) return false; e.click(); return true; }, sel);
 
-  console.log("\nTAFEL: EIN BESCHRIFTETER ORDNER-KNOPF\n");
-  await pg.evaluate(() => { try { Backend.isOwner = () => true; Backend.canModerate = () => true; Backend.getMyWhiteboards = () => Promise.resolve([]); } catch (e) {}
-    window.__gesendet = []; window.LiveChat.tafelSenden = (d) => window.__gesendet.push(d);
-    window.DMA_TAFEL({ t: "blick", z: 1, x: .5, y: .5 }, "Alex", "Alex"); });
-  await tick(700);
-  let r = await pg.evaluate(() => {
-    const t = document.getElementById("lcTafel"), o = t && t.querySelector('[data-tafel="mappe"]');
-    return { tafel: !!t, bild: !!(t && t.querySelector('[data-tafel="bild"]')), ordner: !!o, svg: !!(o && o.querySelector("svg")), text: o ? o.textContent.trim() : "",
-      emoji: o ? /\p{Extended_Pictographic}/u.test(o.textContent) : true };
-  });
-  sage(r.tafel && r.ordner && r.svg && r.text === "Ordner" && !r.emoji && !r.bild, "Knopf „Ordner“ mit gezeichnetem Ordner, kein 🖼️/📂 mehr", JSON.stringify(r));
-  r = await pg.evaluate(() => {
-    const g = document.getElementById("lcTafelGriff").getBoundingClientRect();
-    const ueber = [...document.querySelectorAll("#lcTafel .lc-tafel-leiste button")].filter((b) => { const q = b.getBoundingClientRect(); return q.width && !(q.right <= g.left || q.left >= g.right || q.bottom <= g.top || q.top >= g.bottom); }).map((b) => b.dataset.tafel || b.className);
-    const l = document.querySelector("#lcTafel .lc-tafel-leiste").getBoundingClientRect();
-    return { ueber, griffUnten: Math.round(g.bottom), leisteOben: Math.round(l.top), leisteHoch: Math.round(l.height) };
-  });
-  sage(!r.ueber.length && r.griffUnten <= r.leisteOben, "der Griff ⌄ liegt über der Leiste, nicht auf dem Schwamm", JSON.stringify(r));
-  const klein = await pg.evaluate(() => [...document.querySelectorAll("#lcTafel .lc-tafel-leiste button")].filter((b) => { const q = b.getBoundingClientRect(); return q.width && (q.height < 26 || q.width < 26); }).map((b) => b.dataset.tafel || "farbe"));
-  if (process.env.BILD) await (await pg.$("#lcTafel")).screenshot({ path: process.env.BILD + "-tafel.png" });
-
-  await tippe('#lcTafel [data-tafel="mappe"]'); await tick(500);
-  r = await pg.evaluate(() => [...document.querySelectorAll("#lcTafelMappe .lc-mappe-kat span")].map((s) => s.textContent));
-  sage(JSON.stringify(r) === JSON.stringify(["Vom Gerät", "Aussprache-Übungen", "Bilderwelten"]), "im Ordner: Vom Gerät, Aussprache-Übungen, Bilderwelten", JSON.stringify(r));
-  if (process.env.BILD) await (await pg.$("#lcTafelMappe")).screenshot({ path: process.env.BILD + "-ordner.png" });
-  await pg.evaluate(() => { const d = document.getElementById("lcTafelDatei"); d.addEventListener("click", (e) => { window.__datei = true; e.preventDefault(); }, { once: true }); });
-  await tippe('#lcTafelMappe .lc-mappe-kat[data-kat="geraet"]'); await tick(300);
-  r = await pg.evaluate(() => ({ datei: !!window.__datei, zu: !document.getElementById("lcTafelMappe") }));
-  sage(r.datei && r.zu, "„Vom Gerät“ öffnet die Dateiauswahl", JSON.stringify(r));
-
-  await tippe('#lcTafel [data-tafel="mappe"]'); await tick(500);
-  await tippe('#lcTafelMappe .lc-mappe-kat[data-kat="laute"]');
-  await pg.waitForFunction(() => document.querySelectorAll(".lc-tafel-bildmappe [data-mappe=laut]").length > 8, { timeout: 15000 }).catch(() => {});
-  r = await pg.evaluate(() => [...document.querySelectorAll(".lc-tafel-bildmappe [data-mappe=laut]")].filter((b) => b.querySelector("svg")).map((b) => b.dataset.k));
-  sage(["ng", "ich", "ach", "sch", "s", "st", "sp", "r"].every((k) => r.indexOf(k) >= 0), "Aussprache-Ordner: ng, ich, ach und neu sch, s, st, sp, r (mit Vorschau)", r.join(","));
-  if (process.env.BILD) await (await pg.$(".lc-tafel-bildmappe")).screenshot({ path: process.env.BILD + "-laute.png" });
-  await klick('.lc-tafel-bildmappe [data-mappe="laut"][data-k="sch"]');
-  await pg.waitForFunction(() => window.__gesendet.some((d) => d.t === "bild"), { timeout: 10000 }).catch(() => {});
-  const hell = await pg.evaluate(() => new Promise((ok) => { const b = document.getElementById("lcTafelBild"); if (!b || !b.src) return ok(999); const i = new Image(); i.onload = () => { const c = document.createElement("canvas"); c.width = 60; c.height = 40; const g = c.getContext("2d"); g.drawImage(i, 0, 0, 60, 40); const d = g.getImageData(0, 0, 60, 40).data; let s = 0; for (let k = 0; k < d.length; k += 4) s += (d[k] + d[k + 1] + d[k + 2]) / 3; ok(Math.round(s / (d.length / 4))); }; i.src = b.src; }));
-  sage(hell < 248 && await pg.evaluate(() => window.__gesendet.some((d) => d.t === "bild")), "das sch-Bild liegt auf der Tafel und geht an alle", "Helligkeit " + hell);
-  /* zurück aus dem Laute-Ordner führt in den Ordner */
-  await pg.evaluate(() => window.DMA_TAFEL_ORDNER("laute")); await tick(300);
-  await klick('.lc-tafel-bildmappe [data-mappe="ordner"][data-o=""]'); await tick(500);
-  r = await pg.evaluate(() => ({ ordner: !!document.getElementById("lcTafelMappe"), bm: !!document.querySelector(".lc-tafel-bildmappe") }));
-  sage(r.ordner && !r.bm, "„‹ zurück“ aus Aussprache führt zurück in den Ordner", JSON.stringify(r));
-  await pg.evaluate(() => { const m = document.getElementById("lcTafelMappe"); if (m) m.remove(); });
-
-  console.log("\nMAKROKNOPF: DIREKT IN DIE ORDNER\n");
-  const mk = await pg.evaluate(() => {
-    const a = window.DMA_MAGIC.aktionen();
-    localStorage.removeItem("dma_magic_felder"); localStorage.removeItem("dma_magic_771");
-    const neu = window.DMA_MAGIC.felder();
-    localStorage.setItem("dma_magic_felder", JSON.stringify(["bilder", "spiele"])); localStorage.setItem("dma_magic_753", "1"); localStorage.removeItem("dma_magic_771");
-    const alt1 = window.DMA_MAGIC.felder();
-    localStorage.setItem("dma_magic_felder", JSON.stringify(["bilder"]));
-    const alt2 = window.DMA_MAGIC.felder();
-    return { aktionen: Object.keys(a), neu, alt1, alt2 };
-  });
-  sage(mk.aktionen.indexOf("ausspracheBilder") >= 0 && mk.aktionen.indexOf("bilderwelten") >= 0, "Makroknopf kennt „Aussprache-Bilder“ und „Bilderwelten“", mk.aktionen.join(","));
-  sage(mk.neu.indexOf("ausspracheBilder") >= 0 && mk.alt1.join(",") === "bilder,spiele,ausspracheBilder" && mk.alt2.join(",") === "bilder", "als Feld: neu dabei, eigenen Feldern einmal angehängt, danach nicht mehr aufgedrängt", JSON.stringify(mk));
-  await pg.evaluate(() => { try { window.LiveChat.schreiben("/tafel aus"); } catch (e) {} }); await tick(500);
-  for (const [feld, sel, name] of [["ausspracheBilder", ".lc-tafel-bildmappe [data-mappe=laut]", "Aussprache-Bilder"], ["bilderwelten", '.lc-tafel-bildmappe [data-o^="welten:"]', "Bilderwelten"]]) {
-    await pg.evaluate((f) => { localStorage.setItem("dma_magic_felder", JSON.stringify([f])); document.querySelectorAll("#lcPlatzMenue, .lc-tafel-bildmappe").forEach((x) => x.remove()); }, feld);
-    await pg.evaluate(() => document.querySelector('[data-lc="magic"]').click()); await tick(300);
-    const da = await pg.evaluate((f) => { const b = document.querySelector('#lcPlatzMenue .lc-magic-feld[data-feld="' + f + '"]'); if (b) b.click(); return !!b; }, feld);
-    await pg.waitForFunction((s) => document.querySelectorAll(s).length > 2, sel, { timeout: 20000 }).catch(() => {});
-    r = await pg.evaluate((s) => ({ tafel: !!(document.getElementById("lcTafel") && !document.getElementById("lcTafel").hidden), n: document.querySelectorAll(s).length }), sel);
-    sage(da && r.tafel && r.n > 2, "Makroknopf „" + name + "“: Tafel auf und gleich der Ordner", JSON.stringify(r));
-  }
-  await pg.evaluate(() => { document.querySelectorAll(".lc-tafel-bildmappe").forEach((x) => x.remove()); try { window.LiveChat.schreiben("/tafel aus"); } catch (e) {} }); await tick(400);
-
-  console.log("\nAUSSPRACHE IM SPIEL: NIVEAU UND PROZENT\n");
+  /* Eine echte Aufnahme nachbauen: 0,5 s Rauschen, 0,6 s Ton (das „Wort“), 0,4 s Rauschen. */
   await pg.evaluate(() => {
-    const puffer = { length: 100, sampleRate: 16000, getChannelData: () => new Float32Array(100) };
+    const sr = 16000, n = Math.round(sr * 1.5), d = new Float32Array(n);
+    let z = 7; const rnd = () => { z = (z * 16807) % 2147483647; return z / 2147483647 - 0.5; };
+    for (let i = 0; i < n; i++) { const t = i / sr; d[i] = rnd() * 0.01 + (t >= 0.5 && t < 1.1 ? 0.5 * Math.sin(2 * Math.PI * 220 * t) * Math.min(1, (t - 0.5) * 40, (1.1 - t) * 40) : 0); }
+    window.__eigenPuffer = { numberOfChannels: 1, sampleRate: sr, length: n, duration: n / sr, getChannelData: () => d };
+    const puffer = { length: 8000, sampleRate: 16000, duration: 0.5, numberOfChannels: 1, getChannelData: () => new Float32Array(8000) };
     window.DMA_AUSSPR_BRUECKE = { original: () => Promise.resolve({ puffer: puffer, art: "azure" }) };
+    window.__aufnahmen = 0; window.__note = 97;
     window.AusspracheP = Object.assign({}, window.AusspracheP || {}, {
       mikrofonDa: () => true,
-      aufnahmeStarten: (o) => { setTimeout(o.beiStille, 300); return Promise.resolve({ stoppen: () => Promise.resolve({ blob: new Blob(["x"]) }) }); },
-      tonLesen: () => Promise.resolve(puffer), alsWav: () => new Blob(["wav"]), stufe1Da: () => true,
-      stufe1Bewerten: () => Promise.resolve({ quelle: "azure", prozent: 73.2, woerter: [{ wort: "Schule", laute: [{ laut: "ʃ", note: 48 }, { laut: "uː", note: 92 }, { laut: "l", note: 81 }, { laut: "ə", note: 66 }] }] }),
-      lautKlartext: (l) => "Dein " + l.laut + " war noch zu weit vorn."
+      aufnahmeStarten: (o) => { window.__aufnahmen++; setTimeout(o.beiStille, 300); return Promise.resolve({ stoppen: () => Promise.resolve({ blob: new Blob(["x"]) }) }); },
+      tonLesen: () => Promise.resolve(window.__eigenPuffer), stufe1Da: () => true,
+      stufe1Bewerten: () => Promise.resolve({ quelle: "azure", prozent: window.__note, woerter: [{ wort: "Schule", laute: [{ laut: "ʃ", note: 96 }, { laut: "uː", note: 99 }, { laut: "l", note: 97 }, { laut: "ə", note: 94 }] }] }),
+      lautKlartext: (l) => "Dein " + l.laut + " war gut."
     });
-    window.__wortArgs = [];
+    /* Konto und Wörterbuch-Server nachbauen */
+    window.__woerterbuch = []; window.__eigenRufe = [];
+    const kl = { rpc: (name, args) => {
+      window.__eigenRufe.push({ name, args });
+      let data = null;
+      if (name === "aussprache_eigen_speichern") { window.__woerterbuch = window.__woerterbuch.filter((e) => e.wort.toLowerCase() !== args.p_wort.toLowerCase()); window.__woerterbuch.push({ id: window.__woerterbuch.length + 1, wort: args.p_wort, prozent: args.p_prozent, audio: args.p_audio, dauer: args.p_dauer }); data = { ok: true, wort: args.p_wort, anzahl: window.__woerterbuch.length }; }
+      else if (name === "aussprache_eigen_liste") data = window.__woerterbuch.map((e) => ({ id: e.id, wort: e.wort, prozent: e.prozent, dauer: e.dauer }));
+      else if (name === "aussprache_eigen_ton") { const e = window.__woerterbuch.find((x) => x.wort.toLowerCase() === String(args.p_wort).toLowerCase()); data = e ? { ok: true, audio: e.audio } : { ok: false }; }
+      else if (name === "aussprache_eigen_loeschen") { window.__woerterbuch = window.__woerterbuch.filter((x) => x.id !== args.p_id); data = { ok: true }; }
+      return Promise.resolve({ data, error: null });
+    } };
+    Backend.zugang = () => kl; Backend.currentUser = () => ({ id: "00000000-0000-4000-8000-000000000000", email: "t@t" });
+    window.__abgespielt = 0; const altPlay = HTMLMediaElement.prototype.play; HTMLMediaElement.prototype.play = function () { window.__abgespielt++; return Promise.resolve(); };
     window.__extra = Object.assign({}, window.__extra || {}, {
-      spiel_aussprache_wort: (a) => { window.__wortArgs.push(a.p_niveau); return { ok: true, wort: "Schule", silben: "SCHU-le", niveau: a.p_niveau }; },
-      spiel_aussprache_fertig: (a, ich) => Object.assign({}, ich, { ok: true, gewonnen: 3 })
+      spiel_aussprache_wort: (a) => ({ ok: true, wort: "Schule", silben: "SCHU-le", niveau: a.p_niveau }),
+      spiel_aussprache_fertig: (a, ich) => { window.__fertig = a; return Object.assign({}, ich, { ok: true, gewonnen: 12 }); }
     });
-    try { localStorage.setItem("dma_spiel_niveau", "A1"); } catch (e) {}
-    const S = window.DMA_SPIEL.pruef.zustand(); S.niveau = "A1"; S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true);
+    try { localStorage.setItem("dma_spiel_sprech_auto", "1"); localStorage.setItem("dma_spiel_niveau", "C2"); } catch (e) {}
+    const S = window.DMA_SPIEL.pruef.zustand(); S.niveau = "C2"; S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true);
     S.deutschWahl = true; window.DMA_SPIEL.menue("deutsch");
   });
   await tick(500);
-  await klick('#spPanel [data-tu="kategorie"][data-k="aussprache"]'); await tick(900);
-  r = await pg.evaluate(() => ({ chips: [...document.querySelectorAll("#spPanel .sp-sprech-niveau button")].map((b) => b.textContent + (b.classList.contains("sp-an") ? "*" : "")) }));
-  sage(r.chips.join(",") === "A1*,A2,B1,B2,C1,C2", "die Karte zeigt die Niveaus, A1 gewählt", r.chips.join(","));
-  await tippe('#spPanel .sp-sprech-niveau [data-n="B1"]'); await tick(900);
-  r = await pg.evaluate(() => ({ args: window.__wortArgs.slice(-1)[0], an: (document.querySelector("#spPanel .sp-sprech-niveau .sp-an") || {}).textContent, gemerkt: localStorage.getItem("dma_spiel_niveau") }));
-  sage(r.args === "B1" && r.an === "B1" && r.gemerkt === "B1", "Tipp auf B1 holt ein Wort auf B1 und merkt es sich", JSON.stringify(r));
-  const hoehe0 = await pg.evaluate(() => document.querySelector("#spPanel .sp-sprech").getBoundingClientRect().height);
-  await tippe('#spPanel [data-tu="sprechen"]'); await tick(1600);
-  r = await pg.evaluate(() => {
-    const b = document.querySelector("#spPanel .sp-sprech-balken"), i = b && b.querySelector("i");
-    return { balken: !!b, breite: i ? i.style.width : "", text: b ? b.textContent : "", laute: [...document.querySelectorAll("#spPanel .sp-sprech-laut")].map((l) => l.textContent + ":" + l.style.color),
-      hoehe: document.querySelector("#spPanel .sp-sprech").getBoundingClientRect().height };
-  });
-  /* Seit Fassung 772 steht dort der runde Kreisel wie im Aussprachetrainer (der Balken ist nur noch Rückfall). */
-  const ring = await pg.evaluate(() => { const k = document.querySelector("#spPanel .sp-sprech-kreisel .kreisel"); return k ? k.getAttribute("aria-label") : ""; });
-  sage((r.balken && r.breite === "73%" && /73 %/.test(r.text)) || /^73 Prozent/.test(ring), "nach dem Nachsprechen: 73 % (Kreisel oder Balken)", ring || JSON.stringify(r).slice(0, 160));
-  sage(r.laute.length === 4 && /^ʃ:/.test(r.laute[0]) && new Set(r.laute.map((x) => x.split(":")[1])).size >= 2, "die Laute eingefärbt wie im Aussprachekurs (ʃ schwach, uː gut)", r.laute.join(" "));
-  sage(Math.abs(r.hoehe - hoehe0) < 2, "die Karte springt nicht (gleiche Höhe vorher/nachher)", Math.round(hoehe0) + " → " + Math.round(r.hoehe));
-  if (process.env.BILD) await (await pg.$("#spPanel .sp-sprech")).screenshot({ path: process.env.BILD + "-aussprache.png" });
-  const kleinSp = await pg.evaluate(() => [...document.querySelectorAll("#spPanel .sp-sprech button")].filter((b) => { const q = b.getBoundingClientRect(); return q.width && q.height < 26; }).map((b) => b.textContent));
-  sage(!kleinSp.length, "alle Knöpfe der Karte groß genug zum Tippen", kleinSp.join(","));
 
-  console.log("\nTIPPS UND TRICKS AUF DER SEITE\n");
-  r = await pg.evaluate(() => { const A = window.DMA_AUSSPRACHE; const t = A.TRICKS.de; const f = (id) => t.find((x) => x.id === id) || {};
-    return { sch: !!(f("sch").svg && f("sch").svg2), stsp: !!(f("stsp").svg && f("stsp").svg2), r: !!f("r").svg, grafik: ["sch", "s", "st", "sp", "r"].filter((k) => A.GRAFIK[k]).length }; });
-  sage(r.sch && r.stsp && r.r && r.grafik === 5, "Aussprachekurs: Tricks „SCH“ und „ST/SP“ mit je zwei Zungenbildern, „R“ mit Bild", JSON.stringify(r));
+  console.log("\nAUTOMATISCH: VORSPRECHEN, ZUHÖREN, BEWERTEN\n");
+  await klick('#spPanel [data-tu="kategorie"][data-k="aussprache"]');
+  await pg.waitForFunction(() => document.querySelector("#spPanel .sp-sprech-kreisel"), { timeout: 8000 }).catch(() => {});
+  let r = await pg.evaluate(() => ({ aufnahmen: window.__aufnahmen, fertig: window.__fertig, ring: (document.querySelector("#spPanel .sp-sprech-kreisel .kreisel") || { getAttribute: () => "" }).getAttribute("aria-label"),
+    balken: !!document.querySelector("#spPanel .sp-sprech-balken"), auto: (document.querySelector('#spPanel [data-tu="sprechauto"]') || {}).textContent || "" }));
+  sage(r.aufnahmen === 1 && r.fertig && r.fertig.p_prozent === 97, "ohne Tippen: das Wort wird vorgesprochen, das Mikrofon hört zu, die Bewertung kommt", JSON.stringify({ a: r.aufnahmen, f: r.fertig }));
+  sage(/^97 Prozent/.test(r.ring) && !r.balken, "die Note steht im runden Kreisel wie im Aussprachetrainer", r.ring);
+  sage(/an$/.test(r.auto), "Schalter „Automatisch vorsprechen und zuhören: an“ ist in der Karte", r.auto);
+  const text = await pg.evaluate(() => document.querySelector("#spPanel .sp-erg-platz").textContent);
+  sage(/\+12 Punkte/.test(text), "C2 mit 97 % zeigt +12 Punkte (Server)", text.slice(0, 80));
+  if (process.env.BILD) await (await pg.$("#spPanel .sp-sprech")).screenshot({ path: process.env.BILD + "-karte.png" });
+
+  console.log("\nPERSÖNLICHES AUSSPRACHE-WÖRTERBUCH\n");
+  r = await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-eigen="uebernehmen"]'); return b ? b.textContent : ""; });
+  sage(/In mein Aussprache-Wörterbuch/.test(r), "ab 95 % kommt das Angebot „In mein Aussprache-Wörterbuch übernehmen“", r);
+  await tippe('#spPanel [data-eigen="uebernehmen"]');
+  await pg.waitForFunction(() => window.__woerterbuch.length === 1, { timeout: 6000 }).catch(() => {});
+  r = await pg.evaluate(() => { const e = window.__woerterbuch[0] || {}; return { wort: e.wort, prozent: e.prozent, wav: /^data:audio\/wav;base64,/.test(e.audio || ""), dauer: e.dauer, laenge: (e.audio || "").length }; });
+  sage(r.wort === "Schule" && r.prozent === 97 && r.wav, "gespeichert: „Schule“, 97 %, als WAV", JSON.stringify(r));
+  sage(r.dauer >= 700 && r.dauer <= 950, "sauber geschnitten: aus 1,5 s Aufnahme bleibt das Wort (0,6 s) plus etwas Luft", r.dauer + " ms");
+  const schnitt = await pg.evaluate(() => { const s = window.DMA_EIGENE_AUSSPRACHE.schneiden(window.__eigenPuffer); let rausch = 0; for (let i = 0; i < 400; i++) rausch = Math.max(rausch, Math.abs(s.daten[i])); return { vorn: s.vorn, hinten: s.hinten, rand: Math.round(rausch * 1000) / 1000 }; });
+  sage(schnitt.vorn >= 350 && schnitt.hinten >= 200 && schnitt.rand < 0.05, "Atempause vorn und Stille hinten fallen weg, der Rand ist leise (entrauscht, eingeblendet)", JSON.stringify(schnitt));
+  const leer = await pg.evaluate(() => { const n = 16000, d = new Float32Array(n); for (let i = 0; i < n; i++) d[i] = (Math.random() - 0.5) * 0.004; return window.DMA_EIGENE_AUSSPRACHE.schneiden({ numberOfChannels: 1, sampleRate: 16000, length: n, getChannelData: () => d }); });
+  sage(leer === null, "reine Stille wird nicht gespeichert", String(leer));
+  await tick(600);
+  r = await pg.evaluate(() => ({ meine: !!document.querySelector('#spPanel [data-eigen="hoeren"]'), angebot: !!document.querySelector('#spPanel [data-eigen="uebernehmen"]') }));
+  sage(r.meine && !r.angebot, "danach: „Meine Stimme“ in der Karte, das Angebot ist weg", JSON.stringify(r));
+  await tippe('#spPanel [data-eigen="hoeren"]'); await tick(400);
+  r = await pg.evaluate(() => ({ ton: window.__eigenRufe.some((x) => x.name === "aussprache_eigen_ton"), gespielt: window.__abgespielt }));
+  sage(r.ton && r.gespielt >= 1, "„Meine Stimme“ spielt die eigene Aufnahme", JSON.stringify(r));
+  if (process.env.BILD) await (await pg.$("#spPanel .sp-sprech")).screenshot({ path: process.env.BILD + "-meine.png" });
+
+  console.log("\nSCHWÄCHER ALS 95 %: KEIN ANGEBOT; AUTOMATIK ABSCHALTBAR\n");
+  await pg.evaluate(() => { window.__note = 88; });
+  await tippe('#spPanel [data-tu="sprechneu"]');
+  await pg.waitForFunction(() => window.__aufnahmen >= 2 && document.querySelector("#spPanel .sp-sprech-kreisel"), { timeout: 8000 }).catch(() => {});
+  r = await pg.evaluate(() => ({ aufn: window.__aufnahmen, angebot: !!document.querySelector('#spPanel [data-eigen="uebernehmen"]') }));
+  sage(r.aufn === 2 && !r.angebot, "88 %: bewertet, aber kein Wörterbuch-Angebot", JSON.stringify(r));
+  await tippe('#spPanel [data-tu="sprechauto"]');
+  await tippe('#spPanel [data-tu="sprechneu"]'); await tick(1500);
+  r = await pg.evaluate(() => ({ aufn: window.__aufnahmen, gemerkt: localStorage.getItem("dma_spiel_sprech_auto"), text: (document.querySelector('#spPanel [data-tu="sprechauto"]') || {}).textContent }));
+  sage(r.aufn === 2 && r.gemerkt === "0" && /aus$/.test(r.text), "Automatik aus: das neue Wort wartet auf „Nachsprechen“", JSON.stringify(r));
+  const klein = await pg.evaluate(() => [...document.querySelectorAll("#spPanel .sp-sprech button")].filter((b) => { const q = b.getBoundingClientRect(); return q.width && q.height < 29; }).map((b) => b.textContent));
+  sage(!klein.length, "alle Knöpfe der Karte mindestens 30 px hoch", klein.join(" | "));
+
+  console.log("\nDIE LISTE (PRIVATER BEREICH)\n");
+  r = await pg.evaluate(() => { const h = window.DMA_EIGENE_AUSSPRACHE.listeHtml(window.DMA_EIGENE_AUSSPRACHE.liste); const d = document.createElement("div"); d.innerHTML = h; return { zeilen: d.querySelectorAll(".eigen-zeile").length, hoeren: d.querySelectorAll('[data-eigen="hoeren"]').length, weg: d.querySelectorAll('[data-eigen="weg"]').length }; });
+  sage(r.zeilen === 1 && r.hoeren === 1 && r.weg === 1, "Liste: jedes Wort mit „Anhören“ und „Löschen“", JSON.stringify(r));
+
+  console.log("\nAUSSPRACHETRAINER DER SEITE\n");
+  await pg.evaluate(() => { document.querySelectorAll(".sp-panel").forEach((x) => { x.hidden = true; }); const pille = document.querySelector('[data-sub="sub-aussprache"]'); const v = pille && pille.closest(".view"); if (v && typeof activateTab === "function") activateTab(v.id); if (pille) pille.click(); });
+  await pg.waitForFunction(() => document.querySelector("#eigenBereich .eigen-zeile"), { timeout: 8000 }).catch(() => {});
+  r = await pg.evaluate(() => { const d = document.getElementById("eigenBereich"); return { da: !!d, titel: d ? d.querySelector("summary").textContent : "", zeilen: d ? d.querySelectorAll(".eigen-zeile").length : 0 }; });
+  sage(r.da && /\(1\)/.test(r.titel) && r.zeilen === 1, "im Aussprachetrainer: „Mein Aussprache-Wörterbuch (1)“ mit dem gespeicherten Wort", JSON.stringify(r));
+  if (process.env.BILD && r.da) { await pg.evaluate(() => { const d = document.getElementById("eigenBereich"); d.open = true; d.scrollIntoView({ block: "center" }); }); await tick(300); await pg.screenshot({ path: process.env.BILD + "-trainer.png", timeout: 8000 }).catch(() => {}); }
 
   sage(!konsolenFehler.length, "keine Seitenfehler", konsolenFehler.slice(0, 2).join(" | "));
-  if (klein.length) console.log("  (Hinweis: kleine Leistenknöpfe " + klein.join(",") + ")");
   await br.close(); srv.close();
-  console.log("\nFassung 771 (Funk 195): " + (fehler ? fehler + " rot." : "alles grün."));
+  console.log("\nFassung 772 (Funk 198): " + (fehler ? fehler + " rot." : "alles grün."));
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });

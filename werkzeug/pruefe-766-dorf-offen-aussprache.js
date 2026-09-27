@@ -40,7 +40,7 @@ const sage = (gut, was, zusatz) => {
   const pg = await ctx.newPage();
   const konsolenFehler = [];
   pg.on("pageerror", (e) => konsolenFehler.push(String(e.message || e)));
-  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
+  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); localStorage.setItem("dma_spiel_sprech_auto", "0"); /* seit 772: hier von Hand */ } catch (e) {} });
   await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
   await pg.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF && window.DMA_SPIEL, { timeout: 25000 });
 
@@ -246,7 +246,7 @@ const sage = (gut, was, zusatz) => {
   sage(kat && karte && /Brötchen/.test(karte), "Deutsch-Menü → Aussprache: die Karte zeigt das Wort", String(kat) + " " + String(karte).slice(0, 80));
   sage(r.az && r.az.text === "Brötchen" && r.az.wav && !r.frei, "bewertet wird mit der Laut-Bewertung (Azure), wie im Aussprachekurs", JSON.stringify(r.az));
   sage(r.fertig && r.fertig.p_prozent === 88, "der Server bekommt die Azure-Note (88)", JSON.stringify(r.fertig));
-  sage(/88 \/ 100 · Laut für Laut/.test(r.text) && /Dein øː klang noch nicht rund/.test(r.text) && /\+3 Punkte/.test(r.text), "Anzeige: „88 / 100 · Laut für Laut“, der schwächste Laut als Tipp, +3 Punkte", r.text);
+  sage(/88 \/ 100/.test(r.text) && /Laut für Laut/.test(r.text) /* seit 772: Kreisel „Laut für Laut“ + „88 / 100“ */ && /Dein øː klang noch nicht rund/.test(r.text) && /\+3 Punkte/.test(r.text), "Anzeige: „88 / 100 · Laut für Laut“, der schwächste Laut als Tipp, +3 Punkte", r.text);
   if (process.env.BILD) await (await pg.$("#spPanel .sp-sprech")).screenshot({ path: process.env.BILD + "-aussprache.png" });
   await pg.evaluate(() => { window.AusspracheP.stufe1Da = () => false; window.__frei = false; window.__fertigArgs = null; });
   await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-tu="sprechneu"]'); if (b) b.click(); }); await tick(900);

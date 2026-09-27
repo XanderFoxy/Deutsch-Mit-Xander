@@ -6254,7 +6254,6 @@
     panelAuffrischen();
   }
   function schliessen() { if (panel) panel.hidden = true; }
-  function panelOffen() { return Boolean(panel && !panel.hidden && reiter === "deutsch"); }
   /* Nach der Wahl klappt die Wahl zu und das Fenster springt zur Aufgabe hoch. */
   function deutschNachOben() {
     S.deutschWahl = false;
@@ -6798,7 +6797,6 @@
     if (tu === "sprechhoeren") return sprechHoeren();
     if (tu === "sprechen") return sprechAufnehmen();
     if (tu === "sprechneu") return sprechWortHolen(0);
-    if (tu === "sprechauto") { try { localStorage.setItem("dma_spiel_sprech_auto", sprechAutoAn() ? "0" : "1"); } catch (e) {} panelAuffrischen(); if (sprechAutoAn() && S.sprech) { S.sprech.autoFuer = ""; sprechAutoLauf(); } return; }
     if (tu === "sprechniveau") { S.niveau = k.dataset.n; try { localStorage.setItem("dma_spiel_niveau", S.niveau); } catch (e) {} return sprechWortHolen(0); }
   }
 
@@ -6964,10 +6962,7 @@
      saubere Stimme (Sammeldatei, sonst Azure) über DMA_AUSSPR_BRUECKE –
      nie mehr die eigenen Aufnahmen.
      --------------------------------------------------------------- */
-  try { window.addEventListener("dma-eigen-geaendert", function () { panelAuffrischen(); }); } catch (e) {}
   function sprechWortHolen(versuch) {
-    var EAl = window.DMA_EIGENE_AUSSPRACHE;
-    if (EAl && EAl.liste === null) EAl.listeLaden().then(function () { panelAuffrischen(); });
     S.sprech = { laedt: true };
     panelAuffrischen();
     rpc("spiel_aussprache_wort", { p_niveau: S.niveau }).then(function (r) {
@@ -6986,39 +6981,20 @@
                        : stand && stand.nichtAngemeldet ? "Zum Vorsprechen und Bewerten bitte anmelden."
                        : "Die Aussprache-Stimme antwortet gerade nicht – tippe gleich noch einmal auf „Neues Wort“." };
         panelAuffrischen();
-        sprechAutoLauf();
       });
     }).catch(function (e) { S.sprech = { fehler: String(e && e.message || e) }; panelAuffrischen(); });
-  }
-  /* FASSUNG 772 — XANDER (Funk 198): „hier soll es auch genauso sein dass wir das Wort automatisch vorgelesen bekommen
-     und direkt nachsprechen können und direkt bewertet bekommen". Wie im Aussprachetrainer der Seite: Wort da →
-     vorsprechen → gleich danach hört das Mikrofon zu → Stille beendet die Aufnahme → Bewertung. Abschaltbar
-     („Automatisch“ in der Karte, gemerkt auf dem Gerät). */
-  function sprechAutoAn() { try { return localStorage.getItem("dma_spiel_sprech_auto") !== "0"; } catch (e) { return true; } }
-  function sprechAutoLauf() {
-    var sp = S.sprech;
-    if (!sprechAutoAn() || !sp || !sp.wort || sp.laeuft || sp.ergebnis || sp.autoFuer === sp.wort) return;
-    if (!panelOffen() || S.kategorie !== "aussprache") return;
-    sp.autoFuer = sp.wort;
-    var dauer = sp.original && sp.original.puffer ? sprechHoeren() : 0;
-    setTimeout(function () {
-      if (S.sprech !== sp || sp.laeuft || sp.ergebnis || !panelOffen()) return;
-      sprechAufnehmen();
-    }, Math.round((dauer || 0) * 1000) + 350);
   }
   function sprechBewertbar() { var AP = window.AusspracheP; return Boolean(AP && AP.stufe1Da && AP.stufe1Da() && AP.alsWav); }
   function sprechHoeren() {
     var sp = S.sprech || {};
-    if (!sp.original || !sp.original.puffer) return 0;
+    if (!sp.original || !sp.original.puffer) return;
     klangWecken();
     var k = KLANG.ctx;
-    if (!k) return 0;
+    if (!k) return;
     try {
       var q = k.createBufferSource(), g = k.createGain();
       g.gain.value = 0.95; q.buffer = sp.original.puffer; q.connect(g); g.connect(k.destination); q.start(0);
     } catch (e) {}
-    var pf = sp.original.puffer;
-    return pf.duration || (pf.length && pf.sampleRate ? pf.length / pf.sampleRate : 0.8);
   }
   function sprechAufnehmen() {
     var sp = S.sprech || {}, AP = window.AusspracheP;
@@ -7032,7 +7008,6 @@
         if (!auf || !auf.blob) throw new Error((auf && auf.fehler) || "keine Aufnahme");
         sp.hinweis = "Ich höre zu …"; panelAuffrischen();
         return AP.tonLesen(auf.blob).then(function (eigen) {
-          sp.eigen = eigen;
           var frei = function () {
             if (!sp.original) throw new Error("ohne Vorsprechen kein Vergleich – tippe auf „Neues Wort“");
             return AP.freieBewertungAusPuffern(eigen, sp.original.puffer);
@@ -7062,9 +7037,6 @@
           sp.laeuft = false;
           if (r && r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
           sp.ergebnis = { prozent: prozent, gewonnen: (r && r.gewonnen) || 0, grenze: r && r.grenze, azure: Boolean(erg && erg.azure), tipp: (erg && erg.tipp) || "", laute: (erg && erg.laute) || [] };
-          /* FASSUNG 772: die Aufnahme fürs persönliche Aussprache-Wörterbuch bereithalten (Angebot ab 95 %, nur mit Laut-Bewertung). */
-          var EA = window.DMA_EIGENE_AUSSPRACHE;
-          if (EA && sp.eigen) EA.merken(sp.wort, sp.eigen, sp.ergebnis.azure ? prozent : 0, "spiel");
           sp.hinweis = "";
           ton(sp.ergebnis.gewonnen > 0 ? "bling" : "gummi", 0.45);
           panelAuffrischen(); zeichnen(); schnellZeichnen();
@@ -7087,44 +7059,28 @@
   }
   function sprechProzentHtml(e) {
     var AP = window.AusspracheP;
-    /* FASSUNG 772 — XANDER (Funk 198): „außerdem wird immer noch nicht diese kreisrunde Prozentanzeige angezeigt wie wir
-       das in der globalen Webseite in der Aussprache Übung auch haben". Derselbe Kreisel wie im Aussprachetrainer
-       (aussprache-kreisel.js), klein, links neben den Lauten. Fehlt er, bleibt der Balken. */
-    if (window.Kreisel && Kreisel.html) {
-      var chipsK = (e.laute || []).map(function (l) {
-        var f = AP && AP.noteFarbe ? AP.noteFarbe(l.note) : "#6a7382", name = AP && AP.lautName ? AP.lautName(l.laut) : l.laut;
-        return '<span class="sp-sprech-laut" style="border-color:' + f + ";color:" + f + '" title="' + esc(name + (l.note !== null && l.note !== undefined ? " · " + l.note + " von 100" : "")) + '">' + esc(l.laut) + "</span>";
-      }).join("");
-      return { ring: '<div class="sp-sprech-kreisel">' + Kreisel.html({ prozent: Number(e.prozent) || 0, schwelle: 80, gross: false, beschriftung: e.azure ? "Laut für Laut" : "ähnlich" }) + "</div>",
-               laute: chipsK ? '<div class="sp-sprech-laute">' + chipsK + "</div>" : "" };
-    }
     var farbe = function (n) { return AP && AP.noteFarbe ? AP.noteFarbe(n) : n >= 80 ? "#2e9e5b" : n >= 60 ? "#d9a326" : "#d94f4f"; };
     var p = Math.max(0, Math.min(100, Number(e.prozent) || 0));
     var chips = (e.laute || []).map(function (l) {
       var name = AP && AP.lautName ? AP.lautName(l.laut) : l.laut;
       return '<span class="sp-sprech-laut" style="border-color:' + farbe(l.note) + ";color:" + farbe(l.note) + '" title="' + esc(name + (l.note !== null && l.note !== undefined ? " · " + l.note + " von 100" : "")) + '">' + esc(l.laut) + "</span>";
     }).join("");
-    return { ring: '<div class="sp-sprech-balken" role="img" aria-label="' + p + ' Prozent"><i style="width:' + p + "%;background:" + farbe(p) + '"></i><b>' + p + " %</b></div>",
-             laute: chips ? '<div class="sp-sprech-laute">' + chips + "</div>" : "" };
+    return '<div class="sp-sprech-balken" role="img" aria-label="' + p + ' Prozent"><i style="width:' + p + "%;background:" + farbe(p) + '"></i><b>' + p + " %</b></div>"
+      + (chips ? '<div class="sp-sprech-laute">' + chips + "</div>" : "");
   }
   function sprechKarte() {
     var sp = S.sprech;
     if (!sp || sp.laedt) return '<div class="sp-sprech">' + sprechNiveauHtml(null) + '<div class="sp-sprech-wort">…</div></div>';
     if (sp.fehler) return '<div class="sp-sprech">' + sprechNiveauHtml(null) + '<div class="sp-klein sp-rot">' + esc(sp.fehler) + '</div><div class="sp-knoepfe"><button type="button" data-tu="sprechneu">Neues Wort</button></div></div>';
     var e = sp.ergebnis;
-    var EA = window.DMA_EIGENE_AUSSPRACHE, eigeneDa = Boolean(EA && EA.hat(sp.wort));
     return '<div class="sp-sprech">' + sprechNiveauHtml(sp) + '<div class="sp-sprech-wort">' + esc(sp.wort) + '</div><div class="sp-sprech-silben">' + esc(sp.silben || "") + "</div>"
-      + '<button type="button" data-tu="sprechauto" class="sp-sprech-auto' + (sprechAutoAn() ? " sp-an" : "") + '" aria-pressed="' + sprechAutoAn() + '">Automatisch vorsprechen und zuhören: ' + (sprechAutoAn() ? "an" : "aus") + "</button>"
-      + (eigeneDa ? '<button type="button" class="sp-sprech-meine" data-eigen="hoeren" data-wort="' + esc(sp.wort) + '">Meine Stimme (aus meinem Wörterbuch)</button>' : "")
       + '<div class="sp-knoepfe"><button type="button" data-tu="sprechhoeren"' + (sp.original ? "" : " disabled") + ">Anhören</button>"
       + '<button type="button" data-tu="sprechen" class="sp-sprech-mik' + (sp.laeuft ? " sp-an" : "") + '"' + (sp.laeuft || e || (!sp.original && !sprechBewertbar()) ? " disabled" : "") + ">" + (sp.laeuft ? "Ich höre …" : "Nachsprechen") + "</button>"
       + '<button type="button" data-tu="sprechneu">Neues Wort</button></div>'
       + '<div class="sp-erg-platz' + (e ? (e.gewonnen > 0 ? " sp-erg-gut" : " sp-erg-schlecht") : "") + '">'
-      + (e ? (function () { var pz = sprechProzentHtml(e); return '<div class="sp-sprech-erg">' + pz.ring + '<div class="sp-sprech-erg-rechts"><div class="sp-erg-zeile"><b class="sp-sprech-note">' + e.prozent + (e.azure ? " / 100" : " % ähnlich") + "</b>" + (e.gewonnen > 0 ? ' <span class="sp-gold">+' + e.gewonnen + " Punkte</span>" : "")
-          + '<button type="button" data-tu="sprechneu">Weiter</button></div>' + pz.laute; })()
-          + (window.DMA_EIGENE_AUSSPRACHE ? DMA_EIGENE_AUSSPRACHE.knoepfeHtml(sp.wort, e.azure ? e.prozent : 0) : "")
-          + '<div class="sp-erg-erkl">'
-          + (e.tipp ? esc(e.tipp) + " " : "") + (e.gewonnen > 0 ? "Gut gesprochen!" : e.grenze ? "Für diese Stunde sind die Aussprache-Punkte aufgebraucht." : "Ab 60 % gibt es Punkte – hör noch einmal hin und versuch das nächste Wort.") + "</div></div></div>"
+      + (e ? '<div class="sp-erg-zeile"><b>' + e.prozent + (e.azure ? " / 100 · Laut für Laut</b>" : " % ähnlich</b>") + (e.gewonnen > 0 ? ' <span class="sp-gold">+' + e.gewonnen + " Punkte</span>" : "")
+          + '<button type="button" data-tu="sprechneu">Weiter</button></div>' + sprechProzentHtml(e) + '<div class="sp-erg-erkl">'
+          + (e.tipp ? esc(e.tipp) + " " : "") + (e.gewonnen > 0 ? "Gut gesprochen!" : e.grenze ? "Für diese Stunde sind die Aussprache-Punkte aufgebraucht." : "Ab 60 % gibt es Punkte – hör noch einmal hin und versuch das nächste Wort.") + "</div>"
         : '<div class="sp-erg-leer">' + esc(sp.hinweis || "Erst hören, dann nachsprechen.") + "</div>")
       + "</div></div>";
   }

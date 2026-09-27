@@ -1595,3 +1595,31 @@ Sonden: neu 771 (alles grün); 725 und 753 angepasst und grün; 749, 766, runde5
     - r: am Zäpfchen.
   - Im Aussprachekurs sind sie neue Tricks: „SCH“ (mit s-Vergleich), „ST und SP am Wortanfang“; „R“ hat jetzt ein Bild. Auf der Tafel liegen sie im Aussprache-Ordner.
   - Nebenbei korrigiert: „der Fenster“ → „das Fenster“.
+
+### Fassung 772 (Funk 198/190: Aussprache im Spiel wie auf der Seite, persönliches Aussprache-Wörterbuch)
+Sonden: neu 772 (alles grün); 766, 768, 771, 749 grün (766/768/771 prüfen den Ablauf von Hand und schalten die neue Automatik dafür ab).
+Server geprüft mit Rückrollen: C2 bei 93 % → 12 Punkte, A1 bei 70 % → 3. Das Wörterbuch speichert, ersetzt dasselbe Wort (Groß/klein egal) und liefert den Ton zurück.
+- **Punkte** (XANDER: „man kriegt dort offenbar nur drei Punkte auf Stufe C2“).
+  - Stimmt: A1/A2 gaben fest 2, alles darüber fest 3, egal wie gut.
+  - Jetzt wie bei den Aufgaben nach Niveau: A1 3, A2 4, B1 5, B2 6, C1 7, C2 8. Ab 80 % gibt es +25 %, ab 90 % +50 %. C2 mit 93 % = 12 Punkte.
+  - Die Grenze bleibt bei 40 Aussprache-Wertungen pro Stunde.
+- **Runder Kreisel** (XANDER: „diese kreisrunde Prozentanzeige … wie wir das in der globalen Webseite in der Aussprache Übung auch haben“).
+  - Derselbe Kreisel wie im Aussprachetrainer (aussprache-kreisel.js), links im Ergebnis.
+  - Rechts davon: Note, Punkte, „Weiter“, die Laute eingefärbt.
+- **Automatisch** (XANDER: „dass wir das Wort automatisch vorgelesen bekommen und direkt nachsprechen können und direkt bewertet bekommen“).
+  - Neues Wort → es wird vorgesprochen → gleich danach hört das Mikrofon zu → Stille beendet die Aufnahme → Bewertung, ohne einen Tipp.
+  - Schalter in der Karte „Automatisch vorsprechen und zuhören: an/aus“, auf dem Gerät gemerkt.
+- **Persönliches Aussprache-Wörterbuch** (Funk 190: „das eine perfekt erkannte Aussprache die mindestens über 95% liegt da gekoppt wird und als Vorschlag kommt“; Funk 198: „sauber ausgeschnitten ist und auch entrauscht … seitenweit“).
+  - Ab 95 % (nur mit Laut-Bewertung) erscheint „In mein Aussprache-Wörterbuch übernehmen“, im Spiel und im Aussprachetrainer der Seite.
+  - Im Gerät, vor dem Speichern:
+    - Brummen weg (Hochpass).
+    - Rauschboden messen.
+    - Anfang und Ende des Wortes suchen: Atempause und Stille fallen weg (80 ms Luft vorn, 140 ms hinten).
+    - Weiches Rauschtor gegen Grundrauschen.
+    - Ein-/Ausblenden, gleiche Lautstärke.
+    - Ergebnis im Test: aus 1,5 s Aufnahme bleiben 0,82 s, der Rand ist leise.
+  - Gespeichert als kleine WAV am eigenen Konto (Tabelle aussprache_eigen, nur über SECURITY-DEFINER-Funktionen, RLS an ohne direkte Zugriffe, höchstens 500 Wörter).
+  - Danach steht in Spiel und Trainer „Meine Stimme“ zum Nachsprechen mit sich selbst (Shadowing).
+  - Im Aussprachetrainer gibt es den Bereich „Mein Aussprache-Wörterbuch (n)“ mit Anhören und Löschen.
+  - Ehrlich: Das Entrauschen ist ein Rauschtor, keine Spektral-Entrauschung. Gegen gleichmäßiges Rauschen in den Pausen hilft es, Rauschen unter dem Wort selbst bleibt.
+  - Noch offen aus Funk 188/190: die Lehrer-Freigabe über Sprachnachrichten im Chat, die eigene Stimme als Vorsprecher-Ersatz im Trainer und die Liste im Profil.
