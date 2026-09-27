@@ -26916,22 +26916,10 @@
       const kAlt = alt.querySelector(".lc-kreis");
       if (kAlt) kk.forEach((c) => kAlt.classList.remove(c));
       if (!neu || Number(sch.dataset.lcBis || 0) < Date.now()) { sch.remove(); return; }
-      /* FASSUNG 735 — Funk 176: „faster effects on seat change". Ein Knoten, der umgehängt wird, verliert seine
-         CSS-Animationen – sie fingen im neuen Kasten von vorn an (der Hammer holte ein zweites Mal aus). Die
-         laufenden Zeiten werden gemerkt und nach dem Umhängen wieder eingesetzt: der Effekt läuft nahtlos weiter. */
-      let zeiten = [];
-      try { zeiten = sch.getAnimations({ subtree: true }).map((an) => [an.effect && an.effect.target, an.animationName || "", an.currentTime]); } catch (e) {}
       neu.appendChild(sch);
-      try {
-        sch.getAnimations({ subtree: true }).forEach((an) => {
-          const alt2 = zeiten.find((z) => z[0] === (an.effect && an.effect.target) && z[1] === (an.animationName || ""));
-          if (alt2 && alt2[2] != null) an.currentTime = alt2[2];
-        });
-      } catch (e) {}
       const kNeu = neu.querySelector(".lc-kreis");
       if (kNeu) kk.forEach((c) => kNeu.classList.add(c));
     });
-    if (lcUmzug.length) lcZielWinkelNeu();
   }
 
   function livechatKopfAuffrischen(l) {
@@ -37646,25 +37634,9 @@
     schicht.style.setProperty("--zieldreh", selbst ? "-24deg"
       : (Math.atan2(dy, dx) * 180 / Math.PI).toFixed(1) + "deg");
     schicht.innerHTML = html;
-    /* FASSUNG 735 — Funk 176 (Phase 2 der Design-Prüfung): auch das gehaltene Gerät zieht beim Platzwechsel mit
-       (vorher fehlten lcFuer/lcBis – es blieb am alten Kasten hängen), und es merkt sich, wohin es zielt, damit
-       der Winkel nach einem Umzug (des Schützen ODER des Ziels) neu gerechnet wird. */
-    if (quelle.dataset.lcId) schicht.dataset.lcFuer = quelle.dataset.lcId;
-    schicht.dataset.lcBis = String(Date.now() + dauer);
-    if (!selbst && platz.dataset.lcId) schicht.dataset.lcZiel = platz.dataset.lcId;
     quelle.appendChild(schicht);
     setTimeout(() => schicht.remove(), dauer);
     return schicht;
-  }
-  /* Nach einem Umzug: jedes gehaltene Gerät zeigt wieder genau auf sein Ziel. */
-  function lcZielWinkelNeu() {
-    document.querySelectorAll("#lcPlaetze .lc-zp[data-lc-ziel]").forEach((sch) => {
-      const quelle = sch.closest(".lc-platz");
-      const ziel = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + String(sch.dataset.lcZiel).replace(/["\\]/g, "") + '"]');
-      if (!quelle || !ziel) return;
-      const a = quelle.getBoundingClientRect(), b = ziel.getBoundingClientRect();
-      sch.style.setProperty("--zieldreh", (Math.atan2((b.top + b.height / 2) - (a.top + a.height / 2), (b.left + b.width / 2) - (a.left + a.width / 2)) * 180 / Math.PI).toFixed(1) + "deg");
-    });
   }
 
   /* --- DER SCHNEEBALL -----------------------------------------------
