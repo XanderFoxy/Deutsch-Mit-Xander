@@ -1,14 +1,19 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 711: DORF-BEDIENUNG UND NACHT (Funk 158)
+   SONDE — FASSUNG 709: DAS DORF KLEIN WIE VORHER, MIT KOMPASS (Funk 150/152)
    ---------------------------------------------------------------------
-   XANDER (Funk 158): „Das Dorf soll in der kleinen Sicht ohne die Symbole
-   sein man kann die Symbole … optional dazu schalten", „wenn man oben ist
-   kommt man z.B nicht ganz runter … das bricht da irgendwie ab", „muss man
-   das Dorf auch irgendwie schließen können", „per Klick einfach automatisch
-   einsammelt dort wo fertig steht", „dass man die Nacht besser erkennt mit
-   den Laternen … realistischer Himmel der wie Nacht aussieht".
-   Geprüft auf einem Android-Telefon (360 px, echte Finger).
+   XANDER (Funk 152): „die Karte des Dorfes ist immer noch nicht so klein
+   wie sie vorher war … kleiner und kompakter so wie es vorher war".
+   Funk 150: „wenn wir das größer haben wollen dann gibt es so einen
+   kleinen Kompass … die entsprechenden Symbole … wie auf solchen Google
+   Maps Karten dass man sieht okay das eine ist eine Bäckerei das andere
+   ist eine Mühle".
+   Geprüft auf einem Android-Telefon (360 px, echte Finger): am Anfang das
+   ganze Dorf in voller Breite (16:10, nichts zu wischen), an jedem Haus
+   sein Kartenzeichen; der Kompass öffnet die Karte mit Zeichen und Namen;
+   ein Tipp auf die Bäckerei holt einen dorthin (doppelt so groß) und
+   öffnet sie; der Rahmen in der Karte zeigt den Ausschnitt; „Ganzes
+   Dorf" zurück; Doppeltipp in die Landschaft zoomt; kein neues Malen.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -172,118 +177,79 @@ const sage = (gut, was, zusatz) => {
     window.__hinweise.length = 0;
     window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });
-  await pg.evaluate(() => { try { localStorage.removeItem("dma_dorf_nah"); } catch (e) {} const S = window.DMA_SPIEL.pruef.zustand(); S.dorfNah = null; S.dorfKarte = false; });
-  await pg.evaluate(() => { try { localStorage.removeItem("dma_dorf_zeichen"); } catch (e) {} const S = window.DMA_SPIEL.pruef.zustand(); S.dorfZeichen = null;
-    const ich = window.__ich; ich.werk = { baeckerei: { fertig: new Date(Date.now() - 60000).toISOString(), menge: 4, ware: "brot" } };
-    ich.dorf.kuhstall = { stufe: 1, lp: 20, stand: new Date(Date.now() - 3 * 1200000).toISOString() };
-    S.ich = JSON.parse(JSON.stringify(ich));
-    window.__extra = Object.assign({}, window.__extra, {
-      spiel_werk_abholen: (a) => { const i = JSON.parse(JSON.stringify(window.__ich)); i.werk = {}; window.__ich.werk = {}; return Object.assign(i, { ok: true, menge: 4, ware: "brot" }); },
-      spiel_melken: () => { window.__ich.dorf.kuhstall.stand = new Date().toISOString(); return Object.assign(JSON.parse(JSON.stringify(window.__ich)), { ok: true, menge: 3 }); } }); });
+  /* Seit 711 sind die Zeichen im ganzen Dorf zuschaltbar (Funk 158) – diese Sonde prüft sie eingeschaltet, bei Tag. */
+  await pg.evaluate(() => { try { localStorage.removeItem("dma_dorf_nah"); localStorage.setItem("dma_dorf_zeichen", "1"); } catch (e) {} const S = window.DMA_SPIEL.pruef.zustand(); S.dorfNah = null; S.dorfZeichen = null; S.dorfKarte = false; S.wetterTest = { code: 1, tag: true }; });
   const bild = async (name) => { if (!process.env.BILD) return; await pg.evaluate(() => document.querySelector(".sp-dl-rahmen").scrollIntoView({ block: "start" })); await tick(350); await (await pg.$(".sp-dl-rahmen")).screenshot({ path: process.env.BILD + "-" + name + ".png" }); };
+  const lage = () => pg.evaluate(() => { const r = document.querySelector(".sp-dl-rahmen"), f = r.querySelector(".sp-dl-fenster"), l = f.querySelector(".sp-dorfland");
+    return { klasse: r.className, fw: f.clientWidth, fh: f.clientHeight, lw: l.clientWidth, sw: f.scrollWidth, sl: Math.round(f.scrollLeft), st: Math.round(f.scrollTop), gemalt: (f.querySelector("canvas.sp-dl-mal") || {}).dataset.gemalt || "" }; });
 
-  console.log("\nKLEINE SICHT OHNE ZEICHEN – ZUSCHALTBAR\n");
+  console.log("\nAM ANFANG: DAS GANZE DORF, KLEIN WIE VORHER\n");
   await tippe('.sp-schnell [data-s="makro"]'); await tick(1200);
-  let r = await pg.evaluate(() => [...document.querySelectorAll(".sp-dl-haus-gemalt small")].filter((e) => e.getBoundingClientRect().width > 0).length);
-  sage(r === 0, "ganzes Dorf: keine Zeichen im Bild", r + " sichtbar");
-  /* Ab Fassung 721 (Funk 159: „wenn man keine Symbole hat soll man gefragt werden Symbole an oder Labels an oder beides
-     an oder alles aus … dann soll in dem Zustand natürlich die Option vorgeschlagen werden ob man es ausschalten möchte"):
-     der Knopf unten links im Bild bietet genau an, was zum jetzigen Zustand passt. */
-  const wahl = () => pg.evaluate(() => [...document.querySelectorAll('.sp-dl-anzeige [data-s="dorfanzeige"]')].map((b) => b.textContent));
-  const sicht = () => pg.evaluate(() => ({ pins: [...document.querySelectorAll(".sp-dl-haus-gemalt small .sp-dl-pin")].filter((e) => e.getBoundingClientRect().width > 0).length,
-    namen: [...document.querySelectorAll(".sp-dl-haus-gemalt small span")].filter((e) => e.getBoundingClientRect().width > 0).length, z: localStorage.getItem("dma_dorf_zeichen"), n: localStorage.getItem("dma_dorf_namen") }));
-  await tippe(".sp-dl-anzeige-knopf"); await tick(300);
-  let w0 = await wahl();
-  sage(w0.join("|") === "Symbole an|Namen an|Beides an", "alles aus: angeboten wird „Symbole an“, „Namen an“, „Beides an“", w0.join(" | "));
-  await tippe('.sp-dl-anzeige [data-z="1"][data-n="0"]'); await tick(300);
-  r = await sicht();
-  sage(r.pins >= 6 && r.namen === 0 && r.z === "1" && r.n === "0", "„Symbole an“: die Zeichen erscheinen (ohne Namen), gemerkt", JSON.stringify(r));
-  await tippe(".sp-dl-anzeige-knopf"); await tick(300);
-  w0 = await wahl();
-  sage(w0.includes("Symbole aus") && !w0.includes("Symbole an") && w0.includes("Namen an"), "Symbole sind an: jetzt steht dort „Symbole aus“ (nicht „an“) und „Namen an“", w0.join(" | "));
-  await tippe('.sp-dl-anzeige [data-z="1"][data-n="1"]'); await tick(300);
-  r = await sicht();
-  sage(r.pins >= 6 && r.namen >= 6, "„Beides an“: Zeichen und Namen", JSON.stringify(r));
-  await tippe(".sp-dl-anzeige-knopf"); await tick(300);
-  w0 = await wahl();
-  sage(w0.includes("Alles aus") && w0.includes("Symbole aus") && w0.includes("Namen aus") && !w0.some((x) => / an$/.test(x)), "beides an: nur noch Ausschalten wird angeboten (Alles aus, Symbole aus, Namen aus)", w0.join(" | "));
-  await tippe('.sp-dl-anzeige [data-z="0"][data-n="0"]'); await tick(300);
-  r = await sicht();
-  sage(r.pins === 0 && r.namen === 0, "„Alles aus“: das Bild ist wieder ohne Beschriftung", JSON.stringify(r));
+  let r = await lage();
+  sage(/sp-dl-ganz/.test(r.klasse) && Math.abs(r.lw - r.fw) <= 1 && r.sw <= r.fw + 1, "das ganze Dorf passt ins Fenster (nichts zu wischen)", JSON.stringify(r));
+  sage(Math.abs(r.fh / r.fw - .625) < .02, "Format 16:10 wie vor 704 (volle Breite, nicht höher)", (r.fh / r.fw).toFixed(3));
+  const gemalt0 = r.gemalt;
+  r = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(), d = S.ich.dorf; const gebaut = Object.keys(d).filter((k) => d[k].stufe > 0).length;
+    const pins = [...document.querySelectorAll(".sp-dl-haus-gemalt:not(.sp-dl-bauplatz) small .sp-dl-pin")]; const namen = [...document.querySelectorAll(".sp-dl-haus-gemalt small span")].filter((e) => e.getBoundingClientRect().width > 0).length;
+    return { gebaut, pins: pins.length, groesse: pins.length ? Math.round(pins[0].getBoundingClientRect().width) : 0, sichtbareNamen: namen }; });
+  sage(r.pins === r.gebaut && r.groesse >= 12 && r.sichtbareNamen === 0, "an jedem Haus sein Kartenzeichen, keine Namensschilder (Karte von weitem)", JSON.stringify(r));
+  await bild("ganz");
 
-  console.log("\nDIE STADT SELBST BENENNEN (Funk 160)\n");
-  await pg.evaluate(() => { window.__extra = Object.assign({}, window.__extra, { spiel_dorf_name: (a) => Object.assign(JSON.parse(JSON.stringify(window.__ich)), { ok: true, dorf_name: a.p_name.trim() || null }) }); });
-  r = await pg.evaluate(() => { const b = document.querySelector(".sp-dl-ortsschild"); if (!b) return null; const q = b.getBoundingClientRect(), f = document.querySelector(".sp-dl-rahmen").getBoundingClientRect();
-    return { text: b.textContent, oben: q.top - f.top < 20, mitte: Math.abs((q.left + q.right) / 2 - (f.left + f.right) / 2) < 4, farbe: getComputedStyle(b).backgroundColor }; });
-  sage(r && r.text === "Stadt benennen" && r.oben && r.mitte && r.farbe === "rgb(247, 209, 23)", "oben mitten im Bild ein gelbes Ortsschild „Stadt benennen“", JSON.stringify(r));
-  await tippe(".sp-dl-ortsschild"); await tick(300);
-  r = await pg.evaluate(() => { const d = document.querySelector(".sp-namedialog input"); return d ? { fokus: document.activeElement === d, max: d.maxLength } : null; });
-  sage(r && r.fokus && r.max === 24, "Tipp aufs Schild: ein Fenster fragt nach dem Namen, das Feld ist schon angewählt", JSON.stringify(r));
-  await pg.keyboard.type("Neu-Döbeln"); await pg.keyboard.press("Enter"); await tick(500);
-  r = await pg.evaluate(() => ({ ruf: (window.__rufe.filter((x) => x.name === "spiel_dorf_name").slice(-1)[0] || {}).args, schild: (document.querySelector(".sp-dl-ortsschild") || {}).textContent, zu: !document.querySelector(".sp-namedialog"), meld: window.__hinweise.slice(-1)[0] || "" }));
-  sage(r.ruf && r.ruf.p_name === "Neu-Döbeln" && r.schild === "Neu-Döbeln" && r.zu && /Neu-Döbeln/.test(r.meld), "„Neu-Döbeln“ gespeichert (Server-Ruf), das Schild zeigt den Namen", JSON.stringify(r));
+  console.log("\nDER KOMPASS: KARTE MIT ZEICHEN UND NAMEN\n");
+  r = await pg.evaluate(() => { const k = document.querySelector(".sp-dl-kompass").getBoundingClientRect(); const e = document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2); return { w: Math.round(k.width), oben: Boolean(e && e.closest(".sp-dl-kompass")) }; });
+  sage(r.w >= 32 && r.oben, "der Kompass liegt unten rechts im Bild, 34 px, nichts liegt darüber", JSON.stringify(r));
+  await tippe(".sp-dl-kompass"); await tick(500);
+  r = await pg.evaluate(() => { const k = document.querySelector(".sp-dl-karte"); if (!k) return null; const b = k.querySelector("canvas.sp-dl-karte-bild"); let bunt = 0;
+    try { const d = b.getContext("2d").getImageData(0, 0, b.width, b.height).data; for (let i = 0; i < d.length; i += 4 * 211) if (d[i + 3] > 0) bunt++; } catch (e) {}
+    const pins = [...k.querySelectorAll(".sp-dl-kpin")]; return { pins: pins.length, namen: pins.map((p) => p.textContent), klein: Math.min(...pins.map((p) => Math.min(p.getBoundingClientRect().width, p.getBoundingClientRect().height))), bild: bunt }; });
+  sage(r && r.pins === 12 && r.namen.includes("Bäckerei") && r.namen.includes("Mühle"), "die Karte zeigt alle 12 Gebäude mit Zeichen und Namen (Bäckerei, Mühle …)", r && r.namen.join(", "));
+  sage(r && r.bild > 50, "in der Karte ist das gemalte Dorf in klein zu sehen", r && r.bild + " Stichproben");
+  sage(r && r.klein >= 26, "jedes Zeichen ist groß genug für den Finger", r && r.klein + " px");
+  await bild("karte");
 
-  console.log("\nWISCHEN AUF DEM BILD SCROLLT DAS MENÜ\n");
-  const cdp = await ctx.newCDPSession(pg);
-  const wisch = async (dy) => { const m = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster").getBoundingClientRect(); return { x: f.left + f.width * .5, y: f.top + f.height * .5 }; });
-    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: m.x, y: m.y }] });
-    for (let i = 1; i <= 10; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: m.x, y: m.y + dy * i / 10 }] }); await tick(16); }
-    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await tick(700); };
-  await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); m.scrollTop = 0; }); await tick(200);
-  const vor = await pg.evaluate(() => document.querySelector(".sp-schnellmenue").scrollTop);
-  await wisch(-120);
-  const nach = await pg.evaluate(() => document.querySelector(".sp-schnellmenue").scrollTop);
-  sage(nach > vor + 40, "Finger auf dem Dorfbild nach oben wischen: das Menü scrollt weiter (vorher blieb es hängen)", vor + " → " + nach);
-  r = await pg.evaluate(() => { window.DMA_SPIEL.pruef.dorfZoom(true, .5, .5); const f = document.querySelector(".sp-dl-fenster"); return getComputedStyle(f).overscrollBehaviorY; });
-  sage(r === "auto", "näher dran: am Rand des Dorfes geht das Wischen im Menü weiter", r);
-  await pg.evaluate(() => window.DMA_SPIEL.pruef.dorfZoom(false)); await tick(400);
+  console.log("\nTIPP AUF DIE BÄCKEREI: DORTHIN, NÄHER RAN\n");
+  await tippe('.sp-dl-kpin[data-g="baeckerei"]'); await tick(700);
+  r = await lage();
+  const b = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster").getBoundingClientRect(), h = document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]').getBoundingClientRect();
+    return { drin: h.left >= f.left - 2 && h.right <= f.right + 2 && h.top >= f.top - 2 && h.bottom <= f.bottom + 2, breit: Math.round(h.width), wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl, karte: Boolean(document.querySelector(".sp-dl-karte")),
+      name: [...document.querySelectorAll('.sp-dl-haus-gemalt[data-g="baeckerei"] small span')].map((e) => e.getBoundingClientRect().width > 0)[0], gemerkt: localStorage.getItem("dma_dorf_nah") }; });
+  sage(/sp-dl-nah/.test(r.klasse) && r.lw >= r.fw * 1.9, "näher ran: das Dorf ist doppelt so groß", JSON.stringify(r));
+  sage(b.drin && b.breit >= 40, "die Bäckerei ist mitten im Bild und gut zu erkennen", JSON.stringify(b));
+  sage(b.wahl === "baeckerei" && !b.karte && b.name, "sie ist gleich geöffnet, die Karte zu, jetzt mit Namensschild", JSON.stringify(b));
+  sage(r.gemalt === gemalt0, "beim Zoomen wird nicht neu gemalt (dasselbe Bild, nur größer)", r.gemalt);
+  sage(b.gemerkt === "1", "die Zoomstufe wird auf dem Gerät gemerkt", b.gemerkt);
+  await bild("nah");
 
-  console.log("\nWO „FERTIG“ STEHT: ANTIPPEN SAMMELT EIN\n");
-  await pg.evaluate(() => { window.__rufe.length = 0; window.__hinweise.length = 0; const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = ""; window.DMA_SPIEL.pruef.schnellZeichnen(true); document.querySelector(".sp-dl-rahmen").scrollIntoView({ block: "center", behavior: "instant" }); });
-  await tick(500);
-  r = await pg.evaluate(() => Boolean(document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"] .sp-ds-fertig')));
-  sage(r, "an der Bäckerei steht „fertig“", String(r));
-  await tippe('.sp-dl-haus-gemalt[data-g="baeckerei"]'); await tick(600);
-  r = await pg.evaluate(() => ({ ruf: window.__rufe.filter((x) => x.name === "spiel_werk_abholen").map((x) => x.args.p_gebaeude), station: window.DMA_SPIEL.pruef.zustand().dorfWahl, meld: window.__hinweise.slice(-1)[0] || "" }));
-  sage(r.ruf.join() === "baeckerei" && !r.station && /abgeholt/.test(r.meld), "ein Tipp auf die Bäckerei holt das Brot ab – ohne erst die Station zu öffnen", JSON.stringify(r));
-  await tippe('.sp-dl-haus-gemalt[data-g="baeckerei"]'); await tick(500);
-  r = await pg.evaluate(() => window.DMA_SPIEL.pruef.zustand().dorfWahl);
-  sage(r === "baeckerei", "nichts mehr fertig: der nächste Tipp öffnet die Bäckerei wie gewohnt", r);
-  await pg.evaluate(() => { window.__rufe.length = 0; const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = ""; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300);
-  await tippe('.sp-dl-haus-gemalt[data-g="kuhstall"]'); await tick(500);
-  r = await pg.evaluate(() => window.__rufe.filter((x) => x.name === "spiel_melken").length);
-  sage(r === 1, "Kuhstall mit Milch: ein Tipp melkt", r + " Ruf");
+  console.log("\nIM KOMPASS SIEHT MAN, WO MAN IST\n");
+  await tippe(".sp-dl-kompass"); await tick(400);
+  const r1 = await pg.evaluate(() => { const b = document.querySelector(".sp-dl-karte-blick"); return b ? { l: parseFloat(b.style.left), w: parseFloat(b.style.width) } : null; });
+  await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"); f.scrollLeft = f.scrollWidth - f.clientWidth; }); await tick(300);
+  const r2 = await pg.evaluate(() => { const b = document.querySelector(".sp-dl-karte-blick"); return b ? { l: parseFloat(b.style.left), w: parseFloat(b.style.width) } : null; });
+  sage(r1 && r1.w > 40 && r1.w < 60, "der rote Rahmen zeigt den Ausschnitt (etwa die Hälfte)", JSON.stringify(r1));
+  sage(r2 && r2.l > r1.l + 10, "wischt man nach rechts, wandert der Rahmen mit", JSON.stringify({ r1, r2 }));
+  await pg.evaluate(() => { window.__zoomAnim = 0; const alt = Element.prototype.animate; Element.prototype.animate = function (k, o) { if (this.classList && this.classList.contains("sp-dorfland")) window.__zoomAnim++; return alt.call(this, k, o); }; });
+  await tippe('.sp-dl-karte [data-s="dorfzoom"]'); await tick(150);
+  const anim = await pg.evaluate(() => window.__zoomAnim);
+  await tick(600);
+  r = await lage();
+  sage(/sp-dl-ganz/.test(r.klasse) && Math.abs(r.lw - r.fw) <= 1 && anim >= 1, "„Ganzes Dorf“: wieder alles im Blick, weich gezoomt", JSON.stringify({ klasse: r.klasse, anim }));
 
-  console.log("\nSCHLIESSEN UND ZURÜCK\n");
-  await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); m.scrollTop = 0; }); await tick(300);
-  /* Ab Fassung 721 (Funk 159: „Diese kleinen Panels sollen nicht da stehen mit zum Dorf und Dorf schließen da kannst du
-     einfach das kleine Haus Symbol noch haben"): statt der Knopfzeile ein kleines Haus unten rechts. */
-  r = await pg.evaluate(() => { const f = document.querySelector(".sp-dorf-heim"), m = document.querySelector(".sp-schnellmenue"); if (!f) return null; const a = f.getBoundingClientRect(), b = m.getBoundingClientRect();
-    return { sichtbar: a.bottom <= b.bottom + 1 && a.top >= b.top, breit: Math.round(a.width), rechts: a.right > b.right - 60, zeile: Boolean(document.querySelector(".sp-dorf-fuss")) }; });
-  sage(r && r.sichtbar && r.breit <= 44 && r.rechts && !r.zeile, "unten rechts schwebt nur ein kleines Haus (keine Knopfzeile mehr)", JSON.stringify(r));
-  await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); m.scrollTop = m.scrollHeight; }); await tick(400);
-  await tippe('.sp-dorf-heim'); await tick(900);
-  r = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-rahmen").getBoundingClientRect(), m = document.querySelector(".sp-schnellmenue").getBoundingClientRect(); return { oben: Math.round(f.top - m.top) }; });
-  sage(Math.abs(r.oben) < 60, "das kleine Haus bringt das Bild wieder nach oben", JSON.stringify(r));
-  await tippe('.sp-schnellmenue [data-s="blickzu"]'); await tick(400);
-  r = await pg.evaluate(() => ({ menue: window.DMA_SPIEL.pruef.zustand().schnellMenue, dorf: Boolean(document.querySelector(".sp-dl-rahmen")) }));
-  sage(!r.menue && !r.dorf, "✕ oben schließt das Dorf", JSON.stringify(r));
+  console.log("\nDOPPELTIPP IN DIE LANDSCHAFT\n");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = ""; window.DMA_SPIEL.pruef.schnellZeichnen(true); document.querySelector(".sp-dl-rahmen").scrollIntoView({ block: "center", behavior: "instant" }); }); await tick(1500);
+  const p = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster").getBoundingClientRect(); const hs = [...document.querySelectorAll(".sp-dl-haus-gemalt, .sp-dl-kompass, .sp-dw-schild")].map((e) => e.getBoundingClientRect());
+    /* Chrome rastet einen Fingertipp auf einen nahen Knopf ein – deshalb 22 px Abstand zu jedem Haus. */
+    for (let y = f.top + f.height * .3; y < f.bottom - 20; y += 5) for (let x = f.left + f.width * .5; x < f.right - 44; x += 5) { if (!hs.some((b) => x >= b.left - 22 && x <= b.right + 22 && y >= b.top - 22 && y <= b.bottom + 22)) { const e = document.elementFromPoint(x, y); if (e && e.matches("canvas.sp-dl-mal")) return { x, y, fx: (x - f.left) / f.width, fy: (y - f.top) / f.height }; } } return null; });
+  if (p) { await pg.touchscreen.tap(p.x, p.y); await tick(120); await pg.touchscreen.tap(p.x, p.y); await tick(700); }
+  r = await lage();
+  const zmitte = p && { fx: (r.sl + r.fw / 2) / r.lw, fy: (r.st + r.fh / 2) / (r.lw * .625) };
+  sage(p && /sp-dl-nah/.test(r.klasse) && Math.abs(zmitte.fx - p.fx) < .15, "zweimal schnell in die freie Landschaft: näher ran, genau dort", JSON.stringify({ p, zmitte }));
+  await pg.evaluate(() => window.DMA_SPIEL.pruef.dorfZoom(false)); await tick(500);
 
-  console.log("\nNACHT: ECHTER HIMMEL, LATERNEN\n");
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.wetterTest = { code: 0, tag: false, temp: 9, ort: "Döbeln" }; });
-  await tippe('.sp-schnell [data-s="makro"]'); await tick(1500);
-  r = await pg.evaluate(() => { const lw = document.querySelector("canvas.sp-dl-mal"), g = lw.getContext("2d"), W = lw.width, H = lw.height;
-    const px = (fx, fy) => { const d = g.getImageData(Math.round(fx * W), Math.round(fy * H), 1, 1).data; return [d[0], d[1], d[2]]; };
-    const hell = (p) => p[0] + p[1] + p[2];
-    const himmel = px(.03, .03), wiese = px(.1, .8), later = px(137 / 320, (111 - 13 - .6) / 200); /* ab Fassung 720: die hohe Laterne am Weg vor dem Rathaus (137|111), ihr Kopf 13 Einheiten hoch */
-    return { sig: lw.dataset.gemalt, himmel, himmelHell: hell(himmel), wieseHell: hell(wiese), laterne: later, overlay: getComputedStyle(document.querySelector(".sp-dn")).backgroundImage }; });
-  sage(/N@/.test(r.sig) && r.himmelHell < 45, "der Himmel ist nachtschwarz (nicht hellblau übertüncht)", JSON.stringify({ himmel: r.himmel, sig: r.sig }));
-  sage(r.wieseHell > r.himmelHell * 3, "unten bleibt alles gut zu erkennen (Wiese deutlich heller als der Himmel)", JSON.stringify({ wiese: r.wieseHell, himmel: r.himmelHell }));
-  sage(r.laterne[0] > 180 && r.laterne[0] > r.laterne[2] + 40, "die Laternen brennen warm", JSON.stringify(r.laterne));
-  sage(r.overlay === "none", "keine blaue Schicht mehr über dem ganzen Bild", r.overlay);
-  await bild("nacht");
+  console.log("\nTELEFON: NICHTS RAGT HERAUS\n");
+  r = await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); return { quer: m.scrollWidth - m.clientWidth, raus: [...document.querySelectorAll(".sp-dl-rahmen *")].filter((e) => { const b = e.getBoundingClientRect(); return b.width && b.right > innerWidth + 1; }).length }; });
+  sage(r.quer <= 1 && r.raus === 0, "360 px: nichts ragt heraus", JSON.stringify(r));
   sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
-  console.log("\nFassung 711 (Dorf-Bedienung): " + (fehler ? fehler + " rot." : "alles grün."));
+  console.log("\nFassung 709 (Dorf klein, Kompass): " + (fehler ? fehler + " rot." : "alles grün."));
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

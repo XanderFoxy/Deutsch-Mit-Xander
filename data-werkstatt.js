@@ -49,32 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 720 — Laternen mit Lichtkegel, größerer See, Wasser, runde Dächer, Nachtvögel",
+  stand: "Fassung 721 — Dorf: ein Bild mit Lupe, Symbole/Namen, Ortsschild",
 
   inArbeit: [
-    { seit: "2026-09-27T00:44",
+    { seit: "2026-09-27T00:56",
       text: "Berge und Wiese zufälliger" },
-    { seit: "2026-09-27T00:44",
-      text: "Stadt selbst benennen" },
-    { seit: "2026-09-27T00:44",
-      text: "Kompass im Miniaturbild, Symbole/Labels-Schalter" },
-    { seit: "2026-09-27T00:44",
+    { seit: "2026-09-27T00:56",
+      text: "Echte kleine Menschen mit Animation" },
+    { seit: "2026-09-27T00:56",
       text: "Spielmeldungen mit Sprung-Knopf (Funk 155)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T00:44",
-      text: "Hohe Laternen neben jedem Haus, echter Lichtkegel statt Lichtflecken" },
-    { seit: "2026-09-27T00:44",
-      text: "Nacht klarer: Häuser im Kegel mit allen Details" },
-    { seit: "2026-09-27T00:44",
-      text: "See viermal so groß, Schilf, Seerosen" },
-    { seit: "2026-09-27T00:44",
-      text: "Wasser natürlicher (keine Kachel mehr sichtbar)" },
-    { seit: "2026-09-27T00:44",
-      text: "Runde Dachkanten, keine Treppen an schrägen Kanten" },
-    { seit: "2026-09-27T00:44",
-      text: "Vögel segeln auch nachts" },
+    { seit: "2026-09-27T00:56",
+      text: "Kompass = Lupe, kleine Karte mit Punkten beim Nahblick" },
+    { seit: "2026-09-27T00:56",
+      text: "Symbole und Namen getrennt, Knopf bietet passend an/aus an" },
+    { seit: "2026-09-27T00:56",
+      text: "Kleines Haus statt Knopfzeile" },
+    { seit: "2026-09-27T00:56",
+      text: "Stadt selbst benennen (Ortsschild)" },
   ],
 };

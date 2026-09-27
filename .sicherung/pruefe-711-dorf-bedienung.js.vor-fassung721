@@ -186,42 +186,12 @@ const sage = (gut, was, zusatz) => {
   await tippe('.sp-schnell [data-s="makro"]'); await tick(1200);
   let r = await pg.evaluate(() => [...document.querySelectorAll(".sp-dl-haus-gemalt small")].filter((e) => e.getBoundingClientRect().width > 0).length);
   sage(r === 0, "ganzes Dorf: keine Zeichen im Bild", r + " sichtbar");
-  /* Ab Fassung 721 (Funk 159: „wenn man keine Symbole hat soll man gefragt werden Symbole an oder Labels an oder beides
-     an oder alles aus … dann soll in dem Zustand natürlich die Option vorgeschlagen werden ob man es ausschalten möchte"):
-     der Knopf unten links im Bild bietet genau an, was zum jetzigen Zustand passt. */
-  const wahl = () => pg.evaluate(() => [...document.querySelectorAll('.sp-dl-anzeige [data-s="dorfanzeige"]')].map((b) => b.textContent));
-  const sicht = () => pg.evaluate(() => ({ pins: [...document.querySelectorAll(".sp-dl-haus-gemalt small .sp-dl-pin")].filter((e) => e.getBoundingClientRect().width > 0).length,
-    namen: [...document.querySelectorAll(".sp-dl-haus-gemalt small span")].filter((e) => e.getBoundingClientRect().width > 0).length, z: localStorage.getItem("dma_dorf_zeichen"), n: localStorage.getItem("dma_dorf_namen") }));
-  await tippe(".sp-dl-anzeige-knopf"); await tick(300);
-  let w0 = await wahl();
-  sage(w0.join("|") === "Symbole an|Namen an|Beides an", "alles aus: angeboten wird „Symbole an“, „Namen an“, „Beides an“", w0.join(" | "));
-  await tippe('.sp-dl-anzeige [data-z="1"][data-n="0"]'); await tick(300);
-  r = await sicht();
-  sage(r.pins >= 6 && r.namen === 0 && r.z === "1" && r.n === "0", "„Symbole an“: die Zeichen erscheinen (ohne Namen), gemerkt", JSON.stringify(r));
-  await tippe(".sp-dl-anzeige-knopf"); await tick(300);
-  w0 = await wahl();
-  sage(w0.includes("Symbole aus") && !w0.includes("Symbole an") && w0.includes("Namen an"), "Symbole sind an: jetzt steht dort „Symbole aus“ (nicht „an“) und „Namen an“", w0.join(" | "));
-  await tippe('.sp-dl-anzeige [data-z="1"][data-n="1"]'); await tick(300);
-  r = await sicht();
-  sage(r.pins >= 6 && r.namen >= 6, "„Beides an“: Zeichen und Namen", JSON.stringify(r));
-  await tippe(".sp-dl-anzeige-knopf"); await tick(300);
-  w0 = await wahl();
-  sage(w0.includes("Alles aus") && w0.includes("Symbole aus") && w0.includes("Namen aus") && !w0.some((x) => / an$/.test(x)), "beides an: nur noch Ausschalten wird angeboten (Alles aus, Symbole aus, Namen aus)", w0.join(" | "));
-  await tippe('.sp-dl-anzeige [data-z="0"][data-n="0"]'); await tick(300);
-  r = await sicht();
-  sage(r.pins === 0 && r.namen === 0, "„Alles aus“: das Bild ist wieder ohne Beschriftung", JSON.stringify(r));
-
-  console.log("\nDIE STADT SELBST BENENNEN (Funk 160)\n");
-  await pg.evaluate(() => { window.__extra = Object.assign({}, window.__extra, { spiel_dorf_name: (a) => Object.assign(JSON.parse(JSON.stringify(window.__ich)), { ok: true, dorf_name: a.p_name.trim() || null }) }); });
-  r = await pg.evaluate(() => { const b = document.querySelector(".sp-dl-ortsschild"); if (!b) return null; const q = b.getBoundingClientRect(), f = document.querySelector(".sp-dl-rahmen").getBoundingClientRect();
-    return { text: b.textContent, oben: q.top - f.top < 20, mitte: Math.abs((q.left + q.right) / 2 - (f.left + f.right) / 2) < 4, farbe: getComputedStyle(b).backgroundColor }; });
-  sage(r && r.text === "Stadt benennen" && r.oben && r.mitte && r.farbe === "rgb(247, 209, 23)", "oben mitten im Bild ein gelbes Ortsschild „Stadt benennen“", JSON.stringify(r));
-  await tippe(".sp-dl-ortsschild"); await tick(300);
-  r = await pg.evaluate(() => { const d = document.querySelector(".sp-namedialog input"); return d ? { fokus: document.activeElement === d, max: d.maxLength } : null; });
-  sage(r && r.fokus && r.max === 24, "Tipp aufs Schild: ein Fenster fragt nach dem Namen, das Feld ist schon angewählt", JSON.stringify(r));
-  await pg.keyboard.type("Neu-Döbeln"); await pg.keyboard.press("Enter"); await tick(500);
-  r = await pg.evaluate(() => ({ ruf: (window.__rufe.filter((x) => x.name === "spiel_dorf_name").slice(-1)[0] || {}).args, schild: (document.querySelector(".sp-dl-ortsschild") || {}).textContent, zu: !document.querySelector(".sp-namedialog"), meld: window.__hinweise.slice(-1)[0] || "" }));
-  sage(r.ruf && r.ruf.p_name === "Neu-Döbeln" && r.schild === "Neu-Döbeln" && r.zu && /Neu-Döbeln/.test(r.meld), "„Neu-Döbeln“ gespeichert (Server-Ruf), das Schild zeigt den Namen", JSON.stringify(r));
+  await tippe(".sp-dl-kompass"); await tick(300);
+  await tippe('.sp-dl-karte [data-s="dorfzeichen"]'); await tick(300);
+  r = await pg.evaluate(() => ({ n: [...document.querySelectorAll(".sp-dl-haus-gemalt small .sp-dl-pin")].filter((e) => e.getBoundingClientRect().width > 0).length, gemerkt: localStorage.getItem("dma_dorf_zeichen") }));
+  sage(r.n >= 6 && r.gemerkt === "1", "im Kompass „Zeichen“ antippen: die Zeichen erscheinen, gemerkt", JSON.stringify(r));
+  await tippe('.sp-dl-karte [data-s="dorfzeichen"]'); await tick(200);
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfKarte = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(200);
 
   console.log("\nWISCHEN AUF DEM BILD SCROLLT DAS MENÜ\n");
   const cdp = await ctx.newCDPSession(pg);
@@ -256,18 +226,15 @@ const sage = (gut, was, zusatz) => {
 
   console.log("\nSCHLIESSEN UND ZURÜCK\n");
   await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); m.scrollTop = 0; }); await tick(300);
-  /* Ab Fassung 721 (Funk 159: „Diese kleinen Panels sollen nicht da stehen mit zum Dorf und Dorf schließen da kannst du
-     einfach das kleine Haus Symbol noch haben"): statt der Knopfzeile ein kleines Haus unten rechts. */
-  r = await pg.evaluate(() => { const f = document.querySelector(".sp-dorf-heim"), m = document.querySelector(".sp-schnellmenue"); if (!f) return null; const a = f.getBoundingClientRect(), b = m.getBoundingClientRect();
-    return { sichtbar: a.bottom <= b.bottom + 1 && a.top >= b.top, breit: Math.round(a.width), rechts: a.right > b.right - 60, zeile: Boolean(document.querySelector(".sp-dorf-fuss")) }; });
-  sage(r && r.sichtbar && r.breit <= 44 && r.rechts && !r.zeile, "unten rechts schwebt nur ein kleines Haus (keine Knopfzeile mehr)", JSON.stringify(r));
+  r = await pg.evaluate(() => { const f = document.querySelector(".sp-dorf-fuss"), m = document.querySelector(".sp-schnellmenue"); if (!f) return null; const a = f.getBoundingClientRect(), b = m.getBoundingClientRect(); return { sichtbar: a.bottom <= b.bottom + 1 && a.top >= b.top, text: f.textContent }; });
+  sage(r && r.sichtbar && /Zum Dorfbild/.test(r.text) && /Dorf schließen/.test(r.text), "unten im Dorf steht immer: „↑ Zum Dorfbild“ und „✕ Dorf schließen“", JSON.stringify(r));
   await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); m.scrollTop = m.scrollHeight; }); await tick(400);
-  await tippe('.sp-dorf-heim'); await tick(900);
+  await tippe('.sp-dorf-fuss [data-s="dorfnachoben"]'); await tick(900);
   r = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-rahmen").getBoundingClientRect(), m = document.querySelector(".sp-schnellmenue").getBoundingClientRect(); return { oben: Math.round(f.top - m.top) }; });
-  sage(Math.abs(r.oben) < 60, "das kleine Haus bringt das Bild wieder nach oben", JSON.stringify(r));
-  await tippe('.sp-schnellmenue [data-s="blickzu"]'); await tick(400);
+  sage(Math.abs(r.oben) < 60, "„↑ Zum Dorfbild“ bringt das Bild wieder nach oben", JSON.stringify(r));
+  await tippe('.sp-dorf-fuss [data-s="blickzu"]'); await tick(400);
   r = await pg.evaluate(() => ({ menue: window.DMA_SPIEL.pruef.zustand().schnellMenue, dorf: Boolean(document.querySelector(".sp-dl-rahmen")) }));
-  sage(!r.menue && !r.dorf, "✕ oben schließt das Dorf", JSON.stringify(r));
+  sage(!r.menue && !r.dorf, "„✕ Dorf schließen“ schließt das Dorf", JSON.stringify(r));
 
   console.log("\nNACHT: ECHTER HIMMEL, LATERNEN\n");
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.wetterTest = { code: 0, tag: false, temp: 9, ort: "Döbeln" }; });

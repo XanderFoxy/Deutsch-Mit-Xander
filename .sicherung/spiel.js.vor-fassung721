@@ -535,7 +535,7 @@
      "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo",
      "haustier_leben", "geschuetz_stufe", "eisen", "tarn", "mitspielen",
      "level", "skills", "helm", "brust", "ladung", "daemon",
-     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "klasse", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s", "kampfklasse", "kampf_stufe", "dorf_name"].forEach(function (k) { o[k] = s[k]; });
+     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "klasse", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s", "kampfklasse", "kampf_stufe"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -4407,14 +4407,6 @@
     } else if (s === "dorfnachoben") {
       try { var dr = schnellEl.querySelector(".sp-dl-rahmen"); if (dr) dr.scrollIntoView({ block: "start", behavior: "smooth" }); } catch (e) {}
       return;
-    } else if (s === "dorfname") {
-      dorfNameFragen(); return;
-    } else if (s === "dorfanzeigeauf") {
-      S.dorfAnzeigeAuf = !S.dorfAnzeigeAuf; ton("holzklopf", 0.15); schnellZeichnen(true); return;
-    } else if (s === "dorfanzeige") {
-      S.dorfZeichen = k.dataset.z === "1"; S.dorfNamen = k.dataset.n === "1"; S.dorfAnzeigeAuf = false;
-      try { localStorage.setItem("dma_dorf_zeichen", S.dorfZeichen ? "1" : "0"); localStorage.setItem("dma_dorf_namen", S.dorfNamen ? "1" : "0"); } catch (e) {}
-      ton("holzklopf", 0.2); schnellZeichnen(true); return;
     } else if (s === "dorfzoom") {
       S.dorfKarte = false; ton("swoosh", 0.25);
       dorfZoom(k.dataset.n === "1");
@@ -4688,8 +4680,6 @@
   document.addEventListener("click", function (ev) {
     if ((!S.schnellMenue && S.rad == null && !S.zrad && !S.wwahl && !S.langWahl && !S.trankAuf) || !schnellEl) return;
     if (schnellEl.contains(ev.target)) return;
-    /* FASSUNG 721 — Tipps im Namensfenster der Stadt schließen das Dorf dahinter nicht. */
-    if (ev.target && ev.target.closest && ev.target.closest(".sp-namedialog")) return;
     /* Der Klick beim Loslassen nach dem langen Druck schließt das eben geöffnete Rad nicht gleich wieder. */
     if (Date.now() - (S.radOffenSeit || 0) < 700) return;
     S.schnellMenue = false; S.rad = null; S.zrad = false; S.wwahl = false; S.langWahl = false; S.trankAuf = false; S.ringBereich = ""; schnellZeichnen();
@@ -7659,7 +7649,7 @@
           + (kaputt || gepl || !st.mitspielen ? " disabled" : "") + ' title="' + DORF[k].name + (gepl ? " – 4 h geschützt" : kaputt ? " – kaputt" : "") + '">'
           + dorfSvg(k, g.stufe || 1) + "<small>" + DORF[k].name + "</small></button>";
       }).join("");
-      return knoepfe ? '<div class="sp-nachbar"><b>' + esc(p.name || "?") + (st.dorf_name ? " · " + esc(st.dorf_name) : "") + "</b><small>" + (st.mitspielen ? (st.ritter ? st.ritter + " Ritter" : "keine Ritter") : "spielt gerade nicht") + "</small>"
+      return knoepfe ? '<div class="sp-nachbar"><b>' + esc(p.name || "?") + "</b><small>" + (st.mitspielen ? (st.ritter ? st.ritter + " Ritter" : "keine Ritter") : "spielt gerade nicht") + "</small>"
         + '<div class="sp-nachbar-reihe">' + knoepfe + "</div></div>" : "";
     }).join("");
     return '<div class="sp-sm-gruppe sp-nachbarn"><span>Nachbardörfer plündern · 10 Mana</span></div>'
@@ -9042,19 +9032,12 @@
     var wetter = dorfWetter(), nah = dorfNah();
     /* FASSUNG 715 — Schnee auf den Dächern und der Wiese, wenn es draußen schneit (eigenes Bild: „S" in der Kennung). */
     var malSig = sig + (wetter.art === "schnee" ? "S" : "") + (wetter.tag ? "" : "N");
-    return '<div class="sp-dl-rahmen ' + (nah ? "sp-dl-nah" : "sp-dl-ganz") + (dorfZeichen() ? " sp-dl-zeichen" : "") + (dorfNamen() ? " sp-dl-namen" : "") + (wetter.tag ? "" : " sp-dl-nacht") + '"><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + malSig + '" aria-hidden="true"></canvas><div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
+    return '<div class="sp-dl-rahmen ' + (nah ? "sp-dl-nah" : "sp-dl-ganz") + (dorfZeichen() ? " sp-dl-zeichen" : "") + (wetter.tag ? "" : " sp-dl-nacht") + '"><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + malSig + '" aria-hidden="true"></canvas><div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
       + dorfNachtHtml(ich, wetter) + haeuser + dorfBahnKnoepfe() + dorfLeuteHtml(ich) + dorfBahnHtml(wetter) + "</div></div>" + dorfWetterHtml(wetter) + dorfWetterSchild(wetter)
-      /* FASSUNG 721 — XANDER (Funk 159): „ich möchte dass das kleine Bild was wir haben schon den Kompass hat nicht dass
-         das drei unterschiedliche Bilder sind … diese Lupe wie in den anderen Spielen mit den kleinen Punkten auf der Karte
-         wo man hinkriegen kann … das kleine Miniatur Bild hat schon die Lupe und das kleine Miniatur ist von links nach
-         rechts deckend ja das große ist sowieso zum Suchen mit der Lupe". Es gibt nur noch EIN Bild: der Kompass ist die
-         Lupe (ganzes Dorf ↔ näher ran, wie der Doppeltipp); ist man nah dran, zeigt eine kleine Karte in der Ecke das
-         ganze Dorf mit Punkten für die Gebäude und einem Rahmen, wo man gerade ist – ein Tipp auf einen Punkt fährt hin.
-         Das eigene Karten-Fenster (das dritte Bild) entfällt. */
-      + '<button type="button" class="sp-dl-kompass sp-dl-lupe' + (nah ? " sp-an" : "") + '" data-s="dorfzoom" data-n="' + (nah ? "0" : "1") + '" aria-label="' + (nah ? "Lupe: ganzes Dorf" : "Lupe: näher ran") + '">' + kompassSvg()
-      + '<i class="sp-dl-lupe-zeichen">' + (nah ? "−" : "+") + "</i></button>"
-      + (nah ? dorfMiniKarteHtml(ich, sig) : dorfAnzeigeHtml()) + dorfOrtsschildHtml(ich) + "</div>"
-      + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · die Lupe holt dich näher ran") + "</span>") + (wahl ? (wahl === "bahnhof" ? bahnhofHtml(ich) : dorfStationHtml(ich, wahl)) : "");
+      /* FASSUNG 709 — der Kompass: Karte mit Zeichen, näher ran oder ganzes Dorf. */
+      + '<button type="button" class="sp-dl-kompass' + (S.dorfKarte ? " sp-an" : "") + '" data-s="dorfkarte" aria-label="Kompass: Karte, näher ran">' + kompassSvg() + "</button>"
+      + (S.dorfKarte ? dorfKarteHtml(ich, nah, sig) : "") + "</div>"
+      + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · der Kompass holt dich näher ran") + "</span>") + (wahl ? (wahl === "bahnhof" ? bahnhofHtml(ich) : dorfStationHtml(ich, wahl)) : "");
   }
   /* ---------------------------------------------------------------
      FASSUNG 708 — DAS DORF LEBT MIT DEM ECHTEN WETTER
@@ -9895,79 +9878,6 @@
     }
     return false;
   }
-  /* FASSUNG 721 — XANDER (Funk 159): „dann kann man so entweder Zeichen oder Labels oder ohne aber wenn die anderen sind
-     soll man einfach die Information haben Zeichen aus oder Symbole aus so dass man weiß man drückt es wirklich aus …
-     dann soll in dem Zustand natürlich die Option vorgeschlagen werden ob man es ausschalten möchte und nicht umgekehrt
-     das macht nämlich keinen Sinn wenn da steht anschalten wenn es schon an ist ja also es soll einmal wenn wenn man keine
-     Symbole hat soll man gefragt werden Symbole an oder Labels an oder beides an oder alles aus … das ist nur wenn man in
-     der Übersicht ist". Unten links im Übersichtsbild ein kleiner Knopf; er öffnet genau die Möglichkeiten, die zum
-     jetzigen Zustand passen: was an ist, wird zum Ausschalten angeboten, was aus ist, zum Anschalten. */
-  /* FASSUNG 721 — XANDER (Funk 160): die Stadt selbst benennen. Oben im Bild steht ein gelbes Ortsschild wie an jeder
-     deutschen Ortseinfahrt; ein Tipp darauf öffnet ein kleines Fenster für den Namen (2–24 Zeichen, der Server prüft).
-     Den Namen sehen auch die Nachbarn. */
-  function dorfOrtsschildHtml(ich) {
-    var n = (ich || {}).dorf_name;
-    return '<button type="button" class="sp-dl-ortsschild' + (n ? "" : " sp-dl-ortsschild-leer") + '" data-s="dorfname" title="' + (n ? "Stadt umbenennen" : "Stadt benennen") + '">'
-      + (n ? "<b>" + esc(n) + "</b>" : "<b>Stadt benennen</b>") + "</button>";
-  }
-  function dorfNameFragen() {
-    var alt = document.querySelector(".sp-namedialog"); if (alt) alt.remove();
-    var d = document.createElement("div");
-    d.className = "sp-namedialog"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "Stadt benennen");
-    d.innerHTML = '<form class="sp-namedialog-karte"><b>Wie soll deine Stadt heißen?</b>'
-      + '<input type="text" maxlength="24" autocomplete="off" enterkeyhint="done" placeholder="z. B. Neu-Döbeln" value="' + esc((S.ich || {}).dorf_name || "") + '">'
-      + '<small>2 bis 24 Zeichen · alle im Spiel sehen den Namen</small>'
-      + '<span><button type="button" data-n="weg">Abbrechen</button><button type="submit">Speichern</button></span></form>';
-    document.body.appendChild(d);
-    var f = d.querySelector("form"), eing = d.querySelector("input");
-    var zu = function () { d.remove(); };
-    /* Der Klick, der zum Tipp aufs Schild gehört, kommt erst nach dem Öffnen an – er schließt das Fenster nicht. */
-    var offenSeit = Date.now();
-    d.addEventListener("click", function (ev) { if ((ev.target === d && Date.now() - offenSeit > 450) || (ev.target.dataset && ev.target.dataset.n === "weg")) zu(); });
-    f.addEventListener("submit", function (ev) {
-      ev.preventDefault();
-      rpc("spiel_dorf_name", { p_name: eing.value }).then(function (r) {
-        if (!r || !r.ok) { hinweis("🏷️ " + ((r && r.grund) || "Das ging nicht.")); return; }
-        S.ich = r; S.stand[r.id] = oeffentlich(r); zu();
-        ton("bling", 0.35);
-        hinweis(r.dorf_name ? "🏷️ Deine Stadt heißt jetzt „" + r.dorf_name + "“." : "🏷️ Der Stadtname ist gelöscht.");
-        senden({ ereignis: "stand", stand: oeffentlich(r) });
-        schnellZeichnen(true);
-      }).catch(function () { hinweis("🏷️ Das ging gerade nicht."); });
-    });
-    setTimeout(function () { try { eing.focus(); eing.select(); } catch (e) {} }, 60);
-  }
-  function dorfNamen() {
-    if (S.dorfNamen == null) { try { S.dorfNamen = localStorage.getItem("dma_dorf_namen") === "1"; } catch (e) { S.dorfNamen = false; } }
-    return !!S.dorfNamen;
-  }
-  function dorfAnzeigeHtml() {
-    var z = dorfZeichen(), n = dorfNamen(), wahl = [];
-    if (S.dorfAnzeigeAuf) {
-      if (!z && !n) wahl = [["1", "0", "Symbole an"], ["0", "1", "Namen an"], ["1", "1", "Beides an"]];
-      else {
-        wahl.push(z ? ["0", n ? "1" : "0", "Symbole aus"] : ["1", n ? "1" : "0", "Symbole an"]);
-        wahl.push(n ? [z ? "1" : "0", "0", "Namen aus"] : [z ? "1" : "0", "1", "Namen an"]);
-        if (z && n) wahl.push(["0", "0", "Alles aus"]); else wahl.push(["1", "1", "Beides an"]);
-      }
-    }
-    var jetzt = z && n ? "Symbole und Namen" : z ? "Symbole" : n ? "Namen" : "ohne Beschriftung";
-    return '<div class="sp-dl-anzeige' + (S.dorfAnzeigeAuf ? " sp-an" : "") + '">'
-      + '<button type="button" class="sp-dl-anzeige-knopf" data-s="dorfanzeigeauf" title="Beschriftung: ' + jetzt + '" aria-label="Beschriftung: ' + jetzt + '">'
-      + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 C8.2 2.5 5.5 5.2 5.5 8.8 C5.5 13.3 12 20 12 20 C12 20 18.5 13.3 18.5 8.8 C18.5 5.2 15.8 2.5 12 2.5 Z" fill="' + (z || n ? "#c8312b" : "#8b8f99") + '" stroke="#fff" stroke-width="1.4"/><circle cx="12" cy="8.8" r="2.4" fill="#fff"/></svg>'
-      + (n ? "<b>Aa</b>" : "") + "</button>"
-      + wahl.map(function (w) { return '<button type="button" data-s="dorfanzeige" data-z="' + w[0] + '" data-n="' + w[1] + '">' + w[2] + "</button>"; }).join("") + "</div>";
-  }
-  /* Die kleine Karte in der Ecke (nur nah dran): ganzes Dorf, Punkte für die Gebäude, Rahmen = was man sieht. */
-  function dorfMiniKarteHtml(ich, sig) {
-    var d = ich.dorf || {};
-    var pins = Object.keys(DORF_LAGE).map(function (k) {
-      if (!DORF[k]) return "";
-      var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = DORF_LAGE[k], u = dmUmriss(k, st), z = DORF_ZEICHEN[k] || ["#7a7a7a"];
-      return '<button type="button" class="sp-dl-mpunkt' + (st ? "" : " sp-dl-mpunkt-leer") + '" data-s="dorfhin" data-g="' + k + '" title="' + DORF[k].name + '" style="--pf:' + z[0] + ";left:" + ((q[0] + (u[0] + u[2]) / 2) / 3.2).toFixed(2) + "%;top:" + ((q[1] + u[1] * .4) / 2).toFixed(2) + '%"></button>';
-    }).join("");
-    return '<div class="sp-dl-minikarte" aria-label="Karte des Dorfes"><canvas class="sp-dl-karte-bild" data-sig="' + sig + '" aria-hidden="true"></canvas><i class="sp-dl-karte-blick"></i>' + pins + "</div>";
-  }
   function dorfZeichen() {
     if (S.dorfZeichen == null) { try { S.dorfZeichen = localStorage.getItem("dma_dorf_zeichen") === "1"; } catch (e) { S.dorfZeichen = false; } }
     return !!S.dorfZeichen;
@@ -10050,12 +9960,7 @@
     var t = werkZeilenHtml(ich);
     /* FASSUNG 711 — XANDER (Funk 158): „dann muss man das Dorf auch irgendwie schließen können oder bzw man muss wieder runter
        navigieren können". Unten im Dorf steht immer eine Zeile: zurück zum Bild oder das Dorf schließen. */
-    /* FASSUNG 721 — XANDER (Funk 159): „Diese kleinen Panels sollen nicht da stehen mit zum Dorf und Dorf schließen da
-       kannst du einfach das kleine Haus Symbol noch haben wo man dann automatisch dahin springt". Statt der Zeile mit zwei
-       großen Knöpfen schwebt unten rechts nur ein kleines Haus: ein Tipp springt hinauf zum Dorfbild. Geschlossen wird
-       das Dorf wie jedes Menü: über das Haus in der Leiste oder ✕ oben. */
-    var fuss = '<button type="button" class="sp-dorf-heim" data-s="dorfnachoben" aria-label="Zum Dorfbild" title="Zum Dorfbild">'
-      + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.5 L12 4 L20.5 11.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10 V20 H10.2 V14.6 H13.8 V20 H18 V10" fill="#fff"/></svg></button>';
+    var fuss = '<div class="sp-dorf-fuss"><button type="button" data-s="dorfnachoben">↑ Zum Dorfbild</button><button type="button" data-s="blickzu">✕ Dorf schließen</button></div>';
     return szene + wunderBandHtml(ich) + volkHtml(ich) + ernte + berufeHtml(ich)
       + (t.length ? '<div class="sp-troph-liste">' + t.join("") + "</div>" : "")
       + lagerHtml(ich, true)

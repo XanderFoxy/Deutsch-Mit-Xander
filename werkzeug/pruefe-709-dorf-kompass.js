@@ -195,44 +195,48 @@ const sage = (gut, was, zusatz) => {
   sage(r.pins === r.gebaut && r.groesse >= 12 && r.sichtbareNamen === 0, "an jedem Haus sein Kartenzeichen, keine Namensschilder (Karte von weitem)", JSON.stringify(r));
   await bild("ganz");
 
-  console.log("\nDER KOMPASS: KARTE MIT ZEICHEN UND NAMEN\n");
-  r = await pg.evaluate(() => { const k = document.querySelector(".sp-dl-kompass").getBoundingClientRect(); const e = document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2); return { w: Math.round(k.width), oben: Boolean(e && e.closest(".sp-dl-kompass")) }; });
-  sage(r.w >= 32 && r.oben, "der Kompass liegt unten rechts im Bild, 34 px, nichts liegt darüber", JSON.stringify(r));
-  await tippe(".sp-dl-kompass"); await tick(500);
-  r = await pg.evaluate(() => { const k = document.querySelector(".sp-dl-karte"); if (!k) return null; const b = k.querySelector("canvas.sp-dl-karte-bild"); let bunt = 0;
+  console.log("\nDER KOMPASS IST DIE LUPE (ab Fassung 721, Funk 159)\n");
+  /* XANDER (Funk 159): „ich möchte dass das kleine Bild was wir haben schon den Kompass hat nicht dass das drei
+     unterschiedliche Bilder sind … diese Lupe wie in den anderen Spielen mit den kleinen Punkten auf der Karte".
+     Bis 720 öffnete der Kompass ein eigenes Kartenfenster; jetzt holt er näher ran, und dann zeigt eine kleine Karte
+     in der Ecke das ganze Dorf mit Punkten und dem Ausschnitt. */
+  r = await pg.evaluate(() => { const k = document.querySelector(".sp-dl-kompass").getBoundingClientRect(); const e = document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2); return { w: Math.round(k.width), oben: Boolean(e && e.closest(".sp-dl-kompass")), plus: (document.querySelector(".sp-dl-lupe-zeichen") || {}).textContent }; });
+  sage(r.w >= 32 && r.oben && r.plus === "+", "der Kompass liegt unten rechts im Bild, 34 px, mit „+“ (Lupe), nichts liegt darüber", JSON.stringify(r));
+  await tippe(".sp-dl-kompass"); await tick(800);
+  r = await lage();
+  const mk = await pg.evaluate(() => { const k = document.querySelector(".sp-dl-minikarte"); if (!k) return null; const b = k.querySelector("canvas.sp-dl-karte-bild"); let bunt = 0;
     try { const d = b.getContext("2d").getImageData(0, 0, b.width, b.height).data; for (let i = 0; i < d.length; i += 4 * 211) if (d[i + 3] > 0) bunt++; } catch (e) {}
-    const pins = [...k.querySelectorAll(".sp-dl-kpin")]; return { pins: pins.length, namen: pins.map((p) => p.textContent), klein: Math.min(...pins.map((p) => Math.min(p.getBoundingClientRect().width, p.getBoundingClientRect().height))), bild: bunt }; });
-  sage(r && r.pins === 12 && r.namen.includes("Bäckerei") && r.namen.includes("Mühle"), "die Karte zeigt alle 12 Gebäude mit Zeichen und Namen (Bäckerei, Mühle …)", r && r.namen.join(", "));
-  sage(r && r.bild > 50, "in der Karte ist das gemalte Dorf in klein zu sehen", r && r.bild + " Stichproben");
-  sage(r && r.klein >= 26, "jedes Zeichen ist groß genug für den Finger", r && r.klein + " px");
+    const p = [...k.querySelectorAll(".sp-dl-mpunkt")]; return { punkte: p.length, titel: p.map((x) => x.title), klein: Math.min(...p.map((x) => x.getBoundingClientRect().width)), bild: bunt, fenster: Boolean(document.querySelector(".sp-dl-karte")) }; });
+  sage(/sp-dl-nah/.test(r.klasse) && r.lw >= r.fw * 1.9, "ein Tipp auf die Lupe: näher ran, das Dorf ist doppelt so groß", JSON.stringify(r));
+  sage(mk && mk.punkte === 12 && mk.titel.includes("Bäckerei") && mk.bild > 50 && !mk.fenster, "unten in der Ecke die kleine Karte: das gemalte Dorf, 12 Punkte, kein eigenes Kartenfenster mehr", JSON.stringify(mk));
+  sage(mk && mk.klein >= 14, "jeder Punkt ist mit dem Finger zu treffen", mk && mk.klein + " px");
   await bild("karte");
 
-  console.log("\nTIPP AUF DIE BÄCKEREI: DORTHIN, NÄHER RAN\n");
-  await tippe('.sp-dl-kpin[data-g="baeckerei"]'); await tick(700);
+  console.log("\nTIPP AUF DEN PUNKT DER BÄCKEREI: DORTHIN\n");
+  await tippe('.sp-dl-mpunkt[data-g="baeckerei"]'); await tick(900);
   r = await lage();
   const b = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster").getBoundingClientRect(), h = document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]').getBoundingClientRect();
-    return { drin: h.left >= f.left - 2 && h.right <= f.right + 2 && h.top >= f.top - 2 && h.bottom <= f.bottom + 2, breit: Math.round(h.width), wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl, karte: Boolean(document.querySelector(".sp-dl-karte")),
+    return { drin: h.left >= f.left - 2 && h.right <= f.right + 2 && h.top >= f.top - 2 && h.bottom <= f.bottom + 2, breit: Math.round(h.width), wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl,
       name: [...document.querySelectorAll('.sp-dl-haus-gemalt[data-g="baeckerei"] small span')].map((e) => e.getBoundingClientRect().width > 0)[0], gemerkt: localStorage.getItem("dma_dorf_nah") }; });
-  sage(/sp-dl-nah/.test(r.klasse) && r.lw >= r.fw * 1.9, "näher ran: das Dorf ist doppelt so groß", JSON.stringify(r));
   sage(b.drin && b.breit >= 40, "die Bäckerei ist mitten im Bild und gut zu erkennen", JSON.stringify(b));
-  sage(b.wahl === "baeckerei" && !b.karte && b.name, "sie ist gleich geöffnet, die Karte zu, jetzt mit Namensschild", JSON.stringify(b));
+  sage(b.wahl === "baeckerei" && b.name, "sie ist gleich geöffnet, mit Namensschild", JSON.stringify(b));
   sage(r.gemalt === gemalt0, "beim Zoomen wird nicht neu gemalt (dasselbe Bild, nur größer)", r.gemalt);
   sage(b.gemerkt === "1", "die Zoomstufe wird auf dem Gerät gemerkt", b.gemerkt);
   await bild("nah");
 
-  console.log("\nIM KOMPASS SIEHT MAN, WO MAN IST\n");
-  await tippe(".sp-dl-kompass"); await tick(400);
+  console.log("\nIN DER KLEINEN KARTE SIEHT MAN, WO MAN IST\n");
+  await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"); f.scrollLeft = 0; }); await tick(300);
   const r1 = await pg.evaluate(() => { const b = document.querySelector(".sp-dl-karte-blick"); return b ? { l: parseFloat(b.style.left), w: parseFloat(b.style.width) } : null; });
   await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"); f.scrollLeft = f.scrollWidth - f.clientWidth; }); await tick(300);
   const r2 = await pg.evaluate(() => { const b = document.querySelector(".sp-dl-karte-blick"); return b ? { l: parseFloat(b.style.left), w: parseFloat(b.style.width) } : null; });
   sage(r1 && r1.w > 40 && r1.w < 60, "der rote Rahmen zeigt den Ausschnitt (etwa die Hälfte)", JSON.stringify(r1));
   sage(r2 && r2.l > r1.l + 10, "wischt man nach rechts, wandert der Rahmen mit", JSON.stringify({ r1, r2 }));
   await pg.evaluate(() => { window.__zoomAnim = 0; const alt = Element.prototype.animate; Element.prototype.animate = function (k, o) { if (this.classList && this.classList.contains("sp-dorfland")) window.__zoomAnim++; return alt.call(this, k, o); }; });
-  await tippe('.sp-dl-karte [data-s="dorfzoom"]'); await tick(150);
+  await tippe(".sp-dl-kompass"); await tick(150);
   const anim = await pg.evaluate(() => window.__zoomAnim);
   await tick(600);
   r = await lage();
-  sage(/sp-dl-ganz/.test(r.klasse) && Math.abs(r.lw - r.fw) <= 1 && anim >= 1, "„Ganzes Dorf“: wieder alles im Blick, weich gezoomt", JSON.stringify({ klasse: r.klasse, anim }));
+  sage(/sp-dl-ganz/.test(r.klasse) && Math.abs(r.lw - r.fw) <= 1 && anim >= 1 && !(await pg.evaluate(() => Boolean(document.querySelector(".sp-dl-minikarte")))), "die Lupe mit „−“: wieder das ganze Dorf, weich gezoomt, die kleine Karte verschwindet", JSON.stringify({ klasse: r.klasse, anim }));
 
   console.log("\nDOPPELTIPP IN DIE LANDSCHAFT\n");
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = ""; window.DMA_SPIEL.pruef.schnellZeichnen(true); document.querySelector(".sp-dl-rahmen").scrollIntoView({ block: "center", behavior: "instant" }); }); await tick(1500);
