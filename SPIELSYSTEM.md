@@ -1211,3 +1211,13 @@ Sonden: neu 736-chatwaffen-phase2 (13 Chat-Effekte im Halte-Menü mit eigener Ze
 - **Trefferstelle** (neues Feld „treff“): der Effekt erscheint auf jedem Gerät dort, wo getippt wurde (bis ein gutes Drittel des Bildes aus der Mitte). Gilt für jeden Effekt auf genau eine Person.
 - **Verlauf**: gleiche Treffer (gleicher Absender, gleicher Effekt, gleiches Ziel) direkt hintereinander und höchstens 90 s auseinander stehen als EINE Zeile mit „×4“. Jede Animation läuft trotzdem; ein Tipp auf die Zeile spielt sie noch einmal.
 - Zwille, Spuckrohr und Pusterohr zeichnet der Chat-Effekt selbst am Schützen – das gehaltene Gerät blendet sich dann kurz aus (keine zwei Zwillen).
+
+### Fassung 737 (Funk 155: weitere Meldungen – Entdeckung, Unzufriedenheit, Touristen, Angebote, Verkauf)
+Sonden: 716 (neu: Unzufriedenheit zuerst und bernsteinfarben mit „es fehlt …“, Forschung bereit, Angebot von Bea – ältere/eigene nicht, Verkauf an Bea +18 P – älterer nicht, Entdeckung des Duden, Touristen am Holstentor, nichts doppelt, „Ansehen“ springt zur Volks-Zeile bzw. klappt die Forschung auf), 683, 702, 703, 711 grün. Server: spiel_angebote_liste liefert zusätzlich „verkauft“ (eigene Verkäufe der letzten 24 h aus spiel_protokoll), geprüft mit eingeschobenem Verkauf und Rückrollen.
+- XANDER (Funk 155): Meldungen mit Sprung-Knopf für „Entdeckung, Einsammeln, Mine voll, Angriff, Unzufriedenheit, Touristen, Angebote, Verkauf“ – die letzten fünf fehlten.
+- **Unzufriedenheit** (unter 50 %, noch einmal unter 30 %; je Tag einmal): „Volk unzufrieden (41 %): es fehlt Essen, Lohn“ – bernsteinfarben, kommt gleich nach Angriffen. Ansehen → Volks-Zeile leuchtet.
+- **Entdeckung**: taucht eine geheime Forschung auf („Entdeckung! Geheime Forschung gefunden: Der Duden“) oder kann eine Forschung begonnen werden („Dreifelderwirtschaft kann jetzt erforscht werden“). Ansehen → Forschung klappt auf.
+- **Touristen**: stehen Wahrzeichen und ist die Dorf-Ernte bereit: „2 Touristen warten in deiner Stadt – ernte, dann zahlen sie Eintritt“. Ansehen → Ernte-Knopf.
+- **Angebote**: alle 2 Minuten wird still nachgesehen; neue Angebote anderer („Bea bietet 5 Erz je 2 P an – billiger als beim Händler“, bei mehreren „3 neue Angebote im Handel“). Beim allerersten Mal wird nur gemerkt, was schon da ist.
+- **Verkauf**: „Bea hat dir Brot abgekauft: +18 Punkte“ (mehrere: „3 Verkäufe: +75 Punkte“). Ansehen → Markt & Handel klappt auf.
+- Kommen Meldungen dazu, während eine steht, zählt „+N weitere“ sofort mit. Das Volk zählt jetzt auch Fleisch als Essen (wie die Ernte).

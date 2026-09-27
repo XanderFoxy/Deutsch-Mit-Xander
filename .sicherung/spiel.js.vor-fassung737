@@ -7477,84 +7477,12 @@
       if (g[key]) return;
       neu.push({ key: key, art: "angriff", ziel: k, text: (b.von || "Jemand") + " hat deine " + ((DORF[k] || {}).name || "Gebäude") + " geplündert" });
     });
-    meldungenWeitere(ich, g, jetzt, neu);
     if (!neu.length) return;
     neu.forEach(function (m) { sprungMerken(m.key); });
     if (dorfOffen()) return;
-    /* Angriffe zuerst, dann Warnungen (Unzufriedenheit), dann das Übrige. */
-    var rang = function (m) { return m.art === "angriff" ? 0 : m.art === "warnung" ? 1 : 2; };
-    SPRUNG.liste = SPRUNG.liste.concat(neu).sort(function (a, b) { return rang(a) - rang(b); });
+    /* Angriffe zuerst, dann das Übrige. */
+    SPRUNG.liste = SPRUNG.liste.concat(neu).sort(function (a, b) { return (a.art === "angriff" ? 0 : 1) - (b.art === "angriff" ? 0 : 1); });
     if (!SPRUNG.el || !SPRUNG.el.isConnected) sprungZeigen();
-    else {
-      /* Kommt etwas dazu, während eine Meldung steht: „+N weitere" stimmt sofort. */
-      var sp = SPRUNG.el.querySelector("span"), sm = sp && sp.querySelector("small");
-      if (sp && !sm) { sm = document.createElement("small"); sp.appendChild(document.createTextNode(" ")); sp.appendChild(sm); }
-      if (sm) sm.textContent = "+" + SPRUNG.liste.length + " weitere";
-    }
-  }
-  /* FASSUNG 737 — XANDER (Funk 155): Meldungen mit Sprung-Knopf auch für „Entdeckung … Unzufriedenheit, Touristen,
-     Angebote, Verkauf". Jede Meldung einmal (gemerkt wie die anderen); „Ansehen" springt an die passende Stelle
-     im Dorf-Menü (Forschung, Markt & Handel oder die Volks-Zeile oben). */
-  var MELDE_BILD = {
-    volk: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.5" fill="#d8261f"/><circle cx="7" cy="8" r="1.2" fill="#fff"/><circle cx="13" cy="8" r="1.2" fill="#fff"/><path d="M6 14.5 C8 11.5 12 11.5 14 14.5" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>',
-    touristen: '<svg viewBox="0 0 20 20"><rect x="3" y="7" width="14" height="9.5" rx="2" fill="#2a3a52"/><rect x="7" y="4.5" width="6" height="3" rx="1" fill="#2a3a52"/><circle cx="10" cy="11.8" r="3.2" fill="#9fd0ff" stroke="#fff" stroke-width="1.2"/><circle cx="14.6" cy="9" r=".9" fill="#f2c230"/></svg>'
-  };
-  function meldungenWeitere(ich, g, jetzt, neu) {
-    /* Unzufriedenheit: einmal am Tag je Stufe (unter 50 %, unter 30 %). */
-    var vz = volkZufrieden(ich);
-    if (vz.leute && vz.zuf < 50) {
-      var tag = new Date().toISOString().slice(0, 10), keyU = "u:" + tag + ":" + (vz.zuf < 30 ? 2 : 1);
-      if (!g[keyU]) {
-        var fehlt = [vz.satt < 1 ? "Essen" : "", vz.bezahlt < 1 ? "Lohn" : "", vz.quote < 60 ? "Deutsch" : ""].filter(Boolean);
-        neu.push({ key: keyU, art: "warnung", bild: MELDE_BILD.volk, ziel: "", teil: "volk",
-          text: "Volk unzufrieden (" + vz.zuf + " %)" + (fehlt.length ? ": es fehlt " + fehlt.join(", ") : " – Ertrag sinkt") });
-      }
-    }
-    /* Touristen: stehen Wahrzeichen und ist die Ernte bereit, warten Besucher auf Einlass. */
-    var b = besucherZahl(ich), ab = ich.dorf_ab ? Date.parse(ich.dorf_ab) : 0;
-    if (b && ab && ab + 4 * 3600000 <= jetzt && !g["t:" + ich.dorf_ab]) {
-      neu.push({ key: "t:" + ich.dorf_ab, art: "fertig", bild: MELDE_BILD.touristen, ziel: "", teil: "ernte", text: b + " Touristen warten in deiner Stadt – ernte, dann zahlen sie Eintritt" });
-    }
-    /* Entdeckung: eine geheime Forschung taucht auf; oder eine Forschung kann jetzt begonnen werden. */
-    var v = ich.volk || {}, f = Number(v.forschung) || 0, wiss = beruf(ich, "wissenschaftler"), q = v.quote == null ? 70 : Number(v.quote);
-    Object.keys(FORSCHUNG).forEach(function (k) {
-      var F = FORSCHUNG[k];
-      if (erforscht(ich, k)) return;
-      var klug = wiss >= F.wiss && q >= F.quote;
-      if (F.geheim && klug && !g["e:" + k]) {
-        neu.push({ key: "e:" + k, art: "fertig", bild: GEHEIM_SVG, ziel: "", teil: "forschung", text: "Entdeckung! Geheime Forschung gefunden: " + F.name });
-        return;
-      }
-      var bereit = klug && !(F.haus && dorfSt(ich, F.haus) < (F.stufe || 1)) && f >= F.kosten;
-      if (bereit && !g["r:" + k]) neu.push({ key: "r:" + k, art: "fertig", bild: FORSCHUNG_SVG, ziel: "", teil: "forschung", text: F.name + " kann jetzt erforscht werden (" + F.kosten + " Forschung)" });
-    });
-    /* Angebote und Verkäufe: alle 2 Minuten still nachsehen; beim ersten Mal nur merken, was schon da ist. */
-    if (jetzt - (HANDEL.meldeZeit || 0) > 120000) {
-      HANDEL.meldeZeit = jetzt;
-      rpc("spiel_angebote_liste", {}).then(function (r) { if (r && r.ok) { HANDEL.angebote = r.angebote || []; HANDEL.verkauft = r.verkauft || []; HANDEL.angeboteZeit = Date.now(); } }).catch(function () {});
-    }
-    var maxA = 0, maxV = 0;
-    try { maxA = Number(localStorage.getItem("dma_dorf_angebot_max")); maxV = Number(localStorage.getItem("dma_dorf_verkauf_max")); } catch (e) {}
-    if (HANDEL.angebote) {
-      var fremd = HANDEL.angebote.filter(function (a) { return !a.eigen; }), hoch = fremd.reduce(function (n, a) { return Math.max(n, Number(a.id) || 0); }, 0);
-      var neuA = isNaN(maxA) || !localStorage.getItem("dma_dorf_angebot_max") ? [] : fremd.filter(function (a) { return Number(a.id) > maxA; });
-      if (hoch > (maxA || 0)) { try { localStorage.setItem("dma_dorf_angebot_max", String(hoch)); } catch (e) {} }
-      if (neuA.length) {
-        var a0 = neuA[0], billig = a0.preis < (MARKT[a0.ware] || 0);
-        neu.push({ key: "a:" + hoch, art: "fertig", ware: a0.ware, ziel: "", teil: "markt",
-          text: neuA.length > 1 ? neuA.length + " neue Angebote im Handel" : a0.von + " bietet " + a0.menge + " " + wareName(a0.ware) + " je " + a0.preis + " P an" + (billig ? " – billiger als beim Händler" : "") });
-      }
-    }
-    if (HANDEL.verkauft) {
-      var hochV = HANDEL.verkauft.reduce(function (n, x) { return Math.max(n, Number(x.id) || 0); }, 0);
-      var neuV = !localStorage.getItem("dma_dorf_verkauf_max") ? [] : HANDEL.verkauft.filter(function (x) { return Number(x.id) > (maxV || 0); });
-      if (hochV > (maxV || 0) || !localStorage.getItem("dma_dorf_verkauf_max")) { try { localStorage.setItem("dma_dorf_verkauf_max", String(Math.max(hochV, maxV || 0))); } catch (e) {} }
-      if (neuV.length) {
-        var summe = neuV.reduce(function (n, x) { return n + (Number(x.erloes) || 0); }, 0), v0 = neuV[neuV.length - 1];
-        neu.push({ key: "v:" + hochV, art: "fertig", ware: v0.ware, ziel: "", teil: "markt",
-          text: neuV.length > 1 ? neuV.length + " Verkäufe: +" + summe + " Punkte" : v0.von + " hat dir " + wareName(v0.ware) + " abgekauft: +" + summe + " Punkte" });
-      }
-    }
   }
   function sprungZeigen() {
     clearTimeout(SPRUNG.uhr);
@@ -7562,11 +7490,11 @@
     var m = SPRUNG.liste.shift();
     if (!m) return;
     var mehr = SPRUNG.liste.length, el = document.createElement("div");
-    el.className = "sp-sprung" + (m.art === "angriff" ? " sp-sprung-angriff" : m.art === "warnung" ? " sp-sprung-warnung" : "");
+    el.className = "sp-sprung" + (m.art === "angriff" ? " sp-sprung-angriff" : "");
     el.setAttribute("role", "alert");
     var z = m.art === "angriff" ? DORF_ZEICHEN[m.ziel] || ["#a33a3a", ""] : null;
     el.innerHTML = (z ? '<i class="sp-sprung-bild sp-sprung-pin" style="background:' + z[0] + '" aria-hidden="true"><svg viewBox="0 0 24 24">' + z[1] + "</svg></i>"
-      : '<i class="sp-sprung-bild" aria-hidden="true">' + (m.bild || wareSvg(m.ware || "getreide")) + "</i>")
+      : '<i class="sp-sprung-bild" aria-hidden="true">' + wareSvg(m.ware || "getreide") + "</i>")
       + "<span>" + esc(m.text) + (mehr ? " <small>+" + mehr + " weitere</small>" : "") + "</span>"
       + '<button type="button" class="sp-sprung-hin">Ansehen</button><button type="button" class="sp-sprung-zu" aria-label="Meldung schließen">✕</button>';
     el.querySelector(".sp-sprung-hin").addEventListener("click", function () { sprungOeffnen(m); });
@@ -7581,16 +7509,10 @@
     S.rad = null; S.zrad = false; S.langWahl = false; S.trankAuf = false;
     S.blick = "dorfblick"; S.schnellMenue = true;
     S.dorfWahl = m.ziel && (DORF[m.ziel] || m.ziel === "wald") ? m.ziel : "";
-    /* FASSUNG 737 — Forschung und Handel klappen gleich auf; die Stelle wird angesprungen. */
-    if (m.teil === "forschung" || m.teil === "markt") S.dorfTeil = m.teil;
-    handelLaden(m.teil === "markt"); abrufen(true); dorfTakt(true);
+    handelLaden(false); abrufen(true); dorfTakt(true);
     ton("swoosh", 0.25);
     schnellZeichnen(true);
-    setTimeout(function () { try {
-      var ziel = m.teil === "forschung" || m.teil === "markt" ? schnellEl.querySelector(".sp-dorf-auf") : m.teil === "volk" ? schnellEl.querySelector(".sp-volk") : m.teil === "ernte" ? schnellEl.querySelector('[data-s="ernte"]') : null;
-      var r = ziel || schnellEl.querySelector(".sp-dl-rahmen"); if (r) r.scrollIntoView({ block: ziel ? "start" : "nearest" });
-      if (ziel) { ziel.classList.remove("sp-sprung-ziel"); void ziel.offsetWidth; ziel.classList.add("sp-sprung-ziel"); }
-    } catch (e) {} }, 80);
+    setTimeout(function () { try { var r = schnellEl.querySelector(".sp-dl-rahmen"); if (r) r.scrollIntoView({ block: "nearest" }); } catch (e) {} }, 80);
   }
   function truppFertig(ich, orte) {
     for (var i = 0; i < orte.length; i++) { var t = truppStand(ich, orte[i]); if (t && t.fertig) return orte[i]; }
@@ -7656,23 +7578,15 @@
      Zufriedenheit = 40 % satt + 20 % bezahlt + 40 % Deutsch-Quote (7 Tage).
      Der Ertrag wächst mit: × 0,5 (unglücklich) bis × 1,5 (glücklich).
      --------------------------------------------------------------- */
-  /* FASSUNG 737 — dieselbe Rechnung für die Anzeige und die Meldung „Dein Volk ist unzufrieden". */
-  function volkZufrieden(ich) {
-    var v = ich.volk || {}, arbeiter = Number(v.arbeiter) || 0, ritter = Number(v.ritter) || 0, quote = v.quote == null ? 70 : Number(v.quote);
-    var bedarf = Math.ceil(arbeiter / 4) + ritter + Math.ceil(berufeSumme(ich) / 2), essen = ["fisch", "brot", "bratwurst", "kuchen", "torte", "fleisch"].reduce(function (n, x) { return n + vorrat(ich, x); }, 0);
-    var lohn = arbeiter + 3 * ritter, satt = bedarf ? Math.min(1, essen / bedarf) : 1, bezahlt = lohn ? Math.min(1, (ich.punkte || 0) / lohn) : 1;
-    var q = Math.min(100, quote + (erforscht(ich, "duden") ? 10 : 0));
-    return { zuf: Math.min(100, Math.round(40 * satt + 20 * bezahlt + 40 * q / 100) + wunderFreude(ich)), satt: satt, bezahlt: bezahlt, quote: q, leute: arbeiter + ritter };
-  }
   function volkHtml(ich) {
     var v = ich.volk || {}, arbeiter = Number(v.arbeiter) || 0, ritter = Number(v.ritter) || 0, quote = v.quote == null ? 70 : Number(v.quote);
     if (!arbeiter && !ritter) return "";
     /* FASSUNG 702 — Fachleute essen mit: je zwei eine Portion mehr (wie spiel_dorf_abholen). */
-    var bedarf = Math.ceil(arbeiter / 4) + ritter + Math.ceil(berufeSumme(ich) / 2), essen = ["fisch", "brot", "bratwurst", "kuchen", "torte", "fleisch"].reduce(function (n, x) { return n + vorrat(ich, x); }, 0);
+    var bedarf = Math.ceil(arbeiter / 4) + ritter + Math.ceil(berufeSumme(ich) / 2), essen = ["fisch", "brot", "bratwurst", "kuchen", "torte"].reduce(function (n, x) { return n + vorrat(ich, x); }, 0);
     var lohn = arbeiter + 3 * ritter;
     var satt = bedarf ? Math.min(1, essen / bedarf) : 1, bezahlt = lohn ? Math.min(1, (ich.punkte || 0) / lohn) : 1;
     /* FASSUNG 703 — Duden: Deutsch zählt 10 mehr; Sehenswürdigkeiten freuen das Volk. */
-    var zuf = volkZufrieden(ich).zuf;
+    var zuf = Math.min(100, Math.round(40 * satt + 20 * bezahlt + 40 * Math.min(100, quote + (erforscht(ich, "duden") ? 10 : 0)) / 100) + wunderFreude(ich));
     var gesicht = zuf >= 75 ? "#3aa655" : zuf >= 50 ? "#e0a020" : "#d8261f";
     return '<div class="sp-volk"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="' + gesicht + '"/><circle cx="7" cy="8" r="1.2" fill="#fff"/><circle cx="13" cy="8" r="1.2" fill="#fff"/>'
       + '<path d="' + (zuf >= 75 ? "M6 12 C8 15 12 15 14 12" : zuf >= 50 ? "M6.5 13 H13.5" : "M6 14.5 C8 11.5 12 11.5 14 14.5") + '" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>'
@@ -13683,7 +13597,7 @@
       eigeneGegenwehr: eigeneGegenwehr, tierWechseln: tierWechseln, slots: slots, schnellMenueHtml: schnellMenueHtml,
       krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, zauberStart: zauberStart, fuettern: fuettern, tierZustandPflegen: tierZustandPflegen, faehigZeigen: faehigZeigen, FAEHIG: FAEHIG, tierLaut: tierLaut, tierSvg: tierSvg, fusionHtml: fusionHtml, fusionieren: fusionieren, fusionFeier: fusionFeier,
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
-      dorfMeldungenPruefen: dorfMeldungenPruefen, sprung: function () { return SPRUNG; }, handel: function () { return HANDEL; }, sprungOeffnen: sprungOeffnen,
+      dorfMeldungenPruefen: dorfMeldungenPruefen, sprung: function () { return SPRUNG; },
       haltPflegen: haltPflegen, haltenSetzen: haltenSetzen, halten: function () { return S.halten; },
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, schmerzStimme: schmerzStimme, chatWaffeZeigen: chatWaffeZeigen, tierReagiert: tierReagiert, tiereSpielen: tiereSpielen, handelLaden: handelLaden, erinnerungPruefen: erinnerungPruefen, schmerz: function () { return SCHMERZ; }, ernten: ernten, saeen: saeen, werkzeugSetzen: werkzeugSetzen, ackerPflegen: ackerPflegen, ackerStand: ackerStand, werkHtml: werkHtml, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,

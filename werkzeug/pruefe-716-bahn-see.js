@@ -392,7 +392,52 @@ const sage = (gut, was, zusatz) => {
   sage(/Fischer sind zurück: 5 Fisch/.test(r), "neu Fertiges meldet sich wieder (die Fischer sind zurück)", r);
   await tippe(".sp-sprung .sp-sprung-zu"); await tick(300);
   sage(await pg.evaluate(() => !document.querySelector(".sp-sprung")), "✕ schließt die Meldung", "");
-  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.blick = "dorfblick"; S.schnellMenue = true; P.schnellZeichnen(true); });
+  console.log("\nWEITERE MELDUNGEN (Fassung 737, Funk 155: Entdeckung, Unzufriedenheit, Touristen, Angebote, Verkauf)\n");
+  const band = () => pg.evaluate(() => { const e = document.querySelector(".sp-sprung"); return e ? { t: e.textContent, warn: e.classList.contains("sp-sprung-warnung"), svg: !!e.querySelector(".sp-sprung-bild svg") } : null; });
+  const weiter = async () => { await tippe(".sp-sprung .sp-sprung-zu"); await tick(250); };
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(), ich = window.__ich;
+    try { localStorage.removeItem("dma_dorf_gemeldet"); localStorage.setItem("dma_dorf_angebot_max", "5"); localStorage.setItem("dma_dorf_verkauf_max", "100"); } catch (e) {}
+    P.sprung().gemeldet = null; P.sprung().liste = []; S.schnellMenue = false; S.blick = null; P.schnellZeichnen(true);
+    ich.werk = {}; ich.dorf = Object.assign({}, ich.dorf); Object.keys(ich.dorf).forEach((k) => { ich.dorf[k] = Object.assign({}, ich.dorf[k]); delete ich.dorf[k].gepl; });
+    ich.vorraete = { erz: 1 }; ich.punkte = 3;
+    ich.volk = { arbeiter: 24, ritter: 0, quote: 20, forschung: 25, berufe: { wissenschaftler: 1 }, erforscht: [], wunder: {} };
+    window.__extra = Object.assign({}, window.__extra, { spiel_angebote_liste: () => ({ ok: true, angebote: [{ id: 4, ware: "holz", menge: 3, preis: 2, von: "Cem", eigen: false }, { id: 7, ware: "erz", menge: 5, preis: 2, von: "Bea", eigen: false }, { id: 8, ware: "brot", menge: 2, preis: 9, von: "Alex", eigen: true }],
+      verkauft: [{ id: 99, ware: "holz", erloes: 5, von: "Cem" }, { id: 101, ware: "brot", erloes: 18, von: "Bea" }] }) });
+    S.ich = JSON.parse(JSON.stringify(ich)); P.handel().meldeZeit = 0; P.dorfMeldungenPruefen(); });
+  await tick(500);
+  await pg.evaluate(() => { window.DMA_SPIEL.pruef.dorfMeldungenPruefen(); });
+  await tick(400);
+  /* Alle anstehenden Meldungen: die gezeigte und die wartenden. */
+  const alleMeldungen = () => pg.evaluate(() => { const e = document.querySelector(".sp-sprung"); return (e ? [e.querySelector("span").firstChild.textContent] : []).concat(window.DMA_SPIEL.pruef.sprung().liste.map((m) => m.text)); });
+  r = await band();
+  sage(r && r.warn && /Volk unzufrieden \(\d+ %\): es fehlt Essen, Lohn, Deutsch/.test(r.t), "Unzufriedenheit kommt zuerst (bernsteinfarben) und sagt, was fehlt", JSON.stringify(r));
+  let alle = (await alleMeldungen()).join(" | ");
+  sage(/Dreifelderwirtschaft kann jetzt erforscht werden/.test(alle), "Forschung bereit: „Dreifelderwirtschaft kann jetzt erforscht werden“", alle);
+  sage(/Bea bietet 5 Erz je 2 P an/.test(alle) && !/Cem bietet/.test(alle) && !/Alex bietet/.test(alle), "neues Angebot von Bea (ältere und eigene nicht)", alle);
+  sage(/Bea hat dir Brot abgekauft: \+18 Punkte/.test(alle) && !/Cem hat/.test(alle), "Verkauf: „Bea hat dir Brot abgekauft: +18 Punkte“ (älterer Verkauf nicht)", alle);
+  if (process.env.BILD) await (await pg.$(".sp-sprung")).screenshot({ path: process.env.BILD + "-unzufrieden.png" });
+  await weiter();
+  /* Entdeckung: genug Wissenschaftler und gutes Deutsch → das Geheimnis taucht auf; Touristen bei Wahrzeichen und bereiter Ernte. */
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(), ich = window.__ich;
+    ich.volk = Object.assign({}, ich.volk, { quote: 90, berufe: { wissenschaftler: 3 }, wunder: { holstentor: true } }); ich.dorf_ab = new Date(Date.now() - 5 * 3600000).toISOString();
+    S.ich = JSON.parse(JSON.stringify(ich)); P.sprung().liste = []; P.dorfMeldungenPruefen(); });
+  await tick(400);
+  alle = (await alleMeldungen()).join(" | ");
+  sage(/Entdeckung! Geheime Forschung gefunden: Der Duden/.test(alle), "Entdeckung: der geheime Duden taucht auf", alle);
+  sage(/2 Touristen warten in deiner Stadt/.test(alle), "Touristen: „2 Touristen warten in deiner Stadt – ernte …“ (Holstentor)", alle);
+  await weiter();
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef; P.sprung().liste = []; P.dorfMeldungenPruefen(); });
+  await tick(300);
+  sage(await pg.evaluate(() => !document.querySelector(".sp-sprung")), "nichts davon kommt doppelt", "");
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef; P.sprung().liste = []; P.sprungOeffnen({ teil: "volk", ziel: "" }); });
+  await tick(900);
+  r = await pg.evaluate(() => { const v = document.querySelector(".sp-volk"); if (!v) return null; const q = v.getBoundingClientRect(); return { leuchtet: v.classList.contains("sp-sprung-ziel"), sichtbar: q.top >= 0 && q.top < window.innerHeight }; });
+  sage(r && r.leuchtet && r.sichtbar, "„Ansehen“ bei Unzufriedenheit springt zur Volks-Zeile, die kurz aufleuchtet", JSON.stringify(r));
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); P.sprung().liste = []; S.schnellMenue = false; S.blick = null; P.schnellZeichnen(true); P.sprungOeffnen({ teil: "forschung", ziel: "" }); });
+  await tick(900);
+  r = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); return { teil: S.dorfTeil, forschung: !!document.querySelector(".sp-forschung-kopf"), leuchtet: !!document.querySelector(".sp-dorf-auf.sp-sprung-ziel") }; });
+  sage(r.teil === "forschung" && r.forschung && r.leuchtet, "„Ansehen“ bei einer Entdeckung klappt die Forschung auf", JSON.stringify(r));
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.dorfTeil = ""; S.blick = "dorfblick"; S.schnellMenue = true; P.schnellZeichnen(true); });
   await tick(500);
   console.log("\nSTÄDTE ALS KETTE (Fassung 730, Funk 176)\n");
   /* „dass man sich durch andere stellte so nach links und rechts so durchklicken kann … oder man geht auf ihr Profil und geht einfach in ihre Stadt und greift sie an" */
