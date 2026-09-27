@@ -1182,3 +1182,10 @@ Sonden: neu 731-waffe-halten (alter Schalter gelöscht, ohne Waffe kein Schuss, 
 
 ### Fassung 732 (Walkie 274: Kartoffel 3 Schaden)
 - Walkie 274 (Frage: „Soll ich auf 3 senken?“ – Antwort: „okay“): die Kartoffel, die Standardwaffe, macht 3 statt 6 Schaden (Server `spiel_waffe_schaden` und Spiel). Sonden 697 (Server-Tabelle), 633, 641, 662, 666, 678, 681 grün.
+
+### Fassung 733 (Funk 169: Jahreszeiten und Feste im Dorf, Vorschau für den Betreiber)
+Sonden: neu 733-jahreszeiten (Jahreszeit/Fest für 11 Stichtage, Ostersonntag 2026–2028 nach Gauß, Knopf „Saison“ nur für den Betreiber, jede der 8 Stufen malt ein eigenes Bild, Kürbisgesichter und Christbaumkerzen leuchten nachts, Herbst ohne Halloween leuchtet nicht), 711, 716, 686, 708 grün.
+- XANDER (wörtlich, Funk 169): „ich möchte das schon mal in der Vorschau sehen wie sowas aussieht wenn die Stadt dann geschmückt ist“.
+- **Nach dem echten Datum**: März–Mai Frühling (Blüten in den Laubbäumen), Juni–August Sommer, September–November Herbst (bunte Laubbäume, Kürbisse vor jedem Haus), sonst Winter (kahle Laubbäume; Tannen bleiben grün).
+- **Feste**: Erntedank 25.9.–10.10. (zwei Garben rechts vom Rathaus), Halloween 15.10.–2.11. (Kürbisse mit Gesichtern, nachts leuchtend), Advent 27.11.–6.1. (Christbaum mit Kugeln, Stern und Kerzen rechts vom Rathaus, nachts leuchtend), Ostern Palmsonntag bis Ostermontag (bunte Eier auf der Wiese).
+- **Vorschau**: unter dem Dorfbild „Saison: echt“ – nur beim Betreiber. Jeder Tipp blättert weiter: Herbst → Erntedank → Halloween → Advent → Winter → Ostern → Frühling → Sommer → echt. Die Vorschau gilt nur auf seinem Gerät und nur bis zum Neuladen.
