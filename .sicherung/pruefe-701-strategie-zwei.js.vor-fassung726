@@ -148,14 +148,11 @@ async function fenster(br, port, wer) {
   await zug(A, "super");
   a = await zustand(A); b = await zustand(B);
   const schildDanach = await B.evaluate(() => window.DMA_SPIEL.pruef.st().ich.schild);
-  /* Ab Fassung 726 (Funk 175: „das Schild ist doch da und das Leben zu schützen"): 26 × 0,69 = 18, Rüstung 1 → 16;
-     das Schild fängt die Hälfte (8) und zerbricht: 44 − 8 = 36, Schild 0. */
-  sage(b.ich === 36 && a.er === 36 && schildDanach === 0, "Superkraft (18, Rüstung −2 = 16) zerschlägt das Schild: es fängt 8 ab und ist weg – Bea 36 auf beiden Geräten", JSON.stringify({ a: a.er, b: b.ich, schild: schildDanach }));
+  /* 26 × 0,69 = 18, Rüstung 1 → 16, am Schild vorbei: 44 − 16 = 28, Schild bleibt 30. */
+  sage(b.ich === 28 && a.er === 28 && schildDanach === 30, "Superkraft (26 × 0,69 = 18, Rüstung −2) geht durchs Schild: Bea 28 auf beiden Geräten, Schild bleibt 30", JSON.stringify({ a: a.er, b: b.ich, schild: schildDanach }));
   const farbe = await A.evaluate(() => { const i = document.querySelector(".sp-sa-rechts i"); return { gelb: i.classList.contains("sp-sa-gelb"), rot: i.classList.contains("sp-sa-knapp"), bg: getComputedStyle(i).backgroundImage.slice(0, 60) }; });
   const gruen = await A.evaluate(() => { const i = document.querySelector(".sp-sa-links i"); return { gelb: i.classList.contains("sp-sa-gelb"), bg: getComputedStyle(i).backgroundImage }; });
-  sage(!farbe.gelb && !farbe.rot && !gruen.gelb && /141, 240, 122/.test(gruen.bg), "Lebensbalken grün über der Hälfte (Bea 36/60, Alex 40/60)", JSON.stringify({ farbe, gruen: gruen.bg.slice(0, 60) }));
-  const du = await A.evaluate(() => ({ links: document.querySelector(".sp-sa-links b").textContent, rechts: document.querySelector(".sp-sa-rechts b").textContent }));
-  sage(/^Du · Alex/.test(du.links) && !/^Du/.test(du.rechts), "der eigene Balken sagt „Du“", JSON.stringify(du));
+  sage(farbe.gelb && !farbe.rot && !gruen.gelb && /141, 240, 122/.test(gruen.bg), "Lebensbalken: grün, unter der Hälfte gelb (Bea 28/60)", JSON.stringify({ farbe, gruen: gruen.bg.slice(0, 60) }));
   const sterneA = await A.evaluate(() => window.DMA_SPIEL.pruef.st().ich.sterne);
   sage(sterneA === 1, "Superkraft kostet 3 Sterne, die richtige Antwort bringt einen zurück", String(sterneA));
   if (process.env.BILD) await A.screenshot({ path: process.env.BILD + "-zuege.png" });
@@ -168,9 +165,6 @@ async function fenster(br, port, wer) {
   await B.evaluate(() => { const z = document.querySelector(".sp-extra-zu"); if (z) z.click(); });
   await A.evaluate(() => window.DMA_SPIEL.pruef.extraOeffnen("strat"));
   await tick(200);
-  /* FASSUNG 726 — gemeinsamer Schauplatz: Alex wählt „Burghof“ für beide, Bea hat für sich „Traumwelt“. */
-  await A.evaluate(() => { localStorage.setItem("dma_strat_ort", "burg"); localStorage.setItem("dma_strat_ort_gemeinsam", "1"); });
-  await B.evaluate(() => { localStorage.setItem("dma_strat_ort", "traum"); localStorage.setItem("dma_strat_ort_gemeinsam", "0"); });
   await klick(A, '[data-modus="echtzeit"]');
   await klick(A, '[data-st="bea"]');
   await tick(700);
@@ -178,9 +172,6 @@ async function fenster(br, port, wer) {
   sage(/Echtzeit/.test(box2), "Einladung sagt „Echtzeit“", box2.slice(0, 70));
   await klick(B, '.sp-frage [data-ja="1"]');
   await tick(700);
-  const orte = [await A.evaluate(() => document.querySelector(".sp-sa-buehne").className), await B.evaluate(() => document.querySelector(".sp-sa-buehne").className)];
-  if (process.env.BILD) await B.screenshot({ path: process.env.BILD + "-burg.png" });
-  sage(orte.every((c) => /sp-sa-ort-burg/.test(c)), "gemeinsamer Schauplatz: beide kämpfen im Burghof (Beas eigene Wahl zählt hier nicht)", JSON.stringify(orte));
   /* Beide tippen gleichzeitig auf Angriff. */
   await Promise.all([klick(A, '.sp-st-aktionen [data-ak="angriff"]'), klick(B, '.sp-st-aktionen [data-ak="angriff"]')]);
   await tick(2300);

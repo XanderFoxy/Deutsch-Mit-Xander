@@ -2503,38 +2503,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-lern-mess { font-size: 10.5px; opacity: .85; }
 .sp-lern-schwach { color: #d9534f; } .sp-lern-mittel { color: #d99a1f; } .sp-lern-stark { color: #3c9a4c; }
 .sp-mut { color: #b8862a; font-weight: 700; }
-
-/* FASSUNG 726 — Funk 173/175: Ortsschild wieder mittig, Wetterschild links daneben ohne Überlappung, Beschriftung unter dem Bild,
-   Hauslampe als sichtbare Wandleuchte. */
-.sp-schnell .sp-schnellmenue .sp-dl-rahmen .sp-dl-ortsschild, .sp-dl-ortsschild { left: 50%; right: auto; transform: translateX(-50%); max-width: 150px; }
-.sp-dl-ortsschild b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sp-dw-schild { max-width: calc(50% - 84px); white-space: normal; line-height: 1.2; }
-.sp-dw-schild small { display: block; font-size: .85em; color: #bfe6a8; font-weight: 600; }
-.sp-dl-beschriftung { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 6px 2px 0; font-size: 12px; }
-.sp-dl-beschriftung span { opacity: .8; }
-.sp-schnellmenue .sp-dl-beschriftung button, .sp-dl-beschriftung button { min-height: 0; margin: 0; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
-.sp-dl-beschriftung button.sp-an { background: #3a6b3f; color: #fff; }
-.sp-dl-tl { width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 1px; background: #2b2520;
-  box-shadow: 0 0 5px 2px rgba(255, 200, 110, .45); }
-.sp-dl-tl b { position: absolute; left: .5px; top: 1px; width: 3px; height: 2.4px; border-radius: .5px; background: #ffe7a8; }
-.sp-dl-tl::before { content: ""; position: absolute; left: 1.5px; top: -2px; width: 1px; height: 2px; background: #2b2520; }
-/* FASSUNG 726 — Schauplätze im Rundenkampf (Funk 168/175) */
-.sp-st-orte { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 6px 0; }
-.sp-st-orte button { min-height: 0; padding: 4px 9px; border-radius: 12px; font-size: 12px; }
-.sp-st-gemeinsam { flex-basis: 100%; font-size: 12px; display: flex; gap: 6px; align-items: center; }
-.sp-sa-ortname { position: absolute; right: 6px; top: 6px; z-index: 3; min-height: 0; padding: 2px 8px; border-radius: 10px; border: 0; background: rgba(0, 0, 0, .35); color: #fff; font-size: 10.5px; cursor: pointer; }
-.sp-sa { position: relative; }
-.sp-sa-buehne { background-size: cover; background-position: center 60%; }
-.sp-sa-buehne.sp-sa-ort-wiese { background: radial-gradient(ellipse 60% 30% at 20% 72%, #6fbf4f 0 99%, transparent 100%), radial-gradient(ellipse 70% 34% at 85% 75%, #5aa845 0 99%, transparent 100%),
-  linear-gradient(180deg, #8fd0ff 0%, #cdeeff 55%, #7cc257 56%, #4f9a38 100%); }
-.sp-sa-buehne.sp-sa-ort-arena { background: repeating-linear-gradient(90deg, rgba(60, 40, 20, .35) 0 6px, transparent 6px 34px) 0 18% / 100% 38% no-repeat,
-  radial-gradient(ellipse 22px 26px at 50% 100%, rgba(40, 25, 10, .55) 0 98%, transparent 100%) 0 30% / 34px 30% repeat-x,
-  linear-gradient(180deg, #f3c98b 0%, #e2a25e 55%, #c9955c 56%, #b27c45 100%); }
-.sp-sa-buehne.sp-sa-ort-burg { background: linear-gradient(90deg, #6d6f77 0 12px, transparent 12px 24px) 0 12% / 24px 12% repeat-x,
-  linear-gradient(180deg, #9aa7b6 0%, #c7ced6 40%, #8b8e96 41%, #74777f 70%, #5e5a52 71%, #4b4740 100%); }
-.sp-sa-buehne.sp-sa-ort-traum { background: radial-gradient(circle at 20% 25%, rgba(255, 255, 255, .9) 0 1.5px, transparent 2px) 0 0 / 38px 30px,
-  radial-gradient(ellipse 45% 30% at 70% 30%, rgba(255, 190, 240, .7), transparent 70%), linear-gradient(180deg, #7b5cd6 0%, #d77fd0 55%, #f7b6d8 71%, #c989e6 100%); }
-.sp-sa-buehne.sp-sa-ort-nacht { background: radial-gradient(circle at 80% 22%, #fff9df 0 10px, rgba(255, 249, 223, .25) 11px, transparent 22px),
-  radial-gradient(circle, rgba(255, 255, 255, .85) 0 1px, transparent 1.5px) 0 0 / 27px 23px, linear-gradient(180deg, #0b1330 0%, #1d2b5a 60%, #243a2e 71%, #17261d 100%); }
-.sp-sa-buehne.sp-sa-ort-dorf { background-color: #5a8a3a; }
-.sp-namedialog-kenn { display: block; margin: 2px 0 6px; font-size: 12px; opacity: .8; }

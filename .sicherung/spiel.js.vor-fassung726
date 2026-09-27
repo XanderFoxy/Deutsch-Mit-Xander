@@ -7667,18 +7667,6 @@
      of Empires): das Gebäude bleibt stehen, ist nur beschädigt; du nimmst
      20 % der passenden Vorräte (je Ritter +5 %, ihre Ritter −5 %). */
   var PLUENDERBAR = ["baeckerei", "muehle", "schmiede", "huehnerstall", "kuhstall", "bergwerk", "labor", "brauerei", "rathaus"];
-  /* FASSUNG 726 — XANDER (Funk 175): „wenn man auf das dorfschild geklickt soll die Einwohnerzahl angezeigt werden die
-     Stärke oder das Level". Einwohner: je Gebäudestufe vier Leute, dazu Arbeiter und Ritter. Stärke: je Gebäudestufe 3,
-     je Ritter 6, dazu Mauer, Graben und Turm. */
-  function dorfKennzahlen(st) {
-    st = st || {};
-    var d = st.dorf || {}, stufen = 0;
-    Object.keys(d).forEach(function (k) { var g = d[k] || {}; if (g.stufe > 0 && g.lp > 0) stufen += g.stufe; });
-    var v = st.volk || {}, ritter = Number(st.ritter != null ? st.ritter : v.ritter) || 0, arbeiter = Number(v.arbeiter) || 0;
-    var staerke = stufen * 3 + ritter * 6 + (st.mauer_lp > 0 ? Math.round(st.mauer_lp / 10) : 0) + (st.graben ? 5 : 0) + (st.geschuetz_stufe ? st.geschuetz_stufe * 4 : 0);
-    return { einwohner: stufen * 4 + arbeiter + ritter, staerke: staerke, level: st.level || 1 };
-  }
-  function dorfKennzeile(st) { var z = dorfKennzahlen(st); return z.einwohner + " Einwohner · Stärke " + z.staerke + " · Lv " + z.level; }
   function nachbarnHtml() {
     var zeilen = plaetze().filter(function (p) { return !p.leer && !p.ich && p.id && !istPuppe(p.id); }).map(function (p) {
       var sid = spielIdVon(p.id), st = sid && S.stand[sid];
@@ -7689,7 +7677,7 @@
           + (kaputt || gepl || !st.mitspielen ? " disabled" : "") + ' title="' + DORF[k].name + (gepl ? " – 4 h geschützt" : kaputt ? " – kaputt" : "") + '">'
           + dorfSvg(k, g.stufe || 1) + "<small>" + DORF[k].name + "</small></button>";
       }).join("");
-      return knoepfe ? '<div class="sp-nachbar"><b>' + esc(p.name || "?") + (st.dorf_name ? " · " + esc(st.dorf_name) : "") + "</b><small>" + dorfKennzeile(st) + " · " + (st.mitspielen ? (st.ritter ? st.ritter + " Ritter" : "keine Ritter") : "spielt gerade nicht") + "</small>"
+      return knoepfe ? '<div class="sp-nachbar"><b>' + esc(p.name || "?") + (st.dorf_name ? " · " + esc(st.dorf_name) : "") + "</b><small>" + (st.mitspielen ? (st.ritter ? st.ritter + " Ritter" : "keine Ritter") : "spielt gerade nicht") + "</small>"
         + '<div class="sp-nachbar-reihe">' + knoepfe + "</div></div>" : "";
     }).join("");
     return '<div class="sp-sm-gruppe sp-nachbarn"><span>Nachbardörfer plündern · 10 Mana</span></div>'
@@ -8893,9 +8881,8 @@
         /* FASSUNG 723 — Funk 169: „die Laternen die geben ja schon einen Kegel in der Regel sollte sollten die Lichter in der
            Nacht vom Haus aus sein". Der Kegel, der die ganze Hausfront ausleuchtete (das Haus wirkte „als ob es brennt"),
            ist weg: die Laterne beleuchtet nur den Boden um sich und den Sockel des Hauses daneben. */
-        /* FASSUNG 726 — Funk 173: „Diese einzelnen Lichtflecken sind immer noch auf dem Haus … sie kommen von nirgendwo
-           her … weil das gar keine Lampe sichtbar ist die sollen verschwinden". Der kleine Schein, der von der Laterne auf
-           den Hausfuß fiel, ist weg – es bleibt nur der Lichtfleck am Boden unter der Laterne. */
+        r = m.createRadialGradient(kx, ky + 3, 0, kx + o.seite * 2, o.y - 3, 9); r.addColorStop(0, "rgba(0,0,0,.55)"); r.addColorStop(1, "rgba(0,0,0,0)");
+        m.fillStyle = r; m.beginPath(); m.arc(kx + o.seite * 2, o.y - 3, 9, 0, 7); m.fill();
       });
       /* Das Tagbild, warm gefärbt wie Gaslicht, nur so weit die Maske reicht. */
       var lk = dmKachel(tagBild.width, tagBild.height), l = lk.getContext("2d");
@@ -8942,8 +8929,7 @@
     licht.tueren.forEach(function (t, i) {
       if (t.aus || (t.haus !== "bahnhof" && dmHash(i, 5, 723) > tuerAnteil)) return;
       var b = box(t.pt);
-      /* FASSUNG 726 — eine sichtbare Wandleuchte (Halter und Glas), nicht nur ein Lichtpunkt. */
-      h += '<i class="sp-dl-tl" style="left:' + ((b.x0 + b.w / 2) / 3.2).toFixed(3) + "%;top:" + ((b.y0 - 1.1) / 2).toFixed(3) + '%"><b></b></i>';
+      h += '<i class="sp-dl-tl" style="left:' + ((b.x0 + b.w / 2) / 3.2).toFixed(3) + "%;top:" + ((b.y0 - .9) / 2).toFixed(3) + '%"></i>';
     });
     return h;
   }
@@ -9177,8 +9163,8 @@
          Das eigene Karten-Fenster (das dritte Bild) entfällt. */
       + '<button type="button" class="sp-dl-kompass sp-dl-lupe' + (nah ? " sp-an" : "") + '" data-s="dorfzoom" data-n="' + (nah ? "0" : "1") + '" aria-label="' + (nah ? "Lupe: ganzes Dorf" : "Lupe: näher ran") + '">' + kompassSvg()
       + '<i class="sp-dl-lupe-zeichen">' + (nah ? "−" : "+") + "</i></button>"
-      + (nah ? dorfMiniKarteHtml(ich, sig) : "") + dorfOrtsschildHtml(ich) + "</div>"
-      + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · die Lupe holt dich näher ran") + "</span>") + (wahl ? (wahl === "bahnhof" ? bahnhofHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
+      + (nah ? dorfMiniKarteHtml(ich, sig) : dorfAnzeigeHtml()) + dorfOrtsschildHtml(ich) + "</div>"
+      + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · die Lupe holt dich näher ran") + "</span>") + (wahl ? (wahl === "bahnhof" ? bahnhofHtml(ich) : dorfStationHtml(ich, wahl)) : "");
   }
   /* ---------------------------------------------------------------
      FASSUNG 708 — DAS DORF LEBT MIT DEM ECHTEN WETTER
@@ -9246,7 +9232,7 @@
     var art = in_([95, 96, 99]) ? "gewitter" : in_([61, 63, 65, 66, 67, 80, 81, 82]) ? "regen" : in_([51, 53, 55, 56, 57]) ? "niesel"
       : in_([71, 73, 75, 77, 85, 86]) ? "schnee" : in_([45, 48]) ? "nebel" : code === 2 || code === 3 ? "wolken" : "klar";
     var stark = { 61: .45, 63: .7, 65: 1, 66: .5, 67: 1, 80: .5, 81: .8, 82: 1, 71: .45, 73: .7, 75: 1, 77: .4, 85: .6, 86: 1, 95: .8, 96: 1, 99: 1 }[code] || .5;
-    return { art: art, tag: tag, code: code, stark: stark, temp: j && j.temp != null ? j.temp : null, ort: (j && j.ort) || "", eigenerOrt: (j && j.eigenerOrt) || "", echt: !!j };
+    return { art: art, tag: tag, code: code, stark: stark, temp: j && j.temp != null ? j.temp : null, ort: (j && j.ort) || "", echt: !!j };
   }
   /* Was das Wetter auf den Feldern bewirkt – genau wie der Server (spiel_ernten) es rechnet. */
   function dorfWetterWirkung(w) {
@@ -9295,13 +9281,8 @@
     var sym = "";
     try { sym = window.DMA_WETTER && window.DMA_WETTER.symbol ? window.DMA_WETTER.symbol(w.code, w.tag) : ""; } catch (e) {}
     var wi = dorfWetterWirkung(w);
-    /* FASSUNG 726 — Funk 175: „wenn ich das Wetter von Döbeln da eingestellt habe … dann muss das nicht Döbeln dort noch da
-       stehen sondern ich habe meine Stadt ja schon benannt". Ist die Stadt benannt, steht kein Ort mehr im Wetterschild
-       (der Name steht auf dem Ortsschild); woher das Wetter kommt, steht im Hinweis beim Antippen/Überfahren. */
-    var benannt = !!String((S.ich && S.ich.dorf_name) || "").trim();
-    var quelle = w.ort ? "Wetter aus " + (w.eigenerOrt || w.ort) : "";
-    return '<span class="sp-dw-schild" title="' + esc(quelle + (wi ? " · " + wi : "")) + '">' + sym + (w.temp != null ? " " + w.temp + "°" : "") + " " + (w.art === "klar" && !w.tag ? "Klare Nacht" : DW_NAME[w.art])
-      + (w.ort && !benannt ? " · " + esc(w.ort) : "") + (wi ? "<small>" + wi + "</small>" : "") + "</span>";
+    return '<span class="sp-dw-schild">' + sym + " " + (w.art === "klar" && !w.tag ? "Klare Nacht" : DW_NAME[w.art]) + (w.temp != null ? " · " + w.temp + "°" : "") + (w.ort ? " · " + esc(w.ort) : "")
+      + (wi ? " · <b>" + wi + "</b>" : "") + "</span>";
   }
   function dorfOffen() { return !!(S.schnellMenue && S.blick === "dorfblick" && schnellEl && schnellEl.querySelector(".sp-dl-rahmen")); }
   /* ---------------------------------------------------------------
@@ -10155,14 +10136,14 @@
      Den Namen sehen auch die Nachbarn. */
   function dorfOrtsschildHtml(ich) {
     var n = (ich || {}).dorf_name;
-    return '<button type="button" class="sp-dl-ortsschild' + (n ? "" : " sp-dl-ortsschild-leer") + '" data-s="dorfname" title="' + (n ? esc(n) + " · " + dorfKennzeile(ich) + " · antippen zum Umbenennen" : "Stadt benennen") + '">'
+    return '<button type="button" class="sp-dl-ortsschild' + (n ? "" : " sp-dl-ortsschild-leer") + '" data-s="dorfname" title="' + (n ? "Stadt umbenennen" : "Stadt benennen") + '">'
       + (n ? "<b>" + esc(n) + "</b>" : "<b>Stadt benennen</b>") + "</button>";
   }
   function dorfNameFragen() {
     var alt = document.querySelector(".sp-namedialog"); if (alt) alt.remove();
     var d = document.createElement("div");
     d.className = "sp-namedialog"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "Stadt benennen");
-    d.innerHTML = '<form class="sp-namedialog-karte"><b>Wie soll deine Stadt heißen?</b><small class="sp-namedialog-kenn">' + esc(dorfKennzeile(S.ich)) + '</small>'
+    d.innerHTML = '<form class="sp-namedialog-karte"><b>Wie soll deine Stadt heißen?</b>'
       + '<input type="text" maxlength="24" autocomplete="off" enterkeyhint="done" placeholder="z. B. Neu-Döbeln" value="' + esc((S.ich || {}).dorf_name || "") + '">'
       + '<small>2 bis 24 Zeichen · alle im Spiel sehen den Namen</small>'
       + '<span><button type="button" data-n="weg">Abbrechen</button><button type="submit">Speichern</button></span></form>';
@@ -10188,15 +10169,6 @@
   function dorfNamen() {
     if (S.dorfNamen == null) { try { S.dorfNamen = localStorage.getItem("dma_dorf_namen") === "1"; } catch (e) { S.dorfNamen = false; } }
     return !!S.dorfNamen;
-  }
-  /* FASSUNG 726 — XANDER (Funk 175): „diese Stecknadel soll nicht an der Stelle sein wo du sie hast weil jetzt verdeckt
-     sie den Bahnhof … ich möchte nicht dass da irgendwas überlappt". Die Wahl liegt jetzt UNTER dem Bild, als zwei
-     Schalter „Symbole“ und „Namen“ – jeder zeigt, ob er an ist, ein Tipp schaltet ihn um. Im Bild liegt nichts mehr. */
-  function dorfBeschriftungHtml() {
-    var z = dorfZeichen(), n = dorfNamen();
-    return '<div class="sp-dl-beschriftung"><span>Beschriftung im Bild:</span>'
-      + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "0" : "1") + '" data-n="' + (n ? "1" : "0") + '" class="' + (z ? "sp-an" : "") + '" aria-pressed="' + z + '">Symbole ' + (z ? "an" : "aus") + "</button>"
-      + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "1" : "0") + '" data-n="' + (n ? "0" : "1") + '" class="' + (n ? "sp-an" : "") + '" aria-pressed="' + n + '">Namen ' + (n ? "an" : "aus") + "</button></div>";
   }
   function dorfAnzeigeHtml() {
     var z = dorfZeichen(), n = dorfNamen(), wahl = [];
@@ -12380,7 +12352,7 @@
      Jetzt: jeder rechnet seine EIGENEN Werte (LP, Schild, Sterne) und
      schickt sie mit; jeder Zug wird quittiert und bis zur Quittung alle
      2,5 s wiederholt; doppelt Angekommenes wird erkannt. */
-  var ST = { id: "", gegner: "" }, ST_ORT_VORGABE = "";
+  var ST = { id: "", gegner: "" };
   var ST_LP = 60;
   /* FASSUNG 722 — XANDER (Funk 167): „das Schild was man sich aufbaut das darf
      nicht endlos Sterne haben … Maximalwert … die Schilde müssen auch eine
@@ -12395,11 +12367,7 @@
     konter:  { name: "Konter",  was: "nächster Angriff prallt zur Hälfte zurück · 1 Stern", sterne: 1 },
     donner:  { name: "Donnerwort", was: "22 Schaden · 2 Sterne", sterne: 2 },
     /* „super Power mit dazu erspielen" */
-    /* FASSUNG 726 — Funk 175: „außerdem macht es keinen Sinn weil mein Schild noch an ist und noch ein Viertel Leiste hat und
-       mein Leben schon total verbraucht ist das Schild ist doch da und das Leben zu schützen". Die Superkraft geht nicht
-       mehr am Schild vorbei: sie zerschlägt es – das Schild fängt dabei noch die Hälfte ab und ist danach weg. So ist nie
-       Leben weg, solange Schild da ist. */
-    super:   { name: "Superkraft", was: "26 Schaden · zerschlägt das Schild · 3 Sterne", sterne: 3 }
+    super:   { name: "Superkraft", was: "26 Schaden durch jedes Schild · 3 Sterne", sterne: 3 }
   };
   /* Richtig beantwortet: ein Stern (höchstens 3). „Rüstung erspielen durch
      irgendwelche Fragen": je 3 richtige hintereinander eine Stufe Rüstung
@@ -12433,47 +12401,22 @@
     try { if (ini) { var cs = getComputedStyle(ini); farbe = cs.backgroundColor || farbe; schrift = cs.color || schrift; } } catch (e) {}
     return '<span class="sp-sa-ini" style="background:' + esc(farbe) + ";color:" + esc(schrift) + '">' + esc(String(name || "?").trim().charAt(0).toUpperCase() || "?") + "</span>";
   }
-  /* FASSUNG 726 — XANDER (Funk 168/175): „dass man den Hintergrund wählen kann wie bei Streetfighter wo man kämpfen möchte
-     ja in seiner Stadt in meiner Stadt oder irgendwo auf eine auf einer Wiese auf dem Feld … oder in einer Traumwelt …
-     Und entweder bestimmt jeder für sich wie sein Hintergrund aussieht und der andere sieht das eben nicht … oder wir legen
-     einen fest". Sechs Schauplätze; „Für beide gleich“ schickt den Schauplatz mit der Einladung, sonst sieht jeder seinen
-     eigenen. Während des Kampfes lässt er sich (wenn nicht gemeinsam) mit einem Tipp weiterschalten. „Dein Dorf“ zeigt das
-     eigene gemalte Dorf, wenn es schon einmal gemalt wurde. */
-  var ST_ORTE = [["abend", "Abendrot"], ["dorf", "Dein Dorf"], ["wiese", "Wiese"], ["arena", "Arena"], ["burg", "Burghof"], ["traum", "Traumwelt"], ["nacht", "Sternennacht"]];
-  function stratOrtWahl() { try { return localStorage.getItem("dma_strat_ort") || "abend"; } catch (e) { return "abend"; } }
-  function stratOrtGemeinsam() { try { return localStorage.getItem("dma_strat_ort_gemeinsam") === "1"; } catch (e) { return false; } }
-  function stratOrtSetzen(ort) {
-    var b = extraEl && extraEl.querySelector(".sp-sa-buehne"); if (!b) return;
-    ST_ORTE.forEach(function (o) { b.classList.toggle("sp-sa-ort-" + o[0], o[0] === ort); });
-    b.style.backgroundImage = "";
-    if (ort === "dorf") {
-      var bild = null; Object.keys(DM.bilder || {}).some(function (k) { if (!/N@/.test(k)) { bild = DM.bilder[k].bild; return true; } return false; });
-      if (bild) { try { b.style.backgroundImage = "url(" + (bild.__url || (bild.__url = bild.toDataURL("image/jpeg", .7))) + ")"; } catch (e) {} }
-    }
-    var n = extraEl.querySelector(".sp-sa-ortname"); if (n) n.textContent = (ST_ORTE.find(function (o) { return o[0] === ort; }) || ["", ""])[1] + (ST.ortGemeinsam ? " · für beide" : "");
-  }
   function stratWahl() {
     var inhalt = extraRahmen("Rundenkampf", "sp-extra-strat");
     var leute = []; try { leute = plaetze().filter(function (p) { return p && !p.leer && !p.ich && !istPuppe(p.id) && !/^sparring:/.test(p.id); }); } catch (e) {}
     inhalt.innerHTML = '<p class="sp-text">Du wählst eine Aktion – sie wirkt nur, wenn du die Deutsch-Frage richtig beantwortest. Jede richtige Antwort bringt einen Stern (höchstens 3), drei richtige hintereinander eine Stufe Rüstung. Treffer gehen erst durchs Schild, dann ans Leben. Eine falsche Antwort kostet auf jedem Niveau gleich viel – wer ein höheres Niveau wählt, bekommt mehr Punkte. Fair nach Level: wer niedriger ist, trifft härter.</p>'
       + '<div class="sp-st-modus"><button type="button" data-modus="zug" class="sp-an">Züge (wie Schach)</button><button type="button" data-modus="echtzeit">Echtzeit (beide zugleich)</button></div>'
-      + '<div class="sp-st-orte"><span class="sp-klein">Schauplatz:</span>' + ST_ORTE.map(function (o) { return '<button type="button" data-ort="' + o[0] + '" class="' + (stratOrtWahl() === o[0] ? "sp-an" : "") + '">' + o[1] + "</button>"; }).join("")
-      + '<label class="sp-st-gemeinsam"><input type="checkbox" data-ortgemeinsam="1"' + (stratOrtGemeinsam() ? " checked" : "") + '> für beide gleich (sonst sieht jeder seinen eigenen)</label></div>'
       + '<div class="sp-sm-liste"><button type="button" data-st="computer">Gegen Professor Grammatikus (Computer)</button>'
       + leute.map(function (p) { return '<button type="button" data-st="' + esc(p.id) + '" data-name="' + esc(p.name || "") + '">Gegen ' + esc(p.name || "?") + " (einladen)</button>"; }).join("") + "</div>";
     var modus = "zug";
     inhalt.addEventListener("click", function (ev) {
-      var o = ev.target.closest("[data-ort]");
-      if (o) { try { localStorage.setItem("dma_strat_ort", o.dataset.ort); } catch (e) {} inhalt.querySelectorAll("[data-ort]").forEach(function (x) { x.classList.toggle("sp-an", x === o); }); ton("holzklopf", 0.15); return; }
-      var g = ev.target.closest("[data-ortgemeinsam]");
-      if (g) { try { localStorage.setItem("dma_strat_ort_gemeinsam", g.checked ? "1" : "0"); } catch (e) {} return; }
       var m = ev.target.closest("[data-modus]");
       if (m) { modus = m.dataset.modus; inhalt.querySelectorAll("[data-modus]").forEach(function (x) { x.classList.toggle("sp-an", x === m); }); return; }
       var b = ev.target.closest("[data-st]"); if (!b) return;
       if (b.dataset.st === "computer") return stratBeginnen("computer", "Professor Grammatikus", true, "", modus, stratMeinLevel());
       var id = "st" + Date.now().toString(36);
       var ichName = ""; try { ichName = LC().lage().ichName || ""; } catch (e) {}
-      senden({ ereignis: "strat", typ: "einladung", an: b.dataset.st, partie: id, name: ichName, modus: modus, lv: stratMeinLevel(), ort: stratOrtGemeinsam() ? stratOrtWahl() : "" });
+      senden({ ereignis: "strat", typ: "einladung", an: b.dataset.st, partie: id, name: ichName, modus: modus, lv: stratMeinLevel() });
       ST.wartet = { id: id, an: b.dataset.st, name: b.dataset.name, modus: modus };
       hinweis("♟️ Einladung an " + (b.dataset.name || "") + " geschickt – warte auf die Antwort.");
     });
@@ -12494,7 +12437,7 @@
       + '<div class="sp-sa-kopf"><div class="sp-sa-balken sp-sa-links"><b></b><span><i></i><em class="sp-sa-schildbalken"></em></span><small></small></div><div class="sp-sa-ko">VS</div><div class="sp-sa-balken sp-sa-rechts"><b></b><span><i></i><em class="sp-sa-schildbalken"></em></span><small></small></div></div>'
       + '<div class="sp-sa-buehne"><div class="sp-sa-kaempfer sp-sa-ich"><div class="sp-sa-bild">' + stratBild(ichChat, ST.ich.name) + '</div><div class="sp-sa-koerper"></div></div>'
       + '<div class="sp-sa-kaempfer sp-sa-er"><div class="sp-sa-bild">' + (gegner === "computer" ? '<span class="sp-sa-ini" style="background:#6b4a9c;color:#fff">G</span>' : stratBild(gegner, gegnerName)) + '</div><div class="sp-sa-koerper"></div></div>'
-      + '<div class="sp-sa-boden"></div><button type="button" class="sp-sa-ortname" title="Schauplatz wechseln (nur bei dir)"></button></div>'
+      + '<div class="sp-sa-boden"></div></div>'
       + '<p class="sp-sa-fair"></p></div>'
       + '<p class="sp-st-dran"></p><div class="sp-st-aktionen">' + Object.keys(ST_AKTIONEN).map(function (k) { var a = ST_AKTIONEN[k];
         return '<button type="button" data-ak="' + k + '"><b>' + a.name + "</b><small>" + a.was + "</small></button>"; }).join("") + '</div><ol class="sp-st-log"></ol>';
@@ -12510,14 +12453,6 @@
         if (fehlerTechnik) { if (ST.modus === "zug") ST.ichDran = true; stratZeigen(); return; }
         stratMeinZug(ak, richtig);
       });
-    });
-    ST.ortGemeinsam = !!ST_ORT_VORGABE; ST.ort = ST_ORT_VORGABE || stratOrtWahl(); ST_ORT_VORGABE = "";
-    stratOrtSetzen(ST.ort);
-    inhalt.querySelector(".sp-sa-ortname").addEventListener("click", function () {
-      if (ST.ortGemeinsam) { hinweis("🏟️ Ihr habt den Schauplatz gemeinsam festgelegt."); return; }
-      var i = ST_ORTE.findIndex(function (o) { return o[0] === ST.ort; }); ST.ort = ST_ORTE[(i + 1) % ST_ORTE.length][0];
-      try { localStorage.setItem("dma_strat_ort", ST.ort); } catch (e) {}
-      stratOrtSetzen(ST.ort); ton("holzklopf", 0.15);
     });
     stratZeigen();
     if (!ichZuerst && gegner === "computer") setTimeout(stratComputer, 900);
@@ -12539,7 +12474,7 @@
     var z = { ereignis: "strat", typ: "zug", an: ST.gegner, partie: ST.id, nr: nr, aktion: ak, erfolg: erfolg, schaden: schaden, stand: stratEigen() };
     if (ST.gegner === "computer") { if (schaden) stratTreffer("er", schaden, ak === "super"); stratEndePruefen(); stratZeigen(); if (!ST.ende && ST.modus === "zug") setTimeout(stratComputer, 1300); return; }
     /* Das Bild des Einschlags sofort (die echten Zahlen kommen mit der Quittung). */
-    if (schaden) { var abV = ak === "super" ? Math.min(ST.er.schild, Math.ceil(schaden / 2)) : Math.min(ST.er.schild, schaden); stratEinschlag("er", schaden - abV, abV, 0); }
+    if (schaden) { var abV = ak === "super" ? 0 : Math.min(ST.er.schild, schaden); stratEinschlag("er", schaden - abV, abV, 0); }
     ST.offen = z; senden(z); stratNachsenden();
     stratZeigen();
   }
@@ -12573,19 +12508,12 @@
     var w = seite === "ich" ? ST.ich : ST.er, zurueck = 0;
     if (w.konter) { w.konter = false; zurueck = Math.round(schaden / 2); schaden -= zurueck; }
     if (w.ruestung > 0) schaden = Math.max(1, schaden - 2 * w.ruestung);
-    var ab;
-    if (durch) { ab = Math.min(w.schild, Math.ceil(schaden / 2)); w.schild = 0; }
-    else { ab = Math.min(w.schild, schaden); w.schild -= ab; }
-    w.lp = Math.max(0, w.lp - (schaden - ab));
+    var ab = durch ? 0 : Math.min(w.schild, schaden); w.schild -= ab; w.lp = Math.max(0, w.lp - (schaden - ab));
     stratEinschlag(seite, schaden - ab, ab, zurueck);
     /* Gegen den Computer rechnet dieses Gerät beide Seiten; gegen Menschen zieht
        sich der Angreifer den Rückprall selbst ab (er bekommt ihn mit der Quittung). */
-    if (zurueck && ST.gegner === "computer") { var andere = seite === "ich" ? ST.er : ST.ich; setTimeout(function () { var ab2 = stratSchildZuerst(andere, zurueck); stratEinschlag(seite === "ich" ? "er" : "ich", zurueck - ab2, ab2, 0); stratEndePruefen(); stratZeigen(); }, 420); }
+    if (zurueck && ST.gegner === "computer") { var andere = seite === "ich" ? ST.er : ST.ich; setTimeout(function () { andere.lp = Math.max(0, andere.lp - zurueck); stratEinschlag(seite === "ich" ? "er" : "ich", zurueck, 0, 0); stratEndePruefen(); stratZeigen(); }, 420); }
     return zurueck;
-  }
-  /* Auch der Rückprall eines Konters trifft erst das Schild, dann das Leben. Gibt zurück, was das Schild abfing. */
-  function stratSchildZuerst(w, n) {
-    var ab = Math.min(w.schild || 0, n); w.schild -= ab; w.lp = Math.max(0, w.lp - (n - ab)); return ab;
   }
   function stratFremderZug(n) {
     if (ST.ende) return;
@@ -12620,7 +12548,7 @@
     var wer = vonMir ? "Du" : ST.gegnerName, A = ST_AKTIONEN[ak] || { name: ak };
     ST.log.unshift(!erfolg ? wer + ": " + A.name + " – falsch beantwortet, verpufft."
       : ak === "angriff" || ak === "donner" ? wer + ": " + A.name + " – " + schaden + " Schaden."
-      : ak === "super" ? wer + ": Superkraft – " + schaden + " Schaden, das Schild zerbricht."
+      : ak === "super" ? wer + ": Superkraft – " + schaden + " Schaden, durch jedes Schild."
       : ak === "schild" ? wer + ": Schild (+10)." : ak === "konter" ? wer + ": Konterstellung." : wer + ": Heilen (+12 LP).");
   }
   /* --- Bild und Ton: Anlauf, Schlag, Einschlag – „wie bei Street Fighter" --- */
@@ -12673,8 +12601,7 @@
     if (!extraEl || !extraEl.querySelector(".sp-sa")) return;
     var balken = function (sel, w) {
       var el = extraEl.querySelector(sel); if (!el) return;
-      /* Funk 175: „ich weiß ja nicht … ob das meiner ist" – der eigene Balken sagt „Du“. */
-      el.querySelector("b").textContent = (w === ST.ich ? "Du · " : "") + w.name + " · Lv " + w.lv;
+      el.querySelector("b").textContent = w.name + " · Lv " + w.lv;
       /* „der blaue Wagen liegt über dem eigentlichen roten bzw grünen was die
          Lebensanzeige darstellt ja wenn sie schwächer wird wird sie gelb" */
       var lp = el.querySelector("i"), anteil = w.lp / ST_LP;
@@ -12714,12 +12641,11 @@
         var k = ev.target.closest("button"); if (!k) return;
         clearTimeout(weg); box.remove();
         var ichName = ""; try { ichName = LC().lage().ichName || ""; } catch (e) {}
-        if (k.dataset.ja === "1") { senden({ ereignis: "strat", typ: "ja", an: n.von, partie: n.partie, name: ichName, lv: stratMeinLevel() }); ST_ORT_VORGABE = ST_ORTE.some(function (o) { return o[0] === n.ort; }) ? n.ort : ""; stratBeginnen(n.von, n.name || "Gegner", false, n.partie, n.modus, Number(n.lv) || 0); }
+        if (k.dataset.ja === "1") { senden({ ereignis: "strat", typ: "ja", an: n.von, partie: n.partie, name: ichName, lv: stratMeinLevel() }); stratBeginnen(n.von, n.name || "Gegner", false, n.partie, n.modus, Number(n.lv) || 0); }
         else senden({ ereignis: "strat", typ: "nein", an: n.von, partie: n.partie, name: ichName });
       });
     } else if (n.typ === "ja" && ST.wartet && ST.wartet.id === n.partie) {
       var w = ST.wartet; ST.wartet = null;
-      ST_ORT_VORGABE = stratOrtGemeinsam() ? stratOrtWahl() : "";
       stratBeginnen(n.von, n.name || w.name || "Gegner", true, n.partie, w.modus, Number(n.lv) || 0);
     } else if (n.typ === "nein" && ST.wartet && ST.wartet.id === n.partie) {
       ST.wartet = null; hinweis("♟️ " + (n.name || "Die Person") + " möchte gerade nicht.");
@@ -12729,7 +12655,7 @@
       /* Quittung: der andere hat meinen Zug – und sagt, wie es ihm geht. */
       if (ST.offen && Number(n.nr) >= ST.offen.nr) { ST.offen = null; clearTimeout(ST.nachUhr); }
       /* Mein Angriff traf einen Konter: den Rückprall ziehe ich mir selbst ab – je Zug einmal. */
-      if (n.zurueck > 0 && (ST.rueckAb || 0) < Number(n.nr)) { ST.rueckAb = Number(n.nr); var ab3 = stratSchildZuerst(ST.ich, Number(n.zurueck)); stratEinschlag("ich", Number(n.zurueck) - ab3, ab3, 0);
+      if (n.zurueck > 0 && (ST.rueckAb || 0) < Number(n.nr)) { ST.rueckAb = Number(n.nr); ST.ich.lp = Math.max(0, ST.ich.lp - Number(n.zurueck)); stratEinschlag("ich", Number(n.zurueck), 0, 0);
         senden({ ereignis: "strat", typ: "stand", an: ST.gegner, partie: ST.id, nr: 0, stand: stratEigen() }); }
       if (n.stand) stratStandUebernehmen(n.stand);
       stratEndePruefen(); stratZeigen();

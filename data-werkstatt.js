@@ -49,22 +49,32 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 725 — Baukasten ziehen wie in einer App, Bilderwelten und Aussprache auf die Tafel",
+  stand: "Fassung 726 — Ortsschild mittig, Beschriftung unter dem Bild, Schild schützt das Leben, Schauplätze",
 
   inArbeit: [
-    { seit: "2026-09-27T02:21",
-      text: "Stadt selbst gestalten (Häuser ziehen/drehen, Wege), Bauphasen mit Kran/Bagger, Feuerwehr, Kaserne, Stadt-Spezialität – Funk 168/169/172" },
-    { seit: "2026-09-27T02:21",
-      text: "Jahreszeiten-Schmuck – Funk 169" },
-    { seit: "2026-09-27T02:21",
-      text: "Rundenkampf: Arenen, Skins, Einzug, Super-Moves – Funk 169" },
+    { seit: "2026-09-27T02:38",
+      text: "Meldungen „fertig/angegriffen“ mit Sprung ins Dorf – Funk 155/173" },
+    { seit: "2026-09-27T02:38",
+      text: "Vollständige Ideenliste seit dem Dorf – Funk 173" },
+    { seit: "2026-09-27T02:38",
+      text: "Stadt gestalten, Handel/Beziehungen zwischen Dörfern, Feuerwehr, Kaserne – Funk 169/172/175" },
+    { seit: "2026-09-27T02:38",
+      text: "Rüstung/Skins realistisch, Superkräfte erspielen – Funk 169/175" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T02:21",
-      text: "Baukasten: Figur ziehen mit Finger und Maus, nichts markiert sich" },
-    { seit: "2026-09-27T02:21",
-      text: "Tafel: Ordner Vom Gerät / Bilderwelten / Aussprache" },
+    { seit: "2026-09-27T02:38",
+      text: "Keine Lichtflecken ohne Lampe; Wandleuchte über der Tür" },
+    { seit: "2026-09-27T02:38",
+      text: "Ortsschild mittig, Wetterschild ohne Ortsnamen" },
+    { seit: "2026-09-27T02:38",
+      text: "Beschriftung als Schalter unter dem Bild" },
+    { seit: "2026-09-27T02:38",
+      text: "Einwohner, Stärke, Level beim Ortsschild und bei Nachbarn" },
+    { seit: "2026-09-27T02:38",
+      text: "Rundenkampf: Schild schützt immer das Leben" },
+    { seit: "2026-09-27T02:38",
+      text: "Rundenkampf: Schauplatz wählen, eigener oder gemeinsamer" },
   ],
 };

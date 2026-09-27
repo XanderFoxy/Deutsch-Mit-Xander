@@ -186,36 +186,38 @@ const sage = (gut, was, zusatz) => {
   await tippe('.sp-schnell [data-s="makro"]'); await tick(1200);
   let r = await pg.evaluate(() => [...document.querySelectorAll(".sp-dl-haus-gemalt small")].filter((e) => e.getBoundingClientRect().width > 0).length);
   sage(r === 0, "ganzes Dorf: keine Zeichen im Bild", r + " sichtbar");
-  /* Ab Fassung 726 (Funk 175: „diese Stecknadel soll nicht an der Stelle sein wo du sie hast weil jetzt verdeckt sie den
-     Bahnhof … ich möchte nicht dass da irgendwas überlappt"): zwei Schalter UNTER dem Bild, jeder zeigt seinen Zustand. */
+  /* Ab Fassung 721 (Funk 159: „wenn man keine Symbole hat soll man gefragt werden Symbole an oder Labels an oder beides
+     an oder alles aus … dann soll in dem Zustand natürlich die Option vorgeschlagen werden ob man es ausschalten möchte"):
+     der Knopf unten links im Bild bietet genau an, was zum jetzigen Zustand passt. */
+  const wahl = () => pg.evaluate(() => [...document.querySelectorAll('.sp-dl-anzeige [data-s="dorfanzeige"]')].map((b) => b.textContent));
   const sicht = () => pg.evaluate(() => ({ pins: [...document.querySelectorAll(".sp-dl-haus-gemalt small .sp-dl-pin")].filter((e) => e.getBoundingClientRect().width > 0).length,
     namen: [...document.querySelectorAll(".sp-dl-haus-gemalt small span")].filter((e) => e.getBoundingClientRect().width > 0).length, z: localStorage.getItem("dma_dorf_zeichen"), n: localStorage.getItem("dma_dorf_namen") }));
-  const schalter = () => pg.evaluate(() => { const zeile = document.querySelector(".sp-dl-beschriftung"), bild = document.querySelector(".sp-dl-rahmen");
-    if (!zeile || !bild) return null; const a = zeile.getBoundingClientRect(), b = bild.getBoundingClientRect();
-    return { unter: a.top >= b.bottom - 1, texte: [...zeile.querySelectorAll("button")].map((x) => x.textContent), imBild: !!bild.querySelector(".sp-dl-anzeige") }; });
-  let w0 = await schalter();
-  sage(w0 && w0.unter && !w0.imBild && w0.texte.join("|") === "Symbole aus|Namen aus", "unter dem Bild: „Symbole aus“, „Namen aus“ – im Bild liegt kein Knopf mehr", JSON.stringify(w0));
-  await tippe('.sp-dl-beschriftung button:first-of-type'); await tick(300);
+  await tippe(".sp-dl-anzeige-knopf"); await tick(300);
+  let w0 = await wahl();
+  sage(w0.join("|") === "Symbole an|Namen an|Beides an", "alles aus: angeboten wird „Symbole an“, „Namen an“, „Beides an“", w0.join(" | "));
+  await tippe('.sp-dl-anzeige [data-z="1"][data-n="0"]'); await tick(300);
   r = await sicht();
-  sage(r.pins >= 6 && r.namen === 0 && r.z === "1" && r.n === "0", "„Symbole“ an: die Zeichen erscheinen (ohne Namen), gemerkt", JSON.stringify(r));
-  w0 = await schalter();
-  sage(w0.texte.join("|") === "Symbole an|Namen aus", "der Schalter zeigt jetzt „Symbole an“", w0.texte.join(" | "));
-  await tippe('.sp-dl-beschriftung button:last-of-type'); await tick(300);
+  sage(r.pins >= 6 && r.namen === 0 && r.z === "1" && r.n === "0", "„Symbole an“: die Zeichen erscheinen (ohne Namen), gemerkt", JSON.stringify(r));
+  await tippe(".sp-dl-anzeige-knopf"); await tick(300);
+  w0 = await wahl();
+  sage(w0.includes("Symbole aus") && !w0.includes("Symbole an") && w0.includes("Namen an"), "Symbole sind an: jetzt steht dort „Symbole aus“ (nicht „an“) und „Namen an“", w0.join(" | "));
+  await tippe('.sp-dl-anzeige [data-z="1"][data-n="1"]'); await tick(300);
   r = await sicht();
-  sage(r.pins >= 6 && r.namen >= 6, "„Namen“ dazu: Zeichen und Namen", JSON.stringify(r));
-  await tippe('.sp-dl-beschriftung button:first-of-type'); await tick(300);
-  await tippe('.sp-dl-beschriftung button:last-of-type'); await tick(300);
+  sage(r.pins >= 6 && r.namen >= 6, "„Beides an“: Zeichen und Namen", JSON.stringify(r));
+  await tippe(".sp-dl-anzeige-knopf"); await tick(300);
+  w0 = await wahl();
+  sage(w0.includes("Alles aus") && w0.includes("Symbole aus") && w0.includes("Namen aus") && !w0.some((x) => / an$/.test(x)), "beides an: nur noch Ausschalten wird angeboten (Alles aus, Symbole aus, Namen aus)", w0.join(" | "));
+  await tippe('.sp-dl-anzeige [data-z="0"][data-n="0"]'); await tick(300);
   r = await sicht();
-  sage(r.pins === 0 && r.namen === 0, "beide aus: das Bild ist wieder ohne Beschriftung", JSON.stringify(r));
+  sage(r.pins === 0 && r.namen === 0, "„Alles aus“: das Bild ist wieder ohne Beschriftung", JSON.stringify(r));
 
   console.log("\nDIE STADT SELBST BENENNEN (Funk 160)\n");
   await pg.evaluate(() => { window.__extra = Object.assign({}, window.__extra, { spiel_dorf_name: (a) => Object.assign(JSON.parse(JSON.stringify(window.__ich)), { ok: true, dorf_name: a.p_name.trim() || null }) }); });
   r = await pg.evaluate(() => { const b = document.querySelector(".sp-dl-ortsschild"); if (!b) return null; const q = b.getBoundingClientRect(), f = document.querySelector(".sp-dl-rahmen").getBoundingClientRect();
     const w = document.querySelector(".sp-dw-schild, .sp-dl-wetterschild"), wq = w && w.getBoundingClientRect();
-    return { text: b.textContent, oben: q.top - f.top < 20, mitte: Math.abs((q.left + q.right) / 2 - (f.left + f.right) / 2) < 4, ueberWetter: Boolean(wq && wq.right > q.left && wq.bottom > q.top && wq.left < q.right), farbe: getComputedStyle(b).backgroundColor }; });
-  /* Ab Fassung 726 wieder mittig (Funk 175: „Das startschild soll weiterhin in der Mitte sein damit es nicht den schönen
-     Nachthimmel verdeckt") – und trotzdem nicht über dem Wetterschild. */
-  sage(r && r.text === "Stadt benennen" && r.oben && r.mitte && !r.ueberWetter && r.farbe === "rgb(247, 209, 23)", "oben mittig ein gelbes Ortsschild „Stadt benennen“ (nicht über dem Wetter)", JSON.stringify(r));
+    return { text: b.textContent, oben: q.top - f.top < 20, rechts: f.right - q.right < 12, ueberWetter: Boolean(wq && wq.right > q.left && wq.bottom > q.top && wq.left < q.right), farbe: getComputedStyle(b).backgroundColor }; });
+  /* Ab Fassung 723 oben rechts – mitten oben lag es über dem Wetterschild. */
+  sage(r && r.text === "Stadt benennen" && r.oben && r.rechts && !r.ueberWetter && r.farbe === "rgb(247, 209, 23)", "oben rechts ein gelbes Ortsschild „Stadt benennen“ (nicht über dem Wetter)", JSON.stringify(r));
   await tippe(".sp-dl-ortsschild"); await tick(300);
   r = await pg.evaluate(() => { const d = document.querySelector(".sp-namedialog input"); return d ? { fokus: document.activeElement === d, max: d.maxLength } : null; });
   sage(r && r.fokus && r.max === 24, "Tipp aufs Schild: ein Fenster fragt nach dem Namen, das Feld ist schon angewählt", JSON.stringify(r));
@@ -263,9 +265,7 @@ const sage = (gut, was, zusatz) => {
   r = await pg.evaluate(() => window.__rufe.filter((x) => x.name === "spiel_ernten").map((x) => x.args.p_platz));
   sage(JSON.stringify(r) === "[91]", "Tipp auf den reifen Acker erntet (Feld 91)", JSON.stringify(r));
   /* „dass ich ihnen helfe und mit meinen Antippen das ganze beschleunigen kann" */
-  /* Auch in der Server-Attrappe setzen – sonst überschreibt der nächste Abruf den Stand wieder (war ein Wettlauf in der Sonde). */
-  await pg.evaluate(() => { window.__rufe.length = 0; const acker = { 92: { ab: new Date(Date.now() - 60000).toISOString(), saat: false } }; if (window.__ich) window.__ich.acker = acker;
-    const S = window.DMA_SPIEL.pruef.zustand(); S.ich = Object.assign({}, S.ich, { acker }); window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300);
+  await pg.evaluate(() => { window.__rufe.length = 0; const S = window.DMA_SPIEL.pruef.zustand(); S.ich = Object.assign({}, S.ich, { acker: { 92: { ab: new Date(Date.now() - 60000).toISOString(), saat: false } } }); window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300);
   r = await pg.evaluate(() => { const b = document.querySelector('.sp-dl-feld[data-n="92"]'), st = b && b.querySelector(".sp-dl-stoppeln"); return { reif: b.classList.contains("sp-reif"), stoppeln: Boolean(st), deck: st ? Number(st.style.opacity) : 0 }; });
   sage(!r.reif && r.stoppeln && r.deck > .5 && r.deck < 1, "abgeernteter Acker zeigt Stoppeln (werden mit dem Wachsen blasser)", JSON.stringify(r));
   await tippe('.sp-dl-feld[data-n="92"]'); await tick(500);
@@ -314,15 +314,13 @@ const sage = (gut, was, zusatz) => {
       ? (/K%C3%B6ln/.test(url) ? { results: [{ name: "Köln", latitude: 50.94, longitude: 6.96, country_code: "DE", population: 1000000 }] } : { results: [{ name: "Döbeln", latitude: 51.1, longitude: 13.1, country_code: "DE" }] })
       : { current: { weather_code: 63, is_day: 0, temperature_2m: 12.4 } }) });
     try { localStorage.removeItem("dma_stadt_geo:köln"); localStorage.removeItem("dma_stadt_geo:neu-döbeln"); } catch (e) {}
-    const schild = async (name) => { S.ich = Object.assign({}, S.ich, { dorf_name: name }); P.stadtWetterNeu(); P.schnellZeichnen(true); await new Promise((o) => setTimeout(o, 300)); P.schnellZeichnen(true); await new Promise((o) => setTimeout(o, 200)); const e = document.querySelector(".sp-dw-schild"); return e ? e.textContent + " ‖ " + (e.title || "") : ""; };
+    const schild = async (name) => { S.ich = Object.assign({}, S.ich, { dorf_name: name }); P.stadtWetterNeu(); P.schnellZeichnen(true); await new Promise((o) => setTimeout(o, 300)); P.schnellZeichnen(true); await new Promise((o) => setTimeout(o, 200)); return (document.querySelector(".sp-dw-schild") || {}).textContent || ""; };
     const koeln = await schild("Köln"), fiktiv = await schild("Neu-Döbeln");
     window.fetch = echt; S.wetterTest = { code: 0, tag: false, temp: 9, ort: "Döbeln" };
     return { koeln, fiktiv };
   });
-  /* Ab Fassung 726 steht im Wetterschild kein Ort mehr, wenn die Stadt benannt ist (der Name steht auf dem Ortsschild);
-     woher das Wetter kommt, sagt der Hinweis (title). */
-  sage(/Regen/.test(r.koeln) && /12°/.test(r.koeln) && /Wetter aus Köln/.test(r.koeln) && !/Döbeln/.test(r.koeln), "Stadt „Köln“: echtes Wetter von Köln (Quelle im Hinweis)", r.koeln);
-  sage(/9°/.test(r.fiktiv) && !/Döbeln.*‖/.test(r.fiktiv) && /Wetter aus Döbeln/.test(r.fiktiv), "ausgedachter Name: Wetter vom eigenen Ort, im Schild kein „Döbeln“ (nur im Hinweis)", r.fiktiv);
+  sage(/Regen/.test(r.koeln) && /12°/.test(r.koeln) && /Köln/.test(r.koeln) && !/Döbeln/.test(r.koeln), "Stadt „Köln“: echtes Wetter von Köln im Schild", r.koeln);
+  sage(/Neu-Döbeln/.test(r.fiktiv) && /9°/.test(r.fiktiv) && !/· Döbeln/.test(r.fiktiv), "ausgedachter Name: Wetter vom eigenen Ort, aber der Stadtname im Schild (nicht „Döbeln“)", r.fiktiv);
   sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
   console.log("\nFassung 711 (Dorf-Bedienung): " + (fehler ? fehler + " rot." : "alles grün."));
   await br.close(); srv.close();
