@@ -1386,3 +1386,20 @@ Sonden: neu 758 (alles grün); 633, 634, 650, 683, 692, 699, 719, 734, 754, 755,
   - In der Rangliste im Spiel zählt die beste Figur. Andere sehen nur deinen Namen.
 - **Wechseln**: alle 2 Minuten, nicht in der ersten Minute nach einem Treffer. Beim Wechsel wird die Waffe eingesteckt, der Klassenklang spielt, und die neue Figur fliegt in der Liste ein (0,5 s, Klang und Bewegung beginnen zusammen). Die anderen im Raum bekommen sofort den neuen Stand (Level, Leben).
 - **Nebenbei behoben**: „Stufe 3“ im Kämpferklassen-Menü (seit 699) und „Grundklasse“ (seit 757) wurden von einem 4 px hohen Balken halb verdeckt. Das Zeichen war als Fortschrittsbalken gestylt. Jetzt ist es wieder normaler Text.
+
+### Fassung 759 (Walkie 293: Einzug in der Kurve und von vorn; Optimus Prime nach G1)
+Sonden: neu 759 (alles grün). 696 (Viper und KITT kommen jetzt in 5,4 s statt 3,6 s) und 710 (prüft den Ton-Bild-Gleichlauf jetzt am roten Sportwagen, der den alten Ablauf behält) angepasst und grün; 687, 690, 698, 714 grün. Abläufe auf 360 px Bild für Bild angesehen.
+- XANDER (wörtlich, Walkie 293): „bei den Einstiegs Animationen hätte ich in Zukunft gerne auch dass dieser Dodge Viber oder der Kit halt wirklich so eine geile Kurve rein fährt und dann nach vorne zu sehen ist so so mit seinen Lichtern … mit Schwung reinfährt und um die Kurve quietscht und dann kommt der angefahren man sieht den voll im Bild von vorn mit seiner ganzen Schönheit den Wagen und dann steige ich halt aus“.
+- **Viper und KITT** (5,4 s):
+  - Von links oben in weitem Bogen herein. Das Heck bricht aus (bis 24° schräg), Reifenqualm steigt auf, dazu das neue Geräusch „reifenquietschen“ (ElevenLabs).
+  - Dann schwenkt der Wagen zum Betrachter: Die Seitenansicht wird schmal, die neue Frontansicht geht auf.
+  - Von vorn fährt er mit Scheinwerferkegeln heran, bremst und federt ein. Bei KITT wandert das rote Lauflicht in der Nase, und die Klappscheinwerfer leuchten.
+  - Man sitzt sichtbar hinter der Frontscheibe, steigt aus und hüpft auf den Platz. Der Wagen schwenkt zur Seite und fährt rechts davon.
+  - Die Frontansicht steht immer ganz im Bild, auch am Rand-Platz; dann ist sie etwas seitlich versetzt.
+  - Die Nachbarn bleiben vor dem Wagen, ihr Gesicht bleibt frei. Der Abgang (beim Gehen) ist wie bisher.
+- XANDER: „den Optimus Prime kannst du mal noch viel besser … nach seinem originalen Vorbild gestalten und auch wenn er verwandelt ist … wieder richtige Optimus Prime aussieht … nimm dir das Original als komplette Vorlage“. **Neu gezeichnet nach dem G1-Vorbild** (1984):
+  - **Truck**: roter Frontlenker mit Chromrahmen ums Seitenfenster, zwei Auspuffrohren (vorn mit Hitzeschutz), Lufthörnern und fünf Dachleuchten, dazu großer Chrom-Außenspiegel, Chromgrill mit Scheinwerfer und Blinker an der Front, Chrom-Stoßstange, Trittstufen, Chromtank, blauer Rahmen mit Sattelkupplung, Felgen mit acht Radmuttern.
+  - **Roboter**: blauer Helm mit hohen Ohrantennen und Stirnkamm, blau leuchtende Augen, silberne Mundplatte mit Rillen. Die Brust ist rot, mit den zwei Scheiben des Fahrerhauses in Chromrahmen. Darunter der Kühlergrill als Bauch mit den Scheinwerfern links und rechts und die Stoßstange als Gürtel.
+  - Rote Schultern mit den Auspuffrohren dahinter, graue Oberarme, rote Unterarme mit Rillen, graue Fäuste.
+  - Graue Oberschenkel, blaue Schienbeine mit hellblauem Fenster, Chromtank außen und Rad an der Wade, blaue Füße.
+  - Die Verwandlung, das Absetzen des Bildes mit beiden Händen und das Weggehen laufen unverändert.

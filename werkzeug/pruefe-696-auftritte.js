@@ -41,8 +41,10 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   await tick(600);
   const ARTEN = { monstertruck: [3600, "auftritt-colt"], kitt: [3600, "auftritt-kitt"], viper: [3600, "auftritt-viper"], liane: [3600, "auftritt-liane"], transformer: [6400, "auftritt-trafo"] };
   for (const art of Object.keys(ARTEN)) {
-    const [D, ton] = ARTEN[art];
+    const [D0, ton] = ARTEN[art];
     for (const r of ["rein", "raus"]) {
+      /* Seit Fassung 759 kommen KITT und Viper in einer Kurve und von vorn: das Kommen dauert 5,4 s. */
+      const D = r === "rein" && (art === "kitt" || art === "viper") ? 5400 : D0;
       console.log("\n" + art.toUpperCase() + " " + r + "\n");
       await pg.evaluate(() => { window.DMA_TONLOG.length = 0; });
       const los = await pg.evaluate(([a, r]) => window.DMA_AUFTRITT("ich", a, r), [art, r]);

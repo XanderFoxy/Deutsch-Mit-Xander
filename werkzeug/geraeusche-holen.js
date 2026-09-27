@@ -125,6 +125,8 @@ const GERAEUSCHE = [
   { name: "auftritt-kitt", dauer: 3, text: "A futuristic black sports car gliding in: a pulsing electronic scanner whoosh sweeping left and right repeatedly over a smooth turbine engine hum, no music, no voices" },
   { name: "auftritt-viper", dauer: 3, text: "A V10 sports car engine roaring, revving hard and accelerating past, deep aggressive exhaust burble, no music, no voices" },
   { name: "auftritt-liane", dauer: 3, text: "Swinging on a jungle vine: a long whoosh through the air, rustling leaves, creaking vine, a few exotic bird calls, playful, no voices, no music" },
+  /* FASSUNG 759 — XANDER (Walkie 293): „so eine geile Kurve rein fährt … mit Schwung reinfährt und um die Kurve quietscht". */
+  { name: "reifenquietschen", dauer: 2.5, text: "A sports car drifting fast around a tight corner: loud rubber tires squealing and screeching, engine revving high, ending as the car straightens out, no music, no voices" },
   { name: "auftritt-trafo", dauer: 3, text: "A giant robot transforming from a car: rapid mechanical clicks, whirring servos, metal plates sliding and locking into place, ending with a heavy clunk, no music, no voices" },
   { name: "tier-fellmonster-ruf", dauer: 1.2, text: "a cute small furry gremlin-like monster: happy bubbly gurgling giggle. Short, cute, close microphone, no music, no background, no human voice" },
   { name: "tier-fellmonster-frage", dauer: 1.2, text: "a cute small furry gremlin-like monster: curious rising questioning grunt 'hrrm?'. Short, cute, close microphone, no music, no background, no human voice" },

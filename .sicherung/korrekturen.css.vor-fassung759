@@ -35070,13 +35070,3 @@ svg.lc-mini-echt .lc-sobri-blitz, svg.lc-mini-echt .lc-eimer-strahl { display: n
 .lc-mappe-kat span { font-size: .85rem; font-weight: 700; line-height: 1.2; }
 .lc-mappe-kat small { font-size: .7rem; color: #9fb4cc; line-height: 1.2; }
 .lc-mappe-kat:active { background: #1a2433; }
-/* FASSUNG 759 — Einzug Viper/KITT (Walkie 293): Frontansicht, KITT-Lauflicht vorn, Reifenqualm in der Kurve */
-.lc-auftritt .lc-auftritt-front { position: absolute; z-index: 1; pointer-events: none; }
-.lc-auftritt-front svg { width: 100%; height: 100%; display: block; overflow: visible; }
-.lc-auftritt-front .lc-front-scanner { transform-box: view-box; animation: lcFrontScan .8s ease-in-out infinite alternate; }
-@keyframes lcFrontScan { from { transform: translateX(0); } to { transform: translateX(100px); } }
-.lc-auftritt-reifenrauch { position: absolute; z-index: 0; border-radius: 50%; transform: translate(-50%, -50%) scale(.3); pointer-events: none;
-  background: radial-gradient(circle, rgba(235, 235, 235, .85) 0%, rgba(200, 200, 205, .55) 45%, rgba(200, 200, 205, 0) 72%);
-  animation: lcReifenrauch 1.3s ease-out forwards; }
-@keyframes lcReifenrauch { 0% { transform: translate(-50%, -50%) scale(.3); opacity: .95; } 100% { transform: translate(-50%, -80%) scale(1.8); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .lc-auftritt-front .lc-front-scanner { animation: none; } }

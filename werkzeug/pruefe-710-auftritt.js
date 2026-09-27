@@ -179,7 +179,9 @@ const sage = (gut, was, zusatz) => {
   const lauf = (vorher) => pg.evaluate(async (vorher) => {
     window.DMA_TONLOG.length = 0;
     if (vorher === "langsam") { window.__altDecode = HTMLImageElement.prototype.decode; HTMLImageElement.prototype.decode = function () { const a = window.__altDecode.call(this); return new Promise((o) => setTimeout(() => a.then(o, o), 320)); }; }
-    const t0 = performance.now(); window.DMA_AUFTRITT("bea", "kitt", "rein");
+    /* Seit Fassung 759 kommt KITT in einer Kurve und von vorn (5,4 s); der Gleichlauf von Ton und Bild wird am
+       gewöhnlichen Wagen-Einzug geprüft (gleicher Mechanismus, Bremse bei 34 % von 3,6 s): am roten Sportwagen. */
+    const t0 = performance.now(); window.DMA_AUFTRITT("bea", "sportwagen", "rein");
     if (vorher === "beschaeftigt") { const e = performance.now() + 450; while (performance.now() < e) {} }
     const b = document.querySelector(".lc-auftritt-bild:not(.lc-auftritt-nachbar)");
     const warte = () => new Promise((o) => { const f = () => { const a = b.getAnimations()[0]; if (a && a.playState === "running" && a.startTime != null) o(a); else requestAnimationFrame(f); }; f(); });
