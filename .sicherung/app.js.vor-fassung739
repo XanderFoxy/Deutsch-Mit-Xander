@@ -55744,118 +55744,61 @@
      ================================================================= */
   const LC_MAGIC_NAMEN = { alles: "Alles", bilder: "Bilder", tafel: "Tafel", lehrer: "Lehrer-Menü" };
   function lcBinBetreiber() { try { return Boolean(Backend.isOwner && Backend.isOwner()); } catch (e) { return false; } }
-  /* FASSUNG 739 — die Mitte ist immer das Menü mit den eigenen Feldern (die alte feste Belegung ist darin aufgegangen). */
-  function lcMagicArt() { return "alles"; }
+  function lcMagicArt() {
+    if (!lcBinBetreiber()) return "alles";
+    let a = "alles";
+    try { a = localStorage.getItem("dma_magic") || "alles"; } catch (e) {}
+    return LC_MAGIC_NAMEN[a] ? a : "alles";
+  }
   function lcMagicZeichnen() {
     const m = document.querySelector('[data-lc="magic"]');
     if (!m) return;
     const a = lcMagicArt();
     if (m.dataset.art !== a) { m.dataset.art = a; m.innerHTML = LC_LK[a]; }
-    m.title = "Alles auf einen Griff — lang drücken: anpassen";
+    m.title = (a === "alles" ? "Alles auf einen Griff: Bilder, Lesetext, Spiele" : LC_MAGIC_NAMEN[a]) + (lcBinBetreiber() ? " — lang drücken: die Mitte belegen" : "");
     m.setAttribute("aria-label", m.title);
   }
   function lcEigenerPlatz() { return document.querySelector("#lcPlaetze .lc-platz-ich"); }
-  /* =================================================================
-     FASSUNG 739 — DER MAGIC BUTTON MIT EIGENEN FELDERN
-     -----------------------------------------------------------------
-     XANDER (Funk 153): „das was man dort festlegt das kann man gar nicht
-     wirklich festlegen es hat gar keine richtige Funktion schau mal dass
-     man da wirklich im Menü hat wo man da wirklich die Sachen
-     selbstständige einstellen kann wie bei Apple … so ein kleines Menü
-     hat so dieses Ding was man so aufklappen kann und dann kann man da
-     wirklich mit diesem plus Symbolen da irgendwas hinzufügen oder
-     irgendwas ändern oder irgendwas austauschen".
-     Wie AssistiveTouch: ein Raster aus bis zu acht Feldern. „Anpassen"
-     (oder lang drücken) schaltet in den Bearbeiten-Modus: ✕ nimmt ein
-     Feld heraus, Antippen tauscht es aus, „+" fügt eines hinzu. Gemerkt
-     auf dem Gerät („dma_magic_felder"). Die alte „Belegen"-Mitte ist
-     darin aufgegangen.
-     ================================================================= */
-  const LC_MAGIC_MAX = 8;
-  function lcMagicAktionen() {
-    const chef = lcBinBetreiber();
-    let lehrer = chef;
-    try { lehrer = lehrer || Boolean(LiveChat.binLehrer && LiveChat.binLehrer()); } catch (e) {}
-    const sp = window.DMA_SPIEL || {};
-    const buch = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5 C6 4 9.5 4 12 6 C14.5 4 18 4 21 5.5 V19 C18 17.5 14.5 17.5 12 19.5 C9.5 17.5 6 17.5 3 19 Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 6 V19.5" stroke="currentColor" stroke-width="1.6"/></svg>';
-    const pad = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.2 7.5 H17.8 C20.6 7.5 22.4 10.4 22.8 14.2 C23.2 17.6 21.4 19.4 19.4 18.4 L16.4 15.8 H7.6 L4.6 18.4 C2.6 19.4 .8 17.6 1.2 14.2 C1.6 10.4 3.4 7.5 6.2 7.5 Z" fill="currentColor"/><path d="M7 10.4 V14.2 M5.1 12.3 H8.9" stroke="#1d2330" stroke-width="1.6" stroke-linecap="round"/><circle cx="16.4" cy="11" r="1.1" fill="#e2403a"/><circle cx="18.4" cy="13" r="1.1" fill="#3bbf4a"/></svg>';
-    const schreib = (t) => () => { try { LiveChat.schreiben(t); } catch (e) {} };
-    const a = {
-      bilder:   { name: "Bilder", zeichen: LC_LK.bilder, tun: () => livechatBildWaehler() },
-      lesetext: { name: "Lesetext", zeichen: buch, tun: () => lcLeseWaehler() },
-      spiele:   { name: "Spiele", zeichen: pad, tun: (k) => lcMagicSpiele(k) },
-      slf:      { name: "Stadt, Land, Fluss", zeichen: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 12 H20.5 M12 3.5 C8.5 7 8.5 17 12 20.5 M12 3.5 C15.5 7 15.5 17 12 20.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>', tun: schreib("/slf") },
-      versenken:{ name: "Schiffe versenken", zeichen: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14 H21 L18 19 H6 Z" fill="currentColor"/><path d="M8 14 V9 H15 L17 14" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M11 9 V5" stroke="currentColor" stroke-width="1.6"/></svg>', tun: schreib("/versenken") },
-      raten:    { name: "Aufdecken", zeichen: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="13" y="5" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="4" y="14" width="7" height="5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="14" width="7" height="5" rx="1.5" fill="currentColor"/></svg>', tun: schreib("/raten") },
-      konfetti: { name: "Konfetti", zeichen: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20 L9 8 L16 15 Z" fill="currentColor"/><circle cx="15" cy="5" r="1.4" fill="#f2c230"/><circle cx="19" cy="9" r="1.2" fill="#e86fa8"/><circle cx="18" cy="4" r="1" fill="#7fe0d8"/><path d="M12 6 L13 3 M17 12 L20 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>', tun: schreib("/konfetti") }
-    };
-    if (sp.haltenMenue) a.waffe = { name: "Waffe halten", zeichen: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 H13 M13 12 L19 6 M13 12 L19 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M19 6 Q23 12 19 18" fill="none" stroke="#e2403a" stroke-width="1.4"/></svg>', tun: () => sp.haltenMenue() };
-    if (sp.dorfOeffnen) a.dorf = { name: "Mein Dorf", zeichen: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 L12 4 L21 11" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M5.5 10 V20 H18.5 V10" fill="none" stroke="currentColor" stroke-width="1.9"/><rect x="10" y="14" width="4" height="6" fill="currentColor"/></svg>', tun: () => sp.dorfOeffnen() };
-    if (lehrer) a.tafel = { name: "Tafel", zeichen: LC_LK.tafel, tun: schreib("/tafel") };
-    if (chef) a.lehrer = { name: "Lehrer-Menü", zeichen: LC_LK.lehrer, tun: () => { const p = lcEigenerPlatz(); if (p) lcLehrerPanel(p); } };
-    return a;
-  }
-  function lcMagicFelder() {
-    const a = lcMagicAktionen();
-    let f = null;
-    try { f = JSON.parse(localStorage.getItem("dma_magic_felder") || "null"); } catch (e) { f = null; }
-    if (!Array.isArray(f)) {
-      f = ["bilder", "lesetext", "spiele"];
-      if (a.tafel) f.push("tafel");
-      if (a.lehrer) f.push("lehrer");
-    }
-    return f.filter((k, i) => a[k] && f.indexOf(k) === i).slice(0, LC_MAGIC_MAX);
-  }
-  function lcMagicFelderMerken(f) { try { localStorage.setItem("dma_magic_felder", JSON.stringify(f.slice(0, LC_MAGIC_MAX))); } catch (e) {} }
-  function lcMagicMenue(knopf, bearbeiten, tauschPlatz) {
+  function lcMagicMenue(knopf, nurBelegen) {
     lcPlatzMenueZu();
-    const aktionen = lcMagicAktionen(), felder = lcMagicFelder();
     const kasten = document.createElement("div");
     kasten.id = "lcPlatzMenue";
-    kasten.className = "lc-platzmenue lc-magicmenue" + (bearbeiten ? " lc-magic-bearbeiten" : "");
+    kasten.className = "lc-platzmenue lc-magicmenue";
     kasten.setAttribute("role", "menu");
-    const kopf = document.createElement("div");
-    kopf.className = "lc-magic-kopf";
-    kopf.innerHTML = '<p class="lc-platzmenue-kopf"></p><button type="button" class="lc-magic-anpassen"></button>';
-    kopf.querySelector("p").textContent = tauschPlatz != null ? (tauschPlatz < felder.length ? "Austauschen gegen …" : "Hinzufügen …") : bearbeiten ? "Anpassen" : "Alles auf einen Griff";
-    kopf.querySelector("button").textContent = tauschPlatz != null ? "Zurück" : bearbeiten ? "Fertig" : "Anpassen";
-    kopf.querySelector("button").addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); lcMagicMenue(knopf, tauschPlatz != null ? true : !bearbeiten); });
+    const kopf = document.createElement("p");
+    kopf.className = "lc-platzmenue-kopf";
+    kopf.textContent = nurBelegen ? "Was soll die Mitte für dich sein?" : "Alles auf einen Griff";
     kasten.appendChild(kopf);
-    const knopfBauen = (zeichen, wort, tun, zusatz) => {
+    const knopfBauen = (zeichen, wort, tun, an) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "lc-platzmenue-knopf" + (zusatz ? " " + zusatz : "");
+      b.className = "lc-platzmenue-knopf" + (an ? " ist-da" : "");
       b.innerHTML = '<span class="lc-platzmenue-zeichen lc-lk-zeichen">' + zeichen + '</span><span class="lc-platzmenue-wort"></span>';
       b.querySelector(".lc-platzmenue-wort").textContent = wort;
       b.dataset.mini = "1";
-      b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); tun(e); });
+      b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); lcPlatzMenueZu(); tun(); });
       kasten.appendChild(b);
-      return b;
     };
-    if (tauschPlatz != null) {
-      /* Die Auswahl: alles, was noch nicht auf einem Feld liegt. */
-      Object.keys(aktionen).filter((k) => felder.indexOf(k) < 0).forEach((k) => knopfBauen(aktionen[k].zeichen, aktionen[k].name, () => {
-        const f = felder.slice(); if (tauschPlatz < f.length) f[tauschPlatz] = k; else f.push(k);
-        lcMagicFelderMerken(f); lcMagicMenue(knopf, true);
-      }, "lc-magic-wahl"));
+    const chef = lcBinBetreiber();
+    let lehrer = chef;
+    try { lehrer = lehrer || Boolean(LiveChat.binLehrer && LiveChat.binLehrer()); } catch (e) {}
+    if (nurBelegen) {
+      const jetzt = lcMagicArt();
+      Object.keys(LC_MAGIC_NAMEN).forEach((a) => knopfBauen(LC_LK[a], LC_MAGIC_NAMEN[a], () => {
+        try { localStorage.setItem("dma_magic", a); } catch (e) {}
+        lcMagicZeichnen();
+        showToast("✨ Die Mitte ist jetzt: " + LC_MAGIC_NAMEN[a]);
+      }, a === jetzt));
     } else {
-      felder.forEach((k, i) => {
-        const b = knopfBauen(aktionen[k].zeichen, aktionen[k].name, () => {
-          if (bearbeiten) { lcMagicMenue(knopf, true, i); return; }
-          lcPlatzMenueZu(); aktionen[k].tun(knopf);
-        }, "lc-magic-feld");
-        b.dataset.feld = k;
-        if (bearbeiten) {
-          const x = document.createElement("span");
-          x.className = "lc-magic-weg"; x.setAttribute("role", "button"); x.setAttribute("aria-label", aktionen[k].name + " herausnehmen"); x.textContent = "✕";
-          x.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); lcMagicFelderMerken(felder.filter((y) => y !== k)); lcMagicMenue(knopf, true); });
-          b.appendChild(x);
-        }
-      });
-      if (felder.length < LC_MAGIC_MAX && Object.keys(aktionen).some((k) => felder.indexOf(k) < 0)) {
-        knopfBauen('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5 V19 M5 12 H19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>', "Hinzufügen",
-          () => lcMagicMenue(knopf, true, felder.length), "lc-magic-plus");
-      }
+      knopfBauen(LC_LK.bilder, "Bilder", () => livechatBildWaehler());
+      knopfBauen('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5 C6 4 9.5 4 12 6 C14.5 4 18 4 21 5.5 V19 C18 17.5 14.5 17.5 12 19.5 C9.5 17.5 6 17.5 3 19 Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 6 V19.5" stroke="currentColor" stroke-width="1.6"/></svg>',
+        "Lesetext", () => lcLeseWaehler());
+      if (lehrer) knopfBauen(LC_LK.tafel, "Tafel", () => { try { LiveChat.schreiben("/tafel"); } catch (e) {} });
+      knopfBauen('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.2 7.5 H17.8 C20.6 7.5 22.4 10.4 22.8 14.2 C23.2 17.6 21.4 19.4 19.4 18.4 L16.4 15.8 H7.6 L4.6 18.4 C2.6 19.4 .8 17.6 1.2 14.2 C1.6 10.4 3.4 7.5 6.2 7.5 Z" fill="currentColor"/><path d="M7 10.4 V14.2 M5.1 12.3 H8.9" stroke="#1d2330" stroke-width="1.6" stroke-linecap="round"/><circle cx="16.4" cy="11" r="1.1" fill="#e2403a"/><circle cx="18.4" cy="13" r="1.1" fill="#3bbf4a"/></svg>',
+        "Spiele", () => lcMagicSpiele(knopf));
+      if (chef) knopfBauen(LC_LK.lehrer, "Lehrer-Menü", () => { const p = lcEigenerPlatz(); if (p) lcLehrerPanel(p); });
+      if (chef) knopfBauen('<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 2.5 V5.5 M12 18.5 V21.5 M2.5 12 H5.5 M18.5 12 H21.5 M5.3 5.3 L7.4 7.4 M16.6 16.6 L18.7 18.7 M5.3 18.7 L7.4 16.6 M16.6 7.4 L18.7 5.3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
+        "Belegen", () => lcMagicMenue(knopf, true));
     }
     document.body.appendChild(kasten);
     lcMenueStellen(kasten, knopf);
@@ -55904,17 +55847,18 @@
     const los = () => { clearTimeout(uhr); };
     m.addEventListener("pointerdown", () => {
       lang = false; clearTimeout(uhr);
+      if (!lcBinBetreiber()) return;
       uhr = setTimeout(() => { lang = true; lcMagicMenue(m, true); }, 550);
     });
     ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => m.addEventListener(ev, los));
-    m.addEventListener("contextmenu", (e) => { e.preventDefault(); });
+    m.addEventListener("contextmenu", (e) => { if (lcBinBetreiber()) e.preventDefault(); });
     m.addEventListener("click", (e) => {
       e.stopPropagation();
       if (lang) { lang = false; return; }
       lcMagicAusloesen(m);
     });
   }
-  window.DMA_MAGIC = { art: lcMagicArt, menue: lcMagicMenue, zeichnen: lcMagicZeichnen, felder: lcMagicFelder, aktionen: lcMagicAktionen };
+  window.DMA_MAGIC = { art: lcMagicArt, menue: lcMagicMenue, zeichnen: lcMagicZeichnen };
   function lcLuftballon(wen, art) {
     const helium = String(art || "").toLowerCase() === "helium";
     return lcAmPlatz(wen, "lc-ballon", (schicht, platz) => {

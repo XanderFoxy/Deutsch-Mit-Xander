@@ -13688,8 +13688,6 @@
     dorfVon: function (chatId) { var sid = spielIdVon(chatId), st = sid && S.stand[sid]; return Boolean(S.bereit && st && st.dorf && Object.keys(st.dorf).length); },
     dorfBesuchen: dorfBesuchen, dorfZeichen: function () { return dorfSvg("rathaus", 2); },
     /* FASSUNG 731 — eigenes Platzmenü: „Waffe halten". */
-    /* FASSUNG 739 — für den Magic Button: „Mein Dorf". */
-    dorfOeffnen: function () { if (!S.bereit || !S.ich) { hinweis("Das Spiel lädt noch – gleich noch einmal."); return; } sprungOeffnen({ ziel: "" }); },
     haltenMenue: haltenMenue, haltenAblegen: haltenAblegen, haelt: function () { return haltKennung(); },
     haltenMoeglich: function () { return !spielSichtbar(); }, haltZeichen: function (w) { return haltSvg(w); }, CHAT_HALT: CHAT_HALT, haltenEffektSetzen: haltenEffektSetzen,
     empfangen: empfangen, dreckAbwehren: dreckAbwehren, platzGewechselt: platzGewechselt,

@@ -49,26 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 738 — Controller am Bild der Mitspieler, Nur Mitspieler hören (Funk 153)",
+  stand: "Fassung 739 — Magic Button: Siri-Farbwirbel, eigene Felder wie AssistiveTouch (Funk 153)",
 
   inArbeit: [
-    { seit: "2026-09-27T04:58",
-      text: "Funk 153: Magic-Knopf mit Siri-Animation und eigenem Einstell-Menü, Galaxie-Farbe, Postfach aufräumen" },
-    { seit: "2026-09-27T04:58",
+    { seit: "2026-09-27T05:02",
+      text: "Funk 153: Postfach aufräumen (kompakte Emojis, Orientierung)" },
+    { seit: "2026-09-27T05:02",
       text: "Funk 152 Reste: Taschen-Kachel verständlich, Doppeltipp mit Schaufel = Werkzeugmenü" },
-    { seit: "2026-09-27T04:58",
+    { seit: "2026-09-27T05:02",
       text: "Modulares Dorf, Verteidigung/Kaserne, Verträge – wartet auf Antworten zu den 15 Fragen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T04:58",
+    { seit: "2026-09-27T05:02",
+      text: "Magic Button: Farbwirbel, eigene Felder (+, ✕, austauschen)" },
+    { seit: "2026-09-27T05:02",
       text: "Controller am Bild, Nur Mitspieler hören" },
-    { seit: "2026-09-27T04:58",
+    { seit: "2026-09-27T05:02",
       text: "Meldungen: Entdeckung, Unzufriedenheit, Touristen, Angebote, Verkauf" },
-    { seit: "2026-09-27T04:58",
+    { seit: "2026-09-27T05:02",
       text: "Chat-Effekte halten, Treffer an der getippten Stelle, ×N-Zeilen" },
-    { seit: "2026-09-27T04:58",
-      text: "Rundenkampf: drei Runden, Kämpferfiguren" },
   ],
 };

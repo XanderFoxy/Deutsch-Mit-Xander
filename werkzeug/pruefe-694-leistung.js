@@ -185,8 +185,9 @@ const sage = (gut, was, zusatz) => {
     const task = (b.TaskDuration - a.TaskDuration) / 5 * 1000;
     const lauf = await pg.evaluate(() => document.getAnimations().filter((x) => x.playState === "running").map((x) => x.animationName));
     sage(task < 15, "Rechenzeit im Leerlauf unter 15 ms je Sekunde (vorher ~50)", task.toFixed(1) + " ms/s");
-    sage(lauf.indexOf("lcMagicGlanz") < 0 && lauf.indexOf("lcMagicAtmen") < 0 && lauf.indexOf("lcMagicGlanzBlende") >= 0,
-      "Magic-Knopf glänzt und atmet weiter — über die Grafikkarte", lauf.filter((n) => /Magic/.test(n)).join(", "));
+    /* Ab Fassung 739 (Funk 153: „so eine bewegte Animation … wie bei Siri"): ein kreisender Farbwirbel – nur transform/opacity. */
+    sage(lauf.indexOf("lcMagicGlanz") < 0 && lauf.indexOf("lcMagicAtmen") < 0 && lauf.indexOf("lcSiriDreh") >= 0,
+      "Magic-Knopf: Farbwirbel kreist weiter — über die Grafikkarte", lauf.filter((n) => /Magic|Siri/.test(n)).join(", "));
     sage(lauf.indexOf("lcHintergrund") < 0, "der Farbschein hinter dem Chat ruht bei vier Leuten");
     await ctx.close();
   }
