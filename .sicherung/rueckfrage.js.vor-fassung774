@@ -536,33 +536,13 @@ window.Rueckfrage = (function () {
     };
     mik.onstart = zeigenAn;
     mik.onaudiostart = zeigenAn;
-    /* FASSUNG 774 — Funk 197 (automatisch, Samsung Internet 30, Android 10): „kein-start". Samsung meldet den Start
-       manchmal nur über onsoundstart/onspeechstart – oder erst, nachdem die Mikrofon-Freigabe bestätigt ist. Bisher
-       brach der Wächter nach 4 s ab. Jetzt zählen alle vier Startzeichen, der Wächter wartet 6 s und versucht dann
-       EINMAL neu zu starten; erst wenn auch das nach 5 s nichts bringt, gilt es als Fehler (mit Zustand im Bericht). */
-    mik.onsoundstart = zeigenAn;
-    mik.onspeechstart = zeigenAn;
-    var waechter = function (zweiter) {
-      setTimeout(function () {
-        if (!diktat || diktat.mik !== mik || diktat.an) return;
-        if (!zweiter) {
-          diktat.wartet = true;
-          try { mik.abort(); } catch (e) {}
-          diktatKnopfZeigen(klasse, true, "Das Mikrofon braucht noch einen Moment …");
-          setTimeout(function () {
-            if (!diktat || diktat.mik !== mik) return;
-            diktat.wartet = false;
-            try { mik.start(); } catch (e) {}
-            waechter(true);
-          }, 700);
-          return;
-        }
+    setTimeout(function () {
+      if (diktat && diktat.mik === mik && !diktat.an) {
         try { mik.abort(); } catch (e) {}
-        diktatFehlerMelden("kein-start", "geliehen=" + (diktat.geliehen ? 1 : 0) + ", zweiter Versuch, ms=" + (Date.now() - diktat.seit));
-        diktatEnde("Das Mikrofon ist nicht angesprungen. Ist es gerade in einer anderen App belegt? Dann dort freigeben und nochmal 🎤.");
-      }, zweiter ? 5000 : 6000);
-    };
-    waechter(false);
+        diktatFehlerMelden("kein-start", "");
+        diktatEnde("Das Mikrofon ist nach 4 Sekunden nicht angesprungen. Ist es gerade in einer anderen App belegt?");
+      }
+    }, 4000);
     mik.onresult = function (ev) {
       if (!diktat || diktat.mik !== mik) return;
       diktat.an = true;

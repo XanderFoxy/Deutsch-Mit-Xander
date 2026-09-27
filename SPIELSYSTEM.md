@@ -1636,3 +1636,12 @@ Funk 199 kam um 23:19, noch vor Fassung 772. Kreisel statt Strichbalken, automat
   - Ebenso still ist das Spiel, solange die Aussprache-Übung zuhört (sonst landen Wind, Vögel und Hammer in der Bewertung) und bei Sprachnachrichten (seit 769).
 - **Andere Übung** (XANDER: „man kann keine anderen Aufgaben mehr auswählen wenn man in die Aussprache Übung reingegangen ist“).
   - In der Aussprache-Karte steht „Andere Übung“. Der Knopf klappt die Wahl mit allen Aufgabenarten auf, und die Übung springt so lange nicht weiter.
+
+### Fassung 774 (Funk 197: Diktat im Samsung-Browser „kein-start“)
+Sonde runde99 angepasst und erweitert, alles grün.
+- Meldung (automatisch, Samsung Internet 30, Android 10): Das Walkie-Diktat galt als „nicht angesprungen“.
+- Ursache: Der Wächter brach nach 4 s ab, wenn der Browser kein onstart/onaudiostart schickte. Samsung meldet den Start teils nur über onsoundstart/onspeechstart, oder erst nach der Mikrofon-Freigabe.
+- Jetzt:
+  - Alle vier Startzeichen zählen.
+  - Der Wächter wartet 6 s und startet dann EINMAL neu („Das Mikrofon braucht noch einen Moment …“).
+  - Erst wenn auch das nach 5 s nichts bringt, kommt der Hinweis. Der Bericht an mich enthält dann den Zustand (Mikro geliehen, zweiter Versuch, Dauer).

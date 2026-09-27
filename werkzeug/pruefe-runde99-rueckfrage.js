@@ -71,6 +71,11 @@ const sage = (gut, text, dazu) => {
           return;
         }
         if (window.__rfArt === "stumm") return;          /* springt nie an */
+        /* FASSUNG 774 — Samsung Internet: meldet den Start nur über onsoundstart, und das spät. */
+        if (window.__rfArt === "samsung") { setTimeout(() => this.onsoundstart && this.onsoundstart(), 800);
+          setTimeout(() => this.onresult && this.onresult({ resultIndex: 0, results: [Object.assign([{ transcript: "hallo samsung" }], { isFinal: true })] }), 1200); return; }
+        /* FASSUNG 774 — springt erst beim ZWEITEN Start an (erster Start verpufft). */
+        if (window.__rfArt === "zweiter") { if (window.__rfRunden >= 2) setTimeout(() => this.onstart && this.onstart(), 30); return; }
         if (window.__rfArt === "haengt") {                /* laeuft, aber ⏹ bringt kein Ende */
           setTimeout(() => this.onstart && this.onstart(), 20);
           this.stop = () => {};
@@ -326,10 +331,29 @@ const sage = (gut, text, dazu) => {
     ms.funk.filter((t) => /Diktat/.test(t)).join(" | ") || "keine");
   await pg.evaluate(() => { window.__rfArt = "stumm"; });
   await mikTipp();
-  await pg.waitForTimeout(4400);
+  /* Seit Fassung 774: 6 s warten, einmal neu starten, weitere 5 s – dann erst der Fehler. */
+  await pg.waitForTimeout(12400);
   ms = await mikStand();
   sage(ms.knopf === "🎤" && /nicht angesprungen/.test(ms.live),
-    "Springt das Mikrofon nie an, sagt es das nach 4 s und haengt nicht", ms.live);
+    "Springt das Mikrofon nie an, sagt es das nach einem zweiten Versuch (≈12 s) und haengt nicht", ms.live);
+  const kf = await pg.evaluate(() => window.__rf.funk.map((f) => f.text).filter((t) => /kein-start/.test(t)).join(" | "));
+  sage(/zweiter Versuch/.test(kf), "... mit Zustand im Bericht an Claude", kf.slice(0, 120));
+  /* FASSUNG 774 — Funk 197 (Samsung Internet 30): Start nur über onsoundstart, nach 0,8 s */
+  await pg.evaluate(() => { window.__rfArt = "samsung"; const t = document.querySelector(".rf-vorschlag-text"); t.value = ""; t.dispatchEvent(new Event("input")); });
+  await mikTipp();
+  await pg.waitForTimeout(1600);
+  ms = await mikStand();
+  const samText = await pg.evaluate(() => document.querySelector(".rf-vorschlag-text").value);
+  sage(ms.knopf === "⏹" && /hallo samsung/i.test(samText), "Samsung: Start nur über onsoundstart – das Diktat läuft und schreibt mit", ms.knopf + " / " + samText);
+  await mikTipp(); await pg.waitForTimeout(900);
+  /* springt erst beim zweiten Start an */
+  await pg.evaluate(() => { window.__rfArt = "zweiter"; window.__rfRunden = 0; });
+  await mikTipp();
+  await pg.waitForTimeout(7200);
+  ms = await mikStand();
+  const rz = await pg.evaluate(() => window.__rfRunden);
+  sage(ms.knopf === "⏹" && rz === 2 && /h\u00f6re|höre/.test(ms.live), "Springt es erst beim zweiten Anlauf an, läuft das Diktat danach normal", ms.knopf + " / " + rz + " Starts / " + ms.live);
+  await mikTipp(); await pg.waitForTimeout(900);
   await pg.evaluate(() => { window.__rfArt = "haengt"; window.__rfRunden = 0; });
   await mikTipp();
   await pg.waitForTimeout(200);

@@ -41,7 +41,6 @@
  "ton-liste.js": "831b0bb2765251f631db9fe99ea48fc0c46de9c8",
  "werkstatt.css": "5983b13d12f52bb27f26c3a2e174a726ea496e96",
  "werkstatt.js": "6b16574f10d08259b581e0e9f4d0c0e0cbdbf42d",
- "rueckfrage.js": "399d8b6cef546a554bc74f8bcda3c8e58182ccb2",
  "app-styles.css": "6dab2fca9a6556d99575f3337d82bf9d44c7b83a",
  "baukasten.js": "68a7fd488976c5e284185cbf3fa4d52e01379c6e",
  "data-geraeusche.js": "ccd3574681544074a3055b3060bf92461b4883f7",
@@ -51,5 +50,6 @@
  "livechat.js": "628291e4a094eccd267e092970425cb926e0b681",
  "spiel.css": "e38d2fb3e5e45d65ae3615fb10cd070590d72fb6",
  "spiel.js": "6b17ac23f6fcbd9e0101fa40cb691e5bba1106cf",
- "data-werkstatt.js": "614a30cf38e23269d5c6fe5302bcf38bef0bd0e3"
+ "data-werkstatt.js": "614a30cf38e23269d5c6fe5302bcf38bef0bd0e3",
+ "rueckfrage.js": "7de87f6e8e1dfd76fa649df2080351a71b2fa0f3"
 }
