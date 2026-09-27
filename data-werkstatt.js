@@ -49,30 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 717: die Lok fährt hinten durch die Stadt, Menschen kleiner als die Lok (Funk 165)",
+  stand: "Fassung 718: Ton und Mikrofon im Klassenzimmer, Relais erneuert, Profilbild wieder mittig",
 
   inArbeit: [
-    { seit: "2026-09-26T23:52",
-      text: "Ton und Mikro im Klassenzimmer (Funk 161/163/164)" },
-    { seit: "2026-09-26T23:52",
-      text: "Profilbild zu tief (Funk 161/163)" },
-    { seit: "2026-09-26T23:52",
+    { seit: "2026-09-27T00:00",
       text: "Liste aller Spielvorschläge mit Einschätzung (Funk 162/163/165)" },
-    { seit: "2026-09-26T23:52",
+    { seit: "2026-09-27T00:00",
       text: "Dorf: Laternen mit Lichtkegel, Stadtname, See, Vögel (Funk 159/160/163/165)" },
-    { seit: "2026-09-26T23:52",
+    { seit: "2026-09-27T00:00",
       text: "Leiste und Waffenring (Funk 163/165)" },
-    { seit: "2026-09-26T23:52",
+    { seit: "2026-09-27T00:00",
       text: "Funk 155: Meldungen mit Sprung-Knopf" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-26T23:52",
-      text: "Lok hinten am Wiesenrand, verdeckt vom Waldrand, der Mühle und den Türmen" },
-    { seit: "2026-09-26T23:52",
-      text: "Bahnhof hinter dem Gleis" },
-    { seit: "2026-09-26T23:52",
-      text: "Dorfbewohner kleiner als die Lok" },
+    { seit: "2026-09-27T00:00",
+      text: "Nach dem Walkie-Diktat kommt das Mikrofon zuverlässig zurück" },
+    { seit: "2026-09-27T00:00",
+      text: "Relais-Zugangsdaten laufen nicht mehr ab" },
+    { seit: "2026-09-27T00:00",
+      text: "Pausierte Stimmen werden wieder angespielt" },
+    { seit: "2026-09-27T00:00",
+      text: "Profilbild mittig, beim Auftritt kein Sprung mehr" },
+    { seit: "2026-09-27T00:00",
+      text: "Helikopter: Bild nur unten beschnitten" },
   ],
 };

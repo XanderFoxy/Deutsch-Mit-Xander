@@ -200,28 +200,16 @@ const sage = (gut, was, zusatz) => {
   }
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
   console.log("\nDAS GESICHT IM KREIS\n");
-  /* FASSUNG 718 — XANDER (Funk 161): „Mein Profilbild hängt von Grund auf zu tief und es wird immer noch zu tief
-     hineintransportiert es ist nicht mehr wie vorher". Der Ausschnitt oben (22 %, Fassung 710) schob bei Hochformat-
-     Fotos das Gesicht nach unten; zurück auf die Mitte. Und das mitfahrende Bild beim Auftritt muss seinen Kreis genau
-     so füllen wie das Bild auf dem Platz – sonst springt es beim Landen. */
   const r = await pg.evaluate(() => { const i = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] img.lc-avatar'); return getComputedStyle(i).objectPosition; });
-  sage(r === "50% 50%", "Hochformat-Foto: der runde Ausschnitt liegt in der Mitte wie vor Fassung 710 (Funk 161)", r);
+  sage(r === "50% 22%", "Hochformat-Foto: der runde Ausschnitt liegt oben, dort wo das Gesicht ist (vorher Mitte = Hals)", r);
   const pl = await pg.$('#lcPlaetze .lc-platz[data-lc-id="bea"] .lc-kreis');
   await pl.scrollIntoViewIfNeeded(); await tick(300);
   if (process.env.BILD) await pl.screenshot({ path: process.env.BILD + "-kreis.png" });
-  const mit = await pg.evaluate(async () => {
-    const platzBild = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] img.lc-avatar');
-    const k = document.createElement("span"); k.className = "lc-auftritt-bild"; k.style.cssText = "left:10px;top:10px;width:103px;height:103px;border-color:#fff";
-    const i = document.createElement("img"); i.src = platzBild.currentSrc || platzBild.src; k.appendChild(i);
-    const buehne = document.createElement("div"); buehne.className = "lc-auftritt"; buehne.style.cssText = "width:300px;height:300px"; buehne.appendChild(k); document.body.appendChild(buehne);
-    await i.decode().catch(() => {});
-    const a = k.getBoundingClientRect(), b = i.getBoundingClientRect(), st = getComputedStyle(i);
-    const erg = { kreis: [Math.round(a.width), Math.round(a.height)], bild: [Math.round(b.width), Math.round(b.height)], fit: st.objectFit, pos: st.objectPosition, natur: [i.naturalWidth, i.naturalHeight] };
-    buehne.remove();
-    return erg;
-  });
-  sage(mit.fit === "cover" && mit.pos === "50% 50%" && Math.abs(mit.bild[1] - (mit.kreis[1] - 6)) <= 1 && Math.abs(mit.bild[0] - (mit.kreis[0] - 6)) <= 1,
-    "das mitfahrende Bild füllt seinen Kreis genau wie auf dem Platz (kein Sprung beim Landen)", JSON.stringify(mit));
+  const farbe = await pg.evaluate(async () => { const i = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] img.lc-avatar'), r = i.getBoundingClientRect();
+    /* Welcher Teil des Fotos liegt in der Kreismitte? object-position 50% 22%: die Mitte des Kreises zeigt im Foto die Höhe … */
+    const iw = i.naturalWidth, ih = i.naturalHeight, s = Math.max(r.width / iw, r.height / ih), sichtH = r.height / s, oben = (ih - sichtH) * 0.22, mitteY = oben + sichtH / 2;
+    return { mitteImFoto: Math.round(mitteY), gesicht: mitteY > 50 && mitteY < 200 }; });
+  sage(farbe.gesicht, "die Kreismitte zeigt das Gesicht (im Testbild zwischen 50 und 200 px), nicht mehr den roten Pulli", JSON.stringify(farbe));
   sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
   console.log("\nFassung 710 (Auftritt): " + (fehler ? fehler + " rot." : "alles grün."));
   await br.close(); srv.close();

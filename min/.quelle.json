@@ -44,12 +44,12 @@
  "ton-liste.js": "831b0bb2765251f631db9fe99ea48fc0c46de9c8",
  "werkstatt.css": "5983b13d12f52bb27f26c3a2e174a726ea496e96",
  "werkstatt.js": "6b16574f10d08259b581e0e9f4d0c0e0cbdbf42d",
- "rueckfrage.js": "9a2e8f5135f2d9db9b8fc1e3b3fe23b4e58637db",
- "livechat.js": "aa9ff16ef45e3f7e7dd232aa012fe96072a38bb3",
  "data-geraeusche.js": "ed2494bb6bf9dfed6b43fd69905837622ba4b1b4",
- "korrekturen.css": "b47051f3aa7b667ab21221ca4e925d8b48cf84d2",
- "app.js": "bf8eca73db19aa7f7ad4688b729ed0cb6437d514",
  "spiel.css": "380d62ead972b4b9c65d8af87cc7a983a3ffa134",
  "spiel.js": "048e1fde70aed1260c00a0ea0c96c3a8d9457a88",
- "data-werkstatt.js": "b62cd9728113ac9798a039fcbf654ed9d1307e17"
+ "livechat.js": "b700c8965eef703c70800c756bdff09bcfb65db8",
+ "rueckfrage.js": "08623b8451aa18f50ac18988dba4b79440524de4",
+ "app.js": "e14b2739e051aa018e94c73f6dbdd3282bb22fe6",
+ "korrekturen.css": "d19c98ca71992d0c9b96e0521e24ed000c5e90b4",
+ "data-werkstatt.js": "cc23817864622872d3781e357907ad10f88a9e3e"
 }

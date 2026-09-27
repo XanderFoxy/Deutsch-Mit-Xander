@@ -317,20 +317,13 @@ window.LiveChat = (function () {
   var RELAIS_SCHLUESSEL = "dma_relais_v1";
   var RELAIS_GILT_MS = 2 * 60 * 60 * 1000;      /* GUELTIG_SEKUNDEN in der Funktion */
   var RELAIS_VORLAUF_MS = 10 * 60 * 1000;
-  /* FASSUNG 718 — XANDER (Funk 165): „kümmere Dich auch um die Verbindung weil ich konnte mit Emmi vorhin überhaupt
-     nicht spielen". Die Zugangsdaten wurden nur beim Betreten geholt, aus dem Gerät bis 110 Minuten alt übernommen und
-     während der Sitzung NIE erneuert (der Satz oben versprach es, gemacht wurde es nicht). Wer länger im Raum war,
-     baute danach jede Leitung ohne Relais – und hinter einer Netzsperre kam dann kein Ton mehr an. Jetzt: aus dem
-     Gerät nur, was jünger als eine Stunde ist; alle fünf Minuten nachsehen und nach einer Stunde frische holen; die
-     neuen Daten gehen sofort an alle Leitungen. */
-  var RELAIS_FRISCH_MS = 60 * 60 * 1000;
   function relaisAusGeraet() {
     try {
       var roh = localStorage.getItem(RELAIS_SCHLUESSEL);
       if (!roh) return null;
       var d = JSON.parse(roh);
       if (!d || !d.server || !d.server.length || !d.geholt) return null;
-      if (Date.now() - d.geholt > RELAIS_FRISCH_MS) return null;
+      if (Date.now() - d.geholt > RELAIS_GILT_MS - RELAIS_VORLAUF_MS) return null;
       return d;
     } catch (e) { return null; }
   }
@@ -359,7 +352,7 @@ window.LiveChat = (function () {
       }
     }
     var alter = Date.now() - relaisStand.geholt;
-    if (!neu && relaisStand.server && alter < RELAIS_FRISCH_MS) return Promise.resolve(true);
+    if (!neu && relaisStand.server && alter < 90 * 60 * 1000) return Promise.resolve(true);
     if (relaisLaeuft) return relaisLaeuft;
     relaisLaeuft = relaisRufen({ aktion: "zugang" }).then(function (a) {
       relaisLaeuft = null;
@@ -2797,11 +2790,7 @@ window.LiveChat = (function () {
      Bleibt es nach acht Sekunden bei null, steht es in klaren Worten
      im Chat — und /verbindung zeigt den ganzen Befund. */
   var wache = {};
-  /* FASSUNG 718 — hiess bis hierher ebenfalls „wacheStarten". Weiter unten steht eine zweite Funktion mit demselben
-     Namen (die Wache über ALLE Leitungen), und in JavaScript gewinnt die spätere: diese Wache je Leitung lief nie.
-     Deshalb zeigte /verbindung immer „Ton KEINER", die Warnung „kommt kein Ton an" kam nie, der Neustart bei „failed"
-     griff nie – und jede neue Leitung setzte die Zähler der großen Wache zurück. */
-  function leitungsWacheStarten(anderId, pc) {
+  function wacheStarten(anderId, pc) {
     wacheBeenden(anderId);
     var w = { bytes: 0, letzte: 0, weg: "", gemeldet: false, neustart: false,
               seit: Date.now(), zustand: "" };
@@ -3031,20 +3020,11 @@ window.LiveChat = (function () {
         var w = wache[anderId];
         if (w && !w.neustart && pc.restartIce) {
           w.neustart = true;
-          /* FASSUNG 718 — sind die Relais-Zugangsdaten schon älter als eine Stunde, erst frische holen: mit
-             abgelaufenen findet auch der Neustart keinen Weg. */
-          var weiter = function () {
-            if (brueckeJe[anderId] !== pc) return;
-            try { pc.setConfiguration({ iceServers: VERMITTLER, iceCandidatePoolSize: 1 }); } catch (e) {}
-            try { pc.restartIce(); } catch (e) {}
-            if (zustand.ichId < anderId) setTimeout(function () { if (brueckeJe[anderId] === pc) anrufen(anderId); }, 150);
-          };
-          if (relaisStand.quelle === "cloudflare" && Date.now() - relaisStand.geholt > RELAIS_FRISCH_MS) relaisHolen(true).then(weiter, weiter);
-          else weiter();
+          try { pc.restartIce(); } catch (e) {}
         }
       }
     };
-    leitungsWacheStarten(anderId, pc);
+    wacheStarten(anderId, pc);
     pc.onconnectionstatechange = function () {
       if (pc.connectionState === "failed" || pc.connectionState === "closed") {
         brueckeAbbauen(anderId);
@@ -3252,11 +3232,6 @@ window.LiveChat = (function () {
     } catch (e) {}
   }
 
-  /* FASSUNG 718 — ein Telefonat, bei dem einer gegangen ist, endet. Sonst hörte man weiter nur den (fehlenden)
-     Gesprächspartner und niemanden sonst – das sah aus wie „ich höre die anderen nicht" (Funk 161). */
-  function telefonatWegDa(id) {
-    if (telefonat && (id === telefonat.a || id === telefonat.b)) telefonatSetzen(null);
-  }
   function telefonatSetzen(d) {
     if (!d || d.aus) { telefonat = null; telefonatAnwenden(); return; }
     telefonat = { a: d.a, b: d.b, aName: d.aName || "", bName: d.bName || "" };
@@ -3302,12 +3277,7 @@ window.LiveChat = (function () {
          schon einmal gespielt hat, darf ohne Rueckfrage weiterspielen.
          Nur wenn der Vorrat leer ist, wird ein neues gebaut (und dann
          greift notfalls der Nachhol-Horcher). */
-      /* FASSUNG 718 — nur ein FREIES Element nehmen. Vorher nahm shift() blind das erste – auch eines, auf dem gerade
-         eine Sprachnachricht lief: die brach mittendrin ab, und ihre Warteschlange hing. */
-      a = null;
-      for (var vi = 0; vi < tonVorrat.length; vi++) {
-        if (!tonVorrat[vi].dataset.belegt) { a = tonVorrat.splice(vi, 1)[0]; break; }
-      }
+      a = tonVorrat.shift() || null;
       if (!a) {
         try {
           a = document.createElement("audio");
@@ -3549,7 +3519,6 @@ window.LiveChat = (function () {
     if (tonWacheTakt) return;
     tonWacheTakt = setInterval(function () {
       if (zustand.lage !== "drin") return;
-      stimmenWecken();
       var doppelt = tonSpurenAufraeumen();
       var schief = tonElementeAufraeumen();
       if (doppelt || schief) {
@@ -3565,21 +3534,6 @@ window.LiveChat = (function () {
       }
     }, 4000);
   }
-  /* FASSUNG 718 — XANDER (Funk 161): „ich kann den anderen Spiel überhaupt nicht hören". Nimmt die Spracherkennung
-     (Walkie-Diktat) oder ein Anruf dem Browser die Tonausgabe weg, pausiert Android die Ton-Elemente der Seite – und
-     niemand hat sie wieder angestoßen: die Stimmen blieben stumm. Jetzt: alle 4 s, beim Zurückkehren auf die Seite und
-     nach dem Diktat jede pausierte Stimme wieder anspielen (ohne Stummschaltung eines Telefonats zu verändern). */
-  function stimmenWecken() {
-    Object.keys(tonJe).forEach(function (id) {
-      var a = tonJe[id];
-      if (a && a.srcObject && a.paused) tonAbspielenVersuchen(a);
-    });
-  }
-  try {
-    document.addEventListener("visibilitychange", function () {
-      if (!document.hidden && zustand.lage === "drin") setTimeout(stimmenWecken, 300);
-    });
-  } catch (e) {}
   function tonWacheStoppen() {
     if (tonWacheTakt) { clearInterval(tonWacheTakt); tonWacheTakt = 0; }
   }
@@ -3690,7 +3644,6 @@ window.LiveChat = (function () {
       } catch (e) { return false; }
     }
     frei.dataset.belegt = "1";
-    frei.muted = false;   /* FASSUNG 718 — ein zurückgelegtes Element kann noch stumm sein (Telefonat) */
     try { frei.srcObject = null; } catch (e) {}
     frei.src = quelle;
     frei.currentTime = 0;
@@ -3814,11 +3767,6 @@ window.LiveChat = (function () {
       /* Ein freigeschaltetes Element wegzuwerfen waere Verschwendung —
          freigeschaltet wird nur bei einer Beruehrung, und die hat man
          nicht noch einmal. Es geht zurueck in den Vorrat. */
-      /* FASSUNG 718 — sauber zurücklegen: nicht stumm, keine alten Handler, nicht belegt. Sonst sahen nach einer Weile
-         alle acht belegt aus, und neue Stimmen brauchten auf Android wieder einen Fingertipp. */
-      a.muted = false;
-      a.onended = null; a.onerror = null; a.ontimeupdate = null; a.onplaying = null;
-      if (a.dataset) a.dataset.belegt = "";
       if (a.dataset && a.dataset.frei === "1" && tonVorrat.length < 8) tonVorrat.push(a);
       else a.remove();
     } catch (e) {}
@@ -4457,7 +4405,6 @@ window.LiveChat = (function () {
       }
       brueckeAbbauen(n.von);
       delete zustand.leute[n.von];
-      telefonatWegDa(n.von);  /* FASSUNG 718 */
       grossVergessen(n.von);
       melden();
       return;
@@ -5007,7 +4954,6 @@ window.LiveChat = (function () {
     if (!puppeDa()) return false;
     [PUPPE_ID, PUPPE2_ID].forEach(function (id) {
       delete zustand.leute[id];
-      telefonatWegDa(id);  /* FASSUNG 718 */
       delete sitzTausch[id];
       delete spielSitz[id];
       if (platzJe[id] != null) delete platzJe[id];
@@ -5121,7 +5067,6 @@ window.LiveChat = (function () {
         if (jetzt - (zustand.leute[id].gesehen || 0) > VERFALL_MS) {
           brueckeAbbauen(id);
           delete zustand.leute[id];
-          telefonatWegDa(id);  /* FASSUNG 718 */
           grossVergessen(id);
           weg = true;
         }
@@ -5174,23 +5119,6 @@ window.LiveChat = (function () {
   var versuchJe = {};          // Kennung -> { seit, stufe, anlaeufe }
   var letzterLeitungsstand = "";
 
-  var relaisPflegeUhr = 0;
-  function relaisPflegen() {
-    clearInterval(relaisPflegeUhr);
-    relaisPflegeUhr = setInterval(function () {
-      if (zustand.lage !== "drin") { clearInterval(relaisPflegeUhr); relaisPflegeUhr = 0; return; }
-      if (relaisStand.quelle !== "cloudflare") return;
-      if (relaisStand.server && Date.now() - relaisStand.geholt < RELAIS_FRISCH_MS) return;
-      relaisHolen(true).then(function (ok) {
-        if (!ok) return;
-        Object.keys(brueckeJe).forEach(function (id) {
-          var pcx = brueckeJe[id];
-          if (!pcx || pcx.connectionState === "closed") return;
-          try { pcx.setConfiguration({ iceServers: VERMITTLER, iceCandidatePoolSize: 1 }); } catch (e) {}
-        });
-      });
-    }, 5 * 60 * 1000);
-  }
   function steht(pc) {
     return pc && (pc.connectionState === "connected"
                || pc.iceConnectionState === "connected"
@@ -5855,7 +5783,6 @@ window.LiveChat = (function () {
             paketeNachschicken();
             pulsStarten();
             wacheStarten();          // die Leitungen im Auge behalten
-            relaisPflegen();         // FASSUNG 718 — Zugangsdaten nie ablaufen lassen
             postKanalOeffnen();
             /* WER IST HÄUPTLING?
                Nach RFC 2811 „besitzen" die Operatoren den Kanal, und
@@ -5963,8 +5890,6 @@ window.LiveChat = (function () {
      naechsten. Fehlt die Angabe, ist es ein echtes Weggehen — und
      dann bleibt es beim alten Satz. */
   function verlassen(wohin) {
-    /* FASSUNG 718 — auch wer selbst geht, nimmt kein Telefonat in den nächsten Raum mit. */
-    if (telefonat) { telefonat = null; try { telefonatAnwenden(); } catch (e) {} }
     /* DER KLASSENSPRECHER MACHT WEITER.
        „Der Klassensprecher macht weiter mit den anderen, wenn ich den
        Raum verlasse." Also: bevor die Leitung zugeht, geht die
@@ -6058,67 +5983,29 @@ window.LiveChat = (function () {
      wird abgegeben (die anderen sehen „stumm"), danach holt er sie ohne Abriss zurück —
      und stellt den alten Stand (an oder stumm) wieder her. */
   var mikGeliehen = null;
-  /* FASSUNG 718 — XANDER (Funk 163): „hast du mal geschaut warum ich mit niemanden mehr sprechen kann auch das Mikrofon
-     im Chat wenn ich dir etwas übers Walkie-Talkie schicken will sobald ich da mit jemanden spreche irgendwie und dich
-     aktiviere das aber hier schaltet sich das wieder aus wenn jemand da ist". Automatische Meldung (Funk 164):
-     „Diktat-Fehler: aborted · … SamsungBrowser/30.0".
-     Zwei Fehler seit Fassung 698:
-     1. Ausgeliehen wurde nur die Live-Spur. Zwei weitere Mikrofon-Nutzer blieben offen – die warm gehaltene Spur der
-        Sprachnachrichten (eine Minute nach jedem Drücken) und „Dauernd an" (freisprechen). Solange einer davon das
-        Mikrofon hält, bricht Android die Spracherkennung mit „aborted" ab. Jetzt werden alle drei abgegeben.
-     2. Zurückgeholt wurde genau EINMAL, und zwar im Fehlerfall sofort – während die Spracherkennung das Mikrofon noch
-        hielt. Schlug das fehl, blieb man still und stumm, bis man selbst auf das Mikrofon tippte: die anderen hörten
-        einen nicht mehr. Jetzt wird nach 0,4 / 1,2 / 3 s erneut versucht; „Dauernd an" kommt wieder; und klappt es gar
-        nicht, steht es im Chat. */
   function mikrofonLeihen() {
-    if (mikGeliehen) return false;
-    var g = { tonAn: zustand.tonAn, live: false, frei: false };
-    try { if (frei.an) { g.frei = true; freisprechenBeenden(); } } catch (e) {}
-    try { if (sprachSpur && !sprachRekorder) sprachSpurSchliessen(); } catch (e) {}
-    if (zustand.lage === "drin" && zustand.eigenerStrom) {
-      var spuren = zustand.eigenerStrom.getAudioTracks();
-      if (spuren.length) {
-        g.live = true;
-        spuren.forEach(function (t) { try { t.stop(); zustand.eigenerStrom.removeTrack(t); } catch (e) {} });
-        try { spurTauschen("ton", null); } catch (e) {}
-        zustand.tonAn = false;
-        senden({ art: "stumm", tonAn: false, bildAn: zustand.bildAn, bild: zustand.ichBild });
-        melden();
-      }
-    }
-    if (!g.live && !g.frei) return false;
-    mikGeliehen = g;
+    if (mikGeliehen || zustand.lage !== "drin" || !zustand.eigenerStrom) return false;
+    var spuren = zustand.eigenerStrom.getAudioTracks();
+    if (!spuren.length) return false;
+    mikGeliehen = { tonAn: zustand.tonAn };
+    spuren.forEach(function (t) { try { t.stop(); zustand.eigenerStrom.removeTrack(t); } catch (e) {} });
+    try { spurTauschen("ton", null); } catch (e) {}
+    zustand.tonAn = false;
+    senden({ art: "stumm", tonAn: false, bildAn: zustand.bildAn, bild: zustand.ichBild });
+    melden();
     return true;
   }
   function mikrofonZurueck() {
     var g = mikGeliehen;
     mikGeliehen = null;
-    if (!g) return Promise.resolve(false);
-    var versuche = [400, 1200, 3000];
-    function versuch(i) {
-      return new Promise(function (fertig) { setTimeout(fertig, versuche[i]); }).then(function () {
-        if (zustand.lage !== "drin" || mikGeliehen) return false;
-        return mikrofonDazuholen();
-      }).then(function (ok) {
-        if (ok || i + 1 >= versuche.length || zustand.lage !== "drin" || mikGeliehen) return ok;
-        return versuch(i + 1);
-      });
-    }
-    var liveHolen = g.live ? versuch(0).then(function (ok) {
+    if (!g || zustand.lage !== "drin") return Promise.resolve(false);
+    return mikrofonDazuholen().then(function (ok) {
       if (ok && !g.tonAn) {
         zustand.tonAn = false;
         zustand.eigenerStrom.getAudioTracks().forEach(function (t) { t.enabled = false; });
         senden({ art: "stumm", tonAn: false, bildAn: zustand.bildAn, bild: zustand.ichBild });
         melden();
       }
-      if (!ok && zustand.lage === "drin") {
-        try { systemZeile("Dein Mikrofon ist nach dem Diktat nicht zurückgekommen – tippe einmal auf das Mikrofon, dann hören dich die anderen wieder."); } catch (e) {}
-      }
-      return ok;
-    }) : Promise.resolve(true);
-    return liveHolen.then(function (ok) {
-      if (g.frei && zustand.lage === "drin" && !mikGeliehen) { try { freisprechenStarten(); } catch (e) {} }
-      try { stimmenWecken(); } catch (e) {}
       return ok;
     });
   }

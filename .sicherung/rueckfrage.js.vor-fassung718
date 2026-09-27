@@ -567,11 +567,6 @@ window.Rueckfrage = (function () {
     mik.onerror = function (ev) {
       if (!diktat || diktat.mik !== mik) return;
       var w = (ev && ev.error) || "unbekannt";
-      if (w === "aborted" && diktat.geliehen && !diktat.an && !diktat.nochmal) {
-        diktat.nochmal = true; diktat.wartet = true;
-        setTimeout(function () { if (diktat && diktat.mik === mik) { diktat.wartet = false; try { mik.start(); } catch (e) { diktatEnde("Die Spracherkennung lie\u00df sich nicht starten."); } } }, 700);
-        return;
-      }
       diktat.fehler = w;
       /* „no-speech" ist kein Defekt — er hat nur (noch) nichts gesagt. */
       if (w !== "no-speech") diktatFehlerMelden(w, (ev && ev.message) || "");
@@ -587,7 +582,7 @@ window.Rueckfrage = (function () {
       diktatEnde(grund);
     };
     mik.onend = function () {
-      if (!diktat || diktat.mik !== mik || diktat.wartet) return;
+      if (!diktat || diktat.mik !== mik) return;
       /* Ende ohne Fehler und ohne ein einziges Wort: auch das sagen. */
       if (!diktat.gehoert && Date.now() - diktat.seit < 1500) {
         diktatFehlerMelden("sofort-ende", "");
@@ -596,17 +591,10 @@ window.Rueckfrage = (function () {
       }
       diktatEnde();
     };
-    /* FASSUNG 718 — hat der Livestream gerade sein Mikrofon abgegeben, braucht Android einen Moment, bis es frei ist:
-       sofort gestartet, meldet die Erkennung „aborted" (Funk 164). Deshalb 350 ms warten; und kommt trotzdem „aborted",
-       noch EIN Versuch nach 700 ms, bevor es als Fehler gilt. */
-    var starten = function () {
-      if (!diktat || diktat.mik !== mik) return;
-      try { mik.start(); } catch (e) {
-        diktatFehlerMelden("start-wirft", String((e && e.message) || e));
-        diktatEnde("Die Spracherkennung lie\u00df sich nicht starten.");
-      }
-    };
-    if (diktat.geliehen) setTimeout(starten, 350); else starten();
+    try { mik.start(); } catch (e) {
+      diktatFehlerMelden("start-wirft", String((e && e.message) || e));
+      diktatEnde("Die Spracherkennung lie\u00df sich nicht starten.");
+    }
   }
   /* Der Fehlercode geht als kleine Meldung an Claude — einmal je Code
      und Sitzung, damit nichts zugemuellt wird. */

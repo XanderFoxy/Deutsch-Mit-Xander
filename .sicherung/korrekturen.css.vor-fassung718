@@ -34906,16 +34906,7 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 /* FASSUNG 710 — XANDER (Funk 156): „das Profilbild ist immer noch nach unten gerutscht man erkennt mein Gesicht gar nicht".
    Der runde Ausschnitt nahm bisher die Mitte des Fotos; bei einem Hochformat-Porträt sitzt das Gesicht aber im oberen Drittel –
    im Kreis sah man Hals und Brust. Jetzt liegt der Ausschnitt oben (bei quadratischen Bildern ändert sich nichts). */
-/* FASSUNG 718 — XANDER (Funk 161): „Mein Profilbild hängt von Grund auf zu tief und es wird immer noch zu tief
-   hineintransportiert es ist nicht mehr wie vorher" (Funk 163: „das ist nur bei meinem Profilbild so").
-   Nachgemessen: der Ausschnitt oben (22 %) zeigt bei einem Hochformat-Foto den OBEREN Teil – das Gesicht rutscht im
-   Kreis nach unten (bei 3:4 auf 59 % der Höhe, bei 9:16 auf 72 %). Quadratische Bilder (Emmis Fuchs) merken davon
-   nichts, deshalb traf es nur Fotos. Zurück auf die Mitte, wie vor Fassung 710.
-   Und das Bild, das beim Auftritt mitfährt, füllte seinen Kreis gar nicht: im Raster-Kasten griff „height:100%" nicht,
-   das Foto behielt seine eigene Höhe (96 × 129 px im 103-px-Kreis) – man sah nur seinen oberen Teil, und beim Landen
-   sprang es. Jetzt liegt es absolut im Kreis und füllt ihn wie auf dem Platz: kein Sprung mehr. */
-.lc-avatar, .lc-auftritt-bild img { object-position: 50% 50%; }
-.lc-auftritt-bild img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.lc-avatar, .lc-auftritt-bild img { object-position: 50% 22%; }
 
 /* FASSUNG 712 — Die echten Zeichnungen auf der Kachel (Funk 158).
    Die SVGs tragen ihre Klasse aus der Animation weiter (sonst fehlen die
