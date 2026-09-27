@@ -49,26 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 733 — Jahreszeiten und Feste im Dorf, Vorschau für den Betreiber (Funk 169)",
+  stand: "Fassung 734 — Rundenkampf in drei Runden, ganze Kämpferfiguren (Walkie 288/289)",
 
   inArbeit: [
-    { seit: "2026-09-27T03:58",
+    { seit: "2026-09-27T04:13",
       text: "Chat-Effekt-Waffen (Hammer usw.) halten, Trefferstelle für Chat-Effekte – Funk 176, Phase 2" },
-    { seit: "2026-09-27T03:58",
+    { seit: "2026-09-27T04:13",
       text: "Modulares Dorf, Verteidigung/Kaserne, Verträge – wartet auf Antworten zu den 15 Fragen im Dorf-Gesamtkonzept" },
-    { seit: "2026-09-27T03:58",
+    { seit: "2026-09-27T04:13",
       text: "Weitere Meldungen: Entdeckung, Unzufriedenheit, Touristen, Angebote, Verkauf" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T03:58",
+    { seit: "2026-09-27T04:13",
+      text: "Rundenkampf: Runde 1, Runde 2, Entscheidungsrunde" },
+    { seit: "2026-09-27T04:13",
+      text: "Kämpferfiguren nach Klasse, Rüstung und Waffe" },
+    { seit: "2026-09-27T04:13",
       text: "Jahreszeiten im Dorf: Laub, Kürbisse, Garben, Christbaum, Ostereier; Saison-Vorschau" },
-    { seit: "2026-09-27T03:58",
+    { seit: "2026-09-27T04:13",
       text: "Kartoffel: 3 statt 6 Schaden" },
-    { seit: "2026-09-27T03:58",
-      text: "Fassung 731: Waffe im Chat halten, zielen, treffen" },
-    { seit: "2026-09-27T03:58",
-      text: "Fassung 730: Städte-Kette, aus dem Profil in die Stadt" },
   ],
 };

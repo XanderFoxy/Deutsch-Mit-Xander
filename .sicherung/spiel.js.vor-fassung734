@@ -13063,114 +13063,17 @@
       if (b.dataset.st === "computer") return stratBeginnen("computer", "Professor Grammatikus", true, "", modus, stratMeinLevel());
       var id = "st" + Date.now().toString(36);
       var ichName = ""; try { ichName = LC().lage().ichName || ""; } catch (e) {}
-      senden({ ereignis: "strat", typ: "einladung", an: b.dataset.st, partie: id, name: ichName, modus: modus, lv: stratMeinLevel(), ort: stratOrtGemeinsam() ? stratOrtWahl() : "", fig: stratMeineFigur() });
+      senden({ ereignis: "strat", typ: "einladung", an: b.dataset.st, partie: id, name: ichName, modus: modus, lv: stratMeinLevel(), ort: stratOrtGemeinsam() ? stratOrtWahl() : "" });
       ST.wartet = { id: id, an: b.dataset.st, name: b.dataset.name, modus: modus };
       hinweis("♟️ Einladung an " + (b.dataset.name || "") + " geschickt – warte auf die Antwort.");
     });
   }
-  /* FASSUNG 734 — Walkie 289 („Figuren könnten besser ausgestaltet sein" – Antwort: alle drei): eine ganze Kämpferfigur
-     mit Armen und Beinen, das Profilbild ist der Kopf; das Gewand zeigt die Kämpferklasse (Magier mit Hut und Robe, Titan
-     in Bronzeplatten, Dieb mit Kapuze, Heiler in Weiß mit grünem Kreuz, Ingenieur im Overall mit Schraubenschlüssel,
-     Deutsch-Gelehrter im Talar mit Doktorhut), der angelegte Brustpanzer und Helm aus dem Spiel sitzen sichtbar an der
-     Figur, und die Waffe liegt in der vorderen Hand. Die Figur schaut immer zum Gegner; das Gesicht bleibt frei (Hut und
-     Helm sitzen über der Stirn). */
-  var ST_KLEID = {
-    "":        { rumpf: null, hose: "#2e3440", schuh: "#1d2026" },
-    magier:    { rumpf: "#6a3fb8", saum: "#f2c84a", hose: "#4a2a88", schuh: "#2a1a44", robe: true },
-    dieb:      { rumpf: "#3a4250", saum: "#1e232c", hose: "#262b33", schuh: "#15181d", kapuze: "#2b313b" },
-    titan:     { rumpf: "#b07a34", saum: "#6a4414", hose: "#5a4a3a", schuh: "#3a2c1c", platte: true },
-    heiler:    { rumpf: "#f4f1e8", saum: "#2fae62", hose: "#e2ddd0", schuh: "#7a6a52", robe: true, kreuz: true },
-    ingenieur: { rumpf: "#e07b1a", saum: "#8a4a0c", hose: "#e07b1a", schuh: "#3a2c1c", gurt: true },
-    gelehrter: { rumpf: "#1f3a78", saum: "#f2c84a", hose: "#1a2440", schuh: "#15181d", robe: true }
-  };
-  function stratFigurDaten(seite, chatId, mit) {
-    var s = {}, w = "";
-    if (seite === "ich") { s = S.ich || {}; w = S.waffe || (S.halten && S.halten.waffe) || ""; }
-    else if (chatId === "computer") return { k: "gelehrter", helm: 0, brust: 1, waffe: "", farbe: "#8c2a1e" };
-    else { s = (S.stand || {})[spielIdVon(chatId)] || {}; }
-    mit = mit || {};
-    var k = mit.k != null ? mit.k : s.kampfklasse;
-    return { k: KAMPF[k] ? k : "", helm: Math.max(0, Math.min(3, Number(mit.helm != null ? mit.helm : s.helm) || 0)),
-             brust: Math.max(0, Math.min(3, Number(mit.brust != null ? mit.brust : s.brust) || 0)),
-             waffe: WAFFEN[mit.waffe != null ? mit.waffe : w] ? (mit.waffe != null ? mit.waffe : w) : "" };
-  }
-  /* Was mit der Einladung mitgeht, damit der andere mich richtig anzieht. */
-  function stratMeineFigur() { var f = stratFigurDaten("ich"); return { k: f.k, helm: f.helm, brust: f.brust, waffe: f.waffe }; }
-  /* Die Figur schaut nach rechts; der Gegner wird per CSS gespiegelt. Hals bei (0,0). */
-  function stratFigurSvg(f, seite) {
-    var K = ST_KLEID[f.k] || ST_KLEID[""], haut = "#f1c9a5", hautR = "#b98a64";
-    var shirt = K.rumpf || (seite === "ich" ? "#3a6fd6" : "#d0463a"), saum = K.saum || (seite === "ich" ? "#24468c" : "#8c241c");
-    var h = "";
-    /* Umhang/Robe hinten */
-    if (K.kapuze) h += '<path d="M-12 3 Q-22 30 -16 52 L10 52 Q4 30 10 3 Z" fill="' + K.kapuze + '" opacity=".95"/>';
-    /* Hinteres Bein und hinterer Arm (Deckung) */
-    h += '<path class="sp-fig-bein-h" d="M-4 33 L-9 46 L-11 58" stroke="' + K.hose + '" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
-      + '<path d="M-15 57.5 h8 a2.5 2.5 0 0 1 0 5 h-9 z" fill="' + K.schuh + '"/>';
-    h += '<g class="sp-fig-arm-h"><path d="M-9 6 L-14 18 L-6 24" stroke="' + shirt + '" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
-      + '<circle cx="-5" cy="24" r="3.6" fill="' + haut + '" stroke="' + hautR + '" stroke-width=".8"/>'
-      + (f.k === "ingenieur" ? '<path d="M-5 24 L-2 33 M-4 34.5 a2.4 2.4 0 1 0 4 -2" stroke="#9aa3ad" stroke-width="2" fill="none" stroke-linecap="round"/>' : "")
-      + (f.k === "gelehrter" ? '<rect x="-10" y="22" width="9" height="11" rx="1" fill="#7a2a22" stroke="#3a1410" stroke-width=".8"/><path d="M-9 23 V32" stroke="#f2e6c8" stroke-width="1"/>' : "")
-      + "</g>";
-    /* Vorderes Bein */
-    h += '<path class="sp-fig-bein-v" d="M4 33 L9 45 L8 58" stroke="' + K.hose + '" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
-      + '<path d="M5 57.5 h8 a2.5 2.5 0 0 1 0 5 h-9 z" fill="' + K.schuh + '"/>';
-    /* Rumpf: Robe lang bis übers Knie, sonst Hemd bis zur Hüfte */
-    h += K.robe ? '<path d="M-12 3 Q0 -1 12 3 L15 44 Q0 48 -15 44 Z" fill="' + shirt + '" stroke="rgba(0,0,0,.35)" stroke-width=".8"/><path d="M-15 44 Q0 48 15 44" stroke="' + saum + '" stroke-width="2.4" fill="none"/>'
-      : '<path d="M-12 3 Q0 -1 12 3 L10 34 Q0 36 -10 34 Z" fill="' + shirt + '" stroke="rgba(0,0,0,.35)" stroke-width=".8"/><path d="M-10 31.5 H10" stroke="' + (K.gurt ? "#5a3a1a" : saum) + '" stroke-width="' + (K.gurt ? 3.2 : 2.4) + '"/>';
-    if (f.k === "magier") h += '<path d="M-5 14 l1.2 2.6 2.8.3 -2.1 1.9.6 2.8 -2.5 -1.4 -2.5 1.4.6 -2.8 -2.1 -1.9 2.8 -.3z M5 28 l.8 1.7 1.9.2 -1.4 1.3.4 1.9 -1.7 -1 -1.7 1 .4 -1.9 -1.4 -1.3 1.9 -.2z" fill="#f2c84a"/>';
-    if (K.kreuz) h += '<path d="M-2 10 h4 v5 h5 v4 h-5 v5 h-4 v-5 h-5 v-4 h5 z" fill="#2fae62"/>';
-    if (K.gurt) h += '<path d="M-8 3 L-6 31 M8 3 L6 31" stroke="#b85f10" stroke-width="2.2"/><rect x="-3" y="29.5" width="6" height="4" rx="1" fill="#d9d9d9"/>';
-    if (f.k === "gelehrter") h += '<path d="M-4 2 L0 12 L4 2" fill="#fff" stroke="#c9c9c9" stroke-width=".6"/><path d="M0 4 L-1.3 7 L0 12 L1.3 7 Z" fill="#b8322a"/>';
-    if (K.platte) h += '<path d="M-11 5 H11 L10 30 H-10 Z" fill="url(#spFigBronze' + seite + ')" stroke="#5a3a14" stroke-width="1"/><path d="M-10 16 H10 M-10 23 H10" stroke="#6a4414" stroke-width="1"/>'
-      + '<circle cx="-7" cy="9" r=".9" fill="#f4d9a0"/><circle cx="7" cy="9" r=".9" fill="#f4d9a0"/>';
-    /* Angelegter Brustpanzer aus dem Spiel: Leder (1), Eisen (2), Stahl mit Goldrand (3) */
-    if (f.brust > 0) {
-      var bf = ["", "#8a5a2e", "#8e97a3", "#c9d2dc"][f.brust], br = ["", "#4a2e14", "#4a525c", "#c9a23a"][f.brust];
-      h += '<path d="M-10.5 5 Q0 2 10.5 5 L9 25 Q0 29 -9 25 Z" fill="' + bf + '" stroke="' + br + '" stroke-width="' + (f.brust >= 3 ? 1.6 : 1.1) + '"/>'
-        + '<path d="M0 4 V27" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/><path d="M-9 18 Q0 21 9 18" stroke="' + br + '" stroke-width=".9" fill="none"/>'
-        + [[-6, 8], [6, 8], [-6, 22], [6, 22]].map(function (p) { return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r=".9" fill="' + br + '"/>'; }).join("");
-    }
-    /* Schulterstücke (Titan und ab Panzer 2) */
-    if (K.platte || f.brust >= 2) h += '<ellipse cx="-11" cy="5" rx="5" ry="3.6" fill="' + (K.platte ? "#c89a4a" : "#9aa3ad") + '" stroke="rgba(0,0,0,.4)" stroke-width=".8"/><ellipse cx="11" cy="5" rx="5" ry="3.6" fill="' + (K.platte ? "#c89a4a" : "#9aa3ad") + '" stroke="rgba(0,0,0,.4)" stroke-width=".8"/>';
-    /* Vorderer Arm: in Kampfhaltung nach vorn, die Hand hält die Waffe */
-    var hand = f.waffe
-      ? '<svg x="21.2" y="-0.4" width="27" height="18" viewBox="0 -14 42 28" overflow="visible">' + waffeGeraetSvg(f.waffe).replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, "") + "</svg>"
-      : f.k === "dieb" ? '<path d="M26 10 L36 4" stroke="#c9d2dc" stroke-width="2" stroke-linecap="round"/><circle cx="24" cy="11" r="3.6" fill="' + haut + '" stroke="' + hautR + '" stroke-width=".8"/>'
-      : f.k === "magier" ? '<path d="M22 22 L30 -2" stroke="#6a4414" stroke-width="2" stroke-linecap="round"/><circle cx="30.5" cy="-3" r="2.6" fill="#b9f2ff" stroke="#fff" stroke-width=".6"/><circle cx="24" cy="11" r="3.6" fill="' + haut + '" stroke="' + hautR + '" stroke-width=".8"/>'
-      : '<circle cx="24" cy="11" r="4" fill="' + haut + '" stroke="' + hautR + '" stroke-width=".8"/>';
-    h += '<g class="sp-fig-arm-v"><path d="M10 6 L17 17 L24 11" stroke="' + (K.platte ? "#b07a34" : shirt) + '" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>' + hand + "</g>";
-    var defs = K.platte ? '<defs><linearGradient id="spFigBronze' + seite + '" x1="0" x2="1"><stop offset="0" stop-color="#8a5a1e"/><stop offset=".45" stop-color="#e2b060"/><stop offset="1" stop-color="#7a4a14"/></linearGradient></defs>' : "";
-    return '<svg class="sp-fig" viewBox="-32 -2 64 66" aria-hidden="true">' + defs + h + "</svg>";
-  }
-  /* Kopfschmuck über dem Bild: Helm aus dem Spiel geht vor; sonst Hut der Klasse. Sitzt über der Stirn, das Gesicht bleibt frei. */
-  function stratKopfSvg(f) {
-    var h = "";
-    if (f.helm > 0) {
-      var hf = ["", "#7a5a3a", "#8e97a3", "#c9d2dc"][f.helm], hr = ["", "#3a2a1a", "#3a424c", "#c9a23a"][f.helm];
-      h = '<path d="M4 24 Q4 2 32 2 Q60 2 60 24 Q46 15 32 15 Q18 15 4 24 Z" fill="' + hf + '" stroke="' + hr + '" stroke-width="1.6"/><path d="M32 2 V14" stroke="' + hr + '" stroke-width="2"/>'
-        + (f.helm >= 3 ? '<path d="M32 2 C26 -8 38 -12 46 -6 C40 -6 36 -3 34 2 Z" fill="#c8312b"/>' : "");
-    } else if (f.k === "magier") h = '<path d="M6 22 Q32 12 58 22 Q32 28 6 22 Z" fill="#4a2a88"/><path d="M17 20 Q30 -14 44 -10 Q36 -4 46 20 Z" fill="#6a3fb8" stroke="#3a1f70" stroke-width="1"/><path d="M31 6 l1.4 3 3.2.3 -2.4 2.1.7 3.2 -2.9 -1.6 -2.9 1.6.7 -3.2 -2.4 -2.1 3.2 -.3z" fill="#f2c84a"/>';
-    else if (f.k === "gelehrter") h = '<path d="M10 12 L32 4 L54 12 L32 20 Z" fill="#1d2330"/><path d="M18 15 V21 Q32 26 46 21 V15" fill="#1d2330"/><path d="M54 12 V22" stroke="#f2c84a" stroke-width="1.6"/><circle cx="54" cy="23" r="1.8" fill="#f2c84a"/>';
-    else if (f.k === "dieb") h = '<path d="M2 34 Q0 2 32 0 Q64 2 62 34 Q58 14 32 12 Q6 14 2 34 Z" fill="#2b313b"/>';
-    else if (f.k === "ingenieur") h = '<path d="M8 22 Q8 6 32 6 Q56 6 56 22 Z" fill="#f2c230" stroke="#a07a10" stroke-width="1.2"/><path d="M4 22 H60" stroke="#a07a10" stroke-width="3" stroke-linecap="round"/>';
-    else if (f.k === "titan") h = '<path d="M6 22 Q6 4 32 4 Q58 4 58 22 Q46 14 32 14 Q18 14 6 22 Z" fill="#c89a4a" stroke="#5a3a14" stroke-width="1.4"/><path d="M14 8 L8 -4 M50 8 L56 -4" stroke="#e8e0d0" stroke-width="3" stroke-linecap="round"/>';
-    else if (f.k === "heiler") h = '<path d="M8 20 Q32 6 56 20" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M30 8 h4 v3 h3 v4 h-3 v3 h-4 v-3 h-3 v-4 h3 z" fill="#2fae62"/>';
-    return h ? '<svg class="sp-sa-kopfzier" viewBox="0 -14 64 50" aria-hidden="true">' + h + "</svg>" : "";
-  }
-  function stratKaempferHtml(seite, chatId, name, mit) {
-    var f = stratFigurDaten(seite, chatId, mit);
-    var bild = chatId === "computer" ? '<span class="sp-sa-ini" style="background:#6b4a9c;color:#fff">G</span>' : stratBild(chatId, name);
-    return '<div class="sp-sa-kaempfer sp-sa-' + seite + (f.k ? " sp-sa-kl-" + f.k : "") + '" data-fig="' + esc(JSON.stringify(f)) + '"><div class="sp-sa-bild">' + bild + "</div>" + stratKopfSvg(f)
-      + '<div class="sp-sa-koerper">' + stratFigurSvg(f, seite) + "</div></div>";
-  }
-  function stratBeginnen(gegner, gegnerName, ichZuerst, id, modus, seinLv, seineFigur) {
+  function stratBeginnen(gegner, gegnerName, ichZuerst, id, modus, seinLv) {
     /* Erst den Rahmen (das schließt ein altes Fenster und damit eine alte Partie), dann die neue Partie. */
     var inhalt = extraRahmen("Rundenkampf gegen " + gegnerName, "sp-extra-strat");
     var ichName = "Du"; try { ichName = LC().lage().ichName || "Du"; } catch (e) {}
     ST = { start: Date.now(), id: id || ("c" + Date.now()), gegner: gegner, gegnerName: gegnerName, modus: modus === "echtzeit" ? "echtzeit" : "zug", zug: 0, meinNr: 0, seinNr: 0,
            ichDran: modus === "echtzeit" ? true : ichZuerst, ende: false, log: [], offen: null, bereitAb: 0,
-           /* FASSUNG 734 — Walkie 288: drei Runden, wer zuerst zwei gewinnt. */
-           runde: 1, siege: { ich: 0, er: 0 }, zuerst: !!ichZuerst, pause: false,
            ich: { lp: ST_LP, schild: 0, sterne: 0, konter: false, serie: 0, ruestung: 0, lv: stratMeinLevel(), name: ichName }, er: { lp: ST_LP, schild: 0, sterne: 0, konter: false, serie: 0, ruestung: 0, lv: seinLv || stratMeinLevel(), name: gegnerName } };
     /* Wer deutlich niedriger ist, startet mit Sternen (je 5 Level einer, höchstens 2). */
     var abstand = ST.er.lv - ST.ich.lv;
@@ -13178,14 +13081,15 @@
     if (-abstand >= 5) ST.er.sterne = Math.min(2, Math.floor(-abstand / 5));
     var ichChat = meineChatId();
     inhalt.innerHTML = '<div class="sp-sa">'
-      + '<div class="sp-sa-kopf"><div class="sp-sa-balken sp-sa-links"><b></b><span><i></i><em class="sp-sa-schildbalken"></em></span><small></small><u class="sp-sa-siege"></u></div><div class="sp-sa-mitte"><div class="sp-sa-ko">VS</div><small class="sp-sa-runde"></small></div><div class="sp-sa-balken sp-sa-rechts"><b></b><span><i></i><em class="sp-sa-schildbalken"></em></span><small></small><u class="sp-sa-siege"></u></div></div>'
-      + '<div class="sp-sa-buehne">' + stratKaempferHtml("ich", ichChat, ST.ich.name) + stratKaempferHtml("er", gegner, gegnerName, seineFigur)
+      + '<div class="sp-sa-kopf"><div class="sp-sa-balken sp-sa-links"><b></b><span><i></i><em class="sp-sa-schildbalken"></em></span><small></small></div><div class="sp-sa-ko">VS</div><div class="sp-sa-balken sp-sa-rechts"><b></b><span><i></i><em class="sp-sa-schildbalken"></em></span><small></small></div></div>'
+      + '<div class="sp-sa-buehne"><div class="sp-sa-kaempfer sp-sa-ich"><div class="sp-sa-bild">' + stratBild(ichChat, ST.ich.name) + '</div><div class="sp-sa-koerper"></div></div>'
+      + '<div class="sp-sa-kaempfer sp-sa-er"><div class="sp-sa-bild">' + (gegner === "computer" ? '<span class="sp-sa-ini" style="background:#6b4a9c;color:#fff">G</span>' : stratBild(gegner, gegnerName)) + '</div><div class="sp-sa-koerper"></div></div>'
       + '<div class="sp-sa-boden"></div><button type="button" class="sp-sa-ortname" title="Schauplatz wechseln (nur bei dir)"></button></div>'
       + '<p class="sp-sa-fair"></p></div>'
       + '<p class="sp-st-dran"></p><div class="sp-st-aktionen">' + Object.keys(ST_AKTIONEN).map(function (k) { var a = ST_AKTIONEN[k];
         return '<button type="button" data-ak="' + k + '"><b>' + a.name + "</b><small>" + a.was + "</small></button>"; }).join("") + '</div><ol class="sp-st-log"></ol>';
     inhalt.querySelector(".sp-st-aktionen").addEventListener("click", function (ev) {
-      var b = ev.target.closest("[data-ak]"); if (!b || b.disabled || !ST.ichDran || ST.ende || ST.frage || ST.pause) return;
+      var b = ev.target.closest("[data-ak]"); if (!b || b.disabled || !ST.ichDran || ST.ende || ST.frage) return;
       var ak = b.dataset.ak;
       if (ST.ich.sterne < ST_AKTIONEN[ak].sterne) { hinweis("⭐ Dafür brauchst du " + ST_AKTIONEN[ak].sterne + " Sterne."); return; }
       if (ST.modus === "zug") ST.ichDran = false;
@@ -13206,7 +13110,6 @@
       stratOrtSetzen(ST.ort); ton("holzklopf", 0.15);
     });
     stratZeigen();
-    stratAnsage("Runde 1", "Kampf!");
     if (!ichZuerst && gegner === "computer") setTimeout(stratComputer, 900);
     if (gegner === "computer" && ST.modus === "echtzeit") ST.computerUhr = setTimeout(stratComputer, 4000);
   }
@@ -13223,7 +13126,7 @@
     stratLog(true, ak, erfolg, schaden);
     stratBild_zeigen("ich", ak, erfolg);
     if (ST.modus === "zug") ST.ichDran = false; else ST.bereitAb = Date.now() + 2500;
-    var z = { ereignis: "strat", typ: "zug", an: ST.gegner, partie: ST.id, nr: nr, runde: ST.runde, aktion: ak, erfolg: erfolg, schaden: schaden, stand: stratEigen() };
+    var z = { ereignis: "strat", typ: "zug", an: ST.gegner, partie: ST.id, nr: nr, aktion: ak, erfolg: erfolg, schaden: schaden, stand: stratEigen() };
     if (ST.gegner === "computer") { if (schaden) stratTreffer("er", schaden, ak === "super"); stratEndePruefen(); stratZeigen(); if (!ST.ende && ST.modus === "zug") setTimeout(stratComputer, 1300); return; }
     /* Das Bild des Einschlags sofort (die echten Zahlen kommen mit der Quittung). */
     if (schaden) { var abV = ak === "super" ? Math.min(ST.er.schild, Math.ceil(schaden / 2)) : Math.min(ST.er.schild, schaden); stratEinschlag("er", schaden - abV, abV, 0); }
@@ -13277,12 +13180,6 @@
   function stratFremderZug(n) {
     if (ST.ende) return;
     var nr = Number(n.nr) || 0;
-    /* FASSUNG 734 — ein Zug aus der NÄCHSTEN Runde, während hier noch die Pause läuft: nicht quittieren – der andere
-       schickt ihn in 2,5 s noch einmal, dann ist die neue Runde auch hier da. Ein Zug aus der ALTEN Runde (oder in der
-       Pause) trifft nicht mehr, wird aber quittiert. */
-    var seineRunde = n.runde == null ? ST.runde : Number(n.runde);
-    if (seineRunde > ST.runde) return;
-    if (seineRunde < ST.runde || ST.pause) { if (nr > ST.seinNr) ST.seinNr = nr; senden({ ereignis: "strat", typ: "stand", an: ST.gegner, partie: ST.id, nr: nr, runde: ST.runde, stand: stratEigen(), zurueck: 0 }); return; }
     if (nr > ST.seinNr) {
       ST.seinNr = nr;
       if (n.stand) stratStandUebernehmen(n.stand);
@@ -13294,65 +13191,20 @@
       stratEndePruefen();
     }
     /* Quittung mit meinem Stand – auch für doppelt Angekommenes (die erste ging vielleicht verloren). */
-    senden({ ereignis: "strat", typ: "stand", an: ST.gegner, partie: ST.id, nr: nr, runde: ST.runde, stand: stratEigen(), zurueck: (ST.rueck || {})[nr] || 0, ende: ST.ende });
+    senden({ ereignis: "strat", typ: "stand", an: ST.gegner, partie: ST.id, nr: nr, stand: stratEigen(), zurueck: (ST.rueck || {})[nr] || 0, ende: ST.ende });
     stratZeigen();
   }
-  /* FASSUNG 734 — XANDER (Walkie 288): „Na so wie das früher in dieser Art von Computerspielen üblich war ich glaube man
-     macht die erste Runde und dann hat man eine zweite Runde und deine Entscheidungsrunde basierend auf den Ergebnis der
-     ersten beiden Runden". Ein K.O. entscheidet jetzt nur die Runde; wer zuerst zwei Runden gewinnt, gewinnt den Kampf.
-     Steht es 1:1, kommt die Entscheidungsrunde. Zwischen den Runden: Leben und Schild wieder voll, Konter weg – Sterne und
-     Rüstung (mit Deutsch erspielt) bleiben. Wer die Runde verloren hat, beginnt die nächste. Beide Geräte erkennen das
-     K.O. selbst; Züge und Stände tragen die Rundennummer, damit nichts aus der alten Runde in die neue trifft. */
   function stratEndePruefen() {
-    if (ST.ende || ST.pause || (ST.ich.lp > 0 && ST.er.lp > 0)) return;
-    var ichWeg = ST.ich.lp <= 0, erWeg = ST.er.lp <= 0, rundenSieger = erWeg && !ichWeg ? "ich" : ichWeg && !erWeg ? "er" : "";
-    if (rundenSieger) ST.siege[rundenSieger]++;
-    if (ST.siege.ich < 2 && ST.siege.er < 2) { stratRundePause(rundenSieger); return; }
+    if (ST.ende || (ST.ich.lp > 0 && ST.er.lp > 0)) return;
     ST.ende = true; clearTimeout(ST.nachUhr); clearTimeout(ST.computerUhr);
-    var sieg = ST.siege.ich >= 2;
-    ST.log.unshift(sieg ? "🏆 K.O. – gewonnen! (" + ST.siege.ich + ":" + ST.siege.er + " Runden)" : "K.O. – " + ST.gegnerName + " gewinnt (" + ST.siege.er + ":" + ST.siege.ich + " Runden).");
+    var sieg = ST.er.lp <= 0 && ST.ich.lp > 0;
+    ST.log.unshift(sieg ? "🏆 K.O. – gewonnen!" : "K.O. – " + ST.gegnerName + " gewinnt.");
     extraLohn("strat", ST.start, sieg ? 10 : 3);
     ton(sieg ? "jubel" : "glasbruch", 0.5);
     var b = extraEl && extraEl.querySelector(".sp-sa-buehne");
     if (b) { var ko = document.createElement("div"); ko.className = "sp-sa-kobild" + (sieg ? " sp-sa-sieg" : ""); ko.textContent = sieg ? "SIEG!" : "K.O."; b.appendChild(ko); }
     var sieger = extraEl && extraEl.querySelector(sieg ? ".sp-sa-ich" : ".sp-sa-er"), verlierer = extraEl && extraEl.querySelector(sieg ? ".sp-sa-er" : ".sp-sa-ich");
     if (sieger) sieger.classList.add("sp-sa-jubelt"); if (verlierer) verlierer.classList.add("sp-sa-liegt");
-  }
-  function stratRundePause(sieger) {
-    var partie = ST;
-    ST.pause = true; ST.pauseSieger = sieger; clearTimeout(ST.computerUhr); clearTimeout(ST.bereitUhr);
-    ST.log.unshift(!sieger ? "Runde " + ST.runde + ": Doppel-K.O. – die Runde zählt nicht." : sieger === "ich" ? "Runde " + ST.runde + " gewonnen! (" + ST.siege.ich + ":" + ST.siege.er + ")" : "Runde " + ST.runde + ": " + ST.gegnerName + " gewinnt (" + ST.siege.ich + ":" + ST.siege.er + ").");
-    ton(sieger === "ich" ? "jubel" : "bonk", 0.4);
-    var b = extraEl && extraEl.querySelector(".sp-sa-buehne");
-    if (b) { var ko = document.createElement("div"); ko.className = "sp-sa-kobild sp-sa-rundenbild" + (sieger === "ich" ? " sp-sa-sieg" : ""); ko.textContent = "K.O."; b.appendChild(ko); }
-    if (sieger) { var sg = stratKaempfer(sieger), vl = stratKaempfer(sieger === "ich" ? "er" : "ich"); if (sg) sg.classList.add("sp-sa-jubelt"); if (vl) vl.classList.add("sp-sa-liegt"); }
-    stratZeigen();
-    setTimeout(function () { if (ST !== partie || ST.ende) return; stratNeueRunde(sieger); }, 2600);
-  }
-  function stratNeueRunde(sieger) {
-    if (sieger) ST.runde++;
-    [ST.ich, ST.er].forEach(function (w) { w.lp = ST_LP; w.schild = 0; w.konter = false; });
-    ST.pause = false; ST.pauseSieger = undefined; ST.bereitAb = 0; ST.frage = false;
-    if (extraEl) {
-      extraEl.querySelectorAll(".sp-sa-rundenbild").forEach(function (e) { e.remove(); });
-      extraEl.querySelectorAll(".sp-sa-liegt, .sp-sa-jubelt").forEach(function (e) { e.classList.remove("sp-sa-liegt", "sp-sa-jubelt"); });
-    }
-    /* Wer verloren hat, fängt an (beim Doppel-K.O. wer die Partie begonnen hat). */
-    ST.ichDran = ST.modus === "echtzeit" ? true : sieger ? sieger === "er" : ST.zuerst;
-    stratAnsage(ST.siege.ich === 1 && ST.siege.er === 1 ? "Entscheidungsrunde" : "Runde " + ST.runde, "Kampf!");
-    stratZeigen();
-    if (ST.gegner === "computer") {
-      if (ST.modus === "zug" && !ST.ichDran) setTimeout(stratComputer, 1500);
-      if (ST.modus === "echtzeit") ST.computerUhr = setTimeout(stratComputer, 4000);
-    }
-  }
-  /* Die Ansage groß über der Bühne: „Runde 2 – Kampf!" */
-  function stratAnsage(titel, unter) {
-    var b = extraEl && extraEl.querySelector(".sp-sa-buehne"); if (!b) return;
-    var a = document.createElement("div"); a.className = "sp-sa-ansage"; a.innerHTML = "<b></b><small></small>";
-    a.querySelector("b").textContent = titel; a.querySelector("small").textContent = unter || "";
-    b.appendChild(a); ton("gong", 0.35);
-    setTimeout(function () { a.remove(); }, 1500);
   }
   function stratLog(vonMir, ak, erfolg, schaden) {
     var wer = vonMir ? "Du" : ST.gegnerName, A = ST_AKTIONEN[ak] || { name: ak };
@@ -13395,7 +13247,7 @@
   }
   function stratComputer() {
     clearTimeout(ST.computerUhr);
-    if (ST.ende || ST.pause || ST.gegner !== "computer" || !extraEl) return;
+    if (ST.ende || ST.gegner !== "computer" || !extraEl) return;
     var er = ST.er, ak = er.sterne >= 3 && (ST.ich.schild >= 10 || Math.random() < 0.6) ? "super" : er.sterne >= 2 && Math.random() < 0.55 ? "donner" : er.sterne >= 1 && !er.konter && Math.random() < 0.15 ? "konter" : er.lp < 25 && Math.random() < 0.5 ? "heilen" : er.schild < 10 && Math.random() < 0.2 ? "schild" : "angriff";
     var erfolg = Math.random() < 0.7, schaden = 0;
     if (erfolg) { schaden = stratWirkung(er, ak, stratFair(er.lv, ST.ich.lv)); stratRichtig(er); }
@@ -13425,16 +13277,14 @@
         + (w.ruestung ? " · Rüstung " + w.ruestung : "") + (w.konter ? " · Konter" : "");
     };
     balken(".sp-sa-links", ST.ich); balken(".sp-sa-rechts", ST.er);
-    [[".sp-sa-links", ST.siege.ich], [".sp-sa-rechts", ST.siege.er]].forEach(function (q) { var u = extraEl.querySelector(q[0] + " .sp-sa-siege"); if (u) u.innerHTML = [0, 1].map(function (i) { return '<i class="' + (i < q[1] ? "sp-an" : "") + '"></i>'; }).join(""); });
-    var rt = extraEl.querySelector(".sp-sa-runde"); if (rt) rt.textContent = ST.siege.ich === 1 && ST.siege.er === 1 && !ST.ende ? "Entscheidung" : "Runde " + Math.min(3, ST.runde);
     [["ich", ST.ich], ["er", ST.er]].forEach(function (q) { var k = stratKaempfer(q[0]); if (k) { k.classList.toggle("sp-sa-schild", q[1].schild > 0); k.classList.toggle("sp-sa-konter", q[1].konter); } });
     var fi = stratFair(ST.ich.lv, ST.er.lv), fe = stratFair(ST.er.lv, ST.ich.lv);
     extraEl.querySelector(".sp-sa-fair").textContent = Math.abs(fi - 1) < 0.01 ? "Fair: gleich stark" + (ST.modus === "echtzeit" ? " · Echtzeit" : " · Züge")
       : "Fairness nach Level: du " + (fi > 1 ? "+" : "−") + Math.round(Math.abs(fi - 1) * 100 + 1e-6) + " % Schaden, " + ST.gegnerName + " " + (fe > 1 ? "+" : "−") + Math.round(Math.abs(fe - 1) * 100 + 1e-6) + " %" + (ST.modus === "echtzeit" ? " · Echtzeit" : " · Züge");
     var rest = Math.max(0, Math.ceil((ST.bereitAb - Date.now()) / 1000));
-    extraEl.querySelector(".sp-st-dran").textContent = ST.ende ? "Das Spiel ist aus." : ST.pause ? "Runde vorbei – gleich geht es weiter …" : ST.frage ? "Beantworte die Frage …"
+    extraEl.querySelector(".sp-st-dran").textContent = ST.ende ? "Das Spiel ist aus." : ST.frage ? "Beantworte die Frage …"
       : ST.modus === "echtzeit" ? (rest ? "Gleich wieder bereit …" : "Los – wähle eine Aktion!") : ST.ichDran ? "Du bist dran – wähle eine Aktion." : ST.gegnerName + " ist dran …";
-    extraEl.querySelectorAll("[data-ak]").forEach(function (b) { b.disabled = !ST.ichDran || ST.ende || ST.pause || ST.frage || rest > 0 || ST.ich.sterne < ST_AKTIONEN[b.dataset.ak].sterne; });
+    extraEl.querySelectorAll("[data-ak]").forEach(function (b) { b.disabled = !ST.ichDran || ST.ende || ST.frage || rest > 0 || ST.ich.sterne < ST_AKTIONEN[b.dataset.ak].sterne; });
     if (rest > 0) { clearTimeout(ST.bereitUhr); ST.bereitUhr = setTimeout(stratZeigen, 400); }
     var log = extraEl.querySelector(".sp-st-log"); log.innerHTML = "";
     ST.log.slice(0, 5).forEach(function (t) { var li = document.createElement("li"); li.textContent = t; log.appendChild(li); });
@@ -13454,13 +13304,13 @@
         var k = ev.target.closest("button"); if (!k) return;
         clearTimeout(weg); box.remove();
         var ichName = ""; try { ichName = LC().lage().ichName || ""; } catch (e) {}
-        if (k.dataset.ja === "1") { senden({ ereignis: "strat", typ: "ja", an: n.von, partie: n.partie, name: ichName, lv: stratMeinLevel(), fig: stratMeineFigur() }); ST_ORT_VORGABE = ST_ORTE.some(function (o) { return o[0] === n.ort; }) ? n.ort : ""; stratBeginnen(n.von, n.name || "Gegner", false, n.partie, n.modus, Number(n.lv) || 0, n.fig); }
+        if (k.dataset.ja === "1") { senden({ ereignis: "strat", typ: "ja", an: n.von, partie: n.partie, name: ichName, lv: stratMeinLevel() }); ST_ORT_VORGABE = ST_ORTE.some(function (o) { return o[0] === n.ort; }) ? n.ort : ""; stratBeginnen(n.von, n.name || "Gegner", false, n.partie, n.modus, Number(n.lv) || 0); }
         else senden({ ereignis: "strat", typ: "nein", an: n.von, partie: n.partie, name: ichName });
       });
     } else if (n.typ === "ja" && ST.wartet && ST.wartet.id === n.partie) {
       var w = ST.wartet; ST.wartet = null;
       ST_ORT_VORGABE = stratOrtGemeinsam() ? stratOrtWahl() : "";
-      stratBeginnen(n.von, n.name || w.name || "Gegner", true, n.partie, w.modus, Number(n.lv) || 0, n.fig);
+      stratBeginnen(n.von, n.name || w.name || "Gegner", true, n.partie, w.modus, Number(n.lv) || 0);
     } else if (n.typ === "nein" && ST.wartet && ST.wartet.id === n.partie) {
       ST.wartet = null; hinweis("♟️ " + (n.name || "Die Person") + " möchte gerade nicht.");
     } else if (n.typ === "zug" && ST.id === n.partie) {
@@ -13469,10 +13319,9 @@
       /* Quittung: der andere hat meinen Zug – und sagt, wie es ihm geht. */
       if (ST.offen && Number(n.nr) >= ST.offen.nr) { ST.offen = null; clearTimeout(ST.nachUhr); }
       /* Mein Angriff traf einen Konter: den Rückprall ziehe ich mir selbst ab – je Zug einmal. */
-      var gleicheRunde = (n.runde == null || Number(n.runde) === ST.runde) && !ST.pause;
-      if (gleicheRunde && n.zurueck > 0 && (ST.rueckAb || 0) < Number(n.nr)) { ST.rueckAb = Number(n.nr); var ab3 = stratSchildZuerst(ST.ich, Number(n.zurueck)); stratEinschlag("ich", Number(n.zurueck) - ab3, ab3, 0);
-        senden({ ereignis: "strat", typ: "stand", an: ST.gegner, partie: ST.id, nr: 0, runde: ST.runde, stand: stratEigen() }); }
-      if (n.stand && gleicheRunde) stratStandUebernehmen(n.stand);
+      if (n.zurueck > 0 && (ST.rueckAb || 0) < Number(n.nr)) { ST.rueckAb = Number(n.nr); var ab3 = stratSchildZuerst(ST.ich, Number(n.zurueck)); stratEinschlag("ich", Number(n.zurueck) - ab3, ab3, 0);
+        senden({ ereignis: "strat", typ: "stand", an: ST.gegner, partie: ST.id, nr: 0, stand: stratEigen() }); }
+      if (n.stand) stratStandUebernehmen(n.stand);
       stratEndePruefen(); stratZeigen();
     } else if (n.typ === "ende" && ST.id === n.partie && !ST.ende) {
       extraLohn("strat", ST.start, 10);
@@ -13524,7 +13373,7 @@
       setzen: function (o) { Object.keys(o || {}).forEach(function (k) { S[k] = o[k]; }); zeichnen(); },
       zeichnen: zeichnen, geschossZeigen: geschossZeigen, zahlZeigen: zahlZeigen, trefferZeigen: trefferZeigen,
       gegenwehrZeigen: gegenwehrZeigen, falleZeigen: falleZeigen, tippAufPlatz: tippAufPlatz, ringSvg: ringSvg,
-      extraOeffnen: extraOeffnen, extraSchliessen: extraSchliessen, td: function () { return TD; }, st: function () { return ST; }, stratEmpfangen: stratEmpfangen, stratEnde: function () { stratEndePruefen(); stratZeigen(); }, stratFigurSvg: stratFigurSvg,
+      extraOeffnen: extraOeffnen, extraSchliessen: extraSchliessen, td: function () { return TD; }, st: function () { return ST; }, stratEmpfangen: stratEmpfangen,
       flugzeit: function (w) { return (WAFFEN[w] || {}).flug || 0; }, takt: function () { return { sparsam: takt.sparsam, lebend: teilchenLebend }; }, tierSignatur: tierSignatur,
       schnellZeichnen: schnellZeichnen, geschenkePruefen: geschenkePruefen, superkraft: superkraft,
       turmZeile: turmZeile, platzGewechselt: platzGewechselt, werkZeilenHtml: werkZeilenHtml, waffenSchaden: function (w) { return (WAFFEN[w] || {}).schaden; }, skills: function () { return SKILLS; },

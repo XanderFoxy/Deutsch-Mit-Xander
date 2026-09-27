@@ -191,7 +191,15 @@ async function fenster(br, port, wer) {
   for (let i = 0; i < 3; i++) { await B.waitForFunction(() => { const k = document.querySelector('.sp-st-aktionen [data-ak="angriff"]'); return k && !k.disabled; }, null, { timeout: 8000 }); await zug(B, "angriff", 2300, 1500); }
   a = await zustand(A); b = await zustand(B);
   const ko = await Promise.all([A, B].map((pg) => pg.evaluate(() => (document.querySelector(".sp-sa-kobild") || {}).textContent || "")));
-  sage(a.ende && b.ende && a.ich === 0 && ko[0] === "K.O." && ko[1] === "SIEG!", "Bea haut Alex in drei Schlägen um: bei Alex „K.O.“, bei Bea „SIEG!“", JSON.stringify({ alex: a.ich, ko }));
+  /* Ab Fassung 734 (Walkie 288: „erste Runde … zweite Runde … Entscheidungsrunde"): das K.O. entscheidet nur die Runde. */
+  const runde1 = await Promise.all([A, B].map((pg) => pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.st(); return { pause: S.pause, ende: S.ende, siege: S.siege, sieg: !!document.querySelector(".sp-sa-kobild.sp-sa-sieg") }; })));
+  sage(!a.ende && !b.ende && a.ich === 0 && ko[0] === "K.O." && ko[1] === "K.O." && runde1[0].pause && runde1[1].pause && runde1[0].siege.er === 1 && runde1[1].siege.ich === 1 && runde1[1].sieg && !runde1[0].sieg,
+    "Bea haut Alex in drei Schlägen um: Runde 1 an Bea (1:0 auf beiden Geräten), noch kein Sieg", JSON.stringify({ alex: a.ich, ko, runde1 }));
+  await tick(2900);
+  for (let i = 0; i < 4; i++) { await B.waitForFunction(() => { const k = document.querySelector('.sp-st-aktionen [data-ak="angriff"]'); return k && !k.disabled; }, null, { timeout: 8000 }); await zug(B, "angriff", 2300, 1500); }
+  a = await zustand(A); b = await zustand(B);
+  const ko2 = await Promise.all([A, B].map((pg) => pg.evaluate(() => (document.querySelector(".sp-sa-kobild") || {}).textContent || "")));
+  sage(a.ende && b.ende && a.ich === 0 && ko2[0] === "K.O." && ko2[1] === "SIEG!" && /2:0 Runden/.test(b.log[0]), "Runde 2 auch an Bea (vier Schläge à 16): bei Alex „K.O.“, bei Bea „SIEG!“ – 2:0 Runden", JSON.stringify({ alex: a.ich, ko2, log: b.log[0] }));
   if (process.env.BILD) { await A.screenshot({ path: process.env.BILD + "-ko-alex.png" }); await B.screenshot({ path: process.env.BILD + "-sieg-bea.png" }); }
 
   laeuft = false;

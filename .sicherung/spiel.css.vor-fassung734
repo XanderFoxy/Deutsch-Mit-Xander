@@ -2608,27 +2608,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-halt-wahl-liste i svg { width: 100%; height: 100%; }
 .sp-halt-weg { display: block; width: 100%; margin: 8px 0 4px; padding: 8px; border: 0; border-radius: 10px; background: #7a1f1a; color: #fff; font-weight: 700; cursor: pointer; }
 .sp-halt-wahl .sp-sm-klein { margin: 6px 2px 0; font-size: 12px; opacity: .75; }
-/* FASSUNG 734 — Walkie 289: ganze Kämpferfiguren (Profilbild als Kopf, Klasse, Rüstung, Waffe); Walkie 288: drei Runden. */
-.sp-sa-buehne { height: 178px; }
-.sp-sa-kaempfer { bottom: 11%; }
-.sp-sa-bild { width: 52px; height: 52px; }
-.sp-sa-koerper { width: 64px; height: 66px; margin-top: -7px; border-radius: 0; background: none !important; }
-.sp-sa-koerper::before, .sp-sa-koerper::after { display: none; }
-.sp-sa-koerper .sp-fig { width: 100%; height: 100%; display: block; overflow: visible; }
-.sp-sa-er .sp-fig, .sp-sa-er .sp-sa-kopfzier { transform: scaleX(-1); }
-.sp-sa-kopfzier { position: absolute; top: -13.5px; left: 50%; width: 62px; height: 48px; margin-left: -31px; z-index: 2; pointer-events: none; overflow: visible; }
-.sp-sa-schlag .sp-fig-arm-v { animation: spFigStoss .65s ease-out; }
-@keyframes spFigStoss { 35% { transform: translate(7px, -3px); } 60% { transform: translate(5px, -2px); } }
-.sp-sa-block .sp-fig-arm-v { animation: spFigDeckung .7s ease-out; }
-@keyframes spFigDeckung { 40%, 70% { transform: translate(-6px, -6px); } }
-.sp-sa-mitte { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.sp-sa-runde { color: #ffe27a; font: 800 10px/1 system-ui, sans-serif; white-space: nowrap; text-shadow: 0 1px 0 #000; }
-.sp-sa-siege { display: flex; gap: 3px; text-decoration: none; }
-.sp-sa-siege i { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid #f2c230; background: rgba(0, 0, 0, .35); }
-.sp-sa-siege i.sp-an { background: radial-gradient(circle at 35% 35%, #fff4a8, #f2a60b); box-shadow: 0 0 6px #f2c230; }
-.sp-sa-ansage { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;
-  animation: spSaAnsage 1.5s ease-out forwards; }
-.sp-sa-ansage b { font: 900 30px/1 system-ui, sans-serif; color: #fff; letter-spacing: 1px; text-shadow: 0 3px 0 #8a1a0a, 0 0 14px rgba(255, 120, 40, .8); text-align: center; }
-.sp-sa-ansage small { margin-top: 6px; font: 900 20px/1 system-ui, sans-serif; color: #ffd23c; text-shadow: 0 2px 0 #8a1a0a; }
-@keyframes spSaAnsage { 0% { opacity: 0; transform: scale(2.2); } 18% { opacity: 1; transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(.9); } }
-@media (prefers-reduced-motion: reduce) { .sp-sa-ansage { animation-duration: 1.5s; } }
