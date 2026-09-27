@@ -13646,20 +13646,6 @@
      Das Spiel (spiel.js) holte für seine kleine Aussprache-Karte genau
      diese Aufnahmen. Jetzt fragt es hier: dieselbe saubere Stimme wie
      der Aussprachekurs — erst die Sammeldatei, sonst Azure. */
-  /* FASSUNG 770 — XANDER (Funk 192): „wenn man oben eine Benachrichtigung bekommt und man ist gerade nicht im Klassenzimmer …
-     dann möchte ich dass man durch den benachrichtigungslink wenn die Müller fertig sind oder irgendwas fertig ist dass ich direkt
-     in meinen Livestream zurückkomme an die Stelle in meinem Dorf". Derselbe Weg wie der Knopf im Briefkasten: Bereich
-     öffnen, Pille antippen, in den Raum. */
-  window.DMA_ZUM_KLASSENZIMMER = function (raum) {
-    const pille = document.querySelector('#knowledgeSubnav [data-sub="sub-livechat"]') || document.querySelector('.subnav-pill[data-sub="sub-livechat"]');
-    const bereich = pille && pille.closest(".view");
-    if (bereich && bereich.id && typeof activateTab === "function") activateTab(bereich.id);
-    setTimeout(() => {
-      if (pille) pille.click();
-      setTimeout(() => { if (typeof livechatHinein === "function") livechatHinein(raum || undefined); }, 320);
-    }, 60);
-  };
-
   window.DMA_AUSSPR_BRUECKE = {
     original: function (wort) {
       const ziel = String(wort || "").trim().toLowerCase();

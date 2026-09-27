@@ -1554,3 +1554,15 @@ Sonden: neu 769 (alles grün). Mit der Sicherung bricht sie ab, weil dort die Pr
   - Bei Xander (10 Bauern, Zufriedenheit 96) sind das ≈ 44 Sack pro Stunde, mit Dreifelder ≈ 66, ohne Klicken.
   - Dazu kommt, was man selbst mäht: Ein Feld ist in 4 Minuten reif und bringt 5 Sack.
   - 1 Sack Getreide ergibt 1 Sack Mehl, 1 Sack Mehl ergibt 1 Brot (Markt heute etwa 6 P). Ein Bauer bringt also rund 4 Brote pro Stunde für einmal 5 P Ausbildung.
+
+### Fassung 770 (Funk 192: Meldung draußen führt ins Dorf, Newsticker mit Dorf-Ereignissen)
+Sonden: neu 770 (alles grün); 711, 755, 765, 766, 768, 769 grün. Der Server ist geprüft (Rückrollen).
+- **Meldung draußen** (XANDER: „wenn man oben eine Benachrichtigung bekommt und man ist gerade nicht im Klassenzimmer … dass ich direkt in meinen Livestream zurückkomme an die Stelle in meinem Dorf“).
+  - Wer schon einmal mitgespielt hat, bekommt die Dorf-Meldungen jetzt auch außerhalb des Klassenzimmers: „10 Mehl fertig in der Mühle“, Trupps zurück, Stall voll, Acker reif, Plünderung.
+  - Dafür wird alle 90 Sekunden still der eigene Stand geholt, nur wenn die Seite zu sehen ist. spiel_ich(null) ändert dabei nichts.
+  - Der Knopf heißt draußen „Zum Dorf“. Er führt in den zuletzt benutzten Raum, und dort geht das Dorf gleich an der richtigen Stelle auf (z. B. die Mühle).
+- **Newsticker** (Funk 192: „dass Emmys doof angegriffen wurde oder … Alex hat gerade was zum Verkauf angeboten ja irgendwie das günstig ist“).
+  - Plünderungen standen schon drin.
+  - Neu: „🏷️ Xander bietet 20 Brot je 2 P an – günstiger als beim Händler“ (höchstens einmal in 10 Minuten je Spieler).
+  - Neu: „🏛️ … hat im Dorf Holstentor gebaut – Besucher willkommen“.
+- Walkies zu den offenen Fragen aus Funk 191/192: 300 (Bündnis, Überfall auf Abwesende), 301 (Geldfluss beim Tourismus), 302 (alte Schuhe verwerten).

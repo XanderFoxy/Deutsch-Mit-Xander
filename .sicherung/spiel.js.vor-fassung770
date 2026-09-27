@@ -8040,7 +8040,7 @@
   }
   function dorfMeldungenPruefen() {
     var ich = S.ich;
-    if (!ich || (!S.draussen && (!spielSichtbar() || !drin()))) return;
+    if (!ich || !spielSichtbar() || !drin()) return;
     var g = sprungGemeldet(), jetzt = Date.now(), neu = [], d = ich.dorf || {};
     Object.keys(ich.werk || {}).forEach(function (k) {
       var w = ich.werk[k];
@@ -8158,7 +8158,7 @@
     el.innerHTML = (z ? '<i class="sp-sprung-bild sp-sprung-pin" style="background:' + z[0] + '" aria-hidden="true"><svg viewBox="0 0 24 24">' + z[1] + "</svg></i>"
       : '<i class="sp-sprung-bild" aria-hidden="true">' + (m.bild || wareSvg(m.ware || "getreide")) + "</i>")
       + "<span>" + esc(m.text) + (mehr ? " <small>+" + mehr + " weitere</small>" : "") + "</span>"
-      + (m.ohneSprung ? "" : '<button type="button" class="sp-sprung-hin">' + (drin() ? "Ansehen" : "Zum Dorf") + "</button>") + '<button type="button" class="sp-sprung-zu" aria-label="Meldung schließen">✕</button>';
+      + (m.ohneSprung ? "" : '<button type="button" class="sp-sprung-hin">Ansehen</button>') + '<button type="button" class="sp-sprung-zu" aria-label="Meldung schließen">✕</button>';
     if (!m.ohneSprung) el.querySelector(".sp-sprung-hin").addEventListener("click", function () { sprungOeffnen(m); });
     el.querySelector(".sp-sprung-zu").addEventListener("click", function () { SPRUNG.liste = []; sprungZeigen(); });
     document.body.appendChild(el);
@@ -8167,14 +8167,6 @@
     SPRUNG.uhr = setTimeout(sprungZeigen, m.art === "angriff" ? 12000 : m.ohneSprung ? 5000 : 8000);
   }
   function sprungOeffnen(m) {
-    /* FASSUNG 770 — draußen (nicht im Klassenzimmer): erst in den letzten Raum, dann springt die Meldung ins Dorf. */
-    if (!drin()) {
-      SPRUNG.liste = []; sprungZeigen();
-      var raum = ""; try { raum = localStorage.getItem("dma_spiel_raum") || ""; } catch (e) {}
-      S.sprungNachher = m; S.sprungNachherBis = Date.now() + 60000;
-      if (window.DMA_ZUM_KLASSENZIMMER) window.DMA_ZUM_KLASSENZIMMER(raum);
-      return;
-    }
     SPRUNG.liste = []; sprungZeigen();
     S.rad = null; S.zrad = false; S.langWahl = false; S.trankAuf = false;
     S.blick = "dorfblick"; S.schnellMenue = true;
@@ -13673,29 +13665,8 @@
   /* ---------------------------------------------------------------
      TAKT: beitreten, auffrischen, Plätze schmücken, Tafel beobachten
      --------------------------------------------------------------- */
-  /* FASSUNG 770 — XANDER (Funk 192): „wenn man oben eine Benachrichtigung bekommt und man ist gerade nicht im Klassenzimmer
-     bzw was ist im Klassenzimmer ist aber auf einem anderen Link draußen". Wer schon einmal mitgespielt hat, bekommt die
-     Dorf-Meldungen auch draußen: alle 90 Sekunden (nur wenn die Seite zu sehen ist) wird der eigene Stand still geholt –
-     spiel_ich(null) ändert nichts – und dieselben Meldungen erscheinen, mit „Zum Dorf". */
-  function draussenPruefen() {
-    var jetzt = Date.now();
-    if (S.draussenLaeuft || jetzt - (S.draussenZuletzt || 0) < 90000) return;
-    try { if (document.visibilityState === "hidden" || localStorage.getItem("dma_spiel_dabei") !== "1") return; } catch (e) { return; }
-    S.draussenZuletzt = jetzt; S.draussenLaeuft = true;
-    rpc("spiel_ich", { p_name: null }).then(function (r) {
-      S.draussenLaeuft = false;
-      if (!r || !r.id || drin()) return;
-      S.ich = r; S.draussen = true;
-      try { dorfMeldungenPruefen(); } finally { S.draussen = false; }
-    }).catch(function () { S.draussenLaeuft = false; });
-  }
   setInterval(function () {
-    if (!drin()) { if (schnellEl) schnellEl.hidden = true; draussenPruefen(); return; }
-    if (S.uid) { try { localStorage.setItem("dma_spiel_dabei", "1"); if (raumName()) localStorage.setItem("dma_spiel_raum", raumName()); } catch (e) {} }
-    if (S.sprungNachher && S.bereit && S.ich) {
-      var mN = S.sprungNachher; S.sprungNachher = null;
-      if (Date.now() < (S.sprungNachherBis || 0)) sprungOeffnen(mN);
-    }
+    if (!drin()) { if (schnellEl) schnellEl.hidden = true; return; }
     if (!S.bereit) beitreten();
     abrufen(false);
     tafelPruefen();
