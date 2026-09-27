@@ -214,11 +214,6 @@ const GERAEUSCHE = [
   { name: "klasse-heiler", dauer: 1.5, text: "A gentle healing blessing: warm soft choir-like pad swelling with delicate chimes and a sparkle, calm, no words, no music beat" },
   { name: "klasse-ingenieur", dauer: 1.5, text: "An engineer's quick repair: a ratchet wrench clicking fast, a gear whirring up and a mechanical clunk locking into place, no music, no voices" },
   { name: "klasse-gelehrter", dauer: 1.5, text: "A powerful spell from an old book: pages flipping rapidly in a gust, then a deep resonant magical thump, no music, no voices" },
-  /* FASSUNG 751 — XANDER (Funk 182): „fürs hacken im Bergwerk gibt's nur einen schwachen Sound das müsste er so ein klingen
-     sein für so eine Spitzhacke gegen Stein"; (Funk 183): „Der Sound für das Kühe melken bzw für das Milch abholen könnte ein
-     eigener sein z.B das Muhen von einer Kuh". */
-  { name: "spitzhacke", dauer: 1.2, text: "A steel pickaxe striking hard rock in a mine: one bright metallic clink ringing on stone with small rock chips falling, close, no music, no voices" },
-  { name: "kuhmuh", dauer: 2, text: "A single dairy cow mooing warmly in a barn, a long friendly moo, close microphone, no music, no voices" },
 ];
 
 function schlafen(ms) { return new Promise((f) => setTimeout(f, ms)); }
@@ -274,14 +269,8 @@ async function holen(g) {
   }
   console.log("\n" + neu + " neu erzeugt, " + fehler + " Fehler.");
   /* Die Liste fuer die Seite schreiben — wie bei den Aufnahmen. */
-  /* FASSUNG 751 — die Liste wird ERGÄNZT, nicht ersetzt: viele Töne kommen aus anderen Werkzeugen (…-bauen.py, Tier-
-     stimmen). Früher schrieb dieses Skript nur seine eigenen Namen hinein – beim Holen von zwei neuen Geräuschen wären 294
-     andere (auch „graben", „axttreffer") verschwunden. Sonde 643 hat es gemerkt. */
-  let alt = [];
-  try { const m = /DMA_GERAEUSCHE = "([^"]*)"/.exec(fs.readFileSync(path.join(WURZEL, "data-geraeusche.js"), "utf8")); if (m && m[1]) alt = m[1].split("|"); } catch (e) {}
-  const da = alt.filter((n) => fs.existsSync(path.join(ZIEL, n + ".opus")))
-    .concat(GERAEUSCHE.filter((g) => fs.existsSync(path.join(ZIEL, g.name + ".opus"))).map((g) => g.name))
-    .filter((n, i, l) => l.indexOf(n) === i);
+  const da = GERAEUSCHE.filter((g) => fs.existsSync(path.join(ZIEL, g.name + ".opus")))
+    .map((g) => g.name);
   fs.writeFileSync(path.join(WURZEL, "data-geraeusche.js"),
     "/* =========================================================\n"
     + "   WELCHE ECHTEN GERAEUSCHE ES GIBT\n"

@@ -2723,9 +2723,3 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
    scrollt, zeigt die Liste jetzt alles in voller Höhe. */
 .sp-schnellmenue .sp-troph-liste { max-height: none; overflow: visible; }
 .sp-schnellmenue .sp-dorf-auf { margin-top: 8px; }
-/* FASSUNG 751 — ein Werkzeug-Knopf statt zwei (Funk 181): Werkzeug groß, unten rechts ein kleines ⇄. */
-.sp-schnell .sp-s-graben.sp-s-wwahl { position: relative; }
-.sp-schnell .sp-s-graben .sp-s-tausch { position: absolute; right: -2px; bottom: -2px; width: 15px; height: 15px; border-radius: 50%;
-  background: #2b3242; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 1.5px #fff; pointer-events: none; }
-.sp-schnell .sp-s-graben .sp-s-tausch svg { width: 10px !important; height: 10px !important; }
-.sp-schnell .sp-s-graben.sp-offen { box-shadow: 0 0 0 2px #f2c230; }

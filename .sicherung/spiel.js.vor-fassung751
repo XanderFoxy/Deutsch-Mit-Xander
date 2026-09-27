@@ -284,7 +284,7 @@
     "laserrot", "lasertreffer", "bonk", "krugklirr", "brezelknack", "wurstklatsch", "krautmatsch", "spaetzlesalve", "katapult4", "doenerklatsch",
     "mgsalve", "lasersalve", "monsterbiss", "drachenfeuer", "chihuahuaknurr", "bisszerren", "stachelstich", "fluegelschlag", "geschuetzfeuer",
     "zauberpuff", "zauberrad", "schmerzaumann", "schmerzaufrau", "schmerzautschmann", "schmerzautschfrau", "trankschluck", "gong", "geschenk", "kasse", "wischer", "explosion2", "eiknack", "huhnwurf", "huhntreffer", "axttreffer", "swoosh", "platsch",
-    "hundbellen", "fuchskeckern", "babyfuchs", "einhorn", "phoenix", "feenzauber", "monsterbiss2", "drachenpuste", "erdbeben", "orkan", "brezelknack", "muecken", "kaffeeklatsch", "hexenschuss", "gartenzwerg", "stempel", "spitzhacke", "kuhmuh"];
+    "hundbellen", "fuchskeckern", "babyfuchs", "einhorn", "phoenix", "feenzauber", "monsterbiss2", "drachenpuste", "erdbeben", "orkan", "brezelknack", "muecken", "kaffeeklatsch", "hexenschuss", "gartenzwerg", "stempel"];
   function klangKontext() {
     if (KLANG.ctx) return KLANG.ctx;
     var AC = window.AudioContext || window.webkitAudioContext;
@@ -3784,13 +3784,9 @@
       + '<svg viewBox="0 0 20 20"><path d="M3 8 H6 L10 4.5 V15.5 L6 12 H3 Z" fill="#fff"/><path d="M13 7.5 L17.5 12.5 M17.5 7.5 L13 12.5" stroke="#ff8a80" stroke-width="2" stroke-linecap="round"/></svg></button>');
     /* FASSUNG 677 — das Werkzeug in der Hand (Tipp: weglegen) und daneben ⇄ für die Werkzeugwahl. */
     /* Gleich hinter dem Controller: auf dem Telefon war es am Ende der Leiste abgeschnitten. */
-    /* FASSUNG 751 — XANDER (Funk 181): „dann kommt ja unten in diesen taschenmenü diese zwei Pfeile wo man dann das Instrument
-       tauschen kann … aber gleichzeitig ist auch das aktive Werkzeug ein Lehrer Button … dieser Button musste dort auch gar
-       nicht auftauchen … das ist doppelt gemoppelt". Jetzt EIN Knopf: das Werkzeug in der Hand mit einem kleinen ⇄ – er öffnet
-       die Werkzeugwahl, dort steht auch „Weglegen". */
-    if (S.graben) teile.splice(1, 0, '<button type="button" class="sp-s-graben sp-s-wwahl sp-an sp-wz-' + S.werkzeug + (S.wwahl ? " sp-offen" : "") + '" data-s="werkzeug" title="'
-      + WERKZEUGE[S.werkzeug].name + ' – tippen: wechseln oder weglegen">' + werkzeugSvg(S.werkzeug)
-      + '<i class="sp-s-tausch"><svg viewBox="0 0 20 20"><path d="M4 7 H15 L12 4 M16 13 H5 L8 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i></button>');
+    if (S.graben) teile.splice(1, 0, '<button type="button" class="sp-s-graben sp-an sp-wz-' + S.werkzeug + '" data-s="graben" title="' + WERKZEUGE[S.werkzeug].name + ' weglegen">' + werkzeugSvg(S.werkzeug) + "</button>"
+      + '<button type="button" class="sp-s-wwahl' + (S.wwahl ? " sp-an" : "") + '" data-s="werkzeug" title="Werkzeug wechseln">'
+      + '<svg viewBox="0 0 20 20"><path d="M4 7 H15 L12 4 M16 13 H5 L8 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>');
     /* FASSUNG 679 — das abgelegte Spielfenster liegt griffbereit in der Leiste. */
     if (S.panelAbgelegt) teile.splice(1, 0, '<button type="button" class="sp-s-fenster sp-an" data-s="fensterauf" title="Spielfenster wieder öffnen">'
       + '<svg viewBox="0 0 20 20"><rect x="3" y="9" width="14" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 6 L10 2.8 L13.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>');
@@ -4627,8 +4623,7 @@
       });
       return;
     } else if (s === "melken") {
-      /* FASSUNG 751 — XANDER (Funk 183): „Der Sound für das Kühe melken … könnte ein eigener sein z.B das Muhen von einer Kuh". */
-      wirtschaft("spiel_melken", {}, function (r) { ton("kuhmuh", 0.5); setTimeout(function () { ton("eimerfuellen", 0.3); }, 900); hinweis("🥛 +" + r.menge + " Milch gemolken (" + vorrat(r, "milch") + " im Lager) – für Torten in der Bäckerei."); });
+      wirtschaft("spiel_melken", {}, function (r) { ton("eimerfuellen", 0.45); hinweis("🥛 +" + r.menge + " Milch gemolken (" + vorrat(r, "milch") + " im Lager) – für Torten in der Bäckerei."); });
       return;
     } else if (s === "eier") {
       eierAlle(); return;
@@ -7450,9 +7445,7 @@
     var wz = ort === "jagd" ? "jagd" : "hacke", st = platzHilfeStand(nr, wz);
     if (!st.reif) { hinweis(ort === "jagd" ? "🦌 Das Reh ist geflüchtet – gleich kommt ein neues (" + uhrText(st.rest) + ")." : "⛏️ Hier ist das Erz abgebaut – such dir einen anderen Fels (" + uhrText(st.rest) + ")."); return; }
     if (ort === "jagd") { jagdZeigen(knopf); setTimeout(function () { ton("schuss", 0.45); }, 260); }
-    /* FASSUNG 751 — XANDER (Funk 182): „das müsste er so ein klingen sein für so eine Spitzhacke gegen Stein". Der Klang
-       setzt sofort ein (kein Vorlauf in der Datei); die Hacke schlägt nach 0,5 s auf – also dann. */
-    else { hackeZeigen(knopf); setTimeout(function () { ton("spitzhacke", 0.6); }, 480); }
+    else { hackeZeigen(knopf); setTimeout(function () { ton("hammerschlag", 0.5); }, 180); }
     S.platzHilfe = S.platzHilfe || {}; S.platzHilfe[wz + nr] = Date.now();
     setTimeout(ackerPflegen, 650);
     truppHelfen(knopf, ort, true);
@@ -7894,7 +7887,7 @@
     if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
     if (S.truppHilftBis && S.truppHilftBis > Date.now()) return;
     S.truppHilftBis = Date.now() + 300;
-    if (!stumm) ton(ort === "wald" ? "axttreffer" : ort === "berg" ? "spitzhacke" : ort === "jagd" ? "schuss" : "pling", ort === "berg" ? 0.55 : 0.35);
+    if (!stumm) ton(ort === "wald" ? "axttreffer" : ort === "berg" ? "hammerschlag" : ort === "jagd" ? "schuss" : "pling", 0.35);
     if (knopf) { var f = document.createElement("i"); f.className = "sp-dl-finger"; knopf.appendChild(f); setTimeout(function () { f.remove(); }, 650); }
     rpc("spiel_trupp_helfen", { p_ort: ort }).then(function (r) {
       if (!r || !r.ok) { if (r && r.grund && r.grund !== "langsam") hinweis("🚶 " + r.grund + (r.sek ? " (" + uhrText(r.sek * 1000) + ")" : "") + "."); return; }
@@ -10960,7 +10953,7 @@
       var st = stallBereit(ich, g);
       if (st && st.bereit) {
         if (g === "huehnerstall") eierAlle();
-        else wirtschaft("spiel_melken", {}, function (r) { ton("kuhmuh", 0.5); setTimeout(function () { ton("eimerfuellen", 0.3); }, 900); hinweis("🥛 +" + r.menge + " Milch gemolken (" + vorrat(r, "milch") + " im Lager) – für Torten in der Bäckerei."); });
+        else wirtschaft("spiel_melken", {}, function (r) { ton("eimerfuellen", 0.45); hinweis("🥛 +" + r.menge + " Milch gemolken (" + vorrat(r, "milch") + " im Lager) – für Torten in der Bäckerei."); });
         return true;
       }
     }

@@ -389,6 +389,15 @@ const sage = (gut, was, zusatz) => {
   r = await pg.evaluate(() => ({ h: window.__helfArgs, flucht: !!document.querySelector("#lcPlaetze .sp-acker-jagd.sp-acker-waechst"), hinweis: window.__hinweise.slice(-1)[0] || "" }));
   sage(r.h && r.h.p_ort === "jagd" && r.flucht, "Tipp aufs Reh: Schuss mit der eigenen Waffe, hilft den Jägern, das Reh flüchtet", JSON.stringify(r));
   sage(/hilfst den Jägern/.test(r.hinweis), "richtiger Dativ: „Du hilfst den Jägern“", r.hinweis);
+  /* FASSUNG 751 (Funk 181: „doppelt gemoppelt"): EIN Werkzeug-Knopf mit kleinem ⇄. */
+  r = await pg.evaluate(() => ({ eins: document.querySelectorAll(".sp-schnell .sp-s-reihe > .sp-s-graben").length, tausch: !!document.querySelector(".sp-schnell .sp-s-graben .sp-s-tausch"), extra: document.querySelectorAll(".sp-schnell .sp-s-reihe > .sp-s-wwahl:not(.sp-s-graben)").length }));
+  sage(r.eins === 1 && r.tausch && r.extra === 0, "751: nur noch ein Werkzeug-Knopf (Werkzeug mit ⇄), kein zweiter daneben", JSON.stringify(r));
+  /* FASSUNG 751 (Funk 182): „so ein klingen … für so eine Spitzhacke gegen Stein". */
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.werkzeug = "hacke"; S.platzHilfe = {}; S.truppHilftBis = 0; window.DMA_TONLOG && (window.DMA_TONLOG.length = 0); P.schnellZeichnen(true); P.ackerPflegen && P.ackerPflegen(); });
+  await tick(400);
+  await tippe('#lcPlaetze .lc-platz:nth-child(7) .lc-kreis'); await tick(900);
+  r = await pg.evaluate(() => (window.DMA_TONLOG || []).map((x) => x.name || x).join(","));
+  sage(/spitzhacke/.test(r), "751: Hauen klingt nach Spitzhacke gegen Stein", r);
   if (process.env.BILD) { await pg.evaluate(() => document.getElementById("lcPlaetze").scrollIntoView({ block: "center" })); await tick(300); await (await pg.$("#lcPlaetze")).screenshot({ path: process.env.BILD + "-wild.png" }); }
   await pg.evaluate(() => { const b = document.createElement("button"); b.type = "button"; b.dataset.s = "truppgrafisch"; const sc = document.querySelector(".sp-schnell"); sc.appendChild(b); b.click(); });
   await tick(300);

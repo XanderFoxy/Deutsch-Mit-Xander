@@ -268,7 +268,9 @@ const sage = (gut, was, zusatz) => {
   console.log("\nSCHAUFEL WEGLEGEN\n");
   const weg = await pg.evaluate(() => {
     const P = window.DMA_SPIEL.pruef, S = P.zustand();
+    /* 751: der Werkzeug-Knopf öffnet die Wahl, dort steht „Weglegen". */
     document.querySelector('.sp-schnell .sp-s-graben').click();
+    const wegK = document.querySelector('.sp-werkzeugwahl .sp-ww-weg'); if (wegK) wegK.click();
     const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="7"]');
     window.__rufe = [];
     const genommen = P.tippAufPlatz(k, { nummer: 7, leer: true }, null);

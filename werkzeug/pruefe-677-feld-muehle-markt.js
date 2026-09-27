@@ -268,7 +268,7 @@ const sage = (gut, was, zusatz) => {
     return { da: Boolean(w), knoepfe: w ? [...w.querySelectorAll('[data-s="werkzeugsetzen"]')].map((b) => b.dataset.w).join(",") : "", weg: Boolean(w && w.querySelector(".sp-ww-weg")),
       rect: r ? [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)] : null, imBild: r ? r.left >= 0 && r.right <= innerWidth && r.top >= 0 : false, ernten: window.__rufe.filter((x) => x.name === "spiel_ernten").length };
   });
-  sage(wahl.da && wahl.knoepfe === "schaufel,sense,saat,duenger,axt,angel" && wahl.weg, "2× schnell auf denselben Platz öffnet die Werkzeugwahl (Schaufel, Sense, Saat, Dünger, Axt, Angel, Weglegen)", JSON.stringify(wahl));
+  sage(wahl.da && wahl.knoepfe === "schaufel,sense,saat,duenger,axt,angel,jagd,hacke" && wahl.weg, "2× schnell auf denselben Platz öffnet die Werkzeugwahl (Schaufel, Sense, Saat, Dünger, Axt, Angel, seit 750 Jagen und Spitzhacke, Weglegen)", JSON.stringify(wahl));
   if (process.env.BILD) { await tick(700); console.log("   (Bild) " + await pg.evaluate(() => { const w = document.querySelector(".sp-schnell .sp-werkzeugwahl"); if (!w) return "weg"; const r = w.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top), Math.round(r.right), getComputedStyle(w).opacity, w.style.transform].join(" "); })); await pg.screenshot({ path: process.env.BILD + "-wahl.png" }); }
   sage(wahl.imBild, "die Werkzeugwahl passt ganz auf den Bildschirm (360 px)", JSON.stringify(wahl));
   sage(wahl.ernten === 1, "der erste Tipp hat trotzdem sofort gemäht (keine Wartezeit)", String(wahl.ernten));
@@ -293,10 +293,13 @@ const sage = (gut, was, zusatz) => {
   await tippePlatz(nr1, 800);
   const s3 = await pg.evaluate(() => ({ getreide: window.DMA_SPIEL.pruef.zustand().ich.vorraete.getreide, meld: window.__hinweise.slice(-3).filter((h) => !/Tagesgeschenk|Übungen auf der Seite/.test(h)).slice(-1)[0] || "" }));
   sage(/\+5 Getreide/.test(s3.meld) && /volle Ernte/.test(s3.meld), "nach 4 Minuten: das gesäte Feld bringt 5 Getreide", JSON.stringify(s3));
+  /* 751: ein Werkzeug-Knopf – er öffnet die Wahl, dort „Weglegen". */
   await tippe(".sp-schnell .sp-s-graben");
   await tick(300);
+  await tippe(".sp-werkzeugwahl .sp-ww-weg");
+  await tick(300);
   const weg = await pg.evaluate(() => ({ an: window.DMA_SPIEL.pruef.zustand().graben, felder: document.querySelectorAll("#lcPlaetze .sp-acker").length }));
-  sage(!weg.an && weg.felder === 0, "Werkzeug in der Leiste antippen: weggelegt, die Felder verschwinden", JSON.stringify(weg));
+  sage(!weg.an && weg.felder === 0, "Werkzeug in der Leiste → „Weglegen“: weggelegt, die Felder verschwinden", JSON.stringify(weg));
 
   console.log("\nMÜHLE, BÄCKEREI, MARKT\n");
   const dorf = async () => { await pg.evaluate(() => { const Q = window.DMA_SPIEL.pruef, S = Q.zustand(); S.ich = Object.assign({}, window.__ich, S.ich); S.schnellMenue = true; S.schnellReiter = "dorf"; Q.schnellZeichnen(true); }); await tick(200); };
