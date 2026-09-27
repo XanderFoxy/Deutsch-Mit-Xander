@@ -578,10 +578,6 @@ window.Rueckfrage = (function () {
         setTimeout(function () { if (diktat && diktat.mik === mik) { diktat.wartet = false; try { mik.start(); } catch (e) { diktatEnde("Die Spracherkennung lie\u00df sich nicht starten."); } } }, 700);
         return;
       }
-      /* FASSUNG 724 — Funk 171 (automatisch, Samsung Internet): „aborted" nach 41 s, die Erkennung lief und hatte schon
-         Wörter geliefert. Das ist kein Defekt – Samsung beendet lange Diktate so. Der Text bleibt stehen, keine
-         Fehlermeldung, kein Bericht. */
-      if (w === "aborted" && diktat.gehoert) { diktatEnde(); return; }
       diktat.fehler = w;
       /* „no-speech" ist kein Defekt — er hat nur (noch) nichts gesagt. */
       /* Mit Zustand, damit man den Fall erkennt: geliehen = Livestream-Mikro abgegeben, an = Erkennung lief schon,

@@ -45,8 +45,7 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   await pg.evaluate((ich) => {
     window.__rufe = [];
     const klient = { rpc: (name, args) => { window.__rufe.push({ name, args: args || {} });
-      const data = name === "spiel_ich" ? ich : name === "spiel_stand" ? [ich] : name === "spiel_aufgabe" ? { ok: true, id: 1, frage: "Der ___ Hund.", optionen: ["a", "b"], niveau: "A1" }
-        : name === "spiel_lernstand" ? { praepositionen: { n: 10, r: 4 }, modalverben: { n: 8, r: 8 } } : { ok: true };
+      const data = name === "spiel_ich" ? ich : name === "spiel_stand" ? [ich] : name === "spiel_aufgabe" ? { ok: true, id: 1, frage: "Der ___ Hund.", optionen: ["a", "b"], niveau: "A1" } : { ok: true };
       return Promise.resolve({ data, error: null }); } };
     window.DMA_SPIEL.pruef.setzen({ klient, bereit: true, versucht: true, uid: ich.id, ich, stand: { [ich.id]: ich }, letzterAbruf: Date.now() });
     window.DMA_SPIEL.aufgabe();
@@ -64,31 +63,15 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     return out;
   }, [art, n]);
   const schwach = await ziehen("schwach", 40);
-  /* Ab Fassung 724 zählt auch die gemessene Schwäche (Präpositionen 4/10 aus spiel_lernstand). */
-  const nurSchwach = schwach.every((k) => k === null || k === "artikel" || k === "faelle" || k === "praepositionen");
-  const anteil = schwach.filter((k) => k !== null).length;
-  sage(nurSchwach && anteil >= 20, "Schwächen: nur Artikel/Fälle (angekreuzt) und Präpositionen (gemessen) – ab und zu (≈25 %) eine gemischte Frage", anteil + " von 40 gezielt · " + JSON.stringify(schwach.slice(0, 8)));
+  const nurSchwach = schwach.every((k) => k === null || k === "artikel" || k === "faelle");
+  const anteil = schwach.filter((k) => k === "artikel" || k === "faelle").length;
+  sage(nurSchwach && anteil >= 20, "Schwächen: nur Artikel/Fälle – ab und zu (≈25 %) eine gemischte Frage", anteil + " von 40 gezielt · " + JSON.stringify(schwach.slice(0, 8)));
   const stark = await ziehen("stark", 12);
   sage(stark.every((k) => k === "modalverben"), "Stärken (leichter): nur Modalverben", JSON.stringify(stark.slice(0, 6)));
   const gemischt = await ziehen("gemischt", 8);
   sage(gemischt.every((k) => k === null), "Gemischt: keine Kategorie vorgegeben", JSON.stringify(gemischt.slice(0, 4)));
   const gemerkt = await pg.evaluate(() => localStorage.getItem("dma_spiel_fragenart"));
   sage(gemerkt === "gemischt", "die Wahl bleibt gemerkt", gemerkt);
-  console.log("\nFASSUNG 724: DIE TABELLE IM SPIEL, GEMESSENE SCHWÄCHEN\n");
-  r = await pg.evaluate(async () => {
-    window.__gesetzt = []; Backend.updateExtraProfileField = (feld, wert) => { window.__gesetzt.push([feld, wert]); return Promise.resolve(); };
-    const k = document.querySelector('[data-tu="lernprofilauf"]'); if (!k) return null; k.click(); await new Promise((o) => setTimeout(o, 400));
-    const zeilen = [...document.querySelectorAll(".sp-lern-zeile")];
-    const praep = zeilen.find((z) => z.querySelector('[data-k="praepositionen"]'));
-    const erg = { zeilen: zeilen.length, messung: praep ? praep.querySelector(".sp-lern-mess").textContent : "", gemessen: praep ? (praep.querySelector(".sp-gemessen") || {}).dataset?.r : "",
-      artikelKreuz: (document.querySelector('[data-k="artikel"].sp-an') || {}).dataset?.r };
-    document.querySelector('[data-tu="lernsetzen"][data-k="faelle"][data-r="stark"]').click(); await new Promise((o) => setTimeout(o, 200));
-    erg.gesetzt = window.__gesetzt.slice(-1)[0];
-    return erg; });
-  sage(r && r.zeilen >= 20 && /4\/10 richtig/.test(r.messung) && r.gemessen === "schwach" && r.artikelKreuz === "schwach", "„Meine Stärken & Schwächen“: Tabelle wie in den Einstellungen, mit Messung (Präpositionen 4/10 → schwach)", JSON.stringify(r));
-  sage(r && r.gesetzt && r.gesetzt[0] === "learningProfile" && r.gesetzt[1].faelle === "stark", "ein Kreuz im Spiel speichert ins Lernprofil des Kontos", JSON.stringify(r && r.gesetzt));
-  const gemessen = await ziehen("schwach", 40);
-  sage(gemessen.some((k) => k === "praepositionen"), "gemessene Schwäche (ohne Kreuz) wird auch gefragt", JSON.stringify([...new Set(gemessen)]));
   sage(!seitenFehler.length, "keine Seitenfehler", seitenFehler.slice(0, 2).join(" | "));
   await br.close(); srv.close();
   console.log("\nFassung 722 (Fragen nach Lernprofil): " + (fehler ? fehler + " rot." : "alles grün."));

@@ -295,32 +295,6 @@ const sage = (gut, was, zusatz) => {
   sage(r.laterne[0] > 180 && r.laterne[0] > r.laterne[2] + 40, "die Laternen brennen warm", JSON.stringify(r.laterne));
   sage(r.overlay === "none", "keine blaue Schicht mehr über dem ganzen Bild", r.overlay);
   await bild("nacht");
-
-  console.log("\nFASSUNG 724: LICHTER IN DER NACHT, WETTER DER EIGENEN STADT (Funk 172/168)\n");
-  /* „nachts ja normalerweise die Menschen schlafen es muss nicht jedes Fensterlicht an sein" */
-  r = await pg.evaluate(() => { const alle = [...document.querySelectorAll(".sp-dl-ueber .sp-dl-fl")], haus = alle.filter((e) => e.dataset.h !== "bahnhof");
-    return { alle: alle.length, bahnhof: alle.length - haus.length, an: haus.filter((e) => e.classList.contains("sp-an")).length, haus: haus.length, tueren: document.querySelectorAll(".sp-dl-ueber .sp-dl-tl").length,
-      hell: getComputedStyle(document.querySelector(".sp-dl-ueber")).filter }; });
-  sage(r.haus >= 20 && r.bahnhof >= 2 && r.an < r.haus && r.hell === "none", "Fenster sind eigene Lichter (Häuser und Bahnhof), nicht alle brennen", JSON.stringify(r));
-  const takt = await pg.evaluate(async () => { const P = window.DMA_SPIEL.pruef; const vor = [...document.querySelectorAll(".sp-dl-fl")].map((e) => e.classList.contains("sp-an") ? 1 : 0).join("");
-    const zR = Math.random; let n = 0; Math.random = () => { n++; return 0.01; }; P.dorfLichterTakt(false); Math.random = zR;
-    const nach = [...document.querySelectorAll(".sp-dl-fl")].map((e) => e.classList.contains("sp-an") ? 1 : 0).join(""); return { anders: vor !== nach, n }; });
-  sage(takt.anders, "im Lauf der Nacht gehen Lichter an und aus", JSON.stringify(takt));
-  /* Wetter: die Stadt heißt wie ein echter Ort → dessen Wetter; ausgedachter Name → eigener Ort, aber der Stadtname im Schild. */
-  r = await pg.evaluate(async () => {
-    const P = window.DMA_SPIEL.pruef, S = P.zustand(), echt = window.fetch;
-    delete S.wetterTest; window.DMA_WETTER = Object.assign(window.DMA_WETTER || {}, { jetzt: { code: 0, tag: false, temp: 9, ort: "Döbeln" } });
-    window.fetch = (url) => Promise.resolve({ ok: true, json: () => Promise.resolve(/geocoding/.test(url)
-      ? (/K%C3%B6ln/.test(url) ? { results: [{ name: "Köln", latitude: 50.94, longitude: 6.96, country_code: "DE", population: 1000000 }] } : { results: [{ name: "Döbeln", latitude: 51.1, longitude: 13.1, country_code: "DE" }] })
-      : { current: { weather_code: 63, is_day: 0, temperature_2m: 12.4 } }) });
-    try { localStorage.removeItem("dma_stadt_geo:köln"); localStorage.removeItem("dma_stadt_geo:neu-döbeln"); } catch (e) {}
-    const schild = async (name) => { S.ich = Object.assign({}, S.ich, { dorf_name: name }); P.stadtWetterNeu(); P.schnellZeichnen(true); await new Promise((o) => setTimeout(o, 300)); P.schnellZeichnen(true); await new Promise((o) => setTimeout(o, 200)); return (document.querySelector(".sp-dw-schild") || {}).textContent || ""; };
-    const koeln = await schild("Köln"), fiktiv = await schild("Neu-Döbeln");
-    window.fetch = echt; S.wetterTest = { code: 0, tag: false, temp: 9, ort: "Döbeln" };
-    return { koeln, fiktiv };
-  });
-  sage(/Regen/.test(r.koeln) && /12°/.test(r.koeln) && /Köln/.test(r.koeln) && !/Döbeln/.test(r.koeln), "Stadt „Köln“: echtes Wetter von Köln im Schild", r.koeln);
-  sage(/Neu-Döbeln/.test(r.fiktiv) && /9°/.test(r.fiktiv) && !/· Döbeln/.test(r.fiktiv), "ausgedachter Name: Wetter vom eigenen Ort, aber der Stadtname im Schild (nicht „Döbeln“)", r.fiktiv);
   sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
   console.log("\nFassung 711 (Dorf-Bedienung): " + (fehler ? fehler + " rot." : "alles grün."));
   await br.close(); srv.close();

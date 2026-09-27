@@ -5999,7 +5999,6 @@
              da ist: nichts springt, nichts muss gescrollt werden. */
           + '<div class="sp-erg-platz' + (a.ergebnis ? (a.ergebnis.richtig ? " sp-erg-gut" : " sp-erg-schlecht") : "") + '">'
           + (a.ergebnis ? '<div class="sp-erg-zeile"><b>' + (a.ergebnis.richtig ? "Richtig! +" + (a.ergebnis.gewonnen + (a.ergebnis.bonus || 0)) : "Leider falsch") + "</b>"
-              + (a.ergebnis.richtig && a.ergebnis.mut ? ' <span class="sp-mut" title="Extra-Punkte, weil dir dieser Bereich schwerfällt">davon +' + a.ergebnis.mut + " Mut-Bonus (" + (a.ergebnis.mut_art === "schwach" ? "Schwäche" : "fast geschafft") + ")</span>" : "")
               + (a.ergebnis.richtig && a.ergebnis.mana_plus ? ' <span class="sp-blau">+' + a.ergebnis.mana_plus + " Mana</span>" : "")
               + (a.ergebnis.richtig && a.ergebnis.xp_plus ? ' <span class="sp-gold">+' + a.ergebnis.xp_plus + " EP</span>" : "")
               + (a.ergebnis.bonus ? ' <span class="sp-gold">Mission +' + a.ergebnis.bonus + "</span>" : "")
@@ -6053,7 +6052,7 @@
             var n = f[0] === "gemischt" ? 0 : fragenArten(f[0]).length;
             return '<button type="button" data-tu="fragenart" data-f="' + f[0] + '" class="' + (fragenArt() === f[0] ? "sp-an" : "") + '" title="'
               + (f[0] === "gemischt" ? "aus allen Arten" : n ? n + " Arten aus deinen Einstellungen" : "In den Einstellungen der Seite ist noch nichts als " + f[0] + " markiert") + '">' + f[1] + (f[0] !== "gemischt" ? " (" + n + ")" : "") + "</button>";
-          }).join("") + "</div>" + lernprofilHtml() + "</div>";
+          }).join("") + "</div></div>";
       return teil + (hatAufgabe && !(a && a.frage && !a.ergebnis && !a.hinweis) ? deutschKnoepfe() : "") + missionTeil + wahl + regel;
     }
     if (reiter === "koennen") {
@@ -6288,15 +6287,6 @@
     if (tu === "neuwahl") { S.deutschWahl = !S.deutschWahl; panelAuffrischen();
       if (S.deutschWahl) { var wz = panel.querySelector(".sp-deutsch-wahl"); if (wz) try { wz.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {} }
       return; }
-    if (tu === "lernprofilauf") { S.lernAuf = !S.lernAuf; ton("holzklopf", 0.15); if (S.lernAuf) lernstandHolen(); panelAuffrischen(); return; }
-    if (tu === "lernsetzen") {
-      var bl = window.DMA_SPIEL_BRUECKE, lk = k.dataset.k, lr = k.dataset.r;
-      if (lernprofil()[lk] === lr) lr = "";
-      ton("holzklopf", 0.2);
-      if (bl && bl.lernSetzen) Promise.resolve(bl.lernSetzen(lk, lr)).then(function () { panelAuffrischen(); }).catch(function () { hinweis("Das Lernprofil ließ sich gerade nicht speichern."); });
-      else hinweis("Das Lernprofil gibt es nur mit Konto.");
-      return;
-    }
     if (tu === "fragenart") { S.fragenArt = k.dataset.f; try { localStorage.setItem("dma_spiel_fragenart", S.fragenArt); } catch (e) {} ton("holzklopf", 0.2); aufgabeHolen(false); return; }
     if (tu === "niveau") { S.niveau = k.dataset.n; try { localStorage.setItem("dma_spiel_niveau", S.niveau); } catch (e) {} deutschNachOben(); aufgabeHolen(false); return; }
     if (tu === "aufgabe") return aufgabeHolen(false);
@@ -8822,7 +8812,7 @@
      einen Lichtkegel: in ihm liegt das Bild so, wie es am Tag gemalt ist – nur warm gefärbt –, also mit allen Balken,
      Fenstern und Ziegeln. Außerhalb bleibt es Nacht. Der Kegel selbst ist als feiner Schein in der Luft zu sehen. */
   /* FASSUNG 723 — Funk 169: „der Bahnhof braucht dann auch noch entsprechende Beleuchtung": eine Laterne am Bahnsteig. */
-  var DM_WEGLATERNEN = [[137, 111], [178, 128], [120, 150], [128, 57], [72, 57]];
+  var DM_WEGLATERNEN = [[137, 111], [178, 128], [120, 150], [128, 57]];
   function dmLaternenOrte(dorf, lage) {
     var orte = [];
     Object.keys(lage || {}).forEach(function (k) {
@@ -8903,70 +8893,32 @@
     });
     g.restore();
   }
-  /* FASSUNG 724 — XANDER (Funk 172): „nachts ja normalerweise die Menschen schlafen es muss nicht jedes Fensterlicht an
-     sein das können bei Leuten sein die nachts noch auf die Spätschicht müssen … wenn nachts noch jemand auf Toilette
-     muss … jemand muss auf Nachtschicht muss früh raus … da ist dann in der Küche noch Licht … jemand da ist eine
-     Nachteule … bisschen so Zufälligkeit wie im echten Leben". Die Fensterlichter sind nicht mehr ins Bild gemalt,
-     sondern liegen als eigene kleine Lichter darüber und gehen im Lauf der Nacht an und aus: abends noch viele, gegen
-     Mitternacht wenige, tief in der Nacht fast keine – bis auf die Nachteule und das kurze Licht, wenn jemand aufsteht;
-     ab vier Uhr die Küche der Frühschicht. Am Bahnhof ist länger Dienst. */
-  function dmLichterHtml(licht, s) {
-    if (!licht) return "";
-    var h = "", std = new Date().getHours();
-    function box(pt) {
-      var xs = pt.map(function (p) { return p[0] / s; }), ys = pt.map(function (p) { return p[1] / s; });
-      var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
-      var w = Math.max(.01, x1 - x0), hh = Math.max(.01, y1 - y0);
-      return { x0: x0, y0: y0, w: w, h: hh, poly: pt.map(function (p) { return ((p[0] / s - x0) / w * 100).toFixed(0) + "% " + ((p[1] / s - y0) / hh * 100).toFixed(0) + "%"; }).join(",") };
-    }
-    licht.fenster.forEach(function (f, i) {
-      if (f.aus) return;
-      var b = box(f.pt);
-      h += '<i class="sp-dl-fl" data-i="' + f.haus + i + '" data-h="' + f.haus + '" style="left:' + (b.x0 / 3.2).toFixed(3) + "%;top:" + (b.y0 / 2).toFixed(3) + "%;width:" + (b.w / 3.2).toFixed(3) + "%;height:" + (b.h / 2).toFixed(3) + "%;clip-path:polygon(" + b.poly + ')"></i>';
+  /* Licht aus den Häusern: etwa zwei von drei Fenstern leuchten warm von innen (je Haus immer dieselben), über jeder
+     zweiten Tür brennt die Hauslampe mit einem kleinen Schein auf die Schwelle. Kaputte Häuser bleiben dunkel. */
+  function dmHauslicht(g, s) {
+    var L = DM.licht; if (!L) return;
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
+    L.fenster.forEach(function (f, i) {
+      if (f.aus || dmHash(i, 3, 723) > .66) return;
+      var p = f.pt, x0 = Math.min(p[0][0], p[3][0]), x1 = Math.max(p[1][0], p[2][0]), y0 = Math.min(p[0][1], p[1][1]), y1 = Math.max(p[2][1], p[3][1]);
+      var lg = g.createLinearGradient(x0, y0, x0, y1); lg.addColorStop(0, "rgba(255,226,150,.95)"); lg.addColorStop(1, "rgba(236,150,60,.92)");
+      g.globalCompositeOperation = "source-over"; g.fillStyle = lg; g.beginPath(); g.moveTo(p[0][0], p[0][1]); for (var j = 1; j < 4; j++) g.lineTo(p[j][0], p[j][1]); g.closePath(); g.fill();
+      /* Fensterkreuz bleibt als Schatten sichtbar. */
+      g.strokeStyle = "rgba(60,30,10,.55)"; g.lineWidth = Math.max(.6, (x1 - x0) * .09); g.beginPath(); g.moveTo((x0 + x1) / 2, y0); g.lineTo((x0 + x1) / 2, y1); g.moveTo(x0, y0 + (y1 - y0) * .45); g.lineTo(x1, y0 + (y1 - y0) * .45); g.stroke();
+      g.globalCompositeOperation = "lighter"; var r = Math.max(x1 - x0, y1 - y0) * 1.3, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      var gl = g.createRadialGradient(cx, cy, 0, cx, cy, r); gl.addColorStop(0, "rgba(255,190,90,.22)"); gl.addColorStop(1, "rgba(255,170,70,0)"); g.fillStyle = gl; g.fillRect(cx - r, cy - r, r * 2, r * 2);
     });
-    /* Hauslampe über der Tür: am Abend bei knapp der Hälfte, in der Nacht bei wenigen (Bewegungsmelder aus). */
-    var tuerAnteil = std >= 22 || std < 5 ? .2 : .45;
-    licht.tueren.forEach(function (t, i) {
-      if (t.aus || (t.haus !== "bahnhof" && dmHash(i, 5, 723) > tuerAnteil)) return;
-      var b = box(t.pt);
-      h += '<i class="sp-dl-tl" style="left:' + ((b.x0 + b.w / 2) / 3.2).toFixed(3) + "%;top:" + ((b.y0 - .9) / 2).toFixed(3) + '%"></i>';
+    L.tueren.forEach(function (t, i) {
+      if (t.aus || dmHash(i, 5, 723) > .5) return;
+      var p = t.pt, cx = (p[0][0] + p[1][0]) / 2, ly = Math.min(p[0][1], p[1][1]) - .9 * s, fuss = Math.max(p[2][1], p[3][1]);
+      g.globalCompositeOperation = "lighter";
+      var gl = g.createRadialGradient(cx, ly, 0, cx, ly, 4.5 * s); gl.addColorStop(0, "rgba(255,210,120,.7)"); gl.addColorStop(.3, "rgba(255,180,80,.22)"); gl.addColorStop(1, "rgba(255,160,60,0)");
+      g.fillStyle = gl; g.beginPath(); g.arc(cx, ly, 4.5 * s, 0, 7); g.fill();
+      g.save(); g.translate(cx, fuss + .4 * s); g.scale(1, .35);
+      gl = g.createRadialGradient(0, 0, 0, 0, 0, 4 * s); gl.addColorStop(0, "rgba(255,190,100,.28)"); gl.addColorStop(1, "rgba(255,170,80,0)"); g.fillStyle = gl; g.beginPath(); g.arc(0, 0, 4 * s, 0, 7); g.fill(); g.restore();
+      g.globalCompositeOperation = "source-over"; g.fillStyle = "#fff0c8"; g.beginPath(); g.arc(cx, ly, .42 * s, 0, 7); g.fill();
     });
-    return h;
-  }
-  /* Wie viele Fenster gerade Licht haben sollten – nach der Uhrzeit. */
-  function dorfLichtAnteil(haus) {
-    var t = new Date(), std = t.getHours() + t.getMinutes() / 60;
-    if (haus === "bahnhof") return std >= 23 || std < 5 ? .35 : .75;
-    return std >= 16 && std < 22 ? .55 : std < 23 ? .3 : std >= 23 || std < 1 ? .15 : std < 4 ? .05 : std < 6 ? .2 : std < 9 ? .35 : .5;
-  }
-  var DL = { an: {}, puls: {}, uhr: 0 };
-  function dorfLichterTakt(erstmal) {
-    clearTimeout(DL.uhr);
-    var ueber = schnellEl && schnellEl.querySelector(".sp-dl-ueber");
-    var alle = ueber ? [].slice.call(ueber.querySelectorAll(".sp-dl-fl")) : [];
-    if (!alle.length || !dorfOffen()) return;
-    var jetzt = Date.now(), std = new Date().getHours();
-    var gruppen = {};
-    alle.forEach(function (e) { var hs = e.dataset.h === "bahnhof" ? "bahnhof" : "haus"; (gruppen[hs] = gruppen[hs] || []).push(e); });
-    Object.keys(gruppen).forEach(function (g) {
-      var liste = gruppen[g], ziel = Math.round(dorfLichtAnteil(g) * liste.length);
-      liste.forEach(function (e) {
-        var k = e.dataset.i;
-        if (DL.puls[k] && DL.puls[k] < jetzt) { delete DL.puls[k]; DL.an[k] = false; }
-        if (DL.an[k] == null) DL.an[k] = erstmal ? dmHash(liste.indexOf(e), 9, 724) < dorfLichtAnteil(g) : false;
-      });
-      /* Die Nachteule: ein Fenster bleibt bis drei Uhr hell. */
-      if (g === "haus" && (std >= 20 || std < 3)) DL.an[liste[Math.floor(dmHash(3, 3, 724) * liste.length)].dataset.i] = true;
-      var an = liste.filter(function (e) { return DL.an[e.dataset.i] && !DL.puls[e.dataset.i]; }), aus = liste.filter(function (e) { return !DL.an[e.dataset.i]; });
-      if (!erstmal) {
-        if (an.length < ziel && aus.length && Math.random() < .7) DL.an[aus[Math.floor(Math.random() * aus.length)].dataset.i] = true;
-        else if (an.length > ziel && an.length && Math.random() < .6) DL.an[an[Math.floor(Math.random() * an.length)].dataset.i] = false;
-        /* Jemand steht auf: ein Licht geht für eine Minute an. */
-        if (g === "haus" && (std >= 23 || std < 5) && aus.length && Math.random() < .22) { var p = aus[Math.floor(Math.random() * aus.length)].dataset.i; DL.an[p] = true; DL.puls[p] = jetzt + 35000 + Math.random() * 45000; }
-      }
-    });
-    alle.forEach(function (e) { e.classList.toggle("sp-an", !!DL.an[e.dataset.i]); });
-    DL.uhr = setTimeout(function () { dorfLichterTakt(false); }, 6000 + Math.random() * 3000);
+    g.restore();
   }
   function dmWolken(g) {
     [[40, 16, 1], [150, 10, .8], [236, 22, .9]].forEach(function (w) {
@@ -8981,7 +8933,6 @@
     leinwand.width = W; leinwand.height = H;
     var g = leinwand.getContext("2d"); g.setTransform(s, 0, 0, s, 0, 0); g.imageSmoothingEnabled = true;
     DM.nachtJetzt = !!nacht; DM.schneeJetzt = !!schnee;
-    DM.licht = { fenster: [], tueren: [] }; DM.hausJetzt = null;
     dmLandschaft(g, K, s); if (!nacht) dmWolken(g);
     var punkte = {};
     /* FASSUNG 722 — XANDER (Funk 167): „immer eine Laterne die hinter deinem Haus steht die die Zeit irgendwie übers Haus
@@ -8989,6 +8940,7 @@
        gemalt – eine, die weiter hinten steht, lag dadurch über dem Haus davor. Jetzt kommen Häuser und Laternen zusammen
        in eine Reihe und werden von hinten nach vorn (nach ihrem Fußpunkt) gemalt. */
     var orte = dmLaternenOrte(dorf, lage), reihe = [];
+    DM.licht = { fenster: [], tueren: [] };
     Object.keys(lage).forEach(function (k) { reihe.push({ y: lage[k][1], haus: k }); });
     orte.forEach(function (o) { reihe.push({ y: o.y, laterne: o }); });
     reihe.sort(function (a, b) { return a.y - b.y; }).forEach(function (e) {
@@ -9003,6 +8955,7 @@
       var tag = null;
       try { tag = dmKachel(leinwand.width, leinwand.height); tag.getContext("2d").drawImage(leinwand, 0, 0); } catch (e) { tag = null; }
       dmNacht(g, dorf, lage, tag, orte, s);
+      dmHauslicht(g, s);
       return punkte;
     }
     /* Warmes Licht von rechts oben, leichte Vignette. */
@@ -9100,7 +9053,7 @@
       var ds = lw.getAttribute("data-sig") || "";
       var punkte = dorfMalen(neu, S.ich.dorf || {}, DORF_LAGE, breite, /N$/.test(ds), /SN?$/.test(ds));
       DM.zeit = Math.round(performance.now() - t0);
-      fertig = DM.bilder[sig] = { bild: neu, punkte: punkte, maske: dmBahnMaske(S.ich.dorf || {}, DORF_LAGE), licht: /N$/.test(ds) ? DM.licht : null, s: breite / 320 };
+      fertig = DM.bilder[sig] = { bild: neu, punkte: punkte, maske: dmBahnMaske(S.ich.dorf || {}, DORF_LAGE) };
       var alle = Object.keys(DM.bilder); if (alle.length > 3) delete DM.bilder[alle[0]];
     }
     lw.width = fertig.bild.width; lw.height = fertig.bild.height;
@@ -9125,8 +9078,7 @@
           + [0, 90, 180, 270].map(function (a) { return '<g transform="rotate(' + a + ')"><path d="M-.6 -1 L-.6 -19 L3.6 -19 L3.6 -4 Z" fill="#efe6cf" opacity=".92"/><path d="M-.6 -1 V-19 M3.6 -19 V-4 M-.6 -6 H3.6 M-.6 -10.5 H3.6 M-.6 -15 H3.6 M1.5 -19 V-3" stroke="#6b4521" stroke-width=".6" fill="none"/></g>'; }).join("")
           + '<circle r="1.6" fill="#4a2f18"/></svg></span>';
       });
-      ueber.innerHTML = h + dmLichterHtml(fertig.licht, fertig.s);
-      if (fertig.licht) dorfLichterTakt(true);
+      ueber.innerHTML = h;
     }
     dorfKarteMalen();
   }
@@ -9179,53 +9131,8 @@
      --------------------------------------------------------------- */
   var DW = { uhr: 0, blitz: 0, voegel: 0, laut: 0, atmo: null, gemeldet: "", gemeldetZeit: 0 };
   var DW_NAME = { klar: "Klar", wolken: "Bewölkt", nebel: "Nebel", niesel: "Nieselregen", regen: "Regen", schnee: "Schnee", gewitter: "Gewitter" };
-  /* FASSUNG 724 — XANDER (Funk 172): „ich habe mein Dorf schon benannt aber da steht im Hintergrund immer noch Döbeln also
-     von der Voreinstellung und das sollte nicht sein". Und (Funk 168): „dann können sich auch eine richtige Stadt in
-     Deutschland aussuchen und dann sollen dafür auch die richtigen Wetterdaten abgerufen werden wie es derzeit gerade in
-     dieser Stadt ist … wie es ist gerade in Köln anfühlt oder in Berlin oder in München".
-     Heißt die Stadt wie ein echter Ort in Deutschland, Österreich oder der Schweiz (open-meteo kennt ihn, Name gleich),
-     kommt das Dorfwetter von genau dort. Ein ausgedachter Name bekommt das Wetter vom eigenen Ort (wie oben im Kopf) –
-     im Schild steht aber immer der Name der eigenen Stadt, nicht mehr „Döbeln". */
-  var SW = { name: "", geo: null, jetzt: null, zeit: 0, laeuft: false };
-  function stadtWetterHolen() {
-    var name = String((S.ich && S.ich.dorf_name) || "").trim();
-    if (!name || SW.laeuft || typeof fetch !== "function") return;
-    if (SW.name === name && Date.now() - SW.zeit < 900000) return;
-    SW.laeuft = true;
-    var merk = "dma_stadt_geo:" + name.toLowerCase(), geo;
-    try { geo = JSON.parse(localStorage.getItem(merk) || "null"); } catch (e) { geo = null; }
-    var ortHolen = geo !== null ? Promise.resolve(geo)
-      : fetch("https://geocoding-api.open-meteo.com/v1/search?count=10&language=de&format=json&name=" + encodeURIComponent(name)).then(function (r) { return r.ok ? r.json() : {}; }).then(function (d) {
-        var g = ((d && d.results) || []).filter(function (x) { return ["DE", "AT", "CH"].indexOf(x.country_code) >= 0 && String(x.name).toLowerCase() === name.toLowerCase(); })
-          .sort(function (a, b) { return (b.population || 0) - (a.population || 0); })[0];
-        var z = g ? { lat: g.latitude, lon: g.longitude, name: g.name, land: g.country_code } : false;
-        try { localStorage.setItem(merk, JSON.stringify(z)); } catch (e) {}
-        return z;
-      });
-    ortHolen.then(function (g) {
-      SW.name = name; SW.geo = g || null; SW.zeit = Date.now();
-      if (!g) { SW.jetzt = null; return; }
-      return fetch("https://api.open-meteo.com/v1/forecast?latitude=" + g.lat + "&longitude=" + g.lon + "&current=temperature_2m,weather_code,is_day&timezone=Europe%2FBerlin&_=" + Date.now(), { cache: "no-store" })
-        .then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
-          if (!d || !d.current) return;
-          SW.jetzt = { code: Number(d.current.weather_code), tag: Number(d.current.is_day) === 1, temp: Math.round(d.current.temperature_2m), ort: g.name, echtOrt: true };
-          SW.zeit = Date.now();
-          dorfWetterMelden();
-          if (dorfOffen()) schnellZeichnen(true);
-        });
-    }).catch(function () { SW.name = name; SW.zeit = Date.now() - 600000; /* in 5 min noch einmal */ }).then(function () { SW.laeuft = false; });
-  }
-  function dorfWetterQuelle() {
-    if (S.wetterTest) return S.wetterTest;
-    var name = String((S.ich && S.ich.dorf_name) || "").trim();
-    if (name && SW.name === name && SW.jetzt && Date.now() - SW.zeit < 3600000) return SW.jetzt;
-    var j = (window.DMA_WETTER && window.DMA_WETTER.jetzt) || null;
-    if (j && name) j = Object.assign({}, j, { ort: name, eigenerOrt: j.ort });
-    return j;
-  }
   function dorfWetter() {
-    stadtWetterHolen();
-    var j = dorfWetterQuelle();
+    var j = S.wetterTest || (window.DMA_WETTER && window.DMA_WETTER.jetzt) || null;
     var code = j ? Number(j.code) : 1, std = new Date().getHours();
     var tag = j && j.tag != null ? !!j.tag : std >= 7 && std < 20;
     var in_ = function (l) { return l.indexOf(code) >= 0; };
@@ -9430,10 +9337,7 @@
     band(-2.9, -3.5, h0, h1); g.fillStyle = "rgba(60,52,44,.55)"; g.fill();
     /* Das Bahnhofsgebäude: Backstein, Schieferdach, drei Fenster, Tür in der Mitte. */
     var hp = bahnAn(bahnBeiX(98));
-    /* FASSUNG 724 — die Bahnhofsfenster leuchten nicht mehr fest ins Bild gemalt, sondern wie die Häuser als eigene Lichter. */
-    DM.hausJetzt = { k: "bahnhof", kaputt: false };
-    dmHaus(g, K, s, hp.x, hp.y - 8.4, { w: 21, d: 7, h: 8.2, rh: 4.6, wand: "backstein", dach: "schiefer", fenster: 4, tuerX: .5, schornX: .78 });
-    DM.hausJetzt = null;
+    dmHaus(g, K, s, hp.x, hp.y - 8.4, { w: 21, d: 7, h: 8.2, rh: 4.6, wand: "backstein", dach: "schiefer", fenster: 4, tuerX: .5, schornX: .78, licht: DM.nachtJetzt });
     /* Stationsschild auf zwei Pfosten (weiß, schwarze Schrift – wie an deutschen Bahnhöfen). */
     var sp2 = bahnAn(bahnBeiX(78)), sx = sp2.x, sy = sp2.y - 6.2;
     g.fillStyle = "#3a3a3a"; g.fillRect(sx - 3.6, sy - 3.6, .35, 3.6); g.fillRect(sx + 3.25, sy - 3.6, .35, 3.6);
@@ -9536,10 +9440,7 @@
     muenze: '<circle cy="1" r=".8" fill="#f2c230" stroke="#9a7410" stroke-width=".14"/>'
   };
   function dorfBahnHtml(w) {
-    /* FASSUNG 724 — Funk 172: „den Zug entsprechend zu beleuchten realistisch da wo er beleuchtet werden könnte": vorn der
-       Scheinwerfer (723), hinten am letzten Wagen das rote Schlusslicht. */
-    var zug = BAHN_WAGEN.map(function (x, i) { return '<g class="sp-bz-f" data-l="' + x[1] + '">' + bahnWagenSvg(x[0], x[1])
-      + (i === BAHN_WAGEN.length - 1 ? '<g class="sp-bz-nachtlicht"><circle cx="' + (x[1] / 2 + .1) + '" cy="-3.4" r="1.6" fill="#ff3a2a" opacity=".3"/><circle cx="' + (x[1] / 2 + .1) + '" cy="-3.4" r=".5" fill="#ff5a3c"/></g>' : "") + "</g>"; }).join("");
+    var zug = BAHN_WAGEN.map(function (x) { return '<g class="sp-bz-f" data-l="' + x[1] + '">' + bahnWagenSvg(x[0], x[1]) + "</g>"; }).join("");
     return '<svg class="sp-dl-bahn" data-sig="bahn716" viewBox="0 0 320 200" preserveAspectRatio="none" aria-hidden="true"><defs>'
       + '<radialGradient id="spBzDampf" cx=".45" cy=".4"><stop offset="0" stop-color="#ffffff" stop-opacity="1"/><stop offset=".45" stop-color="#f1f1f3" stop-opacity=".85"/><stop offset=".75" stop-color="#d9dadf" stop-opacity=".45"/><stop offset="1" stop-color="#c8c9cf" stop-opacity="0"/></radialGradient>'
       + '<radialGradient id="spBzRuss" cx=".45" cy=".4"><stop offset="0" stop-color="#4c4c52" stop-opacity="1"/><stop offset=".5" stop-color="#6c6c74" stop-opacity=".7"/><stop offset="1" stop-color="#8d8d96" stop-opacity="0"/></radialGradient>'
@@ -9800,8 +9701,7 @@
     ton("swoosh", 0.35);
     setTimeout(function () { ton("platsch", 0.35); }, 450);
     function einholen() {
-      /* FASSUNG 724 — 1,65 statt 1,7: (a/1000 − b/1000) ergab bei genau 1700 ms manchmal 1,6999…, dann holte niemand mehr ein. */
-      if (fertig || !antwort || Date.now() / 1000 - jetzt < 1.65) return;
+      if (fertig || !antwort || Date.now() / 1000 - jetzt < 1.7) return;
       fertig = true;
       var r = antwort, t = Date.now() / 1000;
       if (!r.ok) {
@@ -10025,7 +9925,7 @@
   }
   /* Die Messung auch dem Server sagen (höchstens alle 10 Minuten oder wenn sich das Wetter ändert) – er rechnet damit die Ernte. */
   function dorfWetterMelden() {
-    var j = dorfWetterQuelle();
+    var j = window.DMA_WETTER && window.DMA_WETTER.jetzt;
     if (!j || !S.ich || !S.ich.mitspielen || S.gast || !S.klient) return;
     var sig = j.code + (j.tag ? "t" : "n");
     if (sig === DW.gemeldet && Date.now() - DW.gemeldetZeit < 600000) return;
@@ -12096,46 +11996,8 @@
     return S.fragenArt;
   }
   function lernprofil() { try { var b = window.DMA_SPIEL_BRUECKE; return (b && b.lernprofil && b.lernprofil()) || {}; } catch (e) { return {}; } }
-  function fragenArten(wert) {
-    var p = lernprofil();
-    return SPIEL_FRAGE_ARTEN.filter(function (k) { return (p[k] || lernGemessen(k)) === wert; });
-  }
-  /* FASSUNG 724 — XANDER (Funk 172): „kannst du vielleicht innerhalb des Spiels auch noch mal die Leute diese Tabelle
-     anzeigen lassen die wir in den Einstellungen haben wo sie ihre Stärken haben wo sie ihre Schwächen haben Grammatik
-     oder oder Betonung oder Satzbildung … dass sie da ihr Häkchen setzen können bzw dass die Übersicht halt vom System
-     erkannt wird … prozentual ausgewertet … diese Aufgaben werden halt am besten belohnt". Im Deutsch-Menü klappt
-     „Meine Stärken & Schwächen“ die Tabelle aus den Einstellungen auf (dieselben Daten, im Konto gespeichert), je Bereich
-     mit dem, was das Spiel selbst gemessen hat (richtig/gesamt der letzten 30 Tage). Wer nichts ankreuzt, für den zählt
-     die Messung. Schwache Bereiche bringen +50 %, mittlere +20 % (rechnet der Server). */
-  function lernstandHolen() {
-    if (!S.klient || (S.lernstandZeit && Date.now() - S.lernstandZeit < 60000)) return;
-    S.lernstandZeit = Date.now();
-    rpc("spiel_lernstand", {}).then(function (r) { S.lernstand = r && typeof r === "object" && !r.id ? r : {}; if (S.lernAuf) panelAuffrischen(); }).catch(function () {});
-  }
-  function lernGemessen(k) {
-    var m = (S.lernstand || {})[k];
-    if (!m || m.n < 6) return "";
-    var q = m.r / m.n;
-    return q < .6 ? "schwach" : q < .8 ? "mittel" : "stark";
-  }
-  function lernprofilHtml() {
-    var h = '<button type="button" class="sp-lern-auf' + (S.lernAuf ? " sp-an" : "") + '" data-tu="lernprofilauf">Meine Stärken &amp; Schwächen ' + (S.lernAuf ? "▴" : "▾") + "</button>";
-    if (!S.lernAuf) return h;
-    var bl = window.DMA_SPIEL_BRUECKE, kats = [];
-    try { kats = (bl && bl.lernKategorien && bl.lernKategorien()) || []; } catch (e) { kats = []; }
-    kats = kats.filter(function (c) { return SPIEL_FRAGE_ARTEN.indexOf(c.id) >= 0; });
-    var p = lernprofil();
-    return h + '<div class="sp-lern-tabelle"><p class="sp-klein">Wie in den Einstellungen: kreuze an, wo du stark oder schwach bist. Aufgaben aus schwachen Bereichen bringen <b>+50 %</b> Punkte, mittlere <b>+20 %</b>. Ohne Kreuz zählt, was das Spiel misst.</p>'
-      + (kats.length ? kats.map(function (c) {
-        var m = (S.lernstand || {})[c.id], g = lernGemessen(c.id), jetzt = p[c.id] || "";
-        return '<div class="sp-lern-zeile"><span>' + esc(c.titel) + (m ? ' <small class="sp-lern-mess sp-lern-' + (g || "neu") + '">' + m.r + "/" + m.n + " richtig</small>" : "") + "</span><span>"
-          + [["stark", "Stark"], ["mittel", "Mittel"], ["schwach", "Schwach"]].map(function (r) {
-            return '<button type="button" data-tu="lernsetzen" data-k="' + c.id + '" data-r="' + r[0] + '" class="' + (jetzt === r[0] ? "sp-an" : !jetzt && g === r[0] ? "sp-gemessen" : "") + '">' + r[1] + "</button>";
-          }).join("") + "</span></div>";
-      }).join("") : '<p class="sp-klein">Die Tabelle gibt es mit Konto (Einstellungen der Seite).</p>') + "</div>";
-  }
+  function fragenArten(wert) { var p = lernprofil(); return Object.keys(p).filter(function (k) { return p[k] === wert && SPIEL_FRAGE_ARTEN.indexOf(k) >= 0; }); }
   function fragenKategorie() {
-    lernstandHolen();
     if (S.kategorie && S.kategorie !== "aussprache") return S.kategorie;
     var art = fragenArt();
     if (art === "gemischt") return null;
@@ -12689,8 +12551,6 @@
       /* FASSUNG 704 */
       dorfMalen: dorfMalen, DORF_LAGE: DORF_LAGE, dmZeit: function () { return DM.zeit; }, dmNeu: function () { DM.geht = null; DM.bilder = {}; },
       leisteReihe: leisteReihe, dorfZoom: dorfZoom, dorfNah: dorfNah, DORF_ZEICHEN: DORF_ZEICHEN,
-      /* FASSUNG 724 */
-      dorfLichterTakt: dorfLichterTakt, stadtWetterNeu: function () { SW.name = ""; SW.jetzt = null; SW.zeit = 0; SW.laeuft = false; },
       dorfWetter: dorfWetter, dorfBlitz: dorfBlitz, dorfVoegel: dorfVoegel, dorfTreiben: dorfTreiben, DW: DW, dorfWetterMelden: dorfWetterMelden,
       puppeSchiesst: puppeSchiesst,
       /* FASSUNG 716 */

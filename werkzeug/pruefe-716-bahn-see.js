@@ -310,8 +310,8 @@ const sage = (gut, was, zusatz) => {
   await tippe(".sp-dl-see"); await tick(250);
   const r1 = await rute();
   sage(r1.length === 2 && r1[0] !== r0[0] && r1[1] !== r0[1], "Tipp auf den See: beide Angler holen aus", JSON.stringify([r0, r1]).slice(0, 200));
-  /* 2,6 s statt 1,9 s: bei voller Maschine kam das Einholen (ab 1,7 s) manchmal erst knapp danach. */
-  await tick(2600);
+  /* Warten, bis eingeholt ist (ab 1,7 s; bei voller Maschine auch später), dann sofort nachsehen. */
+  for (let i = 0; i < 30; i++) { await tick(100); if (i >= 16 && await pg.evaluate(() => /Am See gefangen/.test(window.__hinweise.slice(-1)[0] || ""))) break; }
   r = await pg.evaluate(() => ({ a: window.__angelArgs, h: window.__hinweise.slice(-1)[0] || "",
     fang: [...document.querySelectorAll(".sp-see-fang")].filter((f) => f.style.display !== "none" && f.innerHTML).length }));
   tl = await toene(t0);
