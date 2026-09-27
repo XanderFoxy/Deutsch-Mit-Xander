@@ -4419,8 +4419,6 @@
       S.dorfKarte = false; ton("swoosh", 0.25);
       dorfZoom(k.dataset.n === "1");
       return;
-    } else if (s === "dorffeld") {
-      dorfFeldTipp(k, Number(k.dataset.n)); return;
     } else if (s === "dorfsee") {
       /* FASSUNG 716 — ein Tipp auf den See: die Angler werfen aus. */
       seeAngeln(k); return;
@@ -8329,17 +8327,8 @@
   }
   /* Eine Fläche als Ebene: (u, v) → Welt. o = Ursprung, eu = Richtung u je Einheit, ev = Richtung v je Einheit. */
   function dmEbene(g, o, eu, ev, f) { g.save(); g.transform(eu[0], eu[1], ev[0], ev[1], o[0], o[1]); f(); g.restore(); }
-  /* FASSUNG 723 — XANDER (Funk 169): „mach lieber so dass Lichter in den Häusern sind … vielleicht nur die hauslampe an
-     also die über dem Eingang … aber nicht dass das Haus so wirkt als ob es brennt". Jedes gemalte Fenster und jede Tür
-     merkt sich, wo es auf der Leinwand liegt – nachts leuchten dort Fenster von innen und über manchen Türen eine Lampe. */
-  function dmMerken(g, liste, x, y, w, h) {
-    if (!DM.licht || !DM.hausJetzt) return;
-    try { var t = g.getTransform(), p = function (a, b) { return [t.a * a + t.c * b + t.e, t.b * a + t.d * b + t.f]; };
-      DM.licht[liste].push({ pt: [p(x, y), p(x + w, y), p(x + w, y + h), p(x, y + h)], haus: DM.hausJetzt.k, aus: DM.hausJetzt.kaputt }); } catch (e) {}
-  }
   function dmFenster(g, x, y, w, h, o) {
     o = o || {};
-    dmMerken(g, "fenster", x, y, w, h);
     g.fillStyle = "rgba(0,0,0,.28)"; g.fillRect(x - .35, y - .35, w + .9, h + .9);
     g.fillStyle = o.rahmen || "#efe6d2"; g.fillRect(x - .3, y - .3, w + .6, h + .6);
     var gl = g.createLinearGradient(x, y, x + w, y + h); gl.addColorStop(0, o.licht ? "#ffd98a" : "#9cc7e6"); gl.addColorStop(.5, o.licht ? "#f2a84a" : "#3d5f80"); gl.addColorStop(1, o.licht ? "#c9782a" : "#1f3044");
@@ -8350,7 +8339,6 @@
     if (o.blumen) { g.fillStyle = "#6b4521"; g.fillRect(x - .4, y + h + .3, w + .8, 1); for (var i = 0; i < 5; i++) { g.fillStyle = ["#e2403a", "#f2c230", "#e880b0", "#ffffff", "#e2403a"][i]; g.beginPath(); g.arc(x + (i + .5) * (w / 5), y + h + .1, .45, 0, 7); g.fill(); } }
   }
   function dmTuer(g, x, y, w, h, K, s) {
-    dmMerken(g, "tueren", x, y, w, h);
     g.fillStyle = "rgba(0,0,0,.35)"; g.fillRect(x - .5, y - .5, w + 1, h + .5);
     g.save(); g.beginPath(); g.moveTo(x, y + h); g.lineTo(x, y + w / 2); g.arc(x + w / 2, y + w / 2, w / 2, Math.PI, 0); g.lineTo(x + w, y + h); g.closePath(); g.clip();
     g.fillStyle = dmMuster(g, K.bretter, .06 / s); g.fillRect(x, y, w, h); g.fillStyle = "rgba(40,20,5,.35)"; g.fillRect(x, y, w, h); g.restore();
@@ -8468,7 +8456,6 @@
   }
   /* ------------ Die Gebäude ------------ */
   function dmGebaeude(g, K, s, k, x, y, st, kaputt) {
-    DM.hausJetzt = { k: k, kaputt: !!kaputt };
     var f = [.82, .92, 1.02][Math.max(0, Math.min(2, (st || 1) - 1))], o, dachT = st >= 3 ? "ziegelDunkel" : "ziegel";
     g.save(); g.translate(x, y); g.scale(f, f); g.translate(-x, -y);
     if (k === "muehle") {
@@ -8748,12 +8735,10 @@
       g.save(); g.lineJoin = "round"; g.strokeStyle = "rgba(96,80,46,.5)"; g.lineWidth = 2.2; g.stroke(pfad); g.strokeStyle = "rgba(206,188,140,.85)"; g.lineWidth = 1.05; g.stroke(pfad); g.restore();
     }
     /* Fluss mit Ufer. */
-    /* FASSUNG 723 — XANDER (Funk 170): „Der Fluss vom Dorf ist übrigens nicht ganz durchgängig". Er lief unten aus dem Bild
-       hinaus, gleich neben dem See. Jetzt biegt er unter der Bibliothek nach rechts und mündet in den See. */
-    var fluss = "M150 62 C146 76 132 80 136 96 C140 112 164 116 160 132 C156 146 136 150 142 166 C146 180 160 188 178 186 C192 184 204 184 214 188 L226 190 C216 180 204 176 190 176 C176 176 164 174 162 166 C158 152 178 146 180 132 C182 114 158 108 154 96 C150 82 162 76 158 62 Z";
+    var fluss = "M150 62 C146 76 132 80 136 96 C140 112 164 116 160 132 C156 146 136 150 142 166 C146 178 168 184 176 200 H196 C188 184 166 176 162 166 C158 152 178 146 180 132 C182 114 158 108 154 96 C150 82 162 76 158 62 Z";
     if (typeof Path2D !== "undefined") {
       var fp = new Path2D(fluss);
-      wasser(fp, [130, 60, 228, 202], 731, true);
+      wasser(fp, [130, 60, 200, 202], 731, true);
       /* FASSUNG 720 — der See, gut viermal so groß wie der Teich: eine unregelmäßige Bucht am unteren Rand (sie läuft aus
          dem Bild hinaus), mit Schilf in Büscheln und Seerosenblättern. */
       var see = new Path2D(DM_SEE);
@@ -8787,12 +8772,9 @@
     /* Steinbrücke. */
     g.save(); g.fillStyle = dmMuster(g, K.feldstein, .05 / s); g.beginPath(); g.moveTo(147, 104); g.lineTo(150, 98); g.quadraticCurveTo(158, 93, 166, 98); g.lineTo(169, 104); g.closePath(); g.fill();
     g.fillStyle = "rgba(0,0,0,.25)"; g.fill(); g.fillStyle = "#1f4a6a"; g.beginPath(); g.moveTo(151, 104); g.quadraticCurveTo(158, 97, 165, 104); g.fill(); g.strokeStyle = "#8a826f"; g.lineWidth = .8; g.beginPath(); g.moveTo(149, 98.4); g.quadraticCurveTo(158, 93.6, 167, 98.4); g.stroke(); g.restore();
-    /* FASSUNG 723 — der Weg von der Brauerei zur Bibliothek lief mitten durchs Wasser: eine zweite, kleinere Brücke. */
-    g.save(); g.fillStyle = dmMuster(g, K.feldstein, .05 / s); g.beginPath(); g.moveTo(138, 168); g.lineTo(141, 162); g.quadraticCurveTo(152, 157.5, 163, 161); g.lineTo(166, 167); g.closePath(); g.fill();
-    g.fillStyle = "rgba(0,0,0,.25)"; g.fill(); g.fillStyle = "#1f4a6a"; g.beginPath(); g.moveTo(142.5, 168); g.quadraticCurveTo(152, 161.5, 161.5, 168); g.fill(); g.strokeStyle = "#8a826f"; g.lineWidth = .8; g.beginPath(); g.moveTo(140, 162.4); g.quadraticCurveTo(152, 157.2, 164.5, 161.4); g.stroke(); g.restore();
     /* Einzelne Bäume, Büsche, Heu, Brunnen, Zaun. */
     [[14, 96, 1], [22, 140, 0], [98, 150, 0], [240, 120, 1], [300, 96, 0], [258, 150, 0], [120, 188, 1], [290, 160, 0], [8, 160, 0], [306, 176, 1], [90, 62, 0], [196, 70, 1]].forEach(function (b, n) { dmBaum(g, b[0], b[1], 4 + (n % 3), n + 600, !!b[2]); });
-    [[40, 100], [128, 138], [206, 118], [250, 170], [66, 128], [300, 190], [170, 196]].forEach(function (b, n) { dmBusch(g, b[0], b[1], 2.2 + (n % 2), n + 700); });
+    [[40, 100], [128, 138], [206, 118], [250, 170], [66, 128], [300, 190], [174, 190]].forEach(function (b, n) { dmBusch(g, b[0], b[1], 2.2 + (n % 2), n + 700); });
     [[62, 172], [70, 176]].forEach(function (h) { var hg = g.createRadialGradient(h[0] + .6, h[1] - 1.2, .2, h[0], h[1] - .6, 2.4); hg.addColorStop(0, "#f2d67a"); hg.addColorStop(1, "#b08a2a"); g.fillStyle = hg; g.beginPath(); g.arc(h[0], h[1], 2.2, Math.PI, 0); g.fill(); });
     g.fillStyle = dmMuster(g, K.feldstein, .04 / s); g.beginPath(); g.ellipse(140, 132, 2.4, 1, 0, 0, 7); g.fill(); g.fillRect(137.6, 128, 4.8, 4); g.fillStyle = "#2a4a6a"; g.beginPath(); g.ellipse(140, 128, 2.2, .8, 0, 0, 7); g.fill();
     g.fillStyle = "#6b4521"; g.fillRect(137.8, 123.4, .5, 5); g.fillRect(141.7, 123.4, .5, 5); g.fillStyle = dmMuster(g, K.ziegel, .05 / s); g.beginPath(); g.moveTo(137, 124); g.lineTo(140, 121.4); g.lineTo(143, 124); g.fill();
@@ -8811,8 +8793,7 @@
      steht neben jedem Haus EINE hohe Laterne (13 Einheiten: Sockel, Mast, Laternenhaus mit Glas, Dach). Nachts wirft sie
      einen Lichtkegel: in ihm liegt das Bild so, wie es am Tag gemalt ist – nur warm gefärbt –, also mit allen Balken,
      Fenstern und Ziegeln. Außerhalb bleibt es Nacht. Der Kegel selbst ist als feiner Schein in der Luft zu sehen. */
-  /* FASSUNG 723 — Funk 169: „der Bahnhof braucht dann auch noch entsprechende Beleuchtung": eine Laterne am Bahnsteig. */
-  var DM_WEGLATERNEN = [[137, 111], [178, 128], [120, 150], [128, 57]];
+  var DM_WEGLATERNEN = [[137, 111], [178, 128], [120, 150]];
   function dmLaternenOrte(dorf, lage) {
     var orte = [];
     Object.keys(lage || {}).forEach(function (k) {
@@ -8868,18 +8849,17 @@
         m.save(); m.translate(o.x + o.seite * 3, o.y + 1); m.scale(1, .42);
         r = m.createRadialGradient(0, 0, 0, 0, 0, 17); r.addColorStop(0, "rgba(0,0,0,.95)"); r.addColorStop(.62, "rgba(0,0,0,.72)"); r.addColorStop(.82, "rgba(0,0,0,.28)"); r.addColorStop(1, "rgba(0,0,0,0)");
         m.fillStyle = r; m.beginPath(); m.arc(0, 0, 17, 0, 7); m.fill(); m.restore();
-        /* FASSUNG 723 — Funk 169: „die Laternen die geben ja schon einen Kegel in der Regel sollte sollten die Lichter in der
-           Nacht vom Haus aus sein". Der Kegel, der die ganze Hausfront ausleuchtete (das Haus wirkte „als ob es brennt"),
-           ist weg: die Laterne beleuchtet nur den Boden um sich und den Sockel des Hauses daneben. */
-        r = m.createRadialGradient(kx, ky + 3, 0, kx + o.seite * 2, o.y - 3, 9); r.addColorStop(0, "rgba(0,0,0,.55)"); r.addColorStop(1, "rgba(0,0,0,0)");
-        m.fillStyle = r; m.beginPath(); m.arc(kx + o.seite * 2, o.y - 3, 9, 0, 7); m.fill();
+        /* Kegel zum Haus: vom Laternenkopf schräg nach unten, bis über die Hausfront */
+        var hx = kx + o.seite * Math.min(16, o.breite * .55), hy = o.y - Math.min(o.hoehe * .45, 12), rr = Math.max(14, Math.min(24, o.breite * .75));
+        r = m.createRadialGradient(kx + o.seite * 1.5, ky + 2, 0, hx, hy, rr); r.addColorStop(0, "rgba(0,0,0,.9)"); r.addColorStop(.6, "rgba(0,0,0,.55)"); r.addColorStop(1, "rgba(0,0,0,0)");
+        m.fillStyle = r; m.beginPath(); m.arc(hx, hy, rr, 0, 7); m.fill();
       });
       /* Das Tagbild, warm gefärbt wie Gaslicht, nur so weit die Maske reicht. */
       var lk = dmKachel(tagBild.width, tagBild.height), l = lk.getContext("2d");
       l.drawImage(tagBild, 0, 0);
       l.globalCompositeOperation = "multiply"; l.fillStyle = "rgb(255,212,158)"; l.fillRect(0, 0, lk.width, lk.height);
       l.globalCompositeOperation = "destination-in"; l.drawImage(mk, 0, 0);
-      g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = .8; g.drawImage(lk, 0, 0); g.restore();
+      g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = .92; g.drawImage(lk, 0, 0); g.restore();
     }
     /* Die Laterne selbst leuchtet, und im Dunst ist der Kegel als feiner Schein zu sehen. */
     g.save(); g.globalCompositeOperation = "lighter";
@@ -8890,33 +8870,6 @@
       g.fillStyle = lg; g.beginPath(); g.moveTo(kx - 1.3, ky + 1); g.lineTo(kx + 1.3, ky + 1); g.lineTo(kx + 9 + o.seite * 5, o.y + 2); g.lineTo(kx - 9 + o.seite * 5, o.y + 2); g.closePath(); g.fill();
       lg = g.createRadialGradient(kx, ky, 0, kx, ky, 6); lg.addColorStop(0, "rgba(255,196,96,.8)"); lg.addColorStop(.25, "rgba(255,176,80,.42)"); lg.addColorStop(1, "rgba(255,160,60,0)");
       g.fillStyle = lg; g.beginPath(); g.arc(kx, ky, 6, 0, 7); g.fill();
-    });
-    g.restore();
-  }
-  /* Licht aus den Häusern: etwa zwei von drei Fenstern leuchten warm von innen (je Haus immer dieselben), über jeder
-     zweiten Tür brennt die Hauslampe mit einem kleinen Schein auf die Schwelle. Kaputte Häuser bleiben dunkel. */
-  function dmHauslicht(g, s) {
-    var L = DM.licht; if (!L) return;
-    g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
-    L.fenster.forEach(function (f, i) {
-      if (f.aus || dmHash(i, 3, 723) > .66) return;
-      var p = f.pt, x0 = Math.min(p[0][0], p[3][0]), x1 = Math.max(p[1][0], p[2][0]), y0 = Math.min(p[0][1], p[1][1]), y1 = Math.max(p[2][1], p[3][1]);
-      var lg = g.createLinearGradient(x0, y0, x0, y1); lg.addColorStop(0, "rgba(255,226,150,.95)"); lg.addColorStop(1, "rgba(236,150,60,.92)");
-      g.globalCompositeOperation = "source-over"; g.fillStyle = lg; g.beginPath(); g.moveTo(p[0][0], p[0][1]); for (var j = 1; j < 4; j++) g.lineTo(p[j][0], p[j][1]); g.closePath(); g.fill();
-      /* Fensterkreuz bleibt als Schatten sichtbar. */
-      g.strokeStyle = "rgba(60,30,10,.55)"; g.lineWidth = Math.max(.6, (x1 - x0) * .09); g.beginPath(); g.moveTo((x0 + x1) / 2, y0); g.lineTo((x0 + x1) / 2, y1); g.moveTo(x0, y0 + (y1 - y0) * .45); g.lineTo(x1, y0 + (y1 - y0) * .45); g.stroke();
-      g.globalCompositeOperation = "lighter"; var r = Math.max(x1 - x0, y1 - y0) * 1.3, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-      var gl = g.createRadialGradient(cx, cy, 0, cx, cy, r); gl.addColorStop(0, "rgba(255,190,90,.22)"); gl.addColorStop(1, "rgba(255,170,70,0)"); g.fillStyle = gl; g.fillRect(cx - r, cy - r, r * 2, r * 2);
-    });
-    L.tueren.forEach(function (t, i) {
-      if (t.aus || dmHash(i, 5, 723) > .5) return;
-      var p = t.pt, cx = (p[0][0] + p[1][0]) / 2, ly = Math.min(p[0][1], p[1][1]) - .9 * s, fuss = Math.max(p[2][1], p[3][1]);
-      g.globalCompositeOperation = "lighter";
-      var gl = g.createRadialGradient(cx, ly, 0, cx, ly, 4.5 * s); gl.addColorStop(0, "rgba(255,210,120,.7)"); gl.addColorStop(.3, "rgba(255,180,80,.22)"); gl.addColorStop(1, "rgba(255,160,60,0)");
-      g.fillStyle = gl; g.beginPath(); g.arc(cx, ly, 4.5 * s, 0, 7); g.fill();
-      g.save(); g.translate(cx, fuss + .4 * s); g.scale(1, .35);
-      gl = g.createRadialGradient(0, 0, 0, 0, 0, 4 * s); gl.addColorStop(0, "rgba(255,190,100,.28)"); gl.addColorStop(1, "rgba(255,170,80,0)"); g.fillStyle = gl; g.beginPath(); g.arc(0, 0, 4 * s, 0, 7); g.fill(); g.restore();
-      g.globalCompositeOperation = "source-over"; g.fillStyle = "#fff0c8"; g.beginPath(); g.arc(cx, ly, .42 * s, 0, 7); g.fill();
     });
     g.restore();
   }
@@ -8940,7 +8893,6 @@
        gemalt – eine, die weiter hinten steht, lag dadurch über dem Haus davor. Jetzt kommen Häuser und Laternen zusammen
        in eine Reihe und werden von hinten nach vorn (nach ihrem Fußpunkt) gemalt. */
     var orte = dmLaternenOrte(dorf, lage), reihe = [];
-    DM.licht = { fenster: [], tueren: [] };
     Object.keys(lage).forEach(function (k) { reihe.push({ y: lage[k][1], haus: k }); });
     orte.forEach(function (o) { reihe.push({ y: o.y, laterne: o }); });
     reihe.sort(function (a, b) { return a.y - b.y; }).forEach(function (e) {
@@ -8948,14 +8900,12 @@
       var k = e.haus, q = lage[k], d = (dorf || {})[k], st = d && d.stufe > 0 ? d.stufe : 0;
       if (st) punkte[k] = dmGebaeude(g, K, s, k, q[0], q[1], st, !(d.lp > 0));
       else dmBauplatz(g, K, s, q[0], q[1]);
-      DM.hausJetzt = null;
     });
     dmPinsel(leinwand, s);
     if (nacht) {
       var tag = null;
       try { tag = dmKachel(leinwand.width, leinwand.height); tag.getContext("2d").drawImage(leinwand, 0, 0); } catch (e) { tag = null; }
       dmNacht(g, dorf, lage, tag, orte, s);
-      dmHauslicht(g, s);
       return punkte;
     }
     /* Warmes Licht von rechts oben, leichte Vignette. */
@@ -9375,12 +9325,7 @@
     var h = L / 2, x;
     if (art === "lok") {
       var lok = window.DMA_ZEICHNUNG && window.DMA_ZEICHNUNG.lok ? window.DMA_ZEICHNUNG.lok("D") : "";
-      /* FASSUNG 723 — XANDER (Funk 169): „wenn die Lokomotive fährt … der hat ja auch so Scheinwerfer". Nachts leuchtet
-         vorn (links, wo die Puffer sind) der Scheinwerfer mit einem Lichtkegel auf die Gleise, im Führerhaus brennt Licht. */
-      return lok.replace('<svg class="lc-lok-form"', '<svg class="lc-lok-form sp-bz-lok" x="-9" y="-8.55" width="18" height="9" style="width:18px;height:9px"')
-        + '<g class="sp-bz-nachtlicht"><defs><linearGradient id="spBzKegel" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#fff2c0" stop-opacity=".75"/><stop offset="1" stop-color="#ffe7a0" stop-opacity="0"/></linearGradient></defs>'
-        + '<path d="M-8.2 -4.9 L-34 -9.5 L-34 1.2 L-8.2 -3.6 Z" fill="url(#spBzKegel)"/><circle cx="-8.1" cy="-4.25" r=".75" fill="#fffbe6"/><circle cx="-8.1" cy="-4.25" r="1.8" fill="#ffe9a8" opacity=".35"/>'
-        + '<rect x="4.2" y="-7.3" width="1.8" height="1.5" fill="#ffc86a" opacity=".9"/></g>';
+      return lok.replace('<svg class="lc-lok-form"', '<svg class="lc-lok-form sp-bz-lok" x="-9" y="-8.55" width="18" height="9" style="width:18px;height:9px"');
     }
     if (art === "tender") {
       return bahnPuffer(L) + '<path d="M' + (-h) + ' -6.2 H' + h + ' V-1.9 H' + (-h) + ' Z" fill="url(#spBzLack)" stroke="#07090b" stroke-width=".2"/>'
@@ -9462,24 +9407,7 @@
         + "%;width:" + ((x1 - x0) / 3.2).toFixed(2) + "%;height:" + ((y1 - y0) / 2).toFixed(2) + '%" title="' + name + '"><small>' + dorfPin(k) + "<span>" + name + "</span></small></button>";
     }
     var hy = bahnAn(bahnBeiX(98)).y;
-    return knopf("bahnhof", "dorfwahl", 74, hy - 24, 122, hy - 2, "Bahnhof") + knopf("see", "dorfsee", 199, 182, 262, 200, "See") + dorfFeldKnoepfe();
-  }
-  /* FASSUNG 723 — XANDER (Funk 169): „auf dem Feld kann man übrigens noch nicht ernten da muss man auch draufklicken
-     können". Die zwei Äcker im Bild sind die Felder 91 und 92 (der Server kennt sie). Reif: ein Tipp erntet mit der
-     Sense. Noch am Wachsen: (Funk 170) „dass ich ihnen helfe und mit meinen Antippen das ganze beschleunigen kann mit
-     meinem göttlichen Finger" – jeder Tipp holt das Feld 5 s näher an die Reife. Über dem abgeernteten Feld liegen
-     Stoppeln, die mit dem Wachsen verschwinden. */
-  var DORF_FELDER = [{ nr: 91, pt: [[4, 176], [44, 164], [60, 188], [14, 198]] }, { nr: 92, pt: [[292, 132], [318, 128], [320, 150], [298, 154]] }];
-  function dorfFeldKnoepfe() {
-    return DORF_FELDER.map(function (f) {
-      var xs = f.pt.map(function (p) { return p[0]; }), ys = f.pt.map(function (p) { return p[1]; });
-      var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
-      var st = ackerStand(f.nr), poly = f.pt.map(function (p) { return ((p[0] - x0) / (x1 - x0) * 100).toFixed(1) + "% " + ((p[1] - y0) / (y1 - y0) * 100).toFixed(1) + "%"; }).join(",");
-      return '<button type="button" class="sp-dl-ort sp-dl-feld' + (st.reif ? " sp-reif" : "") + '" data-s="dorffeld" data-g="feld" data-n="' + f.nr + '" style="left:' + (x0 / 3.2).toFixed(2) + "%;top:" + (y0 / 2).toFixed(2)
-        + "%;width:" + ((x1 - x0) / 3.2).toFixed(2) + "%;height:" + ((y1 - y0) / 2).toFixed(2) + '%" title="' + (st.reif ? "Acker – reif, antippen zum Ernten" : "Acker – wächst, antippen hilft (reif in " + uhrText(st.rest) + ")") + '">'
-        + (st.reif ? "" : '<i class="sp-dl-stoppeln" style="clip-path:polygon(' + poly + ");opacity:" + (1 - st.anteil * .85).toFixed(2) + '"></i>')
-        + "<small>" + dorfPin("feld") + "<span>Acker</span></small></button>";
-    }).join("");
+    return knopf("bahnhof", "dorfwahl", 74, hy - 24, 122, hy - 2, "Bahnhof") + knopf("see", "dorfsee", 199, 182, 262, 200, "See");
   }
 
   /* Die Maske auf die Zug-Ebene legen (Bäume und hohe Gebäude verdecken den Zug). */
@@ -9656,43 +9584,12 @@
       seeRing(g, px, py, z < .5 ? z : null);
     }
   }
-  function dorfFeldTipp(knopf, nr) {
-    if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
-    if (S.ich.kaputt) { hinweis(gesperrtGrund()); return; }
-    var st = ackerStand(nr);
-    if (st.reif) { ernten(knopf, nr); return; }
-    if (S.feldHilftBis && S.feldHilftBis > Date.now()) return;
-    S.feldHilftBis = Date.now() + 300;
-    ton("pling", 0.18);
-    var f = document.createElement("i"); f.className = "sp-dl-finger"; knopf.appendChild(f); setTimeout(function () { f.remove(); }, 650);
-    rpc("spiel_feld_helfen", { p_platz: nr }).then(function (r) {
-      if (!r || !r.ok) { if (r && r.grund && r.grund !== "langsam") hinweis("🌾 " + r.grund + "."); return; }
-      if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-      if (!S.feldHinweisZeit || Date.now() - S.feldHinweisZeit > 4000) { S.feldHinweisZeit = Date.now(); hinweis("🌱 Du hilfst beim Wachsen: noch " + uhrText(r.sek * 1000) + " – jeder Tipp 5 s schneller."); }
-      schnellZeichnen();
-    }).catch(function () {});
-  }
-  /* FASSUNG 723 — XANDER (Funk 169): „wenn die Angler Angeln dann Angeln sie erstmal eine Weile nicht nur einen Versuch
-     sondern sie sitzen dann erstmal eine Weile dauern Angeln und das was sie an Ertrag bekommen das kann man dann auch
-     verkaufen". Ein Tipp auf den See: die Angler bleiben eine Minute sitzen und werfen von selbst immer wieder aus
-     (so oft der Server es zulässt, alle 12 s) – fünf Würfe. Was sie fangen, liegt im Lager und geht auf dem Markt. */
   function seeAngeln(knopf) {
     if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
     if (S.ich.kaputt) { hinweis(gesperrtGrund()); return; }
     S.angelAn = S.angelAn || {};
-    if (S.seeSitzung && S.seeSitzung.rest > 0) { hinweis("🎣 Die Angler sitzen schon am See – noch " + S.seeSitzung.rest + " Würfe."); return; }
     var warte = (S.angelAn[99] || 0) - Date.now();
     if (warte > 0) { hinweis("🎣 Die Angler warten noch auf einen Biss – noch " + Math.ceil(warte / 1000) + " s."); return; }
-    S.seeSitzung = { rest: 5, fisch: 0 };
-    hinweis("🎣 Die Angler setzen sich an den See – eine Minute lang werfen sie immer wieder aus.");
-    seeWurf(knopf);
-  }
-  function seeWurf(knopf) {
-    var sz = S.seeSitzung;
-    if (!sz || sz.rest <= 0) return;
-    /* Nur solange das Dorfbild offen ist. */
-    if (!schnellEl || !schnellEl.querySelector("svg.sp-dl-bahn")) { S.seeSitzung = null; return; }
-    sz.rest--;
     S.angelAn[99] = Date.now() + 12000;
     bahnStarten();
     /* Beide werfen aus (der zweite eine Viertelsekunde später); wer den Fang bekommt, wechselt sich ab. */
@@ -9707,22 +9604,16 @@
       if (!r.ok) {
         BAHN.angel.forEach(function (A) { if (A) { A.zieht = t; A.fang = "nichts"; } });
         if (r.sek) S.angelAn[99] = Date.now() + r.sek * 1000; else delete S.angelAn[99];
-        /* In der Sitzung: nicht aufgeben, sondern warten, bis die Angel wieder frei ist. */
-        if (S.seeSitzung && r.sek) { S.seeSitzung.rest++; setTimeout(function () { seeWurf(knopf); }, r.sek * 1000 + 300); return; }
-        S.seeSitzung = null;
         hinweis("🎣 " + (r.grund || "geht nicht") + (r.sek ? " – noch " + r.sek + " s" : ""));
         return;
       }
       if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
       ton("angelkurbel", 0.4);
-      var sz2 = S.seeSitzung; if (sz2 && r.fang === "fisch") sz2.fisch += r.menge;
       BAHN.angel.forEach(function (A, i) { if (A) { A.zieht = t + (i === wer ? 0 : .15); A.fang = i === wer ? r.fang : "nichts"; } });
       if (r.fang === "fisch") setTimeout(function () { bahnWareZeigen("fisch", "+" + r.menge, 214, 176); }, 500);
-      hinweis(r.fang === "fisch" ? "🐟 Am See gefangen: +" + r.menge + " Fisch (" + vorrat(r, "fisch") + " im Lager) – essen (+10 LP), auf dem Markt verkaufen, dein Volk satt machen oder mit der Bahn verschicken."
-        : r.fang === "stiefel" ? "🥾 Ein alter Stiefel aus dem See. Zurück damit!" : r.fang === "muenze" ? "🪙 Eine Münze am Haken: +" + r.menge + " Punkte!" : "🎣 Nichts gebissen – sie werfen gleich wieder aus.");
+      hinweis(r.fang === "fisch" ? "🐟 Am See gefangen: +" + r.menge + " Fisch (" + vorrat(r, "fisch") + " im Lager) – essen (+10 LP), dein Volk satt machen oder mit der Bahn verschicken."
+        : r.fang === "stiefel" ? "🥾 Ein alter Stiefel aus dem See. Zurück damit!" : r.fang === "muenze" ? "🪙 Eine Münze am Haken: +" + r.menge + " Punkte!" : "🎣 Nichts gebissen – gleich nochmal.");
       schnellZeichnen(); panelAuffrischen();
-      if (sz2 && sz2.rest > 0) setTimeout(function () { seeWurf(knopf); }, 12400);
-      else if (sz2) { S.seeSitzung = null; setTimeout(function () { hinweis("🎣 Die Angler packen ein" + (sz2.fisch ? ": " + sz2.fisch + " Fisch in dieser Runde." : " – heute biss nichts.")); }, 2600); }
     }
     setTimeout(einholen, 1700);
     rpc("spiel_angeln", { p_platz: 99 }).then(function (r) { antwort = r || { ok: false }; einholen(); })
@@ -9826,20 +9717,13 @@
      (und Funk 160: „Vögel … auch in der Nacht"). Nachts ziehen seltener ein bis drei Vögel vorbei: langsamer, sie segeln
      mehr als sie schlagen, und sie sind vom Mond hell angestrahlt (sonst sähe man sie vor dem schwarzen Himmel nicht).
      Zu hören ist nur ein leiser Flügelschlag, wenn sie ins Bild kommen – kein Zwitschern in der Nacht. */
-  /* FASSUNG 723 — XANDER (Funk 169): „die Vögel in der Nacht die sollten nicht weiß sein … meistens sind sie ja nicht weiß
-     … die schlafen ja meistens auch und du kannst auch Fledermäuse machen". Nachts: dunkle Silhouetten vor dem Himmel
-     (nur ein Hauch Mondlicht an der Kante), und meist flattern Fledermäuse statt Vögeln – zackig, im Zickzack. */
-  function fledermausSvg() {
-    return '<svg viewBox="0 0 24 12" aria-hidden="true"><path d="M12 5.2c.6-1 .9-1.6 1-2.4.4.7.3 1.6.1 2.2 2.4-1.9 5.6-2.6 9.4-1.6-1.5.6-2.2 1.7-2.2 3.2-1.1-.8-2.4-.8-3.2.3-.8-.7-1.9-.7-2.7.1-.6.6-1.3 1.6-2.4 2.9-1.1-1.3-1.8-2.3-2.4-2.9-.8-.8-1.9-.8-2.7-.1-.8-1.1-2.1-1.1-3.2-.3 0-1.5-.7-2.6-2.2-3.2 3.8-1 7-.3 9.4 1.6-.2-.6-.3-1.5.1-2.2.1.8.4 1.4 1 2.4z" fill="#15131c"/></svg>';
-  }
   function dorfVoegel(nacht) {
     var ort = schnellEl && schnellEl.querySelector(".sp-dw-voegel");
     if (!ort) return;
-    var W = ort.clientWidth || 320, H = ort.clientHeight || 220, links = Math.random() < .5, fleder = nacht && Math.random() < .7;
+    var W = ort.clientWidth || 320, H = ort.clientHeight || 220, links = Math.random() < .5;
     var n = nacht ? 1 + Math.floor(Math.random() * 3) : 3 + Math.floor(Math.random() * 5), dauer = nacht ? 18 + Math.random() * 9 : 11 + Math.random() * 8;
     var s = document.createElement("div");
-    s.className = "sp-dw-schwarm" + (links ? "" : " sp-dw-rueck") + (nacht ? " sp-dw-nacht" : "") + (fleder ? " sp-dw-fleder" : "");
-    if (fleder) { n = 1 + Math.floor(Math.random() * 3); dauer = 9 + Math.random() * 5; }
+    s.className = "sp-dw-schwarm" + (links ? "" : " sp-dw-rueck") + (nacht ? " sp-dw-nacht" : "");
     s.style.top = Math.round(H * (.06 + Math.random() * .28)) + "px";
     s.style.setProperty("--weg", Math.round(W + 160) + "px");
     s.style.animationDuration = dauer.toFixed(1) + "s";
@@ -9848,7 +9732,7 @@
       var gr = 9 + Math.random() * 6;
       /* Jeder Vogel schlägt in seinem eigenen Takt und gleitet ab und zu. */
       h += '<i class="sp-dw-vogel" style="left:' + Math.round(i * 14 + Math.random() * 10) + "px;top:" + Math.round((i % 2 ? 1 : -1) * i * 4 + Math.random() * 6) + "px;width:" + gr.toFixed(1) + "px;animation-delay:-" + (Math.random() * 3).toFixed(1) + 's">'
-        + '<b style="animation-duration:' + (fleder ? .16 + Math.random() * .08 : nacht ? .5 + Math.random() * .3 : .26 + Math.random() * .16).toFixed(2) + 's">' + (fleder ? fledermausSvg() : vogelSvg()) + "</b></i>";
+        + '<b style="animation-duration:' + (nacht ? .5 + Math.random() * .3 : .26 + Math.random() * .16).toFixed(2) + 's">' + vogelSvg() + "</b></i>";
     }
     s.innerHTML = h;
     ort.appendChild(s);
@@ -9951,7 +9835,6 @@
   var DORF_ZEICHEN = {
     /* FASSUNG 716 — Bahnhof (Lok) und See (Fisch). */
     bahnhof: ["#3a4a5c", '<path d="M3 16.5h15.5v-5.5h-4v-4h-3v4H8.5V8.2H10V6.5H5.5v1.7H7v3H3z" fill="#fff"/><circle cx="6.5" cy="18.3" r="1.9" fill="#fff"/><circle cx="15" cy="18.3" r="1.9" fill="#fff"/><path d="M18.5 16.5l2.5 2" stroke="#fff" stroke-width="1.4"/>'],
-    feld: ["#b8862a", '<path d="M12 21V8M12 12c-2-.5-3.5-2-4-4 2 .3 3.6 1.7 4 4zm0 0c2-.5 3.5-2 4-4-2 .3-3.6 1.7-4 4zm0 4c-2-.5-3.5-2-4-4 2 .3 3.6 1.7 4 4zm0 0c2-.5 3.5-2 4-4-2 .3-3.6 1.7-4 4zM12 8c-.8-1.2-.8-3 0-4.5.8 1.5.8 3.3 0 4.5z" stroke="#fff" stroke-width="1.2" fill="#fff"/>'],
     see: ["#2f7fb5", '<path d="M3.5 12c2.6-3.6 8.4-3.6 11 0-2.6 3.6-8.4 3.6-11 0zM14.5 12l4-3v6z" fill="#fff"/><circle cx="7" cy="11.4" r=".9" fill="#2f7fb5"/><path d="M3 19c1.5-1 3-1 4.5 0s3 1 4.5 0 3-1 4.5 0 3 1 4.5 0" stroke="#fff" stroke-width="1.3" fill="none"/>'],
     baeckerei: ["#d9822b", '<path d="M12 19.5c-4.6 0-8-2.9-8-6.6C4 9.8 6 7.5 8.6 7.5s4.2 2 3.4 4.6c-.6 2-3.6 2.4-3.6.2M12 19.5c4.6 0 8-2.9 8-6.6 0-3.1-2-5.4-4.6-5.4s-4.2 2-3.4 4.6c.6 2 3.6 2.4 3.6.2" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>'],
     muehle: ["#4f7cac", '<path d="M10.2 21.5l.9-9.5h1.8l.9 9.5z" fill="#fff"/><path d="M12 11.2L5.2 4.4M12 11.2l6.8-6.8M12 11.2l-6.8 6.8M12 11.2l6.8 6.8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>'],
@@ -10183,9 +10066,8 @@
        kannst du einfach das kleine Haus Symbol noch haben wo man dann automatisch dahin springt". Statt der Zeile mit zwei
        großen Knöpfen schwebt unten rechts nur ein kleines Haus: ein Tipp springt hinauf zum Dorfbild. Geschlossen wird
        das Dorf wie jedes Menü: über das Haus in der Leiste oder ✕ oben. */
-    /* FASSUNG 723 — XANDER (Funk 169): „Dieses Extra Häuser Symbol dieses braune hat keine Funktion es verschiebt auch das
-       Layout wenn man da drauf klickt das kannst du wegmachen". Das kleine Haus ist wieder weg. */
-    var fuss = "";
+    var fuss = '<button type="button" class="sp-dorf-heim" data-s="dorfnachoben" aria-label="Zum Dorfbild" title="Zum Dorfbild">'
+      + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.5 L12 4 L20.5 11.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10 V20 H10.2 V14.6 H13.8 V20 H18 V10" fill="#fff"/></svg></button>';
     return szene + wunderBandHtml(ich) + volkHtml(ich) + ernte + berufeHtml(ich)
       + (t.length ? '<div class="sp-troph-liste">' + t.join("") + "</div>" : "")
       + lagerHtml(ich, true)

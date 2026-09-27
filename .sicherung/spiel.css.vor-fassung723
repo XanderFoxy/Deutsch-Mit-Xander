@@ -2456,29 +2456,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
   box-shadow: 0 1px 0 rgba(0, 0, 0, .35); transition: width .45s ease-out; pointer-events: none; }
 .sp-sa-superkraft .sp-sa-bild { box-shadow: 0 0 0 3px #ffe27a, 0 0 18px 6px rgba(255, 200, 60, .8); }
 .sp-sa-balken small { white-space: normal; line-height: 1.25; }
-
-/* FASSUNG 723 — Funk 169/170 */
-/* Das kleine Haus ist weg; die Anzeige-Wahl (Symbole/Namen) sitzt oben links unter dem Wetter und öffnet nach unten,
-   das Ortsschild oben rechts – nichts liegt mehr über den Äckern oder über dem Wetterschild. */
-.sp-dl-anzeige { left: 6px; top: 32px; bottom: auto; flex-direction: column; }
-.sp-schnell .sp-schnellmenue .sp-dl-rahmen .sp-dl-ortsschild, .sp-dl-ortsschild { left: auto; right: 6px; transform: none; }
-/* Äcker: Tippfläche mit Stoppeln, solange das Korn wächst */
-.sp-dl-ort.sp-dl-feld { overflow: visible; }
-.sp-dl-stoppeln { position: absolute; inset: 0; pointer-events: none; transition: opacity .6s;
-  background: repeating-linear-gradient(100deg, rgba(122, 88, 40, .95) 0 2px, rgba(160, 120, 58, .95) 2px 4px, rgba(96, 70, 32, .95) 4px 5px); }
-.sp-dl-finger { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle, rgba(255, 244, 190, .95), rgba(255, 220, 120, .35) 55%, rgba(255, 220, 120, 0) 70%); animation: spDlFinger .65s ease-out forwards; }
-@keyframes spDlFinger { from { transform: scale(.4); opacity: 1; } to { transform: scale(2.2); opacity: 0; } }
-/* Nachtvögel dunkel (nur ein Hauch Mondlicht an der Kante), Fledermäuse zackig */
-.sp-dw-nacht .sp-dw-vogel svg path { fill: #1b1a24; }
-.sp-dw-nacht .sp-dw-vogel svg { filter: drop-shadow(0 -.5px .6px rgba(190, 205, 240, .45)); }
-.sp-dw-fleder .sp-dw-vogel svg { animation-name: spDwFlattern; }
-.sp-dw-fleder .sp-dw-vogel { animation-name: spDwZickzack; animation-duration: .9s; animation-iteration-count: infinite; animation-timing-function: ease-in-out; }
-@keyframes spDwFlattern { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(-.6); } }
-@keyframes spDwZickzack { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(3px, -5px); } 50% { transform: translate(-2px, 2px); } 75% { transform: translate(2px, -3px); } }
-/* Lok bei Nacht: Scheinwerfer und Licht im Führerhaus */
-.sp-bz-nachtlicht { display: none; }
-.sp-dl-nacht .sp-bz-nachtlicht { display: inline; }
-.sp-dl-anzeige { top: 29px; }
-.sp-schnellmenue .sp-dl-anzeige .sp-dl-anzeige-knopf, .sp-dl-anzeige .sp-dl-anzeige-knopf { width: 26px; height: 26px; }
-.sp-dl-anzeige-knopf svg { width: 17px; height: 17px; }

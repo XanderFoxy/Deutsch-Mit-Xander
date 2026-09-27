@@ -310,7 +310,8 @@ const sage = (gut, was, zusatz) => {
   await tippe(".sp-dl-see"); await tick(250);
   const r1 = await rute();
   sage(r1.length === 2 && r1[0] !== r0[0] && r1[1] !== r0[1], "Tipp auf den See: beide Angler holen aus", JSON.stringify([r0, r1]).slice(0, 200));
-  await tick(1900);
+  /* 2,6 s statt 1,9 s: bei voller Maschine kam das Einholen (ab 1,7 s) manchmal erst knapp danach. */
+  await tick(2600);
   r = await pg.evaluate(() => ({ a: window.__angelArgs, h: window.__hinweise.slice(-1)[0] || "",
     fang: [...document.querySelectorAll(".sp-see-fang")].filter((f) => f.style.display !== "none" && f.innerHTML).length }));
   tl = await toene(t0);
@@ -322,7 +323,12 @@ const sage = (gut, was, zusatz) => {
   await tick(1500);
   await tippe(".sp-dl-see"); await tick(300);
   r = await pg.evaluate(() => window.__hinweise.slice(-1)[0] || "");
-  sage(/warten noch/.test(r), "gleich nochmal: die Angler warten erst auf den nächsten Biss", r);
+  /* FASSUNG 723 — Funk 169: „sie sitzen dann erstmal eine Weile dauern Angeln". */
+  sage(/sitzen schon am See – noch 4 Würfe/.test(r), "gleich nochmal: die Angler sitzen schon am See (noch 4 Würfe)", r);
+  const vorher = await pg.evaluate(() => window.__rufe.filter((x) => x.name === "spiel_angeln").length);
+  await tick(12400);
+  const nachher = await pg.evaluate(() => window.__rufe.filter((x) => x.name === "spiel_angeln").length);
+  sage(nachher === vorher + 1, "nach 12 s werfen sie von selbst wieder aus", vorher + " → " + nachher);
 
   sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
   console.log("\nFassung 716 (Eisenbahn und See): " + (fehler ? fehler + " rot." : "alles grün."));
