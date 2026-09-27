@@ -207,9 +207,10 @@ const sage = (gut, was, zusatz) => {
   await pg.evaluate(() => { const Q = window.DMA_SPIEL.pruef, S = Q.zustand(); S.schnellMenue = true; S.schnellReiter = "mehr"; Q.schnellZeichnen(true); document.querySelector('.sp-schnellmenue [data-s="dorf"]').click(); });
   await tick(600);
   if (process.env.BILD) { await pg.evaluate(() => document.querySelector(".sp-schnellmenue .sp-handel").scrollIntoView({ block: "start" })); await pg.screenshot({ path: process.env.BILD + "-handel.png" }); }
-  const h1 = await pg.evaluate(() => { const h = document.querySelector(".sp-schnellmenue .sp-handel"); return { da: Boolean(h), text: h ? h.textContent : "", getreideKnopf: (document.querySelector('.sp-schnellmenue [data-s="markt"][data-w="getreide"]') || {}).textContent || "" }; });
+  const h1 = await pg.evaluate(() => { const h = document.querySelector(".sp-schnellmenue .sp-handel"); return { da: Boolean(h), text: h ? h.textContent : "", getreideKnopf: (document.querySelector('.sp-schnellmenue [data-s="marktwahl"][data-w="getreide"]') || {}).textContent || "" }; });
   sage(h1.da && /Nachfrage ×1/.test(h1.text) && /Beliebtheit ×0,84/.test(h1.text) && /weniger Kundschaft/.test(h1.text), "Handel: Tagespreis mit Nachfrage, Laune und Beliebtheit (wer viel angreift, hat weniger Kundschaft)", h1.text.slice(0, 200));
-  sage(/12 × 0,74 = \+9/.test(h1.getreideKnopf), "Markt verkauft zum Tagespreis (12 × 0,74 = +9)", h1.getreideKnopf);
+  /* Fassung 764: Vorrat und Stückpreis am Knopf, die Menge wählt man danach. */
+  sage(/12 da · 0,74 P je Stück/.test(h1.getreideKnopf), "Markt verkauft zum Tagespreis (12 da · 0,74 P je Stück)", h1.getreideKnopf);
   await pg.evaluate(() => { window.__rufe.length = 0; const f = document.querySelector('.sp-schnellmenue [data-s="schenken"]'); f.scrollIntoView({ block: "center" });
     const s = f.parentElement.querySelectorAll("select"); s[0].value = "getreide"; s[0].dispatchEvent(new Event("change", { bubbles: true })); s[1].value = "5"; s[1].dispatchEvent(new Event("change", { bubbles: true })); });
   await tippe('.sp-schnellmenue [data-s="schenken"]');

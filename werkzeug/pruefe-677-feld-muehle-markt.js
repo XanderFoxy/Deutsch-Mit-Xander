@@ -337,8 +337,14 @@ const sage = (gut, was, zusatz) => {
   const d5 = await pg.evaluate(() => ({ kuchen: window.DMA_SPIEL.pruef.zustand().ich.vorraete.kuchen, markt: [...document.querySelectorAll('.sp-schnellmenue [data-s="markt"]')].map((b) => b.textContent),
     essen: (document.querySelector('.sp-schnellmenue .sp-markt [data-s="iss"][data-d="kuchen"]') || {}).textContent || "" }));
   sage(d5.kuchen === 2 && d5.essen && /\+30 LP/.test(d5.essen), "2 Kuchen gebacken und abgeholt – „Kuchen essen (+30 LP)“ steht bereit", JSON.stringify(d5));
-  sage(d5.markt.some((t) => /Kuchen verkaufen\s*2 × 14 = \+28/.test(t)), "Markt: Kuchen verkaufen zeigt Menge × Preis = Erlös", JSON.stringify(d5.markt));
-  await pg.evaluate(() => { window.__rufe.length = 0; const b = [...document.querySelectorAll('.sp-schnellmenue [data-s="markt"]')].find((x) => /Kuchen/.test(x.textContent)); b.scrollIntoView({ block: "center" }); b.id = "__kuchenMarkt"; });
+  /* Fassung 764 (Funk 184): erst die Ware antippen, dann die Menge wählen. */
+  const w5 = await pg.evaluate(() => [...document.querySelectorAll('.sp-schnellmenue [data-s="marktwahl"]')].map((b) => b.textContent));
+  sage(w5.some((t) => /Kuchen verkaufen\s*2 da · 14 P je Stück/.test(t)), "Markt: Kuchen verkaufen zeigt Vorrat und Stückpreis", JSON.stringify(w5));
+  await pg.evaluate(() => document.querySelector('.sp-schnellmenue [data-s="marktwahl"][data-w="kuchen"]').scrollIntoView({ block: "center" }));
+  await tippe('.sp-schnellmenue [data-s="marktwahl"][data-w="kuchen"]'); await tick(200);
+  const m5 = await pg.evaluate(() => [...document.querySelectorAll('.sp-schnellmenue [data-s="markt"][data-w="kuchen"]')].map((b) => b.textContent));
+  sage(m5.join("|") === "1× +14|alle 2 +28", "Tipp auf die Ware: Mengen 1× (+14) und alle 2 (+28)", JSON.stringify(m5));
+  await pg.evaluate(() => { window.__rufe.length = 0; const b = document.querySelector('.sp-schnellmenue [data-s="markt"][data-w="kuchen"][data-n="2"]'); b.scrollIntoView({ block: "center" }); b.id = "__kuchenMarkt"; });
   const punkteVor = await pg.evaluate(() => window.__ich.punkte);
   await tippe("#__kuchenMarkt");
   await tick(200);

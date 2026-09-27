@@ -1465,3 +1465,14 @@ Sonden: neu 763 (alles grün); 643, 716, 760 grün (716 und 760 an die neue Lage
 - **„Stimmt der Satz?“ zählt voll**: Bisher gab es halbe Punkte (Fassung 648) und keinen Schnell-Bonus (743), weil man bei zwei Antworten leicht rät. XANDER: „bei C2 … Standard 8 und wenn man schnell 15 wenn man weniger schnell 12 das gibt es dort nicht“. Jetzt wie jede Aufgabe: C2 8 Punkte, bis 6 s 12, bis 12 s 10. Mit der Übung eigener Schwächen und Klassen-Boni kommt mehr dazu. Am Server geprüft (12 bei 4 s, 10 bei 9 s).
 - **Schaufel griffbereit**: „Schaufel nehmen“ in der Schatz-Mission gibt jetzt immer die Schaufel in die Hand. Bisher blieb das zuletzt benutzte Werkzeug (z. B. die Sense) drin, und man musste doppelt tippen und im Menü wechseln. Mit der Schaufel in der Hand heißt der Knopf „Schaufel weglegen“.
 - **Mithelfen-Wahl nur global**: „Mithelfen: auf den Plätzen / nur Knopf“ steht nur noch im Dorf-Menü, nicht mehr im Fenster von Wald, Bergwerk oder See.
+
+### Fassung 764 (Funk 184, zweiter Teil: Dorf)
+Sonden: neu 764 (alles grün); 677, 682, 703, 704, 708, 709, 716, 755, 756 grün. 677, 682 und 703 wurden an die Mengenwahl bzw. die Platz-Knöpfe angepasst.
+- **Knöpfe überdecken nichts mehr**: Der goldene Rand aktiver Knöpfe lag 2 px außen um den Knopf, und die Überschrift („Sehenswürdigkeiten“, „Markt“) begann ohne Abstand direkt darunter. Jetzt liegt der Rand im Menü innen, und unter der Knopfreihe sind 10 px Luft. „Bauen & ausbauen“ war 5 px zu breit und heißt jetzt „Bau & Ausbau“.
+- **Verkaufen mit Menge**: Ein Tipp auf „Brot verkaufen · 12 da · 6 P je Stück“ klappt 1× / 5× / 10× / alle auf, jeweils mit dem Erlös. Erst dann wird verkauft. Der Server (`spiel_markt`) konnte das schon, der Knopf schickte aber immer „alles“.
+- **Wahrzeichen im Dorfbild**: Gebaute Wahrzeichen stehen jetzt im Dorf, auf fünf Plätzen hinter der Bahn wie eine Skyline, und unter der Nacht- und Wetterebene. Ein Tipp öffnet die Sehenswürdigkeiten. Dort steht bei jedem gebauten „Platz im Dorf: 1 2 3 4 5“. Ein belegter Platz tauscht, das andere Wahrzeichen weicht aus. Server: `spiel_wunder_platz` (in `volk.wunder_platz`, geprüft).
+- **Bringt das Geld? (geprüft)**:
+  - Markt: Der ganze Erlös geht auf die Punkte. Ins Ranking zählen davon höchstens 40 am Tag.
+  - Handel mit Mitspielern: Der Verkäufer bekommt genau Menge × seinen Preis.
+  - Bahn-Export zahlt mehr als der Markt (3 Brot: 29 P statt 18 P).
+  - Die Stadt selbst hat keine eigene Kasse. Reicher wird der Spieler, der damit baut.

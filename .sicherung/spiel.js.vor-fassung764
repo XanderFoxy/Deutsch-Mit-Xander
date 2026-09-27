@@ -4758,12 +4758,10 @@
       if (S.dorfWahl) setTimeout(function () { try { var st = schnellEl.querySelector(".sp-dl-station"); if (st) st.scrollIntoView({ block: "nearest" }); } catch (e) {} }, 60);
       return;
     } else if (s === "dorfteil") {
-      /* FASSUNG 764 — ein Wahrzeichen im Dorfbild öffnet die Liste immer (schließt sie nicht). */
-      var imBild = k.classList.contains("sp-dl-wunder");
-      S.dorfTeil = S.dorfTeil === k.dataset.t && !imBild ? "" : k.dataset.t;
+      S.dorfTeil = S.dorfTeil === k.dataset.t ? "" : k.dataset.t;
       if (S.dorfTeil === "markt") handelLaden(false);
       /* FASSUNG 703 — vom Wahrzeichen-Band aus: gleich zur aufgeklappten Tafel. */
-      if (S.dorfTeil && (k.classList.contains("sp-wunderband") || imBild)) setTimeout(function () { try { var z = schnellEl.querySelector(".sp-dorf-auf"); if (z) z.scrollIntoView({ block: "start" }); } catch (e) {} }, 60);
+      if (S.dorfTeil && k.classList.contains("sp-wunderband")) setTimeout(function () { try { var z = schnellEl.querySelector(".sp-dorf-auf"); if (z) z.scrollIntoView({ block: "start" }); } catch (e) {} }, 60);
     } else if (s === "ausbilden") {
       /* FASSUNG 702 — Dorfbewohner ausbilden oder entlassen. */
       var bn = Number(k.dataset.n) || 0, bb = k.dataset.b, BB = BERUFE[bb];
@@ -5021,16 +5019,8 @@
       if (wf && S.dorfWahl !== "wald") { werkAbholen("trupp_" + wf); S.dorfTippWeg = true; return; }
       S.dorfWahl = S.dorfWahl === "wald" ? "" : "wald"; S.dorfTippWeg = true;
       ton(S.dorfWahl ? "holzklopf" : "swoosh", 0.25); schnellZeichnen(true); return;
-    } else if (s === "wunderplatz") {
-      wirtschaft("spiel_wunder_platz", { p_was: k.dataset.w, p_platz: Number(k.dataset.p) }, function (r) {
-        ton("hammerschlag", 0.35);
-        hinweis("🏛️ " + WUNDER[r.wunder].name + " steht jetzt auf Platz " + (r.platz + 1) + (r.getauscht && WUNDER[r.getauscht] ? " – " + WUNDER[r.getauscht].name + " hat Platz gemacht." : "."));
-      });
-      return;
-    } else if (s === "marktwahl") {
-      S.marktWahl = S.marktWahl === k.dataset.w ? "" : k.dataset.w; ton("holzklopf", 0.15); schnellZeichnen(true); panelAuffrischen(); return;
     } else if (s === "markt") {
-      wirtschaft("spiel_markt", { p_ware: k.dataset.w, p_menge: Number(k.dataset.n) || 0 }, function (r) {
+      wirtschaft("spiel_markt", { p_ware: k.dataset.w, p_menge: 0 }, function (r) {
         ton("kasse", 0.45);
         hinweis("🏪 Markt: " + r.menge + " " + (WAREN[r.ware] || r.ware) + " verkauft – +" + r.erloes + " Punkte." + (r.rang ? " " + r.rang + " davon zählen im Ranking." : ""));
         handelLaden(true);
@@ -8161,18 +8151,9 @@
     }).catch(function () {});
   }
   function marktHtml(ich) {
-    /* FASSUNG 764 — XANDER (Funk 184): „wieso verkaufe ich auf einmal glaube ich fünf Brot … kann man das irgendwie anpassen
-       dass man nicht so sein ganzes Brot verkauft … dass man die Auswahl hat und nicht alles auf einmal verpulvert". Ein Tipp
-       auf die Ware klappt die Mengen auf (1, 5, 10, alle); erst der Tipp auf eine Menge verkauft. */
     var markt = Object.keys(WAREN).filter(function (x) { return vorrat(ich, x) > 0; }).map(function (x) {
-      var n = Math.min(50, vorrat(ich, x)), pr = marktPreis(x), offen = S.marktWahl === x;
-      var kopf = '<button type="button" data-s="marktwahl" data-w="' + x + '" class="sp-markt-ware' + (offen ? " sp-an" : "") + '">' + WAREN[x] + " verkaufen <small>"
-        + vorrat(ich, x) + " da · " + komma2(pr) + " P je Stück " + (offen ? "▴" : "▾") + "</small></button>";
-      if (!offen) return kopf;
-      var mengen = [1, 5, 10].filter(function (m) { return m < n; }).concat([n]);
-      return kopf + '<div class="sp-markt-mengen">' + mengen.map(function (m) {
-        return '<button type="button" data-s="markt" data-w="' + x + '" data-n="' + m + '">' + (m === n && m > 1 ? "alle " + m : m + "×") + " <small>+" + Math.max(1, Math.round(m * pr)) + "</small></button>";
-      }).join("") + "</div>";
+      var n = Math.min(50, vorrat(ich, x)), pr = marktPreis(x);
+      return '<button type="button" data-s="markt" data-w="' + x + '">' + WAREN[x] + " verkaufen <small>" + n + " × " + komma2(pr) + " = +" + Math.max(1, Math.round(n * pr)) + "</small></button>";
     }).join("");
     var essenK = ["brot", "kuchen", "fisch", "fleisch", "torte"].filter(function (x) { return vorrat(ich, x) > 0; }).map(function (x) {
       return '<button type="button" data-s="iss" data-d="' + x + '">' + WAREN[x] + " essen <small>" + ({ brot: "+12 LP", kuchen: "+30 LP, +10 Mana", fisch: "+10 LP", fleisch: "+14 LP", torte: "+40 LP, +15 Mana" })[x] + "</small></button>";
@@ -8457,7 +8438,7 @@
       + zeilen;
   }
   function wunderHtml(ich) {
-    var lv = ich.level || 1, punkte = ich.punkte || 0, plaetze = wunderPlaetze(ich);
+    var lv = ich.level || 1, punkte = ich.punkte || 0;
     var zeilen = Object.keys(WUNDER).map(function (k) {
       var W = WUNDER[k], steht = hatWunder(ich, k);
       var ware = Object.keys(W.waren).map(function (x) { return W.waren[x] + " " + wareName(x); }).join(", ");
@@ -8465,11 +8446,7 @@
         : Object.keys(W.waren).filter(function (x) { return vorrat(ich, x) < W.waren[x]; }).map(function (x) { return "zu wenig " + wareName(x); })[0] || "";
       return '<div class="sp-beruf sp-wunder' + (steht ? " sp-an" : "") + '"><i><svg viewBox="0 0 64 90" aria-hidden="true">' + wunderSvg(k) + "</svg></i><span><b>" + W.name + (steht ? " · steht" : "") + "</b>"
         + "<small>" + W.ort + " · " + W.besucher + " Besucher je Ernte, Volk +" + W.freude + " % froh" + (steht ? "" : " · " + W.preis + " P, " + ware + (fehlt ? " · " + fehlt : "")) + "</small></span>"
-        + (steht ? "" : '<span class="sp-beruf-knoepfe"><button type="button" data-s="wunderbauen" data-w="' + k + '"' + (fehlt ? " disabled" : "") + ">Bauen</button></span>")
-        /* FASSUNG 764 — wo es im Dorf steht (fünf Plätze hinter der Bahn, von links nach rechts). */
-        + (steht ? '<span class="sp-wunder-platz"><small>Platz im Dorf:</small>' + WUNDER_PLAETZE.map(function (q, i) {
-            return '<button type="button" data-s="wunderplatz" data-w="' + k + '" data-p="' + i + '" class="' + (plaetze[k] === i ? "sp-an" : "") + '" aria-label="Platz ' + (i + 1) + '">' + (i + 1) + "</button>"; }).join("") + "</span>" : "")
-        + "</div>";
+        + (steht ? "" : '<span class="sp-beruf-knoepfe"><button type="button" data-s="wunderbauen" data-w="' + k + '"' + (fehlt ? " disabled" : "") + ">Bauen</button></span>") + "</div>";
     }).join("");
     var b = besucherZahl(ich);
     return '<div class="sp-sm-gruppe"><span>Sehenswürdigkeiten' + (b ? " · " + b + " Besucher je Ernte" : "") + "</span></div>"
@@ -8513,27 +8490,6 @@
       + '<circle cx="32" cy="22" r="7.6" fill="#9aa4ae"/><path d="M32 14.4 A7.6 7.6 0 0 1 32 29.6 Z" fill="#c3cbd2"/><circle cx="34.6" cy="19.4" r="2" fill="#fff" opacity=".6"/>'
       + '<path d="M24.6 22.6 H39.4" stroke="#39434d" stroke-width="1.6"/><path d="M25 22.6 H39" stroke="#8fd0ff" stroke-width=".5" stroke-dasharray="1 .8"/>'
       + '<path d="M31 14.6 H33 V8 H31 Z" fill="#d7dce2"/><path d="M31.6 8 H32.4 V-1 H31.6 Z" fill="#fff"/><path d="M31.6 6 H32.4 V4 H31.6 Z M31.6 2 H32.4 V0 H31.6 Z" fill="#d8261f"/>';
-  }
-  /* FASSUNG 764 — XANDER (Funk 184): „warum kann ich meinen Fernsehturm nicht in meinem Dorf sehen kann man den dann nicht
-     mit reinstellen kann ich mir mittlerweile bestimmen wo ich das hinstelle". Fünf Plätze hinter der Bahnlinie, vor den
-     Bergen – wie eine Skyline (Mitte unten, im 320 × 200-Raster des Dorfbilds). Wer nichts wählt, bekommt den nächsten freien. */
-  var WUNDER_PLAETZE = [[20, 58], [124, 58], [172, 58], [232, 58], [298, 58]];
-  function wunderPlaetze(ich) {
-    var v = (ich || {}).volk || {}, fest = v.wunder_platz || {}, belegt = {}, aus = {};
-    Object.keys(WUNDER).forEach(function (k) { var p = fest[k]; if (hatWunder(ich, k) && p != null && p >= 0 && p < WUNDER_PLAETZE.length && !belegt[p]) { belegt[p] = k; aus[k] = Number(p); } });
-    Object.keys(WUNDER).forEach(function (k) {
-      if (!hatWunder(ich, k) || aus[k] != null) return;
-      for (var i = 0; i < WUNDER_PLAETZE.length; i++) if (!belegt[i]) { belegt[i] = k; aus[k] = i; break; }
-    });
-    return aus;
-  }
-  function dorfWunderHtml(ich) {
-    var pl = wunderPlaetze(ich);
-    return Object.keys(pl).map(function (k) {
-      var q = WUNDER_PLAETZE[pl[k]], b = 28, h = 38.5;
-      return '<button type="button" class="sp-dl-wunder" data-s="dorfteil" data-t="wunder" data-w="' + k + '" style="left:' + ((q[0] - b / 2) / 3.2).toFixed(2) + "%;top:" + ((q[1] - h) / 2).toFixed(2)
-        + "%;width:" + (b / 3.2).toFixed(2) + "%;height:" + (h / 2).toFixed(2) + '%" title="' + WUNDER[k].name + '"><svg viewBox="0 -2 64 88" preserveAspectRatio="xMidYMax meet" aria-hidden="true">' + wunderSvg(k) + "</svg></button>";
-    }).join("");
   }
   /* Das Band unter dem Dorf: gebaute Wahrzeichen in Farbe, der Rest als Schatten mit Level; Besucher spazieren hindurch. */
   var wunderBandMerk = { sig: "", html: "" };
@@ -10329,7 +10285,7 @@
     var wetter = dorfWetter(), nah = dorfNah();
     /* FASSUNG 715 — Schnee auf den Dächern und der Wiese, wenn es draußen schneit (eigenes Bild: „S" in der Kennung). */
     var malSig = sig + dorfJahrSig() + (wetter.art === "schnee" ? "S" : "") + (wetter.tag ? "" : "N");
-    return '<div class="sp-dl-rahmen ' + (nah ? "sp-dl-nah" : "sp-dl-ganz") + (dorfZeichen() ? " sp-dl-zeichen" : "") + (dorfNamen() ? " sp-dl-namen" : "") + (wetter.tag ? "" : " sp-dl-nacht") + '"><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + malSig + '" aria-hidden="true"></canvas>' + dorfWunderHtml(ich) + '<div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
+    return '<div class="sp-dl-rahmen ' + (nah ? "sp-dl-nah" : "sp-dl-ganz") + (dorfZeichen() ? " sp-dl-zeichen" : "") + (dorfNamen() ? " sp-dl-namen" : "") + (wetter.tag ? "" : " sp-dl-nacht") + '"><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + malSig + '" aria-hidden="true"></canvas><div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
       + dorfNachtHtml(ich, wetter) + haeuser + (besuch ? "" : dorfBahnKnoepfe()) + dorfLeuteHtml(ich) + dorfBahnHtml(wetter) + "</div></div>" + dorfWetterHtml(wetter) + dorfWetterSchild(wetter)
       /* FASSUNG 721 — XANDER (Funk 159): „ich möchte dass das kleine Bild was wir haben schon den Kompass hat nicht dass
          das drei unterschiedliche Bilder sind … diese Lupe wie in den anderen Spielen mit den kleinen Punkten auf der Karte
@@ -11570,7 +11526,7 @@
       + lagerHtml(ich, true)
       + nachbarnHtml()
       + '<div class="sp-sm-liste sp-dorf-auf">'
-      + '<button type="button" data-s="dorfteil" data-t="bau" class="' + (S.dorfTeil === "bau" ? "sp-an" : "") + '">Bau &amp; Ausbau ' + (S.dorfTeil === "bau" ? "▴" : "▾") + "</button>"
+      + '<button type="button" data-s="dorfteil" data-t="bau" class="' + (S.dorfTeil === "bau" ? "sp-an" : "") + '">Bauen &amp; ausbauen ' + (S.dorfTeil === "bau" ? "▴" : "▾") + "</button>"
       + '<button type="button" data-s="dorfteil" data-t="markt" class="' + (S.dorfTeil === "markt" ? "sp-an" : "") + '">Markt &amp; Handel ' + (S.dorfTeil === "markt" ? "▴" : "▾") + "</button>"
       /* FASSUNG 703 */
       + '<button type="button" data-s="dorfteil" data-t="forschung" class="' + (S.dorfTeil === "forschung" ? "sp-an" : "") + '">Forschung ' + (S.dorfTeil === "forschung" ? "▴" : "▾") + "</button>"
