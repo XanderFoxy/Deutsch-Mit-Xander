@@ -1931,6 +1931,10 @@
   {"bild": "l_bahn_tender", "id": "tender", "saat": 1, "jahr": ["winter", "herbst"], "zeit": ["tag", "nacht"], "s": 22, "schritte": 1, "zelle": [4.7, 4.7, 5.98, 2.42], "q": 0.8},
   {"bild": "l_bahn_gwagen", "id": "gwagen", "saat": 1, "jahr": ["winter", "herbst"], "zeit": ["tag", "nacht"], "s": 22, "schritte": 1, "zelle": [4.75, 4.75, 5.7, 2.45], "q": 0.8},
   {"bild": "l_bahn_rungen", "id": "rungenwagen", "saat": 1, "jahr": ["winter", "herbst"], "zeit": ["tag", "nacht"], "s": 22, "schritte": 1, "zelle": [5.65, 5.65, 6.1, 2.9], "q": 0.8},
-  {"bild": "l_bahn_kessel", "id": "kesselwagen", "saat": 1, "jahr": ["winter", "herbst"], "zeit": ["tag", "nacht"], "s": 22, "schritte": 1, "zelle": [4.85, 4.85, 6.22, 2.5], "q": 0.8}
+  {"bild": "l_bahn_kessel", "id": "kesselwagen", "saat": 1, "jahr": ["winter", "herbst"], "zeit": ["tag", "nacht"], "s": 22, "schritte": 1, "zelle": [4.85, 4.85, 6.22, 2.5], "q": 0.8},
+  {"bild": "l_fuhr_korn", "id": "pferdewagen_korn", "saat": 7, "variante": "korn", "varianten": ["schritt0", "schritt1", "schritt2", "schritt3", "steh"], "jahr": ["winter", "herbst"], "zeit": ["tag", "nacht"], "s": 24, "q": 0.78},
+  {"bild": "l_fuhr_mehl", "id": "pferdewagen_korn", "saat": 7, "variante": "mehl", "varianten": ["schritt0", "schritt1", "schritt2", "schritt3", "steh"], "jahr": ["winter", "herbst"], "zeit": ["tag", "nacht"], "s": 24, "q": 0.78},
+  {"bild": "l_fuhr_leer", "id": "pferdewagen_korn", "saat": 7, "variante": "leer", "varianten": ["schritt0", "schritt1", "schritt2", "schritt3", "steh"], "jahr": ["winter", "herbst"], "zeit": ["tag", "nacht"], "s": 24, "q": 0.78},
+  {"bild": "l_fuhr_bahn", "id": "pferdebahn", "saat": 7, "varianten": ["schritt0", "schritt1", "schritt2", "schritt3", "steh"], "jahr": ["winter", "herbst"], "zeit": ["tag", "nacht"], "s": 24, "q": 0.78}
  ]
 }

@@ -44,7 +44,7 @@ function auftraege() {
   /* Menschen: je Art, Saat, Jahres- und Tageszeit EIN Blatt mit 12 Schritten × 8 Richtungen */
   for (const a of plan.leute || []) {
     if (NUR && !NUR.includes(a.bild)) continue;
-    for (const jahr of a.jahr) for (const zeit of a.zeit) liste.push({ leute: true, name: [a.bild, jahr, zeit].join("_"), id: a.id, saat: a.saat, jahr: jahr, zeit: zeit, s: a.s || 40, schritte: a.schritte || 12, zelle: a.zelle, q: a.q });
+    for (const jahr of a.jahr) for (const zeit of a.zeit) liste.push({ leute: true, name: [a.bild, jahr, zeit].join("_"), id: a.id, saat: a.saat, jahr: jahr, zeit: zeit, s: a.s || 40, schritte: a.varianten ? a.varianten.length : a.schritte || 12, zelle: a.zelle, q: a.q, variante: a.variante, varianten: a.varianten, t: a.t || 1.5 });
   }
   for (const a of plan.bilder) {
     if (NUR && !NUR.includes(a.bild)) continue;
@@ -92,6 +92,44 @@ function auftraege() {
         const ST = window.STADT, SZ = ST.szene;
         SZ.jahr = a.jahr; SZ.zeit = a.zeit;
         const Z = SZ.zeitDaten(), def = ST.MODELLE[a.id], s = a.s;
+        /* FASSUNG 810 — XANDER: „Pferdebahn driving plus horse carts taking grain to the mill and flour to the bakery".
+           Gebaute Modelle (bauen statt zeichnen: Pferdebahn, Pferdewagen) werden wie ein Haus gemalt (ST.spriteMalen),
+           je Spalte eine Variante aus dem Plan (varianten: ["schritt0" … "schritt3", "steh"] = die Gangbilder des Pferdes),
+           je Zeile eine der 8 Richtungen. Die Zelle wächst mit dem größten Bild; der Schatten kommt mit aufs Blatt (wie
+           bei den Leuten), die Lichter (Laterne der Pferdebahn) stehen je Zeile im Verzeichnis (l: [Zeile, x, y, r, Farbe, k, flackert, Boden]). */
+        if (!def.zeichnen && def.bauen) {
+          const VAR = a.varianten || [""], N = VAR.length, sp = [];
+          const KS = ST.kamera.s, KD = ST.kamera.dreh; ST.kamera.s = Math.min(s, 10); ST.kamera.dreh = 0;
+          ST.jetzt = a.t * 1000;
+          let L = 0, R = 0, T = 0, U = 0;
+          for (let r = 0; r < 8; r++) for (let i = 0; i < N; i++) {
+            const v = [a.variante || "", VAR[i]].join(" ").trim();
+            const o = { id: 800000 + r * 100 + i, typ: a.id, x: 0, y: 0, gier: r * 45, saat: a.saat, variante: v };
+            const b = ST.spriteMalen(a.id, { ungekappt: true, jahr: a.jahr, bau: 1, saat: a.saat, variante: v, schluessel: v + "|" + a.saat, objekt: o }, r * 45, s, Z, a.t);
+            sp.push(b);
+            L = Math.max(L, -b.ox); R = Math.max(R, b.ox + b.W); T = Math.max(T, -b.oy); U = Math.max(U, b.oy + b.H);
+          }
+          ST.kamera.s = KS; ST.kamera.dreh = KD;
+          const ax = Math.ceil(L), ay = Math.ceil(T), cw = ax + Math.ceil(R), ch = ay + Math.ceil(U);
+          const blatt = document.createElement("canvas"); blatt.width = cw * N; blatt.height = ch * 8;
+          const bg = blatt.getContext("2d");
+          const sch = document.createElement("canvas"); sch.width = cw; sch.height = ch; const shg = sch.getContext("2d");
+          const lichter = [];
+          for (let r = 0; r < 8; r++) for (let i = 0; i < N; i++) {
+            const b = sp[r * N + i];
+            shg.globalCompositeOperation = "source-over"; shg.clearRect(0, 0, cw, ch);
+            shg.drawImage(b.schatten, ax + b.ox, ay + b.oy);
+            shg.globalCompositeOperation = "source-in"; shg.fillStyle = a.jahr === "winter" ? "rgba(40,62,120," + (Z.schatten * 1.15).toFixed(3) + ")" : "rgba(22,34,52," + Z.schatten.toFixed(3) + ")"; shg.fillRect(0, 0, cw, ch);
+            bg.drawImage(sch, i * cw, r * ch);
+            bg.drawImage(b.bild, i * cw + ax + b.ox, r * ch + ay + b.oy);
+            if (i === 0) for (const l of b.lichter) lichter.push([r, Math.round((l.x + b.ox) * 10) / 10, Math.round((l.y + b.oy) * 10) / 10, Math.round(l.r * 10) / 10, l.farbe, Math.round((l.k == null ? 1 : l.k) * 100) / 100, l.flacker ? 1 : 0, l.boden ? 1 : 0]);
+            b.bild.width = 0; b.schatten.width = 0;
+          }
+          const url = blatt.toDataURL("image/webp", a.q || 0.8);
+          const erg = { bild: url, zw: cw, zh: ch, ax: ax, ay: ay, n: N, s: s };
+          if (lichter.length) erg.l = lichter;
+          return erg;
+        }
         /* Zelle: links 0,9 m, rechts 3,1 m (Schatten fällt nach rechts), oben 2 m, unten 0,5 m.
            Andere Figuren (Tretboot) geben im Plan ihre eigene Zelle an: zelle: [links, rechts, oben, unten] in Metern */
         const Zl = a.zelle || [0.9, 3.1, 2.05, 0.55];
