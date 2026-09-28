@@ -32,6 +32,10 @@
      eigene Modelle für Kuhstall, Bergwerk, Krankenhaus … folgen) */
   D.BILD = { muehle: ["g_muehle", "bau_wassermuehle", [16.2, 21.4], 13] };
   const ERKER = { schule: 1, brauerei: 1, bibliothek: 1, rathaus: 1, krankenhaus: 1, labor: 1, gefaengnis: 1 };
+  /* FASSUNG 795 — eigene Modelle (Grundfläche und Höhe wie im Modell) */
+  const EIGEN = { kuhstall: [[11, 9], 10], huehnerstall: [[8, 7], 4], rathaus: [[12, 10], 17], schule: [[12, 9], 13],
+    kaserne: [[12, 10], 12], gefaengnis: [[9, 9], 15] };
+  for (const k in EIGEN) D.BILD[k] = ["g_" + k, "bau_" + k, EIGEN[k][0], EIGEN[k][1]];
   for (const k in D.GEBAEUDE) if (!D.BILD[k]) D.BILD[k] = ERKER[k] ? ["g_" + k, "bau_fachwerkerker", [8, 12], 13] : ["g_" + k, "bau_fachwerkhaus", [10.4, 9.6], 14.2];
   /* Stufe 1–3: kleiner, mittel, voll (wie im Spiel 0,82 / 0,92 / 1,02) */
   D.STUFE = [0.86, 0.94, 1.0];
@@ -81,8 +85,8 @@
     koelner_dom: { name: "Kölner Dom", x: -70, y: 0, dreh: 1, bild: "w_koelner_dom", fuss: [54.2, 30.4], hoehe: 53 },
     holstentor: { name: "Holstentor", x: 60, y: 52, dreh: 0 },
     brandenburger: { name: "Brandenburger Tor", x: -52, y: 56, dreh: 0 },
-    neuschwanstein: { name: "Neuschwanstein", x: -56, y: -56, dreh: 0 },
-    fernsehturm: { name: "Fernsehturm", x: 58, y: -60, dreh: 0 }
+    neuschwanstein: { name: "Neuschwanstein", x: -56, y: -56, dreh: 0, bild: "w_neuschwanstein", fuss: [28, 18], hoehe: 24 },
+    fernsehturm: { name: "Fernsehturm", x: 58, y: -60, dreh: 0, bild: "w_fernsehturm", fuss: [16, 16], hoehe: 46 }
   };
 
   /* ---------------- Boden: Anger, Ringstraße, Wege, Bach, See ---------------- */
@@ -169,6 +173,8 @@
     /* Bäume zwischen den Höfen und eine Obstwiese im Nordosten */
     const frei = (x, y, abst) => {
       for (const k in D.PLAETZE) { const p = D.PLAETZE[k]; if (Math.hypot(p.x - x, p.y - y) < (k === "muehle" ? 13 : 9) + abst) return false; }
+      /* FASSUNG 795 — keine Bäume auf den Plätzen der Wahrzeichen */
+      for (const k in D.WUNDER) { const w = D.WUNDER[k]; if (w.fuss && Math.hypot(w.x - x, w.y - y) < Math.max(w.fuss[0], w.fuss[1]) / 2 + 2 + abst) return false; }
       for (const o of liste) if (!o.rand && Math.hypot(o.x - x, o.y - y) < Math.max(o.fuss[0], o.fuss[1]) / 2 + abst) return false;
       if (B.wert(x, y, 0) > 0.05 || B.wert(x, y, 1) > 0.05) return false;
       return true;
@@ -239,7 +245,7 @@
     return {
       id: "beispiel", name: "Beispiel", dorf_name: "Winterhausen", dorf: dorf, dorf_plan: {},
       baustellen: [{ was: "labor", stufe: 1, start: iso(-50e3), bis: iso(70e3), dauer: 120 }, { was: "flickstube", stufe: 2, start: iso(-200e3), bis: iso(100e3), dauer: 300 }],
-      volk: { wunder: { koelner_dom: { stufe: 1 } } }
+      volk: { wunder: { koelner_dom: { stufe: 1 }, neuschwanstein: { stufe: 1 }, fernsehturm: { stufe: 1 } } }
     };
   };
 })();

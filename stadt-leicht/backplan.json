@@ -29,8 +29,8 @@
   },
   {
    "bild": "g_schule",
-   "id": "fachwerkerker",
-   "saat": 3,
+   "id": "schule",
+   "saat": 7,
    "gier": [
     0,
     90,
@@ -133,8 +133,8 @@
   },
   {
    "bild": "g_rathaus",
-   "id": "fachwerkerker",
-   "saat": 5,
+   "id": "rathaus",
+   "saat": 7,
    "gier": [
     0,
     90,
@@ -185,8 +185,8 @@
   },
   {
    "bild": "g_huehnerstall",
-   "id": "fachwerkhaus",
-   "saat": 31,
+   "id": "huehnerstall",
+   "saat": 7,
    "gier": [
     0,
     90,
@@ -211,8 +211,8 @@
   },
   {
    "bild": "g_kuhstall",
-   "id": "fachwerkhaus",
-   "saat": 41,
+   "id": "kuhstall",
+   "saat": 7,
    "gier": [
     0,
     90,
@@ -315,8 +315,8 @@
   },
   {
    "bild": "g_kaserne",
-   "id": "fachwerkhaus",
-   "saat": 61,
+   "id": "kaserne",
+   "saat": 7,
    "gier": [
     0,
     90,
@@ -367,8 +367,8 @@
   },
   {
    "bild": "g_gefaengnis",
-   "id": "fachwerkerker",
-   "saat": 43,
+   "id": "gefaengnis",
+   "saat": 7,
    "gier": [
     0,
     90,
@@ -1002,6 +1002,232 @@
    "s": {
     "gross": 48,
     "klein": 16
+   }
+  },
+  {
+   "bild": "bau_kuhstall",
+   "id": "kuhstall",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "bau_huehnerstall",
+   "id": "huehnerstall",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "bau_rathaus",
+   "id": "rathaus",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "bau_schule",
+   "id": "schule",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "bau_kaserne",
+   "id": "kaserne",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "bau_gefaengnis",
+   "id": "gefaengnis",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "w_neuschwanstein",
+   "id": "neuschwanstein",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 26,
+    "klein": 10
+   }
+  },
+  {
+   "bild": "w_fernsehturm",
+   "id": "fernsehturm",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 26,
+    "klein": 10
    }
   }
  ],
