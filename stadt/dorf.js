@@ -64,7 +64,7 @@
     B.linie(kurve([[0, -12], [1, -24], [-2, -38], [0, -50]], 12), 1.7, 0, 1);
     B.linie(kurve([[0, 12], [-1, 26], [2, 40], [0, 50]], 12), 1.8, 0, 1);
     B.linie(kurve([[-13, 2], [-26, 4], [-40, 0], [-56, 3]], 12), 1.5, 0, 1);
-    B.linie(kurve([[13, -2], [22, -3], [32, -1], [44, 2]], 12), 1.5, 0, 1);
+    B.linie(kurve([[13, -2], [22, -2.6], [26, -2], [37, -2], [41, 0], [44, 2]], 12), 1.5, 0, 1);
     /* Kirchplatz */
     flaecheRund(0, -52, 9, 7, 0, 0.25);
     /* Bahnhofsvorplatz */
@@ -93,7 +93,7 @@
     SZ.objekte = []; SZ.naechsteId = 1;
     const hat = (id) => !!ST.MODELLE[id];
     /* Bäume in wenigen Spielarten (je eigenes Bild im Speicher), Häuser jedes für sich */
-    const BAUM = { tanne: 9, laubbaum: 6, obstbaum: 5 };
+    const BAUM = { tanne: 24, laubbaum: 16, obstbaum: 12 };
     const setze = (id, x, y, gier, ersatz) => {
       let t = hat(id) ? id : (ersatz && hat(ersatz) ? ersatz : null);
       if (!t) return null;
@@ -132,12 +132,15 @@
     /* Brücke über den Bach */
     setze("bruecke", 31.5, -2, 90);
     /* Laternen am Platzrand und an den Straßen */
-    for (const [x, y] of [[-12, -11], [12, -11], [-12, 11], [12, 11], [2.8, -28], [-2.4, -42], [2.6, 28], [-2.8, 46], [-28, 5.8], [-44, 3.5], [22, -5.5], [42, 4.4]]) setze("laterne", x, y, 0);
+    for (const [x, y] of [[-12, -11], [12, -11], [-12, 11], [12, 11], [2.8, -28], [-2.4, -42], [2.6, 28], [-2.8, 46], [-28, 5.8], [-43, 2.5], [25.8, -5.4], [42, 4.4]]) setze("laterne", x, y, 0);
     /* Schneemänner, Bänke */
     setze("schneemann", -16, 15, 30);
     setze("schneemann", 46, 34, 300);
-    setze("bank", -12.5, 0, 90);
-    setze("bank", 12.5, 0, 270);
+    setze("bank", -12.5, 0, 270);
+    setze("bank", 12.5, 0, 90);
+    /* Zäune um die Vorgärten */
+    setze("zaun", -22, -14.6, 0); setze("zaun", -18, -14.6, 0);
+    setze("zaun", 16, 17, 90); setze("zaun", 16, 21, 90);
     /* Tannenwald im Nordwesten und am Rand, Obstbäume im Südwesten */
     const rng = ST.zufall(4711);
     for (let i = 0; i < 70; i++) {
@@ -163,7 +166,7 @@
         const x = seite === 0 ? u : seite === 1 ? G + tiefe : seite === 2 ? u : -G - tiefe;
         const y = seite === 0 ? -G - tiefe : seite === 1 ? u : seite === 2 ? G + tiefe : u;
         if (Math.abs(x) < G + 2 && Math.abs(y) < G + 2) continue;
-        const o = SZ.neu(rng() < 0.82 || !hat("laubbaum") ? "tanne" : "laubbaum", x, y, rng() * 360, { saat: 1 + ((rng() * 9) | 0), rand: true });
+        const o = SZ.neu(rng() < 0.82 || !hat("laubbaum") ? "tanne" : "laubbaum", x, y, rng() * 360, { saat: 1 + ((rng() * 24) | 0), rand: true });
         void o;
       }
     }

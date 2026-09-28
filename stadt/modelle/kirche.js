@@ -597,7 +597,7 @@
     if (K) return K;
     const Wt = BK.W, Ht = BK.H, saat = 1 + spiel * 17;
     const cw = Math.max(2, Math.round(Wt * pt)), ch = Math.max(2, Math.round(Ht * pt));
-    if (bkPixel + cw * ch > 28e6) { BKACHELN.clear(); bkPixel = 0; }
+    if (bkPixel + cw * ch > 10e6) { BKACHELN.clear(); bkPixel = 0; }
     const cv = document.createElement("canvas"); cv.width = cw; cv.height = ch;
     const g = cv.getContext("2d");
     g.scale(cw / Wt, ch / Ht);
@@ -1190,8 +1190,14 @@
     spitz(loch, x + 0.06, bS, wl, bU); spitz(loch, x + w / 2 + m / 2, bS, wl, bU);
     loch.moveTo(x + w / 2 + rO, cyO); loch.arc(x + w / 2, cyO, rO, 0, 2 * Math.PI);
     g.save(); g.clip(loch);
-    g.fillStyle = "rgb(14,12,14)"; g.fillRect(x - 0.3, bA - 0.3, w + 0.6, bU - bA + 0.6);
+    /* Schräg gesehen verdeckt die Leibung der Lanzetten (0,3 m tief) einen
+       Teil der Öffnung – dort Stein, nur durch den Rest sieht man ins
+       Dunkel und auf die Läden (sonst wird eine schräge Turmseite zum
+       schwarzen Schlitz) */
+    g.fillStyle = rgbS(hellF(c, -0.3)); g.fillRect(x - 0.3, bA - 0.3, w + 0.6, bU - bA + 0.6);
     const t2 = tief(I, 0.3); g.translate(t2[0], t2[1]);
+    g.clip(loch);
+    g.fillStyle = "rgb(14,12,14)"; g.fillRect(x - 0.3, bA - 0.3, w + 0.6, bU - bA + 0.6);
     if (px > 10 && (I.W.bau == null || op.laeden)) {
       /* Schallläden: schräge, verwitterte Holzlamellen */
       const d = 0.2;
@@ -1476,7 +1482,7 @@
     if (k) return k;
     const NR = 12, NC = 16, Wt = NC * sw, Ht = NR * rh;
     const cw = Math.max(2, Math.round(Wt * pt)), ch = Math.max(2, Math.round(Ht * pt));
-    if (kachelPixel + cw * ch > 24e6) { KACHELN.clear(); kachelPixel = 0; }
+    if (kachelPixel + cw * ch > 8e6) { KACHELN.clear(); kachelPixel = 0; }
     const cv = document.createElement("canvas"); cv.width = cw; cv.height = ch;
     const g = cv.getContext("2d");
     g.scale(cw / Wt, ch / Ht);
@@ -1563,14 +1569,24 @@
       g.save(); g.translate(cx, cy); g.scale(1, 0.3); g.fillStyle = gg; g.beginPath(); g.arc(0, 0, rx, 0, 2 * Math.PI); g.fill(); g.restore();
     }
     /* Die Schieferreihen zeichnen sich unter der dünnen Decke ab – oben
-       deutlich, zur Traufe hin (dicker Schnee) kaum noch */
+       deutlich, zur Traufe hin (dicker Schnee) kaum noch. Keine scharfen
+       Striche (die läsen sich als Kratzer), sondern weiche Stufen: eine
+       bläuliche Mulde unter jeder Reihe, darüber ein heller Grat. */
     if (px * 0.17 > 2.5) {
-      const p = new Path2D();
+      const p = new Path2D(), q = new Path2D();
       for (let y = bE - 0.17, k = 0; y > bR; y -= 0.17, k++) {
-        const t = 1 - (y - bR) / h, d = 0.012 + 0.02 * (1 - t);
-        for (let x = x0 - hash(k, 1, saat) * 1.5; x < x1; x += 1.5) { const l = 1.5 * (0.3 + 0.7 * hash(Math.round(x * 3), k, saat)); if (hash(Math.round(x * 3), k, saat + 1) < 0.25 + t * 0.45) continue; p.rect(x, y, l, d); }
+        const t = 1 - (y - bR) / h, d = 0.035 + 0.03 * (1 - t);
+        /* lange, nur hier und da unterbrochene Reihen (kurze Stücke
+           läsen sich wie Regenstriche) */
+        let x = x0 - hash(k, 1, saat) * 3, i = 0;
+        while (x < x1) {
+          const l = 2.5 + 3.5 * hash(k, i, saat + 2), luecke = 0.3 + 1.2 * hash(k, i, saat + 3);
+          if (hash(k, i, saat + 1) > t * 0.55) { p.rect(x, y, l, d); q.rect(x + 0.1, y - 0.03, l - 0.2, 0.03); }
+          x += l + luecke; i++;
+        }
       }
-      g.fillStyle = "rgba(118,130,152,0.2)"; g.fill(p);
+      g.fillStyle = "rgba(130,146,176,0.08)"; g.fill(p);
+      g.fillStyle = "rgba(255,255,255,0.3)"; g.fill(q);
     }
     /* Dicker Rand an der Traufe */
     const gk = g.createLinearGradient(0, bE - 0.35, 0, bE);
@@ -2369,7 +2385,7 @@
      scharf); je Saat, Jahreszeit und Tageszeit ein Bild. Die Linde kostet
      mit dem Maßstab mehr (Stufen je Faktor 1,41), die Tanne fast gleich
      viel (grobe Stufen 16, 40, 100, 250). Bäume malt der Kern rundum gleich, darum ohne Drehung. Der
-     Schatten bleibt live (er kostet 3–20 ms). Höchstens 12 Mio.
+     Schatten bleibt live (er kostet 3–20 ms). Höchstens 8 Mio.
      Bildpunkte, die ältesten fliegen raus.
      b: halbe Breite, h: Höhe über dem Fußpunkt – beides in Bildmetern. */
   const FIGBILD = new Map();
@@ -2393,7 +2409,7 @@
       e = { c: c, x0: x0, y0: y0 };
       FIGBILD.set(key, e); figBildPx += W * H;
       for (const [k, v] of FIGBILD) {
-        if (figBildPx < 12e6) break;
+        if (figBildPx < 8e6) break;
         if (k === key) continue;
         FIGBILD.delete(k); figBildPx -= v.c.width * v.c.height; v.c.width = v.c.height = 0;
       }

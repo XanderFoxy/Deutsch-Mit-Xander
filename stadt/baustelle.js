@@ -930,11 +930,16 @@
         const gr = g.createLinearGradient(0, 0, 0, B);
         gr.addColorStop(0, L([60, 52, 44], 0)); gr.addColorStop(0.3, L([60, 52, 44], 0.35)); gr.addColorStop(0.7, L([60, 52, 44], 0.35)); gr.addColorStop(1, L([60, 52, 44], 0));
         g.fillStyle = gr; g.fillRect(0.12, 0, lang - 0.24, B);
-        for (let x = 0.3 + r() * 0.3; x < lang - 0.3; x += 0.45 + r() * 0.5) {
-          g.fillStyle = L([214, 216, 222], 0.55);
-          g.beginPath(); g.ellipse(x, 0.08 + r() * 0.08, 0.12, 0.045, (r() - 0.5) * 0.4, 0, TAU); g.fill();
-          g.fillStyle = L([70, 64, 58], 0.5);
-          g.beginPath(); g.ellipse(x, 0.1 + r() * 0.04, 0.09, 0.03, (r() - 0.5) * 0.4, 0, TAU); g.fill();
+        /* Stiefelabdrücke: schwach, abwechselnd links und rechts, ohne
+           helle Ränder (sonst wirkt die Bohle wie ein Lochblech) */
+        let seite = 0;
+        for (let x = 0.35 + r() * 0.3; x < lang - 0.35; x += 0.55 + r() * 0.45) {
+          const y = seite ? 0.15 : 0.085, w = (r() - 0.5) * 0.25;
+          g.fillStyle = L([66, 58, 50], 0.2);
+          g.beginPath(); g.ellipse(x, y, 0.1, 0.03, w, 0, TAU); g.fill();
+          g.fillStyle = L([220, 222, 228], 0.18);
+          g.beginPath(); g.ellipse(x - 0.07, y, 0.025, 0.018, w, 0, TAU); g.fill();
+          seite = 1 - seite;
         }
       }
     };
@@ -1327,8 +1332,11 @@
       } catch (e) { T[j] = { c: null, fehler: true }; }
     };
     if (STILL || (ST.szene && ST.szene.ohneBudget)) { malen(); return T[j].c; }
+    /* einmal je Modell und Jahreszeit (rund 0,2 s): erst, wenn der Browser
+       Luft hat, damit kein Bild beim Hineinzoomen hängt */
     T[j] = { laeuft: true };
-    setTimeout(malen, 400);
+    if (window.requestIdleCallback) requestIdleCallback(malen, { timeout: 2500 });
+    else setTimeout(malen, 400);
     return null;
   }
   function bannerMuster(pl, K, breite) {
@@ -1337,8 +1345,9 @@
       /* Grund: tannengrün mit hellem Rand */
       g.fillStyle = L([30, 70, 50]); g.fillRect(-0.1, -0.1, w + 0.2, h + 0.2);
       g.fillStyle = L([236, 234, 226]); g.fillRect(0.08, 0.08, w - 0.16, h - 0.16);
-      const bild = bannerBild(pl, K);
-      if (bild && M.px > 6) {
+      /* das Hausbild erst, wenn man es auch erkennt (nah genug) */
+      const bild = M.px > 6 ? bannerBild(pl, K) : null;
+      if (bild) {
         const bh = h * 0.72, bw = Math.min(w * 0.62, bh * bild.width / bild.height);
         g.drawImage(bild, 0.14, h - 0.1 - bh, bw, bh);
       }
@@ -1602,19 +1611,25 @@
     if (opt.ringe && rmax * K.s > 3) {
       /* farbige Bänder rund um die Walze (nur der sichtbare Bogen) */
       g.save(); pfad(); g.clip();
+      /* als Streifen aus Vierecken zwischen den beiden Bandkanten (dem
+         Profil folgend) – gestrichene Stücke ließen keilförmige Lücken */
+      const rBei = (t) => { for (let j = 0; j < prof.length - 1; j++) if (t >= prof[j][0] && t <= prof[j + 1][0]) return lerp(prof[j][1], prof[j + 1][1], (t - prof[j][0]) / Math.max(1e-6, prof[j + 1][0] - prof[j][0])); return prof[t < 0.5 ? 0 : prof.length - 1][1]; };
+      const axL = len(ax) || 1;
       for (const ri of opt.ringe) {
-        let r0 = 0;
-        for (let j = 0; j < prof.length - 1; j++) if (ri.t >= prof[j][0] && ri.t <= prof[j + 1][0]) r0 = lerp(prof[j][1], prof[j + 1][1], (ri.t - prof[j][0]) / Math.max(1e-6, prof[j + 1][0] - prof[j][0]));
-        const C = add(A, mul(ax, ri.t));
+        const dt = ri.breite / axL / 2, ta = klemm(ri.t - dt, 0, 1), tb = klemm(ri.t + dt, 0, 1);
+        const Ca = add(A, mul(ax, ta)), Cb = add(A, mul(ax, tb)), ra = rBei(ta) * 1.006, rb = rBei(tb) * 1.006;
         let alt = null;
-        for (let i = 0; i <= 40; i++) {
-          const w = i / 40 * TAU, nn = add(mul(e1, Math.cos(w)), mul(e2, Math.sin(w))), p = add(C, mul(nn, r0 * 1.004)), sicht = dot(nn, K.E), P = K.p(p[0], p[1], p[2]);
-          if (alt && sicht > 0 && alt.s > 0) {
-            const f = K.licht(nn, p);
-            g.strokeStyle = rgbS([ri.farbe[0] * f[0], ri.farbe[1] * f[1], ri.farbe[2] * f[2]]); g.lineWidth = Math.max(0.7, ri.breite * K.s); g.lineCap = "butt";
-            g.beginPath(); g.moveTo(alt.P[0], alt.P[1]); g.lineTo(P[0], P[1]); g.stroke();
+        for (let i = 0; i <= 48; i++) {
+          const w = i / 48 * TAU, nn = add(mul(e1, Math.cos(w)), mul(e2, Math.sin(w))), sicht = dot(nn, K.E);
+          const pa = add(Ca, mul(nn, ra)), pb = add(Cb, mul(nn, rb));
+          const cur = { a: K.p(pa[0], pa[1], pa[2]), b: K.p(pb[0], pb[1], pb[2]), s: sicht, n: nn, p: pa };
+          if (alt && (sicht > -0.05 || alt.s > -0.05)) {
+            const f = K.licht(mul(add(nn, alt.n), 0.5), cur.p);
+            const c = rgbS([ri.farbe[0] * f[0], ri.farbe[1] * f[1], ri.farbe[2] * f[2]]);
+            g.fillStyle = c; g.strokeStyle = c; g.lineWidth = 0.6; g.lineJoin = "round";
+            g.beginPath(); g.moveTo(alt.a[0], alt.a[1]); g.lineTo(cur.a[0], cur.a[1]); g.lineTo(cur.b[0], cur.b[1]); g.lineTo(alt.b[0], alt.b[1]); g.closePath(); g.fill(); g.stroke();
           }
-          alt = { P: P, s: sicht };
+          alt = cur;
         }
       }
       g.restore();
@@ -1688,72 +1703,156 @@
       }
     });
   }
-  /* Erd- oder Sandhaufen als weicher Hügel: 28 Sektoren, 6 Ringe, das
-     Licht aus der glatten Form (nicht je Facette), dazu ein flacher
-     Rieselkegel am Fuß. Schnee liegt als zusammenhängende Kappe oberhalb
-     einer welligen Höhenlinie, mit schmutzigem Übergang; darüber Körnung
-     bzw. Erdklumpen, auf den Umriss des Haufens beschnitten. */
+  /* Erd- oder Sandhaufen als weicher Hügel. Nicht mehr aus Dreiecken
+     (die sah man trotz glatter Normalen als Facetten), sondern als
+     Höhenfeld, Bildpunkt für Bildpunkt beleuchtet: Sichtstrahl von oben
+     nach unten abtasten, Treffer halbieren, Farbe aus einem vorab
+     beleuchteten Raster (bilinear, also ohne Kanten). Profil
+     (1 − d²)^k: Sand mit flachem Rieselkegel, Erde steiler und klumpig.
+     Schnee liegt als Kappe über einer welligen Höhenlinie und nur, wo die
+     Flanke flach genug ist; darunter ein schmutziger Übergang. Der Fuß
+     läuft weich in den Boden aus. Körnung bzw. Erdklumpen darüber. */
   function haufen(S, K, cx, cy, rx, ry, h, farbe, saat, opt) {
     opt = opt || {};
     if (h < 0.03) return;
-    const r = ST.zufall(saat), NS = 28;
-    /* Profil: Ringanteil des Radius → Höhenanteil (Rieselkegel außen flach) */
-    const prof = opt.sand ? [[1.12, 0], [0.96, 0.06], [0.8, 0.24], [0.6, 0.52], [0.4, 0.76], [0.2, 0.93], [0, 1]] : [[1.06, 0], [0.9, 0.12], [0.72, 0.36], [0.52, 0.62], [0.32, 0.84], [0.15, 0.96], [0, 1]];
+    const r = ST.zufall(saat), sand = !!opt.sand;
+    const fuss = sand ? 1.12 : 1.06, expo = sand ? 1.9 : 1.5;
     const wel = [];
     for (let i = 0; i < 4; i++) wel.push([r() * TAU, 0.03 + r() * 0.05, 1 + Math.floor(r() * 4)]);
     const rr = (a) => { let q = 1; for (const [ph, amp, f] of wel) q += amp * Math.sin(a * f + ph); return q; };
-    const P = prof.map(([fr, fz]) => {
-      const ring = [];
-      for (let i = 0; i < NS; i++) {
-        const a = i / NS * TAU, q = fr > 0 ? rr(a) : 1;
-        ring.push([cx + Math.cos(a) * rx * fr * q, cy + Math.sin(a) * ry * fr * q, h * fz * (fz > 0 && fz < 1 ? (0.97 + 0.06 * rr(a + 1.3) - 0.03) : 1)]);
-      }
-      return ring;
-    });
-    /* glatte Normale an einer Stelle (aus dem Profil, nicht aus der Facette) */
-    const normale = (x, y, z) => {
-      const dx = (x - cx) / rx, dy = (y - cy) / ry, d = Math.hypot(dx, dy) || 1e-3;
-      const steig = h / Math.max(0.2, Math.min(rx, ry)) * (opt.sand ? 1.25 : 1.2) * (0.35 + 0.9 * Math.min(1, d));
-      return nrm([dx / d * steig * (ry / rx), dy / d * steig * (rx / ry), 1]);
-    };
     const schnee = opt.schnee || 0;
     const kappe = (a) => h * (0.42 - 0.3 * schnee + 0.1 * Math.sin(a * 3 + saat) + 0.06 * Math.sin(a * 7 + saat * 2));
-    const dreieck = (a, b, c) => {
-      const m = [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3];
-      const n = normale(m[0], m[1], m[2]);
-      let alb = farbe;
-      /* am Fuß dunkler (Umgebungsverdeckung, feuchter) */
-      alb = mul(alb, 0.8 + 0.2 * klemm(m[2] / (h * 0.3), 0, 1));
-      if (schnee > 0) {
-        const ang = Math.atan2(m[1] - cy, m[0] - cx), k = glatt((m[2] - kappe(ang)) / (h * 0.14));
-        const schmutz = mix3(F.schnee, mix3(farbe, [150, 140, 130], 0.5), 0.45);
-        alb = k < 0.5 ? mix3(alb, schmutz, k * 2 * klemm(schnee * 2.2, 0, 1)) : mix3(schmutz, F.schnee, (k - 0.5) * 2 * klemm(schnee * 2.2, 0, 1));
-      }
-      S.flaeche([a, b, c], n, alb, { stapel: true });
+    /* Höhe in normierten Koordinaten u = (x − cx)/rx, v = (y − cy)/ry */
+    const hoehe = (u, v) => {
+      const a = Math.atan2(v, u), d = Math.hypot(u, v) / (rr(a) * fuss);
+      if (d >= 1) return 0;
+      let z = Math.pow(1 - d * d, expo);
+      z *= 1 + (sand ? 0.025 : 0.08) * (ST.fbm(u * 3.1 + 7, v * 3.1 - 3, 2, saat) - 0.5);
+      return h * z;
     };
-    for (let j = 0; j < P.length - 1; j++) for (let i = 0; i < NS; i++) {
-      const i2 = (i + 1) % NS;
-      if (j === P.length - 2) dreieck(P[j][i], P[j][i2], P[j + 1][i]);
-      else { dreieck(P[j][i], P[j][i2], P[j + 1][i2]); dreieck(P[j][i], P[j + 1][i2], P[j + 1][i]); }
-    }
-    /* Körnung, Klumpen, Schneeglitzer: auf den Umriss beschnitten */
-    const umriss = P[0];
+    const normale = (u, v) => {
+      const e = 0.02, dx = (hoehe(u + e, v) - hoehe(u - e, v)) / (2 * e * rx), dy = (hoehe(u, v + e) - hoehe(u, v - e)) / (2 * e * ry);
+      return nrm([-dx, -dy, 1]);
+    };
+    /* größter Fußradius (normiert): Raster und Bildausschnitt reichen so weit */
+    let RM = 0;
+    for (let i = 0; i < 64; i++) RM = Math.max(RM, rr(i / 64 * TAU));
+    RM = RM * fuss * 1.03;
+    /* Schatten: Fächer von der Spitze zum Fußkreis (wird nicht gemalt) */
+    const NS = 28, fussP = [];
+    for (let i = 0; i < NS; i++) { const a = i / NS * TAU, q = rr(a) * fuss * 0.97; fussP.push([cx + Math.cos(a) * rx * q, cy + Math.sin(a) * ry * q, 0]); }
+    for (let i = 0; i < NS; i++) S.schatten({ poly: [[cx, cy, h], fussP[i], fussP[(i + 1) % NS]] });
     S.eigen((g) => {
-      if (rx * K.s < 12) return;
-      const pts = huelle2(umriss.map((p) => K.p(p[0], p[1], p[2])).concat([K.p(cx, cy, h)]));
-      g.save(); g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.clip();
-      const rq = ST.zufall(saat + 17), n = Math.round(rx * ry * (opt.sand ? 90 : 40) * Math.min(1, K.s / 40));
-      for (let i = 0; i < n; i++) {
-        const a = rq() * TAU, d = Math.sqrt(rq()) * 0.98, x = cx + Math.cos(a) * rx * d, y = cy + Math.sin(a) * ry * d;
-        const z = h * Math.pow(Math.max(0, 1 - d * d), 1.05);
-        const ist = schnee > 0 && z > kappe(a) + h * 0.07;
-        const nn = normale(x, y, z), f = K.licht(nn, [x, y, z]);
-        const c = ist ? [236, 240, 248] : opt.sand ? (rq() < 0.5 ? [182, 152, 106] : [228, 204, 156]) : (rq() < 0.55 ? [70, 52, 38] : [140, 110, 76]);
-        const Pp = K.p(x, y, z), gr = (opt.sand ? 0.018 : 0.035 + rq() * 0.05) * K.s;
-        g.fillStyle = rgbS([c[0] * f[0], c[1] * f[1], c[2] * f[2]], ist ? 0.55 : 0.7);
-        g.beginPath(); g.ellipse(Pp[0], Pp[1], Math.max(0.5, gr), Math.max(0.4, gr * 0.7), rq() * 3, 0, TAU); g.fill();
+      const s = K.s;
+      /* Bildausschnitt */
+      let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
+      for (const sx of [-RM, RM]) for (const sy of [-RM, RM]) for (const z of [0, h * 1.1]) {
+        const Q = K.p(cx + sx * rx, cy + sy * ry, z);
+        bx0 = Math.min(bx0, Q[0]); bx1 = Math.max(bx1, Q[0]); by0 = Math.min(by0, Q[1]); by1 = Math.max(by1, Q[1]);
       }
-      g.restore();
+      bx0 = Math.floor(bx0) - 1; by0 = Math.floor(by0) - 1;
+      const W = Math.ceil(bx1) + 1 - bx0, H = Math.ceil(by1) + 1 - by0;
+      if (W < 2 || H < 2 || W * H > 1.2e6) return;
+      /* Raster: Höhe und fertig beleuchtete Farbe je Knoten */
+      const G = Math.max(24, Math.min(96, Math.round(Math.max(rx, ry) * s / 3))), U0 = -RM, DU = 2 * RM / G, N1 = G + 1;
+      const HG = new Float32Array(N1 * N1), CG = new Float32Array(N1 * N1 * 4);
+      for (let j = 0; j <= G; j++) for (let i = 0; i <= G; i++) {
+        const u = U0 + i * DU, v = U0 + j * DU, k = j * N1 + i, z = hoehe(u, v);
+        HG[k] = z;
+        if (z <= 0) { CG[k * 4 + 3] = 0; continue; }
+        const x = cx + u * rx, y = cy + v * ry, n = normale(u, v);
+        /* am Fuß dunkler und feuchter, Sand mit feinen Windrippeln */
+        let alb = mul(farbe, 0.78 + 0.22 * klemm(z / (h * 0.3), 0, 1));
+        if (sand) alb = mul(alb, 0.96 + 0.08 * ST.fbm(u * 9 + v * 2, v * 9 - u * 2, 2, saat + 3));
+        else alb = mul(alb, 0.9 + 0.2 * ST.fbm(u * 6, v * 6, 3, saat + 5));
+        if (schnee > 0) {
+          const ang = Math.atan2(v, u);
+          let k2 = glatt((z - kappe(ang)) / (h * 0.1));
+          k2 *= glatt((n[2] - 0.42) / 0.25);
+          const w2 = klemm(schnee * 2.2, 0, 1);
+          const schmutz = mix3(F.schnee, mix3(farbe, [150, 140, 130], 0.5), 0.45);
+          alb = k2 < 0.5 ? mix3(alb, schmutz, k2 * 2 * w2) : mix3(schmutz, F.schnee, (k2 - 0.5) * 2 * w2);
+        }
+        const f = K.licht(n, [x, y, z]);
+        CG[k * 4] = alb[0] * f[0]; CG[k * 4 + 1] = alb[1] * f[1]; CG[k * 4 + 2] = alb[2] * f[2];
+        CG[k * 4 + 3] = klemm(z / (h * 0.045), 0, 1);
+      }
+      const hBei = (u, v) => {
+        const fi = (u - U0) / DU, fj = (v - U0) / DU;
+        if (fi < 0 || fj < 0 || fi >= G || fj >= G) return 0;
+        const i = fi | 0, j = fj | 0, a = fi - i, b = fj - j, k = j * N1 + i;
+        return (HG[k] * (1 - a) + HG[k + 1] * a) * (1 - b) + (HG[k + N1] * (1 - a) + HG[k + N1 + 1] * a) * b;
+      };
+      /* Bildpunkt → Bodenpunkt bei Höhe z (Umkehrung von K.p). Beides ist
+         linear: u = u0 + du·z, v = v0 + dv·z, und u0, v0 wachsen je
+         Bildpunkt um feste Schritte – die Schleife braucht keine Objekte. */
+      const c = K.c, sn = K.sn, kx = KX * s, ky = KY * s, kz = KZ * s;
+      /* der Haufen ist weich: ab mittlerer Größe reicht halbe Auflösung,
+         geglättet hochgezogen (Körnung kommt danach in voller Schärfe) */
+      const q = W * H > 3000 ? 2 : 1, CW = Math.ceil(W / q), CH = Math.ceil(H / q);
+      const cv = document.createElement("canvas"); cv.width = CW; cv.height = CH;
+      const cg = cv.getContext("2d"), id = cg.createImageData(CW, CH), D = id.data;
+      /* (X, Y, z) → (u, v): a − b = (X − X0)/kx, a + b = (Y − Y0 + z·kz)/ky */
+      const zuUV = (dm, sm) => { const a = (sm + dm) / 2, b = (sm - dm) / 2; return [((a * c + b * sn) - cx) / rx, ((-a * sn + b * c) - cy) / ry]; };
+      const E0 = zuUV(0, 0), EX = zuUV(1 / kx, 0), EY = zuUV(0, 1 / ky), EZ = zuUV(0, kz / ky);
+      const uX = EX[0] - E0[0], vX = EX[1] - E0[1], uY = EY[0] - E0[0], vY = EY[1] - E0[1], du = EZ[0] - E0[0], dv = EZ[1] - E0[1];
+      const zTop = h * 1.1, schritte = 18, dz = zTop / schritte, grenz = RM * RM;
+      for (let py = 0; py < CH; py++) {
+        const Y = by0 + (py + 0.5) * q - K.Y0;
+        for (let px = 0; px < CW; px++) {
+          const X = bx0 + (px + 0.5) * q - K.X0;
+          const u0 = E0[0] + uX * X + uY * Y, v0 = E0[1] + vX * X + vY * Y;
+          /* schneller Ausschluss: trifft der Strahl den Fußkreis überhaupt? */
+          const ua = u0 + du * zTop, va = v0 + dv * zTop;
+          const lx = ua - u0, ly = va - v0, ll = lx * lx + ly * ly;
+          const tt = ll > 0 ? klemm(-(u0 * lx + v0 * ly) / ll, 0, 1) : 0;
+          const nx = u0 + lx * tt, ny = v0 + ly * tt;
+          if (nx * nx + ny * ny > grenz) continue;
+          let zo = zTop, zu = -1;
+          for (let k = 1; k <= schritte; k++) {
+            const z = zTop - k * dz;
+            if (hBei(u0 + du * z, v0 + dv * z) >= z) { zu = z; break; }
+            zo = z;
+          }
+          if (zu < 0) continue;
+          for (let it = 0; it < 5; it++) { const zm = (zo + zu) / 2; if (hBei(u0 + du * zm, v0 + dv * zm) >= zm) zu = zm; else zo = zm; }
+          const fi = (u0 + du * zu - U0) / DU, fj = (v0 + dv * zu - U0) / DU;
+          if (fi < 0 || fj < 0 || fi >= G || fj >= G) continue;
+          const i = fi | 0, j = fj | 0, a = fi - i, b = fj - j, k = (j * N1 + i) * 4, k2 = k + 4, k3 = k + N1 * 4, k4 = k3 + 4;
+          const w1 = (1 - a) * (1 - b), w2 = a * (1 - b), w3 = (1 - a) * b, w4 = a * b;
+          const sw = CG[k + 3] * w1, sw2 = CG[k2 + 3] * w2, sw3 = CG[k3 + 3] * w3, sw4 = CG[k4 + 3] * w4, al = sw + sw2 + sw3 + sw4;
+          if (al <= 0.004) continue;
+          /* Farbe mit Deckkraft gewichtet mitteln (Randknoten ohne Farbe zählen nicht) */
+          const o = (py * CW + px) * 4;
+          D[o] = (CG[k] * sw + CG[k2] * sw2 + CG[k3] * sw3 + CG[k4] * sw4) / al;
+          D[o + 1] = (CG[k + 1] * sw + CG[k2 + 1] * sw2 + CG[k3 + 1] * sw3 + CG[k4 + 1] * sw4) / al;
+          D[o + 2] = (CG[k + 2] * sw + CG[k2 + 2] * sw2 + CG[k3 + 2] * sw3 + CG[k4 + 2] * sw4) / al;
+          D[o + 3] = 255 * (al > 1 ? 1 : al);
+        }
+      }
+      cg.putImageData(id, 0, 0);
+      g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+      g.drawImage(cv, bx0, by0, CW * q, CH * q);
+      /* Körnung, Klumpen, Schneeglitzer: nur wo der Haufen zum Betrachter
+         zeigt; Licht aus dem Raster (heller oder dunkler als der Grund) */
+      if (rx * s < 12) return;
+      const rq = ST.zufall(saat + 17), n = Math.round(rx * ry * (sand ? 70 : 30) * Math.min(1, s / 40));
+      const E = K.E;
+      for (let i = 0; i < n; i++) {
+        const a = rq() * TAU, d = Math.sqrt(rq()) * 0.9, u = Math.cos(a) * d, v = Math.sin(a) * d;
+        const hell = rq() < (sand ? 0.5 : 0.45), gr = (sand ? 0.018 : 0.035 + rq() * 0.05) * s, w3 = rq() * 3;
+        const z = hBei(u, v);
+        if (z < h * 0.04) continue;
+        /* Normale aus dem Raster, Blickseite prüfen */
+        const e = DU, nx = -(hBei(u + e, v) - hBei(u - e, v)) / (2 * e * rx), ny = -(hBei(u, v + e) - hBei(u, v - e)) / (2 * e * ry);
+        if (nx * E[0] + ny * E[1] + E[2] < 0.05) continue;       // K.E: Blickrichtung im Modell
+        const fi = (u - U0) / DU, fj = (v - U0) / DU, k = ((fj | 0) * N1 + (fi | 0)) * 4;
+        const ist = schnee > 0 && z > kappe(a) + h * 0.07;
+        const f = ist ? 1.06 : sand ? (hell ? 1.18 : 0.8) : (hell ? 1.35 : 0.62);
+        const x = cx + u * rx, y = cy + v * ry, Pp = K.p(x, y, z);
+        g.fillStyle = rgbS([Math.min(255, CG[k] * f), Math.min(255, CG[k + 1] * f), Math.min(255, CG[k + 2] * f)], ist ? 0.5 : 0.75);
+        g.beginPath(); g.ellipse(Pp[0], Pp[1], Math.max(0.5, gr), Math.max(0.4, gr * 0.7), w3, 0, TAU); g.fill();
+      }
     });
   }
 
@@ -4989,6 +5088,7 @@
       const O = K.p(0, 0, 0), U = K.p(1, 0, 0), V = K.p(0, 1, 0);
       g.transform(U[0] - O[0], U[1] - O[1], V[0] - O[0], V[1] - O[1], O[0], O[1]);
       const px = K.s;                              // ungefähr Bildpunkte je Meter
+      const eL = Math.hypot(K.ex, K.ey) || 1, fern = [-K.ex / eL, -K.ey / eL];
       const BG = bodenGrund(pl, K);
       g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
       g.drawImage(BG.c, BG.x0, BG.y0, BG.w, BG.h);
@@ -5032,7 +5132,7 @@
           /* Wasser in der Spur (Frühling: Pfützen mit Himmel; Winter: Schneematsch-Lachen) */
           for (let i = 3; i < pts.length - 2; i += 7 + ((r() * 5) | 0)) {
             const p = pts[i];
-            pfuetze(g, p[0], p[1], 0.28 + r() * 0.3, 0.14, Math.atan2(p[3], p[2]), winter, L, px);
+            pfuetze(g, p[0], p[1], 0.28 + r() * 0.3, 0.14, Math.atan2(p[3], p[2]), winter, L, px, fern);
           }
         }
       }
@@ -5073,7 +5173,7 @@
       if (!winter) for (let i = 0; i < 4; i++) {
         const x = lerp(Zn.x0 + 1, Zn.x1 - 1, r()), y = lerp(Zn.y0 + 1, Zn.y1 - 1, r());
         if (x > W.x0 - 1.2 && x < W.x1 + 1.2 && y > W.y0 - 1.2 && y < W.y1 + 1.2) continue;
-        pfuetze(g, x, y, 0.5 + r() * 0.6, 0.3 + r() * 0.25, r() * 3, false, L, px);
+        pfuetze(g, x, y, 0.5 + r() * 0.6, 0.3 + r() * 0.25, r() * 3, false, L, px, fern);
       }
       /* ---- Winter: sauberer Schneewall innen am Zaun (vom Räumen) ---- */
       if (winter) {
@@ -5100,16 +5200,45 @@
     return { name: "boden", boden: true, lage: "hinten", bb: [Zn.x0 - 1.6, Zn.y0 - 1.6, Zn.x1 + 1.6, Zn.y1 + 1.6], z1: 0.01, malen: (g) => S.malen(g) };
   }
   /* Pfütze in Bodenkoordinaten: nasser dunkler Rand, darin der Himmel */
-  function pfuetze(g, x, y, rx, ry, w, winter, L, px) {
+  /* Pfütze in Bodenkoordinaten: weicher nasser Rand, Wasser dunkel wie
+     der Schlamm darunter, nur zur abgewandten Seite spiegelt sich der
+     Himmel (so sieht man Wasser von schräg oben); fern = Einheitsvektor
+     vom Betrachter weg (Boden) */
+  function pfuetze(g, x, y, rx, ry, w, winter, L, px, fern) {
     g.save(); g.translate(x, y); g.rotate(w);
-    const form = () => { g.beginPath(); for (let i = 0; i <= 12; i++) { const a = i / 12 * TAU, k = 1 + 0.18 * Math.sin(a * 3 + x * 5) + 0.1 * Math.sin(a * 5 + y * 3); const px2 = Math.cos(a) * rx * k, py2 = Math.sin(a) * ry * k; if (i) g.lineTo(px2, py2); else g.moveTo(px2, py2); } g.closePath(); };
-    g.save(); g.scale(1.18, 1.3); form(); g.fillStyle = winter ? L([80, 72, 66], 0.35) : L([74, 56, 38], 0.45); g.fill(); g.restore();
-    form();
-    const gr = g.createLinearGradient(-rx, -ry, rx, ry);
-    if (winter) { gr.addColorStop(0, L([150, 158, 170], 0.85)); gr.addColorStop(1, L([96, 100, 110], 0.85)); }
-    else { gr.addColorStop(0, L([196, 214, 234], 0.92)); gr.addColorStop(0.55, L([140, 164, 190], 0.92)); gr.addColorStop(1, L([96, 112, 132], 0.92)); }
+    const N = 18, P = [];
+    for (let i = 0; i < N; i++) {
+      const a = i / N * TAU, k = 1 + 0.16 * Math.sin(a * 3 + x * 5) + 0.09 * Math.sin(a * 5 + y * 3);
+      P.push([Math.cos(a) * rx * k, Math.sin(a) * ry * k]);
+    }
+    /* glatte, geschlossene Kurve durch die Seitenmitten */
+    const form = (f) => {
+      const m = (i) => [(P[i][0] + P[(i + 1) % N][0]) / 2 * f, (P[i][1] + P[(i + 1) % N][1]) / 2 * f];
+      const s0 = m(N - 1);
+      g.beginPath(); g.moveTo(s0[0], s0[1]);
+      for (let i = 0; i < N; i++) { const e = m(i); g.quadraticCurveTo(P[i][0] * f, P[i][1] * f, e[0], e[1]); }
+      g.closePath();
+    };
+    /* nasser Rand in zwei weichen Stufen */
+    form(1.34); g.fillStyle = winter ? L([84, 76, 70], 0.16) : L([66, 50, 34], 0.2); g.fill();
+    form(1.15); g.fillStyle = winter ? L([78, 70, 64], 0.3) : L([58, 44, 30], 0.36); g.fill();
+    /* Wasser: Verlauf von der fernen (Himmel) zur nahen Seite (Grund) */
+    const fw = fern ? [fern[0] * Math.cos(w) + fern[1] * Math.sin(w), -fern[0] * Math.sin(w) + fern[1] * Math.cos(w)] : [-0.7, -0.7];
+    const R = Math.max(rx, ry);
+    form(1);
+    const gr = g.createLinearGradient(fw[0] * R, fw[1] * R, -fw[0] * R, -fw[1] * R);
+    if (winter) { gr.addColorStop(0, L([150, 156, 166], 0.76)); gr.addColorStop(0.5, L([108, 106, 106], 0.8)); gr.addColorStop(1, L([86, 80, 78], 0.84)); }
+    else { gr.addColorStop(0, L([126, 140, 154], 0.78)); gr.addColorStop(0.45, L([84, 86, 84], 0.82)); gr.addColorStop(1, L([56, 48, 38], 0.86)); }
     g.fillStyle = gr; g.fill();
-    if (px * rx > 6) { g.strokeStyle = "rgba(255,255,255,0.45)"; g.lineWidth = Math.max(0.015, 1 / px); g.beginPath(); g.moveTo(-rx * 0.5, -ry * 0.35); g.quadraticCurveTo(0, -ry * 0.62, rx * 0.45, -ry * 0.3); g.stroke(); }
+    /* Wasser ist flach: kein heller Rand (das sähe aus wie ein Kiesel),
+       nur ein schmaler Himmelsstreifen quer über die Fläche */
+    if (px * R > 8) {
+      g.save(); form(1); g.clip();
+      const q = [-fw[1], fw[0]], m = [fw[0] * R * 0.35, fw[1] * R * 0.35];
+      g.strokeStyle = winter ? "rgba(236,240,248,0.22)" : "rgba(214,230,250,0.28)"; g.lineWidth = Math.max(0.018, 1.2 / px); g.lineCap = "round";
+      g.beginPath(); g.moveTo(m[0] - q[0] * R * 0.55, m[1] - q[1] * R * 0.55); g.lineTo(m[0] + q[0] * R * 0.35, m[1] + q[1] * R * 0.35); g.stroke();
+      g.restore();
+    }
     g.restore();
   }
 
@@ -5277,7 +5406,7 @@
     const n = felder.length;
     felder.forEach((fe, i) => {
       if ((i + 0.5) / n > zaunAb) return;
-      if (art === "fest") teile("zaun" + i, fe.banner ? (bannerBild(pl, K) ? "b1" : "b0") : "", () => zaunFeld(K, pl, fe));
+      if (art === "fest") teile("zaun" + i, fe.banner ? (K.s > 9 && bannerBild(pl, K) ? "b1" : "b0") : "", () => zaunFeld(K, pl, fe));
       else if (fe.tor) for (const [P0, k] of [[fe.A, 0], [fe.B, 1]]) teile.push(warnleuchte(K, [P0[0], P0[1], 1.33], k * 0.6));
     });
     if (art === "fest" && zaunAb >= 1 && bauschildFrei(pl)) teile("bauschild", "", () => bauschild(K, pl));
@@ -5318,7 +5447,9 @@
     const cg = c.getContext("2d");
     cg.translate(-x0, -y0);
     try { fn(cg); } catch (err) { console.error("baustelle " + it.name, err); }
-    verbrauche(performance.now() - t0);
+    const dt = performance.now() - t0;
+    verbrauche(dt);
+    it._ms = (it._ms || 0) + dt;             // Malzeit (zum Prüfen)
     b = { c: c, x: x0, y: y0 };
     it._bilder[key] = b;
     it._px = (it._px || 0) + w * h; sz.C.px += w * h;
@@ -5390,6 +5521,7 @@
      dem Haus und vor den vorderen Gerüstseiten. Nur auf Wänden, die zum
      Betrachter zeigen und in der Sonne liegen (sonst ist dort ohnehin Schatten). */
   function wandSchatten(g, sz, bau) {
+    /* Prüfschalter: …&ws=0 lässt den Wandschatten weg (Vorher-nachher-Bild) */
     const K = sz.K, pl = sz.pl, GP = pl.geruest;
     if (!GP || K.nacht > 0.85 || bau < 0.3 || K.s < 6 || q.get("ws") === "0") return;
     const wz = wandZ(pl, bau);

@@ -49,22 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 791: Liedteil benennen bricht nicht mehr ab (Walkie 276). Davor 790: Bauen dauert – Bagger, Kran, Gerüst.",
+  stand: "Fassung 792: Baukasten-Stadt Winterhausen (stadt.html) – Weihnachtsdorf mit Kölner Dom, Baustellen, Santa, Frühling",
 
   inArbeit: [
-    { seit: "2026-09-28T03:51",
+    { seit: "2026-09-28T15:41",
       text: "Haustiere reisen mit (Walkie 259)" },
-    { seit: "2026-09-28T03:51",
-      text: "Laserduell mit Zielen und Ausweichen (Walkie 219)" },
-    { seit: "2026-09-28T03:51",
-      text: "Dorf-Module: Wohnhaus, Wege, Gärten, Zäune (Paket D1)" },
+    { seit: "2026-09-28T15:41",
+      text: "Sequenz-Reisen flüssig in normalem Tempo" },
+    { seit: "2026-09-28T15:41",
+      text: "Laserduell / Lese-Duell" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T03:51",
-      text: "Liedteil benennen: Menü bleibt beim Tippen offen" },
-    { seit: "2026-09-28T03:51",
-      text: "Bauzeit mit Bagger, Schaufelradbagger, Kran, Gerüst; Mithelfen −15 s" },
+    { seit: "2026-09-28T15:41",
+      text: "Baukasten-Stadt: drehbare Häuser, Deko, Bachlauf, organische Wiese, Bauphasen, Minikarte 3×3" },
   ],
 };

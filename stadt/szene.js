@@ -105,6 +105,36 @@
   const BUDGET_MS = 28;
   SZ.nachholen = function () { return nachholen; };
   const LEER = { leben: [], rauch: [], lichter: [], schatten: null, bild: null, W: 0, H: 0 };
+  /* Lichtschein eines Dings: nurBoden = Lichtpfützen (vor allen Dingen),
+     sonst Punktlichter (gleich nach dem Ding – was davor steht, verdeckt es) */
+  function lichtMalen(g, e, Z, t, nurBoden) {
+    if (Z.nacht <= 0.02 || !e.sp.lichter || !e.sp.lichter.length) return;
+    g.save();
+    g.globalCompositeOperation = "lighter";
+    for (const l of e.sp.lichter) {
+      if (!!l.boden !== nurBoden) continue;
+      const x = e.x0 + l.x * e.k, y = e.y0 + l.y * e.k, r = l.r * e.k;
+      if (r < 1) continue;
+      const flacker = l.flacker ? 0.85 + 0.15 * Math.sin(t * 9 + x) : 1;
+      const a = Z.nacht * l.k * flacker;
+      if (l.boden) {
+        g.save(); g.translate(x, y); g.scale(1, 0.5);
+        const gr = g.createRadialGradient(0, 0, 0, 0, 0, r);
+        gr.addColorStop(0, "rgba(" + l.farbe + "," + (0.42 * a).toFixed(3) + ")");
+        gr.addColorStop(0.45, "rgba(" + l.farbe + "," + (0.16 * a).toFixed(3) + ")");
+        gr.addColorStop(1, "rgba(" + l.farbe + ",0)");
+        g.fillStyle = gr; g.fillRect(-r, -r, 2 * r, 2 * r);
+        g.restore();
+        continue;
+      }
+      const gr = g.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, "rgba(" + l.farbe + "," + (0.55 * a).toFixed(3) + ")");
+      gr.addColorStop(0.25, "rgba(" + l.farbe + "," + (0.22 * a).toFixed(3) + ")");
+      gr.addColorStop(1, "rgba(" + l.farbe + ",0)");
+      g.fillStyle = gr; g.fillRect(x - r, y - r, 2 * r, 2 * r);
+    }
+    g.restore();
+  }
   SZ.sichtbare = [];
   /* Bewegung lebender Dinge (Menschen laufen, Schlitten fliegen): je Bild */
   let letzteZeit = 0;
@@ -195,6 +225,8 @@
     g.drawImage(schattenBild, 0, 0);
     g.globalAlpha = 1;
 
+    /* Lichtpfützen auf dem Boden: vor allen Dingen */
+    for (const e of reihe) lichtMalen(g, e, Z, t, true);
     /* 3. + 4. Dinge, von hinten nach vorn, mit ihrem Leben */
     for (const e of reihe) {
       if (e.o === SZ.geist) g.globalAlpha = 0.72;
@@ -206,39 +238,13 @@
       if (e.sp.leben.length) {
         for (const fn of e.sp.leben) { g.save(); try { fn(g, e.P); } catch (err) { console.error(err); } g.restore(); }
       }
+      lichtMalen(g, e, Z, t, false);
       if (bauAktiv && ST.baustelle.vorne) { g.save(); try { ST.baustelle.vorne(g, e.P, e.o, e.opt.bau); } catch (err) { console.error(err); } g.restore(); }
       g.globalAlpha = 1;
       if (e.o === SZ.auswahl) auswahlRahmen(e);
     }
     /* Rauch aus Schornsteinen */
     for (const e of reihe) for (const r of e.sp.rauch) rauchMalen(g, e.x0 + r.x * e.k, e.y0 + r.y * e.k, K.s, t, r.k, e.o.id, Z);
-    /* 5. Lichtschein */
-    if (Z.nacht > 0.02) {
-      g.globalCompositeOperation = "lighter";
-      for (const e of reihe) for (const l of e.sp.lichter) {
-        const x = e.x0 + l.x * e.k, y = e.y0 + l.y * e.k, r = l.r * e.k;
-        if (r < 1) continue;
-        const flacker = l.flacker ? 0.85 + 0.15 * Math.sin(t * 9 + x) : 1;
-        const a = Z.nacht * l.k * flacker;
-        if (l.boden) {
-          /* Lichtpfütze: auf dem Boden liegend, also halb so hoch wie breit */
-          g.save(); g.translate(x, y); g.scale(1, 0.5);
-          const gr = g.createRadialGradient(0, 0, 0, 0, 0, r);
-          gr.addColorStop(0, "rgba(" + l.farbe + "," + (0.42 * a).toFixed(3) + ")");
-          gr.addColorStop(0.45, "rgba(" + l.farbe + "," + (0.16 * a).toFixed(3) + ")");
-          gr.addColorStop(1, "rgba(" + l.farbe + ",0)");
-          g.fillStyle = gr; g.fillRect(-r, -r, 2 * r, 2 * r);
-          g.restore();
-          continue;
-        }
-        const gr = g.createRadialGradient(x, y, 0, x, y, r);
-        gr.addColorStop(0, "rgba(" + l.farbe + "," + (0.55 * a).toFixed(3) + ")");
-        gr.addColorStop(0.25, "rgba(" + l.farbe + "," + (0.22 * a).toFixed(3) + ")");
-        gr.addColorStop(1, "rgba(" + l.farbe + ",0)");
-        g.fillStyle = gr; g.fillRect(x - r, y - r, 2 * r, 2 * r);
-      }
-      g.globalCompositeOperation = "source-over";
-    }
     /* Dunst: weiter hinten (oben im Bild) wird die Luft sichtbar – gibt Tiefe */
     {
       const h = K.H * 0.32;

@@ -3117,7 +3117,9 @@
     /* RUNDE 2 (eigene Schleife): drei gleich große Flecken am First lasen
        sich aus der Ferne wie eine Knopfreihe – jetzt ein bis zwei Flecken
        je Fläche, verschieden groß, bevorzugt an Grat, Kamin und Südseite */
-    const n = haupt ? 1 + (r() < 0.4 ? 1 : 0) : 0;
+    /* Schlussprüfung: die Taustellen lasen sich in der Stadt als dunkles
+       Loch neben dem Kamin („komische Vektorrückstände") – ganz weglassen */
+    const n = 0;
     let versuche = 0;
     while (G.flecken.length < n && versuche++ < 80) {
       /* eigene Schleife 4: ein runder Fleck mitten in der Fläche las sich

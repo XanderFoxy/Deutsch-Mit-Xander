@@ -366,6 +366,7 @@
   let speicherPixel = 0;
   const SPEICHER_MAX = 90e6;         // ~ 360 MB RGBA wären zu viel; 90 Mio. Pixel = 360 MB? → Pixel, nicht Bytes
   ST.SPEICHER = SPEICHER;
+  ST.SPRITE_MAX = 12e6;
 
   function modellBauen(id, o) {
     const def = ST.MODELLE[id];
@@ -390,6 +391,12 @@
         const X = (p[0] - p[1]) * KX * s, Y = (p[0] + p[1]) * KY * s - p[2] * KZ * s;
         const b = (fi.breite || 1) * s * 0.6, h = (fi.hoehe || 1) * s * KZ * 1.15;
         x0 = Math.min(x0, X - b); x1 = Math.max(x1, X + b); y0 = Math.min(y0, Y - h); y1 = Math.max(y1, Y + b * 0.4);
+        if (fi.schatten !== false) {
+          /* auch der lange Schatten einer Figur muss ins Bild passen */
+          const L = LICHT, hh = (fi.hoehe || 1) + (fi.z || 0), sa = p[0] - L[0] / L[2] * hh, sb = p[1] - L[1] / L[2] * hh;
+          const SX = (sa - sb) * KX * s, SY = (sa + sb) * KY * s;
+          x0 = Math.min(x0, SX - b); x1 = Math.max(x1, SX + b); y0 = Math.min(y0, SY - b * 0.5); y1 = Math.max(y1, SY + b * 0.5);
+        }
       }
     }
     for (const l of M.lichter) {
@@ -438,9 +445,14 @@
         if (X < x0) x0 = X; if (X > x1) x1 = X; if (Y < y0) y0 = Y; if (Y > y1) y1 = Y;
       }
     }
-    const rand = Math.ceil(4 + s * 0.15);
+    /* Rand: Platz für weiche Schattenkanten und den Kontaktschatten (0,35 m + Unschärfe) */
+    const rand = Math.ceil(4 + s * 0.8);
     x0 = Math.floor(x0 - rand); y0 = Math.floor(y0 - rand); x1 = Math.ceil(x1 + rand); y1 = Math.ceil(y1 + rand);
     const W = Math.max(2, x1 - x0), H = Math.max(2, y1 - y0);
+    /* Sehr nah herangezoomt würde die Leinwand zu groß (iPhone: höchstens
+       ~16,7 Mio. Bildpunkte, darüber bleibt sie leer). Dann kleiner malen –
+       die Szene streckt es auf die richtige Größe. */
+    if (W * H > ST.SPRITE_MAX && !(o && o.ungekappt)) return spriteMalen(id, o, gier, s * Math.sqrt(ST.SPRITE_MAX / (W * H)) * 0.97, Z, t);
     const bild = document.createElement("canvas"); bild.width = W; bild.height = H;
     const g = bild.getContext("2d");
     const T = { s: s, ox: -x0, oy: -y0, c: c, sn: sn };
@@ -453,19 +465,17 @@
       const fl = tl.flaechen.map((f) => { let m = [0, 0, 0]; for (const q of f.umriss) { m[0] += f.o[0] + f.u[0] * q[0] + f.v[0] * q[1]; m[1] += f.o[1] + f.u[1] * q[0] + f.v[1] * q[1]; m[2] += f.o[2] + f.u[2] * q[0] + f.v[2] * q[1]; } const k = f.umriss.length; m = drehP([m[0] / k, m[1] / k, m[2] / k], c, sn); return { f: f, nah: punkt(m, ZUM_AUGE) + (f.ebene || 0) * 100 }; });
       fl.sort((a, b) => a.nah - b.nah);
       for (const x of fl) flaecheZeichnen(g, x.f, T, P, "malen");
+      /* Leuchten (Fenster, Lichterketten) direkt nach dem eigenen Teil: was
+         weiter vorn liegt, wird danach gemalt und verdeckt das Licht richtig */
+      if (Z.nacht > 0.01) for (const x of fl) if (x.f.leuchten) flaecheZeichnen(g, x.f, T, P, "leuchten");
       const figs = tl.figuren.map((fi) => ({ fi: fi, p: drehP([fi.x, fi.y, fi.z], c, sn) })).sort((a, b) => punkt(a.p, ZUM_AUGE) - punkt(b.p, ZUM_AUGE));
       for (const x of figs) figurZeichnen(g, x.fi, x.p, T, P);
-    }
-    /* Leuchten: Fenster, Lichterketten — nach dem Licht, damit sie hell bleiben */
-    if (Z.nacht > 0.01) {
-      for (const e of teile) for (const f of e.tl.flaechen) if (f.leuchten) flaecheZeichnen(g, f, T, P, "leuchten");
     }
     /* Schattenbild */
     const schatten = document.createElement("canvas"); schatten.width = W; schatten.height = H;
     const gs = schatten.getContext("2d");
     gs.fillStyle = "#000";
-    /* weiche Schattenkante (Halbschatten) – mitwachsend mit dem Zoom */
-    gs.filter = "blur(" + Math.max(0.6, s * 0.035).toFixed(2) + "px)";
+    const weich = Math.max(0.6, s * 0.035);
     /* Kontaktschatten: rund um den Fuß ein weicher dunkler Saum – das Haus
        „steht" auf dem Boden statt darüber zu schweben */
     gs.save();
@@ -491,10 +501,17 @@
         figurSchatten(gs, sp.figur, sp.p, T, P);
       }
     }
+    /* weiche Schattenkante (Halbschatten) – einmal für das ganze Schattenbild,
+       statt für jede Fläche einzeln (das war bei vielen Flächen sehr langsam) */
+    const weichBild = document.createElement("canvas"); weichBild.width = W; weichBild.height = H;
+    const gw = weichBild.getContext("2d");
+    gw.filter = "blur(" + weich.toFixed(2) + "px)";
+    gw.drawImage(schatten, 0, 0);
+    schatten.width = schatten.height = 0;
     /* Lichtpunkte im Bild (für den Schein über allem) */
     const lichter = M.lichter.map((l) => { const p = drehP(l.p, c, sn); return { x: T.ox + (p[0] - p[1]) * KX * s, y: T.oy + (p[0] + p[1]) * KY * s - p[2] * KZ * s, r: l.r * s, farbe: l.farbe, k: l.k, flacker: l.flacker, boden: l.boden }; }).concat(P.lichter);
     const rauch = M.rauch.map((r) => { const p = drehP(r.p, c, sn); return { x: T.ox + (p[0] - p[1]) * KX * s, y: T.oy + (p[0] + p[1]) * KY * s - p[2] * KZ * s, k: r.k }; });
-    return { bild: bild, schatten: schatten, ox: x0, oy: y0, W: W, H: H, lichter: lichter, rauch: rauch, leben: M.leben, s: s, c: c, sn: sn };
+    return { bild: bild, schatten: weichBild, ox: x0, oy: y0, W: W, H: H, lichter: lichter, rauch: rauch, leben: M.leben, s: s, c: c, sn: sn };
   }
 
   function figurZeichnen(g, fi, p, T, P) {
@@ -517,7 +534,7 @@
     g.save();
     g.setTransform(1, 0, -hx * k, -hy * k, X, Y);
     g.globalCompositeOperation = "source-over";
-    fi.malen(g, s, { o: P.o, Z: P.Z, nacht: 0, jahr: P.o.jahr, t: 0, schatten: true });
+    fi.malen(g, s, { o: P.o, Z: P.Z, nacht: 0, jahr: P.o.jahr, t: 0, schatten: true, gier: Math.atan2(T.sn, T.c) * 180 / Math.PI });
     g.restore();
   }
 
