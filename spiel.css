@@ -3055,3 +3055,7 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-bahn-freizeit p { margin: 3px 0 5px; }
 .sp-bahn-freizeit button { min-height: 32px; padding: 4px 12px; border-radius: 10px; border: 1px solid rgba(40, 90, 140, .45); background: #2f7fbf; color: #fff; font-weight: 700; font-size: 12px; }
 .sp-bahn-freizeit button:disabled { opacity: .5; }
+/* FASSUNG 804 — fließender Tag/Nacht-Wechsel im gemalten Dorf */
+.sp-dl-daemmer { position: absolute; inset: 0; pointer-events: none; z-index: 0; mix-blend-mode: soft-light;
+  background: linear-gradient(180deg, rgba(255, 140, 40, calc(var(--glut, 0) * .85)), rgba(255, 120, 70, calc(var(--glut, 0) * .6)) 60%, rgba(200, 90, 120, calc(var(--glut, 0) * .4))); }
+.sp-dl-daemmer::after { content: ""; position: absolute; inset: 0; background: rgba(25, 35, 80, var(--dunkel, 0)); mix-blend-mode: multiply; }

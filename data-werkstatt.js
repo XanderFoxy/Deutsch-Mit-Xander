@@ -49,28 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 803: Bootsverleih am See bringt Geld von Touristen",
+  stand: "Fassung 804: Tag und Nacht fließend im alten Dorf",
 
   inArbeit: [
-    { seit: "2026-09-28T19:44",
+    { seit: "2026-09-28T19:48",
       text: "Döbelner Rathaus (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:44",
+    { seit: "2026-09-28T19:48",
       text: "Dodge Viper und Batmobil (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:44",
+    { seit: "2026-09-28T19:48",
       text: "Tretboote, Bootshaus, Badegäste im Bild (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:44",
+    { seit: "2026-09-28T19:48",
       text: "Pferdebahn mit Gleisen, Korn-/Mehlwagen (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:44",
+    { seit: "2026-09-28T19:48",
       text: "Wiener Lichterbogen" },
-    { seit: "2026-09-28T19:44",
+    { seit: "2026-09-28T19:48",
       text: "Karten-Vorlagen und eigene Karten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T19:44",
-      text: "Bootsverleih am See: Touristen mieten Tretboote, im Winter Schlittschuhe" },
-    { seit: "2026-09-28T19:44",
-      text: "Altes Dorf gibt Leinwände frei" },
+    { seit: "2026-09-28T19:48",
+      text: "Abendrot, Dämmerung und Überblendung aufs Nachtbild" },
+    { seit: "2026-09-28T19:48",
+      text: "Bootsverleih am See" },
   ],
 };

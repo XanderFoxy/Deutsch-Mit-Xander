@@ -2041,3 +2041,16 @@ XANDER: „vielleicht so ein kleines Bootshaus für den Verleih vom Wassertreter
   - `spiel_bahn('touristen')` rechnet das zum Erlös und meldet `freizeit` zurück.
 - **Spiel:** Am Bahnhof steht unter der Kurtaxe der Kasten „Bootsverleih am See“ (Bauen/Ausbauen). Steigen Touristen aus, sagt die Meldung, wie viele Tretboot fuhren, was es brachte und wie viele kein Boot mehr bekamen.
 - Sonde `werkzeug/pruefe-803-bootsverleih.js`: neu grün, alter Code 5 rot.
+
+## Fassung 804 — fließender Tag/Nacht-Wechsel im gemalten Dorf
+
+XANDER: „fließend Tag und Nacht … auch bei uns" (im Spiel-Dorf, nicht nur in der neuen Stadt).
+
+- `sonnenHoehe(datum)` berechnet den Sonnenstand über Döbeln (51,12° N, 13,12° O). Stichproben: Sommer-Mittag 62°, Winter-Mittag 15°.
+- Die neue Ebene `.sp-dl-daemmer` direkt über der Leinwand hat zwei Anteile:
+  - `--glut`: Abendrot/Morgenrot (soft-light), am stärksten bei 2° Sonnenhöhe, bei Regen gedämpft.
+  - `--dunkel`: blaue Dämmerung (multiply) ab 5° abwärts, höchstens 0,38.
+  - Nachts übernimmt das gemalte Nachtbild, die Ebene ist dann leer.
+- Wechsel Tag ↔ Nacht: Das vorige Bild aus dem Vorrat (`DM.zuletzt`) blendet in der Leinwand über 3 s aus, statt hart zu springen. Ein eigenes Blend-Element würde das Angleichen des Menüs wieder entfernen.
+- Prüfhaken: `S.sonneTest` (feste Sonnenhöhe), `pruef.sonnenHoehe`.
+- Sonde `werkzeug/pruefe-804-tag-nacht.js`: Bei 1,2 s liegt die Helligkeit zwischen Tag und Nacht (290 → 230 → 125).

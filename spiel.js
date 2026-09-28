@@ -11406,6 +11406,23 @@
     }
     dorfBlickZeigen();
   }
+  /* FASSUNG 804 — XANDER: „fließend Tag und Nacht … auch bei uns". Bisher sprang das gemalte Dorf mit dem Sonnenuntergang
+     hart vom Tag- aufs Nachtbild. Jetzt: (1) Sonnenstand für Döbeln (51,1° N, 13,1° O) aus Datum und Uhrzeit; eine Stunde
+     vor Sonnenuntergang färbt sich das Bild warm (Abendrot), dann dunkelt es blau nach; (2) der Wechsel aufs Nachtbild
+     blendet über drei Sekunden über (das alte Bild verblasst darüber) – morgens genauso zurück. */
+  function sonnenHoehe(wann) {
+    var d = wann || new Date(), tag = Math.floor((Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - Date.UTC(d.getUTCFullYear(), 0, 0)) / 864e5);
+    var dekl = 23.44 * Math.sin(2 * Math.PI * (284 + tag) / 365) * Math.PI / 180, phi = 51.12 * Math.PI / 180;
+    var st = d.getUTCHours() + d.getUTCMinutes() / 60 + 13.12 / 15, H = (st - 12) * 15 * Math.PI / 180;
+    return Math.asin(Math.sin(phi) * Math.sin(dekl) + Math.cos(phi) * Math.cos(dekl) * Math.cos(H)) * 180 / Math.PI;
+  }
+  function dorfDaemmerHtml(w) {
+    var h = S.sonneTest != null ? S.sonneTest : sonnenHoehe(new Date(Date.now() + (S.uhrVersatz || 0)));
+    var glut = w.tag ? Math.max(0, 1 - Math.abs(h - 2) / 7) : 0;
+    var dunkel = w.tag ? Math.max(0, Math.min(.38, (5 - h) / 14)) : 0;
+    if (w.art !== "klar" && w.art !== "wolken") glut *= .35;
+    return '<i class="sp-dl-daemmer" aria-hidden="true" style="--glut:' + glut.toFixed(2) + ";--dunkel:" + dunkel.toFixed(2) + '"></i>';
+  }
   function dmLeinwandWeg(b) {
     [b.bild, b.maske].forEach(function (c) { try { if (c && c.getContext) { c.width = 0; c.height = 0; } } catch (e) {} });
   }
@@ -11443,8 +11460,26 @@
       var alle = Object.keys(DM.bilder);
       while (alle.length > 2) { var weg = alle.shift(); if (DM.bilder[weg]) dmLeinwandWeg(DM.bilder[weg]); delete DM.bilder[weg]; }
     }
+    /* Tag ↔ Nacht: das bisherige Bild blendet in der Leinwand selbst über drei Sekunden aus (nur bei diesem Wechsel;
+       ein eigenes Blend-Element würde das Angleichen des Menüs beim nächsten Zeichnen wieder entfernen). */
+    /* Das vorige Bild kommt aus dem Vorrat (DM.zuletzt), nicht aus der Leinwand: das Angleichen des Menüs setzt sie beim
+       Neuzeichnen zurück (Breite/Höhe werden neu gesetzt). */
+    var vz = DM.zuletzt, dsNeu = lw.getAttribute("data-sig") || "", altBild = null;
+    if (vz && vz.bild && vz.bild.width && vz.bild !== fertig.bild && /N$/.test(vz.ds) !== /N$/.test(dsNeu)) altBild = vz.bild;
+    DM.zuletzt = { ds: dsNeu, bild: fertig.bild };
     lw.width = fertig.bild.width; lw.height = fertig.bild.height;
     lw.getContext("2d").drawImage(fertig.bild, 0, 0);
+    if (altBild) {
+      var t0 = performance.now(), ziel = fertig.bild, meinSig = sig;
+      var blende = function () {
+        var t = Math.min(1, (performance.now() - t0) / 3000), g = lw.getContext("2d");
+        if (lw.dataset.gemalt !== meinSig || !lw.isConnected || !altBild.width) return;
+        g.globalAlpha = 1; g.drawImage(ziel, 0, 0);
+        if (t < 1) { g.globalAlpha = 1 - t * t * (3 - 2 * t); g.drawImage(altBild, 0, 0, lw.width, lw.height); g.globalAlpha = 1; requestAnimationFrame(blende); }
+      };
+      requestAnimationFrame(blende);
+      window.__blenden = (window.__blenden || 0) + 1;
+    }
     lw.dataset.gemalt = sig;
     bahnMaskeSetzen(fertig.maske);
     /* Beim ersten Mal auf die Dorfmitte (Rathaus) schauen. */
@@ -11501,7 +11536,7 @@
     var wetter = dorfWetter(), nah = dorfNah();
     /* FASSUNG 715 — Schnee auf den Dächern und der Wiese, wenn es draußen schneit (eigenes Bild: „S" in der Kennung). */
     var malSig = sig + dorfJahrSig() + (wetter.art === "schnee" ? "S" : "") + (wetter.tag ? "" : "N");
-    return '<div class="sp-dl-rahmen ' + (nah ? "sp-dl-nah" : "sp-dl-ganz") + (S.umbau && !besuch ? " sp-dl-umbau" : "") + (dorfZeichen() ? " sp-dl-zeichen" : "") + (dorfNamen() ? " sp-dl-namen" : "") + (wetter.tag ? "" : " sp-dl-nacht") + '"><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + malSig + '" aria-hidden="true"></canvas>' + dorfWunderHtml(ich) + '<div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
+    return '<div class="sp-dl-rahmen ' + (nah ? "sp-dl-nah" : "sp-dl-ganz") + (S.umbau && !besuch ? " sp-dl-umbau" : "") + (dorfZeichen() ? " sp-dl-zeichen" : "") + (dorfNamen() ? " sp-dl-namen" : "") + (wetter.tag ? "" : " sp-dl-nacht") + '"><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + malSig + '" aria-hidden="true"></canvas>' + dorfDaemmerHtml(wetter) + dorfWunderHtml(ich) + '<div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
       + dorfNachtHtml(ich, wetter) + haeuser + (besuch ? "" : dorfBahnKnoepfe()) + dorfLeuteHtml(ich) + dorfBahnHtml(wetter) + "</div></div>" + dorfWetterHtml(wetter) + dorfWetterSchild(wetter)
       /* FASSUNG 721 — XANDER (Funk 159): „ich möchte dass das kleine Bild was wir haben schon den Kompass hat nicht dass
          das drei unterschiedliche Bilder sind … diese Lupe wie in den anderen Spielen mit den kleinen Punkten auf der Karte
@@ -16095,6 +16130,7 @@
     uebungEnde: uebungEnde,
     pruef: {
       glockenPlan: function (h, r) { return glockenPlan(h, r); },
+      sonnenHoehe: function (d) { return sonnenHoehe(d); },
       /* Hörprobe für den Betreiber: die volle Stunde offline gerechnet (Mono, 22 kHz). */
       glockenHoeren: function (h, r) {
         var plan = glockenPlan(h, r), dauer = plan[plan.length - 1][0] + 10, k = new OfflineAudioContext(1, Math.ceil(22050 * dauer), 22050), g = k.createGain();
