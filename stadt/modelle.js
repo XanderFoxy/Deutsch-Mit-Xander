@@ -4,7 +4,7 @@ STADT.MODELL_DATEIEN = [
   "fachwerkhaus", "fachwerkerker", "wassermuehle", "bahnhof",
   "kirche", "koelnerdom",
   /* FASSUNG 795 — eigene Modelle für die Spielgebäude und Wahrzeichen */
-  "kuhstall", "huehnerstall", "rathaus", "schule", "kaserne", "gefaengnis",
+  "kuhstall", "huehnerstall", "rathaus", "schule", "kaserne", "gefaengnis", "bergwerk",
   "neuschwanstein", "fernsehturm",
   "weihnachtsbaum", "marktbude", "pyramide", "krippe", "karussell", "schneemann",
   "brunnen", "laterne", "bank", "bruecke", "zaun",
