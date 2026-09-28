@@ -4350,7 +4350,7 @@
      eines pro Leerlauf – nicht erst mitten im ersten Nahbild. */
   try {
     const leer = window.requestIdleCallback ? (f) => window.requestIdleCallback(f, { timeout: 4000 }) : (f) => setTimeout(f, 1500);
-    leer(() => { hautB(); leer(() => { quaderB(); leer(() => spurenB()); }); });
+    leer(() => { hautB(); leer(() => quaderB()); });
   } catch (e) { /* ohne window (Werkzeuge) */ }
 
   /* Prüfhilfe: stadt.html?neu=1&dazu=koelnerdom&domprobe=x,y,gier setzt den

@@ -626,6 +626,12 @@
       if (belaubt && z.ord >= 3 && !z.stamm) continue;             // dünne Äste stecken im Laub
       teile.push({ tief: t, malen: () => (dick > 2.2 || z.stamm ? zugMalen : duennMalen)(g, B, plan, z, Z, jahr, s, winter) });
     }
+    /* Eiche: Astkragen – die Rinde des Stamms läuft über die Ansätze der
+       Kronenäste und blendet nach oben aus (Gabel aus einem Guss) */
+    if (plan.eiche) {
+      const vs = plan.zuege.filter((z) => z.vorStamm);
+      if (vs.length) teile.push({ tief: Math.max(...vs.map((z) => tiefen[z.index])) + 0.001, malen: () => astKragen(g, B, plan, vs, Z, jahr, s, winter) });
+    }
     if (!winter) for (const w of plan.wurzeln) {
       const m = [Math.cos(w.phi) * w.l * 0.5, Math.sin(w.phi) * w.l * 0.5, 0.05];
       teile.push({ tief: B.tief(m) - 0.02, malen: () => wurzelMalen(g, B, plan, w, Z, jahr, s, winter) });
@@ -656,6 +662,32 @@
     teile.sort((a, b) => a.tief - b.tief);
     for (const t of teile) t.malen();
     g.setTransform(1, 0, 0, 1, T0.e, T0.f);
+  }
+  function astKragen(g, B, plan, vs, Z, jahr, s, winter) {
+    const st = plan.zuege[0];
+    if (!st || st.rMax * s < 3) return;
+    const zA = Math.min(...vs.map((z) => z.pts[0][2])), zE = Math.max(...vs.map((z) => z.pts[0][2]));
+    let i0 = st.pts.findIndex((q) => q[2] >= zA - 0.4);
+    if (i0 < 0) return;
+    i0 = Math.max(0, i0 - 1);
+    const stueck = { pts: st.pts.slice(i0), rs: st.rs.slice(i0), schnee: (st.schnee || st.pts).slice(i0).map(() => 0), stamm: true, ord: st.ord, v: st.v, rMax: st.rMax, bezug: st };
+    if (stueck.pts.length < 2) return;
+    const P = stueck.pts.map(B.p), rp = Math.max(...stueck.rs) * s + 2;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const p of P) { x0 = Math.min(x0, p[0] - rp); y0 = Math.min(y0, p[1] - rp); x1 = Math.max(x1, p[0] + rp); y1 = Math.max(y1, p[1] + rp); }
+    x0 = Math.floor(x0); y0 = Math.floor(y0);
+    const c = leinwand(x1 - x0 + 1, y1 - y0 + 1), gc = c.g;
+    gc.setTransform(1, 0, 0, 1, -x0, -y0);
+    zugMalen(gc, B, plan, stueck, Z, jahr, s, winter);
+    /* Maske: unten weich ein (keine Naht zum Stamm), über den Ansätzen aus */
+    gc.setTransform(1, 0, 0, 1, 0, 0);
+    gc.globalCompositeOperation = "destination-in";
+    const yU = B.p([0, 0, zA - 0.38])[1] - y0, yM = B.p([0, 0, zA - 0.12])[1] - y0, yO = B.p([0, 0, zE + 0.14])[1] - y0;
+    const mg = gc.createLinearGradient(0, yU, 0, yO);
+    const k = klemm((yU - yM) / ((yU - yO) || 1), 0.05, 0.9);
+    mg.addColorStop(0, "rgba(0,0,0,0)"); mg.addColorStop(k, "rgba(0,0,0,1)"); mg.addColorStop(1, "rgba(0,0,0,0)");
+    gc.fillStyle = mg; gc.fillRect(0, 0, c.width, c.height);
+    g.drawImage(c, x0, y0);
   }
   /* Bildpunkte eines Zugs, bei großer Vergrößerung weich unterteilt
      (Catmull-Rom), damit auch aus der Nähe keine Knicke zu sehen sind */
@@ -689,14 +721,16 @@
       return [-dy / l, dx / l];
     });
     const A = plan.A;
-    let ux = P[n - 1][0] - P[0][0], uy = P[n - 1][1] - P[0][1];
+    /* ein Stück eines Zugs (Astkragen) nimmt Licht und Verlauf vom ganzen Zug */
+    const ref = z.bezug ? zugPunkte(B, z.bezug, s) : zp, PR = ref.P;
+    let ux = PR[PR.length - 1][0] - PR[0][0], uy = PR[PR.length - 1][1] - PR[0][1];
     const ul = Math.hypot(ux, uy) || 1; ux /= ul; uy /= ul;
     let nx = -uy, ny = ux;
     /* Sonne kommt im Bild von links oben: diese Seite hell */
     if (nx * -0.85 + ny * -0.5 < 0) { nx = -nx; ny = -ny; }
     const lfH = lichtAuf([LICHT[0], LICHT[1], 0.3], Z, jahr), lfD = lichtAuf([-LICHT[0], -LICHT[1], 0.1], Z, jahr);
     const innen = z.stamm ? 1 : z.innen && jahr !== "winter" ? 0.72 : 0.94;
-    const m = P[Math.floor(n / 2)], rm = Math.max(...r);
+    const m = PR[Math.floor(PR.length / 2)], rm = Math.max(...ref.r.map((v) => Math.max(0.6, v)));
     const gr = g.createLinearGradient(m[0] + nx * rm, m[1] + ny * rm, m[0] - nx * rm, m[1] - ny * rm);
     gr.addColorStop(0, farbe(A.rinde, lfH, 0.84 * innen));
     gr.addColorStop(0.3, farbe(A.rinde, lfH, 1.0 * innen));
@@ -950,7 +984,7 @@
     const r0 = plan.r0, n = 6;
     const grat = [], li = [], re = [];
     for (let i = 0; i <= n; i++) {
-      const t = i / n, ab = r0 * 0.9 + w.l * t, hz = w.h * Math.pow(1 - t, 2.2), br = r0 * 0.55 * Math.sqrt(1 - 0.85 * t);
+      const t = i / n, ab = r0 * 0.72 + w.l * t, hz = w.h * Math.pow(1 - t, 2.2), br = r0 * 0.55 * Math.sqrt(1 - 0.85 * t);
       grat.push(B.p([d[0] * ab, d[1] * ab, hz]));
       li.push(B.p([d[0] * ab + q[0] * br, d[1] * ab + q[1] * br, 0]));
       re.push(B.p([d[0] * ab - q[0] * br, d[1] * ab - q[1] * br, 0]));
@@ -959,10 +993,13 @@
     for (const [seite, sd] of [[li, 1], [re, -1]]) {
       const nn = norm([q[0] * sd, q[1] * sd, 0.8]);
       const lf = lichtAuf(B.n(nn), Z, jahr);
+      /* unter dem belaubten Dach liegt der Stammfuß im Schatten: sonst
+         leuchten die Wurzelanläufe hell wie Steine neben dem Stamm */
+      const sch = winter ? 0.95 : 0.64;
       const gr = g.createLinearGradient(a[0], a[1], e[0], e[1]);
-      gr.addColorStop(0, farbe(plan.A.rinde, lf, 0.95));
-      gr.addColorStop(0.5, farbe(plan.A.rinde, lf, 0.9, 0.85));
-      gr.addColorStop(1, farbe(plan.A.rinde, lf, 0.85, 0));
+      gr.addColorStop(0, farbe(plan.A.rinde, lf, sch));
+      gr.addColorStop(0.5, farbe(plan.A.rinde, lf, sch * 0.94, 0.85));
+      gr.addColorStop(1, farbe(plan.A.rinde, lf, sch * 0.88, 0));
       g.fillStyle = gr;
       g.beginPath();
       g.moveTo(grat[0][0], grat[0][1]);
