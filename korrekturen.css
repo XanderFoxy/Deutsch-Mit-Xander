@@ -35161,3 +35161,5 @@ body > .lc-tafel-mappe { position: fixed; inset: auto; left: 12px; right: 12px; 
    erbten aber die dunkle Seitenschrift (gemessen rgb(46,42,37) auf rgb(34,28,26)) – kaum lesbar. Jetzt helle Schrift. */
 .lc-tipps { color: #f3ece2; }
 .lc-tipps .lc-tipp { color: #f3ece2; }
+/* FASSUNG 812 — Batmobil und Dodge Viper aus dem 3D-Modell: die Leinwand liegt unter den Gesichtern (die Autos fahren hinter den Bildern der anderen durch). */
+.lc-auftritt .lc-auftritt-3d { position: absolute; z-index: 1; pointer-events: none; display: block; }

@@ -31466,6 +31466,8 @@
     if (wann > 0) lcGeraeuschVorwaermen(name);
     setTimeout(() => {
       try {
+        /* FASSUNG 812 — gerechnete Klänge (Name mit „@", z. B. das Batmobil) statt einer Datei */
+        if (LC_TON_SYNTH[name]) { LC_TON_SYNTH[name](laut, Number(hoechstens) || 0); return; }
         if (!lcGeraeusch(name, name, laut)) return;
         const bis = Number(hoechstens);
         if (!(bis > 0)) return;
@@ -56158,7 +56160,9 @@
     monstertruck: { name: "Colt-Seavers-Truck", wagen: "monstertruck", ton: "auftritt-colt", laut: 0.6 },
     kitt:         { name: "KITT (Knight Rider)", wagen: "kitt", ton: "auftritt-kitt", laut: 0.55 },
     viper:        { name: "Rote Dodge Viper", wagen: "viper", ton: "auftritt-viper", laut: 0.6 },
-    liane:        { name: "An der Liane", ton: "auftritt-liane", laut: 0.55 },
+    /* FASSUNG 812 — XANDER: „dieses Batmobil … auch als Einstiegsanimation" (3D, siehe LC_AUTO3D) */
+    batmobil:     { name: "Batmobil", ton: "@batmobil", laut: 0.6 },
+    liane:      { name: "An der Liane", ton: "auftritt-liane", laut: 0.55 },
     transformer:  { name: "Transformer", ton: "auftritt-trafo", laut: 0.55 },
     rakete:       { name: "Rakete", ton: "granatenpfeifen", laut: 0.45 },
     zauber:       { name: "Zauberwolke", ton: "zauberpuff", laut: 0.5 }
@@ -56315,19 +56319,488 @@
     lcTonSpaeter("auftritt-liane", rein ? 0 : Math.round(0.3 * D), 0.55, 2400);
     if (rein) lcTonSpaeter("aufsetzen", Math.round(0.62 * D), 0.4);
   }
-  function lcAuftritt(id, art, richtung, versuch) {
+  /* =====================================================================
+     FASSUNG 812 — BATMOBIL UND DODGE VIPER AUS DEM 3D-MODELL
+     ---------------------------------------------------------------------
+     XANDER (wörtlich): „dieses Batmobil hätte ich nicht nur in dem Spiel
+     gerne das als fahrendes Auto zu sehen ist, sondern auch als
+     Einstiegsanimation und da möcht ich, dass du dir mehr Mühe gibst,
+     genauso wie du hier denkst in diesem 3-D Maßstab möchte ich, dass das
+     Auto herein gefahren kommt um eine Kurve quietschen, so dass man es
+     schön von vorne sieht und dann soll es wieder in einem Bogen
+     realistisch wieder die Fahrt in die andere Richtung machen …
+     praktisch präsentiert und wegfährt aber nicht einfach [seitlich
+     weggekippt]". Zur Viper: „Dodge Viper Intro-Animation … Dafür sollst
+     du dir richtig Zeit lassen" – „meine Lieblingsanimation, so ein
+     richtig schöner roter Dodge Viper".
+
+     SO GEHT ES. Die Stadt-Modelle (stadt/modelle/auto_viper.js und
+     auto_batmobil.js, aus Fotos nachgebaut) sind vorab aus 32
+     Blickwinkeln gebacken (werkzeug/stadt-backen.js, „drehblaetter" →
+     stadt-leicht/bilder/auftritt_*.json und .webp): die Karosserie, je Rad
+     kleine Flicken (3 Lenkeinschläge × 3 Radstellungen) und der Schatten
+     als eigene Ebene. Hier fährt das Auto auf einem gedachten Boden vor
+     einer Kamera: was weiter weg ist, ist kleiner und steht höher. Die Bahn
+     ist eine glatte Kurve; welches der 32 Bilder gezeigt wird, folgt der
+     Fahrtrichtung RELATIV ZUR KAMERA (Tangente der Bahn gegen den
+     Sehstrahl) – so dreht sich das Auto stetig, nie sprunghaft.
+
+     Ablauf (5,2 s):
+       1) aus der Tiefe vom Rand her, bremst in die Kurve, quietscht mit
+          dünnen Reifenspuren und Qualm herum, beschleunigt heraus;
+       2) bremst auf den Betrachter zu (die Nase taucht ein, federt nach)
+          und steht frontal – die Scheinwerfer blitzen, beim Batmobil
+          glüht kurz der Nachbrenner;
+       3) die Person steigt aus: das Bild hüpft auf den Platz (beim Gehen
+          umgekehrt: es steigt hier ein);
+       4) mit Vollgas im engen Bogen herum – das Heck drängt nach außen,
+          die Vorderräder lenken gegen – und in die andere Richtung
+          davon, perspektivisch immer kleiner, bis es aus dem Bild ist.
+     Die Karosserie neigt sich in der Kurve leicht nach außen und taucht
+     beim Bremsen vorn ein; die Räder bleiben dabei auf dem Boden (nur die
+     Karosserie dreht sich um höchstens 3°, nie das ganze Auto – kein
+     „seitlich Wegkippen" mehr).
+     ===================================================================== */
+  const LC_AUTO3D = {
+    viper: { blatt: "auftritt_viper", radstand: 2.444, motor: "auftritt-viper", laut: 0.6 },
+    batmobil: { blatt: "auftritt_batmobil", radstand: 3.2, motor: "@batmobil", laut: 0.6, nachbrenner: true }
+  };
+  const LC_AUTO3D_DAUER = 5200;
+  const lcAuto3dLager = {};
+  function lcAuto3dPfad(n) { return "stadt-leicht/bilder/" + n + (window.DMA_V ? DMA_V("stadt-leicht/bilder/" + n) : ""); }
+  /* Blätter laden (einmal je Auto; beim ersten Auftritt wird kurz gewartet) */
+  function lcAuto3dLaden(art) {
+    const C = LC_AUTO3D[art];
+    if (!C) return null;
+    if (lcAuto3dLager[art]) return lcAuto3dLager[art];
+    const L = { fertig: false, fehler: false };
+    const bild = (n) => new Promise((ja, nein) => {
+      const i = new Image();
+      i.decoding = "async";
+      i.onload = () => { (i.decode ? i.decode().catch(() => {}) : Promise.resolve()).then(() => ja(i)); };
+      i.onerror = nein;
+      i.src = lcAuto3dPfad(n);
+    });
+    L.warten = fetch(lcAuto3dPfad(C.blatt + ".json")).then((r) => { if (!r.ok) throw new Error("fehlt"); return r.json(); })
+      .then((M) => { L.M = M; return Promise.all([Promise.all(M.blaetter.map(bild)), bild(M.schatten)]); })
+      .then((b) => { L.blaetter = b[0]; L.schatten = b[1]; L.fertig = true; })
+      .catch(() => { L.fehler = true; if (lcAuto3dLager[art] === L) delete lcAuto3dLager[art]; });
+    lcAuto3dLager[art] = L;
+    return L;
+  }
+  /* Ein Modellpunkt im Drehblatt: Versatz zum Anker (Fußpunkt der Wagenmitte) in Metern auf dem Bild, dazu die Nähe zum Betrachter */
+  function lcAuto3dPunkt(M, gier, p) {
+    const e = M.neigung * Math.PI / 180, KY = Math.SQRT1_2 * Math.sin(e), KZ = Math.cos(e);
+    const r = gier * Math.PI / 180, c = Math.cos(r), sn = Math.sin(r);
+    const a = p[0] * c - p[1] * sn, b = p[0] * sn + p[1] * c;
+    return [(a - b) * Math.SQRT1_2, (a + b) * KY - p[2] * KZ, (a + b) * KZ * Math.SQRT1_2 + p[2] * Math.sin(e)];
+  }
+  /* Fahrtrichtung relativ zur Kamera (hx nach rechts, hz in die Tiefe) → Gier des Drehblatts.
+     Im Kern der Stadt zeigt die Nase bei 315° genau auf den Betrachter, bei 45° nach links. */
+  function lcAuto3dGier(hx, hz) {
+    const g = Math.atan2((hz - hx) * Math.SQRT1_2, -(hx + hz) * Math.SQRT1_2) * 180 / Math.PI;
+    return (g % 360 + 360) % 360;
+  }
+  /* Zufall mit Saat (Qualm und Spuren sehen bei jedem Auftritt gleich aus – und lassen sich prüfen) */
+  function lcAuto3dZufall(saat) { let s = saat >>> 0 || 1; return () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+  /* ---------------------------------------------------------------------
+     DIE FAHRT: Bahn, Tempo, Schräglauf, Lenkung, Federung – vorab als
+     Tabelle (240 Werte je Sekunde), damit jedes Bild genau dieselbe Fahrt
+     zeigt, egal wie schnell das Gerät zeichnet (und damit man vor- und
+     zurückspulen kann).
+     Bodenebene: X nach rechts, Z in die Tiefe (Meter), Haltepunkt (0|0).
+     Richtung als Winkel: 0 = nach rechts, +90° = in die Tiefe.
+     sg = +1: kommt von links, fährt rechts davon; −1 gespiegelt.
+     --------------------------------------------------------------------- */
+  function lcAuto3dPlan(sg, C, D) {
+    const R1 = 3.8, L0 = 8, LF = 7.0, ZA = R1 + LF;          /* Anfahrt: Gerade, Viertelkreis, Gerade auf die Kamera zu */
+    const R2 = 1.6, R3 = 6, GAM = 58 * Math.PI / 180;         /* Abfahrt: enger Bogen herum (Linkskurve), weiter links herum schräg in die Tiefe */
+    const B1 = Math.PI / 2 * R1, sB = L0, sC = L0 + B1, sE = sC + LF;
+    const U = Math.PI * R2, E = R3 * GAM;
+    const BREMS = 9;                                           /* m/s² – kräftig, die Nase taucht ein */
+    const ort1 = (s) => {
+      if (s < sB) return [-R1 - L0 + s, ZA, 0, 0, 0];
+      if (s < sC) { const f = (s - sB) / R1; return [-R1 + R1 * Math.sin(f), ZA - R1 + R1 * Math.cos(f), -f, -1 / R1, (s - sB) / B1]; }
+      return [0, ZA - R1 - Math.min(LF, s - sC), -Math.PI / 2, 0, 0];
+    };
+    /* Abfahrt (für sg = +1): vom Halt (Nase zur Kamera) im engen Linksbogen nach rechts herum, bis die
+       Nase in die Tiefe zeigt, dann weiter links herum und schräg nach links hinten davon – ein weiter
+       Bogen „in die andere Richtung": gekommen ist es nach rechts fahrend, es fährt nach links weg. */
+    const ort3 = (s) => {
+      if (s < U) { const f = s / R2; return [R2 - R2 * Math.cos(f), -R2 * Math.sin(f), Math.atan2(-Math.cos(f), Math.sin(f)), 1 / R2, f / Math.PI]; }
+      if (s < U + E) { const f = (s - U) / R3; return [2 * R2 - R3 + R3 * Math.cos(f), R3 * Math.sin(f), Math.PI / 2 + f, 1 / R3, -1 - (s - U) / E]; }
+      const d = s - U - E, X0 = 2 * R2 - R3 + R3 * Math.cos(GAM), Z0 = R3 * Math.sin(GAM);
+      return [X0 - d * Math.sin(GAM), Z0 + d * Math.cos(GAM), Math.PI / 2 + GAM, 0, 0];
+    };
+    const knoten = [[0, 16], [L0 - 3, 13.5], [L0, 8.2], [sB + B1 * 0.5, 7.4], [sC, 9.6]];
+    const v1 = (s) => {
+      let v = 9.6;
+      for (let i = 0; i < knoten.length - 1; i++) if (s >= knoten[i][0] && s < knoten[i + 1][0]) { const u = (s - knoten[i][0]) / (knoten[i + 1][0] - knoten[i][0]); v = knoten[i][1] + (knoten[i + 1][1] - knoten[i][1]) * u; }
+      return Math.min(v, Math.sqrt(2 * BREMS * Math.max(0, sE - s)));
+    };
+    /* Vollgas: 14 m/s² bis 20 m/s, dann weiter mit 8 m/s² */
+    const v3 = (s) => { const v = Math.sqrt(0.5 + 2 * 14 * s); return v <= 20 ? v : Math.sqrt(20 * 20 + 2 * 8 * (s - (20 * 20 - 0.5) / 28)); };
+    /* Zeit über dem Weg (Anfahrt): t(s) */
+    const zeiten = (vf, sEnde) => { const ds = 0.01, T = [0]; let t = 0; for (let s = ds; s <= sEnde + 1e-9; s += ds) { t += ds / Math.max(0.35, vf(s - ds / 2)); T.push(t); } return T; };
+    const T1 = zeiten(v1, sE), Ta = T1[T1.length - 1], tKurve = T1[Math.round((sB + B1 * 0.5) / 0.01)];
+    const Th = Ta + 0.7;
+    const wegBei = (T, t) => { let lo = 0, hi = T.length - 1; if (t >= T[hi]) return hi * 0.01; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (T[m] <= t) lo = m; else hi = m; } return (lo + (t - T[lo]) / Math.max(1e-6, T[hi] - T[lo])) * 0.01; };
+    const T3 = zeiten(v3, 80);
+    const dt = 1 / 240, n = Math.ceil(D / 1000 / dt) + 1;
+    const P = { dt: dt, n: n, Ta: Ta, Th: Th, tKurve: tKurve, D: D / 1000, sg: sg, X: new Float32Array(n), Z: new Float32Array(n), H: new Float32Array(n), v: new Float32Array(n), weg: new Float32Array(n),
+      lenk: new Float32Array(n), nick: new Float32Array(n), wank: new Float32Array(n), schlupf: new Float32Array(n), sB: 0, sC: 0 };
+    let wegGesamt = 0, sAlt = 0, phAlt = 1;
+    for (let i = 0; i < n; i++) {
+      const t = i * dt;
+      let o, v, s, beta = 0;
+      if (t <= Ta) {
+        s = wegBei(T1, t); o = ort1(s); v = v1(s);
+        /* In der Kurve drängt das Heck ein wenig nach außen (Reifen quietschen) */
+        if (o[4] > 0) beta = Math.sign(o[3]) * 9 * Math.sin(Math.PI * o[4]);
+      } else if (t <= Th) { s = 0; o = [0, 0, -Math.PI / 2, 0, 0]; v = 0; }
+      else {
+        s = wegBei(T3, t - Th); o = ort3(s); v = v3(s);
+        /* Vollgas im engen Bogen: das Heck kommt stark (bis 30°), im weiten Bogen danach noch ein wenig */
+        if (o[4] > 0) beta = 30 * Math.pow(Math.sin(Math.PI * o[4]), 0.8) + 6 * Math.max(0, o[4] - 0.5) * 2;
+        else if (o[4] < 0) beta = 6 * Math.cos(Math.PI / 2 * Math.min(1, -o[4] - 1));
+      }
+      const ph = t <= Ta ? 1 : t <= Th ? 2 : 3;
+      if (ph !== phAlt) sAlt = 0;
+      wegGesamt += Math.max(0, s - sAlt); sAlt = s; phAlt = ph;
+      /* gespiegelt für sg = −1: X → −X, Richtung → π − Richtung, Krümmung und Schräglauf wechseln das Vorzeichen */
+      const X = sg * o[0], H0 = sg > 0 ? o[2] : Math.PI - o[2], k = sg * o[3], b = sg * beta * Math.PI / 180;
+      P.X[i] = X; P.Z[i] = o[1]; P.H[i] = H0 + b; P.v[i] = v; P.weg[i] = wegGesamt; P.schlupf[i] = b;
+      /* Lenkung (+ = nach rechts): geometrisch atan(Radstand · Krümmung), im Drift Gegenlenken */
+      const geo = -Math.atan(C.radstand * k) * 180 / Math.PI, w = Math.max(0, Math.min(1, (Math.abs(beta) - 12) / 14));
+      P.lenk[i] = geo * (1 - w) + (b > 0 ? 1 : -1) * 22 * w;
+    }
+    /* Lenkrad dreht nicht sprunghaft: glätten (0,12 s) */
+    for (let i = 1; i < n; i++) P.lenk[i] = P.lenk[i - 1] + (P.lenk[i] - P.lenk[i - 1]) * (dt / 0.12);
+    /* Federung: Feder-Dämpfer (1,5 Hz, gedämpft) auf Längs- und Querbeschleunigung */
+    const w0 = 2 * Math.PI * 1.5, zeta = 0.42;
+    let nk = 0, nkv = 0, wk = 0, wkv = 0;
+    for (let i = 0; i < n; i++) {
+      const aL = i ? (P.v[i] - P.v[i - 1]) / dt : 0;
+      const dH = i ? Math.atan2(Math.sin(P.H[i] - P.schlupf[i] - P.H[i - 1] + P.schlupf[i - 1]), Math.cos(P.H[i] - P.schlupf[i] - P.H[i - 1] + P.schlupf[i - 1])) / dt : 0;
+      const aQ = P.v[i] * dH;   /* + = Beschleunigung nach links */
+      const zielN = Math.max(-1.8, Math.min(2.0, -0.18 * aL)), zielW = Math.max(-2.3, Math.min(2.3, -0.2 * aQ));
+      nkv += (w0 * w0 * (zielN - nk) - 2 * zeta * w0 * nkv) * dt; nk += nkv * dt;
+      wkv += (w0 * w0 * (zielW - wk) - 2 * zeta * w0 * wkv) * dt; wk += wkv * dt;
+      P.nick[i] = nk; P.wank[i] = wk;
+    }
+    return P;
+  }
+
+  /* Der Auftritt selbst (aus lcAuftritt gerufen, wenn die Blätter geladen sind) */
+  function lcAuftrittAuto3d(art, buehne, bild, rk, rs, cx, cy, B, rein, D, an) {
+    const C = LC_AUTO3D[art], L = lcAuto3dLager[art], M = L.M, N = M.bilder.length;
+    const doc = document.documentElement, sy = window.scrollY || 0, VH = window.innerHeight || doc.clientHeight;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    /* Maßstab: Meter → CSS-Pixel am Haltepunkt. Etwa 1,25 Platzbreiten je Meter, auf dem Telefon
+       so, dass das Auto frontal gut 2 Platzbreiten breit ist und trotzdem Luft zum Rand bleibt. */
+    const S_NAH = Math.max(40, Math.min(rk.width * 1.25, B / 4, 115)), S_WEIT = S_NAH * 0.62;
+    /* Kamera 14 m vor dem Haltepunkt. Der Boden steigt etwas steiler an, als die Neigung der Blätter
+       (14°) es verlangt: so liegt die Kurve in der Tiefe ÜBER der Reihe der Plätze (statt hinter den
+       Gesichtern), das Auto kommt sichtbar „von hinten" heran. */
+    const e = M.neigung * Math.PI / 180, ZC = 14, HC = ZC * Math.tan(e) * 1.7;
+    const fahrer = M.punkte.fahrer || [0.4, -0.4, 1];
+    /* Der Halt ist in der Mitte der Plätze (dort hat das Auto nach beiden Seiten Platz); die Person
+       springt von dort auf ihren Platz. Gekommen wird von der Seite des eigenen Platzes. */
+    const reihe = document.getElementById("lcPlaetze"), rr = reihe ? reihe.getBoundingClientRect() : null;
+    const mitte = rr && rr.width > 100 ? rr.left + (window.scrollX || 0) + rr.width / 2 : B / 2;
+    const halb = 1.15 * S_NAH;
+    const xh = Math.max(halb + 6, Math.min(B - halb - 6, mitte));
+    /* Frontal (Gier 315) sitzt der Kopf des Fahrers auf der Höhe des Platzes */
+    const kopf315 = lcAuto3dPunkt(M, 315, fahrer);
+    const y0 = cy - kopf315[1] * S_NAH;
+    const sg = cx <= xh ? 1 : -1;
+    const P = lcAuto3dPlan(sg, C, D);
+    /* Die Kamera fährt mit: weit bei Anfahrt und Abfahrt (man sieht die Kurve und den Bogen), nah am
+       Halt (das Auto wird präsentiert). Gezoomt wird um den Haltepunkt am Boden. */
+    const glatt = (u) => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
+    const Sbei = (t) => S_WEIT + (S_NAH - S_WEIT) * (t < P.Th ? glatt((t - (P.Ta - 1.2)) / 1.1) : 1 - glatt((t - P.Th - 0.05) / 0.8));
+    let S = S_NAH;
+    const bodenBild = (X, Z) => { const k = ZC / Math.max(0.5, ZC + Z); return [xh + X * S * k, y0 - S * HC * (1 - k), k]; };
+    /* Zustand zur Zeit t (Sekunden), zwischen den Tabellenwerten linear */
+    const zustand = (t) => {
+      const f = Math.max(0, Math.min(P.n - 1.001, t / P.dt)), i = Math.floor(f), u = f - i, j = i + 1;
+      const li = (A) => A[i] + (A[j] - A[i]) * u;
+      let dH = P.H[j] - P.H[i]; dH = Math.atan2(Math.sin(dH), Math.cos(dH));
+      return { t: t, X: li(P.X), Z: li(P.Z), H: P.H[i] + dH * u, v: li(P.v), weg: li(P.weg), lenk: li(P.lenk), nick: li(P.nick), wank: li(P.wank), schlupf: li(P.schlupf) };
+    };
+    /* Welches Blatt: Fahrtrichtung gegen den Sehstrahl */
+    const blick = (z) => {
+      const al = Math.atan2(z.X, ZC + z.Z), hx = Math.cos(z.H), hz = Math.sin(z.H);
+      const qx = hx * Math.cos(al) - hz * Math.sin(al), qz = hx * Math.sin(al) + hz * Math.cos(al);
+      const g = lcAuto3dGier(qx, qz);
+      return { g: g, i: Math.round(g / (360 / N)) % N, qx: qx, qz: qz };
+    };
+    /* ---------- Leinwand über dem sichtbaren Teil der Seite ---------- */
+    const lw = document.createElement("canvas");
+    lw.className = "lc-auftritt-3d lc-auftritt-3d-" + art;
+    lw.width = Math.round(B * dpr); lw.height = Math.round(VH * dpr);
+    lw.style.left = "0px"; lw.style.top = sy + "px"; lw.style.width = B + "px"; lw.style.height = VH + "px";
+    buehne.insertBefore(lw, bild);
+    const g = lw.getContext("2d");
+    /* Die Uhr: eine WAAPI-Animation (Ausblenden am Schluss). Sie wird mit dem Foto zusammen
+       angehalten/gestartet – und jedes Bild der Leinwand liest seine Zeit von ihr. */
+    let uhr = null;
+    try { uhr = lw.animate([{ opacity: 1, offset: 0 }, { opacity: 1, offset: 0.95 }, { opacity: 0, offset: 1 }], { duration: D, fill: "forwards" }); } catch (x) {}
+    /* ---------- Reifenspuren und Qualm: vorab, aus der Tabelle ---------- */
+    const zf = lcAuto3dZufall(art === "viper" ? 812 : 1966);
+    const raeder = M.raeder, hl = raeder.hl, hr = raeder.hr;
+    const radWelt = (z, m) => { const hx = Math.cos(z.H), hz = Math.sin(z.H); /* links vom Auto = gegen den Uhrzeiger */ return [z.X + hx * m[1] - hz * m[0], z.Z + hz * m[1] + hx * m[0]]; };
+    const spuren = [], qualm = [];
+    const quietschen = [];
+    for (let i = 0; i < P.n; i += 4) {
+      const t = i * P.dt, b = Math.abs(P.schlupf[i]) * 180 / Math.PI;
+      if (b < 2.5) continue;
+      const z = zustand(t);
+      quietschen.push(t);
+      [hl, hr].forEach((m, w) => {
+        const q = radWelt(z, m);
+        spuren.push({ t: t, w: w, X: q[0], Z: q[1], st: Math.min(1, b / 14) });
+        if (zf() < 0.55 + b / 40) qualm.push({ t: t, X: q[0] + (zf() - 0.5) * 0.4, Z: q[1] + (zf() - 0.5) * 0.4, lebt: 0.9 + zf() * 0.6, gr: 0.8 + zf() * 0.7, st: Math.min(1, b / 16) });
+      });
+    }
+    /* Abschnitte der Spuren (Lücke → neuer Strich) */
+    const striche = [[], []];
+    spuren.forEach((p) => { const L2 = striche[p.w], letzter = L2[L2.length - 1]; if (!letzter || p.t - letzter[letzter.length - 1].t > 0.05) L2.push([p]); else letzter.push(p); });
+    /* ---------- Licht: Scheinwerfer blitzen am Halt, Nachbrenner beim Batmobil ---------- */
+    const blitz = (t) => { const a = t - P.Ta; if (a < 0) return 0.25; return (a < 0.12 ? 1 : a < 0.22 ? 0.3 : a < 0.38 ? 1 : 0.35) * (t > P.Th + 1.0 ? 0.6 : 1); };
+    const brenner = (t) => { if (!C.nachbrenner) return 0; const a = t - (P.Th - 0.32); if (a < 0) return 0; if (a < 0.2) return a / 0.2; if (a < 1.1) return 1; return Math.max(0, 1 - (a - 1.1) / 0.6); };
+    const glut = (x, y, r, farbe, a) => {
+      if (a <= 0.01 || r <= 0.5) return;
+      const gr = g.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, "rgba(" + farbe + "," + Math.min(1, a).toFixed(3) + ")"); gr.addColorStop(0.35, "rgba(" + farbe + "," + (a * 0.35).toFixed(3) + ")"); gr.addColorStop(1, "rgba(" + farbe + ",0)");
+      g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+    };
+    const blatt = (b) => L.blaetter[b[0]];
+    const lenkIdx = (l) => { const LK = M.lenk; let best = 0; for (let j = 1; j < LK.length; j++) if (Math.abs(LK[j] - l) < Math.abs(LK[best] - l)) best = j; return best; };
+    const rollIdx = (weg) => { const nR = M.roll.length, per = (M.roll[1] - M.roll[0]) * nR, rR = raeder.hl[2]; const grad = weg / rR * 180 / Math.PI; return Math.floor(((grad % per) + per) % per / per * nR) % nR; };
+    let letzter = null;
+    const spur = [];
+    window.DMA_AUTO3D = { art: art, richtung: rein ? "rein" : "raus", plan: { Ta: P.Ta, Th: P.Th, tKurve: P.tKurve, D: P.D, sg: sg, S: S_NAH, xh: Math.round(xh), N: N }, spur: spur, jetzt: () => letzter };
+    const qualmMalen = (t, zAuto, vorne) => {
+      for (const q of qualm) {
+        const tau = (t - q.t) / q.lebt;
+        if (tau < 0 || tau >= 1 || (q.Z < zAuto) !== vorne) continue;
+        const p = bodenBild(q.X, q.Z + tau * 0.3), r = (0.28 + 1.25 * tau) * q.gr * S * p[2], hoch = (0.2 + 0.55 * tau) * S * p[2];
+        glut(p[0], p[1] - hoch, r, "232,232,236", 0.3 * q.st * Math.pow(1 - tau, 1.5) * (t > P.D - 0.3 ? (P.D - t) / 0.3 : 1));
+      }
+    };
+    const zeichnen = (t) => {
+      g.setTransform(dpr, 0, 0, dpr, 0, -sy * dpr);
+      g.clearRect(0, sy, B, VH);
+      S = Sbei(t);
+      const z = zustand(t), bl = blick(z), Bd = M.bilder[bl.i];
+      const p = bodenBild(z.X, z.Z), k = p[2], sk = S * k, f = sk / (Bd.m || M.s);
+      const aus = t > P.D - 0.25 ? Math.max(0, (P.D - t) / 0.25) : 1;
+      /* Reifenspuren (dünn, dunkel, verblassen zum Schluss) */
+      g.lineCap = "round"; g.lineJoin = "round";
+      for (const L2 of striche) for (const st of L2) {
+        if (st[0].t > t) continue;
+        g.beginPath();
+        let n = 0;
+        for (const q of st) { if (q.t > t) break; const a = bodenBild(q.X, q.Z); if (n++) g.lineTo(a[0], a[1]); else g.moveTo(a[0], a[1]); }
+        const a0 = bodenBild(st[0].X, st[0].Z);
+        g.strokeStyle = "rgba(30,26,26," + (0.42 * st[0].st * Math.min(1, aus * 1.2)).toFixed(3) + ")"; g.lineWidth = Math.max(0.8, 0.07 * S * a0[2]); g.stroke();
+      }
+      qualmMalen(t, z.Z, false);
+      /* Schatten (eigene Ebene) */
+      g.globalAlpha = 0.2 * aus;
+      g.drawImage(L.schatten, Bd.s[1], Bd.s[2], Bd.s[3], Bd.s[4], p[0] + Bd.so[0] * f, p[1] + Bd.so[1] * f, Bd.s[3] / M.sf * f, Bd.s[4] / M.sf * f);
+      g.globalAlpha = aus;
+      /* Nachbrenner hinter dem Wagen (Düse abgewandt): ein Glühen um das Heck */
+      const nb = brenner(t), duese = M.punkte.duese;
+      const hinten = bl.qz > 0.15;   /* das Heck zeigt zur Kamera */
+      if (nb > 0 && duese) {
+        const d = lcAuto3dPunkt(M, Bd.g, duese), dx = p[0] + d[0] * sk, dy = p[1] + d[1] * sk;
+        if (!hinten) { g.globalCompositeOperation = "lighter"; glut(dx, dy - 0.2 * S * k, (1.5 + 0.2 * Math.sin(t * 60)) * S * k, "255,120,40", 0.55 * nb * aus); g.globalCompositeOperation = "source-over"; }
+      }
+      /* Karosserie – um wenige Grad geneigt (Wanken nach außen, Nicken beim Bremsen), die Räder nicht */
+      const dreh = (z.wank * -bl.qz + z.nick * bl.qx) * Math.PI / 180;
+      const px = p[0], py = p[1] - 0.42 * Math.cos(e) * S * k;
+      g.save(); g.translate(px, py); g.rotate(dreh); g.translate(-px, -py);
+      g.drawImage(blatt(Bd.b), Bd.b[1], Bd.b[2], Bd.b[3], Bd.b[4], p[0] - Bd.a[0] * f, p[1] - Bd.a[1] * f, Bd.b[3] * f, Bd.b[4] * f);
+      g.restore();
+      /* Räder: Flicken mit Lenkeinschlag und Radstellung, hintere zuerst */
+      const li = lenkIdx(z.lenk), ri = rollIdx(z.weg);
+      /* abgewandte Räder haben nur Radstellung 0 (dort sieht man das Drehen nicht) */
+      const fl = Bd.r.filter((r) => (r.l < 0 || r.l === li) && (r.k === ri || (r.k === 0 && !Bd.r.some((q) => q.rad === r.rad && q.k === ri && (q.l < 0 || q.l === li))))).sort((a, b) => a.n - b.n);
+      for (const r of fl) g.drawImage(blatt(r.b), r.b[1], r.b[2], r.b[3], r.b[4], p[0] + r.o[0] * f, p[1] + r.o[1] * f, r.b[3] * f, r.b[4] * f);
+      /* Nachbrenner sichtbar (Heck zur Kamera): Flamme aus der Düse nach hinten */
+      if (nb > 0 && duese && hinten) {
+        const d = lcAuto3dPunkt(M, Bd.g, duese), sp = lcAuto3dPunkt(M, Bd.g, [duese[0], duese[1] - 1.7, duese[2] + 0.05]);
+        const ax = p[0] + d[0] * sk, ay = p[1] + d[1] * sk, bx = p[0] + sp[0] * sk, by = p[1] + sp[1] * sk;
+        g.globalCompositeOperation = "lighter";
+        /* eine Flammenzunge: breit an der Düse, spitz nach hinten, flackernd; darum ein Glühen */
+        const fl2 = 0.85 + 0.15 * Math.sin(t * 71) + 0.08 * Math.sin(t * 173);
+        const tx = ax + (bx - ax) * fl2, ty = ay + (by - ay) * fl2, lx = tx - ax, ly = ty - ay, ll = Math.hypot(lx, ly) || 1;
+        const qx = -ly / ll, qy = lx / ll, br = 0.17 * sk;
+        const vl = g.createLinearGradient(ax, ay, tx, ty);
+        vl.addColorStop(0, "rgba(255,248,220," + (0.95 * nb * aus).toFixed(3) + ")"); vl.addColorStop(0.3, "rgba(255,170,60," + (0.8 * nb * aus).toFixed(3) + ")");
+        vl.addColorStop(0.75, "rgba(255,80,20," + (0.45 * nb * aus).toFixed(3) + ")"); vl.addColorStop(1, "rgba(255,60,10,0)");
+        g.fillStyle = vl; g.beginPath(); g.moveTo(ax + qx * br, ay + qy * br);
+        g.quadraticCurveTo(ax + lx * 0.45 + qx * br * 1.3, ay + ly * 0.45 + qy * br * 1.3, tx, ty);
+        g.quadraticCurveTo(ax + lx * 0.45 - qx * br * 1.3, ay + ly * 0.45 - qy * br * 1.3, ax - qx * br, ay - qy * br); g.closePath(); g.fill();
+        glut(ax, ay, 0.55 * sk, "255,150,60", 0.7 * nb * aus);
+        g.globalCompositeOperation = "source-over";
+      }
+      /* Scheinwerfer: am Tag ein leiser Schein, am Halt zweimal hell aufblitzen */
+      const vorn = Math.max(0, -bl.qz), bz = blitz(t) * Math.pow(vorn, 1.3) * aus;
+      if (bz > 0.02 && M.punkte.licht) {
+        g.globalCompositeOperation = "lighter";
+        for (const lp of M.punkte.licht) {
+          const d = lcAuto3dPunkt(M, Bd.g, lp), x = p[0] + d[0] * sk, y = p[1] + d[1] * sk;
+          glut(x, y, 0.55 * S * k * (0.6 + 0.6 * bz), "255,248,225", 0.9 * bz);
+          if (bz > 0.6) { g.save(); g.translate(x, y); g.scale(1, 0.08); glut(0, 0, 1.3 * S * k, "255,252,240", 0.7 * bz); g.restore(); }
+        }
+        g.globalCompositeOperation = "source-over";
+      }
+      qualmMalen(t, z.Z, true);
+      g.globalAlpha = 1;
+      letzter = { t: Math.round(t * 1000) / 1000, i: bl.i, gier: Math.round(bl.g * 10) / 10, x: Math.round(p[0]), y: Math.round(p[1] - sy), k: Math.round(k * 1000) / 1000,
+        breite: Math.round(Bd.b[3] * f), hoehe: Math.round(Bd.b[4] * f), links: Math.round(p[0] - Bd.a[0] * f), rechts: Math.round(p[0] + (Bd.b[3] - Bd.a[0]) * f),
+        oben: Math.round(p[1] - Bd.a[1] * f - sy), unten: Math.round(p[1] + (Bd.b[4] - Bd.a[1]) * f - sy), lenk: li, roll: ri, dreh: Math.round(dreh * 1800 / Math.PI) / 10, deck: aus };
+      if (spur.length < 2000) spur.push(letzter);
+    };
+    /* Jedes Bild: die Zeit der Uhr (so bleiben Leinwand, Bild und Töne beisammen) */
+    let aus = false;
+    const schleife = () => {
+      if (aus || !buehne.isConnected) return;
+      const ct = uhr && uhr.currentTime != null ? uhr.currentTime : 0;
+      try { zeichnen(Math.min(D, ct) / 1000); } catch (x) {}
+      requestAnimationFrame(schleife);
+    };
+    requestAnimationFrame(schleife);
+    try { zeichnen(0); } catch (x) {}
+
+    /* ---------- Das Bild der Person: fährt am Steuer mit, steigt aus (oder ein) ---------- */
+    const kopfBei = (t) => {
+      S = Sbei(t);
+      const z = zustand(t), bl = blick(z), p = bodenBild(z.X, z.Z), d = lcAuto3dPunkt(M, bl.g, fahrer);
+      return [p[0] + d[0] * S * p[2] - cx, p[1] + d[1] * S * p[2] - cy, Math.max(0.18, 0.62 * S * p[2] / rk.width)];
+    };
+    const tr = (x, y, sc, op) => ({ transform: "translateX(" + x.toFixed(1) + "px) translateY(" + y.toFixed(1) + "px) scale(" + sc.toFixed(3) + ")", opacity: op });
+    const bilder = [], SCHRITTE = 160;
+    const hopp0 = rein ? P.Ta + 0.12 : P.Th - 0.58, hopp1 = hopp0 + 0.46;
+    for (let j = 0; j <= SCHRITTE; j++) {
+      const t = j / SCHRITTE * P.D;
+      const aus2 = t > P.D - 0.25 ? Math.max(0, (P.D - t) / 0.25) : 1;
+      let kf;
+      const imWagen = rein ? t < hopp0 : t > hopp1;
+      if (imWagen) { const q = kopfBei(t); kf = tr(q[0], q[1], q[2], rein ? 1 : aus2); }
+      else if (t >= hopp0 && t <= hopp1) {
+        /* der Sprung: im Bogen aus dem Wagen auf den Platz (beim Gehen umgekehrt) */
+        const u0 = (t - hopp0) / (hopp1 - hopp0), u = rein ? u0 : 1 - u0, q = kopfBei(rein ? hopp0 : hopp1);
+        const e2 = u * u * (3 - 2 * u), bogen = -rk.height * 0.6 * 4 * u * (1 - u);
+        const sc = q[2] + (1 - q[2]) * e2 + (u > 0.8 ? 0.06 * Math.sin((u - 0.8) / 0.2 * Math.PI) : 0);
+        kf = tr(q[0] * (1 - e2), q[1] * (1 - e2) + bogen, sc, 1);
+      } else kf = tr(0, 0, 1, 1);
+      kf.offset = j / SCHRITTE;
+      bilder.push(kf);
+    }
+    an(bild, bilder);
+    /* ---------- Töne (starten mit der Animation) ---------- */
+    lcAuto3dTonPlan = { P: P, laut: C.laut };
+    const kurve = quietschen.length ? quietschen[0] : P.Ta * 0.3;
+    const ms = (s) => Math.max(0, Math.round(s * 1000));
+    lcTonSpaeter(C.motor, 0, C.laut, C.motor.charAt(0) === "@" ? D : 2300);
+    lcTonSpaeter("reifenquietschen", ms(kurve), 0.5, ms(Math.min(1.4, P.Ta * 0.55)));
+    lcTonSpaeter("bremse", ms(P.Ta - 0.95), 0.3, 700);
+    lcTonSpaeter("aufsetzen", ms(rein ? hopp1 - 0.04 : hopp0 + 0.05), 0.35);
+    if (C.motor.charAt(0) !== "@") lcTonSpaeter(C.motor, ms(P.Th - 0.12), C.laut, 1700);
+    lcTonSpaeter("reifenquietschen", ms(P.Th + 0.05), 0.45, 1000);
+    return { P: P, S: S_NAH };
+  }
+  /* ---------------------------------------------------------------------
+     DER KLANG DES BATMOBILS — gerechnet (Web Audio), keine Datei:
+     tiefes V8-Grollen, das mit dem Tempo steigt, darüber das Pfeifen der
+     „Atomturbine" und beim Losfahren das Fauchen des Nachbrenners. Die
+     Kurve der Drehzahl kommt aus derselben Fahrt-Tabelle wie das Bild.
+     --------------------------------------------------------------------- */
+  let lcAuto3dTonPlan = null;
+  function lcBatmobilTon(laut, bis) {
+    if (!lcToeneAn()) return;
+    const a = lcTonAnlage();
+    if (!a) return;
+    try { if (a.state === "suspended" && a.resume) a.resume(); } catch (e) {}
+    try { if (window.DMA_TONLOG && window.DMA_TONLOG.push) window.DMA_TONLOG.push({ name: "@batmobil", wann: Math.round(performance.now()) }); } catch (e) {}
+    const TP = lcAuto3dTonPlan, P = TP && TP.P;
+    if (!P) return;
+    const t0 = a.currentTime + 0.02, dauer = Math.min(P.D, (bis || P.D * 1000) / 1000);
+    const aus = a.createGain(); aus.gain.value = 0; aus.connect(lcTonZiel(a));
+    aus.gain.setValueAtTime(0, t0); aus.gain.linearRampToValueAtTime(0.9 * laut, t0 + 0.25);
+    aus.gain.setValueAtTime(0.9 * laut, t0 + dauer - 0.45); aus.gain.linearRampToValueAtTime(0.0001, t0 + dauer);
+    /* Drehzahlkurve: Tempo und Gas (Beschleunigung) aus der Tabelle, 60 Stützstellen */
+    const n = 60, frq = new Float32Array(n), gas = new Float32Array(n), pfeif = new Float32Array(n), roehr = new Float32Array(n);
+    for (let j = 0; j < n; j++) {
+      const t = j / (n - 1) * dauer, i = Math.min(P.n - 2, Math.round(t / P.dt));
+      const v = P.v[i], aL = (P.v[i + 1] - P.v[i]) / P.dt;
+      const halt = t > P.Ta && t < P.Th;
+      /* Gangwechsel angedeutet: die Drehzahl sägt über das Tempo */
+      const dz = halt ? 0.18 + (t > P.Th - 0.4 ? (t - (P.Th - 0.4)) * 1.6 : 0) : Math.min(1, 0.25 + (v % 9) / 9 * 0.75);
+      frq[j] = 34 + dz * 62;
+      gas[j] = Math.max(0.25, Math.min(1, 0.45 + aL / 14));
+      pfeif[j] = 700 + v * 95 + dz * 400;
+      roehr[j] = Math.max(0.05, Math.min(1, v / 14));
+    }
+    const kurve = (param, werte) => { try { param.setValueCurveAtTime(werte, t0, dauer); } catch (e) { param.value = werte[0]; } };
+    /* V8: zwei Sägezähne, leicht verstimmt, durch ein Tiefpassfilter; eine Welle darin lässt ihn „blubbern" */
+    const tief = a.createBiquadFilter(); tief.type = "lowpass"; tief.frequency.value = 420; tief.Q.value = 3;
+    const grummel = a.createGain(); grummel.gain.value = 0.34; tief.connect(grummel); grummel.connect(aus);
+    const oszis = [];
+    [1, 1.012, 0.5].forEach((m, j) => {
+      const o = a.createOscillator(); o.type = j === 2 ? "square" : "sawtooth";
+      const werte = new Float32Array(n); for (let q = 0; q < n; q++) werte[q] = frq[q] * m;
+      kurve(o.frequency, werte);
+      const og = a.createGain(); og.gain.value = j === 2 ? 0.35 : 0.5; o.connect(og); og.connect(tief); oszis.push(o);
+    });
+    const gasW = new Float32Array(n); for (let q = 0; q < n; q++) gasW[q] = 0.2 + gas[q] * 0.35;
+    kurve(grummel.gain, gasW);
+    const blubb = a.createOscillator(); blubb.frequency.value = 11; const blubbG = a.createGain(); blubbG.gain.value = 0.12;
+    blubb.connect(blubbG); blubbG.connect(grummel.gain); oszis.push(blubb);
+    /* Turbine: ein steigendes Pfeifen */
+    const pf = a.createOscillator(); pf.type = "triangle"; kurve(pf.frequency, pfeif);
+    const pfG = a.createGain(); pfG.gain.value = 0.035; pf.connect(pfG); pfG.connect(aus); oszis.push(pf);
+    /* Rauschen: Fahrtwind/Abgas, beim Nachbrenner ein Fauchen */
+    const lang = Math.ceil(a.sampleRate * (dauer + 0.2)), puf = a.createBuffer(1, lang, a.sampleRate), d = puf.getChannelData(0);
+    for (let q = 0; q < lang; q++) d[q] = Math.random() * 2 - 1;
+    const rq = a.createBufferSource(); rq.buffer = puf;
+    const band = a.createBiquadFilter(); band.type = "bandpass"; band.Q.value = 0.8; kurve(band.frequency, pfeif);
+    const rqG = a.createGain(); kurve(rqG.gain, (() => { const w = new Float32Array(n); for (let q = 0; q < n; q++) { const t = q / (n - 1) * dauer, x = t - (P.Th - 0.32); w[q] = 0.05 * roehr[q] + (x > 0 && x < 1.6 ? 0.5 * Math.min(1, x / 0.15) * Math.max(0, 1 - x / 1.6) : 0); } return w; })());
+    rq.connect(band); band.connect(rqG); rqG.connect(aus);
+    oszis.forEach((o) => { o.start(t0); o.stop(t0 + dauer + 0.05); });
+    rq.start(t0); rq.stop(t0 + dauer + 0.05);
+  }
+  const LC_TON_SYNTH = { "@batmobil": lcBatmobilTon };
+
+  function lcAuftritt(id, art, richtung, versuch, geladen) {
     const A = LC_AUFTRITTE[art];
     if (!A || !id) return false;
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
+    /* FASSUNG 812 — Batmobil und Viper aus dem 3D-Modell: beim ersten Mal erst die Blätter
+       holen (einmal, dann liegen sie im Speicher). Klappt das nicht, fährt die Viper wie
+       früher (gezeichnet), das Batmobil bleibt aus. */
+    const L3 = LC_AUTO3D[art] ? lcAuto3dLaden(art) : null;
+    if (L3 && !L3.fertig && !L3.fehler && !geladen) {
+      const ab = Date.now();
+      L3.warten.then(() => { if (Date.now() - ab < 6000 || richtung !== "rein") lcAuftritt(id, art, richtung, versuch, true); });
+      return true;
+    }
+    const auto3d = Boolean(L3 && L3.fertig);
+    if (LC_AUTO3D[art] && !auto3d && !A.wagen) return false;
     const sel = '#lcPlaetze .lc-platz[data-lc-id="' + String(id).replace(/["\\]/g, "") + '"]';
     const platz = document.querySelector(sel), kreis = platz && platz.querySelector(".lc-kreis");
     const rk = kreis ? kreis.getBoundingClientRect() : null;
     if (!rk || !rk.width) {
       /* Wer gerade erst kommt, hat vielleicht noch keinen Platz – kurz nachsehen. */
-      if (richtung === "rein" && (versuch || 0) < 6) { setTimeout(() => lcAuftritt(id, art, richtung, (versuch || 0) + 1), 250); return true; }
+      if (richtung === "rein" && (versuch || 0) < 6) { setTimeout(() => lcAuftritt(id, art, richtung, (versuch || 0) + 1, geladen), 250); return true; }
       return false;
     }
-    const rein = richtung !== "raus", D = art === "transformer" ? 6400 : art === "liane" ? 3600 : (rein && LC_FRONTWAGEN[art]) ? 5400 : A.wagen ? 3600 : 2600;
+    const rein = richtung !== "raus", D = auto3d ? LC_AUTO3D_DAUER : art === "transformer" ? 6400 : art === "liane" ? 3600 : (rein && LC_FRONTWAGEN[art]) ? 5400 : A.wagen ? 3600 : 2600;
     /* FASSUNG 710 — XANDER (Funk 156): „Die Profil Intro Animation … hängt vom Sound oft hinterher". Die Töne liefen ab dem
        Aufruf, die Animation erst ab ihrem ersten gezeichneten Bild – und das kam spät, wenn das Foto noch entpackt werden
        musste oder die Seite beim Betreten viel zu tun hatte. Jetzt: erst das Foto fertig, dann laufen Bild und Ton gemeinsam
@@ -56374,7 +56847,9 @@
     const fertig = () => { buehne.remove(); if (versteck) versteck.remove(); };
     const cx = rs.left + rs.width / 2, cy = rs.top + rs.height / 2, B = doc.clientWidth;
     const an = (el, bilder, d, e) => { try { el.animate(bilder, { duration: d || D, easing: e || "linear", fill: "forwards" }); } catch (x) {} };
-    if (art === "transformer") {
+    if (auto3d) {
+      lcAuftrittAuto3d(art, buehne, bild, rk, rs, cx, cy, B, rein, D, an);
+    } else if (art === "transformer") {
       lcAuftrittTrafo(buehne, bild, rk, cx, cy, B, rein, D, an);
     } else if (art === "liane") {
       lcAuftrittLiane(buehne, bild, rk, rs, cx, cy, B, rein, D, an);
@@ -56536,7 +57011,10 @@
         const weg = erste && erste.startTime != null ? Math.max(0, jetzt - erste.startTime) : 0;
         tonPuffer.forEach((t) => lcTonSpaeter(t[0], Math.max(0, (Number(t[1]) || 0) - weg), t[2], t[3]));
         lcAuftrittStart = { wann: performance.now(), weg: Math.round(weg) };
-        setTimeout(fertig, Math.max(0, D + 80 - weg));
+        /* FASSUNG 812 — eine Naht zum Nachmessen: steht window.DMA_AUFTRITT_HALTEN, bleibt die
+           Bühne stehen (die Sonde spult Bild für Bild vor und zurück). Sonst kostet das nichts. */
+        const aufraeumen = () => { if (window.DMA_AUFTRITT_HALTEN) { setTimeout(aufraeumen, 250); return; } fertig(); };
+        setTimeout(aufraeumen, Math.max(0, D + 80 - weg));
       };
       if (erste && erste.ready) erste.ready.then(toene, toene); else toene();
     };
@@ -56551,6 +57029,9 @@
   let lcAuftrittStart = null;
   window.DMA_AUFTRITT = lcAuftritt;
   window.DMA_AUFTRITTE = LC_AUFTRITTE;
+  /* FASSUNG 812 — wer selbst Batmobil oder Viper gewählt hat, bekommt die Drehblätter schon in
+     Ruhe vorab (sonst wartet der eigene Einzug beim ersten Mal auf das Netz). */
+  setTimeout(() => { try { const a = window.LiveChat && LiveChat.auftritt ? LiveChat.auftritt() : ""; if (LC_AUTO3D[a]) lcAuto3dLaden(a); } catch (e) {} }, 4000);
   function lcAuftrittMenue(platz) {
     lcPlatzMenueZu();
     let jetzt = "";
@@ -56606,6 +57087,11 @@
     const W = LC_REISEWAGEN[w];
     if (W && W.svg) LC_AUFTRITT_ZEICHEN[k] = lcMiniEcht(W.svg.replace("<svg ", '<svg class="lc-rw-mini" '), vb);
   });
+  /* FASSUNG 812 — das Batmobil in der Auswahl: lang, flach, schwarz, rote Zierlinie, Blasenscheibe, Flosse hinten */
+  LC_AUFTRITT_ZEICHEN.batmobil = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M2 20.6 C2 19.2 3.2 18.5 5 18.2 L9.4 17.5 C10.8 15.8 12.6 15.1 14.6 15.3 L16.2 16.8 L21.6 17 L27 13.4 C27.8 13 28.7 13.4 28.6 14.3 L28.3 17.7 C29.6 18.1 30.3 19.1 30 20.7 L29.4 21.9 L3 22.3 C2.4 22.1 2 21.4 2 20.6 Z" fill="#141418" stroke="#2d2418" stroke-width="1.2" stroke-linejoin="round"/>'
+    + '<path d="M3.4 19.8 L29.2 19.9 M21.8 17.4 L27.6 14" stroke="#e02c1e" stroke-width=".9" fill="none"/><path d="M10.2 17.3 C11.2 15.8 13 15.3 14.6 15.7 L15.3 17.1 Z" fill="#b8dcf5" opacity=".9"/>'
+    + '<circle cx="8" cy="22" r="3.1" fill="#222" stroke="#2d2418" stroke-width="1"/><circle cx="24.4" cy="22" r="3.1" fill="#222" stroke="#2d2418" stroke-width="1"/>'
+    + '<circle cx="8" cy="22" r="1.4" fill="#c9ccd1"/><circle cx="24.4" cy="22" r="1.4" fill="#c9ccd1"/><circle cx="8" cy="22" r=".6" fill="#d11"/><circle cx="24.4" cy="22" r=".6" fill="#d11"/></svg>';
   /* FASSUNG 714 — die Transformer-Kachel zeigt Optimus Prime als Roboter (der Truck ist ausgeblendet). */
   LC_AUFTRITT_ZEICHEN.transformer = lcMiniEcht(LC_TRAFO_SVG.replace("<svg ", '<svg class="op-nur-robot" '), "46 22 148 220");
 

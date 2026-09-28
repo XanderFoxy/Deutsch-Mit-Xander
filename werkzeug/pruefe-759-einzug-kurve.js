@@ -37,7 +37,8 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   const tick = (ms) => pg.waitForTimeout(ms);
   await tick(600);
   const zeit = async (ab, ms) => { await tick(Math.max(0, ms - (Date.now() - ab))); };
-  for (const art of ["viper", "kitt"]) {
+  /* Seit Fassung 812 fährt die Viper als 3D-Modell (werkzeug/pruefe-812-auftritt-autos.js) – hier bleibt KITT. */
+  for (const art of ["kitt"]) {
     console.log("\n" + art.toUpperCase() + " KOMMT\n");
     await pg.evaluate(() => { window.DMA_TONLOG.length = 0; });
     const D = 5400, ab = Date.now();

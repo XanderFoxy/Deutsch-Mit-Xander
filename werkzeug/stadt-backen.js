@@ -68,8 +68,11 @@ function auftraege() {
   const vzDatei = path.join(ZIEL, "verzeichnis.json");
   const vz = fs.existsSync(vzDatei) ? JSON.parse(fs.readFileSync(vzDatei, "utf8")) : {};
   const liste = auftraege().filter((a) => NEU || !vz[a.name] || !fs.existsSync(path.join(ZIEL, a.name + ".webp")));
-  console.log(liste.length + " Bilder zu backen");
-  if (!liste.length) return;
+  /* FASSUNG 812 — Drehblätter der Auftritte (siehe drehblattBacken unten) */
+  const dreh = (plan.drehblaetter || []).filter((a) => (!NUR || NUR.includes(a.bild)) && (NEU || !fs.existsSync(path.join(ZIEL, a.bild + ".json"))));
+  console.log(liste.length + " Bilder zu backen" + (dreh.length ? ", " + dreh.length + " Drehblätter" : ""));
+  if (!liste.length && !dreh.length) return;
+  if (!liste.length) { await drehblaetterBacken(dreh); return; }
 
   const srv = http.createServer((q, a) => {
     let p = decodeURIComponent(q.url.split("?")[0]); if (p === "/") p = "/stadt.html";
@@ -194,4 +197,198 @@ function auftraege() {
   }
   fs.writeFileSync(vzDatei, JSON.stringify(vz));
   await br.close(); srv.close();
+  if (dreh.length) await drehblaetterBacken(dreh);
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/* =====================================================================
+   FASSUNG 812 — DREHBLÄTTER FÜR DIE AUFTRITTE IM KLASSENZIMMER
+   ---------------------------------------------------------------------
+   XANDER (wörtlich): „dieses Batmobil hätte ich nicht nur in dem Spiel
+   gerne das als fahrendes Auto zu sehen ist, sondern auch als
+   Einstiegsanimation und da möcht ich, dass du dir mehr Mühe gibst,
+   genauso wie du hier denkst in diesem 3-D Maßstab möchte ich, dass das
+   Auto herein gefahren kommt um eine Kurve quietschen, so dass man es
+   schön von vorne sieht und dann soll es wieder in einem Bogen
+   realistisch wieder die Fahrt in die andere Richtung machen" – und zum
+   Dodge Viper: „meine Lieblingsanimation, so ein richtig schöner roter
+   Dodge Viper … Dafür sollst du dir richtig Zeit lassen".
+
+   Ein Drehblatt zeigt das Auto aus <gier> Blickwinkeln rundum (32 →
+   alle 11,25°), gemalt vom selben 3D-Modell wie in der Stadt, aber aus
+   einer flacheren Kamera (plan.neigung, z. B. 20° statt 30° – so sieht
+   man das Auto wie auf einem Werbefoto und nicht von oben).
+
+   Die Räder: je Blickwinkel die KAROSSERIE OHNE RÄDER (variante
+   „rad:aus", die Radflächen bleiben als Maß im Modell) und dazu kleine
+   „Flicken" je Rad, Lenkeinschlag (plan.lenk) und Radstellung
+   (plan.roll): das Modell wird mit genau diesem einen Rad gemalt, und
+   alles, was sich gegenüber der Karosserie allein geändert hat, ist das
+   sichtbare Rad – richtig verdeckt von Stoßstange, Kotflügel und
+   Karosserie. So kostet jede weitere Radstellung nur ein paar Kilobyte
+   statt eines ganzen Bildes. Beim Abspielen: Karosserie, dann die
+   Flicken nach Tiefe (hinten zuerst).
+
+   Der Schatten ist eine eigene Ebene (halbe Auflösung, nur Deckkraft).
+
+   Ergebnis in stadt-leicht/bilder/:
+     <bild>_1.webp, <bild>_2.webp …  Blätter (Karosserie und Flicken)
+     <bild>_s.webp                   Schattenblatt
+     <bild>.json                     wo was liegt (Anker, Flicken, Maßstab)
+   ===================================================================== */
+async function drehblaetterBacken(dreh) {
+  const srv = http.createServer((q, a) => {
+    let p = decodeURIComponent(q.url.split("?")[0]); if (p === "/") p = "/stadt.html";
+    const f = path.join(WURZEL, p);
+    if (!fs.existsSync(f) || fs.statSync(f).isDirectory()) { a.writeHead(404); return a.end(); }
+    a.writeHead(200, { "Content-Type": TYP[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(a);
+  }).listen(0);
+  const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
+  for (const a of dreh) {
+    const t0 = Date.now();
+    const pg = await br.newPage({ viewport: { width: 400, height: 300 } });
+    pg.on("pageerror", (e) => console.log("Seitenfehler: " + e.message));
+    pg.on("console", (m) => { if (m.type() === "error") console.log("Konsole: " + m.text()); });
+    /* Die flachere Kamera: nur für diesen Backlauf wird der Kern mit einer anderen
+       Neigung ausgeliefert (die Stadt selbst bleibt bei 30°). */
+    const neig = a.neigung || 30;
+    await pg.route(/\/stadt\/kern\.js/, async (route) => {
+      let t = fs.readFileSync(path.join(WURZEL, "stadt", "kern.js"), "utf8");
+      const vorher = t;
+      t = t.replace("const KY = Math.SQRT1_2 * 0.5;", "const NEIG = " + neig + " * Math.PI / 180;\n  const KY = Math.SQRT1_2 * Math.sin(NEIG);")
+        .replace("const KZ = Math.sqrt(3) / 2;", "const KZ = Math.cos(NEIG);")
+        .replace("const ZUM_AUGE = [KZ * Math.SQRT1_2, KZ * Math.SQRT1_2, 0.5];", "const ZUM_AUGE = [KZ * Math.SQRT1_2, KZ * Math.SQRT1_2, Math.sin(NEIG)];");
+      if ((t.match(/NEIG\)/g) || []).length !== 3 || t === vorher) throw new Error("kern.js: Kamerazeilen nicht gefunden – Neigung lässt sich nicht setzen");
+      await route.fulfill({ contentType: "text/javascript", body: t });
+    });
+    await pg.goto("http://127.0.0.1:" + srv.address().port + "/stadt.html?quelle=1&werkbank=bank&still=1", { waitUntil: "load", timeout: 300000 });
+    await pg.waitForFunction(() => window.__fertig || window.__fehler, null, { timeout: 300000 });
+    const kz = await pg.evaluate(() => window.STADT.KZ);
+    if (Math.abs(kz - Math.cos(neig * Math.PI / 180)) > 1e-9) throw new Error("Neigung nicht gesetzt (KZ " + kz + ")");
+    const N = a.gier || 32;
+    await pg.evaluate(() => { window.__DREH = []; });
+    for (let i = 0; i < N; i++) {
+      const info = await pg.evaluate((arg) => {
+        const a = arg.a, i = arg.i, N = arg.N;
+        const ST = window.STADT, SZ = ST.szene;
+        SZ.jahr = a.jahr || "herbst"; SZ.zeit = a.zeit || "tag";
+        const gier = i * 360 / N;
+        /* Maßstab je Blickwinkel: von vorn (Gier 315°, am Halt ganz nah) am feinsten (plan.sVorn),
+           von der Seite und hinten (weiter weg) plan.s – dazwischen weich übergehend */
+        const vorn = Math.max(0, Math.cos((gier - 315) * Math.PI / 180));
+        const Z = SZ.zeitDaten(), s = Math.round((a.s + ((a.sVorn || a.s) - a.s) * vorn * vorn) * 10) / 10;
+        const feld = a.feld || [8, 6];
+        const WW = Math.ceil(feld[0] * s), HH = Math.ceil(feld[1] * s), CX = Math.round(WW / 2), CY = Math.round(HH * 0.62);
+        const malen = (variante, mitSchatten) => {
+          const o = { id: 1, typ: a.id, x: 0, y: 0, gier: gier, saat: 7, variante: variante };
+          const opt = { ungekappt: true, jahr: SZ.jahr, bau: 1, saat: 7, variante: variante, schluessel: variante + "|7", objekt: o };
+          ST.jetzt = 1500;
+          const sp = ST.spriteMalen(a.id, opt, gier, s, Z, 1.5);
+          const cv = document.createElement("canvas"); cv.width = WW; cv.height = HH;
+          cv.getContext("2d").drawImage(sp.bild, CX + sp.ox, CY + sp.oy);
+          let sch = null;
+          if (mitSchatten) { sch = document.createElement("canvas"); sch.width = WW; sch.height = HH; sch.getContext("2d").drawImage(sp.schatten, CX + sp.ox, CY + sp.oy); }
+          sp.bild.width = 0; sp.schatten.width = 0;
+          return { cv: cv, sch: sch };
+        };
+        const kasten = (d, x0, y0, x1, y1, w) => {
+          let a0 = x1, b0 = y1, a1 = x0 - 1, b1 = y0 - 1;
+          for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) if (d[(y * w + x) * 4 + 3] > 2) { if (x < a0) a0 = x; if (x > a1) a1 = x; if (y < b0) b0 = y; if (y > b1) b1 = y; }
+          return a1 < a0 ? null : [a0, b0, a1 + 1, b1 + 1];
+        };
+        const zu = (cv, k, f) => { const w = Math.max(1, Math.round((k[2] - k[0]) * f)), h = Math.max(1, Math.round((k[3] - k[1]) * f)); const n = document.createElement("canvas"); n.width = w; n.height = h; const g = n.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(cv, k[0], k[1], k[2] - k[0], k[3] - k[1], 0, 0, w, h); return n; };
+        /* 1) Karosserie ohne Räder, mit Schatten */
+        const basis = malen("rad:aus", true);
+        const bd = basis.cv.getContext("2d").getImageData(0, 0, WW, HH).data;
+        const kb = kasten(bd, 0, 0, WW, HH, WW);
+        /* Schatten weicher: noch einmal weichgezeichnet (Halbschatten, wie an einem hellen Tag) */
+        const weich = document.createElement("canvas"); weich.width = WW; weich.height = HH;
+        const wg = weich.getContext("2d"); wg.filter = "blur(" + (s * (a.schattenWeich || 0.06)).toFixed(1) + "px)"; wg.drawImage(basis.sch, 0, 0);
+        const sd = weich.getContext("2d").getImageData(0, 0, WW, HH).data;
+        const ks = kasten(sd, 0, 0, WW, HH, WW) || kb;
+        const eintrag = { g: gier, m: s, a: [CX - kb[0], CY - kb[1]], k: zu(basis.cv, kb, 1), s: zu(weich, ks, 0.5), so: [ks[0] - CX, ks[1] - CY], r: [] };
+        /* 2) Flicken je Rad: nur dieses Rad malen, Unterschied zur Karosserie ausschneiden */
+        const rad = gier * Math.PI / 180, c = Math.cos(rad), sn = Math.sin(rad);
+        const proj = (p) => { const x = p[0] * c - p[1] * sn, y = p[0] * sn + p[1] * c; return [CX + (x - y) * ST.KX * s, CY + (x + y) * ST.KY * s - p[2] * ST.KZ * s, x * ST.ZUM_AUGE[0] + y * ST.ZUM_AUGE[1] + p[2] * ST.ZUM_AUGE[2]]; };
+        /* Die Räder der abgewandten Seite (man sieht ihre Innenseite, meist nur unten ein Stück
+           unter der Karosserie) bekommen nur eine Radstellung – das Drehen sieht man dort nicht,
+           es spart fast die Hälfte. Welche Seite abgewandt ist: die Außenseite (+x links, −x
+           rechts) zeigt vom Betrachter weg. Genau von vorn/hinten gelten beide als zugewandt. */
+        const seite = (c + sn) * ST.ZUM_AUGE[0];
+        const fern = seite > 0.05 ? { vr: 1, hr: 1 } : seite < -0.05 ? { vl: 1, hl: 1 } : {};
+        for (const nm of ["vl", "vr", "hl", "hr"]) {
+          const m = a.raeder[nm], P = proj(m), R = (m[2] + 0.22) * s;
+          const x0 = Math.max(0, Math.floor(P[0] - R)), x1 = Math.min(WW, Math.ceil(P[0] + R)), y0 = Math.max(0, Math.floor(P[1] - R)), y1 = Math.min(HH, Math.ceil(P[1] + R));
+          const lenks = nm[0] === "v" ? a.lenk : [0];
+          lenks.forEach((lenk, li) => a.roll.forEach((roll, ki) => {
+            if (fern[nm] && ki > 0) return;
+            const r = malen("rad:" + nm + ":" + lenk + ":" + roll, false);
+            const g = r.cv.getContext("2d"), img = g.getImageData(x0, y0, x1 - x0, y1 - y0), d = img.data, w = x1 - x0;
+            let a0 = x1, b0 = y1, a1 = -1, b1 = -1, stark = 0;
+            for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+              const o = ((y - y0) * w + (x - x0)) * 4, ob = (y * WW + x) * 4;
+              const diff = Math.abs(d[o] - bd[ob]) + Math.abs(d[o + 1] - bd[ob + 1]) + Math.abs(d[o + 2] - bd[ob + 2]) + Math.abs(d[o + 3] - bd[ob + 3]);
+              if (diff > 6) { if (x < a0) a0 = x; if (x > a1) a1 = x; if (y < b0) b0 = y; if (y > b1) b1 = y; if (diff > 60) stark++; }
+              else { d[o] = d[o + 1] = d[o + 2] = d[o + 3] = 0; }
+            }
+            /* ganz verdeckt – oder nur ein Hauch durch die Kantenglättung der Karosserie: weglassen */
+            if (a1 < 0 || stark < 0.004 * s * s) return;
+            g.putImageData(img, x0, y0);
+            eintrag.r.push({ rad: nm, l: nm[0] === "v" ? li : -1, k: ki, n: Math.round(P[2] * 1000) / 1000, o: [a0 - CX, b0 - CY], bild: zu(r.cv, [a0, b0, a1 + 1, b1 + 1], 1) });
+          }));
+        }
+        window.__DREH[i] = eintrag;
+        return { w: eintrag.k.width, h: eintrag.k.height, flicken: eintrag.r.length, s: s };
+      }, { a: a, i: i, N: N });
+      console.log(a.bild + " " + (i + 1) + "/" + N + " Gier " + (i * 360 / N) + "° (" + info.s + " px/m): " + info.w + "×" + info.h + ", " + info.flicken + " Radflicken");
+    }
+    /* 3) Alles auf Blätter packen (Regale: nach Höhe sortiert, 2 px Luft) */
+    const erg = await pg.evaluate((a) => {
+      const D = window.__DREH, BB = a.blattBreite || 2048, BH = a.blattHoehe || 4096, LUFT = 2;
+      const packen = (stuecke) => {
+        stuecke.sort((p, q) => q.cv.height - p.cv.height || q.cv.width - p.cv.width);
+        const blaetter = []; let bl = null, x = 0, y = 0, zeile = 0;
+        for (const st of stuecke) {
+          const w = st.cv.width + LUFT, h = st.cv.height + LUFT;
+          if (!bl || x + w > BB) { y += zeile; x = 0; zeile = 0; }
+          if (!bl || y + h > BH) { bl = { teile: [], h: 0 }; blaetter.push(bl); x = 0; y = 0; zeile = 0; }
+          st.ort = [blaetter.length - 1, x + 1, y + 1, st.cv.width, st.cv.height];
+          bl.teile.push(st); bl.h = Math.max(bl.h, y + h); x += w; zeile = Math.max(zeile, h);
+        }
+        return blaetter.map((b) => {
+          const cv = document.createElement("canvas"); cv.width = BB; cv.height = b.h;
+          const g = cv.getContext("2d");
+          for (const st of b.teile) g.drawImage(st.cv, st.ort[1], st.ort[2]);
+          return cv;
+        });
+      };
+      const koerper = [], schatten = [];
+      D.forEach((e) => { koerper.push({ cv: e.k, e: e, art: "k" }); e.r.forEach((f) => koerper.push({ cv: f.bild, e: f, art: "r" })); schatten.push({ cv: e.s, e: e, art: "s" }); });
+      const bk = packen(koerper), bs = packen(schatten);
+      /* Blätter so schmal wie nötig */
+      const schmal = (cv) => { const d = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data; let r = 0; for (let y = 0; y < cv.height; y++) for (let x = cv.width - 1; x > r; x--) if (d[(y * cv.width + x) * 4 + 3]) { r = x; break; } const n = document.createElement("canvas"); n.width = r + 3; n.height = cv.height; n.getContext("2d").drawImage(cv, 0, 0); return n; };
+      const blaetter = bk.map((cv) => schmal(cv).toDataURL("image/webp", a.q || 0.8));
+      const sblatt = schmal(bs[0]).toDataURL("image/webp", a.qs || 0.7);
+      const pixel = bk.reduce((t, cv) => t + cv.width * cv.height, 0);
+      const bilder = D.map((e) => ({
+        g: e.g, m: e.m, a: e.a, b: koerper.find((st) => st.e === e && st.art === "k").ort,
+        s: schatten.find((st) => st.e === e).ort, so: e.so,
+        r: e.r.map((f) => ({ rad: f.rad, l: f.l, k: f.k, n: f.n, o: f.o, b: koerper.find((st) => st.e === f).ort }))
+      }));
+      return { blaetter: blaetter, sblatt: sblatt, bilder: bilder, pixel: pixel, sb: bs.length };
+    }, a);
+    if (erg.sb > 1) throw new Error("Schattenblatt zu groß");
+    const namen = [];
+    erg.blaetter.forEach((u, k) => { const n = a.bild + "_" + (k + 1) + ".webp"; fs.writeFileSync(path.join(ZIEL, n), Buffer.from(u.split(",")[1], "base64")); namen.push(n); });
+    fs.writeFileSync(path.join(ZIEL, a.bild + "_s.webp"), Buffer.from(erg.sblatt.split(",")[1], "base64"));
+    const meta = {
+      hinweis: "Drehblatt (werkzeug/stadt-backen.js, FASSUNG 812): m = Bildpunkte je Meter dieses Blickwinkels, b = [Blatt, x, y, w, h], a = Anker (Fußpunkt der Wagenmitte) im Bild, Flicken r: o = linke obere Ecke relativ zum Anker, l = Lenk-, k = Radstellung, n = Tiefe (größer = näher). Schatten in halber Auflösung, so = Ecke relativ zum Anker (volle Auflösung).",
+      id: a.id, s: a.s, neigung: neig, gier: N, lenk: a.lenk, roll: a.roll, raeder: a.raeder, punkte: a.punkte || {},
+      blaetter: namen, schatten: a.bild + "_s.webp", sf: 0.5, bilder: erg.bilder
+    };
+    fs.writeFileSync(path.join(ZIEL, a.bild + ".json"), JSON.stringify(meta));
+    const kb = namen.reduce((t, n) => t + fs.statSync(path.join(ZIEL, n)).size, 0) / 1024;
+    console.log(a.bild + ": " + namen.length + " Blatt/Blätter, " + (erg.pixel / 1e6).toFixed(1) + " Mio. Bildpunkte, " + kb.toFixed(0) + " KB (+ Schatten " + (fs.statSync(path.join(ZIEL, a.bild + "_s.webp")).size / 1024).toFixed(0) + " KB), " + ((Date.now() - t0) / 1000).toFixed(0) + " s");
+    await pg.close();
+  }
+  await br.close(); srv.close();
+}
