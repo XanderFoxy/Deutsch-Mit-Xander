@@ -244,43 +244,99 @@
     D.BILD.rathaus = ["w_rathaus_doebeln", "bau_rathaus", [31, 14.7], 22.8];
     D.MASS = { rathaus: 0.7 };
     P.rathaus = { x: -12.4, y: -14, dreh: 0, winkel: P.rathaus.winkel };
+    /* FASSUNG 808 — XANDER: „das soll genau das selbe Bild sein … man soll das direkt wieder erkennen können". Im alten
+       Bild schauen alle Häuser den Betrachter an – hier auch (dreh 3,5 = zum Betrachter, die Häuser haben acht Winkel);
+       nur die Mühle behält ihr Rad am Bach. */
+    for (const k in P) if (k !== "muehle") P[k].dreh = 3.5;
     D.PLAETZE = P;
-    D.BAHN_Y = -86;
-    /* Die Strecke: hinten entlang (Welt y = −86), an beiden Enden aus der Karte hinaus zu den Nachbardörfern */
-    D.BAHN = []; for (let x = -118; x <= 118; x += 4) D.BAHN.push([x, D.BAHN_Y]);
-    D.BAHN_HALT = [-38, D.BAHN_Y];
+    /* Bildachsen (u = x − y nach rechts, v = x + y nach unten) → Welt */
+    const vw = (u, v) => [(u + v) / 2, (v - u) / 2];
+    const bild = (pts) => pts.map((q) => welt(q[0], q[1]).map((z) => +z.toFixed(1)));
+    /* FASSUNG 808 — „oben war die Horizontlinie … ist der Zug an diesem Rand entlanggefahren an dem oberen Bildrand". Die
+       Horizontlinie liegt quer über dem Bild (v = −100); dahinter stehen die Alpen als Spielgrenze (D.hintergrund). Die
+       Bahn läuft kurz davor waagerecht durchs Bild, leicht gewellt wie der alte Wiesenrand, und an beiden Seiten hinaus. */
+    D.HORIZONT = -100;
+    const bahnV = (u) => -86 + 2.2 * Math.sin(u / 37 + 0.6);
+    D.bahnV = bahnV;
+    D.BAHN = []; for (let u = -140; u <= 140; u += 4) D.BAHN.push(vw(u, bahnV(u)).map((z) => +z.toFixed(2)));
+    D.BAHN_Y = null;
+    /* Bahnhof wie im alten Bild zwischen Flickstube und Gasthaus (Bild x ≈ 98), hinter dem Gleis, Bahnsteig zum Gleis */
+    const uHalt = (98 - BILD.cx) * BILD.a / Math.SQRT1_2;
+    D.BAHN_HALT = vw(uHalt, bahnV(uHalt)).map((z) => +z.toFixed(2));
+    D.BAHNHOF = vw(uHalt, bahnV(uHalt) - 15.2);
+    /* Gleisnähe in Metern quer zur Strecke */
+    const vonBahn = (x, y) => Math.abs(x + y - bahnV(x - y)) / Math.SQRT2;
+    D.vonBahn = vonBahn;
+    /* FASSUNG 808 — Wahrzeichen auf den Plätzen des alten Dorfs (spiel.js WUNDER_PLAETZE) – „wo ich mein Berliner
+       Fernsehturm stehen habe". Wer einen Platz gewählt hat (volk.wunder_platz), findet es dort; sonst der nächste freie
+       Platz in derselben Reihenfolge wie im alten Dorf. Die Wahrzeichen sind auf die Größe des alten Bilds gesetzt. */
+    /* (Platz 2 ein Stück nach rechts: die neuen Häuser sind breiter als die alten Zeichnungen, sonst stünde das Tor im Labor) */
+    D.WUNDER_PLAETZE = [[84, 197], [310, 199], [16, 160], [240, 119], [180, 138]];
+    D.WUNDER_REIHE = ["holstentor", "brandenburger", "koelner_dom", "neuschwanstein", "fernsehturm"];
     D.WUNDER = {
-      koelner_dom: { name: "Kölner Dom", x: -56, y: 76, dreh: 0, bild: "w_koelner_dom", fuss: [54.2, 30.4], hoehe: 53 },
-      holstentor: { name: "Holstentor", x: 40, y: 64, dreh: 0, bild: "w_holstentor", fuss: [18, 8], hoehe: 15.2 },
-      brandenburger: { name: "Brandenburger Tor", x: 30, y: 90, dreh: 0, bild: "w_brandenburger", fuss: [26, 8], hoehe: 11.8 },
-      neuschwanstein: { name: "Neuschwanstein", x: -76, y: -42, dreh: 3, bild: "w_neuschwanstein", fuss: [28, 18], hoehe: 24 },
-      fernsehturm: { name: "Fernsehturm", x: 80, y: -40, dreh: 0, bild: "w_fernsehturm", fuss: [16, 16], hoehe: 46 }
+      koelner_dom: { name: "Kölner Dom", bild: "w_koelner_dom", fuss: [54.2, 30.4], hoehe: 53, mass: 0.36 },
+      holstentor: { name: "Holstentor", bild: "w_holstentor", fuss: [18, 8], hoehe: 15.2, mass: 0.9 },
+      brandenburger: { name: "Brandenburger Tor", bild: "w_brandenburger", fuss: [26, 8], hoehe: 11.8, mass: 0.8 },
+      neuschwanstein: { name: "Neuschwanstein", bild: "w_neuschwanstein", fuss: [28, 18], hoehe: 24, mass: 0.62 },
+      fernsehturm: { name: "Fernsehturm", bild: "w_fernsehturm", fuss: [16, 16], hoehe: 46, mass: 0.8 }
     };
-    /* Wasser: Fluss vom Markt zum See, Mühlbach links (Quelle hinter der Mühle, vorn aus der Karte) */
+    D.wunderPlaetze = function (volk) {
+      const fest = (volk && volk.wunder_platz) || {}, hat = (volk && volk.wunder) || {}, belegt = {}, aus = {};
+      for (const k of D.WUNDER_REIHE) { const p = fest[k]; if (hat[k] && p != null && p >= 0 && p < D.WUNDER_PLAETZE.length && !belegt[p]) { belegt[p] = k; aus[k] = +p; } }
+      for (const k of D.WUNDER_REIHE) { if (!hat[k] || aus[k] != null) continue; for (let i = 0; i < D.WUNDER_PLAETZE.length; i++) if (!belegt[i]) { belegt[i] = k; aus[k] = i; break; } }
+      return aus;
+    };
+    D.wunderSetzen = function (volk) {
+      const pl = D.wunderPlaetze(volk);
+      for (const k in D.WUNDER) {
+        const w = D.WUNDER[k], i = pl[k] != null ? pl[k] : D.WUNDER_REIHE.indexOf(k), q = D.WUNDER_PLAETZE[i];
+        const f = [w.fuss[0] * w.mass, w.fuss[1] * w.mass], hinten = (f[0] + f[1]) / 2 * 0.7;
+        /* der alte Platz ist der Fußpunkt vorn: die Mitte liegt ein Stück dahinter */
+        const c = welt(q[0], q[1]), v = c[0] + c[1] - hinten, u = c[0] - c[1];
+        const p = vw(u, v);
+        Object.assign(w, { x: +p[0].toFixed(1), y: +p[1].toFixed(1), dreh: 3.5, platz: i, fussS: f, steht: !!(volk && volk.wunder && volk.wunder[k]) });
+      }
+    };
+    D.wunderSetzen(null);
+    D.wunderSig = Object.keys(D.WUNDER).map((k) => D.WUNDER[k].steht ? D.WUNDER[k].platz : "-").join(",");
+    /* Wasser: der Fluss wie im alten Bild – er entspringt oben zwischen Flickstube und Gasthaus, läuft links am Rathaus
+       und am Markt vorbei, schlängelt sich zwischen Brauerei und Bibliothek hindurch und mündet unten in den See. */
     const m = P.muehle;
-    D.FLUSS = [[11, 8], [17, 14], [22, 22], [34, 30], [50, 42], [62, 52]];
+    D.FLUSS = bild([[126, 64], [128, 80], [130, 96], [129, 108], [134, 122], [148, 134], [156, 148], [154, 162], [160, 176], [178, 184], [198, 187], [212, 190]]);
+    D.QUELLE = D.FLUSS[0];
     D.MUEHLBACH = [[m.x + 6, m.y - 30], [m.x + 11.5, m.y - 6], [m.x + 11.5, m.y + 8], [m.x + 16, m.y + 26], [m.x + 22, m.y + 50], [m.x + 26, 112]];
+    /* FASSUNG 808 — „unten, wo bei uns nur so ein kleiner See ist … wenn man weiter runtergeht, dass der See sich eröffnet".
+       Oben im Bild nur die Zunge des Sees (wie im alten Bild unten, rechts der Mitte); wer weiter hinunterscrollt, sieht
+       ihn sich öffnen – mit Badebucht und Bootsverleih. Der ganze See ist gegenüber Fassung 803 verschoben
+       (D.SEE_VERSATZ, auch für boote.js). */
+    const OFF = [-4, -41];
+    D.SEE_VERSATZ = OFF;
+    const see = (x, y) => [x + OFF[0], y + OFF[1]];
+    D.BOOTSHAUS = see(60.5, 85.5);
     /* Wegenetz: kürzeste Verbindungen (Prim) zwischen Markt, Hausvorplätzen, Bahnhof, Bootshaus, Wahrzeichen */
     const vor = (p, d) => { const r = (p.dreh * 90 + 90) * Math.PI / 180; return [p.x + Math.cos(r) * d, p.y + Math.sin(r) * d]; };
-    const ziele = [MARKT.slice()];
-    for (const k in P) ziele.push(vor(P[k], k === "muehle" ? 9 : 8));
-    ziele.push([D.BAHN_HALT[0], D.BAHN_HALT[1] + 12], [58, 82]);
-    for (const k in D.WUNDER) { const w = D.WUNDER[k]; ziele.push([w.x, w.y + w.fuss[1] / 2 + 3]); }
-    const drin = [0], kanten = [];
-    while (drin.length < ziele.length) {
-      let best = null;
-      for (const i of drin) for (let j = 0; j < ziele.length; j++) {
-        if (drin.indexOf(j) >= 0) continue;
-        const d = Math.hypot(ziele[i][0] - ziele[j][0], ziele[i][1] - ziele[j][1]);
-        if (!best || d < best[2]) best = [i, j, d];
+    D.wegeBauen = function () {
+      const ziele = [MARKT.slice()];
+      for (const k in P) ziele.push(vor(P[k], k === "muehle" ? 9 : 8));
+      ziele.push(vw(uHalt, bahnV(uHalt) + 7), see(58, 82));
+      for (const k in D.WUNDER) { const w = D.WUNDER[k]; if (w.steht) ziele.push(vor(w, (w.fussS[0] + w.fussS[1]) / 4 + 3)); }
+      const drin = [0], kanten = [];
+      while (drin.length < ziele.length) {
+        let best = null;
+        for (const i of drin) for (let j = 0; j < ziele.length; j++) {
+          if (drin.indexOf(j) >= 0) continue;
+          const d = Math.hypot(ziele[i][0] - ziele[j][0], ziele[i][1] - ziele[j][1]);
+          if (!best || d < best[2]) best = [i, j, d];
+        }
+        drin.push(best[1]); kanten.push(best);
       }
-      drin.push(best[1]); kanten.push(best);
-    }
-    D.WEGE = kanten.map(([i, j], n) => {
-      const A = ziele[i], Bz = ziele[j], dx = Bz[0] - A[0], dy = Bz[1] - A[1], l = Math.hypot(dx, dy) || 1;
-      const bog = (ST.hash2(n, 7, 807) - 0.5) * 0.3 * l;
-      return kurve([A, [A[0] + dx / 2 - dy / l * bog, A[1] + dy / 2 + dx / l * bog], Bz], Math.max(4, Math.round(l / 3)));
-    });
+      D.WEGE = kanten.map(([i, j], n) => {
+        const A = ziele[i], Bz = ziele[j], dx = Bz[0] - A[0], dy = Bz[1] - A[1], l = Math.hypot(dx, dy) || 1;
+        const bog = (ST.hash2(n, 7, 807) - 0.5) * 0.3 * l;
+        return kurve([A, [A[0] + dx / 2 - dy / l * bog, A[1] + dy / 2 + dx / l * bog], Bz], Math.max(4, Math.round(l / 3)));
+      });
+    };
+    D.wegeBauen();
     D.boden = function () {
       B.leeren();
       /* Marktplatz vor dem Rathaus */
@@ -288,28 +344,32 @@
       for (const w of D.WEGE) B.linie(w, 1.25, 0, 1);
       /* Vorgärten vor den Häusern */
       for (const k in P) { if (k === "muehle") continue; const q = vor(P[k], 7.5); rund(q[0], q[1], 2.4, 2.4, 3); }
-      /* Fluss (wird breiter) in die Bucht des Sees, Mühlbach */
+      /* Quelle, Fluss (wird breiter) in die Zunge des Sees, Mühlbach */
+      rund(D.QUELLE[0], D.QUELLE[1], 3, 2.4, 1);
       const fl = kurve(D.FLUSS, 10);
-      B.linie(fl, (i, k) => 1.1 + 1.6 * (i / fl.length) + 0.4 * ST.hash2(i, Math.round(k * 4), 5), 1, 1);
+      B.linie(fl, (i, k) => 1.0 + 1.5 * (i / fl.length) + 0.4 * ST.hash2(i, Math.round(k * 4), 5), 1, 1);
       B.linie(kurve(D.MUEHLBACH, 12), (i, k) => 1.2 + 0.4 * ST.hash2(i, Math.round(k * 4), 6), 1, 1);
-      rund(m.x + 6, m.y - 30, 3.2, 2.6, 1);   // Quellteich
-      /* der See vorn (wie bisher: Zunge, Hals, großer See, Badebucht) */
-      rund(66, 56, 13, 10, 1);
-      kurve([[70, 61], [75, 66], [81, 70]], 5).forEach((q) => rund(q[0], q[1], 5.5, 4.5, 1));
-      const seeLauf = kurve([[80, 71], [86, 79], [87, 89], [80, 98]], 6);
+      rund(m.x + 6, m.y - 30, 3.2, 2.6, 1);   // Quellteich des Mühlbachs
+      /* der See (wie Fassung 803: Zunge, Hals, großer See, Badebucht) – verschoben */
+      const zu = see(66, 56); rund(zu[0], zu[1], 13, 10, 1);
+      kurve([see(70, 61), see(75, 66), see(81, 70)], 5).forEach((q) => rund(q[0], q[1], 5.5, 4.5, 1));
+      const seeLauf = kurve([see(80, 71), see(86, 79), see(87, 89), see(80, 98)], 6);
       seeLauf.forEach((q, i) => {
         const t = i / (seeLauf.length - 1), w = 8 + Math.sin(Math.min(1, t * 1.25) * Math.PI) * 12 + (ST.hash2(i, 3, 17) - 0.5) * 3;
         rund(q[0] + (ST.hash2(i, 5, 17) - 0.5) * 3, q[1], w, w * 0.8, 1);
       });
-      rund(68, 90, 8, 6, 1);
-      /* Felder (Getreide) vorn links und rechts, wie im alten Dorf */
-      for (const [fx, fy, fw, fh] of [[-4, 82, 8, 5.5], [86, 22, 6, 8], [-24, 62, 5, 4]]) rund(fx, fy, fw, fh, 2);
+      const bu = see(68, 90); rund(bu[0], bu[1], 8, 6, 1);
+      /* Felder (Getreide) unten links und rechts am Rand, wie im alten Bild */
+      for (const [px, py, fw, fh] of [[30, 182, 9, 6], [305, 142, 6, 8.5], [58, 196, 4.5, 3.5]]) { const q = welt(px, py); rund(q[0], q[1], fw, fh, 2); }
     };
     D.kulisse = function () {
       const liste = [];
       const setze = (bild, x, y, dreh, x2) => { liste.push(Object.assign({ art: "kulisse", bild: bild, x: x, y: y, dreh: dreh || 0, fuss: [2, 2], hoehe: 4 }, x2 || {})); };
-      setze("k_bahnhof", D.BAHN_HALT[0], D.BAHN_HALT[1] + 9.5, 0, { fuss: [30, 16.6], hoehe: 13, name: "Bahnhof" });
-      /* Brücken, wo Wege den Fluss oder Bach kreuzen */
+      /* Bahnhof hinter dem Gleis, der Bahnsteig schaut zum Gleis (und zum Betrachter) */
+      setze("k_bahnhof", D.BAHNHOF[0], D.BAHNHOF[1], 1.5, { fuss: [30, 16.6], hoehe: 13, name: "Bahnhof" });
+      /* Bootsverleih am See (boote.js) – vor den Bäumen gesetzt, damit keiner darauf wächst */
+      setze("d_bootshaus", D.BOOTSHAUS[0], D.BOOTSHAUS[1], 0, { fuss: [10, 3.4], hoehe: 4, name: "Bootsverleih" });
+      /* Brücken, wo Wege den Fluss oder Bach kreuzen – schräg, wenn der Weg schräg läuft */
       const nah = (pts, q, d) => pts.some((r) => Math.hypot(r[0] - q[0], r[1] - q[1]) < d);
       const fl = kurve(D.FLUSS, 10), mb = kurve(D.MUEHLBACH, 12), bruecken = [];
       for (const w of D.WEGE) for (let i = 2; i < w.length - 2; i += 2) {
@@ -317,7 +377,9 @@
         if ((nah(fl, q, 1.6) || nah(mb, q, 1.4)) && !bruecken.some((b) => Math.hypot(b[0] - q[0], b[1] - q[1]) < 8)) {
           bruecken.push(q);
           const dx = w[i + 1][0] - w[i - 1][0], dy = w[i + 1][1] - w[i - 1][1];
-          setze("d_bruecke", q[0], q[1], Math.abs(dx) > Math.abs(dy) ? 1 : 0, { fuss: [3.9, 11.2], hoehe: 2.7 });   // Brücke (bei dreh 0 längs y) in Wegrichtung
+          /* Brücke bei dreh 0 längs y; Wegrichtung auf 45° gerundet */
+          const a = (Math.round((Math.atan2(dy, dx) * 180 / Math.PI - 90) / 45) * 45 + 360) % 180;
+          setze("d_bruecke", q[0], q[1], a / 90, { fuss: [3.9, 11.2], hoehe: 2.7 });
         }
       }
       /* Laternen an den Wegen (alle ≈ 16 m), Bänke und Brunnen am Markt */
@@ -327,56 +389,60 @@
         if (seit < 16) continue; seit = 0;
         const dx = w[i][0] - w[i - 1][0], dy = w[i][1] - w[i - 1][1], l = Math.hypot(dx, dy) || 1;
         const x = w[i][0] - dy / l * 2.2, y = w[i][1] + dx / l * 2.2;
-        if (nah(fl, [x, y], 3) || nah(mb, [x, y], 3)) continue;
+        if (nah(fl, [x, y], 3) || nah(mb, [x, y], 3) || vonBahn(x, y) < 4) continue;
         setze("d_laterne", x, y, 0, { fuss: [0.8, 0.8], hoehe: 4.4, deko: 1 });
       }
       for (let i = 0; i < 4; i++) { const a = rad(i * 90 + 45); setze("d_bank", MARKT[0] + Math.cos(a) * 8.6, MARKT[1] + Math.sin(a) * 8.6, 0, { fuss: [1.9, 0.75], hoehe: 0.9, deko: 1 }); }
       setze("d_weihnachtsbaum", MARKT[0], MARKT[1], 0, { fuss: [7.4, 7.4], hoehe: 21.8, nurWinter: 1, jahr: "winter", deko: 1 });
       setze("d_brunnen", MARKT[0], MARKT[1], 0, { fuss: [4.6, 4.6], hoehe: 5.4, jahrNicht: "winter", deko: 1 });
       for (let i = 0; i < 6; i++) { const a = rad(30 + i * 60); setze("d_marktbude", MARKT[0] + Math.cos(a) * 6.6, MARKT[1] + Math.sin(a) * 6.6, drehZurMitte(i * 60 + 30), { fuss: [4, 3.2], hoehe: 4.2, nurWinter: 1, jahr: "winter", deko: 1 }); }
-      setze("d_pyramide", 16, -22, 0, { fuss: [9.2, 9.2], hoehe: 13, nurWinter: 1, jahr: "winter", deko: 1 });
-      setze("d_krippe", -24, 2, 0, { fuss: [7.2, 5.4], hoehe: 5.2, nurWinter: 1, jahr: "winter", deko: 1 });
-      /* Wald ringsum (nicht auf dem Gleis, nicht im Wasser) */
       const r = rng(4711), G = B.GROESSE / 2;
+      const frei = (x, y, abst) => {
+        for (const k in P) { const p = P[k]; if (Math.hypot(p.x - x, p.y - y) < (k === "muehle" ? 13 : 9) + abst) return false; }
+        for (const k in D.WUNDER) { const w = D.WUNDER[k], f = w.fussS; if (Math.hypot(w.x - x, w.y - y) < (f[0] + f[1]) / 3 + 2 + abst) return false; }
+        for (const o of liste) if (!o.rand && Math.abs(o.x - x) < o.fuss[0] / 2 + abst && Math.abs(o.y - y) < o.fuss[1] / 2 + abst) return false;
+        if (vonBahn(x, y) < 6 || x + y < D.HORIZONT + 6) return false;
+        if (Math.hypot(x - D.BAHNHOF[0], y - D.BAHNHOF[1]) < 16 + abst) return false;
+        if (Math.hypot(x - D.BOOTSHAUS[0], y - D.BOOTSHAUS[1]) < 9 + abst) return false;
+        if (B.wert(x, y, 0) > 0.05 || B.wert(x, y, 1) > 0.05 || B.wert(x, y, 2) > 0.05) return false;
+        return true;
+      };
+      /* Weihnachtspyramide und Krippe nahe am Markt, auf freier Wiese */
+      const nahMarkt = (bild, fuss, hoehe) => { for (let i = 0; i < 24; i++) { const a = rad(i * 37), d = 15 + (i % 4) * 3, x = MARKT[0] + Math.cos(a) * d, y = MARKT[1] + Math.sin(a) * d; if (frei(x, y, fuss[0] / 2)) { setze(bild, x, y, 0, { fuss: fuss, hoehe: hoehe, nurWinter: 1, jahr: "winter", deko: 1 }); return; } } };
+      nahMarkt("d_pyramide", [9.2, 9.2], 13); nahMarkt("d_krippe", [7.2, 5.4], 5.2);
+      /* Wald ringsum (nicht auf dem Gleis, nicht im Wasser). Was hinter der Horizontlinie steht, verdecken bei Blick nach
+         Norden die Alpen (hinten: nur beim Drehen zu sehen). */
       for (let i = 0; i < 170; i++) {
         const seite = i % 4, u = r() * (2 * G + 30) - G - 15, tief = 4 + Math.pow(r(), 0.7) * 22;
         const x = seite === 0 ? u : seite === 1 ? G + tief : seite === 2 ? u : -G - tief;
         const y = seite === 0 ? -G - tief : seite === 1 ? u : seite === 2 ? G + tief : u;
-        if (Math.abs(y - D.BAHN_Y) < 6) continue;
+        if (vonBahn(x, y) < 5) continue;
         if (B.wert(x, y, 1) > 0.02 || B.wert(x + 2, y, 1) > 0.02 || B.wert(x - 2, y, 1) > 0.02 || B.wert(x, y - 2, 1) > 0.02) continue;
         const bild = r() < 0.7 ? "n_tanne" + ((r() * 3) | 0) : "n_laubbaum" + ((r() * 3) | 0);
-        liste.push({ art: "natur", bild: bild, x: x, y: y, dreh: 0, fuss: [3.5, 3.5], hoehe: 13, rand: 1 });
+        liste.push({ art: "natur", bild: bild, x: x, y: y, dreh: 0, fuss: [3.5, 3.5], hoehe: 13, rand: 1, hinten: x + y < D.HORIZONT - 3 ? 1 : 0 });
       }
-      /* Der Wald hinten rechts (im alten Dorf oben rechts) – hinter der Bahn */
-      for (let i = 0; i < 40; i++) {
-        const x = 10 + r() * 90, y = D.BAHN_Y - 8 - r() * 22;
-        liste.push({ art: "natur", bild: r() < 0.75 ? "n_tanne" + ((r() * 3) | 0) : "n_laubbaum" + ((r() * 3) | 0), x: x, y: y, dreh: 0, fuss: [3.5, 3.5], hoehe: 13, rand: 1 });
+      /* Der Waldsaum am Fuß der Berge hinter der Bahn (im alten Bild rechts vom Rathaus am dichtesten) – der Zug fährt davor */
+      for (let i = 0; i < 44; i++) {
+        const rechts = i % 3 !== 0, u = rechts ? 20 + r() * 90 : -135 + r() * 150, v = D.HORIZONT - 1 + r() * 7;
+        if (v > bahnV(u) - 5.5 || Math.abs(u - uHalt) < 24) continue;
+        const q = vw(u, v);
+        liste.push({ art: "natur", bild: r() < 0.8 ? "n_tanne" + ((r() * 3) | 0) : "n_laubbaum" + ((r() * 3) | 0), x: q[0], y: q[1], dreh: 0, fuss: [3.5, 3.5], hoehe: 13, rand: 1 });
       }
-      const frei = (x, y, abst) => {
-        for (const k in P) { const p = P[k]; if (Math.hypot(p.x - x, p.y - y) < (k === "muehle" ? 13 : 9) + abst) return false; }
-        for (const k in D.WUNDER) { const w = D.WUNDER[k]; if (Math.abs(w.x - x) < w.fuss[0] / 2 + 2 + abst && Math.abs(w.y - y) < w.fuss[1] / 2 + 2 + abst) return false; }
-        for (const o of liste) if (!o.rand && Math.abs(o.x - x) < o.fuss[0] / 2 + abst && Math.abs(o.y - y) < o.fuss[1] / 2 + abst) return false;
-        if (Math.abs(y - D.BAHN_Y) < 8) return false;
-        if (B.wert(x, y, 0) > 0.05 || B.wert(x, y, 1) > 0.05 || B.wert(x, y, 2) > 0.05) return false;
-        return true;
-      };
       /* offen wie das alte Dorf: nur wenige Bäume zwischen den Häusern, eher am Rand der Wiese */
       let innen = 0;
-      for (let i = 0; i < 260 && innen < 38; i++) {
+      for (let i = 0; i < 300 && innen < 34; i++) {
         const x = (r() - 0.5) * 2 * (G - 3), y = (r() - 0.5) * 2 * (G - 3);
         if (Math.hypot(x - MARKT[0], y - MARKT[1]) < 34 || !frei(x, y, 4)) continue;
         innen++;
         liste.push({ art: "natur", bild: r() < 0.5 ? "n_tanne" + ((r() * 3) | 0) : "n_laubbaum" + ((r() * 3) | 0), x: x, y: y, dreh: 0, fuss: [3.5, 3.5], hoehe: 13 });
       }
-      /* Obstwiese hinten rechts */
+      /* Obstwiese unten rechts beim Labor */
       for (let i = 0; i < 12; i++) {
-        const x = 46 + (i % 4) * 6.5 + r() * 1.5, y = -72 + Math.floor(i / 4) * 6 + r() * 1.5;
-        if (!frei(x, y, 1.5)) continue;
-        liste.push({ art: "natur", bild: "n_obstbaum" + (i % 2), x: x, y: y, dreh: 0, fuss: [3, 3], hoehe: 6 });
+        const q = welt(294 + (i % 4) * 7 + r() * 2, 170 + Math.floor(i / 4) * 7 + r() * 2);
+        if (!frei(q[0], q[1], 1.5)) continue;
+        liste.push({ art: "natur", bild: "n_obstbaum" + (i % 2), x: q[0], y: q[1], dreh: 0, fuss: [3, 3], hoehe: 6 });
       }
       for (const [x, y] of [[-16, 26], [24, -30], [40, 30], [-30, -16]]) if (frei(x, y, 1)) setze("d_schneemann", x, y, 0, { fuss: [1.3, 1.3], hoehe: 1.9, nurWinter: 1, jahr: "winter", deko: 1 });
-      /* Bootsverleih am See (boote.js) */
-      setze("d_bootshaus", 60.5, 85.5, 0, { fuss: [10, 3.4], hoehe: 4, name: "Bootsverleih" });
       return liste;
     };
   })();
@@ -406,13 +472,19 @@
       }
       const dreh = extra[k] && extra[k].dreh != null ? extra[k].dreh : p.dreh;
       SZ.neu({ art: "haus", spiel: k, name: D.GEBAEUDE[k][0], bild: bild[0], bauBild: bild[1], x: p.x, y: p.y, dreh: dreh,
-        stufe: D.STUFE[Math.max(0, Math.min(2, (st || 1) - 1))] * ((D.MASS || {})[k] || 1), stufenZahl: st, fuss: bild[2], hoehe: bild[3], bau: bau });
+        stufe: D.STUFE[Math.max(0, Math.min(2, (st || 1) - 1))] * ((D.MASS || {})[k] || 1), stufenZahl: st, fuss: bild[2].map((z) => z * ((D.MASS || {})[k] || 1)), hoehe: bild[3], bau: bau });
     }
     const wunder = (ich && ich.volk && ich.volk.wunder) || {};
+    /* FASSUNG 808 — die Wahrzeichen auf ihren Plätzen aus dem Spielstand (volk.wunder_platz); Wege neu dazu */
+    if (D.wunderSetzen) {
+      D.wunderSetzen(ich && ich.volk);
+      const sig = Object.keys(D.WUNDER).map((k) => D.WUNDER[k].steht ? D.WUNDER[k].platz : "-").join(",");
+      if (sig !== D.wunderSig) { if (D.wunderSig != null) { D.wegeBauen(); D.boden(); } D.wunderSig = sig; }
+    }
     for (const k in D.WUNDER) {
       const w = D.WUNDER[k];
       if (!wunder[k] || !w.bild) continue;
-      SZ.neu({ art: "wunder", spiel: k, name: w.name, bild: w.bild, x: w.x, y: w.y, dreh: w.dreh, fuss: w.fuss, hoehe: w.hoehe });
+      SZ.neu({ art: "wunder", spiel: k, name: w.name, bild: w.bild, x: w.x, y: w.y, dreh: w.dreh, fuss: w.fussS || w.fuss, hoehe: w.hoehe * (w.mass || 1), stufe: w.mass || 1 });
     }
     for (const o of D.kulisse()) SZ.neu(o);
     for (const o of eigeneDeko || []) SZ.neu(Object.assign({ art: "eigen" }, o));

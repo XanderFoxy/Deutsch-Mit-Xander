@@ -237,8 +237,10 @@
     const zeiten = nachtAnteil >= 1 ? [["nacht", 1]] : nachtAnteil > 0 ? [["tag", 1], ["nacht", nachtAnteil]] : [["tag", 1]];
     const sicht = [];
     const rand = 60 * K.dpr;
+    /* FASSUNG 808 — Blick nach Norden: hinter der Horizontlinie stehen die Alpen (himmel.js), was dahinter liegt, ist verdeckt */
+    const horizont = K.dreh === 0 && ST.dorf && ST.dorf.HORIZONT != null;
     for (const o of reihe) {
-      if (o.versteckt) continue;
+      if (o.versteckt || (o.hinten && horizont)) continue;
       const P = ST.proj(o.x, o.y, 0);
       /* grob außerhalb? (Höhe großzügig) */
       const gross = (Math.max(o.fuss ? o.fuss[0] + o.fuss[1] : 4, (o.hoehe || 10) * 1.3)) * K.s * o.stufe;
@@ -260,6 +262,8 @@
     }
     SZ.sichtbare = sicht;
 
+    /* FASSUNG 808 — Himmel und Alpen hinter der Horizontlinie (himmel.js), vor allem anderen */
+    if (horizont && ST.himmel) ST.himmel.hinten(g, t, Z);
     /* FASSUNG 809 — Eisenbahn (bahn.js): Schotterbett, Schwellen, Schienen liegen flach unter allem, vor den Schatten */
     if (ST.bahn) ST.bahn.boden(g, t, Z);
     /* 1. Schatten in halber Auflösung, einfarbig */

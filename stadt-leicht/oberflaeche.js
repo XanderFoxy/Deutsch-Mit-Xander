@@ -46,7 +46,8 @@
   const JAHR_NAME = { winter: "Winter", fruehling: "Frühling", sommer: "Sommer", herbst: "Herbst" };
   /* Die Karte in 3 × 3 Bereiche à 48 m */
   /* FASSUNG 807 — die Viertel der Originalkarte (Welt x nach rechts, y nach vorn) */
-  const BEREICHE = ST.dorf && ST.dorf.VORLAGE === "altdorf" ? [["Bahnhof", "Bergwerk", "Obstwiese"], ["Mühle", "Rathaus", "Schmiede"], ["Felder", "Brauerei", "Seeufer"]]
+  /* FASSUNG 808 — Viertel der Originalkarte (die Karte ist nach Welt-Achsen geteilt, im Bild also schräg) */
+  const BEREICHE = ST.dorf && ST.dorf.VORLAGE === "altdorf" ? [["Bahn", "Gefängnis", "Krankenhaus"], ["Mühle", "Rathaus", "Schmiede"], ["Kuhstall", "Hühnerstall", "Seeufer"]]
     : [["Tannenwald", "Kirchplatz", "Obstwiese"], ["Domplatz", "Anger", "Mühlbach"], ["Gärten", "Bahnhof", "Seeufer"]];
   const BG = 48;
 
@@ -115,6 +116,10 @@
     zeitK = knopf(ZEIT_SYM[SZ.zeit], "Tageszeit", () => { SZ.zeitAuto = false; SZ.zeit = ZEITEN[(ZEITEN.indexOf(SZ.zeit) + 1) % 3]; zeitK.innerHTML = SYM[ZEIT_SYM[SZ.zeit]]; ansage(ST.ZEITEN[SZ.zeit].name); stimmungSetzen(); L().unruhe = 2; });
     jahrK = knopf(JAHR_SYM[SZ.jahr], "Jahreszeit", () => { SZ.jahr = JAHRE[(JAHRE.indexOf(SZ.jahr) + 1) % 4]; jahrK.innerHTML = SYM[JAHR_SYM[SZ.jahr]]; ansage(JAHR_NAME[SZ.jahr]); D.jahrFiltern(); L().unruhe = 2; });
     const farbKn = knopf("farbe", "Farbstimmung", () => { farbFeld.hidden = !farbFeld.hidden; });
+    /* FASSUNG 808 — XANDER: „Tag und Nacht braucht man nicht wählen … soll realistisch nach Uhrzeit sein, vielleicht
+       angepasst an die Zeitzone des Nutzers". Tageszeit und Jahreszeit laufen nach der Uhr und dem Datum des Geräts (also in
+       dessen Zeitzone); die beiden Schalter sieht nur noch der Betreiber (Vorschau). */
+    zeitK.hidden = jahrK.hidden = !(ST.spiel && ST.spiel.betreiber);
     rechts.append(zeitK, jahrK, farbKn, knopf("links", "Karte nach links drehen", () => drehen(1)), knopf("rechts", "Karte nach rechts drehen", () => drehen(-1)));
     kopf.appendChild(rechts);
     wurzel.appendChild(kopf);
@@ -190,9 +195,16 @@
         K.x = 0; K.y = 0; K.s = 1;
         let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
         for (const o of SZ.objekte) {
-          if (!(o.art === "haus" || o.art === "wunder" || (o.art === "kulisse" && o.name))) continue;
+          if (!(o.art === "haus" || o.art === "wunder" || (o.art === "kulisse" && o.name && o.bild !== "d_bootshaus"))) continue;
           const r = Math.hypot(o.fuss[0], o.fuss[1]) / 2, P = ST.proj(o.x, o.y, 0), T = ST.proj(o.x, o.y, (o.hoehe || 8) * (o.stufe || 1));
           x0 = Math.min(x0, P[0] - r * 0.72); x1 = Math.max(x1, P[0] + r * 0.72); y0 = Math.min(y0, T[1] - 2); y1 = Math.max(y1, P[1] + r * 0.38);
+        }
+        /* FASSUNG 808 — wie im alten Bild: oben die Alpen über der Horizontlinie, unten gerade noch die Zunge des Sees
+           (der Bootsverleih liegt weiter unten – „wenn man weiter runtergeht, dass der See sich eröffnet") */
+        const DD = ST.dorf;
+        if (DD && DD.HORIZONT != null && K.dreh === 0 && x1 > x0) {
+          y0 = Math.min(y0, ST.proj(DD.HORIZONT / 2, DD.HORIZONT / 2, 0)[1] - 17);
+          if (DD.SEE_VERSATZ) { const z = ST.proj(66 + DD.SEE_VERSATZ[0], 56 + DD.SEE_VERSATZ[1], 0); y1 = Math.max(y1, z[1] + 3); }
         }
         let erg = { s: Math.max(1, K.W / 150), x: 0, y: 4 };
         if (x1 > x0) {
@@ -383,7 +395,7 @@
     n.querySelector("b").textContent = stadtName();
     n.querySelector("span").textContent = SP.beispiel ? (SP.fehler === "nicht angemeldet" ? "Beispielstadt · bitte anmelden" : "Beispielstadt · Vorschau") : "Neue Stadt · Vorschau";
   }
-  O.betreiberDa = function () { nameSetzen(); };
+  O.betreiberDa = function () { nameSetzen(); if (zeitK && jahrK) zeitK.hidden = jahrK.hidden = !(ST.spiel && ST.spiel.betreiber); };
   O.neuAufgebaut = function () { if (kopf) nameSetzen(); miniMalen(); };
 
   function drehen(r) {

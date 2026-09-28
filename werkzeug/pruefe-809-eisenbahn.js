@@ -61,15 +61,15 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   if (!da) { await br.close(); srv.close(); console.log("\n" + fehler + " FEHLER\n"); process.exit(1); }
   const S = await pg.evaluate(() => {
     const BA = STADT.bahn, W = BA.weg, D = STADT.dorf;
-    const innen = []; for (let i = W.i0; i <= W.i1; i++) if (Math.abs(W.X[i]) < 72) innen.push([W.X[i], W.Y[i]]);   // der Abschnitt vor der Stadt
+    const innen = []; for (let i = W.i0; i <= W.i1; i++) if (Math.abs(W.X[i] - W.Y[i]) < 100) innen.push([W.X[i], W.Y[i]]);   // der Abschnitt vor der Stadt (FASSUNG 808: Bildbreite u = x − y)
     const hf = D.BAHN_HALT || null, b = STADT.szene.objekte.find((o) => o.bild === "k_bahnhof");
     const h = BA.an(BA.halt);
-    return { ersatz: BA.ersatz, von: [W.X[W.i0], W.Y[W.i0]], bis: [W.X[W.i1], W.Y[W.i1]], ymittel: innen.reduce((s, p) => s + p[1], 0) / Math.max(1, innen.length),
+    return { ersatz: BA.ersatz, von: [W.X[W.i0], W.Y[W.i0]], bis: [W.X[W.i1], W.Y[W.i1]], ymittel: innen.reduce((s, p) => s + (p[0] + p[1]) / 2, 0) / Math.max(1, innen.length),
       halt: [h.x, h.y], haltSoll: hf, bahnhof: b ? [b.x, b.y] : null, takt: BA.plan.takt, V: BA.V, eigenerSteig: BA.eigenerSteig,
       baeumeAufGleis: STADT.szene.objekte.filter((o) => o.art === "natur" && !o.versteckt && (() => { let d = 1e9; for (let i = W.i0; i <= W.i1; i += 2) d = Math.min(d, Math.hypot(W.X[i] - o.x, W.Y[i] - o.y)); return d < 3.2; })()).length };
   });
-  sage(Math.abs(S.von[0] - S.bis[0]) > 200 || Math.abs(S.von[1] - S.bis[1]) > 200, "die Strecke läuft von Kartenrand zu Kartenrand (Nachbardörfer)", JSON.stringify({ von: S.von.map(Math.round), bis: S.bis.map(Math.round) }));
-  sage(S.ymittel < -60, "sie liegt hinten in der Stadt (Norden, im Bild oben)", "mittleres y " + S.ymittel.toFixed(1) + (S.ersatz ? " (Ersatzstrecke)" : " (ST.dorf.BAHN)"));
+  sage(Math.hypot(S.von[0] - S.bis[0], S.von[1] - S.bis[1]) > 200, "die Strecke läuft von Kartenrand zu Kartenrand (Nachbardörfer)", JSON.stringify({ von: S.von.map(Math.round), bis: S.bis.map(Math.round) }));
+  sage(S.ymittel < -38, "sie liegt hinten in der Stadt (im Bild oben)", "mittleres (x+y)/2 " + S.ymittel.toFixed(1) + (S.ersatz ? " (Ersatzstrecke)" : " (ST.dorf.BAHN)"));
   sage(!!S.bahnhof && Math.hypot(S.bahnhof[0] - S.halt[0], S.bahnhof[1] - S.halt[1]) < 16, "der Halt liegt am Bahnhof (k_bahnhof)", JSON.stringify({ halt: S.halt.map((v) => +v.toFixed(1)), bahnhof: S.bahnhof, soll: S.haltSoll }));
   if (S.haltSoll) sage(Math.hypot(S.haltSoll[0] - S.halt[0], S.haltSoll[1] - S.halt[1]) < 1, "Halt genau am Bahnsteig (ST.dorf.BAHN_HALT)");
   sage(S.baeumeAufGleis === 0, "kein Baum steht auf dem Gleis", S.baeumeAufGleis + " Bäume");
@@ -91,13 +91,15 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
     return aus;
   });
   const RAND = 112;
-  const drin = (z) => Math.abs(z.x) < RAND && Math.abs(z.y) < RAND;
+  /* FASSUNG 808 — die Strecke läuft im Bild waagerecht (Welt diagonal): „drin" = im Bild (u = x − y), West/Ost nach u */
+  const U = (z) => z.x - z.y;
+  const drin = (z) => Math.abs(U(z)) < RAND * 1.2 && Math.abs(z.x) < RAND + 12 && Math.abs(z.y) < RAND + 12;
   for (const dir of [1, -1]) {
     const R = F[dir].reihe, name = dir > 0 ? "West → Ost" : "Ost → West";
     const erst = R.find((r) => r.zug.some(drin));
-    sage(!!erst && erst.t > 0.5, "[" + name + "] der Zug kommt vom Kartenrand herein (erscheint erst nach dem Start)", erst ? "t = " + erst.t + " s bei x = " + erst.zug.find(drin).x.toFixed(0) : "–");
-    const x0 = erst && erst.zug.find(drin).x;
-    sage(!!erst && (dir > 0 ? x0 < -80 : x0 > 80), "[" + name + "] … und zwar vom richtigen Rand", x0 != null ? "x = " + x0.toFixed(0) : "");
+    sage(!!erst && erst.t > 0.5, "[" + name + "] der Zug kommt vom Kartenrand herein (erscheint erst nach dem Start)", erst ? "t = " + erst.t + " s bei u = " + U(erst.zug.find(drin)).toFixed(0) : "–");
+    const x0 = erst && U(erst.zug.find(drin));
+    sage(!!erst && (dir > 0 ? x0 < -80 : x0 > 80), "[" + name + "] … und zwar vom richtigen Rand", x0 != null ? "u = " + x0.toFixed(0) : "");
     const stehen = R.filter((r) => r.art === "steht");
     const dauer = stehen.length ? stehen[stehen.length - 1].t - stehen[0].t + 0.25 : 0;
     sage(Math.abs(dauer - 14) <= 0.5, "[" + name + "] hält ≈ 14 s am Bahnhof", dauer.toFixed(2) + " s");
@@ -121,7 +123,7 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
     const ende = R.find((r) => r.t > F[dir].tEnde + 0.3);
     sage(!!ende && (!ende.zug.length || !ende.zug.some(drin)), "[" + name + "] am Ende ganz zum anderen Rand hinaus", ende ? "t = " + ende.t : "");
     const raus = R.filter((r) => r.t > (stehen.length ? stehen[stehen.length - 1].t : 0) && r.zug.length && !r.zug.some(drin))[0];
-    sage(!!raus && (dir > 0 ? raus.zug[raus.zug.length - 1].x > 100 : raus.zug[raus.zug.length - 1].x < -100), "[" + name + "] … auf der anderen Seite", raus ? "letzter Wagen x = " + raus.zug[raus.zug.length - 1].x.toFixed(0) : "");
+    sage(!!raus && (dir > 0 ? U(raus.zug[raus.zug.length - 1]) > 100 : U(raus.zug[raus.zug.length - 1]) < -100), "[" + name + "] … auf der anderen Seite", raus ? "letzter Wagen u = " + U(raus.zug[raus.zug.length - 1]).toFixed(0) : "");
     /* Wagen folgen dem Gleis: jeder auf der Strecke, Abstände über Puffer, Richtung = Gleis */
     let abGleis = 0, abAbst = 0, abRicht = 0, n = 0;
     const W = await pg.evaluate(() => ({ X: STADT.bahn.weg.X, Y: STADT.bahn.weg.Y }));
@@ -144,7 +146,11 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   const hin = async (x, y, s) => { await pg.evaluate(([x, y, s]) => { const K = STADT.kamera; K.x = x; K.y = y; K.s = s * K.dpr; STADT.leicht.unruhe = 3; }, [x, y, s]); await pg.waitForTimeout(1200); };
   const stelle = (t, dir) => pg.evaluate(([t, d]) => { STADT.bahn.fest = t == null ? null : { t: t, dir: d }; STADT.leicht.unruhe = 3; }, [t, dir]);
   const tHalt = await pg.evaluate(() => (STADT.bahn.plan.hin.tAn + STADT.bahn.plan.hin.tAb) / 2);
-  await stelle(tHalt, 1); await hin(S.halt[0] + 6, S.halt[1] + 2, 16);
+  await stelle(tHalt, 1); await pg.waitForTimeout(300);
+  /* FASSUNG 808 — Kamera auf die Lok (die Strecke läuft jetzt diagonal in der Welt) */
+  const lz = await pg.evaluate(() => [STADT.bahn.zug[0].x, STADT.bahn.zug[0].y]);
+  await pg.evaluate(() => { const z = STADT.bahn.zug, m = z[Math.floor(z.length / 2)]; STADT.kamera.x = m.x + 1; STADT.kamera.y = m.y + 1; });
+  await hin(await pg.evaluate(() => STADT.kamera.x), await pg.evaluate(() => STADT.kamera.y), 10);
   await pg.waitForFunction(() => STADT.bilder.offen() === 0, null, { timeout: 60000 }).catch(() => {});
   await pg.waitForTimeout(1500);
   const lok = await pg.evaluate(() => { const z = STADT.bahn.zug[0], p = STADT.proj(z.x, z.y, 2); return [p[0] / STADT.kamera.dpr, p[1] / STADT.kamera.dpr]; });
@@ -199,7 +205,7 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   await pg.evaluate(() => { STADT.bahn.versatz = 0; });
   /* Überblick: Zug beim Einfahren hinten */
   await stelle(await pg.evaluate(() => STADT.bahn.plan.hin.t1 + 4), 1);
-  await hin(-10, -45, 4);
+  await hin(S.halt[0] + 22, S.halt[1] + 22, 4);   // FASSUNG 808: über dem Bahnhof, der Bahnhof im oberen Bilddrittel
   await pg.waitForFunction(() => STADT.bilder.offen() === 0, null, { timeout: 60000 }).catch(() => {});
   await pg.waitForTimeout(1200);
   const uebersicht = await pg.evaluate(() => ({ n: STADT.bahn.gezeigt || 0, y: STADT.bahn.zug.map((z) => STADT.proj(z.x, z.y, 0)[1] / STADT.kamera.H) }));

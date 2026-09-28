@@ -96,7 +96,7 @@ const SCHRAEG = /_f_(45|135|225|315)_[a-z]\.webp/;
   sage(new RegExp("_f_" + soll + "_[kg]_s$").test(schatten || ""), "mit eigenem schrägem Schatten", schatten);
   await pg.screenshot({ path: BILD + "-schraeg.png" });
   /* zurück und wieder hin: links/rechts sind Gegenrichtungen */
-  await pg.locator(".lk-karte .lk-knopf[title='Andersherum drehen']").tap({ timeout: 3000 }).catch(() => {}); await pg.waitForTimeout(200);
+  await pg.locator(".lk-karte .lk-knopf[title='Andersherum drehen']").tap({ timeout: 12000 }).catch(() => {}); await pg.waitForTimeout(200);   // (die Software-Grafik im Prüfbrowser ist langsam: großzügig warten)
   const d2 = await pg.evaluate(() => STADT.szene.auswahl.dreh);
   await pg.locator(".lk-karte .lk-knopf[title='Drehen']").first().tap(); await pg.waitForTimeout(200);
   sage(d2 === d0 && (await pg.evaluate(() => STADT.szene.auswahl.dreh)) === d1, "„Andersherum drehen“ dreht 45° zurück", d1 + " → " + d2 + " → " + d1);

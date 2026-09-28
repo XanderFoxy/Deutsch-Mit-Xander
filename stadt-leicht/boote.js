@@ -44,9 +44,22 @@
   const WIESE = [[61.6, 98.7, 0.35], [64.4, 99.8, -0.2], [60.4, 100.9, 0.9], [66.4, 98.4, 1.3]];
 
   /* ---------------- Abstandsfeld zum Ufer ---------------- */
-  const GX = 36, GY = 26, NX = 84, NY = 94;
+  let GX = 36, GY = 26;
+  const NX = 84, NY = 94;
   let feld = null;
+  /* FASSUNG 808 — XANDER: „wenn man weiter runtergeht, dass der See sich eröffnet". Der See ist auf der Originalkarte
+     verschoben (ST.dorf.SEE_VERSATZ): Steg, Liegeplatz, Badebucht, Schwimmer, Liegewiese und Gitter wandern mit. */
+  let versetzt = false;
+  function versetzen() {
+    if (versetzt) return; versetzt = true;
+    const V = (ST.dorf && ST.dorf.SEE_VERSATZ) || [0, 0], dx = V[0], dy = V[1];
+    if (!dx && !dy) return;
+    STEG.x0 += dx; STEG.x1 += dx; STEG.y0 += dy; STEG.y1 += dy;
+    for (const p of [LIEGT, VOR, BUCHT, GASSE, HINAUS].concat(SCHWIMMER, WIESE)) { p[0] += dx; p[1] += dy; }
+    GX += dx; GY += dy; BO.versatz = [dx, dy];
+  }
   function feldBauen() {
+    versetzen();
     const INF = 1e6, d = new Float32Array(NX * NY);
     for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
       const x = GX + i + 0.5, y = GY + j + 0.5;
@@ -95,7 +108,7 @@
     for (let k = 0; k < 4; k++) {
       let x = 0, y = 0;
       for (let v = 0; v < 400; v++) {
-        x = 64 + rng() * 44; y = 40 + rng() * 64;
+        x = 64 + rng() * 44 + (BO.versatz ? BO.versatz[0] : 0); y = 40 + rng() * 64 + (BO.versatz ? BO.versatz[1] : 0);
         if (abst(x, y) >= 5 && BO.boote.every((b) => Math.hypot(b.x - x, b.y - y) > 9)) break;
       }
       BO.boote.push({ k: k, x: x, y: y, h: rng() * TAU, v: 0.7, tempo: 0.62 + rng() * 0.18, wander: 0, rng: ST.zufall(900 + k * 17),

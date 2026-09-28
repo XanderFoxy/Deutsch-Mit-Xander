@@ -12970,7 +12970,7 @@
     /* Derselbe Spielstand: was im Spiel gebaut, versetzt oder fertig wird, steht sofort auch in der neuen Stadt
        (ohne dass sie selbst neu fragt). */
     if (!dorfBesuchStand()) {
-      var i = S.ich, st = { dorf: i.dorf || {}, dorf_plan: i.dorf_plan || {}, baustellen: baustellenVon(i), volk: { wunder: (i.volk || {}).wunder || {} }, dorf_name: i.dorf_name || "" };
+      var i = S.ich, st = { dorf: i.dorf || {}, dorf_plan: i.dorf_plan || {}, baustellen: baustellenVon(i), volk: { wunder: (i.volk || {}).wunder || {}, wunder_platz: (i.volk || {}).wunder_platz || {} }, dorf_name: i.dorf_name || "" };
       var ss = JSON.stringify(st);
       if (ss !== L.sSig) { L.sSig = ss; lsPost({ typ: "leicht-stand", ich: st }); }
     }
