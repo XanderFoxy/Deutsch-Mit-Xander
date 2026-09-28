@@ -1991,3 +1991,20 @@ XANDER: „Ich möchte es in diesem Platz haben, wo die kleine Panorama an sich 
 - `SZ.zeichnen` malt nicht bei 0 × 0 (kurz beim Einbetten).
 - See in der leichten Stadt: Die alte Bucht bleibt als Zunge. Darunter folgen ein schmaler Hals und ein großer See bis y ≈ 104, dazu eine flache Badebucht. Die Randbäume wachsen nicht im Wasser. Der See reicht nicht bis an den Kartenrand (±112 m), sonst wiederholt die Grafik die letzte Zeile als Streifen.
 - Sonde: `werkzeug/pruefe-799-stadt-im-dorfrahmen.js` (ersetzt 798). Neu: grün. Alter Code: 19 rot.
+
+## Fassung 800 — Kirchen- und Rathausglocken zur vollen Stunde
+
+XANDER: „dass die Rathaus- und Kirchenglocken zu jeder vollen Stunde nach deutscher Zeit schlagen, mit einer realistischen Glockenfolge".
+
+- Solange das Dorf offen ist (alte oder neue Version), schlagen die Glocken zur vollen Stunde nach Berliner Zeit (`Intl`, Europe/Berlin), egal wo das Gerät steht.
+- Die Folge:
+  - Viertelschlag der Kirche: 4 Doppelschläge hell/tief (587/440 Hz).
+  - Die große Stundenglocke (196 Hz) schlägt so oft, wie es Uhr ist (1–12).
+  - Steht ein Rathaus, schlägt seine Uhr 4,5 s danach nach (330 Hz).
+- Jede Glocke entsteht aus neun unharmonischen Teiltönen einer Kirchenglocke (Unterton 0,5, Prime, kleine Terz 1,19, Quinte, Oktave …), jeder mit eigenem Nachklang. Dazu kommen eine Schwebung im Unterton und der Klöppelanschlag. Es gibt keine Tondatei.
+- Nachts (22–7 Uhr) klingen sie gedämpft. Wird das Dorf geschlossen, klingen sie in 0,3 s aus. Pro Stunde schlagen sie nur einmal.
+- Prüfhaken:
+  - `pruef.glockenPlan(h, rathaus)`
+  - `pruef.uhrVersatz(ms)`
+  - `pruef.glockenHoeren(h, rathaus)`: rechnet die Stunde offline für eine Hörprobe.
+- Sonde: `werkzeug/pruefe-800-glocken.js`.

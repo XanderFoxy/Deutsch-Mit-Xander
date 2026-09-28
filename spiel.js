@@ -12474,6 +12474,71 @@
     var a = DW.atmo; DW.atmo = null; DW.atmoZiel = 0;
     try { a.g.gain.setTargetAtTime(0, KLANG.ctx.currentTime, .15); setTimeout(function () { try { a.q.stop(); a.g.disconnect(); } catch (e) {} }, 700); } catch (e) {}
   }
+  /* FASSUNG 800 — XANDER: „dass die Rathaus- und Kirchenglocken zu jeder vollen Stunde nach deutscher Zeit schlagen, mit
+     einer realistischen Glockenfolge". Wie in vielen deutschen Orten: erst der Viertelschlag der Kirche (vier Doppelschläge
+     auf zwei hellen Glocken = volle Stunde), dann die große Stundenglocke so oft, wie es Uhr ist (1–12). Steht ein Rathaus,
+     schlägt seine Uhr ein paar Sekunden danach nach – Turmuhren gehen nie ganz gleich. Die Glocken entstehen im Browser
+     (Web Audio): jede aus den unharmonischen Teiltönen einer echten Kirchenglocke (Unterton, Prime, kleine Terz, Quinte,
+     Oktave …), jeder mit eigenem Nachklingen, dazu der Klöppelanschlag. Nachts (22–7 Uhr) klingen sie gedämpft. */
+  var GLOCKE_TEILE = [[0.5, .34, 1.0], [1, .42, .62], [1.19, .3, .5], [1.5, .17, .42], [2, .4, .38], [2.52, .11, .26], [2.67, .1, .24], [3.01, .09, .2], [4.1, .05, .14]];
+  function glockeSchlag(k, ziel, t0, prime, laut, nach) {
+    GLOCKE_TEILE.forEach(function (tt, i) {
+      var o = k.createOscillator(), g = k.createGain(), f = prime * tt[0];
+      o.type = "sine"; o.frequency.value = f * (1 + (i % 2 ? .0012 : -.0009));
+      var d = nach * tt[2];
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(laut * tt[1], t0 + .004 + i * .0015);
+      g.gain.exponentialRampToValueAtTime(laut * tt[1] * .35, t0 + d * .18);
+      g.gain.exponentialRampToValueAtTime(.0001, t0 + d);
+      o.connect(g); g.connect(ziel); o.start(t0); o.stop(t0 + d + .05);
+      /* Schwebung im Unterton, wie bei einer echten Glocke */
+      if (i === 0) { var o2 = k.createOscillator(); o2.frequency.value = f + .9; o2.connect(g); o2.start(t0); o2.stop(t0 + d + .05); }
+    });
+    /* der Klöppel: ein kurzes, gefiltertes Knacken */
+    try {
+      var n = k.createBuffer(1, Math.floor(k.sampleRate * .03), k.sampleRate), dd = n.getChannelData(0);
+      for (var j = 0; j < dd.length; j++) dd[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / dd.length, 3);
+      var q = k.createBufferSource(), bp = k.createBiquadFilter(), gk = k.createGain();
+      q.buffer = n; bp.type = "bandpass"; bp.frequency.value = prime * 3; bp.Q.value = 2; gk.gain.value = laut * .5;
+      q.connect(bp); bp.connect(gk); gk.connect(ziel); q.start(t0);
+    } catch (e) {}
+  }
+  function berlinUhr() {
+    var jetzt = new Date(Date.now() + (S.uhrVersatz || 0)), a = {};
+    try { new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "numeric", minute: "numeric", second: "numeric", hourCycle: "h23" }).formatToParts(jetzt).forEach(function (p) { a[p.type] = +p.value; }); }
+    catch (e) { a = { hour: jetzt.getHours(), minute: jetzt.getMinutes(), second: jetzt.getSeconds() }; }
+    return { h: a.hour % 24, m: a.minute, s: a.second, tag: jetzt.toISOString().slice(0, 10) };
+  }
+  /* Plan einer vollen Stunde: [Sekunde, Glocke, Tonhöhe, Lautstärke, Nachklang] – auch für die Prüfung lesbar. */
+  function glockenPlan(stunde, rathaus) {
+    var plan = [], t = 0, zahl = stunde % 12 || 12, i;
+    for (i = 0; i < 4; i++) { plan.push([t, "viertel-hell", 587, .5, 5]); plan.push([t + 1.3, "viertel-tief", 440, .5, 5.5]); t += 3.4; }
+    t += 2.2;
+    for (i = 0; i < zahl; i++) { plan.push([t, "stunde", 196, .8, 9]); t += 2.7; }
+    if (rathaus) { t += 4.5; for (i = 0; i < zahl; i++) { plan.push([t, "rathaus", 330, .55, 6]); t += 2.1; } }
+    return plan;
+  }
+  function dorfGlocken(w) {
+    var u = berlinUhr(), schl = u.tag + "-" + u.h;
+    if (u.m !== 0 || u.s > 25 || DW.glockeStunde === schl) return;
+    DW.glockeStunde = schl;
+    var d = (S.ich && S.ich.dorf) || {}, rathaus = Boolean(d.rathaus && d.rathaus.stufe > 0);
+    var plan = glockenPlan(u.h, rathaus);
+    try { if (window.__glockenLog) window.__glockenLog.push({ stunde: u.h, plan: plan }); } catch (e) {}
+    var k = KLANG.ctx;
+    if (!k || k.state !== "running" || !KLANG.master || !toeneAn() || lautStufe() === 0) return;
+    var nacht = u.h >= 22 || u.h < 7, g = k.createGain();
+    g.gain.value = nacht ? .1 : .22;
+    g.connect(KLANG.master);
+    DW.glocken = g;
+    var t0 = k.currentTime + .1;
+    plan.forEach(function (p) { glockeSchlag(k, g, t0 + p[0], p[2], p[3], p[4]); });
+    setTimeout(function () { try { g.disconnect(); } catch (e) {} if (DW.glocken === g) DW.glocken = null; }, (plan[plan.length - 1][0] + 12) * 1000);
+  }
+  function dorfGlockenAus() {
+    var g = DW.glocken; if (!g) return; DW.glocken = null;
+    try { g.gain.setTargetAtTime(0, KLANG.ctx.currentTime, .3); setTimeout(function () { try { g.disconnect(); } catch (e) {} }, 1500); } catch (e) {}
+  }
   /* Das Treiben im Dorf: ab und zu ein Hammer aus der Schmiede, Enten am Teich, ein Hund, das Pferd; nachts die Eule. */
   function dorfTreiben(w) {
     var d = (S.ich && S.ich.dorf) || {}, heil = function (k) { return d[k] && d[k].stufe > 0 && d[k].lp > 0; }, wahl = [];
@@ -12490,9 +12555,10 @@
     DW.letzterLaut = x[0];
   }
   function dorfLebenTakt() {
-    if (!dorfOffen()) { clearInterval(DW.uhr); DW.uhr = 0; dorfAtmoAus(); return; }
+    if (!dorfOffen()) { clearInterval(DW.uhr); DW.uhr = 0; dorfAtmoAus(); dorfGlockenAus(); return; }
     var w = dorfWetter(), jetzt = Date.now();
     dorfAtmo(w);
+    dorfGlocken(w);
     if (w.art === "gewitter") { if (!DW.blitz) DW.blitz = jetzt + 1500 + Math.random() * 3000; if (jetzt >= DW.blitz) { DW.blitz = jetzt + (5000 + Math.random() * 9000) / (.6 + w.stark * .6); dorfBlitz(); } }
     else DW.blitz = 0;
     var vogelWetter = w.art === "klar" || w.art === "wolken" || (w.tag && (w.art === "nebel" || w.art === "niesel"));
@@ -12517,7 +12583,7 @@
     bahnStarten();
   }
   function dorfLebenPflegen() {
-    if (!dorfOffen()) { if (DW.uhr) { clearInterval(DW.uhr); DW.uhr = 0; } dorfAtmoAus(); return; }
+    if (!dorfOffen()) { if (DW.uhr) { clearInterval(DW.uhr); DW.uhr = 0; } dorfAtmoAus(); dorfGlockenAus(); return; }
     if (!DW.uhr) {
       ["gewitter", "zwitschern", "hammerschlag", "hundbellen", "enten", "pferd", "tier-eule-ruf"].forEach(function (n) { try { klangLaden(n); } catch (e) {} });
       DW.uhr = setInterval(dorfLebenTakt, 400);
@@ -15991,6 +16057,15 @@
     uebungStarten: uebungStarten,
     uebungEnde: uebungEnde,
     pruef: {
+      glockenPlan: function (h, r) { return glockenPlan(h, r); },
+      /* Hörprobe für den Betreiber: die volle Stunde offline gerechnet (Mono, 22 kHz). */
+      glockenHoeren: function (h, r) {
+        var plan = glockenPlan(h, r), dauer = plan[plan.length - 1][0] + 10, k = new OfflineAudioContext(1, Math.ceil(22050 * dauer), 22050), g = k.createGain();
+        g.gain.value = .5; g.connect(k.destination);
+        plan.forEach(function (p) { glockeSchlag(k, g, .1 + p[0], p[2], p[3], p[4]); });
+        return k.startRendering().then(function (b) { return Array.from(b.getChannelData(0)); });
+      },
+      uhrVersatz: function (ms) { S.uhrVersatz = ms; },
       /* FASSUNG 769 */
       klang: function () { return KLANG; }, sprungTest: function (m) { SPRUNG.liste.push(m); sprungZeigen(); }, handelHtml: handelHtml, HANDEL: HANDEL, stationVorratHtml: stationVorratHtml,
       /* FASSUNG 763 */
