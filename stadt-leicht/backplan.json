@@ -7,9 +7,13 @@
    "saat": 11,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -33,9 +37,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -59,9 +67,13 @@
    "saat": 23,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -85,9 +97,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -111,9 +127,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -137,9 +157,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -163,9 +187,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -189,9 +217,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -215,9 +247,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -241,9 +277,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -267,9 +307,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -293,9 +337,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -319,9 +367,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -345,9 +397,13 @@
    "saat": 71,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -371,9 +427,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -397,9 +457,13 @@
    "saat": 83,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -610,9 +674,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter"
@@ -657,7 +725,9 @@
    "saat": 7,
    "gier": [
     0,
-    90
+    45,
+    90,
+    135
    ],
    "jahr": [
     "winter",
@@ -704,9 +774,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter",
@@ -730,7 +804,9 @@
    "saat": 7,
    "gier": [
     0,
-    90
+    45,
+    90,
+    135
    ],
    "jahr": [
     "winter",
@@ -754,7 +830,9 @@
    "saat": 7,
    "gier": [
     0,
-    90
+    45,
+    90,
+    135
    ],
    "jahr": [
     "winter"
@@ -777,9 +855,13 @@
    "saat": 7,
    "gier": [
     0,
+    45,
     90,
+    135,
     180,
-    270
+    225,
+    270,
+    315
    ],
    "jahr": [
     "winter"
@@ -1451,6 +1533,272 @@
    "s": {
     "gross": 48,
     "klein": 16
+   }
+  },
+  {
+   "bild": "w_rathaus_doebeln",
+   "id": "rathaus_doebeln",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 28,
+    "klein": 11
+   }
+  },
+  {
+   "bild": "v_viper",
+   "id": "auto_viper",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "v_batmobil",
+   "id": "auto_batmobil",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "v_pferdebahn",
+   "id": "pferdebahn",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "v_pferdewagen_korn",
+   "id": "pferdewagen_korn",
+   "saat": 7,
+   "variante": "korn",
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "v_pferdewagen_mehl",
+   "id": "pferdewagen_korn",
+   "saat": 7,
+   "variante": "mehl",
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "v_pferdewagen_leer",
+   "id": "pferdewagen_korn",
+   "saat": 7,
+   "variante": "leer",
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "d_gleis",
+   "id": "gleis_pferdebahn",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "d_gleis_kurve",
+   "id": "gleis_pferdebahn",
+   "saat": 7,
+   "variante": "kurve",
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
    }
   }
  ],

@@ -55,10 +55,12 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   const d0 = await pg.evaluate(() => STADT.szene.auswahl && STADT.szene.auswahl.dreh);
   await pg.click(".lk-karte .lk-knopf[title='Drehen']");
   const d1 = await pg.evaluate(() => STADT.szene.auswahl && STADT.szene.auswahl.dreh);
-  sage(d1 === ((d0 + 1) & 3), "Haus drehen (Vierteldrehung)", d0 + " → " + d1);
+  /* FASSUNG 808 — Spielgebäude drehen in Achtelschritten (45°) */
+  sage(d1 === (d0 + 0.5) % 4, "Haus drehen (Achteldrehung, 45°)", d0 + " → " + d1);
   const gemerkt = await pg.evaluate(() => localStorage.getItem("leicht_lage_v1"));
   sage(/rathaus/.test(gemerkt || ""), "Drehung bleibt gemerkt", gemerkt);
-  await pg.click(".lk-karte .lk-knopf[title='Drehen']"); await pg.click(".lk-karte .lk-knopf[title='Drehen']"); await pg.click(".lk-karte .lk-knopf[title='Drehen']");
+  for (let i = 0; i < 7; i++) await pg.click(".lk-karte .lk-knopf[title='Drehen']");
+  sage(await pg.evaluate(() => STADT.szene.auswahl && STADT.szene.auswahl.dreh) === d0, "nach acht Achteldrehungen wieder wie vorher");
 
   /* Baustelle (Labor im Bau) */
   const labor = await pg.evaluate(() => { const o = STADT.szene.objekte.find((o) => o.spiel === "labor"); return o && [o.x, o.y, o.bau && o.bau.p]; });

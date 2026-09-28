@@ -9,6 +9,13 @@
 
    Objekt: { id, bild, x, y, dreh (Vierteldrehungen), stufe (Maßstab),
              fuss: [Breite, Tiefe] in Metern, bau: { p } | null, … }
+   FASSUNG 808 — XANDER: „du hast gesagt acht Winkel und hast sie nicht
+   umgesetzt die möchte ich bitte". dreh darf halbe Schritte haben
+   (0, 0.5, 1 … 3.5 = 0°, 45°, 90° … 315°). Ganze Zahlen bleiben, was sie
+   waren – alte Spielstände sehen gleich aus. Schräge Bilder (_f_45_ …)
+   gibt es für die Spielgebäude, drehbaren Schmuck und die Fahrzeuge; sie
+   werden nur geladen, wenn etwas schräg steht. Die Kamera bleibt bei
+   vier Drehungen.
    ===================================================================== */
 (function () {
   "use strict";
@@ -20,9 +27,11 @@
     leinwand = c; g = c.getContext("2d");
     schattenC = document.createElement("canvas"); sg = schattenC.getContext("2d");
   };
-  SZ.neu = function (o) { o.id = SZ.naechsteId++; o.dreh = (o.dreh || 0) & 3; o.stufe = o.stufe || 1; SZ.objekte.push(o); SZ.geaendert(); return o; };
+  SZ.neu = function (o) { o.id = SZ.naechsteId++; o.dreh = SZ.drehNorm(o.dreh); o.stufe = o.stufe || 1; SZ.objekte.push(o); SZ.geaendert(); return o; };
   SZ.weg = function (o) { const i = SZ.objekte.indexOf(o); if (i >= 0) SZ.objekte.splice(i, 1); if (SZ.auswahl === o) SZ.auswahl = null; SZ.geaendert(); };
   SZ.geaendert = function () { reiheSchl = ""; };
+  /* FASSUNG 808 — Drehung auf halbe Vierteldrehungen (45°) runden, 0 ≤ dreh < 4 */
+  SZ.drehNorm = function (d) { d = Math.round((+d || 0) * 2) / 2; return ((d % 4) + 4) % 4; };
   /* FASSUNG 795 — XANDER: „der Übergang zwischen Tag und Nacht soll
      flüssiger sein … nicht plötzlich in einem Moment umschalten, sondern
      realistisch sanft ineinander übergehen, so wie es dämmert."
@@ -57,25 +66,37 @@
   function jahrBild() { return SZ.jahr === "winter" ? "winter" : "herbst"; }
   const GIER_CACHE = {};
   /* Welche Drehungen gibt es von diesem Bild? (Bäume nur eine, Zäune zwei) */
-  function gierFuer(bild, gier) {
+  function gierListe(bild) {
     let liste = GIER_CACHE[bild];
     if (!liste) {
       liste = [];
       const re = new RegExp("^" + bild + "_[a-z]+_[a-z]+_[a-z0-9]+_(\\d+)_[kgm]$");
       for (const k in LB.vz) { const m = re.exec(k); if (m && liste.indexOf(+m[1]) < 0) liste.push(+m[1]); }
       liste.sort((a, b) => a - b);
+      /* (auch das kleine Verzeichnis im Rahmen hat alle Winkel: _k und _z gibt es zu jeder Drehung) */
       if (liste.length) GIER_CACHE[bild] = liste;
     }
+    return liste;
+  }
+  function gierFuer(bild, gier) {
+    const liste = gierListe(bild);
     if (!liste.length) return gier;
     if (liste.indexOf(gier) >= 0) return gier;
-    if (liste.length === 2 && liste[0] === 0 && liste[1] === 90) return gier % 180;
+    /* Zaun, Brunnen, Gleis: nach einer halben Drehung gleich (0/90 bzw. 0/45/90/135) */
+    if (liste[liste.length - 1] < 180 && liste.indexOf(gier % 180) >= 0) return gier % 180;
+    /* schräg, aber kein schräges Bild (Bäume, Baustellen): die gerade Drehung davor */
+    if (gier % 90) return gierFuer(bild, gier - 45);
     return liste[0];
   }
   SZ.gierFuer = gierFuer;
+  /* FASSUNG 808 — gibt es von diesem Bild schräge (45°-)Ansichten? Dann dreht die Auswahl in Achtelschritten. */
+  SZ.achtWinkel = function (bild) { return gierListe(bild).some((g) => g % 90 !== 0); };
+  /* Blickwinkel eines Objekts im Bild (Objektdrehung + Kamera), 0 … 315 in 45°-Schritten */
+  SZ.gierVon = function (o) { return ((((o.dreh || 0) + K.dreh) % 4 + 4) % 4) * 90; };
   /* Baustelle: Phase aus dem Fortschritt */
   function bauPhase(p) { return p < 0.2 ? 8 : p < 0.42 ? 30 : p < 0.7 ? 55 : 80; }
   SZ.basis = function (o, zeit) {
-    const gier = ((o.dreh + K.dreh) & 3) * 90;
+    const gier = SZ.gierVon(o);
     if (o.bau && o.bau.p < 1 && o.bauBild && !LB.nurKlein) {
       const gb = gierFuer(o.bauBild, gier);
       return o.bauBild + "_" + jahrBild() + "_tag_b" + bauPhase(o.bau.p) + "_" + gb;
@@ -89,11 +110,18 @@
      überlappen, haben eine eindeutige Reihenfolge. Nur Paare, deren Bilder
      sich überdecken, bekommen eine Kante; dann topologisch sortiert. Neu
      gerechnet nur, wenn sich etwas ändert (Drehung, Bauen, Versetzen). */
+  /* FASSUNG 808 — Ecken der Grundfläche in der Welt, um dreh × 90° gedreht (auch schräg); rand = Zugabe in Metern */
+  function ecken(o, rand) {
+    const w = (o.fuss ? o.fuss[0] : 2) / 2 + (rand || 0), d = (o.fuss ? o.fuss[1] : 2) / 2 + (rand || 0);
+    const a = (o.dreh || 0) * Math.PI / 2, c = Math.round(Math.cos(a) * 1e6) / 1e6, s = Math.round(Math.sin(a) * 1e6) / 1e6;
+    return [[-w, -d], [w, -d], [w, d], [-w, d]].map((p) => [o.x + p[0] * c - p[1] * s, o.y + p[0] * s + p[1] * c]);
+  }
+  SZ.ecken = ecken;
+  /* Liegt flach am Boden (Gleis im Pflaster)? – am Bild erkennbar, damit gespeicherter Schmuck es behält */
+  SZ.flach = function (o) { return !!(o.flach || /^d_gleis(_|$)/.test(o.bild || "")); };
   function kamRechteck(o) {
-    const w = (o.fuss ? o.fuss[0] : 2) / 2, d = (o.fuss ? o.fuss[1] : 2) / 2;
-    const quer = (o.dreh & 1) === 1;
-    const hx = quer ? d : w, hy = quer ? w : d;
-    const ec = [[o.x - hx, o.y - hy], [o.x + hx, o.y - hy], [o.x + hx, o.y + hy], [o.x - hx, o.y + hy]].map((p) => ST.drehXY(p[0], p[1], K.dreh));
+    /* Schräg steht das umschließende Rechteck der gedrehten Grundfläche (gerade: genau wie vorher) */
+    const ec = ecken(o).map((p) => ST.drehXY(p[0], p[1], K.dreh));
     let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
     for (const p of ec) { a0 = Math.min(a0, p[0]); a1 = Math.max(a1, p[0]); b0 = Math.min(b0, p[1]); b1 = Math.max(b1, p[1]); }
     /* Bildkasten in Metern (vom Zoom unabhängig): grob über Höhe und Grundfläche */
@@ -103,7 +131,7 @@
   }
   function sortieren() {
     const n = SZ.objekte.length;
-    const R = SZ.objekte.map(kamRechteck);
+    const R = SZ.objekte.map(kamRechteck), F = SZ.objekte.map(SZ.flach);
     const idx = SZ.objekte.map((o, i) => i).sort((i, j) => R[i].t - R[j].t);
     const vor = new Array(n).fill(0), nach = Array.from({ length: n }, () => []);
     for (let ii = 0; ii < n; ii++) {
@@ -112,7 +140,10 @@
         const j = idx[jj], B = R[j];
         if (A.sx1 < B.sx0 || B.sx1 < A.sx0 || A.sy1 < B.sy0 || B.sy1 < A.sy0) continue;
         let aZuerst;
-        if (A.a1 <= B.a0 + 0.01 || A.b1 <= B.b0 + 0.01) aZuerst = true;
+        /* FASSUNG 808 — Flaches (Pferdebahngleis im Pflaster) liegt unter allem, was darauf steht (wie stadt/szene.js) */
+        const fA = F[i], fB = F[j];
+        if (fA !== fB) aZuerst = fA;
+        else if (A.a1 <= B.a0 + 0.01 || A.b1 <= B.b0 + 0.01) aZuerst = true;
         else if (B.a1 <= A.a0 + 0.01 || B.b1 <= A.b0 + 0.01) aZuerst = false;
         else aZuerst = A.t <= B.t;
         if (aZuerst) { nach[i].push(j); vor[j]++; } else { nach[j].push(i); vor[i]++; }
@@ -263,7 +294,7 @@
         if (!R) continue;
         const x0 = e.X - m.ax * e.k, y0 = e.Y - m.ay * e.k;
         if (px1 < x0 || px0 > x0 + m.w * e.k || py1 < y0 || py0 > y0 + m.h * e.k) continue;
-        if (R.a1 <= p.a + 0.3 || R.b1 <= p.b + 0.3) idx = i;
+        if (SZ.flach(e.o) || R.a1 <= p.a + 0.3 || R.b1 <= p.b + 0.3) idx = i;
       }
       if (!nachDing.has(idx)) nachDing.set(idx, []);
       nachDing.get(idx).push(p);
@@ -301,9 +332,7 @@
   SZ.zuhoerer = [];
 
   function auswahlRahmen(e) {
-    const o = e.o, w = (o.fuss ? o.fuss[0] : 2) / 2 + 0.6, d = (o.fuss ? o.fuss[1] : 2) / 2 + 0.6, quer = (o.dreh & 1) === 1;
-    const hx = quer ? d : w, hy = quer ? w : d;
-    const ec = [[o.x - hx, o.y - hy], [o.x + hx, o.y - hy], [o.x + hx, o.y + hy], [o.x - hx, o.y + hy]].map((p) => ST.proj(p[0], p[1], 0));
+    const ec = ecken(e.o, 0.6).map((p) => ST.proj(p[0], p[1], 0));
     g.save();
     g.strokeStyle = "rgba(255,226,140,0.95)"; g.lineWidth = 2.2 * K.dpr; g.setLineDash([7 * K.dpr, 5 * K.dpr]);
     g.beginPath(); ec.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.stroke();

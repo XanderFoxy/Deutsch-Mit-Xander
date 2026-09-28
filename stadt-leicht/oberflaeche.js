@@ -334,10 +334,9 @@
     c.putImageData(img, 0, 0);
     for (const o of SZ.objekte) {
       if (o.versteckt || o.art === "natur" || o.deko) continue;
-      const w = (o.fuss ? o.fuss[0] : 2) * f, h = (o.fuss ? o.fuss[1] : 2) * f, quer = (o.dreh & 1) === 1;
       c.fillStyle = o.art === "haus" ? (o.bau ? "#e0a030" : "#a4432f") : "#6b5b52";
-      const ww = quer ? h : w, hh = quer ? w : h;
-      c.fillRect((o.x + g / 2) * f - ww / 2, (o.y + g / 2) * f - hh / 2, ww, hh);
+      /* FASSUNG 808 — die Grundfläche gedreht (auch schräg) */
+      c.beginPath(); SZ.ecken(o).forEach((p, i) => { const x = (p[0] + g / 2) * f, y = (p[1] + g / 2) * f; if (i) c.lineTo(x, y); else c.moveTo(x, y); }); c.closePath(); c.fill();
     }
   }
 
@@ -347,12 +346,22 @@
     ["Tanne", "n_tanne0", [3.5, 3.5], 13], ["Tanne", "n_tanne1", [3.5, 3.5], 13], ["Laubbaum", "n_laubbaum0", [4.5, 4.5], 13], ["Laubbaum", "n_laubbaum2", [4.5, 4.5], 13],
     ["Apfelbaum", "n_obstbaum0", [3, 3], 6], ["Apfelbaum", "n_obstbaum1", [3, 3], 6],
     ["Christbaum", "d_weihnachtsbaum", [7.4, 7.4], 21.8, 1], ["Marktbude", "d_marktbude", [4, 3.2], 4.2, 1], ["Schneemann", "d_schneemann", [1.3, 1.3], 1.9, 1],
-    ["Pyramide", "d_pyramide", [9.2, 9.2], 13, 1], ["Krippe", "d_krippe", [7.2, 5.4], 5.2, 1]
+    ["Pyramide", "d_pyramide", [9.2, 9.2], 13, 1], ["Krippe", "d_krippe", [7.2, 5.4], 5.2, 1],
+    /* FASSUNG 808 — neue Modelle aus stadt/modelle/ (gebacken, stadt-leicht/backplan.json); an Stelle 5 die Gruppe.
+       Geladen wird ein Bild erst, wenn die Leiste offen ist oder das Ding in der Stadt steht. */
+    ["Rathaus Döbeln", "w_rathaus_doebeln", [44.2, 21], 32.5, 0, "Wahrzeichen"],
+    ["Dodge Viper", "v_viper", [1.92, 4.45], 1.12, 0, "Fahrzeuge"], ["Batmobil", "v_batmobil", [2.1, 5.9], 1.12, 0, "Fahrzeuge"],
+    ["Pferdebahn", "v_pferdebahn", [2.3, 9.6], 3, 0, "Fahrzeuge"], ["Kornwagen", "v_pferdewagen_korn", [2, 6.5], 2.6, 0, "Fahrzeuge"],
+    ["Mehlwagen", "v_pferdewagen_mehl", [2, 6.5], 2.6, 0, "Fahrzeuge"], ["Leerer Wagen", "v_pferdewagen_leer", [2, 6.5], 2.6, 0, "Fahrzeuge"],
+    ["Gleis", "d_gleis", [3, 4], 0.1, 0, "Gleise"], ["Gleisbogen", "d_gleis_kurve", [7.5, 7.5], 0.1, 0, "Gleise"]
   ];
   function leisteZeigen(an) {
     if (!leiste) {
       leiste = el("div", "lk-leiste");
+      let gruppe = "";
       for (const s of SCHMUCK) {
+        /* FASSUNG 808 — Überschrift, wenn eine neue Gruppe beginnt (Wahrzeichen, Fahrzeuge, Gleise) */
+        if (s[5] && s[5] !== gruppe) { gruppe = s[5]; leiste.appendChild(el("div", "lk-gruppe", "<span>" + gruppe + "</span>")); }
         const b = el("button", "lk-karte-klein"); b.type = "button";
         const bild = s[1] + "_" + (s[4] ? "winter" : SZ.jahr === "winter" ? "winter" : "herbst") + "_tag_f_0_k";
         b.innerHTML = '<img alt="" src="stadt-leicht/bilder/' + bild + '.webp' + (LB.version ? "?v=" + LB.version : "") + '"><span>' + s[0] + "</span>";
@@ -443,6 +452,18 @@
     }
     auswahlWeg();
   };
+  /* FASSUNG 808 — XANDER: „du hast gesagt acht Winkel und hast sie nicht umgesetzt die möchte ich bitte". Was schräge
+     Bilder hat (Spielgebäude, Bank, Zaun, Fahrzeuge …), dreht in Achtelschritten (45°), alles andere wie bisher in
+     Vierteln. r = +1 links herum, −1 rechts herum. */
+  function objDrehen(o, r, merken) {
+    if (!o) return;
+    const schritt = SZ.achtWinkel(o.bild) ? 0.5 : 1;
+    o.dreh = SZ.drehNorm((o.dreh || 0) + r * schritt);
+    SZ.geaendert(); miniMalen(); L().unruhe = 2;
+    if (merken) L().dekoSpeichern();
+    ansage("Gedreht: " + Math.round(o.dreh * 90) + "°");
+  }
+  O.objDrehen = objDrehen;
   function waehlen(o) { SZ.auswahl = o; karteZeigen("haus", o); L().unruhe = 2; }
   function auswahlWeg() { SZ.auswahl = null; if (!geist) karte.hidden = true; L().unruhe = 2; }
 
@@ -469,7 +490,7 @@
     if (art === "setzen") {
       titel.textContent = "Schmuck setzen";
       zeile.textContent = "Mit dem Finger verschieben oder auf die Wiese tippen.";
-      knoepfe.append(knopf("links", "Drehen", () => { geist.dreh = (geist.dreh + 1) & 3; SZ.geaendert(); L().unruhe = 2; }), knopf("rechts", "Drehen", () => { geist.dreh = (geist.dreh + 3) & 3; SZ.geaendert(); L().unruhe = 2; }),
+      knoepfe.append(knopf("links", "Drehen", () => objDrehen(geist, 1)), knopf("rechts", "Andersherum drehen", () => objDrehen(geist, -1)),
         knopf("haken", "Setzen", () => geistFertig(true), "lk-gut"), knopf("kreuz", "Abbrechen", () => geistFertig(false)));
       return;
     }
@@ -510,12 +531,12 @@
         if (ST.spiel.beispiel) { a.disabled = true; a.title = "In der Beispielstadt wird nicht gebaut – bitte anmelden"; }
         knoepfe.append(a);
       }
-      knoepfe.append(knopf("links", "Drehen", () => { o.dreh = (o.dreh + 1) & 3; SZ.geaendert(); L().dekoSpeichern(); L().unruhe = 2; }), knopf("rechts", "Drehen", () => { o.dreh = (o.dreh + 3) & 3; SZ.geaendert(); L().dekoSpeichern(); L().unruhe = 2; }), zu);
+      knoepfe.append(knopf("links", "Drehen", () => objDrehen(o, 1, true)), knopf("rechts", "Andersherum drehen", () => objDrehen(o, -1, true)), zu);
       return;
     }
     if (o.art === "eigen") {
       zeile.textContent = "Dein Schmuck";
-      knoepfe.append(knopf("links", "Drehen", () => { o.dreh = (o.dreh + 1) & 3; SZ.geaendert(); L().dekoSpeichern(); L().unruhe = 2; }),
+      knoepfe.append(knopf("links", "Drehen", () => objDrehen(o, 1, true)), knopf("rechts", "Andersherum drehen", () => objDrehen(o, -1, true)),
         knopf("versetzen", "Versetzen", () => { SZ.weg(o); geist = SZ.neu(Object.assign({}, o, { geist: true })); karteZeigen("setzen", geist); }),
         knopf("abriss", "Entfernen", () => { SZ.weg(o); L().dekoSpeichern(); karte.hidden = true; miniMalen(); L().unruhe = 2; }), zu);
       return;
