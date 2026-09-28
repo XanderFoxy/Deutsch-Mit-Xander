@@ -1645,3 +1645,22 @@ Sonde runde99 angepasst und erweitert, alles grün.
   - Alle vier Startzeichen zählen.
   - Der Wächter wartet 6 s und startet dann EINMAL neu („Das Mikrofon braucht noch einen Moment …“).
   - Erst wenn auch das nach 5 s nichts bringt, kommt der Hinweis. Der Bericht an mich enthält dann den Zustand (Mikro geliehen, zweiter Versuch, Dauer).
+
+### Fassung 775 (Walkie 299: Gasthaus mit Koch und Gefängnis für Plünderer)
+Sonden: neu 775 (18/18 grün); 755, 756, 764, 765 (Erwartung um „à 5 P“ ergänzt), 767, 769, 770 grün.
+- **Gasthaus** (ab Level 6, 150 P je Stufe).
+  - Je Stufe steigt ein Tourist mehr aus dem Zug.
+  - Jedes Gericht bringt 5 + 2 × Stufe Punkte (ohne Gasthaus wie bisher 5 P).
+  - Neuer Beruf **Koch** (15 P, 2 je Gasthaus-Stufe): +3 P je Gericht, und die Gäste essen dann auch Fleisch und Eier.
+  - Beispiel Stufe 2 mit Koch: 12 P je Gericht, und aus 7 Gästen werden 8. Die Station zeigt „12 P je Gericht · +2 Gast je Zug“, der Bahnhof „Essen à 12 P im Gasthaus“.
+- **Gefängnis** (ab Level 7, 170 P je Stufe).
+  - Die Wachen machen Plündern um 4 % je Stufe schwerer (höchstens 70 % Scheitern).
+  - Wer scheitert, sitzt: 2 h je Stufe (höchstens 6 h), Kaution 10 + 10 × Stufe P.
+  - Wer sitzt, kann nicht plündern. Oben im Dorf steht ein Band „Du sitzt im Gefängnis von … · noch 2 h“ mit **Freikaufen**, und die Plündern-Knöpfe sind gesperrt.
+  - Im eigenen Gefängnis steht, wer einsitzt und wie lange noch. Im Gefängnis eines anderen Dorfs kann man für jeden Gefangenen **Kaution zahlen**.
+  - Die Kaution geht an den, der eingesperrt hat. Das steht im Newsticker („🔓 …“), die Festnahme ebenso („🔒 …“).
+- Server:
+  - spiel_bauen, spiel_beruf_max, spiel_ausbilden (Koch), spiel_gasthaus, spiel_bahn_zug/spiel_bahn (Gäste und Preis), spiel_pluendern (Haft, Wachen) und neu spiel_kaution.
+  - spiel_oeffentlich zeigt jetzt „haft“ und „gefangene“, damit Mitspieler die Kaution zahlen können.
+  - Servertest: Bau und Koch klappen; 7 → 8 Gäste; Preis 10 je Gericht (Stufe 1 mit Koch: 5 + 2 + 3); Festnahme mit Kaution 20; ein zweiter Versuch wird abgelehnt („du sitzt im Gefängnis von …“); nach der Kaution ist man frei und die Liste leer.
+- Bild: Das Gasthaus ist Fachwerk mit Wirtshausschild, Tisch, Bank und Fass und steht oben zwischen Mühle und Rathaus. Das Gefängnis ist Feldstein mit Wachturm, Zinnen, Gitterfenstern und Pranger und steht oben rechts neben dem Wald.

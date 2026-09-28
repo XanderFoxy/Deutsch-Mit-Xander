@@ -294,7 +294,7 @@ const sage = (gut, was, zusatz) => {
       ziele: [...st.querySelectorAll('[data-s="bahnreise"]')].map((b) => b.textContent + "|" + b.dataset.z), reise: (st.querySelector(".sp-bahn-reise") || {}).textContent || "",
       gaeste: (st.querySelector(".sp-bahn-gaeste") || {}).textContent || "", hin: window.__hinweise.join(" | ") }; });
   sage(R && /Export, Import und Touristen/.test(R.kopf), "Bahnhof-Kopf: „Export, Import und Touristen“", R && R.kopf);
-  sage(R && /Touristen: 7 steigen aus/.test(R.touristen) && /\+34 P \(14 Kurtaxe \+ 4 × Essen à 5 P\)/.test(R.touristen) && !R.aus, "„Touristen: 7 steigen aus · +34 P (14 Kurtaxe + 4 × Essen)“ – 4 Stück Essen im Lager", JSON.stringify(R && R.touristen));
+  sage(R && /Touristen: 7 steigen aus/.test(R.touristen) && /\+34 P \(14 Kurtaxe \+ 4 × Essen\)/.test(R.touristen) && !R.aus, "„Touristen: 7 steigen aus · +34 P (14 Kurtaxe + 4 × Essen)“ – 4 Stück Essen im Lager", JSON.stringify(R && R.touristen));
   sage(R && R.ziele.length === 1 && /Beastadt/.test(R.ziele[0]) && /11111111-1111-4111-8111-111111111111/.test(R.ziele[0]) && /−12 P, \+6 Forschung/.test(R.reise) && /9 P Eintritt/.test(R.reise),
     "Ausflug: 3 Bewohner, −12 P, +6 Forschung, Ziel „Beastadt (Bea)“, das Dorf dort verdient 9 P", JSON.stringify(R && { ziele: R.ziele, reise: R.reise }));
   sage(R && /Zu Besuch waren: Bea \(3,/.test(R.gaeste) && /Bea kam mit dem Zug zu Besuch: \+9 P Eintritt/.test(R.hin), "Gäste-Zeile „Zu Besuch waren: Bea (3, …)“ und einmal die Meldung „Bea kam mit dem Zug zu Besuch: +9 P Eintritt“", JSON.stringify(R && { g: R.gaeste, h: R.hin }));
@@ -308,7 +308,7 @@ const sage = (gut, was, zusatz) => {
   R = await pg.evaluate(() => ({ a: window.__bahnArgs, h: window.__hinweise.slice(-1)[0] || "", p: window.DMA_SPIEL.pruef.zustand().ich.punkte, aus: document.querySelector('.sp-bahnhof [data-a="touristen"]').disabled,
     text: document.querySelector('.sp-bahnhof [data-a="touristen"]').textContent, bild: !!document.querySelector("svg.sp-dl-bahn .sp-bz-ware svg") }));
   const tl9 = await toene(t9);
-  sage(R.a && R.a.p_art === "touristen" && R.p === p0 + 34 && /7 Touristen steigen aus: 14 P Kurtaxe, sie kaufen 4 × Essen à 5 P – \+34 Punkte/.test(R.h), "Tipp: spiel_bahn(touristen), +34 Punkte, Meldung", JSON.stringify(R));
+  sage(R.a && R.a.p_art === "touristen" && R.p === p0 + 34 && /7 Touristen steigen aus: 14 P Kurtaxe, sie kaufen 4 × Essen – \+34 Punkte/.test(R.h), "Tipp: spiel_bahn(touristen), +34 Punkte, Meldung", JSON.stringify(R));
   sage(R.aus && /unterwegs/.test(R.text) && R.bild && tl9.some((x) => x[0] === "kasse"), "danach „sind unterwegs ✓“, Reisende steigen am Bahnhof auf, die Kasse klingelt", JSON.stringify({ aus: R.aus, bild: R.bild, tl9 }));
   await tippe('.sp-bahnhof [data-s="bahnreise"]'); await tick(700);
   R = await pg.evaluate(() => ({ a: window.__reiseArgs, h: window.__hinweise.slice(-1)[0] || "", aus: document.querySelector('.sp-bahnhof [data-s="bahnreise"]').disabled, reise: document.querySelector(".sp-bahn-reise").textContent }));

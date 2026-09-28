@@ -2924,20 +2924,3 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-sprech-weiter i { display: block; height: 100%; width: 100%; background: #2e9e5b; transform-origin: left; animation: spSprechWeiter var(--weiter, 2200ms) linear forwards; }
 @keyframes spSprechWeiter { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .sp-sprech-andere { background: #fff !important; color: #2b3a52 !important; border: 1px solid #c9d2de !important; }
-/* FASSUNG 775 — Walkie 299: Gefängnis. Wer sitzt, sieht oben im Dorf ein Band mit „Freikaufen"; im Gefängnis stehen die Zellen. */
-.sp-haft { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; padding: 6px 8px; border-radius: 10px; background: linear-gradient(90deg, rgba(75, 80, 89, .95), rgba(45, 48, 56, .95)); border: 1px solid #6c7078; }
-.sp-haft > i, .sp-gefangener > i { flex: 0 0 30px; width: 30px; height: 30px; }
-.sp-haft > i svg, .sp-gefangener > i svg { width: 100%; height: 100%; }
-.sp-haft > span, .sp-gefangener > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.sp-haft b, .sp-gefangener b { color: #f4f6fb; font: 700 12.5px/1.2 system-ui, sans-serif; overflow-wrap: anywhere; }
-.sp-haft small, .sp-gefangener small { color: #c3cad6; font: 500 10.5px/1.25 system-ui, sans-serif; }
-.sp-haft button, .sp-gefangener button { flex: 0 0 auto; min-height: 34px; padding: 4px 9px; border-radius: 9px; border: 0; background: #e2c35a; color: #2d2418; font: 700 12px/1.1 system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; }
-.sp-haft button small, .sp-gefangener button small { color: #5a4a22; font-weight: 600; }
-.sp-haft button:disabled, .sp-gefangener button:disabled { opacity: .5; }
-.sp-gefangene { display: flex; flex-direction: column; gap: 4px; }
-.sp-gefangener { display: flex; align-items: center; gap: 8px; padding: 5px 7px; border-radius: 9px; background: rgba(255, 255, 255, .06); }
-/* Im hellen Stationsfenster: dunkle Schrift wie die übrigen Zeilen. */
-.sp-dl-station .sp-gefangener { background: rgba(90, 60, 30, .08); }
-.sp-dl-station .sp-gefangener b { color: #2d2418; }
-.sp-dl-station .sp-gefangener small { color: #6b5e44; }
-.sp-dl-station .sp-gefangene-leer { color: #6b5e44; }

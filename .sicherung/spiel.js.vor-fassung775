@@ -580,7 +580,7 @@
      "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo",
      "haustier_leben", "geschuetz_stufe", "eisen", "tarn", "mitspielen",
      "level", "skills", "helm", "brust", "ladung", "daemon",
-     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "klasse", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s", "kampfklasse", "kampf_stufe", "dorf_name", "haft", "gefangene"].forEach(function (k) { o[k] = s[k]; });
+     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "klasse", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s", "kampfklasse", "kampf_stufe", "dorf_name"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -4842,14 +4842,6 @@
       eierAlle(); return;
     } else if (s === "pluendern") {
       pluendern(k.dataset.z, k.dataset.c, k.dataset.g); return;
-    } else if (s === "kaution") {
-      var hz = k.dataset.z || null;
-      wirtschaft("spiel_kaution", { p_haeftling: hz }, function (r) {
-        ton("kasse", 0.4); setTimeout(function () { ton("swoosh", 0.3); }, 350);
-        hinweis("🔓 " + (hz && S.ich && hz !== S.ich.id ? "Du hast " + r.kaution + " P Kaution für " + r.frei + " bezahlt" : "Du hast dich freigekauft") + " – das Geld geht an " + (r.an || "?") + ".");
-        setTimeout(function () { abrufen(true); }, 400);
-      });
-      return;
     } else if (s === "bauen") {
       rpc("spiel_bauen", { p_was: k.dataset.w }).then(function (r) {
         if (!r || r.ok === false) { hinweis("🏗️ " + ((r && r.grund) || "Das ging nicht.")); return; }
@@ -7359,10 +7351,7 @@
     bergwerk:     { name: "Bergwerk",    preis: 180, gibt: "Erz, Quarz, Gold, manchmal Öl", ab: 7 },
     labor:        { name: "Labor",       preis: 250, gibt: "Forschung: Chips für ★★★-Laser", ab: 10 },
     /* FASSUNG 756 — Walkie 293: „Ja, und Soldaten brauchen eine Kaserne zum Trainieren". */
-    kaserne:      { name: "Kaserne",     preis: 140, gibt: "bildet Ritter aus: 2 je Stufe (bis 6)", ab: 4 },
-    /* FASSUNG 775 — Walkie 299: „Gasthaus, wo Touristen essen … und ein Gefängnis für Plünderer". */
-    gasthaus:     { name: "Gasthaus",    preis: 150, gibt: "Touristen essen hier: +1 Gast und +2 P je Gericht und Stufe · mit Koch +3 P", ab: 6 },
-    gefaengnis:   { name: "Gefängnis",   preis: 170, gibt: "Wachen +4 % Abwehr je Stufe · erwischte Plünderer sitzen, bis jemand Kaution zahlt", ab: 7 }
+    kaserne:      { name: "Kaserne",     preis: 140, gibt: "bildet Ritter aus: 2 je Stufe (bis 6)", ab: 4 }
   };
   /* Steht das Gebäude (gebaut und nicht kaputt)? */
   function dorfSteht(ich, k) { var g = ((ich || {}).dorf || {})[k]; return Boolean(g && g.stufe > 0 && g.lp > 0); }
@@ -7417,19 +7406,6 @@
     if (art === "kaserne") return '<svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10.5" fill="#b8b0a0" stroke="#2d2418" stroke-width="1"/><path d="M3 11.5 L12 6.5 L21 11.5 Z" fill="#5a626e" stroke="#2d2418" stroke-width="1" stroke-linejoin="round"/>'
       + '<rect x="10" y="15.5" width="4" height="6" fill="#4a5a3a"/><rect x="5.5" y="13" width="3" height="2.4" fill="#e8dcc2"/><rect x="15.5" y="13" width="3" height="2.4" fill="#e8dcc2"/>'
       + '<path d="M20.5 11 V2.5" stroke="#5a4a3a" stroke-width="1"/><rect x="20.5" y="2.5" width="3" height="1.1" fill="#1a1a1a"/><rect x="20.5" y="3.6" width="3" height="1.1" fill="#d8261f"/><rect x="20.5" y="4.7" width="3" height="1.1" fill="#f2c230"/></svg>';
-    /* FASSUNG 775 — Gasthaus: Fachwerk mit Wirtshausschild (Teller mit Wurst), Gefängnis: Stein mit Gitterfenstern. */
-    if (art === "gasthaus") return '<svg viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="11" fill="#efe2c4" stroke="#2d2418" stroke-width="1"/>'
-      + '<path d="M3 11 L12 4.5 L21 11 Z" fill="#a8452c" stroke="#2d2418" stroke-width="1" stroke-linejoin="round"/>'
-      + '<path d="M4 15.5 H20 M8 10.5 V21.5 M16 10.5 V21.5 M4 10.5 L8 15.5 M20 10.5 L16 15.5" stroke="#6b4521" stroke-width=".9"/>'
-      + '<rect x="10.2" y="16.5" width="3.6" height="5" fill="#6b4521"/><rect x="5.2" y="17" width="2" height="2" fill="#ffd97a"/><rect x="16.8" y="17" width="2" height="2" fill="#ffd97a"/>'
-      + '<path d="M20 12.5 H23" stroke="#2d2418" stroke-width=".8"/><circle cx="22" cy="15.2" r="2" fill="#fff" stroke="#2d2418" stroke-width=".7"/>'
-      + '<path d="M20.9 15.4 Q22 14.3 23.1 15.1" stroke="#b5562b" stroke-width="1" fill="none" stroke-linecap="round"/></svg>';
-    if (art === "gefaengnis") return '<svg viewBox="0 0 24 24"><rect x="3.5" y="8.5" width="17" height="13" fill="#8d9097" stroke="#2d2418" stroke-width="1"/>'
-      + '<path d="M3 8.5 H21 V6.5 H18.5 V7.8 H16 V6.5 H13.5 V7.8 H10.5 V6.5 H8 V7.8 H5.5 V6.5 H3 Z" fill="#6c7078" stroke="#2d2418" stroke-width=".8"/>'
-      + '<path d="M3.5 12.5 H20.5 M3.5 16.5 H20.5 M9 8.5 V12.5 M15 12.5 V16.5 M7 16.5 V21.5 M17 16.5 V21.5" stroke="#5b5f66" stroke-width=".6"/>'
-      + '<rect x="5.2" y="10" width="3.6" height="4" fill="#1e2127"/><rect x="15.2" y="10" width="3.6" height="4" fill="#1e2127"/>'
-      + '<path d="M6.4 10 V14 M7.6 10 V14 M16.4 10 V14 M17.6 10 V14" stroke="#c9ccd2" stroke-width=".6"/>'
-      + '<path d="M9.8 21.5 V17.5 A2.2 2.2 0 0 1 14.2 17.5 V21.5 Z" fill="#4a3a2a" stroke="#2d2418" stroke-width=".7"/><circle cx="13.3" cy="19.4" r=".45" fill="#e2c35a"/></svg>';
     if (art === "labor") return '<svg viewBox="0 0 24 24"><rect x="3.5" y="9" width="17" height="12.5" fill="#dfe8f2" stroke="#2d2418" stroke-width="1"/>'
       + '<path d="M3 9 H21" stroke="' + dach + '" stroke-width="1.6"/><rect x="5.5" y="11.5" width="13" height="3" fill="#8fd3ff" stroke="#2d2418" stroke-width=".6"/>'
       + '<path d="M10.5 17 H13.5 V21.5 H10.5 Z" fill="#3a4152"/><path d="M17.5 9 V3.8 M16 3.8 H19" stroke="#2d2418" stroke-width=".9"/><circle cx="17.5" cy="3.3" r=".9" fill="#e2403a"/>'
@@ -8452,9 +8428,7 @@
     fischer:     { name: "Fischer", viele: "Fischer", preis: 15, haus: [], fest: 4, trupp: "see", tut: "+2 Fische je Fahrt" },
     holzfaeller: { name: "Holzfäller", viele: "Holzfäller", preis: 15, haus: [], fest: 4, trupp: "wald", tut: "+2 Holz je Fahrt" },
     jaeger:      { name: "Jäger", viele: "Jäger", preis: 15, haus: [], fest: 4, trupp: "jagd", tut: "+1 Fleisch je Jagd" },
-    bergmann:    { name: "Bergmann", viele: "Bergleute", preis: 15, haus: ["bergwerk"], trupp: "berg", tut: "+1 Erz je Fahrt" },
-    /* FASSUNG 775 — Walkie 299: im Gasthaus kocht ein Koch – teureres Essen, und er brät auch Fleisch und Eier für die Gäste. */
-    koch:        { name: "Koch", viele: "Köche", preis: 15, haus: ["gasthaus"], tut: "Gasthaus: +3 P je Gericht, kocht auch Fleisch und Eier" }
+    bergmann:    { name: "Bergmann", viele: "Bergleute", preis: 15, haus: ["bergwerk"], trupp: "berg", tut: "+1 Erz je Fahrt" }
   };
   var TRUPP_BERUF = { see: "fischer", wald: "holzfaeller", jagd: "jaeger", berg: "bergmann" };
   var BERUF_VON_HAUS = { muehle: "mueller", baeckerei: "baecker", schmiede: "schmied", labor: "wissenschaftler" };
@@ -8479,7 +8453,7 @@
   /* Kleine Figur je Beruf: Kopf, Mütze/Hut, Schürze in Berufsfarbe. */
   function berufSvg(b) {
     var F = { bauer: ["#6b8e3a", "#d9b25a"], mueller: ["#f3efe4", "#cfc6b0"], baecker: ["#ffffff", "#e9e2d0"], schmied: ["#5a4a3a", "#2f2a26"], wissenschaftler: ["#e8eef6", "#4a6fa5"],
-      fischer: ["#2f6f8f", "#f2c230"], holzfaeller: ["#b0302a", "#3a2a1e"], jaeger: ["#4a6a2e", "#7a5a2e"], bergmann: ["#4a4a52", "#2f2f36"], koch: ["#ffffff", "#d8d2c4"] }[b] || ["#999", "#666"];
+      fischer: ["#2f6f8f", "#f2c230"], holzfaeller: ["#b0302a", "#3a2a1e"], jaeger: ["#4a6a2e", "#7a5a2e"], bergmann: ["#4a4a52", "#2f2f36"] }[b] || ["#999", "#666"];
     var hut = b === "bauer" ? '<path d="M5 6.2 H15 L13 4.6 C12 3 8 3 7 4.6 Z" fill="#d9b25a" stroke="#8a6a2a" stroke-width=".5"/>'
       : b === "baecker" ? '<path d="M7 5.6 C5.6 5.6 5.6 2.8 7.4 3 C7.6 1.6 9.4 1.2 10 2.4 C10.8 1.2 12.6 1.6 12.6 3 C14.4 2.8 14.4 5.6 13 5.6 Z" fill="#fff" stroke="#bdb49c" stroke-width=".5"/>'
       : b === "mueller" ? '<path d="M6.6 5.8 C6.6 3.4 13.4 3.4 13.4 5.8 Z" fill="#e7e1d2" stroke="#a89f88" stroke-width=".5"/>'
@@ -8487,7 +8461,6 @@
       : b === "fischer" ? '<path d="M5.6 6 C6 3 14 3 14.4 6 L16 7 H4 Z" fill="#f2c230" stroke="#a88420" stroke-width=".5"/>'
       : b === "holzfaeller" ? '<path d="M6.6 5.6 C6.6 3.2 13.4 3.2 13.4 5.6 Z" fill="#b0302a"/><path d="M13.4 5.6 H15" stroke="#b0302a" stroke-width="1"/>'
       : b === "jaeger" ? '<path d="M5 6 H15 L13.4 4.2 C12.6 2.8 7.4 2.8 6.6 4.2 Z" fill="#4a6a2e" stroke="#2e4a1a" stroke-width=".5"/><path d="M13 4 L15.4 1.6" stroke="#c9302c" stroke-width=".7"/>'
-      : b === "koch" ? '<path d="M7 6 V4.2 C5.4 4.2 5.4 1.6 7.2 1.8 C7.6 .4 9.4 0 10 1.2 C10.6 0 12.4 .4 12.8 1.8 C14.6 1.6 14.6 4.2 13 4.2 V6 Z" fill="#fff" stroke="#bdb49c" stroke-width=".5"/><path d="M7 5.2 H13" stroke="#d8d2c4" stroke-width=".6"/>'
       : b === "bergmann" ? '<path d="M6.4 5.8 C6.4 3 13.6 3 13.6 5.8 Z" fill="#f2c230" stroke="#8a6a1a" stroke-width=".5"/><circle cx="10" cy="4.3" r=".9" fill="#fff6c8"/>'
       : '<circle cx="8.6" cy="7.4" r="1.2" fill="none" stroke="#333" stroke-width=".45"/><circle cx="11.4" cy="7.4" r="1.2" fill="none" stroke="#333" stroke-width=".45"/><path d="M9.8 7.4 H10.2" stroke="#333" stroke-width=".45"/>';
     return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.6 19 C4.6 13 6.8 11.4 10 11.4 C13.2 11.4 15.4 13 15.4 19 Z" fill="' + F[0] + '" stroke="rgba(0,0,0,.35)" stroke-width=".5"/>'
@@ -8825,58 +8798,14 @@
       + '<p class="sp-sm-klein">Das ist das Dorf von ' + esc(e.name) + ". Tippe auf ein Haus, um es anzusehen" + (st.mitspielen ? " oder zu plündern" : "") + ".</p>"
       + '<div class="sp-sm-liste"><button type="button" data-s="dorfkette" data-n="heim">Zurück zu meinem Dorf</button></div>';
   }
-  /* ---------------------------------------------------------------
-     FASSUNG 775 — GASTHAUS UND GEFÄNGNIS (Walkie 299)
-     Gasthaus: je Stufe ein Tourist mehr, und jedes Gericht bringt
-     5 + 2 × Stufe Punkte (mit Koch +3). Gefängnis: je Stufe +4 %
-     Abwehr; wer beim Plündern scheitert, sitzt (2 h je Stufe, höchstens
-     6 h) und kann erst wieder plündern, wenn er frei ist oder jemand
-     die Kaution zahlt – die geht an den, der ihn eingesperrt hat.
-     --------------------------------------------------------------- */
-  function gasthausPreis(ich) {
-    var st = dorfSteht(ich, "gasthaus") ? dorfSt(ich, "gasthaus") : 0;
-    return st ? 5 + 2 * st + (beruf(ich, "koch") > 0 ? 3 : 0) : 5;
-  }
-  function gasthausZeileHtml(ich) {
-    var st = dorfSt(ich, "gasthaus"), koch = beruf(ich, "koch");
-    return '<div class="sp-troph sp-werk sp-gasthaus"><i>' + berufSvg("koch") + "</i><span><b>" + gasthausPreis(ich) + " P je Gericht · +" + st + " Gast je Zug</b>"
-      + "<small>" + (koch ? koch + " " + (koch > 1 ? "Köche kochen" : "Koch kocht") + " – auch Fleisch und Eier kommen auf den Tisch" : "Ohne Koch nur Brot, Wurst, Kuchen und Fisch – bilde unter Berufe einen Koch aus (+3 P je Gericht)") + "</small></span></div>";
-  }
-  function hafRest(bis) { return Math.max(0, Date.parse(bis) - Date.now()); }
-  /* Stunden lesbar: „1 h 40 min" statt „100:00". */
-  function haftZeit(ms) { var m = Math.ceil(ms / 60000), h = Math.floor(m / 60); return h ? h + " h" + (m % 60 ? " " + (m % 60) + " min" : "") : m + " min"; }
-  function gefangeneHtml(liste, fremd) {
-    var g = (liste || []).filter(function (x) { return x && hafRest(x.bis) > 0; });
-    if (!g.length) return '<p class="sp-sm-klein sp-gefangene-leer">Die Zellen sind leer.</p>';
-    return '<div class="sp-gefangene">' + g.map(function (x) {
-      var ichSelbst = S.ich && x.id === S.ich.id;
-      return '<div class="sp-gefangener"><i>' + dorfHausGross("gefaengnis", 1) + "</i><span><b>" + esc(x.name || "?") + "</b><small>sitzt noch " + haftZeit(hafRest(x.bis)) + " · Kaution " + x.kaution + " P</small></span>"
-        + (fremd || ichSelbst ? '<button type="button" data-s="kaution" data-z="' + esc(x.id) + '"' + ((S.ich && S.ich.punkte || 0) < x.kaution ? " disabled" : "") + ">"
-          + (ichSelbst ? "Freikaufen" : "Kaution zahlen") + " <small>" + x.kaution + " P</small></button>" : "") + "</div>";
-    }).join("") + "</div>";
-  }
-  function meineHaft(ich) {
-    var h = ich && (ich.haft || (ich.volk || {}).haft);
-    return h && hafRest(h.bis) > 0 ? h : null;
-  }
-  /* Wer sitzt, sieht es oben im Dorf: bei wem, wie lange noch, und kann sich freikaufen. */
-  function haftBannerHtml(ich) {
-    var h = meineHaft(ich);
-    if (!h) return "";
-    return '<div class="sp-haft" role="status"><i>' + dorfHausGross("gefaengnis", 2) + "</i><span><b>Du sitzt im Gefängnis von " + esc(h.bei_name || "?") + "</b>"
-      + "<small>" + (h.dorf_name ? esc(h.dorf_name) + " · " : "") + "noch " + haftZeit(hafRest(h.bis)) + " – so lange kannst du nicht plündern</small></span>"
-      + '<button type="button" data-s="kaution" data-z=""' + ((ich.punkte || 0) < h.kaution ? " disabled" : "") + ">Freikaufen <small>" + h.kaution + " P</small></button></div>";
-  }
   function fremdStationHtml(e, k) {
     var st = e.st, D = DORF[k], g = (st.dorf || {})[k], stufe = g ? g.stufe : 0, lp = g ? g.lp : 0, mx = 20 * Math.max(1, stufe);
     var gepl = g && g.gepl && Date.now() - Date.parse(g.gepl) < 4 * 3600000, kaputt = !(lp > 0);
     var kann = stufe && PLUENDERBAR.indexOf(k) >= 0;
-    /* FASSUNG 775 — im fremden Gefängnis sieht man, wer sitzt, und kann die Kaution zahlen. */
-    var zellen = k === "gefaengnis" && stufe ? gefangeneHtml(st.gefangene, true) : "";
     return '<div class="sp-dl-station" role="dialog" aria-label="' + esc(D.name) + '"><div class="sp-dl-st-kopf"><i>' + dorfHausGross(k, stufe || 1) + "</i><span><b>" + D.name + "</b>"
       + "<small>" + (stufe ? "Stufe " + stufe + " · " + (kaputt ? "kaputt" : "hält " + lp + "/" + mx) : "noch nicht gebaut") + "</small></span>"
       + '<button type="button" class="sp-dl-st-zu" data-s="dorfwahl" data-g="" aria-label="Station schließen">✕</button></div>'
-      + '<p class="sp-sm-klein">' + D.gibt + (gepl ? " · gerade geplündert (4 h Schutz)" : "") + "</p>" + zellen
+      + '<p class="sp-sm-klein">' + D.gibt + (gepl ? " · gerade geplündert (4 h Schutz)" : "") + "</p>"
       + (kann ? '<div class="sp-sm-liste sp-dl-st-knoepfe"><button type="button" data-s="pluendern" data-z="' + esc(e.sid) + '" data-c="' + esc(e.chat) + '" data-g="' + k + '"'
         + (kaputt || gepl || !st.mitspielen ? " disabled" : "") + ">" + pluenderKnopfText(e.sid) + "</button></div>"
         + (!st.mitspielen ? '<p class="sp-sm-klein">' + esc(e.name) + " spielt gerade nicht mit – dann ist das Dorf geschützt.</p>" : "") : "") + "</div>";
@@ -8891,21 +8820,19 @@
     return true;
   }
   function nachbarnHtml() {
-    /* FASSUNG 775 — wer im Gefängnis sitzt, plündert nicht. */
-    var haft = meineHaft(S.ich);
     var zeilen = plaetze().filter(function (p) { return !p.leer && !p.ich && p.id && !istPuppe(p.id); }).map(function (p) {
       var sid = spielIdVon(p.id), st = sid && S.stand[sid];
       if (!st || !st.dorf) return "";
       var knoepfe = Object.keys(st.dorf).filter(function (k) { return DORF[k] && PLUENDERBAR.indexOf(k) >= 0; }).map(function (k) {
         var g = st.dorf[k] || {}, gepl = g.gepl && Date.now() - Date.parse(g.gepl) < 4 * 3600000, kaputt = !(g.lp > 0);
         return '<button type="button" class="sp-pl-knopf" data-s="pluendern" data-z="' + esc(sid) + '" data-c="' + esc(p.id) + '" data-g="' + k + '"'
-          + (kaputt || gepl || !st.mitspielen || haft ? " disabled" : "") + ' title="' + DORF[k].name + (haft ? " – du sitzt im Gefängnis" : gepl ? " – 4 h geschützt" : kaputt ? " – kaputt" : "") + '">'
+          + (kaputt || gepl || !st.mitspielen ? " disabled" : "") + ' title="' + DORF[k].name + (gepl ? " – 4 h geschützt" : kaputt ? " – kaputt" : "") + '">'
           + dorfSvg(k, g.stufe || 1) + "<small>" + DORF[k].name + "</small></button>";
       }).join("");
       return knoepfe ? '<div class="sp-nachbar' + (racheGegen(sid) ? " sp-nachbar-rache" : "") + '"><b>' + esc(p.name || "?") + (st.dorf_name ? " · " + esc(st.dorf_name) : "") + (racheGegen(sid) ? ' <em class="sp-rache">Rache · ohne Mana</em>' : "") + '</b><button type="button" class="sp-nachbar-hin" data-s="dorfbesuch" data-c="' + esc(p.id) + '">Stadt ansehen</button><small>' + dorfKennzeile(st) + " · " + (st.mitspielen ? (st.ritter ? st.ritter + " Ritter" : "keine Ritter") : "spielt gerade nicht") + "</small>"
         + '<div class="sp-nachbar-reihe">' + knoepfe + "</div></div>" : "";
     }).join("");
-    return '<div class="sp-sm-gruppe sp-nachbarn"><span>' + (haft ? "Nachbardörfer plündern · erst wenn du frei bist" : "Nachbardörfer plündern · 10 Mana") + "</span></div>"
+    return '<div class="sp-sm-gruppe sp-nachbarn"><span>Nachbardörfer plündern · 10 Mana</span></div>'
       + (zeilen || '<p class="sp-sm-klein">Gerade kein Dorf im Raum.</p>')
       + (zeilen ? '<p class="sp-sm-klein">Du nimmst 20 % der Vorräte (je Ritter +5 %, ihre Ritter −5 %). Es kann scheitern: 12 %, je Ritter dort +6 %, je eigener −4 % – dann sind die 10 Mana weg und 3 % deiner Punkte gehen an sie. Wer dich geplündert hat, plünderst du 24 Stunden lang einmal ohne Mana zurück (Rache). Das Gebäude bleibt stehen und ist nur beschädigt – der Besitzer repariert es mit Erz oder Holz. Danach 4 Stunden Schutz. Schule, Bibliothek und Krankenhaus plündert man nicht.</p>' : "");
   }
@@ -8971,7 +8898,7 @@
     var d = (S.ich || {}).dorf || {}, jetzt = Date.now();
     return Object.keys(d).some(function (k) { var b = d[k]; return b && b.von_id === sid && !b.rache && b.gepl && jetzt - Date.parse(b.gepl) < 24 * 3600000; });
   }
-  function pluenderKnopfText(sid) { if (meineHaft(S.ich)) return "Plündern <small>du sitzt</small>"; return racheGegen(sid) ? "Rache <small>ohne Mana</small>" : "Plündern <small>10 Mana</small>"; }
+  function pluenderKnopfText(sid) { return racheGegen(sid) ? "Rache <small>ohne Mana</small>" : "Plündern <small>10 Mana</small>"; }
   function abwehrZeigen(chatId) {
     var el = platzElVon(chatId);
     if (!el) return;
@@ -8995,8 +8922,7 @@
         /* Ton und Bild zugleich: der Schild springt hoch, genau dann klirrt der Schlag. */
         abwehrZeigen(chatId); ton("schildblock", 0.55);
         hinweis("🛡️ " + (r.ritter ? r.an + "s " + r.ritter + " Ritter haben" : r.an + " hat") + " dich abgewehrt" + (r.rache ? " – die Rache ist vorbei" : "")
-          + ": " + (r.mana_weg ? "−" + r.mana_weg + " Mana, " : "") + "−" + r.strafe + " Punkte an " + r.an + ". (Chance zu scheitern: " + r.fehl + " %)"
-          + (r.haft ? " 🔒 Die Wachen sperren dich ins Gefängnis: " + haftZeit(hafRest(r.haft.bis)) + " – oder Kaution " + r.haft.kaution + " P." : ""));
+          + ": " + (r.mana_weg ? "−" + r.mana_weg + " Mana, " : "") + "−" + r.strafe + " Punkte an " + r.an + ". (Chance zu scheitern: " + r.fehl + " %)");
         senden({ ereignis: "pluender_abgewehrt", zielChat: chatId, gebaeude: geb, name: (S.ich || {}).name || "", an: r.an, strafe: r.strafe });
         setTimeout(function () { abrufen(true); }, 400);
         schnellZeichnen(true);
@@ -9096,9 +9022,7 @@
     kuhstall: [30, 118], krankenhaus: [282, 108], schmiede: [222, 138], huehnerstall: [70, 150],
     brauerei: [126, 166], bibliothek: [186, 164], labor: [272, 182],
     /* FASSUNG 756 — die Kaserne zwischen Schmiede und Krankenhaus, ein Weg führt zu ihr. */
-    kaserne: [262, 136],
-    /* FASSUNG 775 — Gasthaus am Weg zwischen Mühle und Rathaus, Gefängnis oben am Hang neben dem Bergwerk. */
-    gasthaus: [150, 58], gefaengnis: [240, 64]
+    kaserne: [262, 136]
   };
   var dorfLandCache = "";
   function dorfZufall(n) { var x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
@@ -9465,9 +9389,6 @@
         + "<small>je Ritter +5 % Beute beim Plündern und +6 % Abwehr · 3 P Lohn und 1 Portion je Ernte</small></span>"
         + '<button type="button" data-s="ritter" data-n="1"' + (rit >= rmx || lv < 4 || (ich.punkte || 0) < 40 ? " disabled" : "") + ">Ritter ausbilden <small>40 P</small></button></div>";
     }
-    /* FASSUNG 775 — Walkie 299: im Gasthaus steht, was die Gäste zahlen; im Gefängnis, wer gerade einsitzt. */
-    if (k === "gasthaus" && st) werk += gasthausZeileHtml(ich);
-    if (k === "gefaengnis" && st) werk += gefangeneHtml(ich.gefangene || (ich.volk || {}).gefangene, false);
     var geplant = g && g.gepl && Date.now() - Date.parse(g.gepl) < 4 * 3600000;
     return '<div class="sp-dl-station" role="dialog" aria-label="' + esc(D.name) + '"><div class="sp-dl-st-kopf"><i>' + dorfHausGross(k, st || 1) + "</i><span><b>" + D.name + "</b>"
       + "<small>" + (st ? "Stufe " + st + " · " + (lp <= 0 ? "kaputt – liefert nichts" : "hält " + lp + "/" + mx) : "noch nicht gebaut") + "</small>"
@@ -9834,9 +9755,7 @@
         kuhstall:     { w: 26, d: 15, h: 9, rh: 10, wand: "bretter", dach: dachT, schornstein: false, tuerB: 6, fenster: 2, sockel: false, seitFenster: false },
         huehnerstall: { w: 14, d: 10, h: 6, rh: 6, wand: "bretter", dach: dachT, schornstein: false, fenster: 1, tuerB: 2.4, sockel: false, seitFenster: false },
         labor:        { w: 22, d: 14, h: 12, rh: 5, wand: "putz", dach: "schiefer", schornstein: false, rahmen: "#dfe6ee", fenster: 3 },
-        kaserne:      { w: 24, d: 14, h: 11, rh: 7, wand: "feldstein", dach: "schiefer", schornstein: false, fenster: 3, rahmen: "#d8d0bc", laden: "#4a5a3a", tuerB: 4.4 },
-        gasthaus:     { w: 26, d: 14, h: 12, rh: 9, wand: "putz", fachwerk: true, dach: dachT, laden: "#2f6a3a", blumen: true, schornX: .22 },
-        gefaengnis:   { w: 22, d: 13, h: 12, rh: 5, wand: "feldstein", dach: "schiefer", schornstein: false, fenster: 2, rahmen: "#3a3d44", laden: "#2a2d33", tuerB: 3.6 }
+        kaserne:      { w: 24, d: 14, h: 11, rh: 7, wand: "feldstein", dach: "schiefer", schornstein: false, fenster: 3, rahmen: "#d8d0bc", laden: "#4a5a3a", tuerB: 4.4 }
       }[k] || { w: 22, d: 12, h: 10, rh: 8 };
       if (st >= 2) P.gaube = true;
       /* Stufe 3: ein Anbau links. */
@@ -9863,27 +9782,6 @@
         g.fillStyle = "#d9b25a"; g.beginPath(); g.ellipse(L - 3, y - 3, 1.3, 2, 0, 0, 7); g.fill(); g.beginPath(); g.arc(L - 3, y - 5.8, 1, 0, 7); g.fill();
         g.fillStyle = "#f3efe4"; g.beginPath(); g.arc(L - 8, y - 1.6, 2.2, 0, 7); g.fill(); g.fillStyle = "#d8261f"; g.beginPath(); g.arc(L - 8, y - 1.6, 1.4, 0, 7); g.fill();
         g.fillStyle = "#f3efe4"; g.beginPath(); g.arc(L - 8, y - 1.6, .7, 0, 7); g.fill(); g.strokeStyle = "#6b4521"; g.lineWidth = .4; g.beginPath(); g.moveTo(L - 9.2, y + 1.6); g.lineTo(L - 8, y - 1); g.lineTo(L - 6.8, y + 1.6); g.stroke();
-      } else if (k === "gasthaus") {
-        /* FASSUNG 775 — Gasthaus: Wirtshausschild am Ausleger, davor Tisch mit Bank und ein Fass. */
-        g.strokeStyle = "#3a2a1a"; g.lineWidth = .6; g.beginPath(); g.moveTo(R, y - P.h * .72); g.lineTo(R + 5, y - P.h * .72); g.stroke();
-        g.fillStyle = "#f3e6c4"; g.beginPath(); g.arc(R + 4, y - P.h * .72 + 2.6, 1.9, 0, 7); g.fill(); g.strokeStyle = "#6b4521"; g.lineWidth = .4; g.stroke();
-        g.strokeStyle = "#b5562b"; g.lineWidth = .7; g.beginPath(); g.moveTo(R + 3, y - P.h * .72 + 2.8); g.quadraticCurveTo(R + 4, y - P.h * .72 + 1.8, R + 5, y - P.h * .72 + 2.6); g.stroke();
-        g.fillStyle = "#8a5a2b"; g.fillRect(L - 9, y - 2.6, 6, 1); g.fillRect(L - 8.4, y - 1.6, .6, 1.8); g.fillRect(L - 4.2, y - 1.6, .6, 1.8);
-        g.fillStyle = "#6b4521"; g.fillRect(L - 9.4, y - .6, 7, .7);
-        g.fillStyle = "#fff"; g.beginPath(); g.ellipse(L - 6.6, y - 2.9, .8, .35, 0, 0, 7); g.fill(); g.fillStyle = "#e0a85a"; g.fillRect(L - 5.2, y - 3.7, .8, 1.1);
-        var fgx = R + 2.6; var fgg = g.createLinearGradient(fgx - 1.6, 0, fgx + 1.6, 0); fgg.addColorStop(0, "#5a3616"); fgg.addColorStop(.6, "#b07a45"); fgg.addColorStop(1, "#6b4521");
-        g.fillStyle = fgg; g.beginPath(); g.ellipse(fgx, y - 1.6, 1.5, 1.8, 0, 0, 7); g.fill();
-      } else if (k === "gefaengnis") {
-        /* FASSUNG 775 — Gefängnis: Wachturm mit Zinnen an der Seite, davor ein Pranger. */
-        var wx = R + .6, wy = y, th = P.h + P.rh + 9;
-        g.fillStyle = dmMuster(g, K.feldstein, .06 / s); g.fillRect(wx, wy - th, 5.6, th);
-        g.fillStyle = "rgba(20,20,30,.28)"; g.fillRect(wx + 3.6, wy - th, 2, th);
-        g.fillStyle = dmMuster(g, K.feldstein, .06 / s); for (var zn = 0; zn < 3; zn++) g.fillRect(wx - .4 + zn * 2.3, wy - th - 1.8, 1.5, 1.9);
-        g.fillStyle = "rgba(20,20,30,.3)"; g.fillRect(wx - .6, wy - th, 6.8, .7);
-        for (var gf = 0; gf < 2; gf++) { var gy = wy - th + 3 + gf * 6.5; g.fillStyle = "#15171c"; g.fillRect(wx + 1.4, gy, 2.6, 3); g.strokeStyle = "#c9ccd2"; g.lineWidth = .3; g.beginPath(); g.moveTo(wx + 2.1, gy); g.lineTo(wx + 2.1, gy + 3); g.moveTo(wx + 3.2, gy); g.lineTo(wx + 3.2, gy + 3); g.stroke(); }
-        g.fillStyle = "rgba(255,200,110,.85)"; g.beginPath(); g.arc(wx + 2.7, wy - th + 1.2, .5, 0, 7); g.fill();
-        g.strokeStyle = "#6b4521"; g.lineWidth = .6; g.beginPath(); g.moveTo(L - 4, y + 1.5); g.lineTo(L - 4, y - 5); g.stroke();
-        g.fillStyle = "#8a5a2b"; g.fillRect(L - 6.4, y - 5, 4.8, 1.3); g.fillStyle = "#1e1a14"; g.beginPath(); g.arc(L - 5.3, y - 4.35, .35, 0, 7); g.arc(L - 4, y - 4.35, .45, 0, 7); g.arc(L - 2.7, y - 4.35, .35, 0, 7); g.fill();
       } else if (k === "schmiede") {
         var gl = g.createRadialGradient(L + P.w * .3, y - 2, .5, L + P.w * .3, y - 2, 5); gl.addColorStop(0, "rgba(255,190,80,.95)"); gl.addColorStop(.5, "rgba(255,110,20,.6)"); gl.addColorStop(1, "rgba(255,110,20,0)");
         g.fillStyle = gl; g.beginPath(); g.arc(L + P.w * .3, y - 2, 5, 0, 7); g.fill();
@@ -10518,8 +10416,7 @@
   /* Wo man auf ein gemaltes Haus tippen kann (Welt-Einheiten, um den Fußpunkt). */
   var DM_MASS = {
     baeckerei: [24, 13, 11, 9], schule: [30, 13, 11, 9, 9], schmiede: [22, 13, 10, 8], brauerei: [24, 14, 12, 9], bibliothek: [26, 14, 13, 9],
-    rathaus: [30, 15, 16, 11, 12], krankenhaus: [28, 14, 14, 8], kuhstall: [26, 15, 9, 10], huehnerstall: [14, 10, 6, 6], labor: [22, 14, 12, 5, 8], kaserne: [24, 14, 11, 7],
-    gasthaus: [26, 14, 12, 9], gefaengnis: [22, 13, 12, 5, 7]
+    rathaus: [30, 15, 16, 11, 12], krankenhaus: [28, 14, 14, 8], kuhstall: [26, 15, 9, 10], huehnerstall: [14, 10, 6, 6], labor: [22, 14, 12, 5, 8], kaserne: [24, 14, 11, 7]
   };
   function dmUmriss(k, st) {
     var f = [.82, .92, 1.02][Math.max(0, Math.min(2, (st || 1) - 1))], M = DM_MASS[k];
@@ -11402,15 +11299,13 @@
       + "<small>Export, Import und Touristen</small></span>"
       + '<button type="button" class="sp-dl-st-zu" data-s="dorfwahl" data-g="" aria-label="Station schließen">✕</button></div>' + inhalt + "</div>";
   }
-  /* FASSUNG 775 — mit Koch im Gasthaus essen die Gäste auch Fleisch und Eier. */
-  function bahnEssen(ich) { return ["brot", "bratwurst", "kuchen", "fisch"].concat(dorfSteht(ich, "gasthaus") && beruf(ich, "koch") > 0 ? ["fleisch", "ei"] : []).reduce(function (n, w) { return n + vorrat(ich, w); }, 0); }
+  function bahnEssen(ich) { return ["brot", "bratwurst", "kuchen", "fisch"].reduce(function (n, w) { return n + vorrat(ich, w); }, 0); }
   function bahnTouristenHtml(ich, z) {
     var t = z.touristen;
     if (!t) return "";
-    var preis = (t.gasthaus && t.gasthaus.preis_essen) || gasthausPreis(ich);
-    var kauf = Math.min(t.anzahl, bahnEssen(ich)), plus = t.kurtaxe + preis * kauf;
+    var kauf = Math.min(t.anzahl, bahnEssen(ich)), plus = t.kurtaxe + 5 * kauf;
     return '<button type="button" class="sp-bahn-touristen" data-s="bahn" data-a="touristen"' + (t.erledigt ? " disabled" : "") + ">" + wareSvg("touristen") + "<b>Touristen: " + t.anzahl + " steigen aus</b><small>"
-      + (t.erledigt ? "sind unterwegs ✓ – der nächste Zug kommt bald" : "+" + plus + " P (" + t.kurtaxe + " Kurtaxe" + (kauf ? " + " + kauf + " × Essen à " + preis + " P" + (dorfSteht(ich, "gasthaus") ? " im Gasthaus" : "") : ", kein Essen im Lager") + ")") + "</small></button>";
+      + (t.erledigt ? "sind unterwegs ✓ – der nächste Zug kommt bald" : "+" + plus + " P (" + t.kurtaxe + " Kurtaxe" + (kauf ? " + " + kauf + " × Essen" : ", kein Essen im Lager") + ")") + "</small></button>";
   }
   function bahnReiseHtml(ich, z) {
     var r = z.reise;
@@ -11472,7 +11367,7 @@
       if (art === "touristen") {
         bahnWareZeigen("touristen", "+" + r.anzahl, 104, bahnAn(bahnBeiX(98)).y - 22);
         ton("kasse", 0.4);
-        hinweis("🚂 " + r.anzahl + " Touristen steigen aus: " + r.kurtaxe + " P Kurtaxe" + (r.gekauft ? ", sie kaufen " + r.gekauft + " × Essen à " + (r.preis_essen || 5) + " P" + (r.gasthaus ? " im Gasthaus" : "") : "") + " – +" + r.erloes + " Punkte.");
+        hinweis("🚂 " + r.anzahl + " Touristen steigen aus: " + r.kurtaxe + " P Kurtaxe" + (r.gekauft ? ", sie kaufen " + r.gekauft + " × Essen" : "") + " – +" + r.erloes + " Punkte.");
         schnellZeichnen(true); panelAuffrischen(); return;
       }
       bahnWareZeigen(r.ware, (art === "export" ? "−" : "+") + r.menge, 104, bahnAn(bahnBeiX(98)).y - 22);
@@ -11675,8 +11570,6 @@
     huehnerstall: ["#e0a32a", '<path d="M12 3c4 0 7 6.8 7 10.8a7 7 0 0 1-14 0C5 9.8 8 3 12 3z" fill="#fff"/>'],
     bergwerk: ["#6d5b4b", '<path d="M3.5 8.2c5.6-4.4 11.4-4.4 17 0" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M12 5.8L7 21" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>'],
     kaserne: ["#4a5a3a", '<path d="M4.5 4.5L15 15M19.5 4.5L9 15" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M13 17l4 4M11 17l-4 4" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>'],
-    gasthaus: ["#a8452c", '<circle cx="12" cy="12.5" r="7.2" fill="#fff"/><path d="M7.8 13.2c1.6-2.4 6.8-2.4 8.4 0" stroke="#a8452c" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M3 4.5v6M3 7.5h1.6M21 4.5v6.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>'],
-    gefaengnis: ["#4b5059", '<path d="M4 4h16v16H4z" fill="none" stroke="#fff" stroke-width="2"/><path d="M8.5 4v16M12 4v16M15.5 4v16" stroke="#fff" stroke-width="1.8"/>'],
     labor: ["#129c8c", '<path d="M9 3h6v1.8h-1v5.3l5.6 8.6c1 1.8.1 3.3-1.8 3.3H6.2c-1.9 0-2.8-1.5-1.8-3.3L10 10.1V4.8H9z" fill="#fff"/><path d="M7.6 15.5h8.8" stroke="#129c8c" stroke-width="1.4"/>']
   };
   function dorfPin(k) {
@@ -11918,7 +11811,7 @@
     if (besuch) return dorfBesuchHtml(besuch);
     var d = ich.dorf || {}, ab = ich.dorf_ab ? Date.parse(ich.dorf_ab) : 0;
     var hat = Object.keys(d).length;
-    var szene = haftBannerHtml(ich) + dorfKetteHtml() + dorfBildHtml(ich);
+    var szene = dorfKetteHtml() + dorfBildHtml(ich);
     var ernte = hat ? (function () {
       var bis = ab ? ab + 4 * 3600000 - Date.now() : 0;
       return '<div class="sp-sm-liste"><button type="button" data-s="ernte"' + (bis > 0 ? ' class="sp-werk-wartet"' : "") + ">Dorf-Ernte <small>" + (bis > 0 ? "in " + Math.ceil(bis / 60000) + " min" : "bereit") + "</small></button>"

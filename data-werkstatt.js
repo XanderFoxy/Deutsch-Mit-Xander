@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 773: Aussprache im Spiel läuft von selbst weiter, Spiel still beim eigenen Sprechen, Andere Übung wählbar",
+  stand: "Fassung 775: Gasthaus mit Koch (mehr Touristen, teureres Essen) und Gefängnis (Haft für gescheiterte Plünderer, Kaution/Freikaufen)",
 
   inArbeit: [
-    { seit: "2026-09-27T23:38",
-      text: "Lehrer-Freigabe im Chat fürs Aussprache-Wörterbuch; Sequenzen für gezeichnete Wege (Funk 196); Diktat startet nicht im Samsung-Browser (Funk 197); Walkies 282/283/285/296/299–302" },
+    { seit: "2026-09-28T00:08",
+      text: "Walkie 300: Bündnis, Offline-Überfälle, Touristenwellen · Walkie 301: Ausflug zum Wahrzeichen · Funk 196: Sequenzen für Lok-Wege · Funk 188/190 Rest" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T23:38",
-      text: "773: nach der Bewertung kommt von selbst das nächste Wort; Spielklang verstummt, solange man spricht oder die Übung zuhört; Knopf Andere Übung" },
+    { seit: "2026-09-28T00:08",
+      text: "Walkie 299: Gasthaus + Koch, Gefängnis + Kaution" },
   ],
 };
