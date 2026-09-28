@@ -214,6 +214,167 @@
     return liste;
   };
 
+  /* =====================================================================
+     FASSUNG 807 — VORLAGE 1: DIE ORIGINALKARTE (das alte gemalte Dorf)
+     XANDER: „die Maps die Grundwert Brauch ist vorrangig" und „denk an das Layout der Originalmap. Die Leute sollen sich
+     sofort zurechtfinden … dass ich die Eisenbahn wieder hinten lang fahren [sehe]". Die Bauplätze kommen aus dem alten
+     Dorfbild (spiel.js DORF_LAGE, 320 × 200): dieselbe Richtung und derselbe Abstand im Bild, umgerechnet in die Welt
+     (Bildschirm x = Welt x − y, Bildschirm y = (x + y) / 2). Mühle links mit Bach, Rathaus mit Marktplatz in der Mitte,
+     Bergwerk hinten rechts, Fluss vom Markt zum See vorn, Felder vorn links und rechts, die Bahn hinten entlang mit dem
+     Bahnhof. Wege verbinden alle Häuser mit dem Markt (kürzestes Wegenetz, leicht geschwungen). Der Rundling bleibt mit
+     ?vorlage=rundling erreichbar.
+     ===================================================================== */
+  D.VORLAGE = (function () { try { return new URLSearchParams(location.search).get("vorlage") || "altdorf"; } catch (e) { return "altdorf"; } })();
+  if (D.VORLAGE === "altdorf") (function () {
+    const BILD = { cx: 160, cy: 118, a: 0.47, b: 0.40 };
+    const welt = (px, py) => { const u = (px - BILD.cx) * BILD.a / Math.SQRT1_2, v = (py - BILD.cy) * BILD.b / (Math.SQRT1_2 * 0.5); return [(u + v) / 2, (v - u) / 2]; };
+    const MARKT = [-1, -1];
+    /* Blickrichtung aus einem Winkel (0° = +x): dreh 0 schaut nach +y, 1 nach −x, 2 nach −y, 3 nach +x – in halben Schritten (45°) */
+    const drehNach = (dx, dy) => { const phi = Math.atan2(dy, dx) * 180 / Math.PI; return (((Math.round((phi - 90) / 45) / 2) % 4) + 4) % 4; };
+    const P = {};
+    for (const k in LAGE) {
+      const w = welt(LAGE[k][0], LAGE[k][1]);
+      P[k] = { x: +w[0].toFixed(1), y: +w[1].toFixed(1), dreh: drehNach(MARKT[0] - w[0], MARKT[1] - w[1]), winkel: Math.atan2(w[1], w[0]) * 180 / Math.PI };
+    }
+    /* Rathaus schaut auf den Markt, die Mühle mit dem Rad (Osten) an den Bach, das Bergwerk nach vorn */
+    P.muehle.dreh = 0; P.bergwerk.dreh = 0;
+    D.PLAETZE = P;
+    D.BAHN_Y = -86;
+    /* Die Strecke: hinten entlang (Welt y = −86), an beiden Enden aus der Karte hinaus zu den Nachbardörfern */
+    D.BAHN = []; for (let x = -118; x <= 118; x += 4) D.BAHN.push([x, D.BAHN_Y]);
+    D.BAHN_HALT = [-38, D.BAHN_Y];
+    D.WUNDER = {
+      koelner_dom: { name: "Kölner Dom", x: -56, y: 76, dreh: 0, bild: "w_koelner_dom", fuss: [54.2, 30.4], hoehe: 53 },
+      holstentor: { name: "Holstentor", x: 40, y: 64, dreh: 0, bild: "w_holstentor", fuss: [18, 8], hoehe: 15.2 },
+      brandenburger: { name: "Brandenburger Tor", x: 30, y: 90, dreh: 0, bild: "w_brandenburger", fuss: [26, 8], hoehe: 11.8 },
+      neuschwanstein: { name: "Neuschwanstein", x: -76, y: -42, dreh: 3, bild: "w_neuschwanstein", fuss: [28, 18], hoehe: 24 },
+      fernsehturm: { name: "Fernsehturm", x: 80, y: -40, dreh: 0, bild: "w_fernsehturm", fuss: [16, 16], hoehe: 46 }
+    };
+    /* Wasser: Fluss vom Markt zum See, Mühlbach links (Quelle hinter der Mühle, vorn aus der Karte) */
+    const m = P.muehle;
+    D.FLUSS = [[11, 8], [17, 14], [22, 22], [34, 30], [50, 42], [62, 52]];
+    D.MUEHLBACH = [[m.x + 6, m.y - 30], [m.x + 11.5, m.y - 6], [m.x + 11.5, m.y + 8], [m.x + 16, m.y + 26], [m.x + 22, m.y + 50], [m.x + 26, 112]];
+    /* Wegenetz: kürzeste Verbindungen (Prim) zwischen Markt, Hausvorplätzen, Bahnhof, Bootshaus, Wahrzeichen */
+    const vor = (p, d) => { const r = (p.dreh * 90 + 90) * Math.PI / 180; return [p.x + Math.cos(r) * d, p.y + Math.sin(r) * d]; };
+    const ziele = [MARKT.slice()];
+    for (const k in P) ziele.push(vor(P[k], k === "muehle" ? 9 : 8));
+    ziele.push([D.BAHN_HALT[0], D.BAHN_HALT[1] + 12], [58, 82]);
+    for (const k in D.WUNDER) { const w = D.WUNDER[k]; ziele.push([w.x, w.y + w.fuss[1] / 2 + 3]); }
+    const drin = [0], kanten = [];
+    while (drin.length < ziele.length) {
+      let best = null;
+      for (const i of drin) for (let j = 0; j < ziele.length; j++) {
+        if (drin.indexOf(j) >= 0) continue;
+        const d = Math.hypot(ziele[i][0] - ziele[j][0], ziele[i][1] - ziele[j][1]);
+        if (!best || d < best[2]) best = [i, j, d];
+      }
+      drin.push(best[1]); kanten.push(best);
+    }
+    D.WEGE = kanten.map(([i, j], n) => {
+      const A = ziele[i], Bz = ziele[j], dx = Bz[0] - A[0], dy = Bz[1] - A[1], l = Math.hypot(dx, dy) || 1;
+      const bog = (ST.hash2(n, 7, 807) - 0.5) * 0.3 * l;
+      return kurve([A, [A[0] + dx / 2 - dy / l * bog, A[1] + dy / 2 + dx / l * bog], Bz], Math.max(4, Math.round(l / 3)));
+    });
+    D.boden = function () {
+      B.leeren();
+      /* Marktplatz vor dem Rathaus */
+      rund(MARKT[0], MARKT[1], 10, 10, 0);
+      for (const w of D.WEGE) B.linie(w, 1.25, 0, 1);
+      /* Vorgärten vor den Häusern */
+      for (const k in P) { if (k === "muehle") continue; const q = vor(P[k], 7.5); rund(q[0], q[1], 2.4, 2.4, 3); }
+      /* Fluss (wird breiter) in die Bucht des Sees, Mühlbach */
+      const fl = kurve(D.FLUSS, 10);
+      B.linie(fl, (i, k) => 1.1 + 1.6 * (i / fl.length) + 0.4 * ST.hash2(i, Math.round(k * 4), 5), 1, 1);
+      B.linie(kurve(D.MUEHLBACH, 12), (i, k) => 1.2 + 0.4 * ST.hash2(i, Math.round(k * 4), 6), 1, 1);
+      rund(m.x + 6, m.y - 30, 3.2, 2.6, 1);   // Quellteich
+      /* der See vorn (wie bisher: Zunge, Hals, großer See, Badebucht) */
+      rund(66, 56, 13, 10, 1);
+      kurve([[70, 61], [75, 66], [81, 70]], 5).forEach((q) => rund(q[0], q[1], 5.5, 4.5, 1));
+      const seeLauf = kurve([[80, 71], [86, 79], [87, 89], [80, 98]], 6);
+      seeLauf.forEach((q, i) => {
+        const t = i / (seeLauf.length - 1), w = 8 + Math.sin(Math.min(1, t * 1.25) * Math.PI) * 12 + (ST.hash2(i, 3, 17) - 0.5) * 3;
+        rund(q[0] + (ST.hash2(i, 5, 17) - 0.5) * 3, q[1], w, w * 0.8, 1);
+      });
+      rund(68, 90, 8, 6, 1);
+      /* Felder (Getreide) vorn links und rechts, wie im alten Dorf */
+      for (const [fx, fy, fw, fh] of [[-4, 82, 8, 5.5], [86, 22, 6, 8], [-24, 62, 5, 4]]) rund(fx, fy, fw, fh, 2);
+    };
+    D.kulisse = function () {
+      const liste = [];
+      const setze = (bild, x, y, dreh, x2) => { liste.push(Object.assign({ art: "kulisse", bild: bild, x: x, y: y, dreh: dreh || 0, fuss: [2, 2], hoehe: 4 }, x2 || {})); };
+      setze("k_bahnhof", D.BAHN_HALT[0], D.BAHN_HALT[1] + 9.5, 0, { fuss: [30, 16.6], hoehe: 13, name: "Bahnhof" });
+      /* Brücken, wo Wege den Fluss oder Bach kreuzen */
+      const nah = (pts, q, d) => pts.some((r) => Math.hypot(r[0] - q[0], r[1] - q[1]) < d);
+      const fl = kurve(D.FLUSS, 10), mb = kurve(D.MUEHLBACH, 12), bruecken = [];
+      for (const w of D.WEGE) for (let i = 2; i < w.length - 2; i += 2) {
+        const q = w[i];
+        if ((nah(fl, q, 1.6) || nah(mb, q, 1.4)) && !bruecken.some((b) => Math.hypot(b[0] - q[0], b[1] - q[1]) < 8)) {
+          bruecken.push(q);
+          const dx = w[i + 1][0] - w[i - 1][0], dy = w[i + 1][1] - w[i - 1][1];
+          setze("d_bruecke", q[0], q[1], Math.abs(dx) > Math.abs(dy) ? 1 : 0, { fuss: [3.9, 11.2], hoehe: 2.7 });   // Brücke (bei dreh 0 längs y) in Wegrichtung
+        }
+      }
+      /* Laternen an den Wegen (alle ≈ 16 m), Bänke und Brunnen am Markt */
+      let seit = 0;
+      for (const w of D.WEGE) for (let i = 1; i < w.length; i++) {
+        seit += Math.hypot(w[i][0] - w[i - 1][0], w[i][1] - w[i - 1][1]);
+        if (seit < 16) continue; seit = 0;
+        const dx = w[i][0] - w[i - 1][0], dy = w[i][1] - w[i - 1][1], l = Math.hypot(dx, dy) || 1;
+        const x = w[i][0] - dy / l * 2.2, y = w[i][1] + dx / l * 2.2;
+        if (nah(fl, [x, y], 3) || nah(mb, [x, y], 3)) continue;
+        setze("d_laterne", x, y, 0, { fuss: [0.8, 0.8], hoehe: 4.4, deko: 1 });
+      }
+      for (let i = 0; i < 4; i++) { const a = rad(i * 90 + 45); setze("d_bank", MARKT[0] + Math.cos(a) * 8.6, MARKT[1] + Math.sin(a) * 8.6, 0, { fuss: [1.9, 0.75], hoehe: 0.9, deko: 1 }); }
+      setze("d_weihnachtsbaum", MARKT[0], MARKT[1], 0, { fuss: [7.4, 7.4], hoehe: 21.8, nurWinter: 1, jahr: "winter", deko: 1 });
+      setze("d_brunnen", MARKT[0], MARKT[1], 0, { fuss: [4.6, 4.6], hoehe: 5.4, jahrNicht: "winter", deko: 1 });
+      for (let i = 0; i < 6; i++) { const a = rad(30 + i * 60); setze("d_marktbude", MARKT[0] + Math.cos(a) * 6.6, MARKT[1] + Math.sin(a) * 6.6, drehZurMitte(i * 60 + 30), { fuss: [4, 3.2], hoehe: 4.2, nurWinter: 1, jahr: "winter", deko: 1 }); }
+      setze("d_pyramide", 16, -22, 0, { fuss: [9.2, 9.2], hoehe: 13, nurWinter: 1, jahr: "winter", deko: 1 });
+      setze("d_krippe", -24, 2, 0, { fuss: [7.2, 5.4], hoehe: 5.2, nurWinter: 1, jahr: "winter", deko: 1 });
+      /* Wald ringsum (nicht auf dem Gleis, nicht im Wasser) */
+      const r = rng(4711), G = B.GROESSE / 2;
+      for (let i = 0; i < 170; i++) {
+        const seite = i % 4, u = r() * (2 * G + 30) - G - 15, tief = 4 + Math.pow(r(), 0.7) * 22;
+        const x = seite === 0 ? u : seite === 1 ? G + tief : seite === 2 ? u : -G - tief;
+        const y = seite === 0 ? -G - tief : seite === 1 ? u : seite === 2 ? G + tief : u;
+        if (Math.abs(y - D.BAHN_Y) < 6) continue;
+        if (B.wert(x, y, 1) > 0.02 || B.wert(x + 2, y, 1) > 0.02 || B.wert(x - 2, y, 1) > 0.02 || B.wert(x, y - 2, 1) > 0.02) continue;
+        const bild = r() < 0.7 ? "n_tanne" + ((r() * 3) | 0) : "n_laubbaum" + ((r() * 3) | 0);
+        liste.push({ art: "natur", bild: bild, x: x, y: y, dreh: 0, fuss: [3.5, 3.5], hoehe: 13, rand: 1 });
+      }
+      /* Der Wald hinten rechts (im alten Dorf oben rechts) – hinter der Bahn */
+      for (let i = 0; i < 40; i++) {
+        const x = 10 + r() * 90, y = D.BAHN_Y - 8 - r() * 22;
+        liste.push({ art: "natur", bild: r() < 0.75 ? "n_tanne" + ((r() * 3) | 0) : "n_laubbaum" + ((r() * 3) | 0), x: x, y: y, dreh: 0, fuss: [3.5, 3.5], hoehe: 13, rand: 1 });
+      }
+      const frei = (x, y, abst) => {
+        for (const k in P) { const p = P[k]; if (Math.hypot(p.x - x, p.y - y) < (k === "muehle" ? 13 : 9) + abst) return false; }
+        for (const k in D.WUNDER) { const w = D.WUNDER[k]; if (Math.abs(w.x - x) < w.fuss[0] / 2 + 2 + abst && Math.abs(w.y - y) < w.fuss[1] / 2 + 2 + abst) return false; }
+        for (const o of liste) if (!o.rand && Math.abs(o.x - x) < o.fuss[0] / 2 + abst && Math.abs(o.y - y) < o.fuss[1] / 2 + abst) return false;
+        if (Math.abs(y - D.BAHN_Y) < 8) return false;
+        if (B.wert(x, y, 0) > 0.05 || B.wert(x, y, 1) > 0.05 || B.wert(x, y, 2) > 0.05) return false;
+        return true;
+      };
+      /* offen wie das alte Dorf: nur wenige Bäume zwischen den Häusern, eher am Rand der Wiese */
+      let innen = 0;
+      for (let i = 0; i < 260 && innen < 38; i++) {
+        const x = (r() - 0.5) * 2 * (G - 3), y = (r() - 0.5) * 2 * (G - 3);
+        if (Math.hypot(x - MARKT[0], y - MARKT[1]) < 34 || !frei(x, y, 4)) continue;
+        innen++;
+        liste.push({ art: "natur", bild: r() < 0.5 ? "n_tanne" + ((r() * 3) | 0) : "n_laubbaum" + ((r() * 3) | 0), x: x, y: y, dreh: 0, fuss: [3.5, 3.5], hoehe: 13 });
+      }
+      /* Obstwiese hinten rechts */
+      for (let i = 0; i < 12; i++) {
+        const x = 46 + (i % 4) * 6.5 + r() * 1.5, y = -72 + Math.floor(i / 4) * 6 + r() * 1.5;
+        if (!frei(x, y, 1.5)) continue;
+        liste.push({ art: "natur", bild: "n_obstbaum" + (i % 2), x: x, y: y, dreh: 0, fuss: [3, 3], hoehe: 6 });
+      }
+      for (const [x, y] of [[-16, 26], [24, -30], [40, 30], [-30, -16]]) if (frei(x, y, 1)) setze("d_schneemann", x, y, 0, { fuss: [1.3, 1.3], hoehe: 1.9, nurWinter: 1, jahr: "winter", deko: 1 });
+      /* Bootsverleih am See (boote.js) */
+      setze("d_bootshaus", 60.5, 85.5, 0, { fuss: [10, 3.4], hoehe: 4, name: "Bootsverleih" });
+      return liste;
+    };
+  })();
+
   /* ---------------- Spielstand → Gebäude ---------------- */
   /* ich: Antwort von spiel_ich (dorf, dorf_plan, baustellen, volk) */
   D.aufbauen = function (ich, eigeneDeko) {

@@ -103,6 +103,9 @@
   /* Welche Größe? stufe = Maßstab des Objekts (Gebäudestufe 0,82…1,02) */
   LB.wahl = function (basis, s, stufe) {
     const k = LB.vz[basis + "_k"], g = LB.vz[basis + "_g"], m = LB.vz[basis + "_m"];
+    /* FASSUNG 807 — Baustelle im kleinen Rahmen: das Zwergbild (_n) der Bauphase */
+    const n = LB.nurKlein && LB.vz[basis + "_n"];
+    if (n) return { name: basis + "_n", meta: n };
     if (m) return { name: basis + "_m", meta: m };
     /* FASSUNG 805 — im kleinen Rahmen das Zwergbild (_z, 40 %), solange es scharf genug ist (bis 1,35-fach). */
     const z = LB.nurKlein && LB.vz[basis + "_z"];

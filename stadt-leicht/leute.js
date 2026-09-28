@@ -25,7 +25,7 @@
   function neu(x, y) { knoten.push([x, y]); nachbarn.push([]); return knoten.length - 1; }
   function kante(a, b) { if (a === b || nachbarn[a].indexOf(b) >= 0) return; nachbarn[a].push(b); nachbarn[b].push(a); }
   function naechster(x, y, aus) { let b = -1, d0 = Infinity; for (const i of aus) { const d = Math.hypot(knoten[i][0] - x, knoten[i][1] - y); if (d < d0) { d0 = d; b = i; } } return b; }
-  (function netz() {
+  function netzRundling() {
     const markt = [], ring = [];
     for (let i = 0; i < 12; i++) markt.push(neu(Math.cos(rad(i * 30)) * 10.2, Math.sin(rad(i * 30)) * 10.2));
     for (let i = 0; i < 12; i++) kante(markt[i], markt[(i + 1) % 12]);
@@ -44,8 +44,25 @@
       let v = naechster(Math.cos(rad(w)) * 34, Math.sin(rad(w)) * 34, ring);
       for (const p of pts) { const n = neu(p[0], p[1]); kante(v, n); v = n; }
     }
-  })();
-  LE.knoten = knoten;
+  }
+  /* FASSUNG 807 — Originalkarte: die Leute gehen auf den Wegen von dorf.js (D.WEGE); Punkte, die sich treffen, werden
+     zu einer Kreuzung zusammengelegt. */
+  function netzWege(wege) {
+    const finde = (x, y) => { for (let i = 0; i < knoten.length; i++) if (Math.hypot(knoten[i][0] - x, knoten[i][1] - y) < 2.5) return i; return neu(x, y); };
+    for (const w of wege) {
+      let v = finde(w[0][0], w[0][1]), seit = 0;
+      for (let i = 1; i < w.length; i++) {
+        seit += Math.hypot(w[i][0] - w[i - 1][0], w[i][1] - w[i - 1][1]);
+        if (seit < 5 && i < w.length - 1) continue;
+        seit = 0; const n = finde(w[i][0], w[i][1]); kante(v, n); v = n;
+      }
+    }
+  }
+  function netzBauen() {
+    if (knoten.length) return;
+    if (ST.dorf && ST.dorf.WEGE) netzWege(ST.dorf.WEGE); else netzRundling();
+    LE.knoten = knoten;
+  }
 
   /* ---------------- Leute ---------------- */
   const ARTEN = 6;
@@ -56,6 +73,7 @@
     return { art: i % (ST.bilder && ST.bilder.spar ? 2 : ARTEN), von: start, nach: nb[Math.floor(rng() * nb.length)], t: rng(), tempo: 1.15 + rng() * 0.35, seite: (rng() - 0.5) * 1.3, ph: rng(), rng: rng, nachts: rng() < 0.35, pause: 0 };
   }
   LE.setzen = function (anzahl) {
+    netzBauen();
     const rng = ST.zufall(20251224);
     LE.liste = [];
     for (let i = 0; i < anzahl; i++) LE.liste.push(menschNeu(i, rng));

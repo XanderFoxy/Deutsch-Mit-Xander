@@ -114,6 +114,7 @@
     if (LB.neu) { LB.neu = false; L.unruhe = 2; }
     if (ST.leute) ST.leute.bewegen(jetzt);
     if (ST.boote) ST.boote.bewegen(jetzt);
+    if (ST.bahn) ST.bahn.bewegen(jetzt);   // FASSUNG 809 — die Eisenbahn (bahn.js)
     /* lebendig: Schneefall, Rauch, Nachtlichter → ~30 Bilder je Sekunde reichen */
     const lebt = (SZ.jahr === "winter" && SZ.schneefall) || true;
     const takt = L.unruhe > 0 ? 0 : lebt ? 33 : 250;
@@ -156,7 +157,7 @@
   };
   try { L.lage = JSON.parse(localStorage.getItem("leicht_lage_v1") || "{}"); } catch (e) { L.lage = {}; }
 
-  L.aufbauen = function () { D.aufbauen(L.ich, L.dekoLaden()); if (ST.leute && !ST.leute.liste.length) ST.leute.setzen(q.get("leute") != null ? +q.get("leute") : LB.spar ? 12 : 30); if (ST.oberflaeche && ST.oberflaeche.neuAufgebaut) ST.oberflaeche.neuAufgebaut(); L.unruhe = 2; };
+  L.aufbauen = function () { D.aufbauen(L.ich, L.dekoLaden()); if (ST.bahn) ST.bahn.aufbauen(); if (ST.leute && !ST.leute.liste.length) ST.leute.setzen(q.get("leute") != null ? +q.get("leute") : LB.spar ? 12 : 30); if (ST.oberflaeche && ST.oberflaeche.neuAufgebaut) ST.oberflaeche.neuAufgebaut(); L.unruhe = 2; };
 
   function los() {
     groesse();
@@ -181,6 +182,7 @@
         return warte().then(() => warte()).then(() => {
           if (ST.leute) for (let x = 0; x <= 20000; x += 50) ST.leute.bewegen(x);
           if (ST.boote) for (let x = 0; x <= 20000; x += 50) ST.boote.bewegen(x);
+          if (ST.bahn) for (let x = 0; x <= 20000; x += 50) ST.bahn.bewegen(x);
           B.zeichnen(1, SZ.zeitDaten(), SZ.jahr); SZ.zeichnen(+(q.get("t") || 1000));
           if (ST.oberflaeche && ST.oberflaeche.bild) ST.oberflaeche.bild(1000);
           window.__fertig = true;

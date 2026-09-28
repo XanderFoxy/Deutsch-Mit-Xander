@@ -125,19 +125,31 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 .lk-mini-modus .lk-mini.zu { display: block; }
 .lk-mini-modus .lk-mini-feld span { display: none; }
 .lk-mini-modus .lk-vorhang b { font-size: 18px; }
+.lk-vorhang.lk-vorhang-klein { inset: auto 0 0 0; height: 3px; display: block; background: rgba(0,0,0,.25); pointer-events: none; }
+.lk-vorhang.lk-vorhang-klein div { display: block; height: 100%; }
+.lk-vorhang.lk-vorhang-klein b, .lk-vorhang.lk-vorhang-klein span { display: none; }
+.lk-vorhang.lk-vorhang-klein i { display: block; width: 100%; height: 3px; border-radius: 0; background: none; }
 
 /* FASSUNG 805 — im kleinen Rahmen scrollt ein Wisch die Seite (nicht die Stadt); Tippen bleibt Tippen. */
-html.lk-mini-html, .lk-mini-modus, .lk-mini-modus #lDinge, .lk-mini-modus #lBoden { touch-action: pan-y; }
+/* FASSUNG 807 — XANDER: „über den Bereich des Bildes scrollen und man kommt … unter das Bild … jetzt bewegt sich die komplette
+   Webseite". Kein natives Scrollen im Rahmen mehr (das schob die ganze Seite): die Stadt leitet das Wischen an das Menü weiter. */
+html.lk-mini-html, .lk-mini-modus, .lk-mini-modus #lDinge, .lk-mini-modus #lBoden { touch-action: none; }
 /* FASSUNG 806 — mit dem Kompass (nah) gehört der Finger der Stadt */
 html.lk-mini-html:has(.lk-nah), .lk-mini-modus.lk-nah, .lk-mini-modus.lk-nah #lDinge, .lk-mini-modus.lk-nah #lBoden { touch-action: none; }
 /* FASSUNG 806 — Zeichen über den Häusern (nur im eingebetteten Spiel): „fertig" grün, Bau/kaputt, laufend nur nah dran */
 #lOber > .lk-zeichen-ebene { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.lk-zeichen { position: absolute; left: 0; top: 0; pointer-events: auto; min-height: 30px; min-width: 30px; padding: 0 8px; border: 0;
-  border-radius: 15px; font: 700 11px/30px system-ui, sans-serif; white-space: nowrap; color: #fff; background: rgba(35, 45, 60, .82);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, .35); cursor: pointer; will-change: transform; }
-.lk-zeichen.lk-z-fertig { background: #2f9a4a; box-shadow: 0 0 0 2px rgba(255, 255, 255, .85), 0 2px 6px rgba(0, 0, 0, .4); animation: lk-zeichen-puls 1.6s ease-in-out infinite; }
-.lk-zeichen.lk-z-bau { background: rgba(190, 120, 20, .9); }
-.lk-zeichen.lk-z-kaputt { background: rgba(170, 40, 40, .9); }
-.lk-zeichen.lk-z-laeuft { font-weight: 600; opacity: .9; }
+/* FASSUNG 807 — Schilder wie im alten Dorf: klein, gelb = fertig (wippt), dunkel = läuft, rot = kaputt, braun = Bau; vorn die Ware.
+   Die Tippfläche bleibt 30 px hoch (durchsichtiger Rand um das Schild). */
+.lk-zeichen { position: absolute; left: 0; top: 0; pointer-events: auto; min-height: 30px; min-width: 30px; padding: 7px 4px; border: 0; background: none; cursor: pointer; will-change: transform; display: inline-flex; align-items: center; justify-content: center; }
+.lk-zeichen span { order: 2; }
+.lk-zeichen::before { content: ""; position: absolute; inset: 7px 4px; border-radius: 8px; background: #1f2a3a; box-shadow: 0 1px 3px rgba(0,0,0,.45); z-index: -1; }
+.lk-zeichen { isolation: isolate; font: 800 9px/16px system-ui, sans-serif; white-space: nowrap; color: #fff; }
+.lk-zeichen span { padding: 0 6px 0 2px; }
+.lk-z-bild { width: 13px; height: 13px; margin-left: 4px; flex: none; }
+.lk-zeichen.lk-z-fertig { color: #3b2a08; animation: lk-zeichen-wink 1s ease-in-out infinite alternate; }
+.lk-zeichen.lk-z-fertig::before { background: #f2c230; }
+.lk-zeichen.lk-z-bau::before { background: #9a6424; }
+.lk-zeichen.lk-z-kaputt::before { background: #d8261f; }
+.lk-zeichen.lk-z-laeuft { font-weight: 700; }
 .lk-mini-modus:not(.lk-nah) .lk-zeichen.lk-z-laeuft { display: none !important; }
-@keyframes lk-zeichen-puls { 50% { filter: brightness(1.18); } }
+@keyframes lk-zeichen-wink { from { scale: 1; } to { scale: 1.12; } }

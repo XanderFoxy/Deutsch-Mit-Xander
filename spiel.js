@@ -12919,6 +12919,7 @@
     LSTADT.post = function (ev) {
       if (!LSTADT || ev.origin !== location.origin || !ev.data || ev.source !== LSTADT.rahmen.contentWindow) return;
       if (ev.data.typ === "leicht-zu") lsVoll(false);
+      if (ev.data.typ === "leicht-scroll") lsScroll(ev.data);
       if (ev.data.typ === "leicht-voll") lsVoll(true);
       /* Tipp auf ein Haus in der kleinen Stadt: die Karte des Spiels darunter (Einsammeln, Ausbauen …). */
       if (ev.data.typ === "leicht-haus" && typeof ev.data.g === "string" && (DORF[ev.data.g] || ev.data.g === "bahnhof" || ev.data.g === "wald")) {
@@ -12945,13 +12946,13 @@
     Object.keys(DORF).forEach(function (k) {
       var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, w = (ich.werk || {})[k], z = null;
       var bauH = baustelleVon(ich, k), stall = st && (k === "huehnerstall" || k === "kuhstall") ? stallBereit(ich, k) : null;
-      if (bauH) z = ["bau", "Bau " + uhrText(Math.max(0, Date.parse(bauH.bis) - jetzt))];
+      if (bauH) z = ["bau", "Bau " + uhrText(Math.max(0, Date.parse(bauH.bis) - jetzt)), "bau"];
       else if (st && !(g.lp > 0)) z = ["kaputt", "kaputt"];
-      else if (w) z = Date.parse(w.fertig) > jetzt ? ["laeuft", wareName(w.ware) + " " + uhrText(Date.parse(w.fertig) - jetzt)] : ["fertig", w.menge + " " + wareName(w.ware)];
-      else if (stall && stall.bereit) z = ["fertig", stall.bereit + (k === "kuhstall" ? " Milch" : " Eier")];
+      else if (w) z = Date.parse(w.fertig) > jetzt ? ["laeuft", wareName(w.ware) + " " + uhrText(Date.parse(w.fertig) - jetzt), w.ware] : ["fertig", w.menge + " " + wareName(w.ware), w.ware];
+      else if (stall && stall.bereit) z = ["fertig", stall.bereit + (k === "kuhstall" ? " Milch" : " Eier"), k === "kuhstall" ? "milch" : "ei"];
       else if (k === "bergwerk" && st) {
         var t = truppStand(ich, "berg");
-        if (t) z = t.fertig ? ["fertig", t.menge + " " + wareName(t.ware)] : ["laeuft", (t.leer ? "Ruhe " : wareName(t.ware) + " ") + uhrText(t.rest)];
+        if (t) z = t.fertig ? ["fertig", t.menge + " " + wareName(t.ware), t.ware] : ["laeuft", (t.leer ? "Ruhe " : wareName(t.ware) + " ") + uhrText(t.rest), t.ware];
       }
       if (z) aus[k] = z;
     });
@@ -12977,6 +12978,32 @@
     if (sig === L.zSig) return;
     L.zSig = sig;
     lsPost({ typ: "leicht-zeichen", z: z });
+  }
+  /* FASSUNG 807 — Wischen über die kleine Stadt scrollt das Dorf-Menü (den Behälter um den Platzhalter), nicht die Seite. */
+  function lsScroller() {
+    var p = document.querySelector(".sp-dl-neustadt-platz"), e = p && p.parentElement;
+    while (e && e !== document.body && e !== document.documentElement) {
+      var cs = getComputedStyle(e);
+      if (/(auto|scroll)/.test(cs.overflowY) && e.scrollHeight > e.clientHeight + 2) return e;
+      e = e.parentElement;
+    }
+    return document.scrollingElement || document.documentElement;
+  }
+  function lsScroll(d) {
+    var L = LSTADT, sc = lsScroller();
+    if (!L || !sc || L.voll) return;
+    if (L.schwung) { cancelAnimationFrame(L.schwung); L.schwung = 0; }
+    if (d.halt) return;
+    if (typeof d.dy === "number" && isFinite(d.dy)) sc.scrollTop += Math.max(-400, Math.min(400, d.dy));
+    if (typeof d.v === "number" && isFinite(d.v)) {
+      var v = Math.max(-5, Math.min(5, d.v)), zuletzt = performance.now();
+      var lauf = function (jetzt) {
+        var dt = Math.min(40, jetzt - zuletzt); zuletzt = jetzt; v *= Math.pow(0.9965, dt);
+        var vor = sc.scrollTop; sc.scrollTop += v * dt;
+        L.schwung = Math.abs(v) > 0.03 && sc.scrollTop !== vor ? requestAnimationFrame(lauf) : 0;
+      };
+      L.schwung = requestAnimationFrame(lauf);
+    }
   }
   function lsTakt() {
     if (!LSTADT) return;

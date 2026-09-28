@@ -33,7 +33,9 @@ const SCHRAEG = /_f_(45|135|225|315)_[a-z]\.webp/;
     if (!f.startsWith(WURZEL) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { a.writeHead(404); return a.end(); }
     a.writeHead(200, { "Content-Type": TYP[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(a);
   }).listen(0);
-  const basis = "http://127.0.0.1:" + srv.address().port + "/stadt-leicht.html?demo=1&jahr=winter&zeit=tag" + (process.env.QUELLE ? "&quelle=1" : "");
+  /* FASSUNG 807: in der Originalkarte stehen manche Häuser schon schräg (zum Markt hin) – die Drehmechanik prüft diese
+     Sonde im Rundling, wo am Anfang alles gerade steht. */
+  const basis = "http://127.0.0.1:" + srv.address().port + "/stadt-leicht.html?demo=1&vorlage=rundling&jahr=winter&zeit=tag" + (process.env.QUELLE ? "&quelle=1" : "");
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
   const ctx = await br.newContext({ viewport: { width: 360, height: 740 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
     userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Mobile Safari/537.36" });
@@ -53,13 +55,14 @@ const SCHRAEG = /_f_(45|135|225|315)_[a-z]\.webp/;
   const hin = async (x, y, s) => { await pg.evaluate(([x, y, s]) => { const K = STADT.kamera; K.x = x; K.y = y; K.s = s * K.dpr; STADT.leicht.unruhe = 3; }, [x, y, s]); await pg.waitForTimeout(900); };
   const karteText = () => pg.evaluate(() => { const k = document.querySelector(".lk-karte"); return k && !k.hidden ? k.textContent : ""; });
   /* das Bild, das für ein Objekt gerade gezeichnet wird (wartet, bis es geladen ist) */
-  const gezeichnet = async (fn) => {
+  /* muster: so lange warten, bis das erwartete Bild dran ist (die Bildschleife malt erst im nächsten Takt neu) */
+  const gezeichnet = async (fn, muster) => {
     for (let i = 0; i < 60; i++) {
-      const r = await pg.evaluate((fn) => { const f = eval(fn); const e = STADT.szene.sichtbare.find((e) => f(e.o)); if (!e) return null; const n = e.lagen[0][0]; return { name: n, fertig: STADT.bilder.fertig(n), dreh: e.o.dreh }; }, fn.toString());
-      if (r && r.fertig) return r;
+      const r = await pg.evaluate((fn) => { const f = eval(fn); const e = STADT.szene.sichtbare.find((e) => f(e.o)); if (!e) return null; const n = e.lagen[0][0]; return { name: n, fertig: STADT.bilder.fertig(n), dreh: e.o.dreh, kdreh: STADT.kamera.dreh }; }, fn.toString());
+      if (r && r.fertig && (!muster || muster.test(r.name))) return r;
       await pg.waitForTimeout(250);
     }
-    return null;
+    return muster ? gezeichnet(fn) : null;
   };
   const kartePruefen = async (was) => {
     const r = await pg.evaluate(() => {
@@ -81,11 +84,11 @@ const SCHRAEG = /_f_(45|135|225|315)_[a-z]\.webp/;
   sage(/Rathaus/.test(await karteText()), "Rathaus antippen öffnet seine Karte");
   await kartePruefen("Karte am Haus");
   const d0 = await pg.evaluate(() => STADT.szene.auswahl && STADT.szene.auswahl.dreh);
-  await pg.locator(".lk-karte .lk-knopf[title='Drehen']").tap();
+  await pg.locator(".lk-karte .lk-knopf[title='Drehen']").first().tap();
   await pg.waitForTimeout(300);
   const d1 = await pg.evaluate(() => STADT.szene.auswahl && STADT.szene.auswahl.dreh);
   sage(d1 === (d0 + 0.5) % 4, "„Drehen“ dreht das Haus um 45°", d0 + " → " + d1);
-  let e = await gezeichnet((o) => o.spiel === "rathaus");
+  let e = await gezeichnet((o) => o.spiel === "rathaus", /_f_(45|135|225|315)_[kg]$/);
   const soll = ((d1 * 90) % 360);
   sage(!!e && new RegExp("^g_rathaus_winter_tag_f_" + soll + "_[kg]$").test(e.name), "gezeichnet wird das schräge Bild _f_" + soll, e && e.name);
   sage(geladen.some((u) => new RegExp("g_rathaus_winter_tag_f_" + soll + "_[kg]\\.webp").test(u)) && !geladen.some((u) => SCHRAEG.test(u) && !/g_rathaus_/.test(u)), "geladen wird nur das schräge Bild dieses Hauses", geladen.filter((u) => SCHRAEG.test(u)).map((u) => u.split("/").pop().split("?")[0]).join(", "));
@@ -93,17 +96,17 @@ const SCHRAEG = /_f_(45|135|225|315)_[a-z]\.webp/;
   sage(new RegExp("_f_" + soll + "_[kg]_s$").test(schatten || ""), "mit eigenem schrägem Schatten", schatten);
   await pg.screenshot({ path: BILD + "-schraeg.png" });
   /* zurück und wieder hin: links/rechts sind Gegenrichtungen */
-  await pg.locator(".lk-karte .lk-knopf[title='Andersherum drehen']").tap(); await pg.waitForTimeout(200);
+  await pg.locator(".lk-karte .lk-knopf[title='Andersherum drehen']").tap({ timeout: 3000 }).catch(() => {}); await pg.waitForTimeout(200);
   const d2 = await pg.evaluate(() => STADT.szene.auswahl.dreh);
-  await pg.locator(".lk-karte .lk-knopf[title='Drehen']").tap(); await pg.waitForTimeout(200);
+  await pg.locator(".lk-karte .lk-knopf[title='Drehen']").first().tap(); await pg.waitForTimeout(200);
   sage(d2 === d0 && (await pg.evaluate(() => STADT.szene.auswahl.dreh)) === d1, "„Andersherum drehen“ dreht 45° zurück", d1 + " → " + d2 + " → " + d1);
   const gemerkt = await pg.evaluate(() => JSON.parse(localStorage.getItem("leicht_lage_v1") || "{}"));
   sage(gemerkt.rathaus && gemerkt.rathaus.dreh === d1, "die schräge Lage wird gemerkt", JSON.stringify(gemerkt));
   /* Kamera drehen: das Haus bleibt schräg (Blick + 90°) */
   await pg.evaluate(() => { STADT.kamera.dreh = 1; STADT.szene.geaendert(); STADT.leicht.unruhe = 3; });
-  e = await gezeichnet((o) => o.spiel === "rathaus");
   const soll2 = (soll + 90) % 360;
-  sage(!!e && new RegExp("_f_" + soll2 + "_[kg]$").test(e.name), "Karte gedreht: das Haus zeigt _f_" + soll2, e && e.name);
+  e = await gezeichnet((o) => o.spiel === "rathaus", new RegExp("_f_" + soll2 + "_[kg]$"));
+  sage(!!e && new RegExp("_f_" + soll2 + "_[kg]$").test(e.name), "Karte gedreht: das Haus zeigt _f_" + soll2, JSON.stringify(e));
   await pg.evaluate(() => { STADT.kamera.dreh = 0; STADT.szene.geaendert(); STADT.leicht.unruhe = 3; });
   /* Tiefensortierung: umschließendes Rechteck der gedrehten Grundfläche */
   const R = await pg.evaluate(() => { const o = STADT.szene.objekte.find((o) => o.spiel === "rathaus"); STADT.szene.zeichnen(performance.now()); const R = o._R; return R && { b: R.a1 - R.a0, t: R.b1 - R.b0, fuss: o.fuss }; });
@@ -116,11 +119,11 @@ const SCHRAEG = /_f_(45|135|225|315)_[a-z]\.webp/;
   await pg.locator(".lk-schmuck").first().tap(); await pg.waitForTimeout(500);
   await pg.locator(".lk-karte-klein", { hasText: "Bank" }).first().tap(); await pg.waitForTimeout(300);
   await kartePruefen("Karte beim Setzen");
-  await pg.locator(".lk-karte .lk-knopf[title='Drehen']").tap(); await pg.waitForTimeout(200);
+  await pg.locator(".lk-karte .lk-knopf[title='Drehen']").first().tap(); await pg.waitForTimeout(200);
   await pg.locator(".lk-karte .lk-knopf[title='Setzen']").tap(); await pg.waitForTimeout(300);
   const bank = await pg.evaluate(() => JSON.parse(localStorage.getItem("leicht_deko_v1") || "[]").find((d) => d.bild === "d_bank"));
   sage(bank && bank.dreh === 0.5, "Bank schräg gesetzt und gemerkt", JSON.stringify(bank));
-  e = await gezeichnet((o) => o.bild === "d_bank" && o.art === "eigen");
+  e = await gezeichnet((o) => o.bild === "d_bank" && o.art === "eigen", /_f_45_[kg]$/);
   sage(!!e && /^d_bank_winter_tag_f_45_[kg]$/.test(e.name), "die Bank zeigt ihr 45°-Bild", e && e.name);
 
   /* Neu laden: alles wieder schräg */
@@ -130,13 +133,14 @@ const SCHRAEG = /_f_(45|135|225|315)_[a-z]\.webp/;
   const r2 = await pg.evaluate(() => { const o = STADT.szene.objekte.find((o) => o.spiel === "rathaus"); const b = STADT.szene.objekte.find((o) => o.bild === "d_bank" && o.art === "eigen"); return { r: o && o.dreh, b: b && b.dreh }; });
   sage(r2.r === d1 && r2.b === 0.5, "Rathaus und Bank stehen wieder schräg", JSON.stringify(r2));
   await hin(rathaus[0], rathaus[1] + 4, 12);
-  e = await gezeichnet((o) => o.spiel === "rathaus");
+  e = await gezeichnet((o) => o.spiel === "rathaus", new RegExp("_f_" + soll + "_[kg]$"));
   sage(!!e && new RegExp("_f_" + soll + "_[kg]$").test(e.name), "das Rathaus zeigt wieder _f_" + soll, e && e.name);
   /* Treffer schräg: ein Tipp aufs Haus (Mitte, halbe Höhe und die schräg vorstehende Ecke) */
   p = await bildpunkt(rathaus[0], rathaus[1], 4);
   await tipp(p[0], p[1]);
   sage(/Rathaus/.test(await karteText()), "Tipp aufs schräge Rathaus öffnet seine Karte", (await karteText()).slice(0, 40));
-  const ecke = await pg.evaluate(() => { const o = STADT.szene.objekte.find((o) => o.spiel === "rathaus"); const ec = STADT.szene.ecken(o); let best = null;
+  const ecke = await pg.evaluate(() => { const o = STADT.szene.objekte.find((o) => o.spiel === "rathaus"); /* alter Stand ohne szene.ecken: die gerade Grundfläche */
+    const w = o.fuss[0] / 2, d = o.fuss[1] / 2, ec = STADT.szene.ecken ? STADT.szene.ecken(o) : [[o.x - w, o.y - d], [o.x + w, o.y - d], [o.x + w, o.y + d], [o.x - w, o.y + d]]; let best = null;
     for (const q of ec) { const P = STADT.proj(q[0] * 0.8 + o.x * 0.2, q[1] * 0.8 + o.y * 0.2, 2); if (!best || P[1] > best[1]) best = P; }
     const t = STADT.szene.treffer(best[0], best[1]); return { treffer: t && t.spiel, x: best[0] / STADT.kamera.dpr, y: best[1] / STADT.kamera.dpr }; });
   sage(ecke.treffer === "rathaus", "auch die vordere Ecke des schrägen Hauses trifft", JSON.stringify(ecke));
@@ -160,23 +164,28 @@ const SCHRAEG = /_f_(45|135|225|315)_[a-z]\.webp/;
   const setzen = async (name, x, y, drehen) => {
     await pg.locator(".lk-karte-klein", { hasText: name }).first().tap(); await pg.waitForTimeout(300);
     await pg.evaluate(([x, y]) => { const g = STADT.szene.objekte.find((o) => o.geist); g.x = x; g.y = y; STADT.szene.geaendert(); }, [x, y]);
-    for (let i = 0; i < (drehen || 0); i++) { await pg.locator(".lk-karte .lk-knopf[title='Drehen']").tap(); await pg.waitForTimeout(120); }
+    for (let i = 0; i < (drehen || 0); i++) { await pg.locator(".lk-karte .lk-knopf[title='Drehen']").first().tap(); await pg.waitForTimeout(120); }
     await pg.locator(".lk-karte .lk-knopf[title='Setzen']").tap(); await pg.waitForTimeout(300);
   };
   const leisteAuf = async () => { await pg.locator(".lk-schmuck").first().tap(); await pg.waitForTimeout(400); };
-  await pg.locator(".lk-karte-klein", { hasText: /^Gleis$/ }).first().tap().catch(() => {}); await pg.waitForTimeout(200);
-  await pg.evaluate(() => { const g = STADT.szene.objekte.find((o) => o.geist); if (g) { g.x = -6; g.y = 22; STADT.szene.geaendert(); } });
-  await pg.locator(".lk-karte .lk-knopf[title='Setzen']").tap(); await pg.waitForTimeout(300);
-  await leisteAuf(); await setzen("Gleis", -6, 18);
-  await leisteAuf(); await setzen("Pferdebahn", -6, 20);
-  await leisteAuf(); await setzen("Dodge Viper", -1, 21, 1);
+  /* ein freier Platz (nichts im Umkreis von 11 m), damit man es auch sieht */
+  const F = await pg.evaluate(() => { const O = STADT.szene.objekte.filter((o) => !o.geist && !o.versteckt);
+    for (let r = 20; r < 70; r += 2) for (let a = 0; a < 360; a += 15) { const x = Math.cos(a * Math.PI / 180) * r, y = Math.sin(a * Math.PI / 180) * r;
+      if (O.every((o) => Math.hypot(o.x - x, o.y - y) > 11 + Math.max(o.fuss ? o.fuss[0] : 2, o.fuss ? o.fuss[1] : 2) / 2)) return [Math.round(x), Math.round(y)]; } return [0, 44]; });
+  await pg.locator(".lk-leiste").evaluate((l) => { l.scrollLeft = 0; });
+  await setzen("Gleis", F[0], F[1] + 2);
+  await leisteAuf(); await setzen("Gleis", F[0], F[1] - 2);
+  await leisteAuf(); await setzen("Pferdebahn", F[0], F[1]);
+  await leisteAuf(); await setzen("Dodge Viper", F[0] + 5, F[1] + 1, 1);
+  await hin(F[0] + 2, F[1] + 1, 16);
   await pg.waitForTimeout(1500);
+  await gezeichnet((o) => o.bild === "v_viper", /_f_45_[kg]$/);
   const reihe = await pg.evaluate(() => { STADT.szene.zeichnen(performance.now()); const s = STADT.szene.sichtbare.map((e) => e.o.bild); return { gleis: s.lastIndexOf("d_gleis"), bahn: s.indexOf("v_pferdebahn"), viper: STADT.szene.sichtbare.filter((e) => e.o.bild === "v_viper").map((e) => e.lagen[0][0])[0] }; });
   sage(reihe.gleis >= 0 && reihe.bahn > reihe.gleis, "das Gleis wird unter der Pferdebahn gemalt (flach zuerst)", JSON.stringify(reihe));
   sage(/^v_viper_winter_tag_f_45_[kg]$/.test(reihe.viper || ""), "die Viper steht schräg (45°)", reihe.viper);
   const pb = await gezeichnet((o) => o.bild === "v_pferdebahn");
   sage(!!pb, "Pferdebahn-Bild geladen", pb && pb.name);
-  const tb = await pg.evaluate(() => { const o = STADT.szene.objekte.find((o) => o.bild === "v_pferdebahn"); const P = STADT.proj(o.x, o.y, 1.5); const t = STADT.szene.treffer(P[0], P[1]); return t && t.bild; });
+  const tb = await pg.evaluate(() => { const o = STADT.szene.objekte.find((o) => o.bild === "v_pferdebahn"); const P = STADT.proj(o.x, o.y + 1, 1.5); const t = STADT.szene.treffer(P[0], P[1]); return t && t.bild; });
   sage(tb === "v_pferdebahn", "ein Tipp auf die Pferdebahn trifft sie, nicht das Gleis darunter", tb);
   await pg.screenshot({ path: BILD + "-gleis.png" });
 

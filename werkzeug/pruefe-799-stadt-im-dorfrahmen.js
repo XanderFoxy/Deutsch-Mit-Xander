@@ -248,13 +248,17 @@ const sage = (gut, was, zusatz) => {
     return { n: a.n + 1, kb: a.kb + kb, gross: a.gross + (/_(g|m)\.webp|l_geher|verzeichnis\.json/.test(u) ? 1 : 0) }; }, { n: 0, kb: 0, gross: 0 });
   sage(!!last && last.gross === 0 && last.kb < 300, "der kleine Rahmen lädt unter 300 KB: nur Zwergbilder und das kleine Verzeichnis (keine großen Bilder, keine Leute, kein großes Verzeichnis)", JSON.stringify(last && { dateien: last.n, kb: Math.round(last.kb), gross: last.gross }));
   const k0 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y }));
-  const sc0 = await pg.evaluate(() => { const e = document.querySelector(".sp-dl-neustadt-platz"); let p = e.parentElement; while (p && !(p.scrollHeight > p.clientHeight + 4 && /(auto|scroll)/.test(getComputedStyle(p).overflowY))) p = p.parentElement; return p ? p.scrollTop : window.scrollY; });
+  const scMess = () => pg.evaluate(() => { const e = document.querySelector(".sp-dl-neustadt-platz"); let p = e.parentElement; while (p && p !== document.body && !(p.scrollHeight > p.clientHeight + 2 && /(auto|scroll)/.test(getComputedStyle(p).overflowY))) p = p.parentElement; return { menue: p && p !== document.body ? p.scrollTop : -1, seite: window.scrollY }; });
+  const sc0 = await scMess();
   { const o = await lage(".sp-lstadt"); const cdp = await ctx.newCDPSession(pg);
     await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: o.l + o.w / 2, y: o.t + o.h * .7 }] });
     for (let i = 1; i <= 8; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: o.l + o.w / 2 + i * 4, y: o.t + o.h * .7 - i * 14 }] }); await tick(16); }
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await tick(600); }
   const k1 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y }));
   sage(k0 && k1 && Math.abs(k0.x - k1.x) < .01 && Math.abs(k0.y - k1.y) < .01, "Wischen über die kleine Stadt verschiebt sie nicht (das Bild steht still wie beim alten Dorf)", JSON.stringify({ k0, k1 }));
+  /* FASSUNG 807 — XANDER: „kann man über den Bereich des Bildes scrollen und man kommt … unter das Bild … jetzt bewegt sich die komplette Webseite". */
+  const sc1 = await scMess();
+  sage(sc0.menue >= 0 && sc1.menue > sc0.menue + 40 && Math.abs(sc1.seite - sc0.seite) < 2, "Wischen über die kleine Stadt scrollt das Dorf-Menü darunter (nicht die ganze Seite)", JSON.stringify({ sc0, sc1 }));
 
   console.log("\nNEUZEICHNEN DES MENÜS LÄDT DIE STADT NICHT NEU\n");
   await imFrame(() => { window.__marke = 42; });

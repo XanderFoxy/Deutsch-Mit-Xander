@@ -45,7 +45,9 @@
   const JAHRE = ["winter", "fruehling", "sommer", "herbst"], JAHR_SYM = { winter: "schnee", fruehling: "bluete", sommer: "sonne", herbst: "blatt" };
   const JAHR_NAME = { winter: "Winter", fruehling: "Frühling", sommer: "Sommer", herbst: "Herbst" };
   /* Die Karte in 3 × 3 Bereiche à 48 m */
-  const BEREICHE = [["Tannenwald", "Kirchplatz", "Obstwiese"], ["Domplatz", "Anger", "Mühlbach"], ["Gärten", "Bahnhof", "Seeufer"]];
+  /* FASSUNG 807 — die Viertel der Originalkarte (Welt x nach rechts, y nach vorn) */
+  const BEREICHE = ST.dorf && ST.dorf.VORLAGE === "altdorf" ? [["Bahnhof", "Bergwerk", "Obstwiese"], ["Mühle", "Rathaus", "Schmiede"], ["Felder", "Brauerei", "Seeufer"]]
+    : [["Tannenwald", "Kirchplatz", "Obstwiese"], ["Domplatz", "Anger", "Mühlbach"], ["Gärten", "Bahnhof", "Seeufer"]];
   const BG = 48;
 
   function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
@@ -167,7 +169,10 @@
     wurzel.appendChild(deckel);
     /* FASSUNG 806 — XANDER: „damit wir keinen Ladebalken haben". Im kleinen Rahmen kein Vorhang: die Zwergbilder sind
        so klein, dass die Häuser fast sofort stehen. */
-    if (q.get("still") === "1" || q.get("mini") === "1") deckel.remove();
+    /* FASSUNG 807 — XANDER: „dann könntest du in der Zeit wo man wartet … doch eher ein kleinen Ladebalken machen". Im kleinen
+       Rahmen ein schmaler Balken unten über dem Bild (das Bild selbst bleibt sichtbar), bis die sichtbaren Häuser da sind. */
+    if (q.get("still") === "1") deckel.remove();
+    else if (q.get("mini") === "1") deckel.classList.add("lk-vorhang-klein");
 
     /* FASSUNG 799 — XANDER: „so klein möchte ich es haben … in diesem kleinen Frame, wo das alte auch ist … wenn man in
        dieser kleinen Miniaturansicht reinzoomt, dann bleibt es ja trotzdem dieser Ausschnitt … die Zoomstärke, die wir in
@@ -233,11 +238,43 @@
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-modus") return;
         modus(!ev.data.voll); L().unruhe = 2;
       });
+      /* FASSUNG 807 — XANDER: „aus unserer ganz normalen kleinen Dorf … heraus kann man über den Bereich des Bildes scrollen
+         und man kommt … unter das Bild, um weiter zu scrollen in die Einzeleinstellungen vom Dorf … jetzt … bewegt sich jetzt
+         die komplette Webseite nach oben oder nach unten. Das soll so nicht sein." Im normalen (festen) Bild wird das Wischen
+         ans Spiel geschickt, das damit das Dorf-Menü rund um das Bild scrollt – mit Schwung wie ein echtes Scrollen. */
+      const scrollModus = () => document.body.classList.contains("lk-mini-modus") && !document.body.classList.contains("lk-nah");
+      const hoch = (d) => { try { window.parent.postMessage(Object.assign({ typ: "leicht-scroll" }, d), location.origin); } catch (x) {} };
+      let wY = null, wT = 0, wV = 0;
+      document.addEventListener("touchstart", (e) => { if (!scrollModus() || e.touches.length !== 1) { wY = null; return; } wY = e.touches[0].clientY; wT = performance.now(); wV = 0; hoch({ halt: 1 }); }, { passive: true });
+      document.addEventListener("touchmove", (e) => {
+        if (wY == null || !scrollModus() || e.touches.length !== 1) return;
+        const y = e.touches[0].clientY, dy = wY - y, t = performance.now();
+        wV = 0.7 * wV + 0.3 * dy / Math.max(1, t - wT); wY = y; wT = t;
+        if (dy) hoch({ dy: dy });
+      }, { passive: true });
+      document.addEventListener("touchend", () => { if (wY == null) return; wY = null; if (performance.now() - wT < 90 && Math.abs(wV) > 0.08) hoch({ v: wV }); }, { passive: true });
+      document.addEventListener("wheel", (e) => { if (scrollModus()) hoch({ dy: e.deltaY }); }, { passive: true });
       /* FASSUNG 806 — XANDER: „dass man in dieser neuen Map auch die Sachen anklicken kann … dass die Sachen verlinkt
          sind, dass ich schon in der Map jetzt schon einsammeln kann". Das Spiel schickt dieselben Zeichen wie im alten
          Dorfbild („4 Brot", „Bau 1:20", „kaputt", „Brot 2:10"); sie stehen über dem Haus. Ein Tipp darauf geht ans
          Spiel (wie ein Tipp aufs Haus): Fertiges wird sofort eingesammelt, eine Baustelle bekommt Hilfe. */
       /* ganz unten in der Bedienung: Lupe und Vollbild liegen immer darüber */
+      const svgB = (inn) => '<svg class="lk-z-bild" viewBox="0 0 16 16" aria-hidden="true">' + inn + "</svg>";
+      const WARE_BILD = {
+        ei: svgB('<ellipse cx="6" cy="9" rx="3.6" ry="4.6" fill="#fbf3e2" stroke="#9c7a4c" stroke-width=".8"/><ellipse cx="10.6" cy="9.8" rx="3.2" ry="4.1" fill="#f1dcc0" stroke="#9c7a4c" stroke-width=".8"/><ellipse cx="5" cy="7.4" rx="1" ry="1.5" fill="#fff" opacity=".8"/>'),
+        milch: svgB('<path d="M5.5 2h5v2l1.5 2.5V14H4V6.5L5.5 4z" fill="#fff" stroke="#5d6f87" stroke-width=".9"/><rect x="4" y="8" width="8" height="3" fill="#8fb7e3"/>'),
+        getreide: svgB('<g stroke="#b8862b" stroke-width=".9" fill="#e7bf5a"><path d="M8 15V3" fill="none"/><ellipse cx="6.6" cy="5" rx="1.2" ry="2" transform="rotate(-25 6.6 5)"/><ellipse cx="9.4" cy="5" rx="1.2" ry="2" transform="rotate(25 9.4 5)"/><ellipse cx="6.6" cy="8.2" rx="1.2" ry="2" transform="rotate(-25 6.6 8.2)"/><ellipse cx="9.4" cy="8.2" rx="1.2" ry="2" transform="rotate(25 9.4 8.2)"/><ellipse cx="8" cy="2.6" rx="1.1" ry="1.8"/></g>'),
+        mehl: svgB('<path d="M4 5c0-2 8-2 8 0l1 8c0 1.5-10 1.5-10 0z" fill="#f4efe4" stroke="#8a7a5c" stroke-width=".9"/><path d="M6 4l2-2 2 2" fill="none" stroke="#8a7a5c" stroke-width=".9"/><text x="8" y="11" font-size="4" text-anchor="middle" fill="#8a7a5c" font-family="system-ui" font-weight="700">M</text>'),
+        brot: svgB('<path d="M2 10c0-4 3-6 6-6s6 2 6 6c0 2-12 2-12 0z" fill="#c78a3e" stroke="#7a4d1c" stroke-width=".9"/><path d="M5.5 6.5l1.2 2M8 5.8v2.4M10.5 6.5l-1.2 2" stroke="#f1d29a" stroke-width=".9"/>'),
+        kuchen: svgB('<path d="M2 12V8l12-3v7z" fill="#f2d7a8" stroke="#8a5a2b" stroke-width=".9"/><path d="M2 8l12-3v2L2 10z" fill="#e79ab0"/><circle cx="10" cy="4" r="1.1" fill="#d23"/>'),
+        torte: svgB('<rect x="2.5" y="7" width="11" height="6" rx="1" fill="#f6dcb0" stroke="#8a5a2b" stroke-width=".9"/><path d="M2.5 9h11" stroke="#e79ab0" stroke-width="1.6"/><path d="M8 3v3.5" stroke="#6b4a22"/><path d="M8 1.5c1 1 .6 1.8 0 2-.6-.2-1-1 0-2z" fill="#f5a623"/>'),
+        fisch: svgB('<path d="M2 8c3-4 8-4 10 0-2 4-7 4-10 0z" fill="#9cc3dc" stroke="#3f6a86" stroke-width=".9"/><path d="M12 8l3-3v6z" fill="#9cc3dc" stroke="#3f6a86" stroke-width=".9"/><circle cx="5" cy="7.4" r=".8" fill="#223"/>'),
+        holz: svgB('<rect x="1.5" y="9" width="13" height="4" rx="2" fill="#a0673a" stroke="#5e3a1c" stroke-width=".9"/><rect x="3" y="4.5" width="11" height="4" rx="2" fill="#b77a45" stroke="#5e3a1c" stroke-width=".9"/><circle cx="13" cy="6.5" r="1.4" fill="#e3c08a"/>'),
+        erz: svgB('<path d="M3 12l2-6 4-2 4 3 1 5z" fill="#7d7f86" stroke="#3a3c42" stroke-width=".9"/><circle cx="7" cy="8" r="1" fill="#d9b44a"/><circle cx="10" cy="9.5" r=".8" fill="#d9b44a"/>'),
+        bau: svgB('<path d="M3 14V6h10v8" fill="none" stroke="#7a4d1c" stroke-width="1.2"/><path d="M3 9h10M3 12h10M6 6v8M10 6v8" stroke="#b07a3c" stroke-width=".8"/><path d="M2 5l6-3 6 3" fill="none" stroke="#7a4d1c" stroke-width="1.2"/>'),
+        korb: svgB('<path d="M2 7h12l-1.5 7h-9z" fill="#c9954f" stroke="#6b4a22" stroke-width=".9"/><path d="M4 7c0-4 8-4 8 0" fill="none" stroke="#6b4a22" stroke-width="1.1"/>')
+      };
+      WARE_BILD.eier = WARE_BILD.ei; WARE_BILD.gold = WARE_BILD.quarz = WARE_BILD.silizium = WARE_BILD.erz;
       const zeichenEbene = el("div", "lk-zeichen-ebene");
       wurzel.insertBefore(zeichenEbene, wurzel.firstChild);
       let zeichen = {};
@@ -260,7 +297,12 @@
           }
           const kl = "lk-zeichen lk-z-" + zeichen[g][0];
           if (b.className !== kl) b.className = kl;
-          if (b.textContent !== zeichen[g][1]) b.textContent = zeichen[g][1];
+          /* FASSUNG 807 — XANDER: „kannst du da ein Ei selber reinmachen … oder Getreide, dass du dann Getreidehalme
+             darstellst … wenn die Schilder, dass sie dann passend sind wie sie früher waren". Das Schild wie im alten Dorf
+             (gelb = fertig), vorn ein kleines Bild der Ware. */
+          const inhalt = (WARE_BILD[zeichen[g][2]] || (zeichen[g][0] === "fertig" ? WARE_BILD.korb : "")) + "<span></span>";
+          if (b.dataset.i !== inhalt) { b.dataset.i = inhalt; b.innerHTML = inhalt; }
+          const sp = b.querySelector("span"); if (sp.textContent !== zeichen[g][1]) sp.textContent = zeichen[g][1];
         }
         O.zeichenLegen();
       });

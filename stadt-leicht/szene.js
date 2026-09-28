@@ -97,7 +97,7 @@
   function bauPhase(p) { return p < 0.2 ? 8 : p < 0.42 ? 30 : p < 0.7 ? 55 : 80; }
   SZ.basis = function (o, zeit) {
     const gier = SZ.gierVon(o);
-    if (o.bau && o.bau.p < 1 && o.bauBild && !LB.nurKlein) {
+    if (o.bau && o.bau.p < 1 && o.bauBild) {   // FASSUNG 807: auch im kleinen Rahmen (Zwergbilder _n)
       const gb = gierFuer(o.bauBild, gier);
       return o.bauBild + "_" + jahrBild() + "_tag_b" + bauPhase(o.bau.p) + "_" + gb;
     }
@@ -260,6 +260,8 @@
     }
     SZ.sichtbare = sicht;
 
+    /* FASSUNG 809 — Eisenbahn (bahn.js): Schotterbett, Schwellen, Schienen liegen flach unter allem, vor den Schatten */
+    if (ST.bahn) ST.bahn.boden(g, t, Z);
     /* 1. Schatten in halber Auflösung, einfarbig */
     for (const e of sicht) {
       const m = e.meta; if (!m.sn) continue;
@@ -268,6 +270,7 @@
       const k2 = e.k;
       sg.drawImage(img, (e.X - m.sax * k2) / 2, (e.Y - m.say * k2) / 2, m.sw * 2 * k2 / 2, m.sh * 2 * k2 / 2);
     }
+    if (ST.bahn) ST.bahn.schatten(sg);   // FASSUNG 809 — Zugschatten in dieselbe Schattenebene (kein doppeltes Abdunkeln)
     sg.globalCompositeOperation = "source-in";
     sg.fillStyle = SZ.jahr === "winter" ? "rgb(40,62,120)" : "rgb(22,34,52)";
     sg.fillRect(0, 0, sw, sh);
@@ -285,6 +288,8 @@
     /* FASSUNG 803 — Tretboote, Badegäste und Liegende (boote.js) kommen genauso dazwischen; Kielspur und
        Ringwellen liegen flach auf dem Wasser, also vor allen Dingen */
     if (ST.boote) { ST.boote.wasser(g, t, Z); for (const p of ST.boote.sichtbar(Z)) leute.push(p); }
+    /* FASSUNG 809 — Lok und Wagen (bahn.js) wie Leute und Boote zwischen die Häuser */
+    if (ST.bahn) for (const p of ST.bahn.sichtbar(Z)) leute.push(p);
     const nachDing = new Map();
     for (const p of leute) {
       const kk = K.s, bx = p.bx || 0.6, px0 = p.X - bx * kk, px1 = p.X + bx * kk, py0 = p.Y - (p.bh || 2) * kk, py1 = p.Y + 0.2 * kk;
