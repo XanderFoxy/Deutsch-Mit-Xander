@@ -580,7 +580,7 @@
      "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo",
      "haustier_leben", "geschuetz_stufe", "eisen", "tarn", "mitspielen",
      "level", "skills", "helm", "brust", "ladung", "daemon",
-     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "klasse", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s", "kampfklasse", "kampf_stufe", "dorf_name", "haft", "gefangene", "wahrzeichen"].forEach(function (k) { o[k] = s[k]; });
+     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "klasse", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s", "kampfklasse", "kampf_stufe", "dorf_name", "dorf_plan", "haft", "gefangene", "wahrzeichen"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -4722,7 +4722,7 @@
       return;
     } else if (s === "dorfhin") {
       /* Tipp auf ein Zeichen in der Karte: dorthin (näher ran) und das Gebäude gleich öffnen. */
-      var hin = k.dataset.g, hq = DORF_LAGE[hin];
+      var hin = k.dataset.g, hq = dorfLageVon((dorfBesuchStand() || { st: S.ich }).st)[hin];
       S.dorfKarte = false; S.dorfTippWeg = true; S.dorfWahl = DORF[hin] ? hin : "";
       ton("swoosh", 0.25);
       if (hq) dorfZoom(true, hq[0] / 320, Math.max(0, hq[1] - 10) / 200); else schnellZeichnen(true);
@@ -4775,6 +4775,18 @@
       bahnHandeln(k); return;
     } else if (s === "bahnreise") {
       bahnReisen(k); return;
+    } else if (s === "umbau") {
+      S.umbau = !S.umbau; S.umbauWahl = ""; S.dorfWahl = ""; S.dorfTippWeg = true; umbauZiehenAn();
+      ton("holzklopf", 0.25); schnellZeichnen(true); return;
+    } else if (s === "umbauwahl") {
+      umbauTippen(k.dataset.g); return;
+    } else if (s === "umbauspiegeln") {
+      var sg = k.dataset.g; k.disabled = true;
+      rpc("spiel_dorf_spiegeln", { p_was: sg }).then(function (r) {
+        if (!r || !r.ok) { hinweis("🏗️ " + ((r && r.grund) || "Das ging nicht.")); schnellZeichnen(true); return; }
+        umbauFertig(r, DORF[sg].name + (r.an ? " steht jetzt gespiegelt." : " steht wieder wie vorher."));
+      }).catch(function () { hinweis("🏗️ Das ging gerade nicht."); schnellZeichnen(true); });
+      return;
     } else if (s === "dorfwahl") {
       /* FASSUNG 711 — XANDER (Funk 158): „wenn man die Sachen einsammelt dass man die per Klick einfach automatisch einsammelt
          dort wo fertig steht … ohne dass man da extra noch diesen Knopf braucht". Steht an einem Haus „fertig" (oder liegen
@@ -8783,17 +8795,89 @@
     schmied:         [[236, 140]],
     wissenschaftler: [[258, 186], [226, 90]]
   };
+  /* FASSUNG 789 — Umbauen: wählen, setzen, ziehen. */
+  function umbauFertig(r, text) {
+    S.ich = r; if (S.stand) S.stand[r.id] = oeffentlich(r);
+    senden({ ereignis: "stand", stand: oeffentlich(r) });
+    ton("holzklopf", 0.35); hinweis("🏗️ " + text);
+    schnellZeichnen(true);
+  }
+  function umbauSetzen(was, zielHaus) {
+    var ich = S.ich; if (!ich || !was || !zielHaus) return;
+    var ziel = dorfPlatzVon(ich, zielHaus);
+    if (!dorfPasst(ich, was, ziel)) { hinweis("🏗️ " + (DORF_FEST[zielHaus] ? DORF[zielHaus].name + " bleibt, wo es ist." : "Dort passt " + DORF[was].name + " nicht hin – der Platz ist zu klein.")); ton("swoosh", 0.15); return; }
+    rpc("spiel_dorf_umsetzen", { p_was: was, p_ziel: ziel }).then(function (r) {
+      if (!r || !r.ok) { hinweis("🏗️ " + ((r && r.grund) || "Das ging nicht.")); schnellZeichnen(true); return; }
+      S.umbauWahl = "";
+      umbauFertig(r, DORF[was].name + (r.getauscht && DORF[r.getauscht] ? " und " + DORF[r.getauscht].name + " haben die Plätze getauscht." : " steht jetzt am neuen Platz."));
+    }).catch(function () { hinweis("🏗️ Das ging gerade nicht."); });
+  }
+  function umbauTippen(k) {
+    if (!k || !DORF[k]) return;
+    if (!S.umbauWahl) {
+      if (DORF_FEST[k]) { hinweis("🏗️ " + DORF[k].name + " bleibt, wo es ist."); ton("swoosh", 0.15); return; }
+      S.umbauWahl = k; ton("holzklopf", 0.2); schnellZeichnen(true); return;
+    }
+    if (S.umbauWahl === k) { S.umbauWahl = ""; schnellZeichnen(true); return; }
+    umbauSetzen(S.umbauWahl, k);
+  }
+  /* Ziehen mit dem Finger: ein Tipp-und-Halten auf einem Gebäude hebt es an; losgelassen über einem Platz wird gesetzt. */
+  var UZ = null;
+  function umbauZiehenAn() {
+    if (UZ) return; UZ = {};
+    document.addEventListener("pointerdown", function (e) {
+      var b = e.target && e.target.closest && e.target.closest('.sp-dl-umbau [data-s="umbauwahl"].sp-dl-haus');
+      if (!b || DORF_FEST[b.dataset.g]) return;
+      UZ.von = b.dataset.g; UZ.x = e.clientX; UZ.y = e.clientY; UZ.zieht = false; UZ.id = e.pointerId;
+    }, true);
+    document.addEventListener("pointermove", function (e) {
+      if (!UZ.von || e.pointerId !== UZ.id) return;
+      if (!UZ.zieht && Math.hypot(e.clientX - UZ.x, e.clientY - UZ.y) > 10) {
+        UZ.zieht = true; S.umbauWahl = UZ.von;
+        UZ.geist = document.createElement("div"); UZ.geist.className = "sp-dl-geist"; UZ.geist.textContent = DORF[UZ.von].name;
+        document.body.appendChild(UZ.geist);
+        schnellZeichnen(true);
+      }
+      if (UZ.zieht) {
+        e.preventDefault();
+        UZ.geist.style.left = e.clientX + "px"; UZ.geist.style.top = e.clientY + "px";
+        var unter = document.elementFromPoint(e.clientX, e.clientY), z = unter && unter.closest && unter.closest('[data-s="umbauwahl"].sp-dl-haus');
+        document.querySelectorAll(".sp-dl-ueberm").forEach(function (x) { x.classList.remove("sp-dl-ueberm"); });
+        if (z && z.dataset.g !== UZ.von) z.classList.add("sp-dl-ueberm");
+      }
+    }, { passive: false, capture: true });
+    function ende(e) {
+      if (!UZ.von || (e && e.pointerId !== UZ.id)) return;
+      var von = UZ.von, zog = UZ.zieht; UZ.von = "";
+      if (UZ.geist) { UZ.geist.remove(); UZ.geist = null; }
+      if (!zog) return;
+      UZ.klickWeg = Date.now();
+      var unter = e && document.elementFromPoint(e.clientX, e.clientY), z = unter && unter.closest && unter.closest('[data-s="umbauwahl"].sp-dl-haus');
+      if (z && z.dataset.g !== von) umbauSetzen(von, z.dataset.g); else schnellZeichnen(true);
+    }
+    document.addEventListener("pointerup", ende, true);
+    document.addEventListener("pointercancel", ende, true);
+    /* Nach dem Ziehen kommt noch ein Klick – der soll nichts mehr wählen. */
+    document.addEventListener("click", function (e) {
+      if (UZ.klickWeg && Date.now() - UZ.klickWeg < 400 && e.target.closest && e.target.closest('[data-s="umbauwahl"]')) { e.stopPropagation(); e.preventDefault(); }
+    }, true);
+  }
+  /* FASSUNG 789 — die Leute gehen mit ihrem Haus mit, wenn es versetzt wurde. */
+  var DORF_LEUTE_HAUS = { mueller: ["muehle"], baecker: ["baeckerei"], schmied: ["schmiede"], wissenschaftler: ["labor", "schule"] };
   function dorfLeuteHtml(ich) {
-    var h = "";
+    var h = "", lageL = dorfLageVon(ich);
     Object.keys(DORF_LEUTE).forEach(function (b) {
       var n = Math.min(DORF_LEUTE[b].length, beruf(ich, b));
       for (var i = 0; i < n; i++) {
-        var p = DORF_LEUTE[b][i];
+        var p = DORF_LEUTE[b][i], hk = (DORF_LEUTE_HAUS[b] || [])[i] || (DORF_LEUTE_HAUS[b] || [])[0];
+        if (hk && lageL[hk] && DORF_LAGE[hk]) p = [p[0] + lageL[hk][0] - DORF_LAGE[hk][0], p[1] + lageL[hk][1] - DORF_LAGE[hk][1]];
         h += '<span class="sp-dl-mensch sp-dl-m-' + b + '" style="left:' + (p[0] / 3.2).toFixed(2) + "%;top:" + (p[1] / 2).toFixed(2) + "%;animation-delay:-" + (i * 0.7 + b.length * 0.3).toFixed(1) + 's" aria-hidden="true">'
           + berufSvg(b) + "</span>";
       }
     });
     var w = ich.werk || {}, faehrt = !!(ich.volk || {}).automatik && !automatikFehlt(ich) && ((w.muehle && w.muehle.auto) || (w.baeckerei && w.baeckerei.auto));
+    /* Das Fuhrwerk fährt den gemalten Mühlweg – nur, wenn Mühle und Bäckerei noch an ihrem Weg stehen. */
+    if (dorfPlatzVon(ich, "muehle") !== "muehle" || dorfPlatzVon(ich, "baeckerei") !== "baeckerei") faehrt = false;
     /* Start an der Mühle (56|80); der Punkt unten in der Mitte des Wagens (10|15) fährt den Mühlweg. */
     if (faehrt) h += '<span class="sp-dl-fuhrwerk" style="left:' + ((56 - 10) / 3.2).toFixed(3) + "%;top:" + ((80 - 15) / 2).toFixed(3) + '%" aria-hidden="true">' + fuhrwerkSvg() + "</span>";
     /* FASSUNG 715 — die Leute, die beladen: der Müller an der Mühle, der Bäcker an der Bäckerei (je ein Sack). */
@@ -9453,6 +9537,38 @@
     /* FASSUNG 782 — Flickstube am Weg zwischen Mühle und Gasthaus. */
     flickstube: [100, 70]
   };
+  /* =================================================================
+     FASSUNG 789 — PAKET D1 „DAS MODULARE DORF", SCHRITT 1: HÄUSER VERSETZEN
+     XANDER (Funk 202): „vor ein paar Iterationen hast du mir im Walkie-Talkie noch gesagt dass wir den modularen Aufbau
+     als nächstes machen … was ist mit dem modularen System". Nach meinem Rat im Dorf-Gesamtkonzept (Frage 1: feste
+     Kacheln, Frage 3: zwei Ansichten) hat jedes Gebäude einen Bauplatz; man setzt es auf einen anderen Platz, steht dort
+     schon eines, tauschen die beiden. So passen Wege und Laternen immer. Rathaus und Bergwerk bleiben (Mitte, Berg),
+     große Häuser passen nur auf große Plätze (Server: spiel_dorf_umsetzen). Dazu „Spiegeln" (spiel_dorf_spiegeln).
+     Der Plan liegt auf dem Server (dorf_plan) – Nachbarn und Besucher sehen das Dorf so, wie man es gestellt hat.
+     ================================================================= */
+  var DORF_FEST = { rathaus: 1, bergwerk: 1 };
+  var DORF_BREITE = { muehle: 20.4, schule: 49.5, baeckerei: 41.2, kuhstall: 45.1, krankenhaus: 47.3, schmiede: 38.5, huehnerstall: 20.9,
+    brauerei: 41.8, bibliothek: 44.5, labor: 39.1, kaserne: 41.8, gasthaus: 44.5, gefaengnis: 38.5, flickstube: 32.4 };
+  function dorfPlan(p) { return (p && p.dorf_plan) || {}; }
+  function dorfPlatzVon(p, k) { var pl = dorfPlan(p).platz || {}; return pl[k] && DORF_LAGE[pl[k]] ? pl[k] : k; }
+  function dorfLageVon(p) {
+    var raus = {};
+    Object.keys(DORF_LAGE).forEach(function (k) { raus[k] = DORF_LAGE[dorfPlatzVon(p, k)]; });
+    DM.spiegel = {}; (dorfPlan(p).spiegel || []).forEach(function (k) { DM.spiegel[k] = true; });
+    return raus;
+  }
+  function dorfPlanSig(p) {
+    var pl = dorfPlan(p), pz = pl.platz || {};
+    return Object.keys(pz).sort().map(function (k) { return k.slice(0, 3) + ">" + String(pz[k]).slice(0, 3); }).join("") + (pl.spiegel || []).slice().sort().map(function (k) { return "~" + k.slice(0, 3); }).join("");
+  }
+  /* Darf k auf den Platz ziel? (Tauschpartner muss auf den alten Platz passen.) */
+  function dorfPasst(p, k, ziel) {
+    if (DORF_FEST[k] || DORF_FEST[ziel] || !DORF_BREITE[k] || !DORF_BREITE[ziel]) return false;
+    var von = dorfPlatzVon(p, k); if (von === ziel) return false;
+    if (DORF_BREITE[k] > DORF_BREITE[ziel] + 7) return false;
+    var wer = Object.keys(DORF_BREITE).filter(function (j) { return dorfPlatzVon(p, j) === ziel; })[0];
+    return !wer || DORF_BREITE[wer] <= DORF_BREITE[von] + 7;
+  }
   var dorfLandCache = "";
   function dorfZufall(n) { var x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
   /* FASSUNG 700 — XANDER (Funk 143): „das Dorf schöner ausarbeiten dass das
@@ -10990,7 +11106,13 @@
     reihe.sort(function (a, b) { return a.y - b.y; }).forEach(function (e) {
       if (e.laterne) { dmLaternen(g, [e.laterne]); return; }
       var k = e.haus, q = lage[k], d = (dorf || {})[k], st = d && d.stufe > 0 ? d.stufe : 0;
-      if (st) punkte[k] = dmGebaeude(g, K, s, k, q[0], q[1], st, !(d.lp > 0));
+      if (st) {
+        var spg = DM.spiegel && DM.spiegel[k];
+        if (spg) { g.save(); g.translate(2 * q[0], 0); g.scale(-1, 1); }
+        var pk = dmGebaeude(g, K, s, k, q[0], q[1], st, !(d.lp > 0));
+        if (spg) { g.restore(); ["rauch", "fluegel"].forEach(function (n) { if (pk[n]) pk[n] = [2 * q[0] - pk[n][0], pk[n][1]]; }); }
+        punkte[k] = pk;
+      }
       else dmBauplatz(g, K, s, q[0], q[1]);
       DM.hausJetzt = null;
     });
@@ -11051,6 +11173,10 @@
     gasthaus: [26, 14, 12, 9], gefaengnis: [22, 13, 12, 5, 7], flickstube: [18, 12, 9, 7]
   };
   function dmUmriss(k, st) {
+    var u0 = dmUmrissRoh(k, st);
+    return DM.spiegel && DM.spiegel[k] && st ? [-u0[2], u0[1], -u0[0], u0[3]] : u0;
+  }
+  function dmUmrissRoh(k, st) {
     var f = [.82, .92, 1.02][Math.max(0, Math.min(2, (st || 1) - 1))], M = DM_MASS[k];
     if (!st) return [-11, -10, 11, 4];
     if (k === "muehle") return [-10 * f, -42 * f, 10 * f, 3];
@@ -11065,7 +11191,7 @@
   }
   function dorfMalSig(ich) {
     var d = ich.dorf || {};
-    return Object.keys(DORF_LAGE).map(function (k) { var g = d[k]; return g && g.stufe > 0 ? k.slice(0, 3) + g.stufe + (g.lp > 0 ? "" : "x") : ""; }).join(".");
+    return Object.keys(DORF_LAGE).map(function (k) { var g = d[k]; return g && g.stufe > 0 ? k.slice(0, 3) + g.stufe + (g.lp > 0 ? "" : "x") : ""; }).join(".") + "|" + dorfPlanSig(ich);
   }
   /* Nach jedem Zeichnen: ist die Leinwand noch nicht (oder anders) gemalt, jetzt malen – aus dem Speicher, wenn es dasselbe Dorf ist. */
   /* FASSUNG 709 — die Karte im Kompass zeigt dasselbe gemalte Dorf in klein; der Ausschnitt-Rahmen folgt dem Wischen. */
@@ -11096,8 +11222,8 @@
       var neu = document.createElement("canvas");
       var t0 = performance.now();
       var ds = lw.getAttribute("data-sig") || "";
-      var zeigDorf = (dorfBesuchStand() || { st: S.ich }).st.dorf || {};
-      var punkte = dorfMalen(neu, zeigDorf, DORF_LAGE, breite, /N$/.test(ds), /SN?$/.test(ds));
+      var zeigWer = (dorfBesuchStand() || { st: S.ich }).st, zeigDorf = zeigWer.dorf || {}, zeigLage = dorfLageVon(zeigWer);
+      var punkte = dorfMalen(neu, zeigDorf, zeigLage, breite, /N$/.test(ds), /SN?$/.test(ds));
       DM.zeit = Math.round(performance.now() - t0);
       /* FASSUNG 728 — XANDER (Funk 177): „Beim Bahnhof … zwei Reihen Fenster individuell jeweils eine komplett links neben dem
          Haus eine komplett rechts neben dem Haus … in der Mitte vom Bahnhof … so ein übergroßes Fenster" und „es gibt immer
@@ -11106,7 +11232,7 @@
          ein zweites Mal als Licht, an falscher Stelle. Die Lichter werden jetzt VOR der Maske genommen, die Maske merkt nichts. */
       var licht = /N$/.test(ds) ? DM.licht : null;
       DM.licht = null;
-      fertig = DM.bilder[sig] = { bild: neu, punkte: punkte, maske: dmBahnMaske(zeigDorf, DORF_LAGE), licht: licht, s: breite / 320, dorf: zeigDorf };
+      fertig = DM.bilder[sig] = { bild: neu, punkte: punkte, maske: dmBahnMaske(zeigDorf, zeigLage), licht: licht, s: breite / 320, dorf: zeigDorf };
       var alle = Object.keys(DM.bilder); if (alle.length > 3) delete DM.bilder[alle[0]];
     }
     lw.width = fertig.bild.width; lw.height = fertig.bild.height;
@@ -11138,10 +11264,11 @@
   }
   /* Das Dorfbild in gemalter Form: eine Leinwand, darüber Tippflächen, Namen, Zeichen, Leute. */
   function dorfBildGemaltHtml(ich) {
+    var lageP = dorfLageVon(ich);
     var besuch = dorfBesuchStand(), d = ich.dorf || {}, lv = ich.level || 1, wahl = S.dorfWahl && (DORF[S.dorfWahl] || (!besuch && (S.dorfWahl === "bahnhof" || S.dorfWahl === "wald"))) ? S.dorfWahl : "", sig = dorfMalSig(ich);
-    var haeuser = Object.keys(DORF_LAGE).sort(function (a, b) { return DORF_LAGE[a][1] - DORF_LAGE[b][1]; }).map(function (k) {
+    var haeuser = Object.keys(lageP).sort(function (a, b) { return lageP[a][1] - lageP[b][1]; }).map(function (k) {
       if (!DORF[k]) return "";
-      var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = DORF_LAGE[k], u = dmUmriss(k, st);
+      var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = lageP[k], u = dmUmriss(k, st);
       var w = (ich.werk || {})[k], kaputt = st && !(g.lp > 0), rest = w ? Date.parse(w.fertig) - Date.now() : 0;
       var stall = st && (k === "huehnerstall" || k === "kuhstall") ? stallBereit(ich, k) : null;
       /* FASSUNG 727 — XANDER (Funk 176): „es soll Anzeigen geben für Fortschritte im Bau oder für Fortschritte der Ernte und
@@ -11149,8 +11276,11 @@
       var zeichen = kaputt ? '<em class="sp-ds-kaputt">kaputt</em>' : w ? '<em class="' + (rest > 0 ? "sp-ds-laeuft" : "sp-ds-fertig") + '">' + (rest > 0 ? wareName(w.ware) + " " + uhrText(rest) : w.menge + " " + wareName(w.ware) + " fertig") + "</em>"
         : stall && stall.bereit ? '<em class="sp-ds-fertig">' + stall.bereit + (k === "kuhstall" ? " Milch" : " Eier") + "</em>" : k === "bergwerk" && st ? truppZeichen(ich, ["berg"]) : "";
       var zu = !st && DORF[k].ab && lv < DORF[k].ab;
-      return '<button type="button" class="sp-dl-haus sp-dl-haus-gemalt' + (st ? "" : " sp-dl-bauplatz") + (kaputt ? " sp-ds-aus" : "") + (zu ? " sp-dl-zu" : "") + (wahl === k ? " sp-an" : "")
-        + '" data-s="dorfwahl" data-g="' + k + '" style="left:' + ((q[0] + u[0]) / 3.2).toFixed(2) + "%;top:" + ((q[1] + u[1]) / 2).toFixed(2) + "%;width:" + ((u[2] - u[0]) / 3.2).toFixed(2) + "%;height:" + ((u[3] - u[1]) / 2).toFixed(2) + '%"'
+      /* FASSUNG 789 — im Umbau-Modus wählt ein Tipp das Gebäude bzw. den Zielplatz (grün = geht, rot = zu klein/fest). */
+      var um = S.umbau && !besuch, umKl = "";
+      if (um) umKl = DORF_FEST[k] ? " sp-dl-fest" : S.umbauWahl === k ? " sp-dl-umbau-wahl" : S.umbauWahl ? (dorfPasst(ich, S.umbauWahl, dorfPlatzVon(ich, k)) ? " sp-dl-ziel" : " sp-dl-ziel-nein") : " sp-dl-umbaubar";
+      return '<button type="button" class="sp-dl-haus sp-dl-haus-gemalt' + (st ? "" : " sp-dl-bauplatz") + (kaputt ? " sp-ds-aus" : "") + (zu ? " sp-dl-zu" : "") + (wahl === k && !um ? " sp-an" : "") + umKl
+        + '" data-s="' + (um ? "umbauwahl" : "dorfwahl") + '" data-g="' + k + '" style="left:' + ((q[0] + u[0]) / 3.2).toFixed(2) + "%;top:" + ((q[1] + u[1]) / 2).toFixed(2) + "%;width:" + ((u[2] - u[0]) / 3.2).toFixed(2) + "%;height:" + ((u[3] - u[1]) / 2).toFixed(2) + '%"'
         + ' title="' + DORF[k].name + (st ? " · Stufe " + st : " · Bauplatz") + '">'
         + "<small>" + dorfPin(k) + "<span>" + DORF[k].name + (st > 1 ? " " + st : "") + "</span></small>" + zeichen + "</button>";
     }).join("");
@@ -11160,7 +11290,7 @@
     var wetter = dorfWetter(), nah = dorfNah();
     /* FASSUNG 715 — Schnee auf den Dächern und der Wiese, wenn es draußen schneit (eigenes Bild: „S" in der Kennung). */
     var malSig = sig + dorfJahrSig() + (wetter.art === "schnee" ? "S" : "") + (wetter.tag ? "" : "N");
-    return '<div class="sp-dl-rahmen ' + (nah ? "sp-dl-nah" : "sp-dl-ganz") + (dorfZeichen() ? " sp-dl-zeichen" : "") + (dorfNamen() ? " sp-dl-namen" : "") + (wetter.tag ? "" : " sp-dl-nacht") + '"><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + malSig + '" aria-hidden="true"></canvas>' + dorfWunderHtml(ich) + '<div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
+    return '<div class="sp-dl-rahmen ' + (nah ? "sp-dl-nah" : "sp-dl-ganz") + (S.umbau && !besuch ? " sp-dl-umbau" : "") + (dorfZeichen() ? " sp-dl-zeichen" : "") + (dorfNamen() ? " sp-dl-namen" : "") + (wetter.tag ? "" : " sp-dl-nacht") + '"><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + malSig + '" aria-hidden="true"></canvas>' + dorfWunderHtml(ich) + '<div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
       + dorfNachtHtml(ich, wetter) + haeuser + (besuch ? "" : dorfBahnKnoepfe()) + dorfLeuteHtml(ich) + dorfBahnHtml(wetter) + "</div></div>" + dorfWetterHtml(wetter) + dorfWetterSchild(wetter)
       /* FASSUNG 721 — XANDER (Funk 159): „ich möchte dass das kleine Bild was wir haben schon den Kompass hat nicht dass
          das drei unterschiedliche Bilder sind … diese Lupe wie in den anderen Spielen mit den kleinen Punkten auf der Karte
@@ -11172,7 +11302,8 @@
       + '<button type="button" class="sp-dl-kompass sp-dl-lupe' + (nah ? " sp-an" : "") + '" data-s="dorfzoom" data-n="' + (nah ? "0" : "1") + '" aria-label="' + (nah ? "Lupe: ganzes Dorf" : "Lupe: näher ran") + '">' + kompassSvg()
       + '<i class="sp-dl-lupe-zeichen">' + (nah ? "−" : "+") + "</i></button>" + dorfUhrHtml()
       + (nah ? dorfMiniKarteHtml(ich, sig) : "") + dorfOrtsschildHtml(ich) + "</div>"
-      + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · die Lupe holt dich näher ran") + "</span>") + (wahl ? (besuch ? fremdStationHtml(besuch, wahl) : wahl === "bahnhof" ? bahnhofHtml(ich) : wahl === "wald" ? waldStationHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
+      + (S.umbau && !besuch ? umbauLeisteHtml(ich) : "")
+      + (S.umbau && !besuch ? "" : wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · die Lupe holt dich näher ran") + "</span>") + (wahl && !(S.umbau && !besuch) ? (besuch ? fremdStationHtml(besuch, wahl) : wahl === "bahnhof" ? bahnhofHtml(ich) : wahl === "wald" ? waldStationHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
   }
   /* ---------------------------------------------------------------
      FASSUNG 708 — DAS DORF LEBT MIT DEM ECHTEN WETTER
@@ -12260,10 +12391,11 @@
   }
   /* Die Karte im Kompass: das Dorf in klein, jedes Gebäude mit Zeichen und Namen, dazu (wenn man nah dran ist) der Ausschnitt, den man gerade sieht. */
   function dorfKarteHtml(ich, nah, sig) {
+    var lageP = dorfLageVon(ich);
     var d = ich.dorf || {};
-    var pins = Object.keys(DORF_LAGE).map(function (k) {
+    var pins = Object.keys(lageP).map(function (k) {
       if (!DORF[k]) return "";
-      var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = DORF_LAGE[k], u = dmUmriss(k, st);
+      var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = lageP[k], u = dmUmriss(k, st);
       return '<button type="button" class="sp-dl-kpin' + (st ? "" : " sp-dl-kpin-leer") + '" data-s="dorfhin" data-g="' + k + '" style="left:' + ((q[0] + (u[0] + u[2]) / 2) / 3.2).toFixed(2) + "%;top:" + ((q[1] + u[1] * .55) / 2).toFixed(2) + '%">'
         + dorfPin(k) + "<span>" + DORF[k].name + "</span></button>";
     }).join("");
@@ -12361,7 +12493,18 @@
     return '<div class="sp-dl-beschriftung"><span>Beschriftung im Bild:</span>'
       + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "0" : "1") + '" data-n="' + (n ? "1" : "0") + '" class="' + (z ? "sp-an" : "") + '" aria-pressed="' + z + '">Symbole ' + (z ? "an" : "aus") + "</button>"
       + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "1" : "0") + '" data-n="' + (n ? "0" : "1") + '" class="' + (n ? "sp-an" : "") + '" aria-pressed="' + n + '">Namen ' + (n ? "an" : "aus") + "</button>"
+      + (dorfBesuchStand() ? "" : '<button type="button" data-s="umbau" class="' + (S.umbau ? "sp-an" : "") + '" aria-pressed="' + !!S.umbau + '">Umbauen ' + (S.umbau ? "an" : "aus") + "</button>")
       + jahrVorschauKnopf() + saisonKnopf() + "</div>";
+  }
+  function umbauLeisteHtml(ich) {
+    var w = S.umbauWahl, name = w && DORF[w] ? DORF[w].name : "";
+    return '<div class="sp-dl-umbauleiste" role="status">'
+      + (w ? "<p><b>" + name + "</b> ist gewählt. Tippe den Platz an, auf den es soll – grün geht, rot ist zu klein. Steht dort schon ein Haus, tauschen die beiden.</p>"
+           : "<p><b>Umbauen:</b> Tippe ein Gebäude an und dann seinen neuen Platz – oder zieh es mit dem Finger dorthin. Rathaus und Bergwerk bleiben stehen.</p>")
+      + '<div class="sp-dl-umbauknoepfe">' + (w ? '<button type="button" data-s="umbauspiegeln" data-g="' + w + '">'
+        + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 2"/><path d="M10 6L4 18h6z" fill="currentColor"/><path d="M14 6l6 12h-6z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Spiegeln</button>'
+        + '<button type="button" data-s="umbauwahl" data-g="' + w + '">Abwählen</button>' : "")
+      + '<button type="button" data-s="umbau" class="sp-an">Fertig</button></div></div>';
   }
   /* FASSUNG 733 — Funk 169: „ich möchte das schon mal in der Vorschau sehen wie sowas aussieht wenn die Stadt dann
      geschmückt ist". Nur der Betreiber sieht den Knopf; er blättert durch Jahreszeiten und Feste. */
@@ -12400,10 +12543,11 @@
   }
   /* Die kleine Karte in der Ecke (nur nah dran): ganzes Dorf, Punkte für die Gebäude, Rahmen = was man sieht. */
   function dorfMiniKarteHtml(ich, sig) {
+    var lageP = dorfLageVon(ich);
     var d = ich.dorf || {};
-    var pins = Object.keys(DORF_LAGE).map(function (k) {
+    var pins = Object.keys(lageP).map(function (k) {
       if (!DORF[k]) return "";
-      var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = DORF_LAGE[k], u = dmUmriss(k, st), z = DORF_ZEICHEN[k] || ["#7a7a7a"];
+      var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = lageP[k], u = dmUmriss(k, st), z = DORF_ZEICHEN[k] || ["#7a7a7a"];
       return '<button type="button" class="sp-dl-mpunkt' + (st ? "" : " sp-dl-mpunkt-leer") + '" data-s="dorfhin" data-g="' + k + '" title="' + DORF[k].name + '" style="--pf:' + z[0] + ";left:" + ((q[0] + (u[0] + u[2]) / 2) / 3.2).toFixed(2) + "%;top:" + ((q[1] + u[1] * .4) / 2).toFixed(2) + '%"></button>';
     }).join("");
     return '<div class="sp-dl-minikarte" aria-label="Karte des Dorfes"><canvas class="sp-dl-karte-bild" data-sig="' + sig + '" aria-hidden="true"></canvas><i class="sp-dl-karte-blick"></i>' + pins + "</div>";
@@ -12452,13 +12596,14 @@
     DW.zoomZeit = Date.now();
   }
   function dorfBildHtml(ich) {
+    var lageP = dorfLageVon(ich);
     /* FASSUNG 704 — gemalt, wenn der Browser malen kann; sonst wie bisher als Vektorbild. */
     if (dorfGemalt()) return dorfBildGemaltHtml(ich);
     var d = ich.dorf || {}, lv = ich.level || 1, wahl = S.dorfWahl && DORF[S.dorfWahl] ? S.dorfWahl : "";
     /* Weiter vorne (weiter unten im Bild) liegt über dem, was dahinter steht. */
-    var haeuser = Object.keys(DORF_LAGE).sort(function (a, b) { return DORF_LAGE[a][1] - DORF_LAGE[b][1]; }).map(function (k) {
+    var haeuser = Object.keys(lageP).sort(function (a, b) { return lageP[a][1] - lageP[b][1]; }).map(function (k) {
       if (!DORF[k]) return "";
-      var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = DORF_LAGE[k];
+      var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = lageP[k];
       var w = (ich.werk || {})[k], kaputt = st && !(g.lp > 0), rest = w ? Date.parse(w.fertig) - Date.now() : 0;
       var stall = st && (k === "huehnerstall" || k === "kuhstall") ? stallBereit(ich, k) : null;
       /* FASSUNG 727 — XANDER (Funk 176): „es soll Anzeigen geben für Fortschritte im Bau oder für Fortschritte der Ernte und

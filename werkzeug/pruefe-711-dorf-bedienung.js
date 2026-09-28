@@ -194,17 +194,17 @@ const sage = (gut, was, zusatz) => {
     if (!zeile || !bild) return null; const a = zeile.getBoundingClientRect(), b = bild.getBoundingClientRect();
     return { unter: a.top >= b.bottom - 1, texte: [...zeile.querySelectorAll("button")].map((x) => x.textContent), imBild: !!bild.querySelector(".sp-dl-anzeige") }; });
   let w0 = await schalter();
-  sage(w0 && w0.unter && !w0.imBild && w0.texte.join("|") === "Symbole aus|Namen aus", "unter dem Bild: „Symbole aus“, „Namen aus“ – im Bild liegt kein Knopf mehr", JSON.stringify(w0));
+  sage(w0 && w0.unter && !w0.imBild && w0.texte.slice(0, 2).join("|") === "Symbole aus|Namen aus", "unter dem Bild: „Symbole aus“, „Namen aus“ (ab 789 dahinter „Umbauen“) – im Bild liegt kein Knopf mehr", JSON.stringify(w0));
   await tippe('.sp-dl-beschriftung button:first-of-type'); await tick(300);
   r = await sicht();
   sage(r.pins >= 6 && r.namen === 0 && r.z === "1" && r.n === "0", "„Symbole“ an: die Zeichen erscheinen (ohne Namen), gemerkt", JSON.stringify(r));
   w0 = await schalter();
-  sage(w0.texte.join("|") === "Symbole an|Namen aus", "der Schalter zeigt jetzt „Symbole an“", w0.texte.join(" | "));
-  await tippe('.sp-dl-beschriftung button:last-of-type'); await tick(300);
+  sage(w0.texte.slice(0, 2).join("|") === "Symbole an|Namen aus", "der Schalter zeigt jetzt „Symbole an“", w0.texte.join(" | "));
+  await tippe('.sp-dl-beschriftung button:nth-of-type(2)'); await tick(300);
   r = await sicht();
   sage(r.pins >= 6 && r.namen >= 6, "„Namen“ dazu: Zeichen und Namen", JSON.stringify(r));
   await tippe('.sp-dl-beschriftung button:first-of-type'); await tick(300);
-  await tippe('.sp-dl-beschriftung button:last-of-type'); await tick(300);
+  await tippe('.sp-dl-beschriftung button:nth-of-type(2)'); await tick(300);
   r = await sicht();
   sage(r.pins === 0 && r.namen === 0, "beide aus: das Bild ist wieder ohne Beschriftung", JSON.stringify(r));
 

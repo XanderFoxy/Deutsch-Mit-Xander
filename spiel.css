@@ -3017,3 +3017,21 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-bahn-reise-ziele button.sp-bahn-wz small { color: #ffd98a; opacity: 1; }
 /* FASSUNG 785 — die eigene Stimme spricht vor (Funk 190). */
 .sp-sprech-eigen { color: #2e9e5b; font-weight: 700; }
+/* FASSUNG 789 — Umbauen (Funk 202, Paket D1): Gebäude wählen, Ziel grün/rot, mit dem Finger ziehen. */
+.sp-dl-umbau .sp-dl-fenster { touch-action: pan-x pan-y; }
+.sp-dl-umbau .sp-dl-haus { touch-action: none; }
+.sp-dl-umbau .sp-dl-haus-gemalt { border-radius: 8px; outline: 2px dashed rgba(255, 255, 255, .75); outline-offset: -2px; background: rgba(255, 255, 255, .08); }
+.sp-dl-umbau .sp-dl-haus-gemalt.sp-dl-fest { outline: none; background: none; opacity: .55; }
+.sp-dl-umbau .sp-dl-haus-gemalt.sp-dl-umbau-wahl { outline: 3px solid #f2c230; background: rgba(242, 194, 48, .22); animation: sp-umbau-puls 1s ease-in-out infinite alternate; }
+.sp-dl-umbau .sp-dl-haus-gemalt.sp-dl-ziel { outline: 3px solid #3fbf6a; background: rgba(63, 191, 106, .22); }
+.sp-dl-umbau .sp-dl-haus-gemalt.sp-dl-ziel-nein { outline: 2px solid rgba(214, 64, 52, .85); background: rgba(214, 64, 52, .16); }
+.sp-dl-umbau .sp-dl-haus-gemalt.sp-dl-ueberm { background: rgba(63, 191, 106, .45); }
+@keyframes sp-umbau-puls { from { background: rgba(242, 194, 48, .12); } to { background: rgba(242, 194, 48, .34); } }
+.sp-dl-umbauleiste { margin: 6px 0 2px; padding: 8px 10px; border-radius: 10px; background: rgba(242, 194, 48, .14); border: 1px solid rgba(242, 194, 48, .5); font-size: .82rem; line-height: 1.35; }
+.sp-dl-umbauleiste p { margin: 0 0 6px; }
+.sp-dl-umbauknoepfe { display: flex; flex-wrap: wrap; gap: 6px; }
+.sp-dl-umbauknoepfe button { display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 4px 12px; border-radius: 9px; font: 700 .8rem system-ui, sans-serif; }
+.sp-dl-umbauknoepfe svg { width: 16px; height: 16px; flex: 0 0 16px; }
+.sp-dl-geist { position: fixed; z-index: 100000; transform: translate(-50%, -130%); pointer-events: none; padding: 5px 10px; border-radius: 9px; background: #f2c230; color: #2d2418; font: 800 .8rem system-ui, sans-serif; box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
+/* FASSUNG 789 — die Schalter unter dem Dorfbild (Symbole, Namen, Umbauen, Saison) mindestens 30 px hoch (Tippziel). */
+.sp-schnellmenue .sp-dl-beschriftung button, .sp-dl-beschriftung button { min-height: 30px; padding: 5px 11px; }

@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 788: Festschmuck sichtbar (Schnee im Winter, Weihnachtsmarkt, Halloween-Himmel, Ostern, Maibaum, Biergarten)",
+  stand: "Fassung 789: Häuser versetzen, tauschen, spiegeln (Paket D1, Schritt 1)",
 
   inArbeit: [
-    { seit: "2026-09-28T03:06",
-      text: "D1 modulares Dorf: Häuser versetzen, Bauphasen, Wohnhaus, Wege/Garten; Walkie-Prüfung" },
+    { seit: "2026-09-28T03:22",
+      text: "D1: Bauzeit mit Bagger und Kran; Wohnhaus, Wege, Gärten; Walkie-Reste (Liedteil benennen, Tiere reisen mit, Laserduell)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T03:06",
-      text: "Funk 202: Saison-Deko groß genug, Vorschau gemerkt" },
+    { seit: "2026-09-28T03:22",
+      text: "Funk 202: Umbauen im Dorf mit Ziehen und Tauschen" },
   ],
 };

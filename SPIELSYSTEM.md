@@ -1869,3 +1869,19 @@ Gemessen: Fassung 733 malte die Deko, aber winzig – Kürbisse mit 1,8 Einheite
 - Sonde `werkzeug/pruefe-788-festschmuck-sichtbar.js`: misst per Bildpunkten, dass jede Stufe sichtbar anders ist (Halloween 17 %, Winter/Advent 54 % anders als Herbst), dass Christbaum und Buden unter keinem Schild liegen und die Vorschau gemerkt bleibt.
 
 Prüfung Funk 202 (Plan aus dem Dorf-Gesamtkonzept, Stand 731): Paket D1 „Das modulare Dorf" (Raster, Häuser ziehen/drehen, Wege, Gärten, Wohnhäuser, Bauphasen mit Bagger und Kran) ist **nicht gebaut** – es hätte laut Plan als Erstes kommen sollen. Es folgt ab Fassung 789.
+
+## Fassung 789 — Paket D1 „Das modulare Dorf", Schritt 1: Häuser versetzen (Funk 202)
+
+XANDER (Funk 202): „vor ein paar Iterationen hast du mir im Walkie-Talkie noch gesagt dass wir den modularen Aufbau als nächstes machen und viele andere Dinge die hast du alle verschluckt … was ist mit dem modularen System".
+
+Nach meinem Rat im Dorf-Gesamtkonzept (Teil C, Frage 1 „feste Kacheln", Frage 3 „zwei Ansichten"):
+
+- **Umbauen** (Schalter unter dem Dorfbild): Gebäude antippen, dann den neuen Platz – oder mit dem Finger dorthin ziehen (es hängt am Finger, losgelassen wird gesetzt). Steht dort schon ein Gebäude oder ein Bauplatz, **tauschen** die beiden. So führen Wege und Laternen weiter zu jedem Haus.
+- **Grün** = passt, **rot** = der Platz ist zu klein (große Häuser wie Schule oder Krankenhaus nicht auf den Platz des Hühnerstalls). **Rathaus und Bergwerk bleiben** (Mitte, Berg).
+- **Spiegeln**: das gewählte Gebäude steht seitenverkehrt (zweite Ansicht). Fensterlichter, Rauch und Mühlenflügel gehen mit.
+- Die Leute (Müller, Bäcker, Schmied, Wissenschaftler) gehen mit ihrem Haus mit. Das Fuhrwerk fährt nur, wenn Mühle und Bäckerei an ihrem gemalten Weg stehen.
+- **Server**: `spiel_spieler.dorf_plan` (platz, spiegel), `spiel_dorf_umsetzen(p_was, p_ziel)` prüft Platzgröße und tauscht, `spiel_dorf_spiegeln(p_was)`. `spiel_oeffentlich` gibt den Plan mit – Nachbarn und Besucher sehen das Dorf so, wie man es gestellt hat.
+- Die Schalter unter dem Dorfbild (Symbole, Namen, Umbauen, Saison) sind jetzt mindestens 30 px hoch.
+- Sonde `werkzeug/pruefe-789-haeuser-versetzen.js`: 13/13 (Tippen, Ziehen, Tauschen, Spiegeln, Rathaus fest, neu gemalt, 360 px). Sonden 709/711: veraltete Erwartungen angepasst (16 Gebäude auf der Karte, Kompass seit Funk 191 kleiner, dritter Schalter „Umbauen").
+
+Noch offen aus D1: Bauzeit mit Bauphasen (Bagger, Kran) – Fassung 790; Wege/Gärten/Zäune/Wohnhaus als eigene Module; Landschaftswahl.
