@@ -115,6 +115,7 @@
     if (LB.neu) { LB.neu = false; L.unruhe = 2; }
     if (ST.leute) ST.leute.bewegen(jetzt);
     if (ST.boote) ST.boote.bewegen(jetzt);
+    if (ST.tiere) ST.tiere.bewegen(jetzt);   // FASSUNG 811 — Tiere im Dorf (tiere.js)
     if (ST.bahn) ST.bahn.bewegen(jetzt);   // FASSUNG 809 — die Eisenbahn (bahn.js)
     /* lebendig: Schneefall, Rauch, Nachtlichter → ~30 Bilder je Sekunde reichen */
     const lebt = (SZ.jahr === "winter" && SZ.schneefall) || true;
@@ -183,6 +184,7 @@
         return warte().then(() => warte()).then(() => {
           if (ST.leute) for (let x = 0; x <= 20000; x += 50) ST.leute.bewegen(x);
           if (ST.boote) for (let x = 0; x <= 20000; x += 50) ST.boote.bewegen(x);
+          if (ST.tiere) for (let x = 0; x <= 20000; x += 50) ST.tiere.bewegen(x);
           if (ST.bahn) for (let x = 0; x <= 20000; x += 50) ST.bahn.bewegen(x);
           B.zeichnen(1, SZ.zeitDaten(), SZ.jahr); SZ.zeichnen(+(q.get("t") || 1000));
           if (ST.oberflaeche && ST.oberflaeche.bild) ST.oberflaeche.bild(1000);

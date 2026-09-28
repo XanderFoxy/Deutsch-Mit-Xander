@@ -16,7 +16,9 @@ STADT.MODELL_DATEIEN = [
   "auto_batmobil",
   /* FASSUNG 809 — die Eisenbahn (Dampflok BR 50 mit Tender, drei Güterwagen) */
   "dampflok", "gueterwagen",
-  "menschen"
+  "menschen",
+  /* FASSUNG 811 — XANDER: „Tiere im Dorf: Hühner, Kühe, Schweine – nachts nicht draußen" (Laufblätter für die leichte Stadt) */
+  "kuh", "schwein", "huhn"
 ];
 /* Rundum gleiche Dinge: die Drehung ändert das Bild nicht → ein Bild im Speicher für alle Winkel */
 STADT.OHNE_DREHUNG = ["tanne", "laubbaum", "obstbaum"];

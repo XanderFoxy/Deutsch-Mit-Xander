@@ -78,16 +78,30 @@ def main():
             vz[zk] = z; neu += 1
     # FASSUNG 809 — die Eisenbahn (Laufblätter l_bahn_…, 8 Richtungen) bekommt je Blatt ein Zwergblatt _z für den
     # kleinen Rahmen: gleiche Zellen, nur kleiner (7,5 Bildpunkte je Meter), damit der Zug dort kaum etwas kostet.
-    for k in [k for k in vz if k.startswith("l_bahn_") and not k.endswith("_z")]:
+    # FASSUNG 811 — ebenso die Tiere (l_tier_…: Kühe, Schweine, Hühner; XANDER: „Tiere im Dorf"). Im kleinen Rahmen ist
+    # eine Kuh kaum 16 Bildpunkte lang: dort reichen drei Bilder je Richtung (ein Schritt, Grasen/Wühlen/Picken, Stehen) –
+    # „bl": [1, 1, 1] sagt tiere.js, wie das Zwergblatt aufgeteilt ist.
+    TIER_BLATT = {20: (12, 6, 2), 16: (8, 6, 2)}
+    for k in [k for k in vz if (k.startswith("l_bahn_") or k.startswith("l_tier_")) and not k.endswith("_z")]:
         m = vz[k]; zk = k + "_z"
         q = os.path.join(ORDNER, k + ".webp"); ziel = os.path.join(ORDNER, zk + ".webp")
         if not os.path.exists(q): continue
         F = ZIEL_S / float(m["s"])
         zw, zh = max(1, round(m["zw"] * F)), max(1, round(m["zh"] * F))
         n = m.get("n", 1)
+        spalten = None
+        if k.startswith("l_tier_") and n in TIER_BLATT:
+            g, h, _ = TIER_BLATT[n]
+            spalten = [round(g * 0.25), g, g + h]
         if not (os.path.exists(ziel) and os.path.getmtime(ziel) >= os.path.getmtime(q)):
-            Image.open(q).convert("RGBA").resize((zw * n, zh * 8), Image.LANCZOS).save(ziel, "WEBP", quality=72, alpha_quality=45, method=6)
+            im = Image.open(q).convert("RGBA")
+            if spalten:
+                auszug = Image.new("RGBA", (m["zw"] * len(spalten), im.height))
+                for i, c in enumerate(spalten): auszug.paste(im.crop((c * m["zw"], 0, (c + 1) * m["zw"], im.height)), (i * m["zw"], 0))
+                im = auszug
+            im.resize((zw * (len(spalten) if spalten else n), zh * 8), Image.LANCZOS).save(ziel, "WEBP", quality=72, alpha_quality=45, method=6)
         z = dict(m, zw=zw, zh=zh, ax=round(m["ax"] * zw / m["zw"], 1), ay=round(m["ay"] * zh / m["zh"], 1), s=round(m["s"] * zw / m["zw"], 3))
+        if spalten: z["n"] = len(spalten); z["bl"] = [1, 1, 1]
         if vz.get(zk) != z:
             vz[zk] = z; neu += 1
     if neu:
