@@ -221,8 +221,8 @@ const sage = (gut, was, zusatz) => {
   r = await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); const z = [...m.querySelectorAll(".sp-forschung")];
     return { n: z.length, geheim: m.querySelectorAll(".sp-geheim").length, text: m.querySelector(".sp-forschung-kopf").textContent, duden: /Duden/.test(m.textContent), dampf: /Dampfmaschine/.test(m.textContent),
       warum: (m.querySelector(".sp-geheim small") || {}).textContent || "", frei: z.filter((e) => e.querySelector('[data-s="erforschen"]:not([disabled])')).map((e) => e.querySelector("b").textContent) }; });
-  /* FASSUNG 797 — zweite Stufe: 12 Forschungen, davon 4 geheim (Duden, Dampf, Röntgen, Benz) */
-  sage(r.n === 12 && /100 Punkte/.test(r.text), "Forschungstafel: 12 Forschungen, 100 Forschung gesammelt", r.n + " · " + r.text);
+  /* FASSUNG 797 — zweite Stufe: 12 Forschungen, davon 4 geheim (Duden, Dampf, Röntgen, Benz). FASSUNG 813: 17 (fünf mit Levelsperre). */
+  sage(r.n === 17 && /100 Punkte/.test(r.text), "Forschungstafel: 17 Forschungen, 100 Forschung gesammelt", r.n + " · " + r.text);
   sage(r.geheim === 4 && !r.duden && !r.dampf, "die vier geheimen Forschungen sind verborgen (Name und Wirkung unsichtbar)", r.geheim + " verborgen");
   sage(/Deutsch-Quote 85 % \(du hast 80 %\)/.test(r.warum), "… und sagen, was fehlt: bessere Deutsch-Quote", r.warum);
   sage(r.frei.join(",") === "Dreifelderwirtschaft,Sauerteig,Wasserrad an der Mühle,Buchdruck", "die vier offenen sind erforschbar", JSON.stringify(r.frei));
