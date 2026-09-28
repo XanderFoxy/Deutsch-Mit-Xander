@@ -164,12 +164,24 @@
   function lichtMalen(e, Z, t, nurBoden, alpha) {
     const m = e.meta; if (!m.l || !m.l.length || Z.nacht <= 0.02) return;
     g.save(); g.globalCompositeOperation = "lighter";
-    for (const l of m.l) {
+    /* FASSUNG 809 — Funk 205: „Bei manchen Häusern über strahlen die Fenster Lichter so sehr dass man das Objekt gar nicht
+       mehr so richtig identifizieren kann … da hatten wir … nicht immer alle Lichter an … ab und zu mal jemand … weil auf
+       Toilette muss oder auf Arbeit muss". Fensterlicht in Häusern: gedämpft, und je Fenster an oder aus – abends die
+       meisten, spät in der Nacht nur noch wenige; jedes Fenster wechselt zu seiner eigenen Zeit (etwa alle 20 min).
+       Laternen, Feuer und der Schein am Boden bleiben immer an. */
+    const o = e.o, fenster = !nurBoden && o && o.id != null && (o.art === "haus" || o.art === "wunder" || o.art === "kulisse") && !/laterne/.test(o.bild || "");
+    let anteil = 1;
+    if (fenster) { const h = new Date().getHours() + new Date().getMinutes() / 60, sp = h >= 23 || h < 5 ? 0.3 : h >= 21.5 ? 0.55 : 0.78; anteil = sp; }
+    const minute = Date.now() / 60000;
+    for (let i = 0; i < m.l.length; i++) {
+      const l = m.l[i];
       if (!!l[6] !== nurBoden) continue;
       const x = e.X + l[0] * e.k, y = e.Y + l[1] * e.k, r = l[2] * e.k;
       if (r < 1.2) continue;
+      if (fenster && !l[5]) { const ver = ST.hash2(o.id, i, 5), takt = Math.floor(minute / 20 + ver); if (ST.hash2(o.id * 7 + i, takt, 9) > anteil) continue; }
       const fl = l[5] ? 0.85 + 0.15 * Math.sin(t * 9 + x) : 1;
-      const a = Z.nacht * l[4] * fl * alpha;
+      /* „die Laternen … haben überhaupt keinen Schein": der Lichtkegel der Laterne am Boden kräftiger */
+      const a = Z.nacht * l[4] * fl * alpha * (fenster && !l[5] ? 0.62 : 1) * (nurBoden && o && /laterne/.test(o.bild || "") ? 1.7 : 1);
       if (nurBoden) {
         g.save(); g.translate(x, y); g.scale(1, 0.5);
         const gr = g.createRadialGradient(0, 0, 0, 0, 0, r);
@@ -288,7 +300,7 @@
     g.globalAlpha = 1;
 
     /* 2. Lichtpfützen */
-    for (const e of sicht) if (e.licht) lichtMalen({ X: e.X, Y: e.Y, k: e.lk, meta: e.licht }, Z, t, true, 1);
+    for (const e of sicht) if (e.licht) lichtMalen({ X: e.X, Y: e.Y, k: e.lk, meta: e.licht, o: e.o }, Z, t, true, 1);
     /* Menschen zwischen die Dinge einsortieren: nach dem letzten Ding, das
        sich mit ihnen im Bild überdeckt und ganz hinter ihnen liegt */
     const leute = ST.leute ? ST.leute.sichtbar(Z) : [];
@@ -328,7 +340,7 @@
         g.drawImage(img, e.X - m.ax * k, e.Y - m.ay * k, m.w * k, m.h * k);
       }
       g.globalAlpha = 1;
-      if (e.licht) lichtMalen({ X: e.X, Y: e.Y, k: e.lk, meta: e.licht }, Z, t, false, 1);
+      if (e.licht) lichtMalen({ X: e.X, Y: e.Y, k: e.lk, meta: e.licht, o: e.o }, Z, t, false, 1);
       if (e.o.geist) auswahlRahmen(e);
       leuteMalen(i);
     }
