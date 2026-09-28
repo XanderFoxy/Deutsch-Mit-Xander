@@ -1897,3 +1897,11 @@ Nach meinem Rat im Dorf-Gesamtkonzept (Teil C, Frage 4 „Minuten"): Man soll de
 - **Fertig:** Der Takt holt den Stand vom Server, sobald die Zeit um ist → „Fertig gebaut: Kaserne Stufe 1." Der Bau-Knopf nennt die Bauzeit.
 - **Server:** `spiel_bauen` legt `volk.baustellen` an, `spiel_bau_abschluss` (in `spiel_ich`) baut Fertiges ein, `spiel_bau_helfen`, `spiel_bau_dauer`. `spiel_oeffentlich` gibt Baustellen mit – Nachbarn sehen Bagger und Kran im fremden Dorf.
 - Sonde `werkzeug/pruefe-790-bauzeit.js`: 7/7 (vier Phasen als eigene Bilder, Mithelfen, Fertig-Meldung, Bau-Meldung). Sonde 789: Meldungsprüfung robuster (eine andere Meldung kam dazwischen).
+
+## Fassung 791 — Liedteil benennen bricht nicht mehr ab (Walkie 276)
+
+XANDER (Walkie 276): „wenn ich einen neuen Teil aufsetzen will und den benennen will bricht es mitten im benennen ab und dann ist das weg".
+
+- Ursache: Das Ausschnitt-Menü (`#lcPlatzMenue`) schließt, wenn die Seite kurz nach einer Geste rollt. Beim Tippen geht die Tastatur auf, das Telefon schiebt das Feld ins Bild und rollt – und jeder Tastendruck zählte als Geste. Das Menü war mitten im Wort zu, der Name weg.
+- Jetzt: Solange ein Schreibfeld im Menü den Fokus hat, schließt Rollen das Menü nicht. Tipp daneben und Escape schließen es weiter wie bisher; ohne Fokus schließt auch Rollen wie gehabt.
+- Sonde `werkzeug/pruefe-791-liedteil-benennen.js`: tippt „Refrain" mit Rollen zwischen den Buchstaben – das Menü bleibt offen, der Name steht; danach ohne Fokus schließt Rollen. Ohne die Änderung rot (gegengeprüft). Sonden 689, runde88-liedstellen, namensvorschlaege, hoerer-klammern, 787 grün.

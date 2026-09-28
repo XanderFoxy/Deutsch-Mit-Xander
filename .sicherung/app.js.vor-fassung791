@@ -35061,12 +35061,6 @@
          700 ms her) — und nie in den ersten 300 ms, in denen das
          Menue sich selbst noch zurechtrueckt. */
       if (e && e.type === "scroll") {
-        /* FASSUNG 791 — XANDER (Walkie 276): „wenn ich einen neuen Teil aufsetzen will und den benennen will bricht es
-           mitten im benennen ab und dann ist das weg". Beim Tippen rollt das Telefon die Seite (Tastatur geht auf, das
-           Feld wird ins Bild geschoben) – und jeder Tastendruck zählte als „Geste". Solange ein Schreibfeld im Menü den
-           Fokus hat, macht Rollen das Menü nicht mehr zu. */
-        const fokusFeld = document.activeElement;
-        if (fokusFeld && kasten.contains(fokusFeld) && /^(INPUT|TEXTAREA|SELECT)$/.test(fokusFeld.tagName)) return;
         const jetzt = Date.now();
         /* FASSUNG 687 — die Knöpfe unter den Plätzen: nach dem Tipp richtet sich das
            Klassenzimmer noch aus (die Seite rollt bis ~600 ms nach). Das Magic-Menü
