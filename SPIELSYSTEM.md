@@ -1727,3 +1727,20 @@ XANDER: „Bündnis wie oben UND Abwesende dürfen überfallen werden, aber nur 
   - Emy bekommt beim Wiederkommen 1 Meldung, beim zweiten Abruf 0.
   - Verbündete und Anfänger werden abgelehnt.
 - Als Nächstes (779): Beliebtheit, Touristenwellen mit Meldung, Kurtaxe wie in Venedig, Überfüllung.
+
+### Fassung 779 (Walkie 300, Teil 3: Beliebtheit, Touristenwellen, Kurtaxe, Überfüllung)
+Sonden: neu 779 (10/10 grün); 765, 770, 775, 777, 778 grün.
+XANDER: „gib mir … Benachrichtigungen wenn ein neuer Touristenstrom in meine Stadt kommt … Mund zum Mund … dass ich dann mehr produzieren muss aber auch mehr Geld verdienen kann … wenn die Leute hören das ist bei mir den Fernsehturm … aktiv bleiben muss … oder gerade noch mehr Deutsch lernen muss … wie in Italien … tourismussteuer … Venedig … Beliebtheitsfaktor".
+- **Beliebtheit** 0–100 (Server `spiel_beliebtheit`) = Grundwert 10 + Wahrzeichen (Besucher × 1,5, bis 40; Fernsehturm allein +21) + Gasthaus (6 je Stufe) + Deutsch geübt in den letzten 24 h (+12) + Ruf (−20 … +20). Am Bahnhof steht sie mit Balken und Aufschlüsselung.
+- **Ruf = Mundpropaganda**:
+  - Alle Gäste satt: +1.
+  - Je 3 Gäste ohne Essen: −1.
+  - Mehr Gäste als Platz (6 + 4 je Gasthaus-Stufe): −1.
+- **Touristenwelle**: Je Zug (alle 20 min) ist die Chance Beliebtheit × 0,4 % (bei 55 etwa 22 %, gemessen 46 von 200; höchstens 40 %). Dann kommen doppelt so viele Gäste.
+  - Meldung oben: „Touristenwelle! 16 Gäste kommen mit diesem Zug – sie wollen Berliner Fernsehturm sehen. Hast du genug Essen?“ (Tipp öffnet den Bahnhof). Der Knopf zeigt vorher „5 bleiben hungrig · zu voll (Platz für 14)“.
+- **Kurtaxe wie in Venedig**: 1–6 P je Gast (bisher fest 2 P), einstellbar am Bahnhof mit − / +.
+  - Höhere Taxe bringt weniger Gäste. Je beliebter die Stadt, desto weniger schreckt sie ab: Gäste × (1 − (Taxe − 2) · 0,12 · (1 − Beliebtheit/150)).
+  - Rechenbeispiel (Server, Beliebtheit 55): Taxe 2 → 9 Gäste (18 P Taxe), Taxe 6 → 6 Gäste (36 P Taxe), aber weniger Essen verkauft. Hohe Taxe lohnt, wenn wenig Essen da ist; niedrige, wenn die Vorratskammer voll ist.
+- Nach dem Aussteigen steht, was passiert ist: „🌊 Das war eine Touristenwelle! 2 blieben hungrig – das spricht sich herum (Ruf −1). Die Stadt war zu voll (Ruf −1) – ein größeres Gasthaus schafft Platz.“ oder „Alle satt – sie empfehlen dich weiter (Ruf +1).“
+- Server: `spiel_beliebtheit`, `spiel_kurtaxe` neu; `spiel_bahn_zug` (Taxe, Welle, Platz, Beliebtheit) und `spiel_bahn` (Ruf, hungrig, zu voll) erweitert.
+- Damit ist Walkie 300 umgesetzt: 777 Bündnis/Vertrauen/Verrat, 778 Überfall auf Abwesende, 779 Tourismus.

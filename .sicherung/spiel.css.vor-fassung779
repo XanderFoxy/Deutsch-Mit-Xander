@@ -2963,12 +2963,3 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-ueberfall-kopf b { flex: 1 1 auto; font: 800 12.5px/1.2 system-ui, sans-serif; }
 .sp-ueberfall-kopf small { font: 500 10.5px/1.2 system-ui, sans-serif; color: #b9c6ef; }
 .sp-ueberfall-ziel { background: rgba(60, 76, 130, .18); }
-/* FASSUNG 779 — Walkie 300: Beliebtheit und Kurtaxe am Bahnhof. */
-.sp-bahn-kurtaxe { margin: 6px 0; padding: 6px 8px; border-radius: 10px; background: rgba(90, 60, 30, .08); }
-.sp-bahn-bel { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
-.sp-bahn-bel b { font: 800 12.5px/1.2 system-ui, sans-serif; color: #2d2418; }
-.sp-bahn-bel small { flex-basis: 100%; font: 500 10.5px/1.3 system-ui, sans-serif; color: #6b5e44; }
-.sp-bahn-taxe { display: flex; align-items: center; gap: 6px; margin: 5px 0 2px; font: 600 12px/1.2 system-ui, sans-serif; color: #2d2418; }
-.sp-bahn-taxe span { flex: 1; }
-.sp-bahn-taxe b { min-width: 34px; text-align: center; }
-.sp-dl-station .sp-bahn-taxe button { width: 34px; height: 34px; min-height: 34px; padding: 0; border-radius: 9px; font: 800 18px/1 system-ui, sans-serif; display: inline-flex; align-items: center; justify-content: center; text-align: center; flex: 0 0 34px; }

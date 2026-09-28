@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 778: Überfall auf Abwesende – 1× am Tag, 10 %, 8 h Schutz, Meldung beim Wiederkommen (Walkie 300 Teil 2)",
+  stand: "Fassung 779: Beliebtheit, Touristenwellen mit Meldung, Kurtaxe 1–6 P wie Venedig, Ruf und Überfüllung (Walkie 300 Teil 3)",
 
   inArbeit: [
-    { seit: "2026-09-28T01:14",
-      text: "779: Beliebtheit, Touristenwellen, Kurtaxe · Walkie 301/302 · Funk 188/190 Rest" },
+    { seit: "2026-09-28T01:20",
+      text: "Walkie 301: Ausflug zum Wahrzeichen · Walkie 302: Flickstube · Funk 188/190 Rest · Folgen für Pac-Man/Mario" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T01:14",
-      text: "Walkie 300 Teil 2: Überfall auf Abwesende" },
+    { seit: "2026-09-28T01:20",
+      text: "Walkie 300 komplett: Diplomatie, Überfall, Tourismus" },
   ],
 };

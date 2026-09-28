@@ -4842,18 +4842,6 @@
       eierAlle(); return;
     } else if (s === "pluendern") {
       pluendern(k.dataset.z, k.dataset.c, k.dataset.g); return;
-    } else if (s === "kurtaxe") {
-      var tNeu = ((S.bahn && S.bahn.touristen && S.bahn.touristen.taxe) || 2) + (Number(k.dataset.n) || 0);
-      rpc("spiel_kurtaxe", { p_wert: tNeu }).then(function (r) {
-        if (!r || r.ok === false) { hinweis("🚂 " + ((r && r.grund) || "Das ging nicht.")); return; }
-        if (r.zug) { S.bahn = r.zug; S.bahnZeit = Date.now(); }
-        if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-        var tt = (r.zug && r.zug.touristen) || {};
-        ton("muenze", 0.3);
-        hinweis("🚂 Kurtaxe jetzt " + r.taxe + " P je Gast – mit dem nächsten Zug kommen " + tt.anzahl + " Gäste (" + tt.kurtaxe + " P Taxe).");
-        schnellZeichnen(true);
-      }).catch(function () { hinweis("🚂 Das ging gerade nicht."); });
-      return;
     } else if (s === "ueberfallauf") {
       S.ueberfallAuf = !S.ueberfallAuf;
       if (S.ueberfallAuf) { S.ueberfall = null; ueberfallLaden(); }
@@ -8282,14 +8270,6 @@
         text: u.abgewehrt ? "Während du weg warst, haben deine Wachen einen Überfall von " + (u.von || "?") + " auf die " + haus + " abgewehrt" + (u.strafe ? " (+" + u.strafe + " P)" : "") + (u.haft ? " – " + u.von + " sitzt jetzt in deinem Gefängnis" : "")
           : "Während du weg warst, hat " + (u.von || "?") + " deine " + haus + " überfallen" + (beute.length ? " (" + beute.join(", ") + ")" : "") + " – 24 h Rache ohne Mana, 8 h Schutz" });
     });
-    /* FASSUNG 779 — XANDER (Walkie 300): „gib mir … Benachrichtigungen wenn ein neuer Touristenstrom in meine Stadt kommt …
-       dass ich über so einen touristenwelle auch informiert werde wenn die Leute hören das ist bei mir den Fernsehturm". */
-    if (ich.dorf && Object.keys(ich.dorf).length) bahnLaden();
-    var zw = S.bahn, tw = zw && zw.touristen;
-    if (tw && tw.welle && !tw.erledigt && Date.parse(zw.bis) > jetzt && !g["tw:" + zw.slot]) {
-      neu.push({ key: "tw:" + zw.slot, art: "fertig", bild: MELDE_BILD.touristen, ziel: "bahnhof",
-        text: "Touristenwelle! " + tw.anzahl + " Gäste kommen mit diesem Zug – " + welleGrund(tw.welle_grund) + ". Hast du genug Essen?" });
-    }
     if (ungesehen.length && !S.ueberfallGesehenLaeuft) {
       S.ueberfallGesehenLaeuft = true;
       rpc("spiel_ueberfaelle_gesehen", {}).then(function () { S.ueberfallGesehenLaeuft = false; }).catch(function () { S.ueberfallGesehenLaeuft = false; });
@@ -11607,7 +11587,7 @@
         /* FASSUNG 765 — XANDER (Funk 184): „praktisch können wir mit dem Zug auch Tourismus in die Stadt bringen oder aus der
            Stadt um eine andere Stadt zu sehen … weil dadurch kann man doch Geld verdienen". Touristen steigen aus (Kurtaxe,
            sie kaufen Essen); eigene Bewohner machen einen Ausflug ins Nachbardorf (Forschung – das Nachbardorf verdient). */
-        + bahnTouristenHtml(ich, z) + "</div>" + bahnKurtaxeHtml(ich, z) + bahnReiseHtml(ich, z) + bahnGaesteHtml(z);
+        + bahnTouristenHtml(ich, z) + "</div>" + bahnReiseHtml(ich, z) + bahnGaesteHtml(z);
     }
     return '<div class="sp-dl-station sp-bahnhof" role="dialog" aria-label="Bahnhof"><div class="sp-dl-st-kopf"><i class="sp-bahn-kopf">' + kopf + "</i><span><b>Bahnhof</b>"
       + "<small>Export, Import und Touristen</small></span>"
@@ -11615,32 +11595,13 @@
   }
   /* FASSUNG 775 — mit Koch im Gasthaus essen die Gäste auch Fleisch und Eier. */
   function bahnEssen(ich) { return ["brot", "bratwurst", "kuchen", "fisch"].concat(dorfSteht(ich, "gasthaus") && beruf(ich, "koch") > 0 ? ["fleisch", "ei"] : []).reduce(function (n, w) { return n + vorrat(ich, w); }, 0); }
-  /* FASSUNG 779 — Beliebtheit und Kurtaxe (Walkie 300): „wie in Italien wo man dann so zusätzlich so eine tourismussteuer
-     verlangen kann … wie das in Venedig ist … weil die Leute sowieso dahin fahren wollen weil die Beliebtheit so groß ist". */
-  function welleGrund(g) {
-    return !g || g === "Mundpropaganda" ? "es hat sich herumgesprochen" : g === "Gasthaus" ? "wegen deines Gasthauses" : "sie wollen " + g + " sehen";
-  }
-  function bahnKurtaxeHtml(ich, z) {
-    var t = z.touristen || {}, b = t.beliebtheit || {};
-    if (!t.taxe) return "";
-    var teile = [["Wahrzeichen", b.wahrzeichen], ["Gasthaus", b.gasthaus], ["Deutsch geübt", b.deutsch], ["Ruf", b.ruf]].filter(function (x) { return x[1]; })
-      .map(function (x) { return x[0] + " " + (x[1] > 0 ? "+" : "") + x[1]; });
-    return '<div class="sp-bahn-kurtaxe"><div class="sp-bahn-bel"><b>Beliebtheit ' + (b.wert || 0) + '</b><i class="sp-dipl-balken"><u style="width:' + Math.max(0, Math.min(100, b.wert || 0)) + '%;background:#e2a93a"></u></i>'
-      + '<small>Grundwert 10' + (teile.length ? " · " + teile.join(" · ") : "") + "</small></div>"
-      + '<div class="sp-bahn-taxe"><span>Kurtaxe je Gast</span><button type="button" data-s="kurtaxe" data-n="-1"' + (t.taxe <= 1 ? " disabled" : "") + ' aria-label="Kurtaxe senken">−</button><b>' + t.taxe + " P</b>"
-      + '<button type="button" data-s="kurtaxe" data-n="1"' + (t.taxe >= 6 ? " disabled" : "") + ' aria-label="Kurtaxe erhöhen">+</button></div>'
-      + '<p class="sp-sm-klein">Höhere Taxe: mehr Geld je Gast, aber es kommen weniger – je beliebter deine Stadt, desto weniger schreckt sie ab (wie in Venedig). '
-      + "Beliebt machen: Wahrzeichen, Gasthaus, jeden Tag Deutsch üben und ein guter Ruf. Satte Gäste erzählen es weiter (Ruf +1), hungrige schaden (−1 je 3 ohne Essen), und über "
-      + (t.platz || 6) + " Gäste wird es zu voll (−1; Gasthaus +4 Plätze je Stufe). Ist die Stadt beliebt, kommt öfter eine Touristenwelle mit doppelt so vielen Gästen.</p></div>";
-  }
   function bahnTouristenHtml(ich, z) {
     var t = z.touristen;
     if (!t) return "";
     var preis = (t.gasthaus && t.gasthaus.preis_essen) || gasthausPreis(ich);
-    var kauf = Math.min(t.anzahl, bahnEssen(ich)), plus = t.kurtaxe + preis * kauf, voll = t.platz && t.anzahl > t.platz;
-    return '<button type="button" class="sp-bahn-touristen" data-s="bahn" data-a="touristen"' + (t.erledigt ? " disabled" : "") + ">" + wareSvg("touristen") + "<b>" + (t.welle ? "Touristenwelle: " : "Touristen: ") + t.anzahl + " steigen aus</b><small>"
-      + (t.erledigt ? "sind unterwegs ✓ – der nächste Zug kommt bald" : "+" + plus + " P (" + t.kurtaxe + " Kurtaxe" + (kauf ? " + " + kauf + " × Essen à " + preis + " P" + (dorfSteht(ich, "gasthaus") ? " im Gasthaus" : "") : ", kein Essen im Lager") + ")"
-        + (kauf < t.anzahl ? " · " + (t.anzahl - kauf) + " bleiben hungrig" : "") + (voll ? " · zu voll (Platz für " + t.platz + ")" : "")) + "</small></button>";
+    var kauf = Math.min(t.anzahl, bahnEssen(ich)), plus = t.kurtaxe + preis * kauf;
+    return '<button type="button" class="sp-bahn-touristen" data-s="bahn" data-a="touristen"' + (t.erledigt ? " disabled" : "") + ">" + wareSvg("touristen") + "<b>Touristen: " + t.anzahl + " steigen aus</b><small>"
+      + (t.erledigt ? "sind unterwegs ✓ – der nächste Zug kommt bald" : "+" + plus + " P (" + t.kurtaxe + " Kurtaxe" + (kauf ? " + " + kauf + " × Essen à " + preis + " P" + (dorfSteht(ich, "gasthaus") ? " im Gasthaus" : "") : ", kein Essen im Lager") + ")") + "</small></button>";
   }
   function bahnReiseHtml(ich, z) {
     var r = z.reise;
@@ -11703,10 +11664,7 @@
       if (art === "touristen") {
         bahnWareZeigen("touristen", "+" + r.anzahl, 104, bahnAn(bahnBeiX(98)).y - 22);
         ton("kasse", 0.4);
-        hinweis("🚂 " + r.anzahl + " Touristen steigen aus: " + r.kurtaxe + " P Kurtaxe" + (r.gekauft ? ", sie kaufen " + r.gekauft + " × Essen à " + (r.preis_essen || 5) + " P" + (r.gasthaus ? " im Gasthaus" : "") : "") + " – +" + r.erloes + " Punkte."
-          + (r.welle ? " 🌊 Das war eine Touristenwelle!" : "")
-          + (r.unversorgt ? " " + r.unversorgt + " blieben hungrig – das spricht sich herum (Ruf −" + Math.ceil(r.unversorgt / 3) + ")." : " Alle satt – sie empfehlen dich weiter (Ruf +1).")
-          + (r.ueberfuellt ? " Die Stadt war zu voll (Ruf −1) – ein größeres Gasthaus schafft Platz." : ""));
+        hinweis("🚂 " + r.anzahl + " Touristen steigen aus: " + r.kurtaxe + " P Kurtaxe" + (r.gekauft ? ", sie kaufen " + r.gekauft + " × Essen à " + (r.preis_essen || 5) + " P" + (r.gasthaus ? " im Gasthaus" : "") : "") + " – +" + r.erloes + " Punkte.");
         schnellZeichnen(true); panelAuffrischen(); return;
       }
       bahnWareZeigen(r.ware, (art === "export" ? "−" : "+") + r.menge, 104, bahnAn(bahnBeiX(98)).y - 22);
