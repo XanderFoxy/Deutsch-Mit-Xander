@@ -95,7 +95,9 @@
 
     kopf = el("div", "lk-kopf");
     const links = el("div", "lk-kopf-links");
-    links.appendChild(knopf("zurueck", "Zurück zur Webseite", () => { if (history.length > 1 && document.referrer.indexOf(location.host) >= 0) history.back(); else location.href = "index.html"; }));
+    /* FASSUNG 798: in der Seite eingebettet (Rahmen über dem Livestream) schließt „zurück“ den Rahmen. */
+    const eingebettet = q.get("eingebettet") === "1" && window.parent !== window;
+    links.appendChild(knopf("zurueck", eingebettet ? "Zurück zum Livestream" : "Zurück zur Webseite", () => { if (eingebettet) { try { window.parent.postMessage({ typ: "leicht-zu" }, location.origin); return; } catch (e) {} } if (history.length > 1 && document.referrer.indexOf(location.host) >= 0) history.back(); else location.href = "index.html"; }));
     const name = el("div", "lk-name");
     links.appendChild(name);
     kopf.appendChild(links);

@@ -3036,4 +3036,15 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 /* FASSUNG 789 — die Schalter unter dem Dorfbild (Symbole, Namen, Umbauen, Saison) mindestens 30 px hoch (Tippziel). */
 .sp-schnellmenue .sp-dl-beschriftung button, .sp-dl-beschriftung button { min-height: 30px; padding: 5px 11px; }
 /* FASSUNG 793 — Link zur neuen, leichten Stadt (nur Betreiber, bis zur Freigabe) */
-.sp-dl-beschriftung a.sp-neue-stadt { display: inline-flex; align-items: center; min-height: 30px; padding: 5px 11px; border-radius: 12px; font-size: 12px; font-weight: 700; background: #b8812e; color: #fff8e8; text-decoration: none; border: 1px solid rgba(243,195,90,.6); }
+.sp-dl-beschriftung .sp-neue-stadt { font-family: inherit; cursor: pointer; display: inline-flex; align-items: center; min-height: 30px; padding: 5px 11px; border-radius: 12px; font-size: 12px; font-weight: 700; background: #b8812e; color: #fff8e8; text-decoration: none; border: 1px solid rgba(243,195,90,.6); }
+
+/* FASSUNG 798 — die kleine Stadt in der Seite: hochkant unten angedockt,
+   quer (oder auf Wunsch) über die ganze Fläche. */
+.sp-lstadt { position: fixed; left: 0; right: 0; bottom: 0; height: 58vh; height: 58dvh; z-index: 2147483000; display: flex; flex-direction: column; background: #1d2a1f; border-top: 2px solid #b8812e; box-shadow: 0 -8px 24px rgba(0,0,0,.45); }
+.sp-lstadt.sp-ls-voll { top: 0; height: auto; border-top: 0; }
+.sp-ls-leiste { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 12px; padding-top: max(4px, env(safe-area-inset-top)); background: #2b1d0e; color: #fff3d6; font: 700 13px/1.2 system-ui, sans-serif; }
+.sp-lstadt:not(.sp-ls-voll) .sp-ls-leiste { padding-top: 4px; }
+.sp-ls-leiste span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-ls-leiste button { flex: 0 0 auto; min-height: 32px; padding: 4px 10px; border-radius: 10px; border: 1px solid rgba(243,195,90,.6); background: #b8812e; color: #fff8e8; font: 700 12px/1.1 system-ui, sans-serif; cursor: pointer; }
+.sp-ls-leiste .sp-ls-zu { background: #7a2e22; }
+.sp-ls-rahmen { flex: 1 1 auto; width: 100%; min-height: 0; border: 0; display: block; background: #1d2a1f; }

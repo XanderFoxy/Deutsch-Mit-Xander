@@ -1970,3 +1970,12 @@ XANDER: „ob du auf der Basis von diesem Konzept das Ganze in einem kleineren M
 - Forschung: XANDER: „Entdeckungen scheinen stehen zu bleiben". Befund: alle 6 erforscht, 308 Forschung lagen brach (die Liste war zu Ende). Neu (Migration spiel_797_forschung_zweite_stufe): Kunstdünger (Liebig, 150: Bauern +30 %), Melkmaschine (160, Kuhstall: doppelt so schnell, doppeltes Lager), Brutkasten (160, Hühnerstall: ebenso), Telegraf (200, Quote 70: Markt zahlt 15 % mehr), geheim Röntgenstrahlen (400, 12 Wiss., Quote 90, Krankenhaus: Heilen +50 %), geheim Automobil (Benz, 500, 15 Wiss., Quote 92, Rathaus 2: Baustellen 25 % schneller).
 - Händler (spiel_haendler_kaufen, spiel_haendler_preis): XANDER: „es gibt kein Kaufen-Menü … keine Angebote von Händlern". Im Markt jetzt „Beim Händler kaufen": jede Ware, die der Markt ankauft, zum Tagespreis × 1,6; 1/5/10/20 je Kauf, höchstens 60 am Tag.
 - Noch offen: Angebote von Freunden (Freundesliste), zweiter Stall/zweite Farm, Schiffe/Hafen.
+
+## Fassung 798 — die neue Stadt in der Seite statt im neuen Tab
+
+XANDER: „die Stadt im Chat … im Hochformat klein, im Querformat Vollbild, aber in der Seite, kein neuer Tab … und dann wieder zurück zum Livestream".
+
+- „Neue Stadt ansehen" ist jetzt ein Knopf (`data-s="neuestadt"`). Er öffnet `stadt-leicht.html?eingebettet=1` in einem Rahmen, der direkt am body hängt, damit das Neuzeichnen des Dorfes ihn nicht neu lädt.
+- Hochkant ist der Rahmen unten angedockt (58 % der Höhe); oben bleiben Livestream und Chat sichtbar. Quer (Höhe unter 700 px) füllt er die ganze Fläche. Drehen schaltet automatisch um, „Vollbild"/„Klein" von Hand.
+- „Zurück zum Livestream" oben am Rahmen und der Zurück-Knopf in der Stadt selbst (per postMessage `leicht-zu`, nur gleiche Herkunft) schließen den Rahmen und werfen ihn weg. Dann lädt und rechnet nichts mehr.
+- Sonde: `werkzeug/pruefe-798-stadt-im-chat.js`. Neu: grün. Alter Code: 11 rot.

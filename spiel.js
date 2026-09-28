@@ -4786,6 +4786,8 @@
       bahnReisen(k); return;
     } else if (s === "bauhelfen") {
       bauHelfen(k.dataset.w); return;
+    } else if (s === "neuestadt") {
+      leichtStadtAuf(); return;
     } else if (s === "umbau") {
       S.umbau = !S.umbau; S.umbauWahl = ""; S.dorfWahl = ""; S.dorfTippWeg = true; umbauZiehenAn();
       ton("holzklopf", 0.25); schnellZeichnen(true); return;
@@ -12694,7 +12696,57 @@
     var be = BE(), darf = false;
     try { darf = Boolean(be && be.isOwner && be.isOwner()); } catch (e) {}
     if (!darf && !window.LEICHT_FREI) return "";
-    return '<a class="sp-neue-stadt" href="stadt-leicht.html" target="_blank" rel="noopener">Neue Stadt ansehen' + (window.LEICHT_FREI ? "" : " (nur du)") + "</a>";
+    return '<button type="button" data-s="neuestadt" class="sp-neue-stadt">Neue Stadt ansehen' + (window.LEICHT_FREI ? "" : " (nur du)") + "</button>";
+  }
+  /* FASSUNG 798 — XANDER: „die Stadt im Chat … im Hochformat klein, im
+     Querformat Vollbild, aber in der Seite, kein neuer Tab … und dann wieder
+     zurück zum Livestream". Die kleine Stadt läuft in einem Rahmen (iframe)
+     über der Seite: hochkant unten angedockt (oben bleiben Livestream und
+     Chat sichtbar), quer über die ganze Fläche. Der Rahmen hängt direkt am
+     body, damit das Neuzeichnen des Dorfes ihn nicht neu lädt. Schließen
+     wirft ihn weg – dann lädt und rechnet nichts mehr. */
+  var LSTADT = null;
+  function leichtStadtQuer() { return window.innerWidth > window.innerHeight && window.innerHeight < 700; }
+  function leichtStadtModus(voll) {
+    if (!LSTADT) return;
+    LSTADT.voll = voll;
+    LSTADT.el.classList.toggle("sp-ls-voll", voll);
+    LSTADT.gross.textContent = voll ? "Klein" : "Vollbild";
+    LSTADT.gross.setAttribute("aria-label", voll ? "Stadt klein zeigen" : "Stadt im Vollbild zeigen");
+  }
+  function leichtStadtZu() {
+    if (!LSTADT) return;
+    window.removeEventListener("resize", LSTADT.dreh);
+    window.removeEventListener("message", LSTADT.post);
+    try { LSTADT.el.remove(); } catch (e) {}
+    document.documentElement.classList.remove("sp-ls-offen");
+    LSTADT = null;
+  }
+  function leichtStadtAuf() {
+    if (LSTADT) { leichtStadtModus(!LSTADT.voll); return; }
+    var el = document.createElement("div");
+    el.className = "sp-lstadt";
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-label", "Neue Stadt");
+    el.innerHTML = '<div class="sp-ls-leiste"><span>Stadt</span>'
+      + '<button type="button" class="sp-ls-gross"></button>'
+      + '<button type="button" class="sp-ls-zu" aria-label="Zurück zum Livestream">Zurück zum Livestream</button></div>'
+      + '<iframe class="sp-ls-rahmen" title="Neue Stadt" src="stadt-leicht.html?eingebettet=1" allow="fullscreen"></iframe>';
+    document.body.appendChild(el);
+    LSTADT = { el: el, gross: el.querySelector(".sp-ls-gross"), hand: false, voll: false };
+    LSTADT.gross.addEventListener("click", function () { LSTADT.hand = true; leichtStadtModus(!LSTADT.voll); });
+    el.querySelector(".sp-ls-zu").addEventListener("click", leichtStadtZu);
+    /* Drehen: quer → Vollbild, hochkant → klein – solange Xander nicht selbst umgeschaltet hat. */
+    var q0 = leichtStadtQuer();
+    LSTADT.dreh = function () { var q = leichtStadtQuer(); if (q === q0 || !LSTADT) return; q0 = q; LSTADT.hand = false; leichtStadtModus(q); };
+    LSTADT.post = function (ev) {
+      if (!LSTADT || ev.origin !== location.origin || !ev.data) return;
+      if (ev.data.typ === "leicht-zu") leichtStadtZu();
+    };
+    window.addEventListener("resize", LSTADT.dreh);
+    window.addEventListener("message", LSTADT.post);
+    document.documentElement.classList.add("sp-ls-offen");
+    leichtStadtModus(q0);
   }
   function umbauLeisteHtml(ich) {
     var w = S.umbauWahl, name = w && DORF[w] ? DORF[w].name : "";
