@@ -53,7 +53,7 @@
   const BEREICHE = [
     ["Tannenwald", "Kirchberg", "Mühlbach"],
     ["Handwerkergasse", "Marktplatz", "Am Bach"],
-    ["Obstwiesen", "Bahnhofstraße", "Seeufer"]
+    ["Domplatz", "Bahnhofstraße", "Seeufer"]
   ];
   O.BEREICHE = BEREICHE;
   const BG = 48;

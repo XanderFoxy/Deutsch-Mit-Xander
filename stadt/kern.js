@@ -143,7 +143,7 @@
     f("nord", [x1, y0, z1], [-1, 0, 0], q.b);
     f("ost", [x1, y1, z1], [0, -1, 0], q.t);
     f("west", [x0, y0, z1], [0, 1, 0], q.t);
-    if (m.oben !== undefined && m.oben !== null) this.flaeche({ name: "oben", o: [x0, y0, z1], u: [1, 0, 0], v: [0, 1, 0], w: q.b, h: q.t, malen: m.oben });
+    if (m.oben !== undefined && m.oben !== null) this.flaeche(Object.assign({ name: "oben", o: [x0, y0, z1], u: [1, 0, 0], v: [0, 1, 0], w: q.b, h: q.t, malen: m.oben }, opt || {}, { ao: false }));
   };
   /* Figur: ein aufrecht gemaltes Ding (Baum, Mensch, Laterne) — wird im
      Bild immer aufrecht gezeigt. malen(g, s, F) zeichnet mit Ursprung am
@@ -423,8 +423,10 @@
     const schattenPunkte = [];
     for (const tl of M.teile) {
       if (!tl.schatten) continue;
-      const pts = teilPunkte(tl, c, sn).map((p) => [p[0] + sx * p[2], p[1] + sy * p[2]]);
-      if (pts.length) schattenPunkte.push({ pts: huelle(pts.concat(teilPunkte(tl, c, sn).map((p) => [p[0], p[1]]))) });
+      /* Punkte unter der Erde (Baugrube, Keller) werfen keinen Schatten */
+      const oben = teilPunkte(tl, c, sn).filter((p) => p[2] > -0.01);
+      const pts = oben.map((p) => [p[0] + sx * p[2], p[1] + sy * p[2]]);
+      if (pts.length >= 3) schattenPunkte.push({ pts: huelle(pts.concat(oben.map((p) => [p[0], p[1]]))) });
       for (const fi of tl.figuren) if (fi.schatten !== false) schattenPunkte.push({ figur: fi, p: drehP([fi.x, fi.y, fi.z], c, sn) });
     }
     let [x0, y0, x1, y1] = grenzen(M, c, sn, s);
@@ -471,7 +473,7 @@
     gs.globalAlpha = 0.55;
     for (const tl of M.teile) {
       if (!tl.schatten) continue;
-      const fuss = teilPunkte(tl, c, sn).filter((p) => p[2] < 0.15);
+      const fuss = teilPunkte(tl, c, sn).filter((p) => p[2] < 0.15 && p[2] > -0.01);
       if (fuss.length < 3) continue;
       const h = huelle(fuss.map((p) => [p[0], p[1]]));
       const mx = h.reduce((a, p) => a + p[0], 0) / h.length, my = h.reduce((a, p) => a + p[1], 0) / h.length;

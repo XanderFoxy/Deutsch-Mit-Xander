@@ -62,13 +62,22 @@
     flaecheEckig(-13, -12, 13, 12, 0);
     /* Hauptstraße Nord–Süd, Kirchweg, Gasse nach Westen, Weg zum Bach */
     B.linie(kurve([[0, -12], [1, -24], [-2, -38], [0, -50]], 12), 1.7, 0, 1);
-    B.linie(kurve([[0, 12], [-1, 26], [2, 44], [0, 62]], 12), 1.8, 0, 1);
+    B.linie(kurve([[0, 12], [-1, 26], [2, 40], [0, 50]], 12), 1.8, 0, 1);
     B.linie(kurve([[-13, 2], [-26, 4], [-40, 0], [-56, 3]], 12), 1.5, 0, 1);
     B.linie(kurve([[13, -2], [22, -3], [32, -1], [44, 2]], 12), 1.5, 0, 1);
     /* Kirchplatz */
     flaecheRund(0, -52, 9, 7, 0, 0.25);
     /* Bahnhofsvorplatz */
-    flaecheEckig(-7, 58, 7, 64, 0);
+    flaecheEckig(-9, 48.5, 9, 54.5, 0);
+    /* Domplatz vor den Westtürmen (Türme zeigen nach Norden zur Gasse) */
+    flaecheEckig(-58, 5, -34, 17, 0);
+    /* Platz um Pyramide und Karussell am Bach */
+    flaecheRund(45, -14, 7.5, 6.5, 0, 0.3);
+    flaecheRund(46, 14, 7.5, 6.5, 0, 0.3);
+    B.linie(kurve([[40, 1], [44, -6], [45, -8]], 8), 1.2, 0, 1);
+    B.linie(kurve([[40, 3], [44, 8], [46, 8]], 8), 1.2, 0, 1);
+    /* Kirchweg zur Krippe */
+    B.linie(kurve([[-4, -50], [-10, -46]], 6), 1.0, 0, 1);
     /* Bach: von Nordosten, unter der Brücke (x≈32) durch, in den See im Südosten */
     const bach = kurve([[66, -72], [54, -54], [40, -40], [36, -22], [31, -2], [34, 16], [42, 30], [48, 40]], 14);
     B.linie(bach, (i, k) => 1.25 + 0.55 * ST.rausch(i * 0.7 + k, 3, 5), 1, 1);
@@ -76,7 +85,7 @@
     /* Rasen vor den Häusern (Vorgärten) und Beete */
     flaecheEckig(-24, -22, -16, -15, 3);
     flaecheEckig(16, 15, 24, 22, 3);
-    flaecheEckig(-40, 30, -28, 42, 2);
+    flaecheEckig(22, -66, 30, -58, 2);
   };
 
   /* ---------------- Gebäude und Schmuck ---------------- */
@@ -103,11 +112,16 @@
     setze("fachwerkerker", -19.5, -7, 270, "probehaus");
     /* Weiter draußen */
     setze("fachwerkhaus", -34, -8, 0, "probehaus");
-    setze("fachwerkerker", -48, 10, 180, "probehaus");
+    setze("fachwerkerker", -56, -22, 90, "probehaus");
     setze("fachwerkhaus", 10, 36, 270, "probehaus");
     setze("fachwerkhaus", -10, -34, 90, "probehaus");
     setze("kirche", 0, -62, 0);
-    setze("bahnhof", 0, 67, 180);
+    setze("bahnhof", 0, 63, 180);
+    setze("koelnerdom", -46, 44, 90);
+    setze("krippe", -13, -46, 0);
+    setze("pyramide", 45, -14, 0);
+    setze("karussell", 46, 14, 0);
+    setze("wassermuehle", 32.4, -37.2, 12);
     /* Markt: Christbaum in der Mitte, Buden im Kreis */
     setze("weihnachtsbaum", 0, 0, 0);
     for (let i = 0; i < 8; i++) {
@@ -133,10 +147,12 @@
       const o = setze("tanne", x, y, rng() * 360);
       if (o && !SZ.passt(o.typ, o.x, o.y, o.gier, o)) SZ.weg(o);
     }
-    for (let i = 0; i < 18; i++) {
-      const x = -66 + (i % 6) * 6 + rng() * 1.5, y = 30 + Math.floor(i / 6) * 7 + rng() * 1.5;
-      if (B.wert(x, y, 2) > 0.2 || B.wert(x, y, 0) > 0.1) continue;
-      setze("obstbaum", x, y, rng() * 360);
+    /* Obstwiese im Nordosten, zwischen Mühle und Waldrand */
+    for (let i = 0; i < 16; i++) {
+      const x = 36 + (i % 4) * 7 + rng() * 2, y = -68 + Math.floor(i / 4) * 6.5 + rng() * 2;
+      if (B.wert(x, y, 1) > 0.05 || B.wert(x, y, 0) > 0.1) continue;
+      const o = setze("obstbaum", x, y, rng() * 360);
+      if (o && !SZ.passt(o.typ, o.x, o.y, o.gier, o)) SZ.weg(o);
     }
     /* Waldsaum rund um die Stadt (außerhalb der Bauflächen): die Karte endet
        nicht an einer Kante, sondern im Wald */
@@ -167,6 +183,8 @@
       try { SZ.ausText(stand); } catch (e) { console.error(e); stand = null; }
     }
     if (!stand) { SZ.jahr = "winter"; SZ.zeit = "abend"; ST.dorfBoden(); ST.dorfBauen(); }
+    /* Menschen werden nicht gespeichert – sie kommen bei jedem Öffnen neu */
+    if (ST.menschenSetzen && !SZ.objekte.some((o) => ST.MODELLE[o.typ] && ST.MODELLE[o.typ].live)) ST.menschenSetzen();
     if (q.get("jahr")) SZ.jahr = q.get("jahr");
     if (q.get("zeit")) SZ.zeit = q.get("zeit");
     const K = ST.kamera;
