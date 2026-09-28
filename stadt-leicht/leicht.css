@@ -99,9 +99,24 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 .lk-mini-modus .lk-vollknopf { left: 6px; bottom: 6px; }
 .lk-mini-modus .lk-kopf, .lk-mini-modus .lk-schmuck, .lk-mini-modus .lk-farbfeld, .lk-mini-modus .lk-leiste,
 .lk-mini-modus .lk-karte, .lk-mini-modus .lk-ansage, .lk-mini-modus .lk-mini-schalter { display: none !important; }
-.lk-mini-modus .lk-mini-rahmen { right: 6px; bottom: 6px; }
+.lk-mini-modus .lk-mini-rahmen { right: 4px; bottom: 4px; }
+.lk-mini-modus .lk-mini { opacity: .92; }
 .lk-mini-modus:not(.lk-nah) .lk-mini-rahmen { display: none; }
-.lk-mini-modus .lk-mini { width: 93px; height: 93px; border-radius: 9px; border-width: 1.5px; }
+.lk-mini-modus .lk-mini { width: 72px; height: 72px; border-radius: 9px; border-width: 1.5px; }
 .lk-mini-modus .lk-mini.zu { display: block; }
 .lk-mini-modus .lk-mini-feld span { display: none; }
 .lk-mini-modus .lk-vorhang b { font-size: 18px; }
+
+/* FASSUNG 805 — im kleinen Rahmen scrollt ein Wisch die Seite (nicht die Stadt); Tippen bleibt Tippen. */
+html.lk-mini-html, .lk-mini-modus, .lk-mini-modus #lDinge, .lk-mini-modus #lBoden { touch-action: pan-y; }
+/* FASSUNG 806 — Zeichen über den Häusern (nur im eingebetteten Spiel): „fertig" grün, Bau/kaputt, laufend nur nah dran */
+#lOber > .lk-zeichen-ebene { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.lk-zeichen { position: absolute; left: 0; top: 0; pointer-events: auto; min-height: 30px; min-width: 30px; padding: 0 8px; border: 0;
+  border-radius: 15px; font: 700 11px/30px system-ui, sans-serif; white-space: nowrap; color: #fff; background: rgba(35, 45, 60, .82);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .35); cursor: pointer; will-change: transform; }
+.lk-zeichen.lk-z-fertig { background: #2f9a4a; box-shadow: 0 0 0 2px rgba(255, 255, 255, .85), 0 2px 6px rgba(0, 0, 0, .4); animation: lk-zeichen-puls 1.6s ease-in-out infinite; }
+.lk-zeichen.lk-z-bau { background: rgba(190, 120, 20, .9); }
+.lk-zeichen.lk-z-kaputt { background: rgba(170, 40, 40, .9); }
+.lk-zeichen.lk-z-laeuft { font-weight: 600; opacity: .9; }
+.lk-mini-modus:not(.lk-nah) .lk-zeichen.lk-z-laeuft { display: none !important; }
+@keyframes lk-zeichen-puls { 50% { filter: brightness(1.18); } }

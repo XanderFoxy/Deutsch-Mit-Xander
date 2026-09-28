@@ -31,6 +31,10 @@
      Variante tiefer gehen können." SPARMODUS: bei „Datensparen", 2G/3G oder
      ?spar=1 nur die kleinen Bilder (nie die großen), kein doppeltes
      Tag-und-Nacht-Bild in der Dämmerung, weniger Leute. */
+  /* FASSUNG 805 — XANDER: „die neue Map in der Miniaturansicht fast noch kleiner als unsere alte … damit wir keinen
+     Ladebalken haben". Im kleinen Rahmen des Spiels (mini=1) von Anfang an nur kleine Bilder, keine Leute, keine
+     Baustellenbilder, kein Tag+Nacht zugleich – das Nötigste für den Überblick. */
+  LB.nurKlein = (function () { try { return new URLSearchParams(location.search).get("mini") === "1"; } catch (e) { return false; } })();
   LB.spar = (function () {
     try {
       const q = new URLSearchParams(location.search);
@@ -46,7 +50,19 @@
 
   LB.laden = function (v) {
     LB.version = v || "";
-    return fetch(PFAD + "verzeichnis.json" + (v ? "?v=" + v : "")).then((r) => r.json()).then((j) => { LB.vz = j; return j; });
+    /* FASSUNG 805 — im kleinen Rahmen erst das kleine Verzeichnis (nur _z und _k); das große kommt erst im Vollbild. */
+    const datei = LB.nurKlein ? "verzeichnis-klein.json" : "verzeichnis.json";
+    LB.vzVoll = !LB.nurKlein;
+    return fetch(PFAD + datei + (v ? "?v=" + v : "")).then((r) => r.json()).then((j) => {
+      /* Im kleinen Verzeichnis tragen nur die Zwergbilder ihre Fensterlichter; die _k-Bilder bekommen sie hochgerechnet. */
+      for (const k in j) if (j[k].lz) { const z = j[k.slice(0, -2) + "_z"], f = z ? j[k].s / z.s : 1; j[k].l = z && z.l ? z.l.map((l) => [l[0] * f, l[1] * f, l[2] * f].concat(l.slice(3))) : []; }
+      LB.vz = j; return j;
+    });
+  };
+  LB.vollLaden = function () {
+    if (LB.vzVoll) return Promise.resolve(LB.vz);
+    LB.vzVoll = true;
+    return fetch(PFAD + "verzeichnis.json" + (LB.version ? "?v=" + LB.version : "")).then((r) => r.json()).then((j) => { LB.vz = Object.assign({}, LB.vz, j); LB.neu = true; return j; }).catch(() => { LB.vzVoll = false; });
   };
 
   function weiter() {
@@ -86,6 +102,9 @@
   LB.wahl = function (basis, s, stufe) {
     const k = LB.vz[basis + "_k"], g = LB.vz[basis + "_g"], m = LB.vz[basis + "_m"];
     if (m) return { name: basis + "_m", meta: m };
+    /* FASSUNG 805 — im kleinen Rahmen das Zwergbild (_z, 40 %), solange es scharf genug ist (bis 1,35-fach). */
+    const z = LB.nurKlein && LB.vz[basis + "_z"];
+    if (z && s * (stufe || 1) <= z.s * 1.35) return { name: basis + "_z", meta: z };
     if (!k && !g) return null;
     const bedarf = s * (stufe || 1);
     /* ab dem 1,6-fachen der kleinen Auflösung lohnt das große Bild

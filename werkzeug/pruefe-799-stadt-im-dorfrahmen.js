@@ -195,7 +195,7 @@ const sage = (gut, was, zusatz) => {
   const stadtFrame = () => pg.frames().find((x) => /stadt-leicht\.html/.test(x.url()));
   const imFrame = async (fn, arg) => { const f = stadtFrame(); if (!f) return null; try { return await f.evaluate(fn, arg); } catch (e) { return null; } };
   const tippeImFrame = async (sel) => {
-    await pg.evaluate(() => { const p = document.querySelector(".sp-dl-neustadt-platz"); if (p) p.scrollIntoView({ block: "center" }); }); await tick(120);
+    await pg.evaluate(() => { const p = document.querySelector(".sp-dl-neustadt-platz"); if (p) p.scrollIntoView({ block: "center" }); }); await tick(450);
     const m = await imFrame((s) => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height }; }, sel);
     const off = await lage(".sp-lstadt");
     if (!m || !off) return null;
@@ -226,6 +226,23 @@ const sage = (gut, was, zusatz) => {
   sage(await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-dl-beschriftung button")].map((x) => x.dataset.s); return b.join(",") === "stadtversion,stadtversion,stadtvoll"; }), "darunter nur „Alte Version“, „Neue Version“ und „Vollbild“ (Symbole/Namen/Umbauen gehören zum alten Bild)");
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-klein.png" });
 
+  console.log("\nSCHLANK UND STILL (Fassung 805)\n");
+  /* Gezählt wird, was über die Leitung geht: Bilder wie sie sind, Text (JSON, JS, CSS) gepackt – wie GitHub Pages es schickt. */
+  const liste = await imFrame(() => performance.getEntriesByType("resource").map((r) => r.name));
+  const last = liste && liste.reduce((a, u) => { const p = decodeURIComponent(new URL(u).pathname).replace(/^\//, ""), d = path.join(WURZEL, p);
+    const roh = /^https?:\/\/(127\.0\.0\.1|localhost)/.test(u) && fs.existsSync(d) ? fs.readFileSync(d) : null;
+    const kb = roh ? (/\.(webp|png|jpe?g)$/.test(p) ? roh.length : require("zlib").gzipSync(roh, { level: 9 }).length) / 1024 : 0;
+    return { n: a.n + 1, kb: a.kb + kb, gross: a.gross + (/_(g|m)\.webp|l_geher|verzeichnis\.json/.test(u) ? 1 : 0) }; }, { n: 0, kb: 0, gross: 0 });
+  sage(!!last && last.gross === 0 && last.kb < 300, "der kleine Rahmen lädt unter 300 KB: nur Zwergbilder und das kleine Verzeichnis (keine großen Bilder, keine Leute, kein großes Verzeichnis)", JSON.stringify(last && { dateien: last.n, kb: Math.round(last.kb), gross: last.gross }));
+  const k0 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y }));
+  const sc0 = await pg.evaluate(() => { const e = document.querySelector(".sp-dl-neustadt-platz"); let p = e.parentElement; while (p && !(p.scrollHeight > p.clientHeight + 4 && /(auto|scroll)/.test(getComputedStyle(p).overflowY))) p = p.parentElement; return p ? p.scrollTop : window.scrollY; });
+  { const o = await lage(".sp-lstadt"); const cdp = await ctx.newCDPSession(pg);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: o.l + o.w / 2, y: o.t + o.h * .7 }] });
+    for (let i = 1; i <= 8; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: o.l + o.w / 2 + i * 4, y: o.t + o.h * .7 - i * 14 }] }); await tick(16); }
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await tick(600); }
+  const k1 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y }));
+  sage(k0 && k1 && Math.abs(k0.x - k1.x) < .01 && Math.abs(k0.y - k1.y) < .01, "Wischen über die kleine Stadt verschiebt sie nicht (das Bild steht still wie beim alten Dorf)", JSON.stringify({ k0, k1 }));
+
   console.log("\nNEUZEICHNEN DES MENÜS LÄDT DIE STADT NICHT NEU\n");
   await imFrame(() => { window.__marke = 42; });
   await pg.evaluate(() => { for (let i = 0; i < 4; i++) window.DMA_SPIEL.pruef.schnellZeichnen(true); });
@@ -243,7 +260,9 @@ const sage = (gut, was, zusatz) => {
   sage(s1 / s0 > 2 && s1 / s0 < 2.4, "die Lupe holt doppelt so nah heran wie beim alten Dorf", (s1 / s0).toFixed(2) + (process.env.STAPEL ? " " + JSON.stringify(await imFrame(() => ({ s: window.STADT.kamera.s, min: window.STADT.kamera.min, W: window.STADT.kamera.W, an: document.querySelector(".lk-lupe").className }))) + " s0=" + s0 : ""));
   sage(nah(await lage(".sp-lstadt"), await lage(".sp-dl-neustadt-platz")), "der Rahmen bleibt dabei so klein wie vorher");
   const kf = await imFrame(() => { const f = [...document.querySelectorAll(".lk-mini-feld")].map((q) => q.getBoundingClientRect()).filter((q) => q.width > 0); return { n: f.length, min: f.length ? Math.min(...f.map((q) => Math.min(q.width, q.height))) : 0 }; });
-  sage(kf && kf.n === 9 && kf.min >= 30, "mit der Lupe erscheint die kleine Karte: 9 Viertel, je ≥ 30 px", JSON.stringify(kf));
+  /* FASSUNG 805 — XANDER: „diese Kachel … muss nicht so ein großes Viereck sein … viel kleiner, weil man kann seinen
+     Finger auch bisschen anstrengen". Die Karte ist 72 px, die Viertel also 24 px (bewusst unter den sonst üblichen 30 px). */
+  sage(kf && kf.n === 9 && kf.min >= 22 && kf.min <= 26, "mit der Lupe erscheint die kleine Karte am Rand: 9 Viertel à ≈ 24 px", JSON.stringify(kf));
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-lupe.png" });
   await tippeImFrame(".lk-mini-feld:nth-child(9)"); await tick(1100);
   const k9 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y }));
@@ -266,6 +285,31 @@ const sage = (gut, was, zusatz) => {
   sage(!!ziel && !!st && st.knoepfe > 0, "Tipp auf ein Haus in der kleinen Stadt öffnet darunter die Karte des Spiels (mit Knöpfen wie Einsammeln)", JSON.stringify({ ziel, st }));
   sage(nah(await lage(".sp-lstadt"), await lage(".sp-dl-neustadt-platz")) && (await imFrame(() => window.__marke)) === 42, "die Stadt bleibt dabei im Rahmen und lädt nicht neu");
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-haus.png" });
+
+  /* FASSUNG 806 — XANDER: „dass die Sachen verlinkt sind, dass ich schon in der Map jetzt schon einsammeln kann". */
+  console.log("\nVERLINKT: SPIELSTAND UND EINSAMMELN IN DER KARTE (Fassung 806)\n");
+  const haeuser = await imFrame(() => window.STADT.szene.objekte.filter((o) => o.art === "haus").map((o) => o.spiel).sort().join(","));
+  const soll = await pg.evaluate(() => { const d = window.DMA_SPIEL.pruef.zustand().ich.dorf || {}; return Object.keys(d).filter((k) => d[k] && d[k].stufe > 0).sort().join(","); });
+  sage(!!haeuser && haeuser === soll, "die neue Stadt zeigt genau die Gebäude des Spielstands (vom Spiel geschickt, nicht die Beispielstadt)", JSON.stringify({ haeuser, soll }));
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = ""; S.ich.dorf = Object.assign({}, S.ich.dorf, { gasthaus: { stufe: 1, lp: 20 } }); window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await tick(1600);
+  sage(await imFrame(() => window.STADT.szene.objekte.some((o) => o.art === "haus" && o.spiel === "gasthaus")) && (await imFrame(() => window.__marke)) === 42, "was im Spiel neu gebaut wird (Gasthaus), steht gleich auch in der Stadt – ohne Neuladen");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(), vor = new Date(Date.now() - 60000).toISOString();
+    S.ich.werk = { baeckerei: { ware: "brot", menge: 4, start: vor, fertig: new Date(Date.now() - 1000).toISOString() }, schule: { ware: "kuchen", menge: 2, start: vor, fertig: new Date(Date.now() + 130000).toISOString() } };
+    window.__abgeholt = [];
+    window.__extra = Object.assign(window.__extra || {}, { spiel_werk_abholen: (a, ich) => { window.__abgeholt.push(a.p_gebaeude); return Object.assign({ ok: true, menge: 4, ware: "brot" }, ich); } });
+    window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await imFrame(() => { const o = window.STADT.szene.objekte.find((x) => x.spiel === "baeckerei"); window.STADT.leicht.fliegeZu(o.x, o.y, window.STADT.kamera.s, 10); });
+  await tick(1600);
+  const zb = await imFrame(() => { const b = document.querySelector('.lk-zeichen[data-g="baeckerei"]'); if (!b) return null; const r = b.getBoundingClientRect();
+    const s = document.querySelector('.lk-zeichen[data-g="schule"]');
+    return { t: b.textContent, kl: b.className, x: r.left + r.width / 2, y: r.top + r.height / 2, h: r.height, sicht: getComputedStyle(b).display !== "none", schule: s ? s.textContent : null }; });
+  sage(!!zb && zb.sicht && /4 Brot/.test(zb.t) && /lk-z-fertig/.test(zb.kl) && zb.h >= 30, "über der Bäckerei steht grün „4 Brot“ (≥ 30 px hoch)", JSON.stringify(zb));
+  sage(!!zb && /^Kuchen [12]:\d\d$/.test(zb.schule || ""), "über der Schule läuft die Uhr („… 2:10“)", JSON.stringify(zb && zb.schule));
+  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-zeichen.png" });
+  if (zb) { const off = await lage(".sp-lstadt"); await pg.touchscreen.tap(off.l + zb.x, off.t + zb.y); await tick(1200); }
+  const nach = await pg.evaluate(() => ({ ab: window.__abgeholt, wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl }));
+  sage(nach.ab.join() === "baeckerei" && nach.wahl !== "baeckerei", "ein Tipp auf „4 Brot“ sammelt direkt ein (spiel_werk_abholen), ohne erst die Station zu öffnen", JSON.stringify(nach));
 
   console.log("\nVOLLBILD UND ZURÜCK\n");
   await tippe('[data-s="stadtvoll"]'); await tick(700);

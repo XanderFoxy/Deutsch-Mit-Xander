@@ -2054,3 +2054,21 @@ XANDER: „fließend Tag und Nacht … auch bei uns" (im Spiel-Dorf, nicht nur i
 - Wechsel Tag ↔ Nacht: Das vorige Bild aus dem Vorrat (`DM.zuletzt`) blendet in der Leinwand über 3 s aus, statt hart zu springen. Ein eigenes Blend-Element würde das Angleichen des Menüs wieder entfernen.
 - Prüfhaken: `S.sonneTest` (feste Sonnenhöhe), `pruef.sonnenHoehe`.
 - Sonde `werkzeug/pruefe-804-tag-nacht.js`: Bei 1,2 s liegt die Helligkeit zwischen Tag und Nacht (290 → 230 → 125).
+
+## Fassung 805 — die neue Stadt im kleinen Rahmen: schlank, still, verlinkt
+
+XANDER: „Du solltest dich vorher erst mal darum kümmern, dass man in dieser neuen Map auch die Sachen anklicken kann … in der Miniaturansicht fast noch kleiner ist als unsere alte … damit wir keinen Ladebalken haben … das Bild bleibt nie irgendwie stehen … wir können jetzt gar nicht mehr runter in unsere Menüs gehen" und „dass die Sachen verlinkt sind, dass ich schon in der Map jetzt schon einsammeln kann".
+
+- **Einsammeln in der Karte:**
+  - Das Spiel schickt der neuen Stadt einmal je Sekunde dieselben Zeichen wie im alten Dorfbild (`leicht-zeichen`), aber nur bei einer Änderung: „4 Brot“ (grün, pulsiert), „Bau 1:20“, „kaputt“, „Kuchen 2:09“ (die laufenden Uhren nur mit der Lupe).
+  - Ein Tipp auf ein Zeichen oder ein Haus wirkt wie im alten Dorf: Fertiges wird sofort eingesammelt (`dorfFertigSammeln`: Werk, Eier, Milch, Bergleute), eine Baustelle bekommt Hilfe, sonst öffnet sich die Station darunter.
+- **Derselbe Spielstand:** Das Spiel schickt Gebäude, Bauplan, Baustellen und Wahrzeichen (`leicht-stand`). Was im Spiel gebaut oder versetzt wird, steht sofort in der Stadt, ohne Neuladen und ohne eigene Abfrage.
+- **Schlank:** Der kleine Rahmen lädt 225 KB statt 1,9 MB. Er nutzt:
+  - nur Zwergbilder `_z` (je Bild ≈ 7,5 Bildpunkte je Meter, `werkzeug/leicht-zwerg.py`, läuft beim Packen mit);
+  - das kleine Verzeichnis `verzeichnis-klein.json` (21 KB gepackt; Fensterlichter der `_k`-Bilder werden aus den Zwergbildern hochgerechnet);
+  - keine Leute, keine Baustellenbilder, kein doppeltes Tag-/Nachtbild;
+  - keinen Ladevorhang (kein Ladebalken).
+- **Steht still:** Wischen über die kleine Stadt scrollt die Seite (Wald, Jagd, Bergwerk, See, Feld, Mühle, Bäckerei, Wahrzeichen bleiben erreichbar). Ziehen und Mausrad verschieben die Karte nur im Vollbild.
+- **Minikarte:** 72 px am Rand, Viertel ≈ 24 px, nur mit der Lupe.
+- **Dazu** (Helfer): Tretboote als Schwäne, Bootshaus mit Steg, Badegäste und Liegewiese (Frühling/Sommer, bei Tag).
+- Sonde `werkzeug/pruefe-799-stadt-im-dorfrahmen.js`: alles grün. Die alte Fassung hat 8 Fehler (Ladegröße, Wischen, Minikarte, Spielstand, Zeichen, Einsammeln).

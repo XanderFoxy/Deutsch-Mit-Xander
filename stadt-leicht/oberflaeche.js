@@ -159,7 +159,9 @@
     deckel = el("div", "lk-vorhang", "<div><b></b><span>wird aufgebaut …</span><i><em></em></i></div>");
     deckel.querySelector("b").textContent = stadtName();
     wurzel.appendChild(deckel);
-    if (q.get("still") === "1") deckel.remove();
+    /* FASSUNG 806 — XANDER: „damit wir keinen Ladebalken haben". Im kleinen Rahmen kein Vorhang: die Zwergbilder sind
+       so klein, dass die Häuser fast sofort stehen. */
+    if (q.get("still") === "1" || q.get("mini") === "1") deckel.remove();
 
     /* FASSUNG 799 — XANDER: „so klein möchte ich es haben … in diesem kleinen Frame, wo das alte auch ist … wenn man in
        dieser kleinen Miniaturansicht reinzoomt, dann bleibt es ja trotzdem dieser Ausschnitt … die Zoomstärke, die wir in
@@ -184,7 +186,9 @@
       const maxVoll = K.max;
       const modus = (klein) => {
         document.body.classList.toggle("lk-mini-modus", klein);
+        document.documentElement.classList.toggle("lk-mini-html", klein);
         LB.nurKlein = klein;
+        if (!klein && LB.vollLaden) LB.vollLaden().then(() => { L().unruhe = 2; });
         K.max = klein ? Math.max(K.min, ueberblick() * 2.3) : maxVoll;
         if (K.s > K.max) K.s = K.max;
         if (klein) { if (bauLeiste) bauLeisteZeigen(false); if (leiste && !leiste.hidden) leisteZeigen(false); karte.hidden = true; farbFeld.hidden = true; }
@@ -196,6 +200,50 @@
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-modus") return;
         modus(!ev.data.voll); L().unruhe = 2;
       });
+      /* FASSUNG 806 — XANDER: „dass man in dieser neuen Map auch die Sachen anklicken kann … dass die Sachen verlinkt
+         sind, dass ich schon in der Map jetzt schon einsammeln kann". Das Spiel schickt dieselben Zeichen wie im alten
+         Dorfbild („4 Brot", „Bau 1:20", „kaputt", „Brot 2:10"); sie stehen über dem Haus. Ein Tipp darauf geht ans
+         Spiel (wie ein Tipp aufs Haus): Fertiges wird sofort eingesammelt, eine Baustelle bekommt Hilfe. */
+      /* ganz unten in der Bedienung: Lupe und Vollbild liegen immer darüber */
+      const zeichenEbene = el("div", "lk-zeichen-ebene");
+      wurzel.insertBefore(zeichenEbene, wurzel.firstChild);
+      let zeichen = {};
+      window.addEventListener("message", (ev) => {
+        if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-stand" || !ev.data.ich) return;
+        L().ich = Object.assign({}, L().ich || {}, ev.data.ich);
+        L().aufbauen();
+      });
+      window.addEventListener("message", (ev) => {
+        if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-zeichen") return;
+        zeichen = ev.data.z || {};
+        const da = {};
+        for (const b of Array.from(zeichenEbene.children)) { if (zeichen[b.dataset.g]) da[b.dataset.g] = b; else b.remove(); }
+        for (const g in zeichen) {
+          let b = da[g];
+          if (!b) {
+            b = el("button"); b.type = "button"; b.dataset.g = g;
+            b.addEventListener("click", (e) => { e.stopPropagation(); try { window.parent.postMessage({ typ: "leicht-haus", g: g }, location.origin); } catch (x) {} });
+            zeichenEbene.appendChild(b);
+          }
+          const kl = "lk-zeichen lk-z-" + zeichen[g][0];
+          if (b.className !== kl) b.className = kl;
+          if (b.textContent !== zeichen[g][1]) b.textContent = zeichen[g][1];
+        }
+        O.zeichenLegen();
+      });
+      O.zeichenLegen = () => {
+        if (!zeichenEbene.firstChild) return;
+        const haeuser = {};
+        for (const o of SZ.objekte) if (o.art === "haus" && o.spiel) haeuser[o.spiel] = o;
+        for (const b of zeichenEbene.children) {
+          const o = haeuser[b.dataset.g];
+          if (!o) { b.style.display = "none"; continue; }
+          const P = ST.proj(o.x, o.y, (o.hoehe || 10) * (o.stufe || 1) * 0.8), x = P[0] / K.dpr, y = P[1] / K.dpr;
+          const drin = x > -40 && y > -20 && x < K.W / K.dpr + 40 && y < K.H / K.dpr + 20;
+          b.style.display = drin ? "" : "none";
+          if (drin) b.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) translate(-50%,-100%)";
+        }
+      };
     }
     miniMalen();
   };
@@ -446,6 +494,7 @@
     }
   };
   O.bild = function () {
+    if (O.zeichenLegen) O.zeichenLegen();
     if (deckel && deckel.isConnected) {
       const offen = LB.offen();
       const bar = deckel.querySelector("em");

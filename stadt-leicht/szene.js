@@ -76,7 +76,7 @@
   function bauPhase(p) { return p < 0.2 ? 8 : p < 0.42 ? 30 : p < 0.7 ? 55 : 80; }
   SZ.basis = function (o, zeit) {
     const gier = ((o.dreh + K.dreh) & 3) * 90;
-    if (o.bau && o.bau.p < 1 && o.bauBild) {
+    if (o.bau && o.bau.p < 1 && o.bauBild && !LB.nurKlein) {
       const gb = gierFuer(o.bauBild, gier);
       return o.bauBild + "_" + jahrBild() + "_tag_b" + bauPhase(o.bau.p) + "_" + gb;
     }
@@ -202,7 +202,7 @@
     const ng = Z.grad != null ? Z.grad : Z.nacht;
     let nachtAnteil = ng >= 0.995 ? 1 : ng <= 0.01 ? 0 : ng <= 0.75 ? 0.62 * ng / 0.75 : 0.62 + 0.38 * (ng - 0.75) / 0.25;
     /* Sparmodus: nur ein Bild je Haus (Tag oder Nacht), nie beide */
-    if (LB.spar) nachtAnteil = nachtAnteil >= 0.5 ? 1 : 0;
+    if (LB.spar || LB.nurKlein) nachtAnteil = nachtAnteil >= 0.5 ? 1 : 0;
     const zeiten = nachtAnteil >= 1 ? [["nacht", 1]] : nachtAnteil > 0 ? [["tag", 1], ["nacht", nachtAnteil]] : [["tag", 1]];
     const sicht = [];
     const rand = 60 * K.dpr;
@@ -251,9 +251,12 @@
     /* Menschen zwischen die Dinge einsortieren: nach dem letzten Ding, das
        sich mit ihnen im Bild überdeckt und ganz hinter ihnen liegt */
     const leute = ST.leute ? ST.leute.sichtbar(Z) : [];
+    /* FASSUNG 803 — Tretboote, Badegäste und Liegende (boote.js) kommen genauso dazwischen; Kielspur und
+       Ringwellen liegen flach auf dem Wasser, also vor allen Dingen */
+    if (ST.boote) { ST.boote.wasser(g, t, Z); for (const p of ST.boote.sichtbar(Z)) leute.push(p); }
     const nachDing = new Map();
     for (const p of leute) {
-      const kk = K.s, px0 = p.X - 0.6 * kk, px1 = p.X + 0.6 * kk, py0 = p.Y - 2 * kk, py1 = p.Y + 0.2 * kk;
+      const kk = K.s, bx = p.bx || 0.6, px0 = p.X - bx * kk, px1 = p.X + bx * kk, py0 = p.Y - (p.bh || 2) * kk, py1 = p.Y + 0.2 * kk;
       let idx = -1;
       for (let i = 0; i < sicht.length; i++) {
         const e = sicht[i], m = e.meta, R = e.o._R;
@@ -265,7 +268,7 @@
       if (!nachDing.has(idx)) nachDing.set(idx, []);
       nachDing.get(idx).push(p);
     }
-    const leuteMalen = (idx) => { const l = nachDing.get(idx); if (!l) return; l.sort((u, v) => (u.a + u.b) - (v.a + v.b)); for (const p of l) ST.leute.malen(g, p); };
+    const leuteMalen = (idx) => { const l = nachDing.get(idx); if (!l) return; l.sort((u, v) => (u.a + u.b) - (v.a + v.b)); for (const p of l) (p.malen || ST.leute.malen)(g, p); };
     leuteMalen(-1);
     /* 3. Dinge */
     for (let i = 0; i < sicht.length; i++) {

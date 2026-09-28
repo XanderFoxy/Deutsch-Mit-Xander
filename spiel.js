@@ -12903,19 +12903,61 @@
       if (ev.data.typ === "leicht-voll") lsVoll(true);
       /* Tipp auf ein Haus in der kleinen Stadt: die Karte des Spiels darunter (Einsammeln, Ausbauen …). */
       if (ev.data.typ === "leicht-haus" && typeof ev.data.g === "string" && (DORF[ev.data.g] || ev.data.g === "bahnhof" || ev.data.g === "wald")) {
-        S.dorfWahl = S.dorfWahl === ev.data.g ? "" : ev.data.g; S.dorfTippWeg = true; ton("swoosh", 0.2); schnellZeichnen(true);
+        /* FASSUNG 806 — wie ein Tipp im alten Dorfbild: steht „fertig" dran, wird gleich eingesammelt; eine Baustelle
+           bekommt Hilfe; sonst öffnet sich die Station darunter. */
+        var lg = ev.data.g;
+        if (!dorfBesuchStand() && dorfFertigSammeln(lg)) { S.dorfTippWeg = true; LSTADT.zSig = ""; return; }
+        if (!dorfBesuchStand() && DORF[lg] && baustelleVon(S.ich, lg)) { bauHelfen(lg); S.dorfWahl = lg; S.dorfTippWeg = true; LSTADT.zSig = ""; schnellZeichnen(true); return; }
+        S.dorfWahl = S.dorfWahl === lg ? "" : lg; S.dorfTippWeg = true; ton("swoosh", 0.2); schnellZeichnen(true);
       }
     };
     LSTADT.fs = function () { if (LSTADT && LSTADT.voll && !(document.fullscreenElement || document.webkitFullscreenElement) && LSTADT.fsWar) lsVoll(false); if (LSTADT) LSTADT.fsWar = Boolean(document.fullscreenElement); };
     window.addEventListener("message", LSTADT.post);
     document.addEventListener("fullscreenchange", LSTADT.fs);
-    LSTADT.rahmen.addEventListener("load", function () { lsPost({ typ: "leicht-modus", voll: LSTADT && LSTADT.voll }); });
+    LSTADT.rahmen.addEventListener("load", function () { lsPost({ typ: "leicht-modus", voll: LSTADT && LSTADT.voll }); if (LSTADT) LSTADT.zSig = LSTADT.sSig = ""; });
     lsFolgen();
     requestAnimationFrame(lsTakt);
+  }
+  /* FASSUNG 806 — XANDER: „dass die Sachen verlinkt sind, dass ich schon in der Map jetzt schon einsammeln kann". Die
+     Zeichen des alten Dorfbilds (fertig, Bau, kaputt, läuft) gehen einmal je Sekunde an die neue Stadt – nur wenn sich
+     etwas geändert hat. */
+  function lsZeichen(ich) {
+    var d = ich.dorf || {}, aus = {}, jetzt = Date.now();
+    Object.keys(DORF).forEach(function (k) {
+      var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, w = (ich.werk || {})[k], z = null;
+      var bauH = baustelleVon(ich, k), stall = st && (k === "huehnerstall" || k === "kuhstall") ? stallBereit(ich, k) : null;
+      if (bauH) z = ["bau", "Bau " + uhrText(Math.max(0, Date.parse(bauH.bis) - jetzt))];
+      else if (st && !(g.lp > 0)) z = ["kaputt", "kaputt"];
+      else if (w) z = Date.parse(w.fertig) > jetzt ? ["laeuft", wareName(w.ware) + " " + uhrText(Date.parse(w.fertig) - jetzt)] : ["fertig", w.menge + " " + wareName(w.ware)];
+      else if (stall && stall.bereit) z = ["fertig", stall.bereit + (k === "kuhstall" ? " Milch" : " Eier")];
+      else if (k === "bergwerk" && st) {
+        var t = truppStand(ich, "berg");
+        if (t) z = t.fertig ? ["fertig", t.menge + " " + wareName(t.ware)] : ["laeuft", (t.leer ? "Ruhe " : wareName(t.ware) + " ") + uhrText(t.rest)];
+      }
+      if (z) aus[k] = z;
+    });
+    return aus;
+  }
+  function lsZeichenSchicken() {
+    var L = LSTADT;
+    if (!L || !S.ich || performance.now() - (L.zZeit || 0) < 1000) return;
+    L.zZeit = performance.now();
+    /* Derselbe Spielstand: was im Spiel gebaut, versetzt oder fertig wird, steht sofort auch in der neuen Stadt
+       (ohne dass sie selbst neu fragt). */
+    if (!dorfBesuchStand()) {
+      var i = S.ich, st = { dorf: i.dorf || {}, dorf_plan: i.dorf_plan || {}, baustellen: baustellenVon(i), volk: { wunder: (i.volk || {}).wunder || {} }, dorf_name: i.dorf_name || "" };
+      var ss = JSON.stringify(st);
+      if (ss !== L.sSig) { L.sSig = ss; lsPost({ typ: "leicht-stand", ich: st }); }
+    }
+    var z = dorfBesuchStand() ? {} : lsZeichen(S.ich), sig = JSON.stringify(z);
+    if (sig === L.zSig) return;
+    L.zSig = sig;
+    lsPost({ typ: "leicht-zeichen", z: z });
   }
   function lsTakt() {
     if (!LSTADT) return;
     lsFolgen();
+    lsZeichenSchicken();
     requestAnimationFrame(lsTakt);
   }
   function lsFolgen() {

@@ -87,6 +87,7 @@
   /* Liste der sichtbaren Leute mit Bildpunkt und Blatt */
   LE.sichtbar = function (Z) {
     const aus = [];
+    if (LB.nurKlein) return aus;   // FASSUNG 805: im kleinen Rahmen keine Laufblätter (je ≈ 90 KB)
     const jahr = SZ.jahr === "winter" ? "winter" : "herbst", zeit = Z.nacht > 0.5 ? "nacht" : "tag";
     for (const m of LE.liste) {
       if (Z.nacht > 0.9 && !m.nachts) continue;

@@ -11,7 +11,7 @@
    ===================================================================== */
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
 const WURZEL = path.join(__dirname, "..");
-const DATEIEN = ["stadt-leicht/kern.js", "stadt/boden.js", "stadt-leicht/bilder.js", "stadt-leicht/szene.js", "stadt-leicht/leute.js", "stadt-leicht/himmel.js", "stadt-leicht/dorf.js", "stadt-leicht/spiel.js", "stadt-leicht/oberflaeche.js", "stadt-leicht/start.js"];
+const DATEIEN = ["stadt-leicht/kern.js", "stadt/boden.js", "stadt-leicht/bilder.js", "stadt-leicht/szene.js", "stadt-leicht/leute.js", "stadt-leicht/boote.js", "stadt-leicht/himmel.js", "stadt-leicht/dorf.js", "stadt-leicht/spiel.js", "stadt-leicht/oberflaeche.js", "stadt-leicht/start.js"];
 function esbuildHolen() {
   try { return require("esbuild"); } catch (e) {}
   const basis = path.join(require("os").homedir(), ".npm", "_npx");
@@ -24,6 +24,8 @@ const eb = esbuildHolen();
 const aus = eb ? eb.transformSync(quelle, { minify: true, target: "es2019", legalComments: "none" }).code : quelle;
 fs.writeFileSync(path.join(WURZEL, "stadt-leicht", "leicht.min.js"), aus);
 const stempel = hash(aus);
+/* FASSUNG 805 — vor dem Stempeln die Zwergbilder und das kleine Verzeichnis nachziehen (werkzeug/leicht-zwerg.py). */
+try { require("child_process").execSync("python3 " + JSON.stringify(path.join(__dirname, "leicht-zwerg.py")), { stdio: "inherit" }); } catch (e) { console.error("Zwergbilder: " + e.message); }
 const vz = path.join(WURZEL, "stadt-leicht", "bilder", "verzeichnis.json");
 const bildStempel = fs.existsSync(vz) ? hash(fs.readFileSync(vz)) : "";
 const cssStempel = hash(fs.readFileSync(path.join(WURZEL, "stadt-leicht", "leicht.css")));

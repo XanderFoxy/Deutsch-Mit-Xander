@@ -49,28 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 804: Tag und Nacht fließend im alten Dorf",
+  stand: "Fassung 805 — neue Stadt: einsammeln in der Karte, schlank, steht still",
 
   inArbeit: [
-    { seit: "2026-09-28T19:48",
-      text: "Döbelner Rathaus (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:48",
-      text: "Dodge Viper und Batmobil (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:48",
-      text: "Tretboote, Bootshaus, Badegäste im Bild (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:48",
-      text: "Pferdebahn mit Gleisen, Korn-/Mehlwagen (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:48",
-      text: "Wiener Lichterbogen" },
-    { seit: "2026-09-28T19:48",
-      text: "Karten-Vorlagen und eigene Karten" },
+    { seit: "2026-09-28T20:15",
+      text: "Grundkarte: alter Dorfplan als Vorlage 1 für die neue Stadt" },
+    { seit: "2026-09-28T20:15",
+      text: "Acht Bauwinkel (45°)" },
+    { seit: "2026-09-28T20:15",
+      text: "Döbelner Rathaus, Viper, Batmobil backen und einbauen" },
+    { seit: "2026-09-28T20:15",
+      text: "Pferdebahn mit Schienen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T19:48",
-      text: "Abendrot, Dämmerung und Überblendung aufs Nachtbild" },
-    { seit: "2026-09-28T19:48",
-      text: "Bootsverleih am See" },
   ],
 };

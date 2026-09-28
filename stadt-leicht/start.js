@@ -54,7 +54,7 @@
   dingeC.addEventListener("pointermove", (e) => {
     if (!zeiger.has(e.pointerId)) return;
     const alt = zeiger.get(e.pointerId), neu = { x: e.clientX * K.dpr, y: e.clientY * K.dpr };
-    if (zeiger.size === 2) {
+    if (zeiger.size === 2 && !document.body.classList.contains("lk-mini-modus")) {
       const [a, b] = [...zeiger.values()];
       const d0 = Math.hypot(a.x - b.x, a.y - b.y);
       zeiger.set(e.pointerId, neu);
@@ -68,6 +68,10 @@
     if (startPunkt && Math.hypot(neu.x - startPunkt.x, neu.y - startPunkt.y) > 8 * K.dpr) gezogen = true;
     if (O().zeigerZiehen && O().zeigerZiehen(neu, alt, gezogen)) { L.unruhe = 2; return; }
     if (!gezogen) return;
+    /* FASSUNG 805 — XANDER: „aus der Bewegung der Map gar nicht raus … wir können jetzt gar nicht mehr runter in unsere
+       Menüs gehen". Im kleinen Rahmen des Spiels steht das Bild still wie das alte Dorf: Wischen scrollt die Seite
+       (touch-action in leicht.css), navigiert wird mit Lupe und kleiner Karte, ein Tipp wählt ein Haus. */
+    if (document.body.classList.contains("lk-mini-modus")) return;
     const dx = neu.x - alt.x, dy = neu.y - alt.y;
     schiebe(dx, dy);
     const jetzt = performance.now(), dt = Math.max(1, jetzt - letzteBewegung);
@@ -83,7 +87,7 @@
   };
   dingeC.addEventListener("pointerup", hoch);
   dingeC.addEventListener("pointercancel", hoch);
-  dingeC.addEventListener("wheel", (e) => { e.preventDefault(); zoomUm(e.clientX * K.dpr, e.clientY * K.dpr, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+  dingeC.addEventListener("wheel", (e) => { if (document.body.classList.contains("lk-mini-modus")) return; e.preventDefault(); zoomUm(e.clientX * K.dpr, e.clientY * K.dpr, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
 
   let flug = null;
   L.fliegeZu = function (x, y, s, dauer) { flug = { x0: K.x, y0: K.y, s0: K.s, x1: x, y1: y, s1: s || K.s, t0: performance.now(), d: dauer || 700 }; L.unruhe = 2; };
@@ -106,6 +110,7 @@
     }
     if (LB.neu) { LB.neu = false; L.unruhe = 2; }
     if (ST.leute) ST.leute.bewegen(jetzt);
+    if (ST.boote) ST.boote.bewegen(jetzt);
     /* lebendig: Schneefall, Rauch, Nachtlichter → ~30 Bilder je Sekunde reichen */
     const lebt = (SZ.jahr === "winter" && SZ.schneefall) || true;
     const takt = L.unruhe > 0 ? 0 : lebt ? 33 : 250;
@@ -172,6 +177,7 @@
         const warte = () => new Promise((ok) => { const t0 = performance.now(); const f = () => { SZ.zeichnen(1000); if (LB.offen() === 0 || performance.now() - t0 > 60000) ok(); else setTimeout(f, 120); }; f(); });
         return warte().then(() => warte()).then(() => {
           if (ST.leute) for (let x = 0; x <= 20000; x += 50) ST.leute.bewegen(x);
+          if (ST.boote) for (let x = 0; x <= 20000; x += 50) ST.boote.bewegen(x);
           B.zeichnen(1, SZ.zeitDaten(), SZ.jahr); SZ.zeichnen(+(q.get("t") || 1000));
           if (ST.oberflaeche && ST.oberflaeche.bild) ST.oberflaeche.bild(1000);
           window.__fertig = true;
