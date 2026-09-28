@@ -2052,7 +2052,10 @@
     if (!winter && F.px > 20) { g.strokeStyle = rgbS(hellF(SCHIEFER, -0.3), 0.6); g.lineWidth = Math.max(0.006, 0.7 / F.px); for (let k = 0.3; k < 1; k += 0.22) { g.beginPath(); g.moveTo(a - w * k, b + 0.1); g.quadraticCurveTo(a, b - h * 2 * (1 - k) - 0.05, a + w * k, b + 0.1); g.stroke(); } }
     /* das Auge: blaugraue Öffnung mit Lamellen (keine schwarzen Löcher) */
     const ew = w * 0.28, eh = h * 0.5;
-    g.fillStyle = "rgb(58,62,74)"; g.beginPath(); g.ellipse(a, b + 0.1, ew, eh, 0, Math.PI, 2 * Math.PI); g.closePath(); g.fill();
+    /* aus mittlerer Entfernung heller (sonst liest es sich als Loch),
+       mit angedeuteten Lamellen */
+    g.fillStyle = F.px > 22 ? "rgb(58,62,74)" : "rgb(88,94,108)"; g.beginPath(); g.ellipse(a, b + 0.1, ew, eh, 0, Math.PI, 2 * Math.PI); g.closePath(); g.fill();
+    if (F.px <= 22) { g.fillStyle = "rgba(150,156,168,0.7)"; for (let y = b + 0.1 - eh * 0.72; y < b + 0.08; y += eh * 0.34) g.fillRect(a - ew * 0.8, y, ew * 1.6, Math.max(0.02, 0.8 / F.px)); }
     if (F.px > 22) {
       g.save(); g.beginPath(); g.ellipse(a, b + 0.1, ew, eh, 0, Math.PI, 2 * Math.PI); g.closePath(); g.clip();
       for (let y = b + 0.1 - eh; y < b + 0.1; y += 0.06) { g.fillStyle = "rgba(112,118,130,0.9)"; g.fillRect(a - ew, y, ew * 2, 0.02); g.fillStyle = "rgba(30,32,40,0.6)"; g.fillRect(a - ew, y + 0.02, ew * 2, 0.012); }

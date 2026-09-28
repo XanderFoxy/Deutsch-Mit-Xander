@@ -2909,7 +2909,9 @@
       const y = lerp(gr.y0, gr.y1, 0.42);
       const G = { x0: W.x0 - 1.6, x1: W.x0 - 0.7, y0: y - 1.3, y1: y + 1.3 };
       const x = (G.x0 + G.x1) / 2 - 3.6;
-      return { x: x, y: y, grube: G, graben: true, tief: 1.2, kippe: [(G.x0 + G.x1) / 2 - 1.0, y - 3.6, 0], eigen: true };
+      /* Aushub neben den Graben – nach Norden, außer dort steht der Bauwagen */
+      const kippe = bauwagenSeite(pl) < 0 ? [(G.x0 + G.x1) / 2 - 1.8, y + 2.9, 0] : [(G.x0 + G.x1) / 2 - 1.0, y - 3.6, 0];
+      return { x: x, y: y, grube: G, graben: true, tief: 1.2, kippe: kippe, eigen: true };
     }
     /* Haufen des Modells (in der Aufstellung): der nächste zur Westseite */
     let hf = null;
@@ -4755,6 +4757,15 @@
     if (it) liste.push(it);
   }
 
+  /* Seite des Bauwagens: -1 Nordwesten, 1 Nordosten, 0 kein Platz. Beim
+     Haus ohne Bauphasen liegen Leitungsgraben und Aushub im Westen, dann
+     lieber nach Nordosten (sonst kippt der Bagger aufs Wagendach). */
+  function bauwagenSeite(pl) {
+    const W = pl.wand, Zn = pl.zaun, G = G_ABST + G_BREITE;
+    const fW = W.x0 - G - Zn.x0, fO = Zn.x1 - (W.x1 + G);
+    if (!pl.phasen) return fO >= 2.75 ? 1 : fW >= 2.75 ? -1 : 0;
+    return fW >= 2.75 ? -1 : fO >= 2.75 ? 1 : 0;
+  }
   /* Lager und Ausstattung je Phase */
   function lagerTeile(K, pl, bau, teile, art) {
     const W = pl.wand, Zn = pl.zaun;
@@ -4763,7 +4774,7 @@
     const G = G_ABST + G_BREITE;
     const fW = W.x0 - G - Zn.x0, fO = Zn.x1 - (W.x1 + G), fN = W.y0 - G - Zn.y0, fS = Zn.y1 - (W.y1 + G);
     /* Bauwagen: Nordwesten, sonst Nordosten, sonst gar nicht */
-    const bwSeite = fW >= 2.75 ? -1 : fO >= 2.75 ? 1 : 0;
+    const bwSeite = bauwagenSeite(pl);
     const bwX = bwSeite < 0 ? Math.max(Zn.x0 + 1.3, W.x0 - G - 0.35 - 1.15) : Math.min(Zn.x1 - 1.3, W.x1 + G + 0.35 + 1.15);
     const bwY = Math.max(Zn.y0 + 2.8, W.y0 - 2.9);
     pl._bauwagen = bwSeite ? { x: bwX, y: bwY, h: -Math.PI / 2 } : null;

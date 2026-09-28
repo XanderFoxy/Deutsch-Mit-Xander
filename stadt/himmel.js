@@ -992,29 +992,30 @@
       B.ao([-0.48, sd * 0.13, -0.2], [0.16, 0, 0], [0, 0.08, 0], 0.35, { tiefe: 0.005 });
     }
 
-    /* ---- Rumpf ---- vorn tiefe Brust mit Widerrist, hinten Bauch und Keule */
-    const fellStr = sehrFein ? { n: 110, laenge: 0.055, richtung: [-1, 0, -0.2], a: 0.32, saat: saat } : null;
+    /* ---- Rumpf ---- vorn tiefe Brust mit Widerrist, hinten Bauch und Keule –
+       EINE Hülle (sonst zeigt sich zwischen Brust und Keule eine Naht);
+       Schulter, Keule, Flanke und Bauch als weiche Fellpartien darauf */
+    const fellStr = sehrFein ? { n: 190, laenge: 0.055, richtung: [-1, 0, -0.2], a: 0.32, saat: saat } : null;
     B.koerper([
       { c: [0.28, 0, -0.04], a: [[0.28, 0, 0], [0, 0.205, 0], [0, 0, 0.32]] },
       { c: [0.26, 0, 0.21], a: [[0.24, 0, 0], [0, 0.15, 0], [0, 0, 0.16]] },     // Widerrist
-      { c: [0.44, 0, -0.18], a: [[0.14, 0, 0], [0, 0.15, 0], [0, 0, 0.16]] }     // Brustbein
+      { c: [0.44, 0, -0.18], a: [[0.14, 0, 0], [0, 0.15, 0], [0, 0, 0.16]] },    // Brustbein
+      { c: [-0.12, 0, 0.03], a: [[0.32, 0, 0], [0, 0.222, 0], [0, 0, 0.24]] },
+      { c: [-0.5, 0, 0.06], a: [[0.28, 0, 0], [0, 0.212, 0], [0, 0, 0.26]] },    // Keule
+      { c: [-0.64, 0, 0.17], a: [[0.16, 0, 0], [0, 0.16, 0], [0, 0, 0.12]] }     // Kruppe
     ], fell, { matt: matt, fell: fellStr, flecken: fein ? [
       { c: [0.18, 0, -0.34], a: [[0.3, 0, 0], [0, 0.18, 0], [0, 0, 0.1]], alb: bauch, n: [0, 0, -1], k: 0.85 },
-      { c: [0.18, 0, 0.3], a: [[0.34, 0, 0], [0, 0.13, 0], [0, 0, 0.1]], alb: dunkel, n: [0, 0, 1], k: 0.6 },
+      { c: [-0.2, 0, -0.24], a: [[0.3, 0, 0], [0, 0.18, 0], [0, 0, 0.08]], alb: bauch, n: [0, 0, -1], k: 0.8 },
+      /* Bauch hinter der Brust leicht eingezogen: Schatten in der Flankenmulde */
+      { c: [-0.02, 0.2, -0.2], a: [[0.2, 0, 0], [0, 0.04, 0], [0, 0, 0.07]], alb: dunkel, n: [0, 1, -0.5], k: 0.35 },
+      { c: [-0.02, -0.2, -0.2], a: [[0.2, 0, 0], [0, 0.04, 0], [0, 0, 0.07]], alb: dunkel, n: [0, -1, -0.5], k: 0.35 },
+      { c: [-0.05, 0, 0.29], a: [[0.62, 0, 0], [0, 0.13, 0], [0, 0, 0.09]], alb: dunkel, n: [0, 0, 1], k: 0.6 },
+      { c: [-0.82, 0, 0.1], a: [[0.08, 0, 0], [0, 0.17, 0], [0, 0, 0.2]], alb: hell, n: [-1, 0, 0], k: 0.95, hart: 0.5 },   // Spiegel
       /* Schulter: oben Licht, hinten die Kante des Trizeps */
       { c: [0.34, 0.2, 0.06], a: [[0.13, 0, 0], [0, 0.04, 0], [0, 0, 0.2]], alb: flanke, n: [0.2, 1, 0.3], k: 0.45 },
       { c: [0.34, -0.2, 0.06], a: [[0.13, 0, 0], [0, 0.04, 0], [0, 0, 0.2]], alb: flanke, n: [0.2, -1, 0.3], k: 0.45 },
       { c: [0.12, 0.2, -0.08], a: [[0.045, 0, 0], [0, 0.04, 0], [0, 0, 0.17]], alb: dunkel, n: [-0.3, 1, 0], k: 0.4, hart: 0.3 },
-      { c: [0.12, -0.2, -0.08], a: [[0.045, 0, 0], [0, 0.04, 0], [0, 0, 0.17]], alb: dunkel, n: [-0.3, -1, 0], k: 0.4, hart: 0.3 }
-    ] : null });
-    B.koerper([
-      { c: [-0.12, 0, 0.02], a: [[0.32, 0, 0], [0, 0.222, 0], [0, 0, 0.25]] },
-      { c: [-0.5, 0, 0.06], a: [[0.28, 0, 0], [0, 0.212, 0], [0, 0, 0.26]] },    // Keule
-      { c: [-0.64, 0, 0.17], a: [[0.16, 0, 0], [0, 0.16, 0], [0, 0, 0.12]] }     // Kruppe
-    ], fell, { tiefe: -0.01, matt: matt, fell: fellStr ? Object.assign({}, fellStr, { saat: saat + 5 }) : null, flecken: fein ? [
-      { c: [-0.2, 0, -0.24], a: [[0.3, 0, 0], [0, 0.18, 0], [0, 0, 0.08]], alb: bauch, n: [0, 0, -1], k: 0.8 },
-      { c: [-0.82, 0, 0.1], a: [[0.08, 0, 0], [0, 0.17, 0], [0, 0, 0.2]], alb: hell, n: [-1, 0, 0], k: 0.95, hart: 0.5 },   // Spiegel
-      { c: [-0.3, 0, 0.27], a: [[0.44, 0, 0], [0, 0.13, 0], [0, 0, 0.08]], alb: dunkel, n: [0, 0, 1], k: 0.6 },
+      { c: [0.12, -0.2, -0.08], a: [[0.045, 0, 0], [0, 0.04, 0], [0, 0, 0.17]], alb: dunkel, n: [-0.3, -1, 0], k: 0.4, hart: 0.3 },
       /* Keule: Licht oben, Kniefalte davor dunkel; heller Flankenstreif */
       { c: [-0.46, 0.21, 0.12], a: [[0.2, 0, 0], [0, 0.04, 0], [0, 0, 0.17]], alb: flanke, n: [0, 1, 0.3], k: 0.35 },
       { c: [-0.46, -0.21, 0.12], a: [[0.2, 0, 0], [0, 0.04, 0], [0, 0, 0.17]], alb: flanke, n: [0, -1, 0.3], k: 0.35 },
@@ -1038,7 +1039,7 @@
     B.koerper([
       { c: plus(N1, mal(A, -0.02)), a: [mal(A, 0.1), mal(Q, 0.08), mal(Pn, 0.105)] }
     , { c: plus(N0, mal(A, 0.06)), a: [mal(A, 0.16), mal(Q, 0.125), mal(Pn, 0.2)] }
-    ], halsF, { matt: matt, fell: sehrFein ? { n: 45, laenge: 0.05, richtung: mal(A, -1), a: 0.3, saat: saat + 9 } : null, flecken: fein ? [
+    ], halsF, { tiefe: -0.2, matt: matt, fell: sehrFein ? { n: 45, laenge: 0.05, richtung: mal(A, -1), a: 0.3, saat: saat + 9 } : null, flecken: fein ? [
       { c: plus(mix(N0, N1, 0.5), mal(Pn, 0.1)), a: [mal(A, 0.24), mal(Q, 0.07), mal(Pn, 0.05)], alb: mix(fell, dunkel, 0.2), n: Pn, k: 0.5 }
     ] : null });
     /* Mähne: hängt unter dem Hals, hell und zottelig */
@@ -1046,11 +1047,11 @@
       { c: plus(plus(N0, mal(A, 0.09)), mal(Pn, -0.17)), a: [mal(A, 0.14), mal(Q, 0.105), mal(Pn, 0.13)] },
       { c: plus(mix(N0, N1, 0.6), mal(Pn, -0.12)), a: [mal(A, 0.12), mal(Q, 0.085), mal(Pn, 0.1)] },
       { c: plus(N1, mal(Pn, -0.06)), a: [mal(A, 0.07), mal(Q, 0.07), mal(Pn, 0.07)] }
-    ], creme, { tiefe: -0.03, matt: 0.5, pelz: fein, flocke: 0.018, pelzSaat: saat * 31 + 1 });
+    ], creme, { tiefe: -0.23, matt: 0.5, pelz: fein, flocke: 0.018, pelzSaat: saat * 31 + 1 });
     if (sehrFein) for (let i = 0; i < 9; i++) {
       /* einzelne Zotteln der Mähne */
       const u = 0.05 + i * 0.045, a0 = plus(plus(N0, mal(A, u + 0.05)), mal(Pn, -0.2 + u * 0.18)), l = 0.05 + ((i * 37) % 5) * 0.012;
-      B.band([a0, plus(a0, [-0.012, ((i % 3) - 1) * 0.02, -l])], 0.012, mix(creme, hell, 0.5), { tiefe: -0.028, breite2: 0.005, schatten: false });
+      B.band([a0, plus(a0, [-0.012, ((i % 3) - 1) * 0.02, -l])], 0.012, mix(creme, hell, 0.5), { tiefe: -0.225, breite2: 0.005, schatten: false });
     }
 
     /* ---- Kopf ---- (Kopfachsen: u nach vorn, z nach oben; nach vorn unten geneigt) */
