@@ -82,7 +82,15 @@
     const la = Math.hypot(a[0] - a1[0], a[1] - a1[1]) || 1, lb = Math.hypot(b[0] - b1[0], b[1] - b1[1]) || 1;
     const vor = [a[0] + (a[0] - a1[0]) / la * AUSLAUF, a[1] + (a[1] - a1[1]) / la * AUSLAUF];
     const nach = [b[0] + (b[0] - b1[0]) / lb * AUSLAUF, b[1] + (b[1] - b1[1]) / lb * AUSLAUF];
-    const pts = glatt([vor].concat(roh.map((p) => [p[0], p[1]]), [nach]), 24);
+    /* erst gleichmäßig alle ≈ 4 m verdichten: ungleiche Abstände ließen die Kurve sonst überschwingen (Schleifen) */
+    const dicht = [];
+    const kette = [vor].concat(roh.map((p) => [p[0], p[1]]), [nach]);
+    for (let i = 0; i < kette.length - 1; i++) {
+      const p = kette[i], q2 = kette[i + 1], n = Math.max(1, Math.round(Math.hypot(q2[0] - p[0], q2[1] - p[1]) / 4));
+      for (let k = 0; k < n; k++) dicht.push([p[0] + (q2[0] - p[0]) * k / n, p[1] + (q2[1] - p[1]) * k / n]);
+    }
+    dicht.push(nach);
+    const pts = glatt(dicht, 8);
     /* gleichmäßig alle 0,5 m */
     const X = [pts[0][0]], Y = [pts[0][1]];
     let rest = 0;
@@ -170,7 +178,8 @@
   }
   BA.stand = stand;
   /* Uhr: für alle gleich (Date.now); ?bahnt=35 hält die Zeit im Umlauf fest (Prüfbilder), ?bahnr=-1 die Richtung */
-  const FEST_T = q.get("bahnt") != null ? +q.get("bahnt") : null, FEST_R = q.get("bahnr") != null ? +q.get("bahnr") : null;
+  /* (Sonden können die Zeit auch vor dem Laden setzen: window.__bahnt, z. B. im eingebetteten Rahmen) */
+  const FEST_T = q.get("bahnt") != null ? +q.get("bahnt") : window.__bahnt != null ? +window.__bahnt : null, FEST_R = q.get("bahnr") != null ? +q.get("bahnr") : null;
   BA.uhr = function () {
     const P = plan || planBauen();
     if (BA.fest) return BA.fest;

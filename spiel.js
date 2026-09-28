@@ -12824,8 +12824,11 @@
      Schalter „Symbole“ und „Namen“ – jeder zeigt, ob er an ist, ein Tipp schaltet ihn um. Im Bild liegt nichts mehr. */
   function dorfBeschriftungHtml() {
     /* FASSUNG 799 — die neue Stadt kennt Symbole/Namen/Umbauen des alten Bildes nicht: nur Version und Vollbild. */
-    if (stadtNeu()) return '<div class="sp-dl-beschriftung sp-dl-beschriftung-neu">' + neueStadtKnopf() + "</div>";
     var z = dorfZeichen(), n = dorfNamen();
+    /* FASSUNG 807 — XANDER: „Es gibt ja nicht umsonst den Punkt Symbole aus". Auch die neue Stadt folgt „Symbole“ und „Namen“. */
+    if (stadtNeu()) return '<div class="sp-dl-beschriftung sp-dl-beschriftung-neu">' + neueStadtKnopf()
+      + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "0" : "1") + '" data-n="' + (n ? "1" : "0") + '" class="' + (z ? "sp-an" : "") + '" aria-pressed="' + z + '">Symbole ' + (z ? "an" : "aus") + "</button>"
+      + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "1" : "0") + '" data-n="' + (n ? "0" : "1") + '" class="' + (n ? "sp-an" : "") + '" aria-pressed="' + n + '">Namen ' + (n ? "an" : "aus") + "</button></div>";
     return '<div class="sp-dl-beschriftung"><span>Beschriftung im Bild:</span>'
       + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "0" : "1") + '" data-n="' + (n ? "1" : "0") + '" class="' + (z ? "sp-an" : "") + '" aria-pressed="' + z + '">Symbole ' + (z ? "an" : "aus") + "</button>"
       + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "1" : "0") + '" data-n="' + (n ? "0" : "1") + '" class="' + (n ? "sp-an" : "") + '" aria-pressed="' + n + '">Namen ' + (n ? "an" : "aus") + "</button>"
@@ -12922,6 +12925,8 @@
       if (ev.data.typ === "leicht-scroll") lsScroll(ev.data);
       if (ev.data.typ === "leicht-voll") lsVoll(true);
       /* Tipp auf ein Haus in der kleinen Stadt: die Karte des Spiels darunter (Einsammeln, Ausbauen …). */
+      /* FASSUNG 807 — ein Tipp auf den See in der neuen Stadt: angeln (oder den Fang der Fischer abholen) */
+      if (ev.data.typ === "leicht-haus" && ev.data.g === "see" && !dorfBesuchStand()) { lsAngeln(); return; }
       if (ev.data.typ === "leicht-haus" && typeof ev.data.g === "string" && (DORF[ev.data.g] || ev.data.g === "bahnhof" || ev.data.g === "wald")) {
         /* FASSUNG 806 — wie ein Tipp im alten Dorfbild: steht „fertig" dran, wird gleich eingesammelt; eine Baustelle
            bekommt Hilfe; sonst öffnet sich die Station darunter. */
@@ -12970,9 +12975,9 @@
       if (ss !== L.sSig) { L.sSig = ss; lsPost({ typ: "leicht-stand", ich: st }); }
     }
     /* FASSUNG 806 — Kopfzeile der kleinen Stadt: Ortsschild (Name der Stadt) und das Wetterschild wie im alten Dorf. */
-    var kopf = { typ: "leicht-kopf", name: String(S.ich.dorf_name || S.ich.name || "").trim(), wetter: "" };
+    var kopf = { typ: "leicht-kopf", name: String(S.ich.dorf_name || S.ich.name || "").trim(), wetter: "", symbole: dorfZeichen(), namen: dorfNamen() };
     try { kopf.wetter = dorfWetterSchild(dorfWetter()); } catch (e) {}
-    var ks = kopf.name + "|" + kopf.wetter;
+    var ks = kopf.name + "|" + kopf.wetter + "|" + kopf.symbole + kopf.namen;
     if (ks !== L.kSig) { L.kSig = ks; lsPost(kopf); }
     var z = dorfBesuchStand() ? {} : lsZeichen(S.ich), sig = JSON.stringify(z);
     if (sig === L.zSig) return;
@@ -12980,6 +12985,26 @@
     lsPost({ typ: "leicht-zeichen", z: z });
   }
   /* FASSUNG 807 — Wischen über die kleine Stadt scrollt das Dorf-Menü (den Behälter um den Platzhalter), nicht die Seite. */
+  function lsAngeln() {
+    var ich = S.ich || {};
+    if (truppFertig(ich, ["see"])) { werkAbholen("trupp_see"); return; }
+    if (!ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
+    if (ich.kaputt) { hinweis(gesperrtGrund()); return; }
+    S.angelAn = S.angelAn || {};
+    var warte = (S.angelAn[99] || 0) - Date.now();
+    if (warte > 0) { hinweis("🎣 Die Angel ist noch draußen – noch " + Math.ceil(warte / 1000) + " s."); return; }
+    S.angelAn[99] = Date.now() + 12000;
+    ton("swoosh", 0.35); setTimeout(function () { ton("platsch", 0.35); }, 450);
+    rpc("spiel_angeln", { p_platz: 99 }).then(function (r) {
+      r = r || { ok: false };
+      if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
+      if (!r.ok) { if (r.sek) S.angelAn[99] = Date.now() + r.sek * 1000; else delete S.angelAn[99]; hinweis("🎣 " + (r.grund || "geht nicht") + (r.sek ? " – noch " + uhrText(r.sek * 1000) : "")); schnellZeichnen(); return; }
+      ton("angelkurbel", 0.4);
+      hinweis(truppGeholt(r) + (r.fang === "fisch" ? "🐟 Am See gefangen: +" + r.menge + " Fisch (" + vorrat(r, "fisch") + " im Lager)" + truppRest(r, "see") + "."
+        : r.fang === "stiefel" ? "Ein alter Stiefel aus dem See – ab ins Lager (" + vorrat(r, "altschuh") + "). " + flickTipp(r) : r.fang === "muenze" ? "🪙 Eine Münze am Haken: +" + r.menge + " Punkte!" : "🎣 Nichts gebissen – gleich nochmal."));
+      schnellZeichnen(); panelAuffrischen();
+    }).catch(function () { delete S.angelAn[99]; hinweis("🎣 Das ging gerade nicht."); });
+  }
   function lsScroller() {
     var p = document.querySelector(".sp-dl-neustadt-platz"), e = p && p.parentElement;
     while (e && e !== document.body && e !== document.documentElement) {

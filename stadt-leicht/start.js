@@ -35,7 +35,8 @@
   /* ---------------- Gesten ---------------- */
   const zeiger = new Map();
   let schwung = [0, 0], letzteBewegung = 0, gezogen = false, startPunkt = null;
-  function begrenzen() { const g = B.GROESSE / 2 + 6; K.x = Math.max(-g, Math.min(g, K.x)); K.y = Math.max(-g, Math.min(g, K.y)); }
+  /* FASSUNG 807 — XANDER: „man kommt nicht über den Ereignishorizont hinaus" – bis in die Außenbezirke (Wald, Bahn) */
+  function begrenzen() { const g = B.GROESSE / 2 + B.RAND * 0.8; K.x = Math.max(-g, Math.min(g, K.x)); K.y = Math.max(-g, Math.min(g, K.y)); }
   function zoomUm(px, py, f) {
     const vor = ST.aufBoden(px, py);
     K.s = Math.max(K.min, Math.min(K.max, K.s * f));

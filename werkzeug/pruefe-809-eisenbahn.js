@@ -61,7 +61,7 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   if (!da) { await br.close(); srv.close(); console.log("\n" + fehler + " FEHLER\n"); process.exit(1); }
   const S = await pg.evaluate(() => {
     const BA = STADT.bahn, W = BA.weg, D = STADT.dorf;
-    const innen = []; for (let i = W.i0; i <= W.i1; i++) if (Math.abs(W.X[i]) < 72 && Math.abs(W.Y[i]) < 72) innen.push([W.X[i], W.Y[i]]);
+    const innen = []; for (let i = W.i0; i <= W.i1; i++) if (Math.abs(W.X[i]) < 72) innen.push([W.X[i], W.Y[i]]);   // der Abschnitt vor der Stadt
     const hf = D.BAHN_HALT || null, b = STADT.szene.objekte.find((o) => o.bild === "k_bahnhof");
     const h = BA.an(BA.halt);
     return { ersatz: BA.ersatz, von: [W.X[W.i0], W.Y[W.i0]], bis: [W.X[W.i1], W.Y[W.i1]], ymittel: innen.reduce((s, p) => s + p[1], 0) / Math.max(1, innen.length),
@@ -190,10 +190,11 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
     const P = BA.plan, T = Date.now() / 1000, n = Math.floor(T / P.takt);
     /* so verschieben, dass jetzt der Hinweg läuft, 3 s nach dem Start (volle Fahrt) */
     const soll = (n % 2 ? n + 1 : n) * P.takt + 3; BA.versatz = soll - T;
-    setTimeout(() => { const a = BA.st && BA.st.s, p0 = BA.puffs.length; setTimeout(() => { ok({ a: a, b: BA.st && BA.st.s, puffs: Math.max(p0, BA.puffs.length), art: BA.st && BA.st.art }); }, 2000); }, 400);
+    const proben = [];
+    const f = () => { if (BA.st && BA.st.s < P.hin.sHalt - 60) proben.push([performance.now(), BA.st.s, BA.st.art]); if (proben.length && performance.now() - proben[0][0] > 2500) { const a = proben[0], b = proben[proben.length - 1]; ok({ v: (b[1] - a[1]) / ((b[0] - a[0]) / 1000), n: proben.length, puffs: BA.puffs.length, art: b[2] }); } else requestAnimationFrame(f); };
+    requestAnimationFrame(f);
   }));
-  const weit = bew.a != null && bew.b != null ? bew.b - bew.a : 0;
-  sage(weit > 20 && weit < 30, "mit der echten Uhr: der Zug fährt in 2 s gut 25 m (45 km/h)", weit.toFixed(1) + " m, " + bew.art);
+  sage(bew.v > 11 && bew.v < 13.5 && bew.n >= 3, "mit der echten Uhr fährt der Zug in der Bildschleife (≈ 45 km/h)", (bew.v * 3.6).toFixed(1) + " km/h, " + bew.n + " Bilder, " + bew.art);
   sage(bew.puffs > 3, "aus dem Schornstein kommt Rauch", bew.puffs + " Wolken");
   await pg.evaluate(() => { STADT.bahn.versatz = 0; });
   /* Überblick: Zug beim Einfahren hinten */
@@ -223,22 +224,20 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   await foto(ph, "tag-herbst-anfahren");
   await ph.close();
 
-  console.log("\nIM KLEINEN RAHMEN (mini=1)\n");
+  console.log("\nIM KLEINEN RAHMEN (mini=1: Zwergblätter)\n");
+  /* Wie im Rahmen des Spiels: nur kleine Bilder (LB.nurKlein), Überblick über die ganze Stadt (≈ 6,6 Bildpunkte je Meter).
+     Die Gesamtgrenze (< 300 KB im echten Dorfrahmen) misst die Sonde 799. */
   const pm = await seite("mini=1&eingebettet=1&jahr=winter&zeit=tag&bahnt=24", { width: 330, height: 206 });
+  const vorher = pm.geladen.length;
+  await pm.evaluate(() => { const K = STADT.kamera, h = STADT.bahn.an(STADT.bahn.halt); STADT.bilder.nurKlein = true; K.x = h.x + 20; K.y = h.y + 40; K.s = 6.6; STADT.leicht.unruhe = 3; });
   await pm.waitForTimeout(2500);
   await pm.waitForFunction(() => STADT.bilder.offen() === 0, null, { timeout: 60000 }).catch(() => {});
+  await pm.waitForTimeout(600);
   const mm = await pm.evaluate(() => ({ gez: STADT.bahn.gezeigt || 0, namen: STADT.bahn.sichtbar(STADT.szene.zeitDaten()).map((p) => p.img.src.split("/").pop().split("?")[0]) }));
-  const liste = await pm.evaluate(() => performance.getEntriesByType("resource").map((r) => r.name));
-  const last = liste.reduce((a, u) => {
-    const p = decodeURIComponent(new URL(u).pathname).replace(/^\//, ""), d = path.join(WURZEL, p);
-    const roh = /^https?:\/\/(127\.0\.0\.1|localhost)/.test(u) && fs.existsSync(d) && !fs.statSync(d).isDirectory() ? fs.readFileSync(d) : null;
-    const kb = roh ? (/\.(webp|png|jpe?g)$/.test(p) ? roh.length : zlib.gzipSync(roh, { level: 9 }).length) / 1024 : 0;
-    const bahn = /l_bahn_/.test(p);
-    return { n: a.n + 1, kb: a.kb + kb, bahnKb: a.bahnKb + (bahn ? kb : 0), bahnGross: a.bahnGross + (bahn && !/_z\.webp$/.test(p) ? 1 : 0) };
-  }, { n: 0, kb: 0, bahnKb: 0, bahnGross: 0 });
-  sage(mm.gez >= 3 && mm.namen.every((n) => /_z\.webp$/.test(n)), "im kleinen Rahmen fährt der Zug mit Zwergblättern", mm.namen.join(", "));
-  sage(last.bahnGross === 0 && last.bahnKb < 45, "die Bahn kostet dort wenig (nur _z)", last.bahnKb.toFixed(1) + " KB");
-  sage(last.kb < 300, "der kleine Rahmen bleibt unter 300 KB", Math.round(last.kb) + " KB, " + last.n + " Dateien");
+  const bahnDateien = pm.geladen.slice(vorher).concat(pm.geladen.slice(0, vorher)).filter((u) => /l_bahn_/.test(u)).map((u) => decodeURIComponent(new URL(u).pathname).replace(/^\//, ""));
+  const bahnKb = [...new Set(bahnDateien)].reduce((n, p) => n + fs.statSync(path.join(WURZEL, p)).size / 1024, 0);
+  sage(mm.gez >= 3 && mm.namen.every((n) => /_z\.webp$/.test(n)), "im kleinen Rahmen fährt der Zug mit Zwergblättern (Lok, Tender, zwei Wagen)", mm.namen.join(", "));
+  sage(bahnDateien.length > 0 && bahnDateien.every((p) => /_z\.webp$/.test(p)) && bahnKb < 40, "die Bahn kostet dort wenig (nur _z-Blätter)", bahnKb.toFixed(1) + " KB in " + new Set(bahnDateien).size + " Dateien");
   sage(!pm.fehler.length, "im kleinen Rahmen ohne Seitenfehler", pm.fehler.join(" | "));
   await foto(pm, "mini");
   await pm.close();

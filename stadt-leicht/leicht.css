@@ -121,7 +121,7 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 .lk-mini-modus .lk-mini-rahmen { right: 4px; bottom: 4px; }
 .lk-mini-modus .lk-mini { opacity: .92; }
 .lk-mini-modus:not(.lk-nah) .lk-mini-rahmen { display: none; }
-.lk-mini-modus .lk-mini { width: 40px; height: 40px; border-radius: 6px; border-width: 1px; }
+.lk-mini-modus .lk-mini { width: 54px; height: 54px; border-radius: 7px; border-width: 1px; }
 .lk-mini-modus .lk-mini.zu { display: block; }
 .lk-mini-modus .lk-mini-feld span { display: none; }
 .lk-mini-modus .lk-vorhang b { font-size: 18px; }
@@ -153,3 +153,10 @@ html.lk-mini-html:has(.lk-nah), .lk-mini-modus.lk-nah, .lk-mini-modus.lk-nah #lD
 .lk-zeichen.lk-z-laeuft { font-weight: 700; }
 .lk-mini-modus:not(.lk-nah) .lk-zeichen.lk-z-laeuft { display: none !important; }
 @keyframes lk-zeichen-wink { from { scale: 1; } to { scale: 1.12; } }
+
+/* FASSUNG 807 — Drehknopf nur mit dem Kompass; Symbole/Namen folgen den Schaltern des Spiels */
+.lk-mini-modus .lk-drehknopf { left: 5px; top: 38px; width: 26px; height: 26px; border-radius: 50%; }
+.lk-mini-modus .lk-drehknopf svg { width: 15px; height: 15px; }
+.lk-mini-modus:not(.lk-nah) .lk-drehknopf { display: none; }
+.lk-ohne-symbole .lk-zeichen:not(.lk-z-fertig) { display: none !important; }
+.lk-ohne-namen .lk-name-schild { display: none !important; }

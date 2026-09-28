@@ -180,7 +180,32 @@
        Überblick, eine Lupe (doppelt so nah, wie beim alten Dorf), die kleine Karte zum Durchtippen der Viertel und ein
        Knopf fürs Vollbild. Im Vollbild ist alles wieder da. Das Spiel schaltet um (postMessage „leicht-modus"). */
     if (eingebettet) {
-      const ueberblick = () => Math.max(K.min, Math.min(K.max, K.W / 150));
+      /* FASSUNG 807 — XANDER: „die Stadt soll auch wie früher in der Klein Ansicht im selben Maßstab sein … jedes Gebäude
+         sichtbar … so großzügig mit so viel Platz dazwischen … die Kirche … der Fernsehturm abgeschnitten". Die ganze Stadt
+         (alle Häuser, Wahrzeichen, Bahnhof – samt Höhe) passt ins kleine Bild, unter der Kopfzeile, mit etwas Rand. */
+      let ganz = null;
+      const ganzeStadt = () => {
+        if (ganz && ganz.W === K.W && ganz.H === K.H && ganz.dreh === K.dreh && ganz.n === SZ.objekte.length) return ganz;
+        const alt = { x: K.x, y: K.y, s: K.s }, kopfH = 30 * K.dpr;
+        K.x = 0; K.y = 0; K.s = 1;
+        let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+        for (const o of SZ.objekte) {
+          if (!(o.art === "haus" || o.art === "wunder" || (o.art === "kulisse" && o.name))) continue;
+          const r = Math.hypot(o.fuss[0], o.fuss[1]) / 2, P = ST.proj(o.x, o.y, 0), T = ST.proj(o.x, o.y, (o.hoehe || 8) * (o.stufe || 1));
+          x0 = Math.min(x0, P[0] - r * 0.72); x1 = Math.max(x1, P[0] + r * 0.72); y0 = Math.min(y0, T[1] - 2); y1 = Math.max(y1, P[1] + r * 0.38);
+        }
+        let erg = { s: Math.max(1, K.W / 150), x: 0, y: 4 };
+        if (x1 > x0) {
+          const sF = Math.min(K.W / (x1 - x0), (K.H - kopfH) / (y1 - y0)) * 0.93, m = ST.aufBoden((x0 + x1) / 2, (y0 + y1) / 2);
+          K.s = sF; K.x = m[0]; K.y = m[1];
+          const w2 = ST.aufBoden(K.W / 2, K.H / 2 - kopfH / 2);
+          erg = { s: sF, x: w2[0], y: w2[1] };
+        }
+        K.x = alt.x; K.y = alt.y; K.s = alt.s;
+        ganz = Object.assign(erg, { W: K.W, H: K.H, dreh: K.dreh, n: SZ.objekte.length });
+        return ganz;
+      };
+      const ueberblick = () => ganzeStadt().s;
       /* Wie beim alten Dorf: die kleine Karte mit den Vierteln erscheint erst, wenn man mit der Lupe näher dran ist. */
       const nahSetzen = (nah) => {
         lupeK.classList.toggle("an", nah); document.body.classList.toggle("lk-nah", nah);
@@ -194,14 +219,19 @@
       SYM.kompass = '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#f7f1e1" stroke="#6b4a22" stroke-width="2"/><circle cx="20" cy="20" r="14.5" fill="none" stroke="#c9b58a" stroke-width="1"/>'
         + '<g class="lk-nadel"><path d="M20 5.5l3.4 14.5h-6.8z" fill="#c8312b"/><path d="M20 34.5l-3.4-14.5h6.8z" fill="#3b3f4a"/></g><circle cx="20" cy="20" r="2" fill="#6b4a22"/>'
         + '<text x="20" y="4.6" font-size="5" font-weight="700" text-anchor="middle" fill="#6b4a22" font-family="system-ui,sans-serif">N</text></svg><i>+</i>';
-      const lupeK = knopf("kompass", "Kompass: näher ran", () => {
-        const nah = K.s > ueberblick() * 1.4;
-        L().fliegeZu(nah ? 0 : K.x, nah ? 4 : K.y, nah ? ueberblick() : ueberblick() * 2.2, 600);
+      const kompass = () => {
+        const nah = K.s > ueberblick() * 1.4, g = ganzeStadt();
+        L().fliegeZu(nah ? g.x : K.x, nah ? g.y : K.y, nah ? g.s : g.s * 2.8, 600);
         nahSetzen(!nah);
-      }, "lk-nur-mini lk-lupe");
+      };
+      const lupeK = knopf("kompass", "Kompass: näher ran", kompass, "lk-nur-mini lk-lupe");
+      /* Doppeltipp auf die Wiese (wie im alten Dorf): mit dem Kompass zurück zur ganzen Stadt */
+      O.doppelTipp = () => { if (document.body.classList.contains("lk-mini-modus") && document.body.classList.contains("lk-nah")) kompass(); };
+      /* FASSUNG 807 — „ein bisschen die Karte auch rotieren": mit dem Kompass ein Knopf zum Drehen */
+      const drehK = knopf("rechts", "Karte drehen", () => { drehen(1); if (!document.body.classList.contains("lk-nah")) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; } }, "lk-nur-mini lk-drehknopf");
       setInterval(() => { if (document.body.classList.contains("lk-mini-modus")) nahSetzen(K.s > ueberblick() * 1.4); }, 700);
       const vollK = knopf("voll", "Vollbild", () => { try { window.parent.postMessage({ typ: "leicht-voll" }, location.origin); } catch (e) {} }, "lk-nur-mini lk-vollknopf");
-      wurzel.append(lupeK, vollK);
+      wurzel.append(lupeK, vollK, drehK);
       const kopfZ = el("div", "lk-kopfzeile", '<span class="lk-uhr" title="Uhrzeit in Deutschland"></span><span class="lk-ortsschild"><b></b></span><span class="lk-wetter" hidden></span>');
       wurzel.appendChild(kopfZ);
       const uhrStellen = () => {
@@ -213,10 +243,13 @@
       window.addEventListener("message", (ev) => {
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-kopf") return;
         O.kopfName = String(ev.data.name || "").slice(0, 40); uhrStellen();
+        /* FASSUNG 807 — „Symbole aus" und „Namen aus" wie im alten Dorf: ohne Symbole nur „fertig", ohne Namen keine Schilder */
+        document.body.classList.toggle("lk-ohne-symbole", ev.data.symbole === false);
+        document.body.classList.toggle("lk-ohne-namen", ev.data.namen === false);
         const w = kopfZ.querySelector(".lk-wetter"); w.innerHTML = String(ev.data.wetter || ""); w.hidden = !ev.data.wetter;
       });
       /* Ein Viertel auf der kleinen Karte: im kleinen Rahmen mit der Lupen-Stärke, nicht mit der großen Nähe. */
-      O.miniNah = () => { if (!document.body.classList.contains("lk-mini-modus")) return Math.max(K.s, 11 * K.dpr); nahSetzen(true); return ueberblick() * 2.2; };
+      O.miniNah = () => { if (!document.body.classList.contains("lk-mini-modus")) return Math.max(K.s, 11 * K.dpr); nahSetzen(true); return ueberblick() * 2.8; };
       /* Schlank wie das alte Dorf: im kleinen Rahmen nur die kleinen Bilder (bilder.js) und höchstens die Lupen-Nähe. */
       const maxVoll = K.max;
       const modus = (klein) => {
@@ -227,13 +260,15 @@
         /* FASSUNG 806 — XANDER: „wenn man in der Vollbildansicht ist dann bricht das Ganze immer ab … dass die kleinen Häuser nur
            so groß gezoomt werden können, wie sie innerhalb des Rahmens vorher waren". Eingebettet bleibt auch das Vollbild
            schlank (Sparmodus: nie die großen Bilder, 12 Leute) – die Nähe reicht bis zum 1,6-Fachen der kleinen Bilder. */
-        K.max = klein ? Math.max(K.min, ueberblick() * 2.3) : LB.spar ? Math.min(maxVoll, 18 * 1.6) : maxVoll;
+        if (klein) K.min = Math.min(K.min, ueberblick() * 0.95);
+        K.max = klein ? Math.max(K.min, ueberblick() * 4) : LB.spar ? Math.min(maxVoll, 18 * 1.6) : maxVoll;
         if (K.s > K.max) K.s = K.max;
         if (klein) { if (bauLeiste) bauLeisteZeigen(false); if (leiste && !leiste.hidden) leisteZeigen(false); karte.hidden = true; farbFeld.hidden = true; }
       };
       const erstesMal = q.get("mini") === "1";
       modus(erstesMal);
-      if (erstesMal) { K.x = 0; K.y = 4; K.s = ueberblick(); L().unruhe = 2; }
+      if (erstesMal) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; }
+      window.addEventListener("resize", () => { if (document.body.classList.contains("lk-mini-modus") && !document.body.classList.contains("lk-nah")) setTimeout(() => { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; }, 50); });
       window.addEventListener("message", (ev) => {
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-modus") return;
         modus(!ev.data.voll); L().unruhe = 2;
@@ -486,6 +521,14 @@
     if (o && (o.art === "haus" || o.art === "wunder" || o.art === "eigen" || o.name)) { waehlen(o); return; }
     /* leerer Bauplatz? */
     const a = ST.aufBoden(px, py);
+    /* FASSUNG 807 — im Spiel eingebettet: ein Tipp auf den See angelt (wie im alten Dorf); Doppeltipp auf die Wiese
+       führt mit dem Kompass zurück zur ganzen Stadt */
+    if (window.parent !== window && document.body.classList.contains("lk-mini-modus")) {
+      if (ST.boden.wert(a[0], a[1], 1) > 0.4) { try { window.parent.postMessage({ typ: "leicht-haus", g: "see" }, location.origin); } catch (e) {} return; }
+      const jetzt = performance.now();
+      if (O._tipp && jetzt - O._tipp.t < 380 && Math.hypot(O._tipp.x - px, O._tipp.y - py) < 40 * K.dpr) { O._tipp = null; if (O.doppelTipp) O.doppelTipp(); return; }
+      O._tipp = { t: jetzt, x: px, y: py };
+    }
     for (const k in D.PLAETZE) {
       const pl = D.PLAETZE[k];
       if (Math.hypot(pl.x - a[0], pl.y - a[1]) > 6.5) continue;

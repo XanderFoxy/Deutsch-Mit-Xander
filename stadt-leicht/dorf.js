@@ -238,6 +238,12 @@
     }
     /* Rathaus schaut auf den Markt, die Mühle mit dem Rad (Osten) an den Bach, das Bergwerk nach vorn */
     P.muehle.dreh = 0; P.bergwerk.dreh = 0;
+    /* FASSUNG 807 — XANDER: „du hast vergessen das Döbelner Rathaus weiterzubauen". Das Rathaus der Originalkarte ist das
+       Döbelner Rathaus vom Obermarkt (Modell rathaus_doebeln, 44 × 21 m), auf 70 % gesetzt, damit es zwischen Gasthaus,
+       Schule und Bäckerei passt; es schaut nach vorn auf den Markt. */
+    D.BILD.rathaus = ["w_rathaus_doebeln", "bau_rathaus", [31, 14.7], 22.8];
+    D.MASS = { rathaus: 0.7 };
+    P.rathaus = { x: -12.4, y: -14, dreh: 0, winkel: P.rathaus.winkel };
     D.PLAETZE = P;
     D.BAHN_Y = -86;
     /* Die Strecke: hinten entlang (Welt y = −86), an beiden Enden aus der Karte hinaus zu den Nachbardörfern */
@@ -400,7 +406,7 @@
       }
       const dreh = extra[k] && extra[k].dreh != null ? extra[k].dreh : p.dreh;
       SZ.neu({ art: "haus", spiel: k, name: D.GEBAEUDE[k][0], bild: bild[0], bauBild: bild[1], x: p.x, y: p.y, dreh: dreh,
-        stufe: D.STUFE[Math.max(0, Math.min(2, (st || 1) - 1))], stufenZahl: st, fuss: bild[2], hoehe: bild[3], bau: bau });
+        stufe: D.STUFE[Math.max(0, Math.min(2, (st || 1) - 1))] * ((D.MASS || {})[k] || 1), stufenZahl: st, fuss: bild[2], hoehe: bild[3], bau: bau });
     }
     const wunder = (ich && ich.volk && ich.volk.wunder) || {};
     for (const k in D.WUNDER) {

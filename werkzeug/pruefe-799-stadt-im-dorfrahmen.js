@@ -223,7 +223,7 @@ const sage = (gut, was, zusatz) => {
     return { mini: document.body.classList.contains("lk-mini-modus"), kopf: g(".lk-kopf"), bauen: g(".lk-bauen"), lupe: g(".lk-lupe"), voll: g(".lk-vollknopf"), feld: felder.length ? Math.min(...felder.map((q) => Math.min(q.width, q.height))) : 0, felder: felder.length }; });
   sage(!!r && r.mini && !r.kopf.sicht && !r.bauen.sicht, "im kleinen Rahmen nur das Bild: keine Kopfleiste, kein Bauen/Schmücken", JSON.stringify(r && { kopf: r.kopf, bauen: r.bauen }));
   sage(!!r && r.lupe.sicht && r.voll.sicht && r.lupe.w >= 24 && r.voll.w >= 30 && r.felder === 0, "Kompass (26 px, Tippfläche 34 px) und Vollbild (≥ 30 px); die kleine Karte erst mit der Lupe, wie beim alten Dorf", JSON.stringify(r && { lupe: r.lupe, voll: r.voll, felder: r.felder }));
-  sage(await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-dl-beschriftung button")].map((x) => x.dataset.s); return /^stadtversion,stadtversion,stadtvoll(,appholen)?$/.test(b.join(",")); }), "darunter nur „Alte Version“, „Neue Version“, „Vollbild“ (und „Als App“) (Symbole/Namen/Umbauen gehören zum alten Bild)");
+  sage(await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-dl-beschriftung button")].map((x) => x.dataset.s); return /^stadtversion,stadtversion,stadtvoll(,appholen)?,dorfanzeige,dorfanzeige$/.test(b.join(",")); }), "darunter nur „Alte Version“, „Neue Version“, „Vollbild“ (und „Als App“) (Symbole/Namen/Umbauen gehören zum alten Bild)");
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-klein.png" });
 
   /* FASSUNG 806 — XANDER: „Jetzt fehlt in der kleinen Ansicht der neuen Version der Kompass … Danach muss wieder die
@@ -274,13 +274,13 @@ const sage = (gut, was, zusatz) => {
   await tippeImFrame(".lk-lupe"); await tick(900);
   if (process.env.STAPEL) console.log("klicks", await imFrame(() => [window.__klicks, window.__ziel, typeof window.STADT.leicht.fliegeZu]));
   const s1 = await imFrame(() => window.STADT.kamera.s);
-  sage(s1 / s0 > 2 && s1 / s0 < 2.4, "die Lupe holt doppelt so nah heran wie beim alten Dorf", (s1 / s0).toFixed(2) + (process.env.STAPEL ? " " + JSON.stringify(await imFrame(() => ({ s: window.STADT.kamera.s, min: window.STADT.kamera.min, W: window.STADT.kamera.W, an: document.querySelector(".lk-lupe").className }))) + " s0=" + s0 : ""));
+  sage(s1 / s0 > 2.5 && s1 / s0 < 3.1, "der Kompass holt fast dreimal so nah heran (die ganze Stadt ist im Überblick kleiner)", (s1 / s0).toFixed(2) + (process.env.STAPEL ? " " + JSON.stringify(await imFrame(() => ({ s: window.STADT.kamera.s, min: window.STADT.kamera.min, W: window.STADT.kamera.W, an: document.querySelector(".lk-lupe").className }))) + " s0=" + s0 : ""));
   sage(nah(await lage(".sp-lstadt"), await lage(".sp-dl-neustadt-platz")), "der Rahmen bleibt dabei so klein wie vorher");
   const kf = await imFrame(() => { const f = [...document.querySelectorAll(".lk-mini-feld")].map((q) => q.getBoundingClientRect()).filter((q) => q.width > 0); return { n: f.length, min: f.length ? Math.min(...f.map((q) => Math.min(q.width, q.height))) : 0 }; });
   /* FASSUNG 805 — XANDER: „diese Kachel … muss nicht so ein großes Viereck sein … viel kleiner, weil man kann seinen
      Finger auch bisschen anstrengen". Die Karte ist 72 px, die Viertel also 24 px (bewusst unter den sonst üblichen 30 px). */
   /* FASSUNG 806 — XANDER: „Die kann halb so klein sein": 40 px, Viertel ≈ 13 px. */
-  sage(kf && kf.n === 9 && kf.min >= 11 && kf.min <= 15, "mit dem Kompass erscheint die kleine Karte am Rand: 9 Viertel à ≈ 13 px", JSON.stringify(kf));
+  sage(kf && kf.n === 9 && kf.min >= 15 && kf.min <= 20, "mit dem Kompass erscheint die kleine Karte am Rand: 9 Viertel à ≈ 18 px", JSON.stringify(kf));
   { const a0 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y })); const o = await lage(".sp-lstadt"); const cdp = await ctx.newCDPSession(pg);
     await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: o.l + o.w / 2, y: o.t + o.h * .6 }] });
     for (let i = 1; i <= 8; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: o.l + o.w / 2 - i * 6, y: o.t + o.h * .6 - i * 3 }] }); await tick(16); }
