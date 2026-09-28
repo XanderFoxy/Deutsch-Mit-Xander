@@ -133,13 +133,18 @@
   L.jahrNachDatum = jahrNachDatum; L.zeitNachUhr = zeitNachUhr;
 
   /* Eigener Schmuck (Baukasten) – vorerst im Browser gemerkt */
-  L.dekoLaden = function () { try { return JSON.parse(localStorage.getItem("leicht_deko_v1") || "[]"); } catch (e) { return []; } };
+  L.dekoLaden = function () {
+    const e = ST.spiel && ST.spiel.eigenes;
+    if (e && Array.isArray(e.deko)) { if (e.lage) L.lage = e.lage; return e.deko; }
+    try { return JSON.parse(localStorage.getItem("leicht_deko_v1") || "[]"); } catch (err) { return []; }
+  };
   L.dekoSpeichern = function () {
     const liste = SZ.objekte.filter((o) => o.art === "eigen").map((o) => ({ bild: o.bild, x: +o.x.toFixed(2), y: +o.y.toFixed(2), dreh: o.dreh, fuss: o.fuss, hoehe: o.hoehe, nurWinter: o.nurWinter, jahr: o.jahr }));
     try { localStorage.setItem("leicht_deko_v1", JSON.stringify(liste)); } catch (e) {}
     const lage = {}; for (const o of SZ.objekte) if (o.art === "haus" && o.dreh !== (D.PLAETZE[o.spiel] || {}).dreh) lage[o.spiel] = { dreh: o.dreh };
     L.lage = lage;
     try { localStorage.setItem("leicht_lage_v1", JSON.stringify(lage)); } catch (e) {}
+    if (ST.spiel && ST.spiel.eigenesSpeichern) ST.spiel.eigenesSpeichern({ v: 1, deko: liste, lage: lage });
   };
   try { L.lage = JSON.parse(localStorage.getItem("leicht_lage_v1") || "{}"); } catch (e) { L.lage = {}; }
 

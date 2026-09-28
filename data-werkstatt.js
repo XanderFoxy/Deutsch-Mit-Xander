@@ -49,26 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 793: Leichte Stadt (stadt-leicht.html) – Winterhausen-Grafik als Bilder, 62 KB Skript, derselbe Spielstand; nur für den Betreiber verlinkt",
+  stand: "Fassung 794: Haustiere reisen mit, Sequenzen im normalen Tempo",
 
   inArbeit: [
-    { seit: "2026-09-28T17:09",
-      text: "Leichte Stadt: eigene Modelle für die 16 Spielgebäude und Wahrzeichen" },
-    { seit: "2026-09-28T17:09",
-      text: "Leichte Stadt: Frühling/Sommer-Bilder, Schlittschuhläufer, Weihnachtsmann" },
-    { seit: "2026-09-28T17:09",
-      text: "Haustiere reisen mit (Walkie 259)" },
-    { seit: "2026-09-28T17:09",
-      text: "Sequenz-Reisen flüssig in normalem Tempo" },
-    { seit: "2026-09-28T17:09",
-      text: "Laserduell / Lese-Duell" },
+    { seit: "2026-09-28T18:06",
+      text: "Leichte Stadt: eigene Modelle für Spielgebäude und Wahrzeichen einbinden" },
+    { seit: "2026-09-28T18:06",
+      text: "Laserduell (Xander testet)" },
+    { seit: "2026-09-28T18:06",
+      text: "Walkie-Reste: Hot Rod, Katze, Adler, Flugzeug, Heli, Delfin, Wangenhand, Lunte, Anziehen" },
+    { seit: "2026-09-28T18:06",
+      text: "Aussprache-Aufgabe im Chat und persönliches Aussprache-Wörterbuch" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T17:09",
-      text: "Leichte Stadt: Bauen, Helfen, Drehen, Schmücken, Mini-Karte, Menschen, Baustellen, Nahansicht scharf" },
-    { seit: "2026-09-28T17:09",
-      text: "Winterhausen: erster Schnee zurück, Farbstimmung mit Regler" },
+    { seit: "2026-09-28T18:06",
+      text: "Haustiere reisen bei allen 23 Reisearten mit und landen sofort" },
+    { seit: "2026-09-28T18:06",
+      text: "Sequenz-Reisen: Tempo nach Weglänge, Stationen exakt, flüssig" },
+    { seit: "2026-09-28T18:06",
+      text: "Leichte Stadt: Weihnachtsmann fliegt im Winter, Schmuck auf dem Server gemerkt" },
   ],
 };

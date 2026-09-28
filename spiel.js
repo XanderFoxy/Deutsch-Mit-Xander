@@ -14207,7 +14207,17 @@
     var r = el.getBoundingClientRect();
     if (r.width < 4 || r.height < 4) return false;
     var s = getComputedStyle(el);
-    return s.visibility !== "hidden" && Number(s.opacity) > 0.15;
+    if (s.visibility === "hidden" || Number(s.opacity) <= 0.15) return false;
+    /* FASSUNG 794 — Maulwurf und Röhre lassen das Bild per clip-path
+       versinken: es ist dann „da", aber man sieht es nicht mehr. */
+    var cp = s.clipPath || s.webkitClipPath || "";
+    var m = /^inset\(\s*([\d.]+)(%|px)?(?:\s+([\d.]+)(%|px)?)?(?:\s+([\d.]+)(%|px)?)?/.exec(cp);
+    if (m) {
+      var pz = function (w, e) { w = Number(w) || 0; return e === "px" ? w / r.height * 100 : e === "%" ? w : 0; };
+      var oben = pz(m[1], m[2]), unten = m[5] != null ? pz(m[5], m[6]) : oben;
+      if (oben + unten >= 85) return false;
+    }
+    return true;
   }
   /* Am Ziel: auf die Plätze der echten Tiere hüpfen, dann Platz machen. */
   function doppelLanden(doppel, platzId, tauschen, fertig) {
@@ -14224,6 +14234,8 @@
     if (!zr || !zr.width) { ende(); return; }
     var boden = doppel.filter(function (d) { return !d.fliegt; })[0], luft = doppel.filter(function (d) { return d.fliegt; })[0];
     doppel.forEach(function (d, i) {
+      /* FASSUNG 794 — unterwegs versteckt (opacity 0), am Ziel wieder zeigen */
+      d.el.style.opacity = "";
       var von = d.el.style.transform;
       var nach = "translate(" + zr.left.toFixed(1) + "px," + zr.top.toFixed(1) + "px)", sk = d.fliegt ? " scale(1.35)" : "";
       d.el.style.width = zr.width.toFixed(1) + "px"; d.el.style.height = zr.height.toFixed(1) + "px";
@@ -14281,6 +14293,7 @@
     (function schritt() {
       if (aus) return;
       var t = performance.now() - los;
+      if (opt.platzEnde && t > 250 && (!platz.isConnected || !platz.classList.contains("lc-platz-unterwegs"))) { opt.platzEnde(); return; }
       var r = ziel(t);
       if (r && r.width) {
         letzte = r;
@@ -14294,7 +14307,19 @@
     return lauf;
   }
   /* Was sich gerade bewegt, wenn nicht das Profilbild selbst. */
-  var TIER_FAHRZEUG = /(^|\s)lc-(boot|lok|lift|kran|zylinder|beam|reise|kata-last|ufo|untertasse|mieze|frisbee|maulwurf|rohr|wagen|reisewagen)/;
+  /* FASSUNG 794 — XANDER (Walkie 259): „meine Haustiere bleiben noch zurück
+     auf meinem Abfahrtsplatz verbessere das mal bitte auch in sämtlichen
+     anderen Animationen die zur Reise gehören".
+     GEFUNDEN: (1) Die alte Liste hatte kein Wortende — „lc-lok" passte auch
+     auf Gleis, Tunnel und Schranke, und das zuletzt Erschienene (ein
+     stehendes Gleis) galt als Fahrzeug. (2) Flugzeug, Adler, Delfin, Heli,
+     Pferd, Liane, Feder, Frosch, Zauberer, Turm, Katze und die Riesenhände
+     fehlten ganz — dort blieben die Tiere unsichtbar und landeten am alten
+     Platz. Jetzt: eine genaue Liste, jedes Wort mit Ende. Beim Tor gehen
+     sie ins Tor hier und kommen aus dem Tor dort (das zweite erscheint
+     erst kurz vor der Ankunft). Beim Beamen gehört das kurze Vertauschen
+     (2 s) zum Witz. */
+  var TIER_FAHRZEUG = /(^|\s)lc-(boot|lok|lok-zug|lok-wagen|lift|kran|kran-last|zylinder|zauberer|zauberhut|zauber-last|beam|reisewagen|wagen|kata-last|ufo|ufo-last|katze|katze-ball|frisbee|maulwurf-auftauch|roehre|rohr-doppel|flieger|greif|turm|turm-springer|delfin|liane|feder|frosch|heli|pferd|riesenhand|riesenhand-last|tor-wirbel)(\s|$)/;
   var tierNeu = [];
   function fahrzeugRechteck(platz, seit, merk) {
     var kreis = platz.querySelector(".lc-kreis");
@@ -14355,7 +14380,15 @@
                 d.classList.toggle("sp-tier-links", merk.rennt && merk.richtung < 0);
               });
               return r;
-            }, { klasse: "sp-tier-haelt", wackeln: true });
+            }, { klasse: "sp-tier-haelt", wackeln: true, platzEnde: function () {
+              /* FASSUNG 794 — nach dem Sitzwechsel wird die Reihe neu
+                 gezeichnet: der alte Platz ist dann ein ANDERES Element
+                 (abgehängt), und sein „nicht mehr unterwegs" sieht die Wache
+                 nie. Dann hingen die Doppelgänger bis zur Notbremse (14 s)
+                 in der Luft. Jetzt landen sie sofort. */
+              var l3 = tierLaeufe[key];
+              if (l3) { delete tierLaeufe[key]; l3.stopp(Boolean(l3.beam && l3.beam())); }
+            } });
             if (lauf) setTimeout(function () { if (merk.rennt) { chatTon(zufall(["hundbellen", "chihuahuaknurr"]), 0.25); } }, 900);
             if (lauf) {
               tierLaeufe[key] = lauf;
@@ -14374,8 +14407,15 @@
                 if (lift()) [].forEach.call(document.querySelectorAll(".sp-tier-begleiter"), function (d) { d.classList.add("sp-tier-quetscht"); });
                 if (beam() || lift()) chatTon(beam() ? "beamen" : "quietschen", 0.18);
               }, 220);
-              /* Notbremse wie bei lcPlatzUnterwegs: nach 14 s ist Schluss. */
-              setTimeout(function () { if (tierLaeufe[key] === lauf) { delete tierLaeufe[key]; lauf.stopp(false); } }, 14000);
+              /* Notbremse wie bei lcPlatzUnterwegs. FASSUNG 794: lange Reisen
+                 (gemalte Wege, Lok mit Tunnel) dauern über 14 s — solange der
+                 Platz noch unterwegs ist, wartet sie weiter (höchstens 90 s). */
+              var bremse = function () {
+                if (tierLaeufe[key] !== lauf) return;
+                if (el.isConnected && el.classList.contains("lc-platz-unterwegs") && performance.now() - seit < 90000) { setTimeout(bremse, 4000); return; }
+                delete tierLaeufe[key]; lauf.stopp(false);
+              };
+              setTimeout(bremse, 14000);
               lauf.beam = beam;
             }
           } else if (warUnterwegs && !istUnterwegs) {

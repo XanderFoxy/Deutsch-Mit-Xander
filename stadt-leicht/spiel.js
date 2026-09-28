@@ -41,11 +41,22 @@
       SP.angemeldet = true; SP.uid = sitzung.user.id;
       /* Betreiber? (profiles.is_owner – wie Backend.isOwner) */
       klient.from("profiles").select("is_owner").eq("id", SP.uid).maybeSingle().then((r) => { SP.betreiber = !!(r && r.data && r.data.is_owner); if (ST.oberflaeche && ST.oberflaeche.betreiberDa) ST.oberflaeche.betreiberDa(); }, () => {});
-      return rpc("spiel_ich", {}).then((ich) => { SP.beispiel = false; return ich; });
+      return rpc("spiel_ich", {}).then((ich) => {
+        SP.beispiel = false;
+        /* eigener Schmuck und Drehungen liegen auf dem Server (gleich auf jedem Gerät) */
+        return rpc("spiel_stadt_leicht_holen", {}).then((d) => { SP.eigenes = d || null; return ich; }, () => ich);
+      });
     }).catch((e) => { console.warn(e); return beispiel("offline"); });
   };
   /* Bauen und Helfen – dieselben Serverfunktionen wie im Spiel */
   SP.bauen = function (was) { if (SP.beispiel) return Promise.reject(new Error("Beispielstadt")); return rpc("spiel_bauen", { p_was: was }); };
   SP.helfen = function (was) { if (SP.beispiel) return Promise.reject(new Error("Beispielstadt")); return rpc("spiel_bau_helfen", { p_was: was }); };
+  /* Speichern mit kurzer Verzögerung (mehrere Änderungen = eine Anfrage) */
+  let uhr = 0;
+  SP.eigenesSpeichern = function (daten) {
+    if (SP.beispiel || !SP.angemeldet) return;
+    clearTimeout(uhr);
+    uhr = setTimeout(() => { rpc("spiel_stadt_leicht_speichern", { p_daten: daten }).catch((e) => console.warn(e)); }, 1200);
+  };
   SP.neuLaden = function () { return SP.beispiel ? Promise.resolve(ST.leicht.ich) : rpc("spiel_ich", {}); };
 })();

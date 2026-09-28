@@ -1754,7 +1754,7 @@
       ziel.setTransform(1, 0, 0, 1, 0, 0); ziel.clearRect(0, 0, K.W, K.H);
     }
     /* 2. Dunstschleier unter dem Gespann */
-    dunstMalen(ziel, pf, p, Z);
+    if (!MESS.ohneDunst) dunstMalen(ziel, pf, p, Z);
     /* 3. Sternenspur hinter dem Schlitten */
     if (!MESS.ohneSpur) spurMalen(ziel, pf, p, t, Z, AS, sF, kam);
     /* 4. Gespann – in Luftperspektive: heller, bläulicher, weicher im Kontrast */

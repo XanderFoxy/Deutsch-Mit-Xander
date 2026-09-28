@@ -45151,7 +45151,7 @@
      die laengste Reise (das UFO braucht mit vier Plaetzen 4,5 s), also
      nimmt die Wache keiner laufenden Reise etwas weg. */
   const LC_UNTERWEGS_WACHE = {};
-  function lcPlatzUnterwegs(el, an) {
+  function lcPlatzUnterwegs(el, an, dauer) {
     if (!el) return;
     el.classList.toggle("lc-platz-unterwegs", Boolean(an));
     /* RUNDE 98 — WEM DIE REISE GEHOERT, STEHT JETZT AM PLATZ.
@@ -45220,7 +45220,10 @@
         karte.querySelectorAll('.lc-platz[data-lc-platz="' + nr + '"]')
           .forEach((p) => p.classList.remove("lc-platz-unterwegs", "lc-platz-bildweg", "lc-platz-leer"));
       } catch (e) {}
-    }, 12000);
+    /* FASSUNG 794 — gemalte Wege und die Lok mit Tunnel dauern laenger als
+       12 s. Die Wache schnitt sie ab, und die Haustiere landeten am alten
+       Platz (Walkie 259). Jetzt wartet sie die Reise ab. */
+    }, Math.max(12000, (Number(dauer) || 0) + 3000));
   }
 
   function lcFahrt(wen, von, art, wegVorgabe, tempo) {
@@ -45359,9 +45362,18 @@
     bilder.push(Object.assign({}, letzt, { opacity: 1, offset: Math.max(letzt.offset, bei(hin + 60)) }));
     bilder.push(Object.assign({}, letzt, { opacity: 0, offset: Math.max(letzt.offset, bei(hin + 260)) }));
     bilder.push(Object.assign({}, letzt, { opacity: 0, offset: 1 }));
-    try { wagen.animate(bilder, { duration: dauer, easing: "ease-in-out", fill: "forwards" }); } catch (e) {}
+    try { wagen.animate(bilder, { duration: dauer, easing: lcFahrtKurve(punkte.length - 1), fill: "forwards" }); } catch (e) {}
     setTimeout(() => wagen.remove(), dauer + 800);
     return wagen;
+  }
+
+  /* FASSUNG 794 — XANDER: „Sequenz-Reisen … im normalen Tempo und flüssig".
+     Ein „ease-in-out" ueber die GANZE Fahrt heisst: bei zwanzig Feldern
+     schleicht es am Anfang und rast in der Mitte doppelt so schnell. Ab
+     drei Feldern: kurz anfahren, dann gleichmaessig, kurz bremsen. Die
+     Kurve gilt fuer Bild und Fahrzeug gleich (sonst sitzt es daneben). */
+  function lcFahrtKurve(felder) {
+    return felder > 2 ? "cubic-bezier(0.12, 0, 0.88, 1)" : "ease-in-out";
   }
 
   function lcFahrtLauf(ab, weg, art, zu, tempo) {
@@ -45409,6 +45421,10 @@
        Jetzt endet die Fahrt DORT, wo sie hinging. */
     const halt = 260;
     const dauer = hin + halt;
+    /* FASSUNG 794 — lange Wege (Sequenzen) dauern ueber 12 s: die Wache
+       am Platz wartet jetzt so lange (sonst landen die Haustiere am
+       alten Platz, Walkie 259). */
+    lcPlatzUnterwegs(ab.el, true, dauer);
 
     const bei = (ms) => Math.min(1, ms / dauer);
     punkte.forEach((p, i) => {
@@ -45460,7 +45476,7 @@
     let lauf = null;
     const abraeumen = () => { zurueck(); try { lauf && lauf.cancel(); } catch (e) {} };
     try {
-      lauf = kreis.animate(bilder, { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+      lauf = kreis.animate(bilder, { duration: dauer, easing: lcFahrtKurve(felder), fill: "forwards" });
       lauf.oncancel = zurueck;
     } catch (e) { zurueck(); return false; }
     setTimeout(abraeumen, dauer + 700);
@@ -46287,8 +46303,18 @@
                   roboterhand: 3400,
                   frisbee: 2000 }[art] || 1800;
     const einheitR = lcPlatzAbstand(document.getElementById("lcPlaetze")) || 0;
-    const streckeR = Math.hypot(ende.x - start.x, ende.y - start.y);
-    const plaetzeR = einheitR ? Math.max(1, Math.min(4, Math.round(streckeR / einheitR))) : 1;
+    /* FASSUNG 794 — XANDER: „Sequenz-Reisen … Fahrzeuge im normalen Tempo
+       und flüssig". Gemessen wurde nur die Luftlinie Start–Ziel, und bei
+       vier Plaetzen war Schluss: eine gemalte Runde ueber zehn Plaetze
+       bekam dieselbe Zeit wie ein Katzensprung, und das Fahrzeug raste.
+       Jetzt zaehlt beim gemalten Weg die ganze Strecke (bis 16 Plaetze). */
+    let streckeR = Math.hypot(ende.x - start.x, ende.y - start.y);
+    if (bahn) {
+      let summe = 0;
+      for (let i = 1; i < bahn.length; i++) summe += Math.hypot(bahn[i].x - bahn[i - 1].x, bahn[i].y - bahn[i - 1].y);
+      streckeR = Math.max(streckeR, summe);
+    }
+    const plaetzeR = einheitR ? Math.max(1, Math.min(bahn ? 16 : 4, Math.round(streckeR / einheitR))) : 1;
     /* Das Beamen ist ein Sprung, keine Fahrt — es darf nicht laenger
        werden, nur weil das Ziel weiter weg liegt. */
     /* RUNDE 85: der Fahrstuhl braucht wie das Beamen immer dieselbe
@@ -46319,7 +46345,7 @@
     lcRueckstandMitnehmen(ab.el, quelle, dauer);
     const altZ = ab.el.style.zIndex;
     ab.el.style.zIndex = "7";
-    lcPlatzUnterwegs(ab.el, true);
+    lcPlatzUnterwegs(ab.el, true, dauer);
     const weg = [];
     const aufraeumen = () => {
       ab.el.style.zIndex = altZ;
@@ -46479,14 +46505,23 @@
     /* Und die Kette der Zwischenbilder dazu: aus einem Anfangs- und
        einem Endanteil wird eine Reihe von Schluesselbildern, die jede
        Station mitnimmt. „mach(dx, dy, t)" baut jedes einzelne. */
+    /* FASSUNG 794 — 18 feste Stuetzpunkte schnitten bei langen Wegen die
+       Ecken ab (die Station lag zwischen zwei Punkten). Jetzt: mehr Punkte
+       bei langen Wegen, und JEDE Station ist selbst ein Stuetzpunkt. */
     const bahnKette = (vonAnteil, bisAnteil, mach, schritte) => {
-      const n = Math.max(2, schritte || 18);
+      const n = Math.max(2, schritte || (bahn ? Math.max(18, bahnPunkte.length * 6) : 18));
+      const ts = [];
+      for (let i = 1; i <= n; i++) ts.push(i / n);
+      if (bahn) bahnAnteile.forEach((a) => { if (a > 0 && a < 1) ts.push(a); });
+      ts.sort((a, b) => a - b);
       const raus = [];
-      for (let i = 1; i <= n; i++) {
-        const t = i / n;
+      let vor = -1;
+      ts.forEach((t) => {
+        if (t - vor < 1e-4) return;
+        vor = t;
         const p = bahnAb(t);
         raus.push(mach(p.x, p.y, t, vonAnteil + (bisAnteil - vonAnteil) * t));
-      }
+      });
       return raus;
     };
     /* Und der haeufigste Fall in einem Satz: ein Fahrzeug, das
