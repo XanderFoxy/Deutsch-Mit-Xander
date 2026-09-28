@@ -223,7 +223,7 @@ const sage = (gut, was, zusatz) => {
     return { mini: document.body.classList.contains("lk-mini-modus"), kopf: g(".lk-kopf"), bauen: g(".lk-bauen"), lupe: g(".lk-lupe"), voll: g(".lk-vollknopf"), feld: felder.length ? Math.min(...felder.map((q) => Math.min(q.width, q.height))) : 0, felder: felder.length }; });
   sage(!!r && r.mini && !r.kopf.sicht && !r.bauen.sicht, "im kleinen Rahmen nur das Bild: keine Kopfleiste, kein Bauen/Schmücken", JSON.stringify(r && { kopf: r.kopf, bauen: r.bauen }));
   sage(!!r && r.lupe.sicht && r.voll.sicht && r.lupe.w >= 24 && r.voll.w >= 30 && r.felder === 0, "Kompass (26 px, Tippfläche 34 px) und Vollbild (≥ 30 px); die kleine Karte erst mit der Lupe, wie beim alten Dorf", JSON.stringify(r && { lupe: r.lupe, voll: r.voll, felder: r.felder }));
-  sage(await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-dl-beschriftung button")].map((x) => x.dataset.s); return /^stadtversion,stadtversion,stadtvoll(,appholen)?,dorfanzeige,dorfanzeige$/.test(b.join(",")); }), "darunter nur „Alte Version“, „Neue Version“, „Vollbild“ (und „Als App“) (Symbole/Namen/Umbauen gehören zum alten Bild)");
+  sage(await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-dl-beschriftung button")].map((x) => x.dataset.s); return /^stadtversion,stadtversion,stadtvoll(,stadtvoll,stadtvoll)?(,appholen)?,dorfanzeige,dorfanzeige$/.test(b.join(",")); }), "darunter nur „Alte Version“, „Neue Version“, „Vollbild“, „Schmücken“, „Bauen“ (und „Als App“) (Symbole/Namen/Umbauen gehören zum alten Bild)");
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-klein.png" });
 
   /* FASSUNG 806 — XANDER: „Jetzt fehlt in der kleinen Ansicht der neuen Version der Kompass … Danach muss wieder die
@@ -327,8 +327,8 @@ const sage = (gut, was, zusatz) => {
   await tick(1600);
   const zb = await imFrame(() => { const b = document.querySelector('.lk-zeichen[data-g="baeckerei"]'); if (!b) return null; const r = b.getBoundingClientRect();
     const s = document.querySelector('.lk-zeichen[data-g="schule"]');
-    return { t: b.textContent, kl: b.className, x: r.left + r.width / 2, y: r.top + r.height / 2, h: r.height, sicht: getComputedStyle(b).display !== "none", schule: s ? s.textContent : null }; });
-  sage(!!zb && zb.sicht && /4 Brot/.test(zb.t) && /lk-z-fertig/.test(zb.kl) && zb.h >= 30, "über der Bäckerei steht grün „4 Brot“ (≥ 30 px hoch)", JSON.stringify(zb));
+    return { t: b.textContent, titel: b.title, kl: b.className, x: r.left + r.width / 2, y: r.top + r.height / 2, h: r.height, sicht: getComputedStyle(b).display !== "none", schule: s ? s.textContent : null }; });
+  sage(!!zb && zb.sicht && (/4 Brot/.test(zb.t) || (/×4/.test(zb.t) && /4 Brot/.test(zb.titel)))  && /lk-z-fertig/.test(zb.kl) && zb.h >= 30, "über der Bäckerei steht „4 Brot“ (Fassung 809: Brot-Bild ×4, Titel „4 Brot“; ≥ 30 px hoch)", JSON.stringify(zb));
   sage(!!zb && /^Kuchen [12]:\d\d$/.test(zb.schule || ""), "über der Schule läuft die Uhr („… 2:10“)", JSON.stringify(zb && zb.schule));
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-zeichen.png" });
   if (process.env.STAPEL && zb) console.log("ZIEL", await imFrame((p) => { const e = document.elementFromPoint(p.x, p.y); return e && (e.className + "/" + e.tagName); }, zb));

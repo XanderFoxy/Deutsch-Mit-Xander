@@ -244,13 +244,12 @@
       setInterval(() => { if (document.body.classList.contains("lk-mini-modus")) nahSetzen(K.s > ueberblick() * 1.4); }, 700);
       const vollK = knopf("voll", "Vollbild", () => { try { window.parent.postMessage({ typ: "leicht-voll" }, location.origin); } catch (e) {} }, "lk-nur-mini lk-vollknopf");
       /* FASSUNG 809 — XANDER: „Mir fehlen noch die items zum schmücken die finde ich hier in der kleinen Map noch gar nicht".
-         Im kleinen Rahmen je ein Knopf Schmücken und Bauen neben dem Vollbild: öffnet das Vollbild gleich mit der Leiste. */
+         Unter dem kleinen Bild (im Spiel) stehen „Schmücken" und „Bauen": das Spiel meldet vorher, welche Leiste nach dem
+         Umschalten ins Vollbild aufgehen soll (im Bild selbst kein Knopf, der Häuser verdeckt). */
       let nachVoll = "";
-      const vollMit = (was) => { nachVoll = was; try { window.parent.postMessage({ typ: "leicht-voll" }, location.origin); } catch (e) {} };
-      const schmuckK = knopf("stern", "Schmücken", () => vollMit("schmuck"), "lk-nur-mini lk-mini-schmuck");
-      const bauK = knopf("hammer", "Bauen", () => vollMit("bauen"), "lk-nur-mini lk-mini-bauen");
+      window.addEventListener("message", (ev) => { if (ev.origin === location.origin && ev.source === window.parent && ev.data && ev.data.typ === "leicht-nachvoll") nachVoll = String(ev.data.was || ""); });
       O.nachVollOeffnen = () => { const w = nachVoll; nachVoll = ""; if (w === "schmuck") leisteZeigen(true); else if (w === "bauen") bauLeisteZeigen(true); };
-      wurzel.append(lupeK, vollK, drehK, schmuckK, bauK);
+      wurzel.append(lupeK, vollK, drehK);
       const kopfZ = el("div", "lk-kopfzeile", '<span class="lk-uhr" title="Uhrzeit in Deutschland"></span><span class="lk-ortsschild"><b></b></span><span class="lk-wetter" hidden></span>');
       wurzel.appendChild(kopfZ);
       const uhrStellen = () => {

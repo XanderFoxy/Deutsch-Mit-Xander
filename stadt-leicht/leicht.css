@@ -116,8 +116,6 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 /* Namen an den Häusern (wie „Namen" im alten Dorf) */
 .lk-name-schild { position: absolute; left: 0; top: 0; pointer-events: none; padding: 0 3px; border-radius: 3px; background: rgba(20,24,34,.55); color: #fff; font: 600 8.5px/1.35 system-ui, sans-serif; white-space: nowrap; will-change: transform; }
 .lk-mini-modus .lk-vollknopf { left: 6px; bottom: 6px; }
-.lk-mini-modus .lk-mini-schmuck { left: 44px; bottom: 6px; }
-.lk-mini-modus .lk-mini-bauen { left: 82px; bottom: 6px; }
 .lk-mini-modus .lk-kopf, .lk-mini-modus .lk-schmuck, .lk-mini-modus .lk-farbfeld, .lk-mini-modus .lk-leiste,
 .lk-mini-modus .lk-karte, .lk-mini-modus .lk-ansage, .lk-mini-modus .lk-mini-schalter { display: none !important; }
 .lk-mini-modus .lk-mini-rahmen { right: 4px; bottom: 4px; }

@@ -4800,7 +4800,8 @@
       else hinweis("📲 Als App: unten (oder oben) auf „Teilen“ tippen, dann „Zum Home-Bildschirm“. Danach startet die Seite wie eine App.");
       return;
     } else if (s === "stadtvoll") {
-      lsAuf(); lsVoll(true); return;
+      /* FASSUNG 809 — „Schmücken"/„Bauen" unter dem kleinen Bild: Vollbild und gleich die passende Leiste */
+      lsAuf(); if (k.dataset.mit) lsPost({ typ: "leicht-nachvoll", was: k.dataset.mit }); lsVoll(true); return;
     } else if (s === "umbau") {
       S.umbau = !S.umbau; S.umbauWahl = ""; S.dorfWahl = ""; S.dorfTippWeg = true; umbauZiehenAn();
       ton("holzklopf", 0.25); schnellZeichnen(true); return;
@@ -12863,7 +12864,9 @@
     var neu = stadtNeu();
     return '<button type="button" data-s="stadtversion" data-v="alt" class="sp-stadt-version' + (neu ? "" : " sp-an") + '" aria-pressed="' + !neu + '">Alte Version</button>'
       + '<button type="button" data-s="stadtversion" data-v="neu" class="sp-stadt-version' + (neu ? " sp-an" : "") + '" aria-pressed="' + neu + '">Neue Version' + (window.LEICHT_FREI ? "" : " (nur du)") + "</button>"
-      + (neu ? '<button type="button" data-s="stadtvoll" class="sp-stadt-voll">Vollbild</button>' : "") + appKnopfHtml();
+      + (neu ? '<button type="button" data-s="stadtvoll" class="sp-stadt-voll">Vollbild</button>' : "")
+      /* FASSUNG 809 — XANDER: „Mir fehlen noch die items zum schmücken die finde ich hier in der kleinen Map noch gar nicht" */
+      + (neu && !dorfBesuchStand() ? '<button type="button" data-s="stadtvoll" data-mit="schmuck" class="sp-stadt-voll">Schmücken</button><button type="button" data-s="stadtvoll" data-mit="bauen" class="sp-stadt-voll">Bauen</button>' : "") + appKnopfHtml();
   }
   /* FASSUNG 806 — XANDER: „es gibt doch oben in der Adresszeile so'n Download Knopf, wo man sich das als App auf dem Desktop
      holen kann … die meisten die wissen nicht was ich mit Adresszeile meine … deswegen gibt es vielleicht in deine
