@@ -14,6 +14,8 @@ STADT.MODELL_DATEIEN = [
   "pferdebahn", "pferdewagen_korn", "gleis_pferdebahn",
   "auto_viper",
   "auto_batmobil",
+  /* FASSUNG 809 — die Eisenbahn (Dampflok BR 50 mit Tender, drei Güterwagen) */
+  "dampflok", "gueterwagen",
   "menschen"
 ];
 /* Rundum gleiche Dinge: die Drehung ändert das Bild nicht → ein Bild im Speicher für alle Winkel */

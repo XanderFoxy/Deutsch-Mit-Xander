@@ -2093,3 +2093,33 @@ XANDER: „Jetzt fehlt in der kleinen Ansicht der neuen Version der Kompass … 
   - „Neue Version“ gibt die gemalten Bilder des alten Dorfs frei (0 × 0).
 - **„Als App“:** Der Knopf unter der Stadt fragt auf Android/Chrome direkt; auf dem iPhone erklärt er „Teilen → Zum Home-Bildschirm“. Läuft die Seite schon als App, fehlt er.
 - Sonde 799 erweitert (Kompass, Uhr, Ortsschild, Namen, Verschieben nur mit Kompass, Vollbild ohne große Bilder): alles grün.
+
+## Fassung 807 — Originalkarte, Eisenbahn, kleines Bild wie früher, acht Winkel
+
+XANDER: „denk an das Layout der Originalmap. Die Leute sollen sich sofort zurechtfinden" · „dass ich die Eisenbahn wieder hinten lang fahren [sehe]" · „die Stadt soll auch wie früher in der Klein Ansicht im selben Maßstab sein … jedes Gebäude sichtbar … so großzügig mit so viel Platz dazwischen" · „über den Bereich des Bildes scrollen … unter das Bild" · „Es gibt ja nicht umsonst den Punkt Symbole aus" · „du hast gesagt acht Winkel".
+
+- **Vorlage 1 „Originalkarte" (Standard, `stadt-leicht/dorf.js`)**:
+  - Die 16 Bauplätze kommen aus dem alten Dorfbild (DORF_LAGE 320 × 200), umgerechnet in die Welt mit gleicher Anordnung im Bild. Rangkorrelation links→rechts und hinten→vorn = 1,0.
+  - Das Rathaus ist das Döbelner Rathaus (Modell rathaus_doebeln, 70 %) am Marktplatz mit Brunnen.
+  - Mühle links mit Mühlbach, Bergwerk hinten rechts, Fluss vom Markt zur Seezunge vorn, Felder vorn.
+  - Wege sind ein kürzestes Netz zwischen Markt, Häusern, Bahnhof, Bootshaus und Wahrzeichen, mit Brücken und Laternen. Die Leute gehen auf diesen Wegen.
+  - Die Wahrzeichen stehen auf freien Plätzen.
+  - Der Rundling bleibt über `?vorlage=rundling` erreichbar.
+- **Eisenbahn (Helfer, `stadt-leicht/bahn.js`)**:
+  - Dampflok mit Tender und Güterwagen fährt hinten entlang (Welt y = −86), hält 14 s am Bahnhof und fährt zu den Nachbardörfern aus der Karte hinaus.
+  - Nachts leuchten die Lampen, im Winter liegt Schnee, Rauch steigt auf.
+- **Kleines Bild wie früher**:
+  - Die ganze Stadt passt in den Rahmen (alle Häuser, Wahrzeichen und der Bahnhof samt Höhe), mit Luft dazwischen.
+  - Der Kompass holt 2,8-fach heran. Dann verschiebt der Finger die Stadt bis in die Außenbezirke, und ein Knopf dreht die Karte.
+  - Ein Doppeltipp auf die Wiese führt zurück.
+  - Die Kachelkarte ist 54 px groß.
+  - Ein Tipp auf den See angelt.
+- **Scrollen**: Im festen Bild scrollt Wischen das Dorf-Menü rund um das Bild (mit Schwung), nicht die ganze Seite.
+- **Schilder wie früher**:
+  - Gelb heißt fertig und wippt, vorn steht ein kleines Bild der Ware (Ei, Milch, Getreide, Brot …).
+  - „Symbole“ und „Namen“ unter dem Bild schalten wie im alten Dorf. Ohne Symbole bleibt nur „fertig“ sichtbar.
+- **Baustellen im kleinen Rahmen** (Zwergbilder `_n`) und ein schmaler Ladebalken unten.
+- **Acht Bauwinkel (Helfer)**:
+  - Häuser und drehbarer Schmuck drehen sich in 45°-Schritten.
+  - Neue setzbare Modelle: Rathaus Döbeln, Dodge Viper, Batmobil, Pferdebahn, Korn-, Mehl- und Leerwagen, Gleise.
+- **Sonden**: `pruefe-807-originalkarte.js` (neu grün, alter Code rot), `pruefe-799` (erweitert), `pruefe-808-acht-winkel.js`, `pruefe-809-eisenbahn.js`, `pruefe-leicht.js`.

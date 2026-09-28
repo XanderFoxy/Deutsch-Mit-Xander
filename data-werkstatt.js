@@ -49,15 +49,19 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 806 — kleine Stadt: Kompass, Uhr, Namen, fest/verschiebbar, Vollbild schlank",
+  stand: "Fassung 807 — Originalkarte, Eisenbahn, Döbelner Rathaus, kleines Bild wie früher, 8 Winkel",
 
   inArbeit: [
-    { seit: "2026-09-28T20:28",
-      text: "Grundkarte: alter Dorfplan als Vorlage 1 für die neue Stadt" },
-    { seit: "2026-09-28T20:28",
-      text: "Acht Bauwinkel (45°) und neue Modelle backen (Rathaus, Viper, Batmobil, Pferdebahn)" },
-    { seit: "2026-09-28T20:28",
-      text: "Weihnachtsmann aus allen Richtungen (fangen), Halloween" },
+    { seit: "2026-09-28T21:11",
+      text: "Originalkarte treuer: Horizont/Alpen oben, Zug an der oberen Kante, See öffnet sich unten" },
+    { seit: "2026-09-28T21:11",
+      text: "Tag/Nacht nur nach Uhrzeit (auch Zeitzone), Sterne, Wolken, Tiere" },
+    { seit: "2026-09-28T21:11",
+      text: "Viper-Einfahrt (Intro-Animation)" },
+    { seit: "2026-09-28T21:11",
+      text: "Pferdebahn fährt Korn/Mehl, Holzfäller/Jäger sichtbar" },
+    { seit: "2026-09-28T21:11",
+      text: "Neue Version für alle freischalten (nach Xanders OK im Walkie)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
