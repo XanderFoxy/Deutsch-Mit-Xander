@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 780: Aussprache-Karte kompakt mit Statuszeile, Piepton wie im Trainer, Punkte nach Prozent × Niveau (Funk 200)",
+  stand: "Fassung 781: Ausflug zu einem Wahrzeichen gibt +5 % Zufriedenheit für 4 h (Walkie 301), Rechnung am Bahnhof offen",
 
   inArbeit: [
-    { seit: "2026-09-28T01:31",
-      text: "Walkie 301: Ausflug zum Wahrzeichen · Walkie 302: Flickstube · Funk 188/190 Rest · Folgen für Pac-Man/Mario" },
+    { seit: "2026-09-28T01:40",
+      text: "Walkie 302 Flickstube (Notiz fehlt); Funk 188/190 Rest (Lehrer-Freigabe, eigene Stimme im Trainer); Sequenzen für Pac-Man/Mario" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T01:31",
-      text: "Funk 200: Aussprache kompakt, Piepton, Punkte nach Prozent" },
+    { seit: "2026-09-28T01:40",
+      text: "Walkie 301 Ausflug-Laune" },
   ],
 };

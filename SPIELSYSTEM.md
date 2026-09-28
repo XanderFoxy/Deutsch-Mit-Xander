@@ -1759,3 +1759,15 @@ XANDER: „möchte ich dass das Design kompakter ist dass die prozentuale Anzeig
   - Höchstmaß je Niveau: A1 6 · A2 8 · B1 10 · B2 13 · C1 16 · C2 20. Man bekommt seinen Prozentanteil davon, ab 30 %.
   - Servertest: A1 50 % → 3, A1 100 % → 6, C2 50 % → 10, C2 100 % → 20, C2 25 % → 0, B2 88 % → 11.
   - Ein schweres Niveau lohnt sich also: C2 mit 50 % bringt mehr als A1 mit 100 %. Weiter gilt: höchstens 40 Wertungen je Stunde.
+
+### Fassung 781 (Walkie 301: Ausflug zum Wahrzeichen hebt die Laune)
+Sonden: neu 781 (10/10 grün); 765 (Ausflugstext angepasst), 775, 777, 778, 779 grün. Servertest: Ausflug nach XanderFox (Fernsehturm) → +5, bis in 4 h; Ausflug in ein Dorf ohne Wahrzeichen → 0.
+XANDER (Walkie 301): „Ausflug zum Fernsehturm/Wahrzeichen eines anderen: Zufriedenheit +5 für 4 h – als Alternative zum Deutschüben, wenn die Laune sinkt" und in der Notiz: „verdient man denn dann überhaupt etwas … verdiene ich mehr als ich ausgebe".
+- **Wirkung**: Steht im Zieldorf ein Wahrzeichen, kommen die Bewohner froh zurück: Zufriedenheit **+5 % für 4 Stunden**.
+  - Das hebt den Ertrag jeder Ernte (Faktor 0,5 + Zufriedenheit/100, also +0,05).
+  - Ein neuer Ausflug verlängert die 4 Stunden, stapelt aber nicht.
+  - Server: `spiel_ausflug_freude(volk)` neu; `spiel_dorf_abholen` zählt sie mit; `spiel_bahn_reise` setzt `volk.ausflug_bis` / `ausflug_ziel`; `spiel_oeffentlich` zeigt `wahrzeichen` (welche stehen).
+- **Bahnhof**: Ziele mit Wahrzeichen stehen vorn und sind golden umrandet: „Beastadt · Bea · Berliner Fernsehturm · Laune +5 %“ (das größte Wahrzeichen wird genannt).
+- **Die Rechnung steht offen da**: „3 Bewohner: −12 P Fahrkarten → +6 Forschung, bei einem Wahrzeichen +5 % Zufriedenheit (4 h). Geld bringt das nicht – 9 P Eintritt verdient das Zieldorf; dein Geld kommt von Touristen.“
+- **Anzeige**: Die Volk-Zeile zeigt „Ausflug Berliner Fernsehturm: +5 % bis 5:39“. Nach der Fahrt kommt die Meldung „Sie haben Berliner Fernsehturm gesehen: Zufriedenheit +5 % bis …“.
+- Die Meldung „Volk unzufrieden“ nennt jetzt als Tipp „Ausflug per Zug zu einem Wahrzeichen (+5 % für 4 h)“, solange kein Ausflug wirkt.

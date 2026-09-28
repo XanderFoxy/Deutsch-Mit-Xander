@@ -580,7 +580,7 @@
      "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo",
      "haustier_leben", "geschuetz_stufe", "eisen", "tarn", "mitspielen",
      "level", "skills", "helm", "brust", "ladung", "daemon",
-     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "klasse", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s", "kampfklasse", "kampf_stufe", "dorf_name", "haft", "gefangene", "wahrzeichen"].forEach(function (k) { o[k] = s[k]; });
+     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "klasse", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s", "kampfklasse", "kampf_stufe", "dorf_name", "haft", "gefangene"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -8353,9 +8353,7 @@
       if (!g[keyU]) {
         var fehlt = [vz.satt < 1 ? "Essen" : "", vz.bezahlt < 1 ? "Lohn" : "", vz.quote < 60 ? "Deutsch" : ""].filter(Boolean);
         neu.push({ key: keyU, art: "warnung", bild: MELDE_BILD.volk, ziel: "", teil: "volk",
-          text: "Volk unzufrieden (" + vz.zuf + " %)" + (fehlt.length ? ": es fehlt " + fehlt.join(", ") : " – Ertrag sinkt")
-            /* FASSUNG 781 (Walkie 301): der Ausflug zu einem Wahrzeichen als zweiter Weg neben Deutsch üben. */
-            + (ausflugBis(ich) ? "" : ". Tipp: Ausflug per Zug zu einem Wahrzeichen (+5 % für 4 h)") });
+          text: "Volk unzufrieden (" + vz.zuf + " %)" + (fehlt.length ? ": es fehlt " + fehlt.join(", ") : " – Ertrag sinkt") });
       }
     }
     /* Touristen: stehen Wahrzeichen und ist die Ernte bereit, warten Besucher auf Einlass. */
@@ -8530,12 +8528,8 @@
     var bedarf = Math.ceil(arbeiter / 4) + ritter + Math.ceil(berufeSumme(ich) / 2), essen = ["fisch", "brot", "bratwurst", "kuchen", "torte", "fleisch"].reduce(function (n, x) { return n + vorrat(ich, x); }, 0);
     var lohn = arbeiter + 3 * ritter, satt = bedarf ? Math.min(1, essen / bedarf) : 1, bezahlt = lohn ? Math.min(1, (ich.punkte || 0) / lohn) : 1;
     var q = Math.min(100, quote + (erforscht(ich, "duden") ? 10 : 0));
-    return { zuf: Math.min(100, Math.round(40 * satt + 20 * bezahlt + 40 * q / 100) + wunderFreude(ich) + ausflugFreude(ich)), satt: satt, bezahlt: bezahlt, quote: q, leute: arbeiter + ritter };
+    return { zuf: Math.min(100, Math.round(40 * satt + 20 * bezahlt + 40 * q / 100) + wunderFreude(ich)), satt: satt, bezahlt: bezahlt, quote: q, leute: arbeiter + ritter };
   }
-  /* FASSUNG 781 — XANDER (Walkie 301): „Ausflug zum Fernsehturm/Wahrzeichen eines anderen: Zufriedenheit +5 für 4 h –
-     als Alternative zum Deutschüben, wenn die Laune sinkt". Der Server (spiel_ausflug_freude) rechnet dasselbe. */
-  function ausflugBis(ich) { var t = Date.parse((((ich || {}).volk) || {}).ausflug_bis || ""); return t > Date.now() ? t : 0; }
-  function ausflugFreude(ich) { return ausflugBis(ich) ? 5 : 0; }
   function ritterMax(ich) { return Math.min(6, 2 * dorfSt(ich, "kaserne")); }
   function volkHtml(ich) {
     var v = ich.volk || {}, arbeiter = Number(v.arbeiter) || 0, ritter = Number(v.ritter) || 0, quote = v.quote == null ? 70 : Number(v.quote);
@@ -8550,8 +8544,7 @@
     return '<div class="sp-volk"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="' + gesicht + '"/><circle cx="7" cy="8" r="1.2" fill="#fff"/><circle cx="13" cy="8" r="1.2" fill="#fff"/>'
       + '<path d="' + (zuf >= 75 ? "M6 12 C8 15 12 15 14 12" : zuf >= 50 ? "M6.5 13 H13.5" : "M6 14.5 C8 11.5 12 11.5 14 14.5") + '" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>'
       + "<span><b>" + zuf + " % zufrieden</b> · Ertrag ×" + komma2(0.5 + zuf / 100) + "<small>" + arbeiter + " Arbeiter · " + ritter + " Ritter · Deutsch-Quote " + quote + " %"
-      + " · je Ernte " + bedarf + " Portionen (du hast " + essen + ") und " + lohn + " P Lohn"
-      + (ausflugBis(ich) ? " · Ausflug " + esc(v.ausflug_ziel || "") + ": +5 % bis " + uhrzeit(ausflugBis(ich)) : "") + "</small></span>"
+      + " · je Ernte " + bedarf + " Portionen (du hast " + essen + ") und " + lohn + " P Lohn</small></span>"
       /* FASSUNG 756 — Walkie 293: Ritter werden in der Kaserne ausgebildet, 2 je Stufe (bis 6). */
       + '<span class="sp-volk-knoepfe"><button type="button" data-s="ritter" data-n="1"' + ((ich.level || 1) >= 4 && ritter < ritterMax(ich) && (ich.punkte || 0) >= 40 ? "" : " disabled")
       + ' title="' + (!dorfSt(ich, "kaserne") ? "Ritter brauchen eine Kaserne zum Trainieren" : ritter >= ritterMax(ich) ? "Die Kaserne fasst " + ritterMax(ich) + " – bau sie aus" : "Ritter in der Kaserne ausbilden") + '">'
@@ -11706,24 +11699,15 @@
     if (!r) return "";
     var ziele = plaetze().filter(function (p) { return !p.leer && !p.ich && p.id && !istPuppe(p.id); }).map(function (p) {
       var sid = spielIdVon(p.id), st = sid && S.stand[sid];
-      return st && st.dorf && Object.keys(st.dorf).length ? { sid: sid, name: p.name || "?", dorf: st.dorf_name || "", wz: wahrzeichenName(st.wahrzeichen) } : null;
+      return st && st.dorf && Object.keys(st.dorf).length ? { sid: sid, name: p.name || "?", dorf: st.dorf_name || "" } : null;
     }).filter(Boolean);
-    /* FASSUNG 781 — Dörfer mit Wahrzeichen zuerst: dort gibt es +5 % Zufriedenheit für 4 Stunden (Walkie 301). */
-    ziele.sort(function (a, b) { return (b.wz ? 1 : 0) - (a.wz ? 1 : 0); });
     var knoepfe = ziele.map(function (d) {
-      return '<button type="button" data-s="bahnreise" data-z="' + esc(d.sid) + '"' + (d.wz ? ' class="sp-bahn-wz"' : "") + (r.erledigt || (ich.punkte || 0) < r.kosten ? " disabled" : "") + ">"
-        + esc(d.dorf || d.name) + "<small>" + (d.dorf ? esc(d.name) : "") + (d.wz ? (d.dorf ? " · " : "") + esc(d.wz) + " · Laune +5 %" : "") + "</small></button>";
+      return '<button type="button" data-s="bahnreise" data-z="' + esc(d.sid) + '"' + (r.erledigt || (ich.punkte || 0) < r.kosten ? " disabled" : "") + ">"
+        + esc(d.dorf || d.name) + (d.dorf ? "<small>" + esc(d.name) + "</small>" : "") + "</button>";
     }).join("");
-    var bis = ausflugBis(ich);
-    /* XANDER (Walkie 301, Notiz): „verdient man denn dann überhaupt etwas … verdiene ich mehr als ich ausgebe". Die Rechnung steht offen da. */
-    return '<div class="sp-bahn-reise"><span class="sp-klein"><b>Ausflug</b> · ' + r.leute + " Bewohner: −" + r.kosten + " P Fahrkarten → +" + r.forschung + " Forschung, "
-      + "bei einem Wahrzeichen +5 % Zufriedenheit (4 h). Geld bringt das nicht – 9 P Eintritt verdient das Zieldorf; dein Geld kommt von Touristen."
-      + (bis ? " Deine Leute sind noch bis " + uhrzeit(bis) + " gut gelaunt." : "") + (r.erledigt ? " Mit diesem Zug sind sie schon unterwegs ✓" : "") + "</span>"
+    return '<div class="sp-bahn-reise"><span class="sp-klein"><b>Ausflug</b> · ' + r.leute + " Bewohner fahren in ein Nachbardorf: −" + r.kosten + " P, +" + r.forschung + " Forschung (Reisen bildet). "
+      + "Das Dorf dort verdient 9 P Eintritt." + (r.erledigt ? " Mit diesem Zug sind sie schon unterwegs ✓" : "") + "</span>"
       + (knoepfe ? '<div class="sp-bahn-reise-ziele">' + knoepfe + "</div>" : '<span class="sp-klein">Gerade ist kein Nachbardorf im Raum.</span>') + "</div>";
-  }
-  function wahrzeichenName(l) {
-    var k = (l || []).filter(function (x) { return WUNDER[x]; }).sort(function (a, b) { return WUNDER[b].ab - WUNDER[a].ab; })[0];
-    return k ? WUNDER[k].name : "";
   }
   function bahnGaesteHtml(z) {
     var g = z.gaeste || [];
@@ -11753,7 +11737,6 @@
       bahnWareZeigen("touristen", "−" + r.leute, 104, bahnAn(bahnBeiX(98)).y - 22);
       ton("gong", 0.35);
       hinweis("🚂 " + r.leute + " Bewohner fahren nach " + (r.dorf_name || r.ziel_name || "drüben") + " (−" + r.kosten + " P) und bringen " + r.forschung + " Forschung mit."
-        + (r.freude ? " Sie haben " + r.ausflug_wz + " gesehen: Zufriedenheit +" + r.freude + " % bis " + uhrzeit(Date.parse(r.freude_bis)) + "." : "")
         + (r.buendnis ? " 🤝 Verbündet: +10 % und Vertrauen +2." : ""));
       schnellZeichnen(true); panelAuffrischen();
     }).catch(function () { S.bahnLaeuft = false; hinweis("🚂 Das ging gerade nicht."); });

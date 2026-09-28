@@ -3012,6 +3012,3 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-sprech-kompakt .sp-sprech-weiterknopf { border: 1px solid #d3dae5; background: #fff; color: #2b3a52; }
 /* Das Wörterbuch-Angebot (ab 95 %) darf die Karte wachsen lassen – es ist eine Frage, keine Anzeige. */
 .sp-sprech-kompakt .sp-erg-platz.sp-erg-angebot { max-height: none; }
-/* FASSUNG 781 — Ausflugsziel mit Wahrzeichen (Walkie 301): goldener Rand, Laune +5 %. */
-.sp-bahn-reise-ziele button.sp-bahn-wz { border-color: #e2a93a; background: #3a3424; }
-.sp-bahn-reise-ziele button.sp-bahn-wz small { color: #ffd98a; opacity: 1; }

@@ -295,8 +295,8 @@ const sage = (gut, was, zusatz) => {
       gaeste: (st.querySelector(".sp-bahn-gaeste") || {}).textContent || "", hin: window.__hinweise.join(" | ") }; });
   sage(R && /Export, Import und Touristen/.test(R.kopf), "Bahnhof-Kopf: „Export, Import und Touristen“", R && R.kopf);
   sage(R && /Touristen: 7 steigen aus/.test(R.touristen) && /\+34 P \(14 Kurtaxe \+ 4 × Essen à 5 P\)/.test(R.touristen) && !R.aus, "„Touristen: 7 steigen aus · +34 P (14 Kurtaxe + 4 × Essen)“ – 4 Stück Essen im Lager", JSON.stringify(R && R.touristen));
-  sage(R && R.ziele.length === 1 && /Beastadt/.test(R.ziele[0]) && /11111111-1111-4111-8111-111111111111/.test(R.ziele[0]) && /−12 P Fahrkarten → \+6 Forschung/.test(R.reise) && /9 P Eintritt/.test(R.reise),
-    "Ausflug: 3 Bewohner, 12 P Fahrkarten, +6 Forschung (Fassung 781: Rechnung ausgeschrieben), Ziel „Beastadt (Bea)“, das Dorf dort verdient 9 P", JSON.stringify(R && { ziele: R.ziele, reise: R.reise }));
+  sage(R && R.ziele.length === 1 && /Beastadt/.test(R.ziele[0]) && /11111111-1111-4111-8111-111111111111/.test(R.ziele[0]) && /−12 P, \+6 Forschung/.test(R.reise) && /9 P Eintritt/.test(R.reise),
+    "Ausflug: 3 Bewohner, −12 P, +6 Forschung, Ziel „Beastadt (Bea)“, das Dorf dort verdient 9 P", JSON.stringify(R && { ziele: R.ziele, reise: R.reise }));
   sage(R && /Zu Besuch waren: Bea \(3,/.test(R.gaeste) && /Bea kam mit dem Zug zu Besuch: \+9 P Eintritt/.test(R.hin), "Gäste-Zeile „Zu Besuch waren: Bea (3, …)“ und einmal die Meldung „Bea kam mit dem Zug zu Besuch: +9 P Eintritt“", JSON.stringify(R && { g: R.gaeste, h: R.hin }));
   const gr = await pg.evaluate(() => [...document.querySelectorAll('.sp-bahnhof [data-a="touristen"], .sp-bahnhof [data-s="bahnreise"]')].map((b) => { const q = b.getBoundingClientRect(); return [Math.round(q.height), Math.round(q.right)]; }));
   sage(gr.every((x) => x[0] >= 30 && x[1] <= 360), "Knöpfe ≥ 30 px hoch, nichts ragt über 360 px hinaus", JSON.stringify(gr));
