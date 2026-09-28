@@ -18,11 +18,12 @@
 /* Gebündelt (werkzeug/stadt-packen.js) – ?quelle=1 lädt die Einzeldateien */
 (function () {
   var q = /[?&]quelle=1/.test(location.search);
-  var liste = q ? ["stadt/kern.js","stadt/pinsel.js","stadt/boden.js","stadt/szene.js","stadt/himmel.js","stadt/baustelle.js","stadt/modelle.js","stadt/oberflaeche.js","stadt/dorf.js","stadt/start.js"] : ["stadt/stadt.min.js?v=ece390f289"];
+  var liste = q ? ["stadt/kern.js","stadt/pinsel.js","stadt/boden.js","stadt/szene.js","stadt/himmel.js","stadt/baustelle.js","stadt/modelle.js","stadt/oberflaeche.js","stadt/dorf.js","stadt/start.js"] : ["stadt/stadt.min.js?v=b9aab0bf68"];
   liste.forEach(function (s) { document.write('<script src="' + s + (q ? "?t=" + Date.now() : "") + '"><\/script>'); });
 })();
 </script>
 <!-- /SKRIPTE -->
+
 
 
 

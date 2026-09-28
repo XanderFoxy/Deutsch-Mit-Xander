@@ -71,7 +71,10 @@
       const A = liste[i], B = liste[j];
       if (A.x1 < B.x0 || B.x1 < A.x0 || A.y1 < B.y0 || B.y1 < A.y0) continue;   // überdecken sich im Bild nicht
       let aHinten;
-      if (A.g.a1 <= B.g.a0 + eps || A.g.b1 <= B.g.b0 + eps) aHinten = true;
+      /* Flaches (Pferdebahngleis im Pflaster, def.flach) liegt unter allem, was darauf steht */
+      const fA = !!(ST.MODELLE[A.o.typ] || {}).flach, fB = !!(ST.MODELLE[B.o.typ] || {}).flach;
+      if (fA !== fB) aHinten = fA;
+      else if (A.g.a1 <= B.g.a0 + eps || A.g.b1 <= B.g.b0 + eps) aHinten = true;
       else if (B.g.a1 <= A.g.a0 + eps || B.g.b1 <= A.g.b0 + eps) aHinten = false;
       else aHinten = A.nah < B.nah;
       if (aHinten) { A.vor.push(B); B.grad++; } else { B.vor.push(A); A.grad++; }

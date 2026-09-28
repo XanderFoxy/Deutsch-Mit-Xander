@@ -6,10 +6,14 @@ STADT.MODELL_DATEIEN = [
   /* FASSUNG 795 — eigene Modelle für die Spielgebäude und Wahrzeichen */
   "kuhstall", "huehnerstall", "rathaus", "schule", "kaserne", "gefaengnis", "bergwerk", "brauerei", "bibliothek", "krankenhaus", "labor",
   "neuschwanstein", "fernsehturm", "holstentor", "brandenburger",
+  "rathaus_doebeln",
   "weihnachtsbaum", "marktbude", "pyramide", "krippe", "karussell", "schneemann",
   "brunnen", "laterne", "bank", "bruecke", "zaun",
   "tanne", "laubbaum", "obstbaum",
   "tretboot", "bootshaus",
+  "pferdebahn", "pferdewagen_korn", "gleis_pferdebahn",
+  "auto_viper",
+  "auto_batmobil",
   "menschen"
 ];
 /* Rundum gleiche Dinge: die Drehung ändert das Bild nicht → ein Bild im Speicher für alle Winkel */
