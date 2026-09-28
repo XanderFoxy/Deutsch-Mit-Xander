@@ -101,7 +101,16 @@
     return { jahr: SZ.jahr, bau: bau, saat: o.saat, variante: o.variante, schluessel: (o.variante || "") + "|" + o.saat, objekt: o };
   }
 
+  const LEER = { leben: [], rauch: [], lichter: [], schatten: null, bild: null, W: 0, H: 0 };
   SZ.sichtbare = [];
+  /* Bewegung lebender Dinge (Menschen laufen, Schlitten fliegen): je Bild */
+  let letzteZeit = 0;
+  SZ.bewegen = function (jetzt) {
+    const dt = Math.min(0.1, Math.max(0, (jetzt - (letzteZeit || jetzt)) / 1000));
+    letzteZeit = jetzt;
+    for (const o of SZ.objekte) { const d = ST.MODELLE[o.typ]; if (d && d.bewegen) { try { d.bewegen(o, dt, jetzt / 1000, SZ); } catch (err) { console.error(err); } } }
+    if (ST.himmel && ST.himmel.bewegen) ST.himmel.bewegen(dt, jetzt / 1000, SZ);
+  };
   SZ.zeichnen = function (jetzt) {
     const Z = SZ.zeitDaten();
     const t = jetzt / 1000;
@@ -118,11 +127,18 @@
     const alle = SZ.geist ? SZ.objekte.concat([SZ.geist]) : SZ.objekte;
     for (const o of alle) {
       const def = ST.MODELLE[o.typ];
-      if (!def) continue;
+      if (!def || o.versteckt) continue;
       const P = ST.proj(o.x, o.y, 0);
       const gross = ((def.grund ? Math.max(def.grund[0], def.grund[1]) : 2) + (def.hoehe || 10)) * K.s;
       if (P[0] < -gross || P[0] > K.W + gross || P[1] < -gross * 0.2 || P[1] > K.H + gross) continue;
       const opt = optionen(o, jetzt);
+      if (def.live) {
+        /* Lebendes (Menschen, Tiere, Fahrzeuge): jedes Bild neu gemalt,
+           aber trotzdem richtig hinter/vor Häusern einsortiert */
+        const b = Math.max(def.grund[0], def.grund[1]) * K.s, h = (def.hoehe || 2) * K.s;
+        liste.push({ o: o, sp: LEER, live: true, X: P[0], Y: P[1], x0: P[0] - b, y0: P[1] - h * 1.2, x1: P[0] + b, y1: P[1] + b * 0.6, g: grundKam(o), opt: opt });
+        continue;
+      }
       let sp;
       try { sp = ST.spriteHolen(o.typ, opt, o.gier + K.dreh * 90, K.s, Z, t); }
       catch (e) { console.error(o.typ, e); continue; }
@@ -132,8 +148,21 @@
     const reihe = sortieren(liste);
     SZ.sichtbare = reihe;
 
+    /* Hilfen je Objekt: Projektion in Modellkoordinaten (gedreht) */
+    for (const e of reihe) {
+      const ob = e.o, s = K.s;
+      const gier = (ob.gier + K.dreh * 90) * Math.PI / 180, c = Math.cos(gier), sn = Math.sin(gier);
+      const proj = (x, y, z) => { const a = x * c - y * sn, b = x * sn + y * c; return [e.X + (a - b) * ST.KX * s, e.Y + (a + b) * ST.KY * s - (z || 0) * ST.KZ * s]; };
+      /* Schattenpunkt: wohin ein Punkt (x,y,z) seinen Schatten auf den Boden wirft */
+      const schattenAuf = (x, y, z) => { const a = x * c - y * sn, b = x * sn + y * c; const L = ST.LICHT; const sa = a - L[0] / L[2] * (z || 0), sb = b - L[1] / L[2] * (z || 0); return [e.X + (sa - sb) * ST.KX * s, e.Y + (sa + sb) * ST.KY * s]; };
+      e.P = { proj: proj, schattenAuf: schattenAuf, s: s, t: t, Z: Z, o: e.opt, g: g, c: c, sn: sn, objekt: ob, def: ST.MODELLE[ob.typ], gier: ob.gier + K.dreh * 90, jahr: SZ.jahr, dpr: K.dpr };
+    }
     /* 2. Schatten */
-    for (const e of reihe) sg.drawImage(e.sp.schatten, Math.round(e.x0), Math.round(e.y0));
+    for (const e of reihe) {
+      if (e.live) { const d = ST.MODELLE[e.o.typ]; if (d.schatten) { sg.save(); try { d.schatten(sg, e.P); } catch (err) { console.error(err); } sg.restore(); } }
+      else sg.drawImage(e.sp.schatten, Math.round(e.x0), Math.round(e.y0));
+      if (e.o.bau && ST.baustelle && ST.baustelle.schatten) { sg.save(); try { ST.baustelle.schatten(sg, e.P, e.o, e.opt.bau); } catch (err) { console.error(err); } sg.restore(); }
+    }
     sg.globalCompositeOperation = "source-in";
     sg.fillStyle = SZ.jahr === "winter" ? "rgb(40,62,120)" : "rgb(22,34,52)";
     sg.fillRect(0, 0, K.W, K.H);
@@ -145,14 +174,14 @@
     /* 3. + 4. Dinge, von hinten nach vorn, mit ihrem Leben */
     for (const e of reihe) {
       if (e.o === SZ.geist) g.globalAlpha = 0.72;
-      g.drawImage(e.sp.bild, Math.round(e.x0), Math.round(e.y0));
+      const bauAktiv = e.o.bau && ST.baustelle && e.o !== SZ.geist;
+      if (bauAktiv && ST.baustelle.hinten) { g.save(); try { ST.baustelle.hinten(g, e.P, e.o, e.opt.bau); } catch (err) { console.error(err); } g.restore(); }
+      if (e.live) { g.save(); try { ST.MODELLE[e.o.typ].zeichnen(g, e.P); } catch (err) { console.error(err); } g.restore(); }
+      else g.drawImage(e.sp.bild, Math.round(e.x0), Math.round(e.y0));
       if (e.sp.leben.length) {
-        const ob = e.o, s = K.s;
-        const gier = (ob.gier + K.dreh * 90) * Math.PI / 180, c = Math.cos(gier), sn = Math.sin(gier);
-        const proj = (x, y, z) => { const a = x * c - y * sn, b = x * sn + y * c; return [e.X + (a - b) * ST.KX * s, e.Y + (a + b) * ST.KY * s - z * ST.KZ * s]; };
-        const P = { proj: proj, s: s, t: t, Z: Z, o: e.opt, g: g, c: c, sn: sn, objekt: ob };
-        for (const fn of e.sp.leben) { g.save(); try { fn(g, P); } catch (err) { console.error(err); } g.restore(); }
+        for (const fn of e.sp.leben) { g.save(); try { fn(g, e.P); } catch (err) { console.error(err); } g.restore(); }
       }
+      if (bauAktiv && ST.baustelle.vorne) { g.save(); try { ST.baustelle.vorne(g, e.P, e.o, e.opt.bau); } catch (err) { console.error(err); } g.restore(); }
       g.globalAlpha = 1;
       if (e.o === SZ.auswahl) auswahlRahmen(e);
     }
@@ -219,7 +248,7 @@
      nie kleiner als ein Pünktchen), sie taumeln und treiben im Wind */
   function schneefall(g, t) {
     const W = K.W, H = K.H, dpr = K.dpr;
-    const ebenen = [[160, 0.55, 0.45, 1.0], [110, 0.85, 0.65, 1.6], [45, 1.25, 0.9, 2.6]];
+    const ebenen = [[170, 0.55, 0.45, 0.9], [110, 0.85, 0.6, 1.35], [40, 1.25, 0.8, 2.0]];
     g.save();
     for (const [anzahl, tempo, alpha, groesse] of ebenen) {
       const menge = Math.round(anzahl * (W * H) / (1200 * 800) / Math.max(1, dpr * 0.8));
@@ -241,7 +270,7 @@
     const r = SZ.sichtbare;
     for (let i = r.length - 1; i >= 0; i--) {
       const e = r[i];
-      if (e.o === SZ.geist) continue;
+      if (e.o === SZ.geist || e.live) continue;
       if (px < e.x0 || px >= e.x1 || py < e.y0 || py >= e.y1) continue;
       try {
         const d = e.sp.bild.getContext("2d").getImageData(Math.floor(px - Math.round(e.x0)), Math.floor(py - Math.round(e.y0)), 1, 1).data;

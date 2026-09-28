@@ -85,7 +85,7 @@
      nacht= wie stark Fenster/Laternen leuchten (0…1) */
   ST.ZEITEN = {
     tag:   { name: "Tag",        amb: [0.64, 0.68, 0.78], sonne: [0.40, 0.36, 0.28], nacht: 0,    schatten: 0.34, himmel: ["#bcd3ea", "#e9f1f8"] },
-    abend: { name: "Dämmerung",  amb: [0.36, 0.44, 0.66], sonne: [0.38, 0.26, 0.16], nacht: 0.75, schatten: 0.26, himmel: ["#2b3b66", "#e7a27a"] },
+    abend: { name: "Dämmerung",  amb: [0.42, 0.50, 0.66], sonne: [0.27, 0.22, 0.17], nacht: 0.75, schatten: 0.26, himmel: ["#2b3b66", "#e7a27a"] },
     nacht: { name: "Nacht",      amb: [0.20, 0.24, 0.40], sonne: [0.06, 0.07, 0.12], nacht: 1,    schatten: 0.18, himmel: ["#0b1330", "#1d2b55"] }
   };
 
@@ -206,12 +206,17 @@
   function farbeMal(farbe) { return function (g, F) { g.fillStyle = farbe; g.fillRect(-1, -1, F.w + 2, F.h + 2); }; }
 
   /* Licht auf einer Fläche: Faktor je Farbkanal (0…1) */
-  function lichtFaktor(n, Z, extra) {
+  function lichtFaktor(n, Z, extra, jahr) {
     const k = Math.max(0, punkt(n, LICHT));
     const amb = Z.amb, so = Z.sonne;
     /* Himmelslicht: nach oben zeigende Flächen bekommen mehr davon */
     const oben = 0.82 + 0.18 * Math.max(0, n[2]);
-    return [0, 1, 2].map((i) => Math.min(1, amb[i] * oben + so[i] * k * 1.35 + (extra || 0)));
+    /* Licht vom Boden zurück: Schnee hellt Schattenseiten deutlich auf,
+       Wiese nur ein wenig (und grünlich) */
+    const seit = Math.max(0, 1 - Math.abs(n[2]) - Math.max(0, n[2]) * 0.5);
+    const hell = (Z.amb[1] + Z.sonne[1] * 0.6);
+    const rueck = jahr === "winter" ? [0.20, 0.21, 0.23] : [0.08, 0.10, 0.06];
+    return [0, 1, 2].map((i) => Math.min(1, amb[i] * oben + so[i] * k * 1.35 + rueck[i] * seit * hell + (extra || 0)));
   }
   ST.lichtFaktor = lichtFaktor;
 
@@ -300,7 +305,7 @@
     const m = typeof f.malen === "string" ? farbeMal(f.malen) : f.malen;
     if (m) m(g, F);
     if (!f.keinLicht) {
-      const lf = lichtFaktor(n, P.Z, f.lichtExtra);
+      const lf = lichtFaktor(n, P.Z, f.lichtExtra, P.o.jahr);
       g.globalCompositeOperation = "multiply";
       g.fillStyle = "rgb(" + Math.round(lf[0] * 255) + "," + Math.round(lf[1] * 255) + "," + Math.round(lf[2] * 255) + ")";
       g.fillRect(-1, -1, f.w + 2, f.h + 2);

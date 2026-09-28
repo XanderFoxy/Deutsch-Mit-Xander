@@ -3,3 +3,69 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 #stadtBoden, #stadtDinge { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #stadtOberflaeche { position: absolute; inset: 0; pointer-events: none; }
 #stadtOberflaeche > * { pointer-events: auto; }
+
+/* ---------- Bedienung ---------- */
+.st-knopf { width: 44px; height: 44px; border-radius: 14px; border: 1px solid rgba(255,255,255,.18); background: rgba(22,28,48,.72); color: #f3ead8; display: inline-grid; place-items: center; padding: 0; cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+.st-knopf svg { width: 22px; height: 22px; }
+.st-knopf:active { transform: scale(.94); }
+.st-ja { background: #3f7d3a; border-color: #6fae63; }
+.st-nein { background: rgba(120,34,30,.85); border-color: rgba(255,140,120,.4); }
+
+.st-kopf { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; pointer-events: none; }
+.st-kopf > * { pointer-events: auto; }
+.st-name { background: rgba(22,28,48,.72); color: #f6ecd6; border-radius: 14px; padding: 7px 12px 8px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.14); cursor: pointer; max-width: 46vw; }
+.st-name b { display: block; font: 700 17px/1.1 Georgia, "Times New Roman", serif; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-name span { font-size: 11px; opacity: .7; }
+.st-kopf-rechts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+.st-mini { position: absolute; right: 12px; bottom: 138px; width: 150px; height: 150px; border-radius: 14px; overflow: hidden; border: 2px solid rgba(255,255,255,.55); box-shadow: 0 6px 20px rgba(0,0,0,.35); background: #dfe6ee; transition: width .25s, height .25s; }
+.st-mini canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.st-mini-gitter { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); }
+.st-mini-feld { border: 0; border-right: 1px solid rgba(20,30,60,.28); border-bottom: 1px solid rgba(20,30,60,.28); background: transparent; padding: 0; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; }
+.st-mini-feld:nth-child(3n) { border-right: 0; } .st-mini-feld:nth-child(n+7) { border-bottom: 0; }
+.st-mini-feld span { font-size: 8.5px; line-height: 1; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9); padding: 0 1px 3px; white-space: nowrap; overflow: hidden; max-width: 100%; }
+.st-mini-feld:active { background: rgba(255,255,255,.25); }
+.st-mini-schalter { position: absolute; top: 3px; right: 3px; width: 30px; height: 30px; border-radius: 9px; }
+.st-mini-schalter svg { width: 16px; height: 16px; }
+.st-mini.zu { width: 36px; height: 36px; }
+.st-mini.zu canvas, .st-mini.zu .st-mini-gitter { display: none; }
+
+.st-leiste { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 8px max(8px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(14,18,34,.92), rgba(14,18,34,.72) 70%, rgba(14,18,34,0)); }
+.st-reiter { display: flex; gap: 6px; overflow-x: auto; padding: 16px 2px 6px; scrollbar-width: none; }
+.st-reiter::-webkit-scrollbar { display: none; }
+.st-reiter-k { flex: none; min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); color: #f3ead8; font: 600 14px/1 system-ui, sans-serif; cursor: pointer; }
+.st-reiter-k.an { background: #e9d6a8; color: #2a2014; border-color: #e9d6a8; }
+.st-karten { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: none; }
+.st-karten::-webkit-scrollbar { display: none; }
+.st-karten:empty { display: none; }
+.st-karte { flex: none; width: 96px; border-radius: 12px; border: 1px solid rgba(255,255,255,.2); background: linear-gradient(#f7f1e4, #e6dcc6); padding: 4px 4px 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.st-karte img { width: 88px; height: 66px; object-fit: contain; display: block; }
+.st-karte span { font: 600 11.5px/1.15 system-ui, sans-serif; color: #2a2014; text-align: center; }
+.st-karte.an { outline: 3px solid #f3c35a; }
+.st-karte-boden i { display: block; width: 88px; height: 46px; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
+
+.st-steuer { position: absolute; left: 50%; transform: translateX(-50%); bottom: 150px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; padding: 8px 10px; border-radius: 18px; background: rgba(22,28,48,.84); border: 1px solid rgba(255,255,255,.16); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: #f3ead8; max-width: calc(100vw - 24px); box-sizing: border-box; box-shadow: 0 8px 26px rgba(0,0,0,.35); }
+.st-steuer[hidden] { display: none; }
+.st-steuer-titel { width: 100%; text-align: center; font: 700 14px/1.2 Georgia, serif; }
+.st-drehring { width: 52px; height: 52px; position: relative; touch-action: none; cursor: grab; color: #f3c35a; }
+.st-drehring svg { width: 100%; height: 100%; }
+.st-drehring b { position: absolute; inset: 0; display: grid; place-items: center; font: 600 11px system-ui; color: #f3ead8; }
+.st-sofort { font-size: 12px; width: 100%; text-align: center; opacity: .85; }
+.st-bau { width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; }
+.st-bau-balken { flex: 1 1 100%; height: 8px; border-radius: 4px; background: rgba(255,255,255,.15); overflow: hidden; }
+.st-bau-balken i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #c7923e, #f3c35a); }
+.st-raffer { margin-left: auto; display: flex; gap: 4px; }
+.st-raffer-k { min-width: 38px; height: 30px; border-radius: 9px; border: 1px solid rgba(255,255,255,.2); background: transparent; color: #f3ead8; font: 600 12px system-ui; cursor: pointer; }
+.st-raffer-k.an { background: #f3c35a; color: #2a2014; }
+.st-regler { width: 120px; }
+.st-klein { font-size: 12px; opacity: .8; }
+
+.st-ansage { position: absolute; left: 50%; top: 70px; transform: translate(-50%, -8px); background: rgba(22,28,48,.85); color: #f6ecd6; padding: 8px 14px; border-radius: 12px; font: 600 14px/1.2 system-ui; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; max-width: calc(100vw - 32px); text-align: center; }
+.st-ansage.an { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 420px) {
+  .st-knopf { width: 40px; height: 40px; border-radius: 12px; }
+  .st-mini { width: 120px; height: 120px; bottom: 132px; right: 8px; }
+  .st-steuer { bottom: 140px; }
+  .st-name b { font-size: 15px; }
+}

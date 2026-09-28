@@ -234,7 +234,7 @@
       // Schneelicht: Relief stark sichtbar, blaue Schatten
       float sdif = max(0.0, dot(normalize(mix(n, vec3(0.0,0.0,1.0), 0.55)), u_licht));
       vec3 schneeFarbe = vec3(0.93, 0.95, 0.99);
-      vec3 schneeLicht = u_amb*vec3(0.92,0.97,1.12) + u_sonne*sdif*1.45;
+      vec3 schneeLicht = u_amb*vec3(0.97,0.99,1.05) + u_sonne*sdif*1.45;
       vec3 sc = schneeFarbe * min(schneeLicht, vec3(1.05));
       sc *= 0.965 + 0.05*s3 + 0.03*vn(w*30.0);
       // Glitzern: winzige Kristalle, die aufblitzen
@@ -247,7 +247,11 @@
 
     // ---------- Wasser ----------
     if (wasser > 0.02) {
-      float tiefe = smoothstep(0.1, 0.95, karte(w + wack*0.1).g);
+      // Tiefe = wie weit das Ufer entfernt ist: Wasser in zwei Ringen ringsum abtasten
+      float r1 = 0.0, r2 = 0.0;
+      for (int i = 0; i < 6; i++) { float a = float(i) * 1.0472 + 0.3; vec2 d = vec2(cos(a), sin(a));
+        r1 += karte(w + wack*0.1 + d*0.8).g; r2 += karte(w + wack*0.1 + d*1.7).g; }
+      float tiefe = smoothstep(0.35, 1.0, (r1 / 6.0) * 0.45 + (r2 / 6.0) * 0.55) * smoothstep(0.2, 0.9, kf.g);
       vec2 fl = w + vec2(u_zeit*0.18, u_zeit*0.05);
       float wel = fbm3(fl*2.2) * 0.6 + vn(fl*6.0 - u_zeit*0.3)*0.4;
       vec3 flach = vec3(0.36, 0.40, 0.30);   // Kies unter Wasser
@@ -265,15 +269,38 @@
       // Ufer: nasser Rand und helle Schaumlinie
       float ufer = smoothstep(0.02, 0.25, wasser) * (1.0 - smoothstep(0.25, 0.5, wasser));
       vec3 nass = col * 0.62;
-      vec3 wc = mix(nass, wf, smoothstep(0.18, 0.4, wasser));
+      vec3 wc = mix(u_schnee > 0.0 ? col : nass, wf, smoothstep(0.18, 0.4, wasser));
       wc += vec3(0.9) * ufer * smoothstep(0.55, 0.8, vn(w*8.0 + u_zeit*0.6)) * 0.25 * (1.0-u_nacht*0.5);
-      // Eis im Winter: Ränder gefroren, Mitte fließt
+      // Eis im Winter: der See friert ganz zu (Schlittschuhbahn), der Bach
+      // nur am Rand – in der Mitte fließt dunkles Wasser zwischen Eisschollen
       if (u_schnee > 0.0) {
-        float eis = u_schnee * (1.0 - smoothstep(0.35, 0.75, tiefe + vn(w*0.7)*0.25));
-        vec3 eisF = mix(vec3(0.72,0.82,0.88), vec3(0.88,0.93,0.97), vn(w*3.0)) * min(u_amb+u_sonne*0.9, vec3(1.05));
-        float riss = smoothstep(0.035, 0.0, abs(zellen(w*1.6).y - zellen(w*1.6).x)) * 0.25;
+        float see = 0.0;
+        for (int i = 0; i < 8; i++) { float a = float(i) * 0.7854; see += karte(w + vec2(cos(a), sin(a))*4.5).g; }
+        float breit = smoothstep(0.3, 0.55, see / 8.0);
+        float offen = (1.0 - breit) * smoothstep(0.55, 0.9, tiefe + (vn(w*1.3 + u_zeit*0.05) - 0.5)*0.35);
+        float eis = u_schnee * (1.0 - offen);
+        vec2 wv = w + vec2(fbm3(w*0.4), fbm3(w*0.4+5.0))*3.0;
+        vec3 z1 = zellen(wv*0.32); vec3 z2 = zellen(wv*1.3+11.0);
+        vec3 eisF = mix(vec3(0.66,0.78,0.86), vec3(0.84,0.90,0.95), vn(w*2.0)*0.7 + z1.z*0.3);
+        // dunkle Tiefe schimmert durch, Risse, Luftblasen
+        eisF = mix(eisF, vec3(0.30,0.42,0.52), smoothstep(0.5, 1.0, tiefe) * 0.35 * (1.0 - vn(w*0.6)));
+        float riss = smoothstep(0.02, 0.0, z1.y - z1.x) * 0.22 * step(0.45, z1.z) + smoothstep(0.012, 0.0, z2.y - z2.x) * 0.10 * step(0.7, z2.z) * smoothstep(0.02, 0.008, pm);
         eisF *= 1.0 - riss;
-        wc = mix(wc, eisF, smoothstep(0.2, 0.6, eis) * smoothstep(0.15, 0.4, wasser));
+        // Kufenspuren auf dem See: lange, sanft gebogene helle Linien
+        float spur = 0.0;
+        for (int i = 0; i < 5; i++) { float fi = float(i); vec2 m = vec2(52.0, 50.0) + vec2(sin(fi*2.1)*4.0, cos(fi*1.7)*3.0);
+          float r = length((w - m) * vec2(1.0, 1.35)) - (3.0 + fi*1.6); spur += smoothstep(0.05, 0.0, abs(r)) * 0.5; }
+        eisF += vec3(spur) * breit * 0.18 * smoothstep(0.03, 0.01, pm);
+        // Schneeverwehungen auf dem Eis
+        float sd = smoothstep(0.45, 0.75, fbm(w*0.35 + 17.0));
+        vec3 schneeAufEis = vec3(0.94, 0.96, 0.99);
+        eisF = mix(eisF, schneeAufEis, sd * 0.85);
+        eisF *= min(u_amb*vec3(0.97,0.99,1.05) + u_sonne*1.2, vec3(1.05));
+        // Glanz auf blankem Eis
+        eisF += vec3(1.0,0.97,0.9) * pow(max(0.0, vn(w*0.9 + 3.0) - 0.55), 2.0) * 1.2 * (1.0 - sd) * (1.0 - u_nacht);
+        wc = mix(wc, eisF, smoothstep(0.15, 0.5, eis) * smoothstep(0.03, 0.2, wasser));
+        // offene Stellen: dunkler, ein schmaler Eisrand
+        wc = mix(wc, wc*0.8 + vec3(0.1), smoothstep(0.02, 0.0, abs(eis - 0.5)) * 0.6);
       }
       col = mix(col, wc, smoothstep(0.02, 0.3, wasser));
     }
@@ -284,7 +311,7 @@
     col *= 1.0 - smoothstep(-2.0, 30.0, aussen) * 0.18;
     // Bauplatzgrenze: feine Linie aus Punkten im Schnee/Gras (nur nah)
     // Nacht: Mondlicht bläulich
-    col = mix(col, col*vec3(0.75,0.85,1.2), u_nacht*0.35);
+    col = mix(col, col*vec3(0.8,0.88,1.1), smoothstep(0.5, 1.0, u_nacht)*0.5);
     farbe = vec4(col, 1.0);
   }`;
 

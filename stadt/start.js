@@ -133,6 +133,7 @@
       schiebe(schwung[0], schwung[1]); schwung[0] *= 0.92; schwung[1] *= 0.92;
     }
     const Z = SZ.zeitDaten();
+    SZ.bewegen(jetzt);
     ST.boden.zeichnen(jetzt / 1000, Z, SZ.jahr);
     SZ.zeichnen(jetzt);
     if (ST.oberflaeche && ST.oberflaeche.bild) ST.oberflaeche.bild(jetzt);
@@ -141,6 +142,7 @@
 
   /* ---------------- Werkbank: ein einzelnes Modell ---------------- */
   function werkbank(id) {
+    ST.oberflaeche = null;     // keine Bedienung auf der Werkbank
     SZ.jahr = q.get("jahr") || "winter";
     SZ.zeit = q.get("zeit") || "tag";
     SZ.schneefall = q.get("flocken") === "1";
@@ -161,6 +163,7 @@
       laufend = false;
       const t = +(q.get("t") || 1000);
       groesse();
+      for (let x = 0; x <= t; x += 50) SZ.bewegen(x);
       const Zd = SZ.zeitDaten();
       ST.boden.zeichnen(t / 1000, Zd, SZ.jahr);
       SZ.zeichnen(t);
@@ -181,6 +184,18 @@
       if (wb) return werkbank(wb);
       if (ST.stadtAnfang) ST.stadtAnfang(q);
       if (ST.oberflaeche && ST.oberflaeche.start) ST.oberflaeche.start(q);
+      if (q.get("still") === "1") {
+        /* Prüfbild: Bewegung bis zur Zeit t vorspulen, dann ein Bild */
+        const t = +(q.get("t") || 1000);
+        groesse();
+        for (let x = 0; x <= t; x += 50) SZ.bewegen(x);
+        const Zd = SZ.zeitDaten();
+        ST.boden.zeichnen(t / 1000, Zd, SZ.jahr);
+        SZ.zeichnen(t);
+        if (ST.oberflaeche && ST.oberflaeche.bild) ST.oberflaeche.bild(t);
+        window.__fertig = true;
+        return;
+      }
       requestAnimationFrame(bild);
       window.__fertig = true;
     }).catch((e) => { console.error(e); window.__fehler = String(e); });

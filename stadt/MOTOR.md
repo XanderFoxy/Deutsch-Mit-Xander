@@ -107,3 +107,21 @@ Keine Konsolenfehler. Rechenzeit eines Sprites: `STADT.spriteMalen` bei s=40 Ger
   echte Bauweise (Fachwerk: Schwelle, Ständer, Rähm, Riegel, Streben/Mann-Figur, Stockwerksauskragung mit Balkenköpfen,
   Sockel aus Bruch- oder Sandstein, Biberschwanz-Doppeldeckung, Gauben, Kamin mit Kaminkopf).
 - Duden-Rechtschreibung in allen Namen und Texten.
+
+## Lebendes, Baustelle, Himmel (Ergänzung)
+
+- **Lebende Modelle** (Menschen, Tiere, Schlitten auf dem Boden): `ST.modell(id, { live: true, grund:[0.6,0.6], hoehe: 1.8,
+  zeichnen(g, P), schatten(sg, P), bewegen(o, dt, t, SZ) })`. Sie haben kein Sprite, werden **jedes Bild** gemalt und trotzdem
+  richtig vor/hinter Häusern einsortiert. `bewegen` ändert `o.x`, `o.y`, `o.gier` (Welt) – z. B. entlang von Wegen
+  (`STADT.boden.wert(x, y, 0)` > 0,5 = Pflaster, `…,1)` = Wasser/Eis, `…,3)` = Rasen). `SZ.passt(typ,x,y,gier,o)` prüft Kollision.
+- **P** (für `zeichnen`, `schatten`, Baustellen-Haken, Leben): `P.proj(x,y,z)` → Bildpunkt eines Punkts in **Modellkoordinaten**
+  (schon gedreht), `P.schattenAuf(x,y,z)` → Bildpunkt seines Schattens am Boden, `P.s` (Gerätepixel/m), `P.t` (s), `P.Z` (Licht:
+  `amb`, `sonne`, `nacht`), `P.gier` (Grad inkl. Kamera), `P.jahr`, `P.dpr`, `P.objekt` (das Objekt), `P.def`.
+  Im Schatten-Kontext `sg` alles in **Schwarz** malen (die Szene färbt die ganze Schattenebene einheitlich ein).
+- **Baustelle** (`stadt/baustelle.js`): `ST.baustelle = { hinten(g,P,o,bau), vorne(g,P,o,bau), schatten(sg,P,o,bau) }` –
+  wird für jedes Objekt mit laufendem Bau aufgerufen: `hinten` vor dem Gebäude (Gerüstteile dahinter, Kran-Mast hinten),
+  `vorne` danach (Gerüst vorn, Arbeiter, Bagger). Grundriss: `P.def.grund`, Höhe `P.def.hoehe`, Fortschritt `bau` 0…1.
+- **Himmel** (`stadt/himmel.js`): `ST.himmel = { bewegen(dt, t, SZ), zeichnen(g, t, Z, SZ) }` – nach allen Dingen, vor dem
+  Schneefall, im Bildraum (Gerätepixel). `ST.proj(x,y,z)` rechnet Weltpunkte in Bildpunkte, `ST.kamera` (`s`, `W`, `H`, `dpr`).
+- **Stadt-Prüfbilder**: `stadt.html?neu=1&still=1&t=8000&s=16&kx=0&ky=0&zeit=abend&dazu=tanne,laterne` – `neu=1` baut Winterhausen
+  frisch, `dazu=` lädt zusätzliche Modelldateien, `t` = Zeitpunkt (Bewegungen werden bis dahin vorgespult).
