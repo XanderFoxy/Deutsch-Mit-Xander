@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 783: Aussprache-Spiel läuft ohne Stillstand weiter (auch bei 95 %+ und nach Fehlern), bewertet nur mit Azure (Funk 201)",
+  stand: "Fassung 784: Flickstube mit Flohmarkt für Touristen und Einschmelzen zu Erz (Walkie 303)",
 
   inArbeit: [
-    { seit: "2026-09-28T02:11",
-      text: "Walkie 303: Flohmarkt und Schrott zu Erz in der Flickstube; Funk 188/190 Rest (Lehrer-Freigabe, eigene Stimme im Trainer); Sequenzen für Pac-Man/Mario" },
+    { seit: "2026-09-28T02:18",
+      text: "Funk 188/190 Rest (Lehrer-Freigabe, eigene Stimme im Trainer); Sequenzen für Pac-Man/Mario; Walkies 282/283/285/296" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T02:11",
-      text: "Funk 201 Aussprache immer weiter" },
+    { seit: "2026-09-28T02:18",
+      text: "Walkie 303 Flohmarkt und Einschmelzen" },
   ],
 };

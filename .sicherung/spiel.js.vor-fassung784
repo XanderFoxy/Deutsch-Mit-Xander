@@ -4904,17 +4904,6 @@
         hinweis("Aus " + r.verbraucht + " alten Schuhen ist ein Paar Wanderstiefel geworden (" + vorrat(r, "wanderstiefel") + " Paar im Lager) – die nächsten Trupps sind schneller zurück.");
       });
       return;
-    } else if (s === "einschmelzen") {
-      wirtschaft("spiel_einschmelzen", {}, function (r) {
-        ton("hammerschlag", 0.35);
-        hinweis("3 alte Schuhe eingeschmolzen: +1 Erz (" + vorrat(r, "erz") + " Erz im Lager).");
-      });
-      return;
-    } else if (s === "flohmarkt") {
-      wirtschaft("spiel_flohmarkt", { p_an: k.dataset.n === "1" }, function (r) {
-        hinweis(r.flohmarkt ? "Der Flohmarkt ist offen: Touristen kaufen alte Schuhe als Andenken (" + flohPreis(r) + " P das Stück)." : "Der Flohmarkt ist zu – die alten Schuhe bleiben im Lager.");
-      });
-      return;
     } else if (s === "kaution") {
       var hz = k.dataset.z || null;
       wirtschaft("spiel_kaution", { p_haeftling: hz }, function (r) {
@@ -8269,19 +8258,9 @@
     var n = flickNoetig(ich), a = vorrat(ich, "altschuh"), paar = vorrat(ich, "wanderstiefel"), halt = stiefelHalt(ich);
     return '<div class="sp-troph sp-werk sp-flick"><i>' + wareSvg("wanderstiefel") + "</i><span><b>" + n + " alte Schuhe → 1 Paar Wanderstiefel</b>"
       + "<small>Du hast " + a + " alte Schuhe und " + paar + " Paar im Lager" + (halt ? " · das getragene Paar hält noch " + halt + (halt === 1 ? " Fahrt" : " Fahrten") : "")
-      + ". Trupps brauchen damit 4 statt 5 min, ein Paar hält 8 Fahrten.</small></span>"
-      + '<button type="button" data-s="flicken"' + (a < n ? " disabled" : "") + ">Flicken <small>" + n + " Schuhe</small></button></div>"
-      /* FASSUNG 784 — XANDER (Walkie 303): „Schrott zu Erz einschmelzen (3 alte Dinge = 1 Erz) für die Schmiede" und
-         „Flohmarkt-Stand: Fundsachen an Touristen verkaufen (mehr Geld pro Gast)". */
-      + '<div class="sp-troph sp-werk sp-flick"><i>' + wareSvg("erz") + "</i><span><b>3 alte Schuhe → 1 Erz</b><small>Einschmelzen für die Schmiede – du hast " + vorrat(ich, "erz") + " Erz</small></span>"
-      + '<button type="button" data-s="einschmelzen"' + (a < 3 ? " disabled" : "") + ">Einschmelzen <small>3 Schuhe</small></button></div>"
-      + '<div class="sp-troph sp-werk sp-flick"><i>' + wareSvg("touristen") + "</i><span><b>Flohmarkt " + (flohmarktAn(ich) ? "offen" : "zu") + "</b><small>Touristen kaufen alte Schuhe als Andenken: bis 1 Stück je 3 Gäste, "
-      + flohPreis(ich) + " P das Stück" + (flohmarktAn(ich) ? "" : " – solange zu, bleiben die Schuhe fürs Flicken und Einschmelzen") + "</small></span>"
-      + '<button type="button" data-s="flohmarkt" data-n="' + (flohmarktAn(ich) ? "0" : "1") + '" aria-pressed="' + flohmarktAn(ich) + '">' + (flohmarktAn(ich) ? "Schließen" : "Öffnen") + "</button></div>";
+      + ". Mit Stiefeln sind Fischer, Holzfäller, Jäger und Bergleute nach 4 statt 5 Minuten zurück; ein Paar hält 8 Fahrten. Alte Schuhe findest du beim Graben und Angeln.</small></span>"
+      + '<button type="button" data-s="flicken"' + (a < n ? " disabled" : "") + ">Flicken <small>" + n + " Schuhe</small></button></div>";
   }
-  function flohmarktAn(ich) { return Boolean(dorfSteht(ich, "flickstube") && ((ich || {}).volk || {}).flohmarkt); }
-  function flohPreis(ich) { return 3 + dorfSt(ich, "flickstube"); }
-  function flohMenge(ich, gaeste) { return flohmarktAn(ich) ? Math.min(Math.ceil(gaeste / 3), vorrat(ich, "altschuh")) : 0; }
   function truppMenge(ich, ort) {
     var b = (ich && ich.volk && ich.volk.berufe) || {}, fach = Object.keys(b).reduce(function (n, k) { return n + (Number(b[k]) || 0); }, 0);
     var frei = Math.max(0, dorfBewohner(ich) - fach);
@@ -11795,9 +11774,9 @@
     var t = z.touristen;
     if (!t) return "";
     var preis = (t.gasthaus && t.gasthaus.preis_essen) || gasthausPreis(ich);
-    var kauf = Math.min(t.anzahl, bahnEssen(ich)), floh = flohMenge(ich, t.anzahl), plus = t.kurtaxe + preis * kauf + floh * flohPreis(ich), voll = t.platz && t.anzahl > t.platz;
+    var kauf = Math.min(t.anzahl, bahnEssen(ich)), plus = t.kurtaxe + preis * kauf, voll = t.platz && t.anzahl > t.platz;
     return '<button type="button" class="sp-bahn-touristen" data-s="bahn" data-a="touristen"' + (t.erledigt ? " disabled" : "") + ">" + wareSvg("touristen") + "<b>" + (t.welle ? "Touristenwelle: " : "Touristen: ") + t.anzahl + " steigen aus</b><small>"
-      + (t.erledigt ? "sind unterwegs ✓ – der nächste Zug kommt bald" : "+" + plus + " P (" + t.kurtaxe + " Kurtaxe" + (kauf ? " + " + kauf + " × Essen à " + preis + " P" + (dorfSteht(ich, "gasthaus") ? " im Gasthaus" : "") : ", kein Essen im Lager") + (floh ? " + " + floh + " × Flohmarkt à " + flohPreis(ich) + " P" : "") + ")"
+      + (t.erledigt ? "sind unterwegs ✓ – der nächste Zug kommt bald" : "+" + plus + " P (" + t.kurtaxe + " Kurtaxe" + (kauf ? " + " + kauf + " × Essen à " + preis + " P" + (dorfSteht(ich, "gasthaus") ? " im Gasthaus" : "") : ", kein Essen im Lager") + ")"
         + (kauf < t.anzahl ? " · " + (t.anzahl - kauf) + " bleiben hungrig" : "") + (voll ? " · zu voll (Platz für " + t.platz + ")" : "")) + "</small></button>";
   }
   function bahnReiseHtml(ich, z) {
@@ -11871,7 +11850,7 @@
       if (art === "touristen") {
         bahnWareZeigen("touristen", "+" + r.anzahl, 104, bahnAn(bahnBeiX(98)).y - 22);
         ton("kasse", 0.4);
-        hinweis("🚂 " + r.anzahl + " Touristen steigen aus: " + r.kurtaxe + " P Kurtaxe" + (r.gekauft ? ", sie kaufen " + r.gekauft + " × Essen à " + (r.preis_essen || 5) + " P" + (r.gasthaus ? " im Gasthaus" : "") : "") + (r.floh ? ", auf dem Flohmarkt " + r.floh + " × alte Schuhe à " + r.floh_preis + " P" : "") + " – +" + r.erloes + " Punkte."
+        hinweis("🚂 " + r.anzahl + " Touristen steigen aus: " + r.kurtaxe + " P Kurtaxe" + (r.gekauft ? ", sie kaufen " + r.gekauft + " × Essen à " + (r.preis_essen || 5) + " P" + (r.gasthaus ? " im Gasthaus" : "") : "") + " – +" + r.erloes + " Punkte."
           + (r.welle ? " 🌊 Das war eine Touristenwelle!" : "")
           + (r.unversorgt ? " " + r.unversorgt + " blieben hungrig – das spricht sich herum (Ruf −" + Math.ceil(r.unversorgt / 3) + ")." : " Alle satt – sie empfehlen dich weiter (Ruf +1).")
           + (r.ueberfuellt ? " Die Stadt war zu voll (Ruf −1) – ein größeres Gasthaus schafft Platz." : ""));

@@ -1803,3 +1803,14 @@ XANDER: „Die Aussprache Übung geht immer noch nicht automatisch weiter ich ha
 - **Nur Azure**:
   - Der Klangvergleich (im Trainer die Strichreihe „Wo es abweicht“, in der Karte „… % ähnlich“) ist aus der Spiel-Karte entfernt.
   - Antwortet Azure nicht, steht „Azure hat diesmal nicht geantwortet – keine Note für dieses Wort.“ Der Server bekommt dann nichts gemeldet, also gibt es keine Punkte aus einem anderen Verfahren. Danach geht es weiter.
+
+### Fassung 784 (Walkie 303: Flohmarkt und Schrott zu Erz)
+Sonden: neu 784 (9/9 grün); 765, 779, 782 grün. Servertest: ohne Flickstube keine Wirkung; 10 alte Schuhe → Einschmelzen: +1 Erz, 7 übrig; Flohmarkt an, 2 Touristen: 1 Fundstück à 5 P (Stufe 2), Erlös 4 P Kurtaxe + 5 = 9 P, 6 Schuhe übrig.
+XANDER (Walkie 303): „Flohmarkt-Stand: Fundsachen an Touristen verkaufen (mehr Geld pro Gast)“ und „Schrott zu Erz einschmelzen (3 alte Dinge = 1 Erz) für die Schmiede“.
+- **Einschmelzen** (Flickstube): 3 alte Schuhe → 1 Erz. Server `spiel_einschmelzen()`.
+- **Flohmarkt** (Flickstube, Schalter „Öffnen/Schließen“, Server `spiel_flohmarkt(p_an)`):
+  - Ist er offen, kaufen die Touristen am Bahnhof bis 1 Fundstück je 3 Gäste, für 3 P + 1 P je Flickstuben-Stufe.
+  - Ist er zu, bleiben die Schuhe fürs Flicken und Einschmelzen.
+  - Der Touristen-Knopf rechnet es vorher mit („+ 3 × Flohmarkt à 4 P“), die Meldung danach auch.
+  - Server: `spiel_bahn` zählt `floh` und `floh_preis` in den Erlös.
+- Die Flickstuben-Zeile ist kürzer geworden.
