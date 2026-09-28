@@ -139,6 +139,19 @@
     const bach = kurve([[78, -100], [66, -70], [58, -44], [m.x + 11.5, m.y - 6], [m.x + 11.5, m.y + 8], [57, 0], [58, 18], [62, 36], [64, 46]], 14);
     B.linie(bach, (i, k) => 1.3 + 0.5 * ST.hash2(i, Math.round(k * 4), 5), 1, 1);
     rund(66, 56, 13, 10, 1);
+    /* FASSUNG 799 — XANDER: „unseren See auch ein kleines bisschen größer machen also so dass man unten die Zunge
+       sieht, wie wir es jetzt auch haben … aber dass der See halt nach unten wenn man bisschen runtergeht mit der
+       Karte noch größer ist und man dann sieht, wie man mit Wassertreter darauf fahren kann, die Leute das Spaß
+       haben oder baden". Die alte Bucht bleibt als Zunge oben; darunter öffnet sich der See in den Rand hinein. */
+    /* Hals: schmal aus der Zunge schräg nach unten (Blickrichtung +x+y), dann der große See */
+    kurve([[70, 61], [75, 66], [81, 70]], 5).forEach((q) => rund(q[0], q[1], 5.5, 4.5, 1));
+    /* Nicht bis an den Kartenrand (±112 m): dort wiederholt die Grafik die letzte Zeile als Streifen. */
+    const seeLauf = kurve([[80, 71], [86, 79], [87, 89], [80, 98]], 6);
+    seeLauf.forEach((q, i) => {
+      const t = i / (seeLauf.length - 1), w = 8 + Math.sin(Math.min(1, t * 1.25) * Math.PI) * 12 + (ST.hash2(i, 3, 17) - 0.5) * 3;
+      rund(q[0] + (ST.hash2(i, 5, 17) - 0.5) * 3, q[1], w, w * 0.8, 1);
+    });
+    rund(68, 90, 8, 6, 1);           // flache Badebucht im Westen
     /* Beete an den Höfen draußen */
     rund(-44, -40, 3.5, 2.5, 2); rund(44, 40, 3.5, 2.5, 2);
   };
@@ -170,6 +183,8 @@
       const x = seite === 0 ? u : seite === 1 ? G + tief : seite === 2 ? u : -G - tief;
       const y = seite === 0 ? -G - tief : seite === 1 ? u : seite === 2 ? G + tief : u;
       const v = r(), bild = v < 0.7 ? "n_tanne" + ((r() * 3) | 0) : "n_laubbaum" + ((r() * 3) | 0);
+      /* FASSUNG 799: der See reicht jetzt in den Rand – dort wachsen keine Bäume im Wasser */
+      if (B.wert(x, y, 1) > 0.02 || B.wert(x + 2, y, 1) > 0.02 || B.wert(x - 2, y, 1) > 0.02 || B.wert(x, y - 2, 1) > 0.02) continue;
       liste.push({ art: "natur", bild: bild, x: x, y: y, dreh: 0, fuss: [3.5, 3.5], hoehe: 13, rand: 1 });
     }
     /* Bäume zwischen den Höfen und eine Obstwiese im Nordosten */
