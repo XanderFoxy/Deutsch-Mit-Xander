@@ -4987,7 +4987,8 @@
         S.ich = r; S.stand[r.id] = oeffentlich(r); senden({ ereignis: "stand", stand: oeffentlich(r) });
         if (r.baustelle) {
           ton("hammerschlag", 0.5);
-          hinweis("🏗️ Baustelle: " + DORF[r.baustelle].name + " Stufe " + r.stufe + " – fertig in " + Math.round((r.dauer || 120) / 60) + " min. Tippe auf die Baustelle, um mitzuhelfen (15 s schneller).");
+          var stoffT = Object.keys(r.stoffe || {}).map(function (x) { return r.stoffe[x] + " " + wareName(x); }).join(", ");
+          hinweis("🏗️ Baustelle: " + DORF[r.baustelle].name + " Stufe " + r.stufe + (stoffT ? " (verbaut: " + stoffT + ")" : "") + " – fertig in " + Math.round((r.dauer || 120) / 60) + " min. Tippe auf die Baustelle, um mitzuhelfen (15 s schneller).");
           schnellZeichnen(true); return;
         }
         ton(r.gebaut === "reparatur" ? "hammerschlag" : "jubel", 0.5);
@@ -5006,6 +5007,8 @@
         if (r.quarz) teile.push(r.quarz + " Quarz"); if (r.gold) teile.push(r.gold + " Gold"); if (r.oel) teile.push(r.oel + " Öl");
         /* FASSUNG 702 — Bauern, Bäcker und Wissenschaftler liefern mit. */
         if (r.getreide) teile.push(r.getreide + " Getreide"); if (r.brot) teile.push(r.brot + " Brot"); if (r.forschung) teile.push(r.forschung + " Forschung");
+        /* FASSUNG 813 — Holzfällerhütte, Schweinestall und Jagdhütte liefern Holz und Fleisch. */
+        if (r.holz) teile.push(r.holz + " Holz"); if (r.fleisch) teile.push(r.fleisch + " Fleisch");
         var zusatz = (r.weggezogen ? " Dein Volk hat zweimal gehungert – ein " + ((BERUFE[r.weggezogen] || {}).name || "Bewohner") + " ist weggezogen." : r.hunger ? " Achtung: dein Volk hat gehungert. Beim nächsten Mal zieht jemand weg." : "")
           + (r.automatik && r.automatik.gemacht && r.automatik.gemacht.length ? " Fuhrwerk: " + r.automatik.gemacht.join(" · ") + "." : "")
           /* FASSUNG 703 — Besucher der Sehenswürdigkeiten. */
@@ -5199,12 +5202,20 @@
       return;
     } else if (s === "marktwahl") {
       S.marktWahl = S.marktWahl === k.dataset.w ? "" : k.dataset.w; ton("holzklopf", 0.15); schnellZeichnen(true); panelAuffrischen(); return;
+    } else if (s === "ausblickalle") {
+      S.ausblickAlle = !S.ausblickAlle; schnellZeichnen(true); return;
+    } else if (s === "handelart") {
+      /* FASSUNG 813 — Umschalter Einkaufen | Verkaufen. */
+      S.handelArt = k.dataset.a === "kaufen" ? "kaufen" : "verkaufen"; ton("holzklopf", 0.15);
+      if (S.handelArt === "kaufen") handelLaden(false);
+      schnellZeichnen(true); return;
     } else if (s === "kaufwahl") {
       S.kaufWahl = S.kaufWahl === k.dataset.w ? "" : k.dataset.w; schnellZeichnen(true); return;
     } else if (s === "haendler") {
       wirtschaft("spiel_haendler_kaufen", { p_ware: k.dataset.w, p_menge: Number(k.dataset.n) || 1 }, function (r) {
         ton("kasse", 0.45);
-        hinweis("🛒 Händler: " + r.menge + " " + (WAREN[r.ware] || r.ware) + " gekauft – −" + r.kosten + " Punkte (heute noch " + r.rest_heute + ").");
+        if (r.rest_heute != null) HANDEL.kaufRest = r.rest_heute;
+        hinweis("🛒 Händler: " + r.menge + " " + (WAREN[r.ware] || r.ware) + " gekauft – −" + r.kosten + " Punkte, jetzt " + vorrat(S.ich, r.ware) + " im Lager (heute noch " + r.rest_heute + ").");
         handelLaden(true);
       });
       return;
@@ -7585,8 +7596,37 @@
     gasthaus:     { name: "Gasthaus",    preis: 150, gibt: "Touristen essen hier: +1 Gast und +2 P je Gericht und Stufe · mit Koch +3 P", ab: 6 },
     gefaengnis:   { name: "Gefängnis",   preis: 170, gibt: "Wachen +4 % Abwehr je Stufe · erwischte Plünderer sitzen, bis jemand Kaution zahlt", ab: 7 },
     /* FASSUNG 782 — XANDER (Walkie 302): „Ja, Flickstube mit Wanderstiefeln" – aus alten Schuhen vom Graben und Angeln. */
-    flickstube:   { name: "Flickstube",  preis: 110, gibt: "3 alte Schuhe → 1 Paar Wanderstiefel (ab Stufe 2: 2) · Trupps 20 % schneller", ab: 6 }
+    flickstube:   { name: "Flickstube",  preis: 110, gibt: "3 alte Schuhe → 1 Paar Wanderstiefel (ab Stufe 2: 2) · Trupps 20 % schneller", ab: 6 },
+    /* FASSUNG 813 — XANDER: „dass abhängig von Levelstufen andere Sachen möglich sind im Ausbau und dass man dann vielleicht
+       doch noch mehr anbauen kann … wo man geglaubt hat das ist alles, man hat es ausgereizt". Fünf Häuser für höhere Level
+       (Server: spiel_bauen, Ertrag in spiel_dorf_abholen, Fachleute in spiel_beruf_max, Handel in spiel_markt/spiel_haendler_tag). */
+    holzhuette:    { name: "Holzfällerhütte", preis: 160, gibt: "3 Holz je Stufe zur Ernte · +2 Holzfäller je Stufe", ab: 12 },
+    marktstand:    { name: "Marktstand",      preis: 220, gibt: "Markt zahlt +3 % je Stufe · Händler liefert 20 Stück mehr am Tag je Stufe", ab: 15 },
+    schweinestall: { name: "Schweinestall",   preis: 200, gibt: "2 Bratwürste und 1 Fleisch je Stufe zur Ernte", ab: 18 },
+    jagdhuette:    { name: "Jagdhütte",       preis: 240, gibt: "2 Fleisch je Stufe zur Ernte · +2 Jäger je Stufe", ab: 22 },
+    sternwarte:    { name: "Sternwarte",      preis: 350, gibt: "3 Forschung je Stufe zur Ernte · +2 Wissenschaftler je Stufe", ab: 30 }
   };
+  /* FASSUNG 813 — die höchste Ausbaustufe hängt am Level (wie spiel_dorf_max): 3, ab Level 15: 4, ab 25: 5, ab 35: 6.
+     Ab Stufe 4 braucht ein Ausbau auch Baustoffe (spiel_bau_stoffe) – die gibt es auch beim Händler. */
+  var DORF_STUFE_AB = { 4: 15, 5: 25, 6: 35 };
+  function dorfMax(lv) { return lv >= 35 ? 6 : lv >= 25 ? 5 : lv >= 15 ? 4 : 3; }
+  function bauStoffe(stufe) { return stufe >= 6 ? { holz: 30, erz: 20, gold: 3 } : stufe === 5 ? { holz: 20, erz: 10, gold: 1 } : stufe === 4 ? { holz: 10, erz: 5 } : {}; }
+  function bauMinuten(stufe) { return [0, 2, 5, 10, 15, 20, 30][Math.min(6, stufe)] || 30; }
+  function stoffeText(st) { return Object.keys(st).map(function (x) { return st[x] + " " + wareName(x); }).join(", "); }
+  function stoffeFehlen(ich, st) { return Object.keys(st).some(function (x) { return vorrat(ich, x) < st[x]; }); }
+  /* Ein Knopf für den nächsten Ausbau – gesperrt mit Schloss und „ab Level N", wenn das Level noch fehlt. */
+  function ausbauKnopf(ich, k, lang) {
+    var D = DORF[k], g = (ich.dorf || {})[k], st = g ? g.stufe : 0, lv = ich.level || 1, preis = D.preis * (st + 1);
+    if (st >= 6) return "";
+    if (D.ab && lv < D.ab) return '<button type="button" class="sp-gesperrt" data-s="bauen" data-w="' + k + '" disabled>' + SCHLOSS_SVG + "ab Level " + D.ab + "</button>";
+    if (st >= dorfMax(lv)) return '<button type="button" class="sp-gesperrt" data-s="bauen" data-w="' + k + '" disabled>' + SCHLOSS_SVG + (lang ? "Stufe " + (st + 1) + " " : "St. " + (st + 1) + " ") + "ab Level " + DORF_STUFE_AB[st + 1] + "</button>";
+    var stoffe = bauStoffe(st + 1), zu = (ich.punkte || 0) < preis || stoffeFehlen(ich, stoffe);
+    return '<button type="button" data-s="bauen" data-w="' + k + '"' + (zu ? " disabled" : "") + ">"
+      + (lang ? (st ? "Ausbauen auf Stufe " + (st + 1) : "Bauen") + " <small>" + preis + " P" + (stoffeText(stoffe) ? " + " + stoffeText(stoffe) : "") + " · " + bauMinuten(st + 1) + " min Bauzeit</small>"
+              : (st ? "Stufe " + (st + 1) : "Bauen") + " · " + preis + (stoffeText(stoffe) ? " <small>+ " + stoffeText(stoffe) + "</small>" : "")) + "</button>";
+  }
+  var SCHLOSS_SVG = '<svg class="sp-schloss" viewBox="0 0 20 20" aria-hidden="true"><rect x="4" y="9" width="12" height="9" rx="1.6" fill="#8a7a5a" stroke="#3a2f22" stroke-width="1"/><path d="M6.6 9 V6.6 C6.6 2.6 13.4 2.6 13.4 6.6 V9" fill="none" stroke="#3a2f22" stroke-width="1.6"/><circle cx="10" cy="13" r="1.3" fill="#2d2418"/><path d="M10 13.4 V15.6" stroke="#2d2418" stroke-width="1"/></svg>';
+  var HAKEN_SVG = '<svg class="sp-haken" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#3aa655"/><path d="M6 10.4 L8.8 13 L14 7.4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   /* Steht das Gebäude (gebaut und nicht kaputt)? */
   function dorfSteht(ich, k) { var g = ((ich || {}).dorf || {})[k]; return Boolean(g && g.stufe > 0 && g.lp > 0); }
   /* Hühner und Kühe: wie viel liegt bereit (so rechnet auch der Server). */
@@ -7666,6 +7706,27 @@
       + '<path d="M3 9 H21" stroke="' + dach + '" stroke-width="1.6"/><rect x="5.5" y="11.5" width="13" height="3" fill="#8fd3ff" stroke="#2d2418" stroke-width=".6"/>'
       + '<path d="M10.5 17 H13.5 V21.5 H10.5 Z" fill="#3a4152"/><path d="M17.5 9 V3.8 M16 3.8 H19" stroke="#2d2418" stroke-width=".9"/><circle cx="17.5" cy="3.3" r=".9" fill="#e2403a"/>'
       + '<path d="M6.2 3 H8.2 V5 L9.8 8.4 H4.6 L6.2 5 Z" fill="#8ee06a" stroke="#2d2418" stroke-width=".7"/></svg>';
+    /* FASSUNG 813 — die fünf neuen Häuser: Blockhütte mit Holzstapel, Marktstand mit Streifendach, Schweinestall mit Sau,
+       Jagdhütte mit Geweih, Sternwarte mit Kuppel und Fernrohr. */
+    if (art === "holzhuette") return '<svg viewBox="0 0 24 24"><path d="M3 12 L11 5.5 L19 12 Z" fill="' + dach + '" stroke="#2d2418" stroke-width="1" stroke-linejoin="round"/>'
+      + '<rect x="4.5" y="11.5" width="13" height="10" fill="#9a6a3a" stroke="#2d2418" stroke-width="1"/><path d="M4.5 14 H17.5 M4.5 16.5 H17.5 M4.5 19 H17.5" stroke="#6b4521" stroke-width=".8"/>'
+      + '<rect x="9.5" y="15.5" width="3.4" height="6" fill="#4a2f16"/><circle cx="20" cy="20.2" r="1.6" fill="#c8894a" stroke="#6b4521" stroke-width=".6"/><circle cx="21.6" cy="17.6" r="1.6" fill="#c8894a" stroke="#6b4521" stroke-width=".6"/>'
+      + '<circle cx="20" cy="20.2" r=".5" fill="#6b4521"/><circle cx="21.6" cy="17.6" r=".5" fill="#6b4521"/></svg>';
+    if (art === "marktstand") return '<svg viewBox="0 0 24 24"><path d="M3 9 L5 4.5 H19 L21 9 Z" fill="#fff" stroke="#2d2418" stroke-width="1" stroke-linejoin="round"/>'
+      + '<path d="M6.5 4.5 L6 9 M10 4.5 V9 M14 4.5 V9 M17.5 4.5 L18 9" stroke="#d8261f" stroke-width="2"/><path d="M3 9 Q4.5 11 6 9 Q7.5 11 9 9 Q10.5 11 12 9 Q13.5 11 15 9 Q16.5 11 18 9 Q19.5 11 21 9" fill="#d8261f" stroke="#2d2418" stroke-width=".6"/>'
+      + '<path d="M4.5 10 V21.5 M19.5 10 V21.5" stroke="#6b4521" stroke-width="1.2"/><rect x="4" y="15.5" width="16" height="3" fill="#c8894a" stroke="#2d2418" stroke-width=".8"/>'
+      + '<circle cx="7.5" cy="14.4" r="1.3" fill="#e2403a"/><circle cx="10.4" cy="14.5" r="1.2" fill="#f2c230"/><path d="M13 15.5 C13 13 16.5 13 16.5 15.5 Z" fill="#c0703a"/></svg>';
+    if (art === "schweinestall") return '<svg viewBox="0 0 24 24"><path d="M2.5 11.5 L7 6.5 H17 L21.5 11.5" fill="' + dach + '" stroke="#2d2418" stroke-width="1" stroke-linejoin="round"/>'
+      + '<rect x="3.5" y="11" width="17" height="10.5" fill="#d9b48a" stroke="#2d2418" stroke-width="1"/><rect x="9.5" y="14.5" width="5" height="7" fill="#7a4a22" stroke="#2d2418" stroke-width=".7"/>'
+      + '<ellipse cx="18.4" cy="19.2" rx="3.6" ry="2.5" fill="#f4a6b8" stroke="#a0506a" stroke-width=".7"/><circle cx="21.4" cy="18.6" r="1.3" fill="#f4a6b8" stroke="#a0506a" stroke-width=".6"/>'
+      + '<ellipse cx="22.3" cy="18.9" rx=".6" ry=".5" fill="#e07a96"/><path d="M15 18.4 q-1 -.8 -.4 -1.6" stroke="#a0506a" stroke-width=".6" fill="none"/></svg>';
+    if (art === "jagdhuette") return '<svg viewBox="0 0 24 24"><path d="M3 13 L12 5 L21 13 Z" fill="#4f6a3a" stroke="#2d2418" stroke-width="1" stroke-linejoin="round"/>'
+      + '<rect x="5" y="12.5" width="14" height="9" fill="#8a5a2e" stroke="#2d2418" stroke-width="1"/><rect x="10.3" y="15.5" width="3.4" height="6" fill="#3a2412"/>'
+      + '<path d="M12 11.8 V9.4 M12 9.4 C10.6 8.4 9.4 8.8 8.6 7.2 M12 9.4 C13.4 8.4 14.6 8.8 15.4 7.2 M9.6 8 L9 6.4 M14.4 8 L15 6.4" stroke="#f4e7cf" stroke-width=".9" fill="none" stroke-linecap="round"/>'
+      + '<rect x="6.3" y="14.6" width="2.4" height="2.2" fill="#ffd97a"/></svg>';
+    if (art === "sternwarte") return '<svg viewBox="0 0 24 24"><rect x="5" y="12" width="14" height="9.5" fill="#e8e4da" stroke="#2d2418" stroke-width="1"/>'
+      + '<path d="M4 12.5 C4 5 20 5 20 12.5 Z" fill="#9fb3c8" stroke="#2d2418" stroke-width="1"/><path d="M12 11 L19.5 3.5" stroke="#3a4152" stroke-width="2.2" stroke-linecap="round"/>'
+      + '<path d="M10.5 6 V12.5" stroke="#2d2418" stroke-width=".6"/><rect x="10.3" y="16" width="3.4" height="5.5" fill="#3a4152"/><path d="M3 4 l.5 1 l1 .3 l-1 .3 l-.5 1 l-.5 -1 l-1 -.3 l1 -.3 Z" fill="#f2c230"/></svg>';
     if (art === "schule") return '<svg viewBox="0 0 24 24">' + haus + '<rect x="10" y="2" width="4" height="5" fill="#f4e7cf" stroke="#2d2418" stroke-width=".9"/><circle cx="12" cy="4.5" r="1" fill="#f2c230"/>'
       + '<rect x="7.5" y="14.5" width="3" height="2.6" fill="#8fd3ff"/><rect x="13.5" y="14.5" width="3" height="2.6" fill="#8fd3ff"/><rect x="10.5" y="17.5" width="3" height="4" fill="#3a8dde"/></svg>';
     return '<svg viewBox="0 0 24 24">' + haus + '<rect x="15" y="4" width="2.6" height="6" fill="#6b4521" stroke="#2d2418" stroke-width=".8"/>'
@@ -7680,8 +7741,8 @@
         + "<small>" + D.gibt + (st ? " · " + (lp <= 0 ? "kaputt – liefert nichts" : "hält " + lp + "/" + mx) : "")
         + (g && g.gepl && Date.now() - Date.parse(g.gepl) < 4 * 3600000 ? " · geplündert von " + esc(g.von || "?") + " (4 h Schutz)" : "") + "</small>"
         + (st ? '<em><u style="width:' + Math.round(100 * lp / Math.max(1, mx)) + '%"></u></em>' : "") + "</span>"
-        + (st >= 3 ? "" : '<button type="button" data-s="bauen" data-w="' + k + '"' + (gesperrt || (ich.punkte || 0) < preis ? " disabled" : "") + ">"
-          + (gesperrt ? "Lv " + D.ab : (st ? "Stufe " + (st + 1) : "Bauen") + " · " + preis) + "</button>")
+        /* FASSUNG 813 — statt bei Stufe 3 ohne Knopf zu enden: der nächste Ausbau, gesperrt mit „ab Level N". */
+        + ausbauKnopf(ich, k, false)
         + "</div>";
     }).join("");
   }
@@ -8526,7 +8587,7 @@
         neu.push({ key: "e:" + k, art: "fertig", bild: GEHEIM_SVG, ziel: "", teil: "forschung", text: "Entdeckung! Geheime Forschung gefunden: " + F.name });
         return;
       }
-      var bereit = klug && !(F.haus && dorfSt(ich, F.haus) < (F.stufe || 1)) && f >= F.kosten;
+      var bereit = klug && !(F.ab && (ich.level || 1) < F.ab) && !(F.haus && dorfSt(ich, F.haus) < (F.stufe || 1)) && f >= F.kosten;
       if (bereit && !g["r:" + k]) neu.push({ key: "r:" + k, art: "fertig", bild: FORSCHUNG_SVG, ziel: "", teil: "forschung", text: F.name + " kann jetzt erforscht werden (" + F.kosten + " Forschung)" });
     });
     /* Angebote und Verkäufe: alle 2 Minuten still nachsehen; beim ersten Mal nur merken, was schon da ist. */
@@ -8650,17 +8711,36 @@
       return '<button type="button" data-s="iss" data-d="' + x + '">' + WAREN[x] + " essen <small>" + ({ brot: "+12 LP", kuchen: "+30 LP, +10 Mana", fisch: "+10 LP", fleisch: "+14 LP", torte: "+40 LP, +15 Mana" })[x] + "</small></button>";
     }).join("");
     /* FASSUNG 797 — XANDER: „im Verkaufen-Menü gibt es kein Kaufen-Menü … wir sehen keine Angebote von Händlern."
-       Der Händler verkauft alles, was der Markt ankauft (Tagespreis × 1,6, bis 20 je Kauf, 60 am Tag – spiel_haendler_kaufen). */
-    var kaufen = HANDEL.preise ? Object.keys(HANDEL.preise).filter(function (x) { return WAREN[x] && HANDEL.preise[x] && HANDEL.preise[x].grund; }).map(function (x) {
-      var P = HANDEL.preise[x], ek = Math.max(1, Math.ceil(Number(P.grund) * Number(P.laune || 1) * 1.6)), offen = S.kaufWahl === x;
-      var kopf = '<button type="button" data-s="kaufwahl" data-w="' + x + '" class="sp-markt-ware' + (offen ? " sp-an" : "") + '">' + WAREN[x] + " kaufen <small>" + ek + " P je Stück " + (offen ? "▴" : "▾") + "</small></button>";
+       Der Händler verkauft alles, was der Markt ankauft (Tagespreis × 1,6 – spiel_haendler_kaufen).
+       FASSUNG 813 — XANDER: „bei dem Handel stimmt auch was noch nicht weil ich kann immer nur noch verkaufen. Ich kann
+       nirgendswo irgendwelche Produkte einkaufen". Das Kaufen stand ganz unten, unter der langen Verkaufsliste und den
+       Essen-Knöpfen – bei einem vollen Lager sah es niemand. Jetzt steht oben ein Umschalter „Einkaufen | Verkaufen";
+       jede Zeile nennt Kaufpreis und Vorrat, die Mengen richten sich nach Punkten, Tagesmenge und Lagergrenze (999). */
+    var art = S.handelArt === "kaufen" ? "kaufen" : "verkaufen";
+    var schalter = '<div class="sp-sm-liste sp-handel-schalter" role="tablist">'
+      + '<button type="button" role="tab" data-s="handelart" data-a="kaufen" class="' + (art === "kaufen" ? "sp-an" : "") + '" aria-selected="' + (art === "kaufen") + '">Einkaufen <small>beim Händler</small></button>'
+      + '<button type="button" role="tab" data-s="handelart" data-a="verkaufen" class="' + (art === "verkaufen" ? "sp-an" : "") + '" aria-selected="' + (art === "verkaufen") + '">Verkaufen <small>auf dem Markt</small></button></div>';
+    if (art === "verkaufen") return schalter + (markt || essenK ? '<div class="sp-sm-gruppe sp-markt"><span>Markt</span>' + markt + essenK + "</div>" : '<p class="sp-sm-klein">Nichts im Lager, was der Markt ankauft.</p>');
+    if (!HANDEL.preise) return schalter + '<p class="sp-sm-klein">Preise werden geladen …</p>';
+    var lagerMax = HANDEL.lagerMax || 999, rest = HANDEL.kaufRest == null ? 60 : HANDEL.kaufRest;
+    var kaufen = Object.keys(HANDEL.preise).filter(function (x) { return WAREN[x] && haendlerPreis(x); }).map(function (x) {
+      var ek = haendlerPreis(x), hat = vorrat(ich, x), voll = hat >= lagerMax, offen = S.kaufWahl === x;
+      var kopf = '<button type="button" data-s="kaufwahl" data-w="' + x + '" class="sp-markt-ware' + (offen ? " sp-an" : "") + '">' + wareSvg(x) + WAREN[x] + " <small>"
+        + ek + " P je Stück · du hast " + hat + (voll ? " · Lager voll" : "") + " " + (offen ? "▴" : "▾") + "</small></button>";
       if (!offen) return kopf;
-      return kopf + '<div class="sp-markt-mengen">' + [1, 5, 10, 20].map(function (m) {
-        return '<button type="button" data-s="haendler" data-w="' + x + '" data-n="' + m + '"' + ((ich.punkte || 0) < m * ek ? " disabled" : "") + ">" + m + "× <small>−" + m * ek + "</small></button>";
+      var frei = Math.max(0, Math.min(50, rest, lagerMax - hat));
+      return kopf + '<div class="sp-markt-mengen">' + [1, 5, 20, 50].map(function (m) {
+        return '<button type="button" data-s="haendler" data-w="' + x + '" data-n="' + m + '"' + (m > frei || (ich.punkte || 0) < m * ek ? " disabled" : "") + ">" + m + "× <small>−" + m * ek + "</small></button>";
       }).join("") + "</div>";
-    }).join("") : "";
-    return (markt || essenK ? '<div class="sp-sm-gruppe sp-markt"><span>Markt</span>' + markt + essenK + "</div>" : "")
-      + (kaufen ? '<div class="sp-sm-gruppe sp-markt sp-haendler"><span>Beim Händler kaufen</span>' + kaufen + "</div>" : "");
+    }).join("");
+    return schalter + '<div class="sp-sm-gruppe sp-markt sp-haendler"><span>Beim Händler kaufen · du hast ' + (ich.punkte || 0) + " P · heute noch " + rest + " Stück</span>"
+      + '<p class="sp-sm-klein">Der Händler verlangt mehr, als der Markt zahlt; der Preis schwankt jeden Tag. Ins Lager passen höchstens ' + lagerMax + " je Ware.</p>" + kaufen + "</div>";
+  }
+  /* FASSUNG 813 — Kaufpreis beim Händler: vom Server (spiel_markt_preise.kauf), sonst dieselbe Rechnung wie spiel_haendler_preis. */
+  function haendlerPreis(x) {
+    if (HANDEL.kauf && HANDEL.kauf[x]) return Number(HANDEL.kauf[x]);
+    var P = HANDEL.preise && HANDEL.preise[x];
+    return P && P.grund ? Math.max(1, Math.ceil(Number(P.grund) * Number(P.laune || 1) * 1.6)) : 0;
   }
   function werkHtml(ich) {
     var t = werkZeilenHtml(ich);
@@ -8744,7 +8824,7 @@
     mueller:         { name: "Müller", viele: "Müller", preis: 15, haus: ["muehle"], tut: "Mühle 10 % schneller je Müller (bis 30 %)" },
     baecker:         { name: "Bäcker", viele: "Bäcker", preis: 15, haus: ["baeckerei"], tut: "backen je Ernte 1 Brot, Bäckerei schneller" },
     schmied:         { name: "Schmied", viele: "Schmiede", preis: 15, haus: ["schmiede"], tut: "Schmiede 10 % schneller je Schmied" },
-    wissenschaftler: { name: "Wissenschaftler", viele: "Wissenschaftler", preis: 30, haus: ["schule", "bibliothek", "labor"], tut: "forschen – je besser dein Deutsch, desto mehr" },
+    wissenschaftler: { name: "Wissenschaftler", viele: "Wissenschaftler", preis: 30, haus: ["schule", "bibliothek", "labor", "sternwarte"], tut: "forschen – je besser dein Deutsch, desto mehr" },
     /* FASSUNG 756 — XANDER (Walkie 293): „Ja – Ausbildung, ausgebildete bringen mehr als freie Bewohner". Die vier Trupps
        haben jetzt eigene Berufe. Ein Ausgebildeter bringt je Fahrt 2 Holz bzw. 2 Fische oder 1 Fleisch bzw. 1 Erz mehr –
        ein freier Bewohner nur eine halbe Einheit (je zwei eine). Fischer, Holzfäller und Jäger: höchstens 4; Bergleute:
@@ -8765,7 +8845,8 @@
   /* Wie spiel_beruf_max: je Stufe des Gebäudes zwei (Bauern: vier plus zwei je Mühlenstufe). */
   function berufMax(ich, b) {
     if (b === "bauer") return 4 + 2 * dorfSt(ich, "muehle");
-    if (BERUFE[b].fest) return BERUFE[b].fest;
+    /* FASSUNG 813 — Holzfällerhütte und Jagdhütte: je Stufe zwei Holzfäller bzw. Jäger mehr (wie spiel_beruf_max). */
+    if (BERUFE[b].fest) return BERUFE[b].fest + (b === "holzfaeller" ? 2 * dorfSt(ich, "holzhuette") : b === "jaeger" ? 2 * dorfSt(ich, "jagdhuette") : 0);
     return 2 * BERUFE[b].haus.reduce(function (n, k) { return n + dorfSt(ich, k); }, 0);
   }
   function automatikMoeglich(ich) { return dorfSt(ich, "muehle") >= 2 && dorfSt(ich, "baeckerei") >= 2; }
@@ -9036,7 +9117,13 @@
     brutkasten:   { name: "Brutkasten", kosten: 160, wiss: 6, quote: 0, haus: "huehnerstall", tut: "Hühner legen doppelt so schnell, der Stall fasst doppelt so viel" },
     telegraf:     { name: "Telegraf (Siemens & Halske)", kosten: 200, wiss: 8, quote: 70, tut: "du kennst die Preise zuerst: der Markt zahlt 15 % mehr" },
     roentgen:     { name: "Röntgenstrahlen", kosten: 400, wiss: 12, quote: 90, haus: "krankenhaus", geheim: true, tut: "Pflaster und Tränke heilen 50 % mehr" },
-    benz:         { name: "Automobil (Carl Benz)", kosten: 500, wiss: 15, quote: 92, haus: "rathaus", stufe: 2, geheim: true, tut: "Baustellen sind 25 % schneller fertig" }
+    benz:         { name: "Automobil (Carl Benz)", kosten: 500, wiss: 15, quote: 92, haus: "rathaus", stufe: 2, geheim: true, tut: "Baustellen sind 25 % schneller fertig" },
+    /* FASSUNG 813 — Forschung, die es erst ab einem Level gibt („ab", Server: spiel_forschung_def/spiel_erforschen). */
+    saegewerk:    { name: "Sägewerk", kosten: 180, wiss: 6, quote: 0, haus: "holzhuette", ab: 14, tut: "die Holzfällerhütte liefert doppelt so viel Holz" },
+    kontor:       { name: "Hanse-Kontor", kosten: 250, wiss: 8, quote: 60, haus: "marktstand", ab: 20, tut: "der Händler liefert doppelt so viel am Tag, der Markt zahlt 5 % mehr" },
+    raeucherei:   { name: "Räucherkammer", kosten: 300, wiss: 10, quote: 70, haus: "schweinestall", ab: 24, tut: "Schweinestall und Jagdhütte liefern 50 % mehr Fleisch" },
+    zeiss:        { name: "Fernrohr (Carl Zeiss)", kosten: 600, wiss: 16, quote: 85, haus: "sternwarte", ab: 32, tut: "50 % mehr Forschung bei jeder Ernte" },
+    zuse:         { name: "Rechenmaschine (Konrad Zuse)", kosten: 900, wiss: 20, quote: 92, haus: "labor", stufe: 5, ab: 40, geheim: true, tut: "Baustellen noch einmal 25 % schneller fertig" }
   };
   var WUNDER = {
     holstentor:     { name: "Holstentor", ort: "Lübeck", ab: 4, preis: 250, waren: { holz: 10, erz: 5 }, besucher: 2, freude: 2 },
@@ -9056,6 +9143,11 @@
     var v = ich.volk || {}, f = Number(v.forschung) || 0, wiss = beruf(ich, "wissenschaftler"), q = v.quote == null ? 70 : Number(v.quote);
     var zeilen = Object.keys(FORSCHUNG).map(function (k) {
       var F = FORSCHUNG[k], hat = erforscht(ich, k), klug = wiss >= F.wiss && q >= F.quote, verborgen = F.geheim && !hat && !klug;
+      /* FASSUNG 813 — gesperrt bis zum Level: mit Schloss und „ab Level N" (wie in anderen Spielen). */
+      var zuFrueh = !hat && F.ab && (ich.level || 1) < F.ab;
+      if (zuFrueh) return '<div class="sp-beruf sp-forschung sp-lvzu"><i>' + SCHLOSS_SVG + "</i><span><b>" + (F.geheim ? "Geheime Forschung" : F.name) + "</b><small>"
+        + (F.geheim ? "wird erst verraten, wenn es so weit ist" : F.tut) + "</small></span>"
+        + '<span class="sp-beruf-knoepfe"><button type="button" class="sp-gesperrt" disabled>' + SCHLOSS_SVG + "ab Level " + F.ab + "</button></span></div>";
       var fehlt = hat ? "" : wiss < F.wiss ? F.wiss + " Wissenschaftler nötig (du hast " + wiss + ")" : q < F.quote ? "Deutsch-Quote " + F.quote + " % nötig (du hast " + q + " %)"
         : F.haus && dorfSt(ich, F.haus) < (F.stufe || 1) ? "braucht " + (DORF[F.haus] ? DORF[F.haus].name : F.haus) + (F.stufe > 1 ? " Stufe " + F.stufe : "") : f < F.kosten ? "noch " + (F.kosten - f) + " Forschung" : "";
       if (verborgen) return '<div class="sp-beruf sp-forschung sp-geheim"><i>' + GEHEIM_SVG + "</i><span><b>Geheime Forschung</b><small>Deine Wissenschaftler sind noch nicht klug genug: "
@@ -9077,7 +9169,8 @@
         : Object.keys(W.waren).filter(function (x) { return vorrat(ich, x) < W.waren[x]; }).map(function (x) { return "zu wenig " + wareName(x); })[0] || "";
       return '<div class="sp-beruf sp-wunder' + (steht ? " sp-an" : "") + '"><i><svg viewBox="0 0 64 90" aria-hidden="true">' + wunderSvg(k) + "</svg></i><span><b>" + W.name + (steht ? " · steht" : "") + "</b>"
         + "<small>" + W.ort + " · " + W.besucher + " Besucher je Ernte, Volk +" + W.freude + " % froh" + (steht ? "" : " · " + W.preis + " P, " + ware + (fehlt ? " · " + fehlt : "")) + "</small></span>"
-        + (steht ? "" : '<span class="sp-beruf-knoepfe"><button type="button" data-s="wunderbauen" data-w="' + k + '"' + (fehlt ? " disabled" : "") + ">Bauen</button></span>")
+        /* FASSUNG 813 — zu früh: Schloss und „ab Level N" auf dem Knopf. */
+        + (steht ? "" : '<span class="sp-beruf-knoepfe"><button type="button" data-s="wunderbauen" data-w="' + k + '"' + (fehlt ? " disabled" : "") + (lv < W.ab ? ' class="sp-gesperrt">' + SCHLOSS_SVG + "ab Level " + W.ab : ">Bauen") + "</button></span>")
         /* FASSUNG 764 — wo es im Dorf steht (fünf Plätze hinter der Bahn, von links nach rechts). */
         + (steht ? '<span class="sp-wunder-platz"><small>Platz im Dorf:</small>' + WUNDER_PLAETZE.map(function (q, i) {
             return '<button type="button" data-s="wunderplatz" data-w="' + k + '" data-p="' + i + '" class="' + (plaetze[k] === i ? "sp-an" : "") + '" aria-label="Platz ' + (i + 1) + '">' + (i + 1) + "</button>"; }).join("") + "</span>" : "")
@@ -10045,8 +10138,7 @@
     var knoepfe = "";
     var bauS = baustelleVon(ich, k);
     if (bauS) knoepfe += '<button type="button" data-s="bauhelfen" data-w="' + k + '">Baustelle: Stufe ' + bauS.stufe + " <small>noch " + uhrText(Math.max(0, Date.parse(bauS.bis) - Date.now())) + " · mithelfen −15 s</small></button>";
-    else if (st < 3) knoepfe += '<button type="button" data-s="bauen" data-w="' + k + '"' + (gesperrt || (ich.punkte || 0) < preis ? " disabled" : "") + ">"
-      + (gesperrt ? "ab Level " + D.ab : (st ? "Ausbauen auf Stufe " + (st + 1) : "Bauen")) + (gesperrt ? "" : " <small>" + preis + " P · " + [2, 5, 10][st] + " min Bauzeit</small>") + "</button>";
+    else knoepfe += ausbauKnopf(ich, k, true);
     if (st && lp < mx) knoepfe += '<button type="button" data-s="bauen" data-w="reparatur"' + (vorrat(ich, "erz") || vorrat(ich, "holz") >= 2 ? "" : " disabled") + ">Reparieren <small>1 Erz oder 2 Holz</small></button>";
     var werk = st ? werkZeilenHtml(ich, k).join("") : "";
     /* FASSUNG 756 — in der Kaserne werden die Ritter ausgebildet: der Knopf steht gleich hier. */
@@ -13214,6 +13306,64 @@
   /* FASSUNG 683 — XANDER: „dass ich schnell Zugriff auf das Dorf habe und
      dann ist auch wirklich nur das Layout von dem Dorf da und was in dem
      Dorf grad passiert". Die Dorf-Ansicht des Makroknopfs. */
+  /* =================================================================
+     FASSUNG 813 — WAS KOMMT ALS NÄCHSTES
+     XANDER: „dass man das vorher auch irgendwo lesen kann was einen erwartet, wenn man sich weiter entwickelt ab welcher
+     Stufe man wo ist und dass das Dorf auch eine gewisse Stufe hat oder das Dorf mit dem Level zusammenhängt … dass
+     abhängig von Levelstufen andere Sachen möglich sind im Ausbau … dass man auch Hinweise bekommt, was in Zukunft
+     möglich ist und dann steht irgendwie, dass irgendwas gesperrt ist, erst ab Level 27 möglich, wie in anderen Spielen."
+     Die Dorfstufe (Weiler bis Großstadt) braucht beides: ein Mindestlevel UND genug Ausbau (alle Gebäudestufen
+     zusammengezählt). Darunter: die Ausbaugrenzen je Level und alles, was mit dem Level frei wird – Gesperrtes mit Schloss
+     und „ab Level N", die nächsten Freischaltungen hervorgehoben, das schon Offene zum Aufklappen.
+     ================================================================= */
+  var DORF_STUFEN = [
+    { name: "Weiler", lv: 1, ausbau: 0 }, { name: "Dorf", lv: 3, ausbau: 4 }, { name: "Marktflecken", lv: 8, ausbau: 12 },
+    { name: "Kleinstadt", lv: 15, ausbau: 30 }, { name: "Stadt", lv: 25, ausbau: 50 }, { name: "Großstadt", lv: 35, ausbau: 75 }
+  ];
+  function dorfAusbau(ich) { return Object.keys(DORF).reduce(function (n, k) { return n + dorfSt(ich, k); }, 0); }
+  function dorfStufe(ich) {
+    var lv = ich.level || 1, au = dorfAusbau(ich), i = 0;
+    DORF_STUFEN.forEach(function (d, j) { if (lv >= d.lv && au >= d.ausbau) i = j; });
+    return i;
+  }
+  function freischaltungen() {
+    var l = [];
+    Object.keys(DORF).forEach(function (k) { l.push({ lv: DORF[k].ab || 1, art: "Gebäude", name: DORF[k].name, tut: DORF[k].gibt, bild: dorfSvg(k, 1) }); });
+    [4, 5, 6].forEach(function (st) {
+      l.push({ lv: DORF_STUFE_AB[st], art: "Ausbau", name: "Ausbaustufe " + st, tut: "jedes Gebäude bis Stufe " + st + " · braucht dazu " + stoffeText(bauStoffe(st)), bild: dorfSvg("rathaus", 3) });
+    });
+    Object.keys(WUNDER).forEach(function (k) { var W = WUNDER[k]; l.push({ lv: W.ab, art: "Wahrzeichen", name: W.name, tut: W.besucher + " Besucher je Ernte, Volk +" + W.freude + " % froh",
+      bild: '<svg viewBox="0 0 64 90" aria-hidden="true">' + wunderSvg(k) + "</svg>" }); });
+    Object.keys(FORSCHUNG).forEach(function (k) { var F = FORSCHUNG[k]; if (F.ab) l.push({ lv: F.ab, art: "Forschung", name: F.geheim ? "Geheime Forschung" : F.name, tut: F.geheim ? "wird erst verraten, wenn es so weit ist" : F.tut, bild: FORSCHUNG_SVG, geheim: F.geheim, echt: F.name }); });
+    if (typeof KLASSEN !== "undefined") l.push({ lv: 5, art: "Klasse", name: "Klassen", tut: "Grammatik-Profi, Sprachkünstler, Logiker … mit eigenen Stärken", bild: klassenSvg("grammatik") });
+    return l.sort(function (a, b) { return a.lv - b.lv; });
+  }
+  function ausblickHtml(ich) {
+    var lv = ich.level || 1, au = dorfAusbau(ich), i = dorfStufe(ich), D = DORF_STUFEN[i], N = DORF_STUFEN[i + 1];
+    var karte = '<div class="sp-beruf sp-ausblick-stufe"><i>' + dorfSvg("rathaus", Math.min(3, i + 1)) + "</i><span><b>Dorfstufe " + (i + 1) + " von " + DORF_STUFEN.length + ": " + D.name + "</b>"
+      + "<small>Die Dorfstufe wächst mit deinem Level und dem Ausbau (alle Gebäudestufen zusammengezählt). Du: Level " + lv + ", Ausbau " + au + ".</small>"
+      + (N ? "<small>Nächste: <b>" + N.name + "</b> – Level " + N.lv + (lv >= N.lv ? " (erreicht)" : " (noch " + (N.lv - lv) + ")") + " und Ausbau " + N.ausbau
+          + (au >= N.ausbau ? " (erreicht)" : " (noch " + (N.ausbau - au) + ")") + "</small>" : "<small>Höchste Dorfstufe erreicht.</small>") + "</span></div>";
+    var mx = dorfMax(lv);
+    var grenzen = '<div class="sp-sm-gruppe"><span>Höchste Ausbaustufe je Level</span></div><div class="sp-ausblick-grenzen">'
+      + [[3, 1], [4, 15], [5, 25], [6, 35]].map(function (g) {
+        var offen = lv >= g[1];
+        return '<span class="' + (offen ? "sp-offen" : "sp-lvzu") + (g[0] === mx ? " sp-jetzt" : "") + '">' + (offen ? HAKEN_SVG : SCHLOSS_SVG) + "Stufe " + g[0] + (g[1] > 1 ? " ab Level " + g[1] : " von Anfang an") + "</span>";
+      }).join("") + "</div>";
+    var alle = freischaltungen(), zu = alle.filter(function (e) { return e.lv > lv; }), offen = alle.filter(function (e) { return e.lv <= lv; });
+    var naechstLv = zu.map(function (e) { return e.lv; }).filter(function (x, j, a) { return a.indexOf(x) === j; }).slice(0, 2);
+    var zeile = function (e, gesperrt) {
+      var n = gesperrt && naechstLv.indexOf(e.lv) >= 0;
+      return '<div class="sp-beruf sp-ausblick-z' + (gesperrt ? " sp-lvzu" : " sp-offen") + (n ? " sp-naechst" : "") + '"><i>' + (gesperrt ? SCHLOSS_SVG : e.bild) + "</i><span><b>" + esc(e.name) + "</b><small>" + e.art + " · " + esc(e.tut) + "</small></span>"
+        + '<em class="sp-ab">' + (gesperrt ? "ab Level " + e.lv : HAKEN_SVG + "Level " + e.lv) + "</em></div>";
+    };
+    var zuN = zu.filter(function (e) { return naechstLv.indexOf(e.lv) >= 0; }), spaeter = zu.filter(function (e) { return naechstLv.indexOf(e.lv) < 0; });
+    return '<div class="sp-ausblick">' + karte + grenzen
+      + (zuN.length ? '<div class="sp-sm-gruppe"><span>Als Nächstes</span></div>' + zuN.map(function (e) { return zeile(e, true); }).join("") : '<p class="sp-sm-klein">Alles freigeschaltet – jetzt heißt es ausbauen.</p>')
+      + (spaeter.length ? '<div class="sp-sm-gruppe"><span>Später</span></div>' + spaeter.map(function (e) { return zeile(e, true); }).join("") : "")
+      + '<div class="sp-sm-liste sp-ausblick-auf"><button type="button" data-s="ausblickalle">Schon offen (' + offen.length + ") " + (S.ausblickAlle ? "▴" : "▾") + "</button></div>"
+      + (S.ausblickAlle ? offen.map(function (e) { return zeile(e, false); }).join("") : "") + "</div>";
+  }
   function dorfBlickHtml(ich) {
     var besuch = dorfBesuchStand();
     if (besuch) return dorfBesuchHtml(besuch);
@@ -13245,9 +13395,11 @@
       + '<button type="button" data-s="dorfteil" data-t="markt" class="' + (S.dorfTeil === "markt" ? "sp-an" : "") + '">Markt &amp; Handel ' + (S.dorfTeil === "markt" ? "▴" : "▾") + "</button>"
       /* FASSUNG 703 */
       + '<button type="button" data-s="dorfteil" data-t="forschung" class="' + (S.dorfTeil === "forschung" ? "sp-an" : "") + '">Forschung ' + (S.dorfTeil === "forschung" ? "▴" : "▾") + "</button>"
-      + '<button type="button" data-s="dorfteil" data-t="wunder" class="' + (S.dorfTeil === "wunder" ? "sp-an" : "") + '" title="Sehenswürdigkeiten">Wahrzeichen ' + (S.dorfTeil === "wunder" ? "▴" : "▾") + "</button></div>"
+      + '<button type="button" data-s="dorfteil" data-t="wunder" class="' + (S.dorfTeil === "wunder" ? "sp-an" : "") + '" title="Sehenswürdigkeiten">Wahrzeichen ' + (S.dorfTeil === "wunder" ? "▴" : "▾") + "</button>"
+      /* FASSUNG 813 — „Was kommt als Nächstes": Dorfstufe, Ausbaugrenzen, Gesperrtes mit „ab Level N". */
+      + '<button type="button" data-s="dorfteil" data-t="ausblick" class="sp-dorf-ausblick' + (S.dorfTeil === "ausblick" ? " sp-an" : "") + '">Was kommt als Nächstes · Dorfstufe ' + (dorfStufe(ich) + 1) + " " + (S.dorfTeil === "ausblick" ? "▴" : "▾") + "</button></div>"
       + (S.dorfTeil === "bau" ? '<div class="sp-troph-liste">' + dorfBauListe(ich) + "</div>" : S.dorfTeil === "markt" ? marktHtml(ich) + handelHtml(ich)
-        : S.dorfTeil === "forschung" ? forschungHtml(ich) : S.dorfTeil === "wunder" ? wunderHtml(ich) : "") + fuss;
+        : S.dorfTeil === "forschung" ? forschungHtml(ich) : S.dorfTeil === "wunder" ? wunderHtml(ich) : S.dorfTeil === "ausblick" ? ausblickHtml(ich) : "") + fuss;
   }
   function wirtschaft(name, args, fertig) {
     rpc(name, args).then(function (r) {
@@ -13308,7 +13460,10 @@
     var jetzt = Date.now();
     if (zwingend || jetzt - HANDEL.preiseZeit > 30000) {
       HANDEL.preiseZeit = jetzt;
-      rpc("spiel_markt_preise", {}).then(function (r) { if (r && r.ok) { HANDEL.preise = r.preise || {}; schnellZeichnen(true); } }).catch(function () {});
+      rpc("spiel_markt_preise", {}).then(function (r) { if (r && r.ok) { HANDEL.preise = r.preise || {};
+        /* FASSUNG 813 — Kaufpreise, Tagesrest und Lagergrenze des Händlers. */
+        HANDEL.kauf = r.kauf || null; HANDEL.kaufRest = r.kauf_rest == null ? null : Number(r.kauf_rest); HANDEL.lagerMax = Number(r.lager_max) || 999;
+        schnellZeichnen(true); } }).catch(function () {});
     }
     if (zwingend || jetzt - HANDEL.angeboteZeit > 15000) {
       HANDEL.angeboteZeit = jetzt;

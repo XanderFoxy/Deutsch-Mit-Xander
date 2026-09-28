@@ -3059,3 +3059,33 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-dl-daemmer { position: absolute; inset: 0; pointer-events: none; z-index: 0; mix-blend-mode: soft-light;
   background: linear-gradient(180deg, rgba(255, 140, 40, calc(var(--glut, 0) * .85)), rgba(255, 120, 70, calc(var(--glut, 0) * .6)) 60%, rgba(200, 90, 120, calc(var(--glut, 0) * .4))); }
 .sp-dl-daemmer::after { content: ""; position: absolute; inset: 0; background: rgba(25, 35, 80, var(--dunkel, 0)); mix-blend-mode: multiply; }
+
+/* FASSUNG 813 — XANDER: „ich kann immer nur noch verkaufen. Ich kann nirgendswo irgendwelche Produkte einkaufen".
+   Umschalter Einkaufen | Verkaufen oben in Markt & Handel; Schloss und „ab Level N" für Gesperrtes; die Übersicht
+   „Was kommt als Nächstes" (Dorfstufe, Ausbaugrenzen, Freischaltungen). */
+.sp-sm-liste.sp-handel-schalter { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 0 8px; }
+.sp-schnellmenue .sp-handel-schalter button, .sp-handel-schalter button { width: auto; min-width: 0; min-height: 42px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; text-align: left; font-weight: 700; }
+.sp-handel-schalter button small { display: block; margin-left: 0; font-weight: 500; font-size: 10.5px; opacity: .8; }
+.sp-handel-schalter button.sp-an { box-shadow: inset 0 0 0 2px #e8b923; }
+.sp-haendler > .sp-sm-klein { width: 100%; margin: 0 0 4px; }
+.sp-haendler .sp-markt-ware svg { width: 18px; height: 18px; flex: 0 0 18px; vertical-align: -4px; margin-right: 5px; }
+.sp-schloss, .sp-haken { width: 14px; height: 14px; flex: 0 0 14px; display: inline-block; vertical-align: -2px; margin-right: 4px; }
+button.sp-gesperrt, button.sp-gesperrt:disabled { opacity: 1; color: #d9ccb0; background: rgba(120, 100, 70, .28); border-color: rgba(200, 170, 110, .45); white-space: nowrap; }
+.sp-schnellmenue .sp-dorf-auf button.sp-dorf-ausblick, .sp-ausblick-auf button { flex: 1 1 100%; grid-column: 1 / -1; }
+.sp-ausblick { margin: 0 0 6px; }
+.sp-ausblick .sp-beruf > span:first-of-type small b { color: #ffe27a; }
+.sp-ausblick-stufe { background: rgba(232, 185, 35, .12); box-shadow: inset 0 0 0 1px rgba(232, 185, 35, .45); }
+.sp-ausblick-stufe > i { flex-basis: 34px; width: 34px; height: 34px; }
+.sp-ausblick-grenzen { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 0 8px; }
+.sp-ausblick-grenzen > span { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 999px; font: 600 11px/1.2 system-ui, sans-serif; color: #e8f3ea; background: rgba(255, 255, 255, .07); }
+.sp-ausblick-grenzen > span.sp-lvzu { color: #cbbd9e; background: rgba(120, 100, 70, .25); }
+.sp-ausblick-grenzen > span.sp-jetzt { box-shadow: inset 0 0 0 1px #3aa655; }
+.sp-ausblick-z .sp-ab { flex: 0 0 auto; margin-left: auto; display: inline-flex; align-items: center; font: 700 11px/1.2 normal system-ui, sans-serif; font-style: normal; color: #d9ccb0; white-space: nowrap; }
+.sp-ausblick-z.sp-offen .sp-ab { color: #9fd8ad; font-weight: 600; }
+.sp-ausblick-z.sp-lvzu { background: rgba(120, 100, 70, .16); }
+.sp-ausblick-z.sp-lvzu > span:first-of-type { color: #e3d8c2; }
+.sp-ausblick-z.sp-naechst { background: rgba(232, 185, 35, .14); box-shadow: inset 0 0 0 1px rgba(232, 185, 35, .7); }
+.sp-ausblick-z.sp-naechst .sp-ab { color: #ffe27a; }
+.sp-ausblick-auf { margin: 6px 0 4px; }
+.sp-forschung.sp-lvzu { background: rgba(120, 100, 70, .16); }
+.sp-beruf > i .sp-schloss { margin: 0; }
