@@ -1240,9 +1240,17 @@
       } else werkzeugNutzen(knopf, nrW, p);
       return true;
     }
+    /* FASSUNG 816 — XANDER (Funk 204): „Ich kann meinen Platz nicht mehr wechseln oben auf dem positionsplätzen da steht
+       tippe auf ein Gesicht der Platz ist leer aber ich kann nicht dorthin einfach da ist niemand anders aus mir im Raum ich
+       kann den Platz nicht wechseln im Spielmodus". Eine bereite Klassenkraft, Tier-Fähigkeit oder ein bereiter Zauber
+       schluckten JEDEN Tipp auf einen Platz – auch auf einen leeren – und blieben dabei bereit; allein im Raum kam man so nie
+       wieder los. Ein LEERER Platz (ohne Sparringspartner darauf) gehört jetzt immer dem Platzwechsel (app.js), das Ziel
+       bleibt bereit; ein Gesicht trifft wie bisher. */
+    var leerFrei = Boolean(knopf && knopf.dataset && knopf.dataset.lcPlatz && (!p || p.leer)
+      && !(S.sparring && Number(knopf.dataset.lcPlatz) === S.sparring));
     /* FASSUNG 699 — eine bereite Klassenkraft gilt dem nächsten Gesicht
        (der Segen des Heilers auch dem eigenen). */
-    if (S.kampfZiel && S.bereit && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
+    if (S.kampfZiel && S.bereit && !leerFrei && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
       var kzK = KAMPF[(S.ich || {}).kampfklasse];
       if (!kzK) { S.kampfZiel = false; return true; }
       if (!p || p.leer) { hinweis("⚔️ Tippe auf ein Gesicht – der Platz ist leer."); return true; }
@@ -1254,7 +1262,7 @@
       return true;
     }
     /* FASSUNG 695 — eine bereite Tier-Fähigkeit gilt dem nächsten Gesicht. */
-    if (S.faehigZiel && S.bereit && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
+    if (S.faehigZiel && S.bereit && !leerFrei && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
       if (!p || p.leer) { hinweis("🐾 Tippe auf ein Gesicht – der Platz ist leer."); return true; }
       if (p.ich) { hinweis("🐾 Nicht auf dich selbst – tippe auf jemand anderen."); return true; }
       if (istPuppe(p.id) || /^sparring:/.test(p.id)) { hinweis("🐾 Fähigkeiten wirken nur auf echte Mitspieler."); S.faehigZiel = false; schnellZeichnen(); return true; }
@@ -1265,7 +1273,7 @@
       return true;
     }
     /* FASSUNG 650 — ein bereiter Zauber gilt dem nächsten Gesicht. */
-    if (S.zauber && S.bereit && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
+    if (S.zauber && S.bereit && !leerFrei && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
       /* FASSUNG 655 — XANDER: „mit der Gummipuppe probiere ich das. Ich
          sehe kein Erdbeben". Auf Puppe und Sparringspartner wird geübt:
          gleiches Bild, gleicher Ton, kein Mana, nur auf dem eigenen Gerät. */
