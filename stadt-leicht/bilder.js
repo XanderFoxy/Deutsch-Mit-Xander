@@ -40,6 +40,8 @@
       const q = new URLSearchParams(location.search);
       if (q.get("spar") === "1") return true;
       if (q.get("spar") === "0") return false;
+      /* FASSUNG 806 — im Spiel eingebettet immer sparsam (auch im Vollbild): das iPhone warf die Seite sonst aus dem Speicher */
+      if (q.get("eingebettet") === "1") return true;
       const gemerkt = localStorage.getItem("leicht_spar");
       if (gemerkt === "1") return true;
       if (gemerkt === "0") return false;

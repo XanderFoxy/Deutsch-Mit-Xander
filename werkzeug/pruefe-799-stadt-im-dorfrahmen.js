@@ -222,9 +222,22 @@ const sage = (gut, was, zusatz) => {
     const felder = [...document.querySelectorAll(".lk-mini-feld")].map((f) => f.getBoundingClientRect()).filter((q) => q.width > 0);
     return { mini: document.body.classList.contains("lk-mini-modus"), kopf: g(".lk-kopf"), bauen: g(".lk-bauen"), lupe: g(".lk-lupe"), voll: g(".lk-vollknopf"), feld: felder.length ? Math.min(...felder.map((q) => Math.min(q.width, q.height))) : 0, felder: felder.length }; });
   sage(!!r && r.mini && !r.kopf.sicht && !r.bauen.sicht, "im kleinen Rahmen nur das Bild: keine Kopfleiste, kein Bauen/Schmücken", JSON.stringify(r && { kopf: r.kopf, bauen: r.bauen }));
-  sage(!!r && r.lupe.sicht && r.voll.sicht && r.lupe.w >= 30 && r.voll.w >= 30 && r.felder === 0, "Lupe und Vollbild (je ≥ 30 px); die kleine Karte erst mit der Lupe, wie beim alten Dorf", JSON.stringify(r && { lupe: r.lupe, voll: r.voll, felder: r.felder }));
-  sage(await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-dl-beschriftung button")].map((x) => x.dataset.s); return b.join(",") === "stadtversion,stadtversion,stadtvoll"; }), "darunter nur „Alte Version“, „Neue Version“ und „Vollbild“ (Symbole/Namen/Umbauen gehören zum alten Bild)");
+  sage(!!r && r.lupe.sicht && r.voll.sicht && r.lupe.w >= 24 && r.voll.w >= 30 && r.felder === 0, "Kompass (26 px, Tippfläche 34 px) und Vollbild (≥ 30 px); die kleine Karte erst mit der Lupe, wie beim alten Dorf", JSON.stringify(r && { lupe: r.lupe, voll: r.voll, felder: r.felder }));
+  sage(await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-dl-beschriftung button")].map((x) => x.dataset.s); return /^stadtversion,stadtversion,stadtvoll(,appholen)?$/.test(b.join(",")); }), "darunter nur „Alte Version“, „Neue Version“, „Vollbild“ (und „Als App“) (Symbole/Namen/Umbauen gehören zum alten Bild)");
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-klein.png" });
+
+  /* FASSUNG 806 — XANDER: „Jetzt fehlt in der kleinen Ansicht der neuen Version der Kompass … Danach muss wieder die
+     Uhrzeit stehen. In der Mitte muss wieder mein Spitzname stehen" und „dass du die Labels … wieder einbaust". */
+  console.log("\nKOMPASS, UHR, ORTSSCHILD UND NAMEN (Fassung 806)\n");
+  await tick(1300);
+  const kz = await imFrame(() => { const g = (s) => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, t: e.textContent.trim(), sicht: getComputedStyle(e).display !== "none" && r.width > 0 }; };
+    const n = [...document.querySelectorAll(".lk-name-schild")].filter((e) => e.style.display !== "none").map((e) => e.textContent);
+    return { kompass: !!document.querySelector(".lk-lupe svg .lk-nadel"), k: g(".lk-lupe"), uhr: g(".lk-uhr"), ort: g(".lk-ortsschild"), namen: n, W: innerWidth }; });
+  sage(!!kz && kz.kompass && kz.k.x < 12 && kz.k.y < 12 && kz.k.w <= 28, "oben links der kleine Kompass (Kreis mit Nadel) statt der Lupe", JSON.stringify(kz && kz.k));
+  sage(!!kz && kz.uhr.sicht && /^\d\d:\d\d$/.test(kz.uhr.t) && kz.uhr.x > kz.k.x + kz.k.w - 2, "daneben die Uhrzeit (Deutschland)", JSON.stringify(kz && kz.uhr));
+  sage(!!kz && kz.ort.sicht && kz.ort.t === "Alex" && Math.abs(kz.ort.x + kz.ort.w / 2 - kz.W / 2) < 3, "in der Mitte das Ortsschild mit dem Namen", JSON.stringify(kz && kz.ort));
+  sage(!!kz && kz.namen.length >= 5 && kz.namen.some((t) => /Bäckerei/.test(t)), "an den Häusern stehen ihre Namen", JSON.stringify(kz && kz.namen));
+  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-kopf.png" });
 
   console.log("\nSCHLANK UND STILL (Fassung 805)\n");
   /* Gezählt wird, was über die Leitung geht: Bilder wie sie sind, Text (JSON, JS, CSS) gepackt – wie GitHub Pages es schickt. */
@@ -262,7 +275,14 @@ const sage = (gut, was, zusatz) => {
   const kf = await imFrame(() => { const f = [...document.querySelectorAll(".lk-mini-feld")].map((q) => q.getBoundingClientRect()).filter((q) => q.width > 0); return { n: f.length, min: f.length ? Math.min(...f.map((q) => Math.min(q.width, q.height))) : 0 }; });
   /* FASSUNG 805 — XANDER: „diese Kachel … muss nicht so ein großes Viereck sein … viel kleiner, weil man kann seinen
      Finger auch bisschen anstrengen". Die Karte ist 72 px, die Viertel also 24 px (bewusst unter den sonst üblichen 30 px). */
-  sage(kf && kf.n === 9 && kf.min >= 22 && kf.min <= 26, "mit der Lupe erscheint die kleine Karte am Rand: 9 Viertel à ≈ 24 px", JSON.stringify(kf));
+  /* FASSUNG 806 — XANDER: „Die kann halb so klein sein": 40 px, Viertel ≈ 13 px. */
+  sage(kf && kf.n === 9 && kf.min >= 11 && kf.min <= 15, "mit dem Kompass erscheint die kleine Karte am Rand: 9 Viertel à ≈ 13 px", JSON.stringify(kf));
+  { const a0 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y })); const o = await lage(".sp-lstadt"); const cdp = await ctx.newCDPSession(pg);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: o.l + o.w / 2, y: o.t + o.h * .6 }] });
+    for (let i = 1; i <= 8; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: o.l + o.w / 2 - i * 6, y: o.t + o.h * .6 - i * 3 }] }); await tick(16); }
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await tick(400);
+    const a1 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y }));
+    sage(a0 && a1 && Math.hypot(a0.x - a1.x, a0.y - a1.y) > 1, "mit dem Kompass (nah) verschiebt der Finger die Stadt", JSON.stringify({ a0, a1 })); }
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-lupe.png" });
   await tippeImFrame(".lk-mini-feld:nth-child(9)"); await tick(1100);
   const k9 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y }));
@@ -307,6 +327,7 @@ const sage = (gut, was, zusatz) => {
   sage(!!zb && zb.sicht && /4 Brot/.test(zb.t) && /lk-z-fertig/.test(zb.kl) && zb.h >= 30, "über der Bäckerei steht grün „4 Brot“ (≥ 30 px hoch)", JSON.stringify(zb));
   sage(!!zb && /^Kuchen [12]:\d\d$/.test(zb.schule || ""), "über der Schule läuft die Uhr („… 2:10“)", JSON.stringify(zb && zb.schule));
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-zeichen.png" });
+  if (process.env.STAPEL && zb) console.log("ZIEL", await imFrame((p) => { const e = document.elementFromPoint(p.x, p.y); return e && (e.className + "/" + e.tagName); }, zb));
   if (zb) { const off = await lage(".sp-lstadt"); await pg.touchscreen.tap(off.l + zb.x, off.t + zb.y); await tick(1200); }
   const nach = await pg.evaluate(() => ({ ab: window.__abgeholt, wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl }));
   sage(nach.ab.join() === "baeckerei" && nach.wahl !== "baeckerei", "ein Tipp auf „4 Brot“ sammelt direkt ein (spiel_werk_abholen), ohne erst die Station zu öffnen", JSON.stringify(nach));
@@ -317,6 +338,9 @@ const sage = (gut, was, zusatz) => {
   sage(!!v && v.l === 0 && v.t === 0 && Math.abs(v.w - 360) < 1 && Math.abs(v.h - 740) < 1, "„Vollbild“: die Stadt füllt den Bildschirm", JSON.stringify(v));
   r = await imFrame(() => ({ mini: document.body.classList.contains("lk-mini-modus"), kopf: getComputedStyle(document.querySelector(".lk-kopf")).display }));
   sage(!!r && !r.mini && r.kopf !== "none", "im Vollbild ist die ganze Bedienung da (Kopfleiste, Bauen …)", JSON.stringify(r));
+  await tick(1500);
+  const vg = await imFrame(() => ({ gross: performance.getEntriesByType("resource").filter((r) => /_g\.webp/.test(r.name)).length, max: window.STADT.kamera.max, tab: !!document.querySelector(".lk-neuer-tab") }));
+  sage(!!vg && vg.gross === 0 && vg.max <= 29 && vg.tab, "auch das Vollbild bleibt schlank (keine großen Bilder, Nähe begrenzt) und bietet „In neuem Tab öffnen“", JSON.stringify(vg));
   await pg.setViewportSize({ width: 740, height: 360 }); await tick(500);
   v = await lage(".sp-lstadt");
   sage(!!v && Math.abs(v.w - 740) < 1 && Math.abs(v.h - 360) < 1, "quer gedreht: weiter bildschirmfüllend", JSON.stringify(v));

@@ -4790,7 +4790,14 @@
       S.stadtNeu = k.dataset.v === "neu"; S.dorfWahl = "";
       try { localStorage.setItem("dma_stadt_neu", S.stadtNeu ? "1" : "0"); } catch (e) {}
       ton("swoosh", 0.2); schnellZeichnen(true);
-      if (S.stadtNeu) lsAuf(); else lsWeg();
+      /* FASSUNG 806 — XANDER: „ob die neue Version dann noch drin hängt im Cash … er geht zurück und dann häng die ganzen
+         Daten aber noch im Puffer". Zurück zur alten: der Rahmen der neuen Stadt wird ganz entfernt (lsWeg – der Browser gibt
+         seinen Speicher frei). Zur neuen: die gemalten Bilder des alten Dorfs werden freigegeben (0 × 0), bis man zurückkommt. */
+      if (S.stadtNeu) { Object.keys(DM.bilder).forEach(function (k) { dmLeinwandWeg(DM.bilder[k]); }); DM.bilder = {}; DM.zuletzt = null; lsAuf(); } else lsWeg();
+      return;
+    } else if (s === "appholen") {
+      if (APP.angebot) { var ang = APP.angebot; APP.angebot = null; try { ang.prompt(); } catch (e) {} schnellZeichnen(true); }
+      else hinweis("📲 Als App: unten (oder oben) auf „Teilen“ tippen, dann „Zum Home-Bildschirm“. Danach startet die Seite wie eine App.");
       return;
     } else if (s === "stadtvoll") {
       lsAuf(); lsVoll(true); return;
@@ -12853,7 +12860,19 @@
     var neu = stadtNeu();
     return '<button type="button" data-s="stadtversion" data-v="alt" class="sp-stadt-version' + (neu ? "" : " sp-an") + '" aria-pressed="' + !neu + '">Alte Version</button>'
       + '<button type="button" data-s="stadtversion" data-v="neu" class="sp-stadt-version' + (neu ? " sp-an" : "") + '" aria-pressed="' + neu + '">Neue Version' + (window.LEICHT_FREI ? "" : " (nur du)") + "</button>"
-      + (neu ? '<button type="button" data-s="stadtvoll" class="sp-stadt-voll">Vollbild</button>' : "");
+      + (neu ? '<button type="button" data-s="stadtvoll" class="sp-stadt-voll">Vollbild</button>' : "") + appKnopfHtml();
+  }
+  /* FASSUNG 806 — XANDER: „es gibt doch oben in der Adresszeile so'n Download Knopf, wo man sich das als App auf dem Desktop
+     holen kann … die meisten die wissen nicht was ich mit Adresszeile meine … deswegen gibt es vielleicht in deine
+     Möglichkeit als App runterladen". Ein Knopf „Als App": Android/Chrome/Edge fragen direkt (beforeinstallprompt), auf
+     dem iPhone steht, wie es geht (Teilen → Zum Home-Bildschirm). Läuft die Seite schon als App, fehlt der Knopf. */
+  var APP = { angebot: null };
+  try { window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); APP.angebot = e; }); } catch (e) {}
+  function appLaeuft() { try { return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true; } catch (e) { return false; } }
+  function appIos() { return /iPhone|iPad|iPod/.test(navigator.userAgent || "") || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); }
+  function appKnopfHtml() {
+    if (appLaeuft() || !(APP.angebot || appIos())) return "";
+    return '<button type="button" data-s="appholen" class="sp-stadt-app">Als App</button>';
   }
   /* Der Platzhalter im Rahmen – genau so groß wie das alte Bild (16:10). */
   function neueStadtRahmenHtml(ich) {
@@ -12914,7 +12933,7 @@
     LSTADT.fs = function () { if (LSTADT && LSTADT.voll && !(document.fullscreenElement || document.webkitFullscreenElement) && LSTADT.fsWar) lsVoll(false); if (LSTADT) LSTADT.fsWar = Boolean(document.fullscreenElement); };
     window.addEventListener("message", LSTADT.post);
     document.addEventListener("fullscreenchange", LSTADT.fs);
-    LSTADT.rahmen.addEventListener("load", function () { lsPost({ typ: "leicht-modus", voll: LSTADT && LSTADT.voll }); if (LSTADT) LSTADT.zSig = LSTADT.sSig = ""; });
+    LSTADT.rahmen.addEventListener("load", function () { lsPost({ typ: "leicht-modus", voll: LSTADT && LSTADT.voll }); if (LSTADT) LSTADT.zSig = LSTADT.sSig = LSTADT.kSig = ""; });
     lsFolgen();
     requestAnimationFrame(lsTakt);
   }
@@ -12949,6 +12968,11 @@
       var ss = JSON.stringify(st);
       if (ss !== L.sSig) { L.sSig = ss; lsPost({ typ: "leicht-stand", ich: st }); }
     }
+    /* FASSUNG 806 — Kopfzeile der kleinen Stadt: Ortsschild (Name der Stadt) und das Wetterschild wie im alten Dorf. */
+    var kopf = { typ: "leicht-kopf", name: String(S.ich.dorf_name || S.ich.name || "").trim(), wetter: "" };
+    try { kopf.wetter = dorfWetterSchild(dorfWetter()); } catch (e) {}
+    var ks = kopf.name + "|" + kopf.wetter;
+    if (ks !== L.kSig) { L.kSig = ks; lsPost(kopf); }
     var z = dorfBesuchStand() ? {} : lsZeichen(S.ich), sig = JSON.stringify(z);
     if (sig === L.zSig) return;
     L.zSig = sig;

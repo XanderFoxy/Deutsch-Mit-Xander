@@ -71,7 +71,10 @@
     /* FASSUNG 805 — XANDER: „aus der Bewegung der Map gar nicht raus … wir können jetzt gar nicht mehr runter in unsere
        Menüs gehen". Im kleinen Rahmen des Spiels steht das Bild still wie das alte Dorf: Wischen scrollt die Seite
        (touch-action in leicht.css), navigiert wird mit Lupe und kleiner Karte, ein Tipp wählt ein Haus. */
-    if (document.body.classList.contains("lk-mini-modus")) return;
+    /* FASSUNG 806 — XANDER: „das sind zwei verschiedene Modus der eine ist fest gezogen und hat dann den Kompass wo wir
+       ein bisschen in der Stadt rum navigieren können". Im kleinen Rahmen steht die Stadt fest (Wischen scrollt die Seite);
+       nur mit dem Kompass (nah dran) verschiebt der Finger die Stadt. */
+    if (document.body.classList.contains("lk-mini-modus") && !document.body.classList.contains("lk-nah")) return;
     const dx = neu.x - alt.x, dy = neu.y - alt.y;
     schiebe(dx, dy);
     const jetzt = performance.now(), dt = Math.max(1, jetzt - letzteBewegung);

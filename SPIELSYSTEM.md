@@ -2072,3 +2072,24 @@ XANDER: „Du solltest dich vorher erst mal darum kümmern, dass man in dieser n
 - **Minikarte:** 72 px am Rand, Viertel ≈ 24 px, nur mit der Lupe.
 - **Dazu** (Helfer): Tretboote als Schwäne, Bootshaus mit Steg, Badegäste und Liegewiese (Frühling/Sommer, bei Tag).
 - Sonde `werkzeug/pruefe-799-stadt-im-dorfrahmen.js`: alles grün. Die alte Fassung hat 8 Fehler (Ladegröße, Wischen, Minikarte, Spielstand, Zeichen, Einsammeln).
+
+## Fassung 806 — kleine Stadt: Kompass, Kopfzeile, Namen, zwei Modi; Vollbild schlank
+
+XANDER: „Jetzt fehlt in der kleinen Ansicht der neuen Version der Kompass … das sind zwei verschiedene Modus der eine ist fest gezogen und hat dann den Kompass wo wir ein bisschen in der Stadt rum navigieren können … diese Kachel … kann halb so klein sein … Danach muss wieder die Uhrzeit stehen. In der Mitte muss wieder mein Spitzname stehen … wenn man in der Vollbildansicht ist dann bricht das Ganze immer ab … schau auch, dass du die Labels … wieder einbaust".
+
+- **Kompass statt Lupe:** oben links der Kompass des alten Dorfs (26 px, Tippfläche 34 px, mit „+“/„−“).
+  - Ein Tipp holt näher heran; dann erscheinen die kleine Karte (jetzt 40 px, Viertel ≈ 13 px) und der Finger verschiebt die Stadt.
+  - Ein zweiter Tipp führt zurück zur ganzen Stadt.
+- **Zwei Modi:**
+  - Normal steht die Stadt fest, und Wischen scrollt die Seite bis in die Menüs.
+  - Nur mit dem Kompass gehört der Finger der Stadt (`lk-nah`: touch-action none, Ziehen in start.js erlaubt).
+- **Kopfzeile wie im alten Dorf:** Kompass und Uhrzeit (Deutschland), in der Mitte das Ortsschild mit dem Namen, rechts das Wetterschild. Name und Wetter schickt das Spiel (`leicht-kopf`).
+- **Namen an den Häusern** („Bäckerei 2“ …) im kleinen Rahmen. Die Zeichen („4 Brot“) rutschen nicht unter die Kopfzeile.
+- **Vollbild bleibt schlank:**
+  - Eingebettet gilt immer der Sparmodus: nie die großen Bilder, 12 Leute, Nähe höchstens das 1,6-Fache der kleinen Bilder.
+  - Oben gibt es „In neuem Tab öffnen“.
+- **Speicher:**
+  - „Alte Version“ entfernt den Rahmen der neuen Stadt ganz.
+  - „Neue Version“ gibt die gemalten Bilder des alten Dorfs frei (0 × 0).
+- **„Als App“:** Der Knopf unter der Stadt fragt auf Android/Chrome direkt; auf dem iPhone erklärt er „Teilen → Zum Home-Bildschirm“. Läuft die Seite schon als App, fehlt er.
+- Sonde 799 erweitert (Kompass, Uhr, Ortsschild, Namen, Verschieben nur mit Kompass, Vollbild ohne große Bilder): alles grün.

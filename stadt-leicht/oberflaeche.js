@@ -100,6 +100,12 @@
     /* FASSUNG 798: in der Seite eingebettet (Rahmen über dem Livestream) schließt „zurück“ den Rahmen. */
     const eingebettet = q.get("eingebettet") === "1" && window.parent !== window;
     links.appendChild(knopf("zurueck", eingebettet ? "Zurück" : "Zurück zur Webseite", () => { if (eingebettet) { try { window.parent.postMessage({ typ: "leicht-zu" }, location.origin); return; } catch (e) {} } if (history.length > 1 && document.referrer.indexOf(location.host) >= 0) history.back(); else location.href = "index.html"; }));
+    /* FASSUNG 806 — XANDER: „wenn wir der Vollbildansicht sind, darf es nicht kaputtmachen oder man muss halt die Wahl
+       bekommen in neuen Tab öffnen … dass man da kurz dort in Ruhe gucken kann oder das auf einem zweiten Gerät öffnet". */
+    if (eingebettet) links.appendChild(knopf('<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5H5V6h5"/></g></svg>', "In neuem Tab öffnen", () => {
+      try { window.parent.postMessage({ typ: "leicht-zu" }, location.origin); } catch (e) {}
+      window.open("stadt-leicht.html", "_blank", "noopener");
+    }, "lk-neuer-tab"));
     const name = el("div", "lk-name");
     links.appendChild(name);
     kopf.appendChild(links);
@@ -171,8 +177,19 @@
     if (eingebettet) {
       const ueberblick = () => Math.max(K.min, Math.min(K.max, K.W / 150));
       /* Wie beim alten Dorf: die kleine Karte mit den Vierteln erscheint erst, wenn man mit der Lupe näher dran ist. */
-      const nahSetzen = (nah) => { lupeK.classList.toggle("an", nah); document.body.classList.toggle("lk-nah", nah); };
-      const lupeK = knopf("lupe", "Lupe: näher ran", () => {
+      const nahSetzen = (nah) => {
+        lupeK.classList.toggle("an", nah); document.body.classList.toggle("lk-nah", nah);
+        const i = lupeK.querySelector("i"); if (i && i.textContent !== (nah ? "−" : "+")) i.textContent = nah ? "−" : "+";
+        lupeK.title = nah ? "Kompass: ganze Stadt" : "Kompass: näher ran"; lupeK.setAttribute("aria-label", lupeK.title);
+      };
+      /* FASSUNG 806 — XANDER: „die Lupe muss keine Lupe sein die kann wieder vorher Kompass sein … so ein kleiner Kreis …
+         das Symbol oben links ruft das jedenfalls auf. Danach muss wieder die Uhrzeit stehen. In der Mitte … mein Spitzname".
+         Oben links der Kompass des alten Dorfs (ganze Stadt ↔ näher ran, dann die kleine Karte und Verschieben mit dem
+         Finger), daneben die Uhrzeit in Deutschland, in der Mitte das Ortsschild, rechts das Wetter (kommt vom Spiel). */
+      SYM.kompass = '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#f7f1e1" stroke="#6b4a22" stroke-width="2"/><circle cx="20" cy="20" r="14.5" fill="none" stroke="#c9b58a" stroke-width="1"/>'
+        + '<g class="lk-nadel"><path d="M20 5.5l3.4 14.5h-6.8z" fill="#c8312b"/><path d="M20 34.5l-3.4-14.5h6.8z" fill="#3b3f4a"/></g><circle cx="20" cy="20" r="2" fill="#6b4a22"/>'
+        + '<text x="20" y="4.6" font-size="5" font-weight="700" text-anchor="middle" fill="#6b4a22" font-family="system-ui,sans-serif">N</text></svg><i>+</i>';
+      const lupeK = knopf("kompass", "Kompass: näher ran", () => {
         const nah = K.s > ueberblick() * 1.4;
         L().fliegeZu(nah ? 0 : K.x, nah ? 4 : K.y, nah ? ueberblick() : ueberblick() * 2.2, 600);
         nahSetzen(!nah);
@@ -180,6 +197,19 @@
       setInterval(() => { if (document.body.classList.contains("lk-mini-modus")) nahSetzen(K.s > ueberblick() * 1.4); }, 700);
       const vollK = knopf("voll", "Vollbild", () => { try { window.parent.postMessage({ typ: "leicht-voll" }, location.origin); } catch (e) {} }, "lk-nur-mini lk-vollknopf");
       wurzel.append(lupeK, vollK);
+      const kopfZ = el("div", "lk-kopfzeile", '<span class="lk-uhr" title="Uhrzeit in Deutschland"></span><span class="lk-ortsschild"><b></b></span><span class="lk-wetter" hidden></span>');
+      wurzel.appendChild(kopfZ);
+      const uhrStellen = () => {
+        let t = ""; try { t = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }).format(new Date()); } catch (e) { const d = new Date(); t = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
+        const u = kopfZ.querySelector(".lk-uhr"); if (u.textContent !== t) u.textContent = t;
+        const n = kopfZ.querySelector(".lk-ortsschild b"), name = O.kopfName || stadtName(); if (n.textContent !== name) n.textContent = name;
+      };
+      uhrStellen(); setInterval(uhrStellen, 10000);
+      window.addEventListener("message", (ev) => {
+        if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-kopf") return;
+        O.kopfName = String(ev.data.name || "").slice(0, 40); uhrStellen();
+        const w = kopfZ.querySelector(".lk-wetter"); w.innerHTML = String(ev.data.wetter || ""); w.hidden = !ev.data.wetter;
+      });
       /* Ein Viertel auf der kleinen Karte: im kleinen Rahmen mit der Lupen-Stärke, nicht mit der großen Nähe. */
       O.miniNah = () => { if (!document.body.classList.contains("lk-mini-modus")) return Math.max(K.s, 11 * K.dpr); nahSetzen(true); return ueberblick() * 2.2; };
       /* Schlank wie das alte Dorf: im kleinen Rahmen nur die kleinen Bilder (bilder.js) und höchstens die Lupen-Nähe. */
@@ -189,7 +219,10 @@
         document.documentElement.classList.toggle("lk-mini-html", klein);
         LB.nurKlein = klein;
         if (!klein && LB.vollLaden) LB.vollLaden().then(() => { L().unruhe = 2; });
-        K.max = klein ? Math.max(K.min, ueberblick() * 2.3) : maxVoll;
+        /* FASSUNG 806 — XANDER: „wenn man in der Vollbildansicht ist dann bricht das Ganze immer ab … dass die kleinen Häuser nur
+           so groß gezoomt werden können, wie sie innerhalb des Rahmens vorher waren". Eingebettet bleibt auch das Vollbild
+           schlank (Sparmodus: nie die großen Bilder, 12 Leute) – die Nähe reicht bis zum 1,6-Fachen der kleinen Bilder. */
+        K.max = klein ? Math.max(K.min, ueberblick() * 2.3) : LB.spar ? Math.min(maxVoll, 18 * 1.6) : maxVoll;
         if (K.s > K.max) K.s = K.max;
         if (klein) { if (bauLeiste) bauLeisteZeigen(false); if (leiste && !leiste.hidden) leisteZeigen(false); karte.hidden = true; farbFeld.hidden = true; }
       };
@@ -231,17 +264,36 @@
         }
         O.zeichenLegen();
       });
+      /* FASSUNG 806 — XANDER: „schau auch, dass du die Labels nach Möglichkeit wieder einbaust. Die Leute das auch aus dieser
+         Ansicht sehen können, damit sie genau wissen, was was ist". Unter jedem Haus sein Name (wie „Namen" im alten Dorf). */
+      const namenEbene = el("div", "lk-zeichen-ebene lk-namen-ebene");
+      wurzel.insertBefore(namenEbene, zeichenEbene);
+      const namenLegen = (haeuser) => {
+        const da = {};
+        for (const n of Array.from(namenEbene.children)) { if (haeuser[n.dataset.g]) da[n.dataset.g] = n; else n.remove(); }
+        for (const g in haeuser) {
+          const o = haeuser[g]; let n = da[g];
+          if (!n) { n = el("span", "lk-name-schild"); n.dataset.g = g; namenEbene.appendChild(n); }
+          const t = o.name + (o.stufenZahl > 1 ? " " + o.stufenZahl : ""); if (n.textContent !== t) n.textContent = t;
+          const P = ST.proj(o.x, o.y, 0), x = P[0] / K.dpr, y = P[1] / K.dpr;
+          const drin = x > -40 && y > -20 && x < K.W / K.dpr + 40 && y < K.H / K.dpr + 20;
+          n.style.display = drin ? "" : "none";
+          if (drin) n.style.transform = "translate(" + x.toFixed(1) + "px," + (y + 2).toFixed(1) + "px) translate(-50%,0)";
+        }
+      };
       O.zeichenLegen = () => {
-        if (!zeichenEbene.firstChild) return;
         const haeuser = {};
         for (const o of SZ.objekte) if (o.art === "haus" && o.spiel) haeuser[o.spiel] = o;
+        if (document.body.classList.contains("lk-mini-modus")) namenLegen(haeuser); else if (namenEbene.firstChild) namenEbene.textContent = "";
+        if (!zeichenEbene.firstChild) return;
         for (const b of zeichenEbene.children) {
           const o = haeuser[b.dataset.g];
           if (!o) { b.style.display = "none"; continue; }
           const P = ST.proj(o.x, o.y, (o.hoehe || 10) * (o.stufe || 1) * 0.8), x = P[0] / K.dpr, y = P[1] / K.dpr;
           const drin = x > -40 && y > -20 && x < K.W / K.dpr + 40 && y < K.H / K.dpr + 20;
           b.style.display = drin ? "" : "none";
-          if (drin) b.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) translate(-50%,-100%)";
+          /* nicht unter die Kopfzeile (Kompass, Uhr, Ortsschild) rutschen */
+          if (drin) b.style.transform = "translate(" + x.toFixed(1) + "px," + Math.max(y, 62).toFixed(1) + "px) translate(-50%,-100%)";
         }
       };
     }

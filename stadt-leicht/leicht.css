@@ -94,21 +94,39 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 .lk-nur-mini { display: none; }
 .lk-mini-modus .lk-nur-mini { display: inline-grid; position: absolute; width: 32px; height: 32px; border-radius: 10px; }
 .lk-mini-modus .lk-nur-mini svg { width: 18px; height: 18px; }
-.lk-mini-modus .lk-lupe { left: 6px; top: 6px; }
-.lk-mini-modus .lk-lupe.an { background: #b8812e; }
+/* FASSUNG 806 — der Kompass oben links wie im alten Dorf (26 px, Tippfläche größer), daneben die Uhr, Mitte Ortsschild, rechts Wetter */
+.lk-mini-modus .lk-lupe { left: 5px; top: 5px; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: none; box-shadow: 0 2px 6px rgba(0,0,0,.45); overflow: visible; }
+.lk-mini-modus .lk-lupe svg { width: 26px; height: 26px; }
+.lk-mini-modus .lk-lupe::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; }
+.lk-mini-modus .lk-lupe .lk-nadel { transform-origin: 20px 20px; transition: transform .3s; }
+.lk-mini-modus .lk-lupe.an .lk-nadel { transform: rotate(35deg); }
+.lk-mini-modus .lk-lupe i { position: absolute; right: -4px; top: -4px; width: 13px; height: 13px; border-radius: 50%; background: #3a2a14; color: #fff; font: 800 11px/13px system-ui, sans-serif; font-style: normal; text-align: center; }
+.lk-kopfzeile { display: none; }
+#lOber > .lk-kopfzeile { pointer-events: none; }
+.lk-mini-modus .lk-kopfzeile { display: block; position: absolute; inset: 0 0 auto 0; height: 0; pointer-events: none; }
+.lk-uhr { position: absolute; left: 35px; top: 7px; padding: 1px 5px; border-radius: 9px; background: rgba(20,24,34,.55); color: #fff; font: 700 10px/1.4 system-ui, sans-serif; }
+.lk-ortsschild { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); max-width: calc(100% - 170px); padding: 1px 3px; border-radius: 4px; background: #f7d117; box-shadow: 0 2px 5px rgba(0,0,0,.45); }
+.lk-ortsschild b { display: block; padding: 1px 7px; border: 1.5px solid #111; border-radius: 3px; color: #111; font: 800 10px/1.25 "DIN Alternate", "Arial Narrow", system-ui, sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lk-wetter { position: absolute; right: 5px; top: 6px; padding: 1px 6px; border-radius: 9px; background: rgba(20,24,34,.55); color: #fff; font: 700 10px/1.4 system-ui, sans-serif; white-space: nowrap; }
+.lk-wetter svg { width: 12px; height: 12px; vertical-align: -2px; }
+.lk-wetter .sp-dw-art, .lk-wetter small { display: none; }
+/* Namen an den Häusern (wie „Namen" im alten Dorf) */
+.lk-name-schild { position: absolute; left: 0; top: 0; pointer-events: none; padding: 0 3px; border-radius: 3px; background: rgba(20,24,34,.55); color: #fff; font: 600 8.5px/1.35 system-ui, sans-serif; white-space: nowrap; will-change: transform; }
 .lk-mini-modus .lk-vollknopf { left: 6px; bottom: 6px; }
 .lk-mini-modus .lk-kopf, .lk-mini-modus .lk-schmuck, .lk-mini-modus .lk-farbfeld, .lk-mini-modus .lk-leiste,
 .lk-mini-modus .lk-karte, .lk-mini-modus .lk-ansage, .lk-mini-modus .lk-mini-schalter { display: none !important; }
 .lk-mini-modus .lk-mini-rahmen { right: 4px; bottom: 4px; }
 .lk-mini-modus .lk-mini { opacity: .92; }
 .lk-mini-modus:not(.lk-nah) .lk-mini-rahmen { display: none; }
-.lk-mini-modus .lk-mini { width: 72px; height: 72px; border-radius: 9px; border-width: 1.5px; }
+.lk-mini-modus .lk-mini { width: 40px; height: 40px; border-radius: 6px; border-width: 1px; }
 .lk-mini-modus .lk-mini.zu { display: block; }
 .lk-mini-modus .lk-mini-feld span { display: none; }
 .lk-mini-modus .lk-vorhang b { font-size: 18px; }
 
 /* FASSUNG 805 — im kleinen Rahmen scrollt ein Wisch die Seite (nicht die Stadt); Tippen bleibt Tippen. */
 html.lk-mini-html, .lk-mini-modus, .lk-mini-modus #lDinge, .lk-mini-modus #lBoden { touch-action: pan-y; }
+/* FASSUNG 806 — mit dem Kompass (nah) gehört der Finger der Stadt */
+html.lk-mini-html:has(.lk-nah), .lk-mini-modus.lk-nah, .lk-mini-modus.lk-nah #lDinge, .lk-mini-modus.lk-nah #lBoden { touch-action: none; }
 /* FASSUNG 806 — Zeichen über den Häusern (nur im eingebetteten Spiel): „fertig" grün, Bau/kaputt, laufend nur nah dran */
 #lOber > .lk-zeichen-ebene { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .lk-zeichen { position: absolute; left: 0; top: 0; pointer-events: auto; min-height: 30px; min-width: 30px; padding: 0 8px; border: 0;

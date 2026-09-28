@@ -49,17 +49,15 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 805 — neue Stadt: einsammeln in der Karte, schlank, steht still",
+  stand: "Fassung 806 — kleine Stadt: Kompass, Uhr, Namen, fest/verschiebbar, Vollbild schlank",
 
   inArbeit: [
-    { seit: "2026-09-28T20:15",
+    { seit: "2026-09-28T20:28",
       text: "Grundkarte: alter Dorfplan als Vorlage 1 für die neue Stadt" },
-    { seit: "2026-09-28T20:15",
-      text: "Acht Bauwinkel (45°)" },
-    { seit: "2026-09-28T20:15",
-      text: "Döbelner Rathaus, Viper, Batmobil backen und einbauen" },
-    { seit: "2026-09-28T20:15",
-      text: "Pferdebahn mit Schienen" },
+    { seit: "2026-09-28T20:28",
+      text: "Acht Bauwinkel (45°) und neue Modelle backen (Rathaus, Viper, Batmobil, Pferdebahn)" },
+    { seit: "2026-09-28T20:28",
+      text: "Weihnachtsmann aus allen Richtungen (fangen), Halloween" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
