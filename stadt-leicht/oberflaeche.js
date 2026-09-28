@@ -243,7 +243,14 @@
       const drehK = knopf("rechts", "Karte drehen", () => { drehen(1); if (!document.body.classList.contains("lk-nah")) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; } }, "lk-nur-mini lk-drehknopf");
       setInterval(() => { if (document.body.classList.contains("lk-mini-modus")) nahSetzen(K.s > ueberblick() * 1.4); }, 700);
       const vollK = knopf("voll", "Vollbild", () => { try { window.parent.postMessage({ typ: "leicht-voll" }, location.origin); } catch (e) {} }, "lk-nur-mini lk-vollknopf");
-      wurzel.append(lupeK, vollK, drehK);
+      /* FASSUNG 809 — XANDER: „Mir fehlen noch die items zum schmücken die finde ich hier in der kleinen Map noch gar nicht".
+         Im kleinen Rahmen je ein Knopf Schmücken und Bauen neben dem Vollbild: öffnet das Vollbild gleich mit der Leiste. */
+      let nachVoll = "";
+      const vollMit = (was) => { nachVoll = was; try { window.parent.postMessage({ typ: "leicht-voll" }, location.origin); } catch (e) {} };
+      const schmuckK = knopf("stern", "Schmücken", () => vollMit("schmuck"), "lk-nur-mini lk-mini-schmuck");
+      const bauK = knopf("hammer", "Bauen", () => vollMit("bauen"), "lk-nur-mini lk-mini-bauen");
+      O.nachVollOeffnen = () => { const w = nachVoll; nachVoll = ""; if (w === "schmuck") leisteZeigen(true); else if (w === "bauen") bauLeisteZeigen(true); };
+      wurzel.append(lupeK, vollK, drehK, schmuckK, bauK);
       const kopfZ = el("div", "lk-kopfzeile", '<span class="lk-uhr" title="Uhrzeit in Deutschland"></span><span class="lk-ortsschild"><b></b></span><span class="lk-wetter" hidden></span>');
       wurzel.appendChild(kopfZ);
       const uhrStellen = () => {
@@ -284,6 +291,7 @@
       window.addEventListener("message", (ev) => {
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-modus") return;
         modus(!ev.data.voll); L().unruhe = 2;
+        if (ev.data.voll && O.nachVollOeffnen) setTimeout(O.nachVollOeffnen, 60);
       });
       /* FASSUNG 807 — XANDER: „aus unserer ganz normalen kleinen Dorf … heraus kann man über den Bereich des Bildes scrollen
          und man kommt … unter das Bild, um weiter zu scrollen in die Einzeleinstellungen vom Dorf … jetzt … bewegt sich jetzt
@@ -349,7 +357,12 @@
              (gelb = fertig), vorn ein kleines Bild der Ware. */
           const inhalt = (WARE_BILD[zeichen[g][2]] || (zeichen[g][0] === "fertig" ? WARE_BILD.korb : "")) + "<span></span>";
           if (b.dataset.i !== inhalt) { b.dataset.i = inhalt; b.innerHTML = inhalt; }
-          const sp = b.querySelector("span"); if (sp.textContent !== zeichen[g][1]) sp.textContent = zeichen[g][1];
+          /* FASSUNG 809 — XANDER: „vielleicht einfach nur ne Kanne mit mal eins dran ohne großes Hintergrund". Fertig mit
+             Bild der Ware: nur das Bild und „×4"; der ganze Text bleibt als Titel/Vorlesetext. */
+          const voll = zeichen[g][1], n = /^(\d+)\s/.exec(voll || "");
+          const text = zeichen[g][0] === "fertig" && n ? "×" + n[1] : voll;
+          const sp = b.querySelector("span"); if (sp.textContent !== text) sp.textContent = text;
+          if (b.title !== voll) { b.title = voll; b.setAttribute("aria-label", voll); }
         }
         O.zeichenLegen();
       });
@@ -500,11 +513,23 @@
     geist = SZ.neu({ art: "eigen", bild: s[1], x: p[0], y: p[1], dreh: 0, fuss: s[2], hoehe: s[3], nurWinter: s[4] ? 1 : undefined, geist: true });
     karteZeigen("setzen", geist);
   }
+  O.haltAufbau = () => !!geist;
+  /* FASSUNG 809 — ein gebautes Haus versetzen: es wird selbst zum Geist (gestrichelt), Abbrechen stellt es zurück */
+  function hausVersetzen(o) {
+    if (geist) geistFertig(false);
+    auswahlWeg();
+    o._zurueck = { x: o.x, y: o.y, dreh: o.dreh };
+    o.geist = true; geist = o;
+    karteZeigen("setzen", geist); SZ.geaendert(); L().unruhe = 2;
+  }
   function geistFertig(ok) {
     if (!geist) return;
     if (ok) { geist.geist = false; L().dekoSpeichern(); ansage("Gesetzt"); }
+    else if (geist._zurueck) { Object.assign(geist, geist._zurueck); geist.geist = false; delete geist._zurueck; }
     else SZ.weg(geist);
+    if (geist) delete geist._zurueck;
     geist = null; karte.hidden = true; SZ.geaendert(); miniMalen(); L().unruhe = 2;
+    if (L().aufbauenSpaeter) L().aufbauen();
   }
 
   /* ---------------- Antippen ---------------- */
@@ -531,6 +556,14 @@
     if (bauLeiste) { bauLeisteZeigen(false); return; }
     const o = SZ.treffer(px, py, (o) => o.art !== "natur" || o.rand !== 1);
     if (o && (o.art === "haus" || o.art === "wunder" || o.art === "eigen" || o.name)) { waehlen(o); return; }
+    /* FASSUNG 809 — XANDER: „Waldstück … wenn man auf die Bäume klickt … einen Effekt". Ein Baum raschelt: Blätter
+       (im Winter Schnee) rieseln, zwei Vögel fliegen auf; im Spiel öffnet sich die Wald-Station darunter. */
+    const baum = SZ.treffer(px, py, (x) => x.art === "natur" && /^n_(tanne|laubbaum|obstbaum|baum|birke|kiefer)/.test(x.bild || ""));
+    if (baum) {
+      baumRascheln(baum);
+      if (window.parent !== window && document.body.classList.contains("lk-mini-modus")) { try { window.parent.postMessage({ typ: "leicht-haus", g: "wald" }, location.origin); } catch (e) {} }
+      auswahlWeg(); return;
+    }
     /* leerer Bauplatz? */
     const a = ST.aufBoden(px, py);
     /* FASSUNG 807 — im Spiel eingebettet: ein Tipp auf den See angelt (wie im alten Dorf); Doppeltipp auf die Wiese
@@ -549,6 +582,38 @@
     }
     auswahlWeg();
   };
+  const rascheln = [];
+  function baumRascheln(o) {
+    const t0 = performance.now(), jahr = SZ.jahr, h = (o.hoehe || 10) * (o.stufe || 1);
+    const farben = jahr === "winter" ? ["#ffffff", "#e8f1fb"] : jahr === "herbst" ? ["#d9822b", "#c2561d", "#e8b23a"] : ["#5f9a3a", "#7cb34a", "#4c8330"];
+    const teile = [];
+    for (let i = 0; i < 14; i++) teile.push({ z: h * (0.45 + Math.random() * 0.45), dx: (Math.random() - 0.5) * 3.2, dy: (Math.random() - 0.5) * 3.2, v: 0.35 + Math.random() * 0.4, w: Math.random() * 6, f: farben[i % farben.length] });
+    rascheln.push({ o: o, t0: t0, teile: teile, voegel: jahr === "winter" ? 1 : 2 });
+    if (rascheln.length > 6) rascheln.shift();
+    L().unruhe = 2;
+  }
+  SZ.zuhoerer.push(function (g) {
+    const jetzt = performance.now();
+    for (let i = rascheln.length - 1; i >= 0; i--) {
+      const r = rascheln[i], d = (jetzt - r.t0) / 1000;
+      if (d > 3.2) { rascheln.splice(i, 1); continue; }
+      const kk = K.s * (r.o.stufe || 1);
+      g.save();
+      for (const p of r.teile) {
+        const z = Math.max(0, p.z - d * p.v * 6), P = ST.proj(r.o.x + p.dx + Math.sin(d * 3 + p.w) * 0.6, r.o.y + p.dy, z);
+        g.globalAlpha = Math.max(0, Math.min(1, 1.6 - d * 0.5)) * (z > 0 ? 1 : Math.max(0, 1 - (d - 2) * 2));
+        g.fillStyle = p.f;
+        g.beginPath(); g.ellipse(P[0], P[1], Math.max(1.2 * K.dpr, 0.18 * kk), Math.max(0.8 * K.dpr, 0.1 * kk), d * 4 + p.w, 0, Math.PI * 2); g.fill();
+      }
+      g.globalAlpha = Math.max(0, 1 - d / 3.2); g.strokeStyle = "#2b2a2e"; g.lineWidth = Math.max(1.2, 0.12 * kk);
+      for (let v = 0; v < r.voegel; v++) {
+        const P = ST.proj(r.o.x + (v ? 1 : -1) * d * 3, r.o.y - d * 2, (r.o.hoehe || 10) * (r.o.stufe || 1) * 0.9 + d * d * 5);
+        const sp = Math.max(3 * K.dpr, 0.5 * kk), fl = Math.sin(d * 18 + v * 2) * sp * 0.5;
+        g.beginPath(); g.moveTo(P[0] - sp, P[1] - fl); g.quadraticCurveTo(P[0] - sp * 0.4, P[1] - sp * 0.3, P[0], P[1]); g.quadraticCurveTo(P[0] + sp * 0.4, P[1] - sp * 0.3, P[0] + sp, P[1] - fl); g.stroke();
+      }
+      g.restore();
+    }
+  });
   /* FASSUNG 808 — XANDER: „du hast gesagt acht Winkel und hast sie nicht umgesetzt die möchte ich bitte". Was schräge
      Bilder hat (Spielgebäude, Bank, Zaun, Fahrzeuge …), dreht in Achtelschritten (45°), alles andere wie bisher in
      Vierteln. r = +1 links herum, −1 rechts herum. */
@@ -585,7 +650,7 @@
     karte.append(titel, zeile, knoepfe);
     const zu = knopf("kreuz", "Schließen", () => { if (geist) geistFertig(false); auswahlWeg(); karte.hidden = true; }, "lk-klein");
     if (art === "setzen") {
-      titel.textContent = "Schmuck setzen";
+      titel.textContent = o && o.art === "haus" ? o.name + " versetzen" : "Schmuck setzen";
       zeile.textContent = "Mit dem Finger verschieben oder auf die Wiese tippen.";
       knoepfe.append(knopf("links", "Drehen", () => objDrehen(geist, 1)), knopf("rechts", "Andersherum drehen", () => objDrehen(geist, -1)),
         knopf("haken", "Setzen", () => geistFertig(true), "lk-gut"), knopf("kreuz", "Abbrechen", () => geistFertig(false)));
@@ -628,7 +693,11 @@
         if (ST.spiel.beispiel) { a.disabled = true; a.title = "In der Beispielstadt wird nicht gebaut – bitte anmelden"; }
         knoepfe.append(a);
       }
-      knoepfe.append(knopf("links", "Drehen", () => objDrehen(o, 1, true)), knopf("rechts", "Andersherum drehen", () => objDrehen(o, -1, true)), zu);
+      knoepfe.append(knopf("links", "Drehen", () => objDrehen(o, 1, true)), knopf("rechts", "Andersherum drehen", () => objDrehen(o, -1, true)),
+        knopf("versetzen", "Versetzen", () => hausVersetzen(o)));
+      if (o.platzX != null && (Math.abs(o.x - o.platzX) > 0.01 || Math.abs(o.y - o.platzY) > 0.01 || o.dreh !== o.platzDreh))
+        knoepfe.append(knopf("zurueck", "Zurück auf den Bauplatz", () => { o.x = o.platzX; o.y = o.platzY; o.dreh = o.platzDreh; SZ.geaendert(); miniMalen(); L().dekoSpeichern(); ansage("Wieder auf dem Bauplatz"); karteZeigen("haus", o); }));
+      knoepfe.append(zu);
       return;
     }
     if (o.art === "eigen") {

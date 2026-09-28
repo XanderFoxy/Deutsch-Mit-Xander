@@ -116,6 +116,8 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 /* Namen an den Häusern (wie „Namen" im alten Dorf) */
 .lk-name-schild { position: absolute; left: 0; top: 0; pointer-events: none; padding: 0 3px; border-radius: 3px; background: rgba(20,24,34,.55); color: #fff; font: 600 8.5px/1.35 system-ui, sans-serif; white-space: nowrap; will-change: transform; }
 .lk-mini-modus .lk-vollknopf { left: 6px; bottom: 6px; }
+.lk-mini-modus .lk-mini-schmuck { left: 44px; bottom: 6px; }
+.lk-mini-modus .lk-mini-bauen { left: 82px; bottom: 6px; }
 .lk-mini-modus .lk-kopf, .lk-mini-modus .lk-schmuck, .lk-mini-modus .lk-farbfeld, .lk-mini-modus .lk-leiste,
 .lk-mini-modus .lk-karte, .lk-mini-modus .lk-ansage, .lk-mini-modus .lk-mini-schalter { display: none !important; }
 .lk-mini-modus .lk-mini-rahmen { right: 4px; bottom: 4px; }
@@ -146,13 +148,18 @@ html.lk-mini-html:has(.lk-nah), .lk-mini-modus.lk-nah, .lk-mini-modus.lk-nah #lD
 .lk-zeichen { isolation: isolate; font: 800 9px/16px system-ui, sans-serif; white-space: nowrap; color: #fff; }
 .lk-zeichen span { padding: 0 6px 0 2px; }
 .lk-z-bild { width: 13px; height: 13px; margin-left: 4px; flex: none; }
-.lk-zeichen.lk-z-fertig { color: #3b2a08; animation: lk-zeichen-wink 1s ease-in-out infinite alternate; }
-.lk-zeichen.lk-z-fertig::before { background: #f2c230; }
+/* FASSUNG 809 — XANDER: „so ruhig und vielleicht leicht pulsieren so wie's vorher war … nicht dass das so springt nach oben
+   und unten". Fertig = nur die Ware groß mit „×4" auf einem weichen hellen Schein, atmet langsam um den Fußpunkt
+   (der untere Rand bleibt stehen). Tippfläche 44 px. */
+.lk-zeichen.lk-z-fertig { color: #3b2a08; min-width: 44px; min-height: 44px; padding: 6px; transform-origin: 50% 100%; animation: lk-zeichen-atmen 2.2s ease-in-out infinite; }
+.lk-zeichen.lk-z-fertig::before { inset: 4px; border-radius: 50%; background: radial-gradient(circle, rgba(255,250,228,.95) 0 38%, rgba(255,238,170,.55) 58%, rgba(255,230,150,0) 72%); box-shadow: none; }
+.lk-zeichen.lk-z-fertig .lk-z-bild { width: 22px; height: 22px; margin: 0; filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+.lk-zeichen.lk-z-fertig span { padding: 0 0 0 1px; font: 900 11px/1 system-ui, sans-serif; color: #2e2006; text-shadow: 0 0 2px #fff, 0 0 3px #fff, 0 0 4px #fff; align-self: flex-end; margin-bottom: 4px; }
+@keyframes lk-zeichen-atmen { 0%, 100% { scale: 1; } 50% { scale: 1.06; } }
 .lk-zeichen.lk-z-bau::before { background: #9a6424; }
 .lk-zeichen.lk-z-kaputt::before { background: #d8261f; }
 .lk-zeichen.lk-z-laeuft { font-weight: 700; }
 .lk-mini-modus:not(.lk-nah) .lk-zeichen.lk-z-laeuft { display: none !important; }
-@keyframes lk-zeichen-wink { from { scale: 1; } to { scale: 1.12; } }
 
 /* FASSUNG 807 — Drehknopf nur mit dem Kompass; Symbole/Namen folgen den Schaltern des Spiels */
 .lk-mini-modus .lk-drehknopf { left: 5px; top: 38px; width: 26px; height: 26px; border-radius: 50%; }

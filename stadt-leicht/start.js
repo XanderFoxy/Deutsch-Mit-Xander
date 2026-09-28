@@ -158,14 +158,24 @@
   L.dekoSpeichern = function () {
     const liste = SZ.objekte.filter((o) => o.art === "eigen").map((o) => ({ bild: o.bild, x: +o.x.toFixed(2), y: +o.y.toFixed(2), dreh: o.dreh, fuss: o.fuss, hoehe: o.hoehe, nurWinter: o.nurWinter, jahr: o.jahr }));
     try { localStorage.setItem("leicht_deko_v1", JSON.stringify(liste)); } catch (e) {}
-    const lage = {}; for (const o of SZ.objekte) if (o.art === "haus" && o.dreh !== (D.PLAETZE[o.spiel] || {}).dreh) lage[o.spiel] = { dreh: o.dreh };
+    /* FASSUNG 809 — Drehung und Versatz gegenüber dem eigenen Bauplatz (auch nach Platztausch im Spiel) */
+    const lage = {};
+    for (const o of SZ.objekte) {
+      if (o.art !== "haus") continue;
+      const pd = o.platzDreh != null ? o.platzDreh : (D.PLAETZE[o.spiel] || {}).dreh;
+      const dx = o.platzX != null ? +(o.x - o.platzX).toFixed(2) : 0, dy = o.platzY != null ? +(o.y - o.platzY).toFixed(2) : 0;
+      if (o.dreh === pd && !dx && !dy) continue;
+      lage[o.spiel] = { dreh: o.dreh };
+      if (dx || dy) { lage[o.spiel].dx = dx; lage[o.spiel].dy = dy; }
+    }
     L.lage = lage;
     try { localStorage.setItem("leicht_lage_v1", JSON.stringify(lage)); } catch (e) {}
     if (ST.spiel && ST.spiel.eigenesSpeichern) ST.spiel.eigenesSpeichern({ v: 1, deko: liste, lage: lage });
   };
   try { L.lage = JSON.parse(localStorage.getItem("leicht_lage_v1") || "{}"); } catch (e) { L.lage = {}; }
 
-  L.aufbauen = function () { D.aufbauen(L.ich, L.dekoLaden()); if (ST.bahn) ST.bahn.aufbauen(); if (ST.fuhrwerk) ST.fuhrwerk.aufbauen(); if (ST.leute && !ST.leute.liste.length) ST.leute.setzen(q.get("leute") != null ? +q.get("leute") : LB.spar ? 12 : 30); if (ST.oberflaeche && ST.oberflaeche.neuAufgebaut) ST.oberflaeche.neuAufgebaut(); L.unruhe = 2; };
+  /* FASSUNG 809 — solange etwas gesetzt/versetzt wird, nicht neu aufbauen (der Geist ginge verloren); danach nachholen */
+  L.aufbauen = function () { if (ST.oberflaeche && ST.oberflaeche.haltAufbau && ST.oberflaeche.haltAufbau()) { L.aufbauenSpaeter = true; return; } L.aufbauenSpaeter = false; D.aufbauen(L.ich, L.dekoLaden()); if (ST.bahn) ST.bahn.aufbauen(); if (ST.fuhrwerk) ST.fuhrwerk.aufbauen(); if (ST.leute && !ST.leute.liste.length) ST.leute.setzen(q.get("leute") != null ? +q.get("leute") : LB.spar ? 12 : 30); if (ST.oberflaeche && ST.oberflaeche.neuAufgebaut) ST.oberflaeche.neuAufgebaut(); L.unruhe = 2; };
 
   function los() {
     groesse();

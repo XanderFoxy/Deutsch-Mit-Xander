@@ -233,7 +233,9 @@
     const ng = Z.grad != null ? Z.grad : Z.nacht;
     let nachtAnteil = ng >= 0.995 ? 1 : ng <= 0.01 ? 0 : ng <= 0.75 ? 0.62 * ng / 0.75 : 0.62 + 0.38 * (ng - 0.75) / 0.25;
     /* Sparmodus: nur ein Bild je Haus (Tag oder Nacht), nie beide */
-    if (LB.spar || LB.nurKlein) nachtAnteil = nachtAnteil >= 0.5 ? 1 : 0;
+    /* FASSUNG 809 — XANDER: „Tag/Nacht … fließend, keine Sprünge". Im kleinen Rahmen (nur _k-Bilder) wird jetzt auch
+       überblendet; hart umgeschaltet wird nur noch im Sparmodus schwacher Geräte außerhalb des Rahmens. */
+    if (LB.spar && !LB.nurKlein) nachtAnteil = nachtAnteil >= 0.5 ? 1 : 0;
     const zeiten = nachtAnteil >= 1 ? [["nacht", 1]] : nachtAnteil > 0 ? [["tag", 1], ["nacht", nachtAnteil]] : [["tag", 1]];
     const sicht = [];
     const rand = 60 * K.dpr;
@@ -318,6 +320,7 @@
     /* 3. Dinge */
     for (let i = 0; i < sicht.length; i++) {
       const e = sicht[i];
+      if (e.o === SZ.auswahl && !e.o.geist) auswahlRing(e, t);
       for (const lg of e.lagen) {
         const img = LB.bild(lg[0]); if (!img) continue;
         const m = lg[3] || e.meta, k = lg[2] || e.k;
@@ -326,7 +329,7 @@
       }
       g.globalAlpha = 1;
       if (e.licht) lichtMalen({ X: e.X, Y: e.Y, k: e.lk, meta: e.licht }, Z, t, false, 1);
-      if (e.o === SZ.auswahl) auswahlRahmen(e);
+      if (e.o.geist) auswahlRahmen(e);
       leuteMalen(i);
     }
     /* 4. Rauch */
@@ -345,6 +348,30 @@
   };
   SZ.zuhoerer = [];
 
+  /* FASSUNG 809 — XANDER: „ich möchte nicht, dass wenn man auf ein Haus klickt, dass man dann diese Strichelinien sieht …
+     so ne Kreis Markierung … weicher … Strichlinie nur wenn man wirklich was hin bauen will oder drehen will".
+     Angetippt: ein weicher, leicht atmender Lichtkreis am Boden UNTER dem Haus. Gestrichelt nur beim Setzen/Versetzen. */
+  function auswahlRing(e, t) {
+    const ec = ecken(e.o, 0.9).map((p) => ST.proj(p[0], p[1], 0));
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const p of ec) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = Math.max(10 * K.dpr, (x1 - x0) / 2), ry = Math.max(5 * K.dpr, (y1 - y0) / 2);
+    const puls = 0.5 + 0.5 * Math.sin((t || 0) * Math.PI * 2 / 1.8);
+    g.save();
+    g.translate(cx, cy); g.scale(1, ry / rx);
+    const gr = g.createRadialGradient(0, 0, rx * 0.55, 0, 0, rx * 1.12);
+    gr.addColorStop(0, "rgba(255,236,170,0)");
+    gr.addColorStop(0.72, "rgba(255,230,150," + (0.30 + 0.12 * puls).toFixed(3) + ")");
+    gr.addColorStop(1, "rgba(255,230,150,0)");
+    g.fillStyle = gr; g.beginPath(); g.arc(0, 0, rx * 1.12, 0, Math.PI * 2); g.fill();
+    g.restore();
+    const f = 0.98 + 0.02 * puls;
+    g.save();
+    g.strokeStyle = "rgba(255,244,205," + (0.62 + 0.25 * puls).toFixed(3) + ")"; g.lineWidth = 2.4 * K.dpr;
+    g.shadowColor = "rgba(255,220,120,0.8)"; g.shadowBlur = 8 * K.dpr;
+    g.beginPath(); g.ellipse(cx, cy, rx * f, ry * f, 0, 0, Math.PI * 2); g.stroke();
+    g.restore();
+  }
   function auswahlRahmen(e) {
     const ec = ecken(e.o, 0.6).map((p) => ST.proj(p[0], p[1], 0));
     g.save();

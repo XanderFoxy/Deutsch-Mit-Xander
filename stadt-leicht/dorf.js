@@ -496,7 +496,10 @@
         bau = { p: st ? Math.max(0.72, anteil) : anteil, bis: bis, dauer: dauer, stufe: b.stufe };
       }
       const dreh = extra[k] && extra[k].dreh != null ? extra[k].dreh : p.dreh;
-      SZ.neu({ art: "haus", spiel: k, name: D.GEBAEUDE[k][0], bild: bild[0], bauBild: bild[1], x: p.x, y: p.y, dreh: dreh,
+      /* FASSUNG 809 — XANDER: „die Möglichkeit meine Häuser auch im Nachhinein … herum zu drehen oder anders zu
+         positionieren … und das abspeichern zu können". Versetzt wird relativ zum Bauplatz (dx/dy in Metern). */
+      const dx = (extra[k] && +extra[k].dx) || 0, dy = (extra[k] && +extra[k].dy) || 0;
+      SZ.neu({ art: "haus", spiel: k, name: D.GEBAEUDE[k][0], bild: bild[0], bauBild: bild[1], x: p.x + dx, y: p.y + dy, dreh: dreh, platzX: p.x, platzY: p.y, platzDreh: p.dreh,
         stufe: D.STUFE[Math.max(0, Math.min(2, (st || 1) - 1))] * ((D.MASS || {})[k] || 1), stufenZahl: st, fuss: bild[2].map((z) => z * ((D.MASS || {})[k] || 1)), hoehe: bild[3], bau: bau });
     }
     const wunder = (ich && ich.volk && ich.volk.wunder) || {};
@@ -512,6 +515,9 @@
       SZ.neu({ art: "wunder", spiel: k, name: w.name, bild: w.bild, x: w.x, y: w.y, dreh: w.dreh, fuss: w.fussS || w.fuss, hoehe: w.hoehe * (w.mass || 1), stufe: w.mass || 1 });
     }
     for (const o of D.kulisse()) SZ.neu(o);
+    /* FASSUNG 809 — ein versetztes Haus verdrängt die Bäume und Büsche, auf denen es jetzt stünde */
+    const versetzt = SZ.objekte.filter((o) => o.art === "haus" && o.platzX != null && (o.x !== o.platzX || o.y !== o.platzY));
+    if (versetzt.length) SZ.objekte = SZ.objekte.filter((n) => n.art !== "natur" || !versetzt.some((h) => Math.abs(n.x - h.x) < (h.fuss[0] + h.fuss[1]) * 0.32 + 1.5 && Math.abs(n.y - h.y) < (h.fuss[0] + h.fuss[1]) * 0.32 + 1.5));
     for (const o of eigeneDeko || []) SZ.neu(Object.assign({ art: "eigen" }, o));
     D.jahrFiltern();
   };
