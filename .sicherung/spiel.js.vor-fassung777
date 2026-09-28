@@ -4842,22 +4842,6 @@
       eierAlle(); return;
     } else if (s === "pluendern") {
       pluendern(k.dataset.z, k.dataset.c, k.dataset.g); return;
-    } else if (s === "buendnis" || s === "verhandeln") {
-      var dz = k.dataset.z, dw = k.dataset.w;
-      (s === "buendnis" ? rpc("spiel_buendnis", { p_ziel: dz, p_was: dw }) : rpc("spiel_verhandeln", { p_ziel: dz, p_punkte: Number(k.dataset.n) || 15 })).then(function (r) {
-        if (!r || r.ok === false) { hinweis("🤝 " + ((r && r.grund) || "Das ging nicht.")); return; }
-        diplUebernehmen(r);
-        if (r.ich && r.ich.id) { S.ich = r.ich; S.stand[r.ich.id] = oeffentlich(r.ich); }
-        var dd = diplVon(dz) || {};
-        if (s === "verhandeln") { ton("kasse", 0.35); hinweis("🎁 Friedensgeschenk an " + r.name + ": −" + r.punkte_weg + " P, Vertrauen +" + r.plus + " (jetzt " + dd.vertrauen + ")."); }
-        else {
-          ton(r.was === "verbuendet" ? "gong" : "swoosh", 0.35);
-          hinweis("🤝 " + ({ angeboten: "Bündnis angeboten – " + r.name + " muss annehmen.", verbuendet: "Du und " + r.name + " seid jetzt verbündet (Vertrauen " + dd.vertrauen + ").",
-            abgelehnt: "Angebot von " + r.name + " abgelehnt.", gekuendigt: "Bündnis mit " + r.name + " friedlich beendet (Vertrauen −5)." })[r.was]);
-        }
-        schnellZeichnen(true); panelAuffrischen();
-      }).catch(function () { hinweis("🤝 Das ging gerade nicht."); });
-      return;
     } else if (s === "kaution") {
       var hz = k.dataset.z || null;
       wirtschaft("spiel_kaution", { p_haeftling: hz }, function (r) {
@@ -8906,100 +8890,24 @@
     abrufen(true); ton("swoosh", 0.25); schnellZeichnen(true);
     return true;
   }
-  /* ---------------------------------------------------------------
-     FASSUNG 777 — DIPLOMATIE (Walkie 300)
-     XANDER: „Man kann im Prinzip jeden überfallen egal mit wem man einen
-     Bündnis hat aber es beschädigt halt das Bündnis und das Vertrauen …
-     die Vertrauensbasis die muss dann wieder durch Verhandlungen
-     hergestellt werden … ob dieses Bündnis überhaupt wieder angenommen
-     werden kann oder ob es dazu eine Sperre gibt".
-     Wie in Travian (Nichtangriffspakt), Civilization (das Gedächtnis der
-     anderen) und Clash of Clans (Schilde): jedes Dorfpaar hat Vertrauen
-     0–100 (Start 50). Bündnis ab 40 Vertrauen, auf Angebot und Annahme;
-     wie viele, trägt das Rathaus (1 + Rathaus-Stufe). Verbündete helfen
-     bei der Abwehr (die Hälfte ihrer Ritter, höchstens 3) und Ausflüge
-     zu ihnen bringen +10 %. Wer einen Verbündeten plündert, begeht
-     Verrat: Bündnis weg, Vertrauen −40, 48 h keine neuen Bündnisse mit
-     diesem Dorf – nur verhandeln. Plündern ohne Bündnis kostet −10.
-     Verhandeln = Friedensgeschenk: je 3 P +1 Vertrauen (höchstens +20 am
-     Tag); eine Kaution für jemanden zu zahlen bringt +10.
-     --------------------------------------------------------------- */
-  function diplUebernehmen(r) {
-    if (!r || r.ok === false) return;
-    S.dipl = S.dipl || {};
-    (r.liste || []).forEach(function (x) { S.dipl[x.id] = x; });
-    if (r.max != null) S.diplMax = r.max;
-    if (r.zahl != null) S.diplZahl = r.zahl;
-  }
-  function diplLaden(ids, zwingen) {
-    ids = (ids || []).filter(Boolean);
-    if (!ids.length || S.diplLaeuft) return;
-    var fehlt = ids.some(function (id) { return !(S.dipl && S.dipl[id]); });
-    var alter = S.diplZeit ? Date.now() - S.diplZeit : 1e9;
-    /* Nie öfter als alle 5 s (sonst zeichnet jede Antwort neu, und jedes Neuzeichnen
-       fragt wieder – eine Schleife, wenn der Server für ein Dorf nichts liefert). */
-    if (alter < 5000 || (!zwingen && !fehlt && alter < 30000)) return;
-    S.diplLaeuft = true; S.diplZeit = Date.now();
-    rpc("spiel_diplomatie", { p_ids: ids }).then(function (r) {
-      S.diplLaeuft = false;
-      if (!r || r.ok === false || !Array.isArray(r.liste)) return;
-      diplUebernehmen(r);
-      /* Was der Server nicht nennt, gilt als neutral – damit fragt niemand endlos nach. */
-      ids.forEach(function (id) { if (!S.dipl[id]) S.dipl[id] = { id: id, vertrauen: 50, buendnis: false, antrag: null, sperre_bis: null, geschenk_rest: 20 }; });
-      schnellZeichnen(true);
-    }).catch(function () { S.diplLaeuft = false; });
-  }
-  function diplVon(sid) { return (S.dipl || {})[sid] || null; }
-  function verbuendet(sid) { var d = diplVon(sid); return !!(d && d.buendnis); }
-  function diplZeileHtml(sid, name) {
-    var d = diplVon(sid);
-    if (!d) return '<div class="sp-dipl"><span class="sp-dipl-text">Vertrauen wird geladen …</span></div>';
-    var v = Math.max(0, Math.min(100, Number(d.vertrauen) || 0));
-    var sperre = d.sperre_bis && Date.parse(d.sperre_bis) > Date.now();
-    var farbe = v >= 70 ? "#4fae4f" : v >= 40 ? "#e2c35a" : "#d8503a";
-    var status = d.buendnis ? '<em class="sp-dipl-bund">verbündet</em>'
-      : d.antrag === "du" ? '<em class="sp-dipl-antrag">bietet dir ein Bündnis an</em>'
-      : d.antrag === "ich" ? '<em>Angebot gesendet</em>'
-      : sperre ? '<em class="sp-dipl-sperre">nach Verrat gesperrt bis ' + ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"][new Date(Date.parse(d.sperre_bis)).getDay()] + " " + uhrzeit(Date.parse(d.sperre_bis)) + "</em>" : "";
-    var k = "";
-    if (d.buendnis) k += '<button type="button" data-s="buendnis" data-w="kuendigen" data-z="' + esc(sid) + '">Kündigen</button>';
-    else if (d.antrag === "du") k += '<button type="button" class="sp-dipl-ja" data-s="buendnis" data-w="annehmen" data-z="' + esc(sid) + '">Annehmen</button>'
-      + '<button type="button" data-s="buendnis" data-w="ablehnen" data-z="' + esc(sid) + '">Ablehnen</button>';
-    else if (!sperre && d.antrag !== "ich") {
-      var voll = S.diplMax != null && S.diplZahl >= S.diplMax;
-      k += '<button type="button" data-s="buendnis" data-w="anbieten" data-z="' + esc(sid) + '"' + (v < 40 || voll ? " disabled" : "")
-        + ' title="' + (v < 40 ? "Ab 40 Vertrauen – erst verhandeln" : voll ? "Dein Rathaus trägt nur " + S.diplMax + " Bündnis(se)" : "Bündnis anbieten") + '">Bündnis anbieten</button>';
-    }
-    k += '<button type="button" data-s="verhandeln" data-n="15" data-z="' + esc(sid) + '"' + ((S.ich && S.ich.punkte || 0) < 15 || !(d.geschenk_rest > 0) ? " disabled" : "")
-      + ' title="Friedensgeschenk: 15 P an ' + esc(name) + ', Vertrauen +5">Geschenk <small>15 P</small></button>';
-    return '<div class="sp-dipl"><span class="sp-dipl-text">Vertrauen <b>' + v + '</b><i class="sp-dipl-balken"><u style="width:' + v + "%;background:" + farbe + '"></u></i>' + status + "</span>"
-      + '<span class="sp-dipl-knoepfe">' + k + "</span></div>";
-  }
   function nachbarnHtml() {
     /* FASSUNG 775 — wer im Gefängnis sitzt, plündert nicht. */
     var haft = meineHaft(S.ich);
-    var diplIds = [];
     var zeilen = plaetze().filter(function (p) { return !p.leer && !p.ich && p.id && !istPuppe(p.id); }).map(function (p) {
       var sid = spielIdVon(p.id), st = sid && S.stand[sid];
       if (!st || !st.dorf) return "";
-      diplIds.push(sid);
-      var bund = verbuendet(sid);
       var knoepfe = Object.keys(st.dorf).filter(function (k) { return DORF[k] && PLUENDERBAR.indexOf(k) >= 0; }).map(function (k) {
         var g = st.dorf[k] || {}, gepl = g.gepl && Date.now() - Date.parse(g.gepl) < 4 * 3600000, kaputt = !(g.lp > 0);
-        return '<button type="button" class="sp-pl-knopf' + (bund ? " sp-pl-verrat" : "") + '" data-s="pluendern" data-z="' + esc(sid) + '" data-c="' + esc(p.id) + '" data-g="' + k + '"'
-          + (kaputt || gepl || !st.mitspielen || haft ? " disabled" : "") + ' title="' + DORF[k].name + (haft ? " – du sitzt im Gefängnis" : gepl ? " – 4 h geschützt" : kaputt ? " – kaputt" : bund ? " – verbündet: Plündern wäre Verrat" : "") + '">'
+        return '<button type="button" class="sp-pl-knopf" data-s="pluendern" data-z="' + esc(sid) + '" data-c="' + esc(p.id) + '" data-g="' + k + '"'
+          + (kaputt || gepl || !st.mitspielen || haft ? " disabled" : "") + ' title="' + DORF[k].name + (haft ? " – du sitzt im Gefängnis" : gepl ? " – 4 h geschützt" : kaputt ? " – kaputt" : "") + '">'
           + dorfSvg(k, g.stufe || 1) + "<small>" + DORF[k].name + "</small></button>";
       }).join("");
       return knoepfe ? '<div class="sp-nachbar' + (racheGegen(sid) ? " sp-nachbar-rache" : "") + '"><b>' + esc(p.name || "?") + (st.dorf_name ? " · " + esc(st.dorf_name) : "") + (racheGegen(sid) ? ' <em class="sp-rache">Rache · ohne Mana</em>' : "") + '</b><button type="button" class="sp-nachbar-hin" data-s="dorfbesuch" data-c="' + esc(p.id) + '">Stadt ansehen</button><small>' + dorfKennzeile(st) + " · " + (st.mitspielen ? (st.ritter ? st.ritter + " Ritter" : "keine Ritter") : "spielt gerade nicht") + "</small>"
-        + diplZeileHtml(sid, p.name || "?")
         + '<div class="sp-nachbar-reihe">' + knoepfe + "</div></div>" : "";
     }).join("");
-    if (diplIds.length) diplLaden(diplIds);
-    return '<div class="sp-sm-gruppe sp-nachbarn"><span>' + (haft ? "Nachbardörfer · plündern erst, wenn du frei bist" : "Nachbardörfer · Bündnis oder Plündern (10 Mana)") + "</span></div>"
+    return '<div class="sp-sm-gruppe sp-nachbarn"><span>' + (haft ? "Nachbardörfer plündern · erst wenn du frei bist" : "Nachbardörfer plündern · 10 Mana") + "</span></div>"
       + (zeilen || '<p class="sp-sm-klein">Gerade kein Dorf im Raum.</p>')
-      + (zeilen ? '<p class="sp-sm-klein">Du nimmst 20 % der Vorräte (je Ritter +5 %, ihre Ritter −5 %). Es kann scheitern: 12 %, je Ritter dort +6 %, je eigener −4 % – dann sind die 10 Mana weg und 3 % deiner Punkte gehen an sie. Wer dich geplündert hat, plünderst du 24 Stunden lang einmal ohne Mana zurück (Rache). Das Gebäude bleibt stehen und ist nur beschädigt – der Besitzer repariert es mit Erz oder Holz. Danach 4 Stunden Schutz. Schule, Bibliothek und Krankenhaus plündert man nicht.</p>'
-        + '<p class="sp-sm-klein"><b>Bündnis:</b> ab 40 Vertrauen. Verbündete helfen bei der Abwehr (die Hälfte ihrer Ritter, höchstens 3), Ausflüge zu ihnen bringen +10 %. Dein Rathaus trägt 1 + Stufe Bündnisse'
-        + (S.diplMax != null ? " (jetzt " + (S.diplZahl || 0) + " von " + S.diplMax + ")" : "") + '. Plünderst du einen Verbündeten, ist das Verrat: Bündnis weg, Vertrauen −40 und 48 Stunden kein neues Bündnis. Vertrauen wächst durch Geschenke (je 3 P +1, bis +20 am Tag), eine bezahlte Kaution (+10) und Ausflüge zu Verbündeten (+2).</p>' : "");
+      + (zeilen ? '<p class="sp-sm-klein">Du nimmst 20 % der Vorräte (je Ritter +5 %, ihre Ritter −5 %). Es kann scheitern: 12 %, je Ritter dort +6 %, je eigener −4 % – dann sind die 10 Mana weg und 3 % deiner Punkte gehen an sie. Wer dich geplündert hat, plünderst du 24 Stunden lang einmal ohne Mana zurück (Rache). Das Gebäude bleibt stehen und ist nur beschädigt – der Besitzer repariert es mit Erz oder Holz. Danach 4 Stunden Schutz. Schule, Bibliothek und Krankenhaus plündert man nicht.</p>' : "");
   }
   var MAKROS = { dorf: "Mein Dorf", handel: "Markt & Handel", werkzeug: "Werkzeug", deutsch: "Deutsch-Aufgabe", tiere: "Tiere", heilen: "Heilen", zauber: "Zauber" };
   try { var makroMerk = localStorage.getItem("dma_spiel_makro"); if (MAKROS[makroMerk]) S.makro = makroMerk; } catch (e) {}
@@ -9078,13 +8986,6 @@
   function pluendern(sid, chatId, geb) {
     if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
     if (S.pluenderLaeuft) return;
-    /* FASSUNG 777 — beim Verbündeten fragt der erste Tipp nach: das wäre Verrat. */
-    if (verbuendet(sid) && !(S.verratFrage && S.verratFrage.sid === sid && Date.now() < S.verratFrage.bis)) {
-      S.verratFrage = { sid: sid, bis: Date.now() + 6000 };
-      hinweis("💔 Ihr seid verbündet. Plündern bricht das Bündnis (Verrat: Vertrauen −40, 48 h Sperre). Tipp noch einmal, wenn du es wirklich willst.");
-      return;
-    }
-    S.verratFrage = null;
     S.pluenderLaeuft = true;
     rpc("spiel_pluendern", { p_ziel: sid, p_gebaeude: geb }).then(function (r) {
       S.pluenderLaeuft = false;
@@ -9095,8 +8996,6 @@
         abwehrZeigen(chatId); ton("schildblock", 0.55);
         hinweis("🛡️ " + (r.ritter ? r.an + "s " + r.ritter + " Ritter haben" : r.an + " hat") + " dich abgewehrt" + (r.rache ? " – die Rache ist vorbei" : "")
           + ": " + (r.mana_weg ? "−" + r.mana_weg + " Mana, " : "") + "−" + r.strafe + " Punkte an " + r.an + ". (Chance zu scheitern: " + r.fehl + " %)"
-          + (r.hilfe ? " (" + r.hilfe + " Ritter kamen aus verbündeten Dörfern zu Hilfe)" : "")
-          + (r.verrat ? " 💔 Das Bündnis ist gebrochen – Vertrauen −40, 48 h Sperre." : "")
           + (r.haft ? " 🔒 Die Wachen sperren dich ins Gefängnis: " + haftZeit(hafRest(r.haft.bis)) + " – oder Kaution " + r.haft.kaution + " P." : ""));
         senden({ ereignis: "pluender_abgewehrt", zielChat: chatId, gebaeude: geb, name: (S.ich || {}).name || "", an: r.an, strafe: r.strafe });
         setTimeout(function () { abrufen(true); }, 400);
@@ -9110,8 +9009,7 @@
       ton("hammerschlag", 0.5);
       if (beute.length) setTimeout(function () { ton("kasse", 0.4); }, 650);
       hinweis("⚔️ " + (r.rache ? "Rache! " : "") + DORF[geb].name + " von " + r.an + " geplündert: " + (beute.join(", ") || "leer – nichts zu holen") + " (" + r.anteil + " %). Das Gebäude bleibt stehen – "
-        + r.an + " kann es reparieren." + (r.verrat ? " 💔 Verrat: das Bündnis ist gebrochen, Vertrauen −40, 48 h kein neues Bündnis." : ""));
-      S.diplZeit = 0; diplLaden([sid], true);
+        + r.an + " kann es reparieren.");
       senden({ ereignis: "gepluendert", zielChat: chatId, gebaeude: geb, beute: r.beute || {}, name: (S.ich || {}).name || "", an: r.an, rache: !!r.rache });
       setTimeout(function () { abrufen(true); }, 400);
       schnellZeichnen(true);
@@ -11556,8 +11454,7 @@
       if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
       bahnWareZeigen("touristen", "−" + r.leute, 104, bahnAn(bahnBeiX(98)).y - 22);
       ton("gong", 0.35);
-      hinweis("🚂 " + r.leute + " Bewohner fahren nach " + (r.dorf_name || r.ziel_name || "drüben") + " (−" + r.kosten + " P) und bringen " + r.forschung + " Forschung mit."
-        + (r.buendnis ? " 🤝 Verbündet: +10 % und Vertrauen +2." : ""));
+      hinweis("🚂 " + r.leute + " Bewohner fahren nach " + (r.dorf_name || r.ziel_name || "drüben") + " (−" + r.kosten + " P) und bringen " + r.forschung + " Forschung mit.");
       schnellZeichnen(true); panelAuffrischen();
     }).catch(function () { S.bahnLaeuft = false; hinweis("🚂 Das ging gerade nicht."); });
   }

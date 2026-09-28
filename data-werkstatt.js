@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 776: gemalte Wege als Folge – Runde, ×-Wiederholung, zweites Modul, Merken/Platzieren (Funk 196)",
+  stand: "Fassung 777: Diplomatie – Bündnis ab 40 Vertrauen, Rathaus trägt Bündnisse, Verrat mit 48-h-Sperre, Friedensgeschenke (Walkie 300 Teil 1)",
 
   inArbeit: [
-    { seit: "2026-09-28T00:23",
-      text: "Walkie 300: Bündnis, Offline-Überfälle, Touristenwellen · Walkie 301: Ausflug zum Wahrzeichen · Walkie 302: Flickstube · Funk 188/190 Rest · Folgen auch für Pac-Man/Mario" },
+    { seit: "2026-09-28T01:05",
+      text: "778: Überfall auf Abwesende · 779: Beliebtheit, Touristenwellen, Kurtaxe · Walkie 301/302 · Funk 188/190 Rest" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T00:23",
-      text: "Funk 196: Sequenzen für gemalte Wege" },
+    { seit: "2026-09-28T01:05",
+      text: "Walkie 300 Teil 1: Bündnis und Vertrauen" },
   ],
 };

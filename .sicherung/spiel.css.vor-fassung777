@@ -2941,18 +2941,3 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-dl-station .sp-gefangener b { color: #2d2418; }
 .sp-dl-station .sp-gefangener small { color: #6b5e44; }
 .sp-dl-station .sp-gefangene-leer { color: #6b5e44; }
-/* FASSUNG 777 — Walkie 300: Vertrauen und Bündnis je Nachbardorf. */
-.sp-dipl { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 4px; }
-.sp-dipl-text { flex: 1 1 150px; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 3px 6px; font: 500 10.5px/1.25 system-ui, sans-serif; color: #c9d4e2; }
-.sp-dipl-text b { color: #fff; font-weight: 800; }
-.sp-dipl-balken { display: inline-block; width: 64px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .14); overflow: hidden; }
-.sp-dipl-balken u { display: block; height: 100%; border-radius: 3px; text-decoration: none; }
-.sp-dipl-text em { font-style: normal; font-weight: 700; padding: 1px 6px; border-radius: 8px; background: rgba(255, 255, 255, .1); }
-.sp-dipl-text .sp-dipl-bund { background: #2f7a3a; color: #fff; }
-.sp-dipl-text .sp-dipl-antrag { background: #e2c35a; color: #2d2418; }
-.sp-dipl-text .sp-dipl-sperre { background: #8a2230; color: #fff; }
-.sp-dipl-knoepfe { display: flex; flex-wrap: wrap; gap: 4px; }
-.sp-dipl-knoepfe button { min-height: 30px; padding: 3px 9px; border-radius: 9px; font: 700 11px/1.1 system-ui, sans-serif; }
-.sp-dipl-knoepfe button small { font-weight: 600; opacity: .8; }
-.sp-dipl-knoepfe .sp-dipl-ja { background: #2f7a3a; color: #fff; border-color: #4fae4f; }
-.sp-pl-knopf.sp-pl-verrat { box-shadow: 0 0 0 1.5px #d8503a inset; }

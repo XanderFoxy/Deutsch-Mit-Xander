@@ -1647,7 +1647,7 @@ Sonde runde99 angepasst und erweitert, alles grün.
   - Erst wenn auch das nach 5 s nichts bringt, kommt der Hinweis. Der Bericht an mich enthält dann den Zustand (Mikro geliehen, zweiter Versuch, Dauer).
 
 ### Fassung 775 (Walkie 299: Gasthaus mit Koch und Gefängnis für Plünderer)
-Sonden: neu 775 (18/18 grün); 755, 756, 764, 765 (Erwartung um „à 5 P“ ergänzt), 767, 769, 770 grün.
+Sonden: neu 775 (17/17 grün); 755, 756, 764, 765 (Erwartung um „à 5 P“ ergänzt), 767, 769, 770 grün.
 - **Gasthaus** (ab Level 6, 150 P je Stufe).
   - Je Stufe steigt ein Tourist mehr aus dem Zug.
   - Jedes Gericht bringt 5 + 2 × Stufe Punkte (ohne Gasthaus wie bisher 5 P).
@@ -1684,3 +1684,25 @@ XANDER: „dass man den Weg im zweiten Modul verändern kann wie sie weiter fäh
   - Beim Auto wird der eigene Platz am Ende nicht mehr „überfahren“.
   - Der Chat-Satz zählt bei mehr als 8 Halten nicht jeden Platz auf („über 20 Halte“).
 - Noch nicht: Pac-Man, Mario und das gemeinsame Reisen senden ihren gemalten Weg weiter sofort beim Loslassen, ohne Folgen-Leiste.
+
+### Fassung 777 (Walkie 300, Teil 1: Diplomatie – Bündnis, Vertrauen, Verrat, Verhandeln)
+Sonden: neu 777 (13/13 grün); 755, 765, 770, 775 grün (775: Überschrift „Nachbardörfer · …“ angepasst).
+XANDER: „Man kann im Prinzip jeden überfallen egal mit wem man einen Bündnis hat aber es beschädigt halt das Bündnis und das Vertrauen … die Vertrauensbasis die muss dann wieder durch Verhandlungen hergestellt werden … ob es dazu eine Sperre gibt … wie das mit der allgemeinen Infrastruktur und dem Rathaus … zusammenhängt".
+Vorbilder: Travian (Nichtangriffspakt, Allianzplätze wachsen mit der Botschaft), Civilization (die anderen merken sich Verrat), Clash of Clans (Schilde).
+- **Vertrauen** 0–100 je Dorfpaar, Start 50. Neben jedem Nachbardorf: Balken (rot < 40, gelb, grün ≥ 70) und Stand.
+- **Bündnis** ab 40 Vertrauen: einer bietet an, der andere nimmt an (Angebot gilt 3 Tage). Annahme: Vertrauen +10.
+  - Wie viele Bündnisse, trägt das **Rathaus**: 1 + Rathaus-Stufe (so wie die Botschaft in Travian).
+  - Wirkung: Verbündete helfen bei der Abwehr (die Hälfte ihrer Ritter, höchstens 3, macht Plündern schwerer). Ausflüge zu Verbündeten bringen +10 % (Eintritt 10 statt 9 P, Forschung 7 statt 6) und Vertrauen +2.
+  - Kündigen geht friedlich (Vertrauen −5, keine Sperre).
+- **Verrat**: Wer einen Verbündeten plündert, bricht das Bündnis. Vertrauen −40, 48 Stunden kein neues Bündnis mit diesem Dorf, Ticker „💔 … bricht das Bündnis“.
+  - Im Spiel fragt der erste Tipp auf ein Gebäude des Verbündeten nach („Tipp noch einmal, wenn du es wirklich willst“). Die Knöpfe sind rot umrandet.
+- Plündern ohne Bündnis kostet −10 Vertrauen (Rache nicht).
+- **Verhandeln**: Friedensgeschenk 15 P an das andere Dorf, je 3 P +1 Vertrauen, höchstens +20 am Tag. Das geht auch während der Sperre.
+  - Eine Kaution für jemanden zu zahlen (Gefängnis, Fassung 775) bringt +10 Vertrauen zu ihm.
+- Server:
+  - Tabelle `dorf_beziehung` (RLS an, keine direkten Zugriffe).
+  - Neue Funktionen: `spiel_diplomatie`, `spiel_buendnis`, `spiel_verhandeln`.
+  - Erweitert: `spiel_pluendern` (Verrat, −10, Hilfe der Verbündeten), `spiel_bahn_reise` (+10 %), `spiel_kaution` (+10).
+  - Servertest (zurückgerollt): anbieten → Geschenk +10 (60) → zweites Geschenk +10 (Tageslimit) → Emy sieht das Angebot und nimmt an (80) → Rathaus Stufe 3: 4 Plätze, 1 belegt → Ausflug 7 Forschung → Plündern = Verrat → Vertrauen 42, Sperre 48 h → neues Angebot abgelehnt.
+- Behoben vor dem Commit: Liefert der Server für ein Dorf nichts, lud die Zeile endlos nach. Jetzt höchstens alle 5 s, fehlende Dörfer gelten als neutral (50).
+- Als Nächstes (778): Überfälle auf Abwesende (1× am Tag, höchstens 10 % Beute, 8 h Schutz, Anfänger unter Level 5 nie, Verbündete nie, Meldung beim Wiederkommen). Danach (779): Beliebtheit, Touristenwellen mit Meldung, Kurtaxe wie in Venedig.

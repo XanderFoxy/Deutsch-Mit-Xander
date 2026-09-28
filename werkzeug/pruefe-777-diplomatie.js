@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 775: GASTHAUS UND GEFÄNGNIS (WALKIE 299)
+   SONDE — FASSUNG 777: DIPLOMATIE (WALKIE 300)
    ---------------------------------------------------------------------
-   Gasthaus: Touristen essen dort, je Gericht 5 + 2 × Stufe P, mit Koch
-   +3 P. Gefängnis: wer beim Plündern scheitert, sitzt; Freikaufen oder
-   jemand anderes zahlt die Kaution.
+   XANDER: „Man kann im Prinzip jeden überfallen egal mit wem man einen
+   Bündnis hat aber es beschädigt halt das Bündnis und das Vertrauen".
+   Gemessen: Vertrauen laden, Bündnis anbieten/annehmen, Verrat-Rückfrage,
+   Friedensgeschenk, Sperre, Layout auf 360 px.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -183,94 +184,78 @@ const sage = (gut, was, zusatz) => {
     window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });
 
-  const beaId = "11111111-1111-4111-8111-111111111111", cemId = "22222222-2222-4222-8222-222222222222";
-  await pg.evaluate(([beaId, cemId]) => {
-    const ich = window.__ich, S = window.DMA_SPIEL.pruef.zustand(), jetzt = Date.now();
-    ich.dorf = Object.assign({}, ich.dorf, { gasthaus: { stufe: 2, lp: 40 }, gefaengnis: { stufe: 1, lp: 20 } });
-    ich.volk = Object.assign({}, ich.volk, { berufe: Object.assign({}, ich.volk.berufe, { koch: 1 }),
-      haft: { bei: beaId, bei_name: "Bea", dorf_name: "Beastadt", seit: new Date(jetzt).toISOString(), bis: new Date(jetzt + 2 * 3600000).toISOString(), kaution: 20 },
-      gefangene: [{ id: cemId, name: "Cem", bis: new Date(jetzt + 3600000).toISOString(), kaution: 20 }] });
-    ich.mitspielen = true;
+
+  const beaId = "11111111-1111-4111-8111-111111111111";
+  await pg.evaluate((beaId) => {
+    const ich = window.__ich, S = window.DMA_SPIEL.pruef.zustand();
+    ich.mitspielen = true; ich.volk = Object.assign({}, ich.volk, { haft: null });
+    window.__dipl = { id: beaId, vertrauen: 55, buendnis: false, antrag: null, sperre_bis: null, geschenk_rest: 20 };
+    const antwort = () => ({ ok: true, max: 2, zahl: window.__dipl.buendnis ? 1 : 0, liste: [Object.assign({}, window.__dipl)] });
     window.__extra = Object.assign({}, window.__extra, {
-      spiel_kaution: (a) => { const neu = JSON.parse(JSON.stringify(ich)); if (!a.p_haeftling) { delete neu.volk.haft; ich.volk = neu.volk; }
-        return Object.assign({ ok: true, frei: a.p_haeftling ? "Emy" : "Alex", kaution: 20, an: "Bea" }, neu); }
+      spiel_diplomatie: () => antwort(),
+      spiel_buendnis: (a) => {
+        if (a.p_was === "anbieten") window.__dipl.antrag = "ich";
+        if (a.p_was === "annehmen") { window.__dipl.antrag = null; window.__dipl.buendnis = true; window.__dipl.vertrauen += 10; }
+        if (a.p_was === "kuendigen") { window.__dipl.buendnis = false; window.__dipl.vertrauen -= 5; }
+        return Object.assign({ ok: true, was: { anbieten: "angeboten", annehmen: "verbuendet", kuendigen: "gekuendigt", ablehnen: "abgelehnt" }[a.p_was], name: "Bea" }, antwort());
+      },
+      spiel_verhandeln: (a) => { window.__dipl.vertrauen += 5; window.__dipl.geschenk_rest -= 5; ich.punkte -= a.p_punkte;
+        return Object.assign({ ok: true, punkte_weg: a.p_punkte, plus: 5, name: "Bea", ich: JSON.parse(JSON.stringify(ich)) }, antwort()); },
+      spiel_pluendern: () => { window.__dipl.buendnis = false; window.__dipl.vertrauen -= 40; window.__dipl.sperre_bis = new Date(Date.now() + 48 * 3600000).toISOString();
+        return Object.assign({ ok: true, gescheitert: false, an: "Bea", beute: { brot: 2 }, anteil: 20, verrat: true, hilfe: 0 }, JSON.parse(JSON.stringify(ich))); }
     });
     const bea = S.stand[beaId];
-    bea.mitspielen = true; bea.dorf_name = "Beastadt";
-    bea.dorf = { baeckerei: { stufe: 1, lp: 20 }, gefaengnis: { stufe: 2, lp: 40 } };
-    bea.gefangene = [{ id: "33333333-3333-4333-8333-333333333333", name: "Emy", bis: new Date(jetzt + 5400000).toISOString(), kaution: 30 }];
-    S.ich = JSON.parse(JSON.stringify(ich)); S.stand[ich.id] = Object.assign({}, S.stand[ich.id], { dorf: ich.dorf });
-    S.schnellMenue = true; S.blick = "dorfblick"; S.dorfWahl = ""; S.dorfBesuch = "";
+    bea.mitspielen = true; bea.dorf_name = "Beastadt"; bea.dorf = { baeckerei: { stufe: 1, lp: 20 } };
+    S.ich = JSON.parse(JSON.stringify(ich)); S.dipl = null; S.diplZeit = 0;
+    S.schnellMenue = true; S.blick = "dorfblick"; S.dorfWahl = ""; S.dorfBesuch = ""; S.dorfTeil = "";
     window.__hinweise.length = 0;
     window.DMA_SPIEL.pruef.schnellZeichnen(true);
-  }, [beaId, cemId]);
+  }, beaId);
   await tick(900);
   const SP = process.env.SP || "/tmp";
+  const dipl = () => pg.evaluate(() => { const e = document.querySelector(".sp-nachbar .sp-dipl"); return e ? e.textContent : ""; });
+  const alleH = () => pg.evaluate(() => window.__hinweise.join(" || "));
 
-  /* 1. Haft-Band oben im Dorf */
-  let b = await pg.evaluate(() => { const e = document.querySelector(".sp-haft"); if (!e) return null; const r = e.getBoundingClientRect(), k = e.querySelector("button").getBoundingClientRect();
-    return { text: e.textContent, rechts: r.right, knopfRechts: k.right, knopfH: k.height, breit: document.documentElement.scrollWidth }; });
-  sage(!!b && /Gefängnis von Bea/.test(b.text) && /Freikaufen/.test(b.text) && /20 P/.test(b.text), "Haft-Band: bei Bea, Freikaufen 20 P", b && b.text.slice(0, 90));
-  sage(!!b && b.knopfRechts <= 360 && b.knopfH >= 30 && b.breit <= 360, "Haft-Band passt auf 360 px, Knopf ≥30 px", b && JSON.stringify({ r: b.knopfRechts, h: b.knopfH, w: b.breit }));
-  await pg.evaluate(() => { const e = document.querySelector(".sp-haft"); if (e) e.scrollIntoView({ block: "center" }); });
-  await pg.screenshot({ path: SP + "/p775_haft.png" }).catch(() => {});
+  let t = await dipl();
+  const ruf = await pg.evaluate(() => window.__rufe.filter((r) => r.name === "spiel_diplomatie").slice(-1)[0]);
+  sage(!!ruf && (ruf.args.p_ids || []).indexOf(beaId) >= 0, "Vertrauen wird für Bea geladen", JSON.stringify(ruf && ruf.args));
+  sage(/Vertrauen 55/.test(t) && /Bündnis anbieten/.test(t) && /Geschenk/.test(t), "Zeile: Vertrauen 55, Bündnis anbieten, Geschenk", t);
+  await pg.evaluate(() => { const e = document.querySelector(".sp-nachbar"); if (e) e.scrollIntoView({ block: "center" }); });
+  await pg.screenshot({ path: SP + "/p777_nachbar.png" }).catch(() => {});
 
-  /* 2. Plündern-Knopf sagt „du sitzt" */
-  const pk = await pg.evaluate(() => { const k = [...document.querySelectorAll('.sp-nachbarn ~ * [data-s="pluendern"], [data-s="pluendern"]')]; const g = document.querySelector(".sp-nachbarn");
-    return { alleZu: k.length > 0 && k.every((e) => e.disabled), titel: k.map((e) => e.title).join("|"), kopf: g ? g.textContent : "" }; });
-  sage(pk.alleZu && /du sitzt/.test(pk.titel) && /erst, wenn du frei bist/.test(pk.kopf), "Plündern gesperrt, solange man sitzt", JSON.stringify(pk).slice(0, 140));
-  sage(/noch 2 h/.test(b.text), "Haftzeit lesbar („2 h“)", b.text.slice(0, 90));
+  await tippe('.sp-nachbar [data-s="buendnis"][data-w="anbieten"]'); await tick(500);
+  sage(/Angebot gesendet/.test(await dipl()), "Bündnis anbieten → „Angebot gesendet“", await dipl());
 
-  /* 3. Freikaufen ruft spiel_kaution ohne Häftling */
-  await tippe('.sp-haft button'); await tick(700);
-  let ruf = await pg.evaluate(() => window.__rufe.filter((r) => r.name === "spiel_kaution").slice(-1)[0]);
-  sage(!!ruf && ruf.args.p_haeftling === null, "Freikaufen → spiel_kaution(p_haeftling null)", JSON.stringify(ruf));
-  const alle = await pg.evaluate(() => window.__hinweise.join(" || "));
-  sage(/Du hast dich freigekauft – das Geld geht an Bea/.test(alle), "Meldung: freigekauft", alle.slice(-160));
-  sage(await pg.evaluate(() => !document.querySelector(".sp-haft")), "Band weg nach dem Freikaufen");
+  await pg.evaluate(() => { window.__dipl.antrag = "du"; const S = window.DMA_SPIEL.pruef.zustand(); S.diplZeit = 0; S.dipl = null; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(700);
+  t = await dipl();
+  sage(/bietet dir ein Bündnis an/.test(t) && /Annehmen/.test(t), "Angebot von Bea: Annehmen/Ablehnen", t);
+  await tippe('.sp-nachbar [data-s="buendnis"][data-w="annehmen"]'); await tick(500);
+  t = await dipl();
+  sage(/verbündet/.test(t) && /Kündigen/.test(t) && /Vertrauen 65/.test(t), "angenommen: verbündet, Vertrauen 65, Kündigen", t);
+  sage(await pg.evaluate(() => document.querySelectorAll(".sp-nachbar .sp-pl-verrat").length > 0), "Plündern-Knöpfe beim Verbündeten rot umrandet");
 
-  /* 4. Eigene Stationen: Gasthaus, Gefängnis */
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = "gasthaus"; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(500);
-  let t = await pg.evaluate(() => (document.querySelector(".sp-dl-station") || {}).textContent || "");
-  sage(/Gasthaus/.test(t) && /12 P je Gericht/.test(t) && /\+2 Gast/.test(t), "Gasthaus-Station: 12 P je Gericht (5+2·2+3), +2 Gast", t.slice(0, 140));
-  await pg.evaluate(() => { const e = document.querySelector(".sp-dl-station"); if (e) e.scrollIntoView({ block: "center" }); });
-  await pg.screenshot({ path: SP + "/p775_gasthaus.png" }).catch(() => {});
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = "gefaengnis"; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(500);
-  t = await pg.evaluate(() => { const e = document.querySelector(".sp-dl-station"); return e ? { t: e.textContent, k: e.querySelectorAll('.sp-gefangener [data-s="kaution"]').length } : null; });
-  sage(!!t && /Cem/.test(t.t) && /Kaution 20 P/.test(t.t) && t.k === 0, "Eigenes Gefängnis: Cem sitzt, kein Zahlknopf", t && t.t.slice(0, 160));
+  await tippe('.sp-nachbar [data-s="pluendern"][data-g="baeckerei"]'); await tick(400);
+  let n = await pg.evaluate(() => window.__rufe.filter((r) => r.name === "spiel_pluendern").length);
+  sage(n === 0 && /Tipp noch einmal/.test(await alleH()), "erster Tipp beim Verbündeten: Rückfrage, kein Plündern", String(n));
+  await tippe('.sp-nachbar [data-s="pluendern"][data-g="baeckerei"]'); await tick(900);
+  n = await pg.evaluate(() => window.__rufe.filter((r) => r.name === "spiel_pluendern").length);
+  sage(n === 1 && /Verrat/.test(await alleH()), "zweiter Tipp: geplündert, Meldung „Verrat“", String(n));
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.diplZeit = 0; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(700);
+  t = await dipl();
+  sage(/gesperrt bis/.test(t) && /Vertrauen 25/.test(t) && !/Bündnis anbieten/.test(t), "nach Verrat: Sperre, Vertrauen 25, kein Angebot möglich", t);
 
-  /* 5. Berufe: Koch */
-  const ber = await pg.evaluate(() => document.body.textContent.indexOf("Koch") >= 0);
-  sage(ber, "Beruf Koch erscheint im Dorf");
+  await tippe('.sp-nachbar [data-s="verhandeln"]'); await tick(500);
+  const v = await pg.evaluate(() => window.__rufe.filter((r) => r.name === "spiel_verhandeln").slice(-1)[0]);
+  sage(!!v && v.args.p_punkte === 15 && /Friedensgeschenk an Bea: −15 P, Vertrauen \+5 \(jetzt 30\)/.test(await alleH()), "Geschenk: 15 P, Vertrauen +5 → 30", JSON.stringify(v && v.args));
 
-  /* 6. Bau-Liste: Gasthaus und Gefängnis */
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = ""; S.dorfTeil = "bau"; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(500);
-  const bau = await pg.evaluate(() => [...document.querySelectorAll('[data-s="bauen"]')].map((e) => e.dataset.w));
-  sage(bau.indexOf("gasthaus") >= 0 && bau.indexOf("gefaengnis") >= 0, "Bau-Liste hat Gasthaus und Gefängnis", bau.join(","));
+  await pg.evaluate(() => { window.__dipl.sperre_bis = null; const S = window.DMA_SPIEL.pruef.zustand(); S.diplZeit = 0; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(700);
+  const zu = await pg.evaluate(() => { const b = document.querySelector('.sp-nachbar [data-s="buendnis"][data-w="anbieten"]'); return b ? { aus: b.disabled, titel: b.title } : null; });
+  sage(!!zu && zu.aus && /Ab 40 Vertrauen/.test(zu.titel), "unter 40 Vertrauen: Bündnis anbieten gesperrt", JSON.stringify(zu));
 
-  /* 7. Besuch bei Bea: fremdes Gefängnis mit Kaution zahlen */
-  await pg.evaluate((beaId) => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfTeil = ""; S.dorfBesuch = beaId; S.dorfWahl = "gefaengnis"; window.DMA_SPIEL.pruef.schnellZeichnen(true); }, beaId); await tick(600);
-  t = await pg.evaluate(() => { const e = document.querySelector(".sp-dl-station"); if (!e) return null; const k = e.querySelector('[data-s="kaution"]'); const r = k && k.getBoundingClientRect(); return { t: e.textContent, z: k && k.dataset.z, r: r && r.right, h: r && r.height }; });
-  sage(!!t && /Emy/.test(t.t) && /Kaution zahlen/.test(t.t) && t.z === "33333333-3333-4333-8333-333333333333", "Fremdes Gefängnis: Emy, „Kaution zahlen“", t && t.t.slice(0, 160));
-  sage(!!t && t.r <= 360 && t.h >= 30, "Kaution-Knopf passt, ≥30 px", t && JSON.stringify({ r: t.r, h: t.h }));
-  await pg.evaluate(() => { const e = document.querySelector(".sp-dl-station"); if (e) e.scrollIntoView({ block: "center" }); });
-  await pg.screenshot({ path: SP + "/p775_fremd.png" }).catch(() => {});
-  await tippe('.sp-dl-station [data-s="kaution"]'); await tick(700);
-  ruf = await pg.evaluate(() => window.__rufe.filter((r) => r.name === "spiel_kaution").slice(-1)[0]);
-  sage(!!ruf && ruf.args.p_haeftling === "33333333-3333-4333-8333-333333333333", "Kaution zahlen → spiel_kaution(Emy)", JSON.stringify(ruf && ruf.args));
-  sage(/Kaution für Emy/.test(await zuletzt()), "Meldung: Kaution für Emy bezahlt", await zuletzt());
-
-  /* 8. Gescheitertes Plündern mit Haft */
-  await pg.evaluate((beaId) => {
-    const S = window.DMA_SPIEL.pruef.zustand(); S.dorfBesuch = ""; S.dorfWahl = "";
-    window.__extra.spiel_pluendern = () => Object.assign({ ok: true, gescheitert: true, an: "Bea", strafe: 12, fehl: 34, ritter: 0,
-      haft: { bei_name: "Bea", bis: new Date(Date.now() + 4 * 3600000).toISOString(), kaution: 30 } }, JSON.parse(JSON.stringify(window.__ich)));
-    window.DMA_SPIEL.pruef.schnellZeichnen(true);
-  }, beaId); await tick(500);
-  await tippe('[data-s="pluendern"][data-g="baeckerei"]'); await tick(900);
-  sage(/Gefängnis/.test(await zuletzt()) && /Kaution 30 P/.test(await zuletzt()) && /4 h/.test(await zuletzt()), "Scheitern meldet Haft und Kaution", await zuletzt());
-
-  /* 9. Dorfbild zeichnet ohne Fehler */
+  const lay = await pg.evaluate(() => { const n = document.querySelector(".sp-nachbar"); const r = n.getBoundingClientRect();
+    const kn = [...n.querySelectorAll(".sp-dipl button")].map((b) => b.getBoundingClientRect());
+    return { rechts: Math.round(r.right), klein: kn.filter((q) => q.height < 30).length, raus: kn.filter((q) => q.right > r.right + 1).length, breit: document.documentElement.scrollWidth }; });
+  sage(lay.klein === 0 && lay.raus === 0 && lay.breit <= 360, "360 px: Knöpfe ≥30 px, nichts ragt heraus", JSON.stringify(lay));
   sage(!konsolenFehler.length, "keine Seitenfehler", konsolenFehler.join(" | ").slice(0, 200));
   console.log(fehler ? "\nROT: " + fehler + " Fehler" : "\nGRÜN");
   await br.close(); srv.close(); process.exit(fehler ? 1 : 0);
