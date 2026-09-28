@@ -139,12 +139,13 @@
   }
 
   /* ---------------- Jahres- und Tageszeit nach dem Kalender ---------------- */
-  function jahrNachDatum(d) {
-    const m = d.getMonth() + 1, t = d.getDate();
-    if ((m === 11 && t >= 27) || m === 12 || m === 1 || m === 2) return "winter";
-    if (m >= 3 && m <= 5) return "fruehling";
-    if (m >= 6 && m <= 8) return "sommer";
-    return "herbst";
+  /* FASSUNG 814 — XANDER: „die Bäume sollen grün bleiben, bis der Herbst wirklich anfängt (Wetter oder Datum)".
+     Der Kalender steht jetzt in szene.js (SZ.jahrNachDatum): September ist noch Sommer, der Herbst beginnt im Oktober. */
+  const jahrNachDatum = (d) => SZ.jahrNachDatum(d);
+  /* ?datum=2026-10-12 – festes Kalenderdatum zum Prüfen (mittags, in der Zeitzone des Geräts) */
+  function datumAusSuche(t) {
+    const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(String(t || "").trim());
+    return m ? new Date(+m[1], +m[2] - 1, +m[3], 12, 0, 0) : null;
   }
   function zeitNachUhr(d) { const h = d.getHours() + d.getMinutes() / 60; return h >= 7.5 && h < 17 ? "tag" : (h >= 17 && h < 19) || (h >= 6.5 && h < 7.5) ? "abend" : "nacht"; }
   L.jahrNachDatum = jahrNachDatum; L.zeitNachUhr = zeitNachUhr;
@@ -173,7 +174,14 @@
     if (!glOk) document.body.style.background = "#dfe6ee";
     SZ.start(dingeC);
     const jetzt = new Date();
-    SZ.jahr = q.get("jahr") || jahrNachDatum(jetzt);
+    /* FASSUNG 814 — ?jahr= legt die Jahreszeit fest (wie bisher), sonst läuft sie nach Datum (?datum=) und Wetter (?wetter=schnee) */
+    SZ.datum = datumAusSuche(q.get("datum"));
+    if (q.get("wetter")) SZ.wetter = q.get("wetter");
+    const jq = q.get("jahr");
+    if (jq && /^(fruehherbst|spaetherbst|schneefall)$/.test(jq)) SZ.modus = jq;   // Vorschau-Stufen des Betreibers
+    else if (jq) { SZ.modus = "fest"; SZ.jahr = jq; }
+    else SZ.modus = "auto";
+    SZ.jahrStellen();
     SZ.zeit = q.get("zeit") || zeitNachUhr(jetzt);
     SZ.zeitAuto = !q.get("zeit"); if (SZ.zeitAuto) SZ.zeitDaten();
     K.x = +(q.get("kx") || 0); K.y = +(q.get("ky") || 4);
@@ -202,6 +210,9 @@
       window.__fertig = true;
     });
   }
+  /* FASSUNG 814 — die Jahreszeit folgt dem Kalender auch, wenn die Seite über Mitternacht offen bleibt */
+  L.jahrNeu = function () { if (SZ.jahrStellen()) { D.jahrFiltern(); if (ST.oberflaeche && ST.oberflaeche.jahrAnzeigen) ST.oberflaeche.jahrAnzeigen(); L.unruhe = 2; } };
+  setInterval(() => { if (SZ.modus === "auto") L.jahrNeu(); }, 60000);
   window.addEventListener("resize", () => { groesse(); L.unruhe = 2; });
   los().catch((e) => { console.error(e); window.__fehler = String(e); });
 })();

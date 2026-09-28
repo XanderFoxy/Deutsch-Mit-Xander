@@ -12976,8 +12976,9 @@
     }
     /* FASSUNG 806 — Kopfzeile der kleinen Stadt: Ortsschild (Name der Stadt) und das Wetterschild wie im alten Dorf. */
     var kopf = { typ: "leicht-kopf", name: String(S.ich.dorf_name || S.ich.name || "").trim(), wetter: "", symbole: dorfZeichen(), namen: dorfNamen() };
-    try { kopf.wetter = dorfWetterSchild(dorfWetter()); } catch (e) {}
-    var ks = kopf.name + "|" + kopf.wetter + "|" + kopf.symbole + kopf.namen;
+    try { var dw = dorfWetter(); kopf.wetter = dorfWetterSchild(dw); kopf.wetterArt = dw.echt || S.wetterTest ? dw.art : ""; } catch (e) {}
+    /* FASSUNG 814 — XANDER: „Winter mit Schnee … (Wetter oder Datum)": die Wetterart geht maschinenlesbar mit (wetterArt) */
+    var ks = kopf.name + "|" + kopf.wetter + "|" + kopf.wetterArt + "|" + kopf.symbole + kopf.namen;
     if (ks !== L.kSig) { L.kSig = ks; lsPost(kopf); }
     var z = dorfBesuchStand() ? {} : lsZeichen(S.ich), sig = JSON.stringify(z);
     if (sig === L.zSig) return;

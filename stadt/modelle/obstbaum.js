@@ -602,8 +602,11 @@
 
   function baumInLeinwand(g, s, F, plan, gier, ex, ey) {
     const B = blick(gier, s);
-    const Z = F.Z, jahr = F.jahr, winter = jahr === "winter";
-    const bluete = jahr === "fruehling", laub = jahr === "sommer" || jahr === "herbst";
+    /* FASSUNG 814 — XANDER: „die Bäume sollen grün bleiben, bis der Herbst wirklich anfängt … automatische Jahreszeiten".
+       Laubfall im November: jahr „kahl" = kahle Zweige ohne Schnee im Herbstlicht; nur die vergessenen Äpfel hängen noch. */
+    const kahl = F.jahr === "kahl";
+    const Z = F.Z, jahr = kahl ? "herbst" : F.jahr, winter = jahr === "winter";
+    const bluete = jahr === "fruehling", laub = !kahl && (jahr === "sommer" || jahr === "herbst");
     const T0 = { e: ex, f: ey };
     const st = stufen(Z, jahr);
     const sB = stufeS(s);
@@ -671,7 +674,7 @@
     }
     if (laub) for (const b of plan.buschel) teile.push({ tief: B.tief(b.p) + b.r * 0.4, malen: () => laubLegen(g, B, T0, plan, b, Z, jahr, s, sB, st, false) });
     for (const ap of plan.aepfel) {
-      if (bluete || (winter && !ap.bleibt)) continue;
+      if (bluete || ((winter || kahl) && !ap.bleibt)) continue;
       teile.push({ tief: B.tief(ap.p) + 0.3, malen: () => apfelMalen(g, B, ap, Z, jahr, s, winter) });
     }
     if (jahr !== "sommer") for (const mi of plan.misteln) teile.push({ tief: B.tief(mi.p) + 0.1, malen: () => mistelMalen(g, B, mi, Z, jahr, s, winter) });
@@ -1295,7 +1298,7 @@
   function baumSchatten(g, s, plan, gier, jahr) {
     const B = blick(gier, s);
     const m = g.getTransform();
-    const winter = jahr === "winter";
+    const winter = jahr === "winter" || jahr === "kahl";   // FASSUNG 814 — kahl wirft den Schatten des Astgerüsts
     const vier = [];
     for (const z of plan.zuege) {
       if (z.rMax < 0.02 && !z.stamm) continue;

@@ -441,7 +441,8 @@
     gl.uniform1f(ort.u_zeit, zeit);
     gl.uniform1f(ort.u_schnee, jahr === "winter" ? 1 : 0);
     gl.uniform1f(ort.u_fruehling, jahr === "fruehling" ? 1 : 0);
-    gl.uniform1f(ort.u_herbst, jahr === "herbst" ? 1 : 0);
+    /* FASSUNG 814 — die leichte Stadt färbt die Wiese im Oktober nach und nach (B.herbstGrad 0…1, sonst voll) */
+    gl.uniform1f(ort.u_herbst, jahr === "herbst" ? (B.herbstGrad == null ? 1 : B.herbstGrad) : 0);
     gl.uniform3fv(ort.u_amb, Z.amb); gl.uniform3fv(ort.u_sonne, Z.sonne);
     gl.uniform1f(ort.u_nacht, Z.nacht);
     gl.uniform3fv(ort.u_licht, ST.LICHT);

@@ -23,6 +23,14 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 .lk-farbfeld { position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 52px); right: 10px; width: min(260px, calc(100% - 20px)); box-sizing: border-box; padding: 10px 12px 12px; border-radius: 14px; background: rgba(22,28,48,.88); color: #f3ead8; font-size: 13px; }
 .lk-farbfeld label { display: flex; justify-content: space-between; margin-bottom: 6px; }
 .lk-farbfeld input { width: 100%; height: 30px; accent-color: #e9b85c; }
+/* FASSUNG 814 — vier Regler (Farbstimmung, Helligkeit, Sättigung, Kontrast) und „Zurücksetzen"; passt auf 360 px,
+   bei wenig Höhe (Telefon quer) scrollt das Feld in sich */
+.lk-farbfeld { max-height: calc(100% - max(10px, env(safe-area-inset-top)) - 64px); overflow-y: auto; overscroll-behavior: contain; }
+.lk-farbfeld .lk-regler { margin: 0 0 4px; }
+.lk-farbfeld .lk-regler label { margin-bottom: 0; line-height: 18px; }
+.lk-farbfeld .lk-regler input { display: block; margin: 0; }
+.lk-regler-zurueck { display: block; width: 100%; min-height: 36px; margin-top: 6px; border-radius: 10px; border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.1); color: #f3ead8; font: 600 13px system-ui, sans-serif; cursor: pointer; }
+.lk-regler-zurueck:active { transform: scale(.97); }
 [hidden] { display: none !important; }
 
 .lk-mini-rahmen { position: absolute; right: 10px; bottom: max(14px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: flex-end; gap: 6px; pointer-events: none; }
@@ -90,7 +98,7 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 
 /* FASSUNG 796 — Sparmodus-Schalter im Farbfeld */
 .lk-spar { display: flex; align-items: center; gap: 8px; margin-top: 8px; font: 500 13px system-ui, sans-serif; color: #e9e2d2; min-height: 32px; }
-.lk-spar input { width: 22px; height: 22px; }
+.lk-spar input { width: 22px; height: 22px; flex: none; margin: 0; }   /* FASSUNG 814 — nicht vom Feld gestaucht (Tippfläche ist das ganze Label) */
 
 /* FASSUNG 799 — im kleinen Dorfrahmen des Spiels (etwa 340 × 212 px): nur das Bild, die Lupe, die kleine Karte
    zum Durchtippen der Viertel und der Vollbild-Knopf. Alles andere erst im Vollbild. */

@@ -61,8 +61,88 @@
       nacht: misch(A.nacht, B.nacht, t), schatten: misch(A.schatten, B.schatten, t) };
   };
 
-  /* ---------------- Welches Bild zeigt ein Objekt gerade? ---------------- */
-  /* Gebacken sind Winter und Herbst (die übrigen Jahreszeiten folgen) */
+  /* ---------------- Jahreszeit: nach Datum, Wetter oder Vorschau ----------------
+     FASSUNG 814 — XANDER: „die Bäume sollen grün bleiben, bis der Herbst wirklich anfängt (Wetter oder Datum) …
+     automatische Jahreszeiten … als Betreiber alle Jahreszeiten vorschauen inkl. Schnee".
+     SZ.modus: „auto" (Kalender des Geräts, ?datum=JJJJ-MM-TT zum Prüfen, Schnee auch, wenn das Wetter ihn meldet),
+     „fest" (?jahr=… wie bisher: alles in dieser Jahreszeit) oder eine Vorschau des Betreibers (MODI).
+     SZ.jahr bleibt die grobe Jahreszeit (Boden, Winterschmuck, Leute); SZ.stichtag ([Monat, Tag]) sagt jedem
+     Laub- und Obstbaum, ob er schon gefärbt (1.–25. Oktober, jeder an seinem Tag) oder kahl (November) ist. */
+  SZ.MODI = {
+    fruehling: { name: "Frühling", jahr: "fruehling", tag: [4, 22] },
+    sommer: { name: "Sommer", jahr: "sommer", tag: [7, 15] },
+    fruehherbst: { name: "Frühherbst", jahr: "herbst", tag: [10, 12] },
+    spaetherbst: { name: "Spätherbst", jahr: "herbst", tag: [11, 13] },
+    winter: { name: "Winter", jahr: "winter", schnee: false },
+    schneefall: { name: "Schneefall", jahr: "winter", schnee: true }
+  };
+  SZ.modus = "auto"; SZ.datum = null; SZ.wetter = null; SZ.stichtag = null;
+  /* Winter ab dem 27.11. bis Ende Februar, Frühling März–Mai, Sommer Juni–September, Herbst Oktober–26.11. */
+  SZ.jahrNachDatum = function (d) {
+    const m = d.getMonth() + 1, t = d.getDate();
+    if ((m === 11 && t >= 27) || m === 12 || m === 1 || m === 2) return "winter";
+    if (m >= 3 && m <= 5) return "fruehling";
+    if (m >= 6 && m <= 9) return "sommer";
+    return "herbst";
+  };
+  /* Hat das Wetter in den letzten anderthalb Tagen Schnee gemeldet? Dann bleibt er liegen. */
+  SZ.schneeGemerkt = function () { try { return +(localStorage.getItem("leicht_schnee_bis") || 0) > Date.now(); } catch (e) { return false; } };
+  SZ.wetterSetzen = function (art) {
+    SZ.wetter = art ? String(art) : null;
+    if (SZ.wetter === "schnee") try { localStorage.setItem("leicht_schnee_bis", String(Date.now() + 36 * 3600e3)); } catch (e) {}
+    return SZ.jahrStellen();
+  };
+  /* Stellt SZ.jahr, SZ.schneefall und den Stichtag; gibt true zurück, wenn sich etwas davon geändert hat */
+  SZ.jahrStellen = function () {
+    const alt = SZ.jahr + "|" + SZ.schneefall + "|" + SZ.stichtag;
+    const M = SZ.MODI[SZ.modus];
+    if (SZ.modus === "fest") { SZ.stichtag = null; SZ.schneefall = SZ.jahr === "winter"; }
+    else if (M) { SZ.jahr = M.jahr; SZ.stichtag = M.tag || null; SZ.schneefall = !!M.schnee; }
+    else {
+      const d = SZ.datum || new Date();
+      let j = SZ.jahrNachDatum(d);
+      if (SZ.wetter === "schnee" || SZ.schneeGemerkt()) j = "winter";
+      SZ.jahr = j; SZ.stichtag = [d.getMonth() + 1, d.getDate()];
+      /* Schneeflocken: wenn das Wetter Schnee meldet; ohne Wetterbericht (eigene Seite) wie bisher im ganzen Winter */
+      SZ.schneefall = SZ.wetter ? SZ.wetter === "schnee" : j === "winter";
+    }
+    /* Die Wiese färbt sich mit den Bäumen (Oktober: nach und nach) */
+    if (ST.boden) ST.boden.herbstGrad = SZ.stichtag && SZ.stichtag[0] === 10 ? Math.min(1, SZ.stichtag[1] / 25) : 1;
+    return alt !== SZ.jahr + "|" + SZ.schneefall + "|" + SZ.stichtag;
+  };
+  /* Laub- und Obstbäume: jeder färbt sich an seinem eigenen Tag (1.–25. Oktober) und verliert sein Laub an seinem
+     eigenen Tag im November (1.–26.) – fester Zufall aus seiner Lage, also bei jedem Besuch gleich. */
+  const LAUB = /^n_(laubbaum|obstbaum)/;
+  SZ.baumTage = function (o) {
+    if (!o._jt) { const h = ST.hash2(Math.round(o.x * 10), Math.round(o.y * 10), 814), h2 = ST.hash2(Math.round(o.y * 10), Math.round(o.x * 10), 1411); o._jt = [1 + Math.floor(h * 25), 1 + Math.floor(h2 * 26)]; }
+    return o._jt;
+  };
+  SZ.jahrVon = function (o) {
+    if (o.nurWinter) return "winter";
+    const j = SZ.jahr;
+    if (j === "winter" || !SZ.stichtag || !LAUB.test(o.bild || "")) return j;
+    const m = SZ.stichtag[0], t = SZ.stichtag[1], T = SZ.baumTage(o);
+    if (m === 10) return t >= T[0] ? "herbst" : "sommer";
+    if (m === 11) return t >= T[1] ? "kahl" : "herbst";
+    return j;
+  };
+  /* Gebacken sind Winter und Herbst für alles, Frühling, Sommer und „kahl" (Laubfall) für die Laub- und Obstbäume.
+     Fehlt ein Bild, nimmt das Ding das nächstbeste: Frühling → Sommer → Herbst, kahl → Herbst (nie ein leeres Bild). */
+  const RUECK = { fruehling: ["fruehling", "sommer", "herbst"], sommer: ["sommer", "herbst"], kahl: ["kahl", "herbst"], herbst: ["herbst"], winter: ["winter"] };
+  let rueckVz = null, rueckMerk = new Map();
+  function mitRueckfall(vorn, jahr, hinten) {
+    const liste = RUECK[jahr] || ["herbst"];
+    if (liste.length === 1) return vorn + "_" + liste[0] + "_" + hinten;
+    if (rueckVz !== LB.vz) { rueckVz = LB.vz; rueckMerk = new Map(); }
+    const schl = vorn + "|" + jahr + "|" + hinten;
+    let b = rueckMerk.get(schl);
+    if (b) return b;
+    for (const j of liste) { const n = vorn + "_" + j + "_" + hinten; if (LB.vz[n + "_k"] || LB.vz[n + "_z"] || LB.vz[n + "_g"] || LB.vz[n + "_m"]) { b = n; break; } }
+    b = b || vorn + "_" + liste[liste.length - 1] + "_" + hinten;
+    rueckMerk.set(schl, b);
+    return b;
+  }
+  SZ.mitRueckfall = mitRueckfall;
   function jahrBild() { return SZ.jahr === "winter" ? "winter" : "herbst"; }
   const GIER_CACHE = {};
   /* Welche Drehungen gibt es von diesem Bild? (Bäume nur eine, Zäune zwei) */
@@ -102,7 +182,8 @@
       return o.bauBild + "_" + jahrBild() + "_tag_b" + bauPhase(o.bau.p) + "_" + gb;
     }
     const gb = gierFuer(o.bild, gier);
-    return o.bild + "_" + (o.nurWinter ? "winter" : jahrBild()) + "_" + zeit + "_f_" + gb;
+    /* FASSUNG 814 — je Ding das Bild seiner Jahreszeit (Bäume gestaffelt), mit Rückfall auf das Herbstbild */
+    return mitRueckfall(o.bild, SZ.jahrVon(o), zeit + "_f_" + gb);
   };
 
   /* ---------------- Reihenfolge: von hinten nach vorn ----------------
