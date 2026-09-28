@@ -13690,12 +13690,6 @@
       const stand = AP && AP.zentralMoeglich && AP.zentralMoeglich() && !AP.zentralStandJetzt() ? AP.zentralStand() : Promise.resolve();
       return Promise.resolve(stand).catch(() => null).then(() => aussprOriginalLaden(eintrag || { word: wort }));
     },
-    /* FASSUNG 786 (Funk 188): „wenn die noch nicht in Wörterbuch sind … an Dich geschickt … zu überprüfen und zu updaten". */
-    imWoerterbuch: function (wort) {
-      const ziel = String(wort || "").trim().toLowerCase();
-      if (!ziel) return true;
-      try { return buildDictionaryEntries().some((e) => aussprSprechtext(e).toLowerCase() === ziel || String(e.word || "").toLowerCase() === ziel); } catch (e) { return true; }
-    },
     /* Für die Laut-Bewertung im Spiel: auch sie braucht den geladenen Stand. */
     bereit: function () {
       const AP = window.AusspracheP;
@@ -13703,64 +13697,6 @@
       return Promise.resolve(AP.zentralStand()).catch(() => null);
     }
   };
-
-  /* FASSUNG 786 — Nachsprechen im Livestream (livechat.js: sprichBefehl).
-     Beim Lehrer: fehlt das Wort im Wörterbuch, geht eine Meldung an Claude (Funk 188: „werden die gleichzeitig auch an
-     Dich geschickt … zu überprüfen und zu updaten … mit dem Artikel und allem drum und dran und der Betonungsregel").
-     Bei allen anderen: das Wort wird einmal mit der sauberen Stimme vorgesprochen. */
-  const sprichGemeldet = new Set();
-  window.addEventListener("dma-sprich-wort", (e) => {
-    const d = (e && e.detail) || {}, wort = String(d.wort || "").trim();
-    if (!wort) return;
-    const br = window.DMA_AUSSPR_BRUECKE;
-    if (d.lehrer) {
-      if (br && !br.imWoerterbuch(wort) && !sprichGemeldet.has(wort.toLowerCase())) {
-        sprichGemeldet.add(wort.toLowerCase());
-        try {
-          const sb = typeof Backend !== "undefined" && Backend.zugang && Backend.zugang();
-          if (sb && sb.from) sb.from("betreiber_funk").insert({ von: "xander", text: "[automatisch] Wort fürs Wörterbuch prüfen (aus /sprich im Livestream): „" + wort
-            + "“ – steht noch nicht im Wörterbuch. Bitte mit Artikel, Plural, Erklärung und Betonungsregel ergänzen (Duden)." }).then(() => {}, () => {});
-          showToast("„" + wort + "“ steht noch nicht im Wörterbuch – Claude bekommt eine Meldung und ergänzt es.");
-        } catch (x) {}
-      }
-      return;
-    }
-    if (!br || !br.original) return;
-    br.original(wort).then((o) => {
-      if (!o || !o.puffer) return;
-      try {
-        const K = window.AudioContext || window.webkitAudioContext;
-        const k = window.__sprichKlang || (window.__sprichKlang = new K());
-        const q = k.createBufferSource(); q.buffer = o.puffer; q.connect(k.destination); q.start(0);
-      } catch (x) {}
-    }).catch(() => {});
-  });
-  /* Die Freigabe kommt an: ein kleines Angebot unten, bis man entschieden hat. */
-  window.addEventListener("dma-sprich-frei", (e) => {
-    const d = (e && e.detail) || {}, wort = String(d.wort || "").trim();
-    if (!wort) return;
-    const alt = document.getElementById("sprichFreiKarte");
-    if (alt) alt.remove();
-    const k = document.createElement("div");
-    k.id = "sprichFreiKarte"; k.className = "sprich-frei-karte"; k.setAttribute("role", "dialog");
-    k.innerHTML = '<p><b>' + escapeHtml(d.lehrer || "Der Lehrer") + " hat deine Aussprache von „" + escapeHtml(wort) + "“ freigegeben.</b> "
-      + (d.sprach ? "Sauber ausgeschnitten kommt sie in dein Aussprache-Wörterbuch – dann hörst du dich selbst als Vorbild." : "Deine Aufnahme ist auf diesem Gerät nicht mehr da – sprich das Wort im Aussprachetrainer noch einmal.") + "</p>"
-      + '<div class="sprich-frei-knoepfe">' + (d.sprach ? '<button type="button" class="btn btn-coffee" data-sprich="ja">In mein Wörterbuch</button>' : "")
-      + '<button type="button" class="btn btn-ghost" data-sprich="nein">' + (d.sprach ? "Nein danke" : "Schließen") + "</button></div>";
-    document.body.appendChild(k);
-    k.addEventListener("click", (ev) => {
-      const b = ev.target.closest && ev.target.closest("[data-sprich]");
-      if (!b) return;
-      if (b.dataset.sprich === "nein") { k.remove(); return; }
-      const EA = window.DMA_EIGENE_AUSSPRACHE, AP = window.AusspracheP;
-      if (!EA || !AP || !AP.tonLesen) { showToast("Die Tonbearbeitung ist nicht geladen."); return; }
-      b.disabled = true; b.textContent = "Wird geschnitten und gespeichert …";
-      AP.tonLesen(d.sprach).then((puffer) => EA.uebernehmen(wort, 100, puffer, "lehrer")).then((r) => {
-        k.remove();
-        showToast("„" + wort + "“ liegt jetzt mit deiner Stimme in deinem Aussprache-Wörterbuch" + (r && r.schnitt ? " (" + (r.schnitt.dauer / 1000).toFixed(2).replace(".", ",") + " s)" : "") + ".");
-      }).catch((x) => { b.disabled = false; b.textContent = "Nochmal versuchen"; showToast((x && x.message) || "Das ging nicht."); });
-    });
-  });
 
   /* =================================================================
      FASSUNG 772 — DAS PERSÖNLICHE AUSSPRACHE-WÖRTERBUCH
@@ -66234,27 +66170,6 @@
             holen.addEventListener("click", (e) => e.stopPropagation());
             /* IN die Blase, rechts neben die Zeit — nicht darunter. */
             knopf.appendChild(holen);
-            /* FASSUNG 786 — XANDER (Funk 188): „dann kontrolliere ich die Aussprache anhand der Sprachnachrichten … und
-               das freigebe für die korrekte Aussprache". Läuft /sprich, steht beim Lehrer an jeder fremden Sprachnachricht
-               ein ✓: ein Tipp gibt sie frei, die Person kann sie dann in ihr Aussprache-Wörterbuch übernehmen. */
-            const sprichAuf = LiveChat.sprichAufgabe ? LiveChat.sprichAufgabe() : null;
-            if (sprichAuf && !n.eigen && LiveChat.binLehrer && LiveChat.binLehrer() && (Number(n.zeit) || Date.now()) >= sprichAuf.seit - 5000) {
-              const frei = document.createElement("button");
-              frei.type = "button";
-              frei.className = "lc-sprach-frei";
-              frei.title = "Aussprache von „" + sprichAuf.wort + "“ freigeben – " + (n.name || "die Person") + " kann sie dann ins Aussprache-Wörterbuch übernehmen";
-              frei.setAttribute("aria-label", "Aussprache freigeben");
-              frei.textContent = "✓";
-              frei.addEventListener("click", (e) => {
-                e.stopPropagation();
-                if (frei.disabled) return;
-                if (LiveChat.sprichFreigeben(n.von, n.id, sprichAuf.wort)) {
-                  frei.disabled = true; frei.classList.add("lc-sprach-frei-ok"); frei.textContent = "✓ frei";
-                  showToast("„" + sprichAuf.wort + "“ von " + (n.name || "dieser Person") + " freigegeben.");
-                }
-              });
-              knopf.appendChild(frei);
-            }
 
             /* =========================================================
                ZURUECKRUFEN, DIREKT AN DER NACHRICHT

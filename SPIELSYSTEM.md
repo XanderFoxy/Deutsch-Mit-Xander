@@ -1824,3 +1824,18 @@ XANDER (Funk 190): „die Option haben den Aussprachetrainer an der Stelle mit i
 - **Profil**: Neue Karte „🎙️ Mein Aussprache-Wörterbuch · privat“ auf der eigenen Profilseite mit Anhören, „Spricht vor“ und Löschen. Sie lädt beim Öffnen frisch.
   - Ehrlich: Die ganze Profilseite ist in der Sonde nicht gezeichnet, geprüft ist die Liste selbst (gleiches HTML).
 - Offen aus Funk 188/190: die **Lehrer-Freigabe über Sprachnachrichten im Livestream** (Xander gibt ein Wort vor, die Leute schicken Sprachnachrichten, Xander gibt die gute frei, die Leute übernehmen sie geschnitten ins Wörterbuch) und die Meldung unbekannter Wörter an Claude.
+
+### Fassung 786 (Funk 188/190: Nachsprechen im Livestream, der Lehrer gibt frei)
+Sonden: neu 786 (14/14 grün); „jeder Befehl“, 772, 785 grün.
+XANDER (Funk 188): „dass ich z.B ein Wort vorgebe … und dann sollen die Leute versuchen das auszusprechen und dann kontrolliere ich die Aussprache anhand der Sprachnachrichten … und das freigebe … haben Sie die Möglichkeit dass in ihr persönliches Aussprache Wörterbuch zu übernehmen … und dann müssen wir diese Wörter die ich da im Chat vorgebe auch wenn die noch nicht im Wörterbuch sind … an Dich geschickt … zu überprüfen und zu updaten“. Funk 190: „falls Sie dann bisschen rumgeeiert haben und eine lange Atempause davor … das System automatisch diesen Teil sauber kroppen“.
+- **/sprich Wort** (nur Lehrer, auch /nachsprechen; /sprich allein beendet):
+  - Alle bekommen im Chat „🎤 Nachsprechen: „Wort“ — halte das Mikrofon und sprich es nach …“. Das Wort wird einmal mit der sauberen Stimme vorgesprochen.
+  - Steht das Wort nicht im Wörterbuch, geht automatisch eine Funk-Meldung an Claude („[automatisch] Wort fürs Wörterbuch prüfen … mit Artikel, Plural, Erklärung und Betonungsregel“), einmal je Wort und Sitzung.
+- **✓ zum Freigeben**: Beim Lehrer steht an jeder fremden Sprachnachricht, die nach /sprich kommt, ein ✓ neben dem Herunterladen. Ein Tipp schickt die Freigabe an genau diese Person, der Knopf wird „✓ frei“.
+- **Beim Lernenden**:
+  - Unten erscheint „XanderFox hat deine Aussprache von „Wort“ freigegeben“ mit „In mein Wörterbuch“ und „Nein danke“.
+  - Die eigene Aufnahme wird wie gewohnt sauber geschnitten (Atempause und Stille weg) und mit Quelle „lehrer“ gespeichert. In der Sonde wurden aus 1,5 s Aufnahme 0,83 s.
+  - Ist die Aufnahme auf dem Gerät nicht mehr da, steht das ehrlich dabei statt eines Knopfes.
+- Die Freigabe ist nur an die eigene Wörterbuch-Liste gebunden; ein nachgemachtes „frei“ könnte höchstens das eigene private Wörterbuch füllen, darum ohne Serverprüfung.
+- Nicht geprüft: echte zwei Geräte im Livestream (hier nur mit eingespielten Nachrichten).
+- Noch offen aus Funk 188: Spiele mit der eigenen Stimme (Wort hören → Artikel / Bedeutung) und die Wortauswahl aus dem Wörterbuch per Tipp statt Tippen.

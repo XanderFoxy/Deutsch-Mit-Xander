@@ -4664,19 +4664,6 @@ window.LiveChat = (function () {
       melden();
       return;
     }
-    /* FASSUNG 786 — der Lehrer gibt ein Wort vor bzw. beendet das Nachsprechen. */
-    if (n.art === "sprichwort") {
-      zustand.sprich = n.wort ? { wort: String(n.wort).slice(0, 60), seit: Date.now(), von: n.von } : null;
-      sprichAnsage(zustand.sprich && zustand.sprich.wort, false);
-      return;
-    }
-    /* … und er hat MEINE Sprachnachricht zu diesem Wort freigegeben. */
-    if (n.art === "sprichfrei") {
-      if (n.an !== zustand.ichId) return;
-      var eigene = sprichEigeneAufnahme(n.id);
-      try { window.dispatchEvent(new CustomEvent("dma-sprich-frei", { detail: { wort: String(n.wort || ""), sprach: eigene, lehrer: n.name || "Der Lehrer", id: n.id } })); } catch (e) {}
-      return;
-    }
     if (n.art === "sprachda") {
       /* Jemand hat meine Wortmeldung vollstaendig bekommen. */
       sprachAngekommen(n.id, n.name || "Jemand");
@@ -7611,46 +7598,6 @@ window.LiveChat = (function () {
      der Lehrer zu sein." Also ueberall. Es ist seine Seite. */
   function binLehrer() {
     return binBetreiber();
-  }
-  /* =================================================================
-     FASSUNG 786 — NACHSPRECHEN IM LIVESTREAM, DER LEHRER GIBT FREI
-     -----------------------------------------------------------------
-     XANDER (Funk 188): „dass ich z.B ein Wort vorgebe oder mir das aussuchen kann aus dem Wörterbuch … und dann sollen die
-     Leute versuchen das auszusprechen und dann kontrolliere ich die Aussprache anhand der Sprachnachrichten … und das
-     freigebe für die korrekte Aussprache weil ich es Probe gehört habe haben Sie die Möglichkeit dass in ihr persönliches
-     Aussprache Wörterbuch zu übernehmen". Funk 190: „falls Sie dann bisschen rumgeeiert haben und eine lange Atempause
-     davor … soll das System automatisch diesen Teil sauber kroppen".
-     /sprich Wort (nur Lehrer) → alle bekommen das Wort angesagt (und vorgesprochen, app.js) → Sprachnachrichten danach
-     tragen beim Lehrer ein ✓ → ein Tipp schickt „sprichfrei" an genau diese Person → sie bekommt das Angebot, ihre
-     eigene Aufnahme geschnitten ins Aussprache-Wörterbuch zu übernehmen (app.js, DMA_EIGENE_AUSSPRACHE).
-     ================================================================= */
-  function sprichAnsage(wort, selbst) {
-    systemZeile(wort ? "🎤 Nachsprechen: „" + wort + "“ — halte das Mikrofon und sprich es nach. "
-      + (selbst ? "An jeder Sprachnachricht steht jetzt ✓ zum Freigeben." : "Ist es gut, gibt der Lehrer es frei — dann kannst du es mit deiner Stimme in dein Aussprache-Wörterbuch übernehmen.")
-      : "🎤 Nachsprechen beendet.");
-    try { window.dispatchEvent(new CustomEvent("dma-sprich-wort", { detail: { wort: wort || "", lehrer: Boolean(selbst) } })); } catch (e) {}
-  }
-  function sprichBefehl(rest) {
-    if (!binLehrer()) return systemZeile("Nur der Lehrer gibt Wörter zum Nachsprechen vor.");
-    var w = String(rest || "").replace(/^[„"']+|[“"']+$/g, "").trim().slice(0, 60);
-    zustand.sprich = w ? { wort: w, seit: Date.now(), von: zustand.ichId } : null;
-    senden({ art: "sprichwort", wort: w, name: zustand.ichName });
-    sprichAnsage(w, true);
-    return true;
-  }
-  /* Meine eigene Sprachnachricht zu dieser Kennung (auch als „…-selbst"/„…-quittung" abgelegt). */
-  function sprichEigeneAufnahme(id) {
-    var kern = String(id || "").replace(/-(quittung|selbst)$/, "");
-    for (var i = zustand.nachrichten.length - 1; i >= 0; i--) {
-      var n = zustand.nachrichten[i];
-      if (n && n.sprach && String(n.id || "").replace(/-(quittung|selbst)$/, "") === kern && (n.eigen || n.von === zustand.ichId)) return n.sprach;
-    }
-    return "";
-  }
-  function sprichFreigeben(an, id, wort) {
-    if (!binLehrer() || !an || !id) return false;
-    senden({ art: "sprichfrei", an: an, id: String(id).replace(/-(quittung|selbst)$/, ""), wort: String(wort || ""), name: zustand.ichName });
-    return true;
   }
   function rangWort(grossAnfang) {
     var w = binLehrer() ? "Lehrer"
@@ -11266,7 +11213,6 @@ window.LiveChat = (function () {
     { gr: "hilfe",  w: "diagnose", kurz: "befund", nutzt: "/diagnose",        was: "Was ist von hier aus erreichbar: Konto, Datenbank, Postfach, dein Rang" },
     { gr: "schule", w: "unterricht", kurz: "glocke", nutzt: "/unterricht [<Text>]", was: "Nur der Betreiber: die Einladung zum Unterricht in jedes Postfach, mit Link hierher" },
     { gr: "schule", w: "weg",        kurz: "zurueck",    nutzt: "/weg",         was: "Deine letzte Sprachnachricht zurückrufen — sie verschwindet bei allen" },
-    { gr: "schule", w: "sprich",     kurz: "nachsprechen", nutzt: "/sprich Wort", was: "Nur Lehrer: ein Wort zum Nachsprechen vorgeben — an jeder Sprachnachricht steht dann ✓ zum Freigeben fürs Aussprache-Wörterbuch (/sprich allein beendet)" },
     { gr: "schule", w: "fokus", kurz: "fokusmodus", nutzt: "/fokus",           was: "Zuhören statt durcheinanderreden: solange jemand spricht, nimmt niemand auf" },
     { gr: "aussehen", w: "sprechbild", kurz: "sprechen", nutzt: "/sprechbild Art", was: "Wie dein Platz beim Sprechen aussieht" },
     { gr: "reden", w: "cschrift",kurz: "colorfont", nutzt: "/c schrift Farbe", was: "Farbe nur für die Schrift" },
@@ -12608,8 +12554,6 @@ window.LiveChat = (function () {
     var wort = (m[1] || m[3] || "").toLowerCase(), rest = (m[2] || "").trim();
     /* RUNDE 100 — die Uebungspuppe (siehe puppeUmschalten). */
     if (wort === "puppe" || wort === "dummy") return puppeUmschalten(rest) || true;
-    /* FASSUNG 786 — Funk 188/190: das Nachsprechen im Livestream (siehe sprichBefehl). */
-    if (wort === "sprich" || wort === "nachsprechen") return sprichBefehl(rest) || true;
     /* FUNK 95 — das Spielfenster: /spiel oeffnet es, /lernen holt gleich
        eine Deutsch-Aufgabe (die einzige Quelle fuer Punkte). */
     if (wort === "spiel" || wort === "kampf") {
@@ -16316,10 +16260,6 @@ window.LiveChat = (function () {
       return zustand.geschlecht;
     },
     binLehrer: binLehrer,
-    /* FASSUNG 786 — Nachsprechen im Livestream. */
-    sprichAufgabe: function () { return zustand.sprich || null; },
-    sprichFreigeben: sprichFreigeben,
-    sprichBefehl: sprichBefehl,
     /* Ein Bild aus einer beliebigen Quelle — Adresse, Datenadresse
        oder Aufkleber-Marke. Die Oberflaeche braucht genau einen
        Ausgang fuer alle vier Wege des Bild-Waehlers. */

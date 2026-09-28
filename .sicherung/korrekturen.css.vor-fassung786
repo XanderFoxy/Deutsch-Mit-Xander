@@ -35131,11 +35131,3 @@ body > .lc-tafel-mappe { position: fixed; inset: auto; left: 12px; right: 12px; 
 .lc-seq-platzhalter { flex: 0 0 32px; width: 32px; }
 /* FASSUNG 785 — „Spricht vor: ich / Azure" je Wort im persönlichen Aussprache-Wörterbuch (Funk 190). */
 .eigen-zeile .eigen-vorbild.eigen-an { background: #2e9e5b; border-color: #2e9e5b; color: #fff; }
-/* FASSUNG 786 — Nachsprechen im Livestream: ✓ zum Freigeben an der Sprachnachricht, Angebot beim Lernenden (Funk 188/190). */
-.lc-sprach-frei { min-width: 30px; min-height: 30px; margin-left: 4px; padding: 0 8px; border-radius: 15px; border: 1.5px solid #2e9e5b; background: #fff; color: #2e9e5b; font: 700 .85rem/1 system-ui, sans-serif; cursor: pointer; }
-.lc-sprach-frei-ok { background: #2e9e5b; color: #fff; }
-.sprich-frei-karte { position: fixed; left: 12px; right: 12px; bottom: 16px; z-index: 9000; max-width: 460px; margin: 0 auto; padding: 12px 14px; border-radius: 14px;
-  background: #fff; color: #1f2a37; border: 2px solid #2e9e5b; box-shadow: 0 8px 28px rgba(0, 0, 0, .25); font-size: .9rem; }
-.sprich-frei-karte p { margin: 0 0 8px; }
-.sprich-frei-knoepfe { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
-.sprich-frei-knoepfe .btn { min-height: 34px; }
