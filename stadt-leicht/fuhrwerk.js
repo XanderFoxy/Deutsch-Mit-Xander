@@ -309,6 +309,12 @@
     let pts = k.slice();
     if (von === "feld" && f.weg.length > 1) pts = f.weg.slice().reverse().concat(pts.slice(1));
     if (nach === "feld" && f.weg.length > 1) pts = pts.concat(f.weg.slice(1));
+    /* FASSUNG 808 — an Weggabelungen knickt der Weg: Ecken zweimal abrunden (Chaikin), damit das Gespann im Bogen fährt */
+    for (let r = 0; r < 2 && pts.length > 2; r++) {
+      const neu = [pts[0]];
+      for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1]; neu.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]); }
+      neu.push(pts[pts.length - 1]); pts = neu;
+    }
     const W = strecke(pts);
     /* Anfang und Ende: nicht im Haus stehen (Grundfläche des Start- und Zielhauses) */
     const hausVon = von === "muehle" ? FW.muehle : von === "baeckerei" ? FW.baeckerei : null;
@@ -388,7 +394,9 @@
     const bp = bahnPunkt(); if (!bp) { FW.bahnGrund = "kein Bahnhof"; return; }
     const MARKT = ST.dorf && ST.dorf.MARKT ? ST.dorf.MARKT : [-1, -1];
     const a = knotenBei(MARKT[0], MARKT[1]).i, b = knotenBei(bp[0], bp[1]).i;
-    const k = a >= 0 && b >= 0 ? weg(a, b) : null;
+    /* FASSUNG 808 — hat die Karte eine eigene Pferdebahn-Straße (ST.dorf.PFERDEBAHN), fährt sie darauf */
+    const eigen = ST.dorf && Array.isArray(ST.dorf.PFERDEBAHN) && ST.dorf.PFERDEBAHN.length > 2 ? ST.dorf.PFERDEBAHN : null;
+    const k = eigen || (a >= 0 && b >= 0 ? weg(a, b) : null);
     if (!k || k.length < 2) { FW.bahnGrund = "kein Weg vom Markt zum Bahnhof"; return; }
     const W = strecke(k);
     /* frei: an jeder Stelle hat die Bahn (2,3 m breit) Platz; die längste freie Strecke wird Gleis */

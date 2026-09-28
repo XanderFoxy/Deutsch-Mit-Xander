@@ -330,11 +330,33 @@
         }
         drin.push(best[1]); kanten.push(best);
       }
+      /* FASSUNG 808 — Wege gehen um die Häuser herum, nicht hindurch (Hindernisse: Häuser, Wahrzeichen, Bahnhof als Kreise) */
+      const hind = [];
+      for (const k in P) { const f = D.BILD[k][2], m = (D.MASS || {})[k] || 1; hind.push([P[k].x, P[k].y, Math.hypot(f[0], f[1]) / 2 * m * 0.8 + 1.2]); }
+      for (const k in D.WUNDER) { const w = D.WUNDER[k]; if (w.steht) hind.push([w.x, w.y, Math.hypot(w.fussS[0], w.fussS[1]) / 2 * 0.8 + 1.2]); }
+      hind.push([D.BAHNHOF[0], D.BAHNHOF[1], 14]);
+      const stoesst = (pts) => { for (const q of pts) for (const h of hind) if (Math.hypot(q[0] - h[0], q[1] - h[1]) < h[2]) return h; return null; };
       D.WEGE = kanten.map(([i, j], n) => {
         const A = ziele[i], Bz = ziele[j], dx = Bz[0] - A[0], dy = Bz[1] - A[1], l = Math.hypot(dx, dy) || 1;
         const bog = (ST.hash2(n, 7, 807) - 0.5) * 0.3 * l;
-        return kurve([A, [A[0] + dx / 2 - dy / l * bog, A[1] + dy / 2 + dx / l * bog], Bz], Math.max(4, Math.round(l / 3)));
+        let pts = [A, [A[0] + dx / 2 - dy / l * bog, A[1] + dy / 2 + dx / l * bog], Bz];
+        let w = kurve(pts, Math.max(4, Math.round(l / 3)));
+        /* innen (ohne die Enden vor den Häusern) an ein Haus gestoßen? dann in einem Bogen außen herum */
+        for (let versuch = 0; versuch < 3; versuch++) {
+          const h = stoesst(w.slice(2, -2)); if (!h) break;
+          const t = Math.max(0.15, Math.min(0.85, ((h[0] - A[0]) * dx + (h[1] - A[1]) * dy) / (l * l)));
+          const px = A[0] + dx * t, py = A[1] + dy * t, nx = -dy / l, ny = dx / l;
+          const seite = (h[0] - px) * nx + (h[1] - py) * ny > 0 ? -1 : 1, um = h[2] + 2.5;
+          const q = [h[0] + nx * seite * um, h[1] + ny * seite * um];
+          pts = [A, [(A[0] + q[0]) / 2, (A[1] + q[1]) / 2], q, [(q[0] + Bz[0]) / 2, (q[1] + Bz[1]) / 2], Bz];
+          w = kurve(pts, Math.max(6, Math.round(l / 2.5)));
+        }
+        return w;
       });
+      /* FASSUNG 808 — XANDER: „die Pferdebahn, die wir in Döbeln haben". Eigene Straße vom Markt links am Rathaus vorbei
+         hinauf zum Bahnhof (fuhrwerk.js fährt darauf); die Leute gehen sie auch. */
+      D.PFERDEBAHN = kurve([vw(-7, -4), vw(-22, -12), vw(-27, -38), vw(-30, -63), vw(uHalt, bahnV(uHalt) + 6)], 14);
+      D.WEGE.push(D.PFERDEBAHN);
     };
     D.wegeBauen();
     D.boden = function () {

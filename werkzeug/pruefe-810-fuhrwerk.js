@@ -121,7 +121,7 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   const G = await pg.evaluate(() => {
     const FW = STADT.fuhrwerk, Z = STADT.szene.zeitDaten(), K = STADT.kamera, spalten = { faehrt: new Set(), steht: new Set() };
     const w = FW.wagen[0];
-    for (let i = 0; i < 600; i++) {
+    for (let i = 0; i < 2400; i++) {   // (FASSUNG 808: die Wege der Originalkarte sind länger – vier Minuten spulen)
       FW.vorspulen(0.1);
       K.x = w.x; K.y = w.y;
       const e = FW.sichtbar(Z).find((p) => p.wagen === w);
