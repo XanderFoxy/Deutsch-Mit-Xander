@@ -1,0 +1,5 @@
+html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+#stadt { position: fixed; inset: 0; }
+#stadtBoden, #stadtDinge { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#stadtOberflaeche { position: absolute; inset: 0; pointer-events: none; }
+#stadtOberflaeche > * { pointer-events: auto; }
