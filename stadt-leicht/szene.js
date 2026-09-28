@@ -266,6 +266,7 @@
     if (horizont && ST.himmel) ST.himmel.hinten(g, t, Z);
     /* FASSUNG 809 — Eisenbahn (bahn.js): Schotterbett, Schwellen, Schienen liegen flach unter allem, vor den Schatten */
     if (ST.bahn) ST.bahn.boden(g, t, Z);
+    if (ST.fuhrwerk) ST.fuhrwerk.boden(g, t, Z);   // FASSUNG 810 — Feldwege und Pferdebahngleis (fuhrwerk.js), ebenso flach
     /* 1. Schatten in halber Auflösung, einfarbig */
     for (const e of sicht) {
       const m = e.meta; if (!m.sn) continue;
@@ -294,6 +295,7 @@
     if (ST.boote) { ST.boote.wasser(g, t, Z); for (const p of ST.boote.sichtbar(Z)) leute.push(p); }
     /* FASSUNG 809 — Lok und Wagen (bahn.js) wie Leute und Boote zwischen die Häuser */
     if (ST.bahn) for (const p of ST.bahn.sichtbar(Z)) leute.push(p);
+    if (ST.fuhrwerk) for (const p of ST.fuhrwerk.sichtbar(Z)) leute.push(p);   // FASSUNG 810 — Kornwagen und Pferdebahn
     const nachDing = new Map();
     for (const p of leute) {
       const kk = K.s, bx = p.bx || 0.6, px0 = p.X - bx * kk, px1 = p.X + bx * kk, py0 = p.Y - (p.bh || 2) * kk, py1 = p.Y + 0.2 * kk;
@@ -303,7 +305,8 @@
         if (!R) continue;
         const x0 = e.X - m.ax * e.k, y0 = e.Y - m.ay * e.k;
         if (px1 < x0 || px0 > x0 + m.w * e.k || py1 < y0 || py0 > y0 + m.h * e.k) continue;
-        if (SZ.flach(e.o) || R.a1 <= p.a + 0.3 || R.b1 <= p.b + 0.3) idx = i;
+        /* FASSUNG 810 — wer über eine Brücke fährt (p.auf, fuhrwerk.js), kommt nach ihr */
+        if (SZ.flach(e.o) || p.auf === e.o || R.a1 <= p.a + 0.3 || R.b1 <= p.b + 0.3) idx = i;
       }
       if (!nachDing.has(idx)) nachDing.set(idx, []);
       nachDing.get(idx).push(p);

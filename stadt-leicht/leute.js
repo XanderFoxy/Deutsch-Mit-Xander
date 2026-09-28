@@ -61,7 +61,7 @@
   function netzBauen() {
     if (knoten.length) return;
     if (ST.dorf && ST.dorf.WEGE) netzWege(ST.dorf.WEGE); else netzRundling();
-    LE.knoten = knoten;
+    LE.knoten = knoten; LE.nachbarn = nachbarn;   // FASSUNG 810: auch für die Fuhrwerke (Rundling)
   }
 
   /* ---------------- Leute ---------------- */

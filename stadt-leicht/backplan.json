@@ -2066,6 +2066,97 @@
     2.5
    ],
    "q": 0.8
+  },
+  {
+   "bild": "l_fuhr_korn",
+   "id": "pferdewagen_korn",
+   "saat": 7,
+   "variante": "korn",
+   "varianten": [
+    "schritt0",
+    "schritt1",
+    "schritt2",
+    "schritt3",
+    "steh"
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "s": 24,
+   "q": 0.78
+  },
+  {
+   "bild": "l_fuhr_mehl",
+   "id": "pferdewagen_korn",
+   "saat": 7,
+   "variante": "mehl",
+   "varianten": [
+    "schritt0",
+    "schritt1",
+    "schritt2",
+    "schritt3",
+    "steh"
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "s": 24,
+   "q": 0.78
+  },
+  {
+   "bild": "l_fuhr_leer",
+   "id": "pferdewagen_korn",
+   "saat": 7,
+   "variante": "leer",
+   "varianten": [
+    "schritt0",
+    "schritt1",
+    "schritt2",
+    "schritt3",
+    "steh"
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "s": 24,
+   "q": 0.78
+  },
+  {
+   "bild": "l_fuhr_bahn",
+   "id": "pferdebahn",
+   "saat": 7,
+   "varianten": [
+    "schritt0",
+    "schritt1",
+    "schritt2",
+    "schritt3",
+    "steh"
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "s": 24,
+   "q": 0.78
   }
  ]
 }
