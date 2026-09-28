@@ -188,6 +188,7 @@
       if (ST.oberflaeche && ST.oberflaeche.start) ST.oberflaeche.start(q);
       if (q.get("still") === "1") {
         SZ.ohneBudget = true;
+        if (ST.oberflaeche && ST.oberflaeche.vorhangWeg) ST.oberflaeche.vorhangWeg();
         /* Prüfbild: Bewegung bis zur Zeit t vorspulen, dann ein Bild */
         const t = +(q.get("t") || 1000);
         groesse();

@@ -125,6 +125,7 @@
     vorhangStart = performance.now();
   };
   let vorhang = null, vorhangStart = 0, fertigBilder = 0;
+  O.vorhangWeg = function () { if (vorhang) { vorhang.remove(); vorhang = null; } };
 
   function kameraDrehen(r) {
     /* um die Bildmitte drehen: die Mitte bleibt, wo sie ist */

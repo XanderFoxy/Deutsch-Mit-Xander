@@ -85,7 +85,7 @@
      nacht= wie stark Fenster/Laternen leuchten (0…1) */
   ST.ZEITEN = {
     tag:   { name: "Tag",        amb: [0.64, 0.68, 0.78], sonne: [0.40, 0.36, 0.28], nacht: 0,    schatten: 0.34, himmel: ["#bcd3ea", "#e9f1f8"] },
-    abend: { name: "Dämmerung",  amb: [0.42, 0.50, 0.66], sonne: [0.27, 0.22, 0.17], nacht: 0.75, schatten: 0.26, himmel: ["#2b3b66", "#e7a27a"] },
+    abend: { name: "Dämmerung",  amb: [0.38, 0.47, 0.62], sonne: [0.30, 0.22, 0.15], nacht: 0.75, schatten: 0.26, himmel: ["#2b3b66", "#e7a27a"] },
     nacht: { name: "Nacht",      amb: [0.20, 0.24, 0.40], sonne: [0.06, 0.07, 0.12], nacht: 1,    schatten: 0.18, himmel: ["#0b1330", "#1d2b55"] }
   };
 
