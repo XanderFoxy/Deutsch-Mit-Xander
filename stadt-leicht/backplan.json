@@ -81,8 +81,8 @@
   },
   {
    "bild": "g_brauerei",
-   "id": "fachwerkerker",
-   "saat": 9,
+   "id": "brauerei",
+   "saat": 7,
    "gier": [
     0,
     90,
@@ -107,8 +107,8 @@
   },
   {
    "bild": "g_bibliothek",
-   "id": "fachwerkerker",
-   "saat": 17,
+   "id": "bibliothek",
+   "saat": 7,
    "gier": [
     0,
     90,
@@ -263,8 +263,8 @@
   },
   {
    "bild": "g_bergwerk",
-   "id": "fachwerkhaus",
-   "saat": 53,
+   "id": "bergwerk",
+   "saat": 7,
    "gier": [
     0,
     90,
@@ -1228,6 +1228,93 @@
    "s": {
     "gross": 26,
     "klein": 10
+   }
+  },
+  {
+   "bild": "bau_bergwerk",
+   "id": "bergwerk",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "bau_brauerei",
+   "id": "brauerei",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "bau_bibliothek",
+   "id": "bibliothek",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
    }
   }
  ],

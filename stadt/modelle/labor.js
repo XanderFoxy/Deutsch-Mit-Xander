@@ -393,7 +393,7 @@
       const x = 0.45 + i * fb + 0.14, w = fb - 0.28;
       g.fillStyle = "rgba(40,14,10,0.22)"; g.fillRect(x, Y(z1) + 0.06, w, z1 - z0 - 0.12);
       if (sv) { g.fillStyle = "rgba(30,10,10,0.3)"; g.fillRect(x, Y(z1) + 0.06, w, Math.max(0.02, sv[1] * 0.6)); if (sv[0] > 0) g.fillRect(x, Y(z1) + 0.06, Math.min(0.05, sv[0] * 0.6), z1 - z0 - 0.12); else g.fillRect(x + w + sv[0] * 0.6, Y(z1) + 0.06, Math.min(0.05, -sv[0] * 0.6), z1 - z0 - 0.12); }
-      if (F.px > 14) { g.strokeStyle = rgb(hell(GELB, -0.05), 0.8); g.lineWidth = 0.03; g.beginPath(); g.moveTo(x + 0.05, Y(z0) - 0.1); g.lineTo(x + w / 2, Y(z1) + 0.15); g.lineTo(x + w - 0.05, Y(z0) - 0.1); g.stroke(); }
+      if (F.px > 14) { g.strokeStyle = rgb(hell(GELB, -0.1), 0.45); g.lineWidth = 0.025; g.beginPath(); g.moveTo(x + 0.05, Y(z0) - 0.1); g.lineTo(x + w / 2, Y(z1) + 0.15); g.lineTo(x + w - 0.05, Y(z0) - 0.1); g.stroke(); }
     }
     /* Abdeckplatte */
     sandstein(g, -0.1, Y(ZW), L + 0.2, 0.12, F, hell(ss, 0.04), { saat: 23, fugen: 0.9 });
@@ -671,7 +671,7 @@
     const achsen = (liste, s, gruen) => { const r = []; for (const a of liste) r.push(kf(a), eg(a, s, { gruen: gruen === a }), og(a, s)); return r; };
     W.push({ p0: PLAN[0], p1: PLAN[1], elemente: achsen([1.2, 2.9, 6.1, 7.8], 1, 6.1).concat([
       { art: "portal", a: 4.5, w: 1.3, h: 2.9, zs: PORTAL_Z }, { art: "sonnenuhr", a: 4.5, zs: 5.4 }, { art: "blitz", a: 0.62 }]) });
-    W.push({ p0: PLAN[1], p1: PLAN[2], elemente: achsen([1.7, 4.5], 2), ranke: [0.4, 2.4] });
+    W.push({ p0: PLAN[1], p1: PLAN[2], elemente: achsen([1.7, 4.5], 2), ranke: [2.6, 3.6] });
     W.push({ p0: PLAN[2], p1: PLAN[3], elemente: achsen([1.2, 2.9, 4.5, 6.1, 7.8], 3) });
     W.push({ p0: PLAN[3], p1: PLAN[0], elemente: achsen([1.7, 4.5], 4) });
     let saat = 3, ox = 0;
@@ -1225,13 +1225,14 @@
         }
         /* Schneekappe */
         if (S.winter && Z.schnee > 0 && Z.blech >= 1) {
-          /* weicher Rand: viele dünne Lagen, die obersten dicht */
-          for (let i = 0; i < 12; i++) {
-            const t0 = 0.5 + i * 0.03, zt = zc + Math.sin(t0) * Rd, rr = Math.cos(t0) * Rd;
-            const wel = (i % 3) * 0.02;
-            g.beginPath(); g.moveTo(-rr * s, yz(zt)); g.ellipse(0, yz(zt) + wel * s, rr * s, 0.5 * rr * s, 0, Math.PI, 0, true); g.lineTo(rr * s, yz(zc + Rd) - 4); g.lineTo(-rr * s, yz(zc + Rd) - 4); g.closePath();
-            g.fillStyle = lit([244, 247, 252], lfN([0, 0, 1]), (i < 11 ? 0.13 : 0.5) * Z.schnee); g.fill();
-          }
+          /* Schneekappe mit weichem Rand (unscharf gemalt) */
+          const kappe = (t0, al, weich) => {
+            const zt = zc + Math.sin(t0) * Rd, rr = Math.cos(t0) * Rd;
+            g.save(); g.filter = "blur(" + Math.max(0.5, weich * s).toFixed(1) + "px)";
+            g.beginPath(); g.moveTo(-rr * s, yz(zt)); g.ellipse(0, yz(zt), rr * s, 0.5 * rr * s, 0, Math.PI, 0, true); g.lineTo(rr * s, yz(zc + Rd) - 0.3 * s); g.lineTo(-rr * s, yz(zc + Rd) - 0.3 * s); g.closePath();
+            g.fillStyle = lit([244, 247, 252], lfN([0, 0, 1]), al * Z.schnee); g.fill(); g.restore();
+          };
+          kappe(0.5, 0.35, 0.12); kappe(0.66, 0.9, 0.07);
           if (s > 12) { g.globalAlpha = 0.5; rausch(g, -Rd * s, yz(zc + Rd), 2 * Rd * s, Rd * s, 0.9 * s, 0.12, 2, 3); g.globalAlpha = 1; }
         }
         g.restore();
@@ -1261,14 +1262,14 @@
         g.fillStyle = gi; g.fill();
         g.clip();
         /* Innenschale: Ringe des Gerippes, im Innern dunkler Raum */
-        if (s > 12) {
-          g.strokeStyle = "rgba(120,126,130,0.45)"; g.lineWidth = Math.max(0.6, 0.025 * s);
+        if (s > 12 && F.nacht < 0.3) {
+          g.strokeStyle = "rgba(120,126,130,0.4)"; g.lineWidth = Math.max(0.6, 0.025 * s);
           g.beginPath();
           for (let t = 0.2; t < tmax; t += 0.22) { const q0 = P([d[0] * Math.cos(t) * Rd + lat[0] * 0.5, d[1] * Math.cos(t) * Rd + lat[1] * 0.5, zc + Math.sin(t) * Rd]), q1 = P([d[0] * Math.cos(t) * Rd - lat[0] * 0.5, d[1] * Math.cos(t) * Rd - lat[1] * 0.5, zc + Math.sin(t) * Rd]); g.moveTo(q0[0], q0[1]); g.lineTo(q1[0], q1[1]); }
           g.stroke();
         }
         /* Innen: Rippen und bei Nacht schwaches Rotlicht */
-        if (F.nacht > 0.1 && Z.licht) { g.fillStyle = "rgba(150,40,30," + (0.22 * F.nacht) + ")"; g.fillRect(-Rd * s, yz(zc + Rd), 2 * Rd * s, Rd * s * 1.6); }
+        if (F.nacht > 0.1) { g.fillStyle = "rgba(6,8,14," + (0.6 * F.nacht) + ")"; g.fillRect(-Rd * s, yz(zc + Rd), 2 * Rd * s, Rd * s * 1.6); }
         if (Z.fernrohr) fernrohr(true);
         g.restore();
         /* Spaltkanten (Blechzargen) */
@@ -1286,7 +1287,7 @@
       function fernrohr(innen) {
         const el = 38 * RAD, dir = [d[0] * Math.cos(el), d[1] * Math.cos(el), Math.sin(el)];
         const piv = [0, 0, zc + 0.25];
-        const A = add(piv, mul(dir, innen ? -0.6 : Rd * 0.96)), E = add(piv, mul(dir, Rd + 0.5));
+        const A = add(piv, mul(dir, innen ? -0.6 : Rd * 0.96)), E = add(piv, mul(dir, Rd + 0.85));
         if (!innen && dot(dir, eM) < 0.05) return;
         const pa = P(A), pe = P(E);
         const Lr = lfN(cam(nrm([dir[1], -dir[0], 0.4])));
@@ -1298,7 +1299,7 @@
         g.beginPath(); g.moveTo(pa[0] + off[0], pa[1] + off[1]); g.lineTo(pe[0] + off[0], pe[1] + off[1]); g.stroke();
         /* Messingringe, Objektiv */
         const ring = (k, br) => { const p = P(add(piv, mul(dir, k))); g.fillStyle = lit([196, 160, 80], Lr); g.beginPath(); g.arc(p[0], p[1], br * s, 0, TAU); g.fill(); };
-        if (!innen) { ring(Rd + 0.48, 0.19); const p = P(E); g.fillStyle = "rgb(20,24,34)"; g.beginPath(); g.arc(p[0], p[1], 0.12 * s, 0, TAU); g.fill(); g.fillStyle = "rgba(160,200,255,0.5)"; g.beginPath(); g.arc(p[0] - 0.03 * s, p[1] - 0.03 * s, 0.04 * s, 0, TAU); g.fill(); }
+        if (!innen) { ring(Rd + 0.83, 0.19); ring(Rd + 0.25, 0.18); const p = P(E); g.fillStyle = "rgb(20,24,34)"; g.beginPath(); g.arc(p[0], p[1], 0.12 * s, 0, TAU); g.fill(); g.fillStyle = "rgba(160,200,255,0.5)"; g.beginPath(); g.arc(p[0] - 0.03 * s, p[1] - 0.03 * s, 0.04 * s, 0, TAU); g.fill(); }
         else ring(0.2, 0.2);
       }
     };

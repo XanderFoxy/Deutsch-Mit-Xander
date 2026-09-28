@@ -1208,7 +1208,7 @@
       if (Z.winter) { g.fillStyle = "rgba(236,240,248,0.35)"; g.fillRect(-1, -1, F.w + 2, F.h + 2); }
     };
     W.teil("grube", { fest: -30, schatten: false });
-    const ex = { keinLicht: false };
+    const ex = { keinLicht: true };
     W.poly([[x0, y0, -T], [x1, y0, -T], [x1, y1, -T], [x0, y1, -T]], [0, 0, -T - 5], (g, F) => {
       g.save(); if (!loch(g, F)) { g.restore(); return; }
       g.fillStyle = rgbS([92, 72, 52]); g.fillRect(-1, -1, F.w + 2, F.h + 2);
@@ -1216,10 +1216,11 @@
       /* Wasser in der Sohle – der Grund ist nass */
       g.fillStyle = "rgba(70,84,96,0.4)"; g.beginPath(); g.ellipse(F.w * 0.3, F.h * 0.6, 2.2, 0.7, 0.3, 0, TAU); g.fill();
       if (Z.winter) { g.fillStyle = "rgba(236,240,248,0.18)"; g.fillRect(-1, -1, F.w + 2, F.h + 2); }
+      belichten(g, F, B, [0, 0, 1]);
       g.restore();
     }, Object.assign({ name: "g-sohle" }, ex));
     const wand = (a, b, n, name, saat) => W.poly([[a[0], a[1], 0], [b[0], b[1], 0], [b[0], b[1], -T], [a[0], a[1], -T]], [a[0] + n[0] * 5, a[1] + n[1] * 5, -T / 2], (g, F) => {
-      g.save(); if (!loch(g, F)) { g.restore(); return; } erde(g, F, saat); g.restore();
+      g.save(); if (!loch(g, F)) { g.restore(); return; } erde(g, F, saat); belichten(g, F, B, mul([n[0], n[1], 0], -1)); g.restore();
     }, Object.assign({ name: name }, ex));
     wand([x0, y0], [x1, y0], [0, -1], "g-n", 3);
     wand([x1, y1], [x0, y1], [0, 1], "g-s", 4);

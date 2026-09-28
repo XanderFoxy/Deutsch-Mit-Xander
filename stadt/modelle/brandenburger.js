@@ -399,9 +399,9 @@
   const XE0 = 5.62, XE1 = 6.62;                       // Endwände
   const WT = 1.45, WB = 0.27;                         // Querwände: halbe Tiefe, halbe Dicke
   /* Torhäuser */
-  const HX0 = 9.4, HX1 = 13.0, HY = 4.0, HYK = 3.15;
-  const Z_H0 = 0.2, Z_HS = 3.35, Z_HG = 4.05, Z_HA = 4.35;
-  const HSX = [9.78, 10.73, 11.67, 12.62], HSY = 3.6, HR0 = 0.2, HR1 = 0.172;
+  const HX0 = 9.6, HX1 = 12.8, HY = 3.4, HYK = 2.62;
+  const Z_H0 = 0.2, Z_HS = 3.1, Z_HG = 3.75, Z_HA = 4.0;
+  const HSX = [9.93, 10.78, 11.62, 12.47], HSY = 3.02, HR0 = 0.19, HR1 = 0.163;
   /* Verbindungsmauern */
   const VY = 0.75, Z_V = 3.0, Z_VK = 3.2;
   /* Triglyphen: über jeder Säulenachse und im Abstand von 0,74 m */
@@ -1002,19 +1002,19 @@
          Torhäusern, in den Durchfahrten */
       const STR = [];
       for (const x of SX) { STR.push([x, SY + 1.5, 0.2]); STR.push([x, -SY - 1.5, 0.2]); }
-      for (const sx of [-1, 1]) { STR.push([sx * 11.2, HY + 1.3, 0.2]); STR.push([sx * 11.2, -HY - 1.3, 0.2]); STR.push([sx * 14.3, 0, 0.2]); STR.push([sx * 8.0, 1.8, 0.2]); STR.push([sx * 8.0, -1.8, 0.2]); }
+      for (const sx of [-1, 1]) { STR.push([sx * 11.2, HY + 1.3, 0.2]); STR.push([sx * 11.2, -HY - 1.3, 0.2]); STR.push([sx * 14.1, 0, 0.2]); STR.push([sx * 8.0, 1.8, 0.2]); STR.push([sx * 8.0, -1.8, 0.2]); }
       const DURCH = [0, -2.59, 2.59, -4.81, 4.81];
       for (const x of DURCH) STR.push([x, 0, 0.3]);
       const flut = Z.fertig ? STR : null;
 
       /* ---------- Baugrube, Pfähle, Fundament ---------- */
       if (Z.grube) {
-        grubeBauen(W, M, B, Z, [-13.2, -4.1, 13.2, 4.1]);
+        grubeBauen(W, M, B, Z, [-13.1, -3.9, 13.1, 3.9]);
         if (Z.fund < 1) pfaehleBauen(W, M, Z);
         if (Z.fund > 0) {
           const z1 = -Z.tiefe * (1 - glatt(Z.fund));
           W.teil("fundament", { fest: -20, schatten: false });
-          const fl = [[-6.8, -2.45, 6.8, 2.45], [-13.1, -4.05, -9.3, 4.05], [9.3, -4.05, 13.1, 4.05], [-9.4, -0.85, -6.7, 0.85], [6.7, -0.85, 9.4, 0.85]];
+          const fl = [[-6.8, -2.45, 6.8, 2.45], [-HX1 - 0.1, -HY - 0.05, -HX0 + 0.1, HY + 0.05], [HX0 - 0.1, -HY - 0.05, HX1 + 0.1, HY + 0.05], [-HX0, -0.85, -6.7, 0.85], [6.7, -0.85, HX0, 0.85]];
           for (const [x0, y0, x1, y1] of fl) kastenRoh(W, x0, y0, -Z.tiefe, x1, y1, z1, (g, F) => { stein(g, F, z1, { farbe: [176, 166, 146], lage: 0.4, lang: 0.8, fahnen: false }); }, { oben: true });
         }
       }
@@ -1208,8 +1208,8 @@
             stein(g, F, zTop, { lage: 0.42, lang: 1.05 });
             if (zTop < Z_HS) return;
             const lang = seite === "ost" || seite === "west";
-            if (lang) for (const t of [0.2, 0.5, 0.8]) hausFenster(g, F, Z, F.w * t - 0.32, zTop - 2.75, 0.64, 1.45);
-            else hausTuer(g, F, Z, F.w / 2 - 0.55, zTop - 2.45, 1.1, 2.45);
+            if (lang) for (const t of [0.2, 0.5, 0.8]) hausFenster(g, F, Z, F.w * t - 0.3, zTop - 2.55, 0.6, 1.35);
+            else hausTuer(g, F, Z, F.w / 2 - 0.5, zTop - 2.3, 1.0, 2.1);
             g.fillStyle = "rgba(90,80,64,0.3)"; g.fillRect(-0.2, zTop - Z_H0 - 0.5, F.w + 0.4, 0.04);
           };
         });
@@ -1231,7 +1231,7 @@
               const f = F.flaeche;
               const ach = [];
               if (seite === "sued" || seite === "nord") { for (const hxr of HSX) ach.push(sx * hxr); for (let i = 0; i < 3; i++) ach.push(sx * (HSX[i] + HSX[i + 1]) / 2); ach.push(hx0 + 0.16, hx1 - 0.16); }
-              else for (let yy = -HY + 0.16; yy <= HY - 0.15; yy += 0.49) ach.push(yy);
+              else for (let yy = -HY + 0.16; yy <= HY - 0.15; yy += (2 * HY - 0.32) / 14) ach.push(yy);
               const achsen = ach.map((v) => seite === "sued" || seite === "nord" ? dot(sub([v, f.o[1], 0], f.o), f.u) : dot(sub([f.o[0], v, 0], f.o), f.u)).sort((a, b) => a - b);
               /* Maße des kleinen Gebälks auf das große abbilden */
               g.save(); g.translate(0, 0);
@@ -1312,11 +1312,12 @@
       if (F.px > 6) rausch(g, -1, -1, F.w + 2, F.h + 2, 1.4, 0.3, 17, true);
       g.fillStyle = "rgba(80,92,100,0.35)"; g.beginPath(); g.ellipse(F.w * 0.7, F.h * 0.4, 2.4, 0.8, 0.2, 0, TAU); g.fill();
       if (Z.winter) { g.fillStyle = "rgba(236,240,248,0.2)"; g.fillRect(-1, -1, F.w + 2, F.h + 2); }
+      belichten(g, F, B, [0, 0, 1]);
       g.restore();
-    }, { name: "g-sohle", keinLicht: false });
+    }, { name: "g-sohle", keinLicht: true });
     const wand = (a, b, n, name, saat) => W.poly([[a[0], a[1], 0], [b[0], b[1], 0], [b[0], b[1], -T], [a[0], a[1], -T]], [a[0] + n[0] * 5, a[1] + n[1] * 5, -T / 2], (g, F) => {
-      g.save(); if (!loch(g, F)) { g.restore(); return; } erde(g, F, saat); g.restore();
-    }, { name: name, keinLicht: false });
+      g.save(); if (!loch(g, F)) { g.restore(); return; } erde(g, F, saat); belichten(g, F, B, mul([n[0], n[1], 0], -1)); g.restore();
+    }, { name: name, keinLicht: true });
     wand([x0, y0], [x1, y0], [0, -1], "g-n", 3);
     wand([x1, y1], [x0, y1], [0, 1], "g-s", 4);
     wand([x1, y0], [x1, y1], [1, 0], "g-o", 5);
@@ -1327,7 +1328,7 @@
     const T = Z.tiefe, st = [], pf = [];
     for (let x = -12.8; x <= 12.81; x += 0.9) for (let y = -3.7; y <= 3.71; y += 0.9) {
       const ax = Math.abs(x);
-      if ((ax < 6.8 && Math.abs(y) < 2.45) || (ax > 9.3 && Math.abs(y) < 4.0) || (ax >= 6.8 && ax <= 9.3 && Math.abs(y) < 0.9)) pf.push([x, y]);
+      if ((ax < 6.8 && Math.abs(y) < 2.45) || (ax > HX0 && ax < HX1 && Math.abs(y) < HY) || (ax >= 6.8 && ax <= HX0 && Math.abs(y) < 0.9)) pf.push([x, y]);
     }
     const n = Math.round(pf.length * Z.pfaehle);
     for (let i = 0; i < n; i++) { const [x, y] = pf[i]; const hoch = i > n - 4 && Z.pfaehle < 1 ? 1.3 : 0.15; st.push([[x, y, -T], [x, y, -T + hoch], 0.13, [150, 118, 80]]); }
