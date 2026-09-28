@@ -15,35 +15,58 @@
    Erdgeschoss aus Bruchstein (Buntsandstein in Kalkmörtel, Eckquader aus
    rotem Mainsandstein), Obergeschoss und Giebel in Fachwerk, steiles
    Satteldach mit Krüppelwalm und Biberschwanz-Doppeldeckung. An der
-   Ostgiebelseite ein oberschlächtiges Wasserrad; das Wasser kommt aus
-   dem Stauwerk im Norden über ein hölzernes Gerinne auf Böcken und fällt
-   knapp hinter dem Scheitel in die Zellen. Unter dem Rad die gemauerte
-   Radgrube, aus der das Wasser durch einen Durchlass nach Osten abfließt.
+   Ostgiebelseite ein oberschlächtiges Wasserrad.
+
+   WOHER DAS WASSER KOMMT (Runde 2, Kritik: „speist sich aus nichts"):
+   Ein oberschlächtiges Rad braucht Gefälle. Weil die Stadt eben ist, steht
+   hinter der Mühle ein geböschter Teichdamm – der Mühlteich (Stauweiher).
+   Zur Mühle hin und am Bach hält ihn eine Bruchstein-Stützmauer, zur
+   Wiese hin fällt er als Rasen- bzw. Schneeböschung auf eine niedrige
+   Trockenmauer ab. Oben die Wasserfläche mit Sandstein-Teichrand, am
+   Mauerkopf das Schütz (Schütztafel, Zahnstange, Handrad), aus dem das
+   Wasser in das hölzerne Gerinne auf Böcken läuft und knapp hinter dem
+   Scheitel in die Zellen fällt. Überschüssiges Wasser geht über den
+   Leerschuss an der Ostmauer in ein Tosbecken. Unter dem Rad die gemauerte
+   Radgrube; der Untergraben läuft als gepflasterte Rinne bis an den
+   Grundrand (in Winterhausen genau in den Mühlbach).
    Das Rad steht an +x, damit man die Mühle an einen Bach stellen kann.
 
-   MASSE (Meter, Mitte des Grundrisses = 0,0,0; x Osten, y Süden)
+   MASSE (Meter; Konstruktion mit dem Haus um y = 0, x Osten, y Süden;
+   für den Kern ist alles um DY nach Süden verschoben, damit die Mitte des
+   Grundrisses auf 0,0,0 liegt – siehe verschoben())
      Haus        10,5 × 8,0 m (x −7,0…3,5), Bruchstein bis 3,3 m,
                  Fachwerk-Obergeschoss bis 6,05 m, Traufe 6,25 m,
                  Dachneigung 50°, First 11,45 m, Krüppelwalm ab 9,3 m
      Wasserrad   Ø 5,0 m, lichte Breite 0,95 m, 36 Zellen, 2 × 8 Arme,
-                 Welle (Eiche, achteckig) Ø 0,54 m, Mitte auf 2,62 m
-     Gerinne     0,8 m breit, Boden auf 5,25 m, vom Stauwerk bis über den
-                 Scheitel des Rades
+                 Welle (Eiche, achteckig) Ø 0,54 m, Mitte auf 2,62 m,
+                 Außenlager auf niedrigem Mauerpfeiler in der Grubenwand
+     Gerinne     0,8 m breit, Boden auf 5,28 m, vom Damm bis über den
+                 Scheitel des Rades, auf zwei Böcken und einer Konsole
+     Teichdamm   Krone 5,95 m, Teich 5,2 × 2,3 m (Spiegel 5,62 m),
+                 Böschung 50° auf 0,45-m-Trockenmauer
      Radgrube    2,7 × 6,2 m, 1,1 m tief, Wasserspiegel 0,55 m unter Gelände
+     Untergraben 1,1 m breit, vom Durchlass (Südhälfte, wo das Wasser aus
+                 den Zellen fällt) bis an den Grundrand
 
-   WAS SICH DREHT, WIRD JEDES BILD GEMALT (M.lebendig): Rad, Welle,
-   Wasser in Gerinne, Zellen und Grube. Was davor liegt (Haus, Lagerstein,
-   Gerinne, Böcke, Stauwerk), wird als Umriss aus dem Malbereich
-   ausgespart – so stimmt die Verdeckung in jedem Drehwinkel.
-   Im Vorschaubild (ohne Objekt) und während des Baus steht das Rad still
-   im Sprite.
+   WAS SICH DREHT: Rad und Wasser werden nicht mehr jedes Bild neu gemalt
+   (Kritik: 116 ms je Bild). Die Symmetrie des Rades (36 Zellen, 8 Arme)
+   wiederholt sich alle 90°. Also malt die Mühle für jede Ansicht (Drehung,
+   Zoom, Jahreszeit, Tageszeit) einmal eine Bildfolge von 16–36 Bildern
+   einer Vierteldrehung – mit ausgespartem Haus, Lager, Damm usw. – und
+   legt im Leben nur noch das passende Bild hin (drawImage). Das Wasser
+   läuft in derselben Schleife (alle seine Bewegungen sind ganzzahlige
+   Vielfache der Schleifendauer), das Wasser im Gerinne in einer eigenen
+   kurzen Schleife. Unter 14 Bildpunkten je Meter steht das Rad still im
+   Sprite; im Sprite liegt immer eine schwach deckende Radsilhouette, damit
+   ein Tipp auf das Rad die Mühle auswählt.
 
    AUFBAU (o.bau): Schnurgerüst und Baugrube (Haus und Radgrube) →
-   Betonfundament mit Schalung → Bruchsteinmauern Lage für Lage → Balken-
-   lage → Fachwerk (Holz, dann Ausfachung) → offener Dachstuhl mit
-   Richtbaum → Lattung, Eindecken Reihe für Reihe → Stauwerk, Böcke,
-   Gerinne → Wasserrad (Welle, Arme, Kränze, Zellen) → Fenster, Türen,
-   Schmuck → Wasser marsch.
+   Betonfundament mit Schalung → Bruchsteinmauern Lage für Lage, der
+   Teichdamm wächst mit (Stützmauer, Erdschüttung) → Balkenlage →
+   Fachwerk (Holz, dann Ausfachung) → offener Dachstuhl mit Richtbaum →
+   Lattung, Eindecken Reihe für Reihe → Schütz, Böcke, Gerinne →
+   Wasserrad (Welle, Arme, Kränze, Zellen) → Fenster, Türen, Schmuck →
+   Rasen auf der Böschung → Wasser marsch.
    ===================================================================== */
 (function () {
   "use strict";
@@ -105,6 +128,136 @@
     const lf = ST.lichtFaktor(F.n, F.zeit, extra || 0, F.jahr);
     return (c, a) => rgb([c[0] * lf[0], c[1] * lf[1], c[2] * lf[2]], a);
   }
+  /* Licht für aufrecht gemalte Figuren (Säcke, Tanne, Christbaum, Aushub):
+     links die Sonnenseite, rechts der Schatten, oben das Himmelslicht.
+     Kritik Runde 1: „Nachts leuchten die Mehlsäcke wie Laternen" – ohne
+     diese Faktoren malten die Figuren Tagesfarben in die Nacht. */
+  function figurLicht(F) {
+    const Zt = F.Z || ST.ZEITEN.tag;
+    const lL = ST.lichtFaktor([-0.707, 0.707, 0], Zt, 0, F.jahr), lR = ST.lichtFaktor([0.707, -0.707, 0], Zt, 0, F.jahr);
+    const lV = ST.lichtFaktor([0.707, 0.707, 0], Zt, 0, F.jahr), lO = ST.lichtFaktor([0, 0, 1], Zt, 0, F.jahr);
+    const lit = (c, l, a) => rgb([c[0] * l[0], c[1] * l[1], c[2] * l[2]], a);
+    return { lL: lL, lR: lR, lV: lV, lO: lO, lit: lit };
+  }
+
+  /* ---------------- Getönte Flecken und Glitzer (wie im Fachwerkhaus) ----------------
+     Ein Rauschmuster als Farbe mit Deckkraft: so bekommt Schnee bläuliche
+     Mulden und weiße Kuppen mit EINEM Füllbefehl – und dieselbe Palette
+     wie die Nachbarhäuser (Kritik: „Stilbruch neben den Fachwerkhäusern"). */
+  const TON = {};
+  function tonMuster(saat, farbe, weich) {
+    const k = saat + "|" + farbe + "|" + (weich || 0);
+    if (TON[k]) return TON[k];
+    const quelle = PI.rauschBild(1 + (saat % 5), 128, 4, 3, 1.6);
+    const d = quelle.getContext("2d").getImageData(0, 0, 128, 128).data;
+    const c = document.createElement("canvas"); c.width = c.height = 128;
+    const g = c.getContext("2d"), id = g.createImageData(128, 128), f = hex(farbe);
+    const u = weich ? 0.2 : 0.35, o = weich ? 0.8 : 0.5;
+    for (let i = 0; i < 128 * 128; i++) {
+      const v = klemm((d[i * 4] / 255 - u) / o, 0, 1);
+      id.data[i * 4] = f[0]; id.data[i * 4 + 1] = f[1]; id.data[i * 4 + 2] = f[2];
+      id.data[i * 4 + 3] = Math.round(v * v * (3 - 2 * v) * 255);
+    }
+    g.putImageData(id, 0, 0);
+    TON[k] = c;
+    return c;
+  }
+  function tonFlecken(g, x, y, w, h, meter, staerke, saat, farbe, weich) {
+    const s = Math.abs(saat | 0);
+    const m = g.createPattern(tonMuster(s % 7, farbe, weich), "repeat");
+    const k = meter / 128, sx = (s >> 2) % 2 ? -k : k;
+    m.setTransform(new DOMMatrix([sx, 0, 0, k, (s * 0.37) % meter, (s * 0.61) % meter]));
+    g.save(); g.globalAlpha = staerke; g.fillStyle = m; g.fillRect(x, y, w, h); g.restore();
+  }
+  function glitzer(g, F, x, y, w, h, dichte, rng, farbe) {
+    if (F.px <= 40 || F.licht < 0.2) return;
+    const k = Math.min(700, Math.round(w * h * dichte));
+    g.beginPath();
+    for (let i = 0; i < k; i++) { const r = (0.5 + rng() * 0.8) / F.px; g.rect(x + rng() * w, y + rng() * h, r, r); }
+    g.fillStyle = farbe || "rgba(255,255,255,0.95)"; g.fill();
+  }
+
+  /* =====================================================================
+     VERSCHIEBUNG: Konstruktion (Haus um y = 0) → Kern (Grundrissmitte auf
+     0,0). Alle Flächen, Teile, Figuren, Lichter und das Leben laufen über
+     diesen Bauer; F.flaeche.oK behält den Ursprung in Konstruktions-
+     koordinaten (für Loch-Clips, Schlagschatten, Aussparungen).
+     ===================================================================== */
+  function verschoben(M, dy) {
+    const t = (p) => [p[0], p[1] + dy, p[2]];
+    return {
+      teil(name, opt) { if (opt && opt.mitte) opt = Object.assign({}, opt, { mitte: t(opt.mitte) }); return M.teil(name, opt); },
+      flaeche(f) { f.oK = f.o; f.o = t(f.o); return M.flaeche(f); },
+      figur(fi) { fi.y = (fi.y || 0) + dy; return M.figur(fi); },
+      licht(x, y, z, r, c, k) { return M.licht(x, y + dy, z, r, c, k); },
+      bodenlicht(x, y, r, c, k) { return M.bodenlicht(x, y + dy, r, c, k); },
+      rauchAus(x, y, z, k) { return M.rauchAus(x, y + dy, z, k); },
+      lebendig(fn) {
+        M.lebendig((g, P) => {
+          const Q = Object.create(P);
+          Q.proj = (x, y, z) => P.proj(x, y + dy, z);
+          if (P.schattenAuf) Q.schattenAuf = (x, y, z) => P.schattenAuf(x, y + dy, z);
+          Q.kern0 = P.proj(0, 0, 0);
+          fn(g, Q);
+        });
+      }
+    };
+  }
+  const fo = (f) => f.oK || f.o;
+
+  /* =====================================================================
+     AUSSPAREN IN DER FLÄCHE (Leuchten): der Leuchten-Durchgang des Kerns
+     läuft nach allen Teilen und kennt keine Verdeckung (Kernwunsch). Damit
+     Fensterlicht nicht durch Dachüberstand, Rinne oder Gerinne scheint,
+     werden die Körper davor entlang der Blickrichtung auf die Wand gelegt
+     und aus dem Malbereich ausgeschnitten. Körper = konvexe Punktwolke in
+     Konstruktionskoordinaten.
+     ===================================================================== */
+  function aussparenFl(g, F, B, koerper) {
+    const f = F.flaeche, n = kreuz(f.u, f.v), E = B.e, en = dot(n, E), o = fo(f);
+    const alle = [];
+    if (en < 1e-3) return alle;
+    for (const K of koerper) {
+      if (!K) continue;
+      const q = [];
+      let vorn = false;
+      for (const p of K) {
+        const d = dot(n, sub(p, o));
+        if (d > 0.01) vorn = true;
+        const r = sub(add(p, mul(E, -d / en)), o);
+        q.push([dot(r, f.u), dot(r, f.v)]);
+      }
+      if (!vorn) continue;
+      const H = huelle2(q);
+      if (H.length < 3) continue;
+      alle.push(H);
+      g.beginPath(); g.rect(-200, -200, 400, 400);
+      g.moveTo(H[0][0], H[0][1]); for (let i = 1; i < H.length; i++) g.lineTo(H[i][0], H[i][1]); g.closePath();
+      g.clip("evenodd");
+    }
+    return alle;
+  }
+  /* Punkt in einer der Hüllen? (Umlaufsinn egal) */
+  function inHuelle(Hs, x, y) {
+    for (const H of Hs) {
+      let pos = 0, neg = 0;
+      for (let i = 0; i < H.length; i++) {
+        const a = H[i], b = H[(i + 1) % H.length], c = (b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0]);
+        if (c > 0) pos++; else if (c < 0) neg++;
+      }
+      if (!pos || !neg) return true;
+    }
+    return false;
+  }
+  /* Fläche für den Leuchten-Durchgang: Körper davor aussparen, und der
+     Szenenschein eines Fensters entfällt, wenn seine Mitte verdeckt ist */
+  function leuchtFlaeche(g, F, B, koerper) {
+    const Hs = aussparenFl(g, F, B, koerper);
+    if (!Hs.length) return F;
+    const F2 = Object.create(F);
+    F2.leuchtPunkt = (x, y, r, c, k, fl) => { if (!inHuelle(Hs, x, y)) F.leuchtPunkt(x, y, r, c, k, fl); };
+    return F2;
+  }
 
   /* =====================================================================
      HAUPTMASSE
@@ -129,29 +282,54 @@
   const LH = XW1 - XW0, LG = 2 * YW;               // Wandlängen
   const HAUS_M = [(XW0 + XW1) / 2, 0, 3];          // Mitte des Hauses (Reihenfolge)
 
+  /* Grundriss (Kern) und Verschiebung Konstruktion → Kern */
+  const GRUND = [16.2, 21.4], DY = 3.0;
+  const XG1 = GRUND[0] / 2;                        // Ostrand des Grundstücks (Bach)
+  const YG0 = -GRUND[1] / 2 - DY, YG1 = GRUND[1] / 2 - DY;   // Nord- und Südrand (Konstruktion)
   /* Wasserrad */
   const RX = 4.4, RZ = 2.62, RR = 2.5, RI = 2.12, RK0 = 2.0;
   const RB = 0.95, RKD = 0.07;
   const XK1 = RX - RB / 2 - RKD, XK2 = RX - RB / 2, XK3 = RX + RB / 2, XK4 = RX + RB / 2 + RKD;
   const NZ = 36, NA = 8, RW = 0.27;
-  const X_LAGER = 5.25;                            // Stirnseite des Lagersteins
-  /* Gerinne */
-  const GX0 = 4.0, GX1 = 4.8, GW = 0.05;           // außen, Brettstärke
-  const GZ0 = 5.2, GZB = 5.28, GZ1 = 5.72;         // Unterkante, Boden innen, Oberkante
-  const GY0 = -5.8, GY1 = 0.35;                    // Anfang am Stauwerk, Ende über dem Rad
-  const GZW = 5.5;                                 // Wasserspiegel im Gerinne
-  /* Stauwerk */
-  const SX0 = 3.4, SX1 = 5.4, SY0 = -7.6, SY1 = GY0, SZ1 = 5.95;
   /* Radgrube */
   const PX0 = XW1, PX1 = 6.2, PY0 = -3.1, PY1 = 3.1, PZB = -1.1, PZW = -0.55;
   const RAND_B = 0.34, RAND_H = 0.12;              // Randsteine
-  /* Lagerstein */
-  const LX0 = X_LAGER, LX1 = 6.05, LY = 0.46, LZ1 = RZ - RW - 0.02, LZB = RZ + 0.36;
+  /* Außenlager (Kritik: der 3-m-Quaderpfeiler stand vor der Nabe): ein
+     niedriger Mauerpfeiler in der Ostwand der Grube, Oberkante 0,55 m unter
+     der Wellenmitte, darauf ein Eichenbock mit eiserner Lagerschale */
+  const LX0 = 5.78, LX1 = PX1 + RAND_B, LY = 0.42, LZ1 = RZ - RW - 0.28, LZB = RZ - RW + 0.02;
+  const X_LAGER = 6.12;                            // Wellenende (Lagermitte)
+  const LZ_P = 0.62;                               // Oberkante des niedrigen Lagerpfeilers
+  /* Lagerbock: zwei geneigte Eichenstiele vom Pfeiler bis unter das Sattelholz */
+  const BOCK_STIELE = [[-1, 0.33, 0.19], [1, 0.33, 0.19]].map(([t, yu, yo]) => [[X_LAGER, t * yu, LZ_P], [X_LAGER, t * yo, LZ1]]);
+  /* Untergraben: aus der Südhälfte der Grube (dort fällt das Wasser aus
+     den Zellen) durch einen Durchlass unter dem Randstein bis an den Rand */
+  const UY0 = 1.35, UY1 = 2.45, UZB = -0.9;        // Rinne 1,1 m breit, Sohle
+  const UYM = (UY0 + UY1) / 2;
+  /* Teichdamm (Mühlteich hinter der Mühle) */
+  const TD_Z = 5.95, TD_W = 5.62;                  // Krone, Wasserspiegel
+  const TD_X0 = 1.2, TD_X1 = 7.0, TD_Y0 = -9.05, TD_Y1 = -5.9;  // Kronenfläche
+  const TD_FUSS = 0.45, TD_NEIG = 50 * RAD;        // Trockenmauer am Böschungsfuß, Böschung 50°
+  const TD_LAUF = (TD_Z - TD_FUSS) / Math.tan(TD_NEIG);
+  const TD_XF = TD_X0 - TD_LAUF, TD_YF = TD_Y0 - TD_LAUF;      // Böschungsfuß West / Nord
+  const TE_X0 = TD_X0 + 0.5, TE_X1 = TD_X1 - 0.45, TE_Y0 = TD_Y0 + 0.45, TE_Y1 = TD_Y1 - 0.5;   // Teich
+  const LS_Y = -7.55, LS_B = 0.5;                  // Leerschuss (Mitte, Breite) an der Ostmauer
+  const TB_X0 = TD_X1, TB_X1 = XG1 - 0.15, TB_Y0 = LS_Y - 0.85, TB_Y1 = LS_Y + 0.85, TB_Z = -0.45;   // Tosbecken
+  /* Gerinne */
+  const GX0 = 4.0, GX1 = 4.8, GW = 0.05;           // außen, Brettstärke
+  const GZ0 = 5.2, GZB = 5.28, GZ1 = 5.72;         // Unterkante, Boden innen, Oberkante
+  const GY0 = TD_Y1, GY1 = 0.35;                   // Anfang am Damm, Ende über dem Rad
+  const GZW = 5.5;                                 // Wasserspiegel im Gerinne
   /* Böcke */
   const BOECKE = [-4.95, -3.45];
   const KONSOLE_Y = -1.5;
-  /* Reihenfolge: Anbauten liegen weit außen (siehe Kopf) */
-  const AUSSEN = 100;
+  /* Reihenfolge der Teile (der Kern sortiert nach der Mitte eines Teils):
+     die Anbauten am Ostgiebel (Rad, Gerinne, Böcke) liegen „weit im
+     Osten" (AUSSEN), alles am und auf dem Damm „sehr weit im Norden"
+     (NORDEN). NORDEN ist viel größer als AUSSEN, damit zwischen Damm und
+     Anbauten die Nord-Süd-Lage entscheidet – sie sind durch die Ebene der
+     Dammmauer getrennt, Anbauten und Haus durch die Ebene des Ostgiebels. */
+  const AUSSEN = 100, NORDEN = 10000;
 
   /* =====================================================================
      BLICK: bauen() kennt den Drehwinkel nicht – eine unsichtbare Figur,
@@ -386,6 +564,39 @@
     if (BS_CACHE.size > 80) BS_CACHE.delete(BS_CACHE.keys().next().value);
     return L;
   }
+  /* Pfade je Farbeimer einmal bauen und merken (Kritik: das Steinlayout
+     wurde bei jeder Zeichnung neu gebaut). Unter 30 Bildpunkten je Meter
+     reichen Reihen-Rechtecke – die 17-Eck-Steine sieht man dort nicht. */
+  const BS_PFADE = new Map();
+  function bruchPfade(L, key, fein, filter) {
+    const k = key + (fein ? "|f" : "|g");
+    let P = filter ? null : BS_PFADE.get(k);
+    if (P) return P;
+    const eimer = new Map();
+    for (const s of L.steine) {
+      if (filter && !filter(s)) continue;
+      const ek = s.c * 3 + s.k;
+      let e = eimer.get(ek);
+      if (!e) { e = { stein: new Path2D(), kern: fein ? new Path2D() : null }; eimer.set(ek, e); }
+      if (fein) {
+        const p = s.pts; e.stein.moveTo(p[0][0], p[0][1]); for (let i = 1; i < p.length; i++) e.stein.lineTo(p[i][0], p[i][1]); e.stein.closePath();
+        const b = s.box, cx = (b[0] + b[2]) / 2 - 0.012, cy = (b[1] + b[3]) / 2 - 0.012, kk = 0.62;
+        e.kern.moveTo(cx + (p[0][0] - cx) * kk, cy + (p[0][1] - cy) * kk);
+        for (let i = 1; i < p.length; i++) e.kern.lineTo(cx + (p[i][0] - cx) * kk, cy + (p[i][1] - cy) * kk);
+        e.kern.closePath();
+      } else e.stein.rect(s.box[0], s.box[1], s.box[2] - s.box[0], s.box[3] - s.box[1]);
+    }
+    const licht = new Path2D(), fuge = new Path2D();
+    if (fein) for (const s of L.steine) {
+      if (filter && !filter(s)) continue;
+      const p = s.pts;
+      licht.moveTo(p[14][0], p[14][1]); licht.lineTo(p[15][0], p[15][1]); licht.lineTo(p[16][0], p[16][1]); licht.lineTo(p[0][0], p[0][1]); licht.lineTo(p[1][0], p[1][1]); licht.lineTo(p[2][0], p[2][1]); licht.lineTo(p[3][0], p[3][1]);
+      fuge.moveTo(p[6][0], p[6][1]); for (let i = 7; i <= 13; i++) fuge.lineTo(p[i][0], p[i][1]);
+    }
+    P = { eimer: eimer, licht: licht, fuge: fuge };
+    if (!filter) { BS_PFADE.set(k, P); if (BS_PFADE.size > 120) BS_PFADE.delete(BS_PFADE.keys().next().value); }
+    return P;
+  }
   /* bis = Höhe von unten, bis zu der schon gemauert ist (Bau); lage = 0…1
      Fortschritt in der obersten Lage */
   function bruchsteinMalen(g, F, x, y, w, h, opt) {
@@ -399,72 +610,46 @@
       rausch(g, x, ob, w, y + h - ob, 3, 0.2, saat, 3);
       return;
     }
-    rausch(g, x, ob, w, y + h - ob, 0.7, 0.18, saat + 2, 3);
+    if (px > 20) rausch(g, x, ob, w, y + h - ob, 0.7, 0.18, saat + 2, 3);
     const L = bruchLayout(saat, w, h);
-    const eimer = new Map();
-    const fein = px > 16;
-    const oben = [], unten = [];
+    const fein = px > 30;
+    const voll = opt.bis == null || opt.bis >= h - 0.005;
+    const filter = voll ? null : (s) => !(s.yb < h - opt.bis - 0.01) && !(s.yt < h - opt.bis - 0.01 && s.box[0] > w * (opt.lage == null ? 1 : opt.lage));
+    const P = bruchPfade(L, saat + "|" + w.toFixed(2) + "|" + h.toFixed(2), fein, filter);
     g.save();
     g.translate(x, y);
-    for (const s of L.steine) {
-      if (opt.bis != null) {
-        if (s.yb < h - opt.bis - 0.01) continue;
-        if (s.yt < h - opt.bis - 0.01) {
-          /* oberste Lage wird gerade gemauert: von links nach rechts */
-          if (s.box[0] > w * (opt.lage == null ? 1 : opt.lage)) continue;
-        }
-      }
-      const key = s.c * 3 + s.k;
-      let e = eimer.get(key);
-      if (!e) { e = []; eimer.set(key, e); }
-      e.push(s);
-    }
-    for (const [key, liste] of eimer) {
+    for (const [key, e] of P.eimer) {
       const c = hell(BS_FARBEN[(key / 3) | 0], (key % 3 - 1) * 0.08);
-      g.fillStyle = rgb(c);
-      g.beginPath();
-      for (const s of liste) {
-        if (fein) { const p = s.pts; g.moveTo(p[0][0], p[0][1]); for (let i = 1; i < p.length; i++) g.lineTo(p[i][0], p[i][1]); g.closePath(); }
-        else g.rect(s.box[0], s.box[1], s.box[2] - s.box[0], s.box[3] - s.box[1]);
-        if (fein) { oben.push(s); unten.push(s); }
-      }
-      g.fill();
-      if (fein) {
-        /* Wölbung: jeder Stein ist bossiert – hellerer Kern, zum Licht versetzt */
-        g.fillStyle = rgb(hell(c, 0.07));
-        g.beginPath();
-        for (const s of liste) {
-          const b = s.box, cx = (b[0] + b[2]) / 2 - 0.012, cy = (b[1] + b[3]) / 2 - 0.012, k = 0.62;
-          const p = s.pts; g.moveTo(cx + (p[0][0] - cx) * k, cy + (p[0][1] - cy) * k);
-          for (let i = 1; i < p.length; i++) g.lineTo(cx + (p[i][0] - cx) * k, cy + (p[i][1] - cy) * k);
-          g.closePath();
-        }
-        g.fill();
-      }
+      g.fillStyle = rgb(c); g.fill(e.stein);
+      /* Wölbung: jeder Stein ist bossiert – hellerer Kern, zum Licht versetzt */
+      if (e.kern) { g.fillStyle = rgb(hell(c, 0.07)); g.fill(e.kern); }
     }
     if (fein) {
       /* Relief: Lichtkante oben, Schattenfuge unten (der Mörtel liegt zurück) */
-      const lichtKante = F.lichtN > 0.05 ? 0.3 : 0.14;
       g.lineWidth = Math.max(0.006, 1.1 / px);
-      g.strokeStyle = "rgba(255,244,226," + lichtKante + ")";
-      g.beginPath();
-      for (const s of oben) { const p = s.pts; g.moveTo(p[14][0], p[14][1]); g.lineTo(p[15][0], p[15][1]); g.lineTo(p[16][0], p[16][1]); g.lineTo(p[0][0], p[0][1]); g.lineTo(p[1][0], p[1][1]); g.lineTo(p[2][0], p[2][1]); g.lineTo(p[3][0], p[3][1]); }
-      g.stroke();
+      g.strokeStyle = "rgba(255,244,226," + (F.lichtN > 0.05 ? 0.3 : 0.14) + ")";
+      g.stroke(P.licht);
       g.strokeStyle = "rgba(40,28,22,0.42)";
       g.lineWidth = Math.max(0.008, 1.4 / px);
-      g.beginPath();
-      for (const s of unten) { const p = s.pts; g.moveTo(p[6][0], p[6][1]); for (let i = 7; i <= 13; i++) g.lineTo(p[i][0], p[i][1]); }
-      g.stroke();
-      if (px > 40) {
-        /* Poren, Flechten, abgeplatzte Kanten */
+      g.stroke(P.fuge);
+      if (px > 45) {
+        /* Poren, Flechten, abgeplatzte Kanten – ein Pfad */
         const rng = zufall(saat + 99);
         g.fillStyle = "rgba(60,44,36,0.25)";
-        for (const s of oben) if (s.fl < 0.5) for (let i = 0; i < 3; i++) { const b = s.box; g.beginPath(); g.arc(b[0] + rng() * (b[2] - b[0]), b[1] + rng() * (b[3] - b[1]), 0.006 + rng() * 0.01, 0, TAU); g.fill(); }
+        g.beginPath();
+        for (const s of L.steine) if (s.fl < 0.5 && (!filter || filter(s))) for (let i = 0; i < 3; i++) { const b = s.box, r = 0.006 + rng() * 0.01, cx = b[0] + rng() * (b[2] - b[0]), cy = b[1] + rng() * (b[3] - b[1]); g.moveTo(cx + r, cy); g.arc(cx, cy, r, 0, TAU); }
+        g.fill();
       }
+    } else if (px > 12) {
+      /* grob: nur eine dunkle Unterkante je Stein */
+      g.fillStyle = "rgba(40,28,22,0.28)";
+      g.beginPath();
+      for (const s of L.steine) if (!filter || filter(s)) g.rect(s.box[0], s.box[3] - Math.max(0.012, 1.1 / px), s.box[2] - s.box[0], Math.max(0.012, 1.1 / px));
+      g.fill();
     }
     g.restore();
     rausch(g, x, ob, w, y + h - ob, 2.8, 0.14, saat + 5, 4);
-    bleich(g, x, ob, w, y + h - ob, 2.2, 0.07, saat + 1);
+    if (px > 12) bleich(g, x, ob, w, y + h - ob, 2.2, 0.07, saat + 1);
   }
 
   /* ---------------- Sandsteinquader (Pfeiler, Eckquader, Abdeckung) ---------------- */
@@ -513,30 +698,77 @@
     bleich(g, x, y, w, h, 2.4, 0.07, saat);
   }
 
-  /* ---------------- Schnee und Eis ---------------- */
-  function schneeFlaeche(g, F, x, y, w, h, saat) {
+  /* ---------------- Schnee und Eis ----------------
+     Pulverschnee ist nie reinweiß und nie glatt (gleiche Palette wie die
+     Fachwerkhäuser): Grundton #e8edf5, großflächige bläuliche Mulden (bis
+     #b9c6da) und weiße Kuppen aus zwei Rauschmaßstäben, lange flache
+     Verwehungen mit mindestens 0,25 Kontrast, Glitzer nur auf der
+     Sonnenseite. opt.zwischen: Ziegelreihen, die sich durchdrücken. */
+  function schneeFlaeche(g, F, x, y, w, h, saat, opt) {
+    opt = opt || {};
     const rng = zufall(saat * 131 + 7);
-    const gr = g.createLinearGradient(0, y, 0, y + h);
-    gr.addColorStop(0, "rgb(236,241,249)"); gr.addColorStop(1, "rgb(247,250,254)");
-    g.fillStyle = gr; g.fillRect(x, y, w, h);
-    /* Verwehungen: wenige große, weiche Mulden, dazu Rauschen */
-    const n = Math.min(6, Math.round(w * h * 0.08) + 1);
+    g.fillStyle = "rgb(232,237,245)"; g.fillRect(x, y, w, h);
+    const wl = g.createLinearGradient(x, 0, x + w, 0);
+    const a0 = 0.05 + rng() * 0.08, a1 = 0.05 + rng() * 0.08;
+    wl.addColorStop(0, "rgba(160,178,212," + a0.toFixed(3) + ")"); wl.addColorStop(0.5, "rgba(160,178,212,0)"); wl.addColorStop(1, "rgba(160,178,212," + a1.toFixed(3) + ")");
+    g.fillStyle = wl; g.fillRect(x, y, w, h);
+    if (F.px > 3) {
+      tonFlecken(g, x, y, w, h, 3.3, 0.6, saat + 31, "#b4c2d8", true);
+      if (opt.zwischen) opt.zwischen();
+      tonFlecken(g, x, y, w, h, 1.9, 0.75, saat + 47, "#f6f8fc", true);
+      if (F.px > 16) tonFlecken(g, x, y, w, h, 0.7, 0.3, saat + 53, "#c9d4e6");
+    }
+    /* lange, flache Verwehungen quer zum Hang: bläuliche Mulden, helle Wehen */
+    const n = Math.min(7, Math.round(w * h * 0.08) + 2);
     for (let i = 0; i < n; i++) {
-      const cx = x + rng() * w, cy = y + rng() * h, rx = 0.8 + rng() * 1.6, ry = 0.15 + rng() * 0.25;
+      const cx = x + rng() * w, cy = y + rng() * h, rx = 0.9 + rng() * 2.2, ry = 0.08 + rng() * 0.16;
       const gg = g.createRadialGradient(cx, cy, 0, cx, cy, rx);
-      gg.addColorStop(0, "rgba(165,185,222,0.13)"); gg.addColorStop(1, "rgba(165,185,222,0)");
+      const hellK = rng() < 0.5;
+      gg.addColorStop(0, hellK ? "rgba(252,253,255,0.55)" : "rgba(140,160,200,0.28)"); gg.addColorStop(1, hellK ? "rgba(252,253,255,0)" : "rgba(140,160,200,0)");
       g.save(); g.translate(cx, cy); g.scale(1, ry / rx); g.fillStyle = gg; g.beginPath(); g.arc(0, 0, rx, 0, TAU); g.fill(); g.restore();
     }
-    rausch(g, x, y, w, h, 2.4, 0.07, saat + 31, 3);
-    if (F.px > 16) rausch(g, x, y, w, h, 0.5, 0.05, saat + 37, 2);
-    if (F.px > 20) {
-      /* Glitzer, in einem Pfad */
-      g.fillStyle = "rgba(255,255,255,0.95)";
-      g.beginPath();
-      const k = Math.min(500, Math.round(w * h * 6));
-      for (let i = 0; i < k; i++) { const r = (0.5 + rng() * 0.8) / F.px; g.rect(x + rng() * w, y + rng() * h, r, r); }
-      g.fill();
+    if (opt.glitzer !== false) glitzer(g, F, x, y, w, h, 6, rng);
+  }
+  /* Ziegelreihen unter dem Schnee: jede Reihe eine weiche Stufe – oben
+     eine Lichtkante, darunter ein blauer Schatten, in Stücken von
+     0,6–3 m (sonst wirkt es wie Wellblech). Zum First hin deutlicher. */
+  function schneeRippen(g, F, x0, x1, yTraufe, yAb, saat, reihe) {
+    const pxV = F.pxV || F.px, ZR = reihe || ZR_;
+    if (pxV * ZR < 2.2) return;
+    const rng = zufall(saat * 3 + 1);
+    const st = klemm((pxV * ZR - 2.2) / 3, 0.4, 1);
+    const reihen = [[], [], []];
+    for (let k = 1; ; k++) {
+      const yu = yTraufe - k * ZR;
+      if (yu < yAb) break;
+      const t = klemm((yTraufe - yu) / Math.max(0.5, yTraufe - yAb), 0, 1);   // 0 Traufe, 1 First
+      let x = x0 - 0.1 - rng() * 0.5;
+      while (x < x1 + 0.1) {
+        const l = 0.6 + rng() * 2.4, q = rng() + (1 - t) * 0.35;
+        if (q < 0.9) {
+          const pts = [], nn = Math.max(4, Math.round(l / 0.25));
+          for (let i = 0; i <= nn; i++) { const u = i / nn; pts.push([x + l * u, yu + (rng() - 0.5) * 0.02, Math.pow(Math.sin(Math.PI * u), 0.6)]); }
+          reihen[q < 0.3 ? 0 : q < 0.6 ? 1 : 2].push(pts);
+        }
+        x += l;
+      }
     }
+    const band = (liste, d0, d1) => {
+      g.beginPath();
+      for (const P of liste) {
+        g.moveTo(P[0][0], P[0][1] + d0 * P[0][2]);
+        for (let i = 1; i < P.length; i++) g.lineTo(P[i][0], P[i][1] + d0 * P[i][2]);
+        for (let i = P.length - 1; i >= 0; i--) g.lineTo(P[i][0], P[i][1] + d1 * P[i][2]);
+        g.closePath();
+      }
+    };
+    reihen.forEach((liste, k) => {
+      if (!liste.length) return;
+      const m = st * [1, 0.65, 0.35][k];
+      band(liste, -0.024, 0); g.fillStyle = "rgba(255,255,255," + (0.3 * m).toFixed(3) + ")"; g.fill();
+      band(liste, 0, 0.05); g.fillStyle = "rgba(104,124,180," + (0.2 * m).toFixed(3) + ")"; g.fill();
+      band(liste, 0, 0.022); g.fillStyle = "rgba(104,124,180," + (0.16 * m).toFixed(3) + ")"; g.fill();
+    });
   }
   /* Schneehaube auf einer schmalen Oberseite (Balken, Brett, Sims) */
   function schneeOben(basis) {
@@ -573,60 +805,91 @@
      In der Dachfläche: x entlang der Traufe, y vom First (0) zur Traufe.
      ===================================================================== */
   const ZB_ = 0.18, ZR_ = 0.155;
+  /* Alterung der Ziegel aus niederfrequentem Rauschen (Kritik Runde 1:
+     „jeder sechste Ziegel moosgrau – ein Leopardenmuster"): Moos und
+     Flechte wachsen in Gruppen, mehr an der Traufe (dort bleibt es
+     feucht), auf der Nordseite und im Tropfbereich unter dem Kamin. Die
+     Farbstreuung je Ziegel bleibt klein (±4 %). opt.nord (0…1),
+     opt.kamin (x des Kamins in der Fläche), opt.welt (Versatz fürs Rauschen) */
   function biberMalen(g, F, x0, x1, yTraufe, yOben, saat, opt) {
     opt = opt || {};
     const px = F.px, basis = opt.farbe || BIBER;
     const w = x1 - x0;
     g.fillStyle = rgb(hell(basis, -0.45)); g.fillRect(x0 - 0.05, yOben - 0.05, w + 0.1, yTraufe - yOben + 0.1);
+    const nord = opt.nord || 0, ow = opt.welt || 0;
+    /* Moosstärke an einer Stelle der Fläche (0…1) */
+    const moos = (x, y) => {
+      const r = ST.fbm((x + ow) * 0.42, y * 0.55 + saat * 0.13, 3, 7 + saat);
+      const traufe = klemm(1 - (yTraufe - y) / 1.6, 0, 1);
+      let k = (r - 0.5) * 2.2 + traufe * 0.55 + nord * 0.45 - 0.35;
+      if (opt.kamin != null) { const d = Math.hypot((x - opt.kamin) * 0.9, Math.max(0, y - 0.3) * 0.35); k += klemm(1 - d / 1.6, 0, 1) * 0.6; }
+      return klemm(k, 0, 1);
+    };
+    const MOOS = [112, 108, 74], FLECHTE = [158, 152, 124];
     if (px * ZR_ < 2.6) {
       const rng = zufall(saat);
       for (let yy = yTraufe; yy > yOben - ZR_; yy -= ZR_) {
-        g.fillStyle = rgb(PI.streu(basis, rng, 0.07)); g.fillRect(x0 - 0.05, yy - ZR_, w + 0.1, ZR_ * 0.8);
+        g.fillStyle = rgb(PI.streu(basis, rng, 0.04)); g.fillRect(x0 - 0.05, yy - ZR_, w + 0.1, ZR_ * 0.8);
+      }
+      /* Moos als weiche Flecken (grob) */
+      if (px > 4) {
+        const rr = zufall(saat + 5);
+        for (let i = 0; i < Math.min(40, w * (yTraufe - yOben) * 0.5); i++) {
+          const x = x0 + rr() * w, y = yOben + rr() * (yTraufe - yOben), m = moos(x, y);
+          if (m < 0.25) continue;
+          g.fillStyle = rgb(misch(basis, MOOS, 0.5), (0.35 * m).toFixed(3));
+          g.beginPath(); g.ellipse(x, y, 0.5 + rr() * 0.8, 0.25 + rr() * 0.3, 0, 0, TAU); g.fill();
+        }
       }
       rausch(g, x0, yOben, w, yTraufe - yOben, 3.5, 0.22, saat + 5, 3);
       return;
     }
     const kante = px * ZB_ > 9;
-    const NE = 6;
+    /* Farbeimer: 3 Grundtöne (±4 %) × 4 Moosstufen */
+    const TOENE = [hell(basis, -0.04), basis, hell(basis, 0.04)];
+    const EIMER = [];
+    for (let m = 0; m < 4; m++) for (let t = 0; t < 3; t++) {
+      const c = m === 0 ? TOENE[t] : misch(TOENE[t], m === 3 ? FLECHTE : MOOS, [0, 0.18, 0.36, 0.3][m]);
+      EIMER.push(c);
+    }
+    const b = ZB_ - 0.008, lang = 2.05 * ZR_, r = b / 2;
     for (let k = 0; ; k++) {
       const yu = yTraufe - k * ZR_;
       if (yu < yOben - 0.02) break;
       if (opt.bisReihe != null && k > opt.bisReihe) break;
       const rr = zufall(saat * 31 + k * 7919);
       const vers = (k % 2) * ZB_ / 2;
-      const eimer = [];
-      for (let i = 0; i < NE; i++) eimer.push([]);
-      /* Schatten des Schwanzes auf die Reihe darunter (ein Pfad je Reihe) */
+      const eimer = EIMER.map(() => []);
+      /* Schatten des Rundschnitts auf die Reihe darunter (ein Pfad je Reihe) */
       g.fillStyle = "rgba(25,10,6,0.3)";
       g.beginPath();
       const xEnde = opt.teilReihe != null && k === opt.bisReihe ? x0 + w * opt.teilReihe : x1 + ZB_;
       for (let xx = x0 - ZB_ + vers - 0.02; xx < xEnde; xx += ZB_) {
-        const b = ZB_ - 0.008, xa = xx + 0.004;
-        g.moveTo(xa + 0.01, yu - ZR_); g.lineTo(xa + 0.01, yu - b * 0.45 + 0.018);
-        g.quadraticCurveTo(xa + b / 2 + 0.01, yu + 0.022, xa + b + 0.01, yu - b * 0.45 + 0.018);
+        const xa = xx + 0.004;
+        g.moveTo(xa + 0.01, yu - ZR_); g.lineTo(xa + 0.01, yu - r + 0.018);
+        g.arc(xa + r + 0.01, yu - r + 0.018, r, Math.PI, 0, true);
         g.lineTo(xa + b + 0.01, yu - ZR_); g.closePath();
-        eimer[(rr() * NE) | 0].push(xa);
+        const m = moos(xa + r, yu - lang * 0.4);
+        const stufe = m < 0.3 ? 0 : m < 0.55 ? 1 : m < 0.8 ? 2 : 3;
+        eimer[stufe * 3 + ((rr() * 3) | 0)].push(xa);
       }
       g.fill();
-      for (let i = 0; i < NE; i++) {
+      for (let i = 0; i < EIMER.length; i++) {
         if (!eimer[i].length) continue;
-        let c = hell(basis, (i - 2.5) * 0.045);
-        if (i === 5) c = misch(c, [112, 106, 76], 0.3);
-        g.fillStyle = rgb(c);
+        g.fillStyle = rgb(EIMER[i]);
         g.beginPath();
-        const b = ZB_ - 0.008, lang = 2.05 * ZR_;
         for (const xa of eimer[i]) {
-          g.moveTo(xa, yu - lang); g.lineTo(xa, yu - b * 0.42);
-          g.quadraticCurveTo(xa + b / 2, yu + 0.004, xa + b, yu - b * 0.42);
+          g.moveTo(xa, yu - lang); g.lineTo(xa, yu - r);
+          g.arc(xa + r, yu - r, r, Math.PI, 0, true);
           g.lineTo(xa + b, yu - lang); g.closePath();
         }
         g.fill();
       }
       if (kante) {
+        /* Lichtkante am Rundschnitt */
         g.strokeStyle = "rgba(255,210,180,0.22)"; g.lineWidth = Math.max(0.004, 0.8 / px);
         g.beginPath();
-        const b = ZB_ - 0.008;
-        for (let xx = x0 - ZB_ + vers - 0.02; xx < xEnde; xx += ZB_) { const xa = xx + 0.004; g.moveTo(xa + 0.01, yu - b * 0.36); g.quadraticCurveTo(xa + b / 2, yu - 0.004, xa + b - 0.01, yu - b * 0.36); }
+        for (let xx = x0 - ZB_ + vers - 0.02; xx < xEnde; xx += ZB_) { const xa = xx + 0.004; g.moveTo(xa + 0.012, yu - r * 0.9); g.arc(xa + r, yu - r, r * 0.86, Math.PI - 0.15, 0.15, true); }
         g.stroke();
       }
       if (px * ZR_ > 5) {
@@ -636,40 +899,67 @@
       }
     }
     rausch(g, x0, yOben, w, yTraufe - yOben, 4.2, 0.2, saat + 8, 4);
-    bleich(g, x0, yOben, w, yTraufe - yOben, 3.1, 0.06, saat + 3);
+    if (px > 12) bleich(g, x0, yOben, w, yTraufe - yOben, 3.1, 0.06, saat + 3);
   }
-  /* Schneedecke auf dem Dach: geschlossen, mit Wellen quer (Ziegelreihen
-     drücken durch), Verwehungen, Glitzer */
+  /* Schneedecke auf dem Dach (Kritik Runde 1: „wie weiße Pappe"): Am First
+     weht der Wind den Schnee weg – dort sieht man in Zungen die roten
+     Biberreihen, sonst Schnee nur in den Absätzen. Darunter die
+     geschlossene Decke mit gerundeter, heller Abbruchkante, bläulichen
+     Mulden, weißen Kuppen und Ziegelreihen als Rippen; unter dem Kamin
+     eine blaue Mulde, bergseitig eine Wehe. */
   function dachSchnee(g, F, x0, x1, yTraufe, yOben, saat, opt) {
     opt = opt || {};
     const w = x1 - x0, h = yTraufe - yOben, rng = zufall(saat * 7 + 3), px = F.px;
-    schneeFlaeche(g, F, x0 - 0.1, yOben - 0.05, w + 0.2, h + 0.1, saat);
-    if (px * ZR_ > 2.5) {
-      /* die Ziegelreihen drücken sich als flache Wellen durch (ein Pfad) */
-      g.fillStyle = "rgba(170,188,222,0.17)";
-      g.beginPath();
-      for (let yu = yTraufe - ZR_; yu > yOben + 0.1; yu -= ZR_) {
-        let x = x0 - rng() * 0.3;
-        while (x < x1) {
-          const len = 0.3 + Math.pow(rng(), 1.5) * 2.2, gap = 0.05 + Math.pow(rng(), 2) * 0.6;
-          const d = 0.015 + rng() * 0.03;
-          g.rect(x, yu - d * 0.5, len, d);
-          x += len + gap;
+    const oben = opt.oben == null ? 0.32 : opt.oben;
+    const grenze = (x) => yOben + klemm((0.05 + (ST.fbm(x * 0.42 + saat * 0.7, saat * 0.31, 3, saat) - 0.3) * 1.5) * oben / 0.36 + Math.sin(x * 1.7 + saat) * 0.03, 0.03, 0.85);
+    const kanteP = []; for (let x = x0 - 0.1; x <= x1 + 0.15; x += 0.1) kanteP.push([x, grenze(x)]);
+    /* 1. am First: freie Ziegel mit Schnee in den Absätzen */
+    if (oben > 0.01) {
+      g.save(); g.beginPath(); g.rect(x0 - 0.1, yOben - 0.1, w + 0.2, oben + 0.7); g.clip();
+      biberMalen(g, F, x0 - 0.05, x1 + 0.05, yTraufe, yOben, saat, { nord: opt.nord, kamin: opt.kamin });
+      g.restore();
+      g.fillStyle = "rgba(226,232,242,0.22)"; g.fillRect(x0 - 0.1, yOben - 0.1, w + 0.2, oben + 0.5);
+      if (px * ZR_ > 2.5) {
+        g.beginPath();
+        for (let k = 0; ; k++) {
+          const yu = yTraufe - k * ZR_;
+          if (yu < yOben + 0.01) break;
+          if (yu > yOben + oben + 0.45) continue;
+          let x = x0 - 0.1 - rng() * 0.2;
+          while (x < x1) {
+            const len = 0.05 + Math.pow(rng(), 2) * 0.7, gap = 0.03 + Math.pow(rng(), 1.5) * 0.5, d = 0.012 + rng() * 0.03;
+            if (yu < grenze(x) + 0.06 && rng() < 0.8) { const rr = d * 0.5; g.moveTo(x + rr, yu - d); g.lineTo(x + len - rr, yu - d); g.quadraticCurveTo(x + len, yu - d, x + len, yu - d + rr); g.lineTo(x + len, yu + 0.008); g.lineTo(x, yu + 0.008); g.lineTo(x, yu - d + rr); g.quadraticCurveTo(x, yu - d, x + rr, yu - d); g.closePath(); }
+            x += len + gap;
+          }
         }
+        g.fillStyle = "rgba(240,244,250,0.93)"; g.fill();
       }
-      g.fill();
     }
-    /* am First dünner: die Firstziegel schauen durch */
-    if (opt.first) {
-      const gr = g.createLinearGradient(0, yOben, 0, yOben + 0.35);
-      gr.addColorStop(0, "rgba(120,70,56,0.45)"); gr.addColorStop(1, "rgba(120,70,56,0)");
-      g.fillStyle = gr; g.fillRect(x0, yOben, w, 0.35);
-    }
+    /* 2. geschlossene Decke */
+    g.save();
+    g.beginPath(); g.moveTo(x0 - 0.1, yTraufe + 0.1); for (const [x, y] of kanteP) g.lineTo(x, oben > 0.01 ? y : yOben - 0.05); g.lineTo(x1 + 0.15, yTraufe + 0.1); g.closePath(); g.clip();
+    schneeFlaeche(g, F, x0 - 0.1, yOben - 0.05, w + 0.25, h + 0.15, saat, { glitzer: false, zwischen: () => schneeRippen(g, F, x0, x1, yTraufe, yOben + oben + 0.15, saat) });
+    /* 3. Mulden und Wehen am Kamin */
+    const blob = (cx, cy, rx, ry, farbe, a) => {
+      const gg = g.createRadialGradient(cx, cy, 0, cx, cy, rx);
+      gg.addColorStop(0, "rgba(" + farbe + "," + a + ")"); gg.addColorStop(0.55, "rgba(" + farbe + "," + (a * 0.5) + ")"); gg.addColorStop(1, "rgba(" + farbe + ",0)");
+      g.save(); g.translate(cx, cy); g.scale(1, ry / rx); g.translate(-cx, -cy); g.fillStyle = gg; g.beginPath(); g.arc(cx, cy, rx, 0, TAU); g.fill(); g.restore();
+    };
     if (opt.kamin != null) {
-      const gg = g.createRadialGradient(opt.kamin, yOben + 0.2, 0, opt.kamin, yOben + 0.2, 0.9);
-      gg.addColorStop(0, "rgba(60,30,24,0.42)"); gg.addColorStop(1, "rgba(60,30,24,0)");
-      g.fillStyle = gg; g.fillRect(opt.kamin - 0.9, yOben - 0.1, 1.8, 1.2);
+      blob(opt.kamin, yOben + 0.9, 1.0, 0.8, "104,124,178", 0.38);
+      blob(opt.kamin, yOben + 0.25, 0.85, 0.34, "252,253,255", 0.5);
     }
+    g.restore();
+    /* 4. gerundete Abbruchkante: Lichtkante, darunter ein Hauch Schatten (die Decke hat Dicke) */
+    if (oben > 0.01) {
+      g.lineJoin = "round"; g.lineCap = "round";
+      g.beginPath(); kanteP.forEach(([x, y], i) => (i ? g.lineTo(x, y + 0.04) : g.moveTo(x, y + 0.04)));
+      g.strokeStyle = "rgba(128,148,196,0.34)"; g.lineWidth = Math.max(0.035, 1.2 / px); g.stroke();
+      g.beginPath(); kanteP.forEach(([x, y], i) => (i ? g.lineTo(x, y + 0.01) : g.moveTo(x, y + 0.01)));
+      g.strokeStyle = "rgba(250,252,255,0.95)"; g.lineWidth = Math.max(0.025, 1.0 / px); g.stroke();
+    }
+    /* 5. Glitzer nur auf der Sonnenseite */
+    if (F.licht > 0.3) glitzer(g, F, x0, yOben + oben, w, h - oben, 5, rng);
   }
 
   /* =====================================================================
@@ -1228,104 +1518,6 @@
     }
   }
 
-  /* Ein Wandmaler: Bruchstein unten, Fachwerk oben, Öffnungen, Schmuck */
-  function wandMaler(W, B, S, Z) {
-    return function (g, F) {
-      const w = F.w, h = F.h, px = F.px, top = W.top;
-      const yE = top - ZE;                         // Flächen-y der Oberkante Bruchstein
-      const winter = S.winter;
-      /* ---- Fachwerk (oben) ---- */
-      if (Z.fw > 0) {
-        const bisZ = Z.fwBis == null ? top : Z.fwBis;
-        g.save();
-        g.beginPath(); g.rect(-0.1, top - bisZ, w + 0.2, bisZ - ZE + 0.001); g.clip();
-        const ausgefacht = Z.gefach;
-        if (ausgefacht > 0) {
-          const c = misch(LEHM, KALK, Z.kalk);
-          gefachGrund(g, F, -0.05, -0.05, w + 0.1, yE + 0.06, c, W.saat);
-          /* jedes Gefach einzeln verputzt: leicht andere Tönung */
-          if (px > 8) {
-            const rng = zufall(W.saat * 5);
-            for (let i = 0; i < 30; i++) { g.fillStyle = "rgba(" + (rng() < 0.5 ? "120,100,70" : "255,250,240") + "," + (0.03 + rng() * 0.04).toFixed(3) + ")"; g.fillRect(rng() * w, rng() * yE, 0.6 + rng() * 1.2, 0.5 + rng() * 1.0); }
-          }
-        } else {
-          /* offenes Gerippe: dahinter dunkler Rohbau */
-          g.fillStyle = "rgb(40,34,30)"; g.fillRect(-0.05, -0.05, w + 0.1, yE + 0.06);
-        }
-        /* Fenster im Fachwerk */
-        const alleF = W.fw.F.concat(W.giebel ? W.giebel.F : []);
-        for (let i = 0; i < alleF.length; i++) {
-          const fe = alleF[i];
-          const fy = top - fe.z - fe.h;
-          if (fe.luke) { lukeMalen(g, F, B, fe.a, fy, fe.w, fe.h, S, Z); continue; }
-          if (ausgefacht <= 0) continue;
-          const fo = fensterArt(W, i, S, Z, false);
-          fensterMalen(g, F, B, fe.a, fy, fe.w, fe.h, fo);
-          if (!fo.leer && fo.laeden && px > 6) laedenMalen(g, F, fe.a, fy, fe.w, fe.h, fo.laeden, W.saat + i);
-          if (!fo.leer && winter && px > 6) {
-            /* Schnee auf dem Brustriegel und Tannengrün darauf */
-            g.fillStyle = "rgb(244,247,252)"; PI.rundRechteck(g, fe.a - 0.04, fy + fe.h - 0.015, fe.w + 0.08, 0.05, 0.02); g.fill();
-          }
-          if (!fo.leer && !winter && S.blumen && px > 8 && (i + W.saat) % 2 === 0) blumenkastenMalen(g, F, fe.a, fy + fe.h, fe.w, W.saat + i);
-        }
-        hoelzerMalen(g, F, W.fw.H.concat(W.giebel ? W.giebel.H : []), top, Z.holzC, W.saat, { nur: Z.holzNur });
-        if (W.fw && S.inschrift && W.name === "sued" && px > 30 && Z.fertig) {
-          /* Inschrift im Rähm: „ANNO 1786" */
-          g.fillStyle = "rgba(236,214,160,0.85)"; g.font = "0.1px Georgia, 'Times New Roman', serif"; g.textAlign = "center"; g.textBaseline = "middle";
-          g.fillText("ANNO · 1786 · JOH · CONRAD · MÜLLER", w / 2, top - ZO + 0.09);
-        }
-        g.restore();
-      }
-      /* ---- Bruchstein (unten) ---- */
-      const bisS = Z.mauerBis;
-      if (bisS > 0) {
-        bruchsteinMalen(g, F, 0, yE, w, ZE, { saat: W.saat, bis: Math.min(ZE, bisS), lage: Z.lage });
-        /* Eckquader */
-        eckquader(g, F, 0, yE, ZE, Math.min(ZE, bisS), false, W.saat);
-        eckquader(g, F, w, yE, ZE, Math.min(ZE, bisS), true, W.saat + 1);
-        /* Öffnungen im Erdgeschoss */
-        for (let i = 0; i < (W.eg || []).length; i++) {
-          const fe = W.eg[i];
-          const fy = top - fe.z - fe.h;
-          if (fe.z > bisS) continue;
-          const fo = fensterArt(W, 100 + i, S, Z, true);
-          fo.gitter = !fe.klein && W.name !== "west";
-          fo.tiefe = 0.24;
-          fo.fluegel = fe.klein ? 1 : 2; fo.sprossen = fe.klein ? [1, 2] : [1, 2];
-          const hSicht = Math.min(fe.h, bisS - fe.z);
-          g.save(); g.beginPath(); g.rect(-1, top - bisS, w + 2, bisS + 1); g.clip();
-          if (Z.gewaende) gewaendeMalen(g, F, B, fe.a, fy, fe.w, fe.h, { winter: winter && Z.fertig });
-          fensterMalen(g, F, B, fe.a, fy, fe.w, fe.h, fo);
-          g.restore();
-          void hSicht;
-        }
-        if (W.tuer) {
-          const T = W.tuer, ty = top - T.h;
-          g.save(); g.beginPath(); g.rect(-1, top - bisS, w + 2, bisS + 1); g.clip();
-          tuerMalen(g, F, B, T.a, ty, T.w, T.h, { bogen: T.bogen, jahr: T.jahr, leer: !Z.tueren, kranz: W.name === "sued", girlande: W.name === "sued", farbe: W.name === "sued" ? "#5a3620" : "#4e3524" }, S);
-          g.restore();
-        }
-        if (W.welle && bisS > RZ - 0.5) welleLoch(g, F, B, top, winter);
-        /* Sockel: Spritzwasser, Moos, Schneewehe an der Wand */
-        const gr = g.createLinearGradient(0, h, 0, h - 0.7);
-        gr.addColorStop(0, S.winter ? "rgba(60,64,80,0.25)" : "rgba(64,70,40,0.32)"); gr.addColorStop(1, "rgba(60,64,60,0)");
-        g.fillStyle = gr; g.fillRect(0, h - 0.7, w, 0.7);
-        if (winter && Z.fertig) schneeWehe(g, F, w, h, W.saat, W.tuer ? [W.tuer.a - 0.3, W.tuer.a + W.tuer.w + 0.3] : null);
-      }
-      /* Schatten des Ortgangs auf dem Giebel */
-      if (W.giebel && Z.dach) {
-        const sv = F.schatten(OGV);
-        if (sv) {
-          g.fillStyle = "rgba(30,34,60,0.28)";
-          const U = giebelUmriss(top);
-          g.beginPath();
-          g.moveTo(U[0][0] - 1, U[0][1]); g.lineTo(U[1][0], U[1][1]); g.lineTo(U[2][0], U[2][1]); g.lineTo(U[3][0] + 1, U[3][1]);
-          g.lineTo(U[3][0] + 1 + sv[0], U[3][1] + sv[1] + 0.12); g.lineTo(U[2][0] + sv[0], U[2][1] + sv[1] + 0.12); g.lineTo(U[1][0] + sv[0], U[1][1] + sv[1] + 0.12); g.lineTo(U[0][0] - 1 + sv[0], U[0][1] + sv[1] + 0.12);
-          g.closePath(); g.fill();
-        }
-      }
-    };
-  }
   function eckquader(g, F, x, y, h, bis, rechts, saat, farbe) {
     const rng = zufall(saat * 3 + 1);
     let zz = 0, k = 0;
@@ -1419,82 +1611,204 @@
   /* =====================================================================
      DACH MIT KRÜPPELWALM
      ===================================================================== */
+  /* Licht einer Dachfläche (Modellnormale n) im aktuellen Blick – damit
+     Schneewülste und Firstpolster wie DIESELBE Schneedecke aussehen */
+  function dachLicht(F, B, n) {
+    if (!B || !B.e) return ST.lichtFaktor(F.n, F.zeit, 0.06, F.jahr);
+    const nc = [n[0] * B.c - n[1] * B.s, n[0] * B.s + n[1] * B.c, n[2]];
+    return ST.lichtFaktor(nc, F.zeit, 0.04, F.jahr);
+  }
+  const lichtMal = (lf) => (c, a, k) => rgb([Math.min(255, c[0] * lf[0] * (k || 1)), Math.min(255, c[1] * lf[1] * (k || 1)), Math.min(255, c[2] * lf[2] * (k || 1))], a);
+  /* Schneewulst über einer Dachkante (Ortgang, Walmtraufe): 15–25 cm dick,
+     oben gerundet, mit durchhängenden Buckeln; kante(a) = Flächen-y der
+     Dachoberkante an der Stelle a. Licht der zugehörigen Dachfläche. */
+  function schneeWulstMal(B, nDach, kante, saat, dick) {
+    return function (g, F) {
+      const w = F.w, rng = zufall(saat), L = lichtMal(dachLicht(F, B, nDach));
+      const d = dick || 0.2, ph = rng() * 6;
+      const oben = (a) => kante(a) - d * (0.75 + 0.2 * Math.sin(a * 2.7 + ph) + 0.08 * Math.sin(a * 7.1 + ph * 2));
+      g.beginPath(); g.moveTo(-0.02, kante(0) + 0.04);
+      for (let a = -0.02; a <= w + 0.02; a += 0.06) g.lineTo(a, oben(klemm(a, 0, w)));
+      for (let a = w + 0.02; a >= -0.02; a -= 0.06) g.lineTo(a, kante(klemm(a, 0, w)) + 0.05 + 0.03 * Math.sin(a * 5 + ph));
+      g.closePath();
+      const gr = g.createLinearGradient(0, kante(w / 2) - d, 0, kante(w / 2) + 0.05);
+      gr.addColorStop(0, L([248, 250, 254], 1, 1.04)); gr.addColorStop(0.55, L([236, 242, 250])); gr.addColorStop(1, L([196, 208, 232], 1, 0.9));
+      g.fillStyle = gr; g.fill();
+      if (F.px > 30) glitzer(g, F, 0, kante(w / 2) - d, w, d, 20, rng, L([255, 255, 255], 0.9, 1.1));
+    };
+  }
+  /* Untersicht unter einem Dachüberstand (Kritik Runde 1: ohne sie hing
+     das Ortgangbrett frei in der Luft): Brettschalung quer, zur Wand hin
+     im Schatten; sie liegt eine Dachstärke unter der Deckung und zeigt
+     nach unten, man sieht sie also nur, wo man unter den Überstand blickt. */
+  function untersichtMal(saat) {
+    return function (g, F) {
+      const w = F.w, h = F.h;
+      bretterMalen(g, F, -0.05, -0.05, w + 0.1, h + 0.1, [104, 76, 54], saat, { richtung: "v", breite: 0.14 });
+      const gr = g.createLinearGradient(0, 0, w, 0);
+      gr.addColorStop(0, "rgba(20,14,12,0.1)"); gr.addColorStop(1, "rgba(20,14,12,0.45)");
+      g.fillStyle = gr; g.fillRect(-0.05, -0.05, w + 0.1, h + 0.1);
+    };
+  }
   function dachBauen(M, S, Z, B) {
     const winter = S.winter;
-    const cosN = Math.cos(NEIG), cosW = Math.cos(WNEIG);
+    const cosN = Math.cos(NEIG), sinN = Math.sin(NEIG), cosW = Math.cos(WNEIG), sinW = Math.sin(WNEIG);
     const wS = XWE1 - XWE0, hS = YTE / cosN;
     const bW = YWE / cosN;                                    // Flächen-y der Walmtraufe
     const umrS = [[XF0 - XWE0, 0], [XF1 - XWE0, 0], [wS, bW], [wS, hS], [0, hS], [0, bW]];
-    const kaminA = S.kaminX - XWE0;
     const reihen = Z.dachReihen;                              // null = ganz gedeckt
     const dachMal = (seite) => function (g, F) {
       if (reihen === 0) return latten(g, F, 0, wS, hS);
+      const nord = seite === 1 ? 1 : 0, kamin = S.kaminX - XWE0;
+      const kaminA = seite === 0 ? kamin : wS - kamin;
       if (reihen != null) {
         latten(g, F, 0, wS, hS);
-        biberMalen(g, F, 0, wS, hS, 0, S.saat + seite, { bisReihe: reihen, teilReihe: Z.dachTeil });
+        biberMalen(g, F, 0, wS, hS, 0, S.saat + seite, { bisReihe: reihen, teilReihe: Z.dachTeil, nord: nord });
         return;
       }
       if (winter) {
-        dachSchnee(g, F, -0.05, wS + 0.05, hS, 0, S.saat + seite, { first: true, kamin: seite === 0 ? null : null });
-        firstZiegel(g, F, 0, wS, true);
+        /* Luv (Süd) weht am First etwas frei, im Lee (Nord) liegt der Schnee
+           bis zum First (Kritik: „breites rotes Band am First") */
+        dachSchnee(g, F, -0.05, wS + 0.05, hS, 0, S.saat + seite, { oben: nord ? 0 : 0.1, kamin: kaminA, nord: nord });
       } else {
-        biberMalen(g, F, -0.05, wS + 0.05, hS, 0, S.saat + seite, {});
+        biberMalen(g, F, -0.05, wS + 0.05, hS, 0, S.saat + seite, { nord: nord, kamin: kaminA, welt: seite * 17 });
         firstZiegel(g, F, XF0 - XWE0, XF1 - XWE0, false);
         gratZiegel(g, F, [[XF1 - XWE0, 0], [wS, bW]], false);
         gratZiegel(g, F, [[XF0 - XWE0, 0], [0, bW]], false);
       }
-      void kaminA;
     };
-    const walmMal = (g, F) => {
+    const walmMal = (seite) => (g, F) => {
       const w = F.w, h = F.h;
       if (reihen === 0) return latten(g, F, 0, w, h);
       if (reihen != null) { latten(g, F, 0, w, h); biberMalen(g, F, 0, w, h, 0, S.saat + 7, { bisReihe: reihen, teilReihe: Z.dachTeil }); return; }
-      if (winter) dachSchnee(g, F, -0.05, w + 0.05, h, 0, S.saat + 9, {});
-      else biberMalen(g, F, -0.05, w + 0.05, h, 0, S.saat + 9, {});
+      if (winter) dachSchnee(g, F, -0.05, w + 0.05, h, 0, S.saat + 9 + seite, { oben: 0 });
+      else biberMalen(g, F, -0.05, w + 0.05, h, 0, S.saat + 9 + seite, { nord: 0.5, welt: 40 + seite * 9 });
     };
     M.teil("dach", { mitte: [HAUS_M[0], 0, HAUS_M[2] + 10] });
-    const vS = [0, cosN, -Math.sin(NEIG)], vN = [0, -cosN, -Math.sin(NEIG)];
-    M.flaeche({ name: "dach-s", o: [XWE0, 0, ZF], u: [1, 0, 0], v: vS, w: wS, h: hS, umriss: umrS, malen: dachMal(0) });
-    M.flaeche({ name: "dach-n", o: [XWE1, 0, ZF], u: [-1, 0, 0], v: vN, w: wS, h: hS, umriss: umrS, malen: dachMal(1) });
+    const vS = [0, cosN, -sinN], vN = [0, -cosN, -sinN];
+    M.flaeche({ name: "dach-s", o: [XWE0, 0, ZF], u: [1, 0, 0], v: vS, w: wS, h: hS, umriss: umrS, malen: dachMal(0), lichtExtra: winter ? 0.05 : 0 });
+    M.flaeche({ name: "dach-n", o: [XWE1, 0, ZF], u: [-1, 0, 0], v: vN, w: wS, h: hS, umriss: umrS, malen: dachMal(1), lichtExtra: winter ? 0.05 : 0 });
     const hW = (XWE1 - XF1) / cosW;
-    M.flaeche({ name: "walm-o", o: [XF1, YWE, ZF], u: [0, -1, 0], v: [cosW, 0, -Math.sin(WNEIG)], w: 2 * YWE, h: hW, umriss: [[YWE, 0], [2 * YWE, hW], [0, hW]], malen: walmMal });
-    M.flaeche({ name: "walm-w", o: [XF0, -YWE, ZF], u: [0, 1, 0], v: [-cosW, 0, -Math.sin(WNEIG)], w: 2 * YWE, h: hW, umriss: [[YWE, 0], [2 * YWE, hW], [0, hW]], malen: walmMal });
-    /* Kanten: Traufbretter, Ortgangbretter, Walmtraufbretter */
-    const brett = (g, F) => { holzMalen(g, F, -0.02, -0.02, F.w + 0.04, F.h + 0.04, [118, 84, 58], 71, { ohneAst: true }); if (winter) { g.fillStyle = "rgb(242,246,252)"; g.fillRect(-0.02, -0.02, F.w + 0.04, 0.05); } };
-    const db = 0.24;
+    M.flaeche({ name: "walm-o", o: [XF1, YWE, ZF], u: [0, -1, 0], v: [cosW, 0, -sinW], w: 2 * YWE, h: hW, umriss: [[YWE, 0], [2 * YWE, hW], [0, hW]], malen: walmMal(0), lichtExtra: winter ? 0.05 : 0 });
+    M.flaeche({ name: "walm-w", o: [XF0, -YWE, ZF], u: [0, 1, 0], v: [-cosW, 0, -sinW], w: 2 * YWE, h: hW, umriss: [[YWE, 0], [2 * YWE, hW], [0, hW]], malen: walmMal(1), lichtExtra: winter ? 0.05 : 0 });
+    /* Untersichten der Überstände an beiden Giebeln (Haupt- und Walmdach) */
+    const bX = (XW1 - XF1) / (XWE1 - XF1) * bW;            // Walmkante über der Giebelwand
+    for (const t of [1, -1]) {
+      /* Hauptdach Süd (t=1) / Nord (t=−1): Unterseite eine Dachstärke tiefer */
+      const n = [0, t * sinN, cosN], v = t > 0 ? vS : vN;
+      for (const s of [1, -1]) {
+        /* s = +1: Ostgiebel, −1: Westgiebel. u zeigt so, dass die Normale nach unten geht */
+        const u = [-t, 0, 0];
+        const xStart = t > 0 ? (s > 0 ? XWE1 : XW0) : (s > 0 ? XW1 : XWE0);
+        const o = [xStart - n[0] * DICKE, -n[1] * DICKE, ZF - n[2] * DICKE];
+        const innen = (t > 0) === (s > 0) ? OGV : 0;          // a der Giebelwand in dieser Fläche
+        const aussen = OGV - innen;
+        const um = [[aussen, bW], [innen, bX], [innen, hS], [aussen, hS]];
+        M.flaeche({ name: "unters" + t + s, o: o, u: u, v: v, w: OGV, h: hS, umriss: um, malen: untersichtMal(60 + t + s * 3), keinAo: true });
+      }
+    }
+    for (const s of [1, -1]) {
+      /* Krüppelwalm: Überstand zwischen Giebelwand und Walmtraufe */
+      const n = [s * sinW, 0, cosW], v = [s * cosW, 0, -sinW], u = [0, s, 0];
+      const bw = ((s > 0 ? XW1 - XF1 : XF0 - XW0)) / cosW;
+      const k = bw / hW;
+      M.flaeche({ name: "unters-walm" + s, o: [(s > 0 ? XF1 : XF0) - n[0] * DICKE, -s * YWE, ZF - n[2] * DICKE], u: u, v: v, w: 2 * YWE, h: hW, umriss: [[YWE * (1 - k), bw], [YWE * (1 + k), bw], [2 * YWE, hW], [0, hW]], malen: untersichtMal(70 + s), keinAo: true });
+    }
+    /* Kanten: Traufbretter, Ortgangbretter (so hoch wie die Dachstärke:
+       keine Lücke zur Untersicht), Walmtraufbretter */
+    const brett = (g, F) => { holzMalen(g, F, -0.02, -0.02, F.w + 0.04, F.h + 0.04, [118, 84, 58], 71, { ohneAst: true }); if (winter) { g.fillStyle = "rgb(242,246,252)"; g.fillRect(-0.02, -0.02, F.w + 0.04, 0.04); } };
+    const db = 0.24, dO = DV + 0.02;
     M.flaeche({ name: "traufe-s", o: [XWE0, YTE, ZTE], u: [1, 0, 0], v: [0, 0, -1], w: wS, h: db, malen: brett, keinAo: true });
     M.flaeche({ name: "traufe-n", o: [XWE1, -YTE, ZTE], u: [-1, 0, 0], v: [0, 0, -1], w: wS, h: db, malen: brett, keinAo: true });
+    const ortBrett = (g, F) => {
+      holzMalen(g, F, -0.02, -0.02, F.w + 0.04, F.h + 0.04, [118, 84, 58], 72, { ohneAst: true });
+      /* unten der Flugsparren, dunkler */
+      const um = F.flaeche.umriss;
+      g.save(); g.globalAlpha = 0.35; g.fillStyle = "rgb(40,26,18)";
+      g.beginPath(); g.moveTo(um[3][0], um[3][1]); g.lineTo(um[2][0], um[2][1]); g.lineTo(um[2][0], um[2][1] - (dO - 0.26)); g.lineTo(um[3][0], um[3][1] - (dO - 0.26)); g.closePath(); g.fill(); g.restore();
+      if (winter) { g.fillStyle = "rgb(242,246,252)"; g.beginPath(); g.moveTo(um[0][0], um[0][1] - 0.01); g.lineTo(um[1][0], um[1][1] - 0.01); g.lineTo(um[1][0], um[1][1] + 0.03); g.lineTo(um[0][0], um[0][1] + 0.03); g.closePath(); g.fill(); }
+    };
+    const spaet = [];
     for (const s of [1, -1]) {
       const xo = s > 0 ? XWE1 : XWE0;
       const u = s > 0 ? [0, -1, 0] : [0, 1, 0];
-      /* Ortgang: Streifen entlang der Dachkante von der Traufe bis zur Walmtraufe (beide Seiten) */
       const ly = YTE - YWE, lz = ZWE - ZTE;
       for (const t of [1, -1]) {
-        /* t = +1: Südseite, −1: Nordseite (von außen gesehen links/rechts je nach s) */
-        const yA = t * YTE, yB = t * YWE;
         const links = (s > 0) === (t > 0);   // liegt die Traufe links?
-        const a0 = links ? yA : yB, a1 = links ? yB : yA;
-        const z0 = links ? ZTE : ZWE, z1 = links ? ZWE : ZTE;
-        const oy = s > 0 ? Math.max(a0, a1) : Math.min(a0, a1);
-        const w = ly;
-        const ztop = Math.max(z0, z1);
-        const um = links ? [[0, ztop - z0], [w, ztop - z1], [w, ztop - z1 + db], [0, ztop - z0 + db]] : [[0, ztop - z0], [w, ztop - z1], [w, ztop - z1 + db], [0, ztop - z0 + db]];
-        M.flaeche({ name: "ort" + s + t, o: [xo, oy, ztop], u: u, v: [0, 0, -1], w: w, h: lz + db, umriss: um, malen: brett, keinAo: true });
-        void a1; void z1;
+        const oy = s > 0 ? Math.max(t * YTE, t * YWE) : Math.min(t * YTE, t * YWE);
+        const z0 = links ? ZTE : ZWE, z1 = links ? ZWE : ZTE, ztop = Math.max(z0, z1);
+        const um = [[0, ztop - z0], [ly, ztop - z1], [ly, ztop - z1 + dO], [0, ztop - z0 + dO]];
+        M.flaeche({ name: "ort" + s + t, o: [xo, oy, ztop], u: u, v: [0, 0, -1], w: ly, h: lz + dO, umriss: um, malen: ortBrett, keinAo: true });
+        if (winter && Z.fertig) {
+          /* Schneewulst auf dem Ortgang (Licht wie die Dachfläche) */
+          const kanteY = (a) => (ztop - z0) + (a / ly) * (z0 - z1);
+          spaet.push({ teil: "ortschnee" + s + t, mitte: [HAUS_M[0] + s * 30, t * 5, HAUS_M[2] + 12], f: { name: "ortschnee" + s + t, o: [xo + s * 0.01, oy, ztop + 0.3], u: u, v: [0, 0, -1], w: ly, h: lz + 0.6, malen: schneeWulstMal(B, [0, t * sinN, cosN], (a) => kanteY(a) + 0.3, 90 + s + t * 3, 0.2), keinLicht: true, keinAo: true } });
+        }
       }
       M.flaeche({ name: "walmtraufe" + s, o: [xo, s > 0 ? YWE : -YWE, ZWE], u: u, v: [0, 0, -1], w: 2 * YWE, h: db, malen: brett, keinAo: true });
+      if (winter && Z.fertig) {
+        /* Wechte und Eiszapfen an der Walmtraufe */
+        spaet.push({ teil: "walmschnee" + s, mitte: [HAUS_M[0] + s * 30, 0, HAUS_M[2] + 12], f: { name: "walmwechte" + s, o: [xo + s * 0.06, s > 0 ? YWE + 0.05 : -YWE - 0.05, ZWE + 0.24], u: u, v: [0, 0, -1], w: 2 * YWE + 0.1, h: 0.36, malen: wechteMal(S.saat + s * 5, B, [s * sinW, 0, cosW]), keinLicht: true, keinAo: true } });
+        spaet.push({ f: { name: "walmzapfen" + s, o: [xo + s * 0.03, s > 0 ? YWE : -YWE, ZWE - 0.2], u: u, v: [0, 0, -1], w: 2 * YWE, h: 0.6, malen: zapfenMal(S.saat + s * 11, 0.45), leuchten: zapfenMal(S.saat + s * 11, 0.45, true), keinLicht: true, keinAo: true } });
+      }
     }
-    /* Dachrinnen an beiden Traufen */
+    for (const e of spaet) { if (e.teil) M.teil(e.teil, { schatten: false, mitte: e.mitte }); M.flaeche(e.f); }
+    /* Firstpolster: ein runder Schneekamm auf dem First (von beiden Seiten) */
+    if (winter && Z.fertig) {
+      M.teil("firstschnee", { schatten: false, mitte: [HAUS_M[0], 0, ZF + 12] });
+      const lf = XF1 - XF0;
+      M.flaeche({ name: "firstschnee", o: [XF0 - 0.05, 0, ZF + 0.2], u: [1, 0, 0], v: [0, 0, -1], w: lf + 0.1, h: 0.26, beidseitig: true, keinLicht: true, keinAo: true, umriss: (function () { const P = [[0, 0.24]]; for (let a = 0; a <= lf + 0.1; a += 0.3) P.push([a, 0.05 + 0.04 * Math.sin(a * 2.3) + 0.02 * Math.sin(a * 6.1)]); P.push([lf + 0.1, 0.24]); return P; })(), malen: (g, F) => {
+        const L = lichtMal(dachLicht(F, B, [0, 0, 1]));
+        const gr = g.createLinearGradient(0, 0, 0, 0.26);
+        gr.addColorStop(0, L([250, 252, 255], 1, 1.05)); gr.addColorStop(0.6, L([238, 243, 251])); gr.addColorStop(1, L([200, 212, 234], 1, 0.9));
+        g.fillStyle = gr; g.fillRect(-0.05, -0.05, F.w + 0.1, 0.35);
+      } });
+    }
+    /* Dachrinnen an beiden Traufen, im Winter Wechte und Eiszapfen, an der
+       Südtraufe eine Lichterkette (wie an den Fachwerkhäusern) */
     for (const t of [1, -1]) {
       M.teil("rinne" + t, { schatten: false, mitte: [HAUS_M[0], t * 20, HAUS_M[2] + 10] });
       const y = t * (YTE + 0.09);
       M.flaeche({ name: "rinne" + t, o: t > 0 ? [XWE0 - 0.05, y, ZTE - 0.05] : [XWE1 + 0.05, y, ZTE - 0.05], u: [t, 0, 0], v: [0, 0, -1], w: wS + 0.1, h: 0.14, malen: rinneMal(winter, S.saat + t), keinAo: true });
       if (winter) {
-        /* Schneewechte und Eiszapfen */
-        M.flaeche({ name: "wechte" + t, o: t > 0 ? [XWE0 - 0.08, y + 0.08, ZTE + 0.2] : [XWE1 + 0.08, y - 0.08, ZTE + 0.2], u: [t, 0, 0], v: [0, 0, -1], w: wS + 0.16, h: 0.34, malen: wechteMal(S.saat + t * 3), keinLicht: true, keinAo: true });
-        M.flaeche({ name: "zapfen" + t, o: t > 0 ? [XWE0, y + 0.02, ZTE - 0.18] : [XWE1, y - 0.02, ZTE - 0.18], u: [t, 0, 0], v: [0, 0, -1], w: wS, h: 0.7, malen: zapfenMal(S.saat + t * 5, 0.6), keinLicht: true, keinAo: true });
+        M.flaeche({ name: "wechte" + t, o: t > 0 ? [XWE0 - 0.08, y + 0.08, ZTE + 0.24] : [XWE1 + 0.08, y - 0.08, ZTE + 0.24], u: [t, 0, 0], v: [0, 0, -1], w: wS + 0.16, h: 0.4, malen: wechteMal(S.saat + t * 3, B, [0, t * sinN, cosN]), keinLicht: true, keinAo: true });
+        M.flaeche({ name: "zapfen" + t, o: t > 0 ? [XWE0, y + 0.02, ZTE - 0.18] : [XWE1, y - 0.02, ZTE - 0.18], u: [t, 0, 0], v: [0, 0, -1], w: wS, h: 0.7, malen: zapfenMal(S.saat + t * 5, 0.6), leuchten: zapfenMal(S.saat + t * 5, 0.6, true), keinLicht: true, keinAo: true });
+      }
+      if (t > 0 && winter && Z.fertig) {
+        M.flaeche({ name: "lichterkette", o: [XWE0 + 0.2, y + 0.13, ZTE - 0.02], u: [1, 0, 0], v: [0, 0, -1], w: wS - 0.4, h: 0.3, keinLicht: true, keinAo: true, malen: lichterKette(false), leuchten: lichterKette(true) });
       }
     }
+  }
+  /* Lichterkette: Kabel an Haken alle 0,7 m, dazwischen durchhängend, die
+     Birnchen an kurzen Fassungen; tagsüber warm getöntes Glas, abends und
+     nachts glühend mit weichem Hof; ein Szenenschein je 3 m. */
+  function lichterKette(an) {
+    return function (g, F) {
+      const w = F.w, rng = zufall(314), L = belichter(F, 0.05);
+      const HAK = 0.7, n = Math.max(1, Math.round(w / HAK)), sl = w / n;
+      const y = (x) => { const k = x / sl - Math.floor(x / sl); return 0.03 + 0.07 * 4 * k * (1 - k); };
+      if (!an) {
+        g.strokeStyle = L([34, 40, 32]); g.lineWidth = Math.max(0.006, 0.8 / F.px);
+        g.beginPath(); for (let x = 0; x <= w + 0.001; x += 0.05) { if (x) g.lineTo(x, y(x)); else g.moveTo(x, y(x)); } g.stroke();
+      }
+      const birnen = [];
+      for (let x = 0.12; x < w; x += 0.24) birnen.push([x + (rng() - 0.5) * 0.03, y(x) + 0.035, 0.013 * (0.85 + rng() * 0.3), rng() < 0.025]);
+      if (!an) {
+        g.fillStyle = L([243, 226, 176], 0.95);
+        g.beginPath(); for (const [x, yy, r] of birnen) { g.moveTo(x + r, yy); g.arc(x, yy, r, 0, TAU); } g.fill();
+        return;
+      }
+      if (F.nacht <= 0) return;
+      const a = F.nacht;
+      for (const [x, yy, r, aus] of birnen) {
+        if (aus) continue;
+        const gg = g.createRadialGradient(x, yy, 0, x, yy, 0.08);
+        gg.addColorStop(0, "rgba(255,246,214," + a.toFixed(3) + ")"); gg.addColorStop(0.3, "rgba(255,206,120," + (0.75 * a).toFixed(3) + ")"); gg.addColorStop(1, "rgba(255,170,70,0)");
+        g.fillStyle = gg; g.fillRect(x - 0.08, yy - 0.08, 0.16, 0.16);
+        g.fillStyle = "rgba(255,250,230," + a.toFixed(3) + ")"; g.beginPath(); g.arc(x, yy, r, 0, TAU); g.fill();
+      }
+      for (let x = 1.2; x < w; x += 3) F.leuchtPunkt(x, 0.12, 1.6, "255,200,120", 0.28, true);
+    };
   }
   function latten(g, F, x0, w, h) {
     g.fillStyle = "rgba(0,0,0,0)";
@@ -1536,21 +1850,40 @@
       void saat;
     };
   }
-  function wechteMal(saat) {
+  /* Schneewechte an der Traufe: dicke, gerundete Kante, die über die Rinne
+     hängt, mit durchhängenden Buckeln und zwei, drei Abbruchstellen; oben
+     im Licht der Dachfläche (nDach), damit Wechte und Decke EINE
+     Schneedecke sind, zur Unterseite hin bläulich (Eigenschatten). */
+  function wechteMal(saat, B, nDach) {
     return function (g, F) {
-      const w = F.w, L = belichter(F, 0.06), rng = zufall(saat);
-      const unten = (x) => 0.22 + Math.sin(x * 2.1 + saat) * 0.04 + Math.sin(x * 5.3 + saat * 3) * 0.02;
-      g.beginPath(); g.moveTo(-0.02, 0.02); g.lineTo(w + 0.02, 0.02);
-      for (let x = w; x >= -0.02; x -= 0.12) g.lineTo(x, unten(x));
+      const w = F.w, rng = zufall(saat);
+      const lf = nDach ? dachLicht(F, B, nDach) : ST.lichtFaktor(F.n, F.zeit, 0.06, F.jahr), L = lichtMal(lf);
+      const brueche = [];
+      for (let i = 0, nb = 2 + (rng() < 0.5 ? 1 : 0); i < nb; i++) brueche.push([0.6 + rng() * Math.max(0.1, w - 1.2), 0.25 + rng() * 0.45]);
+      const buckel = 0.5 + rng() * 0.25, ph = rng() * 6;
+      const unten = (x) => {
+        let y = 0.2 + 0.07 * (0.45 + 0.2 * Math.sin(x * 2.3 + saat) + 0.1 * Math.sin(x * 5.7 + saat * 3));
+        y += 0.06 * Math.pow(0.5 + 0.5 * Math.cos(x / buckel * TAU + ph), 1.6);
+        for (const [bx, bl] of brueche) { const d = Math.abs(x - bx); if (d < bl / 2) y -= 0.12 * Math.sqrt(Math.max(0, 1 - Math.pow(d / (bl / 2), 6))); }
+        return Math.max(0.05, y);
+      };
+      g.beginPath(); g.moveTo(-0.02, 0); g.lineTo(w + 0.02, 0);
+      for (let x = w + 0.02; x >= -0.02; x -= 0.06) g.lineTo(x, unten(x));
       g.closePath();
-      const gr = g.createLinearGradient(0, 0, 0, 0.3);
-      gr.addColorStop(0, L([248, 250, 254])); gr.addColorStop(0.5, L([240, 244, 251])); gr.addColorStop(1, L([196, 208, 230]));
+      const gr = g.createLinearGradient(0, 0, 0, 0.34);
+      gr.addColorStop(0, L([248, 250, 254], 1, 1.05)); gr.addColorStop(0.35, L([242, 246, 252])); gr.addColorStop(0.7, L([224, 232, 246], 1, 0.94)); gr.addColorStop(1, L([186, 200, 228], 1, 0.84));
       g.fillStyle = gr; g.fill();
-      if (F.px > 18) { g.fillStyle = L([255, 255, 255], 0.9); for (let i = 0; i < w * 30; i++) { const r = (0.6 + rng()) / F.px; g.fillRect(rng() * w, 0.03 + rng() * 0.15, r, r); } }
+      if (F.px > 8) { g.save(); g.clip(); tonFlecken(g, 0, 0, w, 0.4, 1.2, 0.35, saat + 3, "#c0cce2", true); g.restore(); }
+      glitzer(g, F, 0, 0.02, w, 0.14, 25, rng, L([255, 255, 255], 0.9, 1.1));
     };
   }
-  function zapfenMal(saat, maxL) {
-    return function (g, F) { eiszapfenMalen(g, F, 0.1, F.w - 0.1, 0, maxL, saat, belichter(F, 0.15)); };
+  /* Eiszapfen (durchscheinend, belichtet). leuchtend: derselbe Pinsel im
+     Leuchten-Durchgang – sonst läge das Fensterlicht über den Zapfen */
+  function zapfenMal(saat, maxL, leuchtend) {
+    return function (g, F) {
+      if (leuchtend && F.nacht < 0.05) return;
+      eiszapfenMalen(g, F, 0.1, F.w - 0.1, 0, maxL, saat, belichter(F, 0.15));
+    };
   }
 
   /* =====================================================================
@@ -1560,14 +1893,27 @@
      Gemalt wird mit eigener Tiefenordnung (hinten zuerst):
        Welle hinten → Kranz hinten → Arme hinten → Radboden innen →
        Welle Mitte → Zellen, Radboden außen, Wasser (nach Tiefe) →
-       Kranz vorn → Arme vorn mit Nabe → Welle vorn
+       Schwall aus den Zellen → Kranz vorn → Arme vorn mit Nabe → Welle vorn
      Das gilt für jede Drehung, weil „hinten" und „vorn" aus E kommen.
+     VIERTELDREHUNG: alles am Rad wiederholt sich nach 90° (36 Zellen,
+     8 Arme, 8 Felgen, 8-kantige Welle); Farbunterschiede der Felgen und
+     Arme wechseln deshalb im Zweierschritt, zufällige Maserung, Reif und
+     Eis werden je Viertel wiederholt – so schließt die Bildfolge nahtlos.
      ===================================================================== */
   function ansichtFigur(s, gier, Zt, jahr) {
     const r = gier * RAD, c = Math.cos(r), sn = Math.sin(r);
     return {
       s: s, c: c, sn: sn, Z: Zt, jahr: jahr, E: [0.6124 * (c + sn), 0.6124 * (c - sn), 0.5],
       p(x, y, z) { const a = x * c - y * sn, b = x * sn + y * c; return [(a - b) * ST.KX * s, (a + b) * ST.KY * s - z * ST.KZ * s]; }
+    };
+  }
+  /* Ansicht für ein Bild der Folge: Punkte in Konstruktionskoordinaten,
+     Bildpunkte relativ zum Ursprung des Kerns minus Bildversatz fx/fy */
+  function ansichtBild(s, gier, Zt, jahr, fx, fy) {
+    const r = gier * RAD, c = Math.cos(r), sn = Math.sin(r);
+    return {
+      s: s, c: c, sn: sn, Z: Zt, jahr: jahr, E: [0.6124 * (c + sn), 0.6124 * (c - sn), 0.5],
+      p(x, y, z) { const yy = y + DY, a = x * c - yy * sn, b = x * sn + yy * c; return [(a - b) * ST.KX * s - fx, (a + b) * ST.KY * s - z * ST.KZ * s - fy]; }
     };
   }
   function ansichtLeben(P) {
@@ -1585,14 +1931,26 @@
   }
   const radPunkt = (x, r, w) => [x, r * Math.cos(w), RZ + r * Math.sin(w)];
   function pfad3(g, A, pts) { g.beginPath(); pts.forEach((p, i) => { const q = A.p(p[0], p[1], p[2]); if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.closePath(); }
-  const radHolz = (winter) => (winter ? misch(HOLZ_ALT, [192, 204, 222], 0.2) : HOLZ_ALT);
+  const radHolz = (winter) => (winter ? misch(HOLZ_ALT, [192, 204, 222], 0.22) : HOLZ_ALT);
+  const VIERTEL = Math.PI / 2;
+  const frac = (x) => x - Math.floor(x);
+  /* feste Zufallstabellen je Viertel (für Maserung, Reif, Eis) */
+  const RAD_TAB = (function () {
+    const rng = zufall(4242);
+    const mas = []; for (let i = 0; i < 7; i++) { const z = []; for (let k = 0; k < 2; k++) z.push([rng() * 0.3, 0.4 + rng() * 0.3, (rng() - 0.5) * 0.02]); mas.push(z); }
+    const reif = []; for (let i = 0; i < 24; i++) reif.push([rng() * VIERTEL, RR - rng() * 0.3, 0.008 + rng() * 0.015]);
+    const eis = []; for (let i = 0; i < 9; i++) eis.push([rng() * VIERTEL, 0.035 + rng() * 0.05, rng()]);
+    /* Eisbärte am Kranz: 9 je Viertel, 8–30 cm (Kritik: „keine Zapfen am Rad") */
+    const zapfen = []; for (let i = 0; i < 9; i++) zapfen.push([(i + 0.15 + rng() * 0.7) / 9 * VIERTEL, 0.08 + Math.pow(rng(), 1.5) * 0.22, 0.022 + rng() * 0.016]);
+    return { mas: mas, reif: reif, eis: eis, zapfen: zapfen };
+  })();
 
   function radMalen(g, A, phi, o) {
     const E = A.E, sg = E[0] >= 0 ? 1 : -1;
     const bau = o.bau == null ? 1 : o.bau;
     const holz = radHolz(o.winter);
     const tWelle = phase(bau, 0, 0.12), tArme = phase(bau, 0.1, 0.4), tKranz = phase(bau, 0.35, 0.65), tZellen = phase(bau, 0.6, 1);
-    /* Welle: vom Haus (XW1) bis zum Lagerstein (X_LAGER) */
+    /* Welle: vom Haus (XW1) bis ins Außenlager (X_LAGER) */
     const xFern = sg > 0 ? XW1 : X_LAGER, xNah = sg > 0 ? X_LAGER : XW1;
     const armeHa = sg > 0 ? XK1 - 0.03 : XK4 + 0.03, armeHi = sg > 0 ? XK2 + 0.04 : XK3 - 0.04;   // hintere Arme: außen / innen
     const armeVi = sg > 0 ? XK3 - 0.04 : XK2 + 0.04, armeVa = sg > 0 ? XK4 + 0.03 : XK1 - 0.03;   // vordere Arme
@@ -1602,9 +1960,10 @@
     }
     if (tKranz > 0) radKranzMalen(g, A, sg > 0 ? XK1 : XK4, sg > 0 ? XK2 : XK3, phi, holz, tKranz, o, false);
     if (tArme > 0) armeMalen(g, A, armeHa, armeHi, phi, holz, tArme, o, false);
-    if (tZellen > 0) bodenInnen(g, A, phi, holz, tZellen);
+    if (tZellen > 0) bodenInnen(g, A, phi, holz, tZellen, o);
     if (tWelle > 0 && tWelle * (xNah - xFern) * sg > (armeHa - xFern) * sg) welleMalen(g, A, phi, armeHa, sg > 0 ? Math.min(xFern + (xNah - xFern) * tWelle, armeVa) : Math.max(xFern + (xNah - xFern) * tWelle, armeVa), holz);
     if (tZellen > 0) bandMalen(g, A, phi, holz, tZellen, o);
+    if (o.wasser && o.schwall) schwallMalen(g, A, phi, o, true);
     if (tKranz > 0) radKranzMalen(g, A, sg > 0 ? XK3 : XK2, sg > 0 ? XK4 : XK1, phi, holz, tKranz, o, true);
     if (tArme > 0) armeMalen(g, A, armeVi, armeVa, phi, holz, tArme, o, true);
     if (tWelle >= 1) welleMalen(g, A, phi, armeVa, xNah, holz);
@@ -1662,24 +2021,24 @@
     const px = A.s;
     if (px > 9) {
       g.save(); ringPfad(g, RK0, RR + 0.015, a0, a1); g.clip();
-      /* Maserung in Bögen, Nässe unten, Stöße der Felgen, Eisenlaschen */
+      /* Maserung in Bögen: je Felge (Zweierschritt) aus einer festen Tabelle */
       g.lineWidth = Math.max(0.004, 0.9 / px);
-      const rng = zufall(vorn ? 31 : 37);
+      g.strokeStyle = lit(hell(holz, -0.35), 0.28);
+      g.beginPath();
       for (let i = 0; i < 7; i++) {
         const r = RK0 + (RR - RK0) * (0.1 + 0.8 * i / 6);
-        g.strokeStyle = lit(hell(holz, -0.35), 0.28);
-        for (let k = 0; k < 8; k++) { const w0 = phi + k * TAU / 8 + rng() * 0.3, w1 = w0 + 0.4 + rng() * 0.3; g.beginPath(); g.arc(0, 0, r + (rng() - 0.5) * 0.02, w0, w1); g.stroke(); }
+        for (let k = 0; k < 8; k++) { const m = RAD_TAB.mas[i][k % 2], w0 = phi + k * TAU / 8 + m[0], w1 = w0 + m[1]; g.moveTo(Math.cos(w0) * (r + m[2]), Math.sin(w0) * (r + m[2])); g.arc(0, 0, r + m[2], w0, w1); }
       }
-      /* jede Felge ein wenig anders im Ton */
+      g.stroke();
+      /* jede zweite Felge ein wenig anders im Ton */
       for (let k = 0; k < 8; k++) {
         const w0 = phi + (k - 0.5) * TAU / 8, w1 = w0 + TAU / 8;
-        g.fillStyle = k % 3 === 0 ? "rgba(255,240,220,0.06)" : k % 3 === 1 ? "rgba(30,18,10,0.08)" : "rgba(60,40,20,0.04)";
+        g.fillStyle = k % 2 ? "rgba(255,240,220,0.06)" : "rgba(30,18,10,0.07)";
         ringPfad(g, RK0, RR + 0.015, w0, w1); g.fill();
       }
       /* Zellenwände zeichnen sich außen als Nagelreihen ab */
       if (px > 22) {
         g.strokeStyle = lit(hell(holz, -0.45), 0.22); g.lineWidth = Math.max(0.004, 0.8 / px);
-        g.fillStyle = lit([34, 30, 28], 0.8);
         g.beginPath();
         const naegel = [];
         for (let k = 0; k < NZ; k++) {
@@ -1692,8 +2051,9 @@
           if (px > 34) for (const f of [0.25, 0.75]) { const r = Wd[1][0] + (Wd[2][0] - Wd[1][0]) * f, ww = Wd[1][1] + (Wd[2][1] - Wd[1][1]) * f; naegel.push([r * Math.cos(ww), r * Math.sin(ww)]); }
         }
         g.stroke();
-        if (naegel.length) { g.beginPath(); for (const [x, y] of naegel) { g.moveTo(x + 0.012, y); g.arc(x, y, 0.012, 0, TAU); } g.fill(); }
+        if (naegel.length) { g.fillStyle = lit([34, 30, 28], 0.8); g.beginPath(); for (const [x, y] of naegel) { g.moveTo(x + 0.012, y); g.arc(x, y, 0.012, 0, TAU); } g.fill(); }
       }
+      /* Nässe unten (Richtung der Kamera-Senkrechten im Rad: fest im Bild) */
       const gr = g.createLinearGradient(0, -RR, 0, RR);
       gr.addColorStop(0, "rgba(20,14,10,0.35)"); gr.addColorStop(0.45, "rgba(20,14,10,0)"); gr.addColorStop(1, "rgba(255,255,255,0)");
       g.fillStyle = gr; g.fillRect(-RR, -RR, 2 * RR, 2 * RR);
@@ -1710,21 +2070,50 @@
         g.restore();
       }
       if (o.winter) {
-        /* Raureif und Eispanzer am Außenrand */
-        /* belichtet – sonst leuchtet der Reif nachts wie ein Ring */
-        g.strokeStyle = lit([236, 244, 255], 0.75); g.lineWidth = 0.06;
-        g.beginPath(); g.arc(0, 0, RR - 0.02, a0, a1); g.stroke();
-        g.fillStyle = lit([240, 246, 255], 0.55);
+        /* Raureif: dichte weiße Körner zum Außenrand hin, je Viertel gleich */
+        g.fillStyle = lit([240, 246, 255], 0.6);
         g.beginPath();
-        for (let i = 0; i < 90; i++) { const w = a0 + rng() * (a1 - a0), r = RR - rng() * 0.3, rr = 0.008 + rng() * 0.015; g.moveTo(Math.cos(w) * r + rr, Math.sin(w) * r); g.arc(Math.cos(w) * r, Math.sin(w) * r, rr, 0, TAU); }
+        for (let q = 0; q < 4; q++) for (const [dw, r, rr] of RAD_TAB.reif) { const w = phi + q * VIERTEL + dw; if (w > a1) continue; g.moveTo(Math.cos(w) * r + rr, Math.sin(w) * r); g.arc(Math.cos(w) * r, Math.sin(w) * r, rr, 0, TAU); }
         g.fill();
+        g.strokeStyle = lit([232, 240, 252], 0.7); g.lineWidth = 0.05;
+        g.beginPath(); g.arc(0, 0, RR - 0.03, a0, a1); g.stroke();
       }
       g.restore();
       /* Lichtkante außen oben */
       g.strokeStyle = lit(hell(holz, 0.35), 0.5); g.lineWidth = Math.max(0.006, 1 / px);
       g.beginPath(); g.arc(0, 0, RR + 0.01, Math.max(a0, 0.3), Math.min(a1, Math.PI - 0.3)); g.stroke();
     }
+    if (o.winter && t >= 1) eisKranzMalen(g, A, phi, L, vorn, px);
     g.restore();
+  }
+  /* Eispanzer am Kranz (Winter): dicke, unregelmäßige Wülste auf dem
+     Außenrand und kurze Zapfen, die mit dem Rad umlaufen (Kritik Runde 1:
+     „Am Rad gibt es keinen einzigen Zapfen"). In der Kranzebene gemalt. */
+  function eisKranzMalen(g, A, phi, L, vorn, px) {
+    const lit = (c, al) => rgb([c[0] * L[0], c[1] * L[1], c[2] * L[2]], al);
+    const k = vorn ? 1 : 0.7;
+    /* Wülste: Kreisbögen knapp über dem Rand */
+    g.fillStyle = lit([214, 230, 246].map((v) => v * k), 0.92);
+    g.beginPath();
+    for (let q = 0; q < 4; q++) for (const [dw, d] of RAD_TAB.eis) {
+      const w = phi + q * VIERTEL + dw, r = RR + d * 0.3, cx = Math.cos(w) * r, cy = Math.sin(w) * r;
+      g.moveTo(cx + d * 1.6, cy); g.ellipse(cx, cy, d * 1.6, d, w + Math.PI / 2, 0, TAU);
+    }
+    g.fill();
+    if (px < 12) return;
+    /* Zapfen: schmale Keile radial nach außen, bläulich durchscheinend */
+    g.fillStyle = lit([196, 220, 244].map((v) => v * k), 0.8);
+    g.beginPath();
+    for (let q = 0; q < 4; q++) for (const [dw, l, b] of RAD_TAB.zapfen) {
+      const w = phi + q * VIERTEL + dw, c = Math.cos(w), s = Math.sin(w);
+      const r0 = RR + 0.01;
+      g.moveTo(c * r0 - s * b, s * r0 + c * b); g.lineTo(c * (r0 + l), s * (r0 + l)); g.lineTo(c * r0 + s * b, s * r0 - c * b); g.closePath();
+    }
+    g.fill();
+    g.strokeStyle = lit([255, 255, 255], 0.8); g.lineWidth = Math.max(0.004, 0.8 / px);
+    g.beginPath();
+    for (let q = 0; q < 4; q++) for (const [dw, l, b] of RAD_TAB.zapfen) { const w = phi + q * VIERTEL + dw, c = Math.cos(w), s = Math.sin(w); g.moveTo(c * RR - s * b * 0.4, s * RR + c * b * 0.4); g.lineTo(c * (RR + l * 0.7), s * (RR + l * 0.7)); }
+    g.stroke();
   }
   /* Arme (8 je Seite) mit Nabe: hinten die Seitenkante, vorn die Fläche */
   function armeMalen(g, A, xA, xB, phi, holz, t, o, vorn) {
@@ -1745,13 +2134,18 @@
     for (let k = 0; k < n; k++) {
       const w = phi + k * TAU / NA + TAU / 16;
       g.save(); g.rotate(w);
-      g.fillStyle = lit(hell(holz, (k % 3) * 0.03));
+      g.fillStyle = lit(hell(holz, (k % 2) * 0.04));
       g.fillRect(rA, -b / 2, rE - rA, b);
       if (px > 16) {
         g.strokeStyle = lit(hell(holz, -0.4), 0.35); g.lineWidth = Math.max(0.004, 0.9 / px);
         g.beginPath(); for (const yy of [-0.04, 0.0, 0.035]) { g.moveTo(rA, yy); g.lineTo(rE, yy + 0.005); } g.stroke();
         g.fillStyle = lit(EISEN); g.fillRect(RK0 - 0.1, -b / 2 - 0.01, 0.07, b + 0.02);
         g.fillStyle = lit([255, 255, 255], 0.1); g.fillRect(rA, -b / 2, rE - rA, 0.02);
+      }
+      if (o.winter) {
+        /* Reif auf der Armkante, Eisbuckel an der Wurzel */
+        g.fillStyle = lit([236, 244, 255], 0.75); g.fillRect(rA, -b / 2 - 0.012, rE - rA, 0.03);
+        g.beginPath(); g.ellipse(rE - 0.12, -b / 2, 0.08, 0.035, 0, 0, TAU); g.fill();
       }
       g.restore();
     }
@@ -1767,7 +2161,7 @@
     g.restore();
   }
   /* Radboden von innen (durch das Rad hindurch sichtbar) */
-  function bodenInnen(g, A, phi, holz, t) {
+  function bodenInnen(g, A, phi, holz, t, o) {
     const E = A.E, dA = TAU / NZ, n = Math.round(NZ * t);
     const L = [];
     for (let k = 0; k < n; k++) {
@@ -1778,8 +2172,9 @@
       L.push({ w0: w0, nn: nn, d: dot(radPunkt(RX, RI, wm), E) });
     }
     L.sort((a, b) => a.d - b.d);
+    const c = o && o.winter ? misch(hell(holz, -0.45), [220, 230, 244], 0.25) : hell(holz, -0.5);
     for (const e of L) {
-      g.fillStyle = farbeA(A, hell(holz, -0.5), e.nn);
+      g.fillStyle = farbeA(A, c, e.nn);
       pfad3(g, A, [radPunkt(XK2, RI, e.w0), radPunkt(XK3, RI, e.w0), radPunkt(XK3, RI, e.w0 + dA), radPunkt(XK2, RI, e.w0 + dA)]); g.fill();
     }
   }
@@ -1787,21 +2182,26 @@
   const Z_DELTA = 0.13, Z_KNICK = 0.16;
   function zellenWand(w) { return [[RI, w], [RI + Z_KNICK, w], [RR, w + Z_DELTA]]; }
   function yzVon(r, w) { return [r * Math.cos(w), RZ + r * Math.sin(w)]; }
-  function wasserInZelle(phi, k) {
-    /* Füllung aus der Lage: gefüllt, nachdem die Zelle unter dem Strahl
-       durch ist (φ ≈ 80°), ausgießend, sobald die Mündung kippt */
+  /* Füllung einer Zelle aus ihrer Lage: gefüllt, nachdem sie unter dem
+     Strahl durch ist (φ ≈ 80°), ausgießend, sobald die Mündung kippt */
+  function fuellung(wm) {
+    let w = ((wm % TAU) + TAU) % TAU; if (w > Math.PI) w -= TAU;
+    const grad = w / RAD;
+    if (grad > 96 || grad < -110) return 0;
+    return klemm((86 - grad) / 16, 0, 1) * klemm((grad + 110) / 70, 0, 1);
+  }
+  function wasserInZelle(phi, k, winter) {
     const dA = TAU / NZ, w0 = phi + k * dA, w1 = w0 + dA;
     let wm = ((w0 + dA / 2) % TAU + TAU) % TAU; if (wm > Math.PI) wm -= TAU;
     const grad = wm / RAD;
     if (grad > 96 || grad < -110) return null;
-    const f = klemm((86 - grad) / 16, 0, 1);
+    const f = klemm((86 - grad) / 16, 0, 1) * (winter ? 0.6 : 1);
     if (f <= 0.02) return null;
     const P = [yzVon(RI, w0), yzVon(RI + Z_KNICK, w0), yzVon(RR, w0 + Z_DELTA), yzVon(RR, w1 + Z_DELTA), yzVon(RI + Z_KNICK, w1), yzVon(RI, w1)];
     let zmin = Infinity; for (const p of P) zmin = Math.min(zmin, p[1]);
     const lippe = Math.min(P[2][1], P[3][1]);
     const pegel = Math.min(lippe - 0.01, zmin + 0.3 * f);
     if (pegel <= zmin + 0.01) return null;
-    /* Schnitt der Waagerechten mit dem Sechseck */
     const ys = [];
     for (let i = 0; i < P.length; i++) {
       const a = P[i], b = P[(i + 1) % P.length];
@@ -1819,12 +2219,10 @@
       const w0 = phi + k * dA, wm = w0 + dA / 2;
       const rad = [0, Math.cos(wm), Math.sin(wm)], rd = dot(rad, E);
       if (rd < -0.25) continue;
-      /* Radboden außen */
       if (rd > 0) {
         const pts = [radPunkt(XK2, RI, w0), radPunkt(XK3, RI, w0), radPunkt(XK3, RI, w0 + dA), radPunkt(XK2, RI, w0 + dA)];
         els.push({ d: tiefe(radPunkt(RX, RI, wm)), art: 0, pts: pts, n: rad });
       }
-      /* Zellenwand k in zwei Stücken */
       const Wd = zellenWand(w0);
       for (let s = 0; s < 2; s++) {
         const [r0, a0] = Wd[s], [r1, a1] = Wd[s + 1];
@@ -1834,9 +2232,8 @@
         const pts = [[XK2, p0[0], p0[1]], [XK3, p0[0], p0[1]], [XK3, p1[0], p1[1]], [XK2, p1[0], p1[1]]];
         els.push({ d: tiefe([RX, (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2]) + 0.001, art: 1, pts: pts, n: nn, s: s });
       }
-      /* Wasser in der Zelle */
       if (o.wasser) {
-        const W = wasserInZelle(phi, k);
+        const W = wasserInZelle(phi, k, o.winter);
         if (W) {
           const pts = [[XK2 + 0.01, W.y0, W.z], [XK3 - 0.01, W.y0, W.z], [XK3 - 0.01, W.y1, W.z], [XK2 + 0.01, W.y1, W.z]];
           els.push({ d: tiefe([RX, (W.y0 + W.y1) / 2, W.z]) + 0.002, art: 2, pts: pts, W: W });
@@ -1848,31 +2245,27 @@
     for (const e of els) {
       if (e.art === 0) g.fillStyle = farbeA(A, hell(nass, -0.1), e.n);
       else if (e.art === 1) g.fillStyle = farbeA(A, e.s ? holz : nass, e.n);
-      else {
-        const w = o.winter ? [150, 176, 196] : [104, 142, 160];
-        g.fillStyle = farbeA(A, w, [0, 0, 1], 0.92);
-      }
+      else g.fillStyle = farbeA(A, o.winter ? [150, 176, 196] : [104, 142, 160], [0, 0, 1], 0.92);
       pfad3(g, A, e.pts); g.fill();
-      if (e.art === 1 && A.s > 18) {
-        /* helle Brettkante außen */
+      if (e.art === 1 && A.s > 18 && e.s) {
         const q0 = A.p(...e.pts[2]), q1 = A.p(...e.pts[3]);
-        if (e.s) { g.strokeStyle = farbeA(A, hell(holz, 0.25), [0, 0, 1], 0.6); g.lineWidth = Math.max(0.6, A.s * 0.012); g.beginPath(); g.moveTo(q0[0], q0[1]); g.lineTo(q1[0], q1[1]); g.stroke(); }
+        g.strokeStyle = o.winter ? weissA(A, [236, 244, 252], 0.8) : farbeA(A, hell(holz, 0.25), [0, 0, 1], 0.6); g.lineWidth = Math.max(0.6, A.s * (o.winter ? 0.02 : 0.012)); g.beginPath(); g.moveTo(q0[0], q0[1]); g.lineTo(q1[0], q1[1]); g.stroke();
       }
       if (e.art === 2 && A.s > 10) {
-        /* Glanz und Schaum im frisch gefüllten Kasten */
         const q = e.pts.map((p) => A.p(...p));
-        const schaum = e.W.grad > 55 ? 0.55 : 0.15;
-        g.strokeStyle = weissA(A, [255, 255, 255], schaum); g.lineWidth = Math.max(0.6, A.s * 0.02);
+        g.strokeStyle = weissA(A, [255, 255, 255], e.W.grad > 55 ? 0.55 : 0.15); g.lineWidth = Math.max(0.6, A.s * 0.02);
         g.beginPath(); g.moveTo(q[0][0], q[0][1]); g.lineTo(q[1][0], q[1][1]); g.stroke();
       }
     }
   }
 
-  /* ---------------- Wasser: Strahl, Vorhang, Grube, Gerinne ---------------- */
+  /* ---------------- Wasser ----------------
+     Alle Bewegungen hängen an u (0…1, eine Vierteldrehung) mit ganzzahligen
+     Vielfachen – so läuft die Bildfolge ohne Sprung im Kreis. */
   const WASSER_T = [118, 150, 168];
-  function strahlMalen(g, A, t, o) {
-    /* aus dem Gerinne über die Lippe auf den Scheitel (knapp dahinter):
-       eine glasige Zunge, oben glatt, unten aufgeraut */
+  /* Strahl aus dem Gerinne über die Lippe auf den Scheitel: eine glasige
+     Zunge, oben glatt, unten aufgeraut */
+  function strahlMalen(g, A, u, o) {
     const v = o.winter ? 0.7 : 1.15, pts = [];
     const y0 = GY1 + 0.02, z0 = GZB + 0.03;
     let tau = 0;
@@ -1885,24 +2278,23 @@
     const breite = o.winter ? 0.34 : 0.66;
     const xa = RX - breite / 2, xb = RX + breite / 2;
     const rand = (x, d) => pts.map((p) => A.p(x, p[0] + (d || 0), p[1]));
-    /* Rückseite (dicker Strahl: Ober- und Unterkante als Fläche) */
     const O = rand(xa, 0), U = rand(xb, 0), O2 = rand(xa, 0.05), U2 = rand(xb, 0.05);
     const band = (P, Q) => { g.beginPath(); P.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]))); for (let i = Q.length - 1; i >= 0; i--) g.lineTo(Q[i][0], Q[i][1]); g.closePath(); };
     band(O2, U2); g.fillStyle = farbeA(A, [96, 132, 150], [0, 1, 0.2], 0.55); g.fill();
     band(O, U); g.fillStyle = farbeA(A, [168, 204, 222], [0, 0.5, 1], 0.72); g.fill();
     g.save(); band(O, U); g.clip();
-    g.lineWidth = Math.max(0.5, A.s * 0.012); g.setLineDash([A.s * 0.06, A.s * 0.05]); g.lineDashOffset = -t * A.s * 2.4;
+    const sch = A.s * 0.11;
+    g.lineWidth = Math.max(0.5, A.s * 0.012); g.setLineDash([A.s * 0.06, A.s * 0.05]); g.lineDashOffset = -u * sch * 6;
     for (let i = 0; i < 7; i++) {
       const Q = rand(xa + (xb - xa) * (i + 0.5) / 7, 0.01);
       g.strokeStyle = weissA(A, [255, 255, 255], (0.25 + 0.25 * ((i * 5) % 3) / 2).toFixed(2));
       g.beginPath(); Q.forEach((q, j) => (j ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]))); g.stroke();
     }
     g.restore();
-    /* Glanzlinie auf der Lippe */
     const l0 = A.p(xa, y0, z0 + 0.01), l1 = A.p(xb, y0, z0 + 0.01);
     g.strokeStyle = weissA(A, [255, 255, 255], 0.75); g.lineWidth = Math.max(0.8, A.s * 0.02);
     g.beginPath(); g.moveTo(l0[0], l0[1]); g.lineTo(l1[0], l1[1]); g.stroke();
-    /* Gischt am Aufschlag */
+    /* Gischt am Aufschlag in den Zellen */
     const e = pts[pts.length - 1];
     const c = A.p(RX, e[0] + 0.08, e[1] + 0.05);
     const r = A.s * (o.winter ? 0.26 : 0.46);
@@ -1912,7 +2304,7 @@
     g.fillStyle = weissA(A, [255, 255, 255], 0.8);
     g.beginPath();
     for (let i = 0; i < 16; i++) {
-      const ph = (t * 1.6 + i * 0.137) % 1;
+      const ph = frac(u * 4 + i * 0.137);
       const x = xa + (xb - xa) * ((i * 0.618) % 1);
       const q = A.p(x, e[0] + 0.05 + ph * 0.3, e[1] + Math.sin(ph * Math.PI) * 0.16);
       const rr = Math.max(0.5, A.s * 0.009 * (1 - ph));
@@ -1920,124 +2312,231 @@
     }
     g.fill();
   }
-  /* Wasser, das unten aus den kippenden Zellen in die Grube fällt:
-     durchscheinende Schleier, oben geschlossen, unten zerstäubt */
-  const VORHANG = [-24, -36, -48, -60, -72];
-  function vorhangMalen(g, A, t, o, oberirdisch) {
-    const winkel = o.winter ? [-30, -50] : VORHANG;
-    for (let i = 0; i < winkel.length; i++) {
-      const w = winkel[i] * RAD;
-      const y0 = (RR + 0.01) * Math.cos(w), z0 = RZ + (RR + 0.01) * Math.sin(w);
-      const zU = oberirdisch ? 0 : PZW, zO = oberirdisch ? z0 : Math.min(0, z0);
-      if (zO <= zU) continue;
-      const bahn = (zz) => y0 + 0.04 + Math.sqrt(Math.max(0, z0 - zz)) * 0.2;
-      const pts = [];
-      for (let k = 0; k <= 8; k++) { const zz = zO - (zO - zU) * k / 8; pts.push([bahn(zz), zz]); }
-      const br = (o.winter ? 0.3 : 0.62) * (1 - i * 0.07);
-      const xa = RX - br / 2 + ((i * 0.37) % 0.2) - 0.1, xb = xa + br;
-      const L = pts.map((p) => A.p(xa, p[0], p[1])), R = pts.map((p) => A.p(xb, p[0], p[1]));
-      g.beginPath(); L.forEach((q, j) => (j ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]))); for (let j = R.length - 1; j >= 0; j--) g.lineTo(R[j][0], R[j][1]); g.closePath();
-      const oben = A.p(RX, bahn(z0), z0), unten = A.p(RX, bahn(PZW), PZW);
-      const gr = g.createLinearGradient(oben[0], oben[1], unten[0], unten[1]);
-      const lf = lichtA(A, [0, 1, 0.3]);
-      const c = (a) => "rgba(" + [214, 232, 242].map((v, k) => Math.round(v * Math.min(1, lf[k] + 0.25))).join(",") + "," + a + ")";
-      gr.addColorStop(0, c(0.42 - i * 0.03)); gr.addColorStop(0.6, c(0.24)); gr.addColorStop(1, c(0.1));
-      g.fillStyle = gr; g.fill();
-      g.save(); g.clip();
-      g.lineWidth = Math.max(0.5, A.s * 0.009); g.setLineDash([A.s * 0.14, A.s * 0.1]); g.lineDashOffset = -t * A.s * 3.2 - i * 11;
-      g.strokeStyle = weissA(A, [255, 255, 255], 0.3);
-      g.beginPath();
-      for (let j = 0; j < 4; j++) {
-        const x = xa + (xb - xa) * (j + 0.5) / 4;
-        pts.forEach((p, k) => { const q = A.p(x, p[0], p[1]); if (k) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); });
+  /* Der Schwall aus den Zellen der absteigenden Seite (Kritik: „fünf
+     gleiche Strahlen wie ein Duschkopf"): jede Zelle im unteren Viertel
+     gießt aus ihrer Mündung, die Strahlen werden mit der Bahn des Radrandes
+     nach innen geworfen, reißen auf, verschieden breit (fester Zufall je
+     Zelle, alle neun Zellen gleich – die Folge schließt nach 90°), dazu
+     Tropfenketten an den Rändern. oben: nur der Teil über Gelände. */
+  function schwallMalen(g, A, phi, o, oben) {
+    const dA = TAU / NZ, om = o.winter ? OMEGA_W : OMEGA, u = o.u || 0;
+    const vt = om * RR;
+    for (let k = 0; k < NZ; k++) {
+      const wm = phi + k * dA + dA / 2 + Z_DELTA;                   // Mündung
+      let w = ((wm % TAU) + TAU) % TAU; if (w > Math.PI) w -= TAU;
+      const grad = w / RAD;
+      if (grad > -18 || grad < -96) continue;
+      const menge = klemm((-18 - grad) / 20, 0, 1) * klemm((grad + 96) / 30, 0, 1) * (o.winter ? 0.45 : 1);
+      if (menge < 0.05) continue;
+      const kz = ((k % 9) + 9) % 9, rz = zufall(700 + kz);
+      const y0 = RR * Math.cos(w), z0 = RZ + RR * Math.sin(w);
+      const vy = vt * Math.sin(w), vz = -vt * Math.cos(w);
+      /* Bahn bis zum Wasserspiegel der Grube */
+      const bahn = [];
+      for (let tt = 0; tt < 1.2; tt += 0.03) {
+        const y = y0 + vy * tt * 0.6 + 0.02, z = z0 + vz * tt - 4.9 * tt * tt;
+        if (oben ? z < -0.02 : false) { bahn.push([y, -0.02, tt]); break; }
+        bahn.push([y, z, tt]);
+        if (z < PZW) break;
       }
-      g.stroke();
-      g.restore();
+      if (bahn.length < 2) continue;
+      const brt = RB * (0.3 + 0.55 * rz()) * (0.55 + 0.45 * menge);
+      const mitte = RX + (rz() - 0.5) * (RB - brt) * 0.8;
+      const wob = rz() * 6;
+      const L = [], Rr = [];
+      bahn.forEach(([y, z, tt], i) => {
+        if (!oben && z > 0.02) return;
+        const f = i / (bahn.length - 1);
+        const b = brt * (1 - 0.25 * f + 0.18 * Math.sin(f * 7 + wob + u * TAU * 3)) / 2;
+        L.push(A.p(mitte - b, y, Math.max(z, PZW))); Rr.push(A.p(mitte + b, y, Math.max(z, PZW)));
+      });
+      if (L.length < 2) continue;
+      const p0 = L[0], p1 = L[L.length - 1];
+      const gr = g.createLinearGradient(p0[0], p0[1], p1[0], p1[1]);
+      const lf = lichtA(A, [0, 1, 0.3]);
+      const c = (a) => "rgba(" + [214, 232, 242].map((v, i) => Math.round(v * Math.min(1, lf[i] + 0.25))).join(",") + "," + a.toFixed(3) + ")";
+      gr.addColorStop(0, c(0.62 * menge)); gr.addColorStop(0.6, c(0.34 * menge)); gr.addColorStop(1, c(0.14 * menge));
+      g.beginPath(); L.forEach((q, j) => (j ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]))); for (let j = Rr.length - 1; j >= 0; j--) g.lineTo(Rr[j][0], Rr[j][1]); g.closePath();
+      g.fillStyle = gr; g.fill();
+      if (A.s > 12) {
+        /* Fäden im Strahl, nach unten wandernd */
+        g.save(); g.clip();
+        g.lineWidth = Math.max(0.5, A.s * 0.008); g.setLineDash([A.s * 0.16, A.s * 0.09]); g.lineDashOffset = -u * A.s * 0.25 * 8;
+        g.strokeStyle = weissA(A, [255, 255, 255], 0.32 * menge);
+        g.beginPath();
+        for (let j = 0; j < 3; j++) {
+          const q = (j + 0.5) / 3;
+          L.forEach((a, i) => { const b = Rr[i], x = a[0] + (b[0] - a[0]) * q, y = a[1] + (b[1] - a[1]) * q; if (i) g.lineTo(x, y); else g.moveTo(x, y); });
+        }
+        g.stroke();
+        g.restore();
+        /* Tropfenketten an den Rändern */
+        g.fillStyle = weissA(A, [236, 246, 252], 0.7 * menge);
+        g.beginPath();
+        for (let j = 0; j < 6; j++) {
+          const f = frac(u * 3 + j / 6 + kz * 0.11), i = Math.min(L.length - 1, Math.floor(f * (L.length - 1)));
+          const seite = j % 2 ? Rr[i] : L[i], dx = (j % 2 ? 1 : -1) * A.s * 0.03 * (1 + f);
+          const r = Math.max(0.5, A.s * 0.012 * (1 - f * 0.5));
+          g.moveTo(seite[0] + dx + r, seite[1]); g.arc(seite[0] + dx, seite[1], r, 0, TAU);
+        }
+        g.fill();
+      }
     }
   }
-  /* Wasserspiegel der Radgrube: dunkles Mühlwasser, Himmel spiegelt sich,
-     Schaum treibt vom Rad zum Durchlass in der Ostwand */
-  function grubeWasserMalen(g, A, t, o, statisch) {
+  /* Wasserspiegel der Radgrube: dunkles Mühlwasser, zu den Mauern hin
+     dunkler, gebrochene Spiegelung des Rades, Gischtwolke und Schaum mit
+     wechselnden Ringen am Aufschlag, Strömung zum Untergraben */
+  function grubeWasserMalen(g, A, u, o) {
     const z = PZW, px = A.s;
     pfad3(g, A, [[PX0, PY0, z], [PX1, PY0, z], [PX1, PY1, z], [PX0, PY1, z]]);
     const nacht = A.Z.nacht;
-    const grund = o.winter ? [70, 92, 104] : [44, 66, 62];
-    g.fillStyle = farbeA(A, grund, [0, 0, 1]); g.fill();
+    g.fillStyle = farbeA(A, o.winter ? [70, 92, 104] : [40, 62, 60], [0, 0, 1]); g.fill();
     g.save(); g.clip();
     const p0 = A.p(PX0, PY0, z), p1 = A.p(PX1, PY1, z);
-    const bx = Math.min(p0[0], p1[0]) - px * 4, by = Math.min(p0[1], p1[1]) - px * 4, bw = Math.abs(p1[0] - p0[0]) + px * 8, bh = Math.abs(p1[1] - p0[1]) + px * 8;
-    /* Himmelsspiegel: heller Streifen quer, zu den Wänden hin dunkel */
+    const bx = Math.min(p0[0], p1[0]) - px * 4, by = Math.min(p0[1], p1[1]) - px * 5, bw = Math.abs(p1[0] - p0[0]) + px * 8, bh = Math.abs(p1[1] - p0[1]) + px * 10;
+    /* Himmelsspiegel quer, zu den Wänden hin dunkel */
     const gr = g.createLinearGradient(p0[0], p0[1], p1[0], p1[1]);
-    gr.addColorStop(0, "rgba(10,18,20,0.45)"); gr.addColorStop(0.45, "rgba(196,214,232," + (0.22 * (1 - nacht)).toFixed(3) + ")"); gr.addColorStop(0.6, "rgba(196,214,232," + (0.12 * (1 - nacht)).toFixed(3) + ")"); gr.addColorStop(1, "rgba(10,18,20,0.4)");
+    gr.addColorStop(0, "rgba(8,14,16,0.55)"); gr.addColorStop(0.4, "rgba(196,214,232," + (0.2 * (1 - nacht)).toFixed(3) + ")"); gr.addColorStop(0.62, "rgba(196,214,232," + (0.1 * (1 - nacht)).toFixed(3) + ")"); gr.addColorStop(1, "rgba(8,14,16,0.5)");
     g.fillStyle = gr; g.fillRect(bx, by, bw, bh);
-    if (!statisch) {
-      /* Wellen: kurze helle Striche, die zum Durchlass ziehen */
-      g.lineWidth = Math.max(0.5, px * 0.014);
-      g.strokeStyle = weissA(A, [226, 238, 246], 0.28);
-      g.beginPath();
-      for (let i = 0; i < 22; i++) {
-        const y = PY0 + 0.3 + (PY1 - PY0 - 0.6) * ((i * 0.618) % 1);
-        const ph = (t * 0.3 + i * 0.173) % 1;
-        const x0 = PX0 + 0.25 + ph * (PX1 - PX0 - 0.4);
-        const yy = y * (1 - ph * 0.7);
-        const a = A.p(x0, yy, z), b = A.p(x0 + 0.28, yy - yy * 0.06, z);
-        g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]);
-      }
-      g.stroke();
-      /* Schaum: weiche, fleckige Teppiche, wo der Schleier aufschlägt */
-      const winkel = o.winter ? [-30, -50] : VORHANG;
-      const rng = zufall(17);
-      for (let i = 0; i < winkel.length; i++) {
-        const yA = (RR + 0.01) * Math.cos(winkel[i] * RAD) + 0.3;
-        for (let k = 0; k < 7; k++) {
-          const ph = (t * 0.22 + k / 7 + i * 0.13) % 1;
-          const x = RX + (rng() - 0.5) * 0.7 + ph * 1.1, y = yA + (rng() - 0.5) * 0.4 - ph * yA * 0.5;
-          const c = A.p(x, y, z), r = px * (0.12 + rng() * 0.16) * (1 + ph);
-          const gg = g.createRadialGradient(c[0], c[1], 0, c[0], c[1], r);
-          gg.addColorStop(0, weissA(A, [244, 248, 252], (0.4 * (1 - ph)).toFixed(3))); gg.addColorStop(1, weissA(A, [244, 248, 252], 0));
-          g.fillStyle = gg; g.save(); g.translate(c[0], c[1]); g.scale(1, 0.55); g.translate(-c[0], -c[1]); g.fillRect(c[0] - r, c[1] - r, 2 * r, 2 * r); g.restore();
-        }
-        /* Ringe */
-        for (let k = 0; k < 2; k++) {
-          const ph = (t * 0.9 + k / 2 + i * 0.21) % 1, r = 0.1 + ph * 0.45;
-          const c = A.p(RX, yA, z), ex = A.p(RX + r, yA, z), ey = A.p(RX, yA + r, z);
-          g.strokeStyle = weissA(A, [240, 248, 255], (0.3 * (1 - ph)).toFixed(3)); g.lineWidth = Math.max(0.5, px * 0.01);
-          g.beginPath(); g.ellipse(c[0], c[1], Math.hypot(ex[0] - c[0], ex[1] - c[1]), Math.hypot(ey[0] - c[0], ey[1] - c[1]) * 0.9, Math.atan2(ex[1] - c[1], ex[0] - c[0]), 0, TAU); g.stroke();
-        }
-      }
-      /* Sog vor dem Durchlass */
-      const d = A.p(PX1 - 0.2, 0, z);
-      const gd = g.createRadialGradient(d[0], d[1], 0, d[0], d[1], px * 0.6);
-      gd.addColorStop(0, "rgba(10,16,18,0.5)"); gd.addColorStop(1, "rgba(10,16,18,0)");
-      g.fillStyle = gd; g.fillRect(d[0] - px * 0.6, d[1] - px * 0.6, px * 1.2, px * 1.2);
+    /* Vignette an allen vier Mauern */
+    for (const [a, b, c, d] of [[PX0, PY0, PX0 + 0.5, PY0], [PX1, PY0, PX1 - 0.5, PY0], [PX0, PY0, PX0, PY0 + 0.6], [PX0, PY1, PX0, PY1 - 0.6]]) {
+      const q0 = A.p(a, b, z), q1 = A.p(c, d, z);
+      const gv = g.createLinearGradient(q0[0], q0[1], q1[0], q1[1]);
+      gv.addColorStop(0, "rgba(6,10,12,0.45)"); gv.addColorStop(1, "rgba(6,10,12,0)");
+      g.fillStyle = gv; g.fillRect(bx, by, bw, bh);
     }
-    /* Winter: Eisränder, nur die Mitte fließt offen */
+    /* gebrochene Spiegelung des Rades: dunkle, zitternde Streifen */
+    if (!o.winter || true) {
+      g.fillStyle = "rgba(24,18,14," + (o.winter ? 0.18 : 0.3) + ")";
+      g.beginPath();
+      for (let i = 0; i < 14; i++) {
+        const y = -RR * 0.9 + (2 * RR * 0.9) * i / 13, wob = Math.sin(u * TAU * 2 + i * 1.7) * 0.06;
+        const a = A.p(XK1 + wob, y, z), b = A.p(XK4 + wob, y + 0.05, z);
+        const h = Math.max(0.6, px * 0.04);
+        g.moveTo(a[0], a[1] - h / 2); g.lineTo(b[0], b[1] - h / 2); g.lineTo(b[0], b[1] + h / 2); g.lineTo(a[0], a[1] + h / 2); g.closePath();
+      }
+      g.fill();
+    }
+    /* Strömung: kurze helle Striche zum Durchlass (Südosten) */
+    g.lineWidth = Math.max(0.5, px * 0.014);
+    g.strokeStyle = weissA(A, [226, 238, 246], 0.26);
+    g.beginPath();
+    for (let i = 0; i < 20; i++) {
+      const ph = frac(u * 2 + i * 0.173);
+      const yS = PY0 + 0.3 + (PY1 - PY0 - 0.6) * ((i * 0.618) % 1);
+      const x0 = PX0 + 0.25 + ph * (PX1 - PX0 - 0.4);
+      const yy = yS + (UYM - yS) * ph * 0.8;
+      const a = A.p(x0, yy, z), b = A.p(x0 + 0.26, yy + (UYM - yS) * 0.05, z);
+      g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]);
+    }
+    g.stroke();
+    /* Aufschlag des Schwalls: Schaumteppiche, Ringe, Gischtwolke */
+    const yA = RR * 0.62, xs = [RX - 0.25, RX + 0.18, RX];
+    const rng = zufall(17);
+    for (let k = 0; k < 9; k++) {
+      const ph = frac(u * 2 + k / 9);
+      const x = xs[k % 3] + (rng() - 0.5) * 0.5 + ph * 0.9, y = yA + (rng() - 0.5) * 0.9 + (UYM - yA) * ph * 0.6;
+      const c = A.p(x, y, z), r = px * (0.14 + rng() * 0.16) * (1 + ph);
+      const gg = g.createRadialGradient(c[0], c[1], 0, c[0], c[1], r);
+      gg.addColorStop(0, weissA(A, [244, 248, 252], 0.45 * (1 - ph))); gg.addColorStop(1, weissA(A, [244, 248, 252], 0));
+      g.fillStyle = gg; g.save(); g.translate(c[0], c[1]); g.scale(1, 0.55); g.translate(-c[0], -c[1]); g.fillRect(c[0] - r, c[1] - r, 2 * r, 2 * r); g.restore();
+    }
+    g.lineWidth = Math.max(0.5, px * 0.01);
+    for (let k = 0; k < 5; k++) {
+      const ph = frac(u * 3 + k / 5), r = 0.12 + ph * 0.55;
+      const cx = RX + [0, -0.3, 0.25, -0.1, 0.15][k], cy = yA + [0, 0.3, -0.2, 0.55, 0.9][k];
+      const c = A.p(cx, cy, z), ex = A.p(cx + r, cy, z), ey = A.p(cx, cy + r, z);
+      g.strokeStyle = weissA(A, [240, 248, 255], 0.3 * (1 - ph));
+      g.beginPath(); g.ellipse(c[0], c[1], Math.hypot(ex[0] - c[0], ex[1] - c[1]), Math.hypot(ey[0] - c[0], ey[1] - c[1]) * 0.9, Math.atan2(ex[1] - c[1], ex[0] - c[0]), 0, TAU); g.stroke();
+    }
+    /* Sog vor dem Durchlass */
+    const d = A.p(PX1 - 0.2, UYM, z);
+    const gd = g.createRadialGradient(d[0], d[1], 0, d[0], d[1], px * 0.6);
+    gd.addColorStop(0, "rgba(10,16,18,0.5)"); gd.addColorStop(1, "rgba(10,16,18,0)");
+    g.fillStyle = gd; g.fillRect(d[0] - px * 0.6, d[1] - px * 0.6, px * 1.2, px * 1.2);
+    /* Winter: Eisränder und Treibeis, nur die Mitte fließt offen */
     if (o.winter) {
-      const rand = 0.6;
-      g.fillStyle = farbeA(A, [214, 228, 240], [0, 0, 1], 0.92);
-      for (const [a, b, c, d] of [[PX0, PY0, PX1, PY0 + rand], [PX0, PY1 - rand, PX1, PY1], [PX1 - 0.45, PY0, PX1, PY1], [PX0, PY0, PX0 + 0.35, PY1]]) {
-        pfad3(g, A, [[a, b, z + 0.01], [c, b, z + 0.01], [c, d, z + 0.01], [a, d, z + 0.01]]); g.fill();
+      const rand = 0.55;
+      g.fillStyle = farbeA(A, [214, 228, 240], [0, 0, 1], 0.94);
+      for (const [a, b, c, dd] of [[PX0, PY0, PX1, PY0 + rand], [PX0, PY1 - rand * 0.6, PX1, PY1], [PX1 - 0.4, PY0, PX1, UY0 - 0.1], [PX0, PY0, PX0 + 0.3, PY1]]) {
+        pfad3(g, A, [[a, b, z + 0.01], [c, b, z + 0.01], [c, dd, z + 0.01], [a, dd, z + 0.01]]); g.fill();
+      }
+      /* Treibeisschollen, die zum Durchlass ziehen */
+      const rs = zufall(29);
+      for (let k = 0; k < 6; k++) {
+        const ph = frac(u + k / 6), x = PX0 + 0.5 + ph * (PX1 - PX0 - 0.9), y = -1.5 + rs() * 2.6 + (UYM - 0.5) * ph * 0.5;
+        const r = 0.12 + rs() * 0.18;
+        pfad3(g, A, [[x - r, y - r * 0.6, z + 0.012], [x + r * 0.8, y - r * 0.8, z + 0.012], [x + r, y + r * 0.5, z + 0.012], [x - r * 0.6, y + r * 0.7, z + 0.012]]);
+        g.fillStyle = farbeA(A, [226, 236, 246], [0, 0, 1], 0.9); g.fill();
       }
       g.strokeStyle = weissA(A, [255, 255, 255], 0.55); g.lineWidth = Math.max(0.5, px * 0.012);
-      const rng = zufall(4);
+      const rr = zufall(4);
       g.beginPath();
-      for (let i = 0; i < 10; i++) { const x = PX0 + rng() * (PX1 - PX0), y = rng() < 0.5 ? PY0 + rng() * rand : PY1 - rng() * rand; const a = A.p(x, y, z + 0.01), b = A.p(x + 0.3, y + (rng() - 0.5) * 0.3, z + 0.01); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); }
+      for (let i = 0; i < 10; i++) { const x = PX0 + rr() * (PX1 - PX0), y = rr() < 0.5 ? PY0 + rr() * rand : PY1 - rr() * rand * 0.6; const a = A.p(x, y, z + 0.01), b = A.p(x + 0.3, y + (rr() - 0.5) * 0.3, z + 0.01); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); }
       g.stroke();
     }
     g.restore();
   }
-  function gerinneWasserMalen(g, A, t, o, statisch) {
+  /* Untergraben: fließt nach Osten (zum Bach), Strömungsstreifen; im
+     Winter Eisränder und eine dunkle offene Rinne */
+  function grabenWasserMalen(g, A, u, o) {
+    const z = PZW, px = A.s;
+    pfad3(g, A, [[PX1 - 0.02, UY0, z], [XG1 + 0.05, UY0, z], [XG1 + 0.05, UY1, z], [PX1 - 0.02, UY1, z]]);
+    g.fillStyle = farbeA(A, o.winter ? [72, 94, 108] : [44, 68, 66], [0, 0, 1]); g.fill();
+    g.save(); g.clip();
+    const q0 = A.p(PX1, UY0, z), q1 = A.p(PX1, UY1, z);
+    const gv = g.createLinearGradient(q0[0], q0[1], q1[0], q1[1]);
+    gv.addColorStop(0, "rgba(6,10,12,0.4)"); gv.addColorStop(0.5, "rgba(190,210,228," + (0.14 * (1 - A.Z.nacht)).toFixed(3) + ")"); gv.addColorStop(1, "rgba(6,10,12,0.4)");
+    g.fillStyle = gv; g.fillRect(-1e4, -1e4, 2e4, 2e4);
+    g.lineWidth = Math.max(0.5, px * 0.014);
+    g.strokeStyle = weissA(A, [228, 240, 248], o.winter ? 0.2 : 0.4);
+    g.beginPath();
+    for (let i = 0; i < 12; i++) {
+      const ph = frac(u * 3 + i * 0.29), y = UY0 + 0.15 + (UY1 - UY0 - 0.3) * ((i * 0.618) % 1);
+      const x = PX1 + ph * (XG1 - PX1 + 0.3), l = 0.18 + 0.2 * ph;
+      const a = A.p(x, y, z), b = A.p(x + l, y, z);
+      g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]);
+    }
+    g.stroke();
+    if (o.winter) {
+      g.fillStyle = farbeA(A, [218, 230, 242], [0, 0, 1], 0.94);
+      for (const [y0, y1] of [[UY0, UY0 + 0.3], [UY1 - 0.26, UY1]]) { pfad3(g, A, [[PX1, y0, z + 0.01], [XG1 + 0.05, y0, z + 0.01], [XG1 + 0.05, y1, z + 0.01], [PX1, y1, z + 0.01]]); g.fill(); }
+    }
+    g.restore();
+  }
+  /* Dampf (Winter): das Wasser ist wärmer als die Luft – über dem
+     fallenden Wasser steigen zarte Schwaden auf */
+  function dampfMalen(g, A, u) {
+    const px = A.s;
+    for (let k = 0; k < 7; k++) {
+      const ph = frac(u + k / 7);
+      const y = 0.6 + (k % 3) * 0.55, x = RX + ((k * 0.37) % 1 - 0.5) * 0.9;
+      const c = A.p(x + ph * 0.3, y - ph * 0.4, 0.2 + ph * 3.2);
+      const r = px * (0.35 + ph * 0.9);
+      const a = 0.16 * Math.sin(ph * Math.PI);
+      const gg = g.createRadialGradient(c[0], c[1], 0, c[0], c[1], r);
+      gg.addColorStop(0, weissA(A, [236, 242, 250], a)); gg.addColorStop(1, weissA(A, [236, 242, 250], 0));
+      g.fillStyle = gg; g.fillRect(c[0] - r, c[1] - r, 2 * r, 2 * r);
+    }
+  }
+  /* Wasser im Gerinne: Strömungsstreifen, die zum Auslauf schneller und
+     länger werden; im Winter Eisränder an den Brettern */
+  function gerinneWasserMalen(g, A, u, o, statisch) {
     const z = GZW, x0 = GX0 + GW, x1 = GX1 - GW;
     pfad3(g, A, [[x0, GY0, z], [x1, GY0, z], [x1, GY1, z], [x0, GY1, z]]);
     g.fillStyle = farbeA(A, o.winter ? [132, 156, 174] : WASSER_T, [0, 0, 1], 0.95); g.fill();
-    if (statisch) return;
     g.save(); g.clip();
+    /* dunkler an den Brettern (Schatten der Wände), heller Himmel in der Mitte */
+    const q0 = A.p(x0, 0, z), q1 = A.p(x1, 0, z);
+    const gv = g.createLinearGradient(q0[0], q0[1], q1[0], q1[1]);
+    gv.addColorStop(0, "rgba(20,34,40,0.35)"); gv.addColorStop(0.5, "rgba(210,226,240," + (0.18 * (1 - A.Z.nacht)).toFixed(3) + ")"); gv.addColorStop(1, "rgba(20,34,40,0.3)");
+    g.fillStyle = gv; g.fillRect(-1e4, -1e4, 2e4, 2e4);
     g.lineWidth = Math.max(0.6, A.s * 0.016);
     for (let i = 0; i < 18; i++) {
       const x = x0 + 0.06 + (x1 - x0 - 0.12) * ((i * 0.618) % 1);
-      const ph = (t * (o.winter ? 0.25 : 0.45) + i * 0.137) % 1;
-      const y = GY0 + ph * (GY1 - GY0);
-      const a = A.p(x, y, z), b = A.p(x, y + 0.45, z);
+      const ph = statisch ? (i * 0.137) % 1 : frac(u + i * 0.137);
+      const f = Math.pow(ph, 1.6), y = GY0 + f * (GY1 - GY0), l = 0.2 + 0.55 * f;
+      const a = A.p(x, y, z), b = A.p(x, Math.min(GY1, y + l), z);
       g.strokeStyle = weissA(A, [235, 244, 250], (0.5 * Math.sin(ph * Math.PI)).toFixed(3));
       g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
     }
@@ -2051,7 +2550,8 @@
   /* =====================================================================
      VERDECKER: was im Sprite steht und vor dem Lebendigen liegt, wird als
      Umriss aus dem Malbereich ausgespart. Jeder Verdecker hat eine Probe
-     „liegt vor dem Rad/vor dem Gerinnewasser" aus dem Blick.
+     „liegt vor dem Rad / der Grube / dem Gerinnewasser / dem Strahl /
+     dem Untergraben" aus der Blickrichtung E.
      ===================================================================== */
   function kastenPunkte(x0, y0, z0, x1, y1, z1) {
     return [[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0], [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]];
@@ -2065,59 +2565,174 @@
     p.push([-3.95, -0.35, ZF + 1.3], [-3.25, 0.35, ZF + 1.3]);
     return p;
   })();
+  const DAMM_PUNKTE = [[TD_XF, TD_Y1, 0], [TD_X1, TD_Y1, 0], [TD_X1, TD_YF, 0], [TD_XF, TD_YF, 0], [TD_X0, TD_Y1, TD_Z], [TD_X1, TD_Y1, TD_Z], [TD_X1, TD_Y0, TD_Z], [TD_X0, TD_Y0, TD_Z]];
+  const immer = () => true, nie = () => false;
   function verdeckerListe() {
     const V = [];
-    V.push({ name: "haus", pts: HAUS_PUNKTE, rad: (E) => E[0] < 0, grube: () => true, gerinne: (E) => E[0] < 0, strahl: (E) => E[0] < 0 });
-    V.push({ name: "lager", pts: kastenPunkte(LX0, -LY - 0.08, PZW, LX1 + 0.05, LY + 0.08, LZB + 0.12), rad: (E) => E[0] > 0, grube: () => true, gerinne: () => false, strahl: (E) => E[0] > 0 });
-    V.push({ name: "gerinne", pts: kastenPunkte(GX0, GY0, GZ0, GX1, GY1, GZ1), rad: () => true, grube: () => true, gerinne: () => false, strahl: (E) => E[1] < 0 });
-    V.push({ name: "konsole", pts: kastenPunkte(XW1, KONSOLE_Y - 0.09, GZ0 - 0.2, GX1 + 0.12, KONSOLE_Y + 0.09, GZ0), rad: () => true, grube: () => true, gerinne: () => false, strahl: () => false });
-    for (const yb of BOECKE) V.push({ name: "bock", pts: kastenPunkte(GX0 - 0.35, yb - 0.12, 0, GX1 + 0.35, yb + 0.12, GZ0), rad: (E) => E[1] < 0, grube: () => true, gerinne: () => false, strahl: () => false });
-    V.push({ name: "stauwerk", pts: kastenPunkte(SX0 - 0.1, SY0 - 0.1, 0, SX1 + 0.1, SY1 + 0.02, SZ1 + 1.5), rad: (E) => E[1] < 0, grube: () => true, gerinne: (E) => E[1] < 0, strahl: (E) => E[1] < 0 });
-    V.push({ name: "rand-s", pts: kastenPunkte(PX0, PY1, 0, PX1 + RAND_B, PY1 + RAND_B, RAND_H + 0.1), rad: (E) => E[1] > 0, grube: () => true, gerinne: () => false, strahl: () => false });
-    V.push({ name: "rand-n", pts: kastenPunkte(PX0, PY0 - RAND_B, 0, PX1 + RAND_B, PY0, RAND_H + 0.1), rad: (E) => E[1] < 0, grube: () => true, gerinne: () => false, strahl: () => false });
-    V.push({ name: "rand-o", pts: kastenPunkte(PX1, PY0 - RAND_B, 0, PX1 + RAND_B, PY1 + RAND_B, RAND_H + 0.1), rad: (E) => E[0] > 0, grube: () => true, gerinne: () => false, strahl: () => false });
+    V.push({ name: "haus", pts: HAUS_PUNKTE, rad: (E) => E[0] < 0, grube: immer, gerinne: (E) => E[0] < 0, strahl: (E) => E[0] < 0, graben: immer });
+    /* Außenlager in Stücken (zwischen den Stielen des Bocks sieht man die Nabe) */
+    const lagerV = (name, pts) => V.push({ name: name, pts: pts, rad: (E) => E[0] > 0, grube: immer, gerinne: nie, strahl: (E) => E[0] > 0, graben: nie });
+    lagerV("lager-pfeiler", kastenPunkte(LX0, -LY - 0.02, PZW, LX1, LY + 0.02, LZ_P));
+    for (const [a, b] of BOCK_STIELE) lagerV("lager-stiel", kastenPunkte(a[0] - 0.09, a[1] - 0.09, a[2], a[0] + 0.09, a[1] + 0.09, a[2]).concat(kastenPunkte(b[0] - 0.09, b[1] - 0.09, b[2], b[0] + 0.09, b[1] + 0.09, b[2])));
+    lagerV("lager-sattel", kastenPunkte(LX0 + 0.04, -0.34, LZ1, LX1 - 0.1, 0.34, LZB));
+    lagerV("lager-deckel", kastenPunkte(X_LAGER - 0.16, -RW - 0.07, LZB - 0.02, X_LAGER + 0.12, RW + 0.07, RZ + RW + 0.08));
+    V.push({ name: "gerinne", pts: kastenPunkte(GX0, GY0, GZ0, GX1, GY1, GZ1), rad: immer, grube: immer, gerinne: nie, strahl: (E) => E[1] < 0, graben: immer });
+    V.push({ name: "konsole", pts: kastenPunkte(XW1, KONSOLE_Y - 0.09, GZ0 - 0.2, GX1 + 0.12, KONSOLE_Y + 0.09, GZ0), rad: immer, grube: immer, gerinne: nie, strahl: nie, graben: nie });
+    for (const yb of BOECKE) V.push({ name: "bock", pts: kastenPunkte(GX0 - 0.35, yb - 0.12, 0, GX1 + 0.35, yb + 0.12, GZ0), rad: (E) => E[1] < 0, grube: immer, gerinne: nie, strahl: nie, graben: nie });
+    V.push({ name: "damm", pts: DAMM_PUNKTE, rad: (E) => E[1] < 0, grube: (E) => E[1] < 0, gerinne: (E) => E[1] < 0, strahl: (E) => E[1] < 0, graben: (E) => E[1] < 0 });
+    V.push({ name: "schuetz", pts: kastenPunkte(GX0 - 0.12, TD_Y1 + 0.02, TD_Z - 0.4, GX1 + 0.12, TD_Y1 + 0.3, TD_Z + 1.35), rad: (E) => E[1] < 0, grube: (E) => E[1] < 0, gerinne: (E) => E[1] < 0, strahl: (E) => E[1] < 0, graben: nie });
+    V.push({ name: "rand-s", pts: kastenPunkte(PX0, PY1, 0, PX1 + RAND_B, PY1 + RAND_B, RAND_H + 0.1), rad: (E) => E[1] > 0, grube: immer, gerinne: nie, strahl: nie, graben: nie });
+    V.push({ name: "rand-n", pts: kastenPunkte(PX0, PY0 - RAND_B, 0, PX1 + RAND_B, PY0, RAND_H + 0.1), rad: (E) => E[1] < 0, grube: immer, gerinne: nie, strahl: nie, graben: nie });
+    V.push({ name: "rand-o", pts: kastenPunkte(PX1, PY0 - RAND_B, 0, PX1 + RAND_B, UY0, RAND_H + 0.1), rad: (E) => E[0] > 0, grube: immer, gerinne: nie, strahl: nie, graben: nie });
+    V.push({ name: "rand-o2", pts: kastenPunkte(PX1, UY1, 0, PX1 + RAND_B, PY1 + RAND_B, RAND_H + 0.1), rad: (E) => E[0] > 0, grube: immer, gerinne: nie, strahl: nie, graben: nie });
+    V.push({ name: "durchlass", pts: kastenPunkte(PX1, UY0 - 0.2, 0, PX1 + RAND_B, UY1 + 0.2, RAND_H + 0.1), rad: nie, grube: (E) => E[0] > 0, gerinne: nie, strahl: nie, graben: (E) => E[0] < 0 });
     return V;
   }
   const VERDECKER = verdeckerListe();
-  /* Malbereich = alles außer den Umrissen der Verdecker, die vorn liegen */
-  function aussparen(g, A, art, extra) {
+  /* Leistung: statt bis zu 14 Clips mit Ausschnitt (jeder Clip kostet beim
+     Rastern eine Maske) wird jeder Abschnitt einer Bildfolge auf eine
+     Hilfsfläche gemalt, die Umrisse der Verdecker werden in EINER Füllung
+     herausgelöscht, dann wird das Ergebnis hingelegt (−65 % Malzeit). */
+  let HILF = null;
+  function abschnitt(g, A, art, malen) {
     const W = g.canvas.width, H = g.canvas.height;
+    if (!HILF) HILF = document.createElement("canvas");
+    if (HILF.width < W || HILF.height < H) { HILF.width = Math.max(HILF.width, W); HILF.height = Math.max(HILF.height, H); }
+    const h = HILF.getContext("2d");
+    h.setTransform(1, 0, 0, 1, 0, 0); h.clearRect(0, 0, W, H);
+    h.save(); malen(h); h.restore();
+    h.save(); h.globalCompositeOperation = "destination-out"; h.fillStyle = "#000"; h.beginPath();
     for (const v of VERDECKER) {
       if (!v[art](A.E)) continue;
-      const h = huelle2(v.pts.map((p) => A.p(p[0], p[1], p[2])));
-      if (h.length < 3) continue;
-      g.beginPath(); g.rect(-W * 2, -H * 2, W * 5, H * 5);
-      g.moveTo(h[0][0], h[0][1]); for (let i = h.length - 1; i > 0; i--) g.lineTo(h[i][0], h[i][1]); g.closePath();
-      g.clip("evenodd");
+      const hu = huelle2(v.pts.map((p) => A.p(p[0], p[1], p[2])));
+      if (hu.length < 3) continue;
+      h.moveTo(hu[0][0], hu[0][1]); for (let i = 1; i < hu.length; i++) h.lineTo(hu[i][0], hu[i][1]); h.closePath();
     }
-    if (extra) extra();
+    h.fill("nonzero"); h.restore();
+    g.drawImage(HILF, 0, 0, W, H, 0, 0, W, H);
   }
-  /* Öffnung der Radgrube (auf Geländehöhe) als Clip */
-  function grubeClip(g, A) {
-    pfad3(g, A, [[PX0, PY0, 0], [PX1, PY0, 0], [PX1, PY1, 0], [PX0, PY1, 0]]); g.clip();
-  }
-  function gerinneClip(g, A) {
-    pfad3(g, A, [[GX0 + GW, GY0, GZ1], [GX1 - GW, GY0, GZ1], [GX1 - GW, GY1, GZ1], [GX0 + GW, GY1, GZ1]]); g.clip();
-  }
+  /* Öffnungen auf Geländehöhe als Clip */
+  function grubeClip(g, A) { pfad3(g, A, [[PX0, PY0, 0], [PX1, PY0, 0], [PX1, PY1, 0], [PX0, PY1, 0]]); g.clip(); }
+  function grabenClip(g, A) { pfad3(g, A, [[PX1 + RAND_B, UY0, 0], [XG1 + 0.05, UY0, 0], [XG1 + 0.05, UY1, 0], [PX1 + RAND_B, UY1, 0]]); g.clip(); }
+  function gerinneClip(g, A) { pfad3(g, A, [[GX0 + GW, GY0, GZ1], [GX1 - GW, GY0, GZ1], [GX1 - GW, GY1, GZ1], [GX0 + GW, GY1, GZ1]]); g.clip(); }
+
+  /* =====================================================================
+     DAS LEBEN ALS BILDFOLGE
+     Je Ansicht (Drehung, Zoom, Jahres- und Tageszeit) zwei Folgen:
+       „rad"   – Grubenwasser, Untergraben, Rad mit Schwall, Strahl, Dampf
+                 (eine Vierteldrehung, 16–36 Bilder, nach Speicher)
+       „rinne" – Wasser im Gerinne (eigene Schleife, 12 Bilder)
+     Die Bilder werden erst gemalt, wenn sie gebraucht werden (höchstens
+     eines je Bild der Szene), mit allen Aussparungen, und danach nur noch
+     hingelegt. Die Zeit wird dadurch von selbst auf ~10–15 Bilder je
+     Sekunde gestuft.
+     ===================================================================== */
   const OMEGA = 0.62, OMEGA_W = 0.36;                 // rad/s (Umfang ≈ 1,5 m/s)
-  function lebenMalen(g, P, o) {
-    const A = ansichtLeben(P);
-    const t = P.t || 0;
-    const winter = o.winter;
-    const phi = PHI0 - t * (winter ? OMEGA_W : OMEGA);
-    const W = { winter: winter, wasser: true, bau: 1 };
-    /* 0. Lichtpfützen auf dem Boden (nur wenn die Südseite zu sehen ist) */
-    if (P.Z.nacht > 0.02 && A.E[1] > 0.03) lichtPfuetzen(g, A, P.Z.nacht, winter);
-    /* 1. Grubenwasser */
-    g.save(); grubeClip(g, A); aussparen(g, A, "grube"); grubeWasserMalen(g, A, t, W, false); vorhangMalen(g, A, t, W, false); g.restore();
-    /* 2. Rad */
-    g.save(); aussparen(g, A, "rad"); radMalen(g, A, phi, W); vorhangMalen(g, A, t, W, true); g.restore();
-    /* 3. Strahl aus dem Gerinne */
-    g.save(); aussparen(g, A, "strahl"); strahlMalen(g, A, t, W); g.restore();
-    /* 4. Wasser im Gerinne */
-    g.save(); gerinneClip(g, A); aussparen(g, A, "gerinne"); gerinneWasserMalen(g, A, t, W, false); g.restore();
-  }
   const PHI0 = 0.21;
+  const LEBEN_S = 14;                                 // darunter steht das Rad still im Sprite
+  const T_RINNE = 1.1;
+  const FOLGEN = new Map();
+  let folgenPixel = 0;
+  const MALTAKT = {};
+  const FOLGEN_MAX = 22e6;
+  const sStufe = (s) => Math.exp(Math.round(Math.log(s) / 0.001) * 0.001);
+  function folgeRahmen(art, s, gier) {
+    const A = ansichtBild(s, gier, ST.ZEITEN.tag, "winter", 0, 0);
+    const pts = [];
+    const kasten = (x0, y0, z0, x1, y1, z1) => { for (const p of kastenPunkte(x0, y0, z0, x1, y1, z1)) pts.push(A.p(p[0], p[1], p[2])); };
+    if (art === "rad") {
+      kasten(XK1 - 0.25, -RR - 0.4, PZW, X_LAGER + 0.1, RR + 0.8, RZ + RR + 0.5);
+      kasten(PX0, PY0, PZB, PX1, PY1, 3.4);
+      kasten(PX1, UY0, UZB, XG1 + 0.1, UY1, 0.1);
+      kasten(GX0, GY1 - 0.1, GZ0, GX1, GY1 + 1.0, GZ1 + 0.3);
+    } else kasten(GX0, GY0, GZW - 0.05, GX1, GY1, GZ1);
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const p of pts) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }
+    const fx = Math.floor(x0) - 2, fy = Math.floor(y0) - 2;
+    return { fx: fx, fy: fy, w: Math.ceil(x1) + 2 - fx, h: Math.ceil(y1) + 2 - fy };
+  }
+  function folgeHolen(art, P, winter) {
+    const s = sStufe(P.s), gier = Math.round(P.gier * 10) / 10;
+    const basis = art + "|" + gier + "|" + P.jahr + "|" + (P.Z.name || P.Z.nacht);
+    const schl = basis + "|" + s.toFixed(3);
+    let f = FOLGEN.get(schl);
+    if (f) { f.zuletzt = ST.jetzt || 0; return f; }
+    const r = folgeRahmen(art, s, gier);
+    const px = r.w * r.h;
+    let N = art === "rinne" ? 12 : klemm(Math.round((winter ? 4.4 : 2.6) * 11), 16, 36);
+    if (art === "rad") N = Math.max(12, Math.min(N, Math.floor(FOLGEN_MAX * 0.8 / px)));
+    f = { art: art, s: s, gier: gier, N: N, bilder: new Array(N), r: r, px: px, zuletzt: ST.jetzt || 0, schl: schl };
+    FOLGEN.set(schl, f);
+    aufraeumenFolgen(f);
+    return f;
+  }
+  function aufraeumenFolgen(neu) {
+    folgenPixel = 0;
+    for (const f of FOLGEN.values()) folgenPixel += f.px * f.bilder.filter(Boolean).length;
+    if (folgenPixel + neu.px * neu.N < FOLGEN_MAX) return;
+    const alle = [...FOLGEN.values()].filter((f) => f !== neu).sort((a, b) => a.zuletzt - b.zuletzt);
+    for (const f of alle) {
+      if (folgenPixel + neu.px * neu.N < FOLGEN_MAX) break;
+      for (const b of f.bilder) if (b) { folgenPixel -= f.px; b.width = b.height = 0; }
+      FOLGEN.delete(f.schl);
+    }
+  }
+  function bildMalen(f, i, P, winter) {
+    const c = document.createElement("canvas"); c.width = Math.max(1, f.r.w); c.height = Math.max(1, f.r.h);
+    const g = c.getContext("2d");
+    const A = ansichtBild(f.s, f.gier, P.Z, P.jahr, f.r.fx, f.r.fy);
+    const u = i / f.N;
+    const W = { winter: winter, wasser: true, bau: 1, schwall: true, u: u };
+    if (f.art === "rinne") {
+      abschnitt(g, A, "gerinne", (h) => { gerinneClip(h, A); gerinneWasserMalen(h, A, u, W, false); });
+      return c;
+    }
+    const phi = PHI0 - u * VIERTEL;
+    /* 1. Grube: Wasser, darin der untere Teil des Schwalls */
+    abschnitt(g, A, "grube", (h) => { grubeClip(h, A); grubeWasserMalen(h, A, u, W); schwallMalen(h, A, phi, W, false); });
+    /* 2. Untergraben */
+    abschnitt(g, A, "graben", (h) => { grabenClip(h, A); grabenWasserMalen(h, A, u, W); });
+    /* 3. Rad (mit dem Schwall über Gelände) */
+    abschnitt(g, A, "rad", (h) => { radMalen(h, A, phi, W); if (winter) dampfMalen(h, A, u); });
+    /* 4. Strahl aus dem Gerinne */
+    abschnitt(g, A, "strahl", (h) => { strahlMalen(h, A, u, W); });
+    return c;
+  }
+  /* Gleichmäßig nachmalen: nach einem neuen Bild der Folge wartet die Mühle
+     mindestens das Anderthalbfache seiner Malzeit (so kostet das Füllen
+     einer neuen Folge höchstens ~40 % der Zeit, statt ein paar Bilder lang
+     zu ruckeln). Gibt es noch gar kein Bild, wird sofort gemalt. */
+  const MAL = { dauer: 0, ende: -1e9 };
+  function folgeZeichnen(g, P, art, u, winter) {
+    const f = folgeHolen(art, P, winter);
+    let i = Math.floor(u * f.N) % f.N;
+    if (!f.bilder[i]) {
+      const takt = ST.jetzt || 0, jetzt = performance.now();
+      const leer = !f.bilder.some(Boolean);
+      if ((takt !== MALTAKT[art] || !takt) && (leer || jetzt - MAL.ende >= 1.5 * MAL.dauer)) {
+        MALTAKT[art] = takt;
+        f.bilder[i] = bildMalen(f, i, P, winter);
+        folgenPixel += f.px;
+        MAL.ende = performance.now(); MAL.dauer = MAL.ende - jetzt;
+      } else {
+        /* schon gemalt in diesem Takt: nächstes vorhandenes Bild davor */
+        let j = i, n = 0;
+        while (!f.bilder[j] && n < f.N) { j = (j - 1 + f.N) % f.N; n++; }
+        if (!f.bilder[j]) return;
+        i = j;
+      }
+    }
+    const k = P.s / f.s, X0 = Math.round(P.kern0[0]), Y0 = Math.round(P.kern0[1]);
+    if (Math.abs(k - 1) < 0.002) g.drawImage(f.bilder[i], X0 + f.r.fx, Y0 + f.r.fy);
+    else g.drawImage(f.bilder[i], P.kern0[0] + f.r.fx * k, P.kern0[1] + f.r.fy * k, f.r.w * k, f.r.h * k);
+  }
+  function lebenMalen(g, P, o, R) {
+    if (P.Z.nacht > 0.02) { const A = ansichtLeben(P); if (A.E[1] > 0.03) lichtPfuetzen(g, A, P.Z.nacht, o.winter); }
+    if (P.s < LEBEN_S || (R.spriteS != null && R.spriteS < LEBEN_S)) return;
+    const t = P.t || 0, om = o.winter ? OMEGA_W : OMEGA;
+    folgeZeichnen(g, P, "rad", frac(t * om / VIERTEL), o.winter);
+    folgeZeichnen(g, P, "rinne", frac(t / T_RINNE), o.winter);
+  }
   function lichtPfuetzen(g, A, nacht, winter) {
     g.save();
     g.globalCompositeOperation = "lighter";
@@ -2130,6 +2745,24 @@
       g.fillStyle = gr; g.fillRect(x - r, y - r, 2 * r, 2 * r);
     }
     g.restore();
+  }
+  /* Radsilhouette im Sprite (für den Treffer beim Antippen und als Ersatz
+     unter dem Leben): Hülle beider Kränze ohne die Mitte, schwach deckend */
+  function radSilhouette(g, A, alpha) {
+    const N = 40;
+    const kreis = (x, r) => Array.from({ length: N }, (_, i) => A.p(...radPunkt(x, r, i / N * TAU)));
+    const aus = huelle2(kreis(XK1, RR + 0.02).concat(kreis(XK4, RR + 0.02)));
+    let loch = kreis(XK1, RK0);
+    const k2 = kreis(XK4, RK0);
+    const fl = (P) => { let f = 0; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length]; f += a[0] * b[1] - b[0] * a[1]; } return f; };
+    const sgn = fl(k2) > 0 ? 1 : -1;
+    for (let i = 0; i < k2.length && loch.length >= 3; i++) {
+      const a = k2[i], b = k2[(i + 1) % k2.length];
+      loch = schneide(loch, (p) => sgn * ((b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])));
+    }
+    g.beginPath(); g.moveTo(aus[0][0], aus[0][1]); for (let i = 1; i < aus.length; i++) g.lineTo(aus[i][0], aus[i][1]); g.closePath();
+    if (loch.length >= 3) { g.moveTo(loch[0][0], loch[0][1]); for (let i = 1; i < loch.length; i++) g.lineTo(loch[i][0], loch[i][1]); g.closePath(); }
+    g.fillStyle = "rgba(46,34,24," + alpha + ")"; g.fill("evenodd");
   }
 
   /* =====================================================================
@@ -2144,8 +2777,8 @@
     const pts = [];
     for (const [x, y] of [[R[0], R[1]], [R[2], R[1]], [R[2], R[3]], [R[0], R[3]]]) {
       const C = [x, y, R[4] || 0];
-      const t = dot(sub(C, f.o), n) / en;
-      const P = sub(C, mul(e, t)), d = sub(P, f.o);
+      const t = dot(sub(C, fo(f)), n) / en;
+      const P = sub(C, mul(e, t)), d = sub(P, fo(f));
       pts.push([dot(d, f.u), dot(d, f.v)]);
     }
     poly(g, pts); g.clip();
@@ -2160,7 +2793,7 @@
     let licht = true;
     const pts = [];
     for (const [x, y] of [[R[0], R[1]], [R[2], R[1]], [R[2], R[3]], [R[0], R[3]]]) {
-      const d = sub([x, y, 0], f.o), a = dot(d, f.u), b = dot(d, f.v), hh = dot(d, n);
+      const d = sub([x, y, 0], fo(f)), a = dot(d, f.u), b = dot(d, f.v), hh = dot(d, n);
       if (hh < -0.01) { licht = false; break; }
       const sv = hh > 0.005 ? F.schatten(hh) : [0, 0];
       if (!sv) { licht = false; break; }
@@ -2223,7 +2856,7 @@
         g.globalCompositeOperation = "source-over";
         if (opt.durchlass) {
           /* gewölbter Durchlass, durch den das Wasser nach Osten abfließt */
-          const cx = opt.durchlass, bw = 0.9, yb = wl + 0.05;
+          const cx = opt.durchlass, bw = 0.96, yb = wl + 0.05;
           g.fillStyle = rgb([L[0] * SANDSTEIN[0], L[1] * SANDSTEIN[1], L[2] * SANDSTEIN[2]]);
           g.beginPath(); g.moveTo(cx - bw / 2 - 0.16, yb); g.lineTo(cx - bw / 2 - 0.16, yb - 0.35); g.arc(cx, yb - 0.35, bw / 2 + 0.16, Math.PI, 0); g.lineTo(cx + bw / 2 + 0.16, yb); g.closePath(); g.fill();
           g.fillStyle = "rgb(12,14,16)";
@@ -2254,10 +2887,12 @@
     const [x0, y0, x1, y1] = R;
     const ex = { keinLicht: true, keinAo: true };
     M.flaeche(Object.assign({ name: "gb" + saat, o: [x0, y0, -T], u: [1, 0, 0], v: [0, 1, 0], w: x1 - x0, h: y1 - y0, malen: grubenBodenMal(B, R, opt.beton, winter, saat), ebene: -1 }, ex));
-    wand(M, [x0, y0, 0], [0, 1, 0], x1 - x0, T, grubenWandMal(B, R, T, stein, winter, saat + 1, opt), Object.assign({ name: "gw-n" + saat }, ex));
-    wand(M, [x1, y1, 0], [0, -1, 0], x1 - x0, T, grubenWandMal(B, R, T, stein, winter, saat + 2, opt), Object.assign({ name: "gw-s" + saat }, ex));
-    wand(M, [x1, y0, 0], [-1, 0, 0], y1 - y0, T, grubenWandMal(B, R, T, stein, winter, saat + 3, Object.assign({}, opt, { durchlass: opt.durchlass ? (0 - y0) : null })), Object.assign({ name: "gw-o" + saat }, ex));
-    wand(M, [x0, y1, 0], [1, 0, 0], y1 - y0, T, grubenWandMal(B, R, T, stein, winter, saat + 4, opt), Object.assign({ name: "gw-w" + saat }, ex));
+    /* der Durchlass nur in der Ostwand (vorher stand er als Geisterbogen in allen vier Wänden) */
+    const ohne = Object.assign({}, opt, { durchlass: null });
+    wand(M, [x0, y0, 0], [0, 1, 0], x1 - x0, T, grubenWandMal(B, R, T, stein, winter, saat + 1, ohne), Object.assign({ name: "gw-n" + saat }, ex));
+    wand(M, [x1, y1, 0], [0, -1, 0], x1 - x0, T, grubenWandMal(B, R, T, stein, winter, saat + 2, ohne), Object.assign({ name: "gw-s" + saat }, ex));
+    wand(M, [x1, y0, 0], [-1, 0, 0], y1 - y0, T, grubenWandMal(B, R, T, stein, winter, saat + 3, Object.assign({}, opt, { durchlass: opt.durchlass ? (UYM - y0) : null })), Object.assign({ name: "gw-o" + saat }, ex));
+    wand(M, [x0, y1, 0], [1, 0, 0], y1 - y0, T, grubenWandMal(B, R, T, stein, winter, saat + 4, ohne), Object.assign({ name: "gw-w" + saat }, ex));
   }
 
   /* =====================================================================
@@ -2297,8 +2932,46 @@
       if (winter && Z.fertig && W.name !== "ost") schneeWehe(g, F, w, ZE, W.saat, W.tuer ? [W.tuer.a - 0.35, W.tuer.a + W.tuer.w + 0.35] : null);
     };
   }
+  /* Körper, die vor den Fenstern liegen können (Kritik Runde 1: „Fenster-
+     licht scheint durch Dachüberstand und Gerinne"). Konstruktionskoordinaten. */
+  function leuchtKoerper(W, S, Z, F) {
+    const K = [];
+    if (Z.dach) {
+      for (const t of [1, -1]) {
+        const ye = t * (YTE + 0.14), zu = ZTE - (S.winter ? 0.42 : 0.2);
+        K.push([[XWE0, t * YW, ZT + DV], [XWE1, t * YW, ZT + DV], [XWE0, t * YW, ZT - 0.08], [XWE1, t * YW, ZT - 0.08], [XWE0, ye, ZTE + 0.05], [XWE1, ye, ZTE + 0.05], [XWE0, ye, zu], [XWE1, ye, zu]]);
+        /* Ortgänge der Giebel (je Dachseite eine dünne, schräge Platte) */
+        for (const [xw, xe] of [[XW1, XWE1], [XW0, XWE0]]) K.push([[xw, t * YTE, ZTE - 0.12], [xe, t * YTE, ZTE - 0.12], [xw, t * YWE, ZWE - 0.12], [xe, t * YWE, ZWE - 0.12], [xw, t * YTE, ZTE + DV], [xe, t * YTE, ZTE + DV], [xw, t * YWE, ZWE + DV], [xe, t * YWE, ZWE + DV]]);
+      }
+      /* Krüppelwalme */
+      for (const [xw, xe, xf] of [[XW1, XWE1, XF1], [XW0, XWE0, XF0]]) K.push([[xe, YWE, ZWE - 0.2], [xe, -YWE, ZWE - 0.2], [xw, YWE, ZWE - 0.2], [xw, -YWE, ZWE - 0.2], [xf, 0, ZF]]);
+    }
+    if (Z.gerinne > 0) K.push(kastenPunkte(GX0 - 0.02, GY0, GZ0, GX1 + 0.02, GY0 + (GY1 - GY0) * Z.gerinne, GZ1 + 0.05));
+    if (Z.konsole) K.push(kastenPunkte(XW1, KONSOLE_Y - 0.1, GZ0 - 1.35, GX1 + 0.12, KONSOLE_Y + 0.1, GZ0));
+    if (Z.boecke > 0) for (const yb of BOECKE) K.push(kastenPunkte(GX0 - 0.45, yb - 0.1, 0, GX1 + 0.45, yb + 0.2, GZ0));
+    if (Z.pfeiler >= 1 && Z.lagerbock) K.push(kastenPunkte(LX0, -0.42, 0, LX1, 0.42, RZ + RW + 0.08));
+    if (Z.dammH > 0.05) K.push(DAMM_PUNKTE);
+    /* das Rad nur, wenn es im Sprite steht (sonst malt das Leben es darüber) */
+    if (Z.rad > 0 && !(Z.lebend && F.s >= LEBEN_S)) {
+      const R = []; for (let i = 0; i < 12; i++) { const w = i / 12 * TAU; R.push(radPunkt(XK1, RR, w), radPunkt(XK4, RR, w)); }
+      K.push(R);
+    }
+    if (Z.deko) {
+      if (S.winter) {
+        /* Christbaum als Kegel mit Kübel */
+        const C = [[0.55, YW + 0.5, 2.02]];
+        for (let i = 0; i < 10; i++) { const w = i / 10 * TAU; C.push([0.55 + 0.4 * Math.cos(w), YW + 0.5 + 0.4 * Math.sin(w), 0.42]); C.push([0.55 + 0.2 * Math.cos(w), YW + 0.5 + 0.2 * Math.sin(w), 0]); }
+        K.push(C);
+      }
+      K.push(kastenPunkte(XW0 - 1.2, -0.13, ZWE - 0.58, XW0, 0.13, ZWE - 0.32));   // Aufzugsbalken
+      K.push(kastenPunkte(-6.5, -YW - 0.55, 0, -3.9, -YW - 0.02, 1.62));         // Holzstapel
+    }
+    void W;
+    return K;
+  }
   function steinLeuchten(W, B, S, Z) {
     return function (g, F) {
+      F = leuchtFlaeche(g, F, B, leuchtKoerper(W, S, Z, F));
       for (let i = 0; i < (W.eg || []).length; i++) {
         const fe = W.eg[i];
         const fo = fensterArt(W, 100 + i, S, Z, true);
@@ -2366,6 +3039,7 @@
   }
   function oberLeuchten(W, B, S, Z) {
     return function (g, F) {
+      F = leuchtFlaeche(g, F, B, leuchtKoerper(W, S, Z, F));
       const top = W.top;
       const alleF = W.fw.F.concat(W.giebel ? W.giebel.F : []);
       for (let i = 0; i < alleF.length; i++) {
@@ -2481,17 +3155,18 @@
   function richtbaum(winter) {
     return function (g, s, F) {
       if (F.schatten) return;
-      const k = s;
-      g.fillStyle = "rgb(84,60,40)"; g.fillRect(-0.03 * k, -1.8 * k, 0.06 * k, 1.8 * k);
+      const k = s, FL = figurLicht(F);
+      g.fillStyle = FL.lit([84, 60, 40], FL.lV); g.fillRect(-0.03 * k, -1.8 * k, 0.06 * k, 1.8 * k);
       for (let i = 0; i < 6; i++) {
         const y = -1.9 * k + i * 0.22 * k, b = (0.15 + i * 0.09) * k;
-        g.fillStyle = winter ? "rgb(40,74,52)" : "rgb(36,86,46)";
-        g.beginPath(); g.moveTo(0, y - 0.1 * k); g.lineTo(-b, y + 0.2 * k); g.lineTo(b, y + 0.2 * k); g.closePath(); g.fill();
-        if (winter) { g.fillStyle = "rgba(245,248,255,0.9)"; g.beginPath(); g.moveTo(0, y - 0.08 * k); g.lineTo(-b * 0.8, y + 0.14 * k); g.lineTo(b * 0.5, y + 0.05 * k); g.closePath(); g.fill(); }
+        const c = winter ? [40, 74, 52] : [36, 86, 46];
+        g.fillStyle = FL.lit(c, FL.lL); g.beginPath(); g.moveTo(0, y - 0.1 * k); g.lineTo(-b, y + 0.2 * k); g.lineTo(0, y + 0.2 * k); g.closePath(); g.fill();
+        g.fillStyle = FL.lit(c, FL.lR); g.beginPath(); g.moveTo(0, y - 0.1 * k); g.lineTo(0, y + 0.2 * k); g.lineTo(b, y + 0.2 * k); g.closePath(); g.fill();
+        if (winter) { g.fillStyle = FL.lit([245, 248, 255], FL.lO, 0.9); g.beginPath(); g.moveTo(0, y - 0.08 * k); g.lineTo(-b * 0.8, y + 0.14 * k); g.lineTo(b * 0.5, y + 0.05 * k); g.closePath(); g.fill(); }
       }
-      const farben = ["#c8202c", "#f2c230", "#2a62b8", "#ffffff", "#2a9a4a"];
+      const farben = [[200, 32, 44], [242, 194, 48], [42, 98, 184], [255, 255, 255], [42, 154, 74]];
       g.lineWidth = Math.max(1, 0.03 * k);
-      for (let i = 0; i < 5; i++) { g.strokeStyle = farben[i]; g.beginPath(); g.moveTo(0, -1.7 * k); g.quadraticCurveTo((i - 2) * 0.25 * k, -1.2 * k, (i - 2) * 0.32 * k + Math.sin((F.t || 0) * 3 + i) * 0.05 * k, -0.8 * k); g.stroke(); }
+      for (let i = 0; i < 5; i++) { g.strokeStyle = FL.lit(farben[i], FL.lV); g.beginPath(); g.moveTo(0, -1.7 * k); g.quadraticCurveTo((i - 2) * 0.25 * k, -1.2 * k, (i - 2) * 0.32 * k + Math.sin((F.t || 0) * 3 + i) * 0.05 * k, -0.8 * k); g.stroke(); }
     };
   }
 
@@ -2535,7 +3210,7 @@
     const x0 = KAMIN_X - KAMIN_B / 2, x1 = KAMIN_X + KAMIN_B / 2, y0 = -KAMIN_T / 2, y1 = KAMIN_T / 2;
     const zOben = ZF + h;
     const zRoof = (y) => ZF - Math.abs(y) * TN;
-    M.teil("kamin", { mitte: [KAMIN_X, 0, HAUS_M[2] + 12] });
+    M.teil("kamin", { schatten: false, mitte: [KAMIN_X, 0, HAUS_M[2] + 12] });
     const mal = (seite) => (g, F) => backsteinMalen(g, F, F.w, F.h, 60 + seite, S.winter);
     const hS = zOben - zRoof(y1);
     wand(M, [x0, y1, zOben], [0, 1, 0], KAMIN_B, hS, mal(1), { name: "kamin-s", keinAo: true });
@@ -2548,7 +3223,32 @@
       const d = 0.06, zk = zOben;
       M.teil("kaminkopf", { schatten: false, mitte: [KAMIN_X, 0, HAUS_M[2] + 13] });
       const platte = (g, F) => { g.fillStyle = rgb(SANDSTEIN_G); g.fillRect(0, 0, F.w, F.h); rausch(g, 0, 0, F.w, F.h, 0.6, 0.3, 5, 3); };
-      kiste(M, x0 - d, y0 - d, zk, x1 + d, y1 + d, zk + 0.1, { s: platte, n: platte, o: platte, w: platte, t: S.winter ? schneeOben(null) : (g, F) => { platte(g, F); g.fillStyle = "rgb(24,20,20)"; g.fillRect(F.w * 0.25, F.h * 0.25, F.w * 0.5, F.h * 0.5); } }, { name: "kk", keinAo: true });
+      const zug = (g, F) => { g.fillStyle = "rgb(24,20,20)"; g.fillRect(F.w * 0.25, F.h * 0.25, F.w * 0.5, F.h * 0.5); };
+      kiste(M, x0 - d, y0 - d, zk, x1 + d, y1 + d, zk + 0.1, { s: platte, n: platte, o: platte, w: platte, t: S.winter && Z.fertig ? null : (g, F) => { platte(g, F); zug(g, F); } }, { name: "kk", keinAo: true });
+      if (S.winter && Z.fertig) {
+        /* Kaminhaube aus Schnee: 12 cm dick, mit gerundeten Kanten; über dem
+           warmen Zug geschmolzen (dunkles Loch mit nassem Rand) */
+        const hH = 0.13, e = 0.035, xa = x0 - d - e, xb = x1 + d + e, ya = y0 - d - e, yb = y1 + d + e;
+        const seite = (saat) => (g, F) => {
+          const w = F.w, rng = zufall(saat);
+          g.fillStyle = "rgb(236,241,249)"; g.beginPath(); g.moveTo(0, F.h); g.lineTo(0, 0.05);
+          for (let a = 0; a <= w; a += 0.05) g.lineTo(a, 0.02 + 0.02 * Math.sin(a * 17 + saat) * rng());
+          g.lineTo(w, 0.05); g.lineTo(w, F.h - 0.02);
+          for (let a = w; a >= 0; a -= 0.06) g.lineTo(a, F.h - 0.01 - 0.035 * rng());
+          g.closePath(); g.fill();
+          const gr = g.createLinearGradient(0, 0, 0, F.h); gr.addColorStop(0, "rgba(255,255,255,0.5)"); gr.addColorStop(1, "rgba(150,170,210,0.45)");
+          g.fillStyle = gr; g.fill();
+        };
+        const deckel = (g, F) => {
+          schneeFlaeche(g, F, 0, 0, F.w, F.h, 31, {});
+          const cx = F.w / 2, cy = F.h / 2;
+          const gr = g.createRadialGradient(cx, cy, 0.05, cx, cy, 0.3);
+          gr.addColorStop(0, "rgba(40,40,46,0.9)"); gr.addColorStop(0.45, "rgba(120,126,140,0.6)"); gr.addColorStop(1, "rgba(200,210,228,0)");
+          g.fillStyle = gr; g.fillRect(0, 0, F.w, F.h);
+          g.fillStyle = "rgb(22,18,18)"; PI.rundRechteck(g, cx - 0.14, cy - 0.14, 0.28, 0.28, 0.06); g.fill();
+        };
+        kiste(M, xa, ya, zk + 0.1, xb, yb, zk + 0.1 + hH, { s: seite(1), n: seite(2), o: seite(3), w: seite(4), t: deckel }, { name: "kh", keinAo: true });
+      }
     }
   }
   function backsteinMalen(g, F, w, h, saat, winter) {
@@ -2575,7 +3275,7 @@
   }
 
   /* =====================================================================
-     STAUWERK, GERINNE, BÖCKE, KONSOLE, LAGERSTEIN, RANDSTEINE
+     TEICHDAMM, GERINNE, BÖCKE, KONSOLE, LAGER, RANDSTEINE, UNTERGRABEN
      ===================================================================== */
   function holzMal(c, saat, extra) {
     return function (g, F) {
@@ -2583,65 +3283,406 @@
       if (extra) extra(g, F);
     };
   }
-  function stauwerkBauen(M, B, S, Z) {
-    const h = SZ1 * Z.stauwerk;
-    if (h < 0.05) return;
-    const winter = S.winter;
-    M.teil("stauwerk", { mitte: [AUSSEN + (SX0 + SX1) / 2, -2 * AUSSEN, h / 2] });
-    const mal = (saat) => (g, F) => {
-      bruchsteinMalen(g, F, 0, 0, F.w, F.h, { saat: saat });
-      eckquader(g, F, 0, 0, F.h, F.h, false, saat, SANDSTEIN_H);
-      eckquader(g, F, F.w, 0, F.h, F.h, true, saat + 1, SANDSTEIN_H);
-      const gr = g.createLinearGradient(0, F.h, 0, F.h - 0.6);
-      gr.addColorStop(0, "rgba(50,60,40,0.3)"); gr.addColorStop(1, "rgba(50,60,40,0)");
-      g.fillStyle = gr; g.fillRect(0, F.h - 0.6, F.w, 0.6);
-      if (Z.wasser && !winter) {
-        /* nasse Spur unter dem Überlauf */
-        const gn = g.createLinearGradient(0, 0, 0, F.h);
-        gn.addColorStop(0, "rgba(30,40,40,0.35)"); gn.addColorStop(1, "rgba(30,40,40,0)");
-        g.fillStyle = gn; g.fillRect(F.w * 0.42, 0, F.w * 0.16, F.h);
+  /* Rasen der Böschung (Frühling), rohe Erde (Bau) oder Schnee (Winter) */
+  function boeschungMalen(g, F, w, h, saat, S, Z) {
+    const px = F.px, rng = zufall(saat);
+    if (!Z.rasen) {
+      /* frisch geschüttete Erde mit Steinen, Spuren der Schaufel */
+      g.fillStyle = "rgb(122,92,64)"; g.fillRect(-0.05, -0.05, w + 0.1, h + 0.1);
+      rausch(g, 0, 0, w, h, 1.6, 0.35, saat, 3);
+      if (px > 8) { g.fillStyle = "rgba(150,138,122,0.8)"; g.beginPath(); for (let i = 0; i < Math.min(260, w * h * 5); i++) { const x = rng() * w, y = rng() * h, r = 0.02 + rng() * 0.04; g.moveTo(x + r, y); g.ellipse(x, y, r * 1.4, r, rng() * 3, 0, TAU); } g.fill(); }
+      if (S.winter) { g.fillStyle = "rgba(240,244,251,0.55)"; g.fillRect(-0.05, -0.05, w + 0.1, h + 0.1); rausch(g, 0, 0, w, h, 0.8, 0.2, saat + 3, 3); }
+      return;
+    }
+    if (S.winter) {
+      schneeFlaeche(g, F, -0.05, -0.05, w + 0.1, h + 0.1, saat, {});
+      /* Grashalme schauen am Fuß aus dem Schnee, dazu ein Trampelpfad der Kinder */
+      if (px > 14) {
+        g.strokeStyle = "rgba(120,112,70,0.7)"; g.lineWidth = Math.max(0.006, 0.8 / px);
+        g.beginPath(); for (let i = 0; i < w * 6; i++) { const x = rng() * w, y = h - rng() * 0.8; g.moveTo(x, y); g.lineTo(x + (rng() - 0.5) * 0.05, y - 0.06 - rng() * 0.08); } g.stroke();
       }
-      if (winter && Z.fertig) { eiszapfenMalen(g, F, 0.1, F.w - 0.1, 0.18, 0.8, saat, (c, a) => rgb(c, a)); schneeWehe(g, F, F.w, F.h, saat, null); }
-    };
-    kiste(M, SX0, SY0, 0, SX1, SY1, h, { s: mal(21), n: mal(22), o: mal(23), w: mal(24), t: h >= SZ1 - 0.01 ? null : (g, F) => { g.fillStyle = rgb(MOERTEL); g.fillRect(0, 0, F.w, F.h); bruchsteinMalen(g, F, 0, 0, F.w, F.h, { saat: 29 }); } }, { name: "stau", ao: true });
-    if (h >= SZ1 - 0.01) {
-      /* Abdeckung aus gelbem Sandstein mit Wasserbecken */
-      M.teil("stau-deckel", { schatten: false, mitte: [AUSSEN + (SX0 + SX1) / 2, -2 * AUSSEN, SZ1 + 1] });
-      const d = 0.07, zd = SZ1;
-      const platte = (g, F) => { quaderMalen(g, F, 0, 0, F.w, F.h, { farbe: SANDSTEIN_G, lage: F.h, laenge: 0.7, saat: 3 }); if (winter) { g.fillStyle = "rgb(244,247,252)"; g.fillRect(-0.02, -0.02, F.w + 0.04, 0.05); } };
-      kiste(M, SX0 - d, SY0 - d, zd, SX1 + d, SY1 + d, zd + 0.16, { s: platte, n: platte, o: platte, w: platte, t: (g, F) => {
-        const w = F.w, hh = F.h, r = 0.3;
-        g.fillStyle = rgb(SANDSTEIN_G); g.fillRect(0, 0, w, hh);
-        rausch(g, 0, 0, w, hh, 0.6, 0.25, 7, 3);
-        if (winter) { g.fillStyle = "rgb(242,246,252)"; g.fillRect(0, 0, w, hh); }
-        /* Becken (Oberwasser) */
-        const gw = g.createLinearGradient(0, r, 0, hh - r);
-        gw.addColorStop(0, winter ? "rgb(170,190,208)" : "rgb(58,84,92)"); gw.addColorStop(1, winter ? "rgb(200,214,228)" : "rgb(96,128,138)");
-        g.fillStyle = gw; g.fillRect(r, r, w - 2 * r, hh - 2 * r);
-        g.fillStyle = "rgba(20,30,34,0.35)"; g.fillRect(r, r, w - 2 * r, 0.05); g.fillRect(r, r, 0.05, hh - 2 * r);
-        if (!winter) { g.fillStyle = "rgba(220,236,246,0.35)"; g.fillRect(r + 0.1, r + 0.2, w - 2 * r - 0.3, 0.03); }
-        else { g.strokeStyle = "rgba(255,255,255,0.6)"; g.lineWidth = 0.01; g.beginPath(); g.moveTo(r + 0.1, r + 0.2); g.lineTo(w - r - 0.2, hh - r - 0.3); g.stroke(); }
-      } }, { name: "stau-d", keinAo: true });
-      /* Schützenaufzug: zwei Pfosten, Querholz, Zahnstange, Handrad, Schützbrett */
-      if (Z.schuetz) {
-        M.teil("schuetz", { schatten: false, mitte: [AUSSEN + (SX0 + SX1) / 2, -2 * AUSSEN + 50, SZ1 + 1] });
-        const hc = [104, 76, 50];
-        const m = (seite) => holzMal(hc, 81, winter ? (g, F) => { if (seite === "R" || seite === "e") { g.fillStyle = "rgba(242,246,252,0.9)"; g.fillRect(0, 0, F.w, Math.min(F.h, 0.04)); } } : null);
-        const pf = (g) => m(g);
-        for (const x of [GX0 - 0.02, GX1 + 0.02]) balken3(M, [x, SY1 + 0.08, SZ1 - 0.4], [x, SY1 + 0.08, SZ1 + 1.25], [1, 0, 0], 0.15, 0.15, pf, { name: "sp" + x });
-        balken3(M, [GX0 - 0.12, SY1 + 0.08, SZ1 + 1.1], [GX1 + 0.12, SY1 + 0.08, SZ1 + 1.1], [0, 1, 0], 0.18, 0.14, pf, { name: "sq" });
-        /* Schützbrett (halb gezogen) */
-        balken3(M, [GX0 + 0.05, SY1 + 0.08, GZB + 0.15], [GX0 + 0.05, SY1 + 0.08, SZ1 + 0.35], [0, 1, 0], 0.06, 0.02, () => holzMal(hell(hc, -0.1), 82), { name: "brett", seiten: "Qq" });
-        M.flaeche({ name: "schuetzbrett", o: [GX0 + 0.05, SY1 + 0.11, SZ1 + 0.35], u: [1, 0, 0], v: [0, 0, -1], w: GX1 - GX0 - 0.1, h: SZ1 + 0.2 - GZB, malen: (g, F) => { bretterMalen(g, F, 0, 0, F.w, F.h, hell(hc, -0.12), 83, { breite: 0.18 }); g.fillStyle = rgb(EISEN); g.fillRect(F.w / 2 - 0.03, 0, 0.06, F.h); } , keinAo: true });
-        balken3(M, [RX, SY1 + 0.13, SZ1 + 0.35], [RX, SY1 + 0.13, SZ1 + 1.5], [1, 0, 0], 0.05, 0.05, () => (g, F) => { g.fillStyle = "rgb(44,42,42)"; g.fillRect(0, 0, F.w, F.h); if (F.px > 30) { g.fillStyle = "rgb(90,88,86)"; for (let x = 0.02; x < F.w; x += 0.05) g.fillRect(x, 0, 0.02, F.h); } }, { name: "zahn" });
-        M.flaeche({ name: "handrad", o: [RX + 0.12, SY1 + 0.22 + 0.25, SZ1 + 1.45], u: [0, -1, 0], v: [0, 0, -1], w: 0.5, h: 0.5, umriss: Array.from({ length: 16 }, (_, i) => [0.25 + 0.25 * Math.cos(i / 16 * TAU), 0.25 + 0.25 * Math.sin(i / 16 * TAU)]), beidseitig: true, keinAo: true, malen: (g, F) => {
-          g.strokeStyle = "rgb(40,38,38)"; g.lineWidth = 0.04; g.beginPath(); g.arc(0.25, 0.25, 0.22, 0, TAU); g.stroke();
-          g.lineWidth = 0.025; g.beginPath(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6; g.moveTo(0.25, 0.25); g.lineTo(0.25 + Math.cos(a) * 0.22, 0.25 + Math.sin(a) * 0.22); } g.stroke();
-          g.fillStyle = "rgb(40,38,38)"; g.beginPath(); g.arc(0.25, 0.25, 0.05, 0, TAU); g.fill();
-        } });
+      g.fillStyle = "rgba(150,166,200,0.25)";
+      g.beginPath(); for (let y = 0.4; y < h - 0.3; y += 0.35) { const x = w * 0.62 + Math.sin(y * 1.3) * 0.25; g.moveTo(x + 0.07, y); g.ellipse(x, y, 0.07, 0.045, 0, 0, TAU); } g.fill();
+      return;
+    }
+    /* Rasen: Grund, große und kleine Flecken, Halme, ein paar Blüten */
+    g.fillStyle = "rgb(88,118,58)"; g.fillRect(-0.05, -0.05, w + 0.1, h + 0.1);
+    tonFlecken(g, 0, 0, w, h, 3.2, 0.5, saat + 3, "#5f7e3a", true);
+    tonFlecken(g, 0, 0, w, h, 1.6, 0.4, saat + 9, "#a6b865", true);
+    rausch(g, 0, 0, w, h, 0.6, 0.18, saat + 5, 3);
+    if (px > 16) {
+      const T = [[70, 104, 44], [104, 136, 64], [58, 88, 40]];
+      for (let k = 0; k < 3; k++) {
+        g.strokeStyle = rgb(T[k], 0.7); g.lineWidth = Math.max(0.005, 0.8 / px);
+        g.beginPath();
+        for (let i = 0; i < Math.min(900, w * h * 26); i++) { const x = rng() * w, y = rng() * h, l = 0.04 + rng() * 0.06; g.moveTo(x, y); g.lineTo(x + (rng() - 0.5) * 0.03, y - l); }
+        g.stroke();
+      }
+      if (px > 26) {
+        for (const [c, n] of [[[250, 250, 244], 50], [[240, 206, 60], 30], [[176, 120, 190], 14]]) {
+          g.fillStyle = rgb(c); g.beginPath();
+          for (let i = 0; i < n * w * h / 20; i++) { const x = rng() * w, y = rng() * h, r = 0.012 + rng() * 0.01; g.moveTo(x + r, y); g.arc(x, y, r, 0, TAU); }
+          g.fill();
+        }
       }
     }
+    /* feuchter, dunkler Fuß, darüber Moos an der Trockenmauer */
+    const gr = g.createLinearGradient(0, h - 0.8, 0, h);
+    gr.addColorStop(0, "rgba(30,50,20,0)"); gr.addColorStop(1, "rgba(30,50,20,0.3)");
+    g.fillStyle = gr; g.fillRect(-0.05, h - 0.8, w + 0.1, 0.85);
   }
+  /* Stützmauer: Buntsandstein wie das Erdgeschoss, oben eine Abdeckung
+     aus Sandsteinplatten (der Linie der Krone folgend), Entwässerungs-
+     öffnungen in einer Reihe, nasse Spuren und Moos; im Winter Schnee auf
+     den Platten und Eisbärte darunter. kante: Liste [a, y] der Mauerkrone. */
+  function stuetzmauerMal(saat, kante, opt, S, Z) {
+    return function (g, F) {
+      const w = F.w, h = F.h, px = F.px;
+      const bis = Z.dammH;
+      bruchsteinMalen(g, F, 0, 0, w, h, { saat: saat, bis: bis >= TD_Z - 0.01 ? null : bis });
+      /* Eckquader an der Ecke zur anderen Mauer */
+      if (opt.ecke != null) eckquader(g, F, opt.ecke, 0, h, Math.min(h, bis), opt.ecke > w / 2, saat, SANDSTEIN_H);
+      if (bis < TD_Z - 0.01) return;
+      /* Entwässerung: kleine dunkle Öffnungen mit Kalkspur */
+      if (px > 8) {
+        for (let a = 0.8; a < w - 0.5; a += 1.6) {
+          const top = kanteBei(kante, a);
+          if (h - top < 1.4) continue;
+          g.fillStyle = "rgba(18,14,12,0.85)"; g.fillRect(a - 0.06, h - 0.62, 0.12, 0.1);
+          const gr = g.createLinearGradient(0, h - 0.52, 0, h);
+          gr.addColorStop(0, S.winter ? "rgba(236,242,250,0.6)" : "rgba(40,50,36,0.35)"); gr.addColorStop(1, "rgba(40,50,36,0)");
+          g.fillStyle = gr; g.fillRect(a - 0.05, h - 0.52, 0.1, 0.52);
+        }
+      }
+      if (opt.extra) opt.extra(g, F);
+      /* Abdeckplatten entlang der Krone */
+      g.save();
+      g.beginPath(); g.moveTo(kante[0][0], kante[0][1] - 0.02);
+      for (const [a, y] of kante) g.lineTo(a, y - 0.02);
+      for (let i = kante.length - 1; i >= 0; i--) g.lineTo(kante[i][0], kante[i][1] + 0.24);
+      g.closePath(); g.clip();
+      quaderMalen(g, F, -0.1, -0.1, w + 0.2, h + 0.2, { farbe: SANDSTEIN_G, lage: 0.26, laenge: 0.9, saat: saat + 3 });
+      g.restore();
+      g.strokeStyle = "rgba(40,28,20,0.4)"; g.lineWidth = Math.max(0.006, 1.2 / px);
+      g.beginPath(); kante.forEach(([a, y], i) => (i ? g.lineTo(a, y + 0.24) : g.moveTo(a, y + 0.24))); g.stroke();
+      if (S.winter && Z.fertig) {
+        g.fillStyle = "rgb(242,246,252)";
+        g.beginPath(); kante.forEach(([a, y], i) => (i ? g.lineTo(a, y - 0.02) : g.moveTo(a, y - 0.02))); for (let i = kante.length - 1; i >= 0; i--) g.lineTo(kante[i][0], kante[i][1] + 0.06); g.closePath(); g.fill();
+        /* Eisbärte unter der Abdeckung, gebündelt, ungleich lang */
+        const rng = zufall(saat + 77);
+        g.fillStyle = "rgba(206,226,246,0.8)";
+        g.beginPath();
+        for (let i = 0; i + 1 < kante.length; i++) {
+          const [a0, y0] = kante[i], [a1, y1] = kante[i + 1];
+          for (let a = a0 + rng() * 0.2; a < a1; a += 0.08 + rng() * 0.35) {
+            const t = (a - a0) / Math.max(1e-6, a1 - a0), y = y0 + (y1 - y0) * t + 0.24, l = 0.05 + Math.pow(rng(), 2) * 0.35, b = 0.015 + l * 0.08;
+            g.moveTo(a - b, y); g.quadraticCurveTo(a - b * 0.4, y + l * 0.6, a, y + l); g.quadraticCurveTo(a + b * 0.4, y + l * 0.6, a + b, y); g.closePath();
+          }
+        }
+        g.fill();
+      }
+      /* Moos und Feuchte am Fuß */
+      const gr = g.createLinearGradient(0, h, 0, h - 0.9);
+      gr.addColorStop(0, S.winter ? "rgba(60,64,80,0.3)" : "rgba(50,70,34,0.4)"); gr.addColorStop(1, "rgba(50,70,34,0)");
+      g.fillStyle = gr; g.fillRect(0, h - 0.9, w, 0.9);
+      if (S.winter && Z.fertig) schneeWehe(g, F, w, h, saat, null);
+    };
+  }
+  function kanteBei(kante, a) {
+    for (let i = 0; i + 1 < kante.length; i++) {
+      const [a0, y0] = kante[i], [a1, y1] = kante[i + 1];
+      if (a >= a0 - 1e-6 && a <= a1 + 1e-6) return y0 + (y1 - y0) * (a - a0) / Math.max(1e-6, a1 - a0);
+    }
+    return kante[kante.length - 1][1];
+  }
+  /* Der Teichdamm hinter der Mühle (siehe Kopf). Ein konvexer Körper:
+     Stützmauer Süd (mit Einlauf und Schütz) und Ost (mit Leerschuss),
+     Böschung West und Nord auf einer Trockenmauer, oben die Krone mit
+     dem Teich. */
+  function dammBauen(M, B, S, Z) {
+    const hD = Z.dammH;
+    if (hD < 0.05) return;
+    const winter = S.winter;
+    const tanN = Math.tan(TD_NEIG), Ls = (TD_Z - TD_FUSS) / Math.sin(TD_NEIG);
+    M.teil("damm", { mitte: [(TD_XF + TD_X1) / 2, -NORDEN + (TD_Y1 + TD_YF) / 2, 2] });
+    const cut = (um, top) => schneide(um, (p) => p[1] - top);      // Flächen-y ≥ top bleibt (unter der Bauhöhe)
+    /* Süd: Umriss mit schräger Krone über der Westböschung */
+    const wS = TD_X1 - TD_XF, aK = TD_X0 - TD_XF;
+    let umS = [[0, TD_Z - TD_FUSS], [aK, 0], [wS, 0], [wS, TD_Z], [0, TD_Z]];
+    const kanteS = [[0, TD_Z - TD_FUSS], [aK, 0], [wS, 0]];
+    if (hD < TD_Z - 0.01) umS = cut(umS, TD_Z - hD);
+    const einlauf = (g, F) => {
+      /* Einlauf zum Gerinne: das Wasser läuft durch die Krone */
+      const a0 = GX0 - TD_XF, a1 = GX1 - TD_XF;
+      g.fillStyle = "rgb(26,22,20)"; g.fillRect(a0 + 0.04, TD_Z - GZ1, a1 - a0 - 0.08, GZ1 - GZB + 0.05);
+      if (Z.wasser && !winter) { const gr = g.createLinearGradient(0, TD_Z - GZ1, 0, TD_Z - GZB); gr.addColorStop(0, "rgba(40,50,46,0.6)"); gr.addColorStop(1, "rgba(30,40,38,0.3)"); g.fillStyle = gr; g.fillRect(a0, TD_Z - GZB, a1 - a0, 1.2); }
+    };
+    if (umS.length >= 3) M.flaeche({ name: "damm-s", o: [TD_XF, TD_Y1, TD_Z], u: [1, 0, 0], v: [0, 0, -1], w: wS, h: TD_Z, umriss: umS, malen: stuetzmauerMal(51, kanteS, { ecke: wS, extra: einlauf }, S, Z), ao: true });
+    /* Ost: Umriss mit schräger Krone über der Nordböschung, Leerschuss */
+    const wO = TD_Y1 - TD_YF, aO = TD_Y1 - TD_Y0;
+    let umO = [[0, 0], [aO, 0], [wO, TD_Z - TD_FUSS], [wO, TD_Z], [0, TD_Z]];
+    const kanteO = [[0, 0], [aO, 0], [wO, TD_Z - TD_FUSS]];
+    if (hD < TD_Z - 0.01) umO = cut(umO, TD_Z - hD);
+    const leerschuss = (g, F) => {
+      /* Schussrinne: in die Mauer gesetzte Sandstein-Treppe, darin das
+         überlaufende Wasser (Frühling) oder ein Eisvorhang (Winter) */
+      const a = TD_Y1 - LS_Y, b = LS_B;
+      quaderMalen(g, F, a - b / 2 - 0.1, 0.2, b + 0.2, TD_Z - 0.2, { farbe: SANDSTEIN_H, lage: 0.3, laenge: b + 0.2, saat: 61 });
+      g.fillStyle = "rgba(30,26,24,0.55)"; g.fillRect(a - b / 2, 0.2, b, TD_Z - 0.2);
+      for (let y = 0.45; y < TD_Z; y += 0.3) { g.fillStyle = "rgba(250,236,214,0.25)"; g.fillRect(a - b / 2, y, b, 0.02); g.fillStyle = "rgba(20,14,12,0.35)"; g.fillRect(a - b / 2, y + 0.02, b, 0.05); }
+      if (!Z.wasser) return;
+      if (winter) {
+        const rng = zufall(62);
+        g.fillStyle = "rgba(214,232,250,0.85)"; g.beginPath();
+        for (let x = a - b / 2 + 0.03; x < a + b / 2 - 0.02; x += 0.05 + rng() * 0.05) { const l = 0.6 + rng() * (TD_Z - 1.2); g.moveTo(x - 0.03, 0.2); g.quadraticCurveTo(x - 0.012, 0.2 + l * 0.6, x, 0.2 + l); g.quadraticCurveTo(x + 0.012, 0.2 + l * 0.6, x + 0.03, 0.2); g.closePath(); }
+        g.fill();
+      } else {
+        const gr = g.createLinearGradient(a - b / 2, 0, a + b / 2, 0);
+        gr.addColorStop(0, "rgba(170,200,214,0.3)"); gr.addColorStop(0.5, "rgba(220,236,244,0.75)"); gr.addColorStop(1, "rgba(170,200,214,0.3)");
+        g.fillStyle = gr; g.fillRect(a - b / 2 + 0.05, 0.2, b - 0.1, TD_Z - 0.2);
+        g.fillStyle = "rgba(255,255,255,0.6)";
+        for (let y = 0.45; y < TD_Z; y += 0.3) g.fillRect(a - b / 2 + 0.04, y + 0.02, b - 0.08, 0.035);
+      }
+    };
+    if (umO.length >= 3) M.flaeche({ name: "damm-o", o: [TD_X1, TD_Y1, TD_Z], u: [0, -1, 0], v: [0, 0, -1], w: wO, h: TD_Z, umriss: umO, malen: stuetzmauerMal(52, kanteO, { ecke: 0, extra: leerschuss }, S, Z), ao: true });
+    /* Böschungen West und Nord (bis zur Bauhöhe), darunter die Trockenmauer */
+    const zB = Math.min(hD, TD_Z);
+    if (zB > TD_FUSS) {
+      const lB = (zB - TD_FUSS) / Math.sin(TD_NEIG), dxB = (zB - TD_FUSS) / tanN;
+      const oW = TD_Z - zB;                                  // Flächen-y der Bauhöhe (vom Kronenrand gemessen)
+      const bOben = (TD_Z - zB) / Math.sin(TD_NEIG);
+      const vW = nrm([TD_XF - TD_X0, 0, TD_FUSS - TD_Z]), vN = nrm([0, TD_YF - TD_Y0, TD_FUSS - TD_Z]);
+      const wW = TD_Y1 - TD_YF, wN = TD_X1 - TD_XF;
+      const yKW = TD_Y0 - (TD_Z - zB) / tanN, xKN = TD_X0 - (TD_Z - zB) / tanN;
+      M.flaeche({ name: "damm-bw", o: [TD_X0, TD_YF, TD_Z], u: [0, 1, 0], v: vW, w: wW, h: Ls, umriss: [[yKW - TD_YF, bOben], [wW, bOben], [wW, Ls], [0, Ls]], malen: (g, F) => boeschungMalen(g, F, F.w, F.h, 71, S, Z) });
+      M.flaeche({ name: "damm-bn", o: [TD_X1, TD_Y0, TD_Z], u: [-1, 0, 0], v: vN, w: wN, h: Ls, umriss: [[0, bOben], [TD_X1 - xKN, bOben], [wN, Ls], [0, Ls]], malen: (g, F) => boeschungMalen(g, F, F.w, F.h, 72, S, Z) });
+      void lB; void dxB; void oW;
+      if (hD < TD_Z - 0.01) {
+        /* Schüttung im Bau: oben offen */
+        M.flaeche({ name: "damm-t-bau", o: [xKN, yKW, zB], u: [1, 0, 0], v: [0, 1, 0], w: TD_X1 - xKN, h: TD_Y1 - yKW, malen: (g, F) => boeschungMalen(g, F, F.w, F.h, 73, S, { rasen: false }) });
+      }
+    }
+    const trocken = (g, F) => { bruchsteinMalen(g, F, 0, 0, F.w, F.h, { saat: 81, moertel: [74, 66, 58] }); if (winter && Z.fertig) { g.fillStyle = "rgb(242,246,252)"; g.fillRect(-0.02, -0.02, F.w + 0.04, 0.05); } };
+    const hF = Math.min(TD_FUSS, hD);
+    wand(M, [TD_XF, TD_YF, hF], [-1, 0, 0], TD_Y1 - TD_YF, hF, trocken, { name: "damm-fw", ao: true });
+    wand(M, [TD_X1, TD_YF, hF], [0, -1, 0], TD_X1 - TD_XF, hF, trocken, { name: "damm-fn", ao: true });
+    if (hD < TD_Z - 0.01) return;
+    /* Krone: vier Streifen um den Teich, im Süden der Einlauf, im Osten der Leerschuss */
+    const krone = (saat) => (g, F) => kroneMalen(g, F, saat, S, Z);
+    const streifen = (name, x0, y0, x1, y1) => { if (x1 - x0 > 0.02 && y1 - y0 > 0.02) M.flaeche({ name: name, o: [x0, y0, TD_Z], u: [1, 0, 0], v: [0, 1, 0], w: x1 - x0, h: y1 - y0, malen: krone(name.length * 7 + x0 * 3), ebene: 1 }); };
+    streifen("krone-n", TD_X0, TD_Y0, TD_X1, TE_Y0);
+    streifen("krone-w", TD_X0, TE_Y0, TE_X0, TE_Y1);
+    streifen("krone-o1", TE_X1, TE_Y0, TD_X1, LS_Y - LS_B / 2);
+    streifen("krone-o2", TE_X1, LS_Y + LS_B / 2, TD_X1, TE_Y1);
+    streifen("krone-s1", TD_X0, TE_Y1, GX0 + 0.05, TD_Y1);
+    streifen("krone-s2", GX1 - 0.05, TE_Y1, TD_X1, TD_Y1);
+    /* Teich (unter der Krone): Wände, Grund, Wasser – durch die Öffnung gesehen */
+    teichBauen(M, B, S, Z);
+    /* Einlaufrinne zum Schütz und Überlauf zum Leerschuss */
+    rinneImDamm(M, B, S, Z, [GX0 + 0.05, TE_Y1 - 0.02, GX1 - 0.05, TD_Y1], GZB + 0.02, "einlauf");
+    rinneImDamm(M, B, S, Z, [TE_X1 - 0.02, LS_Y - LS_B / 2, TD_X1, LS_Y + LS_B / 2], TD_W - 0.02, "ueberlauf");
+    /* Schilf in den Ecken des Teichs */
+    M.teil("schilf", { schatten: false, mitte: [(TE_X0 + TE_X1) / 2, -NORDEN + (TE_Y0 + TE_Y1) / 2, TD_Z + 3] });
+    for (const [x, y, n] of [[TE_X0 + 0.35, TE_Y0 + 0.3, 1], [TE_X1 - 0.4, TE_Y0 + 0.35, 2], [TE_X0 + 0.3, TE_Y1 - 0.3, 3]]) {
+      M.figur({ x: x, y: y, z: TD_W, breite: 0.9, hoehe: 1.3, schatten: false, malen: schilfFigur(n, winter) });
+    }
+    /* Schütz am Kopf des Gerinnes */
+    if (Z.schuetz) schuetzBauen(M, S, Z);
+    /* Zwei Strebepfeiler an der 6 m hohen Ostmauer (eigene Runde: die
+       Mauer wirkte wie eine glatte Bunkerwand) */
+    strebepfeiler(M, S, Z);
+  }
+  function strebepfeiler(M, S, Z) {
+    const winter = S.winter && Z.fertig, T = 0.7, B = 0.34, zF = 0.9;
+    const mauerOben = (y) => y >= TD_Y0 ? TD_Z : TD_FUSS + (TD_Z - TD_FUSS) * (y - TD_YF) / (TD_Y0 - TD_YF);
+    for (const [yp, saat] of [[-9.7, 3], [-11.95, 4]]) {
+      const zW = mauerOben(yp) - 0.45;
+      if (zW < zF + 0.4) continue;
+      const x0 = TD_X1, x1 = TD_X1 + T, L = Math.hypot(T, zW - zF);
+      const stein = (s2) => (g, F) => { bruchsteinMalen(g, F, 0, 0, F.w, F.h, { saat: 90 + s2 }); const gr = g.createLinearGradient(0, F.h, 0, F.h - 0.7); gr.addColorStop(0, winter ? "rgba(60,64,80,0.25)" : "rgba(50,70,34,0.35)"); gr.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = gr; g.fillRect(0, F.h - 0.7, F.w, 0.7); };
+      /* Stirn, Seiten mit schräger Oberkante, Abdeckung aus Sandsteinplatten */
+      M.flaeche({ name: "sp-v" + saat, o: [x1, yp + B, zF], u: [0, -1, 0], v: [0, 0, -1], w: 2 * B, h: zF, malen: stein(saat), ao: true });
+      M.flaeche({ name: "sp-s" + saat, o: [x0, yp + B, zW], u: [1, 0, 0], v: [0, 0, -1], w: T, h: zW, umriss: [[0, 0], [T, zW - zF], [T, zW], [0, zW]], malen: stein(saat + 1), ao: true });
+      M.flaeche({ name: "sp-n" + saat, o: [x1, yp - B, zW], u: [-1, 0, 0], v: [0, 0, -1], w: T, h: zW, umriss: [[0, zW - zF], [T, 0], [T, zW], [0, zW]], malen: stein(saat + 2), ao: true });
+      M.flaeche({ name: "sp-t" + saat, o: [x0, yp + B + 0.04, zW + 0.05], u: [0, -1, 0], v: nrm([T, 0, -(zW - zF)]), w: 2 * B + 0.08, h: L + 0.04, malen: (g, F) => {
+        quaderMalen(g, F, 0, 0, F.w, F.h, { farbe: SANDSTEIN_G, lage: 0.42, laenge: F.w, saat: 60 + saat });
+        if (winter) { schneeFlaeche(g, F, 0, 0, F.w, F.h, 70 + saat, {}); g.fillStyle = "rgba(160,176,210,0.35)"; g.fillRect(0, F.h - 0.08, F.w, 0.08); }
+      }, keinAo: true });
+    }
+  }
+  function kroneMalen(g, F, saat, S, Z) {
+    const w = F.w, h = F.h;
+    if (S.winter) { schneeFlaeche(g, F, -0.05, -0.05, w + 0.1, h + 0.1, saat | 0, {}); return; }
+    boeschungMalen(g, F, w, h, saat | 0, S, Z);
+  }
+  /* Rinne durch die Dammkrone (Einlauf zum Schütz, Überlauf zum
+     Leerschuss): Sandstein, darin Wasser – wie eine kleine Grube */
+  function rinneImDamm(M, B, S, Z, R, zBoden, name) {
+    const [x0, y0, x1, y1] = R, T = TD_Z - zBoden, Rz = [x0, y0, x1, y1, TD_Z];
+    const ex = { keinLicht: true, keinAo: true, ebene: 2 };
+    const wandMal = (g, F) => {
+      g.save(); if (!lochClip(g, F, B, Rz)) { g.restore(); return; }
+      const L = ST.lichtFaktor(F.n, F.zeit, 0, F.jahr);
+      quaderMalen(g, F, 0, 0, F.w, F.h, { farbe: [150, 126, 104], lage: 0.2, laenge: 0.5, saat: 91 });
+      g.fillStyle = "rgba(20,26,24,0.35)"; g.fillRect(0, F.h * 0.4, F.w, F.h);
+      g.globalCompositeOperation = "multiply"; g.fillStyle = rgb([L[0] * 255, L[1] * 255, L[2] * 255]); g.fillRect(0, 0, F.w, F.h); g.globalCompositeOperation = "source-over";
+      if (S.winter && Z.fertig) { g.fillStyle = "rgba(236,242,250,0.9)"; g.fillRect(0, 0, F.w, 0.04); }
+      g.restore();
+    };
+    const zO = TD_Z - 0.001;
+    wand(M, [x0, y0, zO], [0, 1, 0], x1 - x0, T, wandMal, Object.assign({ name: name + "-n" }, ex));
+    wand(M, [x1, y1, zO], [0, -1, 0], x1 - x0, T, wandMal, Object.assign({ name: name + "-s" }, ex));
+    wand(M, [x1, y0, zO], [-1, 0, 0], y1 - y0, T, wandMal, Object.assign({ name: name + "-o" }, ex));
+    wand(M, [x0, y1, zO], [1, 0, 0], y1 - y0, T, wandMal, Object.assign({ name: name + "-w" }, ex));
+    M.flaeche(Object.assign({ name: name + "-wasser", o: [x0, y0, zBoden + 0.2], u: [1, 0, 0], v: [0, 1, 0], w: x1 - x0, h: y1 - y0, malen: (g, F) => {
+      g.save(); if (!lochClip(g, F, B, Rz)) { g.restore(); return; }
+      const L = belichter(F, 0);
+      if (!Z.wasser) { g.fillStyle = L([120, 104, 88]); g.fillRect(-0.1, -0.1, F.w + 0.2, F.h + 0.2); g.restore(); return; }
+      g.fillStyle = S.winter ? L([196, 212, 228]) : L([62, 92, 96]); g.fillRect(-0.1, -0.1, F.w + 0.2, F.h + 0.2);
+      g.fillStyle = S.winter ? L([240, 246, 252], 0.8) : L([220, 236, 246], 0.35);
+      for (let y = 0.1; y < F.h; y += 0.18) g.fillRect(0.05, y, F.w - 0.1, 0.02);
+      g.restore();
+    } }, ex, { ebene: 3 }));
+  }
+  /* Der Mühlteich: Sandsteinwände, darin Wasser mit Himmelsspiegel und
+     Seerosen (Frühling) oder Eis mit Schneeflecken und Rissen (Winter) */
+  function teichBauen(M, B, S, Z) {
+    const R = [TE_X0, TE_Y0, TE_X1, TE_Y1, TD_Z], winter = S.winter;
+    const T = TD_Z - TD_W + 0.25;
+    const ex = { keinLicht: true, keinAo: true, ebene: 2 };
+    const wandMal = (saat) => (g, F) => {
+      g.save(); if (!lochClip(g, F, B, R)) { g.restore(); return; }
+      const L = ST.lichtFaktor(F.n, F.zeit, 0, F.jahr);
+      quaderMalen(g, F, 0, 0, F.w, F.h, { farbe: SANDSTEIN_H, lage: 0.3, laenge: 0.8, saat: saat });
+      const wl = TD_Z - TD_W;
+      g.fillStyle = "rgba(24,34,26,0.45)"; g.fillRect(-0.1, wl - 0.12, F.w + 0.2, F.h);
+      g.fillStyle = winter ? "rgba(226,236,248,0.7)" : "rgba(52,80,40,0.5)"; g.fillRect(-0.1, wl - 0.1, F.w + 0.2, 0.08);
+      g.globalCompositeOperation = "multiply"; g.fillStyle = rgb([L[0] * 255, L[1] * 255, L[2] * 255]); g.fillRect(-0.1, -0.1, F.w + 0.2, F.h + 0.2); g.globalCompositeOperation = "source-over";
+      grubenSchatten(g, F, R, F.w, F.h);
+      g.restore();
+    };
+    const zO = TD_Z - 0.001;
+    wand(M, [TE_X0, TE_Y0, zO], [0, 1, 0], TE_X1 - TE_X0, T, wandMal(1), Object.assign({ name: "teich-n" }, ex));
+    wand(M, [TE_X1, TE_Y1, zO], [0, -1, 0], TE_X1 - TE_X0, T, wandMal(2), Object.assign({ name: "teich-s" }, ex));
+    wand(M, [TE_X1, TE_Y0, zO], [-1, 0, 0], TE_Y1 - TE_Y0, T, wandMal(3), Object.assign({ name: "teich-o" }, ex));
+    wand(M, [TE_X0, TE_Y1, zO], [1, 0, 0], TE_Y1 - TE_Y0, T, wandMal(4), Object.assign({ name: "teich-w" }, ex));
+    M.flaeche({ name: "teich-wasser", o: [TE_X0, TE_Y0, Z.wasser ? TD_W : TD_Z - T], u: [1, 0, 0], v: [0, 1, 0], w: TE_X1 - TE_X0, h: TE_Y1 - TE_Y0, keinLicht: true, keinAo: true, ebene: 3, malen: (g, F) => {
+      g.save(); if (!lochClip(g, F, B, R)) { g.restore(); return; }
+      const L = belichter(F, 0), w = F.w, h = F.h, rng = zufall(55), px = F.px;
+      if (!Z.wasser) { g.fillStyle = L([108, 90, 70]); g.fillRect(-0.1, -0.1, w + 0.2, h + 0.2); rausch(g, 0, 0, w, h, 0.8, 0.3, 5, 3); grubenSchatten(g, F, R, w, h); g.restore(); return; }
+      if (winter) {
+        /* Eis: bläulich, Schneefelder, Risse, eine freigefegte Schlitterbahn */
+        g.fillStyle = L([176, 198, 218]); g.fillRect(-0.1, -0.1, w + 0.2, h + 0.2);
+        tonFlecken(g, 0, 0, w, h, 1.6, 0.8, 11, "#eef3fa", true);
+        g.fillStyle = L([150, 176, 204], 0.55); g.beginPath(); g.ellipse(w * 0.55, h * 0.5, w * 0.3, h * 0.14, -0.2, 0, TAU); g.fill();
+        g.strokeStyle = L([255, 255, 255], 0.7); g.lineWidth = Math.max(0.006, 0.9 / px);
+        g.beginPath(); for (let i = 0; i < 7; i++) { let x = rng() * w, y = rng() * h; g.moveTo(x, y); for (let k = 0; k < 3; k++) { x += (rng() - 0.5) * 0.9; y += (rng() - 0.5) * 0.5; g.lineTo(x, y); } } g.stroke();
+      } else {
+        const gr = g.createLinearGradient(0, 0, w, h);
+        gr.addColorStop(0, L([44, 64, 62])); gr.addColorStop(0.45, L([96, 126, 140])); gr.addColorStop(1, L([36, 54, 52]));
+        g.fillStyle = gr; g.fillRect(-0.1, -0.1, w + 0.2, h + 0.2);
+        g.fillStyle = "rgba(210,228,242," + (0.16 * (1 - F.nacht)).toFixed(3) + ")";
+        for (let y = 0.2; y < h; y += 0.32) g.fillRect(0.1 + (y * 3) % 0.4, y, w - 0.3, 0.025);
+        if (px > 12) {
+          /* Seerosenblätter mit Kerbe, zwei Blüten */
+          for (const [x, y, r] of [[0.6, 0.5, 0.2], [0.95, 0.75, 0.16], [w - 0.8, h - 0.55, 0.22], [w - 1.2, h - 0.4, 0.15], [w * 0.5, 0.35, 0.14]]) {
+            g.fillStyle = L([58, 104, 50]); g.beginPath(); g.moveTo(x, y); g.arc(x, y, r, 0.3, TAU - 0.05); g.closePath(); g.fill();
+            g.strokeStyle = L([40, 76, 36], 0.6); g.lineWidth = Math.max(0.005, 0.7 / px); g.stroke();
+          }
+          for (const [x, y] of [[0.75, 0.6], [w - 0.9, h - 0.6]]) { g.fillStyle = L([250, 236, 242]); g.beginPath(); g.arc(x, y, 0.07, 0, TAU); g.fill(); g.fillStyle = L([246, 206, 90]); g.beginPath(); g.arc(x, y, 0.025, 0, TAU); g.fill(); }
+        }
+      }
+      grubenSchatten(g, F, R, w, h);
+      g.restore();
+    } });
+  }
+  /* Schilf am Teichrand: Halme, Blätter, Rohrkolben; im Winter strohfarben
+     mit Schneehauben */
+  function schilfFigur(saat, winter) {
+    return function (g, s, F) {
+      if (F.schatten) return;
+      const k = s, KZ = ST.KZ, rng = zufall(saat * 13 + 5), FL = figurLicht(F);
+      const halm = winter ? [168, 150, 104] : [88, 122, 60], kolben = winter ? [96, 74, 52] : [104, 70, 44];
+      g.lineCap = "round";
+      for (let i = 0; i < 18; i++) {
+        const x = (rng() - 0.5) * 0.7 * k, hh = (0.6 + rng() * 0.7) * KZ * k, bog = (rng() - 0.5) * 0.25 * k;
+        g.strokeStyle = FL.lit(hell(halm, (rng() - 0.5) * 0.2), rng() < 0.5 ? FL.lL : FL.lR); g.lineWidth = Math.max(0.6, 0.014 * k);
+        g.beginPath(); g.moveTo(x, 0); g.quadraticCurveTo(x + bog * 0.3, -hh * 0.6, x + bog, -hh); g.stroke();
+        if (i % 4 === 0) {
+          g.fillStyle = FL.lit(kolben, FL.lV); g.beginPath(); g.ellipse(x + bog, -hh + 0.06 * k, 0.018 * k, 0.07 * k, 0, 0, TAU); g.fill();
+          if (winter) { g.fillStyle = FL.lit([244, 247, 252], FL.lO); g.beginPath(); g.ellipse(x + bog, -hh - 0.01 * k, 0.022 * k, 0.012 * k, 0, 0, TAU); g.fill(); }
+        }
+      }
+      if (winter) { g.fillStyle = FL.lit([240, 244, 250], FL.lO); g.beginPath(); g.ellipse(0, -0.02 * k, 0.38 * k, 0.05 * k, 0, 0, TAU); g.fill(); }
+    };
+  }
+  /* Schütz am Kopf des Gerinnes: zwei Pfosten, Querholz, Zahnstange,
+     Handrad, die Schütztafel halb gezogen; dazu ein Steg mit Geländer */
+  function schuetzBauen(M, S, Z) {
+    const winter = S.winter;
+    const yS = TD_Y1 - 0.25, zK = TD_Z;
+    M.teil("schuetz", { schatten: false, mitte: [RX, -NORDEN + TD_Y1 + 0.5, TD_Z + 6] });
+    const hc = [104, 76, 50];
+    const pf = () => holzMal(hc, 81, winter ? (g, F) => { if (F.flaeche.v[2] > -0.5) { g.fillStyle = "rgba(242,246,252,0.9)"; g.fillRect(0, 0, F.w, Math.min(F.h, 0.05)); } } : null);
+    for (const x of [GX0 - 0.02, GX1 + 0.02]) balken3(M, [x, yS, zK - 0.1], [x, yS, zK + 1.25], [1, 0, 0], 0.15, 0.15, pf, { name: "sp" + x });
+    balken3(M, [GX0 - 0.12, yS, zK + 1.1], [GX1 + 0.12, yS, zK + 1.1], [0, 1, 0], 0.18, 0.14, pf, { name: "sq" });
+    M.flaeche({ name: "schuetzbrett", o: [GX0 + 0.05, yS + 0.03, zK + 0.4], u: [1, 0, 0], v: [0, 0, -1], w: GX1 - GX0 - 0.1, h: zK + 0.4 - GZB, keinAo: true, malen: (g, F) => {
+      bretterMalen(g, F, 0, 0, F.w, F.h, hell(hc, -0.12), 83, { breite: 0.18 });
+      g.fillStyle = rgb(EISEN); g.fillRect(F.w / 2 - 0.03, 0, 0.06, F.h);
+      g.fillStyle = "rgba(20,30,26,0.4)"; g.fillRect(0, F.h - 0.3, F.w, 0.3);
+      if (winter) { g.fillStyle = "rgb(242,246,252)"; g.fillRect(-0.02, -0.02, F.w + 0.04, 0.05); }
+    } });
+    balken3(M, [RX, yS + 0.05, zK + 0.4], [RX, yS + 0.05, zK + 1.5], [1, 0, 0], 0.05, 0.05, () => (g, F) => { g.fillStyle = "rgb(44,42,42)"; g.fillRect(0, 0, F.w, F.h); if (F.px > 30) { g.fillStyle = "rgb(90,88,86)"; for (let x = 0.02; x < F.w; x += 0.05) g.fillRect(x, 0, 0.02, F.h); } }, { name: "zahn" });
+    M.flaeche({ name: "handrad", o: [RX + 0.12, yS + 0.39, zK + 1.45], u: [0, -1, 0], v: [0, 0, -1], w: 0.5, h: 0.5, umriss: Array.from({ length: 16 }, (_, i) => [0.25 + 0.25 * Math.cos(i / 16 * TAU), 0.25 + 0.25 * Math.sin(i / 16 * TAU)]), beidseitig: true, keinAo: true, keinLicht: true, malen: (g, F) => {
+      const L = belichter(F, 0.05);
+      g.strokeStyle = L([40, 38, 38]); g.lineWidth = 0.04; g.beginPath(); g.arc(0.25, 0.25, 0.22, 0, TAU); g.stroke();
+      g.lineWidth = 0.025; g.beginPath(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6; g.moveTo(0.25, 0.25); g.lineTo(0.25 + Math.cos(a) * 0.22, 0.25 + Math.sin(a) * 0.22); } g.stroke();
+      g.fillStyle = L([40, 38, 38]); g.beginPath(); g.arc(0.25, 0.25, 0.05, 0, TAU); g.fill();
+      if (winter) { g.strokeStyle = L([244, 247, 252]); g.lineWidth = 0.02; g.beginPath(); g.arc(0.25, 0.25, 0.23, Math.PI * 1.15, Math.PI * 1.85); g.stroke(); }
+    } });
+    /* Geländer auf der Krone entlang der Südmauer (der Müller geht hier zum Schütz) */
+    const gl = (g, F) => { holzMalen(g, F, -0.02, -0.02, F.w + 0.04, F.h + 0.04, [96, 70, 48], 83, { ohneAst: true }); if (winter) { g.fillStyle = "rgba(242,246,252,0.95)"; g.fillRect(-0.02, -0.02, F.w + 0.04, 0.03); } };
+    for (let x = TD_X0 + 0.2; x < TD_X1 - 0.1; x += 1.3) { if (x > GX0 - 0.3 && x < GX1 + 0.3) continue; balken3(M, [x, TD_Y1 - 0.12, zK], [x, TD_Y1 - 0.12, zK + 1.0], [1, 0, 0], 0.08, 0.08, () => gl, { name: "gp" + x.toFixed(1), seiten: "QqRr" }); }
+    for (const [xa, xb] of [[TD_X0 + 0.2, GX0 - 0.1], [GX1 + 0.1, TD_X1 - 0.15]]) for (const z of [0.55, 0.98]) balken3(M, [xa, TD_Y1 - 0.12, zK + z], [xb, TD_Y1 - 0.12, zK + z], [0, 1, 0], 0.05, 0.07, () => gl, { name: "gr" + xa.toFixed(1) + z, seiten: "QqR" });
+  }
+  /* Tosbecken am Fuß des Leerschusses: gemauertes Becken, der Abfluss
+     läuft in einem Rohr unter dem Hof zum Untergraben */
+  function tosbeckenBauen(M, B, S, Z) {
+    if (Z.dammH < TD_Z - 0.01) return;
+    const R = [TB_X0, TB_Y0, TB_X1, TB_Y1, 0], winter = S.winter, T = -TB_Z;
+    M.teil("tosbecken", { ebene: -2, mitte: [(TB_X0 + TB_X1) / 2, -NORDEN + LS_Y, -2], schatten: false });
+    const ex = { keinLicht: true, keinAo: true };
+    const wandMal = (saat, rohr) => (g, F) => {
+      g.save(); if (!lochClip(g, F, B, R)) { g.restore(); return; }
+      const L = ST.lichtFaktor(F.n, F.zeit, 0, F.jahr);
+      quaderMalen(g, F, 0, 0, F.w, F.h, { farbe: [140, 118, 98], lage: 0.22, laenge: 0.6, saat: saat });
+      g.fillStyle = "rgba(20,28,24,0.4)"; g.fillRect(0, 0.15, F.w, F.h);
+      if (rohr) { g.fillStyle = "rgb(14,12,12)"; g.beginPath(); g.arc(F.w / 2, F.h - 0.18, 0.14, 0, TAU); g.fill(); }
+      if (winter && Z.fertig) { const rng = zufall(saat); g.fillStyle = "rgba(214,232,250,0.85)"; g.beginPath(); for (let x = 0.05; x < F.w; x += 0.06 + rng() * 0.1) { const l = 0.05 + rng() * 0.18; g.moveTo(x - 0.015, 0); g.lineTo(x, l); g.lineTo(x + 0.015, 0); g.closePath(); } g.fill(); }
+      g.globalCompositeOperation = "multiply"; g.fillStyle = rgb([L[0] * 255, L[1] * 255, L[2] * 255]); g.fillRect(-0.1, -0.1, F.w + 0.2, F.h + 0.2); g.globalCompositeOperation = "source-over";
+      grubenSchatten(g, F, R, F.w, F.h);
+      g.restore();
+    };
+    const [x0, y0, x1, y1] = R;
+    wand(M, [x0, y0, 0], [0, 1, 0], x1 - x0, T, wandMal(1), Object.assign({ name: "tb-n" }, ex));
+    wand(M, [x1, y1, 0], [0, -1, 0], x1 - x0, T, wandMal(2, true), Object.assign({ name: "tb-s" }, ex));
+    wand(M, [x1, y0, 0], [-1, 0, 0], y1 - y0, T, wandMal(3), Object.assign({ name: "tb-o" }, ex));
+    M.flaeche(Object.assign({ name: "tb-wasser", o: [x0, y0, TB_Z + 0.2], u: [1, 0, 0], v: [0, 1, 0], w: x1 - x0, h: y1 - y0, ebene: 1, malen: (g, F) => {
+      g.save(); if (!lochClip(g, F, B, R)) { g.restore(); return; }
+      const L = belichter(F, 0);
+      g.fillStyle = !Z.wasser ? L([110, 96, 80]) : winter ? L([200, 216, 232]) : L([52, 80, 82]); g.fillRect(-0.1, -0.1, F.w + 0.2, F.h + 0.2);
+      if (Z.wasser && !winter) { g.fillStyle = L([240, 248, 252], 0.55); g.beginPath(); g.ellipse(0.12, (LS_Y - y0), 0.3, 0.2, 0, 0, TAU); g.fill(); }
+      grubenSchatten(g, F, R, F.w, F.h);
+      g.restore();
+    } }, ex));
+    /* Randsteine um das Becken */
+    M.teil("tb-rand", { schatten: false, ebene: -1, mitte: [(TB_X0 + TB_X1) / 2, -NORDEN + LS_Y, 0] });
+    const st = (g, F) => { quaderMalen(g, F, 0, 0, F.w, F.h, { saat: 5, lage: F.h, laenge: 0.6, farbe: SANDSTEIN_H }); };
+    const ob = winter ? schneeOben(null) : st;
+    kiste(M, x0, y0 - 0.22, 0, x1, y0, RAND_H, { s: st, n: st, o: st, t: ob }, { name: "tbr-n", keinAo: true });
+    kiste(M, x0, y1, 0, x1, y1 + 0.22, RAND_H, { s: st, n: st, o: st, t: ob }, { name: "tbr-s", keinAo: true });
+  }
+
   /* Gerinne in Stücken (damit die Reihenfolge zu Böcken und Rad stimmt) */
   const GERINNE_STUECKE = [GY0, -4.95, -3.45, -1.5, GY1];
   function gerinneBauen(M, B, S, Z) {
@@ -2652,14 +3693,13 @@
     const bandX = [-5.3, -4.2, -3.0, -1.8, -0.6];
     const aussen = (saat) => (g, F) => {
       bretterMalen(g, F, 0, 0, F.w, F.h, hc, saat, { breite: 0.15 });
-      /* unten nass und dunkel, im Frühling etwas Moos */
       const gr = g.createLinearGradient(0, F.h * 0.3, 0, F.h);
       gr.addColorStop(0, "rgba(20,24,20,0)"); gr.addColorStop(1, winter ? "rgba(30,34,44,0.3)" : "rgba(30,44,26,0.45)");
       g.fillStyle = gr; g.fillRect(0, 0, F.w, F.h);
-      /* Eisenbänder: in Flächenkoordinaten liegen sie bei festen y des Modells */
-      const f = F.flaeche;
+      /* Eisenbänder: in Flächenkoordinaten liegen sie bei festen y der Konstruktion */
+      const f = F.flaeche, o = fo(f);
       for (const yb of bandX) {
-        const a = (yb - f.o[1]) / (f.u[1] || 1e-9);
+        const a = (yb - o[1]) / (f.u[1] || 1e-9);
         if (a > -0.05 && a < F.w + 0.05) eisenBand(g, F, a - 0.035, -0.01, 0.07, F.h + 0.02, { senkrecht: true });
       }
       if (winter) { g.fillStyle = "rgb(244,247,252)"; g.fillRect(-0.02, -0.02, F.w + 0.04, 0.035); }
@@ -2677,11 +3717,14 @@
       wand(M, [GX0 + GW, yb, GZ1], [1, 0, 0], L, GZ1 - GZB, innen, { name: "g-iw" + i, keinAo: true });
       M.flaeche({ name: "g-b" + i, o: [GX0 + GW, ya, GZB], u: [1, 0, 0], v: [0, 1, 0], w: GX1 - GX0 - 2 * GW, h: L, malen: (g, F) => { bretterMalen(g, F, 0, 0, F.w, F.h, hell(hc, -0.35), 78, { richtung: "v", breite: 0.2 }); } });
       for (const [x0, nm] of [[GX0, "kw"], [GX1 - GW, "ko"]]) M.flaeche({ name: "g-" + nm + i, o: [x0, ya, GZ1], u: [1, 0, 0], v: [0, 1, 0], w: GW, h: L, malen: kante });
-      if (!Z.lebend && Z.wasser) {
-        M.flaeche({ name: "g-wasser" + i, o: [GX0 + GW, ya, GZW], u: [1, 0, 0], v: [0, 1, 0], w: GX1 - GX0 - 2 * GW, h: L, ebene: 2, malen: (g, F) => {
+      if (Z.wasser) {
+        /* stehendes Wasser im Sprite nur, wenn das Leben es nicht malt */
+        M.flaeche({ name: "g-wasser" + i, o: [GX0 + GW, ya, GZW], u: [1, 0, 0], v: [0, 1, 0], w: GX1 - GX0 - 2 * GW, h: L, ebene: 2, keinLicht: true, malen: (g, F) => {
+          if (Z.lebend && F.s >= LEBEN_S) return;
           g.save(); if (!lochClip(g, F, B, [GX0 + GW, GY0, GX1 - GW, GY1, GZ1])) { g.restore(); return; }
-          g.fillStyle = winter ? "rgb(150,172,190)" : rgb(WASSER_T); g.fillRect(0, 0, F.w, F.h);
-          g.fillStyle = "rgba(255,255,255,0.2)"; for (let y = 0.2; y < F.h; y += 0.5) g.fillRect(0.1, y, F.w - 0.2, 0.02);
+          const Lb = belichter(F, 0);
+          g.fillStyle = winter ? Lb([150, 172, 190]) : Lb(WASSER_T); g.fillRect(0, 0, F.w, F.h);
+          g.fillStyle = Lb([255, 255, 255], 0.2); for (let y = 0.2; y < F.h; y += 0.5) g.fillRect(0.1, y, F.w - 0.2, 0.02);
           g.restore();
         } });
       }
@@ -2693,11 +3736,15 @@
           g.fillStyle = rgb(hell(hc, 0.1)); g.fillRect(0.08, GZ1 - GZB - 0.04, F.w - 0.16, 0.04);
           if (winter) { g.fillStyle = "rgb(244,247,252)"; g.fillRect(-0.02, -0.02, F.w + 0.04, 0.035); }
         }, keinAo: true });
+        if (winter && Z.fertig) {
+          /* Eisbart unter dem Auslauf: dicke Zapfen an den Ecken, dünne innen */
+          M.flaeche({ name: "g-stirn-zapfen", o: [GX0 - 0.02, GY1 + 0.02, GZ0 + 0.02], u: [1, 0, 0], v: [0, 0, -1], w: GX1 - GX0 + 0.04, h: 0.9, keinLicht: true, keinAo: true, malen: zapfenMal(931, 0.85), leuchten: zapfenMal(931, 0.85, true) });
+        }
       }
       if (winter && Z.fertig) {
         for (const [x, n, u] of [[GX1 + 0.005, [1, 0, 0], [0, -1, 0]], [GX0 - 0.005, [-1, 0, 0], [0, 1, 0]]]) {
           const o = n[0] > 0 ? [x, yb, GZ0] : [x, ya, GZ0];
-          M.flaeche({ name: "g-zapfen" + i + n[0], o: o, u: u, v: [0, 0, -1], w: L, h: 0.9, keinLicht: true, keinAo: true, malen: zapfenMal(900 + i * 7 + n[0], 0.75) });
+          M.flaeche({ name: "g-zapfen" + i + n[0], o: o, u: u, v: [0, 0, -1], w: L, h: 0.9, keinLicht: true, keinAo: true, malen: zapfenMal(900 + i * 7 + n[0], 0.75), leuchten: zapfenMal(900 + i * 7 + n[0], 0.75, true) });
         }
       }
     }
@@ -2711,20 +3758,16 @@
       const yb = BOECKE[i];
       M.teil("bock" + i, { mitte: [AUSSEN + RX, yb, 2.6], schatten: false });
       const zk = GZ0 - 0.2;
-      /* gespreizte Beine */
       for (const [xu, xo] of [[GX0 - 0.35, GX0 + 0.04], [GX1 + 0.35, GX1 - 0.04]]) {
         balken3(M, [xu, yb, 0.15], [xo, yb, zk], [0, 1, 0], 0.16, 0.16, m(60 + i), { name: "bein" + xu, seiten: "QqRr" });
-        /* Fundamentstein */
         const st = (g, F) => { quaderMalen(g, F, 0, 0, F.w, F.h, { lage: F.h, saat: 9, farbe: SANDSTEIN_H }); };
         kiste(M, xu - 0.16, yb - 0.16, 0, xu + 0.16, yb + 0.16, 0.18, { s: st, n: st, o: st, w: st, t: winter ? schneeOben(null) : st }, { name: "fs" + xu, keinAo: true });
       }
-      /* Holm unter dem Gerinne */
       balken3(M, [GX0 - 0.35, yb, zk + 0.1], [GX1 + 0.35, yb, zk + 0.1], [0, 1, 0], 0.2, 0.2, m(70 + i), { name: "holm" + i, seiten: "QqRrae" });
-      /* Zangen und Andreaskreuz (auf der Südseite der Beine) */
       balken3(M, [GX0 - 0.2, yb + 0.12, 1.6], [GX1 + 0.2, yb + 0.12, 1.6], [0, 1, 0], 0.06, 0.18, m(80 + i), { name: "zange" + i, seiten: "QRr" });
       balken3(M, [GX0 - 0.22, yb + 0.12, 1.75], [GX1 + 0.1, yb + 0.12, zk - 0.2], [0, 1, 0], 0.06, 0.14, m(90 + i), { name: "kreuz1" + i, seiten: "QRr" });
       balken3(M, [GX1 + 0.22, yb + 0.12, 1.75], [GX0 - 0.1, yb + 0.12, zk - 0.2], [0, 1, 0], 0.06, 0.14, m(95 + i), { name: "kreuz2" + i, seiten: "QRr" });
-      if (winter && Z.fertig) M.flaeche({ name: "bock-zapfen" + i, o: [GX0 - 0.35, yb + 0.105, zk], u: [1, 0, 0], v: [0, 0, -1], w: GX1 - GX0 + 0.7, h: 0.6, keinLicht: true, keinAo: true, malen: zapfenMal(500 + i, 0.5) });
+      if (winter && Z.fertig) M.flaeche({ name: "bock-zapfen" + i, o: [GX0 - 0.35, yb + 0.105, zk], u: [1, 0, 0], v: [0, 0, -1], w: GX1 - GX0 + 0.7, h: 0.6, keinLicht: true, keinAo: true, malen: zapfenMal(500 + i, 0.5), leuchten: zapfenMal(500 + i, 0.5, true) });
     }
   }
   function konsoleBauen(M, S, Z) {
@@ -2734,32 +3777,41 @@
     M.teil("konsole", { mitte: [AUSSEN + 4.1, KONSOLE_Y, GZ0 + 5], schatten: false });
     balken3(M, [XW1, KONSOLE_Y, GZ0 - 0.1], [GX1 + 0.12, KONSOLE_Y, GZ0 - 0.1], [0, 1, 0], 0.18, 0.2, m, { name: "kons", seiten: "QqRe" });
     balken3(M, [XW1, KONSOLE_Y, GZ0 - 1.3], [GX0 + 0.3, KONSOLE_Y, GZ0 - 0.2], [0, 1, 0], 0.14, 0.14, m, { name: "strebe", seiten: "QqR" });
+    if (S.winter && Z.fertig) M.flaeche({ name: "kons-zapfen", o: [XW1 + 0.05, KONSOLE_Y + 0.1, GZ0 - 0.2], u: [1, 0, 0], v: [0, 0, -1], w: GX1 + 0.1 - XW1, h: 0.5, keinLicht: true, keinAo: true, malen: zapfenMal(611, 0.42), leuchten: zapfenMal(611, 0.42, true) });
   }
+  /* Außenlager: niedriger Mauerpfeiler in der Ostwand der Grube (Kritik:
+     der hohe Quaderpfeiler stand vor der Nabe), darauf ein Eichenbock mit
+     eiserner Lagerschale und Deckel über dem Wellenzapfen */
   function lagerBauen(M, B, S, Z) {
     const h = Z.pfeiler;
     if (h <= 0.01) return;
     const winter = S.winter;
-    const zTop = PZB + (LZ1 - PZB) * h;
-    const st = (saat) => (g, F) => { quaderMalen(g, F, 0, 0, F.w, F.h, { saat: saat, lage: 0.44, laenge: 0.95, farbe: SANDSTEIN_H }); const gr = g.createLinearGradient(0, F.h, 0, F.h - 0.5); gr.addColorStop(0, "rgba(40,50,40,0.35)"); gr.addColorStop(1, "rgba(40,50,40,0)"); g.fillStyle = gr; g.fillRect(0, F.h - 0.5, F.w, 0.5); };
-    if (zTop > 0.01) {
-      M.teil("lager", { mitte: [AUSSEN + 50 + (LX0 + LX1) / 2, 0, 1.2] });
-      kiste(M, LX0, -LY, 0, LX1, LY, zTop, { s: st(1), n: st(2), o: st(3), w: st(4), t: (g, F) => { g.fillStyle = rgb(SANDSTEIN_H); g.fillRect(0, 0, F.w, F.h); rausch(g, 0, 0, F.w, F.h, 0.6, 0.25, 5, 3); if (winter) { g.fillStyle = "rgb(242,246,252)"; g.fillRect(0, 0, F.w, F.h); } } }, { name: "lg", keinAo: false });
-      if (h >= 1 && Z.lagerbock) {
-        /* Lagerbock: Eichenklotz mit eisernem Lagerdeckel */
-        const hc = [96, 70, 48];
-        const bm = (g, F) => {
-          holzMalen(g, F, 0, 0, F.w, F.h, hc, 66, {});
-          /* eiserner Lagerdeckel, zwei Bügel mit Muttern */
-          g.fillStyle = rgb(EISEN); g.fillRect(-0.01, -0.01, F.w + 0.02, 0.1);
-          g.fillStyle = "rgba(150,80,40,0.35)"; g.fillRect(-0.01, 0.05, F.w + 0.02, 0.05);
-          for (const x of [0.12, F.w - 0.12]) { g.fillStyle = rgb(EISEN); g.fillRect(x - 0.025, 0, 0.05, F.h * 0.8); if (F.px > 25) { g.fillStyle = "rgb(28,26,26)"; g.fillRect(x - 0.04, F.h * 0.8 - 0.05, 0.08, 0.06); } }
-          if (winter) { g.fillStyle = "rgb(242,246,252)"; g.fillRect(-0.01, -0.01, F.w + 0.02, 0.035); }
-        };
-        kiste(M, LX0, -0.3, LZ1, LX1 - 0.1, 0.3, LZB, { s: bm, n: bm, o: bm, w: bm, t: winter ? schneeOben(null) : (g, F) => { g.fillStyle = rgb(EISEN); g.fillRect(0, 0, F.w, F.h); g.fillStyle = "rgba(255,255,255,0.15)"; g.fillRect(0, 0, F.w, 0.03); } }, { name: "lb", keinAo: true });
-      }
-    }
+    const zTop = PZB + (LZ_P - PZB) * h;
+    const st = (saat) => (g, F) => { quaderMalen(g, F, 0, 0, F.w, F.h, { saat: saat, lage: 0.31, laenge: 0.8, farbe: SANDSTEIN_H }); const gr = g.createLinearGradient(0, F.h, 0, F.h - 0.4); gr.addColorStop(0, "rgba(40,50,40,0.35)"); gr.addColorStop(1, "rgba(40,50,40,0)"); g.fillStyle = gr; g.fillRect(0, F.h - 0.4, F.w, 0.4); };
+    if (zTop <= 0.01) return;
+    M.teil("lager", { schatten: false, mitte: [AUSSEN + 50 + (LX0 + LX1) / 2, 0, 1.2] });
+    kiste(M, LX0, -LY, 0, LX1, LY, zTop, { s: st(1), n: st(2), o: st(3), w: st(4), t: (g, F) => { quaderMalen(g, F, 0, 0, F.w, F.h, { saat: 5, lage: F.h / 2, laenge: 0.5, farbe: SANDSTEIN_G }); if (winter) { schneeFlaeche(g, F, 0, 0, F.w, F.h, 5, {}); } } }, { name: "lg", keinAo: false });
+    if (h < 1 || !Z.lagerbock) return;
+    const hc = [96, 70, 48];
+    const holz = (saat) => () => holzMal(hc, saat, winter ? (g, F) => { const n = kreuz(F.flaeche.u, F.flaeche.v); if (n[2] > 0.3) { g.fillStyle = "rgba(242,246,252,0.95)"; g.fillRect(0, 0, F.w, F.h); } } : null);
+    /* Stiele (geneigt), dazwischen ein Riegel, oben das Sattelholz mit Eisenbändern */
+    BOCK_STIELE.forEach(([a, b], i) => balken3(M, a, b, [1, 0, 0], 0.17, 0.17, holz(66 + i), { name: "bst" + i, seiten: "QqRr" }));
+    const zR = LZ_P + (LZ1 - LZ_P) * 0.42, yR = 0.33 - (0.33 - 0.19) * 0.42 - 0.08;
+    balken3(M, [X_LAGER, -yR, zR], [X_LAGER, yR, zR], [1, 0, 0], 0.1, 0.12, holz(68), { name: "brg", seiten: "QqRr" });
+    const bm = (g, F) => {
+      holzMalen(g, F, 0, 0, F.w, F.h, hc, 66, {});
+      g.fillStyle = rgb(EISEN);
+      for (const x of [0.08, F.w - 0.08]) { g.fillRect(x - 0.02, 0, 0.04, F.h); if (F.px > 25) { g.fillStyle = "rgb(28,26,26)"; g.fillRect(x - 0.035, F.h - 0.05, 0.07, 0.05); g.fillStyle = rgb(EISEN); } }
+      if (winter) { g.fillStyle = "rgb(242,246,252)"; g.fillRect(-0.01, -0.01, F.w + 0.02, 0.03); }
+    };
+    kiste(M, LX0 + 0.04, -0.34, LZ1, LX1 - 0.1, 0.34, LZB, { s: bm, n: bm, o: bm, w: bm, t: (g, F) => { holzMalen(g, F, 0, 0, F.w, F.h, hc, 67, { ohneAst: true }); if (winter) { g.fillStyle = "rgba(242,246,252,0.9)"; g.fillRect(0, 0, F.w, F.h); } } }, { name: "lb", keinAo: true });
+    /* Lagerschale und Deckel (Gusseisen) um den Wellenzapfen */
+    const ei = (g, F) => { g.fillStyle = rgb(EISEN); g.fillRect(0, 0, F.w, F.h); g.fillStyle = "rgba(150,80,40,0.3)"; g.fillRect(0, F.h * 0.5, F.w, F.h * 0.5); g.fillStyle = "rgba(255,255,255,0.14)"; g.fillRect(0, 0, F.w, Math.min(0.03, F.h)); if (F.px > 25) { g.fillStyle = "rgb(22,20,20)"; for (const x of [0.06, F.w - 0.06]) { g.beginPath(); g.arc(x, F.h * 0.3, 0.02, 0, TAU); g.fill(); } } };
+    M.teil("lagerdeckel", { schatten: false, mitte: [AUSSEN + 60 + X_LAGER, 0, RZ + 3] });
+    kiste(M, X_LAGER - 0.16, -RW - 0.07, LZB - 0.02, X_LAGER + 0.12, RW + 0.07, RZ + RW + 0.08, { s: ei, n: ei, o: ei, w: ei, t: winter ? schneeOben(ei) : ei }, { name: "ld", keinAo: true });
+    if (winter && Z.fertig) M.flaeche({ name: "ld-zapfen", o: [X_LAGER + 0.125, RW + 0.07, LZB], u: [0, -1, 0], v: [0, 0, -1], w: 2 * RW + 0.14, h: 0.45, keinLicht: true, keinAo: true, malen: zapfenMal(621, 0.38), leuchten: zapfenMal(621, 0.38, true) });
   }
-  /* Randsteine um die Radgrube, Ablaufrinne nach Osten */
+  /* Randsteine um die Radgrube (mit Lücke für den Lagerpfeiler) */
   function randBauen(M, B, S, Z) {
     if (!Z.rand) return;
     const winter = S.winter;
@@ -2768,19 +3820,59 @@
     const oben = (saat) => winter ? schneeOben(null) : (g, F) => { quaderMalen(g, F, 0, 0, F.w, F.h, { saat: saat, lage: F.h, laenge: 0.8, farbe: SANDSTEIN_H }); };
     kiste(M, PX0, PY0 - RAND_B, 0, PX1 + RAND_B, PY0, RAND_H, { s: st(1), n: st(2), o: st(3), w: null, t: oben(4) }, { name: "rn", keinAo: true });
     kiste(M, PX0, PY1, 0, PX1 + RAND_B, PY1 + RAND_B, RAND_H, { s: st(5), n: st(6), o: st(7), w: null, t: oben(8) }, { name: "rs", keinAo: true });
-    kiste(M, PX1, PY0, 0, PX1 + RAND_B, PY1, RAND_H, { o: st(9), w: st(10), t: oben(11) }, { name: "ro", keinAo: true });
-    /* Ablaufrinne vom Durchlass bis an den Rand des Grundstücks */
-    const xa = PX1 + RAND_B, xe = 7.5, yr = 0.55;
-    M.flaeche({ name: "ablauf", o: [xa, -yr, 0.012], u: [1, 0, 0], v: [0, 1, 0], w: xe - xa, h: 2 * yr, malen: (g, F) => {
-      const w = F.w, h = F.h;
-      quaderMalen(g, F, 0, 0, w, h, { farbe: [150, 120, 100], lage: 0.25, saat: 12 });
-      const wl = winter ? [196, 212, 228] : [70, 100, 108];
-      const gr = g.createLinearGradient(0, 0.18, 0, h - 0.18);
-      gr.addColorStop(0, rgb(hell(wl, -0.2))); gr.addColorStop(0.5, rgb(wl)); gr.addColorStop(1, rgb(hell(wl, -0.2)));
-      g.fillStyle = gr; g.fillRect(-0.02, 0.18, w + 0.04, h - 0.36);
-      if (!winter) { g.fillStyle = "rgba(230,242,250,0.35)"; for (let x = 0.05; x < w; x += 0.3) g.fillRect(x, h / 2 - 0.1 + ((x * 7) % 0.2), 0.18, 0.02); }
-      else { g.fillStyle = "rgba(250,252,255,0.8)"; g.fillRect(-0.02, 0.18, w + 0.04, 0.12); g.fillRect(-0.02, h - 0.3, w + 0.04, 0.12); }
-    } });
+    kiste(M, PX1, PY0, 0, PX1 + RAND_B, -LY, RAND_H, { o: st(9), w: st(10), s: st(12), t: oben(11) }, { name: "ro1", keinAo: true });
+    kiste(M, PX1, LY, 0, PX1 + RAND_B, UY0, RAND_H, { n: st(13), w: st(14), t: oben(15) }, { name: "ro2", keinAo: true });
+    kiste(M, PX1, UY1, 0, PX1 + RAND_B, PY1, RAND_H, { o: st(16), w: st(17), t: oben(18) }, { name: "ro3", keinAo: true });
+    /* über dem Durchlass: ein Sturzstein, dahinter beginnt der Untergraben */
+    kiste(M, PX1, UY0, 0, PX1 + RAND_B, UY1, RAND_H, { o: (g, F) => { st(19)(g, F); g.fillStyle = "rgb(20,18,16)"; g.fillRect(0.05, F.h * 0.7, F.w - 0.1, F.h * 0.3); }, w: st(20), t: oben(21) }, { name: "ro-sturz", keinAo: true });
+  }
+  /* Untergraben: gemauerte, gepflasterte Rinne vom Durchlass bis an den
+     Grundrand; das Wasser malt das Leben (oder im Sprite still) */
+  function untergrabenBauen(M, B, S, Z) {
+    if (!Z.rand) return;
+    const winter = S.winter;
+    const R = [PX1 + RAND_B, UY0, XG1, UY1, 0], T = -UZB;
+    M.teil("untergraben", { ebene: -2, mitte: [(PX1 + XG1) / 2, UYM, -3], schatten: false });
+    const ex = { keinLicht: true, keinAo: true };
+    const wandMal = (saat, bogen) => (g, F) => {
+      g.save(); if (!lochClip(g, F, B, R)) { g.restore(); return; }
+      const L = ST.lichtFaktor(F.n, F.zeit, 0, F.jahr);
+      quaderMalen(g, F, 0, 0, F.w, F.h, { farbe: [148, 122, 100], lage: 0.24, laenge: 0.7, saat: saat });
+      const wl = -PZW;
+      g.fillStyle = "rgba(24,34,28,0.45)"; g.fillRect(-0.1, wl - 0.08, F.w + 0.2, F.h);
+      g.fillStyle = winter ? "rgba(214,230,246,0.7)" : "rgba(52,84,40,0.5)"; g.fillRect(-0.1, wl - 0.1, F.w + 0.2, 0.06);
+      if (bogen) { g.fillStyle = "rgb(12,14,16)"; g.beginPath(); g.moveTo(0.08, F.h); g.lineTo(0.08, 0.4); g.arc(F.w / 2, 0.4, F.w / 2 - 0.08, Math.PI, 0); g.lineTo(F.w - 0.08, F.h); g.closePath(); g.fill(); }
+      if (winter && Z.fertig) { const rng = zufall(saat); g.fillStyle = "rgba(214,232,250,0.85)"; g.beginPath(); for (let x = 0.05; x < F.w; x += 0.07 + rng() * 0.12) { const l = 0.05 + rng() * 0.2; g.moveTo(x - 0.015, 0); g.lineTo(x, l); g.lineTo(x + 0.015, 0); g.closePath(); } g.fill(); }
+      g.globalCompositeOperation = "multiply"; g.fillStyle = rgb([L[0] * 255, L[1] * 255, L[2] * 255]); g.fillRect(-0.1, -0.1, F.w + 0.2, F.h + 0.2); g.globalCompositeOperation = "source-over";
+      grubenSchatten(g, F, R, F.w, F.h);
+      g.restore();
+    };
+    const [x0, y0, x1, y1] = R;
+    wand(M, [x0, y0, 0], [0, 1, 0], x1 - x0, T, wandMal(31), Object.assign({ name: "ug-n" }, ex));
+    wand(M, [x1, y1, 0], [0, -1, 0], x1 - x0, T, wandMal(32), Object.assign({ name: "ug-s" }, ex));
+    wand(M, [x0, y1, 0], [1, 0, 0], y1 - y0, T, wandMal(33, true), Object.assign({ name: "ug-w" }, ex));
+    M.flaeche(Object.assign({ name: "ug-sohle", o: [x0, y0, -T], u: [1, 0, 0], v: [0, 1, 0], w: x1 - x0, h: y1 - y0, ebene: -1, malen: (g, F) => {
+      g.save(); if (!lochClip(g, F, B, R)) { g.restore(); return; }
+      const L = belichter(F, 0.03);
+      g.fillStyle = L([110, 98, 86]); g.fillRect(-0.1, -0.1, F.w + 0.2, F.h + 0.2);
+      grubenSchatten(g, F, R, F.w, F.h);
+      g.restore();
+    } }, ex));
+    if (Z.wasser) M.flaeche(Object.assign({ name: "ug-wasser", o: [x0, y0, PZW], u: [1, 0, 0], v: [0, 1, 0], w: x1 - x0, h: y1 - y0, ebene: 2, malen: (g, F) => {
+      if (Z.lebend && F.s >= LEBEN_S) return;
+      g.save(); if (!lochClip(g, F, B, R)) { g.restore(); return; }
+      const L = belichter(F, 0);
+      g.fillStyle = winter ? L([176, 196, 214]) : L([52, 78, 76]); g.fillRect(-0.1, -0.1, F.w + 0.2, F.h + 0.2);
+      g.fillStyle = L([230, 242, 250], winter ? 0.5 : 0.3); for (let x = 0.1; x < F.w; x += 0.4) g.fillRect(x, F.h * 0.3 + ((x * 7) % 0.4), 0.22, 0.025);
+      grubenSchatten(g, F, R, F.w, F.h);
+      g.restore();
+    } }, ex));
+    /* Bordsteine längs der Rinne */
+    M.teil("ug-rand", { schatten: false, ebene: -1, mitte: [(PX1 + XG1) / 2, UYM, 0] });
+    const st = (saat) => (g, F) => { quaderMalen(g, F, 0, 0, F.w, F.h, { saat: saat, lage: F.h, laenge: 0.7, farbe: SANDSTEIN_H }); };
+    const ob = (saat) => winter ? schneeOben(null) : st(saat);
+    kiste(M, x0, y0 - 0.24, 0, x1, y0, RAND_H, { n: st(41), s: st(42), t: ob(43) }, { name: "ugr-n", keinAo: true });
+    kiste(M, x0, y1, 0, x1, y1 + 0.24, RAND_H, { n: st(44), s: st(45), t: ob(46) }, { name: "ugr-s", keinAo: true });
   }
 
   /* ---------------- Radgrube (unter Gelände) mit Pfeiler ---------------- */
@@ -2789,40 +3881,41 @@
     M.teil("radgrube", { ebene: -2, mitte: [RX, 0, -3], schatten: false });
     const R = [PX0, PY0, PX1, PY1];
     const T = -PZB;
-    grubeBauen(M, B, R, T, T * Z.grubeStein, winter, 300, { wasser: Z.wasser, durchlass: Z.grubeStein >= 1, beton: true });
-    /* Pfeiler unter Gelände */
+    grubeBauen(M, B, R, T, T * Z.grubeStein, winter && Z.fertig, 300, { wasser: Z.wasser, durchlass: Z.grubeStein >= 1, beton: true });
+    /* Pfeiler unter Gelände (Teil der Ostwand) */
     if (Z.pfeiler > 0) {
-      const zTop = Math.min(0, PZB + (LZ1 - PZB) * Z.pfeiler);
+      const zTop = Math.min(0, PZB + (LZ_P - PZB) * Z.pfeiler);
       const h = zTop - PZB;
       if (h > 0.02) {
         const mal = (saat) => (g, F) => {
           g.save(); if (!lochClip(g, F, B, R)) { g.restore(); return; }
-          quaderMalen(g, F, 0, 0, F.w, F.h, { saat: saat, lage: 0.44, laenge: 0.95, farbe: SANDSTEIN_H });
-          g.fillStyle = "rgba(20,30,24,0.4)"; g.fillRect(0, F.h - (h - (-PZW + PZB) * 0), F.w, F.h);
+          quaderMalen(g, F, 0, 0, F.w, F.h, { saat: saat, lage: 0.42, laenge: 0.8, farbe: SANDSTEIN_H });
+          g.fillStyle = "rgba(20,30,24,0.4)"; g.fillRect(0, F.h + PZW - PZB - 0.05, F.w, F.h);
           const L = ST.lichtFaktor(F.n, F.zeit, 0, F.jahr);
           g.globalCompositeOperation = "multiply"; g.fillStyle = rgb([L[0] * 255, L[1] * 255, L[2] * 255]); g.fillRect(0, 0, F.w, F.h); g.globalCompositeOperation = "source-over";
           grubenSchatten(g, F, R, F.w, F.h);
           g.restore();
         };
         const ex = { keinLicht: true, keinAo: true, ebene: 1 };
-        wand(M, [LX0, LY, zTop], [0, 1, 0], LX1 - LX0, h, mal(1), Object.assign({ name: "pf-s" }, ex));
-        wand(M, [LX1, -LY, zTop], [0, -1, 0], LX1 - LX0, h, mal(2), Object.assign({ name: "pf-n" }, ex));
-        wand(M, [LX1, LY, zTop], [1, 0, 0], 2 * LY, h, mal(3), Object.assign({ name: "pf-o" }, ex));
+        wand(M, [LX0, LY, zTop], [0, 1, 0], PX1 - LX0, h, mal(1), Object.assign({ name: "pf-s" }, ex));
+        wand(M, [PX1, -LY, zTop], [0, -1, 0], PX1 - LX0, h, mal(2), Object.assign({ name: "pf-n" }, ex));
         wand(M, [LX0, -LY, zTop], [-1, 0, 0], 2 * LY, h, mal(4), Object.assign({ name: "pf-w" }, ex));
       }
     }
-    /* Wasser (im Sprite nur, solange das Rad nicht lebt) */
-    if (Z.wasser && !Z.lebend) {
+    /* Wasser (im Sprite nur, wenn das Leben es nicht malt) */
+    if (Z.wasser) {
       M.flaeche({ name: "grube-wasser", o: [PX0, PY0, PZW], u: [1, 0, 0], v: [0, 1, 0], w: PX1 - PX0, h: PY1 - PY0, ebene: 2, keinLicht: true, malen: (g, F) => {
+        if (Z.lebend && F.s >= LEBEN_S) return;
         g.save(); if (!lochClip(g, F, B, R)) { g.restore(); return; }
         const L = belichter(F, 0);
         g.fillStyle = L(winter ? [150, 170, 186] : [48, 70, 66]); g.fillRect(0, 0, F.w, F.h);
-        g.fillStyle = "rgba(220,236,246,0.18)"; for (let y = 0.3; y < F.h; y += 0.45) g.fillRect(0.2, y, F.w - 0.4, 0.03);
+        g.fillStyle = L([220, 236, 246], 0.18); for (let y = 0.3; y < F.h; y += 0.45) g.fillRect(0.2, y, F.w - 0.4, 0.03);
         grubenSchatten(g, F, R, F.w, F.h);
         g.restore();
       } });
     }
   }
+
 
   /* =====================================================================
      SCHMUCK UND GERÄT VOR DEM HAUS
@@ -2835,7 +3928,7 @@
     const C = [cx, yFuss - Math.sin(neig) * r - dicke / 2 * n[1] + 0.05, r * Math.cos(neig) + 0.02];
     const Cf = add(C, mul(n, dicke / 2));
     const u = [1, 0, 0], v = [0, Math.sin(neig), -Math.cos(neig)];
-    M.teil("muehlstein", { mitte: [cx, YW + AUSSEN, 0.6] });
+    M.teil("muehlstein", { schatten: false, mitte: [cx, YW + AUSSEN, 0.6] });
     const umr = Array.from({ length: 28 }, (_, i) => [r + r * Math.cos(i / 28 * TAU), r + r * Math.sin(i / 28 * TAU)]);
     M.flaeche({ name: "ms-v", o: sub(sub(Cf, mul(u, r)), mul(v, r)), u: u, v: v, w: 2 * r, h: 2 * r, umriss: umr, keinAo: true, malen: (g, F) => {
       g.fillStyle = "rgb(98,98,102)"; g.fillRect(0, 0, 2 * r, 2 * r);
@@ -2859,8 +3952,9 @@
       if (S.winter) { g.fillStyle = "rgba(244,247,252,0.95)"; g.beginPath(); g.arc(r, r, r * 0.98, Math.PI * 1.08, Math.PI * 1.92); g.closePath(); g.fill(); }
       if (!S.winter) { g.fillStyle = "rgba(70,110,50,0.4)"; g.beginPath(); g.arc(r * 0.6, r * 1.5, 0.25, 0, TAU); g.fill(); }
     } });
-    /* Rand (Mantel) in Stücken, mit Eisenreif */
-    const N = 20;
+    /* Rand (Mantel) in Stücken, mit Eisenreif (12 Stücke: die hintere Hälfte
+       sieht man nie, die vordere bleibt rund genug) */
+    const N = 12;
     for (let i = 0; i < N; i++) {
       const a0 = i / N * TAU, a1 = (i + 1) / N * TAU, am = (a0 + a1) / 2;
       const p0 = add(C, add(mul(u, r * Math.cos(a0)), mul(v, -r * Math.sin(a0))));
@@ -2882,7 +3976,7 @@
   function bankBauen(M, S, Z) {
     const x0 = -4.05, x1 = -2.55, y0 = YW + 0.08, y1 = YW + 0.5, zs = 0.46;
     const hc = [120, 86, 58];
-    M.teil("bank", { mitte: [(x0 + x1) / 2, YW + AUSSEN, 0.4] });
+    M.teil("bank", { schatten: false, mitte: [(x0 + x1) / 2, YW + AUSSEN, 0.4] });
     const m = (saat) => (g, F) => { holzMalen(g, F, -0.02, -0.02, F.w + 0.04, F.h + 0.04, hc, saat, { ohneAst: true }); };
     for (const x of [x0 + 0.1, x1 - 0.16]) kiste(M, x, y0 + 0.04, 0, x + 0.06, y1 - 0.04, zs - 0.05, { s: m(1), n: m(2), o: m(3), w: m(4) }, { name: "bb" + x, keinAo: true });
     kiste(M, x0, y0, zs - 0.05, x1, y1, zs, { s: m(5), o: m(6), w: m(7), t: S.winter ? schneeOben(m(8)) : (g, F) => { m(8)(g, F); if (F.px > 20) { g.fillStyle = "rgba(20,10,5,0.4)"; for (let y = F.h / 3; y < F.h; y += F.h / 3) g.fillRect(0, y - 0.005, F.w, 0.01); } } }, { name: "bs", keinAo: true });
@@ -2892,7 +3986,7 @@
   function wagenBauen(M, S, Z) {
     const x0 = -1.7, x1 = -0.2, y0 = 5.7, y1 = 6.6, zb = 0.52;
     const hc = [128, 94, 62];
-    M.teil("wagen", { mitte: [(x0 + x1) / 2, (y0 + y1) / 2 + AUSSEN, 0.6] });
+    M.teil("wagen", { schatten: false, mitte: [(x0 + x1) / 2, (y0 + y1) / 2 + AUSSEN, 0.6] });
     const m = (saat) => (g, F) => { bretterMalen(g, F, 0, 0, F.w, F.h, hc, saat, { breite: 0.12 }); };
     kiste(M, x0, y0, zb, x1, y1, zb + 0.28, { s: m(1), n: m(2), o: m(3), w: m(4), t: (g, F) => { bretterMalen(g, F, 0, 0, F.w, F.h, hell(hc, -0.2), 5, { breite: 0.15, richtung: "v" }); if (S.winter) { g.fillStyle = "rgba(242,246,252,0.8)"; g.fillRect(0, 0, F.w, F.h); } } }, { name: "wk", keinAo: true });
     /* Räder mit Speichen */
@@ -2910,108 +4004,120 @@
     /* Deichsel */
     balken3(M, [x0, (y0 + y1) / 2, zb + 0.1], [x0 - 1.0, (y0 + y1) / 2, 0.08], [0, 1, 0], 0.06, 0.06, () => (g, F) => { g.fillStyle = rgb(hell(hc, -0.2)); g.fillRect(0, 0, F.w, F.h); }, { name: "deichsel", seiten: "QqR" });
     /* Ladung als Figur */
-    M.teil("ladung", { mitte: [(x0 + x1) / 2, (y0 + y1) / 2 + AUSSEN, 1.2] });
+    M.teil("ladung", { schatten: false, mitte: [(x0 + x1) / 2, (y0 + y1) / 2 + AUSSEN, 1.2] });
     M.figur({ x: (x0 + x1) / 2, y: (y0 + y1) / 2, z: zb + 0.28, breite: 1.8, hoehe: 1.2, malen: S.winter ? tanneLiegend() : saecke(S) });
   }
+  /* Mehlsäcke (Frühling). Licht aus figurLicht: links Sonnenseite, rechts
+     Schatten – Kritik Runde 1: „nachts leuchten die Mehlsäcke". Die
+     Aufschrift erst ab 60 Bildpunkten je Meter und klein. */
   function saecke(S) {
     return function (g, s, F) {
       const k = s;
+      if (F.schatten) { g.fillStyle = "#000"; g.beginPath(); g.ellipse(0.05 * k, -0.35 * k, 0.72 * k, 0.36 * k, 0, 0, TAU); g.fill(); return; }
+      const FL = figurLicht(F);
       const sack = (x, y, b, h, dreh, hellK) => {
         g.save(); g.translate(x * k, y * k); g.rotate(dreh);
-        const c = F.schatten ? [0, 0, 0] : hell([226, 214, 186], hellK);
-        const gr = F.schatten ? "#000" : g.createLinearGradient(-b * k / 2, 0, b * k / 2, 0);
-        if (!F.schatten) { gr.addColorStop(0, rgb(hell(c, 0.08))); gr.addColorStop(0.7, rgb(c)); gr.addColorStop(1, rgb(hell(c, -0.3))); }
+        const c = hell([226, 214, 186], hellK);
+        const gr = g.createLinearGradient(-b * k / 2, 0, b * k / 2, 0);
+        gr.addColorStop(0, FL.lit(hell(c, 0.04), FL.lL)); gr.addColorStop(0.55, FL.lit(c, FL.lV)); gr.addColorStop(1, FL.lit(hell(c, -0.1), FL.lR));
         g.fillStyle = gr;
         g.beginPath(); g.moveTo(-b * k / 2, 0); g.bezierCurveTo(-b * k * 0.6, -h * k * 0.6, -b * k * 0.4, -h * k, -b * k * 0.15, -h * k * 1.02);
         g.lineTo(b * k * 0.15, -h * k * 1.02); g.bezierCurveTo(b * k * 0.4, -h * k, b * k * 0.6, -h * k * 0.6, b * k / 2, 0); g.closePath(); g.fill();
-        if (!F.schatten && k > 16) {
-          /* Zipfel mit Kordel, Aufdruck */
-          g.fillStyle = rgb(hell(c, -0.15)); g.beginPath(); g.ellipse(0, -h * k * 1.05, b * k * 0.16, h * k * 0.08, 0, 0, TAU); g.fill();
-          g.strokeStyle = "rgba(120,90,50,0.8)"; g.lineWidth = Math.max(0.6, k * 0.012); g.beginPath(); g.moveTo(-b * k * 0.14, -h * k * 0.95); g.lineTo(b * k * 0.14, -h * k * 0.95); g.stroke();
-          if (k > 30) { g.fillStyle = "rgba(40,70,140,0.7)"; g.font = "bold " + (0.09 * k).toFixed(1) + "px Georgia, serif"; g.textAlign = "center"; g.fillText("MEHL", 0, -h * k * 0.45); g.fillStyle = "rgba(160,40,40,0.6)"; g.fillRect(-b * k * 0.3, -h * k * 0.35, b * k * 0.6, 0.012 * k); }
+        if (k > 16) {
+          /* Zipfel mit Kordel, Falten */
+          g.fillStyle = FL.lit(hell(c, -0.15), FL.lO); g.beginPath(); g.ellipse(0, -h * k * 1.05, b * k * 0.16, h * k * 0.08, 0, 0, TAU); g.fill();
+          g.strokeStyle = FL.lit([120, 90, 50], FL.lV, 0.8); g.lineWidth = Math.max(0.6, k * 0.012); g.beginPath(); g.moveTo(-b * k * 0.14, -h * k * 0.95); g.lineTo(b * k * 0.14, -h * k * 0.95); g.stroke();
+          g.strokeStyle = FL.lit([150, 136, 108], FL.lR, 0.5); g.lineWidth = Math.max(0.5, k * 0.008);
+          g.beginPath(); g.moveTo(-b * k * 0.2, -h * k * 0.85); g.quadraticCurveTo(-b * k * 0.05, -h * k * 0.55, -b * k * 0.12, -h * k * 0.2); g.moveTo(b * k * 0.15, -h * k * 0.8); g.quadraticCurveTo(b * k * 0.28, -h * k * 0.5, b * k * 0.2, -h * k * 0.25); g.stroke();
+          if (k > 60) { g.fillStyle = FL.lit([40, 70, 140], FL.lV, 0.6); g.font = "bold " + (0.06 * k).toFixed(1) + "px Georgia, serif"; g.textAlign = "center"; g.fillText("MEHL", 0, -h * k * 0.45); g.fillStyle = FL.lit([160, 40, 40], FL.lV, 0.5); g.fillRect(-b * k * 0.22, -h * k * 0.38, b * k * 0.44, 0.01 * k); }
         }
         g.restore();
       };
-      if (F.schatten) { g.fillStyle = "#000"; g.beginPath(); g.ellipse(0.05 * k, -0.35 * k, 0.72 * k, 0.36 * k, 0, 0, TAU); g.fill(); return; }
       sack(-0.35, 0, 0.42, 0.62, -0.08, 0);
       sack(0.1, 0, 0.44, 0.66, 0.05, -0.05);
       sack(0.5, 0.02, 0.4, 0.55, 0.12, 0.04);
       sack(-0.1, -0.35, 0.42, 0.5, -0.5, 0.06);
     };
   }
+  /* Frisch geschlagene Tanne auf dem Handwagen (Winter), beleuchtet */
   function tanneLiegend() {
     return function (g, s, F) {
       const k = s;
       if (F.schatten) { g.fillStyle = "#000"; g.beginPath(); g.moveTo(-0.85 * k, -0.05 * k); g.lineTo(-0.5 * k, -0.42 * k); g.lineTo(0.85 * k, -0.12 * k); g.lineTo(-0.5 * k, 0.1 * k); g.closePath(); g.fill(); return; }
-      g.save();
-      if (F.schatten) g.fillStyle = "#000";
-      /* Stamm */
-      g.fillStyle = F.schatten ? "#000" : "rgb(92,62,40)"; g.fillRect(-0.85 * k, -0.08 * k, 0.4 * k, 0.07 * k);
-      /* Zweige als liegender Kegel */
+      const FL = figurLicht(F);
+      g.fillStyle = FL.lit([92, 62, 40], FL.lV); g.fillRect(-0.85 * k, -0.08 * k, 0.4 * k, 0.07 * k);
+      /* Zweige als liegender Kegel: oben Himmelslicht, unten Schatten */
       const rng = zufall(8);
       for (let i = 0; i < 90; i++) {
         const t = rng(), x = -0.5 * k + t * 1.35 * k, br = (1 - t) * 0.32 * k + 0.04 * k;
-        const y = -0.1 * k - (rng() - 0.3) * br;
-        g.fillStyle = F.schatten ? "#000" : rgb([30 + rng() * 22, 70 + rng() * 26, 44 + rng() * 10]);
+        const q = rng() - 0.3, y = -0.1 * k - q * br;
+        g.fillStyle = FL.lit([30 + rng() * 22, 70 + rng() * 26, 44 + rng() * 10], q > 0.35 ? FL.lL : FL.lR);
         g.beginPath(); g.ellipse(x, y, 0.1 * k, 0.035 * k, (rng() - 0.5) * 1.2, 0, TAU); g.fill();
       }
-      if (!F.schatten) {
-        g.fillStyle = "rgba(246,249,255,0.9)";
-        for (let i = 0; i < 30; i++) { const t = rng(), x = -0.5 * k + t * 1.35 * k, br = (1 - t) * 0.28 * k + 0.03 * k; g.beginPath(); g.ellipse(x, -0.12 * k - br * 0.8, 0.07 * k, 0.02 * k, 0, 0, TAU); g.fill(); }
-      }
-      g.restore();
+      g.fillStyle = FL.lit([246, 249, 255], FL.lO, 0.9);
+      for (let i = 0; i < 30; i++) { const t = rng(), x = -0.5 * k + t * 1.35 * k, br = (1 - t) * 0.28 * k + 0.03 * k; g.beginPath(); g.ellipse(x, -0.12 * k - br * 0.8, 0.07 * k, 0.02 * k, 0, 0, TAU); g.fill(); }
     };
   }
-  /* Kleiner Christbaum im Holzkübel neben der Tür (Winter) */
+  /* Schlanker Christbaum im Holzkübel rechts neben der Tür (Winter).
+     Kritik Runde 1: „der Baum steht vor der Tür" – jetzt vor dem rechten
+     Pfeiler zwischen Tür und Fenster, schmaler; Kugeln, Strohsterne,
+     Lichter; Nadeln und Kübel im Licht der Tageszeit. */
   function christbaumBauen(M, S, Z) {
-    const x = -0.05, y = YW + 0.45;
-    M.teil("christbaum", { mitte: [x, y + AUSSEN, 1] });
-    M.figur({ x: x, y: y, z: 0, breite: 1.1, hoehe: 2.1, malen: function (g, s, F) {
-      const k = s, sch = F.schatten;
-      const rng = zufall(12);
-      if (sch) {
-        /* Schatten: eine Silhouette, eine Füllung (der Weichzeichner kostet je Füllung) */
+    const x = 0.55, y = YW + 0.5;
+    M.teil("christbaum", { schatten: false, mitte: [x, y + AUSSEN, 1] });
+    M.figur({ x: x, y: y, z: 0, breite: 0.9, hoehe: 2.1, malen: function (g, s, F) {
+      const k = s, rng = zufall(12);
+      if (F.schatten) {
         g.fillStyle = "#000"; g.beginPath();
-        g.moveTo(-0.24 * k, 0); g.lineTo(-0.26 * k, -0.42 * k); g.lineTo(-0.52 * k, -0.45 * k); g.lineTo(0, -2.08 * k); g.lineTo(0.52 * k, -0.45 * k); g.lineTo(0.26 * k, -0.42 * k); g.lineTo(0.24 * k, 0); g.closePath(); g.fill();
+        g.moveTo(-0.2 * k, 0); g.lineTo(-0.22 * k, -0.38 * k); g.lineTo(-0.4 * k, -0.42 * k); g.lineTo(0, -2.02 * k); g.lineTo(0.4 * k, -0.42 * k); g.lineTo(0.22 * k, -0.38 * k); g.lineTo(0.2 * k, 0); g.closePath(); g.fill();
         return;
       }
-      /* Kübel */
-      g.fillStyle = sch ? "#000" : "rgb(112,74,46)";
-      g.beginPath(); g.moveTo(-0.22 * k, 0); g.lineTo(-0.26 * k, -0.4 * k); g.lineTo(0.26 * k, -0.4 * k); g.lineTo(0.22 * k, 0); g.closePath(); g.fill();
-      if (!sch) { g.fillStyle = "rgb(50,48,48)"; g.fillRect(-0.25 * k, -0.33 * k, 0.5 * k, 0.03 * k); g.fillRect(-0.23 * k, -0.1 * k, 0.46 * k, 0.03 * k); g.fillStyle = "rgba(0,0,0,0.25)"; g.fillRect(0.05 * k, -0.4 * k, 0.2 * k, 0.4 * k); }
-      /* Zweige in Etagen */
-      const lagen = 7;
+      const FL = figurLicht(F);
+      /* Kübel mit zwei Eisenreifen */
+      const gk = g.createLinearGradient(-0.22 * k, 0, 0.22 * k, 0);
+      gk.addColorStop(0, FL.lit([122, 82, 52], FL.lL)); gk.addColorStop(1, FL.lit([112, 74, 46], FL.lR));
+      g.fillStyle = gk; g.beginPath(); g.moveTo(-0.18 * k, 0); g.lineTo(-0.22 * k, -0.36 * k); g.lineTo(0.22 * k, -0.36 * k); g.lineTo(0.18 * k, 0); g.closePath(); g.fill();
+      g.fillStyle = FL.lit([50, 48, 48], FL.lV); g.fillRect(-0.21 * k, -0.3 * k, 0.42 * k, 0.025 * k); g.fillRect(-0.19 * k, -0.09 * k, 0.38 * k, 0.025 * k);
+      g.fillStyle = FL.lit([244, 247, 252], FL.lO); g.beginPath(); g.ellipse(0, -0.36 * k, 0.22 * k, 0.04 * k, 0, 0, TAU); g.fill();
+      /* Zweige in Etagen: links hell, rechts dunkel, oben Schnee */
+      const lagen = 8;
       for (let i = 0; i < lagen; i++) {
-        const t = i / (lagen - 1), yy = -0.45 * k - t * 1.45 * k, b = (0.5 - t * 0.42) * k;
-        for (let j = 0; j < 14; j++) {
-          const a = (j / 13 - 0.5) * 2, xx = a * b;
-          g.fillStyle = sch ? "#000" : rgb([24 + rng() * 20, 60 + rng() * 22, 38 + rng() * 8]);
-          g.beginPath(); g.ellipse(xx, yy + Math.abs(a) * 0.08 * k, 0.1 * k, 0.04 * k, a * 0.5, 0, TAU); g.fill();
+        const t = i / (lagen - 1), yy = -0.42 * k - t * 1.45 * k, b = (0.4 - t * 0.33) * k;
+        for (let j = 0; j < 12; j++) {
+          const a = (j / 11 - 0.5) * 2, xx = a * b;
+          g.fillStyle = FL.lit([24 + rng() * 20, 60 + rng() * 22, 38 + rng() * 8], a < -0.2 ? FL.lL : a > 0.3 ? FL.lR : FL.lV);
+          g.beginPath(); g.ellipse(xx, yy + Math.abs(a) * 0.07 * k, 0.085 * k, 0.034 * k, a * 0.5, 0, TAU); g.fill();
         }
-        if (!sch) { g.fillStyle = "rgba(246,249,255,0.92)"; g.beginPath(); g.ellipse(-b * 0.15, yy - 0.03 * k, b * 0.6, 0.03 * k, 0, 0, TAU); g.fill(); }
+        g.fillStyle = FL.lit([246, 249, 255], FL.lO, 0.92); g.beginPath(); g.ellipse(-b * 0.15, yy - 0.03 * k, b * 0.55, 0.026 * k, 0, 0, TAU); g.fill();
       }
-      if (sch) return;
-      /* Kugeln, Strohsterne, Lichter */
-      const kugeln = [[-0.2, -0.7], [0.18, -0.85], [-0.1, -1.05], [0.12, -1.3], [-0.05, -1.55], [0.28, -0.6]];
-      for (let i = 0; i < kugeln.length; i++) { g.fillStyle = i % 2 ? "#c01a2c" : "#d9a33a"; g.beginPath(); g.arc(kugeln[i][0] * k, kugeln[i][1] * k, 0.045 * k, 0, TAU); g.fill(); g.fillStyle = "rgba(255,255,255,0.6)"; g.beginPath(); g.arc(kugeln[i][0] * k - 0.012 * k, kugeln[i][1] * k - 0.012 * k, 0.014 * k, 0, TAU); g.fill(); }
+      /* Kugeln (mit Glanz, der nur bei Tag leuchtet), Strohsterne */
+      const kugeln = [[-0.16, -0.68], [0.15, -0.84], [-0.08, -1.05], [0.1, -1.3], [-0.04, -1.55], [0.22, -0.6]];
+      for (let i = 0; i < kugeln.length; i++) {
+        g.fillStyle = FL.lit(i % 2 ? [192, 26, 44] : [217, 163, 58], FL.lV); g.beginPath(); g.arc(kugeln[i][0] * k, kugeln[i][1] * k, 0.04 * k, 0, TAU); g.fill();
+        g.fillStyle = FL.lit([255, 255, 255], FL.lL, 0.6); g.beginPath(); g.arc(kugeln[i][0] * k - 0.011 * k, kugeln[i][1] * k - 0.011 * k, 0.012 * k, 0, TAU); g.fill();
+      }
+      if (k > 30) {
+        g.strokeStyle = FL.lit([222, 190, 110], FL.lV); g.lineWidth = Math.max(0.6, 0.008 * k);
+        for (const [sx, sy] of [[-0.2, -0.95], [0.18, -1.12], [0.02, -0.78]]) { g.beginPath(); for (let i = 0; i < 4; i++) { const a = i * Math.PI / 4; g.moveTo(sx * k - Math.cos(a) * 0.035 * k, sy * k - Math.sin(a) * 0.035 * k); g.lineTo(sx * k + Math.cos(a) * 0.035 * k, sy * k + Math.sin(a) * 0.035 * k); } g.stroke(); }
+      }
       const nacht = F.nacht || 0;
       for (let i = 0; i < 16; i++) {
-        const t = i / 15, xx = Math.sin(i * 2.4) * (0.42 - t * 0.35) * k, yy = -0.55 * k - t * 1.3 * k;
-        g.fillStyle = nacht > 0.2 ? "rgba(255,236,170,1)" : "rgba(250,240,210,0.9)";
-        g.beginPath(); g.arc(xx, yy, Math.max(0.6, 0.018 * k), 0, TAU); g.fill();
-        if (nacht > 0.2 && i % 2 === 0 && F.leuchtPunkt) F.leuchtPunkt(xx, yy, 0.35 * k, "255,200,120", 0.25, true);
+        const t = i / 15, xx = Math.sin(i * 2.4) * (0.34 - t * 0.28) * k, yy = -0.52 * k - t * 1.3 * k;
+        g.fillStyle = nacht > 0.2 ? "rgba(255,236,170,1)" : FL.lit([250, 240, 210], FL.lV, 0.9);
+        g.beginPath(); g.arc(xx, yy, Math.max(0.6, 0.016 * k), 0, TAU); g.fill();
+        if (nacht > 0.2 && i % 2 === 0 && F.leuchtPunkt) F.leuchtPunkt(xx, yy, 0.3 * k, "255,200,120", 0.22, true);
       }
       /* Stern */
-      g.fillStyle = "#f0c850"; g.beginPath();
-      for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = (i % 2 ? 0.04 : 0.1) * k; g.lineTo(Math.cos(a) * r, -1.98 * k + Math.sin(a) * r); }
+      g.fillStyle = nacht > 0.2 ? "#f6d670" : FL.lit([240, 200, 80], FL.lV); g.beginPath();
+      for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = (i % 2 ? 0.035 : 0.09) * k; g.lineTo(Math.cos(a) * r, -1.93 * k + Math.sin(a) * r); }
       g.closePath(); g.fill();
-      if (nacht > 0.2 && F.leuchtPunkt) F.leuchtPunkt(0, -1.98 * k, 0.6 * k, "255,220,140", 0.45, false);
+      if (nacht > 0.2 && F.leuchtPunkt) F.leuchtPunkt(0, -1.93 * k, 0.5 * k, "255,220,140", 0.4, false);
     } });
   }
   /* Holzstapel an der Nordwand unter der Traufe */
   function holzstapelBauen(M, S, Z) {
     const x0 = -6.5, x1 = -3.9, y0 = -YW - 0.55, y1 = -YW - 0.02, h = 1.55;
-    M.teil("holzstapel", { mitte: [(x0 + x1) / 2, -YW - AUSSEN, 0.8] });
+    M.teil("holzstapel", { schatten: false, mitte: [(x0 + x1) / 2, -YW - AUSSEN, 0.8] });
     const stirn = (g, F) => {
       g.fillStyle = "rgb(70,52,36)"; g.fillRect(0, 0, F.w, F.h);
       const rng = zufall(33), px = F.px;
@@ -3061,10 +4167,15 @@
   }
 
   /* =====================================================================
-     SCHATTEN, DIE DER KERN NICHT KANN (Rad mit Speichen, Gerinne auf
-     Stelzen): eine Figur zeichnet sie im Schattendurchgang auf den Boden.
+     SCHATTEN, DIE DER KERN NICHT KANN (Radkranz mit Welle, Gerinne auf
+     Böcken): eine Figur zeichnet sie im Schattendurchgang auf den Boden.
      ===================================================================== */
   const SLX = -ST.LICHT[0] / ST.LICHT[2], SLY = -ST.LICHT[1] / ST.LICHT[2];
+  /* Leistung (Kritik: Sprite zu teuer): jeder Teil mit Schatten kostet den
+     Kern zwei weichgezeichnete Füllungen (Wurf- und Kontaktschatten). Die
+     kleinen Dinge (Gerinne, Böcke, Konsole, Lager, Kamin, Mühlstein, Bank,
+     Wagen, Holzstapel, Christbaum, Rad) werfen ihren Schatten deshalb hier
+     gemeinsam – EIN Pfad, EINE Füllung (Rad-Loch über den Umlaufsinn). */
   function schattenFigur(B, S, Z) {
     return function (g, s, F) {
       if (!F.schatten) return;
@@ -3072,47 +4183,65 @@
       if (Math.abs(m.d) < 1e-6) return;
       g.transform(1, 0, -m.c / m.d, 1 / m.d, 0, 0);
       const bp = (p) => { const a = p[0] * B.c - p[1] * B.s, b = p[0] * B.s + p[1] * B.c; const ga = a + SLX * p[2], gb = b + SLY * p[2]; return [(ga - gb) * ST.KX * s, (ga + gb) * ST.KY * s]; };
+      const flaecheV = (P) => { let f = 0; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length]; f += a[0] * b[1] - b[0] * a[1]; } return f; };
       g.fillStyle = "#000";
-      /* alle Umrisse in EINEM Pfad (jede Füllung mit Weichzeichner kostet) */
       g.beginPath();
-      const flach = (pts) => { const h = huelle2(pts.map(bp)); if (h.length < 3) return; g.moveTo(h[0][0], h[0][1]); for (let i = 1; i < h.length; i++) g.lineTo(h[i][0], h[i][1]); g.closePath(); };
+      /* Vieleck mit festem Umlaufsinn (+1 = füllen, −1 = Loch) */
+      const zug = (H, sinn) => { if (H.length < 3) return; if ((flaecheV(H) > 0 ? 1 : -1) !== sinn) H = H.slice().reverse(); g.moveTo(H[0][0], H[0][1]); for (let i = 1; i < H.length; i++) g.lineTo(H[i][0], H[i][1]); g.closePath(); };
+      /* Schatten eines Körpers: Hülle seiner Schattenpunkte am Boden */
+      const flach = (pts) => zug(huelle2(pts.map(bp)), 1);
       const stab = (a, b, d) => flach([add(a, [d, d, 0]), add(a, [-d, -d, 0]), add(a, [d, -d, 0]), add(a, [-d, d, 0]), add(b, [d, d, 0]), add(b, [-d, -d, 0]), add(b, [d, -d, 0]), add(b, [-d, d, 0])]);
-      /* Gerinne */
-      if (Z.gerinne > 0) flach(kastenPunkte(GX0, GY0, GZ0, GX1, GY0 + (GY1 - GY0) * Z.gerinne, GZ1));
-      /* Böcke */
+      const kasten = (x0, y0, z0, x1, y1, z1) => flach(kastenPunkte(x0, y0, z0, x1, y1, z1));
+      /* Gerinne, Böcke, Konsole */
+      if (Z.gerinne > 0) kasten(GX0, GY0, GZ0, GX1, GY0 + (GY1 - GY0) * Z.gerinne, GZ1);
       if (Z.boecke > 0) for (const yb of BOECKE) {
         stab([GX0 - 0.35, yb, 0], [GX0 + 0.04, yb, GZ0 - 0.2], 0.08); stab([GX1 + 0.35, yb, 0], [GX1 - 0.04, yb, GZ0 - 0.2], 0.08);
         stab([GX0 - 0.35, yb, GZ0 - 0.1], [GX1 + 0.35, yb, GZ0 - 0.1], 0.1);
         stab([GX0 - 0.22, yb, 1.75], [GX1 + 0.1, yb, GZ0 - 0.4], 0.04); stab([GX1 + 0.22, yb, 1.75], [GX0 - 0.1, yb, GZ0 - 0.4], 0.04);
       }
-      if (Z.konsole) stab([XW1, KONSOLE_Y, GZ0 - 0.1], [GX1 + 0.12, KONSOLE_Y, GZ0 - 0.1], 0.1);
-      if (Z.rad > 0) {
-        for (let k = 0; k < NA; k++) {
-          const w = PHI0 + k * TAU / NA + TAU / 16;
-          for (const x of [XK1, XK4]) stab(radPunkt(x, 0.3, w), radPunkt(x, RK0, w), 0.07);
-        }
-        stab([XW1, 0, RZ], [X_LAGER, 0, RZ], RW);
+      if (Z.konsole) { stab([XW1, KONSOLE_Y, GZ0 - 0.1], [GX1 + 0.12, KONSOLE_Y, GZ0 - 0.1], 0.1); stab([XW1, KONSOLE_Y, GZ0 - 1.3], [GX0 + 0.3, KONSOLE_Y, GZ0 - 0.2], 0.07); }
+      /* Außenlager: Pfeiler, Stiele, Sattel, Deckel */
+      if (Z.pfeiler > 0) kasten(LX0, -LY, 0, LX1, LY, Math.max(0.02, PZB + (LZ_P - PZB) * Z.pfeiler));
+      if (Z.pfeiler >= 1 && Z.lagerbock) {
+        for (const [a, b] of BOCK_STIELE) stab(a, b, 0.085);
+        kasten(LX0 + 0.04, -0.34, LZ1, LX1 - 0.1, 0.34, LZB);
+        kasten(X_LAGER - 0.16, -RW - 0.07, LZB - 0.02, X_LAGER + 0.12, RW + 0.07, RZ + RW + 0.08);
       }
-      g.fill();
-      /* Rad: beide Kränze als Ringe, dazwischen der geschlossene Zellenkranz, Arme */
+      /* Kamin über dem First */
+      if (Z.kamin > 0) kasten(KAMIN_X - KAMIN_B / 2, -KAMIN_T / 2, ZF - 0.5, KAMIN_X + KAMIN_B / 2, KAMIN_T / 2, ZF + KAMIN_H * Z.kamin + 0.1);
+      if (Z.deko) {
+        /* Mühlstein (angelehnte Scheibe), Bank, Handwagen mit Ladung, Holzstapel */
+        const neig = 12 * RAD, r = 0.6, C = [1.6, YW + 0.5 - Math.sin(neig) * r - 0.14 * Math.cos(neig) + 0.05, r * Math.cos(neig) + 0.02];
+        const ms = []; for (let i = 0; i < 14; i++) { const a = i / 14 * TAU; ms.push([C[0] + r * Math.cos(a), C[1] - r * Math.sin(a) * Math.sin(neig), C[2] - r * Math.sin(a) * Math.cos(neig)]); }
+        flach(ms.concat(ms.map((p) => [p[0], p[1] + 0.27, p[2] + 0.06])));
+        kasten(-4.05, YW + 0.08, 0.41, -2.55, YW + 0.5, 0.46); kasten(-4.05, YW + 0.08, 0.61, -2.55, YW + 0.13, 0.91);
+        for (const x of [-3.95, -2.71]) kasten(x, YW + 0.12, 0, x + 0.06, YW + 0.46, 0.41);
+        kasten(-1.7, 5.7, 0.35, -0.2, 6.6, 0.8); kasten(-1.55, 5.8, 0.8, -0.35, 6.5, S.winter ? 1.2 : 1.45);
+        kasten(-6.5, -YW - 0.55, 0, -3.9, -YW - 0.02, 1.55);
+        if (S.winter) {
+          const C2 = [0.55, YW + 0.5], kegel = [[C2[0], C2[1], 2.02]];
+          for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; kegel.push([C2[0] + 0.4 * Math.cos(a), C2[1] + 0.4 * Math.sin(a), 0.42]); kegel.push([C2[0] + 0.2 * Math.cos(a), C2[1] + 0.2 * Math.sin(a), 0]); }
+          flach(kegel);
+        }
+      }
+      /* Rad: Welle und Kranz als Ring (die Speichen drehen sich – ihr
+         Schatten stünde still, Kritik Runde 1) */
       if (Z.rad > 0) {
+        stab([XW1, 0, RZ], [X_LAGER, 0, RZ], RW);
         const N = 40;
         const kreis = (x, r) => Array.from({ length: N }, (_, i) => bp(radPunkt(x, r, i / N * TAU)));
         const aus = huelle2(kreis(XK1, RR).concat(kreis(XK4, RR)));
         /* innen frei: Schnitt beider Innenkreise */
         let loch = kreis(XK1, RI);
-        const k2 = kreis(XK4, RI);
-        for (let i = 0; i < k2.length; i++) {
+        const k2 = kreis(XK4, RI), sgn = flaecheV(k2) > 0 ? 1 : -1;
+        for (let i = 0; i < k2.length && loch.length >= 3; i++) {
           const a = k2[i], b = k2[(i + 1) % k2.length];
-          loch = schneide(loch, (p) => (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]) >= 0 ? 1 : -1);
-          if (loch.length < 3) break;
+          loch = schneide(loch, (p) => sgn * ((b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])));
         }
-        const umlauf = (P) => { let f = 0; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length]; f += a[0] * b[1] - b[0] * a[1]; } return f; };
-        if (umlauf(k2) < 0) { /* Drehsinn prüfen: bei falschem Sinn bleibt nichts übrig */ }
-        g.beginPath(); g.moveTo(aus[0][0], aus[0][1]); for (let i = 1; i < aus.length; i++) g.lineTo(aus[i][0], aus[i][1]); g.closePath();
-        if (loch.length >= 3) { g.moveTo(loch[0][0], loch[0][1]); for (let i = 1; i < loch.length; i++) g.lineTo(loch[i][0], loch[i][1]); g.closePath(); }
-        g.fill("evenodd");
+        zug(aus, 1);
+        zug(loch, -1);
       }
+      g.fill("nonzero");
     };
   }
   /* Unsichtbare Figuren, damit die Figurschatten ins Bild passen: der
@@ -3144,7 +4273,8 @@
       dach: bau >= 0.8,
       dachReihen: bau >= 0.8 ? null : (bau >= 0.66 ? 1 : 0),
       kamin: k(0.64, 0.72),
-      stauwerk: k(0.3, 0.5),
+      dammH: TD_Z * glatt(k(0.14, 0.5)),
+      rasen: bau >= 0.9,
       schuetz: bau >= 0.82,
       grubeStein: k(0.14, 0.3),
       pfeiler: k(0.2, 0.34),
@@ -3174,8 +4304,10 @@
      MODELL
      ===================================================================== */
   ST.modell("wassermuehle", {
-    name: "Wassermühle", gruppe: "Häuser", grund: [15, 15.2], hoehe: 13, bauzeit: 12 * 60,
-    bauen(M, o) {
+    name: "Wassermühle", gruppe: "Häuser", grund: GRUND, hoehe: 13, bauzeit: 12 * 60,
+    bauen(M0, o) {
+      /* alles in Konstruktionskoordinaten (Haus um y = 0), der Bauer schiebt um DY */
+      const M = verschoben(M0, DY);
       const B = neuerBlick();
       M.teil("blick", { ebene: -90, schatten: false, mitte: [0, 0, 0] });
       M.figur({ x: 0, y: 0, z: 0, breite: 0.01, hoehe: 0.01, schatten: false, malen(g, s, F) { if (!F.schatten && F.gier != null) blickSetzen(B, F.gier); } });
@@ -3184,55 +4316,26 @@
       const lebend = !!o.objekt && bau >= 1;
       const Z = zustand(bau, lebend);
       const S = { winter: winter, saat: 7 + ((o.saat || 0) % 5), kaminX: KAMIN_X, inschrift: true, blumen: !winter };
-      /* Schattenfigur (Rad, Gerinne, Böcke) */
+      /* R: was das Sprite über sich weiß (für das Leben dieses Sprites) */
+      const R = { spriteS: null };
+      /* Schattenfigur (Radkranz und Welle; Gerinne, Böcke, Damm werfen ihre
+         Schatten als Flächen selbst) */
       M.teil("schattenwurf", { ebene: -89, schatten: true, mitte: [0, 0, 0] });
       M.figur({ x: 0, y: 0, z: 0, breite: 0.01, hoehe: 0.01, malen: schattenFigur(B, S, Z) });
       grenzPunkte(M);
       /* Baugrube (vor dem Mauern) */
       if (bau < 0.14) {
         M.teil("baugrube", { ebene: -3, mitte: [0, 0, -3], schatten: false });
-        const R = [XW0 - 0.5, -YW - 0.5, PX1 + 0.35, YW + 0.5];
-        grubeBauen(M, B, R, Z.grubeT, 0, winter, 100, {});
-        if (Z.fundament > 0) {
-          const zt = -Z.grubeT + (Z.grubeT) * glatt(Z.fundament);
-          const fx0 = XW0 - 0.1, fx1 = XW1 + 0.1, fy = YW + 0.1;
-          const beton = (g, F) => {
-            g.save(); if (!lochClip(g, F, B, R)) { g.restore(); return; }
-            const L = belichter(F, 0.03), w = F.w, h = F.h;
-            if (Z.fundament < 0.5) { bretterMalen(g, F, 0, 0, w, h, [150, 118, 80], 5, { breite: 0.2 }); }
-            else {
-              g.fillStyle = L(bau < 0.11 ? [132, 132, 128] : [168, 166, 158]); g.fillRect(-0.05, -0.05, w + 0.1, h + 0.1);
-              if (F.px > 8) {
-                rausch(g, 0, 0, w, h, 1.1, 0.25, 40, 3);
-                g.strokeStyle = L([120, 118, 112], 0.6); g.lineWidth = Math.max(0.005, 0.7 / F.px);
-                for (let y = 0.2; y < h; y += 0.2) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
-                for (let x = 0.5; x < w; x += 1.0) { g.fillStyle = L([70, 70, 68]); g.beginPath(); g.arc(x, h * 0.5, 0.012, 0, TAU); g.fill(); }
-              }
-            }
-            g.restore();
-          };
-          const hF = zt + Z.grubeT;
-          if (hF > 0.02) {
-            const ex = { keinLicht: true, keinAo: true };
-            wand(M, [fx0, fy, zt], [0, 1, 0], fx1 - fx0, hF, beton, Object.assign({ name: "f-s" }, ex));
-            wand(M, [fx1, -fy, zt], [0, -1, 0], fx1 - fx0, hF, beton, Object.assign({ name: "f-n" }, ex));
-            wand(M, [fx1, fy, zt], [1, 0, 0], 2 * fy, hF, beton, Object.assign({ name: "f-o" }, ex));
-            wand(M, [fx0, -fy, zt], [-1, 0, 0], 2 * fy, hF, beton, Object.assign({ name: "f-w" }, ex));
-            M.flaeche({ name: "f-t", o: [fx0, -fy, zt], u: [1, 0, 0], v: [0, 1, 0], w: fx1 - fx0, h: 2 * fy, ebene: 1, malen: (g, F) => {
-              const w = F.w, h = F.h, nass = bau < 0.115;
-              g.fillStyle = nass ? "rgb(112,114,116)" : "rgb(172,170,162)"; g.fillRect(-0.05, -0.05, w + 0.1, h + 0.1);
-              if (F.px > 8) rausch(g, 0, 0, w, h, 0.9, 0.2, 31, 3);
-              if (Z.fundament < 0.7) { g.strokeStyle = "rgb(96,64,44)"; g.lineWidth = 0.02; for (let x = 0.3; x < w; x += 0.3) { g.beginPath(); g.moveTo(x, 0.1); g.lineTo(x, h - 0.1); g.stroke(); } for (let y = 0.3; y < h; y += 0.3) { g.beginPath(); g.moveTo(0.1, y); g.lineTo(w - 0.1, y); g.stroke(); } }
-              if (winter && !nass) { g.fillStyle = "rgba(240,244,250,0.5)"; g.fillRect(0, 0, w, h); }
-            } });
-          }
-        }
-        /* Aushub */
+        const Rg = [XW0 - 0.5, -YW - 0.5, PX1 + 0.35, YW + 0.5];
+        grubeBauen(M, B, Rg, Z.grubeT, 0, winter, 100, {});
+        if (Z.fundament > 0) fundamentBauen(M, B, Z, Rg, bau, winter);
+        /* Aushub (am Südrand des Grundstücks, damit er nicht in die Grube ragt) */
         M.teil("aushub", { mitte: [-5, 7 + AUSSEN, 0.5] });
         M.figur({ x: -4.6, y: 6.6, z: 0, breite: 4.5, hoehe: 1.6, malen: aushubFigur(glatt(Z.grubeT / 1.3), winter) });
       } else {
         radgrubeBauen(M, B, S, Z);
         randBauen(M, B, S, Z);
+        untergrabenBauen(M, B, S, Z);
       }
       /* Haus */
       if (bau >= 0.13) hausBauen(M, B, S, Z);
@@ -3241,22 +4344,28 @@
       if (Z.dach) dachBauen(M, S, Z, B);
       kaminBauen(M, S, Z);
       if (Z.fertig) M.rauchAus(KAMIN_X, 0, ZF + KAMIN_H + 0.15, winter ? 1.0 : 0.6);
-      /* Wasserseite */
-      stauwerkBauen(M, B, S, Z);
+      /* Wasserseite: Teichdamm, Tosbecken, Lager, Böcke, Konsole, Gerinne */
+      dammBauen(M, B, S, Z);
+      tosbeckenBauen(M, B, S, Z);
       lagerBauen(M, B, S, Z);
       boeckeBauen(M, S, Z);
       konsoleBauen(M, S, Z);
       gerinneBauen(M, B, S, Z);
-      /* Rad: im Sprite still (Bau, Vorschau), in der Stadt lebendig */
-      if (Z.rad > 0 && !lebend) {
+      /* Rad: im Sprite still (Bau, Vorschau, Übersicht unter LEBEN_S), sonst
+         dreht es sich im Leben; im Sprite liegt dann nur eine schwach
+         deckende Silhouette (damit ein Tipp auf das Rad die Mühle trifft). */
+      if (Z.rad > 0) {
         M.teil("rad", { mitte: [AUSSEN + RX, 0, RZ], schatten: false });
         M.figur({ x: 0, y: 0, z: 0, breite: 0.01, hoehe: 0.01, schatten: false, malen(g, s, F) {
           if (F.schatten) return;
+          R.spriteS = s;
+          /* die Figur steht im Ursprung der Konstruktion: A rechnet von dort */
           const A = ansichtFigur(s, F.gier || 0, F.Z, F.jahr);
-          radMalen(g, A, PHI0, { winter: winter, wasser: Z.wasser, bau: Z.rad });
+          if (!lebend || s < LEBEN_S) radMalen(g, A, PHI0, { winter: winter, wasser: Z.wasser, bau: Z.rad, still: true });
+          else radSilhouette(g, A, 0.2);
         } });
       }
-      if (lebend) M.lebendig((g, P) => lebenMalen(g, P, { winter: winter }));
+      if (lebend) M.lebendig((g, P) => lebenMalen(g, P, { winter: winter }, R));
       /* Hülle für die Bildgrenzen (das Rad wird ja erst später gemalt) */
       M.teil("huelle", { schatten: false, ebene: -85, mitte: [0, 0, 0] });
       M.flaeche(Object.assign({ name: "h-rad", o: [XK1 - 0.1, -RR - 0.2, RZ + RR + 0.2], u: [1, 0, 0], v: [0, 0, -1], w: XK4 - XK1 + 0.2, h: RR * 2 + 0.3 }, LEER));
@@ -3277,40 +4386,100 @@
     }
   });
 
+  /* Betonfundament mit Schalung (Bauphase) */
+  function fundamentBauen(M, B, Z, Rg, bau, winter) {
+    const zt = -Z.grubeT + (Z.grubeT) * glatt(Z.fundament);
+    const fx0 = XW0 - 0.1, fx1 = XW1 + 0.1, fy = YW + 0.1;
+    const beton = (g, F) => {
+      g.save(); if (!lochClip(g, F, B, Rg)) { g.restore(); return; }
+      const L = belichter(F, 0.03), w = F.w, h = F.h;
+      if (Z.fundament < 0.5) { bretterMalen(g, F, 0, 0, w, h, [150, 118, 80], 5, { breite: 0.2 }); }
+      else {
+        g.fillStyle = L(bau < 0.11 ? [132, 132, 128] : [168, 166, 158]); g.fillRect(-0.05, -0.05, w + 0.1, h + 0.1);
+        if (F.px > 8) {
+          rausch(g, 0, 0, w, h, 1.1, 0.25, 40, 3);
+          g.strokeStyle = L([120, 118, 112], 0.6); g.lineWidth = Math.max(0.005, 0.7 / F.px);
+          for (let y = 0.2; y < h; y += 0.2) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+          for (let x = 0.5; x < w; x += 1.0) { g.fillStyle = L([70, 70, 68]); g.beginPath(); g.arc(x, h * 0.5, 0.012, 0, TAU); g.fill(); }
+        }
+      }
+      g.restore();
+    };
+    const hF = zt + Z.grubeT;
+    if (hF <= 0.02) return;
+    const ex = { keinLicht: true, keinAo: true };
+    wand(M, [fx0, fy, zt], [0, 1, 0], fx1 - fx0, hF, beton, Object.assign({ name: "f-s" }, ex));
+    wand(M, [fx1, -fy, zt], [0, -1, 0], fx1 - fx0, hF, beton, Object.assign({ name: "f-n" }, ex));
+    wand(M, [fx1, fy, zt], [1, 0, 0], 2 * fy, hF, beton, Object.assign({ name: "f-o" }, ex));
+    wand(M, [fx0, -fy, zt], [-1, 0, 0], 2 * fy, hF, beton, Object.assign({ name: "f-w" }, ex));
+    M.flaeche({ name: "f-t", o: [fx0, -fy, zt], u: [1, 0, 0], v: [0, 1, 0], w: fx1 - fx0, h: 2 * fy, ebene: 1, malen: (g, F) => {
+      const w = F.w, h = F.h, nass = bau < 0.115;
+      g.fillStyle = nass ? "rgb(112,114,116)" : "rgb(172,170,162)"; g.fillRect(-0.05, -0.05, w + 0.1, h + 0.1);
+      if (F.px > 8) rausch(g, 0, 0, w, h, 0.9, 0.2, 31, 3);
+      if (Z.fundament < 0.7) { g.strokeStyle = "rgb(96,64,44)"; g.lineWidth = 0.02; for (let x = 0.3; x < w; x += 0.3) { g.beginPath(); g.moveTo(x, 0.1); g.lineTo(x, h - 0.1); g.stroke(); } for (let y = 0.3; y < h; y += 0.3) { g.beginPath(); g.moveTo(0.1, y); g.lineTo(w - 0.1, y); g.stroke(); } }
+      if (winter && !nass) { g.fillStyle = "rgba(240,244,250,0.5)"; g.fillRect(0, 0, w, h); }
+    } });
+  }
+
   /* Aushubhaufen */
   function aushubFigur(k, winter) {
     return function (g, s, F) {
       const b = 2.2 * s * Math.cbrt(Math.max(0.05, k)), h = 1.2 * s * ST.KZ * Math.cbrt(Math.max(0.05, k));
       g.beginPath(); g.moveTo(-b, 0); g.bezierCurveTo(-b * 0.6, -h * 0.9, b * 0.4, -h * 1.1, b, 0); g.closePath();
       if (F.schatten) { g.fillStyle = "#000"; g.fill(); return; }
+      const FL = figurLicht(F);
       const gr = g.createLinearGradient(-b, -h, b, 0);
-      gr.addColorStop(0, "rgb(150,112,76)"); gr.addColorStop(1, "rgb(92,66,44)");
+      gr.addColorStop(0, FL.lit([150, 112, 76], FL.lL)); gr.addColorStop(0.5, FL.lit([122, 90, 60], FL.lO)); gr.addColorStop(1, FL.lit([92, 66, 44], FL.lR));
       g.fillStyle = gr; g.fill();
       const rng = zufall(5);
-      for (let i = 0; i < 40; i++) { g.fillStyle = "rgba(60,44,30,0.6)"; g.beginPath(); g.arc((rng() - 0.5) * b * 1.6, -rng() * h * 0.7, Math.max(0.6, s * 0.03), 0, TAU); g.fill(); }
-      if (winter) { g.fillStyle = "rgba(244,247,252,0.85)"; g.beginPath(); g.moveTo(-b * 0.6, -h * 0.55); g.bezierCurveTo(-b * 0.3, -h * 1.0, b * 0.3, -h * 1.05, b * 0.6, -h * 0.5); g.bezierCurveTo(b * 0.2, -h * 0.7, -b * 0.2, -h * 0.72, -b * 0.6, -h * 0.55); g.fill(); }
+      g.fillStyle = FL.lit([60, 44, 30], FL.lV, 0.6);
+      g.beginPath(); for (let i = 0; i < 40; i++) { const x = (rng() - 0.5) * b * 1.6, y = -rng() * h * 0.7, r = Math.max(0.6, s * 0.03); g.moveTo(x + r, y); g.arc(x, y, r, 0, TAU); } g.fill();
+      if (winter) { g.fillStyle = FL.lit([244, 247, 252], FL.lO, 0.85); g.beginPath(); g.moveTo(-b * 0.6, -h * 0.55); g.bezierCurveTo(-b * 0.3, -h * 1.0, b * 0.3, -h * 1.05, b * 0.6, -h * 0.5); g.bezierCurveTo(b * 0.2, -h * 0.7, -b * 0.2, -h * 0.72, -b * 0.6, -h * 0.55); g.fill(); }
     };
   }
 
   /* =====================================================================
-     WINTERHAUSEN: mit ?muehle=1 steht die Mühle am Mühlbach.
-     Der Bach kommt von Nordosten (oben) und fließt nach Süden; die Mühle
-     steht am Westufer, das Rad (+x) zum Wasser, das Gerinne (−y) kommt
-     von bachaufwärts.
+     WINTERHAUSEN: die Mühle steht am Mühlbach (Kritik Runde 1: „der
+     Untergraben endet blind, die Mühle steht irgendwo"). Das Dorf setzt
+     sie nach (32,4 | −37,2); dieser Haken rückt sie danach an den Bach:
+     Ostkante parallel zum Ufer, der Untergraben mündet genau ins Wasser,
+     Teichdamm und Tosbecken bleiben auf dem Trockenen (gerechnet mit der
+     Bachkurve aus dorf.js: Mündung 1,3 m von der Bachmitte, also im Wasser; die Ostkante liegt am Ufer).
+     Was im Weg steht (Obstbäume, Tannen), wird geräumt; dazu ein Mühlweg
+     von der Tür zur Hauptstraße. Mit ?mx=&my=&mg= lässt sich die Lage
+     prüfen, ?muehle=0 lässt alles, wie das Dorf es setzt.
      ===================================================================== */
   (function dorfMuehle() {
     let q = null;
     try { q = new URLSearchParams(location.search); } catch (e) { return; }
-    if (!q || q.get("muehle") !== "1") return;
+    if (q && q.get("muehle") === "0") return;
+    const MX = +(q.get("mx") || 32.2), MY = +(q.get("my") || -46.1), MG = +(q.get("mg") || 22);
+    const inWelt = (x, y) => { const r = MG * RAD, c = Math.cos(r), sn = Math.sin(r), yy = y + DY; return [MX + x * c - yy * sn, MY + x * sn + yy * c]; };
+    const altBoden = ST.dorfBoden;
+    if (typeof altBoden === "function") {
+      ST.dorfBoden = function () {
+        altBoden.apply(this, arguments);
+        /* Mühlweg: von der Tür (Pflaster) in einem Bogen zur Hauptstraße */
+        const B = ST.boden;
+        if (!B || !B.linie) return;
+        const a = inWelt(-1.3, YG1 - 0.3), b = inWelt(-2.2, YG1 + 3);
+        const pts = [[a[0], a[1]], [b[0], b[1]], [15, -31.5], [1.2, -27]];
+        const kette = [];
+        for (let i = 0; i + 1 < pts.length; i++) for (let k = 0; k < 8; k++) { const t = k / 8; kette.push([pts[i][0] + (pts[i + 1][0] - pts[i][0]) * t, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t]); }
+        kette.push(pts[pts.length - 1]);
+        B.linie(kette, 1.05, 0, 0.85);
+      };
+    }
     const alt = ST.dorfBauen;
     if (typeof alt !== "function") return;
-    const MX = +(q.get("mx") || 32.4), MY = +(q.get("my") || -37.2), MG = +(q.get("mg") || 12);
     ST.dorfBauen = function () {
       alt.apply(this, arguments);
       const SZ = ST.szene;
-      const m = SZ.neu("wassermuehle", MX, MY, MG, { saat: 3 });
-      /* was im Weg steht (Bäume), räumen */
-      const ecken = (typ, x, y, gier) => { const d = ST.MODELLE[typ]; const b = d.grund[0] / 2, t = d.grund[1] / 2, r = gier * RAD, c = Math.cos(r), s = Math.sin(r); return [[-b, -t], [b, -t], [b, t], [-b, t]].map(([px, py]) => [x + px * c - py * s, y + px * s + py * c]); };
+      let m = SZ.objekte.find((o) => o.typ === "wassermuehle");
+      if (!m) m = SZ.neu("wassermuehle", MX, MY, MG, { saat: 3 });
+      m.x = MX; m.y = MY; m.gier = MG;
+      /* was im Weg steht, räumen (Trennachsen-Test der Grundrisse) */
+      const ecken = (typ, x, y, gier) => { const d = ST.MODELLE[typ]; const b = d.grund[0] / 2, t = d.grund[1] / 2, r = gier * RAD, c = Math.cos(r), sn = Math.sin(r); return [[-b, -t], [b, -t], [b, t], [-b, t]].map(([px, py]) => [x + px * c - py * sn, y + px * sn + py * c]); };
       const trennt = (A, Bq) => {
         for (const P of [A, Bq]) for (let i = 0; i < 4; i++) {
           const p = P[i], qq = P[(i + 1) % 4], nx = qq[1] - p[1], ny = p[0] - qq[0];

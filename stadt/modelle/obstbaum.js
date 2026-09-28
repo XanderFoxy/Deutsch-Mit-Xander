@@ -478,12 +478,15 @@
       const d = norm([Math.cos(phi) * Math.cos(el), Math.sin(phi) * Math.cos(el), Math.sin(el)]);
       const L = bisRand(k.p, d) * (0.92 + 0.06 * R()) + 0.4;
       haupt.push(ast(k.p, d, L, r0 * 0.5, 1, -1, { haengt: 0.75 + 0.3 * R(), auf: 0.05, eltern: 0 }));
+      /* Leitäste liegen vor dem Stammkopf; der Astkragen verbindet beide */
+      if (haupt[haupt.length - 1]) haupt[haupt.length - 1].vorStamm = true;
     }
     /* manchmal eine steile Mitte */
     if (R() < 0.7) {
       const k = aufKette(stamm.pts, 0.95);
       const d = norm([(R() - 0.5) * 0.3, (R() - 0.5) * 0.3, 1]);
       haupt.push(ast(k.p, d, (H - stammH) * (0.7 + 0.2 * R()), r0 * 0.4, 1, -1, { haengt: 0.1, auf: 0, eltern: 0 }));
+      if (haupt[haupt.length - 1]) haupt[haupt.length - 1].vorStamm = true;
     }
     /* Röhrenmodell: Leitäste zusammen so stark wie der Stamm */
     {
@@ -625,11 +628,18 @@
     const tiefen = new Array(plan.zuege.length);
     for (const z of plan.zuege) {
       let t = B.tief(z.mitte) + (z.innen ? bias : 0);
-      if (z.eltern >= 0 && tiefen[z.eltern] != null) t = Math.min(t, tiefen[z.eltern] - 0.002);
+      if (z.vorStamm && tiefen[0] != null) t = Math.max(t, tiefen[0] + 0.002);
+      else if (z.eltern >= 0 && tiefen[z.eltern] != null) t = Math.min(t, tiefen[z.eltern] - 0.002);
       tiefen[z.index] = t;
       const dick = z.rMax * s;
       if (laub && z.ord >= 3 && !z.stamm && !z.schoss) continue;
       teile.push({ tief: t, malen: () => (dick > 2.2 || z.stamm ? zugMalen : duennMalen)(g, B, plan, z, Z, jahr, s, winter) });
+    }
+    /* Astkragen: die Stammrinde läuft über die Ansätze der Leitäste und
+       blendet nach oben aus – kein runder „Pfostenkopf" zwischen den Ästen */
+    {
+      const vs = plan.zuege.filter((z) => z.vorStamm);
+      if (vs.length) teile.push({ tief: Math.max(...vs.map((z) => tiefen[z.index])) + 0.001, malen: () => astKragen(g, B, plan, vs, Z, jahr, s, winter) });
     }
     if (!winter) for (const w of plan.wurzeln) {
       const m = [Math.cos(w.phi) * w.l * 0.5, Math.sin(w.phi) * w.l * 0.5, 0.05];
@@ -669,6 +679,32 @@
     for (const t of teile) t.malen();
     g.setTransform(1, 0, 0, 1, T0.e, T0.f);
   }
+  function astKragen(g, B, plan, vs, Z, jahr, s, winter) {
+    const st = plan.zuege[0];
+    if (!st || st.rMax * s < 3) return;
+    const zA = Math.min(...vs.map((z) => z.pts[0][2])), zE = Math.max(...vs.map((z) => z.pts[0][2]));
+    let i0 = st.pts.findIndex((q) => q[2] >= zA - 0.4);
+    if (i0 < 0) return;
+    i0 = Math.max(0, i0 - 1);
+    const stueck = { pts: st.pts.slice(i0), rs: st.rs.slice(i0), schnee: (st.schnee || st.pts).slice(i0).map(() => 0), stamm: true, ord: st.ord, v: st.v, rMax: st.rMax, bezug: st };
+    if (stueck.pts.length < 2) return;
+    const P = stueck.pts.map(B.p), rp = Math.max(...stueck.rs) * s + 2;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const p of P) { x0 = Math.min(x0, p[0] - rp); y0 = Math.min(y0, p[1] - rp); x1 = Math.max(x1, p[0] + rp); y1 = Math.max(y1, p[1] + rp); }
+    x0 = Math.floor(x0); y0 = Math.floor(y0);
+    const c = leinwand(x1 - x0 + 1, y1 - y0 + 1), gc = c.g;
+    gc.setTransform(1, 0, 0, 1, -x0, -y0);
+    zugMalen(gc, B, plan, stueck, Z, jahr, s, winter);
+    /* Maske: unten weich ein (keine Naht zum Stamm), über den Ansätzen aus */
+    gc.setTransform(1, 0, 0, 1, 0, 0);
+    gc.globalCompositeOperation = "destination-in";
+    const yU = B.p([0, 0, zA - 0.38])[1] - y0, yM = B.p([0, 0, zA - 0.12])[1] - y0, yO = B.p([0, 0, zE + 0.14])[1] - y0;
+    const mg = gc.createLinearGradient(0, yU, 0, yO);
+    const k = klemm((yU - yM) / ((yU - yO) || 1), 0.05, 0.9);
+    mg.addColorStop(0, "rgba(0,0,0,0)"); mg.addColorStop(k, "rgba(0,0,0,1)"); mg.addColorStop(1, "rgba(0,0,0,0)");
+    gc.fillStyle = mg; gc.fillRect(0, 0, c.width, c.height);
+    g.drawImage(c, x0, y0);
+  }
   /* Bildpunkte eines Zugs, bei großer Vergrößerung weich unterteilt
      (Catmull-Rom), damit auch aus der Nähe keine Knicke zu sehen sind */
   function zugPunkte(B, z, s) {
@@ -701,14 +737,16 @@
       return [-dy / l, dx / l];
     });
     const A = plan.A;
-    let ux = P[n - 1][0] - P[0][0], uy = P[n - 1][1] - P[0][1];
+    /* ein Stück eines Zugs (Astkragen) nimmt Licht und Verlauf vom ganzen Zug */
+    const ref = z.bezug ? zugPunkte(B, z.bezug, s) : zp, PR = ref.P;
+    let ux = PR[PR.length - 1][0] - PR[0][0], uy = PR[PR.length - 1][1] - PR[0][1];
     const ul = Math.hypot(ux, uy) || 1; ux /= ul; uy /= ul;
     let nx = -uy, ny = ux;
     /* Sonne kommt im Bild von links oben: diese Seite hell */
     if (nx * -0.85 + ny * -0.5 < 0) { nx = -nx; ny = -ny; }
     const lfH = lichtAuf([LICHT[0], LICHT[1], 0.3], Z, jahr), lfD = lichtAuf([-LICHT[0], -LICHT[1], 0.1], Z, jahr);
     const innen = z.stamm ? 1 : z.innen && jahr !== "winter" ? 0.72 : 0.94;
-    const m = P[Math.floor(n / 2)], rm = Math.max(...r);
+    const m = PR[Math.floor(PR.length / 2)], rm = Math.max(...ref.r.map((v) => Math.max(0.6, v)));
     const gr = g.createLinearGradient(m[0] + nx * rm, m[1] + ny * rm, m[0] - nx * rm, m[1] - ny * rm);
     gr.addColorStop(0, farbe(A.rinde, lfH, 0.84 * innen));
     gr.addColorStop(0.3, farbe(A.rinde, lfH, 1.0 * innen));
@@ -731,7 +769,7 @@
       rindeMalen(g, P, N, r, z, plan, lfH, lfD, s, innen, glatt(14, 26, s) * glatt(2.6, 5, rm), winter);
       g.restore();
     }
-    if (z.stamm && plan.knollen && s >= 12) stammDetails(g, B, plan, z, Z, jahr, s, winter);
+    if (z.stamm && plan.knollen && s >= 12) stammDetails(g, B, plan, z.bezug || z, Z, jahr, s, winter);
     if (winter) schneeZug(g, P, N, r, z, Z, jahr, s);
   }
 
@@ -827,7 +865,7 @@
       g.stroke();
     }
     /* Grünalgen auf der Wetterseite des Stamms (nicht im Winter) */
-    if (z.stamm && !winter) {
+    if (z.stamm && !winter && !z.bezug) {
       const m = P[0], mg = g.createLinearGradient(m[0] + r[0], 0, m[0] + r[0] * 0.2, 0);
       mg.addColorStop(0, "rgba(96,122,58,0.32)"); mg.addColorStop(1, "rgba(96,122,58,0)");
       g.fillStyle = mg; g.fillRect(m[0] - r[0] * 2, P[n - 1][1] - 4, r[0] * 4, Math.abs(P[n - 1][1] - m[1]) * 0.45 + 8);

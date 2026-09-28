@@ -548,8 +548,12 @@
   }
   function aufraeumen() {
     const alle = [...SPEICHER.values()].sort((a, b) => a.zuletzt - b.zuletzt);
+    const jetzt = ST.jetzt || 0;
     for (const sp of alle) {
       if (speicherPixel < SPEICHER_MAX * 0.6) break;
+      /* was im laufenden Bild gebraucht wird, bleibt (sonst malt die Szene
+         eine freigegebene Leinwand der Breite 0 → Fehler, leeres Bild) */
+      if (sp.zuletzt >= jetzt) continue;
       SPEICHER.delete(sp.schl); speicherPixel -= sp.W * sp.H * 2;
       sp.bild.width = sp.bild.height = 0; sp.schatten.width = sp.schatten.height = 0;
     }

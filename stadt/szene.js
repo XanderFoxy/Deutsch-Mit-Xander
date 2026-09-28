@@ -159,8 +159,9 @@
         /* Budget erschöpft: das alte Bild strecken – oder, wenn es noch keins
            gibt, im nächsten Bild malen (so bleibt die Seite flüssig) */
         nachholen = true;
-        if (!o._sp) continue;
+        if (!o._sp || !o._sp.bild || o._sp.bild.width === 0) continue;
         sp = o._sp;
+        sp.zuletzt = jetzt;
       }
       let k = K.s / sp.s;
       if (Math.abs(k - 1) < 0.002) k = 1;
@@ -315,6 +316,9 @@
     for (let i = r.length - 1; i >= 0; i--) {
       const e = r[i];
       if (e.o === SZ.geist || e.live || e.o.rand) continue;
+      /* Modelle mit eigener Trefferprüfung (große Wahrzeichen, die in Kacheln malen) */
+      const dt = ST.MODELLE[e.o.typ];
+      if (dt && typeof dt.treffer === "function") { try { if (dt.treffer(px, py, e.P)) return e.o; } catch (err) { console.error(err); } continue; }
       if (px < e.x0 || px >= e.x1 || py < e.y0 || py >= e.y1) continue;
       try {
         const d = e.sp.bild.getContext("2d").getImageData(Math.floor((px - e.x0) / e.k), Math.floor((py - e.y0) / e.k), 1, 1).data;

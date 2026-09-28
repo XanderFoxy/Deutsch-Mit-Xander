@@ -19,8 +19,8 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   pg.on("pageerror", (e) => fehler.push("Seitenfehler: " + e.message));
   pg.on("console", (m) => { if (m.type() === "error") fehler.push("Konsole: " + m.text()); });
   const t0 = Date.now();
-  await pg.goto("http://127.0.0.1:" + srv.address().port + "/stadt.html?" + (suche || ""), { waitUntil: "load" });
-  try { await pg.waitForFunction(() => window.__fertig || window.__fehler, null, { timeout: 60000 }); } catch (e) { fehler.push("Zeitüberschreitung"); }
+  await pg.goto("http://127.0.0.1:" + srv.address().port + "/stadt.html?" + (suche || ""), { waitUntil: "load", timeout: +(process.env.ZEIT || 180000) });
+  try { await pg.waitForFunction(() => window.__fertig || window.__fehler, null, { timeout: +(process.env.ZEIT || 180000) }); } catch (e) { fehler.push("Zeitüberschreitung"); }
   const warte = +(process.env.WARTE || 400);
   await pg.waitForTimeout(warte);
   await pg.screenshot({ path: aus });

@@ -198,7 +198,7 @@
     const H = huelle3(pts);
     if (H.flaechen.length < 4) return null;
     const K = Object.assign({ name: name, H: H, mal: mal, schatten: true, wirft: false, nach: null, gruppe: schattenGruppe(name) }, opt);
-    if (/^(stufe|tstufe|rinne|rohr|hals|eis)/.test(name)) K.schatten = false;
+    if (/^(stufe|tstufe|rinne|rohr|hals|eis|weg|beet|tor)/.test(name)) K.schatten = false;
     K.mitte = mitteVon(H.punkte);
     this.k.push(K);
     return K;
@@ -352,6 +352,12 @@
 
   /* Zeitmessung je Körperart (nur zum Prüfen: STADT.kircheMessen = {}) */
   let MESSEN = null;
+  /* Teilzeiten innerhalb eines Malers (nur mit kircheMessen.flush) */
+  function messUhr(g) {
+    if (!MESSEN || !MESSEN.flush) return () => {};
+    let t = performance.now();
+    return (name) => { g.getImageData(0, 0, 1, 1); const n = performance.now(); MESSEN[name] = (MESSEN[name] || 0) + n - t; t = n; };
+  }
   /* ---------------- Ausgabe an den Kern ---------------- */
   function ausgeben(W, M) {
     MESSEN = ST.kircheMessen || null;
@@ -402,11 +408,15 @@
     M.flaeche(Object.assign(basis, {
       ao: !!m.ao && zmin < 0.05, keinAo: !m.ao,
       malen: function (g, F) {
+        /* Messen: mit „flush" wird die Leinwand vor und nach jeder Fläche
+           ausgelesen – dann zählt auch das (sonst verzögerte) Rastern mit */
+        if (MESSEN && MESSEN.flush) g.getImageData(0, 0, 1, 1);
         const t0 = MESSEN ? performance.now() : 0;
         g.save(); g.translate(-A0, -B0);
         if (maler) maler(g, F, info);
         if (schatten.length) eigenschattenMalen(g, F, info);
         g.restore();
+        if (MESSEN && MESSEN.flush) g.getImageData(0, 0, 1, 1);
         if (MESSEN) { const k = K.name.replace(/[-0-9.]+.*$/, ""); MESSEN[k] = (MESSEN[k] || 0) + performance.now() - t0; }
       },
       danach: m.danach ? function (g, F) { g.save(); g.translate(-A0, -B0); m.danach(g, F, info); g.restore(); } : null,
@@ -432,13 +442,22 @@
      HAUPTMASSE
      ===================================================================== */
   const NEIG = Math.tan(57 * RAD);            // Dachneigung Langhaus und Chor
+  /* Turm in drei Geschossen: Erdgeschoss bis zum ersten Gurtgesims (9 m,
+     Höhe der Langhaustraufe), Mittelgeschoss bis 16,6 m, darüber die
+     Glockenstube mit Zifferblättern und Schallarkaden. Das Zifferblatt
+     sitzt frei zwischen Gurtgesims und Arkaden-Sohlbank und über dem
+     First des Langhauses (Ostseite, 17,0 m); die Arkade endet samt
+     Gewände unter der Mauerkrone (Prüfregel unten). */
   const TU = {
-    x0: -18, x1: -12, y: 3.0, h: 22.0, gz: 22.3, ge: 3.3, spitze: 35.0,
-    g1: 9.0, g2: 17.3,                        // Gurtgesimse
-    uhr: 18.3, uhrR: 0.72,                    // Zifferblätter
-    glU: 19.25, glK: 20.45, glW: 2.5          // Glockenstube: Sohlbank, Kämpfer, Breite
+    x0: -18, x1: -12, y: 3.0, h: 23.0, gz: 23.3, ge: 3.3, spitze: 35.0,
+    g1: 9.0, g2: 16.6,                        // Gurtgesimse
+    uhr: 18.3, uhrR: 0.9,                     // Zifferblätter (Ø 1,8 m, Steinring 2,1 m)
+    glU: 19.6, glW: 2.0, glGew: 0.2           // Glockenstube: Sohlbank, Breite, Gewände
   };
   TU.xm = (TU.x0 + TU.x1) / 2;
+  /* Prüfregel: Kämpfer + Bogenhöhe des Gewändes ≤ Mauerkrone − 0,17 m –
+     so stößt der Spitzbogen nie ins Traufgesims (Kritik Runde 1) */
+  TU.glK = TU.h - 0.17 - spitzH(TU.glW + 2 * TU.glGew);
   const LH = { x0: -12, x1: 10, y: 5.0, tr: 9.0, dv: 0.34, ue: 0.5, ort: 0.4 };
   LH.zf = LH.tr + LH.y * NEIG;                 // Unterseite First
   LH.ze = LH.tr - LH.ue * NEIG;                // Unterkante Traufe
@@ -455,8 +474,11 @@
   /* Südportal: Vorbau mit Giebel, Freitreppe */
   const PO = { x0: -5.6, x1: -1.9, y0: LH.y, y1: LH.y + 0.6, h: 5.0, hg: 6.2 };
   PO.xm = (PO.x0 + PO.x1) / 2;
-  const FE = { w: 1.6, z0: 3.4, zk: 6.4, x: [-9.25, -3.75, 1.75, 7.25] };
-  const ROSE = { z: 7.3, r: 0.5 };
+  /* Langhausfenster: Scheitel 7,0 m, Gewände bis 7,3 m – bis zur Traufe
+     (9,0 m) bleiben wie bei echten Dorfkirchen 1,7 m Mauer, so sind
+     Maßwerkkopf und Traufgesims auch unter Rinne und Eiszapfen frei */
+  const FE = { w: 1.6, z0: 2.9, zk: 5.6, x: [-9.25, -3.75, 1.75, 7.25] };
+  const ROSE = { z: 6.95, r: 0.5 };
 
 
   /* Grundriss des Chors (gegen den Uhrzeigersinn von oben), off = Überstand */
@@ -470,9 +492,19 @@
   function quaderP(x0, y0, z0, x1, y1, z1) { return prisma([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], z0, z1); }
 
   /* ---------------- Farben (bei weißem Licht) ---------------- */
-  const MOERTEL = [200, 192, 174];
-  const BRUCH = [[184, 168, 142], [172, 154, 128], [160, 143, 118], [194, 180, 154], [178, 152, 122], [152, 138, 116], [188, 164, 132], [166, 146, 118]];
-  const WERK = { rot: [168, 100, 80], gelb: [194, 170, 124] };
+  /* Zwei Steinwelten (o.saat, jede fünfte Kirche gelb; o.variante
+     „rot"/„gelb" wählt fest):
+     rot  – Werkstein aus rotem Mainsandstein, Bruchstein aus hellem,
+            gemischtem Sandstein (beige, einzelne rötliche und graue Stücke)
+     gelb – Werkstein aus ockergelbem Schilfsandstein, Bruchstein aus
+            grauem Muschelkalk (wie an vielen Kirchen in Unterfranken):
+            so heben sich Eckquader, Gesimse und Pfeiler klar vom
+            Mauerwerk ab – keine „beige Sandburg" (Kritik Runde 1). */
+  const BRUCH_ROT = [[184, 168, 142], [170, 152, 126], [158, 142, 118], [194, 180, 156], [180, 150, 124], [150, 138, 120], [176, 146, 128], [160, 154, 142]];
+  const BRUCH_KALK = [[170, 166, 154], [158, 154, 142], [148, 145, 136], [182, 178, 164], [164, 158, 142], [140, 138, 130], [174, 168, 152], [154, 152, 146]];
+  const MOERTEL_ROT = [150, 140, 124], MOERTEL_KALK = [146, 142, 132];
+  const BRUCH = BRUCH_ROT;
+  const WERK = { rot: [168, 100, 80], gelb: [206, 166, 98] };
   const SCHIEFER = [70, 80, 96];
   const KUPFER = [98, 158, 136];
   const GOLD = [218, 176, 86];
@@ -510,59 +542,183 @@
   /* =====================================================================
      STEIN
      ===================================================================== */
-  /* Lagen des Bruchsteinmauerwerks: einmal für alle Wände (Weltmaß) */
-  const REIHEN = (function () { const z = [0]; for (let i = 0; z[i] < 48; i++) z.push(z[i] + 0.2 + 0.15 * hash(i, 3, 5)); return z; })();
-  function steinPfad(p, a, b, c, d, j, rs) {
-    const k = Math.min(0.05, (d - c) * 0.26, (b - a) * 0.2);
-    const J = (n) => (hash(rs, n, 91) - 0.5) * 2 * j;
-    p.moveTo(a + k + J(1), c + J(2)); p.lineTo(b - k + J(3), c + J(4)); p.lineTo(b + J(5), c + k + J(6)); p.lineTo(b + J(7), d - k + J(8));
-    p.lineTo(b - k + J(9), d + J(10)); p.lineTo(a + k + J(11), d + J(12)); p.lineTo(a + J(13), d - k + J(14)); p.lineTo(a + J(15), c + k + J(16)); p.closePath();
-  }
-  /* Bruchsteinmauerwerk in (A, B) = (waagrecht, −Höhe) */
-  function bruchstein(g, F, I, x0, y0, x1, y1, saat) {
-    const px = F.px;
-    g.fillStyle = rgbS(MOERTEL); g.fillRect(x0, y0, x1 - x0, y1 - y0);
-    if (px < 5.5) {
-      g.fillStyle = rgbS([174, 158, 132], 0.85); g.fillRect(x0, y0, x1 - x0, y1 - y0);
-      rausch(g, x0, y0, x1 - x0, y1 - y0, 3.4, 0.22, saat, 3);
-      return;
-    }
-    const zB = -y1, zT = -y0;
-    let r = 0; while (r < REIHEN.length - 2 && REIHEN[r + 1] < zB) r++;
-    const fein = px >= 26, grob = px < 12;
-    const alle = new Path2D(), eimer = [];
-    for (let i = 0; i < 8; i++) eimer.push(new Path2D());
-    const m = Math.max(0.016, 0.8 / px);
-    for (; r < REIHEN.length - 1 && REIHEN[r] < zT; r++) {
-      const za = REIHEN[r], zb = REIHEN[r + 1];
-      const c = grob ? 1.1 : 0.84, off = hash(r, 7, saat) * c;
-      const i0 = Math.floor((x0 - off) / c) - 1, i1 = Math.floor((x1 - off) / c) + 1;
-      const fuge = (i) => off + i * c + (hash(i, r, saat) - 0.5) * 0.42;
-      for (let i = i0; i <= i1; i++) {
-        const a = fuge(i), b = fuge(i + 1);
-        const teile = !grob && hash(i, r, saat + 1) < 0.36 ? [a, a + (b - a) * (0.35 + 0.3 * hash(i, r, saat + 2)), b] : [a, b];
-        for (let k = 0; k < teile.length - 1; k++) {
-          const sa = teile[k] + m / 2, sb = teile[k + 1] - m / 2;
-          if (sb < x0 - 0.1 || sa > x1 + 0.1) continue;
-          /* Unebene Lagen: Steine mal etwas niedriger */
-          const ya = -zb + m / 2 + (fein ? hash(i * 5 + k, r, saat + 8) * 0.03 : 0), yb = -za - m / 2;
-          const hk = hash(i * 3 + k, r, saat + 3);
-          const p = eimer[(hk * 8) | 0];
-          if (fein) { steinPfad(p, sa, sb, ya, yb, 0.012, (i * 7 + k) * 131 + r); steinPfad(alle, sa, sb, ya, yb, 0.012, (i * 7 + k) * 131 + r); }
-          else { p.rect(sa, ya, sb - sa, yb - ya); alle.rect(sa, ya, sb - sa, yb - ya); }
+  /* =====================================================================
+     BRUCHSTEIN
+     Lagerhaftes Bruchsteinmauerwerk wie an fränkischen Dorfkirchen:
+     die Lagen sind ungleich hoch, darin wechseln die Steine ihre Höhe –
+     ein niedriger Stein bekommt oben eine flache Ausgleichsplatte, alle
+     paar Meter bindet ein hoher Stein über zwei Lagen. Jeder Stein ist
+     ein unregelmäßiges Vieleck (5–7 Ecken, gebrochene Kanten, schräge
+     Lagerfuge), in breiten Stoßfugen sitzen kleine Zwickelsteine. Der
+     Kalkmörtel liegt zurück: dunkler als der Stein, unter jedem Stein
+     eine Schattenkante. Die Farben wechseln in Gruppen – Steine aus
+     demselben Bruchstück liegen nebeneinander.
+     RECHENZEIT: gemalt wird eine nahtlose Kachel (7,2 m × 3,6 m, drei
+     Spielarten je nach Wand) in der Auflösung der Fläche, gelegt als
+     Muster an Weltkoordinaten (x, Höhe) – beim Bauen wandert kein Stein.
+     Vorher kostete jede Wand jeden Stein einzeln (s = 90: 0,7 s).
+     ===================================================================== */
+  const BK = { W: 7.2, H: 3.6 };
+  /* Lagen in der Kachel: Höhen 0,2–0,35 m, genau auf BK.H gestreckt */
+  const BK_LAGEN = (function () {
+    const h = []; let sum = 0;
+    for (let i = 0; sum < BK.H - 0.2; i++) { const d = 0.2 + 0.15 * hash(i, 3, 5); h.push(d); sum += d; }
+    const k = BK.H / sum, z = [0];
+    for (const d of h) z.push(z[z.length - 1] + d * k);
+    z[z.length - 1] = BK.H;
+    return z;
+  })();
+  const BK_N = BK_LAGEN.length - 1;
+  /* Lage r (beliebig, periodisch): Unter- und Oberkante in Kachelhöhe */
+  function lage(r) { const n = ((r % BK_N) + BK_N) % BK_N, p = Math.floor(r / BK_N) * BK.H; return [p + BK_LAGEN[n], p + BK_LAGEN[n + 1], n]; }
+  const BKACHELN = new Map();
+  let bkPixel = 0;
+  function bruchKachel(pt, pal, mo, spiel, sd, kante, grob) {
+    const schl = [pt, pal[0].join(","), spiel, sd[0], sd[1], kante ? 1 : 0, grob ? 1 : 0].join("|");
+    let K = BKACHELN.get(schl);
+    if (K) return K;
+    const Wt = BK.W, Ht = BK.H, saat = 1 + spiel * 17;
+    const cw = Math.max(2, Math.round(Wt * pt)), ch = Math.max(2, Math.round(Ht * pt));
+    if (bkPixel + cw * ch > 28e6) { BKACHELN.clear(); bkPixel = 0; }
+    const cv = document.createElement("canvas"); cv.width = cw; cv.height = ch;
+    const g = cv.getContext("2d");
+    g.scale(cw / Wt, ch / Ht);
+    g.fillStyle = rgbS(mo); g.fillRect(0, 0, Wt, Ht);
+    const px = pt, nF = pal.length, eimer = [];
+    for (let i = 0; i < nF * 3; i++) eimer.push(new Path2D());
+    const m = Math.max(0.02, 0.9 / px);
+    const J = (a, b, c) => (hash(a, b, c) - 0.5);
+    /* ein Stein (Kachelkoordinaten: x, z nach oben; gemalt bei y = Ht − z) */
+    const stein = (a, b, u, o, rs, k) => {
+      const w = b - a, h = o - u;
+      if (w < 0.03 || h < 0.03) return;
+      const p = eimer[k];
+      if (grob) { p.rect(a, Ht - o, w, h); return; }
+      const j = Math.min(0.022, h * 0.12, w * 0.1), kk = Math.min(h, w) * 0.34, ecken = [];
+      /* Ecke (x, z), dx/dz ins Innere; senkrecht = erst der Punkt auf der
+         senkrechten Kante (Umlauf gegen den Uhrzeiger), abgeschlagene
+         Ecken werden zu zwei Punkten */
+      const eck = (x, z, dx, dz, n, senkrecht) => {
+        if (hash(rs, n, 3) < 0.55) {
+          const t1 = kk * (0.25 + 0.75 * hash(rs, n, 4)), t2 = kk * (0.25 + 0.75 * hash(rs, n, 5));
+          const pv = [x, z + dz * t2], ph = [x + dx * t1, z];
+          if (senkrecht) ecken.push(pv, ph); else ecken.push(ph, pv);
+        } else ecken.push([x + J(rs, n, 6) * j, z + J(rs, n, 7) * j]);
+      };
+      const schief = J(rs, 9, 1) * Math.min(0.05, h * 0.2);
+      eck(a, u, 1, 1, 1, true);
+      if (w > 0.35 && hash(rs, 11, 2) < 0.5) ecken.push([a + w * (0.3 + 0.4 * hash(rs, 12, 2)), u + J(rs, 13, 2) * j * 1.4]);
+      eck(b, u, -1, 1, 2, false);
+      eck(b, o + schief, -1, -1, 3, true);
+      if (w > 0.35 && hash(rs, 14, 2) < 0.5) ecken.push([a + w * (0.3 + 0.4 * hash(rs, 15, 2)), o + J(rs, 16, 2) * j * 1.4]);
+      eck(a, o - schief, 1, -1, 4, false);
+      p.moveTo(ecken[0][0], Ht - ecken[0][1]);
+      for (let q = 1; q < ecken.length; q++) p.lineTo(ecken[q][0], Ht - ecken[q][1]);
+      p.closePath();
+    };
+    /* Farbgruppen: niederfrequent über x und Lage, Abstufung je Stein
+       (x über die Kachelbreite periodisch) */
+    const farbe = (xm, rr, rs) => {
+      const nG = 4, xs = ((xm % Wt) + Wt) % Wt;
+      const gi = Math.floor(xs / Wt * nG + ((rr % BK_N + BK_N) % BK_N) * 0.23) % nG, gj = Math.floor(((rr % BK_N + BK_N) % BK_N) / 3);
+      const basis = (hash(gi, gj, saat + 31) * nF) | 0;
+      const nb = hash(rs, 17, 1) < 0.18 ? (basis + 1 + ((hash(rs, 18, 1) * (nF - 1)) | 0)) % nF : basis;
+      return nb * 3 + ((hash(rs, 19, 1) * 3) | 0);
+    };
+    /* Lage r: Fugenraster so, dass genau N Steine auf die Kachelbreite gehen */
+    const raster = (r) => {
+      const n = ((r % BK_N) + BK_N) % BK_N;
+      const c0 = grob ? 1.0 : 0.5 + 0.28 * hash(n, 13, saat), N = Math.max(3, Math.round(Wt / c0)), c = Wt / N;
+      return { n: n, N: N, c: c, off: hash(n, 7, saat) * c };
+    };
+    const binder = (n, i, N) => !grob && n % 2 === 0 && n < BK_N - 1 && hash(((i % N) + N) % N, n, saat + 21) < 0.07;
+    for (let r = -2; r <= BK_N + 1; r++) {
+      const [za, zb, n] = lage(r), R = raster(r);
+      if (zb < -0.5 || za > Ht + 0.5) continue;
+      const imod = (i) => ((i % R.N) + R.N) % R.N;
+      const fuge = (i) => R.off + i * R.c + J(imod(i), n, saat) * R.c * 0.44;
+      /* Binder der Lage darunter: dort kein Stein */
+      const belegt = [];
+      if (n % 2 === 1 && !grob) {
+        const U = raster(r - 1);
+        const f2 = (i) => U.off + i * U.c + J(((i % U.N) + U.N) % U.N, U.n, saat) * U.c * 0.44;
+        for (let i = -2; i <= U.N + 1; i++) if (binder(U.n, i, U.N)) belegt.push([f2(i) - m, f2(i + 1) + m]);
+      }
+      for (let i = -2; i <= R.N + 1; i++) {
+        let a = fuge(i), b = fuge(i + 1);
+        if (b < -0.3 || a > Wt + 0.3) continue;
+        if (belegt.length && belegt.some(([p0, p1]) => b > p0 && a < p1)) {
+          let frei = true;
+          for (const [p0, p1] of belegt) { if (a >= p0 && b <= p1) frei = false; else if (a < p0 && b > p0) b = p0; else if (a < p1 && b > p1) a = p1; }
+          if (!frei || b - a < 0.08) continue;
+        }
+        const im = imod(i), rs = (im * 7919 + n * 104729 + saat * 31) | 0;
+        const zw = !grob && hash(im, n, saat + 5) < 0.18;
+        const ma = m / 2 + (zw ? 0.035 : 0), mb = m / 2;
+        const hochB = binder(n, i, R.N);
+        const zO = hochB ? lage(r + 1)[1] : zb;
+        const u = za + m / 2 + (px > 22 ? hash(im, n, saat + 8) * 0.012 : 0);
+        const teile = !grob && !hochB && hash(im, n, saat + 1) < 0.3 ? [a, a + (b - a) * (0.35 + 0.3 * hash(im, n, saat + 2)), b] : [a, b];
+        for (let q = 0; q < teile.length - 1; q++) {
+          const sa = teile[q] + (q === 0 ? ma : m / 2), sb = teile[q + 1] - (q === teile.length - 2 ? mb : m / 2);
+          const rq = rs + q * 13;
+          const niedrig = !grob && !hochB && hash(rq, 21, 3) < 0.34;
+          const o = niedrig ? u + (zO - u) * (0.52 + 0.22 * hash(rq, 22, 3)) : zO - m / 2;
+          stein(sa, sb, u, o, rq, farbe((sa + sb) / 2, r, rq));
+          if (niedrig && zO - m / 2 - (o + m) > 0.045) {
+            /* flache Ausgleichsplatte darüber (ein oder zwei Stücke) */
+            const zwei = sb - sa > 0.5 && hash(rq, 23, 3) < 0.5;
+            const tm = zwei ? sa + (sb - sa) * (0.4 + 0.2 * hash(rq, 24, 3)) : sb;
+            stein(sa + 0.01, tm - m / 2, o + m, zO - m / 2, rq + 5, farbe(sa + 0.3, r + 1, rq + 5));
+            if (zwei) stein(tm + m / 2, sb - 0.01, o + m, zO - m / 2, rq + 7, farbe(sb, r + 1, rq + 7));
+          }
+        }
+        if (zw) {
+          const zh = Math.min(0.09, (zb - za) * 0.4), zz = za + (zb - za) * (0.3 + 0.35 * hash(im, n, saat + 6));
+          stein(a + m / 2 - 0.005, a + m / 2 + 0.045, zz, zz + zh, rs + 3, farbe(a, r, rs + 3));
         }
       }
     }
-    const sv = F.schatten ? F.schatten(0.022) : null;
-    if (sv && !grob) { g.save(); g.translate(sv[0], sv[1]); g.fillStyle = "rgba(58,50,42,0.5)"; g.fill(alle); g.restore(); }
-    for (let i = 0; i < 8; i++) { g.fillStyle = rgbS(BRUCH[i]); g.fill(eimer[i]); }
-    if (fein && sv) {
-      /* Lichtkante: die der Sonne zugewandte Steinkante hellt auf */
-      g.save(); g.globalCompositeOperation = "screen"; g.translate(-sv[0] * 0.35, -sv[1] * 0.35);
-      g.strokeStyle = "rgba(120,110,90,0.35)"; g.lineWidth = Math.max(0.006, 0.7 / px); g.stroke(alle); g.restore();
+    /* Schattenkante: die zurückgesetzte Fuge liegt unter jedem Stein im
+       Schatten – bei Sonne in Lichtrichtung, sonst senkrecht darunter */
+    if (!grob) {
+      g.save(); g.translate(sd[0], Math.max(m * 0.55, sd[1])); g.fillStyle = sd[2] ? "rgba(44,38,34,0.55)" : "rgba(40,34,30,0.42)";
+      for (const p of eimer) g.fill(p);
+      g.restore();
     }
+    for (let i = 0; i < nF; i++) for (let v = 0; v < 3; v++) { g.fillStyle = rgbS(hellF(pal[i], (v - 1) * 0.055)); g.fill(eimer[i * 3 + v]); }
+    if (kante) {
+      /* Lichtkante: die der Sonne zugewandte Steinkante hellt auf */
+      g.save(); g.globalCompositeOperation = "screen"; g.translate(-sd[0] * 0.3, -sd[1] * 0.3);
+      g.strokeStyle = "rgba(120,110,92,0.32)"; g.lineWidth = Math.max(0.006, 0.7 / px);
+      for (const p of eimer) g.stroke(p);
+      g.restore();
+    }
+    /* feines Korn gleich in die Kachel (0,6 m geht 12- und 6-mal auf –
+       nahtlos), statt es auf jeder Wand neu zu legen */
+    if (px > 22) rausch(g, 0, 0, Wt, Ht, 0.6, 0.16, saat + 5, 3);
+    K = { bild: cv, cw: cw, ch: ch };
+    BKACHELN.set(schl, K); bkPixel += cw * ch;
+    return K;
+  }
+  function bruchstein(g, F, I, x0, y0, x1, y1, saat) {
+    const px = F.px, W = I.W, pal = W.bruch || BRUCH_ROT, mo = W.moertel || MOERTEL_ROT;
+    if (px < 7) {
+      g.fillStyle = rgbS(mo); g.fillRect(x0, y0, x1 - x0, y1 - y0);
+      const mitte = pal.reduce((a, c) => [a[0] + c[0] / pal.length, a[1] + c[1] / pal.length, a[2] + c[2] / pal.length], [0, 0, 0]);
+      g.fillStyle = rgbS(mischF(mitte, mo, 0.18)); g.fillRect(x0, y0, x1 - x0, y1 - y0);
+      rausch(g, x0, y0, x1 - x0, y1 - y0, 3.4, 0.22, saat, 3);
+      return;
+    }
+    const sv = F.schatten ? F.schatten(0.028) : null;
+    const sd = sv ? [Math.round(sv[0] / 0.006) * 0.006, Math.round(sv[1] / 0.006) * 0.006, 1] : [0, 0, 0];
+    const pt = Math.min(360, Math.pow(2, Math.ceil(Math.log2(Math.max(F.pxU || px, F.pxV || px) * 1.05) * 4) / 4));
+    const K = bruchKachel(pt, pal, W.moertel || MOERTEL_ROT, Math.abs(saat | 0) % 3, sd, px > 40 && !!sv, px < 15);
+    const mu = g.createPattern(K.bild, "repeat");
+    /* Kachel an Welt: Kachel-y = B + H (B = −Höhe), x = A */
+    mu.setTransform(new DOMMatrix([BK.W / K.cw, 0, 0, BK.H / K.ch, 0, -BK.H]));
+    g.fillStyle = mu; g.fillRect(x0, y0, x1 - x0, y1 - y0);
     rausch(g, x0, y0, x1 - x0, y1 - y0, 3.6, 0.22, saat, 4);
-    if (px > 22) rausch(g, x0, y0, x1 - x0, y1 - y0, 0.55, 0.16, saat + 5, 3);
   }
 
   /* Quadermauerwerk (Werkstein) — Strebepfeiler, Portal, Sockel */
@@ -596,9 +752,10 @@
     const sv = F.schatten ? F.schatten(0.012) : null;
     if (sv && px > 14) { g.save(); g.translate(sv[0], sv[1]); g.fillStyle = "rgba(60,40,34,0.42)"; g.fill(alle); g.restore(); }
     for (let i = 0; i < 6; i++) { g.fillStyle = rgbS(hellF(c, (i - 2.5) * 0.045)); g.fill(eimer[i]); }
-    rausch(g, x0, y0, x1 - x0, y1 - y0, 2.6, 0.2, saat + 2, 4);
-    if (px > 24) rausch(g, x0, y0, x1 - x0, y1 - y0, 0.38, 0.14, saat + 9, 3);
-    if (px > 55) {
+    /* Rauschen: auf schmalen Flächen (Pfeiler) nur einmal, feines Korn erst nah */
+    if (!opt.einmal) rausch(g, x0, y0, x1 - x0, y1 - y0, 2.6, 0.2, saat + 2, 4);
+    if (px > 24) rausch(g, x0, y0, x1 - x0, y1 - y0, opt.einmal ? 0.9 : 0.38, opt.einmal ? 0.22 : 0.14, saat + 9, 3);
+    if (px > 55 && (F.sicht == null || F.sicht > 0.3) && !opt.ohneHiebe) {
       /* Scharrierung: feine senkrechte Hiebe des Steinmetzen */
       g.strokeStyle = rgbS(hellF(c, -0.25), 0.16); g.lineWidth = Math.max(0.003, 0.6 / px);
       g.beginPath();
@@ -625,9 +782,11 @@
     for (let i = 0; i < 3; i++) { g.fillStyle = rgbS(hellF(c, (i - 1) * 0.06)); g.fill(eimer[i]); }
   }
   /* Sockel mit Schräge */
-  function sockel(g, F, I, x0, x1, zS, saat) {
+  function sockel(g, F, I, x0, x1, zS, saat, schlicht) {
     const c = hellF(I.W.werk, -0.06);
-    quader(g, F, I, x0, -zS + 0.13, x1, 0.02, saat + 70, { lage: (zS - 0.13) / 2, farbe: c, block: 1.1 });
+    /* auf Pfeilern ist schon alles Quader: dort nur Schräge und Spritzwasser */
+    if (!schlicht) quader(g, F, I, x0, -zS + 0.13, x1, 0.02, saat + 70, { lage: (zS - 0.13) / 2, farbe: c, block: 1.1, einmal: x1 - x0 < 1.2 });
+    else { g.fillStyle = rgbS(c, 0.35); g.fillRect(x0, -zS + 0.13, x1 - x0, zS - 0.11); }
     /* Sockelschräge: zeigt nach oben, hell */
     g.fillStyle = rgbS(hellF(I.W.werk, 0.16)); g.fillRect(x0, -zS, x1 - x0, 0.1);
     g.fillStyle = rgbS(hellF(I.W.werk, -0.3), 0.8); g.fillRect(x0, -zS + 0.1, x1 - x0, 0.03);
@@ -746,62 +905,108 @@
     g.fillStyle = "rgba(210,224,244," + (0.05 + 0.12 * tag).toFixed(3) + ")";
     g.beginPath(); g.moveTo(x + w * 0.1, bU); g.lineTo(x + w * 0.62, bA); g.lineTo(x + w * 0.85, bA); g.lineTo(x + w * 0.33, bU); g.closePath(); g.fill();
   }
-  /* Bleiglas bei Nacht (in „danach"): innen brennt Licht. Aufbau wie in
-     einer echten Dorfkirche: Rautenfeld aus hellem, leicht gelblichem
-     Glas (Grisaille), farbige Randborte, je Bahn zwei Medaillons (tiefblau
-     mit goldenem und rotem Innenfeld), das Maßwerk oben rubinrot/blau. */
+  /* Bleiglas bei Nacht (in „danach"): innen brennen Leuchter und Kerzen.
+     XANDER: „Das soll keine Comic Grafik sein." – von außen sieht man
+     darum kein Leuchtschild, sondern ein gedämpftes, warmes Glühen:
+     Deckkraft 55–70 %, jedes Glasfeld eine Spur anders hell und warm,
+     unten wärmer und heller (Leuchter und Kerzen auf Augenhöhe), oben
+     dunkler (dort ist das Gewölbe). Die Farben tief wie mundgeblasenes
+     Antikglas – Kobalt, Rubin, Bernstein –, farbig sind nur die schmale
+     Randborte, das Medaillon und das Maßwerk. Das Medaillon zeigt erst
+     aus der Nähe eine Figur, gemalt wie mit Schwarzlot: Kopf mit Nimbus,
+     Gewand mit Faltenwurf. Die Bleiruten sind dunkel und wachsen mit dem
+     Zoom. */
+  const GLAS = { kobalt: [30, 50, 150], rubin: [140, 20, 30], bernstein: [220, 150, 60], gruen: [60, 110, 60], kathedral: [236, 186, 110] };
   function glasNacht(g, F, x, bS, w, bU, saat, n, k) {
     const a = F.nacht * (k == null ? 1 : k);
     if (a < 0.02) return;
     const bA = bS - spitzH(w), h = bU - bA, px = F.px;
     const A = (v) => (v * a).toFixed(3);
-    /* Grundschein: unten wärmer (Kerzen), oben kühler */
+    const rg = (c, al) => "rgba(" + (c[0] | 0) + "," + (c[1] | 0) + "," + (c[2] | 0) + "," + A(al) + ")";
+    /* Grundschein: oben gedämpft, unten warm */
     const gr = g.createLinearGradient(0, bA, 0, bU);
-    gr.addColorStop(0, "rgba(206,150,210," + A(0.85) + ")"); gr.addColorStop(0.3, "rgba(250,206,150," + A(0.9) + ")"); gr.addColorStop(1, "rgba(255,196,120," + A(0.95) + ")");
+    gr.addColorStop(0, rg([150, 96, 58], 0.5)); gr.addColorStop(0.4, rg([212, 146, 76], 0.6)); gr.addColorStop(1, rg([240, 176, 96], 0.68));
     g.fillStyle = gr; g.fillRect(x - 0.1, bA - 0.1, w + 0.2, h + 0.2);
     if (px * w < 12) return;
-    const nb = n || 1, wl = w / nb, bo = wl * 0.13;
-    const blei = "rgba(38,26,24," + A(0.85) + ")", lw = Math.max(0.008, 0.8 / px);
+    const nb = n || 1, wl = w / nb, bo = Math.max(0.05, wl * 0.1);
+    const lw = Math.max(0.012, 1.1 / px) * (px > 40 ? 1.35 : 1);
+    const blei = "rgba(22,14,10," + A(0.9) + ")";
+    const rng = zuf(saat * 7 + 3);
     for (let i = 0; i < nb; i++) {
       const xi = x + i * wl;
       g.save(); g.beginPath(); spitz(g, xi, bS, wl, bU); g.clip();
-      /* Randborte: rubinrot und blau im Wechsel */
-      for (let yy = bA - 0.2, m = 0; yy < bU; yy += 0.3, m++) { g.fillStyle = m % 2 ? "rgba(60,90,220," + A(0.95) + ")" : "rgba(214,40,52," + A(0.95) + ")"; g.fillRect(xi - 0.1, yy, wl + 0.2, 0.3); }
-      /* Rautenfeld */
-      const ix = xi + bo, iw = wl - 2 * bo;
-      g.beginPath(); spitz(g, ix, bS, iw, bU - bo * 0.6); g.save(); g.clip();
-      const gf = g.createLinearGradient(0, bA, 0, bU);
-      gf.addColorStop(0, "rgba(236,214,190," + A(0.95) + ")"); gf.addColorStop(1, "rgba(255,226,160," + A(1) + ")");
-      g.fillStyle = gf; g.fillRect(ix - 0.1, bA - 0.1, iw + 0.2, h + 0.2);
-      if (px * iw > 16) {
-        const d = Math.max(0.12, iw / 3);
-        g.strokeStyle = blei; g.lineWidth = lw; g.beginPath();
-        for (let t = -h; t < iw + h; t += d) { g.moveTo(ix + t, bU); g.lineTo(ix + t + h * 0.6, bA); g.moveTo(ix + t, bA); g.lineTo(ix + t + h * 0.6, bU); }
-        g.stroke();
+      /* Randborte: kurze Stücke Rubin und Kobalt, jedes etwas anders */
+      for (let yy = bA - 0.2, m = 0; yy < bU; yy += 0.24, m++) {
+        const c = m % 2 ? GLAS.kobalt : GLAS.rubin, f = 0.85 + 0.3 * rng();
+        g.fillStyle = rg([c[0] * f, c[1] * f, c[2] * f], 0.62); g.fillRect(xi - 0.1, yy, wl + 0.2, 0.24);
       }
-      /* Medaillons */
-      for (const [t, innen] of [[0.42, [236, 176, 60]], [0.72, [206, 44, 56]]]) {
-        const cx = ix + iw / 2, cy = bA + h * t, r = iw * 0.44;
-        g.fillStyle = "rgba(44,70,206," + A(1) + ")"; g.beginPath(); g.arc(cx, cy, r, 0, 2 * Math.PI); g.fill();
-        g.fillStyle = rgbS(innen, A(1)); g.beginPath(); g.arc(cx, cy, r * 0.66, 0, 2 * Math.PI); g.fill();
-        if (px * r > 10) {
-          /* angedeutete Figur: Heiligenschein und Gewand */
-          g.fillStyle = "rgba(255,240,190," + A(1) + ")"; g.beginPath(); g.arc(cx, cy - r * 0.28, r * 0.17, 0, 2 * Math.PI); g.fill();
-          g.fillStyle = "rgba(90,40,120," + A(0.9) + ")"; g.beginPath(); g.moveTo(cx, cy - r * 0.12); g.lineTo(cx + r * 0.3, cy + r * 0.55); g.lineTo(cx - r * 0.3, cy + r * 0.55); g.closePath(); g.fill();
+      /* Innenfeld: Rautenverglasung aus Kathedralglas, jede Raute eigen */
+      const ix = xi + bo, iw = wl - 2 * bo;
+      g.save(); g.beginPath(); spitz(g, ix, bS, iw, bU - bo * 0.6); g.clip();
+      const d = Math.max(0.12, iw / 3.2), dh = d * 1.45, rauten = new Path2D();
+      for (let yy = bA - dh, r = 0; yy < bU + dh; yy += dh / 2, r++) {
+        for (let xx = ix - d + (r % 2) * d / 2; xx < ix + iw + d; xx += d) {
+          const t = klemm((yy - bA) / h, 0, 1);
+          const f = (0.72 + 0.5 * rng()) * (0.7 + 0.35 * t);
+          let c = GLAS.kathedral;
+          const z = rng();
+          if (z < 0.06) c = mischF(c, [196, 206, 140], 0.6); else if (z < 0.1) c = mischF(c, [230, 150, 120], 0.5);
+          g.fillStyle = rg([Math.min(255, c[0] * f), Math.min(255, c[1] * f), Math.min(255, c[2] * f)], 0.55 + 0.12 * t);
+          const pr = new Path2D(); pr.moveTo(xx + d / 2, yy); pr.lineTo(xx + d, yy + dh / 2); pr.lineTo(xx + d / 2, yy + dh); pr.lineTo(xx, yy + dh / 2); pr.closePath();
+          g.fill(pr); rauten.addPath(pr);
         }
-        g.strokeStyle = blei; g.lineWidth = lw * 1.4; g.beginPath(); g.arc(cx, cy, r, 0, 2 * Math.PI); g.moveTo(cx + r * 0.66, cy); g.arc(cx, cy, r * 0.66, 0, 2 * Math.PI); g.stroke();
+      }
+      /* Bleiruten genau auf den Rautenkanten */
+      if (px * iw > 14) { g.strokeStyle = blei; g.lineWidth = lw; g.stroke(rauten); }
+      /* Medaillon mit Figur */
+      const cx = ix + iw / 2, cy = bA + h * 0.56, r = iw * 0.44;
+      if (px * r > 5) {
+        g.fillStyle = rg(GLAS.kobalt, 0.66); g.beginPath(); g.arc(cx, cy, r, 0, 2 * Math.PI); g.fill();
+        const innen = (saat + i) % 3 === 0 ? GLAS.rubin : (saat + i) % 3 === 1 ? [46, 92, 52] : [180, 110, 40];
+        g.fillStyle = rg(innen, 0.62); g.beginPath(); g.arc(cx, cy, r * 0.8, 0, 2 * Math.PI); g.fill();
+        if (px * r > 25) figurSchwarzlot(g, cx, cy, r * 0.8, a, i + saat, lw);
+        g.strokeStyle = blei; g.lineWidth = lw * 1.3; g.beginPath(); g.arc(cx, cy, r, 0, 2 * Math.PI); g.moveTo(cx + r * 0.8, cy); g.arc(cx, cy, r * 0.8, 0, 2 * Math.PI); g.stroke();
       }
       g.restore();
-      g.strokeStyle = blei; g.lineWidth = lw * 1.4; g.beginPath(); spitz(g, ix, bS, iw, bU - bo * 0.6); g.stroke();
+      g.strokeStyle = blei; g.lineWidth = lw * 1.3; g.beginPath(); spitz(g, ix, bS, iw, bU - bo * 0.6); g.stroke();
+      /* Querstangen (Windeisen) */
+      if (px * wl > 18) { g.strokeStyle = "rgba(14,10,8," + A(0.9) + ")"; g.lineWidth = lw * 1.6; g.beginPath(); for (let yy = bA + h * 0.3; yy < bU - 0.1; yy += 0.62) { g.moveTo(xi, yy); g.lineTo(xi + wl, yy); } g.stroke(); }
       g.restore();
     }
-    /* Maßwerk oben: Kreis rubinrot, Pässe blau */
+    /* Maßwerk oben: Vierpass in Kobalt mit rubinroten Nasen, Mitte Bernstein */
     if (nb === 2) {
       const r = w / 4, cy = bS - w * 0.559;
-      const gm = g.createRadialGradient(x + w / 2, cy, 0, x + w / 2, cy, r);
-      gm.addColorStop(0, "rgba(255,226,140," + A(1) + ")"); gm.addColorStop(0.5, "rgba(220,50,60," + A(0.95) + ")"); gm.addColorStop(1, "rgba(60,80,220," + A(0.95) + ")");
-      g.fillStyle = gm; g.beginPath(); g.arc(x + w / 2, cy, r, 0, 2 * Math.PI); g.fill();
+      g.fillStyle = rg(GLAS.kobalt, 0.64); g.beginPath(); g.arc(x + w / 2, cy, r, 0, 2 * Math.PI); g.fill();
+      if (px * r > 8) { g.fillStyle = rg(GLAS.rubin, 0.62); g.beginPath(); pass(g, x + w / 2, cy, r * 0.9, 4, Math.PI / 4); g.fill(); }
+      const gm = g.createRadialGradient(x + w / 2, cy, 0, x + w / 2, cy, r * 0.45);
+      gm.addColorStop(0, rg(GLAS.bernstein, 0.7)); gm.addColorStop(1, rg(GLAS.bernstein, 0));
+      g.fillStyle = gm; g.beginPath(); g.arc(x + w / 2, cy, r * 0.45, 0, 2 * Math.PI); g.fill();
     }
+  }
+  /* Figur im Medaillon, gemalt wie mit Schwarzlot auf Glas: Nimbus,
+     Kopf, Haar, Gewand mit Faltenwurf; die Linien sind dunkelbraun */
+  function figurSchwarzlot(g, cx, cy, r, a, v, lw) {
+    const A = (x) => (x * a).toFixed(3);
+    const kopf = [cx, cy - r * 0.42], kr = r * 0.17;
+    /* Nimbus */
+    g.fillStyle = "rgba(226,178,80," + A(0.7) + ")"; g.beginPath(); g.arc(kopf[0], kopf[1], kr * 1.7, 0, 2 * Math.PI); g.fill();
+    /* Gewand: glockig, Farbe je Figur */
+    const gew = v % 2 ? [236, 206, 150] : [60, 90, 170];
+    g.fillStyle = "rgba(" + gew.join(",") + "," + A(0.66) + ")";
+    g.beginPath(); g.moveTo(cx - r * 0.12, cy - r * 0.26); g.quadraticCurveTo(cx - r * 0.42, cy + r * 0.2, cx - r * 0.5, cy + r * 0.86);
+    g.lineTo(cx + r * 0.5, cy + r * 0.86); g.quadraticCurveTo(cx + r * 0.42, cy + r * 0.2, cx + r * 0.12, cy - r * 0.26); g.closePath(); g.fill();
+    /* Kopf: helles Glas */
+    g.fillStyle = "rgba(240,214,176," + A(0.7) + ")"; g.beginPath(); g.arc(kopf[0], kopf[1], kr, 0, 2 * Math.PI); g.fill();
+    /* Schwarzlot: Kontur, Augen, Haar, Falten, eine erhobene Hand */
+    g.strokeStyle = "rgba(38,22,14," + A(0.85) + ")"; g.lineWidth = Math.max(lw * 0.5, r * 0.025); g.lineCap = "round";
+    g.beginPath(); g.arc(kopf[0], kopf[1], kr, 0, 2 * Math.PI);
+    g.moveTo(kopf[0] - kr * 0.9, kopf[1] - kr * 0.2); g.quadraticCurveTo(kopf[0], kopf[1] - kr * 1.3, kopf[0] + kr * 0.9, kopf[1] - kr * 0.2);
+    for (const f of [-0.3, -0.1, 0.12, 0.32]) { g.moveTo(cx + r * f * 0.5, cy - r * 0.12); g.quadraticCurveTo(cx + r * f * 1.1, cy + r * 0.3, cx + r * f * 1.3, cy + r * 0.82); }
+    g.moveTo(cx + r * 0.14, cy - r * 0.18); g.lineTo(cx + r * 0.34, cy - r * 0.36);
+    g.stroke();
+    g.fillStyle = "rgba(38,22,14," + A(0.85) + ")";
+    for (const s of [-1, 1]) { g.beginPath(); g.arc(kopf[0] + s * kr * 0.35, kopf[1] + kr * 0.05, kr * 0.09, 0, 2 * Math.PI); g.fill(); }
+    g.lineCap = "butt";
   }
 
   /* Maßwerkfenster mit Gewände, Laibung, Glas, Sohlbank.
@@ -865,7 +1070,15 @@
   }
   function masswerkNacht(g, F, I, op) {
     if (F.nacht < 0.02 || (I.W.bau != null && !op.glas)) return;
-    const w = op.w, x = op.a - w / 2, bU = -op.z0, bS = -op.zk;
+    const w = op.w, x = op.a - w / 2, bU = -op.z0, bS = -op.zk, gw = op.gew || 0.17;
+    /* Schein auf Laibung und Sohlbank (schwach, „screen") */
+    g.save(); g.globalCompositeOperation = "screen";
+    g.fillStyle = "rgba(255,186,110," + (0.16 * F.nacht).toFixed(3) + ")";
+    g.beginPath(); spitz(g, x, bS, w, bU); g.fill();
+    const gs = g.createLinearGradient(0, bU, 0, bU + 0.5);
+    gs.addColorStop(0, "rgba(255,186,110," + (0.2 * F.nacht).toFixed(3) + ")"); gs.addColorStop(1, "rgba(255,186,110,0)");
+    g.fillStyle = gs; g.fillRect(x - gw - 0.05, bU, w + 2 * gw + 0.1, 0.5);
+    g.restore();
     g.save(); g.beginPath(); spitz(g, x, bS, w, bU); g.clip();
     const tv = tief(I, op.tiefe || 0.3);
     g.translate(tv[0], tv[1]);
@@ -877,7 +1090,7 @@
       g.lineWidth = Math.max(0.05, w * 0.045); g.strokeStyle = "rgba(40,28,26," + (0.85 * F.nacht).toFixed(3) + ")"; g.stroke(p);
     }
     g.restore();
-    lp(F, I, op.a, bS - spitzH(w) * 0.3, Math.max(1.2, w * 1.1), "190,150,255", 0.3 * (op.k == null ? 1 : op.k));
+    lp(F, I, op.a, bS - spitzH(w) * 0.3, Math.max(1.2, w * 1.1), "255,186,112", 0.26 * (op.k == null ? 1 : op.k));
   }
   /* Rundfenster (Rosette) mit Sechspass */
   function rosette(g, F, I, op) {
@@ -908,11 +1121,11 @@
     g.save(); g.beginPath(); g.arc(cx, cy, R, 0, 2 * Math.PI); g.clip();
     const tv = tief(I, 0.25); g.translate(tv[0], tv[1]);
     const gr = g.createRadialGradient(cx, cy, 0, cx, cy, R);
-    gr.addColorStop(0, "rgba(255,220,130," + (0.95 * a).toFixed(3) + ")"); gr.addColorStop(0.35, "rgba(220,60,70," + (0.85 * a).toFixed(3) + ")"); gr.addColorStop(1, "rgba(70,90,240," + (0.85 * a).toFixed(3) + ")");
+    gr.addColorStop(0, "rgba(226,160,74," + (0.68 * a).toFixed(3) + ")"); gr.addColorStop(0.4, "rgba(140,24,34," + (0.62 * a).toFixed(3) + ")"); gr.addColorStop(1, "rgba(34,52,150," + (0.62 * a).toFixed(3) + ")");
     g.fillStyle = gr; g.fillRect(cx - R, cy - R, 2 * R, 2 * R);
     if (F.px * R > 5) { const p = new Path2D(); pass(p, cx, cy, R * 0.9, 6, -Math.PI / 2); p.moveTo(cx + R * 0.2, cy); p.arc(cx, cy, R * 0.2, 0, 2 * Math.PI); g.lineWidth = Math.max(0.045, R * 0.08); g.strokeStyle = "rgba(40,28,26," + (0.85 * a).toFixed(3) + ")"; g.stroke(p); }
     g.restore();
-    lp(F, I, cx, cy, R * 2.2, "230,150,200", 0.3);
+    lp(F, I, cx, cy, R * 2.2, "255,180,110", 0.24);
   }
   /* schmales Lanzettfenster (Turm) */
   function lanzette(g, F, I, op) {
@@ -922,7 +1135,10 @@
     g.save(); g.beginPath(); spitz(g, x, bS, w, bU); g.clip();
     g.fillStyle = rgbS(hellF(c, -0.2)); g.fillRect(x - 0.3, bA - 0.3, w + 0.6, bU - bA + 0.6);
     const tv = tief(I, 0.5); g.translate(tv[0], tv[1]);
-    if (op.glas !== false) glasTag(g, F, x, bS, w, bU, 23); else { g.fillStyle = "rgb(22,20,22)"; g.fillRect(x - 0.3, bA - 0.3, w + 0.6, bU - bA + 0.6); }
+    /* verglast erst, wenn die Glaser da waren (wie die Langhausfenster) –
+       im Rohbau eine dunkle Öffnung in den Turm */
+    const zu = I.W.bau == null ? true : !!op.glas;
+    if (zu) glasTag(g, F, x, bS, w, bU, 23); else { g.fillStyle = "rgb(26,24,26)"; g.fillRect(x - 0.3, bA - 0.3, w + 0.6, bU - bA + 0.6); }
     g.translate(-tv[0], -tv[1]);
     const sv = F.schatten ? F.schatten(0.5) : null;
     if (sv) { g.beginPath(); g.rect(x - 1, bA - 1, w + 2, bU - bA + 2); spitz(g, x + sv[0], bS + sv[1], w, bU + sv[1]); g.fillStyle = "rgba(10,12,26,0.45)"; g.fill("evenodd"); }
@@ -937,7 +1153,7 @@
   /* Schallarkade: großer Spitzbogen, darin zwei offene Lanzetten mit
      Mittelsäule und ein Okulus; dahinter die Schallläden (Holzlamellen) */
   function schallarkade(g, F, I, op) {
-    const c = I.W.werk, w = op.w, x = op.a - w / 2, bU = -op.z0, bS = -op.zk, gw = 0.2, px = F.px;
+    const c = I.W.werk, w = op.w, x = op.a - w / 2, bU = -op.z0, bS = -op.zk, gw = TU.glGew, px = F.px;
     const bA = bS - spitzH(w);
     g.fillStyle = rgbS(c); g.beginPath(); spitz(g, x - gw, bS, w + 2 * gw, bU + 0.05); g.fill();
     if (px * gw > 3) {
@@ -951,7 +1167,7 @@
     g.fillStyle = rgbS(hellF(c, -0.05)); g.beginPath(); spitz(g, x, bS, w, bU); g.fill();
     rausch(g, x, bA, w, bU - bA, 1.4, 0.2, 61, 3);
     /* Öffnungen: zwei Lanzetten + Okulus */
-    const m = 0.16, wl = (w - m) / 2 - 0.06, cyO = bS - w * 0.52, rO = w * 0.17;
+    const m = 0.16, wl = (w - m) / 2 - 0.06, cyO = bS - w * 0.54, rO = w * 0.15;
     const loch = new Path2D();
     spitz(loch, x + 0.06, bS, wl, bU); spitz(loch, x + w / 2 + m / 2, bS, wl, bU);
     loch.moveTo(x + w / 2 + rO, cyO); loch.arc(x + w / 2, cyO, rO, 0, 2 * Math.PI);
@@ -968,9 +1184,6 @@
       }
     }
     g.restore();
-    /* Schatten der Säule und des Bogenfelds in die Öffnungen */
-    const sv = F.schatten ? F.schatten(0.3) : null;
-    if (sv) { g.save(); g.clip(loch); g.fillStyle = "rgba(0,0,0,0.35)"; g.beginPath(); g.rect(x - 1, bA - 1, w + 2, bU - bA + 2); g.translate(sv[0], sv[1]); g.fillStyle = "rgba(0,0,0,0.35)"; g.restore(); }
     /* Mittelsäule mit Kapitell und Basis */
     if (px * m > 1.5) {
       const xs = x + w / 2 - m / 2;
@@ -1017,7 +1230,7 @@
       for (let i = 0; i < 12; i++) { g.save(); g.translate(cx, cy); g.rotate(i * Math.PI / 6); g.fillText(ROEM[i], 0, -R * 0.79); g.restore(); }
       g.lineWidth = Math.max(0.006, R * 0.012);
       g.beginPath(); for (let i = 0; i < 60; i++) { const a = i * Math.PI / 30; g.moveTo(cx + Math.sin(a) * R * 0.9, cy - Math.cos(a) * R * 0.9); g.lineTo(cx + Math.sin(a) * R * (i % 5 ? 0.87 : 0.84), cy - Math.cos(a) * R * (i % 5 ? 0.87 : 0.84)); } g.stroke();
-    } else if (px * R > 6) {
+    } else if (px * R > 4.5) {
       g.fillStyle = gold;
       for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; g.beginPath(); g.arc(cx + Math.sin(a) * R * 0.8, cy - Math.cos(a) * R * 0.8, R * (i % 3 ? 0.05 : 0.08), 0, 2 * Math.PI); g.fill(); }
     }
@@ -1150,7 +1363,10 @@
       g.globalCompositeOperation = "screen"; g.fillStyle = "rgba(90,74,60,0.35)"; g.fillRect(x - 1, bA - 1, w + 2, bU - bA + 2);
       g.restore();
     }
-    if (I.W.winter && op.kranz && (I.W.bau == null || I.W.deko)) adventskranz(g, F, x + w / 2, sturz + hT * 0.36, Math.min(0.42, w * 0.2));
+    if (op.kranz && (I.W.bau == null || I.W.deko)) {
+      if (I.W.winter) adventskranz(g, F, x + w / 2, sturz + hT * 0.36, Math.min(0.42, w * 0.2));
+      else osterkranz(g, F, x + w / 2, sturz + hT * 0.36, Math.min(0.42, w * 0.2));
+    }
   }
   /* Adventskranz an der Tür: Tannengrün, rote Schleife, vier Kerzen */
   function adventskranz(g, F, cx, cy, R) {
@@ -1195,20 +1411,86 @@
       lp(F, I, kx, ky, 0.5, "255,190,110", 0.35);
     }
   }
-  /* Wie viele Adventskerzen brennen? Im Advent nach dem Datum, sonst alle */
-  function adventKerzen() {
-    const d = new Date(), j = d.getFullYear();
-    const hl = new Date(j, 11, 24), a4 = new Date(j, 11, 24 - ((hl.getDay() + 7) % 7 || 7));
-    let n = 0;
-    for (let k = 3; k >= 0; k--) { const s = new Date(a4.getTime() - k * 7 * 864e5); if (d >= s) n++; }
-    return d.getMonth() === 11 && d.getDate() <= 26 && n > 0 ? n : 4;
+  /* Wie viele Adventskerzen brennen? Nach dem Datum in Deutschland
+     (Europe/Berlin, wie die Turmuhr): der 4. Advent ist der Sonntag vor
+     dem 24.12. – fällt Heiligabend selbst auf einen Sonntag, ist er der
+     4. Advent. Der 1. Advent liegt drei Wochen davor (kann im November
+     sein: 2026 am 29.11.). Vom 1. Advent an je Sonntag eine Kerze mehr,
+     ab Heiligabend bis Dreikönig brennen alle vier.
+     Außerhalb dieser Zeit zeigt die Winterfassung trotzdem ein
+     geschmücktes Weihnachtsdorf (Christbäume, Stern, Girlande) – dann
+     brennen, wie in der Weihnachtszeit, alle vier; ein Kranz ohne Licht
+     neben leuchtendem Stern und Lichterketten wirkte wie vergessen. */
+  let DATUM_FORMAT = null;
+  function heuteBerlin() {
+    const d = new Date();
+    try {
+      if (!DATUM_FORMAT) DATUM_FORMAT = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", year: "numeric", month: "numeric", day: "numeric" });
+      const t = {}; for (const p of DATUM_FORMAT.formatToParts(d)) t[p.type] = +p.value;
+      return { j: t.year, m: t.month, t: t.day };
+    } catch (e) { return { j: d.getFullYear(), m: d.getMonth() + 1, t: d.getDate() }; }
   }
+  function adventKerzen(datum) {
+    const d = datum || heuteBerlin(), TAG = 864e5;
+    const heute = Date.UTC(d.j, d.m - 1, d.t);
+    const heiligabend = Date.UTC(d.j, 11, 24);
+    const a4 = heiligabend - new Date(heiligabend).getUTCDay() * TAG, a1 = a4 - 21 * TAG;
+    if (heute >= a1 && heute < heiligabend) { let n = 0; for (let k = 0; k < 4; k++) if (heute >= a1 + k * 7 * TAG) n++; return n; }
+    return 4;
+  }
+  ST.kircheAdvent = adventKerzen;     // zum Prüfen: STADT.kircheAdvent({ j: 2026, m: 11, t: 29 })
 
   /* =====================================================================
      DACH: SCHUPPENSCHIEFER, SCHNEE
      ===================================================================== */
   /* Schiefer in (A, B): A entlang der Traufe, B vom First zur Traufe.
-     Reihen von der Traufe (bE) nach oben, jede Reihe überdeckt die untere. */
+     Reihen von der Traufe (bE) nach oben, jede Reihe überdeckt die untere.
+     RECHENZEIT: Die Schuppen werden nicht Stück für Stück in jede
+     Dachfläche gemalt, sondern einmal als nahtlose Kachel (12 Reihen ×
+     16 Schuppen, in der Auflösung der Fläche – also ohne Pixelkanten)
+     und dann als Muster gelegt, an Traufe und Weltkoordinaten verankert.
+     Das spart bei s = 90 über eine Sekunde (Kritik Runde 1). */
+  const KACHELN = new Map();
+  let kachelPixel = 0;
+  function schieferKachel(pt, basis, rh, sw, saat, sd, rund, kante) {
+    const schl = [pt, basis.join(","), rh, sw, saat, sd[0], sd[1], rund ? 1 : 0, kante ? 1 : 0].join("|");
+    let k = KACHELN.get(schl);
+    if (k) return k;
+    const NR = 12, NC = 16, Wt = NC * sw, Ht = NR * rh;
+    const cw = Math.max(2, Math.round(Wt * pt)), ch = Math.max(2, Math.round(Ht * pt));
+    if (kachelPixel + cw * ch > 24e6) { KACHELN.clear(); kachelPixel = 0; }
+    const cv = document.createElement("canvas"); cv.width = cw; cv.height = ch;
+    const g = cv.getContext("2d");
+    g.scale(cw / Wt, ch / Ht);
+    g.fillStyle = rgbS(hellF(basis, -0.35)); g.fillRect(0, 0, Wt, Ht);
+    const farben = [hellF(basis, -0.06), hellF(basis, -0.02), hellF(basis, 0.02), hellF(basis, 0.06), mischF(basis, [104, 102, 102], 0.18)];
+    const px = pt;
+    for (let k2 = -1; k2 < NR; k2++) {
+      const kk = ((k2 % NR) + NR) % NR;
+      const yb = Ht - k2 * rh, yt = yb - rh;
+      const off = (kk % 2) * sw / 2 + (hash(kk, 2, saat) - 0.5) * 0.04;
+      const schat = new Path2D(), eimer = farben.map(() => new Path2D()), kl = new Path2D();
+      for (let i = -1; i <= NC; i++) {
+        const ii = ((i % NC) + NC) % NC;
+        const xa = off + i * sw + 0.006, xb = off + (i + 1) * sw - 0.006, xm = (xa + xb) / 2, q = sw * 0.34;
+        const p = eimer[(hash(ii, kk, saat) * farben.length) | 0];
+        const form = (pp, dx, dy) => {
+          if (rund) {
+            pp.moveTo(xa + dx, yt - rh * 0.7 + dy); pp.lineTo(xb + dx, yt - rh * 0.7 + dy); pp.lineTo(xb + dx, yb - q + dy);
+            pp.quadraticCurveTo(xb + dx, yb + dy, xm + dx, yb + dy); pp.quadraticCurveTo(xa + dx, yb + dy, xa + dx, yb - q + dy); pp.closePath();
+          } else pp.rect(xa + dx, yt - rh * 0.5 + dy, xb - xa, rh * 1.5);
+        };
+        form(schat, sd[0], sd[1]); form(p, 0, 0);
+        if (kante) { kl.moveTo(xb, yb - q); kl.quadraticCurveTo(xb, yb, xm, yb); kl.quadraticCurveTo(xa, yb, xa, yb - q); }
+      }
+      g.fillStyle = "rgba(10,12,18,0.72)"; g.fill(schat);
+      for (let j = 0; j < farben.length; j++) { g.fillStyle = rgbS(farben[j]); g.fill(eimer[j]); }
+      if (kante) { g.strokeStyle = rgbS(hellF(basis, 0.3), 0.45); g.lineWidth = Math.max(0.005, 0.8 / px); g.stroke(kl); }
+    }
+    k = { bild: cv, Wt: Wt, Ht: Ht, cw: cw, ch: ch };
+    KACHELN.set(schl, k); kachelPixel += cw * ch;
+    return k;
+  }
   function schiefer(g, F, I, x0, y0, x1, y1, bE, opt) {
     opt = opt || {};
     const px = F.px, rh = opt.reihe || 0.17, sw = opt.breite || 0.25, saat = opt.saat || 1;
@@ -1222,31 +1504,14 @@
     }
     const rund = px * sw > 7;
     const sv = F.schatten ? F.schatten(0.014) : null;
-    const sd = sv ? [sv[0], Math.max(0.012, sv[1])] : [0, 0.014];
-    const farben = [hellF(basis, -0.06), hellF(basis, -0.02), hellF(basis, 0.02), hellF(basis, 0.06), mischF(basis, [104, 102, 102], 0.18)];
-    for (let k = k0; k < k1; k++) {
-      const yb = bE - k * rh, yt = yb - rh;
-      if (yb < y0 - rh || yt > y1 + rh) continue;
-      const off = (k % 2) * sw / 2 + (hash(k, 2, saat) - 0.5) * 0.04;
-      const i0 = Math.floor((x0 - off) / sw) - 1, i1 = Math.floor((x1 - off) / sw) + 1;
-      const schat = new Path2D(), eimer = farben.map(() => new Path2D()), kante = new Path2D();
-      for (let i = i0; i <= i1; i++) {
-        const xa = off + i * sw + 0.006, xb = off + (i + 1) * sw - 0.006, xm = (xa + xb) / 2;
-        const q = sw * 0.34;
-        const p = eimer[(hash(i, k, saat) * farben.length) | 0];
-        const form = (pp, dx, dy) => {
-          if (rund) {
-            pp.moveTo(xa + dx, yt - rh * 0.7 + dy); pp.lineTo(xb + dx, yt - rh * 0.7 + dy); pp.lineTo(xb + dx, yb - q + dy);
-            pp.quadraticCurveTo(xb + dx, yb + dy, xm + dx, yb + dy); pp.quadraticCurveTo(xa + dx, yb + dy, xa + dx, yb - q + dy); pp.closePath();
-          } else pp.rect(xa + dx, yt - rh * 0.5 + dy, xb - xa, rh * 1.5);
-        };
-        form(schat, sd[0], sd[1]); form(p, 0, 0);
-        if (rund && px > 34) { kante.moveTo(xb, yb - q); kante.quadraticCurveTo(xb, yb, xm, yb); kante.quadraticCurveTo(xa, yb, xa, yb - q); }
-      }
-      g.fillStyle = "rgba(10,12,18,0.72)"; g.fill(schat);
-      for (let j = 0; j < farben.length; j++) { g.fillStyle = rgbS(farben[j]); g.fill(eimer[j]); }
-      if (rund && px > 34) { g.strokeStyle = rgbS(hellF(basis, 0.3), 0.45); g.lineWidth = Math.max(0.005, 0.8 / px); g.stroke(kante); }
-    }
+    /* Schlagschatten der Schuppen: auf 5 mm gerundet (wenige Kacheln) */
+    const sd = sv ? [Math.round(sv[0] / 0.005) * 0.005, Math.max(0.01, Math.round(sv[1] / 0.005) * 0.005)] : [0, 0.015];
+    /* Kachel-Auflösung: die feinere Richtung der Fläche, in Viertel-Oktaven */
+    const pt = Math.min(420, Math.pow(2, Math.ceil(Math.log2(Math.max(F.pxU || px, F.pxV || px) * 1.05) * 4) / 4));
+    const K = schieferKachel(pt, basis, rh, sw, saat % 3, sd, rund, rund && px > 34);
+    const mu = g.createPattern(K.bild, "repeat");
+    mu.setTransform(new DOMMatrix([K.Wt / K.cw, 0, 0, K.Ht / K.ch, (saat * 1.37) % K.Wt, bE - K.Ht]));
+    g.fillStyle = mu; g.fillRect(x0, y0, x1 - x0, y1 - y0);
     rausch(g, x0, y0, x1 - x0, y1 - y0, 5, 0.12, saat + 3, 4);
     /* Flechten und helle Wasserspuren (nicht im Schnee zu sehen) */
     if (!I.W.winter) bleich(g, x0, y0, x1 - x0, y1 - y0, 4, 0.07, saat + 4);
@@ -1299,29 +1564,61 @@
       for (let i = 0; i < (x1 - x0) * h * 4; i++) { const r = (0.6 + rng()) / px; g.fillRect(x0 + rng() * (x1 - x0), bR + rng() * h, r, r); }
     }
   }
-  /* Schnee auf einem sehr steilen Helm: er hält nur auf den Kanten der
-     Schieferschuppen, unten dichter als oben */
+  /* Schnee auf dem steilen Helm (70–80°): auf so steilem Schiefer hält
+     Schnee kaum. Er bleibt in wenigen weichen Polstern im unteren Drittel
+     und auf den flacheren Zwickeln liegen, als schmaler Grat entlang der
+     Gratleisten (Wind drückt ihn in den Winkel) und als Saum am Fuß.
+     Darüber ist der Schiefer frei, nur mit einem Hauch bläulichem Reif.
+     Weit weg (kleine Schuppen) genügt ein weicher Verlauf. */
   function schneeSteil(g, F, I, x0, x1, bR, bE, rh, saat, menge) {
-    const h = bE - bR, px = F.px, m = menge || 1;
-    if (px * rh < 2.5) { g.fillStyle = "rgba(236,241,250," + (0.3 * m).toFixed(2) + ")"; g.fillRect(x0, bR, x1 - x0, h); return; }
-    /* Schneereste auf den Schuppenkanten: kurze, unregelmäßige Polster */
-    const p = new Path2D();
-    const n = Math.ceil(h / rh);
-    for (let k = 0; k < n; k++) {
-      const yb = bE - k * rh, unten = 1 - k / n;
-      for (let x = x0 - hash(k, 7, saat) * 0.6; x < x1; ) {
-        const l = 0.08 + 0.5 * hash(Math.round(x * 10), k, saat + 1);
-        if (hash(Math.round(x * 10), k, saat) < Math.min(0.92, (0.55 + 0.3 * (1 - unten)) / m)) { x += l; continue; }
-        const t = (0.012 + 0.045 * Math.pow(unten, 1.5)) * m * (0.6 + 0.8 * hash(Math.round(x * 10), k, saat + 2));
-        p.moveTo(x, yb); p.quadraticCurveTo(x + l * 0.5, yb - t * 2, x + l, yb); p.closePath();
-        x += l + 0.03;
-      }
+    const h = bE - bR, px = F.px, m = menge || 1, rng = zuf(saat * 31 + 5);
+    /* Reif */
+    g.save(); g.globalCompositeOperation = "screen"; g.fillStyle = "rgba(190,206,236,0.08)"; g.fillRect(x0, bR, x1 - x0, h); g.restore();
+    /* Saum am Fuß */
+    const hs = Math.min(h, 0.9 * m);
+    const gr = g.createLinearGradient(0, bE - hs, 0, bE);
+    gr.addColorStop(0, "rgba(242,246,252,0)"); gr.addColorStop(0.7, "rgba(242,246,252," + (0.5 * Math.min(1, m)).toFixed(2) + ")"); gr.addColorStop(1, "rgba(244,247,252,0.9)");
+    g.fillStyle = gr; g.fillRect(x0, bE - hs, x1 - x0, hs);
+    if (px * rh < 4) {
+      const gw = g.createLinearGradient(0, bE - h * 0.35, 0, bE);
+      gw.addColorStop(0, "rgba(236,241,250,0)"); gw.addColorStop(1, "rgba(236,241,250," + (0.35 * Math.min(1.4, m)).toFixed(2) + ")");
+      g.fillStyle = gw; g.fillRect(x0, bE - h * 0.35, x1 - x0, h * 0.35);
+      return;
     }
-    g.fillStyle = "rgba(242,246,252,0.92)"; g.fill(p);
-    /* Schneesaum am Fuß */
-    const gr = g.createLinearGradient(0, bE - 1.0 * m, 0, bE);
-    gr.addColorStop(0, "rgba(242,246,252,0)"); gr.addColorStop(1, "rgba(242,246,252,0.85)");
-    g.fillStyle = gr; g.fillRect(x0, bE - 1.0 * m, x1 - x0, 1.0 * m);
+    /* Polster: auf Schuppenreihen, unten dichter, weich auslaufend */
+    const n = Math.round((x1 - x0) * h * 0.5 * m);
+    for (let i = 0; i < n; i++) {
+      const t = Math.pow(rng(), 1.8 / m);                 // 0 = Fuß
+      if (t > 0.4 * m) continue;
+      const cy = bE - (Math.round((t * h) / rh) * rh) - rh * 0.15, cx = x0 + rng() * (x1 - x0);
+      const rx = (0.18 + rng() * 0.38) * (1 - t * 0.9), ry = 0.045 + rng() * 0.05;
+      const gg = g.createRadialGradient(cx, cy, 0, cx, cy, rx);
+      gg.addColorStop(0, "rgba(246,249,253,0.95)"); gg.addColorStop(0.55, "rgba(240,245,252,0.8)"); gg.addColorStop(1, "rgba(232,240,250,0)");
+      g.save(); g.translate(cx, cy); g.scale(1, ry / rx); g.fillStyle = gg; g.beginPath(); g.arc(0, 0, rx, 0, 2 * Math.PI); g.fill(); g.restore();
+    }
+    /* Schneegrate entlang der Gratleisten (alle Kanten außer der Traufe):
+       ein schmales, zur Spitze hin dünner werdendes Band mit welligem
+       Innenrand, nur selten unterbrochen */
+    const pts = I.fl.pts.map((p) => [dot(p, I.u), dot(p, I.v)]);
+    const mx = pts.reduce((a, p) => a + p[0], 0) / pts.length, my = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+    g.fillStyle = "rgba(244,247,252,0.9)";
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      if (Math.abs(a[1] - bE) < 0.02 && Math.abs(b[1] - bE) < 0.02) continue;
+      const L = Math.hypot(b[0] - a[0], b[1] - a[1]); if (L < 0.3) continue;
+      const tx = (b[0] - a[0]) / L, ty = (b[1] - a[1]) / L;
+      let nx = -ty, ny = tx; if ((mx - a[0]) * nx + (my - a[1]) * ny < 0) { nx = -nx; ny = -ny; }
+      const ab = 0.13, schritt = 0.15, innen = [], aussen = [];
+      for (let t = 0; t <= L + 1e-6; t += schritt) {
+        const xx = a[0] + tx * t, yy = a[1] + ty * t;
+        const unten = klemm((yy - bR) / h, 0, 1);
+        const b0 = (0.012 + 0.05 * unten * unten * Math.min(1.4, m)) * (0.6 + 0.8 * ST.rausch(t * 1.3, i * 7.1, saat));
+        aussen.push([xx + nx * ab, yy + ny * ab]); innen.push([xx + nx * (ab + b0), yy + ny * (ab + b0)]);
+      }
+      g.beginPath(); aussen.forEach((q, k) => (k ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])));
+      for (let k = innen.length - 1; k >= 0; k--) g.lineTo(innen[k][0], innen[k][1]);
+      g.closePath(); g.fill();
+    }
   }
   /* Schneefanggitter über der Traufe */
   function schneefang(g, F, I, x0, x1, b) {
@@ -1381,15 +1678,20 @@
     if (sv) masse(sv[0], sv[1], "rgba(20,24,16,0.28)", 1);
     masse(0, 0, "rgb(32,58,28)", 1);
     if (px > 9) {
-      /* Blätter: je Ranke dicht an dicht, unten dunkel, oben frisch */
+      /* Blätter: je Ranke dicht an dicht, unten dunkel, oben frisch.
+         RECHENZEIT: höchstens ~5000 Blätter je Wand – sind es mehr, werden
+         sie etwas größer (gleiche Deckung, ein Drittel der Zeit) */
       const farben = [[34, 64, 30], [46, 84, 38], [58, 102, 46], [72, 118, 52], [94, 142, 64]];
       const eim = farben.map(() => new Path2D());
-      const gr = Math.max(0.07, 1.8 / px);
+      const gr0 = Math.max(0.07, 1.8 / px);
+      let summe = 0;
+      for (const r of ranken) { const n = r.pts.length; for (let i = 1; i < n; i++) { const breite = r.dicke * (1 - 0.75 * i / n) * 0.55; summe += Math.min(40, Math.round(0.35 * breite * 2 / (gr0 * gr0) * 0.35 * 3)); } }
+      const kk = Math.min(1, 5000 / Math.max(1, summe)), gr = gr0 / Math.sqrt(kk);
       for (const r of ranken) {
         const n = r.pts.length;
         for (let i = 1; i < n; i++) {
           const a = r.pts[i - 1], b = r.pts[i], t = i / n, breite = r.dicke * (1 - 0.75 * t) * 0.55;
-          const anz = Math.min(40, Math.round(0.35 * breite * 2 / (gr * gr) * 0.35 * 3));
+          const anz = Math.round(Math.min(40, Math.round(0.35 * breite * 2 / (gr0 * gr0) * 0.35 * 3)) * kk + rng() * 0.5);
           for (let k = 0; k < anz; k++) {
             const u = rng(), x = a[0] + (b[0] - a[0]) * u + (rng() - 0.5) * 2 * breite, y = a[1] + (b[1] - a[1]) * u + (rng() - 0.5) * 2 * breite * 0.8;
             const h = t * 0.6 + rng() * 0.5;
@@ -1414,6 +1716,34 @@
     g.restore();
   }
 
+  /* Efeu an der Turmecke (Frühling): Blattbüschel entlang der Kante, die
+     10–15 cm über die Ecke hinausstehen – der Efeu endet nicht mit einer
+     senkrechten Linie an der Mauerkante, er wächst um sie herum */
+  function efeuEcke(hoch, saat) {
+    return function (g, s, F) {
+      const sch = F.schatten, rng = zuf(saat);
+      const r = (F.gier || 0) * RAD, c = Math.cos(r), sn = Math.sin(r);
+      const nk = [-Math.SQRT1_2 * c - Math.SQRT1_2 * sn, -Math.SQRT1_2 * sn + Math.SQRT1_2 * c, 0];
+      const lf = sch ? null : ST.lichtFaktor(nk, F.Z, 0, F.jahr);
+      const farben = [[34, 64, 30], [46, 84, 38], [58, 102, 46], [72, 118, 52], [94, 142, 64]];
+      const z = (m) => -m * ST.KZ * s;
+      const n = Math.round(hoch * 26);
+      for (let i = 0; i < n; i++) {
+        const t = rng(), zz = Math.pow(t, 0.8) * hoch;
+        const breite = 0.16 * (1 - 0.6 * zz / hoch);
+        const x = (rng() - 0.5) * 2 * breite * s, y = z(zz) + (rng() - 0.5) * 0.1 * s;
+        const rr = Math.max(0.8, (0.05 + rng() * 0.035) * s);
+        if (sch) { g.fillStyle = "#000"; g.beginPath(); g.arc(x, y, rr, 0, 2 * Math.PI); g.fill(); continue; }
+        const hl = klemm(zz / hoch * 0.6 + rng() * 0.5, 0, 0.999);
+        g.fillStyle = belicht(farben[(hl * farben.length) | 0], lf);
+        g.beginPath();
+        if (s > 38) { g.moveTo(x, y - rr); g.quadraticCurveTo(x + rr * 0.9, y - rr * 0.4, x + rr * 0.4, y + rr * 0.7); g.quadraticCurveTo(x, y + rr * 0.4, x - rr * 0.4, y + rr * 0.7); g.quadraticCurveTo(x - rr * 0.9, y - rr * 0.4, x, y - rr); }
+        else g.arc(x, y, rr, 0, 2 * Math.PI);
+        g.fill();
+      }
+    };
+  }
+
   /* =====================================================================
      WAND-MALER: eine Beschreibung je Wand
      spec = { saat, ecken: [[A, dir]], sockel, gesimse: [z], traufe,
@@ -1423,7 +1753,9 @@
     return function (g, F, I) {
       const x0 = I.A0, x1 = I.A0 + F.w, y0 = I.B0, y1 = I.B0 + F.h;
       const zTop = -y0, W = I.W;
+      const uhr = messUhr(g);
       bruchstein(g, F, I, x0, y0, x1, y1, spec.saat || 1);
+      uhr("~bruch");
       /* Verwitterung: dunkle Bahnen von der Traufe, heller in der Sonne */
       if (F.px > 6) {
         const gr = g.createLinearGradient(0, y0, 0, y0 + 2.5);
@@ -1433,9 +1765,13 @@
       if (spec.traufe && spec.traufe <= zTop + 0.01) traufgesims(g, F, I, x0, x1, spec.traufe);
       for (const [a, dir] of spec.ecken || []) eckquader(g, F, I, a, dir, 0.9, Math.min(zTop, spec.eckeBis || 99), (spec.saat || 1) + a * 7);
       for (const z of spec.gesimse || []) if (z < zTop + 0.2) gesims(g, F, I, x0, x1, z, 0.24);
+      uhr("~gesims");
       for (const op of spec.oeff || []) oeffnung(g, F, I, op);
+      uhr("~oeff");
       if (spec.sockel) sockel(g, F, I, x0, x1, spec.sockel, spec.saat || 1);
+      uhr("~sockel");
       if (spec.efeu && !W.winter && W.fertig) efeu(g, F, I, spec.efeu[0], spec.efeu[1], spec.efeu[2], spec.saat + 3);
+      uhr("~efeu");
       if (W.winter) schneeWehe(g, F, x0, x1, spec.saat || 1);
       if (spec.extra) spec.extra(g, F, I);
     };
@@ -1463,23 +1799,93 @@
   function wandNacht(spec) {
     return function (g, F, I) {
       if (F.nacht < 0.02) return;
-      if (spec.flut && I.W.fertig) flutlicht(g, F, I);
+      if (spec.flut && I.W.fertig) flutlicht(g, F, I, spec);
       for (const op of spec.oeff || []) oeffnungNacht(g, F, I, op);
       if (spec.nachtExtra) spec.nachtExtra(g, F, I);
     };
   }
-  /* Anstrahlung: zwei Scheinwerfer am Fuß des Turms tauchen ihn nachts in
-     warmes Licht, nach oben schwächer, zu den Kanten hin weicher */
-  function flutlicht(g, F, I) {
-    const x0 = I.A0, x1 = I.A0 + F.w, zT = -I.B0, a = F.nacht;
+  /* Anstrahlung: je Turmseite zwei Bodenstrahler, 1,8 m vor der Mauer.
+     Jeder wirft einen schmalen, nach oben aufgeweiteten Lichtkegel mit
+     weichem Rand, warmweiß (Natriumdampf ist es nicht mehr – LED 3000 K),
+     nach oben schwächer. Die Gurtgesimse fangen das Licht: ihre
+     Unterkante leuchtet hell auf, darüber liegt ein Schattenstreifen –
+     das Licht kommt ja von unten (ein Schatten UNTER dem Gesims, wie
+     vorgeschlagen, wäre bei Licht von unten falsch). Wo im Frühling
+     Efeu wächst, zielt kein Strahler hin (der Efeu würde bleich). */
+  const FLUT = [255, 220, 170];
+  /* Ein Lichtkegel als kleines Bild (weich, ohne Streifen): Breite nach
+     oben wachsend, Rand weich, Stärke nach oben abnehmend, Schatten über
+     den Gesimsen, helle Gesims-Unterkanten. Wird gestreckt aufgelegt –
+     Licht ist so weich, dass die niedrige Auflösung nicht auffällt. */
+  const KEGEL = new Map();
+  function kegelBild(zT, gesimse) {
+    const schl = zT.toFixed(2) + "|" + gesimse.join(",");
+    let K = KEGEL.get(schl);
+    if (K) return K;
+    const hwMax = 0.3 + zT * 0.14, bw = 40, bh = 160;
+    const cv = document.createElement("canvas"); cv.width = bw; cv.height = bh;
+    const g = cv.getContext("2d"), id = g.createImageData(bw, bh);
+    for (let j = 0; j < bh; j++) {
+      const z = zT * (1 - (j + 0.5) / bh), hw = 0.3 + z * 0.14;
+      let sch = 1, kante = 0;
+      for (const zg of gesimse) {
+        const ob = zg + 0.02, hoch = 0.07 * zg;
+        if (z > ob && z < ob + hoch) sch = Math.min(sch, 0.15 + 0.85 * ((z - ob) / hoch) ** 2);
+        if (z > zg - 0.26 && z < zg - 0.16) kante = 1;
+      }
+      const al = (z < 1 ? 0.5 + 0.5 * z : 1) / (1 + z / 14) * sch * (1 + 0.6 * kante);
+      for (let i = 0; i < bw; i++) {
+        const x = (((i + 0.5) / bw) * 2 - 1) * hwMax, q = Math.abs(x) / hw;
+        const rand = q >= 1 ? 0 : q < 0.45 ? 1 : 0.5 + 0.5 * Math.cos((q - 0.45) / 0.55 * Math.PI);
+        const o = (j * bw + i) * 4;
+        id.data[o] = FLUT[0]; id.data[o + 1] = FLUT[1]; id.data[o + 2] = FLUT[2]; id.data[o + 3] = Math.round(255 * klemm(al * rand, 0, 1));
+      }
+    }
+    g.putImageData(id, 0, 0);
+    K = { bild: cv, hw: hwMax };
+    if (KEGEL.size > 40) KEGEL.clear();
+    KEGEL.set(schl, K);
+    return K;
+  }
+  function flutlicht(g, F, I, spec) {
+    const x0 = I.A0, x1 = I.A0 + F.w, zT = Math.min(-I.B0, TU.h), a = F.nacht;
+    const efeuAn = spec && spec.efeu && !I.W.winter && I.W.fertig;
+    const K = kegelBild(zT, (spec && spec.gesimse) || []);
     g.save(); g.globalCompositeOperation = "screen";
-    for (const t of [0.28, 0.72]) {
+    for (const t of [0.25, 0.75]) {
       const cx = x0 + (x1 - x0) * t;
-      const gr = g.createRadialGradient(cx, 2.5, 0.3, cx, -2, Math.max(8, zT * 0.9));
-      gr.addColorStop(0, "rgba(170,126,70," + (0.62 * a).toFixed(3) + ")"); gr.addColorStop(0.3, "rgba(130,98,58," + (0.4 * a).toFixed(3) + ")"); gr.addColorStop(0.75, "rgba(80,62,42," + (0.14 * a).toFixed(3) + ")"); gr.addColorStop(1, "rgba(60,46,32,0)");
-      g.fillStyle = gr; g.fillRect(x0, -zT, x1 - x0, zT + 0.1);
+      let k = 1;
+      if (efeuAn && cx > spec.efeu[0] - 0.6 && cx < spec.efeu[1] + 0.6) k = 0.22;
+      g.globalAlpha = klemm(0.45 * a * k, 0, 1);
+      g.drawImage(K.bild, cx - K.hw, -zT, 2 * K.hw, zT);
     }
     g.restore();
+  }
+  /* Streulicht der Strahler am Fuß des Helms (die ersten 3,5 m) */
+  function helmFlut(g, F, I) {
+    if (F.nacht < 0.02 || !I.W.fertig || I.n[0] > 0.5) return;
+    let bE = -Infinity; for (const p of I.fl.pts) bE = Math.max(bE, dot(p, I.v));
+    g.save(); g.globalCompositeOperation = "screen";
+    const gr = g.createLinearGradient(0, bE, 0, bE - 3.5);
+    gr.addColorStop(0, "rgba(255,214,160," + (0.3 * F.nacht).toFixed(3) + ")"); gr.addColorStop(1, "rgba(255,214,160,0)");
+    g.fillStyle = gr; g.fillRect(I.A0 - 1, bE - 3.6, F.w + 2, 3.7);
+    g.restore();
+  }
+  /* Bodenstrahler: kleines Gehäuse auf einem Erdspieß, Glas nach oben */
+  function strahler(n) {
+    return function (g, s, F) {
+      const sch = F.schatten, z = (m) => -m * ST.KZ * s;
+      const lf = sch ? null : ST.lichtFaktor([0, 0.4, 0.9], F.Z, 0.05, F.jahr);
+      g.fillStyle = sch ? "#000" : belicht([46, 48, 52], lf);
+      g.beginPath(); g.moveTo(-0.13 * s, z(0.05)); g.lineTo(0.13 * s, z(0.05)); g.lineTo(0.11 * s, z(0.22)); g.lineTo(-0.11 * s, z(0.22)); g.closePath(); g.fill();
+      if (sch) return;
+      g.fillStyle = belicht([70, 72, 78], lf); g.beginPath(); g.ellipse(0, z(0.22), 0.11 * s, 0.04 * s, 0, 0, 2 * Math.PI); g.fill();
+      if (F.jahr === "winter") { g.fillStyle = belicht([240, 244, 251], lf); g.beginPath(); g.ellipse(0, z(0.05), 0.16 * s, 0.05 * s, 0, 0, 2 * Math.PI); g.fill(); }
+      if (F.nacht > 0.05) {
+        g.fillStyle = "rgba(255,238,200," + F.nacht + ")"; g.beginPath(); g.ellipse(0, z(0.22), 0.09 * s, 0.03 * s, 0, 0, 2 * Math.PI); g.fill();
+        if (sichtNach(F.gier, n)) F.leuchtPunkt(0, z(0.3), 0.6 * s, "255,220,170", 0.35);
+      }
+    };
   }
   function uhrNacht(g, F, I, op) {
     /* das Zifferblatt wird nachts angestrahlt */
@@ -1535,8 +1941,8 @@
     return function (g, F, I) {
       const x0 = I.A0, x1 = I.A0 + F.w, y0 = I.B0, y1 = I.B0 + F.h;
       if (Math.abs(I.n[2]) < 0.3) {
-        quader(g, F, I, x0, y0, x1, y1, saat, { lage: 0.42 });
-        if (I.zmin < 0.05) sockel(g, F, I, x0, x1, 0.9, saat);
+        quader(g, F, I, x0, y0, x1, y1, saat, { lage: 0.42, einmal: x1 - x0 < 1.2 });
+        if (I.zmin < 0.05) sockel(g, F, I, x0, x1, 0.9, saat, true);
         if (opt.nachQuader) opt.nachQuader(g, F, I);
         if (I.W.winter && I.zmin < 0.05) schneeWehe(g, F, x0, x1, saat);
       } else {
@@ -1592,6 +1998,11 @@
         if (bauK <= 0) return;
         g.save(); g.beginPath(); g.rect(x0 - 1, bG, x1 - x0 + 2, y1 - bG + 1); g.clip();
         schiefer(g, F, I, x0, bG, x1, y1, bE, opt);
+        /* Im Winter schneit es auch auf das schon gedeckte Stück – dünner,
+           der Rand zur Lattung hin nur angezuckert (kein Sprung von
+           dunkel auf weiß, wenn das Dach fertig ist) */
+        if (W.winter && opt.steil) schneeSteil(g, F, I, x0, x1, bG, bE, opt.reihe || 0.17, opt.saat || 1, 0.7);
+        else if (W.winter) schneeDach(g, F, I, x0, x1, bG, bE, { saat: opt.saat, oben: 0.4, rutsch: false });
         g.restore();
         return;
       }
@@ -1607,34 +2018,58 @@
      sich wie eine Welle (Licht oben, Schatten unten), darunter das
      dunkle Auge; im Winter trägt die Welle eine Schneehaube. */
   function fledermausgaube(g, F, I, a, b) {
-    if (F.px < 7) return;
-    const w = 1.6, h = 0.55, winter = I.W.winter;
-    const sv = F.schatten ? F.schatten(0.25) : null;
+    if (F.px < 5) return;
+    const w = 1.6, h = 0.44, winter = I.W.winter, fern = F.px < 12;
+    const sv = F.schatten ? F.schatten(0.22) : null;
     const welle = (p, dx, dy, k) => { p.moveTo(a - w + dx, b + 0.12 * k + dy); p.bezierCurveTo(a - w * 0.45 + dx, b + 0.1 * k + dy, a - w * 0.32 + dx, b - h * k + dy, a + dx, b - h * k + dy); p.bezierCurveTo(a + w * 0.32 + dx, b - h * k + dy, a + w * 0.45 + dx, b + 0.1 * k + dy, a + w + dx, b + 0.12 * k + dy); p.closePath(); };
-    /* Schlagschatten der Welle */
-    g.fillStyle = "rgba(12,16,30," + (winter ? 0.22 : 0.4) + ")";
-    g.beginPath(); welle(g, sv ? sv[0] : 0.03, (sv ? Math.max(0.04, sv[1]) : 0.06), 1); g.fill();
+    /* Schlagschatten der Welle: weich, im Schnee kaum */
+    g.fillStyle = "rgba(20,26,44," + (winter ? 0.14 : 0.3) + ")";
+    g.beginPath(); welle(g, sv ? sv[0] : 0.03, (sv ? Math.max(0.03, sv[1]) : 0.05), 1); g.fill();
     /* die Welle */
     const gr = g.createLinearGradient(0, b - h, 0, b + 0.1);
     const c = winter ? [238, 243, 251] : hellF(SCHIEFER, 0.12);
-    gr.addColorStop(0, rgbS(hellF(c, 0.08))); gr.addColorStop(0.7, rgbS(c)); gr.addColorStop(1, rgbS(hellF(c, -0.12)));
+    gr.addColorStop(0, rgbS(hellF(c, 0.08))); gr.addColorStop(0.7, rgbS(c)); gr.addColorStop(1, rgbS(hellF(c, winter ? -0.06 : -0.12)));
     g.fillStyle = gr; g.beginPath(); welle(g, 0, 0, 1); g.fill();
+    if (fern) return;                                  // aus der Ferne nur die weiche Welle
     if (!winter && F.px > 20) { g.strokeStyle = rgbS(hellF(SCHIEFER, -0.3), 0.6); g.lineWidth = Math.max(0.006, 0.7 / F.px); for (let k = 0.3; k < 1; k += 0.22) { g.beginPath(); g.moveTo(a - w * k, b + 0.1); g.quadraticCurveTo(a, b - h * 2 * (1 - k) - 0.05, a + w * k, b + 0.1); g.stroke(); } }
-    /* das Auge: dunkle Öffnung mit Lamellen */
-    g.fillStyle = "rgb(16,16,20)"; g.beginPath(); g.ellipse(a, b + 0.1, w * 0.3, h * 0.52, 0, Math.PI, 2 * Math.PI); g.closePath(); g.fill();
-    if (F.px > 30) { g.fillStyle = "rgba(90,84,76,0.8)"; for (let y = b - h * 0.4; y < b + 0.08; y += 0.07) g.fillRect(a - w * 0.26, y, w * 0.52, 0.018); }
+    /* das Auge: blaugraue Öffnung mit Lamellen (keine schwarzen Löcher) */
+    const ew = w * 0.28, eh = h * 0.5;
+    g.fillStyle = "rgb(58,62,74)"; g.beginPath(); g.ellipse(a, b + 0.1, ew, eh, 0, Math.PI, 2 * Math.PI); g.closePath(); g.fill();
+    if (F.px > 22) {
+      g.save(); g.beginPath(); g.ellipse(a, b + 0.1, ew, eh, 0, Math.PI, 2 * Math.PI); g.closePath(); g.clip();
+      for (let y = b + 0.1 - eh; y < b + 0.1; y += 0.06) { g.fillStyle = "rgba(112,118,130,0.9)"; g.fillRect(a - ew, y, ew * 2, 0.02); g.fillStyle = "rgba(30,32,40,0.6)"; g.fillRect(a - ew, y + 0.02, ew * 2, 0.012); }
+      g.restore();
+    }
+    if (winter) {
+      /* Schneewulst über dem Auge und dünne Kante darunter */
+      g.fillStyle = "rgba(246,249,253,0.95)";
+      g.beginPath(); g.ellipse(a, b + 0.1 - eh, ew * 1.08, 0.05, 0, Math.PI, 2 * Math.PI); g.fill();
+      g.fillRect(a - ew * 1.05, b + 0.1, ew * 2.1, 0.03);
+    }
   }
-  /* Lattung auf den Sparren (Bauphase) */
+  /* Lattung auf den Sparren (Bauphase): darunter der Dachraum in
+     dunklem Holzton (Sparren, Kehlbalken im Halbdunkel), die Latten
+     liegen nicht schnurgerade und sind nicht alle gleich hell */
   function lattung(g, F, I, x0, y0, x1, y1, opt) {
     if (y1 <= y0) return;
     g.save(); g.beginPath(); g.rect(x0 - 0.1, y0 - 0.1, x1 - x0 + 0.2, y1 - y0 + 0.1); g.clip();
-    g.fillStyle = "rgb(40,34,30)"; g.fillRect(x0 - 0.1, y0 - 0.1, x1 - x0 + 0.2, y1 - y0 + 0.2);
+    const gr = g.createLinearGradient(0, y0, 0, y1);
+    gr.addColorStop(0, "rgb(52,44,38)"); gr.addColorStop(1, "rgb(68,56,46)");
+    g.fillStyle = gr; g.fillRect(x0 - 0.1, y0 - 0.1, x1 - x0 + 0.2, y1 - y0 + 0.2);
     const holz = [196, 160, 112];
-    g.fillStyle = rgbS(hellF(holz, -0.15));
-    for (let x = Math.ceil(x0 / 0.85) * 0.85; x < x1; x += 0.85) g.fillRect(x - 0.06, y0 - 0.1, 0.12, y1 - y0 + 0.2);
-    g.fillStyle = rgbS(holz);
-    for (let y = y1; y > y0 - 0.2; y -= 0.34) g.fillRect(x0 - 0.1, y - 0.03, x1 - x0 + 0.2, 0.05);
-    if (I.W.winter) { g.fillStyle = "rgba(244,247,252,0.85)"; for (let y = y1; y > y0 - 0.2; y -= 0.34) g.fillRect(x0 - 0.1, y - 0.045, x1 - x0 + 0.2, 0.02); }
+    /* Sparren: etwas dunkler, mit Schattenkante */
+    for (let x = Math.ceil(x0 / 0.85) * 0.85; x < x1; x += 0.85) {
+      g.fillStyle = "rgba(20,16,14,0.45)"; g.fillRect(x + 0.06, y0 - 0.1, 0.05, y1 - y0 + 0.2);
+      g.fillStyle = rgbS(hellF(holz, -0.18 + (hash(Math.round(x * 3), 1, 7) - 0.5) * 0.1)); g.fillRect(x - 0.06, y0 - 0.1, 0.12, y1 - y0 + 0.2);
+    }
+    /* Latten: leichte Lage- und Farbstreuung */
+    let k = 0;
+    for (let y = y1; y > y0 - 0.2; y -= 0.34, k++) {
+      const dy = (hash(k, 3, 9) - 0.5) * 0.03, c = hellF(holz, (hash(k, 4, 9) - 0.5) * 0.16);
+      g.fillStyle = "rgba(24,18,14,0.5)"; g.fillRect(x0 - 0.1, y + dy + 0.02, x1 - x0 + 0.2, 0.025);
+      g.fillStyle = rgbS(c); g.fillRect(x0 - 0.1, y + dy - 0.03, x1 - x0 + 0.2, 0.05);
+      if (I.W.winter) { g.fillStyle = "rgba(244,247,252,0.85)"; g.fillRect(x0 - 0.1, y + dy - 0.045, x1 - x0 + 0.2, 0.02); }
+    }
     g.restore();
   }
   /* Traufblech (Kupfer, grün patiniert) mit überhängendem Schnee */
@@ -1702,13 +2137,20 @@
     }
   }
   /* Eiszapfen an einer durchsichtigen Fläche unter der Traufe */
+  /* Eiszapfen: kurz (höchstens 0,35 m) und über den Fensterachsen
+     ausgespart – dort tropft die warme Luft der Kirche nicht, und der
+     Maßwerkkopf bleibt frei (Kritik Runde 1) */
   function eisMaler(saat) {
     return function (g, F, I) {
       const lf = lichtVon(F, 0.15), x0 = I.A0, x1 = I.A0 + F.w, y0 = I.B0;
-      const rng = zuf(saat);
+      const rng = zuf(saat), sg = I.n[1] > 0 ? 1 : -1;
+      const frei = FE.x.concat(sg > 0 ? [PO.xm] : []);
       let x = x0 + rng() * 0.2;
       while (x < x1) {
-        const l = 0.08 + Math.pow(rng(), 2.3) * 0.62, b = 0.022 + l * 0.1;
+        const xw = sg * x;
+        let l = 0.05 + Math.pow(rng(), 2.3) * 0.3;
+        for (const a of frei) { const d = Math.abs(xw - a); if (d < 1.15) l *= d < 0.9 ? 0.12 : 0.12 + 0.88 * (d - 0.9) / 0.25; }
+        const b = 0.02 + l * 0.1;
         const gr = g.createLinearGradient(x - b, 0, x + b, 0);
         gr.addColorStop(0, belicht([196, 222, 244], lf, 0.7)); gr.addColorStop(0.35, belicht([250, 254, 255], lf, 0.95)); gr.addColorStop(1, belicht([150, 180, 214], lf, 0.7));
         g.fillStyle = gr;
@@ -1727,6 +2169,19 @@
     const r = gier * RAD, c = Math.cos(r), s = Math.sin(r);
     const a = d[0] * c - d[1] * s, b = d[0] * s + d[1] * c;
     return [(a - b) * ST.KX, (a + b) * ST.KY - (d[2] || 0) * ST.KZ];
+  }
+  /* Umriss des Wetterhahns (Blechebene, x nach vorn = Schnabel, y hoch) */
+  function hahnUmriss(g) {
+    g.moveTo(-0.30, 0.12);
+    g.quadraticCurveTo(-0.47, 0.34, -0.36, 0.66); g.quadraticCurveTo(-0.30, 0.46, -0.21, 0.42);
+    g.quadraticCurveTo(-0.25, 0.62, -0.13, 0.70); g.quadraticCurveTo(-0.13, 0.48, -0.04, 0.39);
+    g.quadraticCurveTo(0.08, 0.35, 0.15, 0.42); g.lineTo(0.19, 0.54);
+    g.quadraticCurveTo(0.19, 0.63, 0.23, 0.62); g.quadraticCurveTo(0.24, 0.69, 0.28, 0.645); g.quadraticCurveTo(0.31, 0.70, 0.335, 0.62);
+    g.lineTo(0.35, 0.585); g.lineTo(0.42, 0.56); g.lineTo(0.35, 0.535);
+    g.quadraticCurveTo(0.35, 0.47, 0.315, 0.485);
+    g.quadraticCurveTo(0.31, 0.36, 0.22, 0.25); g.quadraticCurveTo(0.12, 0.13, -0.02, 0.13);
+    g.lineTo(0.03, 0.02); g.lineTo(0.0, 0.0); g.lineTo(0.08, 0.0); g.lineTo(0.06, 0.03); g.lineTo(0.05, 0.13);
+    g.quadraticCurveTo(-0.16, 0.10, -0.30, 0.12); g.closePath();
   }
   function turmspitze(hahn) {
     return function (g, s, F) {
@@ -1757,28 +2212,31 @@
         g.strokeStyle = sch ? "#000" : belicht([50, 50, 54], lf); g.lineWidth = 0.04 * s;
         g.beginPath(); g.moveTo(-nx[0] * 0.5 * s, hy - nx[1] * 0.5 * s); g.lineTo(nx[0] * 0.5 * s, hy + nx[1] * 0.5 * s); g.moveTo(-ox[0] * 0.5 * s, hy - ox[1] * 0.5 * s); g.lineTo(ox[0] * 0.5 * s, hy + ox[1] * 0.5 * s); g.stroke();
         if (!sch && s > 24) {
-          g.fillStyle = gold; g.font = "bold " + (0.18 * s).toFixed(1) + "px serif"; g.textAlign = "center"; g.textBaseline = "middle";
-          for (const [d, t] of [[[0, -1, 0], "N"], [[0, 1, 0], "S"], [[1, 0, 0], "O"], [[-1, 0, 0], "W"]]) { const q = bildRichtung(gier, d); g.fillText(t, q[0] * 0.62 * s, hy + q[1] * 0.62 * s); }
+          g.fillStyle = gold; g.font = "bold " + (0.12 * s).toFixed(1) + "px serif"; g.textAlign = "center"; g.textBaseline = "middle";
+          for (const [d, t] of [[[0, -1, 0], "N"], [[0, 1, 0], "S"], [[1, 0, 0], "O"], [[-1, 0, 0], "W"]]) { const q = bildRichtung(gier, d); g.fillText(t, q[0] * 0.6 * s, hy + q[1] * 0.6 * s); }
         }
-        /* Hahn: flaches Kupferblech, vergoldet, in der Ost-West-Ebene –
-           Kamm, Schnabel, Kehllappen, Sichelfedern am Schwanz */
-        const u = bildRichtung(gier, [1, 0, 0]);
-        g.save(); g.transform(u[0] * s, u[1] * s, 0, -ST.KZ * s, 0, z(1.95));
+        /* Hahn: getriebenes Kupferblech, vergoldet, 0,9 m hoch. Er dreht
+           sich nach dem Wind – hier steht er so, dass man ihn nie genau
+           von der Kante sieht (mindestens ein Viertel seiner Breite).
+           Blechdicke als dunkler Versatz, Glanzkante oben. */
+        let phi = 20 * RAD, u = bildRichtung(gier, [Math.cos(phi), Math.sin(phi), 0]);
+        for (let k = 0; k < 8 && Math.abs(u[0]) < 0.3; k++) { phi += 25 * RAD; u = bildRichtung(gier, [Math.cos(phi), Math.sin(phi), 0]); }
+        const nB = bildRichtung(gier, [-Math.sin(phi), Math.cos(phi), 0]);
+        const k2 = 1.3;
+        if (!sch) {
+          g.save(); g.translate(nB[0] * 0.02 * s, nB[1] * 0.02 * s); g.transform(u[0] * s * k2, u[1] * s * k2, 0, -ST.KZ * s * k2, 0, z(1.95));
+          g.beginPath(); hahnUmriss(g); g.fillStyle = goldD; g.fill(); g.restore();
+        }
+        g.save(); g.transform(u[0] * s * k2, u[1] * s * k2, 0, -ST.KZ * s * k2, 0, z(1.95));
         const hahnPfad = () => {
-          g.beginPath();
-          g.moveTo(-0.30, 0.12);
-          g.quadraticCurveTo(-0.47, 0.34, -0.36, 0.66); g.quadraticCurveTo(-0.30, 0.46, -0.21, 0.42);
-          g.quadraticCurveTo(-0.25, 0.62, -0.13, 0.70); g.quadraticCurveTo(-0.13, 0.48, -0.04, 0.39);
-          g.quadraticCurveTo(0.08, 0.35, 0.15, 0.42); g.lineTo(0.19, 0.54);
-          g.quadraticCurveTo(0.19, 0.63, 0.23, 0.62); g.quadraticCurveTo(0.24, 0.69, 0.28, 0.645); g.quadraticCurveTo(0.31, 0.70, 0.335, 0.62);
-          g.lineTo(0.35, 0.585); g.lineTo(0.42, 0.56); g.lineTo(0.35, 0.535);
-          g.quadraticCurveTo(0.35, 0.47, 0.315, 0.485);
-          g.quadraticCurveTo(0.31, 0.36, 0.22, 0.25); g.quadraticCurveTo(0.12, 0.13, -0.02, 0.13);
-          g.lineTo(0.03, 0.02); g.lineTo(0.0, 0.0); g.lineTo(0.08, 0.0); g.lineTo(0.06, 0.03); g.lineTo(0.05, 0.13);
-          g.quadraticCurveTo(-0.16, 0.10, -0.30, 0.12); g.closePath();
+          g.beginPath(); hahnUmriss(g);
         };
         hahnPfad(); g.fillStyle = gold; g.fill();
         if (!sch && s > 20) {
+          /* Glanz: das getriebene Blech wölbt sich – oben hell, unten dunkler */
+          const gl = g.createLinearGradient(0, 0.7, 0, 0);
+          gl.addColorStop(0, "rgba(255,248,210,0.45)"); gl.addColorStop(0.45, "rgba(255,248,210,0)"); gl.addColorStop(1, "rgba(60,40,10,0.3)");
+          g.fillStyle = gl; hahnPfad(); g.fill();
           g.lineWidth = 0.012; g.strokeStyle = goldD; g.stroke();
           g.strokeStyle = goldH; g.lineWidth = 0.02;
           g.beginPath(); g.moveTo(-0.32, 0.2); g.quadraticCurveTo(-0.38, 0.4, -0.33, 0.58); g.moveTo(-0.18, 0.44); g.quadraticCurveTo(-0.2, 0.56, -0.13, 0.64); g.stroke();
@@ -1863,130 +2321,234 @@
     const r = (gier || 0) * RAD;
     return 0.6124 * (Math.cos(r) - Math.sin(r)) > -0.04;
   }
-  /* kleine Nordmanntanne im Holzkübel mit Lichterkette: Astetagen aus
-     vielen hängenden Zweigen, links heller (Sonne), innen dunkel,
-     Schneepolster auf den Zweigen, warme Birnchen */
+  /* allgemein: zeigt die Seite mit der Normale n (Modell) zum Betrachter? */
+  function sichtNach(gier, n) {
+    const r = (gier || 0) * RAD, c = Math.cos(r), sn = Math.sin(r);
+    return 0.6124 * ((c + sn) * n[0] + (c - sn) * n[1]) > -0.04;
+  }
+  /* Kleine Tanne aus tanne.js: dieselbe Zeichnung wie die Bäume im Dorf
+     (Wedel, Nadeln, Schnee als Polster), nur kleiner gemalt. Die Figur
+     des Tannenmodells wird einmal je Saat und Jahreszeit gebaut. */
+  const TANNEN = {};
+  function kleineTanne(saat, jahr) {
+    const def = ST.MODELLE.tanne;
+    if (!def) return null;
+    const schl = saat + "|" + jahr;
+    if (TANNEN[schl] !== undefined) return TANNEN[schl];
+    let fi = null;
+    const fake = { teil() {}, flaeche() {}, figur(f) { fi = f; return f; }, licht() {}, bodenlicht() {}, rauchAus() {}, lebendig() {} };
+    try { def.bauen(fake, { saat: saat, jahr: jahr, bau: 1 }); } catch (e) { fi = null; }
+    TANNEN[schl] = fi ? { fi: fi, H: Math.max(1, fi.hoehe - 0.4), r: Math.max(0.5, fi.breite * 0.6 - 0.6) } : null;
+    return TANNEN[schl];
+  }
+  /* Christbaum im Holzkübel: eine kleine Nordmanntanne (Zeichnung aus
+     tanne.js), dazu eine Lichterkette mit warmen Birnchen */
   function christbaum(saat) {
     return function (g, s, F) {
       const sch = F.schatten, rng = zuf(saat);
       const lf = sch ? null : ST.lichtFaktor([0.2, 0.5, 0.8], F.Z, 0, F.jahr);
       const col = (c, a) => (sch ? "#000" : belicht(c, lf, a));
       const z = (m) => -m * ST.KZ * s;
-      /* Kübel aus Holzdauben mit Eisenreifen */
-      g.fillStyle = col([112, 76, 46]); g.beginPath(); g.moveTo(-0.3 * s, 0); g.lineTo(0.3 * s, 0); g.lineTo(0.36 * s, z(0.48)); g.lineTo(-0.36 * s, z(0.48)); g.closePath(); g.fill();
+      const H = 2.05, kz = 0.46;
+      const T = kleineTanne(saat, F.jahr);
+      /* Tanne (hinter dem Kübelrand) */
+      if (T) {
+        const k = H / T.H;
+        g.save(); g.translate(0, z(kz - 0.06)); T.fi.malen(g, s * k, F); g.restore();
+      }
+      /* Kübel aus Holzdauben mit Eisenreifen, oben Erde bzw. Schnee */
+      g.fillStyle = col([112, 76, 46]); g.beginPath(); g.moveTo(-0.3 * s, 0); g.lineTo(0.3 * s, 0); g.lineTo(0.36 * s, z(kz)); g.lineTo(-0.36 * s, z(kz)); g.closePath(); g.fill();
       if (!sch) {
-        g.fillStyle = col([86, 58, 36]); for (let k = -3; k <= 3; k++) g.fillRect(k * 0.09 * s - 0.004 * s, z(0.47), 0.008 * s, 0.46 * ST.KZ * s);
-        g.fillStyle = col([52, 48, 46]); g.fillRect(-0.35 * s, z(0.42), 0.7 * s, 0.035 * s); g.fillRect(-0.32 * s, z(0.1), 0.64 * s, 0.035 * s);
+        const gk = g.createLinearGradient(-0.36 * s, 0, 0.36 * s, 0);
+        gk.addColorStop(0, "rgba(255,240,220,0.18)"); gk.addColorStop(0.45, "rgba(0,0,0,0)"); gk.addColorStop(1, "rgba(10,6,4,0.35)");
+        g.fillStyle = gk; g.beginPath(); g.moveTo(-0.3 * s, 0); g.lineTo(0.3 * s, 0); g.lineTo(0.36 * s, z(kz)); g.lineTo(-0.36 * s, z(kz)); g.closePath(); g.fill();
+        g.fillStyle = col([86, 58, 36]); for (let k = -3; k <= 3; k++) g.fillRect(k * 0.09 * s - 0.004 * s, z(kz - 0.01), 0.008 * s, (kz - 0.02) * ST.KZ * s);
+        g.fillStyle = col([52, 48, 46]); g.fillRect(-0.35 * s, z(0.4), 0.7 * s, 0.035 * s); g.fillRect(-0.32 * s, z(0.1), 0.64 * s, 0.035 * s);
+        g.fillStyle = col(F.jahr === "winter" ? [238, 243, 250] : [70, 52, 36]); g.beginPath(); g.ellipse(0, z(kz), 0.36 * s, 0.1 * s, 0, Math.PI, 2 * Math.PI); g.fill();
       }
-      const H = 2.35, basis = 0.5, lagen = 8;
-      for (let i = 0; i < lagen; i++) {
-        const t0 = i / lagen, zu = basis + (H - basis - 0.25) * t0, zo = Math.min(H, zu + 0.55);
-        const br = 0.66 * Math.pow(1 - t0, 0.95) + 0.06;
-        const n = 12;
-        /* Umriss der Etage: hängende Zweigspitzen */
-        const pfad = () => {
-          g.beginPath(); g.moveTo(0, z(zo));
-          for (let k = 0; k <= n; k++) {
-            const tt = k / n, x = (-1 + 2 * tt) * br, h = zu + 0.06 * Math.sin(tt * Math.PI) - (k % 2 ? 0.07 : 0) + (rng() - 0.5) * 0.04;
-            g.lineTo(x * s, z(h));
-          }
-          g.closePath();
-        };
-        if (sch) { g.fillStyle = "#000"; pfad(); g.fill(); continue; }
-        const gr = g.createLinearGradient(-br * s, 0, br * s, 0);
-        gr.addColorStop(0, belicht([52, 100, 62], lf)); gr.addColorStop(0.5, belicht([30, 68, 42], lf)); gr.addColorStop(1, belicht([18, 44, 30], lf));
-        g.fillStyle = gr; pfad(); g.fill();
-        /* Nadeln an den Zweigspitzen */
-        if (s > 24) {
-          g.lineWidth = Math.max(0.6, 0.012 * s);
-          for (let k = 0; k < 26; k++) {
-            const x = (rng() * 2 - 1) * br, y = zu + 0.05 + rng() * 0.3 * (1 - Math.abs(x) / br);
-            g.strokeStyle = belicht(hellF([40, 86, 52], (rng() - 0.3) * 0.5), lf, 0.8);
-            g.beginPath(); g.moveTo(x * s, z(y)); g.lineTo((x + (x > 0 ? 0.06 : -0.06)) * s, z(y - 0.05)); g.stroke();
-          }
-        }
-        if (F.jahr === "winter") {
-          /* Schneepolster oben auf der Etage, in Stücken */
-          g.fillStyle = belicht([244, 248, 253], lf);
-          for (let k = 0; k < 4; k++) {
-            const x = (-0.7 + 0.45 * k + (rng() - 0.5) * 0.15) * br, w = br * (0.22 + rng() * 0.12);
-            g.beginPath(); g.ellipse(x * s, z(zu + 0.12 + (0.3 - Math.abs(x) / br * 0.25)), w * s, 0.045 * s, (x < 0 ? 0.35 : -0.35), 0, 2 * Math.PI); g.fill();
-          }
-        }
-      }
+      if (!T && !sch) { g.fillStyle = col([34, 72, 44]); g.beginPath(); g.moveTo(0, z(kz + H)); g.lineTo(-0.6 * s, z(kz + 0.3)); g.lineTo(0.6 * s, z(kz + 0.3)); g.closePath(); g.fill(); }
       if (sch) return;
-      /* Lichterkette: kleine warme Birnchen, nachts leuchtend */
-      const rng2 = zuf(saat + 3);
-      for (let i = 0; i < 40; i++) {
-        const t = rng2(), zz = basis + 0.12 + t * (H - basis - 0.35), br = (0.66 * Math.pow(1 - (zz - basis) / (H - basis), 0.95) + 0.05) * (0.25 + rng2() * 0.65);
-        const x = (rng2() * 2 - 1) * br * s, y = z(zz);
+      /* Lichterkette: Birnchen auf der Vorderseite des Kegels */
+      const R = T ? T.r * H / T.H : 0.62;
+      for (let i = 0; i < 34; i++) {
+        const t = 0.1 + 0.78 * rng(), zz = kz + H * t, br = R * (1 - t) * 0.82;
+        const x = (rng() * 2 - 1) * br * s, y = z(zz) + (rng() - 0.5) * 0.06 * s;
         if (F.nacht > 0.05) {
-          g.fillStyle = "rgba(255,226,150," + (0.6 + 0.4 * F.nacht).toFixed(2) + ")"; g.beginPath(); g.arc(x, y, Math.max(0.8, 0.026 * s), 0, 2 * Math.PI); g.fill();
-          if (i % 4 === 0 && sichtSued(F.gier)) F.leuchtPunkt(x, y, 0.35 * s, "255,200,120", 0.25);
-        } else { g.fillStyle = "rgba(250,240,210,0.9)"; g.beginPath(); g.arc(x, y, Math.max(0.5, 0.016 * s), 0, 2 * Math.PI); g.fill(); }
+          const gr = g.createRadialGradient(x, y, 0, x, y, Math.max(2, 0.07 * s));
+          gr.addColorStop(0, "rgba(255,236,176," + (0.9 * F.nacht).toFixed(2) + ")"); gr.addColorStop(0.35, "rgba(255,200,110," + (0.45 * F.nacht).toFixed(2) + ")"); gr.addColorStop(1, "rgba(255,170,80,0)");
+          g.fillStyle = gr; g.beginPath(); g.arc(x, y, Math.max(2, 0.07 * s), 0, 2 * Math.PI); g.fill();
+          if (i % 6 === 0 && sichtSued(F.gier)) F.leuchtPunkt(x, y, 0.4 * s, "255,200,120", 0.2);
+        } else { g.fillStyle = "rgba(252,246,226,0.85)"; g.beginPath(); g.arc(x, y, Math.max(0.5, 0.014 * s), 0, 2 * Math.PI); g.fill(); }
       }
-      /* Stern an der Spitze */
-      g.fillStyle = F.nacht > 0.05 ? "rgb(255,236,160)" : col(GOLD);
-      stern5(g, 0, z(H + 0.08), 0.1 * s);
-      if (F.nacht > 0.05 && sichtSued(F.gier)) F.leuchtPunkt(0, z(H + 0.08), 0.5 * s, "255,220,140", 0.35);
     };
   }
-  function stern5(g, x, y, r) {
-    g.beginPath();
-    for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
-    g.closePath(); g.fill();
-  }
-  /* Herrnhuter Stern: 26 Zacken (18 vierkantige, 8 dreikantige) */
-  const STERN_RICHTUNGEN = (function () {
-    const r = [];
-    for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let z = -1; z <= 1; z++) { if (!x && !y && !z) continue; r.push(nrm([x, y, z])); }
-    return r;
-  })();
-  function herrnhuter(g, s, F) {
-    const sch = F.schatten, gier = F.gier || 0, R = 0.34, cy = -0.55 * ST.KZ * s;
-    /* Kette zum Arm */
-    g.strokeStyle = sch ? "#000" : "rgb(40,40,44)"; g.lineWidth = Math.max(1, 0.02 * s);
-    g.beginPath(); g.moveTo(0, -1.15 * ST.KZ * s); g.lineTo(0, cy); g.stroke();
-    const e = [0.6124, 0.6124, 0.5];
-    const r = gier * RAD, c = Math.cos(r), sn = Math.sin(r);
-    const zack = STERN_RICHTUNGEN.map((d) => {
-      const a = d[0] * c - d[1] * sn, b = d[0] * sn + d[1] * c;
-      return { d: d, x: (a - b) * ST.KX, y: (a + b) * ST.KY - d[2] * ST.KZ, t: a * e[0] + b * e[1] + d[2] * e[2] };
-    }).sort((p, q) => p.t - q.t);
-    const nacht = F.nacht || 0;
-    for (const z of zack) {
-      const L = R * s * (Math.abs(z.d[0]) + Math.abs(z.d[1]) + Math.abs(z.d[2]) === 3 ? 0.92 : 1);
-      const tx = z.x * L, ty = cy + z.y * L;
-      const bx = -z.y, by = z.x, bl = Math.hypot(bx, by) || 1, b = 0.13 * s;
-      if (sch) g.fillStyle = "#000";
-      else {
-        const k = 0.55 + 0.45 * (z.t + 1) / 2;
-        const tagF = [236 * k, 232 * k, 222 * k];
-        const col = nacht > 0.05 ? mischF(tagF, [255, 238, 190], nacht) : tagF;
-        g.fillStyle = rgbS(z.d[0] > 0.5 && !nacht ? mischF(col, [200, 40, 50], 0.6) : col);
+  /* Herrnhuter Stern: 26 Zacken auf einem Rhombenkuboktaeder – 18 mit
+     quadratischem, 8 mit dreieckigem Fuß. Jede Zacke ist eine echte
+     Pyramide; jede sichtbare Seitenfläche bekommt ihr Licht nach ihrer
+     Richtung (wie die Hauswände im Kern), von hinten nach vorn gemalt.
+     Papier: tags weiß oder rot (nach Saat), nachts von innen durchleuchtet
+     – die dem Betrachter zugewandten Flächen glühen stärker. Der Stern
+     hängt an einer Kette an einem geschmiedeten Wandarm (0,6 m) aus dem
+     Giebel des Portalvorbaus. */
+  const STERN = (function () {
+    const b = 1 + Math.SQRT2, V = [];
+    for (const q of [[1, 1, b], [1, b, 1], [b, 1, 1]]) for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) V.push([q[0] * sx, q[1] * sy, q[2] * sz]);
+    const dreiecke = [];
+    for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let zz = -1; zz <= 1; zz++) {
+      if (!x && !y && !zz) continue;
+      const D = nrm([x, y, zz]);
+      let mx = -1e9; for (const v of V) mx = Math.max(mx, dot(v, D));
+      const f = V.filter((v) => dot(v, D) > mx - 1e-6);
+      const c = mitteVon(f), u = nrm(sub(f[0], c)), w = kreuz(D, u);
+      f.sort((p, q) => Math.atan2(dot(sub(p, c), w), dot(sub(p, c), u)) - Math.atan2(dot(sub(q, c), w), dot(sub(q, c), u)));
+      const spitze = mul(D, f.length === 3 ? 5.7 : 6.0);
+      for (let i = 0; i < f.length; i++) {
+        const a = f[i], bb = f[(i + 1) % f.length];
+        let n = nrm(kreuz(sub(bb, a), sub(spitze, a)));
+        const m = mitteVon([a, bb, spitze]);
+        if (dot(n, m) < 0) n = mul(n, -1);
+        dreiecke.push({ a: a, b: bb, s: spitze, n: n, m: m, fuss: mitteVon([a, bb]) });
       }
-      g.beginPath(); g.moveTo(tx, ty); g.lineTo(bx / bl * b, cy + by / bl * b); g.lineTo(-bx / bl * b, cy - by / bl * b); g.closePath(); g.fill();
     }
-    if (!sch) {
-      g.fillStyle = nacht > 0.05 ? "rgb(255,244,210)" : "rgb(226,222,210)";
-      g.beginPath(); g.arc(0, cy, 0.13 * s, 0, 2 * Math.PI); g.fill();
-      if (nacht > 0.05 && sichtSued(F.gier)) F.leuchtPunkt(0, cy, 1.4 * s, "255,226,160", 0.7);
-    }
+    return dreiecke;
+  })();
+  function herrnhuter(rot) {
+    return function (g, s, F) {
+      const sch = F.schatten, gier = F.gier || 0, r = gier * RAD, c = Math.cos(r), sn = Math.sin(r);
+      const k = 0.36 / 6.0, zc = 0.37;                          // Maßstab (Spitze 0,36 m), Mitte über dem Fuß
+      const P = (p) => { const a = p[0] * c - p[1] * sn, bb = p[0] * sn + p[1] * c; return [(a - bb) * ST.KX * s, (a + bb) * ST.KY * s - p[2] * ST.KZ * s]; };
+      const e = [ST.KZ * Math.SQRT1_2 * (c + sn), ST.KZ * Math.SQRT1_2 * (c - sn), 0.5];
+      const nacht = F.nacht || 0;
+      const eisen = sch ? "#000" : belicht([44, 42, 40], ST.lichtFaktor([0, 0.6, 0.8], F.Z, 0.05, F.jahr));
+      /* Wandarm: Stange aus dem Giebel, Strebe darunter, Schnörkel */
+      const W0 = [0, -0.62, 1.25], T0 = [0, 0.02, 1.25];
+      const lin = (pts, b) => { g.lineWidth = Math.max(0.8, b * s); g.beginPath(); pts.forEach((q, i) => { const p = P(q); if (i) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }); g.stroke(); };
+      g.strokeStyle = eisen; g.lineCap = "round";
+      lin([W0, T0], 0.03);
+      lin([[0, -0.62, 0.86], [0, -0.3, 1.1], [0, -0.14, 1.25]], 0.022);
+      if (s > 20) {
+        const krl = []; for (let t = 0; t <= 1.001; t += 0.1) { const w = t * 5.2, rr = 0.1 * (1 - t * 0.7); krl.push([0, -0.44 + Math.cos(w) * rr * 0.9, 1.08 + Math.sin(w) * rr]); }
+        lin(krl, 0.012);
+        /* Wandplatte */
+        lin([[0.06, -0.62, 1.34], [0.06, -0.62, 0.8]], 0.05);
+      }
+      /* Kette: Glieder im Wechsel */
+      const kOben = 1.25, kUnten = zc + 0.36;
+      if (s > 26 && !sch) {
+        g.lineWidth = Math.max(0.6, 0.008 * s);
+        for (let zz = kOben; zz > kUnten; zz -= 0.05) { const p = P([0.01, 0.02, zz - 0.025]); g.beginPath(); g.ellipse(p[0], p[1], 0.012 * s * ((zz * 20 | 0) % 2 ? 0.5 : 1), 0.022 * s, 0, 0, 2 * Math.PI); g.stroke(); }
+      } else lin([[0, 0.02, kOben], [0, 0.02, kUnten]], 0.01);
+      g.lineCap = "butt";
+      /* Zacken: sichtbare Seitenflächen von hinten nach vorn */
+      const basis = rot ? [196, 36, 42] : [244, 240, 228];
+      const glut = rot ? [255, 120, 84] : [255, 236, 188];
+      const tris = [];
+      for (const d of STERN) { const sichtbar = dot(d.n, e); if (sichtbar > -0.02) tris.push({ d: d, t: dot(d.m, e), sv: sichtbar }); }
+      tris.sort((p, q) => p.t - q.t);
+      const Q = (v) => P([v[0] * k, v[1] * k + 0.02, v[2] * k + zc]);
+      for (const { d, sv } of tris) {
+        const a = Q(d.a), b2 = Q(d.b), t = Q(d.s);
+        g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b2[0], b2[1]); g.lineTo(t[0], t[1]); g.closePath();
+        if (sch) { g.fillStyle = "#000"; g.fill(); continue; }
+        const nk = [d.n[0] * c - d.n[1] * sn, d.n[0] * sn + d.n[1] * c, d.n[2]];
+        const lf = ST.lichtFaktor(nk, F.Z, 0.1, F.jahr);
+        let farbeF = [basis[0] * lf[0], basis[1] * lf[1], basis[2] * lf[2]];
+        if (nacht > 0.05) farbeF = mischF(farbeF, glut, nacht * (0.5 + 0.45 * klemm(sv, 0, 1)));
+        /* zur Spitze hin heller, am Fuß im Schatten der Nachbarzacken */
+        const f = Q(d.fuss);
+        const gr = g.createLinearGradient(f[0], f[1], t[0], t[1]);
+        gr.addColorStop(0, rgbS(hellF(farbeF, -0.22))); gr.addColorStop(0.55, rgbS(farbeF)); gr.addColorStop(1, rgbS(hellF(farbeF, 0.06)));
+        g.fillStyle = gr; g.fill();
+        if (s > 34) { g.strokeStyle = rgbS(hellF(farbeF, -0.28), 0.55); g.lineWidth = 0.6; g.stroke(); }
+      }
+      if (!sch && nacht > 0.05 && sichtSued(F.gier)) { const m = Q([0, 0, 0]); F.leuchtPunkt(m[0], m[1], 1.5 * s, rot ? "255,140,100" : "255,226,170", 0.7); }
+    };
   }
-  /* Frühlingsblumen am Mauerfuß: Narzissen, Tulpen, Traubenhyazinthen */
-  function blumen(saat) {
+  /* Frühling: Buchsbaumkugel im Holzkübel – dichtes, kleinblättriges
+     Laub, oben links im Licht, unten rechts im Eigenschatten */
+  function buchskugel(saat) {
+    return function (g, s, F) {
+      const sch = F.schatten, rng = zuf(saat), z = (m) => -m * ST.KZ * s;
+      const lf = sch ? null : ST.lichtFaktor([0.2, 0.5, 0.8], F.Z, 0, F.jahr);
+      const col = (c, a) => (sch ? "#000" : belicht(c, lf, a));
+      const kz = 0.46, R = 0.46, cy = z(kz + R * 0.92);
+      /* Kugel */
+      if (sch) { g.fillStyle = "#000"; g.beginPath(); g.arc(0, cy, R * s, 0, 2 * Math.PI); g.fill(); }
+      else {
+        const gr = g.createRadialGradient(-R * 0.35 * s, cy - R * 0.4 * s, R * 0.1 * s, 0, cy, R * s);
+        gr.addColorStop(0, col([92, 136, 60])); gr.addColorStop(0.55, col([48, 92, 40])); gr.addColorStop(1, col([22, 48, 24]));
+        g.fillStyle = gr; g.beginPath(); g.arc(0, cy, R * s, 0, 2 * Math.PI); g.fill();
+        if (s > 16) {
+          /* Blättchen: kleine Ovale, am Rand dichter, oben links heller */
+          const n = Math.min(900, Math.round(s * s * 0.25));
+          for (let i = 0; i < n; i++) {
+            const w = rng() * 2 * Math.PI, rr = Math.sqrt(rng()) * R * 0.98, x = Math.cos(w) * rr, y = Math.sin(w) * rr;
+            const hell = klemm(0.5 - (x + y) / (2.2 * R), 0, 1);
+            g.fillStyle = col(mischF([26, 58, 26], [120, 164, 72], hell * (0.6 + 0.4 * rng())));
+            g.beginPath(); g.ellipse(x * s, cy + y * s, Math.max(0.6, 0.022 * s), Math.max(0.4, 0.014 * s), rng() * 3, 0, 2 * Math.PI); g.fill();
+          }
+        }
+      }
+      /* Kübel */
+      g.fillStyle = col([112, 76, 46]); g.beginPath(); g.moveTo(-0.3 * s, 0); g.lineTo(0.3 * s, 0); g.lineTo(0.36 * s, z(kz)); g.lineTo(-0.36 * s, z(kz)); g.closePath(); g.fill();
+      if (!sch) {
+        g.fillStyle = col([86, 58, 36]); for (let k = -3; k <= 3; k++) g.fillRect(k * 0.09 * s - 0.004 * s, z(kz - 0.01), 0.008 * s, (kz - 0.02) * ST.KZ * s);
+        g.fillStyle = col([52, 48, 46]); g.fillRect(-0.35 * s, z(0.4), 0.7 * s, 0.035 * s); g.fillRect(-0.32 * s, z(0.1), 0.64 * s, 0.035 * s);
+      }
+    };
+  }
+  /* Frühlingsblumen am Mauerfuß: ein schmales Beet (0,45 m tief) mit
+     Tulpen, Narzissen und Traubenhyazinthen, 0,25–0,45 m hoch. Jede
+     Pflanze steht an ihrem Platz im Beet (Tiefe sortiert, hinten zuerst),
+     Blätter lanzettlich, Tulpen als geschlossener Kelch mit Licht links,
+     Narzissen mit Blütenstern und Trompete. */
+  function blumen(saat, breite) {
+    const B = breite || 1.1;
     return function (g, s, F) {
       if (F.schatten) return;
       const rng = zuf(saat), lf = ST.lichtFaktor([0.2, 0.5, 0.8], F.Z, 0.05, F.jahr);
-      const z = (m) => -m * ST.KZ * s;
-      for (let i = 0; i < 16; i++) {
-        const x = (rng() - 0.5) * 1.1 * s, y = (rng() - 0.5) * 0.2 * s, h = 0.18 + rng() * 0.18;
-        g.strokeStyle = belicht([70, 128, 58], lf); g.lineWidth = Math.max(0.8, 0.02 * s);
-        g.beginPath(); g.moveTo(x, y); g.lineTo(x + (rng() - 0.5) * 0.04 * s, y + z(h)); g.stroke();
-        const art = rng();
-        const c = art < 0.4 ? [246, 214, 60] : art < 0.7 ? [214, 48, 60] : art < 0.85 ? [110, 96, 200] : [250, 248, 240];
-        g.fillStyle = belicht(c, lf);
-        g.beginPath(); g.ellipse(x, y + z(h), 0.045 * s, 0.06 * s, 0, 0, 2 * Math.PI); g.fill();
+      const gier = (F.gier || 0) * RAD, c = Math.cos(gier), sn = Math.sin(gier);
+      const P = (x, y, z) => { const a = x * c - y * sn, b = x * sn + y * c; return [(a - b) * ST.KX * s, (a + b) * ST.KY * s - z * ST.KZ * s]; };
+      const tief = (x, y) => (x * c - y * sn + x * sn + y * c);
+      /* Beeterde: dunkler Streifen mit Einfassung */
+      g.fillStyle = belicht([66, 50, 36], lf);
+      const e = [P(-B / 2, -0.22, 0), P(B / 2, -0.22, 0), P(B / 2, 0.22, 0), P(-B / 2, 0.22, 0)];
+      g.beginPath(); e.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.fill();
+      const n = Math.round(B * 30);
+      const pfl = [];
+      for (let i = 0; i < n; i++) {
+        const x = (rng() - 0.5) * (B - 0.08), y = (rng() - 0.5) * 0.36, art = rng();
+        pfl.push({ x: x, y: y, t: tief(x, y), art: art < 0.42 ? "tulpe" : art < 0.78 ? "narzisse" : "hyazinthe", h: 0.25 + rng() * 0.2, f: rng(), r1: rng(), r2: rng() });
+      }
+      pfl.sort((a, b) => a.t - b.t);
+      const w = Math.max(0.7, 0.012 * s);
+      for (const p of pfl) {
+        const fuss = P(p.x, p.y, 0), kopf = P(p.x + (p.r1 - 0.5) * 0.04, p.y, p.h);
+        /* Blätter */
+        g.fillStyle = belicht(p.art === "hyazinthe" ? [74, 118, 60] : [82, 128, 76], lf);
+        for (const sgn of [-1, 1]) {
+          const ls = P(p.x + sgn * (0.05 + 0.03 * p.r2), p.y, p.h * 0.5);
+          g.beginPath(); g.moveTo(fuss[0] - w, fuss[1]); g.quadraticCurveTo(fuss[0] + sgn * 0.02 * s, (fuss[1] + ls[1]) / 2, ls[0], ls[1]); g.quadraticCurveTo(fuss[0] + sgn * 0.01 * s, (fuss[1] + ls[1]) / 2, fuss[0] + w, fuss[1]); g.fill();
+        }
+        /* Stängel */
+        g.strokeStyle = belicht([70, 118, 56], lf); g.lineWidth = w; g.beginPath(); g.moveTo(fuss[0], fuss[1]); g.lineTo(kopf[0], kopf[1]); g.stroke();
+        const r = 0.032 * s;
+        if (p.art === "tulpe") {
+          const cc = p.f < 0.45 ? [206, 32, 40] : p.f < 0.7 ? [246, 196, 40] : p.f < 0.85 ? [236, 110, 150] : [250, 246, 236];
+          const gr = g.createLinearGradient(kopf[0] - r, 0, kopf[0] + r, 0);
+          gr.addColorStop(0, belicht(hellF(cc, 0.15), lf)); gr.addColorStop(0.6, belicht(cc, lf)); gr.addColorStop(1, belicht(hellF(cc, -0.3), lf));
+          g.fillStyle = gr;
+          g.beginPath(); g.moveTo(kopf[0] - r * 0.8, kopf[1] - r * 1.6); g.lineTo(kopf[0] - r * 0.3, kopf[1] - r * 1.1); g.lineTo(kopf[0], kopf[1] - r * 1.7); g.lineTo(kopf[0] + r * 0.3, kopf[1] - r * 1.1); g.lineTo(kopf[0] + r * 0.8, kopf[1] - r * 1.6);
+          g.quadraticCurveTo(kopf[0] + r * 0.95, kopf[1] - r * 0.1, kopf[0], kopf[1] + r * 0.1); g.quadraticCurveTo(kopf[0] - r * 0.95, kopf[1] - r * 0.1, kopf[0] - r * 0.8, kopf[1] - r * 1.6); g.fill();
+        } else if (p.art === "narzisse") {
+          const bl = p.f < 0.7 ? [250, 226, 80] : [252, 248, 232], tr = p.f < 0.35 ? [238, 150, 40] : [248, 206, 50];
+          g.fillStyle = belicht(bl, lf);
+          for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3 + p.r2; g.beginPath(); g.ellipse(kopf[0] + Math.cos(a) * r * 0.7, kopf[1] - r * 0.6 + Math.sin(a) * r * 0.45, r * 0.55, r * 0.3, a, 0, 2 * Math.PI); g.fill(); }
+          g.fillStyle = belicht(tr, lf); g.beginPath(); g.ellipse(kopf[0] + r * 0.25, kopf[1] - r * 0.6, r * 0.38, r * 0.3, 0, 0, 2 * Math.PI); g.fill();
+        } else {
+          /* Traubenhyazinthe: dichte blaue Traube */
+          for (let k = 0; k < 7; k++) { g.fillStyle = belicht(hellF([70, 64, 170], (k % 3 - 1) * 0.12), lf); g.beginPath(); g.arc(kopf[0] + ((k % 2) - 0.5) * r * 0.5, kopf[1] + k * r * 0.28 - r * 1.2, r * 0.3, 0, 2 * Math.PI); g.fill(); }
+        }
       }
     };
   }
@@ -2004,9 +2566,9 @@
       const l = [];
       if (west) {
         l.push({ art: "portal", a: 0, w: 1.5, z0: 0.3, zk: 2.55, stufen: 2, st: 0.14, tiefe: 0.4 });
-        l.push({ art: "lanzette", a: 0, w: 0.55, z0: 5.9, zk: 7.9 });
-      } else l.push({ art: "lanzette", da: 0, w: 0.3, z0: 3.8, zk: 5.3 });
-      l.push({ art: "lanzette", da: 0, w: 0.45, z0: 12.2, zk: 14.1 });
+        l.push({ art: "lanzette", a: 0, w: 0.55, z0: 5.9, zk: 7.9, glas: Z.glas(12) });
+      } else l.push({ art: "lanzette", da: 0, w: 0.3, z0: 3.8, zk: 5.3, glas: Z.glas(13) });
+      l.push({ art: "lanzette", da: 0, w: 0.45, z0: 12.2, zk: 14.1, glas: Z.glas(14) });
       l.push({ art: "uhr", da: 0, z: TU.uhr, r: TU.uhrR, zeiger: zeiger, zeigt: Z.uhr });
       l.push({ art: "schall", da: 0, w: TU.glW, z0: TU.glU, zk: TU.glK, laeden: Z.laeden });
       return l;
@@ -2024,7 +2586,7 @@
       west: { saat: 23, ecken: [[-LH.y, 1], [LH.y, -1]], sockel: 0.9 },
       ost: { saat: 24, ecken: [[-LH.y, 1], [LH.y, -1]], sockel: 0.9 }
     };
-    const chorFenster = (w, i) => ({ art: "fenster", w: w, z0: 3.1, zk: 5.9, bahnen: 2, tiefe: 0.3, saat: 70 + i, glas: Z.glas(8 + i) });
+    const chorFenster = (w, i) => ({ art: "fenster", w: w, z0: 2.9, zk: 5.4, bahnen: 2, tiefe: 0.3, saat: 70 + i, glas: Z.glas(8 + i) });
     const CS = {
       s: { saat: 31, sockel: 0.9, traufe: CH.tr, oeff: [chorFenster(1.3, 0)] },
       so: { saat: 32, sockel: 0.9, traufe: CH.tr, oeff: [chorFenster(1.2, 1)] },
@@ -2217,10 +2779,13 @@
       }
       if (winter) {
         const ye = sy * (LH.y + LH.ue + 0.18);
-        W.koerper("eis" + sy, quaderP(LH.x0 + 0.95, Math.min(ye, ye + sy * 0.01), LH.ze - 0.9, LH.x1 - 0.95, Math.max(ye, ye + sy * 0.01), LH.ze - 0.2),
+        W.koerper("eis" + sy, quaderP(LH.x0 + 0.95, Math.min(ye, ye + sy * 0.01), LH.ze - 0.6, LH.x1 - 0.95, Math.max(ye, ye + sy * 0.01), LH.ze - 0.2),
           (fl) => (Math.abs(fl.n[1]) > 0.9 ? { malen: eisMaler(sy > 0 ? 3 : 4), keinLicht: true, keinSchatten: true } : null), { schatten: false });
       }
     }
+
+    /* ---------------- Kirchhof ---------------- */
+    if (Z.hof > 0) kirchhofBauen(W, Z);
 
     /* ---------------- Figuren ---------------- */
     if (Z.kreuz) {
@@ -2232,17 +2797,372 @@
       const ck = W.figur("chorknauf", { x: CH.xc, y: 0, z: CH.zf + CH.dv - 0.05, breite: 0.6, hoehe: 1.2, malen: chorknauf }, [0.15, 0.15]);
       if (ck) ck.nach = W.k.filter((K) => /^dach-ch/.test(K.name));
     }
+    if (Z.deko) {
+      /* Bodenstrahler vor Süd-, West- und Nordseite des Turms */
+      const d = 1.8;
+      [[TU.x0 + 1.5, TU.y + d, [0, 1, 0]], [TU.x1 - 1.5, TU.y + d, [0, 1, 0]], [TU.x0 - d, 1.6, [-1, 0, 0]], [TU.x0 - d, -1.6, [-1, 0, 0]], [TU.x0 + 1.5, -TU.y - d, [0, -1, 0]], [TU.x1 - 1.5, -TU.y - d, [0, -1, 0]]]
+        .forEach(([x, y, n], i) => W.figur("strahler" + i, { x: x, y: y, z: 0, breite: 0.5, hoehe: 0.3, malen: strahler(n), schatten: false }, [0.15, 0.12]));
+    }
     if (Z.deko && winter) {
-      W.figur("baum-w", { x: -6.5, y: LH.y + 1.75, z: 0, breite: 1.4, hoehe: 2.6, malen: christbaum(3) }, [0.5, 0.5]);
-      W.figur("baum-o", { x: -1.0, y: LH.y + 1.75, z: 0, breite: 1.4, hoehe: 2.6, malen: christbaum(8) }, [0.5, 0.5]);
-      W.figur("stern", { x: PO.xm, y: PO.y1 + 0.42, z: 4.35, breite: 0.9, hoehe: 1.3, malen: herrnhuter }, [0.3, 0.3]);
+      W.figur("baum-w", { x: -6.5, y: LH.y + 1.75, z: 0, breite: 1.6, hoehe: 2.7, malen: christbaum(3) }, [0.5, 0.5]);
+      W.figur("baum-o", { x: -1.0, y: LH.y + 1.75, z: 0, breite: 1.6, hoehe: 2.7, malen: christbaum(8) }, [0.5, 0.5]);
+      /* Herrnhuter Stern am Wandarm vor dem Portalgiebel */
+      W.figur("stern", { x: PO.xm, y: PO.y1 + 0.62, z: 4.3, breite: 1.4, hoehe: 1.35, malen: herrnhuter(((W.saat >>> 3) & 1) === 1) }, [0.38, 0.38]);
     }
     if (Z.deko && !winter) {
+      /* Efeu wächst um die Südwestecke des Turms */
+      W.figur("efeu-ecke", { x: TU.x0 - 0.06, y: TU.y + 0.06, z: 0, breite: 0.6, hoehe: 6.6, malen: efeuEcke(6.2, 17), schatten: false }, [0.06, 0.06]);
       W.figur("forsythie", { x: 12.2, y: 5.0, z: 0, breite: 2.4, hoehe: 1.9, malen: forsythie }, [0.9, 0.65]);
-      [[-10.6, 0.9], [-8.0, 0.9], [0.4, 0.9], [3.0, 0.9], [6.0, 0.9], [8.4, 0.9]].forEach(([x], i) => W.figur("blumen" + i, { x: x, y: LH.y + 0.35, z: 0, breite: 1.2, hoehe: 0.5, malen: blumen(7 + i) }, [0.55, 0.15]));
+      W.figur("buchs-w", { x: -6.5, y: LH.y + 1.75, z: 0, breite: 1.2, hoehe: 1.4, malen: buchskugel(3) }, [0.4, 0.4]);
+      W.figur("buchs-o", { x: -1.0, y: LH.y + 1.75, z: 0, breite: 1.2, hoehe: 1.4, malen: buchskugel(8) }, [0.4, 0.4]);
+      /* Blumenbeete am Sockel zwischen den Strebepfeilern */
+      [[-10.6, 1.9], [-8.1, 1.3], [0.45, 0.85], [3.0, 2.2], [6.0, 1.6], [8.4, 1.1]].forEach(([x, b], i) => W.figur("blumen" + i, { x: x, y: LH.y + 0.38, z: 0, breite: b + 0.4, hoehe: 0.55, malen: blumen(7 + i, b) }, [b / 2, 0.22]));
     }
   }
 
+
+  /* =====================================================================
+     KIRCHHOF — Mauer, Tor, Gräber, Linde
+     „wie sie in Deutschland auf einem Kirchberg steht": die Kirche steht
+     nicht nackt im Schnee, sondern in ihrem ummauerten Kirchhof. Eine
+     1,2 m hohe Bruchsteinmauer mit Abdeckplatten aus Sandstein umläuft
+     die Kirche, im Süden vor dem Portal ein Tor zwischen zwei Pfeilern
+     mit Pyramidenhauben und schmiedeeisernen Flügeln (offen). Ein
+     Plattenweg führt zur Freitreppe. Gräber: Stelen aus Sandstein oder
+     dunklem Granit, Stein- und Eisenkreuze, jedes Grab mit
+     Steineinfassung – im Winter mit Schneekappe, Tannenreisig und
+     rotem Grablicht (nachts glühend), im Frühling mit Stiefmütterchen
+     und Primeln. In der Südwestecke die alte Dorflinde (aus
+     laubbaum.js, im Winter kahl).
+     ===================================================================== */
+  const KH = { x0: -22.85, x1: 22.85, y0: -10.85, y1: 10.85, d: 0.5, h: 1.05, kap: 0.12 };
+  const TOR = { xa: -5.55, xb: -4.95, xc: -2.55, xd: -1.95, h: 1.6 };      // Pfeiler: [xa, xb] und [xc, xd]
+  const GRAEBER = [
+    /* Norden hinter dem Langhaus */
+    { x: -9.6, y: -8.9, art: "stele", h: 0.9, dunkel: false, form: "rund" }, { x: -6.0, y: -8.9, art: "kreuz", h: 1.0 },
+    { x: -2.4, y: -8.9, art: "stele", h: 0.8, dunkel: true, form: "gerade" }, { x: 1.2, y: -8.9, art: "stele", h: 0.95, dunkel: false, form: "giebel" },
+    { x: 4.8, y: -8.9, art: "eisen", h: 1.05 },
+    /* Südosten vor dem Chor */
+    { x: 10.2, y: 8.5, art: "stele", h: 0.9, dunkel: false, form: "giebel" }, { x: 13.6, y: 8.5, art: "kreuz", h: 1.05 },
+    { x: 17.0, y: 8.5, art: "stele", h: 0.85, dunkel: true, form: "rund" },
+    /* Osten hinter dem Chor */
+    { x: 19.4, y: -3.4, art: "stele", h: 0.9, dunkel: false, form: "rund" }, { x: 19.4, y: 3.6, art: "eisen", h: 1.0 },
+    /* Südwesten vor dem Turm */
+    { x: -16.8, y: 8.5, art: "stele", h: 0.95, dunkel: false, form: "giebel" }, { x: -13.4, y: 8.5, art: "kreuz", h: 1.0 }
+  ];
+  function kirchhofBauen(W, Z) {
+    const hk = KH.h * Z.hof, d = KH.d;
+    const wand = { malen: hofMauerMaler, ao: true };
+    const mauer = (name, x0, y0, x1, y1) => {
+      W.koerper(name, quaderP(x0, y0, 0, x1, y1, KH.h), (fl) => (Math.abs(fl.n[2]) > 0.5 ? null : wand), { bisZ: Math.max(0.02, hk) });
+      if (Z.hof >= 1) {
+        /* Abdeckplatte: quer 5 cm Überstand; Nord- und Südmauer enden an
+           den Platten der Ost- und Westmauer (kein Überlappen) */
+        const ue = 0.05, ex = x1 - x0 > y1 - y0;
+        const xa = ex ? (x0 <= KH.x0 + d + 1e-6 ? x0 + ue : x0) : x0 - ue, xb = ex ? (x1 >= KH.x1 - d - 1e-6 ? x1 - ue : x1) : x1 + ue;
+        W.koerper(name + "-kappe", quaderP(xa, ex ? y0 - ue : y0, KH.h, xb, ex ? y1 + ue : y1, KH.h + KH.kap), (fl) => (fl.n[2] < -0.5 ? null : { malen: kappeMaler }), {});
+      }
+    };
+    mauer("hof-w", KH.x0, KH.y0, KH.x0 + d, KH.y1);
+    mauer("hof-o", KH.x1 - d, KH.y0, KH.x1, KH.y1);
+    mauer("hof-n", KH.x0 + d, KH.y0, KH.x1 - d, KH.y0 + d);
+    mauer("hof-sw", KH.x0 + d, KH.y1 - d, TOR.xa, KH.y1);
+    mauer("hof-so", TOR.xd, KH.y1 - d, KH.x1 - d, KH.y1);
+    /* Torpfeiler mit Pyramidenhaube */
+    if (Z.hof >= 1) for (const [a, b] of [[TOR.xa, TOR.xb], [TOR.xc, TOR.xd]]) {
+      const y0 = KH.y1 - d - 0.05, y1 = KH.y1 + 0.05, m = [(a + b) / 2, (y0 + y1) / 2];
+      W.koerper("hof-pfeiler" + a, quaderP(a, y0, 0, b, y1, TOR.h), (fl) => (fl.n[2] < -0.5 ? null : { malen: werksteinMaler(91 + (a | 0)), ao: true }), {});
+      W.koerper("hof-haube" + a, [[a - 0.05, y0 - 0.05, TOR.h], [b + 0.05, y0 - 0.05, TOR.h], [b + 0.05, y1 + 0.05, TOR.h], [a - 0.05, y1 + 0.05, TOR.h], [m[0], m[1], TOR.h + 0.42]], (fl) => (fl.n[2] < -0.5 ? null : { malen: werksteinMaler(97) }), {});
+      W.figur("hof-kugel" + a, { x: m[0], y: m[1], z: TOR.h + 0.43, breite: 0.3, hoehe: 0.2, malen: steinkugel(W.werk), schatten: false }, [0.08, 0.08]);
+    }
+    /* Torflügel, nach innen geöffnet */
+    if (Z.hofTor) for (const [x0t, sg] of [[TOR.xb, 1], [TOR.xc, -1]]) {
+      const x = x0t + sg * 0.035, w = 1.15, a = 72 * RAD, dx = sg * Math.cos(a) * w, dy = -Math.sin(a) * w, hy = KH.y1 - d / 2;
+      const nx = -dy / w * 0.015, ny = dx / w * 0.015;
+      const p = [];
+      for (const [px2, py2] of [[x + nx, hy + ny], [x - nx, hy - ny], [x + dx + nx, hy + dy + ny], [x + dx - nx, hy + dy - ny]]) p.push([px2, py2, 0.06], [px2, py2, 1.24]);
+      W.koerper("tor" + sg, p, (fl) => (Math.abs(fl.n[2]) > 0.5 ? null : { malen: torMaler, keinLicht: true, keinSchatten: true }), {});
+    }
+    /* Plattenweg vom Tor zur Freitreppe */
+    if (Z.hofTor) W.koerper("weg", quaderP(PO.xm - 0.8, PO.y1 + 4 * 0.3, 0, PO.xm + 0.8, KH.y1 - d + 0.02, 0.03), (fl) => (fl.n[2] > 0.5 ? { malen: wegMaler } : null), {});
+    if (!Z.deko) return;
+    /* Gräber */
+    GRAEBER.forEach((gb, i) => grabBauen(W, gb, i));
+    /* Dorflinde in der Südwestecke */
+    const L = lindeFigur(9, W.winter ? "winter" : "fruehling");
+    if (L) W.figur("linde", { x: -20.4, y: 8.1, z: 0, breite: L.breite, hoehe: L.hoehe, malen: (g, s, F) => L.malen(g, s, F) }, [0.4, 0.4]);
+  }
+  /* Linde aus laubbaum.js (Saat 9: Linde, 12 m) */
+  const LINDEN = {};
+  function lindeFigur(saat, jahr) {
+    const def = ST.MODELLE.laubbaum;
+    if (!def) return null;
+    const schl = saat + "|" + jahr;
+    if (LINDEN[schl] !== undefined) return LINDEN[schl];
+    let fi = null;
+    const fake = { teil() {}, flaeche() {}, figur(f) { fi = f; return f; }, licht() {}, bodenlicht() {}, rauchAus() {}, lebendig() {} };
+    try { def.bauen(fake, { saat: saat, jahr: jahr, bau: 1 }); } catch (e) { fi = null; }
+    LINDEN[schl] = fi;
+    return fi;
+  }
+  /* Mauer: Bruchstein, unten Spritzwasser, im Winter Schneewehe */
+  function hofMauerMaler(g, F, I) {
+    const x0 = I.A0, x1 = I.A0 + F.w, y0 = I.B0, y1 = I.B0 + F.h;
+    bruchstein(g, F, I, x0, y0, x1, y1, 7);
+    const gr = g.createLinearGradient(0, 0, 0, -0.45);
+    gr.addColorStop(0, I.W.winter ? "rgba(60,58,62,0.3)" : "rgba(70,84,50,0.34)"); gr.addColorStop(1, "rgba(70,70,60,0)");
+    g.fillStyle = gr; g.fillRect(x0, -0.45, x1 - x0, 0.45);
+    /* Schatten unter der Abdeckplatte */
+    const sv = F.schatten ? F.schatten(0.05) : null;
+    g.fillStyle = "rgba(20,18,26,0.35)"; g.fillRect(x0, -KH.h, x1 - x0, sv ? Math.max(0.03, sv[1]) : 0.04);
+    if (!I.W.winter) {
+      /* Moos in den Fugen am Fuß */
+      g.fillStyle = "rgba(76,104,46,0.22)"; g.fillRect(x0, -0.25, x1 - x0, 0.25);
+    }
+    if (I.W.winter) schneeWehe(g, F, x0, x1, 5);
+  }
+  function kappeMaler(g, F, I) {
+    const x0 = I.A0, x1 = I.A0 + F.w, y0 = I.B0, y1 = I.B0 + F.h, c = hellF(I.W.werk, 0.08);
+    g.fillStyle = rgbS(c); g.fillRect(x0, y0, x1 - x0, y1 - y0);
+    if (I.n[2] > 0.5) {
+      /* Abdeckplatten: Stoßfugen quer */
+      if (F.px > 8) { g.fillStyle = rgbS(hellF(c, -0.35), 0.7); const lang = F.w > F.h; for (let t = Math.ceil((lang ? x0 : y0) / 0.9) * 0.9; t < (lang ? x1 : y1); t += 0.9) { if (lang) g.fillRect(t, y0, Math.max(0.01, 0.8 / F.px), y1 - y0); else g.fillRect(x0, t, x1 - x0, Math.max(0.01, 0.8 / F.px)); } }
+      rausch(g, x0, y0, x1 - x0, y1 - y0, 1.1, 0.26, 17, 3);
+      if (I.W.winter) {
+        /* Schneepolster, zur Mitte hoch gewölbt, am Rand bläulich */
+        g.fillStyle = "rgb(242,246,252)"; g.fillRect(x0, y0, x1 - x0, y1 - y0);
+        const lang = F.w > F.h, gr = lang ? g.createLinearGradient(0, y0, 0, y1) : g.createLinearGradient(x0, 0, x1, 0);
+        gr.addColorStop(0, "rgba(170,188,222,0.45)"); gr.addColorStop(0.3, "rgba(255,255,255,0)"); gr.addColorStop(0.7, "rgba(255,255,255,0)"); gr.addColorStop(1, "rgba(170,188,222,0.45)");
+        g.fillStyle = gr; g.fillRect(x0, y0, x1 - x0, y1 - y0);
+      } else { g.fillStyle = "rgba(92,118,58,0.25)"; for (let i = 0; i < F.w * F.h * 30; i++) { const rr = 0.02 + hash(i, 3, 7) * 0.05; g.beginPath(); g.arc(x0 + hash(i, 1, 7) * F.w, y0 + hash(i, 2, 7) * F.h, rr, 0, 2 * Math.PI); g.fill(); } }
+    } else {
+      /* Stirn der Platte mit Wassernase */
+      g.fillStyle = rgbS(hellF(c, 0.12)); g.fillRect(x0, y0, x1 - x0, (y1 - y0) * 0.35);
+      g.fillStyle = rgbS(hellF(c, -0.25)); g.fillRect(x0, y1 - (y1 - y0) * 0.2, x1 - x0, (y1 - y0) * 0.2);
+      if (I.W.winter) { g.fillStyle = "rgb(242,246,252)"; schneeKante(g, x0, x1, y0 + 0.01, 0.06, 23); }
+    }
+  }
+  /* Kugel auf der Pfeilerhaube */
+  function steinkugel(werk) { return function (g, s, F) {
+    const r = 0.1 * s, cy = -0.07 * ST.KZ * s;
+    if (F.schatten) { g.fillStyle = "#000"; g.beginPath(); g.arc(0, cy, r, 0, 2 * Math.PI); g.fill(); return; }
+    const c = hellF(werk, 0.08), lf = ST.lichtFaktor([0, 0.3, 0.95], F.Z, 0.05, F.jahr);
+    const gr = g.createRadialGradient(-r * 0.4, cy - r * 0.4, r * 0.1, 0, cy, r);
+    gr.addColorStop(0, belicht(hellF(c, 0.25), lf)); gr.addColorStop(1, belicht(hellF(c, -0.3), lf));
+    g.fillStyle = gr; g.beginPath(); g.arc(0, cy, r, 0, 2 * Math.PI); g.fill();
+    if (F.jahr === "winter") { g.fillStyle = belicht([242, 246, 252], lf); g.beginPath(); g.ellipse(0, cy - r * 0.55, r * 0.8, r * 0.45, 0, Math.PI, 2 * Math.PI); g.fill(); }
+  }; }
+  /* schmiedeeiserner Torflügel: Rahmen, Stäbe mit Spitzen, Mittelband
+     mit C-Schnörkeln – durchsichtig, darum selbst belichtet */
+  function torMaler(g, F, I) {
+    const x0 = I.A0, x1 = I.A0 + F.w, y0 = I.B0, px = F.px;
+    const lf = lichtVon(F, 0.05), eisen = belicht([40, 40, 42], lf), hell = belicht([74, 74, 78], lf);
+    const z = (m) => -m;
+    const b = Math.max(0.018, 0.9 / px);
+    g.fillStyle = eisen;
+    for (const zz of [0.12, 0.6, 1.08]) g.fillRect(x0, z(zz) - 0.02, x1 - x0, 0.04);
+    g.fillRect(x0, z(1.16), 0.035, 1.1); g.fillRect(x1 - 0.035, z(1.16), 0.035, 1.1);
+    for (let x = x0 + 0.1; x < x1 - 0.05; x += 0.11) {
+      g.fillStyle = eisen; g.fillRect(x - b / 2, z(1.16), b, 1.1);
+      /* Spitze */
+      g.beginPath(); g.moveTo(x - 0.022, z(1.16)); g.lineTo(x, z(1.23)); g.lineTo(x + 0.022, z(1.16)); g.closePath(); g.fill();
+      if (px > 30) { g.fillStyle = hell; g.fillRect(x - b / 2, z(1.16), b * 0.35, 1.1); }
+    }
+    if (px > 18) {
+      /* C-Schnörkel im Mittelband */
+      g.strokeStyle = eisen; g.lineWidth = b * 0.8;
+      for (let x = x0 + 0.155; x < x1 - 0.1; x += 0.22) { g.beginPath(); g.arc(x, z(0.84), 0.05, -Math.PI / 2, Math.PI / 2); g.stroke(); g.beginPath(); g.arc(x, z(0.36), 0.05, Math.PI / 2, Math.PI * 1.5); g.stroke(); }
+    }
+    if (I.W.winter) { g.fillStyle = belicht([242, 246, 252], lf); for (const zz of [0.6, 1.08]) g.fillRect(x0, z(zz) - 0.04, x1 - x0, 0.022); }
+  }
+  /* Plattenweg: große Sandsteinplatten im Läuferverband, im Winter in
+     der Mitte geräumt, im Frühling Gras in den Fugen */
+  function wegMaler(g, F, I) {
+    const x0 = I.A0, x1 = I.A0 + F.w, y0 = I.B0, y1 = I.B0 + F.h, c = hellF(I.W.werk, 0.06), px = F.px;
+    g.fillStyle = rgbS(hellF(c, -0.4)); g.fillRect(x0, y0, x1 - x0, y1 - y0);
+    if (px > 6) {
+      const eim = [new Path2D(), new Path2D(), new Path2D()];
+      const f = Math.max(0.015, 0.8 / px);
+      for (let r = Math.floor(y0 / 0.55) - 1, k = 0; r * 0.55 < y1; r++, k++) {
+        const off = hash(r, 3, 5) * 0.8;
+        for (let x = x0 - 1 + off; x < x1; x += 0.6 + 0.3 * hash(Math.round(x * 10), r, 6)) {
+          const w = 0.55 + 0.3 * hash(Math.round(x * 10), r, 7);
+          eim[(hash(Math.round(x * 10), r, 8) * 3) | 0].rect(x + f / 2, r * 0.55 + f / 2, w - f, 0.55 - f);
+        }
+      }
+      eim.forEach((p, i) => { g.fillStyle = rgbS(hellF(c, (i - 1) * 0.06)); g.fill(p); });
+    } else { g.fillStyle = rgbS(c); g.fillRect(x0, y0, x1 - x0, y1 - y0); }
+    rausch(g, x0, y0, x1 - x0, y1 - y0, 1.2, 0.25, 43, 3);
+    if (I.W.winter) {
+      const wb = (x1 - x0) * 0.22;
+      g.fillStyle = "rgb(240,244,251)"; g.fillRect(x0, y0, wb, y1 - y0); g.fillRect(x1 - wb, y0, wb, y1 - y0);
+      g.fillStyle = "rgba(236,240,248,0.45)"; g.fillRect(x0 + wb, y0, x1 - x0 - 2 * wb, y1 - y0);
+    } else { g.fillStyle = "rgba(80,120,50,0.3)"; g.fillRect(x0, y0, 0.08, y1 - y0); g.fillRect(x1 - 0.08, y0, 0.08, y1 - y0); }
+  }
+  /* Ein Grab: Stein (Stele) oder Kreuz am Westende, Steineinfassung
+     1,8 × 0,85 m nach Osten, darin Reisig und Grablicht (Winter) oder
+     Blumen (Frühling) */
+  function grabBauen(W, gb, i) {
+    const x = gb.x, y = gb.y;
+    W.koerper("beet" + i, quaderP(x + 0.14, y - 0.42, 0, x + 1.94, y + 0.42, 0.13), (fl) => (fl.n[2] < -0.5 ? null : { malen: grabBeetMaler(i) }), {});
+    if (gb.art === "stele") {
+      W.koerper("grabsockel" + i, quaderP(x - 0.1, y - 0.34, 0, x + 0.1, y + 0.34, 0.1), (fl) => (fl.n[2] < -0.5 ? null : { malen: grabsteinMaler(gb, i, true), ao: true }), {});
+      const hw = 0.28, pts = [];
+      const profil = gb.form === "rund" ? [[-hw, 0], [-hw * 0.92, 0.1], [-hw * 0.7, 0.16], [-hw * 0.38, 0.2], [0, 0.21], [hw * 0.38, 0.2], [hw * 0.7, 0.16], [hw * 0.92, 0.1], [hw, 0]] : gb.form === "giebel" ? [[-hw, 0], [0, 0.14], [hw, 0]] : [[-hw, 0], [hw, 0]];
+      const zt = 0.1 + gb.h - (gb.form === "gerade" ? 0 : 0.18);
+      for (const xx of [x - 0.07, x + 0.07]) { pts.push([xx, y - hw, 0.1], [xx, y + hw, 0.1]); for (const [yy, dz] of profil) pts.push([xx, y + yy, zt + dz]); }
+      W.koerper("grabstein" + i, pts, (fl) => (fl.n[2] < -0.5 ? null : { malen: grabsteinMaler(gb, i, false) }), {});
+    } else {
+      W.figur("grabkreuz" + i, { x: x, y: y, z: 0, breite: 0.8, hoehe: gb.h + 0.2, malen: grabkreuz(gb.art === "eisen", gb.h, i, W.werk) }, [0.12, 0.3]);
+    }
+    W.figur("grablicht" + i, { x: x + 0.3, y: y + 0.22, z: 0.13, breite: 0.3, hoehe: 0.25, malen: grablicht(i), schatten: false }, [0.06, 0.06]);
+  }
+  function grabsteinMaler(gb, i, sockelTeil) {
+    return function (g, F, I) {
+      const x0 = I.A0, x1 = I.A0 + F.w, y0 = I.B0, y1 = I.B0 + F.h, px = F.px, W = I.W;
+      const c = gb.dunkel ? [70, 72, 76] : hellF(W.werk, sockelTeil ? -0.08 : 0.1);
+      g.fillStyle = rgbS(c); g.fillRect(x0, y0, x1 - x0, y1 - y0);
+      if (I.n[2] > 0.3) {
+        if (W.winter) { g.fillStyle = "rgb(242,246,252)"; g.fillRect(x0, y0, x1 - x0, y1 - y0); }
+        return;
+      }
+      if (gb.dunkel) {
+        /* polierter Granit: Spiegelung, feines Korn */
+        const gr = g.createLinearGradient(x0, y0, x1, y1);
+        gr.addColorStop(0, "rgba(255,255,255,0.14)"); gr.addColorStop(0.5, "rgba(255,255,255,0)"); gr.addColorStop(1, "rgba(255,255,255,0.08)");
+        g.fillStyle = gr; g.fillRect(x0, y0, x1 - x0, y1 - y0);
+        rausch(g, x0, y0, x1 - x0, y1 - y0, 0.3, 0.3, 61, 3);
+      } else {
+        rausch(g, x0, y0, x1 - x0, y1 - y0, 0.8, 0.3, 62 + i, 3);
+        /* Flechten und Verwitterung unten */
+        const gv = g.createLinearGradient(0, y1, 0, y1 - 0.4); gv.addColorStop(0, "rgba(70,80,52,0.35)"); gv.addColorStop(1, "rgba(70,80,52,0)");
+        g.fillStyle = gv; g.fillRect(x0, y1 - 0.4, x1 - x0, 0.4);
+      }
+      /* Inschrift (nur Vorderseite nach Osten): Kreuz, Zeilen */
+      if (!sockelTeil && I.n[0] > 0.9 && px * F.w > 14) {
+        const cx = (x0 + x1) / 2, zt = y0;
+        const tief = gb.dunkel ? "rgba(214,190,120,0.9)" : rgbS(hellF(c, -0.45), 0.8);
+        g.fillStyle = tief;
+        g.fillRect(cx - 0.012, zt + 0.12, 0.024, 0.13); g.fillRect(cx - 0.045, zt + 0.16, 0.09, 0.022);
+        const zeilen = [[0.34, 0.36], [0.42, 0.26], [0.47, 0.3], [0.56, 0.22]];
+        for (const [yy, w] of zeilen) if (zt + yy < y1 - 0.12) g.fillRect(cx - w / 2 * (0.8 + 0.2 * hash(i, yy * 10, 3)), zt + yy, w * (0.8 + 0.2 * hash(i, yy * 10, 3)), Math.max(0.012, 0.9 / px));
+      }
+      if (W.winter && !sockelTeil) { g.fillStyle = "rgb(242,246,252)"; schneeKante(g, x0, x1, y0 + 0.012, 0.035, 31 + i); }
+    };
+  }
+  function grabBeetMaler(i) {
+    return function (g, F, I) {
+      const x0 = I.A0, x1 = I.A0 + F.w, y0 = I.B0, y1 = I.B0 + F.h, px = F.px, W = I.W, c = hellF(W.werk, 0.02);
+      g.fillStyle = rgbS(c); g.fillRect(x0, y0, x1 - x0, y1 - y0);
+      if (I.n[2] < 0.5) { rausch(g, x0, y0, x1 - x0, y1 - y0, 0.8, 0.25, 71, 3); if (W.winter) { g.fillStyle = "rgb(242,246,252)"; g.fillRect(x0, y0, x1 - x0, 0.03); } return; }
+      const r = 0.08, ix = x0 + r, iy = y0 + r, iw = x1 - x0 - 2 * r, ih = y1 - y0 - 2 * r;
+      const rng = zuf(900 + i);
+      if (W.winter) {
+        g.fillStyle = "rgb(240,244,251)"; g.fillRect(x0, y0, x1 - x0, y1 - y0);
+        /* Tannenreisig, zum Teil verschneit */
+        if (px > 10) {
+          for (let k = 0; k < 16; k++) {
+            const cx = ix + rng() * iw, cy = iy + rng() * ih, a = rng() * Math.PI, l = 0.25 + rng() * 0.2;
+            g.strokeStyle = rgbS(hellF([34, 70, 44], (rng() - 0.5) * 0.4)); g.lineWidth = Math.max(0.01, 0.8 / px);
+            for (let m = -4; m <= 4; m++) { const t = m / 4, bx = cx + Math.cos(a) * l * t * 0.5, by = cy + Math.sin(a) * l * t * 0.5; g.beginPath(); g.moveTo(bx, by); g.lineTo(bx + Math.cos(a + 1.1) * 0.06, by + Math.sin(a + 1.1) * 0.06); g.moveTo(bx, by); g.lineTo(bx + Math.cos(a - 1.1) * 0.06, by + Math.sin(a - 1.1) * 0.06); g.stroke(); }
+          }
+          g.fillStyle = "rgba(244,247,252,0.85)"; for (let k = 0; k < 20; k++) { g.beginPath(); g.ellipse(ix + rng() * iw, iy + rng() * ih, 0.06 + rng() * 0.06, 0.03, rng() * 3, 0, 2 * Math.PI); g.fill(); }
+        } else { g.fillStyle = "rgba(40,76,48,0.45)"; g.fillRect(ix, iy, iw, ih); }
+      } else {
+        g.fillStyle = "rgb(84,62,44)"; g.fillRect(ix, iy, iw, ih);
+        /* Stiefmütterchen und Primeln in zwei Reihen: je Pflanze eine
+           Blattrosette, darüber 2–4 Blüten mit fünf Blütenblättern und
+           dunklem Auge, dazwischen Bodendecker */
+        const farben = [[120, 70, 170], [246, 214, 60], [236, 236, 244], [200, 50, 90], [250, 170, 60], [90, 110, 210]];
+        if (px > 10) {
+          g.fillStyle = "rgba(70,112,52,0.55)"; g.fillRect(ix, iy + ih * 0.42, iw, ih * 0.16);
+          for (let r = 0; r < 2; r++) for (let k = 0; k < 6; k++) {
+            const cx = ix + (k + 0.5) / 6 * iw + (rng() - 0.5) * 0.06, cy = iy + (r + 0.5) / 2 * ih + (rng() - 0.5) * 0.05;
+            for (let b = 0; b < 6; b++) { const a = b * Math.PI / 3 + rng(); g.fillStyle = rgbS(hellF([54, 96, 44], (rng() - 0.5) * 0.3)); g.beginPath(); g.ellipse(cx + Math.cos(a) * 0.045, cy + Math.sin(a) * 0.045, 0.045, 0.025, a, 0, 2 * Math.PI); g.fill(); }
+            const fc = farben[(rng() * farben.length) | 0];
+            for (let b = 0; b < 2 + ((rng() * 3) | 0); b++) {
+              const bx = cx + (rng() - 0.5) * 0.08, by = cy + (rng() - 0.5) * 0.08, rr = 0.022;
+              for (let q = 0; q < 5; q++) { const a = q * 1.2566; g.fillStyle = rgbS(hellF(fc, q < 2 ? 0.08 : -0.05)); g.beginPath(); g.arc(bx + Math.cos(a) * rr * 0.7, by + Math.sin(a) * rr * 0.7, rr * 0.62, 0, 2 * Math.PI); g.fill(); }
+              if (px > 40) { g.fillStyle = "rgba(40,20,40,0.8)"; g.beginPath(); g.arc(bx, by, rr * 0.3, 0, 2 * Math.PI); g.fill(); }
+              g.fillStyle = "rgb(250,220,80)"; g.beginPath(); g.arc(bx, by, rr * 0.14, 0, 2 * Math.PI); g.fill();
+            }
+          }
+        }
+      }
+      /* Einfassung aus Sandstein */
+      g.strokeStyle = rgbS(hellF(c, 0.1)); g.lineWidth = r; g.strokeRect(x0 + r / 2, y0 + r / 2, x1 - x0 - r, y1 - y0 - r);
+      if (W.winter) { g.strokeStyle = "rgba(242,246,252,0.9)"; g.lineWidth = r * 0.7; g.strokeRect(x0 + r / 2, y0 + r / 2, x1 - x0 - r, y1 - y0 - r); }
+    };
+  }
+  /* Grabkreuz: Stein (mit Sockel) oder geschmiedetes Eisenkreuz mit
+     Blechdach und Schrifttafel */
+  function grabkreuz(eisen, h, i, werk) {
+    return function (g, s, F) {
+      const sch = F.schatten, r = (F.gier || 0) * RAD, co = Math.cos(r), si = Math.sin(r);
+      const winter = F.jahr === "winter";
+      const P = (x, y, z) => { const q = bildRichtung(F.gier || 0, [x, y, z]); return [q[0] * s, q[1] * s]; };
+      const sx = co + si >= 0 ? 1 : -1, sy = co - si >= 0 ? 1 : -1;
+      const basisF = eisen ? [44, 44, 46] : hellF(werk || [176, 160, 136], 0.05);
+      const farbe = (n, d) => {
+        if (sch) return "#000";
+        if (winter && n[2] > 0.5) return belicht([240, 244, 251], ST.lichtFaktor([0, 0, 1], F.Z, 0, F.jahr));
+        return belicht(hellF(basisF, d), ST.lichtFaktor([n[0] * co - n[1] * si, n[0] * si + n[1] * co, n[2]], F.Z, 0.03, F.jahr));
+      };
+      const flaeche = (pts, n, d) => { g.fillStyle = farbe(n, d); g.beginPath(); pts.forEach((p, k) => (k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.fill(); };
+      const quader = (x0, x1, y0, y1, z0, z1) => {
+        const xs = sx > 0 ? x1 : x0, ys = sy > 0 ? y1 : y0;
+        flaeche([P(xs, y0, z0), P(xs, y1, z0), P(xs, y1, z1), P(xs, y0, z1)], [sx, 0, 0], -0.02);
+        flaeche([P(x0, ys, z0), P(x1, ys, z0), P(x1, ys, z1), P(x0, ys, z1)], [0, sy, 0], -0.06);
+        flaeche([P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1)], [0, 0, 1], 0.08);
+      };
+      const d = eisen ? 0.018 : 0.05, b = eisen ? 0.022 : 0.055, za = h * 0.62, zb = za + (eisen ? 0.04 : 0.1), arm = eisen ? 0.26 : 0.24;
+      if (!eisen) quader(-0.12, 0.12, -0.2, 0.2, 0, 0.14);
+      const z0 = eisen ? 0 : 0.14;
+      quader(-d, d, sy > 0 ? -arm : b, sy > 0 ? -b : arm, za, zb);
+      quader(-d, d, -b, b, z0, h);
+      quader(-d, d, sy > 0 ? b : -arm, sy > 0 ? arm : -b, za, zb);
+      if (eisen && !sch) {
+        /* Schrifttafel und kleines Blechdach */
+        const t = [P(sx * 0.02, -0.1, za - 0.06), P(sx * 0.02, 0.1, za - 0.06), P(sx * 0.02, 0.1, za - 0.24), P(sx * 0.02, -0.1, za - 0.24)];
+        g.fillStyle = belicht([200, 190, 160], ST.lichtFaktor([sx * co, sx * si, 0], F.Z, 0.05, F.jahr)); g.beginPath(); t.forEach((p, k) => (k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.fill();
+        g.strokeStyle = belicht([40, 40, 42], ST.lichtFaktor([0, 0, 1], F.Z, 0, F.jahr)); g.lineWidth = Math.max(0.6, 0.012 * s);
+        const oben = P(0, 0, h + 0.1), l = P(0, -0.2, h - 0.02), rr = P(0, 0.2, h - 0.02);
+        g.beginPath(); g.moveTo(l[0], l[1]); g.lineTo(oben[0], oben[1]); g.lineTo(rr[0], rr[1]); g.stroke();
+      }
+    };
+  }
+  /* Grablicht: rotes Glas (Zylinder mit Lichtkante und Spiegelung) unter
+     einem Messingdeckel mit Kuppel und Bügel. Nachts brennt die Kerze:
+     das Glas glüht von innen, die Flamme ist als heller Kern zu sehen,
+     der Schein liegt rot auf Schnee und Einfassung – im Bild gemalt,
+     also richtig verdeckt (kein Schein durch Mauern). */
+  function grablicht(i) {
+    return function (g, s, F) {
+      if (F.schatten) return;
+      const z = (m) => -m * ST.KZ * s, lf = ST.lichtFaktor([0.2, 0.5, 0.8], F.Z, 0.05, F.jahr);
+      const w = 0.05 * s, h = 0.13, n = F.nacht > 0.05 ? F.nacht : 0;
+      if (n) {
+        const gr = g.createRadialGradient(0, z(0.02), 0, 0, z(0.02), 0.45 * s);
+        gr.addColorStop(0, "rgba(255,110,70," + (0.42 * n).toFixed(2) + ")"); gr.addColorStop(0.35, "rgba(220,50,36," + (0.14 * n).toFixed(2) + ")"); gr.addColorStop(1, "rgba(200,40,30,0)");
+        g.save(); g.scale(1, 0.55); g.fillStyle = gr; g.beginPath(); g.arc(0, z(0.02) / 0.55, 0.45 * s, 0, 2 * Math.PI); g.fill(); g.restore();
+      }
+      /* Glaszylinder */
+      const basis = belicht2([150, 18, 24], lf);
+      const glas = g.createLinearGradient(-w, 0, w, 0);
+      if (n) { glas.addColorStop(0, rgbS(mischF(basis, [220, 60, 40], n))); glas.addColorStop(0.45, rgbS(mischF(basis, [255, 150, 90], n))); glas.addColorStop(1, rgbS(mischF(basis, [190, 40, 30], n))); }
+      else { glas.addColorStop(0, rgbS(hellF(basis, 0.25))); glas.addColorStop(0.3, rgbS(basis)); glas.addColorStop(1, rgbS(hellF(basis, -0.4))); }
+      g.fillStyle = glas;
+      g.beginPath(); g.moveTo(-w, z(h)); g.lineTo(w, z(h)); g.lineTo(w * 0.92, z(0.005)); g.quadraticCurveTo(0, z(0.005) + w * 0.3, -w * 0.92, z(0.005)); g.closePath(); g.fill();
+      if (!n && s > 30) { g.fillStyle = "rgba(255,230,230,0.45)"; g.fillRect(-w * 0.6, z(h * 0.9), w * 0.18, h * 0.75 * ST.KZ * s); }
+      if (n) { const fl = g.createRadialGradient(0, z(h * 0.45), 0, 0, z(h * 0.45), w * 0.7); fl.addColorStop(0, "rgba(255,244,200," + n + ")"); fl.addColorStop(1, "rgba(255,160,80,0)"); g.fillStyle = fl; g.fillRect(-w, z(h * 0.8), 2 * w, h * 0.7 * ST.KZ * s); }
+      /* Messingdeckel mit Kuppel und Bügel */
+      g.fillStyle = belicht([176, 142, 76], lf); g.fillRect(-w * 1.08, z(h + 0.012), w * 2.16, 0.014 * ST.KZ * s);
+      g.fillStyle = belicht([150, 118, 60], lf); g.beginPath(); g.ellipse(0, z(h + 0.012), w * 0.8, w * 0.55, 0, Math.PI, 2 * Math.PI); g.fill();
+      if (s > 30) { g.strokeStyle = belicht([120, 96, 50], lf); g.lineWidth = Math.max(0.6, 0.006 * s); g.beginPath(); g.ellipse(0, z(h + 0.04), w * 0.45, w * 0.55, 0, Math.PI, 2 * Math.PI); g.stroke(); }
+      if (F.jahr === "winter") { g.fillStyle = belicht([242, 246, 252], lf); g.beginPath(); g.ellipse(0, z(h + 0.022), w * 0.95, w * 0.28, 0, Math.PI, 2 * Math.PI); g.fill(); }
+    };
+  }
+  function belicht2(c, lf) { return [c[0] * lf[0], c[1] * lf[1], c[2] * lf[2]]; }
 
   /* =====================================================================
      BAUPHASEN
@@ -2495,7 +3415,7 @@
     const nGrat = Math.floor(klemm((k - 0.25) / 0.4, 0, 1) * 8);
     for (let i = 0; i < nGrat; i++) balken(W, "grat" + i, ecke(i, TU.gz + 0.1), ap, 0.16, 0.2, null, "helmstuhl");
     const nRing = Math.floor(klemm((k - 0.6) / 0.4, 0, 1) * 16);
-    for (let j = 0; j < nRing; j++) { const z = j < 8 ? 25.5 : 29.5, i = j % 8; balken(W, "ring" + j, ecke(i, z), ecke(i + 1, z), 0.12, 0.14, null, "helmstuhl"); }
+    for (let j = 0; j < nRing; j++) { const z = TU.gz + (TU.spitze - TU.gz) * (j < 8 ? 0.26 : 0.6), i = j % 8; balken(W, "ring" + j, ecke(i, z), ecke(i + 1, z), 0.12, 0.14, null, "helmstuhl"); }
   }
   /* Rohbau als offene Mauerschalen: man sieht hinein */
   function schalenMal(ebenen) {
@@ -2628,7 +3548,7 @@
     const acht = [];
     for (let i = 0; i < 8; i++) { const a = (22.5 + i * 45) * RAD, r = ge / Math.cos(22.5 * RAD); acht.push([TU.xm + Math.cos(a) * r, Math.sin(a) * r, TU.gz]); }
     const helmMal = dachMaler({ reihe: 0.13, breite: 0.19, saat: 81, band: 0.14, steil: true, eindeck: Z.eindeckHelm });
-    W.koerper("helm", acht.concat([[TU.xm, 0, zS]]), (fl) => (fl.n[2] < -0.3 ? null : { malen: helmMal }), { wirft: true, bisZ: Z.helmH });
+    W.koerper("helm", acht.concat([[TU.xm, 0, zS]]), (fl) => (fl.n[2] < -0.3 ? null : { malen: helmMal, danach: helmFlut }), { wirft: true, bisZ: Z.helmH });
     for (const [sx, sy] of [[1, 1], [-1, 1], [-1, -1], [1, -1]]) {
       const hz = 4.0, k = (zS - TU.gz - hz) / (zS - TU.gz);
       const pts = [[TU.xm + sx * ge, sy * ge * t8, TU.gz], [TU.xm + sx * ge * t8, sy * ge, TU.gz], [TU.xm + sx * ge, sy * ge, TU.gz],
@@ -2656,44 +3576,147 @@
     g.fillStyle = "rgb(150,138,118)"; g.fillRect(x0, y0, F.w, F.h);
     if (F.px > 6) {
       const rng = zuf(7);
-      for (let i = 0; i < Math.min(900, F.w * F.h * 6); i++) { g.fillStyle = rgbS(BRUCH[(rng() * 8) | 0]); g.fillRect(x0 + rng() * F.w, y0 + rng() * F.h, 0.2 + rng() * 0.3, 0.12 + rng() * 0.15); }
+      for (let i = 0; i < Math.min(900, F.w * F.h * 6); i++) { g.fillStyle = rgbS((I.W.bruch || BRUCH)[(rng() * 8) | 0]); g.fillRect(x0 + rng() * F.w, y0 + rng() * F.h, 0.2 + rng() * 0.3, 0.12 + rng() * 0.15); }
     }
     if (I.W.winter) { g.fillStyle = "rgba(240,244,251,0.8)"; g.fillRect(x0, y0, F.w, F.h); }
   }
   /* Schmuck am Portalvorbau: Tannengirlande mit Lichtern (Winter),
      geschmiedete Laterne (sonst) */
+  /* Tannengirlande über dem Portal: vier hängende Bögen (Durchhang
+     0,15 m) zwischen fünf Aufhängepunkten am Bogen, an den Seiten hängt
+     sie als Schwanz herab. Der Strang ist unregelmäßig dick (Zweigbüschel
+     aus vielen Nadelstrichen), oben liegt Schnee, darin Lichter, rote
+     Schleifen an Kämpfern und Scheitel. Punkte in (x, z) der Portalwand. */
+  function girlandenPlan() {
+    const cx = PO.xm, w0 = 1.8 + 6 * 0.13, r = w0, h = spitzH(w0), zk = 2.9, ab = 0.1;
+    const bogenL = (t) => { const a0 = Math.PI, a1 = Math.atan2(h, w0 / 2 - r) ; const a = a0 + (a1 - a0) * t; return [cx - w0 / 2 + r + Math.cos(a) * (r + ab), zk + Math.sin(a) * (r + ab)]; };
+    const L1 = [cx - w0 / 2 - ab, zk], L2 = bogenL(0.5), A = [cx, zk + h + ab];
+    const R2 = [2 * cx - L2[0], L2[1]], R1 = [cx + w0 / 2 + ab, zk];
+    const haken = [L1, L2, A, R2, R1];
+    const strang = [];
+    /* linker Schwanz, Bögen, rechter Schwanz – als Punktfolge mit Dicke */
+    const schwanz = (P, sg) => { const pts = []; for (let z = 1.15; z <= P[1] + 1e-6; z += 0.05) pts.push([P[0] + sg * 0.03 * Math.sin(z * 5), z]); return pts; };
+    strang.push(schwanz(L1, 1));
+    for (let i = 0; i < 4; i++) {
+      const P = haken[i], Q = haken[i + 1], sag = 0.15 + 0.05 * Math.abs(Q[0] - P[0]);
+      const C = [(P[0] + Q[0]) / 2, (P[1] + Q[1]) / 2 - 2 * sag], pts = [];
+      const n = Math.max(8, Math.ceil(Math.hypot(Q[0] - P[0], Q[1] - P[1]) / 0.04));
+      for (let k = 0; k <= n; k++) { const t = k / n; pts.push([(1 - t) * (1 - t) * P[0] + 2 * t * (1 - t) * C[0] + t * t * Q[0], (1 - t) * (1 - t) * P[1] + 2 * t * (1 - t) * C[1] + t * t * Q[1]]); }
+      strang.push(pts);
+    }
+    strang.push(schwanz(R1, -1));
+    /* Lichter entlang der Bögen */
+    const lichter = [];
+    for (let i = 1; i <= 4; i++) { const pts = strang[i]; for (let k = 2; k < pts.length - 1; k += 5) lichter.push(pts[k]); }
+    return { haken: haken, strang: strang, lichter: lichter };
+  }
+  const GIRLANDE = girlandenPlan();
+  function girlandeMalen(g, F, I) {
+    const px = F.px, winter = I.W.winter, rng = zuf(33);
+    const P = (q) => [q[0], -q[1]];
+    const dick = (k, i) => 0.075 + 0.03 * hash(k, i, 5) + 0.015 * Math.sin(i * 0.9 + k);
+    /* Schatten auf die Wand */
+    const sv = (F.schatten && F.schatten(0.12)) || [0.02, 0.05];
+    const koerper = new Path2D(), oben = new Path2D();
+    GIRLANDE.strang.forEach((pts, k) => pts.forEach((q, i) => {
+      const [x, y] = P(q), r = dick(k, i);
+      koerper.moveTo(x + r, y); koerper.arc(x, y, r, 0, 2 * Math.PI);
+      oben.moveTo(x + r * 0.7, y - r * 0.3); oben.arc(x, y - r * 0.3, r * 0.7, 0, 2 * Math.PI);
+    }));
+    if (px < 10) {
+      g.save(); g.translate(sv[0], sv[1]); g.fillStyle = "rgba(10,14,20,0.3)"; g.fill(koerper); g.restore();
+      g.fillStyle = "rgb(30,62,40)"; g.fill(koerper);
+    } else {
+      g.save(); g.translate(sv[0], sv[1]); g.fillStyle = "rgba(10,14,20,0.32)"; g.fill(koerper); g.restore();
+      g.fillStyle = "rgb(22,48,30)"; g.fill(koerper);
+      g.fillStyle = "rgb(38,78,48)"; g.fill(oben);
+      if (px > 20) {
+        /* Nadelbüschel: kurze Striche in fünf Grüntönen, am Rand hinaus */
+        const tone = [[20, 46, 30], [30, 66, 40], [42, 86, 52], [56, 104, 60], [74, 122, 70]];
+        const eim = tone.map(() => new Path2D());
+        GIRLANDE.strang.forEach((pts, k) => pts.forEach((q, i) => {
+          const [x, y] = P(q), r = dick(k, i);
+          for (let m = 0; m < 6; m++) {
+            const a = rng() * 2 * Math.PI, l = r * (0.7 + 0.8 * rng()), x0 = x + Math.cos(a) * r * 0.3, y0 = y + Math.sin(a) * r * 0.3;
+            const hell = klemm(0.5 - Math.sin(a) * 0.45 + (rng() - 0.5) * 0.4, 0, 0.999);
+            const p = eim[(hell * tone.length) | 0];
+            p.moveTo(x0, y0); p.lineTo(x0 + Math.cos(a) * l, y0 + Math.sin(a) * l);
+          }
+        }));
+        g.lineCap = "round"; g.lineWidth = Math.max(0.008, 0.9 / px);
+        tone.forEach((c, i) => { g.strokeStyle = rgbS(c); g.stroke(eim[i]); });
+        g.lineCap = "butt";
+        /* ein paar Zapfen und goldene Kugeln */
+        GIRLANDE.strang.slice(1, 5).forEach((pts, k) => { for (let i = 3; i < pts.length - 2; i += 7) { const [x, y] = P(pts[i]); if (hash(i, k, 9) < 0.5) { g.fillStyle = "rgb(96,64,38)"; g.beginPath(); g.ellipse(x + 0.02, y + 0.05, 0.022, 0.04, 0.3, 0, 2 * Math.PI); g.fill(); } else { const gg = g.createRadialGradient(x - 0.01, y + 0.03, 0.002, x, y + 0.04, 0.03); gg.addColorStop(0, "rgb(255,236,170)"); gg.addColorStop(1, "rgb(170,120,40)"); g.fillStyle = gg; g.beginPath(); g.arc(x, y + 0.04, 0.028, 0, 2 * Math.PI); g.fill(); } } });
+      }
+      if (winter) {
+        /* Schnee oben auf dem Strang, in Polstern */
+        /* nur wo der Strang flach liegt (Bögen), an den senkrechten
+           Schwänzen hält kaum Schnee; Polster unterschiedlich groß */
+        g.fillStyle = "rgba(238,243,250,0.92)";
+        GIRLANDE.strang.forEach((pts, k) => pts.forEach((q, i) => {
+          const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+          const flach = Math.abs(b[0] - a[0]) / (Math.hypot(b[0] - a[0], b[1] - a[1]) || 1);
+          if (hash(i, k, 13) > flach * 0.8 - 0.1) return;
+          const [x, y] = P(q), r = dick(k, i) * (0.5 + 0.6 * hash(i, k, 14));
+          g.beginPath(); g.ellipse(x + (hash(i, k, 15) - 0.5) * 0.04, y - dick(k, i) * 0.7, r, r * 0.36, 0, Math.PI, 2 * Math.PI); g.closePath(); g.fill();
+        }));
+      }
+      /* Birnchen (tags gläsern, nachts leuchtend in „danach") */
+      if (px > 14) { g.fillStyle = "rgba(250,244,222,0.9)"; for (const q of GIRLANDE.lichter) { const [x, y] = P(q); g.beginPath(); g.ellipse(x, y + 0.05, 0.014, 0.022, 0, 0, 2 * Math.PI); g.fill(); } }
+    }
+    /* rote Samtschleifen an Kämpfern und Scheitel */
+    for (const i of [0, 2, 4]) schleife(g, F, P(GIRLANDE.haken[i]), 0.17);
+  }
+  /* Schleife: zwei Schlaufen mit Innenschatten, Knoten, zwei Bänder */
+  function schleife(g, F, [x, y], b) {
+    const rot = [176, 18, 36], hell = rgbS(hellF(rot, 0.25)), dunkel = rgbS(hellF(rot, -0.4));
+    for (const sg of [-1, 1]) {
+      g.fillStyle = rgbS(rot);
+      g.beginPath(); g.moveTo(x, y); g.bezierCurveTo(x + sg * b * 0.6, y - b * 0.75, x + sg * b * 1.15, y - b * 0.45, x + sg * b * 0.95, y + b * 0.1); g.bezierCurveTo(x + sg * b * 0.7, y + b * 0.28, x + sg * b * 0.25, y + b * 0.12, x, y); g.fill();
+      if (F.px * b > 5) { g.fillStyle = dunkel; g.beginPath(); g.moveTo(x + sg * b * 0.15, y); g.bezierCurveTo(x + sg * b * 0.5, y - b * 0.4, x + sg * b * 0.8, y - b * 0.25, x + sg * b * 0.7, y + b * 0.02); g.closePath(); g.fill(); }
+      /* Band */
+      g.fillStyle = rgbS(hellF(rot, -0.1));
+      g.beginPath(); g.moveTo(x - sg * 0.01, y + b * 0.05); g.lineTo(x + sg * b * 0.45, y + b * 1.35); g.lineTo(x + sg * b * 0.28, y + b * 1.25); g.lineTo(x + sg * b * 0.2, y + b * 1.42); g.lineTo(x + sg * 0.02, y + b * 0.1); g.closePath(); g.fill();
+    }
+    g.fillStyle = hell; g.beginPath(); g.ellipse(x, y + b * 0.02, b * 0.16, b * 0.14, 0, 0, 2 * Math.PI); g.fill();
+  }
+  /* Osterkranz an der Tür (Frühling): Buchsbaum, bemalte Eier, Band */
+  function osterkranz(g, F, cx, cy, R) {
+    const px = F.px, rng = zuf(4712);
+    if (px * R < 3) return;
+    g.fillStyle = "rgba(0,0,0,0.28)"; g.beginPath(); g.arc(cx + 0.03, cy + 0.05, R * 1.05, 0, 2 * Math.PI); g.arc(cx + 0.03, cy + 0.05, R * 0.5, 0, 2 * Math.PI, true); g.fill();
+    g.fillStyle = "rgb(46,86,40)"; g.beginPath(); g.arc(cx, cy, R, 0, 2 * Math.PI); g.arc(cx, cy, R * 0.55, 0, 2 * Math.PI, true); g.fill();
+    if (px * R > 10) {
+      for (let i = 0; i < 180; i++) {
+        const a = rng() * 2 * Math.PI, rr = R * (0.56 + 0.43 * rng());
+        const hl = klemm(0.5 - Math.sin(a) * 0.3 - Math.cos(a) * 0.2 + (rng() - 0.5) * 0.4, 0, 1);
+        g.fillStyle = rgbS(mischF([30, 64, 30], [110, 158, 70], hl));
+        g.beginPath(); g.ellipse(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, R * 0.05, R * 0.03, rng() * 3, 0, 2 * Math.PI); g.fill();
+      }
+    }
+    const eier = [[250, 214, 90], [150, 196, 236], [240, 160, 180], [170, 214, 130], [250, 246, 236]];
+    for (let i = 0; i < 6; i++) {
+      const a = i * Math.PI / 3 + 0.4, ex = cx + Math.cos(a) * R * 0.78, ey = cy + Math.sin(a) * R * 0.78, c = eier[i % eier.length];
+      const gr = g.createRadialGradient(ex - R * 0.04, ey - R * 0.05, 0, ex, ey, R * 0.16);
+      gr.addColorStop(0, rgbS(hellF(c, 0.35))); gr.addColorStop(1, rgbS(hellF(c, -0.2)));
+      g.fillStyle = gr; g.beginPath(); g.ellipse(ex, ey, R * 0.1, R * 0.14, a + Math.PI / 2, 0, 2 * Math.PI); g.fill();
+      if (px * R > 20) { g.strokeStyle = rgbS(hellF(c, -0.45), 0.7); g.lineWidth = R * 0.015; g.beginPath(); g.moveTo(ex - R * 0.08, ey); g.lineTo(ex + R * 0.08, ey); g.stroke(); }
+    }
+    /* Band in Gelb und Weiß */
+    g.fillStyle = "rgb(242,206,70)";
+    const by = cy + R * 0.92;
+    g.beginPath(); g.moveTo(cx, by); g.quadraticCurveTo(cx - R * 0.5, by - R * 0.35, cx - R * 0.42, by + R * 0.12); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(cx, by); g.quadraticCurveTo(cx + R * 0.5, by - R * 0.35, cx + R * 0.42, by + R * 0.12); g.closePath(); g.fill();
+    g.fillRect(cx - R * 0.05, by, R * 0.1, R * 0.7);
+  }
   function portalSchmuck(g, F, I) {
     const W = I.W, px = F.px;
     if (I.n[1] < 0.9) return;
-    const cx = PO.xm, w = 1.8 + 6 * 0.13, bS = -2.9;
+    const cx = PO.xm, w = 1.8 + 6 * 0.13;
     if (W.winter && W.fertig) {
-      /* Girlande entlang des äußeren Bogens */
-      const rng = zuf(33);
-      const r = w, h = spitzH(w);
-      const pts = [];
-      for (let t = 0; t <= 1.0001; t += 0.02) {
-        /* linker Bogen, dann rechter */
-        let x, y;
-        if (t < 0.5) { const a = Math.PI + (Math.atan2(-h, w / 2 - r) + 2 * Math.PI - Math.PI) * (t / 0.5); x = cx - w / 2 + r + Math.cos(a) * (r + 0.08); y = bS + Math.sin(a) * (r + 0.08); }
-        else { const a0 = Math.atan2(-h, r - w / 2), a = a0 + (0 - a0) * ((t - 0.5) / 0.5); x = cx + w / 2 - r + Math.cos(a) * (r + 0.08); y = bS + Math.sin(a) * (r + 0.08); }
-        pts.push([x, y]);
-      }
-      pts.unshift([cx - w / 2 - 0.08, -1.2]); pts.push([cx + w / 2 + 0.08, -1.2]);
-      if (px > 6) {
-        g.lineCap = "round";
-        g.strokeStyle = "rgba(0,0,0,0.3)"; g.lineWidth = 0.2; g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x + 0.04, y + 0.06) : g.moveTo(x + 0.04, y + 0.06))); g.stroke();
-        g.strokeStyle = "rgb(30,64,40)"; g.lineWidth = 0.19; g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke();
-        if (px > 16) {
-          g.lineWidth = Math.max(0.006, 0.7 / px);
-          for (const [x, y] of pts) for (let k = 0; k < 6; k++) { const a = rng() * 2 * Math.PI, l = 0.07 + rng() * 0.06; g.strokeStyle = rgbS(hellF([40, 86, 52], (rng() - 0.4) * 0.5)); g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke(); }
-          g.fillStyle = "rgb(236,242,250)"; for (const [x, y] of pts) if (rng() < 0.5) { g.beginPath(); g.ellipse(x, y - 0.06, 0.06, 0.025, 0, 0, 2 * Math.PI); g.fill(); }
-        }
-        g.lineCap = "butt";
-        /* rote Schleifen */
-        g.fillStyle = "rgb(178,20,36)";
-        for (const i of [0, Math.floor(pts.length / 2), pts.length - 1]) { const [x, y] = pts[i]; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x - 0.16, y - 0.12, x - 0.13, y + 0.04); g.closePath(); g.fill(); g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 0.16, y - 0.12, x + 0.13, y + 0.04); g.closePath(); g.fill(); g.fillRect(x - 0.02, y, 0.04, 0.2); }
-      }
-      I.girlande = pts;
+      if (px > 4) girlandeMalen(g, F, I);
+      I.girlande = GIRLANDE.lichter;
     } else if (W.fertig) {
       /* Wandlaterne links vom Portal */
       const lx = cx - w / 2 - 0.3, ly = -3.4;
@@ -2710,11 +3733,11 @@
     if (F.nacht < 0.02 || !W.fertig) return;
     const cx = PO.xm, w = 1.8 + 6 * 0.13;
     if (W.winter && I.girlande) {
-      for (let i = 1; i < I.girlande.length - 1; i += 2) {
-        const [x, y] = I.girlande[i];
-        const gr = g.createRadialGradient(x, y, 0, x, y, 0.1);
-        gr.addColorStop(0, "rgba(255,236,170," + F.nacht + ")"); gr.addColorStop(1, "rgba(255,190,90,0)");
-        g.fillStyle = gr; g.fillRect(x - 0.1, y - 0.1, 0.2, 0.2);
+      for (const q of I.girlande) {
+        const x = q[0], y = -q[1] + 0.05;
+        const gr = g.createRadialGradient(x, y, 0, x, y, 0.13);
+        gr.addColorStop(0, "rgba(255,238,180," + F.nacht + ")"); gr.addColorStop(0.3, "rgba(255,196,110," + (0.55 * F.nacht).toFixed(3) + ")"); gr.addColorStop(1, "rgba(255,170,80,0)");
+        g.fillStyle = gr; g.fillRect(x - 0.13, y - 0.13, 0.26, 0.26);
       }
       lp(F, I, cx, -4.6, 2.2, "255,200,120", 0.35);
       /* Kerzen am Adventskranz (Tür liegt 0,5 m tief) */
@@ -2779,6 +3802,10 @@
     Z.uhr = bau >= 0.94;
     Z.kreuz = bau >= 0.96;
     Z.portal = bau >= 0.2 ? 1 : 0;
+    /* Kirchhof: die Mauer wächst zum Schluss (Außenanlagen), dann Tor
+       und Weg; Gräber und Linde gehören zum fertigen Kirchhof */
+    Z.hof = k(0.86, 0.95);
+    Z.hofTor = bau >= 0.95;
     Z.deko = fertig;
     Z.mauerKappe = !fertig;
     return Z;
@@ -2787,8 +3814,27 @@
   /* =====================================================================
      ANMELDEN
      ===================================================================== */
+  /* Baukörper für die Baustelle (stadt/baustelle.js): statt eines Gerüsts
+     am Rand des Grundrisses (46 × 22 m, das ist die Kirchhofmauer) je
+     Bauteil ein eigener Rechteck-Grundriss mit der Höhe, die gerade
+     gemauert ist. geruest: ob jetzt eingerüstet ist; helm: Helmrüstung
+     (Kaiserstiel und Helm werden verschiefert) mit Mitte, Fuß- und
+     Spitzenhöhe und Fußradius. Beispiel bei bau = 0,5:
+     [{ name: "turm", x0: -18, y0: -3, x1: -12, y1: 3, h: 16.6, geruest: true }, …] */
+  function baukoerper(bau) {
+    const Z = zustand(klemm(bau == null ? 1 : bau, 0, 1));
+    if (Z.bau < 0.18 || Z.bau >= 0.9) return [];
+    const L = [];
+    L.push({ name: "turm", x0: TU.x0, y0: -TU.y, x1: TU.x1, y1: TU.y, h: Z.turmH, geruest: Z.bau < 0.82,
+      helm: Z.bau >= 0.6 && Z.bau < 0.82 ? { x: TU.xm, y: 0, z0: TU.gz, z1: TU.spitze, r: TU.ge / Math.cos(22.5 * RAD) + 0.4 } : null });
+    L.push({ name: "langhaus", x0: LH.x0, y0: -LH.y, x1: LH.x1, y1: LH.y, h: Math.min(Z.lhH, LH.zf), geruest: Z.bau < 0.8 });
+    L.push({ name: "chor", x0: CH.x0, y0: -CH.y, x1: CH.xk, y1: CH.y, h: Z.chH, geruest: Z.bau < 0.8, grundriss: chorGrund(0) });
+    if (Z.sakristei) L.push({ name: "sakristei", x0: SA.x0, y0: SA.y0, x1: SA.x1, y1: SA.y1, h: Z.saH, geruest: Z.bau < 0.5 });
+    return L;
+  }
   ST.modell("kirche", {
-    name: "Dorfkirche", gruppe: "Wahrzeichen", grund: [38, 15], hoehe: 37, bauzeit: 30 * 60,
+    name: "Dorfkirche", gruppe: "Wahrzeichen", grund: [46, 22], hoehe: 37, bauzeit: 30 * 60,
+    baukoerper: baukoerper,
     bauen(M, o) {
       const B = blickVon(o);
       const W = new Werk(o, B);
@@ -2799,8 +3845,14 @@
       W.deko = W.Z.deko;
       W.winter = o.jahr === "winter";
       const saat = (o.saat >>> 0) || 7;
+      W.saat = saat;
       W.variante = saat % 3 === 0 ? 1 : 0;
-      W.werk = saat % 5 === 4 ? WERK.gelb : WERK.rot;
+      /* jede fünfte Kirche gelb (Rest 1) – Winterhausen (Saat 510954844,
+         Rest 4) bekommt die rote Mainsandstein-Kirche */
+      const gelb = o.variante === "gelb" || (o.variante !== "rot" && saat % 5 === 1);
+      W.werk = gelb ? WERK.gelb : WERK.rot;
+      W.bruch = gelb ? BRUCH_KALK : BRUCH_ROT;
+      W.moertel = gelb ? MOERTEL_KALK : MOERTEL_ROT;
       kircheBauen(W, o);
       ausgeben(W, M);
       /* Lichtpfützen vor dem Portal – nur wenn die Südseite zum Betrachter

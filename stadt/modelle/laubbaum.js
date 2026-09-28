@@ -844,7 +844,7 @@
       g.stroke();
     }
     /* Grünalgen auf der Wetterseite des Stamms (nicht im Winter) */
-    if (z.stamm && !winter) {
+    if (z.stamm && !winter && !z.bezug) {
       const m = P[0], mg = g.createLinearGradient(m[0] + r[0], 0, m[0] + r[0] * 0.2, 0);
       mg.addColorStop(0, "rgba(96,122,58,0.32)"); mg.addColorStop(1, "rgba(96,122,58,0)");
       g.fillStyle = mg; g.fillRect(m[0] - r[0] * 2, P[n - 1][1] - 4, r[0] * 4, Math.abs(P[n - 1][1] - m[1]) * 0.45 + 8);

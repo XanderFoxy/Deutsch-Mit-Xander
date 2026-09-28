@@ -96,10 +96,15 @@
      MASSE
      ===================================================================== */
   const LAENGE = 4.0;
-  const PF = { b: 0.09, h: 1.1, kappe: 0.05, x: [-1.955, 0, 1.955] };
+  /* Pfosten genau auf den Abschnittsgrenzen: Reiht man Abschnitte
+     aneinander, fallen die Endpfosten zweier Nachbarn auf dieselbe Stelle
+     (ein Pfosten, kein Doppelpfosten). */
+  const PF = { b: 0.09, h: 1.1, kappe: 0.05, x: [-2.0, 0, 2.0] };
   const RI = { d: 0.035, h: 0.07, z: [0.26, 0.8], y: PF.b / 2 + 0.035 / 2 };
   const ST_ = { b: 0.056, d: 0.022, z0: 0.07, z1: 0.98, spitze: 0.055, y: PF.b / 2 + 0.035 + 0.011 };
-  const ANZAHL = 35;
+  /* festes Raster: 36 Staketen je 4 m (Abstand 11,1 cm) – Abschnitte
+     schließen nahtlos aneinander an */
+  const ANZAHL = 36, RASTER = LAENGE / ANZAHL;
 
   const HOLZ = [
     { name: "weiß gestrichen", f: [236, 234, 226], weiss: true },
@@ -111,10 +116,9 @@
   function staketenPlan(saat) {
     const rng = ST.zufall(saat * 17 + 5);
     const liste = [];
-    const x0 = -LAENGE / 2 + 0.1, x1 = LAENGE / 2 - 0.1;
     for (let i = 0; i < ANZAHL; i++) {
       liste.push({
-        i: i, x: x0 + (x1 - x0) * i / (ANZAHL - 1) + (rng() - 0.5) * 0.008,
+        i: i, x: -LAENGE / 2 + (i + 0.5) * RASTER + (rng() - 0.5) * 0.008,
         dz: (rng() - 0.5) * 0.025, kipp: (rng() - 0.5) * 0.02, hell: 0.92 + rng() * 0.14,
         saat: (rng() * 1e6) | 0, schnee: 0.7 + rng() * 0.6
       });
@@ -143,9 +147,10 @@
   }
 
   /* eine Stakete (kleiner Körper mit Spitze) */
-  function staketeMalen(g, V, F, L, holz, winter, schmuck) {
+  function staketeMalen(g, V, F, L, holz, winter, schmuck, zSchnee) {
     const s = V.s, b = ST_.b / 2, d = ST_.d;
-    const z0 = ST_.z0, z1 = ST_.z1 + L.dz, zs = z1 + ST_.spitze;
+    /* im Winter steckt der Fuß in der Wehe: gemalt wird erst ab der Schneeoberfläche */
+    const z0 = Math.max(ST_.z0, zSchnee || 0), z1 = ST_.z1 + L.dz, zs = z1 + ST_.spitze;
     const yv = ST_.y + d / 2, yh = ST_.y - d / 2;
     const k0 = L.kipp;                                    // leichte Schräglage
     const P = (x, y, z) => V.p(L.x + x + k0 * (z - 0.5), y, z);
@@ -186,6 +191,12 @@
         const gr = g.createLinearGradient(0, 0, 0, 0.25);
         gr.addColorStop(0, rgb(mul([120, 140, 100], k), 0.28)); gr.addColorStop(1, rgb(mul([120, 140, 100], k), 0));
         g.fillStyle = gr; g.fillRect(0, 0, 2 * b, 0.25);
+      }
+      /* wo der Schnee anliegt: 3 cm bläulicher Hauch (Rückstrahlung, Nässe) */
+      if (zSchnee > ST_.z0) {
+        const gr = g.createLinearGradient(0, 0, 0, 0.035);
+        gr.addColorStop(0, rgb(mul([60, 70, 100], k), 0.35)); gr.addColorStop(1, rgb(mul([60, 70, 100], k), 0));
+        g.fillStyle = gr; g.fillRect(-0.01, 0, 2 * b + 0.02, 0.035);
       }
       /* Nägel an den Riegeln (nur vorn sichtbar) */
       if (vorn && s > 55) {
@@ -233,9 +244,9 @@
     }
   }
 
-  function pfostenMalen(g, V, F, x, holz, winter, schmuck, rng) {
+  function pfostenMalen(g, V, F, x, holz, winter, schmuck, rng, zSchnee) {
     const b = PF.b / 2, c = skal(holz.f, holz.weiss ? 0.97 : 0.92);
-    kastenMalen(g, V, F, x - b, x + b, -b, b, 0, PF.h, c, holz, rng, { ohneOben: true });
+    kastenMalen(g, V, F, x - b, x + b, -b, b, zSchnee || 0, PF.h, c, holz, rng, { ohneOben: true });
     /* Pyramidenkappe */
     const top = [x, 0, PF.h + PF.kappe];
     const ecken = [[x - b, -b], [x + b, -b], [x + b, b], [x - b, b]];
@@ -277,35 +288,49 @@
   /* =====================================================================
      BODEN: Schneewehe (Winter), Gras und Blumen (Frühling)
      ===================================================================== */
-  /* Schneefarbe genau wie der Boden (boden.js: schneeFarbe × Himmel +
-     Sonne), damit eine Wehe nahtlos aus dem Bodenschnee wächst.
-     sdif = Sonnenwinkel (0,66 = flacher Boden) */
-  function bodenSchnee(Z, sdif) {
-    const f = [0.93, 0.95, 0.99], m = [0.97, 0.99, 1.05];
-    return [0, 1, 2].map((i) => 255 * f[i] * Math.min(1.05, Z.amb[i] * m[i] + Z.sonne[i] * sdif * 1.45));
+  /* Schneewehe. Der Zaun steckt im Schnee: Staketen und Pfosten beginnen
+     erst an der Schneeoberfläche (8–12 cm, längs des Zauns wellig). Den
+     Schnee selbst malt der Boden (boden.js) – eine eigene Schneefarbe
+     trifft man nie (Dämmerung, Relief, Mondlicht; gemessen: rosa Watte).
+     Wir tönen nur die Böschung zu beiden Seiten: ist sie heller als der
+     flache Boden, ein Hauch Weiß, ist sie dunkler, das Blau der
+     Szenenschatten – beides knapp (22–30 cm) und scharf am Zaun.
+     Auf Pflaster (Weg, Platz) gibt es keine Wehe: dazu fragen wir die
+     Bodenkarte an der Weltstelle des Zauns ab (o.objekt). */
+  function wehePlan(saat, o) {
+    const rng = ST.zufall(saat * 7 + 3);
+    const ph = [rng() * 6, rng() * 6, rng() * 6];
+    const ob = o && o.objekt, frei = [];
+    for (let i = 0; i <= 20; i++) {
+      const x = -LAENGE / 2 + LAENGE * i / 20;
+      let w = 1;
+      if (ob && ST.boden && ST.boden.wert) {
+        const r = (ob.gier || 0) * Math.PI / 180, c = Math.cos(r), sn = Math.sin(r);
+        let p = 0;
+        for (const y of [-0.2, 0, 0.2]) p = Math.max(p, ST.boden.wert(ob.x + x * c - y * sn, ob.y + x * sn + y * c, 0));
+        w = klemm((0.75 - p) / 0.4, 0, 1);
+      }
+      frei.push(w);
+    }
+    const w = (x) => { const u = klemm((x + LAENGE / 2) / LAENGE * 20, 0, 20), i = Math.min(19, Math.floor(u)); return frei[i] + (frei[i + 1] - frei[i]) * (u - i); };
+    const h = (x) => w(x) * (0.095 + 0.022 * Math.sin(x * 2.1 + ph[0]) + 0.012 * Math.sin(x * 5.3 + ph[1]) + 0.006 * Math.sin(x * 13.7 + ph[2]));
+    return { h: h, w: w };
   }
-  function weheMalen(g, V, F, seite, saat) {
-    const s = V.s, rng = ST.zufall(saat * 7 + (seite > 0 ? 3 : 9));
-    const grund = bodenSchnee(F.Z, 0.66), hellS = bodenSchnee(F.Z, 0.9), dunkel = bodenSchnee(F.Z, 0.36);
-    /* Kette weicher Hügel entlang des Zauns; auf der Rückseite (Wetterseite)
-       höher. Jeder Hügel läuft weich in den Boden aus (keine Kante): unten
-       Bodenfarbe, oben links ein Lichtschein, unten rechts die Schattenseite. */
-    const hoch = seite < 0 ? 0.13 : 0.07, breit = seite < 0 ? 0.3 : 0.2;
-    const huegel = [];
-    for (let i = 0; i < 16; i++) huegel.push({ x: -LAENGE / 2 + 0.05 + (i + 0.5) / 16 * (LAENGE - 0.1) + (rng() - 0.5) * 0.12, y: seite * (0.05 + rng() * 0.05) + (seite > 0 ? ST_.y : 0), r: breit * (0.8 + rng() * 0.45), h: hoch * (0.7 + rng() * 0.6) });
-    huegel.sort((p, q) => V.tiefe(p.x, p.y, 0) - V.tiefe(q.x, q.y, 0));
-    const fleck = (x, y, R, sy, c, a0) => {
-      g.save(); g.translate(x, y); g.scale(1, sy);
-      const gr = g.createRadialGradient(0, 0, 0, 0, 0, R);
-      gr.addColorStop(0, rgb(c, a0)); gr.addColorStop(0.55, rgb(c, a0 * 0.8)); gr.addColorStop(1, rgb(c, 0));
-      g.fillStyle = gr; g.beginPath(); g.arc(0, 0, R, 0, TAU); g.fill(); g.restore();
-    };
-    for (const hg of huegel) {
-      const m = V.p(hg.x, hg.y, 0), R = hg.r * s, H = hg.h * KZ * s;
-      const sy = (R * 0.5 + H * 0.6) / R;
-      fleck(m[0], m[1] - H * 0.45, R, sy, grund, 1);
-      fleck(m[0] + R * 0.18, m[1] - H * 0.2, R * 0.75, sy, dunkel, 0.45);
-      fleck(m[0] - R * 0.2, m[1] - H * 0.7, R * 0.6, sy, hellS, 0.7);
+  function weheMalen(g, V, F, seite, W) {
+    const yF = seite > 0 ? ST_.y + ST_.d / 2 : -PF.b / 2;
+    const breit = seite > 0 ? 0.22 : 0.3;                  // hinten (Wetterseite) breiter
+    const kB = ST.lichtFaktor(V.n(0, seite * 0.5, 1), F.Z, 0, F.jahr), kF = ST.lichtFaktor([0, 0, 1], F.Z, 0, F.jahr);
+    const d = ((kB[0] + kB[1] + kB[2]) - (kF[0] + kF[1] + kF[2])) / 3;
+    const farbe = d > 0 ? "255,255,255" : "40,62,120";
+    const a = Math.min(0.3, Math.abs(d) * (d > 0 ? 1.6 : 2.4) + 0.03);
+    for (let i = 0; i < 20; i++) {
+      const xa = -LAENGE / 2 + LAENGE * i / 20, xb = xa + LAENGE / 20;
+      const wm = (W.w(xa) + W.w(xb)) / 2;
+      if (wm < 0.05) continue;
+      const p0 = V.p(xa, yF, 0), p1 = V.p(xb, yF, 0), p2 = V.p(xb, yF + seite * breit, 0), p3 = V.p(xa, yF + seite * breit, 0);
+      const gr = g.createLinearGradient(p0[0], p0[1], p3[0], p3[1]);
+      gr.addColorStop(0, "rgba(" + farbe + "," + (a * wm).toFixed(3) + ")"); gr.addColorStop(0.35, "rgba(" + farbe + "," + (a * wm * 0.6).toFixed(3) + ")"); gr.addColorStop(1, "rgba(" + farbe + ",0)");
+      g.fillStyle = gr; vieleck(g, [p0, p1, p2, p3]); g.fill();
     }
   }
   function grasMalen(g, V, F, saat, seite) {
@@ -333,11 +358,16 @@
   }
 
   /* Rankpflanzen: Stängel winden sich vor und hinter den Latten hoch.
-     teil = "hinten" | "vorn" – je nach Seite der Latten */
+     teil = "hinten" | "vorn" – je nach Seite der Latten.
+     Jede Art hat ihre echte Blattform und Blüte:
+       Kletterrose – gefiederte Blätter (5 Blättchen), gefüllte Blüten 6–8 cm,
+       Waldrebe (Clematis) – dreizählige Blätter, flache Sternblüten 9–11 cm,
+       Wicke – paarige Fiederchen mit Wickelranken, kleine Schmetterlingsblüten
+       in Trauben. Farbe über das Licht der Blattebene, nicht pauschal. */
   const RANKEN = [
-    { name: "Kletterrose", bl: [[226, 70, 110], [240, 120, 150]], blatt: [52, 96, 44], rose: true },
-    { name: "Waldrebe", bl: [[120, 70, 170], [150, 96, 196]], blatt: [60, 108, 48] },
-    { name: "Wicke", bl: [[236, 150, 196], [250, 250, 250], [170, 120, 220]], blatt: [84, 134, 64] }
+    { name: "Kletterrose", bl: [[204, 44, 78], [228, 96, 128]], blatt: [44, 84, 40], art: "rose", r: 0.04 },
+    { name: "Waldrebe", bl: [[104, 62, 168], [128, 82, 186]], blatt: [58, 100, 46], art: "waldrebe", r: 0.055 },
+    { name: "Wicke", bl: [[232, 140, 188], [246, 242, 248], [172, 122, 212]], blatt: [84, 128, 64], art: "wicke", r: 0.014 }
   ];
   function rankenPlan(saat) {
     const rng = ST.zufall(saat * 29 + 11);
@@ -358,8 +388,8 @@
       triebe.push(haupt);
       for (const zr of RI.z) {
         for (const r of [-1, 1]) {
-          if (rng() < 0.3) continue;
-          const t = [], l = 0.35 + rng() * 0.45;
+          if (rng() < 0.2) continue;
+          const t = [], l = 0.4 + rng() * 0.5;
           const xs = x0 + Math.sin(zr / hoch * 44 * 0.36 + p) * 0.14;
           for (let i = 0; i <= 18; i++) { const u = i / 18; t.push([xs + r * l * u, ST_.y + Math.sin(i * 0.9 + p) * 0.034, zr + 0.05 + Math.sin(u * 5 + p) * 0.04 + u * 0.06]); }
           triebe.push(t);
@@ -368,29 +398,98 @@
       const blaetter = [], blueten = [];
       for (const t of triebe) {
         for (let i = 2; i < t.length; i++) {
-          for (let j = 0; j < 2; j++) {
-            if (rng() < 0.3) continue;
-            blaetter.push({ p: t[i], w: rng() * TAU, g: 0.75 + rng() * 0.6, seite: t[i][1] > ST_.y ? 1 : -1, dx: (rng() - 0.5) * 0.08, dz: (rng() - 0.5) * 0.07 });
+          for (let j = 0; j < 3; j++) {
+            if (rng() < 0.35) continue;
+            blaetter.push({ p: t[i], w: rng() * TAU, g: 0.75 + rng() * 0.5, seite: rng() < 0.5 ? 1 : -1, dx: (rng() - 0.5) * 0.1, dz: (rng() - 0.5) * 0.08, ton: (rng() * 3) | 0 });
           }
-          if (rng() < 0.16 && t[i][2] > 0.25) blueten.push({ p: t[i], c: art.bl[(rng() * art.bl.length) | 0], g: 0.85 + rng() * 0.45, dx: (rng() - 0.5) * 0.1, dz: (rng() - 0.5) * 0.06, knospe: rng() < 0.18 });
+          if (rng() < (art.art === "wicke" ? 0.12 : 0.15) && t[i][2] > 0.25) blueten.push({ p: t[i], c: art.bl[(rng() * art.bl.length) | 0], g: 0.85 + rng() * 0.35, dx: (rng() - 0.5) * 0.1, dz: (rng() - 0.5) * 0.06, knospe: rng() < 0.18, dreh: rng() * TAU, seite: rng() < 0.5 ? 1 : -1 });
         }
       }
       pflanzen.push({ triebe: triebe, blaetter: blaetter, blueten: blueten });
     }
     return { art: art, pflanzen: pflanzen };
   }
+  /* ein Blatt der jeweiligen Art an die Pfade hängen (Bildkoordinaten) */
+  function blattForm(P3, rippe, ranke, art, x, y, w, r) {
+    const c = Math.cos(w), sn = Math.sin(w);
+    const at = (d, q) => [x + c * d - sn * q, y + sn * d + c * q];
+    const ell = (m, rx, ry, rot) => { P3.moveTo(m[0] + Math.cos(rot) * rx, m[1] + Math.sin(rot) * rx); P3.ellipse(m[0], m[1], rx, ry, rot, 0, TAU); };
+    if (art === "rose") {
+      const L = r * 1.5, a = at(0, 0), e = at(L, 0);
+      rippe.moveTo(a[0], a[1]); rippe.lineTo(e[0], e[1]);
+      for (const [d, sd] of [[0.3, 1], [0.3, -1], [0.62, 1], [0.62, -1]]) ell(at(L * d, sd * r * 0.3), r * 0.3, r * 0.17, w + sd * 1.0);
+      ell(at(L * 1.05, 0), r * 0.36, r * 0.2, w);
+    } else if (art === "waldrebe") {
+      const L = r * 0.7, a = at(0, 0), e = at(L, 0);
+      rippe.moveTo(a[0], a[1]); rippe.lineTo(e[0], e[1]);
+      for (const [b, l] of [[0, 1], [1.0, 0.8], [-1.0, 0.8]]) ell(at(L + Math.cos(b) * r * 0.45 * l, Math.sin(b) * r * 0.45 * l), r * 0.44 * l, r * 0.2 * l, w + b);
+    } else {
+      for (const sd of [-1, 1]) ell(at(r * 0.45, sd * r * 0.22), r * 0.42, r * 0.12, w + sd * 0.45);
+      /* Wickelranke am Blattende */
+      const a = at(r * 0.7, 0); ranke.moveTo(a[0], a[1]);
+      for (let i = 1; i <= 10; i++) { const t = i / 10, q = at(r * (0.7 + t * 0.6) + Math.cos(t * 9) * r * 0.12 * t, Math.sin(t * 9) * r * 0.12 * t); ranke.lineTo(q[0], q[1]); }
+    }
+  }
+  /* Blüten in der Zaunebene (leicht nach oben gekippt), mit eigener
+     Schattierung: heller Rand, dunkles Herz, die sonnenabgewandte Seite
+     dunkler. ex/ez = Bildrichtung von 1 m in x bzw. schräg nach oben. */
+  function bluteMalen(g, x, y, ex, ez, r, c, art, dreh) {
+    g.save();
+    g.transform(ex[0] * r, ex[1] * r, -ez[0] * r, -ez[1] * r, x, y);
+    if (art === "rose") {
+      const gr = g.createRadialGradient(-0.25, -0.3, 0.1, 0, 0, 1.05);
+      gr.addColorStop(0, rgb(plus(c, [36, 30, 30]))); gr.addColorStop(0.7, rgb(c)); gr.addColorStop(1, rgb(skal(c, 0.7)));
+      g.fillStyle = gr;
+      g.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + dreh; g.moveTo(Math.cos(a) * 0.5 + 0.5, Math.sin(a) * 0.5); g.arc(Math.cos(a) * 0.5, Math.sin(a) * 0.5, 0.5, 0, TAU); } g.fill();
+      /* innere, gefüllte Blütenblätter: Schalen, zur Mitte dunkler */
+      g.fillStyle = rgb(skal(c, 0.82));
+      g.beginPath(); for (let i = 0; i < 5; i++) { const a = i / 5 * TAU + dreh + 0.4; g.moveTo(Math.cos(a) * 0.28 + 0.34, Math.sin(a) * 0.28); g.arc(Math.cos(a) * 0.28, Math.sin(a) * 0.28, 0.34, 0, TAU); } g.fill();
+      g.strokeStyle = rgb(skal(c, 0.55)); g.lineWidth = 0.08;
+      g.beginPath(); for (let i = 0; i <= 16; i++) { const a = i / 16 * TAU * 1.6 + dreh, rr = 0.34 * (1 - i / 20); if (i) g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); else g.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } g.stroke();
+      g.fillStyle = rgb(plus(c, [50, 44, 44]), 0.5);
+      g.beginPath(); g.ellipse(-0.35, -0.4, 0.3, 0.16, -0.5, 0, TAU); g.fill();
+    } else if (art === "waldrebe") {
+      /* sechs spitze Kelchblätter mit Mittelstreifen, cremefarbene Staubblätter */
+      for (let i = 0; i < 6; i++) {
+        const a = i / 6 * TAU + dreh, ca = Math.cos(a), sa = Math.sin(a);
+        const hell = 0.9 + 0.2 * Math.max(0, -ca * 0.7 - sa * 0.7);
+        g.fillStyle = rgb(skal(c, hell));
+        g.beginPath(); g.moveTo(0, 0);
+        g.quadraticCurveTo(ca * 0.5 - sa * 0.34, sa * 0.5 + ca * 0.34, ca * 1.0, sa * 1.0);
+        g.quadraticCurveTo(ca * 0.5 + sa * 0.34, sa * 0.5 - ca * 0.34, 0, 0); g.fill();
+        g.strokeStyle = rgb(skal(c, 0.72), 0.7); g.lineWidth = 0.06;
+        g.beginPath(); g.moveTo(ca * 0.15, sa * 0.15); g.lineTo(ca * 0.85, sa * 0.85); g.stroke();
+      }
+      g.fillStyle = "rgb(236,226,170)"; g.beginPath(); g.arc(0, 0, 0.2, 0, TAU); g.fill();
+      g.fillStyle = "rgb(150,120,60)"; for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; g.beginPath(); g.arc(Math.cos(a) * 0.2, Math.sin(a) * 0.2, 0.05, 0, TAU); g.fill(); }
+    } else {
+      /* Wicke: Fahne (groß, rund), zwei Flügel, Schiffchen */
+      g.fillStyle = rgb(c); g.beginPath(); g.ellipse(0, -0.35, 1.0, 0.8, 0, 0, TAU); g.fill();
+      g.fillStyle = rgb(skal(c, 0.85)); g.beginPath(); g.ellipse(-0.45, 0.45, 0.5, 0.42, 0.4, 0, TAU); g.ellipse(0.45, 0.45, 0.5, 0.42, -0.4, 0, TAU); g.fill();
+      g.fillStyle = rgb(skal(c, 0.7)); g.beginPath(); g.ellipse(0, 0.6, 0.22, 0.35, 0, 0, TAU); g.fill();
+      g.strokeStyle = rgb(skal(c, 0.72), 0.6); g.lineWidth = 0.08; g.beginPath(); g.moveTo(0, -0.1); g.lineTo(0, -0.9); g.stroke();
+    }
+    g.restore();
+  }
   function rankenMalen(g, V, F, R, teil) {
     const s = V.s;
     if (s < 12) return;
-    const k = ST.lichtFaktor(V.n(0.3, 0.3, 0.9), F.Z, 0, F.jahr);
     const vornSicht = dot(V.n(0, 1, 0), AUGE) > 0;
-    /* „nah" = auf der Seite der Latten, die zum Betrachter zeigt */
     const nahSeite = vornSicht ? 1 : -1;
     const passt = (y) => (teil === "vorn" ? (y - ST_.y) * nahSeite > 0 : (y - ST_.y) * nahSeite <= 0);
+    const art = R.art.art;
+    /* Licht der Blattebene: Blätter stehen schräg vom Zaun ab, zur Seite und nach oben */
+    const kBlatt = [0, 1, 2].map((t) => ST.lichtFaktor(V.n((t - 1) * 0.5, nahSeite * 0.7, 0.6), F.Z, 0, F.jahr));
+    const kBl = ST.lichtFaktor(V.n(0, nahSeite * 0.8, 0.6), F.Z, 0, F.jahr);
+    /* Blütenebene: schaut vom Zaun weg und 35° nach oben (ihr „Oben" ist
+       daher etwas zum Zaun hin geneigt) – so sieht man die Blüten aus
+       jedem Winkel als Scheibe, nie als Strich */
+    const o = V.p(0, 0, 0), ex = V.p(1, 0, 0), ez = V.p(0, -nahSeite * 0.57, 0.82);
+    const eX = [(ex[0] - o[0]), (ex[1] - o[1])], eZ = [(ez[0] - o[0]), (ez[1] - o[1])];
     g.lineCap = "round"; g.lineJoin = "round";
     for (const pf of R.pflanzen) {
       /* Stängel, nur die Stücke auf der passenden Seite */
-      g.strokeStyle = rgb(mul([70, 88, 44], k)); g.lineWidth = Math.max(0.5, 0.008 * s);
+      g.strokeStyle = rgb(mul(art === "rose" ? [84, 76, 44] : [70, 96, 46], kBl)); g.lineWidth = Math.max(0.5, (art === "rose" ? 0.01 : 0.007) * s);
       g.beginPath();
       for (const t of pf.triebe) {
         for (let i = 0; i < t.length - 1; i++) {
@@ -401,36 +500,90 @@
         }
       }
       g.stroke();
+      const P3 = [new Path2D(), new Path2D(), new Path2D()], rippe = new Path2D(), ranke = new Path2D();
       for (const b of pf.blaetter) {
-        const y = b.p[1] + b.seite * 0.015;
+        const y = b.p[1] + b.seite * 0.018;
         if (!passt(y)) continue;
         const p = V.p(b.p[0] + b.dx * 0.5, y, b.p[2] + b.dz);
-        const r = 0.036 * s * b.g;
-        g.fillStyle = rgb(mul(skal(R.art.blatt, 0.8 + (b.g - 0.7) * 0.4), k));
-        g.beginPath(); g.ellipse(p[0], p[1], Math.max(0.6, r), Math.max(0.4, r * 0.5), b.w, 0, TAU); g.fill();
-        if (s > 50) { g.strokeStyle = rgb(mul(skal(R.art.blatt, 0.6), k), 0.6); g.lineWidth = Math.max(0.3, s * 0.0015); g.beginPath(); g.moveTo(p[0] - Math.cos(b.w) * r, p[1] - Math.sin(b.w) * r); g.lineTo(p[0] + Math.cos(b.w) * r, p[1] + Math.sin(b.w) * r); g.stroke(); }
+        const r = (art === "wicke" ? 0.05 : art === "waldrebe" ? 0.06 : 0.055) * s * b.g;
+        if (r < 1.2) { P3[b.ton].moveTo(p[0] + r, p[1]); P3[b.ton].ellipse(p[0], p[1], Math.max(0.6, r), Math.max(0.4, r * 0.6), b.w, 0, TAU); continue; }
+        blattForm(P3[b.ton], rippe, ranke, art, p[0], p[1], b.w, r);
       }
+      const TON = [skal(R.art.blatt, 0.72), R.art.blatt, plus(R.art.blatt, [26, 30, 16])];
+      P3.forEach((pp, i) => { g.fillStyle = rgb(mul(TON[i], kBlatt[i])); g.fill(pp); });
+      if (s > 45) { g.strokeStyle = rgb(mul(plus(R.art.blatt, [60, 60, 40]), kBlatt[1]), 0.45); g.lineWidth = Math.max(0.3, s * 0.0014); g.stroke(rippe); }
+      if (art === "wicke") { g.strokeStyle = rgb(mul([110, 150, 70], kBlatt[1]), 0.9); g.lineWidth = Math.max(0.3, s * 0.0016); g.stroke(ranke); }
       for (const b of pf.blueten) {
-        const y = b.p[1];
+        const y = b.p[1] + b.seite * 0.02;
         if (!passt(y)) continue;
-        const p = V.p(b.p[0] + b.dx * 0.3, y + (y > ST_.y ? 0.02 : -0.02), b.p[2] + b.dz);
-        const r = Math.max(0.8, (R.art.rose ? 0.042 : 0.05) * s * b.g), c = mul(b.c, k);
-        if (b.knospe) { g.fillStyle = rgb(c); g.beginPath(); g.ellipse(p[0], p[1], r * 0.35, r * 0.5, 0, 0, TAU); g.fill(); continue; }
-        if (R.art.rose && s > 30) {
-          /* gefüllte Rosenblüte: Ringe von Blütenblättern */
-          for (let j = 0; j < 3; j++) {
-            const rr = r * (1 - j * 0.28);
-            g.fillStyle = rgb(skal(c, 1 - j * 0.12));
-            g.beginPath(); for (let q = 0; q < 6; q++) { const w = q / 6 * TAU + j; g.moveTo(p[0], p[1]); g.arc(p[0] + Math.cos(w) * rr * 0.35, p[1] + Math.sin(w) * rr * 0.3, rr * 0.5, 0, TAU); } g.fill();
+        const p = V.p(b.p[0] + b.dx * 0.3, y, b.p[2] + b.dz);
+        const c = mul(b.c, kBl), r = R.art.r * b.g;
+        if (r * s < 1.2) { g.fillStyle = rgb(c); g.beginPath(); g.arc(p[0], p[1], Math.max(0.7, r * s), 0, TAU); g.fill(); continue; }
+        if (b.knospe && art !== "wicke") { g.fillStyle = rgb(skal(c, 0.85)); g.beginPath(); g.ellipse(p[0], p[1], r * s * 0.3, r * s * 0.5, 0, 0, TAU); g.fill(); continue; }
+        if (art === "wicke") {
+          /* eine kleine Traube aus drei, vier Blüten am Stiel */
+          const sd = Math.cos(b.dreh) > 0 ? 1 : -1;
+          for (let j = 3; j >= 0; j--) {
+            const u = j / 3, dx = sd * (0.012 + 0.03 * u), dz = 0.05 * u - 0.03 * u * u;
+            bluteMalen(g, p[0] + eX[0] * dx + eZ[0] * dz, p[1] + eX[1] * dx + eZ[1] * dz, eX, eZ, r * (1 - j * 0.14), skal(c, 1 - j * 0.04), art, b.dreh + j);
           }
-        } else if (s > 30) {
-          /* sternförmige Blüte (Waldrebe, Wicke) */
-          g.fillStyle = rgb(c);
-          for (let q = 0; q < 5; q++) { const w = q / 5 * TAU + b.g; g.beginPath(); g.ellipse(p[0] + Math.cos(w) * r * 0.5, p[1] + Math.sin(w) * r * 0.42, r * 0.5, r * 0.26, w, 0, TAU); g.fill(); }
-          g.fillStyle = rgb(mul([250, 226, 120], k)); g.beginPath(); g.arc(p[0], p[1], r * 0.18, 0, TAU); g.fill();
-        } else { g.fillStyle = rgb(c); g.beginPath(); g.arc(p[0], p[1], r * 0.7, 0, TAU); g.fill(); }
+        } else bluteMalen(g, p[0], p[1], eX, eZ, r, c, art, b.dreh);
       }
     }
+  }
+
+  /* Weihnachtsschmuck: ein Tannenkranz mit roter Schleife vorn an den
+     Staketen über dem Mittelpfosten, dazu (je nach o.saat) an zwei, drei
+     Staketen eine rote Schleife. Von hinten verdecken ihn die Latten. */
+  function kranzMalen(g, V, F, saat) {
+    const s = V.s;
+    const y = ST_.y + ST_.d / 2 + 0.012, zm = 0.62, R = 0.15;
+    const k = ST.lichtFaktor(V.n(0, 1, 0.3), F.Z, 0, F.jahr), kO = ST.lichtFaktor([0, 0, 1], F.Z, 0, F.jahr);
+    const rng = ST.zufall(saat * 3 + 17);
+    const P = (a, r) => V.p(Math.cos(a) * r, y, zm + Math.sin(a) * r);
+    if (s < 16) {
+      g.strokeStyle = rgb(mul([36, 70, 42], k)); g.lineWidth = Math.max(1, 0.06 * s);
+      g.beginPath(); for (let i = 0; i <= 24; i++) { const p = P(i / 24 * TAU, R); if (i) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); } g.stroke();
+      return;
+    }
+    /* Grundring (dunkles Reisig), dann Nadelbüschel in drei Tönen */
+    g.strokeStyle = rgb(mul([26, 52, 32], k)); g.lineWidth = 0.07 * s;
+    g.beginPath(); for (let i = 0; i <= 32; i++) { const p = P(i / 32 * TAU, R); if (i) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); } g.closePath(); g.stroke();
+    const nadel = [new Path2D(), new Path2D(), new Path2D()];
+    for (let i = 0; i < 150; i++) {
+      const a = rng() * TAU, r = R + (rng() - 0.5) * 0.07, p = P(a, r), w = a + Math.PI / 2 + (rng() - 0.5) * 1.2, l = (0.02 + rng() * 0.025) * s;
+      const q = nadel[(rng() * 3) | 0]; q.moveTo(p[0], p[1]); q.lineTo(p[0] + Math.cos(w) * l, p[1] + Math.sin(w) * l * 0.8);
+    }
+    g.lineCap = "round"; g.lineWidth = Math.max(0.4, 0.004 * s);
+    [[30, 64, 40], [44, 84, 48], [66, 108, 64]].forEach((c, i) => { g.strokeStyle = rgb(mul(c, k)); g.stroke(nadel[i]); });
+    /* Schnee oben auf dem Kranz */
+    if (F.jahr === "winter") {
+      g.fillStyle = rgb(mul([246, 249, 255], kO), 0.95);
+      for (let i = 0; i < 9; i++) { const a = Math.PI * (0.15 + 0.7 * i / 8), p = P(a, R + 0.02); g.beginPath(); g.ellipse(p[0], p[1] - 0.008 * s, 0.03 * s, 0.01 * s, 0, 0, TAU); g.fill(); }
+    }
+    /* rote Kugeln und Zapfen */
+    for (let i = 0; i < 6; i++) {
+      const a = rng() * TAU, p = P(a, R + (rng() - 0.5) * 0.03), rr = Math.max(0.6, 0.013 * s);
+      const gr = g.createRadialGradient(p[0] - rr * 0.35, p[1] - rr * 0.35, rr * 0.1, p[0], p[1], rr);
+      gr.addColorStop(0, rgb(mul([255, 120, 120], k))); gr.addColorStop(1, rgb(mul([130, 10, 20], k)));
+      g.fillStyle = gr; g.beginPath(); g.arc(p[0], p[1], rr, 0, TAU); g.fill();
+    }
+    /* Schleife unten */
+    schleifeMalen(g, V, F, 0, y + 0.01, zm - R, 0.07, k);
+  }
+  function schleifeMalen(g, V, F, x, y, z, gr, k) {
+    const s = V.s, m = V.p(x, y, z), r = gr * s;
+    const rot = [184, 18, 32], c = mul(rot, k), cd = mul(skal(rot, 0.6), k);
+    g.fillStyle = rgb(cd);
+    for (const sd of [-1, 1]) { g.beginPath(); g.moveTo(m[0], m[1]); g.quadraticCurveTo(m[0] + sd * r * 0.5, m[1] + r * 1.0, m[0] + sd * r * 0.35, m[1] + r * 1.9); g.lineTo(m[0] + sd * r * 0.7, m[1] + r * 1.75); g.quadraticCurveTo(m[0] + sd * r * 0.8, m[1] + r * 0.9, m[0] + sd * r * 0.2, m[1]); g.fill(); }
+    for (const sd of [-1, 1]) {
+      const gg = g.createLinearGradient(0, m[1] - r, 0, m[1] + r * 0.6);
+      gg.addColorStop(0, rgb(plus(c, [50, 30, 30]))); gg.addColorStop(1, rgb(cd));
+      g.fillStyle = gg; g.beginPath(); g.moveTo(m[0], m[1]);
+      g.bezierCurveTo(m[0] + sd * r * 0.4, m[1] - r * 1.1, m[0] + sd * r * 1.25, m[1] - r * 0.8, m[0] + sd * r * 1.05, m[1] + r * 0.05);
+      g.bezierCurveTo(m[0] + sd * r * 1.0, m[1] + r * 0.55, m[0] + sd * r * 0.4, m[1] + r * 0.45, m[0], m[1]); g.fill();
+    }
+    g.fillStyle = rgb(c); g.beginPath(); g.ellipse(m[0], m[1], r * 0.28, r * 0.32, 0, 0, TAU); g.fill();
   }
 
   /* Pfostenlöcher (Bauphase) */
@@ -502,6 +655,12 @@
       const holz = HOLZ[saat % HOLZ.length];
       const plan = staketenPlan(saat);
       const ranken = rankenPlan(saat);
+      const W = winter ? wehePlan(saat, o) : null;
+      const zS = (x) => (W && bau >= 1 ? W.h(x) : 0);
+      /* Weihnachtsschmuck: Kranz über dem Mittelpfosten, rote Schleifen an
+         zwei, drei Staketen (welche, hängt an o.saat) */
+      const schleifen = [];
+      { const r = ST.zufall(saat * 41 + 7); const n = 1 + (saat % 3); for (let i = 0; i < n; i++) { const j = (r() * ANZAHL) | 0; if (Math.abs(j - ANZAHL / 2) > 3) schleifen.push(j); } }
       const A = {
         grube: bau < 0.18,
         pfosten: bau < 0.18 ? 0 : 3,
@@ -524,20 +683,26 @@
           /* Lagen von hinten nach vorn: Pfosten (y = 0), Riegel, Staketen */
           const vornSicht = dot(V.n(0, 1, 0), AUGE) > 0;
           const hinten = vornSicht ? -1 : 1;
-          if (A.schmuck && winter) weheMalen(g, V, F, hinten, saat);
+          if (A.schmuck && winter) weheMalen(g, V, F, hinten, W);
           if (A.schmuck && !winter) { grasMalen(g, V, F, saat, hinten); rankenMalen(g, V, F, ranken, "hinten"); }
           const pfosten = () => {
             const liste = PF.x.slice(0, A.pfosten).map((x) => ({ x: x, t: V.tiefe(x, 0, 0) })).sort((a, b) => a.t - b.t);
-            for (const p of liste) pfostenMalen(g, V, F, p.x, holz, winter, A.schmuck, rng);
+            for (const p of liste) pfostenMalen(g, V, F, p.x, holz, winter, A.schmuck, rng, zS(p.x));
           };
           const riegel = () => { for (let i = 0; i < A.riegel; i++) riegelMalen(g, V, F, RI.z[i], holz, winter, A.schmuck, rng); };
           const staketen = () => {
             const liste = plan.slice(0, A.staketen).sort((a, b) => V.tiefe(a.x, 0, 0) - V.tiefe(b.x, 0, 0));
-            for (const L of liste) staketeMalen(g, V, F, L, holz, winter, A.schmuck);
+            for (const L of liste) staketeMalen(g, V, F, L, holz, winter, A.schmuck, zS(L.x));
           };
-          if (vornSicht) { pfosten(); riegel(); staketen(); }
+          const schmuck = () => {
+            if (!(A.schmuck && winter) || !vornSicht) return;
+            const k = ST.lichtFaktor(V.n(0, 1, 0.3), F.Z, 0, F.jahr);
+            for (const j of schleifen) { const L = plan[j]; schleifeMalen(g, V, F, L.x, ST_.y + ST_.d / 2 + 0.006, ST_.z1 + L.dz - 0.04, 0.04, k); }
+            kranzMalen(g, V, F, saat);
+          };
+          if (vornSicht) { pfosten(); riegel(); staketen(); schmuck(); }
           else { staketen(); riegel(); pfosten(); }
-          if (A.schmuck && winter) weheMalen(g, V, F, -hinten, saat);
+          if (A.schmuck && winter) weheMalen(g, V, F, -hinten, W);
           if (A.schmuck && !winter) { rankenMalen(g, V, F, ranken, "vorn"); grasMalen(g, V, F, saat, -hinten); }
         })
       };

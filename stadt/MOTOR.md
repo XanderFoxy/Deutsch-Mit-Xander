@@ -126,3 +126,6 @@ Keine Konsolenfehler. Rechenzeit eines Sprites: `STADT.spriteMalen` bei s=40 Ger
   Schneefall, im Bildraum (Gerätepixel). `ST.proj(x,y,z)` rechnet Weltpunkte in Bildpunkte, `ST.kamera` (`s`, `W`, `H`, `dpr`).
 - **Stadt-Prüfbilder**: `stadt.html?neu=1&still=1&t=8000&s=16&kx=0&ky=0&zeit=abend&dazu=tanne,laterne` – `neu=1` baut Winterhausen
   frisch, `dazu=` lädt zusätzliche Modelldateien, `t` = Zeitpunkt (Bewegungen werden bis dahin vorgespult).
+- **Eigene Trefferprüfung**: `def.treffer(px, py, P)` → `true`, wenn der Bildpunkt (Gerätepixel) das Modell trifft. Für große
+  Modelle, die ihr Bild selbst in Kacheln malen (Kölner Dom). Ohne `treffer` prüft die Szene den Sprite-Bildpunkt.
+- Bildwerkzeuge: Zeitgrenze mit Umgebungsvariable `ZEIT=300000` (ms) anheben.

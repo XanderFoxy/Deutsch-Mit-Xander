@@ -8,27 +8,37 @@
    baut und dass man sieht wie das entsteht. Schritt für Schritt."
 
    Eine Sandsteinbrücke, wie sie in Franken und Hessen über jeden Bach
-   führt: ein Segmentbogen mit 6 m Spannweite und 1,10 m Stich, der
-   Bogenring aus 23 Keilsteinen mit einem vorstehenden Schlussstein
-   (Jahreszahl 1826), Stirnmauern aus Quadern, darüber ein Gurtgesims,
-   die Brüstung (0,85 m, 35 cm dick) mit gerundeten Abdeckplatten, an den
-   vier Enden Pfeiler mit Sandsteinkugeln. Auf der Fahrbahn Kopfstein-
-   pflaster; die Fahrbahn steigt als sanfter Buckel bis 1,60 m an.
+   führt – eine kompakte Buckelbrücke für Fußgänger und Handkarren:
+   ein Segmentbogen mit 4,4 m lichter Weite und 1,25 m Stich, der
+   Bogenring (32 cm) aus 23 Keilsteinen mit einem vorstehenden
+   Schlussstein (Jahreszahl 1826), Stirnmauern aus Quadern, darüber ein
+   profiliertes Gurtgesims, die Brüstung (0,85 m, 35 cm dick) mit
+   gerundeten Abdeckplatten, an den vier Enden Pfeiler mit
+   Sandsteinkugeln. Auf der Fahrbahn Kopfsteinpflaster.
+   Das Längsprofil ist ein echter „Eselsrücken": gerundete Kuppe
+   (Halbmesser 2,4 m), gerade Rampen, unten weich ausgerundet – kein
+   S-Schwung. Die Rampen steigen mit 33 %: Bei 11,2 m Länge und einem
+   Scheitel von 1,68 m (Bogen 1,25 + Ring 0,32 + Pflaster) geht es nicht
+   flacher – im Mittel sind es schon 30 %. So steil sind alte
+   Saumpfad- und Fußgängerbrücken wirklich.
    Unter dem Bogen: die Laibung (die Unterseite des Gewölbes) – durch die
    Öffnung sieht man sie feucht und dunkel, mit Kalkausblühungen.
-   Maße: 15 m lang (Fahrbahn entlang y), 3,6 m breit, 2,9 m lichte Weite
-   der Fahrbahn zwischen den Brüstungen.
+   Maße: 11,2 m lang (Fahrbahn entlang y), 3,6 m breit, 2,9 m lichte
+   Weite der Fahrbahn zwischen den Brüstungen.
 
    In Winterhausen steht sie bei x ≈ 31,5 / y ≈ −2 mit gier 90: die
    Fahrbahn (Modell-y) zeigt dann nach Westen/Osten und führt den Weg
    über den Bach, der unter dem Bogen nach Süden fließt.
 
    Winter: Schnee auf der Fahrbahn mit festgetretenem Pfad, Fußspuren und
-   Schlittenspuren, Schneewülste auf Abdeckplatten, Gesims und Pfeilern,
-   Eiszapfen am Bogen und am Gesims, eine Tannengirlande mit roten
-   Schleifen und warmer Lichterkette an beiden Brüstungen.
-   Frühling: Efeu an den Stirnmauern, Moos auf den Platten, Gras in den
-   Pflasterfugen, Pflanzschalen mit Stiefmütterchen auf den Pfeilern.
+   Kufenrillen, Schlagschatten der Brüstung auf dem Schnee, Schneewülste
+   auf Abdeckplatten, Gesims und Pfeilern, Eiszapfen am Bogen und am
+   Gesims, eine Tannengirlande mit roten Schleifen und warmer
+   Lichterkette an beiden Brüstungen.
+   Frühling: Efeu hängt als Vorhang über die Zwickel an beiden
+   Widerlagern, Moos in den Fugen und auf der Wetterseite der Platten,
+   Gras in den Pflasterfugen, Blumenkästen mit Geranien und hängenden
+   Petunien an den Brüstungen (wie an jeder fränkischen Dorfbrücke).
 
    BAUPHASEN (o.bau)
      0,00 Baugruben für die Widerlager (unter dem Boden, man schaut hinein)
@@ -57,8 +67,8 @@
   function plus(f, d) { return [Math.min(255, f[0] + d[0]), Math.min(255, f[1] + d[1]), Math.min(255, f[2] + d[2])]; }
   function misch(a, b, k) { return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k]; }
   function phase(bau, a, b) { return klemm((bau - a) / (b - a), 0, 1); }
+  function nrm3(v) { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; }
   function vieleck(g, pts) { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); g.closePath(); }
-  const glatt = (u) => { u = klemm(u, 0, 1); return u * u * (3 - 2 * u); };
 
   function blick(gier, s) {
     const r = gier * Math.PI / 180, c = Math.cos(r), sn = Math.sin(r);
@@ -142,14 +152,29 @@
   /* =====================================================================
      MASSE UND FORMEN
      ===================================================================== */
-  const B = { L: 7.5, W: 7.0, xa: 1.8, xi: 1.45, span: 3.0, stich: 1.1, ring: 0.4, krone: 1.6, br: 0.85, kh: 0.12, ku: 0.035, gv: 0.06 };
-  const R = (B.span * B.span + B.stich * B.stich) / (2 * B.stich);    // Halbmesser der Laibung ≈ 4,64 m
+  /* L = halbe Länge (Fahrbahn bis z = 0), W = halbe Länge der Brüstungen
+     (dahinter die Pfeiler), span = halbe lichte Weite, rk/rf = Halbmesser
+     der Ausrundung an der Kuppe und am Fuß der Rampe.
+     In Winterhausen (x = 31,5, gier 90) reicht sie von x ≈ 25,9 bis 37,1 –
+     1,6 m Abstand zum Fachwerkhaus (endet bei x = 24,3). */
+  const B = { L: 5.6, W: 5.1, xa: 1.8, xi: 1.45, span: 2.2, stich: 1.25, ring: 0.32, krone: 1.68, br: 0.85, kh: 0.12, ku: 0.035, gv: 0.08, rk: 2.4, rf: 0.9 };
+  const R = (B.span * B.span + B.stich * B.stich) / (2 * B.stich);    // Halbmesser der Laibung ≈ 2,56 m
   const ZC = B.stich - R;                                              // Mittelpunkt (unter dem Boden)
-  const PHI0 = Math.asin(B.span / R);                                  // Kämpferwinkel
+  const PHI0 = Math.asin(B.span / R);                                  // Kämpferwinkel (≈ 59°)
   const RE = R + B.ring;                                               // Rücken des Bogenrings
   const KEIL = 23;                                                     // Keilsteine
   const ZMAX = B.krone + B.br;                                         // höchste Stelle der Mauer
-  const zDeck = (y) => B.krone * (1 - glatt(Math.abs(y) / B.L));
+  /* Längsprofil: Kuppe als Kreisbogen, gerade Rampe, weicher Fuß.
+     Die Steigung m folgt aus Länge, Scheitelhöhe und beiden Halbmessern
+     (Tangenten stetig): m²·(rk+rf)/2 − m·L + krone = 0  →  m ≈ 0,33 */
+  const PROF = (() => { const S = B.rk + B.rf, m = (B.L - Math.sqrt(B.L * B.L - 2 * S * B.krone)) / S; return { m: m, u1: m * B.rk, u2: B.L - m * B.rf, z1: B.krone - m * m * B.rk / 2 }; })();
+  const zDeck = (y) => {
+    const u = Math.abs(y);
+    if (u >= B.L) return 0;
+    if (u <= PROF.u1) return B.krone - u * u / (2 * B.rk);
+    if (u <= PROF.u2) return PROF.z1 - PROF.m * (u - PROF.u1);
+    const d = B.L - u; return d * d / (2 * B.rf);
+  };
   const zWand = (y) => zDeck(y) + B.br;
   const zI = (y) => (Math.abs(y) >= B.span ? 0 : ZC + Math.sqrt(R * R - y * y));
   const zE = (y) => (Math.abs(y) >= RE * Math.sin(PHI0) ? 0 : ZC + Math.sqrt(RE * RE - y * y));
@@ -225,7 +250,7 @@
       const h = 0.3 + rng() * 0.12;
       const steine = [];
       let y = -B.L - rng() * 0.6;
-      while (y < B.L) { const l = 0.45 + rng() * 0.6; steine.push({ y0: y, y1: y + l, k: 0.88 + rng() * 0.2, rot: rng(), moos: rng() }); y += l; }
+      while (y < B.L) { const l = 0.45 + rng() * 0.6; steine.push({ y0: y, y1: y + l, k: 0.88 + rng() * 0.2, rot: rng(), moos: rng(), alt: rng() }); y += l; }
       lagen.push({ z0: z, z1: z + h, steine: steine });
       z += h;
     }
@@ -239,17 +264,36 @@
     p.lineTo(x + r, y + h); p.quadraticCurveTo(x, y + h, x, y + h - r);
     p.lineTo(x, y + r); p.quadraticCurveTo(x, y, x + r, y); p.closePath();
   }
+  /* Band zwischen zwei Höhenlinien (Welt: z = f(y) + a … f(y) + b) als
+     Pfad in Flächenkoordinaten */
+  function bandPfad(g, zf, f, a, b, yA, yB, schritt) {
+    const d = schritt || 0.2;
+    g.beginPath();
+    let erst = true;
+    for (let y = yA; y <= yB + 1e-6; y += d) { const p = zf(y, f(y) + b); if (erst) { g.moveTo(p[0], p[1]); erst = false; } else g.lineTo(p[0], p[1]); }
+    for (let y = yB; y >= yA - 1e-6; y -= d) { const p = zf(y, f(y) + a); g.lineTo(p[0], p[1]); }
+    g.closePath();
+  }
   /* Alles, was viele gleichartige Stücke hat, wird in wenige Pfade
      gebündelt (ein Zeichenaufruf je Farbe statt je Stein) – in der
-     Grafikkarte ist jeder einzelne Aufruf teuer. */
+     Grafikkarte ist jeder einzelne Aufruf teuer.
+     Jeder Quader hat eine gefaste Kante: die zur Sonne gewandte Fase ist
+     hell, die abgewandte dunkel (F.lichtU sagt, von welcher Seite die
+     Sonne in der Fläche kommt) – schon ab 12 px je Meter, damit die Mauer
+     auch in der Stadtansicht nicht wie Tapete wirkt. Einzelne Steine sind
+     verwittert (dunkler, mit abgeplatzten Schalen), unten zeigt sich
+     Spritzwasser und im Winter weißes Streusalz. */
   function mauerMalen(g, F, stein, plan, zf, opt) {
     opt = opt || {};
     const px = F.px, fuge = 0.018;
     const grund = stein.f;
     g.fillStyle = rgb(misch(grund, [214, 206, 188], 0.55)); g.fillRect(-1, -1, F.w + 2, F.h + 2);   // Kalkmörtel
-    const kante = px > 22;
+    const kante = px > 12, fein = px > 22;
+    const rechtsHell = (F.lichtU || 0) > 0;
     const eimer = new Map();
-    const hellP = new Path2D(), dunkelP = new Path2D(), obenP = new Path2D(), untenP = new Path2D(), rechtsP = new Path2D(), hiebP = new Path2D(), moosP = new Path2D();
+    const hellP = new Path2D(), dunkelP = new Path2D(), obenP = new Path2D(), untenP = new Path2D();
+    const seiteH = new Path2D(), seiteD = new Path2D(), hiebP = new Path2D(), schaleP = new Path2D(), schaleL = new Path2D();
+    const moosP = [new Path2D(), new Path2D()];
     for (const L of plan) {
       if (opt.zMin != null && L.z1 < opt.zMin) continue;
       if (opt.zMax != null && L.z0 > opt.zMax) continue;
@@ -257,56 +301,119 @@
         const a = zf(S.y0 + fuge / 2, L.z1 - fuge / 2), b = zf(S.y1 - fuge / 2, L.z0 + fuge / 2);
         const x0 = Math.min(a[0], b[0]), x1 = Math.max(a[0], b[0]), y0 = Math.min(a[1], b[1]), y1 = Math.max(a[1], b[1]);
         if (x1 < -0.1 || x0 > F.w + 0.1 || y1 < -0.1 || y0 > F.h + 0.1) continue;
-        const stufe = Math.round((S.k - 0.88) / 0.2 * 5), ton = S.rot < 0.15 ? 1 : S.rot > 0.9 ? 2 : 0;
-        const schl = stufe * 3 + ton;
+        const stufe = Math.round((S.k - 0.88) / 0.2 * 5), ton = S.rot < 0.15 ? 1 : S.rot > 0.9 ? 2 : S.alt > 0.86 ? 3 : 0;
+        const schl = stufe * 4 + ton;
         let p = eimer.get(schl);
         if (!p) { p = new Path2D(); eimer.set(schl, p); }
-        if (kante) rrPfad(p, x0, y0, x1 - x0, y1 - y0, 0.02); else p.rect(x0, y0, x1 - x0, y1 - y0);
+        const w = x1 - x0, h = y1 - y0;
+        if (kante) rrPfad(p, x0, y0, w, h, 0.02); else p.rect(x0, y0, w, h);
         if (kante) {
+          const fa = Math.min(0.024, h * 0.1);
+          obenP.rect(x0 + 0.01, y0, w - 0.02, fa);
+          untenP.rect(x0 + 0.01, y1 - fa, w - 0.02, fa);
+          (rechtsHell ? seiteH : seiteD).rect(x1 - fa * 0.8, y0 + 0.01, fa * 0.8, h - 0.02);
+          (rechtsHell ? seiteD : seiteH).rect(x0, y0 + 0.01, fa * 0.8, h - 0.02);
+        }
+        if (fein) {
           /* Farbwolken im Stein (Eisenoxid, Tonlinsen) */
           const sr = ST.zufall(((S.y0 * 1000) | 0) + ((L.z0 * 777) | 0));
           for (let j = 0; j < 3; j++) {
             const q = sr() < 0.5 ? hellP : dunkelP;
-            const cx = x0 + (x1 - x0) * (0.15 + sr() * 0.7), cy = y0 + (y1 - y0) * (0.2 + sr() * 0.6), rx = (x1 - x0) * (0.12 + sr() * 0.2), ry = (y1 - y0) * (0.15 + sr() * 0.2);
+            const cx = x0 + w * (0.15 + sr() * 0.7), cy = y0 + h * (0.2 + sr() * 0.6), rx = w * (0.12 + sr() * 0.2), ry = h * (0.15 + sr() * 0.2);
             q.moveTo(cx + rx, cy); q.ellipse(cx, cy, rx, ry, 0, 0, TAU);
           }
-          obenP.rect(x0 + 0.01, y0, x1 - x0 - 0.02, 0.022);
-          untenP.rect(x0 + 0.01, y1 - 0.022, x1 - x0 - 0.02, 0.022);
-          rechtsP.rect(x1 - 0.018, y0 + 0.01, 0.018, y1 - y0 - 0.02);
+          /* verwitterte Steine: abgeplatzte Schalen mit hellem Bruchrand */
+          if (ton === 3) {
+            for (let j = 0; j < 2; j++) {
+              const cx = x0 + w * (0.2 + sr() * 0.6), cy = y0 + h * (0.25 + sr() * 0.5), rx = w * (0.1 + sr() * 0.16), ry = h * (0.12 + sr() * 0.16);
+              schaleP.moveTo(cx + rx, cy); schaleP.ellipse(cx, cy, rx, ry, sr() - 0.5, 0, TAU);
+              schaleL.moveTo(cx - rx * 0.9, cy - ry * 0.4); schaleL.ellipse(cx, cy, rx, ry, 0, Math.PI * 1.05, Math.PI * 1.7);
+            }
+          }
           /* Scharrierung: feine Hiebe des Steinmetzen (nur ganz nah) */
           if (px > 70) for (let x = x0 + 0.02; x < x1 - 0.02; x += 0.016) { hiebP.moveTo(x, y0 + 0.03); hiebP.lineTo(x + 0.006, y1 - 0.03); }
         }
-        /* Moos und Algen unten (Frühling mehr) */
-        if (opt.moos && S.moos < opt.moos && L.z0 < 0.8) { const cx = (x0 + x1) / 2, rx = (x1 - x0) * 0.4; moosP.moveTo(cx + rx, y1 - 0.04); moosP.ellipse(cx, y1 - 0.04, rx, 0.06, 0, 0, TAU); }
+        /* Moos wächst in den Lagerfugen – unten und im Tropfbereich viel,
+           oben kaum; jedes Polster anders lang und dick */
+        if (opt.moos && px > 8) {
+          const hoehe = L.z0 - (opt.fuss ? opt.fuss((S.y0 + S.y1) / 2) : 0);
+          const chance = opt.moos * (hoehe < 0.5 ? 1 : hoehe < 1.1 ? 0.45 : 0.15);
+          if (S.moos < chance) {
+            const sr = ST.zufall(((S.y1 * 911) | 0) + ((L.z0 * 353) | 0) + 7);
+            let x = x0 + w * sr() * 0.5;
+            const ende = x0 + w * (0.5 + sr() * 0.5);
+            while (x < ende) {
+              const rx = 0.02 + sr() * 0.07, ry = 0.01 + sr() * 0.022;
+              const q = moosP[sr() < 0.6 ? 0 : 1];
+              q.moveTo(x + rx, y1 + fuge * 0.3); q.ellipse(x, y1 + fuge * 0.3 - ry * 0.3, rx, ry, (sr() - 0.5) * 0.3, 0, TAU);
+              x += rx * (0.9 + sr() * 1.4);
+            }
+          }
+        }
       }
     }
     for (const [schl, p] of eimer) {
-      const stufe = Math.floor(schl / 3), ton = schl % 3;
+      const stufe = Math.floor(schl / 4), ton = schl % 4;
       let c = skal(grund, 0.88 + stufe * 0.04);
       if (ton === 1) c = misch(c, [170, 110, 90], 0.25);
       if (ton === 2) c = misch(c, [120, 116, 104], 0.3);
+      if (ton === 3) c = misch(skal(c, 0.82), [92, 86, 74], 0.25);
       g.fillStyle = rgb(c); g.fill(p);
     }
-    if (kante) {
+    if (fein) {
       g.fillStyle = rgb(plus(grund, [16, 14, 10]), 0.3); g.fill(hellP);
       g.fillStyle = rgb(skal(grund, 0.84), 0.3); g.fill(dunkelP);
-      g.fillStyle = rgb(plus(grund, [24, 22, 18]), 0.5); g.fill(obenP);
-      g.fillStyle = rgb(skal(grund, 0.7), 0.5); g.fill(untenP);
-      g.fillStyle = rgb(skal(grund, 0.78), 0.38); g.fill(rechtsP);
+      g.fillStyle = rgb(skal(grund, 0.62), 0.45); g.fill(schaleP);
+      g.strokeStyle = rgb(plus(grund, [34, 30, 24]), 0.55); g.lineWidth = 0.008; g.stroke(schaleL);
       if (px > 70) { g.strokeStyle = rgb(skal(grund, 0.84), 0.3); g.lineWidth = 0.004; g.stroke(hiebP); }
     }
-    if (opt.moos) { g.fillStyle = "rgba(76,104,50,0.35)"; g.fill(moosP); }
+    if (kante) {
+      g.fillStyle = rgb(plus(grund, [30, 28, 22]), 0.55); g.fill(obenP);
+      g.fillStyle = rgb(skal(grund, 0.62), 0.55); g.fill(untenP);
+      g.fillStyle = rgb(plus(grund, [20, 18, 14]), 0.45); g.fill(seiteH);
+      g.fillStyle = rgb(skal(grund, 0.66), 0.45); g.fill(seiteD);
+    }
+    if (opt.moos) {
+      g.fillStyle = "rgba(58,86,38,0.62)"; g.fill(moosP[0]);
+      g.fillStyle = "rgba(96,122,52,0.55)"; g.fill(moosP[1]);
+    }
     if (px > 8) PI.rauschen(g, 0, 0, F.w, F.h, 2.4, 0.22, 21, 4);
     if (px > 25) PI.rauschen(g, 0, 0, F.w, F.h, 0.5, 0.2, 33, 3);
     if (px > 60) PI.rauschen(g, 0, 0, F.w, F.h, 0.12, 0.2, 47, 2);
+    /* Spritzwasser am Fuß (Regen, Schneematsch): dunkler, leicht grünlich,
+       nach oben verlaufend – in vier Bändern entlang der Fußlinie */
+    if (opt.fuss && px > 6) {
+      const f = opt.fuss;
+      for (let i = 0; i < 4; i++) {
+        bandPfad(g, zf, f, i * 0.12, (i + 1) * 0.12, -B.W - 0.3, B.W + 0.3, 0.25);
+        g.fillStyle = "rgba(56,58,38," + (0.2 * (1 - i / 4)).toFixed(3) + ")"; g.fill();
+      }
+      /* Salzausblühungen (Winter: Streusalz vom Weg) – weiße, wolkige
+         Ränder knapp über dem Spritzwasser */
+      if (opt.salz && px > 12) {
+        const rng = ST.zufall(71 + (opt.saat || 0));
+        const sp = new Path2D();
+        for (let i = 0; i < 2 * B.W * 5; i++) {
+          const y = -B.W + rng() * 2 * B.W, z = f(y) + 0.06 + Math.pow(rng(), 1.6) * 0.34, p = zf(y, z);
+          const rx = 0.05 + rng() * 0.16, ry = 0.012 + rng() * 0.03;
+          sp.moveTo(p[0] + rx, p[1]); sp.ellipse(p[0], p[1], rx, ry, 0, 0, TAU);
+        }
+        g.fillStyle = "rgba(236,234,226," + (0.2 * opt.salz).toFixed(3) + ")"; g.fill(sp);
+      }
+    }
   }
-  /* Keilsteine des Bogenrings (in einer Stirnfläche) */
-  function keilsteineMalen(g, F, stein, zf, von, bis, saat, jahr) {
+  /* Keilsteine des Bogenrings (in einer Stirnfläche): derselbe Stein wie
+     die Mauer, jeder Stein mit eigener Helligkeit; an der Laibungskante
+     eine dunkle Schattenkante (dort biegt die Fläche nach innen weg), am
+     Bogenrücken eine Fugenschattenlinie gegen die Zwickel. */
+  function keilsteineMalen(g, F, stein, zf, von, bis, saat) {
     const rng = ST.zufall(saat + 5);
-    const grund = skal(stein.f, 1.04);
+    const grund = stein.f;
+    const kante = F.px > 12;
+    const mortel = rgb(misch(grund, [214, 206, 188], 0.5));
     for (let i = 0; i < KEIL; i++) {
       const a0 = -PHI0 + 2 * PHI0 * i / KEIL, a1 = -PHI0 + 2 * PHI0 * (i + 1) / KEIL;
-      const k = 0.9 + rng() * 0.16;
+      const k = 0.86 + rng() * 0.2, ton = rng();
       if (i < von || i >= bis) continue;
       const schluss = i === (KEIL - 1) / 2;
       const rA = schluss ? RE + 0.06 : RE;
@@ -315,109 +422,289 @@
       for (let j = 3; j >= 0; j--) { const p = bogenPunkt(R, a0 + (a1 - a0) * j / 3); pts.push(zf(p[0], p[1])); }
       /* Fuge: Stein etwas kleiner */
       const m = pts.reduce((s, p) => [s[0] + p[0] / pts.length, s[1] + p[1] / pts.length], [0, 0]);
-      const ein = pts.map((p) => [m[0] + (p[0] - m[0]) * 0.96, m[1] + (p[1] - m[1]) * 0.985]);
-      vieleck(g, pts); g.fillStyle = rgb(misch(stein.f, [214, 206, 188], 0.5)); g.fill();
-      vieleck(g, ein);
-      const c = schluss ? plus(skal(grund, 1.02), [8, 8, 6]) : skal(grund, k);
-      g.fillStyle = rgb(c); g.fill();
+      const ein = pts.map((p) => [m[0] + (p[0] - m[0]) * 0.94, m[1] + (p[1] - m[1]) * 0.975]);
+      vieleck(g, pts); g.fillStyle = mortel; g.fill();
+      let c = skal(grund, k);
+      if (ton < 0.12) c = misch(c, [170, 110, 90], 0.22);
+      else if (ton > 0.9) c = misch(skal(c, 0.84), [92, 86, 74], 0.25);
+      if (schluss) c = skal(grund, 1.0);
+      vieleck(g, ein); g.fillStyle = rgb(c); g.fill();
+      if (kante) {
+        /* gefaste Stoßkanten: die zur Sonne gewandte hell, die andere dunkel */
+        const rechtsHell = (F.lichtU || 0) > 0;
+        const links = [ein[0], ein[ein.length - 1]], rechts = [ein[3], ein[4]];
+        g.lineWidth = 0.016;
+        g.strokeStyle = rgb(plus(c, [26, 24, 18]), 0.55);
+        g.beginPath(); const hl = rechtsHell ? rechts : links; g.moveTo(hl[0][0], hl[0][1]); g.lineTo(hl[1][0], hl[1][1]); g.stroke();
+        g.strokeStyle = rgb(skal(c, 0.66), 0.55);
+        g.beginPath(); const dl = rechtsHell ? links : rechts; g.moveTo(dl[0][0], dl[0][1]); g.lineTo(dl[1][0], dl[1][1]); g.stroke();
+      }
       if (F.px > 22) {
         /* Randschlag: gerader Rand, bossiertes Innenfeld */
-        const in2 = pts.map((p) => [m[0] + (p[0] - m[0]) * 0.78, m[1] + (p[1] - m[1]) * 0.86]);
+        const in2 = pts.map((p) => [m[0] + (p[0] - m[0]) * 0.74, m[1] + (p[1] - m[1]) * 0.84]);
         vieleck(g, in2); g.fillStyle = rgb(skal(c, 0.95)); g.fill();
-        g.strokeStyle = rgb(plus(c, [20, 18, 14]), 0.5); g.lineWidth = 0.012;
-        g.beginPath(); g.moveTo(ein[0][0], ein[0][1]); g.lineTo(ein[3][0], ein[3][1]); g.stroke();
       }
       if (schluss && F.px > 30) {
         /* Jahreszahl im Schlussstein */
         const p = bogenPunkt(R + B.ring * 0.55, 0), q = zf(p[0], p[1]);
         g.save(); g.translate(q[0], q[1]);
-        g.fillStyle = rgb(skal(c, 0.55)); g.font = "bold 0.09px Georgia, 'DejaVu Serif', serif"; g.textAlign = "center"; g.textBaseline = "middle";
+        g.fillStyle = rgb(skal(c, 0.55)); g.font = "bold 0.085px Georgia, 'DejaVu Serif', serif"; g.textAlign = "center"; g.textBaseline = "middle";
         g.fillText("1826", 0, 0);
         g.restore();
       }
     }
-    void jahr;
+    /* Schattenkante an der Laibung und Fugenlinie am Bogenrücken */
+    const phiA = -PHI0 + 2 * PHI0 * von / KEIL, phiB = -PHI0 + 2 * PHI0 * bis / KEIL;
+    if (phiB > phiA) {
+      const bogen = (r) => { g.beginPath(); for (let j = 0; j <= 30; j++) { const b = bogenPunkt(r, phiA + (phiB - phiA) * j / 30), p = zf(b[0], b[1]); if (j) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); } };
+      g.lineCap = "butt";
+      bogen(R + 0.012); g.strokeStyle = "rgba(24,18,22,0.5)"; g.lineWidth = 0.026; g.stroke();
+      bogen(R + 0.03); g.strokeStyle = "rgba(24,18,22,0.2)"; g.lineWidth = 0.014; g.stroke();
+      bogen(RE + 0.006); g.strokeStyle = "rgba(40,30,28,0.38)"; g.lineWidth = 0.014; g.stroke();
+    }
   }
 
   /* =====================================================================
      DIE BAUTEILE
      ===================================================================== */
-  /* Stirnmauer (außen), mit Gesimsschatten und Efeu (Frühling) */
-  function stirnMaler(seite, stein, plan, A, saat) {
+  /* Stirnmauer (außen) bzw. Brüstung innen. Schlagschatten von Gesims und
+     Abdeckplatte über F.schatten – so stimmt ihre Breite in jedem
+     Drehwinkel, und liegt die Wand im Schatten, gibt es keinen. */
+  function stirnMaler(seite, stein, plan, A, saat, innen) {
     const zf = zuFlaeche(seite);
+    const fuss = innen ? zDeck : () => 0;
     return function (g, F) {
-      mauerMalen(g, F, stein, plan, zf, { moos: F.jahr === "winter" ? 0.12 : 0.35 });
-      /* Wasserspuren: dunkle Streifen unter dem Gesims und an den Kämpfern */
-      if (F.px > 10) {
+      const winter = F.jahr === "winter";
+      mauerMalen(g, F, stein, plan, zf, { moos: winter ? 0.12 : (A.schmuck ? 0.5 : 0.3), fuss: fuss, salz: winter && !innen ? 0.8 : 0, saat: saat });
+      /* Wasserspuren: dunkle Streifen unter dem Gesims */
+      if (F.px > 10 && !innen) {
         const rng = ST.zufall(saat + seite * 7);
-        for (let i = 0; i < 16; i++) {
-          const y = -B.W + rng() * 2 * B.W, top = zf(y, zDeck(y) - 0.16), l = 0.3 + rng() * 0.8;
+        for (let i = 0; i < 12; i++) {
+          const y = -B.W + rng() * 2 * B.W, top = zf(y, zDeck(y) - 0.04), l = 0.3 + rng() * 0.7;
           const gr = g.createLinearGradient(0, top[1], 0, top[1] + l);
-          gr.addColorStop(0, "rgba(60,54,44,0.22)"); gr.addColorStop(1, "rgba(60,54,44,0)");
-          g.fillStyle = gr; g.fillRect(top[0] - 0.08, top[1], 0.16 + rng() * 0.1, l);
+          gr.addColorStop(0, "rgba(56,50,42,0.24)"); gr.addColorStop(1, "rgba(56,50,42,0)");
+          g.fillStyle = gr; g.fillRect(top[0] - 0.07, top[1], 0.12 + rng() * 0.12, l);
         }
       }
-      /* Schatten unter dem Gurtgesims */
-      if (A.gesims) {
-        g.fillStyle = "rgba(40,36,50,0.22)";
-        g.beginPath();
-        for (let y = -B.W; y <= B.W + 1e-6; y += 0.25) { const p = zf(y, zDeck(y) + GES.u); if (y === -B.W) g.moveTo(p[0], p[1]); else g.lineTo(p[0], p[1]); }
-        for (let y = B.W; y >= -B.W - 1e-6; y -= 0.25) { const p = zf(y, zDeck(y) + GES.u - 0.09); g.lineTo(p[0], p[1]); }
-        g.closePath(); g.fill();
+      /* Schlagschatten des Gurtgesimses (6 cm vor der Wand) */
+      if (A.gesims && !innen) {
+        const sv = F.schatten(B.gv + 0.02);
+        bandPfad(g, zf, zDeck, GES.u - 0.035, GES.u, -B.W, B.W, 0.25);
+        g.fillStyle = "rgba(34,30,44,0.18)"; g.fill();
+        if (sv && sv[1] > 0.004) {
+          g.beginPath();
+          for (let y = -B.W; y <= B.W + 1e-6; y += 0.25) { const p = zf(y, zDeck(y) + GES.u); if (y === -B.W) g.moveTo(p[0], p[1]); else g.lineTo(p[0], p[1]); }
+          for (let y = B.W; y >= -B.W - 1e-6; y -= 0.25) { const p = zf(y, zDeck(y) + GES.u); g.lineTo(p[0] + sv[0], p[1] + sv[1]); }
+          g.closePath(); g.fillStyle = "rgba(24,22,40,0.36)"; g.fill();
+        }
       }
-      /* Schatten unter der Abdeckplatte (Überstand) */
+      /* Schlagschatten der Abdeckplatte (Überstand) */
       if (A.kappen) {
-        g.fillStyle = "rgba(40,36,50,0.28)";
-        g.beginPath();
-        for (let y = -B.W; y <= B.W + 1e-6; y += 0.25) { const p = zf(y, zWand(y)); if (y === -B.W) g.moveTo(p[0], p[1]); else g.lineTo(p[0], p[1]); }
-        for (let y = B.W; y >= -B.W - 1e-6; y -= 0.25) { const p = zf(y, zWand(y) - 0.07); g.lineTo(p[0], p[1]); }
-        g.closePath(); g.fill();
+        const sv = F.schatten(B.ku + 0.012);
+        bandPfad(g, zf, zWand, -0.03, 0, -B.W, B.W, 0.25);
+        g.fillStyle = "rgba(34,30,44,0.2)"; g.fill();
+        if (sv && sv[1] > 0.003) {
+          g.beginPath();
+          for (let y = -B.W; y <= B.W + 1e-6; y += 0.25) { const p = zf(y, zWand(y)); if (y === -B.W) g.moveTo(p[0], p[1]); else g.lineTo(p[0], p[1]); }
+          for (let y = B.W; y >= -B.W - 1e-6; y -= 0.25) { const p = zf(y, zWand(y)); g.lineTo(p[0] + sv[0], p[1] + sv[1]); }
+          g.closePath(); g.fillStyle = "rgba(24,22,40,0.36)"; g.fill();
+        }
       }
-      /* Efeu (Frühling): an den Enden und am Kämpfer hochwachsend */
-      if (F.jahr !== "winter" && A.schmuck && F.px > 6) efeuMalen(g, F, zf, saat + seite);
+      /* Brüstung innen im Winter: der Fahrbahnschnee liegt an der Wand an
+         (ein Wulst mit welliger Oberkante) – so liest man die Schneehöhe */
+      if (innen && winter && A.schmuck) {
+        const rng = ST.zufall(saat * 3 + seite);
+        const pts = [];
+        for (let y = -B.W; y <= B.W + 1e-6; y += 0.12) pts.push([y, zDeck(y) + 0.05 + (rng() - 0.3) * 0.035]);
+        g.beginPath();
+        pts.forEach((q, i) => { const p = zf(q[0], q[1]); if (i) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); });
+        for (let y = B.W; y >= -B.W - 1e-6; y -= 0.25) { const p = zf(y, zDeck(y) - 0.05); g.lineTo(p[0], p[1]); }
+        g.closePath();
+        g.fillStyle = "rgb(236,241,250)"; g.fill();
+        /* Anlagerung wird zur Wand hin grau (Schatten in der Kehle) */
+        bandPfad(g, zf, zDeck, 0.035, 0.085, -B.W, B.W, 0.25);
+        g.fillStyle = "rgba(150,164,196,0.18)"; g.fill();
+      }
+      /* Efeu (Frühling): an beiden Widerlagern */
+      if (!winter && A.schmuck && !innen && F.px > 5) efeuMalen(g, F, zf, saat + seite, seite);
     };
   }
-  function efeuMalen(g, F, zf, saat) {
+
+  /* Efeu: wächst vom Boden über die Zwickel an beiden Widerlagern bis unter
+     das Gesims und hängt an den Brückenenden als Vorhang von der
+     Abdeckplatte. Zuerst die dunkle Masse (Unterlaub, auch aus der Ferne
+     lesbar), darauf Blätter in drei Grüntönen, 6–9 cm groß, überlappend,
+     mit Lichtkante; ganz nah Blattadern. */
+  const EFEU_BLATT = (() => {
+    const p = new Path2D();
+    p.moveTo(0, 0.35);
+    p.quadraticCurveTo(-0.5, 0.45, -0.95, 0.05); p.quadraticCurveTo(-0.7, -0.1, -0.62, -0.45);
+    p.quadraticCurveTo(-0.3, -0.45, 0, -1); p.quadraticCurveTo(0.3, -0.45, 0.62, -0.45);
+    p.quadraticCurveTo(0.7, -0.1, 0.95, 0.05); p.quadraticCurveTo(0.5, 0.45, 0, 0.35);
+    p.closePath();
+    return p;
+  })();
+  function efeuZonen(seite) {
+    /* [y von, y bis, Art]: „unten" = vom Boden bis unters Gesims,
+       „oben" = Vorhang von der Abdeckplatte am Brückenende */
+    const a = B.span + 0.3;
+    return [[-B.W - 0.05, -a, "unten"], [a, B.W + 0.05, "unten"], [-B.W - 0.05, -B.W + 1.2, "oben"], [B.W - 1.2, B.W + 0.05, "oben"]];
+  }
+  function efeuGrenzen(zone, y, rng) {
+    const [ya, yb, art] = zone;
+    const innen = art === "unten" ? (ya < 0 ? yb - y : y - ya) : (ya < 0 ? yb - y : y - ya);   // Abstand zum inneren Ende der Zone
+    const t = klemm(innen / 0.9, 0, 1);
+    const wellig = 0.5 + 0.5 * Math.sin(y * 5.1 + 1.3) * Math.sin(y * 2.3);
+    if (art === "unten") {
+      const oben = zDeck(y) + GES.u - 0.01;
+      return [Math.max(0, zI(y) - 0.02), Math.max(0, Math.min(oben, oben * (0.35 + 0.65 * t) - wellig * 0.25 * (1 - t * 0.5)))];
+    }
+    const top = zWand(y) - 0.015, unten = zDeck(y) + GES.o + 0.01;
+    return [Math.max(unten, top - (0.2 + 0.6 * t) * (0.6 + 0.4 * wellig)), top];
+  }
+  function efeuMalen(g, F, zf, saat, seite) {
     const rng = ST.zufall(saat * 3 + 1);
-    const stellen = [[-6.2, 1.3], [-3.4, 1.0], [3.3, 0.9], [5.6, 1.5]];
-    const blatt = (x, y, r, w, c) => {
-      /* Efeublatt: fünf spitze Lappen, herzförmiger Grund */
-      g.save(); g.translate(x, y); g.rotate(w);
-      g.fillStyle = rgb(c, 0.97);
-      g.beginPath();
-      g.moveTo(0, r * 0.35);
-      g.quadraticCurveTo(-r * 0.5, r * 0.45, -r * 0.95, r * 0.05);
-      g.quadraticCurveTo(-r * 0.7, -r * 0.1, -r * 0.62, -r * 0.45);
-      g.quadraticCurveTo(-r * 0.3, -r * 0.45, 0, -r);
-      g.quadraticCurveTo(r * 0.3, -r * 0.45, r * 0.62, -r * 0.45);
-      g.quadraticCurveTo(r * 0.7, -r * 0.1, r * 0.95, r * 0.05);
-      g.quadraticCurveTo(r * 0.5, r * 0.45, 0, r * 0.35);
-      g.fill();
-      if (F.px > 50) {
-        g.strokeStyle = "rgba(210,226,180,0.5)"; g.lineWidth = r * 0.07;
-        g.beginPath(); g.moveTo(0, r * 0.3); g.lineTo(0, -r * 0.8); g.moveTo(0, r * 0.2); g.lineTo(-r * 0.6, -r * 0.35); g.moveTo(0, r * 0.2); g.lineTo(r * 0.6, -r * 0.35); g.stroke();
-      }
+    const masse = new Path2D();
+    const zonen = efeuZonen(seite);
+    for (const zone of zonen) {
+      const [ya, yb] = zone;
+      const oben = [], unten = [];
+      for (let y = ya; y <= yb + 1e-6; y += 0.08) { const [z0, z1] = efeuGrenzen(zone, y, rng); oben.push(zf(y, z1 + rng() * 0.03)); unten.push(zf(y, z0)); }
+      masse.moveTo(oben[0][0], oben[0][1]);
+      for (let i = 1; i < oben.length; i++) { const a = oben[i - 1], b = oben[i]; masse.quadraticCurveTo(a[0], a[1] - 0.03, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2); }
+      for (let i = unten.length - 1; i >= 0; i--) masse.lineTo(unten[i][0], unten[i][1]);
+      masse.closePath();
+    }
+    g.fillStyle = "rgb(38,62,32)"; g.fill(masse);
+    if (F.px < 14) {
+      /* aus der Ferne: nur Licht und Schatten im Laub */
+      g.save(); g.clip(masse);
+      PI.rauschen(g, 0, 0, F.w, F.h, 0.6, 0.35, 12, 3);
+      PI.bleichen(g, 0, 0, F.w, F.h, 0.5, 0.18, 14);
       g.restore();
-    };
-    for (const [y0, hoch] of stellen) {
-      if (rng() < 0.2) continue;
-      /* Ranken: vom Boden schräg die Mauer hinauf, verzweigt */
-      for (let t = 0; t < 4; t++) {
-        const pts = [];
-        let y = y0 + (rng() - 0.5) * 0.5, z = 0, w = (rng() - 0.5) * 0.8;
-        const lang = hoch * (0.5 + rng() * 0.6);
-        for (let i = 0; i <= 14; i++) { pts.push([y, z]); z += lang / 14; y += Math.sin(w + i * 0.5) * 0.06; }
-        g.strokeStyle = "rgba(90,70,50,0.8)"; g.lineWidth = 0.012;
-        g.beginPath(); pts.forEach((q, i) => { const p = zf(q[0], q[1]); if (i) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }); g.stroke();
-        for (let i = 1; i < pts.length; i++) {
-          for (let j = 0; j < 2; j++) {
-            const q = pts[i], p = zf(q[0] + (rng() - 0.5) * 0.14, q[1] + (rng() - 0.5) * 0.08);
-            const r = 0.035 + rng() * 0.025 + (1 - i / pts.length) * 0.015;
-            blatt(p[0], p[1], r, (rng() - 0.5) * 1.2, rng() < 0.5 ? [38, 76, 36] : rng() < 0.5 ? [58, 100, 46] : [30, 62, 32]);
-          }
-        }
+      return;
+    }
+    const TOENE = [[46, 86, 40], [66, 112, 50], [90, 136, 60]];
+    const pfade = [new Path2D(), new Path2D(), new Path2D()], lichtP = new Path2D(), ader = new Path2D();
+    for (const zone of zonen) {
+      const [ya, yb] = zone;
+      const n = Math.round((yb - ya) * (zone[2] === "unten" ? 150 : 80));
+      for (let i = 0; i < n; i++) {
+        const y = ya + rng() * (yb - ya);
+        const [z0, z1] = efeuGrenzen(zone, y, rng);
+        if (z1 - z0 < 0.04) continue;
+        const z = z0 + 0.02 + rng() * (z1 - z0 - 0.02);
+        const p = zf(y, z);
+        const r = 0.03 + rng() * 0.016, w = (rng() - 0.5) * 1.6 + (zone[2] === "oben" ? Math.PI : 0) * (rng() < 0.6 ? 1 : 0);
+        const c = Math.cos(w) * r, s = Math.sin(w) * r;
+        const mtx = new DOMMatrix([c, s, -s, c, p[0], p[1]]);
+        const hoehe = (z - z0) / Math.max(0.05, z1 - z0);
+        /* Büschel: ein Rauschfeld entscheidet, wo das Laub im Licht liegt
+           (hell, obenauf) und wo in den Lücken (dunkel) – kein Samtteppich */
+        const busch = ST.fbm(y * 3.1 + seite * 7, z * 3.1, 3, 17);
+        const ton = klemm(Math.floor(rng() * 1.4 + (busch - 0.35) * 5 + hoehe * 0.5), 0, 2);
+        pfade[ton].addPath(EFEU_BLATT, mtx);
+        if (rng() < 0.4) lichtP.addPath(EFEU_BLATT, new DOMMatrix([c * 0.55, s * 0.55, -s * 0.55, c * 0.55, p[0] - r * 0.18, p[1] - r * 0.28]));
+        if (F.px > 60) { ader.moveTo(p[0] + s * 0.3, p[1] - c * 0.3); ader.lineTo(p[0] - s * 0.8, p[1] + c * 0.8); }
       }
     }
+    pfade.forEach((pf, i) => { g.fillStyle = rgb(TOENE[i]); g.fill(pf); });
+    g.fillStyle = "rgba(150,186,104,0.5)"; g.fill(lichtP);
+    if (F.px > 60) { g.strokeStyle = "rgba(196,214,160,0.45)"; g.lineWidth = 0.003; g.stroke(ader); }
+    /* Haftwurzeln und alte Triebe (braungrau) an den Rändern */
+    g.strokeStyle = "rgba(92,78,58,0.7)"; g.lineWidth = 0.01; g.lineCap = "round";
+    g.beginPath();
+    for (const zone of zonen) {
+      if (zone[2] !== "unten") continue;
+      for (let t = 0; t < 3; t++) {
+        let y = zone[0] + rng() * (zone[1] - zone[0]), z = 0.02;
+        const p0 = zf(y, z); g.moveTo(p0[0], p0[1]);
+        for (let i = 0; i < 8; i++) { y += (rng() - 0.5) * 0.12; z += 0.06 + rng() * 0.05; const p = zf(y, z); g.lineTo(p[0], p[1]); }
+      }
+    }
+    g.stroke();
+  }
+  /* Blumenkästen an der Brüstung (Frühling): Holzkasten an Eisenhaken,
+     aufrechte Geranien, dazu hängende Petunien und Efeugeranien, die weit
+     über die Mauer fallen. Eine eigene Ebene 10 cm vor der Wand. */
+  const KASTEN = { y: [-2.9, 0, 2.9], b: 0.92, h: 0.17 };
+  function kastenLage(y) {
+    const u = Math.abs(y) + KASTEN.b / 2;
+    return zWand(u) - 0.24;              // Oberkante: 24 cm unter der Abdeckplatte am tieferen Ende
+  }
+  function blumenkastenMaler(seite, saat, nur) {
+    const zf = zuFlaeche(seite);
+    return function (g, F) {
+      const k = ST.lichtFaktor(F.n, F.zeit, 0, F.jahr);
+      const kO = ST.lichtFaktor([0, 0, 1], F.zeit, 0, F.jahr);
+      const kk = [(k[0] + kO[0]) / 2, (k[1] + kO[1]) / 2, (k[2] + kO[2]) / 2];
+      const fein = F.px > 20;
+      KASTEN.y.forEach((yc, nr) => {
+        if (nr !== nur) return;
+        const rng = ST.zufall(saat * 13 + nr * 7 + seite);
+        const zt = kastenLage(yc), zb = zt - KASTEN.h;
+        const pL = zf(yc - KASTEN.b / 2, zt), pR = zf(yc + KASTEN.b / 2, zb);
+        const x0 = Math.min(pL[0], pR[0]), x1 = Math.max(pL[0], pR[0]), y0 = pL[1], y1 = pR[1];
+        const w = x1 - x0;
+        const bluete = [[204, 30, 44], [226, 58, 96], [238, 238, 244], [150, 60, 170]];
+        const haupt = bluete[(saat + nr) % 2], zweit = bluete[2 + ((saat + nr) % 2)];
+        /* hängende Triebe hinter und vor dem Kasten */
+        const haenger = (vorn) => {
+          const blatt = [new Path2D(), new Path2D()], bl = new Path2D(), bld = new Path2D();
+          const n = Math.round(w * 9);
+          for (let i = 0; i < n; i++) {
+            const x = x0 + 0.04 + rng() * (w - 0.08), lang = 0.12 + rng() * 0.32;
+            let yy = y1 - 0.02, xx = x;
+            const dx = (rng() - 0.5) * 0.08;
+            for (let j = 0; j < 7; j++) {
+              xx += dx * 0.3 + (rng() - 0.5) * 0.02; yy += lang / 7;
+              const r = 0.022 + rng() * 0.012;
+              blatt[rng() < 0.5 ? 0 : 1].moveTo(xx + r, yy); blatt[rng() < 0.5 ? 0 : 1].ellipse(xx, yy, r, r * 0.8, 0, 0, TAU);
+              if (rng() < 0.35) { const rb = 0.028 + rng() * 0.012; bl.moveTo(xx + rb, yy + 0.01); bl.ellipse(xx, yy + 0.01, rb, rb * 0.9, 0, 0, TAU); bld.moveTo(xx + rb * 0.3, yy + 0.012); bld.arc(xx, yy + 0.012, rb * 0.3, 0, TAU); }
+            }
+          }
+          if (!vorn) { g.fillStyle = rgb(mul([36, 70, 32], kk)); g.fill(blatt[0]); g.fill(blatt[1]); }
+          else { g.fillStyle = rgb(mul([52, 96, 40], kk)); g.fill(blatt[0]); g.fillStyle = rgb(mul([70, 116, 50], kk)); g.fill(blatt[1]); }
+          if (fein) {
+            g.fillStyle = rgb(mul(zweit, kk)); g.fill(bl);
+            g.fillStyle = rgb(mul(skal(zweit, 0.6), kk), 0.8); g.fill(bld);
+          }
+        };
+        haenger(false);
+        /* aufrechte Geranien: Laub, darüber kugelige Dolden */
+        const laub = [new Path2D(), new Path2D()], dolde = new Path2D(), doldeL = new Path2D(), doldeS = new Path2D();
+        for (let i = 0; i < w * 30; i++) {
+          const x = x0 + 0.03 + rng() * (w - 0.06), y = y0 + 0.02 - rng() * 0.14, r = 0.03 + rng() * 0.02;
+          laub[rng() < 0.5 ? 0 : 1].moveTo(x + r, y); laub[rng() < 0.5 ? 0 : 1].ellipse(x, y, r, r * 0.8, 0, 0, TAU);
+        }
+        g.fillStyle = rgb(mul([40, 82, 34], kk)); g.fill(laub[0]);
+        g.fillStyle = rgb(mul([62, 110, 46], kk)); g.fill(laub[1]);
+        for (let i = 0; i < Math.round(w * 5); i++) {
+          const x = x0 + 0.08 + (i + 0.5) / Math.round(w * 5) * (w - 0.16) + (rng() - 0.5) * 0.06, y = y0 - 0.12 - rng() * 0.08, r = 0.05 + rng() * 0.02;
+          dolde.moveTo(x + r, y); dolde.arc(x, y, r, 0, TAU);
+          doldeS.moveTo(x + r, y + r * 0.2); doldeS.ellipse(x + r * 0.2, y + r * 0.25, r * 0.8, r * 0.6, 0, 0, TAU);
+          doldeL.moveTo(x - r * 0.1 + r * 0.5, y - r * 0.3); doldeL.arc(x - r * 0.1, y - r * 0.3, r * 0.5, 0, TAU);
+          if (fein) for (let j = 0; j < 5; j++) { const a = rng() * TAU, q = r * (0.5 + rng() * 0.5); doldeL.moveTo(x + Math.cos(a) * q + 0.012, y + Math.sin(a) * q); doldeL.arc(x + Math.cos(a) * q, y + Math.sin(a) * q, 0.012, 0, TAU); }
+        }
+        g.fillStyle = rgb(mul(haupt, kk)); g.fill(dolde);
+        g.fillStyle = rgb(mul(skal(haupt, 0.7), kk), 0.7); g.fill(doldeS);
+        g.fillStyle = rgb(mul(plus(haupt, [40, 40, 40]), kk), 0.75); g.fill(doldeL);
+        /* der Kasten: grün gestrichenes Holz, Bretterfuge, Schatten unten */
+        const kc = [58, 84, 60];
+        const gr = g.createLinearGradient(0, y0, 0, y1);
+        gr.addColorStop(0, rgb(mul(plus(kc, [26, 26, 20]), k))); gr.addColorStop(0.15, rgb(mul(kc, k))); gr.addColorStop(1, rgb(mul(skal(kc, 0.72), k)));
+        g.fillStyle = gr; g.fillRect(x0, y0, w, y1 - y0);
+        g.fillStyle = rgb(mul(skal(kc, 0.55), k)); g.fillRect(x0, y0 + (y1 - y0) * 0.5, w, 0.006);
+        /* Haken */
+        g.fillStyle = rgb(mul([40, 40, 42], k));
+        for (const xh of [x0 + 0.12, x1 - 0.12]) g.fillRect(xh - 0.01, y0 - 0.02, 0.02, y1 - y0 + 0.04);
+        haenger(true);
+      });
+    };
+  }
+  function blumenkastenPoly(yc) {
+    const zt = kastenLage(yc);
+    return [[yc - 0.62, zt + 0.32], [yc + 0.62, zt + 0.32], [yc + 0.62, zt - KASTEN.h - 0.52], [yc - 0.62, zt - KASTEN.h - 0.52]];
   }
   function ringMaler(seite, stein, A, saat) {
     const zf = zuFlaeche(seite);
@@ -448,7 +735,7 @@
     };
   }
   /* Tannengirlande mit roten Schleifen und Lichterkette an der Brüstung */
-  const GIRL = { y: [-6.6, -4.4, -2.2, 0, 2.2, 4.4, 6.6], tief: 0.3 };
+  const GIRL = { y: [-4.8, -3.2, -1.6, 0, 1.6, 3.2, 4.8], tief: 0.24 };
   function girlandeMaler(seite, saat) {
     const zf = zuFlaeche(seite);
     const kurve = (ya, yb, u) => { const y = ya + (yb - ya) * u; return [y, zWand(y) - 0.07 - GIRL.tief * Math.sin(Math.PI * u)]; };
@@ -573,59 +860,110 @@
 
   /* Fahrbahn: Kopfsteinpflaster; Winter: Schnee mit Trampelpfad und Spuren;
      Bauphase: Schotter der Aufschüttung */
-  function fahrbahnMaler(stein, y0, y1, xb, art, saat, hoehe) {
+  function fahrbahnMaler(stein, y0, y1, xb, art, saat, hoehe, fertig) {
     const s0 = bogenLaenge(y0);
     const maler = fahrbahnStoff(stein, y0, y1, xb, art, saat, s0);
     const za = hoehe(y0), zb = hoehe(y1), nf = [0, -(zb - za), y1 - y0];
-    if (art === "schnee") {
-      return function (g, F) {
-        const [k0, k1] = lichtEnden(F, nf, normaleAuf(hoehe, y0), normaleAuf(hoehe, y1));
-        schneeVerlauf(g, F, k0, k1);
-        schneeSpuren(g, F, s0, saat, misch(k0, k1, 0.5));
-      };
-    }
     return function (g, F) {
-      maler(g, F);
-      glattLicht(g, F, nf, normaleAuf(hoehe, y0), normaleAuf(hoehe, y1));
+      const [k0, k1] = lichtEnden(F, nf, normaleAuf(hoehe, y0), normaleAuf(hoehe, y1));
+      const k = misch(k0, k1, 0.5);
+      if (art === "schnee") {
+        schneeVerlauf(g, F, k0, k1);
+        schneeSpuren(g, F, s0, saat, k);
+      } else {
+        maler(g, F);
+        glattLicht(g, F, nf, normaleAuf(hoehe, y0), normaleAuf(hoehe, y1));
+      }
+      if (fertig) bruestungSchatten(g, F, k);
     };
   }
-  /* Trampelpfad, Fußstapfen und Schlittenkufen im Schnee der Fahrbahn
+  /* Die Brüstungen stehen 0,97 m über der Fahrbahn: am Fuß ein weicher
+     Kontaktschatten (18 cm), und auf der sonnenabgewandten Seite ihr
+     Schlagschatten. Seine Breite folgt aus der Sonnenrichtung in der
+     Fläche (F.lichtU / F.lichtN) – in jedem Drehwinkel richtig. Im
+     Schatten bleibt nur das Himmelslicht: wir multiplizieren mit dem
+     Verhältnis „ohne Sonne / mit Sonne", so werden auch Fußspuren und
+     Pflaster darunter richtig dunkler (auf Schnee blau). */
+  function bruestungSchatten(g, F, k) {
+    const W = F.w, H = F.h;
+    g.save();
+    g.globalCompositeOperation = "multiply";
+    for (const [a, b] of [[0, 0.2], [W, W - 0.2]]) {
+      const gr = g.createLinearGradient(a, 0, b, 0);
+      gr.addColorStop(0, "rgb(150,158,184)"); gr.addColorStop(0.45, "rgb(214,218,232)"); gr.addColorStop(1, "rgb(255,255,255)");
+      g.fillStyle = gr; g.fillRect(Math.min(a, b), -0.1, 0.2, H + 0.2);
+    }
+    if (F.lichtN > 0.04) {
+      const kS = ST.lichtFaktor(F.n, { amb: F.zeit.amb, sonne: [0, 0, 0] }, 0, F.jahr);
+      const q = [0, 1, 2].map((i) => Math.round(255 * klemm(kS[i] / Math.max(0.02, k[i]), 0, 1)));
+      const tief = "rgb(" + q.join(",") + ")";
+      const ws = klemm(-F.lichtU * (B.br + B.kh) / F.lichtN, -W, W), weich = 0.05;
+      if (Math.abs(ws) > 0.02) {
+        const kante = ws > 0 ? ws : W + ws;
+        const gr = g.createLinearGradient(kante - weich * Math.sign(ws), 0, kante + weich * Math.sign(ws), 0);
+        gr.addColorStop(0, tief); gr.addColorStop(1, "rgb(255,255,255)");
+        g.fillStyle = gr;
+        if (ws > 0) g.fillRect(-0.1, -0.1, ws + weich + 0.1, H + 0.2); else g.fillRect(W + ws - weich, -0.1, -ws + weich + 0.1, H + 0.2);
+      }
+    }
+    g.restore();
+  }
+  /* Trampelpfad, Fußstapfen und Kufenrillen im Schnee der Fahrbahn
      (fortlaufend über alle Streifen: Weltmaß s0 = Bogenlänge) */
+  const BAHN_LANG = BOGEN[BOGEN.length - 1][1];
   function schneeSpuren(g, F, s0, saat, k) {
     const W = F.w, H = F.h, m = W / 2;
     const rng = ST.zufall(saat + Math.round(s0 * 10));
     const c = (f, a) => rgb(mul(f, k), a);
     const gr = g.createLinearGradient(0, 0, W, 0);
     gr.addColorStop(0, c([255, 255, 255], 0)); gr.addColorStop(0.3, c([206, 210, 222], 0));
-    gr.addColorStop(0.38, c([196, 200, 214], 0.5)); gr.addColorStop(0.5, c([188, 190, 202], 0.65)); gr.addColorStop(0.62, c([196, 200, 214], 0.5));
+    gr.addColorStop(0.38, c([196, 200, 214], 0.45)); gr.addColorStop(0.5, c([188, 190, 202], 0.6)); gr.addColorStop(0.62, c([196, 200, 214], 0.45));
     gr.addColorStop(0.7, c([206, 210, 222], 0)); gr.addColorStop(1, c([255, 255, 255], 0));
-    g.fillStyle = gr; g.fillRect(-0.2, -0.2, W + 0.4, H + 0.4);
+    g.fillStyle = gr; g.fillRect(-0.2, -0.2, W + 0.4, H + 0.2 + 0.2);
+    /* älterer, festgetretener Schnee: etwas grauer als der frische auf den Platten */
+    g.fillStyle = c([214, 220, 234], 0.3); g.fillRect(-0.2, -0.2, W + 0.4, H + 0.4);
     if (F.px > 14) {
       /* Fußstapfen: viele Leute sind hier gegangen – Abdrücke kreuz und
          quer im Trampelpfad, jeder mit Schattenkante und hellem Rand */
       const n = Math.round(H * 9);
+      const tritt = new Path2D(), rand = new Path2D();
       for (let i = 0; i < n; i++) {
         const rr = ST.zufall(Math.round((s0 + i / 9) * 97) + saat);
         const v = (Math.floor(s0 * 9) + i) / 9 - s0 + (rr() - 0.5) * 0.05;
         const x = m + (rr() - 0.5) * 0.9 * (0.4 + rr() * 0.6), w = (rr() - 0.5) * 0.5;
-        g.save(); g.translate(x, v); g.rotate(w);
-        g.fillStyle = c([158, 168, 192], 0.42);
-        g.beginPath(); g.ellipse(0, -0.05, 0.045, 0.075, 0, 0, TAU); g.ellipse(0, 0.07, 0.04, 0.05, 0, 0, TAU); g.fill();
-        g.fillStyle = c([255, 255, 255], 0.45);
-        g.beginPath(); g.ellipse(0.012, -0.06, 0.03, 0.06, 0, -Math.PI / 2, Math.PI / 2); g.fill();
-        g.restore();
+        const M = new DOMMatrix([Math.cos(w), Math.sin(w), -Math.sin(w), Math.cos(w), x, v]);
+        const t = new Path2D(); t.ellipse(0, -0.05, 0.045, 0.075, 0, 0, TAU); t.ellipse(0, 0.07, 0.04, 0.05, 0, 0, TAU);
+        tritt.addPath(t, M);
+        const r = new Path2D(); r.ellipse(0.012, -0.06, 0.03, 0.06, 0, -Math.PI / 2, Math.PI / 2); rand.addPath(r, M);
       }
-      /* Schlittenkufen */
-      g.strokeStyle = c([150, 160, 186], 0.5); g.lineWidth = 0.025;
-      for (const d of [-0.2, 0.2]) {
-        g.beginPath();
-        for (let j = 0; j <= 12; j++) { const v = -0.1 + (H + 0.2) * j / 12, x = m + 0.42 + d + Math.sin((s0 + v) * 0.5) * 0.12; if (j) g.lineTo(x, v); else g.moveTo(x, v); }
-        g.stroke();
+      g.fillStyle = c([158, 168, 192], 0.4); g.fill(tritt);
+      g.fillStyle = c([255, 255, 255], 0.4); g.fill(rand);
+      /* Kufenrillen: ein Schlitten wurde über die Kuppe gezogen und ist
+         hinuntergerodelt – flache Rillen mit Schattenkante (zur Sonne hin)
+         und heller Gegenkante, mit Lücken, nur auf gut der Hälfte der Brücke */
+      const hell = (F.lichtU || 0) > 0 ? -1 : 1;
+      const spur = (s) => s > BAHN_LANG * 0.22 && s < BAHN_LANG * 0.84 && Math.sin(s * 2.3 + 1.1) + Math.sin(s * 5.7) * 0.6 > -0.9;
+      const dunkelP = new Path2D(), hellP = new Path2D();
+      for (const d of [-0.21, 0.21]) {
+        let an = false;
+        for (let j = 0; j <= 16; j++) {
+          const v = -0.05 + (H + 0.1) * j / 16, s = s0 + v;
+          const x = m + 0.4 + d + Math.sin(s * 0.45) * 0.14;
+          if (!spur(s)) { an = false; continue; }
+          if (!an) { dunkelP.moveTo(x + 0.006 * hell, v); hellP.moveTo(x - 0.008 * hell, v); an = true; }
+          else { dunkelP.lineTo(x + 0.006 * hell, v); hellP.lineTo(x - 0.008 * hell, v); }
+        }
       }
+      g.lineCap = "round";
+      g.strokeStyle = c([130, 142, 170], 0.5); g.lineWidth = 0.012; g.stroke(dunkelP);
+      g.strokeStyle = c([255, 255, 255], 0.55); g.lineWidth = 0.008; g.stroke(hellP);
     }
     if (F.px > 20) {
-      g.fillStyle = "rgba(255,255,255,0.9)";
-      for (let j = 0; j < W * H * 10; j++) g.fillRect(0.05 + rng() * (W - 0.1), 0.02 + rng() * (H - 0.04), 0.012, 0.012);
+      /* Glitzer: winzige Kristalle, nachts kaum noch */
+      const a = (0.5 * (1 - 0.7 * F.nacht)).toFixed(3);
+      g.fillStyle = c([255, 255, 255], a);
+      const r = Math.max(0.006, 0.6 / F.px);
+      for (let j = 0; j < W * H * 8; j++) g.fillRect(0.05 + rng() * (W - 0.1), 0.02 + rng() * (H - 0.04), r, r);
     }
   }
   function fahrbahnStoff(stein, y0, y1, xb, art, saat, s0) {
@@ -650,7 +988,7 @@
         const reihe = 0.15;
         const r0 = Math.floor(s0 / reihe);
         const eimer = FARBEN.map(() => [new Path2D(), new Path2D(), new Path2D()]);
-        const licht = new Path2D(), rand = new Path2D();
+        const licht = new Path2D(), randP = new Path2D();
         for (let r = r0 - 1; r * reihe < s0 + H + reihe; r++) {
           const v = r * reihe - s0;
           const rr = ST.zufall(saat * 31 + r * 7 + 1000);
@@ -665,7 +1003,7 @@
             eimer[fi][hi].addPath(stein, m);
             if (F.px > 30) {
               const lp = new Path2D(); lp.ellipse(-l * 0.1, -hh * 0.12, l * 0.28, hh * 0.22, 0, 0, TAU); licht.addPath(lp, m);
-              const rp = new Path2D(); rp.ellipse(0, 0, l / 2 - 0.016, hh / 2 - 0.006, 0, 0.2, Math.PI * 0.95); rand.addPath(rp, m);
+              const rp = new Path2D(); rp.ellipse(0, 0, l / 2 - 0.016, hh / 2 - 0.006, 0, 0.2, Math.PI * 0.95); randP.addPath(rp, m);
             }
             x += l;
           }
@@ -673,69 +1011,167 @@
         eimer.forEach((reihen, fi) => reihen.forEach((p, hi) => { g.fillStyle = rgb(skal(FARBEN[fi], 0.9 + hi * 0.1)); g.fill(p); }));
         if (F.px > 30) {
           g.fillStyle = "rgba(255,250,240,0.16)"; g.fill(licht);
-          g.strokeStyle = "rgba(40,34,28,0.35)"; g.lineWidth = 0.012; g.stroke(rand);
-        }
-        if (art === "gruen") {
-          /* Gras und Moos in den Fugen */
-          g.strokeStyle = "rgba(96,146,62,0.75)"; g.lineWidth = 0.008;
-          for (let j = 0; j < W * H * 14; j++) { const x = rng() * W, y = rng() * H; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (rng() - 0.5) * 0.04, y - 0.045); g.stroke(); }
-          g.fillStyle = "rgba(90,120,60,0.18)";
-          for (let j = 0; j < 2; j++) { g.beginPath(); g.ellipse(rng() * W, rng() * H, 0.25, 0.12, 0, 0, TAU); g.fill(); }
+          g.strokeStyle = "rgba(40,34,28,0.35)"; g.lineWidth = 0.012; g.stroke(randP);
         }
       } else PI.rauschen(g, 0, 0, W, H, 0.6, 0.5, 8, 4);
+      if (art === "gruen") {
+        /* Gras und Moos in den Fugen: alle Halme eines Streifens in zwei
+           Pfaden (zwei Zeichenaufrufe statt Tausender), nur von nah */
+        g.fillStyle = "rgba(84,116,54,0.22)";
+        for (let j = 0; j < 3; j++) { g.beginPath(); g.ellipse(rng() * W, rng() * H, 0.12 + rng() * 0.3, 0.06 + rng() * 0.08, 0, 0, TAU); g.fill(); }
+        if (F.px > 20) {
+          const halme = [new Path2D(), new Path2D()];
+          for (let j = 0; j < W * H * 14; j++) {
+            /* am Rand zur Mauer und in der Mitte (wenig betreten) mehr Gras */
+            const x = rng() < 0.5 ? rng() * 0.35 * (rng() < 0.5 ? 1 : -1) + (rng() < 0.5 ? 0 : W) : rng() * W, y = rng() * H;
+            const h = halme[j & 1];
+            h.moveTo(x, y); h.lineTo(x + (rng() - 0.5) * 0.04, y - 0.03 - rng() * 0.03);
+          }
+          g.lineWidth = 0.008; g.lineCap = "round";
+          g.strokeStyle = "rgba(90,140,58,0.8)"; g.stroke(halme[0]);
+          g.strokeStyle = "rgba(122,164,70,0.7)"; g.stroke(halme[1]);
+        }
+      }
       if (rand > 0.01) { g.fillStyle = rgb(misch(stein.f, [200, 196, 186], 0.5)); g.fillRect(-0.1, -0.1, rand + 0.1, H + 0.2); g.fillRect(W - rand, -0.1, rand + 0.1, H + 0.2); }
     };
   }
 
-  /* Abdeckplatte (Oberseite), Winter mit Schneewulst */
-  function kappeObenMaler(stein, winter, saat, moos) {
+  /* Abdeckplatte (Oberseite). Winter: Schneepolster, dessen Ränder sich
+     wegrunden (zur Sonne hell, abgewandt bläulich), an der Innenkante eine
+     dunkle Kante – so trennt sich die Brüstung vom Fahrbahnschnee dahinter.
+     Frühling: Moos entlang der Stoßfuge und an der Wetterseite, jede
+     Platte anders. */
+  function kappeSchnee(g, F, k, innenLinks) {
+    const W = F.w, H = F.h;
+    const rechtsHell = (F.lichtU || 0) > 0;
+    g.save();
+    g.globalCompositeOperation = "multiply";
+    for (const [a, b, hellSeite] of [[0, 0.09, !rechtsHell], [W, W - 0.09, rechtsHell]]) {
+      const innen = (a === 0) === innenLinks;
+      const gr = g.createLinearGradient(a, 0, b, 0);
+      gr.addColorStop(0, innen ? "rgb(150,164,200)" : hellSeite ? "rgb(226,232,244)" : "rgb(176,188,214)");
+      gr.addColorStop(0.5, innen ? "rgb(214,222,238)" : "rgb(244,246,252)"); gr.addColorStop(1, "rgb(255,255,255)");
+      g.fillStyle = gr; g.fillRect(Math.min(a, b), -0.1, 0.09, H + 0.2);
+    }
+    /* Stoßfuge der Platte schimmert als weiche Mulde durch */
+    const gf = g.createLinearGradient(0, -0.03, 0, 0.03);
+    gf.addColorStop(0, "rgb(255,255,255)"); gf.addColorStop(0.5, "rgb(226,232,246)"); gf.addColorStop(1, "rgb(255,255,255)");
+    g.fillStyle = gf; g.fillRect(-0.1, -0.03, W + 0.2, 0.06);
+    g.restore();
+    /* Innenkante: 2,5 cm dunkler Saum (die Platte rundet sich zur Fahrbahn weg) */
+    g.fillStyle = rgb(mul([92, 104, 138], k), 0.6);
+    g.fillRect(innenLinks ? -0.1 : W - 0.025, -0.1, 0.125, H + 0.2);
+  }
+  function kappeObenMaler(stein, winter, saat, moos, wetterLinks) {
     return function (g, F) {
-      const rng = ST.zufall(saat);
-      if (winter) {
-        g.fillStyle = "rgb(246,249,255)"; g.fillRect(-0.1, -0.1, F.w + 0.2, F.h + 0.2);
-        const gr = g.createLinearGradient(0, 0, 0, F.h);
-        gr.addColorStop(0, "rgba(200,208,226,0.4)"); gr.addColorStop(0.3, "rgba(255,255,255,0)"); gr.addColorStop(0.7, "rgba(255,255,255,0)"); gr.addColorStop(1, "rgba(200,208,226,0.4)");
-        g.fillStyle = gr; g.fillRect(-0.1, -0.1, F.w + 0.2, F.h + 0.2);
-        return;
-      }
+      const rng = ST.zufall(saat * 7 + 3);
       const c = skal(stein.f, 1.06);
       g.fillStyle = rgb(c); g.fillRect(-0.1, -0.1, F.w + 0.2, F.h + 0.2);
-      /* Stoßfuge zwischen den Platten */
-      g.fillStyle = rgb(skal(c, 0.7)); g.fillRect(-0.01, -0.1, 0.012, F.h + 0.2);
       if (F.px > 10) PI.rauschen(g, 0, 0, F.w, F.h, 0.8, 0.28, 17, 3);
-      if (moos) { g.fillStyle = "rgba(90,120,56,0.4)"; for (let i = 0; i < 2; i++) { g.beginPath(); g.ellipse(rng() * F.w, rng() * F.h, 0.12, 0.05, 0, 0, TAU); g.fill(); } }
+      /* Kanten gerundet: außen etwas dunkler */
+      g.fillStyle = rgb(skal(c, 0.82), 0.5); g.fillRect(-0.1, -0.1, 0.13, F.h + 0.2); g.fillRect(F.w - 0.03, -0.1, 0.13, F.h + 0.2);
+      /* Stoßfuge zur Nachbarplatte */
+      g.fillStyle = rgb(skal(c, 0.6)); g.fillRect(-0.1, -0.006, F.w + 0.2, 0.012);
+      if (moos && F.px > 8) {
+        /* Moos: entlang der Stoßfuge und an der Wetterseite, unregelmäßig */
+        const mp = [new Path2D(), new Path2D()];
+        const n = 3 + ((rng() * 6) | 0);
+        for (let i = 0; i < n; i++) {
+          const anFuge = rng() < 0.55;
+          const x = anFuge ? rng() * F.w : (wetterLinks ? rng() * 0.12 : F.w - rng() * 0.12);
+          const y = anFuge ? (rng() < 0.5 ? 0.01 + rng() * 0.04 : F.h - 0.01 - rng() * 0.04) : rng() * F.h;
+          const rx = anFuge ? 0.03 + rng() * 0.1 : 0.02 + rng() * 0.05, ry = anFuge ? 0.01 + rng() * 0.025 : 0.04 + rng() * 0.14;
+          const q = mp[rng() < 0.6 ? 0 : 1];
+          q.moveTo(x + rx, y); q.ellipse(x, y, rx, ry, (rng() - 0.5) * 0.4, 0, TAU);
+          if (rng() < 0.5) { const x2 = x + (rng() - 0.5) * rx * 2, y2 = y + (rng() - 0.5) * ry * 1.5, r2 = rx * (0.3 + rng() * 0.4); q.moveTo(x2 + r2, y2); q.ellipse(x2, y2, r2, r2 * 0.6, 0, 0, TAU); }
+        }
+        g.fillStyle = "rgba(70,104,44,0.62)"; g.fill(mp[0]);
+        g.fillStyle = "rgba(112,136,60,0.55)"; g.fill(mp[1]);
+        /* Flechten: kleine gelbgraue Rosetten */
+        g.fillStyle = "rgba(196,190,120,0.5)";
+        for (let i = 0; i < 3; i++) { if (rng() < 0.4) continue; g.beginPath(); g.arc(rng() * F.w, rng() * F.h, 0.012 + rng() * 0.02, 0, TAU); g.fill(); }
+      }
+      void winter;
     };
   }
-  const GES = { u: -0.02, o: 0.12 };
-  function gesimsMaler(seite, stein, winter, saat) {
+  const GES = { u: -0.04, o: 0.16 };
+  /* Gurtgesims als Steinprofil (von oben): Oberseite der Deckplatte (hell,
+     von oben beleuchtet), Platte, Hohlkehle (nach unten gewandt, dunkel),
+     Rundstab (oben Licht, unten Schatten), Plättchen. Jedes Band mit dem
+     Licht seiner eigenen Neigung – so liest es sich als Profil und nicht
+     als Rohr. Den Schlagschatten auf die Wand malt die Stirnmauer. */
+  function gesimsMaler(seite, stein, winter, saat, fruehling) {
     const zf = zuFlaeche(seite);
-    const linie = (dz) => { const pts = []; for (let y = -B.W; y <= B.W + 1e-6; y += 0.25) pts.push(zf(y, zDeck(y) + dz)); return pts; };
-    const zug = (pts) => { g0.beginPath(); pts.forEach((p, i) => (i ? g0.lineTo(p[0], p[1]) : g0.moveTo(p[0], p[1]))); };
-    let g0 = null;
+    const band = (g, a, b) => bandPfad(g, zf, zDeck, a, b, -B.W, B.W, 0.25);
     return function (g, F) {
-      g0 = g;
-      /* keinLicht: Licht selbst rechnen (die Fläche reicht für die Eiszapfen tiefer) */
-      const k = ST.lichtFaktor(F.n, F.zeit, 0, F.jahr);
-      const c = skal(stein.f, 1.04);
-      const oben = linie(GES.o), unten = linie(GES.u);
-      g.beginPath(); oben.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); for (let i = unten.length - 1; i >= 0; i--) g.lineTo(unten[i][0], unten[i][1]); g.closePath();
-      g.fillStyle = rgb(mul(c, k)); g.fill();
+      const n = F.n, oben = [0, 0, 1];
+      const neig = (k) => nrm3([n[0] * (1 - Math.abs(k)), n[1] * (1 - Math.abs(k)), n[2] * (1 - Math.abs(k)) + k]);
+      const L = (nn) => ST.lichtFaktor(nn, F.zeit, 0, F.jahr);
+      const k = L(n);
+      const c = stein.f;
+      const PROFIL = [
+        [GES.o, GES.o - 0.024, L(neig(0.85)), 1.08],   // Oberseite der Deckplatte
+        [GES.o - 0.024, GES.o - 0.084, k, 1.0],        // Platte
+        [GES.o - 0.084, GES.o - 0.104, L(neig(-0.7)), 0.78],  // Hohlkehle oben (tief im Schatten)
+        [GES.o - 0.104, GES.o - 0.128, L(neig(-0.35)), 0.9],  // Hohlkehle unten
+        [GES.o - 0.128, GES.o - 0.148, L(neig(0.55)), 1.04],  // Rundstab oben
+        [GES.o - 0.148, GES.o - 0.168, L(neig(-0.5)), 0.86],  // Rundstab unten
+        [GES.o - 0.168, GES.u, L(neig(-0.85)), 0.68]          // Plättchen, Unterseite
+      ];
+      for (const [a, b, kk, h] of PROFIL) { band(g, b, a); g.fillStyle = rgb(mul(skal(c, h), kk)); g.fill(); }
       if (F.px > 8) {
-        g.save(); g.clip(); PI.rauschen(g, 0, 0, F.w, F.h, 0.7, 0.2, 15, 3); g.restore();
-        /* Profil: Platte oben, Kehle, Rundstab */
-        g.lineWidth = 0.018; g.strokeStyle = rgb(mul(plus(c, [26, 24, 20]), k)); zug(linie(GES.o - 0.012)); g.stroke();
-        g.lineWidth = 0.02; g.strokeStyle = rgb(mul(skal(c, 0.66), k)); zug(linie(GES.o - 0.055)); g.stroke();
-        g.lineWidth = 0.014; g.strokeStyle = rgb(mul(skal(c, 0.78), k)); zug(linie(GES.u + 0.008)); g.stroke();
+        band(g, GES.u, GES.o); g.save(); g.clip();
+        PI.rauschen(g, 0, 0, F.w, F.h, 0.7, 0.22, 15, 3);
+        /* Stoßfugen der Gesimsstücke (alle ~0,9 m) */
+        if (F.px > 16) {
+          g.strokeStyle = rgb(mul(skal(c, 0.55), k), 0.6); g.lineWidth = 0.008;
+          g.beginPath();
+          for (let y = -B.W + 0.45; y < B.W; y += 0.9) { const a = zf(y, zDeck(y) + GES.o), b = zf(y, zDeck(y) + GES.u); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); }
+          g.stroke();
+        }
+        if (fruehling) {
+          /* Moos und Flechten auf der Deckplatte und in der Kehle */
+          const rng = ST.zufall(saat * 5 + seite);
+          const mp = new Path2D();
+          for (let i = 0; i < 2 * B.W * 3; i++) {
+            const y = -B.W + rng() * 2 * B.W, z = zDeck(y) + GES.o - (rng() < 0.6 ? 0.008 : 0.068), p = zf(y, z), rx = 0.03 + rng() * 0.09;
+            mp.moveTo(p[0] + rx, p[1]); mp.ellipse(p[0], p[1], rx, 0.006 + rng() * 0.01, 0, 0, TAU);
+          }
+          g.fillStyle = rgb(mul([70, 98, 44], k), 0.6); g.fill(mp);
+        }
+        g.restore();
+      }
+      if (fruehling && F.px > 10) {
+        /* Efeu greift an den Brückenenden über das Gesims */
+        const rng = ST.zufall(saat * 9 + seite);
+        const pf = [new Path2D(), new Path2D()];
+        for (const zone of efeuZonen(seite)) {
+          if (zone[2] !== "oben") continue;
+          for (let i = 0; i < 26; i++) {
+            const y = zone[0] + rng() * (zone[1] - zone[0]), p = zf(y, zDeck(y) + GES.u + rng() * (GES.o - GES.u + 0.03));
+            const r = 0.03 + rng() * 0.015, w = (rng() - 0.5) * 1.6, cw = Math.cos(w) * r, sw = Math.sin(w) * r;
+            pf[rng() < 0.5 ? 0 : 1].addPath(EFEU_BLATT, new DOMMatrix([cw, sw, -sw, cw, p[0], p[1]]));
+          }
+        }
+        g.fillStyle = rgb(mul([36, 70, 34], k)); g.fill(pf[0]);
+        g.fillStyle = rgb(mul([56, 96, 44], k)); g.fill(pf[1]);
       }
       if (winter) {
-        /* Schneegrat oben, Eiszapfen am unteren Rand */
-        g.lineCap = "round"; g.lineWidth = 0.035; g.strokeStyle = rgb(mul([246, 249, 255], k)); zug(linie(GES.o + 0.005)); g.stroke();
+        /* Schneepolster auf der Deckplatte (welliger Rücken, unten eine
+           feine Schattenkante), Eiszapfen an der Unterkante */
         const rng = ST.zufall(saat + seite * 3);
+        const kO = L(neig(0.9));
+        const pts = [];
+        for (let y = -B.W; y <= B.W + 1e-6; y += 0.1) pts.push(zf(y, zDeck(y) + GES.o + 0.02 + rng() * 0.018));
+        g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])));
+        for (let y = B.W; y >= -B.W - 1e-6; y -= 0.25) { const p = zf(y, zDeck(y) + GES.o - 0.012); g.lineTo(p[0], p[1]); }
+        g.closePath(); g.fillStyle = rgb(mul([246, 249, 255], kO)); g.fill();
+        band(g, GES.o - 0.016, GES.o - 0.008); g.fillStyle = rgb(mul([196, 208, 232], k), 0.7); g.fill();
         const zapfen = [];
         let y = -B.W + rng() * 0.3;
         while (y < B.W) {
           const p = zf(y, zDeck(y) + GES.u);
-          zapfen.push([p[0], p[1], 0.03 + Math.pow(rng(), 2.5) * 0.24]);
+          zapfen.push([p[0], p[1], 0.03 + Math.pow(rng(), 2.5) * 0.22]);
           y += 0.08 + rng() * 0.3;
         }
         zapfenMalen(g, zapfen, k);
@@ -794,15 +1230,14 @@
           g.beginPath(); g.ellipse(r * 0.35, cy - r * 0.45, r * 0.4, r * 0.18, -0.3, 0, TAU); g.fill();
         }
         if (!winter && schmuck && s > 20) {
-          /* Stiefmütterchen in einer kleinen Schale am Kugelfuß */
-          const rng = ST.zufall(saat);
+          /* Frühling: Moos und gelbe Flechten auf der Oberseite der Kugel
+             (die Blumen hängen in den Kästen an der Brüstung) */
+          const rng = ST.zufall(saat * 3 + 1);
           const kS = ST.lichtFaktor([0, 0, 1], F.Z, 0, F.jahr);
-          const BL = [[120, 60, 180], [250, 206, 40], [236, 236, 244], [200, 50, 90]];
-          for (let i = 0; i < 16; i++) {
-            const w = rng() * TAU, rr = (0.16 + rng() * 0.08) * s;
-            const px = Math.cos(w) * rr, py = Math.sin(w) * rr * 0.5 - 0.01 * s;
-            g.fillStyle = rgb(mul([60, 110, 50], kS)); g.beginPath(); g.ellipse(px, py, 0.03 * s, 0.018 * s, w, 0, TAU); g.fill();
-            if (rng() < 0.6) { g.fillStyle = rgb(mul(BL[(rng() * 4) | 0], kS)); g.beginPath(); g.arc(px, py - 0.015 * s, Math.max(0.7, 0.022 * s), 0, TAU); g.fill(); g.fillStyle = rgb(mul([60, 30, 60], kS)); g.beginPath(); g.arc(px, py - 0.015 * s, Math.max(0.3, 0.007 * s), 0, TAU); g.fill(); }
+          for (let i = 0; i < 7; i++) {
+            const w = Math.PI * (1.1 + rng() * 0.8), q = r * (0.35 + rng() * 0.55);
+            g.fillStyle = rgb(mul(rng() < 0.6 ? [84, 108, 56] : [186, 174, 96], kS), 0.55);
+            g.beginPath(); g.ellipse(Math.cos(w) * q, cy + Math.sin(w) * q * 0.9, r * (0.08 + rng() * 0.12), r * (0.05 + rng() * 0.06), rng() * 3, 0, TAU); g.fill();
           }
         }
       }
@@ -814,7 +1249,7 @@
     const s = V.s, kU = ST.lichtFaktor([0, 0, 1], F.Z, 0, F.jahr);
     const rng = ST.zufall(11);
     for (const sd of [-1, 1]) {
-      const y0 = sd * 2.3, y1 = sd * 4.3, x0 = -2.1, x1 = 2.1;
+      const y0 = sd * 2.0, y1 = sd * 3.7, x0 = -2.1, x1 = 2.1;
       const loch = [[x0, Math.min(y0, y1)], [x1, Math.min(y0, y1)], [x1, Math.max(y0, y1)], [x0, Math.max(y0, y1)]];
       /* Aushub */
       for (let i = 0; i < 5; i++) {
@@ -860,7 +1295,7 @@
      DAS MODELL
      ===================================================================== */
   ST.modell("bruecke", {
-    name: "Steinbrücke", gruppe: "Deko", grund: [3.9, 15.0], hoehe: 2.9, bauzeit: 8 * 60, standardGier: 90,
+    name: "Steinbrücke", gruppe: "Deko", grund: [3.9, 11.2], hoehe: 2.7, bauzeit: 8 * 60, standardGier: 90,
     bauen: function (M, o) {
       const bau = o.bau == null ? 1 : o.bau;
       const saat = Math.abs(o.saat | 0) || 1;
@@ -915,7 +1350,7 @@
         const holz = [150, 118, 80], holzH = [178, 146, 100];
         const pG = phase(bau, 0.27, 0.36);
         M.teil("geruest", { ebene: -2, schatten: false, mitte: [0, 0, 0.4] });
-        const stuetzen = [-2.4, -1.2, 0, 1.2, 2.4];
+        const stuetzen = [-1.8, -0.9, 0, 0.9, 1.8];
         stuetzen.forEach((y, j) => {
           if (j / stuetzen.length > pG * 1.4) return;
           const zt = zI(y) - 0.22;
@@ -993,7 +1428,7 @@
           const poly = [];
           for (let y = -B.W; y <= B.W + 1e-6; y += 0.25) poly.push([y, zDeck(y) + GES.o]);
           for (let y = B.W; y >= -B.W - 1e-6; y -= 0.25) poly.push([y, zDeck(y) + GES.u - tief]);
-          flaecheX(M, x + sd * B.gv, sd, poly, { name: "gesims" + sd, malen: gesimsMaler(sd, stein, winter && A.schmuck, saat), keinLicht: true, ebene: 1 });
+          flaecheX(M, x + sd * B.gv, sd, poly, { name: "gesims" + sd, malen: gesimsMaler(sd, stein, winter && A.schmuck, saat, !winter && A.schmuck), keinLicht: true, ebene: 1 });
         }
         /* Girlande (Winter) */
         if (winter && A.schmuck) {
@@ -1003,6 +1438,10 @@
           const gm = girlandeMaler(sd, saat);
           flaecheX(M, x + sd * 0.03, sd, poly, { name: "girlande" + sd, malen: gm.malen, leuchten: gm.leuchten, keinLicht: true, ebene: 3 });
         }
+        /* Blumenkästen (Frühling) – je eine eigene Ebene 10 cm vor der Wand */
+        if (!winter && A.schmuck) {
+          KASTEN.y.forEach((yc, i) => flaecheX(M, x + sd * 0.1, sd, blumenkastenPoly(yc), { name: "kasten" + sd + "-" + i, malen: blumenkastenMaler(sd, saat, i), keinLicht: true, ebene: 3 }));
+        }
       }
 
       /* ---- 6. Brüstung innen ---- */
@@ -1010,7 +1449,7 @@
         for (const sd of [1, -1]) {
           M.teil("innen" + sd, { mitte: [sd * B.xi, 0, zDm] });
           for (const poly of bereich(-B.W, B.W, zDeck, oben)) {
-            flaecheX(M, sd * B.xi, -sd, poly, { name: "innen" + sd, malen: stirnMaler(-sd, stein, plaene[sd], { kappen: A.kappen }, saat + 9) });
+            flaecheX(M, sd * B.xi, -sd, poly, { name: "innen" + sd, malen: stirnMaler(-sd, stein, plaene[sd], { kappen: A.kappen, schmuck: A.schmuck }, saat + 9, true) });
           }
         }
       }
@@ -1033,7 +1472,7 @@
           const gepflastert = Math.abs(ym) >= B.L * (1 - pflaster) - 1e-6 && bau >= 0.72;
           const art = !gepflastert ? "schotter" : winter && A.schmuck ? "schnee" : !winter && A.schmuck ? "gruen" : "pflaster";
           const xb = bau >= 0.82 || Math.abs(ym) > B.W ? B.xi : B.xa;
-          M.flaeche({ name: "bahn" + j, o: [-xb, ya, zaD], u: [1, 0, 0], v: [0, yb - ya, zbD - zaD], w: 2 * xb, h: Math.hypot(yb - ya, zbD - zaD), malen: fahrbahnMaler(stein, ya, yb, xb, art, saat, (y) => Math.min(oben(y), zDeck(y))), keinLicht: true });
+          M.flaeche({ name: "bahn" + j, o: [-xb, ya, zaD], u: [1, 0, 0], v: [0, yb - ya, zbD - zaD], w: 2 * xb, h: Math.hypot(yb - ya, zbD - zaD), malen: fahrbahnMaler(stein, ya, yb, xb, art, saat, (y) => Math.min(oben(y), zDeck(y)), bau >= 0.86 && xb === B.xi), keinLicht: true });
         }
       }
 
@@ -1050,10 +1489,10 @@
             const xo = sd * (B.xa + B.ku), xn = sd * (B.xi - B.ku);
             const x0 = Math.min(xo, xn), x1 = Math.max(xo, xn);
             /* oben (leicht gewölbt: zwei schmale Streifen wären feiner – eine Fläche reicht) */
-            const km = kappeObenMaler(stein, winter && A.schmuck, saat + j, !winter && A.schmuck), nfk = [0, -(zb - za), yb - ya];
+            const km = kappeObenMaler(stein, winter && A.schmuck, saat * 31 + j * 7 + (sd > 0 ? 3 : 0), !winter && A.schmuck, sd < 0), nfk = [0, -(zb - za), yb - ya];
             M.flaeche({ name: "kappe" + sd + "-" + j, o: [x0, ya, za + B.kh], u: [1, 0, 0], v: [0, yb - ya, zb - za], w: x1 - x0, h: Math.hypot(yb - ya, zb - za), keinLicht: true,
               malen: winter && A.schmuck
-                ? (g, F) => { const [k0, k1] = lichtEnden(F, nfk, normaleAuf(zWand, ya), normaleAuf(zWand, yb)); schneeVerlauf(g, F, k0, k1, [248, 250, 255]); }
+                ? (g, F) => { const [k0, k1] = lichtEnden(F, nfk, normaleAuf(zWand, ya), normaleAuf(zWand, yb)); schneeVerlauf(g, F, k0, k1, [248, 250, 255]); kappeSchnee(g, F, misch(k0, k1, 0.5), sd > 0); }
                 : (g, F) => { km(g, F); glattLicht(g, F, nfk, normaleAuf(zWand, ya), normaleAuf(zWand, yb)); } });
           }
           /* Seiten: je eine ebene Fläche außen und innen */
@@ -1070,7 +1509,7 @@
         const pP = phase(bau, 0.82, 0.9);
         const hP = 1.3 * pP;
         for (const sx of [1, -1]) for (const sy of [1, -1]) {
-          const cx = sx * 1.6, cy = sy * 7.25;
+          const cx = sx * 1.6, cy = sy * (B.W + 0.25);
           M.teil("pfeiler" + sx + sy, { mitte: [cx, cy, 0.7] });
           const pm = (seite) => stirnMaler(seite, stein, plaene[sx], { kappen: false }, saat + 3);
           if (hP > 0.05) {
@@ -1094,7 +1533,7 @@
 
       /* Lichter der Girlande: warmer Schein über der Brücke (Nacht) */
       if (winter && A.schmuck && ST.szene && ST.szene.zeit !== "tag") {
-        for (const sd of [1, -1]) for (const y of [-4.4, 0, 4.4]) M.licht(sd * (B.xa + 0.1), y, zWand(y) - 0.2, 2.2, "255,200,130", 0.16);
+        for (const sd of [1, -1]) for (const y of [-3.2, 0, 3.2]) M.licht(sd * (B.xa + 0.1), y, zWand(y) - 0.2, 2.2, "255,200,130", 0.16);
       }
     }
   });

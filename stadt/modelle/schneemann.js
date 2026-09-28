@@ -14,8 +14,12 @@
    Rücklicht vom Schnee am Boden (Unterseiten hell), Umgebungsverdeckung
    an den Berührstellen, leichte Unebenheiten gepresster Schnee und
    Glitzern. Die Ränder werden über die Abdeckung geglättet – keine
-   Treppenstufen. Nachts leuchtet ein Windlicht zu seinen Füßen und
-   wärmt die untere Kugel von der Seite.
+   Treppenstufen. Abends und nachts brennt die Kerze in einer Laterne
+   (Blech und Glas) zu seinen Füßen und wärmt die untere Kugel von der
+   Seite; tagsüber ist sie aus. Am Boden: weicher Kontaktschatten, ein
+   Schneekragen um den Fuß, die Rollspur der unteren Kugel (mit
+   freigerolltem Gras) und Stiefelabdrücke. Auf der unteren Kugel kleben
+   Laub, Erdkrümel und Halme vom Rollen.
 
    Kohleaugen, Karottennase, Mund, Knöpfe, Schal, Reisigarme und Hut
    haben ihren Platz im Raum: Dreht man den Schneemann, schaut er weg.
@@ -27,6 +31,10 @@
    Schneehaufen grau und traurig – kein „Liebreiz". Ein blühender
    Forsythienstrauch mit bemalten Ostereiern ist ein echter deutscher
    Brauch, braucht denselben Platz und passt zum „Frühlingsgewand".
+   Beet aus Rindenmulch mit Feldsteinrand, Forsythie mit Seitentrieben
+   und Blütenbüscheln, Eier an Seidenbändern mit Schleife, Osterglocken
+   und Tulpen, ein ausgesägter Holzhase. Der Name im Menü folgt der
+   Jahreszeit („Schneemann" / „Osterstrauch").
    ===================================================================== */
 (function () {
   "use strict";
@@ -90,7 +98,15 @@
       { c: [(rng() - 0.5) * 0.04, 0.01 + (rng() - 0.5) * 0.02, 0 + 0], r: R[2] }
     ];
     kugeln[2].c[2] = kugeln[1].c[2] + R[1] + R[2] - 0.055;
-    return { kugeln: kugeln, hut: HUETE[(saat | 0) % 3], schal: SCHALS[((saat | 0) >> 2) % 3], neig: (rng() - 0.5) * 0.12, drehKopf: (rng() - 0.5) * 0.35 };
+    /* Beim Rollen nimmt die untere Kugel Laub, Erde und Grashalme mit */
+    const flecken = [];
+    for (let i = 0; i < 24; i++) flecken.push({ az: rng() * TAU, el: -0.62 + Math.pow(rng(), 1.8) * 1.0, art: rng() < 0.4 ? 0 : rng() < 0.55 ? 1 : 2, rot: rng() * 3, gr: 0.4 + rng() * 0.6, f: rng() });
+    /* Fußabdrücke: ein Weg um den Schneemann herum */
+    const tritte = [];
+    const w0 = rng() * TAU;
+    for (let i = 0; i < 9; i++) { const w = w0 + i * 0.36, r = 0.6 + 0.08 * Math.sin(i * 1.3), seite = i % 2 ? 1 : -1; tritte.push({ x: Math.cos(w) * (r + seite * 0.06), y: Math.sin(w) * (r + seite * 0.06), w: w + Math.PI / 2 + (rng() - 0.5) * 0.2 }); }
+    return { kugeln: kugeln, hut: HUETE[(saat | 0) % 3], schal: SCHALS[((saat | 0) >> 2) % 3], neig: (rng() - 0.5) * 0.12, drehKopf: (rng() - 0.5) * 0.35,
+      flecken: flecken, tritte: tritte, spurW: w0 + Math.PI + 0.4 + rng() * 0.6, spurPh: rng() * 3, saat: saat | 0 };
   }
 
   /* Strahlverfolger für die drei Kugeln → ImageData (mit Kantenglättung) */
@@ -224,14 +240,8 @@
       }
       return;
     }
-    /* Schneehügel am Fuß (festgetretener Schnee) */
-    if (A.kugeln > 0) {
-      const r = K3[0].r * (A.kugeln === 1 ? A.letzte : 1) * 1.25, p = V.p(0, 0, 0);
-      const kU = lichtK([0, 0, 1], Z, jahr);
-      const gr = g.createRadialGradient(p[0], p[1], r * s * 0.3, p[0], p[1], r * s);
-      gr.addColorStop(0, rgb(mul([236, 242, 252], kU))); gr.addColorStop(1, rgb(mul([236, 242, 252], kU), 0));
-      g.fillStyle = gr; g.beginPath(); g.ellipse(p[0], p[1], r * s, r * s * 0.5, 0, 0, TAU); g.fill();
-    }
+    /* Boden: Rollspur, Stiefelabdrücke, Kontaktschatten unter der Kugel */
+    if (A.kugeln > 0) bodenMalen(g, V, F, D, A);
     /* Dinge sammeln: vor oder hinter dem Körper */
     const vornListe = [], hintenListe = [];
     const sicht = (k, p) => { const n = V.n(p[0] - k.c[0], p[1] - k.c[1], p[2] - k.c[2]); return dot(n, EZ); };
@@ -266,6 +276,25 @@
         const p = aufKugel(bauch, vorn * 0.3, 0.42 - i * 0.3, 0.005);
         rein(sicht(bauch, p) > 0.08, V.tiefe(p[0], p[1], p[2]), () => kohle(g, V.p(p[0], p[1], p[2]), 0.026, s));
       }
+    }
+    /* Laub, Erde und Halme auf der unteren Kugel (beim Rollen aufgelesen) */
+    {
+      const unten = K3[0], r0 = unten.r * (A.kugeln === 1 ? A.letzte : 1), cz = r0 * 0.87;
+      const ku = { c: [unten.c[0], unten.c[1], cz], r: r0 };
+      for (const f of D.flecken) {
+        const p = aufKugel(ku, f.az, f.el, 0.004);
+        if (p[2] < 0.04) continue;
+        const sv = sicht(ku, p);
+        if (sv < 0.12) continue;
+        rein(true, V.tiefe(p[0], p[1], p[2]), () => {
+          const q = V.p(p[0], p[1], p[2]), kF = lichtK(V.n(p[0] - ku.c[0], p[1] - ku.c[1], p[2] - ku.c[2]), Z, jahr), sq = Math.sqrt(sv);
+          if (f.art === 0) { g.fillStyle = rgb(mul([132 + f.f * 40, 88 + f.f * 24, 44], kF), 0.75); g.beginPath(); g.ellipse(q[0], q[1], Math.max(0.6, 0.02 * f.gr * s), Math.max(0.4, 0.011 * f.gr * s * sq), f.rot, 0, TAU); g.fill(); if (s > 60) { g.strokeStyle = rgb(mul([80, 48, 24], kF), 0.7); g.lineWidth = Math.max(0.4, 0.002 * s); g.beginPath(); g.moveTo(q[0] - Math.cos(f.rot) * 0.018 * f.gr * s, q[1] - Math.sin(f.rot) * 0.018 * f.gr * s); g.lineTo(q[0] + Math.cos(f.rot) * 0.018 * f.gr * s, q[1] + Math.sin(f.rot) * 0.018 * f.gr * s); g.stroke(); } }
+          else if (f.art === 1) { g.fillStyle = rgb(mul([96, 80, 64], kF), 0.5); g.beginPath(); g.ellipse(q[0], q[1], Math.max(0.5, 0.012 * f.gr * s), Math.max(0.4, 0.008 * f.gr * s), f.rot, 0, TAU); g.fill(); }
+          else { g.strokeStyle = rgb(mul([140, 146, 84], kF), 0.85); g.lineWidth = Math.max(0.4, 0.003 * s); g.beginPath(); g.moveTo(q[0], q[1]); g.quadraticCurveTo(q[0] + 0.012 * s, q[1] - 0.01 * s, q[0] + Math.cos(f.rot) * 0.03 * s, q[1] - 0.012 * s); g.stroke(); }
+        });
+      }
+      /* Schneekragen: am Fuß angehäufter Schnee, vordere Hälfte nach der Kugel */
+      rein(true, 98, () => kragenMalen(g, V, F, r0, cz));
     }
     if (A.arme) {
       /* Reisigarme mit Verzweigungen */
@@ -362,7 +391,13 @@
       /* alter Emaille-Kochtopf, blau mit weißem Rand, Griffe */
       const [u, o, R0] = zyl(0.15, 0.15, 0.16, [40, 76, 150], [30, 50, 100]);
       g.strokeStyle = rgb(mul([236, 236, 240], kO)); g.lineWidth = Math.max(0.8, 0.02 * s); g.beginPath(); g.ellipse(u[0], u[1], R0, R0 * 0.5, 0, 0, Math.PI); g.stroke();
-      g.fillStyle = rgb(mul([30, 30, 34], kL)); for (const sx of [-1, 1]) g.fillRect(o[0] + sx * R0 - (sx < 0 ? 0.06 * s : 0), o[1] + 0.04 * s, 0.06 * s, 0.025 * s);
+      /* Griffe: zwei kleine Laschen seitlich auf halber Höhe (genietet) */
+      const my = (u[1] + o[1]) / 2;
+      for (const sx of [-1, 1]) {
+        const kk = sx < 0 ? kL : skal(kR, 0.8), x0 = u[0] + sx * R0 - (sx < 0 ? 0.05 * s : 0);
+        g.fillStyle = rgb(mul([36, 36, 40], kk)); g.beginPath(); g.moveTo(x0, my - 0.012 * s); g.lineTo(x0 + 0.05 * s, my - 0.012 * s); g.lineTo(x0 + 0.05 * s, my + 0.012 * s); g.lineTo(x0, my + 0.012 * s); g.closePath(); g.fill();
+        if (s > 50) { g.fillStyle = "rgba(200,200,210,0.6)"; g.beginPath(); g.arc(u[0] + sx * R0 * 0.93, my, 0.006 * s, 0, TAU); g.fill(); }
+      }
       if (s > 40) { g.fillStyle = "rgba(20,20,30,0.7)"; g.beginPath(); g.ellipse(u[0] - R0 * 0.3, u[1] - 0.08 * s, 0.02 * s, 0.015 * s, 0, 0, TAU); g.fill(); }
       if (jahrWinter(jahr)) { g.fillStyle = rgb(mul([246, 249, 255], kO)); g.beginPath(); g.ellipse(o[0], o[1], R0 * 0.85, R0 * 0.38, 0, 0, TAU); g.fill(); }
     } else {
@@ -375,23 +410,128 @@
     }
   }
 
-  /* Windlicht zu Füßen (Glas, Kerze) */
+  /* Boden um den Schneemann: Rollspur der unteren Kugel (festgepresster,
+     leicht bläulicher Schnee mit Randwülsten und freigerolltem Gras),
+     Stiefelabdrücke und der weiche Kontaktschatten unter der Kugel */
+  function bodenMalen(g, V, F, D, A) {
+    const s = V.s, Z = F.Z, jahr = F.jahr, kU = lichtK([0, 0, 1], Z, jahr), rng = ST.zufall(D.saat * 5 + 1);
+    const w = D.spurW, ex = [Math.cos(w), Math.sin(w)], ey = [-ex[1], ex[0]];
+    const L = 0.85, B = 0.2;
+    const P = (u, q) => { const c = 0.3 + u * L, bo = 0.12 * Math.sin(u * 2.4 + D.spurPh); const p = [ex[0] * c + ey[0] * (bo + q), ex[1] * c + ey[1] * (bo + q)]; return V.p(p[0], p[1], 0); };
+    const li = [], re = [];
+    /* Breite: vorn (an der Kugel) voll, zum Anfang hin schmal und rund auslaufend */
+    for (let i = 0; i <= 18; i++) { const u = i / 18, b = B * Math.sqrt(Math.max(0, 1 - Math.pow(u, 3))) * (0.94 + 0.06 * Math.sin(i * 1.9)); li.push(P(u, -b)); re.push(P(u, b)); }
+    const pfad = () => { g.beginPath(); li.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); for (let i = re.length - 1; i >= 0; i--) g.lineTo(re[i][0], re[i][1]); g.closePath(); };
+    /* weiche Kante: erst breiter, blasser Rand, dann die gepresste Fläche */
+    g.lineJoin = "round"; g.lineCap = "round";
+    pfad(); g.strokeStyle = rgb(mul([226, 234, 246], kU), 0.35); g.lineWidth = Math.max(1, 0.05 * s); g.stroke();
+    g.fillStyle = rgb(mul([222, 230, 244], kU), 0.7); g.fill();
+    if (s > 24) {
+      g.save(); pfad(); g.clip();
+      /* freigerollter Boden: einzelne Grasbüschel und Erdkrümel schimmern durch */
+      for (let i = 0; i < 9; i++) {
+        const u = 0.15 + rng() * 0.75, q = (rng() - 0.5) * B * 1.1, p = P(u, q), gras = rng() < 0.65;
+        g.fillStyle = gras ? rgb(mul([118, 128, 88], kU), 0.45) : rgb(mul([120, 100, 78], kU), 0.4);
+        for (let k = 0; k < 4; k++) { g.beginPath(); g.ellipse(p[0] + (rng() - 0.5) * 0.04 * s, p[1] + (rng() - 0.5) * 0.02 * s, (0.008 + rng() * 0.014) * s, (0.005 + rng() * 0.008) * s, rng() * 3, 0, TAU); g.fill(); }
+      }
+      g.restore();
+    }
+    /* Randwülste: weggedrückter Schnee, oben hell, zur Spur hin Schatten */
+    for (const kante of [li, re]) {
+      g.strokeStyle = rgb(mul([176, 192, 222], kU), 0.35); g.lineWidth = Math.max(0.7, 0.022 * s);
+      g.beginPath(); kante.forEach((p, i) => (i ? g.lineTo(p[0], p[1] + 0.006 * s) : g.moveTo(p[0], p[1] + 0.006 * s))); g.stroke();
+      g.strokeStyle = rgb(mul([252, 253, 255], kU), 0.9); g.lineWidth = Math.max(0.6, 0.016 * s);
+      g.beginPath(); kante.forEach((p, i) => (i ? g.lineTo(p[0], p[1] - 0.005 * s) : g.moveTo(p[0], p[1] - 0.005 * s))); g.stroke();
+    }
+    /* Stiefelabdrücke: Sohle und Absatz, bläulich im Schatten des Randes */
+    if (s > 18) for (const t of D.tritte) {
+      const c = Math.cos(t.w), sn = Math.sin(t.w);
+      const ab = (x0, y0, lx, ly) => { const pts = []; for (let j = 0; j < 10; j++) { const a = j / 10 * TAU, x = x0 + Math.cos(a) * lx, y = y0 + Math.sin(a) * ly; pts.push(V.p(t.x + x * c - y * sn, t.y + x * sn + y * c, 0)); } g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.fill(); };
+      g.fillStyle = rgb(mul([168, 186, 220], kU), 0.55); ab(0.04, 0, 0.075, 0.045); ab(-0.09, 0, 0.035, 0.038);
+      if (s > 50) { g.fillStyle = rgb(mul([150, 170, 208], kU), 0.35); ab(0.05, 0.008, 0.05, 0.028); }
+    }
+    /* Kontaktschatten: die Kugel sitzt schwer im Schnee */
+    const r0 = D.kugeln[0].r * (A.kugeln === 1 ? A.letzte : 1), p = V.p(0, 0, 0);
+    const ao = g.createRadialGradient(p[0], p[1], 0, p[0], p[1], r0 * 1.25 * s);
+    ao.addColorStop(0, rgb(mul([96, 116, 160], kU), 0.55)); ao.addColorStop(0.6, rgb(mul([130, 150, 190], kU), 0.3)); ao.addColorStop(1, rgb(mul([200, 212, 236], kU), 0));
+    g.save(); g.translate(p[0], p[1]); g.scale(1, 0.5); g.translate(-p[0], -p[1]);
+    g.fillStyle = ao; g.beginPath(); g.arc(p[0], p[1], r0 * 1.25 * s, 0, TAU); g.fill(); g.restore();
+  }
+  /* Schneekragen: um den Fuß der unteren Kugel angehäufter Schnee.
+     Nur die vordere Hälfte wird nach der Kugel gemalt. */
+  function kragenMalen(g, V, F, r0, cz) {
+    const s = V.s, Z = F.Z, jahr = F.jahr, kU = lichtK([0, 0.4, 0.9], Z, jahr);
+    const zi = Math.min(0.12, cz), ri = Math.sqrt(Math.max(0, r0 * r0 - (cz - zi) * (cz - zi))) + 0.01, ra = ri + 0.12;
+    const aus = [], ein = [];
+    for (let j = 0; j <= 24; j++) {
+      const w = j / 24 * Math.PI, dw = [Math.cos(w) * EX[0] + Math.sin(w) * Math.SQRT1_2, Math.cos(w) * EX[1] + Math.sin(w) * Math.SQRT1_2];
+      const l = Math.hypot(dw[0], dw[1]) || 1, d = [dw[0] / l, dw[1] / l];
+      /* Richtung im Kameraraum → Modellraum zurückdrehen */
+      const mx = d[0] * V.c + d[1] * V.sn, my = -d[0] * V.sn + d[1] * V.c;
+      const buckel = 1 + 0.07 * Math.sin(j * 0.9 + r0 * 10) + 0.03 * Math.sin(j * 2.1);
+      aus.push(V.p(mx * ra * buckel, my * ra * buckel, 0));
+      ein.push(V.p(mx * ri, my * ri, zi * (0.85 + 0.15 * Math.sin(j * 0.8))));
+    }
+    /* weich: Mittelpunkte mit Bézierkurven verbinden, keine Zacken */
+    const glatt = (pts, erst) => { if (erst) g.moveTo(pts[0][0], pts[0][1]); else g.lineTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length - 1; i++) g.quadraticCurveTo(pts[i][0], pts[i][1], (pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2); g.lineTo(pts[pts.length - 1][0], pts[pts.length - 1][1]); };
+    g.beginPath(); glatt(aus, true); glatt(ein.slice().reverse(), false); g.closePath();
+    const top = Math.min(...ein.map((p) => p[1])), bot = Math.max(...aus.map((p) => p[1]));
+    const gr = g.createLinearGradient(0, top, 0, bot);
+    gr.addColorStop(0, rgb(mul([250, 252, 255], kU))); gr.addColorStop(0.6, rgb(mul([232, 238, 248], kU))); gr.addColorStop(1, rgb(mul([196, 210, 234], kU)));
+    g.fillStyle = gr; g.fill();
+  }
+
+  /* Windlicht zu Füßen: Laterne aus Blech und Glas mit Stumpenkerze.
+     Die Kerze brennt nur abends und nachts. */
   function windlichtMalen(g, s, F) {
-    if (F.schatten) { g.fillStyle = "#000"; g.fillRect(-0.05 * s, -0.2 * s, 0.1 * s, 0.2 * s); return; }
-    const k = lichtK([-0.4, 0.6, 0.6], F.Z, F.jahr), n = F.nacht, w = 0.055 * s, h = 0.17 * KZ * s;
-    g.fillStyle = rgb(mul([40, 40, 44], k)); g.fillRect(-w * 1.1, -h - 0.02 * s, w * 2.2, 0.025 * s);
-    g.fillStyle = rgb(mul([200, 220, 235], k), 0.35); g.fillRect(-w, -h, w * 2, h);
-    g.strokeStyle = rgb(mul([40, 40, 44], k)); g.lineWidth = Math.max(0.5, 0.008 * s); g.strokeRect(-w, -h, w * 2, h);
-    g.fillStyle = rgb(mul([236, 230, 214], k)); g.fillRect(-w * 0.4, -h * 0.45, w * 0.8, h * 0.45);
-    const fx = 0, fy = -h * 0.45;
-    const gr = g.createRadialGradient(fx, fy - 0.02 * s, 0, fx, fy - 0.02 * s, 0.05 * s);
-    gr.addColorStop(0, "rgba(255,250,220,1)"); gr.addColorStop(0.5, "rgba(255,190,80,0.8)"); gr.addColorStop(1, "rgba(255,150,40,0)");
-    g.fillStyle = gr; g.beginPath(); g.ellipse(fx, fy - 0.025 * s, 0.015 * s, 0.035 * s, 0, 0, TAU); g.fill();
-    if (n > 0) {
-      const gl = g.createRadialGradient(0, -h * 0.5, 0, 0, -h * 0.5, 0.25 * s);
-      gl.addColorStop(0, "rgba(255,210,140," + (0.55 * n) + ")"); gl.addColorStop(1, "rgba(255,180,90,0)");
-      g.globalCompositeOperation = "lighter"; g.fillStyle = gl; g.fillRect(-0.25 * s, -h * 0.5 - 0.25 * s, 0.5 * s, 0.5 * s); g.globalCompositeOperation = "source-over";
-      if (F.leuchtPunkt) { F.leuchtPunkt(0, -h * 0.5, 0.9 * s, "255,190,110", 0.55, true); F.leuchtPunkt(0, 0, 1.6 * s, "255,170,90", 0.22, true); }
+    const r = 0.065 * s, h = 0.2 * KZ * s;
+    if (F.schatten) { g.fillStyle = "#000"; g.fillRect(-r, -h - 0.06 * s, 2 * r, h + 0.06 * s); return; }
+    const Z = F.Z, jahr = F.jahr, n = F.nacht || 0, an = n > 0.05;
+    const kL = lichtK([-0.62, 0.62, 0.3], Z, jahr), kV = lichtK([0.62, 0.62, 0.3], Z, jahr), kR = lichtK([0.62, -0.62, 0.3], Z, jahr), kO = lichtK([0, 0, 1], Z, jahr);
+    const blech = [52, 50, 48];
+    const zyl = (y0, y1, rr, farbe, a) => {
+      const gr = g.createLinearGradient(-rr, 0, rr, 0);
+      gr.addColorStop(0, rgb(mul(farbe, kL), a)); gr.addColorStop(0.4, rgb(mul(farbe, kV), a)); gr.addColorStop(1, rgb(mul(farbe, skal(kR, 0.8)), a));
+      g.fillStyle = gr; g.beginPath(); g.moveTo(-rr, y1); g.lineTo(-rr, y0); g.ellipse(0, y0, rr, rr * 0.5, 0, Math.PI, 0, true); g.lineTo(rr, y1); g.ellipse(0, y1, rr, rr * 0.5, 0, 0, Math.PI); g.closePath(); g.fill();
+    };
+    /* Boden aus Blech */
+    zyl(-0.025 * s, 0, r * 1.12, blech, 1);
+    g.fillStyle = rgb(mul(blech, skal(kO, 1.1))); g.beginPath(); g.ellipse(0, -0.025 * s, r * 1.12, r * 0.56, 0, 0, TAU); g.fill();
+    /* Kerze */
+    const kh = 0.1 * KZ * s, ky = -0.025 * s;
+    zyl(ky - kh, ky, r * 0.5, [238, 230, 212], 1);
+    g.fillStyle = rgb(mul([246, 240, 226], kO)); g.beginPath(); g.ellipse(0, ky - kh, r * 0.5, r * 0.25, 0, 0, TAU); g.fill();
+    g.strokeStyle = "rgba(30,24,20,0.8)"; g.lineWidth = Math.max(0.4, 0.004 * s); g.beginPath(); g.moveTo(0, ky - kh); g.lineTo(0, ky - kh - 0.012 * s); g.stroke();
+    if (an) {
+      const fy = ky - kh - 0.03 * s;
+      const fl = g.createRadialGradient(0, fy + 0.006 * s, 0, 0, fy, 0.022 * s);
+      fl.addColorStop(0, "rgba(255,252,230,1)"); fl.addColorStop(0.5, "rgba(255,200,90,0.95)"); fl.addColorStop(1, "rgba(255,140,40,0)");
+      g.fillStyle = fl; g.beginPath(); g.moveTo(0, fy - 0.03 * s); g.quadraticCurveTo(0.012 * s, fy, 0, fy + 0.014 * s); g.quadraticCurveTo(-0.012 * s, fy, 0, fy - 0.03 * s); g.fill();
+      /* warmes Licht im Glas */
+      const gl = g.createRadialGradient(0, fy, 0, 0, fy, r * 1.3);
+      gl.addColorStop(0, "rgba(255,210,140," + (0.55 * n).toFixed(3) + ")"); gl.addColorStop(1, "rgba(255,170,80,0)");
+      g.globalCompositeOperation = "lighter"; g.fillStyle = gl; g.fillRect(-r * 1.3, fy - r * 1.3, r * 2.6, r * 2.6); g.globalCompositeOperation = "source-over";
+    }
+    /* Glaszylinder: fast durchsichtig, Glanzkanten links, dunkle Kante rechts */
+    const gy0 = -0.025 * s, gy1 = -h - 0.025 * s;
+    g.fillStyle = an ? "rgba(255,226,170,0.12)" : rgb(mul([200, 220, 236], kV), 0.18); g.beginPath(); g.moveTo(-r, gy0); g.lineTo(-r, gy1); g.lineTo(r, gy1); g.lineTo(r, gy0); g.ellipse(0, gy0, r, r * 0.5, 0, 0, Math.PI); g.closePath(); g.fill();
+    g.strokeStyle = "rgba(255,255,255,0.7)"; g.lineWidth = Math.max(0.5, 0.008 * s); g.beginPath(); g.moveTo(-r * 0.7, gy0 - 0.01 * s); g.lineTo(-r * 0.7, gy1 + 0.01 * s); g.stroke();
+    g.strokeStyle = rgb(mul(blech, kV), 0.9); g.lineWidth = Math.max(0.5, 0.006 * s);
+    for (const x of [-r, r]) { g.beginPath(); g.moveTo(x, gy0); g.lineTo(x, gy1); g.stroke(); }
+    /* Deckel mit kleinem Dach und Bügel */
+    zyl(gy1 - 0.02 * s, gy1, r * 1.1, blech, 1);
+    g.fillStyle = rgb(mul(blech, kV)); g.beginPath(); g.ellipse(0, gy1 - 0.02 * s, r * 1.1, r * 0.55, 0, 0, TAU); g.fill();
+    g.fillStyle = rgb(mul(blech, kL)); g.beginPath(); g.moveTo(-r * 0.9, gy1 - 0.02 * s); g.lineTo(0, gy1 - 0.065 * s); g.lineTo(r * 0.9, gy1 - 0.02 * s); g.closePath(); g.fill();
+    if (jahr === "winter") { g.fillStyle = rgb(mul([246, 249, 255], kO)); g.beginPath(); g.moveTo(-r * 0.75, gy1 - 0.028 * s); g.quadraticCurveTo(0, gy1 - 0.085 * s, r * 0.6, gy1 - 0.03 * s); g.closePath(); g.fill(); }
+    g.strokeStyle = rgb(mul(blech, kV)); g.lineWidth = Math.max(0.5, 0.006 * s); g.beginPath(); g.ellipse(0, gy1 - 0.075 * s, 0.025 * s, 0.02 * s, 0, Math.PI, 0); g.stroke();
+    /* Der Lichtschein der Szene liegt über allem (unverdeckt). Steht die
+       Laterne hinter der unteren Kugel, wird er darum abgeschwächt bzw.
+       weggelassen – sonst leuchtet sie durch den Schneemann hindurch. */
+    if (an && F.leuchtPunkt) {
+      const V = blick(F.gier || 0, s), pL = V.p(0.44, 0.22, 0.12), pK = V.p(0, 0, 0.33);
+      const hinten = V.tiefe(0.44, 0.22, 0) < V.tiefe(0, 0, 0), d = Math.hypot(pL[0] - pK[0], pL[1] - pK[1]) / (0.4 * s);
+      const sicht = hinten ? Math.max(0, Math.min(1, (d - 0.75) / 0.5)) : 1;
+      if (sicht > 0.05) { F.leuchtPunkt(0, -h * 0.5, 0.7 * s, "255,190,110", 0.5 * sicht, true); F.leuchtPunkt(0, 0, 1.4 * s, "255,170,90", 0.2 * sicht, true); }
     }
   }
 
@@ -403,17 +543,27 @@
     const aeste = [];
     for (let i = 0; i < 30; i++) {
       const az = i / 30 * TAU + (rng() - 0.5) * 0.3, r = 0.45 + rng() * 0.4, h = 1.05 + rng() * 0.55;
-      aeste.push({ az: az, r: r, h: h, b0: [(rng() - 0.5) * 0.12, (rng() - 0.5) * 0.12], id: i });
+      /* Seitentriebe: kurze, leicht aufsteigende Zweige, auch sie blühen */
+      const zweige = [];
+      const nz = 1 + ((rng() * 3) | 0);
+      for (let k = 0; k < nz; k++) zweige.push({ t: 0.35 + rng() * 0.45, dw: (rng() < 0.5 ? -1 : 1) * (0.4 + rng() * 0.5), l: 0.14 + rng() * 0.2, auf: 0.05 + rng() * 0.25 });
+      aeste.push({ az: az, r: r, h: h, b0: [(rng() - 0.5) * 0.12, (rng() - 0.5) * 0.12], id: i, zweige: zweige });
     }
-    const EI = [[220, 40, 50], [250, 200, 40], [60, 120, 210], [80, 170, 80], [240, 120, 40], [200, 90, 190], [250, 250, 245]];
+    const EI = [[214, 38, 50], [246, 196, 40], [52, 112, 206], [74, 164, 78], [236, 116, 36], [190, 84, 184], [246, 244, 236]];
+    const BAND = [[200, 30, 40], [40, 90, 180], [250, 250, 245], [240, 190, 40]];
     const eier = [];
-    for (let i = 0; i < 26; i++) {
+    for (let i = 0; i < 24; i++) {
       const a = aeste[(rng() * aeste.length) | 0], t = 0.45 + rng() * 0.4;
-      eier.push({ a: a, t: t, f: EI[i % EI.length], f2: EI[(i * 3 + 2) % EI.length], muster: i % 3, lang: 0.06 + rng() * 0.06 });
+      eier.push({ a: a, t: t, f: EI[i % EI.length], f2: EI[(i * 3 + 2) % EI.length], band: BAND[i % BAND.length], muster: i % 4, lang: 0.07 + rng() * 0.06, kipp: (rng() - 0.5) * 0.3 });
     }
     const blumen = [];
-    for (let i = 0; i < 22; i++) { const w = rng() * TAU, r = 0.55 + rng() * 0.3; blumen.push({ x: Math.cos(w) * r, y: Math.sin(w) * r, h: 0.18 + rng() * 0.12, art: rng() < 0.5 ? 0 : 1 }); }
-    return { aeste: aeste, eier: eier, blumen: blumen };
+    for (let i = 0; i < 24; i++) { const w = rng() * TAU, r = 0.52 + rng() * 0.3; blumen.push({ x: Math.cos(w) * r, y: Math.sin(w) * r, h: 0.2 + rng() * 0.12, art: rng() < 0.55 ? 0 : 1, dreh: rng() * TAU, n: rng() }); }
+    /* Einfassung aus Feldsteinen */
+    const steine = [];
+    for (let i = 0; i < 30; i++) { const w = (i + rng() * 0.4) / 30 * TAU; steine.push({ w: w, r: 0.96 + (rng() - 0.5) * 0.04, g: 0.07 + rng() * 0.035, f: 0.85 + rng() * 0.3, h: rng() }); }
+    /* ein Holzhase (ausgesägt, bemalt) steht im Beet */
+    const hw = rng() * TAU;
+    return { aeste: aeste, eier: eier, blumen: blumen, steine: steine, hase: { x: Math.cos(hw) * 0.66, y: Math.sin(hw) * 0.66, w: hw + Math.PI / 2 + (rng() - 0.5) * 0.6 }, saat: saat | 0 };
   }
   function astPunkt(A, t, wachs) {
     /* quadratischer Bogen: steigt auf und hängt zur Spitze über */
@@ -421,13 +571,106 @@
     const u = 1 - t;
     return [(u * u * P0[0] + 2 * u * t * P1[0] + t * t * P2[0]) * wachs, (u * u * P0[1] + 2 * u * t * P1[1] + t * t * P2[1]) * wachs, (u * u * P0[2] + 2 * u * t * P1[2] + t * t * P2[2]) * wachs];
   }
+  function zweigEnde(A, z, wachs) {
+    const b = astPunkt(A, z.t, wachs), w = A.az + z.dw;
+    return [b, [b[0] + Math.cos(w) * z.l * wachs, b[1] + Math.sin(w) * z.l * wachs, b[2] + z.auf * z.l * wachs]];
+  }
+  function affin(g, V, o, eu, ev) {
+    const p0 = V.p(o[0], o[1], o[2]), pu = V.p(o[0] + eu[0], o[1] + eu[1], o[2] + eu[2]), pv = V.p(o[0] + ev[0], o[1] + ev[1], o[2] + ev[2]);
+    g.transform(pu[0] - p0[0], pu[1] - p0[1], pv[0] - p0[0], pv[1] - p0[1], p0[0], p0[1]);
+  }
+  /* Beet: Rindenmulch (Späne, Krümel, kleine Schatten) mit Feldsteinrand */
+  function beetMalen(g, V, F, D) {
+    const s = V.s, Z = F.Z, jahr = F.jahr, kU = lichtK([0, 0, 1], Z, jahr), p0 = V.p(0, 0, 0), rng = ST.zufall(D.saat * 3 + 11);
+    const R = 0.95;
+    g.fillStyle = rgb(mul([74, 54, 38], kU)); g.beginPath(); g.ellipse(p0[0], p0[1], R * s, R * s * 0.5, 0, 0, TAU); g.fill();
+    g.save(); g.beginPath(); g.ellipse(p0[0], p0[1], R * s, R * s * 0.5, 0, 0, TAU); g.clip();
+    const n = s > 60 ? 420 : s > 30 ? 180 : 60;
+    for (let i = 0; i < n; i++) {
+      const w = rng() * TAU, r = Math.sqrt(rng()) * R, x = p0[0] + Math.cos(w) * r * s, y = p0[1] + Math.sin(w) * r * 0.5 * s;
+      const l = (0.018 + rng() * 0.03) * s, b = (0.006 + rng() * 0.008) * s, ro = rng() * 3, c = [104 + rng() * 50, 70 + rng() * 30, 44 + rng() * 18];
+      if (s > 40) { g.fillStyle = "rgba(20,12,6,0.35)"; g.beginPath(); g.ellipse(x + 0.003 * s, y + 0.004 * s, l, b, ro, 0, TAU); g.fill(); }
+      g.fillStyle = rgb(mul(c, kU)); g.beginPath(); g.ellipse(x, y, l, b, ro, 0, TAU); g.fill();
+    }
+    g.fillStyle = rgb(mul([40, 28, 20], kU), 0.6); for (let i = 0; i < n * 0.3; i++) { const w = rng() * TAU, r = Math.sqrt(rng()) * R; g.beginPath(); g.arc(p0[0] + Math.cos(w) * r * s, p0[1] + Math.sin(w) * r * 0.5 * s, Math.max(0.4, 0.006 * s), 0, TAU); g.fill(); }
+    /* Schatten des Strauchs auf dem Mulch (Mitte dunkler) */
+    const ao = g.createRadialGradient(p0[0], p0[1], 0, p0[0], p0[1], 0.6 * s);
+    ao.addColorStop(0, "rgba(20,12,6,0.45)"); ao.addColorStop(1, "rgba(20,12,6,0)");
+    g.save(); g.translate(p0[0], p0[1]); g.scale(1, 0.5); g.translate(-p0[0], -p0[1]); g.fillStyle = ao; g.fillRect(p0[0] - 0.6 * s, p0[1] - 0.6 * s, 1.2 * s, 1.2 * s); g.restore();
+    g.restore();
+    /* Feldsteine, nach Tiefe */
+    const st = D.steine.map((q) => ({ q: q, x: Math.cos(q.w) * q.r, y: Math.sin(q.w) * q.r })).sort((a, b) => V.tiefe(a.x, a.y, 0) - V.tiefe(b.x, b.y, 0));
+    const kL = lichtK([-0.5, 0.5, 0.7], Z, jahr);
+    for (const e of st) {
+      const q = e.q, p = V.p(e.x, e.y, q.g * 0.4), rx = q.g * s, ry = q.g * s * 0.62, c = [150 * q.f, 144 * q.f, 132 * q.f];
+      g.fillStyle = "rgba(30,24,18,0.35)"; g.beginPath(); g.ellipse(p[0] + 0.01 * s, p[1] + ry * 0.5, rx, ry * 0.6, 0, 0, TAU); g.fill();
+      const gr = g.createRadialGradient(p[0] - rx * 0.35, p[1] - ry * 0.45, rx * 0.1, p[0], p[1], rx * 1.1);
+      gr.addColorStop(0, rgb(mul(c, skal(kL, 1.15)))); gr.addColorStop(1, rgb(mul(c, skal(kU, 0.55))));
+      g.fillStyle = gr; g.beginPath(); g.ellipse(p[0], p[1], rx, ry, q.h * 0.6 - 0.3, 0, TAU); g.fill();
+      if (s > 60 && q.h > 0.6) { g.fillStyle = "rgba(96,120,60,0.45)"; g.beginPath(); g.ellipse(p[0] + rx * 0.2, p[1] + ry * 0.3, rx * 0.35, ry * 0.25, 0, 0, TAU); g.fill(); }
+    }
+    /* Grashalme am Außenrand */
+    const rngE = ST.zufall(3);
+    g.lineCap = "round"; g.lineWidth = Math.max(0.5, 0.01 * s);
+    for (let i = 0; i < 110; i++) {
+      const w = rngE() * TAU, r = 1.02 + rngE() * 0.08, x = p0[0] + Math.cos(w) * r * s, y = p0[1] + Math.sin(w) * r * 0.5 * s;
+      g.strokeStyle = rgb(mul([70 + rngE() * 40, 130 + rngE() * 40, 50], kU)); g.beginPath(); g.moveTo(x, y); g.lineTo(x + (rngE() - 0.5) * 0.04 * s, y - (0.03 + rngE() * 0.05) * s); g.stroke();
+    }
+  }
+  /* Forsythienblüte: vier schmale, hängende Kronblätter, innen dunkler */
+  function bluetenBueschel(g, q, s, kb, rr, n) {
+    for (let j = 0; j < n; j++) {
+      const x = q[0] + (rr() - 0.5) * 0.035 * s, y = q[1] + (rr() - 0.5) * 0.025 * s, dreh = rr() * TAU;
+      if (s > 45) {
+        for (let k = 0; k < 4; k++) {
+          const ang = dreh + k * Math.PI / 2, cx = x + Math.cos(ang) * 0.011 * s, cy = y + Math.sin(ang) * 0.008 * s + 0.004 * s;
+          g.fillStyle = rgb(mul([226, 164, 18], kb)); g.beginPath(); g.ellipse(cx, cy, 0.014 * s, 0.0055 * s, ang, 0, TAU); g.fill();
+          g.fillStyle = rgb(mul([255, 222, 86], kb)); g.beginPath(); g.ellipse(cx + Math.cos(ang) * 0.004 * s, cy + Math.sin(ang) * 0.003 * s - 0.001 * s, 0.009 * s, 0.0035 * s, ang, 0, TAU); g.fill();
+        }
+        g.fillStyle = rgb(mul([196, 120, 20], kb)); g.beginPath(); g.arc(x, y + 0.004 * s, 0.004 * s, 0, TAU); g.fill();
+      } else { g.fillStyle = rgb(mul(j % 3 ? [250, 206, 40] : [226, 170, 24], kb)); g.beginPath(); g.arc(x, y, Math.max(0.7, 0.02 * s), 0, TAU); g.fill(); }
+    }
+  }
+  /* Osterhase aus Sperrholz: vorn bemalt, hinten rohes Holz mit Pflock */
+  function haseMalen(g, V, F, H) {
+    const s = V.s, Z = F.Z, jahr = F.jahr;
+    const eu = [Math.cos(H.w), Math.sin(H.w), 0], nrm = [-eu[1], eu[0], 0];
+    const nk = V.n(nrm[0], nrm[1], 0), vorn = dot(nk, EZ) > 0;
+    const k = lichtK(vorn ? V.n(nrm[0], nrm[1], 0.2) : V.n(-nrm[0], -nrm[1], 0.2), Z, jahr);
+    const B = 0.3, Hh = 0.44;
+    g.save();
+    affin(g, V, [H.x - eu[0] * B / 2, H.y - eu[1] * B / 2, Hh + 0.04], eu, [0, 0, -1]);
+    const umriss = () => {
+      g.beginPath();
+      g.ellipse(0.17, 0.31, 0.12, 0.1, 0, 0, TAU);                    // Körper
+      g.moveTo(0.14, 0.17); g.arc(0.09, 0.17, 0.058, 0, TAU);         // Kopf
+      g.moveTo(0.11, 0.1); g.ellipse(0.1, 0.05, 0.02, 0.07, -0.25, 0, TAU);   // Ohren
+      g.moveTo(0.15, 0.1); g.ellipse(0.135, 0.055, 0.019, 0.066, 0.18, 0, TAU);
+      g.moveTo(0.3, 0.3); g.arc(0.285, 0.3, 0.03, 0, TAU);            // Blume (Schwanz)
+      g.moveTo(0.1, 0.4); g.ellipse(0.075, 0.395, 0.035, 0.018, 0, 0, TAU);   // Pfote
+    };
+    /* Pflock */
+    g.fillStyle = rgb(mul([130, 98, 64], k)); g.fillRect(0.14, 0.38, 0.03, 0.1);
+    umriss(); g.fillStyle = rgb(mul(vorn ? [214, 196, 168] : [200, 164, 116], k)); g.fill();
+    g.strokeStyle = rgb(mul(vorn ? [120, 100, 80] : [150, 116, 76], k)); g.lineWidth = 0.008; g.stroke();
+    if (vorn && s > 25) {
+      g.fillStyle = rgb(mul([246, 244, 238], k)); g.beginPath(); g.arc(0.285, 0.3, 0.026, 0, TAU); g.fill(); g.beginPath(); g.ellipse(0.2, 0.33, 0.07, 0.05, 0, 0, TAU); g.fill();
+      g.fillStyle = rgb(mul([236, 170, 176], k)); g.beginPath(); g.ellipse(0.1, 0.055, 0.009, 0.05, -0.25, 0, TAU); g.fill();
+      g.fillStyle = "#1c1814"; g.beginPath(); g.arc(0.07, 0.16, 0.009, 0, TAU); g.fill();
+      g.fillStyle = rgb(mul([200, 110, 120], k)); g.beginPath(); g.arc(0.035, 0.18, 0.007, 0, TAU); g.fill();
+      /* rote Schleife am Hals */
+      g.fillStyle = rgb(mul([196, 28, 40], k)); g.beginPath(); g.moveTo(0.12, 0.22); g.lineTo(0.09, 0.2); g.lineTo(0.09, 0.245); g.closePath(); g.fill(); g.beginPath(); g.moveTo(0.12, 0.22); g.lineTo(0.15, 0.2); g.lineTo(0.15, 0.245); g.closePath(); g.fill();
+    } else if (!vorn && s > 40) {
+      g.save(); umriss(); g.clip(); g.strokeStyle = rgb(mul([168, 132, 90], k), 0.5); g.lineWidth = 0.004; for (let y = 0.02; y < 0.45; y += 0.03) { g.beginPath(); g.moveTo(0, y); g.lineTo(0.32, y + 0.01); g.stroke(); } g.restore();
+    }
+    g.restore();
+  }
   function straussMalen(g, s, F, D, A) {
     const V = blick(F.gier, s), Z = F.Z, jahr = F.jahr, w = A.wachs;
     if (F.schatten) {
       const T = g.getTransform(); g.setTransform(1, 0, 0, 1, T.e, T.f); g.fillStyle = "#000"; g.beginPath();
       const pts = [];
       for (const a of D.aeste) for (const t of [0.3, 0.6, 1]) { const p = astPunkt(a, t, w); pts.push(V.boden(p[0], p[1], p[2])); }
-      /* Hülle */
       pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
       const kr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
       const lo = [], hi = [];
@@ -437,17 +680,7 @@
       g.globalAlpha = 0.75; g.fill(); g.globalAlpha = 1;
       return;
     }
-    /* Beet: dunkle Erde mit frischem Grasrand */
-    const kU = lichtK([0, 0, 1], Z, jahr), p0 = V.p(0, 0, 0);
-    g.fillStyle = rgb(mul([96, 72, 52], kU)); g.beginPath(); g.ellipse(p0[0], p0[1], 0.95 * s, 0.475 * s, 0, 0, TAU); g.fill();
-    const rngE = ST.zufall(3);
-    /* Grasbüschel wachsen über den Beetrand */
-    g.lineCap = "round"; g.lineWidth = Math.max(0.5, 0.012 * s);
-    for (let i = 0; i < 140; i++) {
-      const w = rngE() * TAU, r = 0.9 + rngE() * 0.12, x = p0[0] + Math.cos(w) * r * s, y = p0[1] + Math.sin(w) * r * 0.5 * s;
-      g.strokeStyle = rgb(mul([70 + rngE() * 40, 130 + rngE() * 40, 50], kU)); g.beginPath(); g.moveTo(x, y); g.lineTo(x + (rngE() - 0.5) * 0.05 * s, y - (0.04 + rngE() * 0.06) * s); g.stroke();
-    }
-    g.fillStyle = rgb(mul([70, 52, 38], kU)); for (let i = 0; i < 40; i++) { g.beginPath(); g.arc(p0[0] + (rngE() - 0.5) * 1.6 * s, p0[1] + (rngE() - 0.5) * 0.7 * s, Math.max(0.5, 0.02 * s), 0, TAU); g.fill(); }
+    beetMalen(g, V, F, D);
     /* Teile sammeln */
     const dinge = [];
     for (const a of D.aeste) {
@@ -455,60 +688,84 @@
         const t0 = k / 3, t1 = (k + 1) / 3, m = astPunkt(a, (t0 + t1) / 2, w);
         dinge.push({ art: 0, a: a, t0: t0, t1: t1, t: V.tiefe(m[0], m[1], m[2]) });
       }
+      for (const z of a.zweige) { const [b, e] = zweigEnde(a, z, w); dinge.push({ art: 3, a: a, z: z, b: b, e: e, t: V.tiefe((b[0] + e[0]) / 2, (b[1] + e[1]) / 2, (b[2] + e[2]) / 2) }); }
     }
     if (A.eier) for (const e of D.eier) { const p = astPunkt(e.a, e.t, w); dinge.push({ art: 1, e: e, p: p, t: V.tiefe(p[0], p[1], p[2] - e.lang) + 0.01 }); }
     if (A.blumen) for (const b of D.blumen) dinge.push({ art: 2, b: b, t: V.tiefe(b.x, b.y, 0.1) });
+    if (A.eier) dinge.push({ art: 4, t: V.tiefe(D.hase.x, D.hase.y, 0.2) });
     dinge.sort((a, b) => a.t - b.t);
-    const bluete = [252, 206, 40];
     for (const d of dinge) {
-      if (d.art === 0) {
+      if (d.art === 0 || d.art === 3) {
         const a = d.a, kA = lichtK(V.n(Math.cos(a.az), Math.sin(a.az), 0.6), Z, jahr);
-        const pts = []; for (let i = 0; i <= 5; i++) { const p = astPunkt(a, d.t0 + (d.t1 - d.t0) * i / 5, w); pts.push(V.p(p[0], p[1], p[2])); }
-        g.strokeStyle = rgb(mul([112, 84, 56], kA)); g.lineWidth = Math.max(0.6, (0.022 - d.t0 * 0.012) * s); g.lineCap = "round";
+        const pts = [];
+        if (d.art === 0) { for (let i = 0; i <= 5; i++) { const p = astPunkt(a, d.t0 + (d.t1 - d.t0) * i / 5, w); pts.push(V.p(p[0], p[1], p[2])); } }
+        else { pts.push(V.p(d.b[0], d.b[1], d.b[2]), V.p(d.e[0], d.e[1], d.e[2])); }
+        g.strokeStyle = rgb(mul([112, 86, 58], kA)); g.lineWidth = Math.max(0.5, (d.art === 0 ? 0.022 - d.t0 * 0.012 : 0.007) * s); g.lineCap = "round";
         g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.stroke();
-        /* Blüten dicht an den Zweigen (Forsythie blüht vor dem Laub) */
-        if (A.bluete > 0 && d.t1 > 0.2) {
-          const rr = ST.zufall(a.id * 17 + ((d.t0 * 10) | 0));
-          const n = Math.round((s > 40 ? 26 : 12) * A.bluete);
-          for (let i = 0; i < n; i++) {
-            const t = d.t0 + rr() * (d.t1 - d.t0), p = astPunkt(a, t, w);
-            const q = V.p(p[0] + (rr() - 0.5) * 0.08, p[1] + (rr() - 0.5) * 0.08, p[2] + (rr() - 0.5) * 0.06);
-            const kb = rr() < 0.25 ? skal(kA, 0.75) : kA;
-            if (s > 45) {
-              g.fillStyle = rgb(mul(bluete, kb));
-              for (let j = 0; j < 4; j++) { const ang = j * Math.PI / 2 + rr(); g.beginPath(); g.ellipse(q[0] + Math.cos(ang) * 0.012 * s, q[1] + Math.sin(ang) * 0.012 * s, 0.014 * s, 0.006 * s, ang, 0, TAU); g.fill(); }
-            } else { g.fillStyle = rgb(mul(bluete, kb)); g.beginPath(); g.arc(q[0], q[1], Math.max(0.7, 0.022 * s), 0, TAU); g.fill(); }
-            if (rr() < 0.12) { g.fillStyle = rgb(mul([120, 180, 70], kA)); g.beginPath(); g.ellipse(q[0] + 0.01 * s, q[1], Math.max(0.6, 0.02 * s), Math.max(0.4, 0.009 * s), rr() * 3, 0, TAU); g.fill(); }
+        /* Blüten in Büscheln an den Knoten (Forsythie blüht vor dem Laub) */
+        if (A.bluete > 0 && (d.art === 3 || d.t1 > 0.2)) {
+          const rr = ST.zufall(a.id * 17 + (d.art === 3 ? 900 + ((d.z.t * 100) | 0) : ((d.t0 * 10) | 0)));
+          const knoten = Math.round((d.art === 3 ? (s > 40 ? 5 : 3) : (s > 40 ? 9 : 5)) * A.bluete);
+          for (let i = 0; i < knoten; i++) {
+            const u = (i + rr()) / knoten;
+            let p;
+            if (d.art === 0) p = astPunkt(a, d.t0 + u * (d.t1 - d.t0), w); else p = [d.b[0] + (d.e[0] - d.b[0]) * u, d.b[1] + (d.e[1] - d.b[1]) * u, d.b[2] + (d.e[2] - d.b[2]) * u];
+            const q = V.p(p[0] + (rr() - 0.5) * 0.03, p[1] + (rr() - 0.5) * 0.03, p[2] - 0.01);
+            const kb = rr() < 0.3 ? skal(kA, 0.72) : kA;
+            bluetenBueschel(g, q, s, kb, rr, 2 + ((rr() * 3) | 0));
+            if (rr() < 0.18) { g.fillStyle = rgb(mul([112, 176, 66], kA)); g.beginPath(); g.ellipse(q[0] + 0.012 * s, q[1] - 0.004 * s, Math.max(0.6, 0.018 * s), Math.max(0.4, 0.007 * s), rr() * 3, 0, TAU); g.fill(); }
           }
         }
       } else if (d.art === 1) {
+        /* bemaltes Ei an einem Seidenband mit Schleife */
         const e = d.e, p = d.p, oben = V.p(p[0], p[1], p[2]), unten = V.p(p[0], p[1], p[2] - e.lang);
-        g.strokeStyle = rgb(mul([230, 60, 80], lichtK([0, 1, 0.3], Z, jahr))); g.lineWidth = Math.max(0.4, 0.004 * s);
+        const kE = lichtK([-0.3, 0.6, 0.6], Z, jahr);
+        g.strokeStyle = rgb(mul(e.band, kE)); g.lineWidth = Math.max(0.5, 0.006 * s);
         g.beginPath(); g.moveTo(oben[0], oben[1]); g.lineTo(unten[0], unten[1]); g.stroke();
-        const kE = lichtK([-0.3, 0.6, 0.6], Z, jahr), rx = Math.max(1, 0.04 * s), ry = Math.max(1.3, 0.055 * s), cy = unten[1] + ry;
-        const gr = g.createRadialGradient(unten[0] - rx * 0.4, cy - ry * 0.4, rx * 0.1, unten[0], cy, ry * 1.1);
-        gr.addColorStop(0, rgb(mul(e.f, skal(kE, 1.25)))); gr.addColorStop(1, rgb(mul(e.f, skal(kE, 0.62))));
-        g.fillStyle = gr; g.beginPath(); g.ellipse(unten[0], cy, rx, ry, 0, 0, TAU); g.fill();
-        if (s > 40) {
-          g.save(); g.beginPath(); g.ellipse(unten[0], cy, rx, ry, 0, 0, TAU); g.clip();
-          g.fillStyle = rgb(mul(e.f2, kE));
-          if (e.muster === 0) { g.fillRect(unten[0] - rx, cy - ry * 0.15, rx * 2, ry * 0.3); }
-          else if (e.muster === 1) { for (let j = 0; j < 5; j++) { g.beginPath(); g.arc(unten[0] + (j % 3 - 1) * rx * 0.5, cy + (j < 3 ? -0.3 : 0.35) * ry, rx * 0.18, 0, TAU); g.fill(); } }
-          else { g.beginPath(); for (let j = 0; j <= 8; j++) { const x = unten[0] - rx + j * rx / 4, y = cy + (j % 2 ? -0.2 : 0.2) * ry; if (j) g.lineTo(x, y); else g.moveTo(x, y); } g.lineWidth = Math.max(0.6, rx * 0.25); g.strokeStyle = rgb(mul(e.f2, kE)); g.stroke(); }
+        const rx = Math.max(1.1, 0.05 * s), ry = Math.max(1.5, 0.068 * s), cx = unten[0], cy = unten[1] + ry;
+        g.save(); g.translate(cx, cy); g.rotate(e.kipp); g.translate(-cx, -cy);
+        const gr = g.createRadialGradient(cx - rx * 0.4, cy - ry * 0.4, rx * 0.1, cx, cy, ry * 1.1);
+        gr.addColorStop(0, rgb(mul(e.f, skal(kE, 1.25)))); gr.addColorStop(1, rgb(mul(e.f, skal(kE, 0.6))));
+        g.fillStyle = gr; g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, TAU); g.fill();
+        if (s > 35) {
+          g.save(); g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, TAU); g.clip();
+          g.fillStyle = rgb(mul(e.f2, kE)); g.strokeStyle = rgb(mul(e.f2, kE));
+          if (e.muster === 0) { g.fillRect(cx - rx, cy - ry * 0.15, rx * 2, ry * 0.3); g.fillStyle = rgb(mul([250, 250, 245], kE)); g.fillRect(cx - rx, cy - ry * 0.2, rx * 2, ry * 0.05); g.fillRect(cx - rx, cy + ry * 0.15, rx * 2, ry * 0.05); }
+          else if (e.muster === 1) { for (let j = 0; j < 7; j++) { g.beginPath(); g.arc(cx + ((j * 37) % 5 - 2) * rx * 0.35, cy + (((j * 53) % 5) - 2) * ry * 0.3, rx * 0.15, 0, TAU); g.fill(); } }
+          else if (e.muster === 2) { g.beginPath(); for (let j = 0; j <= 8; j++) { const x = cx - rx + j * rx / 4, y = cy + (j % 2 ? -0.2 : 0.2) * ry; if (j) g.lineTo(x, y); else g.moveTo(x, y); } g.lineWidth = Math.max(0.6, rx * 0.22); g.stroke(); }
+          else { for (let j = 0; j < 4; j++) { const y = cy - ry * 0.55 + j * ry * 0.36; g.beginPath(); g.moveTo(cx - rx, y); g.lineTo(cx + rx, y + ry * 0.1); g.lineWidth = Math.max(0.5, ry * 0.08); g.stroke(); } }
           g.restore();
-          g.fillStyle = "rgba(255,255,255,0.45)"; g.beginPath(); g.ellipse(unten[0] - rx * 0.35, cy - ry * 0.4, rx * 0.22, ry * 0.18, -0.4, 0, TAU); g.fill();
+          g.fillStyle = "rgba(255,255,255,0.5)"; g.beginPath(); g.ellipse(cx - rx * 0.35, cy - ry * 0.42, rx * 0.2, ry * 0.16, -0.4, 0, TAU); g.fill();
+          /* Schleife oben am Ei */
+          const bx = cx, by = cy - ry * 0.95, bw = Math.max(0.8, 0.018 * s);
+          g.fillStyle = rgb(mul(e.band, kE));
+          g.beginPath(); g.moveTo(bx, by); g.quadraticCurveTo(bx - bw * 1.6, by - bw * 1.2, bx - bw * 1.3, by + bw * 0.4); g.closePath(); g.fill();
+          g.beginPath(); g.moveTo(bx, by); g.quadraticCurveTo(bx + bw * 1.6, by - bw * 1.2, bx + bw * 1.3, by + bw * 0.4); g.closePath(); g.fill();
         }
-      } else {
+        g.restore();
+      } else if (d.art === 2) {
         const b = d.b, f = V.p(b.x, b.y, 0), k = V.p(b.x, b.y, b.h), kB = lichtK([-0.3, 0.6, 0.7], Z, jahr);
-        g.strokeStyle = rgb(mul([70, 130, 55], kB)); g.lineWidth = Math.max(0.5, 0.015 * s); g.beginPath(); g.moveTo(f[0], f[1]); g.lineTo(k[0], k[1]); g.stroke();
-        const r = Math.max(0.9, 0.04 * s);
+        /* schmale Blätter um den Stängel */
+        g.fillStyle = rgb(mul([62, 124, 60], kB));
+        for (const sx of [-1, 1]) { g.beginPath(); g.moveTo(f[0], f[1]); g.quadraticCurveTo(f[0] + sx * 0.03 * s, f[1] - b.h * 0.5 * s, f[0] + sx * (0.04 + b.n * 0.02) * s, f[1] - b.h * (0.75 + 0.2 * b.n) * KZ * s); g.quadraticCurveTo(f[0] + sx * 0.012 * s, f[1] - b.h * 0.4 * s, f[0] + sx * 0.008 * s, f[1]); g.fill(); }
+        g.strokeStyle = rgb(mul([78, 136, 60], kB)); g.lineWidth = Math.max(0.5, 0.01 * s); g.beginPath(); g.moveTo(f[0], f[1]); g.lineTo(k[0], k[1]); g.stroke();
+        const r = Math.max(0.9, 0.035 * s);
         if (b.art === 0) {
-          g.fillStyle = rgb(mul([250, 226, 70], kB)); g.beginPath(); for (let i = 0; i < 12; i++) { const a = i / 12 * TAU, rr = i % 2 ? r * 0.45 : r; g.lineTo(k[0] + Math.cos(a) * rr, k[1] + Math.sin(a) * rr * 0.7); } g.closePath(); g.fill();
-          g.fillStyle = rgb(mul([245, 150, 30], kB)); g.beginPath(); g.arc(k[0], k[1], r * 0.4, 0, TAU); g.fill();
+          /* Osterglocke: sechs blasse Blütenblätter, gelbe Trompete zur Seite */
+          const ox = Math.cos(b.dreh) * r * 0.35;
+          g.fillStyle = rgb(mul([250, 236, 150], kB));
+          for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + b.dreh; g.beginPath(); g.ellipse(k[0] + Math.cos(a) * r * 0.55, k[1] + Math.sin(a) * r * 0.4, r * 0.5, r * 0.26, a, 0, TAU); g.fill(); }
+          g.fillStyle = rgb(mul([242, 170, 30], kB)); g.beginPath(); g.ellipse(k[0] + ox, k[1] + 0.1 * r, r * 0.34, r * 0.3, 0, 0, TAU); g.fill();
+          g.fillStyle = rgb(mul([206, 126, 20], kB)); g.beginPath(); g.ellipse(k[0] + ox * 1.6, k[1] + 0.1 * r, r * 0.2, r * 0.17, 0, 0, TAU); g.fill();
         } else {
-          g.fillStyle = rgb(mul([220, 40, 60], kB)); g.beginPath(); g.moveTo(k[0] - r, k[1] - r * 1.3); g.quadraticCurveTo(k[0] - r * 1.1, k[1] + r * 0.4, k[0], k[1] + r * 0.3); g.quadraticCurveTo(k[0] + r * 1.1, k[1] + r * 0.4, k[0] + r, k[1] - r * 1.3); g.lineTo(k[0], k[1] - r * 0.8); g.closePath(); g.fill();
+          /* Tulpe: geschlossener Kelch aus drei Blättern, Licht von links */
+          const fT = [[214, 36, 56], [236, 120, 40], [236, 200, 60], [206, 90, 160]][(b.n * 4) | 0];
+          const gt = g.createLinearGradient(k[0] - r, 0, k[0] + r, 0);
+          gt.addColorStop(0, rgb(mul(fT, skal(kB, 1.15)))); gt.addColorStop(1, rgb(mul(fT, skal(kB, 0.7))));
+          g.fillStyle = gt; g.beginPath(); g.moveTo(k[0] - r * 0.8, k[1] - r * 1.4); g.quadraticCurveTo(k[0] - r * 1.05, k[1] + r * 0.3, k[0], k[1] + r * 0.35); g.quadraticCurveTo(k[0] + r * 1.05, k[1] + r * 0.3, k[0] + r * 0.8, k[1] - r * 1.4); g.quadraticCurveTo(k[0] + r * 0.3, k[1] - r * 0.9, k[0], k[1] - r * 1.5); g.quadraticCurveTo(k[0] - r * 0.3, k[1] - r * 0.9, k[0] - r * 0.8, k[1] - r * 1.4); g.fill();
+          g.strokeStyle = rgb(mul(fT, skal(kB, 0.55)), 0.6); g.lineWidth = Math.max(0.4, 0.004 * s); g.beginPath(); g.moveTo(k[0], k[1] - r * 1.4); g.lineTo(k[0], k[1] + r * 0.3); g.stroke();
         }
-      }
+      } else if (d.art === 4) haseMalen(g, V, F, D.hase);
     }
   }
 
@@ -516,10 +773,16 @@
      DAS MODELL
      ===================================================================== */
   ST.modell("schneemann", {
-    name: "Schneemann", gruppe: "Weihnachten", grund: [1.3, 1.3], hoehe: 1.9, bauzeit: 90,
+    /* Im Frühling steht hier der Osterstrauch – dann heißt er auch so */
+    get name() { return ST.szene && ST.szene.jahr && ST.szene.jahr !== "winter" ? "Osterstrauch" : "Schneemann"; },
+    gruppe: "Weihnachten", grund: [1.3, 1.3], hoehe: 1.9, bauzeit: 90,
     bauen: function (M, o) {
       const bau = o.bau == null ? 1 : o.bau;
       const saat = Math.abs(o.saat | 0) || 1;
+      /* Unsichtbare Hilfsfläche über der Figur: so nimmt der Kern den
+         Figurenschatten in die Bildgrenzen auf (sonst wird er abgeschnitten) */
+      M.teil("schattenhilfe", { mitte: [0, 0, 0] });
+      M.flaeche({ name: "hilfe", o: [-0.02, -0.02, o.jahr === "winter" ? 2.0 : 1.75], u: [1, 0, 0], v: [0, 1, 0], w: 0.04, h: 0.04, malen: function () {}, keinLicht: true });
       M.teil("figur", { mitte: [0, 0, 0] });
       if (o.jahr === "winter") {
         const D = schneemannDaten(saat);
@@ -533,7 +796,7 @@
           aufCpu(g, -1.1 * s, -2.1 * KZ * s, 2.2 * s, 2.1 * KZ * s + 0.8 * s, function (cg) { schneemannMalen(cg, s, F, D, A); });
         }) });
         if (A.lampe) {
-          M.figur({ x: 0.44, y: 0.22, z: 0, breite: 0.3, hoehe: 0.3, malen: windlichtMalen });
+          M.figur({ x: 0.44, y: 0.22, z: 0, breite: 0.3, hoehe: 0.3, malen: mitGier(windlichtMalen) });
         }
       } else {
         const D = straussDaten(saat);

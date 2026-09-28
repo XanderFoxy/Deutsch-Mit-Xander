@@ -23,8 +23,8 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   const bilder = [];
   for (const s of suchen) {
     const t0 = Date.now();
-    await pg.goto("http://127.0.0.1:" + srv.address().port + "/stadt.html?" + s + (/still=/.test(s) ? "" : "&still=1"), { waitUntil: "load" });
-    try { await pg.waitForFunction(() => window.__fertig || window.__fehler, null, { timeout: 60000 }); } catch (e) { fehler.push("Zeitüberschreitung: " + s); }
+    await pg.goto("http://127.0.0.1:" + srv.address().port + "/stadt.html?" + s + (/still=/.test(s) ? "" : "&still=1"), { waitUntil: "load", timeout: +(process.env.ZEIT || 180000) });
+    try { await pg.waitForFunction(() => window.__fertig || window.__fehler, null, { timeout: +(process.env.ZEIT || 180000) }); } catch (e) { fehler.push("Zeitüberschreitung: " + s); }
     await pg.waitForTimeout(+(process.env.WARTE || 150));
     bilder.push({ s: s.replace(/&?still=1/, ""), b: (await pg.screenshot()).toString("base64"), ms: Date.now() - t0 });
   }

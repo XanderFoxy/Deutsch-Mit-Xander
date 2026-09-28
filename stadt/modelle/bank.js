@@ -116,7 +116,10 @@
      MASSE UND FORMEN
      ===================================================================== */
   const XW = 0.872, TW = 0.034;          // Wangen (Mitte) und Gussdicke
-  const XL = 0.853;                      // Lattenenden
+  /* Lattenenden: die Latten liegen auf Sitzträger und Lehnenträger der
+     Wangen auf und stehen außen 5 cm über (man sieht das Hirnholz) */
+  const XL = 0.94;
+  const XA = XW + TW / 2;                // Außenfläche der Wange
   /* Sitzlatten: Mitte y, Unterkante z */
   const SITZ = [0.228, 0.139, 0.050, -0.039, -0.128].map((y) => ({ y: y, z: 0.408 - (0.27 - y) * 0.062, b: 0.078, d: 0.03 }));
   /* Rückenlehne: Linie der Wange */
@@ -217,7 +220,10 @@
      ===================================================================== */
   function latteMalen(g, V, F, L, a, b, holz, saat, opt) {
     const s = V.s;
-    const x0 = -XL, x1 = XL;
+    /* opt.von/opt.bis: nur ein Stück der Latte (Überstand außen wird
+       getrennt gemalt, damit er vor bzw. hinter der Wange liegt) */
+    const x0 = opt && opt.von != null ? opt.von : -XL, x1 = opt && opt.bis != null ? opt.bis : XL;
+    const hirnL = x0 <= -XL + 1e-6, hirnR = x1 >= XL - 1e-6;
     const ha = L.b / 2, hb = L.d / 2;
     const P = (x, sa, sb) => [x, L.y + a[0] * sa * ha + b[0] * sb * hb, L.z + a[1] * sa * ha + b[1] * sb * hb];
     const flaechen = [
@@ -225,9 +231,9 @@
       { n: [0, -b[0], -b[1]], e: [P(x0, 1, -1), P(x1, 1, -1), P(x1, -1, -1), P(x0, -1, -1)], art: "unten" },
       { n: [0, a[0], a[1]], e: [P(x0, 1, 1), P(x1, 1, 1), P(x1, 1, -1), P(x0, 1, -1)], art: "kante" },
       { n: [0, -a[0], -a[1]], e: [P(x0, -1, -1), P(x1, -1, -1), P(x1, -1, 1), P(x0, -1, 1)], art: "kante" },
-      { n: [1, 0, 0], e: [P(x1, -1, 1), P(x1, -1, -1), P(x1, 1, -1), P(x1, 1, 1)], art: "hirn" },
-      { n: [-1, 0, 0], e: [P(x0, 1, 1), P(x0, 1, -1), P(x0, -1, -1), P(x0, -1, 1)], art: "hirn" }
-    ];
+      { n: [1, 0, 0], e: [P(x1, -1, 1), P(x1, -1, -1), P(x1, 1, -1), P(x1, 1, 1)], art: hirnR ? "hirn" : "schnitt" },
+      { n: [-1, 0, 0], e: [P(x0, 1, 1), P(x0, 1, -1), P(x0, -1, -1), P(x0, -1, 1)], art: hirnL ? "hirn" : "schnitt" }
+    ].filter((f) => f.art !== "schnitt");
     const f = holz.f, rng = ST.zufall(saat);
     const c = skal(f, 0.9 + rng() * 0.18);
     for (const fl of flaechen) {
@@ -241,9 +247,9 @@
         /* Maserung längs, Äste, Schrauben – in der Fläche gemalt */
         g.save();
         vieleck(g, pts); g.clip();
-        const o = fl.e[0];
+        const o = [-XL, fl.e[0][1], fl.e[0][2]];
         affin(g, V, o, [1, 0, 0], [0, a[0], a[1]]);
-        const W = x1 - x0, H = L.b;
+        const W = 2 * XL, H = L.b;
         const k = ST.lichtFaktor(nk, F.Z, 0, F.jahr);
         if (s > 22) {
           const zeilen = Math.max(3, Math.min(14, Math.round(s * H / 1.4)));
@@ -274,9 +280,9 @@
             for (let i = 0; i < 5; i++) { const x = rng() * W; g.beginPath(); g.ellipse(x, rng() < 0.5 ? 0.004 : H - 0.004, 0.02 + rng() * 0.03, 0.004, 0, 0, TAU); g.fill(); }
           }
         }
-        /* Schlossschrauben über den Wangen */
+        /* Schlossschrauben genau über den Trägern der Wangen */
         if (s > 50) {
-          for (const x of [0.018, W - 0.018]) {
+          for (const x of [XL - XW, XL + XW]) {
             g.fillStyle = rgb(mul([70, 70, 72], k));
             g.beginPath(); g.arc(x, H / 2, 0.009, 0, TAU); g.fill();
             g.fillStyle = rgb(mul([150, 150, 150], k), 0.6);
@@ -331,89 +337,204 @@
   /* =====================================================================
      SCHNEEKISSEN (Winter)
      ===================================================================== */
-  function kissenMalen(g, V, F, saat) {
-    const s = V.s;
+  /* Das Schneekissen als Höhenfeld: Die Höhe hängt am Abstand zum Rand
+     (Wurzel-Abfall: der Schnee rundet sich weich ab, keine senkrechten
+     Flanken), über den Lattenfugen sackt er etwa 20 % ein, zur Lehne hin
+     liegt weniger, vorn hängt er ein wenig über die vorderste Latte.
+     Jede Zelle bekommt das Licht ihrer eigenen Neigung (ST.lichtFaktor) –
+     so entsteht die Form allein aus Licht und Schatten, ohne Umriss-Strich.
+     Wo jemand eine Ecke freigewischt hat, bricht der Schnee mit Bröseln ab.
+     von/bis: nur die Zellen in diesem x-Bereich (für den Überstand). */
+  /* nx = 37: die Außenflächen der Wangen liegen genau auf Zellgrenzen */
+  const KS = { y0: -0.19, y1: 0.29, nx: 37, ny: 9 };
+  function kissenForm(saat) {
+    const dick = 0.058 + (saat % 3) * 0.011;
+    const frei = saat % 3 === 1 ? { x0: -0.35 + (saat % 5) * 0.14, x1: 0.05 + (saat % 5) * 0.14 + (saat % 2) * 0.1 } : null;
     const rng = ST.zufall(saat * 5 + 1);
-    const y0 = -0.172, y1 = 0.27, x0 = -XL + 0.004, x1 = XL - 0.004;
-    const zU = (y) => SITZ[0].z + 0.03 + (y - 0.27) * 0.062;          // Oberkante der Latten
-    const dick = 0.06 + (saat % 3) * 0.012;
-    /* manchmal hat jemand eine Ecke freigewischt, um sich zu setzen */
-    const frei = saat % 3 === 1 ? { x0: 0.12 + (saat % 5) * 0.05, x1: 0.5 + (saat % 5) * 0.05 } : null;
-    const r = 0.06;
-    /* Umriss als Vieleck (x, y); an Wischkanten zerzaust */
-    const umriss = (xa, xb, ein, zausL, zausR) => {
-      const pts = [];
-      const ecke = (cx, cy, w0) => { for (let i = 0; i <= 5; i++) { const w = w0 + i / 5 * Math.PI / 2; pts.push([cx + Math.cos(w) * (r - ein), cy + Math.sin(w) * (r - ein)]); } };
-      const kante = (x, von, bis, zaus) => { if (!zaus) return; for (let i = 1; i < 8; i++) { const y = von + (bis - von) * i / 8; pts.push([x + (rng() - 0.5) * 0.04 * zaus, y]); } };
-      ecke(xb - r, y1 - r, 0); ecke(xa + r, y1 - r, Math.PI / 2);
-      kante(xa + ein, y1 - r, y0 + r, zausL);
-      ecke(xa + r, y0 + r, Math.PI); ecke(xb - r, y0 + r, Math.PI * 1.5);
-      kante(xb - ein, y0 + r, y1 - r, zausR);
-      return pts;
-    };
-    const stuecke = frei ? [[x0, frei.x0, 0, 1], [frei.x1, x1, 1, 0]] : [[x0, x1, 0, 0]];
-    const seite = licht([222, 230, 246], V.n(0.2, 0.9, 0.2), F);
-    const kO = licht([248, 250, 255], [0, 0, 1], F);
-    for (const [xa, xb, zl, zr] of stuecke) {
-      if (xb - xa < 0.12) continue;
-      const u2 = umriss(xa, xb, -0.012, zl, zr), o2 = umriss(xa, xb, 0.02, zl, zr);
-      const mitte = (xa + xb) / 2, halb = (xb - xa) / 2;
-      const hoch = (q) => dick * (0.8 + 0.2 * Math.cos(klemm((q[0] - mitte) / halb, -1, 1) * Math.PI / 2));
-      const unten = u2.map((q) => V.p(q[0], q[1], zU(q[1]) - 0.004));
-      const oben = o2.map((q) => V.p(q[0], q[1], zU(q[1]) + hoch(q)));
-      /* Flanken: Hülle beider Umrisse, nach unten bläulich */
-      vieleck(g, huelle(unten.concat(oben)));
-      const ya = Math.min(...oben.map((p) => p[1])), yb = Math.max(...unten.map((p) => p[1]));
-      const gs = g.createLinearGradient(0, ya, 0, yb);
-      gs.addColorStop(0, rgb(seite)); gs.addColorStop(1, rgb(mul(seite, [0.72, 0.76, 0.86])));
-      g.fillStyle = gs; g.fill();
-      /* Oberseite mit weicher, gerundeter Kante */
-      vieleck(g, oben);
-      const m = V.p(mitte, (y0 + y1) / 2, zU(0.05) + dick);
-      const gr = g.createRadialGradient(m[0] - 0.12 * s, m[1] - 0.05 * s, 0.03 * s, m[0], m[1], halb * 1.3 * s);
-      gr.addColorStop(0, rgb(plus(kO, [5, 5, 4]))); gr.addColorStop(0.7, rgb(kO)); gr.addColorStop(1, rgb(misch(kO, seite, 0.45)));
-      g.fillStyle = gr; g.fill();
-      g.lineJoin = "round"; g.strokeStyle = rgb(misch(kO, seite, 0.35)); g.lineWidth = Math.max(0.6, 0.02 * s); g.stroke();
-      /* Wulst an der Vorderkante: der Schnee hängt über die vorderste Latte */
-      if (s > 18) {
-        const vorn = o2.filter((q) => q[1] > y1 - r * 0.9).sort((p, q) => p[0] - q[0]);
-        const nk = V.n(0, 1, 0.3);
-        if (vorn.length > 1 && dot(nk, AUGE) > 0) {
-          const wp = vorn.map((q) => V.p(q[0], q[1] + 0.012, zU(q[1]) + hoch(q) - 0.022));
-          g.lineCap = "round"; g.strokeStyle = rgb(licht([232, 238, 250], nk, F)); g.lineWidth = Math.max(0.8, 0.034 * s);
-          g.beginPath(); wp.forEach((p, j) => (j ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.stroke();
-          g.strokeStyle = rgb(kO, 0.9); g.lineWidth = Math.max(0.5, 0.016 * s);
-          g.beginPath(); wp.forEach((p, j) => (j ? g.lineTo(p[0], p[1] - 0.012 * s) : g.moveTo(p[0], p[1] - 0.012 * s))); g.stroke();
-        }
+    const zack = []; for (let i = 0; i < 24; i++) zack.push((rng() - 0.5) * 0.05);
+    const zU = (y) => 0.438 - (0.27 - Math.min(y, 0.27)) * 0.062;          // Oberkante der Latten
+    const fugen = []; for (let i = 0; i < SITZ.length - 1; i++) fugen.push((SITZ[i].y + SITZ[i + 1].y) / 2);
+    const h = (x, y) => {
+      let d = Math.min(x + XL, XL - x, (y - KS.y0) * 1.4, (0.27 - y) + 0.03);
+      if (frei) {
+        /* Wischkante: weich gewellt (zwischen den Stützstellen gemittelt), nicht gezackt */
+        const u = klemm((y - KS.y0) / (KS.y1 - KS.y0), 0, 0.999) * 11, i = Math.floor(u), t = u - i;
+        const kante = (o) => zack[o + i] * (1 - t) + zack[o + i + 1] * t;
+        const a = frei.x0 + kante(0), b = frei.x1 - kante(12);
+        if (x > a && x < b) return null;
+        d = Math.min(d, Math.abs(x - a) * 1.2, Math.abs(x - b) * 1.2);
       }
-      if (s > 35) {
-        g.fillStyle = "rgba(255,255,255,0.85)";
-        for (let i = 0; i < (xb - xa) * 26; i++) { const p = V.p(xa + 0.04 + rng() * (xb - xa - 0.08), y0 + 0.05 + rng() * (y1 - y0 - 0.1), zU(0.05) + dick + 0.004); g.fillRect(p[0], p[1], Math.max(0.6, s * 0.004), Math.max(0.6, s * 0.004)); }
+      if (d <= 0) return 0;
+      let t = dick * Math.sqrt(Math.min(1, d / 0.07));
+      for (const fy of fugen) t *= 1 - 0.2 * Math.exp(-Math.pow((y - fy) / 0.022, 2));
+      t *= 0.72 + 0.28 * klemm((y - KS.y0) / 0.2, 0, 1);               // hinten an der Lehne dünner
+      t *= 1 + 0.07 * Math.sin(x * 7.3 + saat) * Math.sin(y * 21 + saat * 0.3);   // leicht wellig verweht
+      return t;
+    };
+    /* vorn hängt der Schnee über die Kante und etwas nach unten */
+    const z = (x, y) => { const hh = h(x, y); if (hh == null) return null; const vor = Math.max(0, y - 0.27); return zU(y) + hh - vor * vor * 110; };
+    return { dick: dick, frei: frei, z: z, zU: zU, rng: rng };
+  }
+  function kissenMalen(g, V, F, saat, von, bis) {
+    const s = V.s;
+    const K = kissenForm(saat);
+    const nx = KS.nx, ny = KS.ny;
+    const X = (i) => -XL + 2 * XL * i / nx, Y = (j) => KS.y0 + (KS.y1 - KS.y0) * j / ny;
+    const zell = [];
+    for (let i = 0; i < nx; i++) {
+      const xm = (X(i) + X(i + 1)) / 2;
+      if (von != null && (xm < von || xm > bis)) continue;
+      for (let j = 0; j < ny; j++) {
+        const ecken = [[X(i), Y(j)], [X(i + 1), Y(j)], [X(i + 1), Y(j + 1)], [X(i), Y(j + 1)]];
+        const zz = ecken.map((q) => K.z(q[0], q[1]));
+        if (zz.some((v) => v == null)) continue;
+        const hoch = zz.map((v, k) => v - K.zU(ecken[k][1]));
+        if (Math.max(...hoch) < 0.003 && Math.max(...ecken.map((q) => q[1])) < 0.27) continue;
+        /* Normale aus den Ecken */
+        const dzx = ((zz[1] - zz[0]) + (zz[2] - zz[3])) / 2 / (X(i + 1) - X(i));
+        const dzy = ((zz[3] - zz[0]) + (zz[2] - zz[1])) / 2 / (Y(j + 1) - Y(j));
+        const nk = V.n(-dzx, -dzy, 1);
+        const pts = ecken.map((q, k) => V.p(q[0], q[1], zz[k]));
+        zell.push({ pts: pts, nk: nk, t: V.tiefe(xm, (Y(j) + Y(j + 1)) / 2, (zz[0] + zz[2]) / 2), hoch: (hoch[0] + hoch[1] + hoch[2] + hoch[3]) / 4 });
       }
     }
-    if (frei) {
-      /* Wischspuren: dünne Schneereste in den Fugen und auf den Latten */
-      g.fillStyle = rgb(licht([238, 243, 252], [0, 0, 1], F), 0.85);
+    zell.sort((p, q) => p.t - q.t);
+    if (!zell.length) return;
+    /* Farben je Zelle: frischer Schnee sehr hell; dünne Stellen am Rand
+       lassen das Holz dunkel durchschimmern */
+    for (const Z of zell) {
+      let c = licht([246, 249, 255], Z.nk, F);
+      if (Z.hoch < K.dick * 0.3) c = misch(c, licht([200, 206, 220], Z.nk, F), 1 - Math.max(0, Z.hoch) / (K.dick * 0.3));
+      Z.c = rgb(c);
+    }
+    /* Zellen erst in ein kleines Hilfsbild malen und dort weichzeichnen –
+       das ist stufenloses Licht wie auf einer echten Rundung (keine
+       Kacheln). Der Umriss bleibt scharf: wir beschneiden auf die Zellen. */
+    let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
+    const umriss = new Path2D();
+    for (const Z of zell) {
+      for (const p of Z.pts) { bx0 = Math.min(bx0, p[0]); by0 = Math.min(by0, p[1]); bx1 = Math.max(bx1, p[0]); by1 = Math.max(by1, p[1]); }
+      umriss.moveTo(Z.pts[0][0], Z.pts[0][1]); for (let k = 1; k < 4; k++) umriss.lineTo(Z.pts[k][0], Z.pts[k][1]); umriss.closePath();
+    }
+    const zelle = 2 * XL / KS.nx * s;
+    const weich = Math.max(0.6, Math.min(12, zelle * 0.55));
+    const rand = Math.ceil(weich * 3 + 2);
+    const W = Math.ceil(bx1 - bx0 + 2 * rand), H = Math.ceil(by1 - by0 + 2 * rand);
+    if (W > 1 && H > 1 && W * H < 4e6) {
+      const hilf = document.createElement("canvas"); hilf.width = W; hilf.height = H;
+      const h = hilf.getContext("2d");
+      h.translate(rand - bx0, rand - by0);
+      h.lineJoin = "round";
+      /* 1. gedehnt (dicke Kanten), damit das Weichzeichnen am Rand keine
+            Durchsichtigkeit hereinzieht; 2. die Zellen selbst */
+      h.lineWidth = weich * 4;
+      for (const Z of zell) { vieleck(h, Z.pts); h.strokeStyle = Z.c; h.stroke(); }
+      h.lineWidth = 1;
+      for (const Z of zell) { vieleck(h, Z.pts); h.fillStyle = Z.c; h.fill(); h.strokeStyle = Z.c; h.stroke(); }
+      g.save();
+      g.clip(umriss, "nonzero");
+      g.filter = "blur(" + weich.toFixed(2) + "px)";
+      g.drawImage(hilf, bx0 - rand, by0 - rand);
+      g.restore();
+    } else {
+      for (const Z of zell) { vieleck(g, Z.pts); g.fillStyle = Z.c; g.fill(); }
+    }
+    if (s > 40) {
+      /* Glitzer: ein paar Kristalle, nachts kaum */
+      const rng = ST.zufall(saat * 3 + 11);
+      g.fillStyle = "rgba(255,255,255," + (0.8 * (1 - 0.75 * F.nacht)).toFixed(2) + ")";
+      for (let i = 0; i < 40; i++) {
+        const x = -XL + 0.05 + rng() * (2 * XL - 0.1), y = KS.y0 + 0.05 + rng() * (0.27 - KS.y0 - 0.08);
+        if (von != null && (x < von || x > bis)) continue;
+        const z = K.z(x, y); if (z == null) continue;
+        const p = V.p(x, y, z + 0.002); const r = Math.max(0.5, s * 0.0028);
+        g.fillRect(p[0], p[1], r, r);
+      }
+    }
+    if (K.frei && (von == null || (von < 0 && bis > 0))) {
+      /* Wischkanten: Brösel am Rand und Reste in den Fugen */
+      const rng = K.rng;
+      g.fillStyle = rgb(licht([238, 243, 252], [0, 0, 1], F), 0.9);
+      for (const x0 of [K.frei.x0, K.frei.x1]) {
+        for (let i = 0; i < 18; i++) {
+          const y = KS.y0 + 0.02 + rng() * (0.27 - KS.y0 - 0.04), x = x0 + (x0 === K.frei.x0 ? 1 : -1) * Math.pow(rng(), 2) * 0.06;
+          const p = V.p(x, y, K.zU(y) + 0.003), r = Math.max(0.4, (0.003 + rng() * 0.006) * s);
+          g.beginPath(); g.ellipse(p[0], p[1], r, r * 0.6, 0, 0, TAU); g.fill();
+        }
+      }
       for (const L of SITZ) {
         for (let j = 0; j < 2; j++) {
-          if (rng() < 0.35) continue;
-          const xa = frei.x0 + rng() * (frei.x1 - frei.x0) * 0.6, xb = xa + 0.06 + rng() * 0.12;
-          const a = V.p(xa, L.y + (rng() - 0.5) * 0.04, L.z + L.d + 0.003), b = V.p(Math.min(frei.x1, xb), L.y + (rng() - 0.5) * 0.04, L.z + L.d + 0.003);
-          g.beginPath(); g.ellipse((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.hypot(b[0] - a[0], b[1] - a[1]) * 0.5, Math.max(0.5, 0.009 * s), Math.atan2(b[1] - a[1], b[0] - a[0]), 0, TAU); g.fill();
+          if (rng() < 0.55) continue;
+          const xa = K.frei.x0 + rng() * (K.frei.x1 - K.frei.x0) * 0.6, xb = xa + 0.04 + rng() * 0.1;
+          const a = V.p(xa, L.y + (rng() - 0.5) * 0.04, L.z + L.d + 0.003), b = V.p(Math.min(K.frei.x1, xb), L.y + (rng() - 0.5) * 0.04, L.z + L.d + 0.003);
+          g.beginPath(); g.ellipse((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.hypot(b[0] - a[0], b[1] - a[1]) * 0.5, Math.max(0.5, 0.008 * s), Math.atan2(b[1] - a[1], b[0] - a[0]), 0, TAU); g.fill();
         }
       }
     }
   }
   /* Schneegrat auf einer Rückenlatte */
-  function gratMalen(g, V, F, L) {
+  function gratMalen(g, V, F, L, von, bis) {
     const s = V.s;
     const oy = L.y + LD[0] * L.b / 2, oz = L.z + LD[1] * L.b / 2 + 0.008;
-    const a = V.p(-XL + 0.01, oy, oz), b = V.p(XL - 0.01, oy, oz);
+    const a = V.p(Math.max(-XL + 0.01, von), oy, oz), b = V.p(Math.min(XL - 0.01, bis), oy, oz);
     g.lineCap = "round";
     g.strokeStyle = rgb(licht([220, 230, 246], V.n(0, 0.6, 0.6), F)); g.lineWidth = Math.max(0.8, 0.026 * s);
     g.beginPath(); g.moveTo(a[0], a[1] + 0.004 * s); g.lineTo(b[0], b[1] + 0.004 * s); g.stroke();
     g.strokeStyle = rgb(licht([250, 252, 255], [0, 0, 1], F)); g.lineWidth = Math.max(0.6, 0.018 * s);
     g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
+  }
+
+  /* Weihnachtsschmuck: ein Tannenzweig mit roter Schleife, außen an die
+     Volute einer Armlehne gebunden (Seite nach o.saat) – wie ihn der
+     Verschönerungsverein im Advent an jede Bank hängt. */
+  function bankZweigMalen(g, V, F, seite, saat) {
+    const s = V.s;
+    const rng = ST.zufall(saat * 17 + 3);
+    const x0 = seite * (XA + 0.012), P0 = [x0, 0.25, 0.6];
+    const k = ST.lichtFaktor(V.n(seite, 0.3, 0.6), F.Z, 0, F.jahr);
+    const P = (q) => V.p(q[0], q[1], q[2]);
+    if (s < 18) {
+      const m = P([x0, 0.24, 0.52]);
+      g.fillStyle = rgb(mul([36, 70, 42], k)); g.beginPath(); g.ellipse(m[0], m[1], 0.06 * s, 0.09 * s, 0, 0, TAU); g.fill();
+      g.fillStyle = rgb(mul([184, 18, 32], k)); g.beginPath(); g.arc(m[0], m[1] - 0.07 * s, Math.max(0.6, 0.025 * s), 0, TAU); g.fill();
+      return;
+    }
+    const zweige = [[-0.9, 0.2], [-0.35, 0.26], [0.2, 0.24], [0.75, 0.2], [0, 0.17]];
+    const nadeln = [new Path2D(), new Path2D(), new Path2D()], stiel = new Path2D(), schnee = new Path2D();
+    for (const [w, l] of zweige) {
+      /* Richtung in der Ebene außen an der Wange: nach unten fächernd */
+      const dy = Math.sin(w) * 0.6, dz = -Math.cos(w) * 0.9 - 0.1, dx = seite * 0.25;
+      const n = Math.hypot(dx, dy, dz), d = [dx / n, dy / n, dz / n];
+      const pts = []; for (let j = 0; j <= 6; j++) pts.push(P([P0[0] + d[0] * l * j / 6, P0[1] + d[1] * l * j / 6, P0[2] + d[2] * l * j / 6 - 0.01 * j * j / 36]));
+      stiel.moveTo(pts[0][0], pts[0][1]); pts.forEach((p) => stiel.lineTo(p[0], p[1]));
+      for (let j = 0; j < 6; j++) {
+        const p = pts[j], q = pts[j + 1], ex = q[0] - p[0], ey = q[1] - p[1], L = Math.hypot(ex, ey) || 1;
+        const m = Math.max(2, Math.round(L / Math.max(0.7, 0.006 * s)));
+        for (let i = 0; i < m; i++) {
+          const u = i / m, x = p[0] + ex * u, y = p[1] + ey * u, lang = 0.03 * s * (1 - j / 8) * (0.8 + rng() * 0.4);
+          for (const sd of [-1, 1]) { const pf = nadeln[(rng() * 3) | 0]; pf.moveTo(x, y); pf.lineTo(x + (-ey / L * sd * 0.8 + ex / L * 0.5) * lang, y + (ex / L * sd * 0.8 + ey / L * 0.5) * lang); }
+        }
+        if (F.jahr === "winter" && rng() < 0.45) { const rx = Math.max(0.6, 0.02 * s); schnee.moveTo(p[0] + rx, p[1] - 0.012 * s); schnee.ellipse(p[0], p[1] - 0.012 * s, rx, rx * 0.4, 0, 0, TAU); }
+      }
+    }
+    g.lineCap = "round";
+    g.strokeStyle = rgb(mul([86, 64, 42], k)); g.lineWidth = Math.max(0.5, 0.006 * s); g.stroke(stiel);
+    g.lineWidth = Math.max(0.4, 0.0038 * s);
+    [[30, 64, 40], [42, 82, 48], [60, 104, 62]].forEach((c, i) => { g.strokeStyle = rgb(mul(c, k)); g.stroke(nadeln[i]); });
+    g.fillStyle = rgb(mul([246, 249, 255], ST.lichtFaktor([0, 0, 1], F.Z, 0, F.jahr)), 0.95); g.fill(schnee);
+    /* Schleife: zwei Schlaufen, Knoten, zwei Bänder */
+    const m = P([P0[0] + seite * 0.01, P0[1], P0[2] + 0.01]), r = 0.045 * s;
+    const rot = [184, 18, 32], c = mul(rot, k), cd = mul(skal(rot, 0.6), k);
+    g.fillStyle = rgb(cd);
+    for (const sd of [-1, 1]) { g.beginPath(); g.moveTo(m[0], m[1]); g.quadraticCurveTo(m[0] + sd * r * 0.5, m[1] + r * 1.1, m[0] + sd * r * 0.35, m[1] + r * 2.1); g.lineTo(m[0] + sd * r * 0.7, m[1] + r * 1.95); g.quadraticCurveTo(m[0] + sd * r * 0.8, m[1] + r * 1.0, m[0] + sd * r * 0.2, m[1]); g.fill(); }
+    for (const sd of [-1, 1]) {
+      const gr = g.createLinearGradient(0, m[1] - r, 0, m[1] + r * 0.6);
+      gr.addColorStop(0, rgb(plus(c, [50, 30, 30]))); gr.addColorStop(1, rgb(cd));
+      g.fillStyle = gr; g.beginPath(); g.moveTo(m[0], m[1]);
+      g.bezierCurveTo(m[0] + sd * r * 0.4, m[1] - r * 1.1, m[0] + sd * r * 1.25, m[1] - r * 0.8, m[0] + sd * r * 1.05, m[1] + r * 0.05);
+      g.bezierCurveTo(m[0] + sd * r * 1.0, m[1] + r * 0.55, m[0] + sd * r * 0.4, m[1] + r * 0.45, m[0], m[1]); g.fill();
+    }
+    g.fillStyle = rgb(c); g.beginPath(); g.ellipse(m[0], m[1], r * 0.28, r * 0.32, 0, 0, TAU); g.fill();
   }
 
   /* =====================================================================
@@ -572,26 +693,39 @@
           if (A.grube) { grubeMalen(g, V, F, 0.5, bau < 0.18 ? null : -0.5 + 0.5 * phase(bau, 0.18, 0.29)); return; }
           if (bau < 0.5) fundamentMalen(g, V, F, true);
           if (!winter && A.schmuck) fruehlingBoden(g, V, F, saat);
-          /* Teile nach Tiefe: ferne Wange, Latten (von hinten nach vorn), nahe Wange */
-          const nahX = V.tiefe(1, 0, 0) >= 0 ? XW : -XW;
-          const teile = [];
-          for (let i = 0; i < A.sitz; i++) { const L = SITZ[i]; teile.push({ t: V.tiefe(0, L.y, L.z), f: () => latteMalen(g, V, F, L, [1, 0], [0, 1], holz, saat * 7 + i) }); }
-          for (let i = 0; i < A.rueck; i++) { const L = RUECK[i]; teile.push({ t: V.tiefe(0, L.y, L.z), f: () => { latteMalen(g, V, F, L, LD, LN, holz, saat * 7 + 10 + i, { schild: i === 1 }); if (winter && A.schmuck) gratMalen(g, V, F, L); } }); }
-          if (A.stange) teile.push({ t: V.tiefe(0, 0.02, 0.33), f: () => stangeMalen(g, V, F, eisen) });
-          teile.sort((a, b) => a.t - b.t);
-          wangeMalen(g, V, F, -nahX, eisen, winter && A.schmuck);
-          /* Latten; das Schneekissen liegt über den Sitzlatten, aber unter
-             den Rückenlatten, wenn man von hinten schaut */
+          /* Reihenfolge: Überstand hinter der fernen Wange, ferne Wange,
+             Latten zwischen den Wangen (von hinten nach vorn, mit Kissen),
+             nahe Wange, Überstand davor. Ein Lattenende liegt so immer
+             richtig vor oder hinter dem Guss, auf dem es aufliegt. */
+          const nahX = V.tiefe(1, 0, 0) >= 0 ? XW : -XW, sn = nahX > 0 ? 1 : -1;
           const kissen = winter && A.schmuck;
-          const tKissen = V.tiefe(0, 0.05, SITZ[2].z + 0.06);
-          let kissenGemalt = !kissen;
-          for (const e of teile) {
-            if (!kissenGemalt && e.t > tKissen + 0.02) { kissenMalen(g, V, F, saat); kissenGemalt = true; }
-            e.f();
-          }
-          if (!kissenGemalt) kissenMalen(g, V, F, saat);
+          const bereich = (von, bis, mitte) => {
+            const opt = { von: von, bis: bis };
+            const teile = [];
+            for (let i = 0; i < A.sitz; i++) { const L = SITZ[i]; teile.push({ t: V.tiefe(0, L.y, L.z), f: () => latteMalen(g, V, F, L, [1, 0], [0, 1], holz, saat * 7 + i, opt) }); }
+            for (let i = 0; i < A.rueck; i++) { const L = RUECK[i]; teile.push({ t: V.tiefe(0, L.y, L.z), f: () => { latteMalen(g, V, F, L, LD, LN, holz, saat * 7 + 10 + i, Object.assign({ schild: i === 1 && mitte }, opt)); if (kissen) gratMalen(g, V, F, L, von, bis); } }); }
+            if (mitte && A.stange) teile.push({ t: V.tiefe(0, 0.02, 0.33), f: () => stangeMalen(g, V, F, eisen) });
+            teile.sort((a, b) => a.t - b.t);
+            /* das Schneekissen liegt über den Sitzlatten, aber unter den
+               Rückenlatten, wenn man von hinten schaut */
+            const tKissen = V.tiefe(0, 0.05, SITZ[2].z + 0.06);
+            let gemalt = !kissen || A.sitz < SITZ.length;
+            for (const e of teile) {
+              if (!gemalt && e.t > tKissen + 0.02) { kissenMalen(g, V, F, saat, von, bis); gemalt = true; }
+              e.f();
+            }
+            if (!gemalt) kissenMalen(g, V, F, saat, von, bis);
+          };
+          const zweigSeite = saat % 2 ? 1 : -1;
+          const zweig = A.schmuck && winter;
+          if (zweig && zweigSeite !== sn) bankZweigMalen(g, V, F, zweigSeite, saat);
+          bereich(sn > 0 ? -XL : XA, sn > 0 ? -XA : XL, false);
+          wangeMalen(g, V, F, -nahX, eisen, winter && A.schmuck);
+          bereich(-XA, XA, true);
           if (!winter && A.schmuck) blaetterMalen(g, V, F, saat, 1, 14);
           wangeMalen(g, V, F, nahX, eisen, winter && A.schmuck);
+          bereich(sn > 0 ? XA : -XL, sn > 0 ? XL : -XA, false);
+          if (zweig && zweigSeite === sn) bankZweigMalen(g, V, F, zweigSeite, saat);
         })
       };
       M.teil("bank", { mitte: [0, 0, 0.4] });

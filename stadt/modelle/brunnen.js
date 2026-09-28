@@ -12,10 +12,13 @@
    Säule mit Kapitell und eine bemalte Ritterfigur mit dem Wappenschild
    von Winterhausen (grüne Tanne auf Silber, roter Bord) und Fahne.
 
-   Winter: Wasser gefroren (Eis mit Rissen und Schneeverwehungen),
-   gefrorene Wasserstrahlen, Eiszapfen am Beckenrand, Tannengrün mit roten
-   Schleifen um das Becken, ein Kranz an der Säule, Schnee auf Figur und
-   Kanten. Frühling: plätscherndes Wasser (M.lebendig: Strahlen, Tropfen,
+   Winter: wie in Franken üblich ist das Wasser abgelassen und das Becken
+   mit einer Bretterabdeckung winterfest gemacht. Auf den Brettern liegt
+   ein Schneepolster mit sichtbarer Dicke, darauf stehen zwei kleine
+   Tannen in Holzkübeln mit Lichterketten (abends/nachts an). Die Röhren
+   tropfen nicht mehr, nur ein paar Eiszapfen hängen daran. Tannengrün mit
+   roten Schleifen und Eiszapfen am Beckenrand, ein Kranz an der Säule,
+   Schnee auf Figur und Kanten. Frühling: plätscherndes Wasser (M.lebendig: Strahlen, Tropfen,
    Ringe), Blumengirlanden mit bunten Eiern (wie ein fränkischer
    Osterbrunnen) und Blumentöpfe auf der Stufe.
 
@@ -126,6 +129,7 @@
   const SR = 0.17, ZS0 = 1.63, ZS1 = 3.12; // Säule
   const ZK = 3.3, ZF = 3.4;              // Kapitell, Figurenfuß
   const ROEHRE_Z = 1.12;
+  const ZD = ZR1 + 0.05, PD = 0.09;      // Winterabdeckung: Brettoberkante, Schneedicke
   const STEIN = [178, 124, 98];          // Mainsandstein, rötlich
   const STEIN_HELL = [196, 150, 120];
 
@@ -239,20 +243,16 @@
       g.strokeStyle = rgb(mul([150, 112, 50], km)); g.lineWidth = Math.max(1, 0.055 * s); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
       g.strokeStyle = rgb(mul([236, 200, 120], km)); g.lineWidth = Math.max(0.5, 0.018 * s); g.beginPath(); g.moveTo(a[0], a[1] - 0.012 * s); g.lineTo(b[0], b[1] - 0.012 * s); g.stroke();
       if (winter && eisAn) {
-        /* gefrorener Strahl: durchscheinende Eissäule bis zur Eisfläche */
-        const pts = [];
-        for (let i = 0; i <= 8; i++) pts.push(V.p.apply(null, strahlPunkt(d, i / 8)));
+        /* Wasser abgestellt: nur ein paar Eiszapfen an der Röhre, durchscheinend
+           mit hellem Glanzstreif (kein gefrorener Strahl mehr – der las sich
+           wie fließendes Wasser) */
         const kE = lichtK([0, 0.6, 0.8], Z, jahr);
-        g.strokeStyle = rgb(mul([200, 222, 240], kE), 0.55); g.lineWidth = Math.max(1.5, 0.09 * s);
-        g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.stroke();
-        g.strokeStyle = rgb(mul([246, 250, 255], kE), 0.8); g.lineWidth = Math.max(0.6, 0.025 * s);
-        g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(p[0] - 0.015 * s, p[1]) : g.moveTo(p[0] - 0.015 * s, p[1]))); g.stroke();
-        /* Eisbuckel, wo der Strahl auf dem Eis gefror */
-        const e = pts[8];
-        g.fillStyle = rgb(mul([226, 238, 250], kE), 0.8); g.beginPath(); g.ellipse(e[0], e[1], 0.16 * s, 0.07 * s, 0, 0, TAU); g.fill();
-        /* Eiszapfen an der Röhre */
-        g.fillStyle = rgb(mul([220, 236, 250], kE), 0.7);
-        for (let i = 0; i < 3; i++) { const q = V.p(d[0] * (PB + 0.08 + i * 0.08), d[1] * (PB + 0.08 + i * 0.08), ROEHRE_Z - 0.02); const l = (0.08 + i * 0.05) * KZ * s, w = Math.max(0.6, 0.012 * s); g.beginPath(); g.moveTo(q[0] - w, q[1]); g.lineTo(q[0], q[1] + l); g.lineTo(q[0] + w, q[1]); g.closePath(); g.fill(); }
+        for (let i = 0; i < 3; i++) {
+          const u = PB + 0.12 + i * 0.075, q = V.p(d[0] * u, d[1] * u, ROEHRE_Z - 0.015);
+          const l = (0.05 + [0.07, 0.11, 0.04][i]) * KZ * s, w = Math.max(0.5, 0.011 * s);
+          g.fillStyle = rgb(mul([196, 222, 242], kE), 0.62); g.beginPath(); g.moveTo(q[0] - w, q[1]); g.quadraticCurveTo(q[0] - w * 0.3, q[1] + l * 0.6, q[0], q[1] + l); g.quadraticCurveTo(q[0] + w * 0.3, q[1] + l * 0.6, q[0] + w, q[1]); g.closePath(); g.fill();
+          if (s > 40) { g.strokeStyle = "rgba(255,255,255,0.8)"; g.lineWidth = Math.max(0.4, 0.004 * s); g.beginPath(); g.moveTo(q[0] - w * 0.35, q[1]); g.lineTo(q[0] - w * 0.1, q[1] + l * 0.7); g.stroke(); }
+        }
       }
     }
   }
@@ -496,6 +496,148 @@
     g.strokeStyle = "rgba(92,72,52,0.6)"; g.lineWidth = Math.max(1, s * 0.12); g.lineJoin = "round"; vieleck(g, oben); g.stroke();
   }
 
+  /* ---------------- Winterabdeckung ----------------
+     Bretter (Fichte, vergraut) auf dem Beckenrand, darauf ein Schneepolster
+     mit echter Dicke: eigene Deckfläche mit unregelmäßigem Umriss und
+     Seitenflächen rundherum. Am Rand bleiben die Bretter teils frei
+     (dort hat der Wind den Schnee abgetragen). */
+  function bretter(g, w, h, F, saat) {
+    const rng = ST.zufall(saat);
+    g.fillStyle = "rgb(58,46,36)"; g.fillRect(-0.05, -0.05, w + 0.1, h + 0.1);
+    for (let y = 0; y < h; y += 0.19) {
+      const c = [124 + rng() * 22, 104 + rng() * 16, 82 + rng() * 12];
+      g.fillStyle = rgb(c); g.fillRect(0, y + 0.006, w, 0.178);
+      if (F.px > 25) {
+        g.strokeStyle = rgb(skal(c, 0.8), 0.6); g.lineWidth = Math.max(0.003, 0.7 / F.px);
+        for (let i = 0; i < 4; i++) { const yy = y + 0.03 + rng() * 0.13; g.beginPath(); g.moveTo(0, yy); for (let x = 0.4; x < w + 0.4; x += 0.4) g.lineTo(x, yy + (rng() - 0.5) * 0.012); g.stroke(); }
+        g.fillStyle = "rgba(50,34,24,0.5)"; for (let i = 0; i < 2; i++) { g.beginPath(); g.ellipse(rng() * w, y + 0.05 + rng() * 0.09, 0.018, 0.011, 0, 0, TAU); g.fill(); }
+      }
+    }
+    if (F.px > 14) rauschen(g, 0, 0, w, h, 1.2, 0.3, saat % 50);
+  }
+  /* Randabstand des Schneepolsters zur Beckenkante: Achteck-Radius in
+     Richtung a (Kantenmitten bei k·45°), minus unregelmäßiger Rand */
+  function achteckRadius(r, a) {
+    const d = ((a % (Math.PI / 4)) + Math.PI / 4) % (Math.PI / 4), dm = Math.min(d, Math.PI / 4 - d);
+    return r * Math.cos(Math.PI / 8) / Math.cos(dm);
+  }
+  function abdeckungBauen(M, saat) {
+    const R = RA + 0.02;
+    /* Bretterkante (4 cm) und Bretter */
+    achteckWand(M, R, ZR1, ZD, (k) => function (g, F) {
+      g.fillStyle = "rgb(112,92,70)"; g.fillRect(-0.05, -0.05, F.w + 0.1, F.h + 0.1);
+      g.fillStyle = "rgba(40,28,20,0.55)"; for (let x = 0.09 + (k % 3) * 0.05; x < F.w; x += 0.19) g.fillRect(x, 0, 0.01, F.h);
+      g.fillStyle = "rgba(246,249,255,0.9)"; g.fillRect(0, 0, F.w, Math.min(0.012, F.h * 0.3));
+    }, "deckel-kante");
+    achteckDeckel(M, R, ZD, gebacken(function (g, F) { bretter(g, F.w, F.h, F, saat + 5); }), "deckel");
+    /* Schneepolster */
+    const N = 36, pts = [];
+    for (let i = 0; i < N; i++) {
+      const a = i / N * TAU, rr = achteckRadius(R, a) - (0.07 + 0.2 * (0.5 + 0.5 * ST.rausch(i * 0.55, saat % 17, 5)));
+      pts.push([Math.cos(a) * rr, Math.sin(a) * rr]);
+    }
+    const zO = ZD + PD;
+    for (let i = 0; i < N; i++) {
+      const a = pts[i], b = pts[(i + 1) % N], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      M.flaeche({ name: "polster-seite" + i, o: [b[0], b[1], zO], u: [(a[0] - b[0]) / L, (a[1] - b[1]) / L, 0], v: [0, 0, -1], w: L, h: PD, ebene: 1, lichtExtra: 0.04, malen: function (g, F) {
+        const gr = g.createLinearGradient(0, 0, 0, F.h);
+        gr.addColorStop(0, "rgb(246,248,252)"); gr.addColorStop(0.55, "rgb(226,233,244)"); gr.addColorStop(1, "rgb(196,208,226)");
+        g.fillStyle = gr; g.fillRect(-0.05, -0.05, F.w + 0.1, F.h + 0.1);
+      } });
+    }
+    M.flaeche({ name: "polster", o: [-R, -R, zO], u: [1, 0, 0], v: [0, 1, 0], w: 2 * R, h: 2 * R, ebene: 2, lichtExtra: 0.05, umriss: pts.map((p) => [p[0] + R, p[1] + R]), malen: gebacken(function (g, F) {
+      const rng = ST.zufall(saat + 41);
+      g.fillStyle = "rgb(247,249,253)"; g.fillRect(0, 0, F.w, F.h);
+      /* weiche Rundung zur Kante hin: bläulicher Saum innen am Umriss */
+      g.save(); g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(p[0] + R, p[1] + R) : g.moveTo(p[0] + R, p[1] + R))); g.closePath();
+      g.strokeStyle = "rgba(186,200,224,0.45)"; g.lineWidth = 0.16; g.stroke();
+      g.strokeStyle = "rgba(206,218,236,0.5)"; g.lineWidth = 0.07; g.stroke(); g.restore();
+      /* Windrippeln und Glitzer */
+      g.strokeStyle = "rgba(200,212,232,0.35)"; g.lineWidth = 0.012;
+      for (let i = 0; i < 14; i++) { const x = R + (rng() - 0.5) * 2.4, y = R + (rng() - 0.5) * 2.4, l = 0.2 + rng() * 0.4; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + l / 2, y - 0.04, x + l, y + 0.01); g.stroke(); }
+      if (F.px > 40) { g.fillStyle = "rgba(255,255,255,1)"; for (let i = 0; i < 90; i++) g.fillRect(rng() * F.w, rng() * F.h, 0.012, 0.012); }
+    }) });
+  }
+  /* Kleine Tanne im Holzkübel (etwa 1,3 m) mit Schnee und Lichterkette.
+     Als Figur gemalt: Kübel und Nadelkegel sind drehsymmetrisch, nur das
+     Licht kommt aus der Welt (links hell, rechts im Schatten). */
+  function baeumchenMalen(g, s, F, saat) {
+    const Z = F.Z, jahr = F.jahr, rng = ST.zufall(saat * 31 + 7);
+    const tiers = 6, spitze = 1.42;
+    if (F.schatten) {
+      g.fillStyle = "#000"; g.beginPath(); g.moveTo(-0.2 * s, 0); g.lineTo(-0.2 * s, -0.3 * KZ * s); g.lineTo(-0.46 * s, -0.36 * KZ * s);
+      g.lineTo(0, -spitze * KZ * s); g.lineTo(0.46 * s, -0.36 * KZ * s); g.lineTo(0.2 * s, -0.3 * KZ * s); g.lineTo(0.2 * s, 0); g.closePath(); g.fill(); return;
+    }
+    const kL = lichtK([-0.62, 0.62, 0.35], Z, jahr), kV = lichtK([0.62, 0.62, 0.35], Z, jahr), kR = lichtK([0.62, -0.62, 0.35], Z, jahr), kO = lichtK([0, 0, 1], Z, jahr);
+    const nacht = F.nacht || 0, an = nacht > 0.05;
+    /* Holzkübel mit zwei Eisenbändern */
+    const rK = 0.19 * s, hK = 0.3 * KZ * s, holz = [118, 84, 54];
+    const gk = g.createLinearGradient(-rK, 0, rK, 0);
+    gk.addColorStop(0, rgb(mul(holz, kL))); gk.addColorStop(0.45, rgb(mul(holz, kV))); gk.addColorStop(1, rgb(mul(holz, skal(kR, 0.9))));
+    g.fillStyle = gk; g.beginPath(); g.moveTo(-rK * 0.9, 0); g.lineTo(-rK, -hK); g.lineTo(rK, -hK); g.lineTo(rK * 0.9, 0); g.ellipse(0, 0, rK * 0.9, rK * 0.45, 0, 0, Math.PI); g.closePath(); g.fill();
+    if (s > 30) { g.strokeStyle = "rgba(40,26,16,0.45)"; g.lineWidth = Math.max(0.5, 0.006 * s); for (let i = -3; i <= 3; i++) { const x = i / 3.6 * rK; g.beginPath(); g.moveTo(x * 0.9, rK * 0.45 * Math.sqrt(1 - Math.pow(x / rK, 2)) * 0.95); g.lineTo(x, -hK); g.stroke(); } }
+    g.strokeStyle = rgb(mul([46, 44, 42], kV)); g.lineWidth = Math.max(0.7, 0.022 * s);
+    for (const zb of [0.07, 0.23]) { const y = -zb * KZ * s, rr = rK * (0.9 + 0.1 * zb / 0.3); g.beginPath(); g.ellipse(0, y, rr, rr * 0.5, 0, 0, Math.PI); g.stroke(); }
+    g.fillStyle = rgb(mul([58, 42, 30], kO)); g.beginPath(); g.ellipse(0, -hK, rK, rK * 0.5, 0, 0, TAU); g.fill();
+    if (jahr === "winter") { g.fillStyle = rgb(mul([244, 247, 253], kO)); g.beginPath(); g.ellipse(0, -hK + 0.01 * s, rK * 0.86, rK * 0.4, 0, 0, TAU); g.fill(); }
+    /* Stämmchen */
+    g.fillStyle = rgb(mul([86, 62, 44], kV)); g.fillRect(-0.025 * s, -(0.42 * KZ * s), 0.05 * s, 0.12 * KZ * s);
+    /* Nadelkegel: sechs hängende Etagen von unten nach oben */
+    const lampen = [];
+    for (let i = 0; i < tiers; i++) {
+      const zR = 0.4 + i * 0.16, zT = zR + 0.26 - i * 0.012, r = 0.46 * (1 - i / tiers * 0.8);
+      const rx = r * s, ry = r * s * 0.5, cy = -zR * KZ * s, ty = -zT * KZ * s;
+      const nZ = Math.max(8, Math.round(r * 40)), rand = [];
+      for (let j = 0; j <= nZ; j++) { const ph = Math.PI - j / nZ * Math.PI, rr = (j % 2 ? 0.84 : 1.02) * (1 + 0.08 * (rng() - 0.5)); rand.push([Math.cos(ph) * rx * rr, cy + Math.sin(ph) * ry * rr + (j % 2 ? -0.015 : 0.02) * s]); }
+      g.beginPath(); g.moveTo(0, ty); g.lineTo(rand[0][0], rand[0][1] - 0.03 * s);
+      for (const p of rand) g.lineTo(p[0], p[1]);
+      g.lineTo(rand[nZ][0], rand[nZ][1] - 0.03 * s); g.closePath();
+      const gg = g.createLinearGradient(-rx, 0, rx, 0), gruen = [34, 72, 44];
+      gg.addColorStop(0, rgb(mul(gruen, skal(kL, 1.05)))); gg.addColorStop(0.45, rgb(mul(gruen, skal(kV, 0.9)))); gg.addColorStop(1, rgb(mul(gruen, skal(kR, 0.7))));
+      g.fillStyle = gg; g.fill();
+      /* Nadelstriche von der Spitze der Etage nach außen */
+      if (s > 30) {
+        const nS = Math.round(r * s * 0.9);
+        g.lineWidth = Math.max(0.5, 0.006 * s); g.lineCap = "round";
+        for (let k = 0; k < nS; k++) {
+          const ph = 0.06 * Math.PI + rng() * 0.88 * Math.PI, u0 = 0.35 + rng() * 0.35, u1 = Math.min(1, u0 + 0.25 + rng() * 0.2);
+          const x0 = Math.cos(ph) * rx * u0, y0 = ty + (cy + Math.sin(ph) * ry * u0 - ty) * u0 + 0.01 * s, x1 = Math.cos(ph) * rx * u1, y1 = ty + (cy + Math.sin(ph) * ry * u1 - ty) * u1 + 0.02 * s;
+          g.strokeStyle = Math.cos(ph) < -0.2 ? "rgba(150,200,140,0.35)" : "rgba(0,14,6,0.4)";
+          g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+        }
+      }
+      /* Schneekappe auf der Etage */
+      if (jahr === "winter") {
+        g.beginPath(); g.moveTo(0, ty - 0.01 * s);
+        for (let j = 0; j <= 10; j++) { const ph = Math.PI - j / 10 * Math.PI, rr = 0.62 + 0.2 * rng(); g.lineTo(Math.cos(ph) * rx * rr, cy + Math.sin(ph) * ry * rr - (0.07 + 0.03 * rng()) * s); }
+        g.closePath();
+        const gs = g.createLinearGradient(-rx, 0, rx, 0);
+        gs.addColorStop(0, rgb(mul([246, 248, 253], kO))); gs.addColorStop(1, rgb(mul([214, 224, 240], kO)));
+        g.fillStyle = gs; g.fill();
+      }
+      /* Lämpchen auf der Vorderseite */
+      const nL = Math.max(3, Math.round(r * 13));
+      for (let j = 0; j < nL; j++) { const ph = (0.1 + 0.8 * (j + 0.5) / nL + (rng() - 0.5) * 0.06) * Math.PI; lampen.push([Math.cos(ph) * rx * 0.9, cy + Math.sin(ph) * ry * 0.9 - 0.02 * s]); }
+    }
+    /* Strohstern an der Spitze */
+    const sy = -(spitze + 0.02) * KZ * s, sr = Math.max(1.2, 0.07 * s);
+    g.fillStyle = rgb(mul([226, 190, 110], kV)); g.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * TAU - Math.PI / 2, rr = i % 2 ? sr * 0.35 : sr; g.lineTo(Math.cos(a) * rr, sy + Math.sin(a) * rr); } g.closePath(); g.fill();
+    /* Lichterkette: tagsüber kleine Birnchen, abends warm leuchtend */
+    const lr = Math.max(0.6, 0.016 * s);
+    for (let j = 0; j < lampen.length; j++) {
+      const p = lampen[j];
+      if (an) {
+        const hof = g.createRadialGradient(p[0], p[1], 0, p[0], p[1], Math.max(2.5, 0.12 * s));
+        hof.addColorStop(0, "rgba(255,236,190," + (0.9 * Math.min(1, nacht * 1.3)).toFixed(3) + ")"); hof.addColorStop(0.25, "rgba(255,200,120," + (0.35 * nacht).toFixed(3) + ")"); hof.addColorStop(1, "rgba(255,180,90,0)");
+        g.fillStyle = hof; g.fillRect(p[0] - 0.12 * s, p[1] - 0.12 * s, 0.24 * s, 0.24 * s);
+        g.fillStyle = "rgb(255,246,220)"; g.beginPath(); g.arc(p[0], p[1], lr, 0, TAU); g.fill();
+        if (F.leuchtPunkt && j % 4 === 0) F.leuchtPunkt(p[0], p[1], 0.35 * s, "255,200,130", 0.22, j % 8 === 0);
+      } else if (s > 20) {
+        g.fillStyle = rgb(mul([226, 214, 180], kV), 0.9); g.beginPath(); g.arc(p[0], p[1], lr * 0.8, 0, TAU); g.fill();
+      }
+    }
+  }
+
   /* =====================================================================
      DAS MODELL
      ===================================================================== */
@@ -546,8 +688,10 @@
       const randAnteil = phase(bau, 0.46, 0.54);
       M.teil("innen", { ebene: 1, schatten: false, mitte: [0, 0, 0.3] });
       const wasserDa = bau >= 0.94;
-      /* Wasser bzw. Eis */
-      achteckDeckel(M, RI + 0.02, wasserDa ? ZW : ZS + 0.02, gebacken(function (g, F) {
+      /* Winter: Wasser abgelassen, Becken mit Brettern abgedeckt */
+      const abgedeckt = winter && wasserDa;
+      /* Wasser (im Winter unter der Abdeckung, also gar nicht gemalt) */
+      if (!abgedeckt) achteckDeckel(M, RI + 0.02, wasserDa ? ZW : ZS + 0.02, gebacken(function (g, F) {
         const w = F.w, h = F.h, rng = ST.zufall(saat + 17);
         if (!wasserDa) {
           /* trockener Beckenboden */
@@ -583,7 +727,7 @@
       /* Innenwand über dem Wasser */
       if (wandZ > ZS + 0.05) {
         const zI1 = Math.min(ZR1, wandZ + (randAnteil > 0 ? ZR1 - ZR0 : 0)), zI0 = wasserDa ? ZW : ZS + 0.02;
-        if (zI1 > zI0 + 0.01) achteckInnen(M, RI, zI0, zI1, (k) => gebacken(function (g, F) {
+        if (zI1 > zI0 + 0.01 && !abgedeckt) achteckInnen(M, RI, zI0, zI1, (k) => gebacken(function (g, F) {
           sandstein(g, F.w, F.h, F, 50 + k, { lage: 0.22, unten: false });
           if (wasserDa) {
             /* Kalkrand an der Wasserlinie (Frühling) bzw. Eisrand */
@@ -642,18 +786,41 @@
           }) });
         }
       }
+      /* Winterabdeckung mit Schneepolster und zwei Tännchen */
+      if (abgedeckt) {
+        M.teil("abdeckung", { ebene: 2, mitte: [0, 0, 3] });
+        abdeckungBauen(M, saat);
+        if (fertig || bau >= 0.97) {
+          const d = saat % 2 ? [[0.95, 0.95], [-0.95, -0.95]] : [[0.95, -0.95], [-0.95, 0.95]];
+          d.forEach((q, i) => {
+            /* Reihung gegen Brunnenstock (Mitte z ≈ 1,5) und Röhren (Mitte z = 12):
+               die gestreckte Mitte legt das vordere Tännchen hinter die Röhren
+               (also davor ins Bild), das hintere vor den Stock (dahinter) */
+            M.teil("taennchen" + i, { ebene: 3, mitte: [q[0] * 6, q[1] * 6, 7] });
+            M.figur({ x: q[0], y: q[1], z: ZD + PD - 0.02, breite: 1.1, hoehe: 1.6, malen: function (g, s, F) { baeumchenMalen(g, s, F, saat + i * 13); } });
+          });
+        }
+      }
       if (bau < 0.54) return;
 
       /* ---- 4. Brunnenstock, Säule, Kapitell ---- */
+      /* im Winter steht der Stock auf dem Schneepolster (darunter verdeckt) */
+      const stockZ0 = abgedeckt ? ZD + PD - 0.01 : ZW - 0.1;
       const stockZ = ZW + (ZP - ZW) * phase(bau, 0.54, 0.64);
       M.teil("saeule", { ebene: 3 });
-      M.quader({ x: -PB, y: -PB, z: ZW - 0.1, b: 2 * PB, t: 2 * PB, h: stockZ - ZW + 0.1 }, (function () {
+      M.quader({ x: -PB, y: -PB, z: stockZ0, b: 2 * PB, t: 2 * PB, h: stockZ - stockZ0 }, (function () {
         const seite = (i) => gebacken(function (g, F) {
-          const hGanz = ZP - ZW + 0.1;
+          const hGanz = ZP - stockZ0;
           g.save(); g.translate(0, -(hGanz - F.h));
           sandstein(g, F.w, hGanz, F, 90 + i, { lage: 0.3, unten: false });
+          if (abgedeckt && F.px > 12) {
+            /* angewehter Schnee am Fuß des Stocks */
+            g.fillStyle = "rgba(244,247,252,0.95)"; g.beginPath(); g.moveTo(0, hGanz);
+            for (let x = 0; x <= F.w + 0.01; x += 0.05) g.lineTo(x, hGanz - 0.03 - 0.05 * Math.pow(Math.sin(Math.PI * x / F.w), 0.6) - 0.015 * Math.sin(x * 23 + i));
+            g.lineTo(F.w, hGanz); g.closePath(); g.fill();
+          }
           if (bau >= 0.64) {
-            const my = hGanz - (ROEHRE_Z - ZW + 0.1);
+            const my = hGanz - (ROEHRE_Z - stockZ0);
             loewenMaske(g, F.w / 2, my, 0.13, F.px);
             if (i === 0 && F.px > 25) { g.fillStyle = rgb(skal(STEIN_HELL, 1.1)); g.fillRect(F.w / 2 - 0.12, 0.08, 0.24, 0.12); g.fillStyle = "rgba(70,40,30,0.8)"; g.font = "bold 0.07px Georgia, serif"; g.textAlign = "center"; g.fillText("1587", F.w / 2, 0.17); }
           }
@@ -713,6 +880,17 @@
           if (F.nacht > 0 && F.leuchtPunkt && fertig) F.leuchtPunkt(0, -(ZF + 0.8) * KZ * s, 1.6 * s, "255,200,140", 0.3, false);
         }) });
       }
+      /* Unsichtbare Hilfsflächen für die Bildgrenzen (der Kern zählt
+         Figurenschatten nicht mit, und der Kontaktschatten ist breiter als
+         der Rand): eine Fläche an der Wimpelspitze wirft ihren Schatten bis
+         ans Ende des Figurenschattens; ein Achteck am Boden 1 m außerhalb
+         der Stufe gibt dem weichen Kontaktschatten Platz. */
+      if (bau >= 0.84) {
+        M.teil("schattenhilfe", { mitte: [0, 0, 0] });
+        M.flaeche({ name: "hilfe-spitze", o: [0.2, 0.18, ZF + 2.05], u: [1, 0, 0], v: [0, 1, 0], w: 0.6, h: 0.03, malen: function () {}, keinLicht: true });
+      }
+      M.teil("grenzhilfe", { schatten: false, ebene: -3, mitte: [0, 0, -5] });
+      achteckDeckel(M, RS + 1.0, 0.001, function () {}, "grenzhilfe", { keinLicht: true });
       /* ---- 6. Frühling: Blumentöpfe auf der Stufe ---- */
       if (!winter && fertig) {
         const TF = [[220, 40, 60], [250, 200, 40], [240, 110, 160], [150, 80, 200]];
