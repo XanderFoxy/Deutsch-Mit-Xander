@@ -7292,9 +7292,7 @@
     var EA = window.DMA_EIGENE_AUSSPRACHE, eigeneDa = Boolean(EA && EA.hat(sp.wort));
     var mikAus = sp.laeuft || e || (!sp.original && !sprechBewertbar());
     return '<div class="sp-sprech sp-sprech-kompakt"' + (e && sp.weiterMs ? ' data-weiter="' + sp.weiterMs + '"' : "") + ">" + kopf(sp)
-      + '<div class="sp-sprech-wort">' + esc(sp.wort) + '</div><div class="sp-sprech-silben">' + esc(sp.silben || "")
-      /* FASSUNG 785 (Funk 190): spricht die eigene Aufnahme vor, steht es hier klein. */
-      + (sp.original && sp.original.art === "eigen" ? ' · <span class="sp-sprech-eigen">Vorbild: deine Stimme</span>' : "") + "</div>"
+      + '<div class="sp-sprech-wort">' + esc(sp.wort) + '</div><div class="sp-sprech-silben">' + esc(sp.silben || "") + "</div>"
       + sprechStatusHtml(sp)
       + '<div class="sp-sprech-leiste">'
       + '<button type="button" data-tu="sprechhoeren"' + (sp.original ? "" : " disabled") + ">" + SPRECH_SVG.hoeren + "<small>Anhören</small></button>"

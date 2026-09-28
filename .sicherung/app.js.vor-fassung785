@@ -13605,16 +13605,8 @@
      wenn die das Wort nicht hat, gegen die professionelle Stimme. */
   function aussprOriginalLaden(w) {
     if (!window.AusspracheP) return Promise.resolve(null);
-    /* FASSUNG 785 (Funk 190): ist das Wort im persönlichen Wörterbuch auf „Spricht vor: ich" gestellt, spricht die eigene
-       Aufnahme vor – sonst wie bisher die saubere Stimme. */
-    const EA = window.DMA_EIGENE_AUSSPRACHE, t = aussprSprechtext(w);
-    if (!EA) return aussprSpriteLadenOderAzure(w);
-    return Promise.resolve(EA.liste === null ? EA.listeLaden().catch(() => null) : null).then(() => {
-      if (!EA.vorbild(t)) return aussprSpriteLadenOderAzure(w);
-      return EA.pufferHolen(t).then((p) => p ? { puffer: p, art: "eigen", huelle: AusspracheP.huellkurve(p, 150) } : aussprSpriteLadenOderAzure(w));
-    });
+    return aussprSpriteLadenOderAzure(w);
   }
-  try { window.addEventListener("dma-eigen-geaendert", () => { aussprLetztesOriginal = null; }); } catch (e) {}
   function aussprSpriteLadenOderAzure(w) {
     return aussprSpriteLaden(w).then((s) => {
       if (s) return s;
@@ -13688,7 +13680,7 @@
          Jetzt wird der Stand hier zuerst geladen. */
       const AP = window.AusspracheP;
       const stand = AP && AP.zentralMoeglich && AP.zentralMoeglich() && !AP.zentralStandJetzt() ? AP.zentralStand() : Promise.resolve();
-      return Promise.resolve(stand).catch(() => null).then(() => aussprOriginalLaden(eintrag || { word: wort }));
+      return Promise.resolve(stand).catch(() => null).then(() => aussprSpriteLadenOderAzure(eintrag || { word: wort }));
     },
     /* Für die Laut-Bewertung im Spiel: auch sie braucht den geladenen Stand. */
     bereit: function () {
@@ -13788,26 +13780,6 @@
       return laedt;
     }
     function hat(wort) { return Boolean(liste && liste.some((e) => schluessel(e.wort) === schluessel(wort))); }
-    /* FASSUNG 785 — XANDER (Funk 190): „die Option haben den Aussprachetrainer an der Stelle mit ihrer eigenen Stimme …
-       in Zukunft mit nutzen zu können … dass Sie sich entscheiden können ob diese Wörter … ersetzt werden sollen …
-       platzhaltermäßig austauschen dass die Leute sich immer selbst hören können beim Lernen". Je Wort ein Schalter:
-       dann spricht im Trainer und im Spiel die eigene Aufnahme vor statt Azure. Azure bleibt für alle anderen Wörter. */
-    function vorbild(wort) { return Boolean(liste && liste.some((e) => e.vorbild && schluessel(e.wort) === schluessel(wort))); }
-    function vorbildSetzen(id, an) {
-      return rpc("aussprache_eigen_vorbild", { p_id: id, p_an: Boolean(an) }).then((r) => {
-        if (!r || !r.ok) throw new Error((r && r.grund) || "Das ging nicht.");
-        const e = liste && liste.find((x) => Number(x.id) === Number(id));
-        if (e) e.vorbild = Boolean(an);
-        try { window.dispatchEvent(new CustomEvent("dma-eigen-geaendert", { detail: { wort: e ? e.wort : "", vorbild: Boolean(an) } })); } catch (x) {}
-        return r;
-      });
-    }
-    /* Die eigene Aufnahme als AudioBuffer – so kann sie genau dort vorsprechen, wo sonst Azure spricht. */
-    function pufferHolen(wort) {
-      const AP = window.AusspracheP;
-      if (!AP || !AP.tonLesen) return Promise.resolve(null);
-      return tonHolen(wort).then((url) => AP.tonLesen(url)).catch(() => null);
-    }
 
     /* Die letzte gute Aufnahme merken – der Knopf „Übernehmen" holt sie sich hier ab. */
     function merken(wort, puffer, prozent, quelle) {
@@ -13874,16 +13846,6 @@
           try { showToast("„" + wort + "“ liegt jetzt mit deiner Stimme in deinem Wörterbuch (" + (r.schnitt ? (r.schnitt.dauer / 1000).toFixed(2).replace(".", ",") + " s" : "") + ")."); } catch (y) {}
         }).catch((x) => { k.disabled = false; k.textContent = "Nochmal versuchen"; try { showToast(x.message || "Das ging nicht."); } catch (y) {} });
       }
-      if (k.dataset.eigen === "vorbild") {
-        const an = k.dataset.an === "1";
-        k.disabled = true;
-        vorbildSetzen(Number(k.dataset.id), an).then(() => {
-          k.disabled = false; k.dataset.an = an ? "0" : "1"; k.classList.toggle("eigen-an", an);
-          k.textContent = an ? "Spricht vor: ich" : "Spricht vor: Azure"; k.setAttribute("aria-pressed", String(an));
-          try { showToast(an ? "„" + wort + "“ wird jetzt mit deiner eigenen Stimme vorgesprochen." : "„" + wort + "“ spricht wieder die Azure-Stimme vor."); } catch (y) {}
-        }).catch((x) => { k.disabled = false; try { showToast(x.message || "Das ging nicht."); } catch (y) {} });
-        return;
-      }
       if (k.dataset.eigen === "weg") {
         k.disabled = true;
         loeschen(Number(k.dataset.id)).then(() => { const z = k.closest(".eigen-zeile"); if (z) z.remove(); }).catch(() => { k.disabled = false; });
@@ -13896,12 +13858,10 @@
       if (!l || !l.length) return '<p class="empty-note">Noch leer. Sprichst du ein Wort mit mindestens ' + SCHWELLE + ' %, bietet dir die Seite an, es mit deiner Stimme hierher zu übernehmen.</p>';
       return '<div class="eigen-liste">' + l.map((e) => '<div class="eigen-zeile"><b>' + escapeHtml(e.wort) + '</b><span class="eigen-note">' + (e.prozent != null ? e.prozent + " %" : "") + "</span>"
         + '<button type="button" class="btn btn-ghost" data-eigen="hoeren" data-wort="' + escapeHtml(e.wort) + '">Anhören</button>'
-        + '<button type="button" class="btn btn-ghost eigen-vorbild' + (e.vorbild ? " eigen-an" : "") + '" data-eigen="vorbild" data-id="' + e.id + '" data-wort="' + escapeHtml(e.wort) + '" data-an="' + (e.vorbild ? "0" : "1") + '" aria-pressed="' + Boolean(e.vorbild)
-        + '" title="Wer spricht dieses Wort im Trainer und im Spiel vor?">' + (e.vorbild ? "Spricht vor: ich" : "Spricht vor: Azure") + "</button>"
         + '<button type="button" class="btn btn-ghost" data-eigen="weg" data-id="' + e.id + '" title="Aus dem Wörterbuch nehmen">Löschen</button></div>').join("") + "</div>";
     }
 
-    return { SCHWELLE, schneiden, merken, bietetAn, uebernehmen, spielen, hat, vorbild, vorbildSetzen, pufferHolen, listeLaden, knoepfeHtml, listeHtml, get liste() { return liste; } };
+    return { SCHWELLE, schneiden, merken, bietetAn, uebernehmen, spielen, hat, listeLaden, knoepfeHtml, listeHtml, get liste() { return liste; } };
   })();
 
   /* --- Die Laut-Anzeige. Das ist der Kern der ganzen Sache. ---
@@ -14228,9 +14188,6 @@
         : aussprLetztesOriginal.art === "alex" ? `<p class="empty-note" style="font-size:0.7rem;">
           Vorgesprochen wird von <strong>Alex selbst</strong> — eine echte Aufnahme, keine
           Maschinenstimme. Deine Aufnahme wird daneben gegen genau diese gemessen.</p>`
-        : aussprLetztesOriginal.art === "eigen" ? `<p class="empty-note" style="font-size:0.7rem;">
-          Vorgesprochen wird mit <strong>deiner eigenen Stimme</strong> aus deinem Aussprache-Wörterbuch.
-          Umstellen kannst du das dort bei jedem Wort („Spricht vor“).</p>`
         : aussprLetztesOriginal.art === "azure" ? `<p class="empty-note" style="font-size:0.7rem;">
           Vorgesprochen wird von der neuronalen Stimme — dieselbe Technik, mit der
           Wörterbücher ihre Aussprachebeispiele erzeugen.</p>` : ""}
@@ -91178,13 +91135,6 @@ An einem Morgen lief ein kleiner Fuchs los…
         </label>
         <div class="form-error" id="profilDateienFehler"></div>
       </div>
-      ${window.DMA_EIGENE_AUSSPRACHE ? `
-      <div class="question-card" style="margin-top:12px;" id="profilEigenKarte">
-        <p class="eyebrow" style="margin-top:0;">🎙️ Mein Aussprache-Wörterbuch · privat</p>
-        <p class="empty-note" style="margin:0 0 8px;">Deine eigene, geprüfte Aussprache – sauber ausgeschnitten. Nur du siehst und hörst sie.
-          Bei „Spricht vor: ich“ hörst du dich im Aussprachetrainer und im Spiel selbst als Vorbild.</p>
-        <div id="profilEigenListe">${DMA_EIGENE_AUSSPRACHE.liste ? DMA_EIGENE_AUSSPRACHE.listeHtml(DMA_EIGENE_AUSSPRACHE.liste) : '<p class="empty-note">Einen Moment …</p>'}</div>
-      </div>` : ""}
       ${renderTrophyCase(profile)}
       ${renderAlbumPreview(profile)}
       ${!profileEditMode ? renderInterviewPreview(profile) : ""}
@@ -91456,10 +91406,6 @@ An einem Morgen lief ein kleiner Fuchs los…
           renderAccount();
         }
       });
-    }
-    /* FASSUNG 785 (Funk 188): „einen privaten Bereich in ihrem Profil … wo sie ganz leicht auf dieses Wörterbuch zugreifen können". */
-    if (window.DMA_EIGENE_AUSSPRACHE && document.getElementById("profilEigenListe")) {
-      DMA_EIGENE_AUSSPRACHE.listeLaden(true).then((l) => { const z = document.getElementById("profilEigenListe"); if (z) z.innerHTML = DMA_EIGENE_AUSSPRACHE.listeHtml(l); }).catch(() => {});
     }
     const dateienInput = document.getElementById("profilDateienInput");
     if (dateienInput) {

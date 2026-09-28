@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 784: Flickstube mit Flohmarkt für Touristen und Einschmelzen zu Erz (Walkie 303)",
+  stand: "Fassung 785: persönliches Aussprache-Wörterbuch – je Wort „Spricht vor: ich“ (eigene Stimme als Vorbild in Trainer und Spiel), private Liste im Profil (Funk 188/190)",
 
   inArbeit: [
-    { seit: "2026-09-28T02:18",
-      text: "Funk 188/190 Rest (Lehrer-Freigabe, eigene Stimme im Trainer); Sequenzen für Pac-Man/Mario; Walkies 282/283/285/296" },
+    { seit: "2026-09-28T02:29",
+      text: "Lehrer-Freigabe über Sprachnachrichten im Livestream (Funk 188/190); Sequenzen für Pac-Man/Mario; Walkies 282/283/285/296" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T02:18",
-      text: "Walkie 303 Flohmarkt und Einschmelzen" },
+    { seit: "2026-09-28T02:29",
+      text: "Eigene Stimme als Vorsprecher" },
   ],
 };

@@ -1814,3 +1814,13 @@ XANDER (Walkie 303): „Flohmarkt-Stand: Fundsachen an Touristen verkaufen (mehr
   - Der Touristen-Knopf rechnet es vorher mit („+ 3 × Flohmarkt à 4 P“), die Meldung danach auch.
   - Server: `spiel_bahn` zählt `floh` und `floh_preis` in den Erlös.
 - Die Flickstuben-Zeile ist kürzer geworden.
+
+### Fassung 785 (Funk 188/190: eigene Stimme als Vorsprecher, Wörterbuch im Profil)
+Sonden: neu 785 (7/7 grün); 766, 771, 772, 773, 783 grün.
+XANDER (Funk 190): „die Option haben den Aussprachetrainer an der Stelle mit ihrer eigenen Stimme … in Zukunft mit nutzen zu können … dass Sie sich entscheiden können ob diese Wörter … ersetzt werden sollen … platzhaltermäßig austauschen dass die Leute sich immer selbst hören können beim Lernen“. Funk 188: „einen privaten Bereich in ihrem Profil … wo sie ganz leicht auf dieses Wörterbuch zugreifen können“.
+- **Je Wort „Spricht vor: Azure / ich“** im persönlichen Aussprache-Wörterbuch (Server: Spalte `vorbild`, `aussprache_eigen_vorbild(p_id, p_an)`, `aussprache_eigen_liste` liefert sie mit).
+  - Steht es auf „ich“, spricht im Aussprachetrainer und im Spiel die eigene, geschnittene Aufnahme vor („Vorgesprochen wird mit deiner eigenen Stimme …“ bzw. „Vorbild: deine Stimme“ in der Spiel-Karte).
+  - Alle anderen Wörter spricht weiter Azure. Nichts wird gelöscht, es ist nur ein Platzhalter-Tausch.
+- **Profil**: Neue Karte „🎙️ Mein Aussprache-Wörterbuch · privat“ auf der eigenen Profilseite mit Anhören, „Spricht vor“ und Löschen. Sie lädt beim Öffnen frisch.
+  - Ehrlich: Die ganze Profilseite ist in der Sonde nicht gezeichnet, geprüft ist die Liste selbst (gleiches HTML).
+- Offen aus Funk 188/190: die **Lehrer-Freigabe über Sprachnachrichten im Livestream** (Xander gibt ein Wort vor, die Leute schicken Sprachnachrichten, Xander gibt die gute frei, die Leute übernehmen sie geschnitten ins Wörterbuch) und die Meldung unbekannter Wörter an Claude.

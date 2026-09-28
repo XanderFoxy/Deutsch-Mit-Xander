@@ -35129,5 +35129,3 @@ body > .lc-tafel-mappe { position: fixed; inset: auto; left: 12px; right: 12px; 
 .lc-seq-merk.lc-an { background: #2f7a3a; border-color: #4fae4f; }
 .lc-seq-laden { flex: 1; min-width: 0; min-height: 32px; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 9px; background: rgba(255, 255, 255, 0.07); color: #f2f4f8; font: 600 0.76rem/1.25 system-ui, sans-serif; text-align: left; overflow-wrap: anywhere; cursor: pointer; }
 .lc-seq-platzhalter { flex: 0 0 32px; width: 32px; }
-/* FASSUNG 785 — „Spricht vor: ich / Azure" je Wort im persönlichen Aussprache-Wörterbuch (Funk 190). */
-.eigen-zeile .eigen-vorbild.eigen-an { background: #2e9e5b; border-color: #2e9e5b; color: #fff; }

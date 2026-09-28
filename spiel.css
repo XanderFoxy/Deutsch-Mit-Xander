@@ -3015,3 +3015,5 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 /* FASSUNG 781 — Ausflugsziel mit Wahrzeichen (Walkie 301): goldener Rand, Laune +5 %. */
 .sp-bahn-reise-ziele button.sp-bahn-wz { border-color: #e2a93a; background: #3a3424; }
 .sp-bahn-reise-ziele button.sp-bahn-wz small { color: #ffd98a; opacity: 1; }
+/* FASSUNG 785 — die eigene Stimme spricht vor (Funk 190). */
+.sp-sprech-eigen { color: #2e9e5b; font-weight: 700; }
