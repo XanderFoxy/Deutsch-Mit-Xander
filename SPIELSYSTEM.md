@@ -2026,3 +2026,18 @@ XANDER: „dass ich jetzt wie bei Emmi gestern das nur noch Blau angezeigt bekom
 - Geprüft: Mit Xanders echtem Spielstand (16 Gebäude auf Stufe 3, Fernsehturm, Nacht) malt das alte Dorf hier in 1,2 s. Bei sechsfach gedrosselter CPU dauert es 3,4 s, ohne Fehler.
 - Verdacht: Jedes neue Malen (Tag/Nacht, Schnee, Ausbau, Jahreszeit) legt eine große Leinwand und eine Zugmaske an. iOS gibt Leinwandspeicher erst spät frei. Ist das Budget erschöpft, bleiben neue Leinwände leer, und man sieht nur den blauen Grund.
 - Änderung: Verworfene Leinwände werden sofort auf 0 × 0 gesetzt (`dmLeinwandWeg`). Im Vorrat bleiben höchstens 2 statt 4.
+
+## Fassung 803 — Bootsverleih am See (Touristen-Attraktion)
+
+XANDER: „vielleicht so ein kleines Bootshaus für den Verleih vom Wassertreter … dann sind das nämlich Touristen-Attraktionen, wo die Leute dafür bezahlen und dann kommt wieder Geld in die Kasse, und da sollst du irgendwie so eine Zufallsmechanik einbauen, dass die Leute einfach Bock haben, diese Freizeitangebote zu nutzen, weil mein Angebot vielfältig ist".
+
+- **Server** (Migration `spiel_802_bootsverleih`):
+  - `spiel_freizeit_bauen('bootsverleih')` baut den Verleih: Stufe 1–3 für 150/300/500 P, gespeichert in `volk.freizeit.bootsverleih`.
+  - `spiel_freizeit(uid, touristen, slot, s)` würfelt je Zug-Tourist (deterministisch nach Slot), ob er Lust hat.
+  - Lust nach Jahreszeit: Sommer 55 %, Frühling 40 %, Herbst 25 %, Winter 30 % mit Schlittschuhen statt Tretbooten.
+  - Regen × 0,4, nachts (21–8 Uhr) × 0,3.
+  - Vielfalt (Wahrzeichen, Gasthaus, Verleih-Stufe) × (1 + 0,08 je Punkt), höchstens 85 %.
+  - Plätze: 4 je Stufe. Preis: 2 + Stufe P je Fahrt.
+  - `spiel_bahn('touristen')` rechnet das zum Erlös und meldet `freizeit` zurück.
+- **Spiel:** Am Bahnhof steht unter der Kurtaxe der Kasten „Bootsverleih am See“ (Bauen/Ausbauen). Steigen Touristen aus, sagt die Meldung, wie viele Tretboot fuhren, was es brachte und wie viele kein Boot mehr bekamen.
+- Sonde `werkzeug/pruefe-803-bootsverleih.js`: neu grün, alter Code 5 rot.

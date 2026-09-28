@@ -3049,3 +3049,9 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 /* Im Vollbild führt der Zurück-Knopf der Stadt selbst (oben links) zurück; dieser bleibt nur Reserve. */
 /* FASSUNG 801 — über der neuen Stadt liegt ihr eigener Rahmen: die Karte darf nicht ins Bild ragen, sonst verdeckt er sie. */
 .sp-dl-neustadt + .sp-dl-station { margin-top: 8px; }
+/* FASSUNG 803 — Bootsverleih am See (Bahnhof, Touristen) */
+.sp-bahn-freizeit { margin: 6px 0; padding: 6px 8px; border-radius: 10px; background: rgba(40, 110, 170, .1); }
+.sp-bahn-freizeit > b { display: block; font-size: 12.5px; }
+.sp-bahn-freizeit p { margin: 3px 0 5px; }
+.sp-bahn-freizeit button { min-height: 32px; padding: 4px 12px; border-radius: 10px; border: 1px solid rgba(40, 90, 140, .45); background: #2f7fbf; color: #fff; font-weight: 700; font-size: 12px; }
+.sp-bahn-freizeit button:disabled { opacity: .5; }

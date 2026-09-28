@@ -4939,6 +4939,13 @@
         hinweis("Aus " + r.verbraucht + " alten Schuhen ist ein Paar Wanderstiefel geworden (" + vorrat(r, "wanderstiefel") + " Paar im Lager) – die nächsten Trupps sind schneller zurück.");
       });
       return;
+    } else if (s === "freizeitbau") {
+      k.disabled = true;
+      wirtschaft("spiel_freizeit_bauen", { p_was: k.dataset.w || "bootsverleih" }, function (r) {
+        ton("hammerschlag", 0.35);
+        hinweis(r.stufe > 1 ? "Der Bootsverleih ist jetzt Stufe " + r.stufe + ": mehr Boote für die Touristen (−" + r.preis + " P)." : "Das Bootshaus am See steht: Touristen können jetzt Tretboote mieten (−" + r.preis + " P).");
+      });
+      return;
     } else if (s === "einschmelzen") {
       wirtschaft("spiel_einschmelzen", {}, function (r) {
         ton("hammerschlag", 0.35);
@@ -12263,7 +12270,7 @@
         /* FASSUNG 765 — XANDER (Funk 184): „praktisch können wir mit dem Zug auch Tourismus in die Stadt bringen oder aus der
            Stadt um eine andere Stadt zu sehen … weil dadurch kann man doch Geld verdienen". Touristen steigen aus (Kurtaxe,
            sie kaufen Essen); eigene Bewohner machen einen Ausflug ins Nachbardorf (Forschung – das Nachbardorf verdient). */
-        + bahnTouristenHtml(ich, z) + "</div>" + bahnKurtaxeHtml(ich, z) + bahnReiseHtml(ich, z) + bahnGaesteHtml(z);
+        + bahnTouristenHtml(ich, z) + "</div>" + bahnKurtaxeHtml(ich, z) + bahnFreizeitHtml(ich) + bahnReiseHtml(ich, z) + bahnGaesteHtml(z);
     }
     return '<div class="sp-dl-station sp-bahnhof" role="dialog" aria-label="Bahnhof"><div class="sp-dl-st-kopf"><i class="sp-bahn-kopf">' + kopf + "</i><span><b>Bahnhof</b>"
       + "<small>Export, Import und Touristen</small></span>"
@@ -12288,6 +12295,20 @@
       + '<p class="sp-sm-klein">Höhere Taxe: mehr Geld je Gast, aber es kommen weniger – je beliebter deine Stadt, desto weniger schreckt sie ab (wie in Venedig). '
       + "Beliebt machen: Wahrzeichen, Gasthaus, jeden Tag Deutsch üben und ein guter Ruf. Satte Gäste erzählen es weiter (Ruf +1), hungrige schaden (−1 je 3 ohne Essen), und über "
       + (t.platz || 6) + " Gäste wird es zu voll (−1; Gasthaus +4 Plätze je Stufe). Ist die Stadt beliebt, kommt öfter eine Touristenwelle mit doppelt so vielen Gästen.</p></div>";
+  }
+  /* FASSUNG 803 — XANDER: „vielleicht so ein kleines Bootshaus für den Verleih vom Wassertreter … dann sind das nämlich
+     Touristen-Attraktionen, wo die Leute dafür bezahlen … eine Zufallsmechanik, dass die Leute einfach Bock haben, diese
+     Freizeitangebote zu nutzen, weil mein Angebot vielfältig ist". Der Bootsverleih am See (3 Stufen) vermietet an die
+     Zug-Touristen Tretboote, im Winter Schlittschuhe. Wie viele Lust haben, würfelt der Server: Jahreszeit, Wetter,
+     Tageszeit und Vielfalt (Wahrzeichen, Gasthaus, Verleih). */
+  var BOOT_PREISE = [150, 300, 500];
+  function bahnFreizeitHtml(ich) {
+    var st = Math.min(3, Number(((ich.volk || {}).freizeit || {}).bootsverleih) || 0), preis = BOOT_PREISE[st];
+    var winter = [11, 0, 1].indexOf(new Date().getMonth()) >= 0;
+    return '<div class="sp-bahn-freizeit"><b>Bootsverleih am See' + (st ? " · Stufe " + st : "") + "</b>"
+      + '<p class="sp-sm-klein">' + (st ? "Touristen mieten " + (winter ? "Schlittschuhe" : "Tretboote") + ": bis zu " + (4 * st) + " je Zug, " + (2 + st) + " P je Fahrt. Wie viele Lust haben, hängt von Jahreszeit, Wetter, Uhrzeit und der Vielfalt deines Dorfes ab."
+        : "Ein Bootshaus am See: Touristen mieten Tretboote (im Winter Schlittschuhe) und bezahlen dafür.") + "</p>"
+      + (st < 3 ? '<button type="button" data-s="freizeitbau" data-w="bootsverleih"' + ((ich.punkte || 0) < preis ? " disabled" : "") + ">" + (st ? "Ausbauen auf Stufe " + (st + 1) : "Bootsverleih bauen") + " · " + preis + " P</button>" : "") + "</div>";
   }
   function bahnTouristenHtml(ich, z) {
     var t = z.touristen;
@@ -12370,6 +12391,7 @@
         bahnWareZeigen("touristen", "+" + r.anzahl, 104, bahnAn(bahnBeiX(98)).y - 22);
         ton("kasse", 0.4);
         hinweis("🚂 " + r.anzahl + " Touristen steigen aus: " + r.kurtaxe + " P Kurtaxe" + (r.gekauft ? ", sie kaufen " + r.gekauft + " × Essen à " + (r.preis_essen || 5) + " P" + (r.gasthaus ? " im Gasthaus" : "") : "") + (r.floh ? ", auf dem Flohmarkt " + r.floh + " × alte Schuhe à " + r.floh_preis + " P" : "") + " – +" + r.erloes + " Punkte."
+          + (r.freizeit && r.freizeit.fahrer ? " " + r.freizeit.fahrer + " " + (r.freizeit.art === "schlittschuh" ? "liehen Schlittschuhe" : "fuhren Tretboot") + " (+" + r.freizeit.erloes + " P)" + (r.freizeit.wollten > r.freizeit.fahrer ? ", " + (r.freizeit.wollten - r.freizeit.fahrer) + " fanden kein freies Boot mehr" : "") + "." : "")
           + (r.welle ? " 🌊 Das war eine Touristenwelle!" : "")
           + (r.unversorgt ? " " + r.unversorgt + " blieben hungrig – das spricht sich herum (Ruf −" + Math.ceil(r.unversorgt / 3) + ")." : " Alle satt – sie empfehlen dich weiter (Ruf +1).")
           + (r.ueberfuellt ? " Die Stadt war zu voll (Ruf −1) – ein größeres Gasthaus schafft Platz." : ""));

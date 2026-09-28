@@ -49,30 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 802: altes Dorf gibt Leinwände frei (gegen „nur Blau“)",
+  stand: "Fassung 803: Bootsverleih am See bringt Geld von Touristen",
 
   inArbeit: [
-    { seit: "2026-09-28T19:39",
+    { seit: "2026-09-28T19:44",
       text: "Döbelner Rathaus (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:39",
+    { seit: "2026-09-28T19:44",
       text: "Dodge Viper und Batmobil (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:39",
-      text: "Tretboote, Bootshaus, Badegäste (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:39",
+    { seit: "2026-09-28T19:44",
+      text: "Tretboote, Bootshaus, Badegäste im Bild (Helfer arbeitet)" },
+    { seit: "2026-09-28T19:44",
       text: "Pferdebahn mit Gleisen, Korn-/Mehlwagen (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:39",
+    { seit: "2026-09-28T19:44",
       text: "Wiener Lichterbogen" },
-    { seit: "2026-09-28T19:39",
+    { seit: "2026-09-28T19:44",
       text: "Karten-Vorlagen und eigene Karten" },
-    { seit: "2026-09-28T19:39",
-      text: "Tourismus: Bootsverleih bringt Geld" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T19:39",
-      text: "Altes Dorf: verworfene Leinwände werden sofort freigegeben" },
-    { seit: "2026-09-28T19:39",
-      text: "Einsammeln im kleinen Rahmen der neuen Stadt" },
+    { seit: "2026-09-28T19:44",
+      text: "Bootsverleih am See: Touristen mieten Tretboote, im Winter Schlittschuhe" },
+    { seit: "2026-09-28T19:44",
+      text: "Altes Dorf gibt Leinwände frei" },
   ],
 };
