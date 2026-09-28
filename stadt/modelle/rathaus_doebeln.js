@@ -690,6 +690,39 @@
     if (F.px > 10) { g.fillStyle = rgbS(hell(SAND, 0.1)); g.beginPath(); g.arc(a, b + 0.35, 0.1, 0, Math.PI * 2); g.fill(); }
   }
 
+  /* FASSUNG 812 — LICHTERKETTE. XANDER zum Winterfoto vom Obermarkt: „im Winter kannst du es auch genauso darstellen".
+     Auf dem Foto hängt eine warmweiße Lichterkette in flachen Bögen unter dem Sandstein-Gesims über dem Erdgeschoss,
+     rund um Westflügel, Turm und Giebelbau. Tagsüber sieht man Draht und kleine Birnchen, nachts leuchten sie. */
+  const KETTE_BOGEN = 2.1, KETTE_DURCH = 0.3;
+  function kettenPunkte(F, E) {
+    const y0 = bz(F, E.rustika) + 0.1, n = Math.max(1, Math.round(F.w / KETTE_BOGEN)), sp = F.w / n, aus = [];
+    for (let i = 0; i < n; i++) for (let k = 1; k < 8; k++) { const t = k / 8; aus.push([i * sp + t * sp, y0 + 4 * KETTE_DURCH * t * (1 - t)]); }
+    return { y0: y0, n: n, sp: sp, birnen: aus };
+  }
+  function lichterketteMalen(g, F, E) {
+    if (F.jahr !== "winter" || !E.rustika || E.rustika >= F.flaeche.o[2] || F.px < 3) return;
+    const K = kettenPunkte(F, E);
+    g.strokeStyle = "rgba(38,42,34,0.75)"; g.lineWidth = Math.max(0.02, 0.6 / F.px);
+    g.beginPath();
+    for (let i = 0; i < K.n; i++) { const x = i * K.sp; g.moveTo(x, K.y0); g.quadraticCurveTo(x + K.sp / 2, K.y0 + 2 * KETTE_DURCH, x + K.sp, K.y0); }
+    g.stroke();
+    g.fillStyle = "rgba(255,238,196,0.95)";
+    const r = Math.max(0.035, 0.8 / F.px);
+    for (const [x, y] of K.birnen) { g.beginPath(); g.arc(x, y + r * 0.6, r, 0, Math.PI * 2); g.fill(); }
+  }
+  function lichterketteLeuchten(g, F, E) {
+    if (F.jahr !== "winter" || !E.rustika || E.rustika >= F.flaeche.o[2] || F.nacht <= 0.02) return;
+    const K = kettenPunkte(F, E), a = F.nacht;
+    const r = Math.max(0.05, 1 / F.px);
+    for (const [x, y] of K.birnen) {
+      const gr = g.createRadialGradient(x, y, 0, x, y, r * 3.2);
+      gr.addColorStop(0, "rgba(255,236,190," + (0.95 * a).toFixed(3) + ")"); gr.addColorStop(0.3, "rgba(255,214,140," + (0.5 * a).toFixed(3) + ")"); gr.addColorStop(1, "rgba(255,200,120,0)");
+      g.fillStyle = gr; g.fillRect(x - r * 3.2, y - r * 3.2, r * 6.4, r * 6.4);
+    }
+    /* Schein in die Szene: einer je zweitem Bogen, schwach (sonst würde die Fassade überstrahlt) */
+    for (let i = 0; i < K.n; i += 2) F.leuchtPunkt(i * K.sp + K.sp / 2, K.y0 + KETTE_DURCH, 1.7, "255,214,150", 0.22);
+  }
+
   /* =====================================================================
      WAND-MALER: Putz, Rustika, Bänder, Eckquader, dann alle Stücke
      E = { putz, rustika (z), sockel (z), baender [z], kranz (z Unterkante),
@@ -736,6 +769,7 @@
         for (const z of E.baender || []) if (z < zO) g.fillRect(-0.1, bz(F, z) - 0.05, F.w + 0.2, 0.06);
         for (const e of E.el || []) if (e.t === "f" && e.form !== "o") { const [a, b] = fk(F, e.p); g.fillRect(a - e.w / 2 - 0.12, b + 0.04, e.w + 0.24, 0.05); }
       }
+      lichterketteMalen(g, F, E);
     };
     const leuchten = function (g, F) {
       for (const e of E.el || []) {
@@ -754,6 +788,7 @@
           F.leuchtPunkt(a, b - 1.4, 2.5, "255,190,120", 0.6);
         }
       }
+      lichterketteLeuchten(g, F, E);
     };
     return { malen: aufCpu(malen), leuchten: leuchten };
   }
@@ -913,10 +948,12 @@
     { h0: 0.25, h1: 1.6, r: kurve(0.85, 0.05, (t) => Math.sin(t * Math.PI / 2)), farbe: SCHIEFER, n: 10, schnee: true }
   ], { spitze: [1.55, 2.05, 0.1] });
   /* Dachreiter des Westflügels: Kupferhaube */
+  /* FASSUNG 812 — nach Xanders Foto: unten ausgestellt, dann geschweift (eingezogen) zur Spitze, obenauf die goldene Kugel */
   const DACHREITERHAUBE = drehkoerper([
-    { h0: 0, h1: 0.2, r: 0.95, farbe: KUPFER, n: 2 },
-    { h0: 0.2, h1: 1.45, r: kurve(0.9, 0.06, glocke), farbe: KUPFER, n: 10, schnee: true }
-  ], { spitze: [1.4, 1.95, 0.1] });
+    { h0: 0, h1: 0.16, r: kurve(1.0, 0.92), farbe: KUPFER, n: 2 },
+    { h0: 0.16, h1: 0.5, r: kurve(0.92, 0.66, (t) => Math.sin(t * Math.PI / 2)), farbe: KUPFER, n: 5 },
+    { h0: 0.5, h1: 1.7, r: (t) => 0.66 * Math.pow(1 - t, 1.7) + 0.05, farbe: KUPFER, n: 10, schnee: true }
+  ], { spitze: [1.65, 2.25, 0.12] });
   const KUGEL = (r) => drehkoerper([{ h0: 0, h1: 2 * r, r: (t) => Math.max(0.02, Math.sin(t * Math.PI) * r), farbe: SAND, n: 8, schnee: true }]);
 
   function figurKoerper(W, name, x, y, z, r, h, malen, zusatzEbenen) {
@@ -1091,6 +1128,8 @@
         vorn.el.push(...reihe([-0.2, 1.2, 6.8, 8.2], (x) => fOG1(x, GY1, { w: 0.95, verdach: null })));
         vorn.el.push({ t: "band", p: [0.5, GY1, OG1 + 1.75 + 0.45], w: 2.4, h: 0.16 }, { t: "band", p: [7.5, GY1, OG1 + 1.75 + 0.45], w: 2.4, h: 0.16 });
         vorn.el.push({ t: "wappen", p: [4, GY1, OG1 - 0.1], w: 1.5, h: 2.1 });
+        /* FASSUNG 812 — auf Xanders Foto (vom Brunnen aus) steht „Ratskeller" an der Giebelfront über dem dritten Bogen */
+        vorn.el.push({ t: "schrift", p: [6.6, GY1, 3.62], text: "Ratskeller", h: 0.4 });
         vorn.el.push(...reihe(xs, (x) => fOG2(x, GY1)));
         vorn.el.push(...reihe([1.9, 3.3, 4.7, 6.1], (x) => fOG3(x, GY1, { w: 0.85, h: 1.1, p: [x, GY1, 10.2] })));
         /* Westseite zum Brunnenplatz: am Turm drei schmale Achsen mit
@@ -1174,7 +1213,6 @@
         const xs = [11.3, 13.4, 15.5, 17.6, 19.7];
         const sued = { putz: PUTZ, rustika: Z_RUST, baender: BAND, kranz: TRAUFE - 0.45, ecken: [[OX1, OY1]], el: [] };
         for (const x of xs) sued.el.push(fEG(x, OY1), keller(x, OY1), fOG1(x, OY1), fOG2(x, OY1, { verdach: x === 15.5 ? "dreieck" : "gerade" }), fOG3(x, OY1));
-        sued.el.push({ t: "schrift", p: [15.5, OY1, 3.55], text: "Ratskeller", h: 0.42 });
         sued.el.push({ t: "rohr", p: [10.4, OY1, 0], z0: 0.3, z1: TRAUFE - 0.3 });
         const ost = { putz: PUTZ, rustika: Z_RUST, baender: BAND, kranz: TRAUFE - 0.45, ecken: [[OX1, OY1], [OX1, OY0]], el: [] };
         for (const y of [8.8, 6.4, 4.0, 1.6, -0.8]) ost.el.push(fEG(OX1, y), keller(OX1, y), fOG1(OX1, y), fOG2(OX1, y, { verdach: y === 4.0 ? "dreieck" : "gerade" }), fOG3(OX1, y));
@@ -1190,8 +1228,17 @@
         const zD = (y) => TRAUFE + (OY1 + UE - y) * O_TAN;
         /* Das Dach läuft nach Westen bis in die Kehle am Giebelbau-Dach */
         const xK = OX0 - (O_FIRST - TRAUFE) / G_TAN;
-        W.poly([[OX0, OY1 + UE, TRAUFE], [OX1 - d, OY1 + UE, TRAUFE], [OX1 - d, ym, O_FIRST], [xK, ym, O_FIRST]], innen,
-          dach({ fleder: [14.4, 16.6, 18.8].map((x) => [x, 6.4, zD(6.4)]) }), { name: "odS" });
+        /* FASSUNG 812 — die Südfläche ist am Zwerchgiebel (s. u.) ausgeschnitten: links und rechts davon ganz, dahinter
+           bis an die Kehlen des Zwerchdachs (jedes Stück konvex, damit die Reihenfolge stimmt) */
+        const zb = 4.2, zx0 = OX1 - zb - 0.35, zx1 = zx0 + zb, zxm = (zx0 + zx1) / 2;
+        const zR = TRAUFE + (zb / 2) * O_TAN, yR = OY1 + UE - zb / 2, yF = OY1 - d, zE = zD(yF), xE = (zE - TRAUFE) / O_TAN;
+        const dS = dach({ fleder: [14.4, 17.3, 19.4].map((x) => [x, 6.4, zD(6.4)]) });
+        W.poly([[OX0, OY1 + UE, TRAUFE], [zx0, OY1 + UE, TRAUFE], [zx0, ym, O_FIRST], [xK, ym, O_FIRST]], innen, dS, { name: "odS" });
+        W.poly([[zx1, OY1 + UE, TRAUFE], [OX1 - d, OY1 + UE, TRAUFE], [OX1 - d, ym, O_FIRST], [zx1, ym, O_FIRST]], innen, dS, { name: "odS2" });
+        W.teil("ostdachMitte");
+        W.poly([[zx0, yF, zE], [zx0 + xE, yF, zE], [zxm, yR, zR], [zxm, ym, O_FIRST], [zx0, ym, O_FIRST]], innen, dS, { name: "odS3" });
+        W.poly([[zxm, yR, zR], [zx1 - xE, yF, zE], [zx1, yF, zE], [zx1, ym, O_FIRST], [zxm, ym, O_FIRST]], innen, dS, { name: "odS4" });
+        W.teil("ostdachN");
         W.poly([[OX1 - d, OY0 - UE, TRAUFE], [OX0, OY0 - UE, TRAUFE], [xK, ym, O_FIRST], [OX1 - d, ym, O_FIRST]], innen,
           dach({ fleder: [13.2, 17.8].map((x) => [x, 1.6, zD(OY1 + OY0 - 1.6)]) }), { name: "odN" });
         /* Stufengiebel am Ostende */
@@ -1204,7 +1251,28 @@
         giebelScheibe(W, "ostgiebel", [OX1, OY1, 0], [0, -1], [1, 0], d, GO, gO);
         figurKoerper(W, "ostkugel", OX1 - d / 2, ym, GO.top, 0.2, 0.42, KUGEL(0.18));
         /* Gauben vorn und hinten */
-        for (const x of [13.4, 15.5, 17.6]) gaube(W, "gaubeOS" + x, [x, OY1 + UE], [0, 1], TRAUFE, O_TAN, 1.0, 1.2);
+        for (const x of [12.6, 14.0, 15.4]) gaube(W, "gaubeOS" + x, [x, OY1 + UE], [0, 1], TRAUFE, O_TAN, 1.0, 1.2);
+        /* FASSUNG 812 — Xanders Fotos (vom Brunnen und vom Obermarkt): am Ende des Ostflügels steht über der Front ein
+           kleiner Stufengiebel, der wie der große Giebel zum Markt schaut. Zwerchgiebel mit eigenem kleinen Satteldach,
+           dessen First in das Hauptdach läuft. */
+        {
+          /* zb, zx0 … zR (First des Zwerchdachs), yR (wo er das Hauptdach trifft) stehen oben beim Hauptdach */
+          const GZ = stufengiebel(zb, TRAUFE, O_TAN, 0, 2, 0.62);
+          if (TRAUFE < W.zMax) {
+            const gZ = { putz: PUTZ, el: [
+              ...reihe([zx0 + 1.3, zx1 - 1.3], (x) => ({ t: "f", p: [x, OY1, 13.35], w: 0.72, h: 1.15, form: "r", sprossen: [2, 3] })),
+              { t: "f", p: [zxm, OY1, 15.2], w: 0.55, h: 0.8, form: "r", sprossen: [1, 2] },
+              { t: "band", p: [zxm, OY1, 14.0], w: zb - 0.8, h: 0.14 }
+            ] };
+            giebelScheibe(W, "zwerchgiebel", [zx0, OY1, 0], [1, 0], [0, 1], d, GZ, gZ);
+            W.teil("zwerchdach");
+            const innenZ = [zxm, yR + 0.8, TRAUFE + 1.2];
+            /* Dachflächen als Dreiecke oberhalb des Hauptdachs (die Kehle liegt genau auf ihm) */
+            W.poly([[zx0 + xE, yF, zE], [zxm, yF, zR], [zxm, yR, zR]], innenZ, dach(), { name: "zdW" });
+            W.poly([[zxm, yR, zR], [zxm, yF, zR], [zx1 - xE, yF, zE]], innenZ, dach(), { name: "zdO" });
+            figurKoerper(W, "zwerchkugel", zxm, OY1 - d / 2, GZ.top, 0.18, 0.4, KUGEL(0.16));
+          }
+        }
         for (const x of [12.4, 15.5, 18.6]) gaube(W, "gaubeON" + x, [x, OY0 - UE], [0, -1], TRAUFE, O_TAN, 1.0, 1.2);
         /* Türmchen am Anschluss zum Giebel (rechts vom großen Giebel) */
         const tx = 11.0, ty = 8.9, tb = 0.62, tz1 = 15.6;
@@ -1408,7 +1476,9 @@
           for (let i = 0; i < 4; i++) {
             const a = G4[i], b2 = G4[(i + 1) % 4];
             const mx = (a[0] + b2[0]) / 2, my = (a[1] + b2[1]) / 2;
-            const We = wand({ putz: "#f1ece0", kranz: rz1 - 0.22, el: [{ t: "f", p: [mx, my, rz1 - 1.05], w: 0.4, h: 0.6, form: "b", sprossen: [1, 1], fluegel: 1, gewaende: 0.05, bank: false, licht: 0.1 }] });
+            const qx = i % 2 === 0 ? 0.26 : 0, qy = i % 2 === 0 ? 0 : 0.26;
+            const fe = (dd) => ({ t: "f", p: [mx + qx * dd, my + qy * dd, rz1 - 0.95], w: 0.34, h: 0.5, form: "r", sprossen: [1, 1], fluegel: 1, gewaende: 0.05, bank: false, licht: 0.1 });
+            const We = wand({ putz: "#f1ece0", kranz: rz1 - 0.22, el: [fe(-1), fe(1)] });
             const pts = i % 2 === 0
               ? [[a[0], a[1], rz1], [b2[0], b2[1], rz1], [b2[0], b2[1], zR(b2[1])], [a[0], a[1], zR(a[1])]]
               : [[a[0], a[1], rz1], [b2[0], b2[1], rz1], [b2[0], b2[1], zR(b2[1])], [b2[0], fy, zF], [a[0], a[1], zR(a[1])]];

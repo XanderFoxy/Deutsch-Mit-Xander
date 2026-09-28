@@ -49,6 +49,13 @@ function auftraege() {
   for (const a of plan.bilder) {
     if (NUR && !NUR.includes(a.bild)) continue;
     for (const jahr of a.jahr) for (const zeit of a.zeit) for (const bau of a.bau) for (const gier of a.gier) {
+      /* FASSUNG 812 — XANDER: „Vergiss die Windmühle nicht. Ich will den selben Look haben." DREHBLATT: das Flügelkreuz
+         der Windmühle in a.phasen Stellungen nebeneinander (eine Zeile je Blickwinkel, Jahres- und Tageszeit, Größe),
+         ohne Schatten. Der Anker ist der Fußpunkt des Modells – wie beim Gebäude, also passt es genau darüber. */
+      if (a.phasen) {
+        for (const [st, s] of [["g", a.s.gross], ["k", a.s.klein]]) liste.push({ blatt: true, name: [a.bild, jahr, zeit, "f", gier, st].join("_"), id: a.id, saat: a.saat || 7, variante: a.variante, phasen: a.phasen, gier: gier, jahr: jahr, zeit: zeit, bau: 1, s: s, t: a.t || 1.5 });
+        continue;
+      }
       /* Baustellen werden nur tagsüber und nur mittelgroß gebacken (Plan: s.bau) */
       const stufen = bau < 1 ? [["m", a.s.bau || a.s.gross * 0.6]] : [["g", a.s.gross], ["k", a.s.klein]];
       if (bau < 1 && zeit !== "tag") continue;
@@ -81,12 +88,48 @@ function auftraege() {
   const pg = await br.newPage({ viewport: { width: 400, height: 300 } });
   pg.on("pageerror", (e) => console.log("Seitenfehler: " + e.message));
   /* Werkbank mit einem kleinen Modell öffnen: dann sind alle Modelle geladen */
-  await pg.goto("http://127.0.0.1:" + srv.address().port + "/stadt.html?quelle=1&werkbank=bank&still=1&dazu=menschen", { waitUntil: "load", timeout: 300000 });
+  /* FASSUNG 812 — Modelle aus dem Plan, die (noch) nicht in stadt/modelle.js stehen (Windmühle), gleich mitladen */
+  const dazu = ["menschen"].concat([...new Set(plan.bilder.map((a) => a.id))].filter((m) => /^[a-z0-9_]+$/.test(m) && fs.existsSync(path.join(WURZEL, "stadt", "modelle", m + ".js"))));
+  await pg.goto("http://127.0.0.1:" + srv.address().port + "/stadt.html?quelle=1&werkbank=bank&still=1&dazu=" + dazu.join(","), { waitUntil: "load", timeout: 300000 });
   await pg.waitForFunction(() => window.__fertig || window.__fehler, null, { timeout: 300000 });
 
   let n = 0;
   for (const a of liste) {
     const t0 = Date.now();
+    if (a.blatt) {
+      const r = await pg.evaluate((a) => {
+        const ST = window.STADT, SZ = ST.szene;
+        SZ.jahr = a.jahr; SZ.zeit = a.zeit;
+        const Z = SZ.zeitDaten(), N = a.phasen, sp = [];
+        const KS = ST.kamera.s, KD = ST.kamera.dreh; ST.kamera.s = Math.min(a.s, 10); ST.kamera.dreh = 0; ST.jetzt = a.t * 1000;
+        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+        for (let i = 0; i < N; i++) {
+          const o = { id: 810000 + i, typ: a.id, x: 0, y: 0, gier: a.gier, saat: a.saat, variante: a.variante, fluegelPhase: i / N };
+          const b = ST.spriteMalen(a.id, { ungekappt: true, jahr: a.jahr, bau: 1, saat: a.saat, variante: a.variante, fluegelPhase: i / N, schluessel: a.variante + i, objekt: o }, a.gier, a.s, Z, a.t);
+          sp.push(b); x0 = Math.min(x0, b.ox); y0 = Math.min(y0, b.oy); x1 = Math.max(x1, b.ox + b.W); y1 = Math.max(y1, b.oy + b.H);
+        }
+        ST.kamera.s = KS; ST.kamera.dreh = KD;
+        /* gemeinsame Zelle (Fußpunkt bei −x0, −y0), dann auf das Sichtbare aller Stellungen zuschneiden */
+        const cw = Math.ceil(x1 - x0), ch = Math.ceil(y1 - y0);
+        const roh = document.createElement("canvas"); roh.width = cw * N; roh.height = ch; const rg = roh.getContext("2d");
+        sp.forEach((b, i) => { rg.drawImage(b.bild, i * cw + b.ox - x0, b.oy - y0); b.bild.width = 0; b.schatten.width = 0; });
+        const d = rg.getImageData(0, 0, roh.width, ch).data;
+        let k0 = cw, k1 = -1, l0 = ch, l1 = -1;
+        for (let y = 0; y < ch; y++) for (let x = 0; x < cw * N; x++) if (d[(y * cw * N + x) * 4 + 3] > 2) { const cx = x % cw; if (cx < k0) k0 = cx; if (cx > k1) k1 = cx; if (y < l0) l0 = y; if (y > l1) l1 = y; }
+        if (k1 < 0) { k0 = 0; k1 = 1; l0 = 0; l1 = 1; }
+        const zw = k1 - k0 + 1, zh = l1 - l0 + 1;
+        const blatt = document.createElement("canvas"); blatt.width = zw * N; blatt.height = zh; const bg = blatt.getContext("2d");
+        for (let i = 0; i < N; i++) bg.drawImage(roh, i * cw + k0, l0, zw, zh, i * zw, 0, zw, zh);
+        const url = blatt.toDataURL("image/webp", 0.84);
+        roh.width = 0; blatt.width = 0;
+        return { bild: url, w: zw * N, h: zh, n: N, ax: Math.round((-x0 - k0) * 10) / 10, ay: Math.round((-y0 - l0) * 10) / 10, s: a.s };
+      }, a);
+      fs.writeFileSync(path.join(ZIEL, a.name + ".webp"), Buffer.from(r.bild.split(",")[1], "base64"));
+      delete r.bild; vz[a.name] = r; n++;
+      console.log(n + "/" + liste.length + " " + a.name + " (Drehblatt " + r.n + " × " + (r.w / r.n) + "×" + r.h + ") " + (fs.statSync(path.join(ZIEL, a.name + ".webp")).size / 1024).toFixed(0) + " KB " + (Date.now() - t0) + " ms");
+      if (n % 10 === 0) fs.writeFileSync(vzDatei, JSON.stringify(vz));
+      continue;
+    }
     if (a.leute) {
       const r = await pg.evaluate((a) => {
         const ST = window.STADT, SZ = ST.szene;
