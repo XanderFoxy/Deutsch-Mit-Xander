@@ -283,6 +283,9 @@
         if (K.s > K.max) K.s = K.max;
         if (klein) { if (bauLeiste) bauLeisteZeigen(false); if (leiste && !leiste.hidden) leisteZeigen(false); karte.hidden = true; farbFeld.hidden = true; }
       };
+      /* FASSUNG 809 — Walkie 304: „es stehen immer noch Schriften für die Namen der Häuser über den Häusern obwohl ich gar
+         keine … eingeschaltet habe". Namen und Symbole sind aus, bis das Spiel sie einschaltet (wie im alten Dorf). */
+      document.body.classList.add("lk-ohne-namen", "lk-ohne-symbole");
       const erstesMal = q.get("mini") === "1";
       modus(erstesMal);
       if (erstesMal) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; }
@@ -298,11 +301,15 @@
          ans Spiel geschickt, das damit das Dorf-Menü rund um das Bild scrollt – mit Schwung wie ein echtes Scrollen. */
       const scrollModus = () => document.body.classList.contains("lk-mini-modus") && !document.body.classList.contains("lk-nah");
       const hoch = (d) => { try { window.parent.postMessage(Object.assign({ typ: "leicht-scroll" }, d), location.origin); } catch (x) {} };
+      /* FASSUNG 809 — Walkie 304: „Das Scrollen ist sehr schwerfällig und hängt immer nach und schiebt sich zurück". Der
+         Rahmen wandert beim Scrollen mit dem Menü mit – der Finger wurde relativ zum Rahmen gemessen (clientY), also hob
+         sich die Bewegung auf und kam verspätet nach. Jetzt in Koordinaten der Spielseite (Finger + Lage des Rahmens). */
+      const seitenY = (t) => { let o = 0; try { const f = window.frameElement; if (f) o = f.getBoundingClientRect().top; } catch (x) {} return t.clientY + o; };
       let wY = null, wT = 0, wV = 0;
-      document.addEventListener("touchstart", (e) => { if (!scrollModus() || e.touches.length !== 1) { wY = null; return; } wY = e.touches[0].clientY; wT = performance.now(); wV = 0; hoch({ halt: 1 }); }, { passive: true });
+      document.addEventListener("touchstart", (e) => { if (!scrollModus() || e.touches.length !== 1) { wY = null; return; } wY = seitenY(e.touches[0]); wT = performance.now(); wV = 0; hoch({ halt: 1 }); }, { passive: true });
       document.addEventListener("touchmove", (e) => {
         if (wY == null || !scrollModus() || e.touches.length !== 1) return;
-        const y = e.touches[0].clientY, dy = wY - y, t = performance.now();
+        const y = seitenY(e.touches[0]), dy = wY - y, t = performance.now();
         wV = 0.7 * wV + 0.3 * dy / Math.max(1, t - wT); wY = y; wT = t;
         if (dy) hoch({ dy: dy });
       }, { passive: true });

@@ -260,6 +260,16 @@ const sage = (gut, was, zusatz) => {
   const sc1 = await scMess();
   sage(sc0.menue >= 0 && sc1.menue > sc0.menue + 40 && Math.abs(sc1.seite - sc0.seite) < 2, "Wischen über die kleine Stadt scrollt das Dorf-Menü darunter (nicht die ganze Seite)", JSON.stringify({ sc0, sc1 }));
 
+  /* FASSUNG 809 — Walkie 304: „Das Scrollen ist sehr schwerfällig und hängt immer nach und schiebt sich zurück". Langsam
+     wischen (ohne Schwung): das Menü folgt dem Finger 1 : 1, auch wenn der Rahmen dabei mitwandert. */
+  { await pg.evaluate(() => { const e = document.querySelector(".sp-dl-neustadt-platz"); let p = e.parentElement; while (p && p !== document.body && !(p.scrollHeight > p.clientHeight + 2 && /(auto|scroll)/.test(getComputedStyle(p).overflowY))) p = p.parentElement; if (p && p !== document.body) p.scrollTop = 0; }); await tick(300);
+    const a = await scMess(), o = await lage(".sp-lstadt"), cdp = await ctx.newCDPSession(pg);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: o.l + o.w / 2, y: o.t + o.h * .8 }] });
+    for (let i = 1; i <= 8; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: o.l + o.w / 2, y: o.t + o.h * .8 - i * 10 }] }); await tick(40); }
+    await tick(250); await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await tick(400);
+    const b = await scMess();
+    sage(Math.abs((b.menue - a.menue) - 80) <= 12, "langsames Wischen um 80 px scrollt das Menü um 80 px (folgt dem Finger, hängt nicht nach)", JSON.stringify({ a, b, weg: b.menue - a.menue })); }
+
   console.log("\nNEUZEICHNEN DES MENÜS LÄDT DIE STADT NICHT NEU\n");
   await imFrame(() => { window.__marke = 42; });
   await pg.evaluate(() => { for (let i = 0; i < 4; i++) window.DMA_SPIEL.pruef.schnellZeichnen(true); });
@@ -350,7 +360,8 @@ const sage = (gut, was, zusatz) => {
   sage(!!v && Math.abs(v.w - 740) < 1 && Math.abs(v.h - 360) < 1, "quer gedreht: weiter bildschirmfüllend", JSON.stringify(v));
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-voll.png" });
   await pg.setViewportSize({ width: 360, height: 740 }); await tick(500);
-  await tippeImFrame(".lk-kopf-links .lk-knopf"); await tick(700);
+  await tippeImFrame(".lk-kopf-links .lk-knopf");
+  { const t0 = Date.now(); await tick(300); while (Date.now() - t0 < 2500 && !nah(await lage(".sp-lstadt"), await lage(".sp-dl-neustadt-platz"))) await tick(100); console.log("     (zurück im Rahmen nach " + (Date.now() - t0) + " ms)"); }
   sage(nah(await lage(".sp-lstadt"), await lage(".sp-dl-neustadt-platz")) && (await imFrame(() => document.body.classList.contains("lk-mini-modus"))) === true && (await imFrame(() => window.__marke)) === 42,
     "„Zurück“ in der Stadt: wieder klein im Dorfrahmen, dieselbe Stadt");
 
