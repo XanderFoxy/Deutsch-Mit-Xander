@@ -1744,3 +1744,18 @@ XANDER: „gib mir … Benachrichtigungen wenn ein neuer Touristenstrom in meine
 - Nach dem Aussteigen steht, was passiert ist: „🌊 Das war eine Touristenwelle! 2 blieben hungrig – das spricht sich herum (Ruf −1). Die Stadt war zu voll (Ruf −1) – ein größeres Gasthaus schafft Platz.“ oder „Alle satt – sie empfehlen dich weiter (Ruf +1).“
 - Server: `spiel_beliebtheit`, `spiel_kurtaxe` neu; `spiel_bahn_zug` (Taxe, Welle, Platz, Beliebtheit) und `spiel_bahn` (Ruf, hungrig, zu voll) erweitert.
 - Damit ist Walkie 300 umgesetzt: 777 Bündnis/Vertrauen/Verrat, 778 Überfall auf Abwesende, 779 Tourismus.
+
+### Fassung 780 (Funk 200: Aussprache-Karte kompakt, Piepton, Punkte nach Prozent und Niveau)
+Sonden: 766, 768, 771, 772, 773 grün (773 um Piepton/„keine Strichlinie“ erweitert, der Weiter-Balken wird jetzt an `data-weiter` gemessen).
+XANDER: „möchte ich dass das Design kompakter ist dass die prozentuale Anzeige etwas kleiner ist … diese Striche Linie braucht es nicht zusätzlich … nachdem der Sprecher gesprochen hat soll es einen kleinen Piepton geben … mit demselben Signalton wie wir das in Originalspiel auch haben … klein und kompakt und niedlich und augenfreundlich … so gut wie ich in Prozentwert bin so gut soll ich belohnt werden … 50% auf A1 bedeutet etwas anderes wie 50% auf C2".
+- **Kompakt**:
+  - Oben eine Zeile mit den Niveaus A1–C2 und „Auto: an“ (statt der großen Schalter-Pille). Das Wort ist kleiner (22 px).
+  - Darunter eine **Statuszeile** mit farbigem Punkt: „Hör gut zu …“ (blau) → „Piep – jetzt du!“ (rot, pulsiert) → „Ich höre zu …“ (gelb) → „Gleich kommt das nächste Wort“ (grün).
+  - Vier kleine Symbolknöpfe: Anhören, Sprechen, Nächstes, Übungen.
+  - Ergebnis mit kleinem Kreisel (56 px, ohne Schwellenstrich): „88 / 100 · +11 Punkte von 13“, Laute, Tipp.
+  - Die Weiter-Linie ist weg; die Wartezeit läuft unsichtbar weiter. Das Wörterbuch-Angebot ab 95 % darf die Karte wachsen lassen.
+- **Piepton**: Sobald das Mikrofon offen ist, kommt derselbe Ton wie im Aussprachetrainer der Seite (`Core.sound.sprichJetzt`). Ablauf mit „Auto: an“: vorlesen → Piep → sprechen → Bewertung → nächstes Wort, so lange man will.
+- **Punkte nach Prozent und Niveau** (Server `spiel_aussprache_fertig`):
+  - Höchstmaß je Niveau: A1 6 · A2 8 · B1 10 · B2 13 · C1 16 · C2 20. Man bekommt seinen Prozentanteil davon, ab 30 %.
+  - Servertest: A1 50 % → 3, A1 100 % → 6, C2 50 % → 10, C2 100 % → 20, C2 25 % → 0, B2 88 % → 11.
+  - Ein schweres Niveau lohnt sich also: C2 mit 50 % bringt mehr als A1 mit 100 %. Weiter gilt: höchstens 40 Wertungen je Stunde.

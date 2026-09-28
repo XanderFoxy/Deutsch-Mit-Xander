@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 779: Beliebtheit, Touristenwellen mit Meldung, Kurtaxe 1–6 P wie Venedig, Ruf und Überfüllung (Walkie 300 Teil 3)",
+  stand: "Fassung 780: Aussprache-Karte kompakt mit Statuszeile, Piepton wie im Trainer, Punkte nach Prozent × Niveau (Funk 200)",
 
   inArbeit: [
-    { seit: "2026-09-28T01:20",
+    { seit: "2026-09-28T01:31",
       text: "Walkie 301: Ausflug zum Wahrzeichen · Walkie 302: Flickstube · Funk 188/190 Rest · Folgen für Pac-Man/Mario" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T01:20",
-      text: "Walkie 300 komplett: Diplomatie, Überfall, Tourismus" },
+    { seit: "2026-09-28T01:31",
+      text: "Funk 200: Aussprache kompakt, Piepton, Punkte nach Prozent" },
   ],
 };

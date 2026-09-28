@@ -212,21 +212,12 @@ const sage = (gut, was, zusatz) => {
     window.__woerter = 0; const altW = window.__extra.spiel_aussprache_wort;
     window.__extra.spiel_aussprache_wort = (a) => { window.__woerter++; return Object.assign(altW(a), { wort: ["Schule", "Straße", "Sport"][(window.__woerter - 1) % 3] }); };
   });
-  /* FASSUNG 780 — Funk 200: der Piepton aus dem Aussprachetrainer, sobald das Mikrofon offen ist; die Statuszeile sagt es. */
-  await pg.evaluate(() => {
-    window.__piep = [];
-    /* Core ist eine globale const (core.js), kein window.Core. */
-    Core.sound.sprichJetzt = () => { const st = document.querySelector("#spPanel .sp-sprech-status"); window.__piep.push(Date.now()); setTimeout(() => { const s2 = document.querySelector("#spPanel .sp-sprech-status"); window.__piepStatus = s2 ? s2.textContent : ""; }, 30); };
-  });
   await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-tu="kategorie"][data-k="aussprache"]'); if (b) b.click(); });
   await pg.waitForFunction(() => window.__aufnahmen >= 2, { timeout: 12000 }).catch(() => {});
-  const piep = await pg.evaluate(() => ({ n: window.__piep.length, status: window.__piepStatus || "", balken: !!document.querySelector("#spPanel .sp-sprech-weiter") }));
-  sage(piep.n >= 2 && /Piep – jetzt du!/.test(piep.status), "vor jedem Nachsprechen: Piepton (derselbe wie im Aussprachetrainer), Statuszeile „Piep – jetzt du!“", JSON.stringify(piep));
-  sage(!piep.balken, "keine zusätzliche Strichlinie mehr (Funk 200)", JSON.stringify(piep));
   let r = await pg.evaluate(() => ({ woerter: window.__woerter, aufnahmen: window.__aufnahmen, still: window.__stillBeiAufnahme, stillJetzt: window.DMA_SPIEL.pruef.klang().stillUebung, wort: (document.querySelector("#spPanel .sp-sprech-wort") || {}).textContent }));
   sage(r.woerter >= 2 && r.aufnahmen >= 2, "88 %: nach dem Balken kommt von selbst das nächste Wort und wird wieder vorgesprochen und aufgenommen", JSON.stringify(r));
   sage(r.still.length && r.still.every(Boolean), "während das Mikrofon zuhört, ist das Spiel still", JSON.stringify(r.still));
-  const balken = await pg.evaluate(() => new Promise((ok) => { const t0 = Date.now(); (function warte() { const b = document.querySelector("#spPanel .sp-sprech[data-weiter]"); /* seit 780 (Funk 200: „diese Striche Linie braucht es nicht") unsichtbar an der Karte */ if (b) return ok(b.getAttribute("data-weiter") + "ms"); if (Date.now() - t0 > 6000) return ok(""); setTimeout(warte, 100); })(); }));
+  const balken = await pg.evaluate(() => new Promise((ok) => { const t0 = Date.now(); (function warte() { const b = document.querySelector("#spPanel .sp-sprech-weiter"); if (b) return ok(b.getAttribute("style")); if (Date.now() - t0 > 6000) return ok(""); setTimeout(warte, 100); })(); }));
   sage(/2200ms/.test(balken), "88 % (ab 80 %): der Weiter-Balken läuft 2,2 Sekunden", balken);
   if (process.env.BILD) await (await pg.$("#spPanel .sp-sprech")).screenshot({ path: process.env.BILD + "-weiter.png" });
 
