@@ -113,6 +113,11 @@
     const regler = farbFeld.querySelector("input"), zahl = farbFeld.querySelector("b");
     regler.value = Math.round(farbK * 100); zahl.textContent = regler.value + " %";
     regler.addEventListener("input", () => { farbK = +regler.value / 100; zahl.textContent = regler.value + " %"; stimmungSetzen(); try { localStorage.setItem("leicht_farbe", regler.value); } catch (e) {} });
+    /* FASSUNG 796 — Sparmodus zum Einschalten (schwache Verbindung) */
+    const spar = el("label", "lk-spar", '<input type="checkbox"> Daten sparen (schwache Verbindung)');
+    const sparK = spar.querySelector("input"); sparK.checked = !!LB.spar;
+    sparK.addEventListener("change", () => { try { localStorage.setItem("leicht_spar", sparK.checked ? "1" : "0"); } catch (e) {} LB.spar = sparK.checked; ansage(sparK.checked ? "Sparmodus an" : "Sparmodus aus"); L().unruhe = 2; });
+    farbFeld.appendChild(spar);
     wurzel.appendChild(farbFeld);
     stimmungSetzen();
     setInterval(() => { if (SZ.zeitAuto) { stimmungSetzen(); if (zeitK) zeitK.innerHTML = SYM[ZEIT_SYM[SZ.zeit]]; } }, 30000);
@@ -396,7 +401,10 @@
       const offen = LB.offen();
       const bar = deckel.querySelector("em");
       if (bar) bar.style.width = Math.max(8, 100 - offen * 3) + "%";
-      if (offen === 0 && SZ.sichtbare.length) { deckel.classList.add("weg"); setTimeout(() => deckel.remove(), 500); }
+      /* FASSUNG 796 — nicht auf ALLE Bilder warten: nach spätestens 2,5 s
+         (oder wenn alles da ist) geht der Vorhang auf; der Rest lädt sichtbar nach. */
+      if (!O._vorhangSeit) O._vorhangSeit = performance.now();
+      if (SZ.sichtbare.length && (offen === 0 || performance.now() - O._vorhangSeit > 2500)) { deckel.classList.add("weg"); setTimeout(() => deckel.remove(), 500); }
     }
   };
 })();

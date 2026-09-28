@@ -84,3 +84,7 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 #lOber.leiste-offen .lk-bauen { display: none; }
 .lk-bauleiste .lk-karte-klein small { display: block; font: 500 10px system-ui, sans-serif; color: #6b5a3e; }
 .lk-bauleiste .lk-frei img { opacity: .55; filter: grayscale(.6); }
+
+/* FASSUNG 796 — Sparmodus-Schalter im Farbfeld */
+.lk-spar { display: flex; align-items: center; gap: 8px; margin-top: 8px; font: 500 13px system-ui, sans-serif; color: #e9e2d2; min-height: 32px; }
+.lk-spar input { width: 22px; height: 22px; }

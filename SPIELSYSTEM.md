@@ -1958,3 +1958,9 @@ XANDER: „ob du auf der Basis von diesem Konzept das Ganze in einem kleineren M
 - Das Holstentor stand im See – jetzt (38, 64). Bäume wachsen nicht mehr auf Wahrzeichen-Plätzen. Wahrzeichen erscheinen, sobald sie im Spiel gebaut sind (volk.wunder).
 - Bauen-Knopf: Leiste mit allen 16 Gebäuden (Stufe, im Bau, Preis/ab Level); Antippen fliegt hin und öffnet die Karte. Am Haus „Ausbauen" (spiel_bauen) bis Stufe 3.
 - Tag und Nacht nach der Uhr fließend (SZ.nachtGrad: Dämmerung 16:30–20:00 und 6:00–8:00), Licht, Schatten, Nachtbild und Farbstimmung werden gemischt; die Tageszeit-Taste stellt fest ein. Prüfen: `?uhr=18.3`.
+
+## Fassung 796 — Sparmodus für schwache Verbindungen (leichte Stadt)
+- XANDER: „Emmi aus Ägypten hatte gestern nur eine blaue Anzeige und diese Häuser mussten erst mal ewig laden … dass Leute, die mit ihrer Verbindung überhaupt nicht spielen können, noch eine Variante tiefer gehen können."
+- Gemessen (360-px-Telefon, Start): vorher 2,9 MB Bilder, jetzt 2,3 MB; im Sparmodus 0,9 MB.
+- Sparmodus automatisch bei „Datensparen" oder 2G/3G (navigator.connection), sonst per Schalter im Farbfeld oder `?spar=1`: nur kleine Bilder, in der Dämmerung nur ein Bild je Haus, 12 statt 30 Leute aus 2 statt 6 Figurenblättern.
+- Immer: große Bilder erst ab dem 1,6-fachen (statt 1,3), und erst nachdem das kleine da ist; der Ladevorhang wartet höchstens 2,5 s statt auf alle Bilder.

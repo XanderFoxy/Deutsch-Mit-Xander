@@ -198,7 +198,9 @@
     /* FASSUNG 795 — fließend: bis zur Dämmerung (0,75) wächst das Nachtbild
        auf 0,62, danach bis zur vollen Nacht auf 1 */
     const ng = Z.grad != null ? Z.grad : Z.nacht;
-    const nachtAnteil = ng >= 0.995 ? 1 : ng <= 0.01 ? 0 : ng <= 0.75 ? 0.62 * ng / 0.75 : 0.62 + 0.38 * (ng - 0.75) / 0.25;
+    let nachtAnteil = ng >= 0.995 ? 1 : ng <= 0.01 ? 0 : ng <= 0.75 ? 0.62 * ng / 0.75 : 0.62 + 0.38 * (ng - 0.75) / 0.25;
+    /* Sparmodus: nur ein Bild je Haus (Tag oder Nacht), nie beide */
+    if (LB.spar) nachtAnteil = nachtAnteil >= 0.5 ? 1 : 0;
     const zeiten = nachtAnteil >= 1 ? [["nacht", 1]] : nachtAnteil > 0 ? [["tag", 1], ["nacht", nachtAnteil]] : [["tag", 1]];
     const sicht = [];
     const rand = 60 * K.dpr;

@@ -148,7 +148,7 @@
   };
   try { L.lage = JSON.parse(localStorage.getItem("leicht_lage_v1") || "{}"); } catch (e) { L.lage = {}; }
 
-  L.aufbauen = function () { D.aufbauen(L.ich, L.dekoLaden()); if (ST.leute && !ST.leute.liste.length) ST.leute.setzen(q.get("leute") != null ? +q.get("leute") : 30); if (ST.oberflaeche && ST.oberflaeche.neuAufgebaut) ST.oberflaeche.neuAufgebaut(); L.unruhe = 2; };
+  L.aufbauen = function () { D.aufbauen(L.ich, L.dekoLaden()); if (ST.leute && !ST.leute.liste.length) ST.leute.setzen(q.get("leute") != null ? +q.get("leute") : LB.spar ? 12 : 30); if (ST.oberflaeche && ST.oberflaeche.neuAufgebaut) ST.oberflaeche.neuAufgebaut(); L.unruhe = 2; };
 
   function los() {
     groesse();

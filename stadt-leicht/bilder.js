@@ -25,6 +25,24 @@
   let laufend = 0;
   const GLEICHZEITIG = 6;
   LB.version = "";
+  /* FASSUNG 796 — XANDER: „Emmi aus Ägypten hatte gestern nur eine blaue
+     Anzeige und diese Häuser mussten erst mal ewig laden … dass sogar Leute,
+     die mit ihrer Verbindung überhaupt nicht spielen können, noch eine
+     Variante tiefer gehen können." SPARMODUS: bei „Datensparen", 2G/3G oder
+     ?spar=1 nur die kleinen Bilder (nie die großen), kein doppeltes
+     Tag-und-Nacht-Bild in der Dämmerung, weniger Leute. */
+  LB.spar = (function () {
+    try {
+      const q = new URLSearchParams(location.search);
+      if (q.get("spar") === "1") return true;
+      if (q.get("spar") === "0") return false;
+      const gemerkt = localStorage.getItem("leicht_spar");
+      if (gemerkt === "1") return true;
+      if (gemerkt === "0") return false;
+      const c = navigator.connection;
+      return !!(c && (c.saveData || /(^|-)2g|3g/.test(c.effectiveType || "")));
+    } catch (e) { return false; }
+  })();
 
   LB.laden = function (v) {
     LB.version = v || "";
@@ -70,11 +88,15 @@
     if (m) return { name: basis + "_m", meta: m };
     if (!k && !g) return null;
     const bedarf = s * (stufe || 1);
-    /* ab dem 1,3-fachen der kleinen Auflösung lohnt das große Bild */
-    if (g && (!k || bedarf > k.s * 1.3)) {
-      if (LB.bild(basis + "_g")) return { name: basis + "_g", meta: g };
-      /* das große lädt noch: das kleine gestreckt zeigen */
-      if (k && LB.bild(basis + "_k", true)) return { name: basis + "_k", meta: k };
+    /* ab dem 1,6-fachen der kleinen Auflösung lohnt das große Bild
+       (FASSUNG 796: vorher 1,3 – dann lud schon die Übersicht große Bilder).
+       Erst wenn das kleine da ist, wird das große geholt: so steht das Bild
+       sofort und wird danach scharf. Im Sparmodus nie groß. */
+    if (g && (!k || (bedarf > k.s * 1.6 && !LB.spar))) {
+      if (LB.fertig(basis + "_g")) return { name: basis + "_g", meta: g, img: LB.bild(basis + "_g") };
+      if (k && !LB.bild(basis + "_k", true)) return null;
+      LB.bild(basis + "_g");
+      if (k) return { name: basis + "_k", meta: k };
       return null;
     }
     if (LB.bild(basis + "_k")) return { name: basis + "_k", meta: k };

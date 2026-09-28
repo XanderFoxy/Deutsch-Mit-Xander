@@ -52,7 +52,8 @@
   function menschNeu(i, rng) {
     const start = Math.floor(rng() * knoten.length);
     const nb = nachbarn[start];
-    return { art: i % ARTEN, von: start, nach: nb[Math.floor(rng() * nb.length)], t: rng(), tempo: 1.15 + rng() * 0.35, seite: (rng() - 0.5) * 1.3, ph: rng(), rng: rng, nachts: rng() < 0.35, pause: 0 };
+    /* FASSUNG 796 — Sparmodus: nur zwei Figurenblätter statt sechs (je ≈ 90 KB) */
+    return { art: i % (ST.bilder && ST.bilder.spar ? 2 : ARTEN), von: start, nach: nb[Math.floor(rng() * nb.length)], t: rng(), tempo: 1.15 + rng() * 0.35, seite: (rng() - 0.5) * 1.3, ph: rng(), rng: rng, nachts: rng() < 0.35, pause: 0 };
   }
   LE.setzen = function (anzahl) {
     const rng = ST.zufall(20251224);
