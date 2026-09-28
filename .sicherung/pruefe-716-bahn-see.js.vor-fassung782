@@ -283,8 +283,6 @@ const sage = (gut, was, zusatz) => {
       spiel_angeln: (a) => { window.__angelArgs = a; return Object.assign(JSON.parse(JSON.stringify(ich)), { ok: true, fang: "fisch", menge: 2, vorraete: Object.assign({}, ich.vorraete, { fisch: 3 }) }); }
     });
     window.DMA_TONLOG.length = 0; window.__hinweise.length = 0;
-    /* Fassung 782: wie Sonde 765 – frischer Fahrplan ohne Wartesperre aus früheren Schritten. */
-    const S = window.DMA_SPIEL.pruef.zustand(); S.bahn = null; S.bahnZeit = 0; S.bahnVersuch = 0;
   });
   await tippe(".sp-dl-bahnhof"); await tick(700);
   r = await pg.evaluate(() => { const st = document.querySelector(".sp-bahnhof"); return st ? { knoepfe: [...st.querySelectorAll('[data-s="bahn"]')].map((k) => [k.dataset.a, k.disabled, k.textContent.replace(/\s+/g, " ").trim()]) } : null; });

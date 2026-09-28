@@ -1771,3 +1771,21 @@ XANDER (Walkie 301): „Ausflug zum Fernsehturm/Wahrzeichen eines anderen: Zufri
 - **Die Rechnung steht offen da**: „3 Bewohner: −12 P Fahrkarten → +6 Forschung, bei einem Wahrzeichen +5 % Zufriedenheit (4 h). Geld bringt das nicht – 9 P Eintritt verdient das Zieldorf; dein Geld kommt von Touristen.“
 - **Anzeige**: Die Volk-Zeile zeigt „Ausflug Berliner Fernsehturm: +5 % bis 5:39“. Nach der Fahrt kommt die Meldung „Sie haben Berliner Fernsehturm gesehen: Zufriedenheit +5 % bis …“.
 - Die Meldung „Volk unzufrieden“ nennt jetzt als Tipp „Ausflug per Zug zu einem Wahrzeichen (+5 % für 4 h)“, solange kein Ausflug wirkt.
+
+### Fassung 782 (Walkie 302: Flickstube mit Wanderstiefeln)
+Sonden: neu 782 (12/12 grün); 704, 707, 716, 763, 765, 775, 779, 781 grün. Servertest: 7 alte Schuhe → 2 Paar Wanderstiefel (1 Schuh bleibt übrig); der nächste Trupp dauert 240 statt 300 s, Haltbarkeit danach 7; ohne Flickstube kommt „erst eine Flickstube bauen“.
+XANDER (Walkie 302): „Ja, Flickstube mit Wanderstiefeln“. Seine zweite Wahl („lieber etwas anderes, bitte in der Notiz“) hat eine leere Notiz; die Frage steht jetzt als Walkie 303 mit Vorschlägen (Flohmarkt, Schrott zu Erz, Kuriositäten-Vitrine).
+- **Alte Schuhe** (Vorrat `altschuh`):
+  - Beim **Graben** wird aus „nur Erde“ jetzt 12-mal von 100 ein alter Schuh (nur Erde 30 statt 42 von 100).
+  - Beim **Angeln** kommt der alte Stiefel ins Lager statt zurück in den See.
+  - Die Meldung sagt, wie viele man hat und wie viele bis zum nächsten Paar fehlen.
+- **Flickstube** (ab Level 6, 110 P je Stufe, am Weg zwischen Mühle und Gasthaus):
+  - Stufe 1: 3 alte Schuhe → 1 Paar Wanderstiefel; ab Stufe 2: 2 → 1.
+  - Knopf „Flicken“ in der Station, dazu das Lager (alte Schuhe, Wanderstiefel).
+  - Im Bild: kleines Fachwerkhaus, links am Ausleger ein Stiefel als Zunftzeichen, vorn eine Schusterbank und ein Häufchen alter Schuhe.
+- **Wanderstiefel**:
+  - Ein Paar hält 8 Trupp-Fahrten (Fischer, Holzfäller, Jäger, Bergleute). Jede Fahrt dauert 4 statt 5 Minuten, also 20 % schneller.
+  - Die Trupp-Zeile zeigt „4 Minuten mit Wanderstiefeln“ und unterwegs „fällen Bäume in Wanderstiefeln“.
+  - Für den Ausflug per Zug gibt es keine Dauer, die schneller werden könnte; dort wirken die Stiefel nicht. Dafür ist Walkie 303 da.
+- Server: `spiel_flicken()` neu (SECURITY DEFINER, nur angemeldete Spieler). Erweitert wurden `spiel_bauen` (Flickstube), `spiel_graben` (alter Schuh), `spiel_angeln` (Stiefel ins Lager) und `spiel_trupp_s` (Stiefel verbrauchen, 4 min).
+- **Fehler nebenbei**: Nach einem Fehlversuch sperrte `bahnLaden` 4 s lang und versuchte es danach nicht selbst wieder. Der Bahnhof konnte dann auf „Der Fahrplan wird geholt …“ stehen bleiben (Sonde 716 war dadurch rot, auch ohne diese Fassung). Jetzt kommt nach der Sperre ein eigener zweiter Versuch.

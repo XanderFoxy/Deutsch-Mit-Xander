@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 781: Ausflug zu einem Wahrzeichen gibt +5 % Zufriedenheit für 4 h (Walkie 301), Rechnung am Bahnhof offen",
+  stand: "Fassung 782: Flickstube – alte Schuhe vom Graben und Angeln werden Wanderstiefel, Trupps 20 % schneller (Walkie 302); Bahnhof bleibt nicht mehr bei „Fahrplan wird geholt“ hängen",
 
   inArbeit: [
-    { seit: "2026-09-28T01:40",
-      text: "Walkie 302 Flickstube (Notiz fehlt); Funk 188/190 Rest (Lehrer-Freigabe, eigene Stimme im Trainer); Sequenzen für Pac-Man/Mario" },
+    { seit: "2026-09-28T02:01",
+      text: "Walkie 303 Flickstube-Extras (Antwort offen); Funk 188/190 Rest (Lehrer-Freigabe, eigene Stimme im Trainer); Sequenzen für Pac-Man/Mario" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T01:40",
-      text: "Walkie 301 Ausflug-Laune" },
+    { seit: "2026-09-28T02:01",
+      text: "Walkie 302 Flickstube" },
   ],
 };
