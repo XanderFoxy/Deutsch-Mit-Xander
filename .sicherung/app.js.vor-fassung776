@@ -33666,89 +33666,7 @@
      erst malen, dann geht dasselbe Menue an derselben Stelle wieder auf
      und dort steht nur noch Fahren oder Laufen. */
   let lcGemalterWeg = null;
-  /* =====================================================================
-     FASSUNG 776 — SEQUENZEN FÜR GEMALTE WEGE (Funk 196)
-     ---------------------------------------------------------------------
-     XANDER: „wenn die Lok fährt z.B dass man den Weg im zweiten Modul
-     verändern kann wie sie weiter fährt nachdem sie eine Runde gemacht
-     hat und dass man das multiplizieren kann wie oft Sie diese Sequenz
-     fahren soll oder wie oft sie die erste Strecke alleine fahren soll
-     … das sollte für alle Bewegungen gelten dass man jede Bewegung die
-     man zeichnet so multiplizieren kann und sequenzieren kann und die
-     Sequenz auch nur die fixieren kann platzieren kann multiplizieren".
-     Eine Folge besteht aus Modulen: jedes ist ein gemalter Weg mit
-     „× wie oft". Modul 2 wird dort weitergemalt, wo Modul 1 endet. Die
-     ganze Folge hat noch einmal ein „×". Heraus kommt EINE lange Kette
-     („1-2-6-5-1-2-6-5-1-7-8"), die jedes Fahrzeug schon kennt – so sieht
-     jedes Gerät genau dieselbe Fahrt, ohne dass die anderen Geräte etwas
-     Neues verstehen müssen. Eine Runde (zurück auf den Startplatz) darf
-     man jetzt malen; wiederholt schließt sie nahtlos an. Ein offener Weg
-     fährt bei der Wiederholung vom Ende zurück zum Anfang.
-     „Merken" fixiert die Folge im Gerät; „Hier einsetzen" platziert sie
-     so verschoben, dass sie an deinem jetzigen Platz beginnt.
-     ===================================================================== */
-  let lcSequenzOffen = null;
-  const LC_SEQ_MAX = 80;
-  const LC_SEQ_SPEICHER = "dma_weg_sequenzen";
-  function lcSeqKette(seq) {
-    if (!seq || !seq.module || !seq.module.length) return null;
-    const anhaengen = (ziel, teil) => { teil.forEach((n) => { if (ziel[ziel.length - 1] !== n) ziel.push(n); }); };
-    const block = [];
-    seq.module.forEach((m) => {
-      const mal = Math.max(1, Math.min(9, m.mal || 1));
-      for (let i = 0; i < mal; i++) anhaengen(block, m.weg);
-    });
-    const aus = [];
-    const ganz = Math.max(1, Math.min(9, seq.gesamt || 1));
-    for (let i = 0; i < ganz; i++) anhaengen(aus, block);
-    return aus.slice(0, LC_SEQ_MAX);
-  }
-  function lcSeqLaenge(seq) {
-    const k = lcSeqKette(seq);
-    return k ? k.length : 0;
-  }
-  function lcSeqGemerkt() {
-    try {
-      const l = JSON.parse(localStorage.getItem(LC_SEQ_SPEICHER) || "[]");
-      return Array.isArray(l) ? l.filter((x) => x && Array.isArray(x.module) && x.module.length) : [];
-    } catch (e) { return []; }
-  }
-  function lcSeqMerken(seq) {
-    const neu = { module: seq.module.map((m) => ({ weg: m.weg.slice(), mal: m.mal || 1 })), gesamt: seq.gesamt || 1 };
-    const schluessel = JSON.stringify(neu);
-    const l = lcSeqGemerkt().filter((x) => JSON.stringify({ module: x.module, gesamt: x.gesamt }) !== schluessel);
-    l.unshift(neu);
-    try { localStorage.setItem(LC_SEQ_SPEICHER, JSON.stringify(l.slice(0, 8))); } catch (e) { return false; }
-    return true;
-  }
-  function lcSeqVergessen(i) {
-    const l = lcSeqGemerkt();
-    l.splice(i, 1);
-    try { localStorage.setItem(LC_SEQ_SPEICHER, JSON.stringify(l)); } catch (e) {}
-  }
-  function lcSeqText(seq) {
-    return seq.module.map((m) => m.weg.join("\u2013") + ((m.mal || 1) > 1 ? " \u00d7" + m.mal : "")).join(" \u2192 ")
-      + ((seq.gesamt || 1) > 1 ? "  (alles \u00d7" + seq.gesamt + ")" : "");
-  }
-  /* Platzieren: dieselbe Form, nur so verschoben, dass sie an meinem Platz
-     beginnt. Passt sie dort nicht ins Raster, fährt man erst zum alten
-     Startplatz und dann die Folge wie gemerkt. */
-  function lcSeqPlatzieren(seq, ichNr) {
-    const gitter = lcPlatzGitter();
-    const a = gitter.find((p) => p.nr === seq.module[0].weg[0]);
-    const z = gitter.find((p) => p.nr === ichNr);
-    const kopie = { module: seq.module.map((m) => ({ weg: m.weg.slice(), mal: m.mal || 1 })), gesamt: seq.gesamt || 1 };
-    if (!a || !z || a.nr === z.nr) return kopie;
-    const dr = z.reihe - a.reihe, ds = z.spalte - a.spalte;
-    const schiebe = (nr) => { const p = gitter.find((q) => q.nr === nr); if (!p) return null;
-      const t = gitter.find((q) => q.reihe === p.reihe + dr && q.spalte === p.spalte + ds); return t ? t.nr : null; };
-    const verschoben = kopie.module.map((m) => ({ weg: m.weg.map(schiebe), mal: m.mal }));
-    if (verschoben.every((m) => m.weg.every((n) => n))) { kopie.module = verschoben; return kopie; }
-    kopie.module.unshift({ weg: [ichNr, seq.module[0].weg[0]], mal: 1 });
-    kopie.gesamt = 1;
-    return kopie;
-  }
-  function lcWegMalen(art, zielPlatz, weiterOpt) {
+  function lcWegMalen(art, zielPlatz) {
     const karte = document.getElementById("livechatKarte");
     const reihe = document.getElementById("lcPlaetze");
     if (!karte || !reihe) return false;
@@ -33757,11 +33675,8 @@
     if (lcMalWeg) return false;
 
     const gitter = lcPlatzGitter();
-    /* FASSUNG 776 — das zweite Modul beginnt dort, wo das erste endet. */
-    const start = weiterOpt && weiterOpt.start
-      ? gitter.find((p) => p.nr === weiterOpt.start) : gitter.find((p) => p.el === meiner);
+    const start = gitter.find((p) => p.el === meiner);
     if (!start) return false;
-    let rundeZu = false;
 
     if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
     const feld = document.createElement("div");
@@ -33769,8 +33684,7 @@
     feld.setAttribute("aria-hidden", "true");
     feld.innerHTML = '<svg class="lc-wegmal-linie" preserveAspectRatio="none">'
       + '<polyline fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-      + '<p class="lc-wegmal-hinweis">' + (weiterOpt ? 'Zieh, wie es weitergeht \u2014 zur\u00fcck auf den Start schlie\u00dft die Runde'
-        : art ? 'Zieh den Weg \u2014 loslassen startet' : 'Zieh den Weg \u2014 zur\u00fcck auf den Start = Runde, danach Fahrzeug w\u00e4hlen') + '</p>';
+      + '<p class="lc-wegmal-hinweis">' + (art ? 'Zieh den Weg \u2014 loslassen startet' : 'Zieh den Weg \u2014 danach Fahren oder Laufen antippen') + '</p>';
     reihe.appendChild(feld);
     const linie = feld.querySelector("polyline");
     const rk = lcLayoutKasten(reihe);
@@ -33800,13 +33714,7 @@
       if (p === letzte) return;
       /* Zurueck auf den vorletzten Platz heisst: diesen Schritt
          wieder zuruecknehmen. */
-      if (weg.length > 1 && p === weg[weg.length - 2]) { weg.pop(); rundeZu = false; malen(); return; }
-      /* FASSUNG 776 — zurück auf den Startplatz schließt eine Runde (die Lok
-         „hat eine Runde gemacht"); danach ist der Weg fertig. */
-      if (rundeZu) return;
-      if (p === weg[0] && weg.length >= 3 && nachbar(letzte, p)) {
-        weg.push(p); rundeZu = true; malen(); lcTonZu("wegmalen"); return;
-      }
+      if (weg.length > 1 && p === weg[weg.length - 2]) { weg.pop(); malen(); return; }
       if (weg.indexOf(p) >= 0) return;             // kein Kreisel
       if (!nachbar(letzte, p)) return;             // kein Sprung ueber Felder
       /* RUNDE 76 — XANDER: „Weg ueber Personen."
@@ -33836,12 +33744,7 @@
     const loslassen = () => {
       const nummern = weg.map((p) => p.nr);
       schliessen();
-      if (nummern.length < 2) {
-        lcWegAbsage("Kein Weg gezeichnet.");
-        if (weiterOpt && weiterOpt.abbruch) weiterOpt.abbruch();
-        return;
-      }
-      if (weiterOpt && weiterOpt.weiter) { weiterOpt.weiter(nummern); return; }
+      if (nummern.length < 2) { lcWegAbsage("Kein Weg gezeichnet."); return; }
       /* Ohne vorgewaehlte Art wird noch nichts gesendet: der Weg wird
          gemerkt und dasselbe Menue geht an derselben Stelle wieder auf —
          „was ich ja sowieso auch anklicke im normalen Zustand". */
@@ -33874,118 +33777,6 @@
     return true;
   }
 
-  const LC_SEQ_SVG = {
-    minus: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10 H15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
-    plus: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10 H15 M10 5 V15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
-    weiter: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="4" cy="10" r="2.2" fill="currentColor"/><path d="M6.5 10 C9 4 12 16 15 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="2.2 1.6" stroke-linecap="round"/><path d="M13.5 7.2 L16.6 10 L13.4 12.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    runde: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 8 A6 6 0 1 0 15 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16.6 4.6 L15.6 8.4 L11.8 7.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    nadel: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 2.8 H13 L12 8 L15 11 H5 L8 8 Z" fill="currentColor"/><path d="M10 11 V17.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-    weg: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5 L14.5 14.5 M14.5 5.5 L5.5 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
-  };
-  function lcSeqKnopf(cls, svg, titel, tun) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "lc-seq-k " + cls;
-    b.setAttribute("aria-label", titel);
-    b.title = titel;
-    b.innerHTML = svg;
-    b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); tun(b); });
-    return b;
-  }
-  /* Ein Zähler „× n" mit − und +, 1 bis 9. */
-  function lcSeqZaehler(wert, setzen, wort) {
-    const z = document.createElement("span");
-    z.className = "lc-seq-zaehler";
-    const zahl = document.createElement("b");
-    const zeigen = () => { zahl.textContent = "\u00d7" + wert(); };
-    z.appendChild(lcSeqKnopf("lc-seq-minus", LC_SEQ_SVG.minus, wort + " seltener", () => { setzen(Math.max(1, wert() - 1)); zeigen(); lcTonZu("wegmalen"); }));
-    z.appendChild(zahl);
-    z.appendChild(lcSeqKnopf("lc-seq-plus", LC_SEQ_SVG.plus, wort + " \u00f6fter", () => { setzen(Math.min(9, wert() + 1)); zeigen(); lcTonZu("wegmalen"); }));
-    zeigen();
-    return z;
-  }
-  function lcSeqPanel(seq, platz, geaendert) {
-    const box = document.createElement("div");
-    box.className = "lc-seq";
-    const neu = () => { const alt = box; const frisch = lcSeqPanel(seq, platz, geaendert); alt.replaceWith(frisch); geaendert(); };
-    seq.module.forEach((m, i) => {
-      const zeile = document.createElement("div");
-      zeile.className = "lc-seq-zeile";
-      const runde = m.weg.length > 3 && m.weg[0] === m.weg[m.weg.length - 1];
-      const t = document.createElement("span");
-      t.className = "lc-seq-weg";
-      t.innerHTML = '<i class="lc-seq-nr">' + (i + 1) + "</i>" + (runde ? '<i class="lc-seq-runde" title="Runde">' + LC_SEQ_SVG.runde + "</i>" : "");
-      const w = document.createElement("span");
-      w.textContent = m.weg.join("\u2013");
-      t.appendChild(w);
-      zeile.appendChild(t);
-      zeile.appendChild(lcSeqZaehler(() => m.mal || 1, (v) => { m.mal = v; geaendert(); }, "Weg " + (i + 1)));
-      if (i > 0) zeile.appendChild(lcSeqKnopf("lc-seq-weg-x", LC_SEQ_SVG.weg, "Weg " + (i + 1) + " entfernen", () => { seq.module.splice(i, 1); neu(); }));
-      else if (seq.module.length > 1) zeile.insertAdjacentHTML("beforeend", '<span class="lc-seq-platzhalter" aria-hidden="true"></span>');
-      box.appendChild(zeile);
-    });
-    const unten = document.createElement("div");
-    unten.className = "lc-seq-unten";
-    const letzte = () => { const k = seq.module[seq.module.length - 1].weg; return k[k.length - 1]; };
-    if (seq.module.length < 4) {
-      const wb = lcSeqKnopf("lc-seq-mehr", LC_SEQ_SVG.weiter, "Weiter-Weg malen", () => {
-        lcPlatzMenueZu();
-        const nochmal = () => { lcSequenzOffen = seq; lcGemalterWeg = lcSeqKette(seq); if (platz.isConnected) lcAnreiseMenue(platz); };
-        lcWegMalen(null, platz, { start: letzte(), weiter: (nummern) => { seq.module.push({ weg: nummern, mal: 1 }); nochmal(); }, abbruch: nochmal });
-      });
-      wb.insertAdjacentHTML("beforeend", "<span>Weiter-Weg</span>");
-      unten.appendChild(wb);
-    }
-    const ganz = document.createElement("span");
-    ganz.className = "lc-seq-ganz";
-    ganz.innerHTML = "<small>alles</small>";
-    ganz.appendChild(lcSeqZaehler(() => seq.gesamt || 1, (v) => { seq.gesamt = v; geaendert(); }, "Ganze Folge"));
-    unten.appendChild(ganz);
-    const nb = lcSeqKnopf("lc-seq-merk", LC_SEQ_SVG.nadel, "Folge merken", (b) => {
-      if (lcSeqMerken(seq)) { b.classList.add("lc-an"); b.querySelector("span").textContent = "Gemerkt"; lcTonZu("wegmalen"); }
-    });
-    nb.insertAdjacentHTML("beforeend", "<span>Merken</span>");
-    unten.appendChild(nb);
-    box.appendChild(unten);
-    return box;
-  }
-  /* Ohne gemalten Weg: die gemerkten Folgen, zum Einsetzen am eigenen Platz. */
-  function lcSeqGemerktListe(liste, platz) {
-    const box = document.createElement("div");
-    box.className = "lc-seq lc-seq-gemerkt";
-    const kopf = document.createElement("p");
-    kopf.className = "lc-seq-titel";
-    kopf.textContent = "Gemerkte Wege \u2013 tippen setzt sie an deinem Platz ein";
-    box.appendChild(kopf);
-    liste.slice(0, 4).forEach((g, i) => {
-      const zeile = document.createElement("div");
-      zeile.className = "lc-seq-zeile";
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "lc-seq-laden";
-      b.textContent = lcSeqText(g);
-      b.addEventListener("click", (e) => {
-        e.preventDefault(); e.stopPropagation();
-        const ichPl = document.querySelector("#lcPlaetze .lc-platz-ich");
-        const ichNr = ichPl ? Number(ichPl.dataset.lcPlatz) : 0;
-        if (!ichNr) { lcWegAbsage("Du sitzt noch nicht oben."); return; }
-        const s2 = lcSeqPlatzieren(g, ichNr);
-        lcPlatzMenueZu();
-        lcSequenzOffen = s2; lcGemalterWeg = lcSeqKette(s2);
-        lcAnreiseMenue(platz);
-      });
-      zeile.appendChild(b);
-      zeile.appendChild(lcSeqKnopf("lc-seq-weg-x", LC_SEQ_SVG.weg, "Vergessen", () => { lcSeqVergessen(i); zeile.remove(); }));
-      box.appendChild(zeile);
-    });
-    return box;
-  }
-  /* Prüfhaken für die Sonde 776. */
-  window.DMA_PRUEF = Object.assign(window.DMA_PRUEF || {}, {
-    wegFolge: { kette: lcSeqKette, platzieren: lcSeqPlatzieren, gemerkt: lcSeqGemerkt,
-      malen: (el) => lcWegMalen(null, el),
-      menue: (el, weg) => { lcGemalterWeg = weg || null; return lcAnreiseMenue(el); } }
-  });
   function lcAnreiseMenue(platz) {
     const nr = Number(platz.dataset.lcPlatz);
     if (!nr) return false;
@@ -33998,29 +33789,13 @@
        nur noch, WIE sie abgefahren wird. */
     const gemalt = lcGemalterWeg && lcGemalterWeg.length > 1 ? lcGemalterWeg.slice() : null;
     lcGemalterWeg = null;
-    /* FASSUNG 776 — Funk 196: aus dem gemalten Weg wird eine Folge. „gemalt"
-       bleibt dieselbe Liste (alle Knöpfe unten lesen sie beim Tippen), sie
-       wird nur neu befüllt, wenn sich ×-Zahlen oder Module ändern. */
-    const seq = gemalt ? (lcSequenzOffen || { module: [{ weg: gemalt.slice(), mal: 1 }], gesamt: 1 }) : null;
-    lcSequenzOffen = null;
 
     const kopf = document.createElement("p");
     kopf.className = "lc-platzmenue-kopf";
-    const kopfSetzen = () => {
-      if (!gemalt) { kopf.textContent = "Platz " + nr + " \u2014 wie hin?"; return; }
-      const k = lcSeqKette(seq);
-      gemalt.length = 0; k.forEach((x) => gemalt.push(x));
-      kopf.textContent = seq.module.length === 1 && (seq.module[0].mal || 1) === 1 && (seq.gesamt || 1) === 1
-        ? "Dein Weg: " + gemalt.join("\u2013")
-        : "Deine Folge: " + gemalt.length + " Halte" + (gemalt.length >= LC_SEQ_MAX ? " (gek\u00fcrzt)" : "");
-    };
-    kopfSetzen();
+    kopf.textContent = gemalt
+      ? "Dein Weg: " + gemalt.join("\u2013")
+      : "Platz " + nr + " \u2014 wie hin?";
     kasten.appendChild(kopf);
-    if (seq) kasten.appendChild(lcSeqPanel(seq, platz, kopfSetzen));
-    else {
-      const gm = lcSeqGemerkt();
-      if (gm.length) kasten.appendChild(lcSeqGemerktListe(gm, platz));
-    }
 
     /* „offenLassen" ist fuer das Aufziehen: man tippt mehrmals
        hintereinander, und dazwischen darf das Menue nicht zufallen.
@@ -45192,7 +44967,7 @@
     }
     /* RUNDE 98 — und wenn auf dem Zielplatz jemand sitzt, wird er
        ueberfahren. XANDER: „dann ueberfaehrt man ihn eben." */
-    if (zu && !zu.frei && zu.nr !== ab.nr) {
+    if (zu && !zu.frei) {
       setTimeout(() => lcPlatzUeberfahren(zu.el, 0.5), Math.max(0, hin - 60));
     }
     /* UND DANN SITZT MAN AUCH WIRKLICH DORT.
@@ -45909,8 +45684,7 @@
       zu = gitter.find((p) => p.el === zielEl) || null;
       if (!zu) return false;
     }
-    /* FASSUNG 776 — eine gemalte Runde darf am Startplatz enden (Funk 196). */
-    if (!zu || (zu.nr === ab.nr && !(bahn && bahn.length > 2))) return false;
+    if (!zu || zu.nr === ab.nr) return false;
     /* Tauschen ist weiterhin die WIRKUNG von Frisbee und Rohr — dort
        fliegen beide, und das ist der Witz daran. */
     const tauschbar = tausch && (art === "frisbee" || art === "rohr");
@@ -51421,7 +51195,7 @@
        ueberfahren, in dem die Reise ankommt. Die Lok bringt ihre
        eigenen Schreie mit (sie ueberrollt ja auch unterwegs Leute);
        doppelt soll es nicht wehtun. */
-    if (!zu.frei && art !== "lok" && zu !== ab) {
+    if (!zu.frei && art !== "lok") {
       setTimeout(() => lcPlatzUeberfahren(zu.el, 0.5), Math.max(0, hin - 60));
     }
 

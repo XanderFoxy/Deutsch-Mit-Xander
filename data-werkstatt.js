@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 775: Gasthaus mit Koch (mehr Touristen, teureres Essen) und Gefängnis (Haft für gescheiterte Plünderer, Kaution/Freikaufen)",
+  stand: "Fassung 776: gemalte Wege als Folge – Runde, ×-Wiederholung, zweites Modul, Merken/Platzieren (Funk 196)",
 
   inArbeit: [
-    { seit: "2026-09-28T00:08",
-      text: "Walkie 300: Bündnis, Offline-Überfälle, Touristenwellen · Walkie 301: Ausflug zum Wahrzeichen · Funk 196: Sequenzen für Lok-Wege · Funk 188/190 Rest" },
+    { seit: "2026-09-28T00:23",
+      text: "Walkie 300: Bündnis, Offline-Überfälle, Touristenwellen · Walkie 301: Ausflug zum Wahrzeichen · Walkie 302: Flickstube · Funk 188/190 Rest · Folgen auch für Pac-Man/Mario" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T00:08",
-      text: "Walkie 299: Gasthaus + Koch, Gefängnis + Kaution" },
+    { seit: "2026-09-28T00:23",
+      text: "Funk 196: Sequenzen für gemalte Wege" },
   ],
 };

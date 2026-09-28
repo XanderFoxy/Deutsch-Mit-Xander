@@ -1664,3 +1664,23 @@ Sonden: neu 775 (18/18 grün); 755, 756, 764, 765 (Erwartung um „à 5 P“ erg
   - spiel_oeffentlich zeigt jetzt „haft“ und „gefangene“, damit Mitspieler die Kaution zahlen können.
   - Servertest: Bau und Koch klappen; 7 → 8 Gäste; Preis 10 je Gericht (Stufe 1 mit Koch: 5 + 2 + 3); Festnahme mit Kaution 20; ein zweiter Versuch wird abgelehnt („du sitzt im Gefängnis von …“); nach der Kaution ist man frei und die Liste leer.
 - Bild: Das Gasthaus ist Fachwerk mit Wirtshausschild, Tisch, Bank und Fass und steht oben zwischen Mühle und Rathaus. Das Gefängnis ist Feldstein mit Wachturm, Zinnen, Gitterfenstern und Pranger und steht oben rechts neben dem Wald.
+
+### Fassung 776 (Funk 196: Folgen aus gemalten Wegen – Runde, ×, zweites Modul, Merken, Platzieren)
+Sonden: neu 776 (alles grün); runde98-wegfahrzeuge, runde98-lok, runde97-lok, lok-gleise grün; runde22 grün (Erwartung an den neuen Hinweistext angepasst).
+XANDER: „dass man den Weg im zweiten Modul verändern kann wie sie weiter fährt nachdem sie eine Runde gemacht hat und dass man das multiplizieren kann … das sollte für alle Bewegungen gelten … die Sequenz auch … fixieren kann platzieren kann multiplizieren kann".
+- **Runde malen**: Beim Weg-Zeichnen darf man jetzt zurück auf den Startplatz ziehen. Das schließt die Runde (Kreispfeil-Zeichen), danach ist der Weg fertig.
+- **Folge im Reisemenü** (nach dem Malen, über den Fahrzeugen):
+  - Jede Zeile ist ein Modul: „1 · 1–2–6–5–1  − ×2 +“.
+  - **Weiter-Weg** malt Modul 2, beginnend dort, wo Modul 1 endet (höchstens 4 Module, jedes außer dem ersten mit ✕ entfernbar).
+  - **alles − ×n +** wiederholt die ganze Folge.
+  - Oben steht „Deine Folge: 22 Halte“.
+  - Eine Runde schließt bei Wiederholung nahtlos an; ein offener Weg fährt vom Ende zurück zum Anfang. Höchstens 80 Halte.
+- **Für alle Fahrzeuge**: Fahren, Laufen, Hot Rod, Monstertruck und jede Reise mit Weg (Lok, Flugzeug, Boot, Delfin, Pferd, Heli, Frosch …) bekommen die ganze Kette. Weil es EINE Kette ist, sehen alle Geräte dieselbe Fahrt, auch mit älterem Stand.
+- **Merken** (Stecknadel) fixiert die Folge auf dem Gerät (bis 8). Öffnet man das Reisemenü ohne gemalten Weg, stehen die gemerkten Folgen oben.
+  - Ein Tipp **platziert** sie: gleiche Form, verschoben auf den eigenen Platz.
+  - Passt sie dort nicht ins Raster, fährt man erst zum alten Start und dann die Folge.
+- Empfänger:
+  - Die Lok und alle Reisen dürfen am Startplatz enden. Vorher brach `lcReise` ab, wenn Ziel = Start war.
+  - Beim Auto wird der eigene Platz am Ende nicht mehr „überfahren“.
+  - Der Chat-Satz zählt bei mehr als 8 Halten nicht jeden Platz auf („über 20 Halte“).
+- Noch nicht: Pac-Man, Mario und das gemeinsame Reisen senden ihren gemalten Weg weiter sofort beim Loslassen, ohne Folgen-Leiste.

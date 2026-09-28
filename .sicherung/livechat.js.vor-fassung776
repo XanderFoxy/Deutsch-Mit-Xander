@@ -13640,10 +13640,7 @@ window.LiveChat = (function () {
       var stationenR = String(rest).replace(/\s+/g, "").split("-")
         .map(function (x) { return parseInt(x, 10); });
       var zielNrR = stationenR[stationenR.length - 1];
-      /* FASSUNG 776 — eine lange Folge (Funk 196) wird nicht Platz für Platz aufgezählt. */
-      var ueberR = (kettenR && stationenR.length > 8)
-        ? " \u00fcber " + (stationenR.length - 2) + " Halte"
-        : (kettenR && stationenR.length > 2)
+      var ueberR = (kettenR && stationenR.length > 2)
         ? " \u00fcber " + stationenR.slice(1, -1).join(", ") : "";
       var wenR = (kettenR && stationenR.length > 1)
         ? stationenR.join("-") : String(zielNrR);
@@ -13709,9 +13706,7 @@ window.LiveChat = (function () {
       var kette = rest.replace(/\s+/g, "");
       var stationen = kette.split("-").map(function (x) { return parseInt(x, 10); });
       var platzNr = stationen[stationen.length - 1];
-      var ueber = stationen.length > 8
-        ? " \u00fcber " + (stationen.length - 2) + " Halte"
-        : stationen.length > 2
+      var ueber = stationen.length > 2
         ? " \u00fcber " + stationen.slice(1, -1).join(", ") : "";
       if (art === "hotrodfahrt" || art === "monstertruck") {
         return anAlle("aktion", zustand.ichName

@@ -75,7 +75,7 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("und Fahren oder Laufen nimmt dann die ganze Kette",
     /gemalt \? gemalt\.join\("-"\) : nr/.test(js));
   pruefe("der Hinweis beim Zeichnen sagt, was danach kommt",
-    /danach (Fahren oder Laufen antippen|Fahrzeug w\\u00e4hlen)/.test(js));
+    /danach Fahren oder Laufen antippen/.test(js));
 
   console.log("\nDER VERLASSENE PLATZ WIRD NEU GEZEICHNET\n");
   const fahrtLauf = js.slice(js.indexOf("function lcFahrtLauf"),
