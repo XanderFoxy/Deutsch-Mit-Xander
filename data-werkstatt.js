@@ -49,26 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 794: Haustiere reisen mit, Sequenzen im normalen Tempo",
+  stand: "Fassung 795: eigene Gebäude und Wahrzeichen in der leichten Stadt, Bauen-Knopf, fließende Tageszeit",
 
   inArbeit: [
-    { seit: "2026-09-28T18:06",
-      text: "Leichte Stadt: eigene Modelle für Spielgebäude und Wahrzeichen einbinden" },
-    { seit: "2026-09-28T18:06",
+    { seit: "2026-09-28T18:31",
+      text: "Leichte Stadt Runde 2: Rückgängig, Wege/Flüsse malen, Bäume löschen, Lok + Schienen, Pyramide dreht sich, Sommerbilder, Halloween" },
+    { seit: "2026-09-28T18:31",
+      text: "Tag/Nacht fließend auch im Spiel-Dorf" },
+    { seit: "2026-09-28T18:31",
       text: "Laserduell (Xander testet)" },
-    { seit: "2026-09-28T18:06",
+    { seit: "2026-09-28T18:31",
       text: "Walkie-Reste: Hot Rod, Katze, Adler, Flugzeug, Heli, Delfin, Wangenhand, Lunte, Anziehen" },
-    { seit: "2026-09-28T18:06",
+    { seit: "2026-09-28T18:31",
       text: "Aussprache-Aufgabe im Chat und persönliches Aussprache-Wörterbuch" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T18:06",
-      text: "Haustiere reisen bei allen 23 Reisearten mit und landen sofort" },
-    { seit: "2026-09-28T18:06",
-      text: "Sequenz-Reisen: Tempo nach Weglänge, Stationen exakt, flüssig" },
-    { seit: "2026-09-28T18:06",
-      text: "Leichte Stadt: Weihnachtsmann fliegt im Winter, Schmuck auf dem Server gemerkt" },
+    { seit: "2026-09-28T18:31",
+      text: "15 eigene Modelle (11 Spielgebäude, 4 Wahrzeichen) gebacken und eingebunden" },
+    { seit: "2026-09-28T18:31",
+      text: "Bauen-Knopf mit allen Gebäuden, Ausbauen am Haus" },
+    { seit: "2026-09-28T18:31",
+      text: "Tag und Nacht in der leichten Stadt stufenlos nach der Uhr" },
   ],
 };

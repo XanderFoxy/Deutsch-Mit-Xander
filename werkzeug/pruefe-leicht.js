@@ -69,7 +69,7 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   karte = await pg.evaluate(() => { const k = document.querySelector(".lk-karte"); return k && !k.hidden ? k.textContent : ""; });
   sage(/Im Bau/.test(karte) && /noch \d+:\d\d/.test(karte), "Baustelle zeigt Fortschritt und Restzeit", karte.slice(0, 70));
   const bauBild = await pg.evaluate(() => STADT.szene.sichtbare.filter((e) => e.o.spiel === "labor").map((e) => e.lagen[0][0])[0]);
-  sage(/^bau_fachwerkerker_winter_tag_b\d+/.test(bauBild || ""), "Baustelle zeigt ein Baustellenbild (Bagger, Kran …)", bauBild);
+  sage(/^bau_(labor|fachwerkerker)_winter_tag_b\d+/.test(bauBild || ""), "Baustelle zeigt ein Baustellenbild (Bagger, Kran …)", bauBild);
 
   /* Leerer Bauplatz (Gefängnis steht in der Beispielstadt; Labor ist Baustelle). Suche einen freien Platz */
   const frei = await pg.evaluate(() => { const D = STADT.dorf; for (const k in D.PLAETZE) { const pl = D.PLAETZE[k]; if (!STADT.szene.objekte.some((o) => o.art === "haus" && Math.hypot(o.x - pl.x, o.y - pl.y) < 1)) return [k, pl.x, pl.y]; } return null; });
