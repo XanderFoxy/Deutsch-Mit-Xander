@@ -36,14 +36,28 @@
     karte: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/></g></svg>',
     farbe: '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2.1-.5-1.2.3-2.4 1.6-2.4H17a4 4 0 0 0 4-4C21 7 17 3 12 3z" fill="currentColor"/><g fill="#1b2440"><circle cx="7.6" cy="11.2" r="1.5"/><circle cx="10.3" cy="7.2" r="1.5"/><circle cx="15" cy="7.4" r="1.5"/></g></svg>',
     zurueck: '<svg viewBox="0 0 24 24"><path d="M14.5 5 7.5 12l7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    /* FASSUNG 814 — Vorschau der Jahreszeiten (Betreiber): Kalender = automatisch, kahler Baum = Spätherbst, Wolke mit Flocken = Schneefall */
+    kalender: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></g><path d="M9.2 17.6l2.8-6 2.8 6M10.2 15.6h3.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    kahl: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M11 21v-9M11 15l-4-4M11 13l4-5M7 11l-2-3M7 11l-3 .5M15 8l.5-3.5M15 8l3-1.5"/></g><path d="M18.5 14.5c1.8 0 2.8 1.2 2.8 3-1.8 0-2.8-1.2-2.8-3z" fill="currentColor"/></svg>',
+    schneefall: '<svg viewBox="0 0 24 24"><path d="M6.5 13a4 4 0 0 1 .6-8 5 5 0 0 1 9.4 1.6A3.3 3.3 0 0 1 16.8 13z" fill="currentColor"/><g fill="currentColor"><circle cx="7.5" cy="17" r="1.4"/><circle cx="12" cy="20" r="1.4"/><circle cx="16.5" cy="17" r="1.4"/></g></svg>',
     stern: '<svg viewBox="0 0 24 24"><path d="M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3.1-5.4 3.1 1.2-6-4.5-4.2 6.1-.7z" fill="currentColor"/></svg>',
     lupe: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></g></svg>',
     voll: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></g></svg>',
     hammer: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6.5 17.5 10M4 20l9-9"/><path d="M12.5 5l4-2 4.5 4.5-2 4-2-.5-3-3z" fill="currentColor"/></g></svg>'
   };
   const ZEITEN = ["tag", "abend", "nacht"], ZEIT_SYM = { tag: "sonne", abend: "daemmerung", nacht: "mond" };
-  const JAHRE = ["winter", "fruehling", "sommer", "herbst"], JAHR_SYM = { winter: "schnee", fruehling: "bluete", sommer: "sonne", herbst: "blatt" };
+  const JAHR_SYM = { winter: "schnee", fruehling: "bluete", sommer: "sonne", herbst: "blatt" };
   const JAHR_NAME = { winter: "Winter", fruehling: "Frühling", sommer: "Sommer", herbst: "Herbst" };
+  /* FASSUNG 814 — XANDER: „als Betreiber alle Jahreszeiten vorschauen inkl. Schnee". Der Jahreszeit-Knopf (nur für den
+     Betreiber) schaltet durch diese Stufen; „Automatisch" folgt wieder Datum und Wetter. */
+  const MODUS_FOLGE = ["fruehling", "sommer", "fruehherbst", "spaetherbst", "winter", "schneefall", "auto"];
+  const MODUS_SYM = { fruehling: "bluete", sommer: "sonne", fruehherbst: "blatt", spaetherbst: "kahl", winter: "schnee", schneefall: "schneefall", auto: "kalender", fest: "blatt" };
+  function modusName() {
+    const M = SZ.MODI[SZ.modus];
+    if (M) return M.name;
+    if (SZ.modus === "fest") return JAHR_NAME[SZ.jahr] || SZ.jahr;
+    return "Automatisch: " + (JAHR_NAME[SZ.jahr] || SZ.jahr) + (SZ.jahr === "winter" && SZ.schneefall ? " mit Schneefall" : "");
+  }
   /* Die Karte in 3 × 3 Bereiche à 48 m */
   /* FASSUNG 807 — die Viertel der Originalkarte (Welt x nach rechts, y nach vorn) */
   /* FASSUNG 808 — Viertel der Originalkarte (die Karte ist nach Welt-Achsen geteilt, im Bild also schräg) */
@@ -74,6 +88,17 @@
     nacht: { satt: 0.15, kon: 0.12, sep: 0.12, warm: "rgba(255,170,80,.10)", vig: 0.50 }
   };
   let stimmung = null, farbK = 1;
+  /* FASSUNG 814 — XANDER: „Farbverhältnis und Kontrastverhältnis … Regler … generell kannst du den Leuten diese Möglichkeit
+     auch einräumen" (das Bild ist manchmal zu dunkel oder zu intensiv). Jeder stellt für sich Helligkeit, Sättigung und
+     Kontrast ein (in Prozent, 100 = wie gemalt), gemerkt im Browser; es wirkt auf Boden und Dinge gleichermaßen. */
+  const REGLER = [
+    { k: "farbe", name: "Farbstimmung", min: 0, max: 200, merk: "leicht_farbe" },
+    { k: "hell", name: "Helligkeit", min: 50, max: 150, merk: "leicht_hell" },
+    { k: "satt", name: "Sättigung", min: 0, max: 200, merk: "leicht_satt" },
+    { k: "kontrast", name: "Kontrast", min: 50, max: 150, merk: "leicht_kontrast" }
+  ];
+  const BILD = { farbe: 100, hell: 100, satt: 100, kontrast: 100 };
+  O.bildWerte = BILD;
   function stimmungSetzen() {
     /* FASSUNG 795 — nach der Uhr fließend zwischen Tag, Dämmerung und Nacht */
     let m = STIMMUNG[SZ.zeit] || STIMMUNG.tag;
@@ -83,8 +108,13 @@
       const mi = (x, y) => x + (y - x) * t, farbe = (x, y) => { const p = x.match(/[\d.]+/g).map(Number), q = y.match(/[\d.]+/g).map(Number); return "rgba(" + p.map((v, i) => i < 3 ? Math.round(mi(v, q[i])) : mi(v, q[i]).toFixed(3)).join(",") + ")"; };
       m = { satt: mi(A.satt, B.satt), kon: mi(A.kon, B.kon), sep: mi(A.sep, B.sep), vig: mi(A.vig, B.vig), warm: farbe(A.warm, B.warm) };
     }
-    const k = farbK;
-    const f = k > 0 ? "sepia(" + (m.sep * k).toFixed(3) + ") saturate(" + (1 + m.satt * k).toFixed(3) + ") contrast(" + (1 + m.kon * k).toFixed(3) + ")" : "none";
+    const k = farbK = BILD.farbe / 100;
+    let f = k > 0 ? "sepia(" + (m.sep * k).toFixed(3) + ") saturate(" + (1 + m.satt * k).toFixed(3) + ") contrast(" + (1 + m.kon * k).toFixed(3) + ")" : "";
+    /* FASSUNG 814 — die eigenen Regler kommen hinter die Stimmung (gleich für Boden und Dinge) */
+    if (BILD.hell !== 100) f += " brightness(" + (BILD.hell / 100).toFixed(2) + ")";
+    if (BILD.satt !== 100) f += " saturate(" + (BILD.satt / 100).toFixed(2) + ")";
+    if (BILD.kontrast !== 100) f += " contrast(" + (BILD.kontrast / 100).toFixed(2) + ")";
+    f = f.trim() || "none";
     ["lBoden", "lDinge"].forEach((id) => { document.getElementById(id).style.filter = f; });
     stimmung.style.opacity = Math.min(1, k).toFixed(2);
     stimmung.style.background = "linear-gradient(160deg," + m.warm + " 0%, rgba(0,0,0,0) 45%)";
@@ -95,8 +125,14 @@
   O.start = function (q) {
     stimmung = el("div", "lk-stimmung", "<i></i>");
     document.getElementById("lStadt").insertBefore(stimmung, wurzel);
-    try { const v = localStorage.getItem("leicht_farbe"); if (v != null) farbK = +v / 100; } catch (e) {}
-    if (q.get("farbe") != null) farbK = +q.get("farbe") / 100;
+    /* FASSUNG 814 — gemerkte Werte (localStorage), zum Prüfen auch ?farbe= ?hell= ?satt= ?kontrast= */
+    for (const r of REGLER) {
+      let v = null;
+      try { v = localStorage.getItem(r.merk); } catch (e) {}
+      if (q.get(r.k) != null) v = q.get(r.k);
+      if (v != null && v !== "" && isFinite(+v)) BILD[r.k] = Math.max(r.min, Math.min(r.max, Math.round(+v)));
+    }
+    farbK = BILD.farbe / 100;
 
     kopf = el("div", "lk-kopf");
     const links = el("div", "lk-kopf-links");
@@ -114,8 +150,14 @@
     kopf.appendChild(links);
     const rechts = el("div", "lk-kopf-rechts");
     zeitK = knopf(ZEIT_SYM[SZ.zeit], "Tageszeit", () => { SZ.zeitAuto = false; SZ.zeit = ZEITEN[(ZEITEN.indexOf(SZ.zeit) + 1) % 3]; zeitK.innerHTML = SYM[ZEIT_SYM[SZ.zeit]]; ansage(ST.ZEITEN[SZ.zeit].name); stimmungSetzen(); L().unruhe = 2; });
-    jahrK = knopf(JAHR_SYM[SZ.jahr], "Jahreszeit", () => { SZ.jahr = JAHRE[(JAHRE.indexOf(SZ.jahr) + 1) % 4]; jahrK.innerHTML = SYM[JAHR_SYM[SZ.jahr]]; ansage(JAHR_NAME[SZ.jahr]); D.jahrFiltern(); L().unruhe = 2; });
-    const farbKn = knopf("farbe", "Farbstimmung", () => { farbFeld.hidden = !farbFeld.hidden; });
+    jahrK = knopf(MODUS_SYM[SZ.modus] || JAHR_SYM[SZ.jahr] || "blatt", "Jahreszeit", () => {
+      /* FASSUNG 814 — Frühling → Sommer → Frühherbst → Spätherbst → Winter → Schneefall → Automatisch */
+      const i = MODUS_FOLGE.indexOf(SZ.modus);
+      SZ.modus = MODUS_FOLGE[(i + 1) % MODUS_FOLGE.length];
+      SZ.jahrStellen(); D.jahrFiltern(); O.jahrAnzeigen(); ansage(modusName()); L().unruhe = 2;
+    }, "lk-jahr");
+    const farbKn = knopf("farbe", "Farbstimmung", () => { farbFeld.hidden = !farbFeld.hidden; }, "lk-farbknopf");
+    farbKn.setAttribute("aria-label", "Farbe, Helligkeit und Kontrast einstellen");
     /* FASSUNG 808 — XANDER: „Tag und Nacht braucht man nicht wählen … soll realistisch nach Uhrzeit sein, vielleicht
        angepasst an die Zeitzone des Nutzers". Tageszeit und Jahreszeit laufen nach der Uhr und dem Datum des Geräts (also in
        dessen Zeitzone); die beiden Schalter sieht nur noch der Betreiber (Vorschau). */
@@ -124,12 +166,36 @@
     kopf.appendChild(rechts);
     wurzel.appendChild(kopf);
     nameSetzen();
+    O.jahrAnzeigen();
 
-    farbFeld = el("div", "lk-farbfeld", '<label>Farbstimmung <b></b></label><input type="range" min="0" max="200" step="5">');
+    /* FASSUNG 814 — XANDER: „Farbverhältnis und Kontrastverhältnis … Regler". Für alle: Farbstimmung, Helligkeit,
+       Sättigung, Kontrast – je ein Regler, gemerkt im Browser, dazu „Zurücksetzen". */
+    farbFeld = el("div", "lk-farbfeld");
     farbFeld.hidden = true;
-    const regler = farbFeld.querySelector("input"), zahl = farbFeld.querySelector("b");
-    regler.value = Math.round(farbK * 100); zahl.textContent = regler.value + " %";
-    regler.addEventListener("input", () => { farbK = +regler.value / 100; zahl.textContent = regler.value + " %"; stimmungSetzen(); try { localStorage.setItem("leicht_farbe", regler.value); } catch (e) {} });
+    farbFeld.setAttribute("role", "group"); farbFeld.setAttribute("aria-label", "Bild einstellen");
+    const reglerEl = {};
+    const zeigeWert = (r) => { const e = reglerEl[r.k]; e.input.value = BILD[r.k]; e.zahl.textContent = BILD[r.k] + " %"; };
+    for (const r of REGLER) {
+      const zeile = el("div", "lk-regler lk-regler-" + r.k, '<label><span></span> <b></b></label><input type="range" step="5">');
+      const input = zeile.querySelector("input"), id = "lkRegler_" + r.k;
+      input.id = id; input.min = r.min; input.max = r.max; input.setAttribute("aria-label", r.name);
+      zeile.querySelector("label").htmlFor = id; zeile.querySelector("span").textContent = r.name;
+      reglerEl[r.k] = { input: input, zahl: zeile.querySelector("b") };
+      zeigeWert(r);
+      input.addEventListener("input", () => {
+        BILD[r.k] = +input.value; zeigeWert(r); stimmungSetzen(); L().unruhe = 2;
+        try { localStorage.setItem(r.merk, String(BILD[r.k])); } catch (e) {}
+      });
+      farbFeld.appendChild(zeile);
+    }
+    const zurueckK = el("button", "lk-regler-zurueck", "Zurücksetzen"); zurueckK.type = "button";
+    zurueckK.addEventListener("click", (e) => {
+      e.stopPropagation();
+      for (const r of REGLER) { BILD[r.k] = 100; zeigeWert(r); try { localStorage.removeItem(r.merk); } catch (x) {} }
+      stimmungSetzen(); ansage("Bild wie gemalt"); L().unruhe = 2;
+    });
+    farbFeld.appendChild(zurueckK);
+    farbFeld.addEventListener("click", (e) => e.stopPropagation());
     /* FASSUNG 796 — Sparmodus zum Einschalten (schwache Verbindung) */
     const spar = el("label", "lk-spar", '<input type="checkbox"> Daten sparen (schwache Verbindung)');
     const sparK = spar.querySelector("input"); sparK.checked = !!LB.spar;
@@ -265,6 +331,9 @@
         document.body.classList.toggle("lk-ohne-symbole", ev.data.symbole === false);
         document.body.classList.toggle("lk-ohne-namen", ev.data.namen === false);
         const w = kopfZ.querySelector(".lk-wetter"); w.innerHTML = String(ev.data.wetter || ""); w.hidden = !ev.data.wetter;
+        /* FASSUNG 814 — XANDER: „Winter … (Wetter oder Datum)". Das Spiel schickt die Wetterart maschinenlesbar mit
+           (wetterArt: klar, wolken, nebel, niesel, regen, schnee, gewitter); meldet es Schnee, liegt Schnee. */
+        if ("wetterArt" in ev.data && SZ.wetterSetzen(/^[a-z]{2,12}$/.test(ev.data.wetterArt || "") ? ev.data.wetterArt : null)) { D.jahrFiltern(); O.jahrAnzeigen(); L().unruhe = 2; }
       });
       /* Ein Viertel auf der kleinen Karte: im kleinen Rahmen mit der Lupen-Stärke, nicht mit der großen Nähe. */
       O.miniNah = () => { if (!document.body.classList.contains("lk-mini-modus")) return Math.max(K.s, 11 * K.dpr); nahSetzen(true); return ueberblick() * 2.8; };
@@ -430,6 +499,13 @@
     n.querySelector("span").textContent = SP.beispiel ? (SP.fehler === "nicht angemeldet" ? "Beispielstadt · bitte anmelden" : "Beispielstadt · Vorschau") : "Neue Stadt · Vorschau";
   }
   O.betreiberDa = function () { nameSetzen(); if (zeitK && jahrK) zeitK.hidden = jahrK.hidden = !(ST.spiel && ST.spiel.betreiber); };
+  /* FASSUNG 814 — Knopf der Jahreszeit zeigt die gewählte Stufe (oder „automatisch") */
+  O.jahrAnzeigen = function () {
+    if (!jahrK) return;
+    if (miniC) miniMalen();   // die kleine Karte färbt sich mit (Schnee oder Wiese)
+    jahrK.innerHTML = SYM[MODUS_SYM[SZ.modus] || JAHR_SYM[SZ.jahr] || "blatt"];
+    jahrK.setAttribute("aria-label", "Jahreszeit (Vorschau): " + modusName());
+  };
   O.neuAufgebaut = function () { if (kopf) nameSetzen(); miniMalen(); };
 
   function drehen(r) {

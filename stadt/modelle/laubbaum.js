@@ -591,8 +591,12 @@
 
   function baumInLeinwand(g, s, F, plan, gier, ex, ey) {
     const B = blick(gier, s);
-    const Z = F.Z, jahr = F.jahr, winter = jahr === "winter";
-    const belaubt = !winter;
+    /* FASSUNG 814 — XANDER: „die Bäume sollen grün bleiben, bis der Herbst wirklich anfängt … automatische Jahreszeiten".
+       Laubfall im November: jahr „kahl" = das Astgerüst wie im Winter, aber ohne Schnee, im Herbstlicht auf der Wiese
+       (die leichte Stadt backt damit ein eigenes Novemberbild). */
+    const kahl = F.jahr === "kahl";
+    const Z = F.Z, jahr = kahl ? "herbst" : F.jahr, winter = jahr === "winter";
+    const belaubt = !winter && !kahl;
     const T0 = { e: ex, f: ey };
     const st = stufen(Z, jahr);
     const sB = stufeS(s);
@@ -641,6 +645,7 @@
       teile.push({ tief: B.tief([0, 0, 0]) + plan.r0 * 2.4, malen: () => schneeKragen(g, B, plan, Z, jahr, s, true) });
     }
     else teile.push({ tief: B.tief([0, 0, 0]) + plan.r0 * 2.4, malen: () => grasKragen(g, B, plan, Z, jahr, s) });
+    if (kahl) teile.push({ tief: -1e8 + 1, malen: () => laubStreu(g, B, plan, Z, jahr, s) });
     if (winter || jahr === "herbst") {
       /* feinste Zweiglein: in Tiefenscheiben (dünn – kleine Sortierfehler
          fallen nicht auf; dicke Äste werden einzeln einsortiert) */
@@ -652,7 +657,7 @@
         teile.push({ tief: teil[Math.floor(teil.length / 2)].t, malen: () => zweigeMalen(g, B, plan, teil, Z, jahr, s, winter) });
       }
       if (winter) for (const gb of plan.gabeln) teile.push({ tief: B.tief(gb.p) + 0.03, malen: () => gabelSchnee(g, B, gb, Z, jahr, s) });
-      if (winter && plan.eiche) for (const w of plan.welk) teile.push({ tief: B.tief(w.p) + 0.05, malen: () => laubLegen(g, B, T0, plan, w, Z, jahr, s, sB, st, true) });
+      if ((winter || kahl) && plan.eiche) for (const w of plan.welk) teile.push({ tief: B.tief(w.p) + 0.05, malen: () => laubLegen(g, B, T0, plan, w, Z, jahr, s, sB, st, true) });
     }
     if (belaubt) {
       /* Laub: Büschel, nach Wolken schattiert; die Zweiglein, die zu einem
@@ -1048,6 +1053,22 @@
     g.fill();
     g.restore();
   }
+  /* FASSUNG 814 — Laubfall („kahl"): das gefallene Laub liegt als bunter Teppich unter der Krone */
+  function laubStreu(g, B, plan, Z, jahr, s) {
+    const R = ST.zufall(4711 + Math.round(plan.Rk * 100)), lf = lichtAuf([0, 0, 1], Z, jahr);
+    const r = plan.Rk * 0.72, n = Math.round(Math.min(2200, 120 + r * r * s * 2.6));
+    const FARBEN = plan.eiche ? [[150, 98, 48], [128, 84, 44], [176, 124, 58]] : [[214, 150, 46], [190, 112, 40], [226, 182, 70], [160, 92, 40]];
+    for (let f = 0; f < FARBEN.length; f++) {
+      g.fillStyle = farbe(FARBEN[f], lf, 1, 0.8);
+      g.beginPath();
+      for (let i = f; i < n; i += FARBEN.length) {
+        const w = R() * Math.PI * 2, d = r * (0.12 + 0.88 * R() * R());
+        const p = B.p([Math.cos(w) * d, Math.sin(w) * d, 0]), gr = Math.max(0.55, s * (0.04 + 0.03 * R()));
+        g.moveTo(p[0] + gr, p[1]); g.ellipse(p[0], p[1], gr, gr * 0.5, R() * 3, 0, Math.PI * 2);
+      }
+      g.fill();
+    }
+  }
   /* Frühling: Grashalme wachsen über den Stammfuß (kein harter Rand) */
   function grasKragen(g, B, plan, Z, jahr, s) {
     if (s < 12) return;
@@ -1078,7 +1099,7 @@
   function baumSchatten(g, s, plan, gier, jahr) {
     const B = blick(gier, s);
     const m = g.getTransform();
-    const winter = jahr === "winter";
+    const winter = jahr === "winter" || jahr === "kahl";   // FASSUNG 814 — kahl wirft den Schatten des Astgerüsts
     const vier = [];
     for (const z of plan.zuege) {
       if (z.rMax < 0.02 && !z.stamm) continue;
