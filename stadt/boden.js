@@ -149,6 +149,28 @@
       vec2 r=g+o-f; float d=dot(r,r); if(d<d1){ d2=d1; d1=d; id=i+g; } else if(d<d2) d2=d; }
     return vec3(sqrt(d1), sqrt(d2), h21(id)); }
 
+  // Grashalme im Bildraum: Wurzel unten, Spitze oben, leicht geneigt.
+  // q in „Bildmetern" (x nach rechts, y nach unten). Ergebnis: (Deckung, Höhe am Halm 0…1, Zufall)
+  vec3 halme(vec2 q, float breite, float hoehe, float saat) {
+    vec2 zelle = vec2(breite, hoehe * 0.42);
+    vec2 id = floor(q / zelle);
+    float bestY = -1e9; vec3 r = vec3(0.0);
+    for (int j = 0; j <= 2; j++) for (int i = -1; i <= 1; i++) {
+      vec2 c = id + vec2(float(i), float(j));
+      vec2 h = h22(c + saat);
+      float rx = (c.x + h.x) * zelle.x;
+      float ry = (c.y + 1.0 - h.y * 0.35) * zelle.y;
+      float hb = hoehe * (0.5 + 0.5 * h21(c + saat + 7.0));
+      float t = (ry - q.y) / hb;
+      if (t < 0.0 || t > 1.0) continue;
+      float neig = (h21(c + saat + 3.0) - 0.5) * hb * 0.8;
+      float cx = rx + neig * t * t;
+      float hw = breite * 0.36 * (1.0 - t * 0.9);
+      if (abs(q.x - cx) < hw && ry > bestY) { bestY = ry; r = vec3(1.0, t, h21(c + saat + 11.0)); }
+    }
+    return r;
+  }
+
   vec2 dreh(vec2 a, int d){ if(d==1) return vec2(-a.y,a.x); if(d==2) return -a; if(d==3) return vec2(a.y,-a.x); return a; }
 
   vec4 karte(vec2 w){ vec2 k = (w + u_groesse*0.5 + u_rand) / (u_groesse + 2.0*u_rand); return texture(u_karte, k); }
@@ -184,26 +206,53 @@
     float dif = max(0.0, dot(n, u_licht));
 
     // ---------- Wiese ----------
-    float gross = fbm(w*0.045);                    // große Flächen
-    float mittel = fbm(w*0.23+7.0);                // Büschel, feuchte Stellen
-    float fein = vn(w*3.1) * 0.6 + vn(w*7.3)*0.4;  // kleine Unruhe
-    // Halme: im Bild senkrecht gestreckt — Gras steht aufrecht
-    vec2 ha = vec2((w.x - w.y), (w.x + w.y)*0.35);
-    float halm = vn(ha*vec2(16.0, 2.2)) * 0.55 + vn(ha*vec2(38.0, 5.0))*0.45;
-    float halmSicht = smoothstep(0.012, 0.004, pm);
-    vec3 gGruen = vec3(0.30, 0.43, 0.16), gSatt = vec3(0.20, 0.36, 0.11), gTrocken = vec3(0.55, 0.53, 0.28), gHell = vec3(0.47, 0.58, 0.24);
-    vec3 wiese = mix(gGruen, gSatt, smoothstep(0.35, 0.7, mittel));
-    wiese = mix(wiese, gTrocken, smoothstep(0.55, 0.78, gross) * 0.65);
-    wiese = mix(wiese, gHell, smoothstep(0.5, 0.9, fein) * 0.35);
-    wiese *= 0.86 + 0.28 * mix(0.5, halm, halmSicht);
-    // Kleeinseln und Moos
+    // XANDER: „eine Wiese, die sich nicht repetitive wiederholt … so aussieht, als wenn das ne organische echte Wiese wäre."
+    // Drei Größenordnungen: große Farbflächen (sanft, eher Farbton als Helligkeit), Büschel (mittlerer Zoom),
+    // Einzelhalme (ganz nah). Alles hängt an der Weltkoordinate – es gibt keine Kachel, die sich wiederholt.
+    float gross = fbm(w*0.045);
+    float mittel = fbm(w*0.23+7.0);
+    float fein = vn(w*3.1) * 0.6 + vn(w*7.3)*0.4;
+    vec3 gGruen = vec3(0.31, 0.44, 0.17), gSatt = vec3(0.23, 0.39, 0.13), gTrocken = vec3(0.47, 0.50, 0.25), gKuehl = vec3(0.26, 0.42, 0.22);
+    vec3 wiese = mix(gGruen, gSatt, smoothstep(0.3, 0.8, mittel) * 0.7);
+    wiese = mix(wiese, gTrocken, smoothstep(0.55, 0.8, gross) * 0.35);
+    wiese = mix(wiese, gKuehl, smoothstep(0.5, 0.2, gross) * 0.3);
+    wiese *= 0.95 + 0.1 * fein;
+    // Büschel: klumpige Struktur, hell die Spitzen, dunkel die Lücken
+    float bue = vn(w*8.0) * 0.55 + vn(w*21.0) * 0.3 + vn(w*47.0) * 0.15;
+    float bueSicht = smoothstep(0.06, 0.02, pm);
+    wiese *= mix(1.0, 0.9 + 0.18 * smoothstep(0.2, 0.85, bue), bueSicht);
+    // Klee und Moos in Inseln
     float klee = smoothstep(0.62, 0.7, fbm3(w*0.9+21.0));
-    wiese = mix(wiese, vec3(0.23, 0.42, 0.20), klee*0.45);
-    // Frühling: Gänseblümchen und Löwenzahn als winzige Punkte
+    wiese = mix(wiese, vec3(0.22, 0.41, 0.19), klee*0.4);
+    // Einzelhalme (Bildraum, Wurzel unten): zwei Lagen
+    vec2 ac = dreh(w, u_dreh);
+    vec2 q = vec2((ac.x - ac.y) * 0.70710678, (ac.x + ac.y) * 0.35355339);
+    float halmSicht = smoothstep(0.024, 0.008, pm);
+    vec3 hA = vec3(0.0), hB = vec3(0.0);
+    float halm = 0.5;
+    if (halmSicht > 0.0) {
+      hA = halme(q, 0.034, 0.085, 1.0);
+      hB = halme(q + vec2(0.013, 0.021), 0.024, 0.06, 5.0);
+      vec3 grund = wiese * 0.5;
+      vec3 hal = grund;
+      vec3 halmA = mix(wiese * 0.72, wiese * 1.22 + vec3(0.03, 0.03, 0.0), hA.y) * (0.85 + 0.3 * hA.z);
+      vec3 halmB = mix(wiese * 0.62, wiese * 1.1, hB.y) * (0.85 + 0.3 * hB.z);
+      hal = mix(hal, halmB, hB.x);
+      hal = mix(hal, halmA, hA.x);
+      wiese = mix(wiese, hal, halmSicht);
+      halm = max(hA.x * hA.y, hB.x * hB.y * 0.8);
+    }
+    // Frühling: Wildblumen in Nestern – Gänseblümchen, Löwenzahn, Klee, Hahnenfuß
     if (u_fruehling > 0.0) {
-      vec2 zi = floor(w*9.0); vec2 zf = fract(w*9.0) - 0.5 - (h22(zi)-0.5)*0.6;
-      float bl = step(0.93, h21(zi+3.0)) * smoothstep(0.16, 0.06, length(zf)) * smoothstep(0.02, 0.008, pm);
-      vec3 bf = h21(zi+9.0) > 0.6 ? vec3(0.98,0.86,0.22) : vec3(0.98,0.97,0.95);
+      float nest = smoothstep(0.45, 0.75, fbm3(w*0.35 + 40.0));
+      vec2 zi = floor(w*7.0); vec2 zf = fract(w*7.0) - 0.5 - (h22(zi)-0.5)*0.7;
+      float art = h21(zi+9.0);
+      float gr = art > 0.75 ? 0.17 : 0.12;
+      float dd = length(zf * vec2(1.0, 1.6));
+      float bl = step(1.0 - 0.18*nest - 0.03, h21(zi+3.0)) * smoothstep(gr, gr*0.55, dd) * smoothstep(0.03, 0.01, pm);
+      vec3 bf = art > 0.75 ? vec3(0.98,0.82,0.14) : art > 0.5 ? vec3(0.99,0.97,0.94) : art > 0.3 ? vec3(0.95,0.93,0.35) : vec3(0.93,0.72,0.82);
+      // Blütenmitte bei Gänseblümchen
+      if (art <= 0.75 && art > 0.5) bf = mix(vec3(0.98,0.85,0.2), bf, smoothstep(gr*0.25, gr*0.45, dd));
       wiese = mix(wiese, bf, bl*u_fruehling);
     }
     // Herbst: gelbe Töne und Laub
@@ -212,7 +261,7 @@
     // ---------- Rasen: gemäht, Streifen ----------
     float streifen = step(0.5, fract(w.x*0.5 + vn(w*0.3)*0.1));
     vec3 ras = mix(vec3(0.33, 0.52, 0.19), vec3(0.28, 0.47, 0.16), streifen);
-    ras *= 0.93 + 0.14*vn(w*6.0) + 0.06*mix(0.5,halm,halmSicht);
+    ras *= 0.93 + 0.14*vn(w*6.0) + 0.08*(halm - 0.5)*halmSicht;
     vec3 boden = mix(wiese, ras, rasen);
 
     // ---------- Erde / Beet ----------
@@ -245,7 +294,7 @@
     if (u_schnee > 0.0) {
       float s1 = fbm(w*0.12+40.0), s2 = vn(w*2.6), s3 = vn(w*11.0);
       // dünne Stellen: Gras schaut heraus (vor allem auf Büscheln)
-      float decke = u_schnee * (0.78 + 0.35*s1) - mittel*0.18*(1.0-u_schnee) - halm*0.08*halmSicht;
+      float decke = u_schnee * (0.78 + 0.35*s1) - mittel*0.18*(1.0-u_schnee);
       float frei = smoothstep(0.66, 0.6, decke + s2*0.08 + s3*0.03);
       schneeDicke = 1.0 - frei;
       // auf dem Weg geräumt, am Rand Wälle
@@ -263,8 +312,14 @@
       vec2 gz = floor(w*26.0);
       float gl = step(0.985, h21(gz)) * (0.5+0.5*sin(u_zeit*2.0 + h21(gz+5.0)*40.0));
       sc += gl * smoothstep(0.01, 0.004, pm) * 0.35 * (1.0 - u_nacht*0.6);
-      // Spuren im Schnee (Stiefel) auf den Wegen
       col = mix(col, sc, clamp(schneeDicke, 0.0, 1.0));
+      // Wo der Schnee dünn ist, stechen trockene Halmspitzen heraus
+      float duenn = smoothstep(0.86, 0.66, decke + s2*0.1) * (1.0 - weg) * (1.0 - smoothstep(0.1, 0.4, wasser));
+      if (halmSicht > 0.0) {
+        float spitze = max(hA.x * smoothstep(0.35, 0.7, hA.y), hB.x * smoothstep(0.4, 0.75, hB.y) * 0.7);
+        vec3 stroh = vec3(0.62, 0.56, 0.36) * min(lf, vec3(1.0)) * (0.8 + 0.3*hA.z);
+        col = mix(col, stroh, spitze * duenn * halmSicht * 0.85);
+      }
     }
 
     // ---------- Wasser ----------
