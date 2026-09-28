@@ -12642,7 +12642,19 @@
       + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "0" : "1") + '" data-n="' + (n ? "1" : "0") + '" class="' + (z ? "sp-an" : "") + '" aria-pressed="' + z + '">Symbole ' + (z ? "an" : "aus") + "</button>"
       + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "1" : "0") + '" data-n="' + (n ? "0" : "1") + '" class="' + (n ? "sp-an" : "") + '" aria-pressed="' + n + '">Namen ' + (n ? "an" : "aus") + "</button>"
       + (dorfBesuchStand() ? "" : '<button type="button" data-s="umbau" class="' + (S.umbau ? "sp-an" : "") + '" aria-pressed="' + !!S.umbau + '">Umbauen ' + (S.umbau ? "an" : "aus") + "</button>")
-      + jahrVorschauKnopf() + saisonKnopf() + "</div>";
+      + jahrVorschauKnopf() + saisonKnopf() + neueStadtKnopf() + "</div>";
+  }
+  /* FASSUNG 793 — XANDER: „dass ich als Betreiber schon diesen Übergangslink
+     sehe, wie die Stadt entsteht und die Technologie, was haben die anderen
+     oder die allgemeine App beim Laden nicht beeinflusst, so dass ich selber
+     entscheiden kann". Nur ein Link (öffnet stadt-leicht.html in einem neuen
+     Tab) – hier wird nichts von der neuen Stadt geladen. Wenn Xander sie
+     freigibt, bekommt jeder den Knopf (LEICHT_FREI in supabase-config.js). */
+  function neueStadtKnopf() {
+    var be = BE(), darf = false;
+    try { darf = Boolean(be && be.isOwner && be.isOwner()); } catch (e) {}
+    if (!darf && !window.LEICHT_FREI) return "";
+    return '<a class="sp-neue-stadt" href="stadt-leicht.html" target="_blank" rel="noopener">Neue Stadt ansehen' + (window.LEICHT_FREI ? "" : " (nur du)") + "</a>";
   }
   function umbauLeisteHtml(ich) {
     var w = S.umbauWahl, name = w && DORF[w] ? DORF[w].name : "";

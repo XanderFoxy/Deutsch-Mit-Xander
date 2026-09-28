@@ -94,3 +94,11 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 #stadtOberflaeche.steuer-offen .st-karten { display: none; }
 #stadtOberflaeche.steuer-offen.leiste-offen .st-steuer { bottom: 70px; }
 #stadtOberflaeche.steuer-offen .st-steuer { bottom: 70px; }
+
+/* Farbstimmung (Nachbearbeitung über dem Bild) */
+.st-stimmung { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light; }
+.st-stimmung i { position: absolute; inset: 0; mix-blend-mode: multiply; }
+.st-farbfeld { position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 54px); right: 12px; width: min(260px, calc(100% - 24px)); box-sizing: border-box; padding: 10px 12px 12px; border-radius: 14px; background: rgba(22,28,48,.86); color: #f3ead8; font: 13px/1.3 system-ui, sans-serif; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+.st-farbfeld label { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.st-farbfeld input { width: 100%; height: 30px; accent-color: #e9b85c; }
+@media (max-width: 400px) { .st-kopf-rechts .st-knopf { width: 36px; height: 36px; border-radius: 11px; } .st-kopf-rechts .st-knopf svg { width: 20px; height: 20px; } .st-farbfeld { top: calc(max(10px, env(safe-area-inset-top)) + 46px); } }

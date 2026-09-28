@@ -3169,7 +3169,7 @@
       const schneeGrund = (x, y, ww, hh) => {
         g.fillStyle = "rgb(252,253,255)"; g.fillRect(x, y, ww, hh);
         /* große, weiche Mulden und Wehen (zwei Lagen, keine Wiederholung) */
-        flecken2(g, x, y, ww, hh, 5.5, 0.34, "blau", saat);
+        flecken2(g, x, y, ww, hh, 5.5, 0.46, "blau", saat);
         flecken(g, x, y, ww, hh, 1.7, 0.14, "blau", saat + 9, 0.6);
         flecken2(g, x, y, ww, hh, 2.6, 0.3, "hell", saat + 4);
         if (F.px > 22) flecken(g, x, y, ww, hh, 0.6, 0.1, "fein", saat + 2);
@@ -3311,8 +3311,8 @@
     const gr = g.createLinearGradient(0, y, 0, y + h);
     gr.addColorStop(0, "rgb(246,249,254)"); gr.addColorStop(1, "rgb(252,253,255)");
     g.fillStyle = gr; g.fillRect(x, y, w, h);
-    flecken(g, x, y, w, h, 2.2, 0.2, "blau", saat);
-    flecken(g, x, y, w, h, 1.3, 0.25, "hell", saat + 4, 0.5);
+    flecken(g, x, y, w, h, 2.8, 0.32, "blau", saat);
+    flecken(g, x, y, w, h, 1.3, 0.3, "hell", saat + 4, 0.5);
     const M = schneeMul(F);
     mulFarbe(g, F, M, [x, y, w, h]);
     if (F.px > 10) glitzer(g, F, x, y, w, h, 3, M);

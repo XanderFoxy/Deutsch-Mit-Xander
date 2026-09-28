@@ -3035,3 +3035,5 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-dl-geist { position: fixed; z-index: 100000; transform: translate(-50%, -130%); pointer-events: none; padding: 5px 10px; border-radius: 9px; background: #f2c230; color: #2d2418; font: 800 .8rem system-ui, sans-serif; box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
 /* FASSUNG 789 — die Schalter unter dem Dorfbild (Symbole, Namen, Umbauen, Saison) mindestens 30 px hoch (Tippziel). */
 .sp-schnellmenue .sp-dl-beschriftung button, .sp-dl-beschriftung button { min-height: 30px; padding: 5px 11px; }
+/* FASSUNG 793 — Link zur neuen, leichten Stadt (nur Betreiber, bis zur Freigabe) */
+.sp-dl-beschriftung a.sp-neue-stadt { display: inline-flex; align-items: center; min-height: 30px; padding: 5px 11px; border-radius: 12px; font-size: 12px; font-weight: 700; background: #b8812e; color: #fff8e8; text-decoration: none; border: 1px solid rgba(243,195,90,.6); }

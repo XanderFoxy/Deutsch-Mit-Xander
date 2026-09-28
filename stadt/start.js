@@ -138,6 +138,7 @@
     ST.boden.zeichnen(jetzt / 1000, Z, SZ.jahr);
     SZ.zeichnen(jetzt);
     if (ST.oberflaeche && ST.oberflaeche.bild) ST.oberflaeche.bild(jetzt);
+    if (ST.oberflaeche && ST.oberflaeche.stimmungPruefen) ST.oberflaeche.stimmungPruefen();
     if (laufend) requestAnimationFrame(bild);
   }
 

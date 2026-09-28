@@ -102,7 +102,7 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   const kam = await pg.evaluate(() => ({ x: STADT.kamera.x, y: STADT.kamera.y }));
   sage(Math.abs(kam.x) < 2 && Math.abs(kam.y + 48) < 2, "Mini-Karte: Kirchberg angeflogen", JSON.stringify(kam));
   /* Kamera drehen */
-  await pg.click(".st-kopf-rechts .st-knopf:nth-child(3)");
+  await pg.click(".st-kopf-rechts .st-knopf[title='Karte nach links drehen']");
   const d = await pg.evaluate(() => STADT.kamera.dreh);
   sage(d === 1, "Karte gedreht", String(d));
   await pg.waitForTimeout(500);

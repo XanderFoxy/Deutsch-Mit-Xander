@@ -1,0 +1,1094 @@
+{
+ "hinweis": "Backplan der leichten Stadt – node werkzeug/stadt-backen.js",
+ "bilder": [
+  {
+   "bild": "g_baeckerei",
+   "id": "fachwerkhaus",
+   "saat": 11,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_schule",
+   "id": "fachwerkerker",
+   "saat": 3,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_schmiede",
+   "id": "fachwerkhaus",
+   "saat": 23,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_brauerei",
+   "id": "fachwerkerker",
+   "saat": 9,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_bibliothek",
+   "id": "fachwerkerker",
+   "saat": 17,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_rathaus",
+   "id": "fachwerkerker",
+   "saat": 5,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_muehle",
+   "id": "wassermuehle",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_huehnerstall",
+   "id": "fachwerkhaus",
+   "saat": 31,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_kuhstall",
+   "id": "fachwerkhaus",
+   "saat": 41,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_krankenhaus",
+   "id": "fachwerkerker",
+   "saat": 29,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_bergwerk",
+   "id": "fachwerkhaus",
+   "saat": 53,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_labor",
+   "id": "fachwerkerker",
+   "saat": 37,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_kaserne",
+   "id": "fachwerkhaus",
+   "saat": 61,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_gasthaus",
+   "id": "fachwerkhaus",
+   "saat": 71,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_gefaengnis",
+   "id": "fachwerkerker",
+   "saat": 43,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "g_flickstube",
+   "id": "fachwerkhaus",
+   "saat": 83,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "bau_fachwerkhaus",
+   "id": "fachwerkhaus",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "bau_fachwerkerker",
+   "id": "fachwerkerker",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "bau_wassermuehle",
+   "id": "wassermuehle",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "w_koelner_dom",
+   "id": "koelnerdom",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 26,
+    "klein": 10
+   }
+  },
+  {
+   "bild": "k_bahnhof",
+   "id": "bahnhof",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 44,
+    "klein": 15
+   }
+  },
+  {
+   "bild": "k_kirche",
+   "id": "kirche",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 36,
+    "klein": 13
+   }
+  },
+  {
+   "bild": "d_weihnachtsbaum",
+   "id": "weihnachtsbaum",
+   "saat": 7,
+   "gier": [
+    0
+   ],
+   "jahr": [
+    "winter"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "d_marktbude",
+   "id": "marktbude",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "d_pyramide",
+   "id": "pyramide",
+   "saat": 7,
+   "gier": [
+    0
+   ],
+   "jahr": [
+    "winter"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "d_brunnen",
+   "id": "brunnen",
+   "saat": 7,
+   "gier": [
+    0,
+    90
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "d_laterne",
+   "id": "laterne",
+   "saat": 7,
+   "gier": [
+    0
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "d_bank",
+   "id": "bank",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "d_zaun",
+   "id": "zaun",
+   "saat": 7,
+   "gier": [
+    0,
+    90
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "d_schneemann",
+   "id": "schneemann",
+   "saat": 7,
+   "gier": [
+    0,
+    90
+   ],
+   "jahr": [
+    "winter"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "d_krippe",
+   "id": "krippe",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "d_bruecke",
+   "id": "bruecke",
+   "saat": 7,
+   "gier": [
+    0,
+    90
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "n_tanne0",
+   "id": "tanne",
+   "saat": 7,
+   "gier": [
+    0
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 48,
+    "klein": 16
+   }
+  },
+  {
+   "bild": "n_tanne1",
+   "id": "tanne",
+   "saat": 20,
+   "gier": [
+    0
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 48,
+    "klein": 16
+   }
+  },
+  {
+   "bild": "n_tanne2",
+   "id": "tanne",
+   "saat": 33,
+   "gier": [
+    0
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 48,
+    "klein": 16
+   }
+  },
+  {
+   "bild": "n_laubbaum0",
+   "id": "laubbaum",
+   "saat": 7,
+   "gier": [
+    0
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 48,
+    "klein": 16
+   }
+  },
+  {
+   "bild": "n_laubbaum1",
+   "id": "laubbaum",
+   "saat": 20,
+   "gier": [
+    0
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 48,
+    "klein": 16
+   }
+  },
+  {
+   "bild": "n_laubbaum2",
+   "id": "laubbaum",
+   "saat": 33,
+   "gier": [
+    0
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 48,
+    "klein": 16
+   }
+  },
+  {
+   "bild": "n_obstbaum0",
+   "id": "obstbaum",
+   "saat": 7,
+   "gier": [
+    0
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 48,
+    "klein": 16
+   }
+  },
+  {
+   "bild": "n_obstbaum1",
+   "id": "obstbaum",
+   "saat": 20,
+   "gier": [
+    0
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 48,
+    "klein": 16
+   }
+  }
+ ],
+ "leute": [
+  {
+   "bild": "l_geher0",
+   "id": "spaziergaenger",
+   "saat": 11,
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "s": 40
+  },
+  {
+   "bild": "l_geher1",
+   "id": "spaziergaenger",
+   "saat": 23,
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "s": 40
+  },
+  {
+   "bild": "l_geher2",
+   "id": "spaziergaenger",
+   "saat": 37,
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "s": 40
+  },
+  {
+   "bild": "l_geher3",
+   "id": "spaziergaenger",
+   "saat": 41,
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "s": 40
+  },
+  {
+   "bild": "l_geher4",
+   "id": "spaziergaenger",
+   "saat": 59,
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "s": 40
+  },
+  {
+   "bild": "l_geher5",
+   "id": "spaziergaenger",
+   "saat": 73,
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "s": 40
+  }
+ ]
+}

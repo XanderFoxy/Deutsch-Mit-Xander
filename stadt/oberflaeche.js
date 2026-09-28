@@ -40,6 +40,7 @@
     abriss: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/><path d="M10 11v6M14 11v6"/></g></svg>',
     karte: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/></g></svg>',
     pinsel: '<svg viewBox="0 0 24 24"><path d="M14.5 4.5 19.5 9.5 11 18l-5-5z" fill="currentColor"/><path d="M6 13c-2.5 0-3 3-3 6 3 0 6-.5 6-3" fill="currentColor" opacity=".75"/></svg>',
+    farbe: '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2.1-.5-1.2.3-2.4 1.6-2.4H17a4 4 0 0 0 4-4C21 7 17 3 12 3z" fill="currentColor"/><g fill="#1b2440"><circle cx="7.6" cy="11.2" r="1.5"/><circle cx="10.3" cy="7.2" r="1.5"/><circle cx="15" cy="7.4" r="1.5"/></g></svg>',
     uhr: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 7v5l3.5 2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>'
   };
 
@@ -71,6 +72,33 @@
   let malArt = null, malGroesse = 1.4;
   let leiste, reiterZeile, kartenZeile, steuerung, minikarte, miniC, info, kopf;
   let reiterAktiv = null;
+  let stimmung = null, stimmungZeit = null;
+
+  /* Farbnachbearbeitung je Tageszeit: Tag kräftig und klar, Dämmerung warm
+     und rosig, Nacht tiefblau mit warmen Fenstern (Sättigung bleibt dort
+     zurückhaltender, sonst wird das Blau giftig). Ein Hauch Sepia wärmt
+     vor dem Sättigen – sonst färbt die Sättigung nur das Himmelsblau im
+     Schnee kräftiger und die Dächer werden babyblau (im Vergleich geprüft).
+     ?gr=satt,kon,sepia,vignette[,kaltAus] überschreibt zum Abstimmen. */
+  const STIMMUNG = {
+    tag:   { satt: 0.30, kon: 0.10, sep: 0.18, hell: 0.02, warm: "rgba(255,196,120,.16)", kalt: "rgba(40,80,170,.16)", vig: 0.30, kaltAus: 1 },
+    abend: { satt: 0.30, kon: 0.12, sep: 0.25, hell: 0.00, warm: "rgba(255,150,90,.22)", kalt: "rgba(60,50,160,.20)", vig: 0.45, kaltAus: 1 },
+    nacht: { satt: 0.15, kon: 0.12, sep: 0.12, hell: 0.00, warm: "rgba(255,170,80,.10)", kalt: "rgba(20,40,120,.22)", vig: 0.50, kaltAus: 1 }
+  };
+  function stimmungSetzen() {
+    if (!stimmung) return;
+    const k = O.farbStaerke == null ? 1 : O.farbStaerke, m = STIMMUNG[SZ.zeit] || STIMMUNG.tag;
+    const tq = new URLSearchParams(location.search).get("gr");
+    if (tq) { const a = tq.split(",").map(Number); m.satt = a[0]; m.kon = a[1]; m.sep = a[2]; m.vig = a[3]; if (a[4] != null) m.kaltAus = a[4]; }
+    const f = k > 0 ? "sepia(" + ((m.sep || 0) * k).toFixed(3) + ") saturate(" + (1 + m.satt * k).toFixed(3) + ") contrast(" + (1 + m.kon * k).toFixed(3) + ") brightness(" + (1 + m.hell * k).toFixed(3) + ")" : "none";
+    ["stadtBoden", "stadtDinge"].forEach((id) => { const c = document.getElementById(id); if (c) c.style.filter = f; });
+    stimmung.style.opacity = Math.min(1, k).toFixed(2);
+    stimmung.style.background = "linear-gradient(160deg," + m.warm + " 0%, rgba(0,0,0,0) 45%, " + (m.kaltAus ? "rgba(0,0,0,0)" : m.kalt) + " 100%)";
+    stimmung.firstChild.style.background = "radial-gradient(ellipse 75% 70% at 50% 48%, rgba(0,0,0,0) 55%, rgba(8,10,30," + (m.vig * Math.min(1.4, k)).toFixed(3) + ") 100%)";
+    stimmungZeit = SZ.zeit;
+  }
+  O.stimmungSetzen = stimmungSetzen;
+  O.stimmungPruefen = () => { if (stimmung && stimmungZeit !== SZ.zeit) stimmungSetzen(); };
 
   /* ---------------- Aufbau ---------------- */
   O.start = function () {
@@ -82,13 +110,34 @@
     });
     kopf.appendChild(name);
     const rechts = el("div", "st-kopf-rechts");
-    const zeitK = knopf(ZEIT_SYM[SZ.zeit], "Tageszeit", () => { SZ.zeit = ZEITEN[(ZEITEN.indexOf(SZ.zeit) + 1) % 3]; zeitK.innerHTML = SYM[ZEIT_SYM[SZ.zeit]]; ansage(ST.ZEITEN[SZ.zeit].name); speichernSpaeter(); vorschauenNeu(); });
+    const zeitK = knopf(ZEIT_SYM[SZ.zeit], "Tageszeit", () => { SZ.zeit = ZEITEN[(ZEITEN.indexOf(SZ.zeit) + 1) % 3]; zeitK.innerHTML = SYM[ZEIT_SYM[SZ.zeit]]; ansage(ST.ZEITEN[SZ.zeit].name); stimmungSetzen(); speichernSpaeter(); vorschauenNeu(); });
     const jahrK = knopf(JAHR_SYM[SZ.jahr], "Jahreszeit", () => { SZ.jahr = JAHRE[(JAHRE.indexOf(SZ.jahr) + 1) % 4]; jahrK.innerHTML = SYM[JAHR_SYM[SZ.jahr]]; ansage(JAHR_NAME[SZ.jahr]); speichernSpaeter(); vorschauenNeu(); });
     const dl = knopf("links", "Karte nach links drehen", () => kameraDrehen(1));
     const dr = knopf("rechts", "Karte nach rechts drehen", () => kameraDrehen(-1));
-    rechts.append(zeitK, jahrK, dl, dr);
+    const farbK = knopf("farbe", "Farbstimmung", () => farbFeld.hidden = !farbFeld.hidden);
+    rechts.append(zeitK, jahrK, farbK, dl, dr);
     kopf.appendChild(rechts);
     wurzel.appendChild(kopf);
+
+    /* XANDER: „was mir ein bisschen fehlt, ist die Sättigung … was Farbe und
+       Kontrast allein machen auf so ein Bild. Stell dir Photoshop darüber vor
+       und dann kriegen wir echt einen romantischen, intensiven, immersiven
+       weihnachtlichen Look." – Farbnachbearbeitung über dem ganzen Bild
+       (Sättigung, Kontrast, warmes Licht, kühle Schatten, Vignette). Stärke
+       per Regler, 0 = wie gemalt; gemerkt im Browser. */
+    const farbFeld = el("div", "st-farbfeld", '<label>Farbstimmung <b></b></label><input type="range" min="0" max="200" step="5">');
+    farbFeld.hidden = true;
+    const regler = farbFeld.querySelector("input"), zahl = farbFeld.querySelector("b");
+    let st0 = 100; try { const v = localStorage.getItem("stadt_farbe"); if (v != null) st0 = +v; } catch (e) {}
+    const qf = new URLSearchParams(location.search).get("farbe"); if (qf != null) st0 = +qf;
+    regler.value = st0;
+    const farbeSetzen = () => { const k = +regler.value / 100; zahl.textContent = regler.value + " %"; O.farbStaerke = k; stimmungSetzen(); try { localStorage.setItem("stadt_farbe", regler.value); } catch (e) {} };
+    regler.addEventListener("input", farbeSetzen);
+    farbFeld.addEventListener("click", (e) => e.stopPropagation());
+    wurzel.appendChild(farbFeld);
+    stimmung = el("div", "st-stimmung"); stimmung.innerHTML = "<i></i>";
+    document.getElementById("stadt").insertBefore(stimmung, wurzel);
+    farbeSetzen();
 
     /* Mini-Karte */
     minikarte = el("div", "st-mini");

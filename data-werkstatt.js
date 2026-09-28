@@ -49,20 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 792: Baukasten-Stadt Winterhausen (stadt.html) – Weihnachtsdorf mit Kölner Dom, Baustellen, Santa, Frühling",
+  stand: "Fassung 793: Leichte Stadt (stadt-leicht.html) – Winterhausen-Grafik als Bilder, 62 KB Skript, derselbe Spielstand; nur für den Betreiber verlinkt",
 
   inArbeit: [
-    { seit: "2026-09-28T15:41",
+    { seit: "2026-09-28T17:09",
+      text: "Leichte Stadt: eigene Modelle für die 16 Spielgebäude und Wahrzeichen" },
+    { seit: "2026-09-28T17:09",
+      text: "Leichte Stadt: Frühling/Sommer-Bilder, Schlittschuhläufer, Weihnachtsmann" },
+    { seit: "2026-09-28T17:09",
       text: "Haustiere reisen mit (Walkie 259)" },
-    { seit: "2026-09-28T15:41",
+    { seit: "2026-09-28T17:09",
       text: "Sequenz-Reisen flüssig in normalem Tempo" },
-    { seit: "2026-09-28T15:41",
+    { seit: "2026-09-28T17:09",
       text: "Laserduell / Lese-Duell" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T15:41",
-      text: "Baukasten-Stadt: drehbare Häuser, Deko, Bachlauf, organische Wiese, Bauphasen, Minikarte 3×3" },
+    { seit: "2026-09-28T17:09",
+      text: "Leichte Stadt: Bauen, Helfen, Drehen, Schmücken, Mini-Karte, Menschen, Baustellen, Nahansicht scharf" },
+    { seit: "2026-09-28T17:09",
+      text: "Winterhausen: erster Schnee zurück, Farbstimmung mit Regler" },
   ],
 };

@@ -876,11 +876,14 @@
     wl.addColorStop(0, "rgba(160,178,212," + a0.toFixed(3) + ")"); wl.addColorStop(0.5, "rgba(160,178,212,0)"); wl.addColorStop(1, "rgba(160,178,212," + a1.toFixed(3) + ")");
     g.fillStyle = wl; g.fillRect(x, y, w, h);
     if (F.px > 3) {
-      tonFlecken(g, x, y, w, h, 3.3, 0.55, saat + 31, "#b9c6da", true);
+      /* XANDER: „in aller ersten Schnee … der war perfekt für Winter …
+         wenn es auf den Dächern von den Häusern wär das Ganze so malerisch"
+         – Mulden kräftiger und großflächiger, wie die erste Schneedecke */
+      tonFlecken(g, x, y, w, h, 4.2, 0.85, saat + 31, "#b3c1d8", true);
       /* Ziegelrelief (Rippen) unter den weißen Kuppen: wo Schnee
          zusammengeweht ist, verschwinden die Reihen – kein Wellblech */
       if (opt.zwischen) opt.zwischen();
-      tonFlecken(g, x, y, w, h, 1.9, 0.75, saat + 47, "#f6f8fc", true);
+      tonFlecken(g, x, y, w, h, 1.9, 0.9, saat + 47, "#f8fafd", true);
       if (F.px > 16) tonFlecken(g, x, y, w, h, 0.7, 0.3, saat + 53, "#c9d4e6");
     }
     /* lange, flache Verwehungen quer zum Hang */

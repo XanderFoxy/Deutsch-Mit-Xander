@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Baukasten-Stadt</title>
 <meta name="theme-color" content="#1b2440">
-<link rel="stylesheet" href="stadt/stadt.css?v=093496acac">
+<link rel="stylesheet" href="stadt/stadt.css?v=0c0e02434c">
 </head>
 <body>
 <div id="stadt">
@@ -18,11 +18,12 @@
 /* Gebündelt (werkzeug/stadt-packen.js) – ?quelle=1 lädt die Einzeldateien */
 (function () {
   var q = /[?&]quelle=1/.test(location.search);
-  var liste = q ? ["stadt/kern.js","stadt/pinsel.js","stadt/boden.js","stadt/szene.js","stadt/himmel.js","stadt/baustelle.js","stadt/modelle.js","stadt/oberflaeche.js","stadt/dorf.js","stadt/start.js"] : ["stadt/stadt.min.js?v=7afd37746a"];
+  var liste = q ? ["stadt/kern.js","stadt/pinsel.js","stadt/boden.js","stadt/szene.js","stadt/himmel.js","stadt/baustelle.js","stadt/modelle.js","stadt/oberflaeche.js","stadt/dorf.js","stadt/start.js"] : ["stadt/stadt.min.js?v=53bd45f04c"];
   liste.forEach(function (s) { document.write('<script src="' + s + (q ? "?t=" + Date.now() : "") + '"><\/script>'); });
 })();
 </script>
 <!-- /SKRIPTE -->
+
 
 
 

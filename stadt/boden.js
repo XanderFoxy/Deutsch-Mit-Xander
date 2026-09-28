@@ -303,7 +303,13 @@
       schneeDicke = max(schneeDicke*(1.0 - geraeumt*0.85), wall*u_schnee);
       schneeDicke *= (1.0 - smoothstep(0.1, 0.5, wasser));
       // Schneelicht: Relief stark sichtbar, blaue Schatten
-      float sdif = max(0.0, dot(normalize(mix(n, vec3(0.0,0.0,1.0), 0.55)), u_licht));
+      /* XANDER: „in aller ersten Schnee, wo du gesagt hast er wäre zu fleckig
+         der war perfekt für Winter. Das sah so realistisch aus." – also wieder
+         das kräftige Relief der ersten Fassung (Wellen ×1,6, ungeglättet),
+         nur für den Schnee; die Wiese behält das sanfte Licht. */
+      vec3 nws = normalize(vec3(-hx/e*1.6, -hy/e*1.6, 1.0));
+      vec3 ns = vec3(dreh(nws.xy, u_dreh), nws.z);
+      float sdif = max(0.0, dot(ns, u_licht));
       vec3 schneeFarbe = vec3(0.93, 0.95, 0.99);
       vec3 schneeLicht = u_amb*vec3(0.97,0.99,1.05) + u_sonne*sdif*1.45;
       vec3 sc = schneeFarbe * min(schneeLicht, vec3(1.05));
@@ -418,7 +424,10 @@
     if (!gl) return;
     const k = ST.kamera;
     const c = gl.canvas;
-    if (c.width !== k.W || c.height !== k.H) { c.width = k.W; c.height = k.H; }
+    /* B.skala < 1: der Boden wird mit weniger Bildpunkten gerechnet und
+       gestreckt (leichte Stadt auf schwachen Telefonen). Winterhausen: 1. */
+    const sk = B.skala || 1, bw = Math.round(k.W * sk), bh = Math.round(k.H * sk);
+    if (c.width !== bw || c.height !== bh) { c.width = bw; c.height = bh; }
     gl.viewport(0, 0, c.width, c.height);
     if (geaendert) {
       gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -427,7 +436,7 @@
     }
     gl.uniform2f(ort.u_bild, c.width, c.height);
     gl.uniform2f(ort.u_kam, k.x, k.y);
-    gl.uniform1f(ort.u_s, k.s);
+    gl.uniform1f(ort.u_s, k.s * sk);
     gl.uniform1i(ort.u_dreh, k.dreh & 3);
     gl.uniform1f(ort.u_zeit, zeit);
     gl.uniform1f(ort.u_schnee, jahr === "winter" ? 1 : 0);
