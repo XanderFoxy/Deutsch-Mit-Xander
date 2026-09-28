@@ -18,17 +18,19 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 .st-name span { font-size: 11px; opacity: .7; }
 .st-kopf-rechts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 
-.st-mini { position: absolute; right: 12px; bottom: 138px; width: 150px; height: 150px; border-radius: 14px; overflow: hidden; border: 2px solid rgba(255,255,255,.55); box-shadow: 0 6px 20px rgba(0,0,0,.35); background: #dfe6ee; transition: width .25s, height .25s; }
+.st-mini-rahmen { position: absolute; right: 12px; bottom: 138px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; pointer-events: none; }
+.st-mini-rahmen > * { pointer-events: auto; }
+.st-mini { position: relative; width: 150px; height: 150px; border-radius: 14px; overflow: hidden; border: 2px solid rgba(255,255,255,.55); box-shadow: 0 6px 20px rgba(0,0,0,.35); background: #dfe6ee; transition: width .25s, height .25s; }
 .st-mini canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.st-mini-gitter { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); }
+.st-mini-gitter { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); }
 .st-mini-feld { border: 0; border-right: 1px solid rgba(20,30,60,.28); border-bottom: 1px solid rgba(20,30,60,.28); background: transparent; padding: 0; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; }
 .st-mini-feld:nth-child(3n) { border-right: 0; } .st-mini-feld:nth-child(n+7) { border-bottom: 0; }
-.st-mini-feld span { font-size: 8.5px; line-height: 1; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9); padding: 0 1px 3px; white-space: nowrap; overflow: hidden; max-width: 100%; }
+.st-mini-feld { min-width: 0; overflow: hidden; }
+.st-mini-feld span { font-size: 8px; line-height: 1.05; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9); padding: 0 2px 3px; overflow: hidden; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; }
 .st-mini-feld:active { background: rgba(255,255,255,.25); }
-.st-mini-schalter { position: absolute; top: 3px; right: 3px; width: 30px; height: 30px; border-radius: 9px; }
-.st-mini-schalter svg { width: 16px; height: 16px; }
-.st-mini.zu { width: 36px; height: 36px; }
-.st-mini.zu canvas, .st-mini.zu .st-mini-gitter { display: none; }
+.st-knopf.st-mini-schalter { width: 36px; height: 36px; border-radius: 11px; }
+.st-mini-schalter svg { width: 18px; height: 18px; }
+.st-mini.zu { display: none; }
 
 .st-leiste { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 8px max(8px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(14,18,34,.92), rgba(14,18,34,.72) 70%, rgba(14,18,34,0)); }
 .st-reiter { display: flex; gap: 6px; overflow-x: auto; padding: 16px 2px 6px; scrollbar-width: none; }
@@ -65,7 +67,16 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 
 @media (max-width: 420px) {
   .st-knopf { width: 40px; height: 40px; border-radius: 12px; }
-  .st-mini { width: 120px; height: 120px; bottom: 132px; right: 8px; }
+  .st-mini { width: 126px; height: 126px; }
+  .st-mini-rahmen { bottom: 132px; right: 8px; }
   .st-steuer { bottom: 140px; }
   .st-name b { font-size: 15px; }
+}
+
+/* Leiste offen: Karte und Steuerung rutschen über die Karten der Bauleiste */
+#stadtOberflaeche.leiste-offen .st-mini-rahmen { bottom: 236px; }
+#stadtOberflaeche.leiste-offen .st-steuer { bottom: 238px; }
+/* Schmale Bildschirme: während man baut oder auswählt, ist die Karte weg */
+@media (max-width: 620px) {
+  #stadtOberflaeche.steuer-offen .st-mini-rahmen { display: none; }
 }

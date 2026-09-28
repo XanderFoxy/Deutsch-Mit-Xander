@@ -2,7 +2,7 @@
 (function () {
   const ST = window.STADT, PI = ST.pinsel;
   ST.modell("probehaus", {
-    name: "Probehaus", gruppe: "Häuser", grund: [8, 6], hoehe: 10,
+    name: "Probehaus", gruppe: "Häuser", grund: [8, 6], hoehe: 10, bauzeit: 120,
     bauen(M, o) {
       const B = 8, T = 6, H = 5.4, HF = 3.6;
       const wand = (w, h, name) => (g, F) => {

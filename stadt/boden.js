@@ -78,16 +78,38 @@
   };
   B.leeren = function () { daten.fill(0); geaendert = true; };
   B.speichern = function () {
-    /* Lauflängen, damit es in den lokalen Speicher passt */
-    const aus = [];
-    let alt = -1, n = 0;
-    for (let i = 0; i < daten.length; i++) { const v = daten[i]; if (v === alt && n < 65535) n++; else { if (alt >= 0) aus.push(alt, n); alt = v; n = 1; } }
-    aus.push(alt, n);
+    /* Je Kanal für sich lauflängen-kodiert (Weg, Wasser, Beet, Rasen) –
+       die Karte ist meist leer, so bleibt der Text klein */
+    const aus = ["p"];
+    const n = N * N;
+    for (let c = 0; c < 4; c++) {
+      let alt = daten[c], z = 0;
+      for (let i = 0; i < n; i++) {
+        const v = daten[i * 4 + c];
+        if (v === alt) z++; else { aus.push(alt.toString(36) + "." + z.toString(36)); alt = v; z = 1; }
+      }
+      aus.push(alt.toString(36) + "." + z.toString(36));
+      aus.push("|");
+    }
     return aus.join(",");
   };
   B.laden = function (txt) {
-    const z = txt.split(",").map(Number); let p = 0;
-    for (let i = 0; i < z.length; i += 2) { daten.fill(z[i], p, p + z[i + 1]); p += z[i + 1]; }
+    if (txt.slice(0, 2) !== "p,") {
+      /* altes Format: verschränkt */
+      const z = txt.split(",").map(Number); let p = 0;
+      for (let i = 0; i < z.length; i += 2) { daten.fill(z[i], p, p + z[i + 1]); p += z[i + 1]; }
+      geaendert = true; return;
+    }
+    const teile = txt.slice(2).split(",|");
+    for (let c = 0; c < 4 && c < teile.length; c++) {
+      let i = 0;
+      for (const e of teile[c].split(",")) {
+        if (!e) continue;
+        const [v, z] = e.split(".").map((x) => parseInt(x, 36));
+        for (let k = 0; k < z; k++) daten[(i + k) * 4 + c] = v;
+        i += z;
+      }
+    }
     geaendert = true;
   };
 

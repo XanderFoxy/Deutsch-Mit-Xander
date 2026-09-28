@@ -502,9 +502,17 @@
   }
 
   /* Sprite aus dem Speicher (oder neu malen) */
+  /* Zoom fein gestuft (0,1 %): im Ruhezustand wird genau in Bildschirmgröße
+     gemalt – nie gestreckt, also gestochen scharf. Während die Finger
+     zoomen, streckt die Szene das letzte Bild (szene.js). */
+  function sStufe(s) { return Math.exp(Math.round(Math.log(s) / 0.001) * 0.001); }
+  function spriteSchluessel(id, o, gier, s, Z) {
+    return id + "|" + (o.schluessel || "") + "|" + o.jahr + "|" + Math.round(gier * 10) / 10 + "|" + sStufe(s).toFixed(3) + "|" + Z.name + "|" + (o.bau == null ? 1 : Math.round(o.bau * 200) / 200);
+  }
+  ST.spriteSchluessel = spriteSchluessel;
   function spriteHolen(id, o, gier, s, Z, t) {
-    const sq = Math.round(s * 20) / 20;
-    const schl = id + "|" + (o.schluessel || "") + "|" + o.jahr + "|" + Math.round(gier * 10) / 10 + "|" + sq + "|" + Z.name + "|" + (o.bau == null ? 1 : Math.round(o.bau * 200) / 200);
+    const sq = sStufe(s);
+    const schl = spriteSchluessel(id, o, gier, s, Z);
     let sp = SPEICHER.get(schl);
     if (sp) { sp.zuletzt = ST.jetzt || 0; return sp; }
     sp = spriteMalen(id, o, gier, sq, Z, t);

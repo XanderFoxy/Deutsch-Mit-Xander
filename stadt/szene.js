@@ -101,6 +101,9 @@
     return { jahr: SZ.jahr, bau: bau, saat: o.saat, variante: o.variante, schluessel: (o.variante || "") + "|" + o.saat, objekt: o };
   }
 
+  let sBau = 0, sLetzt = 0, sWechsel = 0, bildStart = 0, nachholen = false;
+  const BUDGET_MS = 28;
+  SZ.nachholen = function () { return nachholen; };
   const LEER = { leben: [], rauch: [], lichter: [], schatten: null, bild: null, W: 0, H: 0 };
   SZ.sichtbare = [];
   /* Bewegung lebender Dinge (Menschen laufen, Schlitten fliegen): je Bild */
@@ -115,6 +118,11 @@
     const Z = SZ.zeitDaten();
     const t = jetzt / 1000;
     ST.jetzt = jetzt;
+    bildStart = performance.now();
+    nachholen = false;
+    /* Zoom: erst wenn die Finger ruhen, wird in der neuen Größe gemalt */
+    if (K.s !== sLetzt) { sLetzt = K.s; sWechsel = jetzt; }
+    if (sBau === 0 || SZ.ohneBudget || (sBau !== K.s && jetzt - sWechsel > 160)) sBau = K.s;
     if (leinwand.width !== K.W || leinwand.height !== K.H) { leinwand.width = K.W; leinwand.height = K.H; }
     if (schattenBild.width !== K.W || schattenBild.height !== K.H) { schattenBild.width = K.W; schattenBild.height = K.H; }
     g.setTransform(1, 0, 0, 1, 0, 0);
@@ -139,11 +147,19 @@
         liste.push({ o: o, sp: LEER, live: true, X: P[0], Y: P[1], x0: P[0] - b, y0: P[1] - h * 1.2, x1: P[0] + b, y1: P[1] + b * 0.6, g: grundKam(o), opt: opt });
         continue;
       }
-      let sp;
-      try { sp = ST.spriteHolen(o.typ, opt, o.gier + K.dreh * 90, K.s, Z, t); }
-      catch (e) { console.error(o.typ, e); continue; }
-      const x0 = P[0] + sp.ox, y0 = P[1] + sp.oy;
-      liste.push({ o: o, sp: sp, X: P[0], Y: P[1], x0: x0, y0: y0, x1: x0 + sp.W, y1: y0 + sp.H, g: grundKam(o), opt: opt });
+      let sp = null;
+      const gier = o.gier + K.dreh * 90;
+      /* Neu malen nur, wenn es in dieses Bild noch passt – sonst das
+         zuletzt benutzte Bild dieses Objekts (anders gezoomt) strecken */
+      const schl = ST.spriteSchluessel(o.typ, opt, gier, sBau, Z);
+      if (ST.SPEICHER.has(schl) || performance.now() - bildStart < BUDGET_MS || !o._sp || SZ.ohneBudget) {
+        try { sp = ST.spriteHolen(o.typ, opt, gier, sBau, Z, t); o._sp = sp; }
+        catch (e) { console.error(o.typ, e); continue; }
+      } else { sp = o._sp; nachholen = true; }
+      let k = K.s / sp.s;
+      if (Math.abs(k - 1) < 0.002) k = 1;
+      const x0 = P[0] + sp.ox * k, y0 = P[1] + sp.oy * k;
+      liste.push({ o: o, sp: sp, k: k, X: P[0], Y: P[1], x0: x0, y0: y0, x1: x0 + sp.W * k, y1: y0 + sp.H * k, g: grundKam(o), opt: opt });
     }
     const reihe = sortieren(liste);
     SZ.sichtbare = reihe;
@@ -160,7 +176,8 @@
     /* 2. Schatten */
     for (const e of reihe) {
       if (e.live) { const d = ST.MODELLE[e.o.typ]; if (d.schatten) { sg.save(); try { d.schatten(sg, e.P); } catch (err) { console.error(err); } sg.restore(); } }
-      else sg.drawImage(e.sp.schatten, Math.round(e.x0), Math.round(e.y0));
+      else if (e.k === 1) sg.drawImage(e.sp.schatten, Math.round(e.x0), Math.round(e.y0));
+      else sg.drawImage(e.sp.schatten, e.x0, e.y0, e.sp.W * e.k, e.sp.H * e.k);
       if (e.o.bau && ST.baustelle && ST.baustelle.schatten) { sg.save(); try { ST.baustelle.schatten(sg, e.P, e.o, e.opt.bau); } catch (err) { console.error(err); } sg.restore(); }
     }
     sg.globalCompositeOperation = "source-in";
@@ -177,7 +194,8 @@
       const bauAktiv = e.o.bau && ST.baustelle && e.o !== SZ.geist;
       if (bauAktiv && ST.baustelle.hinten) { g.save(); try { ST.baustelle.hinten(g, e.P, e.o, e.opt.bau); } catch (err) { console.error(err); } g.restore(); }
       if (e.live) { g.save(); try { ST.MODELLE[e.o.typ].zeichnen(g, e.P); } catch (err) { console.error(err); } g.restore(); }
-      else g.drawImage(e.sp.bild, Math.round(e.x0), Math.round(e.y0));
+      else if (e.k === 1) g.drawImage(e.sp.bild, Math.round(e.x0), Math.round(e.y0));
+      else g.drawImage(e.sp.bild, e.x0, e.y0, e.sp.W * e.k, e.sp.H * e.k);
       if (e.sp.leben.length) {
         for (const fn of e.sp.leben) { g.save(); try { fn(g, e.P); } catch (err) { console.error(err); } g.restore(); }
       }
@@ -186,12 +204,12 @@
       if (e.o === SZ.auswahl) auswahlRahmen(e);
     }
     /* Rauch aus Schornsteinen */
-    for (const e of reihe) for (const r of e.sp.rauch) rauchMalen(g, e.x0 + r.x, e.y0 + r.y, K.s, t, r.k, e.o.id, Z);
+    for (const e of reihe) for (const r of e.sp.rauch) rauchMalen(g, e.x0 + r.x * e.k, e.y0 + r.y * e.k, K.s, t, r.k, e.o.id, Z);
     /* 5. Lichtschein */
     if (Z.nacht > 0.02) {
       g.globalCompositeOperation = "lighter";
       for (const e of reihe) for (const l of e.sp.lichter) {
-        const x = e.x0 + l.x, y = e.y0 + l.y, r = l.r;
+        const x = e.x0 + l.x * e.k, y = e.y0 + l.y * e.k, r = l.r * e.k;
         if (r < 1) continue;
         const flacker = l.flacker ? 0.85 + 0.15 * Math.sin(t * 9 + x) : 1;
         const gr = g.createRadialGradient(x, y, 0, x, y, r);
@@ -273,7 +291,7 @@
       if (e.o === SZ.geist || e.live) continue;
       if (px < e.x0 || px >= e.x1 || py < e.y0 || py >= e.y1) continue;
       try {
-        const d = e.sp.bild.getContext("2d").getImageData(Math.floor(px - Math.round(e.x0)), Math.floor(py - Math.round(e.y0)), 1, 1).data;
+        const d = e.sp.bild.getContext("2d").getImageData(Math.floor((px - e.x0) / e.k), Math.floor((py - e.y0) / e.k), 1, 1).data;
         if (d[3] > 30) return e.o;
       } catch (err) { return e.o; }
     }

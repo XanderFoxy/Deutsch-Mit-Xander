@@ -143,6 +143,7 @@
   /* ---------------- Werkbank: ein einzelnes Modell ---------------- */
   function werkbank(id) {
     ST.oberflaeche = null;     // keine Bedienung auf der Werkbank
+    SZ.ohneBudget = true;
     SZ.jahr = q.get("jahr") || "winter";
     SZ.zeit = q.get("zeit") || "tag";
     SZ.schneefall = q.get("flocken") === "1";
@@ -185,6 +186,7 @@
       if (ST.stadtAnfang) ST.stadtAnfang(q);
       if (ST.oberflaeche && ST.oberflaeche.start) ST.oberflaeche.start(q);
       if (q.get("still") === "1") {
+        SZ.ohneBudget = true;
         /* Prüfbild: Bewegung bis zur Zeit t vorspulen, dann ein Bild */
         const t = +(q.get("t") || 1000);
         groesse();

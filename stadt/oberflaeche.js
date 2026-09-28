@@ -101,9 +101,11 @@
       gitter.appendChild(f);
     }));
     minikarte.appendChild(gitter);
-    const miniZu = knopf("karte", "Karte ein- und ausklappen", () => minikarte.classList.toggle("zu"), "st-mini-schalter");
-    minikarte.appendChild(miniZu);
-    wurzel.appendChild(minikarte);
+    /* Klapp-Knopf ÜBER der Karte, nicht darauf – sonst verdeckt er ein Feld */
+    const rahmen = el("div", "st-mini-rahmen");
+    const miniZu = knopf("karte", "Karte ein- und ausklappen", () => { minikarte.classList.toggle("zu"); rahmen.classList.toggle("zu"); }, "st-mini-schalter");
+    rahmen.append(miniZu, minikarte);
+    wurzel.appendChild(rahmen);
 
     /* Bauleiste */
     leiste = el("div", "st-leiste");
@@ -159,8 +161,8 @@
     }
   }
   function reiterWaehlen(id) {
-    if (reiterAktiv === id) { reiterAktiv = null; kartenZeile.innerHTML = ""; leiste.classList.remove("offen"); markieren(); return; }
-    reiterAktiv = id; leiste.classList.add("offen"); markieren();
+    if (reiterAktiv === id) { reiterAktiv = null; kartenZeile.innerHTML = ""; leiste.classList.remove("offen"); wurzel.classList.remove("leiste-offen"); markieren(); return; }
+    reiterAktiv = id; leiste.classList.add("offen"); wurzel.classList.add("leiste-offen"); markieren();
     kartenZeile.innerHTML = "";
     if (id === "Boden") {
       for (const w of BODEN_WERKZEUGE) {
@@ -244,7 +246,7 @@
   function abbrechen() {
     if (SZ.geist && SZ.geist.verschiebt) SZ.geist.verschiebt.versteckt = false;
     SZ.geist = null; if (modus !== "malen") SZ.auswahl = null;
-    modus = "schauen"; malArt = null; steuerung.hidden = true;
+    modus = "schauen"; malArt = null; steuerung.hidden = true; wurzel.classList.remove("steuer-offen");
     for (const k of kartenZeile.querySelectorAll(".an")) k.classList.remove("an");
   }
 
@@ -257,6 +259,7 @@
   function steuerungZeigen() {
     steuerung.innerHTML = "";
     steuerung.hidden = false;
+    wurzel.classList.add("steuer-offen");
     const o = SZ.auswahl;
     if (modus === "platzieren" && SZ.geist) {
       const d = ST.MODELLE[SZ.geist.typ];
@@ -300,7 +303,7 @@
       const r = el("input"); r.type = "range"; r.min = "0.6"; r.max = "4"; r.step = "0.1"; r.value = malGroesse; r.className = "st-regler";
       r.addEventListener("input", () => { malGroesse = +r.value; });
       steuerung.append(el("span", "st-klein", "Pinsel"), r, knopf("haken", "Fertig", abbrechen, "st-ja"));
-    } else steuerung.hidden = true;
+    } else { steuerung.hidden = true; wurzel.classList.remove("steuer-offen"); }
   }
 
   /* Zeitraffer umstellen, ohne dass Baustellen springen */
