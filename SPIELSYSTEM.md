@@ -1950,3 +1950,11 @@ XANDER: „ob du auf der Basis von diesem Konzept das Ganze in einem kleineren M
 - Sequenzen (gemalte Wege): Dauer nach der ganzen Weglänge (bis 16 Plätze) statt Luftlinie mit Deckel bei 4 Plätzen; jede Station ist ein Stützpunkt (keine abgeschnittenen Ecken); Fahren/Spielzug ab drei Feldern kurz anfahren – gleichmäßig – kurz bremsen statt ease-in-out über alles.
 - Leichte Stadt: Weihnachtsmann-Gespann (gebacken aus Winterhausen, 8 Richtungen × 8 Galopp-Schritte, Tag/Nacht) etwa jede Minute im Winter; eigener Schmuck und Drehungen werden über `spiel_stadt_leicht_speichern` auf dem Server gemerkt (gleich auf jedem Gerät).
 - Prüfung: `node werkzeug/pruefe-794-tiere-reisen.js` – 23 Reisearten + 4 Sequenzen (alte Fassung: alle rot, Kette über 7 Stationen so schnell wie eine).
+
+## Fassung 795 — Eigene Gebäude und Wahrzeichen in der leichten Stadt, Bauen-Knopf, fließende Tageszeit
+- XANDER: „mein Gefängnis sieht auch nicht wirklich aus wie ein Gefängnis … sieht aus wie ein Fachwerkhaus".
+- 15 neue Modelle (stadt/modelle/*.js, in STADT.MODELL_DATEIEN, also auch in Winterhausen): Kuhstall, Hühnerstall, Rathaus, Schule, Kaserne, Gefängnis (Rundturm mit Wachstube), Bergwerk (Förderturm, Maschinenhaus, Stollen), Brauerei, Bibliothek, Krankenhaus, Labor (Sternwarten-Kuppel) sowie die Wahrzeichen Neuschwanstein, Fernsehturm, Holstentor und Brandenburger Tor. Je Modell Winter/Herbst/Frühling/Sommer, Tag/Abend/Nacht und Bauphasen.
+- Gebacken (werkzeug/stadt-backen.js, stadt-leicht/backplan.json): g_<haus> fertig in 2 Größen × 4 Richtungen × Winter/Herbst × Tag/Nacht, bau_<haus> in 4 Bauphasen, w_<wahrzeichen>. Grundfläche/Höhe in stadt-leicht/dorf.js (EIGEN, D.WUNDER). Bäckerei, Schmiede, Gasthaus, Flickstube bleiben Fachwerkhäuser, die Mühle die Wassermühle.
+- Das Holstentor stand im See – jetzt (38, 64). Bäume wachsen nicht mehr auf Wahrzeichen-Plätzen. Wahrzeichen erscheinen, sobald sie im Spiel gebaut sind (volk.wunder).
+- Bauen-Knopf: Leiste mit allen 16 Gebäuden (Stufe, im Bau, Preis/ab Level); Antippen fliegt hin und öffnet die Karte. Am Haus „Ausbauen" (spiel_bauen) bis Stufe 3.
+- Tag und Nacht nach der Uhr fließend (SZ.nachtGrad: Dämmerung 16:30–20:00 und 6:00–8:00), Licht, Schatten, Nachtbild und Farbstimmung werden gemischt; die Tageszeit-Taste stellt fest ein. Prüfen: `?uhr=18.3`.
