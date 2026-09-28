@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 789 (Basis 733): JAHRESZEITEN UND FESTE IM DORF (Funk 169)
+   SONDE — FASSUNG 790 (Basis 733): JAHRESZEITEN UND FESTE IM DORF (Funk 169)
    ---------------------------------------------------------------------
    XANDER (Funk 169): „ich möchte das schon mal in der Vorschau sehen wie
    sowas aussieht wenn die Stadt dann geschmückt ist".
@@ -193,69 +193,52 @@ const sage = (gut, was, zusatz) => {
     sage(ist === soll, d + "." + m + "." + y + " → " + soll, ist);
   }
   console.log("\nVORSCHAU-KNOPF NUR FÜR DEN BETREIBER\n");
-  console.log("\nFASSUNG 789: HÄUSER VERSETZEN (Funk 202, Paket D1)\n");
-  /* Server nachbauen: Tausch wie spiel_dorf_umsetzen, Spiegeln wie spiel_dorf_spiegeln. */
+  console.log("\nFASSUNG 790: BAUEN DAUERT – BAGGER, KRAN, GERÜST (Funk 202, Paket D1)\n");
   await pg.evaluate(() => {
-    const B = { muehle: 20.4, schule: 49.5, baeckerei: 41.2, kuhstall: 45.1, krankenhaus: 47.3, schmiede: 38.5, huehnerstall: 20.9, brauerei: 41.8, bibliothek: 44.5, labor: 39.1, kaserne: 41.8, gasthaus: 44.5, gefaengnis: 38.5, flickstube: 32.4 };
-    window.__umRufe = [];
+    const i = window.__ich, jetzt = Date.now();
+    window.__bauRufe = [];
+    i.baustellen = [{ was: "kaserne", stufe: 1, start: new Date(jetzt - 12000).toISOString(), bis: new Date(jetzt + 108000).toISOString(), dauer: 120, geholfen: 0 }];
     window.__extra = Object.assign({}, window.__extra, {
-      spiel_dorf_umsetzen: (a) => {
-        window.__umRufe.push(a); const i = window.__ich; const plan = i.dorf_plan || (i.dorf_plan = {}); const pz = plan.platz || (plan.platz = {});
-        const von = pz[a.p_was] || a.p_was; let wer = null; Object.keys(B).forEach((k) => { if ((pz[k] || k) === a.p_ziel) wer = k; });
-        if (B[a.p_was] > B[a.p_ziel] + 7) return { ok: false, grund: "zu klein" };
-        pz[a.p_was] = a.p_ziel; if (wer) pz[wer] = von; Object.keys(pz).forEach((k) => { if (pz[k] === k) delete pz[k]; });
-        return Object.assign(JSON.parse(JSON.stringify(i)), { ok: true, getauscht: wer });
-      },
-      spiel_dorf_spiegeln: (a) => { window.__umRufe.push(a); const i = window.__ich; const plan = i.dorf_plan || (i.dorf_plan = {}); const sp = plan.spiegel || (plan.spiegel = []);
-        const an = sp.indexOf(a.p_was) < 0; if (an) sp.push(a.p_was); else sp.splice(sp.indexOf(a.p_was), 1); return Object.assign(JSON.parse(JSON.stringify(i)), { ok: true, an }); }
+      spiel_bau_helfen: (a) => { window.__bauRufe.push(["helfen", a.p_was]); const b = window.__ich.baustellen.find((x) => x.was === a.p_was); b.bis = new Date(Date.parse(b.bis) - 15000).toISOString(); b.geholfen += 15; return Object.assign(JSON.parse(JSON.stringify(window.__ich)), { ok: true, gespart: 15 }); },
+      spiel_ich: () => { window.__bauRufe.push(["ich"]); const i2 = window.__ich; i2.baustellen = i2.baustellen.filter((b) => Date.parse(b.bis) > Date.now()); if (!i2.baustellen.length) i2.dorf.kaserne = { stufe: 1, lp: 20 }; return JSON.parse(JSON.stringify(i2)); },
+      spiel_bauen: (a) => { window.__bauRufe.push(["bauen", a.p_was]); return Object.assign(JSON.parse(JSON.stringify(window.__ich)), { ok: true, baustelle: a.p_was, stufe: 3, dauer: 600 }); }
     });
+    const S = window.DMA_SPIEL.pruef.zustand(); S.ich = JSON.parse(JSON.stringify(i));
   });
-  await tippe('.sp-schnell [data-s="makro"]'); await tick(1200);
-  const haus = (k) => pg.evaluate((k) => { const b = document.querySelector('.sp-dl-rahmen .sp-dl-haus[data-g="' + k + '"]'); if (!b) return null; const r = b.getBoundingClientRect(); return { s: b.dataset.s, kl: b.className, left: b.style.left, x: r.left + r.width / 2, y: r.top + r.height / 2, w: Math.round(r.width) }; }, k);
-  let r = await pg.evaluate(() => { const k = document.querySelector('[data-s="umbau"]'); return k ? k.textContent : null; });
-  sage(r === "Umbauen aus", "unter dem Bild: Knopf „Umbauen aus“", String(r));
-  await tippe('[data-s="umbau"]'); await tick(400);
-  r = { rahmen: await pg.evaluate(() => document.querySelector(".sp-dl-rahmen").classList.contains("sp-dl-umbau")), bae: await haus("baeckerei"), rat: await haus("rathaus"), leiste: await pg.evaluate(() => (document.querySelector(".sp-dl-umbauleiste") || {}).textContent || "") };
-  sage(r.rahmen && r.bae.s === "umbauwahl" && /sp-dl-fest/.test(r.rat.kl) && /Umbauen:/.test(r.leiste), "Umbau-Modus: Häuser wählbar, Rathaus fest, Erklärung darunter", JSON.stringify({ bae: r.bae.s, rat: r.rat.kl.slice(-20) }));
-  const baeVorher = r.bae.left;
-  await tippe('.sp-dl-rahmen .sp-dl-haus[data-g="baeckerei"]'); await tick(400);
-  r = { bae: await haus("baeckerei"), kas: await haus("kaserne"), hue: await haus("huehnerstall") };
-  sage(/sp-dl-umbau-wahl/.test(r.bae.kl) && /sp-dl-ziel\b/.test(r.kas.kl) && /sp-dl-ziel-nein/.test(r.hue.kl), "Bäckerei gewählt: Kasernen-Platz grün, Hühnerstall-Platz rot (zu klein)", [r.bae.kl, r.kas.kl, r.hue.kl].map((k) => k.split(" ").pop()).join(" · "));
-  if (process.env.BILD) await (await pg.$(".sp-dl-rahmen")).screenshot({ path: process.env.BILD + "-gewaehlt.png" });
+  await tippe('.sp-schnell [data-s="makro"]'); await tick(1400);
+  let r = await pg.evaluate(() => { const b = document.querySelector('.sp-dl-rahmen .sp-dl-haus[data-g="kaserne"]'); return { kl: b && b.className, t: b && b.textContent, sig: (document.querySelector(".sp-dl-mal") || {}).dataset.gemalt || "" }; });
+  sage(/sp-dl-baustelle/.test(r.kl) && /Bau 1:4\d/.test(r.t) && /\|Bkas\d/.test(r.sig), "Baustelle der Kaserne: „Bau 1:4x“ über dem Platz, Bild kennt die Baustelle", JSON.stringify({ t: r.t, sig: r.sig.split("|").slice(-1)[0] }));
+  /* Die vier Phasen als Bild: Anteil über „bis“ setzen. */
+  const phase = async (anteil, name) => {
+    await pg.evaluate((a) => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.baustellen[0].bis = new Date(Date.now() + (1 - a) * 120000).toISOString(); window.DMA_SPIEL.pruef.schnellZeichnen(true); }, anteil);
+    await tick(1300);
+    const sig = await pg.evaluate(() => (document.querySelector(".sp-dl-mal") || {}).dataset.gemalt || "");
+    if (process.env.BILD) {
+      const box = await pg.evaluate(() => { const c = document.querySelector(".sp-dl-mal").getBoundingClientRect(), k = c.width / 320; return { x: c.left + (262 - 40) * k, y: c.top + (136 - 58) * k, width: 80 * k, height: 66 * k }; });
+      await pg.screenshot({ path: process.env.BILD + "-" + name + ".png", clip: box });
+    }
+    return sig;
+  };
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.wetterTest = { code: 0, tag: true, temp: 12, ort: "Döbeln" }; document.body.classList.add("probe-ohne-schild"); const st = document.createElement("style"); st.textContent = ".probe-ohne-schild .sp-dl-haus em, .probe-ohne-schild .sp-dl-haus small { visibility: hidden !important; }"; document.head.appendChild(st); });
+  const s1 = await phase(.1, "bagger"), s2 = await phase(.3, "fundament"), s3 = await phase(.62, "kran"), s4 = await phase(.95, "fertig");
+  sage(new Set([s1, s2, s3, s4]).size === 4, "vier Phasen, jede malt ein eigenes Bild (Bagger, Fundament, Kran+Gerüst, fertig)", [s1, s2, s3, s4].map((x) => (x.match(/Bkas(\d)/) || [])[1]).join(","));
+  await pg.evaluate(() => document.body.classList.remove("probe-ohne-schild"));
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.baustellen[0].bis = new Date(Date.now() + 90000).toISOString(); window.__ich.baustellen[0].bis = S.ich.baustellen[0].bis; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await tick(500);
   await tippe('.sp-dl-rahmen .sp-dl-haus[data-g="kaserne"]'); await tick(900);
-  r = { rufe: await pg.evaluate(() => window.__umRufe.slice()), bae: await haus("baeckerei"), sig: await pg.evaluate(() => document.querySelector(".sp-dl-mal").dataset.gemalt || ""), hinweis: await pg.evaluate(() => window.__hinweise.slice(-4).filter((h) => /🏗️/.test(h)).pop() || "") };
-  sage(r.rufe.length === 1 && r.rufe[0].p_was === "baeckerei" && r.rufe[0].p_ziel === "kaserne", "Tipp auf den Platz → spiel_dorf_umsetzen(baeckerei, kaserne)", JSON.stringify(r.rufe));
-  sage(r.bae.left !== baeVorher && /bae>kas/.test(r.sig), "Bäckerei steht jetzt am anderen Platz, Bild neu gemalt", baeVorher + " → " + r.bae.left + " · " + r.sig.split("|")[1]);
-  sage(/getauscht|neuen Platz/.test(r.hinweis), "Meldung sagt, was passiert ist", r.hinweis);
-  /* Ziehen mit dem Finger (Maus erzeugt Zeigerereignisse): Mühle auf den Hühnerstall-Platz. */
-  const m = await haus("muehle"), h = await haus("huehnerstall");
-  await pg.mouse.move(m.x, m.y); await pg.mouse.down(); await pg.mouse.move(m.x + 20, m.y + 10, { steps: 4 });
-  await tick(200);
-  const geist = await pg.evaluate(() => (document.querySelector(".sp-dl-geist") || {}).textContent || "");
-  const h2 = await haus("huehnerstall");
-  await pg.mouse.move(h2.x, h2.y, { steps: 8 }); await tick(100); await pg.mouse.up(); await tick(900);
-  r = await pg.evaluate(() => window.__umRufe.slice(-1)[0]);
-  sage(geist === "Mühle" && r && r.p_was === "muehle" && r.p_ziel === "huehnerstall", "Ziehen: Mühle hängt am Finger, losgelassen über dem Hühnerstall → getauscht", geist + " · " + JSON.stringify(r));
-  r = await pg.evaluate(() => !!document.querySelector(".sp-dl-geist"));
-  sage(!r, "nach dem Loslassen ist nichts mehr am Finger", String(r));
-  /* Spiegeln */
-  const sch0 = await haus("schmiede");
-  await tippe('.sp-dl-rahmen .sp-dl-haus[data-g="schmiede"]'); await tick(300);
-  await tippe('[data-s="umbauspiegeln"]'); await tick(900);
-  const sch1 = await haus("schmiede");
-  r = await pg.evaluate(() => window.__umRufe.slice(-1)[0]);
-  sage(r && r.p_was === "schmiede" && sch1.left !== sch0.left, "Spiegeln: spiel_dorf_spiegeln(schmiede), Tippfläche gespiegelt", sch0.left + " → " + sch1.left);
-  /* Rathaus lässt sich nicht wählen */
-  await tippe('.sp-dl-rahmen .sp-dl-haus[data-g="rathaus"]'); await tick(300);
-  r = await pg.evaluate(() => ({ wahl: document.querySelector(".sp-dl-umbau-wahl") ? document.querySelector(".sp-dl-umbau-wahl").dataset.g : "", h: window.__hinweise.slice(-4).filter((h) => /🏗️/.test(h)).pop() }));
-  sage(r.wahl === "schmiede" && /Rathaus bleibt/.test(r.h), "Rathaus als Ziel: „bleibt, wo es ist“, die Schmiede bleibt gewählt", JSON.stringify(r));
-  if (process.env.BILD) await (await pg.$(".sp-dl-rahmen")).screenshot({ path: process.env.BILD + "-nachher.png" });
-  /* 360 px: Knöpfe der Leiste ≥ 30 px, nichts ragt heraus */
-  r = await pg.evaluate(() => Array.from(document.querySelectorAll(".sp-dl-umbauknoepfe button, [data-s='umbau']")).map((b) => { const q = b.getBoundingClientRect(); return [Math.round(q.height), Math.round(q.right)]; }));
-  sage(r.every((x) => x[0] >= 30 && x[1] <= 360), "Knöpfe ≥ 30 px und im Bild (360 px)", JSON.stringify(r));
-  await tippe('.sp-dl-umbauknoepfe [data-s="umbau"]'); await tick(400);
-  r = await pg.evaluate(() => ({ an: document.querySelector(".sp-dl-rahmen").classList.contains("sp-dl-umbau"), s: (document.querySelector('.sp-dl-rahmen .sp-dl-haus[data-g="baeckerei"]') || {}).dataset.s }));
-  sage(!r.an && r.s === "dorfwahl", "„Fertig“: zurück zum normalen Dorf", JSON.stringify(r));
+  r = await pg.evaluate(() => ({ rufe: window.__bauRufe.slice(), h: window.__hinweise.slice(-1)[0], knopf: (document.querySelector('[data-s="bauhelfen"]') || {}).textContent || "" }));
+  sage(r.rufe.some((x) => x[0] === "helfen" && x[1] === "kaserne") && /15 s schneller/.test(r.h), "Tipp auf die Baustelle: spiel_bau_helfen, „15 s schneller“", r.h);
+  sage(/Baustelle: Stufe 1/.test(r.knopf) && /mithelfen/.test(r.knopf), "die Station zeigt „Baustelle: Stufe 1 · noch … · mithelfen −15 s“", r.knopf);
+  /* Ablaufen lassen: der Takt holt den Stand, meldet „Fertig gebaut“. */
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.baustellen[0].bis = new Date(Date.now() - 1000).toISOString(); window.__ich.baustellen[0].bis = S.ich.baustellen[0].bis; S.bauAbrufZuletzt = 0; });
+  await pg.waitForFunction(() => window.__hinweise.some((h) => /Fertig gebaut: Kaserne/.test(h)), null, { timeout: 6000 }).catch(() => {});
+  r = await pg.evaluate(() => ({ h: window.__hinweise.filter((h) => /Fertig gebaut/.test(h)), bs: (window.DMA_SPIEL.pruef.zustand().ich.baustellen || []).length }));
+  sage(r.h.length === 1 && r.bs === 0, "nach Ablauf: „Fertig gebaut: Kaserne Stufe 1“, Baustelle weg", JSON.stringify(r));
+  /* Bauen startet eine Baustelle: Meldung mit Dauer */
+  await pg.evaluate(() => { const b = document.createElement("button"); b.dataset.s = "bauen"; b.dataset.w = "brauerei"; b.id = "probeBau"; b.textContent = "x"; document.querySelector(".sp-dl-rahmen").parentNode.appendChild(b); });
+  await pg.evaluate(() => document.getElementById("probeBau").click()); await tick(700);
+  r = await pg.evaluate(() => window.__hinweise.slice(-1)[0]);
+  sage(/Baustelle: Brauerei Stufe 3 – fertig in 10 min/.test(r), "Bauen: „Baustelle: Brauerei Stufe 3 – fertig in 10 min …“", r);
   sage(konsolenFehler.length === 0, "keine Skriptfehler", konsolenFehler.slice(0, 3).join(" | "));
   console.log(fehler ? "\n" + fehler + " FEHLER\n" : "\nALLES GRÜN\n");
   await br.close(); srv.close(); process.exit(fehler ? 1 : 0);

@@ -580,7 +580,7 @@
      "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo",
      "haustier_leben", "geschuetz_stufe", "eisen", "tarn", "mitspielen",
      "level", "skills", "helm", "brust", "ladung", "daemon",
-     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "klasse", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s", "kampfklasse", "kampf_stufe", "dorf_name", "dorf_plan", "baustellen", "haft", "gefangene", "wahrzeichen"].forEach(function (k) { o[k] = s[k]; });
+     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "klasse", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s", "kampfklasse", "kampf_stufe", "dorf_name", "dorf_plan", "haft", "gefangene", "wahrzeichen"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -4775,8 +4775,6 @@
       bahnHandeln(k); return;
     } else if (s === "bahnreise") {
       bahnReisen(k); return;
-    } else if (s === "bauhelfen") {
-      bauHelfen(k.dataset.w); return;
     } else if (s === "umbau") {
       S.umbau = !S.umbau; S.umbauWahl = ""; S.dorfWahl = ""; S.dorfTippWeg = true; umbauZiehenAn();
       ton("holzklopf", 0.25); schnellZeichnen(true); return;
@@ -4794,8 +4792,6 @@
          dort wo fertig steht … ohne dass man da extra noch diesen Knopf braucht". Steht an einem Haus „fertig" (oder liegen
          Eier/Milch bereit), sammelt ein Tipp darauf gleich ein; der nächste Tipp öffnet es wie gewohnt. */
       if (!dorfBesuchStand() && dorfFertigSammeln(k.dataset.g)) { S.dorfTippWeg = true; return; }
-      /* FASSUNG 790 — ein Tipp auf die Baustelle hilft mit (−15 s bis zur halben Bauzeit), die Station öffnet sich dazu. */
-      if (!dorfBesuchStand() && baustelleVon(S.ich, k.dataset.g)) { bauHelfen(k.dataset.g); S.dorfWahl = k.dataset.g; S.dorfTippWeg = true; schnellZeichnen(true); return; }
       /* FASSUNG 686 — Tipp auf ein Gebäude im Dorfbild: seine Station öffnet sich im Bild. */
       S.dorfWahl = k.dataset.g && S.dorfWahl !== k.dataset.g ? k.dataset.g : ""; S.dorfTippWeg = true;
       if (S.dorfWahl === "bahnhof") bahnLaden();
@@ -4945,11 +4941,6 @@
       rpc("spiel_bauen", { p_was: k.dataset.w }).then(function (r) {
         if (!r || r.ok === false) { hinweis("🏗️ " + ((r && r.grund) || "Das ging nicht.")); return; }
         S.ich = r; S.stand[r.id] = oeffentlich(r); senden({ ereignis: "stand", stand: oeffentlich(r) });
-        if (r.baustelle) {
-          ton("hammerschlag", 0.5);
-          hinweis("🏗️ Baustelle: " + DORF[r.baustelle].name + " Stufe " + r.stufe + " – fertig in " + Math.round((r.dauer || 120) / 60) + " min. Tippe auf die Baustelle, um mitzuhelfen (15 s schneller).");
-          schnellZeichnen(true); return;
-        }
         ton(r.gebaut === "reparatur" ? "hammerschlag" : "jubel", 0.5);
         hinweis(r.gebaut === "reparatur" ? "🔧 Alles repariert" + (r.mit === "holz" ? " (mit 2 Holz)" : " (mit 1 Erz)") + " – das Dorf arbeitet wieder." : "🏗️ " + DORF[r.gebaut].name + " steht – Stufe " + r.stufe + "!");
         schnellZeichnen(true);
@@ -8804,33 +8795,6 @@
     schmied:         [[236, 140]],
     wissenschaftler: [[258, 186], [226, 90]]
   };
-  /* FASSUNG 790 — mithelfen und fertige Baustellen abholen. */
-  function bauHelfen(k) {
-    rpc("spiel_bau_helfen", { p_was: k }).then(function (r) {
-      if (!r || !r.ok) { hinweis("🔨 " + ((r && r.grund) || "Das ging nicht.")); if (r && r.id) { S.ich = r; } schnellZeichnen(true); return; }
-      S.ich = r; if (S.stand) S.stand[r.id] = oeffentlich(r);
-      ton("hammerschlag", 0.45); hinweis("🔨 Mitgeholfen – " + DORF[k].name + " ist " + r.gespart + " s schneller fertig.");
-      schnellZeichnen(true);
-    }).catch(function () { hinweis("🔨 Das ging gerade nicht."); });
-  }
-  function bauPflegen() {
-    var ich = S.ich, alle = baustellenVon(ich);
-    if (!ich || !alle.length || S.bauAbruf || Date.now() - (S.bauAbrufZuletzt || 0) < 4000) return;
-    var fertig = alle.filter(function (b) { return Date.parse(b.bis) <= Date.now(); });
-    if (!fertig.length) return;
-    S.bauAbruf = true; S.bauAbrufZuletzt = Date.now();
-    rpc("spiel_ich", {}).then(function (r) {
-      S.bauAbruf = false;
-      if (!r || !r.id) return;
-      S.ich = r; if (S.stand) S.stand[r.id] = oeffentlich(r);
-      senden({ ereignis: "stand", stand: oeffentlich(r) });
-      fertig.forEach(function (b) {
-        if (baustelleVon(r, b.was)) return;
-        ton("jubel", 0.5); hinweis("🏗️ Fertig gebaut: " + DORF[b.was].name + " Stufe " + b.stufe + ".");
-      });
-      schnellZeichnen(true);
-    }).catch(function () { S.bauAbruf = false; });
-  }
   /* FASSUNG 789 — Umbauen: wählen, setzen, ziehen. */
   function umbauFertig(r, text) {
     S.ich = r; if (S.stand) S.stand[r.id] = oeffentlich(r);
@@ -9605,19 +9569,6 @@
     var wer = Object.keys(DORF_BREITE).filter(function (j) { return dorfPlatzVon(p, j) === ziel; })[0];
     return !wer || DORF_BREITE[wer] <= DORF_BREITE[von] + 7;
   }
-  /* =================================================================
-     FASSUNG 790 — PAKET D1, SCHRITT 2: BAUEN DAUERT (BAGGER, KRAN, GERÜST)
-     Nach meinem Rat im Dorf-Gesamtkonzept (Frage 4 „Minuten"): Stufe 1 zwei, Stufe 2 fünf, Stufe 3 zehn Minuten.
-     Man soll den Kran arbeiten sehen und das fertige Haus noch in derselben Sitzung erleben. Ein Tipp auf die
-     Baustelle hilft mit (−15 s, höchstens bis zur halben Zeit). Ein Bau zugleich, ab Rathaus Stufe 3 zwei.
-     ================================================================= */
-  function baustellenVon(p) { return (p && p.baustellen) || []; }
-  function baustelleVon(p, k) { return baustellenVon(p).filter(function (b) { return b && b.was === k; })[0] || null; }
-  function bauAnteil(b) {
-    var d = (Number(b.dauer) || 120) * 1000, rest = Date.parse(b.bis) - Date.now();
-    return Math.max(0, Math.min(1, 1 - rest / d));
-  }
-  function bauSig(p) { return baustellenVon(p).map(function (b) { return b.was.slice(0, 3) + Math.floor(bauAnteil(b) * 10); }).join(""); }
   var dorfLandCache = "";
   function dorfZufall(n) { var x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
   /* FASSUNG 700 — XANDER (Funk 143): „das Dorf schöner ausarbeiten dass das
@@ -9972,10 +9923,8 @@
     var D = DORF[k], g = (ich.dorf || {})[k], st = g ? g.stufe : 0, lp = g ? g.lp : 0, mx = 20 * Math.max(1, st), lv = ich.level || 1;
     var preis = D.preis * (st + 1), gesperrt = D.ab && lv < D.ab;
     var knoepfe = "";
-    var bauS = baustelleVon(ich, k);
-    if (bauS) knoepfe += '<button type="button" data-s="bauhelfen" data-w="' + k + '">Baustelle: Stufe ' + bauS.stufe + " <small>noch " + uhrText(Math.max(0, Date.parse(bauS.bis) - Date.now())) + " · mithelfen −15 s</small></button>";
-    else if (st < 3) knoepfe += '<button type="button" data-s="bauen" data-w="' + k + '"' + (gesperrt || (ich.punkte || 0) < preis ? " disabled" : "") + ">"
-      + (gesperrt ? "ab Level " + D.ab : (st ? "Ausbauen auf Stufe " + (st + 1) : "Bauen")) + (gesperrt ? "" : " <small>" + preis + " P · " + [2, 5, 10][st] + " min Bauzeit</small>") + "</button>";
+    if (st < 3) knoepfe += '<button type="button" data-s="bauen" data-w="' + k + '"' + (gesperrt || (ich.punkte || 0) < preis ? " disabled" : "") + ">"
+      + (gesperrt ? "ab Level " + D.ab : (st ? "Ausbauen auf Stufe " + (st + 1) : "Bauen")) + (gesperrt ? "" : " <small>" + preis + " P</small>") + "</button>";
     if (st && lp < mx) knoepfe += '<button type="button" data-s="bauen" data-w="reparatur"' + (vorrat(ich, "erz") || vorrat(ich, "holz") >= 2 ? "" : " disabled") + ">Reparieren <small>1 Erz oder 2 Holz</small></button>";
     var werk = st ? werkZeilenHtml(ich, k).join("") : "";
     /* FASSUNG 756 — in der Kaserne werden die Ritter ausgebildet: der Knopf steht gleich hier. */
@@ -10844,97 +10793,6 @@
        Sommer     – Biergarten mit Sonnenschirmen
      Alles, was leuchtet, kommt in DM.jahrLichter und glüht nachts.
      ================================================================= */
-  /* FASSUNG 790 — die Baumaschinen, in derselben Pinselart wie das Dorf (Gelb wie echte Baumaschinen, dunkle Ketten). */
-  function dmKetten(g, x, y, w) {
-    g.fillStyle = "#2b2a28"; g.beginPath(); g.moveTo(x - w / 2 + 1, y); g.lineTo(x + w / 2 - 1, y); g.quadraticCurveTo(x + w / 2 + .6, y - 1.1, x + w / 2 - 1, y - 2.2); g.lineTo(x - w / 2 + 1, y - 2.2); g.quadraticCurveTo(x - w / 2 - .6, y - 1.1, x - w / 2 + 1, y); g.fill();
-    g.fillStyle = "#6b6a66"; for (var i = 0; i < 4; i++) { g.beginPath(); g.arc(x - w / 2 + 1.6 + i * (w - 3.2) / 3, y - 1.1, .55, 0, 7); g.fill(); }
-  }
-  function dmBagger(g, x, y, t) {
-    g.fillStyle = "rgba(30,25,20,.3)"; g.beginPath(); g.ellipse(x, y + .4, 7, 1.3, 0, 0, 7); g.fill();
-    dmKetten(g, x, y, 11);
-    g.fillStyle = "#e8b222"; g.fillRect(x - 4, y - 5.6, 8, 3.4);
-    g.fillStyle = "#c9921a"; g.fillRect(x - 4, y - 2.6, 8, .5);
-    g.fillStyle = "#e8b222"; g.fillRect(x - .2, y - 9, 4, 3.6);
-    g.fillStyle = "#9cc7e6"; g.fillRect(x + .4, y - 8.4, 2.8, 2.2);
-    /* Ausleger und Stiel: der Löffel hebt sich je nach Takt (t). */
-    var ax = x - 1, ay = y - 6, ex = x - 7, ey = y - 10 - Math.sin(t * 6.3) * 1.2, lx = x - 10.5, ly = y - 3 + Math.cos(t * 6.3) * 1.5;
-    g.strokeStyle = "#d9a21e"; g.lineCap = "round"; g.lineWidth = 1.2; g.beginPath(); g.moveTo(ax, ay); g.lineTo(ex, ey); g.stroke();
-    g.lineWidth = .9; g.beginPath(); g.moveTo(ex, ey); g.lineTo(lx, ly); g.stroke();
-    g.fillStyle = "#555"; g.beginPath(); g.moveTo(lx - 1.4, ly - .4); g.lineTo(lx + 1.2, ly - .8); g.lineTo(lx + .8, ly + 1.4); g.lineTo(lx - 1.6, ly + 1); g.closePath(); g.fill();
-    g.fillStyle = "#7a5530"; g.beginPath(); g.arc(lx - .2, ly - .6, .7, 0, 7); g.fill();
-  }
-  function dmSchaufelrad(g, x, y) {
-    g.fillStyle = "rgba(30,25,20,.3)"; g.beginPath(); g.ellipse(x, y + .4, 8, 1.4, 0, 0, 7); g.fill();
-    dmKetten(g, x, y, 12);
-    g.fillStyle = "#e8b222"; g.fillRect(x - 4.5, y - 5.5, 9, 3.3); g.fillRect(x + 1, y - 8.4, 3.4, 3);
-    g.fillStyle = "#9cc7e6"; g.fillRect(x + 1.5, y - 7.9, 2.4, 1.8);
-    g.strokeStyle = "#d9a21e"; g.lineWidth = 1.1; g.lineCap = "round"; g.beginPath(); g.moveTo(x - 2, y - 5); g.lineTo(x - 11, y - 10); g.stroke();
-    var rx = x - 12, ry = y - 10.5;
-    g.strokeStyle = "#8a6a2a"; g.lineWidth = .5; g.beginPath(); g.arc(rx, ry, 3.6, 0, 7); g.stroke();
-    for (var i = 0; i < 8; i++) { var w = i * Math.PI / 4; g.fillStyle = "#555"; g.beginPath(); g.arc(rx + Math.cos(w) * 3.9, ry + Math.sin(w) * 3.9, .8, 0, 7); g.fill(); }
-    g.fillStyle = "#e8b222"; g.beginPath(); g.arc(rx, ry, 1, 0, 7); g.fill();
-    g.fillStyle = "#7a5530"; g.beginPath(); g.ellipse(x + 8, y - .6, 3.6, 1.8, 0, Math.PI, 0); g.fill();
-  }
-  function dmKran(g, x, y, h, zielX, zielY) {
-    g.fillStyle = "rgba(30,25,20,.25)"; g.beginPath(); g.ellipse(x, y + .3, 3.4, .9, 0, 0, 7); g.fill();
-    g.fillStyle = "#7a7a7a"; g.fillRect(x - 2.2, y - 1, 4.4, 1.2);
-    g.strokeStyle = "#e8b222"; g.lineWidth = .35;
-    g.beginPath(); g.moveTo(x - 1, y - 1); g.lineTo(x - 1, y - h); g.moveTo(x + 1, y - 1); g.lineTo(x + 1, y - h); g.stroke();
-    for (var i = 0; i < h - 3; i += 2.6) { g.beginPath(); g.moveTo(x - 1, y - 1 - i); g.lineTo(x + 1, y - 3.6 - i); g.moveTo(x - 1, y - 1 - i); g.lineTo(x + 1, y - 1 - i); g.stroke(); }
-    var top = y - h, arm = Math.max(12, x - zielX + 6);
-    g.lineWidth = .4; g.beginPath(); g.moveTo(x + 1, top); g.lineTo(x - arm, top); g.moveTo(x + 1, top - 1.8); g.lineTo(x - arm, top); g.stroke();
-    for (var j = 0; j < arm; j += 2.4) { g.beginPath(); g.moveTo(x - j, top); g.lineTo(x - j - 1.2, top - 1.8 * (1 - (j + 1.2) / arm)); g.stroke(); }
-    g.beginPath(); g.moveTo(x + 1, top); g.lineTo(x + 7, top); g.stroke();
-    g.fillStyle = "#6b6a66"; g.fillRect(x + 5, top - .2, 2.6, 2.4);
-    g.fillStyle = "#e8b222"; g.fillRect(x - .9, top + .2, 2.6, 2.2); g.fillStyle = "#9cc7e6"; g.fillRect(x - .5, top + .6, 1.6, 1.2);
-    g.fillStyle = "#e8b222"; g.beginPath(); g.moveTo(x - .6, top - 1.8); g.lineTo(x, top - 4.2); g.lineTo(x + .6, top - 1.8); g.fill();
-    /* Laufkatze, Seil und eine Last (Balken) über der Baustelle */
-    var kx = zielX, ky = zielY;
-    g.fillStyle = "#555"; g.fillRect(kx - .8, top - .2, 1.6, .8);
-    g.strokeStyle = "rgba(40,40,40,.8)"; g.lineWidth = .15; g.beginPath(); g.moveTo(kx, top + .6); g.lineTo(kx, ky); g.stroke();
-    g.fillStyle = "#8a5a36"; g.fillRect(kx - 3, ky, 6, .8);
-  }
-  function dmGeruest(g, x0, x1, oben, unten) {
-    g.strokeStyle = "rgba(170,130,80,.95)"; g.lineWidth = .3;
-    for (var x = x0; x <= x1 + .01; x += (x1 - x0) / Math.max(2, Math.round((x1 - x0) / 5))) { g.beginPath(); g.moveTo(x, unten); g.lineTo(x, oben); g.stroke(); }
-    g.strokeStyle = "rgba(120,90,55,.95)"; g.lineWidth = .45;
-    for (var y = unten - 4; y > oben; y -= 5) { g.beginPath(); g.moveTo(x0 - .5, y); g.lineTo(x1 + .5, y); g.stroke(); }
-    g.strokeStyle = "rgba(170,130,80,.7)"; g.lineWidth = .2;
-    for (var y2 = unten; y2 - 5 > oben; y2 -= 5) { g.beginPath(); g.moveTo(x0, y2); g.lineTo(x0 + Math.min(5, x1 - x0), y2 - 5); g.stroke(); }
-  }
-  /* Eine Baustelle: neues Haus in vier Phasen, Ausbau mit Gerüst und Kran um das bestehende Haus. */
-  function dmBaustelle(g, K, s, k, q, st, b, d) {
-    var p = Math.floor(bauAnteil(b) * 10) / 10, ziel = Number(b.stufe) || st + 1, u = dmUmrissRoh(k, ziel), x = q[0], y = q[1];
-    var hoch = -u[1], links = x + u[0], rechts = x + u[2];
-    function haus(stufe) { return dmGebaeude(g, K, s, k, x, y, stufe, false); }
-    if (st > 0) {
-      var pk = haus(p >= .9 ? ziel : st);
-      if (p < .9) { dmGeruest(g, links - 1, rechts + 1, y - hoch * .95, y + 1); dmKran(g, rechts + 5, y + 2, hoch + 10, x - 2, y - hoch * .8); }
-      return pk;
-    }
-    if (p < .2) {
-      g.fillStyle = "rgba(90,62,36,.85)"; g.beginPath(); g.ellipse(x, y - 1, (rechts - links) * .42, 3.2, 0, 0, 7); g.fill();
-      g.fillStyle = "rgba(60,40,22,.9)"; g.beginPath(); g.ellipse(x, y - .6, (rechts - links) * .3, 1.8, 0, 0, 7); g.fill();
-      g.fillStyle = "#7a5530"; g.beginPath(); g.ellipse(rechts + 1, y + 1, 4.5, 2.6, 0, Math.PI, 0); g.fill();
-      dmGross(g, function (g2, bx, by) { dmBagger(g2, bx, by, p * 5); }, x - (rechts - links) * .12, y + 2.2, 1.5);
-      return null;
-    }
-    if (p < .4) {
-      g.fillStyle = "#9a948a"; g.fillRect(links + 2, y - 2.6, rechts - links - 4, 2.6);
-      g.fillStyle = "#b8b2a6"; g.fillRect(links + 2, y - 2.6, rechts - links - 4, .6);
-      dmGross(g, dmSchaufelrad, rechts + 4, y + 3, 1.45);
-      return null;
-    }
-    if (p < .9) {
-      var f = Math.min(1, (p - .4) / .5 + .12);
-      g.save(); g.beginPath(); g.rect(x - 60, y - hoch * f - .5, 120, hoch * f + 6); g.clip();
-      var pk2 = haus(ziel); g.restore();
-      dmGeruest(g, links - 1, rechts + 1, y - hoch * Math.max(.35, f), y + 1);
-      dmKran(g, rechts + 5, y + 2, hoch + 10, x, y - hoch * f - 2);
-      return pk2;
-    }
-    return haus(ziel);
-  }
   var JAHR_PLATZ = [197, 112];
   function dmRgba(hex, a) { var h = String(hex).replace("#", ""); return "rgba(" + parseInt(h.slice(0, 2), 16) + "," + parseInt(h.slice(2, 4), 16) + "," + parseInt(h.slice(4, 6), 16) + "," + a + ")"; }
   function dmGross(g, f, x, y, k) { g.save(); g.translate(x, y); g.scale(k, k); g.translate(-x, -y); f(g, x, y); g.restore(); }
@@ -11248,8 +11106,6 @@
     reihe.sort(function (a, b) { return a.y - b.y; }).forEach(function (e) {
       if (e.laterne) { dmLaternen(g, [e.laterne]); return; }
       var k = e.haus, q = lage[k], d = (dorf || {})[k], st = d && d.stufe > 0 ? d.stufe : 0;
-      var bau = (DM.baustellen || []).filter(function (x) { return x && x.was === k; })[0];
-      if (bau) { var bp = dmBaustelle(g, K, s, k, q, st, bau, d); if (bp) punkte[k] = bp; DM.hausJetzt = null; return; }
       if (st) {
         var spg = DM.spiegel && DM.spiegel[k];
         if (spg) { g.save(); g.translate(2 * q[0], 0); g.scale(-1, 1); }
@@ -11335,7 +11191,7 @@
   }
   function dorfMalSig(ich) {
     var d = ich.dorf || {};
-    return Object.keys(DORF_LAGE).map(function (k) { var g = d[k]; return g && g.stufe > 0 ? k.slice(0, 3) + g.stufe + (g.lp > 0 ? "" : "x") : ""; }).join(".") + "|" + dorfPlanSig(ich) + (baustellenVon(ich).length ? "|B" + bauSig(ich) : "");
+    return Object.keys(DORF_LAGE).map(function (k) { var g = d[k]; return g && g.stufe > 0 ? k.slice(0, 3) + g.stufe + (g.lp > 0 ? "" : "x") : ""; }).join(".") + "|" + dorfPlanSig(ich);
   }
   /* Nach jedem Zeichnen: ist die Leinwand noch nicht (oder anders) gemalt, jetzt malen – aus dem Speicher, wenn es dasselbe Dorf ist. */
   /* FASSUNG 709 — die Karte im Kompass zeigt dasselbe gemalte Dorf in klein; der Ausschnitt-Rahmen folgt dem Wischen. */
@@ -11367,7 +11223,6 @@
       var t0 = performance.now();
       var ds = lw.getAttribute("data-sig") || "";
       var zeigWer = (dorfBesuchStand() || { st: S.ich }).st, zeigDorf = zeigWer.dorf || {}, zeigLage = dorfLageVon(zeigWer);
-      DM.baustellen = baustellenVon(zeigWer);
       var punkte = dorfMalen(neu, zeigDorf, zeigLage, breite, /N$/.test(ds), /SN?$/.test(ds));
       DM.zeit = Math.round(performance.now() - t0);
       /* FASSUNG 728 — XANDER (Funk 177): „Beim Bahnhof … zwei Reihen Fenster individuell jeweils eine komplett links neben dem
@@ -11420,14 +11275,11 @@
          was geerntet wird". Am Haus steht, WAS gerade entsteht (Brot 2:10 · 4 Brot fertig); am Bergwerk die Bergleute. */
       var zeichen = kaputt ? '<em class="sp-ds-kaputt">kaputt</em>' : w ? '<em class="' + (rest > 0 ? "sp-ds-laeuft" : "sp-ds-fertig") + '">' + (rest > 0 ? wareName(w.ware) + " " + uhrText(rest) : w.menge + " " + wareName(w.ware) + " fertig") + "</em>"
         : stall && stall.bereit ? '<em class="sp-ds-fertig">' + stall.bereit + (k === "kuhstall" ? " Milch" : " Eier") + "</em>" : k === "bergwerk" && st ? truppZeichen(ich, ["berg"]) : "";
-      /* FASSUNG 790 — Baustelle: Restzeit über dem Platz (wie „Brot 2:10"), ein Tipp hilft mit. */
-      var bauH = baustelleVon(ich, k);
-      if (bauH) zeichen = '<em class="sp-ds-laeuft sp-ds-bau">Bau ' + uhrText(Math.max(0, Date.parse(bauH.bis) - Date.now())) + "</em>";
       var zu = !st && DORF[k].ab && lv < DORF[k].ab;
       /* FASSUNG 789 — im Umbau-Modus wählt ein Tipp das Gebäude bzw. den Zielplatz (grün = geht, rot = zu klein/fest). */
       var um = S.umbau && !besuch, umKl = "";
       if (um) umKl = DORF_FEST[k] ? " sp-dl-fest" : S.umbauWahl === k ? " sp-dl-umbau-wahl" : S.umbauWahl ? (dorfPasst(ich, S.umbauWahl, dorfPlatzVon(ich, k)) ? " sp-dl-ziel" : " sp-dl-ziel-nein") : " sp-dl-umbaubar";
-      return '<button type="button" class="sp-dl-haus sp-dl-haus-gemalt' + (st ? "" : " sp-dl-bauplatz") + (bauH ? " sp-dl-baustelle" : "") + (kaputt ? " sp-ds-aus" : "") + (zu ? " sp-dl-zu" : "") + (wahl === k && !um ? " sp-an" : "") + umKl
+      return '<button type="button" class="sp-dl-haus sp-dl-haus-gemalt' + (st ? "" : " sp-dl-bauplatz") + (kaputt ? " sp-ds-aus" : "") + (zu ? " sp-dl-zu" : "") + (wahl === k && !um ? " sp-an" : "") + umKl
         + '" data-s="' + (um ? "umbauwahl" : "dorfwahl") + '" data-g="' + k + '" style="left:' + ((q[0] + u[0]) / 3.2).toFixed(2) + "%;top:" + ((q[1] + u[1]) / 2).toFixed(2) + "%;width:" + ((u[2] - u[0]) / 3.2).toFixed(2) + "%;height:" + ((u[3] - u[1]) / 2).toFixed(2) + '%"'
         + ' title="' + DORF[k].name + (st ? " · Stufe " + st : " · Bauplatz") + '">'
         + "<small>" + dorfPin(k) + "<span>" + DORF[k].name + (st > 1 ? " " + st : "") + "</span></small>" + zeichen + "</button>";
@@ -14781,7 +14633,6 @@
     ackerPflegen();
     erinnerungPruefen();
     dorfMeldungenPruefen();
-    bauPflegen();
     haltPflegen();
     tiereSpielen();
     tierZustandPflegen();

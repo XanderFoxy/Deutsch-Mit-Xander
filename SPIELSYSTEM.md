@@ -1885,3 +1885,15 @@ Nach meinem Rat im Dorf-Gesamtkonzept (Teil C, Frage 1 „feste Kacheln", Frage 
 - Sonde `werkzeug/pruefe-789-haeuser-versetzen.js`: 13/13 (Tippen, Ziehen, Tauschen, Spiegeln, Rathaus fest, neu gemalt, 360 px). Sonden 709/711: veraltete Erwartungen angepasst (16 Gebäude auf der Karte, Kompass seit Funk 191 kleiner, dritter Schalter „Umbauen").
 
 Noch offen aus D1: Bauzeit mit Bauphasen (Bagger, Kran) – Fassung 790; Wege/Gärten/Zäune/Wohnhaus als eigene Module; Landschaftswahl.
+
+## Fassung 790 — Paket D1, Schritt 2: Bauen dauert – Bagger, Kran, Gerüst (Funk 202)
+
+Nach meinem Rat im Dorf-Gesamtkonzept (Teil C, Frage 4 „Minuten"): Man soll den Kran arbeiten sehen und das fertige Haus noch in derselben Sitzung erleben.
+
+- **Bauzeit:** Stufe 1 zwei Minuten, Stufe 2 fünf, Stufe 3 zehn. Der Preis wird beim Start bezahlt; die neue Stufe wirkt erst, wenn der Bau fertig ist (beim Ausbau arbeitet das Haus mit der alten Stufe weiter).
+- **Ein Bau zugleich**, ab Rathaus Stufe 3 zwei. Reparieren bleibt sofort.
+- **Im Bild** (neues Haus): 0–20 % Grube mit Bagger · 20–40 % Fundament mit Schaufelradbagger · 40–90 % Wände wachsen hinter dem Gerüst, der Kran setzt Balken · ab 90 % das fertige Haus. Ausbau: Gerüst und Kran um das bestehende Haus. Über dem Platz steht „Bau 1:47".
+- **Mithelfen:** Tipp auf die Baustelle (oder „Baustelle … mithelfen −15 s" in der Station): 15 s schneller, höchstens bis zur halben Bauzeit.
+- **Fertig:** Der Takt holt den Stand vom Server, sobald die Zeit um ist → „Fertig gebaut: Kaserne Stufe 1." Der Bau-Knopf nennt die Bauzeit.
+- **Server:** `spiel_bauen` legt `volk.baustellen` an, `spiel_bau_abschluss` (in `spiel_ich`) baut Fertiges ein, `spiel_bau_helfen`, `spiel_bau_dauer`. `spiel_oeffentlich` gibt Baustellen mit – Nachbarn sehen Bagger und Kran im fremden Dorf.
+- Sonde `werkzeug/pruefe-790-bauzeit.js`: 7/7 (vier Phasen als eigene Bilder, Mithelfen, Fertig-Meldung, Bau-Meldung). Sonde 789: Meldungsprüfung robuster (eine andere Meldung kam dazwischen).

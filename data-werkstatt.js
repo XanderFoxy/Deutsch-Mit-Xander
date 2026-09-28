@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 789: Häuser versetzen, tauschen, spiegeln (Paket D1, Schritt 1)",
+  stand: "Fassung 790: Bauen dauert – Bagger, Schaufelradbagger, Kran, Gerüst; mithelfen −15 s",
 
   inArbeit: [
-    { seit: "2026-09-28T03:22",
-      text: "D1: Bauzeit mit Bagger und Kran; Wohnhaus, Wege, Gärten; Walkie-Reste (Liedteil benennen, Tiere reisen mit, Laserduell)" },
+    { seit: "2026-09-28T03:44",
+      text: "D1: Wohnhaus, Wege, Gärten, Zäune als Bausteine; Walkie-Reste (Liedteil benennen, Tiere reisen mit, Laserduell)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T03:22",
-      text: "Funk 202: Umbauen im Dorf mit Ziehen und Tauschen" },
+    { seit: "2026-09-28T03:44",
+      text: "Funk 202: Bauzeit mit Bauphasen (Paket D1, Schritt 2)" },
   ],
 };
