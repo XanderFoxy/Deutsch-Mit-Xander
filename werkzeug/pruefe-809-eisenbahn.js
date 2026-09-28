@@ -147,6 +147,9 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   const stelle = (t, dir) => pg.evaluate(([t, d]) => { STADT.bahn.fest = t == null ? null : { t: t, dir: d }; STADT.leicht.unruhe = 3; }, [t, dir]);
   const tHalt = await pg.evaluate(() => (STADT.bahn.plan.hin.tAn + STADT.bahn.plan.hin.tAb) / 2);
   await stelle(tHalt, 1); await pg.waitForTimeout(300);
+  /* FASSUNG 809 — unter Last kommt der erste Bildtakt später: erst weiter, wenn der Zug am Halt steht (sonst ist
+     STADT.bahn.zug noch leer oder steht noch woanders, und die Kamera schaut daneben) */
+  await pg.waitForFunction((t) => { const z = STADT.bahn.zug; if (!z || z.length < 4) return false; const a = JSON.stringify(z.map((w) => [+w.x.toFixed(2), +w.y.toFixed(2)])); const alt = window.__zugAlt; window.__zugAlt = a; return a === alt; }, tHalt, { timeout: 20000, polling: 250 }).catch(() => {});
   /* FASSUNG 808 — Kamera auf die Lok (die Strecke läuft jetzt diagonal in der Welt) */
   const lz = await pg.evaluate(() => [STADT.bahn.zug[0].x, STADT.bahn.zug[0].y]);
   await pg.evaluate(() => { const z = STADT.bahn.zug, m = z[Math.floor(z.length / 2)]; STADT.kamera.x = m.x + 1; STADT.kamera.y = m.y + 1; });

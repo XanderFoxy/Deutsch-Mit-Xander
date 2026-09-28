@@ -336,6 +336,21 @@
         korb: svgB('<path d="M2 7h12l-1.5 7h-9z" fill="#c9954f" stroke="#6b4a22" stroke-width=".9"/><path d="M4 7c0-4 8-4 8 0" fill="none" stroke="#6b4a22" stroke-width="1.1"/>')
       };
       WARE_BILD.eier = WARE_BILD.ei; WARE_BILD.gold = WARE_BILD.quarz = WARE_BILD.silizium = WARE_BILD.erz;
+      /* FASSUNG 809 — Stationen ohne Haus: See (Zunge im Überblick) und Wald (dichteste Baumgruppe vorn), Jäger daneben */
+      let waldMitte = null;
+      const wald = () => {
+        if (waldMitte && waldMitte.n === SZ.objekte.length) return waldMitte;
+        const b = SZ.objekte.filter((o) => o.art === "natur" && !o.hinten && /^n_(tanne|laubbaum)/.test(o.bild || ""));
+        let best = null, bn = -1;
+        for (const o of b) { let n = 0; for (const q of b) if (Math.hypot(o.x - q.x, o.y - q.y) < 12) n++; if (n > bn) { bn = n; best = o; } }
+        waldMitte = { n: SZ.objekte.length, x: best ? best.x : 0, y: best ? best.y : 0, h: 12 };
+        return waldMitte;
+      };
+      const ORTE = {
+        see: () => { const v = D.SEE_VERSATZ || [0, 0]; return { x: 66 + v[0], y: 56 + v[1] - 3, h: 2 }; },
+        wald: wald,
+        jagd: () => { const w = wald(); return { x: w.x + 7, y: w.y - 5, h: 10 }; }
+      };
       const zeichenEbene = el("div", "lk-zeichen-ebene");
       wurzel.insertBefore(zeichenEbene, wurzel.firstChild);
       let zeichen = {};
@@ -353,10 +368,10 @@
           let b = da[g];
           if (!b) {
             b = el("button"); b.type = "button"; b.dataset.g = g;
-            b.addEventListener("click", (e) => { e.stopPropagation(); try { window.parent.postMessage({ typ: "leicht-haus", g: g }, location.origin); } catch (x) {} });
+            b.addEventListener("click", (e) => { e.stopPropagation(); try { window.parent.postMessage({ typ: "leicht-haus", g: g === "jagd" ? "wald" : g }, location.origin); } catch (x) {} });
             zeichenEbene.appendChild(b);
           }
-          const kl = "lk-zeichen lk-z-" + zeichen[g][0];
+          const kl = "lk-zeichen lk-z-" + zeichen[g][0] + (ORTE[g] ? " lk-z-ort" : "");
           if (b.className !== kl) b.className = kl;
           /* FASSUNG 807 — XANDER: „kannst du da ein Ei selber reinmachen … oder Getreide, dass du dann Getreidehalme
              darstellst … wenn die Schilder, dass sie dann passend sind wie sie früher waren". Das Schild wie im alten Dorf
@@ -395,7 +410,7 @@
         if (document.body.classList.contains("lk-mini-modus")) namenLegen(haeuser); else if (namenEbene.firstChild) namenEbene.textContent = "";
         if (!zeichenEbene.firstChild) return;
         for (const b of zeichenEbene.children) {
-          const o = haeuser[b.dataset.g];
+          const o = haeuser[b.dataset.g] || (ORTE[b.dataset.g] && Object.assign({ stufe: 1 }, ORTE[b.dataset.g](), { hoehe: ORTE[b.dataset.g]().h / 0.8 }));
           if (!o) { b.style.display = "none"; continue; }
           const P = ST.proj(o.x, o.y, (o.hoehe || 10) * (o.stufe || 1) * 0.8), x = P[0] / K.dpr, y = P[1] / K.dpr;
           const drin = x > -40 && y > -20 && x < K.W / K.dpr + 40 && y < K.H / K.dpr + 20;

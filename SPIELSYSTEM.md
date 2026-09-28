@@ -2157,3 +2157,23 @@ XANDER: „das soll genau das selbe Bild sein im Prinzip von der Map … man sol
   - `pruefe-808` bekommt längere Wartezeiten und einen freien Platz ohne Bäume.
   - `pruefe-leicht` prüft, dass die Schalter nur der Betreiber sieht.
   - Neu: `pruefe-810-fuhrwerk.js` und `pruefe-811-tiere.js`.
+
+## Fassung 809 — Bedienung der Stadt: Leuchtkreis, ruhige Zeichen, Wald, Häuser versetzen, Scrollen, Nachtlicht, Auftritt Batmobil/Viper
+
+XANDER: „ich möchte nicht, dass wenn man auf ein Haus klickt, dass man dann diese Strichelinien sieht … so ne Kreis Markierung … weicher" · „vielleicht einfach nur ne Kanne mit mal eins dran ohne großes Hintergrund … so ruhig und vielleicht leicht pulsieren" · „Waldstück … wenn man auf die Bäume klickt … einen Effekt" · „Mir fehlen noch die items zum schmücken die finde ich hier in der kleinen Map noch gar nicht" · „meine Häuser auch im Nachhinein … herum zu drehen oder anders zu positionieren … und das abspeichern" · Walkie 304: „Das Scrollen ist sehr schwerfällig und hängt immer nach und schiebt sich zurück" · Funk 205: „über strahlen die Fenster Lichter so sehr … die Laternen … haben überhaupt keinen Schein".
+
+- **Auswahl (`szene.js`)**: Ein angetipptes Haus bekommt einen weichen, leicht atmenden Lichtkreis am Boden unter dem Haus. Gestrichelt ist nur noch, was gerade gesetzt oder versetzt wird.
+- **Fertig-Zeichen (`oberflaeche.js`, `leicht.css`)**: nur das Bild der Ware und „×4" auf einem weichen hellen Schein. Es atmet langsam um den Fußpunkt, springt also nicht. Die Tippfläche ist 44 px groß, der ganze Text („4 Brot") steht als Titel dabei.
+- **Wald**: Ein Tipp auf einen Baum lässt Blätter rieseln (im Winter Schnee) und zwei Vögel auffliegen. Im Spiel öffnet sich die Wald-Station.
+- **Schmücken/Bauen**: stehen unter dem kleinen Stadtbild und öffnen das Vollbild gleich mit der passenden Leiste. Viper, Batmobil, Pferdebahn und Wagen sind dort unter „Fahrzeuge".
+- **Häuser versetzen**: In der Hauskarte gibt es jetzt „Versetzen" (Ziehen oder Tippen, Setzen/Abbrechen) und „Zurück auf den Bauplatz". Gespeichert wird der Versatz zum Bauplatz (`lage[k] = {dreh, dx, dy}`), lokal und am Server (`spiel_stadt_leicht_speichern`). Bäume unter einem versetzten Haus verschwinden. Solange etwas gesetzt wird, baut die Stadt nicht neu auf.
+- **Scrollen im kleinen Rahmen**: Der Finger wird in Koordinaten der Spielseite gemessen (Finger + Lage des Rahmens). Das Menü folgt dem Finger jetzt 1 : 1; vorher hob sich die Bewegung zur Hälfte auf, weil der Rahmen mitwanderte.
+- **Namen/Symbole** sind im Rahmen aus, bis das Spiel sie einschaltet.
+- **Nacht**:
+  - Das Fensterlicht ist gedämpft. Jedes Fenster ist an oder aus: abends die meisten, spät nachts wenige; jedes wechselt zu seiner eigenen Zeit.
+  - Die Laternen werfen einen kräftigeren Lichtkegel.
+  - Tag und Nacht blenden auch im kleinen Rahmen fließend über.
+- **Auftritt Batmobil und Dodge Viper (Helfer, `app.js`, Sonde `pruefe-812-auftritt-autos.js`)**: Beide fahren als 3D-Einzug aus einem Drehblatt mit 32 Blickwinkeln ein: Kurve mit Quietschen, frontaler Halt, das Profilbild steigt aus, Abfahrt in die Tiefe. Das Batmobil hat Nachbrenner und einen gerechneten Klang.
+- **Sonden**:
+  - `pruefe-799` prüft zusätzlich das langsame Wischen: 80 px Finger ergeben 80 px Scrollen. Mit dem alten Code sind es 50 px, die Sonde ist dann rot.
+  - `pruefe-799` akzeptiert „×4" mit dem Titel „4 Brot" und die neuen Knöpfe unter dem Bild.

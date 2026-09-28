@@ -12964,6 +12964,12 @@
       }
       if (z) aus[k] = z;
     });
+    /* FASSUNG 809 — Funk 203: „dass z.B die Zeit angezeigt wird wenn etwas in Bearbeitung ist wie das früher am See war
+       da war die Minuten Zeit … beim Wald". Fischer, Holzfäller und Jäger bekommen ihr Zeichen am See bzw. im Wald. */
+    ["see", "wald", "jagd"].forEach(function (ort) {
+      var t = truppStand(ich, ort);
+      if (t) aus[ort] = t.fertig ? ["fertig", t.menge + " " + wareName(t.ware), t.ware] : ["laeuft", (t.leer ? "Ruhe " : wareName(t.ware) + " ") + uhrText(t.rest), t.ware];
+    });
     return aus;
   }
   function lsZeichenSchicken() {

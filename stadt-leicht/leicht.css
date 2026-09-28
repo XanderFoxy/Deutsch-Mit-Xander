@@ -157,11 +157,11 @@ html.lk-mini-html:has(.lk-nah), .lk-mini-modus.lk-nah, .lk-mini-modus.lk-nah #lD
 .lk-zeichen.lk-z-bau::before { background: #9a6424; }
 .lk-zeichen.lk-z-kaputt::before { background: #d8261f; }
 .lk-zeichen.lk-z-laeuft { font-weight: 700; }
-.lk-mini-modus:not(.lk-nah) .lk-zeichen.lk-z-laeuft { display: none !important; }
+.lk-mini-modus:not(.lk-nah) .lk-zeichen.lk-z-laeuft:not(.lk-z-ort) { display: none !important; }
 
 /* FASSUNG 807 — Drehknopf nur mit dem Kompass; Symbole/Namen folgen den Schaltern des Spiels */
 .lk-mini-modus .lk-drehknopf { left: 5px; top: 38px; width: 26px; height: 26px; border-radius: 50%; }
 .lk-mini-modus .lk-drehknopf svg { width: 15px; height: 15px; }
 .lk-mini-modus:not(.lk-nah) .lk-drehknopf { display: none; }
-.lk-ohne-symbole .lk-zeichen:not(.lk-z-fertig) { display: none !important; }
+.lk-ohne-symbole .lk-zeichen:not(.lk-z-fertig):not(.lk-z-ort) { display: none !important; }
 .lk-ohne-namen .lk-name-schild { display: none !important; }
