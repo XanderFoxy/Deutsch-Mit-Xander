@@ -1,14 +1,16 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 798: DIE NEUE STADT IN DER SEITE, NICHT IM NEUEN TAB
+   SONDE — FASSUNG 799: DIE NEUE STADT IM KLEINEN DORFRAHMEN
    ---------------------------------------------------------------------
-   XANDER: „die Stadt im Chat … im Hochformat klein, im Querformat
-   Vollbild, aber in der Seite, kein neuer Tab … und dann wieder zurück
-   zum Livestream".
-   Geprüft auf einem Android-Telefon (360 px, echte Finger): der Knopf
-   öffnet keinen Tab, sondern einen Rahmen unten (oben bleibt der Chat);
-   quer gedreht füllt er alles; „Zurück zum Livestream" und der
-   Zurück-Knopf in der Stadt selbst schließen ihn.
+   XANDER: „Ich möchte es in diesem Platz haben, wo die kleine Panorama
+   an sich die alte noch ist, dass man darunter einen Schalter hat und
+   dann neue Version wählen … man bleibt innerhalb dieses Frames … Nicht
+   dass ich unten ein komplett neues Layer drüberlegt … durch einen Klick
+   auf das Vollbild … und trotzdem noch zurückkommt".
+   Geprüft auf einem Android-Telefon (360 px, echte Finger): der Schalter
+   unter dem kleinen Bild, die Stadt genau im alten Rahmen (gleiche Größe,
+   16:10), Neuzeichnen des Menüs lädt sie nicht neu, Lupe bleibt im
+   Rahmen, Vollbild und zurück, „Alte Version" holt das alte Dorf zurück.
    ---------------------------------------------------------------------
    (Aufbau der Prüfumgebung aus der Sonde 709:)
    ---------------------------------------------------------------------
@@ -56,7 +58,7 @@ const sage = (gut, was, zusatz) => {
     userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Mobile Safari/537.36" });
   const pg = await ctx.newPage();
   const konsolenFehler = [];
-  pg.on("pageerror", (e) => konsolenFehler.push(String(e.message || e)));
+  pg.on("pageerror", (e) => konsolenFehler.push(String(e.message || e) + (process.env.STAPEL ? " @ " + String(e.stack || "").split("\n").slice(1, 4).join(" | ") : "")));
   await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} window.LEICHT_FREI = true; });
   await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
   await pg.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF && window.DMA_SPIEL, { timeout: 25000 });
@@ -188,51 +190,83 @@ const sage = (gut, was, zusatz) => {
     window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });
 
-  const rahmen = () => pg.evaluate(() => { const e = document.querySelector(".sp-lstadt"); if (!e) return null; const r = e.getBoundingClientRect();
-    const f = e.querySelector("iframe"), kn = [...e.querySelectorAll(".sp-ls-leiste button")].map((b) => { const q = b.getBoundingClientRect(); return { l: q.left, r: q.right, h: q.height, w: q.width }; });
-    return { voll: e.classList.contains("sp-ls-voll"), top: Math.round(r.top), bottom: Math.round(r.bottom), left: r.left, right: r.right, h: Math.round(r.height), vh: innerHeight, vw: innerWidth, src: f ? f.getAttribute("src") : "", kn: kn }; });
-  const knoepfeOk = (r) => r.kn.length === 2 && r.kn.every((k) => k.h >= 30 && k.r <= r.vw + 0.5) && r.kn[0].r <= r.kn[1].l;
+  const lage = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { l: r.left, t: r.top, w: r.width, h: r.height, vis: getComputedStyle(e).visibility }; }, sel);
+  const nah = (a, b) => a && b && Math.abs(a.l - b.l) < 1.5 && Math.abs(a.t - b.t) < 1.5 && Math.abs(a.w - b.w) < 1.5 && Math.abs(a.h - b.h) < 1.5;
+  const stadtFrame = () => pg.frames().find((x) => /stadt-leicht\.html/.test(x.url()));
+  const imFrame = async (fn, arg) => { const f = stadtFrame(); if (!f) return null; try { return await f.evaluate(fn, arg); } catch (e) { return null; } };
+  const tippeImFrame = async (sel) => {
+    await pg.evaluate(() => { const p = document.querySelector(".sp-dl-neustadt-platz"); if (p) p.scrollIntoView({ block: "center" }); }); await tick(120);
+    const m = await imFrame((s) => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height }; }, sel);
+    const off = await lage(".sp-lstadt");
+    if (!m || !off) return null;
+    await pg.touchscreen.tap(off.l + m.x, off.t + m.y); return m;
+  };
 
-  console.log("\nHOCHKANT: DER KNOPF ÖFFNET DIE STADT UNTEN IN DER SEITE\n");
+  console.log("\nDER SCHALTER UNTER DEM KLEINEN DORFBILD\n");
   await tippe('.sp-schnell [data-s="makro"]'); await tick(1200);
-  sage(await pg.evaluate(() => { const k = document.querySelector(".sp-neue-stadt"); return !!k && k.tagName === "BUTTON" && !k.getAttribute("target"); }), "„Neue Stadt ansehen“ ist ein Knopf, kein Link in einen neuen Tab");
+  const alt = await lage(".sp-dl-rahmen .sp-dl-fenster");
+  sage(await pg.evaluate(() => document.querySelectorAll('[data-s="stadtversion"]').length === 2 && document.querySelector('[data-s="stadtversion"][data-v="alt"]').classList.contains("sp-an")),
+    "zwei Knöpfe „Alte Version“ (an) und „Neue Version“ unter dem Bild");
   const seitenVorher = ctx.pages().length;
-  await tippe(".sp-neue-stadt"); await tick(600);
-  let r = await rahmen();
-  sage(ctx.pages().length === seitenVorher, "kein neuer Tab", String(ctx.pages().length));
-  sage(!!r && /stadt-leicht\.html\?eingebettet=1/.test(r.src), "die Stadt läuft im Rahmen in der Seite", r && r.src);
-  sage(!!r && !r.voll && r.bottom === r.vh && r.top > r.vh * 0.3 && r.top < r.vh * 0.5, "hochkant unten angedockt, oben bleibt der Livestream frei", JSON.stringify(r && { top: r.top, bottom: r.bottom, vh: r.vh }));
-  sage(!!r && knoepfeOk(r), "Knöpfe ≥ 30 px, nebeneinander, nichts ragt über den Rand", JSON.stringify(r && r.kn));
+  await tippe('[data-s="stadtversion"][data-v="neu"]'); await tick(700);
+  const platz = await lage(".sp-dl-neustadt-platz"), ueber = await lage(".sp-lstadt");
+  sage(ctx.pages().length === seitenVorher, "kein neuer Tab");
+  sage(!!platz && !!alt && Math.abs(platz.w - alt.w) < 1.5 && Math.abs(platz.h - alt.h) < 1.5 && Math.abs(platz.l - alt.l) < 1.5 && Math.abs(platz.h / platz.w - .625) < .02, "die neue Stadt sitzt genau im alten Rahmen (gleiche Größe, 16:10)", JSON.stringify({ alt, platz }));
+  sage(!!ueber && nah(ueber, platz) && ueber.vis !== "hidden", "der Stadtrahmen liegt deckungsgleich darauf, nichts ragt heraus", JSON.stringify(ueber));
+  sage(await pg.evaluate(() => /mini=1/.test((document.querySelector(".sp-lstadt iframe") || {}).src || "")), "die Stadt läuft im Kleinformat (mini=1)");
   let fr = null;
-  for (let i = 0; i < 60 && !fr; i++) { await tick(250); const f = pg.frames().find((x) => /stadt-leicht\.html/.test(x.url())); if (f && await f.evaluate(() => !!document.querySelector(".lk-kopf-links .lk-knopf")).catch(() => false)) fr = f; }
+  for (let i = 0; i < 80 && !fr; i++) { await tick(250); const f = stadtFrame(); if (f && await f.evaluate(() => !!document.querySelector(".lk-lupe")).catch(() => false)) fr = f; }
   sage(!!fr, "die Stadt ist im Rahmen geladen");
-  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-hochkant.png" });
-  if (fr) {
-    const t = await fr.evaluate(() => document.querySelector(".lk-kopf-links .lk-knopf").getAttribute("aria-label"));
-    sage(t === "Zurück zum Livestream", "in der Stadt heißt der Zurück-Knopf „Zurück zum Livestream“", t);
-    await tick(3000); /* der Vorhang der Stadt geht spätestens nach 2,5 s auf */
-    const m = await fr.evaluate(() => { const r = document.querySelector(".lk-kopf-links .lk-knopf").getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
-    const off = await pg.evaluate(() => { const r = document.querySelector(".sp-lstadt iframe").getBoundingClientRect(); return { x: r.left, y: r.top }; });
-    await pg.touchscreen.tap(off.x + m.x, off.y + m.y); await tick(500);
-    sage(!(await rahmen()) && /stadt-leicht|index/.test(pg.url()) && !/stadt-leicht/.test(pg.url()), "der Zurück-Knopf in der Stadt schließt den Rahmen, die Seite bleibt", pg.url());
-  }
+  await tick(3000);
+  let r = await imFrame(() => { const g = (s) => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return { w: r.width, h: r.height, sicht: getComputedStyle(e).display !== "none" }; };
+    const felder = [...document.querySelectorAll(".lk-mini-feld")].map((f) => f.getBoundingClientRect()).filter((q) => q.width > 0);
+    return { mini: document.body.classList.contains("lk-mini-modus"), kopf: g(".lk-kopf"), bauen: g(".lk-bauen"), lupe: g(".lk-lupe"), voll: g(".lk-vollknopf"), feld: felder.length ? Math.min(...felder.map((q) => Math.min(q.width, q.height))) : 0, felder: felder.length }; });
+  sage(!!r && r.mini && !r.kopf.sicht && !r.bauen.sicht, "im kleinen Rahmen nur das Bild: keine Kopfleiste, kein Bauen/Schmücken", JSON.stringify(r && { kopf: r.kopf, bauen: r.bauen }));
+  sage(!!r && r.lupe.sicht && r.voll.sicht && r.lupe.w >= 30 && r.voll.w >= 30 && r.felder === 0, "Lupe und Vollbild (je ≥ 30 px); die kleine Karte erst mit der Lupe, wie beim alten Dorf", JSON.stringify(r && { lupe: r.lupe, voll: r.voll, felder: r.felder }));
+  sage(await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-dl-beschriftung button")].map((x) => x.dataset.s); return b.join(",") === "stadtversion,stadtversion,stadtvoll"; }), "darunter nur „Alte Version“, „Neue Version“ und „Vollbild“ (Symbole/Namen/Umbauen gehören zum alten Bild)");
+  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-klein.png" });
 
-  console.log("\nQUER GEDREHT: VOLLBILD IN DER SEITE\n");
-  await tippe(".sp-neue-stadt"); await tick(400);
+  console.log("\nNEUZEICHNEN DES MENÜS LÄDT DIE STADT NICHT NEU\n");
+  await imFrame(() => { window.__marke = 42; });
+  await pg.evaluate(() => { for (let i = 0; i < 4; i++) window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await tick(600);
+  sage((await imFrame(() => window.__marke)) === 42, "nach viermal Neuzeichnen ist es dieselbe Stadt (kein Neuladen)");
+  sage(nah(await lage(".sp-lstadt"), await lage(".sp-dl-neustadt-platz")), "und sie liegt weiter genau im Rahmen");
+
+  console.log("\nLUPE: NÄHER RAN, ABER IM RAHMEN\n");
+  const s0 = await imFrame(() => window.STADT.kamera.s);
+  if (process.env.STAPEL) console.log(await imFrame(() => { const e = document.querySelector(".lk-lupe"), r = e.getBoundingClientRect(); const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return (t && (t.className && t.className.baseVal != null ? t.className.baseVal : t.className)) + " / " + (t && t.tagName) + " " + JSON.stringify(r); }));
+  if (process.env.STAPEL) { await imFrame(() => { window.__klicks = 0; document.addEventListener("click", (e) => { window.__klicks++; window.__ziel = String(e.target.className && e.target.className.baseVal != null ? "svg" : e.target.className); }, true); }); }
+  await tippeImFrame(".lk-lupe"); await tick(900);
+  if (process.env.STAPEL) console.log("klicks", await imFrame(() => [window.__klicks, window.__ziel, typeof window.STADT.leicht.fliegeZu]));
+  const s1 = await imFrame(() => window.STADT.kamera.s);
+  sage(s1 / s0 > 2 && s1 / s0 < 2.4, "die Lupe holt doppelt so nah heran wie beim alten Dorf", (s1 / s0).toFixed(2) + (process.env.STAPEL ? " " + JSON.stringify(await imFrame(() => ({ s: window.STADT.kamera.s, min: window.STADT.kamera.min, W: window.STADT.kamera.W, an: document.querySelector(".lk-lupe").className }))) + " s0=" + s0 : ""));
+  sage(nah(await lage(".sp-lstadt"), await lage(".sp-dl-neustadt-platz")), "der Rahmen bleibt dabei so klein wie vorher");
+  const kf = await imFrame(() => { const f = [...document.querySelectorAll(".lk-mini-feld")].map((q) => q.getBoundingClientRect()).filter((q) => q.width > 0); return { n: f.length, min: f.length ? Math.min(...f.map((q) => Math.min(q.width, q.height))) : 0 }; });
+  sage(kf && kf.n === 9 && kf.min >= 30, "mit der Lupe erscheint die kleine Karte: 9 Viertel, je ≥ 30 px", JSON.stringify(kf));
+  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-lupe.png" });
+  await tippeImFrame(".lk-mini-feld:nth-child(9)"); await tick(1100);
+  const k9 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y }));
+  sage(!!k9 && k9.x > 30 && k9.y > 30, "ein Tipp auf ein Viertel der kleinen Karte fährt dorthin", JSON.stringify(k9));
+
+  console.log("\nVOLLBILD UND ZURÜCK\n");
+  await tippe('[data-s="stadtvoll"]'); await tick(700);
+  let v = await lage(".sp-lstadt");
+  sage(!!v && v.l === 0 && v.t === 0 && Math.abs(v.w - 360) < 1 && Math.abs(v.h - 740) < 1, "„Vollbild“: die Stadt füllt den Bildschirm", JSON.stringify(v));
+  r = await imFrame(() => ({ mini: document.body.classList.contains("lk-mini-modus"), kopf: getComputedStyle(document.querySelector(".lk-kopf")).display }));
+  sage(!!r && !r.mini && r.kopf !== "none", "im Vollbild ist die ganze Bedienung da (Kopfleiste, Bauen …)", JSON.stringify(r));
   await pg.setViewportSize({ width: 740, height: 360 }); await tick(500);
-  r = await rahmen();
-  sage(!!r && r.voll && r.top === 0 && r.bottom === r.vh && r.left === 0 && r.right === r.vw, "quer: die Stadt füllt die ganze Fläche", JSON.stringify(r && { top: r.top, bottom: r.bottom, left: r.left, right: r.right }));
-  sage(!!r && knoepfeOk(r), "quer: Knöpfe ≥ 30 px, nichts ragt über den Rand");
-  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-quer.png" });
+  v = await lage(".sp-lstadt");
+  sage(!!v && Math.abs(v.w - 740) < 1 && Math.abs(v.h - 360) < 1, "quer gedreht: weiter bildschirmfüllend", JSON.stringify(v));
+  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-voll.png" });
   await pg.setViewportSize({ width: 360, height: 740 }); await tick(500);
-  r = await rahmen();
-  sage(!!r && !r.voll && r.bottom === r.vh, "zurück hochkant: wieder klein unten", JSON.stringify(r && { voll: r.voll, top: r.top }));
-  await tippe(".sp-ls-gross"); await tick(300);
-  r = await rahmen();
-  sage(!!r && r.voll && r.top === 0, "„Vollbild“ macht sie auch hochkant groß");
-  await tippe(".sp-ls-zu"); await tick(300);
-  sage(!(await rahmen()) && !document_offen(await pg.evaluate(() => document.documentElement.className)), "„Zurück zum Livestream“ schließt die Stadt");
-  function document_offen(k) { return /sp-ls-offen/.test(k); }
+  await tippeImFrame(".lk-kopf-links .lk-knopf"); await tick(700);
+  sage(nah(await lage(".sp-lstadt"), await lage(".sp-dl-neustadt-platz")) && (await imFrame(() => document.body.classList.contains("lk-mini-modus"))) === true && (await imFrame(() => window.__marke)) === 42,
+    "„Zurück“ in der Stadt: wieder klein im Dorfrahmen, dieselbe Stadt");
+
+  console.log("\nALTE VERSION\n");
+  await tippe('[data-s="stadtversion"][data-v="alt"]'); await tick(700);
+  sage(!(await lage(".sp-lstadt")) && !!(await lage(".sp-dl-rahmen canvas.sp-dl-mal")), "„Alte Version“: das alte Dorfbild ist zurück, die neue Stadt weg", JSON.stringify({ ls: await lage(".sp-lstadt"), mal: await lage(".sp-dl-rahmen canvas.sp-dl-mal"), knopf: await pg.evaluate(() => [...document.querySelectorAll('[data-s="stadtversion"]')].map((b) => b.className).join("|")) }));
 
   sage(konsolenFehler.length === 0, "keine Skriptfehler", konsolenFehler.slice(0, 3).join(" | "));
   console.log("\n" + (fehler ? fehler + " FEHLER" : "ALLES GRÜN") + "\n");

@@ -88,3 +88,20 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 /* FASSUNG 796 — Sparmodus-Schalter im Farbfeld */
 .lk-spar { display: flex; align-items: center; gap: 8px; margin-top: 8px; font: 500 13px system-ui, sans-serif; color: #e9e2d2; min-height: 32px; }
 .lk-spar input { width: 22px; height: 22px; }
+
+/* FASSUNG 799 — im kleinen Dorfrahmen des Spiels (etwa 340 × 212 px): nur das Bild, die Lupe, die kleine Karte
+   zum Durchtippen der Viertel und der Vollbild-Knopf. Alles andere erst im Vollbild. */
+.lk-nur-mini { display: none; }
+.lk-mini-modus .lk-nur-mini { display: inline-grid; position: absolute; width: 32px; height: 32px; border-radius: 10px; }
+.lk-mini-modus .lk-nur-mini svg { width: 18px; height: 18px; }
+.lk-mini-modus .lk-lupe { left: 6px; top: 6px; }
+.lk-mini-modus .lk-lupe.an { background: #b8812e; }
+.lk-mini-modus .lk-vollknopf { left: 6px; bottom: 6px; }
+.lk-mini-modus .lk-kopf, .lk-mini-modus .lk-schmuck, .lk-mini-modus .lk-farbfeld, .lk-mini-modus .lk-leiste,
+.lk-mini-modus .lk-karte, .lk-mini-modus .lk-ansage, .lk-mini-modus .lk-mini-schalter { display: none !important; }
+.lk-mini-modus .lk-mini-rahmen { right: 6px; bottom: 6px; }
+.lk-mini-modus:not(.lk-nah) .lk-mini-rahmen { display: none; }
+.lk-mini-modus .lk-mini { width: 93px; height: 93px; border-radius: 9px; border-width: 1.5px; }
+.lk-mini-modus .lk-mini.zu { display: block; }
+.lk-mini-modus .lk-mini-feld span { display: none; }
+.lk-mini-modus .lk-vorhang b { font-size: 18px; }

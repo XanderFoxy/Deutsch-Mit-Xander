@@ -1979,3 +1979,15 @@ XANDER: „die Stadt im Chat … im Hochformat klein, im Querformat Vollbild, ab
 - Hochkant ist der Rahmen unten angedockt (58 % der Höhe); oben bleiben Livestream und Chat sichtbar. Quer (Höhe unter 700 px) füllt er die ganze Fläche. Drehen schaltet automatisch um, „Vollbild"/„Klein" von Hand.
 - „Zurück zum Livestream" oben am Rahmen und der Zurück-Knopf in der Stadt selbst (per postMessage `leicht-zu`, nur gleiche Herkunft) schließen den Rahmen und werfen ihn weg. Dann lädt und rechnet nichts mehr.
 - Sonde: `werkzeug/pruefe-798-stadt-im-chat.js`. Neu: grün. Alter Code: 11 rot.
+
+## Fassung 799 — die neue Stadt im kleinen Dorfrahmen, größerer See
+
+XANDER: „Ich möchte es in diesem Platz haben, wo die kleine Panorama an sich die alte noch ist, dass man darunter einen Schalter hat und dann neue Version wählen … man bleibt innerhalb dieses Frames … Nicht dass ich unten ein komplett neues Layer drüberlegt … durch einen Klick auf das Vollbild … und trotzdem noch zurückkommt".
+
+- Das Overlay aus Fassung 798 ist wieder raus. Unter dem kleinen Dorfbild stehen jetzt „Alte Version“ und „Neue Version“ (auf dem Gerät gemerkt: `dma_stadt_neu`), dazu in der neuen Version „Vollbild“.
+- In der neuen Version zeigt der Dorfrahmen (16:10, gleiche Größe wie das alte Bild) einen Platzhalter. Die Stadt selbst ist ein iframe (`stadt-leicht.html?eingebettet=1&mini=1`), das am body hängt und Bild für Bild dem Platzhalter folgt. Es wird mitbeschnitten, wenn das Menü scrollt. Grund: `domAngleichen` würde ein iframe im Menü beim Neuzeichnen umhängen, und dann lädt es neu. Ohne Platzhalter wird es nach 20 s weggeworfen.
+- Kleinformat in der Stadt (Klasse `lk-mini-modus`): nur Bild, Lupe (2,2 × Überblick, wie das alte Dorf) und Vollbild-Knopf. Die kleine Karte mit den 9 Vierteln (je ≥ 30 px) erscheint erst mit der Lupe. Kopfleiste, Bauen und Schmücken gibt es erst im Vollbild.
+- Vollbild: Der Rahmen deckt den Bildschirm (wenn möglich mit echtem Fullscreen und Querformat-Sperre). Der Zurück-Knopf der Stadt führt per postMessage `leicht-zu` zurück in den kleinen Rahmen, ohne dass die Stadt neu lädt.
+- `SZ.zeichnen` malt nicht bei 0 × 0 (kurz beim Einbetten).
+- See in der leichten Stadt: Die alte Bucht bleibt als Zunge. Darunter folgen ein schmaler Hals und ein großer See bis y ≈ 104, dazu eine flache Badebucht. Die Randbäume wachsen nicht im Wasser. Der See reicht nicht bis an den Kartenrand (±112 m), sonst wiederholt die Grafik die letzte Zeile als Streifen.
+- Sonde: `werkzeug/pruefe-799-stadt-im-dorfrahmen.js` (ersetzt 798). Neu: grün. Alter Code: 19 rot.

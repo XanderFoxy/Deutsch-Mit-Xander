@@ -4786,8 +4786,14 @@
       bahnReisen(k); return;
     } else if (s === "bauhelfen") {
       bauHelfen(k.dataset.w); return;
-    } else if (s === "neuestadt") {
-      leichtStadtAuf(); return;
+    } else if (s === "stadtversion") {
+      S.stadtNeu = k.dataset.v === "neu"; S.dorfWahl = "";
+      try { localStorage.setItem("dma_stadt_neu", S.stadtNeu ? "1" : "0"); } catch (e) {}
+      ton("swoosh", 0.2); schnellZeichnen(true);
+      if (S.stadtNeu) lsAuf(); else lsWeg();
+      return;
+    } else if (s === "stadtvoll") {
+      lsAuf(); lsVoll(true); return;
     } else if (s === "umbau") {
       S.umbau = !S.umbau; S.umbauWahl = ""; S.dorfWahl = ""; S.dorfTippWeg = true; umbauZiehenAn();
       ton("holzklopf", 0.25); schnellZeichnen(true); return;
@@ -12679,6 +12685,8 @@
      sie den Bahnhof … ich möchte nicht dass da irgendwas überlappt". Die Wahl liegt jetzt UNTER dem Bild, als zwei
      Schalter „Symbole“ und „Namen“ – jeder zeigt, ob er an ist, ein Tipp schaltet ihn um. Im Bild liegt nichts mehr. */
   function dorfBeschriftungHtml() {
+    /* FASSUNG 799 — die neue Stadt kennt Symbole/Namen/Umbauen des alten Bildes nicht: nur Version und Vollbild. */
+    if (stadtNeu()) return '<div class="sp-dl-beschriftung sp-dl-beschriftung-neu">' + neueStadtKnopf() + "</div>";
     var z = dorfZeichen(), n = dorfNamen();
     return '<div class="sp-dl-beschriftung"><span>Beschriftung im Bild:</span>'
       + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "0" : "1") + '" data-n="' + (n ? "1" : "0") + '" class="' + (z ? "sp-an" : "") + '" aria-pressed="' + z + '">Symbole ' + (z ? "an" : "aus") + "</button>"
@@ -12692,61 +12700,114 @@
      entscheiden kann". Nur ein Link (öffnet stadt-leicht.html in einem neuen
      Tab) – hier wird nichts von der neuen Stadt geladen. Wenn Xander sie
      freigibt, bekommt jeder den Knopf (LEICHT_FREI in supabase-config.js). */
-  function neueStadtKnopf() {
+  function neueStadtErlaubt() {
     var be = BE(), darf = false;
     try { darf = Boolean(be && be.isOwner && be.isOwner()); } catch (e) {}
-    if (!darf && !window.LEICHT_FREI) return "";
-    return '<button type="button" data-s="neuestadt" class="sp-neue-stadt">Neue Stadt ansehen' + (window.LEICHT_FREI ? "" : " (nur du)") + "</button>";
+    return darf || Boolean(window.LEICHT_FREI);
   }
-  /* FASSUNG 798 — XANDER: „die Stadt im Chat … im Hochformat klein, im
-     Querformat Vollbild, aber in der Seite, kein neuer Tab … und dann wieder
-     zurück zum Livestream". Die kleine Stadt läuft in einem Rahmen (iframe)
-     über der Seite: hochkant unten angedockt (oben bleiben Livestream und
-     Chat sichtbar), quer über die ganze Fläche. Der Rahmen hängt direkt am
-     body, damit das Neuzeichnen des Dorfes ihn nicht neu lädt. Schließen
-     wirft ihn weg – dann lädt und rechnet nichts mehr. */
+  function stadtNeu() {
+    if (!neueStadtErlaubt() || dorfBesuchStand()) return false;
+    if (S.stadtNeu == null) { try { S.stadtNeu = localStorage.getItem("dma_stadt_neu") === "1"; } catch (e) { S.stadtNeu = false; } }
+    return !!S.stadtNeu;
+  }
+  /* FASSUNG 799 — XANDER: „Ich möchte es in diesem Platz haben, wo die kleine Panorama an sich die alte noch ist, dass
+     man darunter einen Schalter hat und dann neue Version wählen und dass das in diesem kleinen Frame, wo das alte auch
+     ist, in der Quer-Ansicht zu sehen ist … man bleibt innerhalb dieses Frames, was innerhalb des Chats so eingebunden
+     ist, dass man noch aufs Menü zugreifen kann … Nicht dass ich unten ein komplett neues Layer drüberlegt … und dann
+     soll man die Möglichkeit haben, das Ganze durch einen Klick auf das Vollbild zu legen … und trotzdem noch
+     zurückkommt zu dieser Hoch-Ansicht, wo die Miniaturansicht wieder drin ist".
+     Unter dem kleinen Dorfbild: „Alte Version" / „Neue Version" und „Vollbild". */
+  function neueStadtKnopf() {
+    if (!neueStadtErlaubt() || dorfBesuchStand()) return "";
+    var neu = stadtNeu();
+    return '<button type="button" data-s="stadtversion" data-v="alt" class="sp-stadt-version' + (neu ? "" : " sp-an") + '" aria-pressed="' + !neu + '">Alte Version</button>'
+      + '<button type="button" data-s="stadtversion" data-v="neu" class="sp-stadt-version' + (neu ? " sp-an" : "") + '" aria-pressed="' + neu + '">Neue Version' + (window.LEICHT_FREI ? "" : " (nur du)") + "</button>"
+      + (neu ? '<button type="button" data-s="stadtvoll" class="sp-stadt-voll">Vollbild</button>' : "");
+  }
+  /* Der Platzhalter im Rahmen – genau so groß wie das alte Bild (16:10). */
+  function neueStadtRahmenHtml() {
+    return '<div class="sp-dl-rahmen sp-dl-ganz sp-dl-neustadt"><div class="sp-dl-fenster sp-dl-neustadt-platz"><span>Neue Stadt wird geladen …</span></div></div>' + dorfBeschriftungHtml();
+  }
+  /* Die Stadt selbst läuft in einem Rahmen (iframe), der NICHT im Menü steckt: das Menü wird laufend neu angeglichen,
+     und ein iframe, das dabei umgehängt wird, lädt neu. Er liegt deshalb am body und folgt Bild für Bild genau dem
+     Platzhalter – samt Beschnitt, wenn das Menü scrollt. Ohne Platzhalter (Dorf zu) wird er nach 20 s weggeworfen. */
   var LSTADT = null;
-  function leichtStadtQuer() { return window.innerWidth > window.innerHeight && window.innerHeight < 700; }
-  function leichtStadtModus(voll) {
+  function lsPost(daten) { try { if (LSTADT && LSTADT.rahmen.contentWindow) LSTADT.rahmen.contentWindow.postMessage(daten, location.origin); } catch (e) {} }
+  function lsWeg() {
     if (!LSTADT) return;
-    LSTADT.voll = voll;
-    LSTADT.el.classList.toggle("sp-ls-voll", voll);
-    LSTADT.gross.textContent = voll ? "Klein" : "Vollbild";
-    LSTADT.gross.setAttribute("aria-label", voll ? "Stadt klein zeigen" : "Stadt im Vollbild zeigen");
-  }
-  function leichtStadtZu() {
-    if (!LSTADT) return;
-    window.removeEventListener("resize", LSTADT.dreh);
     window.removeEventListener("message", LSTADT.post);
+    document.removeEventListener("fullscreenchange", LSTADT.fs);
     try { LSTADT.el.remove(); } catch (e) {}
-    document.documentElement.classList.remove("sp-ls-offen");
     LSTADT = null;
   }
-  function leichtStadtAuf() {
-    if (LSTADT) { leichtStadtModus(!LSTADT.voll); return; }
+  function lsVoll(an) {
+    if (!LSTADT || LSTADT.voll === an) return;
+    LSTADT.voll = an;
+    LSTADT.el.classList.toggle("sp-ls-voll", an);
+    lsPost({ typ: "leicht-modus", voll: an });
+    if (an) {
+      try { var f = LSTADT.el.requestFullscreen || LSTADT.el.webkitRequestFullscreen; if (f) { var v = f.call(LSTADT.el); if (v && v.catch) v.catch(function () {}); } } catch (e) {}
+      try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(function () {}); } catch (e) {}
+    } else {
+      try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+      try { var d = document.fullscreenElement || document.webkitFullscreenElement; if (d) (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {}
+    }
+    lsFolgen();
+  }
+  function lsAuf() {
+    if (LSTADT) return;
     var el = document.createElement("div");
     el.className = "sp-lstadt";
-    el.setAttribute("role", "dialog");
-    el.setAttribute("aria-label", "Neue Stadt");
-    el.innerHTML = '<div class="sp-ls-leiste"><span>Stadt</span>'
-      + '<button type="button" class="sp-ls-gross"></button>'
-      + '<button type="button" class="sp-ls-zu" aria-label="Zurück zum Livestream">Zurück zum Livestream</button></div>'
-      + '<iframe class="sp-ls-rahmen" title="Neue Stadt" src="stadt-leicht.html?eingebettet=1" allow="fullscreen"></iframe>';
+    el.innerHTML = '<iframe class="sp-ls-rahmen" title="Neue Stadt" src="stadt-leicht.html?eingebettet=1&mini=1" allow="fullscreen"></iframe>'
+      + '<button type="button" class="sp-ls-zu">Zurück</button>';
     document.body.appendChild(el);
-    LSTADT = { el: el, gross: el.querySelector(".sp-ls-gross"), hand: false, voll: false };
-    LSTADT.gross.addEventListener("click", function () { LSTADT.hand = true; leichtStadtModus(!LSTADT.voll); });
-    el.querySelector(".sp-ls-zu").addEventListener("click", leichtStadtZu);
-    /* Drehen: quer → Vollbild, hochkant → klein – solange Xander nicht selbst umgeschaltet hat. */
-    var q0 = leichtStadtQuer();
-    LSTADT.dreh = function () { var q = leichtStadtQuer(); if (q === q0 || !LSTADT) return; q0 = q; LSTADT.hand = false; leichtStadtModus(q); };
+    LSTADT = { el: el, rahmen: el.querySelector("iframe"), voll: false, ohne: 0 };
+    el.querySelector(".sp-ls-zu").addEventListener("click", function () { lsVoll(false); });
     LSTADT.post = function (ev) {
-      if (!LSTADT || ev.origin !== location.origin || !ev.data) return;
-      if (ev.data.typ === "leicht-zu") leichtStadtZu();
+      if (!LSTADT || ev.origin !== location.origin || !ev.data || ev.source !== LSTADT.rahmen.contentWindow) return;
+      if (ev.data.typ === "leicht-zu") lsVoll(false);
+      if (ev.data.typ === "leicht-voll") lsVoll(true);
     };
-    window.addEventListener("resize", LSTADT.dreh);
+    LSTADT.fs = function () { if (LSTADT && LSTADT.voll && !(document.fullscreenElement || document.webkitFullscreenElement) && LSTADT.fsWar) lsVoll(false); if (LSTADT) LSTADT.fsWar = Boolean(document.fullscreenElement); };
     window.addEventListener("message", LSTADT.post);
-    document.documentElement.classList.add("sp-ls-offen");
-    leichtStadtModus(q0);
+    document.addEventListener("fullscreenchange", LSTADT.fs);
+    LSTADT.rahmen.addEventListener("load", function () { lsPost({ typ: "leicht-modus", voll: LSTADT && LSTADT.voll }); });
+    lsFolgen();
+    requestAnimationFrame(lsTakt);
+  }
+  function lsTakt() {
+    if (!LSTADT) return;
+    lsFolgen();
+    requestAnimationFrame(lsTakt);
+  }
+  function lsFolgen() {
+    var L = LSTADT;
+    if (!L) return;
+    var st = L.el.style;
+    if (L.voll) { st.left = st.top = "0px"; st.width = st.height = ""; st.clipPath = ""; st.visibility = ""; st.zIndex = ""; return; }
+    var platz = schnellEl && !schnellEl.hidden && schnellEl.querySelector(".sp-dl-neustadt-platz");
+    if (!platz || !platz.isConnected) {
+      st.visibility = "hidden";
+      if (!L.ohne) L.ohne = Date.now(); else if (Date.now() - L.ohne > 20000) lsWeg();
+      return;
+    }
+    L.ohne = 0;
+    var r = platz.getBoundingClientRect();
+    if (r.width < 4 || r.height < 4) { st.visibility = "hidden"; return; }
+    /* Beschnitt: was das scrollende Menü (oder der Bildschirmrand) verdeckt, ist auch vom Rahmen nicht zu sehen. */
+    var o = 0, u = innerHeight, li = 0, re = innerWidth, e = platz.parentElement;
+    while (e && e !== document.body) {
+      var cs = getComputedStyle(e);
+      if (/(auto|scroll|hidden)/.test(cs.overflowY + cs.overflowX)) { var q = e.getBoundingClientRect(); o = Math.max(o, q.top); u = Math.min(u, q.bottom); li = Math.max(li, q.left); re = Math.min(re, q.right); }
+      e = e.parentElement;
+    }
+    var ci = [Math.max(0, o - r.top), Math.max(0, r.right - re), Math.max(0, r.bottom - u), Math.max(0, li - r.left)];
+    if (ci[0] + ci[2] >= r.height || ci[1] + ci[3] >= r.width) { st.visibility = "hidden"; return; }
+    st.visibility = "";
+    st.left = r.left + "px"; st.top = r.top + "px"; st.width = r.width + "px"; st.height = r.height + "px";
+    st.clipPath = ci.some(Boolean) ? "inset(" + ci.map(function (x) { return x.toFixed(1) + "px"; }).join(" ") + " round 12px)" : "";
+    if (!L.z) { var z = parseInt(getComputedStyle(schnellEl).zIndex, 10); L.z = String((isNaN(z) ? 30 : z) + 1); }
+    st.zIndex = L.z;
   }
   function umbauLeisteHtml(ich) {
     var w = S.umbauWahl, name = w && DORF[w] ? DORF[w].name : "";
@@ -12853,6 +12914,7 @@
   function dorfBildHtml(ich) {
     var lageP = dorfLageVon(ich);
     /* FASSUNG 704 — gemalt, wenn der Browser malen kann; sonst wie bisher als Vektorbild. */
+    if (stadtNeu()) { setTimeout(lsAuf, 0); return neueStadtRahmenHtml(); }
     if (dorfGemalt()) return dorfBildGemaltHtml(ich);
     var d = ich.dorf || {}, lv = ich.level || 1, wahl = S.dorfWahl && DORF[S.dorfWahl] ? S.dorfWahl : "";
     /* Weiter vorne (weiter unten im Bild) liegt über dem, was dahinter steht. */

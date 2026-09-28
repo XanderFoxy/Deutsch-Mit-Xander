@@ -37,6 +37,8 @@
     farbe: '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2.1-.5-1.2.3-2.4 1.6-2.4H17a4 4 0 0 0 4-4C21 7 17 3 12 3z" fill="currentColor"/><g fill="#1b2440"><circle cx="7.6" cy="11.2" r="1.5"/><circle cx="10.3" cy="7.2" r="1.5"/><circle cx="15" cy="7.4" r="1.5"/></g></svg>',
     zurueck: '<svg viewBox="0 0 24 24"><path d="M14.5 5 7.5 12l7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     stern: '<svg viewBox="0 0 24 24"><path d="M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3.1-5.4 3.1 1.2-6-4.5-4.2 6.1-.7z" fill="currentColor"/></svg>',
+    lupe: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></g></svg>',
+    voll: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></g></svg>',
     hammer: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6.5 17.5 10M4 20l9-9"/><path d="M12.5 5l4-2 4.5 4.5-2 4-2-.5-3-3z" fill="currentColor"/></g></svg>'
   };
   const ZEITEN = ["tag", "abend", "nacht"], ZEIT_SYM = { tag: "sonne", abend: "daemmerung", nacht: "mond" };
@@ -97,7 +99,7 @@
     const links = el("div", "lk-kopf-links");
     /* FASSUNG 798: in der Seite eingebettet (Rahmen über dem Livestream) schließt „zurück“ den Rahmen. */
     const eingebettet = q.get("eingebettet") === "1" && window.parent !== window;
-    links.appendChild(knopf("zurueck", eingebettet ? "Zurück zum Livestream" : "Zurück zur Webseite", () => { if (eingebettet) { try { window.parent.postMessage({ typ: "leicht-zu" }, location.origin); return; } catch (e) {} } if (history.length > 1 && document.referrer.indexOf(location.host) >= 0) history.back(); else location.href = "index.html"; }));
+    links.appendChild(knopf("zurueck", eingebettet ? "Zurück" : "Zurück zur Webseite", () => { if (eingebettet) { try { window.parent.postMessage({ typ: "leicht-zu" }, location.origin); return; } catch (e) {} } if (history.length > 1 && document.referrer.indexOf(location.host) >= 0) history.back(); else location.href = "index.html"; }));
     const name = el("div", "lk-name");
     links.appendChild(name);
     kopf.appendChild(links);
@@ -130,7 +132,7 @@
     const gitter = el("div", "lk-mini-gitter");
     BEREICHE.forEach((zeile, j) => zeile.forEach((n, i) => {
       const f = el("button", "lk-mini-feld", "<span>" + n + "</span>"); f.type = "button";
-      f.addEventListener("click", (e) => { e.stopPropagation(); L().fliegeZu((i - 1) * BG, (j - 1) * BG, Math.max(K.s, 11 * K.dpr), 900); ansage(n); });
+      f.addEventListener("click", (e) => { e.stopPropagation(); L().fliegeZu((i - 1) * BG, (j - 1) * BG, O.miniNah ? O.miniNah() : Math.max(K.s, 11 * K.dpr), 900); ansage(n); });
       gitter.appendChild(f);
     }));
     mini.appendChild(gitter);
@@ -158,6 +160,38 @@
     deckel.querySelector("b").textContent = stadtName();
     wurzel.appendChild(deckel);
     if (q.get("still") === "1") deckel.remove();
+
+    /* FASSUNG 799 — XANDER: „so klein möchte ich es haben … in diesem kleinen Frame, wo das alte auch ist … wenn man in
+       dieser kleinen Miniaturansicht reinzoomt, dann bleibt es ja trotzdem dieser Ausschnitt … die Zoomstärke, die wir in
+       der alten Version schon haben". Im kleinen Dorfrahmen des Spiels (mini=1) zeigt die Stadt nur das Bild: ganz im
+       Überblick, eine Lupe (doppelt so nah, wie beim alten Dorf), die kleine Karte zum Durchtippen der Viertel und ein
+       Knopf fürs Vollbild. Im Vollbild ist alles wieder da. Das Spiel schaltet um (postMessage „leicht-modus"). */
+    if (eingebettet) {
+      const ueberblick = () => Math.max(K.min, Math.min(K.max, K.W / 150));
+      /* Wie beim alten Dorf: die kleine Karte mit den Vierteln erscheint erst, wenn man mit der Lupe näher dran ist. */
+      const nahSetzen = (nah) => { lupeK.classList.toggle("an", nah); document.body.classList.toggle("lk-nah", nah); };
+      const lupeK = knopf("lupe", "Lupe: näher ran", () => {
+        const nah = K.s > ueberblick() * 1.4;
+        L().fliegeZu(nah ? 0 : K.x, nah ? 4 : K.y, nah ? ueberblick() : ueberblick() * 2.2, 600);
+        nahSetzen(!nah);
+      }, "lk-nur-mini lk-lupe");
+      setInterval(() => { if (document.body.classList.contains("lk-mini-modus")) nahSetzen(K.s > ueberblick() * 1.4); }, 700);
+      const vollK = knopf("voll", "Vollbild", () => { try { window.parent.postMessage({ typ: "leicht-voll" }, location.origin); } catch (e) {} }, "lk-nur-mini lk-vollknopf");
+      wurzel.append(lupeK, vollK);
+      /* Ein Viertel auf der kleinen Karte: im kleinen Rahmen mit der Lupen-Stärke, nicht mit der großen Nähe. */
+      O.miniNah = () => { if (!document.body.classList.contains("lk-mini-modus")) return Math.max(K.s, 11 * K.dpr); nahSetzen(true); return ueberblick() * 2.2; };
+      const modus = (klein) => {
+        document.body.classList.toggle("lk-mini-modus", klein);
+        if (klein) { if (bauLeiste) bauLeisteZeigen(false); if (leiste && !leiste.hidden) leisteZeigen(false); karte.hidden = true; farbFeld.hidden = true; }
+      };
+      const erstesMal = q.get("mini") === "1";
+      modus(erstesMal);
+      if (erstesMal) { K.x = 0; K.y = 4; K.s = ueberblick(); L().unruhe = 2; }
+      window.addEventListener("message", (ev) => {
+        if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-modus") return;
+        modus(!ev.data.voll); L().unruhe = 2;
+      });
+    }
     miniMalen();
   };
   function stadtName() { const ich = L().ich || {}; return ich.dorf_name || "Meine Stadt"; }
