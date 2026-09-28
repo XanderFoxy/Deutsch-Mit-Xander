@@ -18,10 +18,12 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
     a.writeHead(200, { "Content-Type": TYP[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(a);
   }).listen(0);
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
-  const pg = await br.newPage({ viewport: { width: 360, height: 740 }, deviceScaleFactor: 2, hasTouch: true });
+  const pg = await br.newPage({ viewport: { width: 360, height: 740 }, deviceScaleFactor: +(process.env.DPR || 1), hasTouch: true });
+  pg.setDefaultTimeout(120000);
   pg.on("pageerror", (e) => { fehler++; console.log("  FEHL Seitenfehler: " + e.message); });
-  await pg.goto("http://127.0.0.1:" + srv.address().port + "/stadt.html?neu=1", { waitUntil: "load" });
-  await pg.waitForFunction(() => window.__fertig, null, { timeout: 60000 });
+  await pg.goto("http://127.0.0.1:" + srv.address().port + "/stadt.html?neu=1" + (process.env.BUENDEL ? "" : "&quelle=1"), { waitUntil: "load" });
+  await pg.waitForFunction(() => window.__fertig, null, { timeout: 120000 });
+  await pg.waitForFunction(() => !document.querySelector(".st-vorhang"), null, { timeout: 120000 }).catch(() => {});
   await pg.waitForTimeout(800);
   const aus = process.argv[2];
 
@@ -47,9 +49,13 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   sage(!!geist, "Geist hängt in der Mitte", JSON.stringify(geist));
   /* ins Freie verschieben (Tipp auf den Boden) und drehen */
   const frei = await pg.evaluate(() => { const p = STADT.proj(-30, 30, 0); return [p[0] / STADT.kamera.dpr, p[1] / STADT.kamera.dpr]; });
-  await pg.evaluate(() => { STADT.kamera.x = -30; STADT.kamera.y = 30; });
-  await pg.waitForTimeout(400);
-  await pg.mouse.click(180, 330);
+  /* freien Bauplatz suchen, Kamera dorthin, auf die Bildmitte tippen */
+  const platz = await pg.evaluate(() => { const g = STADT.szene.geist; for (let r = 20; r < 70; r += 4) for (let a = 0; a < 6.28; a += 0.4) { const x = Math.round(Math.cos(a) * r), y = Math.round(Math.sin(a) * r); if (STADT.szene.passt(g.typ, x, y, 30) && STADT.szene.passt(g.typ, x, y, 0)) { STADT.kamera.x = x; STADT.kamera.y = y; return [x, y]; } } return null; });
+  await pg.waitForTimeout(600);
+  const mitte = await pg.evaluate((pl) => { const P = STADT.proj(pl[0], pl[1], 0); return [P[0] / STADT.kamera.dpr, P[1] / STADT.kamera.dpr]; }, platz);
+  const oben = await pg.evaluate((m) => { const e = document.elementFromPoint(m[0], m[1]); return e ? e.id : "–"; }, mitte);
+  sage(oben === "stadtDinge", "Beim Platzieren ist die Bildmitte frei (kein Feld darüber)", oben);
+  await pg.mouse.click(mitte[0], mitte[1]);
   await pg.waitForTimeout(200);
   await pg.click(".st-steuer .st-knopf[title^='15° nach rechts']");
   await pg.click(".st-steuer .st-knopf[title^='15° nach rechts']");
@@ -65,7 +71,7 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   await pg.waitForTimeout(300);
   const neu = await pg.evaluate(() => { const o = STADT.szene.auswahl; return o && { typ: o.typ, bau: !!o.bau, gier: o.gier, n: STADT.szene.objekte.length }; });
   sage(neu && neu.n === vorher + 1 && neu.bau, "Gebaut: neue Baustelle steht", JSON.stringify(neu));
-  await pg.waitForTimeout(400);
+  await pg.waitForFunction(() => { const e = document.querySelector(".st-bau span"); return e && e.textContent; }, null, { timeout: 90000 }).catch(() => {});
   const balken = await pg.$eval(".st-bau span", (e) => e.textContent).catch((e) => "fehlt: " + e.message.slice(0, 80));
   sage(/Baugrube|Fundament|noch/.test(balken), "Baufortschritt mit Phase und Restzeit", balken);
   await pg.click(".st-raffer-k:nth-child(3)");

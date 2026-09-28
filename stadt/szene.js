@@ -352,7 +352,7 @@
     const halb = ST.boden.GROESSE / 2;
     for (const p of A) if (Math.abs(p[0]) > halb || Math.abs(p[1]) > halb) return false;
     for (const o of SZ.objekte) {
-      if (o === ohne || o.rand || ST.MODELLE[o.typ].ueberall) continue;
+      if (o === ohne || o.rand || ST.MODELLE[o.typ].ueberall || ST.MODELLE[o.typ].live) continue;
       if (!trennt(A, ecken(o.typ, o.x, o.y, o.gier, -0.05))) return false;
     }
     return true;

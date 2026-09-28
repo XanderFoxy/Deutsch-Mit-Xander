@@ -27,7 +27,8 @@
 
   /* Modelle nachladen (Liste in modelle.js) */
   function modelleLaden() {
-    const liste = (ST.MODELL_DATEIEN || []).slice();
+    /* Gebündelt (stadt.min.js): die Modelle der Liste sind schon geladen */
+    const liste = ST.GEBUENDELT ? [] : (ST.MODELL_DATEIEN || []).slice();
     /* Werkbank: die Datei des gezeigten Modells auch laden, wenn sie noch nicht in der Liste steht */
     const wb = q.get("werkbank");
     if (wb && liste.indexOf(wb) < 0 && /^[a-z0-9_-]+$/.test(wb)) liste.push(wb);

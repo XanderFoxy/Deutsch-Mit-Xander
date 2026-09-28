@@ -322,6 +322,14 @@
     for (const C of W.k) {
       if (C === K || !C.wirft) continue;
       if (C.wirftNur && C.wirftNur.indexOf(K) < 0) continue;
+      /* schneller Vortest mit der Hüllkugel: ganz hinter der Ebene oder
+         ihr Schatten fällt neben die Fläche → nichts zu tun */
+      let kg = C._kugel;
+      if (!kg || kg.H !== C.H) { const m = mitteVon(C.H.punkte); let r = 0; for (const p of C.H.punkte) r = Math.max(r, lang(sub(p, m))); kg = C._kugel = { m: m, r: r, H: C.H }; }
+      const dm = dot(n, kg.m) - fl.d;
+      if (dm + kg.r <= 0.01) continue;
+      { const q = sub(kg.m, mul(L, dm / ln)), qa = dot(q, u), qb = dot(q, v), rr = kg.r / ln + 0.05;
+        if (qa + rr < a0 || qa - rr > a1 || qb + rr < b0 || qb - rr > b1) continue; }
       let vorn = false;
       for (const p of C.H.punkte) if (dot(n, p) - fl.d > 0.01) { vorn = true; break; }
       if (!vorn) continue;
@@ -382,10 +390,18 @@
       M.teil("grube", { ebene: 0.5, schatten: false, mitte: [0, 0, -2] });
       for (const gf of W.grube) flaecheAusgeben(M, W, gf.fl, { name: "grube" }, gf.m, gf.ebene);
     }
+    const tOr = MESSEN ? performance.now() : 0;
     const reihe = ordnen(W);
+    if (MESSEN) MESSEN["ordnen"] = (MESSEN["ordnen"] || 0) + performance.now() - tOr;
     reihe.forEach((K, rang) => {
       M.teil(K.name, { ebene: rang + 1, schatten: K.schatten, mitte: K.mitte });
-      if (K.figur) { M.figur(K.figur); return; }
+      if (K.figur) {
+        if (MESSEN) {
+          const fi = K.figur, orig = fi.malen, nm = "fig:" + K.name.replace(/[-0-9.]+.*$/, "");
+          if (!fi._gemessen) { fi._gemessen = true; fi.malen = function (g, s, F) { const t0 = performance.now(); orig.call(this, g, s, F); if (MESSEN.flush) g.getImageData(0, 0, 1, 1); MESSEN[nm] = (MESSEN[nm] || 0) + performance.now() - t0; }; }
+        }
+        M.figur(K.figur); return;
+      }
       for (const fl of K.H.flaechen) flaecheAusgeben(M, W, fl, K, dot(fl.n, W.B.e) > 0.002 ? K.mal(fl, K) : null);
     });
   }
@@ -401,7 +417,9 @@
     const basis = { name: K.name + "|" + fl.n.map((x) => x.toFixed(2)).join(","), o: o, u: u, v: v, w: Mu - mu, h: Mv - mv, umriss: umriss, ebene: ebene || 0 };
     if (!m) { M.flaeche(Object.assign(basis, { malen: null, keinLicht: true, keinAo: true })); return; }
     let zmin = Infinity; for (const p of fl.pts) zmin = Math.min(zmin, p[2]);
+    const tSa = MESSEN ? performance.now() : 0;
     const schatten = m.keinSchatten || !K.H ? [] : schattenAufFlaeche(W, fl, K, [u, v]);
+    if (MESSEN) MESSEN["schattenAuf"] = (MESSEN["schattenAuf"] || 0) + performance.now() - tSa;
     const A0 = mu, B0 = mv;
     const info = { fl: fl, K: K, A0: A0, B0: B0, u: u, v: v, n: fl.n, schatten: schatten, zmin: zmin, W: W };
     const maler = m.malen;
@@ -2341,6 +2359,48 @@
     TANNEN[schl] = fi ? { fi: fi, H: Math.max(1, fi.hoehe - 0.4), r: Math.max(0.5, fi.breite * 0.6 - 0.6) } : null;
     return TANNEN[schl];
   }
+  /* Fremde Figuren (Tanne, Linde) als fertiges Bild merken: die Zeichnung
+     aus tanne.js und laubbaum.js kostet je Aufruf 80–290 ms – bei jedem
+     neuen Zoom der Kirche wieder. Gemalt wird in Stufen des Maßstabs
+     (stufe(s)), beim Auflegen nur verkleinert (nie vergrößert, also
+     scharf); je Saat, Jahreszeit und Tageszeit ein Bild. Die Linde kostet
+     mit dem Maßstab mehr (Stufen je Faktor 1,41), die Tanne fast gleich
+     viel (grobe Stufen 16, 40, 100, 250). Bäume malt der Kern rundum gleich, darum ohne Drehung. Der
+     Schatten bleibt live (er kostet 3–20 ms). Höchstens 12 Mio.
+     Bildpunkte, die ältesten fliegen raus.
+     b: halbe Breite, h: Höhe über dem Fußpunkt – beides in Bildmetern. */
+  const FIGBILD = new Map();
+  let figBildPx = 0;
+  const STUFE_FEIN = (s) => 20 * Math.pow(Math.SQRT2, Math.max(0, Math.ceil(Math.log(s / 20) / Math.log(Math.SQRT2) - 1e-6)));
+  const STUFE_GROB = (s) => (s <= 16 ? 16 : s <= 40 ? 40 : 100 * Math.pow(2.5, Math.max(0, Math.ceil(Math.log(s / 100) / Math.log(2.5) - 1e-6))));
+  function figurAusBild(g, s, F, schl, malen, b, h, stufe) {
+    if (F.schatten || !F.Z) { malen(g, s, F); return; }
+    const sQ = stufe(s);
+    const key = schl + "|" + F.jahr + "|" + F.Z.name + "|" + sQ;
+    let e = FIGBILD.get(key);
+    if (e) { FIGBILD.delete(key); FIGBILD.set(key, e); }
+    else {
+      const x0 = Math.floor(-b * sQ) - 2, y0 = Math.floor(-h * sQ) - 2;
+      const W = Math.ceil(2 * b * sQ) + 4, H = Math.ceil((h + 0.5 * b) * sQ) + 4;
+      if (W * H > 6e6) { malen(g, s, F); return; }
+      const c = document.createElement("canvas"); c.width = W; c.height = H;
+      const cg = c.getContext("2d");
+      cg.setTransform(1, 0, 0, 1, -x0, -y0);
+      malen(cg, sQ, Object.assign({}, F, { gier: 0, leuchtPunkt() {} }));
+      e = { c: c, x0: x0, y0: y0 };
+      FIGBILD.set(key, e); figBildPx += W * H;
+      for (const [k, v] of FIGBILD) {
+        if (figBildPx < 12e6) break;
+        if (k === key) continue;
+        FIGBILD.delete(k); figBildPx -= v.c.width * v.c.height; v.c.width = v.c.height = 0;
+      }
+    }
+    const f = s / sQ;
+    g.save();
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+    g.drawImage(e.c, e.x0 * f, e.y0 * f, e.c.width * f, e.c.height * f);
+    g.restore();
+  }
   /* Christbaum im Holzkübel: eine kleine Nordmanntanne (Zeichnung aus
      tanne.js), dazu eine Lichterkette mit warmen Birnchen */
   function christbaum(saat) {
@@ -2354,7 +2414,9 @@
       /* Tanne (hinter dem Kübelrand) */
       if (T) {
         const k = H / T.H;
-        g.save(); g.translate(0, z(kz - 0.06)); T.fi.malen(g, s * k, F); g.restore();
+        g.save(); g.translate(0, z(kz - 0.06));
+        figurAusBild(g, s, F, "tanne|" + saat, (cg, ss, FF) => T.fi.malen(cg, ss * k, FF), T.fi.breite * 0.6 * k * 1.1, T.fi.hoehe * ST.KZ * 1.15 * k, STUFE_GROB);
+        g.restore();
       }
       /* Kübel aus Holzdauben mit Eisenreifen, oben Erde bzw. Schnee */
       g.fillStyle = col([112, 76, 46]); g.beginPath(); g.moveTo(-0.3 * s, 0); g.lineTo(0.3 * s, 0); g.lineTo(0.36 * s, z(kz)); g.lineTo(-0.36 * s, z(kz)); g.closePath(); g.fill();
@@ -2890,7 +2952,7 @@
     GRAEBER.forEach((gb, i) => grabBauen(W, gb, i));
     /* Dorflinde in der Südwestecke */
     const L = lindeFigur(9, W.winter ? "winter" : "fruehling");
-    if (L) W.figur("linde", { x: -20.4, y: 8.1, z: 0, breite: L.breite, hoehe: L.hoehe, malen: (g, s, F) => L.malen(g, s, F) }, [0.4, 0.4]);
+    if (L) W.figur("linde", { x: -20.4, y: 8.1, z: 0, breite: L.breite, hoehe: L.hoehe, malen: (g, s, F) => figurAusBild(g, s, F, "linde|9", (cg, ss, FF) => L.malen(cg, ss, FF), L.breite * 0.6 * 1.1, L.hoehe * ST.KZ * 1.15, STUFE_FEIN) }, [0.4, 0.4]);
   }
   /* Linde aus laubbaum.js (Saat 9: Linde, 12 m) */
   const LINDEN = {};
@@ -3836,6 +3898,7 @@
     name: "Dorfkirche", gruppe: "Wahrzeichen", grund: [46, 22], hoehe: 37, bauzeit: 30 * 60,
     baukoerper: baukoerper,
     bauen(M, o) {
+      const tBau = ST.kircheMessen ? performance.now() : 0;
       const B = blickVon(o);
       const W = new Werk(o, B);
       const bau = o.bau == null ? 1 : klemm(o.bau, 0, 1);
@@ -3854,6 +3917,7 @@
       W.bruch = gelb ? BRUCH_KALK : BRUCH_ROT;
       W.moertel = gelb ? MOERTEL_KALK : MOERTEL_ROT;
       kircheBauen(W, o);
+      if (ST.kircheMessen) ST.kircheMessen["kircheBauen"] = (ST.kircheMessen["kircheBauen"] || 0) + performance.now() - tBau;
       ausgeben(W, M);
       /* Lichtpfützen vor dem Portal – nur wenn die Südseite zum Betrachter
          zeigt, sonst schiene der Schein durch die Kirche */
@@ -3863,6 +3927,7 @@
       }
       /* Turmuhr: Zeiger jedes Bild nach der echten (deutschen) Uhrzeit */
       if (o.objekt && W.Z.uhr) M.lebendig((g, P) => turmuhrZeiger(g, P));
+      if (ST.kircheMessen) ST.kircheMessen["bauen"] = (ST.kircheMessen["bauen"] || 0) + performance.now() - tBau;
     }
   });
   function turmuhrZeiger(g, P) {

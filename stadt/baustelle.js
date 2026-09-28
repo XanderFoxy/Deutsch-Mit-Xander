@@ -3725,7 +3725,7 @@
     B.glied(sk.N, 0.029 * H, add(sk.N, mul(Uh, 0.05 * H)), 0.027 * H, a.haut);
     const kopfOpt = { flecken: [] };
     if (a.bart && fein) kopfOpt.flecken.push({ c: add(K, add(mul(Yh, 0.62 * kr), mul(Uh, -0.55 * kr))), a: [mul(Xh, 0.62 * kr), mul(Yh, 0.4 * kr), mul(Uh, 0.4 * kr)], alb: mul(a.haar, 0.9), n: Yh, k: 0.85, hart: 0.6 });
-    const kopfAlb = s < 22 ? mix3(a.haut, a.helm, 0.25) : a.haut;
+    const kopfAlb = s < 22 ? mix3(a.haut, a.helm || [40, 44, 56], 0.25) : a.haut;
     eiA(B, K, Xh, 0.8 * kr, Yh, 0.88 * kr, Uh, kr, kopfAlb, kopfOpt);
     eiA(B, add(K, add(mul(Yh, -0.4 * kr), mul(Uh, -0.25 * kr))), Xh, 0.76 * kr, Yh, 0.5 * kr, Uh, 0.6 * kr, a.haar, { tiefe: -0.03 });
     if (fein) {
@@ -5184,28 +5184,34 @@
     if (pl.gross && pl.phasen && !wandTab(def).fertig) wandFuellen(pl, bau >= 0.2 || STILL || (ST.szene && ST.szene.ohneBudget) ? null : 5);
     const K = kamera(P, bau, pl);
     lampenSetzen(K, pl, bau);
-    /* Festes (Gerüst, Zaun, Lager, Kranmast) liegt im Speicher je Zoom,
-       Drehung, Tages- und Jahreszeit; jedes Teil mit seinem Zustand. Beim
-       Zoomen mit den Fingern wird das alte Bild gestreckt (wie die Häuser),
-       neu gemalt erst, wenn der Zoom ruht. */
+    /* Festes (Gerüst, Zaun, Lager, Kranmast) liegt als Bild im Speicher,
+       jedes Teil mit seinem Zustand und dem Zoom, in dem es gemalt wurde.
+       Ändert sich etwas (ein Gerüstfeld wächst, der Zoom ruht an neuer
+       Stelle), wird neu gebaut – aber nur so viel, wie ins Zeitbudget des
+       Bildes passt (ZEIT_FEST für alle Baustellen zusammen). Bis dahin zeigt
+       die Baustelle das alte Bild des Teils, gestreckt auf den neuen Zoom:
+       kein Ruckeln, auch nicht mit zwei Baustellen. */
     if (o._bsLetzteS !== P.s) { o._bsLetzteS = P.s; o._bsSWechsel = jetzt; }
     const gk = (P.Z.name || "") + P.Z.nacht + "|" + P.gier + "|" + K.jahr + "|" + pl.key;
-    let C = o._bsCache, skal = 1;
-    if (!C || C.gk !== gk || C.s !== P.s) {
-      if (C && C.gk === gk && jetzt - o._bsSWechsel < 220 && !STILL && !(ST.szene && ST.szene.ohneBudget)) skal = P.s / C.s;
-      else C = o._bsCache = { gk: gk, s: P.s, map: new Map(), px: 0 };
-    }
-    const KF = skal === 1 ? kamera(P, bau, pl) : C.K;
-    if (skal === 1) { lampenSetzen(KF, pl, bau); C.K = KF; }
+    let C = o._bsCache;
+    if (!C || C.gk !== gk) C = o._bsCache = { gk: gk, map: new Map(), px: 0, spx: 0 };
+    const zoomt = jetzt - o._bsSWechsel < 220 && !STILL && !(ST.szene && ST.szene.ohneBudget);
+    const KF = kamera(P, bau, pl);
+    lampenSetzen(KF, pl, bau);
     for (const e of C.map.values()) e.benutzt = false;
     const fest = [];
     const nimm = (name, zustand, bauen) => {
       const alt = C.map.get(name);
-      if (alt && (alt.zustand === zustand || skal !== 1)) { alt.benutzt = true; fest.push(alt.it); return; }
-      if (skal !== 1) return;
+      if (alt && alt.zustand === zustand && alt.it._s === P.s) { alt.benutzt = true; fest.push(alt.it); return; }
+      if (alt && (zoomt || !budgetFrei())) { alt.benutzt = true; fest.push(alt.it); return; }
+      const t0 = performance.now();
       const it = bauen();
+      verbrauche(performance.now() - t0);
       if (!it) return;
-      it.fest = true; it.lageH = null;
+      it.fest = true; it.lageH = null; it._s = P.s; it._K = KF;
+      /* das alte Bild bleibt, bis das neue gemalt ist */
+      it._vorher = alt && alt.it._bilder ? alt.it : null;
+      if (alt && !it._vorher) freigeben(C, alt.it);
       bildGrenzen(KF, it); it.sb0 = it.sb.slice();
       C.map.set(name, { zustand: zustand, it: it, benutzt: true });
       fest.push(it);
@@ -5220,7 +5226,7 @@
     kleinTeile(KF, pl, bau, nimm, "fest");
     if (pl.mit.zaun && bau < 0.99) nimm("boden", "", () => bodenFleck(KF, pl));
     /* nicht mehr Gebrauchtes (abgebaut) aus dem Speicher */
-    for (const [k, e] of C.map) if (!e.benutzt) { C.map.delete(k); if (e.it._px) C.px -= e.it._px; }
+    for (const [k, e] of C.map) if (!e.benutzt) { C.map.delete(k); freigeben(C, e.it); if (e.it._vorher) freigeben(C, e.it._vorher); }
     /* Lebendes: jedes Bild neu */
     const lebend = [];
     kranTeile(K, pl, bau, lebend, "lebend");
@@ -5242,7 +5248,13 @@
     }
     /* der Boden der Baustelle liegt unter allem */
     const hs = sortieren(K, hinten.filter((it) => !it.boden));
-    const sz = { jetzt: jetzt, s: P.s, gier: P.gier, bau: bau, ox: O[0], oy: O[1], K: K, KF: KF, skal: skal, C: C, pl: pl, alle: alle, hinten: hinten.filter((it) => it.boden).concat(hs), vorne: sortieren(K, vorne) };
+    /* wie viel der Baustelle ist gerade im Bild? (für die Lautstärke) */
+    let a0 = Infinity, b0 = Infinity, a1 = -Infinity, b1 = -Infinity;
+    for (const x of [pl.zaun.x0, pl.zaun.x1]) for (const y of [pl.zaun.y0, pl.zaun.y1]) for (const z of [0, 4]) { const Q = K.p(x, y, z); a0 = Math.min(a0, Q[0]); a1 = Math.max(a1, Q[0]); b0 = Math.min(b0, Q[1]); b1 = Math.max(b1, Q[1]); }
+    const KW = ST.kamera.W, KH = ST.kamera.H;
+    const sicht = Math.max(0, Math.min(a1 + O[0], KW) - Math.max(a0 + O[0], 0)) * Math.max(0, Math.min(b1 + O[1], KH) - Math.max(b0 + O[1], 0));
+    const anteil = sicht / Math.max(1, (a1 - a0) * (b1 - b0));
+    const sz = { jetzt: jetzt, s: P.s, gier: P.gier, bau: bau, ox: O[0], oy: O[1], K: K, KF: KF, C: C, pl: pl, alle: alle, anteil: anteil, hinten: hinten.filter((it) => it.boden).concat(hs), vorne: sortieren(K, vorne) };
     o._bsSz = sz;
     return sz;
   }
@@ -5266,34 +5278,57 @@
     const W = ST.kamera.W, H = ST.kamera.H, b = it.sb, ox = sz.ox, oy = sz.oy;
     return !(b[2] + ox < -20 || b[0] + ox > W + 20 || b[3] + oy < -20 || b[1] + oy > H + 20);
   }
+  /* Zeitbudget je Bild für das Neumalen fester Teile (alle Baustellen
+     zusammen). Im Prüfbild (still=1) gibt es keine Grenze. */
+  const ZEIT_FEST = 8;
+  const RAHMEN = { jetzt: -1, ms: 0 };
+  function rahmen() { const j = ST.jetzt || 0; if (RAHMEN.jetzt !== j) { RAHMEN.jetzt = j; RAHMEN.ms = 0; } return RAHMEN; }
+  function budgetFrei() { return STILL || (ST.szene && ST.szene.ohneBudget) || rahmen().ms < ZEIT_FEST; }
+  function verbrauche(ms) { rahmen().ms += ms; }
+  function freigeben(C, it) {
+    if (!it) return;
+    if (it._bilder) for (const k in it._bilder) { const b = it._bilder[k]; if (b && b.c) b.c.width = 0; }
+    if (it._sch && it._sch.c) it._sch.c.width = 0;
+    C.px -= it._px || 0; C.spx -= it._spx || 0;
+    it._bilder = null; it._sch = null; it._px = 0; it._spx = 0;
+  }
   /* Festes Teil als Bild im Speicher (höchstens ~3 Mio. Bildpunkte je
      Teil und 14 Mio. je Baustelle, sonst wird es direkt gemalt) */
   function bildVon(sz, it, key, fn) {
     it._bilder = it._bilder || {};
     let b = it._bilder[key];
     if (b !== undefined) return b;
-    const K = sz.KF, sb = it.sb0 || it.sb, pad = Math.ceil(4 + K.s * 0.25);
+    const K = it._K || sz.KF, sb = it.sb0 || it.sb, pad = Math.ceil(4 + K.s * 0.25);
     const x0 = Math.floor(sb[0]) - pad, y0 = Math.floor(sb[1]) - pad;
     const w = Math.ceil(sb[2]) + pad - x0, h = Math.ceil(sb[3]) + pad - y0;
-    if (sz.skal !== 1 || w <= 0 || h <= 0 || w * h > 3e6 || sz.C.px + w * h > 14e6) return null;
+    if (w <= 0 || h <= 0 || w * h > 3e6 || sz.C.px + w * h > 14e6) return null;
+    const t0 = performance.now();
     const c = document.createElement("canvas"); c.width = w; c.height = h;
     const cg = c.getContext("2d");
     cg.translate(-x0, -y0);
     try { fn(cg); } catch (err) { console.error("baustelle " + it.name, err); }
+    verbrauche(performance.now() - t0);
     b = { c: c, x: x0, y: y0 };
     it._bilder[key] = b;
     it._px = (it._px || 0) + w * h; sz.C.px += w * h;
     return b;
   }
+  /* Ist das Bild eines Teils schon gemalt? */
+  function gemalt(it) { return !!(it._bilder && (it._bilder._ || it._bilder.A)); }
   function festMalen(g, sz, it) {
-    if (sz.skal !== 1) g.scale(sz.skal, sz.skal);
-    const teil = (key, fn) => { const b = bildVon(sz, it, key, fn); if (b) g.drawImage(b.c, b.x, b.y); else fn(g); };
-    if (it.malenA) {
-      teil("A", it.malenA);
-      if (sz.skal !== 1) { g.save(); g.scale(1 / sz.skal, 1 / sz.skal); geruestLeuteMalen(g, sz.pl, it.seite); g.restore(); }
-      else geruestLeuteMalen(g, sz.pl, it.seite);
-      teil("B", it.malenB);
-    } else teil("_", it.malen);
+    /* noch nicht neu gemalt und kein Budget mehr: das alte Bild zeigen */
+    let z = it;
+    if (!gemalt(it) && it._vorher && gemalt(it._vorher) && !budgetFrei()) z = it._vorher;
+    else if (it._vorher && gemalt(it)) { freigeben(sz.C, it._vorher); it._vorher = null; }
+    const k = sz.s / (z._s || sz.s);
+    if (Math.abs(k - 1) > 1e-4) g.scale(k, k);
+    const teil = (key, fn) => { const b = bildVon(sz, z, key, fn); if (b) g.drawImage(b.c, b.x, b.y); else fn(g); };
+    if (z.malenA) {
+      teil("A", z.malenA);
+      if (Math.abs(k - 1) > 1e-4) { g.save(); g.scale(1 / k, 1 / k); geruestLeuteMalen(g, sz.pl, z.seite); g.restore(); }
+      else geruestLeuteMalen(g, sz.pl, z.seite);
+      teil("B", z.malenB);
+    } else teil("_", z.malen);
   }
   function zeichneListe(g, sz, liste) {
     g.save();
@@ -5313,6 +5348,29 @@
     }
     g.restore();
   }
+  /* Schatten eines festen Teils als eigenes kleines Bild: ändert sich ein
+     Teil, wird nur sein Schatten neu gemalt (nicht der aller anderen) */
+  function schattenVon(sz, it) {
+    if (it._sch !== undefined) return it._sch;
+    const K = it._K || sz.KF, [x0b, y0b, x1b, y1b] = it.bb, z0 = it.z0 || 0, z1 = it.z1 || 1;
+    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+    for (const x of [x0b, x1b]) for (const y of [y0b, y1b]) for (const z of [z0, z1]) {
+      const P = K.sp(x, y, z);
+      if (P[0] < a) a = P[0]; if (P[0] > c) c = P[0]; if (P[1] < b) b = P[1]; if (P[1] > d) d = P[1];
+    }
+    const pad = Math.ceil(4 + K.s * 0.4);
+    const x0 = Math.floor(a) - pad, y0 = Math.floor(b) - pad, w = Math.ceil(c) + pad - x0, h = Math.ceil(d) + pad - y0;
+    if (w <= 0 || h <= 0 || w * h > 2e6 || sz.C.spx + w * h > 10e6) { it._sch = null; return null; }
+    const t0 = performance.now();
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    const cg = cv.getContext("2d");
+    cg.translate(-x0, -y0);
+    try { it.schatten(cg); } catch (err) { console.error(err); }
+    verbrauche(performance.now() - t0);
+    it._sch = { c: cv, x: x0, y: y0 };
+    it._spx = w * h; sz.C.spx += w * h;
+    return it._sch;
+  }
 
   /* Schatten des Gerüsts auf die Hauswand: Beläge und Bordbretter werfen
      ein Band auf die Fassade (entlang ST.LICHT auf die Wandebene projiziert,
@@ -5322,12 +5380,11 @@
      Betrachter zeigen und in der Sonne liegen (sonst ist dort ohnehin Schatten). */
   function wandSchatten(g, sz, bau) {
     const K = sz.K, pl = sz.pl, GP = pl.geruest;
-    if (!GP || K.nacht > 0.85 || bau < 0.3 || K.s < 6) return;
+    if (!GP || K.nacht > 0.85 || bau < 0.3 || K.s < 6 || q.get("ws") === "0") return;
     const wz = wandZ(pl, bau);
     if (wz < 1) return;
     const c = K.c, sn = K.sn, L = LICHT;
     const Lm = [L[0] * c + L[1] * sn, -L[0] * sn + L[1] * c, L[2]];
-    const W = pl.wand;
     const pfad = new Path2D();
     let n = 0;
     for (const E of GP.einheiten) {
@@ -5342,13 +5399,13 @@
       const uMin = 0, uMax = E.L;
       const aufWand = (u, d, z) => {
         /* Punkt d m vor der Wand → Schattenpunkt auf der Wand */
-        const t = d / LN, zz = z - t * Lm[2], uu = u - t * LT;
-        return [uu, zz];
+        const t = d / LN;
+        return [u - t * LT, z - t * Lm[2]];
       };
+      const schneide = (P, f) => { const out = []; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length], fa = f(a), fb = f(b); if (fa >= 0) out.push(a); if ((fa >= 0) !== (fb >= 0)) { const k = fa / (fa - fb); out.push([a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k]); } } return out; };
       const quad = (pts) => {
         /* auf die Wandfläche beschneiden: z 0 … wz, u innerhalb der Seite */
         let P = pts;
-        const schneide = (P, f) => { const out = []; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length], fa = f(a), fb = f(b); if (fa >= 0) out.push(a); if ((fa >= 0) !== (fb >= 0)) { const k = fa / (fa - fb); out.push([a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k]); } } return out; };
         P = schneide(P, (p) => wz - p[1]); if (P.length < 3) return;
         P = schneide(P, (p) => p[1] - 0.05); if (P.length < 3) return;
         P = schneide(P, (p) => p[0] - uMin); if (P.length < 3) return;
@@ -5386,38 +5443,6 @@
     g.restore();
   }
 
-  /* Die Schatten alles Festen (Gerüst mit hunderten Rohren, Zaun, Lager,
-     Kranmast) einmal in ein Bild; neu erst, wenn sich ein festes Teil
-     ändert (Gerüstlage dazu, Stapel weg) */
-  function festSchatten(sz) {
-    const C = sz.C, K = sz.KF;
-    let key = "";
-    for (const [k, e] of C.map) key += k + "=" + e.zustand + ";";
-    if (C.schatten && C.schatten.key === key) return C.schatten.bild;
-    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
-    const liste = sz.alle.filter((it) => it.fest && it.schatten);
-    for (const it of liste) {
-      const [x0, y0, x1, y1] = it.bb, z0 = it.z0 || 0, z1 = it.z1 || 1;
-      for (const x of [x0, x1]) for (const y of [y0, y1]) for (const z of [z0, z1]) {
-        const P = K.sp(x, y, z);
-        if (P[0] < a) a = P[0]; if (P[0] > c) c = P[0]; if (P[1] < b) b = P[1]; if (P[1] > d) d = P[1];
-      }
-    }
-    const pad = Math.ceil(4 + K.s * 0.6);
-    const x0 = Math.floor(a) - pad, y0 = Math.floor(b) - pad, w = Math.ceil(c) + pad - x0, h = Math.ceil(d) + pad - y0;
-    let bild = null;
-    if (liste.length && w > 0 && h > 0 && w * h <= 4e6) {
-      const cv = (C.schatten && C.schatten.bild && C.schatten.bild.c) || document.createElement("canvas");
-      cv.width = w; cv.height = h;
-      const cg = cv.getContext("2d");
-      cg.translate(-x0, -y0);
-      for (const it of liste) { cg.save(); try { it.schatten(cg); } catch (err) { console.error(err); } cg.restore(); }
-      bild = { c: cv, x: x0, y: y0 };
-    }
-    C.schatten = { key: key, bild: bild };
-    return bild;
-  }
-
   /* Messen (nur zum Prüfen): Aufbau, Malen, Schatten je Teil */
   function messen(o, P, bau, g, sg) {
     const r = {}, jetzt = performance.now.bind(performance);
@@ -5426,7 +5451,7 @@
     o._bsSz = null;
     t0 = jetzt(); const sz = szeneFuer(o, P, bau); r.aufbau = jetzt() - t0;
     t0 = jetzt(); zeichneListe(g, sz, sz.hinten); zeichneListe(g, sz, sz.vorne); r.malen = jetzt() - t0;
-    t0 = jetzt(); sg.save(); sg.translate(sz.ox, sz.oy); for (const it of sz.alle) if (it.schatten) it.schatten(sg); sg.restore(); r.schatten = jetzt() - t0;
+    t0 = jetzt(); ST.baustelle.schatten(sg, P, o, bau); r.schatten = jetzt() - t0;
     r.teile = {};
     for (const it of sz.alle) { const t1 = jetzt(); g.save(); g.translate(sz.ox, sz.oy); if (it.fest) festMalen(g, sz, it); else it.malen(g); g.restore(); const k = it.name.replace(/[-0-9]+$/, ""); r.teile[k] = (r.teile[k] || 0) + jetzt() - t1; }
     return r;
@@ -5493,7 +5518,7 @@
       /* Lichtschein (Lampen, Befeuerung) über allem dieser Baustelle */
       if (sz.K.nacht > 0.02) {
         g.save(); g.translate(Math.round(sz.ox), Math.round(sz.oy)); g.globalCompositeOperation = "lighter";
-        for (const it of sz.alle) if (it.glanz) { g.save(); if (it.fest && sz.skal !== 1) g.scale(sz.skal, sz.skal); try { it.glanz(g); } catch (err) { console.error(err); } g.restore(); }
+        for (const it of sz.alle) if (it.glanz) { g.save(); if (it.fest && it._s && Math.abs(sz.s / it._s - 1) > 1e-4) g.scale(sz.s / it._s, sz.s / it._s); try { it.glanz(g); } catch (err) { console.error(err); } g.restore(); }
         g.restore();
       }
     },
@@ -5501,13 +5526,21 @@
       if (bau >= 1) return;
       const sz = szeneFuer(o, P, bau);
       sg.save(); sg.translate(Math.round(sz.ox), Math.round(sz.oy));
-      const fb = sz.skal === 1 && sz.C ? festSchatten(sz) : null;
-      if (fb) sg.drawImage(fb.c, fb.x, fb.y);
       for (const it of sz.alle) {
-        if (!it.schatten || (fb && it.fest)) continue;
+        if (!it.schatten) continue;
         if (!((it.z1 || 0) > 5 || sichtbar(sz, it))) continue;
-        sg.save(); if (it.fest && sz.skal !== 1) sg.scale(sz.skal, sz.skal);
-        try { it.schatten(sg); } catch (err) { console.error(err); }
+        sg.save();
+        try {
+          if (it.fest) {
+            /* festes Teil: sein eigenes Schattenbild (oder das alte, bis das neue gemalt ist) */
+            let z = it;
+            if (it._sch === undefined && it._vorher && it._vorher._sch && !budgetFrei()) z = it._vorher;
+            const k = sz.s / (z._s || sz.s);
+            if (Math.abs(k - 1) > 1e-4) sg.scale(k, k);
+            const b = schattenVon(sz, z);
+            if (b) sg.drawImage(b.c, b.x, b.y); else z.schatten(sg);
+          } else it.schatten(sg);
+        } catch (err) { console.error(err); }
         sg.restore();
       }
       sg.restore();

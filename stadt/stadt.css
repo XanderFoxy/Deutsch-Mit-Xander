@@ -88,3 +88,9 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 .st-vorhang span { display: block; margin-top: 6px; font-size: 14px; opacity: .75; }
 .st-vorhang i { display: block; width: 180px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.15); margin: 16px auto 0; overflow: hidden; }
 .st-vorhang em { display: block; height: 100%; width: 0; background: #f3c35a; transition: width .3s; }
+
+/* Beim Platzieren/Auswählen: Karten der Bauleiste einklappen, damit das
+   Steuerfeld unten bleibt und das Haus in der Bildmitte frei ist */
+#stadtOberflaeche.steuer-offen .st-karten { display: none; }
+#stadtOberflaeche.steuer-offen.leiste-offen .st-steuer { bottom: 70px; }
+#stadtOberflaeche.steuer-offen .st-steuer { bottom: 70px; }

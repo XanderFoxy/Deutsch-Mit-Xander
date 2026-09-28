@@ -9,7 +9,7 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
   const pg = await br.newPage({ viewport: { width: 390, height: 800 }, deviceScaleFactor: 2 });
   const t0 = Date.now();
-  await pg.goto("http://127.0.0.1:" + srv.address().port + "/stadt.html?neu=1", { waitUntil: "load" });
+  await pg.goto("http://127.0.0.1:" + srv.address().port + "/stadt.html?neu=1" + (process.env.BUENDEL ? "" : "&quelle=1"), { waitUntil: "load" });
   await pg.waitForFunction(() => window.__fertig, null, { timeout: 60000 });
   const tLaden = Date.now() - t0;
   await pg.waitForFunction(() => !document.querySelector(".st-vorhang"), null, { timeout: 60000 }).catch(() => {});

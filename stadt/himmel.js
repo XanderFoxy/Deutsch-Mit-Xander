@@ -16,15 +16,22 @@
    Glöckchen, Mittelleine und Zugstränge, der Schlitten mit geschwungenen
    Kufen, Laternen und Goldzier, der Weihnachtsmann im roten Mantel mit
    Pelz, Bart und Zipfelmütze, hinter ihm der Sack voller Geschenke.
-   Beim Überflug winkt er hinunter. Hinter dem Schlitten funkelt eine
-   Sternenspur, und der Schatten des Gespanns gleitet weich über den
-   Schnee – genau dort, wo die Sonne ihn hinwirft (dieselbe Richtung wie
-   bei den Häusern). Nur im Winter; der erste Flug etwa 22 s nach dem
-   Öffnen, dann ungefähr jede Minute (14 s lang), mit Schlittenglöckchen
-   (ST.ton("schlitten")). Die Bahn wird bei Flugbeginn so gelegt, dass sie
-   durch das Bild führt, das man gerade ansieht – danach bleibt sie fest
-   in der Welt. In 40 m Höhe liegt etwas mehr Himmelslicht auf dem
-   Gespann; nachts leuchten die Schlittenlaternen den Weihnachtsmann an.
+   Beim Überflug winkt er hinunter. Hinter dem Schlitten bleibt ein
+   weicher Sternenschleier zurück (kein Strich), und der Schatten des
+   Gespanns gleitet weich über den Schnee – genau dort, wo die Sonne ihn
+   hinwirft (dieselbe Richtung wie bei den Häusern), UNTER Häusern und
+   Lichtern. Nur im Winter; der erste Flug etwa 22 s nach dem Öffnen, dann
+   ungefähr jede Minute (14 s lang, 12,5 m/s, Kurve mit 60–120° Kurs-
+   änderung und Querneigung). Die Bahn wird bei Flugbeginn so gelegt, dass
+   sie durch das Bild führt, das man gerade ansieht – danach bleibt sie
+   fest in der Welt. Damit man die Höhe liest: Luftperspektive (das
+   Gespann ist etwas heller, bläulicher, kontrastärmer), Dunstschleier
+   5–8 m darunter, die langsamer ziehen, und eine Bahn, auf der der
+   Schatten dieselbe Bildgegend kreuzt. Schlittenglöckchen als Web-Audio-
+   Schleife mit Ein- und Ausblenden, Lautstärke und Links-rechts nach der
+   Lage im Bild (ersatzweise ST.ton("schlitten")). Nachts leuchten die
+   Schlittenlaternen den Weihnachtsmann an. Hohe Türme (Dom) verdecken
+   das Gespann, wenn es dahinter vorbeifliegt.
 
    IM FRÜHLING („… dass wir das später in einen Frühlingsgewand packen
    können"): statt des Schlittens segeln drei Weißstörche über das Dorf
@@ -46,7 +53,10 @@
      B.kugel(c, r, farbe) · B.ei(c, a1, a2, a3, farbe) · B.glied(p1, r1, p2, r2, farbe)
      B.koerper([{c, r}|{c, a:[a1,a2,a3]}…], farbe, { flecken, glanz, tiefe, ebene })
      B.band(punkte, breite, farbe) · B.platte(punkte, farbe, { n, innen, muster })
-     B.malen(g) · B.schattenMalen(sg)
+     B.ao(c, a1, a2, k) (Kontaktschatten) · B.malen(g) · B.schattenMalen(sg)
+   Stoffe (Optionen von B.koerper): matt (stumpfes Licht statt Plastik),
+   fell { n, laenge, richtung } (Fell- oder Stoffstriche, nur nah),
+   pelz (flockiger Rand und Flockenrauschen), samt (Glanzkante), kontur.
    Detailstufen nach Pixeln je Meter (B.s): klein nur die Form, groß
    Augen, Glöckchen, Goldzier, Knöpfe, Fellzeichnung.
 
@@ -767,12 +777,18 @@
       Xa += (-0.08 * W - Xa) * nah; Ya += (-0.16 * H - Ya) * nah;
       const za = z0 - 2;
       const apex = rv(Xa, Ya, za);
-      const dS = 0.5 * gesamt - anker, halb = Rk * dPsi / 2;
+      const dS = 0.5 * gesamt - anker, bogen = Rk * dPsi;
+      /* Wo liegt die Kurve? Weit draußen um den Scheitel herum (man sieht sie
+         ganz); ab s ≈ 12 erst, wenn das Gespann das Bild auf der Diagonale
+         durchquert hat – vorher läuft der Schatten dieselbe Linie entlang */
+      const diag = glatt(10, 14, sCss);
+      const dA = -bogen / 2 + diag * (bogen / 2 + 0.85 * Math.hypot(W, H) / s0);
+      const kurs = (dr) => psiM + sigma * (klemm(dr - dA, 0, bogen) - klemm(-dA, 0, bogen)) / Rk;
       const kette = (dir, lang) => {
         const aus = [];
-        let x = apex[0], y = apex[1], psi = psiM;
+        let x = apex[0], y = apex[1];
         for (let d = schritt; d <= lang + 1e-6; d += schritt) {
-          if (d <= halb) psi += dir * sigma * schritt / Rk;
+          const psi = kurs(dir * (d - schritt / 2));
           x += dir * Math.cos(psi) * schritt; y += dir * Math.sin(psi) * schritt;
           aus.push([x, y, d]);
         }
@@ -1561,16 +1577,16 @@
   function dunstMalen(g, pf, p, Z) {
     const huelle = glatt(0.02, 0.14, p) * (1 - glatt(0.86, 0.98, p));
     if (huelle < 0.01) return;
-    const farbe = Z.nacht > 0.8 ? "140,156,204" : Z.nacht > 0.3 ? "214,206,232" : "248,250,255";
-    const grund = (Z.nacht > 0.8 ? 0.09 : Z.nacht > 0.3 ? 0.13 : 0.2) * huelle;
+    const farbe = Z.nacht > 0.8 ? "150,166,214" : Z.nacht > 0.3 ? "222,214,238" : "250,252,255";
+    const grund = (Z.nacht > 0.8 ? 0.15 : Z.nacht > 0.3 ? 0.24 : 0.3) * huelle;
     const tf = p * DAUER, s = K.s;
     g.save();
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 20; i++) {
       const h1 = ST.hash2(i, 11, 3), h2 = ST.hash2(i, 12, 3), h3 = ST.hash2(i, 13, 3);
-      const pp = pfadPunkt(pf, (i + 0.5) / 14 * pf.L);
-      const seit = (h1 - 0.5) * 18;
+      const pp = pfadPunkt(pf, (i + 0.5) / 20 * pf.L);
+      const seit = (h1 - 0.5) * 14;
       const x = pp.p[0] - pp.t[1] * seit + 1.1 * tf, y = pp.p[1] + pp.t[0] * seit + 0.45 * tf, z = pp.p[2] - 5 - h2 * 3;
-      const R = 3 + h3 * 4;
+      const R = 3.5 + h3 * 4.5;
       for (let j = 0; j < 3; j++) {
         const P = ST.proj(x + (j - 1) * R * 0.8, y + (j - 1) * R * 0.3 * (h1 - 0.5), z);
         const rx = R * s * (0.7 + 0.25 * ST.hash2(i, j, 17)), ry = rx * 0.5;
@@ -1635,7 +1651,7 @@
     if (!SZ || !SZ.sichtbare) return aus;
     const tA = tiefeVon(A[0], A[1], A[2]);
     for (const e of SZ.sichtbare) {
-      if (e.live || !e.sp || !e.sp.bild || e.o.rand) continue;
+      if (e.live || !e.sp || !e.sp.bild || !e.sp.bild.width || e.o.rand) continue;
       const def = ST.MODELLE[e.o.typ];
       if (!def || !(def.hoehe >= A[2] - 5)) continue;
       if (e.x1 < box[0] || e.x0 > box[2] || e.y1 < box[1] || e.y0 > box[3]) continue;

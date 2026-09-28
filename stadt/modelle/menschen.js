@@ -992,7 +992,7 @@
     else if (G.zustand === "anstehen") {
       /* ist die Theke frei? dann vortreten und kaufen */
       let besetzt = false;
-      for (const H of GRUPPEN) if (H !== G && H.b === G.b && H.zustand === "kaufen") besetzt = true;
+      for (const H of GRUPPEN) if (H !== G && H.b && G.b && H.b.o === G.b.o && H.zustand === "kaufen") besetzt = true;
       if (!besetzt && G.zt > 0.6) { G.zustand = "kaufen"; G.zt = 0; G.kaufDauer = 3 + G.r() * 3; erster._m.weg = null; }
     } else if (G.zustand === "kaufen" && G.zt > G.kaufDauer && erster._m.da) {
       for (const o of G.leute) o._m.tasse = !o._aus || !o._aus.kind || (o.saat % 2 === 0);
@@ -1029,7 +1029,7 @@
       if (G.zustand === "kommen" || G.zustand === "anstehen") {
         /* anstehen: hinter der Theke in der Schlange, je Gruppe davor 0,9 m weiter hinten */
         let vor = 0;
-        for (const H of GRUPPEN) if (H !== G && H.b === b && (H.zustand === "kaufen" || (H.zustand === "anstehen" && H.id < G.id))) vor++;
+        for (const H of GRUPPEN) if (H !== G && H.b && H.b.o === b.o && (H.zustand === "kaufen" || (H.zustand === "anstehen" && H.id < G.id))) vor++;
         return [b.theke[0] + b.vx * 0.9 * vor, b.theke[1] + b.vy * 0.9 * vor];
       }
       if (G.zustand === "kaufen") return b.theke;
@@ -1411,7 +1411,8 @@
       const links = Math.sin(w);
       const spiel = (x) => glatt(0.1, 0.7, x) * lauf;          // wie weit das Spielbein angehoben ist
       const sL = spiel(-links), sR = spiel(links);            // links gleitet, wenn sin > 0
-      const bein = (sp) => ({ a: 0.06 - 0.42 * sp, k: 0.16 + 0.22 * sp + 0.08 * lauf * (1 - sp), f: 0.1 - 0.25 * sp, b: 0.03 + 0.24 * sp });
+      /* Spielbein fast gestreckt nach hinten-außen, die Kufe knapp über dem Eis und etwa waagerecht */
+      const bein = (sp) => ({ a: 0.06 - 0.38 * sp, k: 0.14 + 0.06 * sp + 0.1 * lauf * (1 - sp), f: 0.08 + 0.36 * sp, b: 0.03 + 0.26 * sp });
       const rueck = (o.saat % 5) < 2;                          // manche laufen mit den Händen auf dem Rücken
       const arm = rueck ? [{ a: 0, e: 0, ab: 0.1 }, { a: 0, e: 0, ab: 0.1 }]
         : [{ a: 0.35 * links * lauf + 0.1, e: 0.35, ab: 0.28 }, { a: -0.35 * links * lauf + 0.1, e: 0.35, ab: 0.28 }];
@@ -1504,7 +1505,7 @@
     ["spaziergaenger", -10.5, -3, 90], ["spaziergaenger", 10.5, 4, 270], ["spaziergaenger", -4, 10.5, 0], ["spaziergaenger", 5, -10.5, 180],
     ["spaziergaenger", 0.5, 18, 180], ["spaziergaenger", -1, 30, 0], ["spaziergaenger", 1.2, -24, 180], ["spaziergaenger", -1.5, -40, 0],
     ["spaziergaenger", -30, 3.6, 90], ["spaziergaenger", -38, 1, 270], ["spaziergaenger", 27.5, -2.2, 270], ["spaziergaenger", 40, 1.5, 90],
-    ["spaziergaenger", 8, 8, 225], ["spaziergaenger", -8, -12, 45], ["spaziergaenger", 30.5, -4.5, 180], ["spaziergaenger", 33, 1.2, 0],
+    ["spaziergaenger", 8, 8, 225], ["spaziergaenger", -8, -12, 45], ["spaziergaenger", 29.2, -2.3, 90], ["spaziergaenger", 34.2, -1.6, 270],
     /* Kinder mit Schlitten auf den Schneewiesen */
     ["kind_schlitten", -18, 20, 45], ["kind_schlitten", 22, 26, 300], ["kind_schlitten", -30, -20, 120],
     /* Schlittschuhläufer auf dem See bei (52, 50) */

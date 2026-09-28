@@ -218,7 +218,7 @@
   /* ---------------- Platzieren ---------------- */
   function platzierenStart(id) {
     abbrechen();
-    const m = ST.aufBoden(K.W / 2, K.H * 0.55);
+    const m = ST.aufBoden(K.W / 2, K.H * 0.42);
     const d = ST.MODELLE[id];
     SZ.geist = { id: -1, typ: id, x: runden(m[0]), y: runden(m[1]), gier: d.standardGier || 0, saat: (Math.random() * 1e9) | 0, bau: null, frei: true };
     SZ.auswahl = SZ.geist;
