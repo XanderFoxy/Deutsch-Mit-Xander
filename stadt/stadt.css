@@ -80,3 +80,11 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 @media (max-width: 620px) {
   #stadtOberflaeche.steuer-offen .st-mini-rahmen { display: none; }
 }
+
+.st-vorhang { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 40%, #2c3a66, #121a33 75%); color: #f6ecd6; transition: opacity .6s; z-index: 5; }
+.st-vorhang.weg { opacity: 0; pointer-events: none; }
+.st-vorhang div { text-align: center; }
+.st-vorhang b { display: block; font: 700 30px/1.1 Georgia, "Times New Roman", serif; letter-spacing: .03em; }
+.st-vorhang span { display: block; margin-top: 6px; font-size: 14px; opacity: .75; }
+.st-vorhang i { display: block; width: 180px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.15); margin: 16px auto 0; overflow: hidden; }
+.st-vorhang em { display: block; height: 100%; width: 0; background: #f3c35a; transition: width .3s; }

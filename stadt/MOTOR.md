@@ -65,7 +65,8 @@ Datei in `stadt/modelle/<name>.js`, Namen in `STADT.MODELL_DATEIEN` (stadt/model
 - `M.figur({x,y,z, breite, hoehe, malen(g, s, F), schatten})` – aufrecht Gemaltes (Baum, Mensch, Laterne): Ursprung am
   Fußpunkt im Bild, `s` = Pixel je Meter, nach oben = **negativ y**. Schatten wird automatisch aus der Zeichnung geworfen.
   `F.gier` = Drehung (Grad), `F.nacht`, `F.jahr`, `F.leuchtPunkt(dx, dy, rPx, farbe, k, flacker)` (hier in Pixeln).
-- `M.licht(x,y,z, r, "r,g,b", k)` – Lichtschein (Laterne), `M.rauchAus(x,y,z,k)` – Rauch aus dem Schornstein.
+- `M.licht(x,y,z, r, "r,g,b", k)` – Lichtschein (Laterne), `M.bodenlicht(x,y, r, "r,g,b", k)` – flache Lichtpfütze auf dem Boden
+  (unter Laternen, vor Schaufenstern), `M.rauchAus(x,y,z,k)` – Rauch aus dem Schornstein.
 - `M.lebendig(fn)` – wird **jedes Bild** gemalt (Animation): `fn(g, P)` mit `P.proj(x,y,z)` → Bildpunkt (Modellkoordinaten!),
   `P.s` (Pixel/m), `P.t` (Sekunden), `P.Z.nacht`. Sparsam einsetzen (Arbeiter, Fahne, Flackern).
 

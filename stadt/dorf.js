@@ -83,10 +83,14 @@
   ST.dorfBauen = function () {
     SZ.objekte = []; SZ.naechsteId = 1;
     const hat = (id) => !!ST.MODELLE[id];
+    /* Bäume in wenigen Spielarten (je eigenes Bild im Speicher), Häuser jedes für sich */
+    const BAUM = { tanne: 9, laubbaum: 6, obstbaum: 5 };
     const setze = (id, x, y, gier, ersatz) => {
       let t = hat(id) ? id : (ersatz && hat(ersatz) ? ersatz : null);
       if (!t) return null;
-      return SZ.neu(t, x, y, gier || 0, { saat: Math.abs(ST.textHash(id + x + "," + y)) });
+      let saat = Math.abs(ST.textHash(id + x + "," + y));
+      if (BAUM[t]) saat = 1 + saat % BAUM[t];
+      return SZ.neu(t, x, y, gier || 0, { saat: saat });
     };
     /* Häuser um den Marktplatz, Front zum Platz */
     setze("fachwerkhaus", -6, -19, 0, "probehaus");
@@ -133,6 +137,19 @@
       const x = -66 + (i % 6) * 6 + rng() * 1.5, y = 30 + Math.floor(i / 6) * 7 + rng() * 1.5;
       if (B.wert(x, y, 2) > 0.2 || B.wert(x, y, 0) > 0.1) continue;
       setze("obstbaum", x, y, rng() * 360);
+    }
+    /* Waldsaum rund um die Stadt (außerhalb der Bauflächen): die Karte endet
+       nicht an einer Kante, sondern im Wald */
+    if (hat("tanne")) {
+      const G = B.GROESSE / 2;
+      for (let i = 0; i < 260; i++) {
+        const seite = i % 4, u = rng() * (2 * G + 30) - G - 15, tiefe = 3 + Math.pow(rng(), 0.7) * 22;
+        const x = seite === 0 ? u : seite === 1 ? G + tiefe : seite === 2 ? u : -G - tiefe;
+        const y = seite === 0 ? -G - tiefe : seite === 1 ? u : seite === 2 ? G + tiefe : u;
+        if (Math.abs(x) < G + 2 && Math.abs(y) < G + 2) continue;
+        const o = SZ.neu(rng() < 0.82 || !hat("laubbaum") ? "tanne" : "laubbaum", x, y, rng() * 360, { saat: 1 + ((rng() * 9) | 0), rand: true });
+        void o;
+      }
     }
     for (let i = 0; i < 26; i++) {
       const x = 44 + rng() * 26, y = -30 + rng() * 60;

@@ -119,7 +119,12 @@
     steuerung = el("div", "st-steuer"); steuerung.hidden = true;
     wurzel.appendChild(steuerung);
     info = el("div", "st-ansage"); wurzel.appendChild(info);
+    /* Vorhang beim Öffnen: bis alle sichtbaren Häuser gemalt sind (höchstens 5 s) */
+    vorhang = el("div", "st-vorhang", '<div><b>' + (localStorage.getItem("stadt_name") || "Winterhausen") + '</b><span>wird aufgebaut …</span><i><em></em></i></div>');
+    wurzel.appendChild(vorhang);
+    vorhangStart = performance.now();
   };
+  let vorhang = null, vorhangStart = 0, fertigBilder = 0;
 
   function kameraDrehen(r) {
     /* um die Bildmitte drehen: die Mitte bleibt, wo sie ist */
@@ -388,6 +393,12 @@
   let miniZeit = 0;
   O.bild = function (jetzt) {
     if (!info) return;
+    if (vorhang) {
+      fertigBilder = SZ.nachholen() ? 0 : fertigBilder + 1;
+      const k = Math.min(1, (performance.now() - vorhangStart) / 5000);
+      const balken = vorhang.querySelector("em"); if (balken) balken.style.width = Math.max(k * 100, fertigBilder ? 100 : 0) + "%";
+      if (fertigBilder > 2 || k >= 1) { const v = vorhang; vorhang = null; v.classList.add("weg"); setTimeout(() => v.remove(), 700); }
+    }
     if (info.classList.contains("an") && jetzt - ansageZeit > 2200) info.classList.remove("an");
     /* versetztes Original verstecken */
     if (modus === "ausgewaehlt" && SZ.auswahl && SZ.auswahl.bau) {

@@ -181,6 +181,7 @@
     if (!glOk) { document.body.style.background = "#dfe6ee"; }
     SZ.start(dingeC);
     modelleLaden().then(() => {
+      for (const id of ST.OHNE_DREHUNG || []) if (ST.MODELLE[id]) ST.MODELLE[id].ohneDrehung = true;
       const wb = q.get("werkbank");
       if (wb) return werkbank(wb);
       if (ST.stadtAnfang) ST.stadtAnfang(q);

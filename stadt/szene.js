@@ -212,14 +212,34 @@
         const x = e.x0 + l.x * e.k, y = e.y0 + l.y * e.k, r = l.r * e.k;
         if (r < 1) continue;
         const flacker = l.flacker ? 0.85 + 0.15 * Math.sin(t * 9 + x) : 1;
-        const gr = g.createRadialGradient(x, y, 0, x, y, r);
         const a = Z.nacht * l.k * flacker;
+        if (l.boden) {
+          /* Lichtpfütze: auf dem Boden liegend, also halb so hoch wie breit */
+          g.save(); g.translate(x, y); g.scale(1, 0.5);
+          const gr = g.createRadialGradient(0, 0, 0, 0, 0, r);
+          gr.addColorStop(0, "rgba(" + l.farbe + "," + (0.42 * a).toFixed(3) + ")");
+          gr.addColorStop(0.45, "rgba(" + l.farbe + "," + (0.16 * a).toFixed(3) + ")");
+          gr.addColorStop(1, "rgba(" + l.farbe + ",0)");
+          g.fillStyle = gr; g.fillRect(-r, -r, 2 * r, 2 * r);
+          g.restore();
+          continue;
+        }
+        const gr = g.createRadialGradient(x, y, 0, x, y, r);
         gr.addColorStop(0, "rgba(" + l.farbe + "," + (0.55 * a).toFixed(3) + ")");
         gr.addColorStop(0.25, "rgba(" + l.farbe + "," + (0.22 * a).toFixed(3) + ")");
         gr.addColorStop(1, "rgba(" + l.farbe + ",0)");
         g.fillStyle = gr; g.fillRect(x - r, y - r, 2 * r, 2 * r);
       }
       g.globalCompositeOperation = "source-over";
+    }
+    /* Dunst: weiter hinten (oben im Bild) wird die Luft sichtbar – gibt Tiefe */
+    {
+      const h = K.H * 0.32;
+      const farbe = Z.nacht > 0.8 ? "18,26,58" : Z.nacht > 0.3 ? "70,86,130" : SZ.jahr === "winter" ? "215,226,240" : "196,214,232";
+      const gr = g.createLinearGradient(0, 0, 0, h);
+      gr.addColorStop(0, "rgba(" + farbe + "," + (0.34 * Math.min(1, 14 * K.dpr / K.s + 0.25)).toFixed(3) + ")");
+      gr.addColorStop(1, "rgba(" + farbe + ",0)");
+      g.fillStyle = gr; g.fillRect(0, 0, K.W, h);
     }
     /* 6. Himmel, Wetter */
     if (ST.himmel && ST.himmel.zeichnen) { try { ST.himmel.zeichnen(g, t, Z, SZ); } catch (err) { console.error(err); } }
@@ -288,7 +308,7 @@
     const r = SZ.sichtbare;
     for (let i = r.length - 1; i >= 0; i--) {
       const e = r[i];
-      if (e.o === SZ.geist || e.live) continue;
+      if (e.o === SZ.geist || e.live || e.o.rand) continue;
       if (px < e.x0 || px >= e.x1 || py < e.y0 || py >= e.y1) continue;
       try {
         const d = e.sp.bild.getContext("2d").getImageData(Math.floor((px - e.x0) / e.k), Math.floor((py - e.y0) / e.k), 1, 1).data;
@@ -322,7 +342,7 @@
     const halb = ST.boden.GROESSE / 2;
     for (const p of A) if (Math.abs(p[0]) > halb || Math.abs(p[1]) > halb) return false;
     for (const o of SZ.objekte) {
-      if (o === ohne || ST.MODELLE[o.typ].ueberall) continue;
+      if (o === ohne || o.rand || ST.MODELLE[o.typ].ueberall) continue;
       if (!trennt(A, ecken(o.typ, o.x, o.y, o.gier, -0.05))) return false;
     }
     return true;
@@ -330,12 +350,12 @@
 
   /* Speichern im Browser */
   SZ.alsText = function () {
-    return JSON.stringify({ v: 1, jahr: SZ.jahr, zeit: SZ.zeit, objekte: SZ.objekte.map((o) => ({ typ: o.typ, x: +o.x.toFixed(2), y: +o.y.toFixed(2), gier: o.gier, saat: o.saat, variante: o.variante, bau: o.bau })), boden: ST.boden.speichern() });
+    return JSON.stringify({ v: 1, jahr: SZ.jahr, zeit: SZ.zeit, objekte: SZ.objekte.filter((o) => !ST.MODELLE[o.typ].live).map((o) => ({ typ: o.typ, x: +o.x.toFixed(2), y: +o.y.toFixed(2), gier: Math.round(o.gier), saat: o.saat, variante: o.variante, bau: o.bau, rand: o.rand ? 1 : undefined })), boden: ST.boden.speichern() });
   };
   SZ.ausText = function (txt) {
     const d = JSON.parse(txt);
     SZ.objekte = []; SZ.naechsteId = 1;
-    for (const o of d.objekte) if (ST.MODELLE[o.typ]) SZ.neu(o.typ, o.x, o.y, o.gier, { saat: o.saat, variante: o.variante, bau: o.bau });
+    for (const o of d.objekte) if (ST.MODELLE[o.typ]) SZ.neu(o.typ, o.x, o.y, o.gier, { saat: o.saat, variante: o.variante, bau: o.bau, rand: !!o.rand });
     if (d.boden) ST.boden.laden(d.boden);
     if (d.jahr) SZ.jahr = d.jahr;
     if (d.zeit) SZ.zeit = d.zeit;

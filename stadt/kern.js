@@ -152,6 +152,8 @@
     fi.z = fi.z || 0; this.akt.figuren.push(fi); return fi;
   };
   Bauer.prototype.licht = function (x, y, z, r, farbe, staerke) { this.lichter.push({ p: [x, y, z], r: r, farbe: farbe || "255,196,120", k: staerke == null ? 1 : staerke }); };
+  /* Lichtpfütze auf dem Boden (Laterne, Schaufenster): flache Ellipse im Schnee */
+  Bauer.prototype.bodenlicht = function (x, y, r, farbe, staerke) { this.lichter.push({ p: [x, y, 0.02], r: r, farbe: farbe || "255,196,120", k: staerke == null ? 1 : staerke, boden: true }); };
   Bauer.prototype.rauchAus = function (x, y, z, staerke) { this.rauch.push({ p: [x, y, z], k: staerke || 1 }); };
   Bauer.prototype.lebendig = function (fn) { this.leben.push(fn); };
 
@@ -462,6 +464,22 @@
     gs.fillStyle = "#000";
     /* weiche Schattenkante (Halbschatten) – mitwachsend mit dem Zoom */
     gs.filter = "blur(" + Math.max(0.6, s * 0.035).toFixed(2) + "px)";
+    /* Kontaktschatten: rund um den Fuß ein weicher dunkler Saum – das Haus
+       „steht" auf dem Boden statt darüber zu schweben */
+    gs.save();
+    gs.filter = "blur(" + Math.max(1, s * 0.22).toFixed(2) + "px)";
+    gs.globalAlpha = 0.55;
+    for (const tl of M.teile) {
+      if (!tl.schatten) continue;
+      const fuss = teilPunkte(tl, c, sn).filter((p) => p[2] < 0.15);
+      if (fuss.length < 3) continue;
+      const h = huelle(fuss.map((p) => [p[0], p[1]]));
+      const mx = h.reduce((a, p) => a + p[0], 0) / h.length, my = h.reduce((a, p) => a + p[1], 0) / h.length;
+      gs.beginPath();
+      h.forEach((p, i) => { const dx = p[0] - mx, dy = p[1] - my, l = Math.hypot(dx, dy) || 1, k = (l + 0.35) / l; const X = T.ox + ((mx + dx * k) - (my + dy * k)) * KX * s, Y = T.oy + ((mx + dx * k) + (my + dy * k)) * KY * s; if (i) gs.lineTo(X, Y); else gs.moveTo(X, Y); });
+      gs.closePath(); gs.fill();
+    }
+    gs.restore();
     for (const sp of schattenPunkte) {
       if (sp.pts) {
         gs.beginPath();
@@ -472,7 +490,7 @@
       }
     }
     /* Lichtpunkte im Bild (für den Schein über allem) */
-    const lichter = M.lichter.map((l) => { const p = drehP(l.p, c, sn); return { x: T.ox + (p[0] - p[1]) * KX * s, y: T.oy + (p[0] + p[1]) * KY * s - p[2] * KZ * s, r: l.r * s, farbe: l.farbe, k: l.k, flacker: l.flacker }; }).concat(P.lichter);
+    const lichter = M.lichter.map((l) => { const p = drehP(l.p, c, sn); return { x: T.ox + (p[0] - p[1]) * KX * s, y: T.oy + (p[0] + p[1]) * KY * s - p[2] * KZ * s, r: l.r * s, farbe: l.farbe, k: l.k, flacker: l.flacker, boden: l.boden }; }).concat(P.lichter);
     const rauch = M.rauch.map((r) => { const p = drehP(r.p, c, sn); return { x: T.ox + (p[0] - p[1]) * KX * s, y: T.oy + (p[0] + p[1]) * KY * s - p[2] * KZ * s, k: r.k }; });
     return { bild: bild, schatten: schatten, ox: x0, oy: y0, W: W, H: H, lichter: lichter, rauch: rauch, leben: M.leben, s: s, c: c, sn: sn };
   }
@@ -507,10 +525,14 @@
      zoomen, streckt die Szene das letzte Bild (szene.js). */
   function sStufe(s) { return Math.exp(Math.round(Math.log(s) / 0.001) * 0.001); }
   function spriteSchluessel(id, o, gier, s, Z) {
-    return id + "|" + (o.schluessel || "") + "|" + o.jahr + "|" + Math.round(gier * 10) / 10 + "|" + sStufe(s).toFixed(3) + "|" + Z.name + "|" + (o.bau == null ? 1 : Math.round(o.bau * 200) / 200);
+    /* Bäume und andere rundum gleiche Dinge: Drehung egal → ein Bild für alle */
+    const def = ST.MODELLE[id];
+    const g = def && def.ohneDrehung ? 0 : Math.round(gier * 10) / 10;
+    return id + "|" + (o.schluessel || "") + "|" + o.jahr + "|" + g + "|" + sStufe(s).toFixed(3) + "|" + Z.name + "|" + (o.bau == null ? 1 : Math.round(o.bau * 200) / 200);
   }
   ST.spriteSchluessel = spriteSchluessel;
   function spriteHolen(id, o, gier, s, Z, t) {
+    if (ST.MODELLE[id] && ST.MODELLE[id].ohneDrehung) gier = 0;
     const sq = sStufe(s);
     const schl = spriteSchluessel(id, o, gier, s, Z);
     let sp = SPEICHER.get(schl);
