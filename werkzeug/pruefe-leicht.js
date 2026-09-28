@@ -124,7 +124,10 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   const gross = await pg.evaluate(() => STADT.szene.sichtbare.filter((e) => /_g$/.test(e.lagen[0][0])).length);
   sage(gross > 0, "Ganz nah: große, scharfe Bilder", gross + " im Bild");
 
-  /* Tages- und Jahreszeit, Farbregler */
+  /* Tages- und Jahreszeit, Farbregler. FASSUNG 808 — XANDER: „Tag und Nacht braucht man nicht wählen": die beiden
+     Schalter sieht nur der Betreiber (Vorschau); für alle anderen laufen sie nach der Uhr. */
+  sage(await pg.evaluate(() => document.querySelector(".lk-kopf-rechts .lk-knopf[title='Tageszeit']").hidden && document.querySelector(".lk-kopf-rechts .lk-knopf[title='Jahreszeit']").hidden), "ohne Betreiber keine Tages- und Jahreszeit-Schalter");
+  await pg.evaluate(() => { STADT.spiel.betreiber = true; STADT.oberflaeche.betreiberDa(); });
   await pg.click(".lk-kopf-rechts .lk-knopf[title='Tageszeit']");
   sage(await pg.evaluate(() => STADT.szene.zeit) === "abend", "Tageszeit wechselt");
   await pg.click(".lk-kopf-rechts .lk-knopf[title='Jahreszeit']");

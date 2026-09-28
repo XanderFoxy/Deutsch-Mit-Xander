@@ -2123,3 +2123,37 @@ XANDER: „denk an das Layout der Originalmap. Die Leute sollen sich sofort zure
   - Häuser und drehbarer Schmuck drehen sich in 45°-Schritten.
   - Neue setzbare Modelle: Rathaus Döbeln, Dodge Viper, Batmobil, Pferdebahn, Korn-, Mehl- und Leerwagen, Gleise.
 - **Sonden**: `pruefe-807-originalkarte.js` (neu grün, alter Code rot), `pruefe-799` (erweitert), `pruefe-808-acht-winkel.js`, `pruefe-809-eisenbahn.js`, `pruefe-leicht.js`.
+
+## Fassung 808 — Originaltreue: Horizont und Alpen, Bahn oben, See unten, Himmel nach Uhrzeit, Fuhrwerke, Tiere
+
+XANDER: „das soll genau das selbe Bild sein im Prinzip von der Map … man soll das direkt wieder erkennen können" · „oben war die Horizontlinie … ist der Zug an diesem Rand entlanggefahren … dann stand das Gästehaus dort unmittelbar in der Nähe von den Gleisen" · „unten … wenn man weiter runtergeht, dass der See sich eröffnet" · „wo ich mein Berliner Fernsehturm stehen habe" · „Tag und Nacht … realistisch nach Uhrzeit, vielleicht angepasst an die Zeitzone" · „realistisch in der Nacht mit Sternen, zufälligen Wolken, Vögeln, Tieren".
+
+- **Bild wie früher (`stadt-leicht/dorf.js`, Vorlage „altdorf")**:
+  - Quer über dem Bild liegt die Horizontlinie (v = x + y = −100). Dahinter stehen die Alpen als Spielgrenze; die Kamera geht nicht darüber hinaus.
+  - Die Bahn läuft oben waagerecht durchs Bild, knapp hinter dem Gasthaus, leicht gewellt, und an beiden Seiten hinaus.
+  - Der Bahnhof steht wie im alten Bild hinter dem Gleis, der Bahnsteig zeigt zum Gleis. Dafür wurden Bahnhof, Wahrzeichen, Bootshaus und Brücke zusätzlich in 45° gebacken.
+  - Alle Häuser schauen wie im alten Bild zum Betrachter. Nur die Mühle behält ihr Rad am Bach.
+  - Der Fluss entspringt oben zwischen Flickstube und Gasthaus. Er läuft links am Rathaus vorbei, zwischen Brauerei und Bibliothek hindurch, und mündet unten rechts der Mitte in den See, wie im alten Bild.
+  - Der See ist verschoben: Im Überblick sieht man nur die Zunge. Weiter unten öffnet er sich, mit Badebucht, Bootsverleih, Tretbooten und Badegästen (`boote.js` rechnet mit `D.SEE_VERSATZ`).
+  - Der Mühlbach fließt nach dem Wasserrad links aus dem Bild. So bleibt beim Kuhstall Platz für Weide und Auslauf.
+  - Die Wahrzeichen stehen auf den fünf Plätzen des alten Dorfs (WUNDER_PLAETZE) und in der Größe des alten Bilds. Ein gewählter Platz (`volk.wunder_platz`) gilt: Xanders Fernsehturm steht unten links. Das Spiel schickt den Platz jetzt mit (`leicht-stand`).
+  - Wege führen um die Häuser herum, nicht hindurch.
+  - Eine eigene Pferdebahn-Straße führt vom Markt links am Rathaus vorbei hinauf zum Bahnhof.
+- **Himmel (`stadt-leicht/himmel.js`)**:
+  - Der Himmel folgt der Uhr und Zeitzone des Geräts: Tag, Dämmerung und Nacht gehen fließend ineinander über.
+  - Tags gibt es Sonne, zufällige Haufenwolken und ab und zu einen Vogelschwarm. Nachts funkeln Sterne, dazu kommen Mond, dunkle Wolken und ab und zu eine Sternschnuppe.
+  - Die Alpen haben Schneefelder, Rinnen und Licht von rechts, davor bewaldete Vorberge im Dunst. Im Winter reicht der Schnee tiefer.
+  - Die Berge werden je Jahreszeit und Tageszeit-Stufe nur einmal vorgemalt.
+- **Tag/Nacht- und Jahreszeit-Schalter** sieht nur noch der Betreiber (Vorschau). Für alle anderen gilt die Uhr des Geräts.
+- **Fuhrwerke (Helfer, `stadt-leicht/fuhrwerk.js`, Sonde 810)**:
+  - Kornwagen fahren vom Feld zur Mühle und bringen Mehl zur Bäckerei. Nachts ruhen sie.
+  - Die Döbelner Pferdebahn pendelt zwischen Markt und Bahnhof.
+- **Tiere (Helfer, `stadt-leicht/tiere.js`, Sonde 811)**:
+  - Kühe stehen auf der Weide am Kuhstall, Schweine im Auslauf, Hühner und ein Hahn laufen um den Hühnerstall.
+  - In der Dämmerung gehen die Tiere in den Stall, nachts ist keins draußen.
+- **Sonden**:
+  - `pruefe-807-originalkarte.js` ist erweitert (Horizont, Himmel, Bahn oben, Bahnhof hinter dem Gleis, Seezunge, Blickrichtung, Wahrzeichenplatz). Neu ist sie grün, mit dem Code von 807 rot.
+  - `pruefe-809` rechnet jetzt mit der waagerechten Strecke.
+  - `pruefe-808` bekommt längere Wartezeiten und einen freien Platz ohne Bäume.
+  - `pruefe-leicht` prüft, dass die Schalter nur der Betreiber sieht.
+  - Neu: `pruefe-810-fuhrwerk.js` und `pruefe-811-tiere.js`.

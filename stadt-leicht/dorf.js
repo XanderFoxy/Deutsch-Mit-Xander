@@ -302,9 +302,10 @@
     /* Wasser: der Fluss wie im alten Bild – er entspringt oben zwischen Flickstube und Gasthaus, läuft links am Rathaus
        und am Markt vorbei, schlängelt sich zwischen Brauerei und Bibliothek hindurch und mündet unten in den See. */
     const m = P.muehle;
-    D.FLUSS = bild([[126, 64], [128, 80], [130, 96], [129, 108], [134, 122], [148, 134], [156, 148], [154, 162], [160, 176], [178, 184], [198, 187], [212, 190]]);
+    D.FLUSS = bild([[131, 66], [130, 80], [130, 96], [129, 108], [134, 122], [148, 134], [156, 148], [154, 162], [160, 176], [178, 184], [198, 187], [212, 190]]);
     D.QUELLE = D.FLUSS[0];
-    D.MUEHLBACH = [[m.x + 6, m.y - 30], [m.x + 11.5, m.y - 6], [m.x + 11.5, m.y + 8], [m.x + 16, m.y + 26], [m.x + 22, m.y + 50], [m.x + 26, 112]];
+    /* Mühlbach: Quelle hinter der Mühle, am Wasserrad vorbei, dann links aus dem Bild (Platz für die Weiden am Kuhstall) */
+    D.MUEHLBACH = [[m.x + 6, m.y - 30], [m.x + 11.5, m.y - 6], [m.x + 11.5, m.y + 8], [m.x + 5, m.y + 17], [m.x - 10, m.y + 27], [m.x - 32, m.y + 44]];
     /* FASSUNG 808 — „unten, wo bei uns nur so ein kleiner See ist … wenn man weiter runtergeht, dass der See sich eröffnet".
        Oben im Bild nur die Zunge des Sees (wie im alten Bild unten, rechts der Mitte); wer weiter hinunterscrollt, sieht
        ihn sich öffnen – mit Badebucht und Bootsverleih. Der ganze See ist gegenüber Fassung 803 verschoben
@@ -318,7 +319,7 @@
     D.wegeBauen = function () {
       const ziele = [MARKT.slice()];
       for (const k in P) ziele.push(vor(P[k], k === "muehle" ? 9 : 8));
-      ziele.push(vw(uHalt, bahnV(uHalt) + 7), see(58, 82));
+      ziele.push(see(58, 82));   // (zum Bahnhof führt die Pferdebahn-Straße)
       for (const k in D.WUNDER) { const w = D.WUNDER[k]; if (w.steht) ziele.push(vor(w, (w.fussS[0] + w.fussS[1]) / 4 + 3)); }
       const drin = [0], kanten = [];
       while (drin.length < ziele.length) {
@@ -355,7 +356,7 @@
       });
       /* FASSUNG 808 — XANDER: „die Pferdebahn, die wir in Döbeln haben". Eigene Straße vom Markt links am Rathaus vorbei
          hinauf zum Bahnhof (fuhrwerk.js fährt darauf); die Leute gehen sie auch. */
-      D.PFERDEBAHN = kurve([vw(-7, -4), vw(-22, -12), vw(-27, -38), vw(-30, -63), vw(uHalt, bahnV(uHalt) + 6)], 14);
+      D.PFERDEBAHN = kurve([vw(-9, -2), vw(-22.5, -9), vw(-24, -28), vw(-27, -48), vw(-32, -66), vw(uHalt, bahnV(uHalt) + 6)], 16);
       D.WEGE.push(D.PFERDEBAHN);
     };
     D.wegeBauen();
@@ -426,6 +427,8 @@
         if (vonBahn(x, y) < 6 || x + y < D.HORIZONT + 6) return false;
         if (Math.hypot(x - D.BAHNHOF[0], y - D.BAHNHOF[1]) < 16 + abst) return false;
         if (Math.hypot(x - D.BOOTSHAUS[0], y - D.BOOTSHAUS[1]) < 9 + abst) return false;
+        /* FASSUNG 811 — Wiese für Weide und Auslauf (tiere.js) beim Kuhstall und Hof beim Hühnerstall frei lassen */
+        if (Math.hypot(x - P.kuhstall.x, y - P.kuhstall.y) < 24 + abst || Math.hypot(x - P.huehnerstall.x, y - P.huehnerstall.y) < 13 + abst) return false;
         if (B.wert(x, y, 0) > 0.05 || B.wert(x, y, 1) > 0.05 || B.wert(x, y, 2) > 0.05) return false;
         return true;
       };

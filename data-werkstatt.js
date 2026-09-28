@@ -49,19 +49,11 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 807 — Originalkarte, Eisenbahn, Döbelner Rathaus, kleines Bild wie früher, 8 Winkel",
+  stand: "Fassung 808: Neue Stadt wie das alte Bild – Horizont mit Alpen, Bahn oben, Bahnhof hinter dem Gleis, Häuser schauen nach vorn, Fluss und See wie früher (See öffnet sich unten), Wahrzeichen auf ihren alten Plätzen, Himmel nach Uhrzeit mit Sternen, Wolken und Vögeln, Kornwagen und Pferdebahn, Kühe, Schweine und Hühner",
 
   inArbeit: [
-    { seit: "2026-09-28T21:11",
-      text: "Originalkarte treuer: Horizont/Alpen oben, Zug an der oberen Kante, See öffnet sich unten" },
-    { seit: "2026-09-28T21:11",
-      text: "Tag/Nacht nur nach Uhrzeit (auch Zeitzone), Sterne, Wolken, Tiere" },
-    { seit: "2026-09-28T21:11",
-      text: "Viper-Einfahrt (Intro-Animation)" },
-    { seit: "2026-09-28T21:11",
-      text: "Pferdebahn fährt Korn/Mehl, Holzfäller/Jäger sichtbar" },
-    { seit: "2026-09-28T21:11",
-      text: "Neue Version für alle freischalten (nach Xanders OK im Walkie)" },
+    { seit: "2026-09-28T22:57",
+      text: "Dodge Viper und Batmobil als Auftritt (in Arbeit), Freigabe der neuen Stadt für alle nach deinem OK, eigene Karten und Vorlagen, Holzfäller/Jäger mit fallenden Bäumen, Herbst-/Halloween-Schmuck" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */

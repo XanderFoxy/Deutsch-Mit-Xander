@@ -170,14 +170,15 @@ const SCHRAEG = /_f_(45|135|225|315)_[a-z]\.webp/;
   const leisteAuf = async () => { await pg.locator(".lk-schmuck").first().tap(); await pg.waitForTimeout(400); };
   /* ein freier Platz (nichts im Umkreis von 11 m), damit man es auch sieht */
   const F = await pg.evaluate(() => { const O = STADT.szene.objekte.filter((o) => !o.geist && !o.versteckt);
-    for (let r = 20; r < 70; r += 2) for (let a = 0; a < 360; a += 15) { const x = Math.cos(a * Math.PI / 180) * r, y = Math.sin(a * Math.PI / 180) * r;
-      if (O.every((o) => Math.hypot(o.x - x, o.y - y) > 11 + Math.max(o.fuss ? o.fuss[0] : 2, o.fuss ? o.fuss[1] : 2) / 2)) return [Math.round(x), Math.round(y)]; } return [0, 44]; });
+    for (let r = 20; r < 100; r += 2) for (let a = 0; a < 360; a += 10) { const x = Math.cos(a * Math.PI / 180) * r, y = Math.sin(a * Math.PI / 180) * r;
+      if (O.every((o) => Math.hypot(o.x - x, o.y - y) > (o.art === "natur" ? 17 : 11) + Math.max(o.fuss ? o.fuss[0] : 2, o.fuss ? o.fuss[1] : 2) / 2)) return [Math.round(x), Math.round(y)]; } return [0, 44]; });   // (Bäume weiter weg: sie stünden vor dem Tipp)
   await pg.locator(".lk-leiste").evaluate((l) => { l.scrollLeft = 0; });
   await setzen("Gleis", F[0], F[1] + 2);
   await leisteAuf(); await setzen("Gleis", F[0], F[1] - 2);
   await leisteAuf(); await setzen("Pferdebahn", F[0], F[1]);
   await leisteAuf(); await setzen("Dodge Viper", F[0] + 5, F[1] + 1, 1);
-  await hin(F[0] + 2, F[1] + 1, 16);
+  /* (FASSUNG 808: etwas weiter weg, damit Gleis, Pferdebahn und Viper sicher alle im Bild sind) */
+  await hin(F[0] + 2.5, F[1] + 1, 11);
   await pg.waitForTimeout(1500);
   await gezeichnet((o) => o.bild === "v_viper", /_f_45_[kg]$/);
   const reihe = await pg.evaluate(() => { STADT.szene.zeichnen(performance.now()); const s = STADT.szene.sichtbare.map((e) => e.o.bild); return { gleis: s.lastIndexOf("d_gleis"), bahn: s.indexOf("v_pferdebahn"), viper: STADT.szene.sichtbare.filter((e) => e.o.bild === "v_viper").map((e) => e.lagen[0][0])[0] }; });
