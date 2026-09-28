@@ -4823,7 +4823,8 @@ window.LiveChat = (function () {
      in app.js (window.DMA_AUFTRITT).
      ========================================================= */
   /* Fassung 696: KITT, Viper, Liane, Transformer dazu. */
-  var AUFTRITTE = { sportwagen: 1, hotrod: 1, monstertruck: 1, kitt: 1, viper: 1, liane: 1, transformer: 1, rakete: 1, zauber: 1 };
+  /* FASSUNG 812: das Batmobil (3D, wie die neue Viper). */
+  var AUFTRITTE = { sportwagen: 1, hotrod: 1, monstertruck: 1, kitt: 1, viper: 1, batmobil: 1, liane: 1, transformer: 1, rakete: 1, zauber: 1 };
   function eigenerAuftritt() {
     try { var a = localStorage.getItem("dma_auftritt") || ""; return AUFTRITTE[a] ? a : ""; } catch (e) { return ""; }
   }

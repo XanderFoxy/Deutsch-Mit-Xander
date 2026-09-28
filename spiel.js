@@ -14934,7 +14934,7 @@
        neuen KITT, Viper, Liane, Transformer) hingen sie GENAU auf dem mitfahrenden Bild — also
        auf dem Gesicht. Jetzt sitzen sie bei jedem Fahrzeug hinten, an der Liane und beim
        Transformer dahinter, an der Rakete unten dran — nie vor dem Gesicht. */
-    var wagen = /sportwagen|hotrod|monstertruck|kitt|viper|liane|transformer/.test(art);
+    var wagen = /sportwagen|hotrod|monstertruck|kitt|viper|batmobil|liane|transformer/.test(art);
     if (art === "zauber") {
       var doppel = tierDoppel(platz);
       if (!doppel.length) return;

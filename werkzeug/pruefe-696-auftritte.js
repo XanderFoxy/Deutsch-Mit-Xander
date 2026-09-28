@@ -44,10 +44,14 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     const [D0, ton] = ARTEN[art];
     for (const r of ["rein", "raus"]) {
       /* Seit Fassung 759 kommen KITT und Viper in einer Kurve und von vorn: das Kommen dauert 5,4 s. */
-      const D = r === "rein" && (art === "kitt" || art === "viper") ? 5400 : D0;
+      /* Seit Fassung 812 fährt die Viper als 3D-Modell: Kommen und Gehen dauern 5,2 s (beim ersten Mal
+         kommen noch die Drehblätter aus dem Netz – dafür beim Aufräumen etwas Luft). */
+      const D = art === "viper" ? 5200 : r === "rein" && art === "kitt" ? 5400 : D0;
       console.log("\n" + art.toUpperCase() + " " + r + "\n");
       await pg.evaluate(() => { window.DMA_TONLOG.length = 0; });
       const los = await pg.evaluate(([a, r]) => window.DMA_AUFTRITT("ich", a, r), [art, r]);
+      /* Fassung 812: die 3D-Viper holt beim ersten Mal ihre Drehblätter – die Uhr läuft ab dem Start der Bühne */
+      if (art === "viper") await pg.waitForFunction(() => document.querySelector(".lc-auftritt"), null, { timeout: 8000 }).catch(() => {});
       const anteile = [0.12, 0.3, 0.45, 0.55, 0.62, 0.72, 0.9];
       /* Die Zeitpunkte zählen ab dem Start — Bildschirmfotos kosten Zeit und dürfen nicht aufsummieren. */
       const start = Date.now(); let t0 = 0; const lagen = [];
@@ -60,7 +64,7 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
             sx: window.scrollX, bl: b.style.left, kl: rk.left, zug: rz ? [Math.round(rz.left), Math.round(rz.top), Math.round(rz.width), Math.round(rz.height)] : null }; }, art));
         if (B) await pg.screenshot({ path: B + "-" + art + "-" + r + "-" + Math.round(f * 100) + ".png" });
       }
-      await tick(Math.max(0, D + 250 - (Date.now() - start)));
+      await tick(Math.max(0, D + 250 + (art === "viper" ? 500 : 0) - (Date.now() - start)));
       const ende = await pg.evaluate(() => ({ buehne: Boolean(document.querySelector(".lc-auftritt")), sicht: getComputedStyle(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .lc-kreis')).visibility,
         toene: window.DMA_TONLOG.map((x) => x.name) }));
       sage(los === true, art + " " + r + ": startet", String(los));

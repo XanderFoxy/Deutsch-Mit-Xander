@@ -374,23 +374,38 @@
     }
     return aus;
   }
-  /* Rad: Reifen (Lauffläche unten und vorn/hinten sichtbar), Flanken, Felge */
+  /* Rad: Reifen (Lauffläche unten und vorn/hinten sichtbar), Flanken, Felge.
+     FASSUNG 812 — XANDER: „dieses Batmobil hätte ich nicht nur in dem Spiel gerne das als
+     fahrendes Auto zu sehen ist, sondern auch als Einstiegsanimation … in diesem 3-D Maßstab".
+     Für das Drehblatt des Auftritts (werkzeug/stadt-backen.js, „drehblaetter") lässt sich
+     jedes Rad LENKEN (opt.lenk, Grad um die Hochachse, + = nach rechts), DREHEN (opt.roll,
+     Grad der Felge) und AUSBLENDEN (opt.unsichtbar: die Flächen bleiben als Maß im Modell –
+     Umriss und Schatten ändern sich nicht –, gemalt wird aber nichts). Ohne diese Angaben
+     ist alles genau wie bisher. */
   Werkstatt.prototype.rad = function (teil, cx, cy, r, breite, aussen, felge, opt) {
+    opt = opt || {};
+    const lenk = (opt.lenk || 0) * Math.PI / 180, roll = (opt.roll || 0) * Math.PI / 180, weg = !!opt.unsichtbar;
+    const lc = Math.cos(lenk), ls = Math.sin(lenk);
+    /* Drehung um die Hochachse durch die Radmitte (Lenkeinschlag) */
+    const D = (p) => { const dx = p[0] - cx, dy = p[1] - cy; return [cx + dx * lc - dy * ls, cy + dx * ls + dy * lc, p[2]]; };
+    const Dv = (v) => [v[0] * lc - v[1] * ls, v[0] * ls + v[1] * lc, v[2]];
+    const nichts = function () {};
+    const leer = weg ? { keinLicht: true } : {};
     const cz = r, xa = cx + aussen * breite / 2, xi = cx - aussen * breite / 2;
     const n = 28, kreis = [];
     for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; kreis.push([Math.sin(a), Math.cos(a)]); }
-    this.teil(teil, Object.assign({ mitte: [cx, cy, cz] }, opt || {}));
+    this.teil(teil, Object.assign({ mitte: [cx, cy, cz] }, opt));
     /* Lauffläche: nur der untere Teil (oben steckt das Rad im Radkasten) */
     const reifen = [26, 26, 28];
     const SEG = 14;
     for (let i = 0; i < SEG; i++) {
       const a1 = Math.PI * (0.5 + i / SEG), a2 = Math.PI * (0.5 + (i + 1) / SEG);
       const p1 = [xi, cy + r * Math.sin(a1), cz + r * Math.cos(a1)], p2 = [xi, cy + r * Math.sin(a2), cz + r * Math.cos(a2)];
-      const q = [p1, plus(p1, [xa - xi, 0, 0]), plus(p2, [xa - xi, 0, 0]), p2];
+      const q = [p1, plus(p1, [xa - xi, 0, 0]), plus(p2, [xa - xi, 0, 0]), p2].map(D);
       const nn = kreuz(minus(q[1], q[0]), minus(q[3], q[0]));
-      const aus = [0, Math.sin((a1 + a2) / 2), Math.cos((a1 + a2) / 2)];
+      const aus = Dv([0, Math.sin((a1 + a2) / 2), Math.cos((a1 + a2) / 2)]);
       const pts = pkt(nn, aus) > 0 ? q : q.slice().reverse();
-      this.platte(teil, pts, function (g, F) {
+      this.platte(teil, pts, weg ? nichts : function (g, F) {
         g.fillStyle = rgb(reifen); g.fillRect(-0.1, -0.1, F.w + 0.2, F.h + 0.2);
         g.strokeStyle = "rgba(0,0,0,0.55)"; g.lineWidth = 0.012;
         for (let k = 1; k < 4; k++) { g.beginPath(); g.moveTo(F.w * k / 4, -0.1); g.lineTo(F.w * k / 4, F.h + 0.1); g.stroke(); }
@@ -398,14 +413,18 @@
         const gr = g.createLinearGradient(0, 0, F.w, 0);
         gr.addColorStop(0, "rgba(0,0,0,0.35)"); gr.addColorStop(0.18, "rgba(0,0,0,0)"); gr.addColorStop(0.82, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,0.35)");
         g.fillStyle = gr; g.fillRect(-0.1, -0.1, F.w + 0.2, F.h + 0.2);
-      }, { name: teil + "-lauf" + i });
+      }, Object.assign({ name: teil + "-lauf" + i }, leer));
     }
     /* Flanken: außen mit Felge, innen dunkel */
+    const achse = Dv([1, 0, 0]);
     const scheibe = (x, nx, malen, name) => {
-      const pts = kreis.map((k) => [x, cy + r * k[0], cz + r * k[1]]);
+      const pts = kreis.map((k) => D([x, cy + r * k[0], cz + r * k[1]]));
       const nn = [0, 0, 0];
-      for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; nn[0] += (a[1] - b[1]) * (a[2] + b[2]); }
-      this.platte(teil, nn[0] * nx > 0 ? pts : pts.slice().reverse(), malen, { name: name });
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i], b = pts[(i + 1) % pts.length];
+        nn[0] += (a[1] - b[1]) * (a[2] + b[2]); nn[1] += (a[2] - b[2]) * (a[0] + b[0]); nn[2] += (a[0] - b[0]) * (a[1] + b[1]);
+      }
+      this.platte(teil, pkt(nn, achse) * nx > 0 ? pts : pts.slice().reverse(), weg ? nichts : malen, Object.assign({ name: name }, leer));
     };
     const RR = r;
     scheibe(xa, aussen, function (g, F) {
@@ -415,7 +434,7 @@
       for (const q of um) { mx += q[0]; my += q[1]; }
       mx /= um.length; my /= um.length;
       g.save(); g.translate(mx, my);
-      felge(g, RR, F, aussen);
+      felge(g, RR, F, aussen, roll * aussen);
       g.restore();
     }, teil + "-aussen");
     scheibe(xi, -aussen, function (g, F) {
@@ -428,6 +447,18 @@
       g.fillStyle = "#222"; g.beginPath(); g.arc(mx, my, RR * 0.25, 0, Math.PI * 2); g.fill();
     }, teil + "-innen");
   };
+  /* FASSUNG 812 — welche Räder das Drehblatt gerade malt: variante „rad:aus" (keines –
+     die Karosserie allein) oder „rad:<vl|vr|hl|hr>:<lenk>:<roll>" (nur dieses eine Rad,
+     gelenkt und gedreht). Ohne variante: alle vier wie immer. */
+  function radWahl(o) {
+    const m = /^rad:(aus|[vh][lr])(?::(-?[\d.]+))?(?::(-?[\d.]+))?$/.exec((o && o.variante) || "");
+    return m ? { nur: m[1] === "aus" ? "" : m[1], lenk: +(m[2] || 0), roll: +(m[3] || 0) } : null;
+  }
+  function radOpt(RW, k) {
+    if (!RW) return {};
+    if (RW.nur !== k) return { unsichtbar: true };
+    return { lenk: k[0] === "v" ? RW.lenk : 0, roll: RW.roll };
+  }
   /* Schrift in der Projektion: z zeigt nach oben, sx wählt die Leserichtung */
   function schrift(g, text, x, y, hoehe, sx, farbe, stil) {
     g.save(); g.translate(x, y); g.scale(sx * hoehe / 100, -hoehe / 100);
@@ -691,8 +722,10 @@
   };
 
   /* Felge: drei breite, leicht gedrehte Speichen, Sechskant-Nabe */
-  function viperFelge(g, r, F, aussen) {
+  function viperFelge(g, r, F, aussen, roll) {
     const L = (f) => beleuchtet(f, F);
+    /* FASSUNG 812: die ganze Felge dreht sich mit dem Rad (Drehblatt des Auftritts) */
+    if (roll) g.rotate(roll);
     g.fillStyle = L([22, 22, 24]); g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.fill();
     /* Reifenflanke mit leichtem Wulst */
     g.strokeStyle = L([44, 44, 46]); g.lineWidth = r * 0.06; g.beginPath(); g.arc(0, 0, r * 0.84, 0, Math.PI * 2); g.stroke();
@@ -906,9 +939,10 @@
         });
       }
 
-      /* ---------- Räder ---------- */
+      /* ---------- Räder (FASSUNG 812: fürs Drehblatt einzeln, gelenkt und gedreht) ---------- */
+      const RW = radWahl(o);
       for (const [cy, r, sp, b, nm] of [[VA, RV, SPV, 0.275, "v"], [HA, RH, SPH, 0.335, "h"]]) {
-        for (const s of [1, -1]) W.rad("rad-" + nm + (s > 0 ? "l" : "r"), s * sp, cy, r, b, s, viperFelge, { ebene: 1 });
+        for (const s of [1, -1]) { const k = nm + (s > 0 ? "l" : "r"); W.rad("rad-" + k, s * sp, cy, r, b, s, viperFelge, Object.assign({ ebene: 1 }, radOpt(RW, k))); }
       }
 
       /* ---------- Antenne auf dem linken hinteren Kotflügel ---------- */
