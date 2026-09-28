@@ -2008,3 +2008,13 @@ XANDER: „dass die Rathaus- und Kirchenglocken zu jeder vollen Stunde nach deut
   - `pruef.uhrVersatz(ms)`
   - `pruef.glockenHoeren(h, rathaus)`: rechnet die Stunde offline für eine Hörprobe.
 - Sonde: `werkzeug/pruefe-800-glocken.js`.
+
+## Fassung 801 — Handeln im kleinen Rahmen, schlank wie das alte Dorf
+
+XANDER: „Da brauchen wir zwei Werkzeuge, einmal zur Ansicht und einmal, dass wir da jetzt an der Stelle was machen wollen … in der ganz kleinen Miniaturansicht muss man dann auch nur auf Einsammeln klicken können" und „dann muss die neue Version in dem kleinen Miniatur-Frame auch genauso schlank sein wie die alte Version … nur in der Landschaftsansicht darf sie etwas größer sein".
+
+- **Ansehen:** Wischen verschiebt, Lupe und die kleine Karte navigieren.
+- **Handeln:** Ein Tipp auf ein Gebäude oder einen Bauplatz in der kleinen Stadt schickt `leicht-haus` an das Spiel. Darunter öffnet sich die gewohnte Karte des Spiels (Einsammeln, Ausbauen, Arbeiter …), nicht mehr ins Bild ragend.
+- **Schlank:** Im kleinen Rahmen lädt `bilder.js` nur die kleinen Bilder (`LB.nurKlein`), und die Nähe ist auf die Lupen-Stufe begrenzt (`K.max` = 2,3 × Überblick). Erst im Vollbild gibt es große Bilder und volle Nähe.
+- `lsAuf` holt die Stadt nach „Alte Version“ nicht mehr zurück. `SZ.sichtbare` ist auch bei einem 0 × 0 großen Rahmen gesetzt.
+- Sonde 799 erweitert: kein großes Bild im Kleinformat; ein Haus-Tipp öffnet die Karte unter dem Bild.

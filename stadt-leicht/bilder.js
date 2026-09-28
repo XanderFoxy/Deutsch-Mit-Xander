@@ -92,7 +92,7 @@
        (FASSUNG 796: vorher 1,3 – dann lud schon die Übersicht große Bilder).
        Erst wenn das kleine da ist, wird das große geholt: so steht das Bild
        sofort und wird danach scharf. Im Sparmodus nie groß. */
-    if (g && (!k || (bedarf > k.s * 1.6 && !LB.spar))) {
+    if (g && (!k || (bedarf > k.s * 1.6 && !LB.spar && !LB.nurKlein))) {
       if (LB.fertig(basis + "_g")) return { name: basis + "_g", meta: g, img: LB.bild(basis + "_g") };
       if (k && !LB.bild(basis + "_k", true)) return null;
       LB.bild(basis + "_g");

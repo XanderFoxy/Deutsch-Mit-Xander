@@ -180,8 +180,13 @@
       wurzel.append(lupeK, vollK);
       /* Ein Viertel auf der kleinen Karte: im kleinen Rahmen mit der Lupen-Stärke, nicht mit der großen Nähe. */
       O.miniNah = () => { if (!document.body.classList.contains("lk-mini-modus")) return Math.max(K.s, 11 * K.dpr); nahSetzen(true); return ueberblick() * 2.2; };
+      /* Schlank wie das alte Dorf: im kleinen Rahmen nur die kleinen Bilder (bilder.js) und höchstens die Lupen-Nähe. */
+      const maxVoll = K.max;
       const modus = (klein) => {
         document.body.classList.toggle("lk-mini-modus", klein);
+        LB.nurKlein = klein;
+        K.max = klein ? Math.max(K.min, ueberblick() * 2.3) : maxVoll;
+        if (K.s > K.max) K.s = K.max;
         if (klein) { if (bauLeiste) bauLeisteZeigen(false); if (leiste && !leiste.hidden) leisteZeigen(false); karte.hidden = true; farbFeld.hidden = true; }
       };
       const erstesMal = q.get("mini") === "1";
@@ -349,6 +354,14 @@
     return plan[platz] ? null : platz;
   }
   function karteZeigen(art, o, platz) {
+    /* FASSUNG 801 — XANDER: „in der ganz kleinen Miniaturansicht muss man dann auch nur auf Einsammeln klicken können und
+       dann muss das funktionieren". Im kleinen Dorfrahmen des Spiels öffnet ein Tipp auf ein Gebäude (oder einen Bauplatz)
+       die gewohnte Karte des Spiels UNTER dem Rahmen – dort sind Einsammeln, Ausbauen, Arbeiter. Wischen bleibt Ansehen. */
+    if (document.body.classList.contains("lk-mini-modus") && window.parent !== window && (art === "haus" || art === "bauplatz")) {
+      const g = art === "haus" ? o && o.spiel : platz;
+      if (g) { try { window.parent.postMessage({ typ: "leicht-haus", g: g }, location.origin); } catch (e) {} }
+      return;
+    }
     karte.hidden = false; karte.innerHTML = "";
     const titel = el("div", "lk-karte-titel"), zeile = el("div", "lk-karte-zeile"), knoepfe = el("div", "lk-karte-knoepfe");
     karte.append(titel, zeile, knoepfe);

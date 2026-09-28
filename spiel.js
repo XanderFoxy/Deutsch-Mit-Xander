@@ -12791,8 +12791,10 @@
       + (neu ? '<button type="button" data-s="stadtvoll" class="sp-stadt-voll">Vollbild</button>' : "");
   }
   /* Der Platzhalter im Rahmen – genau so groß wie das alte Bild (16:10). */
-  function neueStadtRahmenHtml() {
-    return '<div class="sp-dl-rahmen sp-dl-ganz sp-dl-neustadt"><div class="sp-dl-fenster sp-dl-neustadt-platz"><span>Neue Stadt wird geladen …</span></div></div>' + dorfBeschriftungHtml();
+  function neueStadtRahmenHtml(ich) {
+    var wahl = S.dorfWahl && (DORF[S.dorfWahl] || S.dorfWahl === "bahnhof" || S.dorfWahl === "wald") ? S.dorfWahl : "";
+    return '<div class="sp-dl-rahmen sp-dl-ganz sp-dl-neustadt"><div class="sp-dl-fenster sp-dl-neustadt-platz"><span>Neue Stadt wird geladen …</span></div></div>'
+      + (wahl ? (wahl === "bahnhof" ? bahnhofHtml(ich) : wahl === "wald" ? waldStationHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
   }
   /* Die Stadt selbst läuft in einem Rahmen (iframe), der NICHT im Menü steckt: das Menü wird laufend neu angeglichen,
      und ein iframe, das dabei umgehängt wird, lädt neu. Er liegt deshalb am body und folgt Bild für Bild genau dem
@@ -12821,7 +12823,8 @@
     lsFolgen();
   }
   function lsAuf() {
-    if (LSTADT) return;
+    /* Ein noch ausstehender Aufruf aus dem Zeichnen darf die Stadt nach „Alte Version" nicht zurückholen. */
+    if (LSTADT || !stadtNeu()) return;
     var el = document.createElement("div");
     el.className = "sp-lstadt";
     el.innerHTML = '<iframe class="sp-ls-rahmen" title="Neue Stadt" src="stadt-leicht.html?eingebettet=1&mini=1" allow="fullscreen"></iframe>'
@@ -12833,6 +12836,10 @@
       if (!LSTADT || ev.origin !== location.origin || !ev.data || ev.source !== LSTADT.rahmen.contentWindow) return;
       if (ev.data.typ === "leicht-zu") lsVoll(false);
       if (ev.data.typ === "leicht-voll") lsVoll(true);
+      /* Tipp auf ein Haus in der kleinen Stadt: die Karte des Spiels darunter (Einsammeln, Ausbauen …). */
+      if (ev.data.typ === "leicht-haus" && typeof ev.data.g === "string" && (DORF[ev.data.g] || ev.data.g === "bahnhof" || ev.data.g === "wald")) {
+        S.dorfWahl = S.dorfWahl === ev.data.g ? "" : ev.data.g; S.dorfTippWeg = true; ton("swoosh", 0.2); schnellZeichnen(true);
+      }
     };
     LSTADT.fs = function () { if (LSTADT && LSTADT.voll && !(document.fullscreenElement || document.webkitFullscreenElement) && LSTADT.fsWar) lsVoll(false); if (LSTADT) LSTADT.fsWar = Boolean(document.fullscreenElement); };
     window.addEventListener("message", LSTADT.post);
@@ -12980,7 +12987,7 @@
   function dorfBildHtml(ich) {
     var lageP = dorfLageVon(ich);
     /* FASSUNG 704 — gemalt, wenn der Browser malen kann; sonst wie bisher als Vektorbild. */
-    if (stadtNeu()) { setTimeout(lsAuf, 0); return neueStadtRahmenHtml(); }
+    if (stadtNeu()) { setTimeout(lsAuf, 0); return neueStadtRahmenHtml(ich); }
     if (dorfGemalt()) return dorfBildGemaltHtml(ich);
     var d = ich.dorf || {}, lv = ich.level || 1, wahl = S.dorfWahl && DORF[S.dorfWahl] ? S.dorfWahl : "";
     /* Weiter vorne (weiter unten im Bild) liegt über dem, was dahinter steht. */

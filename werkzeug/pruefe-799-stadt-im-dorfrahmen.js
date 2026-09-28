@@ -249,6 +249,24 @@ const sage = (gut, was, zusatz) => {
   const k9 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y }));
   sage(!!k9 && k9.x > 30 && k9.y > 30, "ein Tipp auf ein Viertel der kleinen Karte fährt dorthin", JSON.stringify(k9));
 
+  console.log("\nHANDELN IM KLEINEN RAHMEN (Fassung 801): TIPP AUFS HAUS → KARTE MIT EINSAMMELN DARUNTER\n");
+  sage((await imFrame(() => performance.getEntriesByType("resource").filter((r) => /_g\.webp/.test(r.name)).length)) === 0, "im kleinen Rahmen nur kleine Bilder (kein großes geladen)");
+  await pg.evaluate(() => { const p = document.querySelector(".sp-dl-neustadt-platz"); if (p) p.scrollIntoView({ block: "center" }); }); await tick(200);
+  await imFrame(() => { const K = window.STADT.kamera; window.STADT.leicht.fliegeZu(0, 4, K.s, 10); }); await tick(1200);
+  const ziel = await imFrame(() => { const SZ = window.STADT.szene, K = window.STADT.kamera;
+    for (const e of SZ.sichtbare.slice().reverse()) { if (e.o.art !== "haus" || !e.o.spiel) continue; const m = e.meta;
+      for (let fy = .5; fy < .95; fy += .1) for (let fx = .3; fx < .75; fx += .1) { const px = e.X - m.ax * e.k + m.w * e.k * fx, py = e.Y - m.ay * e.k + m.h * e.k * fy;
+        if (px < 50 * K.dpr || py < 50 * K.dpr || px > K.W - 110 * K.dpr || py > K.H - 10 * K.dpr) continue;
+        if (SZ.treffer(px, py) === e.o) return { x: px / K.dpr, y: py / K.dpr, g: e.o.spiel }; } }
+    return null; });
+  if (ziel) { const off = await lage(".sp-lstadt"); await pg.touchscreen.tap(off.l + ziel.x, off.t + ziel.y); await tick(900); }
+  const st = await pg.evaluate(() => { const e = document.querySelector(".sp-dl-rahmen ~ .sp-dl-station"); if (!e) return null; const p = document.querySelector(".sp-dl-neustadt-platz").getBoundingClientRect(), r = e.getBoundingClientRect();
+    return { name: e.getAttribute("aria-label"), knoepfe: e.querySelectorAll("button").length, frei: r.top >= p.bottom - .5 }; });
+  sage(!!st && st.frei, "die Karte liegt unter dem Stadtbild, nicht darunter versteckt", JSON.stringify(st));
+  sage(!!ziel && !!st && st.knoepfe > 0, "Tipp auf ein Haus in der kleinen Stadt öffnet darunter die Karte des Spiels (mit Knöpfen wie Einsammeln)", JSON.stringify({ ziel, st }));
+  sage(nah(await lage(".sp-lstadt"), await lage(".sp-dl-neustadt-platz")) && (await imFrame(() => window.__marke)) === 42, "die Stadt bleibt dabei im Rahmen und lädt nicht neu");
+  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-haus.png" });
+
   console.log("\nVOLLBILD UND ZURÜCK\n");
   await tippe('[data-s="stadtvoll"]'); await tick(700);
   let v = await lage(".sp-lstadt");

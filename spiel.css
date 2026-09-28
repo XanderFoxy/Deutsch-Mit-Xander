@@ -3047,3 +3047,5 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-ls-zu { display: none; position: absolute; right: max(8px, env(safe-area-inset-right)); top: max(8px, env(safe-area-inset-top)); min-height: 34px; padding: 5px 12px; border-radius: 11px;
   border: 1px solid rgba(243,195,90,.6); background: #7a2e22; color: #fff8e8; font: 700 13px/1.1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
 /* Im Vollbild führt der Zurück-Knopf der Stadt selbst (oben links) zurück; dieser bleibt nur Reserve. */
+/* FASSUNG 801 — über der neuen Stadt liegt ihr eigener Rahmen: die Karte darf nicht ins Bild ragen, sonst verdeckt er sie. */
+.sp-dl-neustadt + .sp-dl-station { margin-top: 8px; }

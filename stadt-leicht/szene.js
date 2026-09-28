@@ -185,7 +185,7 @@
 
   SZ.zeichnen = function (jetzt) {
     /* FASSUNG 799 — im Spiel eingebettet kann der Rahmen kurz 0 × 0 groß sein (Dorf zu, Menü eingeklappt): nichts malen. */
-    if (!(K.W > 0 && K.H > 0)) return;
+    if (!(K.W > 0 && K.H > 0)) { SZ.sichtbare = SZ.sichtbare || []; return; }
     const t = jetzt / 1000, Z = SZ.zeitDaten();
     LB.takt++;
     if (leinwand.width !== K.W || leinwand.height !== K.H) { leinwand.width = K.W; leinwand.height = K.H; }
