@@ -4757,8 +4757,6 @@
     } else if (s === "jahrvorschau") {
       var jv = JAHR_VORSCHAU.findIndex(function (v) { return v[0] === (S.jahrVorschau || ""); });
       S.jahrVorschau = JAHR_VORSCHAU[(jv + 1) % JAHR_VORSCHAU.length][0];
-      /* FASSUNG 788: die Vorschau bleibt nach dem Neuladen stehen (nur auf diesem Gerät), bis man wieder „echt“ wählt. */
-      try { if (S.jahrVorschau) localStorage.setItem("dma_jahr_vorschau", S.jahrVorschau); else localStorage.removeItem("dma_jahr_vorschau"); } catch (e) {}
       ton("holzklopf", 0.2); schnellZeichnen(true); return;
     } else if (s === "dorfzoom") {
       S.dorfKarte = false; ton("swoosh", 0.25);
@@ -10586,7 +10584,7 @@
      Halloween), eine Erntegarbe zu Erntedank, ein Christbaum mit Kerzen im Advent, Ostereier zu Ostern.
      Der Betreiber kann über „Saison" jede Stufe vorab ansehen (S.jahrVorschau, nur auf seinem Gerät). */
   var JAHR_VORSCHAU = [["", "echt"], ["herbst|", "Herbst"], ["herbst|erntedank", "Erntedank"], ["herbst|halloween", "Halloween"],
-    ["winter|advent", "Advent/Weihnachten"], ["winter|", "Winter"], ["fruehling|ostern", "Ostern"], ["fruehling|", "Frühling"], ["sommer|", "Sommer"]];
+    ["winter|advent", "Advent"], ["winter|", "Winter"], ["fruehling|ostern", "Ostern"], ["fruehling|", "Frühling"], ["sommer|", "Sommer"]];
   function osterSonntag(j) {
     var a = j % 19, b = Math.floor(j / 100), c = j % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25),
       g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4,
@@ -10594,7 +10592,6 @@
     return new Date(j, mo - 1, ((h + l - 7 * m + 114) % 31) + 1);
   }
   function dorfJahr(d) {
-    if (S.jahrVorschau == null) { try { var jvg = localStorage.getItem("dma_jahr_vorschau"); S.jahrVorschau = jvg && JAHR_VORSCHAU.some(function (v) { return v[0] === jvg; }) ? jvg : ""; } catch (e) { S.jahrVorschau = ""; } }
     if (S.jahrVorschau) { var v = S.jahrVorschau.split("|"); return { zeit: v[0], fest: v[1] || "", vorschau: true }; }
     d = d || new Date();
     var mo = d.getMonth() + 1, tag = d.getDate(), zeit = mo >= 3 && mo <= 5 ? "fruehling" : mo <= 8 && mo >= 6 ? "sommer" : mo >= 9 && mo <= 11 ? "herbst" : "winter", fest = "";
@@ -10623,8 +10620,7 @@
       c.beginPath(); c.moveTo(x - r * .55, y - r * .55); c.quadraticCurveTo(x, y - r * .1, x + r * .55, y - r * .55); c.quadraticCurveTo(x, y - r * .32, x - r * .55, y - r * .55); c.fill();
     }
     form(g);
-    /* FASSUNG 788: der Schein bleibt klein – sechs Kürbisse im Kürbisberg wurden sonst ein greller Fleck. */
-    DM.jahrLichter.push({ x: x, y: y - r * .65, r: Math.min(r * 2.4, 6), farbe: "rgba(255,160,60,.55)", form: form });
+    DM.jahrLichter.push({ x: x, y: y - r * .65, r: r * 4.5, farbe: "rgba(255,170,60,.7)", form: form });
   }
   function dmGarbe(g, x, y) {
     g.fillStyle = "rgba(40,30,20,.25)"; g.beginPath(); g.ellipse(x, y + .3, 3.4, .9, 0, 0, 7); g.fill();
@@ -10663,175 +10659,21 @@
     g.fillStyle = f[0]; g.beginPath(); g.ellipse(x, y - .9, .8, 1.05, (n % 3 - 1) * .3, 0, 7); g.fill();
     g.strokeStyle = f[1]; g.lineWidth = .28; g.beginPath(); g.moveTo(x - .75, y - .9); g.quadraticCurveTo(x, y - .5, x + .75, y - .9); g.stroke();
   }
-  /* =================================================================
-     FASSUNG 788 — FESTSCHMUCK, DEN MAN AUCH SIEHT
-     XANDER (Funk 202): „warum sehe ich immer noch nicht die Halloween an sich die weihnachtsansicht und für den einzelnen
-     Jahreszeiten keine Dekoration". Gemessen: die Kürbisse aus Fassung 733 hatten 1,8 Einheiten Radius – auf dem Handy
-     rund 3 Pixel. Jetzt hat jede Jahreszeit Stücke in Hausgröße:
-       Herbst     – Kürbisse vor jedem Haus (Halloween: mit Gesicht, dazu Kürbisberg, Fledermäuse, orange Lichterketten)
-       Erntedank  – große Garben und ein Erntewagen
-       Advent     – Schnee, großer Christbaum, zwei Weihnachtsmarktbuden, warme Lichterketten an jedem Haus
-       Winter     – Schnee, Schneemann
-       Ostern     – Osterstrauch mit bunten Eiern, Osterhase, Eier im Gras
-       Frühling   – Maibaum am Rathaus, Blumenbeete vor den Häusern
-       Sommer     – Biergarten mit Sonnenschirmen
-     Alles, was leuchtet, kommt in DM.jahrLichter und glüht nachts.
-     ================================================================= */
-  var JAHR_PLATZ = [197, 112];
-  function dmRgba(hex, a) { var h = String(hex).replace("#", ""); return "rgba(" + parseInt(h.slice(0, 2), 16) + "," + parseInt(h.slice(2, 4), 16) + "," + parseInt(h.slice(4, 6), 16) + "," + a + ")"; }
-  function dmGross(g, f, x, y, k) { g.save(); g.translate(x, y); g.scale(k, k); g.translate(-x, -y); f(g, x, y); g.restore(); }
-  function dmFledermaus(g, x, y, k) {
-    g.fillStyle = "#1c1424"; g.beginPath();
-    g.moveTo(x, y - .6 * k);
-    g.quadraticCurveTo(x - 1.6 * k, y - 2.2 * k, x - 4.2 * k, y - 1.4 * k); g.quadraticCurveTo(x - 3.4 * k, y - .6 * k, x - 3.6 * k, y + .2 * k);
-    g.quadraticCurveTo(x - 2.6 * k, y - .3 * k, x - 2.2 * k, y + .5 * k); g.quadraticCurveTo(x - 1.4 * k, y, x - .8 * k, y + .7 * k);
-    g.lineTo(x + .8 * k, y + .7 * k); g.quadraticCurveTo(x + 1.4 * k, y, x + 2.2 * k, y + .5 * k); g.quadraticCurveTo(x + 2.6 * k, y - .3 * k, x + 3.6 * k, y + .2 * k);
-    g.quadraticCurveTo(x + 3.4 * k, y - .6 * k, x + 4.2 * k, y - 1.4 * k); g.quadraticCurveTo(x + 1.6 * k, y - 2.2 * k, x, y - .6 * k); g.fill();
-    g.beginPath(); g.ellipse(x, y, .75 * k, 1 * k, 0, 0, 7); g.fill();
-    g.beginPath(); g.moveTo(x - .6 * k, y - .7 * k); g.lineTo(x - .45 * k, y - 1.5 * k); g.lineTo(x - .15 * k, y - .85 * k); g.moveTo(x + .6 * k, y - .7 * k); g.lineTo(x + .45 * k, y - 1.5 * k); g.lineTo(x + .15 * k, y - .85 * k); g.fill();
-  }
-  /* Eine durchhängende Lichterkette mit n Birnen; leuchtet nachts. */
-  function dmLichterkette(g, x0, y0, x1, y1, durch, farben, n) {
-    n = n || 8;
-    function punkt(t) { return [x0 + (x1 - x0) * t, y0 + (y1 - y0) * t + Math.sin(t * Math.PI) * durch]; }
-    g.strokeStyle = "rgba(30,30,28,.75)"; g.lineWidth = .28; g.beginPath();
-    for (var i = 0; i <= 16; i++) { var p = punkt(i / 16); g[i ? "lineTo" : "moveTo"](p[0], p[1]); } g.stroke();
-    for (var b = 1; b < n; b++) {
-      var q = punkt(b / n), f = farben[b % farben.length];
-      g.fillStyle = f; g.beginPath(); g.ellipse(q[0], q[1] + .55, .5, .7, 0, 0, 7); g.fill();
-      g.fillStyle = "rgba(255,255,255,.55)"; g.beginPath(); g.arc(q[0] - .15, q[1] + .35, .17, 0, 7); g.fill();
-      (function (qx, qy, fa) { DM.jahrLichter.push({ x: qx, y: qy + .55, r: 3.4, farbe: dmRgba(fa, .75), form: function (c) { c.fillStyle = fa; c.beginPath(); c.ellipse(qx, qy + .55, .5, .7, 0, 0, 7); c.fill(); } }); })(q[0], q[1], f);
-    }
-  }
-  function dmBude(g, x, y, dach) {
-    g.fillStyle = "rgba(30,25,20,.3)"; g.beginPath(); g.ellipse(x, y + .4, 8, 1.4, 0, 0, 7); g.fill();
-    g.fillStyle = "#7a4a26"; g.fillRect(x - 6.5, y - 8, 13, 8);
-    g.fillStyle = "#5c3418"; for (var i = -6; i < 6.5; i += 1.6) g.fillRect(x + i, y - 8, .35, 8);
-    g.fillStyle = "#e9d2a0"; g.fillRect(x - 6.5, y - 4.2, 13, 1.1);
-    g.fillStyle = "#3a2410"; g.fillRect(x - 5.4, y - 7.2, 10.8, 3);
-    [["#c8322a", -4], ["#e8c040", -1.4], ["#6a9a3a", 1.2], ["#c8322a", 3.8]].forEach(function (w) { g.fillStyle = w[0]; g.beginPath(); g.arc(x + w[1], y - 5.2, .7, 0, 7); g.fill(); });
-    g.fillStyle = dach; g.beginPath(); g.moveTo(x - 8, y - 8); g.lineTo(x, y - 13); g.lineTo(x + 8, y - 8); g.closePath(); g.fill();
-    g.fillStyle = "#fff"; for (var s = 0; s < 4; s++) { g.beginPath(); g.moveTo(x - 8 + s * 4, y - 8); g.lineTo(x - 6 + s * 4, y - 8); g.lineTo(x - 6 + s * 4 + (s < 2 ? 1.2 : -1.2) * 0, y - 9.2 + Math.abs(s - 1.5) * -.2); g.lineTo(x - 8 + s * 4, y - 9.2); g.closePath(); g.fill(); }
-    if (DM.schneeJetzt) { g.fillStyle = "rgba(246,249,255,.95)"; g.beginPath(); g.moveTo(x - 7.4, y - 8.6); g.lineTo(x, y - 13.2); g.lineTo(x + 7.4, y - 8.6); g.lineTo(x + 4, y - 10.2); g.lineTo(x, y - 12); g.lineTo(x - 4, y - 10.4); g.closePath(); g.fill(); }
-    dmLichterkette(g, x - 7.5, y - 8, x + 7.5, y - 8, 1.1, ["#ffe7a0", "#fff2c8"], 7);
-  }
-  function dmSchneemann(g, x, y) {
-    g.fillStyle = "rgba(90,110,140,.3)"; g.beginPath(); g.ellipse(x, y + .3, 4.2, 1.1, 0, 0, 7); g.fill();
-    [[0, 3.3], [-6, 2.5], [-10.6, 1.8]].forEach(function (k) { var kg = g.createRadialGradient(x - k[1] * .35, y + k[0] - k[1] * 1.4, .2, x, y + k[0] - k[1], k[1]); kg.addColorStop(0, "#ffffff"); kg.addColorStop(1, "#cfd9e8"); g.fillStyle = kg; g.beginPath(); g.arc(x, y + k[0] - k[1], k[1], 0, 7); g.fill(); });
-    g.fillStyle = "#222"; g.fillRect(x - 1.6, y - 16.4, 3.2, 2.4); g.fillRect(x - 2.4, y - 14.2, 4.8, .5);
-    g.fillStyle = "#e8741c"; g.beginPath(); g.moveTo(x + .2, y - 12.3); g.lineTo(x + 2.4, y - 11.9); g.lineTo(x + .2, y - 11.6); g.closePath(); g.fill();
-    g.fillStyle = "#222"; [[-.7, -12.9], [.7, -12.9], [0, -7.5], [0, -6.1], [0, -4.7]].forEach(function (a) { g.beginPath(); g.arc(x + a[0], y + a[1], .28, 0, 7); g.fill(); });
-    g.fillStyle = "#c8322a"; g.fillRect(x - 2, y - 10.3, 4, .9); g.fillRect(x + 1, y - 10.3, .9, 3);
-    g.strokeStyle = "#5a3a22"; g.lineWidth = .35; g.beginPath(); g.moveTo(x - 2.3, y - 7.5); g.lineTo(x - 5, y - 9.5); g.moveTo(x + 2.3, y - 7.5); g.lineTo(x + 5, y - 9.6); g.stroke();
-  }
-  function dmOsterstrauch(g, x, y) {
-    g.fillStyle = "rgba(40,30,20,.28)"; g.beginPath(); g.ellipse(x, y + .3, 5.5, 1.3, 0, 0, 7); g.fill();
-    g.fillStyle = "#8a5a36"; g.beginPath(); g.moveTo(x - 3, y); g.lineTo(x + 3, y); g.lineTo(x + 2.3, y - 3.4); g.lineTo(x - 2.3, y - 3.4); g.closePath(); g.fill();
-    g.strokeStyle = "#6a4a2a"; g.lineCap = "round";
-    var aeste = [[-7, -16], [-4, -19], [0, -21], [4, -19], [7, -15], [-9, -11], [9, -11]];
-    aeste.forEach(function (a) { g.lineWidth = .45; g.beginPath(); g.moveTo(x, y - 3.2); g.quadraticCurveTo(x + a[0] * .3, y - 3.2 + a[1] * .55, x + a[0], y + a[1] * .5 - 3); g.stroke(); });
-    g.fillStyle = "#b8e090"; aeste.forEach(function (a, i) { g.beginPath(); g.ellipse(x + a[0] * .7, y + a[1] * .42 - 3, .6, .3, i, 0, 7); g.fill(); });
-    aeste.forEach(function (a, i) { var ex = x + a[0] * .85, ey = y + a[1] * .47 - 2.2; g.strokeStyle = "rgba(60,40,20,.6)"; g.lineWidth = .15; g.beginPath(); g.moveTo(ex, ey - 1); g.lineTo(ex, ey - .3); g.stroke(); dmOsterei(g, ex, ey + 1.1, i); });
-  }
-  function dmHase(g, x, y) {
-    g.fillStyle = "rgba(40,30,20,.25)"; g.beginPath(); g.ellipse(x, y + .2, 3, .8, 0, 0, 7); g.fill();
-    g.fillStyle = "#b08a64"; g.beginPath(); g.ellipse(x, y - 2, 2.4, 2.2, 0, 0, 7); g.fill();
-    g.beginPath(); g.ellipse(x + 1.8, y - 4.5, 1.4, 1.3, 0, 0, 7); g.fill();
-    g.beginPath(); g.ellipse(x + 1.4, y - 7.4, .45, 1.9, -.12, 0, 7); g.fill(); g.beginPath(); g.ellipse(x + 2.4, y - 7.2, .45, 1.9, .2, 0, 7); g.fill();
-    g.fillStyle = "#f0c8c0"; g.beginPath(); g.ellipse(x + 1.4, y - 7.2, .18, 1.2, -.12, 0, 7); g.fill();
-    g.fillStyle = "#fff"; g.beginPath(); g.arc(x - 2.2, y - 1.6, .8, 0, 7); g.fill();
-    g.fillStyle = "#222"; g.beginPath(); g.arc(x + 2.3, y - 4.7, .22, 0, 7); g.fill();
-  }
-  function dmMaibaum(g, x, y) {
-    g.fillStyle = "rgba(40,30,20,.3)"; g.beginPath(); g.ellipse(x, y + .3, 3, .8, 0, 0, 7); g.fill();
-    for (var i = 0; i < 12; i++) { g.fillStyle = i % 2 ? "#ffffff" : "#2f6ab8"; g.beginPath(); g.moveTo(x - .75, y - i * 2.6); g.lineTo(x + .75, y - i * 2.6 - 1); g.lineTo(x + .75, y - i * 2.6 - 3.6); g.lineTo(x - .75, y - i * 2.6 - 2.6); g.closePath(); g.fill(); }
-    g.strokeStyle = "#3a7a3a"; g.lineWidth = .9; g.beginPath(); g.ellipse(x, y - 27, 3.6, 1.2, 0, 0, 7); g.stroke();
-    ["#c8322a", "#f2c84a", "#2f6ab8", "#e86aa0"].forEach(function (f, i) { g.strokeStyle = f; g.lineWidth = .35; g.beginPath(); g.moveTo(x - 3 + i * 2, y - 26.6); g.quadraticCurveTo(x - 3.4 + i * 2.2, y - 22, x - 4 + i * 2.6, y - 18.5); g.stroke(); });
-    g.fillStyle = "#2f6a3a"; g.beginPath(); g.moveTo(x - 2, y - 30); g.quadraticCurveTo(x, y - 36, x + 2, y - 30); g.closePath(); g.fill();
-    [[-6, -22], [6, -20]].forEach(function (s) { g.fillStyle = "#6a4a2a"; g.fillRect(x + s[0] * .15 - (s[0] < 0 ? 5 : 0), y + s[1], 5, .5); g.fillStyle = "#f2e2b0"; g.fillRect(x + s[0] - 1.6, y + s[1] - 2.2, 3.2, 2.2); });
-  }
-  function dmBlumen(g, x, y, n) {
-    var F = ["#e84a5f", "#f6d24a", "#ffffff", "#b27ae8", "#ff8a3a"];
-    for (var i = 0; i < 7; i++) {
-      var bx = x + (dmHash(i, n, 788) - .5) * 7, by = y + (dmHash(n, i, 788) - .5) * 2;
-      g.strokeStyle = "#3f7a2a"; g.lineWidth = .25; g.beginPath(); g.moveTo(bx, by); g.lineTo(bx, by - 1.6); g.stroke();
-      g.fillStyle = F[(i + n) % F.length]; g.beginPath(); g.arc(bx, by - 1.9, .75, 0, 7); g.fill();
-      g.fillStyle = "#f2c84a"; g.beginPath(); g.arc(bx, by - 1.9, .25, 0, 7); g.fill();
-    }
-  }
-  function dmSchirm(g, x, y, farbe) {
-    g.fillStyle = "rgba(40,30,20,.25)"; g.beginPath(); g.ellipse(x, y + .3, 6, 1.4, 0, 0, 7); g.fill();
-    g.fillStyle = "#8a6a44"; g.fillRect(x - 4.5, y - 3, 9, .8); g.fillRect(x - 4, y - 2.2, .5, 2.2); g.fillRect(x + 3.5, y - 2.2, .5, 2.2);
-    g.fillRect(x - 5.5, y - 1.4, 2.6, .5); g.fillRect(x + 2.9, y - 1.4, 2.6, .5);
-    g.fillStyle = "#e8c860"; g.beginPath(); g.ellipse(x - 2, y - 3.3, .6, .4, 0, 0, 7); g.fill(); g.fillStyle = "#fff"; g.fillRect(x - 2.5, y - 3.9, 1, .4);
-    g.fillStyle = "#6a6a6a"; g.fillRect(x - .2, y - 10, .4, 7.4);
-    g.fillStyle = farbe; g.beginPath(); g.moveTo(x - 7, y - 8.6); g.quadraticCurveTo(x, y - 13, x + 7, y - 8.6); g.closePath(); g.fill();
-    g.fillStyle = "rgba(255,255,255,.85)"; [-4.5, -1, 2.5].forEach(function (o) { g.beginPath(); g.moveTo(x + o, y - 8.8); g.quadraticCurveTo(x + o * .45 + .6, y - 11.8, x + o + 1.6, y - 8.8); g.closePath(); g.fill(); });
-  }
-  function dmGeist(g, x, y, k) {
-    g.save(); g.globalAlpha = .88;
-    var gg = g.createLinearGradient(x, y - 7 * k, x, y); gg.addColorStop(0, "#ffffff"); gg.addColorStop(1, "rgba(230,236,255,.55)");
-    g.fillStyle = gg; g.beginPath(); g.moveTo(x - 3 * k, y);
-    g.quadraticCurveTo(x - 3.4 * k, y - 7.5 * k, x, y - 7.8 * k); g.quadraticCurveTo(x + 3.4 * k, y - 7.5 * k, x + 3 * k, y);
-    for (var i = 0; i < 4; i++) g.quadraticCurveTo(x + 3 * k - (i + .5) * 1.5 * k, y - (i % 2 ? -1 : 1.1) * k, x + 3 * k - (i + 1) * 1.5 * k, y);
-    g.closePath(); g.fill(); g.restore();
-    g.fillStyle = "#1c1424"; g.beginPath(); g.ellipse(x - 1 * k, y - 5.2 * k, .45 * k, .7 * k, 0, 0, 7); g.fill(); g.beginPath(); g.ellipse(x + 1 * k, y - 5.2 * k, .45 * k, .7 * k, 0, 0, 7); g.fill();
-    g.beginPath(); g.ellipse(x, y - 3.4 * k, .6 * k, .8 * k, 0, 0, 7); g.fill();
-  }
-  function dmWimpel(g, x0, y0, x1, y1, durch, farben) {
-    g.strokeStyle = "rgba(60,50,40,.7)"; g.lineWidth = .25; g.beginPath();
-    for (var i = 0; i <= 16; i++) { var t = i / 16; g[i ? "lineTo" : "moveTo"](x0 + (x1 - x0) * t, y0 + (y1 - y0) * t + Math.sin(t * Math.PI) * durch); } g.stroke();
-    for (var w = 1; w < 12; w++) { var t2 = w / 12, wx = x0 + (x1 - x0) * t2, wy = y0 + (y1 - y0) * t2 + Math.sin(t2 * Math.PI) * durch;
-      g.fillStyle = farben[w % farben.length]; g.beginPath(); g.moveTo(wx - 1.1, wy); g.lineTo(wx + 1.1, wy); g.lineTo(wx, wy + 2.4); g.closePath(); g.fill(); }
-  }
   function dmJahrDeko(g, dorf, lage) {
     var j = DM.jahr || {}, gebaut = Object.keys(lage).filter(function (k) { var d = (dorf || {})[k]; return d && d.stufe > 0; });
-    var rh = lage.rathaus, rhSt = ((dorf || {}).rathaus || {}).stufe > 0, P = JAHR_PLATZ, halloween = j.fest === "halloween", advent = j.fest === "advent";
-    var haeuser = gebaut.filter(function (k) { return k !== "muehle" && k !== "bergwerk"; });
-    /* Vor jedem Haus: rechts neben der Tür, auf der Wiese. */
-    function vorHaus(k) { var q = lage[k], u = dmUmriss(k, dorf[k].stufe); return [q[0] + u[2] * .55 + 2, q[1] + 2.4]; }
-    function fassade(k) { var q = lage[k], u = dmUmriss(k, dorf[k].stufe); return [q[0] + u[0] * .8, q[0] + u[2] * .5, q[1] + u[1] * .42]; }
-    if (j.zeit === "herbst") haeuser.forEach(function (k, n) {
-      var v = vorHaus(k);
-      dmKuerbis(g, v[0], v[1], 2.9 + dmHash(n, 3, 788) * .6, halloween);
-      if (halloween || n % 2 === 0) dmKuerbis(g, v[0] + 4.6, v[1] + .8, 1.9, halloween);
+    var rh = lage.rathaus, rhSt = ((dorf || {}).rathaus || {}).stufe > 0;
+    if (j.zeit === "herbst") gebaut.forEach(function (k, n) {
+      if (k === "muehle" || k === "bergwerk") return;
+      var q = lage[k], u = dmUmriss(k, dorf[k].stufe);
+      dmKuerbis(g, q[0] + u[2] * .55 + 1.5, q[1] + 2, 1.8 + dmHash(n, 3, 733) * .5, j.fest === "halloween");
+      if (j.fest === "halloween" && n % 2 === 0) dmKuerbis(g, q[0] + u[2] * .55 + 4.2, q[1] + 2.6, 1.1, true);
     });
-    if (halloween) {
-      /* Halloween-Himmel: oben violett, am Horizont orange; dazu ein großer Vollmond. */
-      var hh = g.createLinearGradient(0, 0, 0, 70); hh.addColorStop(0, "rgba(88,40,128,.42)"); hh.addColorStop(.6, "rgba(200,90,60,.2)"); hh.addColorStop(1, "rgba(255,140,40,0)");
-      g.fillStyle = hh; g.fillRect(0, 0, 320, 70);
-      var mg = g.createRadialGradient(248, 38, 1, 248, 38, 14); mg.addColorStop(0, "rgba(255,236,170,.95)"); mg.addColorStop(.45, "rgba(255,220,140,.85)"); mg.addColorStop(.5, "rgba(255,200,120,.35)"); mg.addColorStop(1, "rgba(255,190,110,0)");
-      g.fillStyle = mg; g.beginPath(); g.arc(248, 38, 14, 0, 7); g.fill();
-      g.fillStyle = "rgba(210,170,100,.35)"; [[245, 35, 1.4], [251, 40, 1], [247, 42, .7]].forEach(function (c) { g.beginPath(); g.arc(c[0], c[1], c[2], 0, 7); g.fill(); });
-      dmGeist(g, 72, 96, 1.5); dmGeist(g, 268, 128, 1.3);
-      haeuser.forEach(function (k) { var f = fassade(k); dmLichterkette(g, f[0], f[2], f[1], f[2], 1.6, ["#ff8a1c", "#b04ad8", "#ffb040"], 7); });
-      if (rhSt) { [[-6, 0, 3.2], [0, .6, 3.6], [6, 0, 3.2], [-3, -4.6, 2.9], [3.2, -4.4, 2.9], [0, -8.8, 2.6]].forEach(function (k) { dmKuerbis(g, P[0] + k[0], P[1] + k[1], k[2], true); }); }
-      [[56, 40, 1.1], [98, 36, 1], [128, 44, .9], [236, 36, 1.3], [276, 40, 1], [206, 46, .8]].forEach(function (f) { dmFledermaus(g, f[0], f[1], f[2]); });
-    }
-    if (j.fest === "erntedank" && rhSt) { dmGross(g, dmGarbe, P[0] - 6, P[1], 2); dmGross(g, dmGarbe, P[0] + 7, P[1] + 3, 2); }
-    if (advent) {
-      haeuser.forEach(function (k) { var f = fassade(k); dmLichterkette(g, f[0], f[2], f[1], f[2], 1.6, ["#ffe7a0", "#fff4d0", "#ffd070"], 8); });
-      if (rhSt) {
-        var zahl = DM.jahrLichter.length, k2 = 1.9;
-        dmGross(g, dmChristbaum, P[0], P[1] + 2, k2);
-        DM.jahrLichter.slice(zahl).forEach(function (L) { var x = L.x, y = L.y; L.x = P[0] + (x - P[0]) * k2; L.y = P[1] + 2 + (y - P[1] - 2) * k2; L.r = 4.5; L.form = function (c) { c.fillStyle = "#fff0b0"; c.beginPath(); c.arc(L.x, L.y - .05, .6, 0, 7); c.fill(); }; });
-        dmBude(g, 232, 106, "#b8322a"); dmBude(g, 252, 92, "#2f6a3a");
-      }
-    }
-    if (j.zeit === "winter" && !advent) dmSchneemann(g, P[0], P[1] + 2);
-    if (j.fest === "ostern") {
-      if (rhSt) { dmWimpel(g, 176, 96, 222, 100, 4, ["#f28ab0", "#7ac8e8", "#f6d24a", "#9ad86a", "#b89ae8"]); dmGross(g, dmOsterstrauch, P[0], P[1] + 2, 1.9); dmGross(g, dmHase, P[0] + 14, P[1] + 5, 1.9); }
-      [[126, 120], [132, 130], [144, 114], [84, 128], [100, 129], [226, 112], [240, 150], [60, 140], [92, 142], [178, 136], [206, 150], [256, 124], [40, 128], [116, 150]].forEach(function (p, e) { dmGross(g, dmOsterei, p[0], p[1], 2.8); });
-    }
-    if (j.zeit === "fruehling") {
-      if (rhSt && j.fest !== "ostern") { dmWimpel(g, 176, 96, 222, 100, 4, ["#2f6ab8", "#ffffff"]); dmMaibaum(g, P[0], P[1] + 2); }
-      haeuser.forEach(function (k, n) { var v = vorHaus(k); dmBlumen(g, v[0] + 1, v[1], n); });
-    }
-    if (j.zeit === "sommer") {
-      var ga = lage.gasthaus && (dorf.gasthaus || {}).stufe > 0 ? [lage.gasthaus[0] + 22, lage.gasthaus[1] + 4] : P;
-      dmSchirm(g, ga[0], ga[1], "#c8322a"); dmSchirm(g, ga[0] + 14, ga[1] + 3, "#2f6ab8");
-      haeuser.forEach(function (k, n) { if (n % 2 === 0) { var v = vorHaus(k); dmBlumen(g, v[0] + 1, v[1], n); } });
-    }
+    /* Der Festschmuck steht auf freier Wiese rechts vom Rathaus (links liegt das „fertig"-Schild der Bäckerei, davor der Bach). */
+    function gross(f, x, y, k) { g.save(); g.translate(x, y); g.scale(k, k); g.translate(-x, -y); f(g, x, y); g.restore(); }
+    if (j.fest === "erntedank" && rhSt) { gross(dmGarbe, 188, 104, 1.3); gross(dmGarbe, 205, 110, 1.3); }
+    if (j.fest === "advent" && rhSt) { var zahl = DM.jahrLichter.length; gross(dmChristbaum, 197, 110, 1.15);
+      DM.jahrLichter.slice(zahl).forEach(function (L) { var x = L.x, y = L.y; L.x = 197 + (x - 197) * 1.15; L.y = 110 + (y - 110) * 1.15; L.form = function (c) { c.fillStyle = "#fff0b0"; c.beginPath(); c.arc(L.x, L.y - .05, .37, 0, 7); c.fill(); }; }); }
+    if (j.fest === "ostern") [[126, 120], [132, 130], [144, 114], [186, 108], [194, 116], [204, 104], [212, 111], [84, 128], [100, 129]].forEach(function (p, e) { gross(dmOsterei, p[0], p[1], 1.5); });
     return rh;
   }
   /* FASSUNG 728 — XANDER (Funk 177): „auf jedem Haus hast du in der Mitte irgendwo so ein lichtsymbol wo gar keine Lampe ist
@@ -10972,12 +10814,9 @@
     var K = DM.kacheln, W = Math.round(breitePx), H = Math.round(breitePx * 200 / 320), s = W / 320;
     leinwand.width = W; leinwand.height = H;
     var g = leinwand.getContext("2d"); g.setTransform(s, 0, 0, s, 0, 0); g.imageSmoothingEnabled = true;
-    DM.jahr = dorfJahr(); DM.jahrLichter = [];
-    /* FASSUNG 788 — XANDER (Funk 202): „warum sehe ich immer noch nicht die Halloween an sich die weihnachtsansicht …
-       du hast mal mit Schnee angefangen und getestet aber ich sehe nichts davon". Schnee lag nur bei echtem Schneewetter.
-       Im Winter (und im Advent) liegt er jetzt immer – Dächer, Wiese, Wege. */
-    DM.nachtJetzt = !!nacht; DM.schneeJetzt = !!schnee || DM.jahr.zeit === "winter";
+    DM.nachtJetzt = !!nacht; DM.schneeJetzt = !!schnee;
     DM.licht = { fenster: [], tueren: [] }; DM.hausJetzt = null;
+    DM.jahr = dorfJahr(); DM.jahrLichter = [];
     dmLandschaft(g, K, s); if (!nacht) dmWolken(g);
     var punkte = {};
     /* FASSUNG 722 — XANDER (Funk 167): „immer eine Laterne die hinter deinem Haus steht die die Zeit irgendwie übers Haus

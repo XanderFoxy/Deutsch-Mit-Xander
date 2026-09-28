@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 733: JAHRESZEITEN UND FESTE IM DORF (Funk 169)
+   SONDE — FASSUNG 788 (Basis 733): JAHRESZEITEN UND FESTE IM DORF (Funk 169)
    ---------------------------------------------------------------------
    XANDER (Funk 169): „ich möchte das schon mal in der Vorschau sehen wie
    sowas aussieht wenn die Stadt dann geschmückt ist".
@@ -196,37 +196,45 @@ const sage = (gut, was, zusatz) => {
   await tippe('.sp-schnell [data-s="makro"]'); await tick(1200);
   let r = await pg.evaluate(() => !!document.querySelector('[data-s="jahrvorschau"]'));
   sage(!r, "wer nicht Betreiber ist, sieht keinen „Saison“-Knopf");
-  await pg.evaluate(() => { window.DMA_SPIEL.pruef.jahrVorschau("", true); window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(600);
-  const knopf = () => pg.evaluate(() => { const k = document.querySelector('[data-s="jahrvorschau"]'), c = document.querySelector(".sp-dl-mal"); return { text: k && k.textContent, sig: c && c.dataset.sig, gemalt: c && c.dataset.gemalt }; });
-  r = await knopf();
-  sage(r.text === "Saison: echt", "Betreiber: Knopf „Saison: echt“ unter dem Bild", JSON.stringify(r.text));
-  const bild = async (name) => { if (!process.env.BILD) return; await pg.evaluate(() => document.querySelector(".sp-dl-rahmen").scrollIntoView({ block: "start" })); await tick(350); await (await pg.$(".sp-dl-rahmen")).screenshot({ path: process.env.BILD + "-" + name + ".png" }); };
-  const W = (tag) => pg.evaluate((tag) => { const S = window.DMA_SPIEL.pruef.zustand(); S.wetterTest = { code: 0, tag, temp: 12, ort: "Döbeln" }; window.DMA_SPIEL.pruef.schnellZeichnen(true); }, tag);
-  await W(true); await tick(600);
-  const sigs = {};
-  for (const [v, name] of [["herbst|", "Herbst"], ["herbst|erntedank", "Erntedank"], ["herbst|halloween", "Halloween"], ["winter|advent", "Advent/Weihnachten"], ["winter|", "Winter"], ["fruehling|ostern", "Ostern"], ["fruehling|", "Frühling"], ["sommer|", "Sommer"]]) {
-    await tippe('[data-s="jahrvorschau"]'); await tick(900);
-    r = await knopf();
-    sigs[r.sig] = 1;
-    sage(r.text === "Saison: " + name && r.gemalt && r.gemalt.indexOf(r.sig) === 0, "Tipp → „" + name + "“, Bild neu gemalt", JSON.stringify(r));
-    await bild(v.replace("|", "-") || "echt");
-  }
-  sage(Object.keys(sigs).length === 8, "jede Stufe malt ein eigenes Bild", Object.keys(sigs).length + " Bilder");
-  await tippe('[data-s="jahrvorschau"]'); await tick(500);
-  r = await knopf();
-  sage(r.text === "Saison: echt" && /^[^J]*J/.test(r.sig), "nach Sommer zurück auf „echt“ (heutiges Datum)", JSON.stringify(r));
-  console.log("\nFESTLICHTER IN DER NACHT\n");
-  await W(false);
-  for (const [v, n] of [["herbst|halloween", "Kürbisgesichter"], ["winter|advent", "Christbaumkerzen"]]) {
-    await pg.evaluate((v) => { window.DMA_SPIEL.pruef.jahrVorschau(v); window.DMA_SPIEL.pruef.dmNeu(); window.DMA_SPIEL.pruef.schnellZeichnen(true); }, v); await tick(1200);
-    r = await P("jahrLichter");
-    sage(r >= 3, n + " leuchten nachts", r + " Lichter");
-    await bild(v.replace("|", "-") + "-nacht");
-  }
-  await pg.evaluate(() => { window.DMA_SPIEL.pruef.jahrVorschau("herbst|"); window.DMA_SPIEL.pruef.dmNeu(); window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(1200);
-  r = await P("jahrLichter");
-  sage(r === 0, "Herbst ohne Halloween: Kürbisse ohne Gesicht, kein Leuchten", r + " Lichter");
-  await pg.evaluate(() => { window.DMA_SPIEL.pruef.jahrVorschau("", false); window.DMA_SPIEL.pruef.zustand().wetterTest = null; });
+  console.log("\nFASSUNG 788: FESTSCHMUCK, DEN MAN SIEHT (Funk 202)\n");
+  await pg.evaluate(() => { window.DMA_SPIEL.pruef.jahrVorschau("", true); const S = window.DMA_SPIEL.pruef.zustand(); S.wetterTest = { code: 0, tag: true, temp: 12, ort: "Döbeln" }; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await tick(800);
+  /* Das gemalte Bild als kleine Pixelreihe holen (jede 4. Zeile/Spalte), um Stufen zu vergleichen. */
+  const holen = (v) => pg.evaluate(async (v) => {
+    window.DMA_SPIEL.pruef.jahrVorschau(v); window.DMA_SPIEL.pruef.dmNeu(); window.DMA_SPIEL.pruef.schnellZeichnen(true);
+    await new Promise((f) => setTimeout(f, 1100));
+    const c = document.querySelector(".sp-dl-mal"), g = c.getContext("2d"), d = g.getImageData(0, 0, c.width, c.height).data, raus = [];
+    for (let y = 0; y < c.height; y += 4) for (let x = 0; x < c.width; x += 4) { const i = (y * c.width + x) * 4; raus.push(d[i], d[i + 1], d[i + 2]); }
+    return { w: c.width, h: c.height, px: raus, schnee: window.DMA_SPIEL.pruef.zustand && true };
+  }, v);
+  const anteil = (a, b) => { let n = 0; for (let i = 0; i < a.px.length; i += 3) { if (Math.abs(a.px[i] - b.px[i]) + Math.abs(a.px[i + 1] - b.px[i + 1]) + Math.abs(a.px[i + 2] - b.px[i + 2]) > 60) n++; } return n / (a.px.length / 3); };
+  const bilder = {};
+  for (const v of ["herbst|", "herbst|halloween", "winter|advent", "winter|", "fruehling|ostern", "fruehling|", "sommer|"]) bilder[v] = await holen(v);
+  r = anteil(bilder["herbst|"], bilder["herbst|halloween"]);
+  sage(r > 0.012, "Halloween unterscheidet sich sichtbar vom Herbst (Kürbisberg, Fledermäuse, Lichterketten)", (r * 100).toFixed(1) + " % der Bildpunkte");
+  r = anteil(bilder["herbst|"], bilder["winter|advent"]);
+  sage(r > 0.25, "Advent/Weihnachten: Schnee liegt, Christbaum, Buden", (r * 100).toFixed(1) + " % anders als Herbst");
+  r = anteil(bilder["herbst|"], bilder["winter|"]);
+  sage(r > 0.25, "Winter: Schnee liegt auch ohne Schneewetter", (r * 100).toFixed(1) + " %");
+  r = anteil(bilder["fruehling|"], bilder["fruehling|ostern"]);
+  sage(r > 0.006, "Ostern: Osterstrauch, Hase, große Eier", (r * 100).toFixed(1) + " %");
+  r = anteil(bilder["sommer|"], bilder["fruehling|"]);
+  sage(r > 0.006, "Frühling (Maibaum, Blumen) und Sommer (Biergarten) sehen verschieden aus", (r * 100).toFixed(1) + " %");
+  /* Nichts Festliches unter einem Schild: die Schilder sind DOM über dem Bild – prüfen, ob die großen Stücke frei liegen. */
+  r = await pg.evaluate(() => {
+    const c = document.querySelector(".sp-dl-mal"), cr = c.getBoundingClientRect(), k = cr.width / 320;
+    const stuecke = [[197, 100, 20, 28, "Christbaum"], [232, 100, 16, 13, "Bude 1"], [252, 86, 16, 13, "Bude 2"]];
+    const schilder = Array.from(document.querySelectorAll(".sp-dl-rahmen .sp-dl-fertig, .sp-dl-rahmen .sp-dl-schild, .sp-dl-rahmen [class*='sp-dl-'][class*='label'], .sp-dl-rahmen .sp-dl-pin")).map((e) => e.getBoundingClientRect()).filter((q) => q.width > 0);
+    return stuecke.map((s) => { const x = cr.left + (s[0] - s[2] / 2) * k, y = cr.top + (s[1] - s[3] / 2) * k, w = s[2] * k, h = s[3] * k;
+      const drunter = schilder.filter((q) => q.left < x + w && q.right > x && q.top < y + h && q.bottom > y).length; return s[4] + ":" + drunter; });
+  });
+  sage(r.every((t) => /:0$/.test(t)), "Christbaum und Buden liegen unter keinem Schild", r.join(" "));
+  await pg.evaluate(() => { window.DMA_SPIEL.pruef.jahrVorschau("herbst|erntedank"); window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(500);
+  await tippe('[data-s="jahrvorschau"]'); await tick(600);
+  r = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(), knopf = (document.querySelector('[data-s="jahrvorschau"]') || {}).textContent, gemerkt = localStorage.getItem("dma_jahr_vorschau");
+    S.jahrVorschau = null; const nachLaden = window.DMA_SPIEL.pruef.dorfJahr(); return { knopf, gemerkt, nachLaden: nachLaden.zeit + "|" + nachLaden.fest }; });
+  sage(r.knopf === "Saison: Halloween" && r.gemerkt === "herbst|halloween" && r.nachLaden === "herbst|halloween", "Vorschau „Halloween“ bleibt nach dem Neuladen stehen", JSON.stringify(r));
+  await pg.evaluate(() => { localStorage.removeItem("dma_jahr_vorschau"); window.DMA_SPIEL.pruef.jahrVorschau("", false); });
   sage(konsolenFehler.length === 0, "keine Skriptfehler", konsolenFehler.slice(0, 3).join(" | "));
   console.log(fehler ? "\n" + fehler + " FEHLER\n" : "\nALLES GRÜN\n");
   await br.close(); srv.close(); process.exit(fehler ? 1 : 0);

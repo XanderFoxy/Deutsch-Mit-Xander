@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 787: /sprich-Wörter aus dem Wörterbuch antippen, Hörspiel mit der eigenen Stimme (Artikel/Bedeutung), Vorschläge lesbar",
+  stand: "Fassung 788: Festschmuck sichtbar (Schnee im Winter, Weihnachtsmarkt, Halloween-Himmel, Ostern, Maibaum, Biergarten)",
 
   inArbeit: [
-    { seit: "2026-09-28T02:52",
-      text: "1.047 erzeugte Wörterbuch-Erklärungen prüfen; Sequenzen Pac-Man/Mario; Stadt gestalten, Arena/Skins; Walkies 282/283/285/296" },
+    { seit: "2026-09-28T03:06",
+      text: "D1 modulares Dorf: Häuser versetzen, Bauphasen, Wohnhaus, Wege/Garten; Walkie-Prüfung" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T02:52",
-      text: "Funk 188: Wortauswahl für /sprich, Hörspiel mit eigener Stimme, Dringlichkeit nach Duden" },
+    { seit: "2026-09-28T03:06",
+      text: "Funk 202: Saison-Deko groß genug, Vorschau gemerkt" },
   ],
 };

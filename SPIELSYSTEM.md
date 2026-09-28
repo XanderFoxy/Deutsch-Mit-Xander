@@ -1851,3 +1851,21 @@ XANDER: „dass ich z.B ein Wort vorgebe oder mir das aussuchen kann aus dem Wö
 - **Vorschlagsliste lesbar:** Die Chips der Befehlsvorschläge erbten die dunkle Seitenschrift auf dunklem Kasten (gemessen rgb(46,42,37) auf rgb(34,28,26)). Jetzt helle Schrift.
 - Ein Abspieler für die eigene Stimme (iPhone/Android spielen nach dem ersten Tipp weiter).
 - Sonde `werkzeug/pruefe-787-sprich-auswahl-hoerspiel.js`: 19/19. `pruefe-namensvorschlaege.js`: veraltete Erwartung (regenbogen2 seit Funk 75, auch vor 787 rot) angepasst.
+
+## Fassung 788 — Festschmuck, den man sieht (Funk 202)
+
+XANDER (Funk 202): „warum sehe ich immer noch nicht die Halloween an sich die weihnachtsansicht und für den einzelnen Jahreszeiten keine Dekoration du hast mal mit Schnee angefangen und getestet aber ich sehe nichts davon".
+
+Gemessen: Fassung 733 malte die Deko, aber winzig – Kürbisse mit 1,8 Einheiten Radius sind auf dem Handy rund 3 Pixel. Die Sonde 733 prüfte nur „wird gemalt", nicht „sieht man es". Schnee lag nur bei echtem Schneewetter.
+
+- **Winter und Advent:** Schnee auf Dächern, Wiese und Wegen, auch ohne Schneewetter.
+- **Advent/Weihnachten:** Christbaum fast doppelt so groß, zwei Weihnachtsmarktbuden (rot-weiße Dächer, Lichterketten), warme Lichterketten an jedem Haus – nachts leuchten sie.
+- **Winter ohne Advent:** Schneemann am Platz.
+- **Halloween:** violett-oranger Himmel, Vollmond, Fledermäuse, zwei Geister, Kürbisberg am Platz, Kürbisse mit Gesicht an jedem Haus, orange/violette Lichterketten; nachts leuchten Gesichter und Ketten (Schein begrenzt, damit kein greller Fleck entsteht).
+- **Herbst/Erntedank:** größere Kürbisse vor jedem Haus, doppelt so große Garben.
+- **Ostern:** Osterstrauch, Osterhase, Wimpelkette, 14 große Eier im Gras.
+- **Frühling:** Maibaum (blau-weiß, Kranz, Bänder) mit Wimpelkette, Blumenbeete vor den Häusern. **Sommer:** Biergarten mit zwei Sonnenschirmen am Gasthaus.
+- **Vorschau:** „Saison: …" unter dem Dorfbild (nur Betreiber) bleibt nach dem Neuladen stehen, bis wieder „echt" gewählt wird. „Advent" heißt jetzt „Advent/Weihnachten".
+- Sonde `werkzeug/pruefe-788-festschmuck-sichtbar.js`: misst per Bildpunkten, dass jede Stufe sichtbar anders ist (Halloween 17 %, Winter/Advent 54 % anders als Herbst), dass Christbaum und Buden unter keinem Schild liegen und die Vorschau gemerkt bleibt.
+
+Prüfung Funk 202 (Plan aus dem Dorf-Gesamtkonzept, Stand 731): Paket D1 „Das modulare Dorf" (Raster, Häuser ziehen/drehen, Wege, Gärten, Wohnhäuser, Bauphasen mit Bagger und Kran) ist **nicht gebaut** – es hätte laut Plan als Erstes kommen sollen. Es folgt ab Fassung 789.
