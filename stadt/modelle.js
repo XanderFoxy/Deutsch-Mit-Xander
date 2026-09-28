@@ -9,6 +9,7 @@ STADT.MODELL_DATEIEN = [
   "weihnachtsbaum", "marktbude", "pyramide", "krippe", "karussell", "schneemann",
   "brunnen", "laterne", "bank", "bruecke", "zaun",
   "tanne", "laubbaum", "obstbaum",
+  "tretboot", "bootshaus",
   "menschen"
 ];
 /* Rundum gleiche Dinge: die Drehung ändert das Bild nicht → ein Bild im Speicher für alle Winkel */

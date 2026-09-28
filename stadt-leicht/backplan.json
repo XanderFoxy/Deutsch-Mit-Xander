@@ -1426,6 +1426,32 @@
     "gross": 36,
     "klein": 13
    }
+  },
+  {
+   "bild": "d_bootshaus",
+   "id": "bootshaus",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 48,
+    "klein": 16
+   }
   }
  ],
  "leute": [
@@ -1512,6 +1538,46 @@
     "nacht"
    ],
    "s": 40
+  },
+  {
+   "bild": "l_tretboot0",
+   "id": "tretboot",
+   "saat": 5,
+   "jahr": [
+    "sommer"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "s": 30,
+   "schritte": 4,
+   "zelle": [
+    1.85,
+    2.5,
+    2.25,
+    0.95
+   ],
+   "q": 0.78
+  },
+  {
+   "bild": "l_tretboot1",
+   "id": "tretboot",
+   "saat": 12,
+   "jahr": [
+    "sommer"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "s": 30,
+   "schritte": 4,
+   "zelle": [
+    1.85,
+    2.5,
+    2.25,
+    0.95
+   ],
+   "q": 0.78
   }
  ]
 }

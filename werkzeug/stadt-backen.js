@@ -44,7 +44,7 @@ function auftraege() {
   /* Menschen: je Art, Saat, Jahres- und Tageszeit EIN Blatt mit 12 Schritten × 8 Richtungen */
   for (const a of plan.leute || []) {
     if (NUR && !NUR.includes(a.bild)) continue;
-    for (const jahr of a.jahr) for (const zeit of a.zeit) liste.push({ leute: true, name: [a.bild, jahr, zeit].join("_"), id: a.id, saat: a.saat, jahr: jahr, zeit: zeit, s: a.s || 40, schritte: a.schritte || 12 });
+    for (const jahr of a.jahr) for (const zeit of a.zeit) liste.push({ leute: true, name: [a.bild, jahr, zeit].join("_"), id: a.id, saat: a.saat, jahr: jahr, zeit: zeit, s: a.s || 40, schritte: a.schritte || 12, zelle: a.zelle, q: a.q });
   }
   for (const a of plan.bilder) {
     if (NUR && !NUR.includes(a.bild)) continue;
@@ -92,8 +92,10 @@ function auftraege() {
         const ST = window.STADT, SZ = ST.szene;
         SZ.jahr = a.jahr; SZ.zeit = a.zeit;
         const Z = SZ.zeitDaten(), def = ST.MODELLE[a.id], s = a.s;
-        /* Zelle: links 0,9 m, rechts 3,1 m (Schatten fällt nach rechts), oben 2 m, unten 0,5 m */
-        const cw = Math.ceil(4.0 * s), ch = Math.ceil(2.6 * s), ax = Math.round(0.9 * s), ay = Math.round(2.05 * s);
+        /* Zelle: links 0,9 m, rechts 3,1 m (Schatten fällt nach rechts), oben 2 m, unten 0,5 m.
+           Andere Figuren (Tretboot) geben im Plan ihre eigene Zelle an: zelle: [links, rechts, oben, unten] in Metern */
+        const Zl = a.zelle || [0.9, 3.1, 2.05, 0.55];
+        const cw = Math.ceil((Zl[0] + Zl[1]) * s), ch = Math.ceil((Zl[2] + Zl[3]) * s), ax = Math.round(Zl[0] * s), ay = Math.round(Zl[2] * s);
         const N = a.schritte, blatt = document.createElement("canvas"); blatt.width = cw * N; blatt.height = ch * 8;
         const bg = blatt.getContext("2d");
         const zelle = document.createElement("canvas"); zelle.width = cw; zelle.height = ch; const zg = zelle.getContext("2d");
@@ -114,7 +116,7 @@ function auftraege() {
           zg.save(); def.zeichnen(zg, P); zg.restore();
           bg.drawImage(zelle, i * cw, r * ch);
         }
-        const url = blatt.toDataURL("image/webp", 0.82);
+        const url = blatt.toDataURL("image/webp", a.q || 0.82);
         return { bild: url, zw: cw, zh: ch, ax: ax, ay: ay, n: N, s: s };
       }, a);
       fs.writeFileSync(path.join(ZIEL, a.name + ".webp"), Buffer.from(r.bild.split(",")[1], "base64"));

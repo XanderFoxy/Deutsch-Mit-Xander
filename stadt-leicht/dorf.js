@@ -207,6 +207,10 @@
       if (!frei(x, y, 1.5)) continue;
       liste.push({ art: "natur", bild: "n_obstbaum" + (i % 2), x: x, y: y, dreh: 0, fuss: [3, 3], hoehe: 6 });
     }
+    /* FASSUNG 803 — XANDER: „vielleicht so ein kleines Bootshaus für den Verleih vom Wassertreter".
+       Am Westufer über der Badebucht; der Steg (6 m nach Osten) reicht bis x ≈ 65,5 ins Wasser, dort legen
+       die Schwanenboote an (boote.js). Erst nach den Bäumen gesetzt, damit der Wald gleich bleibt. */
+    setze("d_bootshaus", 60.5, 85.5, 0, { fuss: [10, 3.4], hoehe: 4, name: "Bootsverleih" });
     return liste;
   };
 
