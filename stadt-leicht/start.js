@@ -158,6 +158,7 @@
     const jetzt = new Date();
     SZ.jahr = q.get("jahr") || jahrNachDatum(jetzt);
     SZ.zeit = q.get("zeit") || zeitNachUhr(jetzt);
+    SZ.zeitAuto = !q.get("zeit"); if (SZ.zeitAuto) SZ.zeitDaten();
     K.x = +(q.get("kx") || 0); K.y = +(q.get("ky") || 4);
     K.s = (+(q.get("s") || 0) || 7) * K.dpr;
     D.boden();

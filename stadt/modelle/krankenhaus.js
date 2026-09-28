@@ -133,7 +133,12 @@
     };
   }
   function beschleunigen(M) {
-    for (const t of M.teile) for (const f of t.flaechen) if (typeof f.malen === "function" && !f.direkt && !f.malen.direkt) f.malen = aufCpu(f.malen);
+    for (const t of M.teile) for (const f of t.flaechen) {
+      if (typeof f.malen !== "function") continue;
+      /* verdeckte Flächen legen ihr Licht selbst auf (nur im Beschnitt) */
+      if (f.malen.selbstLicht) f.keinLicht = true;
+      if (!f.direkt && !f.malen.direkt) f.malen = aufCpu(f.malen);
+    }
   }
 
   /* ---------------- Blickrichtung ----------------
@@ -175,6 +180,10 @@
       const pp = P.map((p) => { const q = aufFlaeche(F, B, p); return [q[0], q[1], q[2]]; });
       const vorn = schneide(pp, (q) => q[2] - 0.02);
       if (vorn.length < 3) continue;
+      /* nur, wenn es die Fläche überhaupt trifft */
+      let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+      for (const q of vorn) { a0 = Math.min(a0, q[0]); a1 = Math.max(a1, q[0]); b0 = Math.min(b0, q[1]); b1 = Math.max(b1, q[1]); }
+      if (a1 < 0 || a0 > F.w || b1 < 0 || b0 > F.h) continue;
       g.beginPath(); g.rect(-60, -60, F.w + 120, F.h + 120);
       g.moveTo(vorn[0][0], vorn[0][1]); for (let i = 1; i < vorn.length; i++) g.lineTo(vorn[i][0], vorn[i][1]); g.closePath();
       g.clip("evenodd");
@@ -289,7 +298,7 @@
     if (ZMUSTER[k]) return ZMUSTER[k];
     const R = 120, B = 2.08, H = 0.616;
     const c = document.createElement("canvas"); c.width = Math.round(B * R); c.height = Math.round(H * R);
-    const g = c.getContext("2d"), rng = zufall(saat);
+    const g = c.getContext("2d", { willReadFrequently: true }), rng = zufall(saat);
     g.scale(R, R);
     g.fillStyle = rgb(fuge); g.fillRect(0, 0, B, H);
     const sh = 0.077, fz = 0.011;
@@ -384,7 +393,7 @@
     if (SMUSTER[key]) return SMUSTER[key];
     const R = 110, B = tb * 10, H = rh * 6;
     const c = document.createElement("canvas"); c.width = Math.round(B * R); c.height = Math.round(H * R);
-    const g = c.getContext("2d");
+    const g = c.getContext("2d", { willReadFrequently: true });
     g.setTransform(c.width / B, 0, 0, c.height / H, 0, 0);
     g.fillStyle = rgb(hell(basis, -0.42)); g.fillRect(0, 0, B, H);
     for (let k = -2; k <= 8; k++) {
@@ -1278,7 +1287,7 @@
   function zwerchBauen(M, S, Z) {
     const fertig = Z.dachFertig;
     M.teil("zwerch", { ebene: 2, mitte: [0, 1.6, 10.5] });
-    const occ = (m) => { const f = (g, F) => { if (fertig) verdecken(g, F, S.B, DACH_OCC); m(g, F); }; f.direkt = true; return f; };
+    const occ = (m) => { const f = (g, F) => { if (fertig) { verdecken(g, F, S.B, DACH_OCC); m(g, F); lichtAuf(g, F, 0); } else m(g, F); }; f.selbstLicht = fertig; return f; };
     if (Z.stuhl > 0) {
       const o = { beidseitig: !fertig, keinLicht: !fertig, dach: true };
       poly3(M, ZWERCH.w, occ(dachFlaecheMalen(S, Z, "z", [1, 2, 3])), Object.assign({ n: [-1, 0, 0.7], name: "zw-w" }, o));
@@ -1386,7 +1395,7 @@
     const pitch = (zFi - zT) / (hw + ue);
     const dS = (z) => -ddUnten(z);
     const occ = DACH_OCC.concat([ZWERCH.w, ZWERCH.o]);
-    const mal = (m) => { const f = (g, F) => { verdecken(g, F, S.B, occ); m(g, F); }; f.direkt = true; return f; };
+    const mal = (m) => { const f = (g, F) => { verdecken(g, F, S.B, occ); m(g, F); lichtAuf(g, F, 0); }; f.selbstLicht = true; return f; };
     const zEa = zT - ue * pitch;
     M.teil("gaube" + i, { ebene: 3, mitte: P(0, -0.2, 9.8) });
     /* Front mit Dreiecksgiebel */
@@ -1458,8 +1467,7 @@
       const [cx, cy] = KAMINE[i];
       const zo = 11.5 + (hk - 11.5) * Z.kamin;
       M.teil("kamin" + i, { ebene: 3, mitte: [cx, cy, 12.6] });
-      const mal = (g, F) => {
-        if (Z.dachFertig) verdecken(g, F, S.B, DACH_OCC);
+      const mal0 = (g, F) => {
         ziegel(g, -0.1, -0.1, F.w + 0.2, F.h + 0.2, F, { saat: 55 + i, farbe: [150, 70, 50], fuge: [170, 160, 150] });
         if (Z.kamin >= 1) {
           /* Kopf: Sandsteinplatte, darunter Rußspuren */
@@ -1468,7 +1476,8 @@
           g.fillStyle = "rgb(60,56,54)"; g.fillRect(-0.1, 0.4, F.w + 0.2, 0.05);
         }
       };
-      mal.direkt = true;
+      const mal = Z.dachFertig ? (g, F) => { verdecken(g, F, S.B, DACH_OCC); mal0(g, F); lichtAuf(g, F, 0); } : mal0;
+      mal.selbstLicht = Z.dachFertig;
       const x0 = cx - b / 2, x1 = cx + b / 2, y0 = cy - t / 2, y1 = cy + t / 2, zu = 11.4;
       const w1 = wand(M, [x0, y1], [x1, y1], zu, zo, mal, { name: "ks" + i, keinAo: true });
       const w2 = wand(M, [x1, y1], [x1, y0], zu, zo, mal, { name: "ko" + i, keinAo: true });
@@ -1696,7 +1705,7 @@
     if (PFLASTER) return PFLASTER;
     const R = 100, B = 1.2, c = document.createElement("canvas");
     c.width = c.height = Math.round(B * R);
-    const g = c.getContext("2d"), rng = zufall(77);
+    const g = c.getContext("2d", { willReadFrequently: true }), rng = zufall(77);
     g.scale(R, R);
     g.fillStyle = "rgb(104,102,98)"; g.fillRect(0, 0, B, B);
     const st = 0.1;

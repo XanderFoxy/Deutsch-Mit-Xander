@@ -35,7 +35,7 @@
   /* FASSUNG 795 — eigene Modelle (Grundfläche und Höhe wie im Modell) */
   const EIGEN = { kuhstall: [[11, 9], 10], huehnerstall: [[8, 7], 4], rathaus: [[12, 10], 17], schule: [[12, 9], 13],
     kaserne: [[12, 10], 12], gefaengnis: [[9, 9], 15], bergwerk: [[12, 12], 16],
-    brauerei: [[12, 10], 15], bibliothek: [[12, 10], 13] };
+    brauerei: [[12, 10], 15], bibliothek: [[12, 10], 13], krankenhaus: [[12, 10], 13], labor: [[10, 10], 12] };
   for (const k in EIGEN) D.BILD[k] = ["g_" + k, "bau_" + k, EIGEN[k][0], EIGEN[k][1]];
   for (const k in D.GEBAEUDE) if (!D.BILD[k]) D.BILD[k] = ERKER[k] ? ["g_" + k, "bau_fachwerkerker", [8, 12], 13] : ["g_" + k, "bau_fachwerkhaus", [10.4, 9.6], 14.2];
   /* Stufe 1–3: kleiner, mittel, voll (wie im Spiel 0,82 / 0,92 / 1,02) */
@@ -84,8 +84,9 @@
   /* Wahrzeichen (spiel.js WUNDER): eigene Plätze am Rand */
   D.WUNDER = {
     koelner_dom: { name: "Kölner Dom", x: -70, y: 0, dreh: 1, bild: "w_koelner_dom", fuss: [54.2, 30.4], hoehe: 53 },
-    holstentor: { name: "Holstentor", x: 60, y: 52, dreh: 0 },
-    brandenburger: { name: "Brandenburger Tor", x: -52, y: 56, dreh: 0 },
+    /* FASSUNG 795 — das Holstentor stand mitten im See (66, 56) */
+    holstentor: { name: "Holstentor", x: 38, y: 64, dreh: 0, bild: "w_holstentor", fuss: [18, 8], hoehe: 15.2 },
+    brandenburger: { name: "Brandenburger Tor", x: -52, y: 56, dreh: 0, bild: "w_brandenburger", fuss: [26, 8], hoehe: 11.8 },
     neuschwanstein: { name: "Neuschwanstein", x: -56, y: -56, dreh: 0, bild: "w_neuschwanstein", fuss: [28, 18], hoehe: 24 },
     fernsehturm: { name: "Fernsehturm", x: 58, y: -60, dreh: 0, bild: "w_fernsehturm", fuss: [16, 16], hoehe: 46 }
   };
@@ -246,7 +247,7 @@
     return {
       id: "beispiel", name: "Beispiel", dorf_name: "Winterhausen", dorf: dorf, dorf_plan: {},
       baustellen: [{ was: "labor", stufe: 1, start: iso(-50e3), bis: iso(70e3), dauer: 120 }, { was: "flickstube", stufe: 2, start: iso(-200e3), bis: iso(100e3), dauer: 300 }],
-      volk: { wunder: { koelner_dom: { stufe: 1 }, neuschwanstein: { stufe: 1 }, fernsehturm: { stufe: 1 } } }
+      volk: { wunder: { koelner_dom: { stufe: 1 }, neuschwanstein: { stufe: 1 }, fernsehturm: { stufe: 1 }, holstentor: { stufe: 1 }, brandenburger: { stufe: 1 } } }
     };
   };
 })();

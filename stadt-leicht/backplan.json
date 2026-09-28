@@ -237,8 +237,8 @@
   },
   {
    "bild": "g_krankenhaus",
-   "id": "fachwerkerker",
-   "saat": 29,
+   "id": "krankenhaus",
+   "saat": 7,
    "gier": [
     0,
     90,
@@ -289,8 +289,8 @@
   },
   {
    "bild": "g_labor",
-   "id": "fachwerkerker",
-   "saat": 37,
+   "id": "labor",
+   "saat": 7,
    "gier": [
     0,
     90,
@@ -1315,6 +1315,116 @@
     "gross": 56,
     "klein": 18,
     "bau": 26
+   }
+  },
+  {
+   "bild": "bau_krankenhaus",
+   "id": "krankenhaus",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "bau_labor",
+   "id": "labor",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "w_holstentor",
+   "id": "holstentor",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 40,
+    "klein": 14
+   }
+  },
+  {
+   "bild": "w_brandenburger",
+   "id": "brandenburger",
+   "saat": 7,
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 36,
+    "klein": 13
    }
   }
  ],

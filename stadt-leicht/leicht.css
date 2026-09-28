@@ -78,3 +78,9 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
   .lk-name b { font-size: 14px; }
   .lk-farbfeld { top: calc(max(10px, env(safe-area-inset-top)) + 44px); }
 }
+
+/* FASSUNG 795 — Bauen-Knopf neben „Schmücken" und die Gebäudeleiste */
+.lk-bauen { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 52px); }
+#lOber.leiste-offen .lk-bauen { display: none; }
+.lk-bauleiste .lk-karte-klein small { display: block; font: 500 10px system-ui, sans-serif; color: #6b5a3e; }
+.lk-bauleiste .lk-frei img { opacity: .55; filter: grayscale(.6); }

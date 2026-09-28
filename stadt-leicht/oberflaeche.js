@@ -70,7 +70,15 @@
   };
   let stimmung = null, farbK = 1;
   function stimmungSetzen() {
-    const m = STIMMUNG[SZ.zeit] || STIMMUNG.tag, k = farbK;
+    /* FASSUNG 795 — nach der Uhr fließend zwischen Tag, Dämmerung und Nacht */
+    let m = STIMMUNG[SZ.zeit] || STIMMUNG.tag;
+    const Zd = SZ.zeitDaten();
+    if (SZ.zeitAuto && Zd.grad != null) {
+      const n = Zd.grad, A = n <= 0.75 ? STIMMUNG.tag : STIMMUNG.abend, B = n <= 0.75 ? STIMMUNG.abend : STIMMUNG.nacht, t = n <= 0.75 ? n / 0.75 : (n - 0.75) / 0.25;
+      const mi = (x, y) => x + (y - x) * t, farbe = (x, y) => { const p = x.match(/[\d.]+/g).map(Number), q = y.match(/[\d.]+/g).map(Number); return "rgba(" + p.map((v, i) => i < 3 ? Math.round(mi(v, q[i])) : mi(v, q[i]).toFixed(3)).join(",") + ")"; };
+      m = { satt: mi(A.satt, B.satt), kon: mi(A.kon, B.kon), sep: mi(A.sep, B.sep), vig: mi(A.vig, B.vig), warm: farbe(A.warm, B.warm) };
+    }
+    const k = farbK;
     const f = k > 0 ? "sepia(" + (m.sep * k).toFixed(3) + ") saturate(" + (1 + m.satt * k).toFixed(3) + ") contrast(" + (1 + m.kon * k).toFixed(3) + ")" : "none";
     ["lBoden", "lDinge"].forEach((id) => { document.getElementById(id).style.filter = f; });
     stimmung.style.opacity = Math.min(1, k).toFixed(2);
@@ -78,7 +86,7 @@
     stimmung.firstChild.style.background = "radial-gradient(ellipse 75% 70% at 50% 48%, rgba(0,0,0,0) 55%, rgba(8,10,30," + (m.vig * Math.min(1.4, k)).toFixed(3) + ") 100%)";
   }
 
-  let kopf, zeitK, jahrK, farbFeld, minirahmen, mini, miniC, karte, deckel, leiste, schmuckKnopf;
+  let kopf, zeitK, jahrK, farbFeld, minirahmen, mini, miniC, karte, deckel, leiste, schmuckKnopf, bauKnopf, bauLeiste = null;
   O.start = function (q) {
     stimmung = el("div", "lk-stimmung", "<i></i>");
     document.getElementById("lStadt").insertBefore(stimmung, wurzel);
@@ -92,7 +100,7 @@
     links.appendChild(name);
     kopf.appendChild(links);
     const rechts = el("div", "lk-kopf-rechts");
-    zeitK = knopf(ZEIT_SYM[SZ.zeit], "Tageszeit", () => { SZ.zeit = ZEITEN[(ZEITEN.indexOf(SZ.zeit) + 1) % 3]; zeitK.innerHTML = SYM[ZEIT_SYM[SZ.zeit]]; ansage(ST.ZEITEN[SZ.zeit].name); stimmungSetzen(); L().unruhe = 2; });
+    zeitK = knopf(ZEIT_SYM[SZ.zeit], "Tageszeit", () => { SZ.zeitAuto = false; SZ.zeit = ZEITEN[(ZEITEN.indexOf(SZ.zeit) + 1) % 3]; zeitK.innerHTML = SYM[ZEIT_SYM[SZ.zeit]]; ansage(ST.ZEITEN[SZ.zeit].name); stimmungSetzen(); L().unruhe = 2; });
     jahrK = knopf(JAHR_SYM[SZ.jahr], "Jahreszeit", () => { SZ.jahr = JAHRE[(JAHRE.indexOf(SZ.jahr) + 1) % 4]; jahrK.innerHTML = SYM[JAHR_SYM[SZ.jahr]]; ansage(JAHR_NAME[SZ.jahr]); D.jahrFiltern(); L().unruhe = 2; });
     const farbKn = knopf("farbe", "Farbstimmung", () => { farbFeld.hidden = !farbFeld.hidden; });
     rechts.append(zeitK, jahrK, farbKn, knopf("links", "Karte nach links drehen", () => drehen(1)), knopf("rechts", "Karte nach rechts drehen", () => drehen(-1)));
@@ -107,6 +115,7 @@
     regler.addEventListener("input", () => { farbK = +regler.value / 100; zahl.textContent = regler.value + " %"; stimmungSetzen(); try { localStorage.setItem("leicht_farbe", regler.value); } catch (e) {} });
     wurzel.appendChild(farbFeld);
     stimmungSetzen();
+    setInterval(() => { if (SZ.zeitAuto) { stimmungSetzen(); if (zeitK) zeitK.innerHTML = SYM[ZEIT_SYM[SZ.zeit]]; } }, 30000);
 
     /* Mini-Karte */
     minirahmen = el("div", "lk-mini-rahmen");
@@ -124,8 +133,15 @@
     /* unten links: Schmücken */
     schmuckKnopf = el("button", "lk-schmuck", SYM.stern + "<span>Schmücken</span>");
     schmuckKnopf.type = "button";
-    schmuckKnopf.addEventListener("click", (e) => { e.stopPropagation(); leisteZeigen(!leiste || leiste.hidden); });
+    schmuckKnopf.addEventListener("click", (e) => { e.stopPropagation(); if (bauLeiste) { bauLeisteZeigen(false); return; } leisteZeigen(!leiste || leiste.hidden); });
     wurzel.appendChild(schmuckKnopf);
+    /* FASSUNG 795 — XANDER: „Ich sehe nirgendswo ne Möglichkeit Haus zu
+       bauen." Bisher ging das nur über einen leeren Bauplatz. Jetzt ein
+       eigener Knopf mit allen Gebäuden: gebaut (Stufe), im Bau, baubar. */
+    bauKnopf = el("button", "lk-schmuck lk-bauen", SYM.hammer + "<span>Bauen</span>");
+    bauKnopf.type = "button";
+    bauKnopf.addEventListener("click", (e) => { e.stopPropagation(); bauLeisteZeigen(!bauLeiste || bauLeiste.hidden); });
+    wurzel.appendChild(bauKnopf);
 
     karte = el("div", "lk-karte"); karte.hidden = true; wurzel.appendChild(karte);
     karte.addEventListener("click", (e) => e.stopPropagation());
@@ -203,6 +219,34 @@
     wurzel.classList.toggle("leiste-offen", an);
   }
 
+  /* ---------------- Bauen: alle Gebäude des Spiels ---------------- */
+  function platzVon(k) { const plan = (L().ich && L().ich.dorf_plan && L().ich.dorf_plan.platz) || {}; return plan[k] || k; }
+  function bauLeisteZeigen(an) {
+    if (leiste) leisteZeigen(false);
+    if (bauLeiste) { bauLeiste.remove(); bauLeiste = null; }
+    wurzel.classList.toggle("leiste-offen", an);
+    if (!an) return;
+    bauLeiste = el("div", "lk-leiste lk-bauleiste");
+    const dorf = (L().ich && L().ich.dorf) || {};
+    for (const k in D.GEBAEUDE) {
+      const G = D.GEBAEUDE[k], haus = SZ.objekte.find((o) => o.art === "haus" && o.spiel === k);
+      const st = (dorf[k] && dorf[k].stufe) || 0;
+      const text = haus && haus.bau ? "im Bau" : st ? "Stufe " + st : G[2] ? "ab Level " + G[2] : G[1] + " P.";
+      const b = el("button", "lk-karte-klein" + (st || (haus && haus.bau) ? "" : " lk-frei")); b.type = "button";
+      const bild = D.BILD[k][0] + "_" + (SZ.jahr === "winter" ? "winter" : "herbst") + "_tag_f_0_k";
+      b.innerHTML = '<img alt="" src="stadt-leicht/bilder/' + bild + '.webp' + (LB.version ? "?v=" + LB.version : "") + '"><span>' + G[0] + "</span><small>" + text + "</small>";
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bauLeisteZeigen(false);
+        const pk = platzVon(k), pl = D.PLAETZE[pk];
+        if (pl) L().fliegeZu(pl.x, pl.y, Math.max(K.s, 16 * K.dpr), 800);
+        if (haus) waehlen(haus); else karteZeigen("bauplatz", null, pk);
+      });
+      bauLeiste.appendChild(b);
+    }
+    wurzel.appendChild(bauLeiste);
+  }
+
   /* ---------------- Setzen: Geist in der Bildmitte ---------------- */
   let geist = null, geistZiehen = false;
   function setzenBeginnen(s) {
@@ -240,6 +284,7 @@
     farbFeld.hidden = true;
     if (geist) { const a = ST.aufBoden(px, py); geist.x = a[0]; geist.y = a[1]; SZ.geaendert(); L().unruhe = 2; return; }
     if (leiste && !leiste.hidden) { leisteZeigen(false); return; }
+    if (bauLeiste) { bauLeisteZeigen(false); return; }
     const o = SZ.treffer(px, py, (o) => o.art !== "natur" || o.rand !== 1);
     if (o && (o.art === "haus" || o.art === "wunder" || o.art === "eigen" || o.name)) { waehlen(o); return; }
     /* leerer Bauplatz? */
@@ -304,6 +349,12 @@
         h.addEventListener("click", (e) => { e.stopPropagation(); aktion(() => ST.spiel.helfen(o.spiel), "Geholfen – 15 s schneller"); });
         if (ST.spiel.beispiel) h.disabled = true;
         knoepfe.append(h);
+      } else if ((o.stufenZahl || 1) < 3) {
+        /* FASSUNG 795 — Ausbau direkt am Haus (dieselbe Serverfunktion wie im Spiel) */
+        const a = el("button", "lk-text-knopf", SYM.hammer + "<span>Ausbauen</span>"); a.type = "button";
+        a.addEventListener("click", (e) => { e.stopPropagation(); aktion(() => ST.spiel.bauen(o.spiel), o.name + " wird ausgebaut"); });
+        if (ST.spiel.beispiel) { a.disabled = true; a.title = "In der Beispielstadt wird nicht gebaut – bitte anmelden"; }
+        knoepfe.append(a);
       }
       knoepfe.append(knopf("links", "Drehen", () => { o.dreh = (o.dreh + 1) & 3; SZ.geaendert(); L().dekoSpeichern(); L().unruhe = 2; }), knopf("rechts", "Drehen", () => { o.dreh = (o.dreh + 3) & 3; SZ.geaendert(); L().dekoSpeichern(); L().unruhe = 2; }), zu);
       return;

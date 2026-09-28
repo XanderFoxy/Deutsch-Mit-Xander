@@ -370,7 +370,8 @@
       for (let j = 0; j < ny; j++) {
         const y = F.h * j / (ny - 1);
         const P = add(f.o, add(mul(f.u, x), mul(f.v, y)));
-        const a = k * flutWert(strahler, P, n);
+        /* Streulicht: auch abgewandte und waagrechte Flächen bekommen einen Hauch */
+        const a = k * (flutWert(strahler, P, n) + (n[2] > 0.9 ? 0 : 0.09));
         const q = (j * nx + i) * 4;
         id.data[q] = Math.round(klemm(l0[0] + a * WARM[0], 0, 1) * 255);
         id.data[q + 1] = Math.round(klemm(l0[1] + a * WARM[1], 0, 1) * 255);
@@ -848,13 +849,18 @@
         for (let y = y0; y < h + reihe; y += reihe) {
           const tief = klemm((y + yOff) / 5, 0.25, 1);
           let x = -0.2 - rng() * 0.5;
+          g.lineCap = "round";
           while (x < w + 0.2) {
-            const l = 0.25 + rng() * 0.9;
-            if (rng() < 0.55 + 0.3 * tief) {
-              g.fillStyle = rgbS(SCHNEE, (0.55 + 0.4 * rng()) * k);
-              g.fillRect(x, y + reihe * 0.62, l, reihe * (0.18 + 0.2 * tief * rng()));
+            const l = 0.15 + Math.pow(rng(), 1.6) * 1.1;
+            if (rng() < 0.4 + 0.35 * tief) {
+              /* weiche, ungleich dicke Schneewülste an der Schuppenkante */
+              const d = reihe * (0.08 + 0.22 * tief * rng());
+              g.strokeStyle = rgbS(SCHNEE, (0.35 + 0.5 * rng()) * k);
+              g.lineWidth = d;
+              const yy = y + reihe * (0.6 + 0.25 * rng());
+              g.beginPath(); g.moveTo(x, yy); g.quadraticCurveTo(x + l / 2, yy - d * 0.4, x + l, yy + d * 0.2 * (rng() - 0.5)); g.stroke();
             }
-            x += l + rng() * 0.35;
+            x += l + 0.05 + rng() * 0.5;
           }
         }
       }
@@ -963,7 +969,7 @@
 
       if (Z.grube && Z.fund > 0) {
         const zF = -Z.tiefe + Z.tiefe * glatt(Z.fund);
-        fundamentBauen(W, Z, [turmGrund(-1), turmGrund(1), mitteGrund], -Z.tiefe, zF);
+        fundamentBauen(W, Z, B, [turmGrund(-1), turmGrund(1), mitteGrund], -Z.tiefe, zF, [GX0, GY0, GX1, GY1]);
       }
       if (Z.grube && Z.fund < 1) stabwerkGrube(W, M, Z);
 
@@ -1183,22 +1189,26 @@
     if (Z.winter) { g.fillStyle = "rgba(240,244,250,0.22)"; g.fillRect(-1, -1, F.w + 2, F.h + 2); }
   }
 
+  /* Flächen der Baugrube nur innerhalb des Grubenrands malen (der Rand
+     entlang der Blickrichtung auf die Ebene der Fläche projiziert) */
+  function lochClip(g, F, e, Rg) {
+    const [x0, y0, x1, y1] = Rg;
+    const f = F.flaeche, n = nrm(kreuz(f.u, f.v)), en = dot(e, n);
+    if (Math.abs(en) < 1e-4) return false;
+    const q = [];
+    for (const [x, y] of [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]) {
+      const C = [x, y, 0], t = dot(sub(C, f.o), n) / en, P = sub(C, mul(e, t)), d = sub(P, f.o);
+      q.push([dot(d, f.u), dot(d, f.v)]);
+    }
+    g.beginPath(); g.moveTo(q[0][0], q[0][1]); for (let i = 1; i < 4; i++) g.lineTo(q[i][0], q[i][1]); g.closePath(); g.clip();
+    return true;
+  }
   /* ---------- Baugrube ---------- */
   function grubeBauen(W, M, B, Z, Rg) {
     const T = Math.max(0.05, Z.tiefe), [x0, y0, x1, y1] = Rg, e = B.e;
     /* Flächen nur innerhalb des Grubenrands malen (entlang der Blickrichtung
        auf die Fläche projiziert) */
-    const loch = (g, F) => {
-      const f = F.flaeche, n = nrm(kreuz(f.u, f.v)), en = dot(e, n);
-      if (Math.abs(en) < 1e-4) return false;
-      const q = [];
-      for (const [x, y] of [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]) {
-        const C = [x, y, 0], t = dot(sub(C, f.o), n) / en, P = sub(C, mul(e, t)), d = sub(P, f.o);
-        q.push([dot(d, f.u), dot(d, f.v)]);
-      }
-      g.beginPath(); g.moveTo(q[0][0], q[0][1]); for (let i = 1; i < 4; i++) g.lineTo(q[i][0], q[i][1]); g.closePath(); g.clip();
-      return true;
-    };
+    const loch = (g, F) => lochClip(g, F, e, Rg);
     const erde = (g, F, saat) => {
       g.fillStyle = rgbS(ERDE); g.fillRect(-1, -1, F.w + 2, F.h + 2);
       if (F.px > 6) rausch(g, -1, -1, F.w + 2, F.h + 2, 1.0, 0.4, saat, true);
@@ -1269,7 +1279,7 @@
     W.teil("pfaehle", { fest: -25, schatten: false });
     M.figur({ x: 0, y: 0, z: 0, breite: 26, hoehe: 3, schatten: false, malen: stabwerk(st, [0, 0, 0]) });
   }
-  function fundamentBauen(W, Z, grundrisse, z0, z1) {
+  function fundamentBauen(W, Z, B, grundrisse, z0, z1, Rg) {
     if (z1 - z0 < 0.02) return;
     W.teil("fundament", { fest: -20, schatten: false });
     for (const G of grundrisse) {
@@ -1278,13 +1288,17 @@
       for (let i = 0; i < n; i++) {
         const a = G[i], b = G[(i + 1) % n];
         W.poly([[a[0], a[1], z1], [b[0], b[1], z1], [b[0], b[1], z0], [a[0], a[1], z0]], [mx, my, (z0 + z1) / 2], (g, F) => {
+          g.save(); if (!lochClip(g, F, B.e, Rg)) { g.restore(); return; }
           mauerwerk(g, F, "fund", -0.2, -0.2, F.w + 0.4, F.h + 0.4, i * 0.7, z1);
-        }, { name: "fu" + i, keinLicht: false });
+          belichten(g, F, B, nrm(kreuz(F.flaeche.u, F.flaeche.v)));
+          g.restore();
+        }, { name: "fu" + i });
       }
       W.poly(G.map((p) => [p[0], p[1], z1]), [mx, my, z1 - 3], (g, F) => {
         g.fillStyle = rgbS([150, 140, 124]); g.fillRect(-1, -1, F.w + 2, F.h + 2);
         if (F.px > 8) rausch(g, -1, -1, F.w + 2, F.h + 2, 0.7, 0.35, 23, true);
-      }, { name: "fu-o", keinLicht: false });
+        belichten(g, F, B, [0, 0, 1]);
+      }, { name: "fu-o" });
     }
   }
 

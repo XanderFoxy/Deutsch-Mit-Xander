@@ -23,7 +23,34 @@
   SZ.neu = function (o) { o.id = SZ.naechsteId++; o.dreh = (o.dreh || 0) & 3; o.stufe = o.stufe || 1; SZ.objekte.push(o); SZ.geaendert(); return o; };
   SZ.weg = function (o) { const i = SZ.objekte.indexOf(o); if (i >= 0) SZ.objekte.splice(i, 1); if (SZ.auswahl === o) SZ.auswahl = null; SZ.geaendert(); };
   SZ.geaendert = function () { reiheSchl = ""; };
-  SZ.zeitDaten = function () { return Object.assign({ name: SZ.zeit }, ST.ZEITEN[SZ.zeit]); };
+  /* FASSUNG 795 — XANDER: „der Übergang zwischen Tag und Nacht soll
+     flüssiger sein … nicht plötzlich in einem Moment umschalten, sondern
+     realistisch sanft ineinander übergehen, so wie es dämmert."
+     Nach der Uhr (SZ.zeitAuto) gibt es einen Nachtgrad 0…1, der sich in der
+     Dämmerung langsam ändert; Licht, Schatten und das Nachtbild werden
+     dazwischen gemischt. Wer die Tageszeit selbst wählt, bekommt sie fest. */
+  const misch = (a, b, t) => a + (b - a) * t;
+  const UHR = new URLSearchParams(location.search).get("uhr") != null ? +new URLSearchParams(location.search).get("uhr") : null;
+  SZ.nachtGrad = function (d) {
+    const h = d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
+    const rampe = (x, a, b) => Math.max(0, Math.min(1, (x - a) / (b - a)));
+    if (h >= 8 && h < 16.5) return 0;
+    if (h >= 16.5 && h < 18.5) return 0.75 * rampe(h, 16.5, 18.5);
+    if (h >= 18.5 && h < 20) return 0.75 + 0.25 * rampe(h, 18.5, 20);
+    if (h >= 6 && h < 7) return 1 - 0.25 * rampe(h, 6, 7);
+    if (h >= 7 && h < 8) return 0.75 * (1 - rampe(h, 7, 8));
+    return 1;
+  };
+  SZ.zeitDaten = function () {
+    if (!SZ.zeitAuto) return Object.assign({ name: SZ.zeit, grad: ST.ZEITEN[SZ.zeit].nacht }, ST.ZEITEN[SZ.zeit]);
+    /* ?uhr=18.2 – feste Uhrzeit zum Prüfen */
+    const d = new Date(); if (UHR != null) d.setHours(Math.floor(UHR), Math.round((UHR % 1) * 60), 0);
+    const n = SZ.nachtGrad(d), Z = ST.ZEITEN;
+    const A = n <= 0.75 ? Z.tag : Z.abend, B = n <= 0.75 ? Z.abend : Z.nacht, t = n <= 0.75 ? n / 0.75 : (n - 0.75) / 0.25;
+    SZ.zeit = n < 0.3 ? "tag" : n < 0.9 ? "abend" : "nacht";
+    return { name: SZ.zeit, grad: n, amb: A.amb.map((v, i) => misch(v, B.amb[i], t)), sonne: A.sonne.map((v, i) => misch(v, B.sonne[i], t)),
+      nacht: misch(A.nacht, B.nacht, t), schatten: misch(A.schatten, B.schatten, t) };
+  };
 
   /* ---------------- Welches Bild zeigt ein Objekt gerade? ---------------- */
   /* Gebacken sind Winter und Herbst (die übrigen Jahreszeiten folgen) */
@@ -168,7 +195,10 @@
     sg.setTransform(1, 0, 0, 1, 0, 0); sg.clearRect(0, 0, sw, sh);
 
     /* Nacht = Nachtbild; Dämmerung: Tagbild, darüber das Nachtbild halb */
-    const nachtAnteil = Z.nacht >= 0.99 ? 1 : Z.nacht > 0.02 ? 0.62 : 0;
+    /* FASSUNG 795 — fließend: bis zur Dämmerung (0,75) wächst das Nachtbild
+       auf 0,62, danach bis zur vollen Nacht auf 1 */
+    const ng = Z.grad != null ? Z.grad : Z.nacht;
+    const nachtAnteil = ng >= 0.995 ? 1 : ng <= 0.01 ? 0 : ng <= 0.75 ? 0.62 * ng / 0.75 : 0.62 + 0.38 * (ng - 0.75) / 0.25;
     const zeiten = nachtAnteil >= 1 ? [["nacht", 1]] : nachtAnteil > 0 ? [["tag", 1], ["nacht", nachtAnteil]] : [["tag", 1]];
     const sicht = [];
     const rand = 60 * K.dpr;

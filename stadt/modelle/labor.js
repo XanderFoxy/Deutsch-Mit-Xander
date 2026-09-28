@@ -692,7 +692,7 @@
     if (ZMUSTER[k]) return ZMUSTER[k];
     const R = 120, B = 2.08, H = 0.616;
     const c = document.createElement("canvas"); c.width = Math.round(B * R); c.height = Math.round(H * R);
-    const g = c.getContext("2d"), rng = zufall(saat);
+    const g = c.getContext("2d", { willReadFrequently: true }), rng = zufall(saat);
     g.scale(R, R);
     g.fillStyle = rgb(fuge); g.fillRect(0, 0, B, H);
     const sh = 0.077, fz = 0.011;
@@ -1106,6 +1106,7 @@
   function kuppelFigur(S, Z) {
     return function (g, s, F) {
       if (F.schatten) return;
+      attikaClip(g, s, F, KUPPEL.x, KUPPEL.y);
       const K = KUPPEL, KX = ST.KX, KY = ST.KY, KZ = ST.KZ, AUGE = ST.ZUM_AUGE;
       const r = (F.gier || 0) * RAD, c = Math.cos(r), sn = Math.sin(r);
       const cam = (p) => [p[0] * c - p[1] * sn, p[0] * sn + p[1] * c, p[2]];
@@ -1362,9 +1363,26 @@
   /* =====================================================================
      WETTERMAST (Windfahne, Schalenkreuz) UND WETTERHÜTTE
      ===================================================================== */
+  /* Figuren auf dem Dach: was hinter der Attika liegt, abschneiden.
+     Die Figur steht innen – jede ihr zugewandte Außenseite der Attika und
+     jede Abdeckplatte liegt also vor ihr. */
+  function attikaClip(g, s, F, bx, by) {
+    const KX = ST.KX, KY = ST.KY, KZ = ST.KZ, AUGE = ST.ZUM_AUGE;
+    const r = (F.gier || 0) * RAD, c = Math.cos(r), sn = Math.sin(r);
+    const P = (x, y, z) => { x -= bx; y -= by; z -= DACHZ; const X = x * c - y * sn, Yy = x * sn + y * c; return [(X - Yy) * KX * s, (X + Yy) * KY * s - z * KZ * s]; };
+    const eM = [AUGE[0] * c + AUGE[1] * sn, -AUGE[0] * sn + AUGE[1] * c];
+    const loch = (pts) => { g.beginPath(); g.rect(-1e4, -1e4, 2e4, 2e4); pts.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]))); g.closePath(); g.clip("evenodd"); };
+    for (let i = 0; i < PLAN.length; i++) {
+      const a = PLAN[i], b = PLAN[(i + 1) % PLAN.length], ia = INNEN[i], ib = INNEN[(i + 1) % PLAN.length];
+      const nx = -(b[1] - a[1]), ny = b[0] - a[0];
+      if (nx * eM[0] + ny * eM[1] > 0) loch([P(a[0], a[1], ZW), P(b[0], b[1], ZW), P(b[0], b[1], DACHZ - 1), P(a[0], a[1], DACHZ - 1)]);
+      loch([P(a[0], a[1], ZW), P(b[0], b[1], ZW), P(ib[0], ib[1], ZW), P(ia[0], ia[1], ZW)]);
+    }
+  }
   function mastFigur(S) {
     return function (g, s, F) {
       if (F.schatten) return;
+      attikaClip(g, s, F, MAST[0], MAST[1]);
       const KX = ST.KX, KY = ST.KY, KZ = ST.KZ;
       const r = (F.gier || 0) * RAD, c = Math.cos(r), sn = Math.sin(r);
       const P = (x, y, z) => { const X = x * c - y * sn, Yy = x * sn + y * c; return [(X - Yy) * KX * s, (X + Yy) * KY * s - z * KZ * s]; };
@@ -1413,6 +1431,7 @@
   function huetteFigur(S) {
     return function (g, s, F) {
       if (F.schatten) return;
+      attikaClip(g, s, F, HUETTE[0], HUETTE[1]);
       const KX = ST.KX, KY = ST.KY, KZ = ST.KZ, AUGE = ST.ZUM_AUGE;
       const r = (F.gier || 0) * RAD, c = Math.cos(r), sn = Math.sin(r);
       const cam = (p) => [p[0] * c - p[1] * sn, p[0] * sn + p[1] * c, p[2]];

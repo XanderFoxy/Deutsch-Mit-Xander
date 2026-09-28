@@ -363,7 +363,8 @@
       for (let j = 0; j < ny; j++) {
         const y = F.h * j / (ny - 1);
         const P = add(f.o, add(mul(f.u, x), mul(f.v, y)));
-        const a = k * flutWert(strahler, P, n);
+        /* Streulicht: auch abgewandte und waagrechte Flächen bekommen einen Hauch */
+        const a = k * (flutWert(strahler, P, n) + (n[2] > 0.9 ? 0 : 0.09));
         const q = (j * nx + i) * 4;
         id.data[q] = Math.round(klemm(l0[0] + a * WARM[0], 0, 1) * 255);
         id.data[q + 1] = Math.round(klemm(l0[1] + a * WARM[1], 0, 1) * 255);
@@ -409,7 +410,10 @@
   const TRIG_Y = [-1.85, -1.11, -0.37, 0.37, 1.11, 1.85];
 
   /* ---------------- Farben ---------------- */
-  const STEIN = [214, 204, 182];      // Elbsandstein, gereinigt
+  const STEIN_HELL = [214, 204, 182]; // Elbsandstein, frisch gereinigt
+  /* o.saat: mal frisch gereinigt, mal schon wieder etwas nachgedunkelt
+     (wird in bauen() gesetzt; gemalt wird gleich danach) */
+  let STEIN = STEIN_HELL;
   const KUPFER = [86, 148, 126];      // Patina
   const SCHNEE = [240, 244, 250];
 
@@ -753,7 +757,7 @@
         const nk = [nM[0] * c - nM[1] * sn, nM[0] * sn + nM[1] * c, nM[2]];
         const f = ST.lichtFaktor(nk, F.Z, 0, F.jahr);
         if (o.flut && F.nacht > 0) {
-          const k = (F.nacht > 0.9 ? 1 : 0.5 * F.nacht) * 0.62;
+          const k = (F.nacht > 0.9 ? 1 : 0.5 * F.nacht) * 0.45;
           const a = k * flutWert(o.flut, [o.P0[0] + (pz ? pz[0] : 0), o.P0[1] + (pz ? pz[1] : 0), o.zFuss + (pz ? pz[2] : 1)], nM);
           f[0] += a * WARM[0]; f[1] += a * WARM[1]; f[2] += a * WARM[2];
         }
@@ -871,99 +875,113 @@
         const k = F.nacht > 0.9 ? 1 : 0.5 * F.nacht;
         /* Strahler auf Dächern am Platz: von vorn unten und von hinten unten */
         Bh.lampen = [
-          { p: Bh.pk([0, 6, -3]), r: 11, farbe: [1, 0.78, 0.5], k: 0.9 * k },
-          { p: Bh.pk([0, -6, -3]), r: 11, farbe: [1, 0.78, 0.5], k: 0.7 * k },
-          { p: Bh.pk([4, 1, -2]), r: 8, farbe: [1, 0.78, 0.5], k: 0.4 * k }
+          { p: Bh.pk([0, 4.5, -1.5]), r: 9, farbe: [1, 0.8, 0.52], k: 2.2 * k },
+          { p: Bh.pk([0, -4.5, -1.5]), r: 9, farbe: [1, 0.8, 0.52], k: 1.6 * k },
+          { p: Bh.pk([4, 1, -1]), r: 7, farbe: [1, 0.8, 0.52], k: 0.9 * k },
+          { p: Bh.pk([-4, 1, -1]), r: 7, farbe: [1, 0.8, 0.52], k: 0.9 * k }
         ];
       }
       const fein = s > 26;
       const dunkel = [54, 102, 88], hellK = [118, 176, 150];
       const schnee = Z.schnee > 0;
-      const opt = (x) => Object.assign({ matt: 0.25, glanz: fein ? 0.12 : 0 }, x || {});
-      /* ---------- Pferde ---------- */
-      const PF = [[-0.6, 0.12, 0.16], [-0.2, 0.2, 0.04], [0.2, 0.2, -0.04], [0.6, 0.12, -0.16]];
+      const opt = (x) => Object.assign({ matt: 0.4, glanz: fein ? 0.05 : 0 }, x || {});
+      /* ---------- Pferde ----------
+         Schadows Pferde sind schwere, muskulöse Tiere im Schritt: tiefe
+         Brust, kräftige Keule, hoch aufgerichteter Hals, ein Vorderbein
+         erhoben. Die äußeren sind leicht nach außen gewandt. */
+      const PF = [[-0.62, 0.1, 0.15], [-0.21, 0.2, 0.04], [0.21, 0.2, -0.04], [0.62, 0.1, -0.15]];
       PF.forEach(([px, py, dreh], idx) => {
         if (Z.quadriga < (idx + 1) * 0.16) return;
         const cg = Math.cos(dreh), sg = Math.sin(dreh);
         const T = (p) => [px + p[0] * cg - p[1] * sg, py + p[0] * sg + p[1] * cg, p[2]];
         const V = (v) => [v[0] * cg - v[1] * sg, v[0] * sg + v[1] * cg, v[2]];
-        const tiefe = dot(Bh.pk(T([0, 0, 0.5])), ST.ZUM_AUGE);
-        Bh.gruppe(tiefe);
+        Bh.gruppe(dot(Bh.pk(T([0, 0, 0.5])), ST.ZUM_AUGE));
         const links = idx % 2 === 0;
-        /* Beine: ein Vorderbein im Schritt erhoben */
-        const bein = (a, b, cc, r1, r2) => { Bh.glied(T(a), r1, T(b), r2, KUPFER, opt()); Bh.glied(T(b), r2, T(cc), r2 * 0.8, mischF(KUPFER, dunkel, 0.3), opt()); Bh.ei(T(add(cc, [0, 0.012, -0.012])), V([0.034, 0, 0]), V([0, 0.042, 0]), [0, 0, 0.022], dunkel, opt()); };
+        const fuss = (cc) => Bh.ei(T(add(cc, [0, 0.015, 0.012])), V([0.036, 0, 0]), V([0, 0.045, 0]), [0, 0, 0.026], dunkel, opt());
+        /* Beine: Oberarm/Unterschenkel kräftig, Röhre schlank, Fessel, Huf */
+        const bein = (a, b, cc, r1, r2) => {
+          Bh.glied(T(a), r1, T(b), r2 * 1.05, KUPFER, opt());
+          Bh.glied(T(b), r2, T(cc), r2 * 0.72, mischF(KUPFER, dunkel, 0.25), opt());
+          fuss(cc);
+        };
         for (const sx of [-1, 1]) {
           const hoch = (sx < 0) === links;
-          if (hoch) bein([sx * 0.075, 0.34, 0.5], [sx * 0.075, 0.52, 0.4], [sx * 0.075, 0.44, 0.24], 0.05, 0.034);
-          else bein([sx * 0.075, 0.34, 0.5], [sx * 0.075, 0.37, 0.24], [sx * 0.075, 0.38, 0.02], 0.05, 0.032);
-          bein([sx * 0.075, -0.3, 0.52], [sx * 0.075, -0.36, 0.25], [sx * 0.075, -0.31, 0.02], 0.065, 0.033);
+          if (hoch) bein([sx * 0.08, 0.3, 0.46], [sx * 0.08, 0.46, 0.34], [sx * 0.08, 0.4, 0.2], 0.068, 0.04);
+          else bein([sx * 0.08, 0.3, 0.46], [sx * 0.08, 0.33, 0.22], [sx * 0.08, 0.34, 0.02], 0.068, 0.04);
+          bein([sx * 0.08, -0.28, 0.5], [sx * 0.085, -0.36, 0.24], [sx * 0.08, -0.3, 0.02], 0.085, 0.042);
         }
         /* Rumpf: Brust, Mitte, Kruppe als eine Hülle */
         const fl = [];
-        if (fein) fl.push({ c: T([0, 0.02, 0.73]), a: [V([0.1, 0, 0]), V([0, 0.34, 0]), [0, 0, 0.03]], alb: hellK, n: [0, 0, 1], k: 0.6 });
-        if (fein) fl.push({ c: T([0, 0.0, 0.47]), a: [V([0.12, 0, 0]), V([0, 0.3, 0]), [0, 0, 0.04]], alb: dunkel, n: [0, 0, -1], k: 0.7 });
-        if (schnee && fein) fl.push({ c: T([0, -0.05, 0.765]), a: [V([0.08, 0, 0]), V([0, 0.3, 0]), [0, 0, 0.02]], alb: SCHNEE, n: [0, 0, 1], k: 0.95 * Z.schnee });
+        if (fein) {
+          fl.push({ c: T([0, 0.0, 0.75]), a: [V([0.1, 0, 0]), V([0, 0.34, 0]), [0, 0, 0.03]], alb: hellK, n: [0, 0, 1], k: 0.55 });
+          fl.push({ c: T([0, 0.0, 0.44]), a: [V([0.13, 0, 0]), V([0, 0.3, 0]), [0, 0, 0.05]], alb: dunkel, n: [0, 0, -1], k: 0.7 });
+          for (const sx of [-1, 1]) fl.push({ c: T([sx * 0.16, 0.26, 0.58]), a: [V([0.03, 0, 0]), V([0, 0.1, 0]), [0, 0, 0.14]], alb: hellK, n: V([sx, 0.3, 0.2]), k: 0.4 });
+          if (schnee) fl.push({ c: T([0, -0.04, 0.8]), a: [V([0.09, 0, 0]), V([0, 0.3, 0]), [0, 0, 0.02]], alb: SCHNEE, n: [0, 0, 1], k: 0.95 * Z.schnee });
+        }
         Bh.koerper([
-          { c: T([0, 0.28, 0.62]), a: [V([0.13, 0, 0]), V([0, 0.15, 0]), [0, 0, 0.16]] },
-          { c: T([0, 0.02, 0.6]), a: [V([0.14, 0, 0]), V([0, 0.26, 0]), [0, 0, 0.15]] },
-          { c: T([0, -0.24, 0.62]), a: [V([0.145, 0, 0]), V([0, 0.16, 0]), [0, 0, 0.155]] }
+          { c: T([0, 0.26, 0.6]), a: [V([0.15, 0, 0]), V([0, 0.16, 0]), [0, 0, 0.19]] },
+          { c: T([0, 0.02, 0.6]), a: [V([0.16, 0, 0]), V([0, 0.26, 0]), [0, 0, 0.17]] },
+          { c: T([0, -0.24, 0.63]), a: [V([0.165, 0, 0]), V([0, 0.17, 0]), [0, 0, 0.17]] }
         ], KUPFER, opt({ flecken: fl.length ? fl : null }));
-        /* Hals, hoch aufgerichtet, und Kopf, leicht zur Seite */
-        const kopfDreh = (idx < 2 ? 1 : -1) * 0.12;
-        const N0 = [0, 0.38, 0.7], N1 = [kopfDreh * 0.3, 0.52, 0.98];
-        Bh.glied(T(N0), 0.1, T(N1), 0.065, KUPFER, opt());
-        const hd = nrm(V([kopfDreh, 0.55, -0.55]));
-        Bh.ei(T([kopfDreh * 0.4, 0.6, 0.98]), mul(hd, 0.13), V([0.048, 0, 0]), mul(nrm(kreuz(hd, V([1, 0, 0]))), 0.058), KUPFER, opt());
-        Bh.band([T([0, 0.36, 0.8]), T([kopfDreh * 0.25, 0.47, 1.02]), T([kopfDreh * 0.35, 0.53, 1.07])], 0.035, dunkel, opt());   // Mähne
-        if (fein) for (const ex of [-0.025, 0.025]) Bh.glied(T([kopfDreh * 0.35 + ex, 0.55, 1.05]), 0.012, T([kopfDreh * 0.35 + ex * 1.4, 0.54, 1.12]), 0.006, KUPFER, opt());
+        /* Hals, hoch aufgerichtet und kräftig; Kopf leicht zur Seite */
+        const kopfDreh = (idx < 2 ? 1 : -1) * 0.1;
+        Bh.koerper([{ c: T([0, 0.36, 0.72]), a: [V([0.1, 0, 0]), V([0, 0.12, 0]), [0, 0, 0.14]] }, { c: T([kopfDreh * 0.3, 0.47, 0.95]), a: [V([0.07, 0, 0]), V([0, 0.08, 0]), [0, 0, 0.08]] }], KUPFER, opt());
+        const hd = nrm(V([kopfDreh, 0.6, -0.5]));
+        Bh.ei(T([kopfDreh * 0.4, 0.55, 0.97]), mul(hd, 0.14), V([0.05, 0, 0]), mul(nrm(kreuz(hd, V([1, 0, 0]))), 0.062), KUPFER, opt());
+        Bh.band([T([0, 0.3, 0.84]), T([kopfDreh * 0.25, 0.42, 1.02]), T([kopfDreh * 0.3, 0.47, 1.07])], 0.045, dunkel, opt());   // Mähne
+        if (fein) for (const ex of [-0.025, 0.025]) Bh.glied(T([kopfDreh * 0.32 + ex, 0.5, 1.05]), 0.013, T([kopfDreh * 0.32 + ex * 1.4, 0.49, 1.12]), 0.006, KUPFER, opt());
         /* Schweif */
-        Bh.glied(T([0, -0.4, 0.66]), 0.04, T([0, -0.49, 0.42]), 0.022, dunkel, opt());
+        Bh.glied(T([0, -0.4, 0.68]), 0.045, T([0, -0.47, 0.42]), 0.025, dunkel, opt());
       });
-      /* ---------- Wagen ---------- */
+      /* ---------- Wagen: muschelförmiger Kasten, kleine Räder ---------- */
       if (Z.quadriga >= 0.72) {
         Bh.gruppe(dot(Bh.pk([0, -0.6, 0.4]), ST.ZUM_AUGE));
         for (const sx of [-1, 1]) {
           const rad = [];
-          for (let i = 0; i < 18; i++) { const w = i / 18 * TAU; rad.push([sx * 0.27, -0.6 + Math.cos(w) * 0.25, 0.26 + Math.sin(w) * 0.25]); }
-          Bh.platte(rad, dunkel, { n: [sx, 0, 0], beidseitig: true });
-          Bh.kugel([sx * 0.29, -0.6, 0.26], 0.04, KUPFER, opt());
+          for (let i = 0; i < 18; i++) { const w = i / 18 * TAU; rad.push([sx * 0.25, -0.66 + Math.cos(w) * 0.19, 0.2 + Math.sin(w) * 0.19]); }
+          Bh.platte(rad, mischF(KUPFER, dunkel, 0.5), { n: [sx, 0, 0], beidseitig: true });
+          Bh.kugel([sx * 0.27, -0.66, 0.2], 0.035, KUPFER, opt());
         }
-        Bh.koerper([{ c: [0, -0.52, 0.44], a: [[0.24, 0, 0], [0, 0.14, 0], [0, 0, 0.17]] }, { c: [0, -0.64, 0.4], a: [[0.22, 0, 0], [0, 0.1, 0], [0, 0, 0.12]] }], KUPFER, opt());
-        Bh.band([[0, -0.4, 0.42], [0, 0.0, 0.5], [0, 0.42, 0.62]], 0.04, dunkel, opt());   // Deichsel
+        Bh.koerper([{ c: [0, -0.52, 0.42], a: [[0.24, 0, 0], [0, 0.13, 0], [0, 0, 0.18]] }, { c: [0, -0.66, 0.36], a: [[0.22, 0, 0], [0, 0.1, 0], [0, 0, 0.1]] }], KUPFER, opt({ flecken: fein ? [{ c: [0, -0.4, 0.48], a: [[0.18, 0, 0], [0, 0.02, 0], [0, 0, 0.1]], alb: hellK, n: [0, 1, 0.3], k: 0.4 }] : null }));
+        Bh.band([[0, -0.4, 0.42], [0, 0.0, 0.5], [0, 0.4, 0.62]], 0.045, dunkel, opt());   // Deichsel
       }
       /* ---------- Victoria ---------- */
       if (Z.quadriga >= 0.86) {
-        const VY = -0.6;
+        const VY = -0.62;
         Bh.gruppe(dot(Bh.pk([0, VY, 0.9]), ST.ZUM_AUGE) + 0.05);
-        /* Flügel: weit nach hinten oben, gefiedert */
+        /* Flügel: aus den Schultern schräg nach hinten oben, in drei
+           Federlagen (als gewölbte Flächen) */
         for (const sx of [-1, 1]) {
-          const w = [[sx * 0.06, VY - 0.08, 1.02], [sx * 0.22, VY - 0.2, 1.08], [sx * 0.36, VY - 0.3, 1.32], [sx * 0.4, VY - 0.34, 1.55], [sx * 0.3, VY - 0.3, 1.45], [sx * 0.2, VY - 0.24, 1.28], [sx * 0.12, VY - 0.18, 1.16], [sx * 0.05, VY - 0.1, 1.1]];
-          Bh.platte(w, mischF(KUPFER, hellK, 0.15), { beidseitig: true, innen: dunkel, tiefe: -0.05 });
+          for (const [lage, k] of [[0, 1], [1, 0.8], [2, 0.6]]) {
+            const w = [[sx * 0.07, VY - 0.08, 1.2 - lage * 0.02], [sx * (0.18 + 0.02 * lage), VY - 0.17, 1.24], [sx * (0.3 * k + 0.08), VY - 0.26, 1.46 + 0.16 * k], [sx * (0.27 * k + 0.07), VY - 0.24, 1.66 + 0.18 * k], [sx * (0.16 * k + 0.06), VY - 0.2, 1.5 + 0.12 * k], [sx * 0.06, VY - 0.12, 1.3]];
+            Bh.platte(w, mischF(KUPFER, lage === 0 ? dunkel : hellK, 0.15 + 0.1 * lage), { beidseitig: true, innen: dunkel, tiefe: -0.06 + lage * 0.005 });
+          }
         }
-        /* Gewand in Falten, Oberkörper, Kopf mit Kranz */
-        Bh.koerper([{ c: [0, VY, 0.55], a: [[0.13, 0, 0], [0, 0.11, 0], [0, 0, 0.2]] }, { c: [0, VY, 0.78], a: [[0.11, 0, 0], [0, 0.09, 0], [0, 0, 0.16]] }], KUPFER, opt({ flecken: fein ? [{ c: [0.04, VY + 0.08, 0.6], a: [[0.02, 0, 0], [0, 0.02, 0], [0, 0, 0.18]], alb: dunkel, n: [0, 1, 0], k: 0.6 }, { c: [-0.05, VY + 0.08, 0.58], a: [[0.02, 0, 0], [0, 0.02, 0], [0, 0, 0.16]], alb: dunkel, n: [0, 1, 0], k: 0.6 }] : null }));
-        Bh.koerper([{ c: [0, VY, 0.98], a: [[0.1, 0, 0], [0, 0.07, 0], [0, 0, 0.1]] }], KUPFER, opt());
-        Bh.glied([0, VY, 1.06], 0.035, [0, VY + 0.01, 1.12], 0.03, KUPFER, opt());
-        Bh.kugel([0, VY + 0.01, 1.17], 0.055, KUPFER, opt({ flecken: schnee && fein ? [{ c: [0, VY, 1.215], a: [[0.04, 0, 0], [0, 0.04, 0], [0, 0, 0.01]], alb: SCHNEE, n: [0, 0, 1], k: 0.9 }] : null }));
+        /* Gewand in Falten: faltiger Rock, gegürtet, Oberkörper */
+        const falten = fein ? [-0.07, -0.02, 0.03, 0.08].map((x) => ({ c: [x, VY + 0.1, 0.72], a: [[0.012, 0, 0], [0, 0.02, 0], [0, 0, 0.24]], alb: dunkel, n: [0, 1, 0], k: 0.55 })) : null;
+        Bh.koerper([{ c: [0, VY, 0.62], a: [[0.14, 0, 0], [0, 0.12, 0], [0, 0, 0.2]] }, { c: [0, VY, 0.9], a: [[0.12, 0, 0], [0, 0.1, 0], [0, 0, 0.18]] }], KUPFER, opt({ flecken: falten }));
+        Bh.koerper([{ c: [0, VY, 1.16], a: [[0.11, 0, 0], [0, 0.08, 0], [0, 0, 0.12]] }], KUPFER, opt());
+        Bh.glied([0, VY, 1.26], 0.04, [0, VY + 0.01, 1.33], 0.034, KUPFER, opt());
+        Bh.kugel([0, VY + 0.01, 1.39], 0.062, KUPFER, opt({ flecken: schnee && fein ? [{ c: [0, VY, 1.44], a: [[0.045, 0, 0], [0, 0.045, 0], [0, 0, 0.01]], alb: SCHNEE, n: [0, 0, 1], k: 0.9 }] : null }));
         /* linker Arm mit den Zügeln */
-        Bh.glied([-0.1, VY, 1.04], 0.03, [-0.14, VY + 0.12, 0.88], 0.024, KUPFER, opt());
-        for (const px of [-0.6, -0.2, 0.2, 0.6]) Bh.band([[-0.14, VY + 0.14, 0.88], [px * 0.5, 0.1, 0.8], [px, 0.45, 0.95]], 0.008, dunkel, { schatten: false });
+        Bh.glied([-0.11, VY, 1.24], 0.034, [-0.15, VY + 0.14, 1.05], 0.026, KUPFER, opt());
+        for (const px of [-0.62, -0.21, 0.21, 0.62]) Bh.band([[-0.15, VY + 0.16, 1.05], [px * 0.5, 0.05, 0.9], [px, 0.5, 0.97]], 0.008, dunkel, { schatten: false });
         /* rechter Arm erhoben mit dem Siegeszeichen */
-        const hand = [0.2, VY + 0.12, 1.3];
-        Bh.glied([0.1, VY, 1.05], 0.03, hand, 0.024, KUPFER, opt());
-        Bh.band([[0.2, VY + 0.12, 0.55], [0.2, VY + 0.12, 1.95]], 0.022, dunkel, opt());
+        const hand = [0.22, VY + 0.12, 1.52];
+        Bh.glied([0.11, VY, 1.26], 0.034, hand, 0.026, KUPFER, opt());
+        Bh.band([[0.22, VY + 0.12, 0.7], [0.22, VY + 0.12, 2.18]], 0.024, dunkel, opt());
         /* Eichenkranz mit dem Eisernen Kreuz */
         const kr = [];
-        for (let i = 0; i <= 20; i++) { const w = i / 20 * TAU; kr.push([0.2 + Math.cos(w) * 0.13, VY + 0.12, 1.7 + Math.sin(w) * 0.13]); }
-        Bh.band(kr, 0.04, KUPFER, opt());
+        for (let i = 0; i <= 22; i++) { const w = i / 22 * TAU; kr.push([0.22 + Math.cos(w) * 0.14, VY + 0.12, 1.93 + Math.sin(w) * 0.14]); }
+        Bh.band(kr, 0.045, KUPFER, opt());
         if (fein) {
-          const kz = (x, z) => [0.2 + x, VY + 0.13, 1.7 + z];
-          const a = 0.09, b = 0.025;
+          const kz = (x, z) => [0.22 + x, VY + 0.13, 1.93 + z];
+          const a = 0.1, b = 0.028;
           Bh.platte([kz(-b, a), kz(b, a), kz(b * 0.6, b), kz(a, b), kz(a, -b), kz(b * 0.6, -b * 0.6), kz(b, -a), kz(-b, -a), kz(-b * 0.6, -b * 0.6), kz(-a, -b), kz(-a, b), kz(-b * 0.6, b)], [40, 60, 54], { beidseitig: true });
         }
-        /* Preußischer Adler auf der Spitze */
-        Bh.ei([0.2, VY + 0.12, 2.0], [0.03, 0, 0], [0, 0.04, 0], [0, 0, 0.06], KUPFER, opt());
-        for (const sx of [-1, 1]) Bh.platte([[0.2 + sx * 0.02, VY + 0.12, 2.02], [0.2 + sx * 0.16, VY + 0.12, 2.12], [0.2 + sx * 0.14, VY + 0.12, 1.98], [0.2 + sx * 0.03, VY + 0.12, 1.96]], KUPFER, { beidseitig: true });
+        /* Preußischer Adler auf der Spitze, Schwingen gebreitet */
+        Bh.ei([0.22, VY + 0.12, 2.22], [0.032, 0, 0], [0, 0.04, 0], [0, 0, 0.065], KUPFER, opt());
+        for (const sx of [-1, 1]) Bh.platte([[0.22 + sx * 0.02, VY + 0.12, 2.24], [0.22 + sx * 0.17, VY + 0.12, 2.36], [0.22 + sx * 0.15, VY + 0.12, 2.2], [0.22 + sx * 0.03, VY + 0.12, 2.18]], KUPFER, { beidseitig: true });
       }
       Bh.malen(g);
     };
@@ -997,6 +1015,7 @@
       const B = blickVon(o), W = new Werk(M, B);
       const bau = o.bau == null ? 1 : o.bau;
       const Z = zustand(bau, o.jahr);
+      STEIN = mischF(STEIN_HELL, [176, 164, 142], (((o.saat || 1) >>> 0) % 4) * 0.12);
 
       /* Strahler: vor jeder Säule (Platz- und Tiergartenseite), vor den
          Torhäusern, in den Durchfahrten */
@@ -1015,7 +1034,13 @@
           const z1 = -Z.tiefe * (1 - glatt(Z.fund));
           W.teil("fundament", { fest: -20, schatten: false });
           const fl = [[-6.8, -2.45, 6.8, 2.45], [-HX1 - 0.1, -HY - 0.05, -HX0 + 0.1, HY + 0.05], [HX0 - 0.1, -HY - 0.05, HX1 + 0.1, HY + 0.05], [-HX0, -0.85, -6.7, 0.85], [6.7, -0.85, HX0, 0.85]];
-          for (const [x0, y0, x1, y1] of fl) kastenRoh(W, x0, y0, -Z.tiefe, x1, y1, z1, (g, F) => { stein(g, F, z1, { farbe: [176, 166, 146], lage: 0.4, lang: 0.8, fahnen: false }); }, { oben: true });
+          const Rg = [-13.1, -3.9, 13.1, 3.9];
+          for (const [x0, y0, x1, y1] of fl) kastenRoh(W, x0, y0, -Z.tiefe, x1, y1, z1, (g, F) => {
+            g.save(); if (!lochClip(g, F, B.e, Rg)) { g.restore(); return; }
+            stein(g, F, z1, { farbe: [176, 166, 146], lage: 0.4, lang: 0.8, fahnen: false });
+            belichten(g, F, B, nrm(kreuz(F.flaeche.u, F.flaeche.v)));
+            g.restore();
+          }, { oben: true });
         }
       }
       if (Z.grube) { W.ordnen(); beschleunigen(M); return; }
@@ -1179,7 +1204,7 @@
       if (Z.quadriga > 0) {
         W.teil("quadriga");
         W.huelle([[-1.1, -1.1, Z_SOCK], [1.1, -1.1, Z_SOCK], [1.1, 1.1, Z_SOCK], [-1.1, 1.1, Z_SOCK], [-1.3, -1.3, Z_SOCK + 2.6], [1.3, 1.3, Z_SOCK + 2.6]], [[[0, 0, -1], -Z_SOCK]]);
-        M.figur({ x: 0, y: 0, z: Z_SOCK, breite: 3.2, hoehe: 2.8, schatten: false, malen: quadrigaFigur(Z, flut) });
+        M.figur({ x: 0, y: 0, z: Z_SOCK, breite: 3.2, hoehe: 3.1, schatten: false, malen: quadrigaFigur(Z, flut) });
       }
 
       /* ---------- Verbindungsmauern und Torhäuser ---------- */
@@ -1281,23 +1306,27 @@
     const innen = [(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2];
     const S = [[[x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [x0, y1, z0]], [[x1, y0, z1], [x0, y0, z1], [x0, y0, z0], [x1, y0, z0]], [[x1, y1, z1], [x1, y0, z1], [x1, y0, z0], [x1, y1, z0]], [[x0, y0, z1], [x0, y1, z1], [x0, y1, z0], [x0, y0, z0]]];
     if (opt && opt.oben) S.push([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]]);
-    S.forEach((p, i) => W.poly(p, innen, mal, { name: "fu" + i, keinLicht: false }));
+    S.forEach((p, i) => W.poly(p, innen, mal, { name: "fu" + i }));
   }
 
+  /* Flächen der Baugrube nur innerhalb des Grubenrands malen (der Rand
+     entlang der Blickrichtung auf die Ebene der Fläche projiziert) */
+  function lochClip(g, F, e, Rg) {
+    const [x0, y0, x1, y1] = Rg;
+    const f = F.flaeche, n = nrm(kreuz(f.u, f.v)), en = dot(e, n);
+    if (Math.abs(en) < 1e-4) return false;
+    const q = [];
+    for (const [x, y] of [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]) {
+      const C = [x, y, 0], t = dot(sub(C, f.o), n) / en, P = sub(C, mul(e, t)), d = sub(P, f.o);
+      q.push([dot(d, f.u), dot(d, f.v)]);
+    }
+    g.beginPath(); g.moveTo(q[0][0], q[0][1]); for (let i = 1; i < 4; i++) g.lineTo(q[i][0], q[i][1]); g.closePath(); g.clip();
+    return true;
+  }
   /* ---------- Baugrube ---------- */
   function grubeBauen(W, M, B, Z, Rg) {
     const T = Math.max(0.05, Z.tiefe), [x0, y0, x1, y1] = Rg, e = B.e;
-    const loch = (g, F) => {
-      const f = F.flaeche, n = nrm(kreuz(f.u, f.v)), en = dot(e, n);
-      if (Math.abs(en) < 1e-4) return false;
-      const q = [];
-      for (const [x, y] of [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]) {
-        const C = [x, y, 0], t = dot(sub(C, f.o), n) / en, P = sub(C, mul(e, t)), d = sub(P, f.o);
-        q.push([dot(d, f.u), dot(d, f.v)]);
-      }
-      g.beginPath(); g.moveTo(q[0][0], q[0][1]); for (let i = 1; i < 4; i++) g.lineTo(q[i][0], q[i][1]); g.closePath(); g.clip();
-      return true;
-    };
+    const loch = (g, F) => lochClip(g, F, e, Rg);
     const erde = (g, F, saat) => {
       g.fillStyle = rgbS([196, 170, 124]); g.fillRect(-1, -1, F.w + 2, F.h + 2);       // märkischer Sand
       if (F.px > 6) rausch(g, -1, -1, F.w + 2, F.h + 2, 1.0, 0.35, saat, true);
