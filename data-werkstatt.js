@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 786: /sprich Wort im Livestream – Lehrer gibt Sprachnachrichten mit ✓ frei, Lernende übernehmen sie geschnitten ins Aussprache-Wörterbuch; unbekannte Wörter gehen an Claude (Funk 188/190)",
+  stand: "Fassung 787: /sprich-Wörter aus dem Wörterbuch antippen, Hörspiel mit der eigenen Stimme (Artikel/Bedeutung), Vorschläge lesbar",
 
   inArbeit: [
-    { seit: "2026-09-28T02:35",
-      text: "Spiele mit der eigenen Stimme (Artikel/Bedeutung); Wortauswahl aus dem Wörterbuch für /sprich; Sequenzen für Pac-Man/Mario; Walkies 282/283/285/296" },
+    { seit: "2026-09-28T02:52",
+      text: "1.047 erzeugte Wörterbuch-Erklärungen prüfen; Sequenzen Pac-Man/Mario; Stadt gestalten, Arena/Skins; Walkies 282/283/285/296" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T02:35",
-      text: "Lehrer-Freigabe im Livestream" },
+    { seit: "2026-09-28T02:52",
+      text: "Funk 188: Wortauswahl für /sprich, Hörspiel mit eigener Stimme, Dringlichkeit nach Duden" },
   ],
 };

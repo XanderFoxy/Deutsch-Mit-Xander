@@ -1839,3 +1839,15 @@ XANDER (Funk 188): „dass ich z.B ein Wort vorgebe … und dann sollen die Leut
 - Die Freigabe ist nur an die eigene Wörterbuch-Liste gebunden; ein nachgemachtes „frei“ könnte höchstens das eigene private Wörterbuch füllen, darum ohne Serverprüfung.
 - Nicht geprüft: echte zwei Geräte im Livestream (hier nur mit eingespielten Nachrichten).
 - Noch offen aus Funk 188: Spiele mit der eigenen Stimme (Wort hören → Artikel / Bedeutung) und die Wortauswahl aus dem Wörterbuch per Tipp statt Tippen.
+
+## Fassung 787 — /sprich aus dem Wörterbuch, Hörspiel mit der eigenen Stimme (Funk 188)
+
+XANDER: „dass ich z.B ein Wort vorgebe oder mir das aussuchen kann aus dem Wörterbuch" und „Spiele damit machen mit ihrer eigenen Stimme … wo sie das Wort einfach nur hören und sagen müssen welchen Artikel das hat … oder welche Bedeutung dieses Wort hat".
+
+- **/sprich mit Auswahl (nur Lehrer):** Beim Tippen von `/sprich Ti…` stehen passende Wörterbuch-Wörter unter dem Feld (Artikel, Niveau, Bedeutung als Hinweis). Ohne Anfang: zufällige Auswahl A1–B1. Ein Tipp schickt sofort ab. Das selbst getippte Wort steht immer mit dabei („nicht im Wörterbuch – Claude bekommt Bescheid").
+- **Wortschatz wird nachgeladen:** vokabeln/*.js kommen erst auf Anfrage. Ohne sie fehlten die Artikel, und ein Wort galt fälschlich als unbekannt – das betraf auch die Wörterbuch-Meldung aus 786. `DMA_AUSSPR_BRUECKE.laden()/geladen()` lädt zuerst.
+- **Hörspiel mit meiner Stimme** (Profil und Aussprachetrainer, im privaten Wörterbuch): bis zu 5 Fragen; man hört nur die eigene Aufnahme, das Wort steht nicht da; der/die/das oder eine von drei Bedeutungen; Auflösung mit Artikel und Wort, dann geht es von selbst weiter; Endstand und „Nochmal". Wörter ohne Artikel/Erklärung im Wörterbuch bleiben draußen, sonst ein ehrlicher Hinweis. Keine Punkte (sonst ließe es sich mit wenigen Wörtern endlos abholen).
+- **Erzeugte Erklärungen zählen nicht als Bedeutung** („von „X" abgeleitet, mit der Nachsilbe …", „eine Form von …"). Gefunden an „Dringlichkeit – von „drin" abgeleitet" – falsch; nach Duden korrigiert. 1.047 solcher „abgeleitet, mit der Nachsilbe"-Einträge stehen noch im Wortschatz und gehören geprüft.
+- **Vorschlagsliste lesbar:** Die Chips der Befehlsvorschläge erbten die dunkle Seitenschrift auf dunklem Kasten (gemessen rgb(46,42,37) auf rgb(34,28,26)). Jetzt helle Schrift.
+- Ein Abspieler für die eigene Stimme (iPhone/Android spielen nach dem ersten Tipp weiter).
+- Sonde `werkzeug/pruefe-787-sprich-auswahl-hoerspiel.js`: 19/19. `pruefe-namensvorschlaege.js`: veraltete Erwartung (regenbogen2 seit Funk 75, auch vor 787 rot) angepasst.

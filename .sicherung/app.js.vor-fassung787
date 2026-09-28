@@ -13677,8 +13677,6 @@
     }, 60);
   };
 
-  /* Fertig heißt: der Ladeversuch ist durch – auch wenn eine einzelne Themendatei gefehlt hat. */
-  let aussprWortschatzFertig = false;
   window.DMA_AUSSPR_BRUECKE = {
     original: function (wort) {
       const ziel = String(wort || "").trim().toLowerCase();
@@ -13698,56 +13696,6 @@
       if (!ziel) return true;
       try { return buildDictionaryEntries().some((e) => aussprSprechtext(e).toLowerCase() === ziel || String(e.word || "").toLowerCase() === ziel); } catch (e) { return true; }
     },
-    /* FASSUNG 787: Der volle Wortschatz (vokabeln/*.js) kommt erst auf Anfrage. Ohne ihn fehlen die Artikel
-       („Tisch" statt „der Tisch"), und ein Wort galt fälschlich als „nicht im Wörterbuch". */
-    geladen: function () { return aussprWortschatzFertig || !(VocabData.alleThemenDa && !VocabData.alleThemenDa()); },
-    laden: function () { return Promise.resolve(wortschatzBereit()).catch(() => false).then((r) => { aussprWortschatzFertig = true; return r; }); },
-    /* FASSUNG 787 — XANDER (Funk 188): „dass ich z.B ein Wort vorgebe oder mir das aussuchen kann aus dem Wörterbuch".
-       Vorschläge für /sprich beim Tippen: passende Anfänge zuerst, ohne Anfang eine bunte Auswahl A1–B1. */
-    vorschlaege: function (anfang, n) {
-      const such = String(anfang || "").trim().toLowerCase(), wieviel = n || 12;
-      let gut = [];
-      try { gut = buildDictionaryEntries().filter((e) => wortZumUeben(e) && aussprUebbar(e)); } catch (e) { return []; }
-      let treffer;
-      if (such) {
-        const vorn = [], drin = [];
-        gut.forEach((e) => { const t = aussprSprechtext(e).toLowerCase(); if (t.indexOf(such) === 0) vorn.push(e); else if (such.length >= 3 && t.indexOf(such) > 0) drin.push(e); });
-        vorn.sort((a, b) => aussprSprechtext(a).length - aussprSprechtext(b).length);
-        treffer = vorn.concat(drin);
-      } else {
-        const pool = gut.filter((e) => /^(A1|A2|B1)$/.test(String(e.level || "")));
-        treffer = [];
-        for (let i = 0; i < wieviel && pool.length; i++) treffer.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
-      }
-      return treffer.slice(0, wieviel).map((e) => ({ wort: aussprSprechtext(e), artikel: aussprArtikel(e), level: e.level || "",
-        bedeutung: window.DMA_AUSSPR_BRUECKE.echteBedeutung(e.meaning).split(/[;.]/)[0].trim().slice(0, 60) }));
-    },
-    /* Erzeugte Erklärungen („von „X" abgeleitet, mit der Nachsilbe …", „eine Form von …") sind keine Bedeutung –
-       gefunden an „Dringlichkeit – von „drin" abgeleitet" (falsch; Duden: zu „dringlich"). Im Hörspiel zählen nur echte. */
-    echteBedeutung: function (b) {
-      const t = String(b || "").trim();
-      return !t || /abgeleitet|Nachsilbe|Vorsilbe|^zusammengesetzt aus|Form von|^Mehrzahl |^Präteritum|^Partizip|falsche Antwort/i.test(t) ? "" : t;
-    },
-    /* Artikel und Bedeutung zu einem Wort – für das Hörspiel mit der eigenen Stimme. */
-    eintrag: function (wort) {
-      const ziel = String(wort || "").trim().toLowerCase();
-      if (!ziel) return null;
-      let e = null;
-      try { e = buildDictionaryEntries().find((x) => aussprSprechtext(x).toLowerCase() === ziel && !x.uebungsfehler) || null; } catch (x) {}
-      if (!e) return null;
-      return { wort: aussprSprechtext(e), artikel: aussprArtikel(e), bedeutung: window.DMA_AUSSPR_BRUECKE.echteBedeutung(e.meaning), level: e.level || "" };
-    },
-    /* Falsche Bedeutungen als Auswahl daneben – andere Wörter mit Erklärung. */
-    fremdeBedeutungen: function (ohne, n) {
-      const aus = String(ohne || "").trim().toLowerCase(), raus = [];
-      let pool = [];
-      try { pool = buildDictionaryEntries().filter((e) => wortZumUeben(e) && aussprSprechtext(e).toLowerCase() !== aus); } catch (e) { return []; }
-      for (let i = 0; i < 40 && raus.length < (n || 2) && pool.length; i++) {
-        const e = pool[Math.floor(Math.random() * pool.length)], b = window.DMA_AUSSPR_BRUECKE.echteBedeutung(e.meaning);
-        if (b && raus.indexOf(b) < 0) raus.push(b);
-      }
-      return raus;
-    },
     /* Für die Laut-Bewertung im Spiel: auch sie braucht den geladenen Stand. */
     bereit: function () {
       const AP = window.AusspracheP;
@@ -13766,7 +13714,6 @@
     if (!wort) return;
     const br = window.DMA_AUSSPR_BRUECKE;
     if (d.lehrer) {
-      if (br && br.laden && !br.geladen()) { br.laden().then(() => { if (br.geladen()) window.dispatchEvent(new CustomEvent("dma-sprich-wort", { detail: d })); }); return; }
       if (br && !br.imWoerterbuch(wort) && !sprichGemeldet.has(wort.toLowerCase())) {
         sprichGemeldet.add(wort.toLowerCase());
         try {
@@ -13960,10 +13907,7 @@
     function spielen(wort) {
       return tonHolen(wort).then((url) => {
         try { if (spielt) spielt.pause(); } catch (e) {}
-        /* FASSUNG 787: EIN Abspieler für alles – iPhone und Android lassen ihn nach dem ersten Tipp weiterspielen,
-           auch wenn das Hörspiel die nächste Frage von selbst startet. */
-        if (!spielt) spielt = new Audio();
-        spielt.src = url;
+        spielt = new Audio(url);
         return spielt.play();
       });
     }
@@ -13994,14 +13938,6 @@
           try { showToast("„" + wort + "“ liegt jetzt mit deiner Stimme in deinem Wörterbuch (" + (r.schnitt ? (r.schnitt.dauer / 1000).toFixed(2).replace(".", ",") + " s" : "") + ")."); } catch (y) {}
         }).catch((x) => { k.disabled = false; k.textContent = "Nochmal versuchen"; try { showToast(x.message || "Das ging nicht."); } catch (y) {} });
       }
-      if (k.dataset.eigen === "spiel") {
-        const huelle = k.closest(".eigen-spiel") || (k.closest(".eigen-spiel-start") && k.closest(".eigen-spiel-start").nextElementSibling);
-        spielStarten(huelle);
-        return;
-      }
-      if (k.dataset.eigen === "spielzu") { const h = k.closest(".eigen-spiel"); spiel = null; if (h) { h.hidden = true; h.innerHTML = ""; } return; }
-      if (k.dataset.eigen === "spielhoeren") { spielen(wort).catch((x) => { try { showToast(x.message); } catch (y) {} }); return; }
-      if (k.dataset.eigen === "spielwahl") { spielWahl(Number(k.dataset.i)); return; }
       if (k.dataset.eigen === "vorbild") {
         const an = k.dataset.an === "1";
         k.disabled = true;
@@ -14018,111 +13954,18 @@
       }
     });
 
-    /* =================================================================
-       FASSUNG 787 — HÖRSPIEL MIT DER EIGENEN STIMME
-       XANDER (Funk 188): „dann könnte man vielleicht auch Spiele damit machen mit ihrer eigenen Stimme … wo sie das Wort
-       einfach nur hören und sagen müssen welchen Artikel das hat also mit sich selbst oder irgendwie welche Bedeutung
-       dieses Wort hat was dann ja aus dem Wörterbuch dann gemessen wird".
-       Man hört nur die eigene Aufnahme (das Wort steht nicht da) und wählt der/die/das oder die Bedeutung.
-       Artikel und Bedeutung kommen aus dem Wörterbuch; Wörter ohne beides bleiben draußen.
-       ================================================================= */
-    let spiel = null;
-    function mischen(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
-    function spielFragen() {
-      const br = window.DMA_AUSSPR_BRUECKE, fragen = [];
-      if (!br || !br.eintrag || !liste) return fragen;
-      mischen(liste.slice()).forEach((e, i) => {
-        if (fragen.length >= 5) return;
-        const d = br.eintrag(e.wort);
-        if (!d) return;
-        const bedeutungen = d.bedeutung ? br.fremdeBedeutungen(d.wort, 2) : [];
-        const artikelGeht = Boolean(d.artikel), bedeutungGeht = Boolean(d.bedeutung) && bedeutungen.length >= 2;
-        if (!artikelGeht && !bedeutungGeht) return;
-        /* Abwechseln: kann ein Wort beides, entscheidet die Reihe. */
-        const art = artikelGeht && (!bedeutungGeht || fragen.length % 2 === 0) ? "artikel" : "bedeutung";
-        fragen.push(art === "artikel"
-          ? { wort: e.wort, art, richtig: d.artikel, optionen: ["der", "die", "das"], d }
-          : { wort: e.wort, art, richtig: d.bedeutung, optionen: mischen([d.bedeutung].concat(bedeutungen)), d });
-      });
-      return fragen;
-    }
-    function spielZeigen() {
-      if (!spiel || !spiel.ziel || !spiel.ziel.isConnected) { spiel = null; return; }
-      const z = spiel.ziel, f = spiel.fragen[spiel.i];
-      if (!f) {
-        z.innerHTML = '<p class="eigen-spiel-ende"><b>' + spiel.richtig + " von " + spiel.fragen.length + " richtig.</b> "
-          + (spiel.richtig === spiel.fragen.length ? "Alles erkannt – mit deiner eigenen Stimme." : "Die falschen kommen beim nächsten Mal wieder dran.") + "</p>"
-          + '<div class="eigen-spiel-knoepfe"><button type="button" class="btn btn-coffee" data-eigen="spiel">Nochmal spielen</button>'
-          + '<button type="button" class="btn btn-ghost" data-eigen="spielzu">Schließen</button></div>';
-        return;
-      }
-      z.innerHTML = '<p class="eigen-spiel-kopfzeile"><span>Frage ' + (spiel.i + 1) + " von " + spiel.fragen.length + '</span><span>' + spiel.richtig + " richtig</span></p>"
-        + '<p class="eigen-spiel-frage">' + (f.art === "artikel" ? "Hör hin – welcher Artikel gehört dazu?" : "Hör hin – was bedeutet das Wort?") + "</p>"
-        + '<button type="button" class="btn btn-ghost eigen-spiel-hoeren" data-eigen="spielhoeren" data-wort="' + escapeHtml(f.wort) + '">'
-        + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
-        + "Nochmal hören</button>"
-        + '<div class="eigen-spiel-optionen' + (f.art === "artikel" ? " eigen-spiel-artikel" : "") + '">'
-        + f.optionen.map((o, i) => '<button type="button" class="btn eigen-spiel-option" data-eigen="spielwahl" data-i="' + i + '">' + escapeHtml(o) + "</button>").join("") + "</div>"
-        + '<p class="eigen-spiel-loesung" aria-live="polite"></p>';
-      spielen(f.wort).catch(() => {
-        const l = z.querySelector(".eigen-spiel-loesung");
-        if (l) l.textContent = "Tippe auf „Nochmal hören“ – das Gerät hat den Ton noch nicht freigegeben.";
-      });
-    }
-    function spielWahl(i) {
-      if (!spiel || spiel.gewaehlt) return;
-      const f = spiel.fragen[spiel.i], z = spiel.ziel;
-      if (!f) return;
-      spiel.gewaehlt = true;
-      const gut = f.optionen[i] === f.richtig;
-      if (gut) spiel.richtig++;
-      z.querySelectorAll(".eigen-spiel-option").forEach((b, j) => {
-        b.disabled = true;
-        if (f.optionen[j] === f.richtig) b.classList.add("eigen-spiel-gut");
-        else if (j === i) b.classList.add("eigen-spiel-falsch");
-      });
-      const l = z.querySelector(".eigen-spiel-loesung");
-      if (l) l.innerHTML = (gut ? "Richtig! " : "Leider nicht. ") + "<b>" + escapeHtml((f.d.artikel ? f.d.artikel + " " : "") + f.d.wort) + "</b>"
-        + (f.d.bedeutung ? " – " + escapeHtml(f.d.bedeutung.slice(0, 90)) : "");
-      /* Wie in der Aussprache-Übung: nach der Auflösung geht es von selbst weiter. */
-      const jetzt = spiel;
-      setTimeout(() => { if (spiel === jetzt) { spiel.i++; spiel.gewaehlt = false; spielZeigen(); } }, gut ? 1600 : 2800);
-    }
-    function spielStarten(ziel) {
-      if (!ziel) return;
-      const br = window.DMA_AUSSPR_BRUECKE;
-      if (br && br.geladen && !br.geladen()) {
-        ziel.hidden = false;
-        ziel.innerHTML = '<p class="empty-note">Das Wörterbuch lädt …</p>';
-        br.laden().then(() => { if (br.geladen()) spielStarten(ziel); else ziel.innerHTML = '<p class="empty-note">Das Wörterbuch ließ sich nicht laden – bitte gleich noch einmal.</p>'; });
-        return;
-      }
-      const fragen = spielFragen();
-      ziel.hidden = false;
-      if (!fragen.length) {
-        spiel = null;
-        ziel.innerHTML = '<p class="empty-note">Für deine Wörter stehen im Wörterbuch noch kein Artikel und keine Erklärung. Übernimm Nomen wie „Tisch“ oder „Brötchen“ – dann geht das Hörspiel los.</p>';
-        return;
-      }
-      spiel = { ziel, fragen, i: 0, richtig: 0, gewaehlt: false };
-      spielZeigen();
-    }
-
     /* Die Liste für den privaten Bereich. */
     function listeHtml(l) {
       if (!angemeldet()) return '<p class="empty-note">Melde dich an – dann sammelt sich hier deine eigene, geprüfte Aussprache.</p>';
       if (!l || !l.length) return '<p class="empty-note">Noch leer. Sprichst du ein Wort mit mindestens ' + SCHWELLE + ' %, bietet dir die Seite an, es mit deiner Stimme hierher zu übernehmen.</p>';
-      return '<div class="eigen-spiel-start"><button type="button" class="btn btn-coffee" data-eigen="spiel">'
-        + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>Hörspiel mit meiner Stimme</button>'
-        + '<small>Du hörst dich selbst und wählst Artikel oder Bedeutung.</small></div><div class="eigen-spiel" hidden></div>'
-        + '<div class="eigen-liste">' + l.map((e) => '<div class="eigen-zeile"><b>' + escapeHtml(e.wort) + '</b><span class="eigen-note">' + (e.prozent != null ? e.prozent + " %" : "") + "</span>"
+      return '<div class="eigen-liste">' + l.map((e) => '<div class="eigen-zeile"><b>' + escapeHtml(e.wort) + '</b><span class="eigen-note">' + (e.prozent != null ? e.prozent + " %" : "") + "</span>"
         + '<button type="button" class="btn btn-ghost" data-eigen="hoeren" data-wort="' + escapeHtml(e.wort) + '">Anhören</button>'
         + '<button type="button" class="btn btn-ghost eigen-vorbild' + (e.vorbild ? " eigen-an" : "") + '" data-eigen="vorbild" data-id="' + e.id + '" data-wort="' + escapeHtml(e.wort) + '" data-an="' + (e.vorbild ? "0" : "1") + '" aria-pressed="' + Boolean(e.vorbild)
         + '" title="Wer spricht dieses Wort im Trainer und im Spiel vor?">' + (e.vorbild ? "Spricht vor: ich" : "Spricht vor: Azure") + "</button>"
         + '<button type="button" class="btn btn-ghost" data-eigen="weg" data-id="' + e.id + '" title="Aus dem Wörterbuch nehmen">Löschen</button></div>').join("") + "</div>";
     }
 
-    return { SCHWELLE, schneiden, merken, bietetAn, uebernehmen, spielen, hat, vorbild, vorbildSetzen, pufferHolen, listeLaden, knoepfeHtml, listeHtml, spielFragen, get liste() { return liste; } };
+    return { SCHWELLE, schneiden, merken, bietetAn, uebernehmen, spielen, hat, vorbild, vorbildSetzen, pufferHolen, listeLaden, knoepfeHtml, listeHtml, get liste() { return liste; } };
   })();
 
   /* --- Die Laut-Anzeige. Das ist der Kern der ganzen Sache. ---
@@ -32182,34 +32025,6 @@
           c.dataset.gr = "aussehen";
           return c;
         }));
-      }
-      /* FASSUNG 787 — XANDER (Funk 188): „ein Wort vorgebe oder mir das aussuchen kann aus dem Wörterbuch … oder ich kann
-         auch selber ein Wort schreiben". Ein Tipp auf einen Vorschlag schickt /sprich sofort ab. */
-      if ((wort === "sprich" || wort === "nachsprechen") && window.DMA_AUSSPR_BRUECKE && DMA_AUSSPR_BRUECKE.vorschlaege
-          && (!LiveChat.binLehrer || LiveChat.binLehrer())) {
-        const abschicken = (w) => {
-          feld.value = "";
-          const k = document.getElementById("lcSenden");
-          if (k) k.disabled = true;
-          zu();
-          try { LiveChat.schreiben("/sprich " + w); } catch (e) {}
-        };
-        const eigenes = rest.trim();
-        if (DMA_AUSSPR_BRUECKE.geladen && !DMA_AUSSPR_BRUECKE.geladen()) {
-          const wasIchTippe = wert;
-          DMA_AUSSPR_BRUECKE.laden().then(() => { if (feld.value === wasIchTippe && DMA_AUSSPR_BRUECKE.geladen()) auffrischen(); });
-        }
-        const vs = DMA_AUSSPR_BRUECKE.vorschlaege(eigenes, 11);
-        const kinder = vs.map((v) => {
-          const c = chip(v.wort, [v.artikel, v.level, v.bedeutung].filter(Boolean).join(" · "), () => abschicken(v.wort), "lc-tipp-sprich");
-          c.dataset.gr = "schule";
-          return c;
-        });
-        if (eigenes && !vs.some((v) => v.wort.toLowerCase() === eigenes.toLowerCase())) {
-          kinder.push(chip(eigenes, DMA_AUSSPR_BRUECKE.imWoerterbuch(eigenes) ? "eigenes Wort" : "nicht im Wörterbuch – Claude bekommt Bescheid",
-            () => abschicken(eigenes), "lc-tipp-fern"));
-        }
-        return zeigen(kinder);
       }
       if (wort === "ascii" || wort === "bild" || wort === "emoji") {
         const namen = wort === "ascii" ? LiveChat.asciiNamen() : LiveChat.emojibildNamen();

@@ -35139,25 +35139,3 @@ body > .lc-tafel-mappe { position: fixed; inset: auto; left: 12px; right: 12px; 
 .sprich-frei-karte p { margin: 0 0 8px; }
 .sprich-frei-knoepfe { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .sprich-frei-knoepfe .btn { min-height: 34px; }
-/* FASSUNG 787 — Hörspiel mit der eigenen Stimme (Funk 188): hören, dann Artikel oder Bedeutung wählen. */
-.eigen-spiel-start { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 4px 0 8px; }
-.eigen-spiel-start .btn, .eigen-spiel-hoeren { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; }
-.eigen-spiel-start svg, .eigen-spiel-hoeren svg { width: 18px; height: 18px; flex: 0 0 18px; }
-.eigen-spiel-start small { flex: 1 1 160px; font-size: .76rem; opacity: .8; }
-.eigen-spiel { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; border: 1.5px solid rgba(122, 79, 208, .45); background: rgba(122, 79, 208, .07); }
-.eigen-spiel-kopfzeile { display: flex; justify-content: space-between; margin: 0 0 4px; font-size: .78rem; opacity: .8; }
-.eigen-spiel-frage { margin: 0 0 8px; font-weight: 700; }
-.eigen-spiel-optionen { display: grid; gap: 6px; margin-top: 8px; }
-.eigen-spiel-artikel { grid-template-columns: repeat(3, 1fr); }
-.eigen-spiel-option { min-height: 40px; padding: 6px 10px; white-space: normal; text-align: left; line-height: 1.3; overflow-wrap: anywhere; }
-.eigen-spiel-artikel .eigen-spiel-option { text-align: center; font-weight: 800; font-size: 1rem; }
-.eigen-spiel-option.eigen-spiel-gut { background: #2e9e5b; border-color: #2e9e5b; color: #fff; opacity: 1; }
-.eigen-spiel-option.eigen-spiel-falsch { background: #c8453a; border-color: #c8453a; color: #fff; opacity: 1; }
-.eigen-spiel-loesung { min-height: 1.3em; margin: 8px 0 0; font-size: .86rem; }
-.eigen-spiel-ende { margin: 0 0 8px; }
-.eigen-spiel-knoepfe { display: flex; flex-wrap: wrap; gap: 8px; }
-.lc-tipp.lc-tipp-sprich small { max-width: 220px; }
-/* FASSUNG 787 — Gefunden beim Prüfen der /sprich-Vorschläge: die Vorschlagsliste ist immer dunkel (#221c1a), ihre Knöpfe
-   erbten aber die dunkle Seitenschrift (gemessen rgb(46,42,37) auf rgb(34,28,26)) – kaum lesbar. Jetzt helle Schrift. */
-.lc-tipps { color: #f3ece2; }
-.lc-tipps .lc-tipp { color: #f3ece2; }

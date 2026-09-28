@@ -125,9 +125,10 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
   ok(sb.includes("regenbogen"), "auch der Regenbogen");
   ok(erg.beiSprechbild.every((c) => c.woher), "und jedes sagt, wie es aussieht",
      "„" + (erg.beiSprechbild[0] || {}).woher + "“");
-  ok(erg.beiSprechbildReg.length === 1
-     && erg.beiSprechbildReg[0].name.indexOf("regenbogen") === 0,
-     "beim Weitertippen bleibt nur der passende übrig",
+  /* Seit Funk 75 gibt es auch „regenbogen2" – beide beginnen mit dem Getippten, alle anderen fallen weg. */
+  ok(erg.beiSprechbildReg.length >= 1 && erg.beiSprechbildReg.length < sb.length
+     && erg.beiSprechbildReg.every((c) => c.name.indexOf("regenbogen") === 0),
+     "beim Weitertippen bleiben nur die passenden übrig",
      erg.beiSprechbildReg.map((c) => c.name).join(", "));
 
   console.log("\n  FAVORITEN ANHEFTEN (lang drücken)");
