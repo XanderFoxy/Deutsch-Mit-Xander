@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 777: Diplomatie – Bündnis ab 40 Vertrauen, Rathaus trägt Bündnisse, Verrat mit 48-h-Sperre, Friedensgeschenke (Walkie 300 Teil 1)",
+  stand: "Fassung 778: Überfall auf Abwesende – 1× am Tag, 10 %, 8 h Schutz, Meldung beim Wiederkommen (Walkie 300 Teil 2)",
 
   inArbeit: [
-    { seit: "2026-09-28T01:05",
-      text: "778: Überfall auf Abwesende · 779: Beliebtheit, Touristenwellen, Kurtaxe · Walkie 301/302 · Funk 188/190 Rest" },
+    { seit: "2026-09-28T01:14",
+      text: "779: Beliebtheit, Touristenwellen, Kurtaxe · Walkie 301/302 · Funk 188/190 Rest" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T01:05",
-      text: "Walkie 300 Teil 1: Bündnis und Vertrauen" },
+    { seit: "2026-09-28T01:14",
+      text: "Walkie 300 Teil 2: Überfall auf Abwesende" },
   ],
 };

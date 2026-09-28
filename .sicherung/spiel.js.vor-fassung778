@@ -4842,31 +4842,6 @@
       eierAlle(); return;
     } else if (s === "pluendern") {
       pluendern(k.dataset.z, k.dataset.c, k.dataset.g); return;
-    } else if (s === "ueberfallauf") {
-      S.ueberfallAuf = !S.ueberfallAuf;
-      if (S.ueberfallAuf) { S.ueberfall = null; ueberfallLaden(); }
-      schnellZeichnen(true); return;
-    } else if (s === "ueberfall") {
-      if (S.ueberfallSchlag) return;
-      S.ueberfallSchlag = true;
-      rpc("spiel_ueberfall", { p_ziel: k.dataset.z, p_gebaeude: k.dataset.g }).then(function (r) {
-        S.ueberfallSchlag = false;
-        if (!r || r.ok === false) { hinweis("🌙 " + ((r && r.grund) || "Das ging nicht.")); return; }
-        if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-        var hausU = (DORF[k.dataset.g] || {}).name || "Gebäude";
-        if (r.gescheitert) {
-          ton("schildblock", 0.5);
-          hinweis("🌙 " + r.an + "s Wachen haben dich erwischt" + (r.hilfe ? " (" + r.hilfe + " Ritter der Verbündeten halfen)" : "") + ": −10 Mana, −" + r.strafe + " P an " + r.an + "."
-            + (r.haft ? " 🔒 Du sitzt: " + haftZeit(hafRest(r.haft.bis)) + " oder Kaution " + r.haft.kaution + " P." : "") + " (Chance zu scheitern: " + r.fehl + " %)");
-        } else {
-          var bt = Object.keys(r.beute || {}).map(function (w) { return r.beute[w] + " " + (w === "punkte" ? "P" : w === "mana" ? "Mana" : wareName(w)); });
-          ton("hammerschlag", 0.45); if (bt.length) setTimeout(function () { ton("kasse", 0.35); }, 600);
-          hinweis("🌙 Überfall auf die " + hausU + " von " + r.an + ": " + (bt.join(", ") || "fast nichts zu holen") + ". " + r.an + " erfährt es beim Wiederkommen.");
-        }
-        S.ueberfall = null; ueberfallLaden();
-        schnellZeichnen(true); panelAuffrischen();
-      }).catch(function () { S.ueberfallSchlag = false; hinweis("🌙 Das ging gerade nicht."); });
-      return;
     } else if (s === "buendnis" || s === "verhandeln") {
       var dz = k.dataset.z, dw = k.dataset.w;
       (s === "buendnis" ? rpc("spiel_buendnis", { p_ziel: dz, p_was: dw }) : rpc("spiel_verhandeln", { p_ziel: dz, p_punkte: Number(k.dataset.n) || 15 })).then(function (r) {
@@ -8233,8 +8208,6 @@
       if (!b || !b.gepl || jetzt - Date.parse(b.gepl) > 3600000) return;
       key = "p:" + k + ":" + b.gepl;
       if (g[key]) return;
-      /* FASSUNG 778 — ein Überfall hat seine eigene Meldung (siehe unten). */
-      if ((((ich.volk || {}).ueberfaelle) || []).some(function (u) { return u.zeit === b.gepl; })) return;
       neu.push({ key: key, art: "angriff", ziel: k, text: (b.von || "Jemand") + " hat deine " + ((DORF[k] || {}).name || "Gebäude") + " geplündert" });
     });
     meldungenWeitere(ich, g, jetzt, neu);
@@ -8260,20 +8233,6 @@
     touristen: '<svg viewBox="0 0 20 20"><rect x="3" y="7" width="14" height="9.5" rx="2" fill="#2a3a52"/><rect x="7" y="4.5" width="6" height="3" rx="1" fill="#2a3a52"/><circle cx="10" cy="11.8" r="3.2" fill="#9fd0ff" stroke="#fff" stroke-width="1.2"/><circle cx="14.6" cy="9" r=".9" fill="#f2c230"/></svg>'
   };
   function meldungenWeitere(ich, g, jetzt, neu) {
-    /* FASSUNG 778 — XANDER (Walkie 300): „mit Meldung beim Wiederkommen". Was nachts passiert ist, steht beim
-       nächsten Öffnen oben; danach sagt der Server „gesehen", damit es auf keinem Gerät noch einmal kommt. */
-    var ungesehen = (((ich.volk || {}).ueberfaelle) || []).filter(function (u) { return u && !u.gesehen && !g["u:" + u.zeit]; });
-    ungesehen.forEach(function (u) {
-      var haus = (DORF[u.gebaeude] || {}).name || "Gebäude";
-      var beute = Object.keys(u.beute || {}).map(function (w) { return u.beute[w] + " " + (w === "punkte" ? "P" : w === "mana" ? "Mana" : wareName(w)); });
-      neu.push({ key: "u:" + u.zeit, art: u.abgewehrt ? "fertig" : "angriff", ziel: u.gebaeude, teil: "nachbarn",
-        text: u.abgewehrt ? "Während du weg warst, haben deine Wachen einen Überfall von " + (u.von || "?") + " auf die " + haus + " abgewehrt" + (u.strafe ? " (+" + u.strafe + " P)" : "") + (u.haft ? " – " + u.von + " sitzt jetzt in deinem Gefängnis" : "")
-          : "Während du weg warst, hat " + (u.von || "?") + " deine " + haus + " überfallen" + (beute.length ? " (" + beute.join(", ") + ")" : "") + " – 24 h Rache ohne Mana, 8 h Schutz" });
-    });
-    if (ungesehen.length && !S.ueberfallGesehenLaeuft) {
-      S.ueberfallGesehenLaeuft = true;
-      rpc("spiel_ueberfaelle_gesehen", {}).then(function () { S.ueberfallGesehenLaeuft = false; }).catch(function () { S.ueberfallGesehenLaeuft = false; });
-    }
     /* Unzufriedenheit: einmal am Tag je Stufe (unter 50 %, unter 30 %). */
     var vz = volkZufrieden(ich);
     if (vz.leute && vz.zuf < 50) {
@@ -8369,7 +8328,7 @@
     ton("swoosh", 0.25);
     schnellZeichnen(true);
     setTimeout(function () { try {
-      var ziel = m.teil === "forschung" || m.teil === "markt" ? schnellEl.querySelector(".sp-dorf-auf") : m.teil === "volk" ? schnellEl.querySelector(".sp-volk") : m.teil === "ernte" ? schnellEl.querySelector('[data-s="ernte"]') : m.teil === "nachbarn" ? schnellEl.querySelector(".sp-nachbarn") : null;
+      var ziel = m.teil === "forschung" || m.teil === "markt" ? schnellEl.querySelector(".sp-dorf-auf") : m.teil === "volk" ? schnellEl.querySelector(".sp-volk") : m.teil === "ernte" ? schnellEl.querySelector('[data-s="ernte"]') : null;
       var r = ziel || schnellEl.querySelector(".sp-dl-rahmen"); if (r) r.scrollIntoView({ block: ziel ? "start" : "nearest" });
       if (ziel) { ziel.classList.remove("sp-sprung-ziel"); void ziel.offsetWidth; ziel.classList.add("sp-sprung-ziel"); }
     } catch (e) {} }, 80);
@@ -9015,54 +8974,6 @@
       + ' title="Friedensgeschenk: 15 P an ' + esc(name) + ', Vertrauen +5">Geschenk <small>15 P</small></button>';
     return '<div class="sp-dipl"><span class="sp-dipl-text">Vertrauen <b>' + v + '</b><i class="sp-dipl-balken"><u style="width:' + v + "%;background:" + farbe + '"></u></i>' + status + "</span>"
       + '<span class="sp-dipl-knoepfe">' + k + "</span></div>";
-  }
-  /* ---------------------------------------------------------------
-     FASSUNG 778 — ÜBERFALL AUF ABWESENDE (Walkie 300)
-     XANDER: „Bündnis wie oben UND Abwesende dürfen überfallen werden, aber
-     nur 1× am Tag, höchstens 10 % Beute, mit Meldung beim Wiederkommen
-     (Schutz: 8 h nach einem Überfall, Anfänger bis Level 5 nie)".
-     Wer gerade im Raum sitzt, steht oben bei den Nachbarn (Plündern, 20 %).
-     Hier stehen die übrigen Dörfer, die in den letzten 14 Tagen gespielt
-     haben. Verbündete überfällt man nicht, wenn sie nicht da sind.
-     --------------------------------------------------------------- */
-  function ueberfallLaden() {
-    if (S.ueberfallLaeuft) return;
-    S.ueberfallLaeuft = true;
-    rpc("spiel_ueberfall_ziele", {}).then(function (r) {
-      S.ueberfallLaeuft = false;
-      if (!r || r.ok === false) { S.ueberfall = { fehler: (r && r.grund) || "Die Liste kam nicht an." }; schnellZeichnen(true); return; }
-      S.ueberfall = r; S.ueberfallZeit = Date.now();
-      schnellZeichnen(true);
-    }).catch(function () { S.ueberfallLaeuft = false; S.ueberfall = { fehler: "Die Liste kam nicht an." }; schnellZeichnen(true); });
-  }
-  function ueberfallHtml() {
-    var kopf = '<button type="button" class="sp-ueberfall-kopf" data-s="ueberfallauf" aria-expanded="' + (S.ueberfallAuf ? "true" : "false") + '">'
-      + "<b>Abwesende Dörfer überfallen</b><small>1× am Tag · höchstens 10 % · 10 Mana</small>" + (S.ueberfallAuf ? "▴" : "▾") + "</button>";
-    if (!S.ueberfallAuf) return '<div class="sp-ueberfall">' + kopf + "</div>";
-    var U = S.ueberfall;
-    if (!U || (!U.fehler && S.ueberfallZeit && Date.now() - S.ueberfallZeit > 120000)) { if (!S.ueberfallLaeuft) ueberfallLaden(); }
-    if (!U) return '<div class="sp-ueberfall">' + kopf + '<p class="sp-sm-klein">Die Liste wird geladen …</p></div>';
-    if (U.fehler) return '<div class="sp-ueberfall">' + kopf + '<p class="sp-sm-klein">' + esc(U.fehler) + "</p></div>";
-    var imRaum = {};
-    plaetze().forEach(function (p) { var sid = p && p.id && spielIdVon(p.id); if (sid) imRaum[sid] = true; });
-    var haft = meineHaft(S.ich);
-    var zeilen = (U.liste || []).filter(function (z) { return !imRaum[z.id]; }).map(function (z) {
-      var schutz = z.schutz_bis && Date.parse(z.schutz_bis) > Date.now();
-      var knoepfe = Object.keys(z.dorf || {}).filter(function (k) { return DORF[k] && PLUENDERBAR.indexOf(k) >= 0; }).map(function (k) {
-        var g = z.dorf[k] || {}, kaputt = !(g.lp > 0);
-        var zu = !U.frei || schutz || z.buendnis || kaputt || haft || (S.ich && (S.ich.mana || 0) < 10);
-        return '<button type="button" class="sp-pl-knopf" data-s="ueberfall" data-z="' + esc(z.id) + '" data-g="' + k + '"' + (zu ? " disabled" : "") + ' title="' + DORF[k].name
-          + (z.buendnis ? " – verbündet" : schutz ? " – geschützt" : kaputt ? " – kaputt" : "") + '">' + dorfSvg(k, g.stufe || 1) + "<small>" + DORF[k].name + "</small></button>";
-      }).join("");
-      return '<div class="sp-nachbar sp-ueberfall-ziel"><b>' + esc(z.name || "?") + (z.dorf_name ? " · " + esc(z.dorf_name) : "") + "</b><small>Lv " + z.level + " · "
-        + (z.ritter ? z.ritter + " Ritter" : "keine Ritter") + " · Vertrauen " + z.vertrauen
-        + (z.buendnis ? " · verbündet" : schutz ? " · geschützt bis " + uhrzeit(Date.parse(z.schutz_bis)) : "") + "</small>"
-        + (knoepfe ? '<div class="sp-nachbar-reihe">' + knoepfe + "</div>" : "") + "</div>";
-    }).join("");
-    return '<div class="sp-ueberfall">' + kopf
-      + '<p class="sp-sm-klein">' + (U.frei ? "Heute ist noch ein Überfall frei." : "Heute hast du schon überfallen – morgen wieder.") + " Wer da war, steht oben bei den Nachbarn.</p>"
-      + (zeilen || '<p class="sp-sm-klein">Gerade gibt es kein abwesendes Dorf ab Level 5.</p>')
-      + '<p class="sp-sm-klein">Nachts sind weniger Wachen wach, aber es gibt auch weniger zu holen: 10 % der Vorräte (höchstens 5 je Ware). Scheitern wie beim Plündern (Ritter, Gefängnis, Hilfe der Verbündeten). Danach hat das Dorf 8 h Schutz und darf sich 24 h lang ohne Mana rächen; Vertrauen −10. Anfänger unter Level 5 und Verbündete überfällt man nie.</p></div>';
   }
   function nachbarnHtml() {
     /* FASSUNG 775 — wer im Gefängnis sitzt, plündert nicht. */
@@ -12130,7 +12041,7 @@
     return szene + wunderBandHtml(ich) + volkHtml(ich) + ernte + berufeHtml(ich)
       + (t.length ? '<div class="sp-troph-liste">' + t.join("") + "</div>" : "")
       + lagerHtml(ich, true)
-      + nachbarnHtml() + ueberfallHtml()
+      + nachbarnHtml()
       + '<div class="sp-sm-liste sp-dorf-auf">'
       + '<button type="button" data-s="dorfteil" data-t="bau" class="' + (S.dorfTeil === "bau" ? "sp-an" : "") + '">Bau &amp; Ausbau ' + (S.dorfTeil === "bau" ? "▴" : "▾") + "</button>"
       + '<button type="button" data-s="dorfteil" data-t="markt" class="' + (S.dorfTeil === "markt" ? "sp-an" : "") + '">Markt &amp; Handel ' + (S.dorfTeil === "markt" ? "▴" : "▾") + "</button>"

@@ -1706,3 +1706,24 @@ Vorbilder: Travian (Nichtangriffspakt, Allianzplätze wachsen mit der Botschaft)
   - Servertest (zurückgerollt): anbieten → Geschenk +10 (60) → zweites Geschenk +10 (Tageslimit) → Emy sieht das Angebot und nimmt an (80) → Rathaus Stufe 3: 4 Plätze, 1 belegt → Ausflug 7 Forschung → Plündern = Verrat → Vertrauen 42, Sperre 48 h → neues Angebot abgelehnt.
 - Behoben vor dem Commit: Liefert der Server für ein Dorf nichts, lud die Zeile endlos nach. Jetzt höchstens alle 5 s, fehlende Dörfer gelten als neutral (50).
 - Als Nächstes (778): Überfälle auf Abwesende (1× am Tag, höchstens 10 % Beute, 8 h Schutz, Anfänger unter Level 5 nie, Verbündete nie, Meldung beim Wiederkommen). Danach (779): Beliebtheit, Touristenwellen mit Meldung, Kurtaxe wie in Venedig.
+
+### Fassung 778 (Walkie 300, Teil 2: Überfall auf Abwesende)
+Sonden: neu 778 (11/11 grün); 755, 767, 770, 775, 777 grün.
+XANDER: „Bündnis wie oben UND Abwesende dürfen überfallen werden, aber nur 1× am Tag, höchstens 10 % Beute, mit Meldung beim Wiederkommen (Schutz: 8 h nach einem Überfall, Anfänger bis Level 5 nie)" · „ich möchte natürlich dass das auch ein Abwesenheit geht".
+- Im Dorf unter den Nachbarn steht ein aufklappbarer Kasten **„Abwesende Dörfer überfallen“** (1× am Tag · höchstens 10 % · 10 Mana).
+  - Er listet Dörfer, die in den letzten 14 Tagen gespielt haben und gerade nicht im Raum sitzen. Wer da ist, steht oben bei den Nachbarn (normal plündern, 20 %).
+- **Regeln** (Server `spiel_ueberfall`):
+  - Höchstens 1 Überfall am Tag, 10 Mana.
+  - Beute: 10 % je Ware, höchstens 5 je Ware (Rathaus 2 % der Punkte bis 10, Brauerei bis 8 Mana). Schaden am Gebäude: 5 je Stufe.
+  - Danach hat das Dorf **8 h Schutz** vor weiteren Überfällen und 24 h Rache ohne Mana.
+  - **Nie**: Anfänger unter Level 5, Verbündete, Dörfer mit „Mitspielen aus“. Schule, Bibliothek, Krankenhaus, Gasthaus, Gefängnis und Kaserne sind tabu.
+  - Scheitern wie beim Plündern: Ritter, Gefängnis (Haft mit Kaution) und die Hilfe der Verbündeten zählen. Vertrauen −10.
+- **Meldung beim Wiederkommen**: Das Opfer bekommt beim nächsten Öffnen „Während du weg warst, hat Dora deine Bäckerei überfallen (2 Brot) – 24 h Rache ohne Mana, 8 h Schutz“.
+  - Wurde der Überfall abgewehrt, lautet die Meldung „… haben deine Wachen einen Überfall abgewehrt (+Strafe) – … sitzt jetzt in deinem Gefängnis“.
+  - Danach meldet der Client „gesehen“ (`spiel_ueberfaelle_gesehen`), damit es auf keinem Gerät doppelt kommt. Es erscheint keine zweite „geplündert“-Meldung für denselben Überfall.
+- Servertest (zurückgerollt):
+  - Emy steht in der Liste. Der Überfall bringt 3 von 30 Brot.
+  - Ein zweiter Überfall am selben Tag wird abgelehnt. Emy hat 8 h Schutz, das Vertrauen fällt von 50 auf 40.
+  - Emy bekommt beim Wiederkommen 1 Meldung, beim zweiten Abruf 0.
+  - Verbündete und Anfänger werden abgelehnt.
+- Als Nächstes (779): Beliebtheit, Touristenwellen mit Meldung, Kurtaxe wie in Venedig, Überfüllung.
