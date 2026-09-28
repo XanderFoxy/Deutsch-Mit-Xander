@@ -7097,13 +7097,8 @@
     var e = sp && sp.ergebnis;
     if (!e || !sprechAutoAn()) return;
     var EA = window.DMA_EIGENE_AUSSPRACHE;
-    /* FASSUNG 783 — XANDER (Funk 201): „Die Aussprache Übung geht immer noch nicht automatisch weiter … es soll
-       automatisch weitergehen … bis ich selber entscheidet die Aufgabe zu beenden". Gefunden: ab 95 % stand das
-       Wörterbuch-Angebot da, und die Karte WARTETE auf eine Entscheidung – wer gut spricht (fast immer über 95 %),
-       blieb also jedes Mal stehen (Protokoll: 19 von 20 Punkten, dann Stillstand). Jetzt bleibt das Angebot 6 s
-       stehen, dann geht es weiter; übernehmen kann man in dieser Zeit mit einem Tipp. */
-    var angebot = Boolean(EA && EA.bietetAn(sp.wort, e.azure ? e.prozent : 0));
-    sp.weiterMs = angebot ? 6000 : e.prozent >= 80 ? 2200 : e.fehlt ? 2600 : 4000;
+    if (EA && EA.bietetAn(sp.wort, e.azure ? e.prozent : 0)) { sp.weiterMs = 0; return; }
+    sp.weiterMs = e.prozent >= 80 ? 2200 : 4000;
     S.sprechWeiterUhr = setTimeout(function () {
       if (S.sprech !== sp || !panelOffen() || S.kategorie !== "aussprache") return;
       sprechWortHolen(0);
@@ -7142,13 +7137,11 @@
         if (!auf || !auf.blob) throw new Error((auf && auf.fehler) || "keine Aufnahme");
         sp.phase = "rechnet"; sp.hinweis = ""; panelAuffrischen();
         return AP.tonLesen(auf.blob).then(function (eigen) {
-          if (!AP.stufe1Da || !AP.stufe1Da() || !AP.alsWav) return { fehlt: true };
           sp.eigen = eigen;
-          /* FASSUNG 783 — XANDER (Funk 201): „ich möchte nur die prozentuale Bewertung von Azure haben nicht diese
-             strichellinienbewertung". Der Klangvergleich (die Strichreihe „Wo es abweicht" im Trainer) bewertet anders als
-             Azure – er fällt in der Spiel-Karte weg. Antwortet Azure nicht, gibt es für dieses Wort keine Note, und die
-             Übung geht trotzdem weiter. */
-          var frei = function () { return { fehlt: true }; };
+          var frei = function () {
+            if (!sp.original) throw new Error("ohne Vorsprechen kein Vergleich – tippe auf „Neues Wort“");
+            return AP.freieBewertungAusPuffern(eigen, sp.original.puffer);
+          };
           /* FASSUNG 766 — XANDER (Funk 188): „dass wir das wie im Aussprache Training auf der Seite auch in diesem Spiel
              nutzen können und dann müssen Sie die korrekte Aussprache machen und kriegen dann auch die Punkte dafür".
              Wie im Aussprachekurs: zuerst die Laut-Bewertung von Azure (Laut für Laut); nur wenn sie nicht geht, der
@@ -7169,13 +7162,6 @@
           return frei();
         });
       }).then(function (erg) {
-        if (erg && erg.fehlt) {
-          sp.laeuft = false; sp.phase = "";
-          sp.ergebnis = { fehlt: true, prozent: 0, gewonnen: 0, azure: true, laute: [], tipp: "" };
-          sp.hinweis = "";
-          sprechWeiterPlanen(sp); panelAuffrischen();
-          return;
-        }
         var prozent = erg && typeof erg.prozent === "number" ? erg.prozent : 0;
         return rpc("spiel_aussprache_fertig", { p_wort: sp.wort, p_prozent: prozent }).then(function (r) {
           sp.laeuft = false;
@@ -7189,13 +7175,7 @@
           ton(sp.ergebnis.gewonnen > 0 ? "bling" : "gummi", 0.45);
           panelAuffrischen(); zeichnen(); schnellZeichnen();
         });
-      }).catch(function (e) {
-        sp.laeuft = false; KLANG.stillUebung = false; stilleSetzen(); sp.phase = "";
-        /* FASSUNG 783: auch nach einem Fehler weiter – ein Stillstand mitten im Üben ist schlimmer als ein ausgelassenes Wort. */
-        sp.hinweis = "Das ging nicht: " + (e && e.message ? e.message : e) + (sprechAutoAn() ? " – gleich das nächste Wort." : "");
-        if (sprechAutoAn()) { clearTimeout(S.sprechWeiterUhr); sp.weiterMs = 3000; S.sprechWeiterUhr = setTimeout(function () { if (S.sprech === sp && panelOffen() && S.kategorie === "aussprache") sprechWortHolen(0); }, 3000); }
-        panelAuffrischen();
-      });
+      }).catch(function (e) { sp.laeuft = false; KLANG.stillUebung = false; stilleSetzen(); sp.hinweis = "Das ging nicht: " + (e && e.message ? e.message : e); panelAuffrischen(); });
     };
     AP.aufnahmeStarten({ beiStille: auswerten, stilleMs: 800, mindestdauerMs: 500, hoechstdauer: 5000, beiZeitablauf: auswerten })
       .then(function (g) {
@@ -7264,7 +7244,6 @@
     else if (sp.phase === "warte") { t = "Gleich bist du dran …"; cls = "hoer"; }
     else if (sp.phase === "du") { t = "Piep – jetzt du!"; cls = "du"; }
     else if (sp.phase === "rechnet") { t = "Ich höre zu …"; cls = "rechnet"; }
-    else if (e && sp.weiterMs && window.DMA_EIGENE_AUSSPRACHE && DMA_EIGENE_AUSSPRACHE.bietetAn(sp.wort, e.azure ? e.prozent : 0)) { t = "Übernehmen? Gleich geht es weiter"; cls = "weiter"; }
     else if (e && sp.weiterMs) { t = "Gleich kommt das nächste Wort"; cls = "weiter"; }
     else if (e && window.DMA_EIGENE_AUSSPRACHE && DMA_EIGENE_AUSSPRACHE.bietetAn(sp.wort, e.azure ? e.prozent : 0)) { t = "Übernehmen – oder Nächstes"; cls = "weiter"; }
     else if (e) { t = "Tippe auf Nächstes"; cls = "info"; }
@@ -7292,8 +7271,7 @@
       + (eigeneDa ? '<button type="button" class="sp-sprech-meine" data-eigen="hoeren" data-wort="' + esc(sp.wort) + '">Meine Stimme anhören</button>' : "")
       + '<div class="sp-erg-platz' + (e ? (e.gewonnen > 0 ? " sp-erg-gut" : " sp-erg-schlecht") : "")
       + (e && EA && EA.bietetAn(sp.wort, e.azure ? e.prozent : 0) ? " sp-erg-angebot" : "") + '">'
-      + (e && e.fehlt ? '<div class="sp-erg-leer">Azure hat diesmal nicht geantwortet – keine Note für dieses Wort.</div>'
-        : e ? (function () {
+      + (e ? (function () {
           var pz = sprechProzentHtml(e);
           return '<div class="sp-sprech-erg">' + pz.ring + '<div class="sp-sprech-erg-rechts"><div class="sp-erg-zeile"><b class="sp-sprech-note">' + e.prozent + (e.azure ? " / 100" : " % ähnlich") + "</b>"
             + (e.gewonnen > 0 ? '<span class="sp-sprech-punkte">+' + e.gewonnen + " Punkte" + (e.hoechst ? " <small>von " + e.hoechst + "</small>" : "") + "</span>" : "")

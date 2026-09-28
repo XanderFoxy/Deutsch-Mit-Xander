@@ -1789,3 +1789,17 @@ XANDER (Walkie 302): „Ja, Flickstube mit Wanderstiefeln“. Seine zweite Wahl 
   - Für den Ausflug per Zug gibt es keine Dauer, die schneller werden könnte; dort wirken die Stiefel nicht. Dafür ist Walkie 303 da.
 - Server: `spiel_flicken()` neu (SECURITY DEFINER, nur angemeldete Spieler). Erweitert wurden `spiel_bauen` (Flickstube), `spiel_graben` (alter Schuh), `spiel_angeln` (Stiefel ins Lager) und `spiel_trupp_s` (Stiefel verbrauchen, 4 min).
 - **Fehler nebenbei**: Nach einem Fehlversuch sperrte `bahnLaden` 4 s lang und versuchte es danach nicht selbst wieder. Der Bahnhof konnte dann auf „Der Fahrplan wird geholt …“ stehen bleiben (Sonde 716 war dadurch rot, auch ohne diese Fassung). Jetzt kommt nach der Sperre ein eigener zweiter Versuch.
+
+### Fassung 783 (Funk 201: Aussprache geht wirklich immer weiter, nur Azure)
+Sonden: neu 783 (10/10 grün; Gegenprobe mit der Sicherung: 5 rot, genau die Stillstände); 766 (Erwartung angepasst), 771, 772, 773 grün.
+XANDER: „Die Aussprache Übung geht immer noch nicht automatisch weiter ich habe das jetzt schon dreimal gesagt … ich möchte nur die prozentuale Bewertung von Azure haben nicht diese strichellinienbewertung … es soll automatisch weitergehen … bis ich selber entscheide die Aufgabe zu beenden".
+- **Ursache gefunden** (Serverprotokoll: um 01:42 und 01:43 je 19 von 20 Punkten, danach nichts mehr):
+  - Ab 95 % stand das Angebot „In mein Aussprache-Wörterbuch übernehmen“ da, und die Karte **wartete auf eine Entscheidung**.
+  - Wer gut spricht, blieb also fast bei jedem Wort stehen. Die Sonden hatten mit 88 % geprüft, darum fiel es nicht auf.
+- **Jetzt**:
+  - Das Angebot bleibt 6 s stehen („Übernehmen? Gleich geht es weiter“), dann kommt das nächste Wort. Übernehmen geht in dieser Zeit mit einem Tipp.
+  - Nach einem Fehler (Aufnahme kaputt, keine Verbindung) steht „… – gleich das nächste Wort.“, und nach 3 s geht es weiter.
+  - Nur „Auto: aus“ hält an.
+- **Nur Azure**:
+  - Der Klangvergleich (im Trainer die Strichreihe „Wo es abweicht“, in der Karte „… % ähnlich“) ist aus der Spiel-Karte entfernt.
+  - Antwortet Azure nicht, steht „Azure hat diesmal nicht geantwortet – keine Note für dieses Wort.“ Der Server bekommt dann nichts gemeldet, also gibt es keine Punkte aus einem anderen Verfahren. Danach geht es weiter.

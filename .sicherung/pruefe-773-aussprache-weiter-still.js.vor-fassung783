@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 766: FUNK 186 UND 188
+   SONDE — FASSUNG 773: FUNK 199
    ---------------------------------------------------------------------
-   XANDER (186): „Wenn man auf der Bühne etwas einsammelt wie Eier oder
-   diesen Schatz … dann soll das nicht das Dorfmenü beeinflussen … das
-   schließt sich nur wenn ich auf den Makroknopf vom Dorf klicke".
-   XANDER (188): „dass wir das wie im Aussprache Training auf der Seite
-   auch in diesem Spiel nutzen können" – Laut-Bewertung von Azure.
+   XANDER: „ich will das automatisch vorlesen und das sofort automatische
+   nachsprechen und dann geht die Aufgabe weiter … die Töne des Spiels
+   werden immer noch nicht stumm geschalten wenn ich mit dir spreche
+   innerhalb des Livestreams … man kann keine anderen Aufgaben mehr
+   auswählen wenn man in die Aussprache Übung reingegangen ist".
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -40,7 +40,7 @@ const sage = (gut, was, zusatz) => {
   const pg = await ctx.newPage();
   const konsolenFehler = [];
   pg.on("pageerror", (e) => konsolenFehler.push(String(e.message || e)));
-  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); localStorage.setItem("dma_spiel_sprech_auto", "0"); /* seit 772: hier von Hand */ } catch (e) {} });
+  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
   await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
   await pg.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF && window.DMA_SPIEL, { timeout: 25000 });
 
@@ -151,112 +151,99 @@ const sage = (gut, was, zusatz) => {
 
   const seite = (chat) => pg.evaluate((c) => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + c + '"] .lc-kreis'); if (!k) return null; const r = k.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; }, chat);
 
+  const klick = (sel) => pg.evaluate((s) => { const e = document.querySelector(s); if (!e) return false; e.click(); return true; }, sel);
 
-  const meld = () => pg.evaluate(() => window.__hinweise.filter((h) => !/Tagesgeschenk|Übungen auf der Seite/.test(h)).slice(-1)[0] || "");
-
-
-  const zuletzt = () => pg.evaluate(() => window.__hinweise.slice(-1)[0] || "");
-
+  /* Eine echte Aufnahme nachbauen: 0,5 s Rauschen, 0,6 s Ton (das „Wort“), 0,4 s Rauschen. */
   await pg.evaluate(() => {
-    const ich = window.__ich, jetzt = Date.now();
-    ich.level = 13; ich.punkte = 1500; ich.mana = 60;
-    ich.dorf = { muehle: { stufe: 2, lp: 40 }, baeckerei: { stufe: 2, lp: 40 }, schule: { stufe: 1, lp: 20 }, bibliothek: { stufe: 1, lp: 20 }, labor: { stufe: 1, lp: 20 } };
-    ich.werk = {};
-    ich.dorf_ab = new Date(jetzt - 5 * 3600000).toISOString();
-    ich.volk = { arbeiter: 16, ritter: 0, quote: 80, berufe: { bauer: 2, wissenschaftler: 3 }, forschung: 100 };
-    ich.vorraete = Object.assign({}, ich.vorraete, { erz: 30, quarz: 20, gold: 3, holz: 12, brot: 10, fisch: 5, bratwurst: 5 });
-    const FK = { dreifelder: 20, sauerteig: 30, wassermuehle: 40, buchdruck: 60, duden: 80, dampf: 120 };
-    const WD = { holstentor: [4, 250, { holz: 10, erz: 5 }], brandenburger: [8, 500, { erz: 10, quarz: 6 }], koelner_dom: [12, 900, { erz: 20, quarz: 10, gold: 2 }],
-                 neuschwanstein: [16, 1400, { quarz: 25, gold: 5, holz: 10 }], fernsehturm: [20, 2000, { erz: 30, silizium: 4, chip: 2 }] };
-    window.__extra = Object.assign({}, window.__extra || {}, {
-      spiel_markt_preise: () => ({ ok: true, preise: {} }),
-      spiel_angebote_liste: () => ({ ok: true, angebote: [] }),
-      spiel_erforschen: (a) => { if ((ich.volk.forschung || 0) < FK[a.p_was]) return { ok: false, grund: "zu wenig Forschung" };
-        ich.volk = Object.assign({}, ich.volk, { forschung: ich.volk.forschung - FK[a.p_was], erforscht: (ich.volk.erforscht || []).concat([a.p_was]) });
-        return Object.assign({ ok: true, erforscht: a.p_was }, JSON.parse(JSON.stringify(ich))); },
-      spiel_wunder_bauen: (a) => { const d = WD[a.p_was]; if (ich.level < d[0]) return { ok: false, grund: "ab Level " + d[0] };
-        ich.punkte -= d[1]; Object.keys(d[2]).forEach((x) => { ich.vorraete[x] -= d[2][x]; });
-        ich.volk = Object.assign({}, ich.volk, { wunder: Object.assign({}, ich.volk.wunder, { [a.p_was]: new Date().toISOString() }) });
-        return Object.assign({ ok: true, wunder: a.p_was }, JSON.parse(JSON.stringify(ich))); }
-    });
-    const S = window.DMA_SPIEL.pruef.zustand(); S.ich = JSON.parse(JSON.stringify(ich)); S.schnellMenue = false; S.graben = false; S.dorfTeil = "";
-    try { localStorage.removeItem("dma_spiel_makro"); } catch (e) {}
-    window.__hinweise.length = 0;
-    window.DMA_SPIEL.pruef.schnellZeichnen(true);
-  });
-  console.log("\nDORF BLEIBT OFFEN BEIM TIPP AUF DIE BÜHNE\n");
-  await tippe('.sp-schnell [data-s="makro"]'); await tick(900);
-  let r = await pg.evaluate(() => ({ offen: !!document.querySelector(".sp-schnellmenue .sp-dl-rahmen"), menue: window.DMA_SPIEL.pruef.zustand().schnellMenue }));
-  sage(r.offen && r.menue, "das Dorf ist offen (Makroknopf)", JSON.stringify(r));
-  /* Ein Ei auf einen freien Platz legen – so wie eierPflegen es tut – und antippen. */
-  /* Einen freien Platz suchen, der wirklich oben liegt (nicht unter dem Menü oder der Seitenleiste). */
-  const platz = await pg.evaluate(() => { for (const q of document.querySelectorAll("#lcPlaetze .lc-platz")) {
-      if (q.dataset.lcId || !q.querySelector(".lc-kreis")) continue;
-      const b = q.querySelector(".lc-kreis").getBoundingClientRect(), x = b.left + b.width / 2, y = b.top + b.height / 2, e = document.elementFromPoint(x, y);
-      if (e && e.closest(".lc-platz") === q) { const ei = document.createElement("span"); ei.className = "sp-ei-feld"; ei.style.cssText = "position:absolute;left:0;top:0;width:40px;height:40px"; q.appendChild(ei); window.__rufe.length = 0; return { x, y, nr: q.dataset.lcPlatz }; } }
-    return null; });
-  await tick(300);
-  const unter = await pg.evaluate((p) => { const e = document.elementFromPoint(p.x, p.y); return e ? (e.closest(".sp-schnellmenue") ? "menü" : e.closest(".lc-platz") ? "platz" : e.className) : null; }, platz);
-  await pg.touchscreen.tap(platz.x, platz.y); await tick(500);
-  r = await pg.evaluate(() => ({ offen: !!document.querySelector(".sp-schnellmenue .sp-dl-rahmen"), menue: window.DMA_SPIEL.pruef.zustand().schnellMenue, rufe: window.__rufe.map((x) => x.name) }));
-  sage(unter === "platz" && r.offen && r.menue, "Tipp auf einen Platz der Bühne (mit Ei): das Dorf bleibt offen", JSON.stringify({ unter, r }));
-  /* Bei offenem Dorf steht in der Leiste statt des Makroknopfs das Schließen (✕). */
-  await tippe('.sp-schnell [data-s="blickzu"]');
-  await tick(500);
-  r = await pg.evaluate(() => ({ offen: !!document.querySelector(".sp-schnellmenue .sp-dl-rahmen"), menue: window.DMA_SPIEL.pruef.zustand().schnellMenue }));
-  sage(!r.offen && !r.menue, "✕ in der Leiste schließt das Dorf wie gewohnt", JSON.stringify(r));
-  await pg.evaluate(() => { const Q = window.DMA_SPIEL.pruef, S = Q.zustand(); S.schnellMenue = true; S.schnellReiter = "mehr"; S.blick = ""; Q.schnellZeichnen(true); });
-  await tick(300);
-  await pg.touchscreen.tap(platz.x, platz.y); await tick(400);
-  r = await pg.evaluate(() => window.DMA_SPIEL.pruef.zustand().schnellMenue);
-  sage(r === false, "andere Menüs (z. B. „Mehr“) schließt ein Tipp daneben weiter", String(r));
-
-  console.log("\nAUSSPRACHE IM SPIEL: LAUT-BEWERTUNG WIE IM KURS\n");
-  await pg.evaluate(() => {
-    const puffer = { length: 100, sampleRate: 16000, getChannelData: () => new Float32Array(100) };
+    const sr = 16000, n = Math.round(sr * 1.5), d = new Float32Array(n);
+    let z = 7; const rnd = () => { z = (z * 16807) % 2147483647; return z / 2147483647 - 0.5; };
+    for (let i = 0; i < n; i++) { const t = i / sr; d[i] = rnd() * 0.01 + (t >= 0.5 && t < 1.1 ? 0.5 * Math.sin(2 * Math.PI * 220 * t) * Math.min(1, (t - 0.5) * 40, (1.1 - t) * 40) : 0); }
+    window.__eigenPuffer = { numberOfChannels: 1, sampleRate: sr, length: n, duration: n / sr, getChannelData: () => d };
+    const puffer = { length: 8000, sampleRate: 16000, duration: 0.5, numberOfChannels: 1, getChannelData: () => new Float32Array(8000) };
     window.DMA_AUSSPR_BRUECKE = { original: () => Promise.resolve({ puffer: puffer, art: "azure" }) };
-    window.__azArgs = null;
+    window.__aufnahmen = 0; window.__note = 97;
     window.AusspracheP = Object.assign({}, window.AusspracheP || {}, {
       mikrofonDa: () => true,
-      aufnahmeStarten: (o) => { setTimeout(o.beiStille, 300); return Promise.resolve({ stoppen: () => Promise.resolve({ blob: new Blob(["x"]) }) }); },
-      tonLesen: () => Promise.resolve(puffer),
-      alsWav: () => new Blob(["wav"]),
-      stufe1Da: () => true,
-      stufe1Bewerten: (o) => { window.__azArgs = { text: o.text, wav: !!o.wav }; return Promise.resolve({ quelle: "azure", prozent: 87.6, woerter: [{ wort: "Brötchen", laute: [{ laut: "øː", note: 41 }, { laut: "ç", note: 90 }] }] }); },
-      lautKlartext: (l) => "Dein " + l.laut + " klang noch nicht rund.",
-      freieBewertungAusPuffern: () => { window.__frei = true; return Promise.resolve({ prozent: 12 }); }
+      aufnahmeStarten: (o) => { window.__aufnahmen++; setTimeout(o.beiStille, 300); return Promise.resolve({ stoppen: () => Promise.resolve({ blob: new Blob(["x"]) }) }); },
+      tonLesen: () => Promise.resolve(window.__eigenPuffer), stufe1Da: () => true,
+      stufe1Bewerten: () => Promise.resolve({ quelle: "azure", prozent: window.__note, woerter: [{ wort: "Schule", laute: [{ laut: "ʃ", note: 96 }, { laut: "uː", note: 99 }, { laut: "l", note: 97 }, { laut: "ə", note: 94 }] }] }),
+      lautKlartext: (l) => "Dein " + l.laut + " war gut."
     });
+    /* Konto und Wörterbuch-Server nachbauen */
+    window.__woerterbuch = []; window.__eigenRufe = [];
+    const kl = { rpc: (name, args) => {
+      window.__eigenRufe.push({ name, args });
+      let data = null;
+      if (name === "aussprache_eigen_speichern") { window.__woerterbuch = window.__woerterbuch.filter((e) => e.wort.toLowerCase() !== args.p_wort.toLowerCase()); window.__woerterbuch.push({ id: window.__woerterbuch.length + 1, wort: args.p_wort, prozent: args.p_prozent, audio: args.p_audio, dauer: args.p_dauer }); data = { ok: true, wort: args.p_wort, anzahl: window.__woerterbuch.length }; }
+      else if (name === "aussprache_eigen_liste") data = window.__woerterbuch.map((e) => ({ id: e.id, wort: e.wort, prozent: e.prozent, dauer: e.dauer }));
+      else if (name === "aussprache_eigen_ton") { const e = window.__woerterbuch.find((x) => x.wort.toLowerCase() === String(args.p_wort).toLowerCase()); data = e ? { ok: true, audio: e.audio } : { ok: false }; }
+      else if (name === "aussprache_eigen_loeschen") { window.__woerterbuch = window.__woerterbuch.filter((x) => x.id !== args.p_id); data = { ok: true }; }
+      return Promise.resolve({ data, error: null });
+    } };
+    Backend.zugang = () => kl; Backend.currentUser = () => ({ id: "00000000-0000-4000-8000-000000000000", email: "t@t" });
+    window.__abgespielt = 0; const altPlay = HTMLMediaElement.prototype.play; HTMLMediaElement.prototype.play = function () { window.__abgespielt++; return Promise.resolve(); };
     window.__extra = Object.assign({}, window.__extra || {}, {
-      spiel_aussprache_wort: () => ({ ok: true, wort: "Brötchen", silben: "BRÖT-chen", niveau: "A1" }),
-      spiel_aussprache_fertig: (a, ich) => { window.__fertigArgs = a; return Object.assign({}, ich, { ok: true, gewonnen: 3 }); }
+      spiel_aussprache_wort: (a) => ({ ok: true, wort: "Schule", silben: "SCHU-le", niveau: a.p_niveau }),
+      spiel_aussprache_fertig: (a, ich) => { window.__fertig = a; return Object.assign({}, ich, { ok: true, gewonnen: 12 }); }
     });
-    window.__rufe.length = 0;
-    const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true);
-    window.DMA_SPIEL.menue("deutsch");
+    try { localStorage.setItem("dma_spiel_sprech_auto", "1"); localStorage.setItem("dma_spiel_niveau", "C2"); } catch (e) {}
+    const S = window.DMA_SPIEL.pruef.zustand(); S.niveau = "C2"; S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true);
+    S.deutschWahl = true; window.DMA_SPIEL.menue("deutsch");
   });
   await tick(500);
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.deutschWahl = true; window.DMA_SPIEL.menue("deutsch"); });
-  await tick(300);
-  const kat = await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-tu="kategorie"][data-k="aussprache"]'); if (b) b.click(); return !!b; });
+
+  console.log("\nSTILL, WÄHREND MAN SPRICHT\n");
+  const gain = () => pg.evaluate(() => { const K = window.DMA_SPIEL.pruef.klang(); return K.master ? Math.round(K.master.gain.value * 100) / 100 : null; });
+  await pg.evaluate(() => { try { window.DMA_SPIEL.pruef.tonTesten && 0; } catch (e) {} const K = window.DMA_SPIEL.pruef.klang(); if (!K.ctx) { const C = window.AudioContext || window.webkitAudioContext; K.ctx = new C(); K.master = K.ctx.createGain(); K.master.gain.value = 0.62; K.master.connect(K.ctx.destination); } });
+  const vorher = await gain();
+  await pg.evaluate(() => window.dispatchEvent(new CustomEvent("dma-selbst-spricht", { detail: { an: true } }))); await tick(400);
+  const beim = await gain();
+  await pg.evaluate(() => window.dispatchEvent(new CustomEvent("dma-selbst-spricht", { detail: { an: false } }))); await tick(1500);
+  const danach = await gain();
+  sage(vorher > 0.3 && beim < 0.05 && danach > 0.3, "spricht man selbst am Mikrofon, verstummt das Spiel – danach kommt der Klang zurück", vorher + " → " + beim + " → " + danach);
+  const lc = await pg.evaluate(() => fetch("livechat.js").then((r) => r.text()).then((t) => /dma-selbst-spricht/.test(t)));
+  sage(lc, "livechat.js meldet das eigene Sprechen ans Spiel", String(lc));
+
+  console.log("\nAUSSPRACHE: VORSPRECHEN, ZUHÖREN, BEWERTEN, WEITER\n");
+  await pg.evaluate(() => {
+    window.__note = 88; window.__stillBeiAufnahme = [];
+    const alt = window.AusspracheP.aufnahmeStarten;
+    window.AusspracheP.aufnahmeStarten = (o) => { window.__stillBeiAufnahme.push(window.DMA_SPIEL.pruef.klang().stillUebung === true); return alt(o); };
+    window.__woerter = 0; const altW = window.__extra.spiel_aussprache_wort;
+    window.__extra.spiel_aussprache_wort = (a) => { window.__woerter++; return Object.assign(altW(a), { wort: ["Schule", "Straße", "Sport"][(window.__woerter - 1) % 3] }); };
+  });
+  /* FASSUNG 780 — Funk 200: der Piepton aus dem Aussprachetrainer, sobald das Mikrofon offen ist; die Statuszeile sagt es. */
+  await pg.evaluate(() => {
+    window.__piep = [];
+    /* Core ist eine globale const (core.js), kein window.Core. */
+    Core.sound.sprichJetzt = () => { const st = document.querySelector("#spPanel .sp-sprech-status"); window.__piep.push(Date.now()); setTimeout(() => { const s2 = document.querySelector("#spPanel .sp-sprech-status"); window.__piepStatus = s2 ? s2.textContent : ""; }, 30); };
+  });
+  await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-tu="kategorie"][data-k="aussprache"]'); if (b) b.click(); });
+  await pg.waitForFunction(() => window.__aufnahmen >= 2, { timeout: 12000 }).catch(() => {});
+  const piep = await pg.evaluate(() => ({ n: window.__piep.length, status: window.__piepStatus || "", balken: !!document.querySelector("#spPanel .sp-sprech-weiter") }));
+  sage(piep.n >= 2 && /Piep – jetzt du!/.test(piep.status), "vor jedem Nachsprechen: Piepton (derselbe wie im Aussprachetrainer), Statuszeile „Piep – jetzt du!“", JSON.stringify(piep));
+  sage(!piep.balken, "keine zusätzliche Strichlinie mehr (Funk 200)", JSON.stringify(piep));
+  let r = await pg.evaluate(() => ({ woerter: window.__woerter, aufnahmen: window.__aufnahmen, still: window.__stillBeiAufnahme, stillJetzt: window.DMA_SPIEL.pruef.klang().stillUebung, wort: (document.querySelector("#spPanel .sp-sprech-wort") || {}).textContent }));
+  sage(r.woerter >= 2 && r.aufnahmen >= 2, "88 %: nach dem Balken kommt von selbst das nächste Wort und wird wieder vorgesprochen und aufgenommen", JSON.stringify(r));
+  sage(r.still.length && r.still.every(Boolean), "während das Mikrofon zuhört, ist das Spiel still", JSON.stringify(r.still));
+  const balken = await pg.evaluate(() => new Promise((ok) => { const t0 = Date.now(); (function warte() { const b = document.querySelector("#spPanel .sp-sprech[data-weiter]"); /* seit 780 (Funk 200: „diese Striche Linie braucht es nicht") unsichtbar an der Karte */ if (b) return ok(b.getAttribute("data-weiter") + "ms"); if (Date.now() - t0 > 6000) return ok(""); setTimeout(warte, 100); })(); }));
+  sage(/2200ms/.test(balken), "88 % (ab 80 %): der Weiter-Balken läuft 2,2 Sekunden", balken);
+  if (process.env.BILD) await (await pg.$("#spPanel .sp-sprech")).screenshot({ path: process.env.BILD + "-weiter.png" });
+
+  console.log("\nANDERE ÜBUNG WÄHLEN\n");
+  const vorWahl = await pg.evaluate(() => window.__woerter);
+  await tippe('#spPanel .sp-sprech-andere');
+  await tick(4800);
+  r = await pg.evaluate(() => ({ offen: !!document.querySelector("#spPanel .sp-deutsch-wahl.sp-offen"), arten: document.querySelectorAll('#spPanel .sp-deutsch-wahl [data-tu="kategorie"]').length, woerter: window.__woerter }));
+  sage(r.offen && r.arten >= 4, "„Andere Übung“ klappt die Wahl mit allen Aufgabenarten auf", JSON.stringify(r));
+  sage(r.woerter === vorWahl, "solange man wählt, springt die Übung nicht weiter", vorWahl + " → " + r.woerter);
+  await pg.evaluate(() => { const b = document.querySelector('#spPanel .sp-deutsch-wahl [data-tu="kategorie"]:not([data-k="aussprache"])'); if (b) b.click(); });
   await tick(900);
-  const karte = await pg.evaluate(() => { const k = document.querySelector("#spPanel .sp-sprech"); return k ? k.textContent : null; });
-  await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-tu="sprechen"]'); if (b) b.click(); });
-  await tick(1500);
-  r = await pg.evaluate(() => ({ az: window.__azArgs, frei: !!window.__frei, fertig: window.__fertigArgs, text: (document.querySelector("#spPanel .sp-erg-platz") || {}).textContent || "" }));
-  sage(kat && karte && /Brötchen/.test(karte), "Deutsch-Menü → Aussprache: die Karte zeigt das Wort", String(kat) + " " + String(karte).slice(0, 80));
-  sage(r.az && r.az.text === "Brötchen" && r.az.wav && !r.frei, "bewertet wird mit der Laut-Bewertung (Azure), wie im Aussprachekurs", JSON.stringify(r.az));
-  sage(r.fertig && r.fertig.p_prozent === 88, "der Server bekommt die Azure-Note (88)", JSON.stringify(r.fertig));
-  sage(/88 \/ 100/.test(r.text) && /Laut für Laut/.test(r.text) /* seit 772: Kreisel „Laut für Laut“ + „88 / 100“ */ && /Dein øː klang noch nicht rund/.test(r.text) && /\+3 Punkte/.test(r.text), "Anzeige: „88 / 100 · Laut für Laut“, der schwächste Laut als Tipp, +3 Punkte", r.text);
-  if (process.env.BILD) await (await pg.$("#spPanel .sp-sprech")).screenshot({ path: process.env.BILD + "-aussprache.png" });
-  await pg.evaluate(() => { window.AusspracheP.stufe1Da = () => false; window.__frei = false; window.__fertigArgs = null; });
-  await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-tu="sprechneu"]'); if (b) b.click(); }); await tick(900);
-  await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-tu="sprechen"]'); if (b) b.click(); }); await tick(1500);
-  r = await pg.evaluate(() => ({ frei: !!window.__frei, fertig: window.__fertigArgs, text: (document.querySelector("#spPanel .sp-erg-platz") || {}).textContent || "" }));
-  /* Fassung 783 — Funk 201: „ich möchte nur die prozentuale Bewertung von Azure haben nicht diese strichellinienbewertung". */
-  sage(!r.frei && !r.fertig && /Azure hat diesmal nicht geantwortet/.test(r.text), "ohne Laut-Bewertung: kein Klangvergleich mehr, keine Note, Hinweis (Fassung 783)", JSON.stringify(r));
+  r = await pg.evaluate(() => ({ karte: !!document.querySelector("#spPanel .sp-sprech"), frage: !!document.querySelector("#spPanel .sp-aufgabe") }));
+  sage(!r.karte && r.frage, "ein Tipp auf eine andere Art: die Aussprache-Karte weicht der neuen Aufgabe", JSON.stringify(r));
 
   sage(!konsolenFehler.length, "keine Seitenfehler", konsolenFehler.slice(0, 2).join(" | "));
   await br.close(); srv.close();
-  console.log("\nFassung 766 (Funk 186/188): " + (fehler ? fehler + " rot." : "alles grün."));
+  console.log("\nFassung 773 (Funk 199): " + (fehler ? fehler + " rot." : "alles grün."));
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });

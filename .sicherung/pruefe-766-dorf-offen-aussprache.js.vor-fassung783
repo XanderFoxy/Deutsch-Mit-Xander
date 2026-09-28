@@ -252,8 +252,7 @@ const sage = (gut, was, zusatz) => {
   await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-tu="sprechneu"]'); if (b) b.click(); }); await tick(900);
   await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-tu="sprechen"]'); if (b) b.click(); }); await tick(1500);
   r = await pg.evaluate(() => ({ frei: !!window.__frei, fertig: window.__fertigArgs, text: (document.querySelector("#spPanel .sp-erg-platz") || {}).textContent || "" }));
-  /* Fassung 783 — Funk 201: „ich möchte nur die prozentuale Bewertung von Azure haben nicht diese strichellinienbewertung". */
-  sage(!r.frei && !r.fertig && /Azure hat diesmal nicht geantwortet/.test(r.text), "ohne Laut-Bewertung: kein Klangvergleich mehr, keine Note, Hinweis (Fassung 783)", JSON.stringify(r));
+  sage(r.frei && r.fertig && r.fertig.p_prozent === 12 && /12 % ähnlich/.test(r.text), "ohne Laut-Bewertung (nicht angemeldet): Klangvergleich wie bisher", JSON.stringify(r));
 
   sage(!konsolenFehler.length, "keine Seitenfehler", konsolenFehler.slice(0, 2).join(" | "));
   await br.close(); srv.close();
