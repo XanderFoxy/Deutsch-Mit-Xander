@@ -49,32 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 801: Einsammeln im kleinen Rahmen, schlank wie das alte Dorf",
+  stand: "Fassung 802: altes Dorf gibt Leinwände frei (gegen „nur Blau“)",
 
   inArbeit: [
-    { seit: "2026-09-28T19:36",
+    { seit: "2026-09-28T19:39",
       text: "Döbelner Rathaus (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:36",
+    { seit: "2026-09-28T19:39",
       text: "Dodge Viper und Batmobil (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:36",
+    { seit: "2026-09-28T19:39",
       text: "Tretboote, Bootshaus, Badegäste (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:36",
+    { seit: "2026-09-28T19:39",
       text: "Pferdebahn mit Gleisen, Korn-/Mehlwagen (Helfer arbeitet)" },
-    { seit: "2026-09-28T19:36",
-      text: "Alte Version zeigt nur Blau – Ursache suchen" },
-    { seit: "2026-09-28T19:36",
+    { seit: "2026-09-28T19:39",
       text: "Wiener Lichterbogen" },
-    { seit: "2026-09-28T19:36",
+    { seit: "2026-09-28T19:39",
       text: "Karten-Vorlagen und eigene Karten" },
-    { seit: "2026-09-28T19:36",
+    { seit: "2026-09-28T19:39",
       text: "Tourismus: Bootsverleih bringt Geld" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T19:36",
-      text: "Tipp aufs Haus in der kleinen neuen Stadt öffnet die Karte mit Einsammeln" },
-    { seit: "2026-09-28T19:36",
-      text: "Kleiner Rahmen lädt nur kleine Bilder" },
+    { seit: "2026-09-28T19:39",
+      text: "Altes Dorf: verworfene Leinwände werden sofort freigegeben" },
+    { seit: "2026-09-28T19:39",
+      text: "Einsammeln im kleinen Rahmen der neuen Stadt" },
   ],
 };

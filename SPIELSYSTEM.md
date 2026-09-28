@@ -2018,3 +2018,11 @@ XANDER: „Da brauchen wir zwei Werkzeuge, einmal zur Ansicht und einmal, dass w
 - **Schlank:** Im kleinen Rahmen lädt `bilder.js` nur die kleinen Bilder (`LB.nurKlein`), und die Nähe ist auf die Lupen-Stufe begrenzt (`K.max` = 2,3 × Überblick). Erst im Vollbild gibt es große Bilder und volle Nähe.
 - `lsAuf` holt die Stadt nach „Alte Version“ nicht mehr zurück. `SZ.sichtbare` ist auch bei einem 0 × 0 großen Rahmen gesetzt.
 - Sonde 799 erweitert: kein großes Bild im Kleinformat; ein Haus-Tipp öffnet die Karte unter dem Bild.
+
+## Fassung 802 — altes Dorf: Leinwände sofort freigeben (Verdacht „nur Blau“)
+
+XANDER: „dass ich jetzt wie bei Emmi gestern das nur noch Blau angezeigt bekomme … weil das andere wahrscheinlich im Puffer hängt".
+
+- Geprüft: Mit Xanders echtem Spielstand (16 Gebäude auf Stufe 3, Fernsehturm, Nacht) malt das alte Dorf hier in 1,2 s. Bei sechsfach gedrosselter CPU dauert es 3,4 s, ohne Fehler.
+- Verdacht: Jedes neue Malen (Tag/Nacht, Schnee, Ausbau, Jahreszeit) legt eine große Leinwand und eine Zugmaske an. iOS gibt Leinwandspeicher erst spät frei. Ist das Budget erschöpft, bleiben neue Leinwände leer, und man sieht nur den blauen Grund.
+- Änderung: Verworfene Leinwände werden sofort auf 0 × 0 gesetzt (`dmLeinwandWeg`). Im Vorrat bleiben höchstens 2 statt 4.

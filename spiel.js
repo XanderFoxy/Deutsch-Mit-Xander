@@ -11399,6 +11399,9 @@
     }
     dorfBlickZeigen();
   }
+  function dmLeinwandWeg(b) {
+    [b.bild, b.maske].forEach(function (c) { try { if (c && c.getContext) { c.width = 0; c.height = 0; } } catch (e) {} });
+  }
   function dorfMalPflegen() {
     var lw = schnellEl && schnellEl.querySelector("canvas.sp-dl-mal");
     if (!lw || !S.ich) return;
@@ -11426,7 +11429,12 @@
       var licht = /N$/.test(ds) ? DM.licht : null;
       DM.licht = null;
       fertig = DM.bilder[sig] = { bild: neu, punkte: punkte, maske: dmBahnMaske(zeigDorf, zeigLage), licht: licht, s: breite / 320, dorf: zeigDorf };
-      var alle = Object.keys(DM.bilder); if (alle.length > 3) delete DM.bilder[alle[0]];
+      /* FASSUNG 801 — XANDER: „dass ich jetzt wie bei Emmi gestern das nur noch Blau angezeigt bekomme". Jedes neue Malen
+         (Tag/Nacht, Schnee, Ausbau) legt eine große Leinwand an; das iPhone gibt deren Speicher erst sehr spät frei, und ist
+         das Leinwand-Budget erschöpft, bleibt jedes weitere Bild leer – man sieht nur den blauen Grund. Jetzt werden
+         verworfene Leinwände sofort auf 0 × 0 gesetzt (gibt den Speicher frei), und es bleiben höchstens zwei im Vorrat. */
+      var alle = Object.keys(DM.bilder);
+      while (alle.length > 2) { var weg = alle.shift(); if (DM.bilder[weg]) dmLeinwandWeg(DM.bilder[weg]); delete DM.bilder[weg]; }
     }
     lw.width = fertig.bild.width; lw.height = fertig.bild.height;
     lw.getContext("2d").drawImage(fertig.bild, 0, 0);
