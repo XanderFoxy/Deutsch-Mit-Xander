@@ -79,7 +79,11 @@ def main():
     # FASSUNG 809 — die Eisenbahn (Laufblätter l_bahn_…, 8 Richtungen) bekommt je Blatt ein Zwergblatt _z für den
     # kleinen Rahmen: gleiche Zellen, nur kleiner (7,5 Bildpunkte je Meter), damit der Zug dort kaum etwas kostet.
     # FASSUNG 810 — ebenso die Fuhrwerke (l_fuhr_…: Kornwagen, Mehlwagen, leerer Wagen, Pferdebahn; 5 Spalten × 8 Richtungen).
-    for k in [k for k in vz if (k.startswith("l_bahn_") or k.startswith("l_fuhr_")) and not k.endswith("_z")]:
+    # FASSUNG 811 — ebenso die Tiere (l_tier_…: Kühe, Schweine, Hühner; XANDER: „Tiere im Dorf"). Im kleinen Rahmen ist
+    # eine Kuh kaum 16 Bildpunkte lang: dort reichen drei Bilder je Richtung (ein Schritt, Grasen/Wühlen/Picken, Stehen) –
+    # „bl": [1, 1, 1] sagt tiere.js, wie das Zwergblatt aufgeteilt ist.
+    TIER_BLATT = {20: (12, 6, 2), 16: (8, 6, 2)}
+    for k in [k for k in vz if (k.startswith("l_bahn_") or k.startswith("l_fuhr_") or k.startswith("l_tier_")) and not k.endswith("_z")]:
         m = vz[k]; zk = k + "_z"
         q = os.path.join(ORDNER, k + ".webp"); ziel = os.path.join(ORDNER, zk + ".webp")
         if not os.path.exists(q): continue
@@ -88,15 +92,20 @@ def main():
         n = m.get("n", 1)
         # Fuhrwerke im kleinen Rahmen: nur ein Bild je Richtung (mitten im Schritt, Spalte 1) – das Pferd ist dort kaum
         # 8 Punkte hoch, Gangbilder sähe man nicht; so bleibt der Rahmen unter seinen 300 KB (Sonde 799)
-        spalten = [1] if k.startswith("l_fuhr_") and n == 5 else list(range(n))
+        spalten, bl = list(range(n)), None
+        if k.startswith("l_fuhr_") and n == 5: spalten = [1]
+        elif k.startswith("l_tier_") and n in TIER_BLATT:
+            g, h, _ = TIER_BLATT[n]
+            spalten, bl = [round(g * 0.25), g, g + h], [1, 1, 1]
         if not (os.path.exists(ziel) and os.path.getmtime(ziel) >= os.path.getmtime(q)):
             im = Image.open(q).convert("RGBA")
             if len(spalten) != n:
                 neu_im = Image.new("RGBA", (m["zw"] * len(spalten), im.height), (0, 0, 0, 0))
                 for i, sp in enumerate(spalten): neu_im.paste(im.crop((sp * m["zw"], 0, (sp + 1) * m["zw"], im.height)), (i * m["zw"], 0))
                 im = neu_im
-            im.resize((zw * len(spalten), zh * 8), Image.LANCZOS).save(ziel, "WEBP", quality=72 if len(spalten) == n else 64, alpha_quality=45, method=6)
+            im.resize((zw * len(spalten), zh * 8), Image.LANCZOS).save(ziel, "WEBP", quality=64 if k.startswith("l_fuhr_") and len(spalten) != n else 72, alpha_quality=45, method=6)
         z = dict(m, zw=zw, zh=zh, ax=round(m["ax"] * zw / m["zw"], 1), ay=round(m["ay"] * zh / m["zh"], 1), s=round(m["s"] * zw / m["zw"], 3), n=len(spalten))
+        if bl: z["bl"] = bl
         if m.get("l"): z["l"] = [[l[0], round(l[1] * zw / m["zw"], 1), round(l[2] * zh / m["zh"], 1), round(l[3] * zw / m["zw"], 1)] + list(l[4:]) for l in m["l"]]
         if vz.get(zk) != z:
             vz[zk] = z; neu += 1

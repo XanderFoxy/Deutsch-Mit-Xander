@@ -296,6 +296,8 @@
     /* FASSUNG 809 — Lok und Wagen (bahn.js) wie Leute und Boote zwischen die Häuser */
     if (ST.bahn) for (const p of ST.bahn.sichtbar(Z)) leute.push(p);
     if (ST.fuhrwerk) for (const p of ST.fuhrwerk.sichtbar(Z)) leute.push(p);   // FASSUNG 810 — Kornwagen und Pferdebahn
+    /* FASSUNG 811 — Kühe, Schweine, Hühner (tiere.js) wie die Boote zwischen die Häuser */
+    if (ST.tiere) for (const p of ST.tiere.sichtbar(Z)) leute.push(p);
     const nachDing = new Map();
     for (const p of leute) {
       const kk = K.s, bx = p.bx || 0.6, px0 = p.X - bx * kk, px1 = p.X + bx * kk, py0 = p.Y - (p.bh || 2) * kk, py1 = p.Y + 0.2 * kk;
