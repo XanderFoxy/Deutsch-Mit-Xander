@@ -4548,6 +4548,15 @@
     if (Date.now() - (S.dorfZoomSperre || 0) < 450) { ev.preventDefault(); ev.stopPropagation(); return; }
     S.schnellDruck = 0;   /* der Klick beendet die Geste: ab jetzt darf gezeichnet werden */
     S.schnellScroll = 0;  /* FASSUNG 692 — und auch das Scrollen: ein Tipp ist eine Entscheidung */
+    /* FASSUNG 797 — Tipp auf die kleine Karte: nur dorthin fahren (dieses Viertel), kein Haus öffnen. */
+    var mk = ev.target.closest && ev.target.closest(".sp-dl-minikarte");
+    if (mk) {
+      ev.preventDefault(); ev.stopPropagation();
+      var mr = mk.getBoundingClientRect();
+      S.dorfWahl = ""; ton("swoosh", 0.2);
+      dorfZoom(true, Math.max(0, Math.min(1, (ev.clientX - mr.left) / (mr.width || 1))), Math.max(0, Math.min(1, (ev.clientY - mr.top) / (mr.height || 1))));
+      return;
+    }
     var k = ev.target.closest("button");
     /* FASSUNG 704 — XANDER (Funk 148): „dass man auf einem Klick in das leere dieses kleine Panel wieder schließt".
        Ein Tipp auf die gemalte Landschaft (kein Haus) schließt das offene Haus. */
@@ -5159,6 +5168,15 @@
       return;
     } else if (s === "marktwahl") {
       S.marktWahl = S.marktWahl === k.dataset.w ? "" : k.dataset.w; ton("holzklopf", 0.15); schnellZeichnen(true); panelAuffrischen(); return;
+    } else if (s === "kaufwahl") {
+      S.kaufWahl = S.kaufWahl === k.dataset.w ? "" : k.dataset.w; schnellZeichnen(true); return;
+    } else if (s === "haendler") {
+      wirtschaft("spiel_haendler_kaufen", { p_ware: k.dataset.w, p_menge: Number(k.dataset.n) || 1 }, function (r) {
+        ton("kasse", 0.45);
+        hinweis("🛒 Händler: " + r.menge + " " + (WAREN[r.ware] || r.ware) + " gekauft – −" + r.kosten + " Punkte (heute noch " + r.rest_heute + ").");
+        handelLaden(true);
+      });
+      return;
     } else if (s === "markt") {
       wirtschaft("spiel_markt", { p_ware: k.dataset.w, p_menge: Number(k.dataset.n) || 0 }, function (r) {
         ton("kasse", 0.45);
@@ -7544,7 +7562,9 @@
   function stallBereit(ich, art) {
     var g = ((ich || {}).dorf || {})[art];
     if (!g || !(g.stufe > 0) || !(g.lp > 0)) return null;
-    var takt = (art === "huehnerstall" ? 900000 : 1200000) / g.stufe, mx = 3 * g.stufe, jetzt = Date.now();
+    /* FASSUNG 797 — Brutkasten/Melkmaschine: doppelt so schnell, doppeltes Lager (wie der Server) */
+    var turbo = erforscht(ich, art === "huehnerstall" ? "brutkasten" : "melkmaschine");
+    var takt = (art === "huehnerstall" ? 900000 : 1200000) / g.stufe * (turbo ? 0.5 : 1), mx = 3 * g.stufe * (turbo ? 2 : 1), jetzt = Date.now();
     var stand = g.stand ? Date.parse(g.stand) : jetzt - takt;
     stand = Math.max(stand, jetzt - takt * mx);
     var bereit = Math.min(mx, Math.floor((jetzt - stand) / takt));
@@ -8598,7 +8618,18 @@
     var essenK = ["brot", "kuchen", "fisch", "fleisch", "torte"].filter(function (x) { return vorrat(ich, x) > 0; }).map(function (x) {
       return '<button type="button" data-s="iss" data-d="' + x + '">' + WAREN[x] + " essen <small>" + ({ brot: "+12 LP", kuchen: "+30 LP, +10 Mana", fisch: "+10 LP", fleisch: "+14 LP", torte: "+40 LP, +15 Mana" })[x] + "</small></button>";
     }).join("");
-    return markt || essenK ? '<div class="sp-sm-gruppe sp-markt"><span>Markt</span>' + markt + essenK + "</div>" : "";
+    /* FASSUNG 797 — XANDER: „im Verkaufen-Menü gibt es kein Kaufen-Menü … wir sehen keine Angebote von Händlern."
+       Der Händler verkauft alles, was der Markt ankauft (Tagespreis × 1,6, bis 20 je Kauf, 60 am Tag – spiel_haendler_kaufen). */
+    var kaufen = HANDEL.preise ? Object.keys(HANDEL.preise).filter(function (x) { return WAREN[x] && HANDEL.preise[x] && HANDEL.preise[x].grund; }).map(function (x) {
+      var P = HANDEL.preise[x], ek = Math.max(1, Math.ceil(Number(P.grund) * Number(P.laune || 1) * 1.6)), offen = S.kaufWahl === x;
+      var kopf = '<button type="button" data-s="kaufwahl" data-w="' + x + '" class="sp-markt-ware' + (offen ? " sp-an" : "") + '">' + WAREN[x] + " kaufen <small>" + ek + " P je Stück " + (offen ? "▴" : "▾") + "</small></button>";
+      if (!offen) return kopf;
+      return kopf + '<div class="sp-markt-mengen">' + [1, 5, 10, 20].map(function (m) {
+        return '<button type="button" data-s="haendler" data-w="' + x + '" data-n="' + m + '"' + ((ich.punkte || 0) < m * ek ? " disabled" : "") + ">" + m + "× <small>−" + m * ek + "</small></button>";
+      }).join("") + "</div>";
+    }).join("") : "";
+    return (markt || essenK ? '<div class="sp-sm-gruppe sp-markt"><span>Markt</span>' + markt + essenK + "</div>" : "")
+      + (kaufen ? '<div class="sp-sm-gruppe sp-markt sp-haendler"><span>Beim Händler kaufen</span>' + kaufen + "</div>" : "");
   }
   function werkHtml(ich) {
     var t = werkZeilenHtml(ich);
@@ -8965,7 +8996,16 @@
     wassermuehle: { name: "Wasserrad an der Mühle", kosten: 40, wiss: 2, quote: 0, haus: "muehle", stufe: 2, tut: "die Mühle mahlt 25 % schneller" },
     buchdruck:    { name: "Buchdruck", kosten: 60, wiss: 2, quote: 0, haus: "bibliothek", tut: "50 % mehr Forschung" },
     duden:        { name: "Der Duden", kosten: 80, wiss: 3, quote: 85, geheim: true, tut: "dein gutes Deutsch zählt für die Zufriedenheit 10 Punkte mehr" },
-    dampf:        { name: "Dampfmaschine", kosten: 120, wiss: 5, quote: 90, haus: "labor", geheim: true, tut: "das Fuhrwerk fährt doppelte Ladung (10 je Stufe)" }
+    dampf:        { name: "Dampfmaschine", kosten: 120, wiss: 5, quote: 90, haus: "labor", geheim: true, tut: "das Fuhrwerk fährt doppelte Ladung (10 je Stufe)" },
+    /* FASSUNG 797 — XANDER: „Entdeckungen scheinen stehen zu bleiben … ich hab alles abgegrast, aber es wird nicht weiter
+       geforscht … ich möchte auf jeden Fall Entdeckungen noch machen." Die Liste endete nach sechs; die Punkte lagen brach.
+       Zweite Stufe (Server: spiel_forschung_def, Wirkung in den jeweiligen Spielfunktionen). */
+    liebig:       { name: "Kunstdünger (Justus von Liebig)", kosten: 150, wiss: 6, quote: 60, tut: "Bauern ernten noch einmal 30 % mehr Getreide" },
+    melkmaschine: { name: "Melkmaschine", kosten: 160, wiss: 6, quote: 0, haus: "kuhstall", tut: "Kühe geben doppelt so schnell Milch, der Stall fasst doppelt so viel" },
+    brutkasten:   { name: "Brutkasten", kosten: 160, wiss: 6, quote: 0, haus: "huehnerstall", tut: "Hühner legen doppelt so schnell, der Stall fasst doppelt so viel" },
+    telegraf:     { name: "Telegraf (Siemens & Halske)", kosten: 200, wiss: 8, quote: 70, tut: "du kennst die Preise zuerst: der Markt zahlt 15 % mehr" },
+    roentgen:     { name: "Röntgenstrahlen", kosten: 400, wiss: 12, quote: 90, haus: "krankenhaus", geheim: true, tut: "Pflaster und Tränke heilen 50 % mehr" },
+    benz:         { name: "Automobil (Carl Benz)", kosten: 500, wiss: 15, quote: 92, haus: "rathaus", stufe: 2, geheim: true, tut: "Baustellen sind 25 % schneller fertig" }
   };
   var WUNDER = {
     holstentor:     { name: "Holstentor", ort: "Lübeck", ab: 4, preis: 250, waren: { holz: 10, erz: 5 }, besucher: 2, freude: 2 },
@@ -12708,7 +12748,10 @@
     var pins = Object.keys(lageP).map(function (k) {
       if (!DORF[k]) return "";
       var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = lageP[k], u = dmUmriss(k, st), z = DORF_ZEICHEN[k] || ["#7a7a7a"];
-      return '<button type="button" class="sp-dl-mpunkt' + (st ? "" : " sp-dl-mpunkt-leer") + '" data-s="dorfhin" data-g="' + k + '" title="' + DORF[k].name + '" style="--pf:' + z[0] + ";left:" + ((q[0] + (u[0] + u[2]) / 2) / 3.2).toFixed(2) + "%;top:" + ((q[1] + u[1] * .4) / 2).toFixed(2) + '%"></button>';
+      /* FASSUNG 797 — XANDER: „in dem Moment, wo man in ein Viertel der Ansicht reinklickt, klickt es direkt auf einen
+         zufälligen Punkt aus diesen Markierungen, wodurch man direkt in das Haus reinspringt … das möchte ich nicht."
+         Die Punkte sind nur noch Zeichen (keine Knöpfe); die ganze Karte ist EINE Tippfläche (siehe schnellKlick). */
+      return '<i class="sp-dl-mpunkt' + (st ? "" : " sp-dl-mpunkt-leer") + '" data-g="' + k + '" title="' + DORF[k].name + '" style="--pf:' + z[0] + ";left:" + ((q[0] + (u[0] + u[2]) / 2) / 3.2).toFixed(2) + "%;top:" + ((q[1] + u[1] * .4) / 2).toFixed(2) + '%"></i>';
     }).join("");
     return '<div class="sp-dl-minikarte" aria-label="Karte des Dorfes"><canvas class="sp-dl-karte-bild" data-sig="' + sig + '" aria-hidden="true"></canvas><i class="sp-dl-karte-blick"></i>' + pins + "</div>";
   }

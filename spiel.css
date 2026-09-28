@@ -2439,7 +2439,7 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
   border: 1.5px solid #fff8e6; box-shadow: 0 2px 8px rgba(0, 0, 0, .5); background: #cfe3c0; }
 .sp-dl-minikarte canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .sp-dl-minikarte .sp-dl-karte-blick { box-shadow: 0 0 0 999px rgba(20, 16, 10, .28); border-width: 1.5px; }
-.sp-schnellmenue .sp-dl-mpunkt, .sp-dl-mpunkt { position: absolute; width: 16px; height: 16px; min-height: 0; margin: -8px 0 0 -8px; padding: 0; border: 0; background: none; box-shadow: none; }
+.sp-schnellmenue .sp-dl-mpunkt, .sp-dl-mpunkt { position: absolute; width: 16px; height: 16px; min-height: 0; margin: -8px 0 0 -8px; padding: 0; border: 0; background: none; box-shadow: none; pointer-events: none; }
 .sp-dl-mpunkt::after { content: ""; position: absolute; left: 4.5px; top: 4.5px; width: 7px; height: 7px; border-radius: 50%; background: var(--pf, #c8312b); box-shadow: 0 0 0 1.2px #fff, 0 1px 2px rgba(0, 0, 0, .5); }
 .sp-dl-mpunkt-leer::after { background: #9a9a9a; opacity: .75; width: 5px; height: 5px; left: 5.5px; top: 5.5px; }
 .sp-schnellmenue .sp-dorf-heim, .sp-dorf-heim { position: sticky; bottom: 8px; margin: 8px 4px 0 auto; display: grid; place-items: center; width: 40px; height: 40px; min-height: 0; padding: 0;

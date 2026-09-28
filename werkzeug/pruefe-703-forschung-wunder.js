@@ -221,8 +221,9 @@ const sage = (gut, was, zusatz) => {
   r = await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); const z = [...m.querySelectorAll(".sp-forschung")];
     return { n: z.length, geheim: m.querySelectorAll(".sp-geheim").length, text: m.querySelector(".sp-forschung-kopf").textContent, duden: /Duden/.test(m.textContent), dampf: /Dampfmaschine/.test(m.textContent),
       warum: (m.querySelector(".sp-geheim small") || {}).textContent || "", frei: z.filter((e) => e.querySelector('[data-s="erforschen"]:not([disabled])')).map((e) => e.querySelector("b").textContent) }; });
-  sage(r.n === 6 && /100 Punkte/.test(r.text), "Forschungstafel: 6 Forschungen, 100 Forschung gesammelt", r.n + " · " + r.text);
-  sage(r.geheim === 2 && !r.duden && !r.dampf, "die beiden geheimen Forschungen sind verborgen (Name und Wirkung unsichtbar)", r.geheim + " verborgen");
+  /* FASSUNG 797 — zweite Stufe: 12 Forschungen, davon 4 geheim (Duden, Dampf, Röntgen, Benz) */
+  sage(r.n === 12 && /100 Punkte/.test(r.text), "Forschungstafel: 12 Forschungen, 100 Forschung gesammelt", r.n + " · " + r.text);
+  sage(r.geheim === 4 && !r.duden && !r.dampf, "die vier geheimen Forschungen sind verborgen (Name und Wirkung unsichtbar)", r.geheim + " verborgen");
   sage(/Deutsch-Quote 85 % \(du hast 80 %\)/.test(r.warum), "… und sagen, was fehlt: bessere Deutsch-Quote", r.warum);
   sage(r.frei.join(",") === "Dreifelderwirtschaft,Sauerteig,Wasserrad an der Mühle,Buchdruck", "die vier offenen sind erforschbar", JSON.stringify(r.frei));
   await tippe('.sp-forschung [data-s="erforschen"][data-f="buchdruck"]'); await tick(600);
@@ -236,7 +237,7 @@ const sage = (gut, was, zusatz) => {
     const S = window.DMA_SPIEL.pruef.zustand(); S.ich = JSON.parse(JSON.stringify(ich)); window.DMA_SPIEL.pruef.schnellZeichnen(true); });
   await tick(400);
   r = await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); return { geheim: m.querySelectorAll(".sp-geheim").length, duden: /Der Duden/.test(m.textContent), dampf: /Dampfmaschine/.test(m.textContent), offen: m.querySelectorAll(".sp-geheim-offen").length }; });
-  sage(r.geheim === 0 && r.duden && r.dampf && r.offen === 2, "mit Deutsch-Quote 90 % und 5 Wissenschaftlern: Duden und Dampfmaschine werden sichtbar (golden umrandet)", JSON.stringify(r));
+  sage(r.geheim === 2 && r.duden && r.dampf && r.offen === 2, "mit Deutsch-Quote 90 % und 5 Wissenschaftlern: Duden und Dampfmaschine werden sichtbar (golden umrandet), Röntgen und Benz bleiben verborgen", JSON.stringify(r));
 
   console.log("\nERNTE MIT BESUCHERN\n");
   await pg.evaluate(() => { window.__ernte = Object.assign({ ok: true, bratwurst: 0, erz: 0, xp: 0, mana: 0, besucher: 7, besucher_kauf: 7, eintritt: 21, punkte_plus: 56, zufrieden: 97, satt: 4, bedarf: 4, bezahlt: 16, quote: 90 },

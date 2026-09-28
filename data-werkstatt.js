@@ -49,28 +49,32 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 795: eigene Gebäude und Wahrzeichen in der leichten Stadt, Bauen-Knopf, fließende Tageszeit",
+  stand: "Fassung 797: Lupe, zweite Forschungsstufe, Händler",
 
   inArbeit: [
-    { seit: "2026-09-28T18:31",
-      text: "Leichte Stadt Runde 2: Rückgängig, Wege/Flüsse malen, Bäume löschen, Lok + Schienen, Pyramide dreht sich, Sommerbilder, Halloween" },
-    { seit: "2026-09-28T18:31",
-      text: "Tag/Nacht fließend auch im Spiel-Dorf" },
-    { seit: "2026-09-28T18:31",
+    { seit: "2026-09-28T19:01",
+      text: "Stadt im Chat (Hochformat klein, Querformat Vollbild)" },
+    { seit: "2026-09-28T19:01",
+      text: "Karten-Vorlagen und mehrere Stadt-Fassungen" },
+    { seit: "2026-09-28T19:01",
+      text: "Döbelner Rathaus (in Arbeit)" },
+    { seit: "2026-09-28T19:01",
+      text: "Angebote von Freunden, zweiter Stall, Schiffe/Hafen" },
+    { seit: "2026-09-28T19:01",
+      text: "Deutsch-Missionen im Dorf (Weg beschreiben)" },
+    { seit: "2026-09-28T19:01",
       text: "Laserduell (Xander testet)" },
-    { seit: "2026-09-28T18:31",
-      text: "Walkie-Reste: Hot Rod, Katze, Adler, Flugzeug, Heli, Delfin, Wangenhand, Lunte, Anziehen" },
-    { seit: "2026-09-28T18:31",
-      text: "Aussprache-Aufgabe im Chat und persönliches Aussprache-Wörterbuch" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-28T18:31",
-      text: "15 eigene Modelle (11 Spielgebäude, 4 Wahrzeichen) gebacken und eingebunden" },
-    { seit: "2026-09-28T18:31",
-      text: "Bauen-Knopf mit allen Gebäuden, Ausbauen am Haus" },
-    { seit: "2026-09-28T18:31",
-      text: "Tag und Nacht in der leichten Stadt stufenlos nach der Uhr" },
+    { seit: "2026-09-28T19:01",
+      text: "Lupe/Karte springt nicht mehr ins Haus" },
+    { seit: "2026-09-28T19:01",
+      text: "6 neue Forschungen mit Wirkung (Liebig bis Benz)" },
+    { seit: "2026-09-28T19:01",
+      text: "Händler verkauft Waren" },
+    { seit: "2026-09-28T19:01",
+      text: "Sparmodus für schwache Verbindungen" },
   ],
 };

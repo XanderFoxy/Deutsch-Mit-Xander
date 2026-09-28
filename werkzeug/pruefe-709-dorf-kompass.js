@@ -220,7 +220,8 @@ const sage = (gut, was, zusatz) => {
     return { drin: h.left >= f.left - 2 && h.right <= f.right + 2 && h.top >= f.top - 2 && h.bottom <= f.bottom + 2, breit: Math.round(h.width), wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl,
       name: [...document.querySelectorAll('.sp-dl-haus-gemalt[data-g="baeckerei"] small span')].map((e) => e.getBoundingClientRect().width > 0)[0], gemerkt: localStorage.getItem("dma_dorf_nah") }; });
   sage(b.drin && b.breit >= 40, "die Bäckerei ist mitten im Bild und gut zu erkennen", JSON.stringify(b));
-  sage(b.wahl === "baeckerei" && b.name, "sie ist gleich geöffnet, mit Namensschild", JSON.stringify(b));
+  /* FASSUNG 797 — XANDER: „es soll nur in den Bereich gehen … nicht direkt in das Haus reinspringen." */
+  sage(b.wahl === "" && b.name, "nur hingefahren (kein Haus geöffnet), Namensschild sichtbar", JSON.stringify(b));
   sage(r.gemalt === gemalt0, "beim Zoomen wird nicht neu gemalt (dasselbe Bild, nur größer)", r.gemalt);
   sage(b.gemerkt === "1", "die Zoomstufe wird auf dem Gerät gemerkt", b.gemerkt);
   await bild("nah");

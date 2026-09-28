@@ -1964,3 +1964,9 @@ XANDER: „ob du auf der Basis von diesem Konzept das Ganze in einem kleineren M
 - Gemessen (360-px-Telefon, Start): vorher 2,9 MB Bilder, jetzt 2,3 MB; im Sparmodus 0,9 MB.
 - Sparmodus automatisch bei „Datensparen" oder 2G/3G (navigator.connection), sonst per Schalter im Farbfeld oder `?spar=1`: nur kleine Bilder, in der Dämmerung nur ein Bild je Haus, 12 statt 30 Leute aus 2 statt 6 Figurenblättern.
 - Immer: große Bilder erst ab dem 1,6-fachen (statt 1,3), und erst nachdem das kleine da ist; der Ladevorhang wartet höchstens 2,5 s statt auf alle Bilder.
+
+## Fassung 797 — Lupe springt nicht mehr ins Haus, zweite Forschungsstufe, Händler verkauft
+- Kleine Karte (Lupe/Kompass nah): XANDER: „in dem Moment, wo man in ein Viertel reinklickt, klickt es direkt auf einen zufälligen Punkt … wodurch man direkt in das Haus reinspringt". Die Punkte sind nur noch Zeichen (keine Knöpfe, pointer-events: none); ein Tipp auf die Karte fährt nur an diese Stelle (dorfZoom), öffnet kein Haus.
+- Forschung: XANDER: „Entdeckungen scheinen stehen zu bleiben". Befund: alle 6 erforscht, 308 Forschung lagen brach (die Liste war zu Ende). Neu (Migration spiel_797_forschung_zweite_stufe): Kunstdünger (Liebig, 150: Bauern +30 %), Melkmaschine (160, Kuhstall: doppelt so schnell, doppeltes Lager), Brutkasten (160, Hühnerstall: ebenso), Telegraf (200, Quote 70: Markt zahlt 15 % mehr), geheim Röntgenstrahlen (400, 12 Wiss., Quote 90, Krankenhaus: Heilen +50 %), geheim Automobil (Benz, 500, 15 Wiss., Quote 92, Rathaus 2: Baustellen 25 % schneller).
+- Händler (spiel_haendler_kaufen, spiel_haendler_preis): XANDER: „es gibt kein Kaufen-Menü … keine Angebote von Händlern". Im Markt jetzt „Beim Händler kaufen": jede Ware, die der Markt ankauft, zum Tagespreis × 1,6; 1/5/10/20 je Kauf, höchstens 60 am Tag.
+- Noch offen: Angebote von Freunden (Freundesliste), zweiter Stall/zweite Farm, Schiffe/Hafen.
