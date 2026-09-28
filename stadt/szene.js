@@ -152,10 +152,16 @@
       /* Neu malen nur, wenn es in dieses Bild noch passt – sonst das
          zuletzt benutzte Bild dieses Objekts (anders gezoomt) strecken */
       const schl = ST.spriteSchluessel(o.typ, opt, gier, sBau, Z);
-      if (ST.SPEICHER.has(schl) || performance.now() - bildStart < BUDGET_MS || !o._sp || SZ.ohneBudget) {
+      if (ST.SPEICHER.has(schl) || performance.now() - bildStart < BUDGET_MS || SZ.ohneBudget) {
         try { sp = ST.spriteHolen(o.typ, opt, gier, sBau, Z, t); o._sp = sp; }
         catch (e) { console.error(o.typ, e); continue; }
-      } else { sp = o._sp; nachholen = true; }
+      } else {
+        /* Budget erschöpft: das alte Bild strecken – oder, wenn es noch keins
+           gibt, im nächsten Bild malen (so bleibt die Seite flüssig) */
+        nachholen = true;
+        if (!o._sp) continue;
+        sp = o._sp;
+      }
       let k = K.s / sp.s;
       if (Math.abs(k - 1) < 0.002) k = 1;
       const x0 = P[0] + sp.ox * k, y0 = P[1] + sp.oy * k;
