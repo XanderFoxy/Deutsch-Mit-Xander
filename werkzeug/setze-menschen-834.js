@@ -98,7 +98,7 @@ const AUFTRAEGE = [
   { szene: "strasse", teil: "fussgaenger", x: 66, fussY: 170, pose: "gehen", blick: 76, mass: 0.74,
     p: { alter: "erwachsen", geschlecht: "m", haut: "hell", frisur: "kurz", haarfarbe: "braun", gesicht: "g1",
       kleidung: kl({ oberteil: { stueck: "pullover", farbe: "grau" }, jacke: { stueck: "jacke", farbe: "rot" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } }) } },
-  { szene: "bahnhof", teil: "schaffner", x: 212, fussY: 199, pose: "kontrapost", blick: 26, mass: 0.88,
+  { szene: "bahnhof", teil: "schaffner", x: 212, fussY: 199, pose: "arme_verschraenkt", blick: 26, mass: 0.88,
     p: { alter: "erwachsen", geschlecht: "m", haut: "mittel", frisur: "kurz", haarfarbe: "schwarz", bart: "bart_kurz", gesicht: "g3",
       kleidung: kl({ oberteil: { stueck: "hemd", farbe: "hellblau" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, unterteil: { stueck: "anzughose", farbe: "grau" }, kopf: { stueck: "kappe", farbe: "blau" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } }) } },
   { szene: "arztpraxis", teil: "aerztin", x: 126, fussY: 191, pose: "halten", blick: 30,

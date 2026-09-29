@@ -1472,8 +1472,24 @@
     const rockArt = rock ? hoseArt : (kleid ? KLEID[kleid.stueck] || KLEID.sommerkleid : null);
     if (rockArt) {
       const farbe = rock ? stoff(rock, "#333333") : stoff(kleid, "#b8473a");
-      const pts = saumHuelle(rockArt.saum || 0.85, rockArt.weite || 1.05, 14);
-      auftraege.push({ tiefe: Math.max(vorneTiefe, rumpfTiefe) + 0.2, svg: formPunkte(pts, farbe, { hell: 0.18, dunkel: 0.26 }), rock: true });
+      const pts = saumHuelle(rockArt.saum || 0.85, (rockArt.weite || 1.05) * 0.92, 14);
+      /* FASSUNG 836: Faltenwurf — Falten laufen vom Bund zum Saum und
+         fächern sich auf; der Saum ist leicht gewellt statt glatt. */
+      let rsvg = formPunkte(pts, farbe, { hell: 0.18, dunkel: 0.26 });
+      let yMax = -1e9, yMin = 1e9; pts.forEach((q) => { yMax = Math.max(yMax, q[1]); yMin = Math.min(yMin, q[1]); });
+      const unten = pts.filter((q) => q[1] > yMax - 5 * g).sort((a, b) => a[0] - b[0]);
+      const obenR = pts.filter((q) => q[1] < yMin + 4 * g).sort((a, b) => a[0] - b[0]);
+      if (unten.length >= 2 && obenR.length >= 2) {
+        const uL = unten[0], uR = unten[unten.length - 1], oL = obenR[0], oR = obenR[obenR.length - 1];
+        for (let i = 1; i < 6; i++) {
+          const t = i / 6, o = [lerp(oL[0], oR[0], 0.25 + t * 0.5), lerp(oL[1], oR[1], t) + 2 * g], u = [lerp(uL[0], uR[0], t), lerp(uL[1], uR[1], t) - 0.5 * g];
+          rsvg += linie([o, [lerp(o[0], u[0], 0.55), lerp(o[1], u[1], 0.55)], u], i % 2 ? dunkler(farbe, 0.32) : heller(farbe, 0.18), (i % 2 ? 0.4 : 0.55) * g, ' opacity="' + (i % 2 ? 0.5 : 0.35) + '"');
+        }
+        const welle = [];
+        for (let i = 0; i <= 10; i++) { const t = i / 10; welle.push([lerp(uL[0], uR[0], t), lerp(uL[1], uR[1], t) - (i % 2 ? 0.9 : 0) * g]); }
+        rsvg += linie(welle, dunkler(farbe, 0.35), 0.35 * g, ' opacity=".5"');
+      }
+      auftraege.push({ tiefe: Math.max(vorneTiefe, rumpfTiefe) + 0.2, svg: rsvg, rock: true });
     }
     /* Jacke / Mantel / Kittel */
     if (jacke) {
@@ -2274,6 +2290,8 @@
   /* Ärmel: 0 ohne, 0.5 kurz, 1 halb, 2 lang. oben/unten: Rumpfhöhen. */
   const OBERTEIL = {
     tshirt: { aermel: 0.5, oben: 54 },
+    /* FASSUNG 836: Badeshirt für die Wanne (Badekleidung für Männer und Jungen) */
+    badeshirt: { aermel: 0.5, oben: 54, unten: 2 },
     hemd: { aermel: 2, kragen: true, knopf: true, oben: 55 },
     pullover: { aermel: 2, oben: 55 },
     bluse: { aermel: 2, kragen: true, knopf: true, oben: 54 },
