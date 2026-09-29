@@ -34,6 +34,8 @@
   };
   SZ.neu = function (o) { o.id = SZ.naechsteId++; o.dreh = SZ.drehNorm(o.dreh); o.stufe = o.stufe || 1; SZ.objekte.push(o); SZ.geaendert(); return o; };
   SZ.weg = function (o) { const i = SZ.objekte.indexOf(o); if (i >= 0) SZ.objekte.splice(i, 1); if (SZ.auswahl === o) SZ.auswahl = null; SZ.geaendert(); };
+  /* FASSUNG 832 — Einhängepunkte für nachgeladene Teile (quests.js): Maler flach auf dem Boden, Figuren zwischen den Dingen */
+  SZ.bodenMaler = []; SZ.figurQuellen = [];
   SZ.stand = 0;   // FASSUNG 825 — zählt jede Änderung der Stadt (Laternen-Nummern und Wandschein neu bestimmen)
   SZ.geaendert = function () { reiheSchl = ""; SZ.stand++; };
   /* FASSUNG 808 — Drehung auf halbe Vierteldrehungen (45°) runden, 0 ≤ dreh < 4 */
@@ -662,6 +664,9 @@
     /* FASSUNG 809 — Eisenbahn (bahn.js): Schotterbett, Schwellen, Schienen liegen flach unter allem, vor den Schatten */
     if (ST.bahn) ST.bahn.boden(g, t, Z);
     if (ST.fuhrwerk) ST.fuhrwerk.boden(g, t, Z);   // FASSUNG 810 — Feldwege und Pferdebahngleis (fuhrwerk.js), ebenso flach
+    /* FASSUNG 832 — XANDER: „wenn sie dann da ist … sieht es so eine Linie die … rot geht oder grün geht". Flach auf dem
+       Boden (unter Häusern und Leuten): die Wege der Quests (quests.js, nachgeladen) */
+    for (const f of SZ.bodenMaler) f(g, t, Z);
     /* 1. Schatten in halber Auflösung, einfarbig */
     for (const e of sicht) {
       const m = e.meta; if (!m.sn || (e.o.nebel || 0) > 0.4) continue;
@@ -695,6 +700,7 @@
     if (ST.autos) for (const p of ST.autos.sichtbar(Z)) leute.push(p);   // FASSUNG 815 — Dodge Viper und Batmobil fahren (autos.js)
     /* FASSUNG 811 — Kühe, Schweine, Hühner (tiere.js) wie die Boote zwischen die Häuser */
     if (ST.tiere) for (const p of ST.tiere.sichtbar(Z)) leute.push(p);
+    for (const f of SZ.figurQuellen) for (const p of f(Z)) leute.push(p);   // FASSUNG 832 — Leute der Quests (quests.js)
     const nachDing = new Map();
     for (const p of leute) {
       const kk = K.s, bx = p.bx || 0.6, px0 = p.X - bx * kk, px1 = p.X + bx * kk, py0 = p.Y - (p.bh || 2) * kk, py1 = p.Y + 0.2 * kk;

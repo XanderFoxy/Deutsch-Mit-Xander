@@ -11,8 +11,8 @@
    ===================================================================== */
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
 const WURZEL = path.join(__dirname, "..");
-/* FASSUNG 833 — dazu verwalten.js (Wahrzeichen und Bootsverleih verwalten), nach oberflaeche.js */
-const DATEIEN = ["stadt-leicht/kern.js", "stadt/boden.js", "stadt-leicht/bilder.js", "stadt-leicht/szene.js", "stadt-leicht/leute.js", "stadt-leicht/boote.js", "stadt-leicht/tiere.js", "stadt-leicht/ton.js", "stadt-leicht/bahn.js", "stadt-leicht/fuhrwerk.js", "stadt-leicht/autos.js", "stadt-leicht/autoschau.js", "stadt-leicht/windmuehle.js", "stadt-leicht/himmel.js", "stadt-leicht/dorf.js", "stadt-leicht/spiel.js", "stadt-leicht/drehen.js", "stadt-leicht/oberflaeche.js", "stadt-leicht/verwalten.js", "stadt-leicht/start.js"];
+/* FASSUNG 832/833 — dazu verwalten.js (833) und quests.js (832, wird nachgeladen); FASSUNG 833 — verwalten.js (Wahrzeichen und Bootsverleih verwalten), nach oberflaeche.js */
+const DATEIEN = ["stadt-leicht/kern.js", "stadt/boden.js", "stadt-leicht/bilder.js", "stadt-leicht/szene.js", "stadt-leicht/leute.js", "stadt-leicht/boote.js", "stadt-leicht/tiere.js", "stadt-leicht/ton.js", "stadt-leicht/bahn.js", "stadt-leicht/fuhrwerk.js", "stadt-leicht/autos.js", "stadt-leicht/autoschau.js", "stadt-leicht/windmuehle.js", "stadt-leicht/himmel.js", "stadt-leicht/dorf.js", "stadt-leicht/spiel.js", "stadt-leicht/drehen.js", "stadt-leicht/oberflaeche.js", "stadt-leicht/verwalten.js", "stadt-leicht/start.js", "stadt-leicht/quests.js"];
 function esbuildHolen() {
   try { return require("esbuild"); } catch (e) {}
   const basis = path.join(require("os").homedir(), ".npm", "_npx");
@@ -22,12 +22,16 @@ function esbuildHolen() {
 const hash = (b) => crypto.createHash("sha1").update(b).digest("hex").slice(0, 10);
 /* FASSUNG 812 — die Auto-Schau (40 KB) wird erst beim ersten Auto nachgeladen (autoschau-laden.js vertritt sie in der
    Bündelung): der kleine Rahmen im Spiel lädt wieder unter 300 KB */
-const NACH = { "stadt-leicht/autoschau.js": "stadt-leicht/autoschau-laden.js" };
+/* FASSUNG 832 — die Quests (Deutsch-Missionen) ebenso: quests-laden.js vertritt sie, quests.min.js kommt später */
+const NACH = { "stadt-leicht/autoschau.js": "stadt-leicht/autoschau-laden.js", "stadt-leicht/quests.js": "stadt-leicht/quests-laden.js" };
 const eb = esbuildHolen();
 const klein = (q) => (eb ? eb.transformSync(q, { minify: true, target: "es2019", legalComments: "none" }).code : q);
 const schauAus = klein(fs.readFileSync(path.join(WURZEL, "stadt-leicht/autoschau.js"), "utf8"));
 fs.writeFileSync(path.join(WURZEL, "stadt-leicht", "autoschau.min.js"), schauAus);
 const schauStempel = hash(schauAus);
+const questAus = klein(fs.readFileSync(path.join(WURZEL, "stadt-leicht/quests.js"), "utf8"));
+fs.writeFileSync(path.join(WURZEL, "stadt-leicht", "quests.min.js"), questAus);
+const questStempel = hash(questAus);
 const quelle = DATEIEN.map((f) => fs.readFileSync(path.join(WURZEL, NACH[f] || f), "utf8") + "\n;").join("\n");
 const aus = klein(quelle);
 fs.writeFileSync(path.join(WURZEL, "stadt-leicht", "leicht.min.js"), aus);
@@ -44,6 +48,7 @@ window.LEICHT_STEMPEL = "${bildStempel}";
   var q = /[?&]quelle=1/.test(location.search);
   var liste = q ? ${JSON.stringify(DATEIEN)} : ["stadt-leicht/leicht.min.js?v=${stempel}"];
   if (!q) window.LEICHT_AUTOSCHAU = "stadt-leicht/autoschau.min.js?v=${schauStempel}";
+  if (!q) window.LEICHT_QUESTS = "stadt-leicht/quests.min.js?v=${questStempel}";
   liste.forEach(function (s) { document.write('<script src="' + s + (q ? "?t=" + Date.now() : "") + '"><\\/script>'); });
 })();
 </script>`;
