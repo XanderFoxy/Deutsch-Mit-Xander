@@ -19,9 +19,16 @@ function esbuildHolen() {
   return null;
 }
 const hash = (b) => crypto.createHash("sha1").update(b).digest("hex").slice(0, 10);
-const quelle = DATEIEN.map((f) => fs.readFileSync(path.join(WURZEL, f), "utf8") + "\n;").join("\n");
+/* FASSUNG 812 — die Auto-Schau (40 KB) wird erst beim ersten Auto nachgeladen (autoschau-laden.js vertritt sie in der
+   Bündelung): der kleine Rahmen im Spiel lädt wieder unter 300 KB */
+const NACH = { "stadt-leicht/autoschau.js": "stadt-leicht/autoschau-laden.js" };
 const eb = esbuildHolen();
-const aus = eb ? eb.transformSync(quelle, { minify: true, target: "es2019", legalComments: "none" }).code : quelle;
+const klein = (q) => (eb ? eb.transformSync(q, { minify: true, target: "es2019", legalComments: "none" }).code : q);
+const schauAus = klein(fs.readFileSync(path.join(WURZEL, "stadt-leicht/autoschau.js"), "utf8"));
+fs.writeFileSync(path.join(WURZEL, "stadt-leicht", "autoschau.min.js"), schauAus);
+const schauStempel = hash(schauAus);
+const quelle = DATEIEN.map((f) => fs.readFileSync(path.join(WURZEL, NACH[f] || f), "utf8") + "\n;").join("\n");
+const aus = klein(quelle);
 fs.writeFileSync(path.join(WURZEL, "stadt-leicht", "leicht.min.js"), aus);
 const stempel = hash(aus);
 /* FASSUNG 805 — vor dem Stempeln die Zwergbilder und das kleine Verzeichnis nachziehen (werkzeug/leicht-zwerg.py). */
@@ -35,6 +42,7 @@ window.LEICHT_STEMPEL = "${bildStempel}";
 (function () {
   var q = /[?&]quelle=1/.test(location.search);
   var liste = q ? ${JSON.stringify(DATEIEN)} : ["stadt-leicht/leicht.min.js?v=${stempel}"];
+  if (!q) window.LEICHT_AUTOSCHAU = "stadt-leicht/autoschau.min.js?v=${schauStempel}";
   liste.forEach(function (s) { document.write('<script src="' + s + (q ? "?t=" + Date.now() : "") + '"><\\/script>'); });
 })();
 </script>`;

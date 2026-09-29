@@ -818,6 +818,7 @@
     const zu = knopf("kreuz", "Schließen", () => { karte.hidden = true; }, "lk-klein");
     const textKnopf = (html, fn, cls) => { const b = el("button", "lk-text-knopf" + (cls ? " " + cls : ""), html); b.type = "button"; b.addEventListener("click", (e) => { e.stopPropagation(); fn(b); }); return b; };
     const schau = !ziel && ST.autoschau ? textKnopf("<span>Anschauen</span>", () => { karte.hidden = true; autoSchau(s); }, "lk-anschauen-knopf") : null;
+    if (schau && ST.autoschau.vorladen) ST.autoschau.vorladen().catch(() => {});   // FASSUNG 812 — die Schau schon holen, während die Karte offen ist
     const dazu = (...k) => knoepfe.append(...k.concat(schau ? [schau] : [], ziel ? [] : [zu]));
     const hin = () => { const a = AU.auto(id); if (!a) return; weg(); AU.folge = id; L().fliegeZu(a.x, a.y, Math.max(K.s, 16 * K.dpr), 700); karte.hidden = true; };
     if (!AU.hat(id)) {
@@ -847,7 +848,8 @@
   }
   /* FASSUNG 821 — die Auto-Schau öffnen; unten stehen die Knöpfe der Karte */
   function autoSchau(s) {
-    if (!ST.autoschau || !ST.autoschau.oeffnen(s[6], { knoepfe: (ziel) => autoKarte(s, ziel) })) autoKarte(s);
+    /* FASSUNG 812 — sonst: falls die nachgeladene Schau nicht kommt (kein Netz), die Karte des Autos */
+    if (!ST.autoschau || !ST.autoschau.oeffnen(s[6], { knoepfe: (ziel) => autoKarte(s, ziel), sonst: () => autoKarte(s) })) autoKarte(s);
   }
   /* ein abgestelltes Auto (Schmuck) fährt wieder los – dort, wo es stand */
   function losfahrenVonDeko(id, dieses) {
@@ -919,8 +921,13 @@
   }
 
   /* ---------------- Antippen ---------------- */
+  let autoUnterFinger = null;
   O.zeigerRunter = function (p) {
     geistZiehen = false;
+    /* FASSUNG 812 — ein fahrendes Auto zählt schon beim Aufsetzen des Fingers: sonst ist es (die Kamera folgt ihm nicht
+       mehr) beim Loslassen schon ein Stück weitergefahren, und der Tipp „auf das Batmobil" ginge ins Leere */
+    autoUnterFinger = ST.autos && !document.body.classList.contains("lk-mini-modus") ? ST.autos.treffer(p.x, p.y) || null : null;
+    if (autoUnterFinger && ST.autoschau && ST.autoschau.vorladen) ST.autoschau.vorladen().catch(() => {});
     if (ST.autos) ST.autos.folge = null;   // FASSUNG 815 — wer selbst schiebt, folgt dem Auto nicht mehr
     if (geist) {
       /* auf dem Geist angesetzt? dann zieht der Finger den Geist */
@@ -964,7 +971,8 @@
     /* FASSUNG 815 — Tipp auf ein fahrendes Auto: seine Karte (im großen Bild) */
     /* FASSUNG 821 — XANDER: „wenn man bei Batmobil oder Viper klick dann muss ich die Möglichkeit geben sich das Auto
        schön anzugucken": der Tipp öffnet gleich die Auto-Schau (autoschau.js), unten mit den Knöpfen der Karte */
-    const fa = ST.autos && !document.body.classList.contains("lk-mini-modus") && ST.autos.treffer(px, py);
+    const fa = ST.autos && !document.body.classList.contains("lk-mini-modus") && (autoUnterFinger || ST.autos.treffer(px, py));
+    autoUnterFinger = null;
     if (fa) { const s = SCHMUCK.find((x) => x[6] === fa.id); if (s) { autoSchau(s); return; } }
     const o = SZ.treffer(px, py, (o) => o.art !== "natur" || o.rand !== 1);
     if (o && (o.art === "haus" || o.art === "wunder" || o.art === "eigen" || o.name)) { waehlen(o); return; }
