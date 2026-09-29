@@ -8697,3 +8697,7 @@ body.hat-klassenzimmer { padding-bottom: 172px; }
 .sbk-niveau-alle dt { font-weight: 800; }
 .sbk-niveau-alle dd { margin: 0; line-height: 1.4; }
 .sbk-klebe .baustein-satz, .sbk-schwebe .baustein-satz { overflow-wrap: anywhere; }
+/* FASSUNG 835 — Der klebende und der schwebende Satz hatten den Hintergrund
+   „--cream-50“ — das ist in den Themen die TEXTFARBE. Auf hellem Thema stand
+   dunkle Schrift auf dunklem Grund. Jetzt der Kartengrund wie überall. */
+.sbk-klebe, .sbk-schwebe, .sbk-karte-geist { background: var(--plum-800, #fffaf0); color: var(--cream-50, #2e2a25); }

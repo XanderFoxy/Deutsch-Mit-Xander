@@ -530,6 +530,7 @@ const SEIN_K2 = ["wäre", "wärst", "wäre", "wären", "wärt", "wären"], HABEN
       sage(/plusquamperfekt/.test(b1) && /konjunktiv2/.test(b1), "B1: Vorvergangenheit und Konjunktiv II sind da", b1);
 
       /* Xanders Satz: Ich war am Wochenende in den Bergen. */
+      await klick(pg, '[data-sbk-kat="alle"]');
       await klick(pg, '[data-sbk-niveau="A2"]');
       await klick(pg, '[data-sbk-feld="subjekt"][data-sbk-wert="1sg"]');
       await klick(pg, '[data-sbk-feld="verb"][data-sbk-wert="sein"]');
@@ -610,6 +611,7 @@ const SEIN_K2 = ["wäre", "wärst", "wäre", "wären", "wärt", "wären"], HABEN
       await pg.close();
 
       const pg2 = await seite({ width: 1280, height: 800 }, false);
+      await klick(pg2, '[data-sbk-kat="alle"]');
       await klick(pg2, '[data-sbk-niveau="B1"]');
       await klick(pg2, '[data-sbk-feld="verb"][data-sbk-wert="gehen"]');
       await klick(pg2, '[data-sbk-zeitform="vergangenheit"]');

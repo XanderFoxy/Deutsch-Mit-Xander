@@ -2471,3 +2471,60 @@ XANDER (Funk 213): „Bitte gestalte überall Quest innerhalb der Stadt mit Leut
 - **Geisterklick** (`stadt-leicht/quests.js`, `dialogOeffnen`): Das „!“ öffnet schon beim Loslassen des Fingers (pointerup). Den Klick, den das Handy danach nachschiebt, prüft Chrome neu an der Fingerstelle. Lag dort eine Antwort des gerade aufgegangenen Dialogs, zählte sie als Fehlversuch, und der Erstversuch-Bonus war weg (Sonde 832: Punkte [8,8,6]). Jetzt zählt ein Klick in den ersten 500 ms nach dem Aufgehen nur, wenn der Finger im Dialog auch aufgesetzt hat. Das gilt für die Antworten und das ✕.
 - **Sonde 832** prüft das mit „Geisterklick gleich nach dem Aufgehen zählt nicht als falsche Antwort“. Gegenprobe: Der Stand vor 813 zählt den Klick als Versuch.
 - **Kleiner Rahmen**: Sonde 799 misst 295 bis 335 KB, je nachdem, was gerade im Bild fährt (Zug, Fuhrwerke, Gäste). Grenze: 330 KB. Wird es dauerhaft mehr, wird `verwalten.js` wie die Quests nachgeladen.
+
+## Fassung 835 — Satzbaukasten: natürliche Vergangenheit, Grammatik je Niveau, mehrere Sätze, keine Unsinnssätze
+
+XANDER (Funk 217): „was ist im Unterschied zwischen den einzelnen Niveaus und wenn ich z.B Vergangenheit habe sagte er z.B ich bin am Wochenende in den Bergen gewesen warum gibt's da keine natürliche Variante wie z.B ich war am Wochenende in den Bergen … dass die Leute gemessen auf ihrem Niveau alle Sachen benutzen können dass sie mehrere Sätze bilden können und kommen da jetzt wirklich keine Unsinnigkeiten mehr raus".
+
+- **Präteritum (`satzbau.js`, `PRAET_BASIS`)**: Alle 82 Verben haben ihr Präteritum nach Duden. Die Formen stehen knapp als „s:ging“ (stark) oder „w:machte“ (schwach). Die Engine bildet daraus die sechs Personen, auch „du aßest, lasest, fandest“ und „ihr fandet“. Trennbare Verben trennen sich wie im Präsens („Ich räumte meine Wohnung auf.“), „woher“ nutzt „kam“.
+- **„Vergangenheit“ = so, wie man es sagt**: Der Knopf heißt weiter „Vergangenheit“. `natuerlicheVergangenheit()` wählt die Form. Bei sein, haben, mögen, den Modalverben und im Passiv steht das Präteritum vorn („Ich war am Wochenende in den Bergen.“). Darunter steht „Auch richtig (Perfekt): Ich bin … gewesen.“ mit einem Satz Erklärung. Bei allen anderen Verben steht das Perfekt vorn und darunter „Geschrieben oder erzählt (Präteritum): Ich ging …“. Das gibt es erst ab B1, vorher steht nur eine leise Zeile. Geht eine Zeitangabe in der anderen Form nicht („seit …“), fällt die Variante weg.
+- **Neue Zeitformen**: Plusquamperfekt, Konjunktiv II (würde/wäre/hätte/wüsste, könnte/müsste/sollte) und Konjunktiv II der Vergangenheit. `bauSatz` baut die Verbklammer jetzt allgemein aus `finit` und `rechts`. Im Nebensatz steht das gebeugte Verb vor zwei Infinitiven (Duden, Ersatzinfinitiv): „weil ich am Wochenende habe arbeiten müssen“.
+- **Modalverben** (`MODALVERBEN`): können, müssen, wollen, möchten (Vergangenheit „wollte“), dürfen, sollen. Sie gelten mit Präsens, Präteritum, Perfekt „habe … arbeiten müssen“, Futur und K II, je nachdem, was natürlich klingt. Die Oberfläche hat dafür die Reihe „Mit Modalverb?“. Nicht bei verlieren, mögen, brauchen, wissen usw. (`modalPasst`).
+- **Passiv (B2)**: nur bei 27 Verben mit Akkusativ-Ding (`PASSIV_VERBEN`). Das Objekt wird Subjekt mit bestimmtem Artikel („Die Suppe wird gekocht.“). Person, Begleitung, persönlicher Grund und „gern/allein“ fallen weg. In der Vergangenheit: „wurde … gekocht“, Variante „ist … gekocht worden“.
+- **Niveau sichtbar** (`NIVEAU_INFO`, `niveauInfo`, `zeitformenFuer`): Unter den Niveau-Knöpfen steht „Auf A2 baust du: …“, auf Tipp die Übersicht A1–C2.
+  - A1: Präsens, Vergangenheit, können/müssen/wollen/möchten im Präsens, und/aber/oder/dann.
+  - A2: Futur, Präteritum der Modalverben, dürfen/sollen, Nebensatz mit weil/dass/wenn, denn/deshalb, Gründe mit „weil“.
+  - B1: Präteritum aller Verben, Plusquamperfekt, K II, obwohl/damit/trotzdem, „wegen“ + Genitiv.
+  - B2 und höher: Passiv, K II Vergangenheit, um … zu.
+  - Abweichung vom Richtwert: und/aber/oder stehen schon auf A1 (Profile deutsch), sonst könnte man auf A1 keine zwei Sätze verbinden. Indirekte Fragen („Wonach?“) erst ab A2.
+- **Mehrere Sätze** (`verbindeSaetze`, `BINDEWOERTER`): Mit „+ zweiter Satz“ wird der Satz festgehalten, der nächste hängt mit einem Bindewort daran. Höchstens vier Sätze, dazu „letzten Satz zurück“ und „nur ein Satz“.
+  - und/oder: kein Komma. aber/denn: Komma, Verb an 2. Stelle.
+  - dann/deshalb/trotzdem: neuer Satz, Verb gleich dahinter (`vorfeldWort`).
+  - weil/wenn/obwohl/damit: Komma, Verb am Ende.
+  - um … zu: nur bei derselben Person, bei gewollter Handlung, ohne Modalverb, ohne Verneinung; „einzukaufen“.
+  - „wenn“ nur im Präsens und im K II, „damit“ nur im Präsens und nie mit „mögen/vergessen“ oder „wollen/sollen“.
+  - Der Nebensatz allein hat jetzt die Bindewörter weil/dass/wenn/obwohl/damit.
+- **Sinnregeln aus dem Lesen von ~800 Beispielsätzen** (R22–R52 in `grundPasst`/`artPasst`/`zeitPasst`):
+  - Zeit und Zeitform: „seit“ nur im Präsens.
+  - Keine „gern“-Pflicht: nicht „muss gern“, nicht „nie gern“.
+  - „keine Zeit/Lust“ und „weil ich es vergessen habe“ nur zu einer verneinten Handlung.
+  - krank/müde/beschäftigt nur zu Ruhe, Arzt und Heimweg oder verneint.
+  - „unser Mann“ nicht bei wir/ihr/sie.
+  - Kein „mit dem Bus in den Flur“, kein „mit dem Zug in die Metzgerei“.
+  - „dringend“ nur mit nahem Zeitpunkt.
+  - mögen, wissen, glauben nur mit „jetzt/heute“; wohnen nur mit langen Zeiten.
+  - Nicht „jeden Abend die Jacke kaufen“.
+  - Im Internet sucht man nur, was es dort gibt.
+  - Amt, Arzt, Arbeit nur aus einem Anlass.
+  - „sehr“ steht hinter dem Objekt.
+  - denken braucht „an + Person“.
+  - trinken, sehen, hören brauchen eine Ergänzung.
+  - Ein unsichtbares Objekt verneint den Satz nicht mehr.
+  - Daten bereinigt: Wetter/Preis bei haben, Butter bei essen, Koffer bei vorbereiten, Müll bei aufräumen u. a.
+- **Italienisch** (nur im Italienisch-Kurs sichtbar, im Deutsch-Raum weiter keine Zeile):
+  - Präteritum: bei Zuständen, avere, Modalverben und Gewohnheiten das imperfetto („avevo“, „dovevo“), sonst passato prossimo („sono stato in montagna“).
+  - trapassato prossimo, condizionale, im wenn-Satz congiuntivo imperfetto („se andassi“).
+  - Passiv mit „viene/è stata“, „per“ + Infinitiv, Bindewörter.
+- **Oberfläche (`app.js` sbk…, `app-styles.css`)**:
+  - `sbkBauWahl()` baut die Wahl an einer Stelle.
+  - Neue Reihen: Zeitformen je Niveau, Bindewort, Modalverb, Aktiv/Passiv.
+  - Die Variante steht als Kasten unter dem Satz.
+  - Behoben: Der klebende Satz (834) hatte die Textfarbe `--cream-50` als Hintergrund, also dunkle Schrift auf dunklem Grund. Jetzt der Kartengrund.
+  - „Satz legen“ übt je Niveau auch Vergangenheit, Futur und K II und nennt das richtige Bindewort.
+- **Sonde** `werkzeug/pruefe-835-satzbau-zeiten.js` (`NUR=A…F`, `LESEN=1`, `SAMEN=`, `BILD=`, `WURZEL=`):
+  - A: Präteritum, Partizip, Hilfsverb aller Verben gegen eine Duden-Tabelle von Hand.
+  - B: 22 350 Zufallssätze über alle Niveaus, Zeitformen und Nebensatz-Bindewörter. Geprüft werden Verbstellung, Klammer, Kasus nach Präposition (wo/wohin), Artikel/Genus, Hilfsverb, Partizip, Präteritum, doppelte Wörter, Schreibung, Zeichen, Zeitwort zur Zeitform und Sinnlisten.
+  - C: natürliche Vergangenheit. D: Niveaus. E: 600 Geschichten.
+  - F: Oberfläche 360/1280 px.
+  - Gegenprobe (Stand 813): 29 rot.
+- **Offen**: Das Zufallsbauen kann noch seltsam klingen, wenn viele Angaben zusammenkommen, z. B. „Ihr hattet den ganzen Abend keinen Stuhl getragen.“ oder „Sie war im Urlaub in die Werkstatt gefahren.“. Grammatisch sind die Sätze richtig, ein Sinnmodell für jede Kombination gibt es aber nicht. Italienisch beim Präteritum ist eine Faustregel.
