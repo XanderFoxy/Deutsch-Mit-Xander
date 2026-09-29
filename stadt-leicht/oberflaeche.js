@@ -404,6 +404,8 @@
         bau: svgB('<path d="M3 14V6h10v8" fill="none" stroke="#7a4d1c" stroke-width="1.2"/><path d="M3 9h10M3 12h10M6 6v8M10 6v8" stroke="#b07a3c" stroke-width=".8"/><path d="M2 5l6-3 6 3" fill="none" stroke="#7a4d1c" stroke-width="1.2"/>'),
         korb: svgB('<path d="M2 7h12l-1.5 7h-9z" fill="#c9954f" stroke="#6b4a22" stroke-width=".9"/><path d="M4 7c0-4 8-4 8 0" fill="none" stroke="#6b4a22" stroke-width="1.1"/>')
       };
+      /* FASSUNG 810 — Funk 207: „beim Wald müssen Holz und Fleisch zu sehen sein" – Keule für die Jäger */
+      WARE_BILD.fleisch = svgB('<path d="M9.5 3.2c2.8-.9 5 1.6 4.2 4.3-.7 2.4-3.4 3.6-5.6 3l-3 3a1.3 1.3 0 1 1-1.8-1.8l3-3c-.8-2.3.5-4.8 3.2-5.5z" fill="#c8553d" stroke="#6e2a1c" stroke-width=".9"/><path d="M10 5c1.2-.3 2.2.4 2.3 1.4" fill="none" stroke="#f0b3a3" stroke-width=".9"/><circle cx="3.3" cy="12.9" r="1.3" fill="#f3ead6" stroke="#8a7a5c" stroke-width=".7"/>');
       WARE_BILD.eier = WARE_BILD.ei; WARE_BILD.gold = WARE_BILD.quarz = WARE_BILD.silizium = WARE_BILD.erz;
       /* FASSUNG 809 — Stationen ohne Haus: See (Zunge im Überblick) und Wald (dichteste Baumgruppe vorn), Jäger daneben */
       let waldMitte = null;
