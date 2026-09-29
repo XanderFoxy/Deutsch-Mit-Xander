@@ -2530,3 +2530,8 @@ XANDER (Funk 217): „was ist im Unterschied zwischen den einzelnen Niveaus und 
   - F: Oberfläche 360/1280 px.
   - Gegenprobe (Stand 813): 29 rot.
 - **Offen**: Das Zufallsbauen kann noch seltsam klingen, wenn viele Angaben zusammenkommen, z. B. „Ihr hattet den ganzen Abend keinen Stuhl getragen.“ oder „Sie war im Urlaub in die Werkstatt gefahren.“. Grammatisch sind die Sätze richtig, ein Sinnmodell für jede Kombination gibt es aber nicht. Italienisch beim Präteritum ist eine Faustregel.
+
+## Fassung 814 — Satzbaukasten aus 835 ausgeliefert
+
+- Enthält Fassung 835: Präteritum als natürliche Vergangenheit, Grammatik je Niveau, mehrere Sätze und die Sinnregeln (siehe Abschnitt 835).
+- Geprüft auf dem zusammengeführten Stand, alle grün: 835 (22 350 Zufallssätze), 834, 636 (kein Italienisch im Deutsch-Raum), benoten, note-ankommen.

@@ -48,8 +48,8 @@
  "data-szenen.js": "3e6d76afd9e4a539237f72dad41b64a8726cc1a8",
  "spiel.css": "e2e49404db028481dd71a44a15362130bf26a07f",
  "spiel.js": "dd25f5d950ad1066cb88b124a1e1cfab2b7f14ee",
- "data-werkstatt.js": "cdf5d71d54d1a66f56a9962243d8afdc1b5fd06b",
  "app-styles.css": "e9cb9fc2a7e1127cf6d8b280699c7e4e85eb0c2f",
  "app.js": "be77cc7b44b4c809d4537d93b6e73fad7ec361a1",
- "satzbau.js": "1b46e11d6ea26d07696b1ec0afbc694593ca400a"
+ "satzbau.js": "1b46e11d6ea26d07696b1ec0afbc694593ca400a",
+ "data-werkstatt.js": "dc280bb2d651a23d2f9f94c3f11e5f026af9fdb4"
 }

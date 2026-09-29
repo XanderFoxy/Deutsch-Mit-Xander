@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 813: Quests in der Stadt, Vollbild wie der kleine Rahmen, Wahrzeichen verwalten, neue Menschen und Satz legen",
+  stand: "Fassung 814: Satzbaukasten mit natürlicher Vergangenheit, Grammatik je Niveau und mehreren Sätzen",
 
   inArbeit: [
-    { seit: "2026-09-29T21:51",
+    { seit: "2026-09-29T22:30",
       text: "Menschen realistischer und alle Haltungen (836)" },
-    { seit: "2026-09-29T21:51",
-      text: "Satzbaukasten mit Präteritum, Niveaus und mehreren Sätzen (835)" },
-    { seit: "2026-09-29T21:51",
+    { seit: "2026-09-29T22:30",
       text: "Italienisch-Modus im Spiel" },
-    { seit: "2026-09-29T21:51",
+    { seit: "2026-09-29T22:30",
       text: "Punkte für Quests und Eintritt auf dem Server (braucht dein OK)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-29T21:51",
-      text: "Geisterklick im Quest-Dialog behoben" },
-    { seit: "2026-09-29T21:51",
-      text: "Quests, Vollbild und Verwalten, Menschen und Satz legen zusammengeführt" },
+    { seit: "2026-09-29T22:30",
+      text: "Satzbaukasten: Präteritum (ich war, ich hatte, ich musste) mit Perfekt-Variante" },
+    { seit: "2026-09-29T22:30",
+      text: "Satzbaukasten: Grammatik je Niveau A1 bis C2, bis zu vier verbundene Sätze" },
+    { seit: "2026-09-29T22:30",
+      text: "Quests, Vollbild, Verwalten (813)" },
   ],
 };
