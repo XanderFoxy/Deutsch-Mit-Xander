@@ -45,7 +45,7 @@
         SP.beispiel = false;
         /* eigener Schmuck und Drehungen liegen auf dem Server (gleich auf jedem Gerät) */
         return Promise.all([
-          rpc("spiel_stadt_leicht_holen", {}).then((d) => { SP.eigenes = d || null; autosAusEigenem(d); }, () => {}),
+          rpc("spiel_stadt_leicht_holen", {}).then((d) => { SP.eigenes = d || null; autosAusEigenem(d); if (ST.verwalten && ST.verwalten.neu) ST.verwalten.neu(); /* FASSUNG 833 */ }, () => {}),
           autosVomServer()
         ]).then(() => ich);
       });
@@ -100,6 +100,10 @@
     if (SP.beispiel || !SP.angemeldet) return;
     /* FASSUNG 815 — vorläufig gekaufte und abgestellte Autos gehen mit dem Schmuck mit */
     daten = Object.assign({}, daten, { autos: SP.autosVorlaeufig.slice(), geparkt: SP.autosGeparkt.slice() });
+    /* FASSUNG 833 — XANDER (Funk 214): „Den Bootsverleih kann man offenbar nicht verwalten … Eintritt verlangen". Eintritt,
+       Kasse, Zustand und Ausbau der Wahrzeichen (verwalten.js) gehen im selben Stand mit (keine neue Tabelle). */
+    const vw = SP.verwalten || (SP.eigenes && SP.eigenes.verwalten);
+    if (vw) daten.verwalten = vw;
     /* FASSUNG 822 — XANDER: „wo ich ihn hinziehe, schnippst der plötzlich wieder zurück". Der Stand im Speicher der Seite
        ist ab jetzt der gespeicherte – ein Neuaufbau (start.js, dekoLaden) nimmt nicht mehr den alten vom Öffnen. */
     SP.eigenes = Object.assign({}, SP.eigenes || {}, daten);

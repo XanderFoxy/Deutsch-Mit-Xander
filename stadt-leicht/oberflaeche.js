@@ -761,7 +761,8 @@
       window.addEventListener("message", (ev) => {
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-wahl") return;
         O.wahlZu();
-        if (typeof ev.data.g !== "string" || !Array.isArray(ev.data.wahl) || !document.body.classList.contains("lk-mini-modus")) return;
+        /* FASSUNG 833 — auch im Vollbild („in der großen Ansicht … Aufgaben lösen") */
+        if (typeof ev.data.g !== "string" || !Array.isArray(ev.data.wahl)) return;
         const g = ev.data.g, haus = SZ.objekte.find((o) => o.art === "haus" && o.spiel === g);
         /* FASSUNG 822 — die Auswahl des Spiels (Brot, Kuchen …) sitzt am Haus: das kleine Menü der Stadt weicht ihr */
         if (!O.gestalten && !geist && karte && !karte.hidden && karte.classList.contains("lk-am-ding")) auswahlWeg();
@@ -1302,6 +1303,7 @@
       O._tippUhr = setTimeout(() => einzelTippen(px, py), 360);
       return;
     }
+    if (window.parent !== window && !geist && O.wahlZu && O.wahlZu()) return;   // FASSUNG 833 — die Auswahl (Brot/Kuchen) geht zu
     einzelTippen(px, py);
   };
   function einzelTippen(px, py) {
@@ -1549,7 +1551,9 @@
     const jetzt = performance.now(), schl = [K.x, K.y, K.s, K.dreh, K.W, K.H, o.x, o.y, o.dreh, o.stufe, karte.childElementCount, wurzel.classList.contains("leiste-offen"), document.body.className].join("|");
     if (schl === karte._schl && jetzt - (karte._schlT || 0) < 500) return;
     karte._schl = schl; karte._schlT = jetzt;
-    const W = K.W / K.dpr, H = K.H / K.dpr, bw = karte.offsetWidth, bh = karte.offsetHeight;
+    /* FASSUNG 833 — ohne den Teil, den das Fenster des Spiels (Station, Bahnhof) im Vollbild verdeckt */
+    const fr = !document.body.classList.contains("lk-mini-modus") && O.freiRaum ? O.freiRaum : { unten: 0, rechts: 0 };
+    const W = K.W / K.dpr - fr.rechts, H = K.H / K.dpr - fr.unten, bw = karte.offsetWidth, bh = karte.offsetHeight;
     const h = (o.hoehe || 6) * (o.stufe || 1);
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     for (const q of SZ.ecken(o)) for (const z of [0, h]) { const P = ST.proj(q[0], q[1], z); x0 = Math.min(x0, P[0]); x1 = Math.max(x1, P[0]); y0 = Math.min(y0, P[1]); y1 = Math.max(y1, P[1]); }
@@ -1607,6 +1611,17 @@
        die gewohnte Karte des Spiels UNTER dem Rahmen – dort sind Einsammeln, Ausbauen, Arbeiter. Wischen bleibt Ansehen. */
     /* FASSUNG 817 — beim Schmücken/Bauen im kleinen Rahmen (O.gestalten) bleibt die Karte der Stadt (Drehen, Versetzen …) */
     const imRahmen = document.body.classList.contains("lk-mini-modus") && window.parent !== window;
+    /* FASSUNG 833 — XANDER (Funk 214): „Des Weiteren kann man in der großen Ansicht von der Stadt immer noch nichts
+       einsammeln oder Aufgaben lösen oder jemanden losschicken das kann man nur in der kleinen Ansicht". Im Vollbild des
+       Spiels (eingebettet, nicht lk-mini-modus) bediente ein Tipp aufs Haus nur die eigene Karte der Stadt (Stufe, Ausbauen,
+       Drehen) – das Spiel erfuhr nichts: kein Einsammeln, keine Station, kein Losschicken. Jetzt wie im kleinen Rahmen: der
+       Tipp geht ans Spiel (fertig → einsammeln, sonst öffnet es seine Station – im Vollbild als Fenster über der Stadt), und
+       am Haus steht das kleine Menü (Karte, Drehen, Versetzen, Ein Tipp produziert). */
+    const imVoll = !imRahmen && window.parent !== window && !O.gestalten && art === "haus" && o && o.art === "haus" && !!o.spiel && o.spiel !== "bahnhof";
+    if (imVoll && !opt.still) {
+      try { const z = O.zeichenJetzt && O.zeichenJetzt[o.spiel]; if (z && z[0] === "fertig" && ST.ton && ST.ton.einsammeln) ST.ton.einsammeln(z[2] || ""); } catch (e) {}
+      try { window.parent.postMessage({ typ: "leicht-haus", g: o.spiel, voll: 1 }, location.origin); } catch (e) {}
+    }
     if (imRahmen && !O.gestalten && (art === "haus" || art === "bauplatz")) {
       /* FASSUNG 817 — ein leerer Bauplatz meldet das Haus, das (nach dem Umbauen im Spiel) dorthin gehört */
       const g = art === "haus" ? o && o.spiel : (wasGehoertHin(platz) || platz);
@@ -1616,7 +1631,8 @@
       /* FASSUNG 822 — XANDER: „ich möchte im kleinen Menü einen Baum rausnehmen und bin jetzt ein gezoomt … Ich hab jetzt
          kein Menü". Nah dran (Kompass) bekommen Haus, Baum und Schmuck ihr kleines Menü am Ding – der Tipp aufs Haus
          bedient wie bisher das Spiel darunter (Einsammeln, Station), das Menü bietet dazu Karte, Drehen, Versetzen. */
-      if (!(art === "haus" && o && document.body.classList.contains("lk-nah") && (o.art === "haus" || o.art === "eigen" || o.art === "natur"))) return;
+      /* FASSUNG 833 — nah dran auch Wahrzeichen und Bootsverleih (dort steht „Verwalten") */
+      if (!(art === "haus" && o && document.body.classList.contains("lk-nah") && (o.art === "haus" || o.art === "eigen" || o.art === "natur" || (ST.verwalten && ST.verwalten.schluessel(o))))) return;
     }
     /* FASSUNG 823 — XANDER: „wenn ich auf eins klicke, dann muss ich noch mal auf dem Bahnhof …". Auch im Vollbild öffnet ein
        Tipp auf den Bahnhof das eine Bahnhof-Fenster des Spiels (Export, Import, Touristen) statt „Gehört zum Dorf". */
@@ -1663,8 +1679,12 @@
     }
     /* Haus, Wahrzeichen, Kulisse oder eigener Schmuck */
     titel.textContent = o.name || (SCHMUCK.find((s) => s[1] === o.bild) || [""])[0] || "Schmuck";
+    /* FASSUNG 833 — Wahrzeichen und Bootsverleih: „Verwalten" (Eintritt, Besucher, Einnahmen, Zustand, Ausbau, Info) */
+    const vwKey = ST.verwalten && ST.verwalten.schluessel(o);
+    const vwKnopf = () => knopf(ST.verwalten.SYMBOL, "Verwalten: Eintritt, Einnahmen, Info", () => { auswahlWeg(); karte.hidden = true; ST.verwalten.oeffnen(vwKey); }, "lk-verwalten-knopf");
     /* FASSUNG 822 — im kleinen Rahmen (ohne Gestalten) bedient der Tipp das Spiel; das Menü am Haus: Karte, Drehen, Versetzen */
-    if (imRahmen && !O.gestalten && o.art === "haus") {
+    /* FASSUNG 833 — ebenso im Vollbild des Spiels (imVoll) */
+    if ((imRahmen || imVoll) && !O.gestalten && o.art === "haus") {
       zeile.textContent = o.bau ? (o.bau.stufe > 1 ? "Ausbau auf Stufe " + o.bau.stufe : "Im Bau") : "Stufe " + (o.stufenZahl || 1) + " von 3";
       const kk = knopf("liste", "Karte öffnen", () => { auswahlWeg(); try { window.parent.postMessage({ typ: "leicht-haus", g: o.spiel, karte: 1 }, location.origin); } catch (e) {} });
       kk.setAttribute("aria-label", "Karte des Hauses öffnen");
@@ -1684,6 +1704,7 @@
       knoepfe.append(dk);
       if (o.platzX != null && (Math.abs(o.x - o.platzX) > 0.01 || Math.abs(o.y - o.platzY) > 0.01))
         knoepfe.append(knopf("zurueck", "Zurück auf den Bauplatz", () => { o.x = o.platzX; o.y = o.platzY; o.dreh = o.platzDreh; SZ.geaendert(); miniMalen(); L().dekoSpeichern(); ansage("Wieder auf dem Bauplatz"); karteZeigen("haus", o, null, { still: true }); }));
+      if (vwKey) knoepfe.append(vwKnopf());   // FASSUNG 833 — das Rathaus (Döbeln) ist auch Sehenswürdigkeit
       knoepfe.append(zu);
       amDingLegen();
       return;
@@ -1694,7 +1715,8 @@
       /* FASSUNG 812 — zusammen mit 826 (XANDER: „bestehende Bäume … fällen und Platz haben für Gebäude"): ein Menü für Bäume */
       zeile.textContent = (o.rand ? "Baum am Waldrand" : "Baum") + " · steht im Weg? Entfernen schafft Platz zum Bauen.";
       knoepfe.append(knopf("versetzen", "Versetzen", () => hausVersetzen(o)), knopf("abriss", "Entfernen", () => baumEntfernen(o)));
-      if (imRahmen) knoepfe.append(knopf("liste", "Wald: Holzfäller und Jäger", () => { auswahlWeg(); try { window.parent.postMessage({ typ: "leicht-haus", g: "wald" }, location.origin); } catch (e) {} }));
+      /* FASSUNG 833 — die Wald-Station (Holzfäller und Jäger losschicken) auch im Vollbild des Spiels */
+      if (window.parent !== window && !O.gestalten) knoepfe.append(knopf("liste", "Wald: Holzfäller und Jäger", () => { auswahlWeg(); try { window.parent.postMessage({ typ: "leicht-haus", g: "wald" }, location.origin); } catch (e) {} }));
       knoepfe.append(zu);
       amDingLegen();
       return;
@@ -1735,6 +1757,7 @@
       if (!opt.schonDa) knoepfe.append(knopf("versetzen", "Versetzen", () => hausVersetzen(o)));
       if (o.platzX != null && (Math.abs(o.x - o.platzX) > 0.01 || Math.abs(o.y - o.platzY) > 0.01 || o.dreh !== o.platzDreh))
         knoepfe.append(knopf("zurueck", "Zurück auf den Bauplatz", () => { o.x = o.platzX; o.y = o.platzY; o.dreh = o.platzDreh; SZ.geaendert(); miniMalen(); L().dekoSpeichern(); ansage("Wieder auf dem Bauplatz"); karteZeigen("haus", o, null, { still: true }); }));
+      if (vwKey) knoepfe.append(vwKnopf());   // FASSUNG 833
       knoepfe.append(zu);
       amDingLegen();
       return;
@@ -1758,6 +1781,7 @@
         hf.addEventListener("click", (e) => { e.stopPropagation(); baumTun(o); });
         knoepfe.append(hf);
       }
+      if (vwKey) knoepfe.append(vwKnopf());   // FASSUNG 833 — Rathaus Döbeln, Kolosseum als Schmuck
       knoepfe.append(zu);
       amDingLegen();
       return;
@@ -1770,10 +1794,12 @@
         knopf("versetzen", "Versetzen", () => hausVersetzen(o)));
       if (o.platzX != null && (Math.abs(o.x - o.platzX) > 0.01 || Math.abs(o.y - o.platzY) > 0.01 || o.dreh !== o.platzDreh))
         knoepfe.append(knopf("zurueck", "Zurück auf den Wahrzeichenplatz", () => { o.x = o.platzX; o.y = o.platzY; o.dreh = o.platzDreh; SZ.geaendert(); L().dekoSpeichern(); L().aufbauen(); ansage("Wieder auf dem Wahrzeichenplatz"); karte.hidden = true; }));
+      if (vwKey) knoepfe.append(vwKnopf());   // FASSUNG 833
       knoepfe.append(zu);
       return;
     }
-    zeile.textContent = "Gehört zum Dorf";
+    zeile.textContent = vwKey === "bootsverleih" ? "Tretboote am See – für Gäste" : "Gehört zum Dorf";
+    if (vwKey) knoepfe.append(vwKnopf());   // FASSUNG 833 — der Bootsverleih
     knoepfe.append(zu);
     amDingLegen();
   }
@@ -1781,6 +1807,11 @@
      wie viel es verdeckt; liegt der Bahnhof dahinter, fährt die Stadt ihn in den freien Teil – er bleibt zu sehen. */
   window.addEventListener("message", (ev) => {
     if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-frei") return;
+    /* FASSUNG 833 — auch die Station eines Hauses liegt im Vollbild als Fenster über der Stadt: das kleine Menü am Haus
+       bleibt im freien Teil (amDingLegen), das Haus rückt dorthin */
+    O.freiRaum = { unten: Math.max(0, +ev.data.unten || 0), rechts: Math.max(0, +ev.data.rechts || 0) };
+    if (karte) karte._schl = "";
+    if (!ev.data.g) return;
     const b = SZ.objekte.find((x) => x.spiel === ev.data.g) || SZ.objekte.find((x) => x.bild === "k_" + ev.data.g);
     if (!b) return;
     const dpr = K.dpr, W = K.W - Math.max(0, +ev.data.rechts || 0) * dpr, H = K.H - Math.max(0, +ev.data.unten || 0) * dpr, oben = 56 * dpr;

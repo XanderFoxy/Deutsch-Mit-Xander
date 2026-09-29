@@ -490,6 +490,28 @@
     }
     return n;
   }
+  /* FASSUNG 833 — käme das Auto beim Wenden (Richtung dir) vom Pflaster: mehr als 1,9 m neben dem Weg, außer rund um ein
+     Hindernis (dort ist die umfahrene Strecke der Weg, wie am Markt um Fernsehturm und Brunnen)? */
+  function wendeNebenWeg(a, dir) {
+    let x = a.x, y = a.y, h = a.h;
+    const L = WENDE_R * Math.PI / 3;
+    for (let zug = 0; zug < 3; zug++) for (let d = 0; d < L; d += 0.3) {
+      h += dir * 0.3 / WENDE_R; const r = zug === 1 ? -1 : 1; x += Math.cos(h) * 0.3 * r; y += Math.sin(h) * 0.3 * r;
+      if (AU.wegAbstand(x, y) > 1.9 && !AU.inUmfahrung(x, y)) return true;
+    }
+    return false;
+  }
+  /* FASSUNG 833 — berührt der Wagenkasten (x, y, Blick h) ein Ding (kein Haus)? */
+  function streift(a, x, y, h) {
+    const A = a.A, c = Math.cos(h), s = Math.sin(h), R = Math.hypot(Math.max(A.vorn, A.hinten), A.halb) + 0.2;
+    let auto = null;
+    for (const H of hindernisse()) {
+      if (H.teile || H.haus || Math.abs(H.x - x) > H.r + R || Math.abs(H.y - y) > H.r + R) continue;
+      if (!auto) auto = [[A.vorn, A.halb], [A.vorn, -A.halb], [-A.hinten, -A.halb], [-A.hinten, A.halb]].map((p) => [x + p[0] * c - p[1] * s, y + p[0] * s + p[1] * c]);
+      if (ueber(auto, eckenVon(H, 0))) return true;
+    }
+    return false;
+  }
   /* für Sonden: liegt der Punkt an einem Hindernis (dort weicht die Strecke vom Weg des Dorfes ab)? */
   AU.inUmfahrung = function (x, y, extra) {
     const e = extra == null ? 4 : extra;   // (2,5 m Band um die Hülle, dazu die Spur neben der Strecke)
@@ -759,6 +781,9 @@
       /* FASSUNG 830 — streift das Wenden auf dieser Seite ein Hindernis (Spitzkehre neben dem Brunnen), dann zur anderen */
       /* (aber nicht, wenn das Auto dabei vom Pflaster käme – mehr als 1,9 m neben dem Weg) */
       if (wendeTreffer(a, dir) > wendeTreffer(a, -dir) && !wendeTreffer(a, -dir, null, null, null, true)) dir = -dir;
+      /* FASSUNG 833 — und nie zu der Seite, auf der das Auto vom Pflaster käme, wenn die andere frei ist (Sonde 831 sah beim
+         Wenden 3–5 m neben dem Weg; ein Ding streift es nicht mehr – der Zug endet vorher, siehe wenden) */
+      if (wendeNebenWeg(a, dir) && !wendeNebenWeg(a, -dir)) dir = -dir;
       a.wende = { zug: 0, rest: WENDE_R * Math.PI / 3, v: 0, dir: dir };
       a.zustand = "wendet"; a.W = null; a.nachWende = nach;
     };
@@ -797,14 +822,50 @@
     if (kk > 0) { let l = 0; for (let q = 1; q <= kk; q++) l += Math.hypot(ganz[q][0] - ganz[q - 1][0], ganz[q][1] - ganz[q - 1][1]); if (l < 5) { wenden({ pts: pl.pts, z: z, ohne: ohne }); return; } }
     if (kk > 0) {
       const zk = { i: knotenBei(ganz[kk][0], ganz[kk][1]).i, haus: null, name: "Spitzkehre", kehre: { pts: ganz.slice(kk), z: z } };
-      fahrtBeginnen(a, abStandort(a, rest.slice(0, kk), ohne), 0, zk);
+      /* FASSUNG 833 — XANDER (815): „dieses Batmobil hätte ich … gerne, das als fahrendes Auto zu sehen". Auch vor einer
+         Spitzkehre muss die Strecke in Blickrichtung beginnen: nach einem Halt am Markt (32,4 | 27,0) zeigte sie 85° neben
+         den Blick, und die Viper schob sich die ersten Meter seitwärts (Sonde 831). Dann erst wenden, wie in den anderen Fällen. */
+      const Wk = abStandort(a, rest.slice(0, kk), ohne), pk = an(Wk, 0.6, 0.6);
+      if (Math.abs(winkel(Math.atan2(pk.ty, pk.tx) - a.h)) > 0.6) { wenden({ pts: pl.pts, z: z, ohne: ohne }); return; }
+      fahrtBeginnen(a, Wk, 0, zk);
       return;
     }
     /* (zeigt die fertige, geglättete Strecke gleich am Anfang doch mehr als 35° neben die Blickrichtung – der Weg biegt
        dicht vor dem Auto scharf ab –, dann ebenfalls erst wenden) */
     const W = abStandort(a, pl.pts, ohne), p0 = an(W, 0.6, 0.6);
     if (Math.abs(winkel(Math.atan2(p0.ty, p0.tx) - a.h)) > 0.6) { wenden({ pts: pl.pts, z: z, ohne: ohne }); return; }
+    /* FASSUNG 833 — führt die fertige Strecke (um den Markt herum) gleich wieder zurück, erst wenden: dann ab der Kehre */
+    const tk = kehrtBald(W, 0, a.h);
+    if (tk != null) { wenden({ pts: abStrecke(W, tk), z: z, ohne: ohne }); return; }
     fahrtBeginnen(a, W, 0, z);   // FASSUNG 831
+  }
+  /* FASSUNG 833 — sticht eine Punktfolge gleich am Anfang (in den ersten 6 m) hinaus und kehrt spitz um (zum Knoten und
+     zurück), fällt dieser Stich weg: die Fahrt beginnt an der Kehre. */
+  function ohneStich(pts) {
+    if (!pts || pts.length < 3) return pts;
+    const k = spitzkehre(pts, 0.3);
+    if (k <= 0) return pts;
+    let l = 0; for (let q = 1; q <= k; q++) l += Math.hypot(pts[q][0] - pts[q - 1][0], pts[q][1] - pts[q - 1][1]);
+    return l < 6 && pts.length - k >= 2 ? pts.slice(k) : pts;
+  }
+  /* FASSUNG 831/833 — wie weit (0 … 109°) ein Bogen vorwärts (Richtung dir, Halbmesser WENDE_R) drehen muss, damit das Auto
+     am Ende auf den Punkt schaut, an dem seine Strecke beginnt – derselbe, den abStandort mit der neuen Blickrichtung nimmt
+     (voraus, 2,5 m weg); liegt keiner voraus, zählt die Richtung nur als Notlösung. f: verbleibender Winkel. */
+  function zielBogen(a, dir, zielP) {
+    let best = null;
+    for (let phi = 0; phi <= 1.9; phi += 0.05) {
+      const h1 = a.h + dir * phi, px = a.x + dir * WENDE_R * (Math.sin(h1) - Math.sin(a.h)), py = a.y - dir * WENDE_R * (Math.cos(h1) - Math.cos(a.h));
+      const kN = ersteNr(zielP, px, py, h1), N = zielP[kN], voraus = (N[0] - px) * Math.cos(h1) + (N[1] - py) * Math.sin(h1) > 0 && Math.hypot(N[0] - px, N[1] - py) >= 2.5;
+      const f = Math.abs(winkel(Math.atan2(N[1] - py, N[0] - px) - h1)) + (voraus ? 0 : 10);
+      if (!best || f < best.f - 1e-6) best = { f: f, phi: phi };
+    }
+    return best;
+  }
+  /* FASSUNG 833 — kehrt die Strecke ab s0 in den nächsten 8 m um (zeigt irgendwo mehr als 109° neben den Blick h)? Dann die
+     Stelle der Kehre, sonst null. */
+  function kehrtBald(W, s0, h) {
+    for (let t = s0 + 0.5; t <= Math.min(W.L - 0.5, s0 + 8); t += 0.5) { const p = an(W, t, 0.6); if (Math.abs(winkel(Math.atan2(p.ty, p.tx) - h)) > 1.9) return t; }
+    return null;
   }
   /* FASSUNG 831 — Punkte einer Strecke ab s (je Meter, mit dem Ende) – zum Einfädeln mit abStandort */
   function abStrecke(W, s) {
@@ -1076,6 +1137,16 @@
      Danach steht das Auto am selben Fleck, um 180° gedreht. */
   function wenden(a, dt, alle) {
     const w = a.wende, rueck = w.zug === 1, L = WENDE_R * Math.PI / 3;
+    const r = rueck ? -1 : 1, dw = w.dir || 1;
+    /* FASSUNG 833 — XANDER (815): „das als fahrendes Auto zu sehen". Würde der Wagenkasten auf diesem Zug ein Ding (Bank,
+       Brunnen, Sockel) berühren, endet der Zug kurz davor – wie ein Fahrer, der vor der Bank sanft anhält und umlegt (so weit
+       voraus geschaut, wie der Bremsweg reicht). Vorher fuhr das Auto hinein und wurde seitwärts wieder herausgeschoben
+       (ausDingen): Sonde 831 sah dabei 60–170° zwischen Blick und Bewegung. */
+    const bogen = (s) => { const h1 = a.h + dw * s / WENDE_R; return [a.x + r * dw * WENDE_R * (Math.sin(h1) - Math.sin(a.h)), a.y - r * dw * WENDE_R * (Math.cos(h1) - Math.cos(a.h)), h1]; };
+    if (w.rest > 1e-4 && !streift(a, a.x, a.y, a.h)) {
+      const blick = Math.min(w.rest, w.v * w.v / 3 + 0.6);
+      for (let s = 0.1; s <= blick + 1e-9; s += 0.1) { const q = bogen(s); if (streift(a, q[0], q[1], q[2])) { w.rest = Math.max(0, s - 0.15); break; } }
+    }
     /* anfahren, 1,5 m/s, bremsen – je Zug */
     const vmax = Math.min(2, Math.sqrt(2 * 1.5 * Math.max(0, w.rest)) + 0.02);
     /* der Schwenkbereich liegt vor dem Startplatz (bis ≈ 2,4 m voraus, 1,4 m zu jeder Seite): steht oder fährt dort
@@ -1099,10 +1170,10 @@
     w.v = soll > w.v ? Math.min(soll, w.v + 1.6 * dt) : Math.max(soll, w.v - 2.5 * dt);
     /* (wer lange wartet – etwa weil die Pferdebahn auf ihrem Gleis nebenan hin und her fährt –, wendet nach 8 s trotzdem) */
     a.wartet = !frei; if (!frei) { a.warte += dt; if (a.warte > 8) { a.geist = 3; a.warte = 0; } }
-    const ds = Math.min(w.v * dt, w.rest);
+    let ds = Math.min(w.v * dt, w.rest);
+    if (ds > 1e-5) { const q = bogen(ds); if (!streift(a, a.x, a.y, a.h) && streift(a, q[0], q[1], q[2])) { ds = 0; w.rest = 0; } }   // (Notbremse: steht still, das Tempo läuft aus)
     w.rest -= ds;
     a.h += (w.dir || 1) * ds / WENDE_R;
-    const r = rueck ? -1 : 1;
     a.x += Math.cos(a.h) * ds * r; a.y += Math.sin(a.h) * ds * r;
     a.v = w.v; a.rueck = rueck; a.weg += ds;
     rad(a, ds * r, dt);
@@ -1116,26 +1187,60 @@
              beginnt (abStandort: der erste 2,5 m weg). Vorher zielte es vom Anfang des Bogens aus (auf den ersten Punkt, oft
              dicht daneben) und fuhr, wenn es schon zu weit gedreht war, stur 60° – dann begann die Strecke 60–70°
              neben der Blickrichtung (Sonde 815: Batmobil schob sich seitwärts an). */
-          const dir = w.dir || 1, zielP = n.pts || abStrecke(n.W, fusspunkt(n.W, a.x, a.y, n.reich || 16).s + 1);
-          let best = null;
-          for (let phi = 0; phi <= 1.9; phi += 0.05) {
-            const h1 = a.h + dir * phi, px = a.x + dir * WENDE_R * (Math.sin(h1) - Math.sin(a.h)), py = a.y - dir * WENDE_R * (Math.cos(h1) - Math.cos(a.h));
-            const N = ersterWeg(zielP, px, py), f = Math.abs(winkel(Math.atan2(N[1] - py, N[0] - px) - h1));
-            if (!best || f < best.f - 1e-6) best = { f: f, phi: phi };
-          }
-          w.rest = best.phi * WENDE_R;
+          const dir = w.dir || 1, zielP = ohneStich(n.pts || abStrecke(n.W, fusspunkt(n.W, a.x, a.y, n.reich || 16).s + 1));   // FASSUNG 833
+          w.rest = zielBogen(a, dir, zielP).phi * WENDE_R;
         }
       } else {
         a.wende = null; a.rueck = false; a.wenden = (a.wenden || 0) + 1; const n = a.nachWende; a.nachWende = null;
         /* FASSUNG 831 — vom Standort aus (mit Blickrichtung) hinein; nur wer fast genau auf der Strecke steht, fährt gleich
            auf ihr weiter (sonst schob der Rest das Auto die ersten 1,5 m seitwärts – nach dem Wenden bis 3 m daneben) */
-        if (n.pts) fahrtBeginnen(a, abStandort(a, n.pts, n.ohne), 0, n.z);
+        /* FASSUNG 833 — XANDER (815): „das als fahrendes Auto zu sehen". Sonde 831 sah selten „[batmobil] … höchstens 137°
+           … zuerst bei (74,6 | 6,7) fährt 137°": dort (Weg am Kuhstall, Spitzkehre davor) lag nach dem Wenden der ganze
+           Rest der Strecke HINTER dem Auto – abStandort fand keinen Punkt voraus und die Fahrt begann mit einem Stich zurück;
+           das Auto rollte 30 Schritte rückwärts-schräg, während sich der Blick langsam drehte. Ähnlich am Fernsehturm
+           (1,4 | 9,0): die Strecke stach 3,6 m zum Knoten hinaus und kehrte gleich um (Haarnadel, 700°/s). Ursache: der letzte
+           Zug zielte auf den ersten Punkt 2,5 m weg – auch wenn der danach HINTER dem Auto lag. Jetzt zielt er auf den Punkt,
+           den abStandort mit der neuen Blickrichtung wirklich nimmt (zielBogen). Beginnt die Strecke trotzdem mehr als 35°
+           neben dem Blick, sticht sie nur kurz hinaus und kehrt um (Spitzkehre, kehrtBald), wird noch einmal gedreht –
+           mit einem Bogen vorwärts, wenn der reicht, sonst ganz gewendet (höchstens zweimal nacheinander). */
+        let W2 = null, s2 = 0, pn = null, stich = false;
+        if (n.pts) pn = n.pts;
         else {
           const f = fusspunkt(n.W, a.x, a.y, n.reich || 16);
           const p = an(n.W, f.s, 1.2);
-          if (f.d < 0.4 && Math.cos(winkel(Math.atan2(p.ty, p.tx) - a.h)) > 0.9) fahrtBeginnen(a, n.W, f.s, n.z);
-          else fahrtBeginnen(a, abStandort(a, abStrecke(n.W, f.s + 1), n.ohne), 0, n.z);
+          if (f.d < 0.4 && Math.cos(winkel(Math.atan2(p.ty, p.tx) - a.h)) > 0.9) { W2 = n.W; s2 = f.s; }
+          else pn = abStrecke(n.W, f.s + 1);
         }
+        if (!W2) {
+          /* (nach dem nächsten Wenden wird wieder aus den ganzen Punkten eingefädelt – ersteNr nimmt dann nur, was voraus liegt;
+             eine abgeschnittene Folge begann oft weit weg, und die Gerade dorthin lief quer über die Wiese) */
+          const e = ersteNr(pn, a.x, a.y, a.h), ganz = [[a.x, a.y]].concat(pn.slice(e)), k = spitzkehre(ganz, 0.3);
+          if (k > 0) { let l = 0; for (let q = 1; q <= k; q++) l += Math.hypot(ganz[q][0] - ganz[q - 1][0], ganz[q][1] - ganz[q - 1][1]); if (l < 6) stich = true; }
+          W2 = abStandort(a, pn, n.ohne);
+          /* (führt die fertige Strecke – etwa um den Markt herum – gleich wieder zurück, am Auto vorbei: ab der Kehre) */
+          const tk = kehrtBald(W2, 0, a.h);
+          if (tk != null) { pn = abStrecke(W2, tk); stich = true; }
+        }
+        const q2 = an(W2, s2 + 0.6, 0.6);
+        /* (noch einmal gewendet wird möglichst zu der Seite, auf der das Auto dabei auf dem Pflaster bleibt – höchstens 1,9 m
+           neben dem Weg –, und am liebsten ohne ein Ding zu streifen) */
+        const seiten = [w.dir || 1, -(w.dir || 1)].map((d) => ({ d: d, weg: wendeNebenWeg(a, d) ? 1 : 0, t: wendeTreffer(a, d) })).sort((p, q) => p.weg - q.weg || p.t - q.t);
+        if ((stich || Math.abs(winkel(Math.atan2(q2.ty, q2.tx) - a.h)) > 0.6) && (a.nochmal || 0) < 2) {
+          a.nochmal = (a.nochmal || 0) + 1;
+          const nn = Object.assign({}, n, { pts: pn || abStrecke(W2, s2) }); delete nn.W;
+          const dir2 = seiten[0].d;
+          a.wende = { zug: 0, rest: WENDE_R * Math.PI / 3, v: 0, dir: dir2 };
+          /* (reicht ein Bogen vorwärts – bis 109° nach links oder rechts –, um auf die Strecke zu schauen, dann nur dieser:
+             ein ganzes Wenden dreht immer mehr als 120° und schösse darüber hinaus) */
+          if (!stich) {
+            const bogen = [1, -1].map((d) => Object.assign({ d: d }, zielBogen(a, d, ohneStich(nn.pts)))).sort((p, q) => p.f - q.f)[0];
+            if (bogen.f < 0.45 && bogen.phi > 0.05) a.wende = { zug: 2, rest: bogen.phi * WENDE_R, v: 0, dir: bogen.d };
+          }
+          a.zustand = "wendet"; a.W = null; a.nachWende = nn;
+          return;
+        }
+        a.nochmal = 0;
+        fahrtBeginnen(a, W2, s2, n.z);
       }
     }
   }

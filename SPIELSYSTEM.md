@@ -2370,3 +2370,41 @@ XANDER: „dieses Batmobil hätte ich … gerne, das als fahrendes Auto zu sehen
   - 825: Gewertet wird der wärmste deutlich aufgehellte Wandfleck. Der hellste ist seit 826 die weiße Platte des Fernsehturms, deren Rot bei 255 anstößt.
   - 799: Die Uhr steht auf 12 Uhr, denn in der Dämmerung lädt die Stadt auch die Nachtbilder, und die 330 KB gelten für den Tag. Rahmen und Platzhalter werden im selben Augenblick gemessen, nachdem das Rollen vorbei ist.
   - Neu ist 831 (`pruefe-831-markt-verkehr.js`): fünf frische 300-s-Fahrten nach den Maßstäben von 815, das Losfahren nach dem Aufstellen und die Laternen.
+
+## Fassung 833 — Im Vollbild alles wie im kleinen Rahmen, Wahrzeichen und Bootsverleih verwalten, Autos wenden sauber
+
+XANDER (Funk 214): „Des Weiteren kann man in der großen Ansicht von der Stadt immer noch nichts einsammeln oder Aufgaben lösen oder jemanden losschicken das kann man nur in der kleinen Ansicht" · „Den Bootsverleih kann man offenbar nicht verwalten und du meintest dass man in Berliner Fernsehturm auch Eintritt verlangen könnte wie sieht es mit den anderen Sehenswürdigkeiten aus bis jetzt kann man da nicht in ein extra Menü" · „Infos zu den Wahrzeichen auf Deutsch".
+
+- **Was im Vollbild fehlte**: Die Zeichen gingen schon (Tipp → `leicht-haus` mit `zeichen: 1`). Ein Tipp aufs Haus öffnete aber nur die eigene Karte der Stadt (Stufe, Ausbauen, Drehen); das Spiel erfuhr nichts. Und selbst wenn das Spiel eine Station öffnete, lag sie im Menü **hinter** dem Vollbild. Meldungen des Spiels („+4 Mehl abgeholt") standen ebenfalls dahinter.
+- **Stadt (`oberflaeche.js` `karteZeigen`)**:
+  - Im Vollbild des Spiels (eingebettet, nicht `lk-mini-modus`) geht der Tipp aufs Haus jetzt ans Spiel (`leicht-haus`, `voll: 1`). Ist etwas fertig, wird eingesammelt (mit „Pling"); sonst öffnet das Spiel seine Station. Am Haus steht das kleine Menü wie im kleinen Rahmen (Karte, Drehen, Versetzen, „Ein Tipp produziert").
+  - Die Auswahl über der Bäckerei (`leicht-wahl`) gibt es auch im Vollbild. Ein Tipp daneben schließt sie.
+  - Das Baum-Menü hat „Wald: Holzfäller und Jäger" auch im Vollbild.
+  - `leicht-frei` merkt, wie viel das Fenster des Spiels verdeckt (`O.freiRaum`). Das Menü am Ding bleibt im freien Teil, das Haus rückt dorthin.
+- **Spiel (`spiel.js`)**:
+  - `stationFenster()`: Im Vollbild liegt die Station (Haus oder Wald) wie das Bahnhof-Fenster (823) im Rahmen der Stadt: unten, am quer gehaltenen Telefon rechts. Sie ist höchstens gut zwei Fünftel hoch, rollt in sich und wird alle 0,5 s aufgefrischt. ✕ schließt sie. Klicks gehen durch `schnellKlick` (Einsammeln, Mahlen, Losschicken, Ausbauen – dieselben Serverfunktionen).
+  - `lsFreiMelden()` meldet der Stadt die verdeckte Fläche, nach dem Schließen 0.
+  - `lsMeldung()`: Meldungen stehen im Vollbild oben im Rahmen.
+  - `leicht-stand` schickt `volk.freizeit` mit (Stufe des Bootsverleihs). `leicht-freizeitbau` baut den Bootsverleih bzw. baut ihn aus (`spiel_freizeit_bauen`).
+  - CSS (`spiel.css`): `.sp-sf-huelle` (Knöpfe ≥ 34 px), `.sp-ls-meldung`.
+- **Verwalten (`stadt-leicht/verwalten.js`, neu, im Bündel nach `oberflaeche.js`)**:
+  - Menü „Verwalten" (Säulen-Symbol) am Menü von Holstentor, Brandenburger Tor, Kölner Dom, Neuschwanstein und Fernsehturm, außerdem an Rathaus Döbeln (Haus oder Schmuck), Kolosseum und Bootsverleih.
+  - Eintritt 0/2/5/10 Taler (Boot: 0/2/4/6 je Fahrt). Nachfrage = e^(−Preis/(6 + 4·Stufe)) · (0,5 + 0,5·Zustand). Höherer Preis bedeutet weniger Besucher, und gut ausgebaut schreckt ein hoher Preis weniger ab.
+  - Grundbesuch je Tag: 60 (Holstentor) bis 300 (Fernsehturm). Bootsverleih: 24 · Stufe · Jahreszeit, höchstens 10 Fahrten je Boot (2 + 2·Stufe Boote).
+  - Besucher kommen während der Öffnungszeit (9–19 Uhr deutscher Zeit, Boot 10–18 Uhr), in 10-Minuten-Stücken nachgerechnet, höchstens 48 h. „Besucher heute" zählt ab Mitternacht.
+  - Das Geld sammelt sich in der Kasse des Wahrzeichens. „Einnahmen einsammeln" bringt es in die Stadtkasse. Von dort: Pflegen (Zustand wieder 100 %; viele Besucher nutzen ab) und Ausbauen (Stufe 1–3: 150/400/900 Taler).
+  - Den Bootsverleih baut man mit Punkten im Spiel aus (wie am Bahnhof). Die Zug-Touristen rechnet das Spiel weiter in Punkten ab.
+  - Info auf Deutsch (A2/B1, 2–3 Sätze, Ort, Baujahr, Höhe) zu jedem Wahrzeichen und zum Bootsverleih.
+  - Gespeichert im eigenen Stand der Stadt (`spiel_stadt_leicht_speichern`, Feld `verwalten` – dasselbe JSON wie Schmuck und Autos, keine neue Tabelle) und im Browser (`leicht_verwalten_v1`).
+  - Offen: Die Taler bleiben in der Stadt. Sollen sie zu Punkten des Spiels werden, braucht es eine Serverfunktion.
+- **Autos (`autos.js`)** – Sonde 831 meldete selten „[batmobil, Vorlauf 144 s] … höchstens 137° … zuerst bei (74,6 | 6,7)":
+  - Dort ist eine Spitzkehre am Kuhstall. Der letzte Zug des Wendens zielte auf den ersten Punkt 2,5 m weg, auch wenn der danach hinter dem Auto lag. Dann fand `abStandort` nichts voraus, und das Auto rollte rückwärts-schräg los (bis 12 m neben dem Weg).
+  - `zielBogen()`: Jetzt zielt der Zug auf den Punkt, den `abStandort` mit der neuen Blickrichtung wirklich nimmt.
+  - Nach dem Wenden: Zeigt die Strecke noch mehr als 35° neben den Blick, oder sticht sie nur kurz hinaus und kehrt um (Spitzkehre, `kehrtBald` – am Fernsehturm 1,4 | 9,0 mit 700°/s), wird noch einmal gedreht. Das ist ein Bogen vorwärts, wenn der reicht, sonst ein ganzes Wenden (höchstens zweimal). Gewendet wird möglichst zur Seite, auf der das Auto auf dem Pflaster bleibt (`wendeNebenWeg`).
+  - Vor einer Spitzkehre (Halt am Markt 32,4 | 27,0: 85° schräg) und bei einer Strecke, die gleich zurückführt, wird ebenfalls erst gewendet.
+  - `wenden()` schaut so weit voraus, wie der Bremsweg reicht. Würde der Wagenkasten ein Ding (Bank, Brunnen, Sockel) berühren, endet der Zug sanft davor (`streift`). Vorher schob `ausDingen` das Auto seitwärts heraus (60–170° zwischen Blick und Bewegung).
+  - Gemessen mit 160 Fahrten zu je 300 s aus verschiedenen Anfangszuständen: vorher 28 Ausreißer, jetzt 1–2 (Wenden in einer Weggabel, knapp über 2 m neben dem Weg).
+- **Sonde** `werkzeug/pruefe-833-vollbild-verwalten.js` (`NUR=A|B`, `BILD=…`, `WURZEL=…` für die Gegenprobe).
+  - Teil A: das ganze Spiel mit nachgebautem Server, Vollbild auf 360 × 740. Zeichen ≥ 30 px, Abholen, Meldung im Vollbild. Tipp aufs Haus → Station obenauf und ganz im Bild, Menü am Haus ohne Überlappung, Knöpfe ≥ 30 px, ✕ und `leicht-frei`. Mahlen (`spiel_beliefern`), Holzfäller (`spiel_trupp wald`), „Verwalten" am Fernsehturm.
+  - Teil B: `?demo=1`. Fernsehturm und Bootsverleih: Info, Eintritt ändern (weniger Besucher, gemerkt), Kasse nach zwei Stunden, Einsammeln in die Stadtkasse. Menü ganz im Bild, Kopfzeile frei, Knöpfe ≥ 30 px. Jede Info mit 2–3 Sätzen.
+  - Gegenprobe (Stand 812): Teil A scheitert an allem nach dem Zeichen, Teil B an der fehlenden `verwalten.js`.
