@@ -13,7 +13,7 @@
    Boden (stadt/boden.js) und Bilder genau aufeinander passen.
 
    Welt in Metern: x nach Osten, y nach Süden, z nach oben.
-   Kamera orthografisch 2:1, in 90°-Schritten drehbar.
+   Kamera orthografisch 2:1, drehbar (FASSUNG 820: in 45°-Schritten, während der Geste stufenlos).
    ===================================================================== */
 (function () {
   "use strict";
@@ -47,8 +47,18 @@
   };
 
   const kam = (ST.kamera = { x: 0, y: 0, s: 20, dreh: 0, W: 800, H: 600, dpr: 1, min: 4, max: 60 });
+  /* FASSUNG 820 — XANDER (Walkie 309): „Zwei-Finger-Drehen mit Einrasten in 8 Winkeln", vorher Funk 207: „stufenlos
+     drehen … wie Google Maps". Die Kameradrehung kam.dreh zählt weiter in Vierteldrehungen, darf aber jetzt jeden Wert
+     haben: 0,5 = 45°, während der Geste auch Zwischenwerte (stadt-leicht/drehen.js rastet danach auf 45°-Schritte ein).
+     ST.drehMod bringt jeden Wert auf 0 ≤ d < 4 (echter Modulo, auch für negative Werte – statt „& 3", das Nachkommastellen
+     abschneidet). drehXY rechnet ganze Vierteldrehungen weiter exakt (gleiche Zahlen wie vorher), sonst mit cos/sin. */
+  const drehMod = (d) => { d = (+d || 0) % 4; if (d < 0) d += 4; return d >= 4 ? 0 : d + 0; };   // (+0: nie −0)
+  ST.drehMod = drehMod;
   function drehXY(x, y, d) {
-    switch (d & 3) { case 1: return [-y, x]; case 2: return [-x, -y]; case 3: return [y, -x]; default: return [x, y]; }
+    d = drehMod(d);
+    if (d === Math.floor(d)) switch (d) { case 1: return [-y, x]; case 2: return [-x, -y]; case 3: return [y, -x]; default: return [x, y]; }
+    const w = d * Math.PI / 2, c = Math.cos(w), s = Math.sin(w);
+    return [x * c - y * s, x * s + y * c];
   }
   ST.drehXY = drehXY;
   /* Welt → Bild (Gerätepixel) */
@@ -60,7 +70,7 @@
   ST.aufBoden = function (px, py) {
     const u = (px - kam.W / 2) / (KX * kam.s), v = (py - kam.H / 2) / (KY * kam.s);
     const a = (u + v) / 2, b = (v - u) / 2;
-    const w = drehXY(a, b, (4 - (kam.dreh & 3)) & 3);
+    const w = drehXY(a, b, -kam.dreh);   // FASSUNG 820 — zurückdrehen um genau den Kamerawinkel (auch schräg)
     return [w[0] + kam.x, w[1] + kam.y];
   };
   /* Tiefe im Kameraraum (größer = weiter vorn) */

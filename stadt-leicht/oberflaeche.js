@@ -381,7 +381,7 @@
         return imUeberblick(() => ecke.map((w) => { const P = ST.proj(w[0], w[1], 0); return [P[0] / K.W, P[1] / K.H]; }));
       };
       /* FASSUNG 807 — „ein bisschen die Karte auch rotieren": mit dem Kompass ein Knopf zum Drehen */
-      const drehK = knopf("rechts", "Karte drehen", () => { drehen(1); if (!document.body.classList.contains("lk-nah")) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; } }, "lk-nur-mini lk-drehknopf");
+      const drehK = knopf("rechts", "Karte drehen", () => { drehen(1, () => { if (!document.body.classList.contains("lk-nah")) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; } }); }, "lk-nur-mini lk-drehknopf");   // FASSUNG 820 — nach dem weichen Drehen
       setInterval(() => {
         if (!document.body.classList.contains("lk-mini-modus")) { LB.grossErlaubt = false; return; }
         nahSetzen(K.s > ueberblick() * 1.4);
@@ -719,11 +719,10 @@
   };
   O.neuAufgebaut = function () { if (kopf) nameSetzen(); miniMalen(); };
 
-  function drehen(r) {
-    const mitte = [K.x, K.y];
-    K.dreh = (K.dreh + r + 4) & 3; K.x = mitte[0]; K.y = mitte[1];
-    SZ.geaendert(); L().unruhe = 2; miniMalen();
-    ansage(["Blick nach Norden", "Blick nach Osten", "Blick nach Süden", "Blick nach Westen"][K.dreh]);
+  function drehen(r, danach) {
+    /* FASSUNG 820 — XANDER (Walkie 309): „Zwei-Finger-Drehen mit Einrasten in 8 Winkeln". Die Knöpfe drehen jetzt um
+       45°, weich (drehen.js, um die Bildmitte); die Ansage nennt acht Richtungen. */
+    ST.drehen.um(r, { danach: danach });
   }
 
   /* Mini-Karte: Wege, Wasser, Häuser, Bildausschnitt */

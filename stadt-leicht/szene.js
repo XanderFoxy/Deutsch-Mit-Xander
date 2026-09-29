@@ -16,6 +16,11 @@
    gibt es für die Spielgebäude, drehbaren Schmuck und die Fahrzeuge; sie
    werden nur geladen, wenn etwas schräg steht. Die Kamera bleibt bei
    vier Drehungen.
+   FASSUNG 820 — XANDER (Walkie 309): „Zwei-Finger-Drehen mit Einrasten in
+   8 Winkeln". Jetzt dreht auch die Kamera in 45°-Schritten (K.dreh 0,5 …),
+   während der Geste stufenlos; jedes Ding zeigt das Bild des nächsten
+   45°-Schritts von (o.dreh + K.dreh). Nach dem Loslassen rastet die Kamera
+   ein (drehen.js), dann passen alle Bilder genau.
    ===================================================================== */
 (function () {
   "use strict";
@@ -172,11 +177,12 @@
   /* FASSUNG 808 — gibt es von diesem Bild schräge (45°-)Ansichten? Dann dreht die Auswahl in Achtelschritten. */
   SZ.achtWinkel = function (bild) { return gierListe(bild).some((g) => g % 90 !== 0); };
   /* Blickwinkel eines Objekts im Bild (Objektdrehung + Kamera), 0 … 315 in 45°-Schritten */
-  SZ.gierVon = function (o) { return ((((o.dreh || 0) + K.dreh) % 4 + 4) % 4) * 90; };
+  /* FASSUNG 820 — die Kamera darf schräg (0,5) und während der Geste dazwischen stehen: der nächste 45°-Schritt */
+  SZ.gierVon = function (o) { return ST.drehMod(Math.round(((o.dreh || 0) + K.dreh) * 2) / 2) * 90; };
   /* Baustelle: Phase aus dem Fortschritt */
   function bauPhase(p) { return p < 0.2 ? 8 : p < 0.42 ? 30 : p < 0.7 ? 55 : 80; }
-  SZ.basis = function (o, zeit) {
-    const gier = SZ.gierVon(o);
+  SZ.basis = function (o, zeit, gierFest) {
+    const gier = gierFest != null ? gierFest : SZ.gierVon(o);
     if (o.bau && o.bau.p < 1 && o.bauBild) {   // FASSUNG 807: auch im kleinen Rahmen (Zwergbilder _n)
       const gb = gierFuer(o.bauBild, gier);
       return o.bauBild + "_" + jahrBild() + "_tag_b" + bauPhase(o.bau.p) + "_" + gb;
@@ -340,7 +346,9 @@
     if (leinwand.width !== K.W || leinwand.height !== K.H) { leinwand.width = K.W; leinwand.height = K.H; }
     const sw = Math.ceil(K.W / 2), sh = Math.ceil(K.H / 2);
     if (schattenC.width !== sw || schattenC.height !== sh) { schattenC.width = sw; schattenC.height = sh; }
-    const schl = K.dreh + "|" + SZ.objekte.length;
+    /* FASSUNG 820 — während der Drehgeste nicht jedes Bild neu sortieren: in Schritten von 1/16 Vierteldrehung (≈ 5,6°);
+       die eingerasteten Winkel (Vielfache von 0,5) sind genau solche Schritte */
+    const schl = Math.round(K.dreh * 16) / 16 + "|" + SZ.objekte.length;
     if (schl !== reiheSchl) { reiheSchl = schl; sortieren(); }
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, K.W, K.H);
     sg.setTransform(1, 0, 0, 1, 0, 0); sg.clearRect(0, 0, sw, sh);
@@ -358,6 +366,9 @@
     const sicht = [];
     const rand = 60 * K.dpr;
     /* FASSUNG 808 — Blick nach Norden: hinter der Horizontlinie stehen die Alpen (himmel.js), was dahinter liegt, ist verdeckt */
+    /* FASSUNG 820 — nur genau beim Blick nach Norden (K.dreh 0, drehen.js rastet exakt dort ein). Schon ein Grad daneben
+       gibt es keinen Himmel: die Alpen sind ein flaches Bild quer zur Nordblickrichtung, schräg gäbe es einen halben
+       Himmel mit Loch. Ohne Himmel reicht der Boden bis an den Bildrand – wie seit jeher beim Blick nach O/S/W. */
     const horizont = K.dreh === 0 && ST.dorf && ST.dorf.HORIZONT != null;
     for (const o of reihe) {
       if (o.versteckt || (o.hinten && horizont)) continue;
@@ -365,13 +376,17 @@
       /* grob außerhalb? (Höhe großzügig) */
       const gross = (Math.max(o.fuss ? o.fuss[0] + o.fuss[1] : 4, (o.hoehe || 10) * 1.3)) * K.s * o.stufe;
       if (P[0] < -gross - rand || P[0] > K.W + gross + rand || P[1] < -rand || P[1] > K.H + gross + rand + gross) continue;
-      const basis0 = SZ.basis(o, zeiten[0][0]);
-      const w0 = LB.wahl(basis0, K.s, o.stufe);
+      /* FASSUNG 820 — beim Drehen lädt das Bild des neuen Winkels erst: solange bleibt das zuletzt gezeigte stehen
+         (o._gierDa), statt dass das Haus kurz verschwindet */
+      let gier = SZ.gierVon(o);
+      let w0 = LB.wahl(SZ.basis(o, zeiten[0][0], gier), K.s, o.stufe);
+      if (!w0 && o._gierDa != null && o._gierDa !== gier) { gier = o._gierDa; w0 = LB.wahl(SZ.basis(o, zeiten[0][0], gier), K.s, o.stufe); }
       if (!w0) continue;
+      o._gierDa = gier;
       const k = K.s * o.stufe / w0.meta.s;
       const e = { o: o, X: P[0], Y: P[1], k: k, meta: w0.meta, lagen: [[w0.name, 1]] };
       for (let i = 1; i < zeiten.length; i++) {
-        const w = LB.wahl(SZ.basis(o, zeiten[i][0]), K.s, o.stufe);
+        const w = LB.wahl(SZ.basis(o, zeiten[i][0], gier), K.s, o.stufe);
         if (w && w.meta.s === w0.meta.s) e.lagen.push([w.name, zeiten[i][1]]);
         else if (w) e.lagen.push([w.name, zeiten[i][1], K.s * o.stufe / w.meta.s, w.meta]);
       }
