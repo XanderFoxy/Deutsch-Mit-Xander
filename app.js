@@ -70359,6 +70359,32 @@
     await Backend.updateExtraProfileField("itPunkte", neu);
     if (typeof renderItalienischkurs === "function") renderItalienischkurs();
   }
+  /* FASSUNG 837 — XANDER (Funk 214): „dann hätte ich gerne das Spielsystem
+     für mich und vielleicht in Verbindung mit Azoren dem Aussprache Trainer
+     auch global auf der Webseite wenn ich in den italienischen Modus gehe
+     … würde ich auch gerne das Spiel nutzen können dann mit Fragen zu
+     italienischen Sprache also in in Deutsch die Fragen natürlich aber das
+     nur wenn ich in diesen eigenen da nicht für alle zugänglich ist in den
+     eigenen italienischen Bereich in der Seite gehe dann soll das
+     mitgekoppelt werden".
+     Die Brücke für das Spiel (spiel.js): Es fragt hier, ob der
+     Italienisch-Raum gerade offen ist UND ob dieses Konto ihn benutzen darf
+     (Betreiber oder namentlich freigegeben — dieselbe Regel wie beim
+     Umschalten). Die italienischen Spielpunkte landen in derselben eigenen
+     Kasse wie die übrigen italienischen Übungen (extra_profile_data.itPunkte)
+     und auf dem Kursfortschritt der Stufe — nie in profiles.points, also
+     nie im Ranking der Seite. Nacheinander geschrieben, weil beide Felder
+     im selben Profil-Eintrag liegen. */
+  window.DMA_IT_SPIEL = {
+    aktiv: function () { return imItalienischraum() && darfItalienischraum(); },
+    stand: function () { try { return itPunkteStand(); } catch (e) { return { punkte: 0, runden: 0, beste: 0 }; } },
+    gutschreiben: async function (punkte, stufe, richtig, gesamt) {
+      if (!(imItalienischraum() && darfItalienischraum())) return false;
+      if (punkte > 0) await itPunkteGutschreiben(punkte);
+      if (gesamt > 0 && IT_KURS_STUFEN.includes(stufe)) await itKursFortschritt(stufe, richtig, gesamt);
+      return true;
+    }
+  };
   /* Die Rangliste des Raums. Sie wird nachgeladen und danach in die
      Kursseite gehängt — synchron ginge es nicht, und ein leerer Kasten,
      der sich später füllt, ist besser als eine wartende Seite. */

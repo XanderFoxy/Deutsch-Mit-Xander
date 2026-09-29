@@ -263,6 +263,364 @@
   var LASERFARBEN = ["#ff2d2d", "#2dff6a", "#2d8bff", "#ff2df1", "#ffd22d"];
 
   /* ---------------------------------------------------------------
+     FASSUNG 837 — DAS SPIEL IM ITALIENISCH-RAUM
+     XANDER (Funk 214): „dann hätte ich gerne das Spielsystem für mich
+     und vielleicht in Verbindung mit Azoren dem Aussprache Trainer auch
+     global auf der Webseite wenn ich in den italienischen Modus gehe von
+     der Webseite würde ich auch gerne das Spiel nutzen können dann mit
+     Fragen zu italienischen Sprache also in in Deutsch die Fragen
+     natürlich aber das nur wenn ich in diesen eigenen da nicht für alle
+     zugänglich ist in den eigenen italienischen Bereich in der Seite gehe
+     dann soll das mitgekoppelt werden dass diese Sachen dann für mich zum
+     Lernen auch da sind".
+     So gebaut:
+       · Nur wenn der Italienisch-Raum offen ist UND das Konto ihn
+         benutzen darf (app.js: DMA_IT_SPIEL.aktiv – Betreiber oder
+         freigegeben). Sonst ändert sich am Spiel nichts, es bleibt
+         „Deutsch zum Überleben".
+       · Die Fragen stehen auf Deutsch, gefragt wird nach Italienisch.
+         Nichts davon ist ausgedacht: Wörter, Artikel und Niveau kommen
+         aus dem italienischen Wörterbuch der Seite (ExerciseData.
+         IT_WOERTER, 618 Wörter A1–C2), die Verbformen, Hilfsverben und
+         Partizipien aus IT_VERBEN (20 Verben), die Ortsangaben und die
+         Verschmelzung (a + la = alla) aus dem Satzbaukasten
+         (Satzbau.ORTE mit it/itWoher, ortsform). Die Aussprache-Regeln
+         (c, g, gli, gn, sc …) sind eine kleine, von Hand geprüfte Liste.
+       · Geprüft wird hier im Browser – die Aufgabenbank des Servers ist
+         deutsch. Deshalb zählen die Punkte in die eigene italienische
+         Kasse (extra_profile_data.itPunkte) und auf den Kursfortschritt,
+         nie in den Punktestand des Spiels oder das Ranking der Seite.
+     --------------------------------------------------------------- */
+  function itModus() {
+    var b = window.DMA_IT_SPIEL;
+    try { return Boolean(b && b.aktiv && b.aktiv()); } catch (e) { return false; }
+  }
+  /* [art, Name] — „aussprache" ist die Sprechkarte mit Azure (it-IT). */
+  var IT_ARTEN = [["", "Alles"], ["woerter", "Wörter"], ["artikel", "Artikel"], ["verben", "Verben"], ["passato", "Passato prossimo"],
+    ["praep", "Präpositionen"], ["laute", "Aussprache-Regeln"], ["stimmts", "Stimmt's?"], ["aussprache", "Aussprache"]];
+  /* Punkte wie bei den deutschen Aufgaben: A1 3 · A2 4 · B1 5 · B2 6 · C1 7 · C2 8. */
+  var IT_PUNKTE = { A1: 3, A2: 4, B1: 5, B2: 6, C1: 7, C2: 8 };
+  /* Aussprache: dieselbe Obergrenze je Niveau, die die Sprechkarte anzeigt. */
+  var IT_SPRECH_MAX = { A1: 6, A2: 8, B1: 10, B2: 13, C1: 16, C2: 20 };
+  var IT_RUNDE = 5;   /* nach so vielen Antworten wird gutgeschrieben (eine „Runde") */
+
+  var IT = (function () {
+    function ED() { try { return typeof ExerciseData !== "undefined" ? ExerciseData : null; } catch (e) { return null; } }
+    function zufall(l) { return l[Math.floor(Math.random() * l.length)]; }
+    function mischen(l) { l = l.slice(); for (var i = l.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = l[i]; l[i] = l[j]; l[j] = t; } return l; }
+    function stufeIdx(n) { var i = NIVEAUS.indexOf(n); return i < 0 ? 0 : i; }
+    /* Einträge des Niveaus; sind es zu wenige, die Nachbarstufen dazu. */
+    function aufNiveau(liste, niveau, mindest) {
+      var i = stufeIdx(niveau);
+      for (var weite = 0; weite < 6; weite++) {
+        var l = liste.filter(function (x) { return Math.abs(stufeIdx(x.level) - i) <= weite; });
+        if (l.length >= (mindest || 1)) return l;
+      }
+      return liste;
+    }
+    var ARTIKEL_RE = /^(il|lo|la) (.+)$|^(l')(.+)$/;
+    function vokal(w) { return /^[aeiouàèéìòùh]/i.test(w || ""); }
+    function sImpuro(w) { return /^(s[^aeiouàèéìòù]|z|ps|pn|gn|x|y)/i.test(w || ""); }
+    function istNomen(w) { return /^(il|lo|la|i|gli|le) |^l'/.test(w.word); }
+    /* Bedeutungswörter eines deutschen Eintrags – zwei Einträge, die ein
+       Wort teilen („bitte schön“ / „bitte (Bitte um etwas)“), stehen nie
+       zusammen in einer Auswahl, sonst wären zwei Antworten richtig. */
+    function kern(de) {
+      return String(de || "").toLowerCase().replace(/\(.*?\)/g, " ").split(/[^a-zäöüß]+/)
+        .filter(function (t) { return t.length >= 3 && ["der", "die", "das", "den", "dem", "des", "ein", "eine", "sich"].indexOf(t) < 0; });
+    }
+    function teilen(a, b) { var ka = kern(a), kb = kern(b); return ka.some(function (t) { return kb.indexOf(t) >= 0; }); }
+    function woerter() {
+      var ed = ED();
+      return ((ed && ed.IT_WOERTER) || []).filter(function (w) { return w && w.word && w.de && w.level; });
+    }
+    function verben() { var ed = ED(); return ((ed && ed.IT_VERBEN) || []).filter(function (v) { return v && v.formen && v.formen.length === 6 && v.partizip && v.dePartizip; }); }
+
+    /* ---- Wörter: Deutsch → Italienisch und zurück ---- */
+    function aufgabeWoerter(niveau) {
+      var pool = aufNiveau(woerter(), niveau, 8);
+      var w = zufall(pool), nomen = istNomen(w);
+      var gleiche = pool.filter(function (x) { return istNomen(x) === nomen; });
+      var falsch = mischen(gleiche.length >= 8 ? gleiche : pool).filter(function (x) {
+        return x !== w && x.word !== w.word && x.de !== w.de && !teilen(x.de, w.de);
+      });
+      var nachIt = Math.random() < 0.6;
+      var opts = [], gesehen = {};
+      var nimm = function (s) { var k = String(s).toLowerCase(); if (gesehen[k]) return; gesehen[k] = 1; opts.push(s); };
+      nimm(nachIt ? w.word : w.de);
+      for (var i = 0; i < falsch.length && opts.length < 4; i++) nimm(nachIt ? falsch[i].word : falsch[i].de);
+      return {
+        art: "woerter", niveau: w.level,
+        frage: nachIt ? "Was heißt „" + w.de + "“ auf Italienisch?" : "Was heißt „" + w.word + "“ auf Deutsch?",
+        loesung: nachIt ? w.word : w.de, optionen: mischen(opts),
+        erklaerung: w.word + " = " + w.de + (w.example ? " · " + w.example : "")
+      };
+    }
+
+    /* ---- Artikel: il, lo, la oder l' ---- */
+    var ARTIKEL_ERKL = {
+      "l'": "Vor einem Vokal (oder stummem h) werden il und la zu l'.",
+      lo: "Männlich vor s + Konsonant (auch z, gn, ps, x, y) steht lo.",
+      il: "Männlich vor einem gewöhnlichen Konsonanten steht il.",
+      la: "Weiblich vor einem Konsonanten steht la."
+    };
+    function artikelTeile(w) {
+      var m = ARTIKEL_RE.exec(w.word);
+      if (!m) return null;
+      var a = m[1] || m[3], n = m[2] || m[4];
+      /* Nur Einträge, die zur Regel passen (geprüft: alle 444 tun es). */
+      var ok = a === "l'" ? vokal(n) : a === "lo" ? (sImpuro(n) && !vokal(n)) : a === "il" ? (!vokal(n) && !sImpuro(n)) : !vokal(n);
+      return ok ? { artikel: a, nomen: n } : null;
+    }
+    function mitArtikel(t) { return t.artikel === "l'" ? "l'" + t.nomen : t.artikel + " " + t.nomen; }
+    function aufgabeArtikel(niveau) {
+      var pool = aufNiveau(woerter().filter(artikelTeile), niveau, 6);
+      var w = zufall(pool), t = artikelTeile(w);
+      return {
+        art: "artikel", niveau: w.level,
+        /* Die deutsche Bedeutung steht dabei: il/la giornalista, il/la
+           capitale – erst sie macht die Antwort eindeutig. */
+        frage: "Welcher Artikel passt? ___ " + t.nomen + " (" + w.de + ")",
+        loesung: t.artikel, optionen: ["il", "lo", "la", "l'"],
+        erklaerung: mitArtikel(t) + " – " + ARTIKEL_ERKL[t.artikel]
+      };
+    }
+
+    /* ---- Verben: Präsens ---- */
+    var PERSONEN = [["io", "ich"], ["tu", "du"], ["lui", "er"], ["noi", "wir"], ["voi", "ihr"], ["loro", "sie (mehrere)"]];
+    function aufgabeVerben() {
+      var v = zufall(verben()), p = Math.floor(Math.random() * 6);
+      var subj = p === 2 && Math.random() < 0.5 ? "lei" : PERSONEN[p][0];
+      var richtig = v.formen[p];
+      var andere = mischen(v.formen.filter(function (f, i, l) { return f !== richtig && l.indexOf(f) === i; })).slice(0, 3);
+      return {
+        art: "verben", niveau: "A1",
+        frage: "Setze „" + v.inf + "“ (" + v.de + ") ein: " + subj + " ___",
+        loesung: richtig, optionen: mischen([richtig].concat(andere)),
+        erklaerung: v.inf + " im Präsens: " + PERSONEN.map(function (x, i) { return x[0] + " " + v.formen[i]; }).join(", ") + "."
+      };
+    }
+
+    /* ---- Passato prossimo: essere oder avere, und die ganze Form ---- */
+    var AUX = { essere: ["sono", "sei", "è", "siamo", "siete", "sono"], avere: ["ho", "hai", "ha", "abbiamo", "avete", "hanno"] };
+    var DE_AUX = { sein: ["bin", "bist", "ist", "sind", "seid", "sind"], haben: ["habe", "hast", "hat", "haben", "habt", "haben"] };
+    /* Bei essere richtet sich das Partizip nach dem Subjekt – darum nur
+       Personen mit klarem Geschlecht: lui (-o), lei (-a), noi/voi/loro (-i). */
+    var P_ESSERE = [{ it: "lui", de: "er", p: 2, end: "o" }, { it: "lei", de: "sie", p: 2, end: "a" }, { it: "noi", de: "wir", p: 3, end: "i" },
+      { it: "voi", de: "ihr", p: 4, end: "i" }, { it: "loro", de: "sie (mehrere)", p: 5, end: "i" }];
+    function partizip(v, end) { return v.hilfsverb === "essere" ? v.partizip + end : v.partizip; }
+    function aufgabePassato() {
+      var v = zufall(verben());
+      var beispiel = v.hilfsverb === "essere" ? "lui è " + v.partizip + "o, lei è " + v.partizip + "a" : "ho " + v.partizip;
+      if (Math.random() < 0.4) {
+        return {
+          art: "passato", niveau: "A2",
+          frage: "Mit welchem Hilfsverb bildet „" + v.inf + "“ (" + v.de + ") das passato prossimo?",
+          loesung: v.hilfsverb, optionen: ["essere", "avere"],
+          erklaerung: v.inf + " → " + beispiel + "." + (v.hilfsverb === "essere" ? " Mit essere richtet sich das Partizip nach dem Subjekt." : "")
+        };
+      }
+      var pers;
+      if (v.hilfsverb === "essere") pers = zufall(P_ESSERE);
+      else {
+        var p = Math.floor(Math.random() * 6), lei = p === 2 && Math.random() < 0.5;
+        pers = { it: lei ? "lei" : PERSONEN[p][0], de: lei ? "sie" : PERSONEN[p][1], p: p, end: "o" };
+      }
+      var aux = AUX[v.hilfsverb], anders = AUX[v.hilfsverb === "essere" ? "avere" : "essere"];
+      var richtig = pers.it + " " + aux[pers.p] + " " + partizip(v, pers.end);
+      var deSatz = pers.de + " " + DE_AUX[v.deHilfsverb][pers.p] + " " + v.dePartizip;
+      var kandidaten = [
+        /* falsches Hilfsverb */
+        pers.it + " " + anders[pers.p] + " " + (v.hilfsverb === "essere" ? v.partizip + "o" : v.partizip),
+        /* Infinitiv statt Partizip */
+        pers.it + " " + aux[pers.p] + " " + v.inf,
+        /* Hilfsverb in der falschen Person */
+        pers.it + " " + aux[(pers.p + (pers.p === 0 || pers.p === 5 ? 1 : 3)) % 6] + " " + partizip(v, pers.end)
+      ];
+      /* bei essere: das Partizip passt nicht zum Subjekt */
+      if (v.hilfsverb === "essere") kandidaten.push(pers.it + " " + aux[pers.p] + " " + v.partizip + (pers.end === "o" ? "a" : "o"));
+      var falsch = mischen(kandidaten.filter(function (k, i, l) { return k !== richtig && l.indexOf(k) === i; })).slice(0, 3);
+      return {
+        art: "passato", niveau: "A2",
+        frage: "Wie heißt „" + deSatz + "“ auf Italienisch?",
+        loesung: richtig, optionen: mischen([richtig].concat(falsch)),
+        erklaerung: v.inf + " bildet das passato prossimo mit " + v.hilfsverb + ": " + richtig + "." + (v.hilfsverb === "essere" ? " Das Partizip richtet sich nach dem Subjekt." : "")
+      };
+    }
+
+    /* ---- Präpositionen: aus den Orten des Satzbaukastens ---- */
+    /* Dieselbe Tabelle wie IT_VERSCHMELZUNG in satzbau.js. */
+    var VERSCHMELZUNG = {
+      di: { il: "del", lo: "dello", la: "della", "l'": "dell'", i: "dei", gli: "degli", le: "delle" },
+      a: { il: "al", lo: "allo", la: "alla", "l'": "all'", i: "ai", gli: "agli", le: "alle" },
+      da: { il: "dal", lo: "dallo", la: "dalla", "l'": "dall'", i: "dai", gli: "dagli", le: "dalle" },
+      "in": { il: "nel", lo: "nello", la: "nella", "l'": "nell'", i: "nei", gli: "negli", le: "nelle" },
+      su: { il: "sul", lo: "sullo", la: "sulla", "l'": "sull'", i: "sui", gli: "sugli", le: "sulle" }
+    };
+    /* „dalla cucina“ → { fam: "da", art: "la", rest: "cucina" } */
+    function zerlege(s) {
+      s = String(s || "").trim();
+      var fams = ["di", "a", "da", "in", "su"];
+      for (var f = 0; f < fams.length; f++) {
+        var t = VERSCHMELZUNG[fams[f]];
+        for (var a in t) {
+          var form = t[a];
+          var passt = form.slice(-1) === "'" ? (s.indexOf(form) === 0 && s.length > form.length) : s.indexOf(form + " ") === 0;
+          if (passt) return { fam: fams[f], art: a, rest: s.slice(form.length).trim() };
+        }
+      }
+      var m = /^(di|a|da|in|su) (.+)$/.exec(s);
+      return m ? { fam: m[1], art: "", rest: m[2] } : null;
+    }
+    function bilde(fam, art, rest) {
+      if (!art) return fam + " " + rest;
+      var f = VERSCHMELZUNG[fam][art];
+      return f + (f.slice(-1) === "'" ? "" : " ") + rest;
+    }
+    function aufgabeVerschmelzung() {
+      /* Die Verschmelzung selbst: „Aus welcher Präposition und welchem Artikel ist ‚nella‘?“ */
+      var fams = ["di", "a", "da", "in", "su"], arts = ["il", "lo", "la", "l'", "i", "gli", "le"];
+      var fa = zufall(fams), ar = zufall(arts), form = VERSCHMELZUNG[fa][ar];
+      var richtig = fa + " + " + ar, opts = [richtig], gesehen = {};
+      gesehen[richtig] = 1;
+      var andereF = fams.filter(function (x) { return x !== fa; }), andereA = arts.filter(function (x) { return x !== ar; });
+      [[zufall(andereF), ar], [fa, zufall(andereA)], [zufall(andereF), zufall(andereA)], [zufall(andereF), ar], [fa, zufall(andereA)]].forEach(function (p) {
+        var s = p[0] + " + " + p[1];
+        if (!gesehen[s] && opts.length < 4 && VERSCHMELZUNG[p[0]][p[1]] !== form) { gesehen[s] = 1; opts.push(s); }
+      });
+      return {
+        art: "praep", niveau: "A2",
+        frage: "Aus welcher Präposition und welchem Artikel ist „" + form + "“ verschmolzen?",
+        loesung: richtig, optionen: mischen(opts),
+        erklaerung: richtig + " = " + form + ". di, a, da, in und su verschmelzen immer mit dem bestimmten Artikel."
+      };
+    }
+    function aufgabePraep(niveau, versuch) {
+      var SB = window.Satzbau;
+      if (Math.random() < 0.25 || !SB || !SB.ORTE || (versuch || 0) > 6) return aufgabeVerschmelzung();
+      var orte = SB.ORTE.filter(function (o) {
+        var w = o && o.it && o.itWoher ? zerlege(o.itWoher) : null;
+        return w && w.fam === "da" && zerlege(o.it);
+      });
+      var ort = zufall(aufNiveau(orte.map(function (o) { return { o: o, level: o.level || "A1" }; }), niveau, 6)).o;
+      /* Woher nicht bei Städten und Ländern: „di Roma“ hieße „aus Rom (stammend)“. */
+      var woher = !ort.eigenname && Math.random() < 0.4;
+      var ziel = zerlege(woher ? ort.itWoher : ort.it), dah = zerlege(ort.itWoher);
+      /* Der Artikel des Nomens steckt in der „da“-Form (dalla cucina → la). */
+      var art = dah.art, rest = dah.rest;
+      if (ziel.rest !== rest) return aufgabePraep(niveau, (versuch || 0) + 1);
+      var falschFam;
+      if (woher) {
+        falschFam = ["di", "a", "in", "su"];
+        if (!art) falschFam = ["a", "in", "su"];   /* „uscire di casa“ – di ohne Artikel ist eine Wendung */
+      } else {
+        /* „in“ und „a“ sind beide Ortsangaben – als falsche Antwort wären
+           sie oft gar nicht falsch („nella cucina“). Darum nur di, da, su;
+           su nicht am Wasser („sul mare“, „sul lago“ gibt es), da nicht bei
+           Personen und Ämtern („dalla polizia“ sagt man), di nicht ohne
+           Artikel („di casa“ ist eine Redewendung). */
+        falschFam = ["di", "da", "su"].filter(function (f) {
+          return f !== ziel.fam && !(f === "su" && ort.praep === "an") && !(f === "da" && ort.praep === "bei") && !(f === "di" && !art);
+        });
+      }
+      var richtig = woher ? ort.itWoher : ort.it;
+      var opts = [richtig], gesehen = {}; gesehen[richtig] = 1;
+      mischen(falschFam).forEach(function (f) { var s = bilde(f, art, rest); if (!gesehen[s] && opts.length < 4) { gesehen[s] = 1; opts.push(s); } });
+      if (opts.length < 3) return aufgabePraep(niveau, (versuch || 0) + 1);
+      var deOrt = SB.ortsform ? SB.ortsform(ort, woher ? "woher" : "wo") : ort.nomen;
+      return {
+        art: "praep", niveau: ort.level || "A1",
+        frage: "Wie sagt man „" + deOrt + "“ auf Italienisch? (" + (woher ? "woher?" : "wo?") + ")",
+        loesung: richtig, optionen: mischen(opts),
+        erklaerung: deOrt + " = " + richtig + (ziel.art ? " (" + ziel.fam + " + " + ziel.art + ")" : "") + (woher ? ". Woher? heißt da." : ".")
+      };
+    }
+
+    /* ---- Aussprache-Regeln (von Hand geprüft) ---- */
+    var LAUTE = [
+      ["A1", "Wie klingt „c“ vor a, o, u – etwa in „casa“, „cosa“, „cuore“?", "wie „k“", ["wie „tsch“", "wie „ts“", "wie „s“"], "c vor a, o, u ist immer hart: casa, cosa, cuore."],
+      ["A1", "Wie klingt „ci“ in „ciao“?", "wie „tsch“ in „tschüss“", ["wie „k“", "wie „ts“", "wie „ch“ in „ich“"], "c vor e und i klingt wie „tsch“: ciao, cena, cinema."],
+      ["A1", "Wie klingt „ce“ in „cena“?", "wie „tsche“", ["wie „ke“", "wie „tse“", "wie „se“"], "c vor e und i klingt wie „tsch“: cena, dieci."],
+      ["A1", "Wie klingt „che“ in „perché“?", "wie „ke“", ["wie „tsche“", "wie „sche“", "wie „che“ in „Chemie“"], "Das h macht das c hart: che und chi klingen wie „ke“ und „ki“."],
+      ["A1", "Wie klingt „chi“ in „chiesa“?", "wie „ki“", ["wie „tschi“", "wie „schi“", "wie „chi“ in „China“"], "ch vor e und i ist hart: chiesa, chi, anche."],
+      ["A1", "Wie klingt „gi“ in „giorno“?", "wie „dsch“ in „Dschungel“", ["wie „g“ in „Garten“", "wie „j“ in „ja“", "wie „sch“"], "g vor e und i ist weich wie „dsch“: giorno, gelato."],
+      ["A1", "Wie klingt „ge“ in „gelato“?", "wie „dsche“", ["wie „ge“ in „gehen“", "wie „je“", "wie „sche“"], "g vor e und i klingt wie „dsch“: gelato, gente."],
+      ["A1", "Wie klingt „ghe“ in „spaghetti“?", "wie „ge“ in „gehen“ (hartes g)", ["wie „dsche“", "wie „je“", "wie „che“ in „ich“"], "Das h macht das g hart: spaghetti, ghiaccio."],
+      ["A2", "Wie klingt „gli“ in „figlio“?", "wie „lj“ – ein weiches l, ähnlich wie in „Familie“", ["wie „gl“ in „Glas“", "g und li getrennt: „g-li“", "wie „dsch“"], "gli ist ein weiches l: figlio, famiglia, moglie."],
+      ["B1", "Wie klingt „gl“ in „inglese“?", "wie „gl“ in „Glas“", ["wie „lj“ in „Familie“", "wie „dschl“", "wie „j“"], "Nur vor i ist gl weich (figlio). Vor a, e, o, u bleibt es hart: inglese, gloria."],
+      ["A1", "Wie klingt „gn“ in „gnocchi“ oder „bagno“?", "wie „nj“, ähnlich wie in „Champagner“", ["g und n getrennt wie in „Gnade“", "nur wie „n“", "wie „ng“ in „Ring“"], "gn ist ein einziger Laut, ein weiches „nj“: bagno, gnocchi, lasagne."],
+      ["A1", "Wie klingt „sci“ in „piscina“ oder „sce“ in „pesce“?", "wie „sch“", ["wie „s-tsch“", "wie „sk“", "wie „s“"], "sc vor e und i klingt wie „sch“: pesce, piscina, scena."],
+      ["B1", "Wie klingt „sch“ in „schiena“ oder „scherzo“?", "wie „sk“", ["wie „sch“ in „Schule“", "wie „s-tsch“", "wie „s“ und „ch“ in „Häuschen“"], "sch ist im Italienischen immer „sk“: schiena, scherzo, tedeschi."],
+      ["A1", "Wie klingt „zz“ in „pizza“?", "wie „ts“", ["wie das „s“ in „Sonne“", "wie „tsch“", "gar nicht, es ist stumm"], "zz in pizza klingt wie „ts“ – so wie das deutsche z."],
+      ["A1", "Was passiert mit dem „h“ in „ho“ oder „hotel“?", "es ist stumm", ["es wird gehaucht wie im Deutschen", "es klingt wie „ch“", "es klingt wie „k“"], "Das h wird im Italienischen nie gesprochen: ho klingt wie „o“."],
+      ["A2", "„nonno“ oder „nono“ – was machen doppelte Konsonanten?", "sie werden länger gesprochen und ändern die Bedeutung", ["sie klingen genau wie einfache", "der Vokal davor wird lang", "sie werden stumm"], "nonno (der Großvater) und nono (der Neunte): Doppelkonsonanten hört man – und sie unterscheiden Wörter."],
+      ["A1", "Wie klingt „qu“ in „quattro“?", "wie „kw“", ["wie „k“", "wie „ku“ mit zwei Silben", "wie „tsch“"], "qu klingt wie „kw“: quattro, questo, quando."],
+      ["A1", "Wie wird das „r“ gesprochen, etwa in „Roma“?", "gerollt, mit der Zungenspitze", ["hinten im Hals wie oft im Deutschen", "gar nicht", "wie „l“"], "Das italienische r ist ein Zungenspitzen-r, am Wortanfang und bei rr deutlich gerollt."],
+      ["A2", "Wie klingt das „e“ am Ende von „notte“?", "klar und voll – das e wird deutlich gesprochen", ["verschluckt wie in „Katze“", "stumm", "wie „i“"], "Italienische Vokale werden nie verschluckt: not-te, nicht „nott“."],
+      ["A1", "Auf welcher Silbe liegt die Betonung meistens?", "auf der vorletzten", ["auf der ersten", "auf der letzten", "auf der drittletzten"], "Der Normalfall ist die vorletzte Silbe (parola piana): la POR-ta, il bam-BI-no."],
+      ["A2", "Was zeigt der Akzent in „città“ oder „caffè“?", "die Betonung auf der letzten Silbe", ["dass der Vokal kurz ist", "dass das Wort weiblich ist", "dass das Wort aus dem Französischen kommt"], "Ein geschriebener Akzent am Ende zeigt: diese letzte Silbe ist betont (città, caffè, perché)."]
+    ];
+    function aufgabeLaute(niveau) {
+      var i = stufeIdx(niveau);
+      var pool = LAUTE.filter(function (l) { return stufeIdx(l[0]) <= i; });
+      var l = zufall(pool.length ? pool : LAUTE);
+      return { art: "laute", niveau: l[0], frage: l[1], loesung: l[2], optionen: mischen([l[2]].concat(l[3])), erklaerung: l[4] };
+    }
+
+    /* ---- Stimmt's? ---- */
+    function aufgabeStimmts(niveau) {
+      var r = Math.random(), wahr = Math.random() < 0.5, satz, erkl, lvl = niveau;
+      if (r < 0.5) {
+        var pool = aufNiveau(woerter(), niveau, 8), w = zufall(pool);
+        var anderes = mischen(pool).filter(function (x) { return x !== w && x.de !== w.de && !teilen(x.de, w.de) && istNomen(x) === istNomen(w); })[0];
+        if (!anderes) wahr = true;
+        satz = "„" + w.word + "“ heißt „" + (wahr ? w.de : anderes.de) + "“.";
+        erkl = w.word + " = " + w.de + ".";
+        lvl = w.level;
+      } else if (r < 0.75) {
+        var pa = aufNiveau(woerter().filter(artikelTeile), niveau, 6), wa = zufall(pa), t = artikelTeile(wa);
+        /* Der falsche Artikel ist immer eindeutig falsch: il nie vor Vokal
+           oder s + Konsonant, lo nie vor gewöhnlichem Konsonanten und nie
+           bei weiblichen Wörtern. */
+        var falscherArt = { il: "lo", lo: "il", la: "lo", "l'": "il" }[t.artikel];
+        satz = "Richtig geschrieben: „" + (wahr ? mitArtikel(t) : falscherArt + " " + t.nomen) + "“ (" + wa.de + ").";
+        erkl = "Richtig ist „" + mitArtikel(t) + "“. " + ARTIKEL_ERKL[t.artikel];
+        lvl = wa.level;
+      } else {
+        var v = zufall(verben()), hv = wahr ? v.hilfsverb : (v.hilfsverb === "essere" ? "avere" : "essere");
+        satz = "„" + v.inf + "“ bildet das passato prossimo mit „" + hv + "“.";
+        erkl = v.inf + " → " + (v.hilfsverb === "essere" ? "lui è " + v.partizip + "o" : "ho " + v.partizip) + " (mit " + v.hilfsverb + ").";
+        lvl = "A2";
+      }
+      return { art: "stimmts", niveau: lvl, frage: "Stimmt's? " + satz, loesung: wahr ? "richtig" : "falsch", optionen: ["richtig", "falsch"], erklaerung: erkl };
+    }
+
+    var MACHER = { woerter: aufgabeWoerter, artikel: aufgabeArtikel, verben: aufgabeVerben, passato: aufgabePassato, praep: aufgabePraep, laute: aufgabeLaute, stimmts: aufgabeStimmts };
+    function aufgabe(niveau, art) {
+      if (!woerter().length || !verben().length) return null;
+      var a = art && MACHER[art] ? art : null;
+      if (!a) {
+        /* „Alles“: gewichtet und nach Niveau – Konjugation, Passato und
+           Laute gibt es in den Daten nur für A1–B1, darum ab B2 nicht mehr. */
+        var hoch = stufeIdx(niveau) >= 3;
+        a = zufall(["woerter", "woerter", "woerter", "artikel", "artikel", "praep", "praep", "stimmts", "stimmts"]
+          .concat(hoch ? [] : ["verben", "passato", "laute"]));
+      }
+      var x = MACHER[a](niveau);
+      x.art = x.art || a;
+      return x;
+    }
+    /* Ein Wort für die Sprechkarte: ohne Artikel, mit Silben. */
+    function sprechWort(niveau) {
+      var ohne = function (w) { return w.replace(/^(il|lo|la|i|gli|le) /, "").replace(/^l'/, ""); };
+      var pool = aufNiveau(woerter().filter(function (w) { return w.syl && !/ /.test(ohne(w.word)); }), niveau, 6);
+      var w = zufall(pool);
+      return { wort: ohne(w.word), silben: w.syl, de: w.de, voll: w.word, niveau: w.level };
+    }
+    return { aufgabe: aufgabe, sprechWort: sprechWort, LAUTE: LAUTE, zerlege: zerlege, bilde: bilde, artikelTeile: artikelTeile, MACHER: MACHER };
+  })();
+
+  /* ---------------------------------------------------------------
      ZUSTAND
      --------------------------------------------------------------- */
   var S = {
@@ -278,6 +636,9 @@
   };
   try { S.niveau = localStorage.getItem("dma_spiel_niveau") || "A1"; } catch (e) {}
   try { S.laserfarbe = localStorage.getItem("dma_spiel_laser") || LASERFARBEN[0]; } catch (e) {}
+  /* FASSUNG 837 — der Italienisch-Raum hat seine eigene Aufgabe, Art und Runde. */
+  S.itArt = ""; S.itAufgabe = null; S.itRunde = { punkte: 0, treffer: 0, richtig: 0, gesamt: 0, antworten: 0, stufe: "" }; S.itGutschriften = [];
+  try { S.itArt = localStorage.getItem("dma_spiel_it_art") || ""; } catch (e) {}
 
   function LC() { return window.LiveChat || null; }
   function B() { return window.DMA_SPIEL_BRUECKE || {}; }
@@ -6544,7 +6905,7 @@
       + (S.stillstand ? '<div class="sp-hinweis">🕊️ Waffenstillstand – die Tafel ist offen.</div>' : "")
       + (S.duell && Date.now() < S.duell.bis ? '<div class="sp-hinweis">⚔️ Duell läuft – tippe auf deinen Gegner.</div>' : "")
       + "</div>";
-    var tabs = [["start", "Übersicht"], ["anleitung", "Anleitung"], ["deutsch", "Deutsch"], ["koennen", "Können"], ["tiere", "Tiere"], ["waffen", "Waffen"], ["schutz", "Schutz & Laden"], ["duell", "Duell & Heilen"], ["rang", "Rangliste"]];
+    var tabs = [["start", "Übersicht"], ["anleitung", "Anleitung"], ["deutsch", itModus() ? "Italienisch" : "Deutsch"], ["koennen", "Können"], ["tiere", "Tiere"], ["waffen", "Waffen"], ["schutz", "Schutz & Laden"], ["duell", "Duell & Heilen"], ["rang", "Rangliste"]];
     var leiste = '<div class="sp-tabs">' + tabs.map(function (t) {
       return '<button type="button" data-tab="' + t[0] + '" class="' + (reiter === t[0] ? "sp-an" : "") + '">' + t[1] + "</button>";
     }).join("") + "</div>";
@@ -6605,6 +6966,8 @@
         + "<p><b>Waffenstillstand.</b> Solange die Tafel offen ist, trifft niemand.</p></div>";
     }
     if (reiter === "deutsch") {
+      /* FASSUNG 837 — im Italienisch-Raum italienische Fragen auf Deutsch (itPanelHtml). */
+      if (itModus()) return itPanelHtml();
       var chips = NIVEAUS.map(function (n) {
         return '<button type="button" data-tu="niveau" data-n="' + n + '" class="' + (S.niveau === n ? "sp-an" : "") + '">' + n + "</button>";
       }).join("");
@@ -6917,7 +7280,7 @@
   function panelKlick(ev) {
     var k = ev.target.closest("button");
     if (!k || k.disabled) return;
-    if (k.dataset.tab) { reiter = k.dataset.tab; if (reiter === "deutsch" && !S.aufgabe) aufgabeHolen(false); panelAuffrischen(); return; }
+    if (k.dataset.tab) { reiter = k.dataset.tab; if (reiter === "deutsch" && (itModus() ? !S.itAufgabe && S.itArt !== "aussprache" : !S.aufgabe)) aufgabeHolen(false); panelAuffrischen(); return; }
     var tu = k.dataset.tu;
     if (tu === "zu") { S.panelAbgelegt = null; schliessen(); schnellZeichnen(true); return; }
     if (tu === "fensterab") { fensterAblegen(); return; }
@@ -6938,6 +7301,11 @@
     if (tu === "fragenart") { S.fragenArt = k.dataset.f; try { localStorage.setItem("dma_spiel_fragenart", S.fragenArt); } catch (e) {} ton("holzklopf", 0.2); aufgabeHolen(false); return; }
     if (tu === "niveau") { S.niveau = k.dataset.n; try { localStorage.setItem("dma_spiel_niveau", S.niveau); } catch (e) {} deutschNachOben(); aufgabeHolen(false); return; }
     if (tu === "aufgabe") return aufgabeHolen(false);
+    /* FASSUNG 837 — die Knöpfe des Italienisch-Raums */
+    if (tu === "itantwort") return itAntworten(k.dataset.o);
+    if (tu === "itweiter") return itAufgabeHolen();
+    if (tu === "itniveau") { S.niveau = k.dataset.n; try { localStorage.setItem("dma_spiel_niveau", S.niveau); } catch (e) {} if (S.itRunde.antworten) itGutschreiben(); deutschNachOben(); return itAufgabeHolen(); }
+    if (tu === "itart") { S.itArt = k.dataset.k || ""; try { localStorage.setItem("dma_spiel_it_art", S.itArt); } catch (e) {} clearTimeout(S.sprechWeiterUhr); deutschNachOben(); return itAufgabeHolen(); }
     if (tu === "missionsaufgabe") return aufgabeHolen(true);
     if (tu === "antwort") return antworten(k.dataset.o);
     if (tu === "melden") { if (S.aufgabe) { S.aufgabe.melden = "wahl"; panelAuffrischen(); } return; }
@@ -7036,7 +7404,91 @@
       ton("swoosh", 0.25); panelAuffrischen();
     }).catch(function () { hinweis("Zurücknehmen ging gerade nicht."); });
   }
+  /* FASSUNG 837 — XANDER (Funk 214): „würde ich auch gerne das Spiel nutzen können dann mit Fragen zu italienischen
+     Sprache also in in Deutsch die Fragen natürlich". Im Italienisch-Raum kommt die Aufgabe nicht vom Server (dessen
+     Bank ist deutsch), sondern aus IT (oben): Frage auf Deutsch, Antwort auf Italienisch, geprüft hier. */
+  function itArtName(k) { var x = IT_ARTEN.filter(function (a) { return a[0] === (k || ""); })[0]; return x ? x[1] : "Alles"; }
+  function itAufgabeHolen() {
+    clearTimeout(S.itWeiterUhr);
+    reiter = "deutsch";
+    if (S.itArt === "aussprache") { sprechWortHolen(0); return; }
+    var a = null;
+    try { a = IT.aufgabe(S.niveau, S.itArt || ""); } catch (e) { a = null; }
+    S.itAufgabe = a || { frage: "", hinweis: "Die italienischen Wörter sind noch nicht geladen – gleich noch einmal." };
+    panelAuffrischen();
+  }
+  function itAntworten(o) {
+    var a = S.itAufgabe;
+    if (!a || !a.frage || a.ergebnis) return;
+    var richtig = o === a.loesung;
+    /* Punkte nach dem Niveau der Frage, wie im Deutschen (A1 3 … C2 8). */
+    var punkte = richtig ? (IT_PUNKTE[a.niveau] || 3) : 0;
+    a.gewaehlt = o; a.ergebnis = { richtig: richtig, gewonnen: punkte };
+    itRundeZaehlen(punkte, richtig, a.niveau === S.niveau);
+    ton(richtig ? "bling" : "gummi", 0.45);
+    panelAuffrischen();
+    var diese = a;
+    S.itWeiterUhr = setTimeout(function () {
+      if (S.itAufgabe === diese && panel && !panel.hidden && reiter === "deutsch" && itModus() && S.itArt !== "aussprache") itAufgabeHolen();
+    }, richtig ? 1600 : 3500);
+  }
+  /* Gutgeschrieben wird in Runden zu IT_RUNDE Antworten – so wie die übrigen italienischen Übungen eine Runde
+     melden. Der Kursfortschritt zählt nur Fragen, deren Niveau dem gewählten entspricht. */
+  function itRundeZaehlen(punkte, richtig, zaehltKurs) {
+    if (S.itRunde.stufe && S.itRunde.stufe !== S.niveau) itGutschreiben();
+    var r = S.itRunde;
+    r.stufe = S.niveau; r.punkte += punkte; r.antworten++;
+    if (richtig) r.treffer++;
+    if (zaehltKurs) { r.gesamt++; if (richtig) r.richtig++; }
+    if (r.antworten >= IT_RUNDE) itGutschreiben();
+  }
+  function itGutschreiben() {
+    var r = S.itRunde;
+    S.itRunde = { punkte: 0, treffer: 0, richtig: 0, gesamt: 0, antworten: 0, stufe: "" };
+    if (!r.antworten) return;
+    S.itGutschriften.push(r);
+    var b = window.DMA_IT_SPIEL;
+    if (b && b.gutschreiben) Promise.resolve(b.gutschreiben(r.punkte, r.stufe, r.richtig, r.gesamt)).then(function () { panelAuffrischen(); }).catch(function () {});
+    hinweis("Italienisch: " + r.treffer + " von " + r.antworten + " richtig · +" + r.punkte + " italienische Punkte (Stufe " + r.stufe + ")");
+  }
+  try { window.addEventListener("pagehide", function () { if (S.itRunde && S.itRunde.antworten) itGutschreiben(); }); } catch (e) {}
+  function itPanelHtml() {
+    var a = S.itAufgabe, teil;
+    if (S.itArt === "aussprache") teil = sprechKarte();
+    else if (a && a.frage) {
+      var e = a.ergebnis;
+      teil = '<div class="sp-aufgabe sp-it-aufgabe"><div class="sp-it-kopf">Italienisch · ' + esc(a.niveau) + " · " + esc(itArtName(a.art)) + "</div>"
+        + '<div class="sp-frage-satz">' + esc(a.frage) + "</div>"
+        + '<div class="sp-optionen">' + a.optionen.map(function (o) {
+          var kl = e ? (o === a.loesung ? "sp-richtig" : o === a.gewaehlt ? "sp-falsch" : "") : "";
+          return '<button type="button" data-tu="itantwort" data-o="' + esc(o) + '" class="' + kl + '"' + (e ? " disabled" : "") + ">" + esc(o) + "</button>";
+        }).join("") + "</div>"
+        + '<div class="sp-erg-platz' + (e ? (e.richtig ? " sp-erg-gut" : " sp-erg-schlecht") : "") + '">'
+        + (e ? '<div class="sp-erg-zeile"><b>' + (e.richtig ? "Richtig! +" + e.gewonnen : "Leider falsch") + '</b><button type="button" data-tu="itweiter">Weiter</button></div>'
+            + '<div class="sp-erg-erkl">' + esc(a.erklaerung || "") + "</div>"
+          : '<div class="sp-erg-leer">Tippe die richtige Antwort.</div>')
+        + "</div></div>";
+    } else {
+      teil = '<div class="sp-klein sp-rot">' + esc((a && a.hinweis) || "Einen Moment …") + '</div><div class="sp-knoepfe"><button type="button" data-tu="itweiter">Aufgabe holen</button></div>';
+    }
+    var b = window.DMA_IT_SPIEL, st = b && b.stand ? b.stand() : { punkte: 0 }, r = S.itRunde;
+    var kasse = '<div class="sp-it-kasse"><span>Italienische Punkte: <b>' + (st.punkte || 0) + "</b></span>"
+      + (r.antworten ? "<span>diese Runde +" + r.punkte + " (" + r.antworten + "/" + IT_RUNDE + ")</span>" : "") + "</div>";
+    var chips = NIVEAUS.map(function (n) {
+      return '<button type="button" data-tu="itniveau" data-n="' + n + '" class="' + (S.niveau === n ? "sp-an" : "") + '">' + n + "</button>";
+    }).join("");
+    var arten = IT_ARTEN.map(function (x) {
+      return '<button type="button" data-tu="itart" data-k="' + x[0] + '" class="' + ((S.itArt || "") === x[0] ? "sp-an" : "") + '">' + x[1] + "</button>";
+    }).join("");
+    var wahl = '<div class="sp-deutsch-wahl sp-offen sp-it-wahl"><div class="sp-klein sp-wahl-titel">Niveau und Art wählen – die Frage kommt sofort:</div>'
+      + '<div class="sp-chips">' + chips + '</div><div class="sp-chips sp-arten">' + arten + "</div></div>";
+    var regel = '<p class="sp-klein">Lernraum Italienisch: Die Fragen stehen auf Deutsch, geantwortet wird auf Italienisch. Punkte je richtiger Antwort nach Niveau: A1 3 · A2 4 · B1 5 · B2 6 · C1 7 · C2 8; Aussprache bis 6 (A1) … 20 (C2) nach Prozent, bewertet von Azure auf Italienisch. '
+      + "<b>Sie zählen nur in deine italienischen Punkte und in den Kursfortschritt – nicht im Ranking der Seite.</b> Mana, Erfahrung und Ladung vergibt nur der Server für Deutsch. Gutgeschrieben wird nach je " + IT_RUNDE + " Antworten.</p>";
+    return kasse + teil + wahl + regel;
+  }
   function aufgabeHolen(mission) {
+    /* FASSUNG 837 — im Italienisch-Raum die italienische Aufgabe (keine Mission, die prüft der Server auf Deutsch). */
+    if (itModus()) return itAufgabeHolen();
     rpc("spiel_aufgabe", { p_niveau: S.niveau, p_mission: Boolean(mission), p_kategorie: fragenKategorie() }).then(function (a) {
       if (!a || a.ok === false) { S.aufgabe = { frage: "", hinweis: (a && a.grund) || "Keine Aufgabe" }; }
       else S.aufgabe = a;
@@ -7164,8 +7616,37 @@
      nie mehr die eigenen Aufnahmen.
      --------------------------------------------------------------- */
   try { window.addEventListener("dma-eigen-geaendert", function () { panelAuffrischen(); if (S.sprech && S.sprech.ergebnis) setTimeout(function () { sprechWeiterPlanen(S.sprech); panelAuffrischen(); }, 1200); }); } catch (e) {}
+  /* FASSUNG 837 — ist die Sprechkarte gerade dran? Im Italienisch-Raum über die italienische Art. */
+  function sprechArtAn() { return itModus() ? S.itArt === "aussprache" : S.kategorie === "aussprache"; }
+  /* FASSUNG 837 — XANDER (Funk 214): „vielleicht in Verbindung mit Azoren dem Aussprache Trainer … wenn ich in den
+     italienischen Modus gehe". Das Wort kommt aus dem italienischen Wörterbuch, vorgesprochen wird von der
+     Azure-Stimme mit sprache „it-IT“ (Edge Function „aussprache“, Aktion „vorlesen“: it-IT-ElsaNeural), bewertet
+     Laut für Laut ebenfalls mit „it-IT“. Der Schlüssel bleibt auf dem Server. */
+  function itSprechWortHolen() {
+    var w = null;
+    try { w = IT.sprechWort(S.niveau); } catch (e) { w = null; }
+    if (!w) { S.sprech = { fehler: "Die italienischen Wörter sind noch nicht geladen." }; panelAuffrischen(); return; }
+    var sp = { laedt: true };
+    S.sprech = sp; panelAuffrischen();
+    var AP = window.AusspracheP, br = window.DMA_AUSSPR_BRUECKE;
+    Promise.resolve(br && br.bereit ? br.bereit() : null).catch(function () { return null; }).then(function () {
+      if (!AP || !AP.zentralVorlesen || !AP.zentralDa || !AP.zentralDa()) return null;
+      return AP.zentralVorlesen({ text: w.wort, sprache: "it-IT" });
+    }).catch(function () { return null; }).then(function (puffer) {
+      if (S.sprech !== sp) return;
+      var o = puffer ? { puffer: puffer, art: "azure", huelle: AP && AP.huellkurve ? AP.huellkurve(puffer, 150) : null } : null;
+      var stand = AP && AP.zentralStandJetzt ? AP.zentralStandJetzt() : null;
+      S.sprech = { it: true, wort: w.wort, silben: w.silben + " · " + w.de, niveau: w.niveau, original: o,
+                   hinweis: o ? "" : sprechBewertbar() ? "Vorsprechen geht gerade nicht – sprich das Wort trotzdem, bewertet wird auf Italienisch."
+                     : stand && stand.nichtAngemeldet ? "Zum Vorsprechen und Bewerten bitte anmelden."
+                     : "Die Aussprache-Stimme antwortet gerade nicht – tippe gleich noch einmal auf „Nächstes“." };
+      panelAuffrischen();
+      sprechAutoLauf();
+    });
+  }
   function sprechWortHolen(versuch) {
     clearTimeout(S.sprechWeiterUhr);
+    if (itModus()) return itSprechWortHolen();
     var EAl = window.DMA_EIGENE_AUSSPRACHE;
     if (EAl && EAl.liste === null) EAl.listeLaden().then(function () { panelAuffrischen(); });
     S.sprech = { laedt: true };
@@ -7198,7 +7679,7 @@
   function sprechAutoLauf() {
     var sp = S.sprech;
     if (!sprechAutoAn() || !sp || !sp.wort || sp.laeuft || sp.ergebnis || sp.autoFuer === sp.wort) return;
-    if (!panelOffen() || S.kategorie !== "aussprache") return;
+    if (!panelOffen() || !sprechArtAn()) return;
     sp.autoFuer = sp.wort;
     var dauer = sp.original && sp.original.puffer ? sprechHoeren() : 0;
     if (dauer) { sp.phase = "hoer"; panelAuffrischen(); }
@@ -7215,7 +7696,8 @@
     clearTimeout(S.sprechWeiterUhr);
     var e = sp && sp.ergebnis;
     if (!e || !sprechAutoAn()) return;
-    var EA = window.DMA_EIGENE_AUSSPRACHE;
+    /* FASSUNG 837 — italienische Wörter gehören nicht ins deutsche Aussprache-Wörterbuch. */
+    var EA = sp.it ? null : window.DMA_EIGENE_AUSSPRACHE;
     /* FASSUNG 783 — XANDER (Funk 201): „Die Aussprache Übung geht immer noch nicht automatisch weiter … es soll
        automatisch weitergehen … bis ich selber entscheidet die Aufgabe zu beenden". Gefunden: ab 95 % stand das
        Wörterbuch-Angebot da, und die Karte WARTETE auf eine Entscheidung – wer gut spricht (fast immer über 95 %),
@@ -7224,7 +7706,7 @@
     var angebot = Boolean(EA && EA.bietetAn(sp.wort, e.azure ? e.prozent : 0));
     sp.weiterMs = angebot ? 6000 : e.prozent >= 80 ? 2200 : e.fehlt ? 2600 : 4000;
     S.sprechWeiterUhr = setTimeout(function () {
-      if (S.sprech !== sp || !panelOffen() || S.kategorie !== "aussprache") return;
+      if (S.sprech !== sp || !panelOffen() || !sprechArtAn()) return;
       sprechWortHolen(0);
     }, sp.weiterMs);
   }
@@ -7273,7 +7755,7 @@
              Wie im Aussprachekurs: zuerst die Laut-Bewertung von Azure (Laut für Laut); nur wenn sie nicht geht, der
              Klangvergleich wie bisher. */
           if (AP.stufe1Da && AP.stufe1Da() && AP.alsWav) {
-            return AP.stufe1Bewerten({ wav: AP.alsWav(eigen), text: sp.wort, sprache: "de-DE" }).then(function (az) {
+            return AP.stufe1Bewerten({ wav: AP.alsWav(eigen), text: sp.wort, sprache: sp.it ? "it-IT" : "de-DE" }).then(function (az) {
               if (az && !az.fehler && typeof az.prozent === "number") {
                 var schlecht = null;
                 (az.woerter || []).forEach(function (w) { (w.laute || []).forEach(function (l) { if (l.note !== null && (!schlecht || l.note < schlecht.note)) schlecht = l; }); });
@@ -7296,6 +7778,20 @@
           return;
         }
         var prozent = erg && typeof erg.prozent === "number" ? erg.prozent : 0;
+        /* FASSUNG 837 — italienisch: kein Server-Aufruf (spiel_aussprache_fertig kennt nur deutsche Wörter), die
+           Punkte gehen in die italienische Kasse. Dieselbe Staffel wie auf der Karte: unter 30 % nichts, sonst
+           anteilig bis zur Obergrenze des Niveaus. */
+        if (sp.it) {
+          sp.laeuft = false;
+          var itMax = IT_SPRECH_MAX[sp.niveau] || 6, itGew = prozent >= 30 ? Math.max(1, Math.round(itMax * prozent / 100)) : 0;
+          sp.ergebnis = { prozent: prozent, gewonnen: itGew, hoechst: itMax, azure: Boolean(erg && erg.azure), tipp: (erg && erg.tipp) || "", laute: (erg && erg.laute) || [] };
+          itRundeZaehlen(itGew, prozent >= 60, false);
+          sprechWeiterPlanen(sp);
+          sp.hinweis = ""; sp.phase = "";
+          ton(itGew > 0 ? "bling" : "gummi", 0.45);
+          panelAuffrischen();
+          return;
+        }
         return rpc("spiel_aussprache_fertig", { p_wort: sp.wort, p_prozent: prozent }).then(function (r) {
           sp.laeuft = false;
           if (r && r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
@@ -7312,7 +7808,7 @@
         sp.laeuft = false; KLANG.stillUebung = false; stilleSetzen(); sp.phase = "";
         /* FASSUNG 783: auch nach einem Fehler weiter – ein Stillstand mitten im Üben ist schlimmer als ein ausgelassenes Wort. */
         sp.hinweis = "Das ging nicht: " + (e && e.message ? e.message : e) + (sprechAutoAn() ? " – gleich das nächste Wort." : "");
-        if (sprechAutoAn()) { clearTimeout(S.sprechWeiterUhr); sp.weiterMs = 3000; S.sprechWeiterUhr = setTimeout(function () { if (S.sprech === sp && panelOffen() && S.kategorie === "aussprache") sprechWortHolen(0); }, 3000); }
+        if (sprechAutoAn()) { clearTimeout(S.sprechWeiterUhr); sp.weiterMs = 3000; S.sprechWeiterUhr = setTimeout(function () { if (S.sprech === sp && panelOffen() && sprechArtAn()) sprechWortHolen(0); }, 3000); }
         panelAuffrischen();
       });
     };
@@ -7383,9 +7879,9 @@
     else if (sp.phase === "warte") { t = "Gleich bist du dran …"; cls = "hoer"; }
     else if (sp.phase === "du") { t = "Piep – jetzt du!"; cls = "du"; }
     else if (sp.phase === "rechnet") { t = "Ich höre zu …"; cls = "rechnet"; }
-    else if (e && sp.weiterMs && window.DMA_EIGENE_AUSSPRACHE && DMA_EIGENE_AUSSPRACHE.bietetAn(sp.wort, e.azure ? e.prozent : 0)) { t = "Übernehmen? Gleich geht es weiter"; cls = "weiter"; }
+    else if (e && sp.weiterMs && !sp.it && window.DMA_EIGENE_AUSSPRACHE && DMA_EIGENE_AUSSPRACHE.bietetAn(sp.wort, e.azure ? e.prozent : 0)) { t = "Übernehmen? Gleich geht es weiter"; cls = "weiter"; }
     else if (e && sp.weiterMs) { t = "Gleich kommt das nächste Wort"; cls = "weiter"; }
-    else if (e && window.DMA_EIGENE_AUSSPRACHE && DMA_EIGENE_AUSSPRACHE.bietetAn(sp.wort, e.azure ? e.prozent : 0)) { t = "Übernehmen – oder Nächstes"; cls = "weiter"; }
+    else if (e && !sp.it && window.DMA_EIGENE_AUSSPRACHE && DMA_EIGENE_AUSSPRACHE.bietetAn(sp.wort, e.azure ? e.prozent : 0)) { t = "Übernehmen – oder Nächstes"; cls = "weiter"; }
     else if (e) { t = "Tippe auf Nächstes"; cls = "info"; }
     else { t = sprechAutoAn() ? "Gleich wird vorgesprochen" : "Erst hören, dann sprechen"; cls = "info"; }
     return '<div class="sp-sprech-status sp-st-' + cls + '"><i></i><span>' + esc(t) + "</span></div>";
@@ -7397,7 +7893,7 @@
     if (!sp || sp.laedt) return '<div class="sp-sprech sp-sprech-kompakt">' + kopf(null) + '<div class="sp-sprech-wort">…</div></div>';
     if (sp.fehler) return '<div class="sp-sprech sp-sprech-kompakt">' + kopf(null) + '<div class="sp-klein sp-rot">' + esc(sp.fehler) + '</div><div class="sp-sprech-leiste"><button type="button" data-tu="sprechneu">' + SPRECH_SVG.neu + "<small>Neues Wort</small></button></div></div>";
     var e = sp.ergebnis;
-    var EA = window.DMA_EIGENE_AUSSPRACHE, eigeneDa = Boolean(EA && EA.hat(sp.wort));
+    var EA = sp.it ? null : window.DMA_EIGENE_AUSSPRACHE, eigeneDa = Boolean(EA && EA.hat(sp.wort));
     var mikAus = sp.laeuft || e || (!sp.original && !sprechBewertbar());
     return '<div class="sp-sprech sp-sprech-kompakt"' + (e && sp.weiterMs ? ' data-weiter="' + sp.weiterMs + '"' : "") + ">" + kopf(sp)
       + '<div class="sp-sprech-wort">' + esc(sp.wort) + '</div><div class="sp-sprech-silben">' + esc(sp.silben || "")
@@ -7419,7 +7915,7 @@
           return '<div class="sp-sprech-erg">' + pz.ring + '<div class="sp-sprech-erg-rechts"><div class="sp-erg-zeile"><b class="sp-sprech-note">' + e.prozent + (e.azure ? " / 100" : " % ähnlich") + "</b>"
             + (e.gewonnen > 0 ? '<span class="sp-sprech-punkte">+' + e.gewonnen + " Punkte" + (e.hoechst ? " <small>von " + e.hoechst + "</small>" : "") + "</span>" : "")
             + (sprechAutoAn() && sp.weiterMs ? "" : '<button type="button" data-tu="sprechneu" class="sp-sprech-weiterknopf">Weiter</button>') + "</div>" + pz.laute
-            + (window.DMA_EIGENE_AUSSPRACHE ? DMA_EIGENE_AUSSPRACHE.knoepfeHtml(sp.wort, e.azure ? e.prozent : 0) : "")
+            + (EA ? EA.knoepfeHtml(sp.wort, e.azure ? e.prozent : 0) : "")
             + '<div class="sp-erg-erkl">' + (e.tipp ? esc(e.tipp) + " " : "")
             + (e.gewonnen > 0 ? (e.prozent >= 80 ? "Gut gesprochen!" : "") : e.grenze ? "Für diese Stunde sind die Aussprache-Punkte aufgebraucht." : "Unter 30 % gibt es keine Punkte – hör noch einmal hin.")
             + "</div></div></div>";
@@ -15941,6 +16437,29 @@
     box.className = "sp-extra-frage";
     box.innerHTML = '<p class="sp-extra-frage-text">Einen Moment …</p><div class="sp-extra-frage-knoepfe"></div>';
     (extraEl || document.body).appendChild(box);
+    /* FASSUNG 837 — auch die Extra-Spiele fragen im Italienisch-Raum Italienisch (auf Deutsch gestellt), geprüft hier.
+       Der Server-Lohn am Spielende zählt nur deutsche Antworten – italienische landen in der italienischen Kasse. */
+    if (itModus()) {
+      var ia = null;
+      try { ia = IT.aufgabe(S.niveau, S.itArt && S.itArt !== "aussprache" ? S.itArt : ""); } catch (e) { ia = null; }
+      if (!ia) { box.remove(); hinweis("Gerade keine italienische Aufgabe – gleich noch einmal."); fertig(false, true); return; }
+      box.querySelector(".sp-extra-frage-text").textContent = ia.frage;
+      var ikn = box.querySelector(".sp-extra-frage-knoepfe");
+      ia.optionen.forEach(function (o) {
+        var ib = document.createElement("button"); ib.type = "button"; ib.textContent = o;
+        ib.addEventListener("click", function () {
+          ikn.querySelectorAll("button").forEach(function (x) { x.disabled = true; });
+          var ok = o === ia.loesung;
+          ib.classList.add(ok ? "sp-richtig" : "sp-falsch");
+          if (!ok) ikn.querySelectorAll("button").forEach(function (x) { if (x.textContent === ia.loesung) x.classList.add("sp-richtig"); });
+          ton(ok ? "bling" : "bonk", 0.45);
+          itRundeZaehlen(ok ? (IT_PUNKTE[ia.niveau] || 3) : 0, ok, ia.niveau === S.niveau);
+          setTimeout(function () { box.remove(); fertig(ok); }, ok ? 600 : 1300);
+        });
+        ikn.appendChild(ib);
+      });
+      return;
+    }
     rpc("spiel_aufgabe", { p_niveau: S.niveau, p_mission: false, p_kategorie: fragenKategorie() }).then(function (a) {
       if (!a || a.ok === false || !a.frage) { box.remove(); hinweis((a && a.grund) || "Gerade keine Aufgabe – gleich noch einmal."); fertig(false, true); return; }
       box.querySelector(".sp-extra-frage-text").textContent = a.frage;
@@ -16855,6 +17374,8 @@
       puppeSchiesst: puppeSchiesst,
       /* FASSUNG 716 */
       bahn: { plan: bahnPlan, stand: bahnStand, an: bahnAn, beiX: bahnBeiX, B: BAHN, takt: BAHN_TAKT },
+      /* FASSUNG 837 */
+      IT: IT, itModus: itModus, itPanelHtml: itPanelHtml,
       zustand: function () { return S; },
       setzen: function (o) { Object.keys(o || {}).forEach(function (k) { S[k] = o[k]; }); zeichnen(); },
       zeichnen: zeichnen, geschossZeigen: geschossZeigen, zahlZeigen: zahlZeigen, trefferZeigen: trefferZeigen,
