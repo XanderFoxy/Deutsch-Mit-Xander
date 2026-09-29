@@ -106,7 +106,9 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
       let neben = 0, weitBei = "", dhBei = "", beschlBei = "", schiefBei = "", sprungBei = "", weit = 0, sprung = 0, dh = 0, schritte = 0, schief = 0, schiefMax = 0, rueck = 0, vmax = 0, beschl = 0, weg = 0, voll = 0;
       for (let i = 1; i < mit.length; i++) {
         const p = mit[i].find((x) => x.id === a.id), o = mit[i - 1].find((x) => x.id === a.id);
-        const wa = AU.wegAbstand(p.x, p.y); if (wa > 1.25) neben++; if (wa > weit) { weit = wa; weitBei = p.z + " seite " + (+p.s).toFixed(2) + " v " + p.v + (p.r ? " rückwärts" : ""); }
+        /* FASSUNG 830 — XANDER: „fahren durch den Brunnen durch": an Brunnen, Bänken, Schmuck weicht die Strecke bewusst vom
+           Weg ab (AU.inUmfahrung) – dort zählt der Abstand zum Weg nicht */
+        const wa = AU.inUmfahrung && AU.inUmfahrung(p.x, p.y) ? 0 : AU.wegAbstand(p.x, p.y); if (wa > 1.25) neben++; if (wa > weit) { weit = wa; weitBei = p.z + " seite " + (+p.s).toFixed(2) + " v " + p.v + (p.r ? " rückwärts" : ""); }
         const d = Math.hypot(p.x - o.x, p.y - o.y); weg += d;
         if (d / dt - Math.max(p.v, o.v) > sprung) { sprung = d / dt - Math.max(p.v, o.v); sprungBei = o.z + ">" + p.z + " v " + p.v + " seite " + (+o.s).toFixed(2) + ">" + (+p.s).toFixed(2) + " i " + i; }
         if (W(p.h, o.h) / dt > dh) { dh = W(p.h, o.h) / dt; dhBei = o.z + ">" + p.z + " v " + p.v + " seite " + (+p.s).toFixed(2) + " " + p.g + " i " + i; }

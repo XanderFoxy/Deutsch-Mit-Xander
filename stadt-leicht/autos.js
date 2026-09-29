@@ -166,7 +166,10 @@
   }
   /* Strecke fürs Auto: abrunden, dann dreimal gleitend mitteln (±2,5 m) – so bleiben auch an den engen Knicken der
      Dorfwege (Bögen um die Häuser) keine Ecken, die kein Auto fahren kann. Anfang und Ende bleiben, wo sie sind. */
-  function fahrStrecke(pts) {
+  /* FASSUNG 830 — vorher um Hindernisse herum (umfahren), danach nie in eines hinein (wegschieben); ohne = das Haus, vor
+     dem das Auto halten will (dort hält fussIm es auf Abstand) */
+  function fahrStrecke(pts, ohne) {
+    pts = umfahren(pts, ohne);
     let W = strecke(rund(pts));
     for (let r = 0; r < 3 && W.n > 10; r++) {
       const X = W.X, Y = W.Y, n = W.n, neu = [];
@@ -177,8 +180,294 @@
       }
       W = strecke(neu);
     }
-    return W;
+    return wegschieben(W, ohne);
   }
+
+  /* ---------------- FASSUNG 830: Hindernisse umfahren ----------------
+     XANDER (wörtlich): „die Autos … fahren durch den Brunnen durch". Die Wege des Dorfes laufen über den Markt – mitten
+     durch Brunnen, Bänke, Buden, den Christbaum – und wer Schmuck oder ein Wahrzeichen auf einen Weg stellt (oder ein Haus
+     dorthin versetzt), dem fuhren die Autos einfach hindurch. Jetzt ist jedes Ding mit Grundfläche (Schmuck, Wahrzeichen,
+     Kulisse, Häuser; nicht Brücken, Laternen, Flaches und Bäume) ein Hindernis:
+       · umfahren(): führt die Strecke in ein Hindernis (Rechteck fuss × stufe, gedreht, mit Abstand FREI – so bleibt auch
+         ein Auto rechts vom Weg frei), geht sie außen herum – über die Ecken, auf der kürzeren Seite, die nicht in ein
+         anderes Ding, einen Rathausflügel oder ins Wasser führt. Dinge, zwischen denen kein Auto hindurchpasst (im Winter
+         Christbaum, Buden, Bänke und Krippe auf dem Markt), werden als ein Haufen umfahren (ihre konvexe Hülle). Endet die
+         Fahrt in einem Hindernis (Portal hinter dem Brunnen, Markt unter dem Christbaum), führt sie außen herum bis an
+         die Stelle des Randes, die dem Ziel am nächsten ist; beginnt sie daneben, geht es zuerst auf kurzem Weg hinaus.
+       · ausDingen(): streift der Wagenkasten beim Wenden doch einmal ein Ding, gleitet das Auto sanft daran entlang statt
+         hindurch; wo gewendet wird, hält es so weit davor, dass das Wenden frei ist (wendeTreffer).
+       · wegschieben(): was das Abrunden danach doch wieder hineinzieht, wird bis an den Rand geschoben.
+       · abweichung()/spurBereich(): am Hindernis gilt die umfahrene Strecke als Weg, und die Spur bleibt so schmal, dass
+         das Auto das Ding nicht streift.
+       · der Halt (bis) und das Hinstellen liegen nie in einem Hindernis. */
+  const HALB_MAX = 1.05;                         // halbe Breite des breitesten Autos (Batmobil)
+  const FREI = HALB_MAX + SEITE + 1.0;           // ≈ 2,5 m zwischen Strecke und Rand von Schmuck und Wahrzeichen (auch das lange Batmobil schwenkt im Bogen nicht hinein)
+  const FREI_HAUS = HALB_MAX + SEITE + 0.1;      // an Häusern: nur, wenn der Weg (fast) hindurchführt
+  const lokal = (H, x, y) => { const dx = x - H.x, dy = y - H.y; return [dx * H.c + dy * H.s, -dx * H.s + dy * H.c]; };
+  const weltVon = (H, u, v) => [H.x + u * H.c - v * H.s, H.y + u * H.s + v * H.c];
+  const eckenVon = (H, r) => [[H.hw + r, H.hd + r], [-H.hw - r, H.hd + r], [-H.hw - r, -H.hd - r], [H.hw + r, -H.hd - r]].map((q) => weltVon(H, q[0], q[1]));
+  /* konvexe Hülle (gegen den Uhrzeigersinn) */
+  function huelle(p) {
+    p = p.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const kr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const u = [], o = [];
+    for (const q of p) { while (u.length >= 2 && kr(u[u.length - 2], u[u.length - 1], q) <= 0) u.pop(); u.push(q); }
+    for (let i = p.length - 1; i >= 0; i--) { const q = p[i]; while (o.length >= 2 && kr(o[o.length - 2], o[o.length - 1], q) <= 0) o.pop(); o.push(q); }
+    return u.slice(0, -1).concat(o.slice(0, -1));
+  }
+  /* liegen zwei Vierecke (Ecken im Umlauf) übereinander? (Trennachsen) */
+  function ueber(A, B) {
+    for (const P of [A, B]) for (let i = 0; i < P.length; i++) {
+      const p = P[i], q = P[(i + 1) % P.length], nx = q[1] - p[1], ny = p[0] - q[0];
+      let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+      for (const e of A) { const d = e[0] * nx + e[1] * ny; if (d < a0) a0 = d; if (d > a1) a1 = d; }
+      for (const e of B) { const d = e[0] * nx + e[1] * ny; if (d < b0) b0 = d; if (d > b1) b1 = d; }
+      if (a1 < b0 || b1 < a0) return false;
+    }
+    return true;
+  }
+  function inHuelle(Hu, x, y) {
+    for (let i = 0; i < Hu.length; i++) { const p = Hu[i], q = Hu[(i + 1) % Hu.length]; if ((q[0] - p[0]) * (y - p[1]) - (q[1] - p[1]) * (x - p[0]) < 0) return false; }
+    return true;
+  }
+  function huelleAbstand(Hu, x, y) {
+    if (inHuelle(Hu, x, y)) return 0;
+    let d = Infinity;
+    for (let i = 0; i < Hu.length; i++) { const a = Hu[i], b = Hu[(i + 1) % Hu.length], dx = b[0] - a[0], dy = b[1] - a[1], t = klemm(((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy || 1), 0, 1); d = Math.min(d, Math.hypot(x - a[0] - dx * t, y - a[1] - dy * t)); }
+    return d;
+  }
+  let hindMerk = null, hindStand = -1;
+  function hindernisse() {
+    if (hindMerk && hindStand === SZ.stand + ":" + SZ.jahr) return hindMerk;
+    const aus = [];
+    for (const o of SZ.objekte) {
+      /* (Zäune nicht: sie säumen Weiden und Wege, ein Weg durch ein Tor ist gewollt) */
+      if (!o.fuss || o.versteckt || o.geist || o.art === "natur" || SZ.flach(o) || /^d_(bruecke|laterne|zaun)/.test(o.bild || "")) continue;
+      const k = o.stufe || 1, w = (o.dreh || 0) * Math.PI / 2, haus = o.art === "haus";
+      const H = { o: o, x: o.x, y: o.y, c: Math.cos(w), s: Math.sin(w), hw: o.fuss[0] * k / 2, hd: o.fuss[1] * k / 2, rand: haus ? FREI_HAUS : FREI, haus: haus };
+      /* Häuser aus Flügeln (Rathaus): ihr Rechteck deckt den Platz vor dem Portal – dort zählen nur die Flügel, und nur beim
+         Wählen der Seite (die Wege des Dorfes führen nie hinein) */
+      if (o.grundriss) { const oc = Math.cos(w), os = Math.sin(w); H.teile = o.grundriss.map((poly) => poly.map((p) => [o.x + (p[0] * oc - p[1] * os) * k, o.y + (p[0] * os + p[1] * oc) * k])); }
+      H.r = Math.hypot(H.hw, H.hd) + H.rand + 2;
+      aus.push(H);
+    }
+    /* Haufen: Dinge, zwischen denen kein Auto mit Abstand hindurchpasst (Markt im Winter: Christbaum, Buden, Bänke, Krippe),
+       werden als Ganzes umfahren – außen um ihre gemeinsame konvexe Hülle. Häuser bleiben für sich (vor ihnen wird gehalten). */
+    const frei = aus.filter((H) => !H.teile), n = frei.length, eltern = frei.map((H, i) => i);
+    const wurzel = (i) => (eltern[i] === i ? i : (eltern[i] = wurzel(eltern[i])));
+    const E = frei.map((H) => eckenVon(H, H.rand));
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      if (frei[i].haus || frei[j].haus || Math.hypot(frei[i].x - frei[j].x, frei[i].y - frei[j].y) > frei[i].r + frei[j].r) continue;
+      if (ueber(E[i], E[j])) eltern[wurzel(i)] = wurzel(j);
+    }
+    const gruppen = new Map();
+    frei.forEach((H, i) => { const w = wurzel(i); if (!gruppen.has(w)) gruppen.set(w, []); gruppen.get(w).push(H); });
+    const haufen = [];
+    for (const glieder of gruppen.values()) {
+      const treff = huelle([].concat(...glieder.map((H) => eckenVon(H, H.rand)))), um = huelle([].concat(...glieder.map((H) => eckenVon(H, H.rand + 1))));
+      let cx = 0, cy = 0; for (const p of um) { cx += p[0]; cy += p[1]; } cx /= um.length; cy /= um.length;
+      let r = 0; for (const p of um) r = Math.max(r, Math.hypot(p[0] - cx, p[1] - cy));
+      const hf = { glieder: glieder, treff: treff, um: um, x: cx, y: cy, r: r + 2 };
+      for (const H of glieder) H.haufen = hf;
+      haufen.push(hf);
+    }
+    aus.haufen = haufen;
+    hindMerk = aus; hindStand = SZ.stand + ":" + SZ.jahr;
+    return aus;
+  }
+  AU.hindernisse = hindernisse;
+  function imKasten(H, x, y, r) { const q = lokal(H, x, y); return Math.abs(q[0]) < H.hw + r && Math.abs(q[1]) < H.hd + r; }
+  function inFluegeln(H, x, y, r) {
+    for (const poly of H.teile) {
+      let innen = false, dd = Infinity;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const a = poly[i], b = poly[j];
+        if ((a[1] > y) !== (b[1] > y) && x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) innen = !innen;
+        const dx = b[0] - a[0], dy = b[1] - a[1], t = klemm(((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy || 1), 0, 1);
+        dd = Math.min(dd, Math.hypot(x - a[0] - dx * t, y - a[1] - dy * t));
+      }
+      if (innen || dd < r) return true;
+    }
+    return false;
+  }
+  /* Abstand eines Punktes vom Rechteck (innen 0) */
+  function randAbstand(H, x, y) { const q = lokal(H, x, y); return Math.hypot(Math.max(0, Math.abs(q[0]) - H.hw), Math.max(0, Math.abs(q[1]) - H.hd)); }
+  function nahe(liste, pts, extra) {
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const p of pts) { if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0]; if (p[1] < y0) y0 = p[1]; if (p[1] > y1) y1 = p[1]; }
+    return liste.filter((H) => H.x + H.r + extra > x0 && H.x - H.r - extra < x1 && H.y + H.r + extra > y0 && H.y - H.r - extra < y1);
+  }
+  function dicht(pts, d) {
+    const aus = [pts[0].slice()];
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i], n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / d));
+      for (let k = 1; k <= n; k++) aus.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]);
+    }
+    return aus;
+  }
+  /* Ist ein Punkt für ein Auto verbaut (anderes Hindernis, Rathausflügel, Wasser)? – zum Wählen der Seite */
+  function verbaut(liste, hf, x, y) {
+    for (const G of liste) {
+      if (G.haufen === hf && hf) continue;
+      if (G.teile ? inFluegeln(G, x, y, HALB_MAX + 0.3) : imKasten(G, x, y, HALB_MAX + 0.3)) return true;
+    }
+    const B = ST.boden;
+    return !!(B && B.wert && B.wert(x, y, 1) > 0.3);
+  }
+  /* von e (vor dem Haufen) nach x (dahinter) außen herum: über die Ecken seiner Hülle (mit 1 m Zugabe), auf der kürzeren
+     Seite, die nicht in ein anderes Ding, einen Rathausflügel oder ins Wasser führt */
+  function herum(hf, e, x, liste) {
+    const U = hf.um, TAU2 = Math.PI * 2, wink = (p) => ((Math.atan2(p[1] - hf.y, p[0] - hf.x) % TAU2) + TAU2) % TAU2;
+    const we = wink(e), wx = wink(x), eckW = U.map(wink);
+    const weg = (dir) => {
+      const span = dir > 0 ? ((wx - we) % TAU2 + TAU2) % TAU2 : ((we - wx) % TAU2 + TAU2) % TAU2, l2 = [];
+      for (let k = 0; k < U.length; k++) {
+        const d = dir > 0 ? ((eckW[k] - we) % TAU2 + TAU2) % TAU2 : ((we - eckW[k]) % TAU2 + TAU2) % TAU2;
+        if (d > 1e-6 && d < span) l2.push([d, k]);
+      }
+      l2.sort((u, v) => u[0] - v[0]);
+      const pts = l2.map((z) => U[z[1]].slice());
+      let L = 0, strafe = 0, alt = e;
+      for (const p of pts.concat([x])) {
+        L += Math.hypot(p[0] - alt[0], p[1] - alt[1]);
+        for (const t of [0.5, 1]) if (verbaut(liste, hf, alt[0] + (p[0] - alt[0]) * t, alt[1] + (p[1] - alt[1]) * t)) strafe += 1000;
+        alt = p;
+      }
+      return { pts: pts, kosten: L + strafe };
+    };
+    const a = weg(1), b = weg(-1);
+    return (a.kosten <= b.kosten ? a : b).pts;
+  }
+  /* nächster Punkt auf dem Rand einer Hülle */
+  function aufHuelle(Hu, x, y) {
+    let best = null, d0 = Infinity;
+    for (let i = 0; i < Hu.length; i++) {
+      const a = Hu[i], b = Hu[(i + 1) % Hu.length], dx = b[0] - a[0], dy = b[1] - a[1], t = klemm(((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy || 1), 0, 1);
+      const px = a[0] + dx * t, py = a[1] + dy * t, d = Math.hypot(x - px, y - py);
+      if (d < d0) { d0 = d; best = [px, py]; }
+    }
+    return best;
+  }
+  function umfahren(pts, ohne) {
+    if (!pts || pts.length < 2) return pts;
+    const alle = hindernisse(), liste = nahe(alle, pts, 4);
+    const haufen = alle.haufen.filter((hf) => liste.some((H) => H.haufen === hf) && !(hf.glieder.length === 1 && hf.glieder[0].o === ohne));
+    if (!haufen.length) return pts;
+    let P = dicht(pts, 0.5);
+    const drin = (hf, p) => Math.abs(p[0] - hf.x) < hf.r && Math.abs(p[1] - hf.y) < hf.r && inHuelle(hf.treff, p[0], p[1]);
+    const erledigt = new Set();
+    for (let runde = 0; runde < 8; runde++) {
+      let neu = null;
+      for (const hf of haufen) {
+        if (erledigt.has(hf)) continue;
+        let i0 = -1;
+        /* steht das Auto selbst schon am Rand (P[0] im Abstand): herum erst dort, wo die Strecke das Ding selbst träfe */
+        if (drin(hf, P[0])) {
+          erledigt.add(hf);
+          const hart = (q) => hf.glieder.some((H) => imKasten(H, q[0], q[1], HALB_MAX + 1.2));
+          let j = -1; for (let i = 1; i < P.length && drin(hf, P[i]); i++) if (hart(P[i])) { j = i; break; }
+          if (j < 0) continue;
+          let k = j; while (k + 1 < P.length && drin(hf, P[k + 1])) k++;
+          const ende = k === P.length - 1 ? aufHuelle(hf.um, P[k][0], P[k][1]) : P[k + 1];
+          neu = P.slice(0, j).concat(herum(hf, P[j - 1], ende, liste), k === P.length - 1 ? [ende] : P.slice(k + 1));
+          break;
+        }
+        for (let i = 1; i < P.length; i++) if (drin(hf, P[i])) { i0 = i; break; }
+        if (i0 < 0) continue;
+        let i1 = i0; while (i1 + 1 < P.length && drin(hf, P[i1 + 1])) i1++;
+        const letzt = i1 === P.length - 1;
+        /* endet die Fahrt darin (das Portal hinter dem Brunnen, der Markt unter dem Christbaum): außen herum bis an die
+           Stelle des Randes, die dem Ziel am nächsten ist – dort hält das Auto */
+        const ende = letzt ? aufHuelle(hf.um, P[i1][0], P[i1][1]) : P[i1 + 1];
+        neu = P.slice(0, i0).concat(herum(hf, P[i0 - 1], ende, liste), letzt ? [ende] : P.slice(i1 + 1));
+        if (letzt) erledigt.add(hf);
+        break;
+      }
+      if (!neu) break;
+      P = dicht(neu, 0.5);
+    }
+    return P;
+  }
+  function wegschieben(W, ohne) {
+    const liste = nahe(hindernisse(), [[Math.min(...W.X), Math.min(...W.Y)], [Math.max(...W.X), Math.max(...W.Y)]], 2).filter((H) => !H.teile && H.o !== ohne);
+    if (!liste.length) return W;
+    const X = Array.from(W.X), Y = Array.from(W.Y);
+    const schieben = () => {
+      let n = 0;
+      for (let i = 1; i < X.length - 1; i++) for (const H of liste) {
+        const r = H.rand - 0.35, q = lokal(H, X[i], Y[i]), eu = H.hw + r - Math.abs(q[0]), ev = H.hd + r - Math.abs(q[1]);
+        if (eu <= 0 || ev <= 0 || Math.min(eu, ev) > 1.2) continue;   // (nur flache Anschnitte – tiefer hinein führt umfahren nie)
+        if (eu < ev) q[0] = Math.sign(q[0] || 1) * (H.hw + r); else q[1] = Math.sign(q[1] || 1) * (H.hd + r);
+        const p = weltVon(H, q[0], q[1]); X[i] = p[0]; Y[i] = p[1]; n++;
+      }
+      return n;
+    };
+    if (!schieben()) return W;
+    /* leicht glätten, dann noch einmal schieben */
+    for (let i = 2; i < X.length - 2; i++) { X[i] = (X[i - 1] + X[i] + X[i + 1]) / 3; Y[i] = (Y[i - 1] + Y[i] + Y[i + 1]) / 3; }
+    schieben();
+    return strecke(X.map((x, i) => [x, Y[i]]));
+  }
+  /* steht ein Auto bei s auf der Strecke W (Spur rechts) in einem Hindernis? */
+  function imHindernis(W, s, A, ohne, rand) {
+    const liste = hindernisse();
+    for (let d = -A.hinten; d <= A.vorn + 0.01; d += 0.7) {
+      const p = an(W, s + d);
+      for (const H of liste) {
+        if (H.teile || H.o === ohne || Math.abs(H.x - p.x) > H.r || Math.abs(H.y - p.y) > H.r) continue;
+        if (imKasten(H, p.x - p.ty * SEITE, p.y + p.tx * SEITE, rand != null ? rand : A.halb + 0.2)) return true;
+      }
+    }
+    return false;
+  }
+  /* Letzte Sicherung: streift der Wagenkasten doch ein Hindernis (enges Wenden an einer Spitzkehre neben dem Brunnen, ein
+     Bogen dicht an einer Bank), wird das Auto um genau so viel zur Seite geschoben, wie es eindringt (kleinste Trennachse) –
+     es gleitet am Ding entlang statt hindurch. */
+  function ausDingen(a, dt, grenze) {
+    let rest = grenze != null ? grenze : 0.4 * (dt || 0.05) + 0.002;   // beim Wenden zusammen höchstens ≈ 0,45 m/s zur Seite: kein Ruck
+    const liste = hindernisse(), A = a.A, c = Math.cos(a.h), s = Math.sin(a.h), R = Math.hypot(Math.max(A.vorn, A.hinten), A.halb) + 0.2;
+    for (const H of liste) {
+      if (H.teile || H.haus || Math.abs(H.x - a.x) > H.r + R || Math.abs(H.y - a.y) > H.r + R) continue;   // (Häuser: nur umfahren)
+      const auto = [[A.vorn + 0.1, A.halb + 0.1], [A.vorn + 0.1, -A.halb - 0.1], [-A.hinten - 0.1, -A.halb - 0.1], [-A.hinten - 0.1, A.halb + 0.1]].map((p) => [a.x + p[0] * c - p[1] * s, a.y + p[0] * s + p[1] * c]);
+      const ding = eckenVon(H, 0);
+      let best = null;
+      for (const ax of [[H.c, H.s], [-H.s, H.c], [c, s], [-s, c]]) {
+        let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+        for (const p of auto) { const d = p[0] * ax[0] + p[1] * ax[1]; if (d < a0) a0 = d; if (d > a1) a1 = d; }
+        for (const p of ding) { const d = p[0] * ax[0] + p[1] * ax[1]; if (d < b0) b0 = d; if (d > b1) b1 = d; }
+        if (a1 <= b0 || b1 <= a0) { best = null; break; }   // getrennt
+        const rechts = b1 - a0, links = a1 - b0, t = rechts < links ? rechts : -links;
+        if (!best || Math.abs(t) < Math.abs(best.t)) best = { t: t, ax: ax };
+      }
+      if (best && Math.abs(best.t) < 1.5 && rest > 0) { const t = klemm(best.t, -rest, rest); rest -= Math.abs(t); a.x += best.ax[0] * t; a.y += best.ax[1] * t; a.geschoben = (a.geschoben || 0) + Math.abs(t); }
+    }
+  }
+  /* Wie oft streift der Wagenkasten beim Wenden in drei Zügen (Richtung dir) ein Hindernis? (grob nachgefahren) */
+  function wendeTreffer(a, dir, x, y, h, nebenWeg, ohne) {
+    if (x == null) { x = a.x; y = a.y; h = a.h; }
+    if (nebenWeg) {   // kommt das Auto beim Wenden weiter als 1,9 m vom Weg?
+      const L = WENDE_R * Math.PI / 3;
+      for (let zug = 0; zug < 3; zug++) for (let d = 0; d < L; d += 0.3) { h += dir * 0.3 / WENDE_R; const r = zug === 1 ? -1 : 1; x += Math.cos(h) * 0.3 * r; y += Math.sin(h) * 0.3 * r; if (AU.wegAbstand(x, y) > 1.9) return 1; }
+      return 0;
+    }
+    const liste = hindernisse().filter((H) => !H.teile && !H.haus && H.o !== ohne && Math.hypot(H.x - x, H.y - y) < H.r + 8);
+    if (!liste.length) return 0;
+    const A = a.A, L = WENDE_R * Math.PI / 3;
+    let n = 0;
+    for (let zug = 0; zug < 3; zug++) for (let d = 0; d < L; d += 0.3) {
+      h += dir * 0.3 / WENDE_R; const r = zug === 1 ? -1 : 1; x += Math.cos(h) * 0.3 * r; y += Math.sin(h) * 0.3 * r;
+      const c = Math.cos(h), s = Math.sin(h);
+      const auto = [[A.vorn, A.halb], [A.vorn, -A.halb], [-A.hinten, -A.halb], [-A.hinten, A.halb]].map((p) => [x + p[0] * c - p[1] * s, y + p[0] * s + p[1] * c]);
+      for (const H of liste) if (ueber(auto, eckenVon(H, 0.1))) n++;
+    }
+    return n;
+  }
+  /* für Sonden: liegt der Punkt an einem Hindernis (dort weicht die Strecke vom Weg des Dorfes ab)? */
+  AU.inUmfahrung = function (x, y, extra) {
+    const e = extra == null ? 4 : extra;   // (2,5 m Band um die Hülle, dazu die Spur neben der Strecke)
+    for (const hf of hindernisse().haufen) if (Math.abs(x - hf.x) < hf.r + e && Math.abs(y - hf.y) < hf.r + e && huelleAbstand(hf.um, x, y) < e) return true;
+    return false;
+  };
   /* Tempo je Streckenpunkt aus der Krümmung (Richtungswechsel über ±1,5 m) */
   /* dazu die Krümmung mit Vorzeichen (+ = Bogen nach rechts im Bild, dort ist rechts innen) */
   function kurvenTempo(W, V, kr) {
@@ -295,6 +584,7 @@
     const soll = sollFahren();
     soll.forEach((id, n) => {
       const war = alt.find((a) => a.id === id);
+      if (war && war.gast) { war.gast = null; war.fertig = false; }   // FASSUNG 830 — der Gast wird zum eigenen Auto (gekauft, Probefahrt)
       if (war && gleich) {
         /* Ziel noch da? sonst nach dem nächsten Halt ein neues */
         if (war.ziel) { const z = ziele.find((x) => x.i === war.ziel.i); if (z) war.ziel = z; else war.ziel = Object.assign({}, war.ziel, { haus: null }); }
@@ -307,29 +597,42 @@
       else {
         const wo = AU.startBei && AU.startBei[id];
         if (wo) { const k = knotenBei(wo.x, wo.y); a.knoten = k.i; delete AU.startBei[id]; }
-        else a.knoten = ziele[(Math.floor(ST.hash2(n, 3, 815) * ziele.length) + n * 5) % ziele.length].i;
-        hinstellen(a, a.knoten);
+        else {
+          /* FASSUNG 830 — nicht in ein Hindernis stellen (im Winter steht auf dem Markt der Christbaum): dann das nächste Ziel */
+          const k0 = Math.floor(ST.hash2(n, 3, 815) * ziele.length) + n * 5;
+          for (let k = 0; k < ziele.length; k++) { a.knoten = ziele[(k0 + k) % ziele.length].i; if (hinstellen(a, a.knoten)) break; }
+        }
+        if (wo) hinstellen(a, a.knoten);
       }
       AU.liste.push(a);
     });
+    /* FASSUNG 830 — ein Gast (Besuch am Tag) fährt weiter, solange die Wege dieselben sind */
+    if (gleich) for (const g of alt) if (g.gast && !g.fertig && !AU.liste.some((a) => a.id === g.id)) AU.liste.push(g);
   }
   /* am Knoten stehen: 4,5 m davor auf einer seiner Kanten, Blick zum Knoten */
   function hinstellen(a, i) {
     const nb = netz.N[i].filter((j) => netz.im(j));
     const P = netz.P[i];
-    let x = P[0], y = P[1], h = 0;
+    let x = P[0], y = P[1], h = 0, frei = false;
     if (nb.length) {
       /* ein paar Punkte zurück auf der Kante (die Wege haben alle ~3 m einen Punkt) */
       let vor = i, j = nb[0], l = 0; const pts = [P];
-      while (l < 4.5 && j >= 0) { const Q = netz.P[j]; l += Math.hypot(Q[0] - pts[pts.length - 1][0], Q[1] - pts[pts.length - 1][1]); pts.push(Q); const w = netz.N[j].filter((m) => m !== vor && netz.im(m)); vor = j; j = w.length === 1 ? w[0] : -1; }
-      const W = strecke(pts.slice().reverse()), e = an(W, Math.max(0, W.L - 4.5), 1.2);
+      while (l < 14 && j >= 0) { const Q = netz.P[j]; l += Math.hypot(Q[0] - pts[pts.length - 1][0], Q[1] - pts[pts.length - 1][1]); pts.push(Q); const w = netz.N[j].filter((m) => m !== vor && netz.im(m)); vor = j; j = w.length === 1 ? w[0] : -1; }
+      const W = strecke(pts.slice().reverse());
+      /* FASSUNG 830 — nicht in ein Hindernis stellen (Markt unter dem Christbaum): dann ein Stück weiter zurück */
+      let d = 4.5; while (d < W.L - 3 && imHindernis(W, W.L - d, a.A, null)) d += 1.5;
+      const e = an(W, Math.max(0, W.L - Math.min(d, W.L)), 1.2);
       x = e.x; y = e.y; h = Math.atan2(e.ty, e.tx);
+      frei = !imHindernis(W, W.L - Math.min(d, W.L), a.A, null);
     }
     a.x = x; a.y = y; a.h = h; a.seite = 0; a.W = null; a.v = 0;
+    return frei;
   }
 
   /* ---------------- Fahrten ---------------- */
   function zielWaehlen(a) {
+    /* FASSUNG 830 — ein Gast fährt ein Ziel an und dann wieder hinaus (zu einem Weg am Kartenrand) */
+    if (a.gast) { if (a.gast.ziele > 0) a.gast.ziele--; else return { i: a.gast.raus, haus: null, name: "Ausfahrt", raus: true }; }
     const moegl = ziele.filter((z) => z.i !== a.knoten && !AU.liste.some((b) => b !== a && b.ziel && b.ziel.i === z.i));
     const liste = moegl.length ? moegl : ziele.filter((z) => z.i !== a.knoten);
     /* nicht immer ganz nah: unter den zufälligen Zielen eher eins mit etwas Weg */
@@ -364,8 +667,9 @@
     const z = zFest || zielWaehlen(a); if (!z) return null;
     let pts = ptsFest;
     if (!pts) { const k = weg(knoten, z.i); if (!k || k.length < 2) return null; pts = k.map((i) => netz.P[i]); }
+    pts = umfahren(pts, z.haus);   // FASSUNG 830 — um Brunnen, Bänke, Schmuck herum
     const T = teilen(pts, z);
-    const W0 = fahrStrecke(T.pts.slice());
+    const W0 = fahrStrecke(T.pts.slice(), z.haus);
     const f = fusspunkt(W0, x, y, 12), p = an(W0, f.s, 1.2);
     const blick = Math.cos(winkel(Math.atan2(p.ty, p.tx) - h));
     /* der Weg führt zurück, am Auto vorbei: wenden, dann auf W0 ab dem Fußpunkt */
@@ -377,20 +681,28 @@
     a.plan = null;
     if (!pl) { a.halt = 3; return; }
     const z = pl.z;
+    const ohne = (pl.endZ || z).haus || null;   // FASSUNG 830 — vor diesem Haus hält das Auto (kein Hindernis)
     const wenden = (nach) => {
       /* zu der Seite hin wenden, auf der die neue Strecke liegt (bei Spitzkehren der andere Ast) */
       const fq = fusspunkt(pl.W0, a.x, a.y, 16), q0 = an(pl.W0, fq.s), kr = Math.cos(a.h) * (q0.y - a.y) - Math.sin(a.h) * (q0.x - a.x);
-      a.wende = { zug: 0, rest: WENDE_R * Math.PI / 3, v: 0, dir: kr < -0.05 ? -1 : 1 };
+      let dir = kr < -0.05 ? -1 : 1;
+      /* FASSUNG 830 — streift das Wenden auf dieser Seite ein Hindernis (Spitzkehre neben dem Brunnen), dann zur anderen */
+      /* (aber nicht, wenn das Auto dabei vom Pflaster käme – mehr als 1,9 m neben dem Weg) */
+      if (wendeTreffer(a, dir) > wendeTreffer(a, -dir) && !wendeTreffer(a, -dir, null, null, null, true)) dir = -dir;
+      a.wende = { zug: 0, rest: WENDE_R * Math.PI / 3, v: 0, dir: dir };
       a.zustand = "wendet"; a.W = null; a.nachWende = nach;
     };
-    if (pl.wenden) { wenden({ W: pl.W0, z: z }); return; }
+    if (pl.wenden) { wenden({ W: pl.W0, z: z, ohne: ohne }); return; }
     /* steht das Auto schon auf dem Weg, dann ab dort; sonst vom Standort aus hinein (die Ecke wird rund) */
     const f = fusspunkt(pl.W0, a.x, a.y, 12), p = an(pl.W0, f.s, 1.2);
     if (f.d < 0.9 && Math.cos(winkel(Math.atan2(p.ty, p.tx) - a.h)) > 0.3) { fahrtBeginnen(a, pl.W0, f.s, z); return; }
     /* liegt der erste Knoten hinter dem Auto, erst wenden – dann vom Standort aus hinein */
-    const N = pl.pts[0], dN = Math.hypot(N[0] - a.x, N[1] - a.y);
-    if (dN > 1 && Math.cos(Math.atan2(N[1] - a.y, N[0] - a.x) - a.h) < -0.2) { wenden({ pts: pl.pts, z: z }); return; }
-    fahrtBeginnen(a, fahrStrecke([[a.x, a.y]].concat(pl.pts)), 0, z);
+    /* FASSUNG 830 — steht das Auto (fast) auf dem ersten Knoten, zählt der erste Punkt, der 2 m weg liegt (sonst begann die
+       Strecke mit einem spitzen Knick zurück) */
+    let N = pl.pts[0], dN = Math.hypot(N[0] - a.x, N[1] - a.y);
+    if (dN <= 1) { const N2 = pl.pts.find((q) => Math.hypot(q[0] - a.x, q[1] - a.y) >= 2); if (N2) { N = N2; dN = Math.hypot(N[0] - a.x, N[1] - a.y); } }
+    if (dN > 1 &&Math.cos(Math.atan2(N[1] - a.y, N[0] - a.x) - a.h) < -0.2) { wenden({ pts: pl.pts, z: z, ohne: ohne }); return; }
+    fahrtBeginnen(a, fahrStrecke([[a.x, a.y]].concat(pl.pts), ohne), 0, z);
   }
   function fahrtBeginnen(a, W, s0, z) {
     const f = fusspunkt(W, a.x, a.y, s0 + 12, s0 - 3);
@@ -407,10 +719,26 @@
     /* Ende: 4,5 m vor dem Knoten (vor dem Haus; Platz für einen Bogen beim Weiterfahren und fürs Wenden), nicht in der Grundfläche des Hauses */
     let bis = Math.max(a.s + 1, W.L - (z.kehre ? 3 : 4.5));
     if (z.haus) { while (bis > a.s + 1 && fussIm(W, bis, a.A, z.haus)) bis -= 0.5; }
+    /* FASSUNG 830 — und nie in einem Hindernis (Brunnen, Christbaum auf dem Markt …) */
+    while (bis > a.s + 1 && imHindernis(W, bis, a.A, z.haus)) bis -= 0.5;
+    /* an einer Spitzkehre (und oft auch nach dem Halt) wird gewendet: nicht so dicht an einem Hindernis, dass es der
+       Wagenkasten dabei streift – an einer Spitzkehre bis 12 m früher halten, sonst bis 4 m */
+    /* (frei heißt: in eine Richtung ohne Streifen und ohne vom Pflaster zu kommen; findet sich so keine Stelle, bleibt der Halt) */
+    const bis0 = bis; let frei = false;
+    for (let k = 0, kmax = z.kehre ? 12 : 4; k < kmax && bis > a.s + 1; k++) {
+      const e = an(W, bis, 1.2), ex = e.x - e.ty * SEITE, ey = e.y + e.tx * SEITE, eh = Math.atan2(e.ty, e.tx);
+      if ([1, -1].some((d) => !wendeTreffer(a, d, ex, ey, eh) && !wendeTreffer(a, d, ex, ey, eh, true))) { frei = true; break; }
+      bis -= 1;
+    }
+    if (!frei) bis = bis0;
     a.bis = bis;
     a.dev = abweichung(W);
     a.plan = null;
+    /* FASSUNG 830 — steht das Auto neben dem Anfang der Strecke (nach dem Wenden), bleibt es, wo es ist: der Rest wird auf
+       den ersten 1,5 m abgebaut, statt dass es einen Ruck macht */
+    const x0 = a.x, y0 = a.y; a.rest = null;
     lage(a, 0, 0);
+    if (Math.hypot(a.x - x0, a.y - y0) > 0.005) { a.rest = { x: x0 - a.x, y: y0 - a.y, weg: 0 }; a.x = x0; a.y = y0; }
   }
   /* Wie weit liegt die (abgerundete) Strecke neben den Wegen des Dorfes? + = rechts (je Streckenpunkt).
      Damit bleibt das Auto samt Spur und Ausweichen immer unter 2 m vom Weg. */
@@ -428,6 +756,21 @@
       dev[i] = dx * -p.ty + dy * p.tx;           // quer zur Fahrtrichtung (+ = rechts)
       dev.quer[i] = Math.abs(dx * p.tx + dy * p.ty);   // längs (an Abzweigen liegt der nächste Weg schräg)
     }
+    /* FASSUNG 830 — an einem Hindernis gilt die (umfahrene) Strecke selbst als Weg; die Spur bleibt dort so schmal, dass
+       das Auto das Ding nicht streift (dev.eng: größter Abstand der Automitte von der Strecke) */
+    dev.eng = new Float32Array(W.n + 1).fill(9);
+    const hind = nahe(hindernisse(), [[x0, y0], [x1, y1]], 4).filter((H) => !H.teile);
+    const hfs = [...new Set(hind.map((H) => H.haufen))];
+    if (hind.length) for (let i = 0; i <= W.n; i++) {
+      const x = W.X[i], y = W.Y[i];
+      for (const hf of hfs) if (Math.abs(x - hf.x) < hf.r + 3 && Math.abs(y - hf.y) < hf.r + 3 && huelleAbstand(hf.um, x, y) < 2.5) { dev[i] = 0; dev.quer[i] = 0; }
+      for (const H of hind) {
+        const d = randAbstand(H, x, y);
+        if (d >= H.rand + 2.5) continue;
+        dev[i] = 0; dev.quer[i] = 0;
+        dev.eng[i] = Math.min(dev.eng[i], Math.max(0.3, d - HALB_MAX - 0.15));
+      }
+    }
     return dev;
   }
   /* erlaubte Spur um die Stelle s (s0 … s1): so, dass die Mitte des Autos höchstens R vom Weg des Dorfes entfernt
@@ -439,13 +782,16 @@
       if (a.W.S[i] < s0) continue;
       const w = Math.sqrt(Math.max(0, R * R - a.dev.quer[i] * a.dev.quer[i]));
       hi = Math.min(hi, w - a.dev[i]); lo = Math.max(lo, -w - a.dev[i]);
+      if (a.dev.eng) { hi = Math.min(hi, a.dev.eng[i]); lo = Math.max(lo, -a.dev.eng[i]); }   // FASSUNG 830
       if (a.kr[i] > 0.02) hi = Math.min(hi, 0.5 / a.kr[i]);
       if (a.kr[i] < -0.02) lo = Math.max(lo, -0.5 / -a.kr[i]);
     }
     return lo <= hi ? [lo, hi] : [(lo + hi) / 2, (lo + hi) / 2];
   }
   function fussIm(W, s, A, o) {
-    for (let d = -A.hinten; d <= A.vorn + 0.01; d += 0.7) { const p = an(W, s + d); if (drin(o, p.x, p.y, A.halb * 0.6)) return true; }
+    /* FASSUNG 830 — vor einem Wahrzeichen mit dem ganzen Wagenkasten (und etwas Luft zum Wenden) davor */
+    const r = o.art === "haus" ? A.halb * 0.6 : A.halb + 0.8;
+    for (let d = -A.hinten; d <= A.vorn + 0.01; d += 0.7) { const p = an(W, s + d); if (drin(o, p.x, p.y, r)) return true; }
     return false;
   }
 
@@ -524,6 +870,8 @@
     /* auf dem Pflaster bleiben (Mitte höchstens 1,15 m neben dem Weg); zum Ausweichen bis 1,75 m */
     const sb = spurBereich(a, a.s - 0.5, a.s + 5, soll > SEITE ? 1.75 : 1.15);
     soll = klemm(soll, sb[0], sb[1]);
+    /* FASSUNG 830 — auf Brücken fährt das Auto mittig (wie die Fuhrwerke: zwischen den Brüstungen ist nur 2,9 m Platz) */
+    if (ST.fuhrwerk && ST.fuhrwerk.brueckenFaktor) soll *= ST.fuhrwerk.brueckenFaktor(a.x, a.y);
     /* Tempo: Kurven voraus, Ziel, Hindernis */
     let vz = A.V, grenze = "frei";
     const i0 = Math.max(0, Math.floor(a.s * 2) - 2);
@@ -577,7 +925,7 @@
     const dq = klemm(soll - a.seite, -0.22 * ds, 0.22 * ds);
     a.seite += dq;
     rad(a, ds, dt);
-    lage(a, ds > 1e-4 ? dq / ds : 0, ds);
+    lage(a, ds > 1e-4 ? dq / ds : 0, ds, Math.max(a.v, v0) * dt * 1.25 + 0.005);
     /* angekommen, wenn der Rest (fast) null ist und das Auto (fast) steht – sonst bremst es auf der Stelle aus */
     if (a.bis - a.s < 0.05 && a.v < 0.14 && !a.wartet) {
       /* angekommen: vor dem Haus halten */
@@ -587,15 +935,26 @@
       a.ankuenfte = (a.ankuenfte || 0) + 1;
       a.halte = a.halte || []; a.halte.push({ t: +AU.t.toFixed(1), ziel: a.ziel.name, haus: !!a.ziel.haus, x: a.x, y: a.y });
       if (a.halte.length > 30) a.halte.shift();
+      if (a.gast && a.ziel.raus) a.fertig = true;   // FASSUNG 830 — der Gast ist wieder draußen (Nachbardorf)
     }
   }
   /* Lage auf der Strecke; beim Spurwechsel schaut das Auto schräg in die neue Spur (quer = seitlicher Weg je Meter) */
-  function lage(a, quer, ds) {
-    const p = an(a.W, a.s, 0.9), nx = -p.ty, ny = p.tx;
-    a.x = p.x + nx * a.seite; a.y = p.y + ny * a.seite;
+  function lage(a, quer, ds, maxWeg) {
+    const p = an(a.W, a.s, 0.9), nx = -p.ty, ny = p.tx, px = p.x + nx * a.seite, py = p.y + ny * a.seite;
     const hq = Math.atan(quer || 0);
     a.hq = (a.hq || 0) + (hq - (a.hq || 0)) * Math.min(1, (ds || 0) / 1.6);
     a.h = Math.atan2(p.ty, p.tx) + a.hq;
+    let x = px, y = py;
+    if (a.rest) { a.rest.weg += ds || 0; const f = 1 - a.rest.weg / 1.5; if (f <= 0) a.rest = null; else { x += a.rest.x * f; y += a.rest.y * f; } }
+    if (maxWeg != null) {
+      /* FASSUNG 830 — in einem engen Knick gleich am Anfang einer umfahrenen Strecke macht das Auto keinen Satz: es kommt
+         nie weiter als sein Tempo erlaubt, der Rest wird auf den nächsten 1,5 m abgebaut */
+      const xa = x, ya = y;
+      const dx = x - a.x, dy = y - a.y, d = Math.hypot(dx, dy);
+      if (d > maxWeg) { x = a.x + dx * maxWeg / d; y = a.y + dy * maxWeg / d; }
+      if (Math.hypot(x - xa, y - ya) > 1e-4) a.rest = { x: x - px, y: y - py, weg: 0 };
+    }
+    a.x = x; a.y = y;
   }
   function rad(a, ds, dt) {
     /* nicht schneller als ~3,5 Radbilder-Umläufe je Sekunde (sonst flimmert es) */
@@ -650,10 +1009,57 @@
         }
       } else {
         a.wende = null; a.rueck = false; a.wenden = (a.wenden || 0) + 1; const n = a.nachWende; a.nachWende = null;
-        if (n.pts) fahrtBeginnen(a, fahrStrecke([[a.x, a.y]].concat(n.pts)), 0, n.z);
+        if (n.pts) fahrtBeginnen(a, fahrStrecke([[a.x, a.y]].concat(n.pts), n.ohne), 0, n.z);
         else { const f = fusspunkt(n.W, a.x, a.y, 16); fahrtBeginnen(a, n.W, f.s, n.z); }
       }
     }
+  }
+
+  /* ---------------- FASSUNG 830: Besuch am Tag ----------------
+     XANDER (wörtlich): „Autos auch tagsüber mit Geräuschen". Bisher fuhren nur gekaufte Autos (oder die Probefahrt) – wer
+     keins hat, sah und hörte nie eins. Jetzt kommt tagsüber (bis in die Dämmerung) ab und zu ein Gast aus dem Nachbardorf:
+     eines der Autos, das man nicht hat (Viper oder Batmobil), rollt an einem Weg vom Kartenrand herein, hält vor einem
+     Haus, am Markt oder einem Wahrzeichen und fährt an einem anderen Rand wieder hinaus; danach dauert es 35–80 s bis zum
+     nächsten. Er fährt wie die eigenen Autos (Wege, Rechtsverkehr, Warten, Brücken, Hindernisse) und hat denselben leisen
+     Motor (ton.js T.motorSchleife, FASSUNG 825): lauter, je näher und je weiter hineingezoomt, ohne Ton aus. Ein Tipp auf ihn
+     öffnet wie bei den eigenen die Auto-Schau (dort kann man ihn kaufen). Sparsam: im kleinen Rahmen kommt ein Gast nur,
+     wenn sein Blatt schon geladen ist (kein zusätzliches Bild); nie im stillen Prüfbild; ?gaeste=0 schaltet ihn ab,
+     ?gaeste=1 lässt den ersten gleich kommen (Sonde pruefe-830-verkehr). */
+  const GAST = { an: q.get("gaeste") !== "0", schnell: q.get("gaeste") === "1", naechst: null, zahl: 0 };
+  AU.gast = GAST;
+  function randKnoten() {
+    /* Enden des Wegenetzes, die am weitesten draußen liegen (die Landstraßen hinaus) */
+    const L = [];
+    for (let i = 0; i < netz.P.length; i++) if (netz.im(i) && netz.N[i].filter((j) => netz.im(j)).length === 1) L.push(i);
+    const weit = (i) => Math.max(Math.abs(netz.P[i][0]), Math.abs(netz.P[i][1]));
+    L.sort((i, j) => weit(j) - weit(i));
+    return L.slice(0, 5);
+  }
+  AU.randKnoten = () => (netz ? randKnoten().map((i) => netz.P[i]) : []);
+  function gastTakt() {
+    if (!GAST.an || !netz || !netz.P.length || ziele.length < 2 || (ST.leicht && ST.leicht.still)) return;
+    if (AU.liste.some((a) => a.gast)) return;
+    if (GAST.naechst == null) GAST.naechst = AU.t + (GAST.schnell ? 0.5 : 12 + ST.hash2(3, 8, 830) * 10);
+    if (AU.t < GAST.naechst) return;
+    GAST.naechst = AU.t + 20;   // (falls jetzt keiner kommen kann: in 20 s wieder fragen)
+    const Z = SZ.zeitDaten(); if ((Z.nacht || 0) > 0.55) return;   // nur tagsüber und in der Dämmerung
+    const frei = AU.REIHE.filter((id) => !AU.hat(id) && !AU.liste.some((a) => a.id === id));   // (kein Doppelgänger eines eigenen, auch abgestellten Autos)
+    if (!frei.length) return;
+    const n = GAST.zahl, id = frei[Math.floor(ST.hash2(n, 5, 830) * frei.length) % frei.length], A = ARTEN[id];
+    if (klein()) { const b = blatt(A.blatt + "_" + jahrName() + "_" + (Z.nacht > 0.5 ? "nacht" : "tag")); if (!b || !LB.fertig(b.name)) return; }
+    const R = randKnoten(); if (R.length < 2) return;
+    const rein = R[Math.floor(ST.hash2(n, 7, 830) * R.length) % R.length], rest = R.filter((i) => i !== rein);
+    const raus = rest[Math.floor(ST.hash2(n, 9, 830) * rest.length) % rest.length];
+    const a = { id: id, A: A, v: 0, s: 0, W: null, x: 0, y: 0, h: 0, seite: 0, ph: 0, zustand: "haelt", halt: 0.3, ziel: null, knoten: rein,
+      warte: 0, geist: 0, rueck: false, gas: 0, bremst: 0, weg: 0, gast: { raus: raus, ziele: 1, nr: n, t0: AU.t } };
+    /* am Rand herein: ein paar Meter innen auf dem Weg, Blick nach innen */
+    const P0 = netz.P[rein], nb = netz.N[rein].find((j) => netz.im(j)), pts = [P0];
+    let vor = rein, j = nb, l = 0;
+    while (l < 8 && j != null && j >= 0) { const Q = netz.P[j]; l += Math.hypot(Q[0] - pts[pts.length - 1][0], Q[1] - pts[pts.length - 1][1]); pts.push(Q); const w = netz.N[j].filter((m) => m !== vor && netz.im(m)); vor = j; j = w.length === 1 ? w[0] : -1; }
+    const W = strecke(pts), e = an(W, Math.min(2, W.L), 1.2);
+    a.x = e.x - e.ty * SEITE; a.y = e.y + e.tx * SEITE; a.h = Math.atan2(e.ty, e.tx);
+    GAST.zahl++;
+    AU.liste.push(a);
   }
 
   AU.t = 0;
@@ -662,11 +1068,18 @@
     /* neu aufbauen, wenn die Fuhrwerke ihr Netz neu gebaut haben (neue Stadt) oder sich der Besitz geändert hat */
     const soll = sollFahren().join(","), fn = ST.fuhrwerk && ST.fuhrwerk.netz;
     if (!netz || fn !== fwNetz || AU.neu || soll !== gebaut) { AU.neu = false; gebaut = soll; aufbauen(); }
+    gastTakt();   // FASSUNG 830 — Besuch am Tag
     if (!AU.liste.length) { if (motoren.size) motorTon(); return; }   // FASSUNG 825 — kein Auto mehr: Motoren aus
     const alle = fahrzeuge();
     for (const a of AU.liste) {
       schritt(a, dt, alle);
+      if (a.zustand === "wendet") ausDingen(a, dt);   // FASSUNG 830 — nie durch Brunnen, Bänke, Schmuck (beim Fahren: lage)
       const f = alle.find((x) => x.auto === a); if (f) { f.x = a.x; f.y = a.y; f.h = a.h; f.v = a.v; }
+    }
+    if (AU.liste.some((a) => a.fertig)) {
+      AU.liste = AU.liste.filter((a) => !a.fertig);
+      GAST.naechst = AU.t + 35 + ST.hash2(GAST.zahl, 11, 830) * 45;   // der nächste Besuch in 35–80 s
+      if (AU.folge && !AU.auto(AU.folge)) AU.folge = null;
     }
     /* der Kamera folgen („Hinfahren") */
     const F = AU.folge && AU.auto(AU.folge);
@@ -755,27 +1168,39 @@
     const aus = [];
     for (const a of AU.liste) {
       if (AU.ohne === a.id) continue;   // (für Sonden: ohne dieses Auto malen)
-      /* FASSUNG 826 — die Brücken liegen jetzt genau auf den Wegen: auf einer Brücke fährt das Auto über den Buckel (mittlere
-         Deckhöhe unter Front, Mitte, Heck – wie die Fuhrwerke) und wird nach ihr gemalt */
-      let br = null;
-      if (ST.fuhrwerk && ST.fuhrwerk.aufBruecke) {
-        const q = [a.A.vorn * 0.8, 0, -a.A.hinten * 0.8].map((d) => { const w = imAuto(a, 0, d); return ST.fuhrwerk.aufBruecke(w[0], w[1]); }), o = q.find(Boolean);
-        if (o) br = { o: o.o, z: q.reduce((n, e) => n + (e && e.o === o.o ? e.z : 0), 0) / 3 };
+      /* FASSUNG 830 — XANDER: „die Autos verschmelzen mit der Brücke". Auf einer Brücke fährt das Auto oben auf dem Buckel:
+         gehoben um die mittlere Deckhöhe unter Front, Mitte und Heck, und gemalt nach der Brücke (p.auf, szene.js) – wie
+         die Fuhrwerke (fuhrwerk.js). Vorher lag es auf Bodenhöhe und die Brücke malte sich darüber. */
+      let z = 0, auf = null;
+      const FW = ST.fuhrwerk;
+      if (FW && FW.aufBruecke) {
+        const c = Math.cos(a.h), s = Math.sin(a.h), q = [a.A.vorn * 0.8, 0, -a.A.hinten * 0.8].map((d) => FW.aufBruecke(a.x + c * d, a.y + s * d));
+        const o = q.find(Boolean);
+        if (o) { auf = o.o; z = q.reduce((n, e) => n + (e && e.o === o.o ? e.z : 0), 0) / 3; }
       }
-      a.zDeck = br ? br.z : 0;
-      const P = ST.proj(a.x, a.y, a.zDeck), rand = 140 * K.dpr;
+      a.z = z; a.auf = auf;
+      const P = ST.proj(a.x, a.y, z), rand = 140 * K.dpr;
       if (P[0] < -rand || P[0] > K.W + rand || P[1] < -rand || P[1] > K.H + rand * 1.5) continue;
       const b = blatt(a.A.blatt + "_" + jahrName() + "_" + (Z.nacht > 0.5 ? "nacht" : "tag")); if (!b) continue;
+      /* FASSUNG 830 — ein Gast im kleinen Rahmen nur mit einem Blatt, das schon geladen ist (kein zusätzliches Bild) */
+      if (a.gast && klein() && !LB.fertig(b.name)) continue;
       const img = LB.bild(b.name, true); if (!img) continue;   // dringend: das Auto soll gleich zu sehen sein
       const ri = b.meta.ri || 8, gier = Math.atan2(-Math.cos(a.h), Math.sin(a.h)) * 180 / Math.PI + K.dreh * 90;
       const n = b.meta.n || 1, spalte = n > 1 ? Math.floor(a.ph * n) % n : 0;
       const r = ST.drehXY(a.x, a.y, K.dreh);
       a.reihe = ((Math.round(gier / (360 / ri)) % ri) + ri) % ri; a.blatt = b.name;
-      aus.push({ X: P[0], Y: P[1], a: r[0], b: r[1], img: img, meta: b.meta, reihe: a.reihe, schritt: spalte, malen: malen, bx: a.A.vorn * 0.9, bh: 1.4 + a.zDeck, Z: Z, auto: a, auf: br ? br.o : null });
+      aus.push({ X: P[0], Y: P[1], a: r[0], b: r[1], img: img, meta: b.meta, reihe: a.reihe, schritt: spalte, malen: malen, bx: a.A.vorn * 0.9, bh: 1.4 + z, Z: Z, auto: a, auf: auf, alpha: gastAlpha(a) });
     }
     AU.gezeigt = aus.length;
     return aus;
   };
+  /* FASSUNG 830 — ein Gast blendet am Ende des Wegenetzes sanft ein (1,2 s) und auf den letzten 5 m hinaus wieder aus */
+  function gastAlpha(a) {
+    if (!a.gast) return 1;
+    let al = klemm((AU.t - (a.gast.t0 || 0)) / 1.2, 0, 1);
+    if (a.ziel && a.ziel.raus && a.W && a.zustand === "faehrt") al *= klemm((a.bis - a.s) / 5, 0, 1);
+    return al;
+  }
   function glut(g, x, y, R, farbe, a) {
     if (R < 0.8 || a <= 0.003) return;
     const gr = g.createRadialGradient(x, y, 0, x, y, R);
@@ -783,13 +1208,13 @@
     g.fillStyle = gr; g.fillRect(x - R, y - R, 2 * R, 2 * R);
   }
   function malen(g, p) {
-    const m = p.meta, k = K.s / m.s, a = p.auto, A = a.A, Z = p.Z, nacht = Z.nacht || 0;
+    const m = p.meta, k = K.s / m.s, a = p.auto, A = a.A, Z = p.Z, nacht = Z.nacht || 0, zb = a.z || 0;   // zb: Höhe auf der Brücke (FASSUNG 830)
     const licht = AU.ohneLicht ? 0 : klemm((nacht - 0.25) / 0.45, 0, 1);
     a.licht = licht;
     /* Lichtkegel auf dem Boden – unter dem Auto, vor ihm her (nur im großen Bild) */
     if (licht > 0 && !klein()) {
-      const e = [[-0.8, A.vorn], [0.8, A.vorn], [4.4, A.vorn + 12], [-4.4, A.vorn + 12]].map((q) => { const w = imAuto(a, q[0], q[1]); return ST.proj(w[0], w[1], 0.02 + (a.zDeck || 0)); });
-      const m0 = imAuto(a, 0, A.vorn), P0 = ST.proj(m0[0], m0[1], 0.02 + (a.zDeck || 0)), R = Math.hypot(e[2][0] - P0[0], e[2][1] - P0[1]) * 1.05;
+      const e = [[-0.8, A.vorn], [0.8, A.vorn], [4.4, A.vorn + 12], [-4.4, A.vorn + 12]].map((q) => { const w = imAuto(a, q[0], q[1]); return ST.proj(w[0], w[1], 0.02 + zb); });
+      const m0 = imAuto(a, 0, A.vorn), P0 = ST.proj(m0[0], m0[1], 0.02 + zb), R = Math.hypot(e[2][0] - P0[0], e[2][1] - P0[1]) * 1.05;
       if (R > 2) {
         g.save(); g.globalCompositeOperation = "lighter";
         const gr = g.createRadialGradient(P0[0], P0[1], 0, P0[0], P0[1], R);
@@ -798,15 +1223,16 @@
         g.fillStyle = gr; g.fill(); g.restore();
       }
     }
+    if (p.alpha != null && p.alpha < 1) { if (p.alpha <= 0.01) return; g.globalAlpha = p.alpha; }
     g.drawImage(p.img, p.schritt * m.zw, p.reihe * m.zh, m.zw, m.zh, p.X - m.ax * k, p.Y - m.ay * k, m.zw * k, m.zh * k);
     /* Lichter: Scheinwerfer, Rücklichter (beim Bremsen hell), Bat-Licht aus dem Blatt, Turbine */
     const bremse = a.bremst || a.wartet || a.zustand === "haelt" ? 1 : 0;
     const Ks = K.s;
     g.save(); g.globalCompositeOperation = "lighter";
-    if (licht > 0) for (const l of A.lampen) { const w = imAuto(a, l[0], l[1]), P = ST.proj(w[0], w[1], l[2] + (a.zDeck || 0)); glut(g, P[0], P[1], Ks * 0.9, "255,244,215", 0.95 * licht); }
+    if (licht > 0) for (const l of A.lampen) { const w = imAuto(a, l[0], l[1]), P = ST.proj(w[0], w[1], l[2] + zb); glut(g, P[0], P[1], Ks * 0.9, "255,244,215", 0.95 * licht); }
     const rot = Math.max(licht * 0.55, bremse ? 0.75 : 0) * (a.rueck ? 0.8 : 1);
-    if (rot > 0) for (const l of A.rueck) { const w = imAuto(a, l[0], l[1]), P = ST.proj(w[0], w[1], l[2] + (a.zDeck || 0)); glut(g, P[0], P[1], Ks * (bremse ? 0.6 : 0.45), "255,40,28", rot); }
-    if (a.rueck) for (const l of A.rueck) { const w = imAuto(a, l[0] * 0.8, l[1]), P = ST.proj(w[0], w[1], l[2] + (a.zDeck || 0)); glut(g, P[0], P[1], Ks * 0.35, "255,255,240", 0.8); }
+    if (rot > 0) for (const l of A.rueck) { const w = imAuto(a, l[0], l[1]), P = ST.proj(w[0], w[1], l[2] + zb); glut(g, P[0], P[1], Ks * (bremse ? 0.6 : 0.45), "255,40,28", rot); }
+    if (a.rueck) for (const l of A.rueck) { const w = imAuto(a, l[0] * 0.8, l[1]), P = ST.proj(w[0], w[1], l[2] + zb); glut(g, P[0], P[1], Ks * 0.35, "255,255,240", 0.8); }
     if (nacht > 0.3 && m.l) for (const l of m.l) {
       if (l[0] !== p.reihe) continue;
       glut(g, p.X + l[1] * k, p.Y + l[2] * k, l[3] * k * 0.5, l[4], nacht * l[5] * (0.85 + 0.15 * Math.sin(AU.t * 9)));
@@ -815,18 +1241,19 @@
     if (A.duese && (a.gas > 0.3 || a.feuer > 0.02)) {
       a.feuer = Math.max(klemm(a.gas / GAS, 0, 1) * (a.v < 5.5 ? 1 : 0.3), (a.feuer || 0) * 0.9);
       const f = a.feuer * (0.8 + 0.2 * Math.sin(AU.t * 31) * Math.sin(AU.t * 17));
-      const d0 = imAuto(a, A.duese[0], A.duese[1]), P0 = ST.proj(d0[0], d0[1], A.duese[2] + (a.zDeck || 0));
-      const d1 = imAuto(a, A.duese[0], A.duese[1] - 0.7 - 1.3 * f), P1 = ST.proj(d1[0], d1[1], A.duese[2] + (a.zDeck || 0));
+      const d0 = imAuto(a, A.duese[0], A.duese[1]), P0 = ST.proj(d0[0], d0[1], A.duese[2] + zb);
+      const d1 = imAuto(a, A.duese[0], A.duese[1] - 0.7 - 1.3 * f), P1 = ST.proj(d1[0], d1[1], A.duese[2] + zb);
       glut(g, P1[0], P1[1], Ks * (0.5 + 0.6 * f), "255,120,40", 0.55 * f);
       glut(g, P0[0], P0[1], Ks * (0.35 + 0.35 * f), "255,196,110", 0.9 * f);
       glut(g, P0[0], P0[1], Ks * 0.16, "190,220,255", 0.9 * f);
     } else a.feuer = 0;
     g.restore();
+    g.globalAlpha = 1;
   }
   /* Tipp auf ein fahrendes Auto (oberflaeche.js) */
   AU.treffer = function (px, py) {
     let best = null, d0 = Math.max(20 * K.dpr, 1.6 * K.s);
-    for (const a of AU.liste) { const P = ST.proj(a.x, a.y, 0.5), d = Math.hypot(P[0] - px, P[1] - py); if (d < d0) { d0 = d; best = a; } }
+    for (const a of AU.liste) { const P = ST.proj(a.x, a.y, 0.5 + (a.z || 0)), d = Math.hypot(P[0] - px, P[1] - py); if (d < d0) { d0 = d; best = a; } }
     return best;
   };
 })();

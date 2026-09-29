@@ -565,11 +565,43 @@
       const gier = Math.atan2(-Math.cos(z.h), Math.sin(z.h)) * 180 / Math.PI + K.dreh * 90;
       const r = ST.drehXY(z.x, z.y, K.dreh);
       aus.push({ X: P[0], Y: P[1], a: r[0], b: r[1], img: img, meta: b.meta, reihe: ((Math.round(gier / 45) % 8) + 8) % 8, schritt: radSpalte(z.w, b.meta),
-        malen: wagenMalen, bx: (z.w.vorn + z.w.hinten) / 2, bh: z.w.h + 1, z: z, alpha: alpha, Z: Z, bahn: i });
+        malen: wagenMalen, bx: (z.w.vorn + z.w.hinten) / 2, bh: z.w.h + 1, z: z, alpha: alpha, Z: Z, bahn: i,
+        kette: "bahn", vorDing: vorDing(z) });   // FASSUNG 830 — Reihenfolge gegen Bahnhof und Häuser (szene.js)
     }
     BA.gezeigt = aus.length;
     return aus;
   };
+  /* FASSUNG 830 — XANDER (wörtlich): „die Lok schneidet am Bahnhof die Waggons".
+     Ursache: szene.js sortiert Fahrzeuge nach dem Rechteck eines Dings im Kameraraum. Der Bahnhof steht schräg (45°), sein
+     Rechteck reicht dann weit über das Gleis – der Zug galt als „im Bahnhof", wurde vor ihm gemalt, und das Bild des
+     Bahnhofs (Bahnsteig, eigenes Gleis, Vordach) schnitt Lok, Tender und Wagen ab; je Wagen anders, darum überlappten sie
+     sich auch gegenseitig. Jetzt entscheidet für jeden Wagen die Trennachse der beiden Grundflächen (Wagen 3 m breit, von
+     „hinten" bis „vorn"; Ding: fuss × stufe, gedreht): liegt der Wagen ganz auf einer Seite des Dings, steht er davor, wenn
+     diese Seite zur Kamera schaut (ST.tiefe der Seitennormalen > 0), sonst dahinter – in jedem der 8 Winkel. Überlappen
+     sich die Grundflächen, bleibt es bei der alten Regel (undefined). Häuser aus Flügeln (grundriss) und Natur ebenso. */
+  function vorDing(z) {
+    const c = Math.cos(z.h), s = Math.sin(z.h), L0 = -z.w.hinten, L1 = z.w.vorn, Q = 1.5;
+    const zug = [[L1, Q], [L1, -Q], [L0, -Q], [L0, Q]].map((p) => [z.x + c * p[0] - s * p[1], z.y + s * p[0] + c * p[1]]);
+    return function (o) {
+      if (!o || !o.fuss || o.art === "natur" || o.grundriss || SZ.flach(o)) return undefined;
+      const k = o.stufe || 1, w = (o.dreh || 0) * Math.PI / 2, oc = Math.cos(w), os = Math.sin(w), hw = o.fuss[0] * k / 2, hd = o.fuss[1] * k / 2;
+      const ding = [[hw, hd], [-hw, hd], [-hw, -hd], [hw, -hd]].map((p) => [o.x + p[0] * oc - p[1] * os, o.y + p[0] * os + p[1] * oc]);
+      /* Sagen zwei Trennachsen Verschiedenes (der Wagen steht schräg hinter einer Ecke), liegt kein Blickstrahl durch beide –
+         dann ist die Reihenfolge gleich, und es bleibt bei der alten Regel. */
+      let ja = false, nein = false;
+      for (const ax of [[oc, os], [-os, oc], [c, s], [-s, c]]) {
+        let z0 = Infinity, z1 = -Infinity, d0 = Infinity, d1 = -Infinity;
+        for (const p of zug) { const d = p[0] * ax[0] + p[1] * ax[1]; if (d < z0) z0 = d; if (d > z1) z1 = d; }
+        for (const p of ding) { const d = p[0] * ax[0] + p[1] * ax[1]; if (d < d0) d0 = d; if (d > d1) d1 = d; }
+        const n = z0 >= d1 - 0.05 ? ax : z1 <= d0 + 0.05 ? [-ax[0], -ax[1]] : null;   // Normale vom Ding zum Wagen
+        if (!n) continue;
+        const t = ST.tiefe(n[0], n[1]);
+        if (t > 0.02) ja = true; else if (t < -0.02) nein = true;
+      }
+      return ja && !nein ? true : nein && !ja ? false : undefined;
+    };
+  }
+  BA.vorDing = vorDing;
   function wagenMalen(g, p) {
     const m = p.meta, k = K.s / m.s;
     if (p.alpha < 1) g.globalAlpha = p.alpha;

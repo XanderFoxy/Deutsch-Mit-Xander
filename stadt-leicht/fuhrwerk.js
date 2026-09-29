@@ -189,6 +189,9 @@
     for (const o of bruecken) f = Math.min(f, klemm((Math.hypot(x - o.x, y - o.y) - 6) / 4, 0, 1));
     return f;
   }
+  /* FASSUNG 830 — XANDER: „die Autos verschmelzen mit der Brücke". Die Autos (autos.js) fahren wie die Fuhrwerke über den
+     Buckel: dieselbe Deckhöhe und dieselbe Mitte auf der Brücke. */
+  FW.aufBruecke = aufBruecke; FW.brueckenFaktor = brueckenFaktor;
 
   /* ---------------- Felder (Bodenart 2) und Feldwege ---------------- */
   function felderFinden() {
