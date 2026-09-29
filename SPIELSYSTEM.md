@@ -2209,3 +2209,24 @@ XANDER: „ich möchte nicht, dass wenn man auf ein Haus klickt, dass man dann d
 - **Kaufen**: Schmücken-Leiste → Viper 300 Punkte, Batmobil 450 Punkte, „Kaufen" (Beispielstadt: gesperrt, dafür 90 s Probefahrt). Server: Migration `supabase/spiel_815_autos_kaufen.sql` (Spalte `spiel_spieler.autos`, `spiel_auto_kaufen(p_auto)`, `spiel_autos()`; SECURITY DEFINER, keine RLS-/Rechte-Änderung) – **noch nicht angewandt**. Bis dahin merkt sich die Stadt gekaufte Autos vorläufig in `stadt_leicht.autos` (ohne Abbuchung); die Migration übernimmt sie. Gekauft: „Abstellen" (als Schmuck, `stadt_leicht.geparkt`) und „Losfahren".
 - **Fuhrwerke**: fahren jetzt im Bild wirklich rechts (die Schrägansicht spiegelt).
 - **Sonden**: neu `pruefe-815-autos.js` (mit dem alten Stand rot); `pruefe-808` stellt den Viper jetzt über „Abstellen" hin. 799, 807, 809, 810, 811, leicht grün.
+
+## Fassung 810 — Viper und Batmobil in der Stadt, Bergwerk-Stollen, Reiselok mit Klang, flüssige Windmühle, kleine Zeichen
+
+XANDER: „mein neuen Dodge Viper und mein Batmobil habe ich immer noch nicht in der Map … Ich kann sie nicht dazu kaufen" · „ich möchte dieses höhlenartige haben dass man instinktiv weiß da geht's in das Bergwerk hinein" · „diese schöne klassische Lokomotive … unsere Lokomotive hat noch keinen Klang" · Funk 207: „Die Symbole beim Einsammeln sind immer noch viel zu groß … beim Wald müssen Holz und Fleisch zu sehen sein" · „die Blätter der Windmühle rotieren nicht flüssig".
+
+- **Autos (Helfer, `stadt-leicht/autos.js`, Sonde `pruefe-815-autos.js`, Abschnitt „Fassung 815" oben)**:
+  - Viper und Batmobil fahren auf den Dorfwegen, halten vor Häusern und wenden in Sackgassen.
+  - Nachts haben sie Scheinwerfer.
+  - Kaufen in der Schmücken-Leiste: Viper 300, Batmobil 450 Punkte. Die Migration `spiel_815_autos_kaufen` ist angewendet (Spalte `spiel_spieler.autos`, `spiel_auto_kaufen`, `spiel_autos`).
+  - Hinter der haltenden Pferdebahn wartet ein Auto bis zu 30 s, statt dicht daneben zu wenden.
+- **Bergwerk (Helfer, `stadt/modelle/bergstollen.js`, Sonde `pruefe-818-bergwerk-lok.js`)**:
+  - Ein Felshügel mit Stollenmundloch, Türstock und „GLÜCK AUF".
+  - Davor Gleis mit Erzlore, Grubenlampe und Halde; oben ein kleines Fördergerüst. Nachts leuchtet es.
+- **Reiselok (`stadt/modelle/reiselok.js`)**:
+  - Schwarzer Kessel mit Messing, rote Speichenräder mit Treibstangen (sechs Radstellungen), Tender und drei weinrote Abteilwagen.
+  - Der Zug fährt abwechselnd in beide Richtungen, wie schon vorher.
+- **Klang (`stadt-leicht/ton.js`, Web Audio)**:
+  - Schnaufen im Takt der Räder, Pfiff bei Ein- und Abfahrt, Bremsquietschen und Dampf am Halt.
+  - Leise und nach Nähe gemischt. Er spielt nur, wenn die Töne an sind.
+- **Windmühle**: Statt zwei Stellungen zu überblenden, wird die nächste Stellung um die Nabe weitergedreht. So läuft das Kreuz stufenlos, auch im kleinen Rahmen mit nur 4 Stellungen. Die Drehrichtung ist per Bildvergleich geprüft.
+- **Fertig-Zeichen**: kleineres Bild (15 px) mit kleinem Schein, Tippfläche 40 px. Die Jäger bekommen eine Keule als eigenes Symbol.
