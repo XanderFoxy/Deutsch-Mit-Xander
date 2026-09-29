@@ -62,6 +62,8 @@ ORGAN.gehirn = () => {
   return { svg: s, teile: {
     ge_grosshirn: [-6, -3, "l"], ge_stirnlappen: [-15, -6, "l"], ge_scheitellappen: [9, -12, "r"], ge_zentralfurche: [-1, -15, "l"],
     ge_windung: [8, -6, "r"], ge_kleinhirn: [13, 13, "r"], ge_hirnstamm: [2, 18, "l"],
+    /* FASSUNG 836: mehr Teile */
+    ge_schlaefenlappen: [-5, 6, "l"], ge_hinterhauptslappen: [17, -3, "r"], ge_seitenfurche: [5, 2.5, "r"], ge_verlaengertesmark: [2.5, 21.5, "l"],
   } };
 };
 
@@ -84,7 +86,12 @@ ORGAN.herz = () => {
   s += pfad(kurve([[2, -4], [4, 3], [4, 10], [3, 18]]), "none", "#f2d47c", 1.4) + pfad(kurve([[2, -4], [4, 3], [4, 10], [3, 18]]), "none", "#b33a33", 0.5);
   s += pfad(kurve([[4, 3], [8, 6], [11, 9]]), "none", "#b33a33", 0.35) + pfad(kurve([[3, 8], [-1, 10], [-4, 11]]), "none", "#b33a33", 0.35);
   s += pfad(kurve([[-3, -1], [-5, 5], [-8, 7]]), "none", BLAU, 0.35);
+  /* FASSUNG 836: linkes Herzohr, Lungenvenen, Herzbeutel (gestrichelt) */
+  s += pfad(kurve([[9, -10], [13, -12], [16, -9], [13, -6]], true), "#c95a52", "#7e2622", 0.4);
+  s += pfad("M15 -9L22 -11M15 -7L22 -6", "none", "#8e2a24", 1.8) + pfad("M15 -9L22 -11M15 -7L22 -6", "none", "#d9625a", 1.0);
+  s += pfad(kurve([[-17, -8], [-14, -14], [0, -13], [15, -11], [19, 2], [14, 15], [3, 24], [-6, 17], [-15, 7]], true), "none", "#a8716c", 0.35, ' stroke-dasharray="1.2 1"');
   return { svg: s, teile: {
+    hz_herzohr: [12.5, -9, "r"], hz_lungenvene: [20, -10.5, "r"], hz_herzbeutel: [-15.5, 7, "l"],
     hz_rechtekammer: [-4, 6, "l"], hz_linkekammer: [9, 4, "r"], hz_vorhof: [-11, -5, "l"], hz_herzspitze: [3, 19, "r"],
     hz_aorta: [9, -24, "r"], hz_lungenarterie: [7, -15, "r"], hz_hohlvene: [-9.5, -19, "l"], hz_kranzgefaess: [4, 9, "r"], hz_kranzfurche: [-8, -1, "l"],
   } };
@@ -110,7 +117,11 @@ ORGAN.lunge = () => {
   s += ast([[-7, -8], [-9, -2], [-12, 5]], 0.8) + ast([[-9, -3], [-15, -3]], 0.6) + ast([[7, -8], [9, -1], [12, 7]], 0.8) + ast([[9, -2], [15, 0]], 0.6);
   /* Lungenbläschen angedeutet */
   for (let i = 0; i < 26; i++) { const a = i * 2.4, rr = 3 + (i % 5) * 1.8; const x = (i % 2 ? 1 : -1) * (12 + Math.cos(a) * rr * 0.6), y = 2 + Math.sin(a) * rr * 1.5; s += kreis(x, y, 0.6, "none", "#c98a92", 0.25); }
+  /* FASSUNG 836: das Zwerchfell unter den Lungen, eine Traube Lungenbläschen vergrößert */
+  s += pfad(kurve([[-23, 21], [-12, 17], [0, 19], [12, 17], [23, 21]]), "none", "#b5575c", 1.4);
+  [[15, 12], [16.4, 12.8], [15.3, 13.9], [16.8, 14.3], [14.2, 13.2]].forEach((q) => { s += kreis(q[0], q[1], 0.9, "#f7d7da", "#b86a72", 0.25); });
   return { svg: s, teile: {
+    lu_rechterfluegel: [-18.5, 10, "l"], lu_knorpelspange: [2.2, -18.5, "r"], lu_lungenspitze: [12, -14.5, "r"], lu_lungenblaeschen: [15.5, 13, "r"], lu_zwerchfell: [6, 18.4, "r"],
     lu_luftroehre: [0, -22, "r"], lu_bronchus: [-6, -8.5, "l"], lu_oberlappen: [-13, -8, "l"], lu_mittellappen: [-14, 6, "l"],
     lu_unterlappen: [-11, 14, "l"], lu_lappenspalte: [-17, 3, "l"], lu_herzbucht: [5, 10, "r"], lu_linkerfluegel: [15, 2, "r"],
   } };
@@ -150,6 +161,7 @@ ORGAN.magen = () => {
   s += '<rect x="-21.5" y="8" width="3" height="6" rx="1" fill="#b76f64"/>';
   s += pfad(kurve([[-21, 11], [-24, 12], [-25, 18], [-22, 24]]), "none", "#c9a066", 3.6) + pfad(kurve([[-21, 11], [-24, 12], [-25, 18], [-22, 24]]), "none", "#e8c895", 2.4);
   return { svg: s, teile: {
+    ma_magengrund: [8, -13, "r"], ma_magenkoerper: [13, -3, "r"], ma_schleimhaut: [4, 8, "r"],
     ma_speiseroehre: [-3, -22, "l"], ma_mageneingang: [-1, -14, "l"], ma_kleinekurvatur: [-2, 3, "l"], ma_grossekurvatur: [14, 8, "r"],
     ma_magenfalte: [7, 3, "r"], ma_pfoertner: [-20, 11, "l"], ma_zwoelffingerdarm: [-23, 19, "l"],
   } };
@@ -287,6 +299,25 @@ ORGAN.haut_d = () => {
   return { svg: s, teile: {} };
 };
 
+/* FASSUNG 836 — XANDER (Funk 217): „alles im Detail“. Die neuen Teile
+   der Organkarten mit Wort, Silben und Übersetzung. */
+const WORT_836 = {
+  ge_schlaefenlappen: { de: "der Schläfenlappen", syl: "SCHLÄ-fen-lap-pen", it: "il lobo temporale", itSyl: "LO-bo tem-po-RA-le", en: "temporal lobe" },
+  ge_hinterhauptslappen: { de: "der Hinterhauptslappen", syl: "HIN-ter-haupts-lap-pen", it: "il lobo occipitale", itSyl: "LO-bo oc-ci-pi-TA-le", en: "occipital lobe" },
+  ge_seitenfurche: { de: "die Seitenfurche", syl: "SEI-ten-fur-che", it: "la scissura laterale", itSyl: "scis-SU-ra la-te-RA-le", en: "lateral sulcus" },
+  ge_verlaengertesmark: { de: "das verlängerte Mark", syl: "ver-LÄN-ger-te MARK", it: "il midollo allungato", itSyl: "mi-DOL-lo al-lun-GA-to", en: "medulla oblongata" },
+  hz_herzohr: { de: "das Herzohr", syl: "HERZ-ohr", it: "l'auricola", itSyl: "au-RI-co-la", en: "auricle" },
+  hz_lungenvene: { de: "die Lungenvene", syl: "LUN-gen-ve-ne", it: "la vena polmonare", itSyl: "VE-na pol-mo-NA-re", en: "pulmonary vein" },
+  hz_herzbeutel: { de: "der Herzbeutel", syl: "HERZ-beu-tel", it: "il pericardio", itSyl: "pe-ri-CAR-dio", en: "pericardium" },
+  lu_rechterfluegel: { de: "der rechte Lungenflügel", syl: "RECH-te LUN-gen-flü-gel", it: "il polmone destro", itSyl: "pol-MO-ne DE-stro", en: "right lung" },
+  lu_knorpelspange: { de: "die Knorpelspange", syl: "KNOR-pel-span-ge", it: "l'anello cartilagineo", itSyl: "a-NEL-lo car-ti-la-GI-neo", en: "cartilage ring" },
+  lu_lungenspitze: { de: "die Lungenspitze", syl: "LUN-gen-spit-ze", it: "l'apice polmonare", itSyl: "A-pi-ce pol-mo-NA-re", en: "apex of the lung" },
+  lu_lungenblaeschen: { de: "das Lungenbläschen", syl: "LUN-gen-bläs-chen", it: "l'alveolo", itSyl: "al-VE-o-lo", en: "alveolus" },
+  lu_zwerchfell: { de: "das Zwerchfell", syl: "ZWERCH-fell", it: "il diaframma", itSyl: "dia-FRAM-ma", en: "diaphragm" },
+  ma_magengrund: { de: "der Magengrund", syl: "MA-gen-grund", it: "il fondo gastrico", itSyl: "FON-do GA-stri-co", en: "fundus of the stomach" },
+  ma_magenkoerper: { de: "der Magenkörper", syl: "MA-gen-kör-per", it: "il corpo gastrico", itSyl: "COR-po GA-stri-co", en: "body of the stomach" },
+  ma_schleimhaut: { de: "die Magenschleimhaut", syl: "MA-gen-schleim-haut", it: "la mucosa gastrica", itSyl: "mu-CO-sa GA-stri-ca", en: "gastric mucosa" },
+};
 /* Karten: [Mitte x, Mitte y, Breite, Höhe, Maßstab der Zeichnung] */
 const KARTE = {
   gehirn: [42, 36, 80, 66, 1.05], herz: [124, 36, 80, 66, 1.0], lunge: [206, 36, 80, 66, 1.0], leber: [284, 36, 68, 66, 0.9],
@@ -314,6 +345,7 @@ function bau() {
       t.zoom = { x: cx - w / 2 + 1, y: cy - h / 2 + 1, w: w - 2, h: h - 2 };
       const alte = {};
       (t.unter || []).forEach((u) => { alte[u.id] = u; });
+      Object.keys(WORT_836).forEach((w) => { if (!alte[w]) alte[w] = Object.assign({ id: w }, WORT_836[w]); });
       t.unter = ids.map((uid) => {
         const p = o.teile[uid];
         const u = Object.assign({}, alte[uid] || { id: uid });

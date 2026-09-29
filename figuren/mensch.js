@@ -642,7 +642,23 @@
     const hautF = HAUT[spec.haut] || HAUT.hell;
     const haarF = HAAR[spec.haarfarbe] || HAAR.braun;
     const g = M.g, f = M.fuelle;
-    const kl = spec.kleidung || {};
+    /* FASSUNG 836 — GRENZE (verbindlich): Menschen in Haltungen sind immer
+       bekleidet. Fehlt, was Becken oder Rumpf bedeckt, kommt ein
+       Grundstück dazu (Hose, T-Shirt). Ausnahmen nur für die Lehrbuch-
+       tafeln: die Lehrbuch-Haltung bekommt Unterwäsche (Frauen zusätzlich
+       ein Sporttop), das Muskelbild und das Ungeborene bleiben Schema. */
+    const kl = Object.assign({}, spec.kleidung || {});
+    if (!spec.muskeln && spec.pose !== "foetus") {
+      const hat = (pl) => kl[pl] && kl[pl].stueck && kl[pl].stueck !== "nichts";
+      const kleidDa = hat("kleid") && KLEID[kl.kleid.stueck];
+      const langerMantel = hat("jacke") && JACKE[kl.jacke.stueck] && JACKE[kl.jacke.stueck].lang;
+      const lehrbuch = spec.pose === "lehrbuch";
+      if (!hat("unterteil") && !kleidDa && !langerMantel && !(hat("oberteil") && kl.oberteil.stueck === "badeanzug")) kl.unterteil = { stueck: lehrbuch ? "unterhose" : "hose", farbe: "grau" };
+      if (!hat("oberteil") && !kleidDa && !hat("jacke")) {
+        if (!lehrbuch) kl.oberteil = { stueck: "tshirt", farbe: "weiss" };
+        else if (spec.geschlecht === "w") kl.oberteil = { stueck: "sporttop", farbe: "grau" };
+      }
+    }
     const stueck = (platz) => { const w = kl[platz]; return w && w.stueck && w.stueck !== "nichts" && w.stueck !== "barfuss" ? w : null; };
     const zub = stueck("zubehoer");
 
@@ -729,7 +745,7 @@
        erwachsenen Mann. */
     const OA = [[-0.115, 1.2, 1.5, -0.2, -0.7], [-0.085, 2.8, 3.2, -0.2, -0.4], [-0.035, 4.1, 4.5, -0.2, 0.1], [0.02, 4.9, 5.1, -0.1, 0.5], [0.1, 5.3, 5.4, 0, 0.9], [0.22, 5.0, 5.2, 0.1, 0.5],
       [0.36, 4.4, 4.9, 0.2, 0], [0.52, 4.3, 5.0, 0.45, 0], [0.7, 4.1, 4.6, 0.3, 0], [0.87, 4.0, 3.7, -0.1, 0], [1.03, 3.6, 3.4, -0.3, 0]];
-    const UA = [[-0.07, 3.5, 3.4, -0.5, 0], [0.12, 4.3, 3.9, 0, 0.35], [0.3, 4.0, 3.6, 0.1, 0.25], [0.52, 3.2, 3.1, 0, 0.05],
+    const UA = [[-0.07, 3.6, 3.4, -0.5, 0], [0.12, 4.1, 3.9, 0, 0.22], [0.3, 4.0, 3.6, 0.1, 0.25], [0.52, 3.2, 3.1, 0, 0.05],
       [0.74, 2.4, 2.9, 0, 0], [0.9, 2.0, 2.8, 0, 0], [1.0, 2.0, 2.8, 0, 0]];
     const OS = [[-0.06, 8.4, 8.8, 0.2, 0.2], [0.1, 8.7, 8.8, 0.6, 0.7], [0.3, 8.0, 8.4, 0.9, 0.35], [0.5, 7.1, 7.5, 0.85, 0.05],
       [0.7, 6.1, 6.5, 0.55, -0.4], [0.85, 5.4, 5.5, 0.45, -0.5], [0.97, 4.8, 5.0, 0.4, -0.1], [1.05, 4.6, 4.8, 0.2, 0]];
@@ -1069,11 +1085,17 @@
       });
       finger.push({ pts: dpts, tiefe: pr(dpts[1])[2], daumen: true });
       const palmT = pr(add(Hd.p, mul(T, L0 * 0.3)))[2];
+      /* FASSUNG 836: Finger aus drei Gliedern, die zur Spitze schmaler
+         werden, mit Fingerknöcheln und einem hellen Nagel auf dem Endglied. */
       const fz = (fi) => {
         const pp = fi.pts.map((q) => pr(q));
-        const b = fi.daumen ? fb * 1.22 : fb;
-        return linie(pp, dunkler(farbe, 0.36), b * 2 + 0.34 * g) + linie(pp, farbe, b * 2)
-          ;
+        const b = fi.daumen ? fb * 1.25 : fb;
+        const breiten = [1, 0.9, 0.78];
+        let o = linie(pp, dunkler(farbe, 0.36), b * 2 + 0.34 * g);
+        for (let j = 0; j < pp.length - 1; j++) o += linie([pp[j], pp[j + 1]], farbe, b * 2 * breiten[Math.min(j, 2)]);
+        const e = pp[pp.length - 1], v = pp[pp.length - 2];
+        o += '<circle cx="' + r1(lerp(v[0], e[0], 0.7)) + '" cy="' + r1(lerp(v[1], e[1], 0.7)) + '" r="' + r1(b * 0.55) + '" fill="' + heller(farbe, 0.35) + '" opacity=".4"/>';
+        return o;
       };
       const hinten = finger.filter((fi) => fi.tiefe < palmT).sort((a, b) => a.tiefe - b.tiefe);
       const vorn = finger.filter((fi) => fi.tiefe >= palmT).sort((a, b) => a.tiefe - b.tiefe);
