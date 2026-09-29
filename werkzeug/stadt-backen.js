@@ -317,6 +317,9 @@ function auftraege() {
    Flicken nach Tiefe (hinten zuerst).
 
    Der Schatten ist eine eigene Ebene (halbe Auflösung, nur Deckkraft).
+   FASSUNG 821 — plan.sf wählt die Auflösung des Schattens (Auto-Schau:
+   0.25 – der weiche Schatten braucht nicht mehr, und seine Deckkraft
+   wird von WebP verlustfrei gespeichert, q hilft dort nicht).
 
    Ergebnis in stadt-leicht/bilder/:
      <bild>_1.webp, <bild>_2.webp …  Blätter (Karosserie und Flicken)
@@ -393,7 +396,7 @@ async function drehblaetterBacken(dreh) {
         const wg = weich.getContext("2d"); wg.filter = "blur(" + (s * (a.schattenWeich || 0.06)).toFixed(1) + "px)"; wg.drawImage(basis.sch, 0, 0);
         const sd = weich.getContext("2d").getImageData(0, 0, WW, HH).data;
         const ks = kasten(sd, 0, 0, WW, HH, WW) || kb;
-        const eintrag = { g: gier, m: s, a: [CX - kb[0], CY - kb[1]], k: zu(basis.cv, kb, 1), s: zu(weich, ks, 0.5), so: [ks[0] - CX, ks[1] - CY], r: [] };
+        const eintrag = { g: gier, m: s, a: [CX - kb[0], CY - kb[1]], k: zu(basis.cv, kb, 1), s: zu(weich, ks, a.sf || 0.5), so: [ks[0] - CX, ks[1] - CY], r: [] };
         /* 2) Flicken je Rad: nur dieses Rad malen, Unterschied zur Karosserie ausschneiden */
         const rad = gier * Math.PI / 180, c = Math.cos(rad), sn = Math.sin(rad);
         const proj = (p) => { const x = p[0] * c - p[1] * sn, y = p[0] * sn + p[1] * c; return [CX + (x - y) * ST.KX * s, CY + (x + y) * ST.KY * s - p[2] * ST.KZ * s, x * ST.ZUM_AUGE[0] + y * ST.ZUM_AUGE[1] + p[2] * ST.ZUM_AUGE[2]]; };
@@ -471,7 +474,7 @@ async function drehblaetterBacken(dreh) {
     const meta = {
       hinweis: "Drehblatt (werkzeug/stadt-backen.js, FASSUNG 812): m = Bildpunkte je Meter dieses Blickwinkels, b = [Blatt, x, y, w, h], a = Anker (Fußpunkt der Wagenmitte) im Bild, Flicken r: o = linke obere Ecke relativ zum Anker, l = Lenk-, k = Radstellung, n = Tiefe (größer = näher). Schatten in halber Auflösung, so = Ecke relativ zum Anker (volle Auflösung).",
       id: a.id, s: a.s, neigung: neig, gier: N, lenk: a.lenk, roll: a.roll, raeder: a.raeder, punkte: a.punkte || {},
-      blaetter: namen, schatten: a.bild + "_s.webp", sf: 0.5, bilder: erg.bilder
+      blaetter: namen, schatten: a.bild + "_s.webp", sf: a.sf || 0.5, bilder: erg.bilder
     };
     fs.writeFileSync(path.join(ZIEL, a.bild + ".json"), JSON.stringify(meta));
     const kb = namen.reduce((t, n) => t + fs.statSync(path.join(ZIEL, n)).size, 0) / 1024;
