@@ -29,6 +29,7 @@
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = path.join(__dirname, "..");
+const BILD_VOR = process.env.BILD_VOR || "";
 const BILDER = process.env.BILDER || "/tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad";
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
   ".json": "application/json", ".jpg": "image/jpeg", ".png": "image/png",
@@ -106,6 +107,9 @@ const sage = (gut, was, zusatz) => {
   });
   await pg.waitForTimeout(500);
 
+  /* Auf dem alten Stand fehlt, was hier geprüft wird – dann wird es rot, statt abzubrechen. */
+  const ev = (fn, arg) => pg.evaluate(fn, arg).catch((e) => ({ __fehler: String(e.message || e).split("\n")[0] }));
+  const kaputt = (x, was) => { if (x && x.__fehler) { sage(false, was, x.__fehler); return true; } return false; };
   const panelStand = () => pg.evaluate(() => {
     const p = document.getElementById("spPanel");
     const tab = p && [...p.querySelectorAll(".sp-tabs button")].find((b) => b.dataset.tab === "deutsch");
@@ -161,7 +165,7 @@ const sage = (gut, was, zusatz) => {
   sage(!(await pg.evaluate(() => window.__rufe.some((r) => /^spiel_(aufgabe|antwort)$/.test(r.name)))), "keine einzige Anfrage an die deutsche Aufgabenbank");
 
   console.log("\nANTWORTEN STIMMEN (je Art und Niveau nachgerechnet)\n");
-  const pruefung = await pg.evaluate(() => {
+  const pruefung = await ev(() => {
     const IT = window.DMA_SPIEL.pruef.IT, ED = ExerciseData, SB = window.Satzbau;
     const V = {};
     ED.IT_VERBEN.forEach((v) => { V[v.inf] = v; });
@@ -240,11 +244,11 @@ const sage = (gut, was, zusatz) => {
     const laute = IT.LAUTE.length;
     return { probleme, zahl, beispiele, laute };
   });
-  sage(!pruefung.probleme.length, "12 000 erzeugte Aufgaben: jede Lösung stimmt mit den Daten der Seite überein", pruefung.probleme.join("\n        ") || JSON.stringify(pruefung.zahl));
-  Object.keys(pruefung.beispiele).forEach((k) => console.log("        Beispiel " + k + ": " + pruefung.beispiele[k]));
+  if (!kaputt(pruefung, "erzeugte Aufgaben nachrechnen")) sage(!pruefung.probleme.length, "12 000 erzeugte Aufgaben: jede Lösung stimmt mit den Daten der Seite überein", pruefung.probleme.join("\n        ") || JSON.stringify(pruefung.zahl));
+  Object.keys(pruefung.beispiele || {}).forEach((k) => console.log("        Beispiel " + k + ": " + pruefung.beispiele[k]));
 
   console.log("\nANTWORTEN UND PUNKTE\n");
-  const antwort = await pg.evaluate(async () => {
+  const antwort = await ev(async () => {
     const p = document.getElementById("spPanel");
     p.querySelector('.sp-it-wahl [data-tu="itart"][data-k="artikel"]').click();
     await new Promise((r) => setTimeout(r, 100));
@@ -265,6 +269,7 @@ const sage = (gut, was, zusatz) => {
     return { erg, gut: window.__gutschriften, felder: window.__profilSchreiben, extra: JSON.parse(JSON.stringify(window.__extra)), save: window.__saveResult.length,
              server: window.__rufe.map((r) => r.name) };
   });
+  if (!kaputt(antwort, "Antworten und Punkte")) {
   sage(antwort.erg[0].richtig && /^Richtig! \+\d/.test(antwort.erg[0].zeile), "richtige Antwort: „Richtig! +Punkte“", antwort.erg[0].zeile);
   sage(!antwort.erg[1].richtig && /Leider falsch/.test(antwort.erg[1].zeile), "falsche Antwort: „Leider falsch“ mit Erklärung", antwort.erg[1].zeile);
   sage(antwort.erg.every((x) => x.h1 === x.h2 && x.h1 > 0), "die Auswertung hat einen festen Platz (nichts springt)", antwort.erg.map((x) => x.h1 + "→" + x.h2).join(" "));
@@ -273,9 +278,10 @@ const sage = (gut, was, zusatz) => {
   sage(antwort.extra.itPunkte && antwort.extra.itPunkte.punkte === soll && antwort.felder.indexOf("itPunkte") >= 0, "extra_profile_data.itPunkte bekommt die Punkte", JSON.stringify(antwort.extra.itPunkte));
   sage(antwort.felder.every((f) => f === "itPunkte" || f === "itKurs"), "geschrieben werden nur itPunkte/itKurs", antwort.felder.join(","));
   sage(antwort.save === 0 && !antwort.server.some((n) => /^spiel_(antwort|aussprache_fertig|extra_lohn)$/.test(n)), "kein saveResult (deutscher Punktestand/Ranking), kein Spiel-Server", antwort.server.join(",") || "–");
+  }
 
   console.log("\nAUSSPRACHE MIT AZURE AUF ITALIENISCH\n");
-  const sprech = await pg.evaluate(async () => {
+  const sprech = await ev(async () => {
     window.__vorlesen = []; window.__bewerten = []; window.__rufe = []; window.__gutschriften = [];
     const AP = window.AusspracheP;
     AP.zentralDa = () => true;
@@ -304,15 +310,17 @@ const sage = (gut, was, zusatz) => {
              text: (p.querySelector(".sp-sprech .sp-erg-platz") || {}).textContent || "", server: window.__rufe.map((r) => r.name),
              karte: Boolean(p.querySelector(".sp-sprech")), runde: JSON.parse(JSON.stringify(window.DMA_SPIEL.pruef.zustand().itRunde)) };
   });
+  if (!kaputt(sprech, "Aussprache im Italienisch-Raum")) {
   sage(sprech.karte && sprech.it && sprech.wortImWb, "die Sprechkarte zeigt ein Wort aus dem italienischen Wörterbuch", sprech.wort);
   sage(sprech.vorlesen.length >= 1 && sprech.vorlesen.every((o) => o.sprache === "it-IT" && o.text === sprech.wort), "Vorsprechen über Azure mit sprache „it-IT“", JSON.stringify(sprech.vorlesen));
   sage(sprech.bewerten.length === 1 && sprech.bewerten[0].sprache === "it-IT" && sprech.bewerten[0].text === sprech.wort, "Laut-Bewertung mit sprache „it-IT“", JSON.stringify(sprech.bewerten));
   sage(!sprech.server.some((n) => /^spiel_aussprache/.test(n)), "kein spiel_aussprache_wort/_fertig (die kennen nur deutsche Wörter)", sprech.server.join(",") || "–");
   sage(sprech.erg.prozent === 82 && sprech.erg.gewonnen > 0 && /\+\d+ Punkte/.test(sprech.text) && sprech.runde.punkte === sprech.erg.gewonnen, "82 / 100 → Punkte in die italienische Runde", sprech.text.slice(0, 80) + " · Runde " + JSON.stringify(sprech.runde));
-  await pg.screenshot({ path: path.join(BILDER, "837-aussprache-360.png") });
+  }
+  await pg.screenshot({ path: path.join(BILDER, BILD_VOR + "837-aussprache-360.png") });
 
   console.log("\nEXTRA-SPIELE FRAGEN AUCH ITALIENISCH\n");
-  const extra = await pg.evaluate(async () => {
+  const extra = await ev(async () => {
     window.__rufe = [];
     let ergebnis = null;
     window.DMA_SPIEL.pruef.deutschFrage((ok) => { ergebnis = ok; });
@@ -324,10 +332,10 @@ const sage = (gut, was, zusatz) => {
     await new Promise((r) => setTimeout(r, 1600));
     return { frage, n: knoepfe.length, ergebnis, server: window.__rufe.map((r) => r.name) };
   });
-  sage(extra.n >= 2 && typeof extra.ergebnis === "boolean" && !extra.server.some((n) => /^spiel_(aufgabe|antwort)$/.test(n)), "Extra-Spiel-Frage kommt aus dem Italienischen, ohne Server", extra.frage);
+  if (!kaputt(extra, "Extra-Spiel-Frage")) sage(extra.n >= 2 && typeof extra.ergebnis === "boolean" && !extra.server.some((n) => /^spiel_(aufgabe|antwort)$/.test(n)), "Extra-Spiel-Frage kommt aus dem Italienischen, ohne Server", extra.frage);
 
   console.log("\n360 PX\n");
-  const mass = await pg.evaluate(async () => {
+  const mass = await ev(async () => {
     const p = document.getElementById("spPanel");
     p.querySelector('.sp-it-wahl [data-tu="itart"][data-k="passato"]').click();
     await new Promise((r) => setTimeout(r, 150));
@@ -345,24 +353,26 @@ const sage = (gut, was, zusatz) => {
     p.scrollTop = 0; const sc = p.querySelector(".sp-inhalt"); if (sc) sc.scrollTop = 0;
     return { klein, raus, ueber, breite: Math.round(r.width), seite: document.documentElement.scrollWidth, n: ziele.length };
   });
+  if (!kaputt(mass, "360 px")) {
   sage(!mass.klein.length, "alle " + mass.n + " Tippflächen mindestens 30 px", JSON.stringify(mass.klein.slice(0, 5)));
   sage(mass.raus === 0 && mass.ueber === 0 && mass.seite <= 360, "nichts ragt aus dem Fenster, keine Überlappung, kein Querscrollen", JSON.stringify({ raus: mass.raus, ueber: mass.ueber, panel: mass.breite, seite: mass.seite }));
-  await pg.screenshot({ path: path.join(BILDER, "837-frage-360.png") });
-  await pg.evaluate(async () => {
+  }
+  await pg.screenshot({ path: path.join(BILDER, BILD_VOR + "837-frage-360.png") });
+  await ev(async () => {
     const p = document.getElementById("spPanel");
     const a = window.DMA_SPIEL.pruef.zustand().itAufgabe;
     [...p.querySelectorAll('.sp-it-aufgabe [data-tu="itantwort"]')].find((b) => b.dataset.o !== a.loesung).click();
     await new Promise((r) => setTimeout(r, 100));
     p.scrollTop = 0; const sc = p.querySelector(".sp-inhalt"); if (sc) sc.scrollTop = 0;
   });
-  await pg.screenshot({ path: path.join(BILDER, "837-falsch-360.png") });
+  await pg.screenshot({ path: path.join(BILDER, BILD_VOR + "837-falsch-360.png") });
 
   console.log("\nZURÜCK IN DEN DEUTSCH-RAUM\n");
   await lernraum("de", true);
   await oeffnen();
   st = await panelStand();
   sage(st.reiter === "Deutsch" && !st.it && st.aufgabeRufe >= 1 && /Ich ___ nach Hause/.test(st.text), "wieder „Deutsch zum Überleben“ mit Server-Aufgaben", JSON.stringify({ reiter: st.reiter, it: st.it, rufe: st.aufgabeRufe }));
-  await pg.screenshot({ path: path.join(BILDER, "837-deutsch-360.png") });
+  await pg.screenshot({ path: path.join(BILDER, BILD_VOR + "837-deutsch-360.png") });
 
   await br.close(); srv.close();
   if (konsolenFehler.length) { fehler++; console.log("  FEHL Seitenfehler: " + konsolenFehler.slice(0, 5).join(" | ")); }
