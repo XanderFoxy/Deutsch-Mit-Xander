@@ -466,7 +466,8 @@
       const kopfZ = el("div", "lk-kopfzeile", '<span class="lk-uhr" title="Uhrzeit in Deutschland"></span><span class="lk-ortsschild"><b></b></span><span class="lk-wetter" hidden></span>');
       wurzel.appendChild(kopfZ);
       const uhrStellen = () => {
-        let t = ""; try { t = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }).format(new Date()); } catch (e) { const d = new Date(); t = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
+        /* FASSUNG 825 — dieselbe deutsche Uhr wie Laternen und Rathausuhr (ST.uhr, kern.js; ?uhr= zum Prüfen) */
+        const uz = ST.uhr(), t = ("0" + uz.h).slice(-2) + ":" + ("0" + uz.m).slice(-2);
         const u = kopfZ.querySelector(".lk-uhr"); if (u.textContent !== t) u.textContent = t;
         const n = kopfZ.querySelector(".lk-ortsschild b"), name = O.kopfName || stadtName(); if (n.textContent !== name) n.textContent = name;
       };
@@ -622,13 +623,20 @@
       window.addEventListener("message", (ev) => {
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-zeichen") return;
         zeichen = ev.data.z || {};
+        O.zeichenJetzt = zeichen;   // FASSUNG 825 — für das Einsammel-„Pling" beim Tipp aufs Haus im kleinen Rahmen
         const da = {};
         for (const b of Array.from(zeichenEbene.children)) { if (zeichen[b.dataset.g]) da[b.dataset.g] = b; else b.remove(); }
         for (const g in zeichen) {
           let b = da[g];
           if (!b) {
             b = el("button"); b.type = "button"; b.dataset.g = g;
-            b.addEventListener("click", (e) => { e.stopPropagation(); try { window.parent.postMessage({ typ: "leicht-haus", g: g === "jagd" ? "wald" : g }, location.origin); } catch (x) {} });
+            b.addEventListener("click", (e) => {
+              e.stopPropagation();
+              /* FASSUNG 825 — XANDER: „bei den anderen bei Ei … kommt da gar nix … so dieses Haptik-Geräusch fehlt": beim
+                 Einsammeln (fertiges Zeichen) für jede Ware dasselbe kurze „Pling" und ein kurzes Zittern (ton.js) */
+              try { const z = zeichen[g]; if (z && z[0] === "fertig" && ST.ton && ST.ton.einsammeln) ST.ton.einsammeln(z[2] || ""); } catch (x) {}
+              try { window.parent.postMessage({ typ: "leicht-haus", g: g === "jagd" ? "wald" : g }, location.origin); } catch (x) {}
+            });
             zeichenEbene.appendChild(b);
           }
           const kl = "lk-zeichen lk-z-" + zeichen[g][0] + (ORTE[g] ? " lk-z-ort" : "");
@@ -1145,6 +1153,8 @@
     if (document.body.classList.contains("lk-mini-modus") && window.parent !== window && !O.gestalten && (art === "haus" || art === "bauplatz")) {
       /* FASSUNG 817 — ein leerer Bauplatz meldet das Haus, das (nach dem Umbauen im Spiel) dorthin gehört */
       const g = art === "haus" ? o && o.spiel : (wasGehoertHin(platz) || platz);
+      /* FASSUNG 825 — ist dort etwas fertig, sammelt der Tipp es ein: dasselbe „Pling" wie am Zeichen */
+      try { const z = g && O.zeichenJetzt && O.zeichenJetzt[g]; if (z && z[0] === "fertig" && ST.ton && ST.ton.einsammeln) ST.ton.einsammeln(z[2] || ""); } catch (e) {}
       if (g) { try { window.parent.postMessage({ typ: "leicht-haus", g: g }, location.origin); } catch (e) {} }
       return;
     }

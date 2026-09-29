@@ -141,6 +141,7 @@
     if (ST.bahn) ST.bahn.bewegen(jetzt);   // FASSUNG 809 — die Eisenbahn (bahn.js)
     if (ST.fuhrwerk) ST.fuhrwerk.bewegen(jetzt);   // FASSUNG 810 — Kornwagen und Pferdebahn (fuhrwerk.js)
     if (ST.autos) ST.autos.bewegen(jetzt);   // FASSUNG 815 — XANDER: „mein neuen Dodge Viper und mein Batmobil … in der Map" (autos.js)
+    if (ST.ton && ST.ton.takt && !L.still) ST.ton.takt(jetzt);   // FASSUNG 825 — Rathausuhr (Westminster) und Baustellenlärm (ton.js)
     /* lebendig: Schneefall, Rauch, Nachtlichter → ~30 Bilder je Sekunde reichen */
     const lebt = (SZ.jahr === "winter" && SZ.schneefall) || true;
     const takt = L.unruhe > 0 ? 0 : lebt ? 33 : 250;
@@ -165,7 +166,7 @@
     const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(String(t || "").trim());
     return m ? new Date(+m[1], +m[2] - 1, +m[3], 12, 0, 0) : null;
   }
-  function zeitNachUhr(d) { const h = d.getHours() + d.getMinutes() / 60; return h >= 7.5 && h < 17 ? "tag" : (h >= 17 && h < 19) || (h >= 6.5 && h < 7.5) ? "abend" : "nacht"; }
+  function zeitNachUhr(d) { const h = ST.uhr ? ST.uhr().stunde : d.getHours() + d.getMinutes() / 60; /* FASSUNG 825 — deutsche Uhr */ return h >= 7.5 && h < 17 ? "tag" : (h >= 17 && h < 19) || (h >= 6.5 && h < 7.5) ? "abend" : "nacht"; }
   L.jahrNachDatum = jahrNachDatum; L.zeitNachUhr = zeitNachUhr;
 
   /* Eigener Schmuck (Baukasten) – vorerst im Browser gemerkt */

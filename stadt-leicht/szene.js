@@ -34,7 +34,8 @@
   };
   SZ.neu = function (o) { o.id = SZ.naechsteId++; o.dreh = SZ.drehNorm(o.dreh); o.stufe = o.stufe || 1; SZ.objekte.push(o); SZ.geaendert(); return o; };
   SZ.weg = function (o) { const i = SZ.objekte.indexOf(o); if (i >= 0) SZ.objekte.splice(i, 1); if (SZ.auswahl === o) SZ.auswahl = null; SZ.geaendert(); };
-  SZ.geaendert = function () { reiheSchl = ""; };
+  SZ.stand = 0;   // FASSUNG 825 — zählt jede Änderung der Stadt (Laternen-Nummern und Wandschein neu bestimmen)
+  SZ.geaendert = function () { reiheSchl = ""; SZ.stand++; };
   /* FASSUNG 808 — Drehung auf halbe Vierteldrehungen (45°) runden, 0 ≤ dreh < 4 */
   SZ.drehNorm = function (d) { d = Math.round((+d || 0) * 2) / 2; return ((d % 4) + 4) % 4; };
   /* FASSUNG 795 — XANDER: „der Übergang zwischen Tag und Nacht soll
@@ -44,9 +45,9 @@
      Dämmerung langsam ändert; Licht, Schatten und das Nachtbild werden
      dazwischen gemischt. Wer die Tageszeit selbst wählt, bekommt sie fest. */
   const misch = (a, b, t) => a + (b - a) * t;
-  const UHR = new URLSearchParams(location.search).get("uhr") != null ? +new URLSearchParams(location.search).get("uhr") : null;
+  /* FASSUNG 825 — nach der deutschen Uhr der Stadt (ST.uhr, kern.js; ?uhr=21:00 zum Prüfen); d: Stunde als Zahl oder Date */
   SZ.nachtGrad = function (d) {
-    const h = d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
+    const h = typeof d === "number" ? d : d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
     const rampe = (x, a, b) => Math.max(0, Math.min(1, (x - a) / (b - a)));
     if (h >= 8 && h < 16.5) return 0;
     if (h >= 16.5 && h < 18.5) return 0.75 * rampe(h, 16.5, 18.5);
@@ -57,9 +58,8 @@
   };
   SZ.zeitDaten = function () {
     if (!SZ.zeitAuto) return Object.assign({ name: SZ.zeit, grad: ST.ZEITEN[SZ.zeit].nacht }, ST.ZEITEN[SZ.zeit]);
-    /* ?uhr=18.2 – feste Uhrzeit zum Prüfen */
-    const d = new Date(); if (UHR != null) d.setHours(Math.floor(UHR), Math.round((UHR % 1) * 60), 0);
-    const n = SZ.nachtGrad(d), Z = ST.ZEITEN;
+    /* ?uhr=18.2 oder ?uhr=21:00 – Uhrzeit zum Prüfen (kern.js) */
+    const n = SZ.nachtGrad(ST.uhr().stunde), Z = ST.ZEITEN;
     const A = n <= 0.75 ? Z.tag : Z.abend, B = n <= 0.75 ? Z.abend : Z.nacht, t = n <= 0.75 ? n / 0.75 : (n - 0.75) / 0.25;
     SZ.zeit = n < 0.3 ? "tag" : n < 0.9 ? "abend" : "nacht";
     return { name: SZ.zeit, grad: n, amb: A.amb.map((v, i) => misch(v, B.amb[i], t)), sonne: A.sonne.map((v, i) => misch(v, B.sonne[i], t)),
@@ -272,6 +272,239 @@
     reihe = aus.map((i) => { SZ.objekte[i]._R = R[i]; return SZ.objekte[i]; });
   }
 
+  /* ---------------- FASSUNG 825: Laternen, Fenster und angestrahlte Hauswände ----------------
+     XANDER (wörtlich): „hast du daran gedacht, dass du die Laternen richtig hast, dass sie die Häuser an Strahlen, dass
+     sie nicht die ganze Nacht beleuchtet sind, um Strom zu sparen beziehungsweise es ist ja nicht jeder immer nachts noch
+     wach" – und „überprüfe mal wegen den Lampen ja dass nachts die Lampen an sind und diese schönen Lichtkegel geben, die
+     auch realistisch sind."
+     Wie in einer deutschen Kleinstadt (deutsche Uhr, ST.uhr):
+       · Straßenlaternen gehen in der Dämmerung an (Dämmerungsschalter: sobald es merklich dunkel wird) und morgens
+         bei Helligkeit wieder aus.
+       · Nachtabschaltung („Halbnachtschaltung"): zwischen 0:30 und 1:00 geht jede zweite Laterne aus (je Laterne ein
+         paar Minuten versetzt), ab 5:00 sind alle wieder an, solange es dunkel ist.
+       · Fenster gehen im Lauf des Abends nach und nach aus – jedes Fenster hat seine eigene „Schlafenszeit"; ein paar
+         bleiben die ganze Nacht hell, ab etwa 5 Uhr stehen die Ersten wieder auf.
+       · Eine brennende Laterne strahlt die Wände naher Häuser warm an (nur die Seite zur Laterne, nach Abstand
+         schwächer), und ihr Lichtkegel liegt rund am Boden.
+     Mit fester Tageszeit (?zeit=nacht, Knopf) gilt als Uhrzeit 22 Uhr (Abend: 19 Uhr), außer ?uhr= ist gesetzt. */
+  SZ.pruef = {};   // Test-Haken der Sonde 825: { ohneKegel, ohneSchein } schaltet Lichtfleck bzw. Wandschein ab
+  SZ.lichtStunde = function () {
+    if (SZ.zeitAuto || ST.uhrFest) return ST.uhr().stunde;
+    return SZ.zeit === "nacht" ? 22 : SZ.zeit === "abend" ? 19 : 12;
+  };
+  const istLaterne = (o) => !!o && /^d_laterne/.test(o.bild || "");
+  SZ.istLaterne = istLaterne;
+  let laternenNr = -1, laternenListe = [];
+  function laternenZaehlen() {
+    /* in der Reihenfolge des Aufstellens nummeriert: an der Straße entlang abwechselnd gerade/ungerade */
+    if (laternenNr === SZ.stand) return;
+    laternenNr = SZ.stand; laternenListe = [];
+    let n = 0;
+    for (const o of SZ.objekte) if (istLaterne(o)) { o._lnr = n++; laternenListe.push(o); }
+  }
+  /* brennt die Laterne o gerade? (h = Stunde, Z = Licht der Szene) */
+  SZ.laterneAn = function (o, Z, h) {
+    Z = Z || SZ.zeitDaten();
+    if (h == null) h = SZ.lichtStunde();
+    const ng = Z.grad != null ? Z.grad : Z.nacht;
+    if (ng < 0.3) return false;                         // hell genug: aus (Dämmerungsschalter)
+    laternenZaehlen();
+    const nr = o._lnr != null ? o._lnr : 0;
+    if (nr % 2 === 1) {
+      /* jede zweite: zwischen 0:30 und 1:00 aus (je Laterne versetzt), um 5:00 wieder an */
+      const aus = 0.5 + ST.hash2(nr, 825, 3) * 0.5;
+      if (h >= aus && h < 5) return false;
+    }
+    return true;
+  };
+  /* Anteil der Fenster, in denen noch Licht brennt (je Stunde, stückweise gerade) */
+  const FENSTER_KURVE = [[12, 0.8], [18, 0.82], [20, 0.78], [21, 0.7], [22, 0.56], [23, 0.4], [24, 0.27], [25, 0.17], [26, 0.12], [28, 0.1], [29, 0.2], [30, 0.42], [31, 0.55], [32, 0.62], [36, 0.8]];
+  SZ.fensterAnteil = function (h) {
+    const x = h < 12 ? h + 24 : h, K2 = FENSTER_KURVE;
+    for (let i = 1; i < K2.length; i++) if (x <= K2[i][0]) { const a = K2[i - 1], b = K2[i]; return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0]); }
+    return 0.8;
+  };
+  /* Brennt Fenster i von Haus o? Jedes Fenster hat seine „Schlafenszeit" (fester Zufallswert): fällt der Anteil darunter,
+     geht es aus – so erlöschen sie nach und nach und nie alle zugleich; nachts geht selten kurz eins an (Bad, Frühschicht). */
+  SZ.fensterAn = function (o, i, h) {
+    const u = ST.hash2(o.id * 31 + i, 825, 7), anteil = SZ.fensterAnteil(h);
+    if (u < anteil) return true;
+    if (h >= 22 || h < 5) { const takt = Math.floor((h < 12 ? h + 24 : h) * 3 + ST.hash2(o.id, i, 5)); return ST.hash2(o.id * 7 + i, takt, 9) < 0.035; }
+    return false;
+  };
+  /* ausgeschaltete Laterne: das Nachtbild mit dunklem Glas (einmal je Bild gerechnet und gemerkt) */
+  const ausBilder = new Map();
+  function laterneAusBild(name) {
+    if (ausBilder.has(name)) return ausBilder.get(name);
+    const img = LB.bild(name); if (!img) return null;
+    let c = null;
+    try {
+      c = document.createElement("canvas"); c.width = img.naturalWidth || img.width; c.height = img.naturalHeight || img.height;
+      const x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(img, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height), p = d.data, oben = Math.ceil(c.height * 0.42);
+      for (let y = 0; y < oben; y++) for (let xx = 0; xx < c.width; xx++) {
+        const j = (y * c.width + xx) * 4, r = p[j], gg = p[j + 1], b = p[j + 2];
+        /* warmes, helles Glas → dunkles, kaltes Glas mit etwas Spiegelung */
+        if (p[j + 3] > 20 && r > 120 && gg > 90 && r > b + 35) {
+          const v = (r + gg + b) / 765;
+          p[j] = 34 + 26 * v; p[j + 1] = 40 + 28 * v; p[j + 2] = 56 + 34 * v;
+        }
+      }
+      x.putImageData(d, 0, 0);
+    } catch (e) { c = null; }
+    ausBilder.set(name, c);
+    return c;
+  }
+  SZ.laterneAusBild = laterneAusBild;
+  /* Dunkle Fenster: im gemalten Nachtbild sind alle Fenster hell. Je Bild wird einmal gemerkt, welche warmen, hellen
+     Bildpunkte zu welchem gemessenen Fensterlicht (meta.l, ohne Feuer und Bodenschein) gehören; geht ein Fenster aus,
+     werden nur seine Bildpunkte zu dunklem Glas – das Haus bekommt dafür ein eigenes, gemerktes Bild. */
+  const fensterGruppen = new Map(), fensterBilder = new Map();
+  const warm = (r, gg, b) => r > 125 && gg > 75 && r > b + 45;
+  function gruppenVon(name, meta, img) {
+    if (fensterGruppen.has(name)) return fensterGruppen.get(name);
+    let erg = null;
+    try {
+      const W = img.naturalWidth || img.width, H = img.naturalHeight || img.height, sx = W / meta.w, sy = H / meta.h;
+      const quellen = [];
+      meta.l.forEach((l, i) => { if (!l[5] && !l[6]) quellen.push([i, (meta.ax + l[0]) * sx, (meta.ay + l[1]) * sy, Math.max(3, l[2] * 0.55 * sx)]); });
+      if (quellen.length) {
+        const c = document.createElement("canvas"); c.width = W; c.height = H;
+        const x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(img, 0, 0);
+        const p = x.getImageData(0, 0, W, H).data, gr = new Uint8Array(W * H).fill(255);
+        let n = 0;
+        for (const q of quellen) {
+          const x0 = Math.max(0, Math.floor(q[1] - q[3])), x1 = Math.min(W - 1, Math.ceil(q[1] + q[3])), y0 = Math.max(0, Math.floor(q[2] - q[3])), y1 = Math.min(H - 1, Math.ceil(q[2] + q[3]));
+          for (let y = y0; y <= y1; y++) for (let xx = x0; xx <= x1; xx++) {
+            const j = y * W + xx, dd = ((xx - q[1]) * (xx - q[1]) + (y - q[2]) * (y - q[2])) / (q[3] * q[3]);
+            if (dd > 1) continue;
+            const k4 = j * 4;
+            if (p[k4 + 3] < 40 || !warm(p[k4], p[k4 + 1], p[k4 + 2])) continue;
+            /* bei Überschneidung gehört der Punkt der näheren Quelle */
+            if (gr[j] !== 255) { const alt = quellen.find((z) => z[0] === gr[j]); if (alt && ((xx - alt[1]) ** 2 + (y - alt[2]) ** 2) / (alt[3] * alt[3]) <= dd) continue; }
+            gr[j] = q[0]; n++;
+          }
+        }
+        if (n) erg = { W: W, H: H, gr: gr, n: n };
+      }
+    } catch (e) { erg = null; }
+    fensterGruppen.set(name, erg);
+    if (fensterGruppen.size > 60) fensterGruppen.delete(fensterGruppen.keys().next().value);
+    return erg;
+  }
+  function fensterBild(o, name, h) {
+    const meta = LB.vz[name]; if (!meta || !meta.l || !meta.l.length) return null;
+    const img = LB.bild(name); if (!img) return null;
+    const aus = [];
+    meta.l.forEach((l, i) => { if (!l[5] && !l[6] && !SZ.fensterAn(o, i, h)) aus.push(i); });
+    if (!aus.length) return null;
+    const schl = name + "|" + aus.join(",");
+    let c = fensterBilder.get(o.id);
+    if (c && c.schl === schl) { c.zuletzt = LB.takt; return c; }
+    /* höchstens zwei neue Bilder je Gemälde (sonst ruckelt der erste Nachtblick); bis dahin das bisherige */
+    if (SZ.fensterBudget <= 0) return c && c.name === name ? c : null;
+    SZ.fensterBudget--;
+    const G = gruppenVon(name, meta, img); if (!G) return null;
+    try {
+      c = document.createElement("canvas"); c.width = G.W; c.height = G.H; c.schl = schl; c.name = name; c.zuletzt = LB.takt;
+      const x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(img, 0, 0);
+      const d = x.getImageData(0, 0, G.W, G.H), p = d.data, weg = new Uint8Array(256);
+      for (const i of aus) weg[i] = 1;
+      for (let j = 0; j < G.gr.length; j++) {
+        if (G.gr[j] === 255 || !weg[G.gr[j]]) continue;
+        const k4 = j * 4, v = (p[k4] + p[k4 + 1] + p[k4 + 2]) / 765;
+        /* dunkles Glas, ein Hauch vom Nachthimmel gespiegelt */
+        p[k4] = 20 + 26 * v; p[k4 + 1] = 24 + 28 * v; p[k4 + 2] = 38 + 36 * v;
+      }
+      x.putImageData(d, 0, 0);
+    } catch (e) { return null; }
+    fensterBilder.set(o.id, c);
+    SZ.fensterDunkel = (SZ.fensterDunkel || 0) + aus.length;
+    /* höchstens 16 solcher Bilder (Speicher auf dem Telefon): das am längsten ungenutzte geht */
+    if (fensterBilder.size > 16) { let alt = null, t0 = Infinity; for (const [k, v] of fensterBilder) if (v.zuletzt < t0) { t0 = v.zuletzt; alt = k; } fensterBilder.delete(alt); }
+    return c;
+  }
+  SZ.fensterBild = fensterBild;
+  /* Häuser, Wunder und Kulissen mit Fenstern (nicht die Laterne, keine Baustelle) */
+  const fensterArt = (o) => !!o && o.id != null && !o.geist && !(o.bau && o.bau.p < 1) && (o.art === "haus" || o.art === "wunder" || o.art === "kulisse") && !istLaterne(o);
+  /* Hauswände im Schein naher Laternen: je Haus ein kleines Lichtbild (Verlauf je Laterne × Nachtbild als Maske), gemerkt
+     solange sich weder Bild noch Laternen ändern; gemalt mit „lighter" (heller, warm, nach dem Stoff der Wand). */
+  const schein = new Map();
+  const REICHWEITE = 8.5;   // m: so weit strahlt eine 4,4 m hohe Laterne eine Wand merklich an
+  function wirdAngestrahlt(o) { return !!o && !o.bau && !o.geist && (o.art === "haus" || o.art === "wunder" || (o.art === "kulisse" && !o.deko && (o.hoehe || 0) >= 5)); }
+  /* nächster Punkt der Grundfläche (Rechteck aus SZ.ecken) zu einem Punkt, und der Abstand dorthin */
+  function naechsterPunkt(o, x, y) {
+    const E = ecken(o, 0);
+    let bx = o.x, by = o.y, bd = Infinity, innen = true;
+    for (let i = 0; i < 4; i++) {
+      const a = E[i], b = E[(i + 1) % 4], vx = b[0] - a[0], vy = b[1] - a[1], L2 = vx * vx + vy * vy || 1;
+      if ((vx * (y - a[1]) - vy * (x - a[0])) < 0) innen = false;
+      const t = Math.max(0, Math.min(1, ((x - a[0]) * vx + (y - a[1]) * vy) / L2)), px = a[0] + vx * t, py = a[1] + vy * t, d = Math.hypot(x - px, y - py);
+      if (d < bd) { bd = d; bx = px; by = py; }
+    }
+    return { x: bx, y: by, d: innen ? 0 : bd };
+  }
+  function laternenBei(o) {
+    /* nahe Laternen (Abstand zur Wand), gemerkt bis sich die Stadt ändert */
+    if (o._latN === laternenNr && o._latD === K.dreh) return o._lat;
+    const aus = [];
+    for (const l of laternenListe) {
+      if (Math.abs(l.x - o.x) > 60 || Math.abs(l.y - o.y) > 60) continue;
+      const p = naechsterPunkt(o, l.x, l.y);
+      if (p.d > REICHWEITE) continue;
+      /* nur Laternen vor einer Wand, die zum Betrachter zeigt (von der Wand aus gesehen liegt die Laterne vorn) */
+      if (p.d > 0.2 && ST.tiefe(l.x, l.y) - ST.tiefe(p.x, p.y) < -0.1) continue;
+      aus.push({ l: l, x: p.x, y: p.y, d: Math.max(0.4, p.d) });
+    }
+    o._lat = aus; o._latN = laternenNr; o._latD = K.dreh;
+    return aus;
+  }
+  function hausAnstrahlen(e, Z, h) {
+    const o = e.o;
+    if (!wirdAngestrahlt(o) || (LB.spar && !LB.nurKlein) || SZ.pruef.ohneSchein) return;
+    const nb = e.lagen.find((l) => /_nacht_/.test(l[0])); if (!nb) return;
+    const img = LB.bild(nb[0]); if (!img) return;
+    const m = nb[3] || e.meta, k = nb[2] || e.k;
+    const lat = laternenBei(o).filter((w) => SZ.laterneAn(w.l, Z, h));
+    if (!lat.length) return;
+    const schl = o.id + "|" + nb[0] + "|" + K.dreh + "|" + lat.map((w) => w.l._lnr).join(",");
+    let c = schein.get(o.id);
+    if (!c || c.schl !== schl) {
+      const f = Math.min(1, 360 / Math.max(m.w, m.h)), W = Math.max(1, Math.round(m.w * f)), H = Math.max(1, Math.round(m.h * f));
+      c = document.createElement("canvas"); c.width = W; c.height = H; c.schl = schl;
+      const x = c.getContext("2d");
+      x.fillStyle = "#000"; x.fillRect(0, 0, W, H);
+      x.globalCompositeOperation = "lighter";
+      const P0 = ST.proj(o.x, o.y, 0), pxProM = K.s / k * f;   // Bildpunkte des Lichtbilds je Meter
+      for (const w of lat) {
+        /* Mitte des Scheins: der nächste Wandpunkt auf 2,4 m Höhe; je weiter die Laterne weg ist, desto größer und
+           schwächer der Fleck (Licht fällt mit dem Quadrat des Abstands ab) */
+        const P = ST.proj(w.x, w.y, 2.4), cx = (P[0] - P0[0]) / k * f + m.ax * f, cy = (P[1] - P0[1]) / k * f + m.ay * f;
+        const kraft = 1 / (1 + (w.d / 3.6) * (w.d / 3.6));
+        const r = (3 + w.d * 0.9) * pxProM;
+        const gr = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+        gr.addColorStop(0, "rgba(255,198,122," + (0.95 * kraft).toFixed(3) + ")");
+        gr.addColorStop(0.3, "rgba(255,186,108," + (0.5 * kraft).toFixed(3) + ")");
+        gr.addColorStop(0.65, "rgba(240,160,90," + (0.14 * kraft).toFixed(3) + ")");
+        gr.addColorStop(1, "rgba(240,160,90,0)");
+        x.fillStyle = gr; x.fillRect(0, 0, W, H);
+      }
+      /* × Nachtbild (die Farbe der Wand), dann nur wo das Haus ist */
+      x.globalCompositeOperation = "multiply"; x.drawImage(img, 0, 0, W, H);
+      x.globalCompositeOperation = "destination-in"; x.drawImage(img, 0, 0, W, H);
+      schein.set(o.id, c);
+      if (schein.size > 32) schein.delete(schein.keys().next().value);
+    }
+    const a = Math.min(1, (Z.nacht - 0.3) / 0.5);
+    if (a <= 0) return;
+    g.save(); g.globalCompositeOperation = "lighter";
+    /* zweimal: die Wand im Schein wird bis zu dreimal so hell wie im Nachtbild */
+    g.globalAlpha = a; g.drawImage(c, e.X - m.ax * k, e.Y - m.ay * k, m.w * k, m.h * k);
+    g.globalAlpha = a * 0.9; g.drawImage(c, e.X - m.ax * k, e.Y - m.ay * k, m.w * k, m.h * k);
+    g.restore();
+    SZ.angestrahlt = (SZ.angestrahlt || 0) + 1;
+  }
+
   /* ---------------- Zeichnen ---------------- */
   function lichtMalen(e, Z, t, nurBoden, alpha) {
     const m = e.meta; if (!m.l || !m.l.length || Z.nacht <= 0.02) return;
@@ -282,15 +515,35 @@
        meisten, spät in der Nacht nur noch wenige; jedes Fenster wechselt zu seiner eigenen Zeit (etwa alle 20 min).
        Laternen, Feuer und der Schein am Boden bleiben immer an. */
     const o = e.o, fenster = !nurBoden && o && o.id != null && (o.art === "haus" || o.art === "wunder" || o.art === "kulisse") && !/laterne/.test(o.bild || "");
-    let anteil = 1;
-    if (fenster) { const h = new Date().getHours() + new Date().getMinutes() / 60, sp = h >= 23 || h < 5 ? 0.3 : h >= 21.5 ? 0.55 : 0.78; anteil = sp; }
-    const minute = Date.now() / 60000;
+    /* FASSUNG 825 — Laterne aus (Nachtabschaltung, Tag): kein Schein, kein Lichtkegel; Fenster nach ihrer Schlafenszeit */
+    const h = SZ.lichtStunde();
+    if (istLaterne(o) && !SZ.laterneAn(o, Z, h)) { g.restore(); return; }
+    if (istLaterne(o) && m.l[0] && !SZ.pruef.ohneKegel) {
+      /* FASSUNG 825 — „diese schönen Lichtkegel … die auch realistisch sind": unter der Laterne ein runder, warmer
+         Lichtfleck (≈ 7 m, zur Mitte hin hell, weich auslaufend – im 2:1-Blick eine Ellipse) und darüber, ganz zart, der
+         Lichtkegel in der Luft von der Leuchte zum Boden (bei Schnee und Dunst sieht man ihn). */
+      const kopfX = e.X + m.l[0][0] * e.k, kopfY = e.Y + m.l[0][1] * e.k, R = 7 * K.s * (o.stufe || 1), a = Z.nacht * alpha;
+      if (nurBoden) {
+        g.save(); g.translate(e.X, e.Y); g.scale(1, 0.5);
+        const gr = g.createRadialGradient(0, 0, 0, 0, 0, R);
+        gr.addColorStop(0, "rgba(255,200,132," + (0.34 * a).toFixed(3) + ")"); gr.addColorStop(0.35, "rgba(255,188,116," + (0.17 * a).toFixed(3) + ")");
+        gr.addColorStop(0.7, "rgba(255,180,105," + (0.05 * a).toFixed(3) + ")"); gr.addColorStop(1, "rgba(255,180,105,0)");
+        g.fillStyle = gr; g.fillRect(-R, -R, 2 * R, 2 * R); g.restore();
+        SZ.kegel = (SZ.kegel || 0) + 1;
+      } else {
+        const unten = 3.4 * K.s * (o.stufe || 1), oben = 0.25 * K.s * (o.stufe || 1);
+        const gl = g.createLinearGradient(0, kopfY, 0, e.Y);
+        gl.addColorStop(0, "rgba(255,214,150," + (0.12 * a).toFixed(3) + ")"); gl.addColorStop(0.6, "rgba(255,200,130," + (0.05 * a).toFixed(3) + ")"); gl.addColorStop(1, "rgba(255,200,130,0)");
+        g.fillStyle = gl; g.beginPath();
+        g.moveTo(kopfX - oben, kopfY); g.lineTo(kopfX + oben, kopfY); g.lineTo(e.X + unten, e.Y); g.lineTo(e.X - unten, e.Y); g.closePath(); g.fill();
+      }
+    }
     for (let i = 0; i < m.l.length; i++) {
       const l = m.l[i];
       if (!!l[6] !== nurBoden) continue;
       const x = e.X + l[0] * e.k, y = e.Y + l[1] * e.k, r = l[2] * e.k;
       if (r < 1.2) continue;
-      if (fenster && !l[5]) { const ver = ST.hash2(o.id, i, 5), takt = Math.floor(minute / 20 + ver); if (ST.hash2(o.id * 7 + i, takt, 9) > anteil) continue; }
+      if (fenster && !l[5] && !SZ.fensterAn(o, i, h)) continue;
       const fl = l[5] ? 0.85 + 0.15 * Math.sin(t * 9 + x) : 1;
       /* „die Laternen … haben überhaupt keinen Schein": der Lichtkegel der Laterne am Boden kräftiger */
       const a = Z.nacht * l[4] * fl * alpha * (fenster && !l[5] ? 0.62 : 1) * (nurBoden && o && /laterne/.test(o.bild || "") ? 1.7 : 1);
@@ -421,6 +674,7 @@
     g.globalAlpha = 1;
 
     /* 2. Lichtpfützen */
+    SZ.kegel = 0;   // FASSUNG 825 — gezählte Lichtkegel der Laternen (Sonde)
     for (const e of sicht) if (e.licht) lichtMalen({ X: e.X, Y: e.Y, k: e.lk, meta: e.licht, o: e.o }, Z, t, true, 1);
     /* Menschen zwischen die Dinge einsortieren: nach dem letzten Ding, das
        sich mit ihnen im Bild überdeckt und ganz hinter ihnen liegt */
@@ -451,18 +705,28 @@
     }
     const leuteMalen = (idx) => { const l = nachDing.get(idx); if (!l) return; l.sort((u, v) => (u.a + u.b) - (v.a + v.b)); for (const p of l) (p.malen || ST.leute.malen)(g, p); };
     leuteMalen(-1);
+    /* FASSUNG 825 — Uhr für Laternen und Fenster; nur nachts etwas zu tun */
+    const lichtH = SZ.lichtStunde(), nachtLicht = Z.nacht > 0.02, anstrahlen = Z.nacht > 0.3;
+    if (nachtLicht) laternenZaehlen();
+    SZ.fensterBudget = ST.leicht && ST.leicht.still ? 99 : 2;   // Prüfbild (still=1): alles in einem Bild
+    SZ.angestrahlt = 0;
     /* 3. Dinge */
     for (let i = 0; i < sicht.length; i++) {
       const e = sicht[i];
       if (e.o === SZ.auswahl && !e.o.geist) auswahlRing(e, t);
+      const latAus = nachtLicht && istLaterne(e.o) && !SZ.laterneAn(e.o, Z, lichtH);
       for (const lg of e.lagen) {
-        const img = LB.bild(lg[0]); if (!img) continue;
+        const nachtLage = nachtLicht && /_nacht_/.test(lg[0]);
+        const img = latAus && nachtLage ? (laterneAusBild(lg[0]) || LB.bild(lg[0]))
+          : nachtLage && fensterArt(e.o) ? (fensterBild(e.o, lg[0], lichtH) || LB.bild(lg[0])) : LB.bild(lg[0]);
+        if (!img) continue;
         const m = lg[3] || e.meta, k = lg[2] || e.k;
         g.globalAlpha = lg[1] * (e.o.geist ? 0.72 : 1);
         g.drawImage(img, e.X - m.ax * k, e.Y - m.ay * k, m.w * k, m.h * k);
       }
       g.globalAlpha = 1;
       if (ST.windmuehle) ST.windmuehle.nach(g, e, t, Z);   // FASSUNG 812 — die drehenden Flügel der Windmühle (windmuehle.js)
+      if (anstrahlen) hausAnstrahlen(e, Z, lichtH);   // FASSUNG 825 — Wände im Schein naher Laternen
       if (e.licht) lichtMalen({ X: e.X, Y: e.Y, k: e.lk, meta: e.licht, o: e.o }, Z, t, false, 1);
       if (e.o.geist) auswahlRahmen(e);
       leuteMalen(i);

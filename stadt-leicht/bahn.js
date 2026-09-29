@@ -217,6 +217,7 @@
   }
   BA.aufbauen = function () {
     wegBauen(); BA.halt = null; BA.bahnhof = null; haltBestimmen(); planBauen();
+    if (ST.ton && ST.ton.vorladen) ST.ton.vorladen(LOK_DATEIEN);   // FASSUNG 825 — die alten Lok-Aufnahmen (nur wenn Töne erlaubt)
     const weg0 = [];
     for (const o of SZ.objekte) {
       if (o.art !== "natur") continue;
@@ -270,7 +271,7 @@
       }
       tonTakt(st, u.dir, lok);
       altArt = st.art;
-    } else { altArt = ""; tonS = null; }
+    } else { altArt = ""; tonS = null; BA.tonAus(); }
     /* Rauchwolken altern: steigen gebremst, wachsen, verwehen mit dem Wind und vergehen */
     const wind = [0.9, -0.35];
     for (const p of BA.puffs) {
@@ -291,6 +292,56 @@
     const P = ST.proj(lok.x, lok.y, 0);
     return { laut: 0.6 * nah * zoom * randAlpha(lok), pan: klemm((P[0] / K.W - 0.5) * 1.6, -0.85, 0.85) };
   }
+  /* FASSUNG 825 — XANDER (wörtlich): „der Sound von alten Spiel von der Lokomotive den fand ich schöner als den jetzigen.
+     Vielleicht kannst du den wiederherstellen mit der Klang vier realistischer" – „ich möchte wie gesagt meinen alten
+     Lokomotiven Sound". Wie im alten gemalten Dorf (spiel.js, bahnLauf) mit dessen Aufnahmen: Rollen über die
+     Schienenstöße („lokschiene"), die Glocke kurz vor dem Halt („lokglocke"), der Pfiff 0,35 s vor der Abfahrt
+     („lokpfeife"), dann die sieben Anfahr-Stöße („lokstampf"). Etwas echter als damals:
+       · ein Pfiff auch bei der Einfahrt (leiser, aus der Ferne),
+       · nach den sieben Stößen geht das Stampfen weiter – Stücke aus derselben Aufnahme im Takt der Räder (vier Stöße
+         je Radumdrehung, aber nie langsamer als der letzte Stoß der Aufnahme, sonst klänge es, als bremse sie), beim
+         Anfahren kräftig, in voller Fahrt leichter; beim Bremsen ist der Regler zu: kein Stampfen,
+       · das Rollen läuft als Schleife mit, solange der Zug fährt, im Tempo des Zuges,
+       · im Stand zischt leise der Dampf ab.
+     Alles nach Nähe und Zoom (tonLaut) und nur, wenn die Seite Töne darf. */
+  const LOK_DATEIEN = ["lokpfeife", "lokstampf", "lokschiene", "lokglocke"];
+  /* Einsätze der sieben Stöße in „lokstampf" (gemessen: 0 / 0,46 / 0,84 / 1,18 / 1,50 / 1,76 / 1,98 s) – Stücke 2 bis 5 */
+  const STOSS_STUECK = [[0.46, 0.3], [0.84, 0.3], [1.18, 0.28], [1.5, 0.24]];
+  let schiene = null, glockeGeschlagen = false, stossWeg = 0, stossNr = 0;
+  BA.tonAus = function () { if (schiene) { schiene.aus(); schiene = null; } };
+  try { document.addEventListener("visibilitychange", () => { if (document.hidden) BA.tonAus(); }); } catch (e) {}
+  function tonAlt(st, L, hoerbar, weg) {
+    const T = ST.ton;
+    if (hoerbar) T.vorladen(LOK_DATEIEN);
+    /* Einfahrt: Pfiff; die Glocke läutet, während die Lok einrollt (0,25 s vor dem Stillstand, wie im alten Dorf) */
+    if (st.art === "bremst" && altArt !== "bremst") { glockeGeschlagen = false; if (hoerbar) T.datei("lokpfeife", L.laut * 0.7, L.pan, { log: "lokpfeife-ein" }); }
+    if (!glockeGeschlagen && ((st.art === "bremst" && st.v / BREMS <= 0.25) || (st.art === "steht" && st.tau < 1))) {
+      glockeGeschlagen = true; if (hoerbar) T.datei("lokglocke", L.laut * 0.8, L.pan, { log: "lokglocke" });
+    }
+    /* Halt: Dampf ablassen; 0,35 s vor der Abfahrt der Pfiff (die alte Reihenfolge) */
+    if (st.art === "steht" && altArt && altArt !== "steht") { abPfiff = false; if (hoerbar) T.zisch(L.laut * 0.45, L.pan); }
+    if (st.art === "steht" && !abPfiff && st.tau >= HALT - 0.35) { abPfiff = true; if (hoerbar) T.datei("lokpfeife", L.laut * 0.9, L.pan, { log: "lokpfeife-ab" }); }
+    /* Abfahrt: die sieben Stöße der alten Aufnahme */
+    if (st.art === "anfahren" && altArt !== "anfahren") { stossWeg = 0; if (hoerbar) T.datei("lokstampf", L.laut, L.pan, { log: "lokstampf" }); }
+    /* danach weiter im Takt der Räder */
+    if ((st.art === "anfahren" && st.tau > 2.15) || st.art === "faehrt") {
+      const U = TAU * WAGEN[0].radR, jeStoss = Math.max(0.05, Math.min(0.22 * Math.max(st.v, 0.2), U / 4));
+      stossWeg += weg;
+      let n = 0;
+      while (stossWeg >= jeStoss && n < 2) {
+        stossWeg -= jeStoss; n++;
+        const kraft = st.art === "anfahren" ? klemm(1 - st.v / V, 0.35, 1) : 0.3;
+        const stueck = STOSS_STUECK[(stossNr++) % STOSS_STUECK.length], abst = jeStoss / Math.max(0.2, st.v);
+        if (hoerbar) T.datei("lokstampf", L.laut * (0.35 + 0.55 * kraft), L.pan, { ab: stueck[0], dauer: Math.min(stueck[1], Math.max(0.1, abst * 1.5)), rate: 0.95 + Math.random() * 0.1, log: "dampfstoss" });
+      }
+      if (stossWeg >= jeStoss) stossWeg %= jeStoss;
+    } else if (st.art !== "anfahren") stossWeg = 0;
+    /* Rollen über die Schienenstöße: als Schleife, im Tempo des Zuges */
+    if (hoerbar && st.v > 2) {
+      if (!schiene) schiene = T.schleife("lokschiene");
+      if (schiene) schiene.setzen(L.laut * 0.5 * klemm(st.v / V, 0.35, 1), L.pan, klemm(0.55 + 0.5 * st.v / V, 0.6, 1.05));
+    } else if (schiene) { schiene.aus(); schiene = null; }
+  }
   function tonTakt(st, dir, lok) {
     /* gefahrener Weg seit dem letzten Bild (bei festgehaltener Uhr oder Sprüngen: nichts) */
     let weg = tonS == null ? 0 : (st.s - tonS) * dir;
@@ -302,6 +353,9 @@
     const L = tonLaut(lok);
     BA.tonInfo = L;
     const hoerbar = L.laut > 0.004 && T.darf();
+    /* FASSUNG 825 — die alten Aufnahmen; nur wenn sie fehlen, der selbst erzeugte Klang von 818 (darunter) */
+    if (T.datei && !(LOK_DATEIEN.some(T.kaputt) && !LOK_DATEIEN.every(T.hat))) { tonAlt(st, L, hoerbar, weg); return; }
+    if (schiene) { schiene.aus(); schiene = null; }
     /* Einfahrt: langer Pfiff, dann in den letzten 2,6 s das Bremsquietschen */
     if (st.art === "bremst" && altArt !== "bremst") { bremsSpielt = false; if (hoerbar) T.pfiff(L.laut * 0.9, L.pan, "ein"); }
     if (st.art === "bremst" && !bremsSpielt && st.v / BREMS <= 2.6) { bremsSpielt = true; if (hoerbar) T.bremse(L.laut, L.pan, st.v / BREMS + 0.35); }
