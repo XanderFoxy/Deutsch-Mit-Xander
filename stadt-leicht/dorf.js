@@ -247,7 +247,8 @@
     /* FASSUNG 807 — XANDER: „du hast vergessen das Döbelner Rathaus weiterzubauen". Das Rathaus der Originalkarte ist das
        Döbelner Rathaus vom Obermarkt (Modell rathaus_doebeln, 44 × 21 m), auf 70 % gesetzt, damit es zwischen Gasthaus,
        Schule und Bäckerei passt; es schaut nach vorn auf den Markt. */
-    D.BILD.rathaus = ["w_rathaus_doebeln", "bau_rathaus", [31, 14.7], 22.8];
+    /* FASSUNG 819 — Grundfläche = Umriss des Stern-Grundrisses (Modell grund 41 × 33,1 m), mit D.MASS 0,7 in der Welt */
+    D.BILD.rathaus = ["w_rathaus_doebeln", "bau_rathaus", [41, 33.1], 22.8];
     D.MASS = { rathaus: 0.7 };
     P.rathaus = { x: -12.4, y: -14, dreh: 0, winkel: P.rathaus.winkel };
     /* FASSUNG 808 — XANDER: „das soll genau das selbe Bild sein … man soll das direkt wieder erkennen können". Im alten
@@ -256,10 +257,71 @@
     for (const k in P) if (k !== "muehle") P[k].dreh = 3.5;
     /* FASSUNG 809 — XANDER: „wenn man vor dem Brunnen steht … guck mal genau auf den Eingang zu, dann ist dieser dominante
        Teil seitlich nach rechts". Das Portal im Turm schaut zum Brunnen, der Staffelgiebel-Flügel geht nach rechts weg. */
-    P.rathaus.dreh = 3;
-    /* gedreht ist der lange Flügel breiter im Bild: das Rathaus rückt etwas nach rechts (gleiche Tiefe), damit die
-       Pferdebahn-Straße links davon sichtbar bleibt */
-    P.rathaus.x += 3; P.rathaus.y -= 3;
+    /* FASSUNG 819 — XANDER (Funk 206): „im Prinzip ist das ganze wie ein dreizackiger Stern … in der Draufsicht … das
+       seitliche rechts vom Eingang abgehend und das was hinter dem Turm ist ein perfekter rechter Winkel wie ein L und das
+       einzige was schräg ist ist das seitliche Schiff". Das Modell hat jetzt diesen Grundriss (Turm mit Portal vorn,
+       Flügel A nach rechts, B nach hinten, C schräg nach vorn links). Es schaut wie alle Häuser zum Betrachter (dreh 3,5)
+       und steht so, dass das Portal genau hinter dem Brunnen liegt (Walkie 305: „vor dem Brunnen siehst du praktisch den
+       Eingang"): Portalmitte BRUNNEN_ABST m hinter der Brunnenmitte. Grundriss (Modellmeter, mittig wie das Bild; die
+       Sonde pruefe-819-rathaus-form.js prüft, dass er zum Modell passt): für Wege, Bäume und die Leute vor dem Portal. */
+    D.GRUNDRISS = { rathaus: {
+      teile: [
+        [[-3.92, 10.64], [1.28, 10.64], [1.28, 5.44], [-3.92, 5.44]],                                   // Turm
+        [[1.28, 10.04], [13.28, 10.04], [13.28, -2.36], [1.28, -2.36]],                                 // A: Giebelbau
+        [[13.28, 9.04], [20.48, 9.04], [20.48, 0.04], [13.28, 0.04]],                                   // A: Ostflügel
+        [[-8.52, 5.44], [1.28, 5.44], [1.28, -16.56], [-8.52, -16.56]],                                 // B
+        [[-3.92, 10.04], [-12.52, 16.06], [-13.59, 16.53], [-14.76, 16.56], [-15.85, 16.14], [-16.7, 15.33],
+          [-20.48, 9.92], [-14.09, 5.44], [-8.52, 5.44], [-3.92, 5.44]]                                  // C
+      ],
+      portal: [-1.32, 10.64]
+    } };
+    D.BRUNNEN = [-2.5, -7.5];
+    const BRUNNEN_ABST = 5.6;
+    P.rathaus.dreh = 3.5;
+    {
+      const m = D.MASS.rathaus, a = P.rathaus.dreh * Math.PI / 2, c = Math.cos(a), s = Math.sin(a), pt = D.GRUNDRISS.rathaus.portal;
+      const pw = [D.BRUNNEN[0] - BRUNNEN_ABST / Math.SQRT2, D.BRUNNEN[1] - BRUNNEN_ABST / Math.SQRT2];
+      P.rathaus.x = +(pw[0] - (pt[0] * c - pt[1] * s) * m).toFixed(2); P.rathaus.y = +(pw[1] - (pt[0] * s + pt[1] * c) * m).toFixed(2);
+    }
+    /* Grundriss eines Hauses in der Welt (gedreht wie SZ.ecken, mit Maßstab), sonst null */
+    D.teileWelt = function (k, p, stufe) {
+      const G = D.GRUNDRISS && D.GRUNDRISS[k]; if (!G) return null;
+      p = p || P[k]; const m = stufe || (D.MASS || {})[k] || 1, a = (p.dreh || 0) * Math.PI / 2, c = Math.cos(a), s = Math.sin(a);
+      return G.teile.map((poly) => poly.map(([x, y]) => [p.x + (x * c - y * s) * m, p.y + (x * s + y * c) * m]));
+    };
+    /* Portalpunkt d Meter vor der Tür (Rathaus: vor dem Turmportal) */
+    D.tuer = function (k, d) {
+      const G = D.GRUNDRISS && D.GRUNDRISS[k], p = P[k]; if (!G) return null;
+      const m = (D.MASS || {})[k] || 1, a = (p.dreh || 0) * Math.PI / 2, c = Math.cos(a), s = Math.sin(a), x = G.portal[0], y = G.portal[1] + d / m;
+      return [p.x + (x * c - y * s) * m, p.y + (x * s + y * c) * m];
+    };
+    /* Abstand eines Punkts vom Rand eines Vielecks (innen negativ) */
+    const abstPoly = (p, poly) => {
+      let innen = false, dd = Infinity;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const [xi, yi] = poly[i], [xj, yj] = poly[j];
+        if ((yi > p[1]) !== (yj > p[1]) && p[0] < (xj - xi) * (p[1] - yi) / (yj - yi) + xi) innen = !innen;
+        const dx = xj - xi, dy = yj - yi, l2 = dx * dx + dy * dy || 1, t = Math.max(0, Math.min(1, ((p[0] - xi) * dx + (p[1] - yi) * dy) / l2));
+        dd = Math.min(dd, Math.hypot(p[0] - xi - dx * t, p[1] - yi - dy * t));
+      }
+      return innen ? -dd : dd;
+    };
+    /* Punkt in einem der Flügel (mit Rand in Metern)? */
+    D.imGrundriss = function (k, x, y, rand) {
+      const T = D.teileWelt(k);
+      return !!T && T.some((poly) => abstPoly([x, y], poly) < (rand || 0));
+    };
+    /* Kreise, die ein (längliches, konvexes) Vieleck bedecken: längs der längsten Kante in Stücke so lang wie breit */
+    const kreiseUm = (poly, rand) => {
+      let best = null;
+      for (let i = 0; i < poly.length; i++) { const a = poly[i], b = poly[(i + 1) % poly.length], l = Math.hypot(b[0] - a[0], b[1] - a[1]); if (!best || l > best[2]) best = [a, b, l]; }
+      const ex = (best[1][0] - best[0][0]) / best[2], ey = (best[1][1] - best[0][1]) / best[2];
+      let s0 = Infinity, s1 = -Infinity, t0 = Infinity, t1 = -Infinity;
+      for (const [x, y] of poly) { const s = x * ex + y * ey, t = -x * ey + y * ex; s0 = Math.min(s0, s); s1 = Math.max(s1, s); t0 = Math.min(t0, t); t1 = Math.max(t1, t); }
+      const L = s1 - s0, B2 = t1 - t0, n = Math.max(1, Math.ceil(L / B2 - 0.2)), tm = (t0 + t1) / 2, aus = [];
+      for (let i = 0; i < n; i++) { const s = s0 + L * (i + 0.5) / n; aus.push([s * ex - tm * ey, s * ey + tm * ex, Math.hypot(L / n / 2, B2 / 2) * 0.9 + rand]); }
+      return aus;
+    };
     D.PLAETZE = P;
     /* Bildachsen (u = x − y nach rechts, v = x + y nach unten) → Welt */
     const vw = (u, v) => [(u + v) / 2, (v - u) / 2];
@@ -330,7 +392,8 @@
     const vor = (p, d) => { const r = (p.dreh * 90 + 90) * Math.PI / 180; return [p.x + Math.cos(r) * d, p.y + Math.sin(r) * d]; };
     D.wegeBauen = function () {
       const ziele = [MARKT.slice()];
-      for (const k in P) ziele.push(vor(P[k], k === "muehle" ? 9 : 8));
+      /* FASSUNG 819 — zum Rathaus führt der Weg vor das Turmportal (D.tuer), nicht zur Mitte des Grundrisses */
+      for (const k in P) ziele.push(D.tuer(k, 2.2) || vor(P[k], k === "muehle" ? 9 : 8));
       ziele.push(see(58, 82));   // (zum Bahnhof führt die Pferdebahn-Straße)
       for (const k in D.WUNDER) { const w = D.WUNDER[k]; if (w.steht) ziele.push(vor(w, (w.fussS[0] + w.fussS[1]) / 4 + 3)); }
       const drin = [0], kanten = [];
@@ -345,9 +408,49 @@
       }
       /* FASSUNG 808 — Wege gehen um die Häuser herum, nicht hindurch (Hindernisse: Häuser, Wahrzeichen, Bahnhof als Kreise) */
       const hind = [];
-      for (const k in P) { const f = D.BILD[k][2], m = (D.MASS || {})[k] || 1; hind.push([P[k].x, P[k].y, Math.hypot(f[0], f[1]) / 2 * m * 0.8 + 1.2]); }
+      for (const k in P) {
+        /* FASSUNG 819 — der Stern-Grundriss des Rathauses: je Flügel eine Kette von Kreisen längs der Achse statt eines
+           großen Kreises (der läge über dem Platz vor dem Portal) */
+        const T = D.teileWelt(k);
+        if (T) { for (const poly of T) hind.push(...kreiseUm(poly, 1.0)); continue; }
+        const f = D.BILD[k][2], m = (D.MASS || {})[k] || 1; hind.push([P[k].x, P[k].y, Math.hypot(f[0], f[1]) / 2 * m * 0.8 + 1.2]);
+      }
+      if (D.BRUNNEN) hind.push([D.BRUNNEN[0], D.BRUNNEN[1], 3.4]);
       for (const k in D.WUNDER) { const w = D.WUNDER[k]; if (w.steht) hind.push([w.x, w.y, Math.hypot(w.fussS[0], w.fussS[1]) / 2 * 0.8 + 1.2]); }
       hind.push([D.BAHNHOF[0], D.BAHNHOF[1], 14]);
+      /* FASSUNG 819 — Sichtbarkeitsgraph um die Flügel des Rathauses: Knoten = Flügelecken, 3,5 m nach außen gerückt */
+      const RT = D.teileWelt("rathaus");
+      const umRathaus = (A, Bz) => {
+        const knoten = [A, Bz];
+        for (const poly of RT) {
+          let mx = 0, my = 0; for (const q of poly) { mx += q[0]; my += q[1]; } mx /= poly.length; my /= poly.length;
+          for (const q of poly) { const dx = q[0] - mx, dy = q[1] - my, l = Math.hypot(dx, dy) || 1, k = [q[0] + dx / l * 3.5, q[1] + dy / l * 3.5]; if (RT.every((pp) => abstPoly(k, pp) > 2.2)) knoten.push(k); }
+        }
+        const frei = (a, b) => {
+          const l = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.ceil(l / 0.5);
+          for (let i = 0; i <= n; i++) {
+            const q = [a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n];
+            if (Math.min(Math.hypot(q[0] - A[0], q[1] - A[1]), Math.hypot(q[0] - Bz[0], q[1] - Bz[1])) < 1.5) continue;
+            if (RT.some((poly) => abstPoly(q, poly) < 1.4)) return false;
+          }
+          return true;
+        };
+        const N = knoten.length, dist = new Array(N).fill(Infinity), her = new Array(N).fill(-1), fertig = new Array(N).fill(false);
+        dist[0] = 0;
+        for (;;) {
+          let u = -1; for (let i = 0; i < N; i++) if (!fertig[i] && dist[i] < Infinity && (u < 0 || dist[i] < dist[u])) u = i;
+          if (u < 0 || u === 1) break;
+          fertig[u] = true;
+          for (let v = 0; v < N; v++) {
+            if (fertig[v]) continue;
+            const dv = dist[u] + Math.hypot(knoten[v][0] - knoten[u][0], knoten[v][1] - knoten[u][1]);
+            if (dv < dist[v] && frei(knoten[u], knoten[v])) { dist[v] = dv; her[v] = u; }
+          }
+        }
+        if (her[1] < 0) return null;
+        const pts = []; for (let i = 1; i >= 0; i = her[i]) { pts.unshift(knoten[i]); if (i === 0) break; }
+        return kurve(pts, Math.max(4, Math.round(dist[1] / (pts.length - 1) / 2.5)));
+      };
       const stoesst = (pts) => { for (const q of pts) for (const h of hind) if (Math.hypot(q[0] - h[0], q[1] - h[1]) < h[2]) return h; return null; };
       D.WEGE = kanten.map(([i, j], n) => {
         const A = ziele[i], Bz = ziele[j], dx = Bz[0] - A[0], dy = Bz[1] - A[1], l = Math.hypot(dx, dy) || 1;
@@ -364,6 +467,9 @@
           pts = [A, [(A[0] + q[0]) / 2, (A[1] + q[1]) / 2], q, [(q[0] + Bz[0]) / 2, (q[1] + Bz[1]) / 2], Bz];
           w = kurve(pts, Math.max(6, Math.round(l / 2.5)));
         }
+        /* FASSUNG 819 — stößt ein Weg an einen Flügel des Rathauses (Stern um den Turm), geht er auf dem kürzesten freien
+           Weg über die Ecken der Flügel herum */
+        if (RT && w.slice(2, -2).some((q) => RT.some((poly) => abstPoly(q, poly) < 1.0))) { const um = umRathaus(A, Bz); if (um) w = um; }
         return w;
       });
       /* FASSUNG 808 — XANDER: „die Pferdebahn, die wir in Döbeln haben". Eigene Straße vom Markt links am Rathaus vorbei
@@ -378,7 +484,12 @@
       rund(MARKT[0], MARKT[1], 10, 10, 0);
       for (const w of D.WEGE) B.linie(w, 1.25, 0, 1);
       /* Vorgärten vor den Häusern */
-      for (const k in P) { if (k === "muehle") continue; const q = vor(P[k], 7.5); rund(q[0], q[1], 2.4, 2.4, 3); }
+      for (const k in P) {
+        if (k === "muehle") continue;
+        /* FASSUNG 819 — vor dem Rathausportal kein Vorgarten, sondern Pflaster bis zum Brunnen */
+        const t = D.tuer(k, 3.0); if (t) { rund(t[0], t[1], 4.2, 4.2, 0); continue; }
+        const q = vor(P[k], 7.5); rund(q[0], q[1], 2.4, 2.4, 3);
+      }
       /* Quelle, Fluss (wird breiter) in die Zunge des Sees, Mühlbach */
       rund(D.QUELLE[0], D.QUELLE[1], 3, 2.4, 1);
       const fl = kurve(D.FLUSS, 10);
@@ -432,11 +543,12 @@
       for (let i = 0; i < 4; i++) { const a = rad(i * 90 + 45); setze("d_bank", MARKT[0] + Math.cos(a) * 8.6, MARKT[1] + Math.sin(a) * 8.6, 0, { fuss: [1.9, 0.75], hoehe: 0.9, deko: 1 }); }
       setze("d_weihnachtsbaum", MARKT[0], MARKT[1], 0, { fuss: [7.4, 7.4], hoehe: 21.8, nurWinter: 1, jahr: "winter", deko: 1 });
       /* der Brunnen vor dem Portal (wie auf Xanders Foto); Christbaum und Buden bleiben auf dem Markt */
-      setze("d_brunnen", -2.5, -7.5, 0, { fuss: [4.6, 4.6], hoehe: 5.4, jahrNicht: "winter", deko: 1 });
+      setze("d_brunnen", D.BRUNNEN[0], D.BRUNNEN[1], 0, { fuss: [4.6, 4.6], hoehe: 5.4, jahrNicht: "winter", deko: 1 });
       for (let i = 0; i < 6; i++) { const a = rad(30 + i * 60); setze("d_marktbude", MARKT[0] + Math.cos(a) * 6.6, MARKT[1] + Math.sin(a) * 6.6, drehZurMitte(i * 60 + 30), { fuss: [4, 3.2], hoehe: 4.2, nurWinter: 1, jahr: "winter", deko: 1 }); }
       const r = rng(4711), G = B.GROESSE / 2;
       const frei = (x, y, abst) => {
         for (const k in P) { const p = P[k]; if (Math.hypot(p.x - x, p.y - y) < (k === "muehle" ? 13 : 9) + abst) return false; }
+        if (D.imGrundriss("rathaus", x, y, abst + 1)) return false;   // FASSUNG 819 — nichts in den Flügeln des Rathauses
         for (const k in D.WUNDER) { const w = D.WUNDER[k], f = w.fussS; if (Math.hypot(w.x - x, w.y - y) < (f[0] + f[1]) / 3 + 2 + abst) return false; }
         for (const o of liste) if (!o.rand && Math.abs(o.x - x) < o.fuss[0] / 2 + abst && Math.abs(o.y - y) < o.fuss[1] / 2 + abst) return false;
         if (vonBahn(x, y) < 6 || x + y < D.HORIZONT + 6) return false;
@@ -515,7 +627,8 @@
          positionieren … und das abspeichern zu können". Versetzt wird relativ zum Bauplatz (dx/dy in Metern). */
       const dx = (extra[k] && +extra[k].dx) || 0, dy = (extra[k] && +extra[k].dy) || 0;
       SZ.neu({ art: "haus", spiel: k, name: D.GEBAEUDE[k][0], bild: bild[0], bauBild: bild[1], x: p.x + dx, y: p.y + dy, dreh: dreh, platzX: p.x, platzY: p.y, platzDreh: p.dreh,
-        stufe: D.STUFE[Math.max(0, Math.min(2, (st || 1) - 1))] * ((D.MASS || {})[k] || 1), stufenZahl: st, fuss: bild[2].map((z) => z * ((D.MASS || {})[k] || 1)), hoehe: bild[3], bau: bau });
+        stufe: D.STUFE[Math.max(0, Math.min(2, (st || 1) - 1))] * ((D.MASS || {})[k] || 1), stufenZahl: st, fuss: bild[2].map((z) => z * ((D.MASS || {})[k] || 1)), hoehe: bild[3], bau: bau,
+        grundriss: D.GRUNDRISS && D.GRUNDRISS[k] ? D.GRUNDRISS[k].teile : undefined });   // FASSUNG 819 — Flügel für die Leute vor dem Portal (szene.js)
     }
     const wunder = (ich && ich.volk && ich.volk.wunder) || {};
     /* FASSUNG 808 — die Wahrzeichen auf ihren Plätzen aus dem Spielstand (volk.wunder_platz); Wege neu dazu */

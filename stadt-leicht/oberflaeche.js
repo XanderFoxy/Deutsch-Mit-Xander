@@ -550,7 +550,7 @@
     ["Pyramide", "d_pyramide", [9.2, 9.2], 13, 1], ["Krippe", "d_krippe", [7.2, 5.4], 5.2, 1],
     /* FASSUNG 808 — neue Modelle aus stadt/modelle/ (gebacken, stadt-leicht/backplan.json); an Stelle 5 die Gruppe.
        Geladen wird ein Bild erst, wenn die Leiste offen ist oder das Ding in der Stadt steht. */
-    ["Rathaus Döbeln", "w_rathaus_doebeln", [44.2, 21], 32.5, 0, "Wahrzeichen"],
+    ["Rathaus Döbeln", "w_rathaus_doebeln", [41, 33.1], 32.5, 0, "Wahrzeichen"],
     /* FASSUNG 815 — an Stelle 7 der Name des Autos in autos.js: kaufen, fahren lassen, abstellen */
     ["Dodge Viper", "v_viper", [1.92, 4.45], 1.12, 0, "Fahrzeuge", "viper"], ["Batmobil", "v_batmobil", [2.1, 5.9], 1.12, 0, "Fahrzeuge", "batmobil"],
     ["Pferdebahn", "v_pferdebahn", [2.3, 9.6], 3, 0, "Fahrzeuge"], ["Kornwagen", "v_pferdewagen_korn", [2, 6.5], 2.6, 0, "Fahrzeuge"],

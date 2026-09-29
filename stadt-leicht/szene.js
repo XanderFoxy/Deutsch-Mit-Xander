@@ -208,8 +208,33 @@
     /* Bildkasten in Metern (vom Zoom unabhängig): grob über Höhe und Grundfläche */
     const h = o.hoehe || 10;
     const sx0 = (a0 - b1) * ST.KX, sx1 = (a1 - b0) * ST.KX, sy0 = (a0 + b0) * ST.KY - h * ST.KZ, sy1 = (a1 + b1) * ST.KY;
-    return { a0: a0, a1: a1, b0: b0, b1: b1, sx0: sx0, sx1: sx1, sy0: sy0, sy1: sy1, t: (a0 + a1 + b0 + b1) / 2 };
+    return { a0: a0, a1: a1, b0: b0, b1: b1, sx0: sx0, sx1: sx1, sy0: sy0, sy1: sy1, t: (a0 + a1 + b0 + b1) / 2, teile: o.grundriss ? teileKamera(o) : null };
   }
+  /* FASSUNG 819 — XANDER: „deswegen darfst du niemals den Eingang irgendwie verbauen". Häuser aus mehreren Flügeln (das
+     Döbelner Rathaus: ein Stern um den Turm, o.grundriss in Modellmetern) decken mit ihrem Rechteck auch den Platz vor dem
+     Portal. Wer dort steht, gehört vor das Haus: vor dem Haus ist, wen von jedem Flügel eine Kante trennt, die zum
+     Betrachter (oder zur Seite) schaut. */
+  function teileKamera(o) {
+    const a = (o.dreh || 0) * Math.PI / 2, c = Math.cos(a), s = Math.sin(a), k = o.stufe || 1;
+    return o.grundriss.map((poly) => poly.map(([x, y]) => ST.drehXY(o.x + (x * c - y * s) * k, o.y + (x * s + y * c) * k, K.dreh)));
+  }
+  function vorTeilen(T, pa, pb) {
+    for (const poly of T) {
+      let fl = 0;
+      for (let i = 0; i < poly.length; i++) { const p = poly[i], q = poly[(i + 1) % poly.length]; fl += p[0] * q[1] - q[0] * p[1]; }
+      const sg = fl > 0 ? 1 : -1;
+      let vor = false;
+      for (let i = 0; i < poly.length && !vor; i++) {
+        const p = poly[i], q = poly[(i + 1) % poly.length];
+        let nx = (q[1] - p[1]) * sg, ny = -(q[0] - p[0]) * sg; const l = Math.hypot(nx, ny) || 1; nx /= l; ny /= l;
+        if (nx + ny < -0.02) continue;
+        if ((pa - p[0]) * nx + (pb - p[1]) * ny > 0.2) vor = true;
+      }
+      if (!vor) return false;
+    }
+    return true;
+  }
+  SZ.vorTeilen = vorTeilen;
   function sortieren() {
     const n = SZ.objekte.length;
     const R = SZ.objekte.map(kamRechteck), F = SZ.objekte.map(SZ.flach);
@@ -404,7 +429,7 @@
         const x0 = e.X - m.ax * e.k, y0 = e.Y - m.ay * e.k;
         if (px1 < x0 || px0 > x0 + m.w * e.k || py1 < y0 || py0 > y0 + m.h * e.k) continue;
         /* FASSUNG 810 — wer über eine Brücke fährt (p.auf, fuhrwerk.js), kommt nach ihr */
-        if (SZ.flach(e.o) || p.auf === e.o || R.a1 <= p.a + 0.3 || R.b1 <= p.b + 0.3) idx = i;
+        if (SZ.flach(e.o) || p.auf === e.o || R.a1 <= p.a + 0.3 || R.b1 <= p.b + 0.3 || (R.teile && vorTeilen(R.teile, p.a, p.b))) idx = i;
       }
       if (!nachDing.has(idx)) nachDing.set(idx, []);
       nachDing.get(idx).push(p);
