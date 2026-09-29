@@ -13319,6 +13319,15 @@
         var lm = lsEinzigeAufgabe(ev.data.g), lw = lm && lm.art === "wahl" ? lm.wahl.filter(function (x) { return x.w === ev.data.w && x.n > 0; })[0] : null;
         if (lw) { LSTADT.zSig = ""; werkLiefern(ev.data.g, lw.w, lw.n); } else hinweis("Das geht gerade nicht – es fehlen Zutaten.");
       }
+      /* FASSUNG 832 — XANDER (Funk 214): „wenn sie dann da ist ist die Aufgabe gelöst und wir kriegen die Punkte". Eine Quest
+         der Stadt ist geschafft (quests.js): Meldung mit Helferpunkten, Mut-Bonus und Geschenk. Die Punkte zählt die Stadt
+         (noch ohne Serverfunktion, die Spielpunkte bleiben unberührt). */
+      if (ev.data.typ === "leicht-quest") {
+        var qp = Math.max(0, Math.min(99, Number(ev.data.punkte) || 0)), qg = String(ev.data.geschenk || "").slice(0, 40);
+        ton("jubel", 0.35);
+        hinweis("Quest geschafft: " + String(ev.data.titel || "").slice(0, 60) + " – +" + qp + " Helferpunkte" + (Number(ev.data.mut) > 0 ? " (mit Mut-Bonus)" : "") + ", zusammen " + (Number(ev.data.gesamt) || qp) + "." + (qg ? " Geschenk für deine Stadt: " + qg + "!" : ""));
+        S.questMeldung = { punkte: qp, gesamt: Number(ev.data.gesamt) || qp, geschenk: qg, id: String(ev.data.id || "").slice(0, 30) };
+      }
       /* FASSUNG 817 — Doppeltipp in der Stadt (näher ran / ganze Stadt): eine offene Station geht zu, wie im alten Bild. */
       if (ev.data.typ === "leicht-doppel") { clearTimeout(S.lsStationUhr); if (S.dorfWahl) { S.dorfWahl = ""; schnellZeichnen(true); } }
     };
@@ -13382,8 +13391,12 @@
        oder Vorschau) geht mit – dann stehen Kürbisse vor den Häusern wie im alten Bild. */
     try { var dj = dorfJahr(); kopf.fest = dj.fest || ""; kopf.jahrModus = LS_JAHR[S.jahrVorschau || ""] || "auto"; } catch (e) {}
     kopf.direkt = lsDirekt();
+    /* FASSUNG 832 — XANDER (Funk 213): „wenn Emmi z.B bei ihren Schwächen die Betonung hat dann kommen solche Aufgaben auch
+       in den Quests". Die schwachen Bereiche (Kreuz in den Einstellungen, sonst die Messung des Spiels) gehen an die Stadt:
+       Quests dieser Art kommen dort öfter und bringen Mut-Bonus (quests.js). */
+    try { lernstandHolen(); kopf.schwach = fragenArten("schwach"); } catch (e) { kopf.schwach = []; }
     /* FASSUNG 814 — XANDER: „Winter mit Schnee … (Wetter oder Datum)": die Wetterart geht maschinenlesbar mit (wetterArt) */
-    var ks = kopf.name + "|" + kopf.wetter + "|" + kopf.wetterArt + "|" + kopf.symbole + kopf.namen + "|" + kopf.fest + "|" + kopf.jahrModus + "|" + kopf.direkt;
+    var ks = kopf.name + "|" + kopf.wetter + "|" + kopf.wetterArt + "|" + kopf.symbole + kopf.namen + "|" + kopf.fest + "|" + kopf.jahrModus + "|" + kopf.direkt + "|" + kopf.schwach.join(",");
     if (ks !== L.kSig) { L.kSig = ks; lsPost(kopf); }
     var z = dorfBesuchStand() ? {} : lsZeichen(S.ich), sig = JSON.stringify(z);
     if (sig === L.zSig) return;
