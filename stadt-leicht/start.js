@@ -49,7 +49,7 @@
     K.x += vor[0] - nach[0]; K.y += vor[1] - nach[1]; begrenzen(); L.unruhe = 2;
   }
   function schiebe(dx, dy) { const a = ST.aufBoden(K.W / 2 - dx, K.H / 2 - dy); K.x = a[0]; K.y = a[1]; begrenzen(); L.unruhe = 2; }
-  L.zoomUm = zoomUm; L.schiebe = schiebe;
+  L.zoomUm = zoomUm; L.schiebe = schiebe; L.begrenzen = begrenzen;
   const O = () => ST.oberflaeche || {};
   dingeC.addEventListener("pointerdown", (e) => {
     dingeC.setPointerCapture(e.pointerId);
@@ -60,14 +60,20 @@
   dingeC.addEventListener("pointermove", (e) => {
     if (!zeiger.has(e.pointerId)) return;
     const alt = zeiger.get(e.pointerId), neu = { x: e.clientX * K.dpr, y: e.clientY * K.dpr };
-    if (zeiger.size === 2 && !document.body.classList.contains("lk-mini-modus")) {
+    /* FASSUNG 820 — XANDER (Walkie 309): „Zwei-Finger-Drehen mit Einrasten in 8 Winkeln", Funk 207: „wie Google Maps".
+       Zwei Finger kneifen, schieben und drehen zugleich (drehen.js). Im kleinen Rahmen scrollt die Seite: dort nur mit dem
+       Kompass (lk-nah) – drehen und schieben, kein Zoom (der bleibt bei Kompass und Lupe). */
+    const mini = document.body.classList.contains("lk-mini-modus");
+    if (zeiger.size === 2 && (!mini || document.body.classList.contains("lk-nah"))) {
       const [a, b] = [...zeiger.values()];
       const d0 = Math.hypot(a.x - b.x, a.y - b.y);
       zeiger.set(e.pointerId, neu);
       const [c, d] = [...zeiger.values()];
       const d1 = Math.hypot(c.x - d.x, c.y - d.y);
-      if (d0 > 10) zoomUm((c.x + d.x) / 2, (c.y + d.y) / 2, d1 / d0);
+      /* erst schieben (der Boden unter der alten Fingermitte wandert zur neuen), dann um die neue Mitte zoomen und drehen */
       schiebe((neu.x - alt.x) / 2, (neu.y - alt.y) / 2);
+      if (d0 > 10 && !mini) zoomUm((c.x + d.x) / 2, (c.y + d.y) / 2, d1 / d0);
+      if (ST.drehen && d0 > 10) ST.drehen.zweiFinger(a, b, c, d);
       gezogen = true; return;
     }
     zeiger.set(e.pointerId, neu);
@@ -89,6 +95,7 @@
   const hoch = (e) => {
     if (!zeiger.has(e.pointerId)) return;
     zeiger.delete(e.pointerId);
+    if (zeiger.size < 2 && ST.drehen) ST.drehen.loslassen();   // FASSUNG 820 — weich auf den nächsten 45°-Schritt einrasten
     if (performance.now() - letzteBewegung > 80) schwung = [0, 0];
     if (!gezogen && startPunkt && O().tippen) O().tippen(e.clientX * K.dpr, e.clientY * K.dpr);
     if (O().zeigerHoch) O().zeigerHoch(gezogen);
@@ -96,7 +103,11 @@
   };
   dingeC.addEventListener("pointerup", hoch);
   dingeC.addEventListener("pointercancel", hoch);
-  dingeC.addEventListener("wheel", (e) => { if (document.body.classList.contains("lk-mini-modus")) return; e.preventDefault(); zoomUm(e.clientX * K.dpr, e.clientY * K.dpr, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+  /* FASSUNG 820 — Umschalt+Mausrad dreht um 45° (weich, drehen.js); ein Rastschritt je 100 Einheiten, Touchpads sammeln */
+  let radDreh = 0;
+  dingeC.addEventListener("wheel", (e) => { if (document.body.classList.contains("lk-mini-modus")) return; e.preventDefault();
+    if (e.shiftKey && ST.drehen) { radDreh += e.deltaY || e.deltaX; if (Math.abs(radDreh) >= 100) { ST.drehen.um(radDreh > 0 ? 1 : -1, { px: e.clientX * K.dpr, py: e.clientY * K.dpr }); radDreh = 0; } return; }
+    zoomUm(e.clientX * K.dpr, e.clientY * K.dpr, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
 
   let flug = null;
   L.fliegeZu = function (x, y, s, dauer) { flug = { x0: K.x, y0: K.y, s0: K.s, x1: x, y1: y, s1: s || K.s, t0: performance.now(), d: dauer || 700 }; L.unruhe = 2; };

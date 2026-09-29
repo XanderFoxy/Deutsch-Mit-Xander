@@ -467,7 +467,8 @@
   }
   BA.schatten = function (sg) {
     if (!BA.zug.length) return;
-    const L = ST.LICHT, d = ST.drehXY(-L[0] / L[2], -L[1] / L[2], (4 - (K.dreh & 3)) & 3);   // Versatz je Meter Höhe (Welt)
+    /* FASSUNG 820 — Kamera auch schräg (45°): um genau ihren Winkel zurückdrehen statt „(4 − (dreh & 3)) & 3" */
+    const L = ST.LICHT, d = ST.drehXY(-L[0] / L[2], -L[1] / L[2], -K.dreh);   // Versatz je Meter Höhe (Welt)
     sg.save(); sg.fillStyle = "#000";
     for (const z of BA.zug) {
       const a = randAlpha(z); if (a <= 0.01) continue;

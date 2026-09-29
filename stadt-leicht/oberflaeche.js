@@ -306,7 +306,7 @@
       /* Doppeltipp auf die Wiese (wie im alten Dorf): mit dem Kompass zurück zur ganzen Stadt */
       O.doppelTipp = () => { if (document.body.classList.contains("lk-mini-modus") && document.body.classList.contains("lk-nah")) kompass(); };
       /* FASSUNG 807 — „ein bisschen die Karte auch rotieren": mit dem Kompass ein Knopf zum Drehen */
-      const drehK = knopf("rechts", "Karte drehen", () => { drehen(1); if (!document.body.classList.contains("lk-nah")) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; } }, "lk-nur-mini lk-drehknopf");
+      const drehK = knopf("rechts", "Karte drehen", () => { drehen(1, () => { if (!document.body.classList.contains("lk-nah")) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; } }); }, "lk-nur-mini lk-drehknopf");   // FASSUNG 820 — nach dem weichen Drehen
       setInterval(() => { if (document.body.classList.contains("lk-mini-modus")) nahSetzen(K.s > ueberblick() * 1.4); }, 700);
       const vollK = knopf("voll", "Vollbild", () => { try { window.parent.postMessage({ typ: "leicht-voll" }, location.origin); } catch (e) {} }, "lk-nur-mini lk-vollknopf");
       /* FASSUNG 809 — XANDER: „Mir fehlen noch die items zum schmücken die finde ich hier in der kleinen Map noch gar nicht".
@@ -510,11 +510,10 @@
   };
   O.neuAufgebaut = function () { if (kopf) nameSetzen(); miniMalen(); };
 
-  function drehen(r) {
-    const mitte = [K.x, K.y];
-    K.dreh = (K.dreh + r + 4) & 3; K.x = mitte[0]; K.y = mitte[1];
-    SZ.geaendert(); L().unruhe = 2; miniMalen();
-    ansage(["Blick nach Norden", "Blick nach Osten", "Blick nach Süden", "Blick nach Westen"][K.dreh]);
+  function drehen(r, danach) {
+    /* FASSUNG 820 — XANDER (Walkie 309): „Zwei-Finger-Drehen mit Einrasten in 8 Winkeln". Die Knöpfe drehen jetzt um
+       45°, weich (drehen.js, um die Bildmitte); die Ansage nennt acht Richtungen. */
+    ST.drehen.um(r, { danach: danach });
   }
 
   /* Mini-Karte: Wege, Wasser, Häuser, Bildausschnitt */

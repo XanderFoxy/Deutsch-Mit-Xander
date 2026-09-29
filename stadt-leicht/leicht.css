@@ -113,8 +113,8 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 .lk-mini-modus .lk-lupe { left: 5px; top: 5px; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: none; box-shadow: 0 2px 6px rgba(0,0,0,.45); overflow: visible; }
 .lk-mini-modus .lk-lupe svg { width: 26px; height: 26px; }
 .lk-mini-modus .lk-lupe::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; }
-.lk-mini-modus .lk-lupe .lk-nadel { transform-origin: 20px 20px; transition: transform .3s; }
-.lk-mini-modus .lk-lupe.an .lk-nadel { transform: rotate(35deg); }
+.lk-mini-modus .lk-lupe .lk-nadel { transform-origin: 20px 20px; transition: transform .12s linear; transform: rotate(var(--lk-nadel, 0deg)); }
+/* FASSUNG 820 — die Nadel zeigt stufenlos nach Norden, auch wenn die Karte mit zwei Fingern gedreht wird (drehen.js setzt --lk-nadel) */
 .lk-mini-modus .lk-lupe i { position: absolute; right: -4px; top: -4px; width: 13px; height: 13px; border-radius: 50%; background: #3a2a14; color: #fff; font: 800 11px/13px system-ui, sans-serif; font-style: normal; text-align: center; }
 .lk-kopfzeile { display: none; }
 #lOber > .lk-kopfzeile { pointer-events: none; }

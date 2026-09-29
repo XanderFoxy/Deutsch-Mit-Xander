@@ -114,9 +114,14 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   await pg.waitForTimeout(1300);
   const nach = await pg.evaluate(() => [STADT.kamera.x, STADT.kamera.y]);
   sage(Math.abs(nach[1] - 48) < 2 && Math.abs(nach[0]) < 2, "Mini-Karte: Bahnhof angeflogen", JSON.stringify(nach.map((v) => +v.toFixed(1))) + " (vorher " + JSON.stringify(vor.map((v) => +v.toFixed(1))) + ")");
+  /* FASSUNG 820 — XANDER (Walkie 309): „Zwei-Finger-Drehen mit Einrasten in 8 Winkeln": die Knöpfe drehen jetzt weich
+     um 45° (vorher sofort um 90°) – also nach der Drehung (300 ms) auf 0,5 und mit „rechts" wieder genau auf 0 */
+  /* (die Software-Grafik im Prüfbrowser malt oft nur 1–2 Bilder je Sekunde: auf das Einrasten warten, höchstens 10 s) */
+  const drehWarten = (soll) => pg.waitForFunction((s) => STADT.kamera.dreh === s && !(STADT.drehen && STADT.drehen.laeuft()), soll, { timeout: 10000 }).then(() => true, () => false);
   await pg.click(".lk-kopf-rechts .lk-knopf[title='Karte nach links drehen']");
-  sage(await pg.evaluate(() => STADT.kamera.dreh) === 1, "Karte gedreht");
+  sage(await drehWarten(0.5), "Karte gedreht (45°, weich eingerastet)", String(await pg.evaluate(() => STADT.kamera.dreh)));
   await pg.click(".lk-kopf-rechts .lk-knopf[title='Karte nach rechts drehen']");
+  sage(await drehWarten(0), "Karte zurückgedreht (genau Norden)", String(await pg.evaluate(() => STADT.kamera.dreh)));
 
   /* Aufziehen: große Bilder werden geladen */
   await hin(rathaus[0], rathaus[1] + 3, 30);

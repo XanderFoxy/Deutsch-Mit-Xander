@@ -126,7 +126,7 @@
   uniform vec2 u_bild;        // Bildgröße (Gerätepixel)
   uniform vec2 u_kam;         // Kameramitte (Welt)
   uniform float u_s;          // Pixel je Meter
-  uniform int u_dreh;
+  uniform float u_dreh;       // FASSUNG 820 — Kamerawinkel in Vierteldrehungen (auch 0,5 = 45° und Zwischenwerte)
   uniform float u_zeit;       // Sekunden
   uniform float u_schnee;     // 0…1
   uniform float u_fruehling;  // 0…1 Blüten
@@ -171,7 +171,11 @@
     return r;
   }
 
-  vec2 dreh(vec2 a, int d){ if(d==1) return vec2(-a.y,a.x); if(d==2) return -a; if(d==3) return vec2(a.y,-a.x); return a; }
+  /* FASSUNG 820 — XANDER (Walkie 309): „Zwei-Finger-Drehen mit Einrasten in 8 Winkeln". Ganze Vierteldrehungen
+     bleiben exakt (wie vorher, Winterhausen dreht nur so), alles andere mit cos/sin. */
+  vec2 dreh(vec2 a, float d){ float m = mod(d, 4.0);
+    if(m==0.0) return a; if(m==1.0) return vec2(-a.y,a.x); if(m==2.0) return -a; if(m==3.0) return vec2(a.y,-a.x);
+    float w = m*1.57079633, c = cos(w), s = sin(w); return vec2(a.x*c - a.y*s, a.x*s + a.y*c); }
 
   vec4 karte(vec2 w){ vec2 k = (w + u_groesse*0.5 + u_rand) / (u_groesse + 2.0*u_rand); return texture(u_karte, k); }
 
@@ -181,8 +185,7 @@
     float uu = (px.x - u_bild.x*0.5) / (0.70710678*u_s);
     float vv = (px.y - u_bild.y*0.5) / (0.35355339*u_s);
     vec2 a = vec2((uu+vv)*0.5, (vv-uu)*0.5);
-    int rueck = (4 - u_dreh) & 3;
-    vec2 w = dreh(a, rueck) + u_kam;
+    vec2 w = dreh(a, -u_dreh) + u_kam;
     // Pixelgröße in Metern (für saubere Übergänge beim Herauszoomen)
     float pm = 1.0 / u_s;
 
@@ -437,7 +440,7 @@
     gl.uniform2f(ort.u_bild, c.width, c.height);
     gl.uniform2f(ort.u_kam, k.x, k.y);
     gl.uniform1f(ort.u_s, k.s * sk);
-    gl.uniform1i(ort.u_dreh, k.dreh & 3);
+    gl.uniform1f(ort.u_dreh, ((k.dreh % 4) + 4) % 4);   // FASSUNG 820 — Kamerawinkel als Kommazahl
     gl.uniform1f(ort.u_zeit, zeit);
     gl.uniform1f(ort.u_schnee, jahr === "winter" ? 1 : 0);
     gl.uniform1f(ort.u_fruehling, jahr === "fruehling" ? 1 : 0);
