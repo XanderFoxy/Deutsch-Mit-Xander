@@ -8667,3 +8667,33 @@ body.hat-klassenzimmer { padding-bottom: 172px; }
 .bw-beschriftung { display: none; pointer-events: none; }
 .bw-bild-zoom.bw-modus-entdecken .bw-beschriftung,
 .bw-modus-entdecken .bw-beschriftung.bw-immer { display: inline; }
+
+/* =========================================================
+   FASSUNG 835 — SATZBAUKASTEN: natürliche Vergangenheit, Niveau,
+   mehrere Sätze. XANDER (Funk 217): „warum gibt's da keine
+   natürliche Variante wie z.B ich war am Wochenende in den Bergen".
+   ========================================================= */
+.sbk-variante {
+  margin: 8px 0 2px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--amber-400, #f2b84b);
+  background: rgba(242, 184, 75, 0.1);
+  border-radius: 0 10px 10px 0;
+}
+.sbk-variante-satz { margin: 0; font-size: 0.95rem; line-height: 1.45; }
+.sbk-variante-text { margin: 4px 0 0; font-size: 0.74rem; opacity: 0.85; line-height: 1.4; }
+.sbk-variante-leise { margin: 6px 0 0; }
+.sbk-geschichte-vorher { opacity: 0.62; font-weight: 700; }
+.sbk-geschichte-knoepfe { justify-content: flex-start; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.sbk-geschichte-knoepfe .btn { min-height: 38px; }
+.sbk-plus-hinweis { margin: 0; font-size: 0.72rem; }
+.sbk-niveau-info { margin: -4px 0 4px; font-size: 0.76rem; line-height: 1.45; }
+.sbk-niveau-alle { margin: 0 0 8px; font-size: 0.74rem; }
+.sbk-niveau-alle summary {
+  cursor: pointer; min-height: 32px; display: flex; align-items: center;
+  font-weight: 700; text-decoration: underline; text-underline-offset: 3px;
+}
+.sbk-niveau-alle dl { margin: 4px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; }
+.sbk-niveau-alle dt { font-weight: 800; }
+.sbk-niveau-alle dd { margin: 0; line-height: 1.4; }
+.sbk-klebe .baustein-satz, .sbk-schwebe .baustein-satz { overflow-wrap: anywhere; }
