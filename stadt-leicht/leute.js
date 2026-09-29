@@ -47,12 +47,19 @@
   }
   /* FASSUNG 807 — Originalkarte: die Leute gehen auf den Wegen von dorf.js (D.WEGE); Punkte, die sich treffen, werden
      zu einer Kreuzung zusammengelegt. */
+  /* FASSUNG 826 — XANDER: „ich möchte Bewegung auf den Straßen auf den Weg Leute sollen über die Brücke laufen". Die
+     Wegpunkte auf einer Brücke (Auffahrt, Mitte, Abfahrt – dorf.js D.BRUECKEN) werden immer Knoten, damit niemand
+     neben der Brücke durchs Wasser abkürzt; wer an eine Brücke kommt, geht gern hinüber. */
+  const brueckenPunkt = (x, y) => (ST.dorf && ST.dorf.BRUECKEN || []).some((b) => Math.hypot(b.x - x, b.y - y) < 7.2);
+  LE.brueckenKnoten = new Set();
   function netzWege(wege) {
     const finde = (x, y) => { for (let i = 0; i < knoten.length; i++) if (Math.hypot(knoten[i][0] - x, knoten[i][1] - y) < 2.5) return i; return neu(x, y); };
     for (const w of wege) {
       let v = finde(w[0][0], w[0][1]), seit = 0;
       for (let i = 1; i < w.length; i++) {
         seit += Math.hypot(w[i][0] - w[i - 1][0], w[i][1] - w[i - 1][1]);
+        const br = brueckenPunkt(w[i][0], w[i][1]);
+        if (br || (i + 1 < w.length && brueckenPunkt(w[i + 1][0], w[i + 1][1]))) { seit = 0; const n = finde(w[i][0], w[i][1]); kante(v, n); v = n; if (br) LE.brueckenKnoten.add(n); continue; }
         if (seit < 5 && i < w.length - 1) continue;
         seit = 0; const n = finde(w[i][0], w[i][1]); kante(v, n); v = n;
       }
@@ -95,7 +102,9 @@
       if (m.t >= 1) {
         const alt = m.von; m.von = m.nach; m.t = 0;
         const nb = nachbarn[m.von].filter((n) => n !== alt);
-        m.nach = nb.length ? nb[Math.floor(m.rng() * nb.length)] : alt;
+        /* FASSUNG 826 — an einer Kreuzung vor der Brücke geht man meist hinüber */
+        const zurBruecke = nb.filter((n) => LE.brueckenKnoten.has(n));
+        m.nach = zurBruecke.length && m.rng() < 0.6 ? zurBruecke[Math.floor(m.rng() * zurBruecke.length)] : nb.length ? nb[Math.floor(m.rng() * nb.length)] : alt;
         if (m.rng() < 0.06) m.pause = 1 + m.rng() * 4;       // stehen bleiben, schauen
       }
     }
@@ -109,7 +118,8 @@
     const jahr = SZ.jahr === "winter" ? "winter" : "herbst", zeit = Z.nacht > 0.5 ? "nacht" : "tag";
     for (const m of LE.liste) {
       if (Z.nacht > 0.9 && !m.nachts) continue;
-      const L = lage(m), P = ST.proj(L.x, L.y, 0);
+      /* FASSUNG 826 — auf einer Brücke: um die Deckhöhe gehoben und nach der Brücke gemalt (wie die Fuhrwerke) */
+      const L = lage(m), br = ST.fuhrwerk && ST.fuhrwerk.aufBruecke ? ST.fuhrwerk.aufBruecke(L.x, L.y) : null, P = ST.proj(L.x, L.y, br ? br.z : 0);
       if (P[0] < -80 || P[0] > K.W + 80 || P[1] < -80 || P[1] > K.H + 200) continue;
       const name = "l_geher" + m.art + "_" + jahr + "_" + zeit, meta = LB.vz[name];
       if (!meta) continue;
@@ -118,7 +128,7 @@
       const reihe = ((Math.round(gier / 45) % 8) + 8) % 8;
       const schritt = m.pause > 0 ? 0 : Math.floor(m.ph * meta.n) % meta.n;
       const r = ST.drehXY(L.x, L.y, K.dreh);
-      aus.push({ X: P[0], Y: P[1], a: r[0], b: r[1], img: img, meta: meta, reihe: reihe, schritt: schritt });
+      aus.push({ X: P[0], Y: P[1], a: r[0], b: r[1], img: img, meta: meta, reihe: reihe, schritt: schritt, auf: br ? br.o : null, bh: br ? 2 + br.z : 2 });
     }
     return aus;
   };

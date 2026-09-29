@@ -631,7 +631,8 @@
     const horizont = K.dreh === 0 && ST.dorf && ST.dorf.HORIZONT != null;
     for (const o of reihe) {
       if (o.versteckt || (o.hinten && horizont)) continue;
-      const P = ST.proj(o.x, o.y, 0);
+      /* FASSUNG 826 — Bäume im tieferen Umland (unter dem Plateau) stehen auf ihrer Bodenhöhe o.z */
+      const P = ST.proj(o.x, o.y, o.z || 0);
       /* grob außerhalb? (Höhe großzügig) */
       const gross = (Math.max(o.fuss ? o.fuss[0] + o.fuss[1] : 4, (o.hoehe || 10) * 1.3)) * K.s * o.stufe;
       if (P[0] < -gross - rand || P[0] > K.W + gross + rand || P[1] < -rand || P[1] > K.H + gross + rand + gross) continue;
@@ -663,7 +664,7 @@
     if (ST.fuhrwerk) ST.fuhrwerk.boden(g, t, Z);   // FASSUNG 810 — Feldwege und Pferdebahngleis (fuhrwerk.js), ebenso flach
     /* 1. Schatten in halber Auflösung, einfarbig */
     for (const e of sicht) {
-      const m = e.meta; if (!m.sn) continue;
+      const m = e.meta; if (!m.sn || (e.o.nebel || 0) > 0.4) continue;
       const img = LB.bild(m.sn);
       if (!img) continue;
       const k2 = e.k;
@@ -730,7 +731,8 @@
           : nachtLage && fensterArt(e.o) ? (fensterBild(e.o, lg[0], lichtH) || LB.bild(lg[0])) : LB.bild(lg[0]);
         if (!img) continue;
         const m = lg[3] || e.meta, k = lg[2] || e.k;
-        g.globalAlpha = lg[1] * (e.o.geist ? 0.72 : 1);
+        /* FASSUNG 826 — im Umland verblassen die Bäume im Dunst (dorf.js o.nebel) */
+        g.globalAlpha = lg[1] * (e.o.geist ? 0.72 : 1) * (1 - (e.o.nebel || 0));
         g.drawImage(img, e.X - m.ax * k, e.Y - m.ay * k - hb, m.w * k, m.h * k);
       }
       g.globalAlpha = 1;

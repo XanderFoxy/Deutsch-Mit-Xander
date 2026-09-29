@@ -25,7 +25,7 @@
 
   /* Weltgröße und Kartenauflösung */
   B.GROESSE = 144;                // Meter (3 × 3 Bereiche à 48 m)
-  B.RAND = 40;                    // Meter Wald/Wiese rundherum
+  B.RAND = ST.bodenRand || 40;    // Meter Wald/Wiese rundherum (FASSUNG 826: die leichte Stadt nimmt 56, kern.js)
   B.AUFL = 4;                     // Kartenpunkte je Meter
   const N = (B.GROESSE + 2 * B.RAND) * B.AUFL;   // 896
   B.N = N;
@@ -135,6 +135,8 @@
   uniform vec3 u_licht;       // Kameraraum
   uniform sampler2D u_karte;
   uniform float u_groesse, u_rand;
+  uniform vec4 u_plat;        // FASSUNG 826 — Plateau (leichte Stadt): Bildachsen u = x − y von … bis, v = x + y von … bis
+  uniform vec3 u_platH;       // Höhe (m), Breite der Böschung (m), an (1) / aus (0)
 
   // ---------- Rauschen ----------
   float h21(vec2 p){ p = fract(p*vec2(123.34, 456.21)); p += dot(p, p+45.32); return fract(p.x*p.y); }
@@ -177,7 +179,24 @@
     if(m==0.0) return a; if(m==1.0) return vec2(-a.y,a.x); if(m==2.0) return -a; if(m==3.0) return vec2(a.y,-a.x);
     float w = m*1.57079633, c = cos(w), s = sin(w); return vec2(a.x*c - a.y*s, a.x*s + a.y*c); }
 
-  vec4 karte(vec2 w){ vec2 k = (w + u_groesse*0.5 + u_rand) / (u_groesse + 2.0*u_rand); return texture(u_karte, k); }
+  vec4 karte(vec2 w){ vec2 k = (w + u_groesse*0.5 + u_rand) / (u_groesse + 2.0*u_rand);
+    // FASSUNG 826 — jenseits der Karte keine Wege und kein Wasser (sonst wiederholte die Grafik die letzte Zeile als Streifen)
+    if (u_platH.z > 0.5 && (k.x < 0.0 || k.y < 0.0 || k.x > 1.0 || k.y > 1.0)) return vec4(0.0);
+    return texture(u_karte, k); }
+
+  // FASSUNG 826 — XANDER: „Außerdem wollten wir das Plateau noch ein bisschen anheben" und „dass wir da von den Grenzen
+  // her, dass das ein bisschen mehr verschwimmt oder wie das bei Anno … professionell ist". Die Stadt liegt auf einem
+  // Plateau (Rechteck in den Bildachsen, Rand leicht gewellt); ringsum fällt eine Böschung ins tiefere Umland ab, das mit
+  // der Entfernung im Dunst verschwindet. Dieselbe Rechnung steht in stadt-leicht/dorf.js (D.hoehe) für Bäume im Umland.
+  float platAbst(vec2 w){
+    float u = w.x - w.y, v = w.x + w.y;
+    float du = max(max(u_plat.x - u, u - u_plat.y), 0.0), dv = max(max(u_plat.z - v, v - u_plat.w), 0.0);
+    float innen = min(min(u - u_plat.x, u_plat.y - u), min(v - u_plat.z, u_plat.w - v));
+    float d = (du > 0.0 || dv > 0.0) ? length(vec2(du, dv)) : -innen;
+    float wob = 2.6*sin(w.x*0.071+1.3)*sin(w.y*0.053+0.4) + 1.7*sin((w.x+w.y)*0.113+2.0) + 1.2*sin((w.x-w.y)*0.093);
+    return d * 0.70710678 + wob;
+  }
+  float platH(vec2 w){ return -u_platH.x * smoothstep(0.0, u_platH.y, platAbst(w)); }
 
   void main(){
     // Bildpunkt → Weltpunkt am Boden
@@ -188,6 +207,22 @@
     vec2 w = dreh(a, -u_dreh) + u_kam;
     // Pixelgröße in Metern (für saubere Übergänge beim Herauszoomen)
     float pm = 1.0 / u_s;
+    // FASSUNG 826 — Plateau: der Sehstrahl fällt vom Plateau (z = 0) nach hinten ab, bis er Böschung oder Umland trifft
+    // (je Meter Tiefe 1,22 m weiter hinten in beiden Kameraachsen)
+    float zHit = 0.0;
+    if (u_platH.z > 0.5) {
+      vec2 hinten = dreh(vec2(-1.2247449, -1.2247449), rueck);
+      if (platH(w) < 0.0) {
+        float d0 = 0.0, d1 = u_platH.x;
+        for (int i = 1; i <= 10; i++) {
+          float dd = u_platH.x * float(i) / 10.0;
+          if (dd >= -platH(w + hinten*dd)) { d1 = dd; break; }
+          d0 = dd;
+        }
+        for (int i = 0; i < 5; i++) { float m = (d0 + d1) * 0.5; if (m >= -platH(w + hinten*m)) d1 = m; else d0 = m; }
+        w += hinten * d1; zHit = -d1;
+      }
+    }
 
     // ---------- Karte mit verwackelten Rändern ----------
     vec2 wack = vec2(fbm3(w*1.7+3.1), fbm3(w*1.7+9.4)) - 0.5;
@@ -394,7 +429,33 @@
     // ---------- Rand der Stadt: sanft abdunkeln (Wald und Hügel dahinter) ----------
     float halbe = u_groesse*0.5;
     float aussen = max(abs(w.x), abs(w.y)) - halbe;
-    col *= 1.0 - smoothstep(-2.0, 30.0, aussen) * 0.18;
+    if (u_platH.z < 0.5) col *= 1.0 - smoothstep(-2.0, 30.0, aussen) * 0.18;
+    else {
+      // FASSUNG 826 — Böschung: Erde und Fels nach Neigung belichtet, oben eine grüne Kante; das Umland liegt tiefer,
+      // etwas dunkler und verschwindet mit der Entfernung im Dunst (kein harter Kartenrand)
+      float ab = platAbst(w);
+      vec2 gr = vec2(platH(w + vec2(0.35, 0.0)) - platH(w - vec2(0.35, 0.0)), platH(w + vec2(0.0, 0.35)) - platH(w - vec2(0.0, 0.35))) / 0.7;
+      float steil = length(gr);
+      vec3 nb = normalize(vec3(-gr * 1.2, 1.0));
+      nb = vec3(dreh(nb.xy, u_dreh), nb.z);
+      float difB = max(0.0, dot(nb, u_licht));
+      vec3 erdeB = mix(vec3(0.40, 0.31, 0.21), vec3(0.50, 0.46, 0.40), smoothstep(0.35, 0.75, vn(w*0.9 + 3.0)));
+      erdeB *= 0.86 + 0.24 * vn(w*4.0) ;
+      if (u_schnee > 0.0) erdeB = mix(erdeB, vec3(0.90, 0.93, 0.97), 0.55 * u_schnee);
+      vec3 boeLicht = u_amb*(0.85 + 0.15*nb.z) + u_sonne*difB*1.5;
+      float hang = smoothstep(0.28, 0.8, steil) * (0.75 + 0.25 * vn(w*2.3));
+      col = mix(col, erdeB * min(boeLicht, vec3(1.05)), hang * 0.9);
+      // Graskante oben an der Böschung, Schattenfuß unten
+      col *= 1.0 + 0.10 * smoothstep(0.5, 0.0, abs(ab - 0.6)) * (1.0 - u_schnee * 0.5);
+      col *= 1.0 - 0.18 * smoothstep(u_platH.y * 0.6, u_platH.y, ab) * smoothstep(u_platH.y * 1.8, u_platH.y, ab);
+      float tief = clamp(-zHit / max(0.1, u_platH.x), 0.0, 1.0);
+      col *= 1.0 - 0.10 * tief;
+      vec3 dunst = u_schnee > 0.0 ? vec3(0.88, 0.92, 0.96) : vec3(0.80, 0.86, 0.88);
+      dunst = mix(dunst, vec3(0.62, 0.52, 0.56), smoothstep(0.3, 0.75, u_nacht) * (1.0 - smoothstep(0.75, 1.0, u_nacht)));
+      dunst = mix(dunst, vec3(0.10, 0.13, 0.24), smoothstep(0.75, 1.0, u_nacht));
+      dunst *= 0.97 + 0.06 * fbm3(w * 0.03 + u_zeit * 0.01);
+      col = mix(col, dunst, (0.25 * smoothstep(u_platH.y * 0.8, u_platH.y + 25.0, ab) + 0.65 * smoothstep(u_platH.y + 15.0, u_platH.y + 140.0, ab)) * tief);
+    }
     // Bauplatzgrenze: feine Linie aus Punkten im Schnee/Gras (nur nah)
     // Nacht: Mondlicht bläulich
     col = mix(col, col*vec3(0.8,0.88,1.1), smoothstep(0.5, 1.0, u_nacht)*0.5);
@@ -415,7 +476,7 @@
     const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
     const lp = gl.getAttribLocation(prog, "p"); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp, 2, gl.FLOAT, false, 0, 0);
-    ["u_bild", "u_kam", "u_s", "u_dreh", "u_zeit", "u_schnee", "u_fruehling", "u_herbst", "u_amb", "u_sonne", "u_nacht", "u_licht", "u_karte", "u_groesse", "u_rand"].forEach((n) => { ort[n] = gl.getUniformLocation(prog, n); });
+    ["u_bild", "u_kam", "u_s", "u_dreh", "u_zeit", "u_schnee", "u_fruehling", "u_herbst", "u_amb", "u_sonne", "u_nacht", "u_licht", "u_karte", "u_groesse", "u_rand", "u_plat", "u_platH"].forEach((n) => { ort[n] = gl.getUniformLocation(prog, n); });
     tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -451,6 +512,10 @@
     gl.uniform3fv(ort.u_licht, ST.LICHT);
     gl.uniform1i(ort.u_karte, 0);
     gl.uniform1f(ort.u_groesse, B.GROESSE); gl.uniform1f(ort.u_rand, B.RAND);
+    /* FASSUNG 826 — Plateau der leichten Stadt (ST.dorf setzt B.plateau; Winterhausen: aus) */
+    const pl = B.plateau;
+    gl.uniform4f(ort.u_plat, pl ? pl.u0 : 0, pl ? pl.u1 : 0, pl ? pl.v0 : 0, pl ? pl.v1 : 0);
+    gl.uniform3f(ort.u_platH, pl ? pl.hoehe : 0, pl ? pl.boeschung : 1, pl ? 1 : 0);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   };

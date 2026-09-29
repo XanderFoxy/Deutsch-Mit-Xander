@@ -24,7 +24,9 @@
       const alt = K.dpr || 1;
       K.W = w; K.H = h; K.s = K.s * dpr / alt; K.dpr = dpr;
       /* weiteste Übersicht: das ganze Dorf; nächste Nähe: große Bilder scharf */
-      K.min = 2.4 * dpr; K.max = Math.min(66, 30 * dpr);
+      /* FASSUNG 826 — XANDER: „wenn wir so ein bisschen jetzt mehr rauszoomen würden … falls wir Platzmangel haben": weiter
+         heraus (2,4 → 1,6 Bildpunkte je Meter), damit ein großer Kölner Dom samt Nachbarn ins Bild passt */
+      K.min = 1.6 * dpr; K.max = Math.min(66, 30 * dpr);
       /* Boden auf Telefonen mit sehr vielen Bildpunkten gröber rechnen */
       B.skala = dpr >= 2.5 ? 0.55 : dpr >= 1.8 ? 0.7 : 1;
       L.unruhe = 2;
@@ -41,6 +43,17 @@
        trotzdem noch weiter scrollen das macht keinen Sinn". Im kleinen Rahmen gilt allein der Rand des Überblicks
        (oberflaeche.js, O.klemmen) – die Grenzen in Welt-Achsen schoben den Blick sonst schräg weg. */
     if (O().klemmen && document.body.classList.contains("lk-mini-modus")) { O().klemmen(); return; }
+    /* FASSUNG 826 — XANDER: „es geht nicht an den tatsächlichen Linken, oberen Bildrand oder wenn ich unten links drauf
+       klicke, da braucht mehr Spielraum". Mit Bauraum (dorf.js, Rechteck in den Bildachsen u = x − y, v = x + y) reicht die
+       Kamera bis an dessen Rand und ein Stück darüber (die Böschung und das Umland im Dunst) – auch unten links, wo das
+       alte Quadrat in Weltachsen schon vorher Schluss machte. Beim Blick nach Norden bleiben die Alpen die Grenze oben. */
+    const DR = ST.dorf;
+    if (DR && DR.BAURAUM) {
+      const R = DR.BAURAUM, oben = K.dreh === 0 && DR.HORIZONT != null ? DR.HORIZONT - 20 : R.v0 - 12;
+      const u = Math.max(R.u0 - 12, Math.min(R.u1 + 12, K.x - K.y)), v = Math.max(oben, Math.min(R.v1 + 14, K.x + K.y));
+      K.x = (u + v) / 2; K.y = (v - u) / 2;
+      return;
+    }
     const g = B.GROESSE / 2 + B.RAND * 0.8; K.x = Math.max(-g, Math.min(g, K.x)); K.y = Math.max(-g, Math.min(g, K.y));
     /* FASSUNG 808 — Blick nach Norden: die Alpen sind die Spielgrenze, die Kamera geht nicht weit über die Horizontlinie */
     const D = ST.dorf;
@@ -183,14 +196,32 @@
   try { L.natur = naturNorm(JSON.parse(localStorage.getItem("leicht_natur_v1") || "{}")); } catch (e) { L.natur = naturNorm(null); }
   L.dekoLaden = function () {
     const e = ST.spiel && ST.spiel.eigenes;
-    if (e && Array.isArray(e.deko)) { if (e.lage) L.lage = e.lage; if (e.natur) L.natur = naturNorm(e.natur); return e.deko; }
+    if (e && Array.isArray(e.deko)) { if (e.lage) L.lage = e.lage; if (e.natur) L.natur = naturNorm(e.natur); if (Array.isArray(e.baeume)) L.gefaellt = e.baeume.slice(); return e.deko; }
     try { return JSON.parse(localStorage.getItem("leicht_deko_v1") || "[]"); } catch (err) { return []; }
+  };
+  /* FASSUNG 826 — XANDER: „ich möchte … bestehende Bäume … fällen und Platz haben für Gebäude". Gefällte Bäume werden
+     mit ihrer Lage gemerkt (wie der Schmuck) und beim Aufbau weggelassen (dorf.js). */
+  try { L.gefaellt = JSON.parse(localStorage.getItem("leicht_baeume_v1") || "[]"); } catch (e) { L.gefaellt = []; }
+  L.baumSchluessel = (o) => o.x.toFixed(1) + "," + o.y.toFixed(1);
+  L.baumFaellen = function (o) {
+    if (!o || o.art !== "natur") return;
+    const k = L.baumSchluessel(o);
+    if (L.gefaellt.indexOf(k) < 0) L.gefaellt.push(k);
+    SZ.weg(o); L.unruhe = 2;
+    L.dekoSpeichern();
   };
   L.dekoSpeichern = function () {
     const liste = SZ.objekte.filter((o) => o.art === "eigen").map((o) => ({ bild: o.bild, x: +o.x.toFixed(2), y: +o.y.toFixed(2), dreh: o.dreh, fuss: o.fuss, hoehe: o.hoehe, nurWinter: o.nurWinter, jahr: o.jahr }));
     try { localStorage.setItem("leicht_deko_v1", JSON.stringify(liste)); } catch (e) {}
     /* FASSUNG 809 — Drehung und Versatz gegenüber dem eigenen Bauplatz (auch nach Platztausch im Spiel) */
     const lage = {};
+    /* FASSUNG 826 — Wahrzeichen frei aufgestellt: Weltlage und Drehung; die Lage nicht gebauter bleibt erhalten */
+    for (const k in (L.lage || {})) if (D.WUNDER && D.WUNDER[k] && !SZ.objekte.some((o) => o.art === "wunder" && o.spiel === k)) lage[k] = L.lage[k];
+    for (const o of SZ.objekte) {
+      if (o.art !== "wunder" || o.platzX == null) continue;
+      if (Math.abs(o.x - o.platzX) < 0.01 && Math.abs(o.y - o.platzY) < 0.01 && o.dreh === o.platzDreh) continue;
+      lage[o.spiel] = { x: +o.x.toFixed(2), y: +o.y.toFixed(2), dreh: o.dreh };
+    }
     for (const o of SZ.objekte) {
       if (o.art !== "haus") continue;
       const pd = o.platzDreh != null ? o.platzDreh : (D.PLAETZE[o.spiel] || {}).dreh;
@@ -200,14 +231,20 @@
       if (dx || dy) { lage[o.spiel].dx = dx; lage[o.spiel].dy = dy; }
     }
     L.lage = lage;
+    /* FASSUNG 812 — beide Baum-Stände werden gespeichert: entfernte/versetzte (822, L.natur) und gefällte (826, L.gefaellt) */
     L.natur = naturNorm(L.natur);
-    try { localStorage.setItem("leicht_lage_v1", JSON.stringify(lage)); localStorage.setItem("leicht_natur_v1", JSON.stringify(L.natur)); } catch (e) {}
-    if (ST.spiel && ST.spiel.eigenesSpeichern) ST.spiel.eigenesSpeichern({ v: 1, deko: liste, lage: lage, natur: L.natur });
+    try { localStorage.setItem("leicht_lage_v1", JSON.stringify(lage)); localStorage.setItem("leicht_natur_v1", JSON.stringify(L.natur)); localStorage.setItem("leicht_baeume_v1", JSON.stringify(L.gefaellt || [])); } catch (e) {}
+    /* FASSUNG 826 — die geladene Kopie gleich mitführen: ein Neuaufbau (Wahrzeichen versetzt, Baum gefällt) liest sonst den
+       alten Stand vom Server und ließe das eben Gesetzte verschwinden */
+    const stand = { v: 1, deko: liste, lage: lage, natur: L.natur, baeume: (L.gefaellt || []).slice() };
+    if (ST.spiel && ST.spiel.eigenes && Array.isArray(ST.spiel.eigenes.deko)) ST.spiel.eigenes = Object.assign({}, ST.spiel.eigenes, stand);
+    if (ST.spiel && ST.spiel.eigenesSpeichern) ST.spiel.eigenesSpeichern(stand);
   };
   try { L.lage = JSON.parse(localStorage.getItem("leicht_lage_v1") || "{}"); } catch (e) { L.lage = {}; }
 
   /* FASSUNG 809 — solange etwas gesetzt/versetzt wird, nicht neu aufbauen (der Geist ginge verloren); danach nachholen */
-  L.aufbauen = function () { if (ST.oberflaeche && ST.oberflaeche.haltAufbau && ST.oberflaeche.haltAufbau()) { L.aufbauenSpaeter = true; return; } L.aufbauenSpaeter = false; D.aufbauen(L.ich, L.dekoLaden()); if (ST.bahn) ST.bahn.aufbauen(); if (ST.fuhrwerk) ST.fuhrwerk.aufbauen(); if (ST.leute && !ST.leute.liste.length) ST.leute.setzen(q.get("leute") != null ? +q.get("leute") : LB.spar ? 12 : 30); if (ST.oberflaeche && ST.oberflaeche.neuAufgebaut) ST.oberflaeche.neuAufgebaut(); L.unruhe = 2; };
+  /* FASSUNG 826 — XANDER: „ich möchte Bewegung auf den Straßen auf den Weg": 40 Spaziergänger statt 30 (Sparmodus 14 statt 12) */
+  L.aufbauen = function () { if (ST.oberflaeche && ST.oberflaeche.haltAufbau && ST.oberflaeche.haltAufbau()) { L.aufbauenSpaeter = true; return; } L.aufbauenSpaeter = false; D.aufbauen(L.ich, L.dekoLaden()); if (ST.bahn) ST.bahn.aufbauen(); if (ST.fuhrwerk) ST.fuhrwerk.aufbauen(); if (ST.leute && !ST.leute.liste.length) ST.leute.setzen(q.get("leute") != null ? +q.get("leute") : LB.spar ? 14 : 40); if (ST.oberflaeche && ST.oberflaeche.neuAufgebaut) ST.oberflaeche.neuAufgebaut(); L.unruhe = 2; };
 
   function los() {
     groesse();

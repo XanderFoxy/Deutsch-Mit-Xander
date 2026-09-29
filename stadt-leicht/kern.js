@@ -23,6 +23,10 @@
   const norm = (v) => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
   /* Licht im Kameraraum – wie in Winterhausen (die Bilder sind so gemalt) */
   ST.LICHT = norm([-0.42, 0.74, 0.66]);
+  /* FASSUNG 826 — XANDER: „Jetzt muss das nur noch schön Spielraum geben nach unten hin, weil ich will noch den Kölner Dom
+     rein bauen". Die Bodenkarte (Wege, Wasser) reicht 56 statt 40 m über das Dorf hinaus (±128 m), damit auch der Weg
+     zum Dom unten auf dem Bauland gemalt wird (stadt/boden.js liest ST.bodenRand). */
+  ST.bodenRand = 56;
 
   ST.zufall = function (seed) {
     let s = (seed >>> 0) || 1;

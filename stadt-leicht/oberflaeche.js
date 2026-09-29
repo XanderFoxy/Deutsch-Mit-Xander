@@ -340,9 +340,38 @@
          Kacheln geteilt; eine Kachel holt genau ihren Teil ins Bild – die Ecken reichen bis an den Rand des Überblicks. */
       const imUeberblick = (fn) => { const alt = { x: K.x, y: K.y, s: K.s }, g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; try { return fn(); } finally { K.x = alt.x; K.y = alt.y; K.s = alt.s; } };
       O.ueberblick = ganzeStadt; O.imUeberblick = imUeberblick;
+      /* FASSUNG 826 — XANDER: „das mit dem Raster scheint jetzt übrigens zu gehen. Du hast es jetzt so rechteckig gemacht …
+         nach unten hin könnte ein bisschen tiefer gehen … was ist, wenn wir da noch Häuser hin bauen dann ist das nach unten
+         hin zu wenig … ich will noch den Kölner Dom rein bauen … Der Bootsverleih will ich mir richtig angucken können".
+         Das Raster der kleinen Karte (3 × 3 Kacheln), die Grenze beim Verschieben und die kleine Karte selbst gelten jetzt
+         für das FELD: der Überblick, nach unten erweitert um den ganzen See mit Bootsverleih und das Bauland unten links
+         (dorf.js D.BAULAND, Platz für den Kölner Dom), in der Form des Bildes. Der Überblick selbst (Stufe 0, alle Häuser
+         im selben Maßstab wie bisher) bleibt, wie er war. */
+      let feldMerk = null;
+      const feld = () => {
+        const g = ganzeStadt();
+        if (feldMerk && feldMerk.g === g) return feldMerk.f;
+        const DD = ST.dorf; let f = g;
+        if (DD && DD.BAULAND && DD.SEE_VERSATZ) {
+          const b = DD.BAULAND[0], pts = [[b.u0, b.v0], [b.u1, b.v0], [b.u0, b.v1], [b.u1, b.v1]].map(([u, v]) => [(u + v) / 2, (v - u) / 2]);
+          pts.push([84 + DD.SEE_VERSATZ[0], 66 + DD.SEE_VERSATZ[1]]);   // unterster Zipfel des Sees
+          if (DD.BOOTSHAUS) pts.push([DD.BOOTSHAUS[0] + 3, DD.BOOTSHAUS[1] + 6]);
+          const P = imUeberblick(() => pts.map((p) => ST.proj(p[0], p[1], 0)));
+          let x0 = 0, x1 = K.W, y0 = 0, y1 = K.H;
+          for (const q of P) { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }
+          const a = K.W / K.H; let w = x1 - x0, h = y1 - y0;
+          if (w / h < a) w = h * a; else h = w / a;
+          const m = imUeberblick(() => ST.aufBoden((x0 + x1) / 2, (y0 + y1) / 2));
+          f = { s: g.s * K.W / w, x: m[0], y: m[1] };
+        }
+        feldMerk = { g: g, f: f };
+        return f;
+      };
+      const imFeld = (fn) => { const alt = { x: K.x, y: K.y, s: K.s }, g = feld(); K.x = g.x; K.y = g.y; K.s = g.s; try { return fn(); } finally { K.x = alt.x; K.y = alt.y; K.s = alt.s; } };
+      O.feld = feld; O.imFeld = imFeld;
       O.kachelHin = (i, j) => {
         if (O.wahlZu) O.wahlZu(); if (O.dingZu) O.dingZu();
-        const g = ganzeStadt(), a = imUeberblick(() => ST.aufBoden((i + 0.5) / 3 * K.W, (j + 0.5) / 3 * K.H));
+        const g = feld(), a = imFeld(() => ST.aufBoden((i + 0.5) / 3 * K.W, (j + 0.5) / 3 * K.H));
         L().fliegeZu(a[0], a[1], g.s * 3, 800);
         nahSetzen(true, true);
         ansage(["oben", "Mitte", "unten"][j] + " " + ["links", "Mitte", "rechts"][i]);
@@ -351,11 +380,12 @@
          das macht keinen Sinn". Im kleinen Rahmen bleibt der Blick immer innerhalb des Überblicks: an den Rändern ist Schluss. */
       O.klemmZiel = (x, y, s) => {
         if (!document.body.classList.contains("lk-mini-modus")) return [x, y];
-        const g = ganzeStadt(), f = g.s / Math.max(1e-6, s), h = f / 2;
-        const c = imUeberblick(() => { const P = ST.proj(x, y, 0); return [P[0] / K.W, P[1] / K.H]; });
+        /* FASSUNG 826 — Grenze ist das Feld (Überblick + See + Bauland unten) */
+        const g = feld(), f = g.s / Math.max(1e-6, s), h = f / 2;
+        const c = imFeld(() => { const P = ST.proj(x, y, 0); return [P[0] / K.W, P[1] / K.H]; });
         const cx = f >= 1 ? 0.5 : Math.max(h, Math.min(1 - h, c[0])), cy = f >= 1 ? 0.5 : Math.max(h, Math.min(1 - h, c[1]));
         if (Math.abs(cx - c[0]) < 1e-5 && Math.abs(cy - c[1]) < 1e-5) return [x, y];
-        return imUeberblick(() => ST.aufBoden(cx * K.W, cy * K.H));
+        return imFeld(() => ST.aufBoden(cx * K.W, cy * K.H));
       };
       O.klemmen = () => { if (!document.body.classList.contains("lk-mini-modus")) return; const z = O.klemmZiel(K.x, K.y, K.s); K.x = z[0]; K.y = z[1]; };
       O.miniUeberblickMalen = (c0) => {
@@ -363,11 +393,15 @@
         c0.width = pw; c0.height = ph;
         const c = c0.getContext("2d"), B = ST.boden, N = B.N, d = B.daten, gr = 144, r = B.RAND * B.AUFL, winter = SZ.jahr === "winter";
         const img = c.createImageData(pw, ph);
-        imUeberblick(() => {
+        const DD = ST.dorf;
+        imFeld(() => {
           for (let j = 0; j < ph; j++) for (let i = 0; i < pw; i++) {
             const w = ST.aufBoden((i + 0.5) / pw * K.W, (j + 0.5) / ph * K.H), ki = Math.floor(r + (w[0] + gr / 2) * B.AUFL), kj = Math.floor(r + (w[1] + gr / 2) * B.AUFL), p = (j * pw + i) * 4;
             let col = winter ? [233, 238, 245] : [157, 187, 114];
-            if (ki < 0 || kj < 0 || ki >= N || kj >= N) col = [120, 132, 150];
+            /* FASSUNG 826 — über der Horizontlinie Himmel, unter dem Plateau das Umland im Dunst */
+            if (K.dreh === 0 && DD && DD.HORIZONT != null && w[0] + w[1] < DD.HORIZONT) col = [176, 204, 226];
+            else if (DD && DD.hoehe && DD.hoehe(w[0], w[1]) < -1) col = winter ? [206, 214, 224] : [150, 168, 160];
+            else if (ki < 0 || kj < 0 || ki >= N || kj >= N) col = [120, 132, 150];
             else { const o = (kj * N + ki) * 4; if (d[o + 1] > 90) col = [120, 162, 200]; else if (d[o] > 90) col = [176, 168, 156]; else if (d[o + 3] > 90) col = winter ? [220, 228, 238] : [134, 176, 96]; }
             img.data[p] = col[0]; img.data[p + 1] = col[1]; img.data[p + 2] = col[2]; img.data[p + 3] = 255;
           }
@@ -382,7 +416,7 @@
       /* Der helle Rahmen in der kleinen Karte: was gerade im Bild ist (in Teilen des Überblicks) */
       O.blickTeile = () => {
         const ecke = [[0, 0], [K.W, K.H]].map((p) => ST.aufBoden(p[0], p[1]));
-        return imUeberblick(() => ecke.map((w) => { const P = ST.proj(w[0], w[1], 0); return [P[0] / K.W, P[1] / K.H]; }));
+        return imFeld(() => ecke.map((w) => { const P = ST.proj(w[0], w[1], 0); return [P[0] / K.W, P[1] / K.H]; }));
       };
       /* FASSUNG 807 — „ein bisschen die Karte auch rotieren": mit dem Kompass ein Knopf zum Drehen */
       /* FASSUNG 812 — XANDER: „erklär mir mal bitte wie dieser Händel unterm Kompass funktioniert … der springt immer
@@ -422,6 +456,13 @@
       setInterval(() => {
         if (!document.body.classList.contains("lk-mini-modus")) { LB.grossErlaubt = false; return; }
         nahSetzen(K.s > ueberblick() * 1.4);
+        /* FASSUNG 826 — ändert sich der Überblick (ein großes Wahrzeichen kommt dazu oder fällt weg), passt das stehende
+           Bild sich an, statt im alten Maßstab zu bleiben */
+        if (!document.body.classList.contains("lk-nah") && !geist && !O.gestalten && K.W > 0 && K.H > 0) {
+          const g = ganzeStadt();
+          const alt = O._gAlt; O._gAlt = g;
+          if (alt && alt !== g && isFinite(g.s) && g.s > 0 && isFinite(g.x) && isFinite(g.y) && Math.abs(alt.s - g.s) > g.s * 0.02 && Math.abs(K.s - alt.s) < alt.s * 0.02) { K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; miniMalen(); }
+        }
         /* Funk 207: große Bilder nur in der zweiten Stufe; zurück im Überblick auch die kleinen wieder freigeben */
         const st = stufeVon(K.s);
         LB.grossErlaubt = st === 2;
@@ -548,7 +589,7 @@
       document.body.classList.add("lk-ohne-namen", "lk-ohne-symbole");
       const erstesMal = q.get("mini") === "1";
       modus(erstesMal);
-      if (erstesMal && !(O.pinAnwenden && O.pinAnwenden())) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; }
+      if (erstesMal && !(O.pinAnwenden && O.pinAnwenden())) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; O._gAlt = g; L().unruhe = 2; }
       window.addEventListener("resize", () => { if (document.body.classList.contains("lk-mini-modus") && !document.body.classList.contains("lk-nah")) setTimeout(() => { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; miniMalen(); }, 50); });
       window.addEventListener("message", (ev) => {
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-modus") return;
@@ -1099,11 +1140,19 @@
 
   /* ---------------- Setzen: Geist in der Bildmitte ---------------- */
   let geist = null, geistZiehen = false;
+  /* FASSUNG 826 — gebaut wird auf dem Plateau (dorf.js D.BAURAUM): der Geist bleibt mit seiner ganzen Grundfläche darauf,
+     nicht auf der Böschung oder im Umland */
+  function imBauraum(o) {
+    const R = ST.dorf && ST.dorf.BAURAUM; if (!R || !o) return;
+    const f = o.fuss || [2, 2], m = (Math.hypot(f[0], f[1]) / 2 * (o.stufe || 1) + 6) * Math.SQRT2;
+    const u = Math.max(R.u0 + m, Math.min(R.u1 - m, o.x - o.y)), v = Math.max(R.v0 + m, Math.min(R.v1 - m, o.x + o.y));
+    o.x = (u + v) / 2; o.y = (v - u) / 2;
+  }
   function setzenBeginnen(s) {
     leisteZeigen(false);
     auswahlWeg();
     const p = ST.aufBoden(K.W / 2, K.H * 0.46);
-    geist = SZ.neu({ art: "eigen", bild: s[1], x: p[0], y: p[1], dreh: s[7] || 0, fuss: s[2], hoehe: s[3], nurWinter: s[4] ? 1 : undefined, geist: true });
+    geist = SZ.neu({ art: "eigen", bild: s[1], x: p[0], y: p[1], dreh: s[7] || 0, fuss: s[2], hoehe: s[3], nurWinter: s[4] ? 1 : undefined, geist: true }); imBauraum(geist);
     karteZeigen("setzen", geist);
   }
   O.haltAufbau = () => !!geist;
@@ -1124,10 +1173,13 @@
     const parkt = ok && geist.autoParken && ST.autos ? geist.autoParken : null;
     if (parkt) ST.autos.parken(parkt, true);
     if (ok && geist.art === "natur" && geist.nkey) { const N = L().natur || (L().natur = { weg: [], lage: {} }); N.lage[geist.nkey] = [+geist.x.toFixed(2), +geist.y.toFixed(2)]; geist.versetzt = 1; }
+    /* FASSUNG 826 — ein versetztes Wahrzeichen oder großer Schmuck: Wege und Bäume neu (Aufbau nach dem Setzen) */
+    const neuBauen = ok && (geist.art === "wunder" || (geist.art === "eigen" && geist.fuss && Math.max(geist.fuss[0], geist.fuss[1]) > 4));
     if (ok) { geist.geist = false; delete geist.autoParken; L().dekoSpeichern(); ansage(parkt ? "Abgestellt" : "Gesetzt"); }
     else if (geist._zurueck) { Object.assign(geist, geist._zurueck); geist.geist = false; delete geist._zurueck; }
     else SZ.weg(geist);
     if (geist) delete geist._zurueck;
+    if (neuBauen) L().aufbauenSpaeter = true;
     geist = null; karte.hidden = true; SZ.geaendert(); miniMalen(); L().unruhe = 2;
     if (L().aufbauenSpaeter) L().aufbauen();
   }
@@ -1201,7 +1253,7 @@
     if (halten) { const w = Math.hypot(neu.x - halten.x, neu.y - halten.y); if (w > 6 * K.dpr) haltenAbbrechen(); else if (w > 2.5 * K.dpr) halten.zuletzt = performance.now(); }
     if (!geist || !geistZiehen) return false;
     const a = ST.aufBoden(neu.x, neu.y), b = ST.aufBoden(alt.x, alt.y);
-    geist.x += a[0] - b[0]; geist.y += a[1] - b[1]; SZ.geaendert();
+    geist.x += a[0] - b[0]; geist.y += a[1] - b[1]; imBauraum(geist); SZ.geaendert();
     return true;
   };
   O.zeigerHoch = function () {
@@ -1253,7 +1305,7 @@
     einzelTippen(px, py);
   };
   function einzelTippen(px, py) {
-    if (geist) { const a = ST.aufBoden(px, py); geist.x = a[0]; geist.y = a[1]; SZ.geaendert(); L().unruhe = 2; return; }
+    if (geist) { const a = ST.aufBoden(px, py); geist.x = a[0]; geist.y = a[1]; imBauraum(geist); SZ.geaendert(); L().unruhe = 2; return; }
     if (leiste && !leiste.hidden) { leisteZeigen(false); return; }
     if (bauLeiste) { bauLeisteZeigen(false); return; }
     /* FASSUNG 815 — Tipp auf ein fahrendes Auto: seine Karte (im großen Bild) */
@@ -1285,9 +1337,11 @@
         auswahlWeg(); return;
       }
       /* FASSUNG 812 — im Vollbild des Spiels beides: „die Bäume sollen alle darauf reagieren" (Holzfäller, 828) und das
-         kleine Menü am Baum (Versetzen, Entfernen, 822). Nah dran im kleinen Rahmen nur das Menü. */
+         kleine Menü am Baum (Versetzen, Entfernen, 822). Nah dran im kleinen Rahmen nur das Menü.
+         FASSUNG 826 — Bäume im Umland (hinter dem Plateau) haben kein Menü. */
       if (spielTipp && !imRahmen) baumTun(baum); else baumRascheln(baum);
-      waehlen(baum); return;
+      if (!baum.umland && !baum.hinten) { waehlen(baum); return; }
+      auswahlWeg(); return;
     }
     /* leerer Bauplatz? */
     const a = ST.aufBoden(px, py);
@@ -1625,7 +1679,8 @@
     /* FASSUNG 822 — ein Baum der Stadt: Versetzen, Entfernen (im kleinen Rahmen dazu die Wald-Station) */
     if (o.art === "natur") {
       titel.textContent = baumName(o);
-      zeile.textContent = o.rand ? "Baum am Waldrand" : "Baum";
+      /* FASSUNG 812 — zusammen mit 826 (XANDER: „bestehende Bäume … fällen und Platz haben für Gebäude"): ein Menü für Bäume */
+      zeile.textContent = (o.rand ? "Baum am Waldrand" : "Baum") + " · steht im Weg? Entfernen schafft Platz zum Bauen.";
       knoepfe.append(knopf("versetzen", "Versetzen", () => hausVersetzen(o)), knopf("abriss", "Entfernen", () => baumEntfernen(o)));
       if (imRahmen) knoepfe.append(knopf("liste", "Wald: Holzfäller und Jäger", () => { auswahlWeg(); try { window.parent.postMessage({ typ: "leicht-haus", g: "wald" }, location.origin); } catch (e) {} }));
       knoepfe.append(zu);
@@ -1695,7 +1750,18 @@
       amDingLegen();
       return;
     }
-    zeile.textContent = o.art === "wunder" ? "Wahrzeichen" : "Gehört zum Dorf";
+    /* FASSUNG 826 — XANDER: „die sollen frei aufstellbar sein … Wir haben ja eine große Map". Wahrzeichen lassen sich
+       drehen und versetzen wie die Häuser (gemerkt in L.lage mit Weltlage), „Zurück" stellt sie auf ihren Wahrzeichenplatz. */
+    if (o.art === "wunder") {
+      zeile.textContent = "Wahrzeichen – frei aufstellbar";
+      knoepfe.append(knopf("links", "Drehen", () => objDrehen(o, 1, true)), knopf("rechts", "Andersherum drehen", () => objDrehen(o, -1, true)),
+        knopf("versetzen", "Versetzen", () => hausVersetzen(o)));
+      if (o.platzX != null && (Math.abs(o.x - o.platzX) > 0.01 || Math.abs(o.y - o.platzY) > 0.01 || o.dreh !== o.platzDreh))
+        knoepfe.append(knopf("zurueck", "Zurück auf den Wahrzeichenplatz", () => { o.x = o.platzX; o.y = o.platzY; o.dreh = o.platzDreh; SZ.geaendert(); L().dekoSpeichern(); L().aufbauen(); ansage("Wieder auf dem Wahrzeichenplatz"); karte.hidden = true; }));
+      knoepfe.append(zu);
+      return;
+    }
+    zeile.textContent = "Gehört zum Dorf";
     knoepfe.append(zu);
     amDingLegen();
   }
