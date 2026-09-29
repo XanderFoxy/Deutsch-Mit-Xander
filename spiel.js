@@ -3846,7 +3846,7 @@
     if (!S.schnellMenue) S.blick = null;
     var form = document.getElementById("lcForm");
     var an = drin() && S.bereit && S.ich && form && form.style.display !== "none";
-    if (!an) { if (schnellEl) schnellEl.hidden = true; return; }
+    if (!an) { if (schnellEl) schnellEl.hidden = true; bahnFenster(); return; }
     if (!schnellEl || !schnellEl.isConnected || schnellEl.parentNode !== form.parentNode) {
       if (!schnellEl) {
         schnellEl = document.createElement("div");
@@ -4027,6 +4027,7 @@
       try { domAngleichen(schnellEl, html); } catch (e) { schnellEl.innerHTML = html; }
       schnellEl.dataset.html = html;
     }
+    bahnFenster();   /* FASSUNG 823 — das Bahnhof-Fenster folgt dem Stand (offen, zu, neue Zahlen) */
     /* Die offene Werkzeugwahl verdeckt keine Meldung – die Meldung weicht. */
     document.body.classList.toggle("sp-wwahl-offen", Boolean(S.wwahl && ich.mitspielen));
     /* Das Menü darf nie über den oberen Rand hinaus (dort schnitt der
@@ -4794,6 +4795,15 @@
       seeAngeln(k); return;
     } else if (s === "bahn") {
       bahnHandeln(k); return;
+    } else if (s === "bahnauto") {
+      /* FASSUNG 823 — „festlegen, ob die Touristen zu mir kommen können": an = sie steigen mit diesem und jedem weiteren Zug
+         aus (spiel_bahn wie der Knopf), aus = nur, wenn man sie selbst holt. */
+      var tAn = !bahnAuto(), zt = S.bahn && S.bahn.touristen;
+      S.bahnAuto = tAn; try { localStorage.setItem("dma_bahn_touristen", tAn ? "1" : "0"); } catch (e) {}
+      ton(tAn ? "holzklopf" : "swoosh", 0.25);
+      if (tAn && zt && !zt.erledigt && Date.parse(S.bahn.bis) > Date.now()) { S.bahnAutoSlot = S.bahn.slot; bahnHandeln({ dataset: { a: "touristen" } }); }
+      else bahnMelden(tAn ? "🚂 Touristen: an – ab jetzt steigen sie mit jedem Zug aus." : "🚂 Touristen: aus – es kommen nur noch welche, wenn du sie holst.");
+      bahnFenster(); return;
     } else if (s === "bahnreise") {
       bahnReisen(k); return;
     } else if (s === "bauhelfen") {
@@ -4848,6 +4858,8 @@
       if (S.dorfWahl === "bahnhof") bahnLaden();
       ton(S.dorfWahl ? "holzklopf" : "swoosh", 0.25);
       schnellZeichnen(true);
+      /* FASSUNG 823 — der Bahnhof: eigenes Fenster unten, das Dorfbild darüber bleibt stehen */
+      if (S.dorfWahl === "bahnhof") { S.bahnMeldung = null; bahnFensterEinpassen(); return; }
       /* Die Knöpfe der Station sollen gleich zu sehen sein, ohne selbst zu scrollen. */
       if (S.dorfWahl) setTimeout(function () { try { var st = schnellEl.querySelector(".sp-dl-station"); if (st) st.scrollIntoView({ block: "nearest" }); } catch (e) {} }, 60);
       return;
@@ -11671,7 +11683,7 @@
       + '<i class="sp-dl-lupe-zeichen">' + (nah ? "−" : "+") + "</i></button>" + dorfUhrHtml()
       + (nah ? dorfMiniKarteHtml(ich, sig) : "") + dorfOrtsschildHtml(ich) + "</div>"
       + (S.umbau && !besuch ? umbauLeisteHtml(ich) : "")
-      + (S.umbau && !besuch ? "" : wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · die Lupe holt dich näher ran") + "</span>") + (wahl && !(S.umbau && !besuch) ? (besuch ? fremdStationHtml(besuch, wahl) : wahl === "bahnhof" ? bahnhofHtml(ich) : wahl === "wald" ? waldStationHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
+      + (S.umbau && !besuch ? "" : wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · die Lupe holt dich näher ran") + "</span>") + (wahl && !(S.umbau && !besuch) ? (besuch ? fremdStationHtml(besuch, wahl) : wahl === "bahnhof" ? "" : wahl === "wald" ? waldStationHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
   }
   /* ---------------------------------------------------------------
      FASSUNG 708 — DAS DORF LEBT MIT DEM ECHTEN WETTER
@@ -12408,30 +12420,102 @@
     var warte = 4000 - (Date.now() - (S.bahnVersuch || 0));
     if (warte > 0) { if (!S.bahnNochmal) S.bahnNochmal = setTimeout(function () { S.bahnNochmal = 0; if (dorfOffen()) bahnLaden(zwingend); }, warte + 50); return; }
     S.bahnLaedt = true; S.bahnVersuch = Date.now();
-    rpc("spiel_bahn_info", {}).then(function (r) { S.bahnLaedt = false; if (r && r.slot != null) { S.bahn = r; S.bahnZeit = Date.now(); bahnGaesteMelden(r); if (dorfOffen()) schnellZeichnen(true); } })
+    rpc("spiel_bahn_info", {}).then(function (r) { S.bahnLaedt = false; if (r && r.slot != null) { S.bahn = r; S.bahnZeit = Date.now(); bahnGaesteMelden(r); if (dorfOffen()) schnellZeichnen(true); bahnFenster(); bahnAutoPruefen(r); } })
       .catch(function () { S.bahnLaedt = false; });
   }
+  /* FASSUNG 823 — XANDER: „Was macht zum Beispiel der Screen vom Bahnhof. Da ist jetzt Export vier Mehl verladen Import
+     acht Erz kaufen und das nimmt mir die ganze Sicht weg und wenn ich auf eins klicke, dann muss ich noch mal auf dem
+     Bahnhof um auch den Export zu machen und dann muss ich noch mal auf den Bahnhof, um dann auch festzulegen, ob die
+     Touristen zu mir kommen können und das ist ein bisschen viel für eine Sache, die dich da mit einmal regeln will".
+     Der Bahnhof ist jetzt EIN kompaktes Fenster (unten am Bildschirm, im Vollbild quer an der Seite), an allen Stellen
+     gleich (altes Dorfbild, neue Stadt im Rahmen, neue Stadt im Vollbild): oben Export, Import und Touristen je in einer
+     Zeile, darunter (zum Weiterrollen im Fenster) Kurtaxe, Bootsverleih, Ausflug. Nach einer Aufgabe bleibt es offen und
+     steht still – das Menü rollt nicht mehr weg, das Dorfbild darüber bleibt zu sehen. „Touristen: an/aus“ legt fest, ob
+     sie mit jedem Zug von selbst aussteigen (dieselbe Serverfunktion spiel_bahn wie der Knopf). */
   function bahnhofHtml(ich) {
     var z = S.bahn, kopf = (window.DMA_ZEICHNUNG && window.DMA_ZEICHNUNG.lok) ? window.DMA_ZEICHNUNG.lok("H") : "";
-    var inhalt;
+    var inhalt, uhr = "", meldung = "";
     if (!z || Date.parse(z.bis) <= Date.now()) { bahnLaden(true); inhalt = '<p class="sp-sm-klein">Der Fahrplan wird geholt …</p>'; }
     else {
       var e = z.export || {}, im = z.import || {}, hat = vorrat(ich, e.ware), punkte = ich.punkte || 0;
-      var exAus = e.erledigt || hat < e.menge, imAus = im.erledigt || punkte < im.kosten;
-      inhalt = '<p class="sp-sm-klein">Jeder Zug bringt einen Auftrag zum Verladen, ein Angebot aus der Stadt und Touristen. Der nächste Fahrplan kommt in ' + uhrText(Date.parse(z.bis) - Date.now()) + ".</p>"
-        + '<div class="sp-sm-liste sp-dl-st-knoepfe sp-bahn-knoepfe">'
-        + '<button type="button" data-s="bahn" data-a="export"' + (exAus ? " disabled" : "") + ">" + wareSvg(e.ware) + "<b>Export: " + e.menge + " " + wareName(e.ware) + " verladen</b><small>"
+      var exAus = e.erledigt || hat < e.menge, imAus = im.erledigt || punkte < im.kosten, an = bahnAuto();
+      uhr = " · Zug noch " + uhrText(Date.parse(z.bis) - Date.now());
+      /* die letzte Meldung steht in der Kopfzeile (feste Höhe: die Knöpfe darunter springen nicht) */
+      meldung = S.bahnMeldung && S.bahnMeldung.slot === z.slot ? S.bahnMeldung.text : "";
+      inhalt = '<div class="sp-bf-rumpf"><div class="sp-bf-reihen">'
+        + '<button type="button" class="sp-bf-reihe" data-s="bahn" data-a="export"' + (exAus ? " disabled" : "") + ">" + wareSvg(e.ware) + "<b>Export: " + e.menge + " " + wareName(e.ware) + " verladen</b><small>"
         + (e.erledigt ? "verladen ✓ – der nächste Zug kommt bald" : "+" + e.erloes + " P · du hast " + hat) + "</small></button>"
-        + '<button type="button" data-s="bahn" data-a="import"' + (imAus ? " disabled" : "") + ">" + wareSvg(im.ware) + "<b>Import: " + im.menge + " " + wareName(im.ware) + " kaufen</b><small>"
+        + '<button type="button" class="sp-bf-reihe" data-s="bahn" data-a="import"' + (imAus ? " disabled" : "") + ">" + wareSvg(im.ware) + "<b>Import: " + im.menge + " " + wareName(im.ware) + " kaufen</b><small>"
         + (im.erledigt ? "ausgeladen ✓ – der nächste Zug kommt bald" : "−" + im.kosten + " P · du hast " + punkte + " P") + "</small></button>"
         /* FASSUNG 765 — XANDER (Funk 184): „praktisch können wir mit dem Zug auch Tourismus in die Stadt bringen oder aus der
            Stadt um eine andere Stadt zu sehen … weil dadurch kann man doch Geld verdienen". Touristen steigen aus (Kurtaxe,
            sie kaufen Essen); eigene Bewohner machen einen Ausflug ins Nachbardorf (Forschung – das Nachbardorf verdient). */
-        + bahnTouristenHtml(ich, z) + "</div>" + bahnKurtaxeHtml(ich, z) + bahnFreizeitHtml(ich) + bahnReiseHtml(ich, z) + bahnGaesteHtml(z);
+        + '<div class="sp-bf-touri">' + bahnTouristenHtml(ich, z)
+        + '<button type="button" class="sp-bf-schalter' + (an ? " sp-an" : "") + '" data-s="bahnauto" aria-pressed="' + an + '" title="Touristen mit jedem Zug von selbst aussteigen lassen">Touristen<b>' + (an ? "an" : "aus") + "</b></button></div>"
+        + "</div>" + '<p class="sp-bf-mehr">Mehr: Kurtaxe, Bootsverleih, Ausflug</p>'
+        + bahnKurtaxeHtml(ich, z) + bahnFreizeitHtml(ich) + bahnReiseHtml(ich, z) + bahnGaesteHtml(z) + "</div>";
     }
-    return '<div class="sp-dl-station sp-bahnhof" role="dialog" aria-label="Bahnhof"><div class="sp-dl-st-kopf"><i class="sp-bahn-kopf">' + kopf + "</i><span><b>Bahnhof</b>"
-      + "<small>Export, Import und Touristen</small></span>"
-      + '<button type="button" class="sp-dl-st-zu" data-s="dorfwahl" data-g="" aria-label="Station schließen">✕</button></div>' + inhalt + "</div>";
+    return '<div class="sp-dl-station sp-bahnhof sp-bahnfenster" role="dialog" aria-label="Bahnhof"><div class="sp-dl-st-kopf"><i class="sp-bahn-kopf">' + kopf + "</i><span><b>Bahnhof</b>"
+      + (meldung ? '<small class="sp-bf-meldung" role="status">' + esc(meldung) + "</small>" : "<small>Export, Import und Touristen" + uhr + "</small>") + "</span>"
+      + '<button type="button" class="sp-dl-st-zu" data-s="dorfwahl" data-g="" aria-label="Bahnhof schließen">✕</button></div>' + inhalt + "</div>";
+  }
+  /* FASSUNG 823 — „Touristen: an/aus“ (auf diesem Gerät gemerkt): an = sie steigen mit jedem Zug von selbst aus. */
+  function bahnAuto() {
+    if (S.bahnAuto == null) { try { S.bahnAuto = localStorage.getItem("dma_bahn_touristen") === "1"; } catch (e) { S.bahnAuto = false; } }
+    return !!S.bahnAuto;
+  }
+  function bahnAutoPruefen(z) {
+    var t = z && z.touristen;
+    if (!bahnAuto() || !t || t.erledigt || !S.ich || !S.ich.mitspielen || dorfBesuchStand() || S.bahnLaeuft || S.bahnAutoSlot === z.slot || Date.parse(z.bis) <= Date.now()) return;
+    S.bahnAutoSlot = z.slot;
+    bahnHandeln({ dataset: { a: "touristen" } });
+  }
+  /* FASSUNG 823 — das Fenster selbst: es liegt nicht mehr im rollenden Dorf-Menü (dort nahm es die ganze Sicht und rollte
+     nach jeder Aufgabe weg), sondern fest unten am Bildschirm – im Vollbild der neuen Stadt in deren Rahmen. */
+  var BF = { el: null, html: "", zeit: 0 };
+  function bahnFensterSoll() {
+    return S.dorfWahl === "bahnhof" && !!S.ich && !S.umbau && !dorfBesuchStand() && ((LSTADT && LSTADT.voll) || dorfOffen());
+  }
+  function bahnFenster() {
+    if (!bahnFensterSoll()) { if (BF.el) { BF.el.remove(); BF.el = null; BF.html = ""; } return; }
+    var voll = !!(LSTADT && LSTADT.voll), ort = voll ? LSTADT.el : document.body;
+    if (!BF.el) {
+      BF.el = document.createElement("div"); BF.el.className = "sp-bf-huelle";
+      BF.el.addEventListener("click", schnellKlick);
+    }
+    if (BF.el.parentNode !== ort) ort.appendChild(BF.el);
+    BF.el.classList.toggle("sp-bf-voll", voll);
+    var html = bahnhofHtml(S.ich);
+    if (html !== BF.html) { BF.html = html; try { domAngleichen(BF.el, html); } catch (e) { BF.el.innerHTML = html; } }
+    BF.zeit = performance.now();
+  }
+  /* Beim Öffnen: das Dorfbild (bzw. die Stadt im Rahmen) passgenau über das Fenster legen – beides ist zu sehen. Im
+     Vollbild rückt die Stadt den Bahnhof in den freien Teil (über bzw. neben dem Fenster). */
+  function bahnFensterEinpassen() {
+    setTimeout(function () {
+      bahnFenster();
+      var f = BF.el && BF.el.querySelector(".sp-bahnhof");
+      if (!f) return;
+      var q = f.getBoundingClientRect();
+      if (LSTADT && LSTADT.voll) {
+        var quer = q.top < innerHeight * 0.3;
+        lsPost({ typ: "leicht-frei", g: "bahnhof", unten: quer ? 0 : Math.max(0, innerHeight - q.top), rechts: quer ? Math.max(0, innerWidth - q.left) : 0 });
+        return;
+      }
+      var r = schnellEl && schnellEl.querySelector(".sp-dl-rahmen");
+      if (!r) return;
+      dorfRahmenEinpassen(false);
+      var sc = r.closest(".sp-schnellmenue"), fr = r.getBoundingClientRect(), d = fr.bottom - (q.top - 6);
+      if (d <= 0.5) return;
+      if (sc && sc.scrollHeight > sc.clientHeight + 1) {
+        /* im Menü höchstens so weit, dass das Bild oben nicht angeschnitten wird */
+        var oben = sc.getBoundingClientRect().top + sc.clientTop, vor = sc.scrollTop;
+        sc.scrollTop = vor + Math.max(0, Math.min(d, fr.top - oben));
+        d -= sc.scrollTop - vor;
+      }
+      if (d > 0.5) window.scrollBy(0, d);
+      lsFolgen();
+    }, 60);
   }
   /* FASSUNG 775 — mit Koch im Gasthaus essen die Gäste auch Fleisch und Eier. */
   function bahnEssen(ich) { return ["brot", "bratwurst", "kuchen", "fisch"].concat(dorfSteht(ich, "gasthaus") && beruf(ich, "koch") > 0 ? ["fleisch", "ei"] : []).reduce(function (n, w) { return n + vorrat(ich, w); }, 0); }
@@ -12472,7 +12556,7 @@
     if (!t) return "";
     var preis = (t.gasthaus && t.gasthaus.preis_essen) || gasthausPreis(ich);
     var kauf = Math.min(t.anzahl, bahnEssen(ich)), floh = flohMenge(ich, t.anzahl), plus = t.kurtaxe + preis * kauf + floh * flohPreis(ich), voll = t.platz && t.anzahl > t.platz;
-    return '<button type="button" class="sp-bahn-touristen" data-s="bahn" data-a="touristen"' + (t.erledigt ? " disabled" : "") + ">" + wareSvg("touristen") + "<b>" + (t.welle ? "Touristenwelle: " : "Touristen: ") + t.anzahl + " steigen aus</b><small>"
+    return '<button type="button" class="sp-bahn-touristen sp-bf-reihe" data-s="bahn" data-a="touristen"' + (t.erledigt ? " disabled" : "") + ">" + wareSvg("touristen") + "<b>" + (t.welle ? "Touristenwelle: " : "Touristen: ") + t.anzahl + " steigen aus</b><small>"
       + (t.erledigt ? "sind unterwegs ✓ – der nächste Zug kommt bald" : "+" + plus + " P (" + t.kurtaxe + " Kurtaxe" + (kauf ? " + " + kauf + " × Essen à " + preis + " P" + (dorfSteht(ich, "gasthaus") ? " im Gasthaus" : "") : ", kein Essen im Lager") + (floh ? " + " + floh + " × Flohmarkt à " + flohPreis(ich) + " P" : "") + ")"
         + (kauf < t.anzahl ? " · " + (t.anzahl - kauf) + " bleiben hungrig" : "") + (voll ? " · zu voll (Platz für " + t.platz + ")" : "")) + "</small></button>";
   }
@@ -12516,7 +12600,14 @@
     var neu = g.filter(function (x) { return Number(x.id) > max; });
     if (neu.length) hinweis("🚂 " + (neu[0].von || "Jemand") + (neu.length > 1 ? " und " + (neu.length - 1) + " weitere" : "") + " kam mit dem Zug zu Besuch: +" + (9 * neu.length) + " P Eintritt.");
   }
+  /* FASSUNG 823 — die letzte Meldung des Bahnhofs steht auch im Fenster (im Vollbild ist die Meldezeile des Menüs verdeckt). */
+  function bahnMelden(t) {
+    if (S.bahn) S.bahnMeldung = { slot: S.bahn.slot, text: String(t || "").replace(/[\u2600-\u27BF]|[\uD83C-\uDBFF][\uDC00-\uDFFF]|\uFE0F/g, "").replace(/\s+/g, " ").trim() };
+    hinweis(t);
+    bahnFenster();
+  }
   function bahnReisen(k) {
+    var hinweis = bahnMelden;
     if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
     if (S.bahnLaeuft) return;
     S.bahnLaeuft = true;
@@ -12534,7 +12625,7 @@
     }).catch(function () { S.bahnLaeuft = false; hinweis("🚂 Das ging gerade nicht."); });
   }
   function bahnHandeln(k) {
-    var art = k.dataset.a;
+    var art = k.dataset.a, hinweis = bahnMelden;
     if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
     if (S.bahnLaeuft) return;
     S.bahnLaeuft = true;
@@ -13011,7 +13102,8 @@
     return '<div class="sp-dl-rahmen sp-dl-ganz sp-dl-neustadt"><div class="sp-dl-fenster sp-dl-neustadt-platz"><span>Neue Stadt wird geladen …</span></div></div>'
       /* FASSUNG 817 — „Umbauen" auch unter der neuen Stadt: dieselbe Leiste, gewählt wird mit einem Tipp in der Stadt. */
       + (S.umbau ? umbauLeisteHtml(ich, true) : "")
-      + (wahl ?(wahl === "bahnhof" ? bahnhofHtml(ich) : wahl === "wald" ? waldStationHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
+      /* FASSUNG 823 — der Bahnhof steht nicht mehr hier im Menü, sondern in seinem eigenen Fenster (bahnFenster). */
+      + (wahl ?(wahl === "bahnhof" ? "" : wahl === "wald" ? waldStationHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
   }
   /* Die Stadt selbst läuft in einem Rahmen (iframe), der NICHT im Menü steckt: das Menü wird laufend neu angeglichen,
      und ein iframe, das dabei umgehängt wird, lädt neu. Er liegt deshalb am body und folgt Bild für Bild genau dem
@@ -13126,6 +13218,7 @@
     document.removeEventListener("scroll", lsFolgen, true);
     try { LSTADT.el.remove(); } catch (e) {}
     LSTADT = null;
+    bahnFenster();
   }
   function lsVoll(an) {
     if (!LSTADT || LSTADT.voll === an) return;
@@ -13142,6 +13235,8 @@
       setTimeout(function () { dorfRahmenHin(false); }, 120);
     }
     lsFolgen();
+    /* FASSUNG 823 — ein offenes Bahnhof-Fenster wandert mit (ins Vollbild bzw. zurück unter das Dorfbild) */
+    if (S.dorfWahl === "bahnhof") bahnFensterEinpassen(); else bahnFenster();
   }
   function lsAuf() {
     /* Ein noch ausstehender Aufruf aus dem Zeichnen darf die Stadt nach „Alte Version" nicht zurückholen. */
@@ -13181,6 +13276,9 @@
         if (la && la.art === "trupp") { S.dorfTippWeg = true; LSTADT.zSig = ""; truppSchicken(la.ort); return; }
         if (la && la.art === "wahl") { S.dorfTippWeg = true; ton("holzklopf", 0.2); lsPost({ typ: "leicht-wahl", g: lg, wahl: la.wahl }); return; }
         S.dorfWahl = S.dorfWahl === lg ? "" : lg; S.dorfTippWeg = true; ton("swoosh", 0.2); schnellZeichnen(true);
+        /* FASSUNG 823 — der Bahnhof öffnet sein kompaktes Fenster; das Menü rollt nicht zu einer Karte darunter. */
+        if (S.dorfWahl === "bahnhof") { clearTimeout(S.lsStationUhr); S.bahnMeldung = null; bahnLaden(); bahnFensterEinpassen(); return; }
+        bahnFenster();
         /* FASSUNG 817 — XANDER: „entweder springe ich runter zu der Dialogbox die unter dem Bild liegt". Sanft hin. */
         if (S.dorfWahl) lsStationZeigen();
       }
@@ -13304,6 +13402,8 @@
     if (!LSTADT) return;
     lsFolgen();
     lsZeichenSchicken();
+    /* FASSUNG 823 — im Vollbild läuft die Uhr des Bahnhof-Fensters hier mit (das Menü dahinter ist verdeckt) */
+    if ((BF.el || S.dorfWahl === "bahnhof") && performance.now() - BF.zeit > 500) bahnFenster();
     requestAnimationFrame(lsTakt);
   }
   function lsFolgen() {
