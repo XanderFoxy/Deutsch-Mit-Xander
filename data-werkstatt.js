@@ -49,30 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 810: Viper und Batmobil fahren durch die Stadt und sind kaufbar, Bergwerk als Stollen, klassische Lok mit Dampfklang, Windmühle dreht flüssig, kleinere Einsammel-Zeichen",
+  stand: "Fassung 811: Profilfoto fährt nur noch einmal mit (Leitung bei vielen Leuten leichter), Magic-Knopf rund und sparsamer, Viper/Batmobil vorgeladen, neue Stadt für Beta-Tester und Emy, Rathaus als Stern um den Turm, Rahmen passgenau mit gleichen Knöpfen",
 
   inArbeit: [
-    { seit: "2026-09-29T01:41",
-      text: "Rathaus als L mit schrägem Flügel (Funk 206)" },
-    { seit: "2026-09-29T01:41",
-      text: "Rahmen passgenau, Sprung zum Hausmenü und zurück, Schmücken im kleinen Fenster, zweite Zoomstufe, Kacheln bis zum Rand" },
-    { seit: "2026-09-29T01:41",
-      text: "Kippen/stufenloses Drehen (Walkie 309)" },
-    { seit: "2026-09-29T01:41",
-      text: "Landstraße, Felder, Leute sichtbar bei der Arbeit" },
+    { seit: "2026-09-29T03:32",
+      text: "Medienserver (Walkie 311), Zwei-Finger-Drehen, Auto-Schau, Freigabe der Stadt für alle erst nach Xanders OK" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-29T01:41",
-      text: "Viper und Batmobil in der Stadt" },
-    { seit: "2026-09-29T01:41",
-      text: "Bergwerk-Stollen" },
-    { seit: "2026-09-29T01:41",
-      text: "Lok mit Klang" },
-    { seit: "2026-09-29T01:41",
-      text: "Windmühle flüssig" },
-    { seit: "2026-09-29T01:41",
-      text: "Kleine Zeichen, Holz und Fleisch im Wald" },
+    { seit: "2026-09-29T03:32",
+      text: "Leitung ohne Foto im Puls, Magic-Knopf, Auftritt vorladen, Beta-Freigabe Stadt, Rathaus-Stern, Rahmen/Knöpfe/Kacheln/Doppeltipp" },
   ],
 };
