@@ -2286,3 +2286,31 @@ XANDER: „dass du die Laternen richtig hast, dass sie die Häuser an Strahlen, 
 - **Einsammeln (`ton.js` `T.einsammeln`, Aufruf in `oberflaeche.js`)**: XANDER: „bei den anderen bei Ei … kommt da gar nix … so dieses Haptik-Geräusch fehlt". Tipp auf ein fertiges Zeichen (oder im kleinen Rahmen aufs Haus mit fertiger Ware): für jede Ware dasselbe kurze „Pling" (Klick, dann e'' und h'' – eine Quinte nach oben) und `navigator.vibrate(12)`. Die Einsammel-Logik selbst ist unverändert.
 - **Motor der Autos (`autos.js`, `ton.js` `T.motorSchleife`)**: XANDER: „vielleicht auch mit Fahrgeräusche". Viper tiefes Brummen, Batmobil dazu Turbinensingen; Drehzahl nach Tempo und Gas, Lautstärke nach Nähe und Zoom, weit weg oder ohne Ton aus.
 - **Sonde**: `pruefe-825-licht-klang.js` (mit dem alten Stand rot).
+
+## Fassung 830 — Verkehr in der leichten Stadt: Lok am Bahnhof, Autos auf Brücken und um den Brunnen, Besuch am Tag
+
+XANDER: „die Lok schneidet am Bahnhof die Waggons" · „die Autos verschmelzen mit der Brücke" · „fahren durch den Brunnen durch" · „Autos auch tagsüber mit Geräuschen".
+
+- **Lok am Bahnhof (`bahn.js` `vorDing`, `szene.js` Einsortieren der Fahrzeuge)**:
+  - Ursache: `szene.js` sortiert Fahrzeuge nach dem Rechteck eines Dings im Kameraraum. Der Bahnhof steht schräg (45°), sein Rechteck reicht weit über das Gleis. Der Zug galt als „im Bahnhof", wurde vor ihm gemalt, und das Bahnhofsbild (Bahnsteig, eigenes Gleis) schnitt die Wagen ab – je Wagen verschieden, darum überdeckten sich Lok, Tender und Wagen auch gegenseitig. Abstände beim Bremsen und Beschneiden der Blätter waren in Ordnung.
+  - Jetzt entscheidet je Wagen die Trennachse der Grundflächen (Wagen 3 m breit; Ding `fuss × stufe`, gedreht): Liegt der Wagen ganz auf einer Seite und schaut diese Seite zur Kamera, steht er davor, sonst dahinter. Das gilt in allen 8 Winkeln. Widersprechen sich zwei Achsen, kreuzt kein Blickstrahl beide, und es bleibt bei der alten Regel.
+  - Die Wagen eines Zuges (`p.kette`) kommen von hinten nach vorn an die Reihe. Nur ein Ding, das sicher davor steht, zieht einen Wagen vor. Geht beides nicht, gewinnt das Ding mit der größeren Deckung im Bild.
+- **Autos auf der Brücke (`autos.js` `sichtbar`, `fuhrwerk.js` `FW.aufBruecke`/`FW.brueckenFaktor`)**:
+  - Wie die Fuhrwerke um die Deckhöhe gehoben (Mittel unter Front, Mitte, Heck) und nach der Brücke gemalt (`p.auf`). Lichter und Turbine sind mitgehoben.
+  - Auf der Brücke fährt das Auto mittig, denn zwischen den Brüstungen sind nur 2,9 m.
+- **Nicht durch den Brunnen (`autos.js` Abschnitt „Hindernisse umfahren")**:
+  - Hindernisse sind alle Dinge mit Grundfläche: Schmuck, Wahrzeichen, Kulisse und Häuser. Ausgenommen sind Brücken, Laternen, Flaches, Bäume und die Flügel des Rathauses.
+  - `umfahren()` führt die Strecke außen um das Hindernis (Abstand ≈ 2,5 m, damit auch das lange Batmobil im Bogen nicht hineinschwenkt; an Häusern nur, wenn der Weg hindurchführt). Steht das Auto schon neben dem Ding, fährt es von dort außen herum. Es nimmt die kürzere Seite, die nicht in ein anderes Ding, einen Rathausflügel oder ins Wasser führt. Dicht stehende Dinge umfährt es als Haufen, etwa im Winter Christbaum, Buden, Bänke und Krippe auf dem Markt. Endet eine Fahrt in einem Hindernis (Rathausportal hinter dem Brunnen), führt sie außen herum an die Stelle, die dem Ziel am nächsten ist.
+  - `wegschieben()` holt die abgerundete Strecke wieder heraus. Am Hindernis gilt die Strecke selbst als Weg, und die Spur bleibt schmal.
+  - Halt und Hinstellen liegen nie in einem Hindernis. Wo gewendet wird (Spitzkehre, nach dem Halt), hält das Auto so weit davor, dass das Wenden in drei Zügen kein Ding streift; die Wenderichtung wählt die freie Seite (`wendeTreffer`).
+  - `ausDingen()` schiebt beim Wenden sanft (≤ 0,45 m/s) zur Seite, falls der Wagenkasten doch einmal streift. Zäune sind keine Hindernisse (Weiden, Tore).
+  - Nebenbei: Beginnt eine Strecke neben dem Anfang (nach dem Wenden) oder mit einem engen Knick, macht das Auto keinen Satz mehr. Der Rest wird auf 1,5 m abgebaut.
+- **Besuch am Tag (`autos.js` „Besuch am Tag")**:
+  - Ohne eigenes Auto fuhr bisher nie eins. Jetzt kommt tagsüber (Nachtgrad ≤ 0,55) ab und zu ein Gast: ein Auto, das man nicht hat (nie ein Doppelgänger des eigenen, auch nicht des abgestellten). Der erste kommt nach 12–22 s, danach alle 35–80 s.
+  - Er rollt am äußersten Ende des Wegenetzes herein und blendet sanft ein. Er hält an einem Ziel, fährt an einem anderen Ende wieder hinaus und blendet aus.
+  - Er hat denselben leisen Motor (`T.motorSchleife`, 825): lauter nach Nähe und Zoom, ohne Ton aus.
+  - Ein Tipp öffnet die Auto-Schau, dort kann man ihn kaufen. Wird er gekauft oder zur Probefahrt genommen, wird er zum eigenen Auto.
+  - Sparsam: Im kleinen Rahmen kommt er nur mit schon geladenem Blatt, es wird kein zusätzliches Bild geladen. Im stillen Prüfbild kommt er nie.
+  - `?gaeste=0` schaltet ihn ab, `?gaeste=1` lässt ihn sofort kommen.
+- **Sonde 815** zählt an Hindernissen (`AU.inUmfahrung`) den Abstand zum Weg nicht mehr.
+- **Sonde** `werkzeug/pruefe-830-verkehr.js` (`TEIL=1…5` für einzelne Teile). Sie prüft die Malfolge von Bahnhof und Wagen (8 Winkel, Halt beidseitig, Einfahrt) und die Autos auf der Brücke (gehoben, danach gemalt, mittig). Dazu kommen 400 s Fahrt in Herbst und Winter, in denen kein Auto durch ein Hindernis fährt (höchstens 35 cm gestreift; beim Wenden direkt vor einem großen Wahrzeichen bis 80 cm – offener Punkt), die Gäste mit Motor, Hinausfahrt und Nacht und der kleine Rahmen ohne Autoblätter. Mit dem alten Stand ist sie rot.

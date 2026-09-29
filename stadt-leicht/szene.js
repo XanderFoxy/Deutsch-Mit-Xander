@@ -697,17 +697,40 @@
     const nachDing = new Map();
     for (const p of leute) {
       const kk = K.s, bx = p.bx || 0.6, px0 = p.X - bx * kk, px1 = p.X + bx * kk, py0 = p.Y - (p.bh || 2) * kk, py1 = p.Y + 0.2 * kk;
-      let idx = -1;
+      let idx = -1, vorn = sicht.length, fIdx = 0, fVorn = 0;
       for (let i = 0; i < sicht.length; i++) {
         const e = sicht[i], m = e.meta, R = e.o._R;
         if (!R) continue;
         const x0 = e.X - m.ax * e.k, y0 = e.Y - m.ay * e.k;
         if (px1 < x0 || px0 > x0 + m.w * e.k || py1 < y0 || py0 > y0 + m.h * e.k) continue;
+        const fl = p.vorDing ? (Math.min(px1, x0 + m.w * e.k) - Math.max(px0, x0)) * (Math.min(py1, y0 + m.h * e.k) - Math.max(py0, y0)) : 0;
+        /* FASSUNG 830 — XANDER: „die Lok schneidet am Bahnhof die Waggons". Lange Fahrzeuge (Wagen der Eisenbahn) sagen
+           selbst, ob sie vor (true) oder hinter (false) einem Ding stehen (p.vorDing, bahn.js: Trennachse der Grundflächen).
+           Das Rechteck im Kameraraum ist bei schräg stehenden Häusern (Bahnhof, 45°) viel zu groß – dann stand der Zug
+           „im" Bahnhof und dessen Bild malte Bahnsteig und Gleis über die Wagen. Steht ein Ding sicher davor, kommt der
+           Wagen auch nie nach ihm. */
+        const vd = p.vorDing ? p.vorDing(e.o) : undefined;
+        if (vd === false) { if (i < vorn) { vorn = i; fVorn = fl; } continue; }
         /* FASSUNG 810 — wer über eine Brücke fährt (p.auf, fuhrwerk.js), kommt nach ihr */
-        if (SZ.flach(e.o) || p.auf === e.o || R.a1 <= p.a + 0.3 || R.b1 <= p.b + 0.3 || (R.teile && vorTeilen(R.teile, p.a, p.b))) idx = i;
+        if (vd === true || SZ.flach(e.o) || p.auf === e.o || R.a1 <= p.a + 0.3 || R.b1 <= p.b + 0.3 || (R.teile && vorTeilen(R.teile, p.a, p.b))) { idx = i; fIdx = fl; }
       }
-      if (!nachDing.has(idx)) nachDing.set(idx, []);
-      nachDing.get(idx).push(p);
+      /* Geht beides nicht (ein Ding davor steht in der Reihe vor einem Ding dahinter – die beiden decken sich nicht), gewinnt
+         das Ding, das sich mit dem Wagen im Bild mehr deckt */
+      if (vorn <= idx && fIdx > fVorn) vorn = sicht.length;
+      p._vorn = vorn; p._idx = Math.min(idx, vorn - 1);
+    }
+    /* FASSUNG 830 — die Wagen eines Zuges (p.kette) von hinten nach vorn: ein vorderer Wagen kommt nie vor dem Wagen dahinter
+       an die Reihe (sonst deckt der hintere an der Kupplung den vorderen) – außer ein Ding steht sicher vor ihm. */
+    const ketten = new Map();
+    for (const p of leute) if (p.kette) { if (!ketten.has(p.kette)) ketten.set(p.kette, []); ketten.get(p.kette).push(p); }
+    for (const kt of ketten.values()) {
+      kt.sort((u, v) => (u.a + u.b) - (v.a + v.b));
+      let m = -1;
+      for (const p of kt) { p._idx = Math.min(Math.max(p._idx, m), p._vorn - 1); m = p._idx; }
+    }
+    for (const p of leute) {
+      if (!nachDing.has(p._idx)) nachDing.set(p._idx, []);
+      nachDing.get(p._idx).push(p);
     }
     const leuteMalen = (idx) => { const l = nachDing.get(idx); if (!l) return; l.sort((u, v) => (u.a + u.b) - (v.a + v.b)); for (const p of l) (p.malen || ST.leute.malen)(g, p); };
     leuteMalen(-1);
