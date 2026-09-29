@@ -31,8 +31,11 @@ ORDNER = os.path.join(WURZEL, "stadt-leicht", "bilder")
 VZ = os.path.join(ORDNER, "verzeichnis.json")
 ZIEL_S = 7.5   # Bildpunkte je Meter im kleinen Rahmen (Überblick ≈ 6,6 bei 2,75-facher Pixeldichte)
 
+# FASSUNG 812 — der Transparenzkanal war verlustfrei und machte die Hälfte der Zwerge aus; mit alpha_quality 50 sind sie
+# gut ein Drittel kleiner („189 KB statt 400" soll auch am Tag gelten, nicht nur nachts, wenn die Bilder dunkel sind).
+# ZWERG_NEU=1 rechnet einmal alle Zwerge neu.
 def klein(quelle, ziel, f):
-    if os.path.exists(ziel) and os.path.getmtime(ziel) >= os.path.getmtime(quelle):
+    if not os.environ.get("ZWERG_NEU") and os.path.exists(ziel) and os.path.getmtime(ziel) >= os.path.getmtime(quelle):
         try:
             with Image.open(ziel) as z, Image.open(quelle) as q:
                 if abs(z.width - round(q.width * f)) <= 1: return True
@@ -43,7 +46,7 @@ def klein(quelle, ziel, f):
     except Exception:
         return False
     w, h = max(1, round(im.width * f)), max(1, round(im.height * f))
-    im.resize((w, h), Image.LANCZOS).save(ziel, "WEBP", quality=72, method=6)
+    im.resize((w, h), Image.LANCZOS).save(ziel, "WEBP", quality=72, alpha_quality=50, method=6)
     return True
 
 def main():
@@ -151,6 +154,16 @@ def main():
     # Die _k-Einträge brauchen ihre Lichter hier nicht: bilder.js rechnet sie aus denen des Zwergbilds hoch.
     for k in list(kv):
         if k.endswith("_k") and "l" in kv[k] and (k[:-2] + "_z") in kv: kv[k] = {a: b for a, b in kv[k].items() if a != "l"}; kv[k]["lz"] = 1
+    # FASSUNG 812 — _k-Einträge, die sich aus ihrem Zwerg hochrechnen lassen, tragen nur noch „kz" (ihre Bildpunkte je
+    # Meter); bilder.js rechnet den Rest aus dem _z-Eintrag. Die Zwerg-Anker brauchen keine Nachkommastellen.
+    def ganz(v): return {a: (round(b) if isinstance(b, float) and a != "s" else b) for a, b in v.items()}
+    for k in list(kv):
+        z = kv.get(k[:-2] + "_z") if k.endswith("_k") else None
+        if z and "n" not in kv[k] and "n" not in z and abs(round(z["w"] * kv[k]["s"] / z["s"]) - kv[k]["w"]) <= 1.5 \
+                and abs(round(z["h"] * kv[k]["s"] / z["s"]) - kv[k]["h"]) <= 1.5:
+            kv[k] = {"kz": kv[k]["s"]}
+    for k in list(kv):
+        if k.endswith("_z"): kv[k] = ganz(kv[k])
     alt = None
     try: alt = json.load(open(os.path.join(ORDNER, "verzeichnis-klein.json")))
     except Exception: pass

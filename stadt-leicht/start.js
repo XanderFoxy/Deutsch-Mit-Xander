@@ -170,9 +170,20 @@
   L.jahrNachDatum = jahrNachDatum; L.zeitNachUhr = zeitNachUhr;
 
   /* Eigener Schmuck (Baukasten) – vorerst im Browser gemerkt */
+  /* FASSUNG 822 — XANDER: „wo ich ihn hinziehe, schnippst der plötzlich wieder zurück". Ursache: beim Neuaufbau (Spielstand
+     vom Spiel, Bau fertig, Ausbauen …) nahm dekoLaden die Lage der Häuser aus dem Stand, den der Server beim ÖFFNEN der
+     Stadt geliefert hatte – das eben versetzte Haus sprang dorthin zurück. Jetzt hält ST.spiel.eigenes immer den zuletzt
+     gespeicherten Stand (spiel.js, eigenesSpeichern). Dazu die Bäume der Stadt: entfernte und versetzte (L.natur). */
+  const naturNorm = (n) => {
+    const weg = Array.isArray(n && n.weg) ? n.weg.filter((k) => typeof k === "string" && k.length < 40).slice(-200) : [];
+    const lage = {};
+    if (n && n.lage && typeof n.lage === "object") for (const k of Object.keys(n.lage).slice(-200)) { const v = n.lage[k]; if (k.length < 40 && Array.isArray(v) && isFinite(+v[0]) && isFinite(+v[1])) lage[k] = [+(+v[0]).toFixed(2), +(+v[1]).toFixed(2)]; }
+    return { weg: weg, lage: lage };
+  };
+  try { L.natur = naturNorm(JSON.parse(localStorage.getItem("leicht_natur_v1") || "{}")); } catch (e) { L.natur = naturNorm(null); }
   L.dekoLaden = function () {
     const e = ST.spiel && ST.spiel.eigenes;
-    if (e && Array.isArray(e.deko)) { if (e.lage) L.lage = e.lage; return e.deko; }
+    if (e && Array.isArray(e.deko)) { if (e.lage) L.lage = e.lage; if (e.natur) L.natur = naturNorm(e.natur); return e.deko; }
     try { return JSON.parse(localStorage.getItem("leicht_deko_v1") || "[]"); } catch (err) { return []; }
   };
   L.dekoSpeichern = function () {
@@ -189,8 +200,9 @@
       if (dx || dy) { lage[o.spiel].dx = dx; lage[o.spiel].dy = dy; }
     }
     L.lage = lage;
-    try { localStorage.setItem("leicht_lage_v1", JSON.stringify(lage)); } catch (e) {}
-    if (ST.spiel && ST.spiel.eigenesSpeichern) ST.spiel.eigenesSpeichern({ v: 1, deko: liste, lage: lage });
+    L.natur = naturNorm(L.natur);
+    try { localStorage.setItem("leicht_lage_v1", JSON.stringify(lage)); localStorage.setItem("leicht_natur_v1", JSON.stringify(L.natur)); } catch (e) {}
+    if (ST.spiel && ST.spiel.eigenesSpeichern) ST.spiel.eigenesSpeichern({ v: 1, deko: liste, lage: lage, natur: L.natur });
   };
   try { L.lage = JSON.parse(localStorage.getItem("leicht_lage_v1") || "{}"); } catch (e) { L.lage = {}; }
 

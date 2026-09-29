@@ -72,7 +72,7 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 .lk-text-knopf:disabled { opacity: .45; cursor: default; }
 .lk-knopf.lk-klein { margin-left: auto; }
 /* Karte offen: Mini-Karte weg (schmale Bildschirme) */
-@media (max-width: 620px) { #lOber:has(.lk-karte:not([hidden])) .lk-mini-rahmen { display: none; } }
+@media (max-width: 620px) { #lOber:has(.lk-karte:not([hidden]):not(.lk-am-ding)) .lk-mini-rahmen { display: none; } }   /* FASSUNG 822: das kleine Menü am Ding weicht der kleinen Karte aus, statt sie zu verstecken */
 
 .lk-ansage { position: absolute; left: 50%; top: 66px; transform: translate(-50%, -8px); background: rgba(22,28,48,.86); color: #f6ecd6; padding: 8px 14px; border-radius: 12px; font: 600 14px/1.2 system-ui; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; max-width: calc(100vw - 32px); text-align: center; }
 .lk-ansage.an { opacity: 1; transform: translate(-50%, 0); }
@@ -260,3 +260,26 @@ html, body, #lStadt, #lStadt *, .lk-zeichen, .lk-zeichen * { -webkit-user-select
 .lk-mini-modus:not(.lk-nah).lk-gepinnt .lk-pinknopf { left: 5px; }
 .lk-pinknopf.lk-an { background: #ffd24a; color: #3a2a14; }
 .lk-mini-modus.lk-gestalten .lk-pinknopf { display: none; }
+/* FASSUNG 822 — XANDER: „dieses einfache Menü haben am Haus selber das ist direkt irgendwie". Das Menü eines Dings (Haus,
+   Baum, Schmuck) sitzt klein am Ding (Lage setzt oberflaeche.js, amDingLegen), Titel und Zeile in einer Reihe. */
+.lk-karte.lk-am-ding { left: 0; top: 0; right: auto; bottom: auto; width: max-content; max-width: min(310px, calc(100vw - 8px)); padding: 6px 8px 7px; background: rgba(22,28,48,.95); -webkit-backdrop-filter: none; backdrop-filter: none; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; column-gap: 8px; row-gap: 5px; border-radius: 14px; z-index: 3; will-change: transform; }
+.lk-karte.lk-am-ding .lk-karte-titel { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lk-karte.lk-am-ding .lk-karte-zeile { font-size: 12px; min-width: 0; }
+.lk-karte.lk-am-ding .lk-karte-knoepfe, .lk-karte.lk-am-ding .lk-schon-hinweis { grid-column: 1 / -1; }
+.lk-karte.lk-am-ding .lk-knopf { width: 38px; height: 38px; border-radius: 11px; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; background: #2a3252; }   /* ohne Unschärfe-Filter: billig zu malen, auch im kleinen Rahmen */
+.lk-karte.lk-am-ding .lk-knopf svg { width: 19px; height: 19px; }
+.lk-karte.lk-am-ding .lk-text-knopf { height: 38px; padding: 0 10px 0 8px; font-size: 13px; }
+.lk-karte.lk-am-ding .lk-karte-knoepfe { gap: 5px; }
+.lk-schon-hinweis { font: 600 12px/1.25 system-ui, sans-serif; color: #ffd98a; }
+.lk-bauleiste .lk-schon small { color: #8a3b12; font-weight: 700; line-height: 1.1; text-align: center; }
+.lk-mini-modus .lk-karte.lk-am-ding { left: 0; top: 0; right: auto; bottom: auto; width: max-content; max-width: calc(100vw - 8px); padding: 4px 5px 5px; column-gap: 5px; row-gap: 3px; border-radius: 11px; }
+.lk-mini-modus .lk-karte.lk-am-ding .lk-karte-titel { font-size: 11px; }
+.lk-mini-modus .lk-karte.lk-am-ding .lk-karte-zeile { font-size: 9.5px; min-width: 40px; }
+.lk-mini-modus .lk-karte.lk-am-ding .lk-knopf { width: 32px; height: 32px; border-radius: 10px; }
+.lk-mini-modus .lk-karte.lk-am-ding .lk-knopf svg { width: 17px; height: 17px; }
+.lk-mini-modus .lk-karte.lk-am-ding .lk-text-knopf { height: 32px; font-size: 12px; }
+.lk-mini-modus .lk-karte.lk-am-ding .lk-karte-knoepfe { gap: 4px; }
+.lk-mini-modus .lk-schon-hinweis { font-size: 10px; }
+.lk-knopf.lk-direkt-knopf.lk-an { color: #ffd23f; border-color: rgba(255,210,63,.7); }
+/* FASSUNG 822 — solange ein Ding angehoben ist (Halten und Ziehen) */
+body.lk-gehoben #lDinge { cursor: grabbing; }

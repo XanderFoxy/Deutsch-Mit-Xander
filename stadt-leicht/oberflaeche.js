@@ -45,6 +45,8 @@
     voll: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></g></svg>',
     /* FASSUNG 812 — Stecknadel („Ansicht festhalten") */
     pin: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5h6l-1 5.2 3.2 3.3H6.8L10 8.7z" fill="currentColor"/><path d="M12 12v8.5"/></g></svg>',
+    /* FASSUNG 822 — Liste: die Karte/Station des Hauses im Spiel darunter öffnen */
+    liste: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 7h11M9 12h11M9 17h11"/></g><g fill="currentColor"><circle cx="4.5" cy="7" r="1.5"/><circle cx="4.5" cy="12" r="1.5"/><circle cx="4.5" cy="17" r="1.5"/></g></svg>',
     hammer: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6.5 17.5 10M4 20l9-9"/><path d="M12.5 5l4-2 4.5 4.5-2 4-2-.5-3-3z" fill="currentColor"/></g></svg>'
   };
   const ZEITEN = ["tag", "abend", "nacht"], ZEIT_SYM = { tag: "sonne", abend: "daemmerung", nacht: "mond" };
@@ -312,7 +314,7 @@
       const stufeVon = (s) => s > ueberblick() * 4.5 ? 2 : s > ueberblick() * 1.4 ? 1 : 0;
       O.stufe = () => stufeVon(K.s);
       const kompass = () => {
-        if (O.wahlZu) O.wahlZu();
+        if (O.wahlZu) O.wahlZu(); if (O.dingZu) O.dingZu();   // FASSUNG 822 — auch das kleine Menü am Ding
         const nah = K.s > ueberblick() * 1.4, g = ganzeStadt();
         L().fliegeZu(nah ? g.x : K.x, nah ? g.y : K.y, nah ? g.s : g.s * 2.8, 600);
         nahSetzen(!nah, true);
@@ -324,7 +326,7 @@
          dran führt er wie bisher zurück zur ganzen Stadt. */
       O.doppelTipp = (px, py) => {
         if (!document.body.classList.contains("lk-mini-modus")) return;
-        if (O.wahlZu) O.wahlZu();
+        if (O.wahlZu) O.wahlZu(); if (O.dingZu) O.dingZu();
         /* Funk 207: Überblick → Kompass-Nähe → zweite Stufe → wieder die ganze Stadt, jeweils an die getippte Stelle */
         const st = stufeVon(K.s);
         if (st === 2 || px == null) { if (st) kompass(); return; }
@@ -339,7 +341,7 @@
       const imUeberblick = (fn) => { const alt = { x: K.x, y: K.y, s: K.s }, g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; try { return fn(); } finally { K.x = alt.x; K.y = alt.y; K.s = alt.s; } };
       O.ueberblick = ganzeStadt; O.imUeberblick = imUeberblick;
       O.kachelHin = (i, j) => {
-        if (O.wahlZu) O.wahlZu();
+        if (O.wahlZu) O.wahlZu(); if (O.dingZu) O.dingZu();
         const g = ganzeStadt(), a = imUeberblick(() => ST.aufBoden((i + 0.5) / 3 * K.W, (j + 0.5) / 3 * K.H));
         L().fliegeZu(a[0], a[1], g.s * 3, 800);
         nahSetzen(true, true);
@@ -538,7 +540,7 @@
         if (klein) { if (bauLeiste) bauLeisteZeigen(false); if (leiste && !leiste.hidden) leisteZeigen(false); karte.hidden = true; farbFeld.hidden = true; }
         O.gestalten = false; document.body.classList.remove("lk-gestalten");
         /* FASSUNG 817 — die kleine Karte hat im kleinen Rahmen die Lage des Überblicks, im Vollbild die der ganzen Karte */
-        if (O.wahlZu) O.wahlZu();
+        if (O.wahlZu) O.wahlZu(); if (O.dingZu) O.dingZu();
         miniMalen();
       };
       /* FASSUNG 809 — Walkie 304: „es stehen immer noch Schriften für die Namen der Häuser über den Häusern obwohl ich gar
@@ -717,6 +719,8 @@
         O.wahlZu();
         if (typeof ev.data.g !== "string" || !Array.isArray(ev.data.wahl) || !document.body.classList.contains("lk-mini-modus")) return;
         const g = ev.data.g, haus = SZ.objekte.find((o) => o.art === "haus" && o.spiel === g);
+        /* FASSUNG 822 — die Auswahl des Spiels (Brot, Kuchen …) sitzt am Haus: das kleine Menü der Stadt weicht ihr */
+        if (!O.gestalten && !geist && karte && !karte.hidden && karte.classList.contains("lk-am-ding")) auswahlWeg();
         wahlG = g; wahlEl = el("div", "lk-wahl");
         wahlEl.setAttribute("role", "group"); wahlEl.setAttribute("aria-label", (haus ? haus.name : "Haus") + ": was herstellen?");
         for (const w of ev.data.wahl.slice(0, 5)) {
@@ -832,7 +836,9 @@
     n.querySelector("b").textContent = stadtName();
     n.querySelector("span").textContent = SP.beispiel ? (SP.fehler === "nicht angemeldet" ? "Beispielstadt · bitte anmelden" : "Beispielstadt · Vorschau") : "Neue Stadt · Vorschau";
   }
-  O.betreiberDa = function () { nameSetzen(); if (zeitK && jahrK) zeitK.hidden = jahrK.hidden = !(ST.spiel && ST.spiel.betreiber); };
+  /* FASSUNG 822 — antwortet der Server schneller, als die Bedienung steht, gab es einen Fehler (kopf fehlte); O.start
+     setzt Name und Schalter ohnehin selbst */
+  O.betreiberDa = function () { if (!kopf) return; nameSetzen(); if (zeitK && jahrK) zeitK.hidden = jahrK.hidden = !(ST.spiel && ST.spiel.betreiber); };
   /* FASSUNG 814 — Knopf der Jahreszeit zeigt die gewählte Stufe (oder „automatisch") */
   O.jahrAnzeigen = function () {
     if (!jahrK) return;
@@ -840,7 +846,7 @@
     jahrK.innerHTML = SYM[MODUS_SYM[SZ.modus] || JAHR_SYM[SZ.jahr] || "blatt"];
     jahrK.setAttribute("aria-label", "Jahreszeit (Vorschau): " + modusName());
   };
-  O.neuAufgebaut = function () { if (kopf) nameSetzen(); miniMalen(); };
+  O.neuAufgebaut = function () { if (kopf) nameSetzen(); miniMalen(); if (karte) dingNeuVerknuepfen(); };
 
   /* FASSUNG 812 — Dreh-Schieber (siehe oben). XANDER (29.09.): „Vielleicht kannst du den Slider so machen, dass er an der
      Seite von oben nach unten geht. Das kann man besser bedienen, als wenn wir mit dem Finger das Bild verdecken. Ich
@@ -858,7 +864,9 @@
     bahn.addEventListener("pointerdown", (e) => {
       e.stopPropagation(); e.preventDefault();
       try { bahn.setPointerCapture(e.pointerId); } catch (x) {}
-      zug = { id: e.pointerId, y0: e.clientY, d0: K.dreh, weit: 0 };
+      /* FASSUNG 812 — „Entweder nehme ich den Slider der gilt dann für das Haus. Ansonsten gilt der Slider global":
+         ist ein Haus gewählt oder angehoben, dreht der Schieber das Haus in Schritten, sonst die Karte */
+      zug = { id: e.pointerId, y0: e.clientY, d0: K.dreh, weit: 0, ding: !!(O.schieberZiel && O.schieberZiel()), schritte: 0 };
       w.classList.add("lk-schieber-aktiv");
     });
     bahn.addEventListener("pointermove", (e) => {
@@ -869,6 +877,11 @@
       /* Griff folgt dem Finger (höchstens bis an die Enden der Bahn), die Karte dreht mit: nach unten ziehen = rechts herum */
       const halb = Math.max(1, (bahn.clientHeight - griff.offsetHeight) / 2 - 2);
       griff.style.transform = "translateY(" + Math.max(-halb, Math.min(halb, dy)).toFixed(1) + "px)";
+      if (zug.ding) {
+        const n = Math.round(dy / 36);
+        while (zug.schritte !== n) { const r = n > zug.schritte ? -1 : 1; if (!O.schieberDrehen(r)) break; zug.schritte -= r; }
+        return;
+      }
       if (ST.drehen && ST.drehen.setzen) ST.drehen.setzen(zug.d0 - dy / PX);
     });
     const los = (e) => {
@@ -878,9 +891,12 @@
       if (z.weit < 4 && e.type === "pointerup") {
         /* kurzer Tipp: obere Hälfte links herum, untere rechts herum (je 45°) */
         const r = bahn.getBoundingClientRect();
-        drehen(e.clientY < r.top + r.height / 2 ? 1 : -1);
+        const rr = e.clientY < r.top + r.height / 2 ? 1 : -1;
+        if (z.ding && O.schieberDrehen(rr)) return;
+        drehen(rr);
         return;
       }
+      if (z.ding) return;
       if (ST.drehen) ST.drehen.zu(Math.round(K.dreh * 2) / 2, {});
     };
     bahn.addEventListener("pointerup", los);
@@ -986,8 +1002,8 @@
     if (bauLeiste) bauLeisteZeigen(false);
     SZ.auswahl = null;
     const kt = ziel || karte;
-    if (ziel) karte.hidden = true;
-    kt.hidden = false; kt.innerHTML = ""; karte._uhr = null;
+    if (ziel) { karte.hidden = true; kt.hidden = false; kt.innerHTML = ""; } else karteOeffnen(null);   // FASSUNG 822 — sonst die Karte am Ding
+    karte._uhr = null;
     const titel = el("div", "lk-karte-titel"), zeile = el("div", "lk-karte-zeile"), knoepfe = el("div", "lk-karte-knoepfe");
     kt.append(titel, zeile, knoepfe);
     titel.textContent = A.name;
@@ -1049,21 +1065,29 @@
     for (const k in D.GEBAEUDE) {
       const G = D.GEBAEUDE[k], haus = SZ.objekte.find((o) => o.art === "haus" && o.spiel === k);
       const st = (dorf[k] && dorf[k].stufe) || 0;
-      const text = haus && haus.bau ? "im Bau" : st ? "Stufe " + st : G[2] ? "ab Level " + G[2] : G[1] + " P.";
-      const b = el("button", "lk-karte-klein" + (st || (haus && haus.bau) ? "" : " lk-frei")); b.type = "button";
+      /* FASSUNG 822 — XANDER: „wenn ich … einen neuen [Kuhstall] bauen will, baut er gar keinen neuen, sondern er orientiert
+         sich an meinem alten … es bringt im Prinzip gar nix am zweiten Kuhstall zu bauen". Im Spiel gibt es jedes Gebäude
+         genau einmal (dorf[k].stufe; „zweiter Stall" steht in SPIELSYSTEM.md noch als offen). Der Eintrag sagt das jetzt
+         klar: „hast du schon – versetzen?" – ein Tipp öffnet das kleine Menü am vorhandenen Haus mit „Versetzen". */
+      const schon = !!(haus && (st || haus.bau));
+      /* (im kleinen Rahmen ist die Karte nur 56 px breit: dort kurz „hast du", der ganze Satz steht im Titel und im Menü) */
+      const eng = document.body.classList.contains("lk-mini-modus");
+      const text = schon ? (haus.bau && !st ? (eng ? "im Bau" : "im Bau – versetzen?") : (eng ? "hast du" : "hast du schon – versetzen?")) : G[2] ? "ab Level " + G[2] : G[1] + " P.";
+      const b = el("button", "lk-karte-klein" + (st || (haus && haus.bau) ? "" : " lk-frei") + (schon ? " lk-schon" : "")); b.type = "button";
       /* FASSUNG 829 — XANDER: „du hast das Bergwerk nicht mit der Öffnung zu uns gestellt". Im Dorf schauen alle Häuser
          zum Betrachter (dreh 3,5 → Bild _f_315); das Bildchen in der Bau-Leiste zeigt jetzt dieselbe Ansicht (vorher
          _f_0: das Mundloch des Bergwerks schaute schräg zur Seite). Ohne 315°-Bild bleibt es bei 0°. */
       const jz = (SZ.jahr === "winter" ? "winter" : "herbst") + "_tag_f_", vz = LB.vz || {};
       const bild = D.BILD[k][0] + "_" + jz + (vz[D.BILD[k][0] + "_" + jz + "315_k"] ? "315" : "0") + "_k";
-      b.innerHTML = '<img alt="" src="stadt-leicht/bilder/' + bild + '.webp' + (LB.version ? "?v=" + LB.version : "") + '"><span>' + G[0] + "</span><small>" + text + "</small>";
+      b.innerHTML = '<img alt="" src="stadt-leicht/bilder/' + bild + '.webp' + (LB.version ? "?v=" + LB.version : "") + '"><span>' + G[0] + (st ? " " + st : "") + "</span><small>" + text + "</small>";
+      if (schon) { b.title = G[0] + (st ? " (Stufe " + st + ")" : " (im Bau)") + " hast du schon – ein zweiter geht im Spiel nicht. Antippen: versetzen oder ausbauen."; b.setAttribute("aria-label", b.title); }
       b.addEventListener("click", (e) => {
         e.stopPropagation();
         bauLeisteZeigen(false);
         const pk = platzVon(k), pl = D.PLAETZE[pk];
         /* FASSUNG 817 — im kleinen Rahmen höchstens bis zur Grenze des Rahmens (und innerhalb des Überblicks) */
         if (pl) { const s = Math.min(K.max, Math.max(K.s, 16 * K.dpr)), z = O.klemmZiel ? O.klemmZiel(pl.x, pl.y, s) : [pl.x, pl.y]; L().fliegeZu(z[0], z[1], s, 800); }
-        if (haus) waehlen(haus); else karteZeigen("bauplatz", null, pk);
+        if (haus) waehlen(haus, { schonDa: schon }); else karteZeigen("bauplatz", null, pk);
       });
       bauLeiste.appendChild(b);
     }
@@ -1081,9 +1105,12 @@
   }
   O.haltAufbau = () => !!geist;
   /* FASSUNG 809 — ein gebautes Haus versetzen: es wird selbst zum Geist (gestrichelt), Abbrechen stellt es zurück */
+  /* FASSUNG 822 — gilt auch für Bäume der Stadt (art „natur"): sie werden selbst zum Geist */
   function hausVersetzen(o) {
     if (geist) geistFertig(false);
     auswahlWeg();
+    if (SZ.objekte.indexOf(o) < 0) o = gleichesDing(o);   // (nach einem Neuaufbau das neue Haus)
+    if (!o) return;
     o._zurueck = { x: o.x, y: o.y, dreh: o.dreh };
     o.geist = true; geist = o;
     karteZeigen("setzen", geist); SZ.geaendert(); L().unruhe = 2;
@@ -1093,6 +1120,7 @@
     /* FASSUNG 815 — ein abgestelltes Auto fährt nicht mehr, bis man „Losfahren" tippt */
     const parkt = ok && geist.autoParken && ST.autos ? geist.autoParken : null;
     if (parkt) ST.autos.parken(parkt, true);
+    if (ok && geist.art === "natur" && geist.nkey) { const N = L().natur || (L().natur = { weg: [], lage: {} }); N.lage[geist.nkey] = [+geist.x.toFixed(2), +geist.y.toFixed(2)]; geist.versetzt = 1; }
     if (ok) { geist.geist = false; delete geist.autoParken; L().dekoSpeichern(); ansage(parkt ? "Abgestellt" : "Gesetzt"); }
     else if (geist._zurueck) { Object.assign(geist, geist._zurueck); geist.geist = false; delete geist._zurueck; }
     else SZ.weg(geist);
@@ -1103,6 +1131,36 @@
 
   /* ---------------- Antippen ---------------- */
   let autoUnterFinger = null;
+  /* FASSUNG 822 — XANDER: „wenn es jetzt angeklickt ist in dem Modus und ich würde das jetzt halten dann würde das kurz so
+     ne Haptik geben … und ich sehe ich kann's jetzt bewegen dann kann ich es zur Seite ziehen und die Karte bleibt still
+     dabei". Ist ein Haus, Schmuck oder Baum angetippt (sein Menü offen), dann Finger 0,45 s ruhig darauf: kurzes Brummen (navigator.vibrate), das Ding hebt sich
+     an (halb durchsichtig, Rahmen, ein Stück höher) und folgt dem Finger – die Karte steht still. Loslassen setzt es und
+     speichert (derselbe Weg wie „Versetzen“ → „Setzen“), danach steht das kleine Menü am Ding. Im Überblick des kleinen
+     Rahmens nicht (dort scrollt der Finger die Seite). */
+  let halten = null, gehoben = null;
+  const HALTEN_MS = 450;
+  function haltenAbbrechen() { if (halten) { clearTimeout(halten.uhr); halten = null; } }
+  function haltenErlaubt() {
+    if (geist) return false;
+    const b = document.body.classList;
+    return !(b.contains("lk-mini-modus") && !b.contains("lk-nah") && !O.gestalten);
+  }
+  function anheben(o) {
+    halten = null;
+    if (geist || SZ.objekte.indexOf(o) < 0) return;
+    try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
+    clearTimeout(O._tippUhr); O._tipp = null;
+    if (O.wahlZu) O.wahlZu();
+    if (leiste && !leiste.hidden) leisteZeigen(false);
+    if (bauLeiste) bauLeisteZeigen(false);
+    karte.hidden = true; karte._ding = null; SZ.auswahl = null;
+    o._zurueck = { x: o.x, y: o.y, dreh: o.dreh };
+    o.geist = true; o.heben = 7; geist = o; geistZiehen = true; gehoben = o;
+    document.body.classList.add("lk-gehoben");
+    ansage("Ziehen – loslassen setzt");
+    SZ.geaendert(); L().unruhe = 2;
+  }
+  O.gehoben = () => gehoben;
   O.zeigerRunter = function (p) {
     geistZiehen = false;
     /* FASSUNG 812 — ein fahrendes Auto zählt schon beim Aufsetzen des Fingers: sonst ist es (die Kamera folgt ihm nicht
@@ -1110,6 +1168,24 @@
     autoUnterFinger = ST.autos && !document.body.classList.contains("lk-mini-modus") ? ST.autos.treffer(p.x, p.y) || null : null;
     if (autoUnterFinger && ST.autoschau && ST.autoschau.vorladen) ST.autoschau.vorladen().catch(() => {});
     if (ST.autos) ST.autos.folge = null;   // FASSUNG 815 — wer selbst schiebt, folgt dem Auto nicht mehr
+    /* FASSUNG 822 — ein zweiter Finger (Zoomen) bricht das Halten ab */
+    if (halten) { haltenAbbrechen(); return; }
+    if (!geist && haltenErlaubt()) {
+      /* nur das gewählte Ding („wenn es jetzt angeklickt ist … und ich würde das jetzt halten“) – wer über ein anderes Haus
+         wischt, schiebt wie immer die Karte */
+      const gew = karte && !karte.hidden && karte._ding;
+      const o = gew && (gew.art === "haus" || gew.art === "eigen" || gew.art === "natur") ? SZ.treffer(p.x, p.y, (x) => x === gew) : null;
+      /* (zweistufig: hing das Telefon kurz, kommen die liegengebliebenen Fingerbewegungen noch vor dem Anheben an – wer in
+         Wahrheit schon schiebt, schiebt die Karte und hebt nichts an) */
+      if (o) {
+        const h = halten = { o: o, x: p.x, y: p.y, t0: performance.now() };
+        h.uhr = setTimeout(function nachsehen() {
+          if (halten !== h) return;
+          if (performance.now() - h.t0 < HALTEN_MS) { h.uhr = setTimeout(nachsehen, HALTEN_MS - (performance.now() - h.t0)); return; }
+          h.uhr = setTimeout(function heben() { if (halten !== h) return; if (h.zuletzt && performance.now() - h.zuletzt < 150) { h.uhr = setTimeout(heben, 80); return; } anheben(o); }, 40);
+        }, HALTEN_MS - 40);
+      }
+    }
     if (geist) {
       /* auf dem Geist angesetzt? dann zieht der Finger den Geist */
       const t = SZ.treffer(p.x, p.y, (o) => o === geist);
@@ -1118,13 +1194,41 @@
     }
   };
   O.zeigerZiehen = function (neu, alt) {
+    /* FASSUNG 822 — wer schiebt, hält nicht: mehr als 6 px vom Aufsetzpunkt, oder der Finger ist gerade in Bewegung */
+    if (halten) { const w = Math.hypot(neu.x - halten.x, neu.y - halten.y); if (w > 6 * K.dpr) haltenAbbrechen(); else if (w > 2.5 * K.dpr) halten.zuletzt = performance.now(); }
     if (!geist || !geistZiehen) return false;
     const a = ST.aufBoden(neu.x, neu.y), b = ST.aufBoden(alt.x, alt.y);
     geist.x += a[0] - b[0]; geist.y += a[1] - b[1]; SZ.geaendert();
     return true;
   };
-  O.zeigerHoch = function () { geistZiehen = false; };
+  O.zeigerHoch = function () {
+    geistZiehen = false;
+    haltenAbbrechen();
+    /* FASSUNG 822 — losgelassen: das angehobene Ding steht, ist gespeichert, sein Menü sitzt daneben */
+    if (gehoben) {
+      const o = gehoben; gehoben = null; delete o.heben;
+      document.body.classList.remove("lk-gehoben");
+      if (geist === o) { geistFertig(true); if (SZ.objekte.indexOf(o) >= 0) waehlen(o, { still: true }); }
+    }
+  };
+  /* FASSUNG 822 — Koordinator: „solange ein Objekt so gewählt ist, dreht der Dreh-Schieber das Objekt". Ziel des Schiebers:
+     das angehobene/zu setzende Ding, sonst das Haus oder der Schmuck, dessen Menü offen ist; ohne Ziel dreht er die Karte.
+     O.schieberDrehen(r): r = +1/−1 Schritt (45° bei Bildern mit acht Winkeln), gibt true zurück, wenn ein Ding gedreht wurde.
+     O.schieberSetzen(grad): stellt die Blickrichtung des Dings auf den nächsten erlaubten Winkel. */
+  O.schieberZiel = function () {
+    if (geist) return geist;
+    const d = karte && !karte.hidden && karte._ding;
+    return d && (d.art === "haus" || d.art === "eigen") && SZ.objekte.indexOf(d) >= 0 ? d : null;
+  };
+  O.schieberDrehen = function (r) { const o = O.schieberZiel(); if (!o) return false; objDrehen(o, r, !geist); return true; };
+  O.schieberSetzen = function (grad) {
+    const o = O.schieberZiel(); if (!o) return false;
+    const schritt = SZ.achtWinkel(o.bild) ? 0.5 : 1, d = SZ.drehNorm(Math.round((+grad || 0) / 90 / schritt) * schritt);
+    if (d !== o.dreh) { o.dreh = d; SZ.geaendert(); miniMalen(); L().unruhe = 2; if (!geist) L().dekoSpeichern(); }
+    return true;
+  };
   O.tippen = function (px, py) {
+    if (gehoben) return;   // FASSUNG 822 — das Loslassen nach dem Halten ist kein Tipp
     farbFeld.hidden = true;
     /* FASSUNG 817 — im kleinen Rahmen des Spiels wartet ein Tipp einen Augenblick (0,36 s), ob ein zweiter folgt: der
        Doppeltipp zoomt nur („stärker reinkommen"), ohne dass der erste Tipp schon ein Haus bedient oder eine Aufgabe
@@ -1162,14 +1266,23 @@
        sie schon unterwegs, hilft der Tipp mit; sind sie zurück, wird das Holz eingesammelt). Im Vollbild öffnet ein
        eigener Baum weiter seine Karte (Drehen, Versetzen) – dort steht dafür „Holzfäller". */
     const spielTipp = window.parent !== window && !O.gestalten, mini = document.body.classList.contains("lk-mini-modus");
-    if (o && o.art === "eigen" && istBaum(o) && spielTipp && mini) { baumTun(o); auswahlWeg(); return; }
+    if (o && o.art === "eigen" && istBaum(o) && spielTipp && mini && !document.body.classList.contains("lk-nah")) { baumTun(o); auswahlWeg(); return; }
     if (o && (o.art === "haus" || o.art === "wunder" || o.art === "eigen" || o.name)) { waehlen(o); return; }
     /* FASSUNG 809 — XANDER: „Waldstück … wenn man auf die Bäume klickt … einen Effekt". Ein Baum raschelt: Blätter
        (im Winter Schnee) rieseln, zwei Vögel fliegen auf. */
     const baum = SZ.treffer(px, py, (x) => x.art === "natur" && istBaum(x));
+    /* FASSUNG 822 — XANDER: „wenn ich was anklicke, dann muss er hier ein Menü sein, was ich damit machen will … Weil der
+       Baum ist halt direkt noch vorm Rathaus kriegt den da nicht weg". Im Überblick des kleinen Rahmens bleibt es wie bisher
+       (im Spiel: Holzfäller losschicken, Fassung 828; sonst Rascheln); nah dran (Kompass), beim Gestalten und im großen Bild
+       öffnet der Baum sein kleines Menü: Versetzen, Entfernen (im kleinen Rahmen dazu „Wald" für die Station). */
     if (baum) {
-      if (spielTipp) baumTun(baum); else baumRascheln(baum);
-      auswahlWeg(); return;
+      const imRahmen = window.parent !== window && document.body.classList.contains("lk-mini-modus");
+      if (imRahmen && !document.body.classList.contains("lk-nah") && !O.gestalten) {
+        if (spielTipp) baumTun(baum); else baumRascheln(baum);
+        auswahlWeg(); return;
+      }
+      baumRascheln(baum);
+      waehlen(baum); return;
     }
     /* leerer Bauplatz? */
     const a = ST.aufBoden(px, py);
@@ -1338,8 +1451,76 @@
     ansage("Gedreht: " + Math.round(o.dreh * 90) + "°");
   }
   O.objDrehen = objDrehen;
-  function waehlen(o) { SZ.auswahl = o; karteZeigen("haus", o); L().unruhe = 2; }
-  function auswahlWeg() { SZ.auswahl = null; if (!geist) karte.hidden = true; L().unruhe = 2; }
+  function waehlen(o, opt) { SZ.auswahl = o; karteZeigen("haus", o, null, opt); L().unruhe = 2; }
+  function auswahlWeg() { SZ.auswahl = null; if (!geist) { karte.hidden = true; karte._ding = null; } L().unruhe = 2; }
+  /* FASSUNG 822 — Kompass, Doppeltipp, Kachel, Umschalten: das kleine Menü am Ding geht zu (wie die Auswahl des Spiels) */
+  O.dingZu = () => { if (!geist && karte && !karte.hidden && karte.classList.contains("lk-am-ding")) auswahlWeg(); };
+  /* FASSUNG 822 — nach einem Neuaufbau (Spielstand vom Spiel, Bau fertig …) sind alle Dinge neu: dasselbe Ding wiederfinden,
+     sonst wirkten „Versetzen" und „Drehen" auf ein Haus, das gar nicht mehr in der Stadt steht (es „schnippte zurück"). */
+  function gleichesDing(o) {
+    if (!o) return null;
+    if (SZ.objekte.indexOf(o) >= 0) return o;
+    return SZ.objekte.find((n) => n.art === o.art && (o.spiel ? n.spiel === o.spiel : o.nkey ? n.nkey === o.nkey
+      : n.bild === o.bild && Math.abs(n.x - o.x) < 0.05 && Math.abs(n.y - o.y) < 0.05)) || null;
+  }
+  function dingNeuVerknuepfen() {
+    const alt = (karte && !karte.hidden && karte._ding) || SZ.auswahl;
+    if (!alt || geist) return;
+    const neu = gleichesDing(alt);
+    if (neu === alt) return;
+    if (SZ.auswahl === alt) SZ.auswahl = neu;
+    if (karte && !karte.hidden && karte._ding === alt) { if (neu) karteZeigen("haus", neu, null, { still: true, schonDa: karte._schonDa }); else auswahlWeg(); }
+  }
+  /* FASSUNG 822 — XANDER: „dieses einfache Menü haben am Haus selber das ist direkt irgendwie". Die Karte eines Dings
+     (Haus, Baum, Schmuck, Wahrzeichen) sitzt klein direkt am Ding statt unten quer über dem Bild. Sie sucht sich einen
+     Platz über, unter oder neben dem Ding, der das Ding selbst und die Knöpfe (Kopf, kleine Karte, Kompass, Uhr, Leisten,
+     die Zeichen der Häuser) möglichst nicht verdeckt, und bleibt ganz im Bild – auch im kleinen Rahmen (360 px). */
+  function karteOeffnen(ding) {
+    karte.hidden = false; karte.innerHTML = ""; karte._uhr = null; karte._ding = ding || null; karte._i = -1; karte._schonDa = false; karte.style.visibility = ""; karte._schl = "";
+    karte.classList.toggle("lk-am-ding", !!ding);
+    if (!ding) karte.style.transform = "";
+  }
+  const AUSWEICHEN = [".lk-kopf", ".lk-mini-rahmen", ".lk-schmuck", ".lk-leiste", ".lk-lupe", ".lk-uhr", ".lk-ortsschild", ".lk-wetter", ".lk-vollknopf", ".lk-drehknopf", ".lk-gestalten-fertig", ".lk-wahl", ".lk-zeichen"];
+  function amDingLegen() {
+    if (!karte || karte.hidden || !karte.classList.contains("lk-am-ding")) return;
+    const o = karte._ding;
+    if (!o) return;
+    /* nur rechnen, wenn sich Blick, Ding oder die Knöpfe ringsum geändert haben (sonst kostet es jedes Bild ein Layout) */
+    const jetzt = performance.now(), schl = [K.x, K.y, K.s, K.dreh, K.W, K.H, o.x, o.y, o.dreh, o.stufe, karte.childElementCount, wurzel.classList.contains("leiste-offen"), document.body.className].join("|");
+    if (schl === karte._schl && jetzt - (karte._schlT || 0) < 500) return;
+    karte._schl = schl; karte._schlT = jetzt;
+    const W = K.W / K.dpr, H = K.H / K.dpr, bw = karte.offsetWidth, bh = karte.offsetHeight;
+    const h = (o.hoehe || 6) * (o.stufe || 1);
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const q of SZ.ecken(o)) for (const z of [0, h]) { const P = ST.proj(q[0], q[1], z); x0 = Math.min(x0, P[0]); x1 = Math.max(x1, P[0]); y0 = Math.min(y0, P[1]); y1 = Math.max(y1, P[1]); }
+    x0 /= K.dpr; x1 /= K.dpr; y0 /= K.dpr; y1 /= K.dpr;
+    /* das Ding ist aus dem Bild geschoben: das Menü wartet unsichtbar (es soll nicht am Rand über fremden Häusern liegen) */
+    const weg0 = x1 < 0 || y1 < 0 || x0 > W || y0 > H;
+    if (karte.style.visibility !== (weg0 ? "hidden" : "")) karte.style.visibility = weg0 ? "hidden" : "";
+    if (weg0) return;
+    const ding = { left: x0, right: x1, top: y0, bottom: y1 }, mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+    const weg = [];
+    for (const s of AUSWEICHEN) for (const e of wurzel.querySelectorAll(s)) { if (e === karte) continue; const r = e.getBoundingClientRect(); if (r.width > 0 && r.height > 0) weg.push(r); }
+    const setzen = (lx, ly) => [Math.max(4, Math.min(W - bw - 4, lx)), Math.max(4, Math.min(H - bh - 4, ly))];
+    const ueber = (q, r) => Math.max(0, Math.min(r.right, q[0] + bw) - Math.max(r.left, q[0])) * Math.max(0, Math.min(r.bottom, q[1] + bh) - Math.max(r.top, q[1]));
+    const wert = (q) => weg.reduce((a, r) => a + ueber(q, r), 0) + ueber(q, ding) * 0.6;
+    const wahl = [setzen(mx - bw / 2, y0 - bh - 6), setzen(mx - bw / 2, y1 + 6), setzen(x1 + 6, my - bh / 2), setzen(x0 - bw - 6, my - bh / 2)];
+    const werte = wahl.map(wert);
+    let best = 0; for (let i = 1; i < wahl.length; i++) if (werte[i] < werte[best] - 1) best = i;
+    /* die einmal gefundene Lage bleibt, solange sie (fast) so gut ist – kein Springen beim Schieben */
+    if (!(karte._i >= 0 && werte[karte._i] <= werte[best] + 40)) karte._i = best;
+    const q = wahl[karte._i], t = "translate(" + q[0].toFixed(1) + "px," + q[1].toFixed(1) + "px)";
+    if (karte.style.transform !== t) karte.style.transform = t;
+  }
+  O.amDingLegen = amDingLegen;
+  function baumName(o) { const b = o.bild || ""; return /tanne/.test(b) ? "Tanne" : /obstbaum/.test(b) ? "Apfelbaum" : /laubbaum/.test(b) ? "Laubbaum" : /birke/.test(b) ? "Birke" : /kiefer/.test(b) ? "Kiefer" : "Baum"; }
+  function baumEntfernen(o) {
+    const N = L().natur || (L().natur = { weg: [], lage: {} });
+    if (o.nkey) { if (N.weg.indexOf(o.nkey) < 0) N.weg.push(o.nkey); delete N.lage[o.nkey]; }
+    SZ.weg(o); karte.hidden = true; karte._ding = null; SZ.auswahl = null;
+    L().dekoSpeichern(); miniMalen(); L().unruhe = 2;
+    ansage(baumName(o) + " entfernt");
+  }
 
   function zeitText(ms) { const s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
   /* Welches Gebäude gehört auf diesen Platz? (Umsetzen im Spiel beachten) */
@@ -1348,27 +1529,33 @@
     for (const k in plan) if (plan[k] === platz) return k;
     return plan[platz] ? null : platz;
   }
-  function karteZeigen(art, o, platz) {
+  function karteZeigen(art, o, platz, opt) {
+    opt = opt || {};
     /* FASSUNG 801 — XANDER: „in der ganz kleinen Miniaturansicht muss man dann auch nur auf Einsammeln klicken können und
        dann muss das funktionieren". Im kleinen Dorfrahmen des Spiels öffnet ein Tipp auf ein Gebäude (oder einen Bauplatz)
        die gewohnte Karte des Spiels UNTER dem Rahmen – dort sind Einsammeln, Ausbauen, Arbeiter. Wischen bleibt Ansehen. */
     /* FASSUNG 817 — beim Schmücken/Bauen im kleinen Rahmen (O.gestalten) bleibt die Karte der Stadt (Drehen, Versetzen …) */
-    if (document.body.classList.contains("lk-mini-modus") && window.parent !== window && !O.gestalten && (art === "haus" || art === "bauplatz")) {
+    const imRahmen = document.body.classList.contains("lk-mini-modus") && window.parent !== window;
+    if (imRahmen && !O.gestalten && (art === "haus" || art === "bauplatz")) {
       /* FASSUNG 817 — ein leerer Bauplatz meldet das Haus, das (nach dem Umbauen im Spiel) dorthin gehört */
       const g = art === "haus" ? o && o.spiel : (wasGehoertHin(platz) || platz);
       /* FASSUNG 825 — ist dort etwas fertig, sammelt der Tipp es ein: dasselbe „Pling" wie am Zeichen */
       try { const z = g && O.zeichenJetzt && O.zeichenJetzt[g]; if (z && z[0] === "fertig" && ST.ton && ST.ton.einsammeln) ST.ton.einsammeln(z[2] || ""); } catch (e) {}
-      if (g) { try { window.parent.postMessage({ typ: "leicht-haus", g: g }, location.origin); } catch (e) {} }
-      return;
+      if (g && !opt.still) { try { window.parent.postMessage({ typ: "leicht-haus", g: g }, location.origin); } catch (e) {} }
+      /* FASSUNG 822 — XANDER: „ich möchte im kleinen Menü einen Baum rausnehmen und bin jetzt ein gezoomt … Ich hab jetzt
+         kein Menü". Nah dran (Kompass) bekommen Haus, Baum und Schmuck ihr kleines Menü am Ding – der Tipp aufs Haus
+         bedient wie bisher das Spiel darunter (Einsammeln, Station), das Menü bietet dazu Karte, Drehen, Versetzen. */
+      if (!(art === "haus" && o && document.body.classList.contains("lk-nah") && (o.art === "haus" || o.art === "eigen" || o.art === "natur"))) return;
     }
     /* FASSUNG 823 — XANDER: „wenn ich auf eins klicke, dann muss ich noch mal auf dem Bahnhof …". Auch im Vollbild öffnet ein
        Tipp auf den Bahnhof das eine Bahnhof-Fenster des Spiels (Export, Import, Touristen) statt „Gehört zum Dorf". */
-    if (window.parent !== window && !O.gestalten && art === "haus" && o && o.spiel === "bahnhof") {
+    if (window.parent !== window && !O.gestalten && art === "haus" && o && o.spiel === "bahnhof" && !imRahmen) {
       SZ.auswahl = null; karte.hidden = true;
       try { window.parent.postMessage({ typ: "leicht-haus", g: "bahnhof" }, location.origin); } catch (e) {}
       return;
     }
-    karte.hidden = false; karte.innerHTML = "";
+    karteOeffnen(art === "haus" && o ? o : null);
+    karte._schonDa = !!opt.schonDa;
     const titel = el("div", "lk-karte-titel"), zeile = el("div", "lk-karte-zeile"), knoepfe = el("div", "lk-karte-knoepfe");
     karte.append(titel, zeile, knoepfe);
     const zu = knopf("kreuz", "Schließen", () => { if (geist) geistFertig(false); auswahlWeg(); karte.hidden = true; }, "lk-klein");
@@ -1383,6 +1570,18 @@
       const k = wasGehoertHin(platz), G = k && D.GEBAEUDE[k];
       titel.textContent = G ? "Bauplatz: " + G[0] : "Bauplatz";
       if (!G) { zeile.textContent = "Dieser Platz ist im Spiel einem anderen Haus zugeteilt."; knoepfe.append(zu); return; }
+      /* FASSUNG 822 — das Haus dieses Platzes steht schon (nur versetzt): „Bauen" hätte im Spiel nur das alte ausgebaut.
+         Stattdessen klar sagen und das Haus zurückholen oder hinfliegen. */
+      const steht = SZ.objekte.find((x) => x.art === "haus" && x.spiel === k);
+      if (steht) {
+        zeile.textContent = "Dein " + G[0] + " steht schon – nur versetzt. Ein zweiter geht im Spiel nicht.";
+        const zurueck = el("button", "lk-text-knopf", SYM.zurueck + "<span>Zurückholen</span>"); zurueck.type = "button";
+        zurueck.addEventListener("click", (e) => { e.stopPropagation(); if (steht.platzX != null) { steht.x = steht.platzX; steht.y = steht.platzY; steht.dreh = steht.platzDreh; } SZ.geaendert(); miniMalen(); L().dekoSpeichern(); ansage(G[0] + " wieder auf dem Bauplatz"); waehlen(steht, { still: true }); });
+        const hin = el("button", "lk-text-knopf", SYM.versetzen + "<span>Hinfliegen</span>"); hin.type = "button";
+        hin.addEventListener("click", (e) => { e.stopPropagation(); const s2 = Math.min(K.max, Math.max(K.s, 16 * K.dpr)), z = O.klemmZiel ? O.klemmZiel(steht.x, steht.y, s2) : [steht.x, steht.y]; L().fliegeZu(z[0], z[1], s2, 700); waehlen(steht, { still: true }); });
+        knoepfe.append(zurueck, hin, zu);
+        return;
+      }
       const preis = G[1], lv = G[2];
       zeile.textContent = "Preis " + preis + " Punkte" + (lv ? " · ab Level " + lv : "") + " · Bauzeit 2 min";
       const bau = el("button", "lk-text-knopf", SYM.hammer + "<span>Bauen</span>"); bau.type = "button";
@@ -1393,6 +1592,41 @@
     }
     /* Haus, Wahrzeichen, Kulisse oder eigener Schmuck */
     titel.textContent = o.name || (SCHMUCK.find((s) => s[1] === o.bild) || [""])[0] || "Schmuck";
+    /* FASSUNG 822 — im kleinen Rahmen (ohne Gestalten) bedient der Tipp das Spiel; das Menü am Haus: Karte, Drehen, Versetzen */
+    if (imRahmen && !O.gestalten && o.art === "haus") {
+      zeile.textContent = o.bau ? (o.bau.stufe > 1 ? "Ausbau auf Stufe " + o.bau.stufe : "Im Bau") : "Stufe " + (o.stufenZahl || 1) + " von 3";
+      const kk = knopf("liste", "Karte öffnen", () => { auswahlWeg(); try { window.parent.postMessage({ typ: "leicht-haus", g: o.spiel, karte: 1 }, location.origin); } catch (e) {} });
+      kk.setAttribute("aria-label", "Karte des Hauses öffnen");
+      knoepfe.append(kk, knopf("links", "Drehen", () => objDrehen(o, 1, true)), knopf("rechts", "Andersherum drehen", () => objDrehen(o, -1, true)),
+        knopf("versetzen", "Versetzen", () => hausVersetzen(o)));
+      /* FASSUNG 822 — XANDER: „durch den Tipp in den Einstellungen so festlegen kann, sobald ich eins antippe und es hat Arbeit
+         frei dann fängt es sofort an weiter zu produzieren". Die Einstellung des Spiels („Ein Tipp produziert", Fassung 817)
+         auch hier am Haus: ein Tipp schaltet sie (das Spiel merkt sie, dma_ls_direkt) – an = Blitz gelb. */
+      const an = document.body.classList.contains("lk-direkt");
+      const dk = knopf('<svg viewBox="0 0 24 24"><path d="M13.5 2.5 5 13.5h6l-1.5 8 8.5-11h-6z" fill="currentColor"/></svg>', "Ein Tipp produziert: " + (an ? "an" : "aus"), () => {
+        const neu = !document.body.classList.contains("lk-direkt");
+        try { window.parent.postMessage({ typ: "leicht-direkt", an: neu }, location.origin); } catch (e) {}
+        document.body.classList.toggle("lk-direkt", neu);
+        dk.classList.toggle("lk-an", neu); dk.setAttribute("aria-pressed", String(neu)); dk.title = "Ein Tipp produziert: " + (neu ? "an" : "aus"); dk.setAttribute("aria-label", dk.title);
+      }, "lk-direkt-knopf" + (an ? " lk-an" : ""));
+      dk.setAttribute("aria-pressed", String(an));
+      knoepfe.append(dk);
+      if (o.platzX != null && (Math.abs(o.x - o.platzX) > 0.01 || Math.abs(o.y - o.platzY) > 0.01))
+        knoepfe.append(knopf("zurueck", "Zurück auf den Bauplatz", () => { o.x = o.platzX; o.y = o.platzY; o.dreh = o.platzDreh; SZ.geaendert(); miniMalen(); L().dekoSpeichern(); ansage("Wieder auf dem Bauplatz"); karteZeigen("haus", o, null, { still: true }); }));
+      knoepfe.append(zu);
+      amDingLegen();
+      return;
+    }
+    /* FASSUNG 822 — ein Baum der Stadt: Versetzen, Entfernen (im kleinen Rahmen dazu die Wald-Station) */
+    if (o.art === "natur") {
+      titel.textContent = baumName(o);
+      zeile.textContent = o.rand ? "Baum am Waldrand" : "Baum";
+      knoepfe.append(knopf("versetzen", "Versetzen", () => hausVersetzen(o)), knopf("abriss", "Entfernen", () => baumEntfernen(o)));
+      if (imRahmen) knoepfe.append(knopf("liste", "Wald: Holzfäller und Jäger", () => { auswahlWeg(); try { window.parent.postMessage({ typ: "leicht-haus", g: "wald" }, location.origin); } catch (e) {} }));
+      knoepfe.append(zu);
+      amDingLegen();
+      return;
+    }
     if (o.art === "haus") {
       const aktualisieren = () => {
         if (karte.hidden || SZ.auswahl !== o) return false;
@@ -1404,6 +1638,15 @@
       };
       aktualisieren();
       karte._uhr = aktualisieren;
+      /* FASSUNG 822 — aus „Bauen" für ein Haus, das es schon gibt: klar sagen, dass kein zweites entsteht, und Versetzen anbieten */
+      if (opt.schonDa) {
+        const hinweis = el("div", "lk-schon-hinweis");
+        hinweis.textContent = "Hast du schon – ein zweites Gebäude „" + o.name + "“ geht im Spiel nicht. Versetzen?";
+        karte.insertBefore(hinweis, knoepfe);
+        const vs = el("button", "lk-text-knopf lk-versetzen-text", SYM.versetzen + "<span>Versetzen</span>"); vs.type = "button"; vs.title = "Versetzen";
+        vs.addEventListener("click", (e) => { e.stopPropagation(); hausVersetzen(o); });
+        knoepfe.append(vs);
+      }
       if (o.bau) {
         const h = el("button", "lk-text-knopf", SYM.hammer + "<span>Helfen</span>"); h.type = "button";
         h.addEventListener("click", (e) => { e.stopPropagation(); aktion(() => ST.spiel.helfen(o.spiel), "Geholfen – 15 s schneller"); });
@@ -1416,11 +1659,12 @@
         if (ST.spiel.beispiel) { a.disabled = true; a.title = "In der Beispielstadt wird nicht gebaut – bitte anmelden"; }
         knoepfe.append(a);
       }
-      knoepfe.append(knopf("links", "Drehen", () => objDrehen(o, 1, true)), knopf("rechts", "Andersherum drehen", () => objDrehen(o, -1, true)),
-        knopf("versetzen", "Versetzen", () => hausVersetzen(o)));
+      knoepfe.append(knopf("links", "Drehen", () => objDrehen(o, 1, true)), knopf("rechts", "Andersherum drehen", () => objDrehen(o, -1, true)));
+      if (!opt.schonDa) knoepfe.append(knopf("versetzen", "Versetzen", () => hausVersetzen(o)));
       if (o.platzX != null && (Math.abs(o.x - o.platzX) > 0.01 || Math.abs(o.y - o.platzY) > 0.01 || o.dreh !== o.platzDreh))
-        knoepfe.append(knopf("zurueck", "Zurück auf den Bauplatz", () => { o.x = o.platzX; o.y = o.platzY; o.dreh = o.platzDreh; SZ.geaendert(); miniMalen(); L().dekoSpeichern(); ansage("Wieder auf dem Bauplatz"); karteZeigen("haus", o); }));
+        knoepfe.append(knopf("zurueck", "Zurück auf den Bauplatz", () => { o.x = o.platzX; o.y = o.platzY; o.dreh = o.platzDreh; SZ.geaendert(); miniMalen(); L().dekoSpeichern(); ansage("Wieder auf dem Bauplatz"); karteZeigen("haus", o, null, { still: true }); }));
       knoepfe.append(zu);
+      amDingLegen();
       return;
     }
     if (o.art === "eigen") {
@@ -1435,7 +1679,7 @@
       }
       knoepfe.append(knopf("links", "Drehen", () => objDrehen(o, 1, true)), knopf("rechts", "Andersherum drehen", () => objDrehen(o, -1, true)),
         knopf("versetzen", "Versetzen", () => { SZ.weg(o); geist = SZ.neu(Object.assign({}, o, { geist: true })); karteZeigen("setzen", geist); }),
-        knopf("abriss", "Entfernen", () => { SZ.weg(o); L().dekoSpeichern(); karte.hidden = true; miniMalen(); L().unruhe = 2; }));
+        knopf("abriss", "Entfernen", () => { SZ.weg(o); L().dekoSpeichern(); karte.hidden = true; karte._ding = null; miniMalen(); L().unruhe = 2; }));
       /* FASSUNG 828 — ein eigener Baum schickt im Spiel auch aus seiner Karte die Holzfäller los */
       if (istBaum(o) && window.parent !== window) {
         const hf = el("button", "lk-text-knopf", "<span>Holzfäller</span>"); hf.type = "button"; hf.title = "Holzfäller in den Wald schicken";
@@ -1443,10 +1687,12 @@
         knoepfe.append(hf);
       }
       knoepfe.append(zu);
+      amDingLegen();
       return;
     }
     zeile.textContent = o.art === "wunder" ? "Wahrzeichen" : "Gehört zum Dorf";
     knoepfe.append(zu);
+    amDingLegen();
   }
   /* FASSUNG 823 — das Bahnhof-Fenster des Spiels liegt im Vollbild über der Stadt (unten bzw. quer rechts). Das Spiel sagt,
      wie viel es verdeckt; liegt der Bahnhof dahinter, fährt die Stadt ihn in den freien Teil – er bleibt zu sehen. */
@@ -1479,11 +1725,14 @@
       }
       if (karte && !karte.hidden && karte._uhr) karte._uhr();
       /* fertig gebaut: Stand neu holen (der Server schließt den Bau ab) */
-      if (fertig && !O._holt) { O._holt = true; ST.spiel.neuLaden().then((ich) => { if (ich) L().ich = ich; L().aufbauen(); O._holt = false; }, () => { O._holt = false; }); }
+      /* FASSUNG 822 — höchstens alle 10 s nachfragen, solange der Server den Bau noch nicht abgeschlossen hat (sonst baute
+         die Stadt jede Sekunde neu auf – und ein offenes Menü wirkte auf ein Haus von vorhin) */
+      if (fertig && !O._holt && jetzt > (O._holtWieder || 0)) { O._holt = true; O._holtWieder = jetzt + 10000; ST.spiel.neuLaden().then((ich) => { if (ich) L().ich = ich; L().aufbauen(); O._holt = false; }, () => { O._holt = false; }); }
     }
   };
   O.bild = function () {
     if (O.zeichenLegen) O.zeichenLegen();
+    amDingLegen();   // FASSUNG 822 — das kleine Menü folgt seinem Ding
     if (deckel && deckel.isConnected) {
       const offen = LB.offen();
       const bar = deckel.querySelector("em");

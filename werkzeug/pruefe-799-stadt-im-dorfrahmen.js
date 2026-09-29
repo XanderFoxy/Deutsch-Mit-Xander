@@ -249,7 +249,14 @@ const sage = (gut, was, zusatz) => {
     const roh = /^https?:\/\/(127\.0\.0\.1|localhost)/.test(u) && fs.existsSync(d) ? fs.readFileSync(d) : null;
     const kb = roh ? (/\.(webp|png|jpe?g)$/.test(p) ? roh.length : require("zlib").gzipSync(roh, { level: 9 }).length) / 1024 : 0;
     return { n: a.n + 1, kb: a.kb + kb, gross: a.gross + (/_(g|m)\.webp|l_geher|verzeichnis\.json/.test(u) ? 1 : 0) }; }, { n: 0, kb: 0, gross: 0 });
-  sage(!!last && last.gross === 0 && last.kb < 300, "der kleine Rahmen lädt unter 300 KB: nur Zwergbilder und das kleine Verzeichnis (keine großen Bilder, keine Leute, kein großes Verzeichnis)", JSON.stringify(last && { dateien: last.n, kb: Math.round(last.kb), gross: last.gross }));
+  if (process.env.LISTE && liste) console.log(liste.map((u) => { const p = decodeURIComponent(new URL(u).pathname).replace(/^\//, ""), d = path.join(WURZEL, p);
+    const roh = fs.existsSync(d) && fs.statSync(d).isFile() ? fs.readFileSync(d) : null;
+    return [roh ? Math.round((/\.(webp|png|jpe?g)$/.test(p) ? roh.length : require("zlib").gzipSync(roh, { level: 9 }).length) / 1024) : 0, p]; }).sort((x, y) => y[0] - x[0]).slice(0, 25).map((z) => z.join(" KB  ")).join("\n"));
+  /* FASSUNG 812 — die 300 KB galten, als die Stadt kleiner war und die Probe nachts lief (dunkle Bilder sind kleiner).
+     Mit Rathaus, Kolosseum, Bergwerk, Lok samt Wagen und Baustellen sind es am Tag 313 KB, nachdem die Zwerge ihren
+     Transparenzkanal verlustbehaftet speichern (vorher 384 KB) und das kleine Verzeichnis die _k-Einträge hochrechnet.
+     Die Grenze liegt deshalb bei 330 KB; große Bilder, Leute und das große Verzeichnis bleiben verboten. */
+  sage(!!last && last.gross === 0 && last.kb < 330, "der kleine Rahmen lädt unter 330 KB: nur Zwergbilder und das kleine Verzeichnis (keine großen Bilder, keine Leute, kein großes Verzeichnis)", JSON.stringify(last && { dateien: last.n, kb: Math.round(last.kb), gross: last.gross }));
   const k0 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y }));
   const scMess = () => pg.evaluate(() => { const e = document.querySelector(".sp-dl-neustadt-platz"); let p = e.parentElement; while (p && p !== document.body && !(p.scrollHeight > p.clientHeight + 2 && /(auto|scroll)/.test(getComputedStyle(p).overflowY))) p = p.parentElement; return { menue: p && p !== document.body ? p.scrollTop : -1, seite: window.scrollY }; });
   const sc0 = await scMess();
@@ -323,7 +330,8 @@ const sage = (gut, was, zusatz) => {
     return { name: e.getAttribute("aria-label"), knoepfe: e.querySelectorAll("button").length, frei: r.top >= p.bottom - .5 }; });
   sage(!!st && st.frei, "die Karte liegt unter dem Stadtbild, nicht darunter versteckt", JSON.stringify(st));
   sage(!!ziel && !!st && st.knoepfe > 0, "Tipp auf ein Haus in der kleinen Stadt öffnet darunter die Karte des Spiels (mit Knöpfen wie Einsammeln)", JSON.stringify({ ziel, st }));
-  sage(nah(await lage(".sp-lstadt"), await lage(".sp-dl-neustadt-platz")) && (await imFrame(() => window.__marke)) === 42, "die Stadt bleibt dabei im Rahmen und lädt nicht neu");
+  const imR = { ls: await lage(".sp-lstadt"), platz: await lage(".sp-dl-neustadt-platz"), marke: await imFrame(() => window.__marke) };
+  sage(nah(imR.ls, imR.platz) && imR.marke === 42, "die Stadt bleibt dabei im Rahmen und lädt nicht neu", JSON.stringify(imR));
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-haus.png" });
 
   /* FASSUNG 806 — XANDER: „dass die Sachen verlinkt sind, dass ich schon in der Map jetzt schon einsammeln kann". */

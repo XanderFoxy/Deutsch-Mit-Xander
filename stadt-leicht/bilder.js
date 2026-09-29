@@ -50,6 +50,25 @@
     } catch (e) { return false; }
   })();
 
+  /* Im kleinen Verzeichnis tragen nur die Zwergbilder ihre Fensterlichter; die _k-Bilder bekommen sie hochgerechnet.
+     FASSUNG 812 — ein _k-Eintrag mit „kz" ist ganz aus seinem Zwerg (_z) hochgerechnet (kz = Bildpunkte je Meter des
+     _k-Bilds): das spart ein Viertel des kleinen Verzeichnisses. */
+  function kleinAuspacken(j) {
+    for (const k in j) {
+      const e = j[k], z = (e.lz || e.kz) && j[k.slice(0, -2) + "_z"];
+      if (e.kz) {
+        if (!z) { delete j[k]; continue; }
+        const f = e.kz / z.s, n = { s: e.kz };
+        for (const a of ["w", "h", "sw", "sh"]) if (z[a] != null) n[a] = Math.round(z[a] * f);
+        for (const a of ["ax", "ay", "sax", "say"]) if (z[a] != null) n[a] = z[a] * f;
+        if (z.r) n.r = z.r.map((r) => [r[0] * f, r[1] * f].concat(r.slice(2)));
+        if (z.sn) n.sn = z.sn.replace(/_z_s$/, "_k_s");
+        n.l = z.l ? z.l.map((l) => [l[0] * f, l[1] * f, l[2] * f].concat(l.slice(3))) : [];
+        j[k] = n;
+      } else if (e.lz) { const f = z ? e.s / z.s : 1; e.l = z && z.l ? z.l.map((l) => [l[0] * f, l[1] * f, l[2] * f].concat(l.slice(3))) : []; }
+    }
+    return j;
+  }
   LB.laden = function (v) {
     LB.version = v || "";
     /* FASSUNG 805 — im kleinen Rahmen erst das kleine Verzeichnis (nur _z und _k); das große kommt erst im Vollbild. */
@@ -59,7 +78,7 @@
     LB.vzVoll = !LB.nurKlein;
     return fetch(PFAD + datei + (v ? "?v=" + v : "")).then((r) => r.json()).then((j) => {
       /* Im kleinen Verzeichnis tragen nur die Zwergbilder ihre Fensterlichter; die _k-Bilder bekommen sie hochgerechnet. */
-      for (const k in j) if (j[k].lz) { const z = j[k.slice(0, -2) + "_z"], f = z ? j[k].s / z.s : 1; j[k].l = z && z.l ? z.l.map((l) => [l[0] * f, l[1] * f, l[2] * f].concat(l.slice(3))) : []; }
+      kleinAuspacken(j);
       LB.vz = j; return j;
     });
   };
@@ -69,7 +88,7 @@
     if (!LB.nurKlein || LB.vzVoll || !LB.kleinJahr || (LB.kleinJahre || (LB.kleinJahre = {}))[jz] || jz === LB.kleinJahr) return Promise.resolve(LB.vz);
     LB.kleinJahre[jz] = true;
     return fetch(PFAD + "verzeichnis-klein-" + jz + ".json" + (LB.version ? "?v=" + LB.version : "")).then((r) => r.json()).then((j) => {
-      for (const k in j) if (j[k].lz) { const z = j[k.slice(0, -2) + "_z"], f = z ? j[k].s / z.s : 1; j[k].l = z && z.l ? z.l.map((l) => [l[0] * f, l[1] * f, l[2] * f].concat(l.slice(3))) : []; }
+      kleinAuspacken(j);
       LB.vz = Object.assign({}, j, LB.vz); LB.neu = true; if (ST.leicht) ST.leicht.unruhe = 2; return LB.vz;
     }).catch(() => { LB.kleinJahre[jz] = false; });
   };

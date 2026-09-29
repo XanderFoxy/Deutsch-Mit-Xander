@@ -13307,6 +13307,14 @@
         if (S.dorfWahl) lsStationZeigen();
       }
       /* FASSUNG 817 — ein Symbol in der kleinen Auswahl über dem Haus: genau das herstellen (dieselbe Serverfunktion). */
+      /* FASSUNG 822 — XANDER: „durch den Tipp in den Einstellungen so festlegen kann, sobald ich eins antippe und es hat Arbeit
+         frei dann fängt es sofort an weiter zu produzieren". Der Blitz im kleinen Menü am Haus schaltet dieselbe Einstellung
+         wie „Ein Tipp produziert" unter dem Bild (dma_ls_direkt). */
+      if (ev.data.typ === "leicht-direkt") {
+        S.lsDirekt = !!ev.data.an; try { localStorage.setItem("dma_ls_direkt", S.lsDirekt ? "1" : "0"); } catch (e) {}
+        LSTADT.kSig = ""; ton("holzklopf", 0.2); schnellZeichnen(true);
+        hinweis("Ein Tipp produziert: " + (S.lsDirekt ? "an" : "aus"));
+      }
       if (ev.data.typ === "leicht-machen" && typeof ev.data.g === "string" && !dorfBesuchStand()) {
         var lm = lsEinzigeAufgabe(ev.data.g), lw = lm && lm.art === "wahl" ? lm.wahl.filter(function (x) { return x.w === ev.data.w && x.n > 0; })[0] : null;
         if (lw) { LSTADT.zSig = ""; werkLiefern(ev.data.g, lw.w, lw.n); } else hinweis("Das geht gerade nicht – es fehlen Zutaten.");
