@@ -634,7 +634,7 @@
     { id: "versicherung", nomen: "Versicherung", genus: "f", begleiter: ["bestimmt","unbestimmt","possessiv","kein"], itNomen: "assicurazione", itGenus: "f", itBest: "l'assicurazione", itUnbest: "un'assicurazione", it: "un'assicurazione", kategorie: "verwaltung", level: "B1", rollen: ["haben","brauchen","bezahlen","bekommen"], adjektive: ["wichtig","teuer","guenstig"] },
     { id: "steuer", nomen: "Steuer", genus: "f", begleiter: ["bestimmt","unbestimmt","possessiv","kein"], itNomen: "tassa", itGenus: "f", itBest: "la tassa", itUnbest: "una tassa", it: "una tassa", kategorie: "verwaltung", level: "B1", rollen: ["bezahlen","haben","brauchen"], adjektive: ["hoch","niedrig","wichtig"] },
     { id: "wohnung", nomen: "Wohnung", genus: "f", begleiter: ["unbestimmt","bestimmt","possessiv","kein"], itNomen: "appartamento", itGenus: "m", itBest: "l'appartamento", itUnbest: "un appartamento", it: "un appartamento", kategorie: "alltag", level: "A2", rollen: ["haben","suchen","finden","putzen","aufraeumen"], adjektive: ["gross","klein","gemuetlich","teuer","guenstig","hell","dunkel","sauber"] },
-    { id: "miete", nomen: "Miete", genus: "f", begleiter: ["bestimmt","unbestimmt","possessiv","kein"], itNomen: "affitto", itGenus: "m", itBest: "l'affitto", itUnbest: "un affitto", it: "un affitto", kategorie: "verwaltung", level: "B1", rollen: ["bezahlen","haben","brauchen"], adjektive: ["hoch","niedrig","teuer","guenstig"] },
+    { id: "miete", nomen: "Miete", genus: "f", begleiter: ["bestimmt","possessiv","kein"], itNomen: "affitto", itGenus: "m", itBest: "l'affitto", itUnbest: "un affitto", it: "un affitto", kategorie: "verwaltung", level: "B1", rollen: ["bezahlen","haben","brauchen"], adjektive: ["hoch","niedrig","teuer","guenstig"] },
     { id: "idee", nomen: "Idee", genus: "f", begleiter: ["unbestimmt","bestimmt","possessiv","kein"], itNomen: "idea", itGenus: "f", itBest: "l'idea", itUnbest: "un'idea", it: "un'idea", kategorie: "alltag", level: "A2", rollen: ["haben","geben","finden","vergessen"], adjektive: ["gut","neu","wichtig","interessant"] },
     { id: "frage", nomen: "Frage", genus: "f", begleiter: ["unbestimmt","bestimmt","possessiv","kein"], itNomen: "domanda", itGenus: "f", itBest: "la domanda", itUnbest: "una domanda", it: "una domanda", kategorie: "bildung", level: "A1", rollen: ["haben","verstehen","vergessen"], adjektive: ["wichtig","schwierig","einfach","gut"] },
     { id: "antwort", nomen: "Antwort", genus: "f", begleiter: ["unbestimmt","bestimmt","possessiv","kein"], itNomen: "risposta", itGenus: "f", itBest: "la risposta", itUnbest: "una risposta", it: "una risposta", kategorie: "bildung", level: "A1", rollen: ["haben","geben","brauchen","finden","vergessen"], adjektive: ["richtig","falsch","wichtig","kurz","lang"] },
@@ -644,7 +644,7 @@
     { id: "regel", nomen: "Regel", genus: "f", begleiter: ["bestimmt","unbestimmt","possessiv","kein"], itNomen: "regola", itGenus: "f", itBest: "la regola", itUnbest: "una regola", it: "una regola", kategorie: "bildung", level: "A2", rollen: ["haben","verstehen","erklaeren","lernen","wiederholen"], adjektive: ["wichtig","einfach","kompliziert","streng"] },
     { id: "plan", nomen: "Plan", genus: "m", begleiter: ["unbestimmt","bestimmt","possessiv","kein"], itNomen: "piano", itGenus: "m", itBest: "il piano", itUnbest: "un piano", it: "un piano", kategorie: "alltag", level: "B1", rollen: ["haben","machen","brauchen"], adjektive: ["gut","wichtig","genau"] },
     { id: "meinung", nomen: "Meinung", genus: "f", begleiter: ["bestimmt","unbestimmt","possessiv","kein"], itNomen: "opinione", itGenus: "f", itBest: "l'opinione", itUnbest: "un'opinione", it: "un'opinione", kategorie: "alltag", level: "B1", rollen: ["haben","geben","zeigen"], adjektive: ["wichtig","gut"] },
-    { id: "grund", nomen: "Grund", genus: "m", begleiter: ["bestimmt","unbestimmt","possessiv","kein"], itNomen: "motivo", itGenus: "m", itBest: "il motivo", itUnbest: "un motivo", it: "un motivo", kategorie: "alltag", level: "B1", rollen: ["haben","geben","verstehen","finden"], adjektive: ["gut","wichtig","einfach"] },
+    { id: "grund", nomen: "Grund", genus: "m", begleiter: ["bestimmt","unbestimmt","kein"], itNomen: "motivo", itGenus: "m", itBest: "il motivo", itUnbest: "un motivo", it: "un motivo", kategorie: "alltag", level: "B1", rollen: ["haben","geben","verstehen","finden"], adjektive: ["gut","wichtig","einfach"] },
     { id: "wunsch", nomen: "Wunsch", genus: "m", begleiter: ["unbestimmt","bestimmt","possessiv","kein"], itNomen: "desiderio", itGenus: "m", itBest: "il desiderio", itUnbest: "un desiderio", it: "un desiderio", kategorie: "alltag", level: "B1", rollen: ["haben"], adjektive: ["gross","klein","wichtig","schoen"] },
   ];
   const BEGLEITER_NAMEN = {
@@ -975,7 +975,7 @@
     /* --- Gründe, die zu jeder Tätigkeit passen --- */
     { id: "hungerhaben", art: "haben", nomen: "Hunger", it: "fame", stimmung: "negativ", nurDingRollen: ["essen","kochen","bestellen","kaufen"], level: "A1" },
     { id: "dursthaben", art: "haben", nomen: "Durst", it: "sete", stimmung: "negativ", nurDingRollen: ["trinken","bestellen","kaufen"], level: "A1" },
-    { id: "zeithaben", art: "haben", nomen: "Zeit", it: "tempo", stimmung: "positiv", universal: true, grundKlasse: "gelegenheit", level: "A1" },
+    { id: "zeithaben", widerspricht: ["schnell"], art: "haben", nomen: "Zeit", it: "tempo", stimmung: "positiv", universal: true, grundKlasse: "gelegenheit", level: "A1" },
     { id: "keinezeit", art: "haben", nomen: "keine Zeit", it: "tempo", itVerneint: true, stimmung: "negativ", universal: true, grundKlasse: "gelegenheit", level: "A2" },
     { id: "lusthaben", art: "haben", nomen: "Lust", it: "voglia", stimmung: "positiv", universal: true, grundKlasse: "antrieb", level: "A2" },
     { id: "keinelust", art: "haben", nomen: "keine Lust", it: "voglia", itVerneint: true, stimmung: "negativ", universal: true, grundKlasse: "antrieb", level: "A2" },
@@ -1068,7 +1068,7 @@
     { id: "mitdemwoerterbuch", de: "mit dem Wörterbuch", it: "con il dizionario", art: "mittel", passtVerben: ["uebersetzen","lernen","lesen","schreiben","ueben"] },
     { id: "inbar", de: "in bar", it: "in contanti", art: "mittel", passtVerben: ["bezahlen"] },
     { id: "mitkarte", de: "mit Karte", it: "con la carta", art: "mittel", passtVerben: ["bezahlen","buchen","bestellen"] },
-    { id: "sehr", de: "sehr", it: "molto", art: "grad", passtVerben: ["moegen","helfen","lachen","weinen"] },
+    { id: "sehr", nachObjekt: true, de: "sehr", it: "molto", art: "grad", passtVerben: ["moegen","helfen","lachen","weinen"] },
     /* „Er braucht seinen Lehrer sehr“ sagt niemand — gemeint ist
        „dringend“. Deshalb hat brauchen sein eigenes Gradwort. */
     { id: "dringend", de: "dringend", it: "urgentemente", art: "grad", level: "A2",
@@ -1094,7 +1094,7 @@
     { id: "sein", inf: "sein", formen: ["bin", "bist", "ist", "sind", "seid", "sind"], hilfsverb: "sein", partizip: "gewesen",
       lokal: ["wo"], ortPflicht: true, praedikativ: true,
       passtOrte: {"wo":["zuhause","kueche","garten","balkon","bett","keller","wohnzimmer","badezimmer","supermarkt","markt","baeckerei","apotheke","kaufhaus","buero","arbeit","besprechung","werkstatt","baustelle","schule","uni","bibliothek","kurs","meer","berge","see","park","kino","theater","museum","schwimmbad","stadion","konzert","restaurant","cafe","kantine","bahnhof","flughafen","hotel","italien","berlin","rom","stadt","land","arzt","krankenhaus","zahnarzt","amt","bank","post","flur","schlafzimmer","terrasse","garage","hof","dachboden","metzgerei","buchhandlung","drogerie","schuhgeschaeft","fabrik","labor","lager","filiale","kinderzimmer","kindergarten","kita","spielplatz","elternhaus","wald","strand","fluss","zoo","disko","imbiss","eisdiele","pizzeria","bar","weinkeller","hafen","haltestelle","faehre","autobahn","schweiz","oesterreich","klassenzimmer","hoersaal","sprachschule","seminarraum","schulhof","praxis","notaufnahme","physiotherapie","sauna","fitnessstudio","rathaus","botschaft","polizei","gericht","auslaenderbehoerde"]},
-      passtDinge: [], passtPersonen: [], passtGruende: ["muede","krank","erkaeltet","beschaeftigt","hungrig","durstig","neugierig","nervoes","traurig","gluecklich","fertig","frei","wetter","regen","hitze","kaelte","schnee","sturm","streik","stau","arbeitgrund","termingrund","pruefung","krankheit","zeitmangel"],
+      passtDinge: [], passtPersonen: [], passtGruende: ["muede","krank","erkaeltet","beschaeftigt","hungrig","durstig","neugierig","nervoes","traurig","gluecklich","fertig","frei","wetter","regen","hitze","kaelte","schnee","sturm","streik","stau","arbeitgrund","termingrund","pruefung","krankheit"],
       itInf: "essere", itFormen: ["sono", "sei", "è", "siamo", "siete", "sono"], itHilf: "essere", itPart: "stat", itFutStamm: "sar",
       kategorien: ["alltag", "arbeit", "freizeit", "reisen", "bildung", "gesundheit", "einkaufen", "essen", "familie", "verwaltung"] },
 
@@ -1140,12 +1140,12 @@
     { id: "essen", inf: "essen", formen: ["esse", "isst", "isst", "essen", "esst", "essen"], hilfsverb: "haben", partizip: "gegessen",
       lokal: ["wo"], objekt: "akk",
       passtOrte: {"wo":["zuhause","kueche","garten","balkon","restaurant","cafe","kantine","buero","park","meer","hotel","pizzeria","imbiss","eisdiele","strand","wald","flughafen"]},
-      passtDinge: ["brot","apfel","pizza","suppe","kuchen","nudeln","kaese","butter","ei","fleisch","fisch","gemuese","obst","salat","reis","kartoffeln","tomaten","marmelade","joghurt","schokolade","eis","keks","broetchen","sandwich","nachtisch"], passtPersonen: [], passtGruende: ["hungrig","spaet","krank","erkaeltet","traurig","gluecklich","beschaeftigt","zeitmangel","termingrund","unterwegs"],
+      passtDinge: ["brot","apfel","pizza","suppe","kuchen","nudeln","kaese","ei","fleisch","fisch","gemuese","obst","salat","reis","kartoffeln","tomaten","marmelade","joghurt","schokolade","eis","keks","broetchen","sandwich","nachtisch"], passtPersonen: [], passtGruende: ["hungrig","spaet","krank","erkaeltet","traurig","gluecklich","beschaeftigt","zeitmangel","termingrund","unterwegs"],
       itInf: "mangiare", itFormen: ["mangio", "mangi", "mangia", "mangiamo", "mangiate", "mangiano"], itHilf: "avere", itPart: "mangiato", itFutStamm: "manger",
       kategorien: ["essen", "alltag"] },
 
     { id: "trinken", inf: "trinken", formen: ["trinke", "trinkst", "trinkt", "trinken", "trinkt", "trinken"], hilfsverb: "haben", partizip: "getrunken",
-      lokal: ["wo"], objekt: "akk",
+      lokal: ["wo"], objekt: "akk", objektPflicht: true,
       passtOrte: {"wo":["zuhause","kueche","garten","balkon","restaurant","cafe","kantine","buero","park","hotel","bar","weinkeller","disko","strand","flughafen","meer"]},
       passtDinge: ["kaffee","tee","wasser","wein","milch","saft","bier"], passtPersonen: [], passtGruende: ["durstig","muede","krank","erkaeltet","hitze","nervoes","traurig","gluecklich","beschaeftigt","kaelte"],
       itInf: "bere", itFormen: ["bevo", "bevi", "beve", "beviamo", "bevete", "bevono"], itHilf: "avere", itPart: "bevuto", itFutStamm: "berr",
@@ -1187,7 +1187,7 @@
       kategorien: ["arbeit", "bildung", "verwaltung"] },
 
     { id: "sehen", inf: "sehen", formen: ["sehe", "siehst", "sieht", "sehen", "seht", "sehen"], hilfsverb: "haben", partizip: "gesehen",
-      lokal: ["wo"], objekt: "akk", personFall: "akk",
+      lokal: ["wo"], objekt: "akk", objektPflicht: true, personFall: "akk",
       passtOrte: {"wo":["zuhause","wohnzimmer","balkon","garten","terrasse","buero","supermarkt","schule","uni","klassenzimmer","hoersaal","seminarraum","bibliothek","kurs","kino","theater","museum","stadion","konzert","park","stadt","bahnhof","zoo","meer","berge","see"]},
       passtDinge: ["film","foto","preis","tafel","bildschirm","bus","blume","fehler","loesung"],
       passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"],
@@ -1196,7 +1196,7 @@
       kategorien: ["freizeit", "familie"] },
 
     { id: "hoeren", inf: "hören", formen: ["höre", "hörst", "hört", "hören", "hört", "hören"], hilfsverb: "haben", partizip: "gehört",
-      lokal: ["wo"], objekt: "akk", personFall: "akk",
+      lokal: ["wo"], objekt: "akk", objektPflicht: true, personFall: "akk",
       passtOrte: {"wo":["zuhause","wohnzimmer","garten","balkon","terrasse","kueche","schlafzimmer","buero","park","konzert","disko","bar","restaurant","cafe","stadion","fitnessstudio","schule","uni","kurs","sprachschule","klassenzimmer"]},
       passtDinge: ["musik","lied"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["muede","traurig","gluecklich","allein","nervoes","unterwegs","frei"],
       itInf: "ascoltare", itFormen: ["ascolto", "ascolti", "ascolta", "ascoltiamo", "ascoltate", "ascoltano"], itHilf: "avere", itPart: "ascoltato", itFutStamm: "ascolter",
@@ -1266,7 +1266,7 @@
 
     { id: "haben", steuerbar: false, bewertbar: true, inf: "haben", formen: ["habe", "hast", "hat", "haben", "habt", "haben"], hilfsverb: "haben", partizip: "gehabt",
       lokal: [], objekt: "akk", objektPflicht: true,
-      passtOrte: {}, passtDinge: ["termin","zeit","hunger","durst","tisch","stuhl","bett","schrank","lampe","fenster","tuer","schluessel","handtuch","zahnbuerste","blume","topf","pfanne","messer","gabel","loeffel","teller","tasse","glas","flasche","korb","geld","preis","quittung","karte","hemd","hose","jacke","schuhe","mantel","kleid","pullover","muetze","schal","handschuhe","aufgabe","projekt","protokoll","praesentation","pruefung","note","heft","stift","woerterbuch","computer","laptop","handy","bildschirm","drucker","tastatur","programm","datei","ordner","app","spiel","ball","fahrrad","roman","zeitschrift","konzertkarte","koffer","rucksack","regenschirm","pass","visum","fahrkarte","urlaub","wetter","rezept","medikament","tablette","verband","impfung","krankheit","ausweis","formular","anmeldung","kuendigung","versicherung","steuer","wohnung","miete","idee","frage","antwort","problem","loesung","fehler","regel","plan","meinung","grund","wunsch","vertrag","rechnung"], passtPersonen: [], passtGruende: [],
+      passtOrte: {}, passtDinge: ["termin","zeit","hunger","durst","tisch","stuhl","bett","schrank","lampe","fenster","tuer","schluessel","handtuch","zahnbuerste","blume","topf","pfanne","messer","gabel","loeffel","teller","tasse","glas","flasche","korb","geld","quittung","karte","hemd","hose","jacke","schuhe","mantel","kleid","pullover","muetze","schal","handschuhe","aufgabe","projekt","protokoll","praesentation","pruefung","note","heft","stift","woerterbuch","computer","laptop","handy","bildschirm","drucker","tastatur","programm","datei","ordner","app","spiel","ball","fahrrad","roman","zeitschrift","konzertkarte","koffer","rucksack","regenschirm","pass","visum","fahrkarte","urlaub","rezept","medikament","tablette","verband","impfung","krankheit","ausweis","formular","anmeldung","kuendigung","versicherung","steuer","wohnung","miete","idee","frage","antwort","problem","loesung","fehler","regel","plan","meinung","grund","wunsch","vertrag","rechnung"], passtPersonen: [], passtGruende: [],
       itInf: "avere", itFormen: ["ho", "hai", "ha", "abbiamo", "avete", "hanno"], itHilf: "avere", itPart: "avuto", itFutStamm: "avr",
       kategorien: ["alltag", "arbeit"] },
 
@@ -1330,7 +1330,7 @@
     { id: "geben", inf: "geben", formen: ["gebe","gibst","gibt","geben","gebt","geben"], hilfsverb: "haben", partizip: "gegeben",
       lokal: [], objekt: "akk", objektPflicht: true, personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
       passtOrte: {},
-      passtDinge: ["rechnung","schluessel","blume","geld","quittung","aufgabe","note","rezept","formular","kuendigung","idee","antwort","meinung","grund","buch","brief","zeitung","karte","fahrkarte","pass","ausweis","tablette","medikament","verband","impfung","loesung","plan"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["gluecklich"],
+      passtDinge: ["rechnung","schluessel","blume","geld","quittung","aufgabe","note","rezept","formular","kuendigung","idee","antwort","buch","brief","zeitung","karte","fahrkarte","pass","ausweis","tablette","medikament","verband","impfung","loesung","plan"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["gluecklich"],
       itInf: "dare", itFormen: ["do","dai","dà","diamo","date","danno"], itHilf: "avere", itPart: "dato", itFutStamm: "dar",
       kategorien: ["alltag","einkaufen","arbeit"] },
 
@@ -1344,7 +1344,7 @@
     { id: "bezahlen", inf: "bezahlen", formen: ["bezahle","bezahlst","bezahlt","bezahlen","bezahlt","bezahlen"], hilfsverb: "haben", partizip: "bezahlt",
       lokal: [], objekt: "akk", objektPflicht: true,
       passtOrte: {},
-      passtDinge: ["rechnung","geld","preis","karte","fahrkarte","versicherung","steuer","miete","einkauf"], passtPersonen: [], passtGruende: ["fertig"],
+      passtDinge: ["rechnung","geld","karte","fahrkarte","versicherung","steuer","miete","einkauf"], passtPersonen: [], passtGruende: ["fertig"],
       itInf: "pagare", itFormen: ["pago","paghi","paga","paghiamo","pagate","pagano"], itHilf: "avere", itPart: "pagato", itFutStamm: "pagher",
       kategorien: ["einkaufen","alltag","verwaltung"] },
 
@@ -1365,7 +1365,7 @@
     { id: "bekommen", steuerbar: false, inf: "bekommen", formen: ["bekomme","bekommst","bekommt","bekommen","bekommt","bekommen"], hilfsverb: "haben", partizip: "bekommen",
       lokal: [], objekt: "akk", objektPflicht: true,
       passtOrte: {},
-      passtDinge: ["rechnung","quittung","aufgabe","note","pass","visum","rezept","medikament","impfung","krankheit","formular","anmeldung","kuendigung","versicherung"], passtPersonen: [], passtGruende: ["krank","erkaeltet","pruefung"],
+      passtDinge: ["rechnung","quittung","aufgabe","note","pass","visum","rezept","medikament","impfung","formular","anmeldung","kuendigung","versicherung"], passtPersonen: [], passtGruende: ["krank","erkaeltet","pruefung"],
       itInf: "ricevere", itFormen: ["ricevo","ricevi","riceve","riceviamo","ricevete","ricevono"], itHilf: "avere", itPart: "ricevuto", itFutStamm: "ricever",
       kategorien: ["alltag","einkaufen","verwaltung","gesundheit"] },
 
@@ -1414,7 +1414,7 @@
     { id: "aufraeumen", inf: "aufräumen", formen: ["räume","räumst","räumt","räumen","räumt","räumen"], hilfsverb: "haben", partizip: "aufgeräumt", trennbar: "auf",
       lokal: ["wo"], objekt: "akk",
       passtOrte: {"wo":["zuhause","kueche","wohnzimmer","badezimmer","schlafzimmer","kinderzimmer","keller","garage","buero","flur","dachboden","balkon","terrasse","hof","garten"]},
-      passtDinge: ["tisch","schrank","muell","ordner","wohnung"], passtPersonen: [], passtGruende: [],
+      passtDinge: ["tisch","schrank","ordner","wohnung"], passtPersonen: [], passtGruende: [],
       itInf: "riordinare", itFormen: ["riordino","riordini","riordina","riordiniamo","riordinate","riordinano"], itHilf: "avere", itPart: "riordinato", itFutStamm: "riordiner",
       kategorien: ["alltag","familie","arbeit"] },
 
@@ -1463,7 +1463,10 @@
     { id: "denken", steuerbar: false, inf: "denken", formen: ["denke","denkst","denkt","denken","denkt","denken"], hilfsverb: "haben", partizip: "gedacht",
       lokal: [],
       passtOrte: {},
-      passtDinge: [], passtPersonen: [], passtGruende: ["muede","beschaeftigt","nervoes","unsicher"],
+      /* FASSUNG 835 — „Ich denke.“ oder „Wenn ich nie gedacht hätte …“
+         sind keine Sätze. Man denkt AN jemanden: „Ich denke an meine Oma.“ */
+      personPraep: "an", personFall: "akk", personPflicht: true, itPersonFeld: "itAn",
+      passtDinge: [], passtPersonen: ["freund","freundin","eltern","bruder","schwester","oma","opa","tante","onkel","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kind"], passtGruende: ["traurig","allein"],
       itInf: "pensare", itFormen: ["penso","pensi","pensa","pensiamo","pensate","pensano"], itHilf: "avere", itPart: "pensato", itFutStamm: "penser",
       kategorien: ["alltag"] },
 
@@ -1645,7 +1648,7 @@
     { id: "anfangen", inf: "anfangen", formen: ["fange","fängst","fängt","fangen","fangt","fangen"], hilfsverb: "haben", partizip: "angefangen", trennbar: "an",
       lokal: [], objekt: "akk", objektPflicht: true,
       passtOrte: {},
-      passtDinge: ["buch","projekt","aufgabe","uebung","pruefung","film","roman","spiel","praesentation","urlaub","bericht","formular","anmeldung"], passtPersonen: [], passtGruende: ["termingrund","spaet","neugierig","frei"],
+      passtDinge: ["buch","projekt","aufgabe","uebung","pruefung","film","roman","spiel","praesentation","bericht"], passtPersonen: [], passtGruende: ["termingrund","spaet","neugierig","frei"],
       itInf: "cominciare", itFormen: ["comincio","cominci","comincia","cominciamo","cominciate","cominciano"], itHilf: "avere", itPart: "cominciato", itFutStamm: "comincer",
       kategorien: ["alltag","arbeit","bildung"] },
 
@@ -1682,7 +1685,7 @@
     { id: "vorbereiten", inf: "vorbereiten", formen: ["bereite","bereitest","bereitet","bereiten","bereitet","bereiten"], hilfsverb: "haben", partizip: "vorbereitet", trennbar: "vor",
       lokal: [], objekt: "akk", objektPflicht: true,
       passtOrte: {},
-      passtDinge: ["fruehstueck","pruefung","praesentation","projekt","aufgabe","urlaub","koffer","rucksack","formular","antrag","vertrag","bericht","protokoll","anmeldung","uebung","termin","plan"], passtPersonen: [], passtGruende: ["termingrund","pruefung","nervoes","unsicher"],
+      passtDinge: ["fruehstueck","pruefung","praesentation","projekt","aufgabe","urlaub","formular","antrag","vertrag","bericht","protokoll","anmeldung","uebung","termin","plan"], passtPersonen: [], passtGruende: ["termingrund","pruefung","nervoes","unsicher"],
       itInf: "preparare", itFormen: ["preparo","prepari","prepara","prepariamo","preparate","preparano"], itHilf: "avere", itPart: "preparato", itFutStamm: "preparer",
       kategorien: ["alltag","arbeit","bildung","reisen"] },
   ];
@@ -1804,6 +1807,8 @@
     if (OHNE_MODAL.has(verb.id)) return false;
     if (verb.steuerbar === false && !(verb.id === "verstehen" && modal.id === "koennen")) return false;
     if (verb.itUmkehr) return false;
+    // „Sie kann im Krankenhaus liegen“ — liegen, sitzen, stehen muss oder will man.
+    if (modal.id === "koennen" && ["liegen", "sitzen", "stehen"].includes(verb.id)) return false;
     return true;
   }
   /* Ein Grund neben einem Modalverb: „Ich muss arbeiten, weil ich das
@@ -1813,11 +1818,39 @@
   function grundPasstZuModal(grund, modal) {
     if (!grund || !modal || grund.art === "keiner") return true;
     if (grund.art === "satz") return false;
+    /* „Ihr solltet anfangen, weil ihr spät dran seid“, „Sie dürfen ihn
+       wegen des Staus treffen“ — Erlaubnis und Auftrag brauchen keinen
+       eigenen Grund, er klingt fast immer schief. */
+    if (["sollen", "duerfen"].includes(modal.id)) return false;
+    // „Ich kann wegen des Staus ins Kino gehen“ — ein Hindernis ermöglicht nichts.
+    if (modal.id === "koennen" && grund.art === "wegen") return false;
     const pflicht = ["muessen", "sollen", "duerfen"].includes(modal.id);
     if (pflicht && ["antrieb", "gelegenheit"].includes(grund.grundKlasse)) return false;
     if (!pflicht && grund.grundKlasse && grund.stimmung === "negativ") return false;
+    // „Du musst deine Großeltern besuchen, weil du traurig bist“ — müssen nur aus Not.
+    if (modal.id === "muessen" && grund.art === "zustand" && !["muede", "krank", "erkaeltet", "spaet", "hungrig", "durstig"].includes(grund.id)) return false;
     return true;
   }
+  // Warum man auf dem Amt, beim Arzt oder bei der Arbeit ist: wegen eines Termins, der Arbeit, des Umzugs.
+  const ANLASS_AMT = new Set(["termingrund", "arbeitgrund", "umzug", "pruefung"]);
+  const LOHNT_VERBEN = new Set(["kaufen", "buchen", "bestellen", "fahren", "fliegen", "reisen", "lernen", "ueben",
+    "wiederholen", "arbeiten", "warten", "besuchen", "reparieren", "vorbereiten"]);
+  const WETTER_GRUENDE = new Set(["wetter", "regen", "hitze", "kaelte", "schnee", "sturm"]);
+  const KRANK_PASST = new Set(["schlafen", "bleiben", "liegen", "sitzen", "sein", "gehen", "fahren", "kommen", "trinken",
+    "kaufen", "nehmen", "anrufen", "brauchen", "aufhoeren", "weinen", "bestellen", "telefonieren"]);
+  const GESUND_ODER_HEIM = new Set(["arzt", "krankenhaus", "zahnarzt", "apotheke", "praxis", "notaufnahme",
+    "physiotherapie", "zuhause", "bett", "elternhaus"]);
+  const GELEGENHEIT_NICHT = new Set(["tragen", "nehmen", "bezahlen", "oeffnen", "schliessen", "benutzen", "geben", "zeigen", "brauchen", "haben"]);
+  /* Räume im Haus und in Gebäuden — dorthin fährt man nicht „mit dem Bus“. */
+  const INNENRAUM = new Set(["kueche", "flur", "badezimmer", "wohnzimmer", "schlafzimmer", "kinderzimmer", "keller",
+    "dachboden", "balkon", "terrasse", "bett", "klassenzimmer", "hoersaal", "seminarraum", "besprechung", "garten", "hof"]);
+  const IM_NETZ = new Set(["wohnung", "fahrkarte", "konzertkarte", "datei", "app", "spiel", "roman", "zeitschrift",
+    "idee", "antwort", "loesung", "fehler", "problem", "projekt", "protokoll"]);
+  const DRINGEND_ZEIT = new Set(["heute", "jetzt", "gleich", "morgen", "heuteabend", "heutemorgen", "morgenfrueh",
+    "gestern", "gesternabend", "vorhin", "spaeter", "gerade", "baldig"]);
+  const FAHRZEUG_ARTEN = new Set(["zufuss", "mitdemzug", "mitdembus", "mitdemrad", "mitdemauto"]);
+  // Im Passiv klingt nur ein sachlicher Grund: „weil es wichtig/nötig/üblich ist“.
+  const PASSIV_GRUENDE = new Set(["wichtig_ist", "noetig", "gewohnheit"]);
   /* Angaben, die im Passiv sinnvoll bleiben. „gern“, „allein“ oder
      „mit Freude“ beschreiben den, der handelt — und der fehlt im Passiv. */
   const PASSIV_ARTEN = new Set(["schnell", "langsam", "gut", "gruendlich", "ordentlich", "sorgfaeltig",
@@ -1920,15 +1953,27 @@
     { id: "dass", de: "dass", it: "che", art: "unter", level: "A2", nurNebensatz: true, hinweis: "was man sagt, denkt oder weiß — das Verb rutscht ans Ende" },
     { id: "wenn", de: "wenn", it: "se", art: "unter", level: "A2", nurZeitformen: ["praesens", "konjunktiv2", "konjunktiv2v"], hinweis: "eine Bedingung — das Verb rutscht ans Ende" },
     { id: "obwohl", de: "obwohl", it: "anche se", art: "unter", level: "B1", hinweis: "ein Gegengrund — das Verb rutscht ans Ende" },
-    { id: "damit", de: "damit", it: "così", art: "unter", level: "B1", nurZeitformen: ["praesens", "vergangenheit", "perfekt", "praeteritum"], hinweis: "ein Ziel — das Verb rutscht ans Ende" },
+    { id: "damit", de: "damit", it: "così", art: "unter", level: "B1", nurZeitformen: ["praesens"], hinweis: "ein Ziel — das Verb rutscht ans Ende" },
     { id: "trotzdem", de: "trotzdem", it: "comunque", art: "adverb", level: "B1", hinweis: "es geschieht doch — „trotzdem“ vorn, das Verb gleich dahinter" },
     { id: "umzu", de: "um … zu", it: "per", art: "umzu", level: "B2", hinweis: "ein Ziel bei derselben Person — ohne eigenes Subjekt, „zu“ + Infinitiv am Ende" },
   ];
   /* Bindewörter für den einzelnen Nebensatz (Satzart „Nebensatz“) und
      für den zweiten Satz einer kleinen Geschichte. */
-  function nebensatzBindewoerterFuer(level, zeitform) {
+  /* „damit“ nennt ein Ziel. „Damit ihr den Tee mögt“, „damit er den
+     Schlüssel verliert“ oder „damit er spielen will“ sind keine Ziele —
+     dort bleibt „damit“ weg. */
+  const DAMIT_NICHT = new Set(["moegen", "vergessen", "verlieren", "glauben", "denken", "lachen", "weinen", "bekommen"]);
+  function konjPasst(b, verb, modal) {
+    if (!b || b.id !== "damit") return true;
+    if (verb && DAMIT_NICHT.has(verb.id)) return false;
+    if (modal && ["wollen", "moechten", "sollen"].includes(modal.id)) return false;
+    return true;
+  }
+  function nebensatzBindewoerterFuer(level, zeitform, wahl) {
+    const w = wahl || {};
     return BINDEWOERTER.filter((b) => b.art === "unter" && niveauAb(b.level, level)
-      && (!b.nurZeitformen || b.nurZeitformen.includes(zeitform || "praesens")));
+      && (!b.nurZeitformen || b.nurZeitformen.includes(zeitform || "praesens"))
+      && konjPasst(b, w.verb, w.modal));
   }
   function bindewoerterFuer(level, zeitform, wahl) {
     const w = wahl || {};
@@ -1936,12 +1981,13 @@
       if (!niveauAb(b.level, level)) return false;
       if (b.nurNebensatz) return false;
       if (b.nurZeitformen && !b.nurZeitformen.includes(zeitform || "praesens")) return false;
+      if (!konjPasst(b, w.verb, w.modal)) return false;
       if (b.art === "umzu") {
         /* „um … zu“ nur, wenn der zweite Satz dieselbe Person hat, die
            Handlung gewollt ist und kein Modalverb/Passiv dabei ist:
            „Ich fahre in die Stadt, um ein Buch zu kaufen.“ */
         if (w.vorherSubjekt && w.subjekt && w.vorherSubjekt.id !== w.subjekt.id) return false;
-        if (w.verb && (w.verb.steuerbar === false || OHNE_MODAL.has(w.verb.id) || w.verb.id === "sein")) return false;
+        if (w.verb && (w.verb.steuerbar === false || OHNE_MODAL.has(w.verb.id) || ["sein", "liegen"].includes(w.verb.id))) return false;
         if (w.modal || w.passiv) return false;
       }
       return true;
@@ -2116,7 +2162,7 @@
        gekocht.“). Wer es tut, fällt weg — und damit alles, was an dieser
        Person hängt: die Begleitung, die Person, ein persönlicher Grund
        („weil ich müde bin“) und Angaben wie „gern“ oder „allein“. */
-    if (wahl.passiv && wahl.objekt && passivMoeglich(wahl.verb, null, wahl.zeitform, wahl)) {
+    if (wahl.passiv && wahl.objekt && wahl.satzart !== "umzu" && passivMoeglich(wahl.verb, null, wahl.zeitform, wahl)) {
       const obj = wahl.objekt;
       const bl = obj.begleiter || ["bestimmt"];
       const begl = bl.includes("bestimmt") ? "bestimmt" : bl.includes("ohne") ? "ohne" : "bestimmt";
@@ -2129,13 +2175,15 @@
         itGenus: itGen, itPlural: itPl, passivSubjekt: true,
       };
       const artOk = wahl.art && PASSIV_ARTEN.has(wahl.art.id) ? wahl.art : null;
-      const grundOk = wahl.grund && ["wegen", "unpersoenlich"].includes(wahl.grund.art) ? wahl.grund : null;
+      const grundOk = wahl.grund && (wahl.grund.art === "wegen" || PASSIV_GRUENDE.has(wahl.grund.id)) ? wahl.grund : null;
       wahl = Object.assign({}, wahl, { subjekt: ps, objekt: null, objektBegleiter: "", objektAdjektiv: null,
         person: null, begleitung: null, fragesatz: null, art: artOk, grund: grundOk, passivAktiv: true, modal: null });
     } else if (wahl.passiv) {
       wahl = Object.assign({}, wahl, { passiv: false });
     }
     if (wahl.modal && !modalPasst(wahl.modal, wahl.verb, wahl)) wahl = Object.assign({}, wahl, { modal: null });
+    if (wahl.person && !personPasstZumSubjekt(wahl.person, wahl.subjekt)) wahl = Object.assign({}, wahl, { person: null });
+    if (wahl.begleitung && !personPasstZumSubjekt(wahl.begleitung, wahl.subjekt)) wahl = Object.assign({}, wahl, { begleitung: null });
     const subjekt = wahl.subjekt;
     let verb = wahl.verb;
     const i = FORM_INDEX[subjekt.id];
@@ -2148,6 +2196,13 @@
     /* „um … zu“ und ein weil-Satz als Grund vertragen sich nicht in
        einem Nebensatz; „dass“ ebenfalls nicht mit einer indirekten Frage. */
     if (umZu && wahl.grund) wahl = Object.assign({}, wahl, { grund: null });
+    /* „um meiner Nachbarin kein Foto zu zeigen“, „um keinen Kaffee zu
+       kochen“: ein Ziel ist etwas, das man TUT. Im um-zu-Satz fällt die
+       Verneinung weg; ebenso „um vom Bahnhof zu laufen“ (woher). */
+    if (umZu && wahl.objekt && wahl.objektBegleiter === "kein") {
+      wahl = Object.assign({}, wahl, { objektBegleiter: ["unbestimmt", "bestimmt", "ohne"].find((b) => (wahl.objekt.begleiter || []).includes(b)) || "bestimmt" });
+    }
+    if (umZu && wahl.ort && wahl.ortRolle === "woher") wahl = Object.assign({}, wahl, { ort: null });
     /* „damit“ und „um … zu“ nennen selbst schon ein Ziel; bei „obwohl“
        widerspräche ein zweiter Grund. */
     if (konj && ["damit", "obwohl", "wenn"].includes(konj.id) && wahl.grund) wahl = Object.assign({}, wahl, { grund: null });
@@ -2178,6 +2233,10 @@
     // Ein Verb nimmt entweder ein Ding oder eine Person als Objekt.
     const nurEines = verb.objekt === "akk" && verb.personFall === "akk" && !verb.personPraep;
     const zeigeObjekt = wahl.objekt && !(nurEines && wahl.person);
+    /* FASSUNG 835 — ein Objekt, das nicht im Satz steht, darf auch nichts
+       mehr bewirken: sein „kein“ machte den Satz sonst unsichtbar
+       „verneint“ („Ich suche den Kellner, weil ich keine Zeit habe“). */
+    if (wahl.objekt && !zeigeObjekt) wahl = Object.assign({}, wahl, { objekt: null, objektBegleiter: "", objektAdjektiv: null });
 
     /* Zwei Verneinungen in einem Satz („Ich esse nie kein Brot“) heben
        sich auf. Steht schon eine Verneinung in der Zeitangabe, bekommt
@@ -2185,8 +2244,12 @@
     const schonVerneint = (wahl.zeit && (wahl.zeit.itBrauchtNon || wahl.zeit.nichtVerneinbar))
       || (wahl.art && wahl.art.verneinend);
     if (schonVerneint && wahl.objektBegleiter === "kein" && wahl.objekt) {
+      /* FASSUNG 835 — bei „überhaupt nicht“ ist ein Bestimmtes gemeint:
+         „Ich habe die Frage überhaupt nicht verstanden“, nicht „eine
+         Frage überhaupt nicht“. */
+      const reihe = wahl.art && wahl.art.verneinend ? ["bestimmt", "ohne", "unbestimmt"] : ["ohne", "unbestimmt", "bestimmt"];
       wahl = Object.assign({}, wahl, {
-        objektBegleiter: ["ohne", "unbestimmt", "bestimmt"].find((b) => (wahl.objekt.begleiter || []).includes(b)) || "bestimmt",
+        objektBegleiter: reihe.find((b) => (wahl.objekt.begleiter || []).includes(b)) || "bestimmt",
       });
     }
     /* Dieselbe Prüfung wie bei der Auswahl, jetzt aber auf der FERTIGEN
@@ -2587,7 +2650,7 @@
       if (grundIt && !(grundIstNebensatz && satzart === "nebensatz")) {
         it.push({ t: doppeltesPerche ? grundIt.replace(/^perché /, "visto che ") : grundIt, rolle: "warum" });
       }
-      return fertig(de, it, satzart, hinweis, zeitform, ortRolle);
+      return Object.assign(fertig(de, it, satzart, hinweis, zeitform, ortRolle), { passiv: passivAktiv, modal: modal ? modal.id : "" });
     }
 
     if (verneint) it.push({ t: "non", rolle: "verb" });
@@ -2626,7 +2689,7 @@
       it.push({ t: doppeltesPerche ? grundIt.replace(/^perché /, "visto che ") : grundIt, rolle: "warum" });
     }
 
-    return fertig(de, it, satzart, hinweis, zeitform, ortRolle);
+    return Object.assign(fertig(de, it, satzart, hinweis, zeitform, ortRolle), { passiv: passivAktiv, modal: modal ? modal.id : "" });
   }
 
   /* Aus den Bausteinen wird der fertige Satz: zusammenfügen, Leerzeichen
@@ -2692,8 +2755,16 @@
     }
     return liste;
   }
-  function personenFuer(kategorie, level, verb) {
+  /* FASSUNG 835 — „Wir helfen unserem Mann“, „Ihr bestellt mit eurem
+     Mann“: Ehemann und Ehefrau gehören zu EINER Person. Bei ich, du, er,
+     sie (Einzahl) bleiben sie, bei wir, ihr, sie (Mehrzahl) nicht. */
+  const NUR_EINZAHL_PERSON = new Set(["mann", "frau"]);
+  function personPasstZumSubjekt(p, subjekt) {
+    return !(p && subjekt && subjekt.zahl === "pl" && NUR_EINZAHL_PERSON.has(p.id) && (p.begleiter || "possessiv") === "possessiv");
+  }
+  function personenFuer(kategorie, level, verb, subjekt) {
     const liste = PERSONEN.filter((p) => {
+      if (!personPasstZumSubjekt(p, subjekt)) return false;
       if (verb && verb.passtPersonen && !verb.passtPersonen.includes(p.id)) return false;
       if (kategorie && p.kategorie !== kategorie) return false;
       return passtZumNiveau(p, level);
@@ -2766,6 +2837,56 @@
        versprochen hast." Nur die von sich aus negativen Beweggründe
        („weil ich keine Lust habe") passen dann. */
     if (verneint && grund.grundKlasse === "antrieb" && grund.stimmung !== "negativ") return false;
+    /* R27 — „weil ich keine Zeit habe“ oder „keine Lust“ begründen, warum
+       man etwas NICHT tut. Neben einer bejahten Handlung widersprechen sie
+       sich: „Ihr schenkt eurer Nachbarin eine Blume, weil ihr keine Lust
+       habt.“ */
+    if (["keinezeit", "keinelust", "vergessen_grund"].includes(grund.id) && !verneint) return false;
+    /* R28 — Müdigkeit, Unsicherheit, Nervosität, Lärm erklären, warum man
+       etwas NICHT versteht: „Sie konnten die Übung verstehen, weil sie
+       nervös waren“ ist verdreht. */
+    if (verb && verb.id === "verstehen" && grund.stimmung === "negativ" && !verneint) return false;
+    /* R29 — wer krank ist, geht zum Arzt oder nach Hause, nicht „wegen der
+       Krankheit in die Bäckerei“. */
+    const rolle = w.ortRolle || (verb && verb.lokal && verb.lokal[0]) || "";
+    if (["krank", "krankheit", "erkaeltet"].includes(grund.id) && rolle === "wohin" && w.ort && !GESUND_ODER_HEIM.has(w.ort.id)) return false;
+    /* R30 — „Aus der Buchhandlung bin ich gekommen, weil ich Langeweile
+       hatte“: woher man kommt, erklärt ein Zustand oder ein Anlass,
+       kein Beweggrund. */
+    if (rolle === "woher" && w.ort && !(grund.art === "zustand" && (grund.stimmung === "negativ" || grund.id === "fertig"))) return false;
+    /* R39 — „weil er wegen des Regens beim Arzt ist“: das Wetter erklärt
+       nicht, warum man beim Arzt, im Amt oder bei der Arbeit ist. */
+    if (WETTER_GRUENDE.has(grund.id) && w.ort && ["gesundheit", "verwaltung", "arbeit", "bildung"].includes(w.ort.kategorie)) return false;
+    /* R51 — „Sie liest laut eine E-Mail, weil sie beschäftigt ist“: wer
+       beschäftigt ist, tut etwas NICHT — oder vergisst es. */
+    if (grund.id === "beschaeftigt" && verb && !["vergessen", "verlieren"].includes(verb.id) && !verneint) return false;
+    /* R40 — „Sie wird im Labor arbeiten müssen, weil sie krank ist“: krank
+       oder müde ist ein Grund, sich auszuruhen oder zum Arzt zu gehen —
+       für jede andere Tätigkeit nur verneint. */
+    if (["krank", "erkaeltet", "muede", "krankheit"].includes(grund.id) && verb && !KRANK_PASST.has(verb.id) && !verneint) return false;
+    // R41 — „Wir mögen den Mantel, weil es gesund ist“: mögen braucht keine Bewertung.
+    if (verb && verb.id === "moegen" && grund.art === "unpersoenlich") return false;
+    /* R31 — „Werdet ihr eine Mütze tragen, weil ihr Zeit habt?“ Zeit
+       braucht man für eine Tätigkeit, nicht zum Tragen oder Bezahlen. */
+    if (["gelegenheit", "antrieb"].includes(grund.grundKlasse) && verb && GELEGENHEIT_NICHT.has(verb.id)) return false;
+    /* R45 — „Ich war vor Gericht, weil ich Zeit hatte“, „Sie waren im
+       Rathaus, weil sie das mochten“: auf dem Amt, beim Arzt, bei der
+       Arbeit ist man aus einem Anlass („wegen des Termins“), nicht aus
+       Lust. */
+    if (verb && verb.id === "sein" && w.ort && ["verwaltung", "gesundheit", "arbeit"].includes(w.ort.kategorie)
+      && !(ANLASS_AMT.has(grund.id) || (["krank", "erkaeltet", "krankheit"].includes(grund.id) && w.ort.kategorie === "gesundheit"))) return false;
+    // … und wer „zur Polizei“ oder „aufs Amt“ geht, tut das nicht, weil er Zeit oder Lust hat.
+    if (rolle === "wohin" && w.ort && ["verwaltung", "gesundheit"].includes(w.ort.kategorie) && ["gelegenheit", "antrieb"].includes(grund.grundKlasse)) return false;
+    // „Ich werde immer ein Lied singen müssen, weil es sich lohnt“ — lohnen tut sich Arbeit, Kauf, Reise.
+    if (grund.id === "lohnt" && verb && !LOHNT_VERBEN.has(verb.id)) return false;
+    // R46 — „nie …, weil es so üblich ist“ widerspricht sich.
+    if (grund.id === "gewohnheit" && verneint) return false;
+    /* R44 — bekommen: „wegen der Prüfung“ bekommt man eine Note, „weil ich
+       krank bin“ ein Rezept oder ein Medikament — nicht ein Visum. */
+    if (verb && verb.id === "bekommen" && w.objekt) {
+      if (grund.id === "pruefung" && !["note", "aufgabe"].includes(w.objekt.id)) return false;
+      if (["krank", "erkaeltet"].includes(grund.id) && !["rezept", "medikament", "impfung"].includes(w.objekt.id)) return false;
+    }
     if (grund.nurDingRollen) {                                                                    // R4
       const rollen = (w.objekt && w.objekt.rollen) || [];
       if (!grund.nurDingRollen.some((r) => rollen.includes(r))) return false;
@@ -2816,6 +2937,12 @@
       const zletzt = String((w.zeit && w.zeit.de) || "").toLowerCase().split(/\s+/).pop();
       if (zletzt === gnomen) return false;
 
+    }
+    /* R52 — „ein wichtiges Problem erzählen, weil es wichtig ist“: das
+       Adjektiv des Objekts steht nicht noch einmal im Grund. */
+    if (w.objektAdjektiv && w.objektAdjektiv.de) {
+      const adj = String(w.objektAdjektiv.stamm || w.objektAdjektiv.de).toLowerCase().replace(/e$/, "");
+      if (adj.length > 3 && grundText2(grund).toLowerCase().split(/\s+/).some((x) => x.startsWith(adj))) return false;
     }
     /* R16 — ein Grund kann der Art und Weise widersprechen: „Sie geht
        langsam zum Bahnhof, weil es schneller geht." */
@@ -2877,14 +3004,45 @@
   function artPasst(art, verb, wahl) {
     if (!art || !art.de) return true;
     const w = wahl || {};
-    // R23 — „Ich muss gern arbeiten“: Pflicht und Vorliebe vertragen sich nicht.
-    if (w.modal && ["muessen", "sollen"].includes(w.modal.id) && ["gern", "sehrgern", "mitfreude"].includes(art.id)) return false;
+    /* R23 — „Ich muss gern arbeiten“: Pflicht und Vorliebe vertragen sich
+       nicht; „Du kannst ihn sehr gern sehen“ klingt ebenso schief. „gern“
+       bleibt bei wollen und möchten („Ich möchte gern ins Kino gehen“). */
+    if (w.modal && !["wollen", "moechten"].includes(w.modal.id) && ["gern", "sehrgern", "mitfreude"].includes(art.id)) return false;
+    // … und im damit-Satz: „damit er gern spielt“ ist kein Ziel.
+    if (w.konjunktion === "damit" && w.satzart === "nebensatz" && ["gern", "sehrgern", "mitfreude"].includes(art.id)) return false;
+    /* R32 — „dringend“ geschieht jetzt, nicht „jeden Morgen“; und neben
+       einem Modalverb nur bei „müssen“ („Ich muss dringend …“). */
+    if (art.id === "dringend" && w.zeit && w.zeit.de && !DRINGEND_ZEIT.has(w.zeit.id)) return false;
+    /* R42 — „Du würdest nie sehr gern Deutsch sprechen“: „gern“ neben
+       „nie“ oder „kein“ stolpert. */
+    if (["gern", "sehrgern", "mitfreude"].includes(art.id)
+      && (w.objektBegleiter === "kein" || (w.zeit && (w.zeit.itBrauchtNon || w.zeit.id === "nie")))) return false;
+    if (art.id === "dringend" && w.modal && w.modal.id !== "muessen") return false;
+    /* R43 — „Wir sehen den alten Bildschirm sehr gern“: gern sieht man
+       einen Film, ein Foto, Blumen oder einen Menschen. */
+    if (["gern", "sehrgern", "mitfreude"].includes(art.id) && verb && verb.id === "sehen" && w.objekt && !["film", "foto", "blume"].includes(w.objekt.id)) return false;
+    // R47 — „Ihr wärt gern aus der Küche gekommen“: woher man kommt, geschieht nicht „gern“.
+    if (["gern", "sehrgern", "mitfreude"].includes(art.id) && w.ort && w.ortRolle === "woher") return false;
+    /* R50 — „den Stift im Internet suchen“, „den Ausweis im Internet
+       finden“: im Internet sucht und findet man nur, was es dort gibt. */
+    if (art.id === "iminternet" && verb && ["suchen", "finden"].includes(verb.id) && w.objekt && !IM_NETZ.has(w.objekt.id)) return false;
+    // „Sie trifft ihre Cousine gerade sehr gern“ — „gern“ ist eine Gewohnheit, kein Augenblick.
+    if (["gern", "sehrgern"].includes(art.id) && w.zeit && w.zeit.id === "gerade") return false;
+    // R48 — „das Wasser per E-Mail bestellen“: Essen und Trinken bestellt man nicht per E-Mail.
+    if (["peremail", "iminternet"].includes(art.id) && w.objekt && w.objekt.kategorie === "essen") return false;
+    // R33 — „mit dem Bus in den Flur“: Fahrzeuge fahren nicht in Zimmer.
+    if (FAHRZEUG_ARTEN.has(art.id) && w.ort && INNENRAUM.has(w.ort.id)) return false;
+    // „mit dem Zug in die Metzgerei“: der Zug fährt weit — in die Stadt, ans Meer, zur Arbeit.
+    if (art.id === "mitdemzug" && w.ort && ["einkaufen", "essen", "alltag", "gesundheit", "familie"].includes(w.ort.kategorie)) return false;
     // R24 — im Passiv fehlt, wer handelt: „gern“, „allein“ passen nicht mehr.
     if (w.passiv && !PASSIV_ARTEN.has(art.id)) return false;
     // R16 — siehe grundPasst: „langsam … weil es schneller geht".
     if (w.grund && w.grund.widerspricht && w.grund.widerspricht.includes(art.id)) return false;
     if (art.stimmung === "positiv" && w.grund && w.grund.stimmung === "negativ") return false;    // R1
     if (art.nichtMitDingen && w.objekt && art.nichtMitDingen.includes(w.objekt.id)) return false;
+    /* R25 — „überhaupt nicht“ mit einem unbestimmten Objekt: „Ich verstehe
+       eine Frage überhaupt nicht“ klingt schief — gemeint ist DIE Frage. */
+    if (art.verneinend && w.objekt && w.objektBegleiter === "unbestimmt") return false;
     // R5 — Art und Weise neben einer Verneinung des Objekts
     if (w.objektBegleiter === "kein" && !ART_MIT_KEIN_ERLAUBT.has(art.id)) return false;
     // R6 — zwei Orte im selben Satz
@@ -2917,6 +3075,11 @@
      verstehen“, „oft Müller heißen“ — alles keine Sätze. Erlaubt bleibt
      der Zeitpunkt („heute“, „am Abend“) und, bei wohnen und sein, auch
      die Dauer („seit einem Jahr hier wohnen“ ist richtig). */
+  const ZEITLOS = new Set(["moegen", "wissen", "glauben"]);
+  const WOHNEN_ZEIT = new Set(["jetzt", "letztesjahr", "naechstesjahr", "letztensommer", "letztenmonat", "naechstenmonat",
+    "imurlaub", "seitdrei", "seiteinemjahr"]);
+  const EINMAL_DIESELBE = new Set(["kaufen", "bekommen", "buchen", "verlieren", "finden", "schenken", "bestellen",
+    "mitbringen", "vergessen", "vorbereiten", "bezahlen"]);
   const ZUSTANDS_VERBEN = new Set(["wohnen", "heissen", "gehoeren", "kennen", "wissen",
     "moegen", "verstehen", "lieben", "brauchen", "glauben"]);
   // Bei diesen ist die Dauer trotzdem richtig — „seit einem Jahr wohnen“.
@@ -2925,6 +3088,40 @@
     if (!zeit || !zeit.de) return true;
     const w = wahl || {};
     if (w.zeitform && !zeitZurZeitform(zeit, w.zeitform)) return false;                          // R22
+    /* R34 — mögen, wissen, glauben sind Haltungen, keine Termine: „Wenn
+       wir das Hemd morgen früh mögen“, „samstags mochtest du den Urlaub“.
+       Erlaubt bleibt „jetzt“ und „heute“. */
+    if (verb && ZEITLOS.has(verb.id) && !["jetzt", "heute"].includes(zeit.id)) return false;
+    // R35 — „um seit einer Stunde zu helfen“: „seit“ braucht ein gebeugtes Präsens.
+    if (w.satzart === "umzu" && zeit.nichtZukunft) return false;
+    if (w.satzart === "umzu" && (zeit.itBrauchtNon || zeit.id === "nie")) return false;
+    // R32 — siehe artPasst: „jeden Morgen dringend“.
+    if (w.art && w.art.id === "dringend" && !DRINGEND_ZEIT.has(zeit.id)) return false;
+    if (["gern", "sehrgern", "mitfreude"].includes(w.art && w.art.id) && (zeit.itBrauchtNon || zeit.id === "nie")) return false;
+    /* R38 — „zwei Stunden lang ein Buch schreiben“, „den ganzen Tag einen
+       Kaffee trinken“: ein einzelnes Ding füllt keinen Zeitraum. Ohne
+       Artikel geht es („den ganzen Tag Kaffee trinken“). */
+    if (zeit.art === "dauer" && w.objekt && w.objektBegleiter === "unbestimmt" && !w.objekt.plural) return false;
+    // „den ganzen Abend in Berlin wohnen“ — wohnen misst man in Jahren: „seit einem Jahr“.
+    if (verb && verb.id === "wohnen" && zeit.art === "dauer" && !["seitdrei", "seiteinemjahr"].includes(zeit.id)) return false;
+    /* R49 — „dienstags in Rom wohnen“: wohnen ist ein langer Zustand —
+       „jetzt“, „letztes Jahr“, „nächstes Jahr“ oder „seit einem Jahr“. */
+    if (verb && verb.id === "wohnen" && !WOHNEN_ZEIT.has(zeit.id)) return false;
+    // „Wenn ich jede Woche aufhören würde“ — aufhören tut man einmal.
+    if (verb && verb.id === "aufhoeren" && zeit.art === "haeufigkeit") return false;
+    // „Dass du letzten Monat geschlafen hättest“ — Schlaf hat keinen Monat.
+    if (verb && verb.id === "schlafen" && ["letztenmonat", "naechstenmonat", "letztesjahr", "naechstesjahr", "letztensommer"].includes(zeit.id)) return false;
+    // „Sie vergessen die Vokabel morgen früh“ — Vergessen und Verlieren plant man nicht.
+    if (verb && ["vergessen", "verlieren", "finden"].includes(verb.id) && zeit.nurZukunft) return false;
+    // „Du wirst deine Nachbarin nächste Woche verstehen“ — Verstehen plant man nicht.
+    if (verb && verb.id === "verstehen" && zeit.nurZukunft) return false;
+    /* R36 — „Jeden Abend kaufen sie die Jacke“: dieselbe bestimmte Sache
+       kauft, bekommt, verliert man nicht jeden Abend. Mit „eine Jacke“
+       stimmt es wieder. */
+    if (zeit.art === "haeufigkeit" && verb && EINMAL_DIESELBE.has(verb.id) && w.objekt
+      && ["bestimmt", "possessiv"].includes(w.objektBegleiter || "")) return false;
+    // R37 — „Sie fliegen jeden Abend aus Rom“: Reisen sind keine Tagesroutine.
+    if (verb && ["fliegen", "reisen"].includes(verb.id) && ["jedentag", "jedenabend", "jedenmorgen"].includes(zeit.id)) return false;
     if (zeit.art === "haeufigkeit" && w.grund && w.grund.anlass === "einmalig") return false;     // R2
     // R7 — Zeitraum neben einem Verb, das keinen Zeitraum füllt
     if (zeit.art === "dauer" && verb && PUNKTUELLE_VERBEN.has(verb.id)) return false;
@@ -3005,7 +3202,7 @@
   ];
   /* Nur Verben, die überhaupt eine indirekte Frage vertragen. „Ich esse,
      warum er das gemacht hat" wäre kein Satz. */
-  const FRAGESATZ_VERBEN = ["fragen", "wissen", "verstehen", "erzaehlen", "erklaeren", "sehen", "hoeren", "lesen", "vergessen", "denken"];
+  const FRAGESATZ_VERBEN = ["fragen", "wissen", "verstehen", "erzaehlen", "erklaeren", "sehen", "vergessen"];
   function fragesaetzeFuer(verb, level, wahl) {
     if (!verb || !FRAGESATZ_VERBEN.includes(verb.id)) return [];
     /* R20 — die indirekte Frage IST das Objekt: „Ich vergesse, ob es ihm
@@ -3039,6 +3236,7 @@
     const stumpf = (x) => kernWort(x).replace(/(e?n|e|er|in|innen)$/, "");
     const schon = wahl && wahl.person ? stumpf(wahl.person) : "";
     return PERSONEN.filter((p) => p.alsBegleitung !== false
+      && personPasstZumSubjekt(p, wahl && wahl.subjekt)
       && (!schon || schon.length < 3 || stumpf(p) !== schon)
       && passtZumNiveau(p, level));
   }
@@ -3063,7 +3261,7 @@
     return GRUENDE.filter((g) => {
       if (g.art === "keiner") return true;
       if (ohneGrund) return false;
-      if (w.passiv && !["wegen", "unpersoenlich"].includes(g.art)) return false;
+      if (w.passiv && !(g.art === "wegen" || PASSIV_GRUENDE.has(g.id))) return false;
       if (w.modal && !grundPasstZuModal(g, w.modal)) return false;
       /* Gründe, die zu jeder Tätigkeit passen (weil ich Zeit habe, weil
          ich muss), stehen überall zur Verfügung — sonst hätte man bei
@@ -5590,6 +5788,6 @@
     MODALVERBEN, BINDEWOERTER, ZEITFORM_NAMEN, ZEITFORM_NIVEAU, NIVEAU_INFO, PRAET_BASIS, PASSIV_VERBEN,
     zeitformenFuer, modalverbenFuer, passivMoeglich, bindewoerterFuer, nebensatzBindewoerterFuer, niveauInfo,
     natuerlicheVergangenheit, praeteritumErlaubt, verbindeSaetze, istVergangen, modalPasst, grundPasst, artPasst,
-    zeitPasst, zeitZurZeitform, grundPasstZuModal, niveauAb,
+    zeitPasst, zeitZurZeitform, grundPasstZuModal, niveauAb, konjPasst, personPasstZumSubjekt,
   };
 })();

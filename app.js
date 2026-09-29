@@ -70752,7 +70752,7 @@
     const satzartEff = bindewort ? (bindewort.art === "unter" ? "nebensatz" : bindewort.art === "umzu" ? "umzu" : "aussage") : sbkSatzart;
     const zeitformEff = satzartEff === "umzu" ? "praesens" : sbkZeitform;
     if (satzartEff === "umzu") { modalListe = []; modal = null; }
-    const konjListe = S.nebensatzBindewoerterFuer ? S.nebensatzBindewoerterFuer(sbkNiveau, zeitformEff) : [];
+    const konjListe = S.nebensatzBindewoerterFuer ? S.nebensatzBindewoerterFuer(sbkNiveau, zeitformEff, { verb, modal }) : [];
     const konjunktion = bindewort && bindewort.art === "unter" ? bindewort.id
       : ((konjListe.find((k) => k.id === sbkKonjunktion) || konjListe[0] || { id: "weil" }).id);
     const vorfeldWort = bindewort && bindewort.art === "adverb" ? bindewort.de : "";
@@ -70767,7 +70767,7 @@
     const gewaehltesDing = dinge.find((d) => d.id === sbkWahl.objekt) || null;
     // Ein Fachgeschäft taucht nur auf, wenn es das Gewählte auch führt.
     const orte = ortRolle ? S.orteFuer(kat, sbkNiveau, verb, ortRolle, gewaehltesDing) : [];
-    const personen = verb.personFall && !passiv ? S.personenFuer(null, sbkNiveau, verb) : [];
+    const personen = verb.personFall && !passiv ? S.personenFuer(null, sbkNiveau, verb, subjekt) : [];
     let ort = orte.find((o) => o.id === sbkWahl.ort) || null;
     // Manche Verben ergeben ohne ihre Ergänzung gar keinen Satz —
     // „Ich wohne.“ oder „Ich besuche.“ sind keine Sätze. Deshalb wird
@@ -70784,13 +70784,13 @@
     const objektAdjektiv = adjListe.find((a) => a.id === sbkWahl.objektAdjektiv) || null;
     let person = personen.find((p) => p.id === sbkWahl.person) || null;
     if (!person && verb.personPflicht && personen.length) { person = personen[0]; sbkWahl.person = person.id; }
-    const begleitungListe = passiv ? [] : S.begleitungFuer(verb, sbkNiveau, { person: person0 });
+    const begleitungListe = passiv ? [] : S.begleitungFuer(verb, sbkNiveau, { person: person0, subjekt });
     const begleitung = begleitungListe.find((b) => b.id === sbkWahl.begleitung) || null;
     const fragesatzListe = S.fragesaetzeFuer && !passiv ? S.fragesaetzeFuer(verb, sbkNiveau, { objekt }) : [];
     const fragesatz = fragesatzListe.find((f) => f.id === sbkWahl.fragesatz) || null;
     /* Auch die Zeitangabe hängt an Objekt und Ort: „im Urlaub einen
        Urlaub buchen" fällt sonst durch. */
-    const zeiten = S.zeitenFuer(zeitformEff, sbkNiveau, { ort, objekt, objektBegleiter, modal, passiv }, verb);
+    const zeiten = S.zeitenFuer(zeitformEff, sbkNiveau, { ort, ortRolle, objekt, objektBegleiter, modal, passiv, satzart: satzartEff, art: (S.ARTEN.find((x) => x.id === sbkWahl.art) || null) }, verb);
     const zeit = zeiten.find((z) => z.id === sbkWahl.zeit) || zeiten[0];
     /* Die Gründe hängen vom Objekt und vom Ort ab: „weil ich Urlaub
        habe" passt nicht, wenn schon ein Urlaub gebucht wird, und
@@ -70798,7 +70798,7 @@
        Deshalb wird die Liste erst hier gebildet, wenn beides feststeht
        — sonst stünde in der Auswahl etwas, das der gebaute Satz
        gleich wieder wegwirft. */
-    const gruende = S.gruendeFuer(verb, sbkNiveau, { ort, objekt, objektBegleiter, zeit, modal, passiv, zeitform: zeitformEff, satzart: satzartEff });
+    const gruende = S.gruendeFuer(verb, sbkNiveau, { ort, ortRolle, objekt, objektBegleiter, zeit, modal, passiv, zeitform: zeitformEff, satzart: satzartEff });
     const grund = gruende.find((g) => g.id === sbkWahl.grund) || gruende[0];
     /* Die Liste der Angaben hängt von Ort und Objekt ab: „im Internet“
        passt nicht neben eine Ortsangabe, „ordentlich“ nicht neben ein
@@ -70806,7 +70806,7 @@
        beides feststeht — sonst stünde in der Auswahl etwas, das der
        gebaute Satz gleich wieder wegwirft. */
     const arten = S.artenFuer(verb, sbkNiveau, subjekt, objekt,
-      { ort, objekt, objektBegleiter, grund, zeit, modal, passiv });
+      { ort, objekt, objektBegleiter, grund, zeit, modal, passiv, konjunktion, satzart: satzartEff });
     const art = arten.find((a) => a.id === sbkWahl.art) || arten[0];
 
     return { verben, rollen, ortRolle, orte, dinge, personen, zeiten, gruende, arten, begleiterListe, adjListe,
