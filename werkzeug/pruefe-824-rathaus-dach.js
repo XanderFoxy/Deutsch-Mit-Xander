@@ -12,20 +12,25 @@
    nicht hin … schau dir mal das originale Foto an und dann siehst du auch,
    dass da auch so ne Art Balkon mit dabei ist. Den könntest du dann
    vielleicht mit anbringen".
+   FASSUNG 829 — angepasst an Xanders Nachtrag: „Da gibt es wirklich nicht
+   dieses Dach auf der Seite … das was du als Dach da gemacht hast. Das ist
+   eigentlich die Ansicht auf die wir gucken auf dem Foto … Also dieser
+   dreieckige Teil den wir im Gesicht haben." Der Stufengiebel schaut jetzt
+   nach vorn (zum Brunnen), das Dach dahinter läuft mit EINEM First nach
+   hinten; das Haus zur Seite hat ein Zeltdach (kein First, kein Giebel).
    Geprüft (das Modell wird in Node gebaut, ohne Malen):
    - über Flügel A gibt es genau EINEN First (einen Dachkörper): alle großen
-     Dachflächen haben ihre Oberkante auf derselben Linie, und die läuft
-     entlang des Flügels (vom Turm nach rechts), nicht nach hinten
-   - der First reicht vom Turm bis an die Kopfseite
-   - an Flügel A steht genau EIN Stufengiebel, und zwar an der Kopfseite
-     (am Ende des Firsts, schaut in Firstrichtung)
-   - der Balkon hängt im 1. OG an der langen Seite von A zum Markt, und
-     nur dort (an Flügel C hängt keiner mehr)
+     Dachflächen mit Oberkante haben sie auf derselben Linie, und die läuft
+     von der Giebelfront nach hinten (entlang y), keiner quer
+   - der First beginnt an der Giebelfront und läuft mindestens 5 m nach hinten
+   - an Flügel A steht genau EIN Stufengiebel, und zwar vorn (schaut nach +y,
+     zum Brunnen), mittig unter dem First – keiner an der Seite
+   - der Balkon hängt im 1. OG vorn an A, und nur dort (an Flügel C keiner)
    - Grundriss/Fußfläche unverändert (Umriss 41 × 33,1, Flügel A wie in
      FASSUNG 819)
    - alle Rathausbilder (8 Winkel, Winter/Herbst, Tag/Nacht, g/k/z und die
      Schatten) sind da, stehen im Verzeichnis und sind gegenüber dem Stand
-     VOR (Vorgabe cd44286) neu gebacken; der Bildstempel in
+     VOR (Vorgabe f3fabf3 = Fassung 824) neu gebacken; der Bildstempel in
      stadt-leicht.html passt zum Verzeichnis
    AUFRUF: node werkzeug/pruefe-824-rathaus-dach.js
            (MODELL=pfad: anderes Modell prüfen, VOR=commit: Vergleichsstand)
@@ -71,7 +76,7 @@ const innen = (p, poly, rand) => {
   return p[0] >= Math.min(...xs) - rand && p[0] <= Math.max(...xs) + rand && p[1] >= Math.min(...ys) - rand && p[1] <= Math.max(...ys) + rand;
 };
 
-console.log("\nDÖBELNER RATHAUS — RECHTER FLÜGEL: EIN DACH, KOPFSEITE, BALKON (Fassung 824)\n");
+console.log("\nDÖBELNER RATHAUS — RECHTER FLÜGEL: EIN DACH NACH HINTEN, GIEBEL VORN, BALKON (Fassung 824/829)\n");
 const datei = process.env.MODELL || path.join(W, "stadt", "modelle", "rathaus_doebeln.js");
 const { def, teile, flaechen } = modellBauen(datei);
 const G = def.grundriss, A = G.teile.A, C = G.teile.C;
@@ -100,20 +105,22 @@ for (const k of firste) {
 }
 const beschr = linien.map((L) => (L.richtung === "x" ? "entlang x bei y=" + r2(L.y) : "nach hinten bei x=" + r2(L.x)) + " z=" + r2(L.z) + " [" + L.flaechen.join(",") + "]").join(" | ");
 sage(linien.length === 1, "über Flügel A liegt genau EIN Satteldach (ein First, kein zweiter Dachkörper)", linien.length + " First(e): " + beschr);
-sage(linien.length >= 1 && linien.every((L) => L.richtung === "x"), "der First läuft entlang des Flügels vom Turm nach rechts – kein Dach läuft nach hinten wie ein zweites Haus neben Flügel B",
-  linien.filter((L) => L.richtung === "y").length + " First(e) nach hinten");
-const haupt = linien.find((L) => L.richtung === "x");
-sage(!!haupt && haupt.von <= aX0 + 0.5 && haupt.bis >= aX1 - 0.8, "der First reicht vom Turm bis an die Kopfseite", haupt ? r2(haupt.von) + " … " + r2(haupt.bis) + " (Flügel " + r2(aX0) + " … " + r2(aX1) + ")" : "—");
-sage(dachA.filter((f) => firste.some((k) => k.name === f.name)).length >= 2 && dachA.filter((f) => firste.some((k) => k.name === f.name)).every((f) => Math.abs(f.n[0]) < 0.05),
-  "die großen Dachflächen schauen nach vorn und hinten (Satteldach), nicht zur Seite", dachA.map((f) => f.name + ":" + r2(f.n[0]) + "/" + r2(f.n[1])).join(" "));
+/* FASSUNG 829 — der First läuft von der Giebelfront nach hinten (y), keiner quer (x) */
+sage(linien.length >= 1 && linien.every((L) => L.richtung === "y"), "der First läuft von der Giebelfront nach hinten – kein Dach quer entlang des Flügels",
+  linien.filter((L) => L.richtung === "x").length + " First(e) quer");
+const haupt = linien.find((L) => L.richtung === "y");
+sage(!!haupt && haupt.bis >= aY1 - 0.5 && haupt.bis - haupt.von >= 5, "der First beginnt an der Giebelfront und läuft mindestens 5 m nach hinten", haupt ? "y " + r2(haupt.von) + " … " + r2(haupt.bis) + " (Front " + r2(aY1) + ")" : "—");
+sage(dachA.filter((f) => firste.some((k) => k.name === f.name)).length >= 2 && dachA.filter((f) => firste.some((k) => k.name === f.name)).every((f) => Math.abs(f.n[1]) < 0.05),
+  "die großen Dachflächen schauen zur Seite (Satteldach nach hinten), nicht nach vorn", dachA.map((f) => f.name + ":" + r2(f.n[0]) + "/" + r2(f.n[1])).join(" "));
 
 /* ---------- 2. EIN Stufengiebel an A, an der Kopfseite ---------- */
 /* je Giebelscheibe zählt eine Fläche (die Scheibe hat eine bemalte Vorder- und eine Rückseite im selben Körper) */
 const giebelA = [...new Map(flaechen.filter((f) => Math.abs(f.n[2]) < 0.05 && f.umriss.length > 25 && ueberA(f.m, 0.8) && f.m[2] > 11).map((f) => [f.teil, f])).values()];
-const kopf = giebelA[0];
-sage(giebelA.length === 1, "an Flügel A steht genau EIN Stufengiebel (kein zweiter hinten, kein Zwerchgiebel)", giebelA.map((f) => f.teil + " bei x=" + r2(f.m[0]) + " y=" + r2(f.m[1])).join(", ") || "keiner");
-sage(!!kopf && !!haupt && Math.abs(kopf.n[0]) > 0.99 && kopf.m[0] > aX1 - 1 && Math.abs(kopf.m[1] - haupt.y) < 0.3, "der Stufengiebel ist die Kopfseite: am Ende des Firsts, schaut in Firstrichtung nach rechts",
-  kopf ? "Mitte x=" + r2(kopf.m[0]) + " y=" + r2(kopf.m[1]) + ", First y=" + (haupt ? r2(haupt.y) : "—") : "—");
+/* FASSUNG 829 — die bemalte Außenseite der Giebelscheibe (Name „…v"), nicht die Rückseite */
+const kopf = giebelA[0] && (flaechen.find((f) => f.teil === giebelA[0].teil && f.name === giebelA[0].teil + "v") || giebelA[0]);
+sage(giebelA.length === 1, "an Flügel A steht genau EIN Stufengiebel (kein zweiter hinten, keiner an der Seite)", giebelA.map((f) => f.teil + " bei x=" + r2(f.m[0]) + " y=" + r2(f.m[1])).join(", ") || "keiner");
+sage(!!kopf && !!haupt && kopf.n[1] > 0.99 && kopf.m[1] > aY1 - 0.8 && Math.abs(kopf.m[0] - haupt.x) < 0.3, "der Stufengiebel steht vorn: schaut zum Brunnen (+y), mittig unter dem First (FASSUNG 829)",
+  kopf ? "Mitte x=" + r2(kopf.m[0]) + " y=" + r2(kopf.m[1]) + " n=" + kopf.n.map(r2).join("/") + ", First x=" + (haupt ? r2(haupt.x) : "—") : "—");
 
 /* ---------- 3. Balkon an der langen Seite von A zum Markt ---------- */
 const balkonF = flaechen.filter((f) => /balkon/i.test(f.teil || ""));
@@ -121,7 +128,7 @@ const balkonA = balkonF.filter((f) => f.m[0] > aX0 && f.m[0] < aX1 && f.m[1] > a
 const balkonC = balkonF.filter((f) => C.some((poly) => innen(f.m, poly, 1.5)));
 const zB = balkonA.length ? Math.min(...balkonA.map((f) => Math.min(...f.P.map((p) => p[2])))) : -1;
 const brAussen = balkonA.filter((f) => Math.abs(f.n[1]) > 0.99 && f.m[1] > aY1 + 0.5);
-sage(balkonA.length >= 4 && brAussen.length >= 1, "ein Balkon (Platte und Brüstung) hängt vor der langen Seite von Flügel A zum Markt", balkonA.length + " Flächen, Brüstung vorn " + brAussen.length);
+sage(balkonA.length >= 4 && brAussen.length >= 1, "ein Balkon (Platte und Brüstung) hängt vorn an Flügel A (zum Markt)", balkonA.length + " Flächen, Brüstung vorn " + brAussen.length);
 sage(zB > 3.3 && zB < 4.6, "der Balkon sitzt im 1. OG über den Bögen des Erdgeschosses", "Unterkante z=" + r2(zB));
 sage(balkonC.length === 0 && balkonF.length === balkonA.length, "kein zweiter Balkon (an Flügel C hängt keiner mehr)", balkonC.length + " Flächen an C, " + (balkonF.length - balkonA.length) + " anderswo");
 
@@ -131,7 +138,7 @@ let abw = 0; A819.forEach((P, i) => P.forEach((p, j) => { const q = A[i] && A[i]
 sage(abw < 0.01 && G.grund[0] === 41 && G.grund[1] === 33.1, "Grundriss und Fußfläche unverändert (A wie in Fassung 819, Umriss 41 × 33,1)", "Abweichung " + r2(abw) + " m, grund " + JSON.stringify(G.grund));
 
 /* ---------- 5. Bilder neu gebacken, Stempel ---------- */
-const VOR = process.env.VOR || "cd44286";
+const VOR = process.env.VOR || "f3fabf3";   // FASSUNG 829: Vergleich mit dem Stand von Fassung 824
 const ORD = path.join(W, "stadt-leicht", "bilder");
 const vz = JSON.parse(fs.readFileSync(path.join(ORD, "verzeichnis.json"), "utf8"));
 const namen = [];

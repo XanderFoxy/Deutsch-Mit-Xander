@@ -72,7 +72,13 @@
   const GLEIS_SPUR = 0.3, GLEIS_BIS = 6.0;
   const LORE_Y = PY + 2.25;
   const FICHTEN = [[-3.6, -4.9, 3.1, 11], [-1.9, -5.6, 2.6, 23], [4.0, -4.3, 2.9, 37], [-4.9, -2.2, 2.3, 41], [3.2, -5.3, 2.2, 53]];
-  const RASTER = { x0: -7.4, y0: -7.6, d: 0.08, nx: 186, ny: 190 };
+  /* FASSUNG 829 — XANDER: „du hast das Bergwerk nicht mit der Öffnung zu uns gestellt … schade dass dahinten nicht noch
+     mehr Berg dran ist … sieht aus wie ein Bunker … das wär Erdbau und kein Bergbau". Hinter dem Stollenhügel steigt
+     jetzt ein richtiger Felsberg an (BERG): breiter als der Hügel, gut doppelt so hoch, mit zackigen Graten und steilen
+     Felswänden, spitz statt gewölbt – der Hügel mit dem Mundloch ist sein Fuß. Das Raster reicht dafür weiter nach
+     hinten und zu den Seiten. (Im Dorf steht das Bergwerk jetzt mit dem Eingang zum Betrachter, dorf.js.) */
+  const BERG = { x: 0.3, y: -6.4, rx: 8.8, ry: 5.4, h: 13.0 };
+  const RASTER = { x0: -10.2, y0: -12.8, d: 0.08, nx: 256, ny: 256 };
 
   /* Farben (wie im alten Bild: Fels #8a7c62 und #6b5e48, Kuppe #6a9c3c, Holz #8a5a2b/#6b4521, Lore #5b636c) */
   const FELS_H = [150, 136, 110], FELS = [132, 119, 94], FELS_D = [98, 88, 70], FELS_K = [116, 114, 108];
@@ -106,8 +112,20 @@
     if (rr >= 1) return 0;
     return H.h * Math.pow(1 - rr * rr, 0.85);
   }
+  /* FASSUNG 829 — der Felsberg hinter dem Hügel: kegelig (steiler als die Kuppe), Grate aus „gefaltetem" Rauschen,
+     dazu kleine Zacken; unregelmäßiger Fuß */
+  function bergRoh(x, y) {
+    const dx = (x - BERG.x) / BERG.rx, dy = (y - BERG.y) / BERG.ry;
+    const w = Math.atan2(dy, dx);
+    const rr = Math.hypot(dx, dy) / (1 + 0.18 * (R(Math.cos(w) * 2.1 + 9, Math.sin(w) * 2.1 + 4, 881) - 0.5));
+    if (rr >= 1) return 0;
+    const fuss = Math.pow(1 - rr, 1.2);
+    const grat = 1 - Math.abs(2 * FBM(x * 0.2 + 31, y * 0.2 + 17, 3, 883) - 1);
+    const zacke = 1 - Math.abs(2 * FBM(x * 0.6 + 5, y * 0.6 + 9, 2, 887) - 1);
+    return BERG.h * fuss * (0.6 + 0.55 * grat) + zacke * 1.4 * fuss;
+  }
   function hangRoh(x, y, Z) {
-    let h = Math.max(kuppel(x, y, HUEGEL), kuppel(x, y, SCHULTER) * 0.98 + kuppel(x, y, HUEGEL) * 0.25);
+    let h = Math.max(kuppel(x, y, HUEGEL), kuppel(x, y, SCHULTER) * 0.98 + kuppel(x, y, HUEGEL) * 0.25, bergRoh(x, y));
     if (h <= 0) return 0;
     /* Felsbuckel und Bänke: großes Rauschen, dazu Gesteinsstufen (Absätze) */
     const rand = glatt(0, 1.2, h);
@@ -293,7 +311,8 @@
           const sch = glatt(0.3, 0.52, n2 + noise * 0.8 + (R(x * 1.7, z * 1.4 + y, 873) - 0.5) * 0.35 + (z > 0.6 ? 0.05 : -0.05));
           if (sch > 0) { const k = R(x * 5, y * 5, 865); f = misch(f, misch(SCHNEE, [222, 228, 238], k * 0.5), sch); }
         } else {
-          const gr = glatt(0.5, 0.7, n2 + noise * 0.45 + z * 0.012);
+          /* FASSUNG 829 — weiter oben am Berg nur noch Fels (Bergbau, nicht Erdbau): Gras nimmt mit der Höhe ab */
+          const gr = glatt(0.5, 0.7, n2 + noise * 0.45 + z * 0.012 - Math.max(0, z - 6.5) * 0.06);
           if (gr > 0) {
             const k = R(x * 1.3 + 7, y * 1.3, 867), halm = ST.hash2(Math.floor(x * 30), Math.floor(y * 30), 869);
             let gc = misch(GRAS_D, GRAS_H, k);
@@ -938,7 +957,7 @@
      ===================================================================== */
   const GRUND = [13, 13];
   ST.modell("bergstollen", {
-    name: "Bergwerk (Stollen)", gruppe: "Häuser", grund: GRUND, hoehe: 12, bauzeit: 20 * 60,
+    name: "Bergwerk (Stollen)", gruppe: "Häuser", grund: GRUND, hoehe: 16, bauzeit: 20 * 60,
     /* Die Baustelle stellt kein Hausgerüst um einen Berg */
     baustelle: { art: "mittel" },
     bauen(M, o) {

@@ -42,7 +42,8 @@
   /* FASSUNG 818 — XANDER: „ich möchte dieses höhlenartige haben dass man instinktiv weiß da geht's in das Bergwerk
      hinein". Das Bergwerk ist wieder ein Felshügel mit Stolleneingang, Gleis und Lore (Modell bergstollen, 13 × 13 m);
      das Fördergerüst steht klein oben auf der Kuppe. */
-  D.BILD.bergwerk = ["g_bergstollen", "bau_bergstollen", [13, 13], 12];
+  /* FASSUNG 829 — hinter dem Hügel steigt ein Felsberg an (Modell bergstollen): Höhe 16 m statt 12 m */
+  D.BILD.bergwerk = ["g_bergstollen", "bau_bergstollen", [13, 13], 16];
   for (const k in D.GEBAEUDE) if (!D.BILD[k]) D.BILD[k] = ERKER[k] ? ["g_" + k, "bau_fachwerkerker", [8, 12], 13] : ["g_" + k, "bau_fachwerkhaus", [10.4, 9.6], 14.2];
   /* Stufe 1–3: kleiner, mittel, voll (wie im Spiel 0,82 / 0,92 / 1,02) */
   D.STUFE = [0.86, 0.94, 1.0];
@@ -242,8 +243,11 @@
       const w = welt(LAGE[k][0], LAGE[k][1]);
       P[k] = { x: +w[0].toFixed(1), y: +w[1].toFixed(1), dreh: drehNach(MARKT[0] - w[0], MARKT[1] - w[1]), winkel: Math.atan2(w[1], w[0]) * 180 / Math.PI };
     }
-    /* Rathaus schaut auf den Markt, die Mühle mit dem Rad (Osten) an den Bach, das Bergwerk nach vorn */
-    P.muehle.dreh = 0; P.bergwerk.dreh = 0;
+    /* Rathaus schaut auf den Markt, die Mühle mit dem Rad (Osten) an den Bach, das Bergwerk nach vorn.
+       FASSUNG 829 — XANDER: „du hast das Bergwerk nicht mit der Öffnung zu uns gestellt". dreh 0 zeigte das Mundloch
+       schräg nach links (Bild _f_0); dreh 3,5 zeigt es in der Grundansicht genau zum Betrachter (Bild _f_315, wie bei
+       den Häusern, die unten alle auf 3,5 gesetzt werden). */
+    P.muehle.dreh = 0; P.bergwerk.dreh = 3.5;
     /* FASSUNG 807 — XANDER: „du hast vergessen das Döbelner Rathaus weiterzubauen". Das Rathaus der Originalkarte ist das
        Döbelner Rathaus vom Obermarkt (Modell rathaus_doebeln, 44 × 21 m), auf 70 % gesetzt, damit es zwischen Gasthaus,
        Schule und Bäckerei passt; es schaut nach vorn auf den Markt. */
@@ -267,11 +271,11 @@
     D.GRUNDRISS = { rathaus: {
       teile: [
         [[-3.92, 10.64], [1.28, 10.64], [1.28, 5.44], [-3.92, 5.44]],                                   // Turm
-        [[1.28, 10.04], [13.28, 10.04], [13.28, -2.36], [1.28, -2.36]],                                 // A: Giebelbau
-        [[13.28, 9.04], [20.48, 9.04], [20.48, 0.04], [13.28, 0.04]],                                   // A: Ostflügel
-        [[-8.52, 5.44], [1.28, 5.44], [1.28, -16.56], [-8.52, -16.56]],                                 // B
+        [[1.28, 10.04], [13.28, 10.04], [13.28, -2.36], [1.28, -2.36]],                                 // A: Giebelbau (Stufengiebel vorn)
+        [[13.28, 9.04], [20.48, 9.04], [20.48, 0.04], [13.28, 0.04]],                                   // A: Haus zur Seite (Zeltdach)
+        [[-5.32, 5.44], [1.28, 5.44], [1.28, -16.56], [-5.32, -16.56]],                                 // B (FASSUNG 829: 3,2 m schmaler, s. Modell)
         [[-3.92, 10.04], [-12.52, 16.06], [-13.59, 16.53], [-14.76, 16.56], [-15.85, 16.14], [-16.7, 15.33],
-          [-20.48, 9.92], [-14.09, 5.44], [-8.52, 5.44], [-3.92, 5.44]]                                  // C
+          [-20.48, 9.92], [-14.09, 5.44], [-5.32, 5.44], [-3.92, 5.44]]                                  // C
       ],
       portal: [-1.32, 10.64]
     } };
