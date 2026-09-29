@@ -32,7 +32,6 @@
  "klassenzimmer.js": "71e58a392589c250a3651eaf6f47964ec9c2d523",
  "livechat.css": "00c0b7b0908e61bafab519e1d9d7b5dd9c2852ab",
  "quiz.js": "7884e008f38ef069fe65c18b2ddbaeb1ef9ba444",
- "satzbau.js": "6a17d2e3d36b61372c95a00cc9dd7cec361d30f9",
  "styles.css": "6d9def5b08d90b41aa69a36db9adb3f20c33dd1f",
  "supabase-config.js": "825bb26f42e6feef78258e774112d4d7c05f4d54",
  "themes.css": "9529740c81dcc59ed2e16beebf5b22404b14c625",
@@ -46,10 +45,11 @@
  "livechat.js": "15d707c01f3abfefe740085198d42b2f0f127725",
  "data-plaetze.js": "535d4ff79255fb31e4c5d7c5458a28244b02d4c5",
  "baukasten.js": "a63bcb15e0d8be700f68147d239004b8eb93275b",
- "app-styles.css": "6ba036631de07e4b073b58fb614cb76b7f368569",
  "data-szenen.js": "3e6d76afd9e4a539237f72dad41b64a8726cc1a8",
- "app.js": "83d8d2d09a35dc83d2e166d46cd8f564933b3ea0",
  "spiel.css": "e2e49404db028481dd71a44a15362130bf26a07f",
  "spiel.js": "dd25f5d950ad1066cb88b124a1e1cfab2b7f14ee",
- "data-werkstatt.js": "cdf5d71d54d1a66f56a9962243d8afdc1b5fd06b"
+ "data-werkstatt.js": "cdf5d71d54d1a66f56a9962243d8afdc1b5fd06b",
+ "app-styles.css": "e9cb9fc2a7e1127cf6d8b280699c7e4e85eb0c2f",
+ "app.js": "be77cc7b44b4c809d4537d93b6e73fad7ec361a1",
+ "satzbau.js": "1b46e11d6ea26d07696b1ec0afbc694593ca400a"
 }
