@@ -62,7 +62,7 @@ const indexPfad = path.join(WURZEL, "index.html");
    ihrem Inhalt; die Ordner mit Tönen, Tutor und Szenen je einen für den
    ganzen Ordner (ändert sich ein Ton, gilt der neue Stempel für alle
    Töne — das ist selten und hält die Liste klein). */
-const STEMPEL_ORDNER = ["ton", "tutor", "szenen", "aussprache"];
+const STEMPEL_ORDNER = ["ton", "tutor", "szenen", "aussprache", "figuren"];
 
 /* =========================================================
    FASSUNG 694 — DIE SEITE LÄDT VERKLEINERTE KOPIEN

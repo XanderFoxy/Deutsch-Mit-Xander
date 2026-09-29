@@ -70772,71 +70772,20 @@
       subjekt, verb, ort, objekt, objektBegleiter, objektAdjektiv, person, zeit, grund, art };
   }
 
+  /* FASSUNG 834 — „Zufallssatz“ würfelte jede Angabe einzeln und brachte
+     „Wir waschen unser Messer mit unserem Mann.“ Jetzt kommt er aus den
+     Vorschlägen je Tätigkeit (SBK_VORAUSWAHL), dieselben wie beim Üben. */
   function sbkZufall() {
-    const S = window.Satzbau;
-    const kat = sbkKategorie === "alle" ? null : sbkKategorie;
-    const zufall = (l) => l[Math.floor(Math.random() * l.length)];
-    const verben = S.verbenFuer(kat, sbkNiveau);
-    const verb = zufall(verben);
-    const subjekt = zufall(S.SUBJEKTE);
-    const rollen = S.ortRollenFuer(verb);
-    const ortRolle = rollen.length ? zufall(rollen) : "";
-    const dinge = verb.objekt ? S.dingeFuer(verb, null, sbkNiveau) : [];
-    const objekt = dinge.length && (verb.objektPflicht || Math.random() < 0.75) ? zufall(dinge) : null;
-    // Ein Fachgeschäft taucht nur auf, wenn es das Gewählte auch führt.
-    const orte = ortRolle ? S.orteFuer(kat, sbkNiveau, verb, ortRolle, objekt) : [];
-    const personen = verb.personFall ? S.personenFuer(null, sbkNiveau, verb) : [];
-    /* Auch beim Würfeln gilt der ganze Zusammenhang: sonst zieht der
-       Zufall eine Angabe, die der fertige Satz gleich wieder wegwirft —
-       „im Urlaub einen Urlaub buchen" kam genau so zustande. */
-    const person0 = personen.length && verb.personPflicht ? personen[0] : null;
-    const zusammenhang = { ort: null, objekt, objektBegleiter: null, person: person0 };
-    const begl = objekt ? S.begleiterFuer(objekt, verb, zusammenhang) : [];
-    zusammenhang.objektBegleiter = begl.length ? begl[0].id : null;
-    const zeiten = S.zeitenFuer(sbkZeitform, sbkNiveau, zusammenhang, verb);
-    const gruende = S.gruendeFuer(verb, sbkNiveau, zusammenhang);
-    const arten = S.artenFuer(verb, sbkNiveau, subjekt, null, zusammenhang);
-    const arten2 = S.artenFuer(verb, sbkNiveau, subjekt, objekt, zusammenhang);
-    const adj = objekt ? S.adjektiveFuer(objekt, sbkNiveau) : [];
-    /* WIE VIELE ANGABEN EIN SATZ VERTRÄGT
-       ------------------------------------------------------------
-       Bisher wurde jede Angabe einzeln ausgewürfelt. Bei fünf
-       unabhängigen Würfen kam regelmäßig alles zugleich heraus:
-       „Sie kauft ihr Bett jede Woche im Internet im Kaufhaus, weil
-       sie Zeit hat.“ Grammatisch geht das — gesagt wird es nie.
-
-       Deshalb wird jetzt zuerst gezogen, WIE VIELE freiwillige
-       Angaben der Satz überhaupt bekommt (meistens eine, manchmal
-       zwei, selten drei), und erst dann, WELCHE. Pflichtteile —
-       Ort bei „wohnen“, Objekt bei „brauchen“ — zählen nicht mit;
-       ohne sie gäbe es keinen Satz. */
-    const wuerfel = Math.random();
-    const wieViele = wuerfel < 0.45 ? 1 : wuerfel < 0.85 ? 2 : 3;
-    const kandidaten = [];
-    if (zeiten.length) kandidaten.push("zeit");
-    if (gruende.length) kandidaten.push("grund");
-    if (arten2.length) kandidaten.push("art");
-    if (orte.length && !verb.ortPflicht) kandidaten.push("ort");
-    const bl = S.begleitungFuer(verb, sbkNiveau, zusammenhang);
-    if (bl.length) kandidaten.push("begleitung");
-    const fl = S.fragesaetzeFuer ? S.fragesaetzeFuer(verb, sbkNiveau, { objekt }) : [];
-    if (fl.length) kandidaten.push("fragesatz");
-    const gewaehlt = new Set(Core.shuffle(kandidaten).slice(0, wieViele));
+    const r = sbkSinnvollerSatz(sbkZeitform, sbkSatzart);
+    if (!r) return;
+    const w = r.wahl;
     sbkWahl = {
-      subjekt: subjekt.id,
-      verb: verb.id,
-      ortRolle,
-      objekt: objekt ? objekt.id : "",
-      objektBegleiter: begl.length ? zufall(begl).id : "",
-      objektAdjektiv: adj.length && Math.random() < 0.35 ? zufall(adj).id : "",
-      person: personen.length && (verb.personPflicht || Math.random() < 0.6) ? zufall(personen).id : "",
-      ort: verb.ortPflicht && orte.length ? zufall(orte).id : (gewaehlt.has("ort") ? zufall(orte).id : ""),
-      zeit: gewaehlt.has("zeit") ? zufall(zeiten).id : "keine",
-      grund: gewaehlt.has("grund") ? zufall(gruende).id : "keiner",
-      art: gewaehlt.has("art") ? zufall(arten2).id : "keine",
-      begleitung: gewaehlt.has("begleitung") ? zufall(bl).id : "",
-      fragesatz: gewaehlt.has("fragesatz") ? zufall(fl).id : "",
-      vorfeld: Math.random() < 0.25 ? "zeit" : "subjekt",
+      subjekt: w.subjekt.id, verb: w.verb.id, ortRolle: w.ortRolle || "",
+      objekt: w.objekt ? w.objekt.id : "", objektBegleiter: w.objektBegleiter || "", objektAdjektiv: "",
+      person: w.person ? w.person.id : "", ort: w.ort ? w.ort.id : "",
+      zeit: w.zeit ? w.zeit.id : "keine", grund: "keiner", art: "keine",
+      begleitung: w.begleitung ? w.begleitung.id : "", fragesatz: "",
+      vorfeld: r.vorfeld || "subjekt",
     };
   }
 
@@ -70993,6 +70942,312 @@
     woher: { frage: "📍 Woher?", hinweis: "Herkunft — aus dem Büro, vom Meer" },
   };
 
+  /* ============================================================
+     FASSUNG 834 — DEN SATZ SELBST LEGEN
+     ------------------------------------------------------------
+     XANDER (Funk 214, wörtlich): „hätte ich gerne … den Satzbaukasten
+     endlich repariert und gefixt so dass er sinnvoll funktioniert“.
+
+     Was nicht sinnvoll war (ausprobiert wie ein Nutzer, 360 px):
+       • Der Satzbaukasten zeigte nur an — man tippte Bausteine an und
+         bekam einen fertigen Satz. Selbst einen Satz BAUEN und prüfen
+         lassen konnte man nirgends.
+       • Der fertige Satz stand oben, die Bausteine 5 000 Pixel darunter:
+         nach jedem Tipp musste man hochwischen, um zu sehen, was
+         passiert war.
+       • Im Deutsch-Raum stand unter jedem Satz die italienische
+         Übersetzung („Vado a casa.“).
+       • „Zufallssatz“ würfelte jede Angabe einzeln und lieferte Sätze
+         wie „Wir waschen unser Messer mit unserem Mann.“ oder „Wir
+         wohnen morgen früh zu Hause.“
+       • Bei „Was steht vorn?“ stand immer „Ins Büro gehe ich …“ — auch
+         wenn der Satz vom Supermarkt handelte.
+
+     Jetzt:
+       • „Satz legen“: die Satzglieder liegen gemischt da; man tippt sie
+         in der richtigen Reihenfolge an oder zieht sie an ihren Platz.
+         „Prüfen“ sagt, ob der Satz stimmt — und wenn nicht, WAS nicht
+         stimmt (das Verb an der zweiten Stelle, das Partizip am Ende …).
+         Jede richtige Stellung zählt: „Heute gehe ich …“ ist genauso
+         richtig wie „Ich gehe heute …“.
+       • Großschreibung am Satzanfang und das Satzzeichen am Ende setzt
+         die Seite selbst, das Komma vor „weil“ auch — geübt wird die
+         Wortstellung.
+       • Die Sätze kommen aus den Vorschlägen je Tätigkeit
+         (SBK_VORAUSWAHL): Fußball spielt man im Garten, eingekauft wird
+         im Supermarkt. Keine gewürfelten Unsinnssätze mehr.
+       • Der gebaute Satz bleibt beim Bauen oben stehen (klebt am Rand).
+     ============================================================ */
+  let sbkUebung = null;          // { satz, teile, loesungen, gelegt, pool, ergebnis, gezeigt }
+  const sbkUebStand = { richtig: 0, gesamt: 0 };
+
+  /* Zeitangaben, die in jedem Alltagssatz natürlich klingen. */
+  const SBK_UEB_ZEITEN = ["heute", "morgen", "gestern", "abend", "wochenende", "jedentag", "oft", "letztewoche", "naechstewoche", "samstags", "heuteabend"];
+  /* Zustände vertragen keine Zeitangabe: „Wir wohnen morgen früh zu Hause“. */
+  const SBK_UEB_OHNE_ZEIT = { wohnen: 1, wissen: 1, verstehen: 1, glauben: 1, denken: 1, moegen: 1, kennen: 1 };
+
+  function sbkSinnvollerSatz(zeitform, satzart) {
+    const S = window.Satzbau;
+    const kat = sbkKategorie === "alle" ? null : sbkKategorie;
+    const zufall = (l) => l[Math.floor(Math.random() * l.length)];
+    let verben = S.verbenFuer(kat, sbkNiveau).filter((v) => SBK_VORAUSWAHL[v.id] && Object.keys(SBK_VORAUSWAHL[v.id]).length);
+    if (!verben.length) verben = S.VERBEN.filter((v) => SBK_VORAUSWAHL[v.id] && Object.keys(SBK_VORAUSWAHL[v.id]).length);
+    for (let versuch = 0; versuch < 30; versuch++) {
+      const verb = zufall(verben);
+      const v = SBK_VORAUSWAHL[verb.id];
+      const subjekt = zufall(S.SUBJEKTE);
+      const dinge = verb.objekt ? S.dingeFuer(verb, null, sbkNiveau) : [];
+      const objekt = v.objekt ? dinge.find((d) => d.id === v.objekt) || null : null;
+      if (verb.objektPflicht && !objekt) continue;
+      const rollen = S.ortRollenFuer(verb);
+      const ortRolle = v.ortRolle && rollen.includes(v.ortRolle) ? v.ortRolle : "";
+      const orte = ortRolle ? S.orteFuer(null, sbkNiveau, verb, ortRolle, objekt) : [];
+      const ort = v.ort ? orte.find((o) => o.id === v.ort) || null : null;
+      if (verb.ortPflicht && !ort) continue;
+      const personen = verb.personFall ? S.personenFuer(null, sbkNiveau, verb) : [];
+      const person = v.person ? personen.find((p) => p.id === v.person) || null : null;
+      if (verb.personPflicht && !person) continue;
+      const begl = objekt ? S.begleiterFuer(objekt, verb, { person }) : [];
+      const objektBegleiter = begl.length ? begl[0].id : "";
+      const bl = v.begleitung ? S.begleitungFuer(verb, sbkNiveau, { person }) : [];
+      /* „Wir kochen mit unserem Mann“ — Ehemann und Ehefrau passen nur zu
+         einer einzelnen Person. */
+      const mehrere = /pl$/.test(subjekt.id);
+      const begleitung = v.begleitung && !(mehrere && (v.begleitung === "mann" || v.begleitung === "frau"))
+        ? bl.find((b) => b.id === v.begleitung) || null : null;
+      const zeiten = S.zeitenFuer(zeitform, sbkNiveau, { ort, objekt, objektBegleiter }, verb)
+        .filter((z) => SBK_UEB_ZEITEN.indexOf(z.id) >= 0);
+      const zeit = zeiten.length && !SBK_UEB_OHNE_ZEIT[verb.id] && Math.random() < 0.7 ? zufall(zeiten) : null;
+      const wahl = { subjekt, verb, objekt, objektBegleiter, objektAdjektiv: null, person, ort, ortRolle,
+        zeit, grund: null, art: null, begleitung, fragesatz: null, zeitform, satzart, pronomen: false };
+      const vorfelder = ["subjekt"].concat(satzart === "aussage" && zeit ? ["zeit"] : [], satzart === "aussage" && ort ? ["ort"] : []);
+      const saetze = vorfelder.map((vf) => S.bauSatz(Object.assign({}, wahl, { vorfeld: vf })));
+      const haupt = saetze[Math.floor(Math.random() * saetze.length)];
+      if (!haupt || !haupt.deTeile || haupt.deTeile.length < 3) continue;
+      return { haupt, loesungen: saetze, wahl, vorfeld: vorfelder[saetze.indexOf(haupt)] };
+    }
+    return null;
+  }
+
+  /* Die Satzglieder eines gebauten Satzes als Kärtchen. Das Komma vor
+     „weil“ gehört nicht auf die Karte — es wird beim Zusammensetzen
+     gesetzt. */
+  function sbkKarten(satz) {
+    return satz.deTeile.filter((x) => x.t && x.t.trim()).map((x, i) => ({
+      i, text: x.t.replace(/^\s*,\s*/, ""), komma: /^\s*,/.test(x.t), rolle: x.rolle,
+    }));
+  }
+  function sbkUebungStarten(quelle) {
+    const S = window.Satzbau;
+    if (!S) return;
+    let satz = null, loesungen = null;
+    if (quelle && quelle.deTeile) {
+      satz = quelle.satz || quelle;
+      loesungen = quelle.loesungen || [satz];
+    } else {
+      const formen = sbkNiveau === "A1" ? ["praesens"] : ["praesens", "praesens", "perfekt"];
+      const arten = sbkNiveau === "A1" ? ["aussage", "aussage", "frage"] : ["aussage", "aussage", "frage", "nebensatz"];
+      const zf = formen[Math.floor(Math.random() * formen.length)];
+      const sa = arten[Math.floor(Math.random() * arten.length)];
+      const r = sbkSinnvollerSatz(zf, sa);
+      if (!r) { sbkUebung = null; return; }
+      satz = r.haupt; loesungen = r.loesungen;
+    }
+    const karten = sbkKarten(satz);
+    /* Mischen — aber nie so, dass die Karten schon richtig liegen. */
+    let pool = karten.slice();
+    for (let n = 0; n < 12; n++) {
+      pool = Core.shuffle(karten.slice());
+      if (!loesungen.some((l) => sbkKarten(l).map((k) => k.text).join("|") === pool.map((k) => k.text).join("|"))) break;
+    }
+    sbkUebung = { satz, loesungen, karten, pool: pool.map((k) => k.i), gelegt: [], ergebnis: null, gezeigt: false };
+  }
+  /* Der gelegte Satz als Text: erstes Wort groß, Komma vor „weil“,
+     Satzzeichen am Ende. */
+  function sbkUebText(folge, satzart) {
+    const u = sbkUebung;
+    let t = "";
+    folge.forEach((idx, n) => {
+      const k = u.karten.find((x) => x.i === idx);
+      if (!k) return;
+      if (n > 0) t += (k.komma ? ", " : " ");
+      t += k.text;
+    });
+    t = t.charAt(0).toUpperCase() + t.slice(1);
+    return t + (satzart === "frage" ? "?" : satzart === "nebensatz" ? " …" : ".");
+  }
+  function sbkUebPruefen() {
+    const u = sbkUebung;
+    if (!u || u.gelegt.length !== u.karten.length) return;
+    const gelegtTexte = u.gelegt.map((i) => u.karten.find((k) => k.i === i).text);
+    const varianten = u.loesungen.map((l) => sbkKarten(l).map((k) => k.text));
+    const treffer = varianten.find((v) => v.join("|") === gelegtTexte.join("|"));
+    /* Wer vorher die Lösung angesehen hat, bekommt keinen Punkt — und
+       keinen Fehler. */
+    if (!u.gesehen) sbkUebStand.gesamt++;
+    if (treffer) {
+      if (!u.gesehen) sbkUebStand.richtig++;
+      u.ergebnis = { richtig: true, text: "Richtig! " + (u.loesungen.length > 1 ? "Es gibt hier " + u.loesungen.length + " richtige Stellungen — du hast eine davon." : "") };
+      u.markiert = gelegtTexte.map(() => "gut");
+      return;
+    }
+    /* Mit der nächstliegenden Lösung vergleichen: welche Stellen stimmen? */
+    let beste = varianten[0], bestZahl = -1;
+    varianten.forEach((v) => { const z = v.filter((t, i) => t === gelegtTexte[i]).length; if (z > bestZahl) { bestZahl = z; beste = v; } });
+    u.markiert = gelegtTexte.map((t, i) => (t === beste[i] ? "gut" : "falsch"));
+    /* WAS stimmt nicht? Die Regel zur Satzart, an der gelegten Stelle gemessen. */
+    const rollen = u.gelegt.map((i) => u.karten.find((k) => k.i === i).rolle);
+    const finitText = u.satz.deTeile.find((x) => x.rolle === "verb");
+    const finitStelle = gelegtTexte.indexOf(finitText ? finitText.t : "");
+    const verben = u.satz.deTeile.filter((x) => x.rolle === "verb").map((x) => x.t);
+    const letztesVerb = verben.length > 1 ? verben[verben.length - 1] : null;
+    let hinweis = "";
+    const art = u.satz.satzart;
+    if (art === "aussage" && finitStelle !== 1) hinweis = "In der Aussage steht das gebeugte Verb („" + finitText.t + "“) an der zweiten Stelle.";
+    else if (art === "frage" && finitStelle !== 0) hinweis = "In der Ja-Nein-Frage steht das gebeugte Verb („" + finitText.t + "“) ganz vorn.";
+    else if (art === "nebensatz" && rollen[0] !== "konj") hinweis = "Der Nebensatz beginnt mit „weil“.";
+    else if (art === "nebensatz") {
+      const fin = u.satz.deTeile[u.satz.deTeile.length - 1].t;
+      if (gelegtTexte[gelegtTexte.length - 1] !== fin) hinweis = "Im Nebensatz steht das gebeugte Verb („" + fin + "“) ganz am Ende.";
+    }
+    if (!hinweis && letztesVerb && art !== "nebensatz" && gelegtTexte.indexOf(letztesVerb) !== gelegtTexte.length - 1
+        && !u.satz.deTeile.some((x) => x.rolle === "warum" || x.rolle === "wonach")) {
+      hinweis = "„" + letztesVerb + "“ gehört ans Satzende — die Satzklammer.";
+    }
+    if (!hinweis) hinweis = "Das Verb steht schon richtig. Schau auf die Reihenfolge im Mittelfeld: erst wann, dann wie, dann wo (te-ka-mo-lo).";
+    u.ergebnis = { richtig: false, text: (bestZahl === 0 ? "Noch steht kein Satzglied richtig. " : bestZahl + " von " + gelegtTexte.length + " Satzgliedern " + (bestZahl === 1 ? "steht" : "stehen") + " richtig. ") + hinweis };
+  }
+
+  function sbkUebungHtml() {
+    const u = sbkUebung;
+    if (!u) return '<p class="empty-note">Für diese Auswahl gibt es gerade keinen Übungssatz — wähl einen anderen Bereich oder ein anderes Niveau.</p>';
+    const karte = (idx, wo, n) => {
+      const k = u.karten.find((x) => x.i === idx);
+      const mark = wo === "gelegt" && u.markiert ? " sbk-karte-" + (u.markiert[n] || "") : "";
+      return `<button type="button" class="sbk-karte satzteil-${k.rolle}${mark}" data-sbk-karte="${idx}" data-sbk-wo="${wo}">${escapeHtml(k.text)}</button>`;
+    };
+    const artName = { aussage: "Aussage", frage: "Ja-Nein-Frage", nebensatz: "Nebensatz mit „weil“" }[u.satz.satzart] || "";
+    const zeitName = { praesens: "Gegenwart", perfekt: "Vergangenheit (Perfekt)", futur: "Zukunft" }[u.satz.zeitform] || "";
+    const fertig = u.gelegt.length === u.karten.length;
+    const vorschau = u.gelegt.length ? sbkUebText(u.gelegt, u.satz.satzart) : "";
+    return `
+      <div class="question-card sbk-ueben">
+        <p class="eyebrow" style="margin-top:0;">Satz legen · ${artName} · ${zeitName}<span class="sbk-frage-hinweis">${sbkUebStand.gesamt ? sbkUebStand.richtig + " von " + sbkUebStand.gesamt + " richtig" : "tippe die Satzglieder in der richtigen Reihenfolge an — oder zieh sie an ihren Platz"}</span></p>
+        <div class="sbk-leiste" data-sbk-leiste="gelegt" aria-label="Dein Satz">${u.gelegt.map((i, n) => karte(i, "gelegt", n)).join("") || '<span class="sbk-leer">Hier entsteht dein Satz.</span>'}<span class="sbk-schluss">${u.satz.satzart === "frage" ? "?" : u.satz.satzart === "nebensatz" ? "…" : "."}</span></div>
+        <p class="sbk-vorschau" aria-live="polite">${escapeHtml(vorschau)}</p>
+        <div class="sbk-leiste sbk-pool" data-sbk-leiste="pool" aria-label="Satzglieder">${u.pool.map((i) => karte(i, "pool")).join("") || '<span class="sbk-leer">Alle Satzglieder liegen im Satz.</span>'}</div>
+        ${u.ergebnis ? `<p class="sbk-ergebnis ${u.ergebnis.richtig ? "sbk-ergebnis-gut" : "sbk-ergebnis-falsch"}" role="status">${escapeHtml(u.ergebnis.text)}</p>` : ""}
+        ${u.gezeigt ? `<p class="sbk-ergebnis sbk-ergebnis-loesung" role="status">Lösung: ${escapeHtml(u.loesungen.map((l) => l.de).join("  ·  "))}</p>` : ""}
+        <div class="quiz-actions sbk-ueben-knoepfe">
+          <button type="button" class="btn" id="sbkUebPruefen" ${fertig && !u.ergebnis ? "" : "disabled"}>Prüfen</button>
+          <button type="button" class="btn btn-ghost" id="sbkUebZurueck" ${u.gelegt.length && !(u.ergebnis && u.ergebnis.richtig) ? "" : "disabled"}>Zurücklegen</button>
+          <button type="button" class="btn btn-ghost" id="sbkUebLoesung">Lösung zeigen</button>
+          <button type="button" class="btn btn-ghost" id="sbkUebNeu">Neuer Satz</button>
+          <button type="button" class="btn btn-ghost" id="sbkUebVorlesen">🔊 Vorlesen</button>
+        </div>
+      </div>`;
+  }
+
+  function sbkUebungBinden(area, neuZeichnen) {
+    const u = sbkUebung;
+    if (!u) return;
+    const legen = (idx, von, stelle) => {
+      if (u.ergebnis && u.ergebnis.richtig) return;
+      u.ergebnis = null; u.markiert = null;
+      if (von === "pool") {
+        u.pool = u.pool.filter((i) => i !== idx);
+        const ziel = stelle == null ? u.gelegt.length : Math.max(0, Math.min(stelle, u.gelegt.length));
+        u.gelegt.splice(ziel, 0, idx);
+      } else if (stelle == null) {
+        u.gelegt = u.gelegt.filter((i) => i !== idx);
+        u.pool.push(idx);
+      } else {
+        const alt = u.gelegt.indexOf(idx);
+        u.gelegt.splice(alt, 1);
+        u.gelegt.splice(Math.max(0, Math.min(stelle > alt ? stelle - 1 : stelle, u.gelegt.length)), 0, idx);
+      }
+      neuZeichnen();
+    };
+    /* Tippen legt das Kärtchen hinten an (oder zurück in den Vorrat);
+       Ziehen legt es genau dorthin, wo man es loslässt. */
+    const leiste = area.querySelector('[data-sbk-leiste="gelegt"]');
+    area.querySelectorAll("[data-sbk-karte]").forEach((b) => {
+      let start = null, geist = null, zieht = false;
+      b.addEventListener("pointerdown", (e) => {
+        if (e.button != null && e.button > 0) return;
+        start = { x: e.clientX, y: e.clientY, id: e.pointerId };
+        zieht = false;
+      });
+      b.addEventListener("pointermove", (e) => {
+        if (!start || e.pointerId !== start.id) return;
+        if (!zieht && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8) {
+          zieht = true;
+          try { b.setPointerCapture(e.pointerId); } catch (x) {}
+          geist = b.cloneNode(true);
+          geist.classList.add("sbk-karte-geist");
+          document.body.appendChild(geist);
+          b.classList.add("sbk-karte-weg");
+        }
+        if (zieht && geist) {
+          e.preventDefault();
+          geist.style.left = (e.clientX - geist.offsetWidth / 2) + "px";
+          geist.style.top = (e.clientY - geist.offsetHeight / 2) + "px";
+        }
+      });
+      const ende = (e) => {
+        if (!start || e.pointerId !== start.id) return;
+        const warZiehen = zieht;
+        start = null; zieht = false;
+        if (geist) { geist.remove(); geist = null; }
+        b.classList.remove("sbk-karte-weg");
+        if (!warZiehen) return;           // ein Tipp — das erledigt „click“
+        b.dataset.sbkGezogen = "1";
+        setTimeout(() => { delete b.dataset.sbkGezogen; }, 0);
+        const idx = +b.dataset.sbkKarte, von = b.dataset.sbkWo;
+        const r = leiste.getBoundingClientRect();
+        const drin = e.clientX >= r.left - 20 && e.clientX <= r.right + 20 && e.clientY >= r.top - 24 && e.clientY <= r.bottom + 24;
+        if (!drin) { if (von === "gelegt") legen(idx, "gelegt", null); return; }
+        /* Einfügestelle: vor dem ersten Kärtchen, dessen Mitte rechts vom
+           Finger liegt (in derselben Zeile) bzw. in einer tieferen Zeile. */
+        const karten = [...leiste.querySelectorAll('[data-sbk-wo="gelegt"]')].filter((k) => k !== b);
+        let stelle = karten.length;
+        for (let n = 0; n < karten.length; n++) {
+          const kr = karten[n].getBoundingClientRect();
+          const gleicheZeile = e.clientY >= kr.top - 6 && e.clientY <= kr.bottom + 6;
+          if ((gleicheZeile && e.clientX < kr.left + kr.width / 2) || e.clientY < kr.top - 6) { stelle = n; break; }
+        }
+        if (von === "gelegt") {
+          const alt = u.gelegt.indexOf(idx);
+          legen(idx, "gelegt", stelle >= alt ? stelle + 1 : stelle);
+        } else legen(idx, "pool", stelle);
+      };
+      b.addEventListener("pointerup", ende);
+      b.addEventListener("pointercancel", ende);
+      b.addEventListener("click", () => {
+        if (b.dataset.sbkGezogen) return;
+        legen(+b.dataset.sbkKarte, b.dataset.sbkWo, null);
+      });
+    });
+    area.querySelector("#sbkUebPruefen")?.addEventListener("click", () => { sbkUebPruefen(); neuZeichnen(); });
+    area.querySelector("#sbkUebZurueck")?.addEventListener("click", () => {
+      u.pool = Core.shuffle(u.pool.concat(u.gelegt)); u.gelegt = []; u.ergebnis = null; u.markiert = null; u.gezeigt = false; neuZeichnen();
+    });
+    area.querySelector("#sbkUebLoesung")?.addEventListener("click", () => {
+      u.gezeigt = true; u.gesehen = true;
+      u.gelegt = sbkKarten(u.loesungen[0]).map((k) => u.karten.find((x) => x.text === k.text && x.rolle === k.rolle).i);
+      u.pool = [];
+      u.ergebnis = null; u.markiert = u.gelegt.map(() => "gut");
+      neuZeichnen();
+    });
+    area.querySelector("#sbkUebNeu")?.addEventListener("click", () => { sbkUebungStarten(); neuZeichnen(); });
+    area.querySelector("#sbkUebVorlesen")?.addEventListener("click", () => {
+      try {
+        const q = new SpeechSynthesisUtterance(u.satz.de.replace(/…/g, ""));
+        q.lang = "de-DE"; speechSynthesis.cancel(); speechSynthesis.speak(q);
+      } catch (e) { showToast("Vorlesen klappt auf diesem Gerät gerade nicht."); }
+    });
+  }
+
   function renderSatzbaukasten(zielId) {
     const area = document.getElementById(zielId || "satzbaukastenDeArea");
     if (!area) return;
@@ -71016,9 +71271,10 @@
 
     const anzahl = S.anzahlBeispiele(sbkKategorie === "alle" ? null : sbkKategorie, sbkNiveau);
     const kopf = `
-      <p class="empty-note" style="margin-bottom:10px;">🧱 <strong>Satzbaukasten</strong> — entweder du baust dir selbst einen Satz, oder du liest die geprüften Beispielsätze nach.</p>
+      <p class="empty-note" style="margin-bottom:10px;">🧱 <strong>Satzbaukasten</strong> — bau dir selbst einen Satz, leg einen Satz aus seinen Teilen und lass ihn prüfen, oder lies die geprüften Beispielsätze nach.</p>
       <div class="baustein-reihe" style="margin-bottom:12px;">
         <button type="button" class="baustein" data-sbk-ansicht="bauen" aria-selected="${sbkAnsicht === "bauen"}">🔧 Selbst bauen<span class="baustein-de">Wer · macht was · wann · warum · wie · wo</span></button>
+        <button type="button" class="baustein" data-sbk-ansicht="ueben" aria-selected="${sbkAnsicht === "ueben"}">🧩 Satz legen<span class="baustein-de">Satzglieder ordnen und prüfen lassen</span></button>
         <button type="button" class="baustein" data-sbk-ansicht="beispiele" aria-selected="${sbkAnsicht === "beispiele"}">📖 Beispiele lesen<span class="baustein-de">${S.beispielAnzahl(sbkKategorie === "alle" ? "alltag" : sbkKategorie)} Sätze in diesem Bereich</span></button>
       </div>`;
     /* Das Niveau steht jetzt oben: es bestimmt, welche Bausteine es
@@ -71033,6 +71289,17 @@
         ${sbkAnsicht === "bauen" ? `<button type="button" class="baustein" data-sbk-kat="alle" aria-selected="${sbkKategorie === "alle"}">🌍 Alle</button>` : ""}
         ${S.KATEGORIEN.map((k) => `<button type="button" class="baustein" data-sbk-kat="${k.id}" aria-selected="${sbkKategorie === k.id}">${k.icon} ${k.name}</button>`).join("")}
       </div>`;
+
+    if (sbkAnsicht === "ueben") {
+      if (!sbkUebung) sbkUebungStarten();
+      area.innerHTML = kopf + sbkUebungHtml() + bereichsReihe;
+      area.querySelectorAll("[data-sbk-ansicht]").forEach((b) => b.addEventListener("click", () => { sbkAnsicht = b.dataset.sbkAnsicht; renderSatzbaukasten(zielId); }));
+      area.querySelectorAll("[data-sbk-kat]").forEach((b) => b.addEventListener("click", () => { sbkKategorie = b.dataset.sbkKat; sbkUebungStarten(); renderSatzbaukasten(zielId); }));
+      area.querySelectorAll("[data-sbk-niveau]").forEach((b) => b.addEventListener("click", () => { sbkNiveau = b.dataset.sbkNiveau; autoCefrLevel.satzbaukasten = null; sbkUebungStarten(); renderSatzbaukasten(zielId); }));
+      sbkUebungBinden(area, () => renderSatzbaukasten(zielId));
+      merkeZustand({ art: "Satzbaukasten (Satz legen)", niveau: sbkNiveau, kategorie: sbkKategorie, satz: sbkUebung ? sbkUebung.satz.de : "" });
+      return;
+    }
 
     if (sbkAnsicht === "beispiele") {
       const kat = sbkKategorie === "alle" ? "alltag" : sbkKategorie;
@@ -71067,12 +71334,28 @@
     });
     const rollenName = { mitwem: "Mit wem", wonach: "Wonach", wer: "Wer", verb: "Verb", was: "Was", wen: "Wen / Wem", wo: "Wo", wohin: "Wohin", woher: "Woher", wann: "Wann", warum: "Warum", wie: "Wie", konj: "Bindewort" };
     const teile = italienisch ? satz.itTeile : satz.deTeile;
-    const zweitsatz = italienisch ? satz.de : satz.it;
+    /* FASSUNG 834: Im Deutsch-Raum keine italienische Zeile mehr unter
+       dem Satz (XANDER: „diese italienischen Sachen dürfen auch nicht
+       mehr auftauchen“) — nur im Italienisch-Kurs steht die Übersetzung. */
+    const zweitsatz = italienisch || zielId === "satzbaukastenItArea" ? (italienisch ? satz.de : satz.it) : "";
+    /* „Was steht vorn?“ mit dem ECHTEN Satz statt eines festen Beispiels. */
+    const vorfeldBsp = (vf) => {
+      try {
+        const t = S.bauSatz({
+          subjekt: a.subjekt, verb: a.verb, objekt: a.objekt, objektBegleiter: a.objektBegleiter,
+          objektAdjektiv: a.objektAdjektiv, person: a.person, ort: a.ort, ortRolle: a.ortRolle,
+          zeit: a.zeit, grund: a.grund, art: a.art, begleitung: a.gewaehlteBegleitung, fragesatz: a.gewaehlterFragesatz,
+          zeitform: sbkZeitform, satzart: "aussage", pronomen: sbkPronomen, vorfeld: vf,
+        }).de.replace(/[.?]$/, "").split(/\s+/);
+        return escapeHtml(t.slice(0, Math.min(t.length, 4)).join(" ")) + (t.length > 4 ? " …" : "");
+      } catch (e) { return ""; }
+    };
     const ortInfo = SBK_ROLLE_NAME[a.ortRolle] || SBK_ROLLE_NAME.wo;
     const idx = { "1sg": 0, "2sg": 1, "3sgm": 2, "3sgf": 2, "1pl": 3, "2pl": 4, "3pl": 5 }[a.subjekt.id];
 
     area.innerHTML = kopf + `
-      <div class="question-card sbk-anzeige">
+      <div class="sbk-schwebe" aria-hidden="true" hidden></div>
+      <div class="sbk-klebe" aria-live="polite">
         <p class="baustein-satz">${teile.map((x, i) => {
           const t = i === 0 ? x.t.charAt(0).toUpperCase() + x.t.slice(1) : x.t;
           /* Vor einem Komma darf kein Leerzeichen stehen — die Bausteine
@@ -71081,7 +71364,9 @@
           const trenner = i === 0 ? "" : (/^\s*,/.test(x.t) ? "" : " ");
           return trenner + `<span class="satzteil satzteil-${x.rolle}" title="${rollenName[x.rolle] || ""}">${t.replace(/^\s*,\s*/, ", ")}</span>`;
         }).join("")}${satz.satzart === "frage" ? "?" : satz.satzart === "nebensatz" ? " …" : "."}</p>
-        <p class="baustein-satz-de">${zweitsatz}</p>
+      </div>
+      <div class="question-card sbk-anzeige">
+        ${zweitsatz ? `<p class="baustein-satz-de">${zweitsatz}</p>` : ""}
         <p class="empty-note sbk-hinweis">💡 ${satz.hinweis}</p>
         <div class="quiz-actions" style="justify-content:flex-start; margin-top:10px; gap:6px; flex-wrap:wrap;">
           <span class="empty-note" style="width:100%; margin:0 0 2px;">Klingt dieser Satz für dich nach echtem Deutsch?</span>
@@ -71092,6 +71377,7 @@
         <div class="quiz-actions" style="justify-content:flex-start; margin-top:8px;">
           <button type="button" class="btn btn-ghost" id="sbkVorlesen">🔊 Vorlesen</button>
           <button type="button" class="btn btn-ghost" id="sbkZufallBtn">🎲 Zufallssatz</button>
+          <button type="button" class="btn btn-ghost" id="sbkLegenBtn">🧩 Diesen Satz legen</button>
         </div>
       </div>
       ${bereichsReihe}
@@ -71112,9 +71398,9 @@
       ${sbkSatzart === "aussage" ? `
       <p class="eyebrow sbk-frage">🚩 Was steht vorn?<span class="sbk-frage-hinweis">im Deutschen darf fast jeder Teil an den Anfang — das Verb bleibt trotzdem an zweiter Stelle</span></p>
       <div class="baustein-reihe">
-        <button type="button" class="baustein" data-sbk-feld="vorfeld" data-sbk-wert="subjekt" aria-selected="${sbkWahl.vorfeld === "subjekt"}">die Person<span class="baustein-de">Ich gehe heute …</span></button>
-        ${a.zeit && a.zeit.de ? `<button type="button" class="baustein" data-sbk-feld="vorfeld" data-sbk-wert="zeit" aria-selected="${sbkWahl.vorfeld === "zeit"}">die Zeitangabe<span class="baustein-de">Heute gehe ich …</span></button>` : ""}
-        ${a.ort ? `<button type="button" class="baustein" data-sbk-feld="vorfeld" data-sbk-wert="ort" aria-selected="${sbkWahl.vorfeld === "ort"}">die Ortsangabe<span class="baustein-de">Ins Büro gehe ich …</span></button>` : ""}
+        <button type="button" class="baustein" data-sbk-feld="vorfeld" data-sbk-wert="subjekt" aria-selected="${sbkWahl.vorfeld === "subjekt"}">die Person<span class="baustein-de">${vorfeldBsp("subjekt")}</span></button>
+        ${a.zeit && a.zeit.de ? `<button type="button" class="baustein" data-sbk-feld="vorfeld" data-sbk-wert="zeit" aria-selected="${sbkWahl.vorfeld === "zeit"}">die Zeitangabe<span class="baustein-de">${vorfeldBsp("zeit")}</span></button>` : ""}
+        ${a.ort ? `<button type="button" class="baustein" data-sbk-feld="vorfeld" data-sbk-wert="ort" aria-selected="${sbkWahl.vorfeld === "ort"}">die Ortsangabe<span class="baustein-de">${vorfeldBsp("ort")}</span></button>` : ""}
       </div>` : ""}
 
       ${italienisch ? `
@@ -71255,6 +71541,21 @@
       renderSatzbaukasten(zielId);
     }));
     document.getElementById("sbkZufallBtn")?.addEventListener("click", () => { sbkZufall(); renderSatzbaukasten(zielId); });
+    /* Den gerade gebauten Satz selbst legen — mit allen richtigen
+       Stellungen (was vorn stehen darf) als Lösung. */
+    document.getElementById("sbkLegenBtn")?.addEventListener("click", () => {
+      const basis = {
+        subjekt: a.subjekt, verb: a.verb, objekt: a.objekt, objektBegleiter: a.objektBegleiter,
+        objektAdjektiv: a.objektAdjektiv, person: a.person, ort: a.ort, ortRolle: a.ortRolle,
+        zeit: a.zeit, grund: a.grund, art: a.art, begleitung: a.gewaehlteBegleitung, fragesatz: a.gewaehlterFragesatz,
+        zeitform: sbkZeitform, satzart: sbkSatzart, pronomen: sbkPronomen,
+      };
+      const vf = ["subjekt"].concat(sbkSatzart === "aussage" && a.zeit && a.zeit.de ? ["zeit"] : [], sbkSatzart === "aussage" && a.ort ? ["ort"] : []);
+      const loesungen = vf.map((v) => S.bauSatz(Object.assign({}, basis, { vorfeld: v })));
+      sbkUebungStarten({ deTeile: true, satz: satz, loesungen: loesungen.some((l) => l.de === satz.de) ? loesungen : [satz].concat(loesungen) });
+      sbkAnsicht = "ueben";
+      renderSatzbaukasten(zielId);
+    });
     document.getElementById("sbkVorlesen")?.addEventListener("click", () => {
       const text = italienisch ? satz.it : satz.de;
       try {
@@ -71296,6 +71597,7 @@
       renderSatzbaukasten(zielId);
     });
 
+    sbkSchwebePflegen();
     /* Wer hier den Fehlerknopf drückt, meldet den Satz mit, der gerade
        dasteht — samt aller gewählten Bausteine. */
     merkeZustand({
@@ -71307,6 +71609,29 @@
       bausteine: bausteineText(),
     });
   }
+
+  /* FASSUNG 834 — Der gebaute Satz bleibt sichtbar, während man unten
+     Bausteine wählt. „position: sticky“ greift hier nicht (body hat
+     overflow-x: hidden und wird damit selbst zum Rollbereich), deshalb
+     schwebt eine Kopie oben am Rand, sobald das Original hinausrollt.
+     EIN Lauscher für alle Neuzeichnungen — nicht bei jedem Zeichnen ein
+     neuer. */
+  function sbkSchwebePflegen() {
+    document.querySelectorAll(".sbk-schwebe").forEach((sw) => {
+      const area = sw.parentElement;
+      const k = area && area.querySelector(".sbk-klebe");
+      if (!k || !area.offsetParent) { sw.hidden = true; return; }
+      const r = k.getBoundingClientRect(), ra = area.getBoundingClientRect();
+      const zeigen = r.bottom < 0 && ra.bottom > 120;
+      if (zeigen) {
+        const satz = k.querySelector(".baustein-satz");
+        if (satz && sw.dataset.text !== satz.textContent) { sw.innerHTML = satz.outerHTML; sw.dataset.text = satz.textContent; }
+      }
+      sw.hidden = !zeigen;
+    });
+  }
+  window.addEventListener("scroll", sbkSchwebePflegen, { passive: true });
+  window.addEventListener("resize", sbkSchwebePflegen, { passive: true });
 
   function renderSatzbaukastenDe() { renderSatzbaukasten("satzbaukastenDeArea"); }
   function renderItSatzbaukasten() { renderSatzbaukasten("satzbaukastenItArea"); }
@@ -88357,7 +88682,7 @@
      (die Frau von vorn → die äusseren Teile, die weiblichen
      Geschlechtsorgane → innen, beim Mann ebenso), und das Bild sagt
      mit einer blinkenden Lupe, dass es weitergeht. */
-  const BW_EIGENE_TAFELN = ["koerperbau", "koerper_innen", "anatomie", "entstehung"];
+  const BW_EIGENE_TAFELN = ["koerperbau", "muskeln", "koerper_innen", "anatomie", "entstehung"];   // FASSUNG 834: „Die Muskeln“ neu
   function bwEigeneTafeln() {
     const alle = window.DMA_SZENEN || [];
     return BW_EIGENE_TAFELN.map((id) => alle.find((s) => s.id === id)).filter(Boolean);
@@ -88834,7 +89159,7 @@
               width="${(lw + 12).toFixed(1)}" height="${(lh + 12).toFixed(1)}" rx="${r}"/>`;
     }
     return `
-      <svg class="bw-bild bw-szene-${szene.id}${zoom ? " bw-bild-zoom" : ""}" viewBox="0 0 ${szene.breite} ${szene.hoehe}"
+      <svg class="bw-bild bw-szene-${szene.id}${zoom ? " bw-bild-zoom" : ""} bw-modus-${bwModus}" viewBox="0 0 ${szene.breite} ${szene.hoehe}"
            role="group" aria-label="${escapeHtml(szene.titel)}">
         <g ${rahmen}>
           <g class="bw-kulisse" aria-hidden="true">${szene.kulisse}</g>
@@ -96911,28 +97236,18 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (!platz) return null;
     await szeneLaden(platz.szene);
     const fig = brZufall(BR_FIGUREN);
-    if (!(window.DMA_FIGUR || {})[fig]) {
-      await brDatei("figuren/" + fig + ".js");
-      await brDatei("figuren/" + fig + "-teil2.js");
-    } else if (!((window.DMA_FIGUR[fig].haltungen || {})[platz.haltung])) {
-      await brDatei("figuren/" + fig + "-teil2.js");
-    }
-    /* Das seitliche Sitzen braucht ausser Teil 2 auch Teil 3
-       („krabbeln" liegt dort) und die Zusammensetzung. Geholt wird
-       das nur, wenn ein Platz es wirklich verlangt — sonst faehrt
-       fuer jedes Bilderraetsel unnoetig eine Datei mit. */
-    if (platz.haltung === "sitzen_seit") {
-      await brDatei("figuren/" + fig + "-teil3.js");
-      if (!window.DMA_SEITSITZ_BAUEN) await brDatei("figuren/seitsitz.js");
-      try { window.DMA_SEITSITZ_BAUEN && window.DMA_SEITSITZ_BAUEN(fig); } catch (e) {}
-    }
-    const bau = (window.DMA_FIGUR || {})[fig];
-    if (!bau || !(bau.haltungen || {})[platz.haltung]) return null;
+    /* FASSUNG 834 — XANDER (Funk 213): „dass wir wirklich diesmal
+       realistische Personen haben“. Die Figur kommt jetzt aus dem
+       Skelett-System figuren/mensch.js (eine Datei für alle Alter und
+       Haltungen) — dieselbe wie im Baukasten. */
+    if (!window.DMA_MENSCH) await brDatei("figuren/mensch.js");
+    if (!window.DMA_MENSCH) return null;
     const [alter, geschlecht] = fig.split("-");
-    const frisuren = Object.keys((bau.haltungen[platz.haltung].frisuren) || {});
     const wunsch = geschlecht === "w" ? BR_FRISUR_W : BR_FRISUR_M;
-    const moegliche = wunsch.filter((f) => frisuren.indexOf(f) >= 0);
-    const gesichter = Object.keys((bau.haltungen[platz.haltung].gesichter) || {});
+    const frisurWahl = brZufall(wunsch);
+    const moegliche = [frisurWahl.indexOf("bart") === 0 ? "kurz" : frisurWahl];
+    const bartWahl = frisurWahl.indexOf("bart") === 0 && alter !== "kind" && alter !== "jugendlich" ? frisurWahl : "";
+    const gesichter = ["g1", "g2", "g3", "g4"];
     return {
       szene: platz.szene,
       platz: platz,
@@ -96940,8 +97255,9 @@ An einem Morgen lief ein kleiner Fuchs los…
       geschlecht: geschlecht,
       haut: brZufall(BR_HAUT),
       haarfarbe: brZufall(BR_HAAR),
-      frisur: moegliche.length ? brZufall(moegliche) : (frisuren[0] || "kurz"),
-      gesicht: gesichter.length ? brZufall(gesichter) : "g1",
+      frisur: moegliche[0],
+      bart: bartWahl,
+      gesicht: brZufall(gesichter),
       haltung: platz.haltung,
       kleidung: {
         oberteil: { stueck: brZufall(geschlecht === "w" ? BR_OBERTEIL_W : BR_OBERTEIL_M), farbe: brZufall(BR_FARBEN) },
@@ -96964,7 +97280,6 @@ An einem Morgen lief ein kleiner Fuchs los…
     const r = (v) => Math.round(v * 10) / 10;
     return `<div class="br-buehne"><svg viewBox="0 0 ${sz.breite} ${sz.hoehe}" class="br-svg"
         role="img" aria-label="Ein Mensch an einem Ort — welcher Satz beschreibt das Bild?">
-      ${window.DMA_FIGUR_DEFS || ""}
       <g class="br-kulisse">${sz.kulisse}</g>
       ${/* GEMELDET: „Die Frau mit dem weissen Hemd sitzt auf dem Stuhl —
             aber offenbar ist es die falsche Antwort." Der Grund: auf

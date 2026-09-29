@@ -2370,3 +2370,47 @@ XANDER: „dieses Batmobil hätte ich … gerne, das als fahrendes Auto zu sehen
   - 825: Gewertet wird der wärmste deutlich aufgehellte Wandfleck. Der hellste ist seit 826 die weiße Platte des Fernsehturms, deren Rot bei 255 anstößt.
   - 799: Die Uhr steht auf 12 Uhr, denn in der Dämmerung lädt die Stadt auch die Nachtbilder, und die 330 KB gelten für den Tag. Rahmen und Platzhalter werden im selben Augenblick gemessen, nachdem das Rollen vorbei ist.
   - Neu ist 831 (`pruefe-831-markt-verkehr.js`): fünf frische 300-s-Fahrten nach den Maßstäben von 815, das Losfahren nach dem Aufstellen und die Laternen.
+
+## Fassung 834 — Echte Menschen in den Bilderwelten: ein Figuren-System mit Skelett, Haltungen und Bewegung, Lehrbuchtafeln zum Körper, Satzbaukasten mit „Satz legen“
+
+XANDER (Funk 213/214): „dass wir wirklich diesmal realistische Personen haben … die Entstehung des Lebens soll viel detaillierter alles sein mit den Organen innere und äußere … sämtliche Sitz-, Steh-, Hock-, Knie- und sonst was auf allen Vieren Positionen … dass der Kellner nicht mehr so steif da steht … dass sie sich … innerhalb der Bilder … auch bewegen … man soll sie dort auch hinsetzen können … mit ein paar einfachen Animationen“ · „den Satzbaukasten endlich repariert und gefixt so dass er sinnvoll funktioniert“.
+
+Leitplanke: sachlich wie ein Biologie-Schulbuch oder ein medizinischer Atlas. Beschriftet mit deutschen Fachwörtern samt Artikel, neutrale Haltungen. Menschen im Baukasten und in den Szenen sind immer bekleidet, die Körpertafeln zeigen Unterwäsche. Die Entstehung des Lebens wird als Zell-Schema gezeigt.
+
+- **Figuren-System `figuren/mensch.js`** (neu, 112 KB, eine Datei für alle Menschen). Es ersetzt die alten gebackenen Figurendateien (`figuren/*-teil*.js`, zusammen 36 MB, bis 3,4 MB je Mensch). Diese werden nicht mehr geladen.
+  - Skelett mit Vorwärtskinematik. Die Haltungen sind Gelenkwinkel, der Körper sind geloftete Querschnitte, gedreht und mit 10° Aufsicht projiziert. Die Umrisse sind Catmull-Rom-Pfade mit Verlaufsschattierung je Körperteil, gezeichnet nach Tiefe.
+  - Proportionen: Erwachsene 7,5 Kopfhöhen, Säuglinge 4. Sechs Altersstufen, zwei Geschlechter, Hautfarben, Frisuren, Bärte.
+  - Hände mit fünf Fingern. Füße mit flacher Sohle.
+  - Gesichtszüge liegen auf der Kopfoberfläche und werden je nach Blickrichtung sichtbar.
+  - Kleidung als aufgeblasene Querschnitte: Oberteile, Hosen, Kleider, Jacken, Schürze, Weste, Kochmütze, Bademantel, Schuhe. Dazu Zubehör: Tablett, Buch, Tasche, Besen.
+  - 19 Haltungen: stehen, Kontrapost, gehen, sitzen, lesen, auf dem Boden sitzen, Schneidersitz, Fersensitz, hocken, knien, halb knien, vorgebeugt knien, auf allen vieren, liegen, winken, halten, zeigen, werfen, servieren. Dazu die Lehrbuch-Haltungen `lehrbuch`, `foetus` und `baden`.
+  - `zeichne(spec)` liefert SVG, Sitzpunkt, Kopf, Rahmen und benannte Körperstellen (`punkte`). Mit `muskeln: true` zeichnet es die Muskelkarte.
+- **Szenen**: `werkzeug/setze-menschen-834.js` zeichnet 30 Menschen in 15 Szenen neu, mit Haltung, Blick und Kleidung (Bad, Schlafzimmer, Küche, Wohnzimmer, Kinderzimmer, Klassenzimmer, Restaurant, Supermarkt, Straße, Bahnhof, Arztpraxis, Flur, Café, Bibliothek, Bewerbungsgespräch).
+  - Der Kellner serviert jetzt locker mit Tablett.
+  - Die 15 Szenen schrumpfen von 4,0 MB auf 0,8 MB.
+  - Das Wohnzimmer-Kind sitzt im Schneidersitz vor dem Tisch, damit es nicht am Sessel-Platz des Bilderrätsels steht (`pruefe-plaetze`).
+- **Baukasten (`baukasten.js`)**: Die Figuren kommen aus `DMA_MENSCH`.
+  - Die Figur schaut je nach Platz ins Bild. Jede Haltung lässt sich wählen, Babys nur die passenden.
+  - Ziehen: Man packt die Figur irgendwo im Umriss. Ziel ist der Platz, der dem Finger am nächsten liegt. Die Figur geht dort über den Boden hin und rastet ein (Gesäß auf `sitzY`).
+  - Liegeplätze bekommen `liegY`/`kopf`, die Badewanne `wasserY` mit Wasserlinie (`data-plaetze.js`). Sitzfremde Haltungen an Sitzplätzen stehen auf dem Boden davor.
+  - Neue Knöpfe: „Winken“, „Umdrehen“, „Ein paar Schritte“.
+  - Kein „nichts an“ mehr, Oberteil und Unterteil lassen sich nur tauschen. Im Bad gibt es einen Bademantel.
+  - Der Satz nennt die Haltung richtig („hockt“, „kniet“, „ist auf allen vieren“, „liest ein Buch“ …).
+- **Bilderrätsel (`app.js`)** lädt nur noch `figuren/mensch.js`.
+- **Lehrbuchtafeln** (`werkzeug/bau-834-lehrbuch.js`, `bau-834-entstehung.js`, `bau-834-organe.js`):
+  - *Der Körper*: Mann von vorn und hinten in Boxershorts, mit Kopftafel. Die Stellen werden aus `punkte` gerechnet.
+  - *Körperbau*: vier Menschen in Unterwäsche. Keine Geschlechtsteile als Tippwörter.
+  - *Die inneren Organe*: Lehrbuchkarten mit beschrifteten Teilen, nämlich Gehirn, Herz, Lunge, Leber, Magen, Niere und Darm, dazu Knochen, Muskel, Ader, Blut und Haut.
+  - *Die Muskeln* (neu, `szenen/muskeln.js`, Lupe am Arm der Körpertafel): 16 Muskeln und Sehnen.
+  - *Die Entstehung des Lebens*: neun Tafeln (Samenzelle, Eizelle, Befruchtung als Zell-Schema, Weg zur Eizelle, Einnistung statt der früheren Tafel „Geschlechtsverkehr“, Zellteilung, Schwangerschaft, Wachstum, Geburt).
+  - Die Beschriftungen (`.bw-beschriftung`) erscheinen nur in der Lupe beim Entdecken.
+- **Satzbaukasten (`app.js`, `app-styles.css`)**:
+  - Neuer Modus „🧩 Satz legen“: Satzglieder antippen oder mit dem Finger an eine Stelle ziehen. „Prüfen“ nimmt jede richtige Vorfeld-Stellung an. Falsche Stellen werden rot markiert, mit Hinweis zu Verbstellung, Satzklammer und Te-Ka-Mo-Lo.
+  - Der gebaute Satz schwebt beim Rollen oben (`.sbk-schwebe`).
+  - Zufallssätze kommen aus den sinnvollen Vorschlägen je Tätigkeit. Im Deutsch-Raum gibt es keine italienische Zeile, und die Vorfeld-Beispiele passen zum Satz.
+- **Sonde** `werkzeug/pruefe-834-menschen-satzbau.js` in vier Teilen:
+  1. 684 Figuren (12 Menschen × 19 Haltungen × 3 Blicke) auf dem Boden, 7,5 Köpfe, Finger, kleiner als 45 KB.
+  2. Baukasten auf 360 px mit Finger und auf 1280 px mit Maus: aufs Sofa ziehen, einrasten ±1, Bewegung, Winken, alle Haltungen, immer bekleidet, Tippflächen ≥ 30 px.
+  3. Satzbaukasten: Satz legen, richtig/falsch mit Hinweis, Ziehen, schwebender Satz, 40 Zufallssätze.
+  4. Lehrbuchtafeln.
+  Mit dem alten Stand (53eaa31) ist sie in 11 Punkten rot.

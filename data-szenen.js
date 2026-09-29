@@ -187,7 +187,8 @@ window.DMA_SZENEN = [
    "hand_detail",
    "koerper_innen",
    "koerperbau",
-   "kopf_detail"
+   "kopf_detail",
+   "muskeln"
   ],
   "stellen": 6
  },
@@ -689,6 +690,18 @@ window.DMA_SZENEN = [
   "zahl": 13,
   "lupen": [],
   "stellen": 13
+ },
+ {
+  "id": "muskeln",
+  "titel": "Die Muskeln",
+  "emoji": "💪",
+  "thema": "Körper",
+  "breite": 400,
+  "hoehe": 300,
+  "detail": true,
+  "zahl": 16,
+  "lupen": [],
+  "stellen": 0
  },
  {
   "id": "zoo2",
