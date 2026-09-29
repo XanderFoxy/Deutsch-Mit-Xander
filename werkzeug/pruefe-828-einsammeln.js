@@ -78,7 +78,7 @@ window.schick=function(d){document.getElementById("f").contentWindow.postMessage
     await ctx.route(/cdn\.jsdelivr|supabase\.co/, (r) => r.abort());
     await ctx.addInitScript(() => { window.__summ = []; try { navigator.vibrate = (m) => { window.__summ.push(m); return true; }; } catch (e) {} });
     const pg = await ctx.newPage();
-    pg.on("pageerror", (e) => konsolenFehler.push("A: " + String(e.message || e)));
+    pg.on("pageerror", (e) => konsolenFehler.push("A: " + String(e.message || e) + (process.env.STAPEL ? " @ " + String(e.stack || "").slice(0, 600) : "")));
     if (process.env.LOG) pg.on("console", (m) => { if (!/GL Driver|Failed to load/.test(m.text())) console.log("     LOG " + m.text().slice(0, 300)); });
     await pg.goto(URL0 + "/__wirt828.html");
     let fr = null;

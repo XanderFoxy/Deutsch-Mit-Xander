@@ -644,9 +644,12 @@
         const g = b.dataset.g, z = zeichen[g] || [], jetzt = zeit || performance.now();   // Zeit des Fingers (auch wenn der Takt hängt)
         if ((b._sperre || 0) > jetzt) return;   // der zweite Tipp eines Doppeltipps: geschluckt
         clearTimeout(O._tippUhr); O._tipp = null;   // ein wartender Tipp auf das Bild darunter gilt nicht mehr
-        O.summen();
+        /* FASSUNG 812 — genau ein Summen je Einsammeln: das Pling (Fassung 825, T.einsammeln) summt selbst; nur ohne
+           Tonanlage summt es hier. Bei laufender Ware kein Summen („nichts bei Laufendem"), nur das Aufblitzen. */
         if (z[0] === "fertig") {
-          try { if (ST.ton && typeof ST.ton.einsammeln === "function") ST.ton.einsammeln(); } catch (x) {}
+          let gesummt = false;
+          try { if (ST.ton && typeof ST.ton.einsammeln === "function") { ST.ton.einsammeln(z[2] || ""); gesummt = true; } } catch (x) {}
+          if (!gesummt) O.summen();
           zeichenFlug(b, z);
           b._weg = performance.now() + 2600; b._sperre = jetzt + 700; b.classList.add("lk-z-weg");
           /* nach 0,7 s schluckt das verborgene Zeichen keine Tipps mehr (dann gilt wieder das Haus darunter) */
@@ -1281,7 +1284,9 @@
         if (spielTipp) baumTun(baum); else baumRascheln(baum);
         auswahlWeg(); return;
       }
-      baumRascheln(baum);
+      /* FASSUNG 812 — im Vollbild des Spiels beides: „die Bäume sollen alle darauf reagieren" (Holzfäller, 828) und das
+         kleine Menü am Baum (Versetzen, Entfernen, 822). Nah dran im kleinen Rahmen nur das Menü. */
+      if (spielTipp && !imRahmen) baumTun(baum); else baumRascheln(baum);
       waehlen(baum); return;
     }
     /* leerer Bauplatz? */
@@ -1329,8 +1334,8 @@
   }
   /* Angler am Ufer: wenn die Fischer des Spiels arbeiten (Zeichen „läuft" am See) und ein paar Sekunden nach dem eigenen Wurf */
   let anglerWurf = -1e9, anglerFischer = false, uferPlaetze = null, uferSchl = "";
-  O.stationTun = function (g) {
-    O.summen();
+  O.stationTun = function (g, vomZeichen) {
+    if (!vomZeichen) O.summen();   // FASSUNG 812 — vom Zeichen aus hat das Einsammeln schon gesummt (genau einmal)
     if (g === "see") { anglerWurf = performance.now(); L().unruhe = 2; spielPost({ typ: "leicht-haus", g: "see" }); return; }
     const f = /^feld(9[12])$/.exec(g);
     if (f) { feldTipp = { nr: +f[1], t: performance.now() }; L().unruhe = 2; spielPost({ typ: "leicht-feld", nr: +f[1] }); }
