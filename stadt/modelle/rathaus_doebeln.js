@@ -19,17 +19,21 @@
        Ecktürmchen mit Zwiebelhauben, das eingezogene Uhrgeschoss mit
        vier Zifferblättern, darauf die geschweifte Haube, die offene
        Laterne, eine zweite Zwiebel, Kugel und Wetterfahne.
-     • FLÜGEL A (rechts, im rechten Winkel): der GIEBELBAU mit dem großen
-       Stufengiebel zum Markt – vier Stufen mit Voluten („Schnecken"),
-       oben Rundbogen-Abschluss mit Wappenfeld und Kugel; vier Achsen:
-       unten Rundbogenfenster im Sandstein-Rustika-Sockel, „Ratskeller",
-       im 1. OG gekuppelte Fenster mit dem Stadtwappen, im 2. OG hohe
-       Fenster mit Dreiecksgiebeln; hinten ein zweiter Stufengiebel. Daran
-       der OSTFLÜGEL, noch etwas zurückgesetzt, mit Zwerchgiebel und am
-       Ende einem kleineren Stufengiebel. ZWEI TÜRMCHEN mit dunkler Haube:
-       links am großen Giebel (vierkantig, Schallfenster), rechts am
-       Anschluss zum Ostflügel. Die Front liegt hinter der Turmfront –
-       rechts neben dem Portal springt nichts vor.
+     • FLÜGEL A (rechts, im rechten Winkel): ein Flügel mit EINEM
+       Satteldach, First entlang des Flügels vom Turm nach rechts. Die
+       Kopfseite am rechten Ende ist der große Stufengiebel – vier Stufen
+       mit Voluten („Schnecken"), oben Rundbogen-Abschluss mit Wappenfeld
+       und Kugel. Zum Markt die lange Traufseite: unten Rundbogenfenster
+       im Sandstein-Rustika-Sockel, „Ratskeller", im 1. OG der Balkon mit
+       Steinbrüstung und Blumen auf Konsolen, im 2. OG hohe Fenster mit
+       Dreiecksgiebeln, auf dem Dach Gauben. Der hintere Teil ist 1 m
+       zurückgesetzt (gleicher First). ZWEI TÜRMCHEN mit dunkler Haube:
+       vierkantig am Turm, rund vor der Kopfseite. Die Front liegt hinter
+       der Turmfront – rechts neben dem Portal springt nichts vor.
+       FASSUNG 824 — XANDER: „der Seitenflügel selber ist doch nur ein ganz
+       normales Dach. Da ist doch nicht noch mal ein Extra Dach". Früher
+       stand hier ein Giebelbau mit First nach hinten (wie ein zweites
+       Haus neben Flügel B) plus ein Ostflügel mit eigenem Dach.
      • FLÜGEL B (hinter dem Turm, etwas länger als A, rechtwinklig zu A –
        ein L): schlichter, dieselbe Geschossgliederung, Walmdach mit
        Gauben, am Turm die drei Ochsenaugen (Rundfenster), hinten ein
@@ -38,9 +42,9 @@
        gerundeter Ecke, einem langen Dachhaus mit Fensterband, Fleder-
        mausgauben und dem kleinen Dachreiter mit Kupferhaube; unten
        Rundbogenfenster mit Gittern, im 1. OG Doppelfenster, im 2. OG große
-       Rundbogenfenster; vorn zum Markt der Balkon mit Balustrade und
-       Kugelaufsätzen auf Konsolen. C liegt ganz links der Turmkante: das
-       Portal bleibt vom Brunnen aus frei.
+       Rundbogenfenster. C liegt ganz links der Turmkante: das Portal
+       bleibt vom Brunnen aus frei. (Der Balkon ist nach Xanders Foto an
+       Flügel A gewandert – FASSUNG 824.)
    Maße: Das echte Rathaus ist gut 60 m lang, der Turm rund 48 m hoch.
    In 1:1,5 wird der Stern ~41 × 33 m groß, Traufe 12 m (C 10,8 m),
    Turmspitze 32,5 m. Die Geschosse bleiben mit ~2,8–3 m so hoch wie die
@@ -106,12 +110,19 @@
   /* Turm (Mitte = Ursprung), Portal an der Front y = TY1 */
   const TX0 = -2.6, TX1 = 2.6, TY0 = -2.6, TY1 = 2.6, TXM = 0, TYM = 0;
   const T_SCHAFT = 18.6, T_KONS = 19.5, T_BAL = 20.4, T_STUBE = 23.0, T_UHR = 26.0, T_KRANZ = 26.35;
-  /* Flügel A: Giebelbau (Stufengiebel nach vorn) rechts am Turm, Front 0,6 m hinter der Turmfront */
-  const GX0 = TX1, GX1 = GX0 + 12, GY1 = TY1 - 0.6, GY0 = GY1 - 12.4, G_TAN = Math.tan(55 * RAD);
-  const G_FIRST = TRAUFE + (GX1 - GX0) / 2 * G_TAN;
-  /* Flügel A: Ostflügel, noch einmal 1 m zurückgesetzt, am Ende der kleine Stufengiebel */
-  const OX0 = GX1, OX1 = OX0 + 7.2, OY1 = GY1 - 1.0, OY0 = OY1 - 9, O_TAN = Math.tan(50 * RAD);
+  /* Flügel A, vorderer Teil („Giebelbau" im Grundriss) rechts am Turm, Front 0,6 m hinter der Turmfront */
+  const GX0 = TX1, GX1 = GX0 + 12, GY1 = TY1 - 0.6, GY0 = GY1 - 12.4;
+  /* Flügel A, hinterer Teil („Ostflügel" im Grundriss), noch einmal 1 m zurückgesetzt, am Ende die Kopfseite */
+  const OX0 = GX1, OX1 = OX0 + 7.2, OY1 = GY1 - 1.0, OY0 = OY1 - 9, O_TAN = Math.tan(55 * RAD);
   const O_FIRST = TRAUFE + ((OY1 - OY0) / 2 + UE) * O_TAN;
+  /* FASSUNG 824 — XANDER: „das ist die Kopfseite von dem Seitenflügel ist aber der Seitenflügel selber ist doch nur ein
+     ganz normales Dach. Da ist doch nicht noch mal ein Extra Dach weil bei dir gehen zwei Vorsätze nach hinten als wenn
+     zwei Häuser nach hinten gehen eins, was vom Turm aus nach hinten geht und das andere was aus der Seite heraus noch
+     mal nach hinten geht". Flügel A hat darum EIN Satteldach: ein durchgehender First A_FY/A_FIRST entlang x vom Turm
+     bis zur Kopfseite (dem großen Stufengiebel am rechten Ende). Über dem tieferen vorderen Teil sind die Dachflächen
+     etwas flacher (A_TANV vorn, A_TANH hinten), First und Traufhöhe bleiben gleich. */
+  const A_FY = (OY0 + OY1) / 2, A_FIRST = O_FIRST;
+  const A_TANV = (A_FIRST - TRAUFE) / (GY1 + UE - A_FY), A_TANH = (A_FIRST - TRAUFE) / (A_FY - (GY0 - UE));
   /* Flügel B: hinter dem Turm, rechte Wand in der Flucht der rechten Turmwand (Kehle zum Giebelbau) */
   const BX0 = TX1 - 9.8, BX1 = TX1, BY1 = TY0, BY0 = TY0 - 22, B_TAN = Math.tan(50 * RAD);
   /* Flügel C: schräg nach vorn links. Eigenes Achsensystem (wie der frühere Westflügel): x läuft vom Turm (0) zum
@@ -1138,6 +1149,47 @@
   }
 
   /* =====================================================================
+     BALKON — FASSUNG 824. XANDER: „schau dir mal das originale Foto an und
+     dann siehst du auch, dass da auch so ne Art Balkon mit dabei ist. Den
+     könntest du dann vielleicht mit anbringen zusätzlich da wird es richtig
+     schön original aussehen". Auf dem Foto vom Obermarkt hängt er im 1. OG
+     an der langen Seite des rechten Flügels (zum Brunnen), über den Bögen
+     des Erdgeschosses: Steinplatte auf Konsolen, Balustrade mit Docken,
+     Pfeiler mit Kugeln, Blumenkästen.
+     Gebaut in eigenen Achsen: x entlang der Wand (xb0 … xb1), y von der
+     Wand yW nach außen bis yb. kasten(name, x0, y0, z0, x1, y1, z1, seiten,
+     oben) stellt einen Quader in den Grundriss, punkt(x, y) einen Punkt.
+     ===================================================================== */
+  function balkonMaler(g, F) {
+    const n = Math.max(2, Math.round(F.w / 0.2));
+    g.fillStyle = rgbS(hell(PI.hex(PUTZ), -0.25)); g.fillRect(-1, -1, F.w + 2, F.h + 2);
+    for (let i = 0; i < n; i++) {
+      const x = (i + 0.5) * F.w / n;
+      const gr = g.createLinearGradient(x - 0.07, 0, x + 0.07, 0);
+      gr.addColorStop(0, rgbS(hell(SAND, 0.15))); gr.addColorStop(1, rgbS(SAND_D));
+      g.fillStyle = gr;
+      g.beginPath(); g.moveTo(x - 0.04, 0.16); g.quadraticCurveTo(x - 0.1, F.h * 0.6, x - 0.06, F.h - 0.08); g.lineTo(x + 0.06, F.h - 0.08); g.quadraticCurveTo(x + 0.1, F.h * 0.6, x + 0.04, 0.16); g.closePath(); g.fill();
+    }
+    for (const t of [0, 1 / 3, 2 / 3, 1]) { g.fillStyle = rgbS(SAND); g.fillRect(Math.min(F.w - 0.24, Math.max(0, t * F.w - 0.12)), 0, 0.24, F.h); }
+    g.fillStyle = rgbS(hell(SAND, 0.2)); g.fillRect(-1, 0, F.w + 2, 0.15);
+    if (F.jahr === "winter") { g.fillStyle = "rgba(248,250,255,0.95)"; g.fillRect(-1, 0, F.w + 2, 0.06); }
+    else if (F.px > 8) {
+      /* Blumen auf der Brüstung wie auf Xanders Foto (Geranien blühen bis zum ersten Frost, im Herbst etwas weniger) */
+      const rng = F.rng, dicht = F.jahr === "herbst" ? 0.45 : 0.6;
+      for (let x = 0.2; x < F.w - 0.2; x += 0.09) { g.fillStyle = rng() < dicht ? "#c8323a" : "#3f7a3a"; g.beginPath(); g.arc(x, -0.02 - rng() * 0.12, 0.05, 0, Math.PI * 2); g.fill(); }
+    }
+  }
+  function balkonBauen(W, kasten, punkt, xb0, xb1, yW, yb, name) {
+    const bz0 = 3.75, bz1 = 4.05, bz2 = 5.0, th = 0.18;
+    kasten(name + "platte", xb0, yW, bz0, xb1, yb, bz1, { sued: { malen: sandMaler }, ost: { malen: sandMaler }, west: { malen: sandMaler } }, bodenMaler("#b9a888"));
+    kasten(name + "br", xb0, yb - th, bz1, xb1, yb, bz2, { sued: { malen: balkonMaler }, nord: { malen: balkonMaler } }, sandMaler);
+    kasten(name + "brW", xb0, yW, bz1, xb0 + th, yb - th, bz2, { west: { malen: balkonMaler }, ost: { malen: balkonMaler } }, sandMaler);
+    kasten(name + "brO", xb1 - th, yW, bz1, xb1, yb - th, bz2, { west: { malen: balkonMaler }, ost: { malen: balkonMaler } }, sandMaler);
+    const L = xb1 - xb0;
+    for (const t of [0.02, 1 / 3, 2 / 3, 0.98]) { const q = punkt(xb0 + L * t, yb - 0.09); figurKoerper(W, name + "kugel" + t.toFixed(2), q[0], q[1], bz2, 0.2, 0.36, KUGEL(0.17)); }
+  }
+
+  /* =====================================================================
      BAUPHASEN
      ===================================================================== */
   function hoeheImBau(bau) {
@@ -1175,88 +1227,96 @@
       const keller = (x, y) => ({ t: "f", p: [x, y, 0.12], w: 0.6, h: 0.45, form: "b", sprossen: [1, 1], gewaende: 0.07, bank: false, licht: 0.1 });
       const reihe = (xs, fn) => xs.map(fn);
 
-      /* ============ FLÜGEL A — GIEBELBAU (rechts am Turm) ============
+      /* ============ FLÜGEL A — rechts am Turm: EIN Satteldach, die Kopfseite ist der große Stufengiebel ============
          FASSUNG 819 — Walkie 305: „rechts neben dem Eingang gibt es nichts was wie eine Mauer neben dem Eingang nach vorne
-         geht sondern die Seite geht zur Seite nach rechts". Der Giebelbau steht rechts am Turm, seine Front 0,6 m hinter der
-         Turmfront; die linke Wand liegt am Turm und an Flügel B (nicht zu sehen). Der Balkon ist an Flügel C gewandert. */
+         geht sondern die Seite geht zur Seite nach rechts".
+         FASSUNG 824 — XANDER: „kannst du dir mal bitte die Fassade von dem rechten Schiff vom Rathaus angucken weil das
+         sieht aus wie doppelt gemoppelt … das ist die Kopfseite von dem Seitenflügel ist aber der Seitenflügel selber ist
+         doch nur ein ganz normales Dach … Also dieses Doppeldach praktisch das gehört doch da gar nicht hin". Auf dem Foto
+         vom Obermarkt läuft der Flügel unter einem Dach vom Turm bis zum großen Stufengiebel – das ist seine Kopfseite –,
+         und an der langen Seite zum Markt hängt der Balkon. Darum hier: ein First entlang x (A_FY, A_FIRST) über beiden
+         Teilen des Grundrisses (vorn der tiefere Teil, hinten der 1 m zurückgesetzte), am rechten Ende die Kopfseite als
+         Stufengiebel. Kein Dach mehr, das nach hinten läuft (das war das zweite „Haus" neben Flügel B), kein zweiter
+         Stufengiebel hinten, kein Zwerchgiebel, kein eigenes Ostflügel-Dach mit Kehle. */
+      const zAV = (y) => TRAUFE + (GY1 + UE - y) * A_TANV;          // vordere Dachfläche über dem vorderen Teil
+      const zAH = (y) => TRAUFE + (y - (GY0 - UE)) * A_TANH;        // hintere Dachfläche über dem vorderen Teil
+      const zOV = (y) => TRAUFE + (OY1 + UE - y) * O_TAN;           // vordere Dachfläche über dem hinteren Teil
+      const zOH = (y) => TRAUFE + (y - (OY0 - UE)) * O_TAN;         // hintere Dachfläche über dem hinteren Teil
+      /* Wo die Front 1 m (vorn) und die Rückwand 2,4 m (hinten) zurückspringen, laufen die Dachflächen des vorderen Teils
+         mit kleinen Walmecken in die des hinteren Teils (Kehle vom First zur Traufe) – keine senkrechten Dreiecke, die von
+         der Seite wie ein zweiter Giebel aussähen. kV/kH: wie weit die Walmecke an der Traufe über den hinteren Teil greift. */
+      const kV = 1.0, kH = 2.4;
+      /* Türmchen auf der vorderen Dachfläche: vier Wände vom Dach (zAn) bis tz1, Deckel, Haube */
+      const tuermchen = (name, tx, ty, tb, tz1, zAn, fenster, haube, hr, hh) => {
+        if (zAn(ty + tb) >= W.zMax) return;
+        W.teil(name);
+        const G4 = [[tx - tb, ty + tb], [tx + tb, ty + tb], [tx + tb, ty - tb], [tx - tb, ty - tb]];
+        const innenT = [tx, ty, tz1 - 1];
+        for (let i = 0; i < 4; i++) {
+          const a = G4[i], b2 = G4[(i + 1) % 4];
+          const We = wand({ putz: PUTZ, kranz: tz1 - 0.3, el: fenster(i, (a[0] + b2[0]) / 2, (a[1] + b2[1]) / 2) });
+          W.poly([[a[0], a[1], tz1], [b2[0], b2[1], tz1], [b2[0], b2[1], zAn(b2[1])], [a[0], a[1], zAn(a[1])]], innenT, We.malen, { leuchten: We.leuchten, name: name + i });
+        }
+        W.poly(G4.map(([x, y]) => [x, y, tz1]), innenT, schiefer(), { name: name + "o" });
+        figurKoerper(W, name + "haube", tx, ty, tz1, hr, hh, haube);
+      };
+      /* ---- vorderer Teil (am Turm) ---- */
       {
         const ax = (d) => GX0 + d;                              // Achsen, von der linken Kante gemessen
         const xs = [2.1, 4.7, 7.3, 9.9].map(ax);
+        const balkonT = [ax(7.3), ax(9.9)];                     // Balkontüren (Achsen drei und vier)
         const vorn = { putz: PUTZ, rustika: Z_RUST, baender: BAND, kranz: TRAUFE - 0.45, ecken: [[GX0, GY1], [GX1, GY1]], el: [] };
         vorn.el.push(...reihe(xs, (x) => fEG(x, GY1)), ...reihe(xs, (x) => keller(x, GY1)));
-        vorn.el.push(...reihe([1.8, 3.2, 8.8, 10.2].map(ax), (x) => fOG1(x, GY1, { w: 0.95, verdach: null })));
-        vorn.el.push({ t: "band", p: [ax(2.5), GY1, OG1 + 1.75 + 0.45], w: 2.4, h: 0.16 }, { t: "band", p: [ax(9.5), GY1, OG1 + 1.75 + 0.45], w: 2.4, h: 0.16 });
-        vorn.el.push({ t: "wappen", p: [ax(6), GY1, OG1 - 0.1], w: 1.5, h: 2.1 });
-        /* FASSUNG 812 — auf Xanders Foto (vom Brunnen aus) steht „Ratskeller" an der Giebelfront über dem dritten Bogen */
-        vorn.el.push({ t: "schrift", p: [ax(8.6), GY1, 3.62], text: "Ratskeller", h: 0.4 });
-        vorn.el.push(...reihe(xs, (x) => fOG2(x, GY1)));
-        vorn.el.push(...reihe([3.9, 5.3, 6.7, 8.1].map(ax), (x) => fOG3(x, GY1, { w: 0.85, h: 1.1, p: [x, GY1, 10.2] })));
+        vorn.el.push(...reihe([1.8, 3.2].map(ax), (x) => fOG1(x, GY1, { w: 0.95, verdach: null })));
+        vorn.el.push({ t: "band", p: [ax(2.5), GY1, OG1 + 1.75 + 0.45], w: 2.4, h: 0.16 });
+        vorn.el.push({ t: "wappen", p: [ax(5.2), GY1, OG1 - 0.1], w: 1.4, h: 2.0 });
+        vorn.el.push(...reihe(balkonT, (x) => ({ t: "f", p: [x, GY1, 4.05], w: 1.05, h: 2.2, form: "r", verdach: "gerade", sprossen: [2, 4] })));
+        for (const x of [6.65, 8.6, 10.55].map(ax)) vorn.el.push({ t: "konsole", p: [x, GY1, 3.75] });
+        /* FASSUNG 812 — auf Xanders Foto (vom Brunnen aus) steht „Ratskeller" an der Front über einem Bogen (FASSUNG 824:
+           neben dem Balkon, damit die Platte die Schrift nicht verdeckt) */
+        vorn.el.push({ t: "schrift", p: [ax(4.7), GY1, 3.62], text: "Ratskeller", h: 0.4 });
+        vorn.el.push(...reihe(xs, (x) => fOG2(x, GY1)), ...reihe(xs, (x) => fOG3(x, GY1)));
         vorn.el.push({ t: "rohr", p: [GX0 + 0.4, GY1, 0], z0: 0.3, z1: TRAUFE - 0.3 });
         const ostV = { putz: PUTZ, rustika: Z_RUST, baender: BAND, kranz: TRAUFE - 0.45, ecken: [[GX1, GY1]], el: [] };
         const ostH = { putz: PUTZ, rustika: Z_RUST, baender: BAND, kranz: TRAUFE - 0.45, ecken: [[GX1, GY0]], el: [] };
         for (const y of [(OY0 + GY0) / 2]) ostH.el.push(fEG(GX1, y), fOG1(GX1, y), fOG2(GX1, y, { verdach: "gerade" }), fOG3(GX1, y));
         const nord = { putz: PUTZ, rustika: Z_RUST, baender: BAND, kranz: TRAUFE - 0.45, ecken: [[GX1, GY0]], el: [] };
         for (const x of xs) nord.el.push(fEG(x, GY0), fOG1(x, GY0), fOG2(x, GY0, { verdach: "gerade" }), fOG3(x, GY0), keller(x, GY0));
-        /* Körper: rechte Wand in zwei Teilen (vor dem Ostflügel / dahinter), links nichts (Turm, Flügel B) */
+        /* Körper: rechte Wand in zwei Teilen (vor dem hinteren Teil / dahinter), links nichts (Turm, Flügel B) */
         const Wv = wand(vorn), Wo = wand(ostV), Wo2 = wand(ostH), Wn = wand(nord);
-        W.prisma("giebelbau", [[GX0, GY1], [GX1, GY1], [GX1, OY1], [GX1, OY0], [GX1, GY0], [GX0, GY0]], 0, TRAUFE, (i) => {
+        W.prisma("fluegelA", [[GX0, GY1], [GX1, GY1], [GX1, OY1], [GX1, OY0], [GX1, GY0], [GX0, GY0]], 0, TRAUFE, (i) => {
           if (i === 0) return Wv;
           if (i === 1) return Wo;
           if (i === 3) return Wo2;
           if (i === 4) return Wn;
           return null;
         }, mauerkrone);
-        /* Dach: First entlang y, Stufengiebel vorn und hinten; links die Kehle zu Flügel B */
-        const d = 0.3, xm = (GX0 + GX1) / 2;
-        W.teil("giebeldach");
-        const innen = [xm, (GY0 + GY1) / 2, TRAUFE + 2];
-        W.poly([[GX0, GY1 - d, TRAUFE], [xm, GY1 - d, G_FIRST], [xm, GY0 + d, G_FIRST], [GX0, GY0 + d, TRAUFE]], innen,
-          dach({ fleder: [GY1 - 7.4, GY1 - 4.4].map((y) => [GX0 + 3.2, y, TRAUFE + 3.2 * G_TAN]) }), { name: "gdw" });
-        W.poly([[GX1, GY0 + d, TRAUFE], [xm, GY0 + d, G_FIRST], [xm, GY1 - d, G_FIRST], [GX1, GY1 - d, TRAUFE]], innen, dach(), { name: "gdo" });
-        const GG = stufengiebel(GX1 - GX0, TRAUFE, G_TAN, 0, 4, 1.35);
-        const gVorn = { putz: PUTZ, el: [
-          ...reihe([2.9, 3.9, 8.1, 9.1].map(ax), (x) => ({ t: "f", p: [x, GY1, 12.75], w: 0.78, h: 1.25, form: "r", sprossen: [2, 3], verdach: null })),
-          ...reihe([5.4, 6.6].map(ax), (x) => ({ t: "f", p: [x, GY1, 14.9], w: 0.75, h: 1.15, form: "r", sprossen: [2, 3] })),
-          { t: "f", p: [ax(6), GY1, 16.9], w: 0.6, h: 0.85, form: "r", sprossen: [1, 2] },
-          { t: "band", p: [ax(6), GY1, 14.35], w: 8.6, h: 0.18 }, { t: "band", p: [ax(6), GY1, 16.55], w: 5.4, h: 0.16 },
-          { t: "wappen", p: [ax(6), GY1, 19.9], w: 1.3, h: 1.9 }
-        ] };
-        giebelScheibe(W, "giebelvorn", [GX0, GY1, 0], [1, 0], [0, 1], d, GG, gVorn);
-        const gHint = { putz: PUTZ, el: [
-          ...reihe([3.6, 8.4].map(ax), (x) => ({ t: "f", p: [x, GY0, 12.8], w: 0.8, h: 1.2, form: "r", sprossen: [2, 3] })),
-          { t: "f", p: [ax(6), GY0, 14.9], w: 0.7, h: 1.1, form: "r", sprossen: [2, 3] },
-          { t: "f", p: [ax(6), GY0, 18.2], w: 0.6, h: 0.6, form: "o", sprossen: [1, 1] }
-        ] };
-        giebelScheibe(W, "giebelhinten", [GX1, GY0, 0], [-1, 0], [0, -1], d, GG, gHint);
-        figurKoerper(W, "giebelkugel", xm, GY1 - d / 2, GG.top, 0.24, 0.5, KUGEL(0.22));
-        figurKoerper(W, "giebelkugel2", xm, GY0 + d / 2, GG.top, 0.24, 0.5, KUGEL(0.22));
-        /* Gauben auf der linken Dachfläche (über der Kehle zu Flügel B) */
-        for (const y of [GY1 - 8.4, GY1 - 5.8]) gaube(W, "gaubeW" + y, [GX0, y], [-1, 0], TRAUFE, G_TAN, 0.8, 1.2);
-        /* Türmchen links neben dem großen Giebel (vierkantig, Schallfenster) */
-        const tx = GX0 + 2.0, ty = GY1 - 1.9, tb = 0.75, tz1 = 17.9;
-        if (TRAUFE + (tx - tb - GX0) * G_TAN < W.zMax) {
-          W.teil("tuermchenL");
-          const zAn = (x) => TRAUFE + (x - GX0) * G_TAN;
-          const G4 = [[tx - tb, ty + tb], [tx + tb, ty + tb], [tx + tb, ty - tb], [tx - tb, ty - tb]];
-          const innenT = [tx, ty, tz1 - 1];
-          for (let i = 0; i < 4; i++) {
-            const a = G4[i], b2 = G4[(i + 1) % 4];
-            const mx = (a[0] + b2[0]) / 2, my = (a[1] + b2[1]) / 2;
-            const off = i % 2 === 0 ? [mx - 0.26, my] : [mx, my - 0.26];
-            const We = wand({ putz: PUTZ, kranz: tz1 - 0.3, el: [
-              { t: "f", p: [off[0], off[1], tz1 - 1.4], w: 0.4, h: 0.75, form: "b", sprossen: [1, 2], gewaende: 0.07, licht: 0.15 },
-              { t: "f", p: [off[0] + (i % 2 === 0 ? 0.52 : 0), off[1] + (i % 2 ? 0.52 : 0), tz1 - 1.4], w: 0.4, h: 0.75, form: "b", sprossen: [1, 2], gewaende: 0.07, licht: 0.15 }] });
-            W.poly([[a[0], a[1], tz1], [b2[0], b2[1], tz1], [b2[0], b2[1], zAn(b2[0])], [a[0], a[1], zAn(a[0])]], innenT, We.malen, { leuchten: We.leuchten, name: "tl" + i });
-          }
-          W.poly(G4.map(([x, y]) => [x, y, tz1]), innenT, schiefer(), { name: "tlo" });
-          figurKoerper(W, "tuermchenLhaube", tx, ty, tz1, 1.0, 2.1, TUERMCHENHAUBE);
-        }
+        /* Dach: EIN Satteldach, First entlang x. Links hinter dem Turm schaut das Dachende über Flügel B (schlichter
+           Putzgiebel mit Ochsenauge), rechts setzt das Dach des hinteren Teils mit demselben First an; die Walmecken
+           (kV, kH) führen die Traufe schräg auf die zurückgesetzte Traufe des hinteren Teils. */
+        W.teil("adachV");
+        const innen = [(GX0 + GX1) / 2, A_FY, TRAUFE + 2];
+        W.poly([[GX0, GY1 + UE, TRAUFE], [GX1, GY1 + UE, TRAUFE], [GX1, A_FY, A_FIRST], [GX0, A_FY, A_FIRST]], innen, dach(), { name: "adVs" });
+        W.poly([[GX1, GY0 - UE, TRAUFE], [GX0, GY0 - UE, TRAUFE], [GX0, A_FY, A_FIRST], [GX1, A_FY, A_FIRST]], innen,
+          dach({ fleder: [ax(3.6), ax(8.4)].map((x) => [x, GY0 - UE + 3.4, zAH(GY0 - UE + 3.4)]) }), { name: "adVn" });
+        const Wg = wand({ putz: PUTZ, el: [{ t: "f", p: [GX0, (GY0 + TY0) / 2 - 0.5, 14.0], w: 0.75, h: 0.75, form: "o", sprossen: [1, 1], gewaende: 0.1, licht: 0.2 }] });
+        W.poly([[GX0, GY0 - UE, TRAUFE], [GX0, TY0, TRAUFE], [GX0, TY0, zAV(TY0)], [GX0, A_FY, A_FIRST]], innen, Wg.malen, { leuchten: Wg.leuchten, name: "adVw" });
+        W.poly([[GX1, GY1 + UE, TRAUFE], [GX1 + kV, OY1 + UE, TRAUFE], [GX1, A_FY, A_FIRST]], innen, dach(), { name: "adVwalmS" });
+        W.poly([[GX1, A_FY, A_FIRST], [GX1 + kH, OY0 - UE, TRAUFE], [GX1, GY0 - UE, TRAUFE]], innen, dach(), { name: "adVwalmN" });
+        /* Gauben auf der Dachfläche zum Markt (wie auf dem Foto eine Reihe kleiner Giebelgauben) */
+        for (const x of [4.7, 7.3, 9.9].map(ax)) gaube(W, "gaubeAV" + x, [x, GY1 + UE], [0, 1], TRAUFE, A_TANV, 1.0, 1.2);
+        /* Türmchen am Turm (vierkantig, Schallfenster) auf der vorderen Dachfläche */
+        tuermchen("tuermchenL", ax(2.0), GY1 - 1.6, 0.75, 17.9, zAV,
+          (i, mx, my) => [-0.26, 0.26].map((dd) => ({ t: "f", p: [mx + (i % 2 === 0 ? dd : 0), my + (i % 2 ? dd : 0), 16.5], w: 0.4, h: 0.75, form: "b", sprossen: [1, 2], gewaende: 0.07, licht: 0.15 })),
+          TUERMCHENHAUBE, 1.0, 2.1);
+        /* Balkon im 1. OG vor den Achsen drei und vier, wie auf Xanders Foto an der langen Seite zum Markt */
+        if (Z_RUST < W.zMax) balkonBauen(W, (name, x0, y0, z0, x1, y1, z1, m, oben) => W.kasten(name, x0, y0, z0, x1, y1, z1, m, oben), (x, y) => [x, y], ax(6.4), ax(10.8), GY1, GY1 + 1.0, "balkonA");
       }
 
-      /* ============ FLÜGEL A — OSTFLÜGEL (am rechten Ende) ============ */
+      /* ---- hinterer Teil (1 m zurückgesetzt) mit der Kopfseite ---- */
       {
         const ox = (dd) => OX0 + dd;
-        const xs = [1.4, 3.6, 5.8].map(ox), ym = (OY0 + OY1) / 2;
+        const xs = [1.4, 3.6, 5.8].map(ox), ym = A_FY;
         const sued = { putz: PUTZ, rustika: Z_RUST, baender: BAND, kranz: TRAUFE - 0.45, ecken: [[OX1, OY1]], el: [] };
         for (const x of xs) sued.el.push(fEG(x, OY1), keller(x, OY1), fOG1(x, OY1), fOG2(x, OY1, { verdach: x === xs[1] ? "dreieck" : "gerade" }), fOG3(x, OY1));
         sued.el.push({ t: "rohr", p: [ox(0.4), OY1, 0], z0: 0.3, z1: TRAUFE - 0.3 });
@@ -1267,77 +1327,35 @@
         nord.el.push({ t: "f", p: [xs[1], OY0, 0.3], w: 1.5, h: 2.5, form: "b", sprossen: [2, 4], licht: 0.3 });
         const Ws = wand(sued), Wo = wand(ost), Wn = wand(nord);
         W.kasten("ostfluegel", OX0, OY0, 0, OX1, OY1, TRAUFE, { sued: Ws, ost: Wo, nord: Wn }, mauerkrone);
-        /* Dach: First entlang x, Traufen mit Überstand; das Dach läuft nach links bis in die Kehle am Giebelbau-Dach */
+        /* Dach: derselbe First wie vorn (A_FY, A_FIRST), bis an die Kopfseite */
         const d = 0.3;
-        W.teil("ostdach");
+        /* je Dachfläche ein eigener Körper: jede wird von der Walmecke davor durch deren Ebene getrennt */
         const innen = [(OX0 + OX1) / 2, ym, TRAUFE + 2];
-        const zD = (y) => TRAUFE + (OY1 + UE - y) * O_TAN;
-        const xK = OX0 - (O_FIRST - TRAUFE) / G_TAN;
-        /* FASSUNG 812 — die Südfläche ist am Zwerchgiebel (s. u.) ausgeschnitten: links und rechts davon ganz, dahinter
-           bis an die Kehlen des Zwerchdachs (jedes Stück konvex, damit die Reihenfolge stimmt) */
-        const zb = 4.2, zx0 = OX1 - zb - 0.35, zx1 = zx0 + zb, zxm = (zx0 + zx1) / 2;
-        const zR = TRAUFE + (zb / 2) * O_TAN, yR = OY1 + UE - zb / 2, yF = OY1 - d, zE = zD(yF), xE = (zE - TRAUFE) / O_TAN;
-        const dS = dach();
-        W.poly([[OX0, OY1 + UE, TRAUFE], [zx0, OY1 + UE, TRAUFE], [zx0, ym, O_FIRST], [xK, ym, O_FIRST]], innen, dS, { name: "odS" });
-        W.poly([[zx1, OY1 + UE, TRAUFE], [OX1 - d, OY1 + UE, TRAUFE], [OX1 - d, ym, O_FIRST], [zx1, ym, O_FIRST]], innen, dS, { name: "odS2" });
-        W.teil("ostdachMitte");
-        W.poly([[zx0, yF, zE], [zx0 + xE, yF, zE], [zxm, yR, zR], [zxm, ym, O_FIRST], [zx0, ym, O_FIRST]], innen, dS, { name: "odS3" });
-        W.poly([[zxm, yR, zR], [zx1 - xE, yF, zE], [zx1, yF, zE], [zx1, ym, O_FIRST], [zxm, ym, O_FIRST]], innen, dS, { name: "odS4" });
-        W.teil("ostdachN");
-        W.poly([[OX1 - d, OY0 - UE, TRAUFE], [OX0, OY0 - UE, TRAUFE], [xK, ym, O_FIRST], [OX1 - d, ym, O_FIRST]], innen,
-          dach({ fleder: [ox(3.6)].map((x) => [x, OY0 + 3.2, zD(OY1 + OY0 - (OY0 + 3.2))]) }), { name: "odN" });
-        /* Stufengiebel am rechten Ende */
-        const GO = stufengiebel(OY1 - OY0, TRAUFE, O_TAN, UE, 3, 1.0);
+        W.teil("adachHs");
+        W.poly([[OX0 + kV, OY1 + UE, TRAUFE], [OX1 - d, OY1 + UE, TRAUFE], [OX1 - d, ym, A_FIRST], [OX0, ym, A_FIRST]], innen, dach(), { name: "adHs" });
+        W.teil("adachHn");
+        W.poly([[OX1 - d, OY0 - UE, TRAUFE], [OX0 + kH, OY0 - UE, TRAUFE], [OX0, ym, A_FIRST], [OX1 - d, ym, A_FIRST]], innen,
+          dach({ fleder: [[ox(3.6), OY0 + 1.6, zOH(OY0 + 1.6)]] }), { name: "adHn" });
+        /* Kopfseite: der große Stufengiebel – vier Stufen mit Voluten, Rundbogen-Abschluss mit Wappen, Kugel */
+        const GO = stufengiebel(OY1 - OY0, TRAUFE, O_TAN, UE, 4, 1.15);
         const gO = { putz: PUTZ, el: [
-          ...reihe([ym + 3.0, ym + 1.9, ym - 1.9, ym - 3.0], (y) => ({ t: "f", p: [OX1, y, 12.7], w: 0.7, h: 1.15, form: "r", sprossen: [2, 3] })),
-          ...reihe([ym + 0.6, ym - 0.6], (y) => ({ t: "f", p: [OX1, y, 14.45], w: 0.62, h: 0.9, form: "r", sprossen: [1, 2] })),
-          { t: "f", p: [OX1, ym, 15.95], w: 0.5, h: 0.5, form: "o", sprossen: [1, 1] }
+          ...reihe([ym + 2.9, ym + 1.1, ym - 1.1, ym - 2.9], (y) => ({ t: "f", p: [OX1, y, 12.7], w: 0.72, h: 1.2, form: "r", sprossen: [2, 3] })),
+          ...reihe([ym + 0.65, ym - 0.65], (y) => ({ t: "f", p: [OX1, y, 14.55], w: 0.66, h: 1.05, form: "r", sprossen: [1, 2] })),
+          { t: "band", p: [OX1, ym, 14.2], w: 6.2, h: 0.16 }, { t: "band", p: [OX1, ym, 15.95], w: 3.4, h: 0.14 },
+          { t: "wappen", p: [OX1, ym, 16.2], w: 1.1, h: 1.55 }
         ] };
-        giebelScheibe(W, "ostgiebel", [OX1, OY1, 0], [0, -1], [1, 0], d, GO, gO);
-        figurKoerper(W, "ostkugel", OX1 - d / 2, ym, GO.top, 0.2, 0.42, KUGEL(0.18));
-        /* FASSUNG 812 — Xanders Fotos (vom Brunnen und vom Obermarkt): am Ende des Ostflügels steht über der Front ein
-           kleiner Stufengiebel, der wie der große Giebel zum Markt schaut. Zwerchgiebel mit eigenem kleinen Satteldach,
-           dessen First in das Hauptdach läuft. */
-        {
-          /* zb, zx0 … zR (First des Zwerchdachs), yR (wo er das Hauptdach trifft) stehen oben beim Hauptdach */
-          const GZ = stufengiebel(zb, TRAUFE, O_TAN, 0, 2, 0.62);
-          if (TRAUFE < W.zMax) {
-            const gZ = { putz: PUTZ, el: [
-              ...reihe([zx0 + 1.3, zx1 - 1.3], (x) => ({ t: "f", p: [x, OY1, 13.35], w: 0.72, h: 1.15, form: "r", sprossen: [2, 3] })),
-              { t: "f", p: [zxm, OY1, 15.2], w: 0.55, h: 0.8, form: "r", sprossen: [1, 2] },
-              { t: "band", p: [zxm, OY1, 14.0], w: zb - 0.8, h: 0.14 }
-            ] };
-            giebelScheibe(W, "zwerchgiebel", [zx0, OY1, 0], [1, 0], [0, 1], d, GZ, gZ);
-            W.teil("zwerchdach");
-            const innenZ = [zxm, yR + 0.8, TRAUFE + 1.2];
-            /* Dachflächen als Dreiecke oberhalb des Hauptdachs (die Kehle liegt genau auf ihm) */
-            W.poly([[zx0 + xE, yF, zE], [zxm, yF, zR], [zxm, yR, zR]], innenZ, dach(), { name: "zdW" });
-            W.poly([[zxm, yR, zR], [zxm, yF, zR], [zx1 - xE, yF, zE]], innenZ, dach(), { name: "zdO" });
-            figurKoerper(W, "zwerchkugel", zxm, OY1 - d / 2, GZ.top, 0.18, 0.4, KUGEL(0.16));
-          }
-        }
+        giebelScheibe(W, "kopfgiebel", [OX1, OY1, 0], [0, -1], [1, 0], d, GO, gO);
+        figurKoerper(W, "kopfkugel", OX1 - d / 2, ym, GO.top, 0.24, 0.5, KUGEL(0.22));
+        gaube(W, "gaubeHV", [ox(2.4), OY1 + UE], [0, 1], TRAUFE, O_TAN, 1.0, 1.2);
         for (const x of [ox(2.0), ox(5.2)]) gaube(W, "gaubeON" + x, [x, OY0 - UE], [0, -1], TRAUFE, O_TAN, 1.0, 1.2);
-        /* Türmchen am Anschluss zum Giebel (rechts vom großen Giebel) */
-        const tx = ox(1.0), ty = OY1 - 1.1, tb = 0.62, tz1 = 15.6;
-        const zAn = (y) => TRAUFE + (OY1 + UE - y) * O_TAN;
-        if (zAn(ty + tb) < W.zMax) {
-          W.teil("tuermchenR");
-          const G4 = [[tx - tb, ty + tb], [tx + tb, ty + tb], [tx + tb, ty - tb], [tx - tb, ty - tb]];
-          const innenT = [tx, ty, tz1 - 1];
-          for (let i = 0; i < 4; i++) {
-            const a = G4[i], b2 = G4[(i + 1) % 4];
-            const mx = (a[0] + b2[0]) / 2, my = (a[1] + b2[1]) / 2;
-            const We = wand({ putz: PUTZ, kranz: tz1 - 0.3, el: [{ t: "f", p: [mx, my, tz1 - 1.35], w: 0.55, h: 0.8, form: "b", sprossen: [1, 2], gewaende: 0.08, licht: 0.2 }] });
-            W.poly([[a[0], a[1], tz1], [b2[0], b2[1], tz1], [b2[0], b2[1], zAn(b2[1])], [a[0], a[1], zAn(a[1])]], innenT, We.malen, { leuchten: We.leuchten, name: "tr" + i });
-          }
-          W.poly(G4.map(([x, y]) => [x, y, tz1]), innenT, schiefer(), { name: "tro" });
-          figurKoerper(W, "tuermchenRhaube", tx, ty, tz1, 0.85, 2.0, drehkoerper([
+        /* rundes Türmchen vor der Kopfseite (auf dem Foto links neben dem großen Giebel) */
+        tuermchen("tuermchenR", ox(5.3), OY1 - 1.1, 0.62, 16.1, zOV,
+          (i, mx, my) => [{ t: "f", p: [mx, my, 16.1 - 1.35], w: 0.55, h: 0.8, form: "b", sprossen: [1, 2], gewaende: 0.08, licht: 0.2 }],
+          drehkoerper([
             { h0: 0, h1: 0.2, r: 0.85, farbe: SCHIEFER, n: 2 },
             { h0: 0.2, h1: 1.5, r: kurve(0.8, 0.05, (t) => Math.sin(t * Math.PI / 2)), farbe: SCHIEFER, n: 10, schnee: true }
-          ], { spitze: [1.45, 1.95, 0.09] }));
-        }
+          ], { spitze: [1.45, 1.95, 0.09] }), 0.85, 2.0);
       }
-
 
       /* ============ TURM ============ */
       {
@@ -1459,15 +1477,14 @@
         const fb = (x, y, z, extra) => fbM(pc(x, y, z), extra);
         const fd = (x, y) => ({ t: "f", p: pc(x, y, OG1w), w: 1.6, h: 1.65, form: "d", sprossen: [2, 3], fluegel: 1, verdach: "gerade" });
         const kellerC = (x, y) => Object.assign(keller(0, 0), { p: pc(x, y, 0.12) });
-        /* Front zum Markt: vier Achsen; vor den mittleren beiden der Balkon mit Balustrade (früher an der Westseite des
-           Giebelbaus, der jetzt am Turm anliegt) */
-        const xsS = [-1.8, -4.2, -6.6, -9.0], balkon = [-4.2, -6.6];
+        /* Front zum Markt: vier Achsen. FASSUNG 824 — der Balkon, der hier vor den mittleren Achsen hing, ist nach
+           Xanders Foto an die lange Seite von Flügel A gewandert (an C ist auf dem Foto keiner) */
+        const xsS = [-1.8, -4.2, -6.6, -9.0];
         const sued = { putz: PUTZ_W, rustika: Z_RUST, baender: bandW, kranz: TRAUFE_W - 0.45, el: [] };
         for (const x of xsS) {
           sued.el.push(fb(x, WY1, EGw, { gitter: true }), kellerC(x, WY1), fb(x, WY1, OG2w, { w: 1.25, h: 2.1, form: x === xsS[0] || x === xsS[3] ? "r" : "b", verdach: null }));
-          sued.el.push(balkon.includes(x) ? { t: "f", p: pc(x, WY1, 4.05), w: 1.05, h: 2.2, form: "r", verdach: "gerade", sprossen: [2, 4] } : fd(x, WY1));
+          sued.el.push(fd(x, WY1));
         }
-        for (const x of [-3.15, -4.75, -6.05, -7.65]) sued.el.push({ t: "konsole", p: pc(x, WY1, 3.75) });
         sued.el.push({ t: "rohr", p: pc(-0.45, WY1, 0), z0: 0.3, z1: TRAUFE_W - 0.3 }, { t: "rohr", p: pc(cx + 0.4, WY1, 0), z0: 0.3, z1: TRAUFE_W - 0.3 });
         /* Stirnseite am Ende (schaut schräg nach vorn links) */
         const west = { putz: PUTZ_W, rustika: Z_RUST, baender: bandW, kranz: TRAUFE_W - 0.45, el: [] };
@@ -1566,38 +1583,6 @@
           W.poly(G4.map(([x, y]) => pc(x, y, rz1)), innenR, schiefer(KUPFER), { name: "dro" });
           const hp = pc(rx, fy, 0);
           figurKoerper(W, "dachreiterhaube", hp[0], hp[1], rz1, 0.95, 2.0, DACHREITERHAUBE);
-        }
-        /* Balkon mit Balustrade und Kugelaufsätzen auf Konsolen vor den mittleren Achsen der Front */
-        if (Z_RUST < W.zMax) {
-          const xb0 = -7.8, xb1 = -3.0, yb = 1.0, bz0 = 3.75, bz1 = 4.05, bz2 = 5.0, th = 0.18;
-          const kastenC = (name, x0, y0, z0, x1, y1, z1, m, oben) => {
-            const Gk = [[x0, y1], [x1, y1], [x1, y0], [x0, y0]].map((p) => TC(p).slice(0, 2)), seiten = [m.sued, m.ost, m.nord, m.west];
-            W.prisma(name, Gk, z0, z1, (i) => seiten[i] || null, oben);
-          };
-          kastenC("balkonplatte", xb0, WY1, bz0, xb1, yb, bz1, { sued: { malen: sandMaler }, ost: { malen: sandMaler }, west: { malen: sandMaler } }, bodenMaler("#b9a888"));
-          const balM = (g, F) => {
-            const n = Math.max(2, Math.round(F.w / 0.2));
-            g.fillStyle = rgbS(hell(PI.hex(PUTZ), -0.25)); g.fillRect(-1, -1, F.w + 2, F.h + 2);
-            for (let i = 0; i < n; i++) {
-              const x = (i + 0.5) * F.w / n;
-              const gr = g.createLinearGradient(x - 0.07, 0, x + 0.07, 0);
-              gr.addColorStop(0, rgbS(hell(SAND, 0.15))); gr.addColorStop(1, rgbS(SAND_D));
-              g.fillStyle = gr;
-              g.beginPath(); g.moveTo(x - 0.04, 0.16); g.quadraticCurveTo(x - 0.1, F.h * 0.6, x - 0.06, F.h - 0.08); g.lineTo(x + 0.06, F.h - 0.08); g.quadraticCurveTo(x + 0.1, F.h * 0.6, x + 0.04, 0.16); g.closePath(); g.fill();
-            }
-            for (const t of [0, 1 / 3, 2 / 3, 1]) { g.fillStyle = rgbS(SAND); g.fillRect(Math.min(F.w - 0.24, Math.max(0, t * F.w - 0.12)), 0, 0.24, F.h); }
-            g.fillStyle = rgbS(hell(SAND, 0.2)); g.fillRect(-1, 0, F.w + 2, 0.15);
-            if (F.jahr === "winter") { g.fillStyle = "rgba(248,250,255,0.95)"; g.fillRect(-1, 0, F.w + 2, 0.06); }
-            else if (F.jahr !== "herbst" && F.px > 8) {
-              /* Blumen auf der Brüstung wie auf Xanders Panorama */
-              const rng = F.rng;
-              for (let x = 0.2; x < F.w - 0.2; x += 0.09) { g.fillStyle = rng() < 0.6 ? "#c8323a" : "#3f7a3a"; g.beginPath(); g.arc(x, -0.02 - rng() * 0.12, 0.05, 0, Math.PI * 2); g.fill(); }
-            }
-          };
-          kastenC("balkonbr", xb0, yb - th, bz1, xb1, yb, bz2, { sued: { malen: balM }, nord: { malen: balM } }, sandMaler);
-          kastenC("balkonbrW", xb0, WY1, bz1, xb0 + th, yb - th, bz2, { west: { malen: balM }, ost: { malen: balM } }, sandMaler);
-          kastenC("balkonbrO", xb1 - th, WY1, bz1, xb1, yb - th, bz2, { west: { malen: balM }, ost: { malen: balM } }, sandMaler);
-          for (const x of [xb0 + 0.1, xb0 + 1.7, xb0 + 3.2, xb1 - 0.1]) { const q = pc(x, yb - 0.09, 0); figurKoerper(W, "balkonkugel" + x, q[0], q[1], bz2, 0.2, 0.36, KUGEL(0.17)); }
         }
       }
 
