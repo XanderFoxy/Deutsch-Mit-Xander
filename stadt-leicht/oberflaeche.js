@@ -591,18 +591,26 @@
       b.classList.toggle("lk-gekauft", hat);
     }
   }
-  function autoKarte(s) {
+  /* FASSUNG 821 — XANDER: „wenn man bei Batmobil oder Viper klick dann muss ich die Möglichkeit geben sich das Auto schön
+     anzugucken". Mit ziel malt autoKarte ihre Knöpfe unten in die Auto-Schau (autoschau.js) statt in die Karte; „weg"
+     schließt dann die Schau. Ohne ziel gibt es in der Karte den Knopf „Anschauen". */
+  function autoKarte(s, ziel) {
     const AU = ST.autos, id = s[6], A = AU.ARTEN[id];
     if (leiste && !leiste.hidden) leisteZeigen(false);
     if (bauLeiste) bauLeisteZeigen(false);
     SZ.auswahl = null;
-    karte.hidden = false; karte.innerHTML = ""; karte._uhr = null;
+    const kt = ziel || karte;
+    if (ziel) karte.hidden = true;
+    kt.hidden = false; kt.innerHTML = ""; karte._uhr = null;
     const titel = el("div", "lk-karte-titel"), zeile = el("div", "lk-karte-zeile"), knoepfe = el("div", "lk-karte-knoepfe");
-    karte.append(titel, zeile, knoepfe);
+    kt.append(titel, zeile, knoepfe);
     titel.textContent = A.name;
+    const weg = () => { if (ziel && ST.autoschau) ST.autoschau.schliessen(); else karte.hidden = true; };
     const zu = knopf("kreuz", "Schließen", () => { karte.hidden = true; }, "lk-klein");
     const textKnopf = (html, fn, cls) => { const b = el("button", "lk-text-knopf" + (cls ? " " + cls : ""), html); b.type = "button"; b.addEventListener("click", (e) => { e.stopPropagation(); fn(b); }); return b; };
-    const hin = () => { const a = AU.auto(id); if (!a) return; AU.folge = id; L().fliegeZu(a.x, a.y, Math.max(K.s, 16 * K.dpr), 700); karte.hidden = true; };
+    const schau = !ziel && ST.autoschau ? textKnopf("<span>Anschauen</span>", () => { karte.hidden = true; autoSchau(s); }, "lk-anschauen-knopf") : null;
+    const dazu = (...k) => knoepfe.append(...k.concat(schau ? [schau] : [], ziel ? [] : [zu]));
+    const hin = () => { const a = AU.auto(id); if (!a) return; weg(); AU.folge = id; L().fliegeZu(a.x, a.y, Math.max(K.s, 16 * K.dpr), 700); karte.hidden = true; };
     if (!AU.hat(id)) {
       zeile.textContent = "Preis " + A.preis + " Punkte · danach fährt " + A.er + " durch deine Stadt";
       const kauf = textKnopf(SYM.stern + "<span>Kaufen · " + A.preis + " P.</span>", (b) => {
@@ -610,22 +618,27 @@
         AU.kaufen(id).then((r) => {
           ansage(A.name + " gekauft – " + A.er + " fährt los" + (r && r.vorlaeufig ? " (Preis wird später abgebucht)" : ""));
           if (r && r.punkte != null && L().ich) L().ich.punkte = r.punkte;
-          autoKarte(s); autoKartenText(); L().unruhe = 2;
+          autoKarte(s, ziel); autoKartenText(); L().unruhe = 2;
+          if (ziel && ST.autoschau) ST.autoschau.auffrischen();
         }).catch((e) => { b.disabled = false; ansage((e && (e.message || e.hint)) || "Geht gerade nicht"); });
       }, "lk-kaufen-knopf");
       kauf.dataset.preis = A.preis;
       if (ST.spiel.beispiel || !ST.spiel.angemeldet) { kauf.disabled = true; kauf.title = "In der Beispielstadt wird nicht gekauft – bitte anmelden"; }
       const probe = textKnopf("<span>Probefahrt</span>", () => { AU.probefahrt(id); ansage("Probefahrt: " + A.name + " fährt 90 Sekunden"); setTimeout(hin, 400); }, "lk-probe-knopf");
-      knoepfe.append(kauf, probe, zu);
+      dazu(kauf, probe);
       return;
     }
     if (AU.geparkt(id)) {
       zeile.textContent = "Steht abgestellt – tippe es an, um loszufahren.";
-      knoepfe.append(textKnopf("<span>Losfahren</span>", () => { losfahrenVonDeko(id); karte.hidden = true; }), zu);
+      dazu(textKnopf("<span>Losfahren</span>", () => { weg(); losfahrenVonDeko(id); karte.hidden = true; }));
       return;
     }
     zeile.textContent = "Dein Auto fährt durch die Stadt.";
-    knoepfe.append(textKnopf("<span>Hinfahren</span>", hin), textKnopf("<span>Abstellen</span>", () => { setzenBeginnen(s); geist.autoParken = id; }), zu);
+    dazu(textKnopf("<span>Hinfahren</span>", hin), textKnopf("<span>Abstellen</span>", () => { weg(); setzenBeginnen(s); geist.autoParken = id; }));
+  }
+  /* FASSUNG 821 — die Auto-Schau öffnen; unten stehen die Knöpfe der Karte */
+  function autoSchau(s) {
+    if (!ST.autoschau || !ST.autoschau.oeffnen(s[6], { knoepfe: (ziel) => autoKarte(s, ziel) })) autoKarte(s);
   }
   /* ein abgestelltes Auto (Schmuck) fährt wieder los – dort, wo es stand */
   function losfahrenVonDeko(id, dieses) {
@@ -719,8 +732,10 @@
     if (leiste && !leiste.hidden) { leisteZeigen(false); return; }
     if (bauLeiste) { bauLeisteZeigen(false); return; }
     /* FASSUNG 815 — Tipp auf ein fahrendes Auto: seine Karte (im großen Bild) */
+    /* FASSUNG 821 — XANDER: „wenn man bei Batmobil oder Viper klick dann muss ich die Möglichkeit geben sich das Auto
+       schön anzugucken": der Tipp öffnet gleich die Auto-Schau (autoschau.js), unten mit den Knöpfen der Karte */
     const fa = ST.autos && !document.body.classList.contains("lk-mini-modus") && ST.autos.treffer(px, py);
-    if (fa) { const s = SCHMUCK.find((x) => x[6] === fa.id); if (s) { autoKarte(s); return; } }
+    if (fa) { const s = SCHMUCK.find((x) => x[6] === fa.id); if (s) { autoSchau(s); return; } }
     const o = SZ.treffer(px, py, (o) => o.art !== "natur" || o.rand !== 1);
     if (o && (o.art === "haus" || o.art === "wunder" || o.art === "eigen" || o.name)) { waehlen(o); return; }
     /* FASSUNG 809 — XANDER: „Waldstück … wenn man auf die Bäume klickt … einen Effekt". Ein Baum raschelt: Blätter
