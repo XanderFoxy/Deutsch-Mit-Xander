@@ -2674,6 +2674,7 @@ window.LiveChat = (function () {
       else localStorage.removeItem(BILD_SCHLUESSEL);
     } catch (e) {}
     if (a && !/^emoji:/i.test(a) && !aufkleberPfad(a)) bildGemerkt(a);
+    bildGeaendertUm = Date.now();   // FASSUNG 811 — das neue Foto fährt 20 s lang voll mit
     senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn, bild: a });
     melden();
     return true;
@@ -4113,6 +4114,7 @@ window.LiveChat = (function () {
     if (spielKennung && !nutzlast.spiel) nutzlast.spiel = spielKennung;
     /* Zum Nachmessen: die Pakete abfangen, ohne dass ein Raum offen
        sein muss. Im Betrieb ist der Haken immer null. */
+    nutzlast = bildKuerzen(nutzlast);
     if (pruefSenderHaken) { try { pruefSenderHaken(nutzlast); } catch (e) {} }
     if (!kanal) {
       if (wartetAufLeitung(nutzlast)) {
@@ -4127,9 +4129,74 @@ window.LiveChat = (function () {
     }
   }
 
+  /* =========================================================
+     FASSUNG 811 — DAS PROFILFOTO FÄHRT NUR NOCH EINMAL MIT
+     ---------------------------------------------------------
+     XANDER: „Wenn andere Leute mit dazu kommen … wie kann es sein,
+     dass die Webseite sich schwerer anfühlt wenn Leute reinkommen …
+     das funktioniert auch bei HelloTalk".
+     GEFUNDEN: Ein Foto aus der Galerie ist eine Datenadresse (bis
+     140 000 Zeichen). Sie fuhr in JEDEM Paket mit – im Puls alle
+     sechs Sekunden, in jeder Chatzeile, bei jedem Stummschalten –
+     von jedem an alle. Bei fünf Leuten liefen so dauernd rund
+     100 KB je Sekunde nur für Fotos durch die Leitung, und Chat und
+     Verbindungsaufbau standen dahinter in der Schlange.
+     JETZT: Ein Foto geht voll nur beim Hereinkommen („hallo",
+     „auch-da"), 20 s nach dem Ändern und auf Nachfrage („bild-voll").
+     Sonst fährt nur sein Fingerabdruck (bildH) mit; der Empfänger
+     setzt das Foto aus seinem Lager wieder ein und fragt einmal nach,
+     wenn es ihm fehlt. Netzadressen und Aufkleber sind kurz und
+     fahren weiter wie bisher. */
+  var BILD_VOLL_ARTEN = { "hallo": 1, "auch-da": 1, "bild-voll": 1 };
+  var bildGeaendertUm = 0, fingerFuer = "", fingerWert = "";
+  var bildLager = {}, bildGefragt = {}, bildAntwortUm = {};
+  function bildFinger(s) {
+    if (s === fingerFuer) return fingerWert;
+    var h = 2166136261, schritt = Math.max(1, Math.floor(s.length / 4096));
+    for (var i = 0; i < s.length; i += schritt) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    fingerFuer = s; fingerWert = s.length.toString(36) + "-" + (h >>> 0).toString(36);
+    return fingerWert;
+  }
+  function bildKuerzen(n) {
+    if (!n || typeof n.bild !== "string" || n.bild.length < 2000 || !/^data:image\//i.test(n.bild)) return n;
+    var aus = {};
+    for (var k in n) if (Object.prototype.hasOwnProperty.call(n, k)) aus[k] = n[k];
+    aus.bildH = bildFinger(n.bild);
+    if (!BILD_VOLL_ARTEN[n.art] && Date.now() - bildGeaendertUm > 20000) delete aus.bild;
+    return aus;
+  }
+  /* Empfang: das Foto aus dem Lager wieder einsetzen – oder einmal nachfragen */
+  function bildEinsetzen(n) {
+    var k = n.von + "|" + n.bildH;
+    if (n.bild) { bildLager[k] = n.bild; return; }
+    if (bildLager[k]) { n.bild = bildLager[k]; return; }
+    if (!bildGefragt[k] || Date.now() - bildGefragt[k] > 15000) {
+      bildGefragt[k] = Date.now();
+      senden({ art: "bild-bitte", an: n.von, h: n.bildH });
+    }
+  }
+
   function empfangen(n) {
     if (!n || n.von === zustand.ichId) return;             // die eigene Post nicht lesen
     if (n.an && n.an !== zustand.ichId) return;            // nicht für uns
+    /* FASSUNG 811 — Profilfoto nur als Fingerabdruck (siehe bildKuerzen) */
+    if (typeof n.bildH === "string" && n.bildH) bildEinsetzen(n);
+    if (n.art === "bild-bitte") {
+      if (zustand.ichBild && (!bildAntwortUm[n.von] || Date.now() - bildAntwortUm[n.von] > 10000)) {
+        bildAntwortUm[n.von] = Date.now();
+        senden({ art: "bild-voll", an: n.von, name: zustand.ichName, bild: zustand.ichBild });
+      }
+      return;
+    }
+    if (n.art === "bild-voll") {
+      if (typeof n.bild === "string" && n.bild) {
+        personMerken(n.von, n.name, n.bild);
+        /* Zeilen, die vor der Antwort ankamen, bekommen ihr Foto nachträglich */
+        zustand.nachrichten.forEach(function (z) { if (z && z.von === n.von && !z.bild) z.bild = n.bild; });
+        melden();
+      }
+      return;
+    }
 
     /* Jedes Lebenszeichen zählt — auch eine Kerze oder ein Satz im
        Chat sagt: der ist noch da. */

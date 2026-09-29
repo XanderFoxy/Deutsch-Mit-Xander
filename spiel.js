@@ -12958,9 +12958,14 @@
      entscheiden kann". Nur ein Link (öffnet stadt-leicht.html in einem neuen
      Tab) – hier wird nichts von der neuen Stadt geladen. Wenn Xander sie
      freigibt, bekommt jeder den Knopf (LEICHT_FREI in supabase-config.js). */
+  /* FASSUNG 811 — XANDER: „du kannst für die Beta Tester die Stadt freischalten die neue ich möchte, dass Emmy das auch
+     mal sieht und ihre Meinung mal dazu sagen kann". Freigabe über den Schalter „stadt_neu": der Betreiber, alle
+     Beta-Tester und wer einzeln für dieses Spiel eingeladen ist (feature_flags „beta:stadt_neu" – dort steht Emy).
+     Für alle erst, wenn der Schalter selbst an ist oder LEICHT_FREI gesetzt wird. */
   function neueStadtErlaubt() {
     var be = BE(), darf = false;
     try { darf = Boolean(be && be.isOwner && be.isOwner()); } catch (e) {}
+    try { if (!darf && be && be.isFeatureOn) darf = Boolean(be.isFeatureOn("stadt_neu")); } catch (e) {}
     return darf || Boolean(window.LEICHT_FREI);
   }
   function stadtNeu() {
@@ -12979,7 +12984,7 @@
     if (!neueStadtErlaubt() || dorfBesuchStand()) return "";
     var neu = stadtNeu();
     return '<button type="button" data-s="stadtversion" data-v="alt" class="sp-stadt-version' + (neu ? "" : " sp-an") + '" aria-pressed="' + !neu + '">Alte Version</button>'
-      + '<button type="button" data-s="stadtversion" data-v="neu" class="sp-stadt-version' + (neu ? " sp-an" : "") + '" aria-pressed="' + neu + '">Neue Version' + (window.LEICHT_FREI ? "" : " (nur du)") + "</button>"
+      + '<button type="button" data-s="stadtversion" data-v="neu" class="sp-stadt-version' + (neu ? " sp-an" : "") + '" aria-pressed="' + neu + '">Neue Version' + (window.LEICHT_FREI ? "" : " (Beta)") + "</button>"
       + (neu ? '<button type="button" data-s="stadtvoll" class="sp-stadt-voll">Vollbild</button>' : "")
       /* FASSUNG 809 — XANDER: „Mir fehlen noch die items zum schmücken die finde ich hier in der kleinen Map noch gar nicht" */
       /* FASSUNG 817 — XANDER (Funk 207): „soll man dazu nicht ins landscape format gezwungen werden … ich möchte es aus diesem

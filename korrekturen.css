@@ -35163,3 +35163,25 @@ body > .lc-tafel-mappe { position: fixed; inset: auto; left: 12px; right: 12px; 
 .lc-tipps .lc-tipp { color: #f3ece2; }
 /* FASSUNG 812 — Batmobil und Dodge Viper aus dem 3D-Modell: die Leinwand liegt unter den Gesichtern (die Autos fahren hinter den Bildern der anderen durch). */
 .lc-auftritt .lc-auftritt-3d { position: absolute; z-index: 1; pointer-events: none; display: block; }
+
+/* FASSUNG 811 — XANDER: „dieser Magic Button ist beim iPhone wie Würfel angezeigt und nicht als Quadrat und nicht wie
+   ein Kreis" · „Es ist alles so extrem hängt, dass die App gar nicht mehr flüssig läuft".
+   Safari schneidet mit overflow:hidden + border-radius Kinder nicht ab, die sich per Grafikkarte drehen: man sah das
+   drehende QUADRAT des Farbwirbels (::after, 168 % groß) – wie einen kreiselnden Würfel. Jetzt schneidet der Wirbel sich
+   selbst kreisrund zu (clip-path: Kreis in seiner Mitte, genau so groß wie der Knopf – die Drehung ändert daran nichts).
+   Und sparsamer: der Lichtkranz war eine box-shadow-Animation (60 × je Sekunde neu malen) – jetzt steht er still; die
+   zweite, gegenläufige Schicht (Weichzeichner + Mischmodus in jedem Bild) entfällt. Es dreht sich nur noch der Wirbel. */
+.lc-leiste .lc-rundknopf.lc-lk.lc-magic {
+  animation: none;
+  box-shadow: 0 1px 1px rgba(255, 255, 255, .4) inset, 0 0 13px 2px rgba(162, 28, 255, .7);
+}
+.lc-leiste .lc-rundknopf.lc-lk.lc-magic::after {
+  /* inset −34 % → 168 % Kantenlänge; der Knopf ist ein Kreis mit Radius 50/168 = 29,76 % davon */
+  -webkit-clip-path: circle(29.76% at 50% 50%); clip-path: circle(29.76% at 50% 50%);
+  filter: none;   /* der Farbverlauf ist von sich aus weich – kein Weichzeichner in jedem Bild */
+  will-change: transform;
+}
+.lc-leiste .lc-rundknopf.lc-lk.lc-magic::before {
+  /* ohne Weichzeichner zeigte die zweite Schicht einen harten Ring – sie entfällt */
+  display: none; animation: none;
+}

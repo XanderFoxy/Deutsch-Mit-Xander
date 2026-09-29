@@ -56383,7 +56383,13 @@
     });
     L.warten = fetch(lcAuto3dPfad(C.blatt + ".json")).then((r) => { if (!r.ok) throw new Error("fehlt"); return r.json(); })
       .then((M) => { L.M = M; return Promise.all([Promise.all(M.blaetter.map(bild)), bild(M.schatten)]); })
-      .then((b) => { L.blaetter = b[0]; L.schatten = b[1]; L.fertig = true; })
+      .then((b) => {
+        L.blaetter = b[0]; L.schatten = b[1];
+        /* FASSUNG 811 — einmal vorab malen: das erste Entpacken der großen Blätter (2000 × 4000 Bildpunkte) kostete
+           sonst mitten im Auftritt einen Ruck („die hängen total nach … kommen nicht sofort"). */
+        try { const w = document.createElement("canvas"); w.width = w.height = 16; const wg = w.getContext("2d"); L.blaetter.concat([L.schatten]).forEach((i) => wg.drawImage(i, 0, 0, 16, 16)); } catch (e) {}
+        L.fertig = true;
+      })
       .catch(() => { L.fehler = true; if (lcAuto3dLager[art] === L) delete lcAuto3dLager[art]; });
     lcAuto3dLager[art] = L;
     return L;
@@ -57032,6 +57038,22 @@
   /* FASSUNG 812 — wer selbst Batmobil oder Viper gewählt hat, bekommt die Drehblätter schon in
      Ruhe vorab (sonst wartet der eigene Einzug beim ersten Mal auf das Netz). */
   setTimeout(() => { try { const a = window.LiveChat && LiveChat.auftritt ? LiveChat.auftritt() : ""; if (LC_AUTO3D[a]) lcAuto3dLaden(a); } catch (e) {} }, 4000);
+  /* FASSUNG 811 — XANDER: „die Einstiegsanimation von dem Batmobil und dem Dodge Viper … hängen total nach … die kommen nicht
+     on Spot". Fährt ein ANDERER mit Viper oder Batmobil herein, lud jedes Gerät die Blätter erst in diesem Augenblick (bis
+     zu 1 MB je Auto) – der Wagen kam zu spät. Jetzt holt jedes Gerät beide Autos in Ruhe vorab, sobald es im Klassenzimmer
+     ist (einmal, danach liegen sie im Zwischenspeicher der Seite). */
+  let lcAuto3dVorab = false;
+  function lcAuto3dVorladen() {
+    if (lcAuto3dVorab) return;
+    lcAuto3dVorab = true;
+    const los = () => Object.keys(LC_AUTO3D).forEach((a, i) => setTimeout(() => { try { lcAuto3dLaden(a); } catch (e) {} }, i * 1500));
+    if (window.requestIdleCallback) setTimeout(() => requestIdleCallback(los, { timeout: 4000 }), 6000); else setTimeout(los, 8000);
+  }
+  window.DMA_AUTO3D_VORLADEN = (a) => (a ? lcAuto3dLaden(a) : (lcAuto3dVorladen(), null));
+  (function lcVorabAnmelden(n) {
+    if (window.LiveChat && LiveChat.beiAenderung) { LiveChat.beiAenderung((l) => { if (l && l.lage === "drin") lcAuto3dVorladen(); }); return; }
+    if (n < 40) setTimeout(() => lcVorabAnmelden(n + 1), 500);   // livechat.js kommt manchmal nach app.js
+  })(0);
   function lcAuftrittMenue(platz) {
     lcPlatzMenueZu();
     let jetzt = "";

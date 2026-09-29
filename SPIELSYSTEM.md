@@ -2251,3 +2251,15 @@ XANDER (Funk 206): „links den Turm und rechts das Haus … die Rückseite von 
   - Die kleine Karte ist ein Abbild des Überblicks: jede Kachel zeigt genau ihr Neuntel bis an den Rand.
   - Doppeltipp schaltet Überblick → Nähe → zweite Stufe (7-fach, große Bilder erst dann) → Überblick.
   - Schmücken und Bauen gehen im kleinen Rahmen ohne Vollbild.
+- **Leitung bei vielen Leuten** (`livechat.js`, Sonde `pruefe-811-leitung.js`). XANDER: „wie kann es sein, dass die Webseite sich schwerer anfühlt wenn Leute reinkommen".
+  - Vorher fuhr ein Galeriefoto (Datenadresse, bis 140 000 Zeichen) in jedem Paket mit: im Puls alle 6 s, in jeder Chatzeile, bei jedem Stummschalten.
+  - Jetzt geht es voll nur bei `hallo`/`auch-da`, 20 s nach dem Ändern und auf Nachfrage (`bild-bitte` → `bild-voll`, höchstens alle 10 s). Sonst fährt nur der Fingerabdruck `bildH` mit, und der Empfänger setzt das Foto aus seinem Lager ein.
+  - Gegenprobe: Mit dem alten Code ist die Sonde rot (Puls mit 69 950 Zeichen statt 192).
+  - Das Grundproblem bleibt: Jedes Handy schickt sein Bild einzeln an jeden. Dafür braucht es einen Medienserver (SFU); Frage an Xander im Walkie 311 (Cloudflare Realtime).
+- **Magic-Knopf** (`korrekturen.css`):
+  - Auf dem iPhone sah man ein drehendes Quadrat („wie Würfel"), weil Safari drehende Kinder mit `overflow:hidden` + `border-radius` nicht abschneidet. Der Farbwirbel schneidet sich jetzt selbst kreisrund (`clip-path`).
+  - Der Lichtkranz ist nicht mehr als `box-shadow` animiert, und die zweite Schicht mit Weichzeichner und Mischmodus entfällt. Leerlauf-Rechenzeit gemessen: 66 → 48 ms je Sekunde.
+- **Viper/Batmobil-Auftritt** (`app.js`):
+  - Im Klassenzimmer holt jedes Gerät beide Drehblätter im Leerlauf vorab und entpackt sie einmal. Vorher lud jedes Gerät sie erst, wenn jemand hereinfuhr.
+  - Erstes Bild gemessen (vierfach gedrosselt): 1,2 s → 7 ms.
+- **Neue Stadt für Beta-Tester**: `neueStadtErlaubt()` fragt jetzt `isFeatureOn("stadt_neu")` ab. Damit sehen sie der Betreiber, alle Beta-Tester und die einzeln Eingeladenen (`feature_flags["beta:stadt_neu"]`, dort steht Emy). Der Knopf heißt „Neue Version (Beta)". Für alle ist sie erst frei, wenn der Schalter selbst an ist.
