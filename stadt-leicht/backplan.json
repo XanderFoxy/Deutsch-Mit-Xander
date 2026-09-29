@@ -1845,6 +1845,99 @@
     "gross": 56,
     "klein": 18
    }
+  },
+  {
+   "bild": "g_windmuehle",
+   "id": "windmuehle",
+   "saat": 7,
+   "variante": "ohne",
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "bau_windmuehle",
+   "id": "windmuehle",
+   "saat": 7,
+   "variante": "ohne",
+   "gier": [
+    0,
+    90,
+    180,
+    270
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "g_windfluegel",
+   "id": "windmuehle",
+   "saat": 7,
+   "variante": "fluegel",
+   "phasen": 12,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 28,
+    "klein": 14
+   }
   }
  ],
  "leute": [

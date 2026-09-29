@@ -50,7 +50,7 @@ def main():
     vz = json.load(open(VZ))
     neu = 0
     # FASSUNG 807 — auch die Baustellenbilder (_m) bekommen Zwerge (_n): im kleinen Rahmen sieht man den Bau wachsen.
-    for k in [k for k in vz if k.endswith("_k") or k.endswith("_m")]:
+    for k in [k for k in vz if (k.endswith("_k") or k.endswith("_m")) and not k.startswith("g_windfluegel_")]:
         m = vz[k]
         basis = k[:-2]
         zk = basis + ("_z" if k.endswith("_k") else "_n")
@@ -107,6 +107,24 @@ def main():
         z = dict(m, zw=zw, zh=zh, ax=round(m["ax"] * zw / m["zw"], 1), ay=round(m["ay"] * zh / m["zh"], 1), s=round(m["s"] * zw / m["zw"], 3), n=len(spalten))
         if bl: z["bl"] = bl
         if m.get("l"): z["l"] = [[l[0], round(l[1] * zw / m["zw"], 1), round(l[2] * zh / m["zh"], 1), round(l[3] * zw / m["zw"], 1)] + list(l[4:]) for l in m["l"]]
+        if vz.get(zk) != z:
+            vz[zk] = z; neu += 1
+    # FASSUNG 812 — XANDER: „Vergiss die Windmühle nicht. Ich will den selben Look haben." Die Drehblätter der Flügel
+    # (g_windfluegel_…_k: 12 Stellungen einer Vierteldrehung) bekommen im kleinen Rahmen nur jede dritte Stellung (4 Bilder,
+    # 22,5° Schritt – weich überblendet) und etwas stärkere Verdichtung: so bleibt der Rahmen unter seinen 300 KB (Sonde 799).
+    for k in [k for k in vz if k.startswith("g_windfluegel_") and k.endswith("_k")]:
+        m = vz[k]; zk = k[:-2] + "_z"
+        q = os.path.join(ORDNER, k + ".webp"); ziel = os.path.join(ORDNER, zk + ".webp")
+        if not os.path.exists(q): continue
+        n = m.get("n", 1); zw0 = m["w"] // n; F = min(0.8, max(0.3, ZIEL_S / float(m["s"])))
+        spalten = list(range(0, n, 3)) if n % 3 == 0 else list(range(n))
+        zw, zh = max(1, round(zw0 * F)), max(1, round(m["h"] * F))
+        if not (os.path.exists(ziel) and os.path.getmtime(ziel) >= os.path.getmtime(q)):
+            im = Image.open(q).convert("RGBA")
+            neu_im = Image.new("RGBA", (zw0 * len(spalten), im.height), (0, 0, 0, 0))
+            for i, sp in enumerate(spalten): neu_im.paste(im.crop((sp * zw0, 0, (sp + 1) * zw0, im.height)), (i * zw0, 0))
+            neu_im.resize((zw * len(spalten), zh), Image.LANCZOS).save(ziel, "WEBP", quality=60, alpha_quality=40, method=6)
+        z = dict(m, w=zw * len(spalten), h=zh, n=len(spalten), ax=round(m["ax"] * zw / zw0, 1), ay=round(m["ay"] * zh / m["h"], 1), s=round(m["s"] * zw / zw0, 3))
         if vz.get(zk) != z:
             vz[zk] = z; neu += 1
     if neu:

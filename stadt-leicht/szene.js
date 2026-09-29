@@ -421,6 +421,7 @@
         g.drawImage(img, e.X - m.ax * k, e.Y - m.ay * k, m.w * k, m.h * k);
       }
       g.globalAlpha = 1;
+      if (ST.windmuehle) ST.windmuehle.nach(g, e, t, Z);   // FASSUNG 812 — die drehenden Flügel der Windmühle (windmuehle.js)
       if (e.licht) lichtMalen({ X: e.X, Y: e.Y, k: e.lk, meta: e.licht, o: e.o }, Z, t, false, 1);
       if (e.o.geist) auswahlRahmen(e);
       leuteMalen(i);
