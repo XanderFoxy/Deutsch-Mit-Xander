@@ -39,6 +39,10 @@
     kaserne: [[12, 10], 12], gefaengnis: [[9, 9], 15], bergwerk: [[12, 12], 16],
     brauerei: [[12, 10], 15], bibliothek: [[12, 10], 13], krankenhaus: [[12, 10], 13], labor: [[10, 10], 12] };
   for (const k in EIGEN) D.BILD[k] = ["g_" + k, "bau_" + k, EIGEN[k][0], EIGEN[k][1]];
+  /* FASSUNG 818 — XANDER: „ich möchte dieses höhlenartige haben dass man instinktiv weiß da geht's in das Bergwerk
+     hinein". Das Bergwerk ist wieder ein Felshügel mit Stolleneingang, Gleis und Lore (Modell bergstollen, 13 × 13 m);
+     das Fördergerüst steht klein oben auf der Kuppe. */
+  D.BILD.bergwerk = ["g_bergstollen", "bau_bergstollen", [13, 13], 12];
   for (const k in D.GEBAEUDE) if (!D.BILD[k]) D.BILD[k] = ERKER[k] ? ["g_" + k, "bau_fachwerkerker", [8, 12], 13] : ["g_" + k, "bau_fachwerkhaus", [10.4, 9.6], 14.2];
   /* Stufe 1–3: kleiner, mittel, voll (wie im Spiel 0,82 / 0,92 / 1,02) */
   D.STUFE = [0.86, 0.94, 1.0];
@@ -542,7 +546,8 @@
      einiges im Bau – so sieht man jede Phase */
   D.beispiel = function () {
     const dorf = {}, t = Date.now(), iso = (ms) => new Date(t + ms).toISOString();
-    const st = { rathaus: 3, baeckerei: 3, schule: 2, gasthaus: 3, flickstube: 1, schmiede: 2, gefaengnis: 1, bibliothek: 2, brauerei: 3, kaserne: 2, muehle: 3, huehnerstall: 1, krankenhaus: 2, kuhstall: 2 };
+    /* FASSUNG 818 — auch das Bergwerk (Felshügel mit Stolleneingang) steht in der Vorschau */
+    const st = { rathaus: 3, baeckerei: 3, schule: 2, gasthaus: 3, flickstube: 1, schmiede: 2, gefaengnis: 1, bibliothek: 2, brauerei: 3, kaserne: 2, muehle: 3, huehnerstall: 1, krankenhaus: 2, kuhstall: 2, bergwerk: 2 };
     for (const k in st) dorf[k] = { stufe: st[k], lp: 20 * st[k] };
     return {
       id: "beispiel", name: "Beispiel", dorf_name: "Winterhausen", dorf: dorf, dorf_plan: {},

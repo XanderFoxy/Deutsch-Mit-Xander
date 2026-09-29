@@ -149,7 +149,11 @@
     if (this.blick(nrm) < 0) return;
     const it = { art: 2, s: sch, d: this.tiefe([xs, y, z]) + 0.02, x: xs, y: y, z: z, r: r, speichen: o.speichen == null ? 12 : o.speichen,
       farbe: rgb(this.licht(nrm, o.farbe || [150, 28, 24])), reifen: rgb(this.licht(nrm, [64, 64, 66])), kante: rgb(this.licht(nrm, [226, 226, 222])),
-      dunkel: rgb(this.licht(nrm, (o.farbe || [150, 28, 24]).map((v) => v * 0.55))), gegen: o.gegen, kurbel: o.kurbel };
+      dunkel: rgb(this.licht(nrm, (o.farbe || [150, 28, 24]).map((v) => v * 0.55))), gegen: o.gegen, kurbel: o.kurbel,
+      /* FASSUNG 818 — Radstellung (Speichen und Gegengewicht drehen sich mit), Reifen- und Kantenfarbe wählbar */
+      dreh: o.dreh || 0 };
+    if (o.reifen) it.reifen = rgb(this.licht(nrm, o.reifen));
+    if (o.kante) it.kante = rgb(this.licht(nrm, o.kante));
     this.t.push(it);
   };
   /* Scheibe mit Normale n (Puffer, Lampen, Rauchkammertür) */
@@ -167,6 +171,14 @@
     const m = pts[Math.floor(pts.length / 2)], m0 = pts[Math.max(0, Math.floor(pts.length / 2) - 1)];
     const mm = [(m[0] + m0[0]) / 2, (m[1] + m0[1]) / 2, (m[2] + m0[2]) / 2];
     this.t.push({ art: 1, s: o.schicht != null ? o.schicht : 3, d: this.tiefe(mm) + (o.bias || 0), pts: pts, b: breite, f: typeof farbe === "string" ? farbe : rgb(farbe) });
+  };
+  /* FASSUNG 818 — Nieten: Punkte auf einer Fläche mit Normale n (nur wenn sie zum Auge zeigt) */
+  M.nieten = function (pts, r, farbe, o) {
+    o = o || {};
+    if (o.n && this.blick(o.n) < 0.05) return;
+    const m = pts[Math.floor(pts.length / 2)];
+    const f = o.n ? this.licht(o.n, farbe) : farbe;
+    this.t.push({ art: 3, s: o.schicht != null ? o.schicht : 3, d: this.tiefe(m) + (o.bias || 0), pts: pts, r: r, f: rgb(f), glanz: rgb(f.map((v) => Math.min(255, v * 1.6 + 30))) });
   };
   M.malen = function (g) {
     const s = this.P.s;
@@ -186,6 +198,11 @@
         if (t.linien) for (const l of t.linien) linie([l[0], l[1]], l[2], l[3]);
       } else if (t.art === 1) {
         linie(t.pts, t.b, t.f);
+      } else if (t.art === 3) {
+        /* FASSUNG 818 — Nietreihen: kleine runde Köpfe mit Glanzpunkt */
+        const r = Math.max(0.45, t.r * s);
+        if (r < 0.6) continue;
+        for (const p of t.pts) { const q = this.bild(p); g.fillStyle = t.f; g.beginPath(); g.arc(q[0], q[1], r, 0, TAU); g.fill(); if (r > 1.2) { g.fillStyle = t.glanz; g.beginPath(); g.arc(q[0] - r * 0.3, q[1] - r * 0.3, r * 0.4, 0, TAU); g.fill(); } }
       } else if (t.art === 2) {
         /* Radscheibe: Reifen, rote Scheibe mit Speichen, Nabe, weiße Kante */
         const ring = (rr, fn) => { g.beginPath(); for (let i = 0; i <= 24; i++) { const u = i / 24 * TAU, q = this.bild([t.x, t.y + Math.cos(u) * rr, t.z + Math.sin(u) * rr]); if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); } g.closePath(); fn(); };
@@ -196,7 +213,7 @@
           g.strokeStyle = t.dunkel; g.lineWidth = Math.max(0.5, 0.045 * s);
           g.beginPath();
           for (let i = 0; i < t.speichen; i++) {
-            const u = i / t.speichen * TAU + 0.2, a = this.bild([t.x, t.y + Math.cos(u) * t.r * 0.2, t.z + Math.sin(u) * t.r * 0.2]), b = this.bild([t.x, t.y + Math.cos(u) * t.r * 0.8, t.z + Math.sin(u) * t.r * 0.8]);
+            const u = i / t.speichen * TAU + 0.2 + t.dreh, a = this.bild([t.x, t.y + Math.cos(u) * t.r * 0.2, t.z + Math.sin(u) * t.r * 0.2]), b = this.bild([t.x, t.y + Math.cos(u) * t.r * 0.8, t.z + Math.sin(u) * t.r * 0.8]);
             g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]);
           }
           g.stroke();
@@ -204,7 +221,7 @@
         if (t.gegen) {
           /* Gegengewicht: dunkler Halbmond */
           g.fillStyle = t.dunkel; g.beginPath();
-          for (let i = 0; i <= 10; i++) { const u = Math.PI * 0.95 + i / 10 * Math.PI * 1.1, q = this.bild([t.x, t.y + Math.cos(u) * t.r * 0.8, t.z + Math.sin(u) * t.r * 0.8]); if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }
+          for (let i = 0; i <= 10; i++) { const u = Math.PI * 0.95 + i / 10 * Math.PI * 1.1 + t.dreh, q = this.bild([t.x, t.y + Math.cos(u) * t.r * 0.8, t.z + Math.sin(u) * t.r * 0.8]); if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }
           g.closePath(); g.fill();
         }
         ring(t.r * 0.2, () => { g.fillStyle = t.dunkel; g.fill(); });

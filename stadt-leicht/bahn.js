@@ -27,6 +27,26 @@
    Leuten (Tiefensortierung zwischen die Häuser); der Rauch kommt über
    allem (SZ.zuhoerer). Die Schienenoberkante liegt wie im Bahnhofsmodell
    0,5 m über dem Boden.
+
+   FASSUNG 818 — XANDER (wörtlich): „unser Lok sieht nicht mehr so schön
+   wie vorher aus die war viel detaillierter diese schöne alte Lok die
+   wir … in der Vektorgrafik bei den Reisen hier im Chat … haben … diese
+   schönen klassischen Wagen daran und irgendwie scheint sie nur die eine
+   Richtung zu fahren … sie muss ja wegfahren und … ankommen und so wie
+   sie früher in die Richtung gefahren ist so muss das auch wieder möglich
+   sein" – und „unsere Lokomotive hat noch keinen Klang".
+   Der Zug ist jetzt die klassische Reiselok aus dem Chat mit Tender und
+   drei weinroten Abteilwagen (stadt/modelle/reiselok.js, Blätter
+   l_bahn_reiselok mit sechs Radstellungen, l_bahn_reisetender,
+   l_bahn_personenwagen). Die Räder drehen sich mit dem gefahrenen Weg
+   (Stangen und Gegengewichte laufen mit). Der Fahrplan wechselt die
+   Richtung bei jedem Umlauf: einmal kommt der Zug von links, hält am
+   Bahnhof und fährt nach rechts hinaus, beim nächsten Mal von rechts nach
+   links (wie früher im alten Dorf) – die Lok fährt immer vorn. Ton
+   (stadt-leicht/ton.js): Schnaufen im Takt der Räder (vier Stöße je
+   Radumdrehung, beim Anfahren schwer), Pfiff bei der Einfahrt und kurz–
+   lang vor der Abfahrt, Bremsquietschen am Halt, Dampf ablassen im Stand,
+   Schienenstöße – leise, nach Nähe und Zoom, nur wenn die Seite Töne darf.
    ===================================================================== */
 (function () {
   "use strict";
@@ -38,12 +58,13 @@
 
   /* ---------------- Der Zug ---------------- */
   /* Teil, Blatt, vorn/hinten ab der Modellmitte (m, über Puffer), Höhe, Lücke dahinter */
+  /* FASSUNG 818 — die Reiselok (Treibrad Ø 1,9 m), Tender und drei Abteilwagen (stadt/modelle/reiselok.js) */
   const WAGEN = [
-    { art: "lok", bild: "l_bahn_lok", vorn: 6.12, hinten: 5.75, h: 4.3, luecke: 0.2 },
-    { art: "tender", bild: "l_bahn_tender", vorn: 4.05, hinten: 4.52, h: 3.8, luecke: 0 },
-    { art: "gwagen", bild: "l_bahn_gwagen", vorn: 4.57, hinten: 4.57, h: 3.75, luecke: 0 },
-    { art: "rungen", bild: "l_bahn_rungen", vorn: 5.47, hinten: 5.47, h: 3.0, luecke: 0 },
-    { art: "kessel", bild: "l_bahn_kessel", vorn: 4.67, hinten: 4.67, h: 3.6, luecke: 0 }
+    { art: "lok", bild: "l_bahn_reiselok", vorn: 5.87, hinten: 5.5, h: 4.9, luecke: 0.15, radR: 0.95 },
+    { art: "tender", bild: "l_bahn_reisetender", vorn: 3.3, hinten: 3.69, h: 3.9, luecke: 0 },
+    { art: "wagen1", bild: "l_bahn_personenwagen", vorn: 6.32, hinten: 6.32, h: 4.2, luecke: 0 },
+    { art: "wagen2", bild: "l_bahn_personenwagen", vorn: 6.32, hinten: 6.32, h: 4.2, luecke: 0 },
+    { art: "wagen3", bild: "l_bahn_personenwagen", vorn: 6.32, hinten: 6.32, h: 4.2, luecke: 0, schluss: true }
   ];
   const ZUG_L = WAGEN.reduce((n, w) => n + w.vorn + w.hinten + w.luecke, 0);
   BA.WAGEN = WAGEN; BA.ZUG_L = ZUG_L;
@@ -229,13 +250,13 @@
       }
       /* Rauch: beim Anfahren Stoß für Stoß (wie „lokstampf"), in Fahrt alle paar Meter, im Stand ein dünner Faden */
       const lok = BA.zug[0], c = Math.cos(lok.h), s = Math.sin(lok.h);
-      const sx = lok.x + c * 4.72, sy = lok.y + s * 4.72, sz = GLEIS_Z + 4.3;
+      const sx = lok.x + c * 4.3, sy = lok.y + s * 4.3, sz = GLEIS_Z + 4.9;
       if (st.art === "anfahren" && altArt !== "anfahren") stampf = 0;
       if (st.art === "anfahren" && stampf < 7) {
         const STOSS = [0, 0.46, 0.868, 1.224, 1.528, 1.78, 1.98];
         while (stampf < 7 && st.tau >= STOSS[stampf]) {
           puff(sx, sy, sz, stampf < 3 ? "russ" : "dampf", 1.25);
-          for (const sd of [-1, 1]) puff(lok.x + c * 4.3 - s * sd * 1.3, lok.y + s * 4.3 + c * sd * 1.3, GLEIS_Z + 0.9, "zylinder", 0.8, [-s * sd * 1.6, c * sd * 1.6]);
+          for (const sd of [-1, 1]) puff(lok.x + c * 3.9 - s * sd * 1.3, lok.y + s * 3.9 + c * sd * 1.3, GLEIS_Z + 0.9, "zylinder", 0.8, [-s * sd * 1.6, c * sd * 1.6]);
           stampf++;
         }
         rauchWeg = null;
@@ -247,8 +268,9 @@
         naechsterFaden = BA.t + (st.art === "steht" ? 0.8 : 0.5); rauchWeg = null;
         puff(sx, sy, sz, "leise", 0.7);
       }
+      tonTakt(st, u.dir, lok);
       altArt = st.art;
-    } else altArt = "";
+    } else { altArt = ""; tonS = null; }
     /* Rauchwolken altern: steigen gebremst, wachsen, verwehen mit dem Wind und vergehen */
     const wind = [0.9, -0.35];
     for (const p of BA.puffs) {
@@ -258,6 +280,49 @@
     }
     BA.puffs = BA.puffs.filter((p) => BA.t - p.t0 < p.dauer);
   };
+  /* ---------------- FASSUNG 818: Ton der Lok ---------------- */
+  /* Lautstärke nach Nähe (Abstand der Lok zur Bildmitte) und Zoom; Richtung im Bild → links/rechts */
+  let tonS = null, schnaufPh = 0, klackWeg = 0, bremsSpielt = false, abPfiff = false;
+  BA.radWeg = 0;
+  function tonLaut(lok) {
+    const c = ST.aufBoden(K.W / 2, K.H / 2), d = Math.hypot(lok.x - c[0], lok.y - c[1]);
+    const sc = K.s / (K.dpr || 1), R = klemm(1200 / Math.max(1, sc), 45, 170);
+    const nah = Math.pow(klemm(1 - d / R, 0, 1), 1.5), zoom = klemm(sc / 16, 0.25, 1);
+    const P = ST.proj(lok.x, lok.y, 0);
+    return { laut: 0.6 * nah * zoom * randAlpha(lok), pan: klemm((P[0] / K.W - 0.5) * 1.6, -0.85, 0.85) };
+  }
+  function tonTakt(st, dir, lok) {
+    /* gefahrener Weg seit dem letzten Bild (bei festgehaltener Uhr oder Sprüngen: nichts) */
+    let weg = tonS == null ? 0 : (st.s - tonS) * dir;
+    tonS = st.s;
+    if (!(weg >= 0 && weg < 6)) weg = 0;
+    BA.radWeg += weg;
+    const T = ST.ton;
+    if (!T) return;
+    const L = tonLaut(lok);
+    BA.tonInfo = L;
+    const hoerbar = L.laut > 0.004 && T.darf();
+    /* Einfahrt: langer Pfiff, dann in den letzten 2,6 s das Bremsquietschen */
+    if (st.art === "bremst" && altArt !== "bremst") { bremsSpielt = false; if (hoerbar) T.pfiff(L.laut * 0.9, L.pan, "ein"); }
+    if (st.art === "bremst" && !bremsSpielt && st.v / BREMS <= 2.6) { bremsSpielt = true; if (hoerbar) T.bremse(L.laut, L.pan, st.v / BREMS + 0.35); }
+    /* Halt: Dampf ablassen; kurz vor der Abfahrt kurz–lang pfeifen */
+    if (st.art === "steht" && altArt && altArt !== "steht") { abPfiff = false; if (hoerbar) T.zisch(L.laut * 0.8, L.pan); }
+    if (st.art === "steht" && !abPfiff && st.tau >= HALT - 1.9) { abPfiff = true; if (hoerbar) T.pfiff(L.laut, L.pan, "ab"); }
+    /* Schnaufen: vier Dampfstöße je Radumdrehung, beim Anfahren schwer */
+    if (st.art === "anfahren" || st.art === "faehrt") {
+      schnaufPh += weg / (TAU * WAGEN[0].radR) * 4;
+      let n = 0;
+      while (schnaufPh >= 1 && n < 2) {
+        schnaufPh -= 1; n++;
+        const kraft = st.art === "anfahren" ? klemm(1 - st.v / V, 0.2, 1) : 0.12;
+        if (hoerbar) T.schnauf(L.laut * (0.45 + 0.55 * kraft), L.pan, kraft);
+      }
+      if (schnaufPh >= 1) schnaufPh %= 1;
+    } else schnaufPh = 0.85;
+    /* Schienenstöße alle 15 m */
+    klackWeg += weg;
+    if (klackWeg >= 15) { klackWeg %= 15; if (hoerbar && st.v > 3) T.klack(L.laut * 0.55, L.pan); }
+  }
   function puff(x, y, z, art, gr, v) {
     if (BA.puffs.length > (klein() ? 18 : 44)) BA.puffs.shift();
     BA.puffs.push({ x: x, y: y, z: z, t0: BA.t, art: art, gr: gr || 1, vx: v ? v[0] : 0, vy: v ? v[1] : 0,
@@ -266,6 +331,13 @@
 
   /* ---------------- Zeichnen: Hilfen ---------------- */
   const jahrName = () => (SZ.jahr === "winter" ? "winter" : "herbst");
+  /* FASSUNG 818 — Radstellung der Lok (Spalte im Blatt): rollen ohne Rutschen */
+  function radSpalte(w, meta) {
+    const n = (meta && meta.n) || 1;
+    if (n <= 1 || !w.radR) return 0;
+    const ph = ((BA.radWeg / (TAU * w.radR)) % 1 + 1) % 1;
+    return Math.floor(ph * n) % n;
+  }
   function lichtK(Z) { return [0, 1, 2].map((i) => Math.min(1.05, Z.amb[i] + Z.sonne[i] * 0.9)); }
   const farbe = (f, k, a) => "rgba(" + Math.round(f[0] * k[0]) + "," + Math.round(f[1] * k[1]) + "," + Math.round(f[2] * k[2]) + "," + (a == null ? 1 : a) + ")";
   function sichtbarerBereich() {
@@ -429,7 +501,7 @@
     for (let i = 0; i < BA.zug.length; i++) {
       const z = BA.zug[i];
       /* im kleinen Rahmen: Lok, Tender und zwei Wagen */
-      if (kl && z.w.art === "rungen") continue;
+      if (kl && z.w.art === "wagen3") continue;
       const alpha = randAlpha(z); if (alpha <= 0.01) continue;
       const P = ST.proj(z.x, z.y, GLEIS_Z);
       if (P[0] < -rand || P[0] > K.W + rand || P[1] < -rand || P[1] > K.H + rand * 1.5) continue;
@@ -437,7 +509,7 @@
       const img = LB.bild(b.name); if (!img) continue;
       const gier = Math.atan2(-Math.cos(z.h), Math.sin(z.h)) * 180 / Math.PI + K.dreh * 90;
       const r = ST.drehXY(z.x, z.y, K.dreh);
-      aus.push({ X: P[0], Y: P[1], a: r[0], b: r[1], img: img, meta: b.meta, reihe: ((Math.round(gier / 45) % 8) + 8) % 8, schritt: 0,
+      aus.push({ X: P[0], Y: P[1], a: r[0], b: r[1], img: img, meta: b.meta, reihe: ((Math.round(gier / 45) % 8) + 8) % 8, schritt: radSpalte(z.w, b.meta),
         malen: wagenMalen, bx: (z.w.vorn + z.w.hinten) / 2, bh: z.w.h + 1, z: z, alpha: alpha, Z: Z, bahn: i });
     }
     BA.gezeigt = aus.length;
@@ -462,12 +534,14 @@
     /* Lampen nur auf der Seite, die zur Kamera zeigt, voll */
     const vornSicht = ST.tiefe(c, s) > -0.3 ? 1 : 0.35;
     if (z.w.art === "lok") {
-      for (const q of [-0.95, 0.95]) hof(5.8, q, 1.58, 1.1, "255,238,190", 0.9 * vornSicht);
-      hof(5.45, 0, 3.43, 1.0, "255,238,190", 0.85 * vornSicht);
-      hof(-3.8, 0, 2.9, 1.8, "255,150,70", 0.35);
-    } else if (z.w.art === "kessel") {
-      for (const q of [-0.95, 0.95]) hof(-4.6, q, 1.5, 0.8, "255,60,40", 0.8 * (ST.tiefe(-c, -s) > -0.3 ? 1 : 0.35));
+      for (const q of [-0.95, 0.95]) hof(5.55, q, 1.62, 1.1, "255,238,190", 0.9 * vornSicht);
+      hof(4.95, 0, 3.83, 1.0, "255,238,190", 0.85 * vornSicht);
+      hof(-3.9, 0, 3.0, 1.8, "255,150,70", 0.35);
+    } else if (z.w.schluss) {
+      for (const q of [-1.05, 1.05]) hof(-6.1, q, 1.58, 0.8, "255,60,40", 0.8 * (ST.tiefe(-c, -s) > -0.3 ? 1 : 0.35));
     }
+    /* warmes Licht aus den Abteilfenstern */
+    if (/^wagen/.test(z.w.art)) for (const sd of [-1, 1]) for (const l of [-3.5, 0, 3.5]) hof(l, sd * 1.5, 2.6, 1.3, "255,206,130", 0.16);
     g.restore();
   }
 

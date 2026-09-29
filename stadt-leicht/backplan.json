@@ -302,8 +302,8 @@
    }
   },
   {
-   "bild": "g_bergwerk",
-   "id": "bergwerk",
+   "bild": "g_bergstollen",
+   "id": "bergstollen",
    "saat": 7,
    "gier": [
     0,
@@ -1346,8 +1346,8 @@
    }
   },
   {
-   "bild": "bau_bergwerk",
-   "id": "bergwerk",
+   "bild": "bau_bergstollen",
+   "id": "bergstollen",
    "saat": 7,
    "gier": [
     0,
@@ -2066,8 +2066,8 @@
    "q": 0.7
   },
   {
-   "bild": "l_bahn_lok",
-   "id": "dampflok",
+   "bild": "l_bahn_reiselok",
+   "id": "reiselok",
    "saat": 1,
    "jahr": [
     "winter",
@@ -2077,19 +2077,19 @@
     "tag",
     "nacht"
    ],
-   "s": 22,
-   "schritte": 1,
+   "s": 30,
+   "schritte": 6,
    "zelle": [
-    6.3,
-    6.3,
-    6.95,
-    3.23
+    7.1,
+    7.1,
+    7.3,
+    3.9
    ],
-   "q": 0.8
+   "q": 0.82
   },
   {
-   "bild": "l_bahn_tender",
-   "id": "tender",
+   "bild": "l_bahn_reisetender",
+   "id": "reisetender",
    "saat": 1,
    "jahr": [
     "winter",
@@ -2099,19 +2099,19 @@
     "tag",
     "nacht"
    ],
-   "s": 22,
+   "s": 26,
    "schritte": 1,
    "zelle": [
-    4.7,
-    4.7,
-    5.98,
-    2.42
+    5.0,
+    5.0,
+    5.4,
+    3.0
    ],
-   "q": 0.8
+   "q": 0.82
   },
   {
-   "bild": "l_bahn_gwagen",
-   "id": "gwagen",
+   "bild": "l_bahn_personenwagen",
+   "id": "personenwagen",
    "saat": 1,
    "jahr": [
     "winter",
@@ -2121,59 +2121,15 @@
     "tag",
     "nacht"
    ],
-   "s": 22,
+   "s": 26,
    "schritte": 1,
    "zelle": [
-    4.75,
-    4.75,
-    5.7,
-    2.45
+    8.0,
+    8.0,
+    7.6,
+    4.3
    ],
-   "q": 0.8
-  },
-  {
-   "bild": "l_bahn_rungen",
-   "id": "rungenwagen",
-   "saat": 1,
-   "jahr": [
-    "winter",
-    "herbst"
-   ],
-   "zeit": [
-    "tag",
-    "nacht"
-   ],
-   "s": 22,
-   "schritte": 1,
-   "zelle": [
-    5.65,
-    5.65,
-    6.1,
-    2.9
-   ],
-   "q": 0.8
-  },
-  {
-   "bild": "l_bahn_kessel",
-   "id": "kesselwagen",
-   "saat": 1,
-   "jahr": [
-    "winter",
-    "herbst"
-   ],
-   "zeit": [
-    "tag",
-    "nacht"
-   ],
-   "s": 22,
-   "schritte": 1,
-   "zelle": [
-    4.85,
-    4.85,
-    6.22,
-    2.5
-   ],
-   "q": 0.8
+   "q": 0.82
   },
   {
    "bild": "l_fuhr_korn",

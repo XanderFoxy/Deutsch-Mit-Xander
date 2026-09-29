@@ -94,6 +94,8 @@ def main():
         # 8 Punkte hoch, Gangbilder sähe man nicht; so bleibt der Rahmen unter seinen 300 KB (Sonde 799)
         spalten, bl = list(range(n)), None
         if k.startswith("l_fuhr_") and n == 5: spalten = [1]
+        # FASSUNG 818 — die Reiselok hat sechs Radstellungen; im kleinen Rahmen (die Lok ist dort kaum 80 Punkte lang) reicht eine
+        elif k.startswith("l_bahn_") and n > 1: spalten = [0]
         elif k.startswith("l_tier_") and n in TIER_BLATT:
             g, h, _ = TIER_BLATT[n]
             spalten, bl = [round(g * 0.25), g, g + h], [1, 1, 1]

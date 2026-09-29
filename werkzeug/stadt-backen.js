@@ -92,7 +92,8 @@ function auftraege() {
   pg.on("pageerror", (e) => console.log("Seitenfehler: " + e.message));
   /* Werkbank mit einem kleinen Modell öffnen: dann sind alle Modelle geladen */
   /* FASSUNG 812 — Modelle aus dem Plan, die (noch) nicht in stadt/modelle.js stehen (Windmühle), gleich mitladen */
-  const dazu = ["menschen"].concat([...new Set(plan.bilder.map((a) => a.id))].filter((m) => /^[a-z0-9_]+$/.test(m) && fs.existsSync(path.join(WURZEL, "stadt", "modelle", m + ".js"))));
+  /* FASSUNG 818 — auch die Modelle der Laufblätter („leute": die klassische Reiselok mit Tender und Wagen) */
+  const dazu = ["menschen"].concat([...new Set(plan.bilder.map((a) => a.id).concat((plan.leute || []).map((a) => a.id)))].filter((m) => /^[a-z0-9_]+$/.test(m) && fs.existsSync(path.join(WURZEL, "stadt", "modelle", m + ".js"))));
   await pg.goto("http://127.0.0.1:" + srv.address().port + "/stadt.html?quelle=1&werkbank=bank&still=1&dazu=" + dazu.join(","), { waitUntil: "load", timeout: 300000 });
   await pg.waitForFunction(() => window.__fertig || window.__fehler, null, { timeout: 300000 });
 
