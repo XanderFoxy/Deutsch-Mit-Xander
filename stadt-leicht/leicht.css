@@ -141,13 +141,15 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 .lk-mini-blick { display: none; position: absolute; box-sizing: border-box; border: 1.5px solid #fff; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,.45); pointer-events: none; }
 .lk-mini-modus.lk-nah .lk-mini-blick { display: block; }
 /* FASSUNG 817 — die kleine Auswahl über einem Haus (Brot, Kuchen, Torte …): Tippflächen 34 px, dunkel wie die Schilder */
-.lk-wahl { position: absolute; left: 0; top: 0; display: flex; gap: 3px; padding: 3px; border-radius: 12px; background: rgba(22,28,48,.86); box-shadow: 0 3px 10px rgba(0,0,0,.45); z-index: 3; will-change: transform; }
-.lk-wahl-knopf { position: relative; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 9px; background: rgba(255,248,228,.95); color: #1b2440; display: inline-grid; place-items: center; cursor: pointer; }
+/* FASSUNG 811 — deckend: Hausnamen darunter schienen durch das ausgegraute Feld und den Kartenknopf */
+.lk-wahl { position: absolute; left: 0; top: 0; display: flex; gap: 3px; padding: 3px; border-radius: 12px; background: #161c30; box-shadow: 0 3px 10px rgba(0,0,0,.45); z-index: 3; will-change: transform; }
+.lk-wahl-knopf { position: relative; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 9px; background: #fff8e4; color: #1b2440; display: inline-grid; place-items: center; cursor: pointer; }
 .lk-wahl-knopf .lk-z-bild { width: 22px; height: 22px; margin: 0; }
 .lk-wahl-knopf span { position: absolute; right: 1px; bottom: 0; font: 900 9px/1 system-ui, sans-serif; color: #2e2006; text-shadow: 0 0 2px #fff, 0 0 3px #fff; }
-.lk-wahl-knopf:disabled { opacity: .45; cursor: default; }
+.lk-wahl-knopf:disabled { background: #7d8090; cursor: default; }
+.lk-wahl-knopf:disabled > * { opacity: .5; }
 .lk-wahl-knopf:active:not(:disabled) { transform: scale(.94); }
-.lk-wahl-karte { background: rgba(255,255,255,.14); color: #f3ead8; }
+.lk-wahl-karte { background: #353b50; color: #f3ead8; }
 .lk-wahl-karte svg { width: 18px; height: 18px; }
 .lk-mini-modus .lk-mini.zu { display: block; }
 .lk-mini-modus .lk-mini-feld span { display: none; }

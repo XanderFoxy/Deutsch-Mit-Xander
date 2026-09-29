@@ -2230,3 +2230,24 @@ XANDER: „mein neuen Dodge Viper und mein Batmobil habe ich immer noch nicht in
   - Leise und nach Nähe gemischt. Er spielt nur, wenn die Töne an sind.
 - **Windmühle**: Statt zwei Stellungen zu überblenden, wird die nächste Stellung um die Nabe weitergedreht. So läuft das Kreuz stufenlos, auch im kleinen Rahmen mit nur 4 Stellungen. Die Drehrichtung ist per Bildvergleich geprüft.
 - **Fertig-Zeichen**: kleineres Bild (15 px) mit kleinem Schein, Tippfläche 40 px. Die Jäger bekommen eine Keule als eigenes Symbol.
+
+## Fassung 811 — Rathaus als Stern um den Turm, Rahmen passgenau, gleiche Knöpfe, Ein-Tipp-Produktion, Doppeltipp-Zoom
+
+XANDER (Funk 206): „links den Turm und rechts das Haus … die Rückseite von dem Turm hat auch noch mal so ein Hausschiff … dreizackiger Stern" · Walkie 305: „dieselben Knöpfe … wie beim alten" · Walkie 306: „die Kachel oben rechts das Ganze oben rechts anzeigen bis zur Grenze" · Funk 207: „Schmücken/Bauen im kleinen Fenster ohne Vollbild".
+
+- **Rathaus (Helfer, `stadt/modelle/rathaus_doebeln.js`, Sonde `pruefe-819-rathaus-form.js`)**:
+  - Turm mit Portal zum Brunnen.
+  - Flügel A (Stufengiebel, Ratskeller) im rechten Winkel nach rechts.
+  - Flügel B (22 m, länger als A) hinter dem Turm.
+  - Flügel C 35° schräg nach vorn links, mit Balkon und Dachreiter.
+  - Der Grundriss steht als Daten im Modell und in `D.GRUNDRISS.rathaus`. Die Wege führen zum Portal, das Portal liegt frontal 5,6 m hinter dem Brunnen, `dreh 3.5`.
+  - Alle 120 Rathausbilder sind neu gebacken. Die Katalog-Grundfläche in der Schmücken-Leiste ist jetzt [41, 33.1].
+- **Rahmen und Bedienung (Helfer, Sonde `pruefe-817-rahmen-bedienung.js`)**:
+  - Beim Öffnen, beim Wechsel alt/neu, nach dem Vollbild und nach Aufgaben rollt das Bild ganz in den Blick.
+  - Unter beiden Bildern steht dieselbe Knopfreihe (Symbole, Namen, Umbauen, Saison, Halloween-Paket), dazu Vollbild, Schmücken, Bauen und „Ein Tipp produziert".
+  - Halloween-Kürbisse vor den Häusern, nachts leuchtend.
+  - Ein Haus-Tipp rollt zur Karte darunter, jeder Knopf dort wieder zurück zum Bild.
+  - Mit „Ein Tipp produziert" startet der Tipp die Aufgabe sofort. Die Bäckerei zeigt eine kleine Wahl: Brot, Kuchen, Torte, Karte. Das Wahlfeld ist deckend, damit keine Namen durchscheinen.
+  - Die kleine Karte ist ein Abbild des Überblicks: jede Kachel zeigt genau ihr Neuntel bis an den Rand.
+  - Doppeltipp schaltet Überblick → Nähe → zweite Stufe (7-fach, große Bilder erst dann) → Überblick.
+  - Schmücken und Bauen gehen im kleinen Rahmen ohne Vollbild.
