@@ -776,7 +776,10 @@
           if (c.x + c.w / 2 > W - 2) c.x = W - 2 - c.w / 2;
           for (let j = i + 1; j < sicht.length; j++) if (deckt(c, sicht[j])) c.x = Math.min(c.x, sicht[j].x - (c.w + sicht[j].w) / 2 - 1);
         }
+        /* die kleine Auswahl über einem Haus (Brot/Kuchen/Torte) liegt oben: was sie verdeckt, ruht so lange */
+        const wr = wahlEl && wahlEl.getBoundingClientRect();
         for (const q of liste) {
+          if (wr && q.b.dataset.g !== wahlG && Math.min(wr.right, q.x + q.w / 2) - Math.max(wr.left, q.x - q.w / 2) > 0 && Math.min(wr.bottom, q.y) - Math.max(wr.top, q.y - q.h) > 0) { q.b.style.display = "none"; continue; }
           const t = "translate(" + q.x.toFixed(1) + "px," + q.y.toFixed(1) + "px) translate(-50%,-100%)";
           if (q.b._t !== t) { q.b._t = t; q.b.style.transform = t; }
         }
