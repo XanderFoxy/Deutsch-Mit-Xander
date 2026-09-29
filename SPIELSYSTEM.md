@@ -2263,3 +2263,12 @@ XANDER (Funk 206): „links den Turm und rechts das Haus … die Rückseite von 
   - Im Klassenzimmer holt jedes Gerät beide Drehblätter im Leerlauf vorab und entpackt sie einmal. Vorher lud jedes Gerät sie erst, wenn jemand hereinfuhr.
   - Erstes Bild gemessen (vierfach gedrosselt): 1,2 s → 7 ms.
 - **Neue Stadt für Beta-Tester**: `neueStadtErlaubt()` fragt jetzt `isBetaTester()` und `istBetaFuerSpiel("stadt_neu")` ab. Damit sehen sie der Betreiber, alle Beta-Tester und die einzeln Eingeladenen (`feature_flags["beta:stadt_neu"]`, dort steht Emy). Der Knopf heißt „Neue Version (Beta)". Für alle ist sie erst frei, wenn `LEICHT_FREI` gesetzt wird (nur nach Xanders ausdrücklichem OK).
+
+## Fassung 827 — Tonserver (Cloudflare Realtime SFU), zuerst nur Betreiber/Beta
+
+XANDER (Funk 209): „Die App … hängt total erst recht. Wenn andere Leute mit dazu kommen … was müssen wir denn machen damit das endlich leicht und stabil läuft?" — Walkie 311: „Erst nur Ton über den Server, Bild bleibt wie jetzt".
+
+- **Edge-Function `sfu`** (`supabase/functions/sfu/index.ts`, Fassung 3, verify_jwt aus wie `klassenzimmer`): `pruefen`, `sitzung` (sessions/new ohne Körper + eigene Tonspur veröffentlichen), `spuren` (andere abholen), `neu_verhandeln`, `schliessen`, `puls`. Geheimnisse `CF_SFU_APP_ID`/`CF_SFU_APP_TOKEN` nur in der Funktion. Freischaltung an der Datenbank: `is_owner`, `is_beta_tester`, `feature_flags["beta:sfu"]` oder `feature_flags.sfu`.
+- **Bremse** (`supabase/sfu-verbrauch.sql`, Tabellen `sfu_verbrauch`, `sfu_sitzungen`, RLS an, keine Regeln): 64 kbit/s je gehörter Spur, 31-Tage-Fenster, Grenze = 1000 GB − TURN-Budget (jetzt 900 GB). Darüber: alle Hör-Spuren zwangsweise zu, Antwort `{aus:true, grund:"budget"}`. Sitzungen ohne Puls > 3 min werden geschlossen. Enger stellen: `betreiber_geheimnisse.sfu_budget_gb`.
+- **Client** (`livechat.js`, Block „FASSUNG 827 — DER TONSERVER"): nur mit Freischaltung oder `?sfu=1`; nur Ton; nur wenn jemand anderes im Raum den Tonserver auch kann. Umschalten je Person erst, wenn Tonpakete wirklich ankommen (`sfu-hoere`); dann wird die Netz-Tonspur zu ihm leer, Netz-Leitung bleibt für Bild und Spiel. Jeder Fehler (aus, 500, 8 s, ICE) → alles zurück aufs Netz. `/verbindung` zeigt den Stand.
+- **Sonde** `werkzeug/pruefe-827-sfu.js` (nachgebildete Funktion, nachgebildeter Server in einer dritten Seite). Der echte Weg über Cloudflare braucht einen Zwei-Geräte-Test.
