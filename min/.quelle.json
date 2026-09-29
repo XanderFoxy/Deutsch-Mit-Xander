@@ -47,9 +47,9 @@
  "data-werkstatt.js": "cba2657e57d41857343229fd3188630072a1057a",
  "data-plaetze.js": "535d4ff79255fb31e4c5d7c5458a28244b02d4c5",
  "app-styles.css": "6ba036631de07e4b073b58fb614cb76b7f368569",
- "data-szenen.js": "3e6d76afd9e4a539237f72dad41b64a8726cc1a8",
  "app.js": "83d8d2d09a35dc83d2e166d46cd8f564933b3ea0",
  "spiel.css": "e2e49404db028481dd71a44a15362130bf26a07f",
  "spiel.js": "dd25f5d950ad1066cb88b124a1e1cfab2b7f14ee",
- "baukasten.js": "8b3d3eb457b972faae7a4c8e7a58ee1b008a6008"
+ "baukasten.js": "8b3d3eb457b972faae7a4c8e7a58ee1b008a6008",
+ "data-szenen.js": "620e0efc02bc7ddad8da5da7daa13b3ad2ac5d5f"
 }
