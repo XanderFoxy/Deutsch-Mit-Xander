@@ -389,7 +389,7 @@
         const st = stufeVon(K.s);
         LB.grossErlaubt = st === 2;
         if (st === 2 && LB.vollLaden) LB.vollLaden().then(() => { L().unruhe = 2; });
-        if (st < 2 && LB.freigeben) LB.freigeben(/_g$/);
+        if (st < 2 && LB.freigeben) LB.freigeben(/_[gm]$/);   // FASSUNG 828 — auch die schärferen Baustellen (_m)
         if (st === 0 && LB.freigeben) LB.freigeben(/_k$/);
       }, 700);
       const vollK = knopf("voll", "Vollbild", () => { try { window.parent.postMessage({ typ: "leicht-voll" }, location.origin); } catch (e) {} }, "lk-nur-mini lk-vollknopf");
@@ -570,14 +570,71 @@
         waldMitte = { n: SZ.objekte.length, x: best ? best.x : 0, y: best ? best.y : 0, h: 12 };
         return waldMitte;
       };
+      /* FASSUNG 828 — die Äcker bekommen ihr Zeichen wie im alten Bild („Getreide reif" / „Getreide 2:30") */
+      const feldOrt = (nr) => () => { const f = (D.FELD_ORTE || []).find((q) => q.nr === nr) || { x: 0, y: 0 }; return { x: f.x, y: f.y, h: 1.5 }; };
       const ORTE = {
         see: () => { const v = D.SEE_VERSATZ || [0, 0]; return { x: 66 + v[0], y: 56 + v[1] - 3, h: 2 }; },
         wald: wald,
-        jagd: () => { const w = wald(); return { x: w.x + 7, y: w.y - 5, h: 10 }; }
+        jagd: () => { const w = wald(); return { x: w.x + 7, y: w.y - 5, h: 10 }; },
+        feld91: feldOrt(91), feld92: feldOrt(92)
       };
       const zeichenEbene = el("div", "lk-zeichen-ebene");
       wurzel.insertBefore(zeichenEbene, wurzel.firstChild);
       let zeichen = {};
+      /* FASSUNG 828 — XANDER: „die kleinen Symbole zum einsammeln … manchmal schwebt das noch viel zu sehr und es reagiert
+         nicht sofort" – „diese items für Holz und Fleisch die kann man kaum einsammeln, weil die immer von links nach
+         rechts zu schweben … immer wenn man da draufgeht, kommt man auf das dahinter auf den Wald … das einsammeln muss
+         ohne Latenz gehen direkt an und dann kriegt man auch ein Signal, dass das irgendwie so Haptik oder noch mal
+         blinken … Man klickt da drauf und klick meistens zweimal drauf". Das Wandern kam vom Atmen (CSS „scale" wirkt vor
+         „transform" und vergrößerte damit auch den Abstand vom linken Rand: rechts im Bild – Wald und Jagd – schwang das
+         Zeichen um über 10 px hin und her). Jetzt steht es still. Der Tipp wirkt beim Loslassen des Fingers (nicht erst
+         beim späten „click"), sofort mit Rückmeldung: kurzes Summen, die Ware fliegt mit „+4" hoch, das Zeichen verschwindet
+         gleich. Es schluckt den zweiten Tipp (nichts geht zum Wald oder Haus dahinter durch). Das Spiel bekommt „zeichen: 1"
+         und sammelt nur ein (Holz/Fleisch/Fisch der Trupps, Getreide der Äcker), statt die Station zu öffnen. */
+      const flugEbene = el("div", "lk-zeichen-ebene lk-flug-ebene");
+      wurzel.insertBefore(flugEbene, zeichenEbene.nextSibling);
+      const zeichenFlug = (b, z) => {
+        const r = b.getBoundingClientRect(), w = flugEbene.getBoundingClientRect();
+        const n = /^(\d+)\s/.exec(z[1] || ""), f = el("span", "lk-sammel-flug", (WARE_BILD[z[2]] || WARE_BILD.korb) + "<b></b>");
+        f.querySelector("b").textContent = n ? "+" + n[1] : "";
+        f.style.left = (r.left + r.width / 2 - w.left).toFixed(1) + "px"; f.style.top = (r.top + r.height / 2 - w.top).toFixed(1) + "px";
+        flugEbene.appendChild(f);
+        setTimeout(() => f.remove(), 900);
+      };
+      const zeichenTun = (b, zeit) => {
+        const g = b.dataset.g, z = zeichen[g] || [], jetzt = zeit || performance.now();   // Zeit des Fingers (auch wenn der Takt hängt)
+        if ((b._sperre || 0) > jetzt) return;   // der zweite Tipp eines Doppeltipps: geschluckt
+        clearTimeout(O._tippUhr); O._tipp = null;   // ein wartender Tipp auf das Bild darunter gilt nicht mehr
+        O.summen();
+        if (z[0] === "fertig") {
+          try { if (ST.ton && typeof ST.ton.einsammeln === "function") ST.ton.einsammeln(); } catch (x) {}
+          zeichenFlug(b, z);
+          b._weg = performance.now() + 2600; b._sperre = jetzt + 700; b.classList.add("lk-z-weg");
+          /* nach 0,7 s schluckt das verborgene Zeichen keine Tipps mehr (dann gilt wieder das Haus darunter) */
+          setTimeout(() => { if (b.isConnected && b.classList.contains("lk-z-weg")) b.classList.add("lk-z-durch"); }, 720);
+          setTimeout(() => { if (b.isConnected && (b._weg || 0) <= performance.now() + 20) b.classList.remove("lk-z-weg", "lk-z-durch"); }, 2650);
+        } else {
+          b._sperre = jetzt + 450;
+          b.classList.remove("lk-z-blitz"); void b.offsetWidth; b.classList.add("lk-z-blitz");
+        }
+        if (g === "see" || g === "feld91" || g === "feld92") O.stationTun(g, true);
+        else nachOben({ typ: "leicht-haus", g: g, zeichen: 1 });
+      };
+      const zeichenKnopf = (g) => {
+        const b = el("button"); b.type = "button"; b.dataset.g = g;
+        b.addEventListener("pointerdown", (e) => { e.stopPropagation(); b._pd = { x: e.clientX, y: e.clientY }; });
+        b.addEventListener("pointerup", (e) => {
+          e.stopPropagation();
+          const p = b._pd; b._pd = null;
+          if (!p || Math.hypot(e.clientX - p.x, e.clientY - p.y) > 14) return;
+          b._perFinger = e.timeStamp; zeichenTun(b, e.timeStamp);
+        });
+        b.addEventListener("pointercancel", () => { b._pd = null; });
+        /* „click" nur noch für die Tastatur (Enter/Leertaste) – nach einem Finger ist schon alles getan */
+        b.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); if (e.timeStamp - (b._perFinger || -1e9) < 800) return; zeichenTun(b, e.timeStamp); });
+        b.addEventListener("contextmenu", (e) => e.preventDefault());
+        return b;
+      };
       window.addEventListener("message", (ev) => {
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-stand" || !ev.data.ich) return;
         L().ich = Object.assign({}, L().ich || {}, ev.data.ich);
@@ -586,27 +643,26 @@
       window.addEventListener("message", (ev) => {
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-zeichen") return;
         zeichen = ev.data.z || {};
+        /* FASSUNG 828 — die Fischer arbeiten („läuft" am See, nicht „Ruhe"): Angler am Ufer */
+        O.anglerSetzen(!!(zeichen.see && zeichen.see[0] === "laeuft" && !/^Ruhe/.test(zeichen.see[1] || "")));
         const da = {};
         for (const b of Array.from(zeichenEbene.children)) { if (zeichen[b.dataset.g]) da[b.dataset.g] = b; else b.remove(); }
         for (const g in zeichen) {
           let b = da[g];
-          if (!b) {
-            b = el("button"); b.type = "button"; b.dataset.g = g;
-            b.addEventListener("click", (e) => { e.stopPropagation(); try { window.parent.postMessage({ typ: "leicht-haus", g: g === "jagd" ? "wald" : g }, location.origin); } catch (x) {} });
-            zeichenEbene.appendChild(b);
-          }
-          const kl = "lk-zeichen lk-z-" + zeichen[g][0] + (ORTE[g] ? " lk-z-ort" : "");
+          if (!b) { b = zeichenKnopf(g); zeichenEbene.appendChild(b); }
+          /* FASSUNG 828 — gerade eingesammelt: bleibt verborgen, bis das Spiel den neuen Stand schickt (höchstens 2,6 s) */
+          const kl = "lk-zeichen lk-z-" + zeichen[g][0] + (ORTE[g] && !/^feld/.test(g) ? " lk-z-ort" : "") + (zeichen[g][0] === "fertig" && (b._weg || 0) > performance.now() ? " lk-z-weg" + ((b._sperre || 0) <= performance.now() ? " lk-z-durch" : "") : "");
           if (b.className !== kl) b.className = kl;
           /* FASSUNG 807 — XANDER: „kannst du da ein Ei selber reinmachen … oder Getreide, dass du dann Getreidehalme
              darstellst … wenn die Schilder, dass sie dann passend sind wie sie früher waren". Das Schild wie im alten Dorf
              (gelb = fertig), vorn ein kleines Bild der Ware. */
           const inhalt = (WARE_BILD[zeichen[g][2]] || (zeichen[g][0] === "fertig" ? WARE_BILD.korb : "")) + "<span></span>";
-          if (b.dataset.i !== inhalt) { b.dataset.i = inhalt; b.innerHTML = inhalt; }
+          if (b.dataset.i !== inhalt) { b.dataset.i = inhalt; b.innerHTML = inhalt; b._gr = null; }
           /* FASSUNG 809 — XANDER: „vielleicht einfach nur ne Kanne mit mal eins dran ohne großes Hintergrund". Fertig mit
              Bild der Ware: nur das Bild und „×4"; der ganze Text bleibt als Titel/Vorlesetext. */
           const voll = zeichen[g][1], n = /^(\d+)\s/.exec(voll || "");
           const text = zeichen[g][0] === "fertig" && n ? "×" + n[1] : voll;
-          const sp = b.querySelector("span"); if (sp.textContent !== text) sp.textContent = text;
+          const sp = b.querySelector("span"); if (sp.textContent !== text) { sp.textContent = text; b._gr = null; }
           if (b.title !== voll) { b.title = voll; b.setAttribute("aria-label", voll); }
         }
         O.zeichenLegen();
@@ -689,14 +745,40 @@
           if (s.left !== l) s.left = l; if (s.top !== o2) s.top = o2; s.width = Math.max(2, w).toFixed(2) + "%"; s.height = Math.max(2, h).toFixed(2) + "%";
         }
         if (!zeichenEbene.firstChild) return;
+        const liste = [], sig = document.body.className, W = K.W / K.dpr;
         for (const b of zeichenEbene.children) {
-          const o = haeuser[b.dataset.g] || (ORTE[b.dataset.g] && Object.assign({ stufe: 1 }, ORTE[b.dataset.g](), { hoehe: ORTE[b.dataset.g]().h / 0.8 }));
+          const ort = ORTE[b.dataset.g] && ORTE[b.dataset.g]();
+          const o = haeuser[b.dataset.g] || (ort && Object.assign({ stufe: 1 }, ort, { hoehe: ort.h / 0.8 }));
           if (!o) { b.style.display = "none"; continue; }
           const P = ST.proj(o.x, o.y, (o.hoehe || 10) * (o.stufe || 1) * 0.8), x = P[0] / K.dpr, y = P[1] / K.dpr;
-          const drin = x > -40 && y > -20 && x < K.W / K.dpr + 40 && y < K.H / K.dpr + 20;
-          b.style.display = drin ? "" : "none";
+          const drin = x > -40 && y > -20 && x < W + 40 && y < K.H / K.dpr + 20;
+          if (b.style.display !== (drin ? "" : "none")) b.style.display = drin ? "" : "none";
+          if (!drin) continue;
+          /* FASSUNG 828 — Größe nur messen, wenn sich Inhalt oder Schalter geändert haben */
+          if (!b._gr || b._grSig !== sig) { b._gr = [b.offsetWidth, b.offsetHeight]; b._grSig = sig; }
           /* nicht unter die Kopfzeile (Kompass, Uhr, Ortsschild) rutschen */
-          if (drin) b.style.transform = "translate(" + x.toFixed(1) + "px," + Math.max(y, 62).toFixed(1) + "px) translate(-50%,-100%)";
+          liste.push({ b: b, x: x, y: Math.max(y, 62), w: b._gr[0], h: b._gr[1] });
+        }
+        /* FASSUNG 828 — Zeichen, die sich überdecken (Holz und Fleisch am Wald liegen dicht beisammen), rücken
+           nebeneinander: jede Tippfläche ganz frei, keins liegt halb unter dem anderen. Fester Platz, kein Schweben. */
+        const sicht = liste.filter((q) => q.w > 0).sort((a, c) => a.x - c.x);
+        const deckt = (a, c) => (a.w + c.w) / 2 - Math.abs(c.x - a.x) > 0 && Math.min(a.y, c.y) - Math.max(a.y - a.h, c.y - c.h) > 0;
+        /* auch nicht unter den Knöpfen im Bild (Kompass oben links, Vollbild unten links): rechts daneben */
+        for (const k of [lupeK, vollK]) {
+          if (!k || !k.isConnected || getComputedStyle(k).display === "none") continue;
+          const r = k.getBoundingClientRect(), kk = { x: (r.left + r.right) / 2, y: r.bottom, w: r.width + 4, h: r.height + 4 };
+          for (const q of sicht) if (deckt(kk, q)) q.x = r.right + 3 + q.w / 2;
+        }
+        for (let i = 1; i < sicht.length; i++) for (let j = 0; j < i; j++) if (deckt(sicht[j], sicht[i])) sicht[i].x = sicht[j].x + (sicht[j].w + sicht[i].w) / 2 + 1;
+        /* rechter Rand: zurück ins Bild, die Nachbarn weichen nach links (alle, die in derselben Höhe liegen) */
+        for (let i = sicht.length - 1; i >= 0; i--) {
+          const c = sicht[i];
+          if (c.x + c.w / 2 > W - 2) c.x = W - 2 - c.w / 2;
+          for (let j = i + 1; j < sicht.length; j++) if (deckt(c, sicht[j])) c.x = Math.min(c.x, sicht[j].x - (c.w + sicht[j].w) / 2 - 1);
+        }
+        for (const q of liste) {
+          const t = "translate(" + q.x.toFixed(1) + "px," + q.y.toFixed(1) + "px) translate(-50%,-100%)";
+          if (q.b._t !== t) { q.b._t = t; q.b.style.transform = t; }
         }
       };
     }
@@ -953,21 +1035,33 @@
     const fa = ST.autos && !document.body.classList.contains("lk-mini-modus") && ST.autos.treffer(px, py);
     if (fa) { const s = SCHMUCK.find((x) => x[6] === fa.id); if (s) { autoKarte(s); return; } }
     const o = SZ.treffer(px, py, (o) => o.art !== "natur" || o.rand !== 1);
+    /* FASSUNG 828 — XANDER: „Theoretisch könnte ich überall auf die Bäume klicken und das könnte die Holzhacker
+       losschicken … die Bäume sollen alle darauf reagieren jeder Art von Baum". Im Spiel (klein und Vollbild) schickt
+       jeder Baum – Wald, Randwald, Obstbaum und im kleinen Rahmen auch ein selbst gesetzter – die Holzfäller los (sind
+       sie schon unterwegs, hilft der Tipp mit; sind sie zurück, wird das Holz eingesammelt). Im Vollbild öffnet ein
+       eigener Baum weiter seine Karte (Drehen, Versetzen) – dort steht dafür „Holzfäller". */
+    const spielTipp = window.parent !== window && !O.gestalten, mini = document.body.classList.contains("lk-mini-modus");
+    if (o && o.art === "eigen" && istBaum(o) && spielTipp && mini) { baumTun(o); auswahlWeg(); return; }
     if (o && (o.art === "haus" || o.art === "wunder" || o.art === "eigen" || o.name)) { waehlen(o); return; }
     /* FASSUNG 809 — XANDER: „Waldstück … wenn man auf die Bäume klickt … einen Effekt". Ein Baum raschelt: Blätter
-       (im Winter Schnee) rieseln, zwei Vögel fliegen auf; im Spiel öffnet sich die Wald-Station darunter. */
-    const baum = SZ.treffer(px, py, (x) => x.art === "natur" && /^n_(tanne|laubbaum|obstbaum|baum|birke|kiefer)/.test(x.bild || ""));
+       (im Winter Schnee) rieseln, zwei Vögel fliegen auf. */
+    const baum = SZ.treffer(px, py, (x) => x.art === "natur" && istBaum(x));
     if (baum) {
-      baumRascheln(baum);
-      if (window.parent !== window && document.body.classList.contains("lk-mini-modus")) { try { window.parent.postMessage({ typ: "leicht-haus", g: "wald" }, location.origin); } catch (e) {} }
+      if (spielTipp) baumTun(baum); else baumRascheln(baum);
       auswahlWeg(); return;
     }
     /* leerer Bauplatz? */
     const a = ST.aufBoden(px, py);
     /* FASSUNG 807 — im Spiel eingebettet: ein Tipp auf den See angelt (wie im alten Dorf); Doppeltipp auf die Wiese
        führt mit dem Kompass zurück zur ganzen Stadt */
-    if (window.parent !== window && document.body.classList.contains("lk-mini-modus")) {
-      if (ST.boden.wert(a[0], a[1], 1) > 0.4) { try { window.parent.postMessage({ typ: "leicht-haus", g: "see" }, location.origin); } catch (e) {} return; }
+    /* FASSUNG 828 — XANDER: „immer noch keine Angler am See, wenn ich … den See anklicke und es gibt noch kein Getreide
+       … da muss ich immer in die alte Ansicht zurück". See und Äcker jetzt auch im Vollbild; ein Tipp auf den Acker erntet
+       (reif) oder hilft beim Wachsen. Knapp neben einem Baum (im Überblick sind sie winzig) zählt als Baum. */
+    if (spielTipp) {
+      if (ST.boden.wert(a[0], a[1], 1) > 0.4) { O.stationTun("see"); return; }
+      if (ST.boden.wert(a[0], a[1], 2) > 0.4) { const f = feldBei(a[0], a[1]); if (f) { O.stationTun("feld" + f.nr); return; } }
+      const nb = baumNahe(px, py);
+      if (nb) { baumTun(nb); auswahlWeg(); return; }
       /* (FASSUNG 817: der Doppeltipp wird jetzt schon in O.tippen erkannt, für jede Stelle im Bild) */
     }
     for (const k in D.PLAETZE) {
@@ -978,6 +1072,107 @@
     }
     auswahlWeg();
   }
+  /* FASSUNG 828 — Bäume, See und Äcker im Spiel (siehe einzelTippen) */
+  function istBaum(x) { return /^n_(tanne|laubbaum|obstbaum|baum|birke|kiefer)/.test((x && x.bild) || ""); }
+  function spielPost(d) { try { window.parent.postMessage(d, location.origin); } catch (e) {} }
+  O.summen = function () { try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {} };
+  function baumTun(b) { baumRascheln(b); O.summen(); spielPost({ typ: "leicht-baum" }); }
+  /* der nächste Baum (Wald, Rand, eigener) höchstens 10 px neben dem Finger – im Überblick sind Bäume nur ein paar Punkte groß */
+  function baumNahe(px, py) {
+    const r = 10 * K.dpr; let best = null, bd = r;
+    for (const e of SZ.sichtbare || []) {
+      if (!istBaum(e.o) || !(e.o.art === "natur" || (e.o.art === "eigen" && document.body.classList.contains("lk-mini-modus")))) continue;
+      const m = e.meta, x0 = e.X - m.ax * e.k, y0 = e.Y - m.ay * e.k, x1 = x0 + m.w * e.k, y1 = y0 + m.h * e.k;
+      const d = Math.hypot(Math.max(x0 - px, 0, px - x1), Math.max(y0 - py, 0, py - y1));
+      if (d < bd) { bd = d; best = e.o; }
+    }
+    return best;
+  }
+  function feldBei(x, y) {
+    let best = null, bd = 1e9;
+    for (const f of D.FELD_ORTE || []) { const d = Math.hypot(f.x - x, f.y - y) - f.r; if (d < bd) { bd = d; best = f; } }
+    return best && bd < 6 ? best : null;
+  }
+  /* Angler am Ufer: wenn die Fischer des Spiels arbeiten (Zeichen „läuft" am See) und ein paar Sekunden nach dem eigenen Wurf */
+  let anglerWurf = -1e9, anglerFischer = false, uferPlaetze = null, uferSchl = "";
+  O.stationTun = function (g) {
+    O.summen();
+    if (g === "see") { anglerWurf = performance.now(); L().unruhe = 2; spielPost({ typ: "leicht-haus", g: "see" }); return; }
+    const f = /^feld(9[12])$/.exec(g);
+    if (f) { feldTipp = { nr: +f[1], t: performance.now() }; L().unruhe = 2; spielPost({ typ: "leicht-feld", nr: +f[1] }); }
+  };
+  O.anglerSetzen = function (an) { if (an !== anglerFischer) { anglerFischer = an; L().unruhe = 2; } };
+  O.anglerDa = function () { return anglerFischer || performance.now() - anglerWurf < 9000; };
+  O.uferPlaetze = function () { return ufer(); };
+  let feldTipp = null;
+  function ufer() {
+    const v = D.SEE_VERSATZ || [0, 0], schl = v.join(",");
+    if (uferPlaetze && uferSchl === schl) return uferPlaetze;
+    uferSchl = schl; uferPlaetze = [];
+    const cx = 66 + v[0], cy = 56 + v[1], B = ST.boden, nass = (x, y) => B.wert(x, y, 1) > 0.5;
+    /* Uferpunkte rund um die Zunge des Sees: trockenes Land, 1,5 m weiter zur Mitte ist Wasser; vorn (zum Betrachter) zuerst */
+    const kand = [];
+    for (let r = 6; r <= 22; r += 1) for (let w = 0; w < 360; w += 6) {
+      const a = w * Math.PI / 180, x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+      if (nass(x, y) || B.wert(x, y, 0) > 0.4) continue;
+      const dx = cx - x, dy = cy - y, l = Math.hypot(dx, dy) || 1;
+      if (!nass(x + dx / l * 1.5, y + dy / l * 1.5)) continue;
+      if (SZ.objekte.some((o) => o.art !== "natur" && Math.abs(o.x - x) < (o.fuss ? o.fuss[0] : 2) / 2 + 1 && Math.abs(o.y - y) < (o.fuss ? o.fuss[1] : 2) / 2 + 1)) continue;
+      kand.push({ x: x, y: y, dx: dx / l, dy: dy / l, vorn: x + y });
+    }
+    kand.sort((p, q) => q.vorn - p.vorn);
+    for (const p of kand) { if (uferPlaetze.every((q) => Math.hypot(q.x - p.x, q.y - p.y) > 4.5)) uferPlaetze.push(p); if (uferPlaetze.length >= 2) break; }
+    return uferPlaetze;
+  }
+  SZ.zuhoerer.push(function (g, t) {
+    const jetzt = performance.now();
+    /* ein Tipp auf den Acker: ein paar Ähren fliegen auf */
+    if (feldTipp && jetzt - feldTipp.t < 900) {
+      const f = (D.FELD_ORTE || []).find((q) => q.nr === feldTipp.nr);
+      if (f) {
+        const d = (jetzt - feldTipp.t) / 900, P = ST.proj(f.x, f.y, 0.5 + d * 4), r = Math.max(2 * K.dpr, 0.25 * K.s);
+        g.save(); g.globalAlpha = 1 - d; g.fillStyle = "#e7bf5a"; g.strokeStyle = "#9a7410"; g.lineWidth = Math.max(1, 0.05 * K.s);
+        for (let i = 0; i < 7; i++) { const w = i * 0.9 + d * 3; g.beginPath(); g.ellipse(P[0] + Math.cos(w) * r * 3 * d, P[1] - Math.sin(i) * r * 2 * d, r, r * 0.55, w, 0, 7); g.fill(); g.stroke(); }
+        g.restore(); L().unruhe = 2;
+      }
+    }
+    if (!O.anglerDa || !O.anglerDa()) return;
+    const wurf = (jetzt - anglerWurf) / 1000, plaetze = ufer();
+    const k = Math.max(K.s, 3.2 * K.dpr);   // im Überblick etwas größer als maßstäblich, sonst sähe man sie nicht
+    plaetze.forEach((p, i) => {
+      const P = ST.proj(p.x, p.y, 0);
+      if (P[0] < -60 || P[1] < -60 || P[0] > K.W + 60 || P[1] > K.H + 60) return;
+      /* Blickrichtung zum Wasser im Bild */
+      const Q = ST.proj(p.x + p.dx, p.y + p.dy, 0), ux = (Q[0] - P[0]) / (Math.hypot(Q[0] - P[0], Q[1] - P[1]) || 1);
+      const s = k / K.s, hZ = (z) => z * s;   // Höhen in Metern, auf die Mindestgröße gestreckt
+      const hand = ST.proj(p.x + p.dx * 0.25 * s, p.y + p.dy * 0.25 * s, hZ(1.15));
+      /* Rute: hoch zum Wasser hin; nach dem eigenen Wurf schwingt sie eine Sekunde lang aus */
+      const schwung = wurf < 1.2 && i === 0 ? Math.sin(Math.min(1, wurf / 1.2) * Math.PI) * 0.9 : 0;
+      const spitze = ST.proj(p.x + p.dx * (2.2 - schwung) * s, p.y + p.dy * (2.2 - schwung) * s, hZ(2.6 + schwung * 1.4));
+      const pose = ST.proj(p.x + p.dx * 3.6 * s, p.y + p.dy * 3.6 * s, 0);
+      const wipp = Math.sin(t * 2.4 + i * 1.7) * 0.18 * k;
+      g.save();
+      g.fillStyle = "rgba(30,40,30,.28)"; g.beginPath(); g.ellipse(P[0], P[1], 0.45 * k, 0.18 * k, 0, 0, 7); g.fill();
+      /* Beine, Jacke, Kopf mit Hut */
+      g.lineCap = "round";
+      g.strokeStyle = "#3b3a45"; g.lineWidth = Math.max(1.2, 0.2 * k);
+      g.beginPath(); g.moveTo(P[0] - 0.12 * k, P[1]); g.lineTo(P[0] - 0.08 * k, P[1] - 0.8 * k); g.moveTo(P[0] + 0.12 * k, P[1]); g.lineTo(P[0] + 0.08 * k, P[1] - 0.8 * k); g.stroke();
+      g.fillStyle = i ? "#2f6d8f" : "#b0452f";
+      g.beginPath(); g.ellipse(P[0], P[1] - 1.12 * k, 0.26 * k, 0.4 * k, 0, 0, 7); g.fill();
+      g.fillStyle = "#f0c9a0"; g.beginPath(); g.arc(P[0], P[1] - 1.66 * k, 0.16 * k, 0, 7); g.fill();
+      g.fillStyle = "#6b5a2e"; g.beginPath(); g.ellipse(P[0], P[1] - 1.78 * k, 0.27 * k, 0.08 * k, 0, 0, 7); g.fill();
+      /* Rute und Schnur bis zur roten Pose */
+      g.strokeStyle = "#5a3b1c"; g.lineWidth = Math.max(1, 0.07 * k);
+      g.beginPath(); g.moveTo(hand[0], hand[1]); g.lineTo(spitze[0], spitze[1]); g.stroke();
+      g.strokeStyle = "rgba(240,240,240,.75)"; g.lineWidth = Math.max(0.7, 0.025 * k);
+      g.beginPath(); g.moveTo(spitze[0], spitze[1]); g.quadraticCurveTo((spitze[0] + pose[0]) / 2 + ux * 0.2 * k, (spitze[1] + pose[1]) / 2, pose[0], pose[1] + wipp); g.stroke();
+      g.fillStyle = "#d8261f"; g.beginPath(); g.arc(pose[0], pose[1] + wipp, Math.max(1.2, 0.12 * k), 0, 7); g.fill();
+      g.strokeStyle = "rgba(255,255,255,.5)"; g.lineWidth = Math.max(0.6, 0.03 * k);
+      g.beginPath(); g.ellipse(pose[0], pose[1] + 0.1 * k, 0.35 * k * (1 + (t % 1.5) / 1.5), 0.12 * k * (1 + (t % 1.5) / 1.5), 0, 0, 7); g.stroke();
+      g.restore();
+    });
+    if (wurf < 1.6) L().unruhe = 2;
+  });
   const rascheln = [];
   function baumRascheln(o) {
     const t0 = performance.now(), jahr = SZ.jahr, h = (o.hoehe || 10) * (o.stufe || 1);
@@ -1110,7 +1305,14 @@
       }
       knoepfe.append(knopf("links", "Drehen", () => objDrehen(o, 1, true)), knopf("rechts", "Andersherum drehen", () => objDrehen(o, -1, true)),
         knopf("versetzen", "Versetzen", () => { SZ.weg(o); geist = SZ.neu(Object.assign({}, o, { geist: true })); karteZeigen("setzen", geist); }),
-        knopf("abriss", "Entfernen", () => { SZ.weg(o); L().dekoSpeichern(); karte.hidden = true; miniMalen(); L().unruhe = 2; }), zu);
+        knopf("abriss", "Entfernen", () => { SZ.weg(o); L().dekoSpeichern(); karte.hidden = true; miniMalen(); L().unruhe = 2; }));
+      /* FASSUNG 828 — ein eigener Baum schickt im Spiel auch aus seiner Karte die Holzfäller los */
+      if (istBaum(o) && window.parent !== window) {
+        const hf = el("button", "lk-text-knopf", "<span>Holzfäller</span>"); hf.type = "button"; hf.title = "Holzfäller in den Wald schicken";
+        hf.addEventListener("click", (e) => { e.stopPropagation(); baumTun(o); });
+        knoepfe.append(hf);
+      }
+      knoepfe.append(zu);
       return;
     }
     zeile.textContent = o.art === "wunder" ? "Wahrzeichen" : "Gehört zum Dorf";

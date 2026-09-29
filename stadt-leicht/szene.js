@@ -150,7 +150,12 @@
     let liste = GIER_CACHE[bild];
     if (!liste) {
       liste = [];
-      const re = new RegExp("^" + bild + "_[a-z]+_[a-z]+_[a-z0-9]+_(\\d+)_[kgm]$");
+      /* FASSUNG 828 — XANDER: „beim Bauen verschwindet manchmal in einer Zoomstufe das Gebäude. Wenn ich da wieder klein
+         zoome und wieder groß … dann geht es meistens wieder". Im kleinen Rahmen kennt das kleine Verzeichnis die
+         Baustellen nur als Zwergbilder (_n). Ohne _n in der Suche fand ein schräg stehendes Haus (45°) keine Drehung seiner
+         Baustelle und suchte ein Bild, das es nicht gibt (…_b55_315) – unsichtbar, bis die zweite Zoomstufe das große
+         Verzeichnis (mit _m) nachlud. Jetzt zählen alle Größen (_k _g _m _n _z). */
+      const re = new RegExp("^" + bild + "_[a-z]+_[a-z]+_[a-z0-9]+_(\\d+)_[kgmnz]$");
       for (const k in LB.vz) { const m = re.exec(k); if (m && liste.indexOf(+m[1]) < 0) liste.push(+m[1]); }
       liste.sort((a, b) => a - b);
       /* (auch das kleine Verzeichnis im Rahmen hat alle Winkel: _k und _z gibt es zu jeder Drehung) */

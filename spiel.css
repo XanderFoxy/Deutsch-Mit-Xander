@@ -3089,3 +3089,7 @@ button.sp-gesperrt, button.sp-gesperrt:disabled { opacity: 1; color: #d9ccb0; ba
 .sp-ausblick-auf { margin: 6px 0 4px; }
 .sp-forschung.sp-lvzu { background: rgba(120, 100, 70, .16); }
 .sp-beruf > i .sp-schloss { margin: 0; }
+/* FASSUNG 828 — XANDER: „dann ist er auch immer so ein Kopierrahmen drum. Das muss auch verschwinden wie wir das bei den
+   Buttons damals gemacht haben … der will immer die Eier kopieren". Das Dorfbild (alt und neu) ist Spielfeld: nichts
+   markierbar, kein Kopier-/Bildmenü beim langen Drücken, kein grauer Tippkasten. */
+.sp-lstadt, .sp-lstadt *, .sp-dl-rahmen, .sp-dl-rahmen *, .sp-dorfland, .sp-dorfland * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }

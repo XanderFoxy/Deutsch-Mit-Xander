@@ -12870,9 +12870,10 @@
       hinweis(tr ? "🧺 Die " + tr.name + " sind zurück: +" + r.menge + " " + wareName(r.ware) + " im Lager." : "🧺 +" + r.menge + " " + wareName(r.ware) + " abgeholt." + (r.ware === "trank_mana" ? " Trinken: Flasche in der Leiste." : ""));
     });
   }
-  function dorfFertigSammeln(g) {
+  function dorfFertigSammeln(g, zwang) {
     var ich = S.ich || {};
-    if (!g || S.dorfWahl === g) return false;
+    /* FASSUNG 828 — vom Zeichen in der neuen Stadt (zwang): immer einsammeln, auch wenn die Station gerade offen ist */
+    if (!g || (S.dorfWahl === g && !zwang)) return false;
     var w = (ich.werk || {})[g];
     if (w && Date.parse(w.fertig) <= Date.now()) { werkAbholen(g); return true; }
     if (g === "bergwerk" && truppFertig(ich, ["berg"])) { werkAbholen("trupp_berg"); return true; }
@@ -13149,6 +13150,17 @@
       /* Tipp auf ein Haus in der kleinen Stadt: die Karte des Spiels darunter (Einsammeln, Ausbauen …). */
       /* FASSUNG 807 — ein Tipp auf den See in der neuen Stadt: angeln (oder den Fang der Fischer abholen) */
       if (ev.data.typ === "leicht-haus" && ev.data.g === "see" && !dorfBesuchStand()) { lsAngeln(); return; }
+      /* FASSUNG 828 — XANDER: „diese items für Holz und Fleisch die kann man kaum einsammeln … immer wenn man da draufgeht,
+         kommt man auf das dahinter auf den Wald das soll auch nicht sein … die soll man nur einsammeln können ganz locker".
+         Ein Tipp auf ein Zeichen (zeichen: 1) sammelt ein – Holz, Fleisch, Fisch der Trupps ebenso wie Mehl, Eier, Milch –
+         und öffnet nie die Station dahinter. Vorher ging „Fleisch" als „wald" hinaus und öffnete den Wald. */
+      if (ev.data.typ === "leicht-haus" && ev.data.zeichen && typeof ev.data.g === "string" && !dorfBesuchStand() && lsZeichenTippen(ev.data.g)) return;
+      /* FASSUNG 828 — XANDER: „Theoretisch könnte ich überall auf die Bäume klicken und das könnte die Holzhacker
+         losschicken". Jeder Baum in der neuen Stadt: Holzfäller los (oder mithelfen, oder das Holz abholen). */
+      if (ev.data.typ === "leicht-baum" && !dorfBesuchStand()) { lsBaum(); return; }
+      /* FASSUNG 828 — XANDER: „es gibt noch kein Getreide … da muss ich immer in die alte Ansicht zurück". Die Äcker der
+         neuen Stadt sind die Felder 91 und 92 des alten Bildes: reif = mit der Sense ernten, sonst beim Wachsen helfen. */
+      if (ev.data.typ === "leicht-feld" && !dorfBesuchStand()) { lsFeld(Number(ev.data.nr)); return; }
       if (ev.data.typ === "leicht-haus" && typeof ev.data.g === "string" && (DORF[ev.data.g] || ev.data.g === "bahnhof" || ev.data.g === "wald")) {
         /* FASSUNG 806 — wie ein Tipp im alten Dorfbild: steht „fertig" dran, wird gleich eingesammelt; eine Baustelle
            bekommt Hilfe; sonst öffnet sich die Station darunter. */
@@ -13213,6 +13225,11 @@
       var t = truppStand(ich, ort);
       if (t) aus[ort] = t.fertig ? ["fertig", t.menge + " " + wareName(t.ware), t.ware] : ["laeuft", (t.leer ? "Ruhe " : wareName(t.ware) + " ") + uhrText(t.rest), t.ware];
     });
+    /* FASSUNG 828 — die Äcker wie im alten Bild: „Getreide reif" oder die Uhr bis zur Reife */
+    DORF_FELDER.forEach(function (f) {
+      var st = ackerStand(f.nr);
+      aus["feld" + f.nr] = st.reif ? ["fertig", "Getreide reif", "getreide"] : ["laeuft", "Getreide " + uhrText(st.rest), "getreide"];
+    });
     return aus;
   }
   function lsZeichenSchicken() {
@@ -13241,6 +13258,38 @@
     if (sig === L.zSig) return;
     L.zSig = sig;
     lsPost({ typ: "leicht-zeichen", z: z });
+  }
+  /* FASSUNG 828 — ein Tipp auf ein Zeichen der neuen Stadt: nur einsammeln (oder bei laufender Arbeit mithelfen), nie die
+     Station dahinter öffnen. false = wie ein Tipp aufs Haus weiter (Baustelle: helfen; sonst Station). */
+  function lsZeichenTippen(g) {
+    var ich = S.ich || {};
+    if (g === "wald" || g === "jagd") {
+      var t = truppStand(ich, g);
+      if (t && t.fertig) { werkAbholen("trupp_" + g); if (LSTADT) LSTADT.zSig = ""; return true; }
+      if (t && !t.leer) { truppHelfen(null, g); return true; }
+      if (t) { hinweis("🚶 Die " + TRUPPS[g].name + " ruhen noch – in " + uhrText(t.rest) + " können sie wieder los."); return true; }
+      truppSchicken(g); return true;
+    }
+    if (/^feld9[12]$/.test(g)) { lsFeld(Number(g.slice(4))); return true; }
+    if (DORF[g] && dorfFertigSammeln(g, true)) { S.dorfTippWeg = true; if (LSTADT) LSTADT.zSig = ""; return true; }
+    return false;
+  }
+  function lsBaum() {
+    var ich = S.ich || {};
+    if (!ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
+    if (S.lsBaumBis && S.lsBaumBis > Date.now()) return;
+    S.lsBaumBis = Date.now() + 500;
+    var t = truppStand(ich, "wald");
+    if (t && t.fertig) { werkAbholen("trupp_wald"); if (LSTADT) LSTADT.zSig = ""; return; }
+    if (t && !t.leer) { truppHelfen(null, "wald"); return; }
+    if (t) { hinweis("🌲 Die Holzfäller ruhen noch – in " + uhrText(t.rest) + " können sie wieder los."); return; }
+    ton("axttreffer", 0.3);
+    truppSchicken("wald");
+  }
+  function lsFeld(nr) {
+    if (!DORF_FELDER.some(function (f) { return f.nr === nr; })) return;
+    /* Sense und Ähren malt die Stadt selbst; hier nur ein unsichtbarer Platzhalter für die gewohnten Wege */
+    dorfFeldTipp(document.createElement("span"), nr);
   }
   /* FASSUNG 807 — Wischen über die kleine Stadt scrollt das Dorf-Menü (den Behälter um den Platzhalter), nicht die Seite. */
   function lsAngeln() {
