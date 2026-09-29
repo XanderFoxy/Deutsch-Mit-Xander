@@ -828,9 +828,15 @@
     ["Apfelbaum", "n_obstbaum0", [3, 3], 6], ["Apfelbaum", "n_obstbaum1", [3, 3], 6],
     ["Christbaum", "d_weihnachtsbaum", [7.4, 7.4], 21.8, 1], ["Marktbude", "d_marktbude", [4, 3.2], 4.2, 1], ["Schneemann", "d_schneemann", [1.3, 1.3], 1.9, 1],
     ["Pyramide", "d_pyramide", [9.2, 9.2], 13, 1], ["Krippe", "d_krippe", [7.2, 5.4], 5.2, 1],
+    /* FASSUNG 829 — XANDER: „bei den Schmück-Sachen oder Bausachen eine Eisdiele machen, wo dann die Leute auch mal Eis
+       essen gehen können". An Stelle 8 die Drehung beim Setzen: 3,5 = Theke zum Betrachter. */
+    ["Eisdiele", "d_eisdiele", [7.4, 7.0], 5.2, 0, undefined, undefined, 3.5],
     /* FASSUNG 808 — neue Modelle aus stadt/modelle/ (gebacken, stadt-leicht/backplan.json); an Stelle 5 die Gruppe.
        Geladen wird ein Bild erst, wenn die Leiste offen ist oder das Ding in der Stadt steht. */
     ["Rathaus Döbeln", "w_rathaus_doebeln", [41, 33.1], 32.5, 0, "Wahrzeichen"],
+    /* FASSUNG 829 — XANDER: „Guck mal, dass du noch ein realistisches Kolosseum baust … dass das dann von der
+       Größenordnung zum Döbelner Rathaus passt". Modell in 1:2,14 wie das Rathaus im Dorf (88,2 × 72,8 m, 22,4 m hoch). */
+    ["Kolosseum", "w_kolosseum", [88.2, 72.8], 22.4, 0, "Wahrzeichen", undefined, 3.5],
     /* FASSUNG 815 — an Stelle 7 der Name des Autos in autos.js: kaufen, fahren lassen, abstellen */
     ["Dodge Viper", "v_viper", [1.92, 4.45], 1.12, 0, "Fahrzeuge", "viper"], ["Batmobil", "v_batmobil", [2.1, 5.9], 1.12, 0, "Fahrzeuge", "batmobil"],
     ["Pferdebahn", "v_pferdebahn", [2.3, 9.6], 3, 0, "Fahrzeuge"], ["Kornwagen", "v_pferdewagen_korn", [2, 6.5], 2.6, 0, "Fahrzeuge"],
@@ -845,7 +851,8 @@
         /* FASSUNG 808 — Überschrift, wenn eine neue Gruppe beginnt (Wahrzeichen, Fahrzeuge, Gleise) */
         if (s[5] && s[5] !== gruppe) { gruppe = s[5]; leiste.appendChild(el("div", "lk-gruppe", "<span>" + gruppe + "</span>")); }
         const b = el("button", "lk-karte-klein"); b.type = "button";
-        const bild = s[1] + "_" + (s[4] ? "winter" : SZ.jahr === "winter" ? "winter" : "herbst") + "_tag_f_0_k";
+        /* FASSUNG 829 — Dinge, die mit der Front zum Betrachter gesetzt werden, zeigen auch im Bildchen ihre Front */
+        const bild = s[1] + "_" + (s[4] ? "winter" : SZ.jahr === "winter" ? "winter" : "herbst") + "_tag_f_" + (s[7] != null ? (s[7] * 90) % 360 : 0) + "_k";
         b.innerHTML = '<img alt="" src="stadt-leicht/bilder/' + bild + '.webp' + (LB.version ? "?v=" + LB.version : "") + '"><span>' + s[0] + "</span>";
         if (s[6] && ST.autos) { b.classList.add("lk-auto-karte"); b.dataset.auto = s[6]; b.appendChild(el("small", "lk-auto-preis")); b.appendChild(el("b", "lk-kaufen")); }
         b.addEventListener("click", (e) => { e.stopPropagation(); if (s[6] && ST.autos) autoKarte(s); else setzenBeginnen(s); });
@@ -945,7 +952,11 @@
       const st = (dorf[k] && dorf[k].stufe) || 0;
       const text = haus && haus.bau ? "im Bau" : st ? "Stufe " + st : G[2] ? "ab Level " + G[2] : G[1] + " P.";
       const b = el("button", "lk-karte-klein" + (st || (haus && haus.bau) ? "" : " lk-frei")); b.type = "button";
-      const bild = D.BILD[k][0] + "_" + (SZ.jahr === "winter" ? "winter" : "herbst") + "_tag_f_0_k";
+      /* FASSUNG 829 — XANDER: „du hast das Bergwerk nicht mit der Öffnung zu uns gestellt". Im Dorf schauen alle Häuser
+         zum Betrachter (dreh 3,5 → Bild _f_315); das Bildchen in der Bau-Leiste zeigt jetzt dieselbe Ansicht (vorher
+         _f_0: das Mundloch des Bergwerks schaute schräg zur Seite). Ohne 315°-Bild bleibt es bei 0°. */
+      const jz = (SZ.jahr === "winter" ? "winter" : "herbst") + "_tag_f_", vz = LB.vz || {};
+      const bild = D.BILD[k][0] + "_" + jz + (vz[D.BILD[k][0] + "_" + jz + "315_k"] ? "315" : "0") + "_k";
       b.innerHTML = '<img alt="" src="stadt-leicht/bilder/' + bild + '.webp' + (LB.version ? "?v=" + LB.version : "") + '"><span>' + G[0] + "</span><small>" + text + "</small>";
       b.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -966,7 +977,7 @@
     leisteZeigen(false);
     auswahlWeg();
     const p = ST.aufBoden(K.W / 2, K.H * 0.46);
-    geist = SZ.neu({ art: "eigen", bild: s[1], x: p[0], y: p[1], dreh: 0, fuss: s[2], hoehe: s[3], nurWinter: s[4] ? 1 : undefined, geist: true });
+    geist = SZ.neu({ art: "eigen", bild: s[1], x: p[0], y: p[1], dreh: s[7] || 0, fuss: s[2], hoehe: s[3], nurWinter: s[4] ? 1 : undefined, geist: true });
     karteZeigen("setzen", geist);
   }
   O.haltAufbau = () => !!geist;

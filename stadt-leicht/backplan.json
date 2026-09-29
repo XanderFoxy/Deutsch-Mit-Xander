@@ -1611,6 +1611,66 @@
    }
   },
   {
+   "bild": "w_kolosseum",
+   "id": "kolosseum",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 12,
+    "klein": 4.5
+   }
+  },
+  {
+   "bild": "d_eisdiele",
+   "id": "eisdiele",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
    "bild": "v_viper",
    "id": "auto_viper",
    "saat": 7,
