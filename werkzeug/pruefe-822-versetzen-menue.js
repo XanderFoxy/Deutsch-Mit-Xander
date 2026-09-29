@@ -292,7 +292,8 @@ const FALSCH = `(function(){
   await pg.evaluate(() => { window.__msgs.length = 0; });
   if (b1) { await pg.touchscreen.tap(off.l + b1.x, off.t + b1.y); await tick(800); }
   const menueC = await fr.evaluate((b) => { const k = document.querySelector(".lk-karte"); if (!k || k.hidden) return null; const r = k.getBoundingClientRect(), kn = [...k.querySelectorAll("button")].map((x) => x.getBoundingClientRect());
-    const hud = [...document.querySelectorAll(".lk-lupe,.lk-uhr,.lk-ortsschild,.lk-vollknopf,.lk-drehknopf")].map((e) => e.getBoundingClientRect()).filter((q) => q.width > 0);
+    /* FASSUNG 831 — dazu der Dreh-Schieber (.lk-drehschieber hat den Drehknopf links im kleinen Rahmen abgelöst) */
+    const hud = [...document.querySelectorAll(".lk-lupe,.lk-uhr,.lk-ortsschild,.lk-vollknopf,.lk-drehknopf,.lk-drehschieber")].map((e) => e.getBoundingClientRect()).filter((q) => q.width > 0);
     const ueber = hud.filter((q) => Math.min(q.right, r.right) - Math.max(q.left, r.left) > 1 && Math.min(q.bottom, r.bottom) - Math.max(q.top, r.top) > 1).length;
     return { t: k.textContent, am: k.classList.contains("lk-am-ding"), ent: !!k.querySelector('.lk-knopf[title="Entfernen"]'), vs: !!k.querySelector('.lk-knopf[title="Versetzen"]'),
       drin: r.left >= 0 && r.right <= innerWidth + 0.5 && r.top >= 0 && r.bottom <= innerHeight + 0.5, breite: innerWidth, w: Math.round(r.width), h: Math.round(r.height),

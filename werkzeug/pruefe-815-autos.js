@@ -311,11 +311,19 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     const vorn = () => { const x = a.x + Math.cos(a.h) * 7.5, y = a.y + Math.sin(a.h) * 7.5; return STADT.proj(x, y, 0); };
     const hell = () => { const P = vorn(), d = g.getImageData(Math.round(P[0]) - 12, Math.round(P[1]) - 12, 24, 24).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += d[i] + d[i + 1] + d[i + 2]; return s / (d.length / 4) / 3; };
     const Z = STADT.szene.zeitDaten();
-    AU.ohneLicht = true; STADT.boden.zeichnen(1, Z, STADT.szene.jahr); STADT.szene.zeichnen(performance.now()); const ohne = hell();
-    AU.ohneLicht = false; STADT.boden.zeichnen(1, Z, STADT.szene.jahr); STADT.szene.zeichnen(performance.now()); const mit = hell();
-    return { ohne: +ohne.toFixed(1), mit: +mit.toFixed(1), licht: a.licht, blatt: a.blatt, nacht: Z.nacht };
+    /* FASSUNG 831 — der Messpunkt 7,5 m vor dem Auto kann auf der Dinge-Ebene verdeckt sein (ein Haus, der Fernsehturm
+       davor): ohne Licht ist die Ebene dort durchsichtig (≈ 0) – ist sie es nicht (ohne ≥ 25), ein Stück weiterfahren
+       (Kamera mit), bis der Punkt frei ist; höchstens 30 Versuche */
+    let ohne = 0, mit = 0, versuche = 0;
+    for (; versuche < 30; versuche++) {
+      if (versuche) { for (let i = 0; i < 40 && !(a.zustand === "faehrt" && a.v > 2); i++) AU.vorspulen(0.25); AU.vorspulen(0.5); STADT.kamera.x = a.x; STADT.kamera.y = a.y; }
+      AU.ohneLicht = true; STADT.boden.zeichnen(1, Z, STADT.szene.jahr); STADT.szene.zeichnen(performance.now()); ohne = hell();
+      if (ohne < 25) break;
+    }
+    AU.ohneLicht = false; STADT.boden.zeichnen(1, Z, STADT.szene.jahr); STADT.szene.zeichnen(performance.now()); mit = hell();
+    return { ohne: +ohne.toFixed(1), mit: +mit.toFixed(1), licht: a.licht, blatt: a.blatt, nacht: Z.nacht, versuche: versuche };
   });
-  sage(NL.mit > NL.ohne + 8 && NL.licht > 0.9, "nachts leuchten die Scheinwerfer: der Weg vor dem Auto wird hell (Lichtkegel)", JSON.stringify(NL));
+  sage(NL.ohne < 25 && NL.mit > NL.ohne + 8 && NL.licht > 0.9, "nachts leuchten die Scheinwerfer: der Weg vor dem Auto wird hell (Lichtkegel)", JSON.stringify(NL));
   sage(/_winter_nacht$/.test(NL.blatt || ""), "nachts das Nachtblatt", NL.blatt);
   await foto(pn, "nacht-batmobil");
   /* Batmobil glüht beim Anfahren: halten lassen, dann losfahren und malen */

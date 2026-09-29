@@ -433,6 +433,12 @@
     };
     /* Freie Stelle für ein Wahrzeichen (Grundfläche fussS): nicht auf Häusern, anderen Wahrzeichen, Bahnhof, Bootsverleih,
        Wasser oder der Bahn, ganz auf dem Plateau. Gesucht wird in Ringen um die Wunschstelle. */
+    /* FASSUNG 831 — Abstand eines Punktes (px, py) von einem gedrehten Rechteck (Mitte x, y, Größe fu, dreh in Vierteln) */
+    const abstRechteck = (px, py, x, y, fu, dreh) => {
+      const a = (dreh || 0) * Math.PI / 2, c = Math.cos(a), s = Math.sin(a), dx = px - x, dy = py - y;
+      const u = Math.abs(dx * c + dy * s) - fu[0] / 2, v = Math.abs(-dx * s + dy * c) - fu[1] / 2;
+      return Math.hypot(Math.max(0, u), Math.max(0, v));
+    };
     D.freiFuerWunder = function (w, x0, y0, andere) {
       const f = w.fussS || w.fuss, r = Math.hypot(f[0], f[1]) / 2 * 0.78;
       /* genaue Grundflächen (gedrehte Rechtecke, Trennachsen-Test) mit 1,5 m Abstand */
@@ -713,16 +719,34 @@
       const fl = kurve(D.FLUSS, 10), mb = kurve(D.MUEHLBACH, 12);
       for (const b of D.BRUECKEN || []) setze("d_bruecke", b.x, b.y, b.dreh, { fuss: [3.9, 11.2], hoehe: 2.7 });
       /* Laternen an den Wegen (alle ≈ 16 m), Bänke und Brunnen am Markt */
+      /* FASSUNG 831 — liegt ein Punkt in der Grundfläche eines Hauses (Rathaus: seine Flügel) oder eines stehenden
+         Wahrzeichens (mit rand m Luft)? */
+      const inBau = (x, y, rand) => {
+        for (const k in P) {
+          if (k === "rathaus" && D.teileWelt("rathaus")) { if (D.imGrundriss("rathaus", x, y, rand)) return true; continue; }
+          const b = D.BILD[k], m = (D.MASS || {})[k] || 1;
+          if (abstRechteck(x, y, P[k].x, P[k].y, [b[2][0] * m, b[2][1] * m], P[k].dreh) < rand) return true;
+        }
+        for (const k in D.WUNDER) { const u = D.WUNDER[k]; if (u.steht && abstRechteck(x, y, u.x, u.y, u.fussS || u.fuss, u.dreh) < rand) return true; }
+        return false;
+      };
       let seit = 0;
       for (const w of D.WEGE) for (let i = 1; i < w.length; i++) {
         seit += Math.hypot(w[i][0] - w[i - 1][0], w[i][1] - w[i - 1][1]);
         if (seit < 16) continue; seit = 0;
         const dx = w[i][0] - w[i - 1][0], dy = w[i][1] - w[i - 1][1], l = Math.hypot(dx, dy) || 1;
-        const x = w[i][0] - dy / l * 2.2, y = w[i][1] + dx / l * 2.2;
+        /* FASSUNG 831 — XANDER (826): „große Wahrzeichen frei aufstellbar". Die Wege streifen oft die Ecke eines Hauses oder
+           Wahrzeichens; die Laterne 2,2 m daneben stand dann in der Wand (am Fernsehturm 0,5 m vor der Glaswand, ihr
+           Lichtkegel unter dem Sockel). Jetzt: steht sie dort in einer Grundfläche (mit 1 m Luft), kommt sie auf die andere
+           Seite des Weges – ist auch die verbaut, fällt sie aus. */
+        let x = w[i][0] - dy / l * 2.2, y = w[i][1] + dx / l * 2.2;
+        if (inBau(x, y, 1)) { x = w[i][0] + dy / l * 2.2; y = w[i][1] - dx / l * 2.2; if (inBau(x, y, 1)) continue; }
         if (nah(fl, [x, y], 3) || nah(mb, [x, y], 3) || vonBahn(x, y) < 4 || D.brueckeNah(x, y, BR_HALB + 2)) continue;
         setze("d_laterne", x, y, 0, { fuss: [0.8, 0.8], hoehe: 4.4, deko: 1 });
       }
-      for (let i = 0; i < 4; i++) { const a = rad(i * 90 + 45); setze("d_bank", MARKT[0] + Math.cos(a) * 8.6, MARKT[1] + Math.sin(a) * 8.6, 0, { fuss: [1.9, 0.75], hoehe: 0.9, deko: 1 }); }
+      /* FASSUNG 831 — keine Bank unter einem Wahrzeichen (seit 826 frei aufstellbar: wer eines auf den Markt stellt, bekommt
+         keine Bank unter den Sockel) */
+      for (let i = 0; i < 4; i++) { const a = rad(i * 90 + 45), x = MARKT[0] + Math.cos(a) * 8.6, y = MARKT[1] + Math.sin(a) * 8.6; if (inBau(x, y, 1)) continue; setze("d_bank", x, y, 0, { fuss: [1.9, 0.75], hoehe: 0.9, deko: 1 }); }
       setze("d_weihnachtsbaum", MARKT[0], MARKT[1], 0, { fuss: [7.4, 7.4], hoehe: 21.8, nurWinter: 1, jahr: "winter", deko: 1 });
       /* der Brunnen vor dem Portal (wie auf Xanders Foto); Christbaum und Buden bleiben auf dem Markt */
       setze("d_brunnen", D.BRUNNEN[0], D.BRUNNEN[1], 0, { fuss: [4.6, 4.6], hoehe: 5.4, jahrNicht: "winter", deko: 1 });

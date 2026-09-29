@@ -147,8 +147,13 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
     await p21.evaluate(() => { window.STADT.szene.pruef.ohneSchein = false; });
     const bs1 = await foto(p21);
     const wd = w21.map((w) => { const m1 = mittel(bs1, w.pts), m0 = mittel(bs0, w.pts); return m1 && m0 ? { haus: w.haus, d: w.d, L: +(m1.L - m0.L).toFixed(1), W: +(m1.W - m0.W).toFixed(1) } : null; }).filter(Boolean);
-    const best = wd.slice().sort((a, b) => b.L - a.L)[0];
-    sage(st21.schein >= 1 && wd.length >= 1 && best && best.L > 6 && best.W > 4, "nahe Hauswände werden von den Laternen warm angestrahlt", JSON.stringify({ haeuser: st21.schein, flecken: wd.length, bester: best }));
+    /* FASSUNG 831 — vorher zählte nur der hellste Fleck, und der musste wärmer werden. Auf der alten Karte war das eine
+       Hauswand im Schatten; seit 826 (Wahrzeichen im Maßstab, neue Wege und Laternen) ist der hellste Fleck oft eine
+       schon helle Wand – die weiße Platte des Fernsehturms, eine angestrahlte Rathauswand –, deren Rot bei 255 anstößt:
+       dort wird es heller, aber nicht röter (W sinkt sogar). Jetzt: der wärmste deutlich aufgehellte Fleck (L > 6);
+       dazu gezeigt der hellste. */
+    const hell = wd.filter((w) => w.L > 6), best = hell.slice().sort((a, b) => b.W - a.W)[0], hellster = wd.slice().sort((a, b) => b.L - a.L)[0];
+    sage(st21.schein >= 1 && wd.length >= 1 && best && best.L > 6 && best.W > 4, "nahe Hauswände werden von den Laternen warm angestrahlt", JSON.stringify({ haeuser: st21.schein, flecken: wd.length, aufgehellt: hell.length, bester: best, hellster: hellster }));
     p21.warm = warmHell(b1); p21.o = o21;
   }
   const p130 = await seite("uhr=01:30&" + LQ);

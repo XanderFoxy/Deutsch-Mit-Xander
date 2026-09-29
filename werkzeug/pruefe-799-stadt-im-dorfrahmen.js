@@ -60,6 +60,20 @@ const sage = (gut, was, zusatz) => {
   const konsolenFehler = [];
   pg.on("pageerror", (e) => konsolenFehler.push(String(e.message || e) + (process.env.STAPEL ? " @ " + String(e.stack || "").split("\n").slice(1, 4).join(" | ") : "")));
   await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} window.LEICHT_FREI = true; });
+  /* FASSUNG 831 — die Uhr der Stadt ist die deutsche Ortszeit (Fassung 825). In der Dämmerung (Herbst ab ≈ 17 Uhr) und
+     nachts lädt die Stadt zu den Tag- auch die Nachtbilder (sie blendet über) – die Grenze von 330 KB (Fassung 812:
+     „am Tag 313 KB") galt aber für den Tag, und die Sonde war je nach Uhrzeit rot oder grün. Deshalb läuft die Uhr hier
+     (in der Seite und im Rahmen) auf 12 Uhr deutscher Zeit versetzt weiter; UHR_ECHT=1 lässt die echte Uhr. */
+  if (!process.env.UHR_ECHT) {
+    const B = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hourCycle: "h23", hour: "2-digit", minute: "2-digit" });
+    const jetzt = Date.now(); let off = 0;
+    for (let h = -24; h <= 24; h++) { const t = jetzt + h * 3600000, [hh, mm] = B.format(new Date(t)).split(":").map(Number); if (hh === 12) { off = h * 3600000 - mm * 60000; break; } }
+    await pg.addInitScript((off) => {
+      const D = Date;
+      class Versetzt extends D { constructor(...a) { if (a.length) super(...a); else super(D.now() + off); } static now() { return D.now() + off; } }
+      window.Date = Versetzt;
+    }, off);
+  }
   await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
   await pg.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF && window.DMA_SPIEL, { timeout: 25000 });
 
@@ -330,7 +344,14 @@ const sage = (gut, was, zusatz) => {
     return { name: e.getAttribute("aria-label"), knoepfe: e.querySelectorAll("button").length, frei: r.top >= p.bottom - .5 }; });
   sage(!!st && st.frei, "die Karte liegt unter dem Stadtbild, nicht darunter versteckt", JSON.stringify(st));
   sage(!!ziel && !!st && st.knoepfe > 0, "Tipp auf ein Haus in der kleinen Stadt öffnet darunter die Karte des Spiels (mit Knöpfen wie Einsammeln)", JSON.stringify({ ziel, st }));
-  const imR = { ls: await lage(".sp-lstadt"), platz: await lage(".sp-dl-neustadt-platz"), marke: await imFrame(() => window.__marke) };
+  /* FASSUNG 831 — nach dem Tipp rollt das Menü sanft zur Karte (lsStationZeigen: sanft, nach 0,7 s genau nach); der Rahmen
+     folgt dem Platzhalter Bild für Bild. Beide wurden vorher nacheinander (in zwei Aufrufen) gemessen – mitten im Rollen
+     lagen sie dann bis 96 px auseinander, ohne dass der Rahmen danebenlag. Jetzt beide im selben Augenblick, und bis 4 s
+     gewartet, bis das Rollen vorbei ist (zweimal hintereinander dieselbe Lage); ein echter Versatz bleibt rot. */
+  const beide = () => pg.evaluate(() => { const g = (sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { l: r.left, t: r.top, w: r.width, h: r.height, vis: getComputedStyle(e).visibility }; }; return { ls: g(".sp-lstadt"), platz: g(".sp-dl-neustadt-platz") }; });
+  let imR = await beide();
+  for (let i = 0, vor = null; i < 20; i++) { if (vor && nah(imR.ls, imR.platz) && nah(vor.platz, imR.platz)) break; vor = imR; await tick(200); imR = await beide(); }
+  imR.marke = await imFrame(() => window.__marke);
   sage(nah(imR.ls, imR.platz) && imR.marke === 42, "die Stadt bleibt dabei im Rahmen und lädt nicht neu", JSON.stringify(imR));
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-haus.png" });
 

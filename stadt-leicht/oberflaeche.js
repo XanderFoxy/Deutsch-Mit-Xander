@@ -1539,7 +1539,8 @@
     karte.classList.toggle("lk-am-ding", !!ding);
     if (!ding) karte.style.transform = "";
   }
-  const AUSWEICHEN = [".lk-kopf", ".lk-mini-rahmen", ".lk-schmuck", ".lk-leiste", ".lk-lupe", ".lk-uhr", ".lk-ortsschild", ".lk-wetter", ".lk-vollknopf", ".lk-drehknopf", ".lk-gestalten-fertig", ".lk-wahl", ".lk-zeichen"];
+  /* FASSUNG 831 — dazu der Dreh-Schieber (.lk-drehschieber, seit 822 statt des Drehknopfs links im kleinen Rahmen) */
+  const AUSWEICHEN = [".lk-kopf", ".lk-mini-rahmen", ".lk-schmuck", ".lk-leiste", ".lk-lupe", ".lk-uhr", ".lk-ortsschild", ".lk-wetter", ".lk-vollknopf", ".lk-drehknopf", ".lk-drehschieber", ".lk-gestalten-fertig", ".lk-wahl", ".lk-zeichen"];
   function amDingLegen() {
     if (!karte || karte.hidden || !karte.classList.contains("lk-am-ding")) return;
     const o = karte._ding;
@@ -1565,6 +1566,17 @@
     const wert = (q) => weg.reduce((a, r) => a + ueber(q, r), 0) + ueber(q, ding) * 0.6;
     const wahl = [setzen(mx - bw / 2, y0 - bh - 6), setzen(mx - bw / 2, y1 + 6), setzen(x1 + 6, my - bh / 2), setzen(x0 - bw - 6, my - bh / 2)];
     const werte = wahl.map(wert);
+    /* FASSUNG 831 — XANDER (822): „ich möchte im kleinen Menü einen Baum rausnehmen". Im kleinen Rahmen (360 × 225) ist das
+       Menü 321 px breit: über dem Baum stieß es oben an Kompass und Ortsschild, daneben ist kein Platz – alle vier Lagen
+       deckten etwas zu (Sonde 822: „ueber":2), und links lag der Dreh-Schieber über „Versetzen“. Deckt jede der vier Lagen
+       etwas zu, werden auch die Lagen dicht neben den Knöpfen probiert (rechts/unter/über jedem Knopf, an den Rändern) –
+       genommen wird die, die am wenigsten zudeckt und dem Ding am nächsten liegt. */
+    if (Math.min(...werte) > 1) {
+      const xs = [mx - bw / 2, 4, W - bw - 4], ys = [y0 - bh - 6, y1 + 6, my - bh / 2, 4, H - bh - 4];
+      for (const r of weg) { xs.push(r.right + 4, r.left - bw - 4); ys.push(r.bottom + 4, r.top - bh - 4); }
+      const naehe = (q) => Math.hypot(Math.max(0, x0 - (q[0] + bw), q[0] - x1), Math.max(0, y0 - (q[1] + bh), q[1] - y1));
+      for (const x of xs) for (const y of ys) { const q = setzen(x, y); wahl.push(q); werte.push(wert(q) + naehe(q) * 0.2); }
+    }
     let best = 0; for (let i = 1; i < wahl.length; i++) if (werte[i] < werte[best] - 1) best = i;
     /* die einmal gefundene Lage bleibt, solange sie (fast) so gut ist – kein Springen beim Schieben */
     if (!(karte._i >= 0 && werte[karte._i] <= werte[best] + 40)) karte._i = best;

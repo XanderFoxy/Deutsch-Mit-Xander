@@ -500,6 +500,11 @@
     T.bauInfo = { spiel: best.o.spiel, phase: ph, laut: Math.round(L.laut * 1000) / 1000, ruhe: ruhe };
     if (ruhe || L.laut < 0.01 || !T.darf()) { bauNaechst.an = false; return; }
     if (!bauGeladen) { bauGeladen = true; T.vorladen(BAU_DATEIEN); }
+    /* FASSUNG 831 — neue Bauphase (oder eine andere Baustelle): neu anfangen. Vorher lief der Takt der Baugrube weiter –
+       dort hämmert es nur alle 5–11 s, und der erste Schlag des Rohbaus kam manchmal erst nach 12 s (Sonde 825: „Rohbau:
+       Hämmern in Gruppen" mit hammer 0) */
+    const bauSchl = best.o.id + ":" + ph;
+    if (bauNaechst.schl !== bauSchl) { bauNaechst.schl = bauSchl; bauNaechst.an = false; }
     if (!bauNaechst.an) {
       /* gerade hergekommen: nicht alles auf einmal */
       bauNaechst.an = true;

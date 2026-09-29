@@ -2340,3 +2340,32 @@ XANDER: „die Lok schneidet am Bahnhof die Waggons" · „die Autos verschmelze
   - `?gaeste=0` schaltet ihn ab, `?gaeste=1` lässt ihn sofort kommen.
 - **Sonde 815** zählt an Hindernissen (`AU.inUmfahrung`) den Abstand zum Weg nicht mehr.
 - **Sonde** `werkzeug/pruefe-830-verkehr.js` (`TEIL=1…5` für einzelne Teile). Sie prüft die Malfolge von Bahnhof und Wagen (8 Winkel, Halt beidseitig, Einfahrt) und die Autos auf der Brücke (gehoben, danach gemalt, mittig). Dazu kommen 400 s Fahrt in Herbst und Winter, in denen kein Auto durch ein Hindernis fährt (höchstens 35 cm gestreift; beim Wenden direkt vor einem großen Wahrzeichen bis 80 cm – offener Punkt), die Gäste mit Motor, Hinausfahrt und Nacht und der kleine Rahmen ohne Autoblätter. Mit dem alten Stand ist sie rot.
+
+## Fassung 831 — 826 und 830 zusammen: Autos am Markt neben dem großen Fernsehturm, Laternen nicht in Wänden, Baum-Menü im kleinen Rahmen, robuste Sonden
+
+XANDER: „dieses Batmobil hätte ich … gerne, das als fahrendes Auto zu sehen" · „die Autos … fahren durch den Brunnen durch" (830) · „große Wahrzeichen frei aufstellbar" (826) · „ich möchte im kleinen Menü einen Baum rausnehmen" (822).
+
+- **Ursache**: Seit 826 ist der Fernsehturm 16 × 16 m und reicht übereck bis 2 m an die Mitte des Marktes. Mit dem Umfahren aus 830 lag der ganze Markt in einem großen Haufen (Turm, Bänke, Brunnen). Frisch aufgestellte Autos fuhren schräg an (69°), die Strecken bekamen Haken und kleine Schleifen, und an spitzen Abzweigen schnitt die geglättete Strecke den Zwickel (Sonde 815: bis 670°/s, 137° schräg, 2,1 m neben dem Weg).
+- **Autos (`autos.js`)**, auf dem Stand von 830 aufgebaut (die Hülle des Markthaufens bleibt wie in 830):
+  - `ausrichten()`: Ein neu aufgestelltes, noch ungesehenes Auto schaut gleich in die Richtung seiner ersten Fahrt.
+  - `losfahren()`/`abStandort()`: Die Strecke beginnt am Standort mit bis zu 2 m in Blickrichtung. Punkte unter 2,5 m und hinter dem Auto fallen weg. Liegt der erste Punkt mehr als 72° neben dem Blick, oder zeigt die fertige Strecke am Anfang mehr als 35° daneben, wird zuerst gewendet. Das gilt auch, wenn das Auto schon fast auf der Strecke steht.
+  - Spitzkehren: schon ab 109° (vorher 115°), in `teilen` schon ab 1,5 m nach dem Start. Beim Losfahren wird die ganze Fahrt ab dem Standort geprüft: Liegt die Kehre in den ersten 5 m, wird gleich gewendet, sonst bis kurz davor gefahren.
+  - `planen()`: Ob der Weg am Auto vorbei zurückführt, wird so weit gesucht, wie der Knoten entfernt ist (+12 m, auch 3 m neben dem Auto).
+  - Beim Wenden dreht der letzte Zug bis 109° so weit, dass das Auto auf den Anfang seiner Strecke schaut. Danach geht es vom Standort aus hinein.
+  - `umfahren()`: so viele Runden, wie Haufen an der Strecke liegen. Eine Stelle, an der sich nichts mehr ändert, ist erledigt (vorher hing es daran, und der Markt am Ende einer langen Fahrt blieb unbeachtet). `entknoten()` schneidet Schleifen und Stiche heraus (die Strecke kommt innerhalb von 15 m auf 0,8 m an einen früheren Punkt zurück).
+  - `ausDingen()`: Das Auto gleitet sanft höchstens bis 0,3 m tief, darüber wird sofort ausgeglichen. An Wahrzeichen-Sockeln sind es 0,7 m.
+  - Die Spur wechselt nicht gegen die Blickrichtung, solange das Auto noch schräg zur Strecke steht.
+- **Karte (`dorf.js`)**:
+  - Laternen stehen nie in einer Hauswand, einem Rathausflügel oder einem Wahrzeichen-Sockel (1 m Luft). Sonst kommen sie auf die andere Wegseite oder fallen aus.
+  - Unter einem frei aufgestellten Wahrzeichen steht keine Bank.
+  - Der Fernsehturm bleibt auf seinem Platz.
+- **Baum-Menü im kleinen Rahmen (`oberflaeche.js` `amDingLegen`)**:
+  - Deckt jede der vier Lagen etwas zu, werden auch Lagen dicht neben Kompass, Uhr, Ortsschild und Knöpfen probiert. Es gilt die, die am wenigsten deckt und dem Ding am nächsten liegt.
+  - Der Dreh-Schieber (`.lk-drehschieber`) zählt jetzt mit. Vorher lag das Menü über Kompass und Ortsschild, und der Schieber lag über „Versetzen".
+- **Baustelle (`ton.js`)**: Mit einer neuen Bauphase (oder einer anderen Baustelle) beginnt der Takt der Geräte neu. Vorher lief der lange Hammer-Abstand der Baugrube weiter, und im Rohbau blieb es bis 12 s still.
+- **Sonden**:
+  - 815: Der Scheinwerfer-Messpunkt wird so lange weitergefahren, bis er auf der Dinge-Ebene frei ist (ohne Licht < 25).
+  - 822: Der Dreh-Schieber gehört zu den Knöpfen, die das Menü nicht decken darf.
+  - 825: Gewertet wird der wärmste deutlich aufgehellte Wandfleck. Der hellste ist seit 826 die weiße Platte des Fernsehturms, deren Rot bei 255 anstößt.
+  - 799: Die Uhr steht auf 12 Uhr, denn in der Dämmerung lädt die Stadt auch die Nachtbilder, und die 330 KB gelten für den Tag. Rahmen und Platzhalter werden im selben Augenblick gemessen, nachdem das Rollen vorbei ist.
+  - Neu ist 831 (`pruefe-831-markt-verkehr.js`): fünf frische 300-s-Fahrten nach den Maßstäben von 815, das Losfahren nach dem Aufstellen und die Laternen.
