@@ -690,7 +690,7 @@
   };
 
   /* Felge: Chrom, rote Fledermaus-Nabe, schmale rote Linie am Reifen */
-  function batFelge(g, r, F, aussen) {
+  function batFelge(g, r, F, aussen, dreh) {
     const L = (f) => beleuchtet(f, F);
     g.fillStyle = L([16, 16, 18]); g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.fill();
     g.strokeStyle = L([200, 40, 30]); g.lineWidth = r * 0.03; g.beginPath(); g.arc(0, 0, r * 0.8, 0, Math.PI * 2); g.stroke();
@@ -700,7 +700,7 @@
     g.fillStyle = gr; g.beginPath(); g.arc(0, 0, rf, 0, Math.PI * 2); g.fill();
     /* Lochkranz und Speichen-Rippen */
     g.strokeStyle = L([90, 94, 104]); g.lineWidth = r * 0.02;
-    for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5; g.beginPath(); g.moveTo(Math.cos(a) * rf * 0.45, Math.sin(a) * rf * 0.45); g.lineTo(Math.cos(a) * rf * 0.88, Math.sin(a) * rf * 0.88); g.stroke(); }
+    for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5 - (dreh || 0) * aussen; g.beginPath(); g.moveTo(Math.cos(a) * rf * 0.45, Math.sin(a) * rf * 0.45); g.lineTo(Math.cos(a) * rf * 0.88, Math.sin(a) * rf * 0.88); g.stroke(); }
     g.strokeStyle = L([245, 246, 250]); g.lineWidth = r * 0.03; g.beginPath(); g.arc(0, 0, rf * 0.94, 0, Math.PI * 2); g.stroke();
     /* Nabe: rote Scheibe mit schwarzer Fledermaus */
     g.fillStyle = L([200, 24, 24]); g.beginPath(); g.arc(0, 0, rf * 0.38, 0, Math.PI * 2); g.fill();
@@ -755,6 +755,13 @@
     auto: { laenge: 5.9, breite: 2.1, hoehe: 1.12, radstand: 3.2, vorn: "+y" },
     bauen(M, o) {
       const W = new Werkstatt(M);
+      /* FASSUNG 815 — XANDER: „dieses Batmobil hätte ich nicht nur in dem Spiel gerne, das als fahrendes Auto zu sehen ist".
+         Laufblatt für stadt-leicht/autos.js: Variante „fahrt radN" dreht den Lochkranz der Felgen um N × 12° (zehn Rippen →
+         nach drei Bildern wieder gleich; die Fledermaus-Nabe bleibt stehen) und lässt die Lichtpunkte weg – Scheinwerfer,
+         Rücklichter und das Glühen der Turbine malt autos.js in Fahrtrichtung. */
+      const vari = String((o && o.variante) || ""), radN = /rad(\d)/.exec(vari), fahrt = /fahrt/.test(vari);
+      const radDreh = radN ? +radN[1] * Math.PI / 15 : 0;
+      const felge = radDreh ? (g, r, F, aussen) => batFelge(g, r, F, aussen, radDreh) : batFelge;
       W.teil("wanne", { ebene: 0 });
       for (const t of ["hinten", "hinterwagen", "tuer-l", "tuer-r", "armaturen", "vorderwagen", "nase"]) W.teil(t, { ebene: 1 });
 
@@ -883,12 +890,13 @@
 
       /* ---------- Räder ---------- */
       for (const [cy, nm] of [[VA, "v"], [HA, "h"]]) {
-        for (const s of [1, -1]) W.rad("rad-" + nm + (s > 0 ? "l" : "r"), s * SP, cy, RR, RB, s, batFelge, { ebene: 1 });
+        for (const s of [1, -1]) W.rad("rad-" + nm + (s > 0 ? "l" : "r"), s * SP, cy, RR, RB, s, felge, { ebene: 1 });
       }
 
       W.fertig();
 
       /* ---------- Licht bei Nacht ---------- */
+      if (fahrt) return;
       for (const s of [-1, 1]) {
         M.licht(s * 0.81, 2.86, 0.58, 0.9, "255,236,200", 1.0);
         M.licht(s * 0.7, -2.56, 0.4, 0.5, "255,40,30", 0.8);

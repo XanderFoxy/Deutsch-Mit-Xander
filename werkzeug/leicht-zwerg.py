@@ -83,7 +83,10 @@ def main():
     # eine Kuh kaum 16 Bildpunkte lang: dort reichen drei Bilder je Richtung (ein Schritt, Grasen/Wühlen/Picken, Stehen) –
     # „bl": [1, 1, 1] sagt tiere.js, wie das Zwergblatt aufgeteilt ist.
     TIER_BLATT = {20: (12, 6, 2), 16: (8, 6, 2)}
-    for k in [k for k in vz if (k.startswith("l_bahn_") or k.startswith("l_fuhr_") or k.startswith("l_tier_")) and not k.endswith("_z")]:
+    # FASSUNG 815 — ebenso die Autos (l_auto_…: Dodge Viper, Batmobil; 3 Radstellungen × 16 Richtungen, "ri": 16). XANDER:
+    # „Ich kann sie im Spiel überhaupt nicht ausprobieren" – gekauft fahren sie auch im kleinen Bild; dort reicht ein Bild
+    # je Richtung (die Räder sieht man bei 7,5 Bildpunkten je Meter nicht drehen).
+    for k in [k for k in vz if (k.startswith("l_bahn_") or k.startswith("l_fuhr_") or k.startswith("l_tier_") or k.startswith("l_auto_")) and not k.endswith("_z")]:
         m = vz[k]; zk = k + "_z"
         q = os.path.join(ORDNER, k + ".webp"); ziel = os.path.join(ORDNER, zk + ".webp")
         if not os.path.exists(q): continue
@@ -93,7 +96,9 @@ def main():
         # Fuhrwerke im kleinen Rahmen: nur ein Bild je Richtung (mitten im Schritt, Spalte 1) – das Pferd ist dort kaum
         # 8 Punkte hoch, Gangbilder sähe man nicht; so bleibt der Rahmen unter seinen 300 KB (Sonde 799)
         spalten, bl = list(range(n)), None
+        reihen = m.get("ri", 8)
         if k.startswith("l_fuhr_") and n == 5: spalten = [1]
+        elif k.startswith("l_auto_"): spalten = [0]
         elif k.startswith("l_tier_") and n in TIER_BLATT:
             g, h, _ = TIER_BLATT[n]
             spalten, bl = [round(g * 0.25), g, g + h], [1, 1, 1]
@@ -103,7 +108,7 @@ def main():
                 neu_im = Image.new("RGBA", (m["zw"] * len(spalten), im.height), (0, 0, 0, 0))
                 for i, sp in enumerate(spalten): neu_im.paste(im.crop((sp * m["zw"], 0, (sp + 1) * m["zw"], im.height)), (i * m["zw"], 0))
                 im = neu_im
-            im.resize((zw * len(spalten), zh * 8), Image.LANCZOS).save(ziel, "WEBP", quality=64 if k.startswith("l_fuhr_") and len(spalten) != n else 72, alpha_quality=45, method=6)
+            im.resize((zw * len(spalten), zh * reihen), Image.LANCZOS).save(ziel, "WEBP", quality=64 if (k.startswith("l_fuhr_") and len(spalten) != n) or k.startswith("l_auto_") else 72, alpha_quality=45, method=6)
         z = dict(m, zw=zw, zh=zh, ax=round(m["ax"] * zw / m["zw"], 1), ay=round(m["ay"] * zh / m["zh"], 1), s=round(m["s"] * zw / m["zw"], 3), n=len(spalten))
         if bl: z["bl"] = bl
         if m.get("l"): z["l"] = [[l[0], round(l[1] * zw / m["zw"], 1), round(l[2] * zh / m["zh"], 1), round(l[3] * zw / m["zw"], 1)] + list(l[4:]) for l in m["l"]]

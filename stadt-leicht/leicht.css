@@ -44,6 +44,10 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 .lk-karte-klein { flex: none; width: 84px; border-radius: 12px; border: 1px solid rgba(255,255,255,.2); background: linear-gradient(#f7f1e4, #e6dcc6); padding: 4px 4px 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .lk-karte-klein img { width: 76px; height: 60px; object-fit: contain; display: block; }
 .lk-karte-klein span { font: 600 11px/1.1 system-ui, sans-serif; color: #2a2014; }
+/* FASSUNG 815 — Autos in der Schmuck-Leiste: Preis und „Kaufen" (gekauft: grün „Dein Auto") */
+.lk-auto-karte small { display: block; font: 500 10px/1.1 system-ui, sans-serif; color: #6b5a3e; }
+.lk-auto-karte .lk-kaufen { margin-top: 1px; padding: 3px 8px; border-radius: 8px; background: #b8812e; color: #fff8e8; font: 700 10px/1 system-ui, sans-serif; }
+.lk-auto-karte.lk-gekauft .lk-kaufen { background: #4f7a3a; }
 /* FASSUNG 808 — Gruppen in der Schmuck-Leiste (Wahrzeichen, Fahrzeuge, Gleise): schmale senkrechte Überschrift */
 .lk-gruppe { flex: none; align-self: stretch; width: 22px; border-radius: 9px; background: rgba(22,28,48,.74); color: #f3c35a; display: grid; place-items: center; }
 .lk-gruppe span { writing-mode: vertical-rl; transform: rotate(180deg); font: 700 11px/1 system-ui, sans-serif; letter-spacing: .04em; white-space: nowrap; }

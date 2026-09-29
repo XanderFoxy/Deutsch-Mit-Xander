@@ -44,19 +44,63 @@
       return rpc("spiel_ich", {}).then((ich) => {
         SP.beispiel = false;
         /* eigener Schmuck und Drehungen liegen auf dem Server (gleich auf jedem Gerät) */
-        return rpc("spiel_stadt_leicht_holen", {}).then((d) => { SP.eigenes = d || null; return ich; }, () => ich);
+        return Promise.all([
+          rpc("spiel_stadt_leicht_holen", {}).then((d) => { SP.eigenes = d || null; autosAusEigenem(d); }, () => {}),
+          autosVomServer()
+        ]).then(() => ich);
       });
     }).catch((e) => { console.warn(e); return beispiel("offline"); });
   };
   /* Bauen und Helfen – dieselben Serverfunktionen wie im Spiel */
   SP.bauen = function (was) { if (SP.beispiel) return Promise.reject(new Error("Beispielstadt")); return rpc("spiel_bauen", { p_was: was }); };
   SP.helfen = function (was) { if (SP.beispiel) return Promise.reject(new Error("Beispielstadt")); return rpc("spiel_bau_helfen", { p_was: was }); };
+  /* FASSUNG 815 — XANDER: „mein neuen Dodge Viper und mein Batmobil habe ich immer noch nicht in der Map … Ich kann sie
+     nicht dazu kaufen. Ich kann sie im Spiel überhaupt nicht ausprobieren." Die Autos (autos.js) kauft man mit den Punkten
+     des Spiels über spiel_auto_kaufen (Migration supabase/spiel_815_autos_kaufen.sql, SECURITY DEFINER wie die anderen
+     spiel_-Funktionen): der Server prüft die Punkte, zieht den Preis ab und merkt das Auto in spiel_spieler.autos;
+     spiel_autos() liefert die Liste. Solange es diese Funktionen noch nicht gibt, wird der Besitz wie der eigene Schmuck
+     gespeichert (stadt_leicht.autos, noch ohne Abbuchung) – nach der Migration übernimmt der Server diese Autos.
+     Abgestellte Autos (als Schmuck) stehen in stadt_leicht.geparkt. */
+  SP.autos = []; SP.autosGeparkt = []; SP.autosVorlaeufig = []; SP.autosServer = false;
+  const vereinen = (a, b) => a.concat(b.filter((x) => a.indexOf(x) < 0));
+  const nurNamen = (l) => (Array.isArray(l) ? l.filter((x) => typeof x === "string" && /^[a-z]{2,20}$/.test(x)) : []);
+  function autosAusEigenem(d) {
+    SP.autosVorlaeufig = nurNamen(d && d.autos);
+    SP.autosGeparkt = nurNamen(d && d.geparkt);
+    SP.autos = vereinen(SP.autos, SP.autosVorlaeufig);
+  }
+  const fehltFunktion = (e) => !!e && (e.code === "PGRST202" || e.code === "42883" || /Could not find the function|does not exist|schema cache/i.test(String(e.message || e)));
+  function autosVomServer() {
+    return SP.rpc("spiel_autos", {}).then((r) => {
+      SP.autosServer = true;
+      SP.autos = vereinen(nurNamen(r && (r.autos || r)), SP.autos);
+    }, (e) => { SP.autosServer = !fehltFunktion(e) && SP.autosServer; });
+  }
+  /* Kaufen: gibt { ok, gekauft, punkte? , vorlaeufig? } zurück oder wirft mit dem Grund */
+  SP.autoKaufen = function (id, preis) {
+    if (SP.beispiel || !SP.angemeldet) return Promise.reject(new Error("In der Beispielstadt wird nicht gekauft – bitte anmelden (oder Probefahrt)"));
+    return SP.rpc("spiel_auto_kaufen", { p_auto: id }).then((r) => {
+      if (!r || r.ok === false) throw new Error((r && r.grund) || "Geht gerade nicht");
+      SP.autosServer = true;
+      SP.autos = vereinen(nurNamen(r.autos), vereinen(SP.autos, [id]));
+      if (r.punkte != null && ST.leicht && ST.leicht.ich) ST.leicht.ich.punkte = r.punkte;
+      return Object.assign({ gekauft: id }, r);
+    }, (e) => {
+      if (!fehltFunktion(e)) throw e;
+      /* Server kennt den Autokauf noch nicht: vorläufig wie der eigene Schmuck merken */
+      SP.autosVorlaeufig = vereinen(SP.autosVorlaeufig, [id]); SP.autos = vereinen(SP.autos, [id]);
+      if (ST.leicht && ST.leicht.dekoSpeichern) ST.leicht.dekoSpeichern();
+      return { ok: true, gekauft: id, preis: preis, vorlaeufig: true };
+    });
+  };
   /* Speichern mit kurzer Verzögerung (mehrere Änderungen = eine Anfrage) */
   let uhr = 0;
   SP.eigenesSpeichern = function (daten) {
     if (SP.beispiel || !SP.angemeldet) return;
+    /* FASSUNG 815 — vorläufig gekaufte und abgestellte Autos gehen mit dem Schmuck mit */
+    daten = Object.assign({}, daten, { autos: SP.autosVorlaeufig.slice(), geparkt: SP.autosGeparkt.slice() });
     clearTimeout(uhr);
-    uhr = setTimeout(() => { rpc("spiel_stadt_leicht_speichern", { p_daten: daten }).catch((e) => console.warn(e)); }, 1200);
+    uhr = setTimeout(() => { SP.rpc("spiel_stadt_leicht_speichern", { p_daten: daten }).catch((e) => console.warn(e)); }, 1200);
   };
   SP.neuLaden = function () { return SP.beispiel ? Promise.resolve(ST.leicht.ich) : rpc("spiel_ich", {}); };
 })();

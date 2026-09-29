@@ -2267,6 +2267,52 @@
     0.28
    ],
    "q": 0.82
+  },
+  {
+   "bild": "l_auto_viper",
+   "id": "auto_viper",
+   "saat": 7,
+   "variante": "fahrt",
+   "varianten": [
+    "rad0",
+    "rad1",
+    "rad2"
+   ],
+   "richtungen": 16,
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "s": 28,
+   "q": 0.78,
+   "gierVersatz": 0.5
+  },
+  {
+   "bild": "l_auto_batmobil",
+   "id": "auto_batmobil",
+   "saat": 7,
+   "variante": "fahrt",
+   "varianten": [
+    "rad0",
+    "rad1",
+    "rad2"
+   ],
+   "richtungen": 16,
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "s": 28,
+   "q": 0.78,
+   "gierVersatz": 0.5
   }
  ]
 }

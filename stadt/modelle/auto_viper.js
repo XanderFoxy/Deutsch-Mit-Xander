@@ -725,6 +725,13 @@
     auto: { laenge: 4.448, breite: 1.92, hoehe: 1.118, radstand: 2.444, vorn: "+y" },
     bauen(M, o) {
       const W = new Werkstatt(M);
+      /* FASSUNG 815 — XANDER: „mein neuen Dodge Viper und mein Batmobil habe ich immer noch nicht in der Map … Ich kann sie
+         im Spiel überhaupt nicht ausprobieren." Für das Laufblatt der leichten Stadt (stadt-leicht/autos.js) wird der Viper
+         mit Variante „fahrt radN" gebacken: die Felgen um N × 40° gedreht (drei Speichen → nach drei Bildern wieder gleich),
+         ohne die Lichtpunkte (Scheinwerfer und Lichtkegel malt autos.js selbst, genau in Fahrtrichtung). */
+      const vari = String((o && o.variante) || ""), radN = /rad(\d)/.exec(vari), fahrt = /fahrt/.test(vari);
+      const radDreh = radN ? +radN[1] * Math.PI * 2 / 9 : 0;
+      const felge = radDreh ? (g, r, F, aussen) => { g.rotate(-radDreh * aussen); viperFelge(g, r, F, aussen); } : viperFelge;
       /* Reihenfolge der Teile: Innenraum (Wanne) zuerst, alles andere nach Nähe */
       W.teil("wanne", { ebene: 0 });
       const E1 = { ebene: 1 };
@@ -908,7 +915,7 @@
 
       /* ---------- Räder ---------- */
       for (const [cy, r, sp, b, nm] of [[VA, RV, SPV, 0.275, "v"], [HA, RH, SPH, 0.335, "h"]]) {
-        for (const s of [1, -1]) W.rad("rad-" + nm + (s > 0 ? "l" : "r"), s * sp, cy, r, b, s, viperFelge, { ebene: 1 });
+        for (const s of [1, -1]) W.rad("rad-" + nm + (s > 0 ? "l" : "r"), s * sp, cy, r, b, s, felge, { ebene: 1 });
       }
 
       /* ---------- Antenne auf dem linken hinteren Kotflügel ---------- */
@@ -920,6 +927,7 @@
       W.fertig();
 
       /* ---------- Licht bei Nacht: Scheinwerfer und Rückleuchten ---------- */
+      if (fahrt) return;
       for (const s of [-1, 1]) {
         M.licht(s * 0.6, 2.15, 0.59, 0.9, "255,244,215", 1.0);
         M.licht(s * 0.6, -2.2, 0.63, 0.45, "255,40,30", 0.8);

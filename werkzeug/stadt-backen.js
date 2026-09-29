@@ -44,7 +44,7 @@ function auftraege() {
   /* Menschen: je Art, Saat, Jahres- und Tageszeit EIN Blatt mit 12 Schritten × 8 Richtungen */
   for (const a of plan.leute || []) {
     if (NUR && !NUR.includes(a.bild)) continue;
-    for (const jahr of a.jahr) for (const zeit of a.zeit) liste.push({ leute: true, name: [a.bild, jahr, zeit].join("_"), id: a.id, saat: a.saat, jahr: jahr, zeit: zeit, s: a.s || 40, schritte: a.varianten ? a.varianten.length : a.schritte || 12, zelle: a.zelle, q: a.q, variante: a.variante, varianten: a.varianten, t: a.t || 1.5 });
+    for (const jahr of a.jahr) for (const zeit of a.zeit) liste.push({ leute: true, name: [a.bild, jahr, zeit].join("_"), id: a.id, saat: a.saat, jahr: jahr, zeit: zeit, s: a.s || 40, schritte: a.varianten ? a.varianten.length : a.schritte || 12, zelle: a.zelle, q: a.q, variante: a.variante, varianten: a.varianten, t: a.t || 1.5, richtungen: a.richtungen || 8, gierVersatz: a.gierVersatz || 0 });
   }
   for (const a of plan.bilder) {
     if (NUR && !NUR.includes(a.bild)) continue;
@@ -98,24 +98,29 @@ function auftraege() {
            je Zeile eine der 8 Richtungen. Die Zelle wächst mit dem größten Bild; der Schatten kommt mit aufs Blatt (wie
            bei den Leuten), die Lichter (Laterne der Pferdebahn) stehen je Zeile im Verzeichnis (l: [Zeile, x, y, r, Farbe, k, flackert, Boden]). */
         if (!def.zeichnen && def.bauen) {
-          const VAR = a.varianten || [""], N = VAR.length, sp = [];
+          /* FASSUNG 815 — XANDER: „mein neuen Dodge Viper und mein Batmobil habe ich immer noch nicht in der Map". Autos
+             fahren schneller und biegen weicher ab als Pferde: ihr Laufblatt hat 16 Richtungen (Plan: richtungen: 16,
+             im Verzeichnis ri: 16), je Spalte eine Radstellung. */
+          /* GV (Plan: gierVersatz): ein kleiner Drehversatz, damit keine Fläche genau auf der Kante steht (die langen
+             Striche genau von hinten behebt stadt/kern.js selbst, der Versatz schadet nicht) */
+          const VAR = a.varianten || [""], N = VAR.length, sp = [], RI = a.richtungen || 8, GV = a.gierVersatz || 0;
           const KS = ST.kamera.s, KD = ST.kamera.dreh; ST.kamera.s = Math.min(s, 10); ST.kamera.dreh = 0;
           ST.jetzt = a.t * 1000;
           let L = 0, R = 0, T = 0, U = 0;
-          for (let r = 0; r < 8; r++) for (let i = 0; i < N; i++) {
+          for (let r = 0; r < RI; r++) for (let i = 0; i < N; i++) {
             const v = [a.variante || "", VAR[i]].join(" ").trim();
-            const o = { id: 800000 + r * 100 + i, typ: a.id, x: 0, y: 0, gier: r * 45, saat: a.saat, variante: v };
-            const b = ST.spriteMalen(a.id, { ungekappt: true, jahr: a.jahr, bau: 1, saat: a.saat, variante: v, schluessel: v + "|" + a.saat, objekt: o }, r * 45, s, Z, a.t);
+            const o = { id: 800000 + r * 100 + i, typ: a.id, x: 0, y: 0, gier: r * 360 / RI + GV, saat: a.saat, variante: v };
+            const b = ST.spriteMalen(a.id, { ungekappt: true, jahr: a.jahr, bau: 1, saat: a.saat, variante: v, schluessel: v + "|" + a.saat, objekt: o }, r * 360 / RI + GV, s, Z, a.t);
             sp.push(b);
             L = Math.max(L, -b.ox); R = Math.max(R, b.ox + b.W); T = Math.max(T, -b.oy); U = Math.max(U, b.oy + b.H);
           }
           ST.kamera.s = KS; ST.kamera.dreh = KD;
           const ax = Math.ceil(L), ay = Math.ceil(T), cw = ax + Math.ceil(R), ch = ay + Math.ceil(U);
-          const blatt = document.createElement("canvas"); blatt.width = cw * N; blatt.height = ch * 8;
+          const blatt = document.createElement("canvas"); blatt.width = cw * N; blatt.height = ch * RI;
           const bg = blatt.getContext("2d");
           const sch = document.createElement("canvas"); sch.width = cw; sch.height = ch; const shg = sch.getContext("2d");
           const lichter = [];
-          for (let r = 0; r < 8; r++) for (let i = 0; i < N; i++) {
+          for (let r = 0; r < RI; r++) for (let i = 0; i < N; i++) {
             const b = sp[r * N + i];
             shg.globalCompositeOperation = "source-over"; shg.clearRect(0, 0, cw, ch);
             shg.drawImage(b.schatten, ax + b.ox, ay + b.oy);
@@ -127,6 +132,7 @@ function auftraege() {
           }
           const url = blatt.toDataURL("image/webp", a.q || 0.8);
           const erg = { bild: url, zw: cw, zh: ch, ax: ax, ay: ay, n: N, s: s };
+          if (RI !== 8) erg.ri = RI;
           if (lichter.length) erg.l = lichter;
           return erg;
         }
