@@ -662,7 +662,7 @@
     /* neu aufbauen, wenn die Fuhrwerke ihr Netz neu gebaut haben (neue Stadt) oder sich der Besitz geändert hat */
     const soll = sollFahren().join(","), fn = ST.fuhrwerk && ST.fuhrwerk.netz;
     if (!netz || fn !== fwNetz || AU.neu || soll !== gebaut) { AU.neu = false; gebaut = soll; aufbauen(); }
-    if (!AU.liste.length) return;
+    if (!AU.liste.length) { if (motoren.size) motorTon(); return; }   // FASSUNG 825 — kein Auto mehr: Motoren aus
     const alle = fahrzeuge();
     for (const a of AU.liste) {
       schritt(a, dt, alle);
@@ -671,6 +671,33 @@
     /* der Kamera folgen („Hinfahren") */
     const F = AU.folge && AU.auto(AU.folge);
     if (F && ST.leicht) { K.x += (F.x - K.x) * Math.min(1, dt * 3); K.y += (F.y - K.y) * Math.min(1, dt * 3); ST.leicht.unruhe = 2; }
+    motorTon();
+  }
+  /* FASSUNG 825 — XANDER (wörtlich): „am Tag möchte ich auch Autos fahren sehen … vielleicht auch mit Fahrgeräusche".
+     Jedes fahrende Auto hat einen leisen Motor (ST.ton.motorSchleife): lauter, je näher es der Bildmitte ist und je
+     näher man heranzoomt; Drehzahl nach Tempo und Gas; nur wenn die Stadt Töne darf; weit weg oder ohne Ton: aus. */
+  const motoren = new Map();
+  AU.motoren = motoren; AU.motorTon = () => motorTon();   // (Sonde 825)
+  function motorLaut(a) {
+    const c = ST.aufBoden(K.W / 2, K.H / 2), d = Math.hypot(a.x - c[0], a.y - c[1]);
+    const sc = K.s / (K.dpr || 1), R = klemm(520 / Math.max(1, sc), 22, 65);
+    const nah = Math.pow(klemm(1 - d / R, 0, 1), 1.6), zoom = klemm(sc / 16, 0.3, 1);
+    const P = ST.proj(a.x, a.y, 0);
+    return { laut: 0.2 * nah * zoom * (0.35 + 0.65 * klemm(a.v / 7, 0, 1)), pan: klemm((P[0] / K.W - 0.5) * 1.6, -0.85, 0.85) };
+  }
+  function motorTon() {
+    const T = ST.ton; if (!T || !T.motorSchleife) return;
+    const darf = T.darf();
+    for (const a of AU.liste) {
+      let m = motoren.get(a.id);
+      const L = darf ? motorLaut(a) : { laut: 0, pan: 0 };
+      a.motorLaut = L.laut;
+      if (L.laut > 0.003) {
+        if (!m) { m = T.motorSchleife(a.id === "batmobil" ? "turbine" : "v10"); if (m) motoren.set(a.id, m); }
+        if (m) m.setzen(L.laut, L.pan, a.v / 7.5, klemm((a.gas || 0) / 3, 0, 1));
+      } else if (m) { m.aus(); motoren.delete(a.id); }
+    }
+    for (const [id, m] of motoren) if (!AU.liste.some((a) => a.id === id)) { m.aus(); motoren.delete(id); }
   }
   let letzte = 0;
   AU.bewegen = function (jetzt) {

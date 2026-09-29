@@ -33,6 +33,40 @@
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   };
+  /* FASSUNG 825 — die Uhr der Stadt: deutsche Ortszeit (Europe/Berlin), für Tag/Nacht, Laternen, Fenster und die
+     Rathausuhr. XANDER: „dass sie nicht die ganze Nacht beleuchtet sind, um Strom zu sparen beziehungsweise es ist ja
+     nicht jeder immer nachts noch wach". ?uhr=21:00 (auch 1:30, 05:30:10 oder 18.2) stellt die Uhr zum Prüfen auf diese
+     Zeit – sie läuft von dort weiter; ST.uhrStellen("14:59:55") tut dasselbe für die Sonden.
+     ST.uhr() → { sek (seit Mitternacht), h, m, s, stunde (Kommazahl) }. */
+  const BERLIN = (function () { try { return new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hourCycle: "h23", hour: "2-digit", minute: "2-digit", second: "2-digit" }); } catch (e) { return null; } })();
+  let uhrAbstand = null, uhrAbstandBis = 0, uhrVersatz = 0;
+  function berlinSek(ms) {
+    /* Abstand Berlin–UTC einmal je Minute bestimmen (formatToParts ist teuer), dann nur noch rechnen */
+    if (uhrAbstand == null || ms > uhrAbstandBis || ms < uhrAbstandBis - 120000) {
+      let s = null;
+      if (BERLIN) try { const t = BERLIN.formatToParts(new Date(ms)), w = {}; for (const p of t) w[p.type] = +p.value; s = (w.hour % 24) * 3600 + w.minute * 60 + w.second; } catch (e) { s = null; }
+      if (s == null) { const d = new Date(ms); s = d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds(); }
+      const utc = Math.floor(ms / 1000) % 86400;
+      uhrAbstand = ((s - utc) % 86400 + 86400) % 86400; uhrAbstandBis = ms + 60000;
+    }
+    return ((ms / 1000 + uhrAbstand) % 86400 + 86400) % 86400;
+  }
+  function uhrLesen(t) {
+    if (t == null || t === "") return null;
+    const s = String(t).trim(), m = s.match(/^(\d{1,2})[:.h](\d{2})(?:[:.](\d{2}))?$/);
+    if (m && s.indexOf(":") >= 0) return ((+m[1]) % 24) * 3600 + (+m[2]) * 60 + (+(m[3] || 0));
+    const z = parseFloat(s);
+    return isFinite(z) ? ((z % 24 + 24) % 24) * 3600 : null;
+  }
+  ST.uhrStellen = function (t) { const ziel = uhrLesen(t); uhrVersatz = ziel == null ? 0 : ziel - berlinSek(Date.now()); };
+  ST.uhr = function () {
+    const sek = ((berlinSek(Date.now()) + uhrVersatz) % 86400 + 86400) % 86400;
+    const h = Math.floor(sek / 3600), m = Math.floor(sek / 60) % 60, s = Math.floor(sek) % 60;
+    return { sek: sek, h: h, m: m, s: s, stunde: sek / 3600 };
+  };
+  ST.uhrFest = false;
+  try { const u = new URLSearchParams(location.search).get("uhr"); if (u != null && uhrLesen(u) != null) { ST.uhrStellen(u); ST.uhrFest = true; } } catch (e) {}
+
   ST.hash2 = function (x, y, s) {
     let h = Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(s | 0, 2147483647);
     h = Math.imul(h ^ (h >>> 13), 1274126177);
