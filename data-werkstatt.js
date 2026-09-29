@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 815: realistischere Menschen, 32 Haltungen, Lehrbuchtafel Geschlechtsorgane",
+  stand: "Fassung 816: Spiel im Italienisch-Raum mit Fragen zur italienischen Sprache und Aussprache auf Italienisch",
 
   inArbeit: [
-    { seit: "2026-09-29T22:56",
-      text: "Menschen: Hände und Füße von vorn noch grob, alte Menschen ohne eigene Haltung" },
-    { seit: "2026-09-29T22:56",
-      text: "Italienisch-Modus im Spiel" },
-    { seit: "2026-09-29T22:56",
+    { seit: "2026-09-29T23:33",
+      text: "Italienisch: Grammatik über A2 (congiuntivo, futuro, imperfetto) – die vorhandenen Lückensätze müssen erst durchgesehen werden" },
+    { seit: "2026-09-29T23:33",
+      text: "Italienisch: Mana, Erfahrung und Missionen für italienische Antworten (bräuchte eine Server-Funktion)" },
+    { seit: "2026-09-29T23:33",
       text: "Punkte für Quests und Eintritt auf dem Server (braucht dein OK)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-29T22:56",
-      text: "Menschen: Körperformen, Gesichter, Haar, Kleidung mit Falten" },
-    { seit: "2026-09-29T22:56",
-      text: "32 Haltungen: Schneidersitz, Hocke, Fersensitz, Kniestand, Vierfüßler, Rücken-, Bauch- und Seitenlage, Badewanne und mehr" },
-    { seit: "2026-09-29T22:56",
-      text: "Satzbaukasten mit Präteritum und Niveaus (814)" },
+    { seit: "2026-09-29T23:33",
+      text: "Italienisch-Raum: Wörter, Artikel, Präsens, Passato prossimo, Präpositionen, Aussprache-Regeln, Stimmt's?" },
+    { seit: "2026-09-29T23:33",
+      text: "Aussprache im Spiel auf Italienisch (it-IT)" },
+    { seit: "2026-09-29T23:33",
+      text: "Menschen realistischer (815), Satzbaukasten (814)" },
   ],
 };

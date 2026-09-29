@@ -2631,3 +2631,8 @@ Leitplanke (verbindlich): Menschen in Haltungen, im Baukasten und in Szenen sind
 - **Extra-Spiele** (Tower Defense, Rundenkampf): die Zwischenfrage ist im Italienisch-Raum ebenfalls italienisch; der Server-Lohn am Ende zählt weiterhin nur deutsche Antworten.
 - Sonde `werkzeug/pruefe-837-italienisch-spiel.js` (31 Prüfungen, 360 px): Deutsch-Raum und Nicht-Freigegebene bleiben deutsch; Betreiber im Italienisch-Raum bekommt alle Arten ohne Server; 12 000 erzeugte Aufgaben gegen die Daten nachgerechnet; Punkte nur in itPunkte/itKurs; Aussprache mit it-IT; Tippflächen ≥ 30 px. Gegenprobe gegen 815: 16 rot (alle neuen Punkte), die deutschen grün. Ebenfalls grün: 636, 760, 766, 771, 772, 773, spielsystem, 669, 762. 648 hat vorher wie nachher dieselben 2 roten Punkte (seit 783: keine Klangvergleichs-Note mehr, die Sonde erwartet sie noch).
 - Offen: Aufgaben über A2 hinaus für Grammatik (congiuntivo, futuro, imperfetto) gibt es in den geprüften Daten nicht – die it-*-Lückensätze in data-uebungen.js (7171) wären eine Quelle, enthalten aber Fehler (z. B. Erklärung „„notte“ ist feminin“ zu „Questa ragazza è sana“) und müssten erst durchgesehen werden.
+
+## Fassung 816 — Spiel im Italienisch-Raum aus 837 ausgeliefert
+
+- Enthält Fassung 837: Im Italienisch-Raum (Betreiber und von Xander freigegebene Konten) stellt das Spiel Fragen zur italienischen Sprache auf Deutsch. Die Aussprache läuft mit it-IT, die Punkte gehen nur in die italienische Kasse (siehe Abschnitt 837).
+- Geprüft auf dem zusammengeführten Stand, alle grün: 837, 636, spielsystem, 835.
