@@ -157,6 +157,16 @@ def main():
     if alt != kv:
         with open(os.path.join(ORDNER, "verzeichnis-klein.json"), "w") as f:
             json.dump(kv, f, separators=(",", ":"))
+    # FASSUNG 812 — der kleine Rahmen braucht nur die Bilder der laufenden Jahreszeit: je ein Verzeichnis für Winter und
+    # Herbst (Einträge ohne Jahreszeit stehen in beiden). Das halbiert den größten Brocken des kleinen Rahmens (55 KB).
+    for jz, anders in (("winter", "_herbst_"), ("herbst", "_winter_")):
+        teil = {k: v for k, v in kv.items() if anders not in k}
+        ziel = os.path.join(ORDNER, "verzeichnis-klein-" + jz + ".json")
+        try: altj = json.load(open(ziel))
+        except Exception: altj = None
+        if altj != teil:
+            with open(ziel, "w") as f:
+                json.dump(teil, f, separators=(",", ":"))
     zg = sum(os.path.getsize(os.path.join(ORDNER, k + ".webp")) for k in vz if k.endswith("_z") and os.path.exists(os.path.join(ORDNER, k + ".webp")))
     kg = sum(os.path.getsize(os.path.join(ORDNER, k + ".webp")) for k in vz if k.endswith("_k") and os.path.exists(os.path.join(ORDNER, k + ".webp")))
     print("Zwergbilder: %d neu/geändert, zusammen %d KB (die _k-Bilder: %d KB)" % (neu, zg // 1024, kg // 1024))

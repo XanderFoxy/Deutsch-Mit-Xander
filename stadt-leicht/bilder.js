@@ -53,13 +53,25 @@
   LB.laden = function (v) {
     LB.version = v || "";
     /* FASSUNG 805 — im kleinen Rahmen erst das kleine Verzeichnis (nur _z und _k); das große kommt erst im Vollbild. */
-    const datei = LB.nurKlein ? "verzeichnis-klein.json" : "verzeichnis.json";
+    /* FASSUNG 812 — im kleinen Rahmen nur das Verzeichnis der laufenden Jahreszeit (die andere kommt bei Bedarf nach) */
+    const jz = LB.kleinJahr = (ST.szene && ST.szene.jahr === "winter") ? "winter" : "herbst";
+    const datei = LB.nurKlein ? "verzeichnis-klein-" + jz + ".json" : "verzeichnis.json";
     LB.vzVoll = !LB.nurKlein;
     return fetch(PFAD + datei + (v ? "?v=" + v : "")).then((r) => r.json()).then((j) => {
       /* Im kleinen Verzeichnis tragen nur die Zwergbilder ihre Fensterlichter; die _k-Bilder bekommen sie hochgerechnet. */
       for (const k in j) if (j[k].lz) { const z = j[k.slice(0, -2) + "_z"], f = z ? j[k].s / z.s : 1; j[k].l = z && z.l ? z.l.map((l) => [l[0] * f, l[1] * f, l[2] * f].concat(l.slice(3))) : []; }
       LB.vz = j; return j;
     });
+  };
+  /* FASSUNG 812 — wechselt im kleinen Rahmen die Jahreszeit (Vorschau, Schnee), kommt ihr kleines Verzeichnis dazu */
+  LB.jahrNachladen = function (jahr) {
+    const jz = jahr === "winter" ? "winter" : "herbst";
+    if (!LB.nurKlein || LB.vzVoll || !LB.kleinJahr || (LB.kleinJahre || (LB.kleinJahre = {}))[jz] || jz === LB.kleinJahr) return Promise.resolve(LB.vz);
+    LB.kleinJahre[jz] = true;
+    return fetch(PFAD + "verzeichnis-klein-" + jz + ".json" + (LB.version ? "?v=" + LB.version : "")).then((r) => r.json()).then((j) => {
+      for (const k in j) if (j[k].lz) { const z = j[k.slice(0, -2) + "_z"], f = z ? j[k].s / z.s : 1; j[k].l = z && z.l ? z.l.map((l) => [l[0] * f, l[1] * f, l[2] * f].concat(l.slice(3))) : []; }
+      LB.vz = Object.assign({}, j, LB.vz); LB.neu = true; if (ST.leicht) ST.leicht.unruhe = 2; return LB.vz;
+    }).catch(() => { LB.kleinJahre[jz] = false; });
   };
   LB.vollLaden = function () {
     if (LB.vzVoll) return Promise.resolve(LB.vz);

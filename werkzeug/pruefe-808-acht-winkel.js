@@ -204,7 +204,7 @@ const SCHRAEG = /_f_(45|135|225|315)_[a-z]\.webp/;
   await pg2.waitForFunction(() => window.__fertig, null, { timeout: 120000 });
   await pg2.waitForTimeout(3000);
   const neu = g2.filter((u) => /w_rathaus_doebeln|\/v_|d_gleis|verzeichnis\.json/.test(u));
-  sage(neu.length === 0 && g2.some((u) => /verzeichnis-klein\.json/.test(u)), "mini=1 lädt keine Bilder der neuen Modelle und nicht das große Verzeichnis", neu.map((u) => u.split("/").pop()).join(", ") || g2.filter((u) => /\.webp/.test(u)).length + " Bilder");
+  sage(neu.length === 0 && g2.some((u) => /verzeichnis-klein(-winter|-herbst)?\.json/.test(u)), "mini=1 lädt keine Bilder der neuen Modelle und nicht das große Verzeichnis", neu.map((u) => u.split("/").pop()).join(", ") || g2.filter((u) => /\.webp/.test(u)).length + " Bilder");
 
   console.log(fehler ? "\n  " + fehler + " FEHLER" : "\n  alles gut");
   console.log("  Bildschirmfotos: " + BILD + "-{schraeg,neugeladen,leiste,gleis}.png");

@@ -111,6 +111,7 @@
       /* Schneeflocken: wenn das Wetter Schnee meldet; ohne Wetterbericht (eigene Seite) wie bisher im ganzen Winter */
       SZ.schneefall = SZ.wetter ? SZ.wetter === "schnee" : j === "winter";
     }
+    if (ST.bilder && ST.bilder.jahrNachladen) ST.bilder.jahrNachladen(SZ.jahr);   // FASSUNG 812 — kleines Verzeichnis der Jahreszeit
     /* Die Wiese färbt sich mit den Bäumen (Oktober: nach und nach) */
     if (ST.boden) ST.boden.herbstGrad = SZ.stichtag && SZ.stichtag[0] === 10 ? Math.min(1, SZ.stichtag[1] / 25) : 1;
     return alt !== SZ.jahr + "|" + SZ.schneefall + "|" + SZ.stichtag;

@@ -257,6 +257,9 @@
   T.laden = function (name) {
     const d = DATEI[name] || (DATEI[name] = {});
     if (d.puffer || d.laedt || d.kaputt) return;
+    /* FASSUNG 812 — im kleinen Rahmen des Spiels (Sparmodus) keine Aufnahmen laden: sie wogen dort 140 KB („leicht und
+       stabil", Funk 207; der Rahmen soll unter 300 KB bleiben). Im Vollbild werden sie beim ersten Bedarf geholt. */
+    if (ST.bilder && ST.bilder.nurKlein) return;
     const k = anlage();
     if (!k || !window.fetch) { d.kaputt = "keine Tonanlage"; return; }
     if (typeof k.decodeAudioData !== "function") { d.kaputt = "kein decodeAudioData"; return; }
