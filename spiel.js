@@ -7465,7 +7465,7 @@
         }).join("") + "</div>"
         + '<div class="sp-erg-platz' + (e ? (e.richtig ? " sp-erg-gut" : " sp-erg-schlecht") : "") + '">'
         + (e ? '<div class="sp-erg-zeile"><b>' + (e.richtig ? "Richtig! +" + e.gewonnen : "Leider falsch") + '</b><button type="button" data-tu="itweiter">Weiter</button></div>'
-            + '<div class="sp-erg-erkl">' + esc(a.erklaerung || "") + "</div>"
+            + '<div class="sp-erg-erkl" title="' + esc(a.erklaerung || "") + '">' + esc(a.erklaerung || "") + "</div>"
           : '<div class="sp-erg-leer">Tippe die richtige Antwort.</div>')
         + "</div></div>";
     } else {
@@ -7481,7 +7481,8 @@
       return '<button type="button" data-tu="itart" data-k="' + x[0] + '" class="' + ((S.itArt || "") === x[0] ? "sp-an" : "") + '">' + x[1] + "</button>";
     }).join("");
     var wahl = '<div class="sp-deutsch-wahl sp-offen sp-it-wahl"><div class="sp-klein sp-wahl-titel">Niveau und Art wählen – die Frage kommt sofort:</div>'
-      + '<div class="sp-chips">' + chips + '</div><div class="sp-chips sp-arten">' + arten + "</div></div>";
+      /* Die Sprechkarte hat ihre eigene Niveau-Zeile – dann nicht zweimal. */
+      + (S.itArt === "aussprache" ? "" : '<div class="sp-chips">' + chips + "</div>") + '<div class="sp-chips sp-arten">' + arten + "</div></div>";
     var regel = '<p class="sp-klein">Lernraum Italienisch: Die Fragen stehen auf Deutsch, geantwortet wird auf Italienisch. Punkte je richtiger Antwort nach Niveau: A1 3 · A2 4 · B1 5 · B2 6 · C1 7 · C2 8; Aussprache bis 6 (A1) … 20 (C2) nach Prozent, bewertet von Azure auf Italienisch. '
       + "<b>Sie zählen nur in deine italienischen Punkte und in den Kursfortschritt – nicht im Ranking der Seite.</b> Mana, Erfahrung und Ladung vergibt nur der Server für Deutsch. Gutgeschrieben wird nach je " + IT_RUNDE + " Antworten.</p>";
     return kasse + teil + wahl + regel;
@@ -17375,7 +17376,7 @@
       /* FASSUNG 716 */
       bahn: { plan: bahnPlan, stand: bahnStand, an: bahnAn, beiX: bahnBeiX, B: BAHN, takt: BAHN_TAKT },
       /* FASSUNG 837 */
-      IT: IT, itModus: itModus, itPanelHtml: itPanelHtml,
+      IT: IT, itModus: itModus, itPanelHtml: itPanelHtml, deutschFrage: function (f) { return deutschFrage(f); },
       zustand: function () { return S; },
       setzen: function (o) { Object.keys(o || {}).forEach(function (k) { S[k] = o[k]; }); zeichnen(); },
       zeichnen: zeichnen, geschossZeigen: geschossZeigen, zahlZeigen: zahlZeigen, trefferZeigen: trefferZeigen,
