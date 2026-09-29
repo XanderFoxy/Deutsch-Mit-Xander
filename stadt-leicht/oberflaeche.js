@@ -755,33 +755,45 @@
   };
   O.neuAufgebaut = function () { if (kopf) nameSetzen(); miniMalen(); };
 
-  /* FASSUNG 812 — Dreh-Schieber (siehe oben): 70 px Weg = 90° */
+  /* FASSUNG 812 — Dreh-Schieber (siehe oben). XANDER (29.09.): „Vielleicht kannst du den Slider so machen, dass er an der
+     Seite von oben nach unten geht. Das kann man besser bedienen, als wenn wir mit dem Finger das Bild verdecken. Ich
+     glaube unter dem Kompass wär das besser". Senkrecht am linken Rand unter dem Kompass: den Griff nach oben/unten
+     ziehen dreht stufenlos (60 px Weg = 90°), loslassen rastet ein; ein kurzer Tipp in die obere/untere Hälfte der Bahn
+     dreht um 45°. */
   function drehSchieber(cls) {
     const w = el("div", "lk-schieber " + cls), bahn = el("div", "lk-schieber-bahn"), griff = el("div", "lk-schieber-griff");
-    const pl = knopf("links", "Karte nach links drehen", () => drehen(1), "lk-schieber-pfeil lk-sp-l");
-    const pr = knopf("rechts", "Karte nach rechts drehen", () => drehen(-1), "lk-schieber-pfeil lk-sp-r");
-    bahn.append(griff); w.append(pl, bahn, pr);
-    w.title = "Karte drehen: Griff ziehen"; w.setAttribute("role", "slider"); w.setAttribute("aria-label", "Karte drehen");
+    const pfeil = (r) => el("span", "lk-schieber-marke", r > 0 ? SYM.links : SYM.rechts);
+    bahn.append(pfeil(1), griff, pfeil(-1)); w.append(bahn);
+    w.title = "Karte drehen: Griff nach oben oder unten ziehen"; w.setAttribute("role", "slider"); w.setAttribute("aria-label", "Karte drehen");
+    w.setAttribute("aria-orientation", "vertical");
     let zug = null;
-    const PX = 70;
+    const PX = 60;
     bahn.addEventListener("pointerdown", (e) => {
       e.stopPropagation(); e.preventDefault();
       try { bahn.setPointerCapture(e.pointerId); } catch (x) {}
-      zug = { id: e.pointerId, x0: e.clientX, d0: K.dreh };
+      zug = { id: e.pointerId, y0: e.clientY, d0: K.dreh, weit: 0 };
       w.classList.add("lk-schieber-aktiv");
     });
     bahn.addEventListener("pointermove", (e) => {
       if (!zug || e.pointerId !== zug.id) return;
-      const dx = e.clientX - zug.x0;
-      /* Griff folgt dem Finger (höchstens bis an die Enden der Bahn), die Karte dreht mit: nach rechts ziehen = rechts herum */
-      const halb = Math.max(1, (bahn.clientWidth - griff.offsetWidth) / 2);
-      griff.style.transform = "translateX(" + Math.max(-halb, Math.min(halb, dx)).toFixed(1) + "px)";
-      if (ST.drehen && ST.drehen.setzen) ST.drehen.setzen(zug.d0 - dx / PX);
+      const dy = e.clientY - zug.y0;
+      zug.weit = Math.max(zug.weit, Math.abs(dy));
+      if (zug.weit < 4) return;
+      /* Griff folgt dem Finger (höchstens bis an die Enden der Bahn), die Karte dreht mit: nach unten ziehen = rechts herum */
+      const halb = Math.max(1, (bahn.clientHeight - griff.offsetHeight) / 2 - 2);
+      griff.style.transform = "translateY(" + Math.max(-halb, Math.min(halb, dy)).toFixed(1) + "px)";
+      if (ST.drehen && ST.drehen.setzen) ST.drehen.setzen(zug.d0 - dy / PX);
     });
     const los = (e) => {
       if (!zug || e.pointerId !== zug.id) return;
-      zug = null; w.classList.remove("lk-schieber-aktiv");
+      const z = zug; zug = null; w.classList.remove("lk-schieber-aktiv");
       griff.style.transform = "";
+      if (z.weit < 4 && e.type === "pointerup") {
+        /* kurzer Tipp: obere Hälfte links herum, untere rechts herum (je 45°) */
+        const r = bahn.getBoundingClientRect();
+        drehen(e.clientY < r.top + r.height / 2 ? 1 : -1);
+        return;
+      }
       if (ST.drehen) ST.drehen.zu(Math.round(K.dreh * 2) / 2, {});
     };
     bahn.addEventListener("pointerup", los);

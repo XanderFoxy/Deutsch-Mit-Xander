@@ -11670,7 +11670,7 @@
     var wetter = dorfWetter(), nah = dorfNah();
     /* FASSUNG 715 — Schnee auf den Dächern und der Wiese, wenn es draußen schneit (eigenes Bild: „S" in der Kennung). */
     var malSig = sig + dorfJahrSig() + (wetter.art === "schnee" ? "S" : "") + (wetter.tag ? "" : "N");
-    return '<div class="sp-dl-rahmen ' + (nah ? "sp-dl-nah" : "sp-dl-ganz") + (S.umbau && !besuch ? " sp-dl-umbau" : "") + (dorfZeichen() ? " sp-dl-zeichen" : "") + (dorfNamen() ? " sp-dl-namen" : "") + (wetter.tag ? "" : " sp-dl-nacht") + '"><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + malSig + '" aria-hidden="true"></canvas>' + dorfDaemmerHtml(wetter) + dorfWunderHtml(ich) + '<div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
+    return '<div class="sp-dl-rahmen ' + (nah ? "sp-dl-nah" : "sp-dl-ganz") + (S.umbau && !besuch ? " sp-dl-umbau" : "") + (dorfZeichen() ? " sp-dl-zeichen" : "") + (dorfNamen() ? " sp-dl-namen" : "") + (wetter.tag ? "" : " sp-dl-nacht") + '"' + dorfLuftAttr() + '><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + malSig + '" aria-hidden="true"></canvas>' + dorfDaemmerHtml(wetter) + dorfWunderHtml(ich) + '<div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
       + dorfNachtHtml(ich, wetter) + haeuser + (besuch ? "" : dorfBahnKnoepfe()) + dorfLeuteHtml(ich) + dorfBahnHtml(wetter) + "</div></div>" + dorfWetterHtml(wetter) + dorfWetterSchild(wetter)
       /* FASSUNG 721 — XANDER (Funk 159): „ich möchte dass das kleine Bild was wir haben schon den Kompass hat nicht dass
          das drei unterschiedliche Bilder sind … diese Lupe wie in den anderen Spielen mit den kleinen Punkten auf der Karte
@@ -13099,7 +13099,7 @@
   /* Der Platzhalter im Rahmen – genau so groß wie das alte Bild (16:10). */
   function neueStadtRahmenHtml(ich) {
     var wahl = S.dorfWahl && !S.umbau && (DORF[S.dorfWahl] || S.dorfWahl === "bahnhof" || S.dorfWahl === "wald") ? S.dorfWahl : "";
-    return '<div class="sp-dl-rahmen sp-dl-ganz sp-dl-neustadt"><div class="sp-dl-fenster sp-dl-neustadt-platz"><span>Neue Stadt wird geladen …</span></div></div>'
+    return '<div class="sp-dl-rahmen sp-dl-ganz sp-dl-neustadt"' + dorfLuftAttr() + '><div class="sp-dl-fenster sp-dl-neustadt-platz"><span>Neue Stadt wird geladen …</span></div></div>'
       /* FASSUNG 817 — „Umbauen" auch unter der neuen Stadt: dieselbe Leiste, gewählt wird mit einem Tipp in der Stadt. */
       + (S.umbau ? umbauLeisteHtml(ich, true) : "")
       /* FASSUNG 823 — der Bahnhof steht nicht mehr hier im Menü, sondern in seinem eigenen Fenster (bahnFenster). */
@@ -13129,6 +13129,9 @@
     if (Math.abs(ziel - jetzt) >= 0.5) menueRollen(sc, ziel, sanft);
     return ziel - jetzt;
   }
+  /* FASSUNG 812 — die Luft über dem Bild (s. u.) steht im HTML des Rahmens, damit sie beim Neuzeichnen des Menüs bleibt
+     (sonst spränge alles, was darunter liegt, bei jedem Zeichnen um diese Höhe) */
+  function dorfLuftAttr() { var l = S.dorfLuft || 0; return l ? ' style="margin-top:' + l + 'px" data-luft="' + l + '"' : ""; }
   function dorfRahmenEinpassen(sanft, spot) {
     var r = schnellEl && !schnellEl.hidden && schnellEl.querySelector(".sp-dl-rahmen");
     if (!r || !r.isConnected) return;
@@ -13136,7 +13139,11 @@
     var kt = kopf ? kopf.getBoundingClientRect().top : fr.top, d = 0;
     if (sc && sc.scrollHeight > sc.clientHeight + 1) {
       var pad = parseFloat(getComputedStyle(sc).paddingTop) || 0;
-      if (!spot) d = menueEinpassen(sc, fr.top, fr.bottom, kt - pad, sanft);   // beim Öffnen (Walkie 305): „die Überschrift soll da bleiben"
+      /* FASSUNG 812 — XANDER (29.09., später): „wenn wir das aufmachen für das Dorf dann sehen wir ja nur dieses Fenster
+         … so dass es so ein leichten Rand hat oben und unten aber das muss oben unten der gleiche sein … Dann sieht es
+         nämlich aus wie ein schönes gerahmtes Foto … egal was wir machen … springen wir sofort wieder zurück". Das gilt
+         jetzt auch beim Öffnen (statt Walkie 305: Überschrift sichtbar); spot === false hält die alte Lage. */
+      if (spot === false) d = menueEinpassen(sc, fr.top, fr.bottom, kt - pad, sanft);
       else {
         /* FASSUNG 812 — XANDER: „dann ist das trotzdem ein bisschen zu weit unten da. Da ist noch Platz da kann das noch
            ein bisschen höher vom Sprunglink … dann hat man nämlich oben und unten das selbe … im Prinzip sah er nur die
@@ -13144,9 +13151,14 @@
            Nach einer Aufgabe (Einsammeln, Losschicken, Herstellen: lsZurueckZumBild) steht das Bild mittig im Menü
            (oben und unten gleich viel Rand); die Kopfzeile mit dem Kreuz rollt dabei ganz aus dem Blick – ist dafür zu
            wenig Platz, rückt das Bild so weit hoch, dass sie gerade verschwindet. */
-        var kb = fr.top;
-        if (kopf) { kb = kopf.getBoundingClientRect().bottom; [].forEach.call(kopf.querySelectorAll("*"), function (e) { var b = e.getBoundingClientRect(); if (b.height) kb = Math.max(kb, b.bottom); }); }
-        var rand = Math.max(0, (sc.clientHeight - (fr.bottom - fr.top)) / 2), abstand = Math.max(0, fr.top - kb + 1);
+        var kopfUnten = function () { var u = fr.top; if (kopf) { u = kopf.getBoundingClientRect().bottom; [].forEach.call(kopf.querySelectorAll("*"), function (e) { var b = e.getBoundingClientRect(); if (b.height) u = Math.max(u, b.bottom); }); } return u; };
+        var kb = kopfUnten();
+        var rand = Math.max(0, (sc.clientHeight - (fr.bottom - fr.top)) / 2);
+        /* Liegt die Kopfzeile näher am Bild als der halbe freie Platz, bekommt das Bild oben so viel Luft, dass es mittig
+           stehen kann und die Kopfzeile trotzdem ganz verschwindet (sonst wäre oben weniger Rand als unten). */
+        var luft = parseFloat(r.dataset.luft || "0") || 0, abstand0 = fr.top - kb - luft, soll = Math.max(0, Math.ceil(rand + 2 - abstand0));
+        if (Math.abs(soll - luft) > 1) { S.dorfLuft = soll; r.style.marginTop = soll ? soll + "px" : ""; r.dataset.luft = String(soll); fr = r.getBoundingClientRect(); kt = kopf ? kopf.getBoundingClientRect().top : fr.top; kb = kopfUnten(); }
+        var abstand = Math.max(0, fr.top - kb + 1);
         d = menueEinpassen(sc, fr.top, fr.bottom, fr.top - Math.min(rand, abstand), sanft);
       }
     }

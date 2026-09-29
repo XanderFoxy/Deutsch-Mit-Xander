@@ -240,9 +240,9 @@ const sage = (gut, was, zusatz) => {
   const istPassgenau = (p, neu) => !!p && p.t >= p.oben - 2 && p.b <= p.unten + 2 && p.kopf[0] >= p.oben - 2 && p.kopf[1] <= p.t + 1
     && (!neu || (!!p.ls && Math.abs(p.ls[0] - p.t) < 2 && Math.abs(p.ls[1] - p.b) < 2 && !p.clip));
   /* FASSUNG 812 — nach einer Aufgabe (Rücksprung) „im Spot": Bild mittig (oben ≈ unten Rand), die Kopfzeile mit dem Kreuz
-     ganz ausgeblendet; reicht der Platz dafür nicht, liegt der Kopf gerade eben oberhalb (Bild höher als die Mitte) */
+     ganz ausgeblendet (dafür bekommt das Bild oben Luft), auch beim Öffnen */
   const imSpot = (p, neu) => !!p && p.t >= p.oben - 2 && p.b <= p.unten + 2 && p.kopfAlles <= p.oben + 1
-    && (Math.abs((p.t - p.oben) - (p.unten - p.b)) < 6 || (p.t - p.oben) < (p.unten - p.b))
+    && Math.abs((p.t - p.oben) - (p.unten - p.b)) < 8   // oben und unten gleicher Rand („wie ein gerahmtes Foto")
     && (!neu || (!!p.ls && Math.abs(p.ls[0] - p.t) < 2 && Math.abs(p.ls[1] - p.b) < 2 && !p.clip));
   const menueRunter = () => pg.evaluate(() => { const m = document.querySelector(".sp-schnell .sp-sm-blick"); if (m) m.scrollTop = 1e6; });
   const menueHoch = () => pg.evaluate(() => { const m = document.querySelector(".sp-schnell .sp-sm-blick"); if (m) m.scrollTop = 0; });
@@ -267,7 +267,7 @@ const sage = (gut, was, zusatz) => {
   { const l = await lage(".sp-schnell"); await pg.evaluate((d) => window.scrollBy(0, d), l.t - 250); await tick(300); }
   await tippe('.sp-schnell [data-s="makro"]'); await tick(900);
   let p = await passt();
-  sage(istPassgenau(p, false), "beim Öffnen liegt das Dorfbild ganz im sichtbaren Teil, „Mein Dorf“ darüber", JSON.stringify(p));
+  sage(imSpot(p, false), "beim Öffnen liegt das Dorfbild wie ein gerahmtes Foto im Menü: oben und unten gleicher Rand, Kopfzeile ausgeblendet (Fassung 812)", JSON.stringify(p));
   await knipsen("1-offen");
   const altListe = await knoepfe();
   await menueRunter(); await tick(300);
@@ -277,14 +277,14 @@ const sage = (gut, was, zusatz) => {
   sage(!!fr, "die neue Stadt ist im Rahmen geladen");
   await tick(1500);
   p = await passt();
-  sage(istPassgenau(p, true), "alt → neu: das Stadtbild springt passgenau an den Platz (Rahmen der Stadt deckungsgleich, nichts abgeschnitten)", JSON.stringify(p));
+  sage(imSpot(p, true), "alt → neu: das Stadtbild springt passgenau an den Platz (Rahmen der Stadt deckungsgleich, nichts abgeschnitten)", JSON.stringify(p));
   await knipsen("2-neu");
   const neuListe = await knoepfe();
   for (const [v, neu] of [["alt", false], ["neu", true]]) {
     await menueRunter(); await tick(300);
     await tippe('[data-s="stadtversion"][data-v="' + v + '"]'); await tick(v === "neu" ? 2500 : 900);
     p = await passt();
-    sage(istPassgenau(p, neu), "→ " + v + ": wieder genau an seinem Platz", JSON.stringify(p));
+    sage(imSpot(p, neu), "→ " + v + ": wieder genau an seinem Platz", JSON.stringify(p));
   }
 
   console.log("\nDIESELBEN KNÖPFE UNTER DER NEUEN VERSION (Walkie 305)\n");
@@ -493,7 +493,7 @@ const sage = (gut, was, zusatz) => {
   if (process.env.STAPEL) for (let i = 0; i < 12; i++) { await tick(150); console.log("     " + JSON.stringify(await passt())); }
   await tick(1500);
   p = await passt();
-  sage(istPassgenau(p, true), "nach dem Vollbild liegt das Bild wieder passgenau", JSON.stringify(p));
+  sage(imSpot(p, true), "nach dem Vollbild liegt das Bild wieder passgenau", JSON.stringify(p));
   const emo = await pg.evaluate(() => [".sp-dl-beschriftung", ".sp-dl-umbauleiste"].map((s) => [...document.querySelectorAll(".sp-schnell " + s)].map((e) => e.innerHTML).join("")).some((h) => /\p{Extended_Pictographic}/u.test(h)));
   sage(!emo, "keine Emoji-Grafiken in der Knopfreihe");
 

@@ -12,7 +12,8 @@
      • Griff ziehen dreht stufenlos (Zwischenwerte), die Karte springt
        dabei nicht weg (Bildmitte bleibt auf demselben Boden)
      • loslassen rastet auf eine der acht Richtungen ein
-     • Pfeil rechts/links dreht um 45°
+     • senkrecht am Rand unter dem Kompass (29.09.: „von oben nach unten … unter dem Kompass“);
+       kurzer Tipp oben/unten auf die Bahn dreht um 45°
      • Nadel („festnageln … PIN"): hält Lage, Nähe und Richtung fest,
        nach dem Neuladen öffnet der Rahmen genau dort; noch ein Tipp löst sie
    Bildschirmfoto: BILD=/pfad/praefix.
@@ -52,6 +53,7 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   const s1 = await sicht();
   const um = await pg.evaluate(() => [".lk-lupe", ".lk-uhr", ".lk-ortsschild", ".lk-wetter", ".lk-vollknopf"].map((s) => { const e = document.querySelector(s); if (!e || getComputedStyle(e).display === "none") return null; const r = e.getBoundingClientRect(); return r.width ? [s, r.left, r.top, r.right, r.bottom] : null; }).filter(Boolean));
   const ueber = s1 ? um.filter((u) => u[1] < s1.r - 0.5 && s1.l < u[3] - 0.5 && u[2] < s1.b - 0.5 && s1.t < u[4] - 0.5).map((u) => u[0]) : ["?"];
+  sage(!!s1 && s1.b - s1.t > (s1.r - s1.l) * 2, "der Schieber steht senkrecht (höher als breit)", JSON.stringify(s1));
   sage(!!s1 && s1.an && s1.l >= 0 && s1.t >= 0 && s1.r <= 280 && s1.b <= 175 && !ueber.length, "mit dem Kompass steht der Schieber im Bild, ohne Überlappung", JSON.stringify({ s1, ueber }));
   if (process.env.BILD) await seite.screenshot({ path: process.env.BILD + "-schieber.png" });
   const bahn = await pg.evaluate(() => { const r = document.querySelector(".lk-schieber-bahn").getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
@@ -60,7 +62,7 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   bahn[0] += 10; bahn[1] += 20;   // Lage des iframes in der Seite
   await pg.mouse.move(bahn[0], bahn[1]); await pg.mouse.down();
   const werte = [];
-  for (let i = 1; i <= 6; i++) { await pg.mouse.move(bahn[0] + i * 5, bahn[1]); werte.push(await pg.evaluate(() => STADT.kamera.dreh)); }
+  for (let i = 1; i <= 6; i++) { await pg.mouse.move(bahn[0], bahn[1] + i * 5); werte.push(await pg.evaluate(() => STADT.kamera.dreh)); }
   const mitte1 = await pg.evaluate(() => STADT.aufBoden(STADT.kamera.W / 2, STADT.kamera.H / 2));
   const zwischen = werte.filter((w) => Math.abs(w * 2 - Math.round(w * 2)) > 0.02).length;
   sage(zwischen >= 3 && werte.every((w, i) => i === 0 || Math.abs(w - werte[i - 1]) < 0.2), "Griff ziehen dreht stufenlos mit (Zwischenwerte)", werte.map((w) => w.toFixed(3)).join(" "));
@@ -68,10 +70,12 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   await pg.mouse.up(); await pg.waitForTimeout(900);
   const d1 = await pg.evaluate(() => STADT.kamera.dreh);
   sage(Math.abs(d1 * 2 - Math.round(d1 * 2)) < 1e-6 && Math.abs(d1 - d0) > 0.01, "loslassen rastet auf eine der acht Richtungen ein", d0 + " → " + d1);
-  await pg.click(".lk-drehschieber .lk-sp-r"); await pg.waitForTimeout(900);
+  /* kurzer Tipp in die untere Hälfte der Bahn = rechts herum (45°) */
+  const unten = await pg.evaluate(() => { const r = document.querySelector(".lk-schieber-bahn").getBoundingClientRect(); return [r.left + r.width / 2, r.bottom - 8]; });
+  await pg.mouse.click(unten[0] + 10, unten[1] + 20); await pg.waitForTimeout(900);
   const d2 = await pg.evaluate(() => STADT.kamera.dreh);
   const diff = ((d1 - d2) % 4 + 4) % 4;
-  sage(Math.abs(diff - 0.5) < 1e-6, "Pfeil rechts dreht um 45°", d1 + " → " + d2);
+  sage(Math.abs(diff - 0.5) < 1e-6, "kurzer Tipp unten auf die Bahn dreht um 45° rechts herum", d1 + " → " + d2);
   sage(await pg.evaluate(() => document.body.classList.contains("lk-nah")), "nach dem Drehen bleibt man nah dran (kein Sprung auf die ganze Stadt)");
   /* ---- Nadel: Ansicht festhalten ---- */
   const pin0 = await pg.evaluate(() => { const e = document.querySelector(".lk-pinknopf"); if (!e) return null; const r = e.getBoundingClientRect(), s = document.querySelector(".lk-drehschieber").getBoundingClientRect(); return { an: getComputedStyle(e).display !== "none" && r.width > 0, frei: r.left >= s.right - 0.5, im: r.right <= 280 && r.bottom <= 175, w: r.width }; });
