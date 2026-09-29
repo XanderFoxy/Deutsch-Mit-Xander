@@ -43,6 +43,8 @@
     stern: '<svg viewBox="0 0 24 24"><path d="M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3.1-5.4 3.1 1.2-6-4.5-4.2 6.1-.7z" fill="currentColor"/></svg>',
     lupe: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></g></svg>',
     voll: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></g></svg>',
+    /* FASSUNG 812 — Stecknadel („Ansicht festhalten") */
+    pin: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5h6l-1 5.2 3.2 3.3H6.8L10 8.7z" fill="currentColor"/><path d="M12 12v8.5"/></g></svg>',
     hammer: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6.5 17.5 10M4 20l9-9"/><path d="M12.5 5l4-2 4.5 4.5-2 4-2-.5-3-3z" fill="currentColor"/></g></svg>'
   };
   const ZEITEN = ["tag", "abend", "nacht"], ZEIT_SYM = { tag: "sonne", abend: "daemmerung", nacht: "mond" };
@@ -381,7 +383,40 @@
         return imUeberblick(() => ecke.map((w) => { const P = ST.proj(w[0], w[1], 0); return [P[0] / K.W, P[1] / K.H]; }));
       };
       /* FASSUNG 807 — „ein bisschen die Karte auch rotieren": mit dem Kompass ein Knopf zum Drehen */
-      const drehK = knopf("rechts", "Karte drehen", () => { drehen(1, () => { if (!document.body.classList.contains("lk-nah")) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; } }); }, "lk-nur-mini lk-drehknopf");   // FASSUNG 820 — nach dem weichen Drehen
+      /* FASSUNG 812 — XANDER: „erklär mir mal bitte wie dieser Händel unterm Kompass funktioniert … der springt immer
+         irgendwo hin aber ich weiß gar nicht wohin er springt … Ich wollte eigentlich den Slider, der die Karte so hin
+         dreht und zurückdreht". Statt des Knopfs (45° weiter, danach zurück auf die ganze Stadt) ein Schieber: den Griff
+         nach links/rechts ziehen dreht die Karte stufenlos um die Bildmitte mit, loslassen rastet weich auf die nächste
+         der acht Richtungen ein (drehen.js) und sagt sie an; ein Tipp auf die Pfeile links/rechts dreht um 45°. */
+      const drehK = drehSchieber("lk-nur-mini lk-drehschieber");
+      /* FASSUNG 812 — XANDER: „Wie kann ich das festnageln wenn ich ne Ansicht habe, in der ich bleiben möchte, kannst du
+         mir deinen PIN reinmachen oder irgend sowas, der sich dann immer abspeichert mit, bis ich das umentschieden so
+         lassen will". Nah dran (Kompass) steckt die Nadel die Ansicht fest: Lage, Nähe und Richtung bleiben gespeichert
+         (auf diesem Gerät) und der kleine Rahmen öffnet beim nächsten Mal genau dort; noch ein Tipp löst die Nadel. */
+      const PIN_SCHLUESSEL = "lk-pin-ansicht";
+      const pinLesen = () => { try { const v = JSON.parse(localStorage.getItem(PIN_SCHLUESSEL) || "null"); return v && isFinite(v.x) && isFinite(v.y) && isFinite(v.s) ? v : null; } catch (e) { return null; } };
+      const pinK = knopf("pin", "Ansicht festhalten", () => {
+        if (pinLesen()) { try { localStorage.removeItem(PIN_SCHLUESSEL); } catch (e) {} pinZeigen(); ansage("Ansicht wieder frei"); return; }
+        const v = { x: K.x, y: K.y, s: K.s / K.dpr, dreh: K.dreh };
+        try { localStorage.setItem(PIN_SCHLUESSEL, JSON.stringify(v)); } catch (e) {}
+        pinZeigen(); ansage("Ansicht festgehalten");
+      }, "lk-nur-mini lk-pinknopf");
+      const pinZeigen = () => {
+        const an = !!pinLesen();
+        pinK.classList.toggle("lk-an", an);
+        document.body.classList.toggle("lk-gepinnt", an);
+        pinK.title = an ? "Ansicht lösen" : "Ansicht festhalten"; pinK.setAttribute("aria-label", pinK.title);
+        pinK.setAttribute("aria-pressed", an ? "true" : "false");
+      };
+      /* die gespeicherte Ansicht anwenden (beim Laden und zurück aus dem Vollbild); false, wenn keine Nadel steckt */
+      O.pinAnwenden = () => {
+        const v = pinLesen(); if (!v) return false;
+        if (ST.drehen && ST.drehen.setzen && isFinite(v.dreh)) ST.drehen.setzen(v.dreh);
+        K.x = v.x; K.y = v.y; K.s = Math.min(K.max, Math.max(K.min, v.s * K.dpr)); L().unruhe = 2;
+        nahSetzen(true, true);
+        return true;
+      };
+      pinZeigen();
       setInterval(() => {
         if (!document.body.classList.contains("lk-mini-modus")) { LB.grossErlaubt = false; return; }
         nahSetzen(K.s > ueberblick() * 1.4);
@@ -427,7 +462,7 @@
         if (stufeVon(K.s) === 0) { const g = ganzeStadt(); L().fliegeZu(g.x, g.y, g.s * STUFE[1], 500); nahSetzen(true, true); }
         if (was === "bauen") bauLeisteZeigen(true); else leisteZeigen(true);
       });
-      wurzel.append(lupeK, vollK, drehK, fertigK);
+      wurzel.append(lupeK, vollK, drehK, pinK, fertigK);
       const kopfZ = el("div", "lk-kopfzeile", '<span class="lk-uhr" title="Uhrzeit in Deutschland"></span><span class="lk-ortsschild"><b></b></span><span class="lk-wetter" hidden></span>');
       wurzel.appendChild(kopfZ);
       const uhrStellen = () => {
@@ -510,11 +545,12 @@
       document.body.classList.add("lk-ohne-namen", "lk-ohne-symbole");
       const erstesMal = q.get("mini") === "1";
       modus(erstesMal);
-      if (erstesMal) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; }
+      if (erstesMal && !(O.pinAnwenden && O.pinAnwenden())) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; }
       window.addEventListener("resize", () => { if (document.body.classList.contains("lk-mini-modus") && !document.body.classList.contains("lk-nah")) setTimeout(() => { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; miniMalen(); }, 50); });
       window.addEventListener("message", (ev) => {
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-modus") return;
         modus(!ev.data.voll); L().unruhe = 2;
+        if (!ev.data.voll && O.pinAnwenden) O.pinAnwenden();   // FASSUNG 812 — zurück im kleinen Rahmen: die festgehaltene Ansicht
         if (ev.data.voll && O.nachVollOeffnen) setTimeout(O.nachVollOeffnen, 60);
       });
       /* FASSUNG 807 — XANDER: „aus unserer ganz normalen kleinen Dorf … heraus kann man über den Bereich des Bildes scrollen
@@ -650,7 +686,7 @@
         /* frei von Kompass, Uhr, Ortsschild (oben), Vollbild (unten links), Drehknopf und kleiner Karte (nah) – und von
            den Schildern der anderen Häuser: erst über dem Haus, sonst darunter, sonst daneben */
         const weg = [];
-        for (const s of [".lk-lupe", ".lk-uhr", ".lk-ortsschild", ".lk-wetter", ".lk-vollknopf", ".lk-drehknopf", ".lk-mini-rahmen"]) { const e = wurzel.querySelector(s); if (e && getComputedStyle(e).display !== "none" && !e.hidden) weg.push(e.getBoundingClientRect()); }
+        for (const s of [".lk-lupe", ".lk-uhr", ".lk-ortsschild", ".lk-wetter", ".lk-vollknopf", ".lk-drehschieber", ".lk-mini-rahmen"]) { const e = wurzel.querySelector(s); if (e && getComputedStyle(e).display !== "none" && !e.hidden) weg.push(e.getBoundingClientRect()); }
         for (const z of zeichenEbene.children) if (z.dataset.g !== wahlG && z.style.display !== "none" && getComputedStyle(z).display !== "none") weg.push(z.getBoundingClientRect());
         const setzen = (lx, ly) => [Math.max(nah ? 36 : 4, Math.min(W - bw - 4, lx)), Math.max(34, Math.min(H - bh - (nah ? 56 : 42), ly))];
         const frei = (q) => !weg.some((r) => r.width > 0 && Math.min(r.right, q[0] + bw) - Math.max(r.left, q[0]) > 0.5 && Math.min(r.bottom, q[1] + bh) - Math.max(r.top, q[1]) > 0.5);
@@ -718,6 +754,41 @@
     jahrK.setAttribute("aria-label", "Jahreszeit (Vorschau): " + modusName());
   };
   O.neuAufgebaut = function () { if (kopf) nameSetzen(); miniMalen(); };
+
+  /* FASSUNG 812 — Dreh-Schieber (siehe oben): 70 px Weg = 90° */
+  function drehSchieber(cls) {
+    const w = el("div", "lk-schieber " + cls), bahn = el("div", "lk-schieber-bahn"), griff = el("div", "lk-schieber-griff");
+    const pl = knopf("links", "Karte nach links drehen", () => drehen(1), "lk-schieber-pfeil lk-sp-l");
+    const pr = knopf("rechts", "Karte nach rechts drehen", () => drehen(-1), "lk-schieber-pfeil lk-sp-r");
+    bahn.append(griff); w.append(pl, bahn, pr);
+    w.title = "Karte drehen: Griff ziehen"; w.setAttribute("role", "slider"); w.setAttribute("aria-label", "Karte drehen");
+    let zug = null;
+    const PX = 70;
+    bahn.addEventListener("pointerdown", (e) => {
+      e.stopPropagation(); e.preventDefault();
+      try { bahn.setPointerCapture(e.pointerId); } catch (x) {}
+      zug = { id: e.pointerId, x0: e.clientX, d0: K.dreh };
+      w.classList.add("lk-schieber-aktiv");
+    });
+    bahn.addEventListener("pointermove", (e) => {
+      if (!zug || e.pointerId !== zug.id) return;
+      const dx = e.clientX - zug.x0;
+      /* Griff folgt dem Finger (höchstens bis an die Enden der Bahn), die Karte dreht mit: nach rechts ziehen = rechts herum */
+      const halb = Math.max(1, (bahn.clientWidth - griff.offsetWidth) / 2);
+      griff.style.transform = "translateX(" + Math.max(-halb, Math.min(halb, dx)).toFixed(1) + "px)";
+      if (ST.drehen && ST.drehen.setzen) ST.drehen.setzen(zug.d0 - dx / PX);
+    });
+    const los = (e) => {
+      if (!zug || e.pointerId !== zug.id) return;
+      zug = null; w.classList.remove("lk-schieber-aktiv");
+      griff.style.transform = "";
+      if (ST.drehen) ST.drehen.zu(Math.round(K.dreh * 2) / 2, {});
+    };
+    bahn.addEventListener("pointerup", los);
+    bahn.addEventListener("pointercancel", los);
+    return w;
+  }
+  O.drehSchieber = drehSchieber;
 
   function drehen(r, danach) {
     /* FASSUNG 820 — XANDER (Walkie 309): „Zwei-Finger-Drehen mit Einrasten in 8 Winkeln". Die Knöpfe drehen jetzt um

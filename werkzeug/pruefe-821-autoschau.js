@@ -34,6 +34,7 @@
    Bildschirmfotos (BILD=/pfad/praefix): beide Autos, 360 × 740 und
    1280 × 800, je 3 Winkel × 3 Neigungen.
    Mit dem alten Stand (ohne stadt-leicht/autoschau.js) ist alles rot.
+   FASSUNG 812 — die Schau wird nachgeladen (autoschau-laden.js): vor dem Messen wartet die Sonde, bis sie offen ist.
    Aufruf: node werkzeug/pruefe-821-autoschau.js
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
@@ -136,6 +137,7 @@ const BLATT = /\/(schau_|auftritt_)[a-z0-9_]+\.(json|webp)/;
   sage(blaetter(pg).length === 0, "vor dem Öffnen wird kein Blatt der Autos angefragt (schau_*, auftritt_*)", blaetter(pg).join(", ") || "keine");
   const a1 = await anschauen(pg, "viper");
   sage(!a1, "die Karte des Vipers hat „Anschauen\"", a1);
+  await pg.waitForFunction(() => STADT.autoschau.zustand().offen, null, { timeout: 5000 }).catch(() => {});
   await pg.waitForTimeout(150);
   const Z0 = await zustand(pg);
   const eb = await pg.evaluate(() => { const e = document.querySelector(".as-ebene"); if (!e) return null; const r = e.getBoundingClientRect(), s = getComputedStyle(e); return { w: r.width, h: r.height, touch: s.touchAction, lein: !!e.querySelector("canvas.as-leinwand"), laedt: !!document.querySelector(".as-kipp.as-laedt"), marke30: !!document.querySelector('.as-marke.as-laedt[data-neig="30"]'), name: (document.querySelector(".as-name") || {}).textContent, unter: (document.querySelector(".as-unter") || {}).textContent }; });
@@ -143,7 +145,7 @@ const BLATT = /\/(schau_|auftritt_)[a-z0-9_]+\.(json|webp)/;
   if (!eb || !Z0 || !Z0.offen) return ende();
   sage(eb.name === "Dodge Viper" && eb.unter === "Dein Auto", "oben der Name und „Dein Auto\"", eb.name + " · " + eb.unter);
   sage(eb.laedt && eb.marke30, "solange 30° und 55° laden, zeigt der Kippgriff den Ladezustand", JSON.stringify({ laedt: eb.laedt, marke30: eb.marke30 }));
-  await pg.waitForFunction(() => STADT.autoschau.zustand().stufen.every((s) => s.fertig || s.fehler), null, { timeout: 60000 }).catch(() => {});
+  await pg.waitForFunction(() => { const z = STADT.autoschau.zustand(); return z.offen && z.stufen && z.stufen.every((s) => s.fertig || s.fehler); }, null, { timeout: 60000 }).catch(() => {});
   const Z1 = await zustand(pg), bl = blaetter(pg);
   const i14 = bl.indexOf("auftritt_viper.json"), i30 = bl.indexOf("schau_viper_30.json"), i55 = bl.indexOf("schau_viper_55.json");
   sage(Z1.stufen.every((s) => s.fertig) && i14 >= 0 && i30 > i14 && i55 > i30, "erst jetzt werden die Blätter geladen: zuerst 14°, dann 30° und 55°", bl.join(", "));
@@ -230,12 +232,13 @@ const BLATT = /\/(schau_|auftritt_)[a-z0-9_]+\.(json|webp)/;
   await pg.waitForTimeout(400);
   const P2 = await pg.evaluate(() => { const a = STADT.autos.auto("batmobil"), P = STADT.proj(a.x, a.y, 0.5), d = STADT.kamera.dpr; return [P[0] / d, P[1] / d]; });
   await tippen(pg, P2[0], P2[1]);
+  await pg.waitForFunction(() => STADT.autoschau.zustand().offen, null, { timeout: 5000 }).catch(() => {});
   await pg.waitForTimeout(400);
   const Zt = await zustand(pg);
   const kn = await pg.evaluate(() => [...document.querySelectorAll(".as-knoepfe button")].map((b) => b.textContent.trim()));
   sage(!!t && Zt.offen && Zt.id === "batmobil" && kn.some((x) => /Hinfahren/.test(x)), "ein Tipp auf das fahrende Batmobil öffnet die Schau (unten „Hinfahren\", „Abstellen\", „Zurück\")", JSON.stringify({ offen: Zt.offen, id: Zt.id, knoepfe: kn }));
   if (Zt.offen) {
-    await pg.waitForFunction(() => STADT.autoschau.zustand().stufen.every((s) => s.fertig || s.fehler), null, { timeout: 60000 }).catch(() => {});
+    await pg.waitForFunction(() => { const z = STADT.autoschau.zustand(); return z.offen && z.stufen && z.stufen.every((s) => s.fertig || s.fehler); }, null, { timeout: 60000 }).catch(() => {});
     /* „Zurück" unten schließt, der Eintrag in der Geschichte ist wieder weg */
     await pg.evaluate(() => document.querySelector(".as-zurueck").click());
     await pg.waitForTimeout(400);
@@ -255,7 +258,7 @@ const BLATT = /\/(schau_|auftritt_)[a-z0-9_]+\.(json|webp)/;
   const fotos = async (p, id, tag) => {
     const a = await anschauen(p, id);
     if (a) return sage(false, "[" + tag + "] " + id + " öffnen", a);
-    await p.waitForFunction(() => STADT.autoschau.zustand().stufen.every((s) => s.fertig || s.fehler), null, { timeout: 60000 }).catch(() => {});
+    await p.waitForFunction(() => { const z = STADT.autoschau.zustand(); return z.offen && z.stufen && z.stufen.every((s) => s.fertig || s.fehler); }, null, { timeout: 60000 }).catch(() => {});
     await p.waitForTimeout(300);
     let schlecht = [];
     for (const n of NEIG) for (const g of WINKEL) {
@@ -279,7 +282,7 @@ const BLATT = /\/(schau_|auftritt_)[a-z0-9_]+\.(json|webp)/;
   sage(blaetter(pd).length === 0, "vor dem Öffnen kein Blatt angefragt", blaetter(pd).join(", ") || "keine");
   const a2 = await anschauen(pd, "batmobil");
   sage(!a2, "„Anschauen\" beim Batmobil", a2);
-  await pd.waitForFunction(() => STADT.autoschau.zustand().stufen.every((s) => s.fertig || s.fehler), null, { timeout: 60000 }).catch(() => {});
+  await pd.waitForFunction(() => { const z = STADT.autoschau.zustand(); return z.offen && z.stufen && z.stufen.every((s) => s.fertig || s.fehler); }, null, { timeout: 60000 }).catch(() => {});
   const D0 = await zustand(pd), LD = await anordnung(pd);
   sage(!LD.aus.length && !LD.klein.length && !LD.ueber.length && LD.autoGut, "nichts überlappt, das Auto ganz im Bild", JSON.stringify(LD));
   /* Maus: waagrecht ziehen dreht */
