@@ -728,7 +728,15 @@
     const aus = [];
     for (const a of AU.liste) {
       if (AU.ohne === a.id) continue;   // (für Sonden: ohne dieses Auto malen)
-      const P = ST.proj(a.x, a.y, 0), rand = 140 * K.dpr;
+      /* FASSUNG 826 — die Brücken liegen jetzt genau auf den Wegen: auf einer Brücke fährt das Auto über den Buckel (mittlere
+         Deckhöhe unter Front, Mitte, Heck – wie die Fuhrwerke) und wird nach ihr gemalt */
+      let br = null;
+      if (ST.fuhrwerk && ST.fuhrwerk.aufBruecke) {
+        const q = [a.A.vorn * 0.8, 0, -a.A.hinten * 0.8].map((d) => { const w = imAuto(a, 0, d); return ST.fuhrwerk.aufBruecke(w[0], w[1]); }), o = q.find(Boolean);
+        if (o) br = { o: o.o, z: q.reduce((n, e) => n + (e && e.o === o.o ? e.z : 0), 0) / 3 };
+      }
+      a.zDeck = br ? br.z : 0;
+      const P = ST.proj(a.x, a.y, a.zDeck), rand = 140 * K.dpr;
       if (P[0] < -rand || P[0] > K.W + rand || P[1] < -rand || P[1] > K.H + rand * 1.5) continue;
       const b = blatt(a.A.blatt + "_" + jahrName() + "_" + (Z.nacht > 0.5 ? "nacht" : "tag")); if (!b) continue;
       const img = LB.bild(b.name, true); if (!img) continue;   // dringend: das Auto soll gleich zu sehen sein
@@ -736,7 +744,7 @@
       const n = b.meta.n || 1, spalte = n > 1 ? Math.floor(a.ph * n) % n : 0;
       const r = ST.drehXY(a.x, a.y, K.dreh);
       a.reihe = ((Math.round(gier / (360 / ri)) % ri) + ri) % ri; a.blatt = b.name;
-      aus.push({ X: P[0], Y: P[1], a: r[0], b: r[1], img: img, meta: b.meta, reihe: a.reihe, schritt: spalte, malen: malen, bx: a.A.vorn * 0.9, bh: 1.4, Z: Z, auto: a });
+      aus.push({ X: P[0], Y: P[1], a: r[0], b: r[1], img: img, meta: b.meta, reihe: a.reihe, schritt: spalte, malen: malen, bx: a.A.vorn * 0.9, bh: 1.4 + a.zDeck, Z: Z, auto: a, auf: br ? br.o : null });
     }
     AU.gezeigt = aus.length;
     return aus;
@@ -753,8 +761,8 @@
     a.licht = licht;
     /* Lichtkegel auf dem Boden – unter dem Auto, vor ihm her (nur im großen Bild) */
     if (licht > 0 && !klein()) {
-      const e = [[-0.8, A.vorn], [0.8, A.vorn], [4.4, A.vorn + 12], [-4.4, A.vorn + 12]].map((q) => { const w = imAuto(a, q[0], q[1]); return ST.proj(w[0], w[1], 0.02); });
-      const m0 = imAuto(a, 0, A.vorn), P0 = ST.proj(m0[0], m0[1], 0.02), R = Math.hypot(e[2][0] - P0[0], e[2][1] - P0[1]) * 1.05;
+      const e = [[-0.8, A.vorn], [0.8, A.vorn], [4.4, A.vorn + 12], [-4.4, A.vorn + 12]].map((q) => { const w = imAuto(a, q[0], q[1]); return ST.proj(w[0], w[1], 0.02 + (a.zDeck || 0)); });
+      const m0 = imAuto(a, 0, A.vorn), P0 = ST.proj(m0[0], m0[1], 0.02 + (a.zDeck || 0)), R = Math.hypot(e[2][0] - P0[0], e[2][1] - P0[1]) * 1.05;
       if (R > 2) {
         g.save(); g.globalCompositeOperation = "lighter";
         const gr = g.createRadialGradient(P0[0], P0[1], 0, P0[0], P0[1], R);
@@ -768,10 +776,10 @@
     const bremse = a.bremst || a.wartet || a.zustand === "haelt" ? 1 : 0;
     const Ks = K.s;
     g.save(); g.globalCompositeOperation = "lighter";
-    if (licht > 0) for (const l of A.lampen) { const w = imAuto(a, l[0], l[1]), P = ST.proj(w[0], w[1], l[2]); glut(g, P[0], P[1], Ks * 0.9, "255,244,215", 0.95 * licht); }
+    if (licht > 0) for (const l of A.lampen) { const w = imAuto(a, l[0], l[1]), P = ST.proj(w[0], w[1], l[2] + (a.zDeck || 0)); glut(g, P[0], P[1], Ks * 0.9, "255,244,215", 0.95 * licht); }
     const rot = Math.max(licht * 0.55, bremse ? 0.75 : 0) * (a.rueck ? 0.8 : 1);
-    if (rot > 0) for (const l of A.rueck) { const w = imAuto(a, l[0], l[1]), P = ST.proj(w[0], w[1], l[2]); glut(g, P[0], P[1], Ks * (bremse ? 0.6 : 0.45), "255,40,28", rot); }
-    if (a.rueck) for (const l of A.rueck) { const w = imAuto(a, l[0] * 0.8, l[1]), P = ST.proj(w[0], w[1], l[2]); glut(g, P[0], P[1], Ks * 0.35, "255,255,240", 0.8); }
+    if (rot > 0) for (const l of A.rueck) { const w = imAuto(a, l[0], l[1]), P = ST.proj(w[0], w[1], l[2] + (a.zDeck || 0)); glut(g, P[0], P[1], Ks * (bremse ? 0.6 : 0.45), "255,40,28", rot); }
+    if (a.rueck) for (const l of A.rueck) { const w = imAuto(a, l[0] * 0.8, l[1]), P = ST.proj(w[0], w[1], l[2] + (a.zDeck || 0)); glut(g, P[0], P[1], Ks * 0.35, "255,255,240", 0.8); }
     if (nacht > 0.3 && m.l) for (const l of m.l) {
       if (l[0] !== p.reihe) continue;
       glut(g, p.X + l[1] * k, p.Y + l[2] * k, l[3] * k * 0.5, l[4], nacht * l[5] * (0.85 + 0.15 * Math.sin(AU.t * 9)));
@@ -780,8 +788,8 @@
     if (A.duese && (a.gas > 0.3 || a.feuer > 0.02)) {
       a.feuer = Math.max(klemm(a.gas / GAS, 0, 1) * (a.v < 5.5 ? 1 : 0.3), (a.feuer || 0) * 0.9);
       const f = a.feuer * (0.8 + 0.2 * Math.sin(AU.t * 31) * Math.sin(AU.t * 17));
-      const d0 = imAuto(a, A.duese[0], A.duese[1]), P0 = ST.proj(d0[0], d0[1], A.duese[2]);
-      const d1 = imAuto(a, A.duese[0], A.duese[1] - 0.7 - 1.3 * f), P1 = ST.proj(d1[0], d1[1], A.duese[2]);
+      const d0 = imAuto(a, A.duese[0], A.duese[1]), P0 = ST.proj(d0[0], d0[1], A.duese[2] + (a.zDeck || 0));
+      const d1 = imAuto(a, A.duese[0], A.duese[1] - 0.7 - 1.3 * f), P1 = ST.proj(d1[0], d1[1], A.duese[2] + (a.zDeck || 0));
       glut(g, P1[0], P1[1], Ks * (0.5 + 0.6 * f), "255,120,40", 0.55 * f);
       glut(g, P0[0], P0[1], Ks * (0.35 + 0.35 * f), "255,196,110", 0.9 * f);
       glut(g, P0[0], P0[1], Ks * 0.16, "190,220,255", 0.9 * f);

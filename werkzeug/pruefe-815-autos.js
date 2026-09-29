@@ -137,8 +137,9 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     sage(f.wenden >= 1 && f.rueck > 20, "[" + N + "] wendet, wo der Weg zurückführt (in drei Zügen, einer rückwärts)", f.wenden + " mal");
   }
   /* Halte liegen wirklich vor dem Haus: höchstens 16 m von der Hausmitte */
-  const HA = await pg.evaluate(() => { const aus = []; for (const a of STADT.autos.liste) for (const h of a.halte || []) if (h.haus) { const o = STADT.szene.objekte.find((x) => (x.name || x.spiel || x.bild) === h.ziel); if (o) aus.push(+Math.hypot(o.x - h.x, o.y - h.y).toFixed(1)); } return aus; });
-  sage(HA.length >= 3 && HA.every((d) => d < 17), "die Halte liegen vor den Häusern (< 17 m von der Hausmitte)", HA.join(", ") + " m");
+  /* FASSUNG 826 — bei den großen Wahrzeichen (Kölner Dom 43 m lang) gilt: höchstens 6 m vor der halben Grundfläche */
+  const HA = await pg.evaluate(() => { const aus = []; for (const a of STADT.autos.liste) for (const h of a.halte || []) if (h.haus) { const o = STADT.szene.objekte.find((x) => (x.name || x.spiel || x.bild) === h.ziel); if (o) { const d = Math.hypot(o.x - h.x, o.y - h.y), g = Math.max(17, (o.fuss[0] + o.fuss[1]) / 2 + 6); aus.push([+d.toFixed(1), +g.toFixed(1)]); } } return aus; });
+  sage(HA.length >= 3 && HA.every((d) => d[0] < d[1]), "die Halte liegen vor den Häusern (< 17 m von der Hausmitte, bei großen Wahrzeichen halbe Grundfläche + 6 m)", HA.map((d) => d[0] + (d[1] > 17 ? " (≤ " + d[1] + ")" : "")).join(", ") + " m");
 
   console.log("\nWARTEN HINTER ANDEREN\n");
   /* hinter dem Kornwagen: das Auto wird 14 m hinter den fahrenden Kornwagen auf dessen Strecke gesetzt */

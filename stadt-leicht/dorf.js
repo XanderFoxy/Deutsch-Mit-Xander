@@ -330,6 +330,33 @@
        Horizontlinie liegt quer über dem Bild (v = −100); dahinter stehen die Alpen als Spielgrenze (D.hintergrund). Die
        Bahn läuft kurz davor waagerecht durchs Bild, leicht gewellt wie der alte Wiesenrand, und an beiden Seiten hinaus. */
     D.HORIZONT = -100;
+    /* FASSUNG 826 — XANDER: „nach unten hin könnte ein bisschen tiefer gehen … Aber du musst auch ein berechnen, dass wir
+       noch was bauen könnten … Jetzt muss das nur noch schön Spielraum geben nach unten hin, weil ich will noch den Kölner
+       Dom rein bauen und alles das muss schön Platz haben. Der Bootsverleih will ich mir richtig angucken können" und „Wir
+       wollen ja auch weiter bauen Häuser nach links". Der Bauraum ist ein Rechteck in den Bildachsen (u = x − y nach rechts,
+       v = x + y nach unten, wie das alte Bild): oben die Horizontlinie, unten weit unter den See, links Platz für neue
+       Häuser. Er ist zugleich das Plateau der Stadt (stadt/boden.js): „Außerdem wollten wir das Plateau noch ein bisschen
+       anheben" – ringsum fällt eine Böschung 6 m tief ins Umland ab, das im Dunst verschwindet.
+       BAULAND: freie Wiese ohne Wald für große neue Gebäude (Kölner Dom) unten links und links. */
+    D.BAURAUM = { u0: -168, u1: 166, v0: -142, v1: 190, hoehe: 6, boeschung: 9 };
+    D.BAULAND = [{ u0: -132, u1: -40, v0: 104, v1: 176 }, { u0: -160, u1: -118, v0: -30, v1: 96 }];
+    B.plateau = D.BAURAUM;
+    /* Abstand vom Plateaurand in Metern (innen negativ), Rand leicht gewellt – wie platAbst im Boden-Shader */
+    D.randAbst = function (x, y) {
+      const R = D.BAURAUM, u = x - y, v = x + y;
+      const du = Math.max(R.u0 - u, u - R.u1, 0), dv = Math.max(R.v0 - v, v - R.v1, 0);
+      const d = du > 0 || dv > 0 ? Math.hypot(du, dv) : -Math.min(u - R.u0, R.u1 - u, v - R.v0, R.v1 - v);
+      const wob = 2.6 * Math.sin(x * 0.071 + 1.3) * Math.sin(y * 0.053 + 0.4) + 1.7 * Math.sin((x + y) * 0.113 + 2.0) + 1.2 * Math.sin((x - y) * 0.093);
+      return d * Math.SQRT1_2 + wob;
+    };
+    /* Bodenhöhe: 0 auf dem Plateau, −6 m im Umland */
+    D.hoehe = function (x, y) { const R = D.BAURAUM, t = Math.max(0, Math.min(1, D.randAbst(x, y) / R.boeschung)); return -R.hoehe * t * t * (3 - 2 * t); };
+    /* Dunst im Umland (0 … 0,9) wie im Boden-Shader: Bäume dort verblassen mit (szene.js o.nebel) */
+    D.nebel = function (x, y) {
+      const R = D.BAURAUM, ab = D.randAbst(x, y), ss = (a, b, t) => { t = Math.max(0, Math.min(1, (t - a) / (b - a))); return t * t * (3 - 2 * t); };
+      return +(0.25 * ss(R.boeschung * 0.8, R.boeschung + 25, ab) + 0.65 * ss(R.boeschung + 15, R.boeschung + 140, ab)).toFixed(3);
+    };
+    D.imBauland = function (x, y, rand) { const u = x - y, v = x + y, r = (rand || 0) * Math.SQRT2; return D.BAULAND.some((b) => u > b.u0 - r && u < b.u1 + r && v > b.v0 - r && v < b.v1 + r); };
     const bahnV = (u) => -86 + 2.2 * Math.sin(u / 37 + 0.6);
     D.bahnV = bahnV;
     D.BAHN = []; for (let u = -140; u <= 140; u += 4) D.BAHN.push(vw(u, bahnV(u)).map((z) => +z.toFixed(2)));
@@ -347,12 +374,23 @@
     /* (Platz 2 ein Stück nach rechts: die neuen Häuser sind breiter als die alten Zeichnungen, sonst stünde das Tor im Labor) */
     D.WUNDER_PLAETZE = [[84, 197], [310, 199], [16, 160], [240, 119], [180, 138]];
     D.WUNDER_REIHE = ["holstentor", "brandenburger", "koelner_dom", "neuschwanstein", "fernsehturm"];
+    /* FASSUNG 826 — XANDER: „der Kölner Dom [und] das Schloss Neuschwanstein [sind] im Maßstab viel zu klein … der Kölner
+       Dom … ist fast doppelt so hoch wie das Döbelner Rathaus … Schloss Neuschwanstein ist auch riesig". Maßstab am Döbelner
+       Rathaus gemessen: sein Turm (echt rund 48 m) ist in der Stadt 32,5 m × 0,7 = 22,8 m hoch.
+         Kölner Dom (Modell 52,5 m, echt 157 m): 0,8 → 42 m, knapp doppelt so hoch wie der Rathausturm (Xanders Maß; ganz
+           echt wären es 3,3-fach = 74 m – dann wäre der Dom 70 m lang und fände auf dem Plateau keinen Platz neben der Stadt).
+         Neuschwanstein (Modell 24 m, echt ≈ 65 m Turm): 1,2 → 29 m, höher als das Rathaus und breit wie ein Straßenzug.
+         Fernsehturm (Modell 46 m, echt 368 m): gekappt bei 1,0 → 46 m. Echt wäre er 2,3 × so hoch wie der Dom (≈ 98 m) – er
+           ragte dann über den halben Bildschirm hinaus, und das gemalte Bild würde über seine Auflösung hinaus gestreckt.
+         Brandenburger Tor (echt 26 m) 1,0 → 11,8 m, Holstentor (echt ≈ 26 m) bleibt 0,9 → 13,7 m.
+       Frei aufstellbar: steht ein Wahrzeichen nicht mehr auf seinem Platz (L.lage mit Weltlage, oberflaeche.js „Versetzen"),
+       gilt diese Lage; auf seinem alten Platz sucht es sich sonst die nächste freie Stelle (D.freiFuerWunder). */
     D.WUNDER = {
-      koelner_dom: { name: "Kölner Dom", bild: "w_koelner_dom", fuss: [54.2, 30.4], hoehe: 53, mass: 0.36 },
+      koelner_dom: { name: "Kölner Dom", bild: "w_koelner_dom", fuss: [54.2, 30.4], hoehe: 53, mass: 0.8 },
       holstentor: { name: "Holstentor", bild: "w_holstentor", fuss: [18, 8], hoehe: 15.2, mass: 0.9 },
-      brandenburger: { name: "Brandenburger Tor", bild: "w_brandenburger", fuss: [26, 8], hoehe: 11.8, mass: 0.8 },
-      neuschwanstein: { name: "Neuschwanstein", bild: "w_neuschwanstein", fuss: [28, 18], hoehe: 24, mass: 0.62 },
-      fernsehturm: { name: "Fernsehturm", bild: "w_fernsehturm", fuss: [16, 16], hoehe: 46, mass: 0.8 }
+      brandenburger: { name: "Brandenburger Tor", bild: "w_brandenburger", fuss: [26, 8], hoehe: 11.8, mass: 1.0 },
+      neuschwanstein: { name: "Neuschwanstein", bild: "w_neuschwanstein", fuss: [28, 18], hoehe: 24, mass: 1.2 },
+      fernsehturm: { name: "Fernsehturm", bild: "w_fernsehturm", fuss: [16, 16], hoehe: 46, mass: 1.0 }
     };
     D.wunderPlaetze = function (volk) {
       const fest = (volk && volk.wunder_platz) || {}, hat = (volk && volk.wunder) || {}, belegt = {}, aus = {};
@@ -367,12 +405,62 @@
         const f = [w.fuss[0] * w.mass, w.fuss[1] * w.mass], hinten = (f[0] + f[1]) / 2 * 0.7;
         /* der alte Platz ist der Fußpunkt vorn: die Mitte liegt ein Stück dahinter */
         const c = welt(q[0], q[1]), v = c[0] + c[1] - hinten, u = c[0] - c[1];
-        const p = vw(u, v);
+        let p = vw(u, v);
+        /* FASSUNG 826 — der große Kölner Dom hat seinen Platz auf dem Bauland unten links (Xander: „wenn ich mein Kölner
+           Dom haben möchte dann brauche ich hier Platz"), solange ihn niemand selbst aufstellt */
+        if (k === "koelner_dom" && D.BAULAND) { const b = D.BAULAND[0]; p = vw((b.u0 + b.u1) / 2, (b.v0 + b.v1) / 2 - 4); }
         Object.assign(w, { x: +p[0].toFixed(1), y: +p[1].toFixed(1), dreh: 3.5, platz: i, fussS: f, steht: !!(volk && volk.wunder && volk.wunder[k]) });
       }
+      /* FASSUNG 826 — frei aufgestellt (L.lage), sonst die nächste freie Stelle um den Platz; der Platz selbst bleibt als
+         „Zurück"-Ziel (px/py) */
+      const lage = (ST.leicht && ST.leicht.lage) || {}, gesetzt = [];
+      for (const k of D.WUNDER_REIHE) {
+        const w = D.WUNDER[k];
+        const l = lage[k];
+        if (l && l.x != null && isFinite(+l.x) && isFinite(+l.y)) {
+          const pz = D.freiFuerWunder(w, w.x, w.y, gesetzt);
+          Object.assign(w, { px: pz[0], py: pz[1], x: +l.x, y: +l.y, dreh: l.dreh != null ? +l.dreh : 3.5, frei: true });
+        } else {
+          const pz = D.freiFuerWunder(w, w.x, w.y, gesetzt);
+          Object.assign(w, { x: pz[0], y: pz[1], px: pz[0], py: pz[1], frei: false });
+        }
+        if (w.steht) gesetzt.push(w);
+      }
+    };
+    /* Freie Stelle für ein Wahrzeichen (Grundfläche fussS): nicht auf Häusern, anderen Wahrzeichen, Bahnhof, Bootsverleih,
+       Wasser oder der Bahn, ganz auf dem Plateau. Gesucht wird in Ringen um die Wunschstelle. */
+    D.freiFuerWunder = function (w, x0, y0, andere) {
+      const f = w.fussS || w.fuss, r = Math.hypot(f[0], f[1]) / 2 * 0.78;
+      /* genaue Grundflächen (gedrehte Rechtecke, Trennachsen-Test) mit 1,5 m Abstand */
+      const eck = (x, y, fu, dreh, rand) => { const a = (dreh || 0) * Math.PI / 2, c = Math.cos(a), s = Math.sin(a), hw = fu[0] / 2 + rand, hd = fu[1] / 2 + rand; return [[-hw, -hd], [hw, -hd], [hw, hd], [-hw, hd]].map(([u, v]) => [x + u * c - v * s, y + u * s + v * c]); };
+      const trennt = (A, Bq) => { for (const Q of [A, Bq]) for (let i = 0; i < 4; i++) { const p = Q[i], q = Q[(i + 1) % 4], nx = q[1] - p[1], ny = p[0] - q[0]; const pa = A.map((e) => e[0] * nx + e[1] * ny), pb = Bq.map((e) => e[0] * nx + e[1] * ny); if (Math.max(...pa) < Math.min(...pb) || Math.max(...pb) < Math.min(...pa)) return true; } return false; };
+      const frei = (x, y) => {
+        if (D.randAbst(x, y) > -(r + 3)) return false;
+        if (vonBahn(x, y) < r + 4 || x + y < D.HORIZONT + r + 8) return false;
+        const ich = eck(x, y, f, 3.5, 1.5);
+        for (const k in P) {
+          const b = D.BILD[k], m = (D.MASS || {})[k] || 1; if (!trennt(ich, eck(P[k].x, P[k].y, [b[2][0] * m, b[2][1] * m], P[k].dreh, 0))) return false;
+          /* vor der Haustür (dort beginnen die Wege) Platz lassen, sonst führen die Wege in engen Haken herum */
+          const wv = ((P[k].dreh || 0) * 90 + 90) * Math.PI / 180, fx = P[k].x + Math.cos(wv) * 8, fy = P[k].y + Math.sin(wv) * 8;
+          if (!trennt(ich, eck(fx, fy, [7, 7], 0, 0))) return false;
+        }
+        if (D.imGrundriss && D.imGrundriss("rathaus", x, y, r + 2)) return false;
+        for (const o of andere || []) { if (!trennt(ich, eck(o.x, o.y, o.fussS || o.fuss, o.dreh, 0))) return false; }
+        if (D.BAHNHOF && Math.hypot(x - D.BAHNHOF[0], y - D.BAHNHOF[1]) < r + 15) return false;
+        if (D.BOOTSHAUS && Math.hypot(x - D.BOOTSHAUS[0], y - D.BOOTSHAUS[1]) < r + 7) return false;
+        if (D.BRUNNEN && Math.hypot(x - D.BRUNNEN[0], y - D.BRUNNEN[1]) < r + 4) return false;
+        for (let a = 0; a < 12; a++) for (const t of [0.35, 0.75]) { const q = [x + Math.cos(a * 0.5236) * r * t, y + Math.sin(a * 0.5236) * r * t]; if (B.wert(q[0], q[1], 1) > 0.25) return false; }
+        return B.wert(x, y, 1) < 0.25;
+      };
+      if (frei(x0, y0)) return [+x0.toFixed(1), +y0.toFixed(1)];
+      for (let rr = 3; rr <= 90; rr += 3) for (let i = 0, n = Math.max(8, Math.round(rr * 1.2)); i < n; i++) {
+        const a = i / n * Math.PI * 2, x = x0 + Math.cos(a) * rr, y = y0 + Math.sin(a) * rr;
+        if (frei(x, y)) return [+x.toFixed(1), +y.toFixed(1)];
+      }
+      return [+x0.toFixed(1), +y0.toFixed(1)];
     };
     D.wunderSetzen(null);
-    D.wunderSig = Object.keys(D.WUNDER).map((k) => D.WUNDER[k].steht ? D.WUNDER[k].platz : "-").join(",");
+    D.wunderSig = Object.keys(D.WUNDER).map((k) => D.WUNDER[k].steht ? D.WUNDER[k].platz + "@" + D.WUNDER[k].x + ":" + D.WUNDER[k].y : "-").join(",");
     /* Wasser: der Fluss wie im alten Bild – er entspringt oben zwischen Flickstube und Gasthaus, läuft links am Rathaus
        und am Markt vorbei, schlängelt sich zwischen Brauerei und Bibliothek hindurch und mündet unten in den See. */
     const m = P.muehle;
@@ -476,7 +564,102 @@
          hinauf zum Bahnhof (fuhrwerk.js fährt darauf); die Leute gehen sie auch. */
       D.PFERDEBAHN = kurve([vw(-9, -2), vw(-22.5, -9), vw(-24, -28), vw(-27, -48), vw(-32, -66), vw(uHalt, bahnV(uHalt) + 6)], 16);
       D.WEGE.push(D.PFERDEBAHN);
+      brueckenLegen();
     };
+    /* FASSUNG 826 — XANDER: „Leute sollen über die Brücke laufen. Guck mal, dass die Brücken nicht korrigieren weil das
+       wirkt hier so als wenn da zwei Brücken sich überlappen oder so … die stehen so ganz komisch da." Bisher stand eine
+       Brücke am ersten Wegpunkt nahe am Wasser, in Wegrichtung – oft neben dem Bach, schräg, und zwei Wege dicht
+       beieinander bekamen zwei Brücken übereinander. Jetzt: genauer Schnittpunkt von Weg und Wasser, die Brücke quer zum
+       Wasserlauf (auf 45° gerundet), der Weg läuft gerade über sie hinweg (Auffahrt, Mitte, Abfahrt als Wegpunkte, auch
+       fürs Wegenetz der Leute). Kreuzt ein zweiter Weg in der Nähe, benutzt er dieselbe Brücke. */
+    const BR_HALB = 5.6;   // halbe Länge (Modell bruecke.js: 11,2 m)
+    function brueckenLegen() {
+      const wasser = [kurve(D.FLUSS, 10), kurve(D.MUEHLBACH, 12)];
+      const schnitt = (a, b, c, d) => {
+        const r = [b[0] - a[0], b[1] - a[1]], s = [d[0] - c[0], d[1] - c[1]], n = r[0] * s[1] - r[1] * s[0];
+        if (Math.abs(n) < 1e-9) return null;
+        const t = ((c[0] - a[0]) * s[1] - (c[1] - a[1]) * s[0]) / n, u = ((c[0] - a[0]) * r[1] - (c[1] - a[1]) * r[0]) / n;
+        return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? t : null;
+      };
+      D.BRUECKEN = [];
+      D.WEGE = D.WEGE.map((w, wn) => {
+        const kreuz = [];
+        for (let i = 0; i < w.length - 1; i++) for (let k = 0; k < wasser.length; k++) {
+          const wl = wasser[k];
+          for (let j = 0; j < wl.length - 1; j++) {
+            const t = schnitt(w[i], w[i + 1], wl[j], wl[j + 1]); if (t == null) continue;
+            const q = [w[i][0] + (w[i + 1][0] - w[i][0]) * t, w[i][1] + (w[i + 1][1] - w[i][1]) * t];
+            const tx = wl[j + 1][0] - wl[j][0], ty = wl[j + 1][1] - wl[j][1], tl = Math.hypot(tx, ty) || 1;
+            kreuz.push({ i: i, q: q, tan: [tx / tl, ty / tl] });
+          }
+        }
+        if (!kreuz.length) return w;
+        let pts = w.slice();
+        /* von hinten nach vorn ersetzen, damit die Indizes stimmen */
+        const erledigt = [];
+        for (const c of kreuz.slice().reverse()) {
+          if (erledigt.some((e) => Math.hypot(e[0] - c.q[0], e[1] - c.q[1]) < 3)) continue;
+          erledigt.push(c.q);
+          let b = D.BRUECKEN.find((o) => Math.hypot(o.x - c.q[0], o.y - c.q[1]) < 13);
+          /* dieser Weg geht schon über diese Brücke (zweimal dicht hintereinander über den Bach) */
+          if (b && pts.some((p) => p[0] === b.x && p[1] === b.y)) continue;
+          if (!b) {
+            /* quer zum Wasser: von den vier Richtungen (45°-Schritte) die, die dem Weg am nächsten kommt und dabei mindestens
+               60° zum Wasserlauf steht – so bleibt die Brücke quer, und Weg, Wagen und Autos biegen kaum ab */
+            const tanW = Math.atan2(c.tan[1], c.tan[0]) * 180 / Math.PI, wegW = Math.atan2(w[c.i + 1][1] - w[c.i][1], w[c.i + 1][0] - w[c.i][0]) * 180 / Math.PI;
+            const diff = (p, q) => { const d = (((p - q) % 180) + 180) % 180; return Math.min(d, 180 - d); };
+            let a = 0, best = Infinity;
+            for (const kand of [0, 45, 90, 135]) {
+              const achsW = kand + 90;   // dreh kand° → Achse (−sin, cos) zeigt in Richtung kand + 90°
+              if (diff(achsW, tanW) < 67) continue;
+              const g = diff(achsW, wegW) + (90 - diff(achsW, tanW)) * 0.3;
+              if (g < best) { best = g; a = kand; }
+            }
+            const w2 = a * Math.PI / 180;
+            b = { x: +c.q[0].toFixed(2), y: +c.q[1].toFixed(2), dreh: a / 90, achse: [-Math.sin(w2), Math.cos(w2)], wege: [] };
+            D.BRUECKEN.push(b);
+          }
+          b.wege.push(wn);
+          /* Wegpunkte um die Brücke herausnehmen, dafür Auffahrt – Mitte – Abfahrt (von der Seite des Wegs her) */
+          const vor = pts.slice(0, c.i + 1), nach = pts.slice(c.i + 1);
+          const weg = (p) => Math.hypot(p[0] - b.x, p[1] - b.y) < BR_HALB + 4 || Math.hypot(p[0] - c.q[0], p[1] - c.q[1]) < 3.5;
+          while (vor.length > 1 && weg(vor[vor.length - 1])) vor.pop();
+          while (nach.length > 1 && weg(nach[0])) nach.shift();
+          const A = vor[vor.length - 1], s = ((A[0] - b.x) * b.achse[0] + (A[1] - b.y) * b.achse[1]) < 0 ? -1 : 1;
+          const ende = (f, d) => [+(b.x + b.achse[0] * f * d).toFixed(2), +(b.y + b.achse[1] * f * d).toFixed(2)];
+          /* Auffahrt und Abfahrt als sanfter Bogen (quadratische Kurve, die in Richtung der Brücke einläuft), damit Wagen,
+             Autos und Leute ohne Knick und ohne Schleife einbiegen */
+          const E1 = ende(s, BR_HALB + 2.4), E2 = ende(-s, BR_HALB + 2.4), Z = nach[0];
+          const bez = (P0, C, P1) => { const aus = [], n = Math.max(2, Math.round(Math.hypot(P1[0] - P0[0], P1[1] - P0[1]) / 1.2)); for (let i = 1; i < n; i++) { const t = i / n, u = 1 - t; aus.push([u * u * P0[0] + 2 * u * t * C[0] + t * t * P1[0], u * u * P0[1] + 2 * u * t * C[1] + t * t * P1[1]]); } return aus; };
+          const C1 = ende(s, BR_HALB + 2.4 + Math.min(5, Math.hypot(A[0] - E1[0], A[1] - E1[1]) * 0.5)), C2 = ende(-s, BR_HALB + 2.4 + Math.min(5, Math.hypot(Z[0] - E2[0], Z[1] - E2[1]) * 0.5));
+          const kern = [E1, ende(s, BR_HALB + 1.2), ende(s, BR_HALB * 0.5), [b.x, b.y], ende(-s, BR_HALB * 0.5), ende(-s, BR_HALB + 1.2), E2];
+          /* Ecken auf beiden Seiten (bis zur Brücke) zweimal abrunden (Chaikin), die Brücke selbst bleibt gerade */
+          const rund = (l) => { for (let r = 0; r < 2; r++) { const n = [l[0]]; for (let i = 0; i < l.length - 1; i++) { const p = l[i], q = l[i + 1]; if (i > 0) n.push([p[0] * 0.75 + q[0] * 0.25, p[1] * 0.75 + q[1] * 0.25]); if (i < l.length - 2) n.push([p[0] * 0.25 + q[0] * 0.75, p[1] * 0.25 + q[1] * 0.75]); } n.push(l[l.length - 1]); l = n; } return l; };
+          /* (nur nahe der Brücke: die Umwege um die Häuser weiter weg bleiben, wie sie sind) */
+          const vn = Math.max(0, vor.length - 3), nn = Math.min(nach.length, 3);
+          const links = rund(vor.slice(vn).concat(bez(A, C1, E1), [E1])), rechts = rund([E2].concat(bez(E2, C2, Z), nach.slice(0, nn)));
+          pts = vor.slice(0, vn).concat(links.slice(0, -1), kern, rechts.slice(1), nach.slice(nn)).filter((p, i, l) => i === 0 || i === l.length - 1 || Math.hypot(p[0] - l[i - 1][0], p[1] - l[i - 1][1]) > 0.25 || (p[0] === b.x && p[1] === b.y));
+        }
+        return pts;
+      });
+      D.PFERDEBAHN = D.WEGE[D.WEGE.length - 1];
+      /* Alle Wege (außer dem Gleis der Pferdebahn) einmal sanft abrunden: die Umwege um die größeren Wahrzeichen und die
+         Auffahrten der Brücken bekommen Bögen statt Ecken – Autos und Wagen schauen dann in Fahrtrichtung. Fest bleiben die
+         Enden und die Punkte auf den Brücken. */
+      const fest = (p) => D.BRUECKEN.some((b) => { const dx = p[0] - b.x, dy = p[1] - b.y; return Math.hypot(dx, dy) < BR_HALB + 2.5 && Math.abs(dx * b.achse[1] - dy * b.achse[0]) < 0.05; });
+      const chaikin = (l) => { const n = [l[0]]; for (let i = 0; i < l.length - 1; i++) { const p = l[i], q = l[i + 1]; if (i > 0) n.push([p[0] * 0.75 + q[0] * 0.25, p[1] * 0.75 + q[1] * 0.25]); if (i < l.length - 2) n.push([p[0] * 0.25 + q[0] * 0.75, p[1] * 0.25 + q[1] * 0.75]); } n.push(l[l.length - 1]); return n; };
+      D.WEGE = D.WEGE.map((w) => {
+        if (w === D.PFERDEBAHN || w.length < 3) return w;
+        const aus = []; let stueck = [w[0]];
+        for (let i = 1; i < w.length; i++) {
+          stueck.push(w[i]);
+          if (i === w.length - 1 || fest(w[i])) { const g = stueck.length > 2 ? chaikin(chaikin(stueck)) : stueck; aus.push(...(aus.length ? g.slice(1) : g)); stueck = [w[i]]; }
+        }
+        return aus;
+      });
+    }
+    /* Brücke in der Nähe eines Punkts (für Laternen und Bäume) */
+    D.brueckeNah = (x, y, d) => (D.BRUECKEN || []).some((b) => Math.hypot(b.x - x, b.y - y) < d);
     D.wegeBauen();
     D.boden = function () {
       B.leeren();
@@ -517,19 +700,11 @@
       setze("k_bahnhof", D.BAHNHOF[0], D.BAHNHOF[1], 1.5, { fuss: [30, 16.6], hoehe: 13, name: "Bahnhof", spiel: "bahnhof" });
       /* Bootsverleih am See (boote.js) – vor den Bäumen gesetzt, damit keiner darauf wächst */
       setze("d_bootshaus", D.BOOTSHAUS[0], D.BOOTSHAUS[1], 0, { fuss: [10, 3.4], hoehe: 4, name: "Bootsverleih" });
-      /* Brücken, wo Wege den Fluss oder Bach kreuzen – schräg, wenn der Weg schräg läuft */
+      /* Brücken, wo Wege den Fluss oder Bach kreuzen */
+      /* FASSUNG 826 — quer über dem Wasser, genau im Schnittpunkt, eine je Übergang (D.BRUECKEN aus wegeBauen) */
       const nah = (pts, q, d) => pts.some((r) => Math.hypot(r[0] - q[0], r[1] - q[1]) < d);
-      const fl = kurve(D.FLUSS, 10), mb = kurve(D.MUEHLBACH, 12), bruecken = [];
-      for (const w of D.WEGE) for (let i = 2; i < w.length - 2; i += 2) {
-        const q = w[i];
-        if ((nah(fl, q, 1.6) || nah(mb, q, 1.4)) && !bruecken.some((b) => Math.hypot(b[0] - q[0], b[1] - q[1]) < 8)) {
-          bruecken.push(q);
-          const dx = w[i + 1][0] - w[i - 1][0], dy = w[i + 1][1] - w[i - 1][1];
-          /* Brücke bei dreh 0 längs y; Wegrichtung auf 45° gerundet */
-          const a = (Math.round((Math.atan2(dy, dx) * 180 / Math.PI - 90) / 45) * 45 + 360) % 180;
-          setze("d_bruecke", q[0], q[1], a / 90, { fuss: [3.9, 11.2], hoehe: 2.7 });
-        }
-      }
+      const fl = kurve(D.FLUSS, 10), mb = kurve(D.MUEHLBACH, 12);
+      for (const b of D.BRUECKEN || []) setze("d_bruecke", b.x, b.y, b.dreh, { fuss: [3.9, 11.2], hoehe: 2.7 });
       /* Laternen an den Wegen (alle ≈ 16 m), Bänke und Brunnen am Markt */
       let seit = 0;
       for (const w of D.WEGE) for (let i = 1; i < w.length; i++) {
@@ -537,7 +712,7 @@
         if (seit < 16) continue; seit = 0;
         const dx = w[i][0] - w[i - 1][0], dy = w[i][1] - w[i - 1][1], l = Math.hypot(dx, dy) || 1;
         const x = w[i][0] - dy / l * 2.2, y = w[i][1] + dx / l * 2.2;
-        if (nah(fl, [x, y], 3) || nah(mb, [x, y], 3) || vonBahn(x, y) < 4) continue;
+        if (nah(fl, [x, y], 3) || nah(mb, [x, y], 3) || vonBahn(x, y) < 4 || D.brueckeNah(x, y, BR_HALB + 2)) continue;
         setze("d_laterne", x, y, 0, { fuss: [0.8, 0.8], hoehe: 4.4, deko: 1 });
       }
       for (let i = 0; i < 4; i++) { const a = rad(i * 90 + 45); setze("d_bank", MARKT[0] + Math.cos(a) * 8.6, MARKT[1] + Math.sin(a) * 8.6, 0, { fuss: [1.9, 0.75], hoehe: 0.9, deko: 1 }); }
@@ -557,6 +732,8 @@
         /* FASSUNG 811 — Wiese für Weide und Auslauf (tiere.js) beim Kuhstall und Hof beim Hühnerstall frei lassen */
         if (Math.hypot(x - P.kuhstall.x, y - P.kuhstall.y) < 24 + abst || Math.hypot(x - P.huehnerstall.x, y - P.huehnerstall.y) < 13 + abst) return false;
         if (B.wert(x, y, 0) > 0.05 || B.wert(x, y, 1) > 0.05 || B.wert(x, y, 2) > 0.05) return false;
+        /* FASSUNG 826 — Bauland bleibt frei, nichts auf der Böschung */
+        if (D.imBauland(x, y, abst) || D.randAbst(x, y) > -2) return false;
         return true;
       };
       /* Weihnachtspyramide und Krippe nahe am Markt, auf freier Wiese */
@@ -571,7 +748,22 @@
         if (vonBahn(x, y) < 5) continue;
         if (B.wert(x, y, 1) > 0.02 || B.wert(x + 2, y, 1) > 0.02 || B.wert(x - 2, y, 1) > 0.02 || B.wert(x, y - 2, 1) > 0.02) continue;
         const bild = r() < 0.7 ? "n_tanne" + ((r() * 3) | 0) : "n_laubbaum" + ((r() * 3) | 0);
-        liste.push({ art: "natur", bild: bild, x: x, y: y, dreh: 0, fuss: [3.5, 3.5], hoehe: 13, rand: 1, hinten: x + y < D.HORIZONT - 3 ? 1 : 0 });
+        /* FASSUNG 826 — nicht aufs Bauland; im Umland stehen die Bäume unten (Plateau-Höhe, szene.js o.z) */
+        if (D.imBauland(x, y, 2)) continue;
+        const z = D.hoehe(x, y);
+        liste.push({ art: "natur", bild: bild, x: x, y: y, dreh: 0, fuss: [3.5, 3.5], hoehe: 13, rand: 1, hinten: x + y < D.HORIZONT - 3 ? 1 : 0, z: z < -0.05 ? +z.toFixed(2) : undefined, nebel: D.nebel(x, y) || undefined });
+      }
+      /* FASSUNG 826 — Wald unten im Umland vor dem Plateau (Blick nach Norden: unten und an den Seiten), er verliert sich im
+         Dunst – die Karte endet nicht an einer Kante */
+      const r2 = rng(826);
+      for (let i = 0; i < 200; i++) {
+        const R = D.BAURAUM, seite = i % 3, t = r2();
+        const weit = () => 8 + Math.pow(r2(), 1.3) * 130, u = seite === 0 ? R.u0 - weit() : seite === 1 ? R.u1 + weit() : R.u0 - 60 + t * (R.u1 - R.u0 + 120);
+        const v = seite === 2 ? R.v1 + weit() : R.v0 + 60 + t * (R.v1 - R.v0);
+        const x = (u + v) / 2, y = (v - u) / 2, z = D.hoehe(x, y);
+        if (z > -R.hoehe * 0.98) continue;
+        const bild = r2() < 0.65 ? "n_tanne" + ((r2() * 3) | 0) : "n_laubbaum" + ((r2() * 3) | 0);
+        liste.push({ art: "natur", bild: bild, x: +x.toFixed(2), y: +y.toFixed(2), dreh: 0, fuss: [3.5, 3.5], hoehe: 13, rand: 1, z: +z.toFixed(2), umland: 1, nebel: D.nebel(x, y) });
       }
       /* Der Waldsaum am Fuß der Berge hinter der Bahn (im alten Bild rechts vom Rathaus am dichtesten) – der Zug fährt davor */
       for (let i = 0; i < 44; i++) {
@@ -634,19 +826,25 @@
     /* FASSUNG 808 — die Wahrzeichen auf ihren Plätzen aus dem Spielstand (volk.wunder_platz); Wege neu dazu */
     if (D.wunderSetzen) {
       D.wunderSetzen(ich && ich.volk);
-      const sig = Object.keys(D.WUNDER).map((k) => D.WUNDER[k].steht ? D.WUNDER[k].platz : "-").join(",");
+      const sig = Object.keys(D.WUNDER).map((k) => D.WUNDER[k].steht ? D.WUNDER[k].platz + "@" + D.WUNDER[k].x + ":" + D.WUNDER[k].y : "-").join(",");
       if (sig !== D.wunderSig) { if (D.wunderSig != null) { D.wegeBauen(); D.boden(); } D.wunderSig = sig; }
     }
     for (const k in D.WUNDER) {
       const w = D.WUNDER[k];
       if (!wunder[k] || !w.bild) continue;
-      SZ.neu({ art: "wunder", spiel: k, name: w.name, bild: w.bild, x: w.x, y: w.y, dreh: w.dreh, fuss: w.fussS || w.fuss, hoehe: w.hoehe * (w.mass || 1), stufe: w.mass || 1 });
+      /* FASSUNG 826 — mit seinem Wahrzeichenplatz (für „Zurück") und frei aufstellbar */
+      SZ.neu({ art: "wunder", spiel: k, name: w.name, bild: w.bild, x: w.x, y: w.y, dreh: w.dreh, fuss: w.fussS || w.fuss, hoehe: w.hoehe * (w.mass || 1), stufe: w.mass || 1,
+        platzX: w.px != null ? w.px : w.x, platzY: w.py != null ? w.py : w.y, platzDreh: 3.5 });
     }
     for (const o of D.kulisse()) SZ.neu(o);
-    /* FASSUNG 809 — ein versetztes Haus verdrängt die Bäume und Büsche, auf denen es jetzt stünde */
-    const versetzt = SZ.objekte.filter((o) => o.art === "haus" && o.platzX != null && (o.x !== o.platzX || o.y !== o.platzY));
-    if (versetzt.length) SZ.objekte = SZ.objekte.filter((n) => n.art !== "natur" || !versetzt.some((h) => Math.abs(n.x - h.x) < (h.fuss[0] + h.fuss[1]) * 0.32 + 1.5 && Math.abs(n.y - h.y) < (h.fuss[0] + h.fuss[1]) * 0.32 + 1.5));
     for (const o of eigeneDeko || []) SZ.neu(Object.assign({ art: "eigen" }, o));
+    /* FASSUNG 809 — ein versetztes Haus verdrängt die Bäume und Büsche, auf denen es jetzt stünde */
+    /* FASSUNG 826 — ebenso jedes Wahrzeichen und großer eigener Schmuck (Rathaus, Autos …); gefällte Bäume (L.gefaellt,
+       Karte des Baums „Fällen") bleiben weg */
+    const verdraengt = SZ.objekte.filter((o) => (o.art === "haus" && o.platzX != null && (o.x !== o.platzX || o.y !== o.platzY)) || o.art === "wunder" || (o.art === "eigen" && o.fuss && Math.max(o.fuss[0], o.fuss[1]) > 4));
+    const gefaellt = new Set((ST.leicht && ST.leicht.gefaellt) || []);
+    const schl = (n) => n.x.toFixed(1) + "," + n.y.toFixed(1);
+    SZ.objekte = SZ.objekte.filter((n) => n.art !== "natur" || (!gefaellt.has(schl(n)) && !verdraengt.some((h) => Math.abs(n.x - h.x) < (h.fuss[0] + h.fuss[1]) * 0.32 + 1.5 && Math.abs(n.y - h.y) < (h.fuss[0] + h.fuss[1]) * 0.32 + 1.5)));
     D.jahrFiltern();
   };
   /* Winterdinge nur im Winter, Brunnen nur ohne Winter */

@@ -181,6 +181,8 @@
     }
     return null;
   }
+  /* FASSUNG 826 — auch die Fußgänger (leute.js) gehen über den Buckel */
+  FW.aufBruecke = aufBruecke;
   /* 1 weit weg von Brücken, 0 auf der Brücke (dort fährt man mittig) */
   function brueckenFaktor(x, y) {
     let f = 1;

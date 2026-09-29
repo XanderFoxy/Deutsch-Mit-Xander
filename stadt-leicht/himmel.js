@@ -78,7 +78,15 @@
   const ST = window.STADT, K = ST.kamera, SZ = ST.szene, LB = ST.bilder;
   const HM = (ST.himmel = ST.himmel || {});
   const h2 = ST.hash2;
-  const LINKS = -230, RECHTS = 230, OBEN = 34, UNTEN = 3;
+  /* FASSUNG 826 — XANDER: „wenn man die große Karte hat in der Panoramaansicht … die Berge aber wie so ne Hintergrund
+     Leinwand einfach abschneiden kann man die weich ausführen lassen … dass das die irgendwie so spitz zu laufen und dann
+     … ausklingen". Die Kette ist breiter (±330 Bildmeter), wird zu den Enden hin niedriger bis auf null (HUELLE), und die
+     Leinwand blendet an beiden Enden weich aus; dahinter liegt über die ganze Bildbreite ein flacher, blasser Höhenzug im
+     Dunst – keine senkrechte Kante mehr, auch nicht oben. */
+  const LINKS = -330, RECHTS = 330, OBEN = 47, UNTEN = 3, HOCH = 1.4;   // FASSUNG 826 — Berge 1,4-mal so hoch (Xander: „könnte die Berge ein bisschen höher machen")
+  const glatt = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const HUELLE = (x) => 1 - glatt(175, 318, Math.abs(x));
+  const HUELLE_VOR = (x) => 1 - glatt(215, 326, Math.abs(x));
   let vorrat = { schl: "", c: null, R: 0 };
   const mischF = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
   const rgb = (f, a) => a == null ? "rgb(" + f.join(",") + ")" : "rgba(" + f.join(",") + "," + a + ")";
@@ -107,9 +115,10 @@
     g.setTransform(R, 0, 0, -R, -LINKS * R, OBEN * R);
     const winter = jahr === "winter";
     /* Die Alpenkette: markante Gipfel (einer spitz wie das Matterhorn), dazwischen Sättel */
-    const kette = grat([[-240, 11], [-200, 17], [-170, 13], [-150, 21], [-122, 15], [-96, 27], [-84, 19], [-60, 16], [-38, 20], [-14, 14], [8, 23], [30, 18], [56, 25],
-      [74, 29], [96, 20], [118, 17], [140, 22], [166, 15], [190, 24], [214, 16], [240, 12]], 1, 808);
-    const schnee = winter ? 8 : 16.5;
+    const kette = grat([[-340, 6], [-300, 12], [-262, 18], [-240, 11], [-200, 17], [-170, 13], [-150, 21], [-122, 15], [-96, 27], [-84, 19], [-60, 16], [-38, 20], [-14, 14], [8, 23], [30, 18], [56, 25],
+      [74, 29], [96, 20], [118, 17], [140, 22], [166, 15], [190, 24], [214, 16], [240, 12], [268, 19], [302, 11], [340, 7]], 1, 808)
+      .map((q) => [q[0], -UNTEN + (q[1] * HOCH + UNTEN) * HUELLE(q[0])]);
+    const schnee = (winter ? 8 : 16.5) * HOCH;
     g.save();
     g.beginPath(); g.moveTo(LINKS - 10, -UNTEN); for (const q of kette) g.lineTo(q[0], q[1]); g.lineTo(RECHTS + 10, -UNTEN); g.closePath();
     g.clip();
@@ -154,13 +163,14 @@
     du.addColorStop(0, "rgba(226,236,246,0)"); du.addColorStop(1, "rgba(226,236,246,0.62)");
     g.fillStyle = du; g.fillRect(LINKS - 10, 0, RECHTS - LINKS + 20, 14);
     /* Bewaldete Vorberge, bläulich im Dunst, mit Tannenspitzen */
-    const vor = grat([[-240, 4], [-190, 7.5], [-150, 5], [-110, 8.5], [-70, 5.5], [-30, 7], [10, 4.5], [50, 8], [90, 6], [130, 9], [170, 5.5], [240, 6.5]], 0.8, 909);
+    const vor = grat([[-340, 3], [-290, 6], [-240, 4], [-190, 7.5], [-150, 5], [-110, 8.5], [-70, 5.5], [-30, 7], [10, 4.5], [50, 8], [90, 6], [130, 9], [170, 5.5], [240, 6.5], [290, 5], [340, 3]], 0.8, 909)
+      .map((q) => [q[0], -UNTEN + (q[1] + UNTEN) * HUELLE_VOR(q[0])]);
     g.save();
     g.beginPath(); g.moveTo(LINKS - 10, -UNTEN); for (const q of vor) g.lineTo(q[0], q[1]); g.lineTo(RECHTS + 10, -UNTEN); g.closePath(); g.clip();
     const vg = g.createLinearGradient(0, 9, 0, -UNTEN);
     vg.addColorStop(0, winter ? "#8a9aa8" : "#58765f"); vg.addColorStop(1, winter ? "#a4b2bc" : "#6d8a5c");
     g.fillStyle = vg; g.fillRect(LINKS - 10, -UNTEN, RECHTS - LINKS + 20, 13);
-    for (let i = 0; i < 520; i++) {
+    for (let i = 0; i < 740; i++) {
       const tx = LINKS + h2(i, 1, 177) * (RECHTS - LINKS), ty = -UNTEN + h2(i, 2, 177) * 11, tr = 0.35 + h2(i, 3, 177) * 0.45;
       g.fillStyle = h2(i, 4, 177) > 0.5 ? (winter ? "rgba(70,86,96,0.5)" : "rgba(34,62,44,0.55)") : (winter ? "rgba(236,242,248,0.55)" : "rgba(104,136,96,0.45)");
       g.beginPath(); g.moveTo(tx, ty + tr * 2.4); g.lineTo(tx + tr, ty); g.lineTo(tx - tr, ty); g.closePath(); g.fill();
@@ -169,6 +179,18 @@
     const du2 = g.createLinearGradient(0, 8, 0, -UNTEN);
     du2.addColorStop(0, "rgba(230,240,248,0)"); du2.addColorStop(1, "rgba(230,240,248,0.35)");
     g.fillStyle = du2; g.fillRect(LINKS - 10, -UNTEN, RECHTS - LINKS + 20, 11);
+    /* FASSUNG 826 — an beiden Enden weich ausblenden („ausklingen") */
+    g.save(); g.globalCompositeOperation = "destination-out";
+    for (const seite of [-1, 1]) {
+      const a = seite * 262, b = seite * RECHTS, ag = g.createLinearGradient(a, 0, b, 0);
+      ag.addColorStop(0, "rgba(0,0,0,0)"); ag.addColorStop(0.55, "rgba(0,0,0,0.55)"); ag.addColorStop(1, "rgba(0,0,0,1)");
+      g.fillStyle = ag; g.fillRect(Math.min(a, b), -UNTEN - 1, Math.abs(b - a) + 0.01, OBEN + UNTEN + 2);
+    }
+    /* … und unten: die Vorberge gehen weich in die Wiese über statt mit einer Kante */
+    const ug = g.createLinearGradient(0, -UNTEN + 2.6, 0, -UNTEN);
+    ug.addColorStop(0, "rgba(0,0,0,0)"); ug.addColorStop(1, "rgba(0,0,0,1)");
+    g.fillStyle = ug; g.fillRect(LINKS - 10, -UNTEN - 1, RECHTS - LINKS + 20, 3.6);
+    g.restore();
     /* Tageszeit: Dämmerung rötlich, Nacht tiefblau (nur auf den Bergen) */
     if (stufe > 0) {
       g.setTransform(1, 0, 0, 1, 0, 0);
@@ -317,11 +339,32 @@
         }
       }
     }
+    /* FASSUNG 826 — 5b. Ferner Höhenzug im Dunst über die ganze Bildbreite (hinter den Alpen), blass wie der Horizont */
+    {
+      const ferne = mischF(f[2], [118, 138, 150], 0.3 * (1 - n * 0.6)), schritt = Math.max(4, 6 * K.dpr);
+      const fg = g.createLinearGradient(0, Y(6), 0, Yh);
+      fg.addColorStop(0, rgb(ferne, 0.3)); fg.addColorStop(1, rgb(ferne, 0.9));
+      g.fillStyle = fg;
+      g.beginPath(); g.moveTo(0, Yh + 1);
+      for (let x = 0; x <= K.W + schritt; x += schritt) {
+        const mx = (x - X0) / s, hh = 2.4 + 1.6 * Math.sin(mx * 0.021 + 1.1) + 1.1 * Math.sin(mx * 0.057 + 0.3) + 0.5 * Math.sin(mx * 0.13);
+        g.lineTo(x, Y(Math.max(0.6, hh)));
+      }
+      g.lineTo(K.W + schritt, Yh + 1); g.closePath(); g.fill();
+    }
     /* 6. Die Alpen davor (vorgemalt, skaliert) */
     const stufe = n < 0.2 ? 0 : n < 0.5 ? 1 : n < 0.8 ? 2 : n < 0.95 ? 3 : 4;
     const R = LB.nurKlein ? 3 : LB.spar ? 5 : 7;
     const schl = SZ.jahr + "|" + stufe + "|" + R;
     if (vorrat.schl !== schl) { vorrat.c = vormalen(SZ.jahr, stufe, R); vorrat.R = R; vorrat.schl = schl; }
     g.drawImage(vorrat.c, X(LINKS), Y(OBEN), (RECHTS - LINKS) * s, (OBEN + UNTEN) * s);
+    /* FASSUNG 826 — 7. Dunst am Horizont über die ganze Breite: Berge, ferner Höhenzug und Umland gehen ineinander über,
+       statt dass der Himmel hart auf die Wiese stößt */
+    {
+      const a0 = 0.5 * (1 - n * 0.4), y0 = Y(9), y1 = Yh + 7 * s;
+      const dg = g.createLinearGradient(0, y0, 0, y1);
+      dg.addColorStop(0, rgb(f[2], 0)); dg.addColorStop(0.45, rgb(f[2], (a0 * 0.75).toFixed(3))); dg.addColorStop(0.56, rgb(f[2], a0.toFixed(3))); dg.addColorStop(1, rgb(f[2], 0));
+      g.fillStyle = dg; g.fillRect(0, y0, K.W, y1 - y0);
+    }
   };
 })();
