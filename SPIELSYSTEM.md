@@ -2612,3 +2612,9 @@ Leitplanke (verbindlich): Menschen in Haltungen, im Baukasten und in Szenen sind
   5. Tafeln und Szenen.
   - Gegen den alten Stand 2d4b3e5 ist die Sonde 23-mal rot.
   - `pruefe-834-menschen-satzbau.js` angepasst: Datei unter 200 KB, jede Figur unter 60 KB, der Boden wird mit `messen` statt über die Bildkante geprüft. Die Sonde ist grün, `pruefe-plaetze` auch (34/34).
+
+## Fassung 815 — Realistische Menschen aus 836 ausgeliefert
+
+- Enthält Fassung 836: realistischere Körper, Gesichter und Haare, 32 Haltungen am Boden (alle bekleidet, in der Badewanne mit Badekleidung) und die Lehrbuchtafel „Die Geschlechtsorgane“ als schematischer Längsschnitt (siehe Abschnitt 836).
+- Geprüft auf dem zusammengeführten Stand, alle grün: 836, 834, plaetze, 835, 636, 771-aussprache-tafel, betonung-regeln.
+- Die ältere Tafel `szenen/anatomie.js` (von Xander hochgeladen) ist unverändert. Ob sie bleibt, entscheidet Xander.

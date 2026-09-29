@@ -49,7 +49,7 @@
  "app-styles.css": "e9cb9fc2a7e1127cf6d8b280699c7e4e85eb0c2f",
  "app.js": "be77cc7b44b4c809d4537d93b6e73fad7ec361a1",
  "satzbau.js": "1b46e11d6ea26d07696b1ec0afbc694593ca400a",
- "data-werkstatt.js": "dc280bb2d651a23d2f9f94c3f11e5f026af9fdb4",
  "baukasten.js": "8b3d3eb457b972faae7a4c8e7a58ee1b008a6008",
- "data-szenen.js": "620e0efc02bc7ddad8da5da7daa13b3ad2ac5d5f"
+ "data-szenen.js": "620e0efc02bc7ddad8da5da7daa13b3ad2ac5d5f",
+ "data-werkstatt.js": "b76fcef954a4a6f105ed8e2321826971f8a22654"
 }

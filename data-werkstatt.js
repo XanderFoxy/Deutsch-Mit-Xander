@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 814: Satzbaukasten mit natürlicher Vergangenheit, Grammatik je Niveau und mehreren Sätzen",
+  stand: "Fassung 815: realistischere Menschen, 32 Haltungen, Lehrbuchtafel Geschlechtsorgane",
 
   inArbeit: [
-    { seit: "2026-09-29T22:30",
-      text: "Menschen realistischer und alle Haltungen (836)" },
-    { seit: "2026-09-29T22:30",
+    { seit: "2026-09-29T22:56",
+      text: "Menschen: Hände und Füße von vorn noch grob, alte Menschen ohne eigene Haltung" },
+    { seit: "2026-09-29T22:56",
       text: "Italienisch-Modus im Spiel" },
-    { seit: "2026-09-29T22:30",
+    { seit: "2026-09-29T22:56",
       text: "Punkte für Quests und Eintritt auf dem Server (braucht dein OK)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-29T22:30",
-      text: "Satzbaukasten: Präteritum (ich war, ich hatte, ich musste) mit Perfekt-Variante" },
-    { seit: "2026-09-29T22:30",
-      text: "Satzbaukasten: Grammatik je Niveau A1 bis C2, bis zu vier verbundene Sätze" },
-    { seit: "2026-09-29T22:30",
-      text: "Quests, Vollbild, Verwalten (813)" },
+    { seit: "2026-09-29T22:56",
+      text: "Menschen: Körperformen, Gesichter, Haar, Kleidung mit Falten" },
+    { seit: "2026-09-29T22:56",
+      text: "32 Haltungen: Schneidersitz, Hocke, Fersensitz, Kniestand, Vierfüßler, Rücken-, Bauch- und Seitenlage, Badewanne und mehr" },
+    { seit: "2026-09-29T22:56",
+      text: "Satzbaukasten mit Präteritum und Niveaus (814)" },
   ],
 };
