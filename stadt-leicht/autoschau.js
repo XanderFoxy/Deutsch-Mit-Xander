@@ -273,7 +273,7 @@
     return {
       offen: true, id: z.id, gier: z.gier, gv: z.gv, neig: z.neig, S: z.S, Sfit: z.Sfit, Smax: z.Smax, Svoll: z.Svoll, dpr: d,
       /* Bildpunkte des Blatts je Gerätepixel (≥ 1 = volle Auflösung erreicht) */
-      voll: B ? z.S * d / (B.m || 1) : 0, ox: z.ox, oy: z.oy, ruhe: z.ruhe, modus: z.modus,
+      voll: B ? z.S * d / (B.m || 1) : 0, ox: z.ox, oy: z.oy, ruhe: z.ruhe, modus: z.modus, finger: z.zeiger.size, laeuft: !!z.raf,
       stufen: z.stufen.map((St) => ({ neig: St.neig, fertig: St.fertig, laedt: St.laedt, fehler: St.fehler })),
       angefragt: AS.angefragt.slice(), gemalt: z.gemalt || 0, buehne: z.bue,
       /* wo die Karosserie zuletzt gemalt wurde (CSS-Pixel: x, y, Breite, Höhe) */
@@ -416,12 +416,14 @@
   }
 
   /* ---------------- Finger und Maus auf der Leinwand ---------------- */
+  /* Zeit des Ereignisses selbst (nicht, wann es verarbeitet wird) – so stimmt der Schwung auch, wenn das Gerät gerade langsam malt */
+  const zeit = (e) => (e && e.timeStamp > 0 ? e.timeStamp : performance.now());
   function beruehrt(z) { if (!z.tipp.classList.contains("aus")) setTimeout(() => z.tipp.classList.add("aus"), 1800); }
   function runter(e) {
     const z = offen; if (!z) return;
     e.preventDefault();
     z.cv.setPointerCapture(e.pointerId);
-    const p = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now(), t: performance.now() };
+    const p = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: zeit(e), t: zeit(e) };
     z.zeiger.set(e.pointerId, p);
     z.gv = 0; z.gZiel = null; z.nZiel = null; z.zoomFlug = null;
     if (z.zeiger.size === 1) { z.modus = "?"; z.weg = 0; }
@@ -431,7 +433,7 @@
   }
   function ziehen(e) {
     const z = offen; if (!z || !z.zeiger.has(e.pointerId)) return;
-    const p = z.zeiger.get(e.pointerId), jetzt = performance.now();
+    const p = z.zeiger.get(e.pointerId), jetzt = zeit(e);
     const dx = e.clientX - p.x, dy = e.clientY - p.y, dt = Math.max(1, jetzt - p.t);
     p.x = e.clientX; p.y = e.clientY; p.t = jetzt;
     if (z.modus === "zoom" && z.zeiger.size >= 2) {
@@ -456,7 +458,7 @@
       z.gier = ((z.gier + dg) % 360 + 360) % 360;
       const v = dg / dt * 1000;
       z.gv = z.gv * 0.35 + v * 0.65;
-      z.zuletzt = jetzt;
+      z.zuletzt = jetzt; z.schrittDt = dt;
     } else if (z.modus === "kipp") {
       /* hoch ziehen = mehr von oben (wie der Schieber) */
       neigungSetzen(z, z.neig - dy * 41 / Math.max(180, Math.min(z.bue.h, 420)));
@@ -466,7 +468,7 @@
   }
   function hoch(e) {
     const z = offen; if (!z || !z.zeiger.has(e.pointerId)) return;
-    const p = z.zeiger.get(e.pointerId), jetzt = performance.now();
+    const p = z.zeiger.get(e.pointerId), jetzt = zeit(e);
     z.zeiger.delete(e.pointerId);
     if (z.modus === "zoom") {
       if (z.zeiger.size === 0) z.modus = "";
@@ -476,7 +478,8 @@
     }
     if (z.zeiger.size) return;
     const war = z.modus; z.modus = "";
-    if (war === "dreh" && jetzt - z.zuletzt > 120) z.gv = 0;
+    /* hat der Finger vor dem Loslassen still gehalten? (auf langsamen Geräten kommen die Ereignisse seltener) */
+    if (war === "dreh" && jetzt - z.zuletzt > Math.max(120, 2.5 * (z.schrittDt || 0))) z.gv = 0;
     if (war === "dreh") z.gv = klemm(z.gv, -900, 900);
     if (war === "kipp" || war === "?") einrasten(z);
     /* Tipp: zwei kurz nacheinander an fast derselben Stelle = Doppeltipp */
@@ -522,7 +525,7 @@
     if (!finger || z.modus !== "dreh") {
       if (Math.abs(z.gv) > 25) {
         z.gier = ((z.gier + z.gv * dt) % 360 + 360) % 360;
-        z.gv *= Math.exp(-dt * 2.6);
+        z.gv *= Math.exp(-dt * 3.5);
         z.gZiel = null;
         weiter = true;
       } else if (!finger || z.modus === "zoom" || z.modus === "aus") {
@@ -587,7 +590,7 @@
     gr.addColorStop(0, c(70, 78, 102)); gr.addColorStop(0.45, c(38, 44, 64)); gr.addColorStop(1, c(14, 17, 27));
     g.fillStyle = gr; g.fillRect(0, 0, W, H);
     /* Drehscheibe am Boden: ein Kreis, der mit der Neigung flacher wird – so sieht man das Kippen auch am Boden */
-    const e = z.neig * RAD, R = (z.A.fuss[1] * 0.62 + 0.3) * z.S, ry = R * Math.sin(e);
+    const e = z.neig * RAD, R = Math.min((z.A.fuss[1] * 0.62 + 0.3) * (z.Sfit || z.S), z.bue.w / 2 - 4) * z.S / (z.Sfit || z.S), ry = R * Math.sin(e);
     const bx = P[0], by = P[1] + z.hp * Math.cos(e) * z.S;
     g.save();
     g.translate(bx, by); g.scale(1, Math.max(0.05, ry / R));
@@ -615,13 +618,14 @@
   }
   function autoMalen(z, g, St, j) {
     const Bd = St.M.bilder[j], L = lage(z, St, Bd), f = L.f, bl = (b) => St.blaetter[b[0]];
-    g.drawImage(bl(Bd.b), Bd.b[1], Bd.b[2], Bd.b[3], Bd.b[4], L.ax - Bd.a[0] * f, L.ay - Bd.a[1] * f, Bd.b[3] * f, Bd.b[4] * f);
+    /* ohne Zeichenfläche (g = null) wird nur gemessen */
+    if (g) g.drawImage(bl(Bd.b), Bd.b[1], Bd.b[2], Bd.b[3], Bd.b[4], L.ax - Bd.a[0] * f, L.ay - Bd.a[1] * f, Bd.b[3] * f, Bd.b[4] * f);
     /* Räder: Flicken mit Lenkeinschlag 0 und Radstellung 0, hintere zuerst */
     const fl = Bd.r.filter((r) => r.k === 0 && (r.l < 0 || r.l === St.lenk0)).sort((a, b) => a.n - b.n);
     let x0 = L.ax - Bd.a[0] * f, y0 = L.ay - Bd.a[1] * f, x1 = x0 + Bd.b[3] * f, y1 = y0 + Bd.b[4] * f;
     for (const r of fl) {
       const x = L.ax + r.o[0] * f, y = L.ay + r.o[1] * f;
-      g.drawImage(bl(r.b), r.b[1], r.b[2], r.b[3], r.b[4], x, y, r.b[3] * f, r.b[4] * f);
+      if (g) g.drawImage(bl(r.b), r.b[1], r.b[2], r.b[3], r.b[4], x, y, r.b[3] * f, r.b[4] * f);
       x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x + r.b[3] * f); y1 = Math.max(y1, y + r.b[4] * f);
     }
     return [x0, y0, x1 - x0, y1 - y0];
@@ -641,7 +645,7 @@
     g.save(); g.globalCompositeOperation = "lighter";
     const av = klemm(vorn * 1.8, 0, 1) * nacht, ah = klemm(-vorn * 1.8, 0, 1) * nacht;
     for (const p of A.lampen || []) glut(p, "255,244,214", 0.9 * av, 0.55);
-    for (const p of A.rueck || []) glut(p, "255,40,30", 0.7 * ah, 0.32);
+    for (const p of A.rueck || []) glut(p, "255,60,40", 0.9 * ah, 0.45);
     g.restore();
   }
   function zeichnen(z) {
@@ -673,23 +677,28 @@
     } else {
       /* Überblenden: jede Ansicht (Karosserie + Räder) für sich, dann mit ihrem Gewicht addiert –
          wo beide Ansichten deckend sind, bleibt es deckend (kein Durchscheinen des Hintergrunds) */
-      const lg = z.lage.getContext("2d"), mg = z.misch.getContext("2d");
-      mg.setTransform(1, 0, 0, 1, 0, 0); mg.clearRect(0, 0, z.misch.width, z.misch.height);
-      mg.globalCompositeOperation = "lighter";
+      /* nur im Rechteck, das die Ansichten zusammen bedecken (Gerätepixel) – spart am Telefon viel Füllarbeit */
       let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
-      for (const T of teile) {
-        lg.setTransform(1, 0, 0, 1, 0, 0); lg.clearRect(0, 0, z.lage.width, z.lage.height);
-        lg.setTransform(d, 0, 0, d, 0, 0);
-        const r = autoMalen(z, lg, T.St, T.j);
-        x0 = Math.min(x0, r[0]); y0 = Math.min(y0, r[1]); x1 = Math.max(x1, r[0] + r[2]); y1 = Math.max(y1, r[1] + r[3]);
-        mg.globalAlpha = T.w;
-        mg.drawImage(z.lage, 0, 0);
-      }
+      for (const T of teile) { const r = autoMalen(z, null, T.St, T.j); x0 = Math.min(x0, r[0]); y0 = Math.min(y0, r[1]); x1 = Math.max(x1, r[0] + r[2]); y1 = Math.max(y1, r[1] + r[3]); }
       z.rahmen = [x0, y0, x1 - x0, y1 - y0];
-      mg.globalAlpha = 1; mg.globalCompositeOperation = "source-over";
-      g.setTransform(1, 0, 0, 1, 0, 0);
-      g.drawImage(z.misch, 0, 0);
-      g.setTransform(d, 0, 0, d, 0, 0);
+      const rx = Math.max(0, Math.floor(x0 * d) - 2), ry = Math.max(0, Math.floor(y0 * d) - 2);
+      const rw = Math.min(z.misch.width, Math.ceil(x1 * d) + 2) - rx, rh = Math.min(z.misch.height, Math.ceil(y1 * d) + 2) - ry;
+      if (rw > 0 && rh > 0) {
+        const lg = z.lage.getContext("2d"), mg = z.misch.getContext("2d");
+        mg.setTransform(1, 0, 0, 1, 0, 0); mg.clearRect(rx, ry, rw, rh);
+        mg.globalCompositeOperation = "lighter";
+        for (const T of teile) {
+          lg.setTransform(1, 0, 0, 1, 0, 0); lg.clearRect(rx, ry, rw, rh);
+          lg.setTransform(d, 0, 0, d, 0, 0);
+          autoMalen(z, lg, T.St, T.j);
+          mg.globalAlpha = T.w;
+          mg.drawImage(z.lage, rx, ry, rw, rh, rx, ry, rw, rh);
+        }
+        mg.globalAlpha = 1; mg.globalCompositeOperation = "source-over";
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        g.drawImage(z.misch, rx, ry, rw, rh, rx, ry, rw, rh);
+        g.setTransform(d, 0, 0, d, 0, 0);
+      }
     }
     lichterMalen(z, g, z.gier, nacht);
     z.gemalt = (z.gemalt || 0) + 1;

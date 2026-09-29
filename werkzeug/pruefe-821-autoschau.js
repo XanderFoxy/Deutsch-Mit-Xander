@@ -73,19 +73,23 @@ const BLATT = /\/(schau_|auftritt_)[a-z0-9_]+\.(json|webp)/;
   const blaetter = (pg) => pg.anfragen.filter((u) => BLATT.test(u)).map((u) => u.split("/").pop().split("?")[0]);
   /* Finger über CDP (echte Touch-Ereignisse → Pointer Events mit pointerType „touch") */
   const cdpVon = async (pg) => pg.__cdp || (pg.__cdp = await pg.context().newCDPSession(pg));
+  /* Jedes Ereignis trägt seine Zeit (timestamp) wie von einem echten Finger: im Prüf-Chromium (Software-Grafik) malt
+     ein Bild einige hundert Millisekunden, und CDP wartet auf jedes Ereignis – ohne eigene Zeitstempel sähe jeder Wisch
+     wie ein langsames Schieben aus. */
   const wischen = async (pg, wege, dauer, schritte, probe) => {
-    const cdp = await cdpVon(pg), n = schritte || 12, proben = [];
+    const cdp = await cdpVon(pg), n = schritte || 12, proben = [], t0 = Date.now() / 1000;
     const pt = (k) => wege.map((w, i) => ({ x: w[0][0] + (w[1][0] - w[0][0]) * k / n, y: w[0][1] + (w[1][1] - w[0][1]) * k / n, id: i + 1 }));
-    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: pt(0) });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: pt(0), timestamp: t0 });
     for (let k = 1; k <= n; k++) {
       await pg.waitForTimeout(dauer / n);
-      await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: pt(k) });
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: pt(k), timestamp: t0 + k * dauer / n / 1000 });
       if (probe && k < n - 1) proben.push(await zustand(pg));
     }
-    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [], timestamp: t0 + (dauer + 8) / 1000 });
     return proben;
   };
-  const tippen = async (pg, x, y) => { const cdp = await cdpVon(pg); await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: x, y: y, id: 1 }] }); await pg.waitForTimeout(40); await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); };
+  const tippen = async (pg, x, y, t0) => { const cdp = await cdpVon(pg); t0 = t0 || Date.now() / 1000; await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: x, y: y, id: 1 }], timestamp: t0 }); await pg.waitForTimeout(40); await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [], timestamp: t0 + 0.05 }); };
+  const doppeltippen = async (pg, x, y) => { const t0 = Date.now() / 1000; await tippen(pg, x, y, t0); await pg.waitForTimeout(100); await tippen(pg, x, y, t0 + 0.16); };
   const ruhe = (pg) => pg.waitForFunction(() => { const z = STADT.autoschau.zustand(); return z.offen && z.ruhe; }, null, { timeout: 15000 }).catch(() => {});
   /* grobe Unterschrift des Bildes auf der Bühne: 24 × 24 Felder Helligkeit */
   const unterschrift = (pg) => pg.evaluate(() => {
@@ -152,18 +156,20 @@ const BLATT = /\/(schau_|auftritt_)[a-z0-9_]+\.(json|webp)/;
   /* ---- waagrecht wischen: stufenlos drehen, mit Schwung ---- */
   const B = Z1.buehne, mx = B.x + B.w / 2, my = B.y + B.h / 2;
   const g0 = Z1.gier, u0 = await unterschrift(pg);
-  const P = await wischen(pg, [[[mx - 110, my], [mx + 60, my]]], 200, 10, true);
+  const P = await wischen(pg, [[[mx - 80, my], [mx + 40, my]]], 160, 10, true);
   const nachLos = await zustand(pg);
-  await pg.waitForTimeout(160);
+  /* ein paar Bilder abwarten (im Prüf-Chromium malt ein Bild bis zu ~0,2 s) */
+  await pg.waitForFunction((g) => Math.abs(STADT.autoschau.zustand().gier - g) > 2, nachLos.gier, { timeout: 3000 }).catch(() => {});
   const spaeter = await zustand(pg);
   const zwischen = P.filter((z) => Math.abs(z.gier / 11.25 - Math.round(z.gier / 11.25)) > 0.05).length;
   sage(zwischen >= 4 && P.every((z, i) => i === 0 || z.gier !== P[i - 1].gier), "waagrecht wischen dreht stufenlos (Zwischenwerte zwischen den 32 Winkeln)", P.map((z) => z.gier.toFixed(1)).join(" → "));
   const dSchwung = Math.abs(((spaeter.gier - nachLos.gier + 540) % 360) - 180);
-  sage(dSchwung > 2 && Math.abs(nachLos.gv) > 25, "nach dem Loslassen dreht es mit Schwung weiter", "Schwung " + nachLos.gv.toFixed(0) + " °/s, in 160 ms noch " + dSchwung.toFixed(1) + "°");
+  sage(dSchwung > 2 && Math.abs(nachLos.gv) > 25, "nach dem Loslassen dreht es mit Schwung weiter", "Schwung " + nachLos.gv.toFixed(0) + " °/s, danach noch " + dSchwung.toFixed(1) + "° (in wenigen Bildern)");
   await ruhe(pg);
   const Zr = await zustand(pg), u1 = await unterschrift(pg);
   const dG = Math.abs(((Zr.gier - g0 + 540) % 360) - 180);
-  sage(Zr.ruhe && Math.abs(Zr.gier / 11.25 - Math.round(Zr.gier / 11.25)) < 0.01 && dG > 20, "es läuft aus und kommt auf einem der 32 Winkel zur Ruhe", g0 + "° → " + Zr.gier.toFixed(2) + "°");
+  const dAus = Math.abs(((Zr.gier - nachLos.gier + 540) % 360) - 180);
+  sage(Zr.ruhe && Math.abs(Zr.gier / 11.25 - Math.round(Zr.gier / 11.25)) < 0.01 && dG > 20 && dAus > 20, "es läuft aus und kommt auf einem der 32 Winkel zur Ruhe", g0 + "° → (losgelassen bei " + nachLos.gier.toFixed(1) + "°) → " + Zr.gier.toFixed(2) + "°");
   sage(abstand(u0, u1) > 3, "das gemalte Bild hat sich gedreht", "Unterschied " + abstand(u0, u1).toFixed(1));
   /* nach rechts wischen = die vordere Seite wandert nach rechts: die Gier nimmt ab */
   sage(P[P.length - 1].gier !== g0 && (((P[P.length - 1].gier - g0 + 540) % 360) - 180) < 0, "die Richtung passt zum Finger (nach rechts wischen dreht die Nase nach rechts)");
@@ -199,10 +205,10 @@ const BLATT = /\/(schau_|auftritt_)[a-z0-9_]+\.(json|webp)/;
   sage(Zk.S >= Zk.Smax - 0.01 && Zk.voll >= 0.999, "bis zur vollen Auflösung der Blätter (1 Blatt-Bildpunkt je Gerätepixel)", "S " + Zk.S.toFixed(1) + " = Grenze " + Zk.Smax.toFixed(1) + ", Blatt-Bildpunkte je Gerätepixel " + Zk.voll.toFixed(2));
   if (BILD) await pg.screenshot({ path: BILD + "-viper-360-nah.png" });
   /* Doppeltipp: zurück – und noch einmal: nah */
-  await tippen(pg, mx, my); await pg.waitForTimeout(120); await tippen(pg, mx, my);
+  await doppeltippen(pg, mx, my);
   await pg.waitForTimeout(700); await ruhe(pg);
   const Zd1 = await zustand(pg);
-  await tippen(pg, mx + 20, my + 10); await pg.waitForTimeout(120); await tippen(pg, mx + 20, my + 10);
+  await doppeltippen(pg, mx + 20, my + 10);
   await pg.waitForTimeout(700); await ruhe(pg);
   const Zd2 = await zustand(pg);
   sage(Math.abs(Zd1.S - Zd1.Sfit) < 0.01 && Zd2.S > Zd2.Sfit * 1.3, "Doppeltipp: zurück auf die ganze Ansicht, noch einmal: nah heran", Zk.S.toFixed(1) + " → " + Zd1.S.toFixed(1) + " → " + Zd2.S.toFixed(1));
