@@ -32,7 +32,6 @@
  "klassenzimmer.js": "71e58a392589c250a3651eaf6f47964ec9c2d523",
  "livechat.css": "00c0b7b0908e61bafab519e1d9d7b5dd9c2852ab",
  "quiz.js": "7884e008f38ef069fe65c18b2ddbaeb1ef9ba444",
- "satzbau.js": "6a17d2e3d36b61372c95a00cc9dd7cec361d30f9",
  "styles.css": "6d9def5b08d90b41aa69a36db9adb3f20c33dd1f",
  "supabase-config.js": "825bb26f42e6feef78258e774112d4d7c05f4d54",
  "themes.css": "9529740c81dcc59ed2e16beebf5b22404b14c625",
@@ -51,5 +50,6 @@
  "data-szenen.js": "3e6d76afd9e4a539237f72dad41b64a8726cc1a8",
  "app.js": "83d8d2d09a35dc83d2e166d46cd8f564933b3ea0",
  "spiel.css": "e2e49404db028481dd71a44a15362130bf26a07f",
- "spiel.js": "dd25f5d950ad1066cb88b124a1e1cfab2b7f14ee"
+ "spiel.js": "dd25f5d950ad1066cb88b124a1e1cfab2b7f14ee",
+ "satzbau.js": "87a42fdf0bddcd939503e64ebe251f51c3584ca5"
 }

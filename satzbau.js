@@ -1687,6 +1687,302 @@
       kategorien: ["alltag","arbeit","bildung","reisen"] },
   ];
 
+  /* ===================================================================
+     5b. FASSUNG 835 — PRÄTERITUM, MODALVERBEN, KONJUNKTIV II, PASSIV
+     ===================================================================
+     XANDER (Funk 217): „wenn ich z.B Vergangenheit habe sagte er z.B ich
+     bin am Wochenende in den Bergen gewesen warum gibt's da keine
+     natürliche Variante wie z.B ich war am Wochenende in den Bergen und
+     braucht es dafür eine andere Zeitform können wir das mit einbauen
+     dass die Leute gemessen auf ihrem Niveau alle Sachen benutzen können“
+
+     Bisher kannte der Baukasten nur Präsens, Perfekt und Futur. Jetzt
+     hat jedes Verb sein Präteritum (nach Duden, die starken Formen von
+     Hand: ging, lief, aß, las, trank, fuhr, schlief, kam, sah, nahm …).
+
+     Die Grundform steht hier knapp: „w:machte“ ist schwach (machte,
+     machtest, machte, machten, machtet, machten), „s:ging“ stark (ging,
+     gingst, ging, gingen, gingt, gingen). Bei einem Zischlaut am Ende
+     (aß, las, saß, schloss, wusch) heißt es „du aßest“, bei d/t (fand,
+     stand) „du fandest, ihr fandet“ — so steht es im Duden. Trennbare
+     Verben tragen hier nur ihren Stamm; die Vorsilbe wandert wie im
+     Präsens ans Satzende („Ich räumte mein Zimmer auf.“). */
+  const PRAET_BASIS = {
+    sein: "s:war", gehen: "s:ging", fahren: "s:fuhr", kommen: "s:kam", wohnen: "w:wohnte",
+    arbeiten: "w:arbeitete", essen: "s:aß", trinken: "s:trank", kochen: "w:kochte", kaufen: "w:kaufte",
+    lesen: "s:las", schreiben: "s:schrieb", sehen: "s:sah", hoeren: "w:hörte", spielen: "w:spielte",
+    lernen: "w:lernte", sprechen: "s:sprach", verstehen: "s:verstand", treffen: "s:traf", helfen: "s:half",
+    warten: "w:wartete", machen: "w:machte", haben: "w:hatte", schlafen: "s:schlief", fragen: "w:fragte",
+    antworten: "w:antwortete", suchen: "w:suchte", finden: "s:fand", oeffnen: "w:öffnete",
+    schliessen: "s:schloss", bringen: "w:brachte", geben: "s:gab", nehmen: "s:nahm", bezahlen: "w:bezahlte",
+    bestellen: "w:bestellte", brauchen: "w:brauchte", bekommen: "s:bekam", vergessen: "s:vergaß",
+    verlieren: "s:verlor", benutzen: "w:benutzte", reparieren: "w:reparierte", waschen: "s:wusch",
+    putzen: "w:putzte", aufraeumen: "w:räumte", packen: "w:packte", buchen: "w:buchte",
+    erklaeren: "w:erklärte", zeigen: "w:zeigte", ueben: "w:übte", wiederholen: "w:wiederholte",
+    denken: "w:dachte", glauben: "w:glaubte", wissen: "w:wusste", moegen: "w:mochte", reisen: "w:reiste",
+    laufen: "s:lief", fliegen: "s:flog", tragen: "s:trug", schenken: "w:schenkte", mitbringen: "w:brachte",
+    feiern: "w:feierte", tanzen: "w:tanzte", singen: "s:sang", schwimmen: "s:schwamm", wandern: "w:wanderte",
+    einkaufen: "w:kaufte", telefonieren: "w:telefonierte", anrufen: "s:rief", schicken: "w:schickte",
+    lachen: "w:lachte", weinen: "w:weinte", bleiben: "s:blieb", sitzen: "s:saß", stehen: "s:stand",
+    liegen: "s:lag", aufstehen: "s:stand", anfangen: "s:fing", aufhoeren: "w:hörte", steigen: "s:stieg",
+    besuchen: "w:besuchte", erzaehlen: "w:erzählte", vorbereiten: "w:bereitete",
+  };
+  function praeteritumReihe(spec) {
+    const [art, b] = String(spec).split(":");
+    if (art === "w") return [b, b + "st", b, b + "n", b + "t", b + "n"];
+    const zischt = /(s|ß|z|x|sch)$/.test(b), dental = /[dt]$/.test(b);
+    return [b, b + (zischt || dental ? "est" : "st"), b, b + "en", b + (dental ? "et" : "t"), b + "en"];
+  }
+  VERBEN.forEach((v) => {
+    if (PRAET_BASIS[v.id]) v.praeteritum = praeteritumReihe(PRAET_BASIS[v.id]);
+    // Bei „woher“ wird aus gehen/fahren „kommen“ — also auch „kam“.
+    if (v.deWoherInf === "kommen") v.deWoherPraeteritum = praeteritumReihe("s:kam");
+  });
+
+  const HILF_PRAESENS = { sein: ["bin", "bist", "ist", "sind", "seid", "sind"], haben: ["habe", "hast", "hat", "haben", "habt", "haben"] };
+  const HILF_PRAET = { sein: GRUND_WAR, haben: GRUND_HATTE };
+  const HILF_K2 = {
+    sein: ["wäre", "wärst", "wäre", "wären", "wärt", "wären"],
+    haben: ["hätte", "hättest", "hätte", "hätten", "hättet", "hätten"],
+  };
+  const WERDEN = ["werde", "wirst", "wird", "werden", "werdet", "werden"];
+  const WURDE = ["wurde", "wurdest", "wurde", "wurden", "wurdet", "wurden"];
+  const WUERDE = ["würde", "würdest", "würde", "würden", "würdet", "würden"];
+  /* Konjunktiv II ohne „würde“: bei sein, haben und wissen sagt man die
+     eigene Form („ich wäre“, „ich hätte“, „ich wüsste“). */
+  const K2_EIGEN = {
+    sein: HILF_K2.sein, haben: HILF_K2.haben,
+    wissen: ["wüsste", "wüsstest", "wüsste", "wüssten", "wüsstet", "wüssten"],
+  };
+
+  /* Modalverben. „ersatz“ ist der Ersatzinfinitiv im Perfekt: „ich habe
+     arbeiten MÜSSEN“ (nicht „gemusst“). „zeitformen“ sagt, wo das
+     Modalverb natürlich klingt — „ich werde arbeiten wollen“ oder „ich
+     dürfte …“ (andere Bedeutung) bleiben weg. Italienisch: potere,
+     dovere, volere; „möchte“ heißt „vorrei“. */
+  const IMP_END = ["o", "i", "a", "amo", "ate", "ano"];
+  const MODALVERBEN = [
+    { id: "koennen", inf: "können", formen: ["kann", "kannst", "kann", "können", "könnt", "können"],
+      praeteritum: ["konnte", "konntest", "konnte", "konnten", "konntet", "konnten"],
+      k2: ["könnte", "könntest", "könnte", "könnten", "könntet", "könnten"], ersatz: "können",
+      it: "potere", itFormen: ["posso", "puoi", "può", "possiamo", "potete", "possono"], itImp: "pote", itFutStamm: "potr", itPart: "potuto", itKongStamm: "pote",
+      zeitformen: ["praesens", "vergangenheit", "perfekt", "praeteritum", "futur", "konjunktiv2", "konjunktiv2v"], level: "A1" },
+    { id: "muessen", inf: "müssen", formen: ["muss", "musst", "muss", "müssen", "müsst", "müssen"],
+      praeteritum: ["musste", "musstest", "musste", "mussten", "musstet", "mussten"],
+      k2: ["müsste", "müsstest", "müsste", "müssten", "müsstet", "müssten"], ersatz: "müssen",
+      it: "dovere", itFormen: ["devo", "devi", "deve", "dobbiamo", "dovete", "devono"], itImp: "dove", itFutStamm: "dovr", itPart: "dovuto", itKongStamm: "dove",
+      zeitformen: ["praesens", "vergangenheit", "perfekt", "praeteritum", "futur", "konjunktiv2", "konjunktiv2v"], level: "A1" },
+    { id: "wollen", inf: "wollen", formen: ["will", "willst", "will", "wollen", "wollt", "wollen"],
+      praeteritum: ["wollte", "wolltest", "wollte", "wollten", "wolltet", "wollten"], ersatz: "wollen",
+      it: "volere", itFormen: ["voglio", "vuoi", "vuole", "vogliamo", "volete", "vogliono"], itImp: "vole", itFutStamm: "vorr", itPart: "voluto", itKongStamm: "vole",
+      zeitformen: ["praesens", "vergangenheit", "perfekt", "praeteritum"], level: "A1" },
+    { id: "moechten", inf: "möchten", formen: ["möchte", "möchtest", "möchte", "möchten", "möchtet", "möchten"],
+      /* „möchte“ hat keine eigene Vergangenheit: man sagt „ich wollte“. */
+      praeteritum: ["wollte", "wolltest", "wollte", "wollten", "wolltet", "wollten"], ersatz: "wollen",
+      it: "volere", itFormen: ["vorrei", "vorresti", "vorrebbe", "vorremmo", "vorreste", "vorrebbero"], itImp: "vole", itFutStamm: "vorr", itPart: "voluto", itKongStamm: "vole",
+      zeitformen: ["praesens", "vergangenheit", "perfekt", "praeteritum"], level: "A1" },
+    { id: "duerfen", inf: "dürfen", formen: ["darf", "darfst", "darf", "dürfen", "dürft", "dürfen"],
+      praeteritum: ["durfte", "durftest", "durfte", "durften", "durftet", "durften"], ersatz: "dürfen",
+      it: "potere", itFormen: ["posso", "puoi", "può", "possiamo", "potete", "possono"], itImp: "pote", itFutStamm: "potr", itPart: "potuto", itKongStamm: "pote",
+      zeitformen: ["praesens", "vergangenheit", "perfekt", "praeteritum"], level: "A2" },
+    { id: "sollen", inf: "sollen", formen: ["soll", "sollst", "soll", "sollen", "sollt", "sollen"],
+      praeteritum: ["sollte", "solltest", "sollte", "sollten", "solltet", "sollten"],
+      k2: ["sollte", "solltest", "sollte", "sollten", "solltet", "sollten"], ersatz: "sollen",
+      it: "dovere", itFormen: ["devo", "devi", "deve", "dobbiamo", "dovete", "devono"], itImp: "dove", itFutStamm: "dovr", itPart: "dovuto", itKongStamm: "dove",
+      zeitformen: ["praesens", "vergangenheit", "perfekt", "praeteritum", "konjunktiv2", "konjunktiv2v"], level: "A2" },
+  ];
+  /* Zu diesen Verben passt kein Modalverb: „Ich muss den Schlüssel
+     verlieren“, „Ich will Kaffee mögen“ oder „Ich kann ein Buch
+     brauchen“ sagt niemand. Alles, was man nicht absichtlich tut
+     (steuerbar: false), fällt ebenfalls weg — außer „verstehen“ mit
+     „können“ („Ich kann die Grammatik verstehen“). */
+  const OHNE_MODAL = new Set(["moegen", "brauchen", "glauben", "denken", "wissen", "haben", "bekommen",
+    "vergessen", "verlieren", "finden", "lachen", "weinen"]);
+  function modalPasst(modal, verb, wahl) {
+    if (!modal || !verb) return true;
+    const w = wahl || {};
+    if (OHNE_MODAL.has(verb.id)) return false;
+    if (verb.steuerbar === false && !(verb.id === "verstehen" && modal.id === "koennen")) return false;
+    if (verb.itUmkehr) return false;
+    return true;
+  }
+  /* Ein Grund neben einem Modalverb: „Ich muss arbeiten, weil ich das
+     muss“ sagt dasselbe zweimal, „Ich muss ins Kino gehen, weil ich Lust
+     habe“ widerspricht sich (Pflicht gegen Lust), „Ich kann ins Kino
+     gehen, weil ich keine Zeit habe“ ebenso. */
+  function grundPasstZuModal(grund, modal) {
+    if (!grund || !modal || grund.art === "keiner") return true;
+    if (grund.art === "satz") return false;
+    const pflicht = ["muessen", "sollen", "duerfen"].includes(modal.id);
+    if (pflicht && ["antrieb", "gelegenheit"].includes(grund.grundKlasse)) return false;
+    if (!pflicht && grund.grundKlasse && grund.stimmung === "negativ") return false;
+    return true;
+  }
+  /* Angaben, die im Passiv sinnvoll bleiben. „gern“, „allein“ oder
+     „mit Freude“ beschreiben den, der handelt — und der fehlt im Passiv. */
+  const PASSIV_ARTEN = new Set(["schnell", "langsam", "gut", "gruendlich", "ordentlich", "sorgfaeltig",
+    "vorsichtig", "mitderhand", "iminternet", "peremail", "amtelefon", "inbar", "mitkarte", "aufdeutsch",
+    "aufitalienisch", "mitdemwoerterbuch", "laut", "leise", "deutlich"]);
+
+  /* Welche Zeitform in der „Vergangenheit“ natürlich klingt:
+     sein, haben, die Modalverben (und mögen) sagt man im Gespräch fast
+     immer im Präteritum („ich war“, „ich hatte“, „ich musste“), alle
+     anderen Verben im Perfekt („ich bin gegangen“). */
+  const PRAET_IM_GESPRAECH = new Set(["sein", "haben", "moegen"]);
+  function natuerlicheVergangenheit(verb, modal, passiv) {
+    if (modal || passiv) return "praeteritum";
+    return verb && PRAET_IM_GESPRAECH.has(verb.id) ? "praeteritum" : "perfekt";
+  }
+  const VERGANGEN = new Set(["vergangenheit", "perfekt", "praeteritum", "plusquamperfekt", "konjunktiv2v"]);
+  function istVergangen(zf) { return VERGANGEN.has(zf); }
+
+  /* ---------------------------------------------------------------
+     WAS MAN AUF WELCHEM NIVEAU BAUEN KANN (Richtwert GER)
+     A1  Präsens, Perfekt, Präteritum von sein/haben; können, müssen,
+         wollen, möchten im Präsens; und, aber, oder, dann
+     A2  + Präteritum der Modalverben, dürfen/sollen, Futur, Nebensätze
+         mit weil/dass/wenn, denn, deshalb
+     B1  + Präteritum aller Verben, Plusquamperfekt, Konjunktiv II
+         (würde/hätte/wäre), obwohl, damit, trotzdem, „wegen“ + Genitiv
+     B2+ + Passiv, Konjunktiv II der Vergangenheit, um … zu
+     C1/C2 dieselbe Grammatik mit dem ganzen Wortschatz.
+     („und, aber, oder“ stehen schon auf A1 — so steht es in Profile
+     deutsch; ohne sie könnte man auf A1 keine zwei Sätze verbinden.)
+     --------------------------------------------------------------- */
+  const ZEITFORM_NIVEAU = {
+    praesens: "A1", vergangenheit: "A1", perfekt: "A1", praeteritum: "A1", futur: "A2",
+    plusquamperfekt: "B1", konjunktiv2: "B1", konjunktiv2v: "B2",
+  };
+  const ZEITFORM_NAMEN = {
+    praesens: { name: "Gegenwart", fach: "Präsens", it: "presente" },
+    vergangenheit: { name: "Vergangenheit", fach: "so, wie man es sagt", it: "passato" },
+    perfekt: { name: "Perfekt", fach: "Perfekt", it: "passato prossimo" },
+    praeteritum: { name: "Präteritum", fach: "Präteritum", it: "imperfetto / passato prossimo" },
+    futur: { name: "Zukunft", fach: "Futur I", it: "futuro semplice" },
+    plusquamperfekt: { name: "Vorvergangenheit", fach: "Plusquamperfekt", it: "trapassato prossimo" },
+    konjunktiv2: { name: "Wunsch & Möglichkeit", fach: "Konjunktiv II", it: "condizionale" },
+    konjunktiv2v: { name: "hätte, wäre … gewesen", fach: "Konjunktiv II der Vergangenheit", it: "condizionale passato" },
+  };
+  function niveauAb(eintragLevel, level) {
+    if (!level) return true;
+    return NIVEAU_REIHE.indexOf(eintragLevel || "A1") <= NIVEAU_REIHE.indexOf(level);
+  }
+  function zeitformenFuer(level) {
+    return ["praesens", "vergangenheit", "futur", "plusquamperfekt", "konjunktiv2", "konjunktiv2v"]
+      .filter((z) => niveauAb(ZEITFORM_NIVEAU[z], level));
+  }
+  /* Präteritum auf dem gewählten Niveau erlaubt? A1: nur sein/haben
+     (und mögen), A2: dazu die Modalverben, ab B1 alle Verben. */
+  function praeteritumErlaubt(verb, modal, level, passiv) {
+    if (passiv) return niveauAb("B2", level);
+    if (modal) return niveauAb("A2", level);
+    if (verb && PRAET_IM_GESPRAECH.has(verb.id)) return true;
+    return niveauAb("B1", level);
+  }
+  function modalverbenFuer(verb, level, zeitform, wahl) {
+    if (!verb) return [];
+    const zf = zeitform || "praesens";
+    // Präteritum der Modalverben ab A2, Futur/Konjunktiv II ab B1, K II Verg. ab B2.
+    const zfLevel = { praesens: "A1", vergangenheit: "A2", perfekt: "A2", praeteritum: "A2", futur: "B1", konjunktiv2: "B1", konjunktiv2v: "B2" }[zf];
+    if (!zfLevel || !niveauAb(zfLevel, level)) return [];
+    if (wahl && wahl.passiv) return [];
+    return MODALVERBEN.filter((m) => m.zeitformen.includes(zf) && niveauAb(m.level, level) && modalPasst(m, verb, wahl));
+  }
+  /* Passiv: nur bei Verben mit echtem Akkusativobjekt, die man mit
+     einem Ding tut („Die Suppe wird gekocht.“). „Das Buch wird
+     bekommen“ oder „Der Kaffee wird gemocht“ gibt es nicht. */
+  const PASSIV_VERBEN = new Set(["kochen", "kaufen", "lesen", "schreiben", "putzen", "waschen", "reparieren",
+    "bezahlen", "bestellen", "buchen", "packen", "aufraeumen", "oeffnen", "schliessen", "vorbereiten", "essen",
+    "trinken", "spielen", "lernen", "sprechen", "schicken", "erklaeren", "ueben", "wiederholen", "machen", "singen", "benutzen"]);
+  function passivMoeglich(verb, level, zeitform, wahl) {
+    if (!verb || !PASSIV_VERBEN.has(verb.id) || verb.objekt !== "akk") return false;
+    if (!niveauAb("B2", level)) return false;
+    if (!["praesens", "vergangenheit", "perfekt", "praeteritum"].includes(zeitform || "praesens")) return false;
+    if (wahl && wahl.modal) return false;
+    return true;
+  }
+
+  /* Bindewörter — für den Nebensatz und fürs Verbinden zweier Sätze.
+     art: reihend (und/oder, kein Komma), reihendKomma (aber/denn),
+          adverb (dann/deshalb/trotzdem: neuer Satz, Verb davor),
+          unter (weil/dass/wenn/obwohl/damit: Verb ans Ende),
+          umzu (Infinitiv mit zu).
+     nurZeitformen: „wenn“ nicht mit Perfekt („wenn ich gegangen bin“
+     meint etwas anderes), „damit“ nicht mit Konjunktiv. */
+  const BINDEWOERTER = [
+    { id: "und", de: "und", it: "e", art: "reihend", level: "A1", hinweis: "verbindet zwei Hauptsätze — beide mit dem Verb an zweiter Stelle" },
+    { id: "aber", de: "aber", it: "ma", art: "reihendKomma", level: "A1", hinweis: "ein Gegensatz — Komma davor, Verb an zweiter Stelle" },
+    { id: "oder", de: "oder", it: "o", art: "reihend", level: "A1", hinweis: "eine andere Möglichkeit — Verb an zweiter Stelle" },
+    { id: "dann", de: "dann", it: "poi", art: "adverb", level: "A1", hinweis: "was danach kommt — „dann“ steht vorn, das Verb gleich dahinter" },
+    { id: "denn", de: "denn", it: "perché", art: "reihendKomma", level: "A2", hinweis: "ein Grund — wie „weil“, aber das Verb bleibt an zweiter Stelle" },
+    { id: "deshalb", de: "deshalb", it: "per questo", art: "adverb", level: "A2", hinweis: "eine Folge — „deshalb“ steht vorn, das Verb gleich dahinter" },
+    { id: "weil", de: "weil", it: "perché", art: "unter", level: "A2", hinweis: "ein Grund — das gebeugte Verb rutscht ans Ende" },
+    { id: "dass", de: "dass", it: "che", art: "unter", level: "A2", nurNebensatz: true, hinweis: "was man sagt, denkt oder weiß — das Verb rutscht ans Ende" },
+    { id: "wenn", de: "wenn", it: "se", art: "unter", level: "A2", nurZeitformen: ["praesens", "konjunktiv2", "konjunktiv2v"], hinweis: "eine Bedingung — das Verb rutscht ans Ende" },
+    { id: "obwohl", de: "obwohl", it: "anche se", art: "unter", level: "B1", hinweis: "ein Gegengrund — das Verb rutscht ans Ende" },
+    { id: "damit", de: "damit", it: "così", art: "unter", level: "B1", nurZeitformen: ["praesens", "vergangenheit", "perfekt", "praeteritum"], hinweis: "ein Ziel — das Verb rutscht ans Ende" },
+    { id: "trotzdem", de: "trotzdem", it: "comunque", art: "adverb", level: "B1", hinweis: "es geschieht doch — „trotzdem“ vorn, das Verb gleich dahinter" },
+    { id: "umzu", de: "um … zu", it: "per", art: "umzu", level: "B2", hinweis: "ein Ziel bei derselben Person — ohne eigenes Subjekt, „zu“ + Infinitiv am Ende" },
+  ];
+  /* Bindewörter für den einzelnen Nebensatz (Satzart „Nebensatz“) und
+     für den zweiten Satz einer kleinen Geschichte. */
+  function nebensatzBindewoerterFuer(level, zeitform) {
+    return BINDEWOERTER.filter((b) => b.art === "unter" && niveauAb(b.level, level)
+      && (!b.nurZeitformen || b.nurZeitformen.includes(zeitform || "praesens")));
+  }
+  function bindewoerterFuer(level, zeitform, wahl) {
+    const w = wahl || {};
+    return BINDEWOERTER.filter((b) => {
+      if (!niveauAb(b.level, level)) return false;
+      if (b.nurNebensatz) return false;
+      if (b.nurZeitformen && !b.nurZeitformen.includes(zeitform || "praesens")) return false;
+      if (b.art === "umzu") {
+        /* „um … zu“ nur, wenn der zweite Satz dieselbe Person hat, die
+           Handlung gewollt ist und kein Modalverb/Passiv dabei ist:
+           „Ich fahre in die Stadt, um ein Buch zu kaufen.“ */
+        if (w.vorherSubjekt && w.subjekt && w.vorherSubjekt.id !== w.subjekt.id) return false;
+        if (w.verb && (w.verb.steuerbar === false || OHNE_MODAL.has(w.verb.id) || w.verb.id === "sein")) return false;
+        if (w.modal || w.passiv) return false;
+      }
+      return true;
+    });
+  }
+  const NIVEAU_INFO = {
+    A1: ["Gegenwart (Präsens)", "Vergangenheit: Perfekt („ich bin gegangen“) und „ich war / ich hatte“", "können, müssen, wollen, möchten", "zwei Sätze mit und, aber, oder, dann"],
+    A2: ["alles von A1", "Präteritum der Modalverben („ich musste“), dürfen und sollen", "Zukunft (Futur)", "Nebensätze mit weil, dass, wenn", "denn und deshalb"],
+    B1: ["alles von A2", "Präteritum aller Verben („ich ging, ich las“)", "Vorvergangenheit (Plusquamperfekt)", "Konjunktiv II: würde, hätte, wäre, könnte", "obwohl, damit, trotzdem, „wegen“ mit Genitiv"],
+    B2: ["alles von B1", "Passiv („Die Suppe wird gekocht.“)", "Konjunktiv II der Vergangenheit („ich wäre gegangen“)", "um … zu"],
+    C1: ["die ganze Grammatik von B2", "dazu der ganze Wortschatz des Baukastens"],
+    C2: ["die ganze Grammatik von B2", "dazu der ganze Wortschatz des Baukastens"],
+  };
+  function niveauInfo(level) {
+    return NIVEAU_INFO[level || "A1"] || NIVEAU_INFO.A1;
+  }
+
+  /* --- Italienisch: imperfetto, condizionale, congiuntivo -------------- */
+  const IT_IMP_SONDER = { essere: "er", bere: "beve", fare: "face", dire: "dice" };
+  function itImpStamm(inf) {
+    let w = String(inf || "").split(" ")[0];
+    if (/rsi$/.test(w)) w = w.replace(/rsi$/, "re");              // alzarsi → alzare
+    if (IT_IMP_SONDER[w]) return IT_IMP_SONDER[w];
+    return w.replace(/re$/, "");                                   // parlare → parla
+  }
+  function itImperfetto(inf, i) {
+    const st = itImpStamm(inf);
+    if (st === "er") return ["ero", "eri", "era", "eravamo", "eravate", "erano"][i];
+    return st + "v" + IMP_END[i];
+  }
+  const IT_COND_END = ["ei", "esti", "ebbe", "emmo", "este", "ebbero"];
+  const IT_KONG_END = ["ssi", "ssi", "sse", "ssimo", "ste", "ssero"];
+  function itKongiuntivo(inf, i) {
+    let w = String(inf || "").split(" ")[0];
+    if (/rsi$/.test(w)) w = w.replace(/rsi$/, "re");
+    if (w === "essere") return ["fossi", "fossi", "fosse", "fossimo", "foste", "fossero"][i];
+    if (w === "dare") return ["dessi", "dessi", "desse", "dessimo", "deste", "dessero"][i];
+    if (w === "stare") return ["stessi", "stessi", "stesse", "stessimo", "steste", "stessero"][i];
+    return itImpStamm(w) + IT_KONG_END[i];
+  }
+
   const KATEGORIEN = [
     { id: "alltag", name: "Haushalt & Alltag", icon: "🏠" },
     { id: "einkaufen", name: "Einkaufen", icon: "🛒" },
@@ -1737,22 +2033,22 @@
     const i = FORM_INDEX[subjekt.id];
     if (grund.art === "zustand") {
       if (sprache === "it") {
-        const kopula = zeitform === "perfekt" ? GRUND_IT_WAR[i] : GRUND_IT_SEIN[i];
+        const kopula = istVergangen(zeitform) ? GRUND_IT_WAR[i] : GRUND_IT_SEIN[i];
         const adj = itAdjektiv(grund, subjekt.itGenus || "m", subjekt.zahl === "pl");
         return "perché " + kopula + " " + adj;
       }
-      const kopula = zeitform === "perfekt" ? GRUND_WAR[i] : GRUND_SEIN[i];
+      const kopula = istVergangen(zeitform) ? GRUND_WAR[i] : GRUND_SEIN[i];
       return "weil " + subjekt.de + " " + grund.adjektiv + " " + kopula;
     }
     /* „weil ich Hunger habe“ — so redet man wirklich; „weil ich hungrig
        bin“ ist die Schulbuchvariante. Beides gibt es jetzt. */
     if (grund.art === "haben") {
       if (sprache === "it") {
-        const hilf = zeitform === "perfekt" ? GRUND_IT_HATTE[i] : GRUND_IT_HABEN[i];
+        const hilf = istVergangen(zeitform) ? GRUND_IT_HATTE[i] : GRUND_IT_HABEN[i];
         if (grund.itFest) return "perché " + hilf + " " + grund.it;
         return "perché " + (grund.itVerneint ? "non " + hilf : hilf) + " " + grund.it;
       }
-      const hilf = zeitform === "perfekt" ? GRUND_HATTE[i] : GRUND_HABEN[i];
+      const hilf = istVergangen(zeitform) ? GRUND_HATTE[i] : GRUND_HABEN[i];
       return "weil " + subjekt.de + " " + grund.nomen + " " + hilf;
     }
     /* „weil ich das mag“, „weil ich muss“ — die Gründe, die zu jeder
@@ -1761,7 +2057,7 @@
       /* In der Vergangenheit muss auch der Grund in der Vergangenheit
          stehen: „Wir haben geschrieben, weil wir das sollTEN" — vorher
          stand dort immer die Gegenwart. */
-      const past = zeitform === "perfekt";
+      const past = istVergangen(zeitform);
       if (sprache === "it") {
         const reihe = (past && grund.itPastFormen) ? grund.itPastFormen : grund.itFormen;
         return "perché " + (reihe[IT_PERSON_INDEX[subjekt.id]] || reihe[0]);
@@ -1771,7 +2067,7 @@
     }
     // „weil es wichtig ist“ — unpersönlich, unverändert in jeder Person.
     if (grund.art === "unpersoenlich") {
-      const past = zeitform === "perfekt";
+      const past = istVergangen(zeitform);
       if (sprache === "it") return "perché " + ((past && grund.itPast) || grund.it);
       return "weil " + ((past && grund.dePast) || grund.de);
     }
@@ -1781,12 +2077,88 @@
     return "wegen " + nominalgruppe(eintrag, "gen", "bestimmt");
   }
 
+  /* FASSUNG 835 — „Vergangenheit“ heißt: so, wie man es wirklich sagt.
+     Bei sein, haben und den Modalverben steht das Präteritum vorn („Ich
+     war am Wochenende in den Bergen.“) und das Perfekt als zweite,
+     ebenfalls richtige Form darunter. Bei allen anderen Verben ist es
+     umgekehrt: vorn das Perfekt, darunter das Präteritum „geschrieben
+     oder erzählt“ — das aber erst ab B1, vorher gibt es nur das Perfekt. */
   function bauSatz(wahl) {
+    const zf = wahl.zeitform || "praesens";
+    if (zf !== "vergangenheit") return bauSatzEinzeln(wahl);
+    const modal = wahl.modal || null;
+    const passiv = Boolean(wahl.passiv);
+    const haupt = natuerlicheVergangenheit(wahl.verb, modal, passiv);
+    const r = bauSatzEinzeln(Object.assign({}, wahl, { zeitform: haupt }));
+    r.zeitformWahl = "vergangenheit";
+    if (wahl.satzart === "umzu") return r;
+    const neben = haupt === "praeteritum" ? "perfekt" : "praeteritum";
+    if (neben === "praeteritum" && !praeteritumErlaubt(wahl.verb, modal, wahl.niveau, passiv)) return r;
+    // Eine Zeitangabe, die in der anderen Form nicht geht, verbietet die Variante.
+    if (wahl.zeit && !zeitPasst(wahl.zeit, wahl.verb, Object.assign({}, wahl, { zeitform: neben }))) return r;
+    const v = bauSatzEinzeln(Object.assign({}, wahl, { zeitform: neben }));
+    if (v.de === r.de) return r;
+    const gesprochen = haupt === "praeteritum";
+    r.variante = {
+      de: v.de, it: v.it, deTeile: v.deTeile, itTeile: v.itTeile, zeitform: neben, deRoh: v.deRoh, itRoh: v.itRoh,
+      titel: gesprochen ? "Auch richtig (Perfekt):" : "Geschrieben oder erzählt (Präteritum):",
+      erklaerung: passiv
+        ? "Beides ist richtig. Beim Passiv ist das Präteritum („wurde … gekocht“) auch im Gespräch üblich; das Perfekt („ist … gekocht worden“) ist länger."
+        : gesprochen
+        ? "Beides ist richtig. Gesprochen sagt man bei sein, haben und den Modalverben meist das Präteritum („ich war“, „ich hatte“, „ich musste“) — das Perfekt klingt hier umständlich."
+        : "Beides ist richtig. Im Gespräch sagt man bei fast allen Verben das Perfekt; in Büchern, Berichten und Erzählungen steht oft das Präteritum.",
+    };
+    return r;
+  }
+
+  function bauSatzEinzeln(wahl) {
+    /* FASSUNG 835 — Passiv: das Objekt wird zum Subjekt („Die Suppe wird
+       gekocht.“). Wer es tut, fällt weg — und damit alles, was an dieser
+       Person hängt: die Begleitung, die Person, ein persönlicher Grund
+       („weil ich müde bin“) und Angaben wie „gern“ oder „allein“. */
+    if (wahl.passiv && wahl.objekt && passivMoeglich(wahl.verb, null, wahl.zeitform, wahl)) {
+      const obj = wahl.objekt;
+      const bl = obj.begleiter || ["bestimmt"];
+      const begl = bl.includes("bestimmt") ? "bestimmt" : bl.includes("ohne") ? "ohne" : "bestimmt";
+      const pl = Boolean(obj.plural);
+      const itPl = obj.itPlural !== undefined ? obj.itPlural : pl;
+      const itGen = obj.itGenus || obj.genus || "m";
+      const ps = {
+        id: pl ? "3pl" : "3sgm", de: nominalgruppe(obj, "nom", begl, wahl.objektAdjektiv, null),
+        it: itDingform(obj, "bestimmt", wahl.objektAdjektiv, null), zahl: pl ? "pl" : "sg", person: 3,
+        itGenus: itGen, itPlural: itPl, passivSubjekt: true,
+      };
+      const artOk = wahl.art && PASSIV_ARTEN.has(wahl.art.id) ? wahl.art : null;
+      const grundOk = wahl.grund && ["wegen", "unpersoenlich"].includes(wahl.grund.art) ? wahl.grund : null;
+      wahl = Object.assign({}, wahl, { subjekt: ps, objekt: null, objektBegleiter: "", objektAdjektiv: null,
+        person: null, begleitung: null, fragesatz: null, art: artOk, grund: grundOk, passivAktiv: true, modal: null });
+    } else if (wahl.passiv) {
+      wahl = Object.assign({}, wahl, { passiv: false });
+    }
+    if (wahl.modal && !modalPasst(wahl.modal, wahl.verb, wahl)) wahl = Object.assign({}, wahl, { modal: null });
     const subjekt = wahl.subjekt;
     let verb = wahl.verb;
     const i = FORM_INDEX[subjekt.id];
     const zeitform = wahl.zeitform || "praesens";
     const satzart = wahl.satzart || "aussage";
+    const modal = wahl.modal || null;
+    const passivAktiv = Boolean(wahl.passivAktiv);
+    const umZu = satzart === "umzu";
+    const konj = satzart === "nebensatz" ? (BINDEWOERTER.find((b) => b.id === (wahl.konjunktion || "weil")) || BINDEWOERTER.find((b) => b.id === "weil")) : null;
+    /* „um … zu“ und ein weil-Satz als Grund vertragen sich nicht in
+       einem Nebensatz; „dass“ ebenfalls nicht mit einer indirekten Frage. */
+    if (umZu && wahl.grund) wahl = Object.assign({}, wahl, { grund: null });
+    /* „damit“ und „um … zu“ nennen selbst schon ein Ziel; bei „obwohl“
+       widerspräche ein zweiter Grund. */
+    if (konj && ["damit", "obwohl", "wenn"].includes(konj.id) && wahl.grund) wahl = Object.assign({}, wahl, { grund: null });
+    /* Konjunktiv II der Vergangenheit („ich wäre gegangen“) mit einem
+       Grund klingt schief („…, weil ich müde war“) — gemeint ist eine
+       Bedingung. Der Grund fällt dort weg. */
+    if (zeitform === "konjunktiv2v" && wahl.grund && wahl.grund.art !== "keiner") wahl = Object.assign({}, wahl, { grund: null });
+    /* Ein Modalverb im Satz und ein Grund, der selbst ein Modalverb oder
+       einen Beweggrund nennt: „Ich muss arbeiten, weil ich das muss“,
+       „Ich muss ins Kino gehen, weil ich Lust habe“ — das fällt weg. */
+    if (modal && wahl.grund && !grundPasstZuModal(wahl.grund, modal)) wahl = Object.assign({}, wahl, { grund: null });
     const ortRolle = wahl.ortRolle || (verb.lokal && verb.lokal[0]) || "wo";
 
     /* --- Die Bausteine des Mittelfelds --------------------------------
@@ -1823,8 +2195,9 @@
        Passt die Zeitangabe dann nicht mehr, fällt sie weg statt den
        Satz zu verderben. */
     if (wahl.zeit && !zeitPasst(wahl.zeit, verb, wahl)) wahl = Object.assign({}, wahl, { zeit: null });
-    const zeitVorne = wahl.vorfeld === "zeit" && wahl.zeit && wahl.zeit.de;
-    const ortVorne = wahl.vorfeld === "ort" && wahl.ort;
+    // Vorn steht etwas anderes als das Subjekt nur in der Aussage.
+    const zeitVorne = satzart === "aussage" && wahl.vorfeld === "zeit" && wahl.zeit && wahl.zeit.de;
+    const ortVorne = satzart === "aussage" && wahl.vorfeld === "ort" && wahl.ort;
 
     /* Personen sind im Satz immer bekannte Information („mein Freund“,
        „der Arzt“) und stehen deshalb vor den Umstandsangaben. Nur wenn
@@ -1962,90 +2335,202 @@
        aber man KOMMT von irgendwoher. „vom Arzt gegangen“ sagt niemand. */
     const deWoher = ortRolle === "woher" && verb.deWoherFormen;
     const dFormen = deWoher ? verb.deWoherFormen : verb.formen;
+    const dPraet = deWoher ? verb.deWoherPraeteritum : verb.praeteritum;
     const dInf = deWoher ? verb.deWoherInf : verb.inf;
     const dPart = deWoher ? verb.deWoherPartizip : verb.partizip;
     const dHilf = deWoher ? "sein" : verb.hilfsverb;
-    let deFinit, dePartizip = "", deInfinitiv = "";
-    if (zeitform === "perfekt") {
-      deFinit = (dHilf === "sein" ? ["bin", "bist", "ist", "sind", "seid", "sind"] : ["habe", "hast", "hat", "haben", "habt", "haben"])[i];
-      dePartizip = dPart;
-    } else if (zeitform === "futur") {
-      deFinit = ["werde", "wirst", "wird", "werden", "werdet", "werden"][i];
-      deInfinitiv = dInf;
-    } else {
-      deFinit = dFormen[i];
-    }
-    /* Trennbare Verben: im Präsens und im Hauptsatz wandert die Vorsilbe
-       ans Ende („ich räume mein Zimmer auf“), im Nebensatz wächst sie
-       wieder ans Verb („weil ich mein Zimmer aufräume“). Im Perfekt und
-       im Futur steckt sie ohnehin schon im Partizip beziehungsweise im
-       Infinitiv. */
-    const trennbar = zeitform === "praesens" && !deWoher ? (verb.trennbar || "") : "";
+    const dTrenn = deWoher ? "" : (verb.trennbar || "");
 
-    let itVerb;
+    /* FASSUNG 835 — die Verbklammer für jede Zeitform.
+         finit    das gebeugte Verb (Stelle 2, in der Frage Stelle 1, im
+                  Nebensatz am Ende)
+         rechts   was ans Satzende gehört, in der Reihenfolge des
+                  Hauptsatzes: Partizip, Infinitiv, „worden“, Modalverb
+         trennbar die Vorsilbe, wenn das Vollverb selbst gebeugt ist
+                  (Präsens und Präteritum: „Ich räumte auf.“)
+         finitVorn im Nebensatz steht das gebeugte Verb VOR zwei
+                  Infinitiven: „weil ich am Wochenende habe arbeiten
+                  müssen“ (Duden: Ersatzinfinitiv). */
+    let deFinit = "", rechts = [], trennbar = "", finitVorn = false, zuInfinitiv = "";
+    if (umZu) {
+      // „um … einzukaufen“, „um … aufzuräumen“, „um … zu kochen“
+      zuInfinitiv = dTrenn ? dTrenn + "zu" + dInf.slice(dTrenn.length) : "zu " + dInf;
+    } else if (passivAktiv) {
+      const n = subjekt.zahl === "pl" ? 5 : 2;
+      if (zeitform === "perfekt") { deFinit = HILF_PRAESENS.sein[n]; rechts = [dPart, "worden"]; }
+      else if (zeitform === "praeteritum") { deFinit = WURDE[n]; rechts = [dPart]; }
+      else { deFinit = WERDEN[n]; rechts = [dPart]; }
+    } else if (modal) {
+      if (zeitform === "praeteritum") { deFinit = modal.praeteritum[i]; rechts = [dInf]; }
+      else if (zeitform === "perfekt") { deFinit = HILF_PRAESENS.haben[i]; rechts = [dInf, modal.ersatz]; finitVorn = true; }
+      else if (zeitform === "futur") { deFinit = WERDEN[i]; rechts = [dInf, modal.inf]; finitVorn = true; }
+      else if (zeitform === "konjunktiv2" && modal.k2) { deFinit = modal.k2[i]; rechts = [dInf]; }
+      else if (zeitform === "konjunktiv2v") { deFinit = HILF_K2.haben[i]; rechts = [dInf, modal.ersatz]; finitVorn = true; }
+      else if (zeitform === "plusquamperfekt") { deFinit = HILF_PRAET.haben[i]; rechts = [dInf, modal.ersatz]; finitVorn = true; }
+      else { deFinit = modal.formen[i]; rechts = [dInf]; }
+    } else if (zeitform === "perfekt") {
+      deFinit = HILF_PRAESENS[dHilf][i]; rechts = [dPart];
+    } else if (zeitform === "plusquamperfekt") {
+      deFinit = HILF_PRAET[dHilf][i]; rechts = [dPart];
+    } else if (zeitform === "futur") {
+      deFinit = WERDEN[i]; rechts = [dInf];
+    } else if (zeitform === "konjunktiv2") {
+      if (K2_EIGEN[verb.id] && !deWoher) deFinit = K2_EIGEN[verb.id][i];
+      else { deFinit = WUERDE[i]; rechts = [dInf]; }
+    } else if (zeitform === "konjunktiv2v") {
+      deFinit = HILF_K2[dHilf][i]; rechts = [dPart];
+    } else if (zeitform === "praeteritum") {
+      deFinit = (dPraet || dFormen)[i]; trennbar = dTrenn;
+    } else {
+      deFinit = dFormen[i]; trennbar = dTrenn;
+    }
+
+    /* --- Italienisch ---------------------------------------------------
+       Präteritum: bei Zuständen (avere, Modalverben, sitzen/liegen) und
+       bei Gewohnheiten („jeden Tag“) das imperfetto („avevo“, „dovevo“,
+       „andavo ogni giorno“), sonst wie im Perfekt das passato prossimo
+       („sono stato in montagna“). Plusquamperfekt: trapassato prossimo,
+       Konjunktiv II: condizionale, im wenn-Satz congiuntivo imperfetto. */
+    const itWennKong = Boolean(konj && konj.id === "wenn" && (zeitform === "konjunktiv2" || zeitform === "konjunktiv2v"));
+    const itInf0 = nutzeWoherVerb ? verb.itWoherInf : verb.itInf;
+    const itPartStamm = nutzeWoherVerb ? verb.itWoherPart : verb.itPart;
+    const itFut = nutzeWoherVerb ? verb.itWoherFutStamm : verb.itFutStamm;
     const itHilf = nutzeWoherVerb ? "essere" : verb.itHilf;
-    if (verb.itZustand) {
+    const gewohnheit = Boolean(wahl.zeit && (wahl.zeit.art === "haeufigkeit" || wahl.zeit.art === "dauer"));
+    const itZustandImp = Boolean(verb.itZustand) || Boolean(verb.itZusatz)
+      || ["haben", "wissen", "glauben", "denken", "wohnen"].includes(verb.id)
+      || (verb.id === "sein" && gewohnheit);
+    const itImp = zeitform === "praeteritum" && Boolean(modal || itZustandImp || gewohnheit);
+    const itHilfForm = (hilf, art) => {
+      if (art === "imp") return (hilf === "essere" ? GRUND_IT_WAR : GRUND_IT_HATTE)[i];
+      if (art === "cond") return (hilf === "essere" ? "sar" : "avr") + IT_COND_END[i];
+      if (art === "kong") return itKongiuntivo(hilf === "essere" ? "essere" : "avere", i);
+      return (hilf === "essere" ? GRUND_IT_SEIN : GRUND_IT_HABEN)[i];
+    };
+    // Infinitiv ohne „si“ (für Modalverben und „per …“).
+    const itInfNackt = String(itInf0 || "").split(" ")[0].replace(/rsi$/, "re");
+    const itReflPron = ["mi", "ti", "si", "ci", "vi", "si"][i];
+    const itZustandInf = verb.itZustand
+      ? "stare " + (verb.itZustandFest ? verb.itZustand : itPartizip(verb.itZustand, "essere", subjekt)) : "";
+    let itVerb;
+    if (umZu) {
+      // „per alzarmi presto“, „per comprare un libro“
+      itVerb = verb.itReflexiv ? itInfNackt.replace(/e$/, "") + itReflPron : (itZustandInf || itInfNackt);
+    } else if (passivAktiv) {
+      const pst = String(itPartStamm).replace(/o$/, "");
+      const endung = subjekt.itPlural ? (subjekt.itGenus === "f" ? "e" : "i") : (subjekt.itGenus === "f" ? "a" : "o");
+      const n = subjekt.itPlural ? 5 : 2;
+      if (zeitform === "praesens") itVerb = (subjekt.itPlural ? "vengono " : "viene ") + pst + endung;
+      else itVerb = GRUND_IT_SEIN[n] + " stat" + endung + " " + pst + endung;
+    } else if (modal) {
+      const m = modal;
+      let mf;
+      if (zeitform === "praeteritum") mf = m.itImp + "v" + IMP_END[i];
+      else if (zeitform === "perfekt") mf = GRUND_IT_HABEN[i] + " " + m.itPart;
+      else if (zeitform === "plusquamperfekt") mf = GRUND_IT_HATTE[i] + " " + m.itPart;
+      else if (zeitform === "futur") mf = m.itFutStamm + IT_FUTUR_ENDUNG[i];
+      else if (zeitform === "konjunktiv2") mf = itWennKong ? m.itKongStamm + IT_KONG_END[i] : m.itFutStamm + IT_COND_END[i];
+      else if (zeitform === "konjunktiv2v") mf = (itWennKong ? itKongiuntivo("avere", i) : "avr" + IT_COND_END[i]) + " " + m.itPart;
+      else mf = m.itFormen[i];
+      itVerb = (verb.itReflexiv ? itReflPron + " " : "") + mf + " " + (itZustandInf || itInfNackt);
+    } else if (verb.itZustand) {
       /* Ein Zustand wird im Italienischen mit essere und einem
          angeglichenen Partizip ausgedrückt, in der Vergangenheit im
          Imperfetto: sono seduto, ero seduto, sarò seduto. */
       const form = verb.itZustandFest ? verb.itZustand : itPartizip(verb.itZustand, "essere", subjekt);
-      const kopula = zeitform === "perfekt" ? itHilfsform("essere", subjekt) + " " + itPartizip("stat", "essere", subjekt)
+      const stato = itPartizip("stat", "essere", subjekt);
+      const kopula = zeitform === "perfekt" ? itHilfsform("essere", subjekt) + " " + stato
+        : zeitform === "praeteritum" ? GRUND_IT_WAR[i]
+        : zeitform === "plusquamperfekt" ? GRUND_IT_WAR[i] + " " + stato
         : zeitform === "futur" ? "sar" + IT_FUTUR_ENDUNG[i]
+        : zeitform === "konjunktiv2" ? (itWennKong ? itKongiuntivo("essere", i) : "sar" + IT_COND_END[i])
+        : zeitform === "konjunktiv2v" ? (itWennKong ? itKongiuntivo("essere", i) : "sar" + IT_COND_END[i]) + " " + stato
         : GRUND_IT_SEIN[i];
       itVerb = kopula + " " + form;
-    } else if (zeitform === "perfekt") {
-      itVerb = itHilfsform(itHilf, subjekt) + " " + itPartizip(nutzeWoherVerb ? verb.itWoherPart : verb.itPart, itHilf, subjekt);
+    } else if (zeitform === "perfekt" || (zeitform === "praeteritum" && !itImp)) {
+      itVerb = itHilfsform(itHilf, subjekt) + " " + itPartizip(itPartStamm, itHilf, subjekt);
+    } else if (zeitform === "praeteritum") {
+      itVerb = itImperfetto(itInf0, i);
+    } else if (zeitform === "plusquamperfekt") {
+      itVerb = itHilfForm(itHilf, "imp") + " " + itPartizip(itPartStamm, itHilf, subjekt);
     } else if (zeitform === "futur") {
-      itVerb = (nutzeWoherVerb ? verb.itWoherFutStamm : verb.itFutStamm) + IT_FUTUR_ENDUNG[i];
+      itVerb = itFut + IT_FUTUR_ENDUNG[i];
+    } else if (zeitform === "konjunktiv2") {
+      itVerb = itWennKong ? itKongiuntivo(itInf0, i) : itFut + IT_COND_END[i];
+    } else if (zeitform === "konjunktiv2v") {
+      itVerb = itHilfForm(itHilf, itWennKong ? "kong" : "cond") + " " + itPartizip(itPartStamm, itHilf, subjekt);
     } else {
       itVerb = (nutzeWoherVerb ? verb.itWoherFormen : verb.itFormen)[i];
     }
     /* Reflexive italienische Verben tragen ihr Pronomen vor dem Verb.
-       Im Präsens steckt es schon in den Formen, in Perfekt und Futur
-       muss es davor: „mi sono alzato“, „mi alzerò“. */
-    if (verb.itReflexiv && zeitform !== "praesens") {
-      itVerb = ["mi", "ti", "si", "ci", "vi", "si"][i] + " " + itVerb;
+       Im Präsens steckt es schon in den Formen, sonst muss es davor:
+       „mi sono alzato“, „mi alzerò“, „mi alzavo“. */
+    if (verb.itReflexiv && zeitform !== "praesens" && !modal && !umZu) {
+      itVerb = itReflPron + " " + itVerb;
     }
     /* Feste Ergänzungen wie „bisogno di“ gehören unmittelbar vor das
        Objekt — sonst schiebt sich ein Adverb dazwischen: „ho bisogno di
        spesso un libro“. Sie werden deshalb erst später eingesetzt. */
 
     // --- Deutsch zusammensetzen ---
-    const vorfeld = zeitVorne ? { t: wahl.zeit.de, rolle: "wann" }
+    const vorfeldWort = satzart === "aussage" && wahl.vorfeldWort ? wahl.vorfeldWort : "";
+    /* Steht ein Bindewort wie „deshalb“ vorn, rücken Zeit und Ort ins
+       Mittelfeld zurück: „Deshalb bin ich gestern zu Hause geblieben.“ */
+    let mitte = deTeile;
+    if (vorfeldWort && zeitVorne) mitte = [{ t: wahl.zeit.de, rolle: "wann" }].concat(mitte);
+    if (vorfeldWort && ortVorne) mitte = mitte.concat([{ t: ortsform(wahl.ort, ortRolle), rolle: ortRolle }]);
+    const vorfeld = vorfeldWort ? { t: vorfeldWort, rolle: "konj" }
+      : zeitVorne ? { t: wahl.zeit.de, rolle: "wann" }
       : ortVorne ? { t: ortsform(wahl.ort, ortRolle), rolle: ortRolle }
       : { t: subjekt.de, rolle: "wer" };
     const subjektTeil = { t: subjekt.de, rolle: "wer" };
+    const finitTeil = (t) => ({ t, rolle: "verb", finit: true });
 
     let de = [];
     let hinweis = "";
-    if (satzart === "frage") {
-      de = [{ t: deFinit, rolle: "verb" }, subjektTeil, ...deTeile];
+    const klammerHinweis = modal
+      ? (finitVorn ? "Mit Modalverb und Hilfsverb stehen am Ende zwei Infinitive („arbeiten müssen“) — man sagt nicht „gemusst“." : "Das Modalverb steht an der Stelle des gebeugten Verbs, das Vollverb im Infinitiv ganz am Ende.")
+      : passivAktiv ? "Passiv: „werden“ ist gebeugt, das Partizip steht am Ende — wer es tut, ist nicht wichtig."
+      : zeitform === "konjunktiv2" && rechts.length ? "Konjunktiv II: „würde“ an zweiter Stelle, der Infinitiv am Ende."
+      : zeitform === "konjunktiv2" ? "Konjunktiv II: bei sein, haben und wissen sagt man die eigene Form (wäre, hätte, wüsste)."
+      : zeitform === "praeteritum" ? "Präteritum: nur ein Verbteil — das gebeugte Verb an zweiter Stelle."
+      : "";
+    if (umZu) {
+      de = [{ t: "um", rolle: "konj" }, ...mitte, { t: zuInfinitiv, rolle: "verb" }];
+      hinweis = "„um … zu“: kein eigenes Subjekt, „zu“ und der Infinitiv stehen ganz am Ende"
+        + (dTrenn ? " — bei trennbaren Verben steckt das „zu“ mitten im Wort." : ".");
+    } else if (satzart === "frage") {
+      de = [finitTeil(deFinit), subjektTeil, ...mitte];
       if (trennbar) de.push({ t: trennbar, rolle: "verb" });
-      if (dePartizip) de.push({ t: dePartizip, rolle: "verb" });
-      if (deInfinitiv) de.push({ t: deInfinitiv, rolle: "verb" });
+      rechts.forEach((r) => de.push({ t: r, rolle: "verb" }));
       hinweis = trennbar
         ? "In der Ja-Nein-Frage steht das gebeugte Verb ganz vorn — die Vorsilbe bleibt am Satzende."
-        : "In der Ja-Nein-Frage steht das gebeugte Verb ganz vorn.";
+        : "In der Ja-Nein-Frage steht das gebeugte Verb ganz vorn." + (klammerHinweis ? " " + klammerHinweis : "");
     } else if (satzart === "nebensatz") {
-      de = [{ t: "weil", rolle: "konj" }, subjektTeil, ...deTeile];
-      if (dePartizip) de.push({ t: dePartizip, rolle: "verb" });
-      if (deInfinitiv) de.push({ t: deInfinitiv, rolle: "verb" });
-      de.push({ t: trennbar + deFinit, rolle: "verb" });
-      hinweis = trennbar
+      de = [{ t: konj.de, rolle: "konj" }, subjektTeil, ...mitte];
+      if (finitVorn) {
+        de.push(finitTeil(deFinit));
+        rechts.forEach((r) => de.push({ t: r, rolle: "verb" }));
+      } else {
+        rechts.forEach((r) => de.push({ t: r, rolle: "verb" }));
+        de.push(finitTeil(trennbar + deFinit));
+      }
+      hinweis = finitVorn
+        ? "Im Nebensatz steht das gebeugte Verb hier VOR den zwei Infinitiven („habe arbeiten müssen“) — eine Ausnahme."
+        : trennbar
         ? "Im Nebensatz rutscht das Verb ans Ende — und die Vorsilbe wächst wieder daran fest."
-        : "Im Nebensatz mit „weil“ rutscht das gebeugte Verb ganz ans Ende.";
+        : "Im Nebensatz mit „" + konj.de + "“ rutscht das gebeugte Verb ganz ans Ende.";
     } else {
       // Aussage: das Vorfeld, dann das Verb, dann der Rest.
-      de = [vorfeld, { t: deFinit, rolle: "verb" }];
+      de = [vorfeld, finitTeil(deFinit)];
       if (vorfeld.rolle !== "wer") de.push(subjektTeil);
-      de = de.concat(deTeile);
+      de = de.concat(mitte);
       if (trennbar) de.push({ t: trennbar, rolle: "verb" });
-      if (dePartizip) de.push({ t: dePartizip, rolle: "verb" });
-      if (deInfinitiv) de.push({ t: deInfinitiv, rolle: "verb" });
+      rechts.forEach((r) => de.push({ t: r, rolle: "verb" }));
       hinweis = trennbar
         ? "Trennbare Verben teilen sich: das gebeugte Verb steht an zweiter Stelle, die Vorsilbe ganz am Ende."
         : vorfeld.rolle === "wer"
-        ? "In der Aussage steht das gebeugte Verb an zweiter Stelle."
+        ? "In der Aussage steht das gebeugte Verb an zweiter Stelle." + (klammerHinweis ? " " + klammerHinweis : "")
         : "Steht etwas anderes vorn, rutscht das Subjekt hinter das Verb — das Verb bleibt an zweiter Stelle.";
     }
     /* Eine indirekte Frage hängt als eigener Nebensatz hinten dran und
@@ -2055,12 +2540,18 @@
       de.push({ t: ", " + wahl.fragesatz.de, rolle: "wonach" });
     }
     // Ein weil-Satz als Grund hängt hinten dran.
-    if (grundDe && grundIstNebensatz && satzart !== "nebensatz") de.push({ t: ", " + grundDe, rolle: "warum" });
+    if (grundDe && grundIstNebensatz && satzart !== "nebensatz" && !umZu) de.push({ t: ", " + grundDe, rolle: "warum" });
 
     // --- Italienisch zusammensetzen ---
     const it = [];
-    if (itZeitVorne) it.push({ t: wahl.zeit.it, rolle: "wann" });
-    if (wahl.pronomen) it.push({ t: subjekt.it, rolle: "wer" });
+    const itKonjWort = umZu ? "per" : konj ? konj.it : "";
+    if (itKonjWort) it.push({ t: itKonjWort, rolle: "konj" });
+    const itVorfeldWort = vorfeldWort ? (BINDEWOERTER.find((b) => b.de === vorfeldWort) || {}).it : "";
+    if (itVorfeldWort) it.push({ t: itVorfeldWort, rolle: "konj" });
+    if (itZeitVorne && !umZu) it.push({ t: wahl.zeit.it, rolle: "wann" });
+    // Im Passiv ist das Ding das Subjekt und steht vorn: „La zuppa viene cucinata.“
+    if (passivAktiv) it.push({ t: subjekt.it, rolle: "wer" });
+    else if (wahl.pronomen && !umZu) it.push({ t: subjekt.it, rolle: "wer" });
     /* Das italienische „non“ steht vor dem Verb — sowohl bei der Verneinung
        eines Objekts („non mangio pane“) als auch bei „mai“, das ohne „non“
        gar nicht stehen kann („non ci sono mai stato“). */
@@ -2072,18 +2563,19 @@
        sondern der Kaffee gefällt mir. Das Verb richtet sich deshalb nach
        dem OBJEKT, und die Person steht als Pronomen davor. Ohne diesen
        Sonderfall käme „amo il caffè“ heraus — das heißt „ich liebe“. */
-    if (verb.itUmkehr && zeigeObjekt) {
+    if (verb.itUmkehr && zeigeObjekt && !modal && !umZu) {
       const objPl = wahl.objekt.itPlural !== undefined ? wahl.objekt.itPlural : Boolean(wahl.objekt.plural);
       const objGen = wahl.objekt.itGenus || wahl.objekt.genus || "m";
       const pron = { "1sg": "mi", "2sg": "ti", "3sgm": "gli", "3sgf": "le", "1pl": "ci", "2pl": "vi", "3pl": "a loro" }[subjekt.id];
+      const piaciuto = "piaciut" + (objPl ? (objGen === "f" ? "e" : "i") : (objGen === "f" ? "a" : "o"));
       let kern;
-      if (zeitform === "perfekt") {
-        kern = (objPl ? "sono" : "è") + " piaciut" + (objPl ? (objGen === "f" ? "e" : "i") : (objGen === "f" ? "a" : "o"));
-      } else if (zeitform === "futur") {
-        kern = objPl ? "piaceranno" : "piacerà";
-      } else {
-        kern = objPl ? "piacciono" : "piace";
-      }
+      if (zeitform === "perfekt") kern = (objPl ? "sono" : "è") + " " + piaciuto;
+      else if (zeitform === "praeteritum") kern = objPl ? "piacevano" : "piaceva";
+      else if (zeitform === "plusquamperfekt") kern = (objPl ? "erano" : "era") + " " + piaciuto;
+      else if (zeitform === "futur") kern = objPl ? "piaceranno" : "piacerà";
+      else if (zeitform === "konjunktiv2") kern = objPl ? "piacerebbero" : "piacerebbe";
+      else if (zeitform === "konjunktiv2v") kern = (objPl ? "sarebbero" : "sarebbe") + " " + piaciuto;
+      else kern = objPl ? "piacciono" : "piace";
       // „Non mi piace“ — das non steht ganz vorn, vor dem Pronomen.
       if (verneint) it.push({ t: "non", rolle: "verb" });
       it.push({ t: pron, rolle: "wer" });
@@ -2091,18 +2583,20 @@
       if (wahl.art && wahl.art.it) it.push({ t: wahl.art.it, rolle: "wie" });
       itTeile.forEach((x) => it.push(x));
       /* Ist der Satz selbst ein weil-Satz, fällt der kausale Baustein im
-       Deutschen weg — dann darf er im Italienischen nicht auftauchen. */
-    if (grundIt && !(grundIstNebensatz && satzart === "nebensatz")) {
-      it.push({ t: doppeltesPerche ? grundIt.replace(/^perché /, "visto che ") : grundIt, rolle: "warum" });
-    }
+         Deutschen weg — dann darf er im Italienischen nicht auftauchen. */
+      if (grundIt && !(grundIstNebensatz && satzart === "nebensatz")) {
+        it.push({ t: doppeltesPerche ? grundIt.replace(/^perché /, "visto che ") : grundIt, rolle: "warum" });
+      }
       return fertig(de, it, satzart, hinweis, zeitform, ortRolle);
     }
 
     if (verneint) it.push({ t: "non", rolle: "verb" });
     /* Im passato prossimo rutscht die Häufigkeitsangabe zwischen
        Hilfsverb und Partizip: „ho sempre abitato“, nicht „ho abitato
-       sempre“. */
-    if (itZeitBeimVerb && (zeitform === "perfekt" || verb.itZustand) && itVerb.includes(" ")) {
+       sempre“. Beim Modalverb entsprechend: „devo spesso lavorare“. */
+    const itZusammengesetzt = itVerb.includes(" ") && Boolean(modal || verb.itZustand || passivAktiv
+      || ["perfekt", "plusquamperfekt", "konjunktiv2v"].includes(zeitform) || (zeitform === "praeteritum" && !itImp));
+    if (itZeitBeimVerb && itZusammengesetzt && !umZu) {
       const luecke = itVerb.indexOf(" ");
       it.push({ t: itVerb.slice(0, luecke), rolle: "verb" });
       it.push({ t: wahl.zeit.it, rolle: "wann" });
@@ -2111,6 +2605,7 @@
       it.push({ t: itVerb, rolle: "verb" });
       if (itZeitBeimVerb) it.push({ t: wahl.zeit.it, rolle: "wann" });
     }
+    if (umZu && itZeitVorne) it.push({ t: wahl.zeit.it, rolle: "wann" });
     if (wahl.art && wahl.art.it) {
       let artIt = wahl.art.it;
       if (wahl.art.itAngleichen) {
@@ -2127,7 +2622,7 @@
     if (wahl.fragesatz && satzart !== "nebensatz") it.push({ t: wahl.fragesatz.it, rolle: "wonach" });
     /* Ist der Satz selbst ein weil-Satz, fällt der kausale Baustein im
        Deutschen weg — dann darf er im Italienischen nicht auftauchen. */
-    if (grundIt && !(grundIstNebensatz && satzart === "nebensatz")) {
+    if (grundIt && !(grundIstNebensatz && satzart === "nebensatz") && !umZu) {
       it.push({ t: doppeltesPerche ? grundIt.replace(/^perché /, "visto che ") : grundIt, rolle: "warum" });
     }
 
@@ -2139,10 +2634,12 @@
   function fertig(de, it, satzart, hinweis, zeitform, ortRolle) {
     const deText = de.map((x) => x.t).filter(Boolean).join(" ").replace(/\s+([,.])/g, "$1").replace(/\s+/g, " ").trim();
     const itText = itVerschmelzung(it.map((x) => x.t).filter(Boolean).join(" ").replace(/\s+([,.])/g, "$1").replace(/\s+/g, " ").trim());
-    const schluss = satzart === "frage" ? "?" : satzart === "nebensatz" ? " …" : ".";
+    const schluss = satzart === "frage" ? "?" : (satzart === "nebensatz" || satzart === "umzu") ? " …" : ".";
     return {
       de: deText.charAt(0).toUpperCase() + deText.slice(1) + schluss,
       it: itText.charAt(0).toUpperCase() + itText.slice(1) + schluss,
+      // FASSUNG 835 — ohne Großbuchstaben und Schlusszeichen, zum Verbinden.
+      deRoh: deText, itRoh: itText,
       deTeile: de, itTeile: it, hinweis, zeitform, satzart, ortRolle,
     };
   }
@@ -2208,14 +2705,29 @@
     return liste;
   }
   function zeitenFuer(zeitform, level, wahl, verb) {
+    /* FASSUNG 835 — die Zeitangabe muss zur Zeitform passen, die am Ende
+       wirklich im Satz steht: „Vergangenheit“ heißt bei sein Präteritum,
+       bei gehen Perfekt (siehe natuerlicheVergangenheit). */
+    const w = wahl || {};
+    const zf = zeitform === "vergangenheit" ? natuerlicheVergangenheit(verb, w.modal, w.passiv) : (zeitform || "praesens");
+    const w2 = Object.assign({}, w, { zeitform: zf });
     return ZEITEN.filter((z) => {
-      if (z.nurVergangenheit && zeitform !== "perfekt") return false;
-      if (z.nurZukunft && zeitform === "perfekt") return false;
-      if (z.nichtZukunft && zeitform === "futur") return false;
-      if (z.nurGegenwart && zeitform !== "praesens") return false;
-      if (!zeitPasst(z, verb || null, wahl)) return false;
+      if (!zeitPasst(z, verb || null, w2)) return false;
       return passtZumNiveau(z, level);
     });
+  }
+  /* Passt die Zeitangabe zur Zeitform? „gestern“ nur in der
+     Vergangenheit, „morgen“ nicht in der Vergangenheit, „seit drei
+     Wochen“ nur im Präsens („Ich lerne seit drei Wochen Deutsch“ — nicht
+     „ich habe seit drei Wochen gelernt“), „jetzt“ im Präsens und im
+     Konjunktiv II („Ich würde jetzt gern schlafen“). */
+  function zeitZurZeitform(zeit, zf) {
+    if (!zeit || !zeit.de || !zf) return true;
+    if (zeit.nurVergangenheit && !istVergangen(zf)) return false;
+    if (zeit.nurZukunft && !["praesens", "futur", "konjunktiv2"].includes(zf)) return false;
+    if (zeit.nichtZukunft && zf !== "praesens") return false;
+    if (zeit.nurGegenwart && !(zf === "praesens" || (zf === "konjunktiv2" && zeit.id === "jetzt"))) return false;
+    return true;
   }
   /* ---------------------------------------------------------------
      Verträglichkeit — was sich widerspricht, wird gar nicht erst
@@ -2365,6 +2877,10 @@
   function artPasst(art, verb, wahl) {
     if (!art || !art.de) return true;
     const w = wahl || {};
+    // R23 — „Ich muss gern arbeiten“: Pflicht und Vorliebe vertragen sich nicht.
+    if (w.modal && ["muessen", "sollen"].includes(w.modal.id) && ["gern", "sehrgern", "mitfreude"].includes(art.id)) return false;
+    // R24 — im Passiv fehlt, wer handelt: „gern“, „allein“ passen nicht mehr.
+    if (w.passiv && !PASSIV_ARTEN.has(art.id)) return false;
     // R16 — siehe grundPasst: „langsam … weil es schneller geht".
     if (w.grund && w.grund.widerspricht && w.grund.widerspricht.includes(art.id)) return false;
     if (art.stimmung === "positiv" && w.grund && w.grund.stimmung === "negativ") return false;    // R1
@@ -2408,6 +2924,7 @@
   function zeitPasst(zeit, verb, wahl) {
     if (!zeit || !zeit.de) return true;
     const w = wahl || {};
+    if (w.zeitform && !zeitZurZeitform(zeit, w.zeitform)) return false;                          // R22
     if (zeit.art === "haeufigkeit" && w.grund && w.grund.anlass === "einmalig") return false;     // R2
     // R7 — Zeitraum neben einem Verb, das keinen Zeitraum füllt
     if (zeit.art === "dauer" && verb && PUNKTUELLE_VERBEN.has(verb.id)) return false;
@@ -2496,6 +3013,8 @@
        zusammen: „Ich vergesse keine Aufgabe, ob es ihm gefallen hat."
        war ein echter Fehler. */
     if (wahl && wahl.objekt) return [];
+    // Eine indirekte Frage ist ein Nebensatz — Nebensätze gibt es ab A2.
+    if (!niveauAb("A2", level)) return [];
     return FRAGESAETZE.filter((f) => passtZumNiveau(f, level));
   }
 
@@ -2535,8 +3054,17 @@
   }
 
   function gruendeFuer(verb, level, wahl) {
+    const w = wahl || {};
+    /* FASSUNG 835 — der Grund ist ein Nebensatz mit „weil“ (ab A2) oder
+       „wegen“ mit Genitiv (B1, steht an den Gründen selbst). Im Passiv
+       gibt es keinen persönlichen Grund, im Konjunktiv II der
+       Vergangenheit gar keinen (siehe bauSatz). */
+    const ohneGrund = !niveauAb("A2", level) || w.zeitform === "konjunktiv2v" || w.satzart === "umzu";
     return GRUENDE.filter((g) => {
       if (g.art === "keiner") return true;
+      if (ohneGrund) return false;
+      if (w.passiv && !["wegen", "unpersoenlich"].includes(g.art)) return false;
+      if (w.modal && !grundPasstZuModal(g, w.modal)) return false;
       /* Gründe, die zu jeder Tätigkeit passen (weil ich Zeit habe, weil
          ich muss), stehen überall zur Verfügung — sonst hätte man bei
          manchen Verben nur zwei zur Auswahl. */
@@ -5026,6 +5554,31 @@
     return (BEISPIELE[kategorie] || []).length;
   }
 
+  /* FASSUNG 835 — zwei oder drei Sätze zu einer kleinen Geschichte.
+     liste = [{ satz, bindewort }] — der erste Satz ohne Bindewort.
+       und/oder        „Ich war müde und ich ging nach Hause.“
+       aber/denn       „…, aber ich hatte keine Zeit.“
+       dann/deshalb/   neuer Satz, das Wort vorn, das Verb gleich
+       trotzdem        dahinter: „Deshalb bin ich zu Hause geblieben.“
+       weil/wenn/…     „…, weil ich keine Zeit hatte.“ (Verb am Ende)
+       um … zu         „…, um ein Buch zu kaufen.“ */
+  function verbindeSaetze(liste) {
+    const gross = (t) => String(t || "").charAt(0).toUpperCase() + String(t || "").slice(1);
+    let de = "", it = "";
+    (liste || []).forEach((e, n) => {
+      const s = e && e.satz;
+      if (!s) return;
+      const dR = s.deRoh || "", iR = s.itRoh || "";
+      if (!de) { de = gross(dR); it = gross(iR); return; }
+      const b = BINDEWOERTER.find((x) => x.id === e.bindewort);
+      if (!b || b.art === "adverb") { de += ". " + gross(dR); it += ". " + gross(iR); }
+      else if (b.art === "reihend") { de += " " + b.de + " " + dR; it += " " + b.it + " " + iR; }
+      else if (b.art === "reihendKomma") { de += ", " + b.de + " " + dR; it += ", " + b.it + " " + iR; }
+      else { de += ", " + dR; it += ", " + iR; }
+    });
+    return { de: de ? de + "." : "", it: it ? it + "." : "" };
+  }
+
   window.Satzbau = {
     ORTE, DINGE, PERSONEN, SUBJEKTE, VERBEN, ZEITEN, ARTEN, GRUENDE, ADJEKTIVE, KATEGORIEN,
     BEGLEITER_NAMEN, BEISPIELE,
@@ -5033,5 +5586,10 @@
     verbenFuer, orteFuer, dingeFuer, personenFuer, zeitenFuer, artenFuer, gruendeFuer, begleitungFuer, begleitungText,
     adjektiveFuer, begleiterFuer, ortRollenFuer, anzahlBeispiele, beispieleFuer, beispielAnzahl, fragesaetzeFuer, FRAGESAETZE,
     WECHSEL, NUR_DATIV, NUR_AKKUSATIV, NUR_GENITIV,
+    // FASSUNG 835
+    MODALVERBEN, BINDEWOERTER, ZEITFORM_NAMEN, ZEITFORM_NIVEAU, NIVEAU_INFO, PRAET_BASIS, PASSIV_VERBEN,
+    zeitformenFuer, modalverbenFuer, passivMoeglich, bindewoerterFuer, nebensatzBindewoerterFuer, niveauInfo,
+    natuerlicheVergangenheit, praeteritumErlaubt, verbindeSaetze, istVergangen, modalPasst, grundPasst, artPasst,
+    zeitPasst, zeitZurZeitform, grundPasstZuModal, niveauAb,
   };
 })();
