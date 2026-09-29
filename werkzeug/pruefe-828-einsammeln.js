@@ -269,6 +269,10 @@ window.schick=function(d){document.getElementById("f").contentWindow.postMessage
     await leeren();
     let b2 = null; for (let i = 0; i < 40 && !b2; i++) { b2 = await baumPunkt("n_tanne"); if (!b2) await tick(400); }
     if (b2) { await tipp(OFF2.x + b2.x, OFF2.y + b2.y); await bis((r) => r.length > 0, 5000); }
+    /* FASSUNG 812 — im Vollbild öffnet der Baum zusätzlich sein kleines Menü (822); es wird vor dem Tipp auf den See
+       geschlossen, damit der Tipp nicht im Menü landet */
+    await fr.evaluate(() => { const k = document.querySelector(".lk-karte"); if (k && !k.hidden) { const z = k.querySelector(".lk-karte-zu, [aria-label='Schließen']"); if (z) z.click(); else k.hidden = true; } });
+    await tick(300);
     const see2 = await bodenPunkt(1);
     if (see2) { await tipp(OFF2.x + see2.x, OFF2.y + see2.y); }
     r = await bis((r) => r.length > 1, 5000);
