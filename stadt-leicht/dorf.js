@@ -642,10 +642,22 @@
       if (!wunder[k] || !w.bild) continue;
       SZ.neu({ art: "wunder", spiel: k, name: w.name, bild: w.bild, x: w.x, y: w.y, dreh: w.dreh, fuss: w.fussS || w.fuss, hoehe: w.hoehe * (w.mass || 1), stufe: w.mass || 1 });
     }
-    for (const o of D.kulisse()) SZ.neu(o);
+    /* FASSUNG 822 — XANDER: „ich möchte im kleinen Menü einen Baum rausnehmen … der Baum ist halt direkt noch vorm Rathaus
+       kriegt den da nicht weg". Jeder Baum der Stadt hat einen festen Schlüssel (Bild und Lage, wie er gewachsen ist);
+       entfernte und versetzte Bäume stehen in ST.leicht.natur (gespeichert wie der Schmuck). */
+    const NT = (ST.leicht && ST.leicht.natur) || {}, nWeg = NT.weg || [], nLage = NT.lage || {};
+    for (const o of D.kulisse()) {
+      if (o.art === "natur") {
+        o.nkey = o.bild + "@" + o.x.toFixed(1) + "," + o.y.toFixed(1);
+        if (nWeg.indexOf(o.nkey) >= 0) continue;
+        const l = nLage[o.nkey];
+        if (l && isFinite(+l[0]) && isFinite(+l[1])) { o.x = +l[0]; o.y = +l[1]; o.versetzt = 1; }
+      }
+      SZ.neu(o);
+    }
     /* FASSUNG 809 — ein versetztes Haus verdrängt die Bäume und Büsche, auf denen es jetzt stünde */
     const versetzt = SZ.objekte.filter((o) => o.art === "haus" && o.platzX != null && (o.x !== o.platzX || o.y !== o.platzY));
-    if (versetzt.length) SZ.objekte = SZ.objekte.filter((n) => n.art !== "natur" || !versetzt.some((h) => Math.abs(n.x - h.x) < (h.fuss[0] + h.fuss[1]) * 0.32 + 1.5 && Math.abs(n.y - h.y) < (h.fuss[0] + h.fuss[1]) * 0.32 + 1.5));
+    if (versetzt.length) SZ.objekte = SZ.objekte.filter((n) => n.art !== "natur" || n.versetzt || !versetzt.some((h) => Math.abs(n.x - h.x) < (h.fuss[0] + h.fuss[1]) * 0.32 + 1.5 && Math.abs(n.y - h.y) < (h.fuss[0] + h.fuss[1]) * 0.32 + 1.5));
     for (const o of eigeneDeko || []) SZ.neu(Object.assign({ art: "eigen" }, o));
     D.jahrFiltern();
   };

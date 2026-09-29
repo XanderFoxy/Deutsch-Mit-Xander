@@ -440,11 +440,14 @@
     for (let i = 0; i < sicht.length; i++) {
       const e = sicht[i];
       if (e.o === SZ.auswahl && !e.o.geist) auswahlRing(e, t);
+      /* FASSUNG 822 — XANDER: „ich würde das jetzt halten … und ich sehe ich kann's jetzt bewegen": ein angehobenes Ding
+         (oberflaeche.js, Halten) schwebt ein paar Bildpunkte über seinem Platz */
+      const hb = e.o.heben ? e.o.heben * K.dpr : 0;
       for (const lg of e.lagen) {
         const img = LB.bild(lg[0]); if (!img) continue;
         const m = lg[3] || e.meta, k = lg[2] || e.k;
         g.globalAlpha = lg[1] * (e.o.geist ? 0.72 : 1);
-        g.drawImage(img, e.X - m.ax * k, e.Y - m.ay * k, m.w * k, m.h * k);
+        g.drawImage(img, e.X - m.ax * k, e.Y - m.ay * k - hb, m.w * k, m.h * k);
       }
       g.globalAlpha = 1;
       if (ST.windmuehle) ST.windmuehle.nach(g, e, t, Z);   // FASSUNG 812 — die drehenden Flügel der Windmühle (windmuehle.js)

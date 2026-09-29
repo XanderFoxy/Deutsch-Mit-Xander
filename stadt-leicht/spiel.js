@@ -94,13 +94,21 @@
     });
   };
   /* Speichern mit kurzer Verzögerung (mehrere Änderungen = eine Anfrage) */
-  let uhr = 0;
+  let uhr = 0, offen = null;
+  const senden = () => { clearTimeout(uhr); const d = offen; offen = null; if (d) SP.rpc("spiel_stadt_leicht_speichern", { p_daten: d }).catch((e) => console.warn(e)); };
   SP.eigenesSpeichern = function (daten) {
     if (SP.beispiel || !SP.angemeldet) return;
     /* FASSUNG 815 — vorläufig gekaufte und abgestellte Autos gehen mit dem Schmuck mit */
     daten = Object.assign({}, daten, { autos: SP.autosVorlaeufig.slice(), geparkt: SP.autosGeparkt.slice() });
+    /* FASSUNG 822 — XANDER: „wo ich ihn hinziehe, schnippst der plötzlich wieder zurück". Der Stand im Speicher der Seite
+       ist ab jetzt der gespeicherte – ein Neuaufbau (start.js, dekoLaden) nimmt nicht mehr den alten vom Öffnen. */
+    SP.eigenes = Object.assign({}, SP.eigenes || {}, daten);
+    offen = daten;
     clearTimeout(uhr);
-    uhr = setTimeout(() => { SP.rpc("spiel_stadt_leicht_speichern", { p_daten: daten }).catch((e) => console.warn(e)); }, 1200);
+    uhr = setTimeout(senden, 1200);
   };
+  /* FASSUNG 822 — wer gleich nach dem Setzen neu lädt oder die Seite schließt, verliert den Stand nicht */
+  window.addEventListener("pagehide", senden);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") senden(); });
   SP.neuLaden = function () { return SP.beispiel ? Promise.resolve(ST.leicht.ich) : rpc("spiel_ich", {}); };
 })();
