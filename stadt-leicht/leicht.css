@@ -242,3 +242,4 @@ html.lk-mini-html:has(.lk-nah), .lk-mini-modus.lk-nah, .lk-mini-modus.lk-nah #lD
 .lk-mini-modus:not(.lk-nah):not(.lk-gepinnt) .lk-pinknopf { display: none; }
 .lk-mini-modus:not(.lk-nah).lk-gepinnt .lk-pinknopf { left: 5px; }
 .lk-pinknopf.lk-an { background: #ffd24a; color: #3a2a14; }
+.lk-mini-modus.lk-gestalten .lk-nur-mini.lk-drehschieber, .lk-mini-modus.lk-gestalten .lk-pinknopf { display: none; }

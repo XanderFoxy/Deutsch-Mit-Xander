@@ -13037,14 +13037,26 @@
     if (Math.abs(ziel - jetzt) >= 0.5) menueRollen(sc, ziel, sanft);
     return ziel - jetzt;
   }
-  function dorfRahmenEinpassen(sanft) {
+  function dorfRahmenEinpassen(sanft, spot) {
     var r = schnellEl && !schnellEl.hidden && schnellEl.querySelector(".sp-dl-rahmen");
     if (!r || !r.isConnected) return;
     var sc = r.closest(".sp-schnellmenue"), fr = r.getBoundingClientRect(), kopf = sc && sc.querySelector(".sp-sm-kopf");
     var kt = kopf ? kopf.getBoundingClientRect().top : fr.top, d = 0;
     if (sc && sc.scrollHeight > sc.clientHeight + 1) {
       var pad = parseFloat(getComputedStyle(sc).paddingTop) || 0;
-      d = menueEinpassen(sc, fr.top, fr.bottom, kt - pad, sanft);
+      if (!spot) d = menueEinpassen(sc, fr.top, fr.bottom, kt - pad, sanft);   // beim Öffnen (Walkie 305): „die Überschrift soll da bleiben"
+      else {
+        /* FASSUNG 812 — XANDER: „dann ist das trotzdem ein bisschen zu weit unten da. Da ist noch Platz da kann das noch
+           ein bisschen höher vom Sprunglink … dann hat man nämlich oben und unten das selbe … im Prinzip sah er nur die
+           Überschrift oben ausgeblendet sein … aber nicht so dass dann dieses Schließkreuz noch teilweise sichtbar ist".
+           Nach einer Aufgabe (Einsammeln, Losschicken, Herstellen: lsZurueckZumBild) steht das Bild mittig im Menü
+           (oben und unten gleich viel Rand); die Kopfzeile mit dem Kreuz rollt dabei ganz aus dem Blick – ist dafür zu
+           wenig Platz, rückt das Bild so weit hoch, dass sie gerade verschwindet. */
+        var kb = fr.top;
+        if (kopf) { kb = kopf.getBoundingClientRect().bottom; [].forEach.call(kopf.querySelectorAll("*"), function (e) { var b = e.getBoundingClientRect(); if (b.height) kb = Math.max(kb, b.bottom); }); }
+        var rand = Math.max(0, (sc.clientHeight - (fr.bottom - fr.top)) / 2), abstand = Math.max(0, fr.top - kb + 1);
+        d = menueEinpassen(sc, fr.top, fr.bottom, fr.top - Math.min(rand, abstand), sanft);
+      }
     }
     /* Die Seite: das Menü hängt über der Eingabezeile – ragt es oben aus dem Bildschirm, rollt die Seite nach. */
     var ft = fr.top - d, fb = fr.bottom - d, kf = kt - d;
@@ -13061,8 +13073,8 @@
      Servers neu), setzt ein zweiter Blick nach 0,7 s es genau hin. */
   function lsZurueckZumBild() {
     clearTimeout(S.lsStationUhr);
-    setTimeout(function () { dorfRahmenEinpassen(true); }, 60);
-    setTimeout(function () { dorfRahmenEinpassen(false); }, 750);
+    setTimeout(function () { dorfRahmenEinpassen(true, true); }, 60);
+    setTimeout(function () { dorfRahmenEinpassen(false, true); }, 750);
   }
   /* FASSUNG 817 — „entweder springe ich runter zu der Dialogbox die unter dem Bild liegt": sanft bis die Station ganz zu
      sehen ist (so wenig wie nötig). */

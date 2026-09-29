@@ -232,11 +232,17 @@ const sage = (gut, was, zusatz) => {
   const passt = () => pg.evaluate(() => {
     const r = document.querySelector(".sp-schnell .sp-dl-rahmen"); if (!r) return null;
     const sc = r.closest(".sp-schnellmenue"), q = r.getBoundingClientRect(), s = sc.getBoundingClientRect(), k = sc.querySelector(".sp-sm-kopf").getBoundingClientRect();
+    let kopfAlles = k.bottom; sc.querySelectorAll(".sp-sm-kopf *").forEach((e) => { const b = e.getBoundingClientRect(); if (b.height) kopfAlles = Math.max(kopfAlles, b.bottom); });
     const oben = Math.max(0, s.top + sc.clientTop), unten = Math.min(innerHeight, s.top + sc.clientTop + sc.clientHeight);
     const ls = document.querySelector(".sp-lstadt"), lr = ls && getComputedStyle(ls).visibility !== "hidden" ? ls.getBoundingClientRect() : null;
-    return { t: +q.top.toFixed(1), b: +q.bottom.toFixed(1), oben: +oben.toFixed(1), unten: +unten.toFixed(1), kopf: [+k.top.toFixed(1), +k.bottom.toFixed(1)], ls: lr && [+lr.top.toFixed(1), +lr.bottom.toFixed(1)], clip: ls ? ls.style.clipPath : "", menue: Math.round(sc.scrollTop), seite: Math.round(scrollY) };
+    return { t: +q.top.toFixed(1), b: +q.bottom.toFixed(1), oben: +oben.toFixed(1), unten: +unten.toFixed(1), kopf: [+k.top.toFixed(1), +k.bottom.toFixed(1)], kopfAlles: +kopfAlles.toFixed(1), ls: lr && [+lr.top.toFixed(1), +lr.bottom.toFixed(1)], clip: ls ? ls.style.clipPath : "", menue: Math.round(sc.scrollTop), seite: Math.round(scrollY) };
   });
   const istPassgenau = (p, neu) => !!p && p.t >= p.oben - 2 && p.b <= p.unten + 2 && p.kopf[0] >= p.oben - 2 && p.kopf[1] <= p.t + 1
+    && (!neu || (!!p.ls && Math.abs(p.ls[0] - p.t) < 2 && Math.abs(p.ls[1] - p.b) < 2 && !p.clip));
+  /* FASSUNG 812 — nach einer Aufgabe (Rücksprung) „im Spot": Bild mittig (oben ≈ unten Rand), die Kopfzeile mit dem Kreuz
+     ganz ausgeblendet; reicht der Platz dafür nicht, liegt der Kopf gerade eben oberhalb (Bild höher als die Mitte) */
+  const imSpot = (p, neu) => !!p && p.t >= p.oben - 2 && p.b <= p.unten + 2 && p.kopfAlles <= p.oben + 1
+    && (Math.abs((p.t - p.oben) - (p.unten - p.b)) < 6 || (p.t - p.oben) < (p.unten - p.b))
     && (!neu || (!!p.ls && Math.abs(p.ls[0] - p.t) < 2 && Math.abs(p.ls[1] - p.b) < 2 && !p.clip));
   const menueRunter = () => pg.evaluate(() => { const m = document.querySelector(".sp-schnell .sp-sm-blick"); if (m) m.scrollTop = 1e6; });
   const menueHoch = () => pg.evaluate(() => { const m = document.querySelector(".sp-schnell .sp-sm-blick"); if (m) m.scrollTop = 0; });
@@ -246,7 +252,7 @@ const sage = (gut, was, zusatz) => {
       for (let fy = .55; fy < .95; fy += .1) for (let fx = .3; fx < .75; fx += .1) { const px = e.X - m.ax * e.k + m.w * e.k * fx, py = e.Y - m.ay * e.k + m.h * e.k * fy;
         if (px < 4 * K.dpr || py < 34 * K.dpr || px > K.W - 4 * K.dpr || py > K.H - 4 * K.dpr || (px < 42 * K.dpr && py > K.H - 42 * K.dpr)) continue;
         if (SZ.treffer(px, py) !== e.o) continue;
-        const b = document.elementFromPoint(px / K.dpr, py / K.dpr); if (b && b.closest && b.closest("button")) continue;
+        const b = document.elementFromPoint(px / K.dpr, py / K.dpr); if (b && b.closest && b.closest("button, .lk-schieber")) continue;   // (FASSUNG 812: nicht auf den Dreh-Schieber)
         return { x: px / K.dpr, y: py / K.dpr }; } }
     if (false) return null; return { fehl: SZ.sichtbare.filter((e) => e.o.spiel === g).map((e) => [Math.round(e.X / K.dpr), Math.round(e.Y / K.dpr)]), z: [...document.querySelectorAll(".lk-zeichen")].filter((z) => getComputedStyle(z).display !== "none").map((z) => z.dataset.g + ":" + JSON.stringify(z.getBoundingClientRect())) }; }, g);
   const tippeHaus = async (g) => { const p = await hausPunkt(g), o = await lage(".sp-lstadt"); if (p && p.fehl) console.log("     (" + g + " nicht antippbar: " + JSON.stringify(p) + ")"); if (!p || p.fehl || !o) return null; await pg.touchscreen.tap(o.l + p.x, o.t + p.y); return p; };
@@ -334,7 +340,7 @@ const sage = (gut, was, zusatz) => {
   const bau0 = (await rufe("spiel_bauen")).length;
   await tippe(".sp-dl-neustadt ~ .sp-dl-station .sp-dl-st-knoepfe button:not([disabled])"); await tick(1700);
   p = await passt();
-  sage((await rufe("spiel_bauen")).length === bau0 + 1 && istPassgenau(p, true), "Aufgabe in der Karte (Ausbauen) → das Menü springt zurück, das Bild liegt wieder passgenau", JSON.stringify(p));
+  sage((await rufe("spiel_bauen")).length === bau0 + 1 && imSpot(p, true), "Aufgabe in der Karte (Ausbauen) → das Menü springt zurück, das Bild liegt mittig im Spot, Kopfzeile mit Kreuz ganz ausgeblendet (Fassung 812)", JSON.stringify(p));
   await knipsen("5-zurueck");
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = ""; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(400);
   await menueHoch(); await tick(300);
@@ -375,7 +381,7 @@ const sage = (gut, was, zusatz) => {
   sage(await pg.evaluate(() => { const e = document.querySelector(".sp-dl-neustadt ~ .sp-dl-station"); return !!e && e.getAttribute("aria-label") === "Bäckerei"; }), "„Karte“ in der Auswahl öffnet die Station der Bäckerei darunter");
   await tippe('.sp-dl-neustadt ~ .sp-dl-station [data-s="liefern"][data-w="brot"]'); await tick(1700);
   p = await passt();
-  sage(((await rufe("spiel_beliefern")).slice(-1)[0] || {}).p_ware === "brot" && istPassgenau(p, true), "„Brot“ in der Station → wieder zurück zum Bild, passgenau", JSON.stringify({ p, b: (await rufe("spiel_beliefern")).slice(-2), w: await pg.evaluate(() => window.DMA_SPIEL.pruef.zustand().dorfWahl), h: await zuletzt() }));
+  sage(((await rufe("spiel_beliefern")).slice(-1)[0] || {}).p_ware === "brot" && imSpot(p, true), "„Brot“ in der Station → wieder zurück zum Bild, mittig im Spot (Fassung 812)", JSON.stringify({ p, b: (await rufe("spiel_beliefern")).slice(-2), w: await pg.evaluate(() => window.DMA_SPIEL.pruef.zustand().dorfWahl), h: await zuletzt() }));
 
   console.log("\nKACHELN DER KLEINEN KARTE: GENAU IHR TEIL, BIS AN DEN RAND (Walkie 306)\n");
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = ""; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300);
