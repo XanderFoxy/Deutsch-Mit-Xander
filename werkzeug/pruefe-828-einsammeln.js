@@ -205,7 +205,7 @@ window.schick=function(d){document.getElementById("f").contentWindow.postMessage
     if (feld) { await tipp(OFF.x + feld.x, OFF.y + feld.y); }
     r = await bis((r) => r.length > 0, 5000); await tick(500); r = await raus();
     sage(!!feld && r.some((m) => m.typ === "leicht-feld" && m.nr === 92) && r.length === 1, "Tipp auf den Acker rechts: Ernten im Spiel (Feld 92)", JSON.stringify({ feld, r }));
-    await schicke({ typ: "leicht-zeichen", z: { feld91: ["fertig", "Getreide reif", "getreide"], feld92: ["laeuft", "Getreide 2:30", "getreide"] } }); await tick(900);
+    await schicke({ typ: "leicht-zeichen", z: { feld91: ["fertig", "2 Getreide", "getreide"], feld92: ["laeuft", "Getreide 2:30", "getreide"] } }); await tick(900);
     let fz = [await zeichenLage("feld91"), await zeichenLage("feld92")];
     const knoepfeFrei = await fr.evaluate(() => { const z = [...document.querySelectorAll(".lk-zeichen")].filter((b) => getComputedStyle(b).display !== "none").map((b) => b.getBoundingClientRect());
       return [".lk-vollknopf", ".lk-lupe"].every((s) => { const k = document.querySelector(s).getBoundingClientRect(); return z.every((r) => Math.min(r.right, k.right) - Math.max(r.left, k.left) <= 0.5 || Math.min(r.bottom, k.bottom) - Math.max(r.top, k.top) <= 0.5); }); });

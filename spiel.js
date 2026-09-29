@@ -13228,7 +13228,8 @@
     /* FASSUNG 828 — die Äcker wie im alten Bild: „Getreide reif" oder die Uhr bis zur Reife */
     DORF_FELDER.forEach(function (f) {
       var st = ackerStand(f.nr);
-      aus["feld" + f.nr] = st.reif ? ["fertig", "Getreide reif", "getreide"] : ["laeuft", "Getreide " + uhrText(st.rest), "getreide"];
+      /* reif: klein wie die anderen fertigen Zeichen – nur die Ähre und „×2" (gesät „×5", wie spiel_ernten) */
+      aus["feld" + f.nr] = st.reif ? ["fertig", (st.saat ? 5 : 2) + " Getreide", "getreide"] : ["laeuft", "Getreide " + uhrText(st.rest), "getreide"];
     });
     return aus;
   }
