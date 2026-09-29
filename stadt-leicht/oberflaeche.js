@@ -1043,6 +1043,13 @@
       if (g) { try { window.parent.postMessage({ typ: "leicht-haus", g: g }, location.origin); } catch (e) {} }
       return;
     }
+    /* FASSUNG 823 — XANDER: „wenn ich auf eins klicke, dann muss ich noch mal auf dem Bahnhof …". Auch im Vollbild öffnet ein
+       Tipp auf den Bahnhof das eine Bahnhof-Fenster des Spiels (Export, Import, Touristen) statt „Gehört zum Dorf". */
+    if (window.parent !== window && !O.gestalten && art === "haus" && o && o.spiel === "bahnhof") {
+      SZ.auswahl = null; karte.hidden = true;
+      try { window.parent.postMessage({ typ: "leicht-haus", g: "bahnhof" }, location.origin); } catch (e) {}
+      return;
+    }
     karte.hidden = false; karte.innerHTML = "";
     const titel = el("div", "lk-karte-titel"), zeile = el("div", "lk-karte-zeile"), knoepfe = el("div", "lk-karte-knoepfe");
     karte.append(titel, zeile, knoepfe);
@@ -1116,6 +1123,18 @@
     zeile.textContent = o.art === "wunder" ? "Wahrzeichen" : "Gehört zum Dorf";
     knoepfe.append(zu);
   }
+  /* FASSUNG 823 — das Bahnhof-Fenster des Spiels liegt im Vollbild über der Stadt (unten bzw. quer rechts). Das Spiel sagt,
+     wie viel es verdeckt; liegt der Bahnhof dahinter, fährt die Stadt ihn in den freien Teil – er bleibt zu sehen. */
+  window.addEventListener("message", (ev) => {
+    if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-frei") return;
+    const b = SZ.objekte.find((x) => x.spiel === ev.data.g) || SZ.objekte.find((x) => x.bild === "k_" + ev.data.g);
+    if (!b) return;
+    const dpr = K.dpr, W = K.W - Math.max(0, +ev.data.rechts || 0) * dpr, H = K.H - Math.max(0, +ev.data.unten || 0) * dpr, oben = 56 * dpr;
+    const P = ST.proj(b.x, b.y, (b.hoehe || 10) * 0.4), rand = 30 * dpr;
+    if (P[0] > rand && P[0] < W - rand && P[1] > oben + rand && P[1] < H - rand) return;
+    const a = ST.aufBoden(P[0], P[1]), t = ST.aufBoden(W / 2, (oben + H) / 2);
+    L().fliegeZu(K.x + a[0] - t[0], K.y + a[1] - t[1], K.s, 500);
+  });
   function aktion(fn, text) {
     fn().then((r) => {
       ansage(text);
