@@ -3127,3 +3127,20 @@ button.sp-gesperrt, button.sp-gesperrt:disabled { opacity: 1; color: #d9ccb0; ba
    Buttons damals gemacht haben … der will immer die Eier kopieren". Das Dorfbild (alt und neu) ist Spielfeld: nichts
    markierbar, kein Kopier-/Bildmenü beim langen Drücken, kein grauer Tippkasten. */
 .sp-lstadt, .sp-lstadt *, .sp-dl-rahmen, .sp-dl-rahmen *, .sp-dorfland, .sp-dorfland * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+/* FASSUNG 833 — XANDER (Funk 214): „in der großen Ansicht von der Stadt immer noch nichts einsammeln oder Aufgaben lösen
+   oder jemanden losschicken". Die Station eines Hauses im Vollbild der neuen Stadt: wie das Bahnhof-Fenster unten (hoch)
+   bzw. quer rechts, höchstens gut zwei Fünftel hoch, rollt in sich; Knöpfe mindestens 34 px. Dazu die Meldungen oben. */
+.sp-sf-huelle > .sp-dl-station { pointer-events: auto; animation: none; margin: 0; width: 100%; max-width: 440px; box-sizing: border-box; max-height: min(44vh, 320px); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 7px 9px 9px; background: #fcf6e6; }
+.sp-sf-huelle .sp-dl-st-kopf > i { flex: 0 0 38px; width: 38px; }
+.sp-sf-huelle .sp-dl-st-zu { width: 34px; height: 34px; min-width: 34px; min-height: 34px; }
+.sp-sf-huelle button { min-height: 34px; border: 0; border-radius: 9px; padding: 4px 9px; background: #8a5a2b; color: #fff8e6; font: 700 12px/1.15 system-ui, sans-serif; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+.sp-sf-huelle button:disabled { opacity: .45; cursor: default; }
+.sp-sf-huelle button small { font-weight: 600; opacity: .9; margin-left: 4px; }
+.sp-sf-huelle button.sp-gesperrt, .sp-sf-huelle button.sp-gesperrt:disabled { opacity: 1; color: #5a4a30; background: #e6dac0; }
+.sp-sf-huelle .sp-sm-liste { display: flex; flex-direction: column; gap: 4px; }
+.sp-sf-huelle .sp-sm-liste button { width: 100%; justify-content: flex-start; text-align: left; white-space: normal; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .sp-sf-huelle > .sp-dl-station { max-height: 100%; }
+}
+.sp-ls-meldung { position: absolute; left: 50%; top: max(58px, calc(env(safe-area-inset-top) + 52px)); transform: translateX(-50%); z-index: 8; width: max-content; max-width: min(420px, calc(100% - 24px)); box-sizing: border-box; padding: 8px 14px; border-radius: 12px; background: rgba(22, 28, 48, .92); color: #f6ecd6; font: 600 13px/1.3 system-ui, sans-serif; text-align: center; pointer-events: none; transition: opacity .3s; }
+.sp-ls-meldung.sp-weg { opacity: 0; }

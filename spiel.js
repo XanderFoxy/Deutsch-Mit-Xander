@@ -432,6 +432,8 @@
   function hinweis(text) {
     try { console.log("[Spiel]", text); } catch (e) {}
     try { if (window.__spielMeldungen) window.__spielMeldungen.push(String(text)); } catch (e) {}
+    /* FASSUNG 833 — im Vollbild der neuen Stadt steht die Meldung oben in deren Rahmen (das Menü liegt dahinter) */
+    try { if (typeof LSTADT !== "undefined" && LSTADT && LSTADT.voll) lsMeldung(text); } catch (e) {}
     /* FASSUNG 669 — läuft ein Extra-Spiel, steht die Meldung im Spielfenster. */
     if (typeof extraEl !== "undefined" && extraEl && extraEl.isConnected) {
       var em = extraEl.querySelector(".sp-extra-meldung");
@@ -12517,6 +12519,56 @@
       lsFolgen();
     }, 60);
   }
+  /* FASSUNG 833 — XANDER (Funk 214): „Des Weiteren kann man in der großen Ansicht von der Stadt immer noch nichts
+     einsammeln oder Aufgaben lösen oder jemanden losschicken das kann man nur in der kleinen Ansicht". Im Vollbild der neuen
+     Stadt lag die Station eines Hauses (Einsammeln, Herstellen, Losschicken, Ausbauen) im Menü HINTER dem Vollbild – sie
+     ging auf, aber niemand sah sie. Jetzt liegt sie wie das Bahnhof-Fenster (823) im Rahmen der Stadt: unten (Telefon hoch)
+     bzw. quer rechts (Telefon quer), höchstens gut zwei Fünftel hoch, rollt in sich. Die Stadt erfährt, wie viel verdeckt ist
+     (leicht-frei), und rückt das Haus samt seinem kleinen Menü in den freien Teil. */
+  var SF = { el: null, html: "", zeit: 0, g: "", frei: "" };
+  function stationFensterSoll() {
+    var g = S.dorfWahl;
+    return !!(LSTADT && LSTADT.voll && g && g !== "bahnhof" && (DORF[g] || g === "wald") && S.ich && !S.umbau && !dorfBesuchStand());
+  }
+  function stationFenster(sofort) {
+    if (!stationFensterSoll()) {
+      if (SF.el) { SF.el.remove(); SF.el = null; SF.html = ""; SF.g = ""; }
+      /* (nur nachsehen, wenn noch etwas als verdeckt gemeldet ist oder das Bahnhof-Fenster offen ist – höchstens alle 0,3 s) */
+      if ((SF.frei !== "|0|0" || BF.el) && performance.now() - (SF.freiZeit || 0) > 300) { SF.freiZeit = performance.now(); lsFreiMelden(); }
+      return;
+    }
+    if (!sofort && SF.el && SF.g === S.dorfWahl && performance.now() - SF.zeit < 500) return;
+    if (!SF.el) {
+      SF.el = document.createElement("div"); SF.el.className = "sp-bf-huelle sp-bf-voll sp-sf-huelle";
+      SF.el.addEventListener("click", function (ev) { schnellKlick(ev); setTimeout(function () { stationFenster(true); }, 30); });
+    }
+    if (SF.el.parentNode !== LSTADT.el) LSTADT.el.appendChild(SF.el);
+    var g = S.dorfWahl, html = (g === "wald" ? waldStationHtml(S.ich) : dorfStationHtml(S.ich, g)).replace('class="sp-dl-station"', 'class="sp-dl-station sp-stationfenster"');
+    if (html !== SF.html) { SF.html = html; try { domAngleichen(SF.el, html); } catch (e) { SF.el.innerHTML = html; } }
+    SF.g = g; SF.zeit = performance.now();
+    lsFreiMelden();
+  }
+  /* wie viel die Fenster des Spiels (Station, Bahnhof) von der Stadt verdecken – nur, wenn es sich ändert */
+  function lsFreiMelden() {
+    if (!LSTADT) return;
+    var f = (SF.el && SF.el.querySelector(".sp-dl-station")) || (BF.el && LSTADT.voll && BF.el.querySelector(".sp-bahnhof")), d = { typ: "leicht-frei", g: "", unten: 0, rechts: 0 };
+    if (f && LSTADT.voll) {
+      var q = f.getBoundingClientRect(), quer = q.top < innerHeight * 0.3;
+      d.g = SF.el && f.closest(".sp-sf-huelle") ? SF.g : "bahnhof";
+      d.unten = quer ? 0 : Math.max(0, Math.round(innerHeight - q.top)); d.rechts = quer ? Math.max(0, Math.round(innerWidth - q.left)) : 0;
+    }
+    var sig = d.g + "|" + d.unten + "|" + d.rechts;
+    if (sig === SF.frei) return;
+    SF.frei = sig; lsPost(d);
+  }
+  /* FASSUNG 833 — Meldungen des Spiels (eingesammelt, losgeschickt …) im Vollbild: sonst standen sie im Menü dahinter */
+  function lsMeldung(text) {
+    if (!LSTADT || !LSTADT.voll || !LSTADT.el) return;
+    var m = LSTADT.el.querySelector(".sp-ls-meldung");
+    if (!m) { m = document.createElement("div"); m.className = "sp-ls-meldung"; m.setAttribute("role", "status"); LSTADT.el.appendChild(m); }
+    m.textContent = String(text || ""); m.classList.remove("sp-weg"); void m.offsetWidth;
+    clearTimeout(m.uhr); m.uhr = setTimeout(function () { m.classList.add("sp-weg"); }, 3400);
+  }
   /* FASSUNG 775 — mit Koch im Gasthaus essen die Gäste auch Fleisch und Eier. */
   function bahnEssen(ich) { return ["brot", "bratwurst", "kuchen", "fisch"].concat(dorfSteht(ich, "gasthaus") && beruf(ich, "koch") > 0 ? ["fleisch", "ei"] : []).reduce(function (n, w) { return n + vorrat(ich, w); }, 0); }
   /* FASSUNG 779 — Beliebtheit und Kurtaxe (Walkie 300): „wie in Italien wo man dann so zusätzlich so eine tourismussteuer
@@ -13231,6 +13283,7 @@
     document.removeEventListener("scroll", lsFolgen, true);
     try { LSTADT.el.remove(); } catch (e) {}
     LSTADT = null;
+    SF.el = null; SF.html = ""; SF.g = ""; SF.frei = "";   // FASSUNG 833 — das Stationsfenster lag im Rahmen
     bahnFenster();
   }
   function lsVoll(an) {
@@ -13287,7 +13340,8 @@
         /* FASSUNG 817 — „Umbauen" unter der neuen Stadt: der Tipp wählt das Gebäude bzw. seinen neuen Platz. */
         if (S.umbau && !dorfBesuchStand()) { if (DORF[lg]) umbauTippen(lg); return; }
         /* FASSUNG 817 — „Karte" in der kleinen Auswahl über dem Haus: die Station darunter öffnen. */
-        if (ev.data.karte) { S.dorfWahl = lg; S.dorfTippWeg = true; ton("swoosh", 0.2); schnellZeichnen(true); lsStationZeigen(); return; }
+        /* FASSUNG 833 — im Vollbild als Fenster über der Stadt (stationFenster), sonst rollt das Menü zur Station darunter */
+        if (ev.data.karte) { S.dorfWahl = lg; S.dorfTippWeg = true; ton("swoosh", 0.2); schnellZeichnen(true); if (LSTADT.voll) { bahnFenster(); stationFenster(true); } else lsStationZeigen(); return; }
         if (!dorfBesuchStand() && dorfFertigSammeln(lg)) { S.dorfTippWeg = true; LSTADT.zSig = ""; return; }
         if (!dorfBesuchStand() && DORF[lg] && baustelleVon(S.ich, lg)) { bauHelfen(lg); S.dorfWahl = lg; S.dorfTippWeg = true; LSTADT.zSig = ""; schnellZeichnen(true); return; }
         /* FASSUNG 817 — XANDER (Walkie 305): „dass man beim einfachen klicken auf ein Haus einfach schon die Aufgabe anstellt
@@ -13304,7 +13358,9 @@
         if (S.dorfWahl === "bahnhof") { clearTimeout(S.lsStationUhr); S.bahnMeldung = null; bahnLaden(); bahnFensterEinpassen(); return; }
         bahnFenster();
         /* FASSUNG 817 — XANDER: „entweder springe ich runter zu der Dialogbox die unter dem Bild liegt". Sanft hin. */
-        if (S.dorfWahl) lsStationZeigen();
+        /* FASSUNG 833 — im Vollbild: das Fenster der Station über der Stadt (auch zu, wenn dasselbe Haus noch einmal getippt wird) */
+        if (LSTADT.voll) stationFenster(true);
+        else if (S.dorfWahl) lsStationZeigen();
       }
       /* FASSUNG 817 — ein Symbol in der kleinen Auswahl über dem Haus: genau das herstellen (dieselbe Serverfunktion). */
       /* FASSUNG 822 — XANDER: „durch den Tipp in den Einstellungen so festlegen kann, sobald ich eins antippe und es hat Arbeit
@@ -13321,6 +13377,13 @@
       }
       /* FASSUNG 817 — Doppeltipp in der Stadt (näher ran / ganze Stadt): eine offene Station geht zu, wie im alten Bild. */
       if (ev.data.typ === "leicht-doppel") { clearTimeout(S.lsStationUhr); if (S.dorfWahl) { S.dorfWahl = ""; schnellZeichnen(true); } }
+      /* FASSUNG 833 — „Bootsverleih bauen/ausbauen" aus dem Verwalten-Menü der Stadt: dieselbe Serverfunktion wie am Bahnhof */
+      if (ev.data.typ === "leicht-freizeitbau" && !dorfBesuchStand()) {
+        wirtschaft("spiel_freizeit_bauen", { p_was: "bootsverleih" }, function (r) {
+          ton("hammerschlag", 0.35); LSTADT && (LSTADT.sSig = "");
+          hinweis(r.stufe > 1 ? "Der Bootsverleih ist jetzt Stufe " + r.stufe + ": mehr Boote für die Touristen (−" + r.preis + " P)." : "Das Bootshaus am See steht: Touristen können jetzt Tretboote mieten (−" + r.preis + " P).");
+        });
+      }
     };
     LSTADT.fs = function () { if (LSTADT && LSTADT.voll && !(document.fullscreenElement || document.webkitFullscreenElement) && LSTADT.fsWar) lsVoll(false); if (LSTADT) LSTADT.fsWar = Boolean(document.fullscreenElement); };
     window.addEventListener("message", LSTADT.post);
@@ -13370,7 +13433,8 @@
     /* Derselbe Spielstand: was im Spiel gebaut, versetzt oder fertig wird, steht sofort auch in der neuen Stadt
        (ohne dass sie selbst neu fragt). */
     if (!dorfBesuchStand()) {
-      var i = S.ich, st = { dorf: i.dorf || {}, dorf_plan: i.dorf_plan || {}, baustellen: baustellenVon(i), volk: { wunder: (i.volk || {}).wunder || {}, wunder_platz: (i.volk || {}).wunder_platz || {} }, dorf_name: i.dorf_name || "" };
+      /* FASSUNG 833 — dazu die Freizeit (Stufe des Bootsverleihs) für das Verwalten-Menü der Stadt */
+      var i = S.ich, st = { dorf: i.dorf || {}, dorf_plan: i.dorf_plan || {}, baustellen: baustellenVon(i), volk: { wunder: (i.volk || {}).wunder || {}, wunder_platz: (i.volk || {}).wunder_platz || {}, freizeit: (i.volk || {}).freizeit || {} }, dorf_name: i.dorf_name || "" };
       var ss = JSON.stringify(st);
       if (ss !== L.sSig) { L.sSig = ss; lsPost({ typ: "leicht-stand", ich: st }); }
     }
@@ -13474,6 +13538,7 @@
     lsZeichenSchicken();
     /* FASSUNG 823 — im Vollbild läuft die Uhr des Bahnhof-Fensters hier mit (das Menü dahinter ist verdeckt) */
     if ((BF.el || S.dorfWahl === "bahnhof") && performance.now() - BF.zeit > 500) bahnFenster();
+    stationFenster();   // FASSUNG 833 — die Station im Vollbild (zu, sobald sie nicht mehr gewählt ist; sonst alle 0,5 s frisch)
     requestAnimationFrame(lsTakt);
   }
   function lsFolgen() {

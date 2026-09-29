@@ -283,3 +283,37 @@ html, body, #lStadt, #lStadt *, .lk-zeichen, .lk-zeichen * { -webkit-user-select
 .lk-knopf.lk-direkt-knopf.lk-an { color: #ffd23f; border-color: rgba(255,210,63,.7); }
 /* FASSUNG 822 — solange ein Ding angehoben ist (Halten und Ziehen) */
 body.lk-gehoben #lDinge { cursor: grabbing; }
+/* FASSUNG 833 — XANDER (Funk 214): „Den Bootsverleih kann man offenbar nicht verwalten … Eintritt verlangen … in ein extra
+   Menü". Das Menü „Verwalten" eines Wahrzeichens bzw. des Bootsverleihs (verwalten.js): unten über der Stadt, auf dem
+   Telefon (360 px) volle Breite, rollt in sich; Tippflächen mindestens 34 px. */
+.lk-verwalten { position: absolute; left: 8px; right: 8px; bottom: calc(max(10px, env(safe-area-inset-bottom)) + 4px); max-width: 440px; margin: 0 auto; max-height: calc(100% - 76px); overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box; padding: 10px 12px 12px; border-radius: 16px; background: rgba(22,28,48,.95); border: 1px solid rgba(255,255,255,.16); color: #f3ead8; box-shadow: 0 8px 26px rgba(0,0,0,.4); z-index: 7; font: 500 13px/1.35 system-ui, sans-serif; touch-action: pan-y; }
+.lk-vw-kopf { display: flex; align-items: center; gap: 8px; }
+.lk-vw-titel { flex: 1 1 auto; min-width: 0; font: 700 16px/1.2 Georgia, serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lk-vw-zu { flex: none; width: 36px; height: 36px; border-radius: 11px; border: 1px solid rgba(255,255,255,.2); background: #2a3252; color: #f3ead8; display: inline-grid; place-items: center; padding: 0; cursor: pointer; }
+.lk-vw-zu svg { width: 18px; height: 18px; }
+.lk-vw-info { margin: 6px 0 8px; padding: 7px 9px; border-radius: 10px; background: rgba(255,255,255,.07); color: #efe4cc; }
+.lk-vw-reihe { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 4px 0 6px; }
+.lk-vw-name { font-weight: 700; min-width: 64px; }
+.lk-vw-stufen { display: flex; gap: 5px; flex: 1 1 auto; }
+.lk-vw-stufe { flex: 1 1 0; min-width: 44px; height: 36px; border-radius: 10px; border: 1px solid rgba(243,195,90,.45); background: #2a3252; color: #f3ead8; font: 700 13px system-ui, sans-serif; cursor: pointer; padding: 0 4px; }
+.lk-vw-stufe.an { background: #b8812e; border-color: #f3c35a; color: #fff8e8; }
+.lk-vw-zahlen { display: grid; grid-template-columns: 1fr; gap: 2px; margin: 4px 0 8px; }
+.lk-vw-zeile { display: flex; justify-content: space-between; gap: 10px; padding: 3px 2px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.lk-vw-zeile b { font-weight: 800; white-space: nowrap; }
+.lk-vw-knoepfe { display: flex; flex-wrap: wrap; gap: 6px; }
+.lk-vw-knopf { min-height: 38px; padding: 0 12px 0 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,.2); background: #2f3a5c; color: #fff8e8; display: inline-flex; align-items: center; gap: 6px; font: 700 13px system-ui, sans-serif; cursor: pointer; flex: 1 1 auto; justify-content: center; }
+.lk-vw-knopf svg { width: 18px; height: 18px; flex: none; }
+.lk-vw-knopf.lk-vw-gut { background: #3f7d3a; border-color: rgba(111,174,99,.8); }
+.lk-vw-knopf:disabled { opacity: .45; cursor: default; }
+.lk-vw-klein { margin: 8px 0 0; font-size: 11.5px; color: #cdbf9f; }
+.lk-knopf.lk-verwalten-knopf svg { width: 20px; height: 20px; }
+.lk-mini-modus .lk-verwalten { left: 4px; right: 4px; top: 4px; bottom: 4px; max-height: none; padding: 6px 8px; font-size: 11.5px; }
+.lk-mini-modus .lk-vw-titel { font-size: 13px; }
+.lk-mini-modus .lk-vw-stufe, .lk-mini-modus .lk-vw-zu { height: 32px; }
+.lk-mini-modus .lk-vw-zu { width: 32px; }
+.lk-mini-modus .lk-vw-knopf { min-height: 32px; font-size: 12px; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .lk-verwalten { left: auto; right: max(8px, env(safe-area-inset-right)); top: 56px; bottom: 8px; width: min(380px, 52vw); max-height: none; margin: 0; }
+}
+/* FASSUNG 833 — am Rathaus steht zusätzlich „Verwalten": sieben Knöpfe passen in eine Reihe (sonst stand ✕ allein darunter) */
+.lk-karte.lk-am-ding { max-width: min(330px, calc(100vw - 8px)); }

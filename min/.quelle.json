@@ -44,12 +44,12 @@
  "rueckfrage.js": "7de87f6e8e1dfd76fa649df2080351a71b2fa0f3",
  "korrekturen.css": "6bd713b6491f3cb7c2df82c246a2540d8dd68ae5",
  "livechat.js": "15d707c01f3abfefe740085198d42b2f0f127725",
- "spiel.css": "c04d62affd569236177824bda6e8fc10a61e2f95",
- "spiel.js": "900980455267b2bed6f3538b97bd3ea1802ae2a7",
  "data-werkstatt.js": "cba2657e57d41857343229fd3188630072a1057a",
  "data-plaetze.js": "535d4ff79255fb31e4c5d7c5458a28244b02d4c5",
  "baukasten.js": "a63bcb15e0d8be700f68147d239004b8eb93275b",
  "app-styles.css": "6ba036631de07e4b073b58fb614cb76b7f368569",
  "data-szenen.js": "3e6d76afd9e4a539237f72dad41b64a8726cc1a8",
- "app.js": "83d8d2d09a35dc83d2e166d46cd8f564933b3ea0"
+ "app.js": "83d8d2d09a35dc83d2e166d46cd8f564933b3ea0",
+ "spiel.css": "e2e49404db028481dd71a44a15362130bf26a07f",
+ "spiel.js": "95dd4234aceb5efa823a897ffb591ee7f712b94a"
 }
