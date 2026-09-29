@@ -506,7 +506,10 @@
       });
       const bu = see(68, 90); rund(bu[0], bu[1], 8, 6, 1);
       /* Felder (Getreide) unten links und rechts am Rand, wie im alten Bild */
-      for (const [px, py, fw, fh] of [[30, 182, 9, 6], [305, 142, 6, 8.5], [58, 196, 4.5, 3.5]]) { const q = welt(px, py); rund(q[0], q[1], fw, fh, 2); }
+      /* FASSUNG 828 — XANDER: „es gibt noch kein Getreide … da muss ich immer in die alte Ansicht zurück". Die Äcker sind
+         die Felder 91 (links) und 92 (rechts) des alten Bildes – ein Tipp darauf erntet im Spiel (oberflaeche.js). */
+      D.FELD_ORTE = [];
+      for (const [px, py, fw, fh, nr] of [[30, 182, 9, 6, 91], [305, 142, 6, 8.5, 92], [58, 196, 4.5, 3.5, 91]]) { const q = welt(px, py); rund(q[0], q[1], fw, fh, 2); D.FELD_ORTE.push({ nr: nr, x: q[0], y: q[1], r: Math.max(fw, fh) }); }
     };
     D.kulisse = function () {
       const liste = [];
