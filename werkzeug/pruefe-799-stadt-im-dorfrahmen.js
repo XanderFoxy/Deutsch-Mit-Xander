@@ -223,7 +223,10 @@ const sage = (gut, was, zusatz) => {
     return { mini: document.body.classList.contains("lk-mini-modus"), kopf: g(".lk-kopf"), bauen: g(".lk-bauen"), lupe: g(".lk-lupe"), voll: g(".lk-vollknopf"), feld: felder.length ? Math.min(...felder.map((q) => Math.min(q.width, q.height))) : 0, felder: felder.length }; });
   sage(!!r && r.mini && !r.kopf.sicht && !r.bauen.sicht, "im kleinen Rahmen nur das Bild: keine Kopfleiste, kein Bauen/Schmücken", JSON.stringify(r && { kopf: r.kopf, bauen: r.bauen }));
   sage(!!r && r.lupe.sicht && r.voll.sicht && r.lupe.w >= 24 && r.voll.w >= 30 && r.felder === 0, "Kompass (26 px, Tippfläche 34 px) und Vollbild (≥ 30 px); die kleine Karte erst mit der Lupe, wie beim alten Dorf", JSON.stringify(r && { lupe: r.lupe, voll: r.voll, felder: r.felder }));
-  sage(await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-dl-beschriftung button")].map((x) => x.dataset.s); return /^stadtversion,stadtversion,stadtvoll(,stadtvoll,stadtvoll)?(,appholen)?,dorfanzeige,dorfanzeige$/.test(b.join(",")); }), "darunter nur „Alte Version“, „Neue Version“, „Vollbild“, „Schmücken“, „Bauen“ (und „Als App“) (Symbole/Namen/Umbauen gehören zum alten Bild)");
+  /* FASSUNG 817 — XANDER (Walkie 305): „genau die Buttons und genau die Funktionen sollen unter der neuen Version genauso
+     stehen". Seitdem dieselbe Reihe wie unter dem alten Bild (Symbole, Namen, Umbauen …), dazu Vollbild, Schmücken, Bauen
+     (im kleinen Rahmen, Funk 207) und „Ein Tipp produziert" (die Einzelheiten prüft pruefe-817-rahmen-bedienung.js). */
+  sage(await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-dl-beschriftung button")].map((x) => x.dataset.s); return /^dorfanzeige,dorfanzeige,umbau,stadtversion,stadtversion,stadtvoll,stadtgestalten,stadtgestalten,lsdirekt(,appholen)?$/.test(b.join(",")); }), "darunter dieselbe Reihe wie beim alten Bild (Symbole, Namen, Umbauen, Alte/Neue Version) und Vollbild, Schmücken, Bauen, „Ein Tipp produziert“ (Fassung 817)", await pg.evaluate(() => [...document.querySelectorAll(".sp-dl-beschriftung button")].map((x) => x.dataset.s).join(",")));
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-klein.png" });
 
   /* FASSUNG 806 — XANDER: „Jetzt fehlt in der kleinen Ansicht der neuen Version der Kompass … Danach muss wieder die
@@ -290,7 +293,8 @@ const sage = (gut, was, zusatz) => {
   /* FASSUNG 805 — XANDER: „diese Kachel … muss nicht so ein großes Viereck sein … viel kleiner, weil man kann seinen
      Finger auch bisschen anstrengen". Die Karte ist 72 px, die Viertel also 24 px (bewusst unter den sonst üblichen 30 px). */
   /* FASSUNG 806 — XANDER: „Die kann halb so klein sein": 40 px, Viertel ≈ 13 px. */
-  sage(kf && kf.n === 9 && kf.min >= 15 && kf.min <= 20, "mit dem Kompass erscheint die kleine Karte am Rand: 9 Viertel à ≈ 18 px", JSON.stringify(kf));
+  /* FASSUNG 817 — die kleine Karte hat die Form des Bildes (16:10): Viertel ≈ 25 × 16 px */
+  sage(kf && kf.n === 9 && kf.min >= 15 && kf.min <= 20, "mit dem Kompass erscheint die kleine Karte am Rand: 9 Viertel à ≈ 25 × 16 px", JSON.stringify(kf));
   { const a0 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y })); const o = await lage(".sp-lstadt"); const cdp = await ctx.newCDPSession(pg);
     await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: o.l + o.w / 2, y: o.t + o.h * .6 }] });
     for (let i = 1; i <= 8; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: o.l + o.w / 2 - i * 6, y: o.t + o.h * .6 - i * 3 }] }); await tick(16); }
@@ -300,7 +304,9 @@ const sage = (gut, was, zusatz) => {
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-lupe.png" });
   await tippeImFrame(".lk-mini-feld:nth-child(9)"); await tick(1100);
   const k9 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y }));
-  sage(!!k9 && k9.x > 30 && k9.y > 30, "ein Tipp auf ein Viertel der kleinen Karte fährt dorthin", JSON.stringify(k9));
+  /* FASSUNG 817 — XANDER (Walkie 306): die Kachel unten rechts zeigt genau das untere rechte Neuntel des Überblicks */
+  const t9 = await imFrame(() => window.STADT.oberflaeche.blickTeile ? window.STADT.oberflaeche.blickTeile() : null);
+  sage(!!t9 && Math.abs(t9[0][0] - 2 / 3) < .02 && Math.abs(t9[0][1] - 2 / 3) < .02 && Math.abs(t9[1][0] - 1) < .02 && Math.abs(t9[1][1] - 1) < .02, "ein Tipp auf ein Viertel der kleinen Karte fährt dorthin (Fassung 817: genau das Neuntel unten rechts)", JSON.stringify({ k9, t9 }));
 
   console.log("\nHANDELN IM KLEINEN RAHMEN (Fassung 801): TIPP AUFS HAUS → KARTE MIT EINSAMMELN DARUNTER\n");
   sage((await imFrame(() => performance.getEntriesByType("resource").filter((r) => /_g\.webp/.test(r.name)).length)) === 0, "im kleinen Rahmen nur kleine Bilder (kein großes geladen)");
@@ -342,6 +348,8 @@ const sage = (gut, was, zusatz) => {
   sage(!!zb && /^Kuchen [12]:\d\d$/.test(zb.schule || ""), "über der Schule läuft die Uhr („… 2:10“)", JSON.stringify(zb && zb.schule));
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-zeichen.png" });
   if (process.env.STAPEL && zb) console.log("ZIEL", await imFrame((p) => { const e = document.elementFromPoint(p.x, p.y); return e && (e.className + "/" + e.tagName); }, zb));
+  /* FASSUNG 817 — der Tipp aufs Haus rollt das Menü zur Karte darunter: vorher das Bild wieder ganz ins Blickfeld */
+  await pg.evaluate(() => { const p = document.querySelector(".sp-dl-neustadt-platz"); if (p) p.scrollIntoView({ block: "center" }); }); await tick(400);
   if (zb) { const off = await lage(".sp-lstadt"); await pg.touchscreen.tap(off.l + zb.x, off.t + zb.y); await tick(1200); }
   const nach = await pg.evaluate(() => ({ ab: window.__abgeholt, wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl }));
   sage(nach.ab.join() === "baeckerei" && nach.wahl !== "baeckerei", "ein Tipp auf „4 Brot“ sammelt direkt ein (spiel_werk_abholen), ohne erst die Station zu öffnen", JSON.stringify(nach));

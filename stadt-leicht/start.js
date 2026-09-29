@@ -37,6 +37,10 @@
   let schwung = [0, 0], letzteBewegung = 0, gezogen = false, startPunkt = null;
   /* FASSUNG 807 — XANDER: „man kommt nicht über den Ereignishorizont hinaus" – bis in die Außenbezirke (Wald, Bahn) */
   function begrenzen() {
+    /* FASSUNG 817 — XANDER (Funk 207): „wenn ich da hinklicke muss die Map an ihr äußerstes Ende gehen … und ich kann dann
+       trotzdem noch weiter scrollen das macht keinen Sinn". Im kleinen Rahmen gilt allein der Rand des Überblicks
+       (oberflaeche.js, O.klemmen) – die Grenzen in Welt-Achsen schoben den Blick sonst schräg weg. */
+    if (O().klemmen && document.body.classList.contains("lk-mini-modus")) { O().klemmen(); return; }
     const g = B.GROESSE / 2 + B.RAND * 0.8; K.x = Math.max(-g, Math.min(g, K.x)); K.y = Math.max(-g, Math.min(g, K.y));
     /* FASSUNG 808 — Blick nach Norden: die Alpen sind die Spielgrenze, die Kamera geht nicht weit über die Horizontlinie */
     const D = ST.dorf;
@@ -60,7 +64,9 @@
   dingeC.addEventListener("pointermove", (e) => {
     if (!zeiger.has(e.pointerId)) return;
     const alt = zeiger.get(e.pointerId), neu = { x: e.clientX * K.dpr, y: e.clientY * K.dpr };
-    if (zeiger.size === 2 && !document.body.classList.contains("lk-mini-modus")) {
+    /* FASSUNG 817 — Funk 207: „diese zweite Zoomstufe … auch in der kleinen Miniaturansicht": zwei Finger zoomen jetzt
+       auch im kleinen Rahmen (Grenzen setzt oberflaeche.js: vom Überblick bis zur zweiten Stufe). */
+    if (zeiger.size === 2) {
       const [a, b] = [...zeiger.values()];
       const d0 = Math.hypot(a.x - b.x, a.y - b.y);
       zeiger.set(e.pointerId, neu);

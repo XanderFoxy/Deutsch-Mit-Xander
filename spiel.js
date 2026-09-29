@@ -4576,6 +4576,10 @@
     if (!k || k.disabled) return;
     ev.preventDefault(); ev.stopPropagation();
     var s = k.dataset.s, zu = false;
+    /* FASSUNG 817 — XANDER (Walkie 305): „sobald ich dann gesagt habe losschicken oder einsammeln oder produzieren dass es
+       bei dem Klick auf den Button wieder an die Position in mein Dorfbild springt". Jeder Knopf in der Station unter der
+       neuen Stadt rollt danach sanft zurück zum Bild (passgenau wie beim Öffnen). */
+    if (stadtNeu() && k.closest(".sp-dl-neustadt ~ .sp-dl-station")) lsZurueckZumBild();
     if (s === "waffe") {
       /* FASSUNG 649 — XANDER: „das Waffen Menü vielleicht so klassisch,
          wie man das so bei Diablo … so ne Art Tachometer … ganz schnell
@@ -4802,11 +4806,21 @@
          Daten aber noch im Puffer". Zurück zur alten: der Rahmen der neuen Stadt wird ganz entfernt (lsWeg – der Browser gibt
          seinen Speicher frei). Zur neuen: die gemalten Bilder des alten Dorfs werden freigegeben (0 × 0), bis man zurückkommt. */
       if (S.stadtNeu) { Object.keys(DM.bilder).forEach(function (k) { dmLeinwandWeg(DM.bilder[k]); }); DM.bilder = {}; DM.zuletzt = null; lsAuf(); } else lsWeg();
+      /* FASSUNG 817 — „auch wenn man zwischen der alten und neuen … wechselt soll es immer wieder an dem Platz springen" */
+      dorfRahmenHin(false);
       return;
     } else if (s === "appholen") {
       if (APP.angebot) { var ang = APP.angebot; APP.angebot = null; try { ang.prompt(); } catch (e) {} schnellZeichnen(true); }
       else hinweis("📲 Als App: unten (oder oben) auf „Teilen“ tippen, dann „Zum Home-Bildschirm“. Danach startet die Seite wie eine App.");
       return;
+    } else if (s === "stadtgestalten") {
+      /* FASSUNG 817 — Schmücken/Bauen im kleinen Rahmen; das Bild rückt dafür passgenau ins Blickfeld */
+      lsAuf(); lsPost({ typ: "leicht-gestalten", was: k.dataset.mit || "schmuck" }); ton("swoosh", 0.2); dorfRahmenHin(true);
+      return;
+    } else if (s === "lsdirekt") {
+      S.lsDirekt = !lsDirekt(); try { localStorage.setItem("dma_ls_direkt", S.lsDirekt ? "1" : "0"); } catch (e) {}
+      if (LSTADT) LSTADT.kSig = "";
+      ton("holzklopf", 0.2); schnellZeichnen(true); return;
     } else if (s === "stadtvoll") {
       /* FASSUNG 809 — „Schmücken"/„Bauen" unter dem kleinen Bild: Vollbild und gleich die passende Leiste */
       lsAuf(); if (k.dataset.mit) lsPost({ typ: "leicht-nachvoll", was: k.dataset.mit }); lsVoll(true); return;
@@ -5153,10 +5167,7 @@
     } else if (s === "werkzeugsetzen") {
       S.schnellMenue = false; werkzeugSetzen(k.dataset.w); return;
     } else if (s === "liefern") {
-      wirtschaft("spiel_beliefern", { p_gebaeude: k.dataset.g, p_ware: k.dataset.w, p_menge: Number(k.dataset.n) || 0 }, function (r) {
-        ton("hammerschlag", 0.4);
-        hinweis(({ muehle: "🌬️ Die Mühle mahlt ", baeckerei: "🔥 Die Bäckerei backt ", schmiede: "🔥 Die Schmiede schmilzt ", labor: "🔬 Das Labor baut ", brauerei: "🍺 Die Brauerei braut " })[r.gebaeude] + r.menge + " " + wareName(r.ware) + " – fertig in " + r.minuten + " min. Dann: Mein Dorf → Abholen.");
-      });
+      werkLiefern(k.dataset.g, k.dataset.w, Number(k.dataset.n) || 0);
       return;
     } else if (s === "abholen") {
       werkAbholen(k.dataset.g);
@@ -8658,7 +8669,8 @@
     schnellZeichnen(true);
     setTimeout(function () { try {
       var ziel = m.teil === "forschung" || m.teil === "markt" ? schnellEl.querySelector(".sp-dorf-auf") : m.teil === "volk" ? schnellEl.querySelector(".sp-volk") : m.teil === "ernte" ? schnellEl.querySelector('[data-s="ernte"]') : m.teil === "nachbarn" ? schnellEl.querySelector(".sp-nachbarn") : null;
-      var r = ziel || schnellEl.querySelector(".sp-dl-rahmen"); if (r) r.scrollIntoView({ block: ziel ? "start" : "nearest" });
+      /* FASSUNG 817 — ohne eigenes Ziel: das Dorfbild passgenau (wie beim Öffnen) */
+      if (ziel) ziel.scrollIntoView({ block: "start" }); else dorfRahmenHin(false);
       if (ziel) { ziel.classList.remove("sp-sprung-ziel"); void ziel.offsetWidth; ziel.classList.add("sp-sprung-ziel"); }
     } catch (e) {} }, 80);
   }
@@ -9567,6 +9579,8 @@
     }
     ton("swoosh", 0.2);
     schnellZeichnen(true);
+    /* FASSUNG 817 — „beim öffnen soll das Bild passgenau … liegen": das Dorfbild ganz im Blick, die Überschrift darüber. */
+    if (S.schnellMenue && S.blick === "dorfblick") dorfRahmenHin(false);
   }
   function chatVonSpiel(sid) {
     if (!sid) return "";
@@ -12924,13 +12938,15 @@
      sie den Bahnhof … ich möchte nicht dass da irgendwas überlappt". Die Wahl liegt jetzt UNTER dem Bild, als zwei
      Schalter „Symbole“ und „Namen“ – jeder zeigt, ob er an ist, ein Tipp schaltet ihn um. Im Bild liegt nichts mehr. */
   function dorfBeschriftungHtml() {
-    /* FASSUNG 799 — die neue Stadt kennt Symbole/Namen/Umbauen des alten Bildes nicht: nur Version und Vollbild. */
+    /* FASSUNG 799 — die neue Stadt kannte Symbole/Namen/Umbauen des alten Bildes nicht (seit 817: dieselben Knöpfe). */
     var z = dorfZeichen(), n = dorfNamen();
     /* FASSUNG 807 — XANDER: „Es gibt ja nicht umsonst den Punkt Symbole aus". Auch die neue Stadt folgt „Symbole“ und „Namen“. */
-    if (stadtNeu()) return '<div class="sp-dl-beschriftung sp-dl-beschriftung-neu">' + neueStadtKnopf()
-      + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "0" : "1") + '" data-n="' + (n ? "1" : "0") + '" class="' + (z ? "sp-an" : "") + '" aria-pressed="' + z + '">Symbole ' + (z ? "an" : "aus") + "</button>"
-      + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "1" : "0") + '" data-n="' + (n ? "0" : "1") + '" class="' + (n ? "sp-an" : "") + '" aria-pressed="' + n + '">Namen ' + (n ? "an" : "aus") + "</button></div>";
-    return '<div class="sp-dl-beschriftung"><span>Beschriftung im Bild:</span>'
+    /* FASSUNG 817 — XANDER (Walkie 305): „wenn ich zwischen der alten Version in der neuen Version hin und her wechsle dass
+       ich die alten Buttons nicht mehr vorfinde … genau die Buttons und genau die Funktionen sollen unter der neuen Version
+       genauso stehen … dass die Labels an und ausgehen dass sich das Halloween Paket an und ausschalten kann … nur unter dem
+       neuen Bild eben auch". Unter beiden Bildern steht jetzt dieselbe Knopfreihe in derselben Reihenfolge (Symbole, Namen,
+       Umbauen, Saison, Halloween-Paket, Alte/Neue Version); die neue Version hat dazu Vollbild, Schmücken, Bauen. */
+    return '<div class="sp-dl-beschriftung' + (stadtNeu() ? " sp-dl-beschriftung-neu" : "") + '"><span>Beschriftung im Bild:</span>'
       + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "0" : "1") + '" data-n="' + (n ? "1" : "0") + '" class="' + (z ? "sp-an" : "") + '" aria-pressed="' + z + '">Symbole ' + (z ? "an" : "aus") + "</button>"
       + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "1" : "0") + '" data-n="' + (n ? "0" : "1") + '" class="' + (n ? "sp-an" : "") + '" aria-pressed="' + n + '">Namen ' + (n ? "an" : "aus") + "</button>"
       + (dorfBesuchStand() ? "" : '<button type="button" data-s="umbau" class="' + (S.umbau ? "sp-an" : "") + '" aria-pressed="' + !!S.umbau + '">Umbauen ' + (S.umbau ? "an" : "aus") + "</button>")
@@ -12966,7 +12982,11 @@
       + '<button type="button" data-s="stadtversion" data-v="neu" class="sp-stadt-version' + (neu ? " sp-an" : "") + '" aria-pressed="' + neu + '">Neue Version' + (window.LEICHT_FREI ? "" : " (nur du)") + "</button>"
       + (neu ? '<button type="button" data-s="stadtvoll" class="sp-stadt-voll">Vollbild</button>' : "")
       /* FASSUNG 809 — XANDER: „Mir fehlen noch die items zum schmücken die finde ich hier in der kleinen Map noch gar nicht" */
-      + (neu && !dorfBesuchStand() ? '<button type="button" data-s="stadtvoll" data-mit="schmuck" class="sp-stadt-voll">Schmücken</button><button type="button" data-s="stadtvoll" data-mit="bauen" class="sp-stadt-voll">Bauen</button>' : "") + appKnopfHtml();
+      /* FASSUNG 817 — XANDER (Funk 207): „soll man dazu nicht ins landscape format gezwungen werden … ich möchte es aus diesem
+         kleinen Fenster heraus aufstellen können". „Schmücken"/„Bauen" öffnen die Leiste jetzt im kleinen Rahmen (ohne Vollbild). */
+      + (neu && !dorfBesuchStand() ? '<button type="button" data-s="stadtgestalten" data-mit="schmuck" class="sp-stadt-voll">Schmücken</button><button type="button" data-s="stadtgestalten" data-mit="bauen" class="sp-stadt-voll">Bauen</button>'
+        /* FASSUNG 817 — Funk 207: Einstellung „Ein Tipp produziert direkt" (sonst öffnet ein Tipp die Karte darunter) */
+        + '<button type="button" data-s="lsdirekt" class="' + (lsDirekt() ? "sp-an" : "") + '" aria-pressed="' + lsDirekt() + '">Ein Tipp produziert: ' + (lsDirekt() ? "an" : "aus") + "</button>" : "") + appKnopfHtml();
   }
   /* FASSUNG 806 — XANDER: „es gibt doch oben in der Adresszeile so'n Download Knopf, wo man sich das als App auf dem Desktop
      holen kann … die meisten die wissen nicht was ich mit Adresszeile meine … deswegen gibt es vielleicht in deine
@@ -12982,19 +13002,111 @@
   }
   /* Der Platzhalter im Rahmen – genau so groß wie das alte Bild (16:10). */
   function neueStadtRahmenHtml(ich) {
-    var wahl = S.dorfWahl && (DORF[S.dorfWahl] || S.dorfWahl === "bahnhof" || S.dorfWahl === "wald") ? S.dorfWahl : "";
+    var wahl = S.dorfWahl && !S.umbau && (DORF[S.dorfWahl] || S.dorfWahl === "bahnhof" || S.dorfWahl === "wald") ? S.dorfWahl : "";
     return '<div class="sp-dl-rahmen sp-dl-ganz sp-dl-neustadt"><div class="sp-dl-fenster sp-dl-neustadt-platz"><span>Neue Stadt wird geladen …</span></div></div>'
-      + (wahl ? (wahl === "bahnhof" ? bahnhofHtml(ich) : wahl === "wald" ? waldStationHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
+      /* FASSUNG 817 — „Umbauen" auch unter der neuen Stadt: dieselbe Leiste, gewählt wird mit einem Tipp in der Stadt. */
+      + (S.umbau ? umbauLeisteHtml(ich, true) : "")
+      + (wahl ?(wahl === "bahnhof" ? bahnhofHtml(ich) : wahl === "wald" ? waldStationHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
   }
   /* Die Stadt selbst läuft in einem Rahmen (iframe), der NICHT im Menü steckt: das Menü wird laufend neu angeglichen,
      und ein iframe, das dabei umgehängt wird, lädt neu. Er liegt deshalb am body und folgt Bild für Bild genau dem
      Platzhalter – samt Beschnitt, wenn das Menü scrollt. Ohne Platzhalter (Dorf zu) wird er nach 20 s weggeworfen. */
+  /* FASSUNG 817 — XANDER (Walkie 305): „beim öffnen soll das Bild passgenau in diesem iPhone liegen so wie es ja auch rein
+     passt … es ist nur an der falschen Position geöffnet mit der Überschrift … die Überschrift soll da bleiben … es soll in
+     der Position reinspringen auch wenn man zwischen der alten und neuen … wechselt soll es immer wieder an dem Platz
+     springen". Beim Öffnen des Dorfs, beim Umschalten alt/neu, nach dem Vollbild und nach einer Aufgabe in der Station
+     rollt das Dorf-Menü so, dass das Bild ganz zu sehen ist – die Überschrift („Mein Dorf“) darüber, soweit Platz ist –
+     und, falls das Menü selbst aus dem Bildschirm ragt, auch die Seite. */
+  function menueRollen(el, ziel, sanft) {
+    if (el === window) { if (sanft && window.scrollTo) window.scrollTo({ top: ziel, behavior: "smooth" }); else window.scrollTo(0, ziel); return; }
+    if (sanft && el.scrollTo) el.scrollTo({ top: ziel, behavior: "smooth" }); else el.scrollTop = ziel;
+  }
+  /* Rollt den Behälter sc so, dass [oben, unten] (Bildschirm-Lage) ganz drin liegt; lieber so, dass „ideal“ oben steht. */
+  function menueEinpassen(sc, oben, unten, ideal, sanft) {
+    var sr = sc === window ? { top: 0 } : sc.getBoundingClientRect();
+    var o = sc === window ? 0 : sr.top + sc.clientTop, h = sc === window ? innerHeight : sc.clientHeight;
+    var max = sc === window ? (document.scrollingElement || document.documentElement).scrollHeight - innerHeight : sc.scrollHeight - sc.clientHeight;
+    var jetzt = sc === window ? window.scrollY : sc.scrollTop;
+    var lo = unten - (o + h), hi = oben - o, d = lo > hi ? hi : Math.max(lo, Math.min(hi, ideal - o));
+    var ziel = Math.max(0, Math.min(max, jetzt + d));
+    if (Math.abs(ziel - jetzt) >= 0.5) menueRollen(sc, ziel, sanft);
+    return ziel - jetzt;
+  }
+  function dorfRahmenEinpassen(sanft) {
+    var r = schnellEl && !schnellEl.hidden && schnellEl.querySelector(".sp-dl-rahmen");
+    if (!r || !r.isConnected) return;
+    var sc = r.closest(".sp-schnellmenue"), fr = r.getBoundingClientRect(), kopf = sc && sc.querySelector(".sp-sm-kopf");
+    var kt = kopf ? kopf.getBoundingClientRect().top : fr.top, d = 0;
+    if (sc && sc.scrollHeight > sc.clientHeight + 1) {
+      var pad = parseFloat(getComputedStyle(sc).paddingTop) || 0;
+      d = menueEinpassen(sc, fr.top, fr.bottom, kt - pad, sanft);
+    }
+    /* Die Seite: das Menü hängt über der Eingabezeile – ragt es oben aus dem Bildschirm, rollt die Seite nach. */
+    var ft = fr.top - d, fb = fr.bottom - d, kf = kt - d;
+    if (ft < 0 || fb > innerHeight) menueEinpassen(window, ft, fb, kf < 0 ? kf : 0, sanft);
+    /* der Rahmen der Stadt sofort mit (nicht erst im nächsten Bild) */
+    lsFolgen();
+  }
+  /* Nach dem Zeichnen (auch der Rahmen der Stadt folgt erst im nächsten Bild) noch einmal genau nachsetzen. */
+  function dorfRahmenHin(sanft) {
+    dorfRahmenEinpassen(sanft);
+    if (!sanft) setTimeout(function () { dorfRahmenEinpassen(false); }, 90);
+  }
+  /* Sanft zurück zum Bild; wird das sanfte Rollen unterwegs abgebrochen (das Menü zeichnet sich nach der Antwort des
+     Servers neu), setzt ein zweiter Blick nach 0,7 s es genau hin. */
+  function lsZurueckZumBild() {
+    clearTimeout(S.lsStationUhr);
+    setTimeout(function () { dorfRahmenEinpassen(true); }, 60);
+    setTimeout(function () { dorfRahmenEinpassen(false); }, 750);
+  }
+  /* FASSUNG 817 — „entweder springe ich runter zu der Dialogbox die unter dem Bild liegt": sanft bis die Station ganz zu
+     sehen ist (so wenig wie nötig). */
+  function lsStationZeigen() {
+    var hin = function (sanft, dann) {
+      S.lsStationUhr = setTimeout(function () {
+        var st = schnellEl && schnellEl.querySelector(".sp-dl-neustadt ~ .sp-dl-station"), sc = st && st.closest(".sp-schnellmenue");
+        if (!st || !sc) return;
+        var r = st.getBoundingClientRect(), sr = sc.getBoundingClientRect();
+        menueEinpassen(sc, r.top, Math.min(r.bottom, r.top + sc.clientHeight), sr.top + sc.clientTop, sanft);
+        if (dann) dann();
+      }, sanft ? 40 : 700);
+    };
+    clearTimeout(S.lsStationUhr);
+    /* sanft hin; ein zweiter Blick setzt nach, falls das Neuzeichnen das sanfte Rollen abgebrochen hat */
+    hin(true, function () { hin(false); });
+  }
+  function lsDirekt() {
+    if (S.lsDirekt == null) { try { S.lsDirekt = localStorage.getItem("dma_ls_direkt") === "1"; } catch (e) { S.lsDirekt = false; } }
+    return !!S.lsDirekt;
+  }
+  /* FASSUNG 817 — Herstellen wie der Knopf in der Station (spiel_beliefern), auch aus der Stadt heraus. */
+  function werkLiefern(g, w, n) {
+    wirtschaft("spiel_beliefern", { p_gebaeude: g, p_ware: w, p_menge: Number(n) || 0 }, function (r) {
+      ton("hammerschlag", 0.4);
+      hinweis(({ muehle: "🌬️ Die Mühle mahlt ", baeckerei: "🔥 Die Bäckerei backt ", schmiede: "🔥 Die Schmiede schmilzt ", labor: "🔬 Das Labor baut ", brauerei: "🍺 Die Brauerei braut " })[r.gebaeude] + r.menge + " " + wareName(r.ware) + " – fertig in " + r.minuten + " min. Dann: Mein Dorf → Abholen.");
+    });
+  }
+  /* Die eine naheliegende Aufgabe eines Hauses (oder die Auswahl, wenn es mehrere gibt); null = Station öffnen. */
+  function lsEinzigeAufgabe(g) {
+    var ich = S.ich || {}, st = dorfSt(ich, g), gg = (ich.dorf || {})[g];
+    if (!st || !(gg.lp > 0) || baustelleVon(ich, g)) return null;
+    if (g === "bergwerk") return truppStand(ich, "berg") ? null : { art: "trupp", ort: "berg" };
+    var R = REZEPTE[g];
+    if (!R || (ich.werk || {})[g]) return null;
+    var wahl = R.liste.map(function (x) { return { w: x[0], name: wareName(x[0]), n: rezeptMenge(ich, st, x[1]) }; });
+    if (!wahl.some(function (x) { return x.n > 0; })) return null;
+    return wahl.length === 1 ? { art: "liefern", w: wahl[0].w, n: wahl[0].n } : { art: "wahl", wahl: wahl };
+  }
+  /* FASSUNG 817 — „Saison: …“ des alten Bildes → Stufe der Jahreszeit in der neuen Stadt (SZ.MODI dort). */
+  var LS_JAHR = { "": "auto", "herbst|": "fruehherbst", "herbst|erntedank": "fruehherbst", "herbst|halloween": "fruehherbst", "winter|advent": "schneefall",
+    "winter|": "winter", "fruehling|ostern": "fruehling", "fruehling|": "fruehling", "sommer|": "sommer" };
   var LSTADT = null;
   function lsPost(daten) { try { if (LSTADT && LSTADT.rahmen.contentWindow) LSTADT.rahmen.contentWindow.postMessage(daten, location.origin); } catch (e) {} }
   function lsWeg() {
     if (!LSTADT) return;
     window.removeEventListener("message", LSTADT.post);
     document.removeEventListener("fullscreenchange", LSTADT.fs);
+    document.removeEventListener("scroll", lsFolgen, true);
     try { LSTADT.el.remove(); } catch (e) {}
     LSTADT = null;
   }
@@ -13009,6 +13121,8 @@
     } else {
       try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
       try { var d = document.fullscreenElement || document.webkitFullscreenElement; if (d) (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {}
+      /* FASSUNG 817 — aus dem Vollbild zurück: wieder genau an den Platz des Bildes */
+      setTimeout(function () { dorfRahmenHin(false); }, 120);
     }
     lsFolgen();
   }
@@ -13034,14 +13148,38 @@
         /* FASSUNG 806 — wie ein Tipp im alten Dorfbild: steht „fertig" dran, wird gleich eingesammelt; eine Baustelle
            bekommt Hilfe; sonst öffnet sich die Station darunter. */
         var lg = ev.data.g;
+        /* FASSUNG 817 — „Umbauen" unter der neuen Stadt: der Tipp wählt das Gebäude bzw. seinen neuen Platz. */
+        if (S.umbau && !dorfBesuchStand()) { if (DORF[lg]) umbauTippen(lg); return; }
+        /* FASSUNG 817 — „Karte" in der kleinen Auswahl über dem Haus: die Station darunter öffnen. */
+        if (ev.data.karte) { S.dorfWahl = lg; S.dorfTippWeg = true; ton("swoosh", 0.2); schnellZeichnen(true); lsStationZeigen(); return; }
         if (!dorfBesuchStand() && dorfFertigSammeln(lg)) { S.dorfTippWeg = true; LSTADT.zSig = ""; return; }
         if (!dorfBesuchStand() && DORF[lg] && baustelleVon(S.ich, lg)) { bauHelfen(lg); S.dorfWahl = lg; S.dorfTippWeg = true; LSTADT.zSig = ""; schnellZeichnen(true); return; }
+        /* FASSUNG 817 — XANDER (Walkie 305): „dass man beim einfachen klicken auf ein Haus einfach schon die Aufgabe anstellt
+           … es sei denn … Brot, Kuchen oder Torte … kleine Einzelauswahl … wo man auf das Symbol klickt". Hat das Haus genau
+           eine naheliegende Aufgabe (die Mühle mahlt, das Bergwerk schickt die Bergleute los), startet der Tipp sie; hat es
+           mehrere (die Bäckerei), erscheint über dem Haus in der Stadt eine kleine Auswahl mit den Symbolen. */
+        /* FASSUNG 817 — Funk 207: das nur mit der Einstellung „Ein Tipp produziert direkt"; sonst springt das Menü zur Karte. */
+        var la = lsDirekt() && !dorfBesuchStand() && S.dorfWahl !== lg ? lsEinzigeAufgabe(lg) : null;
+        if (la && la.art === "liefern") { S.dorfTippWeg = true; LSTADT.zSig = ""; werkLiefern(lg, la.w, la.n); return; }
+        if (la && la.art === "trupp") { S.dorfTippWeg = true; LSTADT.zSig = ""; truppSchicken(la.ort); return; }
+        if (la && la.art === "wahl") { S.dorfTippWeg = true; ton("holzklopf", 0.2); lsPost({ typ: "leicht-wahl", g: lg, wahl: la.wahl }); return; }
         S.dorfWahl = S.dorfWahl === lg ? "" : lg; S.dorfTippWeg = true; ton("swoosh", 0.2); schnellZeichnen(true);
+        /* FASSUNG 817 — XANDER: „entweder springe ich runter zu der Dialogbox die unter dem Bild liegt". Sanft hin. */
+        if (S.dorfWahl) lsStationZeigen();
       }
+      /* FASSUNG 817 — ein Symbol in der kleinen Auswahl über dem Haus: genau das herstellen (dieselbe Serverfunktion). */
+      if (ev.data.typ === "leicht-machen" && typeof ev.data.g === "string" && !dorfBesuchStand()) {
+        var lm = lsEinzigeAufgabe(ev.data.g), lw = lm && lm.art === "wahl" ? lm.wahl.filter(function (x) { return x.w === ev.data.w && x.n > 0; })[0] : null;
+        if (lw) { LSTADT.zSig = ""; werkLiefern(ev.data.g, lw.w, lw.n); } else hinweis("Das geht gerade nicht – es fehlen Zutaten.");
+      }
+      /* FASSUNG 817 — Doppeltipp in der Stadt (näher ran / ganze Stadt): eine offene Station geht zu, wie im alten Bild. */
+      if (ev.data.typ === "leicht-doppel") { clearTimeout(S.lsStationUhr); if (S.dorfWahl) { S.dorfWahl = ""; schnellZeichnen(true); } }
     };
     LSTADT.fs = function () { if (LSTADT && LSTADT.voll && !(document.fullscreenElement || document.webkitFullscreenElement) && LSTADT.fsWar) lsVoll(false); if (LSTADT) LSTADT.fsWar = Boolean(document.fullscreenElement); };
     window.addEventListener("message", LSTADT.post);
     document.addEventListener("fullscreenchange", LSTADT.fs);
+    /* FASSUNG 817 — beim Rollen (auch dem sanften Zurückrollen zum Bild) folgt der Rahmen sofort, nicht erst im nächsten Bild */
+    document.addEventListener("scroll", lsFolgen, true);
     LSTADT.rahmen.addEventListener("load", function () { lsPost({ typ: "leicht-modus", voll: LSTADT && LSTADT.voll }); if (LSTADT) LSTADT.zSig = LSTADT.sSig = LSTADT.kSig = ""; });
     lsFolgen();
     requestAnimationFrame(lsTakt);
@@ -13086,8 +13224,13 @@
     /* FASSUNG 806 — Kopfzeile der kleinen Stadt: Ortsschild (Name der Stadt) und das Wetterschild wie im alten Dorf. */
     var kopf = { typ: "leicht-kopf", name: String(S.ich.dorf_name || S.ich.name || "").trim(), wetter: "", symbole: dorfZeichen(), namen: dorfNamen() };
     try { var dw = dorfWetter(); kopf.wetter = dorfWetterSchild(dw); kopf.wetterArt = dw.echt || S.wetterTest ? dw.art : ""; } catch (e) {}
+    /* FASSUNG 817 — XANDER: „genau die Buttons und genau die Funktionen sollen unter der neuen Version genauso stehen".
+       „Saison: …“ (Vorschau des Betreibers) stellt auch die Jahreszeit der neuen Stadt; das Fest (Halloween nach Datum
+       oder Vorschau) geht mit – dann stehen Kürbisse vor den Häusern wie im alten Bild. */
+    try { var dj = dorfJahr(); kopf.fest = dj.fest || ""; kopf.jahrModus = LS_JAHR[S.jahrVorschau || ""] || "auto"; } catch (e) {}
+    kopf.direkt = lsDirekt();
     /* FASSUNG 814 — XANDER: „Winter mit Schnee … (Wetter oder Datum)": die Wetterart geht maschinenlesbar mit (wetterArt) */
-    var ks = kopf.name + "|" + kopf.wetter + "|" + kopf.wetterArt + "|" + kopf.symbole + kopf.namen;
+    var ks = kopf.name + "|" + kopf.wetter + "|" + kopf.wetterArt + "|" + kopf.symbole + kopf.namen + "|" + kopf.fest + "|" + kopf.jahrModus + "|" + kopf.direkt;
     if (ks !== L.kSig) { L.kSig = ks; lsPost(kopf); }
     var z = dorfBesuchStand() ? {} : lsZeichen(S.ich), sig = JSON.stringify(z);
     if (sig === L.zSig) return;
@@ -13175,11 +13318,11 @@
     if (!L.z) { var z = parseInt(getComputedStyle(schnellEl).zIndex, 10); L.z = String((isNaN(z) ? 30 : z) + 1); }
     st.zIndex = L.z;
   }
-  function umbauLeisteHtml(ich) {
+  function umbauLeisteHtml(ich, neu) {
     var w = S.umbauWahl, name = w && DORF[w] ? DORF[w].name : "";
     return '<div class="sp-dl-umbauleiste" role="status">'
-      + (w ? "<p><b>" + name + "</b> ist gewählt. Tippe den Platz an, auf den es soll – grün geht, rot ist zu klein. Steht dort schon ein Haus, tauschen die beiden.</p>"
-           : "<p><b>Umbauen:</b> Tippe ein Gebäude an und dann seinen neuen Platz – oder zieh es mit dem Finger dorthin. Rathaus und Bergwerk bleiben stehen.</p>")
+      + (w ? "<p><b>" + name + "</b> ist gewählt. Tippe den Platz an, auf den es soll" + (neu ? "" : " – grün geht, rot ist zu klein") + ". Steht dort schon ein Haus, tauschen die beiden.</p>"
+           : "<p><b>Umbauen:</b> Tippe ein Gebäude an und dann seinen neuen Platz" + (neu ? " (ein anderes Haus oder einen leeren Bauplatz)" : " – oder zieh es mit dem Finger dorthin") + ". Rathaus und Bergwerk bleiben stehen.</p>")
       + '<div class="sp-dl-umbauknoepfe">' + (w ? '<button type="button" data-s="umbauspiegeln" data-g="' + w + '">'
         + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 2"/><path d="M10 6L4 18h6z" fill="currentColor"/><path d="M14 6l6 12h-6z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Spiegeln</button>'
         + '<button type="button" data-s="umbauwahl" data-g="' + w + '">Abwählen</button>' : "")

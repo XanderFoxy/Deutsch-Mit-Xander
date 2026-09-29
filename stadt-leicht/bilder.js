@@ -116,7 +116,9 @@
        (FASSUNG 796: vorher 1,3 – dann lud schon die Übersicht große Bilder).
        Erst wenn das kleine da ist, wird das große geholt: so steht das Bild
        sofort und wird danach scharf. Im Sparmodus nie groß. */
-    if (g && (!k || (bedarf > k.s * 1.6 && !LB.spar && !LB.nurKlein))) {
+    /* FASSUNG 817 — Funk 207: in der zweiten Zoomstufe des kleinen Rahmens dürfen die großen Bilder kommen (LB.grossErlaubt);
+       beim Herauszoomen gibt LB.freigeben sie wieder frei. */
+    if (g && (!k || (bedarf > k.s * (LB.grossErlaubt ? 1.2 : 1.6) && (LB.grossErlaubt || (!LB.spar && !LB.nurKlein))))) {
       if (LB.fertig(basis + "_g")) return { name: basis + "_g", meta: g, img: LB.bild(basis + "_g") };
       if (k && !LB.bild(basis + "_k", true)) return null;
       LB.bild(basis + "_g");
@@ -126,6 +128,16 @@
     if (LB.bild(basis + "_k")) return { name: basis + "_k", meta: k };
     return null;
   };
+  /* FASSUNG 817 — Bilder einer Größe freigeben, die seit ein paar Bildern nicht mehr gezeichnet wurden (Speicher im kleinen
+     Rahmen: die großen nach der zweiten Zoomstufe, die kleinen nach dem Zurück in den Überblick). */
+  LB.freigeben = function (muster) {
+    let n = 0;
+    for (const [k, e] of cache) if (e.fertig && muster.test(k) && LB.takt - (e.zuletzt || 0) > 3) { cache.delete(k); n++; }
+    for (let i = warte.length - 1; i >= 0; i--) if (muster.test(warte[i])) { cache.delete(warte[i]); warte.splice(i, 1); }
+    return n;
+  };
+  /* wie viele Bilder einer Größe gerade im Speicher liegen (für die Sonde) */
+  LB.zahl = function (muster) { let n = 0; for (const [k, e] of cache) if (e.fertig && muster.test(k)) n++; return n; };
   LB.fertig = function (name) { const e = cache.get(name); return !!(e && e.fertig); };
   LB.offen = function () { return warte.length + laufend; };
 })();
