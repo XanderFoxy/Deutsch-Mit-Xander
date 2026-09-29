@@ -316,6 +316,60 @@
       huefteR: { vor: -2, seit: 4, dreh: -4 }, knieR: 1, fussR: 0,
     },
   };
+  /* FASSUNG 836 — XANDER (Funk 217): „um alle Positionen die Sie einnehmen
+     können ob sie im Schneidersitz sitzen ob sie in der Hocke sitzen ob
+     sie auf den Unterschenkeln hocken ob sie aufrecht auf den Unterschenkel
+     hocken … ob sie auf allen Vieren sind ob sie auf dem Rücken liegen ob
+     sie auf dem Bauch liegen … ob sie in der Wanne sitzen und die Beine
+     angewinkelt haben“.
+     Die Haltungen von 834 waren geschätzte Winkel — der Schneidersitz saß
+     42 cm über dem Boden auf den Unterschenkeln, im Fersensitz schwebten
+     die Knie, in der Hocke stand man auf den Zehen, auf allen vieren
+     berührten weder Hände noch Knie den Boden. Jetzt sind sie aus
+     ZIELPUNKTEN gerechnet (Knie, Knöchel, Ellbogen, Hand; Zwei-Glieder-
+     Rechnung wie in der Trickfilm-Technik) und am Boden ausgerichtet:
+     die Körperteile, die aufliegen, liegen auf (± 2 cm), und kein Glied
+     steckt im Rumpf oder im anderen Bein (Messung mit messen: true). */
+  Object.assign(POSEN, {
+    /* Schneidersitz: Gesäß am Boden, Knie weit außen und tief, die Unterschenkel kreuzen sich vor dem Körper (der linke vorn), jeder Fuß liegt auf der Außenkante unter dem anderen Bein; die Hände ruhen auf den Knien. */
+    schneidersitz: { kipp: -1, lende: 8, brust: 6, nacken: 10, kopf: -6, unterarmL: -70, handL: -6, fingerL: 0.35, unterarmR: -70, handR: -6, fingerR: 0.35, huefteL: {vor:  56,  seit:  93,  dreh:  180}, knieL: 141, huefteR: {vor:  75,  seit:  60,  dreh:  139}, knieR: 155, fussL: 18, fussR: 109, schulterL: {vor:  16,  seit:  14,  dreh:  0}, ellbogenL: 66, schulterR: {vor:  37,  seit:  3,  dreh:  -37}, ellbogenR: 27 },
+    /* Hocke mit den Fersen am Boden: Gesäß tief zwischen den Fersen, Knie nach vorn und außen, Oberkörper vorgeneigt, damit der Schwerpunkt über den Füßen bleibt. */
+    hocken: { kipp: 33, lende: 8, brust: 10, nacken: -24, kopf: -12, unterarmL: -20, handL: -6, fingerL: 0.45, unterarmR: -20, handR: -6, fingerR: 0.45, huefteL: {vor:  57,  seit:  152,  dreh:  154}, knieL: 144, huefteR: {vor:  57,  seit:  152,  dreh:  154}, knieR: 144, fussL: -57, fussR: -57, schulterL: {vor:  59,  seit:  9,  dreh:  -33}, ellbogenL: 31, schulterR: {vor:  59,  seit:  9,  dreh:  -33}, ellbogenR: 31 },
+    /* Fersensitz: auf den Unterschenkeln sitzen — Knie und Fußrücken am Boden, das Gesäß ruht auf den Fersen, der Rücken aufrecht, die Hände auf den Oberschenkeln. */
+    fersensitz: { kipp: 1, lende: -2, brust: 4, nacken: 6, kopf: -4, unterarmL: -75, handL: -6, fingerL: 0.3, unterarmR: -75, handR: -6, fingerR: 0.3, fz: -45, fy: -3, huefteL: {vor:  64,  seit:  0,  dreh:  -9}, knieL: 159, huefteR: {vor:  64,  seit:  0,  dreh:  -9}, knieR: 159, fussL: 38, fussR: 38, schulterL: {vor:  19,  seit:  -9,  dreh:  -33}, ellbogenL: 12, schulterR: {vor:  19,  seit:  -9,  dreh:  -33}, ellbogenR: 12 },
+    /* Kniestand: aufrecht auf den Knien, Oberschenkel und Rumpf senkrecht, Unterschenkel und Fußrücken liegen hinten auf dem Boden. */
+    knien: { kipp: 0, lende: 2, brust: -2, nacken: 6, kopf: -4, schulterL: {vor:  4,  seit:  8}, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.38, schulterR: {vor:  -2,  seit:  9}, ellbogenR: 12, unterarmR: 6, handR: 4, fingerR: 0.36, fz: -29, fy: 0, huefteL: {vor:  5,  seit:  2,  dreh:  -1}, knieL: 94, huefteR: {vor:  5,  seit:  2,  dreh:  -1}, knieR: 94, fussL: 63, fussR: 63 },
+    /* Vierfüßlerstand: Hände unter den Schultern, Knie unter der Hüfte, Rücken waagrecht, Blick nach vorn unten. */
+    krabbeln: { kipp: 86, lende: -6, brust: -6, nacken: -40, kopf: -22, unterarmL: -85, handL: 75, fingerL: 0.08, unterarmR: -85, handR: 75, fingerR: 0.08, fz: -29, fy: -3, huefteL: {vor:  87,  seit:  60,  dreh:  60}, knieL: 91, huefteR: {vor:  87,  seit:  60,  dreh:  60}, knieR: 91, fussL: 62, fussR: 62, schulterL: {vor:  62,  seit:  10,  dreh:  -18}, ellbogenL: 33, schulterR: {vor:  62,  seit:  10,  dreh:  -18}, ellbogenR: 33 },
+    /* Rückenlage: gerade ausgestreckt, Hinterkopf, Schulterblätter, Gesäß und Fersen am Boden, die Arme neben dem Körper, die Füße fallen locker nach außen. */
+    liegen: { kipp: -90, lende: 0, brust: 0, nacken: -7, kopf: 2, schulterL: {vor:  -13,  seit:  10}, ellbogenL: 8, unterarmL: -75, handL: 0, fingerL: 0.35, schulterR: {vor:  -14,  seit:  11}, ellbogenR: 10, unterarmR: -75, handR: 0, fingerR: 0.35, huefteL: {vor:  0,  seit:  6,  dreh:  -16}, knieL: 3, fussL: 22, huefteR: {vor:  0,  seit:  6,  dreh:  -16}, knieR: 4, fussR: 22 },
+    /* Bauchlage: Brust, Bauch und Oberschenkel am Boden, der Kopf zur Seite gedreht auf der Wange, die Arme angewinkelt neben dem Kopf, die Fußrücken am Boden. */
+    bauchlage: { kipp: 90, lende: 0, brust: -2, nacken: 26, kopf: 0, kopfDreh: 78, fz: -65, unterarmL: -85, unterarmR: -85, handL: 10, handR: 10, fingerL: 0.25, fingerR: 0.25, huefteL: {vor:  0,  seit:  5,  dreh:  8}, knieL: 4, huefteR: {vor:  0,  seit:  5,  dreh:  8}, knieR: 6, schulterL: {vor:  19,  seit:  105,  dreh:  82}, ellbogenL: 134, schulterR: {vor:  19,  seit:  105,  dreh:  82}, ellbogenR: 134, fussL: 21, fussR: 21 },
+    /* Seitenlage (auf der linken Seite): das untere Bein fast gestreckt, das obere angewinkelt davor auf dem Boden, der untere Arm unter dem Kopf, die obere Hand vor der Brust am Boden. */
+    seitenlage: { kipp: -90, dreh: 152, lende: 4, brust: 4, nacken: 4, kopf: 4, kopfRoll: -33, unterarmL: -20, unterarmR: -70, handL: 0, handR: 20, fingerL: 0.4, fingerR: 0.3, huefteL: {vor:  21,  seit:  -23,  dreh:  -57}, knieL: 37, huefteR: {vor:  41,  seit:  38,  dreh:  60}, knieR: 75, fussL: 122, fussR: 109, schulterL: {vor:  26,  seit:  -118,  dreh:  -115}, ellbogenL: 116, schulterR: {vor:  47,  seit:  50,  dreh:  55}, ellbogenR: 97 },
+    /* Am Boden sitzen mit angewinkelten Beinen: Füße flach, Knie hoch, die Arme um die Knie gelegt. */
+    sitzen_angewinkelt: { kipp: -4, lende: 10, brust: 10, nacken: 14, kopf: -8, unterarmL: -60, unterarmR: -60, handL: -10, handR: -10, fingerL: 0.55, fingerR: 0.55, huefteL: {vor:  41,  seit:  174,  dreh:  176}, knieL: 115, huefteR: {vor:  41,  seit:  174,  dreh:  176}, knieR: 115, fussL: 27, fussR: 27, schulterL: {vor:  39,  seit:  9,  dreh:  -46}, ellbogenL: 87, schulterR: {vor:  38,  seit:  10,  dreh:  -53}, ellbogenR: 75 },
+    /* In der Badewanne: zurückgelehnt sitzen, die Beine angewinkelt, die Hände auf den Knien. */
+    baden: { kipp: -13, lende: 6, brust: 6, nacken: 22, kopf: -4, unterarmL: -70, unterarmR: -70, handL: -8, handR: -8, fingerL: 0.35, fingerR: 0.35, huefteL: {vor:  51,  seit:  173,  dreh:  174}, knieL: 115, huefteR: {vor:  51,  seit:  173,  dreh:  174}, knieR: 115, fussL: 26, fussR: 26, schulterL: {vor:  27,  seit:  18,  dreh:  -26}, ellbogenL: 117, schulterR: {vor:  27,  seit:  18,  dreh:  -26}, ellbogenR: 117 },
+    /* Grätschsitz wie beim Turnen: aufrecht, die Beine gestreckt und weit gespreizt, Kniescheiben und Zehen nach oben, die Hände vorn am Boden. */
+    graetschsitz: { kipp: 8, lende: 6, brust: 4, nacken: 8, kopf: -8, unterarmL: -80, unterarmR: -80, handL: 70, handR: 70, fingerL: 0.12, fingerR: 0.12, huefteL: {vor:  39,  seit:  121,  dreh:  125}, knieL: 39, huefteR: {vor:  39,  seit:  121,  dreh:  125}, knieR: 39, fussL: -1, fussR: -1, schulterL: {vor:  42,  seit:  -1,  dreh:  -110}, ellbogenL: 12, schulterR: {vor:  42,  seit:  -1,  dreh:  -110}, ellbogenR: 12 },
+    /* Auf dem Stuhl mit übergeschlagenem Bein: das rechte Knie liegt über dem linken, der rechte Unterschenkel hängt vorn schräg herab, die Hände ruhen auf dem Knie. */
+    sitzen_ueberkreuz: { kipp: 0, lende: -4, brust: 4, nacken: 8, kopf: -6, huefteL: {vor:  86,  seit:  5,  dreh:  -4}, knieL: 86, fussL: 0, unterarmL: -70, unterarmR: -70, handL: -10, handR: -10, fingerL: 0.35, fingerR: 0.35, huefteR: {vor:  68,  seit:  -134,  dreh:  -127}, knieR: 54, fussR: 28, schulterL: {vor:  26,  seit:  8,  dreh:  -43}, ellbogenL: 68, schulterR: {vor:  25,  seit:  7,  dreh:  -51}, ellbogenR: 74 },
+    /* Anlehnen (an eine Wand): der ganze Körper leicht zurückgeneigt, die Füße ein Stück vor der Wand, das rechte Bein über das linke gekreuzt, die Arme verschränkt. */
+    anlehnen: { lende: 2, brust: -1, nacken: 32, kopf: -2, huefteL: {vor:  0,  seit:  2,  dreh:  -6}, knieL: 2, fussL: 6, huefteR: {vor:  8,  seit:  -20,  dreh:  -55}, knieR: 10, fussR: 42, kipp: -8, schulterL: {vor:  34,  seit:  -6,  dreh:  -73}, ellbogenL: 94, schulterR: {vor:  28,  seit:  -6,  dreh:  -81}, ellbogenR: 100, unterarmL: 0, unterarmR: 0, handL: -45, handR: -50, fingerL: 0.55, fingerR: 0.6 },
+    /* Laufen/Joggen: Oberkörper leicht vor, das vordere Bein greift aus, das hintere ist hoch angewinkelt, die Arme im rechten Winkel gegengleich. */
+    laufen: { kipp: 9, lende: 2, brust: 0, brustDreh: -8, nacken: -4, kopf: -4, schulterL: {vor:  -38,  seit:  10}, ellbogenL: 95, unterarmL: 20, handL: 0, fingerL: 0.6, schulterR: {vor:  42,  seit:  6}, ellbogenR: 92, unterarmR: 20, handR: 0, fingerR: 0.6, huefteL: {vor:  32,  seit:  2,  dreh:  -4}, knieL: 22, fussL: -8, huefteR: {vor:  -24,  seit:  3,  dreh:  -6}, knieR: 98, fussR: 34 },
+    /* Treppensteigen: der linke Fuß steht eine Stufe (17 cm) höher, das rechte Bein drückt sich hinten über die Zehen ab. */
+    treppe: { kipp: 7, lende: 2, brust: 2, nacken: 2, kopf: -8, brustDreh: 5, schulterL: {vor:  -14,  seit:  8}, ellbogenL: 22, unterarmL: 10, handL: 4, fingerL: 0.4, schulterR: {vor:  22,  seit:  8}, ellbogenR: 30, unterarmR: 10, handR: 4, fingerR: 0.4, huefteR: {vor:  1,  seit:  1,  dreh:  -4}, knieR: 10, huefteL: {vor:  51,  seit:  2,  dreh:  3}, knieL: 44, fussL: 1, fussR: 6 },
+    /* Bücken: aus der Hüfte vorgebeugt, die Knie leicht gebeugt, die Hände reichen bis kurz über den Boden. */
+    buecken: { kipp: 78, lende: 16, brust: 12, nacken: -14, kopf: -14, fingerL: 0.3, fingerR: 0.3, unterarmL: -30, unterarmR: -30, handL: 0, handR: 0, huefteL: {vor:  75,  seit:  172,  dreh:  174}, knieL: 58, huefteR: {vor:  75,  seit:  172,  dreh:  174}, knieR: 58, fussL: -31, fussR: -31, schulterL: {vor:  84,  seit:  -29,  dreh:  174}, ellbogenL: 12, schulterR: {vor:  84,  seit:  -29,  dreh:  174}, ellbogenR: 12 },
+    /* Strecken: auf den Zehenspitzen, die Arme gerade über den Kopf, der Blick nach oben. */
+    strecken: { lende: -3, brust: -8, nacken: -8, kopf: -16, schulterL: {vor:  168,  seit:  16}, ellbogenL: 6, unterarmL: 70, handL: 12, fingerL: 0.06, schulterR: {vor:  170,  seit:  14}, ellbogenR: 5, unterarmR: 70, handR: 12, fingerR: 0.06, huefteL: {vor:  0,  seit:  3,  dreh:  -4}, knieL: 0, fussL: 32, huefteR: {vor:  0,  seit:  3,  dreh:  -4}, knieR: 0, fussR: 32 },
+    /* Arme verschränkt: die Unterarme liegen schräg vor der unteren Brust, der linke vorn, die Hände an den Oberarmen — nicht durch den Brustkorb. */
+    arme_verschraenkt: { lende: 1, brust: -2, nacken: 6, kopf: -2, huefteL: {vor:  3,  seit:  3,  dreh:  -6}, knieL: 3, fussL: 0, huefteR: {vor:  -3,  seit:  3,  dreh:  -6}, knieR: 2, fussR: 0, schulterL: {vor:  32,  seit:  -7,  dreh:  -76}, ellbogenL: 104, schulterR: {vor:  25,  seit:  -6,  dreh:  -83}, ellbogenR: 102, unterarmL: 0, unterarmR: 0, handL: -45, handR: -50, fingerL: 0.55, fingerR: 0.6 },
+    /* Hände in den Hüften: die Handgelenke über dem Beckenkamm, die Ellbogen weit nach außen und etwas nach hinten. */
+    haende_huefte: { lende: 1, brust: -2, nacken: 6, kopf: -6, huefteL: {vor:  3,  seit:  3,  dreh:  -6}, knieL: 3, fussL: 0, huefteR: {vor:  -3,  seit:  3,  dreh:  -6}, knieR: 2, fussR: 0, roll: 2, brustRoll: -2, schulterL: {vor:  -17,  seit:  37,  dreh:  -76}, ellbogenL: 97, schulterR: {vor:  -16,  seit:  41,  dreh:  -77}, ellbogenR: 97, unterarmL: -60, unterarmR: -60, handL: -25, handR: -25, fingerL: 0.2, fingerR: 0.2 },
+  });
   /* Der Gang: ein Zyklus aus Winkelkurven (Phase 0…1). Standbein zurück,
      Schwungbein mit gebeugtem Knie nach vorn, Arme gegengleich. */
   function gehPose(p) {
@@ -766,6 +820,72 @@
       return [bw[0], boden, bw[2]];
     })();
     const pr = (v) => { const w = cam.welt(v); const q = cam.bild([w[0] - anker[0], w[1] - anker[1], w[2] - anker[2]]); return spec.spiegel ? [-q[0], q[1], q[2]] : q; };
+    /* FASSUNG 836 — MESSEN (für die Sonde und beim Bauen der Haltungen):
+       wie hoch über dem Boden liegt jeder Körperteil an seiner tiefsten
+       Stelle (cm), und steckt ein Glied im Rumpf oder im anderen Bein? */
+    const mess = spec.messen ? (function () {
+      const tief = (ss) => {
+        let m = 1e9;
+        ss.forEach((q) => { const w = cam.welt(q.c), Uw = cam.welt(q.U), Vw = cam.welt(q.V); m = Math.min(m, anker[1] - (w[1] + Math.sqrt((q.a * Uw[1]) ** 2 + (q.b * Vw[1]) ** 2))); });
+        return Math.round(m * 10) / 10;
+      };
+      const h = {};
+      teile.forEach((t) => {
+        if (t.oberschenkel) {
+          const sd = t.seite;
+          h["fuss" + sd] = tief(t.fuss); h["ferse" + sd] = tief(t.fuss.slice(0, 2)); h["zeh" + sd] = tief(t.fuss.slice(-2));
+          h["knie" + sd] = tief(t.unterschenkel.slice(0, 2).concat(t.oberschenkel.slice(-2)));
+          h["unterschenkel" + sd] = tief(t.unterschenkel); h["oberschenkel" + sd] = tief(t.oberschenkel);
+        }
+        if (t.oberarm) {
+          const sd = t.seite, Hd = S["hand" + sd];
+          h["ellbogen" + sd] = tief(t.oberarm.slice(-2).concat(t.unterarm.slice(0, 2)));
+          h["unterarm" + sd] = tief(t.unterarm);
+          h["hand" + sd] = tief([schnitt(add(Hd.p, mul(mv(Hd.R, [0, 1, 0]), M.hand * 0.45)), mv(Hd.R, [1, 0, 0]), mv(Hd.R, [0, 0, 1]), 1.6 * g, 4 * g)]);
+        }
+      });
+      h.gesaess = tief(rumpf.filter((q) => q.hy <= 0));
+      h.rumpf = tief(rumpf.filter((q) => q.hy > 4 && q.hy < 46));
+      h.kopf = tief([schnitt(S.kopf.p, mv(S.kopf.R, [1, 0, 0]), mv(S.kopf.R, [0, 0, 1]), M.kopf * 0.33, M.kopf * 0.42)]);
+      /* Eindringen: liegt die Achse eines Glieds im Rumpf? */
+      const imRumpf = (p) => {
+        let best = 1e9;
+        for (let j = 0; j < rumpf.length - 1; j++) {
+          const q = rumpf[j], q2 = rumpf[j + 1];
+          const T = unit(sub(q2.c, q.c)), L = len(sub(q2.c, q.c));
+          const t = dot(sub(p, q.c), T);
+          if (t < -0.5 || t > L + 0.5) continue;
+          const u = klemm(t / L, 0, 1);
+          const c = lerp3(q.c, q2.c, u), Uu = unit(lerp3(q.U, q2.U, u)), Vv = unit(lerp3(q.V, q2.V, u));
+          const d = sub(p, c);
+          const e = Math.hypot(dot(d, Uu) / lerp(q.a, q2.a, u), dot(d, Vv) / lerp(q.b, q2.b, u));
+          best = Math.min(best, e);
+        }
+        return best;
+      };
+      const stecken = [];
+      teile.forEach((t) => {
+        const proben = t.oberarm ? t.oberarm.slice(4).concat(t.unterarm) : t.oberschenkel.slice(3).concat(t.unterschenkel);
+        let m = 1e9; proben.forEach((q) => { m = Math.min(m, imRumpf(q.c)); });
+        if (m < 0.9) stecken.push(t.name + " im Rumpf (" + m.toFixed(2) + ")");
+      });
+      const achse = (ss) => ss.map((q) => ({ c: q.c, r: Math.min(q.a, q.b) }));
+      let wo = "";
+      const nah = (A, B) => { let m = 1e9; A.forEach((a, i) => B.forEach((b, j) => { const v = len(sub(a.c, b.c)) / (a.r + b.r); if (v < m) { m = v; wo = i + "/" + j; } })); return m; };
+      const bL = teile.find((t) => t.name === "beinL"), bR = teile.find((t) => t.name === "beinR");
+      const aL = teile.find((t) => t.name === "armL"), aR = teile.find((t) => t.name === "armR");
+      const bb = nah(achse(bL.unterschenkel.concat(bL.oberschenkel.slice(3))), achse(bR.unterschenkel.concat(bR.oberschenkel.slice(3))));
+      if (bb < 0.55) stecken.push("Beine ineinander (" + bb.toFixed(2) + " bei " + wo + ")");
+      const aa = nah(achse(aL.unterarm), achse(aR.unterarm));
+      if (aa < 0.55) stecken.push("Unterarme ineinander (" + aa.toFixed(2) + ")");
+      /* Gelenke im Raum (x links, y unten, z vorn; über dem Boden unter der Hüfte) */
+      const gelenk = {};
+      ["becken", "brust", "kopf", "schulterL", "schulterR", "ellbogenL", "ellbogenR", "handL", "handR", "huefteL", "huefteR", "knieL", "knieR", "fussL", "fussR"].forEach((n) => {
+        const w = cam.welt(S[n].p); gelenk[n] = [w[0] - anker[0], anker[1] - w[1], w[2] - anker[2]].map((v) => Math.round(v * 10) / 10);
+      });
+      return { hoehe: h, stecken, gelenk, imRumpf: (v) => imRumpf(v) };
+    })() : null;
+    if (spec.nurMessen) return { mess };
     const prRichtung = (v) => { const q = cam.bild(cam.welt(v)); return spec.spiegel ? [-q[0], q[1], q[2]] : q; };
     const kreuz3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
     const proj = (ss) => ss.map((s) => ({ c: pr(s.c), U: prRichtung(s.U), V: prRichtung(s.V), T: prRichtung(kreuz3(s.U, s.V)), a: s.a, b: s.b }));
@@ -1614,7 +1734,7 @@
       svg: '<g class="mensch">' + (defs.length ? "<defs>" + defs.join("") + "</defs>" : "") + inhalt + "</g>",
       sitz: { x: r1(sitzP[0]), y: r1(sitzP[1]) },
       kopf: { x: r1(kopfP[0]), y: r1(kopfP[1]) },
-      box, hoehe: M.H, mass: M, punkte,
+      box, hoehe: M.H, mass: M, punkte, mess,
       handL: (() => { const p = pr(S.handL.p); return { x: r1(p[0]), y: r1(p[1]) }; })(),
       handR: (() => { const p = pr(S.handR.p); return { x: r1(p[0]), y: r1(p[1]) }; })(),
     };
@@ -2235,12 +2355,28 @@
      zweite, untere Linie ersetzt. Einfach gehalten: Kranz = kurze Haare
      mit sehr hoher Stirn, oben mit Hautfarbe übermalt. */
   const API = {
-    zeichne, POSEN, gehPose, mische, pose, massFuer, HAUT, HAAR, FARBE,
+    zeichne, POSEN, gehPose, mische, pose, massFuer, skelett, HAUT, HAAR, FARBE,
     OBERTEIL, HOSE, KLEID, JACKE, SCHUH, KOPF, FRISUR,
     HALTUNGEN: ["stehen", "kontrapost", "gehen", "sitzen", "lesen", "sitzen_boden", "schneidersitz", "fersensitz",
-      "hocken", "knien", "knien_halb", "knien_vor", "krabbeln", "liegen", "winken", "halten", "zeigen", "werfen", "servieren"],
+      "hocken", "knien", "knien_halb", "knien_vor", "krabbeln", "liegen", "winken", "halten", "zeigen", "werfen", "servieren",
+      /* FASSUNG 836 */
+      "bauchlage", "seitenlage", "sitzen_angewinkelt", "baden", "graetschsitz", "sitzen_ueberkreuz", "anlehnen", "laufen",
+      "treppe", "buecken", "strecken", "arme_verschraenkt", "haende_huefte"],
     /* Haltungen, bei denen das Gesäß auf einer Sitzfläche liegt */
-    SITZEND: { sitzen: 1, lesen: 1, sitzen_seit: 1 },
+    SITZEND: { sitzen: 1, lesen: 1, sitzen_seit: 1, sitzen_ueberkreuz: 1 },
+    /* FASSUNG 836: welche Körperteile in der Haltung auf dem Boden liegen
+       (für die Sonde; Namen wie in zeichne({messen: true}).mess.hoehe). */
+    BODEN: {
+      stehen: ["fussL", "fussR"], sitzen_boden: ["gesaess"], schneidersitz: ["gesaess", "fussR"],
+      hocken: ["ferseL", "ferseR", "zehL", "zehR"], fersensitz: ["knieL", "knieR", "zehL", "zehR"],
+      knien: ["knieL", "knieR", "zehL", "zehR"], krabbeln: ["handL", "handR", "knieL", "knieR"],
+      liegen: ["kopf", "rumpf", "gesaess", "ferseL", "ferseR"], bauchlage: ["rumpf", "zehL", "zehR"],
+      seitenlage: ["rumpf", "knieR"], sitzen_angewinkelt: ["gesaess", "ferseL", "ferseR"], baden: ["gesaess", "ferseL", "ferseR"],
+      graetschsitz: ["gesaess", "ferseL", "ferseR"], buecken: ["ferseL", "ferseR", "zehL", "zehR"], treppe: ["zehR"],
+      arme_verschraenkt: ["fussL", "fussR"], haende_huefte: ["fussL", "fussR"], strecken: ["zehL", "zehR"],
+    },
+    /* und was dabei NICHT aufliegen darf (schwebt über dem Boden) */
+    FREI: { schneidersitz: ["knieL"], hocken: ["gesaess"], fersensitz: ["gesaess"], knien: ["gesaess"], krabbeln: ["rumpf", "gesaess"], strecken: ["ferseL", "ferseR"], treppe: ["ferseL", "zehL"] },
   };
   W.DMA_MENSCH = API;
 })(typeof window !== "undefined" ? window : globalThis);
