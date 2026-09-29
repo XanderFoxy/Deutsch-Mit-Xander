@@ -48,8 +48,8 @@
  "rueckfrage.js": "7de87f6e8e1dfd76fa649df2080351a71b2fa0f3",
  "korrekturen.css": "6bd713b6491f3cb7c2df82c246a2540d8dd68ae5",
  "app.js": "c0e45e9989714152d33abec387ec4556339795d5",
- "data-werkstatt.js": "576a14659fa63a5d0cbd49a9980ad5259793591b",
  "livechat.js": "15d707c01f3abfefe740085198d42b2f0f127725",
  "spiel.css": "c04d62affd569236177824bda6e8fc10a61e2f95",
- "spiel.js": "900980455267b2bed6f3538b97bd3ea1802ae2a7"
+ "spiel.js": "900980455267b2bed6f3538b97bd3ea1802ae2a7",
+ "data-werkstatt.js": "cba2657e57d41857343229fd3188630072a1057a"
 }
