@@ -79,8 +79,8 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
       maxKB = Math.max(maxKB, r.svg.length / 1024);
       if (!r.mess) { kaputt.push(h + " ohne Messung"); return; }
       if (b === 0) {
-        /* 3 cm; alte Menschen mit rundem Rücken und Bauch 4,5 cm */
-        (M.BODEN && M.BODEN[h] || []).forEach((k) => { if (!(r.mess.hoehe[k] <= (a === "alt" ? 4.5 : 3))) boden.push(h + "/" + a + g + ":" + k + "=" + r.mess.hoehe[k]); });
+        /* 3 cm; Kinder (großer Kopf, er liegt zuerst auf) 4 cm, alte Menschen mit rundem Rücken und Bauch 4,5 cm */
+        (M.BODEN && M.BODEN[h] || []).forEach((k) => { if (!(r.mess.hoehe[k] <= (a === "alt" ? 4.5 : a === "kind" ? 4 : 3))) boden.push(h + "/" + a + g + ":" + k + "=" + r.mess.hoehe[k]); });
         (M.FREI && M.FREI[h] || []).forEach((k) => { if (!(r.mess.hoehe[k] > 2.5)) frei.push(h + "/" + a + g + ":" + k + "=" + r.mess.hoehe[k]); });
         if (a === "erwachsen" && r.mess.stecken.length) stecken.push(h + "/" + g + ": " + r.mess.stecken.join(";"));
       }

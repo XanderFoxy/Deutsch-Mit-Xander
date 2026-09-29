@@ -344,7 +344,7 @@
     /* Rückenlage: gerade ausgestreckt, Hinterkopf, Schulterblätter, Gesäß und Fersen am Boden, die Arme neben dem Körper, die Füße fallen locker nach außen. */
     liegen: { kipp: -90, lende: 0, brust: 0, nacken: -7, kopf: 2, schulterL: {vor:  -13,  seit:  10}, ellbogenL: 8, unterarmL: -75, handL: 0, fingerL: 0.35, schulterR: {vor:  -14,  seit:  11}, ellbogenR: 10, unterarmR: -75, handR: 0, fingerR: 0.35, huefteL: {vor:  0,  seit:  6,  dreh:  -16}, knieL: 3, fussL: 22, huefteR: {vor:  0,  seit:  6,  dreh:  -16}, knieR: 4, fussR: 22 },
     /* Bauchlage: Brust, Bauch und Oberschenkel am Boden, der Kopf zur Seite gedreht auf der Wange, die Arme angewinkelt neben dem Kopf, die Fußrücken am Boden. */
-    bauchlage: { kipp: 90, lende: 0, brust: -2, nacken: 26, kopf: 0, kopfDreh: 78, fz: -65, unterarmL: -85, unterarmR: -85, handL: 10, handR: 10, fingerL: 0.25, fingerR: 0.25, huefteL: {vor:  0,  seit:  5,  dreh:  8}, knieL: 4, huefteR: {vor:  0,  seit:  5,  dreh:  8}, knieR: 6, schulterL: {vor:  19,  seit:  105,  dreh:  82}, ellbogenL: 134, schulterR: {vor:  19,  seit:  105,  dreh:  82}, ellbogenR: 134, fussL: 21, fussR: 21 },
+    bauchlage: { kipp: 90, lende: 0, brust: -2, nacken: 21, kopf: 0, kopfDreh: 78, fz: -65, unterarmL: -85, unterarmR: -85, handL: 10, handR: 10, fingerL: 0.25, fingerR: 0.25, huefteL: {vor:  0,  seit:  5,  dreh:  8}, knieL: 4, huefteR: {vor:  0,  seit:  5,  dreh:  8}, knieR: 6, schulterL: {vor:  19,  seit:  105,  dreh:  82}, ellbogenL: 134, schulterR: {vor:  19,  seit:  105,  dreh:  82}, ellbogenR: 134, fussL: 21, fussR: 21 },
     /* Seitenlage (auf der linken Seite): das untere Bein fast gestreckt, das obere angewinkelt davor auf dem Boden, der untere Arm unter dem Kopf, die obere Hand vor der Brust am Boden. */
     seitenlage: { kipp: -90, dreh: 152, lende: 4, brust: 4, nacken: 4, kopf: 4, kopfRoll: -33, unterarmL: -20, unterarmR: -70, handL: 0, handR: 20, fingerL: 0.4, fingerR: 0.3, huefteL: {vor:  21,  seit:  -23,  dreh:  -57}, knieL: 37, huefteR: {vor:  41,  seit:  38,  dreh:  60}, knieR: 75, fussL: 122, fussR: 109, schulterL: {vor:  26,  seit:  -118,  dreh:  -115}, ellbogenL: 116, schulterR: {vor:  47,  seit:  50,  dreh:  55}, ellbogenR: 97 },
     /* Am Boden sitzen mit angewinkelten Beinen: Füße flach, Knie hoch, die Arme um die Knie gelegt. */
@@ -825,7 +825,9 @@
         if (t.oberarm) t.oberarm.concat(t.unterarm).forEach((s) => alle.push(s));
       });
       rumpf.forEach((s) => alle.push(s));
-      alle.push(schnitt(S.kopf.p, [1, 0, 0], [0, 0, 1], M.kopf * 0.36, M.kopf * 0.45));
+      /* FASSUNG 836: der Kopf im eigenen Rahmen — im Liegen ruht er mit
+         dem Hinterkopf bzw. der Wange auf dem Boden, statt einzusinken. */
+      alle.push(schnitt(S.kopf.p, mv(S.kopf.R, [1, 0, 0]), mv(S.kopf.R, [0, 0, 1]), M.kopf * 0.34, M.kopf * 0.43));
       ["L", "R"].forEach((sd) => alle.push(schnitt(add(S["hand" + sd].p, mul(mv(S["hand" + sd].R, [0, 1, 0]), M.hand * 0.5)), [1, 0, 0], [0, 0, 1], 1.5 * g, 1.5 * g)));
       alle.forEach((s) => {
         const w = cam.welt(s.c), Uw = cam.welt(s.U), Vw = cam.welt(s.V);
@@ -857,12 +859,14 @@
           const sd = t.seite, Hd = S["hand" + sd];
           h["ellbogen" + sd] = tief(t.oberarm.slice(-2).concat(t.unterarm.slice(0, 2)));
           h["unterarm" + sd] = tief(t.unterarm);
-          h["hand" + sd] = tief([schnitt(add(Hd.p, mul(mv(Hd.R, [0, 1, 0]), M.hand * 0.45)), mv(Hd.R, [1, 0, 0]), mv(Hd.R, [0, 0, 1]), 1.6 * g, 4 * g)]);
+          /* wie beim Boden-Anker: Handmitte, 1,5 cm Halbmesser */
+          h["hand" + sd] = tief([schnitt(add(Hd.p, mul(mv(Hd.R, [0, 1, 0]), M.hand * 0.5)), [1, 0, 0], [0, 0, 1], 1.5 * g, 1.5 * g)]);
         }
       });
       h.gesaess = tief(rumpf.filter((q) => q.hy <= 0));
       h.rumpf = tief(rumpf.filter((q) => q.hy > 4 && q.hy < 46));
-      h.kopf = tief([schnitt(S.kopf.p, mv(S.kopf.R, [1, 0, 0]), mv(S.kopf.R, [0, 0, 1]), M.kopf * 0.33, M.kopf * 0.42)]);
+      /* der Kopf als Kugel (Hinterkopf, Wange, Stirn) */
+      h.kopf = tief([schnitt(S.kopf.p, mv(S.kopf.R, [1, 0, 0]), mv(S.kopf.R, [0, 0, 1]), M.kopf * 0.34, M.kopf * 0.43)]);
       /* Eindringen: liegt die Achse eines Glieds im Rumpf? */
       const imRumpf = (p) => {
         let best = 1e9;
@@ -1691,7 +1695,31 @@
 
     /* ---- sortieren und zusammensetzen ---- */
     auftraege.sort((a, b) => a.tiefe - b.tiefe);
-    const inhalt = auftraege.map((a) => a.svg).join("");
+    /* FASSUNG 836: Kontaktschatten — ein weicher Schatten auf dem Boden
+       unter allem, was aufliegt oder nahe darüber ist (Füße, Gesäß, Knie,
+       Hände, im Liegen der ganze Körper). Als Ellipse, damit er den
+       Rahmen der Figur nicht verändert. */
+    let schatten = "";
+    if (!spec.ohneSchatten) {
+      const nah = [];
+      const sammle = (ss) => ss.forEach((q) => {
+        const w = cam.welt(q.c), Uw = cam.welt(q.U), Vw = cam.welt(q.V);
+        const hoch = anker[1] - (w[1] + Math.sqrt((q.a * Uw[1]) ** 2 + (q.b * Vw[1]) ** 2));
+        if (hoch < 6) { const c = pr(q.c); nah.push([c[0] - q.a, c[0] + q.a, cam.bild([0, 0, w[2] - anker[2]])[1]]); }
+      });
+      teile.forEach((t) => { if (t.fuss) sammle(t.fuss); if (t.oberschenkel) { sammle(t.oberschenkel); sammle(t.unterschenkel); } if (t.oberarm) sammle(t.unterarm); });
+      sammle(rumpf);
+      if (nah.length) {
+        let x0 = 1e9, x1 = -1e9, y = 0;
+        nah.forEach((q) => { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[1]); y += q[2]; });
+        y /= nah.length;
+        const sid = id + "k" + (gz++);
+        defs.push('<radialGradient id="' + sid + '"><stop offset="0" stop-color="#2a1f18" stop-opacity=".32"/><stop offset=".7" stop-color="#2a1f18" stop-opacity=".12"/><stop offset="1" stop-color="#2a1f18" stop-opacity="0"/></radialGradient>');
+        const rx = (x1 - x0) / 2 + 6 * g;
+        schatten = '<ellipse cx="' + r1((x0 + x1) / 2) + '" cy="' + r1(y - 0.3 * g) + '" rx="' + r1(rx) + '" ry="' + r1(Math.max(2.2 * g, rx * 0.16)) + '" fill="url(#' + sid + ')"/>';
+      }
+    }
+    const inhalt = schatten + auftraege.map((a) => a.svg).join("");
 
     /* Benannte Stellen am Körper — für Beschriftungen, Trefferflächen und
        die Lehrbuchtafeln (Körperteile vorn und hinten). */
@@ -2410,7 +2438,7 @@
       stehen: ["fussL", "fussR"], sitzen_boden: ["gesaess"], schneidersitz: ["gesaess", "fussR"],
       hocken: ["ferseL", "ferseR", "zehL", "zehR"], fersensitz: ["knieL", "knieR", "zehL", "zehR"],
       knien: ["knieL", "knieR", "zehL", "zehR"], krabbeln: ["handL", "handR", "knieL", "knieR"],
-      liegen: ["kopf", "rumpf", "gesaess", "ferseL", "ferseR"], bauchlage: ["rumpf", "zehL", "zehR"],
+      liegen: ["kopf", "rumpf", "gesaess", "ferseL", "ferseR"], bauchlage: ["kopf", "rumpf", "zehL", "zehR"],
       seitenlage: ["rumpf", "knieR"], sitzen_angewinkelt: ["gesaess", "ferseL", "ferseR"], baden: ["gesaess", "ferseL", "ferseR"],
       graetschsitz: ["gesaess", "ferseL", "ferseR"], buecken: ["ferseL", "ferseR", "zehL", "zehR"], treppe: ["zehR"],
       arme_verschraenkt: ["fussL", "fussR"], haende_huefte: ["fussL", "fussR"], strecken: ["zehL", "zehR"],
