@@ -162,7 +162,12 @@ const SCHRAEG = /_f_(45|135|225|315)_[a-z]\.webp/;
   await pg.screenshot({ path: BILD + "-leiste.png" });
   /* Gleis setzen, Pferdebahn genau darauf */
   const setzen = async (name, x, y, drehen) => {
+    /* FASSUNG 815 — XANDER: „Ich kann sie nicht dazu kaufen". Die Autos stehen jetzt mit Preis und „Kaufen" in der
+       Leiste; ein gekauftes stellt man mit „Abstellen" als Schmuck hin (hier: der Viper gehört dem Spieler schon). */
+    const auto = name === "Dodge Viper";
+    if (auto) await pg.evaluate(() => { STADT.spiel.autos = ["viper"]; });
     await pg.locator(".lk-karte-klein", { hasText: name }).first().tap(); await pg.waitForTimeout(300);
+    if (auto) { await pg.locator(".lk-karte .lk-text-knopf", { hasText: "Abstellen" }).first().tap(); await pg.waitForTimeout(300); }
     await pg.evaluate(([x, y]) => { const g = STADT.szene.objekte.find((o) => o.geist); g.x = x; g.y = y; STADT.szene.geaendert(); }, [x, y]);
     for (let i = 0; i < (drehen || 0); i++) { await pg.locator(".lk-karte .lk-knopf[title='Drehen']").first().tap(); await pg.waitForTimeout(120); }
     await pg.locator(".lk-karte .lk-knopf[title='Setzen']").tap(); await pg.waitForTimeout(300);

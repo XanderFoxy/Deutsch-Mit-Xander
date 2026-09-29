@@ -11,7 +11,7 @@
    ===================================================================== */
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
 const WURZEL = path.join(__dirname, "..");
-const DATEIEN = ["stadt-leicht/kern.js", "stadt/boden.js", "stadt-leicht/bilder.js", "stadt-leicht/szene.js", "stadt-leicht/leute.js", "stadt-leicht/boote.js", "stadt-leicht/tiere.js", "stadt-leicht/ton.js", "stadt-leicht/bahn.js", "stadt-leicht/fuhrwerk.js", "stadt-leicht/windmuehle.js", "stadt-leicht/himmel.js", "stadt-leicht/dorf.js", "stadt-leicht/spiel.js", "stadt-leicht/oberflaeche.js", "stadt-leicht/start.js"];
+const DATEIEN = ["stadt-leicht/kern.js", "stadt/boden.js", "stadt-leicht/bilder.js", "stadt-leicht/szene.js", "stadt-leicht/leute.js", "stadt-leicht/boote.js", "stadt-leicht/tiere.js", "stadt-leicht/ton.js", "stadt-leicht/bahn.js", "stadt-leicht/fuhrwerk.js", "stadt-leicht/autos.js", "stadt-leicht/windmuehle.js", "stadt-leicht/himmel.js", "stadt-leicht/dorf.js", "stadt-leicht/spiel.js", "stadt-leicht/oberflaeche.js", "stadt-leicht/start.js"];
 function esbuildHolen() {
   try { return require("esbuild"); } catch (e) {}
   const basis = path.join(require("os").homedir(), ".npm", "_npx");

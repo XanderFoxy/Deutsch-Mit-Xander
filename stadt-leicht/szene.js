@@ -391,6 +391,7 @@
     /* FASSUNG 809 — Lok und Wagen (bahn.js) wie Leute und Boote zwischen die Häuser */
     if (ST.bahn) for (const p of ST.bahn.sichtbar(Z)) leute.push(p);
     if (ST.fuhrwerk) for (const p of ST.fuhrwerk.sichtbar(Z)) leute.push(p);   // FASSUNG 810 — Kornwagen und Pferdebahn
+    if (ST.autos) for (const p of ST.autos.sichtbar(Z)) leute.push(p);   // FASSUNG 815 — Dodge Viper und Batmobil fahren (autos.js)
     /* FASSUNG 811 — Kühe, Schweine, Hühner (tiere.js) wie die Boote zwischen die Häuser */
     if (ST.tiere) for (const p of ST.tiere.sichtbar(Z)) leute.push(p);
     const nachDing = new Map();

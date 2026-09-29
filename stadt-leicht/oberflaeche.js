@@ -551,7 +551,8 @@
     /* FASSUNG 808 — neue Modelle aus stadt/modelle/ (gebacken, stadt-leicht/backplan.json); an Stelle 5 die Gruppe.
        Geladen wird ein Bild erst, wenn die Leiste offen ist oder das Ding in der Stadt steht. */
     ["Rathaus Döbeln", "w_rathaus_doebeln", [44.2, 21], 32.5, 0, "Wahrzeichen"],
-    ["Dodge Viper", "v_viper", [1.92, 4.45], 1.12, 0, "Fahrzeuge"], ["Batmobil", "v_batmobil", [2.1, 5.9], 1.12, 0, "Fahrzeuge"],
+    /* FASSUNG 815 — an Stelle 7 der Name des Autos in autos.js: kaufen, fahren lassen, abstellen */
+    ["Dodge Viper", "v_viper", [1.92, 4.45], 1.12, 0, "Fahrzeuge", "viper"], ["Batmobil", "v_batmobil", [2.1, 5.9], 1.12, 0, "Fahrzeuge", "batmobil"],
     ["Pferdebahn", "v_pferdebahn", [2.3, 9.6], 3, 0, "Fahrzeuge"], ["Kornwagen", "v_pferdewagen_korn", [2, 6.5], 2.6, 0, "Fahrzeuge"],
     ["Mehlwagen", "v_pferdewagen_mehl", [2, 6.5], 2.6, 0, "Fahrzeuge"], ["Leerer Wagen", "v_pferdewagen_leer", [2, 6.5], 2.6, 0, "Fahrzeuge"],
     ["Gleis", "d_gleis", [3, 4], 0.1, 0, "Gleise"], ["Gleisbogen", "d_gleis_kurve", [7.5, 7.5], 0.1, 0, "Gleise"]
@@ -566,13 +567,73 @@
         const b = el("button", "lk-karte-klein"); b.type = "button";
         const bild = s[1] + "_" + (s[4] ? "winter" : SZ.jahr === "winter" ? "winter" : "herbst") + "_tag_f_0_k";
         b.innerHTML = '<img alt="" src="stadt-leicht/bilder/' + bild + '.webp' + (LB.version ? "?v=" + LB.version : "") + '"><span>' + s[0] + "</span>";
-        b.addEventListener("click", (e) => { e.stopPropagation(); setzenBeginnen(s); });
+        if (s[6] && ST.autos) { b.classList.add("lk-auto-karte"); b.dataset.auto = s[6]; b.appendChild(el("small", "lk-auto-preis")); b.appendChild(el("b", "lk-kaufen")); }
+        b.addEventListener("click", (e) => { e.stopPropagation(); if (s[6] && ST.autos) autoKarte(s); else setzenBeginnen(s); });
         leiste.appendChild(b);
       }
       wurzel.appendChild(leiste);
     }
+    if (an) autoKartenText();
     leiste.hidden = !an;
     wurzel.classList.toggle("leiste-offen", an);
+  }
+
+  /* ---------------- FASSUNG 815 — Autos kaufen, fahren lassen, abstellen ----------------
+     XANDER: „mein neuen Dodge Viper und mein Batmobil habe ich immer noch nicht in der Map … Ich kann sie nicht dazu
+     kaufen. Ich kann sie im Spiel überhaupt nicht ausprobieren." In der Schmücken-Leiste stehen die Autos mit Preis und
+     „Kaufen"; ein Tipp öffnet die Karte des Autos (Kaufen, Probefahrt – gekauft: Hinfahren, Abstellen, Losfahren). */
+  function autoKartenText() {
+    if (!leiste || !ST.autos) return;
+    for (const b of leiste.querySelectorAll(".lk-auto-karte")) {
+      const id = b.dataset.auto, A = ST.autos.ARTEN[id], hat = ST.autos.hat(id);
+      b.querySelector(".lk-auto-preis").textContent = hat ? (ST.autos.geparkt(id) ? "abgestellt" : "fährt") : A.preis + " Punkte";
+      b.querySelector(".lk-kaufen").textContent = hat ? "Dein Auto" : "Kaufen";
+      b.classList.toggle("lk-gekauft", hat);
+    }
+  }
+  function autoKarte(s) {
+    const AU = ST.autos, id = s[6], A = AU.ARTEN[id];
+    if (leiste && !leiste.hidden) leisteZeigen(false);
+    if (bauLeiste) bauLeisteZeigen(false);
+    SZ.auswahl = null;
+    karte.hidden = false; karte.innerHTML = ""; karte._uhr = null;
+    const titel = el("div", "lk-karte-titel"), zeile = el("div", "lk-karte-zeile"), knoepfe = el("div", "lk-karte-knoepfe");
+    karte.append(titel, zeile, knoepfe);
+    titel.textContent = A.name;
+    const zu = knopf("kreuz", "Schließen", () => { karte.hidden = true; }, "lk-klein");
+    const textKnopf = (html, fn, cls) => { const b = el("button", "lk-text-knopf" + (cls ? " " + cls : ""), html); b.type = "button"; b.addEventListener("click", (e) => { e.stopPropagation(); fn(b); }); return b; };
+    const hin = () => { const a = AU.auto(id); if (!a) return; AU.folge = id; L().fliegeZu(a.x, a.y, Math.max(K.s, 16 * K.dpr), 700); karte.hidden = true; };
+    if (!AU.hat(id)) {
+      zeile.textContent = "Preis " + A.preis + " Punkte · danach fährt " + A.er + " durch deine Stadt";
+      const kauf = textKnopf(SYM.stern + "<span>Kaufen · " + A.preis + " P.</span>", (b) => {
+        b.disabled = true;
+        AU.kaufen(id).then((r) => {
+          ansage(A.name + " gekauft – " + A.er + " fährt los" + (r && r.vorlaeufig ? " (Preis wird später abgebucht)" : ""));
+          if (r && r.punkte != null && L().ich) L().ich.punkte = r.punkte;
+          autoKarte(s); autoKartenText(); L().unruhe = 2;
+        }).catch((e) => { b.disabled = false; ansage((e && (e.message || e.hint)) || "Geht gerade nicht"); });
+      }, "lk-kaufen-knopf");
+      kauf.dataset.preis = A.preis;
+      if (ST.spiel.beispiel || !ST.spiel.angemeldet) { kauf.disabled = true; kauf.title = "In der Beispielstadt wird nicht gekauft – bitte anmelden"; }
+      const probe = textKnopf("<span>Probefahrt</span>", () => { AU.probefahrt(id); ansage("Probefahrt: " + A.name + " fährt 90 Sekunden"); setTimeout(hin, 400); }, "lk-probe-knopf");
+      knoepfe.append(kauf, probe, zu);
+      return;
+    }
+    if (AU.geparkt(id)) {
+      zeile.textContent = "Steht abgestellt – tippe es an, um loszufahren.";
+      knoepfe.append(textKnopf("<span>Losfahren</span>", () => { losfahrenVonDeko(id); karte.hidden = true; }), zu);
+      return;
+    }
+    zeile.textContent = "Dein Auto fährt durch die Stadt.";
+    knoepfe.append(textKnopf("<span>Hinfahren</span>", hin), textKnopf("<span>Abstellen</span>", () => { setzenBeginnen(s); geist.autoParken = id; }), zu);
+  }
+  /* ein abgestelltes Auto (Schmuck) fährt wieder los – dort, wo es stand */
+  function losfahrenVonDeko(id, dieses) {
+    const A = ST.autos.ARTEN[id], o = dieses || SZ.objekte.find((x) => x.art === "eigen" && x.bild === A.bild && !x.geist);
+    if (o) SZ.weg(o);
+    ST.autos.parken(id, false, o ? { x: o.x, y: o.y } : null);
+    L().dekoSpeichern(); SZ.geaendert(); miniMalen(); L().unruhe = 2;
+    ansage(A.name + " fährt los");
   }
 
   /* ---------------- Bauen: alle Gebäude des Spiels ---------------- */
@@ -623,7 +684,10 @@
   }
   function geistFertig(ok) {
     if (!geist) return;
-    if (ok) { geist.geist = false; L().dekoSpeichern(); ansage("Gesetzt"); }
+    /* FASSUNG 815 — ein abgestelltes Auto fährt nicht mehr, bis man „Losfahren" tippt */
+    const parkt = ok && geist.autoParken && ST.autos ? geist.autoParken : null;
+    if (parkt) ST.autos.parken(parkt, true);
+    if (ok) { geist.geist = false; delete geist.autoParken; L().dekoSpeichern(); ansage(parkt ? "Abgestellt" : "Gesetzt"); }
     else if (geist._zurueck) { Object.assign(geist, geist._zurueck); geist.geist = false; delete geist._zurueck; }
     else SZ.weg(geist);
     if (geist) delete geist._zurueck;
@@ -634,6 +698,7 @@
   /* ---------------- Antippen ---------------- */
   O.zeigerRunter = function (p) {
     geistZiehen = false;
+    if (ST.autos) ST.autos.folge = null;   // FASSUNG 815 — wer selbst schiebt, folgt dem Auto nicht mehr
     if (geist) {
       /* auf dem Geist angesetzt? dann zieht der Finger den Geist */
       const t = SZ.treffer(p.x, p.y, (o) => o === geist);
@@ -653,6 +718,9 @@
     if (geist) { const a = ST.aufBoden(px, py); geist.x = a[0]; geist.y = a[1]; SZ.geaendert(); L().unruhe = 2; return; }
     if (leiste && !leiste.hidden) { leisteZeigen(false); return; }
     if (bauLeiste) { bauLeisteZeigen(false); return; }
+    /* FASSUNG 815 — Tipp auf ein fahrendes Auto: seine Karte (im großen Bild) */
+    const fa = ST.autos && !document.body.classList.contains("lk-mini-modus") && ST.autos.treffer(px, py);
+    if (fa) { const s = SCHMUCK.find((x) => x[6] === fa.id); if (s) { autoKarte(s); return; } }
     const o = SZ.treffer(px, py, (o) => o.art !== "natur" || o.rand !== 1);
     if (o && (o.art === "haus" || o.art === "wunder" || o.art === "eigen" || o.name)) { waehlen(o); return; }
     /* FASSUNG 809 — XANDER: „Waldstück … wenn man auf die Bäume klickt … einen Effekt". Ein Baum raschelt: Blätter
@@ -801,6 +869,14 @@
     }
     if (o.art === "eigen") {
       zeile.textContent = "Dein Schmuck";
+      /* FASSUNG 815 — ein abgestelltes eigenes Auto kann wieder losfahren */
+      const auto = SCHMUCK.find((x) => x[6] && x[1] === o.bild);
+      if (auto && ST.autos && ST.autos.hat(auto[6])) {
+        zeile.textContent = "Dein Auto – abgestellt";
+        const los = el("button", "lk-text-knopf", "<span>Losfahren</span>"); los.type = "button";
+        los.addEventListener("click", (e) => { e.stopPropagation(); SZ.auswahl = null; karte.hidden = true; losfahrenVonDeko(auto[6], o); });
+        knoepfe.append(los);
+      }
       knoepfe.append(knopf("links", "Drehen", () => objDrehen(o, 1, true)), knopf("rechts", "Andersherum drehen", () => objDrehen(o, -1, true)),
         knopf("versetzen", "Versetzen", () => { SZ.weg(o); geist = SZ.neu(Object.assign({}, o, { geist: true })); karteZeigen("setzen", geist); }),
         knopf("abriss", "Entfernen", () => { SZ.weg(o); L().dekoSpeichern(); karte.hidden = true; miniMalen(); L().unruhe = 2; }), zu);

@@ -123,6 +123,7 @@
     if (ST.tiere) ST.tiere.bewegen(jetzt);   // FASSUNG 811 — Tiere im Dorf (tiere.js)
     if (ST.bahn) ST.bahn.bewegen(jetzt);   // FASSUNG 809 — die Eisenbahn (bahn.js)
     if (ST.fuhrwerk) ST.fuhrwerk.bewegen(jetzt);   // FASSUNG 810 — Kornwagen und Pferdebahn (fuhrwerk.js)
+    if (ST.autos) ST.autos.bewegen(jetzt);   // FASSUNG 815 — XANDER: „mein neuen Dodge Viper und mein Batmobil … in der Map" (autos.js)
     /* lebendig: Schneefall, Rauch, Nachtlichter → ~30 Bilder je Sekunde reichen */
     const lebt = (SZ.jahr === "winter" && SZ.schneefall) || true;
     const takt = L.unruhe > 0 ? 0 : lebt ? 33 : 250;

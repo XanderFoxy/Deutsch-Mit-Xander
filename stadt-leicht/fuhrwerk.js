@@ -81,6 +81,7 @@
     return { x: x, y: y, tx: tx / l, ty: ty / l };
   }
   FW.an = an;
+  FW.strecke = strecke;   // FASSUNG 815 — die Autos (autos.js) rechnen mit denselben Strecken
   function naechsteStelle(W, x, y, bis) {
     let b = 0, d0 = Infinity;
     for (let i = 0; i <= W.n; i++) { if (bis != null && W.S[i] > bis) break; const d = (W.X[i] - x) * (W.X[i] - x) + (W.Y[i] - y) * (W.Y[i] - y); if (d < d0) { d0 = d; b = i; } }
@@ -358,7 +359,10 @@
     }
     const rest = w.bis - w.s;
     const vmax = Math.min(WAGEN.V, Math.sqrt(Math.max(0, 2 * BESCHL * rest)) + 0.05);
-    w.v = Math.min(vmax, w.v + BESCHL * dt);
+    /* FASSUNG 815 — steht ein Auto (autos.js) vorn im Weg, hält das Pferd an, bis es weg ist */
+    if (ST.autos && ST.autos.imWeg && ST.autos.imWeg(w.x, w.y, w.h, WAGEN.vorn, WAGEN.breit)) w.v = Math.max(0, w.v - 2 * BESCHL * dt);
+    else w.v = Math.min(vmax, w.v + BESCHL * dt);
+    w.wartet = w.v < 0.02 && rest > 0.1;
     w.s = Math.min(w.bis, w.s + w.v * dt);
     w.ph = (w.ph + w.v * dt / SCHRITT_L) % 1;
     lage(w);
@@ -376,7 +380,10 @@
     const p = an(w.W, w.s, 2.2), nx = -p.ty, ny = p.tx;
     /* am Anfang und Ende der Fahrt (Feldrand, Vorplatz) mittig */
     const k = klemm(Math.min(w.s, w.bis - w.s) / 4, 0, 1) * WAGEN.seite * brueckenFaktor(p.x, p.y);
-    w.x = p.x - nx * k; w.y = p.y - ny * k; w.h = Math.atan2(p.ty, p.tx);
+    /* FASSUNG 815 — die Schrägansicht spiegelt (Welt-x nach rechts unten, Welt-y nach links unten): (−ty, tx) liegt im Bild
+       RECHTS der Fahrtrichtung. Vorher stand hier „−", und die Wagen fuhren im Bild links; jetzt Rechtsverkehr wie die
+       Autos (autos.js) – so fährt ein Auto hinter einem Kornwagen in derselben Spur und weicht entgegenkommenden aus. */
+    w.x = p.x + nx * k; w.y = p.y + ny * k; w.h = Math.atan2(p.ty, p.tx);
   }
 
   /* ---------------- Pferdebahn ---------------- */

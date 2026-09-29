@@ -268,7 +268,11 @@
     /* Umriss um gut einen halben Bildpunkt aufblasen: benachbarte Flächen
        überlappen dann minimal – sonst blitzen an den Kanten helle
        Haarlinien durch (Kantenglättung zweier Flächen addiert sich nicht). */
-    const um = aufblasen(f.umriss, 0.65 / Math.max(1e-3, Math.min(Math.hypot(ux, uy), Math.hypot(vx, vy))));
+    /* FASSUNG 815 — fast auf der Kante stehende Flächen (Radflächen des Batmobils, genau von hinten gesehen): der halbe
+       Bildpunkt entlang der kurzen Achse wurde in Flächenmaß riesig und malte lange Striche entlang der langen Achse.
+       Höchstens 2 Bildpunkte entlang der langen Achse aufblasen – bei gewöhnlichen Flächen ändert sich nichts. */
+    const lu = Math.hypot(ux, uy), lv = Math.hypot(vx, vy);
+    const um = aufblasen(f.umriss, Math.min(0.65 / Math.max(1e-3, Math.min(lu, lv)), 2 / Math.max(1e-3, lu, lv)));
     g.moveTo(um[0][0], um[0][1]);
     for (let i = 1; i < um.length; i++) g.lineTo(um[i][0], um[i][1]);
     g.closePath();
