@@ -211,10 +211,12 @@
     const gitter = el("div", "lk-mini-gitter");
     BEREICHE.forEach((zeile, j) => zeile.forEach((n, i) => {
       const f = el("button", "lk-mini-feld", "<span>" + n + "</span>"); f.type = "button";
-      f.addEventListener("click", (e) => { e.stopPropagation(); L().fliegeZu((i - 1) * BG, (j - 1) * BG, O.miniNah ? O.miniNah() : Math.max(K.s, 11 * K.dpr), 900); ansage(n); });
+      f.addEventListener("click", (e) => { e.stopPropagation(); if (O.kachelHin && document.body.classList.contains("lk-mini-modus")) { O.kachelHin(i, j); return; } L().fliegeZu((i - 1) * BG, (j - 1) * BG, O.miniNah ? O.miniNah() : Math.max(K.s, 11 * K.dpr), 900); ansage(n); });
       gitter.appendChild(f);
     }));
     mini.appendChild(gitter);
+    /* FASSUNG 817 — im kleinen Rahmen zeigt ein heller Rahmen in der Karte, welcher Teil gerade zu sehen ist */
+    const blick = el("i", "lk-mini-blick"); blick.setAttribute("aria-hidden", "true"); mini.appendChild(blick);
     minirahmen.append(knopf("karte", "Karte ein- und ausklappen", () => { mini.classList.toggle("zu"); }, "lk-mini-schalter"), mini);
     wurzel.appendChild(minirahmen);
 
@@ -285,7 +287,11 @@
       };
       const ueberblick = () => ganzeStadt().s;
       /* Wie beim alten Dorf: die kleine Karte mit den Vierteln erscheint erst, wenn man mit der Lupe näher dran ist. */
-      const nahSetzen = (nah) => {
+      /* FASSUNG 817 — nach einem Kompass-/Doppeltipp-Flug fragt der Takt (700 ms) kurz nicht nach, ob man nah ist (sonst
+         stellte er mitten im Flug den alten Stand wieder her) */
+      let nahSperre = 0;
+      const nahSetzen = (nah, fest) => {
+        if (fest) nahSperre = performance.now() + 900; else if (performance.now() < nahSperre) return;
         lupeK.classList.toggle("an", nah); document.body.classList.toggle("lk-nah", nah);
         const i = lupeK.querySelector("i"); if (i && i.textContent !== (nah ? "−" : "+")) i.textContent = nah ? "−" : "+";
         lupeK.title = nah ? "Kompass: ganze Stadt" : "Kompass: näher ran"; lupeK.setAttribute("aria-label", lupeK.title);
@@ -297,17 +303,95 @@
       SYM.kompass = '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#f7f1e1" stroke="#6b4a22" stroke-width="2"/><circle cx="20" cy="20" r="14.5" fill="none" stroke="#c9b58a" stroke-width="1"/>'
         + '<g class="lk-nadel"><path d="M20 5.5l3.4 14.5h-6.8z" fill="#c8312b"/><path d="M20 34.5l-3.4-14.5h6.8z" fill="#3b3f4a"/></g><circle cx="20" cy="20" r="2" fill="#6b4a22"/>'
         + '<text x="20" y="4.6" font-size="5" font-weight="700" text-anchor="middle" fill="#6b4a22" font-family="system-ui,sans-serif">N</text></svg><i>+</i>';
+      /* FASSUNG 817 — XANDER (Funk 207): „lasse gern noch diese zweite Zoomstufe zu dass man bisschen tiefer ins Geschehen
+         gucken kann auch in der kleinen Miniaturansicht". Stufen im kleinen Rahmen: 0 = ganze Stadt, 1 = Kompass (2,8-fach),
+         2 = noch näher (7-fach, erst dann kommen die großen Bilder, beim Herauszoomen werden sie wieder freigegeben). */
+      const STUFE = [1, 2.8, 7];
+      const stufeVon = (s) => s > ueberblick() * 4.5 ? 2 : s > ueberblick() * 1.4 ? 1 : 0;
+      O.stufe = () => stufeVon(K.s);
       const kompass = () => {
+        if (O.wahlZu) O.wahlZu();
         const nah = K.s > ueberblick() * 1.4, g = ganzeStadt();
         L().fliegeZu(nah ? g.x : K.x, nah ? g.y : K.y, nah ? g.s : g.s * 2.8, 600);
-        nahSetzen(!nah);
+        nahSetzen(!nah, true);
       };
       const lupeK = knopf("kompass", "Kompass: näher ran", kompass, "lk-nur-mini lk-lupe");
       /* Doppeltipp auf die Wiese (wie im alten Dorf): mit dem Kompass zurück zur ganzen Stadt */
-      O.doppelTipp = () => { if (document.body.classList.contains("lk-mini-modus") && document.body.classList.contains("lk-nah")) kompass(); };
+      /* FASSUNG 817 — XANDER (Walkie 305): „durch einen Double Tab in das Bild soll man auch … stärker reinkommen nicht nur
+         durch den Kompass". Im Überblick holt der Doppeltipp genau die getippte Stelle heran (so nah wie der Kompass), nah
+         dran führt er wie bisher zurück zur ganzen Stadt. */
+      O.doppelTipp = (px, py) => {
+        if (!document.body.classList.contains("lk-mini-modus")) return;
+        if (O.wahlZu) O.wahlZu();
+        /* Funk 207: Überblick → Kompass-Nähe → zweite Stufe → wieder die ganze Stadt, jeweils an die getippte Stelle */
+        const st = stufeVon(K.s);
+        if (st === 2 || px == null) { if (st) kompass(); return; }
+        const a = ST.aufBoden(px, py), g = ganzeStadt(), s = g.s * STUFE[st + 1], z = O.klemmZiel(a[0], a[1], s);
+        L().fliegeZu(z[0], z[1], s, 600);
+        nahSetzen(true, true);
+      };
+      /* FASSUNG 817 — XANDER (Walkie 306): „die Kachel ist nicht kongruent mit dem eigentlichen Bildausschnitt … die Kachel
+         oben rechts das ganze oben rechts anzeigen bis zur Grenze … oben links … unten links … unten rechts". Im kleinen
+         Rahmen zeigt die kleine Karte jetzt genau das Überblicksbild (gleiche Lage, gleiche Drehung, 16:10) und ist in 3 × 3
+         Kacheln geteilt; eine Kachel holt genau ihren Teil ins Bild – die Ecken reichen bis an den Rand des Überblicks. */
+      const imUeberblick = (fn) => { const alt = { x: K.x, y: K.y, s: K.s }, g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; try { return fn(); } finally { K.x = alt.x; K.y = alt.y; K.s = alt.s; } };
+      O.ueberblick = ganzeStadt; O.imUeberblick = imUeberblick;
+      O.kachelHin = (i, j) => {
+        if (O.wahlZu) O.wahlZu();
+        const g = ganzeStadt(), a = imUeberblick(() => ST.aufBoden((i + 0.5) / 3 * K.W, (j + 0.5) / 3 * K.H));
+        L().fliegeZu(a[0], a[1], g.s * 3, 800);
+        nahSetzen(true, true);
+        ansage(["oben", "Mitte", "unten"][j] + " " + ["links", "Mitte", "rechts"][i]);
+      };
+      /* FASSUNG 817 — Funk 207: „muss die Map an ihr äußerstes Ende gehen … und ich kann dann trotzdem noch weiter scrollen
+         das macht keinen Sinn". Im kleinen Rahmen bleibt der Blick immer innerhalb des Überblicks: an den Rändern ist Schluss. */
+      O.klemmZiel = (x, y, s) => {
+        if (!document.body.classList.contains("lk-mini-modus")) return [x, y];
+        const g = ganzeStadt(), f = g.s / Math.max(1e-6, s), h = f / 2;
+        const c = imUeberblick(() => { const P = ST.proj(x, y, 0); return [P[0] / K.W, P[1] / K.H]; });
+        const cx = f >= 1 ? 0.5 : Math.max(h, Math.min(1 - h, c[0])), cy = f >= 1 ? 0.5 : Math.max(h, Math.min(1 - h, c[1]));
+        if (Math.abs(cx - c[0]) < 1e-5 && Math.abs(cy - c[1]) < 1e-5) return [x, y];
+        return imUeberblick(() => ST.aufBoden(cx * K.W, cy * K.H));
+      };
+      O.klemmen = () => { if (!document.body.classList.contains("lk-mini-modus")) return; const z = O.klemmZiel(K.x, K.y, K.s); K.x = z[0]; K.y = z[1]; };
+      O.miniUeberblickMalen = (c0) => {
+        const dpr = window.devicePixelRatio || 1, rb = c0.getBoundingClientRect(), pw = Math.max(8, Math.round((rb.width || 75) * dpr)), ph = Math.max(5, Math.round((rb.height || 47) * dpr));
+        c0.width = pw; c0.height = ph;
+        const c = c0.getContext("2d"), B = ST.boden, N = B.N, d = B.daten, gr = 144, r = B.RAND * B.AUFL, winter = SZ.jahr === "winter";
+        const img = c.createImageData(pw, ph);
+        imUeberblick(() => {
+          for (let j = 0; j < ph; j++) for (let i = 0; i < pw; i++) {
+            const w = ST.aufBoden((i + 0.5) / pw * K.W, (j + 0.5) / ph * K.H), ki = Math.floor(r + (w[0] + gr / 2) * B.AUFL), kj = Math.floor(r + (w[1] + gr / 2) * B.AUFL), p = (j * pw + i) * 4;
+            let col = winter ? [233, 238, 245] : [157, 187, 114];
+            if (ki < 0 || kj < 0 || ki >= N || kj >= N) col = [120, 132, 150];
+            else { const o = (kj * N + ki) * 4; if (d[o + 1] > 90) col = [120, 162, 200]; else if (d[o] > 90) col = [176, 168, 156]; else if (d[o + 3] > 90) col = winter ? [220, 228, 238] : [134, 176, 96]; }
+            img.data[p] = col[0]; img.data[p + 1] = col[1]; img.data[p + 2] = col[2]; img.data[p + 3] = 255;
+          }
+          c.putImageData(img, 0, 0);
+          for (const o of SZ.objekte) {
+            if (o.versteckt || o.art === "natur" || o.deko) continue;
+            c.fillStyle = o.art === "haus" ? (o.bau ? "#e0a030" : "#a4432f") : "#6b5b52";
+            c.beginPath(); SZ.ecken(o).forEach((q, n) => { const P = ST.proj(q[0], q[1], 0), x = P[0] / K.W * pw, y = P[1] / K.H * ph; if (n) c.lineTo(x, y); else c.moveTo(x, y); }); c.closePath(); c.fill();
+          }
+        });
+      };
+      /* Der helle Rahmen in der kleinen Karte: was gerade im Bild ist (in Teilen des Überblicks) */
+      O.blickTeile = () => {
+        const ecke = [[0, 0], [K.W, K.H]].map((p) => ST.aufBoden(p[0], p[1]));
+        return imUeberblick(() => ecke.map((w) => { const P = ST.proj(w[0], w[1], 0); return [P[0] / K.W, P[1] / K.H]; }));
+      };
       /* FASSUNG 807 — „ein bisschen die Karte auch rotieren": mit dem Kompass ein Knopf zum Drehen */
       const drehK = knopf("rechts", "Karte drehen", () => { drehen(1); if (!document.body.classList.contains("lk-nah")) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; } }, "lk-nur-mini lk-drehknopf");
-      setInterval(() => { if (document.body.classList.contains("lk-mini-modus")) nahSetzen(K.s > ueberblick() * 1.4); }, 700);
+      setInterval(() => {
+        if (!document.body.classList.contains("lk-mini-modus")) { LB.grossErlaubt = false; return; }
+        nahSetzen(K.s > ueberblick() * 1.4);
+        /* Funk 207: große Bilder nur in der zweiten Stufe; zurück im Überblick auch die kleinen wieder freigeben */
+        const st = stufeVon(K.s);
+        LB.grossErlaubt = st === 2;
+        if (st === 2 && LB.vollLaden) LB.vollLaden().then(() => { L().unruhe = 2; });
+        if (st < 2 && LB.freigeben) LB.freigeben(/_g$/);
+        if (st === 0 && LB.freigeben) LB.freigeben(/_k$/);
+      }, 700);
       const vollK = knopf("voll", "Vollbild", () => { try { window.parent.postMessage({ typ: "leicht-voll" }, location.origin); } catch (e) {} }, "lk-nur-mini lk-vollknopf");
       /* FASSUNG 809 — XANDER: „Mir fehlen noch die items zum schmücken die finde ich hier in der kleinen Map noch gar nicht".
          Unter dem kleinen Bild (im Spiel) stehen „Schmücken" und „Bauen": das Spiel meldet vorher, welche Leiste nach dem
@@ -315,7 +399,35 @@
       let nachVoll = "";
       window.addEventListener("message", (ev) => { if (ev.origin === location.origin && ev.source === window.parent && ev.data && ev.data.typ === "leicht-nachvoll") nachVoll = String(ev.data.was || ""); });
       O.nachVollOeffnen = () => { const w = nachVoll; nachVoll = ""; if (w === "schmuck") leisteZeigen(true); else if (w === "bauen") bauLeisteZeigen(true); };
-      wurzel.append(lupeK, vollK, drehK);
+      /* FASSUNG 817 — XANDER (Funk 207): „wenn man irgendwas aufstellen will oder irgendwas schmücken will soll man dazu
+         nicht ins landscape format gezwungen werden denn dazu reicht mein Speicher nicht und dann bricht wieder alles ab ich
+         möchte es aus diesem kleinen Fenster heraus aufstellen können". „Schmücken"/„Bauen" unter dem kleinen Bild öffnen
+         die Leiste jetzt IM kleinen Rahmen (kompakt, nur die kleinen Bilder); Setzen, Drehen, Versetzen und die Karte der
+         Häuser gehen hier. „Fertig" oben rechts beendet das Gestalten. Das Vollbild bleibt nur noch eine Möglichkeit. */
+      const fertigK = el("button", "lk-gestalten-fertig", SYM.haken + "<span>Fertig</span>");
+      fertigK.type = "button"; fertigK.title = "Schmücken/Bauen beenden";
+      fertigK.addEventListener("click", (e) => { e.stopPropagation(); O.gestaltenEnde(); });
+      O.gestaltenEnde = () => {
+        if (geist) geistFertig(false);
+        if (leiste && !leiste.hidden) leisteZeigen(false);
+        if (bauLeiste) bauLeisteZeigen(false);
+        auswahlWeg(); karte.hidden = true;
+        O.gestalten = false; document.body.classList.remove("lk-gestalten");
+      };
+      window.addEventListener("message", (ev) => {
+        if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-gestalten") return;
+        if (!document.body.classList.contains("lk-mini-modus")) { nachVoll = String(ev.data.was || ""); O.nachVollOeffnen(); return; }
+        const was = String(ev.data.was || "");
+        if (O.wahlZu) O.wahlZu();
+        clearTimeout(O._tippUhr); O._tipp = null;
+        /* derselbe Knopf noch einmal: die Leiste geht zu (Gestalten bleibt, bis „Fertig") */
+        if (O.gestalten && ((was === "bauen" && bauLeiste) || (was !== "bauen" && leiste && !leiste.hidden))) { if (was === "bauen") bauLeisteZeigen(false); else leisteZeigen(false); return; }
+        O.gestalten = true; document.body.classList.add("lk-gestalten");
+        /* zum Aufstellen näher ran (Kompass-Nähe), wenn man noch die ganze Stadt sieht */
+        if (stufeVon(K.s) === 0) { const g = ganzeStadt(); L().fliegeZu(g.x, g.y, g.s * STUFE[1], 500); nahSetzen(true, true); }
+        if (was === "bauen") bauLeisteZeigen(true); else leisteZeigen(true);
+      });
+      wurzel.append(lupeK, vollK, drehK, fertigK);
       const kopfZ = el("div", "lk-kopfzeile", '<span class="lk-uhr" title="Uhrzeit in Deutschland"></span><span class="lk-ortsschild"><b></b></span><span class="lk-wetter" hidden></span>');
       wurzel.appendChild(kopfZ);
       const uhrStellen = () => {
@@ -330,10 +442,47 @@
         /* FASSUNG 807 — „Symbole aus" und „Namen aus" wie im alten Dorf: ohne Symbole nur „fertig", ohne Namen keine Schilder */
         document.body.classList.toggle("lk-ohne-symbole", ev.data.symbole === false);
         document.body.classList.toggle("lk-ohne-namen", ev.data.namen === false);
+        /* FASSUNG 817 — „Ein Tipp produziert direkt" (Einstellung im Spiel): dann steht auch im Überblick die kleine Uhr */
+        document.body.classList.toggle("lk-direkt", ev.data.direkt === true);
         const w = kopfZ.querySelector(".lk-wetter"); w.innerHTML = String(ev.data.wetter || ""); w.hidden = !ev.data.wetter;
         /* FASSUNG 814 — XANDER: „Winter … (Wetter oder Datum)". Das Spiel schickt die Wetterart maschinenlesbar mit
            (wetterArt: klar, wolken, nebel, niesel, regen, schnee, gewitter); meldet es Schnee, liegt Schnee. */
         if ("wetterArt" in ev.data && SZ.wetterSetzen(/^[a-z]{2,12}$/.test(ev.data.wetterArt || "") ? ev.data.wetterArt : null)) { D.jahrFiltern(); O.jahrAnzeigen(); L().unruhe = 2; }
+        /* FASSUNG 817 — XANDER: „genau die Buttons und genau die Funktionen sollen unter der neuen Version genauso stehen".
+           „Saison: …“ unter dem Bild (Vorschau des Betreibers) stellt die Jahreszeit hier; nur wenn sie sich im Spiel ändert
+           (der eigene Jahreszeit-Knopf im Vollbild bleibt sonst, wie er gewählt ist). Das Fest bringt Kürbisse. */
+        const jm = String(ev.data.jahrModus || "");
+        if (jm && jm !== O._jahrVomSpiel && (jm === "auto" || SZ.MODI[jm])) {
+          O._jahrVomSpiel = jm; SZ.modus = jm; SZ.jahrStellen(); D.jahrFiltern(); O.jahrAnzeigen(); L().unruhe = 2;
+        }
+        const fest = /^[a-z]{0,12}$/.test(ev.data.fest || "") ? String(ev.data.fest || "") : "";
+        if (fest !== O.fest) { O.fest = fest; L().unruhe = 2; }
+      });
+      /* FASSUNG 817 — Halloween (Datum oder „Saison: Halloween“): vor jedem Haus Kürbisse, nachts mit leuchtendem Gesicht –
+         wie im alten Bild (gemalt, keine eigenen Bilddateien). */
+      SZ.zuhoerer.push(function (g, t, Z) {
+        if (O.fest !== "halloween") return;
+        const vorn = ST.drehXY(1, 1, (4 - (K.dreh & 3)) & 3), nacht = Z && Z.nacht > 0.4;
+        for (const o of SZ.objekte) {
+          if (o.art !== "haus" || o.versteckt || o.bau) continue;
+          const rr = Math.max(o.fuss ? o.fuss[0] : 4, o.fuss ? o.fuss[1] : 4) * 0.42;
+          for (let n = 0; n < 2; n++) {
+            const x = o.x + vorn[0] * rr + (n ? 1.3 : -0.4) * vorn[1] * 0.8, y = o.y + vorn[1] * rr - (n ? 1.3 : -0.4) * vorn[0] * 0.8;
+            const P = ST.proj(x, y, 0), r = (n ? 0.45 : 0.62) * K.s * 0.9;
+            if (P[0] < -r || P[1] < -r || P[0] > K.W + r || P[1] > K.H + r || r < 1.2) continue;
+            g.fillStyle = "rgba(40,30,20,.3)"; g.beginPath(); g.ellipse(P[0], P[1], r * 1.2, r * .38, 0, 0, 7); g.fill();
+            const kg = g.createRadialGradient(P[0] - r * .3, P[1] - r * 1.1, r * .1, P[0], P[1] - r * .7, r * 1.1);
+            kg.addColorStop(0, "#ffb347"); kg.addColorStop(.6, "#e7771c"); kg.addColorStop(1, "#9a4410");
+            g.fillStyle = kg; g.beginPath(); g.ellipse(P[0], P[1] - r * .7, r, r * .75, 0, 0, 7); g.fill();
+            g.fillStyle = "#4d6b25"; g.fillRect(P[0] - r * .1, P[1] - r * 1.6, r * .2, r * .3);
+            if (nacht) {
+              g.fillStyle = "rgba(255,214,90,.95)";
+              g.beginPath(); g.moveTo(P[0] - r * .45, P[1] - r * .95); g.lineTo(P[0] - r * .2, P[1] - r * .95); g.lineTo(P[0] - r * .32, P[1] - r * 1.2); g.fill();
+              g.beginPath(); g.moveTo(P[0] + r * .45, P[1] - r * .95); g.lineTo(P[0] + r * .2, P[1] - r * .95); g.lineTo(P[0] + r * .32, P[1] - r * 1.2); g.fill();
+              g.fillRect(P[0] - r * .4, P[1] - r * .6, r * .8, r * .14);
+            }
+          }
+        }
       });
       /* Ein Viertel auf der kleinen Karte: im kleinen Rahmen mit der Lupen-Stärke, nicht mit der großen Nähe. */
       O.miniNah = () => { if (!document.body.classList.contains("lk-mini-modus")) return Math.max(K.s, 11 * K.dpr); nahSetzen(true); return ueberblick() * 2.8; };
@@ -348,9 +497,13 @@
            so groß gezoomt werden können, wie sie innerhalb des Rahmens vorher waren". Eingebettet bleibt auch das Vollbild
            schlank (Sparmodus: nie die großen Bilder, 12 Leute) – die Nähe reicht bis zum 1,6-Fachen der kleinen Bilder. */
         if (klein) K.min = Math.min(K.min, ueberblick() * 0.95);
-        K.max = klein ? Math.max(K.min, ueberblick() * 4) : LB.spar ? Math.min(maxVoll, 18 * 1.6) : maxVoll;
+        K.max = klein ? Math.max(K.min, ueberblick() * (STUFE[2] + 0.5)) : LB.spar ? Math.min(maxVoll, 18 * 1.6) : maxVoll;
         if (K.s > K.max) K.s = K.max;
         if (klein) { if (bauLeiste) bauLeisteZeigen(false); if (leiste && !leiste.hidden) leisteZeigen(false); karte.hidden = true; farbFeld.hidden = true; }
+        O.gestalten = false; document.body.classList.remove("lk-gestalten");
+        /* FASSUNG 817 — die kleine Karte hat im kleinen Rahmen die Lage des Überblicks, im Vollbild die der ganzen Karte */
+        if (O.wahlZu) O.wahlZu();
+        miniMalen();
       };
       /* FASSUNG 809 — Walkie 304: „es stehen immer noch Schriften für die Namen der Häuser über den Häusern obwohl ich gar
          keine … eingeschaltet habe". Namen und Symbole sind aus, bis das Spiel sie einschaltet (wie im alten Dorf). */
@@ -358,7 +511,7 @@
       const erstesMal = q.get("mini") === "1";
       modus(erstesMal);
       if (erstesMal) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; }
-      window.addEventListener("resize", () => { if (document.body.classList.contains("lk-mini-modus") && !document.body.classList.contains("lk-nah")) setTimeout(() => { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; }, 50); });
+      window.addEventListener("resize", () => { if (document.body.classList.contains("lk-mini-modus") && !document.body.classList.contains("lk-nah")) setTimeout(() => { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; miniMalen(); }, 50); });
       window.addEventListener("message", (ev) => {
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-modus") return;
         modus(!ev.data.voll); L().unruhe = 2;
@@ -368,7 +521,7 @@
          und man kommt … unter das Bild, um weiter zu scrollen in die Einzeleinstellungen vom Dorf … jetzt … bewegt sich jetzt
          die komplette Webseite nach oben oder nach unten. Das soll so nicht sein." Im normalen (festen) Bild wird das Wischen
          ans Spiel geschickt, das damit das Dorf-Menü rund um das Bild scrollt – mit Schwung wie ein echtes Scrollen. */
-      const scrollModus = () => document.body.classList.contains("lk-mini-modus") && !document.body.classList.contains("lk-nah");
+      const scrollModus = () => document.body.classList.contains("lk-mini-modus") && !document.body.classList.contains("lk-nah") && !O.gestalten && !geist;
       const hoch = (d) => { try { window.parent.postMessage(Object.assign({ typ: "leicht-scroll" }, d), location.origin); } catch (x) {} };
       /* FASSUNG 809 — Walkie 304: „Das Scrollen ist sehr schwerfällig und hängt immer nach und schiebt sich zurück". Der
          Rahmen wandert beim Scrollen mit dem Menü mit – der Finger wurde relativ zum Rahmen gemessen (clientY), also hob
@@ -456,6 +609,55 @@
         }
         O.zeichenLegen();
       });
+      /* FASSUNG 817 — XANDER (Walkie 305): „es sei denn … Brot, Kuchen oder Torte … kleine Einzelauswahl … wo man auf das
+         Symbol klickt". Hat ein Haus mehrere Aufgaben, schickt das Spiel die Auswahl: über dem Haus eine kleine Leiste mit
+         dem Bild jeder Ware (und wie viele gehen); ein Tipp darauf startet genau das. Rechts „Karte" öffnet die Station
+         darunter. Ein Tipp daneben schließt die Leiste. */
+      let wahlEl = null, wahlG = "";
+      O.wahlZu = () => { if (!wahlEl) return false; wahlEl.remove(); wahlEl = null; wahlG = ""; return true; };
+      const nachOben = (d) => { try { window.parent.postMessage(d, location.origin); } catch (e) {} };
+      window.addEventListener("message", (ev) => {
+        if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-wahl") return;
+        O.wahlZu();
+        if (typeof ev.data.g !== "string" || !Array.isArray(ev.data.wahl) || !document.body.classList.contains("lk-mini-modus")) return;
+        const g = ev.data.g, haus = SZ.objekte.find((o) => o.art === "haus" && o.spiel === g);
+        wahlG = g; wahlEl = el("div", "lk-wahl");
+        wahlEl.setAttribute("role", "group"); wahlEl.setAttribute("aria-label", (haus ? haus.name : "Haus") + ": was herstellen?");
+        for (const w of ev.data.wahl.slice(0, 5)) {
+          const n = Math.max(0, Math.floor(+w.n || 0)), name = String(w.name || w.w || "").slice(0, 24);
+          const b = el("button", "lk-wahl-knopf", (WARE_BILD[w.w] || WARE_BILD.korb) + "<span>×" + n + "</span>");
+          b.type = "button"; b.dataset.w = String(w.w || ""); b.disabled = !n;
+          b.title = n ? name + " herstellen (" + n + ")" : name + " – es fehlen Zutaten"; b.setAttribute("aria-label", b.title);
+          b.addEventListener("click", (e) => { e.stopPropagation(); O.wahlZu(); nachOben({ typ: "leicht-machen", g: g, w: b.dataset.w }); });
+          wahlEl.appendChild(b);
+        }
+        const k = el("button", "lk-wahl-knopf lk-wahl-karte", '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 7h11M9 12h11M9 17h11"/></g><g fill="currentColor"><circle cx="4.5" cy="7" r="1.5"/><circle cx="4.5" cy="12" r="1.5"/><circle cx="4.5" cy="17" r="1.5"/></g></svg>');
+        k.type = "button"; k.title = "Karte öffnen"; k.setAttribute("aria-label", "Karte des Hauses öffnen");
+        k.addEventListener("click", (e) => { e.stopPropagation(); O.wahlZu(); nachOben({ typ: "leicht-haus", g: g, karte: 1 }); });
+        wahlEl.appendChild(k);
+        wahlEl.addEventListener("click", (e) => e.stopPropagation());
+        wurzel.appendChild(wahlEl);
+        O.zeichenLegen();
+      });
+      const wahlLegen = (haeuser) => {
+        if (!wahlEl) return;
+        const o = haeuser[wahlG];
+        if (!o) { O.wahlZu(); return; }
+        const W = K.W / K.dpr, H = K.H / K.dpr, bw = wahlEl.offsetWidth, bh = wahlEl.offsetHeight, nah = document.body.classList.contains("lk-nah");
+        const P = ST.proj(o.x, o.y, (o.hoehe || 10) * (o.stufe || 1) * 0.8), F = ST.proj(o.x, o.y, 0), x = P[0] / K.dpr, y = P[1] / K.dpr;
+        /* frei von Kompass, Uhr, Ortsschild (oben), Vollbild (unten links), Drehknopf und kleiner Karte (nah) – und von
+           den Schildern der anderen Häuser: erst über dem Haus, sonst darunter, sonst daneben */
+        const weg = [];
+        for (const s of [".lk-lupe", ".lk-uhr", ".lk-ortsschild", ".lk-wetter", ".lk-vollknopf", ".lk-drehknopf", ".lk-mini-rahmen"]) { const e = wurzel.querySelector(s); if (e && getComputedStyle(e).display !== "none" && !e.hidden) weg.push(e.getBoundingClientRect()); }
+        for (const z of zeichenEbene.children) if (z.dataset.g !== wahlG && z.style.display !== "none" && getComputedStyle(z).display !== "none") weg.push(z.getBoundingClientRect());
+        const setzen = (lx, ly) => [Math.max(nah ? 36 : 4, Math.min(W - bw - 4, lx)), Math.max(34, Math.min(H - bh - (nah ? 56 : 42), ly))];
+        const frei = (q) => !weg.some((r) => r.width > 0 && Math.min(r.right, q[0] + bw) - Math.max(r.left, q[0]) > 0.5 && Math.min(r.bottom, q[1] + bh) - Math.max(r.top, q[1]) > 0.5);
+        const wahl = [setzen(x - bw / 2, y - bh - 2), setzen(x - bw / 2, F[1] / K.dpr + 4), setzen(x + 14, (y + F[1] / K.dpr) / 2 - bh / 2), setzen(x - bw - 14, (y + F[1] / K.dpr) / 2 - bh / 2)];
+        /* die einmal gefundene Lage bleibt, solange sie frei ist (kein Springen, wenn ein Schild atmet) */
+        if (!(wahlEl._i >= 0 && frei(wahl[wahlEl._i]))) { const i = wahl.findIndex(frei); wahlEl._i = i >= 0 ? i : 0; }
+        const q = wahl[wahlEl._i];
+        wahlEl.style.transform = "translate(" + q[0].toFixed(1) + "px," + q[1].toFixed(1) + "px)";
+      };
       /* FASSUNG 806 — XANDER: „schau auch, dass du die Labels nach Möglichkeit wieder einbaust. Die Leute das auch aus dieser
          Ansicht sehen können, damit sie genau wissen, was was ist". Unter jedem Haus sein Name (wie „Namen" im alten Dorf). */
       const namenEbene = el("div", "lk-zeichen-ebene lk-namen-ebene");
@@ -477,6 +679,13 @@
         const haeuser = {};
         for (const o of SZ.objekte) if (o.art === "haus" && o.spiel) haeuser[o.spiel] = o;
         if (document.body.classList.contains("lk-mini-modus")) namenLegen(haeuser); else if (namenEbene.firstChild) namenEbene.textContent = "";
+        wahlLegen(haeuser);
+        /* FASSUNG 817 — der Rahmen in der kleinen Karte (nur nah dran sichtbar) */
+        if (document.body.classList.contains("lk-nah") && O.blickTeile) {
+          const t = O.blickTeile(), s = blick.style, f = (v) => (Math.max(-5, Math.min(105, v * 100))).toFixed(2) + "%";
+          const l = f(t[0][0]), o2 = f(t[0][1]), w = (Math.min(1.05, t[1][0]) - Math.max(-0.05, t[0][0])) * 100, h = (Math.min(1.05, t[1][1]) - Math.max(-0.05, t[0][1])) * 100;
+          if (s.left !== l) s.left = l; if (s.top !== o2) s.top = o2; s.width = Math.max(2, w).toFixed(2) + "%"; s.height = Math.max(2, h).toFixed(2) + "%";
+        }
         if (!zeichenEbene.firstChild) return;
         for (const b of zeichenEbene.children) {
           const o = haeuser[b.dataset.g] || (ORTE[b.dataset.g] && Object.assign({ stufe: 1 }, ORTE[b.dataset.g](), { hoehe: ORTE[b.dataset.g]().h / 0.8 }));
@@ -518,6 +727,7 @@
   /* Mini-Karte: Wege, Wasser, Häuser, Bildausschnitt */
   function miniMalen() {
     if (!miniC) return;
+    if (O.miniUeberblickMalen && document.body.classList.contains("lk-mini-modus")) { O.miniUeberblickMalen(miniC); return; }
     const g = 144, px = Math.round(120 * (window.devicePixelRatio || 1));
     miniC.width = miniC.height = px;
     const c = miniC.getContext("2d"), f = px / g;
@@ -593,7 +803,8 @@
         e.stopPropagation();
         bauLeisteZeigen(false);
         const pk = platzVon(k), pl = D.PLAETZE[pk];
-        if (pl) L().fliegeZu(pl.x, pl.y, Math.max(K.s, 16 * K.dpr), 800);
+        /* FASSUNG 817 — im kleinen Rahmen höchstens bis zur Grenze des Rahmens (und innerhalb des Überblicks) */
+        if (pl) { const s = Math.min(K.max, Math.max(K.s, 16 * K.dpr)), z = O.klemmZiel ? O.klemmZiel(pl.x, pl.y, s) : [pl.x, pl.y]; L().fliegeZu(z[0], z[1], s, 800); }
         if (haus) waehlen(haus); else karteZeigen("bauplatz", null, pk);
       });
       bauLeiste.appendChild(b);
@@ -648,6 +859,26 @@
   O.zeigerHoch = function () { geistZiehen = false; };
   O.tippen = function (px, py) {
     farbFeld.hidden = true;
+    /* FASSUNG 817 — im kleinen Rahmen des Spiels wartet ein Tipp einen Augenblick (0,36 s), ob ein zweiter folgt: der
+       Doppeltipp zoomt nur („stärker reinkommen"), ohne dass der erste Tipp schon ein Haus bedient oder eine Aufgabe
+       startet („beim einfachen klicken auf ein Haus … schon die Aufgabe anstellt"). */
+    if (window.parent !== window && document.body.classList.contains("lk-mini-modus") && !geist) {
+      if (O.wahlZu && O.wahlZu()) { O._tipp = null; return; }
+      const jetzt = performance.now();
+      clearTimeout(O._tippUhr);
+      if (O._tipp && jetzt - O._tipp.t < 360 && Math.hypot(O._tipp.x - px, O._tipp.y - py) < 40 * K.dpr) {
+        O._tipp = null;
+        if (O.doppelTipp) O.doppelTipp(px, py);
+        try { window.parent.postMessage({ typ: "leicht-doppel" }, location.origin); } catch (e) {}
+        return;
+      }
+      O._tipp = { t: jetzt, x: px, y: py };
+      O._tippUhr = setTimeout(() => einzelTippen(px, py), 360);
+      return;
+    }
+    einzelTippen(px, py);
+  };
+  function einzelTippen(px, py) {
     if (geist) { const a = ST.aufBoden(px, py); geist.x = a[0]; geist.y = a[1]; SZ.geaendert(); L().unruhe = 2; return; }
     if (leiste && !leiste.hidden) { leisteZeigen(false); return; }
     if (bauLeiste) { bauLeisteZeigen(false); return; }
@@ -667,9 +898,7 @@
        führt mit dem Kompass zurück zur ganzen Stadt */
     if (window.parent !== window && document.body.classList.contains("lk-mini-modus")) {
       if (ST.boden.wert(a[0], a[1], 1) > 0.4) { try { window.parent.postMessage({ typ: "leicht-haus", g: "see" }, location.origin); } catch (e) {} return; }
-      const jetzt = performance.now();
-      if (O._tipp && jetzt - O._tipp.t < 380 && Math.hypot(O._tipp.x - px, O._tipp.y - py) < 40 * K.dpr) { O._tipp = null; if (O.doppelTipp) O.doppelTipp(); return; }
-      O._tipp = { t: jetzt, x: px, y: py };
+      /* (FASSUNG 817: der Doppeltipp wird jetzt schon in O.tippen erkannt, für jede Stelle im Bild) */
     }
     for (const k in D.PLAETZE) {
       const pl = D.PLAETZE[k];
@@ -678,7 +907,7 @@
       auswahlWeg(); karteZeigen("bauplatz", null, k); return;
     }
     auswahlWeg();
-  };
+  }
   const rascheln = [];
   function baumRascheln(o) {
     const t0 = performance.now(), jahr = SZ.jahr, h = (o.hoehe || 10) * (o.stufe || 1);
@@ -737,8 +966,10 @@
     /* FASSUNG 801 — XANDER: „in der ganz kleinen Miniaturansicht muss man dann auch nur auf Einsammeln klicken können und
        dann muss das funktionieren". Im kleinen Dorfrahmen des Spiels öffnet ein Tipp auf ein Gebäude (oder einen Bauplatz)
        die gewohnte Karte des Spiels UNTER dem Rahmen – dort sind Einsammeln, Ausbauen, Arbeiter. Wischen bleibt Ansehen. */
-    if (document.body.classList.contains("lk-mini-modus") && window.parent !== window && (art === "haus" || art === "bauplatz")) {
-      const g = art === "haus" ? o && o.spiel : platz;
+    /* FASSUNG 817 — beim Schmücken/Bauen im kleinen Rahmen (O.gestalten) bleibt die Karte der Stadt (Drehen, Versetzen …) */
+    if (document.body.classList.contains("lk-mini-modus") && window.parent !== window && !O.gestalten && (art === "haus" || art === "bauplatz")) {
+      /* FASSUNG 817 — ein leerer Bauplatz meldet das Haus, das (nach dem Umbauen im Spiel) dorthin gehört */
+      const g = art === "haus" ? o && o.spiel : (wasGehoertHin(platz) || platz);
       if (g) { try { window.parent.postMessage({ typ: "leicht-haus", g: g }, location.origin); } catch (e) {} }
       return;
     }

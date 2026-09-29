@@ -124,12 +124,27 @@ html, body { margin: 0; height: 100%; background: #1b2440; overflow: hidden; tou
 /* Namen an den Häusern (wie „Namen" im alten Dorf) */
 .lk-name-schild { position: absolute; left: 0; top: 0; pointer-events: none; padding: 0 3px; border-radius: 3px; background: rgba(20,24,34,.55); color: #fff; font: 600 8.5px/1.35 system-ui, sans-serif; white-space: nowrap; will-change: transform; }
 .lk-mini-modus .lk-vollknopf { left: 6px; bottom: 6px; }
-.lk-mini-modus .lk-kopf, .lk-mini-modus .lk-schmuck, .lk-mini-modus .lk-farbfeld, .lk-mini-modus .lk-leiste,
-.lk-mini-modus .lk-karte, .lk-mini-modus .lk-ansage, .lk-mini-modus .lk-mini-schalter { display: none !important; }
+/* FASSUNG 817 — Leiste und Karte gibt es jetzt auch im kleinen Rahmen (Schmücken/Bauen ohne Vollbild, siehe unten) */
+.lk-mini-modus .lk-kopf, .lk-mini-modus .lk-schmuck, .lk-mini-modus .lk-farbfeld,
+.lk-mini-modus .lk-ansage, .lk-mini-modus .lk-mini-schalter { display: none !important; }
 .lk-mini-modus .lk-mini-rahmen { right: 4px; bottom: 4px; }
 .lk-mini-modus .lk-mini { opacity: .92; }
 .lk-mini-modus:not(.lk-nah) .lk-mini-rahmen { display: none; }
 .lk-mini-modus .lk-mini { width: 54px; height: 54px; border-radius: 7px; border-width: 1px; }
+/* FASSUNG 817 — XANDER (Walkie 306): „die Kachel ist nicht kongruent mit dem eigentlichen Bildausschnitt". Im kleinen Rahmen
+   ist die kleine Karte ein Abbild des Überblicks (16:10, gleiche Lage); der helle Rahmen zeigt, was gerade im Bild ist. */
+.lk-mini-modus .lk-mini { width: 75px; height: 47px; }
+.lk-mini-blick { display: none; position: absolute; box-sizing: border-box; border: 1.5px solid #fff; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,.45); pointer-events: none; }
+.lk-mini-modus.lk-nah .lk-mini-blick { display: block; }
+/* FASSUNG 817 — die kleine Auswahl über einem Haus (Brot, Kuchen, Torte …): Tippflächen 34 px, dunkel wie die Schilder */
+.lk-wahl { position: absolute; left: 0; top: 0; display: flex; gap: 3px; padding: 3px; border-radius: 12px; background: rgba(22,28,48,.86); box-shadow: 0 3px 10px rgba(0,0,0,.45); z-index: 3; will-change: transform; }
+.lk-wahl-knopf { position: relative; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 9px; background: rgba(255,248,228,.95); color: #1b2440; display: inline-grid; place-items: center; cursor: pointer; }
+.lk-wahl-knopf .lk-z-bild { width: 22px; height: 22px; margin: 0; }
+.lk-wahl-knopf span { position: absolute; right: 1px; bottom: 0; font: 900 9px/1 system-ui, sans-serif; color: #2e2006; text-shadow: 0 0 2px #fff, 0 0 3px #fff; }
+.lk-wahl-knopf:disabled { opacity: .45; cursor: default; }
+.lk-wahl-knopf:active:not(:disabled) { transform: scale(.94); }
+.lk-wahl-karte { background: rgba(255,255,255,.14); color: #f3ead8; }
+.lk-wahl-karte svg { width: 18px; height: 18px; }
 .lk-mini-modus .lk-mini.zu { display: block; }
 .lk-mini-modus .lk-mini-feld span { display: none; }
 .lk-mini-modus .lk-vorhang b { font-size: 18px; }
@@ -165,11 +180,37 @@ html.lk-mini-html:has(.lk-nah), .lk-mini-modus.lk-nah, .lk-mini-modus.lk-nah #lD
 .lk-zeichen.lk-z-bau::before { background: #9a6424; }
 .lk-zeichen.lk-z-kaputt::before { background: #d8261f; }
 .lk-zeichen.lk-z-laeuft { font-weight: 700; }
-.lk-mini-modus:not(.lk-nah) .lk-zeichen.lk-z-laeuft:not(.lk-z-ort) { display: none !important; }
+.lk-mini-modus:not(.lk-nah):not(.lk-direkt) .lk-zeichen.lk-z-laeuft:not(.lk-z-ort) { display: none !important; }
 
 /* FASSUNG 807 — Drehknopf nur mit dem Kompass; Symbole/Namen folgen den Schaltern des Spiels */
 .lk-mini-modus .lk-drehknopf { left: 5px; top: 38px; width: 26px; height: 26px; border-radius: 50%; }
 .lk-mini-modus .lk-drehknopf svg { width: 15px; height: 15px; }
 .lk-mini-modus:not(.lk-nah) .lk-drehknopf { display: none; }
-.lk-ohne-symbole .lk-zeichen:not(.lk-z-fertig):not(.lk-z-ort) { display: none !important; }
+.lk-ohne-symbole .lk-zeichen:not(.lk-z-fertig):not(.lk-z-ort):not(.lk-z-laeuft), .lk-ohne-symbole:not(.lk-direkt) .lk-zeichen.lk-z-laeuft:not(.lk-z-ort) { display: none !important; }
 .lk-ohne-namen .lk-name-schild { display: none !important; }
+
+/* FASSUNG 817 — XANDER (Funk 207): „ich möchte es aus diesem kleinen Fenster heraus aufstellen können". Schmücken/Bauen im
+   kleinen Rahmen (etwa 280 × 175 px): die Leiste als schmaler Streifen unten (seitlich wischen), die Karte kompakt darüber,
+   „Fertig" oben rechts. Tippflächen ≥ 30 px. */
+.lk-gestalten-fertig { display: none; }
+.lk-mini-modus.lk-gestalten .lk-gestalten-fertig { display: inline-flex; position: absolute; right: 5px; top: 28px; height: 30px; padding: 0 9px 0 6px; align-items: center; gap: 3px; border-radius: 15px; border: 1px solid rgba(111,174,99,.8); background: #3f7d3a; color: #fff; font: 700 11px system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.4); z-index: 4; }
+.lk-mini-modus.lk-gestalten .lk-gestalten-fertig svg { width: 15px; height: 15px; }
+.lk-mini-modus.lk-gestalten .lk-vollknopf { display: none; }
+.lk-mini-modus.lk-gestalten .lk-wetter { display: none; }
+.lk-mini-modus .lk-leiste { left: 0; right: 0; bottom: 0; gap: 4px; padding: 4px; background: rgba(22,28,48,.82); touch-action: pan-x; overscroll-behavior-x: contain; z-index: 3; }
+.lk-mini-modus .lk-karte-klein { width: 56px; padding: 2px 2px 3px; border-radius: 8px; gap: 1px; }
+.lk-mini-modus .lk-karte-klein img { width: 50px; height: 32px; }
+.lk-mini-modus .lk-karte-klein span { font-size: 9px; max-width: 52px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lk-mini-modus .lk-bauleiste .lk-karte-klein small { font-size: 8px; }
+.lk-mini-modus .lk-gruppe { width: 16px; border-radius: 6px; }
+.lk-mini-modus .lk-gruppe span { font-size: 9px; }
+.lk-mini-modus .lk-karte { left: 4px; right: 4px; bottom: 4px; width: auto; transform: none; padding: 5px 6px; gap: 3px; border-radius: 12px; z-index: 3; }
+.lk-mini-modus .lk-karte-titel { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lk-mini-modus .lk-karte-zeile { font-size: 10px; gap: 2px; }
+.lk-mini-modus .lk-karte-zeile .lk-balken { height: 5px; }
+.lk-mini-modus .lk-karte-knoepfe { gap: 4px; flex-wrap: nowrap; overflow-x: auto; touch-action: pan-x; scrollbar-width: none; }
+.lk-mini-modus .lk-karte-knoepfe .lk-knopf { width: 32px; height: 32px; border-radius: 10px; }
+.lk-mini-modus .lk-karte-knoepfe .lk-knopf svg { width: 17px; height: 17px; }
+.lk-mini-modus .lk-text-knopf { height: 32px; padding: 0 8px 0 6px; font-size: 12px; border-radius: 10px; flex: none; }
+.lk-mini-modus .lk-text-knopf svg { width: 16px; height: 16px; }
+.lk-mini-modus .lk-knopf.lk-klein { margin-left: auto; }
