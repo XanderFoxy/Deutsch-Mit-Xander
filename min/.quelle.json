@@ -44,12 +44,12 @@
  "korrekturen.css": "6bd713b6491f3cb7c2df82c246a2540d8dd68ae5",
  "livechat.js": "15d707c01f3abfefe740085198d42b2f0f127725",
  "data-plaetze.js": "535d4ff79255fb31e4c5d7c5458a28244b02d4c5",
- "baukasten.js": "a63bcb15e0d8be700f68147d239004b8eb93275b",
- "data-szenen.js": "3e6d76afd9e4a539237f72dad41b64a8726cc1a8",
  "spiel.css": "e2e49404db028481dd71a44a15362130bf26a07f",
  "spiel.js": "dd25f5d950ad1066cb88b124a1e1cfab2b7f14ee",
  "app-styles.css": "e9cb9fc2a7e1127cf6d8b280699c7e4e85eb0c2f",
  "app.js": "be77cc7b44b4c809d4537d93b6e73fad7ec361a1",
  "satzbau.js": "1b46e11d6ea26d07696b1ec0afbc694593ca400a",
- "data-werkstatt.js": "dc280bb2d651a23d2f9f94c3f11e5f026af9fdb4"
+ "data-werkstatt.js": "dc280bb2d651a23d2f9f94c3f11e5f026af9fdb4",
+ "baukasten.js": "8b3d3eb457b972faae7a4c8e7a58ee1b008a6008",
+ "data-szenen.js": "620e0efc02bc7ddad8da5da7daa13b3ad2ac5d5f"
 }

@@ -2535,3 +2535,80 @@ XANDER (Funk 217): „was ist im Unterschied zwischen den einzelnen Niveaus und 
 
 - Enthält Fassung 835: Präteritum als natürliche Vergangenheit, Grammatik je Niveau, mehrere Sätze und die Sinnregeln (siehe Abschnitt 835).
 - Geprüft auf dem zusammengeführten Stand, alle grün: 835 (22 350 Zufallssätze), 834, 636 (kein Italienisch im Deutsch-Raum), benoten, note-ankommen.
+
+
+## Fassung 836 — Realistische Menschen: Körperformen, Gesichter, Haar, alle Haltungen am Boden, Badewanne, Tafel „Die Geschlechtsorgane“
+
+XANDER (Funk 217): „bei den Bilderwelten und der Gestaltung der Menschen sehe ich noch keine Änderung … so kritisch sein … um alle Positionen die Sie einnehmen können ob sie im Schneidersitz sitzen ob sie in der Hocke sitzen ob sie auf den Unterschenkeln hocken … ob sie auf allen Vieren sind ob sie auf dem Rücken liegen ob sie auf dem Bauch liegen … ob sie in der Wanne sitzen und die Beine angewinkelt haben … realistische Menschen … mit realistischen Gesichtern … realistischer Behaarung alles im Detail“.
+
+Leitplanke (verbindlich): Menschen in Haltungen, im Baukasten und in Szenen sind immer bekleidet; `figuren/mensch.js` setzt selbst Grundkleidung (Hose, T-Shirt), wenn nichts Becken oder Rumpf bedeckt. Ausnahmen gibt es nur für die Lehrbuchtafeln: Die Lehrbuch-Haltung trägt Unterwäsche, Frauen zusätzlich ein Sporttop. Muskelbild und Ungeborenes bleiben Schema. In der Badewanne gibt es Badekleidung. Die neue Tafel ist ein Schema wie im Biologiebuch, ohne Figuren.
+
+- **Körper (`figuren/mensch.js`)**
+  - Die Glieder folgen den Muskelbäuchen: Deltamuskel außen, Bizeps vorn, flacher Ellbogen, dicker Unterarm oben, schmales Handgelenk, Oberschenkel oben außen voll und über dem Knie innen gewölbt, Wade hinten im oberen Drittel, schmaler Knöchel. Bei Frauen, Kindern und alten Menschen ist die Muskelzeichnung weicher.
+  - Oberarm und Unterarm sowie Oberschenkel und Unterschenkel sind jeweils eine Kette ohne Fuge (`kette()`: erst Kontur, dann Fläche). Die Glieder wachsen ohne Kante aus dem Rumpf. Stark gebeugte Gelenke behalten ihre Kante.
+  - Jedes Glied hat einen Rundungsverlauf quer zur Achse: Glanz, Grundton, Kernschatten, Reflexlicht. Das Licht kommt von oben links.
+  - Neuer Schultergürtel: Das Schulterdach gehört zum Rumpf, der Deltamuskel liegt als Kappe darüber und legt sich auch über den Rumpf, wenn der Arm dahinter ist.
+  - Der Hals hat eine Schattenkante unter dem Kinn, Kopfnicker und einen Adamsapfel.
+  - Unter der Figur liegt ein Kontaktschatten.
+  - Der Rumpf und der Sitz der Hose sind unten offen, damit keine „Windel-Linie“ über den Beinen liegt.
+- **Gesicht**
+  - Echtes Profil: Brauenbogen, Nasenwurzel, Nasenrücken, Nasenspitze, Oberlippe, Unterlippe, Kinn.
+  - Augen mit Lidern, Lidfalte, Karunkel und einer Iris mit Verlauf; Frauen und Babys haben Wimpern.
+  - Brauen als spitz zulaufende Form mit Härchen.
+  - Nase mit Nasenflügeln, Nasenlöchern, Schatten und Glanz.
+  - Mund mit Philtrum und Lippenschatten.
+  - Wangen- und Kieferschatten auf der Schattenseite, Falten bei alten Menschen.
+  - Ohren mit Krempe, Muschel und Läppchen.
+  - Alle Gesichtszüge bleiben im Kopfumriss (Clip).
+- **Haar**
+  - Die Haarschale hat Volumen, 34 Strähnen und Glanzsträhnen auf der Lichtseite.
+  - Die Haarlinie hat Stirn, Schläfen, Koteletten und Nacken.
+  - Langes Haar bedeckt die Ohren, der Dutt ist eine Kugel, der Zopf ist geflochten.
+  - Kurzer Bart erscheint als Stoppeln (Muster) statt als Maske. Der Vollbart hat Strähnen.
+  - Männer haben dezente Arm- und Beinbehaarung.
+- **Hände**: Die Finger bestehen aus drei schmaler werdenden Gliedern mit Nagel.
+- **Kleidung**
+  - Hosenbeine fallen gerade vom Knie zum Saum.
+  - Falten liegen in der Kniekehle, als Zugfalten beim Sitzen, an der Hüfte und als Stauchfalten über dem Schuh.
+  - Ärmel haben Luft, Falten in der Armbeuge und ein Bündchen.
+  - Röcke haben Faltenwurf und einen gewellten Saum.
+  - Neu ist das Badeshirt.
+- **Haltungen** (32 statt 19; `werkzeug/bau-836-haltungen.js`)
+  - Die Haltungen werden aus Zielpunkten gerechnet (Zwei-Glieder-Rechnung) und am Boden ausgerichtet.
+  - Neu oder korrigiert:
+    - Schneidersitz: Gesäß am Boden, Unterschenkel gekreuzt.
+    - Hocke mit den Fersen am Boden.
+    - Fersensitz: Knie und Fußrücken am Boden, das Gesäß auf den Fersen.
+    - Kniestand.
+    - Vierfüßlerstand: Hände und Knie am Boden.
+    - Rückenlage (gerade), Bauchlage (Kopf auf der Wange) und Seitenlage.
+    - Sitzen mit angewinkelten Beinen.
+    - Baden: in der Wanne, Beine angewinkelt.
+    - Grätschsitz.
+    - Bein übergeschlagen (auf dem Stuhl).
+    - Anlehnen, Laufen/Joggen, Treppensteigen, Bücken, Strecken.
+    - Arme verschränkt, Hände in den Hüften.
+  - `zeichne({ messen: true })` liefert für jeden Körperteil die Höhe über dem Boden, meldet eingedrungene Glieder (in den Rumpf oder ins andere Bein) und gibt die Gelenkpunkte zurück.
+  - `DMA_MENSCH.BODEN` und `FREI` legen je Haltung fest, was aufliegt und was frei bleibt.
+- **Baukasten (`baukasten.js`)**
+  - Alle neuen Haltungen lassen sich wählen, mit deutschen Namen.
+  - Der Satz nennt die Haltung als Modalangabe vor dem Ort, zum Beispiel „Die Frau sitzt im Schneidersitz im Wohnzimmer.“ Weitere Wendungen: „liegt auf dem Bauch“, „sitzt in der Hocke“, „sitzt auf den Fersen“, „kniet aufrecht“, „sitzt mit übereinandergeschlagenen Beinen“, „steht mit verschränkten Armen“, „bückt sich“, „joggt“, „steigt … eine Stufe hinauf“.
+  - Badewanne: Die Figur trägt einen Badeanzug bzw. Badehose mit Badeshirt. Sie sitzt mit angewinkelten Beinen, und das Wasser verdeckt sie ab der Brust („sitzt mit angewinkelten Beinen in der Badewanne“). Unter der Dusche bleibt es beim Bademantel.
+- **Szenen**: Alle 15 Szenen sind neu gebacken (`werkzeug/setze-menschen-834.js`). Der Schaffner steht jetzt mit verschränkten Armen. Die Szenen sind zusammen 1,4 MB groß; jede Figur bleibt unter 60 KB.
+- **Lehrbuch**
+  - Neue Tafel **„Die Geschlechtsorgane“** (`werkzeug/bau-836-geschlechtsorgane.js` → `szenen/geschlechtsorgane.js`, Lupe an der Hüfte der Tafel „Der Körper“): schematischer Längsschnitt durch das Becken für Mann und Frau mit 30 beschrifteten Fachwörtern samt Artikel, Silben, Italienisch und Englisch.
+  - Organkarten (`bau-834-organe.js`) mit mehr Teilen:
+    - Gehirn: Schläfenlappen, Hinterhauptslappen, Seitenfurche, verlängertes Mark.
+    - Herz: Herzohr, Lungenvene, Herzbeutel.
+    - Lunge: rechter Lungenflügel, Knorpelspange, Lungenspitze, Lungenbläschen, Zwerchfell.
+    - Magen: Magengrund, Magenkörper, Magenschleimhaut.
+  - Alle Lehrbuchtafeln sind mit den neuen Figuren neu gebaut.
+  - Offen für den Hauptagenten: Die ältere Tafel `anatomie` (Lupe am Bauch) zeigt neben Schnittbildern auch Nahansichten der äußeren Geschlechtsorgane. Sie wurde hier nicht verändert.
+- **Sonde** `werkzeug/pruefe-836-menschen-realismus.js`: 29 Punkte in fünf Teilen.
+  1. Haltungen: 384 Figuren. Bodenkontakt je Haltung höchstens 3 cm, bei Kindern 4 cm und bei alten Menschen 4,5 cm. Außerdem: kein Glied im Rumpf, 7,5 Köpfe, jede Figur unter 60 KB.
+  2. Immer bekleidet: Grundkleidung in allen Haltungen und Altersstufen; an Bauch, Leiste und Gesäß sind keine Hautpixel zu sehen.
+  3. Merkmale: Iris, Wimpern, Strähnen, Stoppeln, Fingerglieder, Falten.
+  4. Baukasten auf 360 px: Satz je Haltung, Badewanne, Tippflächen ≥ 30 px.
+  5. Tafeln und Szenen.
+  - Gegen den alten Stand 2d4b3e5 ist die Sonde 23-mal rot.
+  - `pruefe-834-menschen-satzbau.js` angepasst: Datei unter 200 KB, jede Figur unter 60 KB, der Boden wird mit `messen` statt über die Bildkante geprüft. Die Sonde ist grün, `pruefe-plaetze` auch (34/34).

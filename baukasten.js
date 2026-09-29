@@ -64,6 +64,27 @@ const BK_VERB = {
   krabbeln: "krabbelt", hocken: "hockt", knien_halb: "kniet",
   /* FASSUNG 834: die neuen Haltungen */
   kontrapost: "steht", lesen: "liest", servieren: "serviert",
+  /* FASSUNG 836 */
+  bauchlage: "liegt", seitenlage: "liegt", sitzen_angewinkelt: "sitzt", baden: "sitzt",
+  graetschsitz: "sitzt", sitzen_ueberkreuz: "sitzt", anlehnen: "lehnt", laufen: "joggt",
+  treppe: "steigt", buecken: "bückt", strecken: "streckt", arme_verschraenkt: "steht", haende_huefte: "steht",
+};
+/* FASSUNG 836 — XANDER (Funk 217): „ob sie im Schneidersitz sitzen ob sie
+   in der Hocke sitzen … ob sie auf dem Rücken liegen ob sie auf dem Bauch
+   liegen“. Der Satz nennt die Haltung genau: „sitzt im Schneidersitz“,
+   „liegt auf dem Bauch“. Die Wendung steht als Modalangabe VOR dem Ort
+   (Te-Ka-Mo-Lo: „Die Frau sitzt im Schneidersitz auf dem Teppich.“);
+   nur die Richtung beim Steigen steht hinten („steigt im Flur eine Stufe
+   hinauf“). „sich bücken“ und „sich strecken“ sind reflexiv. */
+const BK_WENDUNG = {
+  schneidersitz: ["sitzt", "im Schneidersitz"], fersensitz: ["sitzt", "auf den Fersen"],
+  knien: ["kniet", "aufrecht"], hocken: ["sitzt", "in der Hocke"],
+  liegen: ["liegt", "auf dem Rücken"], bauchlage: ["liegt", "auf dem Bauch"], seitenlage: ["liegt", "auf der Seite"],
+  sitzen_angewinkelt: ["sitzt", "mit angewinkelten Beinen"], baden: ["sitzt", "mit angewinkelten Beinen"],
+  graetschsitz: ["sitzt", "im Grätschsitz"], sitzen_ueberkreuz: ["sitzt", "mit übereinandergeschlagenen Beinen"],
+  anlehnen: ["lehnt", "an der Wand"], laufen: ["joggt"], buecken: ["bückt", "sich"], strecken: ["streckt", "sich"],
+  arme_verschraenkt: ["steht", "mit verschränkten Armen"], haende_huefte: ["steht", "mit den Händen in den Hüften"],
+  treppe: ["steigt", "eine Stufe hinauf", "hinten"],
 };
 /* FASSUNG 834 — Verben, die im Satz noch etwas brauchen.
    „Die Frau hält am Tisch.“ ist kein Deutsch (halten ohne Objekt heißt
@@ -84,6 +105,12 @@ function bkVerbFuer(z) {
   };
   if (h === "krabbeln") {
     return ["saeugling", "kleinkind"].indexOf(z.alter) >= 0 ? { verb: "krabbelt" } : { verb: "ist", nach: "auf allen vieren", vorOrt: true };
+  }
+  if (BK_WENDUNG[h]) {
+    const w = BK_WENDUNG[h];
+    /* Babys liegen „auf dem Rücken“, aber ein Baby „joggt“ nicht — das
+       verhindert schon die Auswahl der Haltungen. */
+    return w[1] ? { verb: w[0], nach: w[1], vorOrt: w[2] !== "hinten" } : { verb: w[0] };
   }
   if (h === "halten") return ding ? { verb: "hält", nach: akk(ding), ding } : { verb: "steht" };
   if (h === "lesen") return zub && zub.stueck === "buch" ? { verb: "liest", nach: akk(zub), ding: zub } : { verb: "liest" };
@@ -107,6 +134,7 @@ const BK_STUECK = {
   polizeihemd:   ["das Polizeihemd", "n", "Po-li-ZEI-hemd"],
   weihnachtsmantel: ["der Weihnachtsmantel", "m", "WEIH-nachts-man-tel"],
   badeanzug:     ["der Badeanzug", "m", "BA-de-an-zug"],
+  badeshirt:     ["das Badeshirt", "n", "BA-de-shirt"],
   bikinioberteil: ["das Bikinioberteil", "n", "Bi-KI-ni-o-ber-teil"],
   hose:          ["die Hose", "f", "HO-se"],
   jeans:         ["die Jeans", "f", "JEANS"],
@@ -397,7 +425,13 @@ const BK_BLICK = {
   sitzen_boden: 50, schneidersitz: 30, fersensitz: 55, hocken: 55, knien: 40,
   knien_halb: 62, knien_vor: 60, krabbeln: 64, liegen: 90, winken: 22, halten: 30,
   zeigen: 40, servieren: 34,
+  /* FASSUNG 836: jede Haltung aus dem Winkel, in dem man sie erkennt */
+  bauchlage: 90, seitenlage: 80, sitzen_angewinkelt: 55, baden: 60, graetschsitz: 30,
+  sitzen_ueberkreuz: 40, anlehnen: 40, laufen: 70, treppe: 65, buecken: 70, strecken: 24,
+  arme_verschraenkt: 22, haende_huefte: 18,
 };
+/* Haltungen, in denen man in der Badewanne im Wasser sitzt oder liegt */
+const BK_BADHALTUNG = { liegen: 1, baden: 1, sitzen_angewinkelt: 1 };
 function bkBlick(z, szBreite, haltung) {
   const h = haltung || z.haltung;
   const blick = BK_BLICK[h] != null ? BK_BLICK[h] : 26;
@@ -430,8 +464,9 @@ function bkKleidungFuerFigur(z) {
    dabei „sitzt“ bzw. „liegt“. */
 function bkGezeichneteHaltung(z, haltung) {
   let h = haltung || z.haltung;
-  if ((h === "sitzen" || h === "lesen" || h === "sitzen_seit") && z.platz && typeof z.platz.sitzY !== "number") h = "sitzen_boden";
-  const pose = h === "liegen" && z.platz && z.platz.bild === "baden" ? "baden" : h;
+  if ((h === "sitzen" || h === "lesen" || h === "sitzen_seit" || h === "sitzen_ueberkreuz") && z.platz && typeof z.platz.sitzY !== "number") h = "sitzen_boden";
+  /* FASSUNG 836: In der Wanne sitzt man mit angewinkelten Beinen im Wasser. */
+  const pose = BK_BADHALTUNG[h] && z.platz && z.platz.bild === "baden" ? "baden" : h;
   return { haltung: h, pose };
 }
 
@@ -463,6 +498,8 @@ function bkFigurSvg(z, hoehe, extra) {
        Hüfte — „fuss“ ist deshalb 0. */
     fuss: 0,
     sitz: r.sitz ? r.sitz.y * k : null,
+    /* FASSUNG 836: Höhe der Brust — dort steht in der Wanne das Wasser */
+    brustY: r.punkte && r.punkte.brust ? r.punkte.brust[1] * k : null,
     sitzX: r.sitz ? r.sitz.x * k : 0,
     blick: b,
   };
@@ -472,7 +509,7 @@ function bkFigurSvg(z, hoehe, extra) {
    Hüfte. Sitzend am Gesäß — es liegt auf der Sitzfläche des Platzes
    (sitzY), die Füße fallen von selbst dorthin, wo sie hingehören. So
    „rastet“ die Figur auf dem Stuhl ein. */
-const BK_SITZHALTUNG = { sitzen: 1, lesen: 1, sitzen_seit: 1, fersensitz: 1,
+const BK_SITZHALTUNG = { sitzen: 1, lesen: 1, sitzen_seit: 1, fersensitz: 1, sitzen_ueberkreuz: 1,
                          schneidersitz: 1, sitzen_boden: 1 };
 function bkFigurAnker(fig, platz, haltung) {
   if (!fig || !platz) return { x: 0, y: 0 };
@@ -480,6 +517,8 @@ function bkFigurAnker(fig, platz, haltung) {
   const sitzend = BK_SITZHALTUNG[h] && fig.sitz !== null
     && typeof platz.sitzY === "number";
   if (sitzend) return { x: platz.x - fig.sitzX, y: platz.sitzY - fig.sitz };
+  /* FASSUNG 836: In der Badewanne steht das Wasser bis zur Brust. */
+  if (BK_BADHALTUNG[h] && typeof platz.wasserY === "number" && fig.brustY != null) return { x: platz.x, y: platz.wasserY - fig.brustY - 1 };
   /* FASSUNG 834: Wer an einem Sitzplatz steht, kniet oder krabbelt, tut
      das VOR dem Möbel auf dem Boden — nicht auf der Rückenlehne (dort
      liegt platz.y). Der Boden ist eine Sitzhöhe (47 cm) unter der
@@ -655,7 +694,7 @@ const Baukasten = (function () {
         + p2(anker.x) + ',' + p2(anker.y) + ')">' + fig.svg + "</g>"
       : "";
     /* In der Badewanne verdeckt das Wasser alles unter dem Wasserspiegel. */
-    if (figur && platz && typeof platz.wasserY === "number" && zustand.haltung === "liegen") {
+    if (figur && platz && typeof platz.wasserY === "number" && BK_BADHALTUNG[zustand.haltung]) {
       figur = '<clipPath id="bkWasser"><rect x="0" y="0" width="' + sz.breite + '" height="' + platz.wasserY + '"/></clipPath>'
         + '<g clip-path="url(#bkWasser)">' + figur + "</g>"
         + '<path d="M' + (platz.x - 34) + " " + platz.wasserY + "q17 -2 34 0t34 0" + '" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1.2" stroke-linecap="round"/>';
@@ -709,7 +748,7 @@ const Baukasten = (function () {
   const BK_PLATZ_STUECKE = {
     kopf: ["muetze", "hut", "kappe", "helm", "weihnachtsmuetze", "kopftuch"],
     oberteil: ["tshirt", "hemd", "pullover", "bluse", "kellnerhemd", "polizeihemd", "arztkittel",
-      "warnweste", "feuerwehrjacke", "weihnachtsmantel", "badeanzug", "bikinioberteil"],
+      "warnweste", "feuerwehrjacke", "weihnachtsmantel", "badeanzug", "badeshirt", "bikinioberteil"],
     kleid: ["sommerkleid", "abendkleid", "schuerze"],
     jacke: ["jacke", "mantel", "weste", "kittel", "bademantel"],
     unterteil: ["hose", "jeans", "anzughose", "arbeitshose", "shorts", "rock", "badehose", "bikinihose"],
@@ -731,10 +770,13 @@ const Baukasten = (function () {
      Erwachsener. */
   const BK_HALTUNGEN = ["stehen", "kontrapost", "gehen", "sitzen", "lesen", "sitzen_boden", "schneidersitz",
     "fersensitz", "hocken", "knien", "knien_halb", "knien_vor", "krabbeln", "liegen", "winken", "halten",
-    "zeigen", "servieren"];
+    "zeigen", "servieren",
+    /* FASSUNG 836 */
+    "bauchlage", "seitenlage", "sitzen_angewinkelt", "baden", "graetschsitz", "sitzen_ueberkreuz", "anlehnen",
+    "laufen", "treppe", "buecken", "strecken", "arme_verschraenkt", "haende_huefte"];
   function bkHaltungErlaubt(h) {
-    if (zustand.alter === "saeugling") return ["sitzen_boden", "krabbeln", "liegen", "sitzen"].indexOf(h) >= 0;
-    if (zustand.alter === "kleinkind") return h !== "servieren" && h !== "lesen";
+    if (zustand.alter === "saeugling") return ["sitzen_boden", "krabbeln", "liegen", "sitzen", "bauchlage", "seitenlage"].indexOf(h) >= 0;
+    if (zustand.alter === "kleinkind") return ["servieren", "lesen", "sitzen_ueberkreuz", "anlehnen", "laufen"].indexOf(h) < 0;
     return true;
   }
 
@@ -808,6 +850,12 @@ const Baukasten = (function () {
     krabbeln: "auf allen vieren", liegen: "liegen", winken: "winken",
     halten: "etwas halten", zeigen: "zeigen", servieren: "servieren",
     sitzen_seit: "seitlich sitzen",
+    /* FASSUNG 836 */
+    fersensitz: "auf den Fersen sitzen", knien: "aufrecht knien", hocken: "in der Hocke",
+    liegen: "auf dem Rücken liegen", bauchlage: "auf dem Bauch liegen", seitenlage: "auf der Seite liegen",
+    sitzen_angewinkelt: "mit angewinkelten Beinen", baden: "in der Wanne sitzen", graetschsitz: "Grätschsitz",
+    sitzen_ueberkreuz: "Bein übergeschlagen", anlehnen: "anlehnen", laufen: "joggen", treppe: "Treppe steigen",
+    buecken: "sich bücken", strecken: "sich strecken", arme_verschraenkt: "Arme verschränkt", haende_huefte: "Hände in die Hüften",
   };
   const BK_HAUT_NAME = {
     sehrhell: "sehr hell", hell: "hell", mittel: "mittel",
@@ -851,6 +899,7 @@ const Baukasten = (function () {
     if (zustand.alter === "saeugling") {
       return p.haltung === "liegen" ? "liegen" : (typeof p.sitzY === "number" ? "sitzen" : "sitzen_boden");
     }
+    if (p.teil === "badewanne") return "baden";
     return p.haltung === "gehen" ? "gehen" : p.haltung;
   }
 
@@ -865,7 +914,11 @@ const Baukasten = (function () {
     if (!eigen.haltung) zustand.haltung = bkHaltungVomPlatz(p);
     if (BK_BADEPLATZ[p.teil]) {
       if (!warBad) zustand.vorher = zustand.kleidung;
-      zustand.kleidung = { jacke: { stueck: "bademantel", farbe: "weiss" } };
+      /* FASSUNG 836: In der Wanne Badekleidung (Badeanzug bzw. Badehose
+         mit Badeshirt), unter der Dusche der Bademantel. */
+      zustand.kleidung = p.teil === "badewanne"
+        ? (zustand.geschlecht === "w" ? { oberteil: { stueck: "badeanzug", farbe: "blau" } } : { oberteil: { stueck: "badeshirt", farbe: "hellblau" }, unterteil: { stueck: "badehose", farbe: "blau" } })
+        : { jacke: { stueck: "bademantel", farbe: "weiss" } };
     } else if (warBad) {
       zustand.kleidung = zustand.vorher || bkGrundkleidung();
     } else if (!Object.keys(zustand.kleidung).length) {

@@ -136,6 +136,9 @@ function bauKoerper() {
   S.d.teile = S.d.teile.filter((t) => t.id !== "scheide");
   /* Vom Arm aus führt eine Lupe zur neuen Tafel „Die Muskeln“. */
   S.d.teile.forEach((t) => { if (t.id === "arm") t.lupe = "muskeln"; });
+  /* FASSUNG 836: Von der Hüfte aus führt eine Lupe zur Tafel „Die
+     Geschlechtsorgane“ (Längsschnitt Becken, werkzeug/bau-836-geschlechtsorgane.js). */
+  S.d.teile.forEach((t) => { if (t.id === "huefte") t.lupe = "geschlechtsorgane"; });
   S.d.teile.forEach((t) => {
     const z = ziel[t.id];
     if (!z) { console.log("  ?? kein Ziel für", t.id); return; }

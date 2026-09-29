@@ -70,7 +70,9 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
   if (hatMensch) {
   const pg1 = await seite({ width: 800, height: 600 }, false);
   const datei = fs.statSync(path.join(WURZEL, "figuren/mensch.js")).size;
-  sage(datei < 120 * 1024, "figuren/mensch.js ist leicht (eine Datei für alle Menschen)", Math.round(datei / 1024) + " KB");
+  /* FASSUNG 836: Realismus (Muskelprofile, Gesicht, Haar, Falten, 32
+     Haltungen) — die Datei darf wachsen, bleibt aber eine Datei < 200 KB. */
+  sage(datei < 200 * 1024, "figuren/mensch.js ist leicht (eine Datei für alle Menschen)", Math.round(datei / 1024) + " KB");
   await pg1.addScriptTag({ url: basis.replace("index.html", "figuren/mensch.js") });
   const fig = await pg1.evaluate(() => {
     const M = window.DMA_MENSCH;
@@ -79,7 +81,7 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
     const probleme = [], boden = [], groesse = []; let anzahl = 0, maxKB = 0, finger = 1e9;
     alter.forEach((a) => ["m", "w"].forEach((g) => M.HALTUNGEN.forEach((h) => [0, 35, 90].forEach((b) => {
       let r;
-      try { r = M.zeichne({ alter: a, geschlecht: g, pose: h, blick: b, kleidung: kl, id: "t" }); }
+      try { r = M.zeichne({ alter: a, geschlecht: g, pose: h, blick: b, kleidung: kl, id: "t", messen: true }); }
       catch (e) { probleme.push(a + g + "/" + h + "/" + b + ": " + e.message); return; }
       anzahl++;
       if (!r.svg || r.svg.length < 2000 || /NaN|undefined|Infinity/.test(r.svg)) probleme.push(a + g + "/" + h + "/" + b + ": leer oder NaN");
@@ -89,7 +91,19 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
          von oben: ein Fuß, der einen halben Meter VOR der Hüfte steht
          (halbes Knien), erscheint dadurch um etwa 9 cm tiefer — von vorn
          und schräg darf es darum etwas mehr sein als im Profil. */
-      if (r.box.y1 < -2.5 || r.box.y1 > (b === 90 ? 0.05 : 0.07) * r.hoehe + 2) boden.push(a + g + "/" + h + "/" + b + " " + r.box.y1.toFixed(1));
+      /* FASSUNG 836: Liegende reichen der Länge nach auf den Betrachter zu
+         (Blick von vorn) — durch die 10° Aufsicht erscheint der vordere
+         Teil tiefer (beim Säugling mit dem großen Kopf vorn am meisten); dort gilt 17 %. */
+      const liegt = ["liegen", "bauchlage", "seitenlage"].indexOf(h) >= 0;
+      /* FASSUNG 836: Seit mensch.js misst (messen: true), wird der Boden
+         direkt geprüft: der tiefste Körperteil liegt 0 … 3 cm über dem
+         Boden. Die Bildkante war nur ein Ersatz dafür — bei gespreizten
+         oder liegenden Beinen, die auf den Betrachter zu reichen, täuscht
+         sie durch die 10° Aufsicht. */
+      if (r.mess && r.mess.hoehe) {
+        const hmin = Math.min.apply(null, Object.keys(r.mess.hoehe).map((k) => r.mess.hoehe[k]));
+        if (hmin < -1 || hmin > 3) boden.push(a + g + "/" + h + "/" + b + " tiefster Teil " + hmin);
+      } else if (r.box.y1 < -2.5 || r.box.y1 > (b === 90 ? 0.05 : (liegt ? 0.17 : 0.07)) * r.hoehe + 2) boden.push(a + g + "/" + h + "/" + b + " " + r.box.y1.toFixed(1));
       if (h === "stehen" && b === 35) {
         groesse.push([a + g, r.hoehe, -r.box.y0, r.mass.kopf]);
         finger = Math.min(finger, (r.svg.match(/stroke-linecap="round"/g) || []).length);
@@ -107,7 +121,8 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
   const baby = fig.groesse.find((x) => x[0] === "saeuglingm");
   sage(baby && baby[1] / baby[3] < 4.5, "der Säugling hat Babyproportionen (4 Kopfhöhen)", baby && (baby[1] / baby[3]).toFixed(2));
   sage(fig.finger >= 20, "Hände mit Fingern (je Hand fünf, als Glieder gezeichnet)", fig.finger + " Fingerstriche");
-  sage(fig.maxKB < 45, "jede Figur bleibt leicht (< 45 KB SVG)", fig.maxKB.toFixed(1) + " KB");
+  /* FASSUNG 836: Grenze 60 KB je Figur (vorher 45 KB) */
+  sage(fig.maxKB < 60, "jede Figur bleibt leicht (< 60 KB SVG)", fig.maxKB.toFixed(1) + " KB");
   await pg1.close();
   }
 
