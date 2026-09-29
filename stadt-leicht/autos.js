@@ -556,7 +556,10 @@
     if (a.vorAuto && ((a.warte > 6 && a.vorAuto.wartet && a.vorAuto.vorAuto === a) || a.warte > 25)) { a.geist = 4; a.warte = 0; }
     /* steht ein Fuhrwerk lange im Weg (lädt ab, ruht über Nacht) oder pendelt die Pferdebahn immer wieder davor,
        sucht sich das Auto ein anderes Ziel – notfalls wenden */
-    if (!a.vorAuto && fr.f && (a.warte > 15 || (a.warte > 12 && (fr.f.v || 0) < 0.05))) {
+    /* FASSUNG 810 — die Pferdebahn hält planmäßig (10 s) und fährt dann weiter: dahinter geduldig warten (bis 30 s),
+       statt dicht neben ihr zu wenden */
+    const geduld = fr.f && !fr.f.wagen && !fr.f.auto ? 30 : 15;
+    if (!a.vorAuto && fr.f && (a.warte > geduld || (a.warte > Math.min(12, geduld) && (fr.f.v || 0) < 0.05 && geduld < 30))) {
       const p = an(W, Math.max(0, a.s - 3)), k = knotenBei(p.x, p.y);
       a.warte = 0; a.zustand = "haelt"; a.halt = 0.5; a.W = null; a.plan = null; a.knoten = k.i; a.umkehr = (a.umkehr || 0) + 1; a.v = 0;
       return;
