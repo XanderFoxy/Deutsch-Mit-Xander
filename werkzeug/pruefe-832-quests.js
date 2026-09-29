@@ -305,6 +305,13 @@ const ELTERN = `<!doctype html><meta charset="utf-8"><meta name="viewport" conte
       await pg.waitForTimeout(300);
       const box = await pg.evaluate((i) => { const b = document.querySelector('.lq-zeichen[data-q="' + i + '"]'); if (!b || b.style.display === "none") return null; const r = b.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, id);
       if (box) await pg.touchscreen.tap(box[0], box[1]);
+      /* FASSUNG 813 — Geisterklick: der nachgeschobene Klick des Handys trifft eine falsche Antwort,
+         die gerade unter dem Finger aufgegangen ist – das darf kein Fehlversuch sein */
+      if (vid === "artikel_ort") {
+        await pg.waitForFunction(() => !!document.querySelector(".lq-antwort"), null, { timeout: 2000 }).catch(() => {});
+        const geist = await pg.evaluate(() => { const q = STADT.quests.liste[0]; const i = q.antworten.findIndex((a) => !a.richtig); const b = document.querySelector('.lq-antwort[data-i="' + i + '"]'); if (!b) return null; b.click(); return { versuche: q.versuche, aus: b.disabled }; });
+        sage(!!geist && geist.versuche === 0 && !geist.aus, "Geisterklick gleich nach dem Aufgehen zählt nicht als falsche Antwort", JSON.stringify(geist));
+      }
       await pg.waitForTimeout(300);
       if (!(await Qp(pg, () => STADT.quests.pruef.dialog()))) console.log("       " + vid + ": Tipp aufs Zeichen bei " + JSON.stringify(box) + " öffnet nichts – " + (await pg.evaluate((b) => { const e = b && document.elementFromPoint(b[0], b[1]); return e ? (e.closest("button") || e).className.toString() : "-"; }, box)));
       await pg.waitForTimeout(900);

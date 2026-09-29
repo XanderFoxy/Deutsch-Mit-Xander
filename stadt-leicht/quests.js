@@ -799,7 +799,13 @@
       kopf.appendChild(voll);
     }
     const zu = document.createElement("button"); zu.type = "button"; zu.className = "lq-klein lq-zu"; zu.innerHTML = "&#x2715;"; zu.title = "Später"; zu.setAttribute("aria-label", "Später helfen (schließen)");
-    zu.addEventListener("click", (e) => { e.stopPropagation(); dialogZu(); });
+    /* FASSUNG 813 — Geisterklick: das „!“ öffnet beim Loslassen (pointerup); der Klick, den das
+       Handy danach nachschiebt, prüft neu, was unter dem Finger liegt – und traf manchmal eine Antwort
+       des gerade aufgegangenen Dialogs (Fehlversuch, Erstversuch-Bonus weg; Sonde 832: [8,8,6]).
+       Kurz nach dem Aufgehen zählen Klicks nur, wenn der Finger im Dialog auch aufgesetzt hat. */
+    const aufZeit = performance.now(); let gedrueckt = false;
+    const geisterKlick = () => !gedrueckt && performance.now() - aufZeit < 500;
+    zu.addEventListener("click", (e) => { e.stopPropagation(); if (geisterKlick()) return; dialogZu(); });
     kopf.appendChild(zu);
     const text = document.createElement("p"); text.className = "lq-text"; text.textContent = qu.text;
     const frage = document.createElement("p"); frage.className = "lq-frage"; frage.textContent = qu.frage;
@@ -808,11 +814,12 @@
     qu.antworten.forEach((a, i) => {
       const b = document.createElement("button"); b.type = "button"; b.className = "lq-antwort"; b.innerHTML = a.html; b.dataset.i = i;
       if (a.falschGetippt) { b.disabled = true; b.classList.add("lq-falsch"); }
-      b.addEventListener("click", (e) => { e.stopPropagation(); antworten(qu, i, b, hinweis, liste); });
+      b.addEventListener("click", (e) => { e.stopPropagation(); if (geisterKlick()) return; antworten(qu, i, b, hinweis, liste); });
       liste.appendChild(b);
     });
     d.append(kopf, text, frage, liste, hinweis);
     ["pointerdown", "pointerup", "wheel"].forEach((t) => d.addEventListener(t, (e) => e.stopPropagation(), { passive: true }));
+    d.addEventListener("pointerdown", () => { gedrueckt = true; }, { passive: true });
     wurzelEl.appendChild(d);
     dialog = { el: d, qu: qu };
   }
