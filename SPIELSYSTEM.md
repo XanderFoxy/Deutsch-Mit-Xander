@@ -2262,4 +2262,4 @@ XANDER (Funk 206): „links den Turm und rechts das Haus … die Rückseite von 
 - **Viper/Batmobil-Auftritt** (`app.js`):
   - Im Klassenzimmer holt jedes Gerät beide Drehblätter im Leerlauf vorab und entpackt sie einmal. Vorher lud jedes Gerät sie erst, wenn jemand hereinfuhr.
   - Erstes Bild gemessen (vierfach gedrosselt): 1,2 s → 7 ms.
-- **Neue Stadt für Beta-Tester**: `neueStadtErlaubt()` fragt jetzt `isFeatureOn("stadt_neu")` ab. Damit sehen sie der Betreiber, alle Beta-Tester und die einzeln Eingeladenen (`feature_flags["beta:stadt_neu"]`, dort steht Emy). Der Knopf heißt „Neue Version (Beta)". Für alle ist sie erst frei, wenn der Schalter selbst an ist.
+- **Neue Stadt für Beta-Tester**: `neueStadtErlaubt()` fragt jetzt `isBetaTester()` und `istBetaFuerSpiel("stadt_neu")` ab. Damit sehen sie der Betreiber, alle Beta-Tester und die einzeln Eingeladenen (`feature_flags["beta:stadt_neu"]`, dort steht Emy). Der Knopf heißt „Neue Version (Beta)". Für alle ist sie erst frei, wenn der Schalter selbst an ist.

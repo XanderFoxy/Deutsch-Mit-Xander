@@ -12959,13 +12959,13 @@
      Tab) – hier wird nichts von der neuen Stadt geladen. Wenn Xander sie
      freigibt, bekommt jeder den Knopf (LEICHT_FREI in supabase-config.js). */
   /* FASSUNG 811 — XANDER: „du kannst für die Beta Tester die Stadt freischalten die neue ich möchte, dass Emmy das auch
-     mal sieht und ihre Meinung mal dazu sagen kann". Freigabe über den Schalter „stadt_neu": der Betreiber, alle
+     mal sieht und ihre Meinung mal dazu sagen kann". Freigabe: der Betreiber, alle
      Beta-Tester und wer einzeln für dieses Spiel eingeladen ist (feature_flags „beta:stadt_neu" – dort steht Emy).
      Für alle erst, wenn der Schalter selbst an ist oder LEICHT_FREI gesetzt wird. */
   function neueStadtErlaubt() {
     var be = BE(), darf = false;
     try { darf = Boolean(be && be.isOwner && be.isOwner()); } catch (e) {}
-    try { if (!darf && be && be.isFeatureOn) darf = Boolean(be.isFeatureOn("stadt_neu")); } catch (e) {}
+    try { if (!darf && be) darf = Boolean((be.isBetaTester && be.isBetaTester()) || (be.istBetaFuerSpiel && be.istBetaFuerSpiel("stadt_neu"))); } catch (e) {}
     return darf || Boolean(window.LEICHT_FREI);
   }
   function stadtNeu() {
