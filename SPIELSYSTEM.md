@@ -2174,6 +2174,30 @@ XANDER: „ich möchte nicht, dass wenn man auf ein Haus klickt, dass man dann d
   - Die Laternen werfen einen kräftigeren Lichtkegel.
   - Tag und Nacht blenden auch im kleinen Rahmen fließend über.
 - **Auftritt Batmobil und Dodge Viper (Helfer, `app.js`, Sonde `pruefe-812-auftritt-autos.js`)**: Beide fahren als 3D-Einzug aus einem Drehblatt mit 32 Blickwinkeln ein: Kurve mit Quietschen, frontaler Halt, das Profilbild steigt aus, Abfahrt in die Tiefe. Das Batmobil hat Nachbrenner und einen gerechneten Klang.
+- **Zeitanzeige an See und Wald** (Funk 203: „dass z.B die Zeit angezeigt wird wenn etwas in Bearbeitung ist wie das früher am See war"): Fischer, Holzfäller und Jäger bekommen ihr Zeichen mit Restzeit an der Seezunge bzw. an der dichtesten Baumgruppe. Das Zeichen ist auch im Überblick und bei „Symbole aus" sichtbar. Fertiges wird mit einem Tipp abgeholt (`lsZeichen` in `spiel.js`, `ORTE` in `oberflaeche.js`).
+- **Einkaufen und was ab welchem Level kommt (Helfer, `spiel.js`, Sonde `pruefe-813-handel-level.js`)**:
+  - Im Dorf-Menü steht „Markt & Handel" mit dem Umschalter „Einkaufen | Verkaufen". Jede Ware zeigt Kaufpreis und Vorrat, man kauft 1, 5, 20 oder 50 Stück. Gesperrt ist ein Knopf, wenn Punkte, Tagesmenge oder Lagerplatz fehlen.
+  - Der Kaufpreis ist Tagespreis × 1,6. Man kann 60 Stück am Tag kaufen, mit Marktstand und Hanse-Kontor mehr. Kaufen und gleich wieder Verkaufen bringt nie Gewinn.
+  - Häuser lassen sich über Stufe 3 hinaus ausbauen: Stufe 4 ab Level 15, Stufe 5 ab 25, Stufe 6 ab 35, jeweils mit Holz, Erz und Gold.
+  - Neue Häuser: Holzfällerhütte (Level 12), Marktstand (15), Schweinestall (18), Jagdhütte (22), Sternwarte (30).
+  - Neue Forschungen ab Level: Sägewerk 14, Hanse-Kontor 20, Räucherkammer 24, Fernrohr 32 und eine geheime ab 40.
+  - „Was kommt als Nächstes · Dorfstufe N" zeigt die Dorfstufe (Weiler bis Großstadt), die Höchststufe je Level und die nächsten Freischaltungen. Gesperrtes trägt ein Schloss und „ab Level N".
+  - Die Migrationen `fassung_813_handel_level_a/_b_ernte` sind angewendet (Kopie in `supabase/fassung-813-handel-level.sql`). Die neuen Häuser haben in der Karte noch keinen Platz.
+- **Jahreszeiten und Bildregler (Helfer, Sonde `pruefe-814-jahreszeiten.js`)**:
+  - Der September ist noch Sommer. Jeder Laub- und Obstbaum färbt sich an einem eigenen Tag zwischen 1. und 25. Oktober und wird im November kahl.
+  - Winter kommt ab dem 27.11. oder wenn das Wetter Schnee meldet; der Schnee bleibt dann 36 Stunden liegen.
+  - Neu gebacken sind Frühling (Obstbäume blühen), Sommer und kahl, zusammen 2 MB.
+  - Der Betreiber schaltet mit dem Jahreszeit-Knopf durch Frühling, Sommer, Frühherbst, Spätherbst, Winter, Schneefall und Automatisch.
+  - Alle Nutzer haben Regler für Farbstimmung, Helligkeit, Sättigung und Kontrast, dazu „Zurücksetzen". Die Werte bleiben gespeichert.
+  - Zum Prüfen gibt es die Parameter `?datum=JJJJ-MM-TT` und `?wetter=schnee`.
+- **Döbelner Rathaus und Windmühle (Helfer, Sonde `pruefe-812-rathaus-windmuehle.js`)** — XANDER: „wenn man vor dem Brunnen steht … guck mal genau auf den Eingang zu, dann ist dieser dominante Teil seitlich nach rechts" · „Vergiss die Windmühle nicht":
+  - Das Rathaus steht jetzt mit `dreh` 3: Vom Brunnen aus sieht man frontal das Portal im Turm, der Staffelgiebel-Flügel geht nach rechts weg, der Flügel mit dem Dachreiter liegt links.
+  - Es rückt 3 m nach rechts (gleiche Tiefe), damit die Pferdebahn-Straße links sichtbar bleibt. Der Brunnen steht vor dem Portal, Christbaum und Buden bleiben auf dem Markt.
+  - Am Modell kamen dazu: „Ratskeller"-Schrift am Giebel, ein kleiner Staffelgiebel am Ostflügel, ein Dachreiter mit Kupferhaube und im Winter Lichterketten unter dem Sandsteinsims.
+  - Die Mühle ist wieder die Windmühle des alten Dorfs (`g_windmuehle`). Die Flügel drehen sich als eigenes Drehblatt (`stadt-leicht/windmuehle.js`): tags 7, nachts 3 Umdrehungen je Minute.
+  - Der Bahnhof ist antippbar und öffnet im Spiel die Bahnhof-Station.
+- **Platzwechsel im Spielmodus (Helfer, Funk 204, Sonde `pruefe-816-platzwechsel.js`)**: Eine bereite Klassenkraft, Tier-Fähigkeit oder ein gewählter Zauber fing jeden Tipp auf einen leeren Platz ab („Tippe auf ein Gesicht – der Platz ist leer"). Allein im Raum saß man so fest. Jetzt wechselt ein Tipp auf einen leeren Platz immer dorthin, und die Kraft bleibt bereit.
 - **Sonden**:
+  - `pruefe-809` wartet, bis der Zug am Halt steht. Unter Last war der Zug beim Lesen noch leer.
   - `pruefe-799` prüft zusätzlich das langsame Wischen: 80 px Finger ergeben 80 px Scrollen. Mit dem alten Code sind es 50 px, die Sonde ist dann rot.
   - `pruefe-799` akzeptiert „×4" mit dem Titel „4 Brot" und die neuen Knöpfe unter dem Bild.

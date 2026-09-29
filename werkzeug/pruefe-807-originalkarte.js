@@ -77,7 +77,7 @@ const spearman = (a, b) => { const ra = rang(a), rb = rang(b), n = a.length; let
   sage(f0[0] + f0[1] < -40 && Math.hypot(f1[0] - zunge[0], f1[1] - zunge[1]) < 13, "der Fluss entspringt oben und mündet unten in den See", JSON.stringify({ f0, f1, zunge }));
   const zb = welt(231, 190);
   sage(Math.hypot(zunge[0] - zb[0], zunge[1] - zb[1]) < 10, "die Zunge des Sees liegt wie im alten Bild unten rechts der Mitte", JSON.stringify({ zunge, altesBild: zb.map((z) => +z.toFixed(1)) }));
-  const falsch = r.haeuser.filter((h) => h.k !== "muehle" && h.d !== 3.5).map((h) => h.k + ":" + h.d);
+  const falsch = r.haeuser.filter((h) => h.k !== "muehle" && !(h.k === "rathaus" ? h.d === 3 : h.d === 3.5)).map((h) => h.k + ":" + h.d);
   sage(r.haeuser.length >= 10 && !falsch.length, "alle Häuser schauen wie im alten Bild zum Betrachter (die Mühle mit dem Rad am Bach)", falsch.join(", "));
   const m = r.plaetze.muehle;
   sage(r.bach.some((q) => Math.abs(q[0] - (m.x + 11.5)) < 1 && Math.abs(q[1] - m.y) < 9), "der Mühlbach läuft am Wasserrad der Mühle vorbei", JSON.stringify(m));

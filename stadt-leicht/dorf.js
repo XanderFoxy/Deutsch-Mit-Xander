@@ -30,7 +30,9 @@
   };
   /* Bilder je Spielgebäude (vorläufig Fachwerkhäuser in eigener Farbe –
      eigene Modelle für Kuhstall, Bergwerk, Krankenhaus … folgen) */
-  D.BILD = { muehle: ["g_muehle", "bau_wassermuehle", [16.2, 21.4], 13] };
+  /* FASSUNG 809 — XANDER: „Vergiss die Windmühle nicht. Ich will den selben Look haben": die Windmühle des alten Dorfs
+     (Flügel drehen sich, windmuehle.js) statt der Wassermühle */
+  D.BILD = { muehle: ["g_windmuehle", "bau_windmuehle", [13, 13], 22] };
   const ERKER = { schule: 1, brauerei: 1, bibliothek: 1, rathaus: 1, krankenhaus: 1, labor: 1, gefaengnis: 1 };
   /* FASSUNG 795 — eigene Modelle (Grundfläche und Höhe wie im Modell) */
   const EIGEN = { kuhstall: [[11, 9], 10], huehnerstall: [[8, 7], 4], rathaus: [[12, 10], 17], schule: [[12, 9], 13],
@@ -248,6 +250,12 @@
        Bild schauen alle Häuser den Betrachter an – hier auch (dreh 3,5 = zum Betrachter, die Häuser haben acht Winkel);
        nur die Mühle behält ihr Rad am Bach. */
     for (const k in P) if (k !== "muehle") P[k].dreh = 3.5;
+    /* FASSUNG 809 — XANDER: „wenn man vor dem Brunnen steht … guck mal genau auf den Eingang zu, dann ist dieser dominante
+       Teil seitlich nach rechts". Das Portal im Turm schaut zum Brunnen, der Staffelgiebel-Flügel geht nach rechts weg. */
+    P.rathaus.dreh = 3;
+    /* gedreht ist der lange Flügel breiter im Bild: das Rathaus rückt etwas nach rechts (gleiche Tiefe), damit die
+       Pferdebahn-Straße links davon sichtbar bleibt */
+    P.rathaus.x += 3; P.rathaus.y -= 3;
     D.PLAETZE = P;
     /* Bildachsen (u = x − y nach rechts, v = x + y nach unten) → Welt */
     const vw = (u, v) => [(u + v) / 2, (v - u) / 2];
@@ -389,7 +397,9 @@
       const liste = [];
       const setze = (bild, x, y, dreh, x2) => { liste.push(Object.assign({ art: "kulisse", bild: bild, x: x, y: y, dreh: dreh || 0, fuss: [2, 2], hoehe: 4 }, x2 || {})); };
       /* Bahnhof hinter dem Gleis, der Bahnsteig schaut zum Gleis (und zum Betrachter) */
-      setze("k_bahnhof", D.BAHNHOF[0], D.BAHNHOF[1], 1.5, { fuss: [30, 16.6], hoehe: 13, name: "Bahnhof" });
+      /* FASSUNG 809 — Walkie 305: „man kann den Bahnhof auch nicht anklicken um irgendwelchen Input oder Export zu steuern":
+         im Spiel öffnet ein Tipp die Bahnhof-Station (Export/Import) */
+      setze("k_bahnhof", D.BAHNHOF[0], D.BAHNHOF[1], 1.5, { fuss: [30, 16.6], hoehe: 13, name: "Bahnhof", spiel: "bahnhof" });
       /* Bootsverleih am See (boote.js) – vor den Bäumen gesetzt, damit keiner darauf wächst */
       setze("d_bootshaus", D.BOOTSHAUS[0], D.BOOTSHAUS[1], 0, { fuss: [10, 3.4], hoehe: 4, name: "Bootsverleih" });
       /* Brücken, wo Wege den Fluss oder Bach kreuzen – schräg, wenn der Weg schräg läuft */
@@ -417,7 +427,8 @@
       }
       for (let i = 0; i < 4; i++) { const a = rad(i * 90 + 45); setze("d_bank", MARKT[0] + Math.cos(a) * 8.6, MARKT[1] + Math.sin(a) * 8.6, 0, { fuss: [1.9, 0.75], hoehe: 0.9, deko: 1 }); }
       setze("d_weihnachtsbaum", MARKT[0], MARKT[1], 0, { fuss: [7.4, 7.4], hoehe: 21.8, nurWinter: 1, jahr: "winter", deko: 1 });
-      setze("d_brunnen", MARKT[0], MARKT[1], 0, { fuss: [4.6, 4.6], hoehe: 5.4, jahrNicht: "winter", deko: 1 });
+      /* der Brunnen vor dem Portal (wie auf Xanders Foto); Christbaum und Buden bleiben auf dem Markt */
+      setze("d_brunnen", -2.5, -7.5, 0, { fuss: [4.6, 4.6], hoehe: 5.4, jahrNicht: "winter", deko: 1 });
       for (let i = 0; i < 6; i++) { const a = rad(30 + i * 60); setze("d_marktbude", MARKT[0] + Math.cos(a) * 6.6, MARKT[1] + Math.sin(a) * 6.6, drehZurMitte(i * 60 + 30), { fuss: [4, 3.2], hoehe: 4.2, nurWinter: 1, jahr: "winter", deko: 1 }); }
       const r = rng(4711), G = B.GROESSE / 2;
       const frei = (x, y, abst) => {
