@@ -49,26 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 818: Satzbaukasten auf Italienisch, alte Bilderwelt wieder Standard (neue per Link)",
+  stand: "Fassung 819: Batmobil fährt vorn, Saugnapf-Pfeil klebt oben am Kopf",
 
   inArbeit: [
-    { seit: "2026-09-30T03:38",
+    { seit: "2026-09-30T04:11",
+      text: "Sollen Viper, KITT und Colt-Truck auch vorn fahren? (deine Entscheidung)" },
+    { seit: "2026-09-30T04:11",
       text: "Italienisch: noch nicht von Muttersprachlern gegengelesen" },
-    { seit: "2026-09-30T03:38",
-      text: "Neue Bilderwelt: Haare/Frisuren weiter verbessern" },
-    { seit: "2026-09-30T03:38",
+    { seit: "2026-09-30T04:11",
       text: "Tonserver: echter Test mit zwei Geräten" },
-    { seit: "2026-09-30T03:38",
-      text: "Punkte für Quests und Eintritt auf dem Server (braucht dein OK)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-30T03:38",
-      text: "Satzbaukasten Italienisch mit Sperre gegen Unsinn und Vorschlägen" },
-    { seit: "2026-09-30T03:38",
-      text: "Bilderwelt: alte Version als Standard, neue als Test-Link" },
-    { seit: "2026-09-30T03:38",
-      text: "Tonserver für alle eingeschaltet" },
+    { seit: "2026-09-30T04:11",
+      text: "Batmobil-Auftritt im Vordergrund mit Aussteigen" },
+    { seit: "2026-09-30T04:11",
+      text: "Saugnapf-Pfeil oben am Kopf, Gesichter frei" },
   ],
 };
