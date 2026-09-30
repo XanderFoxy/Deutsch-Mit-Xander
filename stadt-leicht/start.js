@@ -118,7 +118,7 @@
     if (performance.now() - letzteBewegung > 80) schwung = [0, 0];
     if (!gezogen && startPunkt && O().tippen) O().tippen(e.clientX * K.dpr, e.clientY * K.dpr);
     if (O().zeigerHoch) O().zeigerHoch(gezogen);
-    if (zeiger.size === 0) startPunkt = null;
+    if (zeiger.size === 0) { startPunkt = null; if (ST.oberflaeche) ST.oberflaeche._finger = 0; }   // FASSUNG 844 — Fingerzähler fürs lange Drücken
   };
   dingeC.addEventListener("pointerup", hoch);
   dingeC.addEventListener("pointercancel", hoch);
@@ -137,7 +137,37 @@
      (höchstens 4 Bilder je Sekunde, für die Baustellen-Uhr). */
   L.unruhe = 2;
   let letztesBild = 0;
+  /* FASSUNG 844 — „warm halten": XANDER bekam die Antwort, dass die Stadt nach dem Verlassen ein paar Minuten im Speicher
+     bleibt, damit sie beim Zurückkommen sofort da ist. Solange das Spiel den Rahmen versteckt (Dorf zu, weggescrollt,
+     anderer Tab), ruht die Bildschleife ganz (zwei Blicke je Sekunde, ob sie wieder zu sehen ist) – der Rahmen kostet dann
+     weder Rechenzeit noch Akku. Wird das Dorf wieder geöffnet (vorher war es zu), zeigt die Stadt ihre Startansicht: die
+     festgesteckte (Stecknadel) oder die ganze Stadt (oberflaeche.js O.wiederDa). Das Spiel kann die Ruhe auch selbst
+     sagen (postMessage „leicht-ruhe"). */
+  L.versteckt = false; L.ruheVomSpiel = false;
+  function rahmenVersteckt() {
+    if (document.hidden || L.ruheVomSpiel) return true;
+    try {
+      const f = window.frameElement; if (!f) return false;
+      const h = f.parentElement;
+      if (h && h.style && h.style.visibility === "hidden") return true;
+      const r = f.getBoundingClientRect(); return r.width < 4 || r.height < 4;
+    } catch (e) { return false; }
+  }
+  /* ist das Dorf im Spiel offen? (der Platzhalter des Rahmens steht im Menü – gleiche Adresse, also lesbar) */
+  function dorfOffen() { try { const d = window.parent !== window && window.parent.document; return !d || !!d.querySelector(".sp-dl-neustadt-platz") || !!(window.frameElement && window.frameElement.parentElement && window.frameElement.parentElement.classList.contains("sp-ls-voll")); } catch (e) { return true; } }
+  L.dorfZuSeit = 0;
+  setInterval(() => {
+    if (window.parent !== window && !dorfOffen()) { if (!L.dorfZuSeit) L.dorfZuSeit = performance.now(); }
+    else if (L.dorfZuSeit) {
+      const weg = performance.now() - L.dorfZuSeit; L.dorfZuSeit = 0;
+      if (weg > 1200 && ST.oberflaeche && ST.oberflaeche.wiederDa) ST.oberflaeche.wiederDa(weg);
+    }
+    const v = rahmenVersteckt();
+    if (v !== L.versteckt) { L.versteckt = v; L.unruhe = 2; }
+  }, 400);
+  window.addEventListener("message", (ev) => { if (ev.source === window.parent && ev.data && ev.data.typ === "leicht-ruhe") { L.ruheVomSpiel = !!ev.data.an; L.unruhe = 2; } });
   function bild(jetzt) {
+    if (L.versteckt && !L.still) { setTimeout(() => requestAnimationFrame(bild), 500); return; }
     groesse();
     if (flug) {
       const k = Math.min(1, (jetzt - flug.t0) / flug.d), e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;

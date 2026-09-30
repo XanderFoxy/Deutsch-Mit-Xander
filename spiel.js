@@ -13849,7 +13849,19 @@
         var la = lsDirekt() && !dorfBesuchStand() && S.dorfWahl !== lg ? lsEinzigeAufgabe(lg) : null;
         if (la && la.art === "liefern") { S.dorfTippWeg = true; LSTADT.zSig = ""; werkLiefern(lg, la.w, la.n); return; }
         if (la && la.art === "trupp") { S.dorfTippWeg = true; LSTADT.zSig = ""; truppSchicken(la.ort); return; }
-        if (la && la.art === "wahl") { S.dorfTippWeg = true; ton("holzklopf", 0.2); lsPost({ typ: "leicht-wahl", g: lg, wahl: la.wahl }); return; }
+        if (la && la.art === "wahl") { S.dorfTippWeg = true; ton("holzklopf", 0.2); lsPost({ typ: "leicht-wahl", g: lg, wahl: la.wahl, fokus: ev.data.klein ? 1 : 0 }); return; }
+        /* FASSUNG 844 — XANDER (Walkie 313): „du wolltest eigentlich kleine links machen kleine Symbole am Haus … dass ich am
+           Haus direkt auswählen kann … jetzt kriege ich trotzdem wieder das große Menü und dann springt manchmal die Seite hoch
+           durch das große Menü". Die Stadt fragt mit „klein: 1": hat das Haus etwas zu tun, kommen die kleinen Symbole ans
+           Haus (die Stadt fliegt hin, oberflaeche.js O.fokus), und das Menü rollt nicht zur Station. Nur wenn es nichts zu tun
+           gibt, bleibt es beim bisherigen Weg (Station darunter). */
+        if (ev.data.klein && !dorfBesuchStand() && !LSTADT.voll && lg !== "bahnhof") {
+          var lk = lsEinzigeAufgabe(lg), kw = null;
+          if (lk && lk.art === "wahl") kw = lk.wahl;
+          else if (lk && lk.art === "liefern") kw = [{ w: lk.w, name: wareName(lk.w), n: lk.n }];
+          else if (lk && lk.art === "trupp") kw = [{ w: "trupp", n: 1, bild: "erz", text: "Bergleute" }];
+          if (kw) { S.dorfTippWeg = true; ton("holzklopf", 0.2); lsPost({ typ: "leicht-wahl", g: lg, wahl: kw, fokus: 1 }); return; }
+        }
         S.dorfWahl = S.dorfWahl === lg ? "" : lg; S.dorfTippWeg = true; ton("swoosh", 0.2); schnellZeichnen(true);
         /* FASSUNG 823 — der Bahnhof öffnet sein kompaktes Fenster; das Menü rollt nicht zu einer Karte darunter. */
         if (S.dorfWahl === "bahnhof") { clearTimeout(S.lsStationUhr); S.bahnMeldung = null; bahnLaden(); bahnFensterEinpassen(); return; }
@@ -13870,7 +13882,10 @@
       }
       if (ev.data.typ === "leicht-machen" && typeof ev.data.g === "string" && !dorfBesuchStand()) {
         var lm = lsEinzigeAufgabe(ev.data.g), lw = lm && lm.art === "wahl" ? lm.wahl.filter(function (x) { return x.w === ev.data.w && x.n > 0; })[0] : null;
-        if (lw) { LSTADT.zSig = ""; werkLiefern(ev.data.g, lw.w, lw.n); } else hinweis("Das geht gerade nicht – es fehlen Zutaten.");
+        /* FASSUNG 844 — auch die einzelnen Symbole (eine Ware, die Bergleute) aus der kleinen Auswahl am Haus */
+        if (!lw && lm && lm.art === "liefern" && lm.w === ev.data.w) lw = { w: lm.w, n: lm.n };
+        if (lm && lm.art === "trupp" && ev.data.w === "trupp") { LSTADT.zSig = ""; truppSchicken(lm.ort); lsPost({ typ: "leicht-zurueck" }); return; }
+        if (lw) { LSTADT.zSig = ""; werkLiefern(ev.data.g, lw.w, lw.n); lsPost({ typ: "leicht-zurueck" }); } else hinweis("Das geht gerade nicht – es fehlen Zutaten.");
       }
       /* FASSUNG 832 — XANDER (Funk 214): „wenn sie dann da ist ist die Aufgabe gelöst und wir kriegen die Punkte". Eine Quest
          der Stadt ist geschafft (quests.js): Meldung mit Helferpunkten, Mut-Bonus und Geschenk. Die Punkte zählt die Stadt
@@ -14059,7 +14074,9 @@
     var platz = schnellEl && !schnellEl.hidden && schnellEl.querySelector(".sp-dl-neustadt-platz");
     if (!platz || !platz.isConnected) {
       st.visibility = "hidden";
-      if (!L.ohne) L.ohne = Date.now(); else if (Date.now() - L.ohne > 20000) lsWeg();
+      /* FASSUNG 844 — Walkie 313: „sollen wir die temporären Daten jetzt behalten … um direkt weiter zu spielen zu können ohne
+         jedes Mal zu warten". Die versteckte Stadt bleibt 5 Minuten warm (die Bildschleife ruht dabei, start.js), vorher 20 s. */
+      if (!L.ohne) L.ohne = Date.now(); else if (Date.now() - L.ohne > 300000) lsWeg();
       return;
     }
     L.ohne = 0;

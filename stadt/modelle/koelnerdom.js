@@ -608,12 +608,23 @@
       for (const L of FLUTER) {
         const d = sub(L, c), l = Math.hypot(d[0], d[1], d[2]) || 1;
         const cw = (n[0] * d[0] + n[1] * d[1] + n[2] * d[2]) / l;
-        if (cw > 0) summe += cw / (1 + (l / 26) * (l / 26));
+        if (cw > 0) summe += cw / (1 + (l / 38) * (l / 38));   // FASSUNG 844 — die Strahler reichen bis in die Turmspitzen (26 → 38 m)
       }
-      const k = K.nacht * (0.1 + 0.9 * Math.min(1, summe * 1.15)) * (1 - 0.35 * klemm(f.zm / 55, 0, 1)) * (innen ? 0.25 : 1);
-      flut = [0.62 * k, 0.50 * k, 0.33 * k];
+      /* FASSUNG 844 — XANDER (Walkie 313): „dann hat der Kölner Dom keinen Kontrast der sieht so gelblich aus und das sieht
+         nachts nicht danach aus dass dort ein Kölner Dom steht". Das Licht der Strahler war orange-gelb (0,62/0,50/0,33)
+         und das Mondlicht hellte jede Fläche gleich auf – ein beiger Block. Jetzt wie in Köln: fast weißes, leicht warmes
+         Flutlicht (Natriumdampf ist dort längst durch LED ersetzt), kräftiger auf den angestrahlten Wänden und Türmen, und
+         was kein Strahler trifft (Dächer, Nischen, Rückseiten), bleibt fast schwarz – so steht der Dom hell gegen den
+         Nachthimmel, mit tiefen Schatten im Maßwerk. */
+      const an = Math.min(1, summe * 1.35);
+      const k = K.nacht * (0.02 + 1.25 * an * an * (3 - 2 * an)) * (1 + 0.1 * klemm(f.zm / 55, 0, 1)) * (innen ? 0.2 : 1);
+      /* Dachflächen (Blei) fangen kaum Licht: sie bleiben dunkel über den hellen Wänden */
+      const kd = n[2] > 0.35 ? k * 0.3 : k;
+      flut = [0.92 * kd, 0.9 * kd, 0.84 * kd];
     }
     const W = lichtWerte(nk, K.Z, K.jahr, flut);
+    /* FASSUNG 844 — nachts ohne Strahler dunkler (Mond- und Himmelslicht halb): mehr Kontrast zum Flutlicht */
+    if (flut) for (let i = 0; i < 3; i++) { const d = (1 - 0.62 * K.nacht); W.lf[i] = (W.lf[i] - flut[i]) * d + flut[i]; W.ls[i] = (W.ls[i] - flut[i]) * d + flut[i]; }
     if (innen) for (let i = 0; i < 3; i++) { W.lf[i] *= 0.62; W.ls[i] *= 0.62; }
     const lf = W.lf, ls = W.ls;
     const F = {

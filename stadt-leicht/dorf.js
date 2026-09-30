@@ -248,12 +248,19 @@
        schräg nach links (Bild _f_0); dreh 3,5 zeigt es in der Grundansicht genau zum Betrachter (Bild _f_315, wie bei
        den Häusern, die unten alle auf 3,5 gesetzt werden). */
     P.muehle.dreh = 0; P.bergwerk.dreh = 3.5;
+    /* FASSUNG 844 — XANDER (Walkie 313): „das Bergwerk ist immer noch nicht so wirklich sichtbar es ist immer noch klein …
+       vorher … hinter den Gleisen … wo ein Bergwerk auch Sinn macht wo [die] Berge sind … jetzt muss ich es immer suchen im
+       Dunkeln". Das Bergwerk steht jetzt hinter der Bahn am Fuß der Alpen (Bildachsen u = 92, v = −103: die Horizontlinie
+       liegt bei v = −100, das Gleis bei v ≈ −86) und ist 1,45-mal so groß (D.MASS unten): der Felsberg wächst aus den
+       Bergen, der Stollen schaut über die Gleise zum Betrachter. */
+    { const u = 92, v = -103; P.bergwerk.x = +((u + v) / 2).toFixed(2); P.bergwerk.y = +((v - u) / 2).toFixed(2); }
     /* FASSUNG 807 — XANDER: „du hast vergessen das Döbelner Rathaus weiterzubauen". Das Rathaus der Originalkarte ist das
        Döbelner Rathaus vom Obermarkt (Modell rathaus_doebeln, 44 × 21 m), auf 70 % gesetzt, damit es zwischen Gasthaus,
        Schule und Bäckerei passt; es schaut nach vorn auf den Markt. */
     /* FASSUNG 819 — Grundfläche = Umriss des Stern-Grundrisses (Modell grund 41 × 33,1 m), mit D.MASS 0,7 in der Welt */
     D.BILD.rathaus = ["w_rathaus_doebeln", "bau_rathaus", [41, 33.1], 22.8];
     D.MASS = { rathaus: 0.7 };
+    D.MASS.bergwerk = 1.45;   // FASSUNG 844 — das Bergwerk größer (s. o.)
     P.rathaus = { x: -12.4, y: -14, dreh: 0, winkel: P.rathaus.winkel };
     /* FASSUNG 808 — XANDER: „das soll genau das selbe Bild sein … man soll das direkt wieder erkennen können". Im alten
        Bild schauen alle Häuser den Betrachter an – hier auch (dreh 3,5 = zum Betrachter, die Häuser haben acht Winkel);
@@ -439,7 +446,9 @@
       const u = Math.abs(dx * c + dy * s) - fu[0] / 2, v = Math.abs(-dx * s + dy * c) - fu[1] / 2;
       return Math.hypot(Math.max(0, u), Math.max(0, v));
     };
-    D.freiFuerWunder = function (w, x0, y0, andere) {
+    /* FASSUNG 844 — nurPruefen: nur sagen, ob (x0, y0) frei ist (null sonst), ohne zu suchen; w.pruefDreh: die Drehung des
+       Dings (beim Versetzen), sonst die Grundstellung 3,5 */
+    D.freiFuerWunder = function (w, x0, y0, andere, nurPruefen) {
       const f = w.fussS || w.fuss, r = Math.hypot(f[0], f[1]) / 2 * 0.78;
       /* genaue Grundflächen (gedrehte Rechtecke, Trennachsen-Test) mit 1,5 m Abstand */
       const eck = (x, y, fu, dreh, rand) => { const a = (dreh || 0) * Math.PI / 2, c = Math.cos(a), s = Math.sin(a), hw = fu[0] / 2 + rand, hd = fu[1] / 2 + rand; return [[-hw, -hd], [hw, -hd], [hw, hd], [-hw, hd]].map(([u, v]) => [x + u * c - v * s, y + u * s + v * c]); };
@@ -447,7 +456,7 @@
       const frei = (x, y) => {
         if (D.randAbst(x, y) > -(r + 3)) return false;
         if (vonBahn(x, y) < r + 4 || x + y < D.HORIZONT + r + 8) return false;
-        const ich = eck(x, y, f, 3.5, 1.5);
+        const ich = eck(x, y, f, w.pruefDreh != null ? w.pruefDreh : 3.5, 1.5);
         for (const k in P) {
           const b = D.BILD[k], m = (D.MASS || {})[k] || 1; if (!trennt(ich, eck(P[k].x, P[k].y, [b[2][0] * m, b[2][1] * m], P[k].dreh, 0))) return false;
           /* vor der Haustür (dort beginnen die Wege) Platz lassen, sonst führen die Wege in engen Haken herum */
@@ -455,14 +464,19 @@
           if (!trennt(ich, eck(fx, fy, [7, 7], 0, 0))) return false;
         }
         if (D.imGrundriss && D.imGrundriss("rathaus", x, y, r + 2)) return false;
+        /* FASSUNG 844 — der frühere Platz des Bergwerks bleibt für Wahrzeichen gesperrt: sonst rückten Neuschwanstein & Co.
+           dorthin nach, und die Stadt sähe anders aus als gewohnt */
+        if (Math.hypot(x - 12.2, y + 75.5) < r + 8) return false;
         for (const o of andere || []) { if (!trennt(ich, eck(o.x, o.y, o.fussS || o.fuss, o.dreh, 0))) return false; }
         if (D.BAHNHOF && Math.hypot(x - D.BAHNHOF[0], y - D.BAHNHOF[1]) < r + 15) return false;
         if (D.BOOTSHAUS && Math.hypot(x - D.BOOTSHAUS[0], y - D.BOOTSHAUS[1]) < r + 7) return false;
         if (D.BRUNNEN && Math.hypot(x - D.BRUNNEN[0], y - D.BRUNNEN[1]) < r + 4) return false;
-        for (let a = 0; a < 12; a++) for (const t of [0.35, 0.75]) { const q = [x + Math.cos(a * 0.5236) * r * t, y + Math.sin(a * 0.5236) * r * t]; if (B.wert(q[0], q[1], 1) > 0.25) return false; }
+        /* FASSUNG 844 — auch nicht auf die Äcker (sonst lägen die Kornfelder wieder unter einem Wahrzeichen) */
+        for (let a = 0; a < 12; a++) for (const t of [0.35, 0.75]) { const q = [x + Math.cos(a * 0.5236) * r * t, y + Math.sin(a * 0.5236) * r * t]; if (B.wert(q[0], q[1], 1) > 0.25 || B.wert(q[0], q[1], 2) > 0.25) return false; }
         return B.wert(x, y, 1) < 0.25;
       };
-      if (frei(x0, y0)) return [+x0.toFixed(1), +y0.toFixed(1)];
+      if (frei(x0, y0)) return nurPruefen ? [x0, y0] : [+x0.toFixed(1), +y0.toFixed(1)];
+      if (nurPruefen) return null;
       for (let rr = 3; rr <= 90; rr += 3) for (let i = 0, n = Math.max(8, Math.round(rr * 1.2)); i < n; i++) {
         const a = i / n * Math.PI * 2, x = x0 + Math.cos(a) * rr, y = y0 + Math.sin(a) * rr;
         if (frei(x, y)) return [+x.toFixed(1), +y.toFixed(1)];
@@ -491,7 +505,7 @@
     D.wegeBauen = function () {
       const ziele = [MARKT.slice()];
       /* FASSUNG 819 — zum Rathaus führt der Weg vor das Turmportal (D.tuer), nicht zur Mitte des Grundrisses */
-      for (const k in P) ziele.push(D.tuer(k, 2.2) || vor(P[k], k === "muehle" ? 9 : 8));
+      for (const k in P) ziele.push(D.tuer(k, 2.2) || vor(P[k], (k === "muehle" ? 9 : 8) * ((D.MASS || {})[k] || 1)));   // FASSUNG 844 — vor großen Häusern (Bergwerk) weiter vorn
       ziele.push(see(58, 82));   // (zum Bahnhof führt die Pferdebahn-Straße)
       for (const k in D.WUNDER) { const w = D.WUNDER[k]; if (w.steht) ziele.push(vor(w, (w.fussS[0] + w.fussS[1]) / 4 + 3)); }
       const drin = [0], kanten = [];
@@ -681,7 +695,7 @@
         if (k === "muehle") continue;
         /* FASSUNG 819 — vor dem Rathausportal kein Vorgarten, sondern Pflaster bis zum Brunnen */
         const t = D.tuer(k, 3.0); if (t) { rund(t[0], t[1], 4.2, 4.2, 0); continue; }
-        const q = vor(P[k], 7.5); rund(q[0], q[1], 2.4, 2.4, 3);
+        const q = vor(P[k], 7.5 * ((D.MASS || {})[k] || 1)); rund(q[0], q[1], 2.4, 2.4, 3);
       }
       /* Quelle, Fluss (wird breiter) in die Zunge des Sees, Mühlbach */
       rund(D.QUELLE[0], D.QUELLE[1], 3, 2.4, 1);
@@ -701,8 +715,21 @@
       /* Felder (Getreide) unten links und rechts am Rand, wie im alten Bild */
       /* FASSUNG 828 — XANDER: „es gibt noch kein Getreide … da muss ich immer in die alte Ansicht zurück". Die Äcker sind
          die Felder 91 (links) und 92 (rechts) des alten Bildes – ein Tipp darauf erntet im Spiel (oberflaeche.js). */
+      /* FASSUNG 844 — XANDER (Walkie 313): „die Getreidefelder sieht man immer noch nicht man kriegt immer nur
+         getreidesymbole präsentiert die man einsammeln soll aber die scheinen unter den Sehenswürdigkeiten zu liegen ich möchte
+         sichtbare Getreidefelder". Die Äcker waren kleine Flecken (9 × 6 m); der linke lag genau hinter dem Kölner Dom, dessen
+         Bild ihn ganz verdeckte. Jetzt zwei große rechteckige Äcker in den Bildachsen (u = x − y, v = x + y) nebeneinander auf freier Wiese
+         rechts zwischen Kaserne, Krankenhaus und Brandenburger Tor – dort steht nichts Hohes davor, und sie liegen in jedem
+         Dorf im Überblick des kleinen Bilds (unten links wäre der Platz hinter dem Kölner Dom, ganz unten außerhalb). Die Halme malt szene.js (D.FELD_ORTE mit u0…v1, reif oder wachsend nach dem Zeichen des Spiels). */
       D.FELD_ORTE = [];
-      for (const [px, py, fw, fh, nr] of [[30, 182, 9, 6, 91], [305, 142, 6, 8.5, 92], [58, 196, 4.5, 3.5, 91]]) { const q = welt(px, py); rund(q[0], q[1], fw, fh, 2); D.FELD_ORTE.push({ nr: nr, x: q[0], y: q[1], r: Math.max(fw, fh) }); }
+      /* auf oder dicht vor (im Bild darunter) einem Acker steht nichts Hohes: sein Bild läge sonst über dem Feld */
+      D.feldNah = function (x, y) { const u = x - y, v = x + y; return D.FELD_ORTE.some((f) => f.u0 != null && u > f.u0 - 4 && u < f.u1 + 4 && v > f.v0 - 4 && v < f.v1 + 12); };
+      for (const [um, vm, bu, bv, nr] of [[89, 26, 18, 30, 91], [109, 26, 18, 30, 92]]) {
+        const u0 = um - bu / 2, u1 = um + bu / 2, v0 = vm - bv / 2, v1 = vm + bv / 2;
+        for (let v = v0; v <= v1; v += 0.6) for (let u = u0; u <= u1; u += 0.6) { const q = vw(u, v); B.pinsel(q[0], q[1], 0.45, 2, 1); }
+        const q = vw(um, vm);
+        D.FELD_ORTE.push({ nr: nr, x: +q[0].toFixed(2), y: +q[1].toFixed(2), r: Math.hypot(bu, bv) / 2 / Math.SQRT2, u0: u0, u1: u1, v0: v0, v1: v1 });
+      }
     };
     D.kulisse = function () {
       const liste = [];
@@ -752,8 +779,13 @@
       setze("d_brunnen", D.BRUNNEN[0], D.BRUNNEN[1], 0, { fuss: [4.6, 4.6], hoehe: 5.4, jahrNicht: "winter", deko: 1 });
       for (let i = 0; i < 6; i++) { const a = rad(30 + i * 60); setze("d_marktbude", MARKT[0] + Math.cos(a) * 6.6, MARKT[1] + Math.sin(a) * 6.6, drehZurMitte(i * 60 + 30), { fuss: [4, 3.2], hoehe: 4.2, nurWinter: 1, jahr: "winter", deko: 1 }); }
       const r = rng(4711), G = B.GROESSE / 2;
+      /* FASSUNG 844 — die Ackerflecken bis Fassung 843 (Bild 30|182 9 × 6 m, 305|142 6 × 8,5 m, 58|196 4,5 × 3,5 m) */
+      const ALT_ACKER = [[30, 182, 9, 6], [305, 142, 6, 8.5], [58, 196, 4.5, 3.5]].map(([px, py, fw, fh]) => { const q = welt(px, py); return [q[0], q[1], fw + 0.6, fh + 0.6]; });
+      const altAcker = (x, y) => ALT_ACKER.some(([cx, cy, rx, ry]) => Math.hypot((x - cx) / rx, (y - cy) / ry) <= 1);
+      /* dasselbe für die Häuser: das Bergwerk stand bis 843 vorn rechts (die Bäume bleiben, wie sie waren) */
+      const PB = Object.assign({}, P, { bergwerk: { x: 12.2, y: -75.5 } });
       const frei = (x, y, abst) => {
-        for (const k in P) { const p = P[k]; if (Math.hypot(p.x - x, p.y - y) < (k === "muehle" ? 13 : 9) + abst) return false; }
+        for (const k in PB) { const p = PB[k]; if (Math.hypot(p.x - x, p.y - y) < (k === "muehle" ? 13 : 9) + abst) return false; }
         if (D.imGrundriss("rathaus", x, y, abst + 1)) return false;   // FASSUNG 819 — nichts in den Flügeln des Rathauses
         for (const k in D.WUNDER) { const w = D.WUNDER[k], f = w.fussS; if (Math.hypot(w.x - x, w.y - y) < (f[0] + f[1]) / 3 + 2 + abst) return false; }
         for (const o of liste) if (!o.rand && Math.abs(o.x - x) < o.fuss[0] / 2 + abst && Math.abs(o.y - y) < o.fuss[1] / 2 + abst) return false;
@@ -762,7 +794,10 @@
         if (Math.hypot(x - D.BOOTSHAUS[0], y - D.BOOTSHAUS[1]) < 9 + abst) return false;
         /* FASSUNG 811 — Wiese für Weide und Auslauf (tiere.js) beim Kuhstall und Hof beim Hühnerstall frei lassen */
         if (Math.hypot(x - P.kuhstall.x, y - P.kuhstall.y) < 24 + abst || Math.hypot(x - P.huehnerstall.x, y - P.huehnerstall.y) < 13 + abst) return false;
-        if (B.wert(x, y, 0) > 0.05 || B.wert(x, y, 1) > 0.05 || B.wert(x, y, 2) > 0.05) return false;
+        /* FASSUNG 844 — die Äcker liegen jetzt woanders; für die Bäume gelten weiter die alten Ackerflecken (altAcker), damit
+           jeder Baum dort wächst, wo er bisher stand (entfernte und gefällte Bäume sind mit ihrer Lage gemerkt). Was auf
+           oder vor den neuen Äckern stünde, fällt am Ende weg (s. u.). */
+        if (B.wert(x, y, 0) > 0.05 || B.wert(x, y, 1) > 0.05 || altAcker(x, y)) return false;
         /* FASSUNG 826 — Bauland bleibt frei, nichts auf der Böschung */
         if (D.imBauland(x, y, abst) || D.randAbst(x, y) > -2) return false;
         return true;
@@ -818,7 +853,10 @@
         liste.push({ art: "natur", bild: "n_obstbaum" + (i % 2), x: q[0], y: q[1], dreh: 0, fuss: [3, 3], hoehe: 6 });
       }
       for (const [x, y] of [[-16, 26], [24, -30], [40, 30], [-30, -16]]) if (frei(x, y, 1)) setze("d_schneemann", x, y, 0, { fuss: [1.3, 1.3], hoehe: 1.9, nurWinter: 1, jahr: "winter", deko: 1 });
-      return liste;
+      /* FASSUNG 844 — erst jetzt (die Zufallsfolge und damit jeder andere Baum bleibt, wie er war): kein Baum auf oder vor
+         einem neuen Acker (sein Bild läge über dem Feld) und keiner im Felsberg des Bergwerks hinter der Bahn */
+      const bw = P.bergwerk, bwR = Math.hypot(D.BILD.bergwerk[2][0], D.BILD.bergwerk[2][1]) / 2 * ((D.MASS || {}).bergwerk || 1) + 3;
+      return liste.filter((o) => o.art !== "natur" || (!D.feldNah(o.x, o.y) && Math.hypot(o.x - bw.x, o.y - bw.y) > bwR));
     };
   })();
 

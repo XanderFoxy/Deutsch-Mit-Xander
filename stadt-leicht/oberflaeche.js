@@ -241,6 +241,9 @@
     karte.addEventListener("click", (e) => e.stopPropagation());
 
     /* Laden-Vorhang, bis die ersten Bilder da sind */
+    /* FASSUNG 844 — steht das Ladebild (stadt-leicht.html #lLade), übernimmt es die Aufgabe des Vorhangs */
+    const ladeBild = document.getElementById("lLade");
+    if (ladeBild) { const n = ladeBild.querySelector("#lLadeName"); if (n && (L().ich || {}).dorf_name && !(ST.spiel && ST.spiel.beispiel)) n.textContent = stadtName(); }
     deckel = el("div", "lk-vorhang", "<div><b></b><span>wird aufgebaut …</span><i><em></em></i></div>");
     deckel.querySelector("b").textContent = stadtName();
     wurzel.appendChild(deckel);
@@ -248,7 +251,7 @@
        so klein, dass die Häuser fast sofort stehen. */
     /* FASSUNG 807 — XANDER: „dann könntest du in der Zeit wo man wartet … doch eher ein kleinen Ladebalken machen". Im kleinen
        Rahmen ein schmaler Balken unten über dem Bild (das Bild selbst bleibt sichtbar), bis die sichtbaren Häuser da sind. */
-    if (q.get("still") === "1") deckel.remove();
+    if (q.get("still") === "1" || ladeBild) deckel.remove();
     else if (q.get("mini") === "1") deckel.classList.add("lk-vorhang-klein");
 
     /* FASSUNG 799 — XANDER: „so klein möchte ich es haben … in diesem kleinen Frame, wo das alte auch ist … wenn man in
@@ -266,10 +269,14 @@
         const alt = { x: K.x, y: K.y, s: K.s }, kopfH = 30 * K.dpr;
         K.x = 0; K.y = 0; K.s = 1;
         let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+        /* FASSUNG 844 — das Bergwerk steht jetzt hinter der Bahn am Fuß der Alpen: sein Felsberg ragt in die Berge, er soll
+           den Überblick nicht nach oben aufziehen (sonst würde die ganze Stadt im kleinen Bild kleiner) */
+        const DH = ST.dorf, hinterH = (o) => K.dreh === 0 && DH && DH.HORIZONT != null && o.x + o.y < DH.HORIZONT + 8;
+        const hY = DH && DH.HORIZONT != null ? ST.proj(DH.HORIZONT / 2, DH.HORIZONT / 2, 0)[1] - 17 : -1e9;
         for (const o of SZ.objekte) {
           if (!(o.art === "haus" || o.art === "wunder" || (o.art === "kulisse" && o.name && o.bild !== "d_bootshaus"))) continue;
           const r = Math.hypot(o.fuss[0], o.fuss[1]) / 2, P = ST.proj(o.x, o.y, 0), T = ST.proj(o.x, o.y, (o.hoehe || 8) * (o.stufe || 1));
-          x0 = Math.min(x0, P[0] - r * 0.72); x1 = Math.max(x1, P[0] + r * 0.72); y0 = Math.min(y0, T[1] - 2); y1 = Math.max(y1, P[1] + r * 0.38);
+          x0 = Math.min(x0, P[0] - r * 0.72); x1 = Math.max(x1, P[0] + r * 0.72); y0 = Math.min(y0, hinterH(o) ? Math.max(T[1] - 2, hY) : T[1] - 2); y1 = Math.max(y1, P[1] + r * 0.38);
         }
         /* FASSUNG 808 — wie im alten Bild: oben die Alpen über der Horizontlinie, unten gerade noch die Zunge des Sees
            (der Bootsverleih liegt weiter unten – „wenn man weiter runtergeht, dass der See sich eröffnet") */
@@ -314,7 +321,7 @@
       const stufeVon = (s) => s > ueberblick() * 4.5 ? 2 : s > ueberblick() * 1.4 ? 1 : 0;
       O.stufe = () => stufeVon(K.s);
       const kompass = () => {
-        if (O.wahlZu) O.wahlZu(); if (O.dingZu) O.dingZu();   // FASSUNG 822 — auch das kleine Menü am Ding
+        if (O.wahlZu) O.wahlZu(); if (O.dingZu) O.dingZu(); if (O.fokusVergessen) O.fokusVergessen();   // FASSUNG 844   // FASSUNG 822 — auch das kleine Menü am Ding
         const nah = K.s > ueberblick() * 1.4, g = ganzeStadt();
         L().fliegeZu(nah ? g.x : K.x, nah ? g.y : K.y, nah ? g.s : g.s * 2.8, 600);
         nahSetzen(!nah, true);
@@ -326,7 +333,7 @@
          dran führt er wie bisher zurück zur ganzen Stadt. */
       O.doppelTipp = (px, py) => {
         if (!document.body.classList.contains("lk-mini-modus")) return;
-        if (O.wahlZu) O.wahlZu(); if (O.dingZu) O.dingZu();
+        if (O.wahlZu) O.wahlZu(); if (O.dingZu) O.dingZu(); if (O.fokusVergessen) O.fokusVergessen();   // FASSUNG 844
         /* Funk 207: Überblick → Kompass-Nähe → zweite Stufe → wieder die ganze Stadt, jeweils an die getippte Stelle */
         const st = stufeVon(K.s);
         if (st === 2 || px == null) { if (st) kompass(); return; }
@@ -370,7 +377,7 @@
       const imFeld = (fn) => { const alt = { x: K.x, y: K.y, s: K.s }, g = feld(); K.x = g.x; K.y = g.y; K.s = g.s; try { return fn(); } finally { K.x = alt.x; K.y = alt.y; K.s = alt.s; } };
       O.feld = feld; O.imFeld = imFeld;
       O.kachelHin = (i, j) => {
-        if (O.wahlZu) O.wahlZu(); if (O.dingZu) O.dingZu();
+        if (O.wahlZu) O.wahlZu(); if (O.dingZu) O.dingZu(); if (O.fokusVergessen) O.fokusVergessen();   // FASSUNG 844
         const g = feld(), a = imFeld(() => ST.aufBoden((i + 0.5) / 3 * K.W, (j + 0.5) / 3 * K.H));
         L().fliegeZu(a[0], a[1], g.s * 3, 800);
         nahSetzen(true, true);
@@ -431,12 +438,22 @@
          (auf diesem Gerät) und der kleine Rahmen öffnet beim nächsten Mal genau dort; noch ein Tipp löst die Nadel. */
       const PIN_SCHLUESSEL = "lk-pin-ansicht";
       const pinLesen = () => { try { const v = JSON.parse(localStorage.getItem(PIN_SCHLUESSEL) || "null"); return v && isFinite(v.x) && isFinite(v.y) && isFinite(v.s) ? v : null; } catch (e) { return null; } };
+      /* FASSUNG 844 — XANDER (Walkie 313): „mit der pinnadel einen zoomausschnitt den ich mir selber gestalte oder wie ich es
+         mir selber drehe anpinnen dann will ich wieder aus dem Menü rausgehen und diese Ansicht soll sich gemerkt werden dass
+         man wenn man auf mein Dorf kommt immer mit dieser Ansicht präsentiert wird dafür soll die pinnadel sein für nichts
+         anderes". Die Nadel steht jetzt immer im kleinen Bild (nicht erst nah dran). Ein Tipp steckt die Ansicht fest, die
+         man gerade sieht (Lage, Nähe, Richtung); hat man sich danach anders hingestellt, steckt der nächste Tipp die NEUE
+         Ansicht fest – gelöst wird die Nadel nur, wenn man genau in der festgehaltenen Ansicht steht. Kommt man zurück ins
+         Dorf (der Rahmen war versteckt, O.wiederDa) oder aus dem Vollbild, steht wieder genau diese Ansicht. */
+      const pinGleich = (v) => !!v && Math.abs(v.x - K.x) < 0.5 && Math.abs(v.y - K.y) < 0.5 && Math.abs(v.s * K.dpr - K.s) < K.s * 0.03 && Math.abs(ST.drehMod((v.dreh || 0) - K.dreh)) < 0.01;
       const pinK = knopf("pin", "Ansicht festhalten", () => {
-        if (pinLesen()) { try { localStorage.removeItem(PIN_SCHLUESSEL); } catch (e) {} pinZeigen(); ansage("Ansicht wieder frei"); return; }
-        const v = { x: K.x, y: K.y, s: K.s / K.dpr, dreh: K.dreh };
+        const alt = pinLesen();
+        if (alt && pinGleich(alt)) { try { localStorage.removeItem(PIN_SCHLUESSEL); } catch (e) {} pinZeigen(); ansage("Nadel gelöst – das Dorf öffnet wieder ganz"); return; }
+        const v = { x: +K.x.toFixed(2), y: +K.y.toFixed(2), s: +(K.s / K.dpr).toFixed(3), dreh: ST.drehMod(Math.round(K.dreh * 2) / 2) };
         try { localStorage.setItem(PIN_SCHLUESSEL, JSON.stringify(v)); } catch (e) {}
-        pinZeigen(); ansage("Ansicht festgehalten");
+        pinZeigen(); ansage(alt ? "Neue Ansicht festgesteckt" : "Ansicht festgesteckt – so öffnet dein Dorf");
       }, "lk-nur-mini lk-pinknopf");
+      O.pinLesen = pinLesen;
       const pinZeigen = () => {
         const an = !!pinLesen();
         pinK.classList.toggle("lk-an", an);
@@ -449,16 +466,77 @@
         const v = pinLesen(); if (!v) return false;
         if (ST.drehen && ST.drehen.setzen && isFinite(v.dreh)) ST.drehen.setzen(v.dreh);
         K.x = v.x; K.y = v.y; K.s = Math.min(K.max, Math.max(K.min, v.s * K.dpr)); L().unruhe = 2;
-        nahSetzen(true, true);
+        nahSetzen(K.s > ueberblick() * 1.4 || K.dreh !== 0, true);
         return true;
       };
+      /* FASSUNG 844 — die Ansicht, mit der das Dorf sich zeigt: die festgesteckte, sonst die ganze Stadt. sanft = hinfliegen. */
+      O.zurStartAnsicht = (sanft) => {
+        if (O.wahlZu) O.wahlZu(); if (O.dingZu) O.dingZu();
+        const v = pinLesen();
+        if (v && !sanft) { O.pinAnwenden(); return; }
+        if (v) {
+          if (ST.drehen && ST.drehen.setzen && isFinite(v.dreh) && Math.abs(ST.drehMod(v.dreh - K.dreh)) > 0.01) ST.drehen.setzen(v.dreh);
+          const s2 = Math.min(K.max, Math.max(K.min, v.s * K.dpr));
+          L().fliegeZu(v.x, v.y, s2, 650); nahSetzen(s2 > ueberblick() * 1.4 || K.dreh !== 0, true); return;
+        }
+        if (K.dreh !== 0 && ST.drehen && ST.drehen.setzen) ST.drehen.setzen(0);
+        const g = ganzeStadt();
+        if (sanft) L().fliegeZu(g.x, g.y, g.s, 650); else { K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; }
+        nahSetzen(false, true);
+      };
       pinZeigen();
+      /* FASSUNG 844 — XANDER (Walkie 313): „dass bei bei einem gewählten Haus dass der Zoom direkt auf dieses Haus springt dass
+         man es näher sieht und wenn man die Aufgabe erledigt hat … dass es dann wieder auf das Gesamtbild der Stadt springt".
+         O.fokus(o): hinfliegen (Kompass-Nähe, das Ding in der Mitte, mit seiner halben Höhe), gemerkt in fokus. Zurück zur
+         Startansicht (festgesteckt oder ganze Stadt) geht es, sobald die Aufgabe erledigt ist: das Zeichen am Haus ändert
+         sich (eingesammelt, Arbeit läuft), ein Symbol der kleinen Auswahl wurde getippt, das Spiel meldet „leicht-zurueck",
+         oder man tippt daneben. */
+      let fokus = null, fokusUhr = 0;
+      O.fokus = (o) => {
+        if (!o || !document.body.classList.contains("lk-mini-modus") || O.gestalten) return;
+        clearTimeout(fokusUhr);
+        const g = ganzeStadt(), s = Math.max(K.s, g.s * STUFE[1]), h = (o.hoehe || 8) * (o.stufe || 1);
+        const alt = { x: K.x, y: K.y, s: K.s };
+        K.x = o.x; K.y = o.y; K.s = s;
+        const P = ST.proj(o.x, o.y, h * 0.45), mitte = ST.aufBoden(P[0], P[1] - 14 * K.dpr);   // (etwas Luft darüber für die kleine Auswahl)
+        K.x = alt.x; K.y = alt.y; K.s = alt.s;
+        const z = O.klemmZiel(mitte[0], mitte[1], s);
+        L().fliegeZu(z[0], z[1], s, 550);
+        nahSetzen(true, true);
+        fokus = { g: o.spiel || "", o: o, sig: JSON.stringify((O.zeichenJetzt || {})[o.spiel || ""] || null), t: performance.now() };
+      };
+      O.fokusDa = () => !!fokus;
+      O.fokusZurueck = (warte) => {
+        if (!fokus) return;
+        clearTimeout(fokusUhr);
+        fokusUhr = setTimeout(() => { if (!fokus || geist || O.gestalten) return; fokus = null; O.zurStartAnsicht(true); }, warte == null ? 900 : warte);
+      };
+      O.fokusVergessen = () => { fokus = null; clearTimeout(fokusUhr); };
+      /* das Zeichen am gewählten Haus hat sich geändert → die Aufgabe ist erledigt */
+      O.fokusZeichen = (z) => {
+        if (!fokus || !fokus.g || performance.now() - fokus.t < 250) return;
+        const sig = JSON.stringify((z || {})[fokus.g] || null);
+        if (sig === fokus.sig) return;
+        const alt = fokus.sig ? JSON.parse(fokus.sig) : null, neu = (z || {})[fokus.g] || null;
+        fokus.sig = sig;
+        /* nur die laufende Uhr hat weitergezählt: noch nicht erledigt */
+        if (alt && neu && alt[0] === neu[0] && alt[2] === neu[2] && alt[0] !== "fertig") return;
+        O.fokusZurueck(1100);
+      };
+      window.addEventListener("message", (ev) => { if (ev.origin === location.origin && ev.source === window.parent && ev.data && ev.data.typ === "leicht-zurueck") O.fokusZurueck(500); });
+      /* FASSUNG 844 — zurück ins Dorf (der Rahmen war versteckt, start.js): Menüs zu, die Startansicht */
+      O.wiederDa = () => {
+        if (geist || O.gestalten) return;
+        if (O.wahlZu) O.wahlZu();
+        auswahlWeg(); fokus = null; clearTimeout(fokusUhr);
+        O.zurStartAnsicht(false);
+      };
       setInterval(() => {
         if (!document.body.classList.contains("lk-mini-modus")) { LB.grossErlaubt = false; return; }
         nahSetzen(K.s > ueberblick() * 1.4);
         /* FASSUNG 826 — ändert sich der Überblick (ein großes Wahrzeichen kommt dazu oder fällt weg), passt das stehende
            Bild sich an, statt im alten Maßstab zu bleiben */
-        if (!document.body.classList.contains("lk-nah") && !geist && !O.gestalten && K.W > 0 && K.H > 0) {
+        if (!document.body.classList.contains("lk-nah") && !geist && !O.gestalten && K.W > 0 && K.H > 0 && !pinLesen()) {
           const g = ganzeStadt();
           const alt = O._gAlt; O._gAlt = g;
           if (alt && alt !== g && isFinite(g.s) && g.s > 0 && isFinite(g.x) && isFinite(g.y) && Math.abs(alt.s - g.s) > g.s * 0.02 && Math.abs(K.s - alt.s) < alt.s * 0.02) { K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; miniMalen(); }
@@ -518,6 +596,8 @@
       window.addEventListener("message", (ev) => {
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-kopf") return;
         O.kopfName = String(ev.data.name || "").slice(0, 40); uhrStellen();
+        /* FASSUNG 844 — für das Ladebild beim nächsten Öffnen */
+        if (O.kopfName) { try { localStorage.setItem("leicht_stadtname", O.kopfName); } catch (e) {} const ln = document.getElementById("lLadeName"); if (ln) ln.textContent = O.kopfName; }
         /* FASSUNG 807 — „Symbole aus" und „Namen aus" wie im alten Dorf: ohne Symbole nur „fertig", ohne Namen keine Schilder */
         document.body.classList.toggle("lk-ohne-symbole", ev.data.symbole === false);
         document.body.classList.toggle("lk-ohne-namen", ev.data.namen === false);
@@ -590,7 +670,7 @@
       const erstesMal = q.get("mini") === "1";
       modus(erstesMal);
       if (erstesMal && !(O.pinAnwenden && O.pinAnwenden())) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; O._gAlt = g; L().unruhe = 2; }
-      window.addEventListener("resize", () => { if (document.body.classList.contains("lk-mini-modus") && !document.body.classList.contains("lk-nah")) setTimeout(() => { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; L().unruhe = 2; miniMalen(); }, 50); });
+      window.addEventListener("resize", () => { if (document.body.classList.contains("lk-mini-modus") && !document.body.classList.contains("lk-nah")) setTimeout(() => { if (!(O.pinAnwenden && O.pinAnwenden())) { const g = ganzeStadt(); K.x = g.x; K.y = g.y; K.s = g.s; } L().unruhe = 2; miniMalen(); }, 50); });
       window.addEventListener("message", (ev) => {
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-modus") return;
         modus(!ev.data.voll); L().unruhe = 2;
@@ -651,7 +731,8 @@
         return waldMitte;
       };
       /* FASSUNG 828 — die Äcker bekommen ihr Zeichen wie im alten Bild („Getreide reif" / „Getreide 2:30") */
-      const feldOrt = (nr) => () => { const f = (D.FELD_ORTE || []).find((q) => q.nr === nr) || { x: 0, y: 0 }; return { x: f.x, y: f.y, h: 1.5 }; };
+      /* FASSUNG 844 — beim großen Acker am hinteren Rand (im Bild oben): so bleibt das Zeichen auch im kleinen Rahmen im Bild */
+      const feldOrt = (nr) => () => { const f = (D.FELD_ORTE || []).find((q) => q.nr === nr) || { x: 0, y: 0 }; if (f.u0 != null) { const u = (f.u0 + f.u1) / 2, v = f.v0 + 4; return { x: (u + v) / 2, y: (v - u) / 2, h: 1.5 }; } return { x: f.x, y: f.y, h: 1.5 }; };
       const ORTE = {
         see: () => { const v = D.SEE_VERSATZ || [0, 0]; return { x: 66 + v[0], y: 56 + v[1] - 3, h: 2 }; },
         wald: wald,
@@ -727,6 +808,7 @@
         if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.typ !== "leicht-zeichen") return;
         zeichen = ev.data.z || {};
         O.zeichenJetzt = zeichen;   // FASSUNG 825 — für das Einsammel-„Pling" beim Tipp aufs Haus im kleinen Rahmen
+        if (O.fokusZeichen) O.fokusZeichen(zeichen);   // FASSUNG 844 — Aufgabe erledigt? dann zurück zur ganzen Stadt
         /* FASSUNG 828 — die Fischer arbeiten („läuft" am See, nicht „Ruhe"): Angler am Ufer */
         O.anglerSetzen(!!(zeichen.see && zeichen.see[0] === "laeuft" && !/^Ruhe/.test(zeichen.see[1] || "")));
         const da = {};
@@ -764,18 +846,25 @@
         /* FASSUNG 833 — auch im Vollbild („in der großen Ansicht … Aufgaben lösen") */
         if (typeof ev.data.g !== "string" || !Array.isArray(ev.data.wahl)) return;
         const g = ev.data.g, haus = SZ.objekte.find((o) => o.art === "haus" && o.spiel === g);
+        /* FASSUNG 844 — die Symbole kommen als Antwort auf den Tipp aufs Haus (fokus: 1, spiel.js lsKleineWahl): jetzt zum Haus
+           fliegen. (Die Auswahl, die ein älteres Spiel bei „Ein Tipp produziert" schickt, lässt die Stadt stehen.) */
+        const fw = O._fokusWunsch; O._fokusWunsch = null;
+        if (ev.data.fokus && fw && fw.g === g && haus && performance.now() - fw.t < 6000 && O.fokus && document.body.classList.contains("lk-mini-modus")) { SZ.auswahl = haus; O.fokus(haus); }
         /* FASSUNG 822 — die Auswahl des Spiels (Brot, Kuchen …) sitzt am Haus: das kleine Menü der Stadt weicht ihr */
         if (!O.gestalten && !geist && karte && !karte.hidden && karte.classList.contains("lk-am-ding")) auswahlWeg();
         wahlG = g; wahlEl = el("div", "lk-wahl");
         wahlEl.setAttribute("role", "group"); wahlEl.setAttribute("aria-label", (haus ? haus.name : "Haus") + ": was herstellen?");
         for (const w of ev.data.wahl.slice(0, 5)) {
           const n = Math.max(0, Math.floor(+w.n || 0)), name = String(w.name || w.w || "").slice(0, 24);
-          const b = el("button", "lk-wahl-knopf", (WARE_BILD[w.w] || WARE_BILD.korb) + "<span>×" + n + "</span>");
+          /* FASSUNG 844 — das Spiel kann ein eigenes Bild (w.bild) und einen Text (w.text, z. B. „Bergleute") schicken */
+          const b = el("button", "lk-wahl-knopf", (WARE_BILD[w.bild] || WARE_BILD[w.w] || WARE_BILD.korb) + "<span>" + (w.text ? String(w.text).slice(0, 14).replace(/[<>&]/g, "") : "×" + n) + "</span>");
           b.type = "button"; b.dataset.w = String(w.w || ""); b.disabled = !n;
           b.title = n ? name + " herstellen (" + n + ")" : name + " – es fehlen Zutaten"; b.setAttribute("aria-label", b.title);
-          b.addEventListener("click", (e) => { e.stopPropagation(); O.wahlZu(); nachOben({ typ: "leicht-machen", g: g, w: b.dataset.w }); });
+          b.addEventListener("click", (e) => { e.stopPropagation(); O.wahlZu(); nachOben({ typ: "leicht-machen", g: g, w: b.dataset.w }); if (O.fokusZurueck) O.fokusZurueck(1000); });
           wahlEl.appendChild(b);
         }
+        /* FASSUNG 844 — nichts zu tun (läuft schon, fehlt etwas): der kurze Grund vom Spiel steht in der Auswahl */
+        if (ev.data.info) { const i = el("span", "lk-wahl-info"); i.textContent = String(ev.data.info).slice(0, 60); wahlEl.appendChild(i); }
         const k = el("button", "lk-wahl-knopf lk-wahl-karte", '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 7h11M9 12h11M9 17h11"/></g><g fill="currentColor"><circle cx="4.5" cy="7" r="1.5"/><circle cx="4.5" cy="12" r="1.5"/><circle cx="4.5" cy="17" r="1.5"/></g></svg>');
         k.type = "button"; k.title = "Karte öffnen"; k.setAttribute("aria-label", "Karte des Hauses öffnen");
         k.addEventListener("click", (e) => { e.stopPropagation(); O.wahlZu(); nachOben({ typ: "leicht-haus", g: g, karte: 1 }); });
@@ -793,7 +882,7 @@
         /* frei von Kompass, Uhr, Ortsschild (oben), Vollbild (unten links), Drehknopf und kleiner Karte (nah) – und von
            den Schildern der anderen Häuser: erst über dem Haus, sonst darunter, sonst daneben */
         const weg = [];
-        for (const s of [".lk-lupe", ".lk-uhr", ".lk-ortsschild", ".lk-wetter", ".lk-vollknopf", ".lk-drehschieber", ".lk-mini-rahmen"]) { const e = wurzel.querySelector(s); if (e && getComputedStyle(e).display !== "none" && !e.hidden) weg.push(e.getBoundingClientRect()); }
+        for (const s of [".lk-lupe", ".lk-uhr", ".lk-ortsschild", ".lk-wetter", ".lk-vollknopf", ".lk-drehschieber", ".lk-mini-rahmen", ".lk-pinknopf"]) { const e = wurzel.querySelector(s); if (e && getComputedStyle(e).display !== "none" && !e.hidden) weg.push(e.getBoundingClientRect()); }
         for (const z of zeichenEbene.children) if (z.dataset.g !== wahlG && z.style.display !== "none" && getComputedStyle(z).display !== "none") weg.push(z.getBoundingClientRect());
         const setzen = (lx, ly) => [Math.max(nah ? 36 : 4, Math.min(W - bw - 4, lx)), Math.max(34, Math.min(H - bh - (nah ? 56 : 42), ly))];
         const frei = (q) => !weg.some((r) => r.width > 0 && Math.min(r.right, q[0] + bw) - Math.max(r.left, q[0]) > 0.5 && Math.min(r.bottom, q[1] + bh) - Math.max(r.top, q[1]) > 0.5);
@@ -851,7 +940,7 @@
         const sicht = liste.filter((q) => q.w > 0).sort((a, c) => a.x - c.x);
         const deckt = (a, c) => (a.w + c.w) / 2 - Math.abs(c.x - a.x) > 0 && Math.min(a.y, c.y) - Math.max(a.y - a.h, c.y - c.h) > 0;
         /* auch nicht unter den Knöpfen im Bild (Kompass oben links, Vollbild unten links): rechts daneben */
-        for (const k of [lupeK, vollK]) {
+        for (const k of [lupeK, vollK, pinK]) {
           if (!k || !k.isConnected || getComputedStyle(k).display === "none") continue;
           const r = k.getBoundingClientRect(), kk = { x: (r.left + r.right) / 2, y: r.bottom, w: r.width + 4, h: r.height + 4 };
           for (const q of sicht) if (deckt(kk, q)) q.x = r.right + 3 + q.w / 2;
@@ -874,7 +963,12 @@
     }
     miniMalen();
   };
-  function stadtName() { const ich = L().ich || {}; return ich.dorf_name || "Meine Stadt"; }
+  function stadtName() {
+    const ich = L().ich || {};
+    /* FASSUNG 844 — der Name der eigenen Stadt wird fürs Ladebild gemerkt (nicht der der Beispielstadt) */
+    if (ich.dorf_name && ST.spiel && !ST.spiel.beispiel) { try { if (localStorage.getItem("leicht_stadtname") !== ich.dorf_name) localStorage.setItem("leicht_stadtname", ich.dorf_name); } catch (e) {} }
+    return ich.dorf_name || "Meine Stadt";
+  }
   function nameSetzen() {
     const SP = ST.spiel, n = kopf.querySelector(".lk-name");
     n.innerHTML = "<b></b><span></span>";
@@ -1166,7 +1260,36 @@
     if (!o) return;
     o._zurueck = { x: o.x, y: o.y, dreh: o.dreh };
     o.geist = true; geist = o;
+    if (O.fokusVergessen) O.fokusVergessen();
     karteZeigen("setzen", geist); SZ.geaendert(); L().unruhe = 2;
+    grossHeraus(o);   // FASSUNG 844
+  }
+  /* FASSUNG 844 — große Dinge setzen: prüfen, ob die Stelle frei ist (dorf.js D.freiFuerWunder), und frei suchen */
+  function grossDing(o) { return !!o && (o.art === "wunder" || (o.fuss && Math.max(o.fuss[0], o.fuss[1]) * (o.art === "wunder" ? 1 : (o.stufe || 1)) > 16)); }
+  function fussVon(o) { const f = o.fuss || [2, 2], m = o.art === "wunder" ? 1 : (o.stufe || 1); return [f[0] * m, f[1] * m]; }
+  function andereGrosse(o) { return SZ.objekte.filter((x) => x !== o && !x.geist && (x.art === "wunder" || (x.art === "eigen" && grossDing(x)))).map((x) => ({ x: x.x, y: x.y, fussS: fussVon(x), dreh: x.dreh })); }
+  let pruefZeit = 0;
+  function platzPruefen(o, sofort) {
+    if (!o || !D.freiFuerWunder) return;
+    const jetzt = performance.now(); if (!sofort && jetzt - pruefZeit < 120) return; pruefZeit = jetzt;
+    const q = D.freiFuerWunder({ fussS: fussVon(o), pruefDreh: o.dreh }, o.x, o.y, andereGrosse(o), true);
+    o._frei = !!q && Math.abs(q[0] - o.x) < 0.06 && Math.abs(q[1] - o.y) < 0.06;
+  }
+  function freiSuchen(o) {
+    if (!o || !D.freiFuerWunder) return;
+    const q = D.freiFuerWunder({ fussS: fussVon(o), pruefDreh: o.dreh }, o.x, o.y, andereGrosse(o));
+    if (!q) return;
+    const frei = Math.abs(q[0] - o.x) < 0.06 && Math.abs(q[1] - o.y) < 0.06;
+    o.x = q[0]; o.y = q[1]; imBauraum(o); platzPruefen(o, true); SZ.geaendert(); L().unruhe = 2;
+    const P = ST.proj(o.x, o.y, 0);
+    if (P[0] < 0 || P[1] < 0 || P[0] > K.W || P[1] > K.H) { const z = O.klemmZiel ? O.klemmZiel(o.x, o.y, K.s) : [o.x, o.y]; L().fliegeZu(z[0], z[1], K.s, 500); }
+    ansage(o._frei ? (frei ? "Hier ist schon Platz" : "Freien Platz gefunden") : "Kein ganz freier Platz in der Nähe");
+  }
+  /* große Dinge beim Versetzen: weit genug heraus, dass sie samt Umgebung ins Bild passen */
+  function grossHeraus(o) {
+    if (!grossDing(o)) return;
+    const f = fussVon(o), d = Math.hypot(f[0], f[1]), sZiel = Math.max(K.min, Math.min(K.s, 0.42 * K.W / Math.max(1, d)));
+    if (sZiel < K.s * 0.97) { const z = O.klemmZiel ? O.klemmZiel(o.x, o.y, sZiel) : [o.x, o.y]; L().fliegeZu(z[0], z[1], sZiel, 600); }
   }
   function geistFertig(ok) {
     if (!geist) return;
@@ -1179,7 +1302,7 @@
     if (ok) { geist.geist = false; delete geist.autoParken; L().dekoSpeichern(); ansage(parkt ? "Abgestellt" : "Gesetzt"); }
     else if (geist._zurueck) { Object.assign(geist, geist._zurueck); geist.geist = false; delete geist._zurueck; }
     else SZ.weg(geist);
-    if (geist) delete geist._zurueck;
+    if (geist) { delete geist._zurueck; delete geist._frei; }
     if (neuBauen) L().aufbauenSpaeter = true;
     geist = null; karte.hidden = true; SZ.geaendert(); miniMalen(); L().unruhe = 2;
     if (L().aufbauenSpaeter) L().aufbauen();
@@ -1218,14 +1341,26 @@
   }
   O.gehoben = () => gehoben;
   O.zeigerRunter = function (p) {
-    geistZiehen = false;
+    geistZiehen = false; O._langStart = { x: p.x, y: p.y };
     /* FASSUNG 812 — ein fahrendes Auto zählt schon beim Aufsetzen des Fingers: sonst ist es (die Kamera folgt ihm nicht
        mehr) beim Loslassen schon ein Stück weitergefahren, und der Tipp „auf das Batmobil" ginge ins Leere */
     autoUnterFinger = ST.autos && !document.body.classList.contains("lk-mini-modus") ? ST.autos.treffer(p.x, p.y) || null : null;
     if (autoUnterFinger && ST.autoschau && ST.autoschau.vorladen) ST.autoschau.vorladen().catch(() => {});
     if (ST.autos) ST.autos.folge = null;   // FASSUNG 815 — wer selbst schiebt, folgt dem Auto nicht mehr
     /* FASSUNG 822 — ein zweiter Finger (Zoomen) bricht das Halten ab */
+    /* FASSUNG 844 — ein zweiter Finger (Kneifen, Drehen) ist nie ein langes Drücken */
+    O._lang = false; const zweiter = !!langUhr || (O._finger || 0) > 0; clearTimeout(langUhr); langUhr = 0; O._finger = (O._finger || 0) + 1;
     if (halten) { haltenAbbrechen(); return; }
+    /* FASSUNG 844 — XANDER (Walkie 313): „wenn ich lange auf ein Haus gedrückt halte soll das Bearbeiten Menü kommen".
+       Finger 0,5 s ruhig auf einem Haus, Wahrzeichen, Schmuck, Bahnhof/Bootsverleih oder Baum (nicht im Umland): kurzes
+       Summen, das kleine Bearbeiten-Menü am Ding (Karte, Drehen, Versetzen, Ein Tipp produziert …) – überall, auch im
+       Überblick des kleinen Rahmens (dort fliegt die Stadt dafür näher heran). Ist das Menü des Dings schon offen, hebt
+       langes Halten es an wie bisher (Fassung 822). Der Finger danach ist kein Tipp. */
+    const offen0 = karte && !karte.hidden && karte._ding;
+    if (!geist && !zweiter) {
+      const lo = SZ.treffer(p.x, p.y, (x) => x.art === "haus" || x.art === "wunder" || x.art === "eigen" || (x.art === "kulisse" && !!x.name) || (x.art === "natur" && istBaum(x) && !x.umland && !x.hinten));
+      if (lo && !(offen0 === lo && haltenErlaubt())) langUhr = setTimeout(() => { langUhr = 0; if (geist || SZ.objekte.indexOf(lo) < 0) return; langMenue(lo); }, O.langMs || 500);
+    }
     if (!geist && haltenErlaubt()) {
       /* nur das gewählte Ding („wenn es jetzt angeklickt ist … und ich würde das jetzt halten“) – wer über ein anderes Haus
          wischt, schiebt wie immer die Karte */
@@ -1249,16 +1384,37 @@
       if (t || Math.hypot(p.x - G[0], p.y - G[1]) < 50 * K.dpr) geistZiehen = true;
     }
   };
+  let langUhr = 0;
+  function langMenue(o) {
+    try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
+    O._lang = true;
+    clearTimeout(O._tippUhr); O._tipp = null;
+    if (O.wahlZu) O.wahlZu();
+    if (leiste && !leiste.hidden) leisteZeigen(false);
+    if (bauLeiste) bauLeisteZeigen(false);
+    const imRahmen = document.body.classList.contains("lk-mini-modus") && window.parent !== window;
+    if (imRahmen && !document.body.classList.contains("lk-nah") && O.fokus) { O.fokus(o); if (O.fokusVergessen) O.fokusVergessen(); }
+    SZ.auswahl = o; karteZeigen("haus", o, null, { still: true, bearbeiten: true }); L().unruhe = 2;
+    /* das Menü kann unter dem Finger aufgehen: bis der Finger oben ist (und kurz danach), nimmt es keinen Tipp an – sonst
+       schaltete das Loslassen gleich den Knopf darunter (etwa den Blitz) */
+    karte.classList.add("lk-sperre"); O._langSperre = true;
+    ansage("Bearbeiten: " + (o.name || (o.art === "natur" ? baumName(o) : (SCHMUCK.find((x) => x[1] === o.bild) || ["Schmuck"])[0])));
+  }
+  O.langMenue = langMenue;
   O.zeigerZiehen = function (neu, alt) {
+    /* FASSUNG 844 — wer schiebt oder scrollt, will kein Menü */
+    if (langUhr && (O._langStart ? Math.hypot(neu.x - O._langStart.x, neu.y - O._langStart.y) > 8 * K.dpr : true)) { clearTimeout(langUhr); langUhr = 0; }
     /* FASSUNG 822 — wer schiebt, hält nicht: mehr als 6 px vom Aufsetzpunkt, oder der Finger ist gerade in Bewegung */
     if (halten) { const w = Math.hypot(neu.x - halten.x, neu.y - halten.y); if (w > 6 * K.dpr) haltenAbbrechen(); else if (w > 2.5 * K.dpr) halten.zuletzt = performance.now(); }
     if (!geist || !geistZiehen) return false;
     const a = ST.aufBoden(neu.x, neu.y), b = ST.aufBoden(alt.x, alt.y);
     geist.x += a[0] - b[0]; geist.y += a[1] - b[1]; imBauraum(geist); SZ.geaendert();
+    if (grossDing(geist)) platzPruefen(geist);   // FASSUNG 844 — grün/rot
     return true;
   };
   O.zeigerHoch = function () {
-    geistZiehen = false;
+    geistZiehen = false; clearTimeout(langUhr); langUhr = 0; O._finger = Math.max(0, (O._finger || 0) - 1);
+    if (O._langSperre) { O._langSperre = false; setTimeout(() => { if (karte) karte.classList.remove("lk-sperre"); }, 400); }
     haltenAbbrechen();
     /* FASSUNG 822 — losgelassen: das angehobene Ding steht, ist gespeichert, sein Menü sitzt daneben */
     if (gehoben) {
@@ -1285,12 +1441,13 @@
   };
   O.tippen = function (px, py) {
     if (gehoben) return;   // FASSUNG 822 — das Loslassen nach dem Halten ist kein Tipp
+    if (O._lang) { O._lang = false; return; }   // FASSUNG 844 — ebenso nach dem langen Drücken (Bearbeiten-Menü)
     farbFeld.hidden = true;
     /* FASSUNG 817 — im kleinen Rahmen des Spiels wartet ein Tipp einen Augenblick (0,36 s), ob ein zweiter folgt: der
        Doppeltipp zoomt nur („stärker reinkommen"), ohne dass der erste Tipp schon ein Haus bedient oder eine Aufgabe
        startet („beim einfachen klicken auf ein Haus … schon die Aufgabe anstellt"). */
     if (window.parent !== window && document.body.classList.contains("lk-mini-modus") && !geist) {
-      if (O.wahlZu && O.wahlZu()) { O._tipp = null; return; }
+      if (O.wahlZu && O.wahlZu()) { O._tipp = null; if (O.fokusDa && O.fokusDa()) O.fokusZurueck(0); return; }
       const jetzt = performance.now();
       clearTimeout(O._tippUhr);
       if (O._tipp && jetzt - O._tipp.t < 360 && Math.hypot(O._tipp.x - px, O._tipp.y - py) < 40 * K.dpr) {
@@ -1307,7 +1464,7 @@
     einzelTippen(px, py);
   };
   function einzelTippen(px, py) {
-    if (geist) { const a = ST.aufBoden(px, py); geist.x = a[0]; geist.y = a[1]; imBauraum(geist); SZ.geaendert(); L().unruhe = 2; return; }
+    if (geist) { const a = ST.aufBoden(px, py); geist.x = a[0]; geist.y = a[1]; imBauraum(geist); if (grossDing(geist)) platzPruefen(geist, true); SZ.geaendert(); L().unruhe = 2; return; }
     if (leiste && !leiste.hidden) { leisteZeigen(false); return; }
     if (bauLeiste) { bauLeisteZeigen(false); return; }
     /* FASSUNG 815 — Tipp auf ein fahrendes Auto: seine Karte (im großen Bild) */
@@ -1385,7 +1542,11 @@
   }
   function feldBei(x, y) {
     let best = null, bd = 1e9;
-    for (const f of D.FELD_ORTE || []) { const d = Math.hypot(f.x - x, f.y - y) - f.r; if (d < bd) { bd = d; best = f; } }
+    for (const f of D.FELD_ORTE || []) {
+      /* FASSUNG 844 — rechteckige Äcker: drinnen ist drinnen */
+      if (f.u0 != null) { const u = x - y, v = x + y; if (u >= f.u0 && u <= f.u1 && v >= f.v0 && v <= f.v1) return f; }
+      const d = Math.hypot(f.x - x, f.y - y) - f.r; if (d < bd) { bd = d; best = f; }
+    }
     return best && bd < 6 ? best : null;
   }
   /* Angler am Ufer: wenn die Fischer des Spiels arbeiten (Zeichen „läuft" am See) und ein paar Sekunden nach dem eigenen Wurf */
@@ -1468,6 +1629,51 @@
     });
     if (wurf < 1.6) L().unruhe = 2;
   });
+  /* FASSUNG 844 — XANDER (Walkie 313): „ich möchte sichtbare Getreidefelder". Auf die Äcker (dorf.js D.FELD_ORTE, große
+     Rechtecke in den Bildachsen) kommt flach auf den Boden ein Kornfeld: Reihen von Halmen, gelb-golden wenn das Spiel
+     „fertig" meldet (reif), sonst grün mit gelbem Schimmer (wächst), im Winter Stoppeln mit Schnee. Nachts dunkler wie der
+     Boden. Nah dran stehen einzelne Ähren in den Reihen. */
+  SZ.bodenMaler.push(function (g, t, Z) {
+    const felder = D.FELD_ORTE || []; if (!felder.length) return;
+    const vw = (u, v) => [(u + v) / 2, (v - u) / 2], z = O.zeichenJetzt || {}, winter = SZ.jahr === "winter";
+    const dunkel = Math.min(0.78, (Z && Z.nacht || 0) * 0.8);
+    const farbe = (c, a) => "rgba(" + c.map((x, i) => Math.round(x * (1 - dunkel) + [16, 22, 44][i] * dunkel)).join(",") + "," + (a == null ? 1 : a) + ")";
+    for (const f of felder) {
+      if (f.u0 == null) continue;
+      const E = [[f.u0, f.v0], [f.u1, f.v0], [f.u1, f.v1], [f.u0, f.v1]].map(([u, v]) => { const q = vw(u, v); return ST.proj(q[0], q[1], 0); });
+      let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const p of E) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
+      if (x1 < 0 || y1 < 0 || x0 > K.W || y0 > K.H) continue;
+      const zz = z["feld" + f.nr], reif = !!zz && zz[0] === "fertig";
+      const grund = winter ? [226, 230, 236] : reif ? [214, 170, 62] : [150, 176, 70], hell = winter ? [245, 247, 250] : reif ? [240, 204, 96] : [186, 200, 92], furche = winter ? [150, 130, 104] : reif ? [168, 118, 38] : [96, 128, 50];
+      g.save();
+      g.beginPath(); E.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath();
+      const gr = g.createLinearGradient(x0, y0, x1, y1);
+      gr.addColorStop(0, farbe(hell)); gr.addColorStop(1, farbe(grund));
+      g.fillStyle = gr; g.fill();
+      g.clip();
+      /* Reihen quer zum Bild (entlang u), Abstand 1,4 m */
+      g.lineWidth = Math.max(1, 0.35 * K.s); g.strokeStyle = farbe(furche, 0.55);
+      g.beginPath();
+      for (let v = f.v0 + 0.7; v < f.v1; v += 1.4) { const a = vw(f.u0, v), b = vw(f.u1, v), A = ST.proj(a[0], a[1], 0), Bp = ST.proj(b[0], b[1], 0); g.moveTo(A[0], A[1]); g.lineTo(Bp[0], Bp[1]); }
+      g.stroke();
+      /* nah dran: Ähren (kurze Striche nach oben) in den Reihen */
+      if (K.s > 5 * K.dpr && !winter) {
+        const hoch = (reif ? 1.0 : 0.7) * ST.KZ * K.s;
+        g.strokeStyle = farbe(reif ? [250, 214, 110] : [200, 214, 110], 0.9); g.lineWidth = Math.max(1, 0.12 * K.s);
+        g.beginPath();
+        for (let v = f.v0 + 0.7; v < f.v1; v += 1.4) for (let u = f.u0 + 0.5; u < f.u1; u += 0.9) {
+          const q = vw(u + (ST.hash2(u * 10, v * 10, 44) - 0.5) * 0.5, v), P = ST.proj(q[0], q[1], 0);
+          if (P[0] < -4 || P[1] < -4 || P[0] > K.W + 4 || P[1] > K.H + 8) continue;
+          const w = Math.sin(t * 1.3 + u * 0.4) * 0.12 * K.s;
+          g.moveTo(P[0], P[1]); g.lineTo(P[0] + w, P[1] - hoch);
+        }
+        g.stroke();
+      }
+      g.restore();
+      g.save(); g.strokeStyle = farbe([110, 84, 46], 0.7); g.lineWidth = Math.max(1, 0.25 * K.s);
+      g.beginPath(); E.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.stroke(); g.restore();
+    }
+  });
   const rascheln = [];
   function baumRascheln(o) {
     const t0 = performance.now(), jahr = SZ.jahr, h = (o.hoehe || 10) * (o.stufe || 1);
@@ -1507,6 +1713,7 @@
     if (!o) return;
     const schritt = SZ.achtWinkel(o.bild) ? 0.5 : 1;
     o.dreh = SZ.drehNorm((o.dreh || 0) + r * schritt);
+    if (o === geist && grossDing(o)) platzPruefen(o, true);   // FASSUNG 844
     SZ.geaendert(); miniMalen(); L().unruhe = 2;
     if (merken) L().dekoSpeichern();
     ansage("Gedreht: " + Math.round(o.dreh * 90) + "°");
@@ -1626,13 +1833,30 @@
       /* FASSUNG 817 — ein leerer Bauplatz meldet das Haus, das (nach dem Umbauen im Spiel) dorthin gehört */
       const g = art === "haus" ? o && o.spiel : (wasGehoertHin(platz) || platz);
       /* FASSUNG 825 — ist dort etwas fertig, sammelt der Tipp es ein: dasselbe „Pling" wie am Zeichen */
-      try { const z = g && O.zeichenJetzt && O.zeichenJetzt[g]; if (z && z[0] === "fertig" && ST.ton && ST.ton.einsammeln) ST.ton.einsammeln(z[2] || ""); } catch (e) {}
-      if (g && !opt.still) { try { window.parent.postMessage({ typ: "leicht-haus", g: g }, location.origin); } catch (e) {} }
+      const zj = g && O.zeichenJetzt && O.zeichenJetzt[g], fertig = !!zj && zj[0] === "fertig";
+      if (!opt.bearbeiten) { try { if (fertig && ST.ton && ST.ton.einsammeln) ST.ton.einsammeln(zj[2] || ""); } catch (e) {} }
+      /* FASSUNG 844 — XANDER (Walkie 313): „du wolltest eigentlich kleine links machen kleine Symbole am Haus … dass ich am
+         Haus direkt auswählen kann … jetzt kriege ich trotzdem wieder das große Menü und dann springt manchmal die Seite hoch
+         durch das große Menü". Der Tipp fragt das Spiel mit „klein: 1" nach den kleinen Symbolen am Haus (leicht-wahl:
+         Brot, Kuchen, Bergleute … und „Karte" für das große Menü nur auf Wunsch); das Spiel öffnet dann nicht mehr die Station
+         unter dem Bild (ältere Spielstände tun es noch). Dazu fliegt die Stadt zum Haus („dass der Zoom direkt auf dieses
+         Haus springt") – nicht, wenn nur eingesammelt wird. Langes Halten öffnet stattdessen das Bearbeiten-Menü. */
+      if (g && !opt.still && !opt.bearbeiten) { try { window.parent.postMessage({ typ: "leicht-haus", g: g, klein: 1 }, location.origin); } catch (e) {} }
+      /* hingeflogen wird, sobald das Spiel die kleinen Symbole schickt (leicht-wahl): ein älteres Spiel, das stattdessen die
+         Station unter dem Bild öffnet, lässt die Stadt stehen, wie sie ist */
+      if (art === "haus" && o && !opt.still && !opt.bearbeiten && !fertig && g !== "bahnhof") O._fokusWunsch = { g: g, o: o, t: performance.now() };
+      if (art === "haus" && o && !opt.bearbeiten && o.art === "haus") return;
       /* FASSUNG 822 — XANDER: „ich möchte im kleinen Menü einen Baum rausnehmen und bin jetzt ein gezoomt … Ich hab jetzt
          kein Menü". Nah dran (Kompass) bekommen Haus, Baum und Schmuck ihr kleines Menü am Ding – der Tipp aufs Haus
          bedient wie bisher das Spiel darunter (Einsammeln, Station), das Menü bietet dazu Karte, Drehen, Versetzen. */
       /* FASSUNG 833 — nah dran auch Wahrzeichen und Bootsverleih (dort steht „Verwalten") */
-      if (!(art === "haus" && o && document.body.classList.contains("lk-nah") && (o.art === "haus" || o.art === "eigen" || o.art === "natur" || (ST.verwalten && ST.verwalten.schluessel(o))))) return;
+      /* FASSUNG 844 — Walkie 313: „viele Sachen sind gar nicht anwählbar". Im alten Dorf öffnete ein Tipp auf ein Wahrzeichen
+         dessen Tafel; im Überblick der neuen Stadt geschah dort nichts (auch am Bootsverleih und am eigenen Schmuck). Jetzt
+         bekommen Wahrzeichen, Bootsverleih und Schmuck auch im Überblick ihr kleines Menü (Verwalten, Info, Drehen …), und die
+         Stadt fliegt zu ihnen. Langes Halten (opt.bearbeiten) öffnet das Menü für jedes Ding. */
+      const vwK = art === "haus" && o && ST.verwalten && ST.verwalten.schluessel(o);
+      if (art === "haus" && o && !opt.bearbeiten && !opt.still && (o.art === "wunder" || o.art === "eigen" || vwK) && !document.body.classList.contains("lk-nah") && O.fokus) O.fokus(o);
+      if (!(art === "haus" && o && (opt.bearbeiten || o.art === "wunder" || o.art === "eigen" || vwK || (document.body.classList.contains("lk-nah") && o.art === "natur")))) return;
     }
     /* FASSUNG 823 — XANDER: „wenn ich auf eins klicke, dann muss ich noch mal auf dem Bahnhof …". Auch im Vollbild öffnet ein
        Tipp auf den Bahnhof das eine Bahnhof-Fenster des Spiels (Export, Import, Touristen) statt „Gehört zum Dorf". */
@@ -1647,10 +1871,22 @@
     karte.append(titel, zeile, knoepfe);
     const zu = knopf("kreuz", "Schließen", () => { if (geist) geistFertig(false); auswahlWeg(); karte.hidden = true; }, "lk-klein");
     if (art === "setzen") {
-      titel.textContent = o && o.art === "haus" ? o.name + " versetzen" : "Schmuck setzen";
+      titel.textContent = o && (o.art === "haus" || o.art === "wunder") ? o.name + " versetzen" : "Schmuck setzen";
       zeile.textContent = "Mit dem Finger verschieben oder auf die Wiese tippen.";
       knoepfe.append(knopf("links", "Drehen", () => objDrehen(geist, 1)), knopf("rechts", "Andersherum drehen", () => objDrehen(geist, -1)),
         knopf("haken", "Setzen", () => geistFertig(true), "lk-gut"), knopf("kreuz", "Abbrechen", () => geistFertig(false)));
+      /* FASSUNG 844 — XANDER (Walkie 313): „ich möchte den Kölner Dom irgendwie besser setzen können und ich habe kaum Platz
+         weil er so riesig ist". Große Dinge (Wahrzeichen, großer Schmuck): der Rahmen zeigt grün (passt) oder rot (stößt an
+         ein Haus, ein Wahrzeichen, Wasser, Acker oder die Bahn), und „Freier Platz" schiebt es an die nächste Stelle, an der
+         es ganz frei steht. Die Größe bleibt, wie sie ist. */
+      if (o && grossDing(o)) {
+        zeile.textContent = "Ziehen oder auf die Wiese tippen · grün = passt, rot = stößt an";
+        const fp = el("button", "lk-text-knopf lk-freiplatz", SYM.versetzen + "<span>Freier Platz</span>"); fp.type = "button";
+        fp.title = "An die nächste Stelle schieben, an der es ganz frei steht";
+        fp.addEventListener("click", (e) => { e.stopPropagation(); freiSuchen(geist); });
+        knoepfe.insertBefore(fp, knoepfe.firstChild);
+        platzPruefen(o, true);
+      }
       return;
     }
     if (art === "bauplatz") {
@@ -1693,19 +1929,28 @@
       /* FASSUNG 822 — XANDER: „durch den Tipp in den Einstellungen so festlegen kann, sobald ich eins antippe und es hat Arbeit
          frei dann fängt es sofort an weiter zu produzieren". Die Einstellung des Spiels („Ein Tipp produziert", Fassung 817)
          auch hier am Haus: ein Tipp schaltet sie (das Spiel merkt sie, dma_ls_direkt) – an = Blitz gelb. */
+      /* FASSUNG 844 — XANDER (Walkie 313): „ich weiß allerdings nicht wofür der Blitz in bearbeiten Menü ist". Der Blitz ist
+         jetzt eine eigene, beschriftete Zeile unter den Knöpfen: „Ein Tipp produziert sofort: an/aus" – an = ein Tipp aufs
+         Haus startet gleich die Arbeit (die Mühle mahlt, die Bergleute gehen los), aus = ein Tipp zeigt erst die kleinen
+         Symbole. Dieselbe Einstellung wie „Ein Tipp produziert" unter dem Bild. */
       const an = document.body.classList.contains("lk-direkt");
-      const dk = knopf('<svg viewBox="0 0 24 24"><path d="M13.5 2.5 5 13.5h6l-1.5 8 8.5-11h-6z" fill="currentColor"/></svg>', "Ein Tipp produziert: " + (an ? "an" : "aus"), () => {
+      const blitz = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2.5 5 13.5h6l-1.5 8 8.5-11h-6z" fill="currentColor"/></svg>';
+      const dText = (x) => blitz + "<span>Ein Tipp produziert sofort: <b>" + (x ? "an" : "aus") + "</b></span>";
+      const dk = el("button", "lk-direkt-zeile" + (an ? " lk-an" : ""), dText(an)); dk.type = "button";
+      dk.title = "An: ein Tipp aufs Haus startet gleich die Arbeit. Aus: ein Tipp zeigt erst die kleinen Symbole am Haus.";
+      dk.addEventListener("click", (e) => {
+        e.stopPropagation();
         const neu = !document.body.classList.contains("lk-direkt");
-        try { window.parent.postMessage({ typ: "leicht-direkt", an: neu }, location.origin); } catch (e) {}
+        try { window.parent.postMessage({ typ: "leicht-direkt", an: neu }, location.origin); } catch (x) {}
         document.body.classList.toggle("lk-direkt", neu);
-        dk.classList.toggle("lk-an", neu); dk.setAttribute("aria-pressed", String(neu)); dk.title = "Ein Tipp produziert: " + (neu ? "an" : "aus"); dk.setAttribute("aria-label", dk.title);
-      }, "lk-direkt-knopf" + (an ? " lk-an" : ""));
+        dk.classList.toggle("lk-an", neu); dk.setAttribute("aria-pressed", String(neu)); dk.innerHTML = dText(neu);
+      });
       dk.setAttribute("aria-pressed", String(an));
-      knoepfe.append(dk);
       if (o.platzX != null && (Math.abs(o.x - o.platzX) > 0.01 || Math.abs(o.y - o.platzY) > 0.01))
         knoepfe.append(knopf("zurueck", "Zurück auf den Bauplatz", () => { o.x = o.platzX; o.y = o.platzY; o.dreh = o.platzDreh; SZ.geaendert(); miniMalen(); L().dekoSpeichern(); ansage("Wieder auf dem Bauplatz"); karteZeigen("haus", o, null, { still: true }); }));
       if (vwKey) knoepfe.append(vwKnopf());   // FASSUNG 833 — das Rathaus (Döbeln) ist auch Sehenswürdigkeit
       knoepfe.append(zu);
+      karte.appendChild(dk);   // FASSUNG 844 — die beschriftete Blitz-Zeile unter den Knöpfen
       amDingLegen();
       return;
     }
@@ -1713,7 +1958,8 @@
     if (o.art === "natur") {
       titel.textContent = baumName(o);
       /* FASSUNG 812 — zusammen mit 826 (XANDER: „bestehende Bäume … fällen und Platz haben für Gebäude"): ein Menü für Bäume */
-      zeile.textContent = (o.rand ? "Baum am Waldrand" : "Baum") + " · steht im Weg? Entfernen schafft Platz zum Bauen.";
+      /* FASSUNG 844 — im kleinen Rahmen kürzer: das Menü bleibt schmal genug, dass es Kompass, Uhr und Schieber nicht deckt */
+      zeile.textContent = document.body.classList.contains("lk-mini-modus") ? "Entfernen schafft Platz" : (o.rand ? "Baum am Waldrand" : "Baum") + " · steht im Weg? Entfernen schafft Platz zum Bauen.";
       knoepfe.append(knopf("versetzen", "Versetzen", () => hausVersetzen(o)), knopf("abriss", "Entfernen", () => baumEntfernen(o)));
       /* FASSUNG 833 — die Wald-Station (Holzfäller und Jäger losschicken) auch im Vollbild des Spiels */
       if (window.parent !== window && !O.gestalten) knoepfe.append(knopf("liste", "Wald: Holzfäller und Jäger", () => { auswahlWeg(); try { window.parent.postMessage({ typ: "leicht-haus", g: "wald" }, location.origin); } catch (e) {} }));
@@ -1773,7 +2019,7 @@
         knoepfe.append(los);
       }
       knoepfe.append(knopf("links", "Drehen", () => objDrehen(o, 1, true)), knopf("rechts", "Andersherum drehen", () => objDrehen(o, -1, true)),
-        knopf("versetzen", "Versetzen", () => { SZ.weg(o); geist = SZ.neu(Object.assign({}, o, { geist: true })); karteZeigen("setzen", geist); }),
+        knopf("versetzen", "Versetzen", () => { SZ.weg(o); geist = SZ.neu(Object.assign({}, o, { geist: true })); karteZeigen("setzen", geist); grossHeraus(geist); }),
         knopf("abriss", "Entfernen", () => { SZ.weg(o); L().dekoSpeichern(); karte.hidden = true; karte._ding = null; miniMalen(); L().unruhe = 2; }));
       /* FASSUNG 828 — ein eigener Baum schickt im Spiel auch aus seiner Karte die Holzfäller los */
       if (istBaum(o) && window.parent !== window) {
@@ -1846,6 +2092,13 @@
   };
   O.bild = function () {
     if (O.zeichenLegen) O.zeichenLegen();
+    /* FASSUNG 844 — das Ladebild geht, sobald die Häuser stehen (alle sichtbaren Bilder da, spätestens nach 4 s) */
+    const lade = document.getElementById("lLade");
+    if (lade && !lade.classList.contains("weg")) {
+      if (!O._ladeSeit) O._ladeSeit = performance.now();
+      const hs = SZ.sichtbare.filter((e) => e.o.art === "haus" || e.o.art === "wunder"), da = hs.filter((e) => LB.fertig(e.lagen[0][0])).length;
+      if ((hs.length && da >= hs.length * 0.85) || performance.now() - O._ladeSeit > 5000) { lade.classList.add("weg"); setTimeout(() => lade.remove(), 500); }
+    }
     amDingLegen();   // FASSUNG 822 — das kleine Menü folgt seinem Ding
     if (deckel && deckel.isConnected) {
       const offen = LB.offen();

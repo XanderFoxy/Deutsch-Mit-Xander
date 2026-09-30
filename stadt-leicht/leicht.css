@@ -256,8 +256,8 @@ html, body, #lStadt, #lStadt *, .lk-zeichen, .lk-zeichen * { -webkit-user-select
 .lk-mini-modus .lk-pinknopf { left: 36px; top: 38px; width: 26px; height: 26px; border-radius: 50%; }
 .lk-mini-modus .lk-pinknopf svg { width: 14px; height: 14px; }
 .lk-mini-modus .lk-pinknopf::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; }
-.lk-mini-modus:not(.lk-nah):not(.lk-gepinnt) .lk-pinknopf { display: none; }
-.lk-mini-modus:not(.lk-nah).lk-gepinnt .lk-pinknopf { left: 5px; }
+/* FASSUNG 844 — die Stecknadel steht immer im kleinen Bild (Walkie 313: „mit der pinnadel einen zoomausschnitt … anpinnen") */
+.lk-mini-modus:not(.lk-nah) .lk-pinknopf { left: 5px; }
 .lk-pinknopf.lk-an { background: #ffd24a; color: #3a2a14; }
 .lk-mini-modus.lk-gestalten .lk-pinknopf { display: none; }
 /* FASSUNG 822 — XANDER: „dieses einfache Menü haben am Haus selber das ist direkt irgendwie". Das Menü eines Dings (Haus,
@@ -317,3 +317,24 @@ body.lk-gehoben #lDinge { cursor: grabbing; }
 }
 /* FASSUNG 833 — am Rathaus steht zusätzlich „Verwalten": sieben Knöpfe passen in eine Reihe (sonst stand ✕ allein darunter) */
 .lk-karte.lk-am-ding { max-width: min(330px, calc(100vw - 8px)); }
+
+/* FASSUNG 844 — der Blitz im Bearbeiten-Menü mit Beschriftung (Walkie 313: „ich weiß allerdings nicht wofür der Blitz … ist") */
+.lk-direkt-zeile { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px 0 7px; border-radius: 10px; border: 1px solid rgba(255,255,255,.18); background: #2a3252; color: #f3ead8; font: 600 12px system-ui, sans-serif; cursor: pointer; text-align: left; }
+.lk-direkt-zeile svg { width: 16px; height: 16px; flex: none; color: #9aa3b8; }
+.lk-direkt-zeile.lk-an { border-color: rgba(255,210,63,.7); }
+.lk-direkt-zeile.lk-an svg, .lk-direkt-zeile.lk-an b { color: #ffd23f; }
+/* FASSUNG 844 — kurzer Grund in der kleinen Auswahl am Haus („läuft noch …") */
+.lk-wahl-info { align-self: center; max-width: 160px; font: 600 11px/1.2 system-ui, sans-serif; color: #f3ead8; padding: 0 4px; }
+/* FASSUNG 844 — Ladebild: Alex zeigt auf die Stadt, daneben ihr Name */
+.lk-lade { position: fixed; inset: 0; z-index: 9; display: flex; flex-direction: row-reverse; align-items: center; justify-content: center; gap: 14px; background: radial-gradient(ellipse at 60% 45%, #2e3d6c, #141a30 75%); color: #f6ecd6; transition: opacity .45s; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.lk-lade.weg { opacity: 0; pointer-events: none; }
+.lk-lade img { height: min(78vh, 260px); width: auto; filter: drop-shadow(0 6px 12px rgba(0,0,0,.45)); }
+.lk-lade div { display: flex; flex-direction: column; gap: 6px; max-width: 60vw; }
+.lk-lade b { font: 700 clamp(18px, 6vw, 30px)/1.1 Georgia, serif; color: #ffd24a; overflow-wrap: anywhere; }
+.lk-lade span { font-size: clamp(12px, 3.6vw, 15px); opacity: .9; }
+.lk-lade i { width: min(180px, 40vw); height: 5px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
+.lk-lade em { display: block; height: 100%; width: 30%; background: #f3c35a; border-radius: 3px; animation: lkLade 1.2s ease-in-out infinite alternate; }
+@keyframes lkLade { from { transform: translateX(-10%); } to { transform: translateX(240%); } }
+.lk-lade.lk-lade-klein { gap: 8px; }
+.lk-lade.lk-lade-klein img { height: 86vh; }
+.lk-karte.lk-sperre, .lk-karte.lk-sperre * { pointer-events: none; }   /* FASSUNG 844 — gleich nach dem langen Drücken */

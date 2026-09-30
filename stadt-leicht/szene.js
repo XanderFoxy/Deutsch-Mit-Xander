@@ -438,7 +438,11 @@
   /* Hauswände im Schein naher Laternen: je Haus ein kleines Lichtbild (Verlauf je Laterne × Nachtbild als Maske), gemerkt
      solange sich weder Bild noch Laternen ändern; gemalt mit „lighter" (heller, warm, nach dem Stoff der Wand). */
   const schein = new Map();
-  const REICHWEITE = 8.5;   // m: so weit strahlt eine 4,4 m hohe Laterne eine Wand merklich an
+  /* FASSUNG 844 — XANDER (Walkie 313): „die Laternen die einen Kegel geben sollten der die die Häuser anstrahlt … gibt gar
+     nicht diesen strahl-effekt dass die Häuser nicht ohne Ihre Fenster Lichter auskommen das sollte einfach erkennbar sein
+     wie im alten Spiel auch weil es nachts meist viel zu düster wirkt". Weiter (8,5 → 13 m), heller und größer: eine
+     Laterne strahlt die Wände der Häuser ringsum sichtbar an, auch im kleinen Bild. */
+  const REICHWEITE = 13;   // m: so weit strahlt eine 4,4 m hohe Laterne eine Wand merklich an
   function wirdAngestrahlt(o) { return !!o && !o.bau && !o.geist && (o.art === "haus" || o.art === "wunder" || (o.art === "kulisse" && !o.deko && (o.hoehe || 0) >= 5)); }
   /* nächster Punkt der Grundfläche (Rechteck aus SZ.ecken) zu einem Punkt, und der Abstand dorthin */
   function naechsterPunkt(o, x, y) {
@@ -488,8 +492,8 @@
         /* Mitte des Scheins: der nächste Wandpunkt auf 2,4 m Höhe; je weiter die Laterne weg ist, desto größer und
            schwächer der Fleck (Licht fällt mit dem Quadrat des Abstands ab) */
         const P = ST.proj(w.x, w.y, 2.4), cx = (P[0] - P0[0]) / k * f + m.ax * f, cy = (P[1] - P0[1]) / k * f + m.ay * f;
-        const kraft = 1 / (1 + (w.d / 3.6) * (w.d / 3.6));
-        const r = (3 + w.d * 0.9) * pxProM;
+        const kraft = 1 / (1 + (w.d / 5.5) * (w.d / 5.5));
+        const r = (4.5 + w.d * 1.1) * pxProM;
         const gr = x.createRadialGradient(cx, cy, 0, cx, cy, r);
         gr.addColorStop(0, "rgba(255,198,122," + (0.95 * kraft).toFixed(3) + ")");
         gr.addColorStop(0.3, "rgba(255,186,108," + (0.5 * kraft).toFixed(3) + ")");
@@ -508,7 +512,8 @@
     g.save(); g.globalCompositeOperation = "lighter";
     /* zweimal: die Wand im Schein wird bis zu dreimal so hell wie im Nachtbild */
     g.globalAlpha = a; g.drawImage(c, e.X - m.ax * k, e.Y - m.ay * k, m.w * k, m.h * k);
-    g.globalAlpha = a * 0.9; g.drawImage(c, e.X - m.ax * k, e.Y - m.ay * k, m.w * k, m.h * k);
+    g.globalAlpha = a; g.drawImage(c, e.X - m.ax * k, e.Y - m.ay * k, m.w * k, m.h * k);
+    g.globalAlpha = a * 0.7; g.drawImage(c, e.X - m.ax * k, e.Y - m.ay * k, m.w * k, m.h * k);   // FASSUNG 844 — ein drittes Mal
     g.restore();
     SZ.angestrahlt = (SZ.angestrahlt || 0) + 1;
   }
@@ -530,12 +535,14 @@
       /* FASSUNG 825 — „diese schönen Lichtkegel … die auch realistisch sind": unter der Laterne ein runder, warmer
          Lichtfleck (≈ 7 m, zur Mitte hin hell, weich auslaufend – im 2:1-Blick eine Ellipse) und darüber, ganz zart, der
          Lichtkegel in der Luft von der Leuchte zum Boden (bei Schnee und Dunst sieht man ihn). */
-      const kopfX = e.X + m.l[0][0] * e.k, kopfY = e.Y + m.l[0][1] * e.k, R = 7 * K.s * (o.stufe || 1), a = Z.nacht * alpha;
+      /* FASSUNG 844 — der Fleck am Boden kräftiger (6,5 m, im kleinen Bild mindestens 9 Bildpunkte) und kräftiger */
+      const kopfX = e.X + m.l[0][0] * e.k, kopfY = e.Y + m.l[0][1] * e.k, R = Math.max(6.5 * K.s * (o.stufe || 1), 9 * K.dpr), a = Z.nacht * alpha;
       if (nurBoden) {
         g.save(); g.translate(e.X, e.Y); g.scale(1, 0.5);
         const gr = g.createRadialGradient(0, 0, 0, 0, 0, R);
-        gr.addColorStop(0, "rgba(255,200,132," + (0.34 * a).toFixed(3) + ")"); gr.addColorStop(0.35, "rgba(255,188,116," + (0.17 * a).toFixed(3) + ")");
-        gr.addColorStop(0.7, "rgba(255,180,105," + (0.05 * a).toFixed(3) + ")"); gr.addColorStop(1, "rgba(255,180,105,0)");
+        /* (steil nach außen: die Nachbarlaterne, die nachts ausgeschaltet ist, bleibt dunkel – Sonde 825) */
+        gr.addColorStop(0, "rgba(255,204,138," + (0.62 * a).toFixed(3) + ")"); gr.addColorStop(0.25, "rgba(255,190,118," + (0.34 * a).toFixed(3) + ")");
+        gr.addColorStop(0.5, "rgba(255,180,105," + (0.08 * a).toFixed(3) + ")"); gr.addColorStop(0.75, "rgba(255,180,105," + (0.015 * a).toFixed(3) + ")"); gr.addColorStop(1, "rgba(255,180,105,0)");
         g.fillStyle = gr; g.fillRect(-R, -R, 2 * R, 2 * R); g.restore();
         SZ.kegel = (SZ.kegel || 0) + 1;
       } else {
@@ -623,6 +630,7 @@
     /* FASSUNG 809 — XANDER: „Tag/Nacht … fließend, keine Sprünge". Im kleinen Rahmen (nur _k-Bilder) wird jetzt auch
        überblendet; hart umgeschaltet wird nur noch im Sparmodus schwacher Geräte außerhalb des Rahmens. */
     if (LB.spar && !LB.nurKlein) nachtAnteil = nachtAnteil >= 0.5 ? 1 : 0;
+
     const zeiten = nachtAnteil >= 1 ? [["nacht", 1]] : nachtAnteil > 0 ? [["tag", 1], ["nacht", nachtAnteil]] : [["tag", 1]];
     const sicht = [];
     const rand = 60 * K.dpr;
@@ -688,6 +696,17 @@
     /* 2. Lichtpfützen */
     SZ.kegel = 0;   // FASSUNG 825 — gezählte Lichtkegel der Laternen (Sonde)
     for (const e of sicht) if (e.licht) lichtMalen({ X: e.X, Y: e.Y, k: e.lk, meta: e.licht, o: e.o }, Z, t, true, 1);
+    /* FASSUNG 844 — Walkie 313: „das Bergwerk … jetzt muss ich es immer suchen im Dunkeln". Nachts leuchten vor dem
+       Stollen Grubenlampen: ein warmer Schein am Boden und am Felsen, schon im kleinen Bild zu finden. */
+    if (Z.nacht > 0.3) for (const e of sicht) {
+      const o = e.o; if (o.spiel !== "bergwerk" || o.bau) continue;
+      const w = ((o.dreh || 0) * 90 + 90) * Math.PI / 180, f = (o.fuss ? o.fuss[0] : 13) * 0.42;
+      const P = ST.proj(o.x + Math.cos(w) * f, o.y + Math.sin(w) * f, 1.5), R = Math.max(9 * K.s * (o.stufe || 1), 16 * K.dpr), a = Math.min(1, (Z.nacht - 0.3) / 0.4);
+      g.save(); g.globalCompositeOperation = "lighter"; g.translate(P[0], P[1]); g.scale(1, 0.62);
+      const gr = g.createRadialGradient(0, 0, 0, 0, 0, R);
+      gr.addColorStop(0, "rgba(255,196,110," + (0.7 * a).toFixed(3) + ")"); gr.addColorStop(0.35, "rgba(255,170,80," + (0.3 * a).toFixed(3) + ")"); gr.addColorStop(1, "rgba(255,150,60,0)");
+      g.fillStyle = gr; g.fillRect(-R, -R, 2 * R, 2 * R); g.restore();
+    }
     /* Menschen zwischen die Dinge einsortieren: nach dem letzten Ding, das
        sich mit ihnen im Bild überdeckt und ganz hinter ihnen liegt */
     const leute = ST.leute ? ST.leute.sichtbar(Z) : [];
@@ -763,6 +782,14 @@
         /* FASSUNG 826 — im Umland verblassen die Bäume im Dunst (dorf.js o.nebel) */
         g.globalAlpha = lg[1] * (e.o.geist ? 0.72 : 1) * (1 - (e.o.nebel || 0));
         g.drawImage(img, e.X - m.ax * k, e.Y - m.ay * k - hb, m.w * k, m.h * k);
+        /* FASSUNG 844 — „weil es nachts meist viel zu düster wirkt": das Nachtbild eines Hauses, Wahrzeichens oder Bahnhofs
+           ein zweites Mal aufgehellt darüber („lighter", 30 %) – Wände und Dächer bleiben erkennbar, dunkle Stellen bleiben
+           dunkel (kein zusätzliches Bild zu laden) */
+        if (nachtLage && !SZ.pruef.ohneAufhellen && (e.o.art === "haus" || e.o.art === "wunder" || (e.o.art === "kulisse" && e.o.name))) {
+          g.globalCompositeOperation = "lighter"; g.globalAlpha = 0.3 * lg[1] * Math.min(1, Z.nacht);
+          g.drawImage(img, e.X - m.ax * k, e.Y - m.ay * k - hb, m.w * k, m.h * k);
+          g.globalCompositeOperation = "source-over";
+        }
       }
       g.globalAlpha = 1;
       if (ST.windmuehle) ST.windmuehle.nach(g, e, t, Z);   // FASSUNG 812 — die drehenden Flügel der Windmühle (windmuehle.js)
@@ -814,7 +841,9 @@
   function auswahlRahmen(e) {
     const ec = ecken(e.o, 0.6).map((p) => ST.proj(p[0], p[1], 0));
     g.save();
-    g.strokeStyle = "rgba(255,226,140,0.95)"; g.lineWidth = 2.2 * K.dpr; g.setLineDash([7 * K.dpr, 5 * K.dpr]);
+    /* FASSUNG 844 — große Dinge beim Versetzen: grün = die Stelle ist frei, rot = stößt an (oberflaeche.js platzPruefen) */
+    g.strokeStyle = e.o._frei === true ? "rgba(110,235,120,0.95)" : e.o._frei === false ? "rgba(255,92,80,0.95)" : "rgba(255,226,140,0.95)";
+    g.lineWidth = (e.o._frei != null ? 3 : 2.2) * K.dpr; g.setLineDash([7 * K.dpr, 5 * K.dpr]);
     g.beginPath(); ec.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.stroke();
     g.restore();
   }
