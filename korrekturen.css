@@ -35236,3 +35236,45 @@ body > .lc-tafel-mappe { position: fixed; inset: auto; left: 12px; right: 12px; 
   67%, 90% { opacity: 1; transform: translate(var(--pf4x), var(--pf4y)) rotate(var(--pf4d)) scale(1); }
   100% { opacity: 0; transform: translate(var(--pf4x), var(--pf4y)) rotate(var(--pf4d)) scale(.92); }
 }
+
+/* =====================================================================
+   FASSUNG 845 — XANDER (Walkie 313): „ich soll hinter dem Glas vom
+   Batmobil sitzen und auch bei Dodge Viper ist es nicht viel besser".
+   Solange das Bild im 3D-Auto sitzt (lc-im-wagen, gesetzt im selben Takt
+   wie die Leinwand, siehe app.js lcAuftrittAuto3d/bildSetzen), liegt die
+   Scheibe davor: eine leichte Tönung mit zwei Lichtstreifen, und unten
+   verdeckt die Karosserie Kinn und Rand. Beim Aussteigen fällt beides weg.
+   ===================================================================== */
+.lc-auftritt .lc-auftritt-bild.lc-im-wagen {
+  clip-path: inset(0 0 17% 0);
+  border-color: rgba(24, 24, 30, .85) !important;
+  box-shadow: none;
+}
+.lc-auftritt .lc-auftritt-bild.lc-im-wagen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    linear-gradient(118deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, .2) 20%, rgba(255, 255, 255, 0) 33%,
+      rgba(255, 255, 255, 0) 56%, rgba(255, 255, 255, .26) 62%, rgba(255, 255, 255, 0) 71%),
+    radial-gradient(ellipse at 50% 110%, rgba(10, 14, 22, .55) 0%, rgba(10, 14, 22, 0) 60%),
+    rgba(120, 150, 180, .22);
+  /* der helle Rand der Kuppel liegt VOR dem Gesicht */
+  box-shadow: inset 0 0 0 2px rgba(236, 240, 246, .8), inset 0 3px 6px rgba(255, 255, 255, .25);
+}
+
+/* =====================================================================
+   FASSUNG 845 — XANDER (Walkie 313): „… vorher konnte man alles gut
+   sehen … man hat oben noch die Überschrift gelesen". Am Telefon gibt
+   der Chatverlauf nach, bis die ganze Karte (Überschrift bis Schreib-
+   zeile) auf den Schirm passt; die Höhe rechnet app.js lcVerlaufPassen
+   aus (240 px bis herunter auf 120 px).
+   ===================================================================== */
+@media (max-width: 760px) {
+  #livechatKarte .lc-chat-verlauf {
+    height: var(--lc-verlauf-h, 240px);
+    min-height: var(--lc-verlauf-h, 240px);
+  }
+}

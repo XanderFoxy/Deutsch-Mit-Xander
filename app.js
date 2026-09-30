@@ -27708,11 +27708,53 @@
      Also: passt die Karte ganz auf den freien Schirm, steht sie mittig
      darin. Passt sie nicht, wird die EINGABEZEILE an den unteren Rand
      gelegt — darüber liegt der Chat, darüber die Plätze. */
+  /* =================================================================
+     FASSUNG 845 — DIE KARTE PASST WIEDER GANZ AUF DEN SCHIRM
+     -----------------------------------------------------------------
+     XANDER (Walkie 313): „übrigens scheint der Livestream jetzt nicht
+     mehr an der Position zu sein wo er … ursprünglich war erscheint
+     jetzt etwas höher zu sein zumindest auf dem Android … vorher konnte
+     man alles gut sehen … man hat oben noch die Überschrift gelesen aber
+     vielleicht liegt das daran dass ich jetzt oben die Adresszeile nicht
+     mehr ausblendet"
+     NACHGEMESSEN (390 px breit): die Karte ist 778–832 px hoch (Kopf 62,
+     Plätze 205, Knöpfe 61, die Zeile „Die Leitung zu …" 54, Chat-Kopf
+     38, Verlauf 240, Schreibzeile 61, Einladen 29). Frei sind mit
+     sichtbarer Adresszeile rund 716 px, ohne rund 772 px. Passt die Karte
+     nicht, legt lcPlatzZiel die Schreibzeile an den unteren Rand — und
+     die Überschrift rutscht oben hinaus (−79 px mit, −23 px ohne
+     Adresszeile). Mit der Adresszeile (kein Vollbild) und der Leitungs-
+     Zeile war es also genau das, was er sieht.
+     JETZT gibt der VERLAUF nach (240 → bis 120 px), bis die ganze Karte
+     mit Überschrift und Schreibzeile hineinpasst. Gemessen wird am
+     Fenster (innerHeight) und nicht am sichtbaren Ausschnitt: geht die
+     Tastatur auf, bleibt der Verlauf, wie er ist (sonst wackelt beim
+     Tippen alles). Solange das Schreibfeld den Fokus hat, wird nichts
+     neu bemessen. Nur am Telefon (bis 760 px Breite). */
+  const LC_VERLAUF_VOLL = 240, LC_VERLAUF_MIN = 120;
+  function lcVerlaufPassen(karte, kleb, luft) {
+    try {
+      if (!karte || window.innerWidth > 760) return;
+      const v = karte.querySelector("#lcVerlauf");
+      if (!v || !v.offsetHeight) return;
+      const fokus = document.activeElement;
+      if (fokus && karte.contains(fokus) && /^(INPUT|TEXTAREA)$/.test(fokus.tagName)) return;
+      const jetzt = v.offsetHeight;
+      const rest = karte.getBoundingClientRect().height - jetzt;
+      const frei = window.innerHeight - kleb - luft * 2;
+      const soll = Math.round(Math.max(LC_VERLAUF_MIN, Math.min(LC_VERLAUF_VOLL, frei - rest)));
+      if (Math.abs(soll - jetzt) < 4) return;
+      karte.style.setProperty("--lc-verlauf-h", soll + "px");
+    } catch (e) {}
+  }
+
   function lcPlatzZiel() {
     const karte = document.getElementById("livechatKarte")
                || document.getElementById("livechatArea");
     if (!karte) return null;
     const kleb = lcKlebeHoehe();
+    /* FASSUNG 845 — erst die Karte passend machen, dann rechnen (siehe lcVerlaufPassen). */
+    lcVerlaufPassen(karte, kleb, 28);
     /* NACHGEBESSERT: „Wenn man drin ist und sich das Klassenzimmer
        zurechtschiebt, könnte es theoretisch noch ein bisschen höher,
        damit wir die Eingabeleiste sehen. Es kann bestimmt noch 5 mm
@@ -53424,23 +53466,35 @@
     };
     let hier = { x: pk[0].x, y: pk[0].y };
     setze(hier.x, hier.y, letzterWinkel);
+    /* FASSUNG 845 — kommt eine Folge (Runde ×2, dann weiter) mehrmals an
+       dieselbe Ecke, bekommt die Ecke jedes Mal DENSELBEN Bogen (den
+       engsten). Vorher war er je nach Länge der nächsten Geraden anders
+       weit, und an der Ecke lagen zwei Kurven wie ein Fächer übereinander. */
+    const radien = pk.map((q, i) => {
+      if (i === 0 || i === pk.length - 1) return 0;
+      const ein = einheit(pk[i - 1], q), aus = einheit(q, pk[i + 1]);
+      if (Math.abs(ein.x * aus.x + ein.y * aus.y) >= 0.35) return 0;
+      const lVor = Math.hypot(q.x - pk[i - 1].x, q.y - pk[i - 1].y);
+      const lNach = Math.hypot(pk[i + 1].x - q.x, pk[i + 1].y - q.y);
+      /* RUNDE 97: 0,45 auf 0,49 heraufgesetzt. Mehr geht nicht —
+         bei 0,5 stiessen zwei Bogen aneinander und es bliebe keine
+         Gerade mehr dazwischen. Der Bogen wird dadurch so weit, wie
+         der Platz es ueberhaupt hergibt, und die Lok kommt ohne
+         Ueberhang herum. */
+      return Math.max(0, Math.min(rMax, lVor * 0.49, lNach * 0.49));
+    });
+    const radiusAn = (i) => {
+      let r = radien[i];
+      if (r > 0) pk.forEach((q, j) => { if (radien[j] > 0 && Math.hypot(q.x - pk[i].x, q.y - pk[i].y) < 2) r = Math.min(r, radien[j]); });
+      return r;
+    };
     for (let i = 1; i < pk.length; i++) {
       const ein = einheit(pk[i - 1], pk[i]);
       const ecke = i < pk.length - 1;
       const aus = ecke ? einheit(pk[i], pk[i + 1]) : null;
       /* Nur eine echte Ecke bekommt ein Kurvenmodul. Faehrt die Bahn
          geradeaus weiter, waere ein Bogen mit Radius null Unsinn. */
-      let r = 0;
-      if (ecke && Math.abs(ein.x * aus.x + ein.y * aus.y) < 0.35) {
-        const lVor = Math.hypot(pk[i].x - pk[i - 1].x, pk[i].y - pk[i - 1].y);
-        const lNach = Math.hypot(pk[i + 1].x - pk[i].x, pk[i + 1].y - pk[i].y);
-        /* RUNDE 97: 0,45 auf 0,49 heraufgesetzt. Mehr geht nicht —
-           bei 0,5 stiessen zwei Bogen aneinander und es bliebe keine
-           Gerade mehr dazwischen. Der Bogen wird dadurch so weit, wie
-           der Platz es ueberhaupt hergibt, und die Lok kommt ohne
-           Ueberhang herum. */
-        r = Math.max(0, Math.min(rMax, lVor * 0.49, lNach * 0.49));
-      }
+      const r = ecke ? radiusAn(i) : 0;
       const A = { x: pk[i].x - ein.x * r, y: pk[i].y - ein.y * r };
       if (Math.hypot(A.x - hier.x, A.y - hier.y) > 0.5) {
         mod.push({ art: "gerade", a: { x: hier.x, y: hier.y }, b: { x: A.x, y: A.y } });
@@ -53612,6 +53666,21 @@
                A: { x: q.x - e.x * r, y: q.y - e.y * r },
                B: { x: q.x + a.x * r, y: q.y + a.y * r } };
     });
+    /* FASSUNG 845 — dieselbe Ecke, derselbe Bogen (siehe lcLokBahn). */
+    ecke.forEach((c, i) => {
+      if (!(c.r > 0)) return;
+      let r = c.r;
+      ecke.forEach((c2, j) => { if (c2.r > 0 && Math.hypot(P[j].x - P[i].x, P[j].y - P[i].y) < 2) r = Math.min(r, c2.r); });
+      if (r < c.r) {
+        c.r2 = r;
+      }
+    });
+    ecke.forEach((c, i) => {
+      if (c.r2 === undefined) return;
+      c.r = c.r2;
+      c.A = { x: P[i].x - c.e.x * c.r, y: P[i].y - c.e.y * c.r };
+      c.B = { x: P[i].x + c.a.x * c.r, y: P[i].y + c.a.y * c.r };
+    });
     const mod = [], pt = [];
     let hier = ecke[0].B;
     for (let k = 1; k <= n; k++) {
@@ -53710,7 +53779,19 @@
        Ende hinaus — ein Gleis, das genau unter der Lok aufhoert, sieht
        aus wie ein Bauzaun. */
     const rand = d * 0.5;
+    /* FASSUNG 845 — jedes Modul bekommt seine eigene Gruppe (Schwellen und
+       Schienen getrennt, damit die Schienen weiter ueber ALLEN Schwellen
+       liegen). So kann lcLokGleisFolge ein Stueck erst aufbauen, wenn die
+       Lok dort ankommt, und ein altes ausblenden, bevor ein neues darueber
+       gelegt wird. */
+    const schwellenM = [], schienenM = [];
     bahn.mod.forEach((m, i) => {
+      const s0 = schwellen.length, r0 = schienen.length;
+      modulMalen(m, i);
+      schwellenM.push(schwellen.slice(s0));
+      schienenM.push(schienen.slice(r0));
+    });
+    function modulMalen(m, i) {
       zusatz = m.rund ? " lc-lok-rund" : "";
       if (m.art === "gerade") {
         const dx = m.b.x - m.a.x, dy = m.b.y - m.a.y;
@@ -53758,11 +53839,193 @@
             + x2.toFixed(1) + " " + y2.toFixed(1) + '"/>';
         });
       }
-    });
+    }
     /* Schwellen zuerst — die Schienen liegen darauf, nicht darunter. */
-    svg.innerHTML = schwellen + schienen;
+    svg.innerHTML = '<g class="lc-lok-schwellen">' + schwellenM.map((x, i) => '<g data-m="' + i + '">' + x + "</g>").join("")
+      + '</g><g class="lc-lok-schienen">' + schienenM.map((x, i) => '<g data-m="' + i + '">' + x + "</g>").join("") + "</g>";
     reihe.appendChild(svg);
     return svg;
+  }
+
+  /* =====================================================================
+     FASSUNG 845 — DIE GLEISE EINER FOLGE BAUEN SICH AUF, WENN SIE DRAN SIND
+     ---------------------------------------------------------------------
+     XANDER (Walkie 313, 29.09.): „wenn wir diesen multiplizierten
+     schienenverlauf machen … ich möchte meine Lokomotive fahren lassen im
+     ganz normalen Chat dann soll das was danach kommt sich danach auch erst
+     aufbauen sonst haben wir schienen die sich überlappen … aus einer Kurve
+     heraus in den total krassen geraden Umbruch der nicht sein darf da muss
+     dann flüssig wieder eine Kurve gezeichnet werden wenn ich dann die
+     Strecke erweitere und da darf nicht ein Bild sein mit dem ganzen Gleisen
+     übermalt sondern diese Gleise müssen sich dann aufbauen wenn sie dran
+     sind … erstmal der erste Weg und wenn der erste Weg gefahren ist muss
+     sich flüssig der zweite Weg aufbauen ohne die alten Gleise sichtbar zu
+     überschreiben"
+
+     BISHER lag bei einer Folge (Fassung 776: Runde ×2, dann Weiter-Weg) der
+     GANZE Gleisplan vom ersten Bild an da. Wo der zweite Weg über den ersten
+     lief, lagen zwei Gleise übereinander: an der 2 zum Beispiel die Kurve der
+     Runde (nach unten) und die Gerade des Weiter-Wegs (nach rechts) — für das
+     Auge eine Kurve, aus der das Gleis plötzlich gerade herausbricht.
+
+     JETZT (die Kette bleibt dieselbe, alte Geräte sehen dieselbe Fahrt):
+       · Die Module werden in Fahrtreihenfolge durchgegangen. Der ERSTE WEG
+         reicht bis zum ersten Modul, das auf einem schon liegenden Gleis
+         läge (parallel darüber, nicht bloß kreuzend). Er liegt von Anfang an.
+       · Jedes spätere Modul baut sich erst auf, wenn die Lok gleich dort ist
+         (Schwelle für Schwelle, die Schienen werden gezogen). Liegt genau
+         dasselbe Stück schon (Runde ×2), wird nichts neu gelegt.
+       · Ein altes Stück, auf dem das neue läge, wird VORHER ausgeblendet —
+         aber erst, wenn der letzte Wagen es verlassen hat.
+       · Die Übergänge zwischen den Wegen sind echte Bögen (lcLokBahn setzt an
+         jede Ecke ein Kurvenmodul), die Richtung springt nie.
+     ===================================================================== */
+  function lcLokGleisFolge(svg, bahnG, bahnF, T, dauer, d, schwanz) {
+    if (!svg || !bahnG || !bahnG.mod || bahnG.mod.length < 2 || !bahnF || !bahnF.pt || !(dauer > 0)) return null;
+    const spur = d * 0.1632, schritt = Math.max(3, d * 0.05);
+    /* Jedes Modul als Punktreihe mit Richtung (in Fahrtrichtung). */
+    const proben = bahnG.mod.map((m) => {
+      const p = [];
+      if (m.art === "gerade") {
+        const l = Math.hypot(m.b.x - m.a.x, m.b.y - m.a.y) || 1, ux = (m.b.x - m.a.x) / l, uy = (m.b.y - m.a.y) / l;
+        const n = Math.max(2, Math.ceil(l / schritt));
+        for (let k = 0; k <= n; k++) p.push({ x: m.a.x + ux * l * k / n, y: m.a.y + uy * l * k / n, ux: ux, uy: uy });
+      } else {
+        const n = Math.max(3, Math.ceil(Math.abs(m.dw) * m.r / schritt)), sg = m.dw > 0 ? 1 : -1;
+        for (let k = 0; k <= n; k++) {
+          const w = m.w0 + m.dw * k / n;
+          p.push({ x: m.c.x + m.r * Math.cos(w), y: m.c.y + m.r * Math.sin(w), ux: -Math.sin(w) * sg, uy: Math.cos(w) * sg });
+        }
+      }
+      return p;
+    });
+    const gleich = (i, j) => {
+      const a = bahnG.mod[i], b = bahnG.mod[j];
+      if (a.art !== b.art) return false;
+      const nah = (p, q) => Math.hypot(p.x - q.x, p.y - q.y) < 1.5;
+      if (a.art === "bogen" && !(nah(a.c, b.c) && Math.abs(a.r - b.r) < 1.5)) return false;
+      return (nah(a.a, b.a) && nah(a.b, b.b)) || (nah(a.a, b.b) && nah(a.b, b.a));
+    };
+    /* Läge Modul i (parallel) auf Modul j? Kreuzen ist erlaubt, und wo ein
+       Modul an das nächste anschließt (gemeinsamer Endpunkt, gleiche
+       Richtung), liegt es auch nicht darauf: gezählt werden nur Punkte, die
+       INNEN auf dem anderen Modul liegen. */
+    const aufModul = (q, m) => {
+      if (m.art === "gerade") {
+        const l = Math.hypot(m.b.x - m.a.x, m.b.y - m.a.y) || 1, ux = (m.b.x - m.a.x) / l, uy = (m.b.y - m.a.y) / l;
+        const t = (q.x - m.a.x) * ux + (q.y - m.a.y) * uy;
+        if (t < 1.5 || t > l - 1.5) return false;
+        return Math.abs(-uy * (q.x - m.a.x) + ux * (q.y - m.a.y)) < spur * 0.9 && Math.abs(q.ux * uy - q.uy * ux) < 0.42;
+      }
+      const w = Math.atan2(q.y - m.c.y, q.x - m.c.x);
+      let dw = w - m.w0;
+      while (dw > Math.PI) dw -= 2 * Math.PI;
+      while (dw < -Math.PI) dw += 2 * Math.PI;
+      const f = dw / m.dw, rand = 1.5 / (Math.abs(m.dw) * m.r || 1);
+      if (!(f > rand && f < 1 - rand)) return false;
+      const tx = -Math.sin(w), ty = Math.cos(w);
+      return Math.abs(Math.hypot(q.x - m.c.x, q.y - m.c.y) - m.r) < spur * 0.9 && Math.abs(q.ux * ty - q.uy * tx) < 0.42;
+    };
+    const liegtAuf = (i, j) => {
+      let lang = 0;
+      const m = bahnG.mod[j];
+      proben[i].forEach((q) => { if (aufModul(q, m)) lang += schritt; });
+      return lang > spur * 0.6;
+    };
+    /* Wo auf der Fahrt liegt ein Modul? Der Reihe nach gesucht — bei einer
+       Runde ×2 liegt dasselbe Stück zweimal auf der Fahrt. */
+    const pt = bahnF.pt;
+    const lotAb = (q, sMin) => {
+      let beste = null;
+      for (let i = 1; i < pt.length; i++) {
+        const a = pt[i - 1], b = pt[i];
+        if (b.s < sMin - 0.5) continue;
+        const dx = b.x - a.x, dy = b.y - a.y, ll = dx * dx + dy * dy;
+        let f = ll ? ((q.x - a.x) * dx + (q.y - a.y) * dy) / ll : 0;
+        f = Math.max(0, Math.min(1, f));
+        const s = a.s + (b.s - a.s) * f;
+        if (s < sMin - 0.5) continue;
+        const ds = Math.hypot(q.x - (a.x + dx * f), q.y - (a.y + dy * f));
+        if (ds < 2.5) return { s: s, dist: ds };
+        if (!beste || ds < beste.dist) beste = { s: s, dist: ds };
+      }
+      return beste || { s: sMin, dist: Infinity };
+    };
+    let sVor = 0;
+    const lage = proben.map((p) => {
+      const a = lotAb(p[0], sVor);
+      if (a.dist > d * 0.3) return { s0: sVor, s1: sVor, faehrt: false };
+      const b = lotAb(p[p.length - 1], a.s + 0.5);
+      const s1 = b.dist > d * 0.3 ? a.s : Math.max(a.s, b.s);
+      sVor = s1;
+      return { s0: a.s, s1: s1, faehrt: true };
+    });
+    /* Der erste Weg: bis zum ersten Modul, das auf einem liegenden Gleis läge. */
+    const liegt = [];            /* sichtbare Module: { i, bis } (bis = s, an dem der Zug es zuletzt braucht) */
+    let ersterWeg = bahnG.mod.length;
+    for (let i = 0; i < bahnG.mod.length; i++) {
+      if (liegt.some((v) => liegtAuf(i, v.i) || gleich(i, v.i))) { ersterWeg = i; break; }
+      liegt.push({ i: i, bis: lage[i].s1 });
+    }
+    if (ersterWeg >= bahnG.mod.length) return { ersterWeg: ersterWeg, plan: [] };
+    const BAU = 520, WEG = 260;
+    const vorlauf = d * 1.1;
+    const plan = [];            /* je Modul: { i, an, aus } in ms */
+    liegt.forEach((v) => { plan[v.i] = { i: v.i, an: 0, aus: null }; });
+    for (let i = ersterWeg; i < bahnG.mod.length; i++) {
+      const L = lage[i];
+      const schon = liegt.find((v) => gleich(i, v.i));
+      if (schon) { schon.bis = Math.max(schon.bis, L.s1); plan[i] = { i: i, an: null, aus: null, wie: schon.i }; continue; }
+      const an = Math.max(0, Math.min(dauer - BAU, T(Math.max(0, L.s0 - vorlauf)) - BAU));
+      /* Was im Weg liegt, geht vorher — frühestens, wenn der letzte Wagen durch ist. */
+      for (let k = liegt.length - 1; k >= 0; k--) {
+        const v = liegt[k];
+        if (!liegtAuf(i, v.i) && !liegtAuf(v.i, i)) continue;
+        const frei = T(v.bis + schwanz);
+        plan[v.i].aus = Math.max(0, Math.min(dauer - WEG, Math.max(an - WEG * 0.6, frei)));
+        liegt.splice(k, 1);
+      }
+      plan[i] = { i: i, an: an, aus: null };
+      liegt.push({ i: i, bis: L.s1 });
+    }
+    /* Die Uhr ist dieselbe wie die der Lok: gleiche Dauer, im selben Augenblick angelegt. */
+    const off = (t) => Math.max(0, Math.min(1, t / dauer));
+    const gruppen = (i) => [svg.querySelector('.lc-lok-schwellen > g[data-m="' + i + '"]'), svg.querySelector('.lc-lok-schienen > g[data-m="' + i + '"]')];
+    plan.forEach((p) => {
+      if (!p) return;
+      const [gs, gr] = gruppen(p.i);
+      if (!gs || !gr) return;
+      if (p.an === null) { gs.style.opacity = "0"; gr.style.opacity = "0"; gs.dataset.folge = gr.dataset.folge = "doppelt"; return; }
+      const auf = p.an > 0;
+      gs.dataset.folge = gr.dataset.folge = auf ? "baut" : "liegt";
+      try {
+        if (p.aus !== null) {
+          const a0 = off(p.aus), a1 = off(p.aus + WEG);
+          [gs, gr].forEach((g) => g.animate([{ opacity: 1, offset: 0 }, { opacity: 1, offset: a0 }, { opacity: 0, offset: Math.max(a0, a1) }, { opacity: 0, offset: 1 }],
+            { duration: dauer, fill: "forwards", composite: "replace" }));
+          gs.dataset.aus = gr.dataset.aus = String(Math.round(p.aus));
+        }
+        if (!auf) return;
+        gs.dataset.an = gr.dataset.an = String(Math.round(p.an));
+        /* Schwelle für Schwelle … */
+        const sw = [...gs.children], n = sw.length || 1;
+        sw.forEach((el, k) => {
+          const t0 = p.an + BAU * 0.8 * k / n;
+          el.animate([{ opacity: 0, offset: 0 }, { opacity: 0, offset: off(t0) }, { opacity: 1, offset: Math.min(1, off(t0 + 140)) }, { opacity: 1, offset: 1 }],
+            { duration: dauer, fill: "both" });
+        });
+        /* … und die Schienen werden in Fahrtrichtung gezogen. */
+        [...gr.children].forEach((el) => {
+          const l = el.getTotalLength ? el.getTotalLength() : 0;
+          if (!(l > 0)) return;
+          el.style.strokeDasharray = l.toFixed(1) + " " + (l + 4).toFixed(1);
+          el.animate([{ strokeDashoffset: l, offset: 0 }, { strokeDashoffset: l, offset: off(p.an + BAU * 0.1) }, { strokeDashoffset: 0, offset: Math.min(1, off(p.an + BAU)) }, { strokeDashoffset: 0, offset: 1 }],
+            { duration: dauer, fill: "both" });
+        });
+      } catch (e) {}
+    });
+    svg.dataset.ersterWeg = String(ersterWeg);
+    return { ersterWeg: ersterWeg, plan: plan.filter(Boolean) };
   }
 
   /* =====================================================================
@@ -54720,6 +54983,8 @@
       }
     } catch (e) { gleisPlan = bahn; }
     const gleis = lcLokGleise(reihe, gleisPlan, rk, d);
+    /* FASSUNG 845 — bei einer Folge baut sich jeder weitere Weg erst auf, wenn die Lok dort ist. */
+    try { lcLokGleisFolge(gleis, gleisPlan, bahn, T, dauer, d, d * ((plan.wagen ? LC_ZUG_ABSTAND.schwanz : LC_ZUG.lok / 2) + 0.3)); } catch (e) {}
     if (plan.tunnel && gleis) {
       lcLokTunnelMaske(gleis, parseFloat(gleis.style.left) || 0, parseFloat(gleis.style.top) || 0,
                        Number(gleis.getAttribute("width")) || 1, Number(gleis.getAttribute("height")) || 1,
@@ -56658,7 +56923,10 @@
     const halb = 1.15 * S_NAH;
     const xh = Math.max(halb + 6, Math.min(B - halb - 6, mitte));
     /* Frontal (Gier 315) sitzt der Kopf des Fahrers auf der Höhe des Platzes */
-    const kopf315 = lcAuto3dPunkt(M, 315, fahrer);
+    /* FASSUNG 845 — der Kopf sitzt etwas tiefer, hinter der Scheibe (siehe bildSetzen); auf DIESE Höhe kommt der Platz */
+    const KOPF_GROSS = 0.46, KOPF_TIEF = 0.16;
+    const sitz = [fahrer[0], fahrer[1], fahrer[2] - KOPF_TIEF];
+    const kopf315 = lcAuto3dPunkt(M, 315, sitz);
     const y0 = cy - kopf315[1] * S_NAH;
     const sg = cx <= xh ? 1 : -1;
     const P = lcAuto3dPlan(sg, C, D);
@@ -56813,42 +57081,59 @@
       if (spur.length < 2000) spur.push(letzter);
     };
     /* Jedes Bild: die Zeit der Uhr (so bleiben Leinwand, Bild und Töne beisammen) */
-    let aus = false;
+    let aus = false, bildSetzen = null;
     const schleife = () => {
       if (aus || !buehne.isConnected) return;
       const ct = uhr && uhr.currentTime != null ? uhr.currentTime : 0;
       try { zeichnen(Math.min(D, ct) / 1000); } catch (x) {}
+      /* FASSUNG 845 — im selben Takt wie das Auto (siehe bildSetzen) */
+      try { if (bildSetzen) bildSetzen(Math.min(D, ct) / 1000); } catch (x) {}
       requestAnimationFrame(schleife);
     };
     requestAnimationFrame(schleife);
     try { zeichnen(0); } catch (x) {}
 
     /* ---------- Das Bild der Person: fährt am Steuer mit, steigt aus (oder ein) ---------- */
+    /* FASSUNG 845 — XANDER (Walkie 313): „dann hängt meine Intro Animation immer noch sehr weil sie mein Bild gar nicht
+       richtig mitnimmt da ist eine Latenz zwischen meinem Bild und dem Auto … mein Bild geht schon vorher auf dem Platz und
+       dann kommt das Auto und versucht es wieder irgendwie einzufangen das macht keinen Sinn so ich soll hinter dem Glas vom
+       Batmobil sitzen und auch bei Dodge Viper ist es nicht viel besser also generell die Animation muss flüssiger sein"
+       URSACHE: Auto und Bild liefen auf ZWEI Uhren. Das Auto wird in jedem Bild (requestAnimationFrame) auf die Leinwand
+       gemalt — im Hauptfaden. Das Bild hatte eine eigene WAAPI-Animation, die der Browser im Compositor weiterlaufen lässt,
+       auch wenn der Hauptfaden hängt (beim Betreten des Raums: Verbindung, Plätze, Töne). Auf dem Telefon blieb das Auto
+       also stehen, während das Bild schon zum Platz sprang; dann „holte" das Auto auf.
+       JETZT gibt es nur noch EINE Uhr und EINEN Takt: dasselbe Bild der Schleife, das das Auto malt, setzt auch das Bild der
+       Person (nur transform und opacity). Hängt das Gerät, hängen beide gemeinsam — sie können nicht mehr auseinanderlaufen.
+       Im Wagen sitzt das Bild kleiner und tiefer, im Fahrerplatz hinter der Scheibe (Klasse lc-im-wagen: Spiegelung der
+       Scheibe darüber, unten von der Karosserie verdeckt), erst beim Aussteigen springt es heraus auf den Platz. */
     const kopfBei = (t) => {
       S = Sbei(t);
-      const z = zustand(t), bl = blick(z), p = bodenBild(z.X, z.Z), d = lcAuto3dPunkt(M, bl.g, fahrer);
-      return [p[0] + d[0] * S * p[2] - cx, p[1] + d[1] * S * p[2] - cy, Math.max(0.18, 0.62 * S * p[2] / rk.width)];
+      const z = zustand(t), bl = blick(z), p = bodenBild(z.X, z.Z), d = lcAuto3dPunkt(M, bl.g, sitz);
+      return [p[0] + d[0] * S * p[2] - cx, p[1] + d[1] * S * p[2] - cy, Math.max(0.15, KOPF_GROSS * S * p[2] / rk.width)];
     };
-    const tr = (x, y, sc, op) => ({ transform: "translateX(" + x.toFixed(1) + "px) translateY(" + y.toFixed(1) + "px) scale(" + sc.toFixed(3) + ")", opacity: op });
-    const bilder = [], SCHRITTE = 160;
     const hopp0 = rein ? P.Ta + 0.12 : P.Th - 0.58, hopp1 = hopp0 + 0.46;
-    for (let j = 0; j <= SCHRITTE; j++) {
-      const t = j / SCHRITTE * P.D;
+    const bildBei = (t) => {
       const aus2 = t > P.D - 0.25 ? Math.max(0, (P.D - t) / 0.25) : 1;
-      let kf;
       const imWagen = rein ? t < hopp0 : t > hopp1;
-      if (imWagen) { const q = kopfBei(t); kf = tr(q[0], q[1], q[2], rein ? 1 : aus2); }
-      else if (t >= hopp0 && t <= hopp1) {
+      if (imWagen) { const q = kopfBei(t); return { x: q[0], y: q[1], sc: q[2], op: rein ? 1 : aus2, wagen: true }; }
+      if (t >= hopp0 && t <= hopp1) {
         /* der Sprung: im Bogen aus dem Wagen auf den Platz (beim Gehen umgekehrt) */
         const u0 = (t - hopp0) / (hopp1 - hopp0), u = rein ? u0 : 1 - u0, q = kopfBei(rein ? hopp0 : hopp1);
         const e2 = u * u * (3 - 2 * u), bogen = -rk.height * 0.6 * 4 * u * (1 - u);
         const sc = q[2] + (1 - q[2]) * e2 + (u > 0.8 ? 0.06 * Math.sin((u - 0.8) / 0.2 * Math.PI) : 0);
-        kf = tr(q[0] * (1 - e2), q[1] * (1 - e2) + bogen, sc, 1);
-      } else kf = tr(0, 0, 1, 1);
-      kf.offset = j / SCHRITTE;
-      bilder.push(kf);
-    }
-    an(bild, bilder);
+        return { x: q[0] * (1 - e2), y: q[1] * (1 - e2) + bogen, sc: sc, op: 1, wagen: false };
+      }
+      return { x: 0, y: 0, sc: 1, op: 1, wagen: false };
+    };
+    let imWagenJetzt = null;
+    bildSetzen = (t) => {
+      const q = bildBei(t);
+      bild.style.transform = "translateX(" + q.x.toFixed(1) + "px) translateY(" + q.y.toFixed(1) + "px) scale(" + q.sc.toFixed(3) + ")";
+      bild.style.opacity = q.op.toFixed(3);
+      if (q.wagen !== imWagenJetzt) { imWagenJetzt = q.wagen; bild.classList.toggle("lc-im-wagen", q.wagen); }
+      if (letzter) letzter.bild = { x: Math.round(q.x + cx), y: Math.round(q.y + cy - sy), sc: Math.round(q.sc * 1000) / 1000, wagen: q.wagen };
+    };
+    try { bildSetzen(0); } catch (x) {}
     /* ---------- Töne (starten mit der Animation) ---------- */
     lcAuto3dTonPlan = { P: P, laut: C.laut };
     const kurve = quietschen.length ? quietschen[0] : P.Ta * 0.3;
