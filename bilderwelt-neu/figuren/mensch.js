@@ -128,7 +128,9 @@
     const kopf = H / t.koepfe;
     const kinn = H - kopf;
     const huefteH = H * t.bein;
-    const schulterH = kinn - 0.52 * kopf * (t.koepfe >= 7 ? 1 : 0.8);
+    /* FASSUNG 838, Runde 2: beim Säugling sitzen die Schultern höher — der
+       Hals ist kurz, das Kinn fast auf der Brust. */
+    const schulterH = kinn - 0.52 * kopf * (t.koepfe >= 7 ? 1 : (t.koepfe < 4.5 ? 0.45 : 0.8));
     const halsH = kinn - t.hals * 0.85 * kopf;
     const rumpf = schulterH - huefteH;
     const erw = t.koepfe >= 7;
@@ -370,6 +372,21 @@
     /* Hände in den Hüften: die Handgelenke über dem Beckenkamm, die Ellbogen weit nach außen und etwas nach hinten. */
     haende_huefte: { lende: 1, brust: -2, nacken: 6, kopf: -6, huefteL: {vor:  3,  seit:  3,  dreh:  -6}, knieL: 3, fussL: 0, huefteR: {vor:  -3,  seit:  3,  dreh:  -6}, knieR: 2, fussR: 0, roll: 2, brustRoll: -2, schulterL: {vor:  -17,  seit:  37,  dreh:  -76}, ellbogenL: 97, schulterR: {vor:  -16,  seit:  41,  dreh:  -77}, ellbogenR: 97, unterarmL: -60, unterarmR: -60, handL: -25, handR: -25, fingerL: 0.2, fingerR: 0.2 },
   });
+  /* FASSUNG 838 — XANDER (Funk 222): „mal seitlich sitzen mal gerade …
+     jede Sitzhaltung möglich“. Seitlich: derselbe Sitz, gesehen mit dem
+     Blick von der Seite (der Baukasten zeigt sie im Profil, BK_BLICK 70).
+     Zurückgelehnt: das Becken kippt 10° nach hinten, der Rücken lehnt an,
+     der Kopf nickt wieder nach vorn, die Hände liegen locker auf den
+     Oberschenkeln; die Hüftbeugung gleicht das Kippen aus, damit die
+     Oberschenkel auf der Sitzfläche bleiben. */
+  POSEN.sitzen_seit = Object.assign({}, POSEN.sitzen);
+  POSEN.sitzen_zurueck = {
+    kipp: -10, lende: -12, brust: -2, nacken: 20, kopf: 0,
+    schulterL: { vor: 16, seit: 12 }, ellbogenL: 46, unterarmL: -72, handL: -12, fingerL: 0.3,
+    schulterR: { vor: 14, seit: 13 }, ellbogenR: 50, unterarmR: -74, handR: -14, fingerR: 0.3,
+    huefteL: { vor: 76, seit: 7, dreh: -4 }, knieL: 80, fussL: -4,
+    huefteR: { vor: 78, seit: 9, dreh: -6 }, knieR: 88, fussR: 0,
+  };
   /* Der Gang: ein Zyklus aus Winkelkurven (Phase 0…1). Standbein zurück,
      Schwungbein mit gebeugtem Knie nach vorn, Arme gegengleich. */
   function gehPose(p) {
@@ -410,7 +427,6 @@
   }
   function pose(name) {
     if (name && typeof name === "object") return name;
-    if (name === "sitzen_seit") return POSEN.sitzen;
     return POSEN[name] || POSEN.stehen;
   }
 
@@ -534,12 +550,22 @@
     }
     const hvon = (s, nv) => {
       const u = s.U[0] * nv[0] + s.U[1] * nv[1], v = s.V[0] * nv[0] + s.V[1] * nv[1];
+      /* FASSUNG 838: Querschnitt vorn als Superellipse (Gesicht) */
+      if (s.pe && s.pe > 2.01) {
+        let h = -1e9;
+        for (let i = 0; i <= 24; i++) {
+          const q = -1 + i / 12, w = Math.pow(Math.max(0, 1 - Math.pow(Math.abs(q), s.pe)), 1 / s.pe);
+          h = Math.max(h, s.a * q * u + s.b * w * v, s.a * q * u - s.b * Math.sqrt(Math.max(0, 1 - q * q)) * v);
+        }
+        return h;
+      }
       return Math.sqrt((s.a * u) * (s.a * u) + (s.b * v) * (s.b * v));
     };
     for (let i = 0; i < n; i++) {
       const s = ps[i], t = tang[i], nv = [-t[1], t[0]], h = hvon(s, nv);
       links.push([s.c[0] + nv[0] * h, s.c[1] + nv[1] * h]);
-      rechts.push([s.c[0] - nv[0] * h, s.c[1] - nv[1] * h]);
+      const h2 = s.pe && s.pe > 2.01 ? hvon(s, [-nv[0], -nv[1]]) : h;   // Superellipse: vorn und hinten verschieden
+      rechts.push([s.c[0] - nv[0] * h2, s.c[1] - nv[1] * h2]);
     }
     const kappe = (s, t, vorwaerts) => {
       /* Halbe Ellipse vom einen Rand über die Spitze zum anderen. */
@@ -721,7 +747,9 @@
         const U = unit(lerp3(lerp3(mv(fB.R, [1, 0, 0]), mv(fL.R, [1, 0, 0]), w1), mv(fC.R, [1, 0, 0]), w2));
         const Vv = unit(lerp3(lerp3(mv(fB.R, [0, 0, 1]), mv(fL.R, [0, 0, 1]), w1), mv(fC.R, [0, 0, 1]), w2));
         const breit = (M.erw ? 1 : 0.94) * f;
-        const sn = schnitt(c, U, Vv, q[1] * M.k * breit + dicke, q[2] * M.k * breit * (M.erw ? 1 : 1.05) + dicke);
+        /* FASSUNG 838: dicke darf je Höhe verschieden sein (Oberteil liegt an der Taille an) */
+        const dk = typeof dicke === "function" ? dicke(q[0]) : dicke;
+        const sn = schnitt(c, U, Vv, q[1] * M.k * breit + dk, q[2] * M.k * breit * (M.erw ? 1 : 1.05) + dk);
         sn.hy = q[0];
         out.push(sn);
       });
@@ -809,6 +837,11 @@
     /* FASSUNG 836: unten breiter (Kapuzenmuskel), oben unter dem Kiefer schmal */
     const HALS = [[-0.12, 7.4, 5.9, -0.9], [0.18, 6.0, 5.6, -0.5], [0.55, 5.3, 5.3, 0.2], [1.0, 5.1, 5.3, 0.7]];
     const halsLaenge = len(sub(S.kopf.basis, S.hals.p)) + 1.5 * M.k;
+    /* FASSUNG 838: bei Säugling und Kleinkind lag der Halsansatz über dem
+       oberen Ende des Rumpfs — zwischen Hals und Pullover war eine Lücke
+       (Hintergrund). Der Hals reicht jetzt bis in den Rumpf hinein. */
+    const halsLuecke = M.halsH - (M.huefteH + rumpfTab[rumpfTab.length - 1][0] * M.k);
+    if (halsLuecke > -1) HALS[0] = [-0.12 - (halsLuecke + 1.5) / halsLaenge, 7.4, 5.9, -0.9];
     const halsS = HALS.map((q) => schnitt(add(add(S.hals.p, mul(unit(sub(S.kopf.basis, S.hals.p)), q[0] * halsLaenge)), mul(mv(halsR, [0, 0, 1]), q[3] * M.k)),
       mv(halsR, [1, 0, 0]), mv(halsR, [0, 0, 1]), q[1] * (M.kopf / 23.7) * (M.w ? 0.9 : 1) * f, q[2] * (M.kopf / 23.7) * (M.w ? 0.92 : 1) * f));
 
@@ -908,7 +941,7 @@
     if (spec.nurMessen) return { mess };
     const prRichtung = (v) => { const q = cam.bild(cam.welt(v)); return spec.spiegel ? [-q[0], q[1], q[2]] : q; };
     const kreuz3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-    const proj = (ss) => ss.map((s) => ({ c: pr(s.c), U: prRichtung(s.U), V: prRichtung(s.V), T: prRichtung(kreuz3(s.U, s.V)), a: s.a, b: s.b }));
+    const proj = (ss) => ss.map((s) => ({ c: pr(s.c), U: prRichtung(s.U), V: prRichtung(s.V), T: prRichtung(kreuz3(s.U, s.V)), a: s.a, b: s.b, pe: s.pe }));
     const LICHT = spec.spiegel ? [0.55, -0.83] : [-0.55, -0.83];
 
     function verlauf(pts2, grund, opt) {
@@ -1058,7 +1091,7 @@
       const handschuh = zub && zub.stueck === "handschuhe";
       const farbe = handschuh ? stoff(zub, "#5a4636") : hautF;
       let out = form(palm, farbe, { hell: 0.14, dunkel: 0.16 });
-      const fl = L0 * 0.47, fb = 1.0 * g * (M.w ? 0.88 : 1) * (M.erw ? 1 : 1.12);
+      const fl = L0 * 0.47, fb = 1.08 * g * (M.w ? 0.88 : 1) * (M.erw ? 1 : 1.12);
       const finger = [];
       const lage = [0.72, 0.24, -0.24, -0.7];
       const laengen = [0.93, 1.03, 0.97, 0.78];
@@ -1098,7 +1131,21 @@
         let o = linie(pp, dunkler(farbe, 0.36), b * 2 + 0.34 * g);
         for (let j = 0; j < pp.length - 1; j++) o += linie([pp[j], pp[j + 1]], farbe, b * 2 * breiten[Math.min(j, 2)]);
         const e = pp[pp.length - 1], v = pp[pp.length - 2];
-        o += '<circle cx="' + r1(lerp(v[0], e[0], 0.7)) + '" cy="' + r1(lerp(v[1], e[1], 0.7)) + '" r="' + r1(b * 0.55) + '" fill="' + heller(farbe, 0.35) + '" opacity=".4"/>';
+        /* FASSUNG 838: Nagel als helle Platte mit Rand und Nagelhaut,
+           Knöchelfalten an den Gelenken (quer zum Finger). */
+        const R2 = (x) => Math.round(x * 100) / 100;
+        const dx = e[0] - v[0], dy = e[1] - v[1], dl = Math.hypot(dx, dy) || 1;
+        if (!handschuh && dl > 0.3 * g) {
+          const nc = [lerp(v[0], e[0], 0.68), lerp(v[1], e[1], 0.68)];
+          o += '<ellipse cx="' + R2(nc[0]) + '" cy="' + R2(nc[1]) + '" rx="' + R2(b * 0.62) + '" ry="' + R2(Math.min(dl * 0.34, b * 0.95)) + '" transform="rotate(' + r1(Math.atan2(dy, dx) * 180 / Math.PI + 90) + "," + R2(nc[0]) + "," + R2(nc[1]) + ')" fill="' + misch(heller(farbe, 0.4), "#f2c4bd", 0.3) + '" stroke="' + dunkler(farbe, 0.25) + '" stroke-width="' + R2(0.07 * g) + '" opacity=".85"/>';
+        }
+        let kn = "";
+        for (let j = 1; j < pp.length - 1; j++) {
+          const a0 = pp[j - 1], a1 = pp[j + 1], tx = a1[0] - a0[0], ty = a1[1] - a0[1], tl = Math.hypot(tx, ty) || 1;
+          const nx = -ty / tl * b * 0.7, ny = tx / tl * b * 0.7;
+          kn += "M" + R2(pp[j][0] - nx) + " " + R2(pp[j][1] - ny) + "Q" + R2(pp[j][0] + tx / tl * b * 0.2) + " " + R2(pp[j][1] + ty / tl * b * 0.2) + " " + R2(pp[j][0] + nx) + " " + R2(pp[j][1] + ny);
+        }
+        if (kn) o += '<path d="' + kn + '" fill="none" stroke="' + dunkler(farbe, 0.34) + '" stroke-width="' + R2(0.08 * g) + '" opacity=".6"/>';
         return o;
       };
       const hinten = finger.filter((fi) => fi.tiefe < palmT).sort((a, b) => a.tiefe - b.tiefe);
@@ -1223,15 +1270,31 @@
             const hoch = knochen(Kn.p, Kn.R, M.unterschenkel, [[fussArt.schaft, 5.2, 5.6, -0.3], [0.84, 3.9, 4.0, 0], [1.0, 3.9, 4.2, 0]], f);
             svg += form(hoch, farbe, { hell: 0.2, dunkel: 0.26 });
           }
-          /* Sohle als dunkler Rand unten */
-          const unterkante = t.fuss.map((s) => pr(add(s.c, mul(s.V, -(s.b + 0.5 * g)))));
-          if (fussVorn <= 0.6) {
-            svg += linie(unterkante, fussArt.sohle || dunkler(farbe, 0.5), 0.9 * g);
-            if (fussArt.weiss) svg += linie(unterkante, "#f3f1ec", 0.55 * g);
-          }
+          /* FASSUNG 838 — XANDER: „Füße/Schuhe von vorn nicht als Klumpen“.
+             Die Sohle läuft als Band rund um den Schuh (auch von vorn zu
+             sehen), vorn eine Zehenkappe, oben die Schnürung als Kreuz
+             über der Zunge, ein Glanz auf der Kappe. */
+          const sohleF = fussArt.sohle || dunkler(farbe, 0.55);
+          const ring = (s0, w, zu) => add(add(s0.c, mul(s0.U, Math.cos(w) * (s0.a + zu))), mul(s0.V, Math.sin(w) * (s0.b + zu)));
+          const band = [];
+          const fs = sohle;
+          for (let i = 0; i < fs.length; i++) band.push(ring(fs[i], -Math.PI * 0.08, 0));
+          for (let w = -0.08; w >= -0.92; w -= 0.12) band.push(ring(fs[fs.length - 1], Math.PI * w, 0.2 * g));
+          for (let i = fs.length - 1; i >= 0; i--) band.push(ring(fs[i], -Math.PI * 0.92, 0));
+          const bandP = band.filter((q, i) => true).map(pr);
+          svg += linie(bandP, sohleF, 1.0 * g, ' opacity=".95"');
+          if (fussArt.weiss) svg += linie(bandP, "#e2dfd7", 0.45 * g);
+          const kap = [0.25, 0.4, 0.5, 0.6, 0.75].map((w) => pr(ring(fs[fs.length - 2], Math.PI * w, 0.05 * g)));
+          if (sichtbar(mv(Fu.R, [0, 0, 1])) > -0.3) svg += linie(kap, dunkler(farbe, 0.28), 0.22 * g, ' opacity=".6"');
+          const glanzP = pr(ring(fs[fs.length - 2], Math.PI * 0.62, 0.1 * g));
+          svg += '<ellipse cx="' + r1(glanzP[0]) + '" cy="' + r1(glanzP[1]) + '" rx="' + r1(1.3 * g) + '" ry="' + r1(0.6 * g) + '" fill="#fff" opacity="' + (fussArt.weiss ? 0.5 : 0.22) + '"/>';
           if (fussArt.schnuerung) {
-            const a = pr(add(t.fuss[1].c, mul(t.fuss[1].V, t.fuss[1].b + 0.4 * g))), b = pr(add(t.fuss[2].c, mul(t.fuss[2].V, t.fuss[2].b + 0.4 * g)));
-            svg += linie([a, b], heller(farbe, 0.45), 0.35 * g, ' stroke-dasharray="' + r1(0.5 * g) + " " + r1(0.6 * g) + '"');
+            let sn = "";
+            const ose = (i, sg) => pr(ring(fs[i], Math.PI * (0.5 + sg * 0.16), 0.15 * g));
+            [[1, 2], [2, 3]].forEach(([i, j]) => { sn += "M" + r1(ose(i, 1)[0]) + " " + r1(ose(i, 1)[1]) + "L" + r1(ose(j, -1)[0]) + " " + r1(ose(j, -1)[1]) + "M" + r1(ose(i, -1)[0]) + " " + r1(ose(i, -1)[1]) + "L" + r1(ose(j, 1)[0]) + " " + r1(ose(j, 1)[1]); });
+            const zunge = [pr(ring(fs[1], Math.PI * 0.5, 0.25 * g)), pr(ring(fs[3], Math.PI * 0.5, 0.1 * g))];
+            svg += linie(zunge, dunkler(farbe, 0.2), 2.2 * g, ' opacity=".35"');
+            svg += '<path d="' + sn + '" stroke="' + (fussArt.weiss ? "#8d9096" : heller(farbe, 0.5)) + '" stroke-width="' + r1(0.3 * g) + '" stroke-linecap="round"/>';
           }
         }
       }
@@ -1265,6 +1328,8 @@
           /* Stauchfalten über dem Schuh und die Bügelfalte bzw. Naht */
           svg += hosenFalte(unten, [[0.84, 45], [0.87, 90], [0.84, 135]], farbe, aussen, 0.45) + hosenFalte(unten, [[0.93, 55], [0.96, 88], [0.94, 125]], farbe, aussen, 0.4);
           svg += gliedLinie(unten, [[0.12, 90], [0.8, 90]], heller(farbe, 0.18), 0.35 * g, 0.4, aussen);
+          /* FASSUNG 838: Seitennaht */
+          svg += gliedLinie(oben, [[0.1, 8], [0.95, 5]], dunkler(farbe, 0.35), 0.18 * g, 0.5, aussen) + gliedLinie(unten, [[0.02, 5], [0.97, 3]], dunkler(farbe, 0.35), 0.18 * g, 0.5, aussen);
           const saum = unten[unten.length - 1];
           const sq = { c: pr(saum.c), U: prRichtung(saum.U), V: prRichtung(saum.V), a: saum.a, b: saum.b };
           const saumPts = ellipsePunkte(sq, 16).filter((p, i) => Math.sin(i / 16 * 2 * Math.PI) * sq.V[2] + Math.cos(i / 16 * 2 * Math.PI) * sq.U[2] > -0.1);
@@ -1298,7 +1363,12 @@
       const sd = t.seite, aussen = sd === "L" ? 1 : -1;
       const beuge = P["ellbogen" + sd] || 0;
       const einzeln = beuge > 72;
-      let svg = kette([{ ss: t.oberarm, grund: koerperF, offen: true, opt: { hell: 0.16, dunkel: 0.2 } },
+      /* FASSUNG 838: mit Ärmel beginnen Arm und Ärmel am Schultergelenk —
+         die Kappe darüber gehört zum Rumpf (Schulternaht), sonst saß der
+         Ärmel wie ein Polster oben auf der Schulter. */
+      const mitAermel0 = aermel > 0 && aermelFarbe && !spec.muskeln;
+      const oberarmS = mitAermel0 ? t.oberarm.slice(2) : t.oberarm;
+      let svg = kette([{ ss: oberarmS, grund: koerperF, offen: true, opt: { hell: 0.16, dunkel: 0.2 } },
         { ss: t.unterarm, grund: koerperF, einzeln, opt: { hell: 0.16, dunkel: 0.2 } }]);
       if (spec.muskeln) {
         const aus = t.seite === "L" ? 0 : 180;
@@ -1314,7 +1384,8 @@
         if (M.erw && !M.w) for (let i = 0; i < 7; i++) svg += gliedLinie(t.unterarm, [[0.18 + i * 0.09, -10 + (i % 3) * 25], [0.22 + i * 0.09, -4 + (i % 3) * 25]], dunkler(haarF, 0.1), 0.1 * g, 0.32, aussen);
       }
       if (aermel > 0 && aermelFarbe) {
-        const ober = aufblasen(t.oberarm, 1.0 * g);
+        /* FASSUNG 838: an der Schulter liegt der Ärmel an (vorher Puffärmel) */
+        const ober = oberarmS.map((s0, i) => { const d = (aermel >= 1 ? (i < 1 ? 0.5 : (i < 3 ? 0.8 : 1.0)) : 0.65) * g; return schnitt(s0.c, s0.U, s0.V, s0.a + d, s0.b + d); });
         if (aermel >= 1) {
           /* Der Ärmel ist weiter als der Arm und wird zum Bündchen enger. */
           const lang = aermel >= 2;
@@ -1340,7 +1411,7 @@
             svg += '<path d="' + pfad(bund) + '" fill="none" stroke="' + dunkler(aermelFarbe, 0.3) + '" stroke-width="' + r1(0.3 * g) + '" opacity=".6"/>';
           }
         } else {
-          const kurz = ober.slice(0, 4);
+          const kurz = ober.slice(0, 3);
           svg += kette([{ ss: kurz, grund: aermelFarbe, offen: true, opt: { hell: 0.16, dunkel: 0.24 } }]);
           const e = kurz[kurz.length - 1];
           const bund = ellipsePunkte({ c: pr(e.c), U: prRichtung(e.U), V: prRichtung(e.V), a: e.a, b: e.b }, 14)
@@ -1353,14 +1424,19 @@
          über die Schulter und der Arm hängt wie bei einer Puppe hinten
          dran. Nur solange die Schulter noch am Umriss liegt. */
       const brustS = rumpf.find((q) => q.hy >= 43) || rumpf[rumpf.length - 3];
-      if (t.tiefe < rumpfTiefe0 && pr(S["schulter" + sd].p)[2] - pr(brustS.c)[2] > -0.62 * brustS.b) {
+      if (t.tiefe < rumpfTiefe0 && pr(S["schulter" + sd].p)[2] - pr(brustS.c)[2] > -0.62 * brustS.b && !(aermel > 0 && aermelFarbe)) {
+        /* FASSUNG 838: mit Ärmel keine Kappe mehr — sie saß als Polster auf
+           der Schulter; jetzt kommt der Ärmel unter der Schulternaht hervor. */
         const mitAermel = aermel > 0 && aermelFarbe;
-        const kappeSS = (mitAermel ? aufblasen(t.oberarm, 1.0 * g) : t.oberarm).slice(0, 6);
+        const kappeSS = (mitAermel ? t.oberarm.map((s0, i) => { const d = (aermel >= 1 ? (i < 3 ? 0.35 : (i < 5 ? 0.7 : 1.0)) : 0.65) * g; return schnitt(s0.c, s0.U, s0.V, s0.a + d, s0.b + d); }) : t.oberarm).slice(0, 6);
         auftraege.push({ tiefe: rumpfTiefe0 + 0.05, svg: kette([{ ss: kappeSS, grund: mitAermel ? aermelFarbe : koerperF, offen: true, einzeln: true, nurSeiten: true, aussenX: pr(brustS.c)[0], opt: { hell: 0.16, dunkel: mitAermel ? 0.24 : 0.2 } }]) });
       }
       svg += hand(t.hand, t.seite, t.tiefe);
       if (zub && t.seite === (P.traghand || "R")) svg += zubehoerInHand(zub, t.hand);
-      auftraege.push({ tiefe: t.tiefe, svg, arm: true, seite: t.seite });
+      /* FASSUNG 838: ein Arm im Ärmel, der neben dem Rumpf hängt, liegt
+         hinter dem Rumpf — die Schulternaht deckt den Ärmelansatz. */
+      const hinterRumpf = mitAermel0 && Math.abs(t.tiefe - rumpfTiefe0) < 5 * g;
+      auftraege.push({ tiefe: hinterRumpf ? rumpfTiefe0 - 0.02 : t.tiefe, svg, arm: true, seite: t.seite });
     });
 
     /* Rumpf mit Oberteil, Kleid, Jacke, Schürze */
@@ -1438,11 +1514,34 @@
     })();
     const nackt = !oben && !kleid && !jacke;
     const oberArt = oben ? OBERTEIL[oben.stueck] || OBERTEIL.tshirt : null;
+    /* FASSUNG 838: Oberteile mit Ärmeln decken die Schulter bis über den
+       Deltamuskel — der Ärmel kommt darunter hervor (Schulternaht), statt
+       als Polster auf der Schulter zu sitzen. */
+    function schulterStoff(tab, aermel) {
+      if (!aermel) return tab;
+      const zu = (y) => y < 45 ? 0 : (y < 50 ? lerp(0, 2.6, (y - 45) / 5) : (y < 53.5 ? lerp(2.6, 4.4, (y - 50) / 3.5) : (y < 56.5 ? lerp(4.4, 1.2, (y - 53.5) / 3) : 0)));
+      const sk = M.erw ? 1 : (spec.alter === "saeugling" ? 0.35 : 0.7);   /* Kinder: schmalere Schulter */
+      return tab.map((q) => [q[0], q[1] + zu(q[0]) * f * sk, q[2], q[3]]);
+    }
     /* Hose am Rumpf (Gesäß und Bund) */
     if (hoseArt) {
       const farbe = stoff(hose, "#3b4d6b");
       const bund = hoseArt.bund == null ? 9 : hoseArt.bund;
-      rumpfSvg += rumpfForm(rumpfSchnitte(rumpfTab, 0.9 * g, bund * M.k), farbe, { hell: 0.16, dunkel: 0.24 }, 0);
+      const hss = rumpfSchnitte(rumpfTab, 0.9 * g, bund * M.k);
+      rumpfSvg += rumpfForm(hss, farbe, { hell: 0.16, dunkel: 0.24 }, 0);
+      /* FASSUNG 838: Nähte der Hose — Hosenschlitz mit J-Naht, Taschen,
+         Gürtelschlaufen; bei Jeans gelbe Ziernaht. */
+      if (hoseArt.lang || hoseArt.gurt) {
+        const naht = hose.stueck === "jeans" ? "#c9953f" : dunkler(farbe, 0.35);
+        const nb = hose.stueck === "jeans" ? 0.16 * g : 0.22 * g;
+        const bo = bund - 1.2;
+        rumpfSvg += stoffLinie(hss, [[bo, 0.06], [3, 0.06], [0.5, 0.0]], naht, nb, 0.8) + stoffLinie(hss, [[bo, 0.0], [1, 0.0]], dunkler(farbe, 0.4), 0.2 * g, 0.5);
+        [1, -1].forEach((sg) => {
+          rumpfSvg += stoffLinie(hss, [[bo, sg * 0.42], [bo - 3, sg * 0.6], [bo - 5.5, sg * 0.82]], dunkler(farbe, 0.38), 0.24 * g, 0.6);
+          rumpfSvg += stoffLinie(hss, [[bo - 0.3, sg * 0.36], [bo - 3.4, sg * 0.55], [bo - 6, sg * 0.8]], naht, nb, 0.6);
+          [0.3, 0.8].forEach((u) => { rumpfSvg += stoffLinie(hss, [[bund + 0.2, sg * u], [bund - 1.8, sg * u]], dunkler(farbe, 0.3), 0.55 * g, 0.55); });
+        });
+      }
       if (hoseArt.lang || hoseArt.gurt) {
         const b = rumpfSchnitte(rumpfTab, 1.0 * g, bund * M.k);
         const oberk = b[b.length - 1];
@@ -1455,9 +1554,17 @@
       const farbe = stoff(oben, "#c8c8c8");
       const bis = oberArt.oben == null ? 56 : oberArt.oben;
       const von = oberArt.unten == null ? -2 : oberArt.unten;
-      const ss = rumpfSchnitte(rumpfTab.filter((q) => q[0] >= von), 0.8 * g, bis * M.k);
-      rumpfSvg += form(ss, farbe, { hell: 0.18, dunkel: 0.24 });
+      /* FASSUNG 838, Runde 2 — „Rumpf: Taille/Brustkorb im T-Shirt etwas
+         formen, damit er nicht sackartig wirkt.“ Über dem Hosenbund liegt der
+         Stoff an der Taille an (0,6 cm statt 1,15 cm), über der Brust wieder
+         weiter; darunter fällt er locker über den Bund. */
+      const anlieg = (y) => (y <= 11.5 ? 1.15 : (y < 15 ? lerp(1.15, 0.6, (y - 11.5) / 3.5) : (y < 24 ? 0.6 : (y < 34 ? lerp(0.6, 1.0, (y - 24) / 10) : 1.0)))) * g;
+      const ss = rumpfSchnitte(hemdTab(schulterStoff(rumpfTab, oberArt.aermel)).filter((q) => q[0] >= von), anlieg, bis * M.k);
+      const hemdForm = form(ss, farbe, { hell: 0.18, dunkel: 0.24 });
+      rumpfSvg += hemdForm;
+      rumpfSvg += stoffRundung(farbe, ss, (/d="([^"]+)"/.exec(hemdForm) || [])[1]);
       rumpfSvg += oberteilDetails(oberArt, farbe, ss);
+      rumpfSvg += stoffFalten(oberArt, farbe, ss, von);
     }
     if (kleid) {
       const art = KLEID[kleid.stueck] || KLEID.sommerkleid;
@@ -1521,7 +1628,7 @@
     if (jacke) {
       const art = JACKE[jacke.stueck] || JACKE.jacke;
       const farbe = stoff(jacke, "#445566");
-      const ss = rumpfSchnitte(rumpfTab.filter((q) => q[0] >= (art.lang ? -5 : -6)), (art.weste ? 1.1 : 1.5) * g, (art.weste ? 52 : 55) * M.k);
+      const ss = rumpfSchnitte(schulterStoff(rumpfTab, art.aermel).filter((q) => q[0] >= (art.lang ? -5 : -6)), (art.weste ? 1.1 : 1.5) * g, (art.weste ? 52 : 57.2) * M.k);
       let svg = form(ss, farbe, { hell: 0.2, dunkel: 0.26 });
       if ((art.weste || art.offen) && oberArt && sichtbar(ss[ss.length - 3].V) > 0.1) {
         /* V-Ausschnitt: das Hemd schaut heraus */
@@ -1562,6 +1669,85 @@
       const m1 = pr(add(add(b0.c, mul(b0.U, 0.2 * b0.a)), mul(b0.V, b0.b + 0.5 * g)));
       svgS += linie([m1, [lerp(unten[0][0], unten[1][0], 0.4), lerp(unten[0][1], unten[1][1], 0.4)]], dunkler(farbe, 0.16), 0.25 * g, ' opacity=".6"');
       auftraege.push({ tiefe: Math.max(vorneTiefe, rumpfTiefe) + 0.4, svg: svgS });
+    }
+
+    /* FASSUNG 838 — XANDER (Funk 222): „alles soll Struktur haben“.
+       Eine Linie auf dem Stoff über dem Rumpf: Punkte [Höhe (Tabelle),
+       quer −1 … 1, vorn +1 / hinten −1]; unsichtbare Stücke fallen weg. */
+    function stoffLinie(ss, liste, farbe, breite, deck) {
+      const o = liste.map((q) => {
+        let i = 0; while (i < ss.length - 2 && ss[i + 1].hy < q[0]) i++;
+        const a0 = ss[i], a1 = ss[i + 1] || ss[i];
+        const t = klemm((q[0] - a0.hy) / ((a1.hy - a0.hy) || 1), 0, 1);
+        const c = lerp3(a0.c, a1.c, t), Uu = unit(lerp3(a0.U, a1.U, t)), Vv = unit(lerp3(a0.V, a1.V, t));
+        const ra = lerp(a0.a, a1.a, t), rb = lerp(a0.b, a1.b, t), w = Math.sqrt(Math.max(0, 1 - q[1] * q[1])), v = q[2] == null ? 1 : q[2];
+        return { p: add(add(c, mul(Uu, q[1] * ra * 1.01)), mul(Vv, v * rb * w * 1.01)), n: unit(add(mul(Uu, q[1] / ra), mul(Vv, v * w / rb))) };
+      });
+      const sicht = o.reduce((a, q) => a + sichtbar(q.n), 0) / o.length;
+      if (sicht < 0.1) return "";
+      return linie(o.map((q) => pr(q.p)), farbe, breite, ' opacity="' + (deck * klemm(sicht * 1.4, 0, 1)).toFixed(2) + '"');
+    }
+    /* Falten und Nähte am Oberteil: Zugfalten von der Achsel, Stauch-
+       falten über dem Bund, Seiten- und Schulternaht, Saum mit Naht und
+       einem Schatten darunter; beim Pullover Rippen an Saum und Bündchen. */
+    function stoffFalten(art, farbe, ss, von) {
+      if (!ss.length || art.aermel === 0 && !art.rund) return "";
+      const d = dunkler(farbe, 0.32), hl = heller(farbe, 0.22), gw = g;
+      const bein = rumpfTab[0][0];
+      let o = "";
+      [1, -1].forEach((sg) => {
+        o += stoffLinie(ss, [[45, sg * 0.93], [37, sg * 0.72], [29, sg * 0.55]], d, 0.3 * gw, 0.35);
+        o += stoffLinie(ss, [[43, sg * 0.86], [34, sg * 0.5], [27, sg * 0.36]], hl, 0.35 * gw, 0.3);
+        o += stoffLinie(ss, [[8, sg * 0.85], [6.5, sg * 0.55], [7.5, sg * 0.25]], d, 0.26 * gw, 0.35);
+        o += stoffLinie(ss, [[4, sg * 0.7], [3, sg * 0.4]], d, 0.22 * gw, 0.3);
+        o += stoffLinie(ss, [[von + 1, sg * 0.999, 0], [46, sg * 0.999, 0]], d, 0.2 * gw, 0.4);
+        o += stoffLinie(ss, [[57, sg * 0.55], [54, sg * 0.85], [51, sg * 0.99]], d, 0.18 * gw, 0.35);
+        o += stoffLinie(ss, [[57, sg * 0.55, -1], [54, sg * 0.85, -1], [51, sg * 0.99, -1]], d, 0.18 * gw, 0.35);
+      });
+      /* Saum: Naht und Schatten auf der Hose darunter */
+      const saumY = Math.max(von, bein) + 0.8;
+      const saumL = [-0.98, -0.6, -0.2, 0.2, 0.6, 0.98].map((u) => [saumY, u]);
+      o += stoffLinie(ss, saumL, d, 0.2 * gw, 0.5);
+      o += stoffLinie(ss, saumL.map((q) => [q[0] - 1.1, q[1] * 1.02]), dunkler(farbe, 0.6), 0.9 * gw, 0.18);
+      if (art.strick) {
+        for (let u = -0.9; u <= 0.91; u += 0.12) o += stoffLinie(ss, [[saumY - 0.6, u], [saumY + 3.2, u]], d, 0.12 * gw, 0.35);
+      }
+      return o;
+    }
+    /* FASSUNG 838, Runde 2: Säugling — der Kragen reicht bis unter das
+       Kinn (kurzer Hals), statt einen langen Hals frei zu lassen. */
+    function hemdTab(tab) {
+      return tab;   /* (Versuch mit hohem Kragen verworfen: sah schief aus — der
+                       Säuglingshals ist jetzt über höhere Schultern kurz, massFuer) */
+    }
+    /* Rundung des Oberkörpers: an beiden Seiten ein weicher Kernschatten,
+       auf der Lichtseite ein breiter Glanz — der Stoff wirkt wie über einen
+       Zylinder gespannt. */
+    function stoffRundung(farbe, ss, dPfad) {
+      if (!ss.length) return "";
+      const m = ss[Math.floor(ss.length / 2)];
+      const aL = pr(add(m.c, mul(m.U, m.a))), aR = pr(add(m.c, mul(m.U, -m.a)));
+      if (!dPfad) return "";
+      const links = aL[0] < aR[0] ? aL : aR, rechts = aL[0] < aR[0] ? aR : aL;
+      const gid = id + "r" + (gz++), d = dunkler(farbe, 0.55), hl = heller(farbe, 0.4);
+      /* Licht von links: links Glanz nahe am Rand, beide Ränder im Kernschatten */
+      defs.push('<linearGradient id="' + gid + '" gradientUnits="userSpaceOnUse" x1="' + r1(links[0]) + '" y1="0" x2="' + r1(rechts[0]) + '" y2="0">'
+        + '<stop offset="0" stop-color="' + d + '" stop-opacity=".22"/><stop offset=".1" stop-color="' + d + '" stop-opacity=".05"/>'
+        + '<stop offset=".26" stop-color="' + hl + '" stop-opacity=".16"/><stop offset=".45" stop-color="' + hl + '" stop-opacity="0"/>'
+        + '<stop offset=".78" stop-color="' + d + '" stop-opacity=".06"/><stop offset="1" stop-color="' + d + '" stop-opacity=".3"/></linearGradient>');
+      return '<path d="' + dPfad + '" fill="url(#' + gid + ')"/>';
+    }
+    /* Das Halsbündchen liegt VOR dem Hals (der Hals wird nach dem Rumpf
+       gezeichnet und deckte den Ausschnitt sonst zu). */
+    function halsBuendchen(art, farbe, ss) {
+      if (!art.rund || !ss.length) return "";
+      const top = ss[ss.length - 1];
+      if (sichtbar(top.V) < -0.1) return "";
+      const ring = (dy, zu) => { const pts = []; for (let i = 0; i <= 12; i++) { const w = Math.PI * i / 12; pts.push(pr(add(add(add(top.c, mul(top.U, Math.cos(w) * (top.a + zu))), mul(top.V, Math.sin(w) * (top.b + zu))), mul(mv(S.brust.R, [0, 1, 0]), dy)))); } return pts; };
+      const o1 = ring(0, 0.2 * g), u1 = ring(1.4 * g, 0.5 * g).reverse();
+      let o = '<path d="M' + o1.concat(u1).map((p) => r1(p[0]) + " " + r1(p[1])).join("L") + 'Z" fill="' + farbe + '" stroke="' + dunkler(farbe, 0.3) + '" stroke-width="' + r1(0.2 * g) + '" stroke-linejoin="round"/>';
+      o += linie(ring(0.7 * g, 0.35 * g), dunkler(farbe, 0.25), 0.15 * g, ' opacity=".6"');
+      return o;
     }
 
     /* ---- Oberteil-Details: Kragen, Knöpfe, Reißverschluss ---- */
@@ -1657,17 +1843,30 @@
       defs.push('<clipPath id="' + cid + '"><path d="' + pfad(hp) + '"/></clipPath>');
       const oberst = halsS[halsS.length - 1];
       const sp = pr(add(oberst.c, add(mul(oberst.V, oberst.b * 0.5), mul(mv(S.hals.R, [0, 1, 0]), 1.2 * M.k))));
-      let schat = '<ellipse cx="' + r1(sp[0]) + '" cy="' + r1(sp[1]) + '" rx="' + r1(oberst.a * 1.3) + '" ry="' + r1(3.2 * M.k) + '" fill="' + dunkler(hautF, 0.4) + '" opacity=".3"/>';
+      /* FASSUNG 838: der Schatten unter dem Kinn ist ein weicher Verlauf
+         (vorher eine halbdurchsichtige Scheibe mit sichtbarem Rand). */
+      const nsid = id + "ns" + (gz++);
+      defs.push('<radialGradient id="' + nsid + '"><stop offset="0" stop-color="' + dunkler(hautF, 0.5) + '" stop-opacity=".5"/><stop offset=".6" stop-color="' + dunkler(hautF, 0.5) + '" stop-opacity=".22"/><stop offset="1" stop-color="' + dunkler(hautF, 0.5) + '" stop-opacity="0"/></radialGradient>');
+      let schat = '<ellipse cx="' + r1(sp[0]) + '" cy="' + r1(sp[1]) + '" rx="' + r1(oberst.a * 1.5) + '" ry="' + r1(3.8 * M.k) + '" fill="url(#' + nsid + ')"/>';
       if (sichtbar(mv(S.hals.R, [0, 0, 1])) > -0.2) {
         schat += gliedLinie(halsS, [[0.95, 150], [0.5, 125], [0.08, 98]], dunkler(hautF, 0.3), 0.35 * g, 0.35, 1)
           + gliedLinie(halsS, [[0.95, 30], [0.5, 55], [0.08, 82]], dunkler(hautF, 0.3), 0.35 * g, 0.35, 1);
-        if (M.erw && !M.w) schat += gliedLinie(halsS, [[0.42, 86], [0.58, 90], [0.42, 94]], heller(hautF, 0.3), 0.5 * g, 0.5, 1);
+        /* Adamsapfel: Licht oben, Schatten darunter statt eines Strichs */
+        if (M.erw && !M.w) schat += gliedLinie(halsS, [[0.5, 84], [0.56, 90], [0.5, 96]], heller(hautF, 0.3), 0.6 * g, 0.18, 1) + gliedLinie(halsS, [[0.4, 86], [0.44, 90], [0.4, 94]], dunkler(hautF, 0.3), 0.5 * g, 0.2, 1);
+        /* Drosselgrube zwischen den Kopfnickern */
+        schat += gliedLinie(halsS, [[0.02, 84], [0.1, 90], [0.02, 96]], dunkler(hautF, 0.35), 0.8 * g, 0.25, 1);
       }
       halsSvg += '<g clip-path="url(#' + cid + ')">' + schat + "</g>";
     }
     const kragenHoch = (oberArt && oberArt.rollkragen);
     if (kragenHoch) halsSvg += form(aufblasen(halsS.slice(0, 2), 0.8 * g), stoff(oben, "#c8c8c8"));
-    auftraege.push({ tiefe: rumpfTiefe + 0.5, svg: halsSvg, hals: true });
+    /* Beim Säugling reicht der Hals in den Rumpf: dann liegt er hinter dem Oberteil */
+    const halsHinten = (halsLuecke > -1 || spec.alter === "saeugling") && (oben || kleid || jacke);
+    auftraege.push({ tiefe: halsHinten ? rumpfTiefe - 0.05 : rumpfTiefe + 0.5, svg: halsSvg, hals: true });
+    if (oberArt && !jacke && !(kleid && !oben) && !halsHinten) {
+      const bis = oberArt.oben == null ? 56 : oberArt.oben;
+      auftraege.push({ tiefe: rumpfTiefe + 0.55, svg: halsBuendchen(oberArt, stoff(oben, "#c8c8c8"), rumpfSchnitte(hemdTab(rumpfTab), 1.15 * g, bis * M.k)) });
+    }
 
     const kopfSpec = Object.assign({}, spec, { kopfbedeckung: stueck("kopf"), brille: !!(zub && zub.stueck === "brille") });
     const kopfTeile = kopf(S.kopf, M, kopfSpec, { pr, prRichtung, sichtbar, form, fuellung: () => letzteFuellung, formPunkte, linie, verlauf, hautF, haarF, g, id, defs, zaehler: () => gz++, stoff, licht: LICHT });
@@ -1675,6 +1874,42 @@
     if (kopfTeile.hinten) {
       const profil = Math.abs(Math.sin(blick * RAD)) > 0.8;
       auftraege.push({ tiefe: profil ? rumpfTiefe + 0.1 : rumpfTiefe - 0.5, svg: kopfTeile.hinten });
+    }
+    /* FASSUNG 838, Runde 2 — „Langes Haar soll über die Schultern fallen
+       (Strähnen vor der Schulter), nicht als Fläche hinter dem Kopf.“
+       Je Seite eine Haarsträhne: vom Kopf neben dem Ohr über die Schulter
+       nach vorn und auf die Brust, vor Rumpf und Hals, hinter dem Gesicht. */
+    {
+      const frW = spec.frisur === "kahl" ? null : (FRISUR[spec.frisur] ? spec.frisur : (M.w ? "lang" : "kurz"));
+      const FR = frW && FRISUR[frW];
+      const KT = mv(S.kopf.R, [0, 1, 0]);
+      if (FR && FR.laenge && FR.ohrenFrei === false && spec.alter !== "saeugling" && KT[1] > 0.7 && !stueck("kopf")) {
+        const kk = M.kopf / 23, B = S.brust, hs = M.schulterH - M.huefteH - M.brustY;
+        const aufK = (y, u, v) => add(add(add(S.kopf.p, mul(mv(S.kopf.R, [0, 1, 0]), y * kk)), mul(mv(S.kopf.R, [1, 0, 0]), u * kk)), mul(mv(S.kopf.R, [0, 0, 1]), v * kk));
+        const aufB = (x, y, z) => add(B.p, mv(B.R, [x, y, z]));
+        const Ub = mv(B.R, [1, 0, 0]), Vb = mv(B.R, [0, 0, 1]);
+        let strang = "";
+        const lk = FR.laenge / 1.3;
+        [1, -1].forEach((sd) => {
+          const pts = [aufK(1.5, sd * 7.4, 1.2), aufK(6.5, sd * 7.9, 1.0), aufB(sd * 9 * g, -(hs + 0.5 * M.k), 4.5 * g), aufB(sd * 10 * g, -(hs - 7 * M.k * lk), 10.5 * g * f), aufB(sd * 9.2 * g, -(hs - 16 * M.k * lk), 11.2 * g * f)];
+          const br = [2.3, 2.6, 2.9, 2.5, 1.1], ti = [1.1, 1.2, 1.2, 1.0, 0.6];
+          const ss = pts.map((c, i) => schnitt(c, Ub, Vb, br[i] * g, ti[i] * g));
+          strang += form(ss, dunkler(haarF, 0.04), { hell: 0.3, dunkel: 0.32, kontur: dunkler(haarF, 0.3), strich: 0.1 * g });
+          /* Strähnen und Glanz im Strang */
+          const zeilen = [[], [], []];
+          for (let j = -3; j <= 3; j++) {
+            const zug = pts.map((c, i) => pr(add(c, add(mul(Ub, j / 3.4 * br[i] * g), mul(Vb, ti[i] * g * 0.9)))));
+            zeilen[j % 2 ? 0 : (j === 0 || j === 2 ? 2 : 1)].push(pfad(zug, true));
+          }
+          strang += '<path d="' + zeilen[0].join("") + '" fill="none" stroke="' + dunkler(haarF, 0.4) + '" stroke-width="' + r1(0.14 * g) + '" opacity=".5"/>'
+            + '<path d="' + zeilen[1].join("") + '" fill="none" stroke="' + dunkler(haarF, 0.2) + '" stroke-width="' + r1(0.2 * g) + '" opacity=".45"/>'
+            + '<path d="' + zeilen[2].join("") + '" fill="none" stroke="' + heller(haarF, 0.45) + '" stroke-width="' + r1(0.12 * g) + '" opacity=".55"/>';
+          /* spitz auslaufendes Ende */
+          const e = pr(pts[4]), e2 = pr(add(pts[4], mul(mv(B.R, [0, 1, 0]), 2.5 * g)));
+          strang += '<path d="M' + r1(e[0] - 1 * g) + " " + r1(e[1]) + "L" + r1(e2[0]) + " " + r1(e2[1]) + "L" + r1(e[0] + 1 * g) + " " + r1(e[1]) + 'Z" fill="' + dunkler(haarF, 0.1) + '"/>';
+        });
+        auftraege.push({ tiefe: rumpfTiefe + 0.7, svg: strang });
+      }
     }
 
     /* Schal über allem am Hals */
@@ -1841,9 +2076,13 @@
   function haarLinie(F) {
     if (F.linie) return F.linie;
     const st = F.stirn != null ? F.stirn : -6.4, na = F.nacken != null ? F.nacken : 4.8;
-    if (F.glatze) return [[0, -13], [50, -8], [70, -3], [85, -1.4], [100, -2.2], [120, 2], [150, 3.2], [180, na]];
-    if (F.ohrenFrei === false) return [[0, st], [30, st + 0.5], [55, -3.4], [72, 2.4], [90, 4.2], [115, 5.2], [150, na - 0.4], [180, na]];
-    return [[0, st], [32, st + (F.geheimrat ? -1.6 : 0.5)], [58, -3.6], [72, F.kotelette != null ? F.kotelette : 1.0], [80, -0.8], [95, -2.4], [112, 2.2], [145, na - 0.8], [180, na]];
+    /* FASSUNG 838, Runde 2: Stirn, dann eine fast senkrechte Schläfenkante,
+       schmale Koteletten vor dem Ohr (bis Ohrmitte), Bogen über dem Ohr,
+       hinter dem Ohr hinunter, Nacken — keine schräge Kante mehr. */
+    if (F.glatze) return [[0, -13], [50, -8], [66, -3.6], [72, -1], [75, 0.8], [80, 0.8], [84, -1], [95, -2.0], [106, -1.2], [116, 1.8], [128, 2.8], [150, 3.2], [180, na]];
+    if (F.ohrenFrei === false) return [[0, st], [30, st + 0.5], [48, -4.6], [57, -3.8], [61, -1.5], [63, 1.5], [66, 4.2], [90, 5], [115, 5.2], [150, na - 0.4], [180, na]];
+    const kt = F.kotelette != null ? F.kotelette : 1.2;
+    return [[0, st], [26, st + (F.geheimrat ? -1.6 : 0.3)], [44, st + 1.3], [55, -4.2], [61, -3.4], [65, -1.6], [68, 0.4], [71, kt], [77, kt], [80, -0.4], [86, -1.9], [96, -2.5], [106, -1.4], [114, 1.4], [124, 2.8], [150, na - 0.6], [180, na]];
   }
   function kopf(K, M, spec, h) {
     const { pr, prRichtung, sichtbar, form, linie, hautF, haarF, g } = h;
@@ -1856,16 +2095,28 @@
       let [y, a, b, v] = q;
       if (!M.erw) { a *= 1.04; b *= 0.98; if (y > 4) { a *= 0.92; b *= 0.9; v *= 0.85; y = y * 0.93 + 0.5; } }
       if (M.w && M.erw) { a *= 0.95; b *= 0.96; if (y > 5) { a *= 0.93; } }
+      /* FASSUNG 838, Runde 2: Säugling — runder Kopf, Pausbacken */
+      if (baby) { a *= 1.03; b *= 1.02; if (y > 1.5 && y < 9.8) a *= 1 + 0.08 * Math.sin((y - 1.5) / 8.3 * Math.PI); }
       return [y, a, b, v];
     });
     const auf = (y, u, vv) => add(add(add(K.p, mul(T, y * k)), mul(U, u * k)), mul(Vv, vv * k));
-    const ss = tab.map((q) => schnitt(auf(q[0], 0, q[3]), U, Vv, q[1] * k, q[2] * k));
+    /* Stirn bis Kinn flacher, am flachsten auf Höhe der Wangenknochen */
+    const peVon = (y) => 2 + (0.6 + 0.8 * glatt((y + 2.5) / 2.5) * glatt((7 - y) / 3)) * glatt((y + 6) / 2.5) * glatt((10.5 - y) / 2.5);
+    const ss = tab.map((q) => Object.assign(schnitt(auf(q[0], 0, q[3]), U, Vv, q[1] * k, q[2] * k), { pe: peVon(q[0]) }));
     const flaeche = (y, u) => {
       /* Punkt auf der Vorderfläche in Höhe y bei quer u (−1 … 1) */
       let i = 0; while (i < tab.length - 2 && tab[i + 1][0] < y) i++;
       const t = klemm((y - tab[i][0]) / (tab[i + 1][0] - tab[i][0]), 0, 1);
       const a = lerp(tab[i][1], tab[i + 1][1], t), b = lerp(tab[i][2], tab[i + 1][2], t), v = lerp(tab[i][3], tab[i + 1][3], t);
-      return { p: auf(y, u * a, v + b * Math.sqrt(Math.max(0, 1 - u * u))), n: unit(add(mul(U, u / a), mul(Vv, Math.sqrt(Math.max(0, 1 - u * u)) / b))), a, b, v };
+      /* FASSUNG 838, Runde 2: Das Gesicht ist vorn flacher als eine Ellipse
+         (Superellipse, Exponent bis 2,6 zwischen Stirn und Kinn). Augen,
+         Brauen und Mund liegen dadurch weiter vorn: im Halbprofil rückt das
+         hintere Auge vom Gesichtsrand weg hinter den Nasenrücken, statt am
+         Rand abgeschnitten zu werden. */
+      const pe = peVon(y);
+      const au = Math.min(Math.abs(u), 1), w = Math.pow(Math.max(0, 1 - Math.pow(au, pe)), 1 / pe);
+      const nu = (u < 0 ? -1 : 1) * Math.pow(au, pe - 1) / a, nv = Math.pow(w, pe - 1) / b;
+      return { p: auf(y, u * a, v + b * w), n: unit(add(mul(U, nu), mul(Vv, nv))), a, b, v };
     };
     /* Punkt rund um den Kopf: Höhe y, Winkel w (Grad, 0 = vorn, + = links), etwas außerhalb (zu, cm) */
     const rund = (y, w, zu) => {
@@ -1874,7 +2125,7 @@
     };
     const gesicht = spec.gesicht || "g1";
     const gi = Math.max(0, ["g1", "g2", "g3", "g4"].indexOf(gesicht));
-    let svg = form(ss, hautF, { hell: 0.16, dunkel: 0.22, fein: 40 });
+    let svg = form(ss, hautF, { hell: 0.16, dunkel: 0.22, fein: 40, kontur: dunkler(hautF, 0.32), strich: 0.2 * k });
     const kopfFuellung = h.fuellung() || hautF;
     let hinten = "";
     const vor = prRichtung(Vv);
@@ -1882,7 +2133,7 @@
     const vonVorn = sichtbar(Vv);
     const nasenSeite = vor[0] >= 0 ? 1 : -1;
     const nB = baby ? 0.6 : (M.erw ? (M.w ? 0.9 : 1) : 0.78);
-    const profilDeck = klemm((seitlich - 0.55) / 0.3, 0, 1);
+    const profilDeck = klemm((seitlich - 0.68) / 0.26, 0, 1);   /* FASSUNG 838: Profilkante erst ab etwa 43° (vorher zog sie im Halbprofil einen Strich über Stirn und Wange) */
     /* Die Schattenseite des Gesichts: die Seite, die vom Licht weg liegt. */
     const mitteX = pr(K.p)[0];
     const schatten = (pr(flaeche(4, 0.6).p)[0] - mitteX) * h.licht[0] < 0 ? 1 : -1;
@@ -1900,7 +2151,7 @@
       svg += '<path d="' + profilD + '" fill="' + kopfFuellung + '"/>';
       if (profilDeck > 0) svg += linie(pp, kontur, 0.3 * g, ' opacity="' + profilDeck.toFixed(2) + '"');
       const nasenDeck = klemm((seitlich - 0.22) / 0.33, 0, 1) - profilDeck;
-      if (nasenDeck > 0.02) svg += linie(pp.slice(3, 9), kontur, 0.26 * g, ' opacity="' + nasenDeck.toFixed(2) + '"');
+      if (nasenDeck > 0.02) svg += linie(pp.slice(4, 8), kontur, 0.16 * g, ' opacity="' + (nasenDeck * 0.45).toFixed(2) + '"');
     }
 
     /* Ohren: Krempe (Helix), Muschel, Läppchen — nach dem Haar gezeichnet,
@@ -1917,10 +2168,16 @@
       const bx = (rv[0] >= 0 ? -1 : 1) * breit;
       const d = "M" + r1(ob[0]) + " " + r1(ob[1]) + "C" + r1(ob[0] + bx * 1.25) + " " + r1(ob[1] - 0.8 * k) + " " + r1(o[0] + bx * 1.35) + " " + r1(o[1] + 1.6 * k) + " " + r1(un[0] + bx * 0.45) + " " + r1(un[1] - 0.2 * k)
         + "Q" + r1(un[0] + bx * 0.05) + " " + r1(un[1] + 0.5 * k) + " " + r1(un[0] - bx * 0.15) + " " + r1(un[1] - 0.6 * k) + "L" + r1(o[0]) + " " + r1(o[1] + 1.2 * k) + "Z";
-      svg += '<path d="' + d + '" fill="' + dunkler(hautF, 0.04) + '" stroke="' + kontur + '" stroke-width="' + r1(0.22 * k) + '" stroke-linejoin="round"/>';
+      svg += '<path d="' + d + '" fill="' + dunkler(hautF, 0.04) + '" stroke="' + kontur + '" stroke-width="' + r1(0.15 * k) + '" stroke-linejoin="round"/>';
+      /* FASSUNG 838: Ohr mit Krempe (Helix), Gegenleiste (Anthelix),
+         Muschel im Schatten, Ecke vor dem Gehörgang (Tragus), Läppchen. */
       if (vis > 0.45) {
-        svg += '<path d="M' + r1(ob[0] + bx * 0.35) + " " + r1(ob[1] + 0.7 * k) + "Q" + r1(o[0] + bx * 1.0) + " " + r1(o[1] - 0.6 * k) + " " + r1(o[0] + bx * 0.55) + " " + r1(o[1] + 2.2 * k) + '" fill="none" stroke="' + dunkler(hautF, 0.3) + '" stroke-width="' + r1(0.24 * k) + '" opacity=".7"/>';
-        svg += '<ellipse cx="' + r1(o[0] + bx * 0.35) + '" cy="' + r1(o[1] + 0.9 * k) + '" rx="' + r1(Math.abs(bx) * 0.28) + '" ry="' + r1(0.9 * k) + '" fill="' + dunkler(hautF, 0.32) + '" opacity=".45"/>';
+        const R2 = (v) => Math.round(v * 100) / 100;
+        svg += '<ellipse cx="' + R2(o[0] + bx * 0.33) + '" cy="' + R2(o[1] + 0.8 * k) + '" rx="' + R2(Math.abs(bx) * 0.36) + '" ry="' + R2(1.25 * k) + '" fill="url(#' + DK + ')" opacity=".6"/>';
+        svg += '<path d="M' + R2(ob[0] + bx * 0.3) + " " + R2(ob[1] + 0.6 * k) + "Q" + R2(o[0] + bx * 1.02) + " " + R2(o[1] - 0.7 * k) + " " + R2(o[0] + bx * 0.62) + " " + R2(o[1] + 2.3 * k) + '" fill="none" stroke="' + dunkler(hautF, 0.3) + '" stroke-width="' + R2(0.14 * k) + '" opacity=".65"/>';
+        svg += '<path d="M' + R2(o[0] + bx * 0.55) + " " + R2(o[1] - 0.9 * k) + "Q" + R2(o[0] + bx * 0.72) + " " + R2(o[1] + 0.6 * k) + " " + R2(o[0] + bx * 0.45) + " " + R2(o[1] + 2.0 * k) + '" fill="none" stroke="' + heller(hautF, 0.35) + '" stroke-width="' + R2(0.22 * k) + '" opacity=".5"/>';
+        svg += '<path d="M' + R2(o[0] + bx * 0.08) + " " + R2(o[1] + 0.9 * k) + "q" + R2(bx * 0.18) + " " + R2(0.3 * k) + " 0 " + R2(0.8 * k) + '" fill="none" stroke="' + dunkler(hautF, 0.3) + '" stroke-width="' + R2(0.13 * k) + '" opacity=".6"/>';
+        svg += '<ellipse cx="' + R2(un[0] + bx * 0.2) + '" cy="' + R2(un[1] - 0.3 * k) + '" rx="' + R2(Math.abs(bx) * 0.2) + '" ry="' + R2(0.4 * k) + '" fill="url(#' + GL + ')" opacity=".4"/>';
       }
     }); return svg; };
 
@@ -1943,34 +2200,131 @@
         const flaechePts = obenR.concat(untenR).map((q) => pr(q.p));
         const bf = voll ? misch(haarF, hautF, 0.12) : misch(haarF, hautF, 0.45);
         if (voll) {
-          svg += h.formPunkte(flaechePts, bf, { hell: 0.14, dunkel: 0.2, kontur: dunkler(bf, 0.2) });
-          for (let i = 0; i < 12; i++) {
-            const u = -0.8 + i * 0.145, y0 = kante(u) + 0.6;
-            const a = pt(y0, u), b = pt(Math.min(11.2, y0 + 2.6 + (i % 3) * 0.6), u * 0.92);
-            if (sichtbar(a.n) > 0.1) svg += linie([pr(a.p), pr(b.p)], dunkler(haarF, 0.25), 0.2 * k, ' opacity=".5"');
+          /* FASSUNG 838: Vollbart aus Haaren — dichte kurze Strähnen in drei
+             Tönen, die Wangenkante franst aus (vorher eine Platte mit 12
+             Strichen und harter Kante). */
+          svg += h.formPunkte(flaechePts, bf, { hell: 0.2, dunkel: 0.26, kontur: dunkler(bf, 0.12), strich: 0.08 * k });
+          const R2 = (v) => Math.round(v * 100) / 100, Q = (p) => R2(p[0]) + " " + R2(p[1]);
+          const tonB = ["", "", ""];
+          for (let i = 0; i < 70; i++) {
+            const u = -0.9 + (i % 14) * 0.138 + ((i * 7) % 5) * 0.012, reihe = Math.floor(i / 14);
+            const y0 = kante(u) - 0.3 + reihe * 1.25 + ((i * 3) % 4) * 0.15;
+            if (y0 > 11.4) continue;
+            const a = pt(y0, u), b = pt(Math.min(11.8, y0 + 1.3 + (i % 3) * 0.3), u * 0.95 + ((i % 5) - 2) * 0.01);
+            if (sichtbar(a.n) < 0.08) continue;
+            tonB[i % 3 === 0 ? 2 : i % 2] += "M" + Q(pr(a.p)) + "L" + Q(pr(b.p));
           }
+          if (tonB[0]) svg += '<path data-teil="bart" d="' + tonB[0] + '" stroke="' + dunkler(haarF, 0.35) + '" stroke-width="' + R2(0.13 * k) + '" stroke-linecap="round" opacity=".6"/>';
+          if (tonB[1]) svg += '<path d="' + tonB[1] + '" stroke="' + dunkler(haarF, 0.1) + '" stroke-width="' + R2(0.15 * k) + '" stroke-linecap="round" opacity=".55"/>';
+          if (tonB[2]) svg += '<path d="' + tonB[2] + '" stroke="' + heller(haarF, 0.35) + '" stroke-width="' + R2(0.09 * k) + '" stroke-linecap="round" opacity=".5"/>';
+          /* ausfransende Oberkante an der Wange */
+          let fr = "";
+          obenR.forEach((q, i) => { const p = pr(q.p), o = pr(add(q.p, mul(T, -0.7 * k))); fr += "M" + Q(p) + "L" + Q([o[0] + ((i % 3) - 1) * 0.15 * k, o[1]]); });
+          if (fr) svg += '<path d="' + fr + '" stroke="' + bf + '" stroke-width="' + R2(0.14 * k) + '" stroke-linecap="round" opacity=".7"/>';
         } else {
-          const pid = h.id + "s" + h.zaehler();
-          const q = 0.42 * k;
-          h.defs.push('<pattern id="' + pid + '" width="' + r1(q) + '" height="' + r1(q) + '" patternUnits="userSpaceOnUse"><circle cx="' + r1(q * 0.25) + '" cy="' + r1(q * 0.3) + '" r="' + r1(q * 0.1) + '" fill="' + dunkler(haarF, 0.15) + '"/><circle cx="' + r1(q * 0.72) + '" cy="' + r1(q * 0.75) + '" r="' + r1(q * 0.09) + '" fill="' + dunkler(haarF, 0.15) + '"/></pattern>');
-          const dd = pfad(flaechePts);
-          svg += '<path d="' + dd + '" fill="' + bf + '" opacity=".24"/><path d="' + dd + '" fill="url(#' + pid + ')" opacity=".42"/>';
+          /* FASSUNG 838, Runde 2 — „Bartstoppeln: aktuell ein regelmäßiges
+             Punkteraster (wie ein Sieb). Unregelmäßig streuen, dichter am
+             Kinn/Oberlippe, weicher Übergang.“ Jetzt einzelne kurze Haare
+             an zufälligen (festen) Stellen; die Dichte steigt zu Kinn und
+             Oberlippe und läuft zur Wange hin aus. */
+          const R2 = (v) => Math.round(v * 100) / 100, sf = dunkler(haarF, 0.2);
+          let zz = 7919;
+          const zuf = () => { zz = (zz * 16807) % 2147483647; return zz / 2147483647; };
+          const dicht = ["", ""];
+          for (let i = 0; i < 520; i++) {
+            const u = -0.98 + zuf() * 1.96, oben = kante(u), unten = 11.6 - Math.abs(u) * 3.2;
+            const y = oben + zuf() * (unten - oben);
+            let wgt = 0.25 + 0.75 * glatt((y - 8.6) / 2) + (Math.abs(u) < 0.36 && y > 5.2 && y < 6.8 ? 0.7 : 0);
+            wgt *= glatt((y - oben) / 1.6) * (0.55 + 0.45 * glatt((0.95 - Math.abs(u)) / 0.4));
+            if (zuf() > wgt) continue;
+            const q = pt(y, u);
+            if (sichtbar(q.n) < 0.06) continue;
+            const a = pr(q.p), b = pr(add(q.p, add(mul(T, (0.12 + zuf() * 0.12) * k), mul(U, (zuf() - 0.5) * 0.12 * k))));
+            dicht[wgt > 0.7 ? 1 : 0] += "M" + R2(a[0]) + " " + R2(a[1]) + "L" + R2(b[0]) + " " + R2(b[1]);
+          }
+          svg += '<path data-teil="stoppeln" d="' + pfad(flaechePts) + '" fill="' + bf + '" opacity=".05"/>';
+          if (dicht[0]) svg += '<path data-teil="stoppelhaare" d="' + dicht[0] + '" stroke="' + sf + '" stroke-width="' + R2(0.07 * k) + '" stroke-linecap="round" opacity=".45"/>';
+          if (dicht[1]) svg += '<path data-teil="stoppelhaare" d="' + dicht[1] + '" stroke="' + sf + '" stroke-width="' + R2(0.075 * k) + '" stroke-linecap="round" opacity=".6"/>';
         }
       }
     }
 
-    /* Augen: Lidspalte, Augapfel, Iris mit Verlauf und Glanzpunkt, Oberlid
-       mit Wimpern, Unterlid, Lidfalte, Tränenkarunkel */
+    /* FASSUNG 838 — XANDER (Funk 222, wörtlich): „die Menschen jetzt
+       jegliche Details verloren man sieht keine Augen man sieht keine
+       Wimpern man sieht keine Augenbrauen … jedes kleinste Detail das
+       kläres die Iris die Pupille alles soll man deutlich sehen die
+       Nasenlöcher … mit euch realistischen Licht und Schatten dass es
+       plastisch wirkt“.
+       Das Gesicht ist neu gezeichnet, wie es die alten gebackenen Figuren
+       konnten und darüber hinaus:
+       - Modellierung mit weichen Verläufen (keine flachen Scheiben mehr):
+         Licht auf Stirn, Nasenrücken, Wangenknochen und Kinn der Licht-
+         seite; Schatten in der Augenhöhle, an der Schläfe, unter dem
+         Wangenknochen, unter Nase und Unterlippe.
+       - Augen: Augapfel mit Weiß im Verlauf, Iris mit Kranz, Musterung
+         (Strahlen) und dunklem Rand, Pupille, zwei Glanzlichter, Schatten
+         des Oberlids auf dem Augapfel, kräftiges Oberlid, Unterlid mit
+         Lidrand, Lidfalte, Tränenkarunkel; Wimpern als einzelne gebogene
+         Striche (oben 9–12, unten 6), bei jedem Menschen.
+       - Brauen aus 14–24 einzelnen Haaren in Wuchsrichtung (innen nach
+         oben, außen zur Schläfe) über einem zarten Grund.
+       - Nase: Glanz auf Rücken und Spitze, Schattenseite, Nasenflügel mit
+         Furche, Nasenlöcher, Steg, Schatten unter der Nase.
+       - Mund: Oberlippe mit Amorbogen, Lippenrand, Unterlippe mit Glanz,
+         Mundwinkel; Philtrum aus zwei Leisten.
+       - Alter: Baby mit großer Stirn, kleiner Nase, runden Wangen; alte
+         Menschen mit Stirn-, Krähenfuß- und Nasolabialfalten, Tränen-
+         säcken und Altersflecken.
+       Feine Maße mit zwei Nachkommastellen (r2), sonst werden Wimpern und
+       Iris in der Nahansicht eckig. */
+    const r2 = (v) => Math.round(v * 100) / 100;
+    const P2 = (p) => r2(p[0]) + " " + r2(p[1]);
+    const alt = spec.alter === "alt";
+    const gid8 = (n) => h.id + n + h.zaehler();
+    const GL = gid8("gl"), DK = gid8("dk"), RT = gid8("rt");
+    h.defs.push('<radialGradient id="' + GL + '"><stop offset="0" stop-color="#fffaf2"/><stop offset="1" stop-color="#fffaf2" stop-opacity="0"/></radialGradient>'
+      + '<radialGradient id="' + DK + '"><stop offset="0" stop-color="' + dunkler(hautF, 0.55) + '"/><stop offset="1" stop-color="' + dunkler(hautF, 0.55) + '" stop-opacity="0"/></radialGradient>'
+      + '<radialGradient id="' + RT + '"><stop offset="0" stop-color="#d4695a"/><stop offset="1" stop-color="#d4695a" stop-opacity="0"/></radialGradient>');
+    /* (rotate mit Kommas: der Rahmen der Figur wird aus Zahlenpaaren mit
+       Leerzeichen gelesen — ein Drehwinkel darf dort nicht als Punkt zählen) */
+    const weich = (c, rx, ry, art, op, dreh) => '<ellipse cx="' + r2(c[0]) + '" cy="' + r2(c[1]) + '" rx="' + r2(Math.max(0.05, rx)) + '" ry="' + r2(Math.max(0.05, ry)) + '" fill="url(#' + art + ')" opacity="' + op.toFixed(2) + '"' + (dreh ? ' transform="rotate(' + r1(dreh) + "," + r2(c[0]) + "," + r2(c[1]) + ')"' : "") + "/>";
+    const auf2 = (y, u) => { const q = flaeche(y, u); return sichtbar(q.n) > 0.04 ? pr(q.p) : null; };
+    const licht = -schatten;                         // Seite (u-Vorzeichen), die zum Licht zeigt
+    const bz = (a, b, c, d, t) => { const m = 1 - t; return [m * m * m * a[0] + 3 * m * m * t * b[0] + 3 * m * t * t * c[0] + t * t * t * d[0], m * m * m * a[1] + 3 * m * m * t * b[1] + 3 * m * t * t * c[1] + t * t * t * d[1]]; };
+    const nrm2 = (v) => { const l = Math.hypot(v[0], v[1]) || 1; return [v[0] / l, v[1] / l]; };
+
+    /* ---- Modellierung: Licht und Schatten auf der Gesichtsfläche ---- */
+    if (vonVorn > -0.1) {
+      let mo = "";
+      const setz = (y, u, rx, ry, art, op) => { const p = auf2(y, u); if (p) mo += weich(p, rx * k, ry * k, art, op); };
+      setz(-5.6, licht * 0.25, 3.4, 2.2, GL, 0.34);                  // Stirn
+      setz(2.6, licht * 0.62, 1.9, 1.2, GL, 0.3);                    // Wangenknochen
+      setz(9.6, licht * 0.12, 1.5, 0.9, GL, 0.26);                   // Kinn
+      setz(-3.2, schatten * 0.86, 1.8, 3.6, DK, 0.22);               // Schläfe
+      setz(5.2, schatten * 0.66, 1.9, 2.4, DK, baby ? 0.08 : 0.2);   // unter dem Wangenknochen
+      setz(8.4, schatten * 0.7, 1.6, 2.4, DK, 0.14);                 // Kiefer
+      ["L", "R"].forEach((sd) => {                                    // Wangenröte
+        const s = sd === "L" ? 1 : -1;
+        setz(3.9, s * 0.56, baby || !M.erw ? 2.4 : 1.9, baby ? 1.8 : 1.3, RT, baby || !M.erw ? 0.28 : (M.w ? 0.18 : 0.1));
+      });
+      svg += mo;
+    }
+
+    /* ---- Augen ---- */
     const augenFarbe = AUGE[gi % AUGE.length];
-    const irisId = h.id + "i" + h.zaehler();
-    h.defs.push('<radialGradient id="' + irisId + '"><stop offset="0" stop-color="' + heller(augenFarbe, 0.35) + '"/><stop offset=".55" stop-color="' + augenFarbe + '"/><stop offset="1" stop-color="' + dunkler(augenFarbe, 0.55) + '"/></radialGradient>');
+    const irisId = gid8("i"), skId = gid8("sk"), lsId = gid8("ls");
+    h.defs.push('<radialGradient id="' + irisId + '"><stop offset="0" stop-color="' + dunkler(augenFarbe, 0.45) + '"/><stop offset=".34" stop-color="' + heller(augenFarbe, 0.34) + '"/><stop offset=".64" stop-color="' + augenFarbe + '"/><stop offset=".87" stop-color="' + dunkler(augenFarbe, 0.35) + '"/><stop offset="1" stop-color="' + dunkler(augenFarbe, 0.78) + '"/></radialGradient>'
+      + '<radialGradient id="' + skId + '" cx=".5" cy=".62" r=".6"><stop offset="0" stop-color="#fcf9f4"/><stop offset=".62" stop-color="#efe5dc"/><stop offset="1" stop-color="' + misch("#cdb2a4", hautF, 0.25) + '"/></radialGradient>'
+      + '<linearGradient id="' + lsId + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b241a" stop-opacity=".62"/><stop offset=".36" stop-color="#3b241a" stop-opacity=".2"/><stop offset=".58" stop-color="#3b241a" stop-opacity="0"/></linearGradient>');
     const augY = 0.2, augU = 0.43;
+    const wimperF = misch(haarF, "#140d0a", 0.72);
     ["L", "R"].forEach((sd) => {
       const s = sd === "L" ? 1 : -1;
       const F = flaeche(augY, s * augU);
       const vis = sichtbar(F.n);
       if (vis < 0.08) return;
-      const c = pr(add(F.p, mul(F.n, -0.3 * k)));
+      /* FASSUNG 838, Runde 2: das Auge liegt in der Augenhöhle (0,7 cm tief) */
+      const c = pr(add(F.p, mul(F.n, -0.7 * k)));
       /* Die Querrichtung des Auges ist die waagrechte Tangente der
          Gesichtsfläche an dieser Stelle. */
       const nU = dot(F.n, U), nV = dot(F.n, Vv);
@@ -1978,109 +2332,229 @@
       const quer = prRichtung(tang3);
       const ql = Math.hypot(quer[0], quer[1]) || 1;
       const qx = quer[0] / ql, qy = quer[1] / ql;
-      const w = 1.55 * k * klemm(ql, 0.3, 1) * (baby ? 1.2 : 1);
-      const hgt = (M.w ? 0.62 : 0.55) * k * (baby ? 1.25 : 1);
-      const P = (u, v) => [c[0] + qx * u * w, c[1] + qy * u * w + v * hgt];
-      /* innen (zur Nase) ist u = −s bei der linken Seite */
-      const a = P(-1, 0.05), b = P(1, 0), o1 = P(-0.35, -1.15), o2 = P(0.42, -1.1), u1 = P(-0.3, 0.72), u2 = P(0.4, 0.7);
-      const auge = "M" + r1(a[0]) + " " + r1(a[1]) + "C" + r1(o1[0]) + " " + r1(o1[1]) + " " + r1(o2[0]) + " " + r1(o2[1]) + " " + r1(b[0]) + " " + r1(b[1]) + "C" + r1(u2[0]) + " " + r1(u2[1]) + " " + r1(u1[0]) + " " + r1(u1[1]) + " " + r1(a[0]) + " " + r1(a[1]) + "Z";
+      const w = 1.6 * k * klemm(ql, 0.3, 1) * (baby ? 1.18 : 1);
+      const hgt = (M.w ? 0.64 : 0.58) * k * (baby ? 1.3 : 1) * (alt ? 0.9 : 1);
+      /* u = −1 innen (Nase), +1 außen (Schläfe) — für beide Augen gleich */
+      const P = (u, v) => [c[0] + qx * s * u * w, c[1] + qy * s * u * w + v * hgt];
+      const a = P(-1, 0.12), b = P(1, -0.06), o1 = P(-0.45, -1.22), o2 = P(0.48, -1.14), u1 = P(-0.35, 0.72), u2 = P(0.5, 0.62);
+      const auge = "M" + P2(a) + "C" + P2(o1) + " " + P2(o2) + " " + P2(b) + "C" + P2(u2) + " " + P2(u1) + " " + P2(a) + "Z";
+      /* Augenhöhle: Schatten innen oben, Licht auf dem Brauenbogen außen */
+      svg += weich(P(-0.55, -1.9), w * 0.95, hgt * 1.5, DK, alt ? 0.3 : 0.22);
+      svg += weich(P(0.55, -2.7), w * 0.8, hgt * 0.8, GL, 0.22);
+      svg += weich(P(-0.1, 1.55), w * 0.85, hgt * 0.55, DK, alt ? 0.3 : (baby ? 0.05 : 0.13));
       /* Blickrichtung: die Iris wandert zur Seite, in die die Figur schaut */
       const vr = prRichtung(Vv);
       const iris = [c[0] + vr[0] * 0.35 * k, c[1] + 0.02 * k];
-      const ir = 0.66 * k * (baby ? 1.3 : 1);
+      const ir = 0.62 * k * (baby ? 1.25 : 1);
+      const irx = ir * klemm(vis * 1.1, 0.42, 1);
       const cid = h.id + "a" + h.zaehler();
       h.defs.push('<clipPath id="' + cid + '"><path d="' + auge + '"/></clipPath>');
-      svg += '<path d="' + auge + '" fill="#f4efe8"/>';
-      svg += '<g clip-path="url(#' + cid + ')"><ellipse cx="' + r1(iris[0]) + '" cy="' + r1(iris[1]) + '" rx="' + r1(ir * klemm(vis * 1.2, 0.45, 1)) + '" ry="' + r1(ir) + '" fill="url(#' + irisId + ')" stroke="' + dunkler(augenFarbe, 0.6) + '" stroke-width="' + r1(0.08 * k) + '"/>'
-        + '<circle cx="' + r1(iris[0]) + '" cy="' + r1(iris[1]) + '" r="' + r1(ir * 0.42) + '" fill="#141110"/>'
-        + '<circle cx="' + r1(iris[0] - 0.24 * k) + '" cy="' + r1(iris[1] - 0.26 * k) + '" r="' + r1(0.14 * k) + '" fill="#fff" opacity=".92"/>'
-        + '<path d="M' + r1(a[0]) + " " + r1(a[1] - 1.3 * hgt) + "H" + r1(b[0]) + "V" + r1(b[1] - 0.45 * hgt) + "H" + r1(a[0]) + 'Z" fill="' + dunkler(hautF, 0.2) + '" opacity=".4"/></g>';
-      /* Oberlid (kräftig, mit Wimpern), Unterlid (zart), Lidfalte, Karunkel */
-      const lidB = (M.w ? 0.36 : 0.28) * k;
-      svg += '<path d="M' + r1(a[0]) + " " + r1(a[1]) + "C" + r1(o1[0]) + " " + r1(o1[1]) + " " + r1(o2[0]) + " " + r1(o2[1]) + " " + r1(b[0]) + " " + r1(b[1]) + '" fill="none" stroke="#2a1c16" stroke-width="' + r1(lidB) + '" stroke-linecap="round"/>';
-      if (M.w || baby) {
-        [0.35, 0.65, 0.92].forEach((t, j) => {
-          const p0 = P(-1 + 2 * t, -1.05 + (t > 0.8 ? 0.35 : 0)), p1 = P(-1 + 2 * t + 0.18, -1.55 + (t > 0.8 ? 0.4 : 0) - j * 0.05);
-          svg += '<path d="M' + r1(p0[0]) + " " + r1(p0[1]) + "L" + r1(p1[0]) + " " + r1(p1[1]) + '" stroke="#2a1c16" stroke-width="' + r1(0.13 * k) + '" stroke-linecap="round"/>';
-        });
+      svg += '<path d="' + auge + '" fill="url(#' + skId + ')"/>';
+      /* Iris: Kranz, Strahlen (hell und dunkel), dunkler Rand, Pupille */
+      let hellS = "", dunkS = "";
+      for (let j = 0; j < 16; j++) {
+        const wj = j * Math.PI / 8 + 0.2, r0 = 0.42 + (j % 3) * 0.04, r1_ = 0.9 - (j % 2) * 0.1;
+        const seg = "M" + P2([iris[0] + Math.cos(wj) * irx * r0, iris[1] + Math.sin(wj) * ir * r0]) + "L" + P2([iris[0] + Math.cos(wj + 0.06) * irx * r1_, iris[1] + Math.sin(wj + 0.06) * ir * r1_]);
+        if (j % 2) dunkS += seg; else hellS += seg;
       }
-      svg += '<path d="M' + r1(a[0]) + " " + r1(a[1]) + "C" + r1(u1[0]) + " " + r1(u1[1]) + " " + r1(u2[0]) + " " + r1(u2[1]) + " " + r1(b[0]) + " " + r1(b[1]) + '" fill="none" stroke="' + dunkler(hautF, 0.32) + '" stroke-width="' + r1(0.15 * k) + '" opacity=".75"/>';
-      const f1 = P(-0.85, -1.55), f2 = P(0.2, -2.05), f3 = P(1.1, -1.3);
-      svg += '<path d="M' + r1(f1[0]) + " " + r1(f1[1]) + "Q" + r1(f2[0]) + " " + r1(f2[1]) + " " + r1(f3[0]) + " " + r1(f3[1]) + '" fill="none" stroke="' + dunkler(hautF, 0.28) + '" stroke-width="' + r1(0.15 * k) + '" opacity=".6"/>';
-      /* Augenhöhle: ein weicher Schatten zwischen Braue und Lid, innen */
-      const ho = P(-0.55, -1.7);
-      svg += '<ellipse cx="' + r1(ho[0]) + '" cy="' + r1(ho[1]) + '" rx="' + r1(w * 0.55) + '" ry="' + r1(hgt * 0.9) + '" fill="' + dunkler(hautF, 0.3) + '" opacity=".12"/>';
-      const ka = P(-0.93, 0.08);
-      svg += '<ellipse cx="' + r1(ka[0]) + '" cy="' + r1(ka[1]) + '" rx="' + r1(0.2 * k) + '" ry="' + r1(0.16 * k) + '" fill="#d99088" opacity=".8"/>';
-      /* Augenbraue: innen kräftig, außen spitz auslaufend, leicht gebogen */
-      const bF = flaeche(-1.95 - gi * 0.08, s * 0.45);
-      if (sichtbar(bF.n) > 0.05) {
-        const bm = pr(bF.p);
-        const vk = klemm(vis, 0.4, 1);
-        const innenE = [bm[0] - qx * 1.9 * k * vk, bm[1] + 0.3 * k], aussenE = [bm[0] + qx * 2.15 * k * vk, bm[1] + 0.35 * k];
-        const dick = (M.w ? 0.34 : 0.55) * k * (1 + (gi === 2 ? 0.25 : 0)) * (baby ? 0.6 : 1);
-        const bogen = [bm[0] + qx * 0.4 * k, bm[1] - 0.55 * k];
-        const bfarbe = misch(haarF, "#2a1d16", spec.haarfarbe === "weiss" || spec.haarfarbe === "grau" ? 0.15 : 0.35);
-        svg += '<path d="M' + r1(innenE[0]) + " " + r1(innenE[1] + dick * 0.5) + "Q" + r1(bogen[0]) + " " + r1(bogen[1] - dick * 0.55) + " " + r1(aussenE[0]) + " " + r1(aussenE[1])
-          + "Q" + r1(bogen[0]) + " " + r1(bogen[1] + dick * 0.55) + " " + r1(innenE[0]) + " " + r1(innenE[1] + dick * 0.5 + dick) + 'Z" fill="' + bfarbe + '" opacity=".9"/>';
-        for (let j = 0; j < 4; j++) {
-          const t = 0.12 + j * 0.2, x0 = lerp(innenE[0], aussenE[0], t), y0 = lerp(innenE[1], aussenE[1], t) - Math.sin(t * Math.PI) * 0.5 * k + dick * 0.6;
-          svg += '<path d="M' + r1(x0) + " " + r1(y0) + "l" + r1(qx * 0.55 * k) + " " + r1(-0.45 * k) + '" stroke="' + dunkler(bfarbe, 0.2) + '" stroke-width="' + r1(0.1 * k) + '" opacity=".6"/>';
+      svg += '<g clip-path="url(#' + cid + ')"><g data-teil="iris"><ellipse cx="' + r2(iris[0]) + '" cy="' + r2(iris[1]) + '" rx="' + r2(irx) + '" ry="' + r2(ir) + '" fill="url(#' + irisId + ')" stroke="' + dunkler(augenFarbe, 0.72) + '" stroke-width="' + r2(0.07 * k) + '"/>'
+        + '<path d="' + hellS + '" stroke="' + heller(augenFarbe, 0.5) + '" stroke-width="' + r2(0.05 * k) + '" opacity=".6"/>'
+        + '<path d="' + dunkS + '" stroke="' + dunkler(augenFarbe, 0.45) + '" stroke-width="' + r2(0.045 * k) + '" opacity=".55"/></g>'
+        + '<ellipse data-teil="pupille" cx="' + r2(iris[0]) + '" cy="' + r2(iris[1]) + '" rx="' + r2(irx * (baby ? 0.44 : 0.38)) + '" ry="' + r2(ir * (baby ? 0.44 : 0.38)) + '" fill="#0b0807"/>'
+        /* Schatten des Oberlids auf dem Augapfel */
+        + '<rect x="' + r2(Math.min(a[0], b[0])) + '" y="' + r2(Math.min(o1[1], o2[1]) - 0.1 * k) + '" width="' + r2(Math.abs(b[0] - a[0])) + '" height="' + r2(2.1 * hgt) + '" fill="url(#' + lsId + ')"/>'
+        + '<circle cx="' + r2(iris[0] - 0.3 * ir) + '" cy="' + r2(iris[1] - 0.34 * ir) + '" r="' + r2(0.2 * ir) + '" fill="#fff" opacity=".95"/>'
+        + '<circle cx="' + r2(iris[0] + 0.34 * ir) + '" cy="' + r2(iris[1] + 0.28 * ir) + '" r="' + r2(0.08 * ir) + '" fill="#fff" opacity=".6"/></g>';
+      /* Oberlid: kräftige Linie, außen etwas breiter; Lidfalte darüber */
+      const lidB = (M.w ? 0.2 : 0.16) * k * (baby ? 0.9 : 1);
+      svg += '<path d="M' + P2(a) + "C" + P2(o1) + " " + P2(o2) + " " + P2(b) + '" fill="none" stroke="' + misch(wimperF, hautF, 0.1) + '" stroke-width="' + r2(lidB) + '" stroke-linecap="round"/>';
+      svg += '<path d="M' + P2(bz(a, o1, o2, b, 0.45)) + "C" + P2(bz(a, o1, o2, b, 0.62)) + " " + P2(bz(a, o1, o2, b, 0.85)) + " " + P2(b) + '" fill="none" stroke="' + wimperF + '" stroke-width="' + r2(lidB * 1.5) + '" stroke-linecap="round"/>';
+      const f1 = P(-0.82, -1.55), f2 = P(0.1, -2.2 - (alt ? 0.15 : 0)), f3 = P(1.08, -1.3);
+      svg += '<path d="M' + P2(f1) + "Q" + P2(f2) + " " + P2(f3) + '" fill="none" stroke="' + dunkler(hautF, 0.34) + '" stroke-width="' + r2(0.1 * k) + '" opacity=".7"/>';
+      /* Wimpern: einzelne gebogene Striche, außen länger und nach außen geschwungen */
+      const aussenR = nrm2([b[0] - a[0], b[1] - a[1]]);
+      const hoch = [aussenR[1], -aussenR[0]][1] < 0 ? [aussenR[1], -aussenR[0]] : [-aussenR[1], aussenR[0]];
+      const nOben = baby ? 9 : (M.w ? 13 : 10);
+      const lang = (M.w ? 0.5 : 0.34) * k * (baby ? 0.75 : 1) * (alt ? 0.8 : 1) * klemm(vis * 1.25, 0.5, 1);
+      let wd = "";
+      for (let i = 0; i < nOben; i++) {
+        const t = 0.1 + 0.88 * i / (nOben - 1) + ((i * 37) % 7 - 3) * 0.004;
+        const p = bz(a, o1, o2, b, t);
+        /* Wimpern stehen zuerst nach vorn-unten (flach) und biegen sich dann nach oben */
+        const d = nrm2([hoch[0] * (0.55 - 0.3 * t) + aussenR[0] * (0.35 + 0.9 * t), hoch[1] * (0.55 - 0.3 * t) + aussenR[1] * (0.35 + 0.9 * t)]);
+        const L = lang * (0.45 + 0.65 * Math.sin(Math.PI * (0.15 + 0.7 * t)));
+        const m = [p[0] + d[0] * L * 0.55, p[1] + d[1] * L * 0.55];
+        const e = [p[0] + d[0] * L * 0.75 + hoch[0] * L * 0.55, p[1] + d[1] * L * 0.75 + hoch[1] * L * 0.55];
+        wd += "M" + P2(p) + "Q" + P2(m) + " " + P2(e);
+      }
+      svg += '<path data-teil="wimpern" d="' + wd + '" fill="none" stroke="' + wimperF + '" stroke-width="' + r2((M.w ? 0.075 : 0.06) * k) + '" stroke-linecap="round"/>';
+      /* Unterlid: Lidrand (rosa), Hautlinie, feine untere Wimpern */
+      svg += '<path d="M' + P2(a) + "C" + P2(u1) + " " + P2(u2) + " " + P2(b) + '" fill="none" stroke="#dca69a" stroke-width="' + r2(0.1 * k) + '" opacity=".75"/>';
+      const ua = [a[0], a[1] + 0.12 * hgt], ub = [b[0], b[1] + 0.1 * hgt];
+      svg += '<path d="M' + P2(ua) + "C" + P2([u1[0], u1[1] + 0.2 * hgt]) + " " + P2([u2[0], u2[1] + 0.2 * hgt]) + " " + P2(ub) + '" fill="none" stroke="' + dunkler(hautF, 0.34) + '" stroke-width="' + r2(0.08 * k) + '" opacity=".6"/>';
+      let ud = "";
+      for (let i = 0; i < 6; i++) {
+        const t = 0.35 + i * 0.12;
+        const p = bz(a, u1, u2, b, t);
+        const d = nrm2([-hoch[0] * 0.8 + aussenR[0] * 0.5, -hoch[1] * 0.8 + aussenR[1] * 0.5]);
+        const L = lang * 0.32 * (0.7 + 0.5 * t);
+        ud += "M" + P2(p) + "L" + P2([p[0] + d[0] * L, p[1] + d[1] * L]);
+      }
+      svg += '<path data-teil="wimpernU" d="' + ud + '" stroke="' + wimperF + '" stroke-width="' + r2(0.04 * k) + '" opacity=".55"/>';
+      /* Tränenkarunkel */
+      const ka = P(-0.86, 0.14);
+      svg += '<ellipse cx="' + r2(ka[0]) + '" cy="' + r2(ka[1]) + '" rx="' + r2(0.2 * k) + '" ry="' + r2(0.15 * k) + '" fill="#d98c84"/><circle cx="' + r2(ka[0] - 0.04 * k) + '" cy="' + r2(ka[1] - 0.05 * k) + '" r="' + r2(0.05 * k) + '" fill="#fff" opacity=".7"/>';
+      /* Alter: Krähenfüße und Tränensack */
+      if (alt) {
+        let fd = "";
+        [-0.5, 0.05, 0.6].forEach((dv, j) => { const p0 = P(1.25, dv - 0.2), p1 = P(1.85 + j * 0.1, dv * 1.6 - 0.35); fd += "M" + P2(p0) + "Q" + P2([(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2 - 0.1 * k]) + " " + P2(p1); });
+        svg += '<path d="' + fd + '" fill="none" stroke="' + dunkler(hautF, 0.32) + '" stroke-width="' + r2(0.07 * k) + '" opacity=".6"/>';
+        svg += '<path d="M' + P2(P(-0.7, 1.35)) + "Q" + P2(P(0.1, 2.15)) + " " + P2(P(0.95, 1.2)) + '" fill="none" stroke="' + dunkler(hautF, 0.3) + '" stroke-width="' + r2(0.09 * k) + '" opacity=".55"/>';
+      }
+      /* Augenbraue aus einzelnen Haaren */
+      const bi = auf2(-1.5 - gi * 0.06, s * 0.17), ba = auf2(-2.15 - gi * 0.08, s * 0.47), bo = auf2(-1.55, s * 0.76);
+      if (ba) {
+        const bI = bi || ba, bO = bo || ba;
+        const bfarbe = misch(haarF, "#2a1d16", spec.haarfarbe === "weiss" || spec.haarfarbe === "grau" ? 0.12 : 0.3);
+        const ctl = [2 * ba[0] - (bI[0] + bO[0]) / 2, 2 * ba[1] - (bI[1] + bO[1]) / 2];
+        const B = (t) => { const m = 1 - t; return [m * m * bI[0] + 2 * m * t * ctl[0] + t * t * bO[0], m * m * bI[1] + 2 * m * t * ctl[1] + t * t * bO[1]]; };
+        const raus = nrm2([bO[0] - bI[0], bO[1] - bI[1]]);
+        const oben = raus[1] * 0 + (-1);   // Bildschirm oben
+        const dick = (M.w ? 0.4 : 0.58) * k * (baby ? 0.5 : 1) * (gi === 2 ? 1.2 : 1);
+        /* zarter Grund */
+        const ob = [], un = [];
+        for (let i = 0; i <= 8; i++) { const t = i / 8, p = B(t), th = dick * (1 - 0.72 * t) * (i === 0 ? 0.8 : 1); ob.push([p[0], p[1] - th * 0.55]); un.push([p[0], p[1] + th * 0.45]); }
+        svg += '<path d="M' + ob.map(P2).join("L") + "L" + un.reverse().map(P2).join("L") + 'Z" fill="' + bfarbe + '" opacity="' + (baby ? 0.22 : 0.55) + '"/>';
+        const n = baby ? 12 : (M.w ? 26 : 34) + (alt ? 4 : 0);
+        let hd = "";
+        for (let j = 0; j < n; j++) {
+          const t = klemm(j / (n - 1) + (((j * 53) % 11) - 5) * 0.006, 0, 1);
+          const p = B(t), th = dick * (1 - 0.72 * t);
+          const v = (((j * 7) % 5) / 4 - 0.5) * th * 0.9;
+          const q = [p[0], p[1] + v];
+          /* Wuchsrichtung: am Kopf der Braue steil nach oben, dann zur Schläfe */
+          const steil = klemm(1 - t * 3, 0, 1);
+          const d = nrm2([raus[0] * (0.35 + 0.65 * (1 - steil)), raus[1] * 0.5 + oben * (0.25 + 0.75 * steil) + (t > 0.7 ? 0.2 : 0)]);
+          const L = (0.46 + (alt && j % 5 === 0 ? 0.35 : 0)) * k * (1 - 0.3 * t) * (baby ? 0.6 : 1);
+          hd += "M" + P2(q) + "Q" + P2([q[0] + d[0] * L * 0.6, q[1] + d[1] * L * 0.6]) + " " + P2([q[0] + d[0] * L + raus[0] * L * 0.2, q[1] + d[1] * L + 0.12 * L]);
         }
+        svg += '<path data-teil="braue" d="' + hd + '" fill="none" stroke="' + dunkler(bfarbe, 0.18) + '" stroke-width="' + r2(0.07 * k) + '" stroke-linecap="round" opacity=".9"/>';
       }
     });
 
-    /* Nase: Schatten neben dem Nasenrücken, Nasenflügel, Nasenlöcher,
-       Glanz auf der Spitze. Im Profil zeichnet das Profil die Nase. */
-    const nRuecken = auf(0.7, 0, 9.4 + 0.1);
+    /* FASSUNG 838, Runde 2 — „Hinteres Auge perspektivisch verkürzt hinter
+       dem Nasenrücken, Nase mit Profilkante statt Strich.“ Im Halbprofil
+       ist die Nase ein Körper: die zugewandte Seitenfläche zwischen
+       Nasenrücken (Profilkante) und Nasenwurzel auf der Wange. Sie wird
+       NACH den Augen gezeichnet und verdeckt den inneren Augenwinkel des
+       hinteren Auges; ihre Kante gegen die ferne Wange ist eine weiche
+       Schattenkante. */
+    if (vonVorn > 0 && seitlich > 0.18) {
+      const nahSeite = sichtbar(unit(add(mul(U, 0.55), Vv))) > sichtbar(unit(add(mul(U, -0.55), Vv))) ? 1 : -1;
+      const rid = profil.filter((q) => q.y >= -0.4 && q.y <= 4.9).map((q) => pr(q.p));
+      const basis = [];
+      for (let y = 5.2; y >= -0.4; y -= 0.8) {
+        const q = flaeche(y, nahSeite * (y > 3.4 ? 0.26 * nB : lerp(0.1, 0.2, (y + 0.4) / 3.8) * nB));
+        basis.push(pr(q.p));
+      }
+      if (rid.length > 2) {
+        const nid = gid8("n");
+        const r0 = rid[Math.floor(rid.length / 2)], b0 = basis[Math.floor(basis.length / 2)];
+        h.defs.push('<linearGradient id="' + nid + '" gradientUnits="userSpaceOnUse" x1="' + r2(r0[0]) + '" y1="' + r2(r0[1]) + '" x2="' + r2(b0[0]) + '" y2="' + r2(b0[1]) + '"><stop offset="0" stop-color="' + dunkler(hautF, 0.1) + '"/><stop offset=".3" stop-color="' + dunkler(hautF, 0.04) + '" stop-opacity=".95"/><stop offset=".75" stop-color="' + dunkler(hautF, 0.04) + '" stop-opacity=".35"/><stop offset="1" stop-color="' + dunkler(hautF, 0.04) + '" stop-opacity="0"/></linearGradient>');
+        const dn = pfad(rid.concat(basis));
+        svg += '<path data-teil="nasenkoerper" d="' + dn + '" fill="url(#' + nid + ')" opacity="' + klemm((seitlich - 0.18) * 3, 0, 1).toFixed(2) + '"/>';
+        svg += linie(rid.slice(1), dunkler(hautF, 0.34), 0.14 * k, ' opacity="' + (0.5 * klemm((seitlich - 0.18) * 3, 0, 1)).toFixed(2) + '"');
+      }
+    }
+    /* ---- Nase ---- Glanz auf Rücken und Spitze, Schattenseite,
+       Nasenflügel mit Furche, Nasenlöcher, Steg, Schatten darunter. Im
+       Profil zeichnet das Profil die Nase. */
     const nSpitze = profil[6].p;
-    const pRu = pr(nRuecken), pSp = pr(nSpitze);
+    const pSp = pr(nSpitze);
     const vorneDeck = 1 - profilDeck;
     if (vonVorn > 0) {
-      /* Schattenseite der Nase */
-      const sA = pr(flaeche(0.4, schatten * 0.12).p), sB = pr(flaeche(3.8, schatten * 0.2).p), sC = pr(flaeche(4.7, schatten * 0.3).p);
-      svg += linie([sA, sB, sC], dunkler(hautF, 0.3), 0.7 * k * nB, ' opacity="' + (0.22 * vorneDeck + 0.05).toFixed(2) + '"');
-      svg += '<path d="M' + r1(pRu[0] - nasenSeite * 0.3 * k) + " " + r1(pRu[1] + 0.8 * k) + "C" + r1(pRu[0] + nasenSeite * 0.3 * k * seitlich) + " " + r1(pRu[1] + 2.2 * k) + " " + r1(pSp[0]) + " " + r1(pSp[1] - 1 * k) + " " + r1(pSp[0] + 0.1 * k * nasenSeite) + " " + r1(pSp[1]) + '" fill="none" stroke="' + dunkler(hautF, 0.3) + '" stroke-width="' + r1(0.2 * k) + '" opacity="' + (0.3 * vorneDeck).toFixed(2) + '"/>';
+      const lang3 = (p, q, br, art, op) => { if (!p || !q) return ""; const c = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2], l = Math.hypot(q[0] - p[0], q[1] - p[1]); return weich(c, br, l * 0.62, art, op, Math.atan2(q[0] - p[0], p[1] - q[1]) * -180 / Math.PI); };
+      const rT = pr(add(flaeche(0.6, 0).p, mul(Vv, 0.35 * k * nB))), rU = pr(add(flaeche(3.9, 0).p, mul(Vv, 1.4 * k * nB)));
+      svg += lang3([rT[0] - licht * 0.15 * k, rT[1]], [rU[0] - licht * 0.2 * k * (1 - seitlich), rU[1]], 0.42 * k * nB, GL, 0.5 * vorneDeck);
+      const sA = pr(flaeche(0.6, schatten * 0.14).p), sC = pr(flaeche(4.6, schatten * 0.3).p);
+      svg += lang3(sA, sC, 0.75 * k * nB, DK, (0.38 * vorneDeck + 0.06) * klemm(1 - seitlich * 1.6, 0, 1));
+      /* Schatten unter der Nase auf die Oberlippe */
+      const un0 = auf2(5.7, schatten * 0.05);
+      if (un0) svg += weich(un0, 1.3 * k * nB, 0.55 * k, DK, 0.3 * vorneDeck + 0.05);
+      let loecher = "";
       ["L", "R"].forEach((sd) => {
         const s = sd === "L" ? 1 : -1;
         const n = unit(add(mul(U, s * 0.55), Vv));
-        if (sichtbar(n) < 0.1) return;
-        /* Nasenflügel als Bogen */
-        const f0 = pr(auf(3.9, s * 0.9 * nB, 9.9)), f1 = pr(auf(4.6, s * 1.75 * nB, 9.1)), f2 = pr(auf(5.3, s * 1.2 * nB, 9.3));
-        svg += '<path d="M' + r1(f0[0]) + " " + r1(f0[1]) + "Q" + r1(f1[0]) + " " + r1(f1[1]) + " " + r1(f2[0]) + " " + r1(f2[1]) + '" fill="none" stroke="' + dunkler(hautF, 0.4) + '" stroke-width="' + r1(0.22 * k) + '" stroke-linecap="round" opacity=".8"/>';
-        const nl = pr(auf(5.05, s * 0.7 * nB, 9.6));
-        svg += '<ellipse cx="' + r1(nl[0]) + '" cy="' + r1(nl[1]) + '" rx="' + r1(0.44 * k * nB * klemm(sichtbar(n), 0.3, 1)) + '" ry="' + r1(0.24 * k) + '" fill="' + dunkler(hautF, 0.55) + '" opacity=".75"/>';
+        const sn = sichtbar(n);
+        if (sn < 0.1) return;
+        /* Nasenflügel: Wölbung mit Licht, Furche als Bogen */
+        const f0 = pr(auf(3.8, s * 0.95 * nB, 9.9)), f1 = pr(auf(4.55, s * 1.85 * nB, 9.1)), f2 = pr(auf(5.35, s * 1.15 * nB, 9.35));
+        const fm = pr(auf(4.6, s * 1.3 * nB, 9.6));
+        svg += weich(fm, 0.55 * k * nB, 0.42 * k, s === licht ? GL : DK, s === licht ? 0.3 : 0.18);
+        svg += '<path d="M' + P2(f0) + "Q" + P2(f1) + " " + P2(f2) + '" fill="none" stroke="' + dunkler(hautF, 0.42) + '" stroke-width="' + r2(0.13 * k) + '" stroke-linecap="round" opacity=".6"/>';
+        svg += '<path d="M' + P2(f0) + "Q" + P2(f1) + " " + P2(f2) + '" fill="none" stroke="' + dunkler(hautF, 0.4) + '" stroke-width="' + r2(0.45 * k) + '" stroke-linecap="round" opacity=".12"/>';
+        /* Nasenloch: schräg liegende Tropfenform, innen am Steg schmal */
+        const nl = pr(auf(5.05, s * 0.72 * nB, 9.55)), na = pr(auf(5.0, s * 0.3 * nB, 9.9)), nb = pr(auf(4.9, s * 1.2 * nB, 9.3));
+        const breit = 0.26 * k * klemm(sn, 0.35, 1) * (baby ? 0.8 : 1);
+        loecher += "M" + P2(na) + "Q" + P2([nl[0], nl[1] + breit * 1.1]) + " " + P2(nb) + "Q" + P2([nl[0], nl[1] - breit * 0.8]) + " " + P2(na) + "Z";
       });
-      /* Unterkante der Nasenspitze und Glanzlicht */
+      if (loecher) svg += '<path data-teil="nasenloch" d="' + loecher + '" fill="' + dunkler(hautF, 0.66) + '" opacity=".88"/>';
+      /* Unterkante der Nasenspitze, Steg und Glanzlicht */
       const fl = pr(auf(4.95, 1.2 * nB, 9.4)), fr = pr(auf(4.95, -1.2 * nB, 9.4)), un = pr(profil[7].p);
-      svg += '<path d="M' + r1(fl[0]) + " " + r1(fl[1]) + "Q" + r1(un[0]) + " " + r1(un[1] + 0.4 * k) + " " + r1(fr[0]) + " " + r1(fr[1]) + '" fill="none" stroke="' + dunkler(hautF, 0.35) + '" stroke-width="' + r1(0.2 * k) + '" opacity="' + (0.6 * vorneDeck).toFixed(2) + '"/>';
-      if (seitlich < 0.45) svg += '<ellipse cx="' + r1(pSp[0] - nasenSeite * 0.5 * k * seitlich - 0.15 * k) + '" cy="' + r1(pSp[1] - 0.45 * k) + '" rx="' + r1(0.5 * k) + '" ry="' + r1(0.38 * k) + '" fill="' + heller(hautF, 0.45) + '" opacity="' + (0.45 * (1 - seitlich / 0.45)).toFixed(2) + '"/>';
+      svg += '<path d="M' + P2(fl) + "Q" + P2([un[0], un[1] + 0.35 * k]) + " " + P2(fr) + '" fill="none" stroke="' + dunkler(hautF, 0.35) + '" stroke-width="' + r2(0.12 * k) + '" opacity="' + (0.35 * vorneDeck).toFixed(2) + '"/>';
+      if (seitlich < 0.5) {
+        const gl = [pSp[0] - nasenSeite * 0.5 * k * seitlich - 0.15 * k, pSp[1] - 0.5 * k];
+        svg += weich(gl, 0.7 * k * nB, 0.55 * k, GL, 0.6 * (1 - seitlich / 0.5));
+        svg += '<ellipse cx="' + r2(gl[0] - 0.08 * k) + '" cy="' + r2(gl[1] - 0.05 * k) + '" rx="' + r2(0.16 * k) + '" ry="' + r2(0.11 * k) + '" fill="#fff" opacity="' + (0.5 * (1 - seitlich / 0.5)).toFixed(2) + '"/>';
+      }
     }
 
-    /* Mund: Oberlippe mit Amorbogen, Unterlippe, Mundspalte; im Profil
-       nur die Lippen am Umriss und eine kurze Spalte. */
+    /* ---- Mund ---- Oberlippe mit Amorbogen (zwei Spitzen, Delle),
+       Lippenrand, Unterlippe mit Glanz, Mundwinkel, Philtrum. */
     const mY = baby ? 6.8 : 7.4;
     const mm0 = flaeche(mY, 0), mL = flaeche(mY, 0.36), mR = flaeche(mY, -0.36);
-    const lippe = misch(hautF, M.w && M.erw ? "#b4545a" : "#a45a50", M.w && M.erw ? 0.45 : 0.3);
+    const lippe = misch(hautF, M.w && M.erw ? "#b24f58" : "#a45a50", M.w && M.erw ? 0.48 : (alt ? 0.22 : 0.32));
     const laecheln = (spec.laecheln == null ? 0.35 : spec.laecheln) * k;
     if (vonVorn > -0.1 && vorneDeck > 0.05) {
       const vorn = (q) => add(q.p, mul(q.n, 0.45 * k));
       const pm = pr(add(mm0.p, mul(mm0.n, 0.9 * k)));
       const pl = sichtbar(mL.n) > 0 ? pr(vorn(mL)) : [pm[0] + (pr(mL.p)[0] - pm[0]) * 0.35, pr(mL.p)[1]];
       const prr = sichtbar(mR.n) > 0 ? pr(vorn(mR)) : [pm[0] + (pr(mR.p)[0] - pm[0]) * 0.35, pr(mR.p)[1]];
-      const ol = 0.55 * k * (M.w ? 1.15 : 0.9), ul = 0.75 * k * (M.w ? 1.2 : 0.95);
+      const ol = 0.55 * k * (M.w ? 1.15 : 0.9) * (alt ? 0.75 : 1), ul = 0.75 * k * (M.w ? 1.2 : 0.95) * (alt ? 0.8 : 1);
       const op = ' opacity="' + klemm(vorneDeck * 1.3, 0, 1).toFixed(2) + '"';
-      svg += '<g' + op + '>';
-      svg += '<path d="M' + r1(pl[0]) + " " + r1(pl[1]) + "Q" + r1((pl[0] + pm[0]) / 2) + " " + r1(pm[1] - ol * 1.3) + " " + r1(pm[0]) + " " + r1(pm[1] - ol * 0.75) + "Q" + r1((prr[0] + pm[0]) / 2) + " " + r1(pm[1] - ol * 1.3) + " " + r1(prr[0]) + " " + r1(prr[1])
-        + "Q" + r1(pm[0]) + " " + r1(pm[1] + laecheln * 0.4) + " " + r1(pl[0]) + " " + r1(pl[1]) + 'Z" fill="' + dunkler(lippe, 0.14) + '"/>';
-      svg += '<path d="M' + r1(pl[0]) + " " + r1(pl[1]) + "Q" + r1(pm[0]) + " " + r1(pm[1] + laecheln * 0.4) + " " + r1(prr[0]) + " " + r1(prr[1]) + "Q" + r1(pm[0]) + " " + r1(pm[1] + ul * 1.6) + " " + r1(pl[0]) + " " + r1(pl[1]) + 'Z" fill="' + lippe + '"/>';
-      svg += '<path d="M' + r1(pl[0]) + " " + r1(pl[1] - laecheln * 0.3) + "Q" + r1(pm[0]) + " " + r1(pm[1] + laecheln * 0.5) + " " + r1(prr[0]) + " " + r1(prr[1] - laecheln * 0.3) + '" fill="none" stroke="' + dunkler(lippe, 0.55) + '" stroke-width="' + r1(0.2 * k) + '" stroke-linecap="round"/>';
-      svg += '<path d="M' + r1(pm[0] - 0.5 * k) + " " + r1(pm[1] + ul * 0.95) + "Q" + r1(pm[0]) + " " + r1(pm[1] + ul * 1.25) + " " + r1(pm[0] + 0.5 * k) + " " + r1(pm[1] + ul * 0.95) + '" fill="none" stroke="' + heller(lippe, 0.45) + '" stroke-width="' + r1(0.2 * k) + '" opacity=".7"/>';
-      /* Philtrum und Schatten unter der Unterlippe */
-      const ph = pr(add(flaeche(5.9, 0).p, mul(Vv, 0.9 * k)));
-      svg += '<ellipse cx="' + r1(ph[0]) + '" cy="' + r1(ph[1]) + '" rx="' + r1(0.35 * k) + '" ry="' + r1(0.55 * k) + '" fill="' + dunkler(hautF, 0.25) + '" opacity=".22"/>';
-      svg += '<ellipse cx="' + r1(pm[0]) + '" cy="' + r1(pm[1] + ul * 2.3) + '" rx="' + r1(1.0 * k) + '" ry="' + r1(0.35 * k) + '" fill="' + dunkler(hautF, 0.3) + '" opacity=".25"/>';
-      svg += "</g>";
+      const lid = gid8("l");
+      h.defs.push('<linearGradient id="' + lid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + dunkler(lippe, 0.12) + '"/><stop offset=".55" stop-color="' + lippe + '"/><stop offset="1" stop-color="' + dunkler(lippe, 0.2) + '"/></linearGradient>');
+      const spL = [lerp(pl[0], pm[0], 0.62), pm[1] - ol * 1.35], spR = [lerp(prr[0], pm[0], 0.62), pm[1] - ol * 1.35], delle = [pm[0], pm[1] - ol * 1.02];
+      const spalt = (x) => [x[0], x[1]];
+      const mitteS = [pm[0], pm[1] + laecheln * 0.4];
+      let m = '<g' + op + '>';
+      /* Philtrum: zwei Leisten von der Nase zu den Spitzen des Amorbogens */
+      const ph0 = pr(add(flaeche(5.5, 0).p, mul(Vv, 0.95 * k)));
+      m += weich([pm[0], lerp(ph0[1], delle[1], 0.5)], 0.32 * k, 0.6 * k, DK, 0.22);
+      m += '<path d="M' + P2([ph0[0] + (spL[0] - pm[0]) * 0.55, ph0[1]]) + "L" + P2(spL) + "M" + P2([ph0[0] + (spR[0] - pm[0]) * 0.55, ph0[1]]) + "L" + P2(spR) + '" stroke="' + heller(hautF, 0.3) + '" stroke-width="' + r2(0.13 * k) + '" opacity=".45"/>';
+      /* Oberlippe */
+      m += '<path d="M' + P2(pl) + "Q" + P2([lerp(pl[0], spL[0], 0.5), spL[1] + ol * 0.45]) + " " + P2(spL) + "Q" + P2([lerp(spL[0], pm[0], 0.5), spL[1] - ol * 0.05]) + " " + P2(delle) + "Q" + P2([lerp(spR[0], pm[0], 0.5), spR[1] - ol * 0.05]) + " " + P2(spR) + "Q" + P2([lerp(prr[0], spR[0], 0.5), spR[1] + ol * 0.45]) + " " + P2(prr)
+        + "Q" + P2(mitteS) + " " + P2(spalt(pl)) + 'Z" fill="' + dunkler(lippe, 0.2) + '"/>';
+      /* Lippenrand (weiße Linie) über der Oberlippe */
+      m += '<path d="M' + P2([lerp(pl[0], spL[0], 0.4), lerp(pl[1], spL[1], 0.55) - 0.05 * k]) + "L" + P2([spL[0], spL[1] - 0.08 * k]) + "L" + P2([delle[0], delle[1] - 0.08 * k]) + "L" + P2([spR[0], spR[1] - 0.08 * k]) + "L" + P2([lerp(prr[0], spR[0], 0.4), lerp(prr[1], spR[1], 0.55) - 0.05 * k]) + '" fill="none" stroke="' + heller(hautF, 0.4) + '" stroke-width="' + r2(0.1 * k) + '" opacity=".55"/>';
+      /* Unterlippe */
+      m += '<path d="M' + P2(pl) + "Q" + P2(mitteS) + " " + P2(prr) + "C" + P2([lerp(prr[0], pm[0], 0.3), pm[1] + ul * 1.75]) + " " + P2([lerp(pl[0], pm[0], 0.3), pm[1] + ul * 1.75]) + " " + P2(pl) + 'Z" fill="url(#' + lid + ')"/>';
+      /* Mundspalte und Mundwinkel */
+      m += '<path d="M' + P2([pl[0], pl[1] - laecheln * 0.3]) + "Q" + P2([pm[0], pm[1] + laecheln * 0.5]) + " " + P2([prr[0], prr[1] - laecheln * 0.3]) + '" fill="none" stroke="' + dunkler(lippe, 0.62) + '" stroke-width="' + r2(0.12 * k) + '" stroke-linecap="round"/>';
+      m += weich(pl, 0.28 * k, 0.2 * k, DK, 0.5) + weich(prr, 0.28 * k, 0.2 * k, DK, 0.5);
+      /* Glanz auf der Unterlippe */
+      m += weich([pm[0] - 0.35 * k, pm[1] + ul * 0.95], 0.75 * k, 0.26 * k, GL, 0.75);
+      m += '<path d="M' + P2([pm[0] - 0.7 * k, pm[1] + ul * 0.92]) + "Q" + P2([pm[0] - 0.3 * k, pm[1] + ul * 0.75]) + " " + P2([pm[0] + 0.2 * k, pm[1] + ul * 0.9]) + '" fill="none" stroke="#fff" stroke-width="' + r2(0.07 * k) + '" opacity=".45"/>';
+      /* Schatten unter der Unterlippe (Kinnfurche) */
+      m += weich([pm[0], pm[1] + ul * 2.3], 1.1 * k, 0.38 * k, DK, 0.35);
+      m += "</g>";
+      svg += m;
+      /* Falten neben dem Mund bei alten Menschen */
+      if (alt) {
+        let fd = "";
+        ["L", "R"].forEach((sd) => { const s = sd === "L" ? 1 : -1; const a = auf2(8.1, s * 0.34), b = auf2(9.5, s * 0.36); if (a && b) fd += "M" + P2(a) + "L" + P2(b); });
+        if (fd) svg += '<path d="' + fd + '" stroke="' + dunkler(hautF, 0.3) + '" stroke-width="' + r2(0.12 * k) + '" opacity=".45"/>';
+      }
     }
     if (profilDeck > 0 && vonVorn > -0.25) {
       /* Lippenrot im Profil und die Mundspalte nach hinten */
@@ -2090,43 +2564,32 @@
       const sp0 = pr(profil[11].p), sp1 = pr(add(profil[11].innen, mul(U, 0)));
       svg += linie([sp0, [lerp(sp0[0], sp1[0], 0.8), lerp(sp0[1], sp1[1], 0.8) + laecheln * 0.2]], dunkler(lippe, 0.55), 0.22 * k, ' opacity="' + profilDeck.toFixed(2) + '"');
     }
-    /* Wangen: etwas Röte, der Schatten unter dem Wangenknochen und am
-       Kiefer auf der Schattenseite; die Kieferlinie im Halbprofil. */
-    ["L", "R"].forEach((sd) => {
-      const s = sd === "L" ? 1 : -1;
-      const F = flaeche(4.2, s * 0.55);
-      if (sichtbar(F.n) < 0.2) return;
-      const p = pr(F.p);
-      svg += '<ellipse cx="' + r1(p[0]) + '" cy="' + r1(p[1]) + '" rx="' + r1(1.8 * k * sichtbar(F.n)) + '" ry="' + r1(1.2 * k) + '" fill="#e0806f" opacity="' + (baby || !M.erw ? 0.22 : (M.w ? 0.14 : 0.1)) + '"/>';
-      if (s === schatten && !baby) {
-        const w1 = pr(flaeche(4.6, s * 0.72).p);
-        svg += '<ellipse cx="' + r1(w1[0]) + '" cy="' + r1(w1[1]) + '" rx="' + r1(1.9 * k) + '" ry="' + r1(1.1 * k) + '" fill="' + dunkler(hautF, 0.35) + '" opacity=".13"/>';
-      }
-    });
-    if (vonVorn > -0.2 && !baby) {
-      const kiefer = [];
-      for (let i = 0; i <= 6; i++) { const u = schatten * (0.2 + i * 0.13); const q = flaeche(10.9 - i * 0.55 - (i > 4 ? (i - 4) * 0.7 : 0), u); if (sichtbar(q.n) > -0.05) kiefer.push(pr(q.p)); }
-      if (kiefer.length > 2) svg += linie(kiefer, dunkler(hautF, 0.35), 1.1 * k, ' opacity=".12"');
-      if (seitlich > 0.35) {
-        const kl = [];
-        const seiteU = sichtbar(U) >= 0 ? 1 : -1;
-        for (let i = 0; i <= 6; i++) kl.push(pr(rund(lerp(11.1, 7.2, i / 6), seiteU * (15 + i * 14), 0).p));
-        svg += linie(kl, kontur, 0.26 * k, ' opacity="' + (0.55 * klemm((seitlich - 0.35) / 0.4, 0, 1)).toFixed(2) + '"');
-      }
+    /* Kieferlinie im Halbprofil */
+    if (vonVorn > -0.2 && !baby && seitlich > 0.35) {
+      const kl = [];
+      const seiteU = sichtbar(U) >= 0 ? 1 : -1;
+      for (let i = 0; i <= 6; i++) kl.push(pr(rund(lerp(11.1, 7.2, i / 6), seiteU * (15 + i * 14), 0).p));
+      svg += linie(kl, kontur, 0.2 * k, ' opacity="' + (0.5 * klemm((seitlich - 0.35) / 0.4, 0, 1)).toFixed(2) + '"');
     }
-    if (spec.alter === "alt" || (M.erw && gi === 3)) {
-      /* Falten: Nasolabial und Stirn, zart */
-      const deck = spec.alter === "alt" ? 0.55 : 0.25;
+    if (alt || (M.erw && gi === 3)) {
+      /* Falten: Nasolabial (von der Nase zum Mundwinkel) und Stirn */
+      const deck = alt ? 0.6 : 0.28;
       ["L", "R"].forEach((sd) => {
         const s = sd === "L" ? 1 : -1;
         const a = flaeche(4.6, s * 0.3), b = flaeche(7.8, s * 0.46);
         if (sichtbar(a.n) < 0.25) return;
-        svg += linie([pr(a.p), pr(flaeche(6.2, s * 0.43).p), pr(b.p)], dunkler(hautF, 0.3), 0.18 * k, ' opacity="' + deck + '"');
+        const pts = [pr(a.p), pr(flaeche(6.2, s * 0.44).p), pr(b.p)];
+        svg += linie(pts, dunkler(hautF, 0.32), 0.14 * k, ' opacity="' + deck + '"') + linie(pts.map((p) => [p[0] - s * 0.12 * k * (licht === s ? -1 : 1), p[1]]), heller(hautF, 0.3), 0.14 * k, ' opacity="' + (deck * 0.6).toFixed(2) + '"');
       });
-      if (spec.alter === "alt") {
-        [-5, -4.1].forEach((y) => {
-          const s1 = flaeche(y, -0.35), s2 = flaeche(y - 0.2, 0.35);
-          if (sichtbar(s1.n) > 0.3 || sichtbar(s2.n) > 0.3) svg += linie([pr(s1.p), pr(flaeche(y - 0.3, 0).p), pr(s2.p)], dunkler(hautF, 0.2), 0.15 * k, ' opacity=".4"');
+      if (alt) {
+        [-6.2, -5.2, -4.2].forEach((y, j) => {
+          const pts = [-0.5, -0.25, 0, 0.25, 0.5].map((u, i) => auf2(y + (i % 2 ? 0.12 : -0.05) + Math.abs(u) * 0.4, u)).filter(Boolean);
+          if (pts.length > 2) svg += linie(pts, dunkler(hautF, 0.24), 0.1 * k, ' opacity="' + (0.5 - j * 0.08).toFixed(2) + '"');
+        });
+        /* Altersflecken */
+        [[-6.2, 0.62, 0.4], [-2.4, -0.84, 0.32], [3.4, 0.78, 0.26]].forEach((q) => {
+          const p = auf2(q[0], q[1]);
+          if (p) svg += '<ellipse cx="' + r2(p[0]) + '" cy="' + r2(p[1]) + '" rx="' + r2(q[2] * k) + '" ry="' + r2(q[2] * 0.8 * k) + '" fill="' + misch(hautF, "#8a5a3a", 0.3) + '" opacity=".28"/>';
         });
       }
     }
@@ -2135,7 +2598,23 @@
        Eine Schale mit Volumen über dem Schädel, an der Haarlinie
        abgeschnitten; darauf Strähnen vom Wirbel zur Haarlinie und ein
        Glanzband auf der Lichtseite. */
-    const frisur = spec.frisur === "kahl" ? "kahl" : (FRISUR[spec.frisur] ? spec.frisur : (M.w ? "lang" : "kurz"));
+    /* FASSUNG 838 — XANDER (Funk 222): „man sieht keine Haarstruktur“.
+       Das Haar war eine Schale mit harter Kante (wie ein Helm) und 34
+       dicken Strichen. Jetzt:
+       - Schale mit feiner Kontur und Verlauf, darauf 90–100 Strähnen in
+         drei Tönen (dunkel in der Tiefe, Grundton, hell im Licht), vom
+         Wirbel zur Haarlinie, mit Scheitel.
+       - Glanzband quer über den Kopf auf der Lichtseite, durchzogen von
+         hellen Einzelhaaren (so glänzt Haar: in Bändern, nicht als Fleck).
+       - Weiche Haarlinie: kurze Haare wachsen über die Kante in die Stirn,
+         davor feiner Flaum — kein gerader Schnitt mehr.
+       - Der Umriss franst in Haarspitzen aus.
+       - Locken als Kringel mit welligem Umriss (vorher schwarze Kugeln),
+         Glatze als Haarkranz über den Ohren (vorher eine Kappe mit
+         grauem Rand), Säuglinge mit Flaum statt Frisur, langes Haar mit
+         Strähnen, Glanz und spitz auslaufenden Enden. */
+    let frisur = spec.frisur === "kahl" ? "kahl" : (FRISUR[spec.frisur] ? spec.frisur : (M.w ? "lang" : "kurz"));
+    if (spec.alter === "saeugling" && frisur !== "kahl") frisur = "flaum";
     const F = FRISUR[frisur];
     const hut = spec.kopfbedeckung;
     {
@@ -2148,8 +2627,23 @@
     }
     if (!F || F.ohrenFrei !== false || hut) svg += ohren();
     if (F && frisur !== "kahl") {
-      const dick = (F.dick || 0.9) * k * (baby ? 0.5 : 1.25);
-      const haarS = tab.filter((q) => q[0] <= (F.bis || 3)).map((q) => schnitt(auf(q[0] - dick * 0.45 / k, 0, q[3] - 0.25), U, Vv, q[1] * k + dick, q[2] * k + dick));
+      /* FASSUNG 838, Runde 2 — Rückmeldung zum Halbprofil: „Die Haarmasse
+         endet als gerade, schräge Kante quer über Stirn/Wange (sieht aus wie
+         ein Helm oder Visier)“. Ursache: die Haarschale stand überall gleich
+         dick (bis 1,1 cm) vom Schädel ab — auch an der Haarlinie, wo Haar
+         flach auf der Haut liegt. Jetzt wird das Haar zur Haarlinie hin
+         dünn: eine anliegende Schale (2–3 mm) reicht bis an die Haarlinie,
+         die halbe Dicke beginnt 0,7 cm, die volle Dicke 1,4 cm dahinter.
+         Die Haarlinie selbst folgt dem Schädel: Stirn, senkrechte Schläfen-
+         kante, schmale Koteletten vor dem Ohr, Bogen über und hinter dem
+         Ohr, Nacken. */
+      const dick = (F.dick || 0.9) * k * (baby ? 0.5 : 1.25) * (F.locken ? 1.45 : 1);
+      const dickD = (F.flaum ? 0.06 : (F.glatze ? 0.14 : 0.22)) * k;
+      /* Locken: das Volumen nimmt zum Ohr hin ab (runde Form, keine Kante) */
+      const verjuengt = (d, y) => F.locken ? d * (0.3 + 0.7 * glatt((1 - y) / 4.5)) : d;
+      const schale = (d0, filt) => tab.filter(filt).map((q) => { const d = verjuengt(d0, q[0]); return schnitt(auf(q[0] - d * 0.45 / k, 0, q[3] - 0.25), U, Vv, q[1] * k + d, q[2] * k + d); });
+      const haarS = schale(dick, (q) => q[0] <= (F.bis || 3) && (!F.glatze || q[0] >= -3.8));
+      const haarD = schale(dickD, (q) => q[0] <= (F.bis || 3) + 1);
       /* Haarlinie: Winkel um den Kopf (Grad, 0 = Stirnmitte) → Höhe */
       const HL = haarLinie(F);
       const linieH = (wGrad) => {
@@ -2157,46 +2651,202 @@
         for (let i = 0; i < HL.length - 1; i++) if (w <= HL[i + 1][0]) return lerp(HL[i][1], HL[i + 1][1], (w - HL[i][0]) / (HL[i + 1][0] - HL[i][0]));
         return HL[HL.length - 1][1];
       };
-      const kante = [];
-      for (let i = 0; i <= 60; i++) {
-        const w = (i / 60) * 360;
-        const y = linieH(w);
-        const q = rund(y, w, 0.25);
-        kante.push({ p: pr(q.p), s: sichtbar(q.n) });
-      }
-      /* sichtbarer Bogen der Haarlinie */
-      let start = -1;
-      for (let i = 0; i < 60; i++) if (kante[i].s <= 0 && kante[(i + 1) % 60].s > 0) { start = (i + 1) % 60; break; }
-      let bogen = [];
-      if (start < 0) bogen = kante.slice(0, 60).map((q) => q.p);
-      else for (let j = 0; j < 60; j++) { const q = kante[(start + j) % 60]; if (q.s <= 0) break; bogen.push(q.p); }
+      const NK = 144;
       const mitte = pr(K.p);
-      let maske = "";
-      if (bogen.length >= 2) {
-        const a = bogen[0], z = bogen[bogen.length - 1];
-        const weg = (p) => [mitte[0] + (p[0] - mitte[0]) * 8, mitte[1] + (p[1] - mitte[1]) * 8];
-        const obenP = pr(add(K.p, mul(T, -60 * k)));
-        const pts = [weg(z)].concat([[obenP[0], obenP[1]]], [weg(a)], bogen);
-        maske = "M" + pts.map((p) => r1(p[0]) + " " + r1(p[1])).join("L") + "Z";
-      }
-      const hid = h.id + "h" + h.zaehler();
-      if (maske) h.defs.push('<clipPath id="' + hid + '"><path d="' + maske + '"/></clipPath>');
-      let kappe = form(haarS, haarF, { hell: 0.26, dunkel: 0.3, kontur: dunkler(haarF, 0.4), fein: 36 });
-      /* Strähnen: vom Wirbel (hinten oben) über den Kopf zur Haarlinie */
-      const haarPunkt = (y, w) => rund(y, w, dick / k + 0.05);
-      const scheitel = F.scheitel != null ? F.scheitel : 28;
-      if (!F.glatze) {
-        for (let i = 0; i < 34; i++) {
-          const w = -180 + i * (360 / 34) + 3 + (i % 3) * 2;
-          const ende = linieH(w) - 0.2 - (i % 4) * 0.35, anf = (w > -60 && w < 60 ? -10.6 : -9.8) + (i % 3) * 0.5;
-          const pts = [0, 0.3, 0.6, 0.85, 1].map((t) => haarPunkt(lerp(anf, ende, t), w + (Math.abs(w) < 90 ? (scheitel - w) * 0.15 * (1 - t) : 0) + Math.sin(t * 3 + i) * 2));
-          const sicht = sichtbar(pts[2].n);
-          if (sicht < 0.08) continue;
-          const pp = pts.map((q) => pr(q.p));
-          const nb = prRichtung(pts[1].n), zumLicht = (nb[0] * h.licht[0] + nb[1] * h.licht[1]) / (Math.hypot(nb[0], nb[1]) || 1);
-          kappe += linie(pp, i % 2 ? dunkler(haarF, 0.4) : dunkler(haarF, 0.22), (i % 2 ? 0.2 : 0.3) * k, ' opacity="' + (0.45 * klemm(sicht * 2, 0, 1)).toFixed(2) + '"');
-          if (zumLicht > 0.2 && i % 2 === 0) kappe += linie(pp.slice(1, 3), heller(haarF, 0.5), 0.3 * k, ' opacity="' + (0.4 * zumLicht).toFixed(2) + '"');
+      /* Maske „oberhalb der Linie fn(w)“: der sichtbare Bogen der Linie und
+         weit außen liegende Punkte; zu = Abstand über der Haut */
+      const maskeVon = (fn, zu) => {
+        const kante = [];
+        for (let i = 0; i <= NK; i++) {
+          const w = (i / NK) * 360, y = fn(w), q = rund(y, w, zu);
+          kante.push({ p: pr(q.p), s: sichtbar(q.n), w, y });
         }
+        let start = -1;
+        for (let i = 0; i < NK; i++) if (kante[i].s <= 0 && kante[(i + 1) % NK].s > 0) { start = (i + 1) % NK; break; }
+        let bogen = [];
+        if (start < 0) bogen = kante.slice(0, NK);
+        else for (let j = 0; j < NK; j++) { const q = kante[(start + j) % NK]; if (q.s <= 0) break; bogen.push(q); }
+        let d = "";
+        if (bogen.length >= 2) {
+          const a = bogen[0].p, z = bogen[bogen.length - 1].p;
+          const weg = (p) => [mitte[0] + (p[0] - mitte[0]) * 8, mitte[1] + (p[1] - mitte[1]) * 8];
+          const obenP = pr(add(K.p, mul(T, -60 * k)));
+          const pts = [weg(z)].concat([[obenP[0], obenP[1]]], [weg(a)], bogen.map((q) => q.p));
+          d = "M" + pts.map((p) => r1(p[0]) + " " + r1(p[1])).join("L") + "Z";
+        }
+        return { d, bogen };
+      };
+      const clipVon = (d) => { if (!d) return ""; const id0 = h.id + "h" + h.zaehler(); h.defs.push('<clipPath id="' + id0 + '"><path d="' + d + '"/></clipPath>'); return id0; };
+      const mD = maskeVon(linieH, 0.12);
+      const bogen = mD.bogen;
+      let hid = clipVon(mD.d);
+      let maske = mD.d;
+      /* Glatze: der Kranz ist ein Band zwischen einer unregelmäßigen Ober-
+         kante und der Haarlinie um die Ohren — anliegend am Schädel. */
+      const kranzOben0 = (w) => -4.4 + 0.35 * Math.sin(w * RAD * 7) + 0.25 * Math.sin(w * RAD * 13 + 1);
+      /* zur Schläfe hin läuft der Kranz spitz aus (keine senkrechte Kante) */
+      const kranzOben = (w) => { const aw = Math.abs(((w + 540) % 360) - 180); return lerp(linieH(w) - 0.15, kranzOben0(w), glatt((aw - 64) / 26)); };
+      if (F.glatze) {
+        let d = "";
+        [1, -1].forEach((sg) => {
+          const oben = [], unten = [];
+          for (let w = 60; w <= 180; w += 4) {
+            const ww = sg * w;
+            if (linieH(ww) < kranzOben(ww) + 0.4) continue;
+            const qo = rund(kranzOben(ww), ww, 0.1), qu = rund(linieH(ww), ww, 0.1);
+            if (sichtbar(qo.n) < 0 && sichtbar(qu.n) < 0) continue;
+            oben.push(pr(qo.p)); unten.push(pr(qu.p));
+          }
+          if (oben.length > 1) d += "M" + oben.concat(unten.reverse()).map((p) => r1(p[0]) + " " + r1(p[1])).join("L") + "Z";
+        });
+        hid = clipVon(d); maske = d;
+      }
+      const haarPunkt = (y, w) => rund(y, w, (F.glatze ? dickD : dick) / k + 0.05);
+      const zumLichtVon = (n) => { const nb = prRichtung(n); return (nb[0] * h.licht[0] + nb[1] * h.licht[1]) / (Math.hypot(nb[0], nb[1]) || 1); };
+      const um = duenn(umriss(haarS.map((s) => ({ c: pr(s.c), U: prRichtung(s.U), V: prRichtung(s.V), a: s.a, b: s.b }))), 0.9 * k);
+      let kappe = "";
+      /* anliegende Schale bis an die Haarlinie */
+      kappe += form(haarD, haarF, { hell: 0.26, dunkel: 0.3, kontur: dunkler(haarF, 0.2), strich: 0.06 * k, fein: 36, extra: F.flaum ? ' opacity=".14"' : (F.glatze ? ' opacity=".85"' : "") });
+      let dicke = "";
+      if (!F.glatze && !F.flaum) {
+        /* halbe und volle Dicke, jeweils weiter hinter der Haarlinie */
+        const heb = F.locken ? 0.6 : 0.7;
+        const mM = maskeVon((w) => linieH(w) - heb, 0.4), mT = maskeVon((w) => linieH(w) - 2 * heb, 0.6);
+        const cM = clipVon(mM.d), cT = clipVon(mT.d);
+        const mittel = schale(dick * 0.5, (q) => q[0] <= (F.bis || 3));
+        dicke += '<g clip-path="url(#' + cM + ')">' + form(mittel, haarF, { hell: 0.28, dunkel: 0.32, kontur: dunkler(haarF, 0.22), strich: 0.06 * k, fein: 36 }) + "</g>";
+        dicke += '<g clip-path="url(#' + cT + ')">' + form(haarS, haarF, { hell: 0.3, dunkel: 0.34, kontur: F.locken ? haarF : dunkler(haarF, 0.28), strich: F.locken ? 0.01 : 0.1 * k, fein: 36 }) + "</g>";
+      }
+      if (F.locken) {
+        /* Afro/Locken: Volumen mit unregelmäßigem Umriss aus Bögen
+           verschiedener Größe, etwas nach außen versetzt */
+        const fu = h.fuellung();
+        let bu = "";
+        /* weiche Wellen im Umriss: große, überlappende Bögen, deren Mitte
+           innerhalb der Schale liegt (keine Kugeln am Rand) */
+        um.forEach((p, i) => {
+          const nx = p[0] - mitte[0], ny = p[1] - mitte[1], l = Math.hypot(nx, ny) || 1;
+          if (ny / l > -0.15) return;
+          const r = (0.9 + ((i * 7) % 5) * 0.12) * k, c = [p[0] - nx / l * r * 0.62, p[1] - ny / l * r * 0.62];
+          bu += "M" + P2([c[0] - r, c[1]]) + "a" + r2(r) + "," + r2(r) + ",0,1,0," + r2(2 * r) + ",0a" + r2(r) + "," + r2(r) + ",0,1,0," + r2(-2 * r) + ",0";
+        });
+        dicke += '<path d="' + bu + '" fill="' + fu + '"/>';
+        /* Umriss: kleine gekringelte Haarspitzen (Striche), keine Kugeln */
+        let kr = "";
+        um.forEach((p, i) => {
+          if (i % 2) return;
+          const nx = p[0] - mitte[0], ny = p[1] - mitte[1], l = Math.hypot(nx, ny) || 1;
+          if (ny / l > 0.3) return;
+          const r = (0.25 + ((i * 5) % 3) * 0.08) * k, c = [p[0] + nx / l * 0.05 * k, p[1] + ny / l * 0.05 * k];
+          kr += "M" + P2([c[0] - r, c[1]]) + "a" + r2(r) + "," + r2(r) + ",0,1," + (i % 4 ? 1 : 0) + "," + r2(r * 1.6) + "," + r2(-r * 0.3);
+        });
+        dicke += '<path d="' + kr + '" fill="none" stroke="' + haarF + '" stroke-width="' + r2(0.22 * k) + '" stroke-linecap="round"/>';
+      }
+      const scheitel = F.scheitel != null ? F.scheitel : 28;
+      const ton = [[], [], []];
+      if (!F.locken) {
+        const N = F.glatze ? 150 : (F.flaum ? 60 : 96);
+        for (let i = 0; i < N; i++) {
+          const w = -180 + (i + ((i * 7) % 5) * 0.17) * (360 / N);
+          const ende = linieH(w) - 0.1 - ((i * 13) % 5) * 0.22;
+          if (F.glatze && linieH(w) < kranzOben(w) + 0.4) continue;
+          const anf = F.glatze ? kranzOben(w) - 0.3 : (F.flaum ? -11 + ((i * 3) % 5) * 0.8 : ((w > -60 && w < 60 ? -10.8 : -10) + ((i * 3) % 4) * 0.45));
+          const pts = [0, 0.5, 1].map((t) => haarPunkt(lerp(anf, ende, t), w + (Math.abs(w) < 90 && !F.glatze ? (scheitel - w) * 0.15 * (1 - t) : 0) + Math.sin(t * 3 + i) * 2.5));
+          if (sichtbar(pts[1].n) < 0.05) continue;
+          const pp = pts.map((q) => pr(q.p));
+          const c = [2 * pp[1][0] - (pp[0][0] + pp[2][0]) / 2, 2 * pp[1][1] - (pp[0][1] + pp[2][1]) / 2];
+          const zl = zumLichtVon(pts[1].n);
+          ton[zl > 0.2 && i % 3 === 0 ? 2 : (i % 2 ? 0 : 1)].push("M" + P2(pp[0]) + "Q" + P2(c) + " " + P2(pp[2]));
+        }
+        if (F.flaum) {
+          /* ein paar Löckchen am Wirbel und über der Stirn */
+          [[-10.4, 20], [-9.6, -25], [-8.9, 5], [-9.8, 60], [-9.2, -70]].forEach((q) => {
+            const p0 = haarPunkt(q[0], q[1]);
+            if (sichtbar(p0.n) < 0.1) return;
+            const p = pr(p0.p), r = 0.45 * k;
+            ton[1].push("M" + P2([p[0] - r, p[1]]) + "a" + r2(r) + "," + r2(r) + ",0,1,1," + r2(r * 1.5) + "," + r2(r * 0.8));
+          });
+        }
+      } else {
+        /* Kringel über die ganze Schale: klein, unregelmäßig versetzt */
+        for (let y = -11; y < 3; y += 0.95) for (let w = -180; w < 180; w += 10) {
+          const ww = w + (Math.round(y * 4) % 3) * 3.3 + ((w * 7) % 4);
+          if (y > linieH(ww) - 0.2) continue;
+          const q = rund(y, ww, dick / k * 0.9);
+          if (sichtbar(q.n) < 0.08) continue;
+          const p = pr(q.p), r = (0.28 + ((Math.round(ww + y * 10) & 3) * 0.06)) * k;
+          const zl = zumLichtVon(q.n);
+          ton[zl > 0.25 && (Math.round(ww + y) & 1) ? 2 : ((Math.round(ww / 10 + y) & 1) ? 0 : 1)].push("M" + P2([p[0] - r, p[1]]) + "a" + r2(r) + "," + r2(r) + ",0,1,1," + r2(r * 1.4) + "," + r2(r * 0.7));
+        }
+      }
+      const tb = F.flaum ? 0.5 : (F.locken ? 0.8 : 1);
+      if (ton[0].length) kappe += dicke + '<path data-teil="straehnen" d="' + ton[0].join("") + '" fill="none" stroke="' + dunkler(haarF, 0.45) + '" stroke-width="' + r2(0.11 * k * tb) + '" stroke-linecap="round" opacity="' + (F.glatze ? ".75" : ".55") + '"/>';
+      else kappe += dicke;
+      if (ton[1].length) kappe += '<path data-teil="straehnen" d="' + ton[1].join("") + '" fill="none" stroke="' + dunkler(haarF, 0.2) + '" stroke-width="' + r2(0.17 * k * tb) + '" stroke-linecap="round" opacity="' + (F.flaum ? ".7" : ".5") + '"/>';
+      if (ton[2].length) kappe += '<path data-teil="straehnen" d="' + ton[2].join("") + '" fill="none" stroke="' + heller(haarF, 0.5) + '" stroke-width="' + r2(0.1 * k * tb) + '" stroke-linecap="round" opacity=".6"/>';
+      /* Glanzband mit hellen Einzelhaaren (bei Locken: ein Glanzschimmer) */
+      if (!F.glatze && !F.flaum) {
+        const band = [], quer = [];
+        for (let w = -115; w <= 115; w += 9) {
+          const ww = w + licht * 22;
+          const y = -7.4 + Math.abs(w) / 115 * 2.4;
+          const q = haarPunkt(y, ww);
+          if (sichtbar(q.n) < 0.1 || zumLichtVon(q.n) < -0.35) continue;
+          band.push(pr(q.p));
+          if (!F.locken) [0, 1].forEach((z) => {
+            const w2 = ww + z * 4 + ((w * 7) % 3);
+            const a = pr(haarPunkt(y - 1.4 - ((w + z * 5) % 4) * 0.35, w2 + (scheitel - w2) * 0.05).p), b = pr(haarPunkt(y + 0.8 + ((w * 3 + z) % 3) * 0.4, w2 + 1).p);
+            quer.push("M" + P2(a) + "L" + P2(b));
+          });
+        }
+        if (band.length > 2) {
+          const sd0 = /d="([^"]+)"/.exec(form(haarS, haarF, { flach: true }));
+          const bcid = h.id + "hb" + h.zaehler();
+          if (sd0) h.defs.push('<clipPath id="' + bcid + '"><path d="' + sd0[1] + '"/></clipPath>');
+          kappe += '<g clip-path="url(#' + bcid + ')">';
+          kappe += linie(band, heller(haarF, 0.45), 2.6 * k, ' opacity="' + (F.locken ? ".16" : ".12") + '"') + linie(band, heller(haarF, 0.5), 1.2 * k, ' opacity=".14"');
+          if (quer.length) kappe += '<path d="' + quer.join("") + '" stroke="' + heller(haarF, 0.65) + '" stroke-width="' + r2(0.07 * k) + '" stroke-linecap="round" opacity=".5"/>';
+          kappe += "</g>";
+        }
+      }
+      /* Haarspitzen am Umriss */
+      {
+        let tuft = "";
+        um.forEach((p, i) => {
+          if (i % 2 || F.locken || F.glatze) return;
+          const nx = p[0] - mitte[0], ny = p[1] - mitte[1], l = Math.hypot(nx, ny) || 1;
+          const n = [nx / l, ny / l];
+          if (n[1] > -0.6) return;
+          const t = [-n[1], n[0]], td = t[1] >= 0 ? t : [-t[0], -t[1]];
+          const L = (0.45 + (i % 3) * 0.2) * k * (F.flaum ? 0.6 : 1), o = (0.06 + (i % 4) * 0.05) * k;
+          const a = [p[0] - n[0] * 0.35 * k, p[1] - n[1] * 0.35 * k], e = [p[0] + n[0] * o + td[0] * L, p[1] + n[1] * o + td[1] * L];
+          tuft += "M" + P2(a) + "Q" + P2([(a[0] + e[0]) / 2 + n[0] * 0.1 * k, (a[1] + e[1]) / 2 + n[1] * 0.1 * k]) + " " + P2(e);
+        });
+        if (tuft && !F.flaum) kappe += '<path d="' + tuft + '" fill="none" stroke="' + haarF + '" stroke-width="' + r2(0.2 * k * tb) + '" stroke-linecap="round"/><path d="' + tuft + '" fill="none" stroke="' + dunkler(haarF, 0.3) + '" stroke-width="' + r2(0.06 * k) + '" opacity=".5"/>';
+      }
+      svg += maske ? '<g clip-path="url(#' + hid + ')">' + kappe + "</g>" : kappe;
+      /* Weiche Haarlinie: Haare über die Kante, davor Flaum */
+      if (!F.locken) {
+        let fed = "", fl = "";
+        bogen.forEach((q, i) => {
+          if (q.s < 0.12 || (i % 3 === 1) || (F.glatze && q.y < -4)) return;
+          const a = rund(q.y + 0.15 + (i % 4) * 0.12, q.w + ((i * 7) % 5 - 2) * 0.6, 0.05), b = rund(q.y - 1.0 - ((i * 5) % 7) * 0.2, q.w + ((i * 3) % 7 - 3) * 1.5 + (scheitel - q.w) * 0.04, dick / k * 0.8);
+          const pa = pr(a.p), pb = pr(b.p);
+          fed += "M" + P2(pa) + "Q" + P2([lerp(pa[0], pb[0], 0.5) + ((i % 3) - 1) * 0.12 * k, lerp(pa[1], pb[1], 0.5)]) + " " + P2(pb);
+          if (i % 4 === 0) fl += "M" + P2(pr(rund(q.y + 0.6, q.w + 1, 0).p)) + "L" + P2(pr(rund(q.y + 0.05, q.w + 2, 0.05).p));
+        });
+        if (fed) svg += '<path d="' + fed + '" fill="none" stroke="' + haarF + '" stroke-width="' + r2(0.1 * k * tb) + '" stroke-linecap="round" opacity=".55"/>';
+        if (fl) svg += '<path d="' + fl + '" stroke="' + haarF + '" stroke-width="' + r2(0.06 * k) + '" opacity=".4"/>';
+      }
+      /* Locken: Kringel über der Haarlinie und am Rand statt einer glatten Kante */
+      if (F.locken) {
+        let kr = "";
+        bogen.forEach((q, i) => {
+          if (q.s < 0.1 || i % 3 || q.y > -1) return;
+          const a = pr(rund(q.y - 0.35 - (i % 2) * 0.3, q.w, dick / k * 0.5).p), r = (0.2 + (i % 4) * 0.05) * k;
+          kr += "M" + P2([a[0] - r, a[1]]) + "a" + r2(r) + "," + r2(r) + ",0,1," + (i % 4 < 2 ? 1 : 0) + "," + r2(r * 1.5) + "," + r2(r * 0.5);
+        });
+        if (kr) svg += '<path d="' + kr + '" fill="none" stroke="' + heller(haarF, 0.12) + '" stroke-width="' + r2(0.16 * k) + '" stroke-linecap="round" opacity=".8"/>';
       }
       /* Hinten hängendes Haar (lang, Pony) */
       if (F.laenge) {
@@ -2205,59 +2855,74 @@
         const aufrecht = T[1] > 0.5;
         const unten = add(nackenP, mul(fall, F.laenge * M.kopf * (aufrecht ? 1 : 0.35)));
         const R0 = mv(R, [0, 0, 1]);
-        const breiteH = (F.breit || 9.6) * k;
+        const breiteH = (F.breit || 8.2) * k;
         const hs = [0, 0.3, 0.7, 1].map((t, i) => {
           const c = add(lerp3(nackenP, unten, t), mul(R0, -(t * 2.4 * k)));
           return schnitt(c, U, R0, breiteH * [1, 1.1, 1.06, 0.84][i], (6.2 - t * 3) * k);
         });
-        hinten += form(hs, dunkler(haarF, 0.08), { hell: 0.24, dunkel: 0.3, kontur: dunkler(haarF, 0.42) });
+        hinten += form(hs, dunkler(haarF, 0.08), { hell: 0.3, dunkel: 0.34, kontur: dunkler(haarF, 0.3), strich: 0.12 * k });
         const pH = hs.map((s) => pr(s.c));
         const q = prRichtung(U), ql = Math.hypot(q[0], q[1]) || 1;
-        for (let i = -4; i <= 4; i++) {
-          hinten += linie(pH.map((p, j) => [p[0] + q[0] / ql * i * breiteH * 0.2 * (1 - j * 0.1), p[1] + q[1] / ql * i * 0.4]), i % 2 ? heller(haarF, 0.3) : dunkler(haarF, 0.32), (i % 2 ? 0.16 : 0.22) * k, ' opacity="' + (i % 2 ? ".35" : ".5") + '"');
+        const qx = q[0] / ql, qy = q[1] / ql;
+        const st = [[], [], []];
+        let spitzen = "";
+        for (let i = -12; i <= 12; i++) {
+          const j = i + ((i * 5) % 3) * 0.3;
+          const zug = pH.map((p, n) => [p[0] + qx * j * breiteH * 0.078 * [1, 1.1, 1.06, 0.84][n], p[1] + qy * j * 0.4 + (n === 3 ? ((i * 7) % 4) * 0.4 * k : 0)]);
+          st[i % 3 === 0 ? 2 : (i % 2 ? 0 : 1)].push(pfad(zug, true));
+          const e = zug[3];
+          if (Math.abs(i) < 11) spitzen += "M" + P2([e[0] - qx * 0.4 * k, e[1] - 1.2 * k]) + "L" + P2([e[0] + qx * 0.1 * k, e[1] + (0.9 + (i & 3) * 0.4) * k]) + "L" + P2([e[0] + qx * 0.5 * k, e[1] - 1.2 * k]) + "Z";
         }
+        hinten += '<path d="' + spitzen + '" fill="' + dunkler(haarF, 0.12) + '"/>';
+        hinten += '<path d="' + st[0].join("") + '" fill="none" stroke="' + dunkler(haarF, 0.4) + '" stroke-width="' + r2(0.14 * k) + '" opacity=".55"/>'
+          + '<path d="' + st[1].join("") + '" fill="none" stroke="' + dunkler(haarF, 0.18) + '" stroke-width="' + r2(0.2 * k) + '" opacity=".45"/>'
+          + '<path d="' + st[2].join("") + '" fill="none" stroke="' + heller(haarF, 0.45) + '" stroke-width="' + r2(0.12 * k) + '" opacity=".55"/>';
+        /* Glanz quer über das hängende Haar */
+        const g0 = [lerp(pH[0][0], pH[1][0], 0.6), lerp(pH[0][1], pH[1][1], 0.6)];
+        hinten += linie([[g0[0] - qx * breiteH * 0.8, g0[1] - qy * breiteH * 0.2], g0, [g0[0] + qx * breiteH * 0.8, g0[1] + qy * breiteH * 0.2]], heller(haarF, 0.5), 1.4 * k, ' opacity=".2"');
       }
       if (F.zopf) {
         const ansatz = auf(-3.5, 0, -10.4);
         const unten = add(ansatz, [0, F.zopf * M.kopf, 1 * k]);
         const zs = [0, 0.5, 1].map((t, i) => schnitt(add(lerp3(ansatz, unten, t), [0, 0, -t * 1.6 * k]), U, mv(R, [0, 0, 1]), [2.4, 2.1, 1.2][i] * k, [2.4, 2.1, 1.2][i] * k));
-        hinten += form(zs, haarF, { hell: 0.24, dunkel: 0.28, kontur: dunkler(haarF, 0.4) });
-        /* geflochtene Glieder */
+        hinten += form(zs, haarF, { hell: 0.28, dunkel: 0.3, kontur: dunkler(haarF, 0.35), strich: 0.12 * k });
+        /* geflochtene Glieder mit Glanz */
         const pa = pr(ansatz), pu = pr(unten);
-        for (let i = 1; i < 6; i++) {
-          const c = [lerp(pa[0], pu[0], i / 6), lerp(pa[1], pu[1], i / 6)], rr = (2.3 - i * 0.18) * k;
-          hinten += '<path d="M' + r1(c[0] - rr) + " " + r1(c[1] - rr * 0.3) + "Q" + r1(c[0]) + " " + r1(c[1] + rr * 0.5) + " " + r1(c[0] + rr) + " " + r1(c[1] - rr * 0.3) + '" fill="none" stroke="' + dunkler(haarF, 0.35) + '" stroke-width="' + r1(0.2 * k) + '" opacity=".6"/>';
+        let zd = "", zg = "";
+        for (let i = 1; i < 9; i++) {
+          const c = [lerp(pa[0], pu[0], i / 9), lerp(pa[1], pu[1], i / 9)], rr = (2.3 - i * 0.13) * k, sg = i % 2 ? 1 : -1;
+          zd += "M" + P2([c[0] - rr * sg, c[1] - rr * 0.5]) + "Q" + P2([c[0] - rr * 0.2 * sg, c[1] + rr * 0.55]) + " " + P2([c[0] + rr * 0.7 * sg, c[1] + rr * 0.1]);
+          zg += "M" + P2([c[0] - rr * 0.6 * sg, c[1] - rr * 0.25]) + "Q" + P2([c[0] - rr * 0.15 * sg, c[1] + rr * 0.2]) + " " + P2([c[0] + rr * 0.3 * sg, c[1]]);
         }
+        hinten += '<path d="' + zd + '" fill="none" stroke="' + dunkler(haarF, 0.4) + '" stroke-width="' + r2(0.2 * k) + '" opacity=".7"/><path d="' + zg + '" fill="none" stroke="' + heller(haarF, 0.45) + '" stroke-width="' + r2(0.14 * k) + '" opacity=".6"/>';
       }
-      svg += maske ? '<g clip-path="url(#' + hid + ')">' + kappe + "</g>" : kappe;
       if (F.glatze) {
-        /* Oben kahl: die Haut über den Kranz ziehen, mit etwas Glanz. */
-        const oben = tab.filter((q) => q[0] <= -3.2).map((q) => schnitt(auf(q[0], 0, q[3]), U, Vv, q[1] * k + 0.2 * k, q[2] * k + 0.2 * k));
-        svg += form(oben, hautF, { hell: 0.16, dunkel: 0.2, kontur: dunkler(hautF, 0.3) }).replace(/fill="url\(#[^)]*\)"/, 'fill="' + kopfFuellung + '"');
-        const gl = pr(auf(-9.5, 1.5, 3));
-        svg += '<ellipse cx="' + r1(gl[0]) + '" cy="' + r1(gl[1]) + '" rx="' + r1(2.2 * k) + '" ry="' + r1(1.1 * k) + '" fill="#fff" opacity=".22"/>';
+        let kr = "";
+        for (let w = -180; w < 180; w += 5) {
+          const a = haarPunkt(-3.3 + ((w / 5) & 1) * 0.3, w);
+          if (sichtbar(a.n) < 0.05 || linieH(w) < -3.4) continue;
+          const pa = pr(a.p), pb = pr(rund(-4.4 - ((w / 5) % 3) * 0.3, w + 3, dick / k * 0.3).p);
+          kr += "M" + P2(pa) + "L" + P2(pb);
+        }
+        if (kr) svg += '<path data-teil="straehnen" d="' + kr + '" stroke="' + haarF + '" stroke-width="' + r2(0.1 * k) + '" stroke-linecap="round" opacity=".7"/>';
+        /* Kahler Scheitel: Glanz und bei alten Menschen Altersflecken */
+        const gl = pr(auf(-9.4, licht * 2, 3));
+        svg += weich(gl, 2.6 * k, 1.5 * k, GL, 0.55);
+        if (alt) [[-8.8, 0.35, 0.45], [-7.6, -0.55, 0.35]].forEach((q) => { const p = auf2(q[0], q[1]); if (p) svg += '<ellipse cx="' + r2(p[0]) + '" cy="' + r2(p[1]) + '" rx="' + r2(q[2] * k) + '" ry="' + r2(q[2] * 0.75 * k) + '" fill="' + misch(hautF, "#8a5a3a", 0.3) + '" opacity=".26"/>'; });
       }
       if (F.dutt) {
-        /* Der Dutt ist eine Kugel — im Bild immer ein Kreis. */
+        /* Der Dutt ist eine Kugel aus gewickelten Strähnen. */
         const c = pr(auf(-6.6, 0, -10.6));
         const rr = 3.7 * k;
-        const d = '<circle cx="' + r1(c[0]) + '" cy="' + r1(c[1]) + '" r="' + r1(rr) + '" fill="' + haarF + '" stroke="' + dunkler(haarF, 0.38) + '" stroke-width="' + r1(0.25 * k) + '"/>'
-          + '<path d="M' + r1(c[0] - rr * 0.7) + " " + r1(c[1] - rr * 0.1) + "Q" + r1(c[0]) + " " + r1(c[1] - rr * 0.9) + " " + r1(c[0] + rr * 0.75) + " " + r1(c[1] + rr * 0.1) + "M" + r1(c[0] - rr * 0.5) + " " + r1(c[1] + rr * 0.45) + "Q" + r1(c[0] + rr * 0.1) + " " + r1(c[1] - rr * 0.2) + " " + r1(c[0] + rr * 0.6) + " " + r1(c[1] + rr * 0.55) + '" fill="none" stroke="' + dunkler(haarF, 0.35) + '" stroke-width="' + r1(0.22 * k) + '" opacity=".6"/>'
-          + '<circle cx="' + r1(c[0] - rr * 0.3) + '" cy="' + r1(c[1] - rr * 0.35) + '" r="' + r1(rr * 0.45) + '" fill="' + heller(haarF, 0.3) + '" opacity=".35"/>';
+        let wd = "";
+        for (let i = 0; i < 9; i++) { const a0 = i * 0.7, rw = rr * (0.35 + (i % 4) * 0.16); wd += "M" + P2([c[0] + Math.cos(a0) * rw, c[1] + Math.sin(a0) * rw * 0.8]) + "A" + r2(rw) + "," + r2(rw * 0.75) + "," + r1(i * 40) + ",0,1," + P2([c[0] + Math.cos(a0 + 2.2) * rw, c[1] + Math.sin(a0 + 2.2) * rw * 0.8]); }
+        const d = '<circle cx="' + r1(c[0]) + '" cy="' + r1(c[1]) + '" r="' + r1(rr) + '" fill="' + haarF + '" stroke="' + dunkler(haarF, 0.3) + '" stroke-width="' + r2(0.12 * k) + '"/>'
+          + weich([c[0] + rr * 0.35, c[1] + rr * 0.3], rr * 0.8, rr * 0.8, DK, 0.25)
+          + '<path d="' + wd + '" fill="none" stroke="' + dunkler(haarF, 0.35) + '" stroke-width="' + r2(0.14 * k) + '" opacity=".6"/>'
+          + weich([c[0] - rr * 0.3, c[1] - rr * 0.35], rr * 0.5, rr * 0.35, GL, 0.5);
         const hinter = sichtbar(mul(Vv, -1)) < -0.2 && Math.abs(sichtbar(U)) < 0.6;
         if (hinter) hinten += d; else svg += d;
       }
-      if (F.locken && !hut) {
-        /* Locken: kleine Kringel entlang des Umrisses der Haarkappe */
-        const um = duenn(umriss(haarS.map((s) => ({ c: pr(s.c), U: prRichtung(s.U), V: prRichtung(s.V), a: s.a, b: s.b }))), 1.3 * k);
-        um.forEach((p, i) => {
-          if (i % 2) return;
-          if (p[1] > pr(auf(1, 0, 0))[1]) return;
-          svg += '<circle cx="' + r1(p[0]) + '" cy="' + r1(p[1]) + '" r="' + r1(1.5 * k) + '" fill="' + haarF + '" stroke="' + dunkler(haarF, 0.3) + '" stroke-width="' + r1(0.2 * k) + '"/>'
-            + '<circle cx="' + r1(p[0] - 0.4 * k) + '" cy="' + r1(p[1] - 0.4 * k) + '" r="' + r1(0.55 * k) + '" fill="' + heller(haarF, 0.35) + '" opacity=".45"/>';
-        });
-      }
-      void mitte;
     }
 
     /* ---- Kopfbedeckung ---- */
@@ -2339,22 +3004,22 @@
      ------------------------------------------------------------------ */
   /* Ärmel: 0 ohne, 0.5 kurz, 1 halb, 2 lang. oben/unten: Rumpfhöhen. */
   const OBERTEIL = {
-    tshirt: { aermel: 0.5, oben: 54 },
+    tshirt: { aermel: 0.5, oben: 57.6, rund: true },
     /* FASSUNG 836: Badeshirt für die Wanne (Badekleidung für Männer und Jungen) */
-    badeshirt: { aermel: 0.5, oben: 54, unten: 2 },
-    hemd: { aermel: 2, kragen: true, knopf: true, oben: 55 },
-    pullover: { aermel: 2, oben: 55 },
-    bluse: { aermel: 2, kragen: true, knopf: true, oben: 54 },
-    kellnerhemd: { aermel: 2, kragen: true, knopf: true, fliege: "#1d1d22", oben: 55 },
-    polizeihemd: { aermel: 2, kragen: true, knopf: true, oben: 55 },
-    arztkittel: { aermel: 2, kragen: true, knopf: true, oben: 55 },
+    badeshirt: { aermel: 0.5, oben: 57.6, unten: 2, rund: true },
+    hemd: { aermel: 2, kragen: true, knopf: true, oben: 57.8 },
+    pullover: { aermel: 2, oben: 57.8, rund: true, strick: true },
+    bluse: { aermel: 2, kragen: true, knopf: true, oben: 57.2 },
+    kellnerhemd: { aermel: 2, kragen: true, knopf: true, fliege: "#1d1d22", oben: 57.8 },
+    polizeihemd: { aermel: 2, kragen: true, knopf: true, oben: 57.8 },
+    arztkittel: { aermel: 2, kragen: true, knopf: true, oben: 57.8 },
     warnweste: { aermel: 0, streifen: "#d9d4c4", oben: 50 },
-    feuerwehrjacke: { aermel: 2, reiss: true, streifen: "#d9c64a", oben: 55 },
-    weihnachtsmantel: { aermel: 2, knopf: true, oben: 55 },
+    feuerwehrjacke: { aermel: 2, reiss: true, streifen: "#d9c64a", oben: 57.8 },
+    weihnachtsmantel: { aermel: 2, knopf: true, oben: 57.8 },
     badeanzug: { aermel: 0, oben: 44, unten: -9 },
     bikinioberteil: { aermel: 0, oben: 38, unten: 26 },
-    rollkragen: { aermel: 2, rollkragen: true, oben: 56 },
-    bademantel: { aermel: 2, kragen: true, oben: 55 },
+    rollkragen: { aermel: 2, rollkragen: true, oben: 57.8 },
+    bademantel: { aermel: 2, kragen: true, oben: 57.8 },
     /* Lehrbuch: Körperteile werden an Menschen in Unterwäsche gezeigt. */
     sporttop: { aermel: 0, oben: 41, unten: 23 },
     unterhemd: { aermel: 0, oben: 50 },
@@ -2409,6 +3074,8 @@
     locken: { stirn: -6.4, schlaefe: -1, nacken: 4, dick: 1.8, locken: true },
     pony: { stirn: -2.8, schlaefe: -0.5, nacken: 5, dick: 1.0, laenge: 0.55, breit: 8.2, bis: 3.5 },
     glatze: { stirn: -13, schlaefe: 0.4, nacken: 3.8, dick: 0.6, glatze: true },
+    /* FASSUNG 838: Säuglinge haben Flaum statt einer Frisur */
+    flaum: { dick: 0.5, flaum: true, linie: [[0, -8.4], [40, -7.8], [65, -5.6], [85, -4.2], [105, -3.8], [135, -1.6], [180, 0.4]] },
     kahl: null,
   };
   /* Stücke, die eine eigene Grundfarbe haben */
@@ -2429,9 +3096,11 @@
       "hocken", "knien", "knien_halb", "knien_vor", "krabbeln", "liegen", "winken", "halten", "zeigen", "werfen", "servieren",
       /* FASSUNG 836 */
       "bauchlage", "seitenlage", "sitzen_angewinkelt", "baden", "graetschsitz", "sitzen_ueberkreuz", "anlehnen", "laufen",
-      "treppe", "buecken", "strecken", "arme_verschraenkt", "haende_huefte"],
+      "treppe", "buecken", "strecken", "arme_verschraenkt", "haende_huefte",
+      /* FASSUNG 838 */
+      "sitzen_seit", "sitzen_zurueck"],
     /* Haltungen, bei denen das Gesäß auf einer Sitzfläche liegt */
-    SITZEND: { sitzen: 1, lesen: 1, sitzen_seit: 1, sitzen_ueberkreuz: 1 },
+    SITZEND: { sitzen: 1, lesen: 1, sitzen_seit: 1, sitzen_ueberkreuz: 1, sitzen_zurueck: 1 },
     /* FASSUNG 836: welche Körperteile in der Haltung auf dem Boden liegen
        (für die Sonde; Namen wie in zeichne({messen: true}).mess.hoehe). */
     BODEN: {

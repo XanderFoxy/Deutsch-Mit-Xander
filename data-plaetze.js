@@ -8,10 +8,6 @@
 
    Die Koordinaten kommen aus den echten Szenendaten, erzeugt
    von scratchpad/bau-plaetze.py — Aenderungen dort machen.
-   FASSUNG 834: Die Liegeplätze tragen von Hand „liegY“ (Höhe der
-   Liegefläche), „kopf“ (wo das Kissen ist) und die Badewanne
-   „wasserY“ (bis dahin verdeckt das Wasser die Figur) — die neuen,
-   echten Liegehaltungen brauchen das, sonst schwebt man über dem Bett.
    ========================================================= */
 window.DMA_PLAETZE = [
  {
@@ -29,10 +25,6 @@ window.DMA_PLAETZE = [
  },
  {
   "id": "badezimmer-badewanne",
-  "liegY": 128,
-  "kopf": "rechts",
-  "wasserY": 116,
-  "bild": "baden",
   "szene": "badezimmer",
   "teil": "badewanne",
   "x": 60,
@@ -92,8 +84,6 @@ window.DMA_PLAETZE = [
  },
  {
   "id": "schlafzimmer-bett",
-  "liegY": 121,
-  "kopf": "links",
   "szene": "schlafzimmer",
   "teil": "bett",
   "x": 189,
@@ -267,8 +257,6 @@ window.DMA_PLAETZE = [
  },
  {
   "id": "kinderzimmer-bett",
-  "liegY": 119,
-  "kopf": "links",
   "szene": "kinderzimmer",
   "teil": "bett",
   "x": 64,
@@ -551,8 +539,6 @@ window.DMA_PLAETZE = [
  },
  {
   "id": "arztpraxis-liege",
-  "liegY": 130,
-  "kopf": "links",
   "szene": "arztpraxis",
   "teil": "liege",
   "x": 192,

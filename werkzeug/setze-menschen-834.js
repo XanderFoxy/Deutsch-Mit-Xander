@@ -29,10 +29,11 @@ const path = require("path");
 const vm = require("vm");
 
 const WURZEL = path.dirname(__dirname);
+/* FASSUNG 840 — XANDER (Funk 225): „für die Bilderwelt möchte ich meine alte Version wieder zurück haben … und nur eine Option als Link zur neuen Version“. Die neue Bilderwelt (834/836/838) liegt jetzt in bilderwelt-neu/. */
 const probe = process.argv.includes("--probe");
 const raum = vm.createContext({});
 vm.runInContext("var window = this;", raum);
-vm.runInContext(fs.readFileSync(path.join(WURZEL, "figuren/mensch.js"), "utf8"), raum, { filename: "mensch.js" });
+vm.runInContext(fs.readFileSync(path.join(WURZEL, "bilderwelt-neu/figuren/mensch.js"), "utf8"), raum, { filename: "mensch.js" });
 const M = raum.window.DMA_MENSCH;
 const CM = 1.7;   // Zentimeter je Bildeinheit (DMA_PLATZ_MASS._standard)
 
@@ -61,7 +62,7 @@ const AUFTRAEGE = [
   { szene: "wohnzimmer", teil: "tochter", x: 122, sitzY: 150, pose: "sitzen", blick: 16,
     p: { alter: "kind", geschlecht: "w", haut: "hell", frisur: "zopf", haarfarbe: "dunkelbraun", gesicht: "g2",
       kleidung: kl({ oberteil: { stueck: "tshirt", farbe: "rot" }, unterteil: { stueck: "hose", farbe: "blau" }, schuhe: { stueck: "turnschuh" } }) } },
-  { szene: "wohnzimmer", teil: "mutter", x: 238, sitzY: 144, pose: "lesen", blick: 20, spiegel: true,
+  { szene: "wohnzimmer", teil: "mutter", x: 236, sitzY: 137, pose: "lesen", blick: 20, spiegel: true,
     p: { alter: "erwachsen", geschlecht: "w", haut: "hell", frisur: "dutt", haarfarbe: "braun", gesicht: "g2",
       kleidung: kl({ oberteil: { stueck: "bluse", farbe: "gruen" }, unterteil: { stueck: "hose", farbe: "grau" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "buch", farbe: "blau" } }) } },
   { szene: "wohnzimmer", teil: "kind", x: 176, fussY: 197, pose: "schneidersitz", blick: 40,
@@ -133,8 +134,39 @@ const AUFTRAEGE = [
       kleidung: kl({ oberteil: { stueck: "bluse", farbe: "blau" }, unterteil: { stueck: "anzughose", farbe: "grau" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } }) } },
 ];
 
+/* FASSUNG 838 — EBENEN: MÖBEL-RÜCKSEITE, FIGUR, MÖBEL-VORDERKANTE
+   XANDER (Funk 222): „sie sollen wenn sie auf der Couch sitzen nicht
+   irgendwelche komischen Details von der Couch vor sich haben … auch
+   wenn man in einem Sessel sitzt dass man hinter der Sessel Linie sitzt
+   und nicht an den Sessel dran geklebt“.
+   Im Wohnzimmer lagen „Sitzkissen“ und „Armlehne“ als waagrechte Balken
+   quer über den Oberschenkeln der Sitzenden. Jetzt:
+   - das Sitzkissen liegt UNTER den Sitzenden (vor ihnen in der Liste),
+   - die Armlehne ist, was sie ist: die beiden Seitenpolster des Sessels,
+     gezeichnet NACH der Mutter — sie sitzt zwischen den Lehnen. */
+function ebenen838(szene, d) {
+  if (szene !== "wohnzimmer") return;
+  const T = d.teile;
+  const idx = (id) => T.findIndex((t) => t.id === id);
+  const kissen = idx("sitzkissen");
+  const erste = Math.min(idx("vater"), idx("tochter"));
+  if (kissen > erste && erste >= 0) { const [k] = T.splice(kissen, 1); T.splice(erste, 0, k); }
+  const lehne = T[idx("armlehne")], sessel = T[idx("sessel")];
+  if (lehne && sessel) {
+    const arm = (x) => '<rect x="' + x + '" y="-34.15" width="12.68" height="26.34" rx="2.93" fill="#c47f6b" stroke="#815447" stroke-width="1.5"/>'
+      + '<rect x="' + (x + 1.2) + '" y="-33.2" width="3.2" height="23.5" rx="1.6" fill="#d8ab9d" opacity=".45"/>'
+      + '<line x1="' + (x + 1.46) + '" y1="-32.2" x2="' + (x + 11.2) + '" y2="-32.2" stroke="#d8ab9d" stroke-width="1.1" stroke-linecap="round"/>'
+      + '<rect x="' + (x + 0.6) + '" y="-12.5" width="11.5" height="3.6" rx="1.2" fill="#9a6152" opacity=".45"/>';
+    lehne.kunst = arm(-24.39) + arm(11.71);
+    lehne.x = sessel.x; lehne.y = sessel.y;
+    lehne.tipp = "Der Sessel hat zwei davon — links und rechts. Wer darin sitzt, sitzt zwischen den Armlehnen.";
+    const i = idx("armlehne"), m = idx("mutter");
+    if (i < m) { const [l] = T.splice(i, 1); T.splice(idx("mutter") + 1, 0, l); }
+  }
+}
+
 function lade(szene) {
-  const pfad = path.join(WURZEL, "szenen", szene + ".js");
+  const pfad = path.join(WURZEL, "bilderwelt-neu/szenen", szene + ".js");
   const txt = fs.readFileSync(pfad, "utf8");
   const i = txt.indexOf('{"id"'), j = txt.lastIndexOf("};");
   return { pfad, txt, i, j, d: JSON.parse(txt.slice(i, j + 1)) };
@@ -160,6 +192,7 @@ Object.keys(proSzene).forEach((szene) => {
     t.x = Math.round(x * 10) / 10;
     t.y = Math.round(y * 10) / 10;
   });
+  ebenen838(szene, S.d);
   if (!probe) fs.writeFileSync(S.pfad, S.txt.slice(0, S.i) + JSON.stringify(S.d) + S.txt.slice(S.j + 1));
 });
 console.log("\nzusammen " + (vorher / 1048576).toFixed(2) + " MB -> " + (nachher / 1048576).toFixed(2) + " MB" + (probe ? "  (nur gerechnet)" : ""));

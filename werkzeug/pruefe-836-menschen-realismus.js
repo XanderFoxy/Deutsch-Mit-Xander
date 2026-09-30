@@ -38,6 +38,7 @@
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = process.env.WURZEL || path.join(__dirname, "..");
+/* FASSUNG 840 — XANDER (Funk 225): „für die Bilderwelt möchte ich meine alte Version wieder zurück haben … und nur eine Option als Link zur neuen Version“. Die neue Bilderwelt (834/836/838) liegt jetzt in bilderwelt-neu/. */
 const BILD = process.env.BILD || "";
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp" };
 let fehler = 0;
@@ -61,9 +62,9 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
   console.log("\n1 · HALTUNGEN\n");
   const pg = await br.newPage({ viewport: { width: 900, height: 700 } });
   pg.setDefaultTimeout(120000);
-  await pg.goto(basis + "figuren/mensch.js");
+  await pg.goto(basis + "bilderwelt-neu/figuren/mensch.js");
   await pg.setContent("<html><body style='margin:0;background:#fff'></body></html>");
-  await pg.addScriptTag({ url: basis + "figuren/mensch.js" });
+  await pg.addScriptTag({ url: basis + "bilderwelt-neu/figuren/mensch.js" });
   const f1 = await pg.evaluate((VERLANGT) => {
     const M = window.DMA_MENSCH;
     const fehlt = VERLANGT.filter((h) => M.HALTUNGEN.indexOf(h) < 0 || !M.POSEN[h] && h !== "gehen");
@@ -94,7 +95,10 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
   sage(f1.BODEN && !f1.frei.length, "was frei sein muss, schwebt nicht auf dem Boden (Hocke: Gesäß frei, Strecken: Fersen frei …)", f1.frei.slice(0, 5).join(" | "));
   sage(!f1.stecken.length, "kein Glied steckt im Rumpf oder im anderen Bein (Mann und Frau, alle Haltungen)", f1.stecken.slice(0, 4).join(" | "));
   sage(Math.abs(f1.koepfe - 7.5) < 0.05 && Math.abs(f1.groesse - f1.H) < 6, "Proportionen: der erwachsene Mann ist 7,5 Kopfhöhen groß", f1.koepfe.toFixed(2) + " Köpfe");
-  sage(f1.maxKB < 60, "jede Figur < 60 KB SVG", f1.maxKB.toFixed(1) + " KB");
+  /* FASSUNG 838: Gesicht, Haar und Kleidung mit allen Details (Iris-
+     Musterung, einzelne Wimpern und Brauenhaare, Strähnen, Nähte) — die
+     Grenze steigt auf 90 KB je Figur (Auftrag 838: „möglichst < 90 KB“). */
+  sage(f1.maxKB < 90, "jede Figur < 90 KB SVG", f1.maxKB.toFixed(1) + " KB");
 
   /* ---------------------------------------------------------------- 2 */
   console.log("\n2 · IMMER BEKLEIDET (Hautfläche im Rumpfbereich)\n");
@@ -146,9 +150,11 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
     const s = M.zeichne({ pose: "sitzen", blick: 30, id: "s", kleidung: { oberteil: { stueck: "hemd" }, unterteil: { stueck: "jeans" } } }).svg;
     const p = M.zeichne({ pose: "stehen", blick: 90, id: "p" }).svg;
     return {
-      iris: /radialGradient/.test(w), wimpern: (w.match(/stroke="#2a1c16"/g) || []).length >= 6,
+      /* FASSUNG 838: Wimpern sind einzelne Striche in der Farbe des Haars (data-teil="wimpern") */
+      iris: /radialGradient/.test(w), wimpern: (w.match(/stroke="#2a1c16"/g) || []).length >= 6 || (w.match(/data-teil="wimpern"/g) || []).length >= 2,
       straehnen: (w.match(/stroke-width="0\.[0-9]+" stroke-linecap="round" stroke-linejoin="round" opacity="0\.[0-9]+"/g) || []).length >= 15,
-      stoppeln: /<pattern /.test(m), gesichtClip: /clipPath id="m\w*f/.test(m), finger: (m.match(/stroke-linecap="round"/g) || []).length >= 40,
+      /* FASSUNG 838 Runde 2: Stoppeln sind einzeln gestreute Haare statt eines Punktrasters (Muster) */
+      stoppeln: /<pattern /.test(m) || /data-teil="stoppelhaare"/.test(m), gesichtClip: /clipPath id="m\w*f/.test(m), finger: (m.match(/stroke-linecap="round"/g) || []).length >= 40,
       falten: (s.match(/opacity="0\.[1-5]\d?"/g) || []).length >= 10, profil: p.length > 20000,
     };
   });
@@ -166,7 +172,7 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
     pb.setDefaultTimeout(120000);
     const pf = []; pb.on("pageerror", (e) => pf.push(String(e.message || e)));
     await pb.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); localStorage.setItem("dma_tutor", "aus"); } catch (e) {} });
-    await pb.goto(basis + "index.html", { waitUntil: "domcontentloaded" });
+    await pb.goto(basis + "index.html?bilderwelt=neu", { waitUntil: "domcontentloaded" });
     await pb.waitForFunction(() => window.Baukasten, null, { timeout: 120000 });
     await pb.evaluate(async () => {
       const d = document.createElement("div"); d.id = "__bk";
@@ -225,11 +231,15 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
       const f = document.querySelector("#__bk [data-bk-figur]");
       const m = /translate\(\s*([-\d.]+)[ ,]+([-\d.]+)/.exec(f.getAttribute("transform"));
       const fig = bkFigurSvg(z, 0);
-      return { haltung: z.haltung, kleider, wasser: /clipPath id="bkWasser"/.test(svg), brust: +m[2] + fig.brustY, wasserY: z.platz && z.platz.wasserY, satz: document.querySelector("#__bk .bk-satz-text").textContent };
+      /* FASSUNG 838: statt abgeschnitten liegt die Figur hinter Wannenwand und Wasser */
+      return { haltung: z.haltung, kleider, wasser: /clipPath id="bkWasser"/.test(svg) || /data-bk-vorne="wasser"/.test(svg), brust: +m[2] + fig.brustY, wasserY: z.platz && z.platz.wasserY, satz: document.querySelector("#__bk .bk-satz-text").textContent };
     });
     sage(bad.haltung === "baden" && bad.wasser, "in der Badewanne: sitzen mit angewinkelten Beinen im Wasser", JSON.stringify({ h: bad.haltung, wasser: bad.wasser }));
     sage(bad.kleider.some((k) => /badeanzug|badehose|badeshirt/.test(k)) && !bad.kleider.includes("bademantel"), "in der Wanne Badekleidung (Badeanzug bzw. Badehose mit Badeshirt)", bad.kleider.join(","));
-    sage(Math.abs(bad.brust - bad.wasserY) < 3, "das Wasser verdeckt die Figur ab der Brust", "Brust " + bad.brust.toFixed(1) + " / Wasser " + bad.wasserY);
+    /* FASSUNG 838: das Gesäß liegt jetzt auf dem Wannenboden (Sonde 838) —
+       das Wasser steht auf Brusthöhe bis unter die Achseln (Brust bis
+       10 Einheiten ≈ 17 cm unter dem Wasserspiegel). */
+    sage(bad.brust - bad.wasserY > -3 && bad.brust - bad.wasserY < 10, "das Wasser verdeckt die Figur ab der Brust", "Brust " + bad.brust.toFixed(1) + " / Wasser " + bad.wasserY);
     sage(/in der Badewanne/.test(bad.satz) && /angewinkelten Beinen/.test(bad.satz), "der Satz: „… sitzt mit angewinkelten Beinen in der Badewanne“", bad.satz);
     if (BILD) await (await pb.$("#__bk .bk-buehne")).screenshot({ path: BILD + "-baukasten-360-badewanne.png" });
     await pb.evaluate(() => document.querySelector('#__bk [data-bk-fach="wer"]').click());
@@ -245,9 +255,9 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
   /* ---------------------------------------------------------------- 5 */
   console.log("\n5 · TAFELN UND SZENEN\n");
   global.window = global; window.DMA_SZENE = {};
-  const tafel = (id) => { const f = path.join(WURZEL, "szenen", id + ".js"); if (!fs.existsSync(f)) return null; delete require.cache[f]; require(f); return window.DMA_SZENE[id] || null; };
+  const tafel = (id) => { const f = path.join(WURZEL, "bilderwelt-neu/szenen", id + ".js"); if (!fs.existsSync(f)) return null; delete require.cache[f]; require(f); return window.DMA_SZENE[id] || null; };
   const go = tafel("geschlechtsorgane");
-  const reg = fs.readFileSync(path.join(WURZEL, "data-szenen.js"), "utf8");
+  const reg = fs.readFileSync(path.join(WURZEL, "bilderwelt-neu/data-szenen.js"), "utf8");
   sage(go && go.teile.length === 2 && /"id":\s*"geschlechtsorgane"/.test(reg), "Tafel „Die Geschlechtsorgane“: Längsschnitt Mann und Frau, eingetragen", go && go.teile.map((t) => t.de).join(" | "));
   const worte = go ? go.teile.flatMap((t) => t.unter || []) : [];
   const muss = ["die Gebärmutter", "der Eierstock", "der Eileiter", "die Scheide", "die große Schamlippe", "die kleine Schamlippe", "der Kitzler", "der Hoden", "der Nebenhoden", "der Samenleiter", "die Prostata", "der Penis", "die Harnröhre", "die Harnblase"];
@@ -271,7 +281,7 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
     /* Übersichtsbogen aller Haltungen, drei Blickwinkel */
     const pz = await br.newPage({ viewport: { width: 1300, height: 800 } });
     await pz.setContent("<html><body style='margin:0;background:#eee'></body></html>");
-    await pz.addScriptTag({ url: basis + "figuren/mensch.js" });
+    await pz.addScriptTag({ url: basis + "bilderwelt-neu/figuren/mensch.js" });
     await pz.evaluate(() => {
       const M = window.DMA_MENSCH; let html = "";
       M.HALTUNGEN.forEach((h, i) => {

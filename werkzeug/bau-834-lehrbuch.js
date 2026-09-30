@@ -35,16 +35,17 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const WURZEL = path.dirname(__dirname);
+/* FASSUNG 840 — XANDER (Funk 225): „für die Bilderwelt möchte ich meine alte Version wieder zurück haben … und nur eine Option als Link zur neuen Version“. Die neue Bilderwelt (834/836/838) liegt jetzt in bilderwelt-neu/. */
 const raum = vm.createContext({});
 vm.runInContext("var window = this;", raum);
-vm.runInContext(fs.readFileSync(path.join(WURZEL, "figuren/mensch.js"), "utf8"), raum, { filename: "mensch.js" });
+vm.runInContext(fs.readFileSync(path.join(WURZEL, "bilderwelt-neu/figuren/mensch.js"), "utf8"), raum, { filename: "mensch.js" });
 const M = raum.window.DMA_MENSCH;
 const nur = process.argv.slice(2);
 const soll = (n) => !nur.length || nur.indexOf(n) >= 0;
 
 const r1 = (v) => Math.round(v * 10) / 10;
 function lade(szene) {
-  const pfad = path.join(WURZEL, "szenen", szene + ".js");
+  const pfad = path.join(WURZEL, "bilderwelt-neu/szenen", szene + ".js");
   const txt = fs.readFileSync(pfad, "utf8");
   const i = txt.indexOf('{"id"'), j = txt.lastIndexOf("};");
   return { pfad, txt, i, j, d: JSON.parse(txt.slice(i, j + 1)) };
@@ -241,7 +242,7 @@ const MUSKEL_WORT = {
   achillessehne: ["die Achillessehne", "a-CHIL-les-seh-ne", "il tendine d'Achille", "TEN-di-ne da-KIL-le", "Achilles tendon"],
 };
 function bauMuskeln() {
-  const pfad = path.join(WURZEL, "szenen", "muskeln.js");
+  const pfad = path.join(WURZEL, "bilderwelt-neu/szenen", "muskeln.js");
   const B = 400, H = 300;
   const mensch = { alter: "erwachsen", geschlecht: "m", haut: "hell", frisur: "kurz", haarfarbe: "braun", pose: "lehrbuch", muskeln: true };
   const k = 272 / 178;

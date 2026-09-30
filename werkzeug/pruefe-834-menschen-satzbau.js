@@ -36,6 +36,7 @@
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = process.env.WURZEL || path.join(__dirname, "..");
+/* FASSUNG 840 — XANDER (Funk 225): „für die Bilderwelt möchte ich meine alte Version wieder zurück haben … und nur eine Option als Link zur neuen Version“. Die neue Bilderwelt (834/836/838) liegt jetzt in bilderwelt-neu/. */
 const BILD = process.env.BILD || "";
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp" };
 let fehler = 0;
@@ -49,7 +50,7 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
     if (!f.startsWith(WURZEL) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { a.writeHead(404); return a.end(); }
     a.writeHead(200, { "Content-Type": TYP[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(a);
   }).listen(0);
-  const basis = "http://127.0.0.1:" + srv.address().port + "/index.html";
+  const basis = "http://127.0.0.1:" + srv.address().port + "/index.html?bilderwelt=neu";   // FASSUNG 840: Modus NEU
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
   const seite = async (vp, telefon) => {
     const pg = await br.newPage({ viewport: vp, deviceScaleFactor: telefon ? 2 : 1, hasTouch: !!telefon, isMobile: !!telefon });
@@ -65,15 +66,17 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
 
   /* ---------------------------------------------------------------- 1 */
   console.log("\n1 · FIGUREN IN ALLEN HALTUNGEN\n");
-  const hatMensch = fs.existsSync(path.join(WURZEL, "figuren/mensch.js"));
+  const hatMensch = fs.existsSync(path.join(WURZEL, "bilderwelt-neu/figuren/mensch.js"));
   sage(hatMensch, "figuren/mensch.js ist da (ein Figuren-System für alle Menschen)");
   if (hatMensch) {
   const pg1 = await seite({ width: 800, height: 600 }, false);
-  const datei = fs.statSync(path.join(WURZEL, "figuren/mensch.js")).size;
+  const datei = fs.statSync(path.join(WURZEL, "bilderwelt-neu/figuren/mensch.js")).size;
   /* FASSUNG 836: Realismus (Muskelprofile, Gesicht, Haar, Falten, 32
      Haltungen) — die Datei darf wachsen, bleibt aber eine Datei < 200 KB. */
-  sage(datei < 200 * 1024, "figuren/mensch.js ist leicht (eine Datei für alle Menschen)", Math.round(datei / 1024) + " KB");
-  await pg1.addScriptTag({ url: basis.replace("index.html", "figuren/mensch.js") });
+  /* FASSUNG 838: Gesicht, Haar, Kleidung und Sitzen im Detail — die Datei
+     darf bis 260 KB wachsen (sie ersetzt weiterhin 36 MB alte Figuren). */
+  sage(datei < 260 * 1024, "figuren/mensch.js ist leicht (eine Datei für alle Menschen)", Math.round(datei / 1024) + " KB");
+  await pg1.addScriptTag({ url: basis.replace("index.html?bilderwelt=neu", "bilderwelt-neu/figuren/mensch.js") });
   const fig = await pg1.evaluate(() => {
     const M = window.DMA_MENSCH;
     const alter = ["saeugling", "kleinkind", "kind", "jugendlich", "erwachsen", "alt"];
@@ -121,8 +124,11 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
   const baby = fig.groesse.find((x) => x[0] === "saeuglingm");
   sage(baby && baby[1] / baby[3] < 4.5, "der Säugling hat Babyproportionen (4 Kopfhöhen)", baby && (baby[1] / baby[3]).toFixed(2));
   sage(fig.finger >= 20, "Hände mit Fingern (je Hand fünf, als Glieder gezeichnet)", fig.finger + " Fingerstriche");
-  /* FASSUNG 836: Grenze 60 KB je Figur (vorher 45 KB) */
-  sage(fig.maxKB < 60, "jede Figur bleibt leicht (< 60 KB SVG)", fig.maxKB.toFixed(1) + " KB");
+  /* FASSUNG 836: Grenze 60 KB je Figur (vorher 45 KB).
+     FASSUNG 838: 90 KB — Iris mit Musterung, einzelne Wimpern und
+     Brauenhaare, Strähnen mit Glanzband, Nähte und Falten (Xander, Funk
+     222: „jedes kleinste Detail … soll man deutlich sehen“). */
+  sage(fig.maxKB < 90, "jede Figur bleibt leicht (< 90 KB SVG)", fig.maxKB.toFixed(1) + " KB");
   await pg1.close();
   }
 
@@ -339,7 +345,7 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
      (Unterwäsche) und ohne Geschlechtsteile als Wörter zum Antippen. */
   console.log("\n4 · LEHRBUCHTAFELN (Körper, Organe, Muskeln, Entstehung)\n");
   global.window = global; window.DMA_SZENE = {};
-  const tafel = (id) => { const f = path.join(WURZEL, "szenen", id + ".js"); if (!fs.existsSync(f)) return null; delete require.cache[f]; require(f); return window.DMA_SZENE[id] || null; };
+  const tafel = (id) => { const f = path.join(WURZEL, "bilderwelt-neu/szenen", id + ".js"); if (!fs.existsSync(f)) return null; delete require.cache[f]; require(f); return window.DMA_SZENE[id] || null; };
   const alleIds = (s) => s ? s.teile.flatMap((t) => [t.id, ...(t.unter || []).map((u) => u.id)]) : [];
   const alleKunst = (s) => s ? s.kulisse + s.teile.map((t) => t.kunst + (t.unter || []).map((u) => u.kunst || "").join("")).join("") : "";
   const ent = tafel("entstehung");
@@ -352,7 +358,7 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
   const organe = ["gehirn", "herz", "lunge", "leber", "magen", "niere", "darm"];
   sage(inn && organe.every((o) => { const t = inn.teile.find((x) => x.id === o); return t && (t.unter || []).length >= 5; }), "die Organe sind Lehrbuchkarten mit beschrifteten Teilen", organe.map((o) => { const t = inn && inn.teile.find((x) => x.id === o); return o + ":" + (t ? (t.unter || []).length : "-"); }).join(" "));
   const mu = tafel("muskeln");
-  const reg = fs.readFileSync(path.join(WURZEL, "data-szenen.js"), "utf8");
+  const reg = fs.readFileSync(path.join(WURZEL, "bilderwelt-neu/data-szenen.js"), "utf8");
   sage(mu && mu.teile.length >= 12 && /"id":\s*"muskeln"/.test(reg), "neue Tafel „Die Muskeln“ ist da und eingetragen", mu && mu.teile.length + " Muskeln");
   const artikel = [ent, kp, inn, mu].filter(Boolean).flatMap((s) => s.teile.flatMap((t) => [t, ...(t.unter || [])])).filter((t) => t.de && !/^(der|die|das) /.test(t.de));
   sage(!artikel.length, "jedes Fachwort steht mit Artikel da", artikel.slice(0, 4).map((t) => t.de).join(" | "));

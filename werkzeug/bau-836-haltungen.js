@@ -14,7 +14,7 @@
    ===================================================================== */
 // Haltungen aus Zielpunkten (Knie, Knöchel, Ellbogen, Hand) per Zwei-Glieder-IK,
 // danach Feinabgleich der Bodenkontakte. node ik2.js <mensch.js> [namen]
-require(require("path").join(__dirname, "../figuren/mensch.js"));
+require(require("path").join(__dirname, "../bilderwelt-neu/figuren/mensch.js"));   // FASSUNG 840: neue Bilderwelt in bilderwelt-neu/
 const MM = globalThis.DMA_MENSCH;
 const nur = process.argv[2] ? process.argv[2].split(",") : null;
 const RAD = Math.PI / 180, DEG = 180 / Math.PI;
