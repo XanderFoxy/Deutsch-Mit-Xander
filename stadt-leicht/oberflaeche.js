@@ -1669,6 +1669,7 @@
      Rechtecke in den Bildachsen) kommt flach auf den Boden ein Kornfeld: Reihen von Halmen, gelb-golden wenn das Spiel
      „fertig" meldet (reif), sonst grün mit gelbem Schimmer (wächst), im Winter Stoppeln mit Schnee. Nachts dunkler wie der
      Boden. Nah dran stehen einzelne Ähren in den Reihen. */
+  /* FASSUNG 846 — XANDER (Walkie 315): „vorher waren das gelbe Felder“ – auch das wachsende Korn ist gelblich (nicht mehr grasgrün) */
   SZ.bodenMaler.push(function (g, t, Z) {
     const felder = D.FELD_ORTE || []; if (!felder.length) return;
     const vw = (u, v) => [(u + v) / 2, (v - u) / 2], z = O.zeichenJetzt || {}, winter = SZ.jahr === "winter";
@@ -1680,7 +1681,7 @@
       let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const p of E) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
       if (x1 < 0 || y1 < 0 || x0 > K.W || y0 > K.H) continue;
       const zz = z["feld" + f.nr], reif = !!zz && zz[0] === "fertig";
-      const grund = winter ? [226, 230, 236] : reif ? [214, 170, 62] : [150, 176, 70], hell = winter ? [245, 247, 250] : reif ? [240, 204, 96] : [186, 200, 92], furche = winter ? [150, 130, 104] : reif ? [168, 118, 38] : [96, 128, 50];
+      const grund = winter ? [226, 230, 236] : reif ? [214, 170, 62] : [178, 180, 66], hell = winter ? [245, 247, 250] : reif ? [240, 204, 96] : [210, 206, 92], furche = winter ? [150, 130, 104] : reif ? [168, 118, 38] : [96, 128, 50];
       g.save();
       g.beginPath(); E.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath();
       const gr = g.createLinearGradient(x0, y0, x1, y1);

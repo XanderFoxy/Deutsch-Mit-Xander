@@ -49,22 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 824: Stadt nach Walkie 313 (Laternen, Stecknadel, langes Drücken, kleine Symbole, Bergwerk, Ladebild)",
+  stand: "Fassung 825: Pfeil wie vor dem Werbevideo, stufenlos zoomen, Nadel hält Nähe und Winkel, 36 Quests mit Suchen und Uhrzeit, echte Turmuhr, gelbe Kornfelder",
 
   inArbeit: [
-    { seit: "2026-09-30T18:36",
-      text: "Sichtbare Getreidefelder (große Äcker mit Kornwagen und Autos vereinbar machen)" },
-    { seit: "2026-09-30T18:36",
-      text: "Kölner Dom: echte Größe? (Walkie 316)" },
-    { seit: "2026-09-30T18:36",
-      text: "Schwarzbild bei Tastatur und beim Verlassen" },
+    { seit: "2026-09-30T19:55",
+      text: "Schwarzbild bei Tastatur/Verlassen" },
+    { seit: "2026-09-30T19:55",
+      text: "Italienisch: Räume nur Besitzer, Punkte per Server-RPC" },
+    { seit: "2026-09-30T19:55",
+      text: "WebGL für Häuser und Figuren" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-30T18:36",
-      text: "Kleine Symbole am Haus statt großem Menü" },
-    { seit: "2026-09-30T18:36",
-      text: "Bergwerk groß am Berg hinter der Bahn" },
+    { seit: "2026-09-30T19:55",
+      text: "Pfeil zurück" },
+    { seit: "2026-09-30T19:55",
+      text: "Zoom und Nadel" },
+    { seit: "2026-09-30T19:55",
+      text: "Quests neu" },
+    { seit: "2026-09-30T19:55",
+      text: "Turmuhr" },
+    { seit: "2026-09-30T19:55",
+      text: "Kornfelder" },
   ],
 };
