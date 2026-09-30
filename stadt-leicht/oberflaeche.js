@@ -731,8 +731,9 @@
         return waldMitte;
       };
       /* FASSUNG 828 — die Äcker bekommen ihr Zeichen wie im alten Bild („Getreide reif" / „Getreide 2:30") */
-      /* FASSUNG 844 — beim großen Acker am hinteren Rand (im Bild oben): so bleibt das Zeichen auch im kleinen Rahmen im Bild */
-      const feldOrt = (nr) => () => { const f = (D.FELD_ORTE || []).find((q) => q.nr === nr) || { x: 0, y: 0 }; if (f.u0 != null) { const u = (f.u0 + f.u1) / 2, v = f.v0 + 4; return { x: (u + v) / 2, y: (v - u) / 2, h: 1.5 }; } return { x: f.x, y: f.y, h: 1.5 }; };
+      /* FASSUNG 844 — beim großen Acker in seiner Mitte: am hinteren Rand lag das Zeichen im kleinen Rahmen über der Schule
+         dahinter (die Schule war dort nicht mehr antippbar, Sonde 817) */
+      const feldOrt = (nr) => () => { const f = (D.FELD_ORTE || []).find((q) => q.nr === nr) || { x: 0, y: 0 }; if (f.u0 != null) { const u = (f.u0 + f.u1) / 2, v = f.v1 != null ? (f.v0 + f.v1) / 2 : f.v0 + 4; return { x: (u + v) / 2, y: (v - u) / 2, h: 1.5 }; } return { x: f.x, y: f.y, h: 1.5 }; };
       const ORTE = {
         see: () => { const v = D.SEE_VERSATZ || [0, 0]; return { x: 66 + v[0], y: 56 + v[1] - 3, h: 2 }; },
         wald: wald,
