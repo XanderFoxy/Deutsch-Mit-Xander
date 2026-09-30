@@ -120,7 +120,8 @@ sage(/ev\.data\.info/.test(ob) && /b\.disabled = !n/.test(ob), "die Stadt zeigt 
     });
     sage(r.length === 2, "zwei Äcker (91, 92)", JSON.stringify(r));
     sage(r.every((f) => !f.weg && !f.wasser && !f.bau), "kein Acker liegt auf einem Weg, im Wasser oder unter einem Haus", JSON.stringify(r));
-    sage(r.some((f) => f.u < -60) && r.some((f) => f.u > 60), "ein Acker links, einer rechts der Stadt (wie früher)", JSON.stringify(r.map((f) => f.u)));
+    /* links/rechts im Bild: u = x − y (Rathaus bei u ≈ 6) */
+    sage(r.some((f) => f.u < -25) && r.some((f) => f.u > 60), "ein Acker links, einer rechts der Stadt (wie früher)", JSON.stringify(r.map((f) => f.u)));
 
     console.log("\nTEIL C — Quest-Dialog schwebt unter dem Bild (über dem Chat)\n");
     const ctx = await br.newContext({ viewport: { width: 360, height: 740 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });

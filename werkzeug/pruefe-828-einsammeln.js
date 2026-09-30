@@ -412,8 +412,9 @@ window.schick=function(d){document.getElementById("f").contentWindow.postMessage
       sage((await rufe("spiel_angeln")).length === 1, "Tipp auf den See: angeln (spiel_angeln)");
       const vorE = (await rufe("spiel_ernten")).length;
       const fq = await zeichenTipp("feld91"); await tick(1600);
+      if (!fq) console.log("    (Blick: " + JSON.stringify(await imFrame(() => { const K = STADT.kamera, f = STADT.dorf.FELD_ORTE.find((q) => q.nr === 91), P = STADT.proj(f.x, f.y, 0), b = document.querySelector('.lk-zeichen[data-g="feld91"]'); return { W: K.W / K.dpr, H: K.H / K.dpr, s: +(K.s / K.dpr).toFixed(2), feld: [Math.round(P[0] / K.dpr), Math.round(P[1] / K.dpr)], zeichen: b ? [b.style.display, b.style.transform, getComputedStyle(b).display] : null }; })) + ")");
       const er = (await rufe("spiel_ernten")).slice(vorE);
-      sage(!!fq && er.length === 1 && er[0].args.p_platz === 91, "Tipp auf „Getreide reif“ am Acker: mit der Sense ernten (spiel_ernten 91)", JSON.stringify(er.map((x) => x.args)));
+      sage(!!fq && er.length === 1 && er[0].args.p_platz === 91, "Tipp auf „Getreide reif“ am Acker: mit der Sense ernten (spiel_ernten 91)", JSON.stringify({ er: er.map((x) => x.args), fq }));
       await post({ typ: "leicht-feld", nr: 92 }); await tick(800);
       sage((await rufe("spiel_feld_helfen")).some((x) => x.args.p_platz === 92), "Tipp auf den wachsenden Acker: beim Wachsen helfen (spiel_feld_helfen 92)");
       const us = await pg.evaluate(() => { const e = document.querySelector(".sp-lstadt"); if (!e) return null; const c = getComputedStyle(e); return c.userSelect + "/" + c.webkitTapHighlightColor; });

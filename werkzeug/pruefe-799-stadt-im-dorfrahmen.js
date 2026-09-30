@@ -337,7 +337,10 @@ const sage = (gut, was, zusatz) => {
   await pg.evaluate(() => { const p = document.querySelector(".sp-dl-neustadt-platz"); if (p) p.scrollIntoView({ block: "center" }); }); await tick(200);
   await imFrame(() => { const K = window.STADT.kamera; window.STADT.leicht.fliegeZu(0, 4, K.s, 10); }); await tick(1200);
   const ziel = await imFrame(() => { const SZ = window.STADT.szene, K = window.STADT.kamera;
-    for (const e of SZ.sichtbare.slice().reverse()) { if (e.o.art !== "haus" || !e.o.spiel) continue; const m = e.meta;
+    /* FASSUNG 827 — Funk 248: Häuser, die etwas herstellen, zeigen die kleinen Symbole am Haus (Sonde 847); die Karte
+       darunter öffnet ein Haus ohne Herstellung */
+    const HERSTELLT = ["muehle", "baeckerei", "schmiede", "labor", "brauerei", "bergwerk"];
+    for (const e of SZ.sichtbare.slice().reverse()) { if (e.o.art !== "haus" || !e.o.spiel || HERSTELLT.indexOf(e.o.spiel) >= 0) continue; const m = e.meta;
       for (let fy = .5; fy < .95; fy += .1) for (let fx = .3; fx < .75; fx += .1) { const px = e.X - m.ax * e.k + m.w * e.k * fx, py = e.Y - m.ay * e.k + m.h * e.k * fy;
         if (px < 50 * K.dpr || py < 50 * K.dpr || px > K.W - 110 * K.dpr || py > K.H - 10 * K.dpr) continue;
         if (SZ.treffer(px, py) === e.o) return { x: px / K.dpr, y: py / K.dpr, g: e.o.spiel }; } }

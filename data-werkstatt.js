@@ -49,22 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 826: Tonserver erst ab 4 Leuten, zu zweit wieder direkt über die Relais",
+  stand: "Fassung 827: Mühle zeigt immer die kleinen Symbole, Äcker links und rechts neben den Wegen, Quest-Frage schwebt unter dem Bild, ruhiger Einzug",
 
   inArbeit: [
-    { seit: "2026-09-30T21:31",
-      text: "Mühle sofort produzieren, zwei Symbole am Haus" },
-    { seit: "2026-09-30T21:31",
-      text: "Kornfelder nicht auf Wegen, beide Seiten" },
-    { seit: "2026-09-30T21:31",
-      text: "Quest-Menü schwebend über dem Chat" },
-    { seit: "2026-09-30T21:31",
-      text: "Leistung: Einzug im Auto flüssig" },
+    { seit: "2026-09-30T23:24",
+      text: "Funk 249: Stadt-Quests durch Sprechen beantworten (Fassung 828)" },
+    { seit: "2026-09-30T23:24",
+      text: "Was ist noch nicht anwählbar? (Frage an Xander)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-30T21:31",
-      text: "Tonserver zu zweit aus" },
+    { seit: "2026-09-30T23:24",
+      text: "Funk 248: Symbole am Haus statt großem Menü" },
+    { seit: "2026-09-30T23:24",
+      text: "Funk 248: Äcker nicht mehr auf dem Weg" },
   ],
 };

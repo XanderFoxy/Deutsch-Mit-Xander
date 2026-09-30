@@ -733,12 +733,13 @@
          im Boden) und damit die Autos bleiben genau wie bis jetzt – so kommen sie weiter über den Markt (Sonde 830). Die
          kleinen Ackerflecken im Boden bleiben die Ladestellen des Kornwagens. */
       /* FASSUNG 827 — die Ladestellen liegen jetzt unter den gemalten Äckern (vorher lag die rechte als brauner Fleck am Weg) */
-      for (const [px, py, fw, fh] of [[-38, 158, 5, 5], [325, 144, 5, 5.5], [-46, 166, 3.5, 3.5]]) { const q = welt(px, py); rund(q[0], q[1], fw, fh, 2); }
+      for (const [px, py, fw, fh] of [[-18, 53, 5, 5], [325, 144, 5, 5.5], [-18, 64, 3.5, 3.5]]) { const q = welt(px, py); rund(q[0], q[1], fw, fh, 2); }
       /* FASSUNG 827 — XANDER (Funk 248): „die getreideäcker scheinen auf einem Gehweg zu sein" · „die Getreidefelder waren
-         früher auf beiden Seiten". Der linke Acker (91) lag über dem Weg zu Kaserne und Krankenhaus; jetzt liegt er wie im
-         alten Bild links auf freier Wiese (links der Kuhweide, frei vom Kölner Dom), der rechte (92) bleibt rechts, ein Stück vom
-         Weg weg. Beide Rechtecke sind frei von Wegen, Wasser und Häusern (Sonde 847). */
-      for (const [um, vm, bu, bv, nr] of [[-134, 45, 18, 30, 91], [110, 30, 18, 30, 92]]) {
+         früher auf beiden Seiten". Der linke Acker (91) lag über dem Weg zu Kaserne und Krankenhaus; jetzt liegt er links
+         bei der Windmühle auf freier Wiese, der rechte (92) bleibt rechts, ein Stück vom Weg
+         weg. Beide sind frei von Wegen, Wasser und Häusern, im Überblick des kleinen Rahmens ganz zu sehen, und der Kölner
+         Dom findet beim Versetzen weiter einen freien Platz (Sonden 844, 847). */
+      for (const [um, vm, bu, bv, nr] of [[-118, -68, 18, 30, 91], [110, 30, 18, 30, 92]]) {
         const u0 = um - bu / 2, u1 = um + bu / 2, v0 = vm - bv / 2, v1 = vm + bv / 2, q = vw(um, vm);
         D.FELD_ORTE.push({ nr: nr, x: +q[0].toFixed(2), y: +q[1].toFixed(2), r: Math.hypot(bu, bv) / 2 / Math.SQRT2, u0: u0, u1: u1, v0: v0, v1: v1 });
       }
