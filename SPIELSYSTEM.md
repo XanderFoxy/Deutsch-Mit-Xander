@@ -2748,3 +2748,10 @@ XANDER (Funk 225, wörtlich): „für die Bilderwelt möchte ich meine alte Vers
   Der Satzbaukasten in `app.js` ist nicht angefasst (bleibt auf dem neuen Stand).
 - **Sonde** `werkzeug/pruefe-840-bilderwelt-alt-neu.js` (`BILD=`, `WURZEL=`), 34 Punkte: 215 Dateien byte-gleich mit `53eaa31`, nichts Neues im alten Pfad, neue Bilderwelt vollständig, `.bk-chip` wie 812; `app.js` gegen `53eaa31` (Abschnitte „DIE BILDERWELT“ bis vor „DIE SAUBERE STIMME“ und „DAS BILDERRÄTSEL“): jede Änderung markiert, jede alte Zeile erhalten, genau 11 Stellen, die Weiche reicht nicht in andere Teile; im Browser bei 360 px: Standard alt (alte Figuren, keine Anfrage an `bilderwelt-neu/`, kein `mensch.js`), Szene, Lupe (Badezimmer → Dusche), Baukasten, Bilderrätsel; Link → neu (Bilderwelt öffnet sich wieder, Muskeltafel, Szene aus `bilderwelt-neu/` mit Iris, Baukasten mit `mensch.js`, Rätsel mit neuen Plätzen), die Wahl hält beim Neuladen, zurück auf alt, hält wieder; Link ≥ 30 px, nichts überlappt, kein Querscrollen, keine Seitenfehler. Gegenprobe am Stand vor 840 (`70d95f4`, Hardlink-Kopie): 9 rot, der Browser-Teil bricht ab (kein Link).
 - **Die Sonden 834/836/838** laden jetzt `index.html?bilderwelt=neu` und lesen `bilderwelt-neu/…`; alle drei grün. `pruefe-plaetze` (alt, Standard) 34/34.
+
+## Fassung 818 — Italienischer Satzbaukasten (839) und Bilderwelt alt als Standard, neu per Link (838/840)
+
+- Enthält 839: Satzbaukasten nach italienischer Grammatik im Italienisch-Raum, Unsinn-Sperre mit Vorschlägen in beiden Sprachen, deutscher Baukasten aufgefüllt.
+- Enthält 840 mit 838: Die Bilderwelt ist wieder wie in Fassung 812. Die neuen Menschen (834/836/838, samt Runde 2) gibt es nur über den Link „Neue Version ansehen (Test)“ (`bilderwelt-neu/`).
+- Beim Zusammenführen fiel in `index.html` die Ladeweiche weg (dort „ours“ genommen). Sie ist wiederhergestellt; `index.html` ist hier nicht nur erzeugt.
+- Geprüft auf dem zusammengeführten Stand, alle grün: 840, 839, 838, 835, 834, 837, 636, plaetze.
