@@ -49,24 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 816: Spiel im Italienisch-Raum mit Fragen zur italienischen Sprache und Aussprache auf Italienisch",
+  stand: "Fassung 817: neues Lied von One Day In Rome im Player und auf dem Kopfhörer",
 
   inArbeit: [
-    { seit: "2026-09-29T23:33",
-      text: "Italienisch: Grammatik über A2 (congiuntivo, futuro, imperfetto) – die vorhandenen Lückensätze müssen erst durchgesehen werden" },
-    { seit: "2026-09-29T23:33",
-      text: "Italienisch: Mana, Erfahrung und Missionen für italienische Antworten (bräuchte eine Server-Funktion)" },
-    { seit: "2026-09-29T23:33",
+    { seit: "2026-09-30T00:05",
+      text: "Menschen detailreich wie vorher, Wanne und Sessel mit Verdeckung (838 in Arbeit)" },
+    { seit: "2026-09-30T00:05",
+      text: "Italienisch: Grammatik über A2" },
+    { seit: "2026-09-30T00:05",
       text: "Punkte für Quests und Eintritt auf dem Server (braucht dein OK)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-29T23:33",
-      text: "Italienisch-Raum: Wörter, Artikel, Präsens, Passato prossimo, Präpositionen, Aussprache-Regeln, Stimmt's?" },
-    { seit: "2026-09-29T23:33",
-      text: "Aussprache im Spiel auf Italienisch (it-IT)" },
-    { seit: "2026-09-29T23:33",
-      text: "Menschen realistischer (815), Satzbaukasten (814)" },
+    { seit: "2026-09-30T00:05",
+      text: "One Day In Rome — So schön ist die Weihnacht im Player und für /kopfhoerer" },
+    { seit: "2026-09-30T00:05",
+      text: "Spiel im Italienisch-Raum (816)" },
   ],
 };

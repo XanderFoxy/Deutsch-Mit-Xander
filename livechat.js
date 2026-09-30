@@ -3160,6 +3160,10 @@ window.LiveChat = (function () {
       titel: "One Day In Rome — A Lovers Fairytale" },
     { datei: "One Day In Rome - Ein Leben Lang.mp3",
       titel: "One Day In Rome — Ein Leben lang" },
+    /* FASSUNG 817 — Xander: „Sie sollen in den Player mit rein und auch in der Möglichkeit sie
+       dann wie gesagt auf den Kopfhörer zu setzen. Des wo steht Demo brauchst du nicht hinzuzufügen“ */
+    { datei: "One Day In Rome - So Schoen Ist Die Weihnacht.mp3",
+      titel: "One Day In Rome — So schön ist die Weihnacht" },
     { datei: "promised-eden_mein-stiller-schmerz.mp3",
       titel: "Promised Eden — Mein stiller Schmerz" }
   ];

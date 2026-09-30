@@ -93076,8 +93076,11 @@ An einem Morgen lief ein kleiner Fuchs los…
     { title: "Xander Fox — Du", url: "music/Du.mp3" },
     { title: "Xander Fox — Nah (2011)", url: "music/Nah%20(2011).mp3" },
     { title: "Xander Fox — Nur Mit Mir", url: "music/Nur%20Mit%20Mir%20(Demo%201)-3.mp3" },
-    { title: "Xander Fox — A Lovers Fairytale", url: "music/One%20Day%20In%20Rome%20-%20A%20Lovers%20Fairytale.mp3" },
-    { title: "Xander Fox — Ein Leben Lang", url: "music/One%20Day%20In%20Rome%20-%20Ein%20Leben%20Lang.mp3" },
+    /* FASSUNG 817 — Xander: „Alle Dateien sind von One Day in Rom … einfach nur den Namen der Band
+       also in Englisch und dann den Titel“ */
+    { title: "One Day In Rome — A Lovers Fairytale", url: "music/One%20Day%20In%20Rome%20-%20A%20Lovers%20Fairytale.mp3" },
+    { title: "One Day In Rome — Ein Leben Lang", url: "music/One%20Day%20In%20Rome%20-%20Ein%20Leben%20Lang.mp3" },
+    { title: "One Day In Rome — So schön ist die Weihnacht", url: "music/One%20Day%20In%20Rome%20-%20So%20Schoen%20Ist%20Die%20Weihnacht.mp3" },
     { title: "Xander Fox — Mein Stiller Schmerz", url: "music/promised-eden_mein-stiller-schmerz.mp3" },
     { title: "Second Decay — I Hate Berlin", url: "https://www.youtube.com/watch?v=K2PaCbRb1j4" },
     // Von Alex am 12.09. nachgereicht — die Links kamen von ihm selbst.

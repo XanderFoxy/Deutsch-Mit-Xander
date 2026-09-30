@@ -2636,3 +2636,13 @@ Leitplanke (verbindlich): Menschen in Haltungen, im Baukasten und in Szenen sind
 
 - Enthält Fassung 837: Im Italienisch-Raum (Betreiber und von Xander freigegebene Konten) stellt das Spiel Fragen zur italienischen Sprache auf Deutsch. Die Aussprache läuft mit it-IT, die Punkte gehen nur in die italienische Kasse (siehe Abschnitt 837).
 - Geprüft auf dem zusammengeführten Stand, alle grün: 837, 636, spielsystem, 835.
+
+## Fassung 817 — „So schön ist die Weihnacht“ von One Day In Rome
+
+XANDER: „Alle Dateien sind von One Day in Rom. Sie sollen in den Player mit rein und auch in der Möglichkeit sie dann wie gesagt auf den Kopfhörer zu setzen. Des wo steht Demo brauchst du nicht hinzuzufügen einfach nur den Namen der Band also in Englisch und dann den Titel“
+
+- Neue Datei: `music/One Day In Rome - So Schoen Ist Die Weihnacht.mp3`. Im Dateinamen steht „oe“ statt „ö“, damit der Link überall sicher funktioniert.
+- Der Titel lautet „One Day In Rome — So schön ist die Weihnacht“. Er steht im Player (`app.js`) und in der Liedliste für /musik und /kopfhoerer (`livechat.js`, LIEDER).
+- Im Player stehen „A Lovers Fairytale“ und „Ein Leben Lang“ jetzt unter „One Day In Rome“ statt unter „Xander Fox“.
+- „Ein Leben Lang“ war schon drin: Die hochgeladene Datei ist byte-gleich mit der vorhandenen.
+- Geprüft: pruefe-hoerer-klammern und pruefe-runde88-selbst sind grün.
