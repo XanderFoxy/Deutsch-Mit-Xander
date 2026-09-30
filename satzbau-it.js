@@ -1871,6 +1871,10 @@
     if (o && o.id === "colazione" && t.tz && t.tz.every((x) => x === "abend")) return false;
     if (o && (o.id === "cena" || o.id === "cena_obj") && t.tz && t.tz.every((x) => x === "morgen")) return false;
     if (t.id === "domani_mattina" && feldAktiv(w, "modo") && w.modo === "presto") return false;
+    /* „Domani sera mio fratello ha fame“ — Hunger, Durst, Fieber sagt man nicht für einen Termin voraus */
+    if (v.id === "avere" && o && ["fame", "sete", "febbre", "influenza", "mal_testa"].includes(o.id) && ["zukunft", "samstag", "wochenende", "abend"].includes(g) && zf !== "passato") return false;
+    /* „Ogni settimana non va in biblioteca?“ — verneinte Gewohnheit klingt schief (wie bei „ogni giorno“) */
+    if (w.neg && t.woechentlich && !["il_sabato", "la_domenica", "di_solito"].includes(t.id)) return false;
     /* „Vorrebbero fumare da tre anni“ — ein Wunsch „seit drei Jahren“ im Konditional ist schief */
     if (["seit", "dauerpast"].includes(g) && (zf === "condizionale" || (feldAktiv(w, "modale") && w.modale === "vorrei"))) return false;
     /* „Quando ho tempo, domani vado …“ — „quando“ mit Präsens heißt „immer wenn“;
@@ -1882,7 +1886,7 @@
     if (v.id === "frequentare" && !(["seit", "dauerpast", "jetzt"].includes(g) || t.lang)) return false;
     if ((t.taeglich || t.woechentlich) && l && l.tags.includes("ausflug")) return false;
     if (v.id === "abitare" && ["vergangen", "zukunft", "samstag", "heute", "abend", "stamattina", "wochenende"].includes(g) && !t.lang) return false;
-    if (["pranzare", "cenare", "fare_colazione"].includes(v.id) && (habitGrp || g === "freq") && !l) return false;
+    if (["pranzare", "cenare", "fare_colazione"].includes(v.id) && (habitGrp || g === "freq") && !l && wFeld(w) !== "luogo") return false;
     if ((w.verbindung === "se2" || w.verbindung === "se3") && feldAktiv(w, "causa") && (g === "uhr" || habitGrp || g === "freq")) return false;
     if (feldAktiv(w, "modo") && (g === "freq" || g === "mai")) return false;
     if (v.id === "essere_luogo" && ["seit", "dauerpast"].includes(g) && !(l && l.tags.some((x) => ["fern", "stadt", "urlaub"].includes(x)) && !feldAktiv(w, "compagnia"))) return false;
@@ -1982,21 +1986,23 @@
      Damit kein Angebot eine frühere Wahl kaputt macht: angebote()
      prüft jedes Angebot gegen diese Felder, bevor es gezeigt wird. */
   const ABH = {
-    oggetto: ["causa", "quando", "modo", "luogo", "persona", "modale", "zeitform", "compagnia"],
+    oggetto: ["causa", "quando", "modo", "luogo", "persona", "modale", "zeitform", "compagnia", "wort"],
     det: ["modo"],
-    luogo: ["causa", "quando", "modo", "oggetto", "persona", "compagnia", "mezzo", "modale"],
-    mezzo: ["causa", "luogo"],
-    persona: ["causa", "luogo", "oggetto", "compagnia", "soggetto"],
-    compagnia: ["causa", "luogo", "modo", "persona", "soggetto", "quando", "modale"],
-    quando: ["causa", "zeitform", "modo", "luogo", "oggetto", "modale"],
-    modo: ["causa", "quando", "luogo", "oggetto", "compagnia", "soggetto", "modale"],
-    modale: ["causa", "quando", "zeitform", "modo"],
+    luogo: ["causa", "quando", "modo", "oggetto", "persona", "compagnia", "mezzo", "modale", "wort"],
+    mezzo: ["causa", "luogo", "wort"],
+    persona: ["causa", "luogo", "oggetto", "compagnia", "soggetto", "wort"],
+    compagnia: ["causa", "luogo", "modo", "persona", "soggetto", "quando", "modale", "wort"],
+    quando: ["causa", "zeitform", "modo", "luogo", "oggetto", "modale", "compagnia", "persona", "einleitung", "agg", "wort"],
+    modo: ["causa", "quando", "luogo", "oggetto", "compagnia", "soggetto", "modale", "wort"],
+    modale: ["causa", "quando", "zeitform", "modo", "wort", "einleitung"],
     causa: ["quando", "zeitform", "modo", "modale", "stato", "oggetto"],
     zeitform: ["causa", "quando", "modale", "einleitung", "verbindung", "oggetto", "soggetto"],
     soggetto: ["compagnia", "persona", "modo", "einleitung"],
     stato: ["causa"],
     verbindung: ["causa", "quando", "zeitform", "modale"],
     einleitung: ["soggetto", "zeitform", "modale", "quando"],
+    /* FASSUNG 839 — auch das Fragewort darf nichts anderes ungültig machen */
+    wort: ["soggetto", "mezzo", "quando", "modo", "oggetto", "compagnia", "luogo", "persona", "modale", "zeitform"],
   };
   /* Verben, bei denen eine Eigenschaft des Dings etwas sagt (eine neue Jacke kaufen, ein interessantes Buch lesen) */
   const MIT_ADJ = ["comprare", "regalare", "leggere", "guardare", "mangiare", "bere", "scegliere", "provare", "vendere", "cercare", "scrivere",
@@ -2004,8 +2010,8 @@
   function idVon(x) { return typeof x === "string" ? x : x.id; }
   function angebote(w, feld) {
     const roh = angeboteRoh(w, feld);
-    const abh = (ABH[feld] || []).filter((g) => g === "zeitform" || (feldAktiv(w, g) && wFeld(w) !== g));
-    const anlassFelder = ["modo", "modale", "quando", "verbindung", "causa", "zeitform", "einleitung", "oggetto"];
+    const abh = (ABH[feld] || []).filter((g) => g === "zeitform" || (g === "wort" ? (w.satzart === "wfrage" && !leer(w.wort)) : (feldAktiv(w, g) && wFeld(w) !== g)));
+    const anlassFelder = ["modo", "modale", "quando", "verbindung", "causa", "zeitform", "einleitung", "oggetto", "wort"];
     const vv = wVerb(w);
     const anlassJetztOk = vv && !condOhneAnlass(w, vv);
     if (!abh.length && !(anlassJetztOk && anlassFelder.includes(feld))) return roh;
@@ -2015,9 +2021,19 @@
       if (feld === "oggetto") { w2.det = ""; w2.agg = ""; }
       /* FASSUNG 839 — weg von „mai“ fällt auch das „non“ weg, das „mai“ mitgebracht hat (so macht es die Oberfläche) */
       if (feld === "quando" && w.quando === "mai" && id !== "mai") w2.neg = false;
+      if (feld === "causa" && !w2.verbindung) w2.verbindung = "perche";   // wie die Oberfläche
+      /* wird „Quando?“ abgewählt, braucht ein imperfetto wieder eine Gewohnheit */
+      if (feld === "wort" && vv && wFeld(w2) !== "quando" && !feldAktiv(w2, "quando") && brauchtGewohnheit(w2, vv)) return false;
+      /* „Che cosa sapeva riparare?“ → „Perché …?“: das Pflicht-Ding muss dann auch wählbar sein */
+      if (feld === "wort" && vv) {
+        const alt = wFeld(w);
+        const pflicht = { oggetto: vv.objPflicht, persona: vv.persPflicht, luogo: vv.ortPflicht }[alt];
+        if (alt && pflicht && wFeld(w2) !== alt && !angebote(Object.assign({}, w2, { [alt]: "" }), alt).length) return false;
+      }
       if (feld === "quando" && id === "mai") { w2.neg = true; if (!abh.includes("modale") && feldAktiv(w, "modale") && !angeboteRoh(w2, "modale").some((y) => y.id === w.modale)) return false; if (feldAktiv(w, "modo") && !angeboteRoh(w2, "modo").some((y) => y.id === w.modo)) return false; if (feldAktiv(w, "oggetto") && !angeboteRoh(w2, "oggetto").some((y) => y.id === w.oggetto)) return false; }
       if (anlassJetztOk && anlassFelder.includes(feld) && feld !== "zeitform" && condOhneAnlass(w2, vv)) return false;
       return abh.every((g) => {
+        if (g !== "zeitform" && g !== "wort" && wFeld(w2) === g) return true;   // wird selbst zur Frage
         if (g === "zeitform") return angeboteRoh(w2, "zeitform").some((z) => z.id === w2.tempo);
         if (g === "causa" && !feldAktiv(w2, "causa")) return true;
         return angeboteRoh(w2, g).some((y) => idVon(y) === w2[g]);
@@ -2241,6 +2257,8 @@
           && !(m.id === "da_solo" && feldAktiv(w, "compagnia"))
           /* „Non dorme poco“, „Ha potuto fumare poco?“ — „poco“ verträgt kein „non“ und kein Modalverb */
           && !(m.id === "poco" && (w.neg || feldAktiv(w, "modale")))
+          /* „Ho dovuto aspettare … con calma“ — Ruhe lässt sich nicht befehlen */
+          && !(m.id === "con_calma" && feldAktiv(w, "modale") && w.modale === "dovere")
           /* „Sono da Marco da sole“ — bei jemandem ist man nicht allein */
           && !(m.id === "da_solo" && l && l.tags.includes("person"))
           && !(["molto", "poco"].includes(m.id) && o && v.id !== "parlare")
@@ -2279,6 +2297,8 @@
       case "causa": {
         if (!v) return [];
         if (wFeld(w) === "causa") return [];
+        /* In einer W-Frage gibt es kein Bindewort (siehe verbindung) — also auch keinen Grund */
+        if (w.satzart === "wfrage") return [];
         return gruendeFuer(w).map((g) => Object.assign({}, CAUSA[g.id.replace(/^non:/, "")], { id: g.id, gneg: g.neg }));
       }
       case "verbindung": {

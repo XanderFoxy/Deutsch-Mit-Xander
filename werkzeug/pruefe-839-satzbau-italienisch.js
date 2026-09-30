@@ -540,15 +540,21 @@ const DE_DU = { essen: "isst", lesen: "liest", sehen: "siehst", fahren: "fährst
       let versuche = 0, schlecht = [];
       for (let i = 0; i < 1500; i++) {
         const lv = S.NIVEAUS[i % 6];
-        const b = S.zufallsWahl(lv, S.KATEGORIEN[i % 10].id, zufall, {});
+        /* FASSUNG 839 — auch Fragen, W-Fragen, Gründe und Einleitungen, auch das Fragewort selbst */
+        const ex = { satzart: ["aussage", "aussage", "frage", "wfrage"][Math.floor(zufall() * 4)] };
+        const vb = ["", "perche", "quindi", "se", "quando", "se2", "se3"][Math.floor(zufall() * 7)];
+        if (vb) { ex.mitGrund = true; ex.verbindung = vb; }
+        ex.einleitung = ["", "", "so_che", "penso_che", "spero_che", "non_credo_che", "importante_che", "pensavo_che", "speravo_che"][Math.floor(zufall() * 9)] || false;
+        const b = S.zufallsWahl(lv, S.KATEGORIEN[i % 10].id, zufall, ex);
         if (!b) continue;
-        const felder = ["oggetto", "luogo", "quando", "modo", "compagnia", "mezzo", "persona", "causa", "modale"];
+        const felder = ["oggetto", "luogo", "quando", "modo", "compagnia", "mezzo", "persona", "causa", "modale", "wort", "einleitung", "verbindung", "stato"];
         const f = felder[i % felder.length];
         S.angebote(b.w, f).slice(0, 6).forEach((x) => {
           versuche++;
           const w2 = Object.assign({}, b.w, { [f]: x.id });
           if (f === "oggetto") { w2.det = ""; w2.agg = ""; }
           if (f === "quando" && b.w.quando === "mai" && x.id !== "mai") w2.neg = false;   // wie die Oberfläche
+          if (f === "causa" && !w2.verbindung) w2.verbindung = "perche";
           const r = S.pruefe(w2);
           if (!r.ok && !r.probleme.every((p) => p.feld === "zuviel")) schlecht.push(f + "=" + x.id + " bei " + b.it + " → " + r.probleme.map((p) => p.feld).join(","));
         });

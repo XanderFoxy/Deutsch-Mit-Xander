@@ -2646,3 +2646,39 @@ XANDER: „Alle Dateien sind von One Day in Rom. Sie sollen in den Player mit re
 - Die vorhandenen Player-Einträge (auch „Ein Leben Lang“ und „A Lovers Fairytale“) bleiben unter „Xander Fox“, wie Xander es wollte: „Nimm die Änderung bei den anderen Dateien wo vorher Xander Fox stand wieder zurück.“
 - „Ein Leben Lang“ war schon drin: Die hochgeladene Datei ist byte-gleich mit der vorhandenen (SHA-256 gleich). Sie wurde deshalb nicht ersetzt.
 - Geprüft: pruefe-hoerer-klammern und pruefe-runde88-selbst sind grün.
+
+## Fassung 839 — Italienischer Satzbaukasten nach italienischer Grammatik, Unsinn-Sperre mit Vorschlägen, kein Italienisch im Deutsch-Raum
+
+XANDER (Funk 225): „Mache mir auch den italienisch satzbaukasten für den italienischen Kurs … die italienischen Wörter Sätze und Inhalte gehören ausschließlich in den italienisch Raum … einen funktionierenden satzbaukasten auf der Basis der italienischen originalen Grammatik … keine Quatschsätze achte ganz explizit darauf dass er niemals Unsinn rausgehen kann und dass das gesperrt wird wenn es Unsinn wird … dass dann eher Vorschläge kommen was man sagen will und man dann geführt wird … mache beide Versionen vollständig“
+
+- **Eigene Engine `satzbau-it.js`** (`window.SatzbauIt`). Sie wird nur im Italienisch-Raum und nur für freigegebene Konten nachgeladen (`sitDarf()` = `imItalienischraum() && darfItalienischraum()`). Der Satz wird italienisch gebaut, darunter steht die deutsche Bedeutung, die Erklärungen sind auf Deutsch.
+  - Formenlehre: Konjugation mit Ausnahmen (`C`), Artikel nach dem folgenden Wort (lo zaino / il nuovo zaino), Präposition + Artikel verschmolzen, Adjektive dahinter mit Angleichung (buono/bello davor), Possessiv ohne Artikel bei Familie (außer loro).
+  - Das Subjektpronomen fällt weg, mit Hinweis. Im congiuntivo bleibt es, wenn die Form sonst nicht eindeutig ist.
+  - Zeiten je Niveau: presente, passato prossimo (essere/avere mit Angleichung), imperfetto, futuro, condizionale, trapassato, condizionale passato. Ab B2 congiuntivo nach Auslösern (penso/credo/spero/non credo/è importante che). Ab C1 pensavo/speravo che mit congiuntivo imperfetto/trapassato. Dazu periodo ipotetico (se + congiuntivo imperfetto/trapassato).
+  - Reflexive Verben (mi alzo, devo alzarmi), Modalverben + Infinitiv, non, Ja/Nein- und W-Fragen, Nebensätze mit perché/quando/se/che, Sätze verbinden mit e/ma/poi/o (`geschichte`).
+- **Deutsche Bedeutung**: eigenes kleines Deutsch in der Engine (V2, Verb am Ende im Nebensatz, trennbare Verben, kein/nicht, K II, Ersatzinfinitiv „hatten essen müssen“).
+- **Geführtes Bauen**: `angebote()` zeigt nur, was zu allem bereits Gewählten passt. Die Abhängigkeitstabelle `ABH` gilt jetzt auch für das Fragewort, die Einleitung und die Gründe. Zeitform- und Subjekt-Reihe zeigen absichtlich alles, was das Niveau kann. Beißt sich dort etwas, greift die Sperre.
+- **Unsinn-Sperre** (beide Baukästen): `pruefe()` findet den Schuldigen (`schuld()`). Dann steht statt des Satzes die Karte „So klingt der Satz komisch – meintest du …?“ mit 2–3 fertigen, gültigen Vorschlägen (`vorschlaege()`). Ein Tipp baut den Vorschlag. Im deutschen Baukasten: `sbkSperre`, `data-sbk-sperre`/`data-sbk-vorschlag`.
+- **Sinnregeln** aus zweimal Lesen (je 60 Sätze pro Niveau). Beispiele:
+  - keine Begleitung im Bett, auch nicht als „Con chi … a letto?“
+  - nicht „allein bei Marco/bei den Großeltern“, nicht „bei Marco mit Marco“
+  - kein „Fest, weil Fest“, kein „Geburtstag → Weihnachten“
+  - kein „es regnet, deshalb kann man …“; „können“ + weil/deshalb nur mit Zeit, schönem Wetter, Urlaub, Rabatten, Hitze
+  - kein „ich hoffe, dass du musst“, kein „Non credo che … non …“
+  - verlieren/vergessen nicht als Vorhersage
+  - „vorrei … da tre anni“ gesperrt
+  - „quando“ im Präsens (immer wenn) nicht mit festem Termin
+  - Frühstück nicht abends, Abendessen nicht morgens
+  - kein „non … poco“
+  - W-Frage nicht mehrdeutig („Dove aiutava mio fratello Marco?“)
+  - „che cosa parla?“ gesperrt
+  - „mai“ nie von selbst ohne „non“
+- **Deutscher Baukasten vervollständigt**: `satzbau.js` gibt den dünnen Themen passende vorhandene Verben (Essen 8→18, Gesundheit 9→22, Amt 6→21, Familie 13→27, Einkaufen 12→21 auf A1). Gradwörter stehen direkt vor dem Verb („Er hat im Kino sehr gelacht.“). Im deutschen Baukasten läuft kein italienischer Code mehr (`italienisch = false`).
+- **Deutsch-Raum ohne Italienisch**: Sonde 636 erweitert. Sie prüft 42 Ansichten des deutschen Baukastens A1–C2, Übungen, Grammatik, Wörterbuch und Bilderwelt. Einzige bewusste Ausnahme: die Hilfesprache in den Bilderwelten, wenn jemand Italienisch als Hilfesprache gewählt hat oder aus Italien kommt. Sie wurde nicht verändert.
+- **Sonde `werkzeug/pruefe-839-satzbau-italienisch.js`**:
+  - A: Handtabelle mit 110 Verben, dazu Artikel, Verschmelzung, Adjektive, Possessive.
+  - B: 21 000 Zufallssätze (mulberry32, ≥ 15 000 verschiedene) mit Regex-Prüfung von Form und Sinn, `LESEN=1` druckt 60 je Niveau.
+  - C: Sperrfälle mit 2–3 gültigen Vorschlägen. Dazu jedes Angebot aus 13 Reihen (auch Fragewort/Einleitung/Grund), das nie zu einem ungültigen Satz führen darf.
+  - D: Oberfläche. Kein Italienisch im Deutsch-Raum, kein Italienisch ohne Freigabe, Sperre in beiden Baukästen, 360/1280 px, Tippflächen ≥ 30 px.
+- Geprüft, alle grün: 839, 835, 636, 837, spielsystem. Gegenprobe: 839 auf dem alten Stand (71b7557) → 8 rot.
+- Offen: Die Sinnregeln sind eine Positivliste mit Heuristiken. Das Italienische hat noch kein Muttersprachler gelesen. Die deutschen Zufallssätze (835-Engine) enthalten weiter manche schiefe, aber grammatisch richtige Sätze („Er hat einen Preis gewusst.“).
