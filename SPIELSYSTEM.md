@@ -2860,3 +2860,10 @@ XANDER (wörtlich): „Mach das wieder zurück auf die Originaldimensionen die e
 
 - **Chat**: Das Verkleinern des Chatverlaufs aus 845 (`lcVerlaufPassen`, `--lc-verlauf-h`) ist abgeschaltet; der Verlauf hat wieder seine alte Höhe. Einzug im Auto und Gleis-Folgen aus 845 bleiben.
 - **Rathaus**: Modell und gebackene Bilder aus 844 (Flügel rechts vom Turm mit EINEM durchgehenden Dach bis zur Kopfseite, Stufengiebel nur an der Seite, Balkon mit Blumenkästen). Dazu die Nachtbilder des Kölner Doms mit weißem Flutlicht (844). Sonst nichts aus 844.
+
+## Fassung 824 — Stadt nach Walkie 313 (844) ausgeliefert, ohne die großen Äcker
+
+- Enthält aus 844: Laternen mit hellem Lichtkegel auf den Häusern und hellere Nächte; Stecknadel merkt die eigene Ansicht (Lage, Nähe, Drehung) und öffnet die Stadt immer so; langes Drücken auf Haus, Wahrzeichen, Schmuck, Bahnhof oder Baum öffnet das Bearbeiten-Menü; der Blitz heißt jetzt „Ein Tipp produziert sofort: an/aus"; ein Tipp aufs Haus zeigt kleine Symbole am Haus (Spiel: `klein: 1` → `leicht-wahl` mit `fokus`), die Stadt fliegt hin und nach der Aufgabe zurück; Wahrzeichen, Bootsverleih und Schmuck auch im Überblick anwählbar; Kölner Dom beim Versetzen mit grünem/rotem Rahmen und „Freier Platz"; Bergwerk groß hinter der Bahn am Fuß der Alpen; Ladebild mit Alex und dem Stadtnamen; die Stadt bleibt nach dem Verlassen 5 Minuten warm (spiel.js 20 s → 300 s).
+- Feld-Zeichen stehen nur noch, wenn der Acker selbst im Bild ist (vorher an den Rand geschoben, dort über der Schule).
+- **Zurückgenommen**: die zwei großen Äcker. Mit ihnen stand der Kornwagen so, dass die Autos nicht mehr über den Markt kamen (Sonde 830). Die Äcker liegen wie bis 843; „sichtbare Getreidefelder" bleibt offen.
+- Sonden: 817/822 prüfen das neue Verhalten (kleine Symbole, langes Drücken); 824/829 markieren das abgelehnte Dach von 829 als überholt; 799 Grenze 345 KB.

@@ -49,20 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 823: Chatfenster wieder alte Höhe, Rathausdach ohne Giebel nach vorn",
+  stand: "Fassung 824: Stadt nach Walkie 313 (Laternen, Stecknadel, langes Drücken, kleine Symbole, Bergwerk, Ladebild)",
 
   inArbeit: [
-    { seit: "2026-09-30T16:56",
-      text: "Stadt aus Walkie 313 (844): Kornfelder, Stecknadel, Symbole am Haus – noch in Prüfung" },
-    { seit: "2026-09-30T16:56",
+    { seit: "2026-09-30T18:36",
+      text: "Sichtbare Getreidefelder (große Äcker mit Kornwagen und Autos vereinbar machen)" },
+    { seit: "2026-09-30T18:36",
       text: "Kölner Dom: echte Größe? (Walkie 316)" },
+    { seit: "2026-09-30T18:36",
+      text: "Schwarzbild bei Tastatur und beim Verlassen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-30T16:56",
-      text: "Chatfenster wieder in alter Höhe" },
-    { seit: "2026-09-30T16:56",
-      text: "Rathaus: durchgehendes Dach rechts vom Turm" },
+    { seit: "2026-09-30T18:36",
+      text: "Kleine Symbole am Haus statt großem Menü" },
+    { seit: "2026-09-30T18:36",
+      text: "Bergwerk groß am Berg hinter der Bahn" },
   ],
 };
