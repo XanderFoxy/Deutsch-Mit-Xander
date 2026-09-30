@@ -27,6 +27,7 @@
       /* FASSUNG 826 — XANDER: „wenn wir so ein bisschen jetzt mehr rauszoomen würden … falls wir Platzmangel haben": weiter
          heraus (2,4 → 1,6 Bildpunkte je Meter), damit ein großer Kölner Dom samt Nachbarn ins Bild passt */
       K.min = 1.6 * dpr; K.max = Math.min(66, 30 * dpr);
+      if (ST.oberflaeche && ST.oberflaeche.miniGrenzen) ST.oberflaeche.miniGrenzen();   // FASSUNG 846 — im kleinen Rahmen dessen Grenzen
       /* Boden auf Telefonen mit sehr vielen Bildpunkten gröber rechnen */
       B.skala = dpr >= 2.5 ? 0.55 : dpr >= 1.8 ? 0.7 : 1;
       L.unruhe = 2;
@@ -72,6 +73,7 @@
     dingeC.setPointerCapture(e.pointerId);
     zeiger.set(e.pointerId, { x: e.clientX * K.dpr, y: e.clientY * K.dpr });
     schwung = [0, 0]; gezogen = false; startPunkt = { x: e.clientX * K.dpr, y: e.clientY * K.dpr, t: performance.now() };
+    L.letzterFinger = performance.now();   // FASSUNG 846 — für die Quests: hat man seitdem selbst etwas angefasst?
     if (O().zeigerRunter) O().zeigerRunter(startPunkt);
   });
   dingeC.addEventListener("pointermove", (e) => {
@@ -120,6 +122,9 @@
     if (O().zeigerHoch) O().zeigerHoch(gezogen);
     if (zeiger.size === 0) { startPunkt = null; if (ST.oberflaeche) ST.oberflaeche._finger = 0; }   // FASSUNG 844 — Fingerzähler fürs lange Drücken
   };
+  /* FASSUNG 846 — XANDER (Walkie 315): „stufenlos Zoomen … wie vorher". Auf dem iPhone zog Safari beim Kneifen im Bild die
+     ganze Spielseite mit groß (die Stadt sprang dann mit der Seite). Die Geste gehört allein der Stadt. */
+  for (const t of ["gesturestart", "gesturechange", "gestureend"]) document.addEventListener(t, (e) => { e.preventDefault(); }, { passive: false });
   dingeC.addEventListener("pointerup", hoch);
   dingeC.addEventListener("pointercancel", hoch);
   /* FASSUNG 820 — Umschalt+Mausrad dreht um 45° (weich, drehen.js); ein Rastschritt je 100 Einheiten, Touchpads sammeln */

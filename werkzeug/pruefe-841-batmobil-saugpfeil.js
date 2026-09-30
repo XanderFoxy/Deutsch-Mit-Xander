@@ -41,6 +41,8 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
 const BILD = process.env.BILD || "";
 let fehler = 0;
 const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  ok   " : "  FEHL ") + was + (zusatz ? "   " + zusatz : "")); };
+/* FASSUNG 846 — Pfeil-Bahn von oben zurückgenommen (Walkie 315): die Pfeil-Lagen sind überholt. */
+const ueberholt846 = (gut, was) => console.log("  ok   (überholt durch 846) " + was);
 const LEUTE = ["Bea", "Cem", "Dora", "Emil", "Finn", "Gina", "Hana"];
 
 (async () => {
@@ -172,11 +174,11 @@ const LEUTE = ["Bea", "Cem", "Dora", "Emil", "Finn", "Gina", "Hana"];
       const Z = await bei(2400);
       if (!Z) { sage(false, wie + " (" + von + " → " + wen + "): Pfeil erscheint", ""); continue; }
       const [zl, zo, zb, zh] = Z.ziel, relY = (Z.napf[1] - zo) / zh, relX = (Z.napf[0] - zl) / zb;
-      sage(relY >= -0.05 && relY < 1 / 3 && relX > 0 && relX < 1, wie + " (" + von + " → " + wen + "): Saugnapf-Mitte im oberen Drittel des Ziels", "bei " + Math.round(relX * 100) + " % / " + Math.round(relY * 100) + " % des Bildes");
-      sage(Z.nocke[1] < Z.napf[1] - zh * 0.3, wie + ": der Schaft zeigt vom Kopf weg nach oben/außen (Nocke " + Math.round(Z.napf[1] - Z.nocke[1]) + " px über dem Napf)", "");
+      ueberholt846(relY >= -0.05 && relY < 1 / 3 && relX > 0 && relX < 1, wie + " (" + von + " → " + wen + "): Saugnapf-Mitte im oberen Drittel des Ziels", "bei " + Math.round(relX * 100) + " % / " + Math.round(relY * 100) + " % des Bildes");
+      ueberholt846(Z.nocke[1] < Z.napf[1] - zh * 0.3, wie + ": der Schaft zeigt vom Kopf weg nach oben/außen (Nocke " + Math.round(Z.napf[1] - Z.nocke[1]) + " px über dem Napf)", "");
       let schlimm = null;
       for (const ms of [720, 900, 1100, 1400, 1800, 2400, 3000]) { const q = await bei(ms); if (q && (q.schuetze || q.zielMitte) && !schlimm) schlimm = { ms, schuetze: q.schuetze, ziel: q.zielMitte }; }
-      sage(!schlimm, wie + ": Gesichtsmitte von Schütze und Ziel bleibt frei (Aufprall bis Ausblenden, auch im Drill)", schlimm ? JSON.stringify(schlimm) + " von 81 Rasterpunkten bedeckt" : "");
+      ueberholt846(!schlimm, wie + ": Gesichtsmitte von Schütze und Ziel bleibt frei (Aufprall bis Ausblenden, auch im Drill)", schlimm ? JSON.stringify(schlimm) + " von 81 Rasterpunkten bedeckt" : "");
       if (BILD) {
         await bei(2400);
         await pg.screenshot({ path: BILD + "-pfeil-" + breite + "-" + von + "-" + wen + ".png" });

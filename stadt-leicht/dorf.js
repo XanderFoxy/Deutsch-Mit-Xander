@@ -472,7 +472,7 @@
         if (D.BOOTSHAUS && Math.hypot(x - D.BOOTSHAUS[0], y - D.BOOTSHAUS[1]) < r + 7) return false;
         if (D.BRUNNEN && Math.hypot(x - D.BRUNNEN[0], y - D.BRUNNEN[1]) < r + 4) return false;
         /* FASSUNG 844 — auch nicht auf die Äcker (sonst lägen die Kornfelder wieder unter einem Wahrzeichen) */
-        for (let a = 0; a < 12; a++) for (const t of [0.35, 0.75]) { const q = [x + Math.cos(a * 0.5236) * r * t, y + Math.sin(a * 0.5236) * r * t]; if (B.wert(q[0], q[1], 1) > 0.25) return false; }
+        for (let a = 0; a < 12; a++) for (const t of [0.35, 0.75]) { const q = [x + Math.cos(a * 0.5236) * r * t, y + Math.sin(a * 0.5236) * r * t]; if (B.wert(q[0], q[1], 1) > 0.25 || (D.feldNah && D.feldNah(q[0], q[1]))) return false; }   // FASSUNG 846 — nicht aufs Kornfeld
         return B.wert(x, y, 1) < 0.25;
       };
       if (frei(x0, y0)) return nurPruefen ? [x0, y0] : [+x0.toFixed(1), +y0.toFixed(1)];
@@ -726,7 +726,17 @@
       D.feldNah = function (x, y) { const u = x - y, v = x + y; return D.FELD_ORTE.some((f) => f.u0 != null && u > f.u0 - 4 && u < f.u1 + 4 && v > f.v0 - 4 && v < f.v1 + 12); };
       /* FASSUNG 844 — die großen Äcker (u 80–118) sind vorerst zurückgenommen: mit ihnen blieb der Kornwagen so, dass die Autos
          nicht mehr über den Markt kamen (Sonde 830). Bis das gelöst ist, liegen die Äcker wieder wie bis 843. */
-      for (const [px, py, fw, fh, nr] of [[30, 182, 9, 6, 91], [305, 142, 6, 8.5, 92], [58, 196, 4.5, 3.5, 91]]) { const q = welt(px, py); rund(q[0], q[1], fw, fh, 2); D.FELD_ORTE.push({ nr: nr, x: q[0], y: q[1], r: Math.max(fw, fh) }); }
+      /* FASSUNG 846 — XANDER (Walkie 315): „immer noch keine sichtbaren Getreidefelder vorher waren das gelbe Felder jetzt
+         fehlt das total". Die zwei großen Äcker von 844 (rechts zwischen Kaserne, Krankenhaus und Brandenburger Tor) kommen
+         zurück – aber nur als gemaltes Kornfeld obendrauf (oberflaeche.js, Halme gelb/grün) und als Tippfläche und Zeichen
+         der Felder 91/92. Der Boden darunter bleibt Wiese: das Wegenetz, der Kornwagen (fuhrwerk.js sucht die Ackerzellen
+         im Boden) und damit die Autos bleiben genau wie bis jetzt – so kommen sie weiter über den Markt (Sonde 830). Die
+         kleinen Ackerflecken im Boden bleiben die Ladestellen des Kornwagens. */
+      for (const [px, py, fw, fh] of [[30, 182, 9, 6], [305, 142, 6, 8.5], [58, 196, 4.5, 3.5]]) { const q = welt(px, py); rund(q[0], q[1], fw, fh, 2); }
+      for (const [um, vm, bu, bv, nr] of [[89, 26, 18, 30, 91], [109, 26, 18, 30, 92]]) {
+        const u0 = um - bu / 2, u1 = um + bu / 2, v0 = vm - bv / 2, v1 = vm + bv / 2, q = vw(um, vm);
+        D.FELD_ORTE.push({ nr: nr, x: +q[0].toFixed(2), y: +q[1].toFixed(2), r: Math.hypot(bu, bv) / 2 / Math.SQRT2, u0: u0, u1: u1, v0: v0, v1: v1 });
+      }
     };
     D.kulisse = function () {
       const liste = [];

@@ -143,14 +143,14 @@ const ELTERN = (w, h, suche) => `<!doctype html><html><head><meta charset="utf-8
         return { nr: f.nr, flaeche: Math.round(flaeche), gedeckt: gedeckt / n };
       });
     });
-    offen844(felder.length >= 2 && felder.every((f) => f.flaeche >= 250), "zwei große Äcker (je ≥ 250 m²)", JSON.stringify(felder));
-    offen844(felder.length >= 2 && felder.every((f) => f.gedeckt <= 0.15), "kein Wahrzeichen, Haus oder Baum verdeckt die Äcker (≤ 15 % der Prüfpunkte)", JSON.stringify(felder.map((f) => f.gedeckt)));
+    sage(felder.length >= 2 && felder.every((f) => f.flaeche >= 250), "zwei große Äcker (je ≥ 250 m²)", JSON.stringify(felder));
+    sage(felder.length >= 2 && felder.every((f) => f.gedeckt <= 0.15), "kein Wahrzeichen, Haus oder Baum verdeckt die Äcker (≤ 15 % der Prüfpunkte)", JSON.stringify(felder.map((f) => f.gedeckt)));
     const halme = await pg.evaluate(() => {
       const c = document.getElementById("lDinge"), g = c.getContext("2d"), f = STADT.dorf.FELD_ORTE[0], P = STADT.proj(f.x, f.y, 0);
       const d = g.getImageData(Math.round(P[0] - 6), Math.round(P[1] - 3), 12, 6).data; let a = 0, gelb = 0; for (let i = 0; i < d.length; i += 4) { a += d[i + 3]; gelb += d[i] + d[i + 1] - 2 * d[i + 2]; }
       return { deckend: a / (d.length / 4), gelb: gelb / (d.length / 4) };
     });
-    offen844(halme.deckend > 200 && halme.gelb > 120, "auf dem Acker steht gemaltes Korn (deckend, gelb-grün)", JSON.stringify(halme));
+    sage(halme.deckend > 200 && halme.gelb > 120, "auf dem Acker steht gemaltes Korn (deckend, gelb-grün)", JSON.stringify(halme));
     /* Bergwerk */
     const berg = await pg.evaluate(() => {
       const D = STADT.dorf, o = STADT.szene.objekte.find((x) => x.spiel === "bergwerk"), K = STADT.kamera;

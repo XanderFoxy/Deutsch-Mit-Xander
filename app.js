@@ -38836,8 +38836,9 @@
          Kreisbahn, dieselbe Rechnung wie beim Schneeball). */
       schicht.style.setProperty("--ex", (r.x * 38).toFixed(1) + "%");
       schicht.style.setProperty("--ey", (r.y * 38).toFixed(1) + "%");
-      /* FASSUNG 841 — die Bahn in Pixeln, der Napf oben am Kopf (siehe lcSaugpfeilBahn) */
-      try { lcSaugpfeilBahn(schicht, platz); } catch (e) {}
+      /* FASSUNG 846 — XANDER (Walkie 315): „die Sache mit dem Pfeil kannst du wieder zurücknehmen ich möchte nicht dass die so
+         von oben kommt es soll wieder so wie vorher funktioniert … so wie es zuletzt war vor dieser Änderung für das
+         Werbevideo". Die Bahn von oben an den Kopf (841, lcSaugpfeilBahn) ist abgeschaltet: der Pfeil fliegt wieder wie vorher. */
       /* Die Aeste einer Feder: feine Striche, die vom Kiel schraeg
          nach hinten aussen laufen. Ohne sie ist eine Fahne nur eine
          Flaeche — mit ihnen sieht man, dass es eine Feder ist. */

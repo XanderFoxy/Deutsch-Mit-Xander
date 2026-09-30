@@ -758,6 +758,44 @@
       if (!nachDing.has(p._idx)) nachDing.set(p._idx, []);
       nachDing.get(p._idx).push(p);
     }
+    /* FASSUNG 846 — XANDER (Walkie 315): „cool wäre es auch noch wenn die Turmuhr die richtige Uhrzeit anzeigen würde und
+       man … die Uhrzeit … trainieren könnte". Die Zifferblätter am Uhrgeschoss des Döbelner Rathauses (Modell
+       rathaus_doebeln: Turmmitte im mittig gerückten Grundriss bei (−1,32 | 8,04), Blätter 1,8 m vor der Turmmitte auf
+       24,65 m Höhe, Halbmesser 0,85 m) bekommen die echten Zeiger nach deutscher Uhr (ST.uhr, wie die Glocken): die im
+       Bild gebackenen Zeiger (zehn vor drei) deckt eine Scheibe in Blattfarbe innerhalb der Stundenstriche zu, darauf
+       Stunden- und Minutenzeiger in der Ebene des Blatts. Nur die Blätter, die zum Betrachter schauen, und erst, wenn ein
+       Blatt groß genug ist, um Zeiger zu erkennen. Die Quests fragen danach („Wie spät ist es?", quests.js). */
+    const UHR_MITTE = [-1.32, 8.04], UHR_AB = 1.8, UHR_Z = 24.65, UHR_R = 0.85;
+    function turmuhr(e, Z) {
+      const o = e.o, m = o.stufe || 1, a = (o.dreh || 0) * Math.PI / 2, c = Math.cos(a), sn = Math.sin(a);
+      const w = (x, y) => [o.x + (x * c - y * sn) * m, o.y + (x * sn + y * c) * m];
+      const u = ST.uhr ? ST.uhr() : null; if (!u) return;
+      const stunde = ((u.h % 12) + u.m / 60 + (u.s || 0) / 3600), minute = u.m + (u.s || 0) / 60;
+      const hb = e.o.heben ? e.o.heben * K.dpr : 0;
+      for (const [nx, ny] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        const C = w(UHR_MITTE[0] + nx * UHR_AB, UHR_MITTE[1] + ny * UHR_AB), N = w(UHR_MITTE[0] + nx * (UHR_AB + 1), UHR_MITTE[1] + ny * (UHR_AB + 1));
+        const P = ST.proj(C[0], C[1], UHR_Z * m), Pn = ST.proj(N[0], N[1], UHR_Z * m);
+        if (Pn[1] - P[1] < 0.05 * K.s * m) continue;   // schaut nicht zum Betrachter
+        /* waagrecht in der Wand (für den Betrachter nach rechts) und senkrecht */
+        const T = w(UHR_MITTE[0] + nx * UHR_AB + ny, UHR_MITTE[1] + ny * UHR_AB - nx), Pt = ST.proj(T[0], T[1], UHR_Z * m), Pz = ST.proj(C[0], C[1], (UHR_Z + 1) * m);
+        const tx = (Pt[0] - P[0]) / m, ty = (Pt[1] - P[1]) / m, zx = (Pz[0] - P[0]) / m, zy = (Pz[1] - P[1]) / m;
+        if (Math.hypot(tx, ty) * UHR_R * m < 3.2 && Math.hypot(zx, zy) * UHR_R * m < 3.2) continue;   // zu klein für Zeiger
+        g.save();
+        g.setTransform(tx * m, ty * m, -zx * m, -zy * m, P[0], P[1] - hb);
+        const r = UHR_R, nacht = Math.min(1, Z.nacht || 0);
+        /* Blattfarbe wie im Bild: die Sonnenseite heller, die Schattenseite etwas grauer, nachts gedämpft */
+        const LI = ST.LICHT || [-0.5, -0.3, 0.8], ln = Math.hypot(LI[0], LI[1]) || 1, wn = [(N[0] - C[0]) / m, (N[1] - C[1]) / m];
+        const hell = (0.86 + 0.14 * Math.max(-1, Math.min(1, -(wn[0] * LI[0] + wn[1] * LI[1]) / ln))) * (1 - 0.6 * nacht);
+        g.fillStyle = "rgb(" + Math.round(244 * hell) + "," + Math.round(241 * hell) + "," + Math.round(230 * hell) + ")";
+        g.beginPath(); g.arc(0, 0, r * 0.7, 0, Math.PI * 2); g.fill();
+        const zeiger = (an, l, b) => { g.save(); g.rotate(an); g.fillStyle = "#1b1b1b"; g.beginPath(); g.moveTo(-b, 0); g.lineTo(0, -l); g.lineTo(b, 0); g.lineTo(0, l * 0.15); g.closePath(); g.fill(); g.restore(); };
+        zeiger(stunde / 12 * Math.PI * 2, r * 0.5, r * 0.07);
+        zeiger(minute / 60 * Math.PI * 2, r * 0.68, r * 0.05);
+        g.fillStyle = "#1b1b1b"; g.beginPath(); g.arc(0, 0, r * 0.07, 0, Math.PI * 2); g.fill();
+        g.restore();
+      }
+    }
+    SZ.pruef.turmuhr = { mitte: UHR_MITTE, ab: UHR_AB, z: UHR_Z, r: UHR_R };
     const leuteMalen = (idx) => { const l = nachDing.get(idx); if (!l) return; l.sort((u, v) => (u.a + u.b) - (v.a + v.b)); for (const p of l) (p.malen || ST.leute.malen)(g, p); };
     leuteMalen(-1);
     /* FASSUNG 825 — Uhr für Laternen und Fenster; nur nachts etwas zu tun */
@@ -793,6 +831,7 @@
       }
       g.globalAlpha = 1;
       if (ST.windmuehle) ST.windmuehle.nach(g, e, t, Z);   // FASSUNG 812 — die drehenden Flügel der Windmühle (windmuehle.js)
+      if (e.o.bild === "w_rathaus_doebeln" && e.lagen.length && /^w_rathaus_doebeln/.test(e.lagen[0][0])) turmuhr(e, Z);   // FASSUNG 846
       if (anstrahlen) hausAnstrahlen(e, Z, lichtH);   // FASSUNG 825 — Wände im Schein naher Laternen
       if (e.licht) lichtMalen({ X: e.X, Y: e.Y, k: e.lk, meta: e.licht, o: e.o }, Z, t, false, 1);
       if (e.o.geist) auswahlRahmen(e);

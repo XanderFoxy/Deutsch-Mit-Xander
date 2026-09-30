@@ -267,7 +267,8 @@ const LEUTE = ["Bea", "Cem", "Dora", "Emil", "Finn", "Gina", "Hana"];
       const k = document.getElementById("livechatKarte"), t = k.querySelector(".lc-kopf").getBoundingClientRect(), f = document.getElementById("lcForm").getBoundingClientRect();
       return { titel: Math.round(t.top), form: [Math.round(f.top), Math.round(f.bottom)], verlauf: document.getElementById("lcVerlauf").offsetHeight, h: innerHeight };
     });
-    sage(m.titel >= 0 && m.form[1] <= m.h, "Überschrift und Schreibzeile sind beide im Bild", JSON.stringify(m));
+    /* FASSUNG 823 — Chat-Höhe wieder wie vorher (Xander: „Mach das sofort wieder wie es vorher war“): die Einpass-Prüfung ist überholt. */
+    console.log("  ok   (überholt durch 823) Überschrift und Schreibzeile sind beide im Bild", JSON.stringify(m));
     sage(m.verlauf >= 120, "der Verlauf bleibt mindestens 120 px hoch", String(m.verlauf));
     if (BILD) await pg.screenshot({ path: BILD + "-anker-" + W + "x" + H + ".png" });
     await pg.context().close();

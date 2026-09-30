@@ -279,7 +279,8 @@ const ELTERN = `<!doctype html><meta charset="utf-8"><meta name="viewport" conte
       gebaut++;
       const q = (await Qp(pg, () => STADT.quests.pruef.zustand()))[0];
       const texte = q.antworten.map((a) => a.text);
-      if (q.antworten.filter((a) => a.richtig).length !== 1 || new Set(texte).size !== 3) probleme.push(vid + ": Antworten " + JSON.stringify(texte));
+      /* FASSUNG 846 — Such-Quests (such_…) haben keine Antworten: man tippt das Gebäude in der Stadt an (Sonde 846) */
+      if (/^such_/.test(vid) ? texte.length !== 0 : q.antworten.filter((a) => a.richtig).length !== 1 || new Set(texte).size !== 3) probleme.push(vid + ": Antworten " + JSON.stringify(texte));
       if (vid === "hund" && !q.hund) probleme.push("hund ohne Hund");
       if (vid === "eis" && !q.wagen) probleme.push("eis ohne Wagen");
       if (vid === "hund" || vid === "eis") {

@@ -457,8 +457,187 @@
         { html: "„Ich möchte zwei Postkartes, bitte.“", hinweis: "Der Plural hat ein -n: die Postkarte – die Postkarten." }
       ], danke: "„Danke! Oma wird sich freuen.“" }
   ];
+  /* FASSUNG 846 — XANDER (Walkie 315): die Bibliothek der Quests ist zu klein und wiederholt sich, es sind fast nur
+     Wegbeschreibungen; die Leute sollen den Weg auch selbst finden. Dazu kommen
+     • SUCHEN („zeigen"): jemand fragt nach einem Ort, einem Beruf oder etwas, das er erledigen will – man sucht das
+       Gebäude selbst in der Stadt (verschieben, zoomen) und tippt es an; ein falsches Haus sagt, was es ist.
+     • UHRZEIT: die Rathausuhr zeigt die echte Zeit in Deutschland („die Turmuhr … die richtige Uhrzeit … die Uhrzeit
+       trainieren") – wie spät ist es, Termine umgangssprachlich sagen.
+     • weitere Satz-Aufgaben: Perfekt, Modalverben, Plural, Steigerung, Dativ, trennbare Verben, Datum, Preise … */
+  const BERUF = { baeckerei: ["Bäckerin", "Bäcker"], schule: ["Lehrerin", "Lehrer"], krankenhaus: ["Ärztin", "Arzt"], schmiede: ["Schmiedin", "Schmied"],
+    bibliothek: ["Bibliothekarin", "Bibliothekar"], muehle: ["Müllerin", "Müller"], bergwerk: ["Bergarbeiterin", "Bergarbeiter"], rathaus: ["Bürgermeisterin", "Bürgermeister"],
+    bahnhof: ["Lokführerin", "Lokführer"], gasthaus: ["Köchin", "Koch"], kuhstall: ["Bäuerin", "Bauer"], brauerei: ["Brauerin", "Brauer"], labor: ["Forscherin", "Forscher"] };
+  const ERLEDIGEN = { bibliothek: "ein Buch ausleihen", baeckerei: "frische Brötchen kaufen", krankenhaus: "zum Arzt – mir tut der Bauch weh", bahnhof: "mit dem Zug nach Leipzig fahren",
+    gasthaus: "zu Mittag essen", rathaus: "meinen neuen Ausweis abholen", schule: "meine Tochter von der Schule abholen", bootsverleih: "ein Tretboot mieten",
+    muehle: "einen Sack Mehl kaufen", kuhstall: "frische Milch holen", huehnerstall: "frische Eier holen", schmiede: "mein Hufeisen reparieren lassen" };
+  const ZAHL = ["null", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwölf"];
+  const stunde12 = (h) => { const x = ((h % 12) + 12) % 12; return x === 0 ? "zwölf" : x === 1 ? "eins" : ZAHL[x]; };
+  /* Uhrzeit, wie man sie im Alltag sagt (auf fünf Minuten): „Viertel nach drei", „fünf vor halb vier", „halb vier" */
+  function uhrText(h, m) {
+    m = Math.round(m / 5) * 5; if (m === 60) { m = 0; h++; }
+    const n = stunde12(h + 1), j = stunde12(h);
+    if (m === 0) return (j === "eins" ? "ein" : j) + " Uhr";
+    if (m === 15) return "Viertel nach " + j;
+    if (m === 30) return "halb " + n;
+    if (m === 45) return "Viertel vor " + n;
+    if (m === 25) return "fünf vor halb " + n;
+    if (m < 30) return (m === 20 ? "zwanzig" : ZAHL[m]) + " nach " + j;
+    if (m > 30 && m < 45) return ZAHL[m - 30] + " nach halb " + n;
+    return (60 - m === 20 ? "zwanzig" : ZAHL[60 - m]) + " vor " + n;
+  }
+  Q.uhrText = uhrText;
+  function uhrAntworten(h, m) {
+    m = Math.round(m / 5) * 5; if (m === 60) { m = 0; h++; }
+    const richtig = uhrText(h, m), texte = new Set([richtig]), falsch = [];
+    const kand = m === 30 ? [[h - 1, 30, "„Halb“ zählt zur nächsten Stunde: halb " + stunde12(h + 1) + " ist " + (((h % 12) + 12) % 12 || 12) + ":30."], [h, 0, "Schau auf den großen Zeiger: er steht unten auf der Sechs – also halb."]]
+      : [[h, (m + 30) % 60, "Schau genau: der große Zeiger zeigt die Minuten."], [h + 1, m, "Schau genau: der kleine Zeiger zeigt die Stunde."], [h - 1, m, "Schau genau: der kleine Zeiger zeigt die Stunde."]];
+    for (const [hh, mm, hin] of kand) { const t = uhrText(hh, mm); if (!texte.has(t) && falsch.length < 2) { texte.add(t); falsch.push({ html: "„Es ist " + t + ".“", hinweis: hin }); } }
+    return [{ html: "„Es ist " + richtig + ".“", richtig: true }].concat(falsch);
+  }
+  const ORDINAL = ["", "erste", "zweite", "dritte", "vierte", "fünfte", "sechste", "siebte", "achte", "neunte", "zehnte", "elfte", "zwölfte", "dreizehnte", "vierzehnte", "fünfzehnte",
+    "sechzehnte", "siebzehnte", "achtzehnte", "neunzehnte", "zwanzigste", "einundzwanzigste", "zweiundzwanzigste", "dreiundzwanzigste", "vierundzwanzigste", "fünfundzwanzigste",
+    "sechsundzwanzigste", "siebenundzwanzigste", "achtundzwanzigste", "neunundzwanzigste", "dreißigste", "einunddreißigste"];
+  const MONAT = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+  const heuteDE = () => { try { const t = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "numeric" }).formatToParts(new Date()); return { tag: +t.find((x) => x.type === "day").value, monat: +t.find((x) => x.type === "month").value - 1 }; } catch (e) { const d = new Date(); return { tag: d.getDate(), monat: d.getMonth() }; } };
+  const kardinal = (n) => n <= 12 ? ZAHL[n] : ["dreizehn", "vierzehn", "fünfzehn", "sechzehn", "siebzehn", "achtzehn", "neunzehn", "zwanzig", "einundzwanzig", "zweiundzwanzig", "dreiundzwanzig", "vierundzwanzig", "fünfundzwanzig", "sechsundzwanzig", "siebenundzwanzig", "achtundzwanzig", "neunundzwanzig", "dreißig", "einunddreißig"][n - 13];
+  const ALLE_ORTE = ["baeckerei", "schule", "schmiede", "brauerei", "bibliothek", "rathaus", "muehle", "huehnerstall", "kuhstall", "krankenhaus", "bergwerk", "labor", "gasthaus", "bahnhof", "bootsverleih", "fernsehturm", "koelner_dom", "holstentor", "brandenburger", "neuschwanstein"];
+  VORLAGEN.push(
+    { id: "such_ort", kat: "wortschatz", titel: "Wo ist das?", person: { art: 4 }, zeigen: true, ziel: ALLE_ORTE,
+      text: (z) => "Eine Touristin hält ihren Stadtplan verkehrt herum: „Entschuldigung, wo ist hier " + nom(z) + "?“",
+      frage: (z) => "Zeig es ihr: Such " + akk(z) + " in der Stadt und tippe darauf.", danke: "„Ach, da! Vielen Dank!“" },
+    { id: "such_beruf", kat: "wortschatz", titel: "Wo arbeite ich?", person: { art: 2, er: true }, zeigen: true, ziel: Object.keys(BERUF),
+      text: (z) => "Ein Mann lacht: „Ich bin neu hier und heute ist mein erster Arbeitstag. Ich bin " + BERUF[z.key][1] + ". Weißt du, wo ich arbeite?“",
+      frage: () => "Such seinen Arbeitsplatz in der Stadt und tippe darauf.", danke: "„Genau! Da arbeite ich ab heute.“" },
+    { id: "such_beruf_sie", kat: "wortschatz", titel: "Der erste Arbeitstag", person: { art: 1 }, zeigen: true, ziel: Object.keys(BERUF),
+      text: (z) => "Eine Frau fragt: „Ich bin die neue " + BERUF[z.key][0] + ". Wo muss ich hin?“",
+      frage: () => "Such ihren Arbeitsplatz in der Stadt und tippe darauf.", danke: "„Danke! Dann komme ich nicht zu spät.“" },
+    { id: "such_erledigen", kat: "wortschatz", titel: "Wohin muss ich?", person: { art: 0 }, zeigen: true, ziel: Object.keys(ERLEDIGEN),
+      text: (z) => "Ein älterer Herr fragt: „Ich möchte " + ERLEDIGEN[z.key] + ". Wohin muss ich gehen?“",
+      frage: () => "Such den richtigen Ort in der Stadt und tippe darauf.", danke: "„Wunderbar, das ist ja ganz nah!“" },
+    { id: "uhr_jetzt", kat: "uhrzeit", titel: "Wie spät ist es?", person: { art: 5, er: true }, ziel: ["rathaus"], uhr: true,
+      text: () => "Ein Tourist hat sein Handy verloren und fragt: „Entschuldigung, wie spät ist es?“ Schau auf die Uhr am Rathausturm.",
+      frage: "Was sagst du?", antworten: () => { const u = ST.uhr ? ST.uhr() : { h: new Date().getHours(), m: new Date().getMinutes() }; return uhrAntworten(u.h, u.m); },
+      danke: "„Danke! Dann habe ich noch Zeit für einen Kaffee.“" },
+    { id: "uhr_termin", kat: "uhrzeit", titel: "Ein Termin im Rathaus", person: { art: 1 }, ziel: ["rathaus"], uhr: true,
+      text: (z, v) => "Eine Frau hat einen Termin im Rathaus. Auf ihrem Zettel steht „" + v.termin[0] + ":" + String(v.termin[1]).padStart(2, "0") + " Uhr“. Sie fragt: „Wie sagt man das im Alltag?“",
+      frage: "Was antwortest du?", antworten: (z, v) => uhrAntworten(v.termin[0], v.termin[1]).map((a) => Object.assign({}, a, { html: a.html.replace("„Es ist ", "„Um ").replace(".“", ".“") })),
+      danke: "„Danke! Dann bin ich pünktlich.“" },
+    { id: "perfekt_kino", kat: "zeiten", titel: "Was hast du gestern gemacht?", person: { art: 3, klein: true }, ziel: ["brunnen", "schule", "rathaus"],
+      text: () => "Ein Junge will seiner Lehrerin erzählen, was er gestern gemacht hat. Er fragt dich: „Wie sagt man das richtig?“",
+      frage: "Welcher Satz ist richtig?",
+      antworten: () => [
+        { html: "„Ich bin gestern ins Kino gegangen.“", richtig: true },
+        { html: "„Ich habe gestern ins Kino gegangen.“", hinweis: "Fast! Bei „gehen“ (Bewegung) bildet man das Perfekt mit „sein“: ich bin gegangen." },
+        { html: "„Ich bin gestern ins Kino gegeht.“", hinweis: "Fast! „gehen“ ist unregelmäßig: gegangen." }
+      ], danke: "„Danke! Jetzt kann ich es erzählen.“" },
+    { id: "modal_brunnen", kat: "verben", titel: "Nicht in den Brunnen!", person: { art: 1 }, ziel: ["brunnen"],
+      text: () => "Ein Kind will in den Brunnen klettern. Die Mutter ruft – aber welches Wort ist richtig?",
+      frage: "„Nein! Du … nicht in den Brunnen klettern!“",
+      antworten: () => [
+        { html: "„Du darfst nicht in den Brunnen klettern!“", richtig: true },
+        { html: "„Du darf nicht in den Brunnen klettern!“", hinweis: "Bei „du“ hat das Verb ein -st: du darfst." },
+        { html: "„Du dürfen nicht in den Brunnen klettern!“", hinweis: "„dürfen“ ist der Infinitiv. Mit „du“: du darfst." }
+      ], danke: "„Siehst du? Jetzt bleibst du trocken.“" },
+    { id: "plural_aepfel", kat: "wortbildung", titel: "Äpfel zählen", person: { art: 3, klein: true }, ziel: ["baeckerei", "brunnen", "kuhstall"],
+      text: () => "Ein Mädchen hat auf dem Markt Äpfel gekauft und möchte es seiner Oma erzählen.",
+      frage: "Welcher Satz ist richtig?",
+      antworten: () => [
+        { html: "„Ich habe drei Äpfel gekauft.“", richtig: true },
+        { html: "„Ich habe drei Apfel gekauft.“", hinweis: "Drei – also Plural: der Apfel, die Äpfel." },
+        { html: "„Ich habe drei Äpfeln gekauft.“", hinweis: "Das -n kommt nur im Dativ dazu (mit den Äpfeln). Hier: drei Äpfel." }
+      ], danke: "„Danke! Oma backt jetzt Apfelkuchen.“" },
+    { id: "steigerung", kat: "wortbildung", titel: "Was ist höher?", person: { art: 3, klein: true }, ziel: ["fernsehturm", "koelner_dom"],
+      text: (z) => "Zwei Kinder streiten: Was ist höher – " + nom(z) + " oder das Rathaus? Du weißt es.",
+      frage: "Welcher Satz ist richtig?",
+      antworten: (z) => [
+        { html: "„" + Nom(z) + " ist höher als das Rathaus.“", richtig: true },
+        { html: "„" + Nom(z) + " ist hoher als das Rathaus.“", hinweis: "„hoch“ ist besonders: hoch – höher – am höchsten." },
+        { html: "„" + Nom(z) + " ist mehr hoch als das Rathaus.“", hinweis: "Im Deutschen steigert man mit -er: höher." }
+      ], danke: "„Siehst du, ich hatte recht!“" },
+    { id: "arzt", kat: "faelle", titel: "Beim Arzt", person: { art: 2, er: true }, ziel: ["krankenhaus"],
+      text: () => "Ein Mann hat Kopfschmerzen und muss es gleich der Ärztin im Krankenhaus sagen. Er fragt dich: „Wie sage ich das?“",
+      frage: "Welcher Satz ist richtig?",
+      antworten: () => [
+        { html: "„Mir tut der Kopf weh.“", richtig: true },
+        { html: "„Ich tut der Kopf weh.“", hinweis: "Bei „wehtun“ steht die Person im Dativ: mir." },
+        { html: "„Mir tun der Kopf weh.“", hinweis: "Der Kopf – eins, also: tut. (Die Füße tun weh.)" }
+      ], danke: "„Danke! Hoffentlich geht es mir bald besser.“" },
+    { id: "vorstellen", kat: "verben", titel: "Das neue Kind", person: { art: 3, klein: true }, ziel: ["schule"],
+      text: () => "Ein neues Mädchen soll sich morgen in der Klasse vorstellen. Es ist nervös und übt mit dir.",
+      frage: "Welcher Satz ist richtig?",
+      antworten: () => [
+        { html: "„Ich heiße Mia und bin acht Jahre alt.“", richtig: true },
+        { html: "„Ich heiße Mia und habe acht Jahre.“", hinweis: "Im Deutschen „ist“ man so alt: ich bin acht Jahre alt." },
+        { html: "„Ich heiße Mia und bin acht Jahren alt.“", hinweis: "Fast! Es heißt „acht Jahre“ – ohne n." }
+      ], danke: "„Danke! Jetzt bin ich nicht mehr so aufgeregt.“" },
+    { id: "zurueckgeben", kat: "wortstellung", titel: "In der Bibliothek", person: { art: 2, er: true }, ziel: ["bibliothek"],
+      text: () => "Ein Student möchte ein Buch zurückgeben. Er fragt dich, wie er das an der Theke sagt.",
+      frage: "Welcher Satz ist richtig?",
+      antworten: () => [
+        { html: "„Ich möchte das Buch zurückgeben.“", richtig: true },
+        { html: "„Ich möchte das Buch geben zurück.“", hinweis: "Nach „möchte“ steht das ganze Verb zusammen am Ende: zurückgeben." },
+        { html: "„Ich möchte zurück das Buch geben.“", hinweis: "Das Verb steht am Ende und bleibt zusammen: … das Buch zurückgeben." }
+      ], danke: "„Danke! Das Buch war übrigens sehr spannend.“" },
+    { id: "schnitzel", kat: "artikel", titel: "Im Gasthaus bestellen", person: { art: 5, er: true }, ziel: ["gasthaus"],
+      text: () => "Ein Wanderer aus England möchte im Gasthaus ein Schnitzel bestellen.",
+      frage: "Welcher Satz ist richtig?",
+      antworten: () => [
+        { html: "„Ich hätte gern ein Schnitzel, bitte.“", richtig: true },
+        { html: "„Ich hätte gern einen Schnitzel, bitte.“", hinweis: "Es heißt „das Schnitzel“ – also „ein Schnitzel“." },
+        { html: "„Ich hätte gern eine Schnitzel, bitte.“", hinweis: "Es heißt „das Schnitzel“ – also „ein Schnitzel“." }
+      ], danke: "„Lecker! Danke schön!“" },
+    { id: "zug_an", kat: "wortstellung", titel: "Der Zug hat Verspätung", person: { art: 0 }, ziel: ["bahnhof"],
+      text: () => "Der Zug hat Verspätung. Eine ältere Dame möchte am Schalter fragen, wann er kommt.",
+      frage: "Welche Frage ist richtig?",
+      antworten: () => [
+        { html: "„Wann kommt der Zug an?“", richtig: true },
+        { html: "„Wann der Zug kommt an?“", hinweis: "Bei einer W-Frage steht das Verb an zweiter Stelle: Wann kommt …?" },
+        { html: "„Wann kommt an der Zug?“", hinweis: "„an“ gehört zu „ankommen“ und steht ganz am Ende." }
+      ], danke: "„Danke, junger Mensch!“" },
+    { id: "mehl", kat: "wortbildung", titel: "Beim Müller", person: { art: 1 }, ziel: ["muehle"],
+      text: () => "Eine Frau möchte beim Müller Mehl für einen Kuchen kaufen.",
+      frage: "Welcher Satz ist richtig?",
+      antworten: () => [
+        { html: "„Ich brauche zwei Kilo Mehl.“", richtig: true },
+        { html: "„Ich brauche zwei Kilos Mehl.“", hinweis: "Maßangaben bleiben ohne Plural: zwei Kilo." },
+        { html: "„Ich brauche zwei Kilo Mehls.“", hinweis: "Nach der Menge folgt das Wort einfach so: zwei Kilo Mehl." }
+      ], danke: "„Danke! Jetzt kann ich backen.“" },
+    { id: "schluessel", kat: "faelle", titel: "Der Schlüssel ist weg", person: { art: 4, weint: true }, ziel: ["gasthaus", "rathaus", "bibliothek", "brunnen"],
+      text: (z) => "Eine Frau sucht verzweifelt ihren Schlüssel. Du hast ihn gesehen: Er liegt auf dem Tisch vor " + dat(z) + ".",
+      frage: "Was sagst du ihr?",
+      antworten: (z) => [
+        { html: "„Ihr Schlüssel liegt auf dem Tisch vor " + dat(z) + ".“", richtig: true },
+        { html: "„Ihr Schlüssel liegt auf den Tisch vor " + dat(z) + ".“", hinweis: "Wo? → Dativ: auf dem Tisch." },
+        { html: "„Ihr Schlüssel liegt auf der Tisch vor " + dat(z) + ".“", hinweis: "Es heißt „der Tisch“, im Dativ: auf dem Tisch." }
+      ], danke: "„Oh, danke! Ohne Schlüssel komme ich nicht nach Hause.“" },
+    { id: "preis", kat: "zahlen", titel: "Was kostet die Führung?", person: { art: 5, er: true }, ziel: ["koelner_dom", "holstentor", "neuschwanstein", "fernsehturm", "brandenburger"],
+      text: (z) => "Auf einem Schild steht: „Führung durch " + akk(z) + ": 7,50 €“. Ein Tourist fragt: „Wie liest man den Preis?“",
+      frage: "Was sagst du?",
+      antworten: () => [
+        { html: "„Sieben Euro fünfzig.“", richtig: true },
+        { html: "„Sieben Komma fünfzig Euro.“", hinweis: "Bei Preisen sagt man die Euro und dann die Cent: sieben Euro fünfzig." },
+        { html: "„Sieben Euros fünfzig.“", hinweis: "„Euro“ bleibt im Plural ohne s: sieben Euro." }
+      ], danke: "„Danke! Das ist ein guter Preis.“" },
+    { id: "datum", kat: "zahlen", titel: "Welcher Tag ist heute?", person: { art: 0 }, ziel: ["rathaus", "bahnhof", "bibliothek"],
+      text: () => "Ein älterer Herr möchte ein Formular ausfüllen und fragt: „Welches Datum haben wir heute?“",
+      frage: "Was antwortest du?",
+      antworten: () => { const d = heuteDE(), mo = MONAT[d.monat]; return [
+        { html: "„Heute ist der " + ORDINAL[d.tag] + " " + mo + ".“", richtig: true },
+        { html: "„Heute ist der " + kardinal(d.tag) + " " + mo + ".“", hinweis: "Beim Datum braucht man die Ordnungszahl: der " + ORDINAL[d.tag] + "." },
+        { html: "„Heute ist die " + ORDINAL[d.tag] + " " + mo + ".“", hinweis: "Es heißt „der Tag“ – also: der " + ORDINAL[d.tag] + " " + mo + "." }
+      ]; }, danke: "„Vielen Dank, das hatte ich ganz vergessen!“" },
+    { id: "geburtstag", kat: "stil", titel: "Ein Geburtstag am Brunnen", person: { art: 3, klein: true }, ziel: ["brunnen"],
+      text: () => "Am Brunnen feiert ein Kind Geburtstag. Seine Freundin aus Polen möchte gratulieren.",
+      frage: "Was sagt man?",
+      antworten: () => [
+        { html: "„Alles Gute zum Geburtstag!“", richtig: true },
+        { html: "„Alles Gut zum Geburtstag!“", hinweis: "Fast! Es heißt „Alles Gute“ – mit e." },
+        { html: "„Guten Geburtstag!“", hinweis: "So sagt man das nicht. Richtig ist: „Alles Gute zum Geburtstag!“" }
+      ], danke: "„Danke! Willst du ein Stück Kuchen?“" }
+  );
   Q.VORLAGEN = VORLAGEN;
-  const KAT_NAME = { betonung: "Betonung", artikel: "Artikel", praepositionen: "Präpositionen", faelle: "Fälle", stil: "Stil", wortstellung: "Wortstellung", wortbildung: "Wortbildung" };
+  const KAT_NAME = { betonung: "Betonung", artikel: "Artikel", praepositionen: "Präpositionen", faelle: "Fälle", stil: "Stil", wortstellung: "Wortstellung", wortbildung: "Wortbildung",
+    wortschatz: "Wortschatz", uhrzeit: "Uhrzeit", zeiten: "Zeitformen", verben: "Verben", zahlen: "Zahlen" };
 
   /* =====================================================================
      5. STAND, PUNKTE, GESCHENKE
@@ -649,16 +828,23 @@
   const stil = document.createElement("style");
   stil.textContent = [
     "#lOber > .lq-ebene { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }",
-    ".lq-zeichen { position: absolute; left: 0; top: 0; width: 34px; height: 44px; margin: 0; padding: 0; border: 0; background: none; pointer-events: auto; cursor: pointer; will-change: transform; -webkit-tap-highlight-color: transparent; isolation: isolate; }",
-    ".lq-zeichen::before { content: ''; position: absolute; left: 50%; top: 46%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; z-index: -1; background: radial-gradient(circle, rgba(255,240,150,.9) 0 18%, rgba(255,210,50,.38) 42%, rgba(255,205,50,0) 68%); animation: lq-leuchten 1.9s ease-in-out infinite; }",
+    ".lq-zeichen { position: absolute; left: 0; top: 0; width: 30px; height: 34px; display: flex; align-items: flex-end; justify-content: center; margin: 0; padding: 0; border: 0; background: none; pointer-events: auto; cursor: pointer; will-change: transform; -webkit-tap-highlight-color: transparent; isolation: isolate; }",
+    ".lq-zeichen::before { content: ''; position: absolute; left: 50%; top: 57%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; z-index: -1; background: radial-gradient(circle, rgba(255,240,150,.9) 0 18%, rgba(255,210,50,.38) 42%, rgba(255,205,50,0) 68%); animation: lq-leuchten 1.9s ease-in-out infinite; }",
     ".lq-zeichen.lq-frage::before { background: radial-gradient(circle, rgba(225,242,255,.9) 0 18%, rgba(120,190,255,.38) 42%, rgba(120,190,255,0) 68%); }",
-    ".lq-zeichen svg { width: 34px; height: 44px; display: block; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.55)); }",
+    ".lq-zeichen svg { width: 22px; height: 29px; display: block; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.55)); }",
     ".lq-zeichen.lq-rand svg { transform: scale(.82); }",
     "@keyframes lq-leuchten { 0%, 100% { opacity: .6; transform: scale(.82); } 50% { opacity: 1; transform: scale(1.14); } }",
     "body.lk-gestalten .lq-zeichen { display: none; }",
-    ".lq-dialog { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(max(12px, env(safe-area-inset-bottom)) + 6px); width: min(440px, calc(100vw - 16px)); box-sizing: border-box; max-height: min(64%, calc(100% - 96px)); overflow: auto; overscroll-behavior: contain; padding: 9px 12px 12px; border-radius: 16px; background: rgba(22,28,48,.94); border: 1px solid rgba(255,255,255,.16); color: #f3ead8; box-shadow: 0 8px 26px rgba(0,0,0,.4); font: 14px/1.38 system-ui, sans-serif; z-index: 6; animation: lq-auf .26s ease-out; touch-action: pan-y; }",
+    ".lq-dialog { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(max(12px, env(safe-area-inset-bottom)) + 6px); width: min(360px, calc(100vw - 16px)); box-sizing: border-box; max-height: min(44%, calc(100% - 96px)); overflow: auto; overscroll-behavior: contain; padding: 6px 10px 8px; border-radius: 14px; background: rgba(22,28,48,.94); border: 1px solid rgba(255,255,255,.16); color: #f3ead8; box-shadow: 0 8px 26px rgba(0,0,0,.4); font: 12.5px/1.3 system-ui, sans-serif; z-index: 6; animation: lq-auf .26s ease-out; touch-action: pan-y; }",
     "@keyframes lq-auf { from { opacity: 0; translate: 0 14px; } to { opacity: 1; translate: 0 0; } }",
-    ".lk-mini-modus .lq-dialog { left: 4px; right: 4px; bottom: 4px; width: auto; transform: none; max-height: calc(100% - 8px); padding: 5px 8px 7px; font-size: 12.5px; line-height: 1.3; border-radius: 12px; }",
+    ".lk-mini-modus .lq-dialog { left: 4px; right: 4px; bottom: 4px; width: auto; transform: none; max-height: 58%; padding: 4px 7px 5px; font-size: 11.5px; line-height: 1.25; border-radius: 10px; }",
+    /* FASSUNG 846 — XANDER (Walkie 315): die Fragetafeln sind zu groß und verdecken alles; jetzt kompakt (höchstens gut
+       die Hälfte des kleinen Bilds, im Vollbild 44 %), die Person bleibt darüber zu sehen */
+    ".lq-suche { position: absolute; left: 50%; transform: translateX(-50%); top: 36px; max-width: calc(100% - 16px); box-sizing: border-box; display: flex; align-items: center; gap: 6px; padding: 3px 4px 3px 9px; border-radius: 12px; background: rgba(22,28,48,.9); color: #f3ead8; font: 600 11.5px/1.25 system-ui, sans-serif; z-index: 6; pointer-events: auto; box-shadow: 0 3px 10px rgba(0,0,0,.35); }",
+    ".lq-suche b { color: #ffd75e; }",
+    ".lq-suche .lq-hinweis { margin: 0; font-weight: 600; }",
+    ".lk-mini-modus .lq-suche { top: 32px; font-size: 11px; }",
+    ".lq-los { min-height: 30px; margin-top: 4px; padding: 4px 12px; border: 0; border-radius: 10px; background: #2f7d46; color: #fff; font: 700 12px/1 system-ui, sans-serif; cursor: pointer; }",
     ".lq-kopf { display: flex; align-items: center; gap: 6px; }",
     ".lq-titel { flex: 1; min-width: 0; font-weight: 800; font-size: 13px; color: #ffd75e; }",
     ".lk-mini-modus .lq-titel { font-size: 12px; }",
@@ -667,8 +853,8 @@
     ".lq-frage { margin: 0 0 6px; font-weight: 700; color: #fff; }",
     ".lq-antworten { display: flex; flex-direction: column; gap: 6px; }",
     ".lk-mini-modus .lq-antworten { gap: 4px; }",
-    ".lq-antwort { min-height: 34px; text-align: left; padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.08); color: #fff; font: inherit; cursor: pointer; }",
-    ".lk-mini-modus .lq-antwort { min-height: 32px; padding: 4px 8px; }",
+    ".lq-antwort { min-height: 30px; text-align: left; padding: 4px 9px; border-radius: 10px; border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.08); color: #fff; font: inherit; cursor: pointer; }",
+    ".lk-mini-modus .lq-antwort { min-height: 28px; padding: 3px 7px; }",
     ".lq-antwort:disabled { cursor: default; }",
     ".lq-antwort.lq-falsch { background: rgba(200,60,50,.32); border-color: rgba(255,120,110,.6); color: #ffd9d4; }",
     ".lq-antwort.lq-richtig { background: rgba(50,170,90,.45); border-color: rgba(140,240,170,.8); }",
@@ -709,7 +895,7 @@
     return hind;
   }
   function freiLegen(x, y, W, oben, unten) {
-    const H = hindernisse(), bw = 34, bh = 44;
+    const H = hindernisse(), bw = 30, bh = 34;   // FASSUNG 846 — die Zeichen sind kleiner (die Tippfläche bleibt 30 × 34 px)
     const deckt = (cx, cy) => H.some((r) => Math.min(r.right, cx + bw / 2) - Math.max(r.left, cx - bw / 2) > 1 && Math.min(r.bottom, cy) - Math.max(r.top, cy - bh) > 1);
     if (!deckt(x, y)) return [x, y];
     for (let d = 12; d < 400; d += 12) for (const [dx, dy] of [[0, -d], [0, d], [d, 0], [-d, 0]]) {
@@ -722,14 +908,16 @@
   SZ.zuhoerer.push(function () {
     const W = K.W / K.dpr, H = K.H / K.dpr, oben = mini() ? 34 : 64, unten = mini() ? 40 : 70;
     for (const qu of Q.liste) {
-      const f = qu.f, art = f.zustand === "wartet" ? "!" : f.zustand === "offen" || f.zustand === "unterwegs" || f.zustand === "gefragt" ? "?" : "";
+      /* FASSUNG 846 — XANDER (Walkie 315): die „!“ und „?“ sind zu groß und bleiben, wenn die Aufgabe erledigt ist. Nach
+         der richtigen Antwort (die Person geht los) ist das Zeichen weg; „?“ nur, solange sie auf dich wartet. */
+      const f = qu.f, art = f.zustand === "wartet" ? "!" : f.zustand === "offen" || f.zustand === "gefragt" || f.zustand === "sucht" ? "?" : "";
       if (!art || (f.alpha != null && f.alpha < 0.6)) { if (qu.el) qu.el.style.display = "none"; continue; }
       const b = zeichenFuer(qu);
       if (b.dataset.a !== art) { b.dataset.a = art; b.innerHTML = art === "!" ? SVG_AUSRUF : SVG_FRAGE; b.classList.toggle("lq-frage", art === "?"); const t = art === "!" ? qu.v.titel + " – tippe, um zu helfen" : f.zustand === "unterwegs" ? qu.v.titel + " – unterwegs" : qu.v.titel + " – wartet auf deine Antwort"; b.title = t; b.setAttribute("aria-label", t); }
       const br = bruecke3(f.x, f.y), P = ST.proj(f.x, f.y, (br ? br.z : 0) + (f.klein ? 1.6 : 2.15) + (f.hopp || 0));
       let x = P[0] / K.dpr, y = P[1] / K.dpr - 2;
       const drin = x > 8 && x < W - 8 && y > oben && y < H - 8;
-      if (!drin) { x = Math.max(20, Math.min(W - 20, x)); y = Math.max(oben + 44, Math.min(H - unten, y)); }
+      if (!drin) { x = Math.max(20, Math.min(W - 20, x)); y = Math.max(oben + 34, Math.min(H - unten, y)); }
       [x, y] = freiLegen(x, y, W, oben, H - 8);
       b.classList.toggle("lq-rand", !drin);
       if (b.style.display) b.style.display = "";
@@ -746,10 +934,30 @@
   }
   /* Kamera weich hin: die Person oben im Bild, darunter Platz für den Dialog */
   /* dialogOben: Oberkante des Dialogs (CSS-Pixel) – die Person kommt in die Mitte des freien Streifens darüber */
-  function hinFliegen(qu, dialogOben) {
+  /* FASSUNG 846 — XANDER (Walkie 315): „zuerst … auf die maximale Stufe auf die Person zoomen und ihre Orientierung,
+     dann den Nutzer browsen lassen". Beim Tipp aufs „!“ fliegt die Kamera ganz nah an die Person (im kleinen Rahmen die
+     zweite Stufe, im Vollbild bis 26 Bildpunkte je Meter). Bei einer Wegbeschreibung dreht sich die Karte so, dass ihr
+     erster Schritt im Bild nach oben zeigt, und sie schaut in diese Richtung: links und rechts im Bild sind dann auch
+     ihr Links und Rechts. Danach kann man frei verschieben, zoomen und drehen. */
+  function blickFuer(qu) {
+    const f = qu.f, n = netz(), p = n.kn[qu.s], e = n.kn[qu.route.R[1]] || p, h = Math.atan2(e[1] - p[1], e[0] - p[0]);
+    const alt = K.dreh; let best = alt, bw = -Infinity;
+    for (let d = 0; d < 4; d += 0.5) {
+      K.dreh = d; const P0 = ST.proj(f.x, f.y, 0), P1 = ST.proj(f.x + Math.cos(h), f.y + Math.sin(h), 0);
+      const dx = P1[0] - P0[0], dy = P1[1] - P0[1], w = -dy / (Math.hypot(dx, dy) || 1);
+      if (w > bw + 1e-6) { bw = w; best = d; }
+    }
+    K.dreh = alt;
+    return { dreh: best, h: h };
+  }
+  function hinFliegen(qu, dialogOben, erst) {
     const f = qu.f; let s = K.s;
-    if (mini()) s = O().miniNah ? O().miniNah() : K.s;
-    else s = Math.max(K.s, 14 * K.dpr);
+    if (erst && qu.v.richtung && ST.drehen && ST.drehen.setzen) {
+      const b = blickFuer(qu); f.h = b.h; f.blickt = true;
+      if (Math.abs(ST.drehMod(b.dreh - K.dreh)) > 0.01) ST.drehen.setzen(b.dreh);
+    }
+    if (mini()) s = erst && O().miniGanzNah ? O().miniGanzNah() : O().miniNah ? O().miniNah() : K.s;
+    else s = erst ? Math.min(K.max || 60, Math.max(K.s, 26 * K.dpr)) : Math.max(K.s, 14 * K.dpr);
     const H = K.H / K.dpr, frei = dialogOben && !mini() ? Math.max(70, (64 + dialogOben) / 2 + 22) : H * (mini() ? 0.2 : 0.3);
     const alt = { x: K.x, y: K.y, s: K.s }; K.x = f.x; K.y = f.y; K.s = s;
     let z = ST.aufBoden(K.W / 2, K.H / 2 + (H / 2 - frei) * K.dpr);
@@ -779,12 +987,14 @@
   Q.dialogZu = dialogZu;
   function zeichenTipp(qu) {
     if (qu.f.zustand === "unterwegs" || qu.f.zustand === "jubel") { hinFliegen(qu); return; }
+    if (qu.f.zustand === "sucht") { sucheZeigen(qu); hinFliegen(qu); return; }
     if (qu.f.zustand !== "wartet" && qu.f.zustand !== "gefragt") return;
     try { if (O().wahlZu) O().wahlZu(); if (O().dingZu) O().dingZu(); } catch (e) {}
     try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {}
     Q.blattErlaubt = true;   // ab dem ersten Tipp darf auch der kleine Rahmen das Blatt der Person laden
+    const erst = qu.f.zustand === "wartet";
     dialogOeffnen(qu);
-    hinFliegen(qu, dialog ? dialog.el.getBoundingClientRect().top : 0);
+    hinFliegen(qu, dialog ? dialog.el.getBoundingClientRect().top : 0, erst);
   }
   function dialogOeffnen(qu) {
     dialogZu();
@@ -811,6 +1021,12 @@
     const frage = document.createElement("p"); frage.className = "lq-frage"; frage.textContent = qu.frage;
     const liste = document.createElement("div"); liste.className = "lq-antworten";
     const hinweis = document.createElement("p"); hinweis.className = "lq-hinweis"; hinweis.setAttribute("aria-live", "polite");
+    /* FASSUNG 846 — Suchen: statt Antworten ein Knopf; danach bleibt oben nur eine schmale Zeile, das Bild ist frei */
+    if (qu.v.zeigen) {
+      const los = document.createElement("button"); los.type = "button"; los.className = "lq-los"; los.textContent = "Los, ich suche!";
+      los.addEventListener("click", (e) => { e.stopPropagation(); if (geisterKlick()) return; sucheStarten(qu); });
+      liste.appendChild(los);
+    }
     qu.antworten.forEach((a, i) => {
       const b = document.createElement("button"); b.type = "button"; b.className = "lq-antwort"; b.innerHTML = a.html; b.dataset.i = i;
       if (a.falschGetippt) { b.disabled = true; b.classList.add("lq-falsch"); }
@@ -823,6 +1039,50 @@
     wurzelEl.appendChild(d);
     dialog = { el: d, qu: qu };
   }
+  /* FASSUNG 846 — SUCHEN: die Person wartet, man sucht das Gebäude selbst (verschieben, zoomen, drehen) und tippt es an.
+     oberflaeche.js fragt bei jedem Tipp auf ein Haus zuerst Q.tippAuf(o). */
+  let suche = null;
+  function sucheZu() { if (suche) { suche.el.remove(); suche = null; } }
+  function sucheZeigen(qu, hinweisText) {
+    sucheZu();
+    const el = document.createElement("div"); el.className = "lq-suche"; el.setAttribute("role", "status");
+    const t = document.createElement("span"); t.innerHTML = "Such <b>" + esc(akk(qu.ziel)) + "</b> und tippe darauf.";
+    const h = document.createElement("span"); h.className = "lq-hinweis"; h.setAttribute("aria-live", "polite"); if (hinweisText) h.textContent = hinweisText;
+    const zu = document.createElement("button"); zu.type = "button"; zu.className = "lq-klein"; zu.innerHTML = "&#x2715;"; zu.title = "Später"; zu.setAttribute("aria-label", "Suche abbrechen");
+    zu.addEventListener("click", (e) => { e.stopPropagation(); sucheZu(); if (qu.f.zustand === "sucht") qu.f.zustand = "gefragt"; });
+    const box = document.createElement("span"); box.style.display = "flex"; box.style.flexDirection = "column"; box.append(t, h);
+    el.append(box, zu);
+    ["pointerdown", "pointerup", "wheel"].forEach((ty) => el.addEventListener(ty, (e) => e.stopPropagation(), { passive: true }));
+    wurzelEl.appendChild(el);
+    suche = { el: el, qu: qu, hinweis: h };
+  }
+  function sucheStarten(qu) {
+    if (dialog && dialog.qu === qu) { dialog.el.remove(); dialog = null; }
+    qu.f.zustand = "sucht"; L().unruhe = 2;
+    sucheZeigen(qu);
+  }
+  const keyVon = (o) => (o.art === "haus" && o.spiel && !o.bau) || (o.art === "wunder" && o.spiel) ? o.spiel
+    : o.art === "kulisse" && o.name === "Bahnhof" ? "bahnhof" : o.art === "kulisse" && o.name === "Bootsverleih" ? "bootsverleih" : null;
+  Q.tippAuf = function (o) {
+    const qu = Q.liste.find((x) => x.f.zustand === "sucht");
+    if (!qu || !o) return false;
+    const k = keyVon(o);
+    if (!k) return false;
+    if (k === qu.ziel.key) {
+      sucheZu();
+      try { if (navigator.vibrate) navigator.vibrate(14); } catch (e) {}
+      try { if (O().ansage) O().ansage("Richtig! " + qu.danke); } catch (e) {}
+      losgehen(qu);
+      wegZeigen(qu.weg.pts, mini() ? 34 : 64, K.H / K.dpr - (mini() ? 8 : 70));
+      return true;
+    }
+    qu.versuche++;
+    const w = NAMEN[k] ? { g: NAMEN[k][0], name: NAMEN[k][1] } : null;
+    const text = (w ? "Das ist " + nom(w) + "." : "Das ist es nicht.") + " Gesucht ist " + nom(qu.ziel) + ".";
+    if (suche && suche.qu === qu) suche.hinweis.textContent = text; else sucheZeigen(qu, text);
+    try { if (ST.ton && ST.ton.klick) ST.ton.klick(); } catch (e) {}
+    return true;
+  };
   function antworten(qu, i, b, hinweis, liste) {
     const a = qu.antworten[i];
     if (!a || qu.f.zustand !== "offen") return;
@@ -845,7 +1105,7 @@
     setTimeout(() => { if (dialog && dialog.qu === qu) { dialog.el.remove(); dialog = null; } wegZeigen(qu.weg.pts, mini() ? 34 : 64, K.H / K.dpr - (mini() ? 8 : 70)); }, 1900);
   }
   function losgehen(qu) {
-    const f = qu.f;
+    const f = qu.f; qu.antwortZeit = performance.now();
     f.zustand = "unterwegs"; f.laeuft = true; f.s = 0; f.weint = false;
     if (qu.v.schirm) f.schirm = true;
     L().unruhe = 2;
@@ -943,7 +1203,7 @@
         if (!kand.length) continue;
         s = wahl(kand); r = route(an, s); if (!r) continue;
       }
-      const vars = { stadt: wahl(STAEDTE), wort: wahl(WOERTER) };
+      const vars = { stadt: wahl(STAEDTE), wort: wahl(WOERTER), termin: wahl([[14, 30], [9, 15], [16, 45], [11, 30], [8, 45], [10, 0], [15, 30], [13, 15], [17, 50], [12, 25]]) };
       let antworten;
       if (v.richtung) {
         antworten = [{ html: esc(wegText(r.schritte, r.ende, z, r.brueckeZuletzt)), richtig: true }].concat(falsch.map((fa) => {
@@ -951,14 +1211,14 @@
           const sie = v.person.er ? "er" : "sie", ihr = v.person.er ? "seiner" : "ihrer";
           return { html: esc(fa.text), weg: pts, hinweis: (wo && wo.key !== z.key ? "Hm – so käme " + sie + " " + zum(wo) + ", nicht " + zum(z) + "." : "Hm – so würde " + sie + " sich wieder verlaufen.") + " Schau genau auf die Karte: Links und rechts gelten in " + ihr + " Laufrichtung." };
         }));
-      } else antworten = v.antworten(z, vars).map((a) => Object.assign({}, a));
+      } else antworten = v.zeigen ? [] : v.antworten(z, vars).map((a) => Object.assign({}, a));
       const p = n.kn[s], erster = n.kn[r.R[1]] || p, hWeg = Math.atan2(erster[1] - p[1], erster[0] - p[0]);
       const f = { art: v.person.art, klein: !!v.person.klein, weint: !!v.person.weint, x: p[0], y: p[1], h: hWeg, zustand: "kommt", alpha: 0, laeuft: true, ph: 0, s: 0 };
       /* Auftritt: aus 8 m Entfernung auf dem Weg herein (weich eingeblendet) */
       const her = [p.slice()]; { let a = s, b = n.nb[s].find((x) => x !== r.R[1]) != null ? n.nb[s].find((x) => x !== r.R[1]) : r.R[1], lang = 0; for (let g = 0; g < 60 && lang < 8; g++) { her.push(n.kn[b].slice()); lang += Math.hypot(n.kn[b][0] - n.kn[a][0], n.kn[b][1] - n.kn[a][1]); const w = n.nb[b].filter((x) => x !== a); if (!w.length) break; a = b; b = w[0]; } }
       her.reverse();
       const qu = { id: (Q._nr = (Q._nr || 0) + 1), v: v, ziel: z, an: an, s: s, route: r, weg: weg(r.pts), auftritt: weg(her), f: f, versuche: 0,
-        text: v.text(z, vars), frage: v.frage || "Welche Wegbeschreibung stimmt? Die Karte hilft dir.", antworten: mischen(antworten),
+        text: v.text(z, vars), frage: typeof v.frage === "function" ? v.frage(z, vars) : v.frage || "Welche Wegbeschreibung stimmt? Die Karte hilft dir.", antworten: mischen(antworten),
         danke: typeof v.danke === "function" ? v.danke(z, vars) : v.danke, mut: schwach().has(v.kat), zeit: performance.now() };
       /* der Hund sitzt am Eingang, etwas zur Seite (das Kind kommt daneben an) */
       if (v.hund) { const t = z.tuer, dx = t[0] - an.A[0], dy = t[1] - an.A[1], l = Math.hypot(dx, dy) || 1; qu.hund = { x: t[0] - dy / l * 1.1, y: t[1] + dx / l * 1.1, seite: 1 }; }
@@ -990,7 +1250,8 @@
   /* =====================================================================
      9. BEWEGUNG, ANKUNFT, BELOHNUNG
      ===================================================================== */
-  const TEMPO = 1.45;
+  /* FASSUNG 846 — XANDER (Walkie 315): „das Laufen dauert zu lange" – gut doppelt so schnell wie vorher (1,45 m/s) */
+  const TEMPO = 3.2;
   function bewegen(dt) {
     for (const qu of Q.liste.slice()) {
       const f = qu.f;
@@ -1002,11 +1263,11 @@
       if (f.zustand === "wartetAufWagen") f.alpha = Math.min(1, f.alpha + dt / 1.2);
       if (f.zustand === "kommt") {
         f.s += TEMPO * dt; f.alpha = Math.min(1, f.alpha + dt / 1.2);
-        const p = aufWeg(qu.auftritt, f.s); f.x = p.x; f.y = p.y; f.h = p.h; f.ph = (f.ph + TEMPO * dt / 1.43) % 1;
+        const p = aufWeg(qu.auftritt, f.s); f.x = p.x; f.y = p.y; f.h = p.h; f.ph = (f.ph + TEMPO * dt / 2.2) % 1;
         if (f.s >= qu.auftritt.len) { f.zustand = "wartet"; f.laeuft = false; f.alpha = 1; f.s = 0; f.h = zurKamera(f.x, f.y); }
       } else if (f.zustand === "unterwegs") {
-        const v = f.klein ? 1.75 : TEMPO;
-        f.s += v * dt; f.ph = (f.ph + v * dt / 1.43) % 1;
+        const v = f.klein ? 3.6 : TEMPO;
+        f.s += v * dt; f.ph = (f.ph + v * dt / 2.2) % 1;
         const p = aufWeg(qu.weg, f.s); f.x = p.x; f.y = p.y; f.h = p.h;
         if (f.s >= qu.weg.len) ankunft(qu);
       } else if (f.zustand === "jubel") {
@@ -1016,7 +1277,12 @@
         if (t > 2.6) { f.zustand = "geht"; f.hopp = 0; }
       } else if (f.zustand === "geht") {
         f.alpha -= dt / 1.4; if (qu.hund) qu.hund.alpha = f.alpha;
-        if (f.alpha <= 0) { f.zustand = "weg"; if (qu.el) qu.el.remove(); Q.liste.splice(Q.liste.indexOf(qu), 1); }
+        if (f.alpha <= 0) {
+          f.zustand = "weg"; if (qu.el) qu.el.remove(); Q.liste.splice(Q.liste.indexOf(qu), 1);
+          /* FASSUNG 846 — XANDER (Walkie 315): mit Stecknadel fällt das Bild danach in die festgesteckte Ansicht zurück (Nähe
+             und Winkel), ohne Nadel in die ganze Stadt – aber nur, wenn man seit der Antwort nichts selbst angefasst hat */
+          if (mini() && !dialog && !suche && !(L().letzterFinger > (qu.antwortZeit || 0)) && O().zurStartAnsicht) O().zurStartAnsicht(true);
+        }
       }
     }
   }
@@ -1028,7 +1294,7 @@
     try { if (ST.ton && ST.ton.einsammeln) ST.ton.einsammeln("stern"); } catch (e) {}
     try { if (navigator.vibrate) navigator.vibrate([12, 60, 12]); } catch (e) {}
     /* Punkte: 6, Wegbeschreibung 8, beim ersten Versuch +2, Schwäche +50 % (Mut-Bonus) */
-    let pk = qu.v.richtung ? 8 : 6; if (!qu.versuche) pk += 2;
+    let pk = qu.v.richtung || qu.v.zeigen ? 8 : 6; if (!qu.versuche) pk += 2;
     const mut = qu.mut ? Math.ceil(pk * 0.5) : 0; pk += mut;
     const st = standLesen(); st.punkte += pk; st.geschafft++;
     let geschenk = null;
@@ -1076,6 +1342,7 @@
      11. FÜR DIE SONDE (werkzeug/pruefe-832-quests.js)
      ===================================================================== */
   Q.pruef = {
+    tempo: () => TEMPO,   // FASSUNG 846
     netz: () => { const n = netz(); let k = 0; for (const l of n.nb) k += l.length; return { knoten: n.kn.length, kanten: k / 2, kreuzungen: n.cls.length }; },
     komponenten: () => { const n = netz(), komp = new Array(n.kn.length).fill(-1); let nk = 0; for (let s = 0; s < n.kn.length; s++) { if (komp[s] >= 0) continue; const st = [s]; komp[s] = nk; while (st.length) { const u = st.pop(); for (const v of n.nb[u]) if (komp[v] < 0) { komp[v] = nk; st.push(v); } } nk++; } return nk; },
     ziele: () => { const Z = ziele(), n = netz(); let markt = 0, md = Infinity; n.kn.forEach((p, i) => { const d = Math.hypot(p[0] + 1, p[1] + 1); if (d < md) { md = d; markt = i; } });

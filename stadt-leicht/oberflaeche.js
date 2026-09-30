@@ -266,6 +266,9 @@
       let ganz = null;
       const ganzeStadt = () => {
         if (ganz && ganz.W === K.W && ganz.H === K.H && ganz.dreh === K.dreh && ganz.n === SZ.objekte.length) return ganz;
+        /* FASSUNG 846 — lädt der Rahmen versteckt (ohne Größe), gibt es noch keinen Überblick: nicht rechnen (sonst kam ein
+           negativer Maßstab heraus und das Bild blieb leer bzw. die Nadel fiel auf eine schwächere Nähe zurück) */
+        if (K.W < 40 || K.H < 40) return { s: K.s > 0 ? K.s : Math.max(1, K.min || 1), x: K.x, y: K.y, W: K.W, H: K.H, dreh: K.dreh, n: -1 };
         const alt = { x: K.x, y: K.y, s: K.s }, kopfH = 30 * K.dpr;
         K.x = 0; K.y = 0; K.s = 1;
         let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
@@ -303,6 +306,11 @@
       let nahSperre = 0;
       const nahSetzen = (nah, fest) => {
         if (fest) nahSperre = performance.now() + 900; else if (performance.now() < nahSperre) return;
+        /* FASSUNG 846 — XANDER (Walkie 315): „ich möchte das wie vorher auch stufenlos Zoomen das fühlt sich jetzt so an als
+           wenn das mit der Lupe direkt aufspringt". Beim Kneifen schaltete die Anzeige mitten in der Geste auf „Kompass nah"
+           um (die kleine Karte sprang auf, das Zeichen wechselte). Solange Finger auf dem Bild liegen, bleibt alles stehen;
+           umgeschaltet wird erst nach dem Loslassen. */
+        if (!fest && (O._finger || 0) > 0) return;
         lupeK.classList.toggle("an", nah); document.body.classList.toggle("lk-nah", nah);
         const i = lupeK.querySelector("i"); if (i && i.textContent !== (nah ? "−" : "+")) i.textContent = nah ? "−" : "+";
         lupeK.title = nah ? "Kompass: ganze Stadt" : "Kompass: näher ran"; lupeK.setAttribute("aria-label", lupeK.title);
@@ -323,6 +331,12 @@
       const kompass = () => {
         if (O.wahlZu) O.wahlZu(); if (O.dingZu) O.dingZu(); if (O.fokusVergessen) O.fokusVergessen();   // FASSUNG 844   // FASSUNG 822 — auch das kleine Menü am Ding
         const nah = K.s > ueberblick() * 1.4, g = ganzeStadt();
+        /* FASSUNG 846 — XANDER (Walkie 315): „wenn einer Ansicht festgepinnt ist nicht nur vom Winkel sondern auch von der
+           Zoomstärke in diese wieder zurückfallen … der PIN setzt alles fest die Zoomstärke und den Winkel". Steckt die Nadel
+           und man steht woanders, führt der Kompass zurück in genau diese Ansicht (Lage, Nähe, Richtung); erst aus der
+           festgesteckten Ansicht heraus geht er zur ganzen Stadt. */
+        const pv = pinLesen();
+        if (pv && !pinGleich(pv)) { O.zurStartAnsicht(true); return; }
         L().fliegeZu(nah ? g.x : K.x, nah ? g.y : K.y, nah ? g.s : g.s * 2.8, 600);
         nahSetzen(!nah, true);
       };
@@ -461,6 +475,19 @@
         pinK.title = an ? "Ansicht lösen" : "Ansicht festhalten"; pinK.setAttribute("aria-label", pinK.title);
         pinK.setAttribute("aria-pressed", an ? "true" : "false");
       };
+      /* FASSUNG 846 — die Zoomgrenzen des kleinen Rahmens (vom Überblick bis zur zweiten Stufe) gelten auch nach einer
+         Größenänderung: start.js setzte sie dabei auf die des Vollbilds zurück, und die Nadel wurde auf eine falsche Nähe
+         beschnitten. Hat der Rahmen erst jetzt eine Größe (er lud versteckt), kommt die Startansicht (Nadel oder ganze Stadt). */
+      let hatteGroesse = K.W >= 40 && K.H >= 40;
+      O.miniGrenzen = () => {
+        const gross = K.W >= 40 && K.H >= 40, neu = gross && !hatteGroesse; hatteGroesse = gross;
+        if (!document.body.classList.contains("lk-mini-modus") || !gross) return;
+        /* (der Überblick in Blickrichtung Norden: gedreht wäre er kleiner und die festgesteckte Nähe würde beschnitten) */
+        const d = K.dreh; K.dreh = 0; const u = ueberblick(); K.dreh = d;
+        K.min = Math.min(1.6 * K.dpr, u * 0.95); K.max = Math.max(K.min, u * (STUFE[2] + 0.5));
+        if (neu || !(K.s > 0)) { O.zurStartAnsicht(false); return; }
+        K.s = Math.min(K.max, Math.max(K.min, K.s));
+      };
       /* die gespeicherte Ansicht anwenden (beim Laden und zurück aus dem Vollbild); false, wenn keine Nadel steckt */
       O.pinAnwenden = () => {
         const v = pinLesen(); if (!v) return false;
@@ -533,6 +560,7 @@
       };
       setInterval(() => {
         if (!document.body.classList.contains("lk-mini-modus")) { LB.grossErlaubt = false; return; }
+        if ((O._finger || 0) > 0) return;   // FASSUNG 846 — während der Geste nichts umschalten (Bilder, Kompass)
         nahSetzen(K.s > ueberblick() * 1.4);
         /* FASSUNG 826 — ändert sich der Überblick (ein großes Wahrzeichen kommt dazu oder fällt weg), passt das stehende
            Bild sich an, statt im alten Maßstab zu bleiben */
@@ -644,6 +672,8 @@
         }
       });
       /* Ein Viertel auf der kleinen Karte: im kleinen Rahmen mit der Lupen-Stärke, nicht mit der großen Nähe. */
+      /* FASSUNG 846 — ganz nah (zweite Stufe) für den ersten Blick auf eine Quest-Person */
+      O.miniGanzNah = () => { nahSetzen(true, true); return Math.min(K.max, ueberblick() * STUFE[2]); };
       O.miniNah = () => { if (!document.body.classList.contains("lk-mini-modus")) return Math.max(K.s, 11 * K.dpr); nahSetzen(true); return ueberblick() * 2.8; };
       /* Schlank wie das alte Dorf: im kleinen Rahmen nur die kleinen Bilder (bilder.js) und höchstens die Lupen-Nähe. */
       const maxVoll = K.max;
@@ -658,6 +688,7 @@
         if (klein) K.min = Math.min(K.min, ueberblick() * 0.95);
         K.max = klein ? Math.max(K.min, ueberblick() * (STUFE[2] + 0.5)) : LB.spar ? Math.min(maxVoll, 18 * 1.6) : maxVoll;
         if (K.s > K.max) K.s = K.max;
+        if (klein && O.miniGrenzen) O.miniGrenzen();   // FASSUNG 846
         if (klein) { if (bauLeiste) bauLeisteZeigen(false); if (leiste && !leiste.hidden) leisteZeigen(false); karte.hidden = true; farbFeld.hidden = true; }
         O.gestalten = false; document.body.classList.remove("lk-gestalten");
         /* FASSUNG 817 — die kleine Karte hat im kleinen Rahmen die Lage des Überblicks, im Vollbild die der ganzen Karte */
@@ -1484,6 +1515,8 @@
        eigener Baum weiter seine Karte (Drehen, Versetzen) – dort steht dafür „Holzfäller". */
     const spielTipp = window.parent !== window && !O.gestalten, mini = document.body.classList.contains("lk-mini-modus");
     if (o && o.art === "eigen" && istBaum(o) && spielTipp && mini && !document.body.classList.contains("lk-nah")) { baumTun(o); auswahlWeg(); return; }
+    /* FASSUNG 846 — eine Such-Quest wartet (quests.js): der Tipp aufs Haus ist die Antwort */
+    if (o && ST.quests && ST.quests.tippAuf && ST.quests.tippAuf(o)) { auswahlWeg(); return; }
     if (o && (o.art === "haus" || o.art === "wunder" || o.art === "eigen" || o.name)) { waehlen(o); return; }
     /* FASSUNG 809 — XANDER: „Waldstück … wenn man auf die Bäume klickt … einen Effekt". Ein Baum raschelt: Blätter
        (im Winter Schnee) rieseln, zwei Vögel fliegen auf. */
