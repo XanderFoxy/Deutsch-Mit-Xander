@@ -2794,3 +2794,8 @@ Xander (Funk 233, wörtlich): „Wir haben es eben getestet in dem Moment wo ich
 - **Edge-Function** `supabase/functions/sfu/index.ts`: unverändert, nicht nötig.
 - **Sonde** `werkzeug/pruefe-842-sfu-spiel.js` (hört auf jeder Seite alle 100 ms mit: Pakete der Spur, die wirklich gespielt wird, nach Gegenstand zugeordnet; Lücke > 1 s oder zwei hörbare Spuren derselben Person = rot): Spiel an/aus/an zu zweit, dritte Person kommt beim Spielen dazu, C spielt, Server-Stau (Rückfall für A beidseitig in ~1,3 s), neu verbundener Raumkanal (keine Lücke, keine neue Sitzung, Leitung bleibt), Neuladen von A (A schliesst seine Sitzung, B behält seine, holt A wieder ab), Rückfall per Budget. Neu: alles grün. Gegenprobe gegen den alten Stand (`livechat.js` aus HEAD): 13 rot.
 - **Vorhandene Sonden**: 827 (Tonserver), 659 (Verbindung/Datenkanal), 645 (Ton/Telefon), spielsystem, runde20, runde22, 678, 701 — alle grün. Zweiter Lauf von 842 ebenfalls grün.
+
+## Fassung 820 — Tonserver-Fix (842) ausgeliefert
+
+- Enthält 842 (Funk 233): Das Spiel war nicht die Ursache. Der Server-Weg für den Ton wurde nur einmal geprüft; nach einem Aussetzer (Handy unter Last) blieb es still bis zum Neuladen. Außerdem wurde die Server-Stimme manchmal nicht abgespielt (Spur-Vergleich über die Kennung statt über das Objekt).
+- Jetzt: Wächter zählt alle 250 ms die Tonpakete, nach 0,8 s Stille sofort Rückfall aufs direkte Netz für beide Seiten, nach 30 s neuer Versuch über den Server. Beim Schließen der Seite wird die Sitzung sauber beendet.

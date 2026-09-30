@@ -49,22 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 819: Batmobil fährt vorn, Saugnapf-Pfeil klebt oben am Kopf",
+  stand: "Fassung 820: Tonserver-Fix ausgeliefert (Funk 233)",
 
   inArbeit: [
-    { seit: "2026-09-30T04:11",
-      text: "Sollen Viper, KITT und Colt-Truck auch vorn fahren? (deine Entscheidung)" },
-    { seit: "2026-09-30T04:11",
-      text: "Italienisch: noch nicht von Muttersprachlern gegengelesen" },
-    { seit: "2026-09-30T04:11",
-      text: "Tonserver: echter Test mit zwei Geräten" },
+    { seit: "2026-09-30T05:48",
+      text: "Italienisch außerhalb des Italienischraums entfernen (Funk 225/232)" },
+    { seit: "2026-09-30T05:48",
+      text: "Viper, KITT, Colt-Truck vorn? (Frage an Xander)" },
+    { seit: "2026-09-30T05:48",
+      text: "Italienischraum nur für Betreiber? (Frage an Xander)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-30T04:11",
-      text: "Batmobil-Auftritt im Vordergrund mit Aussteigen" },
-    { seit: "2026-09-30T04:11",
-      text: "Saugnapf-Pfeil oben am Kopf, Gesichter frei" },
+    { seit: "2026-09-30T05:48",
+      text: "Tonserver-Wächter mit Rückfall aufs Netz (842)" },
+    { seit: "2026-09-30T05:48",
+      text: "Batmobil vorn, Saugnapf oben am Kopf (841)" },
   ],
 };
