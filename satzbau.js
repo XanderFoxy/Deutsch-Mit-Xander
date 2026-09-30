@@ -1090,6 +1090,10 @@
      objekt       Fall des Objekts, objektPflicht wenn ohne Objekt kein Satz
      personFall   Fall der Person, personPraep die nötige Präposition
      =================================================================== */
+  // FASSUNG 839 — XANDER (Funk 225, wörtlich): „mache beide Versionen vollständig die deutsche mit allen Inhalten füllen
+  // mit allen Regeln die gehen in allen Niveaus mit genügend Beispielen für alle Nive…“
+  // Vorhandene Verben zusätzlich den dünn besetzten Themen (Essen, Gesundheit, Amt, Familie, Einkaufen) zugeordnet;
+  // welche Orte/Dinge/Personen dazu passen, regeln weiter passtOrte/passtDinge/passtPersonen.
   const VERBEN = [
     { id: "sein", inf: "sein", formen: ["bin", "bist", "ist", "sind", "seid", "sind"], hilfsverb: "sein", partizip: "gewesen",
       lokal: ["wo"], ortPflicht: true, praedikativ: true,
@@ -1114,7 +1118,7 @@
       itInf: "andare", itFormen: ["vado", "vai", "va", "andiamo", "andate", "vanno"], itHilf: "essere", itPart: "andat", itFutStamm: "andr",
       deWoherInf: "kommen", deWoherFormen: ["komme", "kommst", "kommt", "kommen", "kommt", "kommen"], deWoherPartizip: "gekommen",
       itWoherInf: "venire", itWoherFormen: ["vengo", "vieni", "viene", "veniamo", "venite", "vengono"], itWoherPart: "venut", itWoherFutStamm: "verr",
-      kategorien: ["reisen", "arbeit", "freizeit", "einkaufen"] },
+      kategorien: ["reisen", "arbeit", "freizeit", "einkaufen", "familie"] },
 
     { id: "kommen", inf: "kommen", formen: ["komme", "kommst", "kommt", "kommen", "kommt", "kommen"], hilfsverb: "sein", partizip: "gekommen",
       ortPflicht: true, lokal: ["woher", "wohin"],
@@ -1128,7 +1132,7 @@
       passtOrte: {"wo":["zuhause","berlin","rom","italien","schweiz","oesterreich","stadt","land","meer","berge","elternhaus"]},
       passtDinge: [], passtPersonen: [], passtGruende: ["arbeitgrund","umzug"],
       itInf: "abitare", itFormen: ["abito", "abiti", "abita", "abitiamo", "abitate", "abitano"], itHilf: "avere", itPart: "abitato", itFutStamm: "abiter",
-      kategorien: ["alltag", "reisen"] },
+      kategorien: ["alltag", "reisen", "familie"] },
 
     { id: "arbeiten", inf: "arbeiten", formen: ["arbeite", "arbeitest", "arbeitet", "arbeiten", "arbeitet", "arbeiten"], hilfsverb: "haben", partizip: "gearbeitet",
       lokal: ["wo"],
@@ -1142,28 +1146,28 @@
       passtOrte: {"wo":["zuhause","kueche","garten","balkon","restaurant","cafe","kantine","buero","park","meer","hotel","pizzeria","imbiss","eisdiele","strand","wald","flughafen"]},
       passtDinge: ["brot","apfel","pizza","suppe","kuchen","nudeln","kaese","ei","fleisch","fisch","gemuese","obst","salat","reis","kartoffeln","tomaten","marmelade","joghurt","schokolade","eis","keks","broetchen","sandwich","nachtisch"], passtPersonen: [], passtGruende: ["hungrig","spaet","krank","erkaeltet","traurig","gluecklich","beschaeftigt","zeitmangel","termingrund","unterwegs"],
       itInf: "mangiare", itFormen: ["mangio", "mangi", "mangia", "mangiamo", "mangiate", "mangiano"], itHilf: "avere", itPart: "mangiato", itFutStamm: "manger",
-      kategorien: ["essen", "alltag"] },
+      kategorien: ["essen", "alltag", "familie"] },
 
     { id: "trinken", inf: "trinken", formen: ["trinke", "trinkst", "trinkt", "trinken", "trinkt", "trinken"], hilfsverb: "haben", partizip: "getrunken",
       lokal: ["wo"], objekt: "akk", objektPflicht: true,
       passtOrte: {"wo":["zuhause","kueche","garten","balkon","restaurant","cafe","kantine","buero","park","hotel","bar","weinkeller","disko","strand","flughafen","meer"]},
       passtDinge: ["kaffee","tee","wasser","wein","milch","saft","bier"], passtPersonen: [], passtGruende: ["durstig","muede","krank","erkaeltet","hitze","nervoes","traurig","gluecklich","beschaeftigt","kaelte"],
       itInf: "bere", itFormen: ["bevo", "bevi", "beve", "beviamo", "bevete", "bevono"], itHilf: "avere", itPart: "bevuto", itFutStamm: "berr",
-      kategorien: ["essen"] },
+      kategorien: ["essen", "gesundheit"] },
 
     { id: "kochen", inf: "kochen", formen: ["koche", "kochst", "kocht", "kochen", "kocht", "kochen"], hilfsverb: "haben", partizip: "gekocht",
       lokal: ["wo"], objekt: "akk", objektPflicht: true,
       passtOrte: {"wo":["zuhause","kueche","garten","restaurant","kantine","hotel"]},
       passtDinge: ["suppe","nudeln","kuchen","pizza","reis","kartoffeln","gemuese","fisch","fleisch","ei","kaffee","tee","zwiebel","tomaten"], passtPersonen: [], passtGruende: ["hungrig","krank","erkaeltet","beschaeftigt","zeitmangel"],
       itInf: "cucinare", itFormen: ["cucino", "cucini", "cucina", "cuciniamo", "cucinate", "cucinano"], itHilf: "avere", itPart: "cucinato", itFutStamm: "cuciner",
-      kategorien: ["essen", "alltag"] },
+      kategorien: ["essen", "alltag", "familie"] },
 
     { id: "kaufen", inf: "kaufen", formen: ["kaufe", "kaufst", "kauft", "kaufen", "kauft", "kaufen"], hilfsverb: "haben", partizip: "gekauft",
       lokal: ["wo"], objekt: "akk", objektPflicht: true,
       passtOrte: {"wo":["supermarkt","markt","baeckerei","apotheke","kaufhaus","stadt","italien","metzgerei","buchhandlung","drogerie","schuhgeschaeft","weinkeller","schweiz","oesterreich"]},
       passtDinge: ["brot","apfel","pizza","kuchen","kaffee","tee","wein","buch","zeitung","kaese","butter","ei","fleisch","fisch","gemuese","obst","salat","reis","kartoffeln","tomaten","zwiebel","milch","saft","bier","zucker","salz","pfeffer","oel","marmelade","joghurt","schokolade","eis","keks","broetchen","sandwich","tisch","stuhl","bett","schrank","lampe","handtuch","seife","zahnbuerste","blume","topf","pfanne","tasse","glas","flasche","korb","hemd","hose","jacke","schuhe","mantel","kleid","pullover","muetze","schal","handschuhe","heft","stift","woerterbuch","computer","laptop","handy","bildschirm","drucker","tastatur","spiel","ball","fahrrad","roman","zeitschrift","konzertkarte","koffer","rucksack","regenschirm","fahrkarte","medikament","tablette","verband","wohnung"], passtPersonen: [], passtGruende: ["hungrig","durstig","termingrund","zeitmangel","krankheit","krank","erkaeltet","umzug","pruefung"],
       itInf: "comprare", itFormen: ["compro", "compri", "compra", "compriamo", "comprate", "comprano"], itHilf: "avere", itPart: "comprato", itFutStamm: "comprer",
-      kategorien: ["einkaufen"] },
+      kategorien: ["einkaufen", "essen"] },
 
     { id: "lesen", inf: "lesen", formen: ["lese", "liest", "liest", "lesen", "lest", "lesen"], hilfsverb: "haben", partizip: "gelesen",
       lokal: ["wo"], objekt: "akk",
@@ -1184,7 +1188,7 @@
       passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","chef","lehrerin","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","nachbar","nachbarin","kind","lehrer","vermieter","verkaeufer"],
       passtGruende: ["beschaeftigt","termingrund","arbeitgrund","umzug","krankheit"],
       itInf: "scrivere", itFormen: ["scrivo", "scrivi", "scrive", "scriviamo", "scrivete", "scrivono"], itHilf: "avere", itPart: "scritto", itFutStamm: "scriver", itPersonFeld: "itAn",
-      kategorien: ["arbeit", "bildung", "verwaltung"] },
+      kategorien: ["arbeit", "bildung", "verwaltung", "familie"] },
 
     { id: "sehen", inf: "sehen", formen: ["sehe", "siehst", "sieht", "sehen", "seht", "sehen"], hilfsverb: "haben", partizip: "gesehen",
       lokal: ["wo"], objekt: "akk", objektPflicht: true, personFall: "akk",
@@ -1207,7 +1211,7 @@
       passtOrte: {"wo":["zuhause","wohnzimmer","garten","balkon","terrasse","park","spielplatz","schule","schulhof","hof","stadion","schwimmbad","see","strand","cafe","bar","keller","kindergarten","kita"]},
       passtDinge: ["fussball","klavier","karten","spiel"], passtPersonen: [], passtGruende: ["frei","gluecklich","allein"],
       itVerbNachDing: { klavier: { itInf: "suonare", itFormen: ["suono","suoni","suona","suoniamo","suonate","suonano"], itPart: "suonato", itFutStamm: "suoner" } }, itInf: "giocare", itFormen: ["gioco", "giochi", "gioca", "giochiamo", "giocate", "giocano"], itHilf: "avere", itPart: "giocato", itFutStamm: "giocher",
-      kategorien: ["freizeit"] },
+      kategorien: ["freizeit", "familie"] },
 
     { id: "lernen", inf: "lernen", formen: ["lerne", "lernst", "lernt", "lernen", "lernt", "lernen"], hilfsverb: "haben", partizip: "gelernt",
       lokal: ["wo"], objekt: "akk",
@@ -1231,7 +1235,7 @@
       passtDinge: ["deutsch","italienisch","aufgabe","grammatik","uebung","frage","problem","fehler","regel","grund","antwort"],
       passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["muede","unsicher","nervoes","laerm","zeitverschiebung"],
       itInf: "capire", itFormen: ["capisco", "capisci", "capisce", "capiamo", "capite", "capiscono"], itHilf: "avere", itPart: "capito", itFutStamm: "capir",
-      kategorien: ["bildung", "familie"] },
+      kategorien: ["bildung", "familie", "gesundheit", "verwaltung"] },
 
     { id: "treffen", inf: "treffen", formen: ["treffe", "triffst", "trifft", "treffen", "trefft", "treffen"], hilfsverb: "haben", partizip: "getroffen",
       lokal: ["wo"], personFall: "akk", personPflicht: true,
@@ -1239,7 +1243,7 @@
       passtDinge: [], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"],
       passtGruende: ["termingrund","neugierig","pruefung","frei","unterwegs","stau","umzug"],
       itInf: "incontrare", itFormen: ["incontro", "incontri", "incontra", "incontriamo", "incontrate", "incontrano"], itHilf: "avere", itPart: "incontrato", itFutStamm: "incontrer",
-      kategorien: ["familie", "freizeit", "arbeit"] },
+      kategorien: ["familie", "freizeit", "arbeit", "essen"] },
 
     { id: "helfen", inf: "helfen", formen: ["helfe", "hilfst", "hilft", "helfen", "helft", "helfen"], hilfsverb: "haben", partizip: "geholfen",
       lokal: ["wo"], personFall: "dat",
@@ -1247,7 +1251,7 @@
       passtDinge: [], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"],
       passtGruende: ["frei","umzug","pruefung","krankheit"],
       itInf: "aiutare", itFormen: ["aiuto", "aiuti", "aiuta", "aiutiamo", "aiutate", "aiutano"], itHilf: "avere", itPart: "aiutato", itFutStamm: "aiuter", itPersonFeld: "it",
-      kategorien: ["familie", "arbeit", "alltag"] },
+      kategorien: ["familie", "arbeit", "alltag", "gesundheit"] },
 
     { id: "warten", inf: "warten", formen: ["warte", "wartest", "wartet", "warten", "wartet", "warten"], hilfsverb: "haben", partizip: "gewartet",
       lokal: ["wo"], personPraep: "auf", personFall: "akk",
@@ -1255,7 +1259,7 @@
       passtDinge: [], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"],
       passtGruende: ["termingrund","stau","streik","frei"],
       itInf: "aspettare", itFormen: ["aspetto", "aspetti", "aspetta", "aspettiamo", "aspettate", "aspettano"], itHilf: "avere", itPart: "aspettato", itFutStamm: "aspetter", itPersonFeld: "it",
-      kategorien: ["alltag", "reisen", "familie"] },
+      kategorien: ["alltag", "reisen", "familie", "essen", "gesundheit", "verwaltung", "einkaufen"] },
 
     { id: "machen", inf: "machen", formen: ["mache", "machst", "macht", "machen", "macht", "machen"], hilfsverb: "haben", partizip: "gemacht",
       lokal: ["wo"], objekt: "akk", objektPflicht: true,
@@ -1275,7 +1279,7 @@
       passtOrte: {"wo":["zuhause","bett","schlafzimmer","wohnzimmer","garten","hotel","kinderzimmer","elternhaus","krankenhaus","wald","strand","flughafen"]},
       passtDinge: [], passtPersonen: [], passtGruende: ["muede","krank","erkaeltet","fertig","zeitverschiebung","krankheit"],
       itInf: "dormire", itFormen: ["dormo", "dormi", "dorme", "dormiamo", "dormite", "dormono"], itHilf: "avere", itPart: "dormito", itFutStamm: "dormir",
-      kategorien: ["alltag", "reisen"] },
+      kategorien: ["alltag", "reisen", "gesundheit"] },
 
     /* --- neu aufgenommen --- */
     { id: "fragen", inf: "fragen", formen: ["frage","fragst","fragt","fragen","fragt","fragen"], hilfsverb: "haben", partizip: "gefragt",
@@ -1283,28 +1287,28 @@
       passtOrte: {},
       passtDinge: [], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["neugierig","unsicher"],
       itInf: "chiedere", itFormen: ["chiedo","chiedi","chiede","chiediamo","chiedete","chiedono"], itHilf: "avere", itPart: "chiesto", itFutStamm: "chieder",
-      kategorien: ["alltag","bildung","arbeit"] },
+      kategorien: ["alltag","bildung","arbeit", "gesundheit", "verwaltung", "einkaufen"] },
 
     { id: "antworten", inf: "antworten", formen: ["antworte","antwortest","antwortet","antworten","antwortet","antworten"], hilfsverb: "haben", partizip: "geantwortet",
       lokal: [], personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
       passtOrte: {},
       passtDinge: [], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["beschaeftigt","spaet"],
       itInf: "rispondere", itFormen: ["rispondo","rispondi","risponde","rispondiamo","rispondete","rispondono"], itHilf: "avere", itPart: "risposto", itFutStamm: "risponder",
-      kategorien: ["alltag","bildung","arbeit"] },
+      kategorien: ["alltag","bildung","arbeit", "gesundheit", "verwaltung"] },
 
     { id: "suchen", inf: "suchen", formen: ["suche","suchst","sucht","suchen","sucht","suchen"], hilfsverb: "haben", partizip: "gesucht",
       lokal: [], objekt: "akk", objektPflicht: true, personFall: "akk", itPersonFeld: "it",
       passtOrte: {},
       passtDinge: ["schluessel","preis","karte","schuhe","projekt","protokoll","heft","stift","woerterbuch","handy","datei","ordner","app","spiel","ball","fahrrad","roman","zeitschrift","konzertkarte","koffer","regenschirm","pass","bus","fahrkarte","ausweis","wohnung","idee","antwort","problem","loesung","fehler","grund"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["zeitmangel","spaet"],
       itInf: "cercare", itFormen: ["cerco","cerchi","cerca","cerchiamo","cercate","cercano"], itHilf: "avere", itPart: "cercato", itFutStamm: "cercher",
-      kategorien: ["alltag","arbeit","bildung"] },
+      kategorien: ["alltag","arbeit","bildung", "verwaltung", "einkaufen"] },
 
     { id: "finden", steuerbar: false, inf: "finden", formen: ["finde","findest","findet","finden","findet","finden"], hilfsverb: "haben", partizip: "gefunden",
       lokal: [], objekt: "akk", objektPflicht: true, personFall: "akk", itPersonFeld: "it",
       passtOrte: {},
       passtDinge: ["schluessel","preis","karte","schuhe","projekt","protokoll","heft","stift","woerterbuch","handy","datei","ordner","app","spiel","ball","fahrrad","roman","zeitschrift","konzertkarte","koffer","regenschirm","pass","bus","fahrkarte","ausweis","wohnung","idee","antwort","problem","loesung","fehler","grund"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: [],
       itInf: "trovare", itFormen: ["trovo","trovi","trova","troviamo","trovate","trovano"], itHilf: "avere", itPart: "trovato", itFutStamm: "trover",
-      kategorien: ["alltag","arbeit","bildung"] },
+      kategorien: ["alltag","arbeit","bildung", "verwaltung", "einkaufen"] },
 
     { id: "oeffnen", inf: "öffnen", formen: ["öffne","öffnest","öffnet","öffnen","öffnet","öffnen"], hilfsverb: "haben", partizip: "geöffnet",
       lokal: [], objekt: "akk", objektPflicht: true,
@@ -1325,28 +1329,28 @@
       passtOrte: {"wohin":["zuhause","kueche","garten","balkon","bett","keller","wohnzimmer","badezimmer","supermarkt","markt","baeckerei","apotheke","kaufhaus","buero","arbeit","besprechung","werkstatt","baustelle","schule","uni","bibliothek","kurs","meer","berge","see","park","kino","theater","museum","schwimmbad","stadion","konzert","restaurant","cafe","kantine","bahnhof","flughafen","hotel","italien","berlin","rom","stadt","land","arzt","krankenhaus","zahnarzt","amt","bank","post","flur","schlafzimmer","terrasse","garage","hof","dachboden","metzgerei","buchhandlung","drogerie","schuhgeschaeft","fabrik","labor","lager","filiale","kinderzimmer","kindergarten","kita","spielplatz","elternhaus","wald","strand","fluss","zoo","disko","imbiss","eisdiele","pizzeria","bar","weinkeller","hafen","haltestelle","faehre","autobahn","schweiz","oesterreich","klassenzimmer","hoersaal","sprachschule","seminarraum","schulhof","praxis","notaufnahme","physiotherapie","sauna","fitnessstudio","rathaus","botschaft","polizei","gericht","auslaenderbehoerde"]},
       passtDinge: ["schluessel","muell","flasche","kaese","broetchen","sandwich","spiel","roman","lied","zeitschrift","konzertkarte","regenschirm","pass","ausweis","buch","brief","geld","koffer","rucksack","handy","blume","medikament","tablette","rezept","formular","kuchen","kaffee","wasser","wein","bier","zeitung","karte","fahrkarte","quittung","nachricht","suppe","salat","pizza","obst","gemuese","fleisch","fisch"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["termingrund","arbeitgrund"],
       itInf: "portare", itFormen: ["porto","porti","porta","portiamo","portate","portano"], itHilf: "avere", itPart: "portato", itFutStamm: "porter",
-      kategorien: ["alltag","arbeit","reisen"] },
+      kategorien: ["alltag","arbeit","reisen", "verwaltung", "familie"] },
 
     { id: "geben", inf: "geben", formen: ["gebe","gibst","gibt","geben","gebt","geben"], hilfsverb: "haben", partizip: "gegeben",
       lokal: [], objekt: "akk", objektPflicht: true, personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
       passtOrte: {},
       passtDinge: ["rechnung","schluessel","blume","geld","quittung","aufgabe","note","rezept","formular","kuendigung","idee","antwort","buch","brief","zeitung","karte","fahrkarte","pass","ausweis","tablette","medikament","verband","impfung","loesung","plan"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["gluecklich"],
       itInf: "dare", itFormen: ["do","dai","dà","diamo","date","danno"], itHilf: "avere", itPart: "dato", itFutStamm: "dar",
-      kategorien: ["alltag","einkaufen","arbeit"] },
+      kategorien: ["alltag","einkaufen","arbeit", "verwaltung", "familie"] },
 
     { id: "nehmen", inf: "nehmen", formen: ["nehme","nimmst","nimmt","nehmen","nehmt","nehmen"], hilfsverb: "haben", partizip: "genommen",
       lokal: [], objekt: "akk", objektPflicht: true,
       passtOrte: {},
       passtDinge: ["bus","medikament","tablette","schluessel","geld","koffer","rucksack","regenschirm","handy","kaffee","tee","wasser","wein","bier","pizza","salat","suppe","nudeln","fleisch","fisch","kuchen"], passtPersonen: [], passtGruende: ["spaet","zeitmangel","stau"],
       itInf: "prendere", itFormen: ["prendo","prendi","prende","prendiamo","prendete","prendono"], itHilf: "avere", itPart: "preso", itFutStamm: "prender",
-      kategorien: ["alltag","reisen","essen"] },
+      kategorien: ["alltag","reisen","essen", "gesundheit", "einkaufen"] },
 
     { id: "bezahlen", inf: "bezahlen", formen: ["bezahle","bezahlst","bezahlt","bezahlen","bezahlt","bezahlen"], hilfsverb: "haben", partizip: "bezahlt",
       lokal: [], objekt: "akk", objektPflicht: true,
       passtOrte: {},
       passtDinge: ["rechnung","geld","karte","fahrkarte","versicherung","steuer","miete","einkauf"], passtPersonen: [], passtGruende: ["fertig"],
       itInf: "pagare", itFormen: ["pago","paghi","paga","paghiamo","pagate","pagano"], itHilf: "avere", itPart: "pagato", itFutStamm: "pagher",
-      kategorien: ["einkaufen","alltag","verwaltung"] },
+      kategorien: ["einkaufen","alltag","verwaltung", "essen"] },
 
     { id: "bestellen", inf: "bestellen", formen: ["bestelle","bestellst","bestellt","bestellen","bestellt","bestellen"], hilfsverb: "haben", partizip: "bestellt",
       lokal: [], objekt: "akk", objektPflicht: true,
@@ -1360,7 +1364,7 @@
       passtOrte: {},
       passtDinge: ["butter","ei","zwiebel","milch","zucker","salz","pfeffer","oel","rechnung","bett","handtuch","seife","zahnbuerste","messer","gabel","loeffel","teller","geld","quittung","jacke","mantel","pullover","handschuhe","projekt","protokoll","praesentation","pruefung","note","heft","stift","woerterbuch","computer","laptop","handy","drucker","programm","app","fahrrad","konzertkarte","regenschirm","pass","visum","fahrkarte","urlaub","rezept","medikament","tablette","verband","impfung","ausweis","formular","anmeldung","kuendigung","versicherung","steuer","miete","antwort","loesung","plan","wasser","kaffee","zeit","schluessel","buch","wohnung","tastatur","bildschirm","topf","pfanne","hemd","hose","schuhe","kleid","muetze","schal","termin","idee"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["hungrig","durstig","krank","erkaeltet"],
       itInf: "avere bisogno di", itFormen: ["ho","hai","ha","abbiamo","avete","hanno"], itHilf: "avere", itPart: "avuto", itFutStamm: "avr", itZusatz: "bisogno di",
-      kategorien: ["alltag","einkaufen","gesundheit"] },
+      kategorien: ["alltag","einkaufen","gesundheit", "verwaltung"] },
 
     { id: "bekommen", steuerbar: false, inf: "bekommen", formen: ["bekomme","bekommst","bekommt","bekommen","bekommt","bekommen"], hilfsverb: "haben", partizip: "bekommen",
       lokal: [], objekt: "akk", objektPflicht: true,
@@ -1374,14 +1378,14 @@
       passtOrte: {},
       passtDinge: ["aufgabe","protokoll","pruefung","vokabel","medikament","tablette","idee","frage","antwort","problem","termin","schluessel","handy","regenschirm","pass","ausweis"], passtPersonen: [], passtGruende: ["muede","beschaeftigt","zeitmangel","spaet"],
       itInf: "dimenticare", itFormen: ["dimentico","dimentichi","dimentica","dimentichiamo","dimenticate","dimenticano"], itHilf: "avere", itPart: "dimenticato", itFutStamm: "dimenticher",
-      kategorien: ["alltag","bildung","arbeit","gesundheit"] },
+      kategorien: ["alltag","bildung","arbeit","gesundheit", "verwaltung", "einkaufen"] },
 
     { id: "verlieren", steuerbar: false, inf: "verlieren", formen: ["verliere","verlierst","verliert","verlieren","verliert","verlieren"], hilfsverb: "haben", partizip: "verloren",
       lokal: [], objekt: "akk", objektPflicht: true,
       passtOrte: {},
       passtDinge: ["schluessel","karte","heft","stift","handy","datei","spiel","ball","fahrrad","zeitschrift","konzertkarte","koffer","regenschirm","pass","fahrkarte","ausweis"], passtPersonen: [], passtGruende: ["muede","beschaeftigt","spaet"],
       itInf: "perdere", itFormen: ["perdo","perdi","perde","perdiamo","perdete","perdono"], itHilf: "avere", itPart: "perso", itFutStamm: "perder",
-      kategorien: ["alltag","reisen","bildung","freizeit"] },
+      kategorien: ["alltag","reisen","bildung","freizeit", "verwaltung"] },
 
     { id: "benutzen", inf: "benutzen", formen: ["benutze","benutzt","benutzt","benutzen","benutzt","benutzen"], hilfsverb: "haben", partizip: "benutzt",
       lokal: [], objekt: "akk", objektPflicht: true,
@@ -1402,7 +1406,7 @@
       passtOrte: {},
       passtDinge: ["handtuch","topf","pfanne","messer","gabel","loeffel","teller","tasse","glas","hemd","hose"], passtPersonen: [], passtGruende: [],
       itInf: "lavare", itFormen: ["lavo","lavi","lava","laviamo","lavate","lavano"], itHilf: "avere", itPart: "lavato", itFutStamm: "laver",
-      kategorien: ["alltag"] },
+      kategorien: ["alltag", "essen"] },
 
     { id: "putzen", inf: "putzen", formen: ["putze","putzt","putzt","putzen","putzt","putzen"], hilfsverb: "haben", partizip: "geputzt",
       lokal: [], objekt: "akk",
@@ -1444,7 +1448,7 @@
       passtOrte: {},
       passtDinge: ["projekt","praesentation","pass","fahrkarte","rezept","ausweis","loesung","foto"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: [],
       itInf: "mostrare", itFormen: ["mostro","mostri","mostra","mostriamo","mostrate","mostrano"], itHilf: "avere", itPart: "mostrato", itFutStamm: "mostrer",
-      kategorien: ["arbeit","reisen","gesundheit","verwaltung"] },
+      kategorien: ["arbeit","reisen","gesundheit","verwaltung", "familie", "einkaufen"] },
 
     { id: "ueben", inf: "üben", formen: ["übe","übst","übt","üben","übt","üben"], hilfsverb: "haben", partizip: "geübt",
       lokal: [], objekt: "akk",
@@ -1482,7 +1486,7 @@
       passtOrte: {},
       passtDinge: ["antwort","loesung","regel","grund","preis","termin"], passtPersonen: [], passtGruende: [],
       itInf: "sapere", itFormen: ["so","sai","sa","sappiamo","sapete","sanno"], itHilf: "avere", itPart: "saputo", itFutStamm: "sapr",
-      kategorien: ["alltag","bildung"] },
+      kategorien: ["alltag","bildung", "gesundheit"] },
 
     { id: "moegen", steuerbar: false, bewertbar: true, inf: "mögen", formen: ["mag","magst","mag","mögen","mögt","mögen"], hilfsverb: "haben", partizip: "gemocht",
       lokal: [], objekt: "akk", objektPflicht: true, nurBegleiter: ["bestimmt", "ohne"], itPersonFeld: "it",
@@ -1517,28 +1521,28 @@
       passtOrte: {},
       passtDinge: ["stuhl","muell","flasche","korb","hemd","hose","jacke","schuhe","mantel","kleid","pullover","muetze","schal","handschuhe","heft","laptop","ball","koffer","rucksack","verband"], passtPersonen: [], passtGruende: ["kaelte","regen","wetter"],
       itInf: "portare", itFormen: ["porto","porti","porta","portiamo","portate","portano"], itHilf: "avere", itPart: "portato", itFutStamm: "porter",
-      kategorien: ["alltag"] },
+      kategorien: ["alltag", "einkaufen"] },
 
     { id: "schenken", inf: "schenken", formen: ["schenke","schenkst","schenkt","schenken","schenkt","schenken"], hilfsverb: "haben", partizip: "geschenkt",
       lokal: [], objekt: "akk", objektPflicht: true, personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
       passtOrte: {},
       passtDinge: ["blume","schokolade","schal"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["gluecklich"],
       itInf: "regalare", itFormen: ["regalo","regali","regala","regaliamo","regalate","regalano"], itHilf: "avere", itPart: "regalato", itFutStamm: "regaler",
-      kategorien: ["alltag","familie"] },
+      kategorien: ["alltag","familie", "einkaufen"] },
 
     { id: "mitbringen", inf: "mitbringen", formen: ["bringe","bringst","bringt","bringen","bringt","bringen"], hilfsverb: "haben", partizip: "mitgebracht", trennbar: "mit",
       lokal: ["wohin"], objekt: "akk", objektPflicht: true, personFall: "dat", itPersonFeld: "itAn",
       passtOrte: {"wohin":["zuhause","buero","arbeit","schule","uni","kurs","besprechung","krankenhaus"]},
       passtDinge: ["kaese","broetchen","sandwich","spiel","roman","lied","zeitschrift","konzertkarte","regenschirm","pass","ausweis"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["gluecklich"],
       itInf: "portare", itFormen: ["porto","porti","porta","portiamo","portate","portano"], itHilf: "avere", itPart: "portato", itFutStamm: "porter",
-      kategorien: ["alltag","familie"] },
+      kategorien: ["alltag","familie", "essen", "verwaltung"] },
 
     { id: "feiern", inf: "feiern", formen: ["feiere","feierst","feiert","feiern","feiert","feiern"], hilfsverb: "haben", partizip: "gefeiert",
       lokal: ["wo"],
       passtOrte: {"wo":["zuhause","garten","balkon","terrasse","wohnzimmer","restaurant","park","disko","hof","bar"]},
       passtDinge: [], passtPersonen: [], passtGruende: ["gluecklich","pruefung","fertig"],
       itInf: "festeggiare", itFormen: ["festeggio","festeggi","festeggia","festeggiamo","festeggiate","festeggiano"], itHilf: "avere", itPart: "festeggiato", itFutStamm: "festegger",
-      kategorien: ["freizeit","familie"] },
+      kategorien: ["freizeit","familie", "essen"] },
 
     { id: "tanzen", inf: "tanzen", formen: ["tanze","tanzt","tanzt","tanzen","tanzt","tanzen"], hilfsverb: "haben", partizip: "getanzt",
       lokal: ["wo"],
@@ -1573,35 +1577,35 @@
       passtOrte: {"wo":["supermarkt","markt","baeckerei","metzgerei","kaufhaus","apotheke","drogerie","buchhandlung","schuhgeschaeft"]},
       passtDinge: ["brot","apfel","pizza","kuchen","kaffee","tee","wein","kaese","butter","ei","fleisch","fisch","gemuese","obst","salat","reis","kartoffeln","tomaten","zwiebel","milch","saft","bier","zucker","salz","pfeffer","oel","marmelade","joghurt","schokolade","eis","keks","broetchen","sandwich","seife","zahnbuerste","handtuch","regenschirm","blume","hemd","hose","jacke","schuhe","mantel","kleid","pullover","muetze","schal","handschuhe"], passtPersonen: [], passtGruende: ["frei"],
       itInf: "comprare", itFormen: ["compro","compri","compra","compriamo","comprate","comprano"], itHilf: "avere", itPart: "comprato", itFutStamm: "comprer",
-      kategorien: ["einkaufen","alltag"] },
+      kategorien: ["einkaufen","alltag", "essen"] },
 
     { id: "telefonieren", inf: "telefonieren", formen: ["telefoniere","telefonierst","telefoniert","telefonieren","telefoniert","telefonieren"], hilfsverb: "haben", partizip: "telefoniert",
       lokal: ["wo"], personFall: "dat", personPraep: "mit", itPersonFeld: "itMit",
       passtOrte: {"wo":["zuhause","buero","kueche","garten","balkon","terrasse","wohnzimmer","schlafzimmer","bahnhof","flughafen","park","hotel"]},
       passtDinge: [], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","nachbarin","lehrer","vermieter"], passtGruende: ["krank","arbeitgrund","termingrund"],
       itInf: "telefonare", itFormen: ["telefono","telefoni","telefona","telefoniamo","telefonate","telefonano"], itHilf: "avere", itPart: "telefonato", itFutStamm: "telefoner",
-      kategorien: ["alltag","arbeit"] },
+      kategorien: ["alltag","arbeit", "gesundheit", "verwaltung", "familie"] },
 
     { id: "anrufen", inf: "anrufen", formen: ["rufe","rufst","ruft","rufen","ruft","rufen"], hilfsverb: "haben", partizip: "angerufen", trennbar: "an",
       lokal: ["wo"], personFall: "akk", itPersonFeld: "it",
       passtOrte: {"wo":["zuhause","buero","kueche","garten","balkon","terrasse","wohnzimmer","schlafzimmer","bahnhof","flughafen","park","hotel"]},
       passtDinge: [], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","nachbarin","lehrer","vermieter"], passtGruende: ["krank","arbeitgrund","termingrund"],
       itInf: "chiamare", itFormen: ["chiamo","chiami","chiama","chiamiamo","chiamate","chiamano"], itHilf: "avere", itPart: "chiamato", itFutStamm: "chiamer",
-      kategorien: ["alltag","arbeit"] },
+      kategorien: ["alltag","arbeit", "gesundheit", "verwaltung", "familie"] },
 
     { id: "schicken", inf: "schicken", formen: ["schicke","schickst","schickt","schicken","schickt","schicken"], hilfsverb: "haben", partizip: "geschickt",
       lokal: ["wo"], objekt: "akk", objektPflicht: true, personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
       passtOrte: {"wo":["buero","zuhause","post","cafe"]},
       passtDinge: ["brief","nachricht","mail","foto","geld","rechnung","vertrag","formular","bericht","protokoll","praesentation","aufgabe","kuendigung","gedicht","lied","blume","quittung","antrag","buch"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","nachbarin","lehrer","vermieter"], passtGruende: ["termingrund","arbeitgrund","zeitmangel"],
       itInf: "mandare", itFormen: ["mando","mandi","manda","mandiamo","mandate","mandano"], itHilf: "avere", itPart: "mandato", itFutStamm: "mander",
-      kategorien: ["alltag","arbeit"] },
+      kategorien: ["alltag","arbeit", "verwaltung", "familie"] },
 
     { id: "lachen", steuerbar: false, inf: "lachen", formen: ["lache","lachst","lacht","lachen","lacht","lachen"], hilfsverb: "haben", partizip: "gelacht",
       lokal: ["wo"],
       passtOrte: {"wo":["zuhause","wohnzimmer","kueche","buero","park","kino","cafe","restaurant","schule","disko"]},
       passtDinge: [], passtPersonen: [], passtGruende: ["gluecklich","nervoes"],
       itInf: "ridere", itFormen: ["rido","ridi","ride","ridiamo","ridete","ridono"], itHilf: "avere", itPart: "riso", itFutStamm: "rider",
-      kategorien: ["alltag","freizeit"] },
+      kategorien: ["alltag","freizeit", "familie"] },
 
     { id: "weinen", steuerbar: false, inf: "weinen", formen: ["weine","weinst","weint","weinen","weint","weinen"], hilfsverb: "haben", partizip: "geweint",
       lokal: ["wo"],
@@ -1615,14 +1619,14 @@
       passtOrte: {"wo":["zuhause","kueche","garten","balkon","bett","keller","wohnzimmer","badezimmer","supermarkt","markt","baeckerei","apotheke","kaufhaus","buero","arbeit","besprechung","werkstatt","baustelle","schule","uni","bibliothek","kurs","meer","berge","see","park","kino","theater","museum","schwimmbad","stadion","konzert","restaurant","cafe","kantine","bahnhof","flughafen","hotel","italien","berlin","rom","stadt","land","arzt","krankenhaus","zahnarzt","amt","bank","post","flur","schlafzimmer","terrasse","garage","hof","dachboden","metzgerei","buchhandlung","drogerie","schuhgeschaeft","fabrik","labor","lager","filiale","kinderzimmer","kindergarten","kita","spielplatz","elternhaus","wald","strand","fluss","zoo","disko","imbiss","eisdiele","pizzeria","bar","weinkeller","hafen","haltestelle","faehre","autobahn","schweiz","oesterreich","klassenzimmer","hoersaal","sprachschule","seminarraum","schulhof","praxis","notaufnahme","physiotherapie","sauna","fitnessstudio","rathaus","botschaft","polizei","gericht","auslaenderbehoerde"]},
       passtDinge: [], passtPersonen: [], passtGruende: ["krank","krankheit","erkaeltet","muede","beschaeftigt","traurig","nervoes","unsicher","wetter","regen","hitze","kaelte","schnee","sturm","stau","streik","umzug","termingrund","pruefung","baustelle"],
       itInf: "rimanere", itFormen: ["rimango","rimani","rimane","rimaniamo","rimanete","rimangono"], itHilf: "essere", itPart: "rimast", itFutStamm: "rimarr",
-      kategorien: ["alltag","reisen"] },
+      kategorien: ["alltag","reisen", "gesundheit"] },
 
     { id: "sitzen", inf: "sitzen", formen: ["sitze","sitzt","sitzt","sitzen","sitzt","sitzen"], hilfsverb: "haben", partizip: "gesessen",
       lokal: ["wo"], ortPflicht: true,
       passtOrte: {"wo":["zuhause","kueche","garten","balkon","bett","keller","wohnzimmer","buero","besprechung","schule","bibliothek","kurs","park","kino","theater","schwimmbad","stadion","konzert","restaurant","cafe","kantine","bahnhof","flughafen","hotel","arzt","krankenhaus","zahnarzt","amt","bank","post","flur","terrasse","hof","spielplatz","wald","strand","fluss","zoo","imbiss","eisdiele","pizzeria","bar","weinkeller","hafen","haltestelle","faehre","klassenzimmer","hoersaal","sprachschule","seminarraum","schulhof","praxis","notaufnahme","physiotherapie","sauna","rathaus","botschaft","polizei","gericht","auslaenderbehoerde"]},
       passtDinge: [], passtPersonen: [], passtGruende: ["muede","krank","wetter","regen","hitze","traurig","allein","erkaeltet","fertig","frei","kaelte","krankheit"],
       itZustand: "sedut", itInf: "sedersi", itFormen: ["mi siedo","ti siedi","si siede","ci sediamo","vi sedete","si siedono"], itHilf: "essere", itPart: "sedut", itFutStamm: "sieder",
-      kategorien: ["alltag","freizeit"] },
+      kategorien: ["alltag","freizeit", "essen", "familie"] },
 
     { id: "stehen", inf: "stehen", formen: ["stehe","stehst","steht","stehen","steht","stehen"], hilfsverb: "haben", partizip: "gestanden",
       lokal: ["wo"], ortPflicht: true,
@@ -1643,7 +1647,7 @@
       passtOrte: {},
       passtDinge: [], passtPersonen: [], passtGruende: ["spaet","termingrund","arbeitgrund","puenktlich","beschaeftigt","zeitmangel"],
       itInf: "alzarsi", itFormen: ["mi alzo","ti alzi","si alza","ci alziamo","vi alzate","si alzano"], itHilf: "essere", itReflexiv: true, itPart: "alzat", itFutStamm: "alzer",
-      kategorien: ["alltag"] },
+      kategorien: ["alltag", "gesundheit"] },
 
     { id: "anfangen", inf: "anfangen", formen: ["fange","fängst","fängt","fangen","fangt","fangen"], hilfsverb: "haben", partizip: "angefangen", trennbar: "an",
       lokal: [], objekt: "akk", objektPflicht: true,
@@ -1687,7 +1691,7 @@
       passtOrte: {},
       passtDinge: ["fruehstueck","pruefung","praesentation","projekt","aufgabe","urlaub","formular","antrag","vertrag","bericht","protokoll","anmeldung","uebung","termin","plan"], passtPersonen: [], passtGruende: ["termingrund","pruefung","nervoes","unsicher"],
       itInf: "preparare", itFormen: ["preparo","prepari","prepara","prepariamo","preparate","preparano"], itHilf: "avere", itPart: "preparato", itFutStamm: "preparer",
-      kategorien: ["alltag","arbeit","bildung","reisen"] },
+      kategorien: ["alltag","arbeit","bildung","reisen", "essen"] },
   ];
 
   /* ===================================================================
