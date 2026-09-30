@@ -133,8 +133,10 @@ window.FAKE = (() => {
       } catch (e) { return route.fulfill({ status: 500, contentType: "text/plain", body: String(e.message || e).slice(0, 80) }); }
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(antwort) });
     });
-    await pg.goto(basis + "/index.html" + (mitFlag ? "?sfu=1" : ""), { waitUntil: "domcontentloaded" });
+    await pg.goto(basis + "/index.html" + (mitFlag === true ? "?sfu=1" : ""), { waitUntil: "domcontentloaded" });
     await pg.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.LiveChat.pruefEmpfangen, { timeout: 40000 });
+    /* FASSUNG 847 — „frei": freigeschaltet wie beim Betreiber/Beta (Schalter „sfu"), aber ohne ?sfu=1 zu erzwingen */
+    if (mitFlag === "frei") await pg.evaluate(() => { const B = (typeof Backend !== "undefined") ? Backend : window.Backend; const alt = B.isFeatureOn; B.isFeatureOn = (k) => k === "sfu" ? true : alt(k); });
     await pg.evaluate(async ([ich, leute]) => {
       const strom = await navigator.mediaDevices.getUserMedia({ audio: true });
       window.__tonId = strom.getAudioTracks()[0].id;
@@ -217,6 +219,24 @@ window.FAKE = (() => {
   }
 
   /* ---------------------------------------------------------------- */
+  console.log("\n  2b) FASSUNG 847 — FREIGESCHALTET, ABER NUR ZU ZWEIT: der Ton geht direkt (Tonserver erst ab 4)\n");
+  {
+    const vorher = aufrufe.length;
+    const A = await seite("aaa", ["bbb"], "frei"), B = await seite("bbb", ["aaa"], "frei");
+    seiten = [A, B];
+    await A.evaluate(() => window.LiveChat.pruefEmpfangen({ art: "hallo", von: "bbb", name: "BBB", seit: 2000, kf: 1 }));
+    const d = await bis(async () => (await leitungSteht(A)) && (await leitungSteht(B)), 15000);
+    sage(d >= 0, "die Netz-Leitung steht", d + " ms");
+    await warte(8000);
+    const sA = await stand(A), sB = await stand(B), idA = await tonId(A);
+    sage(sA && sA.erlaubt === true && sB && sB.erlaubt === true, "beide dürfen den Tonserver (Schalter an)", JSON.stringify([sA && sA.erlaubt, sB && sB.erlaubt]));
+    sage(aufrufe.length === vorher && sA.lage === "aus" && sB.lage === "aus", "zu zweit wird er trotzdem nicht aufgebaut – kein Aufruf", (aufrufe.length - vorher) + " Aufrufe, " + sA.lage + "/" + sB.lage);
+    sage(sA.meshTon.bbb === idA && (sB.stromTon.aaa || []).length === 1, "die Stimme geht direkt über die Netz-Leitung (mit Relais wie vor 820)", String(sA.meshTon.bbb).slice(0, 8));
+    const bericht = await A.evaluate(() => window.LiveChat.verbindungsBericht ? window.LiveChat.verbindungsBericht() : "");
+    sage(/unter 4 Leuten läuft der Ton direkt/.test(bericht), "/verbindung sagt es so", (bericht.match(/Tonserver[^\n]*/) || [""])[0]);
+    await schliesseSeiten();
+  }
+
   console.log("\n  3) MIT FREISCHALTUNG, ZWEI LEUTE — Ton über den Server\n");
   aufrufe.length = 0; pakete.length = 0;
   const A = await seite("aaa", ["bbb"], true), B = await seite("bbb", ["aaa"], true);

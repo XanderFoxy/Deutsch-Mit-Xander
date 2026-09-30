@@ -48,9 +48,9 @@
  "baukasten.js": "68a7fd488976c5e284185cbf3fa4d52e01379c6e",
  "data-plaetze.js": "61824c9636dd4d1ed55f9a8c2992cb2f7b419199",
  "data-szenen.js": "facd9322aa9a85e01fb979df8f95dc077e1222b1",
- "livechat.js": "40c50d0b16f191329b23caf9587f854e0ba6c56a",
  "korrekturen.css": "aae032bf4ce9495b1a9077b9480f1da78655baf1",
  "spiel.js": "f09178fe7b452648382355a40f62b73b1233c015",
  "app.js": "40ef7ba317a399504c2e6b444f9045f8cce01301",
- "data-werkstatt.js": "4417f3d78f572e5c7f133463deb9316992b485ca"
+ "livechat.js": "d6936c82698dd3aba1cc17a20c5e641dc833a61a",
+ "data-werkstatt.js": "944efc67842013c37687cdf656913845edf9811d"
 }

@@ -49,28 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 825: Pfeil wie vor dem Werbevideo, stufenlos zoomen, Nadel hält Nähe und Winkel, 36 Quests mit Suchen und Uhrzeit, echte Turmuhr, gelbe Kornfelder",
+  stand: "Fassung 826: Tonserver erst ab 4 Leuten, zu zweit wieder direkt über die Relais",
 
   inArbeit: [
-    { seit: "2026-09-30T19:55",
-      text: "Schwarzbild bei Tastatur/Verlassen" },
-    { seit: "2026-09-30T19:55",
-      text: "Italienisch: Räume nur Besitzer, Punkte per Server-RPC" },
-    { seit: "2026-09-30T19:55",
-      text: "WebGL für Häuser und Figuren" },
+    { seit: "2026-09-30T21:31",
+      text: "Mühle sofort produzieren, zwei Symbole am Haus" },
+    { seit: "2026-09-30T21:31",
+      text: "Kornfelder nicht auf Wegen, beide Seiten" },
+    { seit: "2026-09-30T21:31",
+      text: "Quest-Menü schwebend über dem Chat" },
+    { seit: "2026-09-30T21:31",
+      text: "Leistung: Einzug im Auto flüssig" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-30T19:55",
-      text: "Pfeil zurück" },
-    { seit: "2026-09-30T19:55",
-      text: "Zoom und Nadel" },
-    { seit: "2026-09-30T19:55",
-      text: "Quests neu" },
-    { seit: "2026-09-30T19:55",
-      text: "Turmuhr" },
-    { seit: "2026-09-30T19:55",
-      text: "Kornfelder" },
+    { seit: "2026-09-30T21:31",
+      text: "Tonserver zu zweit aus" },
   ],
 };

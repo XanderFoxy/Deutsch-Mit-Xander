@@ -4209,6 +4209,20 @@ window.LiveChat = (function () {
   var SFU_STILL_MS = 800;
   var SFU_PAUSE_MS = 30000;
 
+  /* FASSUNG 847 — XANDER (Funk 246): „Die Verbindung mit Leuten ist jetzt noch schwerer … nach ein paar Sekunden ist ja
+     plötzlich weg dann aktualisiere ich und ich höre ihn überhaupt nicht mehr … warum habe ich denn den sfu Server
+     eingerichtet". NACHGESEHEN (sfu_sitzungen, 30.09. 19:42–20:39 UTC, Xander und Maram): über 20 Server-Sitzungen in
+     einer Stunde, die meisten nach 2–10 Sekunden wieder zu, und fast nie kam die Stimme des anderen darüber an. Zu zweit
+     bringt der Tonserver nichts (jeder schickt seine Stimme ohnehin nur an einen), er kostet nur Umschalten und Pausen.
+     Darum gilt er jetzt erst ab SFU_AB Leuten im Raum, die ihn können (mich mitgezählt); darunter läuft der Ton wie vor
+     820 direkt über die eigenen Relais. ?sfu=1 erzwingt ihn weiter (Sonden 827/842). */
+  var SFU_AB = 4;
+  function sfuErzwungen() {
+    var q = "";
+    try { q = String(location.search || "") + "&" + String(location.hash || ""); } catch (e) {}
+    return /[?&#]sfu=1(?![0-9])/.test(q);
+  }
+  function sfuGenug(bereit) { return sfuErzwungen() ? bereit.length > 0 : bereit.length + 1 >= SFU_AB; }
   function sfuErlaubt() {
     if (typeof RTCPeerConnection !== "function") return false;
     var q = "";
@@ -4399,11 +4413,11 @@ window.LiveChat = (function () {
     if (sfu.lage === "rueckfall" && jetzt > sfu.sperreBis) { sfu.lage = "aus"; sfu.grund = ""; }
     if (sfu.lage === "aus") {
       /* Nur wenn wirklich jemand da ist, der den Server auch kann. */
-      if (bereit.length) sfuStarten();
+      if (sfuGenug(bereit)) sfuStarten();   /* FASSUNG 847 — erst ab SFU_AB Leuten */
       return;
     }
     if (sfu.lage !== "laeuft") return;
-    if (!bereit.length) { sfuBeenden("allein"); return; }
+    if (!sfuGenug(bereit)) { sfuBeenden("allein"); return; }
     var weg = [];
     Object.keys(sfu.empfang).forEach(function (id) {
       var e = sfu.empfang[id], a = sfu.andere[id];
@@ -4811,7 +4825,7 @@ window.LiveChat = (function () {
         + (sfu.verbrauchtGb != null ? " (geschätzt " + sfu.verbrauchtGb + " von " + sfu.grenzeGb + " GB)" : "");
     }
     if (sfu.lage === "rueckfall") return "Tonserver (Cloudflare, Beta): aus — alle direkt. Grund: " + sfu.grund;
-    return "Tonserver (Cloudflare, Beta): " + (sfu.lage === "startet" ? "verbindet …" : "nicht nötig (niemand sonst mit Tonserver im Raum)");
+    return "Tonserver (Cloudflare, Beta): " + (sfu.lage === "startet" ? "verbindet …" : "nicht nötig (unter " + SFU_AB + " Leuten läuft der Ton direkt über die Relais)");
   }
   function sfuStand() {
     var aus = { erlaubt: sfuErlaubt(), lage: sfu.lage, grund: sfu.grund, sitzung: sfu.sitzung,

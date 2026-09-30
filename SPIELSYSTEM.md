@@ -2879,3 +2879,11 @@ XANDER (Walkie 315, wörtlich): „die Sache mit dem Pfeil kannst du wieder zur�
 - **Turmuhr (`szene.js turmuhr`)**: die vier Zifferblätter des Döbelner Rathauses zeigen die deutsche Uhrzeit (`ST.uhr`, wie die Glocken): die gebackenen Zeiger deckt eine Scheibe in Blattfarbe zu, darauf Stunden- und Minutenzeiger in der Ebene des Blatts.
 - **Kornfelder (`dorf.js`)**: die zwei großen Äcker von 844 sind zurück, aber nur gemalt (golden/grün, Tippfläche und Zeichen der Felder 91/92); der Boden darunter bleibt Wiese, damit Wegenetz, Kornwagen und Autos unverändert bleiben (Sonde 830). Wahrzeichen suchen sich Plätze außerhalb.
 - **Sonden**: `pruefe-846-zoom-nadel.js` (mit dem Stand vorher 7 rot), `pruefe-846b-quests-uhr.js`; 832 (Such-Quests ohne Antworten), 844 (Äcker wieder geprüft), 845 (Einpass-Prüfung durch 823 überholt).
+
+## Fassung 826 — Tonserver erst ab 4 Leuten, zu zweit wieder direkt über die Relais (Funk 246/248)
+
+XANDER (Funk 246, wörtlich): „Die Verbindung mit Leuten ist jetzt noch schwerer … nach ein paar Sekunden ist ja plötzlich weg dann aktualisiere ich und ich höre ihn überhaupt nicht mehr … warum habe ich denn den sfu Server eingerichtet".
+
+- **Befund** (`sfu_sitzungen`, 30.09. 19:42–20:39 UTC, zwei Leute): über 20 Server-Sitzungen in einer Stunde, die meisten nach 2–10 s wieder zu, fast nie kam die Stimme des anderen darüber an. Die /verbindung-Zeile steht nur auf dem eigenen Bildschirm, nicht in der Datenbank.
+- **Jetzt (`livechat.js`, `SFU_AB = 4`)**: der Tonserver wird erst aufgebaut, wenn mindestens 4 Leute im Raum sind, die ihn können (mich mitgezählt); darunter läuft der Ton wie vor 820 direkt über die eigenen Cloudflare-Relais. ?sfu=1 erzwingt ihn weiter (Sonden). /verbindung sagt: „nicht nötig (unter 4 Leuten läuft der Ton direkt über die Relais)".
+- **Sonde** 827 Teil 2b (freigeschaltet, zu zweit: kein Aufruf, Stimme über die Netz-Leitung) – mit dem Stand vorher 3 rot; 842, 659 grün.
