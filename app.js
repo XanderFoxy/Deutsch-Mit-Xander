@@ -2970,7 +2970,8 @@
         </p>
         <select id="hilfsSpracheWahl" class="challenge-select" style="margin-top:12px;">
           <option value="">Automatisch (aus meinem Herkunftsland) — gerade ${escapeHtml(hilfsSpracheName(hilfsSprache()))}</option>
-          ${Object.entries(HILFSSPRACHEN).filter(([c]) => c !== "de").map(([c, n]) =>
+          ${/* FASSUNG 843 — „generell … rausnehmen“: kein Italienisch als Hilfssprache außerhalb des Italienischraums */ ""}
+          ${sprachwahlOhneItalienisch(Object.entries(HILFSSPRACHEN)).filter(([c]) => c !== "de").map(([c, n]) =>
             `<option value="${c}" ${((profile.extraProfileData || {}).hilfsSprache === c) ? "selected" : ""}>${n}</option>`).join("")}
         </select>
       </div>
@@ -11492,7 +11493,34 @@
   };
   function firstStepsLangFor(profile) {
     const origin = profile?.origin;
-    return (origin && ORIGIN_TO_LANG[origin]) || "en";
+    /* FASSUNG 843 — Herkunftsland Italien führt außerhalb des
+       Italienischraums nicht mehr zu italienischen Übersetzungen. */
+    return ohneItalienisch((origin && ORIGIN_TO_LANG[origin]) || "en");
+  }
+  /* ============================================================
+     FASSUNG 843 — ITALIENISCH NUR NOCH IM ITALIENISCHRAUM
+     ------------------------------------------------------------
+     XANDER (Funk 225/232): Italienisch soll „generell … rausnehmen“
+     werden — überall außerhalb des Italienischraums.
+
+     Italienisch war bis hier auch eine der Hilfssprachen: wer es im
+     Profil wählte oder Italien als Herkunftsland angab, bekam
+     italienische Zeilen in der Bilderwelt, in „Erste Schritte“, in
+     „Es war einmal in Deutschland“ und in den kleinen Übersetzungen.
+     Die Daten bleiben (der Italienischraum braucht sie, z. B. die
+     it-Felder der Szenen); abgeschaltet wird nur die ANZEIGE: außerhalb
+     des Italienischraums wird aus „it“ die Rückfallsprache Englisch,
+     und die Sprachauswahlen bieten Italienisch dort nicht mehr an.
+     Im Italienischraum (darfItalienischraum(), Lernraum „it“) bleibt
+     alles, wie es ist.
+     ============================================================ */
+  function ohneItalienisch(code) {
+    return code === "it" && !imItalienischraum() ? "en" : code;
+  }
+  /* Für Auswahllisten: [code, name]-Paare ohne Italienisch, solange
+     man nicht im Italienischraum ist. */
+  function sprachwahlOhneItalienisch(paare) {
+    return paare.filter(([c]) => ohneItalienisch(c) === c);
   }
 
   /* ============================================================
@@ -11528,7 +11556,9 @@
   function hilfsSprache() {
     const p = Backend.currentProfile();
     const gewaehlt = p && p.extraProfileData && p.extraProfileData.hilfsSprache;
-    if (gewaehlt && HILFSSPRACHEN[gewaehlt]) return gewaehlt;
+    /* FASSUNG 843 — „generell … rausnehmen“: ein früher gewähltes
+       Italienisch gilt außerhalb des Italienischraums nicht mehr. */
+    if (gewaehlt && HILFSSPRACHEN[gewaehlt] && ohneItalienisch(gewaehlt) === gewaehlt) return gewaehlt;
     return firstStepsLangFor(p);
   }
   function hilfsSpracheName(code) { return HILFSSPRACHEN[code] || code; }
@@ -11720,7 +11750,7 @@
   /* Das Wort in der Hilfssprache. Gibt es dort keine Entsprechung,
      ist Englisch der Rückfall — das steht zu jedem Wort bereit. */
   function inHilfsSprache(teil, code) {
-    const c = code || hilfsSprache();
+    const c = ohneItalienisch(code || hilfsSprache());   // FASSUNG 843 — „generell … rausnehmen“
     if (c === "de") return teil.de || "";
     if (c === "it") return teil.it || teil.en || "";
     if (c === "en") return teil.en || "";
@@ -11798,7 +11828,9 @@
     if (!area) return;
     const profile = Backend.currentProfile();
     const langNames = { en: "Englisch", ar: "Arabisch", tr: "Türkisch", ru: "Russisch", uk: "Ukrainisch", fa: "Persisch/Farsi", es: "Spanisch", pt: "Portugiesisch", fr: "Französisch", pl: "Polnisch", it: "Italienisch", hi: "Hindi", zh: "Chinesisch", he: "Hebräisch" };
-    const lang = firstStepsLangOverride || firstStepsLangFor(profile);
+    /* FASSUNG 843 — „generell … rausnehmen“: auch ein vorher gewähltes
+       Italienisch fällt außerhalb des Italienischraums auf Englisch zurück. */
+    const lang = ohneItalienisch(firstStepsLangOverride || firstStepsLangFor(profile));
     const rtl = lang === "ar" || lang === "fa" || lang === "he";
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:14px;">Ein Baukasten für den allerersten Kontakt mit Deutsch — auch ohne ein einziges bereits bekanntes deutsches Wort. Kapitel für Kapitel, wie im Buch: erst ein paar Bausteine lernen, direkt danach damit Sätze bauen — bevor es zum nächsten Kapitel geht.</p>
@@ -11806,7 +11838,7 @@
         <p class="eyebrow" style="margin-top:0;">🌍 Übersetzung gerade in: ${langNames[lang]}${lang === "en" && !profile?.origin && !firstStepsLangOverride ? " (Standard — leg dein Herkunftsland im Profil fest, oder wähl unten manuell)" : ""}</p>
         <select id="firstStepsLangSelect" class="challenge-select" style="margin-top:6px;">
           <option value="">Automatisch (aus Herkunftsland)</option>
-          ${Object.entries(langNames).map(([code, name]) => `<option value="${code}" ${firstStepsLangOverride === code ? "selected" : ""}>${name}</option>`).join("")}
+          ${sprachwahlOhneItalienisch(Object.entries(langNames)).map(([code, name]) => `<option value="${code}" ${firstStepsLangOverride === code ? "selected" : ""}>${name}</option>`).join("")}
         </select>
       </div>
       <p class="empty-note" style="margin-bottom:14px;">💡 Die betonte Silbe steht <strong>fett</strong>, und unter ihrem Vokal steht ein Zeichen wie im Duden: ein <strong>Strich</strong> heißt lang gesprochen (T<span class="stress-vokal stress-lang">a</span>g, B<span class="stress-vokal stress-lang">a</span>hn), ein <strong>Punkt</strong> heißt kurz (B<span class="stress-vokal stress-kurz">a</span>nk). Ein kleiner offener Kreis heißt: die Silbe ist betont, aber die Schreibung verrät die Länge nicht eindeutig. Geschrieben wird das Wort ganz normal — die Zeichen gelten nur der Aussprache.</p>
@@ -89880,7 +89912,7 @@
           Tippe auf ein Ding im Bild — du hörst das Wort, siehst den Artikel
           und die Betonung. ${imItalienischraum()
             ? "Im Italienisch-Raum läuft alles auf Italienisch: <em>il letto</em>, <em>la finestra</em>."
-            : "Wer will, sieht zu jedem Wort auch gleich das italienische daneben."}
+            : "" /* FASSUNG 843 — Xander (Funk 225/232): Italienisch „generell … rausnehmen“ — der Satz über das italienische Wort daneben ist weg. */}
         </p>
         <p class="empty-note" style="margin-bottom:0;">${szenen.length} Szenen · ${szenen.reduce((n, s) => n + (s.zahl || (s.teile || []).length), 0)} Wörter · ${besucht.size} schon besucht</p>
       </div>
@@ -91475,7 +91507,8 @@
     const auto = firstStepsLangFor(Backend.currentProfile());
     /* Im Lernraum Italienisch ist der Text italienisch — die Hilfe
        gehört dann auf Deutsch, nicht in die Herkunftssprache. */
-    const lang = historyUebersetzungSprache || (imItalienischraum() ? "de" : auto);
+    /* FASSUNG 843 — „generell … rausnehmen“: kein Italienisch außerhalb des Italienischraums. */
+    const lang = ohneItalienisch(historyUebersetzungSprache || (imItalienischraum() ? "de" : auto));
     // Zuerst die Fassung, die genau zum gewählten Niveau gehört; sonst die A1-Fassung.
     const nachNiveau = entry.translationsByLevel && entry.translationsByLevel[level];
     /* WICHTIG — erst in der gewünschten Sprache suchen, und NUR wenn es
@@ -91499,7 +91532,7 @@
         <label class="empty-note" style="display:block; margin-top:8px; font-size:0.72rem;">Sprache</label>
         <select class="challenge-select hist-lang-select" id="${idPrefix}LangSelect" style="margin-bottom:8px;">
           <option value="">Automatisch (aus dem Herkunftsland)</option>
-          ${Object.entries(HISTORY_SPRACHEN).map(([code, name]) => `<option value="${code}" ${historyUebersetzungSprache === code ? "selected" : ""}>${name}</option>`).join("")}
+          ${sprachwahlOhneItalienisch(Object.entries(HISTORY_SPRACHEN)).map(([code, name]) => `<option value="${code}" ${historyUebersetzungSprache === code ? "selected" : ""}>${name}</option>`).join("")}
         </select>
         <p class="empty-note" style="margin:0 0 4px; font-size:0.7rem;">${herkunft}</p>
         <p style="margin-top:4px; padding-top:6px; border-top:1px dashed rgba(0,0,0,0.12);" dir="${istRueckfall ? "ltr" : (rtl ? "rtl" : "ltr")}">${text}</p>

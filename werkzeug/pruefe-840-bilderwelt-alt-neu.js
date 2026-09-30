@@ -15,6 +15,10 @@
        durch die dokumentierte Weiche: jede Stelle trägt „FASSUNG 840“, und
        jede alte Zeile steht unverändert im ALT-Zweig. Die neue Bilderwelt
        liegt vollständig in bilderwelt-neu/.
+       FASSUNG 843 — seit Xanders „generell … rausnehmen“ (Funk 225/232)
+       gilt statt „Byte für Byte“: alt = 53eaa31 abzüglich Italienisch
+       (fehlende it-/itSyl-Felder und die mit „FASSUNG 843“ markierten
+       Stellen in app.js, die nur einen italienischen Satz leeren).
      2 IM BROWSER, 360 px (Android): Standard ist ALT (alte Figuren, keine
        Datei aus bilderwelt-neu/); Szene, Lupe, Baukasten, Bilderrätsel
        laufen. Der Link „Neue Version ansehen (Test)“ schaltet auf NEU
@@ -49,8 +53,17 @@ const lies = (f) => { const p = path.join(WURZEL, f); return fs.existsSync(p) ? 
   console.log("\n1 · DATEIEN: ALTER PFAD = STAND " + ALT + "\n");
   const altListe = git(["ls-tree", "-r", "--name-only", ALT, "--", "szenen", "figuren", "baukasten.js", "data-plaetze.js", "data-szenen.js",
     "min/baukasten.js", "min/data-plaetze.js", "min/data-szenen.js"]).toString().split("\n").filter(Boolean);
-  const anders = altListe.filter((f) => { const jetzt = lies(f); return !jetzt || !jetzt.equals(git(["show", ALT + ":" + f])); });
-  sage(altListe.length > 60 && !anders.length, "alle Dateien der alten Bilderwelt sind Byte für Byte wie in " + ALT, altListe.length + " Dateien" + (anders.length ? ", anders: " + anders.slice(0, 5).join(" ") : ""));
+  /* FASSUNG 843 — XANDER (Funk 225/232): Italienisch „generell …
+     rausnehmen“, auch in der alten Bilderwelt. Deshalb verlangt diese
+     Sonde nicht mehr Byte-Gleichheit, sondern „alt = 53eaa31 abzüglich
+     Italienisch“: eine Datei darf sich vom Stand 53eaa31 nur darin
+     unterscheiden, dass italienische Felder ("it", "itSyl") fehlen.
+     (Stand 843: die Szenendateien sind noch byte-gleich — die it-Felder
+     braucht der Italienischraum; abgeschaltet ist nur die Anzeige in
+     app.js, siehe unten.) */
+  const itWeg = (t) => String(t).replace(/,\s*"(?:it|itSyl)"\s*:\s*"(?:[^"\\]|\\.)*"/g, "");
+  const anders = altListe.filter((f) => { const jetzt = lies(f); if (!jetzt) return true; const alt = git(["show", ALT + ":" + f]); return !jetzt.equals(alt) && itWeg(jetzt) !== itWeg(alt); });
+  sage(altListe.length > 60 && !anders.length, "alle Dateien der alten Bilderwelt sind wie in " + ALT + " (Byte für Byte oder nur ohne italienische Felder, FASSUNG 843)", altListe.length + " Dateien" + (anders.length ? ", anders: " + anders.slice(0, 5).join(" ") : ""));
   const altSet = new Set(altListe);
   const dazu = ["szenen", "figuren"].flatMap((o) => fs.readdirSync(path.join(WURZEL, o)).map((n) => o + "/" + n)).filter((f) => !altSet.has(f));
   sage(!dazu.length, "im alten Pfad liegt nichts Neues (kein figuren/mensch.js, keine Muskel- oder Geschlechtsorgan-Tafel)", dazu.join(" "));
@@ -88,7 +101,20 @@ const lies = (f) => { const p = path.join(WURZEL, f); return fs.existsSync(p) ? 
     if (z[0] === "-") s.weg.push(z.slice(1)); else if (z[0] === "+") s.neu.push(z.slice(1));
   });
   const imBereich = (s) => BEREICHE.some(([a, b]) => s.alt >= a && s.alt <= b);
-  const bw = stuecke.filter(imBereich), rest = stuecke.filter((s) => !imBereich(s));
+  /* FASSUNG 843 — „generell … rausnehmen“: Stellen mit der Marke
+     „FASSUNG 843“ sind keine Weiche, sondern das Herausnehmen von
+     Italienisch aus der alten Bilderwelt. Sie zählen nicht zu den
+     WEICHE_STELLEN und werden eigens geprüft: jede weggenommene Zeile
+     handelt von Italienisch, und die neue Zeile ist — ohne ihren
+     Kommentar — genau die alte, nur mit leerem Text statt des
+     italienischen Satzes. Alles andere bleibt Stand 53eaa31 + Weiche. */
+  const ist843 = (s) => s.neu.some((z) => z.includes("FASSUNG 843")) && !s.neu.some((z) => z.includes("FASSUNG 840"));
+  const bwAlle = stuecke.filter(imBereich), rest = stuecke.filter((s) => !imBereich(s));
+  const bw = bwAlle.filter((s) => !ist843(s)), bw843 = bwAlle.filter(ist843);
+  const ohneKommentar = (z) => z.replace(/\s*\/\*[\s\S]*?\*\//g, "");
+  const nurItalienischWeg = (s) => s.weg.length === s.neu.length && s.weg.length > 0 && s.weg.every((w, i) =>
+    /italien/i.test(w) && ohneKommentar(s.neu[i]) === w.replace(/"[^"]*italien[^"]*"/i, '""'));
+  const bw843falsch = bw843.filter((s) => !nurItalienischWeg(s));
   const ohneMarke = bw.filter((s) => !s.neu.some((z) => z.includes("FASSUNG 840")));
   /* Eine ersetzte Zeile gilt als erhalten, wenn ihr Ausdruck (ohne
      „x = “ vorn und „;“ hinten) wörtlich im ALT-Zweig steht — oder wenn
@@ -103,6 +129,8 @@ const lies = (f) => { const p = path.join(WURZEL, f); return fs.existsSync(p) ? 
   sage(!altVerloren.length, "app.js: jede alte Zeile steht unverändert im ALT-Zweig der Weiche", altVerloren.map((w) => w.trim().slice(0, 70)).join(" | "));
   sage(bw.length === WEICHE_STELLEN, "app.js: genau " + WEICHE_STELLEN + " Weichenstellen (wie in SPIELSYSTEM.md aufgeführt)", bw.length + " gefunden");
   bw.forEach((s) => console.log("         · alt Z. " + s.alt + ": −" + s.weg.length + " +" + s.neu.length + "  " + (s.neu.find((z) => z.includes("FASSUNG 840")) || "").trim().slice(0, 90)));
+  sage(!bw843falsch.length, "app.js: Stellen „FASSUNG 843“ nehmen nur Italienisch heraus (alt = " + ALT + " abzüglich Italienisch)",
+    bw843.length + " Stelle(n)" + (bw843falsch.length ? ", unklar: " + bw843falsch.map((s) => "alt Z. " + s.alt).join(" ") : ""));
   const leck = rest.filter((s) => s.neu.some((z) => /FASSUNG 840|DMA_BILDERWELT_NEU|DMA_BW_PFAD/.test(z)));
   sage(!leck.length, "die Weiche reicht nicht in andere Teile von app.js (Satzbaukasten bleibt, wie er ist)", leck.map((s) => "alt Z. " + s.alt).join(" "));
 
