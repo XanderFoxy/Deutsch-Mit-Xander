@@ -183,12 +183,6 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
     sage(abCm <= 2, "Badewanne: Gesäß auf dem Wannenboden (± 2 cm)", abCm.toFixed(1) + " cm");
     sage(ba.iVorn > ba.iFig && ba.wasser && ba.wand, "Badewanne: Wasser (durchsichtig) und Wannenwand liegen VOR der Figur", "Figur #" + ba.iFig + ", davor #" + ba.iVorn);
     if (BILD) await (await pb.$("#__bk .bk-buehne")).screenshot({ path: BILD + "-badewanne.png" });
-    /* Badekleidung: wie ein Nutzer — den Platz antippen */
-    await pb.evaluate(() => document.querySelector('#__bk [data-bk-platz="badezimmer-badewanne"]').dispatchEvent(new MouseEvent("click", { bubbles: true })));
-    await tick(700);
-    await pb.waitForFunction(() => !Baukasten.bewegt(), null, { timeout: 20000 }).catch(() => {});
-    const bk = await pb.evaluate(() => Object.keys(Baukasten.zustand.kleidung).map((k) => Baukasten.zustand.kleidung[k] && Baukasten.zustand.kleidung[k].stueck));
-    sage(bk.some((k) => /badeanzug|badehose|badeshirt/.test(k)), "in der Badewanne Badekleidung", bk.join(","));
     const varianten = [["wohnzimmer-sessel", "sitzen_seit", "seitlich"], ["wohnzimmer-sessel", "sitzen_zurueck", "zurückgelehnt"], ["wohnzimmer-sessel", "sitzen_ueberkreuz", "übereinandergeschlagenen"],
       ["wohnzimmer-sofa", "schneidersitz", "Schneidersitz"], ["badezimmer-toilette", "sitzen", "Toilette"]];
     const schlecht = [];
@@ -198,6 +192,12 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
       if (BILD && h !== "sitzen") await (await pb.$("#__bk .bk-buehne")).screenshot({ path: BILD + "-" + h + ".png" });
     }
     sage(!schlecht.length, "Sitzvarianten: seitlich, zurückgelehnt, Bein übergeschlagen, Schneidersitz auf dem Sofa, Toilette", schlecht.join(" | "));
+    /* Badekleidung: wie ein Nutzer — den Platz antippen */
+    await pb.evaluate(() => document.querySelector('#__bk [data-bk-platz="badezimmer-badewanne"]').dispatchEvent(new MouseEvent("click", { bubbles: true })));
+    await tick(700);
+    await pb.waitForFunction(() => !Baukasten.bewegt(), null, { timeout: 20000 }).catch(() => {});
+    const bk = await pb.evaluate(() => Object.keys(Baukasten.zustand.kleidung).map((k) => Baukasten.zustand.kleidung[k] && Baukasten.zustand.kleidung[k].stueck));
+    sage(bk.some((k) => /badeanzug|badehose|badeshirt/.test(k)), "in der Badewanne Badekleidung", bk.join(","));
     const knopf = await pb.evaluate(() => ({ nichts: [...document.querySelectorAll("#__bk [data-wert]")].some((b) => /^(nichts|nackt)$/.test(b.dataset.wert)) }));
     sage(!knopf.nichts, "keine Wahl „nichts an“ im Baukasten");
     sage(!pf.length, "keine Seitenfehler im Baukasten", pf.slice(0, 2).join(" | "));
