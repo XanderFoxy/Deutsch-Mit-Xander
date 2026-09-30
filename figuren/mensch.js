@@ -809,6 +809,11 @@
     /* FASSUNG 836: unten breiter (Kapuzenmuskel), oben unter dem Kiefer schmal */
     const HALS = [[-0.12, 7.4, 5.9, -0.9], [0.18, 6.0, 5.6, -0.5], [0.55, 5.3, 5.3, 0.2], [1.0, 5.1, 5.3, 0.7]];
     const halsLaenge = len(sub(S.kopf.basis, S.hals.p)) + 1.5 * M.k;
+    /* FASSUNG 838: bei Säugling und Kleinkind lag der Halsansatz über dem
+       oberen Ende des Rumpfs — zwischen Hals und Pullover war eine Lücke
+       (Hintergrund). Der Hals reicht jetzt bis in den Rumpf hinein. */
+    const halsLuecke = M.halsH - (M.huefteH + rumpfTab[rumpfTab.length - 1][0] * M.k);
+    if (halsLuecke > -1) HALS[0] = [-0.12 - (halsLuecke + 1.5) / halsLaenge, 7.4, 5.9, -0.9];
     const halsS = HALS.map((q) => schnitt(add(add(S.hals.p, mul(unit(sub(S.kopf.basis, S.hals.p)), q[0] * halsLaenge)), mul(mv(halsR, [0, 0, 1]), q[3] * M.k)),
       mv(halsR, [1, 0, 0]), mv(halsR, [0, 0, 1]), q[1] * (M.kopf / 23.7) * (M.w ? 0.9 : 1) * f, q[2] * (M.kopf / 23.7) * (M.w ? 0.92 : 1) * f));
 
@@ -1058,7 +1063,7 @@
       const handschuh = zub && zub.stueck === "handschuhe";
       const farbe = handschuh ? stoff(zub, "#5a4636") : hautF;
       let out = form(palm, farbe, { hell: 0.14, dunkel: 0.16 });
-      const fl = L0 * 0.47, fb = 1.0 * g * (M.w ? 0.88 : 1) * (M.erw ? 1 : 1.12);
+      const fl = L0 * 0.47, fb = 1.08 * g * (M.w ? 0.88 : 1) * (M.erw ? 1 : 1.12);
       const finger = [];
       const lage = [0.72, 0.24, -0.24, -0.7];
       const laengen = [0.93, 1.03, 0.97, 0.78];
@@ -1098,7 +1103,21 @@
         let o = linie(pp, dunkler(farbe, 0.36), b * 2 + 0.34 * g);
         for (let j = 0; j < pp.length - 1; j++) o += linie([pp[j], pp[j + 1]], farbe, b * 2 * breiten[Math.min(j, 2)]);
         const e = pp[pp.length - 1], v = pp[pp.length - 2];
-        o += '<circle cx="' + r1(lerp(v[0], e[0], 0.7)) + '" cy="' + r1(lerp(v[1], e[1], 0.7)) + '" r="' + r1(b * 0.55) + '" fill="' + heller(farbe, 0.35) + '" opacity=".4"/>';
+        /* FASSUNG 838: Nagel als helle Platte mit Rand und Nagelhaut,
+           Knöchelfalten an den Gelenken (quer zum Finger). */
+        const R2 = (x) => Math.round(x * 100) / 100;
+        const dx = e[0] - v[0], dy = e[1] - v[1], dl = Math.hypot(dx, dy) || 1;
+        if (!handschuh && dl > 0.3 * g) {
+          const nc = [lerp(v[0], e[0], 0.68), lerp(v[1], e[1], 0.68)];
+          o += '<ellipse cx="' + R2(nc[0]) + '" cy="' + R2(nc[1]) + '" rx="' + R2(b * 0.62) + '" ry="' + R2(Math.min(dl * 0.34, b * 0.95)) + '" transform="rotate(' + r1(Math.atan2(dy, dx) * 180 / Math.PI + 90) + "," + R2(nc[0]) + "," + R2(nc[1]) + ')" fill="' + misch(heller(farbe, 0.4), "#f2c4bd", 0.3) + '" stroke="' + dunkler(farbe, 0.25) + '" stroke-width="' + R2(0.07 * g) + '" opacity=".85"/>';
+        }
+        let kn = "";
+        for (let j = 1; j < pp.length - 1; j++) {
+          const a0 = pp[j - 1], a1 = pp[j + 1], tx = a1[0] - a0[0], ty = a1[1] - a0[1], tl = Math.hypot(tx, ty) || 1;
+          const nx = -ty / tl * b * 0.7, ny = tx / tl * b * 0.7;
+          kn += "M" + R2(pp[j][0] - nx) + " " + R2(pp[j][1] - ny) + "Q" + R2(pp[j][0] + tx / tl * b * 0.2) + " " + R2(pp[j][1] + ty / tl * b * 0.2) + " " + R2(pp[j][0] + nx) + " " + R2(pp[j][1] + ny);
+        }
+        if (kn) o += '<path d="' + kn + '" fill="none" stroke="' + dunkler(farbe, 0.34) + '" stroke-width="' + R2(0.08 * g) + '" opacity=".6"/>';
         return o;
       };
       const hinten = finger.filter((fi) => fi.tiefe < palmT).sort((a, b) => a.tiefe - b.tiefe);
@@ -1223,15 +1242,31 @@
             const hoch = knochen(Kn.p, Kn.R, M.unterschenkel, [[fussArt.schaft, 5.2, 5.6, -0.3], [0.84, 3.9, 4.0, 0], [1.0, 3.9, 4.2, 0]], f);
             svg += form(hoch, farbe, { hell: 0.2, dunkel: 0.26 });
           }
-          /* Sohle als dunkler Rand unten */
-          const unterkante = t.fuss.map((s) => pr(add(s.c, mul(s.V, -(s.b + 0.5 * g)))));
-          if (fussVorn <= 0.6) {
-            svg += linie(unterkante, fussArt.sohle || dunkler(farbe, 0.5), 0.9 * g);
-            if (fussArt.weiss) svg += linie(unterkante, "#f3f1ec", 0.55 * g);
-          }
+          /* FASSUNG 838 — XANDER: „Füße/Schuhe von vorn nicht als Klumpen“.
+             Die Sohle läuft als Band rund um den Schuh (auch von vorn zu
+             sehen), vorn eine Zehenkappe, oben die Schnürung als Kreuz
+             über der Zunge, ein Glanz auf der Kappe. */
+          const sohleF = fussArt.sohle || dunkler(farbe, 0.55);
+          const ring = (s0, w, zu) => add(add(s0.c, mul(s0.U, Math.cos(w) * (s0.a + zu))), mul(s0.V, Math.sin(w) * (s0.b + zu)));
+          const band = [];
+          const fs = sohle;
+          for (let i = 0; i < fs.length; i++) band.push(ring(fs[i], -Math.PI * 0.08, 0));
+          for (let w = -0.08; w >= -0.92; w -= 0.12) band.push(ring(fs[fs.length - 1], Math.PI * w, 0.2 * g));
+          for (let i = fs.length - 1; i >= 0; i--) band.push(ring(fs[i], -Math.PI * 0.92, 0));
+          const bandP = band.filter((q, i) => true).map(pr);
+          svg += linie(bandP, sohleF, 1.0 * g, ' opacity=".95"');
+          if (fussArt.weiss) svg += linie(bandP, "#e2dfd7", 0.45 * g);
+          const kap = [0.25, 0.4, 0.5, 0.6, 0.75].map((w) => pr(ring(fs[fs.length - 2], Math.PI * w, 0.05 * g)));
+          if (sichtbar(mv(Fu.R, [0, 0, 1])) > -0.3) svg += linie(kap, dunkler(farbe, 0.28), 0.22 * g, ' opacity=".6"');
+          const glanzP = pr(ring(fs[fs.length - 2], Math.PI * 0.62, 0.1 * g));
+          svg += '<ellipse cx="' + r1(glanzP[0]) + '" cy="' + r1(glanzP[1]) + '" rx="' + r1(1.3 * g) + '" ry="' + r1(0.6 * g) + '" fill="#fff" opacity="' + (fussArt.weiss ? 0.5 : 0.22) + '"/>';
           if (fussArt.schnuerung) {
-            const a = pr(add(t.fuss[1].c, mul(t.fuss[1].V, t.fuss[1].b + 0.4 * g))), b = pr(add(t.fuss[2].c, mul(t.fuss[2].V, t.fuss[2].b + 0.4 * g)));
-            svg += linie([a, b], heller(farbe, 0.45), 0.35 * g, ' stroke-dasharray="' + r1(0.5 * g) + " " + r1(0.6 * g) + '"');
+            let sn = "";
+            const ose = (i, sg) => pr(ring(fs[i], Math.PI * (0.5 + sg * 0.16), 0.15 * g));
+            [[1, 2], [2, 3]].forEach(([i, j]) => { sn += "M" + r1(ose(i, 1)[0]) + " " + r1(ose(i, 1)[1]) + "L" + r1(ose(j, -1)[0]) + " " + r1(ose(j, -1)[1]) + "M" + r1(ose(i, -1)[0]) + " " + r1(ose(i, -1)[1]) + "L" + r1(ose(j, 1)[0]) + " " + r1(ose(j, 1)[1]); });
+            const zunge = [pr(ring(fs[1], Math.PI * 0.5, 0.25 * g)), pr(ring(fs[3], Math.PI * 0.5, 0.1 * g))];
+            svg += linie(zunge, dunkler(farbe, 0.2), 2.2 * g, ' opacity=".35"');
+            svg += '<path d="' + sn + '" stroke="' + (fussArt.weiss ? "#8d9096" : heller(farbe, 0.5)) + '" stroke-width="' + r1(0.3 * g) + '" stroke-linecap="round"/>';
           }
         }
       }
@@ -1265,6 +1300,8 @@
           /* Stauchfalten über dem Schuh und die Bügelfalte bzw. Naht */
           svg += hosenFalte(unten, [[0.84, 45], [0.87, 90], [0.84, 135]], farbe, aussen, 0.45) + hosenFalte(unten, [[0.93, 55], [0.96, 88], [0.94, 125]], farbe, aussen, 0.4);
           svg += gliedLinie(unten, [[0.12, 90], [0.8, 90]], heller(farbe, 0.18), 0.35 * g, 0.4, aussen);
+          /* FASSUNG 838: Seitennaht */
+          svg += gliedLinie(oben, [[0.1, 8], [0.95, 5]], dunkler(farbe, 0.35), 0.18 * g, 0.5, aussen) + gliedLinie(unten, [[0.02, 5], [0.97, 3]], dunkler(farbe, 0.35), 0.18 * g, 0.5, aussen);
           const saum = unten[unten.length - 1];
           const sq = { c: pr(saum.c), U: prRichtung(saum.U), V: prRichtung(saum.V), a: saum.a, b: saum.b };
           const saumPts = ellipsePunkte(sq, 16).filter((p, i) => Math.sin(i / 16 * 2 * Math.PI) * sq.V[2] + Math.cos(i / 16 * 2 * Math.PI) * sq.U[2] > -0.1);
@@ -1298,7 +1335,12 @@
       const sd = t.seite, aussen = sd === "L" ? 1 : -1;
       const beuge = P["ellbogen" + sd] || 0;
       const einzeln = beuge > 72;
-      let svg = kette([{ ss: t.oberarm, grund: koerperF, offen: true, opt: { hell: 0.16, dunkel: 0.2 } },
+      /* FASSUNG 838: mit Ärmel beginnen Arm und Ärmel am Schultergelenk —
+         die Kappe darüber gehört zum Rumpf (Schulternaht), sonst saß der
+         Ärmel wie ein Polster oben auf der Schulter. */
+      const mitAermel0 = aermel > 0 && aermelFarbe && !spec.muskeln;
+      const oberarmS = mitAermel0 ? t.oberarm.slice(2) : t.oberarm;
+      let svg = kette([{ ss: oberarmS, grund: koerperF, offen: true, opt: { hell: 0.16, dunkel: 0.2 } },
         { ss: t.unterarm, grund: koerperF, einzeln, opt: { hell: 0.16, dunkel: 0.2 } }]);
       if (spec.muskeln) {
         const aus = t.seite === "L" ? 0 : 180;
@@ -1314,7 +1356,8 @@
         if (M.erw && !M.w) for (let i = 0; i < 7; i++) svg += gliedLinie(t.unterarm, [[0.18 + i * 0.09, -10 + (i % 3) * 25], [0.22 + i * 0.09, -4 + (i % 3) * 25]], dunkler(haarF, 0.1), 0.1 * g, 0.32, aussen);
       }
       if (aermel > 0 && aermelFarbe) {
-        const ober = aufblasen(t.oberarm, 1.0 * g);
+        /* FASSUNG 838: an der Schulter liegt der Ärmel an (vorher Puffärmel) */
+        const ober = oberarmS.map((s0, i) => { const d = (aermel >= 1 ? (i < 1 ? 0.5 : (i < 3 ? 0.8 : 1.0)) : 0.65) * g; return schnitt(s0.c, s0.U, s0.V, s0.a + d, s0.b + d); });
         if (aermel >= 1) {
           /* Der Ärmel ist weiter als der Arm und wird zum Bündchen enger. */
           const lang = aermel >= 2;
@@ -1340,7 +1383,7 @@
             svg += '<path d="' + pfad(bund) + '" fill="none" stroke="' + dunkler(aermelFarbe, 0.3) + '" stroke-width="' + r1(0.3 * g) + '" opacity=".6"/>';
           }
         } else {
-          const kurz = ober.slice(0, 4);
+          const kurz = ober.slice(0, 3);
           svg += kette([{ ss: kurz, grund: aermelFarbe, offen: true, opt: { hell: 0.16, dunkel: 0.24 } }]);
           const e = kurz[kurz.length - 1];
           const bund = ellipsePunkte({ c: pr(e.c), U: prRichtung(e.U), V: prRichtung(e.V), a: e.a, b: e.b }, 14)
@@ -1353,14 +1396,19 @@
          über die Schulter und der Arm hängt wie bei einer Puppe hinten
          dran. Nur solange die Schulter noch am Umriss liegt. */
       const brustS = rumpf.find((q) => q.hy >= 43) || rumpf[rumpf.length - 3];
-      if (t.tiefe < rumpfTiefe0 && pr(S["schulter" + sd].p)[2] - pr(brustS.c)[2] > -0.62 * brustS.b) {
+      if (t.tiefe < rumpfTiefe0 && pr(S["schulter" + sd].p)[2] - pr(brustS.c)[2] > -0.62 * brustS.b && !(aermel > 0 && aermelFarbe)) {
+        /* FASSUNG 838: mit Ärmel keine Kappe mehr — sie saß als Polster auf
+           der Schulter; jetzt kommt der Ärmel unter der Schulternaht hervor. */
         const mitAermel = aermel > 0 && aermelFarbe;
-        const kappeSS = (mitAermel ? aufblasen(t.oberarm, 1.0 * g) : t.oberarm).slice(0, 6);
+        const kappeSS = (mitAermel ? t.oberarm.map((s0, i) => { const d = (aermel >= 1 ? (i < 3 ? 0.35 : (i < 5 ? 0.7 : 1.0)) : 0.65) * g; return schnitt(s0.c, s0.U, s0.V, s0.a + d, s0.b + d); }) : t.oberarm).slice(0, 6);
         auftraege.push({ tiefe: rumpfTiefe0 + 0.05, svg: kette([{ ss: kappeSS, grund: mitAermel ? aermelFarbe : koerperF, offen: true, einzeln: true, nurSeiten: true, aussenX: pr(brustS.c)[0], opt: { hell: 0.16, dunkel: mitAermel ? 0.24 : 0.2 } }]) });
       }
       svg += hand(t.hand, t.seite, t.tiefe);
       if (zub && t.seite === (P.traghand || "R")) svg += zubehoerInHand(zub, t.hand);
-      auftraege.push({ tiefe: t.tiefe, svg, arm: true, seite: t.seite });
+      /* FASSUNG 838: ein Arm im Ärmel, der neben dem Rumpf hängt, liegt
+         hinter dem Rumpf — die Schulternaht deckt den Ärmelansatz. */
+      const hinterRumpf = mitAermel0 && Math.abs(t.tiefe - rumpfTiefe0) < 5 * g;
+      auftraege.push({ tiefe: hinterRumpf ? rumpfTiefe0 - 0.02 : t.tiefe, svg, arm: true, seite: t.seite });
     });
 
     /* Rumpf mit Oberteil, Kleid, Jacke, Schürze */
@@ -1438,11 +1486,33 @@
     })();
     const nackt = !oben && !kleid && !jacke;
     const oberArt = oben ? OBERTEIL[oben.stueck] || OBERTEIL.tshirt : null;
+    /* FASSUNG 838: Oberteile mit Ärmeln decken die Schulter bis über den
+       Deltamuskel — der Ärmel kommt darunter hervor (Schulternaht), statt
+       als Polster auf der Schulter zu sitzen. */
+    function schulterStoff(tab, aermel) {
+      if (!aermel) return tab;
+      const zu = (y) => y < 45 ? 0 : (y < 50 ? lerp(0, 2.6, (y - 45) / 5) : (y < 53.5 ? lerp(2.6, 4.4, (y - 50) / 3.5) : (y < 56.5 ? lerp(4.4, 1.2, (y - 53.5) / 3) : 0)));
+      return tab.map((q) => [q[0], q[1] + zu(q[0]) * f, q[2], q[3]]);
+    }
     /* Hose am Rumpf (Gesäß und Bund) */
     if (hoseArt) {
       const farbe = stoff(hose, "#3b4d6b");
       const bund = hoseArt.bund == null ? 9 : hoseArt.bund;
-      rumpfSvg += rumpfForm(rumpfSchnitte(rumpfTab, 0.9 * g, bund * M.k), farbe, { hell: 0.16, dunkel: 0.24 }, 0);
+      const hss = rumpfSchnitte(rumpfTab, 0.9 * g, bund * M.k);
+      rumpfSvg += rumpfForm(hss, farbe, { hell: 0.16, dunkel: 0.24 }, 0);
+      /* FASSUNG 838: Nähte der Hose — Hosenschlitz mit J-Naht, Taschen,
+         Gürtelschlaufen; bei Jeans gelbe Ziernaht. */
+      if (hoseArt.lang || hoseArt.gurt) {
+        const naht = hose.stueck === "jeans" ? "#c9953f" : dunkler(farbe, 0.35);
+        const nb = hose.stueck === "jeans" ? 0.16 * g : 0.22 * g;
+        const bo = bund - 1.2;
+        rumpfSvg += stoffLinie(hss, [[bo, 0.06], [3, 0.06], [0.5, 0.0]], naht, nb, 0.8) + stoffLinie(hss, [[bo, 0.0], [1, 0.0]], dunkler(farbe, 0.4), 0.2 * g, 0.5);
+        [1, -1].forEach((sg) => {
+          rumpfSvg += stoffLinie(hss, [[bo, sg * 0.42], [bo - 3, sg * 0.6], [bo - 5.5, sg * 0.82]], dunkler(farbe, 0.38), 0.24 * g, 0.6);
+          rumpfSvg += stoffLinie(hss, [[bo - 0.3, sg * 0.36], [bo - 3.4, sg * 0.55], [bo - 6, sg * 0.8]], naht, nb, 0.6);
+          [0.3, 0.8].forEach((u) => { rumpfSvg += stoffLinie(hss, [[bund + 0.2, sg * u], [bund - 1.8, sg * u]], dunkler(farbe, 0.3), 0.55 * g, 0.55); });
+        });
+      }
       if (hoseArt.lang || hoseArt.gurt) {
         const b = rumpfSchnitte(rumpfTab, 1.0 * g, bund * M.k);
         const oberk = b[b.length - 1];
@@ -1455,9 +1525,10 @@
       const farbe = stoff(oben, "#c8c8c8");
       const bis = oberArt.oben == null ? 56 : oberArt.oben;
       const von = oberArt.unten == null ? -2 : oberArt.unten;
-      const ss = rumpfSchnitte(rumpfTab.filter((q) => q[0] >= von), 0.8 * g, bis * M.k);
+      const ss = rumpfSchnitte(schulterStoff(rumpfTab, oberArt.aermel).filter((q) => q[0] >= von), 1.15 * g, bis * M.k);
       rumpfSvg += form(ss, farbe, { hell: 0.18, dunkel: 0.24 });
       rumpfSvg += oberteilDetails(oberArt, farbe, ss);
+      rumpfSvg += stoffFalten(oberArt, farbe, ss, von);
     }
     if (kleid) {
       const art = KLEID[kleid.stueck] || KLEID.sommerkleid;
@@ -1521,7 +1592,7 @@
     if (jacke) {
       const art = JACKE[jacke.stueck] || JACKE.jacke;
       const farbe = stoff(jacke, "#445566");
-      const ss = rumpfSchnitte(rumpfTab.filter((q) => q[0] >= (art.lang ? -5 : -6)), (art.weste ? 1.1 : 1.5) * g, (art.weste ? 52 : 55) * M.k);
+      const ss = rumpfSchnitte(schulterStoff(rumpfTab, art.aermel).filter((q) => q[0] >= (art.lang ? -5 : -6)), (art.weste ? 1.1 : 1.5) * g, (art.weste ? 52 : 57.2) * M.k);
       let svg = form(ss, farbe, { hell: 0.2, dunkel: 0.26 });
       if ((art.weste || art.offen) && oberArt && sichtbar(ss[ss.length - 3].V) > 0.1) {
         /* V-Ausschnitt: das Hemd schaut heraus */
@@ -1562,6 +1633,62 @@
       const m1 = pr(add(add(b0.c, mul(b0.U, 0.2 * b0.a)), mul(b0.V, b0.b + 0.5 * g)));
       svgS += linie([m1, [lerp(unten[0][0], unten[1][0], 0.4), lerp(unten[0][1], unten[1][1], 0.4)]], dunkler(farbe, 0.16), 0.25 * g, ' opacity=".6"');
       auftraege.push({ tiefe: Math.max(vorneTiefe, rumpfTiefe) + 0.4, svg: svgS });
+    }
+
+    /* FASSUNG 838 — XANDER (Funk 222): „alles soll Struktur haben“.
+       Eine Linie auf dem Stoff über dem Rumpf: Punkte [Höhe (Tabelle),
+       quer −1 … 1, vorn +1 / hinten −1]; unsichtbare Stücke fallen weg. */
+    function stoffLinie(ss, liste, farbe, breite, deck) {
+      const o = liste.map((q) => {
+        let i = 0; while (i < ss.length - 2 && ss[i + 1].hy < q[0]) i++;
+        const a0 = ss[i], a1 = ss[i + 1] || ss[i];
+        const t = klemm((q[0] - a0.hy) / ((a1.hy - a0.hy) || 1), 0, 1);
+        const c = lerp3(a0.c, a1.c, t), Uu = unit(lerp3(a0.U, a1.U, t)), Vv = unit(lerp3(a0.V, a1.V, t));
+        const ra = lerp(a0.a, a1.a, t), rb = lerp(a0.b, a1.b, t), w = Math.sqrt(Math.max(0, 1 - q[1] * q[1])), v = q[2] == null ? 1 : q[2];
+        return { p: add(add(c, mul(Uu, q[1] * ra * 1.01)), mul(Vv, v * rb * w * 1.01)), n: unit(add(mul(Uu, q[1] / ra), mul(Vv, v * w / rb))) };
+      });
+      const sicht = o.reduce((a, q) => a + sichtbar(q.n), 0) / o.length;
+      if (sicht < 0.1) return "";
+      return linie(o.map((q) => pr(q.p)), farbe, breite, ' opacity="' + (deck * klemm(sicht * 1.4, 0, 1)).toFixed(2) + '"');
+    }
+    /* Falten und Nähte am Oberteil: Zugfalten von der Achsel, Stauch-
+       falten über dem Bund, Seiten- und Schulternaht, Saum mit Naht und
+       einem Schatten darunter; beim Pullover Rippen an Saum und Bündchen. */
+    function stoffFalten(art, farbe, ss, von) {
+      if (!ss.length || art.aermel === 0 && !art.rund) return "";
+      const d = dunkler(farbe, 0.32), hl = heller(farbe, 0.22), gw = g;
+      const bein = rumpfTab[0][0];
+      let o = "";
+      [1, -1].forEach((sg) => {
+        o += stoffLinie(ss, [[45, sg * 0.93], [37, sg * 0.72], [29, sg * 0.55]], d, 0.3 * gw, 0.35);
+        o += stoffLinie(ss, [[43, sg * 0.86], [34, sg * 0.5], [27, sg * 0.36]], hl, 0.35 * gw, 0.3);
+        o += stoffLinie(ss, [[8, sg * 0.85], [6.5, sg * 0.55], [7.5, sg * 0.25]], d, 0.26 * gw, 0.35);
+        o += stoffLinie(ss, [[4, sg * 0.7], [3, sg * 0.4]], d, 0.22 * gw, 0.3);
+        o += stoffLinie(ss, [[von + 1, sg * 0.999, 0], [46, sg * 0.999, 0]], d, 0.2 * gw, 0.4);
+        o += stoffLinie(ss, [[57, sg * 0.55], [54, sg * 0.85], [51, sg * 0.99]], d, 0.18 * gw, 0.35);
+        o += stoffLinie(ss, [[57, sg * 0.55, -1], [54, sg * 0.85, -1], [51, sg * 0.99, -1]], d, 0.18 * gw, 0.35);
+      });
+      /* Saum: Naht und Schatten auf der Hose darunter */
+      const saumY = Math.max(von, bein) + 0.8;
+      const saumL = [-0.98, -0.6, -0.2, 0.2, 0.6, 0.98].map((u) => [saumY, u]);
+      o += stoffLinie(ss, saumL, d, 0.2 * gw, 0.5);
+      o += stoffLinie(ss, saumL.map((q) => [q[0] - 1.1, q[1] * 1.02]), dunkler(farbe, 0.6), 0.9 * gw, 0.18);
+      if (art.strick) {
+        for (let u = -0.9; u <= 0.91; u += 0.12) o += stoffLinie(ss, [[saumY - 0.6, u], [saumY + 3.2, u]], d, 0.12 * gw, 0.35);
+      }
+      return o;
+    }
+    /* Das Halsbündchen liegt VOR dem Hals (der Hals wird nach dem Rumpf
+       gezeichnet und deckte den Ausschnitt sonst zu). */
+    function halsBuendchen(art, farbe, ss) {
+      if (!art.rund || !ss.length) return "";
+      const top = ss[ss.length - 1];
+      if (sichtbar(top.V) < -0.1) return "";
+      const ring = (dy, zu) => { const pts = []; for (let i = 0; i <= 12; i++) { const w = Math.PI * i / 12; pts.push(pr(add(add(add(top.c, mul(top.U, Math.cos(w) * (top.a + zu))), mul(top.V, Math.sin(w) * (top.b + zu))), mul(mv(S.brust.R, [0, 1, 0]), dy)))); } return pts; };
+      const o1 = ring(0, 0.2 * g), u1 = ring(1.4 * g, 0.5 * g).reverse();
+      let o = '<path d="M' + o1.concat(u1).map((p) => r1(p[0]) + " " + r1(p[1])).join("L") + 'Z" fill="' + farbe + '" stroke="' + dunkler(farbe, 0.3) + '" stroke-width="' + r1(0.2 * g) + '" stroke-linejoin="round"/>';
+      o += linie(ring(0.7 * g, 0.35 * g), dunkler(farbe, 0.25), 0.15 * g, ' opacity=".6"');
+      return o;
     }
 
     /* ---- Oberteil-Details: Kragen, Knöpfe, Reißverschluss ---- */
@@ -1674,7 +1801,12 @@
     }
     const kragenHoch = (oberArt && oberArt.rollkragen);
     if (kragenHoch) halsSvg += form(aufblasen(halsS.slice(0, 2), 0.8 * g), stoff(oben, "#c8c8c8"));
-    auftraege.push({ tiefe: rumpfTiefe + 0.5, svg: halsSvg, hals: true });
+    /* Beim Säugling reicht der Hals in den Rumpf: dann liegt er hinter dem Oberteil */
+    auftraege.push({ tiefe: halsLuecke > -1 && (oben || kleid || jacke) ? rumpfTiefe - 0.05 : rumpfTiefe + 0.5, svg: halsSvg, hals: true });
+    if (oberArt && !jacke && !(kleid && !oben)) {
+      const bis = oberArt.oben == null ? 56 : oberArt.oben;
+      auftraege.push({ tiefe: rumpfTiefe + 0.55, svg: halsBuendchen(oberArt, stoff(oben, "#c8c8c8"), rumpfSchnitte(rumpfTab, 1.15 * g, bis * M.k)) });
+    }
 
     const kopfSpec = Object.assign({}, spec, { kopfbedeckung: stueck("kopf"), brille: !!(zub && zub.stueck === "brille") });
     const kopfTeile = kopf(S.kopf, M, kopfSpec, { pr, prRichtung, sichtbar, form, fuellung: () => letzteFuellung, formPunkte, linie, verlauf, hautF, haarF, g, id, defs, zaehler: () => gz++, stoff, licht: LICHT });
@@ -2013,7 +2145,9 @@
     h.defs.push('<radialGradient id="' + GL + '"><stop offset="0" stop-color="#fffaf2"/><stop offset="1" stop-color="#fffaf2" stop-opacity="0"/></radialGradient>'
       + '<radialGradient id="' + DK + '"><stop offset="0" stop-color="' + dunkler(hautF, 0.55) + '"/><stop offset="1" stop-color="' + dunkler(hautF, 0.55) + '" stop-opacity="0"/></radialGradient>'
       + '<radialGradient id="' + RT + '"><stop offset="0" stop-color="#d4695a"/><stop offset="1" stop-color="#d4695a" stop-opacity="0"/></radialGradient>');
-    const weich = (c, rx, ry, art, op, dreh) => '<ellipse cx="' + r2(c[0]) + '" cy="' + r2(c[1]) + '" rx="' + r2(Math.max(0.05, rx)) + '" ry="' + r2(Math.max(0.05, ry)) + '" fill="url(#' + art + ')" opacity="' + op.toFixed(2) + '"' + (dreh ? ' transform="rotate(' + r1(dreh) + " " + r2(c[0]) + " " + r2(c[1]) + ')"' : "") + "/>";
+    /* (rotate mit Kommas: der Rahmen der Figur wird aus Zahlenpaaren mit
+       Leerzeichen gelesen — ein Drehwinkel darf dort nicht als Punkt zählen) */
+    const weich = (c, rx, ry, art, op, dreh) => '<ellipse cx="' + r2(c[0]) + '" cy="' + r2(c[1]) + '" rx="' + r2(Math.max(0.05, rx)) + '" ry="' + r2(Math.max(0.05, ry)) + '" fill="url(#' + art + ')" opacity="' + op.toFixed(2) + '"' + (dreh ? ' transform="rotate(' + r1(dreh) + "," + r2(c[0]) + "," + r2(c[1]) + ')"' : "") + "/>";
     const auf2 = (y, u) => { const q = flaeche(y, u); return sichtbar(q.n) > 0.04 ? pr(q.p) : null; };
     const licht = -schatten;                         // Seite (u-Vorzeichen), die zum Licht zeigt
     const bz = (a, b, c, d, t) => { const m = 1 - t; return [m * m * m * a[0] + 3 * m * m * t * b[0] + 3 * m * t * t * c[0] + t * t * t * d[0], m * m * m * a[1] + 3 * m * m * t * b[1] + 3 * m * t * t * c[1] + t * t * t * d[1]]; };
@@ -2381,6 +2515,7 @@
         for (let i = 0; i < N; i++) {
           const w = -180 + (i + ((i * 7) % 5) * 0.17) * (360 / N);
           const ende = linieH(w) - 0.1 - ((i * 13) % 5) * 0.22;
+          if (F.glatze && linieH(w) < -4) continue;
           const anf = F.glatze ? -4.6 - (i % 3) * 0.4 : ((w > -60 && w < 60 ? -10.8 : -10) + ((i * 3) % 4) * 0.45);
           const pts = [0, 0.5, 1].map((t) => haarPunkt(lerp(anf, ende, t), w + (Math.abs(w) < 90 && !F.glatze ? (scheitel - w) * 0.15 * (1 - t) : 0) + Math.sin(t * 3 + i) * 2.5));
           if (sichtbar(pts[1].n) < 0.05) continue;
@@ -2524,7 +2659,7 @@
         const c = pr(auf(-6.6, 0, -10.6));
         const rr = 3.7 * k;
         let wd = "";
-        for (let i = 0; i < 9; i++) { const a0 = i * 0.7, rw = rr * (0.35 + (i % 4) * 0.16); wd += "M" + P2([c[0] + Math.cos(a0) * rw, c[1] + Math.sin(a0) * rw * 0.8]) + "A" + r2(rw) + " " + r2(rw * 0.75) + " " + r1(i * 40) + " 0 1 " + P2([c[0] + Math.cos(a0 + 2.2) * rw, c[1] + Math.sin(a0 + 2.2) * rw * 0.8]); }
+        for (let i = 0; i < 9; i++) { const a0 = i * 0.7, rw = rr * (0.35 + (i % 4) * 0.16); wd += "M" + P2([c[0] + Math.cos(a0) * rw, c[1] + Math.sin(a0) * rw * 0.8]) + "A" + r2(rw) + "," + r2(rw * 0.75) + "," + r1(i * 40) + ",0,1," + P2([c[0] + Math.cos(a0 + 2.2) * rw, c[1] + Math.sin(a0 + 2.2) * rw * 0.8]); }
         const d = '<circle cx="' + r1(c[0]) + '" cy="' + r1(c[1]) + '" r="' + r1(rr) + '" fill="' + haarF + '" stroke="' + dunkler(haarF, 0.3) + '" stroke-width="' + r2(0.12 * k) + '"/>'
           + weich([c[0] + rr * 0.35, c[1] + rr * 0.3], rr * 0.8, rr * 0.8, DK, 0.25)
           + '<path d="' + wd + '" fill="none" stroke="' + dunkler(haarF, 0.35) + '" stroke-width="' + r2(0.14 * k) + '" opacity=".6"/>'
@@ -2613,22 +2748,22 @@
      ------------------------------------------------------------------ */
   /* Ärmel: 0 ohne, 0.5 kurz, 1 halb, 2 lang. oben/unten: Rumpfhöhen. */
   const OBERTEIL = {
-    tshirt: { aermel: 0.5, oben: 54 },
+    tshirt: { aermel: 0.5, oben: 57.6, rund: true },
     /* FASSUNG 836: Badeshirt für die Wanne (Badekleidung für Männer und Jungen) */
-    badeshirt: { aermel: 0.5, oben: 54, unten: 2 },
-    hemd: { aermel: 2, kragen: true, knopf: true, oben: 55 },
-    pullover: { aermel: 2, oben: 55 },
-    bluse: { aermel: 2, kragen: true, knopf: true, oben: 54 },
-    kellnerhemd: { aermel: 2, kragen: true, knopf: true, fliege: "#1d1d22", oben: 55 },
-    polizeihemd: { aermel: 2, kragen: true, knopf: true, oben: 55 },
-    arztkittel: { aermel: 2, kragen: true, knopf: true, oben: 55 },
+    badeshirt: { aermel: 0.5, oben: 57.6, unten: 2, rund: true },
+    hemd: { aermel: 2, kragen: true, knopf: true, oben: 57.8 },
+    pullover: { aermel: 2, oben: 57.8, rund: true, strick: true },
+    bluse: { aermel: 2, kragen: true, knopf: true, oben: 57.2 },
+    kellnerhemd: { aermel: 2, kragen: true, knopf: true, fliege: "#1d1d22", oben: 57.8 },
+    polizeihemd: { aermel: 2, kragen: true, knopf: true, oben: 57.8 },
+    arztkittel: { aermel: 2, kragen: true, knopf: true, oben: 57.8 },
     warnweste: { aermel: 0, streifen: "#d9d4c4", oben: 50 },
-    feuerwehrjacke: { aermel: 2, reiss: true, streifen: "#d9c64a", oben: 55 },
-    weihnachtsmantel: { aermel: 2, knopf: true, oben: 55 },
+    feuerwehrjacke: { aermel: 2, reiss: true, streifen: "#d9c64a", oben: 57.8 },
+    weihnachtsmantel: { aermel: 2, knopf: true, oben: 57.8 },
     badeanzug: { aermel: 0, oben: 44, unten: -9 },
     bikinioberteil: { aermel: 0, oben: 38, unten: 26 },
-    rollkragen: { aermel: 2, rollkragen: true, oben: 56 },
-    bademantel: { aermel: 2, kragen: true, oben: 55 },
+    rollkragen: { aermel: 2, rollkragen: true, oben: 57.8 },
+    bademantel: { aermel: 2, kragen: true, oben: 57.8 },
     /* Lehrbuch: Körperteile werden an Menschen in Unterwäsche gezeigt. */
     sporttop: { aermel: 0, oben: 41, unten: 23 },
     unterhemd: { aermel: 0, oben: 50 },
