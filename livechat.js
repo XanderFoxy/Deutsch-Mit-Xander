@@ -3067,7 +3067,10 @@ window.LiveChat = (function () {
      nicht gibt, lässt sich später nicht mehr befüllen. */
   function plaetzeAnlegen(anderId, pc) {
     var strom = zustand.eigenerStrom;
-    var tonSpur = (strom && strom.getAudioTracks()[0]) || null;
+    /* FASSUNG 842 — die Tonspur, die gerade gelten soll (spurTauschen):
+       wer nicht auf der Bühne steht, schickt auch nach einem Neuaufbau
+       der Leitung nichts. */
+    var tonSpur = sfuEigeneTonspur();
     var bildSpur = (strom && strom.getVideoTracks()[0]) || null;
     var stroeme = strom ? [strom] : [];
     try {
@@ -3092,7 +3095,11 @@ window.LiveChat = (function () {
      Richtung auf „senden und empfangen" gestellt. */
   function spurenNachtragen(anderId, pc) {
     var strom = zustand.eigenerStrom;
-    var tonSpur = (strom && strom.getAudioTracks()[0]) || null;
+    /* FASSUNG 842 — nach einer neuen Aushandlung nicht blind das
+       Mikrofon zurücklegen, sondern die Spur, die gerade gelten soll
+       (siehe plaetzeAnlegen); sfuMeshTonAnwenden leert sie danach, wenn
+       er mich über den Server hört. */
+    var tonSpur = sfuEigeneTonspur();
     var bildSpur = (strom && strom.getVideoTracks()[0]) || null;
     var satz = { ton: null, bild: null };
     try {
@@ -3992,6 +3999,9 @@ window.LiveChat = (function () {
         /* Wer über diesen Kanal spricht, ist sicher der, zu dem er führt. */
         n.von = anderId;
         if (n.art === "dc-hallo") { kanalBereit[anderId] = true; return; }
+        /* FASSUNG 842 — „ich höre dich nicht mehr über den Server" kommt
+           auch auf diesem schnellen Weg (siehe sfuHoereSagen). */
+        if (n.art === "sfu-hoere") { if (!n.an || n.an === zustand.ichId) sfuPaket(n); return; }
         if (n.art === "spiel" && n.ereignis) empfangen(n);
       };
       dc.onclose = function () { if (kanalJe[anderId] === dc) { delete kanalBereit[anderId]; } };
@@ -4135,8 +4145,69 @@ window.LiveChat = (function () {
     kette: Promise.resolve(), aboWartet: false,
     pulsUhr: 0, pulsFehler: 0, angesagt: 0, sperreBis: 0,
     aufrufe: 0, tonWunsch: undefined, verbrauchtGb: null, grenzeGb: null,
-    pruefUrl: "", pruefMarke: ""
+    pruefUrl: "", pruefMarke: "",
+    /* FASSUNG 842 — siehe „DER TONSERVER HORCHT WEITER" */
+    hoereNrLetzt: 0, hoereNrVon: {}, letzteMarke: "", horchUhr: 0, stille: 0
   };
+
+  /* =========================================================
+     FASSUNG 842 — DER TONSERVER HORCHT WEITER
+     ---------------------------------------------------------
+     XANDER (Funk 233): „Wir haben es eben getestet in dem Moment wo
+     ich das Spiel angeschalten habe hat der Ton so offenbar wieder
+     Probleme gehabt wie verhält sich das mit dem Spiel liegt das auf
+     dem Server oder was liegt auf dem was ist mit dem Server warum
+     hängt das jetzt schon wieder liegt es an dem Spiel oder war das
+     Zufall"
+
+     NACHGESEHEN (Datenbank, 30.09. 04:25–04:35 UTC, und nachgestellt
+     in werkzeug/pruefe-842-sfu-spiel.js):
+     - Das Spiel selbst fasst die Tonleitung NICHT an. Der Spielkanal
+       ist ausgehandelt, bevor die Leitung steht (negotiated, id 7);
+       „Mitspielen" an/aus löst keine neue Aushandlung aus. In der Sonde
+       läuft der Ton beim Ein- und Ausschalten ohne jede Lücke weiter.
+     - Aber: der Tonserver hat nur EINMAL, beim Umschalten, geprüft, ob
+       wirklich Ton ankommt. Blieb danach der Server-Weg stehen (ein
+       Handy unter Last, das Spiel und die Stadt im Rahmen dazu, ein
+       kurzer Aussetzer bei Cloudflare), merkte das niemand: der eine
+       wartete auf die Server-Stimme, der andere schickte übers Netz
+       nichts mehr, weil er „ich höre dich über den Server" gehört
+       hatte. Ergebnis: Stille, bis jemand neu lädt. Genau das steht in
+       der Datenbank: danach hörten die Pulse der einen Seite auf (neu
+       geladen), und die andere Seite hat ihre Server-Sitzung
+       abgebaut und eine neue aufgemacht, in der niemand mehr ankam.
+     - Und ein „hallo" (Neuladen, aber auch nur ein neu verbundener
+       Raumkanal oder die Leitungswache) hat die GANZE Server-Sitzung
+       des anderen abgerissen und neu aufgebaut — auch wenn beim
+       Absender alles in Ordnung war. In der Sonde: 6 s Stille, zwei
+       neue Sitzungen.
+
+     JETZT:
+       1. Alle 250 ms wird je Server-Stimme gezählt, ob Tonpakete
+          ankommen. Kommt 0,8 s lang nichts (und er hat sein Mikrofon
+          an und steht auf der Bühne), geht es für ihn SOFORT zurück
+          aufs Netz: seine Netz-Stimme wird eingehängt, und ihm wird
+          gesagt „ich höre dich nicht mehr über den Server" — über den
+          Raumkanal UND direkt über den Spielkanal (schneller). Nach
+          30 s wird der Server-Weg für ihn wieder versucht (erst wenn
+          wieder Pakete kommen, wird umgeschaltet).
+       2. Jede „sfu-hoere"-Ansage trägt eine Nummer; eine ältere, die
+          auf dem langsameren Weg zu spät kommt, wird überhört.
+       3. Ein „hallo" sagt jetzt mit, welche Server-Sitzung beim
+          Absender läuft und wen er darüber hört. Ist es dieselbe wie
+          bisher, bleibt über den Server alles, wie es ist. Hat er neu
+          angefangen, wird nur SEIN Teil gelöst — die eigene Sitzung
+          läuft weiter, er wird gleich wieder abgeholt, sobald er seine
+          neue ansagt (vorher: ganze Sitzung zu, neue auf).
+       4. Neu verbundener Raumkanal (kein Neuladen): die Leitung zu ihm
+          wird nicht abgerissen, wenn sie steht.
+       5. Beim Schliessen der Seite wird die Sitzung beim Server
+          zugemacht (keepalive), und eine Sitzung, die zu spät kam,
+          wird nicht vergessen, sondern gleich wieder geschlossen.
+     ========================================================= */
+  var SFU_HORCH_MS = 250;
+  var SFU_STILL_MS = 800;
+  var SFU_PAUSE_MS = 30000;
 
   function sfuErlaubt() {
     if (typeof RTCPeerConnection !== "function") return false;
@@ -4157,6 +4228,7 @@ window.LiveChat = (function () {
     var m = sfu.pruefMarke ? Promise.resolve(sfu.pruefMarke) : marke();
     var anfrage = m.then(function (t) {
       if (!t) return { aus: true, grund: "nicht-angemeldet" };
+      sfu.letzteMarke = t;   /* FASSUNG 842 — nur im Speicher, für das Schliessen beim Weggehen */
       var abbruch = typeof AbortController === "function" ? new AbortController() : null;
       var uhr = setTimeout(function () { if (abbruch) abbruch.abort(); }, SFU_WARTEN_MS);
       return fetch(basis.replace(/\/+$/, "") + SFU_WEG, {
@@ -4231,6 +4303,7 @@ window.LiveChat = (function () {
       var sitz = (typeof n.sitzung === "string" && /^[A-Za-z0-9_-]{6,128}$/.test(n.sitzung)) ? n.sitzung : "";
       var alt = sfu.andere[id] || {};
       sfu.andere[id] = { sitzung: sitz, kaputt: alt.sitzung === sitz ? Boolean(alt.kaputt) : false,
+                         kaputtBis: alt.sitzung === sitz ? (alt.kaputtBis || 0) : 0,  /* FASSUNG 842 */
                          aus: Boolean(n.aus) };
       /* Hört er mich laut seiner eigenen Liste NICHT (mehr) über den
          Server — oder hat er gar keinen —, geht meine Stimme wieder
@@ -4246,6 +4319,12 @@ window.LiveChat = (function () {
       return;
     }
     if (n.art === "sfu-hoere") {
+      /* FASSUNG 842 — kam schon eine neuere Ansage (auf dem schnellen
+         Weg)? Dann ist diese hier überholt. */
+      if (typeof n.nr === "number") {
+        if (n.nr <= (sfu.hoereNrVon[id] || 0)) return;
+        sfu.hoereNrVon[id] = n.nr;
+      }
       if (n.ja && sfu.lage === "laeuft" && n.sitzung === sfu.sitzung) sfu.hoertMich[id] = true;
       else delete sfu.hoertMich[id];
       sfuMeshTonAnwenden(id);
@@ -4253,14 +4332,46 @@ window.LiveChat = (function () {
     }
   }
 
-  /* Er hat neu angefangen (Neuladen): alles, was mit seinem alten Stand
-     über den Server lief, gilt nicht mehr. */
-  function sfuNeustartVon(id) {
+  /* Er hat „hallo" gesagt. Bisher hiess das immer: er hat neu
+     angefangen — alles, was mit seinem alten Stand über den Server lief,
+     gilt nicht mehr.
+     FASSUNG 842 — das „hallo" sagt jetzt, welche Server-Sitzung bei ihm
+     läuft (n.sfu) und wen er darüber hört (n.sfuHoere). Ist es dieselbe
+     Sitzung, hat er NICHT neu angefangen (neu verbundener Raumkanal,
+     Leitungswache): über den Server bleibt alles, wie es ist. Hat er
+     neu angefangen, wird nur sein Teil gelöst — er bleibt als „kann den
+     Server" eingetragen, damit die eigene Sitzung nicht zugeht und er
+     sofort wieder abgeholt wird, wenn er seine neue ansagt. */
+  function sfuNeustartVon(id, n) {
     if (!sfu.andere[id] && !sfu.hoertMich[id] && !sfu.empfang[id]) return;
+    var a = sfu.andere[id];
+    var heil = Boolean(n && typeof n.sfu === "string" && n.sfu && a && a.sitzung === n.sfu);
+    if (heil) {
+      var hoertMichNoch = Array.isArray(n.sfuHoere) && n.sfuHoere.indexOf(zustand.ichId) >= 0;
+      if (sfu.hoertMich[id] && !hoertMichNoch) { delete sfu.hoertMich[id]; sfuMeshTonAnwenden(id); }
+      return;
+    }
     delete sfu.hoertMich[id];
     var e = sfu.empfang[id];
     if (e) { sfuEmpfangLoesen(id, false); sfuAbbestellen([e.mid]); }
-    delete sfu.andere[id];
+    /* Wer den Server nicht (mehr) kann, sagt es innerhalb von 20 s
+       nicht an — dann fällt er in sfuTakt heraus. */
+    sfu.andere[id] = { sitzung: "", kaputt: false, aus: false, seitHallo: Date.now() };
+  }
+
+  /* FASSUNG 842 — „ich höre dich (nicht mehr) über den Server" sagen.
+     Das „nicht mehr" eilt: es geht zusätzlich direkt über den
+     Spielkanal. Die Nummer ist eine Uhrzeit, die nie rückwärts läuft —
+     so bleibt sie auch über ein Neuladen hinweg aufsteigend. */
+  function sfuHoereSagen(id, sitzung, ja) {
+    var nr = Math.max(Date.now(), sfu.hoereNrLetzt + 1);
+    sfu.hoereNrLetzt = nr;
+    var p = { art: "sfu-hoere", an: id, sitzung: sitzung, ja: Boolean(ja), nr: nr };
+    senden(p);
+    if (!ja) {
+      var dc = kanalJe[id];
+      if (dc && dc.readyState === "open") { try { dc.send(JSON.stringify(p)); } catch (x) {} }
+    }
   }
 
   function sfuTakt() {
@@ -4272,6 +4383,14 @@ window.LiveChat = (function () {
         delete sfu.andere[id];
         delete sfu.hoertMich[id];
       }
+    });
+    /* FASSUNG 842 — wer nach einem „hallo" 30 s nichts ansagt, kann den
+       Server nicht; ein gesperrter Weg zu jemandem wird nach der Pause
+       wieder versucht. */
+    Object.keys(sfu.andere).forEach(function (id) {
+      var a = sfu.andere[id];
+      if (a.seitHallo && !a.sitzung && jetzt - a.seitHallo > SFU_PAUSE_MS) { delete sfu.andere[id]; return; }
+      if (a.kaputt && a.kaputtBis && jetzt > a.kaputtBis) { a.kaputt = false; a.kaputtBis = 0; }
     });
     if (!sfu.angesagt || jetzt - sfu.angesagt > SFU_ANSAGE_MS) sfuAnsagen();
     var da = Object.keys(sfu.andere);
@@ -4348,11 +4467,16 @@ window.LiveChat = (function () {
                           spuren: [{ mid: sfu.tonTr.mid, trackName: SFU_SPUR }] });
       })
       .then(function (r) {
-        if (sfu.versuch !== v) throw "alt";
+        /* FASSUNG 842 — kam die Sitzung zu spät (inzwischen abgebrochen),
+           wird sie gleich wieder zugemacht, statt offen liegen zu bleiben. */
+        if (sfu.versuch !== v) {
+          if (r && r.sitzung) sfuRufen({ aktion: "schliessen", sitzung: String(r.sitzung), alles: true });
+          throw "alt";
+        }
+        if (r && r.sitzung) sfu.sitzung = String(r.sitzung);
         if (!r || r.aus || r.fehler || !r.sitzung || !r.antwort) throw sfuGrund(r);
         var s0 = (r.spuren || [])[0];
         if (s0 && s0.errorCode) throw "spur-" + s0.errorCode;
-        sfu.sitzung = String(r.sitzung);
         return pc.setRemoteDescription(r.antwort);
       })
       .then(function () { return sfuVerbunden(pc); })
@@ -4364,6 +4488,8 @@ window.LiveChat = (function () {
         clearInterval(sfu.pulsUhr);
         sfu.pulsFehler = 0;
         sfu.pulsUhr = setInterval(sfuPuls, SFU_PULS_MS);
+        clearInterval(sfu.horchUhr);
+        sfu.horchUhr = setInterval(sfuHorchen, SFU_HORCH_MS);  /* FASSUNG 842 */
         melden();
         sfuTakt();
       })
@@ -4392,8 +4518,13 @@ window.LiveChat = (function () {
     if (!e.spur || e.spur.readyState === "ended") return;
     if (!p.strom || !p.strom.addTrack) p.strom = new MediaStream();
     var schon = false;
+    /* FASSUNG 842 — nach dem GEGENSTAND vergleichen, nicht nach der
+       Kennung: die Netz-Spur und die Server-Spur desselben Menschen
+       können dieselbe Kennung tragen (sie stammt vom Mikrofon des
+       Absenders). Dann blieb die Netz-Spur — die leer ist — im Strom
+       und die Server-Stimme kam nie an: Stille. */
     p.strom.getAudioTracks().forEach(function (t) {
-      if (t === e.spur || t.id === e.spur.id) { schon = true; return; }
+      if (t === e.spur) { schon = true; return; }
       try { p.strom.removeTrack(t); } catch (x) {}
     });
     if (!schon) { try { p.strom.addTrack(e.spur); } catch (x) {} }
@@ -4419,12 +4550,12 @@ window.LiveChat = (function () {
           if (r.track && r.track.kind === "audio" && r.track.readyState !== "ended") netz = r.track;
         });
       } catch (x) {}
-      if (netz && !p.strom.getTracks().some(function (t) { return t.id === netz.id; })) {
+      if (netz && !p.strom.getTracks().some(function (t) { return t === netz; })) {  /* FASSUNG 842 — Gegenstand, nicht Kennung */
         try { p.strom.addTrack(netz); } catch (x) {}
       }
       tonAnschliessen(id, p.strom);
     }
-    if (sagen && e.bestaetigt) senden({ art: "sfu-hoere", an: id, sitzung: e.sitzung, ja: false });
+    if (sagen && e.bestaetigt) sfuHoereSagen(id, e.sitzung, false);  /* FASSUNG 842 */
     melden();
   }
 
@@ -4449,7 +4580,7 @@ window.LiveChat = (function () {
           ids.forEach(function (id, i) {
             var a = sfu.andere[id];
             var t = spuren.filter(function (x) { return x && x.sessionId === a.sitzung; })[0] || spuren[i];
-            if (!t || t.errorCode || t.mid == null) { a.kaputt = true; return; }
+            if (!t || t.errorCode || t.mid == null) { a.kaputt = true; a.kaputtBis = Date.now() + SFU_PAUSE_MS; return; }
             /* Die mid VOR dem Anwenden zuordnen — sonst kommt die Spur
                an und findet niemanden (so steht es auch in der Doku). */
             sfu.midZu[String(t.mid)] = id;
@@ -4492,13 +4623,15 @@ window.LiveChat = (function () {
         var abgelaufen = Date.now() - t0 > SFU_WARTEN_MS;
         if (pakete > 0 || (abgelaufen && p && p.tonAn === false)) {
           e.bestaetigt = true;
+          e.pakete = pakete; e.paketeZeit = Date.now();  /* FASSUNG 842 — ab hier horcht sfuHorchen */
           sfuSpurEinsetzen(id);
-          senden({ art: "sfu-hoere", an: id, sitzung: e.sitzung, ja: true });
+          sfuHoereSagen(id, e.sitzung, true);
           melden();
           return;
         }
         if (abgelaufen) {
-          if (sfu.andere[id]) sfu.andere[id].kaputt = true;
+          /* FASSUNG 842 — nicht für immer: nach der Pause neu versuchen. */
+          if (sfu.andere[id]) { sfu.andere[id].kaputt = true; sfu.andere[id].kaputtBis = Date.now() + 2 * SFU_PAUSE_MS; }
           sfuEmpfangLoesen(id, false);
           sfuAbbestellen([e.mid]);
           return;
@@ -4544,6 +4677,79 @@ window.LiveChat = (function () {
     });
   }
 
+  /* FASSUNG 842 — DER TONSERVER HORCHT WEITER (siehe oben). Kommt von
+     einer Server-Stimme 0,8 s lang kein Paket, geht es für ihn sofort
+     zurück aufs Netz — für beide Seiten. */
+  function sfuHorchen() {
+    if (sfu.lage !== "laeuft") return;
+    var v = sfu.versuch;
+    Object.keys(sfu.empfang).forEach(function (id) {
+      var e = sfu.empfang[id];
+      if (!e || !e.bestaetigt || e.horcht) return;
+      var p = zustand.leute[id];
+      var jetzt = Date.now();
+      /* Wer stumm ist oder nicht auf der Bühne steht, schickt nichts —
+         das ist keine Störung. */
+      if (!p || p.tonAn === false || p.buehne === false) { e.paketeZeit = jetzt; return; }
+      if (!e.paketeZeit) e.paketeZeit = jetzt;
+      var tr = sfuTransceiver(e.mid);
+      var rec = tr && tr.receiver;
+      if (!rec || !rec.getStats) {
+        if (jetzt - e.paketeZeit > SFU_STILL_MS) sfuStill(id, e, "keine-spur");
+        return;
+      }
+      e.horcht = true;
+      rec.getStats().then(function (b) {
+        var n = 0;
+        b.forEach(function (x) { if (x.type === "inbound-rtp") n += x.packetsReceived || 0; });
+        return n;
+      }, function () { return -1; }).then(function (n) {
+        e.horcht = false;
+        if (sfu.versuch !== v || sfu.empfang[id] !== e) return;
+        if (n > (e.pakete || 0)) { e.pakete = n; e.paketeZeit = Date.now(); return; }
+        if (Date.now() - e.paketeZeit > SFU_STILL_MS) sfuStill(id, e, "still");
+      });
+    });
+  }
+  function sfuStill(id, e, warum) {
+    sfu.stille++;
+    try { console.info("[Klassenzimmer] Tonserver: von " + id.slice(0, 6) + " kommt nichts an (" + warum + ") — seine Stimme wieder direkt."); } catch (x) {}
+    var a = sfu.andere[id];
+    if (a) { a.kaputt = true; a.kaputtBis = Date.now() + SFU_PAUSE_MS; }
+    sfuEmpfangLoesen(id, true);
+    sfuAbbestellen([e.mid]);
+  }
+
+  /* FASSUNG 842 — die Seite geht weg (Neuladen, Tab zu): die Sitzung
+     beim Server zumachen. keepalive trägt die Anfrage über das Ende der
+     Seite hinaus; die Marke ist die zuletzt benutzte (nur im Speicher).
+     Geht die Seite nur in den Zwischenspeicher (persisted), bleibt alles. */
+  function sfuAbschied(ev) {
+    if (ev && ev.persisted) return;
+    var sitz = sfu.sitzung, t = sfu.pruefMarke || sfu.letzteMarke;
+    var basis = sfu.pruefUrl || (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url) || "";
+    if (!sitz || !t || !basis || typeof fetch !== "function") return;
+    sfu.sitzung = "";
+    try {
+      fetch(basis.replace(/\/+$/, "") + SFU_WEG, {
+        method: "POST", keepalive: true,
+        headers: { "Authorization": "Bearer " + t,
+                   "apikey": (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.anonKey) || "",
+                   "Content-Type": "application/json" },
+        body: JSON.stringify({ aktion: "schliessen", sitzung: sitz, alles: true })
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  try { window.addEventListener("pagehide", sfuAbschied); } catch (e) {}
+
+  /* FASSUNG 842 — was ein „hallo" über den Tonserver mitsagt. */
+  function sfuHalloFelder(p) {
+    if (!sfuErlaubt()) return;
+    var laeuft = sfu.lage === "laeuft";
+    p.sfu = laeuft ? sfu.sitzung : "";
+    p.sfuHoere = laeuft ? Object.keys(sfu.empfang).filter(sfuHoertIhn) : [];
+  }
+
   /* Alle 60 s: der Verbrauch wird gebucht, und die Bremse antwortet. */
   function sfuPuls() {
     if (sfu.lage !== "laeuft") return Promise.resolve(null);
@@ -4562,6 +4768,7 @@ window.LiveChat = (function () {
   function sfuAbbauen(sagen) {
     sfu.versuch++;
     clearInterval(sfu.pulsUhr); sfu.pulsUhr = 0;
+    clearInterval(sfu.horchUhr); sfu.horchUhr = 0;  /* FASSUNG 842 */
     Object.keys(sfu.empfang).forEach(function (id) { sfuEmpfangLoesen(id, sagen); });
     Object.keys(sfu.hoertMich).forEach(function (id) { delete sfu.hoertMich[id]; sfuMeshTonAnwenden(id); });
     if (sfu.pc) { try { sfu.pc.close(); } catch (e) {} }
@@ -4608,7 +4815,7 @@ window.LiveChat = (function () {
   }
   function sfuStand() {
     var aus = { erlaubt: sfuErlaubt(), lage: sfu.lage, grund: sfu.grund, sitzung: sfu.sitzung,
-                aufrufe: sfu.aufrufe, andere: {}, empfang: {}, hoertMich: Object.keys(sfu.hoertMich),
+                aufrufe: sfu.aufrufe, stille: sfu.stille, andere: {}, empfang: {}, hoertMich: Object.keys(sfu.hoertMich),
                 meshTon: {}, stromTon: {} };
     Object.keys(sfu.andere).forEach(function (id) { aus.andere[id] = { sitzung: sfu.andere[id].sitzung, kaputt: Boolean(sfu.andere[id].kaputt) }; });
     Object.keys(sfu.empfang).forEach(function (id) {
@@ -4685,6 +4892,7 @@ window.LiveChat = (function () {
   function senden(nutzlast) {
     nutzlast.von = zustand.ichId;
     nutzlast.kf = 1;     /* Fassung 659: „ich verstehe gebündelte Kerzen" */
+    if (nutzlast.art === "hallo") sfuHalloFelder(nutzlast);  /* FASSUNG 842 */
     if (spielKennung && !nutzlast.spiel) nutzlast.spiel = spielKennung;
     /* Zum Nachmessen: die Pakete abfangen, ohne dass ein Raum offen
        sein muss. Im Betrieb ist der Haken immer null. */
@@ -4853,8 +5061,10 @@ window.LiveChat = (function () {
          bruecke() gleich mit der Leiche, und die Verbindung kommt
          nie wieder zustande. Genau daran hing das „ich höre die
          beiden nicht". */
-      if (brueckeJe[n.von]) brueckeAbbauen(n.von);
-      sfuNeustartVon(n.von);  /* FASSUNG 827 */
+      /* FASSUNG 842 — nur der Raumkanal war kurz weg („wieder") und die
+         Leitung zu ihm steht: dann bleibt sie. */
+      if (brueckeJe[n.von] && !(n.wieder === true && steht(brueckeJe[n.von]))) brueckeAbbauen(n.von);
+      sfuNeustartVon(n.von, n);  /* FASSUNG 827/842 */
       /* Abgeschlossener Raum: wer nicht auf der Einladungsliste steht,
          kommt nicht herein. So steht es in RFC 2811 für +i — „new
          members are only accepted if they have been invited by a
@@ -6488,6 +6698,11 @@ window.LiveChat = (function () {
       return new Promise(function (fertig) {
         kanal.subscribe(function (stand) {
           if (stand === "SUBSCRIBED") {
+            /* FASSUNG 842 — war man schon drin, hat sich nur der Raumkanal
+               neu verbunden (Netzwechsel, Handy unter Last). Das „hallo"
+               sagt es mit, damit die anderen keine stehende Leitung
+               abreissen. */
+            var kanalWieder = zustand.lage === "drin";
             zustand.lage = "drin";
             /* Die Tonwache laeuft, solange man im Raum ist — sie
                haelt das doppelte Hoeren auf, bevor es auffaellt. */
@@ -6510,7 +6725,8 @@ window.LiveChat = (function () {
                      seit: zustand.seit, buehne: zustand.buehne,
                      sprechbild: zustand.sprechbild || "",
                      spricht: Boolean(zustand.spricht),
-                     geschlecht: zustand.geschlecht || "", konto: kontoId || "" });
+                     geschlecht: zustand.geschlecht || "", konto: kontoId || "",
+                     wieder: kanalWieder || undefined });
             /* FASSUNG 687 — den eigenen Auftritt sieht man auch selbst, einmal je Betreten. */
             if (zustand.auftrittRaum !== zustand.raum) { zustand.auftrittRaum = zustand.raum; auftrittZeigen(zustand.ichId, eigenerAuftritt(), "rein"); }
             /* Und alles, was waehrend der Funkstille geschrieben
@@ -16735,6 +16951,12 @@ window.LiveChat = (function () {
       return sfuStand();
     },
     pruefSfuPuls: function () { return sfuPuls(); },
+    /* FASSUNG 842 — nur zum Nachprüfen: ein „hallo" wie beim (Wieder-)
+       Verbinden des Raumkanals schicken. */
+    pruefHallo: function (wieder) {
+      senden({ art: "hallo", name: zustand.ichName, bild: zustand.ichBild, tonAn: zustand.tonAn, bildAn: zustand.bildAn,
+               seit: zustand.seit, buehne: zustand.buehne, konto: kontoId || "", wieder: wieder ? true : undefined });
+    },
     sfuBericht: sfuBericht,
     /* Fassung 659 — nur zum Nachprüfen: Stand des Spielkanals, und eine
        Gegenseite wie eine alte Fassung behandeln. */
