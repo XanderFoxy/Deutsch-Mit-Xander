@@ -2118,7 +2118,10 @@
           const dd = pfad(flaechePts);
           /* FASSUNG 838: Stoppeln als dichtes Punktmuster, der Grundton nur
              ganz zart — die flache Fläche hatte einen harten Rand. */
-          svg += '<path data-teil="stoppeln" d="' + dd + '" fill="' + bf + '" opacity=".1"/><path d="' + dd + '" fill="url(#' + pid + ')" opacity=".55"/>';
+          /* weicher Rand: dreimal, zur Mitte hin enger und dichter */
+          let cx0 = 0, cy0 = 0; flaechePts.forEach((q) => { cx0 += q[0]; cy0 += q[1]; }); cx0 /= flaechePts.length; cy0 /= flaechePts.length;
+          const eng = (f) => pfad(flaechePts.map((q) => [cx0 + (q[0] - cx0) * f, cy0 + (q[1] - cy0) * f]));
+          svg += '<path data-teil="stoppeln" d="' + dd + '" fill="' + bf + '" opacity=".06"/><path d="' + dd + '" fill="url(#' + pid + ')" opacity=".22"/><path d="' + eng(0.9) + '" fill="url(#' + pid + ')" opacity=".22"/><path d="' + eng(0.8) + '" fill="url(#' + pid + ')" opacity=".2"/>';
         }
       }
     }
@@ -2247,8 +2250,8 @@
       /* Wimpern: einzelne gebogene Striche, außen länger und nach außen geschwungen */
       const aussenR = nrm2([b[0] - a[0], b[1] - a[1]]);
       const hoch = [aussenR[1], -aussenR[0]][1] < 0 ? [aussenR[1], -aussenR[0]] : [-aussenR[1], aussenR[0]];
-      const nOben = M.w ? 13 : (baby ? 10 : 10);
-      const lang = (M.w ? 0.5 : 0.34) * k * (baby ? 1.0 : 1) * (alt ? 0.8 : 1) * klemm(vis * 1.25, 0.5, 1);
+      const nOben = baby ? 9 : (M.w ? 13 : 10);
+      const lang = (M.w ? 0.5 : 0.34) * k * (baby ? 0.75 : 1) * (alt ? 0.8 : 1) * klemm(vis * 1.25, 0.5, 1);
       let wd = "";
       for (let i = 0; i < nOben; i++) {
         const t = 0.1 + 0.88 * i / (nOben - 1) + ((i * 37) % 7 - 3) * 0.004;
@@ -2519,7 +2522,7 @@
       if (F.locken) {
         const fu = h.fuellung();
         let bu = "";
-        um.forEach((p, i) => { const r = (0.75 + (i % 3) * 0.18) * k; bu += "M" + P2([p[0] - r, p[1]]) + "a" + r2(r) + " " + r2(r) + " 0 1 0 " + r2(2 * r) + " 0a" + r2(r) + " " + r2(r) + " 0 1 0 " + r2(-2 * r) + " 0"; });
+        um.forEach((p, i) => { const r = (0.6 + (i % 3) * 0.15) * k; bu += "M" + P2([p[0] - r, p[1]]) + "a" + r2(r) + " " + r2(r) + " 0 1 0 " + r2(2 * r) + " 0a" + r2(r) + " " + r2(r) + " 0 1 0 " + r2(-2 * r) + " 0"; });
         kappe += '<path d="' + bu + '" fill="' + fu + '"/>';
       }
       const scheitel = F.scheitel != null ? F.scheitel : 28;
@@ -2545,14 +2548,14 @@
           if (y > linieH(ww) + 0.3) continue;
           const q = haarPunkt(y, ww);
           if (sichtbar(q.n) < 0.08) continue;
-          const p = pr(q.p), r = (0.5 + ((Math.round(ww + y * 10) & 3) * 0.08)) * k;
+          const p = pr(q.p), r = (0.4 + ((Math.round(ww + y * 10) & 3) * 0.07)) * k;
           ton[zumLichtVon(q.n) > 0.3 && (Math.round(ww) & 1) ? 2 : ((Math.round(ww / 13) & 1) ? 0 : 1)].push("M" + P2([p[0] - r, p[1]]) + "a" + r2(r) + " " + r2(r) + " 0 1 1 " + r2(r * 1.4) + " " + r2(r * 0.7));
         }
       }
       const tb = F.flaum ? 0.6 : 1;
-      if (ton[0].length) kappe += '<path d="' + ton[0].join("") + '" fill="none" stroke="' + dunkler(haarF, 0.45) + '" stroke-width="' + r2(0.11 * k * tb) + '" stroke-linecap="round" opacity=".55"/>';
+      if (ton[0].length) kappe += '<path data-teil="straehnen" d="' + ton[0].join("") + '" fill="none" stroke="' + dunkler(haarF, 0.45) + '" stroke-width="' + r2(0.11 * k * tb) + '" stroke-linecap="round" opacity=".55"/>';
       if (ton[1].length) kappe += '<path data-teil="straehnen" d="' + ton[1].join("") + '" fill="none" stroke="' + dunkler(haarF, 0.2) + '" stroke-width="' + r2(0.17 * k * tb) + '" stroke-linecap="round" opacity=".5"/>';
-      if (ton[2].length) kappe += '<path d="' + ton[2].join("") + '" fill="none" stroke="' + heller(haarF, 0.5) + '" stroke-width="' + r2(0.1 * k * tb) + '" stroke-linecap="round" opacity=".6"/>';
+      if (ton[2].length) kappe += '<path data-teil="straehnen" d="' + ton[2].join("") + '" fill="none" stroke="' + heller(haarF, 0.5) + '" stroke-width="' + r2(0.1 * k * tb) + '" stroke-linecap="round" opacity=".6"/>';
       /* Glanzband mit hellen Einzelhaaren */
       if (!F.glatze && !F.locken && !F.flaum) {
         const band = [], quer = [];
@@ -2584,11 +2587,11 @@
           if (i % 2 || F.locken || F.glatze) return;
           const nx = p[0] - mitte[0], ny = p[1] - mitte[1], l = Math.hypot(nx, ny) || 1;
           const n = [nx / l, ny / l];
-          if (n[1] > -0.3) return;
+          if (n[1] > -0.6) return;
           const t = [-n[1], n[0]], td = t[1] >= 0 ? t : [-t[0], -t[1]];
-          const L = (0.7 + (i % 3) * 0.3) * k * (F.flaum ? 0.6 : 1), o = (0.1 + (i % 4) * 0.06) * k;
+          const L = (0.45 + (i % 3) * 0.2) * k * (F.flaum ? 0.6 : 1), o = (0.06 + (i % 4) * 0.05) * k;
           const a = [p[0] - n[0] * 0.35 * k, p[1] - n[1] * 0.35 * k], e = [p[0] + n[0] * o + td[0] * L, p[1] + n[1] * o + td[1] * L];
-          tuft += "M" + P2(a) + "Q" + P2([(a[0] + e[0]) / 2 + n[0] * 0.25 * k, (a[1] + e[1]) / 2 + n[1] * 0.25 * k]) + " " + P2(e);
+          tuft += "M" + P2(a) + "Q" + P2([(a[0] + e[0]) / 2 + n[0] * 0.1 * k, (a[1] + e[1]) / 2 + n[1] * 0.1 * k]) + " " + P2(e);
         });
         if (tuft) kappe += '<path d="' + tuft + '" fill="none" stroke="' + haarF + '" stroke-width="' + r2(0.2 * k * tb) + '" stroke-linecap="round"/><path d="' + tuft + '" fill="none" stroke="' + dunkler(haarF, 0.3) + '" stroke-width="' + r2(0.06 * k) + '" opacity=".5"/>';
       }
@@ -2597,7 +2600,7 @@
       if (!F.locken) {
         let fed = "", fl = "";
         bogen.forEach((q, i) => {
-          if (q.s < 0.12 || (i % 3 === 1)) return;
+          if (q.s < 0.12 || (i % 3 === 1) || (F.glatze && q.y < -4)) return;
           const a = rund(q.y + 0.15 + (i % 4) * 0.12, q.w + ((i * 7) % 5 - 2) * 0.6, 0.05), b = rund(q.y - 1.0 - ((i * 5) % 7) * 0.2, q.w + ((i * 3) % 7 - 3) * 1.5 + (scheitel - q.w) * 0.04, dick / k * 0.8);
           const pa = pr(a.p), pb = pr(b.p);
           fed += "M" + P2(pa) + "Q" + P2([lerp(pa[0], pb[0], 0.5) + ((i % 3) - 1) * 0.12 * k, lerp(pa[1], pb[1], 0.5)]) + " " + P2(pb);
@@ -2662,7 +2665,7 @@
           const pa = pr(a.p), pb = pr(rund(-4.4 - ((w / 5) % 3) * 0.3, w + 3, dick / k * 0.3).p);
           kr += "M" + P2(pa) + "L" + P2(pb);
         }
-        if (kr) svg += '<path d="' + kr + '" stroke="' + haarF + '" stroke-width="' + r2(0.1 * k) + '" stroke-linecap="round" opacity=".7"/>';
+        if (kr) svg += '<path data-teil="straehnen" d="' + kr + '" stroke="' + haarF + '" stroke-width="' + r2(0.1 * k) + '" stroke-linecap="round" opacity=".7"/>';
         /* Kahler Scheitel: Glanz und bei alten Menschen Altersflecken */
         const gl = pr(auf(-9.4, licht * 2, 3));
         svg += weich(gl, 2.6 * k, 1.5 * k, GL, 0.55);
