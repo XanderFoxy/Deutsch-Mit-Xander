@@ -1520,7 +1520,8 @@
     function schulterStoff(tab, aermel) {
       if (!aermel) return tab;
       const zu = (y) => y < 45 ? 0 : (y < 50 ? lerp(0, 2.6, (y - 45) / 5) : (y < 53.5 ? lerp(2.6, 4.4, (y - 50) / 3.5) : (y < 56.5 ? lerp(4.4, 1.2, (y - 53.5) / 3) : 0)));
-      return tab.map((q) => [q[0], q[1] + zu(q[0]) * f, q[2], q[3]]);
+      const sk = M.erw ? 1 : (spec.alter === "saeugling" ? 0.35 : 0.7);   /* Kinder: schmalere Schulter */
+      return tab.map((q) => [q[0], q[1] + zu(q[0]) * f * sk, q[2], q[3]]);
     }
     /* Hose am Rumpf (Gesäß und Bund) */
     if (hoseArt) {
@@ -2638,7 +2639,9 @@
          Ohr, Nacken. */
       const dick = (F.dick || 0.9) * k * (baby ? 0.5 : 1.25) * (F.locken ? 1.45 : 1);
       const dickD = (F.flaum ? 0.06 : (F.glatze ? 0.14 : 0.22)) * k;
-      const schale = (d, filt) => tab.filter(filt).map((q) => schnitt(auf(q[0] - d * 0.45 / k, 0, q[3] - 0.25), U, Vv, q[1] * k + d, q[2] * k + d));
+      /* Locken: das Volumen nimmt zum Ohr hin ab (runde Form, keine Kante) */
+      const verjuengt = (d, y) => F.locken ? d * (0.3 + 0.7 * glatt((1 - y) / 4.5)) : d;
+      const schale = (d0, filt) => tab.filter(filt).map((q) => { const d = verjuengt(d0, q[0]); return schnitt(auf(q[0] - d * 0.45 / k, 0, q[3] - 0.25), U, Vv, q[1] * k + d, q[2] * k + d); });
       const haarS = schale(dick, (q) => q[0] <= (F.bis || 3) && (!F.glatze || q[0] >= -3.8));
       const haarD = schale(dickD, (q) => q[0] <= (F.bis || 3) + 1);
       /* Haarlinie: Winkel um den Kopf (Grad, 0 = Stirnmitte) → Höhe */
@@ -2710,7 +2713,7 @@
         const heb = F.locken ? 0.6 : 0.7;
         const mM = maskeVon((w) => linieH(w) - heb, 0.4), mT = maskeVon((w) => linieH(w) - 2 * heb, 0.6);
         const cM = clipVon(mM.d), cT = clipVon(mT.d);
-        const mittel = schale(dick * 0.5, (q) => q[0] <= (F.locken ? -2 : (F.bis || 3)));
+        const mittel = schale(dick * 0.5, (q) => q[0] <= (F.bis || 3));
         dicke += '<g clip-path="url(#' + cM + ')">' + form(mittel, haarF, { hell: 0.28, dunkel: 0.32, kontur: dunkler(haarF, 0.22), strich: 0.06 * k, fein: 36 }) + "</g>";
         dicke += '<g clip-path="url(#' + cT + ')">' + form(haarS, haarF, { hell: 0.3, dunkel: 0.34, kontur: F.locken ? haarF : dunkler(haarF, 0.28), strich: F.locken ? 0.01 : 0.1 * k, fein: 36 }) + "</g>";
       }
@@ -3068,7 +3071,7 @@
     lang: { stirn: -6.2, schlaefe: 1.5, nacken: 6, dick: 1.0, laenge: 1.3, bis: 4, ohrenFrei: false },
     zopf: { stirn: -6.6, schlaefe: -1, nacken: 3.5, dick: 0.75, zopf: 1.15 },
     dutt: { stirn: -6.6, schlaefe: -1.2, nacken: 3.2, dick: 0.7, dutt: true },
-    locken: { stirn: -6.4, schlaefe: -1, nacken: 4, dick: 1.8, locken: true, bis: -2 },
+    locken: { stirn: -6.4, schlaefe: -1, nacken: 4, dick: 1.8, locken: true },
     pony: { stirn: -2.8, schlaefe: -0.5, nacken: 5, dick: 1.0, laenge: 0.55, breit: 8.2, bis: 3.5 },
     glatze: { stirn: -13, schlaefe: 0.4, nacken: 3.8, dick: 0.6, glatze: true },
     /* FASSUNG 838: Säuglinge haben Flaum statt einer Frisur */

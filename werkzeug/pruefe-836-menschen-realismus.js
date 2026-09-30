@@ -152,7 +152,8 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
       /* FASSUNG 838: Wimpern sind einzelne Striche in der Farbe des Haars (data-teil="wimpern") */
       iris: /radialGradient/.test(w), wimpern: (w.match(/stroke="#2a1c16"/g) || []).length >= 6 || (w.match(/data-teil="wimpern"/g) || []).length >= 2,
       straehnen: (w.match(/stroke-width="0\.[0-9]+" stroke-linecap="round" stroke-linejoin="round" opacity="0\.[0-9]+"/g) || []).length >= 15,
-      stoppeln: /<pattern /.test(m), gesichtClip: /clipPath id="m\w*f/.test(m), finger: (m.match(/stroke-linecap="round"/g) || []).length >= 40,
+      /* FASSUNG 838 Runde 2: Stoppeln sind einzeln gestreute Haare statt eines Punktrasters (Muster) */
+      stoppeln: /<pattern /.test(m) || /data-teil="stoppelhaare"/.test(m), gesichtClip: /clipPath id="m\w*f/.test(m), finger: (m.match(/stroke-linecap="round"/g) || []).length >= 40,
       falten: (s.match(/opacity="0\.[1-5]\d?"/g) || []).length >= 10, profil: p.length > 20000,
     };
   });
