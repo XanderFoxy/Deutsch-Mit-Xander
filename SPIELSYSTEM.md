@@ -2643,6 +2643,6 @@ XANDER: „Alle Dateien sind von One Day in Rom. Sie sollen in den Player mit re
 
 - Neue Datei: `music/One Day In Rome - So Schoen Ist Die Weihnacht.mp3`. Im Dateinamen steht „oe“ statt „ö“, damit der Link überall sicher funktioniert.
 - Der Titel lautet „One Day In Rome — So schön ist die Weihnacht“. Er steht im Player (`app.js`) und in der Liedliste für /musik und /kopfhoerer (`livechat.js`, LIEDER).
-- Im Player steht „Ein Leben Lang“ jetzt unter „One Day In Rome“. „A Lovers Fairytale“ bleibt auf Xanders Wunsch unter „Xander Fox“.
+- Die vorhandenen Player-Einträge (auch „Ein Leben Lang“ und „A Lovers Fairytale“) bleiben unter „Xander Fox“, wie Xander es wollte: „Nimm die Änderung bei den anderen Dateien wo vorher Xander Fox stand wieder zurück.“
 - „Ein Leben Lang“ war schon drin: Die hochgeladene Datei ist byte-gleich mit der vorhandenen (SHA-256 gleich). Sie wurde deshalb nicht ersetzt.
 - Geprüft: pruefe-hoerer-klammern und pruefe-runde88-selbst sind grün.
