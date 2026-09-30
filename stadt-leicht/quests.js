@@ -838,6 +838,12 @@
     ".lq-dialog { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(max(12px, env(safe-area-inset-bottom)) + 6px); width: min(360px, calc(100vw - 16px)); box-sizing: border-box; max-height: min(44%, calc(100% - 96px)); overflow: auto; overscroll-behavior: contain; padding: 6px 10px 8px; border-radius: 14px; background: rgba(22,28,48,.94); border: 1px solid rgba(255,255,255,.16); color: #f3ead8; box-shadow: 0 8px 26px rgba(0,0,0,.4); font: 12.5px/1.3 system-ui, sans-serif; z-index: 6; animation: lq-auf .26s ease-out; touch-action: pan-y; }",
     "@keyframes lq-auf { from { opacity: 0; translate: 0 14px; } to { opacity: 1; translate: 0 0; } }",
     ".lk-mini-modus .lq-dialog { left: 4px; right: 4px; bottom: 4px; width: auto; transform: none; max-height: 58%; padding: 4px 7px 5px; font-size: 11.5px; line-height: 1.25; border-radius: 10px; }",
+    /* FASSUNG 827 — schwebend unter dem Bild (über dem Chat des Spiels): das Bild bleibt frei */
+    "html.lq-unten, html.lq-unten body { background: transparent; }",
+    "html.lq-unten #lStadt { bottom: var(--lq-unten); }",
+    "html.lq-unten .lk-mini-modus .lq-dialog.lq-schwebe { position: fixed; top: auto; bottom: 0; left: 0; right: 0; max-height: var(--lq-unten, 190px); border-radius: 0 0 12px 12px; animation: none; background: rgba(22,28,48,.97); }",
+    "html.lq-unten .lk-mini-modus .lq-schwebe .lq-text { margin: 1px 0 3px; }",
+    "html.lq-unten .lk-mini-modus .lq-schwebe .lq-frage { margin: 0 0 4px; }",
     /* FASSUNG 846 — XANDER (Walkie 315): die Fragetafeln sind zu groß und verdecken alles; jetzt kompakt (höchstens gut
        die Hälfte des kleinen Bilds, im Vollbild 44 %), die Person bleibt darüber zu sehen */
     ".lq-suche { position: absolute; left: 50%; transform: translateX(-50%); top: 36px; max-width: calc(100% - 16px); box-sizing: border-box; display: flex; align-items: center; gap: 6px; padding: 3px 4px 3px 9px; border-radius: 12px; background: rgba(22,28,48,.9); color: #f3ead8; font: 600 11.5px/1.25 system-ui, sans-serif; z-index: 6; pointer-events: auto; box-shadow: 0 3px 10px rgba(0,0,0,.35); }",
@@ -958,7 +964,8 @@
     }
     if (mini()) s = erst && O().miniGanzNah ? O().miniGanzNah() : O().miniNah ? O().miniNah() : K.s;
     else s = erst ? Math.min(K.max || 60, Math.max(K.s, 26 * K.dpr)) : Math.max(K.s, 14 * K.dpr);
-    const H = K.H / K.dpr, frei = dialogOben && !mini() ? Math.max(70, (64 + dialogOben) / 2 + 22) : H * (mini() ? 0.2 : 0.3);
+    /* FASSUNG 827 — liegt der Dialog außerhalb des Bilds (untenPx), steht die Person in der Mitte des freien Bilds */
+    const H = K.H / K.dpr, frei = untenPx || untenWunsch ? H * 0.45 : dialogOben && !mini() ? Math.max(70, (64 + dialogOben) / 2 + 22) : H * (mini() ? 0.2 : 0.3);
     const alt = { x: K.x, y: K.y, s: K.s }; K.x = f.x; K.y = f.y; K.s = s;
     let z = ST.aufBoden(K.W / 2, K.H / 2 + (H / 2 - frei) * K.dpr);
     K.x = alt.x; K.y = alt.y; K.s = alt.s;
@@ -983,7 +990,43 @@
     L().fliegeZu(z[0], z[1], s, 700);
   }
   let dialog = null;
-  function dialogZu() { if (dialog) { dialog.el.remove(); const qu = dialog.qu; dialog = null; if (qu.f.zustand === "offen") qu.f.zustand = "gefragt"; } }
+  /* FASSUNG 827 — XANDER (Funk 248): „die Suchquests können bleiben aber das Menü sollte ein kleines kompaktes schwebendes
+     Menü über dem Chat sein damit man die Richtungen herausfinden kann und im Bild bleibt". Im kleinen Rahmen des Spiels lag
+     der Dialog über der halben Stadt – Weg und Person waren verdeckt. Jetzt wächst der Rahmen für die Frage nach unten (das
+     Spiel legt ihn über den Chat darunter, spiel.js „leicht-unten"); das Stadtbild behält seine Größe und bleibt ganz frei.
+     Reicht der Platz unten nicht (Antwort „leicht-unten-lage" mit geht: 0), bleibt der Dialog wie bisher im Bild. */
+  let untenPx = 0, untenWunsch = 0, untenH0 = 0;
+  function untenAnwenden(px) {
+    if (px === untenPx) return;
+    untenPx = px;
+    const h = document.documentElement;
+    h.classList.toggle("lq-unten", px > 0);
+    h.style.setProperty("--lq-unten", px + "px");
+    ST.untenPlatz = px;
+    if (L().groesse) L().groesse();
+    L().unruhe = 2;
+  }
+  /* erst wenn das Spiel den Rahmen wirklich vergrößert hat (Antwort oder Größenänderung), gehört der Streifen dem Dialog –
+     antwortet niemand (älteres Spiel, Sonde ohne Spiel), bleibt der Dialog im Bild wie bisher */
+  function platzUnten(px) {
+    px = Math.max(0, Math.round(px || 0));
+    if (px > 0 && !(mini() && imRahmen)) return;
+    untenWunsch = px; untenH0 = window.innerHeight - untenPx;
+    if (!px) untenAnwenden(0);
+    try { window.parent.postMessage({ typ: "leicht-unten", px: px }, location.origin); } catch (e) {}
+  }
+  const untenBereit = () => { if (untenWunsch > 0 && dialog && dialog.el.classList.contains("lq-schwebe")) untenAnwenden(untenWunsch); };
+  window.addEventListener("resize", () => { if (untenWunsch > 0 && untenPx !== untenWunsch && window.innerHeight >= untenH0 + untenWunsch - 1) untenBereit(); });
+  window.addEventListener("message", (ev) => {
+    if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data) return;
+    /* ins Vollbild: der Dialog kommt zurück ins (große) Bild */
+    if (ev.data.typ === "leicht-modus" && ev.data.voll && dialog && (untenPx > 0 || untenWunsch > 0)) { dialog.el.classList.remove("lq-schwebe"); platzUnten(0); return; }
+    if (ev.data.typ !== "leicht-unten-lage") return;
+    if (ev.data.geht === 1 && Number(ev.data.px) === untenWunsch) untenBereit();
+    else if (ev.data.geht === 0 && dialog) { dialog.el.classList.remove("lq-schwebe"); platzUnten(0); }
+  });
+  Q.untenPx = () => untenPx;
+  function dialogZu() { if (dialog) { dialog.el.remove(); const qu = dialog.qu; dialog = null; platzUnten(0); if (qu.f.zustand === "offen") qu.f.zustand = "gefragt"; } }
   Q.dialogZu = dialogZu;
   function zeichenTipp(qu) {
     if (qu.f.zustand === "unterwegs" || qu.f.zustand === "jubel") { hinFliegen(qu); return; }
@@ -1038,6 +1081,8 @@
     d.addEventListener("pointerdown", () => { gedrueckt = true; }, { passive: true });
     wurzelEl.appendChild(d);
     dialog = { el: d, qu: qu };
+    /* FASSUNG 827 — im kleinen Rahmen: der Dialog unter dem Bild, höchstens 190 px hoch, rollbar */
+    if (mini() && imRahmen) { d.classList.add("lq-schwebe"); platzUnten(Math.min(190, d.scrollHeight + 2)); }
   }
   /* FASSUNG 846 — SUCHEN: die Person wartet, man sucht das Gebäude selbst (verschieben, zoomen, drehen) und tippt es an.
      oberflaeche.js fragt bei jedem Tipp auf ein Haus zuerst Q.tippAuf(o). */
@@ -1057,7 +1102,7 @@
     suche = { el: el, qu: qu, hinweis: h };
   }
   function sucheStarten(qu) {
-    if (dialog && dialog.qu === qu) { dialog.el.remove(); dialog = null; }
+    if (dialog && dialog.qu === qu) { dialog.el.remove(); dialog = null; platzUnten(0); }
     qu.f.zustand = "sucht"; L().unruhe = 2;
     sucheZeigen(qu);
   }
@@ -1102,7 +1147,7 @@
     const dl = hinweis.parentElement; if (dl) dl.scrollTop = dl.scrollHeight;   // (nicht scrollIntoView: das rollte im Rahmen auch die Seite des Spiels)
     qu.rot = null;
     losgehen(qu);
-    setTimeout(() => { if (dialog && dialog.qu === qu) { dialog.el.remove(); dialog = null; } wegZeigen(qu.weg.pts, mini() ? 34 : 64, K.H / K.dpr - (mini() ? 8 : 70)); }, 1900);
+    setTimeout(() => { if (dialog && dialog.qu === qu) { dialog.el.remove(); dialog = null; platzUnten(0); } wegZeigen(qu.weg.pts, mini() ? 34 : 64, K.H / K.dpr - (mini() ? 8 : 70)); }, 1900);
   }
   function losgehen(qu) {
     const f = qu.f; qu.antwortZeit = performance.now();
@@ -1343,6 +1388,7 @@
      ===================================================================== */
   Q.pruef = {
     tempo: () => TEMPO,   // FASSUNG 846
+    tipp: (id) => { const qu = Q.liste.find((x) => x.id === id); if (qu) zeichenTipp(qu); return !!qu; },   // FASSUNG 827
     netz: () => { const n = netz(); let k = 0; for (const l of n.nb) k += l.length; return { knoten: n.kn.length, kanten: k / 2, kreuzungen: n.cls.length }; },
     komponenten: () => { const n = netz(), komp = new Array(n.kn.length).fill(-1); let nk = 0; for (let s = 0; s < n.kn.length; s++) { if (komp[s] >= 0) continue; const st = [s]; komp[s] = nk; while (st.length) { const u = st.pop(); for (const v of n.nb[u]) if (komp[v] < 0) { komp[v] = nk; st.push(v); } } nk++; } return nk; },
     ziele: () => { const Z = ziele(), n = netz(); let markt = 0, md = Infinity; n.kn.forEach((p, i) => { const d = Math.hypot(p[0] + 1, p[1] + 1); if (d < md) { md = d; markt = i; } });

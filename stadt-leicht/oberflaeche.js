@@ -1864,7 +1864,9 @@
     const imVoll = !imRahmen && window.parent !== window && !O.gestalten && art === "haus" && o && o.art === "haus" && !!o.spiel && o.spiel !== "bahnhof";
     if (imVoll && !opt.still) {
       try { const z = O.zeichenJetzt && O.zeichenJetzt[o.spiel]; if (z && z[0] === "fertig" && ST.ton && ST.ton.einsammeln) ST.ton.einsammeln(z[2] || ""); } catch (e) {}
-      try { window.parent.postMessage({ typ: "leicht-haus", g: o.spiel, voll: 1 }, location.origin); } catch (e) {}
+      /* FASSUNG 827 — XANDER (Funk 248): „die Mühle produziert nicht sofort die geht immer erst ins große Menü". Auch im
+         Vollbild fragt der Tipp nach den kleinen Symbolen am Haus (klein: 1); das große Fenster nur, wenn es keine gibt. */
+      try { window.parent.postMessage({ typ: "leicht-haus", g: o.spiel, voll: 1, klein: 1 }, location.origin); } catch (e) {}
     }
     if (imRahmen && !O.gestalten && (art === "haus" || art === "bauplatz")) {
       /* FASSUNG 817 — ein leerer Bauplatz meldet das Haus, das (nach dem Umbauen im Spiel) dorthin gehört */

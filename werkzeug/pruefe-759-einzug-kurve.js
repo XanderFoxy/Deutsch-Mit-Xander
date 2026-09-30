@@ -41,8 +41,11 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   for (const art of ["kitt"]) {
     console.log("\n" + art.toUpperCase() + " KOMMT\n");
     await pg.evaluate(() => { window.DMA_TONLOG.length = 0; });
-    const D = 5400, ab = Date.now();
+    const D = 5400;
     await pg.evaluate((a) => window.DMA_AUFTRITT("ich", a, "rein"), art);
+    /* FASSUNG 827 — der Einzug wartet auf ein paar ruhige Bilder: die Uhr läuft ab dem Start der Bühne */
+    await pg.waitForFunction(() => document.querySelector(".lc-auftritt"), null, { timeout: 8000 }).catch(() => {});
+    const ab = Date.now();
     await zeit(ab, 0.22 * D);
     let R = await pg.evaluate(() => { const w = document.querySelector(".lc-auftritt .lc-auftritt-wagen"); const m = w ? new DOMMatrix(getComputedStyle(w).transform) : null;
       return { winkel: m ? Math.round(Math.atan2(m.b, m.a) * 180 / Math.PI) : null, rauch: document.querySelectorAll(".lc-auftritt-reifenrauch").length }; });
@@ -69,7 +72,9 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   }
 
   console.log("\nOPTIMUS PRIME\n");
-  const O = await pg.evaluate(() => { window.DMA_AUFTRITT("ich", "transformer", "rein");
+  await pg.evaluate(() => { window.DMA_AUFTRITT("ich", "transformer", "rein"); });
+  await pg.waitForFunction(() => document.querySelector(".lc-auftritt-trafo"), null, { timeout: 8000 }).catch(() => {});   // FASSUNG 827
+  const O = await pg.evaluate(() => {
     const t = document.querySelector(".lc-auftritt-trafo"); const q = (k) => t ? t.querySelectorAll(k).length : 0;
     const r = { kopf: q(".op-kopf"), arme: q(".op-arm"), beine: q(".op-bein"), raeder: q(".op-truck .op-rad"), augen: 0 };
     if (t) { r.augen = [...t.querySelectorAll(".op-kopf path")].filter((p) => /opAuge/.test(p.getAttribute("fill") || "")).length;

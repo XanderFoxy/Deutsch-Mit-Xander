@@ -51,7 +51,8 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
       await pg.evaluate(() => { window.DMA_TONLOG.length = 0; });
       const los = await pg.evaluate(([a, r]) => window.DMA_AUFTRITT("ich", a, r), [art, r]);
       /* Fassung 812: die 3D-Viper holt beim ersten Mal ihre Drehblätter – die Uhr läuft ab dem Start der Bühne */
-      if (art === "viper") await pg.waitForFunction(() => document.querySelector(".lc-auftritt"), null, { timeout: 8000 }).catch(() => {});
+      /* FASSUNG 827 — beim Kommen wartet jeder Einzug auf ein paar ruhige Bilder: die Uhr läuft ab dem Start der Bühne */
+      if (art === "viper" || r === "rein") await pg.waitForFunction(() => document.querySelector(".lc-auftritt"), null, { timeout: 8000 }).catch(() => {});
       const anteile = [0.12, 0.3, 0.45, 0.55, 0.62, 0.72, 0.9];
       /* Die Zeitpunkte zählen ab dem Start — Bildschirmfotos kosten Zeit und dürfen nicht aufsummieren. */
       const start = Date.now(); let t0 = 0; const lagen = [];

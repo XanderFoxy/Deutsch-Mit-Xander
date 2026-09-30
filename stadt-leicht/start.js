@@ -19,7 +19,8 @@
 
   function groesse() {
     const dpr = Math.min(3, window.devicePixelRatio || 1);
-    const w = Math.round(window.innerWidth * dpr), h = Math.round(window.innerHeight * dpr);
+    /* FASSUNG 827 — der Streifen für den Quest-Dialog unter dem Bild (quests.js platzUnten) gehört nicht zum Bild */
+    const w = Math.round(window.innerWidth * dpr), h = Math.round(Math.max(40, window.innerHeight - (ST.untenPlatz || 0)) * dpr);
     if (K.W !== w || K.H !== h || K.dpr !== dpr) {
       const alt = K.dpr || 1;
       K.W = w; K.H = h; K.s = K.s * dpr / alt; K.dpr = dpr;

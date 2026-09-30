@@ -13768,6 +13768,31 @@
     if (!wahl.some(function (x) { return x.n > 0; })) return null;
     return wahl.length === 1 ? { art: "liefern", w: wahl[0].w, n: wahl[0].n } : { art: "wahl", wahl: wahl };
   }
+  /* FASSUNG 827 — XANDER (Funk 248): „die Mühle produziert nicht sofort die geht immer erst ins große Menü … wenn in einer
+     Sache an einer Stelle zwei Sachen produziert werden können dass diese zwei Symbole einfach nur da sind bei dem Haus und
+     ich eins der Symbole halt anklicken kann". Die kleinen Symbole am Haus kommen jetzt immer, wenn das Haus etwas herstellt –
+     auch wenn es gerade arbeitet (Symbole grau, dazu „mahlt noch 3:10") oder Zutaten fehlen (grau, „Es fehlt Getreide").
+     Vorher fiel die Mühle in beiden Fällen ins große Menü. */
+  function lsKleineWahl(g) {
+    var lk = lsEinzigeAufgabe(g);
+    if (lk && lk.art === "wahl") return { wahl: lk.wahl };
+    if (lk && lk.art === "liefern") return { wahl: [{ w: lk.w, name: wareName(lk.w), n: lk.n }] };
+    if (lk && lk.art === "trupp") return { wahl: [{ w: "trupp", n: 1, bild: "erz", text: "Bergleute" }] };
+    var ich = S.ich || {}, st = dorfSt(ich, g), gg = (ich.dorf || {})[g];
+    if (!st || !gg || !(gg.lp > 0) || baustelleVon(ich, g)) return null;
+    if (g === "bergwerk") {
+      var t = truppStand(ich, "berg");
+      return t && !t.fertig ? { wahl: [{ w: "trupp", n: 0, bild: "erz", text: "Bergleute" }], info: "Die Bergleute sind unterwegs – noch " + uhrText(t.rest) } : null;
+    }
+    var R = REZEPTE[g];
+    if (!R) return null;
+    var w = (ich.werk || {})[g];
+    var wahl = R.liste.map(function (x) { return { w: x[0], name: wareName(x[0]), n: w ? 0 : rezeptMenge(ich, st, x[1]) }; });
+    if (w) return { wahl: wahl, info: R.name + " " + R.tut + " " + wareName(w.ware) + " – noch " + uhrText(Math.max(0, Date.parse(w.fertig) - Date.now())) };
+    var fehlt = [];
+    R.liste.forEach(function (x) { Object.keys(x[1]).forEach(function (k) { if (vorrat(ich, k) < x[1][k] && fehlt.indexOf(k) < 0) fehlt.push(k); }); });
+    return { wahl: wahl, info: "Es fehlt " + fehlt.map(wareName).join(", ") + "." };
+  }
   /* FASSUNG 817 — „Saison: …“ des alten Bildes → Stufe der Jahreszeit in der neuen Stadt (SZ.MODI dort). */
   var LS_JAHR = { "": "auto", "herbst|": "fruehherbst", "herbst|erntedank": "fruehherbst", "herbst|halloween": "fruehherbst", "winter|advent": "schneefall",
     "winter|": "winter", "fruehling|ostern": "fruehling", "fruehling|": "fruehling", "sommer|": "sommer" };
@@ -13815,6 +13840,20 @@
       if (!LSTADT || ev.origin !== location.origin || !ev.data || ev.source !== LSTADT.rahmen.contentWindow) return;
       if (ev.data.typ === "leicht-zu") lsVoll(false);
       if (ev.data.typ === "leicht-scroll") lsScroll(ev.data);
+      /* FASSUNG 827 — XANDER (Funk 248): „ein kleines kompaktes schwebendes Menü über dem Chat … damit man die Richtungen
+         herausfinden kann und im Bild bleibt". Die Stadt braucht für den Quest-Dialog einen Streifen unter dem Bild: der Rahmen
+         wächst um so viel nach unten und liegt dort über dem, was darunter kommt (Chat). Reicht der Platz im Fenster nicht,
+         sagt das Spiel „geht: 0" – dann bleibt der Dialog wie bisher im Bild. */
+      if (ev.data.typ === "leicht-unten") {
+        var lu = Math.max(0, Math.min(240, Number(ev.data.px) || 0));
+        LSTADT.unten = LSTADT.voll ? 0 : lu;
+        lsFolgen();
+        if (lu) {
+          var lg0 = !LSTADT.voll && LSTADT.untenGeht !== false && LSTADT.el.style.visibility !== "hidden";
+          if (!lg0) { LSTADT.unten = 0; lsFolgen(); }
+          lsPost({ typ: "leicht-unten-lage", geht: lg0 ? 1 : 0, px: lu });
+        }
+      }
       if (ev.data.typ === "leicht-voll") lsVoll(true);
       /* Tipp auf ein Haus in der kleinen Stadt: die Karte des Spiels darunter (Einsammeln, Ausbauen …). */
       /* FASSUNG 807 — ein Tipp auf den See in der neuen Stadt: angeln (oder den Fang der Fischer abholen) */
@@ -13855,12 +13894,10 @@
            durch das große Menü". Die Stadt fragt mit „klein: 1": hat das Haus etwas zu tun, kommen die kleinen Symbole ans
            Haus (die Stadt fliegt hin, oberflaeche.js O.fokus), und das Menü rollt nicht zur Station. Nur wenn es nichts zu tun
            gibt, bleibt es beim bisherigen Weg (Station darunter). */
-        if (ev.data.klein && !dorfBesuchStand() && !LSTADT.voll && lg !== "bahnhof") {
-          var lk = lsEinzigeAufgabe(lg), kw = null;
-          if (lk && lk.art === "wahl") kw = lk.wahl;
-          else if (lk && lk.art === "liefern") kw = [{ w: lk.w, name: wareName(lk.w), n: lk.n }];
-          else if (lk && lk.art === "trupp") kw = [{ w: "trupp", n: 1, bild: "erz", text: "Bergleute" }];
-          if (kw) { S.dorfTippWeg = true; ton("holzklopf", 0.2); lsPost({ typ: "leicht-wahl", g: lg, wahl: kw, fokus: 1 }); return; }
+        /* FASSUNG 827 — Funk 248: auch im Vollbild, und auch wenn das Haus gerade arbeitet oder Zutaten fehlen (lsKleineWahl) */
+        if (ev.data.klein && !dorfBesuchStand() && lg !== "bahnhof") {
+          var kw = lsKleineWahl(lg);
+          if (kw) { S.dorfTippWeg = true; ton("holzklopf", 0.2); lsPost({ typ: "leicht-wahl", g: lg, wahl: kw.wahl, info: kw.info || "", fokus: 1 }); return; }
         }
         S.dorfWahl = S.dorfWahl === lg ? "" : lg; S.dorfTippWeg = true; ton("swoosh", 0.2); schnellZeichnen(true);
         /* FASSUNG 823 — der Bahnhof öffnet sein kompaktes Fenster; das Menü rollt nicht zu einer Karte darunter. */
@@ -14092,7 +14129,11 @@
     var ci = [Math.max(0, o - r.top), Math.max(0, r.right - re), Math.max(0, r.bottom - u), Math.max(0, li - r.left)];
     if (ci[0] + ci[2] >= r.height || ci[1] + ci[3] >= r.width) { st.visibility = "hidden"; return; }
     st.visibility = "";
-    st.left = r.left + "px"; st.top = r.top + "px"; st.width = r.width + "px"; st.height = r.height + "px";
+    /* FASSUNG 827 — der Streifen für den Quest-Dialog unter dem Bild (L.unten): nur der Bildschirmrand schneidet ihn ab */
+    var un = L.unten || 0;
+    L.untenGeht = !un || (r.bottom - ci[2] + un <= innerHeight + 1 && ci[2] < 2);
+    if (un && L.untenGeht) ci[2] = 0; else un = 0;
+    st.left = r.left + "px"; st.top = r.top + "px"; st.width = r.width + "px"; st.height = (r.height + un) + "px";
     st.clipPath = ci.some(Boolean) ? "inset(" + ci.map(function (x) { return x.toFixed(1) + "px"; }).join(" ") + " round 12px)" : "";
     if (!L.z) { var z = parseInt(getComputedStyle(schnellEl).zIndex, 10); L.z = String((isNaN(z) ? 30 : z) + 1); }
     st.zIndex = L.z;

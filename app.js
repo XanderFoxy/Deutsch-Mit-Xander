@@ -57211,17 +57211,42 @@
   }
   const LC_TON_SYNTH = { "@batmobil": lcBatmobilTon };
 
-  function lcAuftritt(id, art, richtung, versuch, geladen) {
+  /* FASSUNG 827 — XANDER (Funk 248): „mein Auto kommt nie flüssig … ich sehe mich nicht damit reinfahren … die ganze
+     Webseite hängt nur noch". NACHGESEHEN: der eigene Einzug startete 300 ms nach dem Betreten – genau dann, wenn die Seite
+     am meisten zu tun hat (Verbindungen, Plätze, Verlauf, Töne). Das Auto läuft auf der Uhr der Animation: hängt der
+     Hauptfaden, springt es von Bild zu Bild. Und lagen die Blätter von Viper/Batmobil nach 6 s noch nicht da, fiel der eigene
+     Einzug ganz aus. JETZT: vor dem Kommen wartet der Einzug (höchstens 3 s), bis die Seite ein paar Bilder lang ruhig
+     läuft; die Blätter dürfen 15 s brauchen; und solange ein Einzug fährt, ruht die eingebettete Stadt (die im selben
+     Faden malt). Bild und Qualität bleiben genau gleich. */
+  function lcRuhigDann(dann, maxMs) {
+    const ab = performance.now();
+    let vorher = 0, ruhig = 0;
+    const schritt = (t) => {
+      if (vorher) ruhig = t - vorher < 24 ? ruhig + 1 : 0;
+      vorher = t;
+      if (ruhig >= 8 || t - ab > maxMs || document.hidden) { dann(); return; }
+      requestAnimationFrame(schritt);
+    };
+    requestAnimationFrame(schritt);
+  }
+  let lcStadtRuheZahl = 0;
+  function lcStadtRuhe(an) {
+    lcStadtRuheZahl = Math.max(0, lcStadtRuheZahl + (an ? 1 : -1));
+    document.querySelectorAll("iframe.sp-ls-rahmen").forEach((f) => { try { f.contentWindow.postMessage({ typ: "leicht-ruhe", an: lcStadtRuheZahl > 0 }, location.origin); } catch (e) {} });
+  }
+  window.DMA_STADT_RUHE_ZAHL = () => lcStadtRuheZahl;
+  function lcAuftritt(id, art, richtung, versuch, geladen, ruhig) {
     const A = LC_AUFTRITTE[art];
     if (!A || !id) return false;
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
+    if (richtung === "rein" && !ruhig && !versuch) { lcRuhigDann(() => lcAuftritt(id, art, richtung, versuch, geladen, true), 3000); return true; }
     /* FASSUNG 812 — Batmobil und Viper aus dem 3D-Modell: beim ersten Mal erst die Blätter
        holen (einmal, dann liegen sie im Speicher). Klappt das nicht, fährt die Viper wie
        früher (gezeichnet), das Batmobil bleibt aus. */
     const L3 = LC_AUTO3D[art] ? lcAuto3dLaden(art) : null;
     if (L3 && !L3.fertig && !L3.fehler && !geladen) {
       const ab = Date.now();
-      L3.warten.then(() => { if (Date.now() - ab < 6000 || richtung !== "rein") lcAuftritt(id, art, richtung, versuch, true); });
+      L3.warten.then(() => { if (Date.now() - ab < 15000 || richtung !== "rein") lcAuftritt(id, art, richtung, versuch, true, true); });
       return true;
     }
     const auto3d = Boolean(L3 && L3.fertig);
@@ -57231,7 +57256,7 @@
     const rk = kreis ? kreis.getBoundingClientRect() : null;
     if (!rk || !rk.width) {
       /* Wer gerade erst kommt, hat vielleicht noch keinen Platz – kurz nachsehen. */
-      if (richtung === "rein" && (versuch || 0) < 6) { setTimeout(() => lcAuftritt(id, art, richtung, (versuch || 0) + 1, geladen), 250); return true; }
+      if (richtung === "rein" && (versuch || 0) < 6) { setTimeout(() => lcAuftritt(id, art, richtung, (versuch || 0) + 1, geladen, true), 250); return true; }
       return false;
     }
     /* FASSUNG 841 — „im VORDERGRUND über die Köpfe fahren": siehe LC_AUTO3D.batmobil.vorn */
@@ -57281,7 +57306,10 @@
       document.head.appendChild(versteck);
     }
     document.body.appendChild(buehne);
-    const fertig = () => { buehne.remove(); if (versteck) versteck.remove(); };
+    lcStadtRuhe(true);
+    let ruheAus = false;
+    const fertig = () => { buehne.remove(); if (versteck) versteck.remove(); if (!ruheAus) { ruheAus = true; lcStadtRuhe(false); } };
+    setTimeout(() => { if (!ruheAus && !window.DMA_AUFTRITT_HALTEN) { ruheAus = true; lcStadtRuhe(false); } }, D + 3000);
     const cx = rs.left + rs.width / 2, cy = rs.top + rs.height / 2, B = doc.clientWidth;
     const an = (el, bilder, d, e) => { try { el.animate(bilder, { duration: d || D, easing: e || "linear", fill: "forwards" }); } catch (x) {} };
     if (auto3d) {

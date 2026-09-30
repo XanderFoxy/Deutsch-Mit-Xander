@@ -158,7 +158,11 @@ Deno.serve(async (anfrage: Request) => {
   /* =======================================================
      C) BEWERTEN UND VORLESEN — für alle Angemeldeten
      ======================================================= */
-  if (aktion !== "bewerten" && aktion !== "vorlesen") return json({ fehler: "unbekannte-aktion" }, 400);
+  /* FASSUNG 828 — XANDER (Funk 249): „über eine spracherkennungsdienst der automatisch das Mikro anschaltet nachdem die
+     Person dich gefragt hat in der Mission antwortest du einfach was du antworten möchtest und das System erkennt dann ob es
+     logisch ist". „erkennen" = freie Spracherkennung (ohne Referenztext): Azure schreibt auf, was gesagt wurde; ob es passt,
+     prüft die Stadt (stadt-leicht/sprechen.js). */
+  if (aktion !== "bewerten" && aktion !== "vorlesen" && aktion !== "erkennen") return json({ fehler: "unbekannte-aktion" }, 400);
 
   const { schluessel, region } = await geheimnisse();
   if (!schluessel || !region) return json({ fehler: "kein-zentraler-schluessel" }, 503);
@@ -174,7 +178,8 @@ Deno.serve(async (anfrage: Request) => {
   if (aktion === "vorlesen") {
     const text = String(koerper.text || "").slice(0, 300);
     if (!text) return json({ fehler: "kein-text" }, 400);
-    const stimme = STIMMEN[sprache] || STIMMEN["de-DE"];
+    /* FASSUNG 828 — Männer in den Stadt-Quests fragen mit einer Männerstimme (stimme: "m", nur Deutsch) */
+    const stimme = sprache === "de-DE" && koerper.stimme === "m" ? "de-DE-ConradNeural" : (STIMMEN[sprache] || STIMMEN["de-DE"]);
     /* Der Text wird in SSML gepackt. Dabei MUSS er maskiert
        werden — ein „&" oder „<" im Wort würde das SSML sonst
        zerbrechen, und Azure antwortet mit einem Fehler, den
@@ -201,10 +206,11 @@ Deno.serve(async (anfrage: Request) => {
     });
   }
 
-  /* --- Bewerten: die Aussprachebewertung Laut für Laut --- */
+  /* --- Bewerten: die Aussprachebewertung Laut für Laut (bzw. Erkennen: nur aufschreiben) --- */
+  const erkennen = aktion === "erkennen";
   const text = String(koerper.text || "").slice(0, 300);
   const wavBase64 = String(koerper.wav || "");
-  if (!text || !wavBase64) return json({ fehler: "unvollstaendig" }, 400);
+  if ((!text && !erkennen) || !wavBase64) return json({ fehler: "unvollstaendig" }, 400);
 
   let wav: Uint8Array;
   try {
@@ -231,7 +237,11 @@ Deno.serve(async (anfrage: Request) => {
     `?language=${encodeURIComponent(sprache)}&format=detailed`,
     {
       method: "POST",
-      headers: {
+      headers: erkennen ? {
+        "Ocp-Apim-Subscription-Key": schluessel,
+        "Content-Type": "audio/wav; codecs=audio/pcm; samplerate=16000",
+        "Accept": "application/json",
+      } : {
         "Ocp-Apim-Subscription-Key": schluessel,
         "Pronunciation-Assessment": kopfWert,
         "Content-Type": "audio/wav; codecs=audio/pcm; samplerate=16000",
