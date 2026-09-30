@@ -51,6 +51,8 @@ const BILD = process.env.BILD || "";
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".webp": "image/webp" };
 let fehler = 0;
 const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log("  " + (gut ? "ok  " : "FEHL") + " " + was + (zusatz ? "   " + zusatz : "")); };
+/* FASSUNG 844 — XANDER (Walkie 313): „es sollte ein Dach vom Turm aus nach rechts gehen über den Seitenflügel … keine extra Dächer quer nach vorne". Das Dach von 829 (Giebel nach vorn) ist abgelehnt; die Prüfungen dafür sind überholt, das richtige Dach prüft Sonde 844. */
+const ueberholt844 = (gut, was) => console.log("  ok   (überholt durch 844) " + was);
 const r2 = (z) => Math.round(z * 100) / 100;
 const lies = (p) => { try { return fs.readFileSync(path.join(WURZEL, p), "utf8"); } catch (e) { return null; } };
 
@@ -112,8 +114,8 @@ const innen = (p, poly, rand) => {
     const giebel = flaechen.filter((f) => Math.abs(f.n[2]) < 0.05 && f.umriss.length > 25 && ueberA(f.m, 0.8) && f.m[2] > 11 && /v$/.test(f.name || ""));
     const vorn = giebel.filter((f) => f.n[1] > 0.99 && f.m[1] > aY1 - 0.8);
     const seite = giebel.filter((f) => Math.abs(f.n[0]) > 0.9);
-    sage(vorn.length === 1, "der große Stufengiebel an Flügel A schaut nach vorn zum Brunnen (+y)", giebel.map((f) => f.name + " n=" + f.n.map(r2).join("/") + " y=" + r2(f.m[1])).join(", ") + " (Front y=" + r2(aY1) + ")");
-    sage(seite.length === 0, "kein Stufengiebel an der Seite von Flügel A („nicht dieses Dach auf der Seite“)", seite.map((f) => f.name).join(", "));
+    ueberholt844(vorn.length === 1, "der große Stufengiebel an Flügel A schaut nach vorn zum Brunnen (+y)", giebel.map((f) => f.name + " n=" + f.n.map(r2).join("/") + " y=" + r2(f.m[1])).join(", ") + " (Front y=" + r2(aY1) + ")");
+    ueberholt844(seite.length === 0, "kein Stufengiebel an der Seite von Flügel A („nicht dieses Dach auf der Seite“)", seite.map((f) => f.name).join(", "));
     /* Firste: Oberkanten großer Dachflächen über A */
     const dach = flaechen.filter((f) => Math.abs(f.n[2]) > 0.3 && Math.abs(f.n[2]) < 0.95 && f.flaeche > 6 && ueberA(f.m, 0.6));
     const firste = [];
@@ -124,8 +126,8 @@ const innen = (p, poly, rand) => {
     }
     const linien = [];
     for (const k of firste) { if (!linien.some((L) => L.richtung === k.richtung && Math.abs(L.z - k.z) < 0.1 && (k.richtung === "quer" ? Math.abs(L.y - k.y) < 0.1 : Math.abs(L.x - k.x) < 0.1))) linien.push(k); }
-    sage(linien.length === 1 && linien[0].richtung === "nach hinten", "über Flügel A genau EIN First, und der läuft nach hinten (kein zweites Dach quer)", linien.map((L) => L.richtung + " x=" + r2(L.x) + " z=" + r2(L.z) + " (" + r2(L.l) + " m)").join(" | ") || "keiner");
-    sage(vorn.length === 1 && linien.length === 1 && Math.abs(vorn[0].m[0] - linien[0].x) < 0.3, "der Giebel steht mittig unter dem First (das Dach gehört zu ihm)", vorn[0] ? "Giebel x=" + r2(vorn[0].m[0]) : "—");
+    ueberholt844(linien.length === 1 && linien[0].richtung === "nach hinten", "über Flügel A genau EIN First, und der läuft nach hinten (kein zweites Dach quer)", linien.map((L) => L.richtung + " x=" + r2(L.x) + " z=" + r2(L.z) + " (" + r2(L.l) + " m)").join(" | ") || "keiner");
+    ueberholt844(vorn.length === 1 && linien.length === 1 && Math.abs(vorn[0].m[0] - linien[0].x) < 0.3, "der Giebel steht mittig unter dem First (das Dach gehört zu ihm)", vorn[0] ? "Giebel x=" + r2(vorn[0].m[0]) : "—");
     /* Balkon und Blumenkästen */
     const balkon = flaechen.filter((f) => /^balkon/i.test(f.teil || ""));
     const kaesten = [...new Set(balkon.filter((f) => /blumen/.test(f.teil)).map((f) => f.teil))];

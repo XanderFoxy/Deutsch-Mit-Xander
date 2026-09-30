@@ -39,6 +39,8 @@ const fs = require("fs"), path = require("path"), vm = require("vm"), crypto = r
 const W = path.join(__dirname, "..");
 let fehler = 0;
 const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log("  " + (gut ? "ok  " : "FEHL") + " " + was + (zusatz ? "   " + zusatz : "")); };
+/* FASSUNG 844 — XANDER (Walkie 313): „es sollte ein Dach vom Turm aus nach rechts gehen über den Seitenflügel … keine extra Dächer quer nach vorne". Das Dach von 829 (Giebel nach vorn) ist abgelehnt; die Prüfungen dafür sind überholt, das richtige Dach prüft Sonde 844. */
+const ueberholt844 = (gut, was) => console.log("  ok   (überholt durch 844) " + was);
 const r2 = (z) => Math.round(z * 100) / 100;
 
 /* ---------- Modell bauen (ohne Malen) ---------- */
@@ -106,11 +108,11 @@ for (const k of firste) {
 const beschr = linien.map((L) => (L.richtung === "x" ? "entlang x bei y=" + r2(L.y) : "nach hinten bei x=" + r2(L.x)) + " z=" + r2(L.z) + " [" + L.flaechen.join(",") + "]").join(" | ");
 sage(linien.length === 1, "über Flügel A liegt genau EIN Satteldach (ein First, kein zweiter Dachkörper)", linien.length + " First(e): " + beschr);
 /* FASSUNG 829 — der First läuft von der Giebelfront nach hinten (y), keiner quer (x) */
-sage(linien.length >= 1 && linien.every((L) => L.richtung === "y"), "der First läuft von der Giebelfront nach hinten – kein Dach quer entlang des Flügels",
+ueberholt844(linien.length >= 1 && linien.every((L) => L.richtung === "y"), "der First läuft von der Giebelfront nach hinten – kein Dach quer entlang des Flügels",
   linien.filter((L) => L.richtung === "x").length + " First(e) quer");
 const haupt = linien.find((L) => L.richtung === "y");
-sage(!!haupt && haupt.bis >= aY1 - 0.5 && haupt.bis - haupt.von >= 5, "der First beginnt an der Giebelfront und läuft mindestens 5 m nach hinten", haupt ? "y " + r2(haupt.von) + " … " + r2(haupt.bis) + " (Front " + r2(aY1) + ")" : "—");
-sage(dachA.filter((f) => firste.some((k) => k.name === f.name)).length >= 2 && dachA.filter((f) => firste.some((k) => k.name === f.name)).every((f) => Math.abs(f.n[1]) < 0.05),
+ueberholt844(!!haupt && haupt.bis >= aY1 - 0.5 && haupt.bis - haupt.von >= 5, "der First beginnt an der Giebelfront und läuft mindestens 5 m nach hinten", haupt ? "y " + r2(haupt.von) + " … " + r2(haupt.bis) + " (Front " + r2(aY1) + ")" : "—");
+ueberholt844(dachA.filter((f) => firste.some((k) => k.name === f.name)).length >= 2 && dachA.filter((f) => firste.some((k) => k.name === f.name)).every((f) => Math.abs(f.n[1]) < 0.05),
   "die großen Dachflächen schauen zur Seite (Satteldach nach hinten), nicht nach vorn", dachA.map((f) => f.name + ":" + r2(f.n[0]) + "/" + r2(f.n[1])).join(" "));
 
 /* ---------- 2. EIN Stufengiebel an A, an der Kopfseite ---------- */
@@ -119,7 +121,7 @@ const giebelA = [...new Map(flaechen.filter((f) => Math.abs(f.n[2]) < 0.05 && f.
 /* FASSUNG 829 — die bemalte Außenseite der Giebelscheibe (Name „…v"), nicht die Rückseite */
 const kopf = giebelA[0] && (flaechen.find((f) => f.teil === giebelA[0].teil && f.name === giebelA[0].teil + "v") || giebelA[0]);
 sage(giebelA.length === 1, "an Flügel A steht genau EIN Stufengiebel (kein zweiter hinten, keiner an der Seite)", giebelA.map((f) => f.teil + " bei x=" + r2(f.m[0]) + " y=" + r2(f.m[1])).join(", ") || "keiner");
-sage(!!kopf && !!haupt && kopf.n[1] > 0.99 && kopf.m[1] > aY1 - 0.8 && Math.abs(kopf.m[0] - haupt.x) < 0.3, "der Stufengiebel steht vorn: schaut zum Brunnen (+y), mittig unter dem First (FASSUNG 829)",
+ueberholt844(!!kopf && !!haupt && kopf.n[1] > 0.99 && kopf.m[1] > aY1 - 0.8 && Math.abs(kopf.m[0] - haupt.x) < 0.3, "der Stufengiebel steht vorn: schaut zum Brunnen (+y), mittig unter dem First (FASSUNG 829)",
   kopf ? "Mitte x=" + r2(kopf.m[0]) + " y=" + r2(kopf.m[1]) + " n=" + kopf.n.map(r2).join("/") + ", First x=" + (haupt ? r2(haupt.x) : "—") : "—");
 
 /* ---------- 3. Balkon an der langen Seite von A zum Markt ---------- */

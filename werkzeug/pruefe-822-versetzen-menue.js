@@ -314,12 +314,20 @@ const FALSCH = `(function(){
     return null; });
   await pg.evaluate(() => { window.__msgs.length = 0; });
   if (haus) { await pg.touchscreen.tap(off.l + haus.x, off.t + haus.y); await tick(800); }
-  const hm = { msgs: await pg.evaluate(() => window.__msgs.filter((m) => m && m.typ === "leicht-haus").map((m) => m.g)),
+  const hmsgs = await pg.evaluate(() => window.__msgs.filter((m) => m && m.typ === "leicht-haus").map((m) => m.g));
+  /* FASSUNG 844 — XANDER (Walkie 313): „wenn ich lange auf ein Haus gedrückt halte soll das Bearbeiten Menü kommen". Der
+     kurze Tipp geht ans Spiel (kleine Symbole), das Menü am Haus mit „Versetzen" kommt beim langen Drücken. Das Prüf-
+     Chromium malt langsam: 1,5 s Schwelle, 2,2 s halten (wie Sonde 844). */
+  await fr.evaluate(() => { const z = [...document.querySelectorAll(".lk-wahl")]; z.forEach((w) => w.remove()); STADT.oberflaeche.langMs = 1500; });
+  if (haus) { const cdpH = await pg.context().newCDPSession(pg), t0 = Date.now() / 1000, hx = off.l + haus.x, hy = off.t + haus.y;
+    await cdpH.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: hx, y: hy, id: 1 }], timestamp: t0 }); await tick(2200);
+    await cdpH.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [], timestamp: t0 + 2.21 }); await tick(700); }
+  const hm = { msgs: hmsgs,
     m: await fr.evaluate(() => { const k = document.querySelector(".lk-karte"); if (!k || k.hidden) return null; const r = k.getBoundingClientRect(); return { vs: !!k.querySelector('.lk-knopf[title="Versetzen"]'), drin: r.left >= 0 && r.right <= innerWidth + 0.5 && r.top >= 0 && r.bottom <= innerHeight + 0.5 }; }) };
-  sage(!!haus && hm.msgs.indexOf(haus.g) >= 0 && !!hm.m && hm.m.vs && hm.m.drin, "kleiner Rahmen, nah: Tipp aufs Haus geht ans Spiel, dazu das Menü am Haus mit „Versetzen“", JSON.stringify({ haus, hm }));
+  sage(!!haus && hm.msgs.indexOf(haus.g) >= 0 && !!hm.m && hm.m.vs && hm.m.drin, "kleiner Rahmen, nah: Tipp aufs Haus geht ans Spiel, langes Drücken bringt das Menü am Haus mit „Versetzen“", JSON.stringify({ haus, hm }));
   if (BILD) await pg.screenshot({ path: path.join(BILD, "c-haus-menue-rahmen.png"), clip: { x: 0, y: off.t - 10, width: 360, height: 245 } });
   /* „Ein Tipp produziert" am Haus: der Blitz schaltet die Einstellung des Spiels */
-  { const q = await fr.evaluate(() => { const b = document.querySelector(".lk-karte:not([hidden]) .lk-direkt-knopf"); if (!b) return null; const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, t: b.title }; });
+  { const q = await fr.evaluate(() => { const b = document.querySelector(".lk-karte:not([hidden]) .lk-direkt-zeile, .lk-karte:not([hidden]) .lk-direkt-knopf"); if (!b) return null; const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, t: b.title }; });
     await pg.evaluate(() => { window.__msgs.length = 0; });
     if (q) { await pg.touchscreen.tap(off.l + q.x, off.t + q.y); await tick(400); }
     const dm = await pg.evaluate(() => window.__msgs.filter((m) => m && m.typ === "leicht-direkt"));

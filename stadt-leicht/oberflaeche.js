@@ -731,9 +731,8 @@
         return waldMitte;
       };
       /* FASSUNG 828 — die Äcker bekommen ihr Zeichen wie im alten Bild („Getreide reif" / „Getreide 2:30") */
-      /* FASSUNG 844 — beim großen Acker an seinem vorderen Rand: am hinteren Rand (und in der Mitte) lag das Zeichen im kleinen Rahmen über der Schule
-         dahinter (die Schule war dort nicht mehr antippbar, Sonde 817) */
-      const feldOrt = (nr) => () => { const f = (D.FELD_ORTE || []).find((q) => q.nr === nr) || { x: 0, y: 0 }; if (f.u0 != null) { const u = (f.u0 + f.u1) / 2, v = f.v1 != null ? f.v1 + 1 : f.v0 + 4; return { x: (u + v) / 2, y: (v - u) / 2, h: 1.5 }; } return { x: f.x, y: f.y, h: 1.5 }; };
+      /* FASSUNG 844 — beim großen Acker in seiner Mitte (nur sichtbar, wenn der Acker im Bild ist, siehe zeichenLegen) */
+      const feldOrt = (nr) => () => { const f = (D.FELD_ORTE || []).find((q) => q.nr === nr) || { x: 0, y: 0 }; if (f.u0 != null) { const u = (f.u0 + f.u1) / 2, v = f.v1 != null ? (f.v0 + f.v1) / 2 : f.v0 + 4; return { x: (u + v) / 2, y: (v - u) / 2, h: 1.5 }; } return { x: f.x, y: f.y, h: 1.5 }; };
       const ORTE = {
         see: () => { const v = D.SEE_VERSATZ || [0, 0]; return { x: 66 + v[0], y: 56 + v[1] - 3, h: 2 }; },
         wald: wald,
@@ -928,7 +927,10 @@
           const o = haeuser[b.dataset.g] || (ort && Object.assign({ stufe: 1 }, ort, { hoehe: ort.h / 0.8 }));
           if (!o) { b.style.display = "none"; continue; }
           const P = ST.proj(o.x, o.y, (o.hoehe || 10) * (o.stufe || 1) * 0.8), x = P[0] / K.dpr, y = P[1] / K.dpr;
-          const drin = x > -40 && y > -20 && x < W + 40 && y < K.H / K.dpr + 20;
+          /* FASSUNG 844 — ein Acker knapp neben dem Bild: sein Zeichen wurde an den Rand zurückgeschoben und lag dort über
+             einem fremden Haus (Schule, Sonde 817). Feld-Zeichen stehen nur, wenn der Acker selbst im Bild ist. */
+          const feldZ = /^feld/.test(b.dataset.g);
+          const drin = feldZ ? x > 8 && x < W - 8 && y > 0 && y < K.H / K.dpr : x > -40 && y > -20 && x < W + 40 && y < K.H / K.dpr + 20;
           if (b.style.display !== (drin ? "" : "none")) b.style.display = drin ? "" : "none";
           if (!drin) continue;
           /* FASSUNG 828 — Größe nur messen, wenn sich Inhalt oder Schalter geändert haben */

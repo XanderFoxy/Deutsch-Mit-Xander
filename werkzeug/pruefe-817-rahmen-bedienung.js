@@ -344,10 +344,16 @@ const sage = (gut, was, zusatz) => {
   await knipsen("5-zurueck");
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = ""; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(400);
   await menueHoch(); await tick(300);
-  /* Ohne die Einstellung „Ein Tipp produziert“ (Grundstellung): auch die Mühle öffnet nur ihre Karte darunter (Sprunglogik). */
+  /* Ohne die Einstellung „Ein Tipp produziert“ (Grundstellung): nichts startet von selbst.
+     FASSUNG 844 — XANDER (Walkie 313): „kleine Symbole am Haus … jetzt kriege ich trotzdem wieder das große Menü und dann
+     springt manchmal die Seite hoch". Hat die Mühle etwas zu tun, kommt die kleine Auswahl ans Haus (kein Sprung zur Karte). */
   await tippeHaus("muehle"); await tick(1700);
   const ms = await pg.evaluate(() => { const e = document.querySelector(".sp-dl-neustadt ~ .sp-dl-station"); return e && e.getAttribute("aria-label"); });
-  sage(ms === "Mühle" && (await rufe("spiel_beliefern")).length === 0, "ohne „Ein Tipp produziert“: Tipp auf die Mühle öffnet ihre Karte darunter, nichts startet von selbst", JSON.stringify({ ms }));
+  const mw = await imFrame(() => { const w = document.querySelector(".lk-wahl"); return w ? w.querySelectorAll(".lk-wahl-knopf").length : 0; });
+  sage((ms === "Mühle" || mw > 0) && (await rufe("spiel_beliefern")).length === 0, "ohne „Ein Tipp produziert“: Tipp auf die Mühle zeigt die kleine Auswahl am Haus (oder die Karte), nichts startet von selbst", JSON.stringify({ ms, mw }));
+  /* die Auswahl schließen wie ein Tipp daneben: die Stadt fliegt zurück zur ganzen Stadt */
+  await imFrame(() => { const O = window.STADT && STADT.oberflaeche; if (!O) return; if (O.wahlZu) O.wahlZu(); if (O.fokusVergessen) O.fokusVergessen(); if (O.zurStartAnsicht) O.zurStartAnsicht(false); });
+  await tick(900);
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = ""; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300);
   await tippe('.sp-dl-beschriftung [data-s="lsdirekt"]'); await tick(1400);
   const dk = await pg.evaluate(() => (document.querySelector('.sp-dl-beschriftung [data-s="lsdirekt"]') || {}).textContent);
@@ -374,7 +380,8 @@ const sage = (gut, was, zusatz) => {
     if (q) await pg.touchscreen.tap(o.l + q.x, o.t + q.y); await tick(900); }
   bl = await rufe("spiel_beliefern");
   sage(bl.length === 2 && bl[1].p_gebaeude === "baeckerei" && bl[1].p_ware === "kuchen" && bl[1].p_menge === 1 && !(await imFrame(() => !!document.querySelector(".lk-wahl"))), "Tipp auf den Kuchen: die Bäckerei backt Kuchen, die Auswahl geht zu", JSON.stringify(bl[1]));
-  await stand("ich.werk = {}; ich.vorraete = Object.assign({}, ich.vorraete, { getreide: 6, mehl: 3 });"); await tick(1300);
+  /* FASSUNG 844 — nach dem Symbol fliegt die Stadt zurück zur ganzen Stadt (Walkie 313: „wenn man die Aufgabe erledigt hat … dass es dann wieder auf das Gesamtbild der Stadt springt"); erst danach wieder tippen */
+  await stand("ich.werk = {}; ich.vorraete = Object.assign({}, ich.vorraete, { getreide: 6, mehl: 3 });"); await tick(2600);
   await tippeHaus("baeckerei"); await tick(1000);
   { const q = await imFrame(() => { const b = document.querySelector(".lk-wahl .lk-wahl-karte"); if (!b) return null; const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }), o = await lage(".sp-lstadt");
     if (q) await pg.touchscreen.tap(o.l + q.x, o.t + q.y); await tick(1200); }
@@ -415,7 +422,8 @@ const sage = (gut, was, zusatz) => {
 
   console.log("\nDOPPELTIPP: STÄRKER REIN – UND WIEDER RAUS (Walkie 305)\n");
   await tippeImFrame(".lk-lupe"); await tick(1000);
-  await stand("ich.werk = {}; ich.vorraete = Object.assign({}, ich.vorraete, { getreide: 6, mehl: 3 });"); await tick(1300);
+  /* FASSUNG 844 — nach dem Symbol fliegt die Stadt zurück zur ganzen Stadt (Walkie 313: „wenn man die Aufgabe erledigt hat … dass es dann wieder auf das Gesamtbild der Stadt springt"); erst danach wieder tippen */
+  await stand("ich.werk = {}; ich.vorraete = Object.assign({}, ich.vorraete, { getreide: 6, mehl: 3 });"); await tick(2600);
   const b0 = (await rufe("spiel_beliefern")).length;
   const mp = (await hausPunkt("muehle")) || { x: 140, y: 90 }, o = await lage(".sp-lstadt");
   const w0 = await imFrame((m) => { const K = window.STADT.kamera; return { s: K.s, g: window.STADT.oberflaeche.ueberblick().s, w: window.STADT.aufBoden(m.x * K.dpr, m.y * K.dpr) }; }, mp);
