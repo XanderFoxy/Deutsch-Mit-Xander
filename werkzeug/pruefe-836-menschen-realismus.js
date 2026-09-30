@@ -94,7 +94,10 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
   sage(f1.BODEN && !f1.frei.length, "was frei sein muss, schwebt nicht auf dem Boden (Hocke: Gesäß frei, Strecken: Fersen frei …)", f1.frei.slice(0, 5).join(" | "));
   sage(!f1.stecken.length, "kein Glied steckt im Rumpf oder im anderen Bein (Mann und Frau, alle Haltungen)", f1.stecken.slice(0, 4).join(" | "));
   sage(Math.abs(f1.koepfe - 7.5) < 0.05 && Math.abs(f1.groesse - f1.H) < 6, "Proportionen: der erwachsene Mann ist 7,5 Kopfhöhen groß", f1.koepfe.toFixed(2) + " Köpfe");
-  sage(f1.maxKB < 60, "jede Figur < 60 KB SVG", f1.maxKB.toFixed(1) + " KB");
+  /* FASSUNG 838: Gesicht, Haar und Kleidung mit allen Details (Iris-
+     Musterung, einzelne Wimpern und Brauenhaare, Strähnen, Nähte) — die
+     Grenze steigt auf 90 KB je Figur (Auftrag 838: „möglichst < 90 KB“). */
+  sage(f1.maxKB < 90, "jede Figur < 90 KB SVG", f1.maxKB.toFixed(1) + " KB");
 
   /* ---------------------------------------------------------------- 2 */
   console.log("\n2 · IMMER BEKLEIDET (Hautfläche im Rumpfbereich)\n");
@@ -146,7 +149,8 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
     const s = M.zeichne({ pose: "sitzen", blick: 30, id: "s", kleidung: { oberteil: { stueck: "hemd" }, unterteil: { stueck: "jeans" } } }).svg;
     const p = M.zeichne({ pose: "stehen", blick: 90, id: "p" }).svg;
     return {
-      iris: /radialGradient/.test(w), wimpern: (w.match(/stroke="#2a1c16"/g) || []).length >= 6,
+      /* FASSUNG 838: Wimpern sind einzelne Striche in der Farbe des Haars (data-teil="wimpern") */
+      iris: /radialGradient/.test(w), wimpern: (w.match(/stroke="#2a1c16"/g) || []).length >= 6 || (w.match(/data-teil="wimpern"/g) || []).length >= 2,
       straehnen: (w.match(/stroke-width="0\.[0-9]+" stroke-linecap="round" stroke-linejoin="round" opacity="0\.[0-9]+"/g) || []).length >= 15,
       stoppeln: /<pattern /.test(m), gesichtClip: /clipPath id="m\w*f/.test(m), finger: (m.match(/stroke-linecap="round"/g) || []).length >= 40,
       falten: (s.match(/opacity="0\.[1-5]\d?"/g) || []).length >= 10, profil: p.length > 20000,
@@ -225,11 +229,15 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
       const f = document.querySelector("#__bk [data-bk-figur]");
       const m = /translate\(\s*([-\d.]+)[ ,]+([-\d.]+)/.exec(f.getAttribute("transform"));
       const fig = bkFigurSvg(z, 0);
-      return { haltung: z.haltung, kleider, wasser: /clipPath id="bkWasser"/.test(svg), brust: +m[2] + fig.brustY, wasserY: z.platz && z.platz.wasserY, satz: document.querySelector("#__bk .bk-satz-text").textContent };
+      /* FASSUNG 838: statt abgeschnitten liegt die Figur hinter Wannenwand und Wasser */
+      return { haltung: z.haltung, kleider, wasser: /clipPath id="bkWasser"/.test(svg) || /data-bk-vorne="wasser"/.test(svg), brust: +m[2] + fig.brustY, wasserY: z.platz && z.platz.wasserY, satz: document.querySelector("#__bk .bk-satz-text").textContent };
     });
     sage(bad.haltung === "baden" && bad.wasser, "in der Badewanne: sitzen mit angewinkelten Beinen im Wasser", JSON.stringify({ h: bad.haltung, wasser: bad.wasser }));
     sage(bad.kleider.some((k) => /badeanzug|badehose|badeshirt/.test(k)) && !bad.kleider.includes("bademantel"), "in der Wanne Badekleidung (Badeanzug bzw. Badehose mit Badeshirt)", bad.kleider.join(","));
-    sage(Math.abs(bad.brust - bad.wasserY) < 3, "das Wasser verdeckt die Figur ab der Brust", "Brust " + bad.brust.toFixed(1) + " / Wasser " + bad.wasserY);
+    /* FASSUNG 838: das Gesäß liegt jetzt auf dem Wannenboden (Sonde 838) —
+       das Wasser steht auf Brusthöhe bis unter die Achseln (Brust bis
+       10 Einheiten ≈ 17 cm unter dem Wasserspiegel). */
+    sage(bad.brust - bad.wasserY > -3 && bad.brust - bad.wasserY < 10, "das Wasser verdeckt die Figur ab der Brust", "Brust " + bad.brust.toFixed(1) + " / Wasser " + bad.wasserY);
     sage(/in der Badewanne/.test(bad.satz) && /angewinkelten Beinen/.test(bad.satz), "der Satz: „… sitzt mit angewinkelten Beinen in der Badewanne“", bad.satz);
     if (BILD) await (await pb.$("#__bk .bk-buehne")).screenshot({ path: BILD + "-baukasten-360-badewanne.png" });
     await pb.evaluate(() => document.querySelector('#__bk [data-bk-fach="wer"]').click());

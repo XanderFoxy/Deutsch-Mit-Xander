@@ -1807,7 +1807,7 @@
         schat += gliedLinie(halsS, [[0.95, 150], [0.5, 125], [0.08, 98]], dunkler(hautF, 0.3), 0.35 * g, 0.35, 1)
           + gliedLinie(halsS, [[0.95, 30], [0.5, 55], [0.08, 82]], dunkler(hautF, 0.3), 0.35 * g, 0.35, 1);
         /* Adamsapfel: Licht oben, Schatten darunter statt eines Strichs */
-        if (M.erw && !M.w) schat += gliedLinie(halsS, [[0.5, 84], [0.56, 90], [0.5, 96]], heller(hautF, 0.3), 0.7 * g, 0.35, 1) + gliedLinie(halsS, [[0.4, 86], [0.44, 90], [0.4, 94]], dunkler(hautF, 0.3), 0.5 * g, 0.2, 1);
+        if (M.erw && !M.w) schat += gliedLinie(halsS, [[0.5, 84], [0.56, 90], [0.5, 96]], heller(hautF, 0.3), 0.6 * g, 0.18, 1) + gliedLinie(halsS, [[0.4, 86], [0.44, 90], [0.4, 94]], dunkler(hautF, 0.3), 0.5 * g, 0.2, 1);
         /* Drosselgrube zwischen den Kopfnickern */
         schat += gliedLinie(halsS, [[0.02, 84], [0.1, 90], [0.02, 96]], dunkler(hautF, 0.35), 0.8 * g, 0.25, 1);
       }
@@ -2102,12 +2102,27 @@
         const flaechePts = obenR.concat(untenR).map((q) => pr(q.p));
         const bf = voll ? misch(haarF, hautF, 0.12) : misch(haarF, hautF, 0.45);
         if (voll) {
-          svg += h.formPunkte(flaechePts, bf, { hell: 0.14, dunkel: 0.2, kontur: dunkler(bf, 0.2) });
-          for (let i = 0; i < 12; i++) {
-            const u = -0.8 + i * 0.145, y0 = kante(u) + 0.6;
-            const a = pt(y0, u), b = pt(Math.min(11.2, y0 + 2.6 + (i % 3) * 0.6), u * 0.92);
-            if (sichtbar(a.n) > 0.1) svg += linie([pr(a.p), pr(b.p)], dunkler(haarF, 0.25), 0.2 * k, ' opacity=".5"');
+          /* FASSUNG 838: Vollbart aus Haaren — dichte kurze Strähnen in drei
+             Tönen, die Wangenkante franst aus (vorher eine Platte mit 12
+             Strichen und harter Kante). */
+          svg += h.formPunkte(flaechePts, bf, { hell: 0.2, dunkel: 0.26, kontur: dunkler(bf, 0.12), strich: 0.08 * k });
+          const R2 = (v) => Math.round(v * 100) / 100, Q = (p) => R2(p[0]) + " " + R2(p[1]);
+          const tonB = ["", "", ""];
+          for (let i = 0; i < 70; i++) {
+            const u = -0.9 + (i % 14) * 0.138 + ((i * 7) % 5) * 0.012, reihe = Math.floor(i / 14);
+            const y0 = kante(u) - 0.3 + reihe * 1.25 + ((i * 3) % 4) * 0.15;
+            if (y0 > 11.4) continue;
+            const a = pt(y0, u), b = pt(Math.min(11.8, y0 + 1.3 + (i % 3) * 0.3), u * 0.95 + ((i % 5) - 2) * 0.01);
+            if (sichtbar(a.n) < 0.08) continue;
+            tonB[i % 3 === 0 ? 2 : i % 2] += "M" + Q(pr(a.p)) + "L" + Q(pr(b.p));
           }
+          if (tonB[0]) svg += '<path data-teil="bart" d="' + tonB[0] + '" stroke="' + dunkler(haarF, 0.35) + '" stroke-width="' + R2(0.13 * k) + '" stroke-linecap="round" opacity=".6"/>';
+          if (tonB[1]) svg += '<path d="' + tonB[1] + '" stroke="' + dunkler(haarF, 0.1) + '" stroke-width="' + R2(0.15 * k) + '" stroke-linecap="round" opacity=".55"/>';
+          if (tonB[2]) svg += '<path d="' + tonB[2] + '" stroke="' + heller(haarF, 0.35) + '" stroke-width="' + R2(0.09 * k) + '" stroke-linecap="round" opacity=".5"/>';
+          /* ausfransende Oberkante an der Wange */
+          let fr = "";
+          obenR.forEach((q, i) => { const p = pr(q.p), o = pr(add(q.p, mul(T, -0.7 * k))); fr += "M" + Q(p) + "L" + Q([o[0] + ((i % 3) - 1) * 0.15 * k, o[1]]); });
+          if (fr) svg += '<path d="' + fr + '" stroke="' + bf + '" stroke-width="' + R2(0.14 * k) + '" stroke-linecap="round" opacity=".7"/>';
         } else {
           const pid = h.id + "s" + h.zaehler();
           /* FASSUNG 838: vorher rundete r1 die Punkte auf den Halbmesser 0 —

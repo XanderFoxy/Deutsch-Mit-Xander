@@ -72,7 +72,9 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
   const datei = fs.statSync(path.join(WURZEL, "figuren/mensch.js")).size;
   /* FASSUNG 836: Realismus (Muskelprofile, Gesicht, Haar, Falten, 32
      Haltungen) — die Datei darf wachsen, bleibt aber eine Datei < 200 KB. */
-  sage(datei < 200 * 1024, "figuren/mensch.js ist leicht (eine Datei für alle Menschen)", Math.round(datei / 1024) + " KB");
+  /* FASSUNG 838: Gesicht, Haar, Kleidung und Sitzen im Detail — die Datei
+     darf bis 260 KB wachsen (sie ersetzt weiterhin 36 MB alte Figuren). */
+  sage(datei < 260 * 1024, "figuren/mensch.js ist leicht (eine Datei für alle Menschen)", Math.round(datei / 1024) + " KB");
   await pg1.addScriptTag({ url: basis.replace("index.html", "figuren/mensch.js") });
   const fig = await pg1.evaluate(() => {
     const M = window.DMA_MENSCH;
@@ -121,8 +123,11 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
   const baby = fig.groesse.find((x) => x[0] === "saeuglingm");
   sage(baby && baby[1] / baby[3] < 4.5, "der Säugling hat Babyproportionen (4 Kopfhöhen)", baby && (baby[1] / baby[3]).toFixed(2));
   sage(fig.finger >= 20, "Hände mit Fingern (je Hand fünf, als Glieder gezeichnet)", fig.finger + " Fingerstriche");
-  /* FASSUNG 836: Grenze 60 KB je Figur (vorher 45 KB) */
-  sage(fig.maxKB < 60, "jede Figur bleibt leicht (< 60 KB SVG)", fig.maxKB.toFixed(1) + " KB");
+  /* FASSUNG 836: Grenze 60 KB je Figur (vorher 45 KB).
+     FASSUNG 838: 90 KB — Iris mit Musterung, einzelne Wimpern und
+     Brauenhaare, Strähnen mit Glanzband, Nähte und Falten (Xander, Funk
+     222: „jedes kleinste Detail … soll man deutlich sehen“). */
+  sage(fig.maxKB < 90, "jede Figur bleibt leicht (< 90 KB SVG)", fig.maxKB.toFixed(1) + " KB");
   await pg1.close();
   }
 
