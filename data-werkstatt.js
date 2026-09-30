@@ -49,20 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 821: Italienisch nur noch im Italienischraum (Funk 225/232)",
+  stand: "Fassung 822: Klassenzimmer, Einzug im Auto, Gleise der Folgen (Walkie 313)",
 
   inArbeit: [
-    { seit: "2026-09-30T06:24",
-      text: "Viper, KITT, Colt-Truck vorn? (Frage an Xander)" },
-    { seit: "2026-09-30T06:24",
-      text: "Italienischraum nur für Betreiber? (Frage an Xander)" },
+    { seit: "2026-09-30T12:34",
+      text: "Stadt aus Walkie 313 (844): Kornfelder in allen Dörfern frei legen, dann ausliefern" },
+    { seit: "2026-09-30T12:34",
+      text: "Schwarzbild bei Tastatur und beim Verlassen" },
+    { seit: "2026-09-30T12:34",
+      text: "Kölner Dom: echte Größe? (Walkie 316)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-30T06:24",
-      text: "Italienisch außerhalb des Italienischraums entfernt (843)" },
-    { seit: "2026-09-30T06:24",
-      text: "Tonserver-Wächter mit Rückfall aufs Netz (842)" },
+    { seit: "2026-09-30T12:34",
+      text: "Einzug: Bild sitzt im Auto hinter der Scheibe (845)" },
+    { seit: "2026-09-30T12:34",
+      text: "Gleise einer Folge bauen sich nacheinander auf (845)" },
   ],
 };
