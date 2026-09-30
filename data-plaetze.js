@@ -12,6 +12,16 @@
    Liegefläche), „kopf“ (wo das Kissen ist) und die Badewanne
    „wasserY“ (bis dahin verdeckt das Wasser die Figur) — die neuen,
    echten Liegehaltungen brauchen das, sonst schwebt man über dem Bett.
+   FASSUNG 838 — XANDER (Funk 222): „in der Badewanne wenn sie sitzt …
+   fixierungspunkt … auf den Wannen Boden … Querschnitt von der Wanne
+   … auch wenn man in einem Sessel sitzt dass man hinter der Sessel
+   Linie sitzt und nicht an den Sessel dran geklebt“.
+   „bodenY“: Wannenboden (dort liegt das Gesäß), „sitzX“: wo in der
+   Wanne; „vorderkante“: was VOR der Figur gezeichnet wird („wanne“:
+   Wannenwand im Querschnitt und Wasser); „vorne“: Szenenteile, die
+   nach der Figur noch einmal gezeichnet werden (Armlehnen des
+   Sessels). Der Sessel-Platz liegt jetzt im Sessel (x 234, vorher
+   daneben vor der Lampe) und nimmt den Platz der gemalten Mutter ein.
    ========================================================= */
 window.DMA_PLAETZE = [
  {
@@ -32,6 +42,9 @@ window.DMA_PLAETZE = [
   "liegY": 128,
   "kopf": "rechts",
   "wasserY": 116,
+  "bodenY": 143,
+  "sitzX": 46,
+  "vorderkante": "wanne",
   "bild": "baden",
   "szene": "badezimmer",
   "teil": "badewanne",
@@ -238,7 +251,7 @@ window.DMA_PLAETZE = [
   "id": "wohnzimmer-sessel",
   "szene": "wohnzimmer",
   "teil": "sessel",
-  "x": 214,
+  "x": 234,
   "y": 126,
   "wo": "im Sessel",
   "wort": "der Sessel",
@@ -246,7 +259,13 @@ window.DMA_PLAETZE = [
   "tut": "liest",
   "an": true,
   "hoehe": 62,
-  "sitzY": 140
+  "sitzY": 135,
+  "verdeckt": [
+   "mutter"
+  ],
+  "vorne": [
+   "armlehne"
+  ]
  },
  {
   "id": "wohnzimmer-fernseher",

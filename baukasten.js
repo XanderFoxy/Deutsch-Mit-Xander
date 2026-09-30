@@ -517,6 +517,13 @@ function bkFigurAnker(fig, platz, haltung) {
   const sitzend = BK_SITZHALTUNG[h] && fig.sitz !== null
     && typeof platz.sitzY === "number";
   if (sitzend) return { x: platz.x - fig.sitzX, y: platz.sitzY - fig.sitz };
+  /* FASSUNG 838 — XANDER (Funk 222): „in der Badewanne wenn sie sitzt …
+     Beine angewinkelt … fixierungspunkt … auf den Wannen Boden“. Das
+     Gesäß liegt auf dem Wannenboden (bodenY); vorher hing die Figur mit
+     der Brust an der Wasserlinie und schwebte über der Wanne. */
+  if (BK_BADHALTUNG[h] && typeof platz.bodenY === "number" && fig.sitz != null) {
+    return { x: (typeof platz.sitzX === "number" ? platz.sitzX : platz.x) - fig.sitzX, y: platz.bodenY - fig.sitz };
+  }
   /* FASSUNG 836: In der Badewanne steht das Wasser bis zur Brust. */
   if (BK_BADHALTUNG[h] && typeof platz.wasserY === "number" && fig.brustY != null) return { x: platz.x, y: platz.wasserY - fig.brustY - 1 };
   /* FASSUNG 834: Wer an einem Sitzplatz steht, kniet oder krabbelt, tut
@@ -529,6 +536,85 @@ function bkFigurAnker(fig, platz, haltung) {
   }
   return { x: platz.x, y: platz.y - fig.fuss };
 }
+
+/* FASSUNG 838 — WAS VOR DER FIGUR LIEGT
+   XANDER (Funk 222): „sie sollen wenn sie auf der Couch sitzen nicht
+   irgendwelche komischen Details von der Couch vor sich haben … die
+   Person so hinter die Wannenwand zu setzen auch wenn man in einem
+   Sessel sitzt dass man hinter der Sessel Linie sitzt und nicht an den
+   Sessel dran geklebt“.
+   Die Bühne hat drei Ebenen: Kulisse und Möbel (hinten), die Figur, und
+   danach die Vorderkante des Platzes — die Armlehnen des Sessels
+   (platz.vorne: Szenenteile, die noch einmal gezeichnet werden) bzw. die
+   Wanne im Querschnitt: Wannenwand und Boden, darüber leicht durch-
+   sichtiges Wasser mit Glanzlinie an der Oberfläche. */
+function bkVorderkante(platz, haltung, sz) {
+  if (!platz || !sz) return "";
+  let o = "";
+  (platz.vorne || []).forEach((id) => {
+    const t = (sz.teile || []).find((q) => q.id === id);
+    if (t) o += '<g transform="translate(' + t.x + "," + t.y + ')">' + t.kunst + "</g>";
+  });
+  if (platz.vorderkante === "wanne" && BK_BADHALTUNG[haltung]) {
+    const t = (sz.teile || []).find((q) => q.id === platz.teil);
+    const x = t ? t.x : 64, y = t ? t.y : 148, w = platz.wasserY - y;
+    /* Innenmaße der gemalten Wanne (szenen/badezimmer.js): oben ±50,6 bei
+       −35,4, unten ±44,5 bei −5; außen ±53,6 bei −41,4 bis ±46,9 bei −2. */
+    const innen = (yy) => 50.6 - (yy + 35.4) / 30.4 * 6.1;
+    const P = (a, b) => (x + a).toFixed(1) + " " + (y + b).toFixed(1);
+    const wi = innen(w);
+    o += '<defs><linearGradient id="bkWasserV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe6f2" stop-opacity=".5"/><stop offset=".45" stop-color="#8ccbe2" stop-opacity=".66"/><stop offset="1" stop-color="#5fa9c9" stop-opacity=".86"/></linearGradient></defs>';
+    o += '<path data-bk-vorne="wasser" d="M' + P(-wi, w) + "L" + P(wi, w) + "L" + P(44.5, -5) + "L" + P(-44.5, -5) + 'Z" fill="url(#bkWasserV)"/>';
+    /* Oberfläche: Glanzlinie und kleine Wellen */
+    let welle = "M" + P(-wi, w);
+    for (let i = 1; i <= 8; i++) welle += "Q" + P(-wi + (i - 0.5) * wi / 4, w + (i % 2 ? -1.1 : 1.1)) + " " + P(-wi + i * wi / 4, w);
+    o += '<path d="' + welle + '" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".9"/>';
+    o += '<path d="M' + P(-wi * 0.7, w + 2.2) + "L" + P(-wi * 0.35, w + 2.2) + "M" + P(wi * 0.1, w + 3.4) + "L" + P(wi * 0.5, w + 3.4) + '" stroke="#fff" stroke-width=".8" stroke-linecap="round" opacity=".55"/>';
+    /* Wannenwand im Querschnitt: Seitenwände und Boden, oben die Enden
+       des Wannenrands — über der Öffnung sieht man die Person. */
+    o += '<path data-bk-vorne="wannenwand" fill-rule="evenodd" d="M' + P(-53.6, -41.4) + "L" + P(53.6, -41.4) + "L" + P(46.9, -2) + "L" + P(-46.9, -2) + "Z"
+      + "M" + P(-50.6, -41.4) + "L" + P(-50.6, -35.4) + "L" + P(-44.5, -5) + "L" + P(44.5, -5) + "L" + P(50.6, -35.4) + "L" + P(50.6, -41.4) + 'Z" fill="#fbfdfe" stroke="#9db8c0" stroke-width="1.2" stroke-linejoin="round"/>';
+    o += '<rect x="' + (x - 54.8).toFixed(1) + '" y="' + (y - 43.8).toFixed(1) + '" width="4.6" height="3.6" rx="1.6" fill="#f2f8fa" stroke="#9db8c0" stroke-width="1.1"/>'
+      + '<rect x="' + (x + 50.2).toFixed(1) + '" y="' + (y - 43.8).toFixed(1) + '" width="4.6" height="3.6" rx="1.6" fill="#f2f8fa" stroke="#9db8c0" stroke-width="1.1"/>';
+  }
+  return o ? '<g class="bk-vorderkante">' + o + "</g>" : "";
+}
+
+/* FASSUNG 838 — WINKEN FÜR ANDERE BILDER (Bilderrätsel): eine gezeichnete
+   Figur (ihr <g> mit transform) winkt mit dem rechten Arm, in ihrer
+   Haltung, dann kehrt sie zurück. Dieselbe Bewegung wie „Winken“ im
+   Baukasten. XANDER (Funk 222): „tippe den Mann im grünen T-Shirt an …
+   dann soll er winken“. */
+function bkWinken(g, z, dauer) {
+  const M = window.DMA_MENSCH;
+  if (!g || !M || !z) return false;
+  const gh = bkGezeichneteHaltung(z);
+  const basis = M.pose(gh.pose);
+  const fig0 = bkFigurSvg(z, 0);
+  if (!fig0) return false;
+  const W = M.POSEN.winken;
+  const oben = Object.assign({}, basis, { schulterR: W.schulterR, ellbogenR: W.ellbogenR, unterarmR: W.unterarmR, handR: W.handR, fingerR: W.fingerR, kopf: -8 });
+  const blick0 = fig0.blick.blick, blick1 = Math.min(blick0, 30);
+  const t0 = performance.now(), T = dauer || 2600;
+  g.setAttribute("data-winkt", "1");
+  const bild = (pose, blick) => { const f = bkFigurSvg(z, 0, { pose, blick, spiegel: fig0.blick.spiegel, id: "bw" }); if (f) g.innerHTML = f.svg; };
+  const tick = (t) => {
+    if (!g.isConnected) return;
+    const u = Math.min(1, (t - t0) / T);
+    let pose, blick;
+    if (u < 0.15) { const w = u / 0.15; pose = M.mische(basis, oben, w * w * (3 - 2 * w)); blick = blick0 + (blick1 - blick0) * w; }
+    else if (u < 0.85) {
+      const s = Math.sin((u - 0.15) / 0.7 * Math.PI * 2 * 3);
+      pose = Object.assign({}, oben, { ellbogenR: W.ellbogenR - 10 + 22 * s, schulterR: Object.assign({}, W.schulterR, { seit: W.schulterR.seit + 6 * s }), handR: 8 + 12 * s });
+      blick = blick1;
+    } else { const w = (u - 0.85) / 0.15; pose = M.mische(oben, basis, w * w * (3 - 2 * w)); blick = blick1 + (blick0 - blick1) * w; }
+    bild(pose, blick);
+    if (u < 1) requestAnimationFrame(tick); else { g.innerHTML = fig0.svg; g.removeAttribute("data-winkt"); }
+  };
+  requestAnimationFrame(tick);
+  return true;
+}
+if (typeof window !== "undefined") window.bkWinken = bkWinken;
 
 /* ------------------------------------------------------------
    4 — DIE BEDIENOBERFLÄCHE
@@ -693,12 +779,15 @@ const Baukasten = (function () {
       ? '<g class="bk-figur" data-bk-figur="1" transform="translate('
         + p2(anker.x) + ',' + p2(anker.y) + ')">' + fig.svg + "</g>"
       : "";
-    /* In der Badewanne verdeckt das Wasser alles unter dem Wasserspiegel. */
-    if (figur && platz && typeof platz.wasserY === "number" && BK_BADHALTUNG[zustand.haltung]) {
+    /* In der Badewanne verdeckt das Wasser alles unter dem Wasserspiegel.
+       FASSUNG 838: nicht mehr abgeschnitten, sondern hinter Wannenwand und
+       Wasser (bkVorderkante); ohne Querschnitt bleibt es beim Abschneiden. */
+    if (figur && platz && typeof platz.wasserY === "number" && BK_BADHALTUNG[zustand.haltung] && platz.vorderkante !== "wanne") {
       figur = '<clipPath id="bkWasser"><rect x="0" y="0" width="' + sz.breite + '" height="' + platz.wasserY + '"/></clipPath>'
         + '<g clip-path="url(#bkWasser)">' + figur + "</g>"
         + '<path d="M' + (platz.x - 34) + " " + platz.wasserY + "q17 -2 34 0t34 0" + '" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1.2" stroke-linecap="round"/>';
     }
+    if (figur) figur += bkVorderkante(platz, zustand.haltung, sz);
 
     return '<div class="bk-buehne"><svg viewBox="0 0 ' + sz.breite + " " + sz.hoehe
       + '" class="bk-svg" role="img" aria-label="Die gebaute Situation">'
