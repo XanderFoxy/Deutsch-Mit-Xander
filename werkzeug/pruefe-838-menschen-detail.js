@@ -41,6 +41,7 @@
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = process.env.WURZEL || path.join(__dirname, "..");
+/* FASSUNG 840 — XANDER (Funk 225): „für die Bilderwelt möchte ich meine alte Version wieder zurück haben … und nur eine Option als Link zur neuen Version“. Die neue Bilderwelt (834/836/838) liegt jetzt in bilderwelt-neu/. */
 const BILD = process.env.BILD || "";
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp" };
 let fehler = 0;
@@ -62,7 +63,7 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
   const pg = await br.newPage({ viewport: { width: 900, height: 700 } });
   pg.setDefaultTimeout(180000);
   await pg.setContent("<html><body style='margin:0;background:#fff'></body></html>");
-  await pg.addScriptTag({ url: basis + "figuren/mensch.js" });
+  await pg.addScriptTag({ url: basis + "bilderwelt-neu/figuren/mensch.js" });
   const f1 = await pg.evaluate(() => {
     const M = window.DMA_MENSCH;
     const leute = [["saeugling", "w", "kurz"], ["kleinkind", "m", "kurz"], ["kind", "w", "zopf"], ["jugendlich", "m", "kurz"], ["erwachsen", "m", "kurz", "bart_kurz"], ["erwachsen", "w", "lang"], ["alt", "m", "glatze"], ["alt", "w", "dutt"]];
@@ -145,7 +146,7 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
     pb.setDefaultTimeout(120000);
     const pf = []; pb.on("pageerror", (e) => pf.push(String(e.message || e)));
     await pb.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); localStorage.setItem("dma_tutor", "aus"); } catch (e) {} });
-    await pb.goto(basis + "index.html", { waitUntil: "domcontentloaded" });
+    await pb.goto(basis + "index.html?bilderwelt=neu", { waitUntil: "domcontentloaded" });
     await pb.waitForFunction(() => window.Baukasten, null, { timeout: 120000 });
     await pb.evaluate(async () => {
       const d = document.createElement("div"); d.id = "__bk";
@@ -206,7 +207,7 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
   /* ---------------------------------------------------------------- 5 */
   console.log("\n5 · SZENEN\n");
   global.window = global; window.DMA_SZENE = {};
-  const szene = (id) => { const f = path.join(WURZEL, "szenen", id + ".js"); if (!fs.existsSync(f)) return null; delete require.cache[f]; require(f); return window.DMA_SZENE[id] || null; };
+  const szene = (id) => { const f = path.join(WURZEL, "bilderwelt-neu/szenen", id + ".js"); if (!fs.existsSync(f)) return null; delete require.cache[f]; require(f); return window.DMA_SZENE[id] || null; };
   const wz = szene("wohnzimmer");
   const idx = (id) => wz.teile.findIndex((t) => t.id === id);
   sage(idx("sitzkissen") < idx("vater") && idx("sitzkissen") < idx("tochter"), "Wohnzimmer: das Sitzkissen liegt UNTER Vater und Tochter (vor ihnen gezeichnet)", "Kissen #" + idx("sitzkissen") + ", Vater #" + idx("vater"));
@@ -222,7 +223,7 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
     const pr = await br.newPage({ viewport: { width: 360, height: 740 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true });
     pr.setDefaultTimeout(120000);
     await pr.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); localStorage.setItem("dma_tutor", "aus"); } catch (e) {} });
-    await pr.goto(basis + "index.html", { waitUntil: "domcontentloaded" });
+    await pr.goto(basis + "index.html?bilderwelt=neu", { waitUntil: "domcontentloaded" });
     await pr.waitForFunction(() => window.DMA_PRUEF && document.querySelector('#learnSubnav [data-sub="sub-bilderraetsel"]'), null, { timeout: 120000 });
     await pr.evaluate(() => document.querySelector('#learnSubnav [data-sub="sub-bilderraetsel"]').click());
     let erg = null;

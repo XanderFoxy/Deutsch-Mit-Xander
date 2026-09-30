@@ -29,10 +29,11 @@ const path = require("path");
 const vm = require("vm");
 
 const WURZEL = path.dirname(__dirname);
+/* FASSUNG 840 — XANDER (Funk 225): „für die Bilderwelt möchte ich meine alte Version wieder zurück haben … und nur eine Option als Link zur neuen Version“. Die neue Bilderwelt (834/836/838) liegt jetzt in bilderwelt-neu/. */
 const probe = process.argv.includes("--probe");
 const raum = vm.createContext({});
 vm.runInContext("var window = this;", raum);
-vm.runInContext(fs.readFileSync(path.join(WURZEL, "figuren/mensch.js"), "utf8"), raum, { filename: "mensch.js" });
+vm.runInContext(fs.readFileSync(path.join(WURZEL, "bilderwelt-neu/figuren/mensch.js"), "utf8"), raum, { filename: "mensch.js" });
 const M = raum.window.DMA_MENSCH;
 const CM = 1.7;   // Zentimeter je Bildeinheit (DMA_PLATZ_MASS._standard)
 
@@ -165,7 +166,7 @@ function ebenen838(szene, d) {
 }
 
 function lade(szene) {
-  const pfad = path.join(WURZEL, "szenen", szene + ".js");
+  const pfad = path.join(WURZEL, "bilderwelt-neu/szenen", szene + ".js");
   const txt = fs.readFileSync(pfad, "utf8");
   const i = txt.indexOf('{"id"'), j = txt.lastIndexOf("};");
   return { pfad, txt, i, j, d: JSON.parse(txt.slice(i, j + 1)) };

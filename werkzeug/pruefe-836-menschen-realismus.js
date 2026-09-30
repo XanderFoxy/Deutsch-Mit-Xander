@@ -38,6 +38,7 @@
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = process.env.WURZEL || path.join(__dirname, "..");
+/* FASSUNG 840 — XANDER (Funk 225): „für die Bilderwelt möchte ich meine alte Version wieder zurück haben … und nur eine Option als Link zur neuen Version“. Die neue Bilderwelt (834/836/838) liegt jetzt in bilderwelt-neu/. */
 const BILD = process.env.BILD || "";
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp" };
 let fehler = 0;
@@ -61,9 +62,9 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
   console.log("\n1 · HALTUNGEN\n");
   const pg = await br.newPage({ viewport: { width: 900, height: 700 } });
   pg.setDefaultTimeout(120000);
-  await pg.goto(basis + "figuren/mensch.js");
+  await pg.goto(basis + "bilderwelt-neu/figuren/mensch.js");
   await pg.setContent("<html><body style='margin:0;background:#fff'></body></html>");
-  await pg.addScriptTag({ url: basis + "figuren/mensch.js" });
+  await pg.addScriptTag({ url: basis + "bilderwelt-neu/figuren/mensch.js" });
   const f1 = await pg.evaluate((VERLANGT) => {
     const M = window.DMA_MENSCH;
     const fehlt = VERLANGT.filter((h) => M.HALTUNGEN.indexOf(h) < 0 || !M.POSEN[h] && h !== "gehen");
@@ -171,7 +172,7 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
     pb.setDefaultTimeout(120000);
     const pf = []; pb.on("pageerror", (e) => pf.push(String(e.message || e)));
     await pb.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); localStorage.setItem("dma_tutor", "aus"); } catch (e) {} });
-    await pb.goto(basis + "index.html", { waitUntil: "domcontentloaded" });
+    await pb.goto(basis + "index.html?bilderwelt=neu", { waitUntil: "domcontentloaded" });
     await pb.waitForFunction(() => window.Baukasten, null, { timeout: 120000 });
     await pb.evaluate(async () => {
       const d = document.createElement("div"); d.id = "__bk";
@@ -254,9 +255,9 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
   /* ---------------------------------------------------------------- 5 */
   console.log("\n5 · TAFELN UND SZENEN\n");
   global.window = global; window.DMA_SZENE = {};
-  const tafel = (id) => { const f = path.join(WURZEL, "szenen", id + ".js"); if (!fs.existsSync(f)) return null; delete require.cache[f]; require(f); return window.DMA_SZENE[id] || null; };
+  const tafel = (id) => { const f = path.join(WURZEL, "bilderwelt-neu/szenen", id + ".js"); if (!fs.existsSync(f)) return null; delete require.cache[f]; require(f); return window.DMA_SZENE[id] || null; };
   const go = tafel("geschlechtsorgane");
-  const reg = fs.readFileSync(path.join(WURZEL, "data-szenen.js"), "utf8");
+  const reg = fs.readFileSync(path.join(WURZEL, "bilderwelt-neu/data-szenen.js"), "utf8");
   sage(go && go.teile.length === 2 && /"id":\s*"geschlechtsorgane"/.test(reg), "Tafel „Die Geschlechtsorgane“: Längsschnitt Mann und Frau, eingetragen", go && go.teile.map((t) => t.de).join(" | "));
   const worte = go ? go.teile.flatMap((t) => t.unter || []) : [];
   const muss = ["die Gebärmutter", "der Eierstock", "der Eileiter", "die Scheide", "die große Schamlippe", "die kleine Schamlippe", "der Kitzler", "der Hoden", "der Nebenhoden", "der Samenleiter", "die Prostata", "der Penis", "die Harnröhre", "die Harnblase"];
@@ -280,7 +281,7 @@ const VERLANGT = ["schneidersitz", "hocken", "fersensitz", "knien", "krabbeln", 
     /* Übersichtsbogen aller Haltungen, drei Blickwinkel */
     const pz = await br.newPage({ viewport: { width: 1300, height: 800 } });
     await pz.setContent("<html><body style='margin:0;background:#eee'></body></html>");
-    await pz.addScriptTag({ url: basis + "figuren/mensch.js" });
+    await pz.addScriptTag({ url: basis + "bilderwelt-neu/figuren/mensch.js" });
     await pz.evaluate(() => {
       const M = window.DMA_MENSCH; let html = "";
       M.HALTUNGEN.forEach((h, i) => {

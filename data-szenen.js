@@ -186,10 +186,8 @@ window.DMA_SZENEN = [
    "fuss_detail",
    "hand_detail",
    "koerper_innen",
-   "geschlechtsorgane",
    "koerperbau",
-   "kopf_detail",
-   "muskeln"
+   "kopf_detail"
   ],
   "stellen": 6
  },
@@ -691,30 +689,6 @@ window.DMA_SZENEN = [
   "zahl": 13,
   "lupen": [],
   "stellen": 13
- },
- {
-  "id": "geschlechtsorgane",
-  "titel": "Die Geschlechtsorgane",
-  "emoji": "🔬",
-  "thema": "Körper",
-  "breite": 368,
-  "hoehe": 236,
-  "detail": true,
-  "zahl": 2,
-  "lupen": [],
-  "stellen": 2
- },
- {
-  "id": "muskeln",
-  "titel": "Die Muskeln",
-  "emoji": "💪",
-  "thema": "Körper",
-  "breite": 400,
-  "hoehe": 300,
-  "detail": true,
-  "zahl": 16,
-  "lupen": [],
-  "stellen": 0
  },
  {
   "id": "zoo2",

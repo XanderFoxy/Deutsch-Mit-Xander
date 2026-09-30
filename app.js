@@ -88851,7 +88851,7 @@
     if (window.DMA_SZENEN) { szenenGeladen = Promise.resolve(true); return szenenGeladen; }
     szenenGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = (window.DMA_Q ? DMA_Q("data-szenen.js") : "data-szenen.js") + (window.DMA_V ? DMA_V("data-szenen.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = window.DMA_BILDERWELT_NEU ? window.DMA_BW_PFAD("data-szenen.js") + (window.DMA_V ? DMA_V("bilderwelt-neu/data-szenen.js") : "") : (window.DMA_Q ? DMA_Q("data-szenen.js") : "data-szenen.js") + (window.DMA_V ? DMA_V("data-szenen.js") : "?v=" + (window.DMA_VERSION || "1"));   // FASSUNG 840: Weiche
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { szenenGeladen = null; fertig(false); };
@@ -88887,7 +88887,7 @@
      (die Frau von vorn → die äusseren Teile, die weiblichen
      Geschlechtsorgane → innen, beim Mann ebenso), und das Bild sagt
      mit einer blinkenden Lupe, dass es weitergeht. */
-  const BW_EIGENE_TAFELN = ["koerperbau", "muskeln", "koerper_innen", "anatomie", "entstehung"];   // FASSUNG 834: „Die Muskeln“ neu
+  const BW_EIGENE_TAFELN = window.DMA_BILDERWELT_NEU ? ["koerperbau", "muskeln", "koerper_innen", "anatomie", "entstehung"] : ["koerperbau", "koerper_innen", "anatomie", "entstehung"];   // FASSUNG 840: Weiche (neu: „Die Muskeln“ aus 834)
   function bwEigeneTafeln() {
     const alle = window.DMA_SZENEN || [];
     return BW_EIGENE_TAFELN.map((id) => alle.find((s) => s.id === id)).filter(Boolean);
@@ -88922,7 +88922,7 @@
       };
       if ((window.DMA_SZENE || {})[id]) { fertigmachen(); return; }
       const sk = document.createElement("script");
-      sk.src = "szenen/" + id + ".js" + (window.DMA_V ? DMA_V("szenen/") : "?v=" + (window.DMA_VERSION || "1"));
+      sk.src = window.DMA_BILDERWELT_NEU ? window.DMA_BW_PFAD("szenen/" + id + ".js") + (window.DMA_V ? DMA_V(window.DMA_BW_PFAD("szenen/" + id + ".js").replace(/[^/]+$/, "")) : "") : "szenen/" + id + ".js" + (window.DMA_V ? DMA_V("szenen/") : "?v=" + (window.DMA_VERSION || "1"));   // FASSUNG 840: Weiche
       sk.async = true;
       sk.onload = fertigmachen;
       sk.onerror = () => { szeneLaeuft[id] = null; fertig(null); };
@@ -89105,6 +89105,7 @@
     autoWeiterAbbrechen();
     const area = document.getElementById("bilderweltArea");
     if (!area) return;
+    bwVersionSchalter(area);   // FASSUNG 840: Weiche alte/neue Bilderwelt
     if (!window.DMA_SZENEN) {
       area.innerHTML = '<p class="empty-note">Die Bilderwelt wird geladen …</p>';
       const ok = await szenenLaden();
@@ -89131,6 +89132,35 @@
     if (!bwSzene) { bwUebersichtZeichnen(area); return; }
     bwSzeneZeichnen(area);
   }
+
+  /* FASSUNG 840 — XANDER (Funk 225, wörtlich): „für die Bilderwelt möchte
+     ich meine alte Version wieder zurück haben so wie sie war unverändert
+     und nur eine Option als Link zur neuen Version so dass ich beide
+     Version habe damit ich selber entscheiden kann“.
+     Ein dezenter Link über der Bilderwelt: „Neue Version ansehen (Test)“
+     bzw. „Zur alten Version“. Er merkt die Wahl (localStorage
+     dma_bilderwelt, gesetzt von der Weiche in index.html) und lädt die
+     Seite neu; danach öffnet sich wieder die Bilderwelt. */
+  function bwVersionSchalter(area) {
+    if (document.getElementById("bwVersion")) return;
+    const neu = !!window.DMA_BILDERWELT_NEU;
+    area.insertAdjacentHTML("beforebegin", '<p id="bwVersion" class="bw-version"><a href="?bilderwelt=' + (neu ? "alt" : "neu") + '" data-bw-version="' + (neu ? "alt" : "neu") + '">'
+      + (neu ? "Zur alten Version" : "Neue Version ansehen (Test)") + "</a>" + (neu ? ' <span class="bw-version-hinweis">Du siehst die neue Bilderwelt (Test).</span>' : "") + "</p>");
+    document.getElementById("bwVersion").querySelector("a").addEventListener("click", (e) => {
+      e.preventDefault();
+      const ziel = e.currentTarget.dataset.bwVersion;
+      try { localStorage.setItem("dma_bilderwelt", ziel); sessionStorage.setItem("dma_bw_oeffnen", "1"); } catch (x) {}
+      location.href = location.pathname + "?bilderwelt=" + ziel;
+    });
+  }
+  window.addEventListener("load", () => {
+    let offen = false;
+    try { offen = sessionStorage.getItem("dma_bw_oeffnen") === "1"; sessionStorage.removeItem("dma_bw_oeffnen"); } catch (x) {}
+    if (!offen) return;
+    setTimeout(() => {
+      try { activateTab("view-learn"); jumpToSubnavTarget('[data-sub="sub-bilderwelt"]', "#bilderweltArea", 40); setTimeout(() => renderBilderwelt(), 150); } catch (x) {}
+    }, 600);
+  });
 
   function bwUebersichtZeichnen(area) {
     const besucht = bwBesucht();
@@ -89364,7 +89394,7 @@
               width="${(lw + 12).toFixed(1)}" height="${(lh + 12).toFixed(1)}" rx="${r}"/>`;
     }
     return `
-      <svg class="bw-bild bw-szene-${szene.id}${zoom ? " bw-bild-zoom" : ""} bw-modus-${bwModus}" viewBox="0 0 ${szene.breite} ${szene.hoehe}"
+      <svg class="bw-bild bw-szene-${szene.id}${zoom ? " bw-bild-zoom" : ""}${window.DMA_BILDERWELT_NEU ? " bw-modus-" + bwModus : "" /* FASSUNG 840: Weiche */}" viewBox="0 0 ${szene.breite} ${szene.hoehe}"
            role="group" aria-label="${escapeHtml(szene.titel)}">
         <g ${rahmen}>
           <g class="bw-kulisse" aria-hidden="true">${szene.kulisse}</g>
@@ -97433,7 +97463,57 @@ An einem Morgen lief ein kleiner Fuchs los…
   function brZufall(liste) { return liste[Math.floor(Math.random() * liste.length)]; }
 
   async function brNeueAufgabe(platzId) {
+    if (window.DMA_BILDERWELT_NEU) return brNeueAufgabeNeu(platzId);   // FASSUNG 840: Weiche zur neuen Bilderwelt
     if (!window.DMA_PLAETZE) await brDatei("data-plaetze.js");
+    await szenenLaden();
+    const plaetze = brPlaetze();
+    if (!plaetze.length) return null;
+    const platz = platzId ? plaetze.find((p) => p.id === platzId) : brZufall(plaetze);
+    if (!platz) return null;
+    await szeneLaden(platz.szene);
+    const fig = brZufall(BR_FIGUREN);
+    if (!(window.DMA_FIGUR || {})[fig]) {
+      await brDatei("figuren/" + fig + ".js");
+      await brDatei("figuren/" + fig + "-teil2.js");
+    } else if (!((window.DMA_FIGUR[fig].haltungen || {})[platz.haltung])) {
+      await brDatei("figuren/" + fig + "-teil2.js");
+    }
+    /* Das seitliche Sitzen braucht ausser Teil 2 auch Teil 3
+       („krabbeln" liegt dort) und die Zusammensetzung. Geholt wird
+       das nur, wenn ein Platz es wirklich verlangt — sonst faehrt
+       fuer jedes Bilderraetsel unnoetig eine Datei mit. */
+    if (platz.haltung === "sitzen_seit") {
+      await brDatei("figuren/" + fig + "-teil3.js");
+      if (!window.DMA_SEITSITZ_BAUEN) await brDatei("figuren/seitsitz.js");
+      try { window.DMA_SEITSITZ_BAUEN && window.DMA_SEITSITZ_BAUEN(fig); } catch (e) {}
+    }
+    const bau = (window.DMA_FIGUR || {})[fig];
+    if (!bau || !(bau.haltungen || {})[platz.haltung]) return null;
+    const [alter, geschlecht] = fig.split("-");
+    const frisuren = Object.keys((bau.haltungen[platz.haltung].frisuren) || {});
+    const wunsch = geschlecht === "w" ? BR_FRISUR_W : BR_FRISUR_M;
+    const moegliche = wunsch.filter((f) => frisuren.indexOf(f) >= 0);
+    const gesichter = Object.keys((bau.haltungen[platz.haltung].gesichter) || {});
+    return {
+      szene: platz.szene,
+      platz: platz,
+      alter: alter,
+      geschlecht: geschlecht,
+      haut: brZufall(BR_HAUT),
+      haarfarbe: brZufall(BR_HAAR),
+      frisur: moegliche.length ? brZufall(moegliche) : (frisuren[0] || "kurz"),
+      gesicht: gesichter.length ? brZufall(gesichter) : "g1",
+      haltung: platz.haltung,
+      kleidung: {
+        oberteil: { stueck: brZufall(geschlecht === "w" ? BR_OBERTEIL_W : BR_OBERTEIL_M), farbe: brZufall(BR_FARBEN) },
+        unterteil: { stueck: brZufall(geschlecht === "w" ? BR_UNTERTEIL_W : BR_UNTERTEIL_M), farbe: brZufall(BR_FARBEN) },
+        schuhe: { stueck: brZufall(BR_SCHUHE), farbe: brZufall(BR_FARBEN) },
+      },
+    };
+  }
+  /* FASSUNG 840 — die neue Fassung (834–838), nur über die Weiche oben erreichbar. */
+  async function brNeueAufgabeNeu(platzId) {
+    if (!window.DMA_PLAETZE) await brDatei(window.DMA_BW_PFAD("data-plaetze.js"));
     await szenenLaden();
     const plaetze = brPlaetze();
     if (!plaetze.length) return null;
@@ -97445,7 +97525,7 @@ An einem Morgen lief ein kleiner Fuchs los…
        realistische Personen haben“. Die Figur kommt jetzt aus dem
        Skelett-System figuren/mensch.js (eine Datei für alle Alter und
        Haltungen) — dieselbe wie im Baukasten. */
-    if (!window.DMA_MENSCH) await brDatei("figuren/mensch.js");
+    if (!window.DMA_MENSCH) await brDatei(window.DMA_BW_PFAD("figuren/mensch.js"));
     if (!window.DMA_MENSCH) return null;
     const [alter, geschlecht] = fig.split("-");
     const wunsch = geschlecht === "w" ? BR_FRISUR_W : BR_FRISUR_M;
@@ -97475,6 +97555,33 @@ An einem Morgen lief ein kleiner Fuchs los…
   /* Das Bild: Kulisse + Figur, genau wie im Baukasten — nur ohne die
      Platzmarken, die hier die Antwort verraten würden. */
   function brBildHtml(z) {
+    if (window.DMA_BILDERWELT_NEU) return brBildHtmlNeu(z);   // FASSUNG 840: Weiche zur neuen Bilderwelt
+    const sz = (window.DMA_SZENE || {})[z.szene];
+    if (!sz || typeof bkFigurSvg !== "function") {
+      return '<p class="empty-note">Das Bild wird geladen …</p>';
+    }
+    const fig = bkFigurSvg(z, 0);
+    if (!fig) return '<p class="empty-note">Das Bild wird geladen …</p>';
+    const anker = bkFigurAnker(fig, z.platz);
+    const r = (v) => Math.round(v * 10) / 10;
+    return `<div class="br-buehne"><svg viewBox="0 0 ${sz.breite} ${sz.hoehe}" class="br-svg"
+        role="img" aria-label="Ein Mensch an einem Ort — welcher Satz beschreibt das Bild?">
+      ${window.DMA_FIGUR_DEFS || ""}
+      <g class="br-kulisse">${sz.kulisse}</g>
+      ${/* GEMELDET: „Die Frau mit dem weissen Hemd sitzt auf dem Stuhl —
+            aber offenbar ist es die falsche Antwort." Der Grund: auf
+            demselben Stuhl sass schon ein GEMALTER Gast, und die Figur
+            wurde einfach darübergelegt. Zwei Körper an einer Stelle —
+            da kann man nichts mehr richtig lesen.
+            Ein Platz sagt jetzt mit „verdeckt", welche gemalte Person
+            er einnimmt; die tritt für dieses Bild zur Seite. */ ""}
+      ${(sz.teile || []).filter((t) => (z.platz.verdeckt || []).indexOf(t.id) < 0)
+        .map((t) => `<g transform="translate(${t.x},${t.y})">${t.kunst}</g>`).join("")}
+      <g transform="translate(${r(anker.x)},${r(anker.y)})">${fig.svg}</g>
+    </svg></div>`;
+  }
+  /* FASSUNG 840 — die neue Fassung (834–838), nur über die Weiche oben erreichbar. */
+  function brBildHtmlNeu(z) {
     const sz = (window.DMA_SZENE || {})[z.szene];
     if (!sz || typeof bkFigurSvg !== "function") {
       return '<p class="empty-note">Das Bild wird geladen …</p>';
@@ -97667,7 +97774,7 @@ An einem Morgen lief ein kleiner Fuchs los…
        sagen tippe den Mann im grünen T-Shirt an … dann soll er winken“.
        Richtig gelesen → die Person im Bild winkt (dieselbe Bewegung wie
        „Winken“ im Baukasten, bkWinken in baukasten.js). */
-    if (ok && typeof window.bkWinken === "function") {
+    if (ok && window.DMA_BILDERWELT_NEU && typeof window.bkWinken === "function") {   // FASSUNG 840: nur in der neuen Bilderwelt
       const g = document.querySelector("#bilderraetselArea .br-figur");
       /* noch bevor nach AUTO_WEITER_RICHTIG_MS das nächste Bild kommt */
       if (g) window.bkWinken(g, brZustand, AUTO_WEITER_RICHTIG_MS - 60);

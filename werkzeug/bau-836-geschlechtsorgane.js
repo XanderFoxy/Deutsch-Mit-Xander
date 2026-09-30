@@ -48,6 +48,7 @@ const path = require("path");
 const L = require("./bau-834-lehrbuch.js");
 const { r1, flaeche, beschriftung } = L;
 const WURZEL = path.dirname(__dirname);
+/* FASSUNG 840 — XANDER (Funk 225): „für die Bilderwelt möchte ich meine alte Version wieder zurück haben … und nur eine Option als Link zur neuen Version“. Die neue Bilderwelt (834/836/838) liegt jetzt in bilderwelt-neu/. */
 
 function kurve(pts, zu) {
   const n = pts.length, P = (i) => zu ? pts[(i + n) % n] : pts[Math.max(0, Math.min(n - 1, i))];
@@ -235,7 +236,7 @@ function bau() {
   const d = { id: "geschlechtsorgane", titel: "Die Geschlechtsorgane", emoji: "🔬", thema: "Körper", detail: true, breite: B, hoehe: H, kulisse, teile };
   const txt = "/* FASSUNG 836 — Die Geschlechtsorgane: schematischer Längsschnitt durch das\n   Becken (Mann und Frau) wie im Biologiebuch, gebaut von\n   werkzeug/bau-836-geschlechtsorgane.js. Nicht von Hand ändern. */\n"
     + "window.DMA_SZENE = window.DMA_SZENE || {};\nwindow.DMA_SZENE[\"geschlechtsorgane\"] = " + JSON.stringify(d) + ";\n";
-  fs.writeFileSync(path.join(WURZEL, "szenen/geschlechtsorgane.js"), txt);
+  fs.writeFileSync(path.join(WURZEL, "bilderwelt-neu/szenen/geschlechtsorgane.js"), txt);
   console.log("geschlechtsorgane: " + teile.map((t) => t.id + " " + t.unter.length).join(", ") + ", " + (txt.length / 1024).toFixed(0) + " KB");
 }
 module.exports = { bau, MASTDARM, ANALKANAL };

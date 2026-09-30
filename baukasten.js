@@ -62,66 +62,7 @@ const BK_VERB = {
   knien: "kniet", knien_vor: "kniet", fersensitz: "kniet",
   schneidersitz: "sitzt", sitzen_boden: "sitzt", sitzen_seit: "sitzt",
   krabbeln: "krabbelt", hocken: "hockt", knien_halb: "kniet",
-  /* FASSUNG 834: die neuen Haltungen */
-  kontrapost: "steht", lesen: "liest", servieren: "serviert",
-  /* FASSUNG 836 */
-  bauchlage: "liegt", seitenlage: "liegt", sitzen_angewinkelt: "sitzt", baden: "sitzt",
-  graetschsitz: "sitzt", sitzen_ueberkreuz: "sitzt", anlehnen: "lehnt", laufen: "joggt",
-  /* FASSUNG 838 */
-  sitzen_zurueck: "sitzt",
-  treppe: "steigt", buecken: "bückt", strecken: "streckt", arme_verschraenkt: "steht", haende_huefte: "steht",
 };
-/* FASSUNG 836 — XANDER (Funk 217): „ob sie im Schneidersitz sitzen ob sie
-   in der Hocke sitzen … ob sie auf dem Rücken liegen ob sie auf dem Bauch
-   liegen“. Der Satz nennt die Haltung genau: „sitzt im Schneidersitz“,
-   „liegt auf dem Bauch“. Die Wendung steht als Modalangabe VOR dem Ort
-   (Te-Ka-Mo-Lo: „Die Frau sitzt im Schneidersitz auf dem Teppich.“);
-   nur die Richtung beim Steigen steht hinten („steigt im Flur eine Stufe
-   hinauf“). „sich bücken“ und „sich strecken“ sind reflexiv. */
-const BK_WENDUNG = {
-  schneidersitz: ["sitzt", "im Schneidersitz"], fersensitz: ["sitzt", "auf den Fersen"],
-  knien: ["kniet", "aufrecht"], hocken: ["sitzt", "in der Hocke"],
-  liegen: ["liegt", "auf dem Rücken"], bauchlage: ["liegt", "auf dem Bauch"], seitenlage: ["liegt", "auf der Seite"],
-  sitzen_angewinkelt: ["sitzt", "mit angewinkelten Beinen"], baden: ["sitzt", "mit angewinkelten Beinen"],
-  graetschsitz: ["sitzt", "im Grätschsitz"], sitzen_ueberkreuz: ["sitzt", "mit übereinandergeschlagenen Beinen"],
-  anlehnen: ["lehnt", "an der Wand"], laufen: ["joggt"], buecken: ["bückt", "sich"], strecken: ["streckt", "sich"],
-  arme_verschraenkt: ["steht", "mit verschränkten Armen"], haende_huefte: ["steht", "mit den Händen in den Hüften"],
-  treppe: ["steigt", "eine Stufe hinauf", "hinten"],
-  /* FASSUNG 838 */
-  sitzen_seit: ["sitzt", "seitlich"], sitzen_zurueck: ["sitzt", "zurückgelehnt"],
-};
-/* FASSUNG 834 — Verben, die im Satz noch etwas brauchen.
-   „Die Frau hält am Tisch.“ ist kein Deutsch (halten ohne Objekt heißt
-   anhalten), „Der Mann zeigt im Flur.“ auch nicht. Deshalb: halten und
-   lesen bekommen das Ding aus der Hand als Akkusativobjekt („hält ein
-   Tablett“, „liest ein Buch“), zeigen die Richtung („zeigt nach vorn“).
-   Und auf allen vieren krabbelt nur ein Kind; ein Erwachsener „ist auf
-   allen vieren“ (Duden: klein geschrieben). */
-function bkVerbFuer(z) {
-  const h = z.haltung;
-  const zub = (z.kleidung || {}).zubehoer;
-  const ding = zub && BK_STUECK[zub.stueck] && ["tablett", "buch", "tasche", "besen"].indexOf(zub.stueck) >= 0 ? zub : null;
-  const akk = (w) => {
-    const e = BK_STUECK[w.stueck];
-    const g = e[1];
-    const farbe = w.farbe && BK_FARBE[w.farbe];
-    return BK_UNBESTIMMT[g] + " " + (farbe && w.stueck !== "tablett" ? farbe[1][g] + " " : "") + e[0].replace(/^(der|die|das)\s+/, "");
-  };
-  if (h === "krabbeln") {
-    return ["saeugling", "kleinkind"].indexOf(z.alter) >= 0 ? { verb: "krabbelt" } : { verb: "ist", nach: "auf allen vieren", vorOrt: true };
-  }
-  if (BK_WENDUNG[h]) {
-    const w = BK_WENDUNG[h];
-    /* Babys liegen „auf dem Rücken“, aber ein Baby „joggt“ nicht — das
-       verhindert schon die Auswahl der Haltungen. */
-    return w[1] ? { verb: w[0], nach: w[1], vorOrt: w[2] !== "hinten" } : { verb: w[0] };
-  }
-  if (h === "halten") return ding ? { verb: "hält", nach: akk(ding), ding } : { verb: "steht" };
-  if (h === "lesen") return zub && zub.stueck === "buch" ? { verb: "liest", nach: akk(zub), ding: zub } : { verb: "liest" };
-  if (h === "zeigen") return { verb: "zeigt", nach: "nach vorn" };
-  if (h === "servieren" && ding && ding.stueck === "tablett") return { verb: "serviert" };
-  return { verb: BK_VERB[h] || "ist" };
-}
 
 /* Kleidungsstücke mit Artikel, Geschlecht und Betonung. Das
    Geschlecht braucht der Satz für den Akkusativ: „Er trägt EINEN
@@ -138,7 +79,6 @@ const BK_STUECK = {
   polizeihemd:   ["das Polizeihemd", "n", "Po-li-ZEI-hemd"],
   weihnachtsmantel: ["der Weihnachtsmantel", "m", "WEIH-nachts-man-tel"],
   badeanzug:     ["der Badeanzug", "m", "BA-de-an-zug"],
-  badeshirt:     ["das Badeshirt", "n", "BA-de-shirt"],
   bikinioberteil: ["das Bikinioberteil", "n", "Bi-KI-ni-o-ber-teil"],
   hose:          ["die Hose", "f", "HO-se"],
   jeans:         ["die Jeans", "f", "JEANS"],
@@ -172,7 +112,6 @@ const BK_STUECK = {
   schal:         ["der Schal", "m", "SCHAL"],
   handschuhe:    ["die Handschuhe", "p", "HAND-schu-he"],
   tablett:       ["das Tablett", "n", "Ta-BLETT"],
-  bademantel:    ["der Bademantel", "m", "BA-de-man-tel"],
   besen:         ["der Besen", "m", "BE-sen"],
   buch:          ["das Buch", "n", "BUCH"],
 };
@@ -232,13 +171,8 @@ function bkSatz(z) {
     const merk = bkMerkmal(anhabe);
     wer = bkGross(subj.wort) + (merk ? " " + merk : "");
   }
-  const vb = bkVerbFuer(z);
-  let eins = wer + " " + vb.verb;
-  /* „ist auf allen vieren im Flur“: die Wendung vor den Ort; ein
-     Objekt („hält ein Tablett“) oder eine Richtung dahinter. */
-  if (vb.nach && vb.vorOrt) eins += " " + vb.nach;
+  let eins = wer + " " + (BK_VERB[z.haltung] || "ist");
   if (platz) eins += " " + platz.wo;
-  if (vb.nach && !vb.vorOrt) eins += " " + vb.nach;
   /* GEMELDET: „die nackte Frau sitzt in der Küche, sie ist nackt“ ist
      doppelt gemoppelt.
 
@@ -251,14 +185,7 @@ function bkSatz(z) {
      Dativ nach „wo?“). „Am Herd und kocht“ oder „auf dem Bahnsteig
      und wartet auf den Zug“ bleiben dagegen: dort sagt die Tätigkeit
      etwas Neues. */
-  /* FASSUNG 834: Die Tätigkeit des Platzes („und isst“) passt nur zur
-     Haltung des Platzes. Wer am Tisch winkt, serviert oder auf allen
-     vieren ist, „isst“ dabei nicht — sonst stand da „Der Kellner
-     serviert am Tisch und isst“. */
-  const haltungPasst = platz && (z.haltung === platz.haltung
-    || (platz.haltung === "stehen" && z.haltung === "kontrapost")
-    || (platz.haltung === "sitzen" && z.haltung === "sitzen_seit"));
-  if (platz && platz.tut && haltungPasst && !bkTutSagtDasselbe(platz)) eins += " und " + platz.tut;
+  if (platz && platz.tut && !bkTutSagtDasselbe(platz)) eins += " und " + platz.tut;
   saetze.push(eins + ".");
 
   /* Satz 2: Was hat er an?
@@ -277,9 +204,7 @@ function bkSatz(z) {
      zweimal. Der zweite Satz zählt deshalb nur noch auf, was oben NICHT
      schon stand. Bleibt danach nichts übrig (die Person trägt genau ein
      Stück), fällt der zweite Satz ganz weg. */
-  /* Was als Objekt schon im ersten Satz stand („hält ein Tablett“),
-     steht nicht noch einmal in der Aufzählung. */
-  const an = anhabe.filter((st) => st !== schonGenannt && !(vb.ding && st.stueck === vb.ding.stueck));
+  const an = anhabe.filter((st) => st !== schonGenannt);
   if (!an.length) {
     /* nichts zu ergänzen — der erste Satz sagt es bereits */
   } else {
@@ -400,17 +325,9 @@ function bkAngezogen(z) {
 /* ------------------------------------------------------------
    3 — DIE FIGUR ZEICHNEN
    ------------------------------------------------------------
-   FASSUNG 834 — XANDER (Funk 213): „dass wir wirklich diesmal
-   realistische Personen haben … dass der Kellner nicht mehr so steif
-   da steht … dass sie sich … innerhalb der Bilder … auch bewegen ja
-   dann nur auf so einem 2D Level aber man soll sie dort auch hinsetzen
-   können … mit ein paar einfachen Animationen“.
-
-   Die Figur kommt jetzt aus figuren/mensch.js: ein Skelett mit
-   Gelenken, jede Haltung ist eine Liste von Gelenkwinkeln. Deshalb
-   kann sie sich bewegen (Gehen, Hinsetzen, Winken) — die alten
-   Einzelbilder (36 MB) konnten das nicht. Geladen wird eine einzige
-   Datei von rund 70 KB, für alle Alter, Geschlechter und Haltungen.
+   Der Browser legt die Ebenen übereinander. Die Reihenfolge steht
+   in DMA_FIGUR_REIHENFOLGE, die Farben kommen als CSS-Variablen —
+   so lässt sich die Hautfarbe wechseln, ohne die Ebene neu zu holen.
    ------------------------------------------------------------ */
 /* Wie viele Bildeinheiten ein Zentimeter ist — der Kehrwert der Zahl
    aus DMA_PLATZ_MASS. Fehlt die Kulisse dort, gilt der Standardwert. */
@@ -420,100 +337,99 @@ function bkMassstab(szene) {
   return 1 / cm;
 }
 
-/* Wohin schaut die Figur? Sitzend und stehend schräg nach vorn (so
-   sieht man Gesicht UND Oberschenkel), liegend im Profil. Steht sie in
-   der rechten Bildhälfte, schaut sie in den Raum hinein — also nach
-   links. Wer „umdrehen“ gedrückt hat, bestimmt es selbst. */
-const BK_BLICK = {
-  stehen: 24, kontrapost: 26, gehen: 70, sitzen: 36, lesen: 40, sitzen_seit: 70, sitzen_zurueck: 34,
-  sitzen_boden: 50, schneidersitz: 30, fersensitz: 55, hocken: 55, knien: 40,
-  knien_halb: 62, knien_vor: 60, krabbeln: 64, liegen: 90, winken: 22, halten: 30,
-  zeigen: 40, servieren: 34,
-  /* FASSUNG 836: jede Haltung aus dem Winkel, in dem man sie erkennt */
-  bauchlage: 90, seitenlage: 80, sitzen_angewinkelt: 55, baden: 60, graetschsitz: 30,
-  sitzen_ueberkreuz: 40, anlehnen: 40, laufen: 70, treppe: 65, buecken: 70, strecken: 24,
-  arme_verschraenkt: 22, haende_huefte: 18,
-};
-/* Haltungen, in denen man in der Badewanne im Wasser sitzt oder liegt */
-const BK_BADHALTUNG = { liegen: 1, baden: 1, sitzen_angewinkelt: 1 };
-function bkBlick(z, szBreite, haltung) {
-  const h = haltung || z.haltung;
-  const blick = BK_BLICK[h] != null ? BK_BLICK[h] : 26;
-  let spiegel = false;
-  if (z.platz && szBreite) spiegel = z.platz.x > szBreite * 0.56;
-  /* Liegend: der Kopf gehört aufs Kissen (data-plaetze: „kopf“). */
-  if (h === "liegen" && z.platz && z.platz.kopf) spiegel = z.platz.kopf === "rechts";
-  if (z.umgedreht) spiegel = !spiegel;
-  return { blick, spiegel };
-}
+function bkFigurSvg(z, hoehe) {
+  const bau = (window.DMA_FIGUR || {})[z.alter + "-" + z.geschlecht];
+  if (!bau) return null;
+  const h = bau.haltungen[z.haltung] || bau.haltungen.stehen;
+  if (!h) return null;
 
-/* Die Menschen im Baukasten sind immer bekleidet. Fehlt oben oder
-   unten etwas (weil jemand das letzte Stück abgewählt hat), kommt das
-   Grundstück dazu — ein Kleid, ein Badeanzug oder ein langer Mantel
-   zählen dabei für beides. */
-function bkKleidungFuerFigur(z) {
-  const k = Object.assign({}, z.kleidung || {});
-  const s = (p) => (k[p] && k[p].stueck && k[p].stueck !== "nichts") ? k[p].stueck : "";
-  const kleid = ["sommerkleid", "abendkleid"].indexOf(s("kleid")) >= 0;
-  const langerMantel = ["mantel", "bademantel", "kittel"].indexOf(s("jacke")) >= 0;
-  const badeanzug = s("oberteil") === "badeanzug";
-  if (!s("oberteil") && !kleid && !s("jacke")) k.oberteil = { stueck: "tshirt", farbe: "weiss" };
-  if (!s("unterteil") && !kleid && !badeanzug && !langerMantel) k.unterteil = { stueck: "hose", farbe: "blau" };
-  return k;
-}
+  /* Die Hautfarbe und die Haarfarbe gelten fuer die ganze Figur, also
+     stehen sie am aeusseren Rahmen. Jedes Kleidungsstueck bekommt
+     dagegen SEINE EIGENE Huelle mit seinen eigenen Stoffvariablen —
+     sonst haetten Hose und Hemd zwangslaeufig dieselbe Farbe, weil
+     beide dieselben Variablennamen benutzen. */
+  const haut = (window.DMA_FIGUR_HAUT || {})[z.haut] || {};
+  const haar = (window.DMA_FIGUR_HAAR || {})[z.haarfarbe] || {};
+  const aussen = Object.keys(haut).map((k) => k + ":" + haut[k])
+    .concat(Object.keys(haar).map((k) => k + ":" + haar[k])).join(";");
 
-/* Welche Haltung wirklich gezeichnet wird. Sitzen ohne Sitzfläche (mitten
-   im Raum): auf dem Boden — sonst säße die Figur in der Luft. In der
-   Badewanne liegt man zurückgelehnt, nicht flach. Der Satz bleibt
-   dabei „sitzt“ bzw. „liegt“. */
-function bkGezeichneteHaltung(z, haltung) {
-  let h = haltung || z.haltung;
-  if ((h === "sitzen" || h === "lesen" || h === "sitzen_seit" || h === "sitzen_ueberkreuz" || h === "sitzen_zurueck") && z.platz && typeof z.platz.sitzY !== "number") h = "sitzen_boden";
-  /* FASSUNG 836: In der Wanne sitzt man mit angewinkelten Beinen im Wasser. */
-  const pose = BK_BADHALTUNG[h] && z.platz && z.platz.bild === "baden" ? "baden" : h;
-  return { haltung: h, pose };
-}
-
-function bkFigurSvg(z, hoehe, extra) {
-  const M = window.DMA_MENSCH;
-  if (!M) return null;
-  extra = extra || {};
-  const sz = (window.DMA_SZENE || {})[z.szene];
-  const gh = bkGezeichneteHaltung(z, extra.haltung);
-  const haltung = gh.haltung;
-  const b = bkBlick(z, sz && sz.breite, haltung);
-  const r = M.zeichne({
-    id: extra.id || "bk", alter: z.alter, geschlecht: z.geschlecht, haut: z.haut,
-    haarfarbe: z.haarfarbe, frisur: z.frisur, bart: z.bart, gesicht: z.gesicht,
-    kleidung: bkKleidungFuerFigur(z),
-    pose: extra.pose || gh.pose,
-    blick: extra.blick != null ? extra.blick : b.blick,
-    spiegel: extra.spiegel != null ? extra.spiegel : b.spiegel,
+  const ebenen = [];
+  const reihe = window.DMA_FIGUR_REIHENFOLGE
+    || ["koerper", "unterteil", "kleid", "oberteil", "jacke", "schuhe",
+        "kopf", "zubehoer", "gesicht", "frisur"];
+  reihe.forEach((platz) => {
+    if (platz === "koerper") { ebenen.push(h.koerper || ""); return; }
+    if (platz === "gesicht") {
+      /* Faellt die gemerkte Auswahl weg (die Figurendateien liefern
+         jetzt vier Gesichter statt acht), wird das erste genommen —
+         sonst stuende die Figur ohne Gesicht da. */
+      const gs = h.gesichter || {};
+      ebenen.push(gs[z.gesicht] || gs[Object.keys(gs)[0]] || "");
+      return;
+    }
+    if (platz === "frisur") {
+      /* Frisur UND Bart sind in den Figurendateien zwei ganz normale
+         Frisur-Ebenen im selben Koordinatensystem. Sie lassen sich
+         deshalb einfach übereinanderlegen — vorher schloss die eine
+         die andere aus, und wer „Vollbart" wählte, bekam einen
+         Glatzkopf mit Bart statt eines Mannes mit Haar und Bart. */
+      ebenen.push((h.frisuren || {})[z.frisur] || "");
+      if (z.bart) ebenen.push((h.frisuren || {})[z.bart] || "");
+      return;
+    }
+    const w = z.kleidung[platz];
+    if (!w || !w.stueck || w.stueck === "nichts") return;
+    const teil = (h.kleidung || {})[w.stueck];
+    if (!teil) return;
+    ebenen.push('<g style="' + bkStoffStil(w) + '">' + teil + "</g>");
   });
-  /* DER MASSSTAB — eine Zahl je Kulisse (DMA_PLATZ_MASS), damit dieselbe
-     Frau auf dem Stuhl so groß ist wie am Herd. Die Figur ist in
-     Zentimetern gebaut. */
-  const k = hoehe > 0 ? hoehe / (r.hoehe || 100) : bkMassstab(z.szene);
+
+  /* DER MASSSTAB.
+     GEMELDET: „Wenn jemand sich auf den Stuhl oder auf die Couch setzt
+     … die Größe soll sich dabei nicht ändern. Er soll in Relation zum
+     Stuhl realistisch groß sein, auch wenn man sich auf die Toilette
+     setzt, dann soll es keine Minifigur werden."
+
+     Vorher brachte JEDER Platz seine eigene Wunschhöhe mit — 74 hier,
+     58 dort. Dieselbe Person schrumpfte also beim Hinsetzen, und weil
+     die Zahlen geschätzt waren, stimmte auch das Verhältnis zum Möbel
+     nicht. Jetzt gibt es je Kulisse EINE Zahl: wie viele Zentimeter
+     eine Bildeinheit sind (siehe DMA_PLATZ_MASS). Die Figurendateien
+     sind in Zentimetern gezeichnet, also ist der Maßstab schlicht der
+     Kehrwert. Eine Frau von 166 cm ist damit in jeder Haltung und an
+     jedem Platz dieselbe Frau. */
+  const k = hoehe > 0 ? hoehe / (h.hoehe || 100) : bkMassstab(z.szene);
+  /* GEMELDET: „die Platzierung der Menschen funktioniert nicht. Wenn man
+     sie auf Toilette setzt, dann sitzt sie nicht realistisch, oder wenn
+     sie Fernsehen schaut, dann steht sie auf dem Fernseher."
+
+     Ursache: die Figur wurde IMMER an den Fuessen aufgehaengt. Bei einer
+     stehenden Figur ist das richtig — der Boden ist der Boden. Bei einer
+     SITZENDEN Figur ist der entscheidende Punkt aber nicht der Fuss,
+     sondern das Gesaess: es muss auf der Sitzflaeche liegen, dann fallen
+     die Fuesse von allein dorthin, wo sie hingehoeren. Das Geruest
+     kennt diesen Punkt bereits als „sitz". Er wird hier mitgegeben. */
+  const pk = h.punkte || {};
   return {
-    svg: '<g transform="scale(' + k.toFixed(4) + ')">' + r.svg + "</g>",
-    breite: (r.box.x1 - r.box.x0) * k,
-    hoehe: (r.hoehe || 100) * k,
-    /* Der Ursprung der neuen Figur liegt schon auf dem Boden unter der
-       Hüfte — „fuss“ ist deshalb 0. */
-    fuss: 0,
-    sitz: r.sitz ? r.sitz.y * k : null,
-    /* FASSUNG 836: Höhe der Brust — dort steht in der Wanne das Wasser */
-    brustY: r.punkte && r.punkte.brust ? r.punkte.brust[1] * k : null,
-    sitzX: r.sitz ? r.sitz.x * k : 0,
-    blick: b,
+    svg: '<g style="' + aussen + '" transform="scale(' + k.toFixed(4) + ')">'
+         + ebenen.join("") + "</g>",
+    breite: (h.breite || 40) * k,
+    hoehe: (h.hoehe || 100) * k,
+    fuss: (h.fuss || 0) * k,
+    sitz: pk.sitz ? pk.sitz[1] * k : null,
+    sitzX: pk.sitz ? pk.sitz[0] * k : 0,
   };
 }
 
-/* Wo hängt die Figur? Stehend, kniend, liegend: am Boden unter der
-   Hüfte. Sitzend am Gesäß — es liegt auf der Sitzfläche des Platzes
-   (sitzY), die Füße fallen von selbst dorthin, wo sie hingehören. So
-   „rastet“ die Figur auf dem Stuhl ein. */
-const BK_SITZHALTUNG = { sitzen: 1, lesen: 1, sitzen_seit: 1, fersensitz: 1, sitzen_ueberkreuz: 1, sitzen_zurueck: 1,
+/* Wo haengt die Figur? Beim Stehen und Liegen an den Fuessen (der Boden
+   ist der Boden), beim Sitzen am Gesaess (die Sitzflaeche ist die
+   Sitzflaeche). Der Platz sagt mit „sitzY", wo seine Sitzflaeche liegt —
+   fehlt die Angabe, bleibt es beim alten Verhalten. */
+/* Welche Haltungen auf einer Sitzfläche aufliegen. Maßgeblich ist die
+   Haltung der FIGUR, nicht die des Platzes: seit man die Haltung selbst
+   wählen kann, kann jemand auf dem Stuhl auch stehen oder knien — dann
+   gehört er an die Füße gehängt und nicht ans Gesäß. */
+const BK_SITZHALTUNG = { sitzen: 1, sitzen_seit: 1, fersensitz: 1,
                          schneidersitz: 1, sitzen_boden: 1 };
 function bkFigurAnker(fig, platz, haltung) {
   if (!fig || !platz) return { x: 0, y: 0 };
@@ -521,104 +437,50 @@ function bkFigurAnker(fig, platz, haltung) {
   const sitzend = BK_SITZHALTUNG[h] && fig.sitz !== null
     && typeof platz.sitzY === "number";
   if (sitzend) return { x: platz.x - fig.sitzX, y: platz.sitzY - fig.sitz };
-  /* FASSUNG 838 — XANDER (Funk 222): „in der Badewanne wenn sie sitzt …
-     Beine angewinkelt … fixierungspunkt … auf den Wannen Boden“. Das
-     Gesäß liegt auf dem Wannenboden (bodenY); vorher hing die Figur mit
-     der Brust an der Wasserlinie und schwebte über der Wanne. */
-  if (BK_BADHALTUNG[h] && typeof platz.bodenY === "number" && fig.sitz != null) {
-    return { x: (typeof platz.sitzX === "number" ? platz.sitzX : platz.x) - fig.sitzX, y: platz.bodenY - fig.sitz };
-  }
-  /* FASSUNG 836: In der Badewanne steht das Wasser bis zur Brust. */
-  if (BK_BADHALTUNG[h] && typeof platz.wasserY === "number" && fig.brustY != null) return { x: platz.x, y: platz.wasserY - fig.brustY - 1 };
-  /* FASSUNG 834: Wer an einem Sitzplatz steht, kniet oder krabbelt, tut
-     das VOR dem Möbel auf dem Boden — nicht auf der Rückenlehne (dort
-     liegt platz.y). Der Boden ist eine Sitzhöhe (47 cm) unter der
-     Sitzfläche. */
-  if (h === "liegen" && typeof platz.liegY === "number") return { x: platz.x, y: platz.liegY - fig.fuss };
-  if (typeof platz.sitzY === "number" && h !== "liegen") {
-    return { x: platz.x, y: platz.sitzY + 47 * bkMassstab(platz.szene) - fig.fuss };
-  }
   return { x: platz.x, y: platz.y - fig.fuss };
 }
 
-/* FASSUNG 838 — WAS VOR DER FIGUR LIEGT
-   XANDER (Funk 222): „sie sollen wenn sie auf der Couch sitzen nicht
-   irgendwelche komischen Details von der Couch vor sich haben … die
-   Person so hinter die Wannenwand zu setzen auch wenn man in einem
-   Sessel sitzt dass man hinter der Sessel Linie sitzt und nicht an den
-   Sessel dran geklebt“.
-   Die Bühne hat drei Ebenen: Kulisse und Möbel (hinten), die Figur, und
-   danach die Vorderkante des Platzes — die Armlehnen des Sessels
-   (platz.vorne: Szenenteile, die noch einmal gezeichnet werden) bzw. die
-   Wanne im Querschnitt: Wannenwand und Boden, darüber leicht durch-
-   sichtiges Wasser mit Glanzlinie an der Oberfläche. */
-function bkVorderkante(platz, haltung, sz) {
-  if (!platz || !sz) return "";
-  let o = "";
-  (platz.vorne || []).forEach((id) => {
-    const t = (sz.teile || []).find((q) => q.id === id);
-    if (t) o += '<g transform="translate(' + t.x + "," + t.y + ')">' + t.kunst + "</g>";
-  });
-  if (platz.vorderkante === "wanne" && BK_BADHALTUNG[haltung]) {
-    const t = (sz.teile || []).find((q) => q.id === platz.teil);
-    const x = t ? t.x : 64, y = t ? t.y : 148, w = platz.wasserY - y;
-    /* Innenmaße der gemalten Wanne (szenen/badezimmer.js): oben ±50,6 bei
-       −35,4, unten ±44,5 bei −5; außen ±53,6 bei −41,4 bis ±46,9 bei −2. */
-    const innen = (yy) => 50.6 - (yy + 35.4) / 30.4 * 6.1;
-    const P = (a, b) => (x + a).toFixed(1) + " " + (y + b).toFixed(1);
-    const wi = innen(w);
-    o += '<defs><linearGradient id="bkWasserV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe6f2" stop-opacity=".5"/><stop offset=".45" stop-color="#8ccbe2" stop-opacity=".66"/><stop offset="1" stop-color="#5fa9c9" stop-opacity=".86"/></linearGradient></defs>';
-    o += '<path data-bk-vorne="wasser" d="M' + P(-wi, w) + "L" + P(wi, w) + "L" + P(44.5, -5) + "L" + P(-44.5, -5) + 'Z" fill="url(#bkWasserV)"/>';
-    /* Oberfläche: Glanzlinie und kleine Wellen */
-    let welle = "M" + P(-wi, w);
-    for (let i = 1; i <= 8; i++) welle += "Q" + P(-wi + (i - 0.5) * wi / 4, w + (i % 2 ? -1.1 : 1.1)) + " " + P(-wi + i * wi / 4, w);
-    o += '<path d="' + welle + '" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".9"/>';
-    o += '<path d="M' + P(-wi * 0.7, w + 2.2) + "L" + P(-wi * 0.35, w + 2.2) + "M" + P(wi * 0.1, w + 3.4) + "L" + P(wi * 0.5, w + 3.4) + '" stroke="#fff" stroke-width=".8" stroke-linecap="round" opacity=".55"/>';
-    /* Wannenwand im Querschnitt: Seitenwände und Boden, oben die Enden
-       des Wannenrands — über der Öffnung sieht man die Person. */
-    o += '<path data-bk-vorne="wannenwand" fill-rule="evenodd" d="M' + P(-53.6, -41.4) + "L" + P(53.6, -41.4) + "L" + P(46.9, -2) + "L" + P(-46.9, -2) + "Z"
-      + "M" + P(-50.6, -41.4) + "L" + P(-50.6, -35.4) + "L" + P(-44.5, -5) + "L" + P(44.5, -5) + "L" + P(50.6, -35.4) + "L" + P(50.6, -41.4) + 'Z" fill="#fbfdfe" stroke="#9db8c0" stroke-width="1.2" stroke-linejoin="round"/>';
-    o += '<rect x="' + (x - 54.8).toFixed(1) + '" y="' + (y - 43.8).toFixed(1) + '" width="4.6" height="3.6" rx="1.6" fill="#f2f8fa" stroke="#9db8c0" stroke-width="1.1"/>'
-      + '<rect x="' + (x + 50.2).toFixed(1) + '" y="' + (y - 43.8).toFixed(1) + '" width="4.6" height="3.6" rx="1.6" fill="#f2f8fa" stroke="#9db8c0" stroke-width="1.1"/>';
+/* Die Stoffvariablen eines einzelnen Stuecks: erst die Farben, die das
+   Stueck von Haus aus hat, dann — falls jemand eine Farbe gewaehlt hat —
+   die gewaehlte darueber. */
+function bkStoffStil(w) {
+  const stil = [];
+  const grund = (window.DMA_FIGUR_STUECK || {})[w.stueck] || {};
+  Object.keys(grund).forEach((k) => stil.push(k + ":" + grund[k]));
+  if (w.farbe) {
+    const f = (window.DMA_FIGUR_STOFF || {})[w.farbe];
+    if (f) {
+      /* Die Stofftabelle nennt die Toene f/d/dd/h/naht; die Ebenen
+         erwarten sie als --stoff-1, --stoff-1-d und so weiter. */
+      const zu = { f: "--stoff-1", d: "--stoff-1-d", dd: "--stoff-1-dd",
+                   h: "--stoff-1-h", naht: "--stoff-1-naht" };
+      Object.keys(zu).forEach((k) => { if (f[k]) stil.push(zu[k] + ":" + f[k]); });
+    } else {
+      const grundton = bkFarbwert(w.farbe);
+      stil.push("--stoff-1:" + grundton);
+      stil.push("--stoff-1-d:" + bkDunkler(grundton, 0.22));
+      stil.push("--stoff-1-dd:" + bkDunkler(grundton, 0.40));
+      stil.push("--stoff-1-h:" + bkHeller(grundton, 0.22));
+      stil.push("--stoff-1-naht:" + bkDunkler(grundton, 0.32));
+    }
   }
-  return o ? '<g class="bk-vorderkante">' + o + "</g>" : "";
+  return stil.join(";");
 }
 
-/* FASSUNG 838 — WINKEN FÜR ANDERE BILDER (Bilderrätsel): eine gezeichnete
-   Figur (ihr <g> mit transform) winkt mit dem rechten Arm, in ihrer
-   Haltung, dann kehrt sie zurück. Dieselbe Bewegung wie „Winken“ im
-   Baukasten. XANDER (Funk 222): „tippe den Mann im grünen T-Shirt an …
-   dann soll er winken“. */
-function bkWinken(g, z, dauer) {
-  const M = window.DMA_MENSCH;
-  if (!g || !M || !z) return false;
-  const gh = bkGezeichneteHaltung(z);
-  const basis = M.pose(gh.pose);
-  const fig0 = bkFigurSvg(z, 0);
-  if (!fig0) return false;
-  const W = M.POSEN.winken;
-  const oben = Object.assign({}, basis, { schulterR: W.schulterR, ellbogenR: W.ellbogenR, unterarmR: W.unterarmR, handR: W.handR, fingerR: W.fingerR, kopf: -8 });
-  const blick0 = fig0.blick.blick, blick1 = Math.min(blick0, 30);
-  const t0 = performance.now(), T = dauer || 2600;
-  g.setAttribute("data-winkt", "1");
-  const bild = (pose, blick) => { const f = bkFigurSvg(z, 0, { pose, blick, spiegel: fig0.blick.spiegel, id: "bw" }); if (f) g.innerHTML = f.svg; };
-  const tick = (t) => {
-    if (!g.isConnected) return;
-    const u = Math.min(1, (t - t0) / T);
-    let pose, blick;
-    if (u < 0.15) { const w = u / 0.15; pose = M.mische(basis, oben, w * w * (3 - 2 * w)); blick = blick0 + (blick1 - blick0) * w; }
-    else if (u < 0.85) {
-      const s = Math.sin((u - 0.15) / 0.7 * Math.PI * 2 * Math.max(2, Math.round(T / 850)));
-      pose = Object.assign({}, oben, { ellbogenR: W.ellbogenR - 10 + 22 * s, schulterR: Object.assign({}, W.schulterR, { seit: W.schulterR.seit + 6 * s }), handR: 8 + 12 * s });
-      blick = blick1;
-    } else { const w = (u - 0.85) / 0.15; pose = M.mische(oben, basis, w * w * (3 - 2 * w)); blick = blick1 + (blick0 - blick1) * w; }
-    bild(pose, blick);
-    if (u < 1) requestAnimationFrame(tick); else { g.innerHTML = fig0.svg; g.removeAttribute("data-winkt"); }
-  };
-  requestAnimationFrame(tick);
-  return true;
+const BK_FARBWERT = {
+  rot: "#c0503f", blau: "#2d6da3", gruen: "#4e8a45", gelb: "#d9b23a",
+  schwarz: "#33343a", weiss: "#f1f2f0", grau: "#8d8f93", braun: "#8a6142",
+  gruen_d: "#2f5c34", rosa: "#d98ca8",
+};
+function bkFarbwert(n) { return BK_FARBWERT[n] || "#7a8fa6"; }
+function bkMischen(hex, ziel, anteil) {
+  const a = hex.replace("#", ""), b = ziel.replace("#", "");
+  const z = (s, i) => parseInt(s.substr(i, 2), 16);
+  const m = [0, 2, 4].map((i) => Math.round(z(a, i) + (z(b, i) - z(a, i)) * anteil));
+  return "#" + m.map((v) => ("0" + v.toString(16)).slice(-2)).join("");
 }
-if (typeof window !== "undefined") window.bkWinken = bkWinken;
+function bkDunkler(h, t) { return bkMischen(h, "#000000", t); }
+function bkHeller(h, t) { return bkMischen(h, "#ffffff", t); }
 
 /* ------------------------------------------------------------
    4 — DIE BEDIENOBERFLÄCHE
@@ -637,7 +499,6 @@ const Baukasten = (function () {
     bart: "",
     gesicht: "g1",
     haltung: "stehen",
-    umgedreht: false,
     kleidung: {
       oberteil: { stueck: "tshirt", farbe: "rot" },
       unterteil: { stueck: "jeans", farbe: "blau" },
@@ -652,11 +513,23 @@ const Baukasten = (function () {
      noch die langen Haare. Und es macht auch keinen Unterschied, wenn
      man ihn zum alten Mann macht oder zur alten Frau — da gibt's keine
      grauen Haare."
-     Je Alter und Geschlecht gibt es eine Vorgabe; sie wird beim
-     Umschalten übernommen — ABER NUR, SOLANGE DER NUTZER NICHT SELBST
-     GEWÄHLT HAT (`eigen`). ------------------------------------------ */
+
+     Ursache: `frisur` und `haarfarbe` standen als feste Anfangswerte im
+     Zustand und wurden beim Umschalten von Alter oder Geschlecht nie
+     nachgezogen. Jetzt gibt es je Alter und Geschlecht eine Vorgabe,
+     und beim Umschalten wird sie übernommen.
+
+     ABER NUR, SOLANGE DER NUTZER NICHT SELBST GEWÄHLT HAT. Wer der
+     Frau ausdrücklich einen Dutt gegeben hat, will ihn nicht verlieren,
+     bloß weil er danach das Alter ändert. Deshalb merkt sich `eigen`
+     für jedes betroffene Feld, ob dort noch die Vorgabe steht oder eine
+     eigene Wahl. Nur Felder, die noch auf der Vorgabe stehen, werden
+     nachgezogen. ------------------------------------------------- */
   const eigen = {};         // Feld -> true, sobald der Nutzer es wählt
 
+  /* Die Vorgaben. Beim Säugling und beim Kleinkind ist das Haar dünn
+     und hell und es gibt keinen Bart; beim alten Menschen ist es grau
+     oder weiß. */
   const BK_VORGABE = {
     "saeugling-m":  { frisur: "kurz",   haarfarbe: "hellblond",   bart: "" },
     "saeugling-w":  { frisur: "kurz",   haarfarbe: "hellblond",   bart: "" },
@@ -677,26 +550,17 @@ const Baukasten = (function () {
     return BK_VORGABE[zustand.alter + "-" + zustand.geschlecht]
       || BK_VORGABE["erwachsen-w"];
   }
+  /* Nach jedem Wechsel von Alter oder Geschlecht: alles nachziehen, was
+     noch auf der Vorgabe steht. */
   function bkVorgabenNachziehen() {
     const v = bkVorgabe();
     BK_NACHGEZOGEN.forEach((feld) => {
       if (!eigen[feld]) zustand[feld] = v[feld];
     });
+    /* Ein Bart am Kind bleibt auch dann weg, wenn ihn jemand vorher
+       ausdrücklich gewählt hat — es gibt für Kinder keine Bartebene,
+       und „Vollbart" stünde dann als Knopf ohne Wirkung da. */
     if (!bkBartErlaubt()) zustand.bart = "";
-    /* Ein Säugling kann nicht stehen oder gehen: dann liegt, sitzt oder
-       krabbelt er — was der Platz eher nahelegt. */
-    if (!bkHaltungErlaubt(zustand.haltung)) {
-      delete eigen.haltung;
-      zustand.haltung = zustand.platz ? bkHaltungVomPlatz(zustand.platz) : "stehen";
-    }
-    /* Bikini nur für Erwachsene und Jugendliche. */
-    if (["saeugling", "kleinkind", "kind"].indexOf(zustand.alter) >= 0) {
-      ["oberteil", "unterteil"].forEach((p) => {
-        const w = zustand.kleidung[p];
-        if (w && /^bikini/.test(w.stueck)) zustand.kleidung[p] = p === "oberteil"
-          ? { stueck: "tshirt", farbe: w.farbe } : { stueck: "shorts", farbe: w.farbe };
-      });
-    }
   }
   function bkBartErlaubt() {
     return zustand.geschlecht === "m"
@@ -705,9 +569,6 @@ const Baukasten = (function () {
 
   /* Womit eine Figur anfaengt, wenn sie wieder etwas anziehen soll. */
   function bkGrundkleidung() {
-    if (zustand.alter === "saeugling") {
-      return { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "hose", farbe: "gelb" } };
-    }
     return {
       oberteil: { stueck: "tshirt", farbe: "rot" },
       unterteil: { stueck: "jeans", farbe: "blau" },
@@ -740,15 +601,36 @@ const Baukasten = (function () {
     return (window.DMA_SZENEN || []).filter((s) => da.has(s.id));
   }
 
-  /* Alles holen, was für die aktuelle Auswahl gebraucht wird.
-     FASSUNG 834: statt drei Figurendateien je Alter und Geschlecht
-     (zusammen bis zu 3,4 MB) eine einzige für alle — figuren/mensch.js. */
+  /* Alles holen, was für die aktuelle Auswahl gebraucht wird. */
   async function nachladen() {
+    /* Das Verzeichnis der Bilderwelt wird auch hier gebraucht — daraus
+       kommen Titel, Emoji und Masse der Kulissen. Ohne es gaebe es im
+       Baukasten keine Auswahl der Orte. */
     await datei("data-plaetze.js");
     if (!window.DMA_SZENEN) await datei("data-szenen.js");
     const s = zustand.szene;
     if (!(window.DMA_SZENE || {})[s]) await datei("szenen/" + s + ".js");
-    if (!window.DMA_MENSCH) await datei("figuren/mensch.js");
+    const f = zustand.alter + "-" + zustand.geschlecht;
+    /* Je Figur liegen DREI Dateien vor: Teil 1 stehen und halten,
+       Teil 2 sitzen und liegen, Teil 3 die Haltungen am Boden (knien,
+       Fersensitz, Schneidersitz, auf dem Boden sitzen, krabbeln).
+       Teil 3 wurde hier nie geholt — die Haltungen darin waren damit
+       nicht zu erreichen. */
+    if (!(window.DMA_FIGUR || {})[f]) {
+      await datei("figuren/" + f + ".js");
+      await datei("figuren/" + f + "-teil2.js");
+      await datei("figuren/" + f + "-teil3.js");
+    } else if (!((window.DMA_FIGUR[f].haltungen || {})[zustand.haltung])) {
+      await datei("figuren/" + f + "-teil2.js");
+      await datei("figuren/" + f + "-teil3.js");
+    }
+    /* Und die elfte Haltung dazu: seitliches Sitzen. Sie steht in
+       keiner der drei Dateien, weil sie nicht gezeichnet, sondern
+       aus „liegen" und „krabbeln" zusammengesetzt wird — erst hier,
+       wenn beide da sind. Die Datei ist fuer alle Figuren dieselbe
+       und wird nur einmal geholt. */
+    if (!window.DMA_SEITSITZ_BAUEN) await datei("figuren/seitsitz.js");
+    try { window.DMA_SEITSITZ_BAUEN && window.DMA_SEITSITZ_BAUEN(f); } catch (e) {}
   }
 
   /* ------------------------------------------------------------
@@ -757,6 +639,9 @@ const Baukasten = (function () {
   function buehne() {
     const sz = (window.DMA_SZENE || {})[zustand.szene];
     if (!sz) return '<p class="empty-note">Die Kulisse wird geladen …</p>';
+    /* Wenn noch kein Platz gewaehlt ist, nimmt die Figur den freien Platz
+       des Raumes. Der Satz muss denselben kennen, sonst beschreibt er eine
+       andere Stelle als das Bild zeigt — deshalb wird er zurueckgeschrieben. */
     if (!zustand.platz || zustand.platz.szene !== zustand.szene) {
       zustand.platz = plaetze().find((p) => p.frei) || plaetze()[0] || null;
       if (zustand.platz && !eigen.haltung) {
@@ -764,51 +649,43 @@ const Baukasten = (function () {
       }
     }
     const platz = zustand.platz;
+    /* 0 heisst: nicht auf eine Wunschhoehe zwingen, sondern den
+       Massstab der Kulisse nehmen — die Figur ist dann ueberall so
+       gross, wie sie in Wirklichkeit waere. */
     const fig = bkFigurSvg(zustand, 0);
 
-    /* Sitzplätze bekommen einen eigenen Ring (gefüllter Kern): dort
-       setzt sich die Figur hin, wenn man sie loslässt. */
     const marken = plaetze().map((p) => {
       const an = platz && p.id === platz.id;
-      const sitz = typeof p.sitzY === "number";
-      return '<g class="bk-platz ' + (an ? "bk-platz-an" : "") + (sitz ? " bk-platz-sitz" : "") + '" data-bk-platz="'
+      return '<g class="bk-platz ' + (an ? "bk-platz-an" : "") + '" data-bk-platz="'
         + p.id + '" transform="translate(' + p.x + ',' + p.y + ')">'
         + '<circle r="9" fill="rgba(255,255,255,0.5)" stroke="#b4553c" '
         + 'stroke-width="1.4" stroke-dasharray="3 2"/>'
-        + '<circle r="' + (sitz ? 4 : 2.6) + '" fill="#b4553c"/></g>';
+        + '<circle r="2.6" fill="#b4553c"/></g>';
     }).join("");
 
+    /* Aufhaengung ueber bkFigurAnker: stehend an den Fuessen, sitzend am
+       Gesaess. Vorher stand hier platz.y - fig.fuss fuer ALLE Haltungen —
+       daher sass die Figur nicht auf der Toilette, sondern stand mit den
+       Fuessen auf deren Rand, und vor dem Fernseher stand sie oben drauf. */
     const anker = bkFigurAnker(fig, platz, zustand.haltung);
-    let figur = fig && platz
+    const figur = fig && platz
       ? '<g class="bk-figur" data-bk-figur="1" transform="translate('
         + p2(anker.x) + ',' + p2(anker.y) + ')">' + fig.svg + "</g>"
       : "";
-    /* In der Badewanne verdeckt das Wasser alles unter dem Wasserspiegel.
-       FASSUNG 838: nicht mehr abgeschnitten, sondern hinter Wannenwand und
-       Wasser (bkVorderkante); ohne Querschnitt bleibt es beim Abschneiden. */
-    if (figur && platz && typeof platz.wasserY === "number" && BK_BADHALTUNG[zustand.haltung] && platz.vorderkante !== "wanne") {
-      figur = '<clipPath id="bkWasser"><rect x="0" y="0" width="' + sz.breite + '" height="' + platz.wasserY + '"/></clipPath>'
-        + '<g clip-path="url(#bkWasser)">' + figur + "</g>"
-        + '<path d="M' + (platz.x - 34) + " " + platz.wasserY + "q17 -2 34 0t34 0" + '" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1.2" stroke-linecap="round"/>';
-    }
-    if (figur) figur += bkVorderkante(platz, zustand.haltung, sz);
 
     return '<div class="bk-buehne"><svg viewBox="0 0 ' + sz.breite + " " + sz.hoehe
       + '" class="bk-svg" role="img" aria-label="Die gebaute Situation">'
+      + (window.DMA_FIGUR_DEFS || "")
       + '<g class="bk-kulisse">' + sz.kulisse + "</g>"
-      /* Auf dem Stuhl sass schon ein gemalter Gast — der Platz sagt mit
-         „verdeckt", wen er einnimmt; der tritt dann zur Seite. */
+      /* Derselbe Grund wie im Bilderraetsel: auf dem Stuhl sass schon
+         ein gemalter Gast, und die eigene Figur wurde einfach
+         darueberglegt — zwei Koerper auf einem Fleck. Der Platz sagt
+         mit „verdeckt", wen er einnimmt; der tritt dann zur Seite. */
       + (sz.teile || []).filter((t) =>
           !platz || (platz.verdeckt || []).indexOf(t.id) < 0)
         .map((t) =>
           '<g transform="translate(' + t.x + "," + t.y + ')">' + t.kunst + "</g>").join("")
-      + marken + figur + "</svg></div>"
-      /* Die kleinen Bewegungen: winken, umdrehen, ein paar Schritte. */
-      + '<div class="bk-aktionen">'
-      + '<button type="button" class="bk-chip" data-bk-tu="winken">Winken</button>'
-      + '<button type="button" class="bk-chip" data-bk-tu="umdrehen">Umdrehen</button>'
-      + '<button type="button" class="bk-chip" data-bk-tu="gehen">Ein paar Schritte</button>'
-      + "</div>";
+      + marken + figur + "</svg></div>";
   }
   function p2(v) { return Math.round(v * 10) / 10; }
 
@@ -822,7 +699,22 @@ const Baukasten = (function () {
         }).join("") + "</div></div>";
   }
 
-  /* Vier Fächer, immer nur EINES offen (Wo? · Wer? · Aussehen · Anziehen). */
+  /* ------------------------------------------------------------
+     GEMELDET: „Das System soll viel lockerer sein und nicht so
+     überladen mit so vielen Möglichkeiten aufgeklappt — das soll man
+     auswählen können. Außerdem habe ich keine Option, sie anzuziehen."
+
+     Beides derselbe Grund: unter dem Bild standen fünfzehn Reihen
+     Knöpfe UNTEREINANDER und alle offen. Was man suchte — das
+     Anziehen — lag weit unterhalb des Bildrandes und war auf dem
+     Telefon praktisch unerreichbar.
+
+     Jetzt vier Fächer, immer nur EINES offen:
+       📍 Wo?      Ort und Platz
+       🧍 Wer?     Alter, Mann/Frau
+       🎨 Aussehen Haut, Frisur, Haarfarbe, Gesicht
+       👕 Anziehen an/aus und jedes Kleidungsstück
+     ------------------------------------------------------------ */
   const BK_FAECHER = [
     ["wo", "📍 Wo?"], ["wer", "🧍 Wer?"],
     ["aussehen", "🎨 Aussehen"], ["kleidung", "👕 Anziehen"],
@@ -835,53 +727,33 @@ const Baukasten = (function () {
       + '" data-bk-fach="' + k + '">' + t + "</button>").join("") + "</div>";
   }
 
-  /* Welche Stücke zu welchem Platz am Körper gehören. Früher kam das
-     aus den alten Figurendateien (DMA_FIGUR_PLATZ); jetzt steht es hier,
-     und angeboten wird nur, was figuren/mensch.js auch zeichnet. */
-  const BK_PLATZ_STUECKE = {
-    kopf: ["muetze", "hut", "kappe", "helm", "weihnachtsmuetze", "kopftuch"],
-    oberteil: ["tshirt", "hemd", "pullover", "bluse", "kellnerhemd", "polizeihemd", "arztkittel",
-      "warnweste", "feuerwehrjacke", "weihnachtsmantel", "badeanzug", "badeshirt", "bikinioberteil"],
-    kleid: ["sommerkleid", "abendkleid", "schuerze"],
-    jacke: ["jacke", "mantel", "weste", "kittel", "bademantel"],
-    unterteil: ["hose", "jeans", "anzughose", "arbeitshose", "shorts", "rock", "badehose", "bikinihose"],
-    schuhe: ["halbschuh", "turnschuh", "stiefel", "sandale", "gummistiefel"],
-    zubehoer: ["brille", "tasche", "rucksack", "schal", "handschuhe", "tablett", "besen", "buch"],
-  };
-  function bkStueckeFuer(platz) {
-    const kind = ["saeugling", "kleinkind", "kind"].indexOf(zustand.alter) >= 0;
-    return (BK_PLATZ_STUECKE[platz] || []).filter((s) => {
-      if (!BK_STUECK[s]) return false;
-      if (kind && /^bikini|abendkleid|arztkittel|polizeihemd|feuerwehrjacke|kellnerhemd|anzughose|arbeitshose/.test(s)) return false;
-      if (zustand.alter === "saeugling" && platz === "zubehoer") return false;
-      return true;
-    });
-  }
-
-  /* Welche Haltungen es für wen gibt: Säuglinge liegen, sitzen und
-     krabbeln — sie stehen noch nicht, und servieren tut man erst als
-     Erwachsener. */
-  const BK_HALTUNGEN = ["stehen", "kontrapost", "gehen", "sitzen", "lesen", "sitzen_boden", "schneidersitz",
-    "fersensitz", "hocken", "knien", "knien_halb", "knien_vor", "krabbeln", "liegen", "winken", "halten",
-    "zeigen", "servieren",
-    /* FASSUNG 836 */
-    "bauchlage", "seitenlage", "sitzen_angewinkelt", "baden", "graetschsitz", "sitzen_ueberkreuz", "anlehnen",
-    "laufen", "treppe", "buecken", "strecken", "arme_verschraenkt", "haende_huefte",
-    /* FASSUNG 838 */
-    "sitzen_seit", "sitzen_zurueck"];
-  function bkHaltungErlaubt(h) {
-    if (zustand.alter === "saeugling") return ["sitzen_boden", "krabbeln", "liegen", "sitzen", "bauchlage", "seitenlage"].indexOf(h) >= 0;
-    if (zustand.alter === "kleinkind") return ["servieren", "lesen", "sitzen_ueberkreuz", "anlehnen", "laufen"].indexOf(h) < 0;
-    return true;
-  }
-
   function steuerung() {
+    const bau = (window.DMA_FIGUR || {})[zustand.alter + "-" + zustand.geschlecht];
+    /* Angeboten wird nur, wofür BK_STUECK ein deutsches Wort kennt.
+       Kommt aus den Figurendateien einmal ein Stück, das hier noch
+       nicht steht, stünde sonst sein interner Name als Knopf da
+       („rock_knie") und der Satz ließe es stillschweigend weg — in
+       einem Werkzeug, dessen ganzer Zweck das deutsche Wort ist, ist
+       ein Knopf ohne Wort schlimmer als gar kein Knopf. */
+    const bekannt = (liste) => liste.filter((s) => BK_STUECK[s]);
+    const stuecke = (platz) => {
+      const alle = window.DMA_FIGUR_PLATZ && window.DMA_FIGUR_PLATZ[platz];
+      if (alle) return bekannt(alle);
+      const h = bau && (bau.haltungen[zustand.haltung] || bau.haltungen.stehen);
+      if (!h) return [];
+      return bekannt(Object.keys(h.kleidung || {})
+        .filter((k) => (h.platz || {})[k] === platz));
+    };
     const anGezogen = (platz) => (zustand.kleidung[platz] || {}).stueck || "nichts";
+
     const fach = zustand.fach || "wo";
     const teile = [];
 
     if (fach === "wo") {
       teile.push(wahlHtml("szene", "Der Ort", szenen().map((s) => [s.id, (s.emoji || "") + " " + s.titel]), zustand.szene));
+      /* Die Plätze auch als Knöpfe, nicht nur als Ringe im Bild: mit dem
+         Finger ist ein Knopf leichter zu treffen als ein Ring von neun
+         Punkt Durchmesser. */
       const pl = plaetze();
       if (pl.length) {
         teile.push(wahlHtml("platz", "Der Platz",
@@ -893,36 +765,59 @@ const Baukasten = (function () {
         ["jugendlich", "Jugendliche"], ["erwachsen", "Erwachsen"], ["alt", "Alt"]], zustand.alter));
       teile.push(wahlHtml("geschlecht", "Mann oder Frau?",
         [["m", "♂ männlich"], ["w", "♀ weiblich"]], zustand.geschlecht));
-      /* Der erste Knopf gibt die Entscheidung an den Platz zurück. */
-      const liste = [[BK_HALTUNG_PLATZ, "wie es der Platz will"]]
-        .concat(BK_HALTUNGEN.filter(bkHaltungErlaubt).map((k) => [k, BK_HALTUNG_NAME[k] || k]));
-      teile.push(wahlHtml("haltung", "Die Haltung", liste,
-        eigen.haltung ? zustand.haltung : BK_HALTUNG_PLATZ));
+      /* GEWÜNSCHT: „Diese Positionen sollen alle Menschen immer
+         einnehmen können … und im Baukasten sollen wir diese
+         Positionen auch einnehmen können."
+         Angeboten wird, was die geladenen Figurendateien wirklich
+         mitbringen — eine Haltung ohne Ebenen wäre ein Knopf, der die
+         Figur bloß aufstellt. */
+      const halt = bau ? Object.keys(bau.haltungen || {}) : [];
+      if (halt.length) {
+        /* Der erste Knopf gibt die Entscheidung an den Platz zurück:
+           sonst käme man aus einer einmal gewählten Haltung nie wieder
+           heraus, und wer sich einmal hingekniet hat, kniete auch noch
+           in der Badewanne. */
+        const liste = [[BK_HALTUNG_PLATZ, "📍 wie es der Platz will"]]
+          .concat(halt.map((k) => [k, BK_HALTUNG_NAME[k] || k]));
+        teile.push(wahlHtml("haltung", "Die Haltung", liste,
+          eigen.haltung ? zustand.haltung : BK_HALTUNG_PLATZ));
+      }
     } else if (fach === "aussehen") {
       teile.push(wahlHtml("haut", "Hautfarbe",
-        Object.keys(BK_HAUT_NAME).map((k) => [k, BK_HAUT_NAME[k]]), zustand.haut));
+        Object.keys(window.DMA_FIGUR_HAUT || {}).map((k) => [k, BK_HAUT_NAME[k] || k]), zustand.haut));
+      const alleF = Object.keys((bau && (bau.haltungen[zustand.haltung] || bau.haltungen.stehen) || {}).frisuren || {});
+      /* Frisur und Bart sind zwei getrennte Reihen. Vorher standen sie
+         in EINER: wer „Vollbart" wählte, verlor damit die Frisur und
+         bekam einen Glatzkopf mit Bart. */
+      const frisuren = alleF.filter((k) => k.indexOf("bart") !== 0);
       teile.push(wahlHtml("frisur", "Frisur",
-        ["kurz", "lang", "locken", "zopf", "dutt", "pony", "glatze"].map((k) => [k, BK_FRISUR_NAME[k] || k]), zustand.frisur));
-      if (bkBartErlaubt()) {
+        frisuren.map((k) => [k, BK_FRISUR_NAME[k] || k]), zustand.frisur));
+      const baerte = bkBartErlaubt() ? alleF.filter((k) => k.indexOf("bart") === 0) : [];
+      if (baerte.length) {
         teile.push(wahlHtml("bart", "Bart",
-          [["", "— kein Bart"], ["bart_kurz", BK_FRISUR_NAME.bart_kurz], ["bart_voll", BK_FRISUR_NAME.bart_voll]],
+          [["", "— kein Bart"]].concat(baerte.map((k) => [k, BK_FRISUR_NAME[k] || k])),
           zustand.bart || ""));
       }
       teile.push(wahlHtml("haarfarbe", "Haarfarbe",
-        Object.keys(BK_HAAR_NAME).map((k) => [k, BK_HAAR_NAME[k]]), zustand.haarfarbe));
-      teile.push(wahlHtml("gesicht", "Gesicht",
-        ["g1", "g2", "g3", "g4"].map((k, i) => [k, "Gesicht " + (i + 1)]), zustand.gesicht));
+        Object.keys(window.DMA_FIGUR_HAAR || {}).map((k) => [k, BK_HAAR_NAME[k] || k]), zustand.haarfarbe));
+      /* Nur die Gesichter anbieten, die es wirklich gibt: die
+         Figurendateien liefern vier statt acht, und die vier fehlenden
+         Knöpfe zeigten alle dasselbe Gesicht. */
+      const ges = Object.keys((bau && (bau.haltungen[zustand.haltung] || bau.haltungen.stehen) || {}).gesichter || {});
+      if (ges.length) {
+        teile.push(wahlHtml("gesicht", "Gesicht",
+          ges.map((k, i) => [k, "Gesicht " + (i + 1)]), zustand.gesicht));
+      }
     } else {
-      /* FASSUNG 834: Die Menschen im Baukasten sind bekleidet — es gibt
-         keinen Schalter mehr für „nichts an“. Oberteil und Unterteil
-         haben kein „—“: man tauscht sie, statt sie wegzunehmen (ein
-         Kleid ersetzt beides). */
+      /* Der Schalter, der gefehlt hat: mit einem Griff alles an oder
+         alles aus. Darunter dann jedes Stück einzeln. */
+      const etwasAn = Object.keys(zustand.kleidung).length > 0;
+      teile.push(wahlHtml("anhaben", "Angezogen oder nicht?",
+        [["an", "👕 angezogen"], ["aus", "🚿 nichts an"]], etwasAn ? "an" : "aus"));
       ["kopf", "oberteil", "kleid", "jacke", "unterteil", "schuhe", "zubehoer"].forEach((platz) => {
-        const liste = bkStueckeFuer(platz);
+        const liste = stuecke(platz);
         if (!liste.length) return;
-        const pflicht = platz === "oberteil" || platz === "unterteil";
-        const leer = pflicht ? [] : [["nichts", platz === "schuhe" ? "barfuß" : "—"]];
-        const namen = leer.concat(liste.map((s) => [s, (BK_STUECK[s] || [s])[0].replace(/^(der|die|das)\s+/, "")]));
+        const namen = [["nichts", "—"]].concat(liste.map((s) => [s, (BK_STUECK[s] || [s])[0].replace(/^(der|die|das)\s+/, "")]));
         teile.push(wahlHtml("kl-" + platz, bkPlatzName(platz), namen, anGezogen(platz)));
       });
       teile.push(wahlHtml("farbe", "Farbe für das zuletzt Gewählte",
@@ -938,19 +833,13 @@ const Baukasten = (function () {
   };
   const BK_HALTUNG_PLATZ = "_platz";   // „der Platz entscheidet"
   const BK_HALTUNG_NAME = {
-    stehen: "stehen", kontrapost: "locker stehen", gehen: "gehen",
-    sitzen: "sitzen", lesen: "sitzen und lesen", sitzen_boden: "am Boden sitzen",
-    schneidersitz: "Schneidersitz", fersensitz: "Fersensitz", hocken: "hocken",
-    knien: "knien", knien_halb: "auf einem Knie", knien_vor: "vorgebeugt knien",
-    krabbeln: "auf allen vieren", liegen: "liegen", winken: "winken",
-    halten: "etwas halten", zeigen: "zeigen", servieren: "servieren",
-    sitzen_seit: "seitlich sitzen", sitzen_zurueck: "zurückgelehnt sitzen",
-    /* FASSUNG 836 */
-    fersensitz: "auf den Fersen sitzen", knien: "aufrecht knien", hocken: "in der Hocke",
-    liegen: "auf dem Rücken liegen", bauchlage: "auf dem Bauch liegen", seitenlage: "auf der Seite liegen",
-    sitzen_angewinkelt: "mit angewinkelten Beinen", baden: "in der Wanne sitzen", graetschsitz: "Grätschsitz",
-    sitzen_ueberkreuz: "Bein übergeschlagen", anlehnen: "anlehnen", laufen: "joggen", treppe: "Treppe steigen",
-    buecken: "sich bücken", strecken: "sich strecken", arme_verschraenkt: "Arme verschränkt", haende_huefte: "Hände in die Hüften",
+    stehen: "🧍 stehen", halten: "🤲 etwas halten",
+    sitzen: "🪑 sitzen", liegen: "🛏️ liegen",
+    knien: "🧎 knien", knien_vor: "🧎 vorgebeugt knien",
+    fersensitz: "🧎 Fersensitz", schneidersitz: "🧘 Schneidersitz",
+    sitzen_boden: "🧑‍🦯 am Boden sitzen", krabbeln: "🍼 krabbeln",
+    sitzen_seit: "🪑 seitlich sitzen",
+    gehen: "🚶 gehen", hocken: "🧎 hocken",
   };
   const BK_HAUT_NAME = {
     sehrhell: "sehr hell", hell: "hell", mittel: "mittel",
@@ -963,7 +852,7 @@ const Baukasten = (function () {
   };
 
   const BK_PLATZ_NAME = {
-    kopf: "Auf dem Kopf", oberteil: "Oberteil", kleid: "Kleid oder Schürze",
+    kopf: "Auf dem Kopf", oberteil: "Oberteil", kleid: "Kleid",
     jacke: "Jacke", unterteil: "Unterteil", schuhe: "Schuhe",
     zubehoer: "Dazu",
   };
@@ -978,186 +867,62 @@ const Baukasten = (function () {
 
   function zeichnen() {
     if (!flaeche) return;
-    stopp();
     const bild = buehne();
     flaeche.innerHTML =
       '<h3 class="bk-titel">🧩 Der Situations-Baukasten</h3>'
       + '<p class="empty-note bk-hinweis">Bau dir eine Situation zusammen: such einen Ort,'
-      + ' zieh die Figur auf einen Platz — auf einem Stuhl oder Sofa setzt sie sich hin —,'
-      + ' zieh ihr an, was du willst, und lies unten, wie man das auf Deutsch sagt.</p>'
+      + ' zieh die Figur auf einen Platz, zieh ihr an, was du willst — und lies unten,'
+      + ' wie man das auf Deutsch sagt.</p>'
       + bild + satzHtml() + steuerung();
     binden();
   }
 
-  /* Welche Haltung ein Platz nahelegt. */
-  function bkHaltungVomPlatz(p) {
-    if (zustand.alter === "saeugling") {
-      return p.haltung === "liegen" ? "liegen" : (typeof p.sitzY === "number" ? "sitzen" : "sitzen_boden");
-    }
-    if (p.teil === "badewanne") return "baden";
-    return p.haltung === "gehen" ? "gehen" : p.haltung;
-  }
-
   /* Einen Platz einnehmen — an EINER Stelle, damit Ring, Knopf und
      Ziehen sich nicht unterschiedlich verhalten.
-     FASSUNG 834: In der Dusche und in der Badewanne trägt die Figur
-     einen Bademantel; danach bekommt sie ihre Sachen zurück. */
-  const BK_BADEPLATZ = { dusche: 1, badewanne: 1 };
-  function bkPlatzNehmen(p) {
-    const warBad = zustand.platz && BK_BADEPLATZ[zustand.platz.teil];
-    zustand.platz = p;
-    if (!eigen.haltung) zustand.haltung = bkHaltungVomPlatz(p);
-    if (BK_BADEPLATZ[p.teil]) {
-      if (!warBad) zustand.vorher = zustand.kleidung;
-      /* FASSUNG 836: In der Wanne Badekleidung (Badeanzug bzw. Badehose
-         mit Badeshirt), unter der Dusche der Bademantel. */
-      zustand.kleidung = p.teil === "badewanne"
-        ? (zustand.geschlecht === "w" ? { oberteil: { stueck: "badeanzug", farbe: "blau" } } : { oberteil: { stueck: "badeshirt", farbe: "hellblau" }, unterteil: { stueck: "badehose", farbe: "blau" } })
-        : { jacke: { stueck: "bademantel", farbe: "weiss" } };
-    } else if (warBad) {
-      zustand.kleidung = zustand.vorher || bkGrundkleidung();
-    } else if (!Object.keys(zustand.kleidung).length) {
-      zustand.kleidung = bkGrundkleidung();
-    }
+
+     An manchen Plätzen ist man nicht angezogen (Dusche, Badewanne). An
+     allen anderen zieht sich die Figur wieder an, wenn sie von so einem
+     Platz kommt — sonst saß sie nackt am Küchentisch, ohne dass das
+     jemand wollte. Wer ausdrücklich „nichts an" gewählt hat, bleibt
+     nackt. */
+  /* Welche Haltung ein Platz nahelegt. „gehen" gibt es als Ebene nicht,
+     dort steht die Figur. */
+  function bkHaltungVomPlatz(p) {
+    return p.haltung === "gehen" ? "stehen" : p.haltung;
   }
 
-  /* ------------------------------------------------------------
-     DIE BEWEGUNG
-     ------------------------------------------------------------
-     Die Figur ist ein Skelett; jede Haltung ist eine Liste von Winkeln.
-     Zwischen zwei Haltungen wird überblendet (Hinsetzen, Aufstehen),
-     beim Platzwechsel geht sie hinüber (Gangzyklus), beim Winken
-     schwingt der Unterarm. Gemalt wird nur die Figur neu, nicht die
-     ganze Kulisse. */
-  let lauf = null;
-  function stopp() { if (lauf) { cancelAnimationFrame(lauf); lauf = null; } }
-  function figurEl() { return flaeche && flaeche.querySelector("[data-bk-figur]"); }
-  function figurMalen(st) {
-    const el = figurEl();
-    if (!el) return;
-    const fig = bkFigurSvg(zustand, 0, { pose: st.pose, haltung: st.haltung, blick: st.blick, spiegel: st.spiegel, id: "bkb" });
-    if (!fig) return;
-    el.setAttribute("transform", "translate(" + p2(st.x) + "," + p2(st.y) + ")");
-    el.innerHTML = fig.svg;
-  }
-  /* Wie die Figur gerade aussieht — Ausgangspunkt jeder Bewegung. */
-  function jetzt() {
-    const fig = bkFigurSvg(zustand, 0);
-    const a = bkFigurAnker(fig, zustand.platz, zustand.haltung);
-    return { x: a.x, y: a.y, pose: window.DMA_MENSCH.pose(bkGezeichneteHaltung(zustand).pose), blick: fig.blick.blick, spiegel: fig.blick.spiegel, haltung: zustand.haltung };
-  }
-  function ablauf(dauer, schritt, fertig) {
-    stopp();
-    const t0 = performance.now();
-    const tick = (t) => {
-      const u = Math.min(1, (t - t0) / dauer);
-      schritt(u);
-      if (u < 1) lauf = requestAnimationFrame(tick);
-      else { lauf = null; if (fertig) fertig(); }
-    };
-    lauf = requestAnimationFrame(tick);
-  }
-  const weich = (u) => u * u * (3 - 2 * u);
-  /* Überblenden von a nach b (Ort, Haltung, Blick). */
-  function ueberblenden(a, b, dauer, fertig) {
-    const M = window.DMA_MENSCH;
-    ablauf(dauer, (u) => {
-      const w = weich(u);
-      figurMalen({ x: a.x + (b.x - a.x) * w, y: a.y + (b.y - a.y) * w,
-        pose: M.mische(a.pose, b.pose, w), blick: a.blick + (b.blick - a.blick) * w,
-        spiegel: w < 0.5 ? a.spiegel : b.spiegel, haltung: b.haltung });
-    }, fertig);
-  }
-  /* Hinübergehen: aufstehen (falls nötig), gehen, am Ziel die Haltung
-     des Platzes einnehmen — sitzend rastet das Gesäß auf der Sitzfläche ein. */
-  function hinuebergehen(von, zu) {
-    const M = window.DMA_MENSCH;
-    const k = bkMassstab(zustand.szene);
-    /* Zum Gehen steht die Figur auf dem Boden: der Punkt unter der Hüfte. */
-    /* Der Anker jeder Haltung liegt auf dem Boden unter der Hüfte — auch
-       beim Sitzen (dort, wo die Füße stehen). Gegangen wird also von
-       Boden zu Boden, nicht zur Rückenlehne hinauf. */
-    const startY = von.y;
-    const zielBoden = zu.y;
-    const dx = zu.x - von.x, dy = zielBoden - startY;
-    const weg = Math.hypot(dx, dy);
-    if (weg < 6) { ueberblenden(von, zu, 420); return; }
-    const spiegel = dx < 0;
-    const gehBlick = 72;
-    const doppelschritt = 140 * k;
-    const dauer = Math.min(2600, Math.max(700, weg / (95 * k) * 1000));
-    const stand = { x: von.x, y: startY, pose: M.gehPose(0), blick: gehBlick, spiegel, haltung: "gehen" };
-    /* 1. aufstehen / loslaufen */
-    ueberblenden(von, stand, 260, () => {
-      /* 2. gehen */
-      ablauf(dauer, (u) => {
-        const x = von.x + dx * u, y = startY + dy * u;
-        const phase = (weg * u) / doppelschritt;
-        figurMalen({ x, y, pose: M.gehPose(phase % 1), blick: gehBlick, spiegel, haltung: "gehen" });
-      }, () => {
-        /* 3. ankommen: in die Haltung des Platzes */
-        const ende = { x: von.x + dx, y: zielBoden, pose: M.gehPose(((weg) / doppelschritt) % 1), blick: gehBlick, spiegel, haltung: "gehen" };
-        ueberblenden(ende, zu, 480);
-      });
-    });
-  }
-  function winken() {
-    const M = window.DMA_MENSCH;
-    const a = jetzt();
-    /* Wer sitzt, kniet oder liegt, winkt in dieser Haltung — die Beine
-       bleiben, nur der rechte Arm geht hoch. */
-    const oben = Object.assign({}, a.pose, {
-      schulterR: M.POSEN.winken.schulterR, ellbogenR: M.POSEN.winken.ellbogenR,
-      unterarmR: M.POSEN.winken.unterarmR, handR: M.POSEN.winken.handR, fingerR: M.POSEN.winken.fingerR,
-      kopf: -8,
-    });
-    const b = Object.assign({}, a, { pose: oben, blick: Math.min(a.blick, 30) });
-    ueberblenden(a, b, 380, () => {
-      ablauf(1800, (u) => {
-        const s = Math.sin(u * Math.PI * 2 * 3);
-        const p = Object.assign({}, oben, {
-          ellbogenR: M.POSEN.winken.ellbogenR - 10 + 22 * s,
-          schulterR: Object.assign({}, M.POSEN.winken.schulterR, { seit: M.POSEN.winken.schulterR.seit + 6 * s }),
-          handR: 8 + 12 * s,
-        });
-        figurMalen(Object.assign({}, b, { pose: p }));
-      }, () => ueberblenden(b, a, 420));
-    });
-  }
-  /* Ein paar Schritte hin und zurück — ohne den Platz zu wechseln. */
-  function paarSchritte() {
-    const M = window.DMA_MENSCH;
-    const sz = (window.DMA_SZENE || {})[zustand.szene];
-    const a = jetzt();
-    const k = bkMassstab(zustand.szene);
-    const richtung = zustand.platz && sz && zustand.platz.x > sz.breite / 2 ? -1 : 1;
-    const boden = zustand.platz ? zustand.platz.y : a.y;
-    const weite = 120 * k;
-    const start = { x: a.x, y: boden, pose: M.gehPose(0), blick: 72, spiegel: richtung < 0, haltung: "gehen" };
-    ueberblenden(a, start, 260, () => {
-      ablauf(1500, (u) => {
-        const hin = u < 0.5;
-        const w = hin ? u * 2 : (1 - u) * 2;
-        figurMalen({ x: a.x + richtung * weite * w, y: boden, pose: M.gehPose((u * 2.2) % 1), blick: 72,
-          spiegel: hin ? richtung < 0 : richtung > 0, haltung: "gehen" });
-      }, () => ueberblenden(Object.assign({}, start, { spiegel: richtung > 0 }), a, 420));
-    });
+  function bkPlatzNehmen(p) {
+    zustand.platz = p;
+    /* Hat der Nutzer die Haltung selbst gewählt, bleibt sie stehen —
+       sonst hätte er sie hingesetzt und der nächste Platz hätte sie
+       wieder aufgestellt. */
+    if (!eigen.haltung) zustand.haltung = bkHaltungVomPlatz(p);
+    if (!p.an) zustand.kleidung = {};
+    else if (!Object.keys(zustand.kleidung).length && !zustand.nacktGewollt) {
+      zustand.kleidung = bkGrundkleidung();
+    }
   }
 
   function binden() {
     flaeche.querySelectorAll("[data-bk]").forEach((b) => {
       b.addEventListener("click", async () => {
         const was = b.dataset.bk, wert = b.dataset.wert;
-        const vorher = jetzt();
-        let bewegung = null;
         if (was === "szene") {
           zustand.szene = wert;
           zustand.platz = null;
-          if (!Object.keys(zustand.kleidung).length) zustand.kleidung = bkGrundkleidung();
+          /* Wer die Dusche verlaesst, zieht sich wieder an — es sei denn,
+             das Ausziehen war ausdrücklich gewollt. */
+          if (!Object.keys(zustand.kleidung).length && !zustand.nacktGewollt) {
+            zustand.kleidung = bkGrundkleidung();
+          }
         }
         else if (was === "platz") {
           const p = plaetze().find((x) => x.id === wert);
-          if (p) { zustand.platzVorher = zustand.platz; bkPlatzNehmen(p); bewegung = "gehen"; }
+          if (p) bkPlatzNehmen(p);
+        }
+        else if (was === "anhaben") {
+          zustand.nacktGewollt = wert === "aus";
+          zustand.kleidung = wert === "aus" ? {} : bkGrundkleidung();
         }
         else if (was === "farbe") {
           zustand.letzteFarbe = wert;
@@ -1168,79 +933,37 @@ const Baukasten = (function () {
           zustand.letzterPlatz = platz;
           if (wert === "nichts") delete zustand.kleidung[platz];
           else zustand.kleidung[platz] = { stueck: wert, farbe: zustand.letzteFarbe || "rot" };
-          /* Ein Kleid ersetzt Oberteil und Unterteil; wer es wieder
-             ablegt, bekommt die Grundsachen zurück. */
-          if (platz === "kleid" && /kleid$/.test(wert)) { delete zustand.kleidung.oberteil; delete zustand.kleidung.unterteil; }
-          if (platz === "kleid" && wert === "nichts") {
-            const g = bkGrundkleidung();
-            if (!zustand.kleidung.oberteil) zustand.kleidung.oberteil = g.oberteil;
-            if (!zustand.kleidung.unterteil) zustand.kleidung.unterteil = g.unterteil;
-          }
-          if ((platz === "oberteil" || platz === "unterteil") && zustand.kleidung.kleid && /kleid$/.test(zustand.kleidung.kleid.stueck)) {
-            delete zustand.kleidung.kleid;
-            const g = bkGrundkleidung();
-            if (!zustand.kleidung.oberteil) zustand.kleidung.oberteil = g.oberteil;
-            if (!zustand.kleidung.unterteil) zustand.kleidung.unterteil = g.unterteil;
-          }
+          /* Von Hand ausgezogen heißt: so soll es bleiben, auch wenn die
+             Figur den Raum wechselt. */
+          zustand.nacktGewollt = Object.keys(zustand.kleidung).length === 0;
         } else if (was === "haltung" && wert === BK_HALTUNG_PLATZ) {
           delete eigen.haltung;
           if (zustand.platz) zustand.haltung = bkHaltungVomPlatz(zustand.platz);
-          bewegung = "blenden";
-        } else if (was === "haltung") {
-          eigen.haltung = true;
-          zustand.haltung = wert;
-          bewegung = "blenden";
         } else if (was === "alter" || was === "geschlecht") {
+          /* Erst umschalten, dann alles nachziehen, was noch auf der
+             Vorgabe steht — daher hatte der Mann vorher die langen
+             Haare der Frau und der Alte keine grauen. */
           zustand[was] = wert;
           bkVorgabenNachziehen();
         } else {
+          /* Eine eigene Wahl. Ab jetzt wird dieses Feld nicht mehr
+             nachgezogen. */
           eigen[was] = true;
           zustand[was] = wert;
         }
         await nachladen();
         zeichnen();
-        if (bewegung && window.DMA_MENSCH) {
-          const nachher = jetzt();
-          figurMalen(vorher);
-          if (bewegung === "gehen") hinuebergehen(vorher, nachher);
-          else ueberblenden(vorher, nachher, 520);
-        }
       });
     });
     flaeche.querySelectorAll("[data-bk-fach]").forEach((b) => {
       b.addEventListener("click", () => { zustand.fach = b.dataset.bkFach; zeichnen(); });
     });
-    flaeche.querySelectorAll("[data-bk-tu]").forEach((b) => {
-      b.addEventListener("click", () => {
-        if (!window.DMA_MENSCH) return;
-        const tu = b.dataset.bkTu;
-        if (tu === "winken") winken();
-        else if (tu === "gehen") paarSchritte();
-        else if (tu === "umdrehen") {
-          const a = jetzt();
-          zustand.umgedreht = !zustand.umgedreht;
-          zeichnen();
-          const z = jetzt();
-          figurMalen(a);
-          /* Umdrehen über das Profil: erst zur Seite, dann andersherum. */
-          const mitte = Object.assign({}, a, { blick: 88 });
-          ueberblenden(a, mitte, 220, () => ueberblenden(Object.assign({}, mitte, { spiegel: z.spiegel }), z, 260));
-        }
-      });
-    });
     flaeche.querySelectorAll("[data-bk-platz]").forEach((g) => {
       g.addEventListener("click", () => {
         const p = (window.DMA_PLAETZE || []).find((x) => x.id === g.dataset.bkPlatz);
         if (!p) return;
-        const vorher = jetzt();
-        zustand.platzVorher = zustand.platz;
         bkPlatzNehmen(p);
-        nachladen().then(() => {
-          zeichnen();
-          const nachher = jetzt();
-          figurMalen(vorher);
-          hinuebergehen(vorher, nachher);
-        });
+        nachladen().then(zeichnen);
       });
     });
     const sprich = flaeche.querySelector("[data-bk-sprich]");
@@ -1252,14 +975,17 @@ const Baukasten = (function () {
 
   /* Ziehen und Ablegen: die Figur lässt sich mit dem Finger auf einen
      anderen Platz schieben.
-     FASSUNG 725 — XANDER (Funk 168): „dass man die Person von einem Punkt
-     zum anderen ziehen kann ohne dass man zufällig aus Versehen mal etwas
-     markiert … das ist so per Drag & Drop wie in einer App geht".
-     Pointer-Ereignisse mit „Capture", großzügiger Griff, nichts markierbar,
-     ein Ring zeigt den Zielplatz.
-     FASSUNG 834: Beim Loslassen rastet die Figur ein — auf einem Stuhl,
-     einer Bank oder dem Sofa setzt sie sich dabei hin (das Gesäß gleitet
-     auf die Sitzfläche), sonst stellt sie sich auf den Platz. */
+     FASSUNG 725 — XANDER (Funk 168): „im Baukasten für unsere Bilderwelt …
+     dass man die Person von einem Punkt zum anderen ziehen kann ohne dass
+     man zufällig aus Versehen mal etwas markiert und dann die Person nicht
+     versetzen kann das soll immer funktionieren das ist so per Drag & Drop
+     wie in einer App geht". Bisher: Maus- und Touch-Ereignisse getrennt, die
+     Figur selbst war das einzige Ziel (klein), ein langer Druck markierte
+     Text, und bei jedem Neuzeichnen kamen neue Lauscher am Fenster dazu.
+     Jetzt: Pointer-Ereignisse mit „Capture" (der Finger bleibt an der Figur,
+     auch wenn er sie verlässt), man darf in einem großzügigen Kreis um die
+     Figur zugreifen, nichts im Bild lässt sich markieren, und während des
+     Ziehens zeigt ein Ring den Platz, auf dem sie landen wird. */
   function bkZiehen(wurzel) {
     const svg = wurzel.querySelector(".bk-svg");
     const figur = wurzel.querySelector("[data-bk-figur]");
@@ -1283,14 +1009,10 @@ const Baukasten = (function () {
     svg.addEventListener("pointerdown", (e) => {
       if (e.button != null && e.button > 0) return;
       const p = punkt(e), f = figurOrt(), vb = svg.viewBox.baseVal;
+      /* Zugreifen: direkt auf der Figur oder im Umkreis von 9 % der Bildbreite. */
       const nah = e.target.closest && e.target.closest("[data-bk-figur]");
-      /* FASSUNG 834: gegriffen wird überall am Körper — auch zwischen den
-         Beinen oder neben dem Arm (Umriss der Figur plus 12 px). */
-      const fr = figur.getBoundingClientRect();
-      const imUmriss = e.clientX >= fr.left - 12 && e.clientX <= fr.right + 12 && e.clientY >= fr.top - 12 && e.clientY <= fr.bottom + 12;
-      if (!nah && !imUmriss && !(f && Math.hypot(p.x - f.x, p.y - (f.y - vb.width * .03)) < vb.width * .09)) return;
+      if (!nah && !(f && Math.hypot(p.x - f.x, p.y - (f.y - vb.width * .03)) < vb.width * .09)) return;
       e.preventDefault();
-      stopp();
       zieht = { id: e.pointerId, dx: f ? f.x - p.x : 0, dy: f ? f.y - p.y : 0 };
       gezogen = false;
       try { svg.setPointerCapture(e.pointerId); } catch (x) {}
@@ -1306,40 +1028,26 @@ const Baukasten = (function () {
       const p = punkt(e), x = p.x + zieht.dx, y = p.y + zieht.dy;
       gezogen = true;
       figur.setAttribute("transform", "translate(" + p2(x) + "," + p2(y) + ")");
-      /* Das Ziel ist der Platz unter dem FINGER (dort, wo man die Figur
-         hinhält) — nicht der unter ihren Füßen. */
-      const z = naechster(p);
-      if (z && ring) {
-        ring.setAttribute("cx", p2(z.x)); ring.setAttribute("cy", p2(z.y)); ring.style.display = "";
-        ring.classList.toggle("bk-zielring-sitz", typeof z.sitzY === "number");
-      }
+      const z = naechster({ x: x, y: y });
+      if (z && ring) { ring.setAttribute("cx", p2(z.x)); ring.setAttribute("cy", p2(z.y)); ring.style.display = ""; }
     });
     const ab = (e) => {
       if (!zieht || e.pointerId !== zieht.id) return;
-      const p = punkt(e), losX = p.x + zieht.dx, losY = p.y + zieht.dy;
-      const ziel = gezogen ? naechster(p) : null;
+      const p = punkt(e), ziel = gezogen ? naechster({ x: p.x + zieht.dx, y: p.y + zieht.dy }) : null;
       zieht = null;
       figur.classList.remove("bk-zieht");
       if (ring) { ring.remove(); ring = null; }
       try { svg.releasePointerCapture(e.pointerId); } catch (x) {}
       if (!gezogen) return;
+      /* Der Klick, der nach dem Loslassen folgt, soll keinen anderen Platz mehr wählen. */
       svg.addEventListener("click", (k) => { k.stopPropagation(); k.preventDefault(); }, { capture: true, once: true });
       setTimeout(() => { gezogen = false; }, 0);
-      const vorher = jetzt();
-      vorher.x = losX; vorher.y = losY;
       if (ziel) bkPlatzNehmen(ziel);
-      nachladen().then(() => {
-        zeichnen();
-        if (!window.DMA_MENSCH) return;
-        /* Einrasten: von der Stelle, an der der Finger losließ, auf den
-           Platz — und dabei in dessen Haltung (Hinsetzen). */
-        const nachher = jetzt();
-        figurMalen(vorher);
-        ueberblenden(vorher, nachher, 460);
-      });
+      nachladen().then(zeichnen);
     };
     svg.addEventListener("pointerup", ab);
     svg.addEventListener("pointercancel", ab);
+    /* Kein Markieren, kein Kontextmenü beim langen Druck (auch bevor das Stylesheet da ist). */
     svg.style.userSelect = "none"; svg.style.webkitUserSelect = "none"; svg.style.webkitTouchCallout = "none"; svg.style.touchAction = "none";
     svg.addEventListener("selectstart", (e) => e.preventDefault());
     svg.addEventListener("contextmenu", (e) => e.preventDefault());
@@ -1360,11 +1068,7 @@ const Baukasten = (function () {
     zeichnen();
   }
 
-  return {
-    render: render, zustand: zustand, satz: () => bkSatz(zustand),
-    /* für Sonden: läuft gerade eine Bewegung? */
-    bewegt: () => Boolean(lauf),
-  };
+  return { render: render, zustand: zustand, satz: () => bkSatz(zustand) };
 })();
 
 window.Baukasten = Baukasten;

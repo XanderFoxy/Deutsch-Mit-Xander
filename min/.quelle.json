@@ -43,13 +43,13 @@
  "rueckfrage.js": "7de87f6e8e1dfd76fa649df2080351a71b2fa0f3",
  "korrekturen.css": "6bd713b6491f3cb7c2df82c246a2540d8dd68ae5",
  "livechat.js": "15d707c01f3abfefe740085198d42b2f0f127725",
- "app-styles.css": "e9cb9fc2a7e1127cf6d8b280699c7e4e85eb0c2f",
  "satzbau.js": "1b46e11d6ea26d07696b1ec0afbc694593ca400a",
- "data-szenen.js": "620e0efc02bc7ddad8da5da7daa13b3ad2ac5d5f",
  "spiel.css": "b5d60cf169dee7dc4738454c40e79a2097d7ca28",
  "spiel.js": "dd20cb5e89890edd927205c76af688aa9fc50699",
  "data-werkstatt.js": "31b5b15332a01b5cecd4a7ac099f5f9794479708",
- "data-plaetze.js": "0df06f11891650c0d03bf838d66183e726311108",
- "app.js": "a29e337c6b29eab81411aea75cd6a37d501c931c",
- "baukasten.js": "08777f306adf53a6cf083adeaa7208a1811d2fc5"
+ "app-styles.css": "bfc2344680c0389237412ddb6ddff13ff51a113c",
+ "baukasten.js": "68a7fd488976c5e284185cbf3fa4d52e01379c6e",
+ "data-plaetze.js": "61824c9636dd4d1ed55f9a8c2992cb2f7b419199",
+ "data-szenen.js": "facd9322aa9a85e01fb979df8f95dc077e1222b1",
+ "app.js": "97ed1b52c3a9e717ec147b0b56d0820178ee695a"
 }
