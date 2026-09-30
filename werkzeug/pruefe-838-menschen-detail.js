@@ -76,7 +76,7 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
       const irisMuster = (s.match(/data-teil="iris">.*?<\/g>/g) || []).every((x) => (x.match(/M/g) || []).length >= 12);
       out.push({ wer: a + "-" + g + " b" + b, irisVerlauf, irisMuster, iris: (s.match(/data-teil="iris"/g) || []).length,
         pupille: (s.match(/data-teil="pupille"/g) || []).length, wimpern: zaehl(s, "wimpern"), brauen: zaehl(s, "braue"),
-        nasenloch: zaehl(s, "nasenloch"), straehnen: [zaehl(s, "straehnen").reduce((x, y) => x + y, 0)], stoppeln: /data-teil="stoppeln"/.test(s) && /<pattern /.test(s),
+        nasenloch: zaehl(s, "nasenloch"), straehnen: [zaehl(s, "straehnen").reduce((x, y) => x + y, 0)], stoppeln: /data-teil="stoppeln"/.test(s) && zaehl(s, "stoppelhaare").reduce((x, y) => x + y, 0) >= 60,
         falten: a === "alt" ? (s.match(/opacity="\.2[68]"\/>/g) || []).length : -1, bart: !!bart, b });
     }));
     return out;
@@ -88,7 +88,7 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
   sage(f1.every((x) => x.brauen.length >= 2 && x.brauen.every((n) => n >= 10)), "Augenbrauen aus einzelnen Haaren (≥ 10 je Braue)", f1.map((x) => x.wer + ":" + x.brauen.join("/")).slice(0, 4).join(" "));
   sage(vorn.every((x) => x.nasenloch.length === 1 && x.nasenloch[0] >= 2), "Nasenlöcher (beide, von vorn)", vorn.map((x) => x.wer + ":" + x.nasenloch.join("/")).join(" "));
   sage(vorn.every((x) => x.straehnen.length && x.straehnen[0] >= (x.wer.startsWith("alt-m") ? 8 : (x.wer.startsWith("saeugling") ? 15 : 30))), "Haar aus Strähnen (≥ 30, Säuglingsflaum ≥ 15, Haarkranz ≥ 8)", vorn.map((x) => x.wer + ":" + x.straehnen.join("/")).join(" "));
-  sage(f1.filter((x) => x.bart).every((x) => x.stoppeln), "Bartstoppeln als Muster");
+  sage(f1.filter((x) => x.bart).every((x) => x.stoppeln), "Bartstoppeln als einzeln gestreute Haare (≥ 60)");
   sage(f1.filter((x) => x.falten >= 0).every((x) => x.falten >= 2), "alte Menschen: Altersflecken und Falten", f1.filter((x) => x.falten >= 0).map((x) => x.wer + ":" + x.falten).join(" "));
 
   /* ---------------------------------------------------------------- 2 */
