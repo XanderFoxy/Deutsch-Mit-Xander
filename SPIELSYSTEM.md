@@ -2834,3 +2834,10 @@ Xander (Walkie 313, 29.09., Auszüge wörtlich): (a) „übrigens scheint der Li
 
 - Enthält 845: Das Klassenzimmer passt mit Überschrift auf den Schirm, auch mit sichtbarer Adresszeile (der Chatverlauf wird am Telefon dafür niedriger, beim Tippen wird nichts neu bemessen). Beim Einzug sitzt das Profilbild von Anfang an hinter der Scheibe von Batmobil und Viper und fährt im selben Takt mit. Gleise einer Folge bauen sich erst auf, wenn die Lok hinkommt, mit durchgehenden Bögen.
 - Noch nicht dabei: die Stadt-Punkte aus Walkie 313 (844), weil die neuen Kornfelder in manchen Dörfern über Häusern liegen. Offen: Schwarzbild bei Tastatur/Verlassen (headless nicht nachstellbar).
+
+## Fassung 823 — Chatfenster wieder in alter Höhe, Rathausdach ohne Giebel nach vorn
+
+XANDER (wörtlich): „Mach das wieder zurück auf die Originaldimensionen die es vorher auch hatte, damit wir unsere Stadt auch wieder navigieren können … ich habe niemals gesagt, dass du das Chat Fenster innerhalb des Klassenzimmer Frames verkleinern sollst" · „ein Rathausturm und daneben gehen … drei einfache waagerechte Linien nach rechts … da gibt es keine Dreiecksgeometrie nach vorn".
+
+- **Chat**: Das Verkleinern des Chatverlaufs aus 845 (`lcVerlaufPassen`, `--lc-verlauf-h`) ist abgeschaltet; der Verlauf hat wieder seine alte Höhe. Einzug im Auto und Gleis-Folgen aus 845 bleiben.
+- **Rathaus**: Modell und gebackene Bilder aus 844 (Flügel rechts vom Turm mit EINEM durchgehenden Dach bis zur Kopfseite, Stufengiebel nur an der Seite, Balkon mit Blumenkästen). Dazu die Nachtbilder des Kölner Doms mit weißem Flutlicht (844). Sonst nichts aus 844.

@@ -27753,8 +27753,10 @@
                || document.getElementById("livechatArea");
     if (!karte) return null;
     const kleb = lcKlebeHoehe();
-    /* FASSUNG 845 — erst die Karte passend machen, dann rechnen (siehe lcVerlaufPassen). */
-    lcVerlaufPassen(karte, kleb, 28);
+    /* FASSUNG 823 — XANDER: „Mach das wieder zurück auf die Originaldimensionen die es vorher auch hatte, damit wir unsere
+       Stadt auch wieder navigieren können … ich habe niemals gesagt, dass du das Chat Fenster innerhalb des Klassenzimmer
+       Frames verkleinern sollst". Das Anpassen der Verlaufshöhe aus 845 (lcVerlaufPassen) ist abgeschaltet; der Verlauf hat
+       wieder seine alte Höhe. */
     /* NACHGEBESSERT: „Wenn man drin ist und sich das Klassenzimmer
        zurechtschiebt, könnte es theoretisch noch ein bisschen höher,
        damit wir die Eingabeleiste sehen. Es kann bestimmt noch 5 mm
