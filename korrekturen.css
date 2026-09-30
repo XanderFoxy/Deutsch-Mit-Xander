@@ -35265,16 +35265,5 @@ body > .lc-tafel-mappe { position: fixed; inset: auto; left: 12px; right: 12px; 
   box-shadow: inset 0 0 0 2px rgba(236, 240, 246, .8), inset 0 3px 6px rgba(255, 255, 255, .25);
 }
 
-/* =====================================================================
-   FASSUNG 845 — XANDER (Walkie 313): „… vorher konnte man alles gut
-   sehen … man hat oben noch die Überschrift gelesen". Am Telefon gibt
-   der Chatverlauf nach, bis die ganze Karte (Überschrift bis Schreib-
-   zeile) auf den Schirm passt; die Höhe rechnet app.js lcVerlaufPassen
-   aus (240 px bis herunter auf 120 px).
-   ===================================================================== */
-@media (max-width: 760px) {
-  #livechatKarte .lc-chat-verlauf {
-    height: var(--lc-verlauf-h, 240px);
-    min-height: var(--lc-verlauf-h, 240px);
-  }
-}
+/* FASSUNG 823 — XANDER: „Mach das wieder zurück auf die Originaldimensionen". Die Verkleinerung des Chatverlaufs
+   aus 845 ist wieder herausgenommen. */
