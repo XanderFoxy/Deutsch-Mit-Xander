@@ -70835,7 +70835,26 @@
       { ort, objekt, objektBegleiter, grund, zeit, modal, passiv, konjunktion, satzart: satzartEff });
     const art = arten.find((a) => a.id === sbkWahl.art) || arten[0];
 
-    return { verben, rollen, ortRolle, orte, dinge, personen, zeiten, gruende, arten, begleiterListe, adjListe,
+    /* FASSUNG 839 — XANDER (Funk 225): „dass das gesperrt wird wenn es
+       Unsinn wird bzw dass der Hinweis kommt dass … der Satz so wie er
+       jetzt gebaut ist eher komisch ist und dass dann eher Vorschläge
+       kommen“. Bisher fiel eine Wahl, die nach einer Änderung nicht mehr
+       passte (gestern → Futur), still weg — man sah einen anderen Satz
+       als den gewählten und wusste nicht warum. Jetzt wird sie gemeldet;
+       der Baukasten zeigt dann keinen Satz, sondern Vorschläge. */
+    const konflikte = [];
+    const LEER = { zeit: "keine", grund: "keiner", art: "keine" };
+    const pruefFeld = (feld, liste) => {
+      const x = sbkWahl[feld];
+      if (!x || x === LEER[feld]) return;
+      if (!liste.some((y) => y.id === x)) konflikte.push({ feld, wert: x });
+    };
+    pruefFeld("ort", orte); pruefFeld("objekt", dinge);
+    if (!passiv) { pruefFeld("person", personen); pruefFeld("begleitung", begleitungListe); pruefFeld("fragesatz", fragesatzListe); }
+    pruefFeld("zeit", zeiten); pruefFeld("grund", gruende); pruefFeld("art", arten);
+    if (sbkModal && !modal && satzartEff !== "umzu") konflikte.push({ feld: "modal", wert: sbkModal });
+
+    return { konflikte, verben, rollen, ortRolle, orte, dinge, personen, zeiten, gruende, arten, begleiterListe, adjListe,
       begleitung: begleitungListe, gewaehlteBegleitung: begleitung,
       fragesaetze: fragesatzListe, gewaehlterFragesatz: fragesatz,
       subjekt, verb, ort, objekt, objektBegleiter, objektAdjektiv, person, zeit, grund, art,
@@ -71341,6 +71360,86 @@
     });
   }
 
+  /* FASSUNG 839 — die Sperre im deutschen Baukasten.
+     sbkStand/sbkStandSetzen: der ganze Zustand, damit ein Vorschlag
+     ausprobiert werden kann, ohne die Auswahl zu verlieren. */
+  let sbkZuletzt = null;
+  function sbkStand() {
+    return { wahl: JSON.parse(JSON.stringify(sbkWahl)), zeitform: sbkZeitform, satzart: sbkSatzart, modal: sbkModal, passiv: sbkPassiv,
+      konjunktion: sbkKonjunktion, bindewort: sbkBindewort, niveau: sbkNiveau };
+  }
+  function sbkStandSetzen(st) {
+    sbkWahl = JSON.parse(JSON.stringify(st.wahl)); sbkZeitform = st.zeitform; sbkSatzart = st.satzart; sbkModal = st.modal;
+    sbkPassiv = st.passiv; sbkKonjunktion = st.konjunktion; sbkBindewort = st.bindewort; sbkNiveau = st.niveau;
+  }
+  const SBK_LEER = { zeit: "keine", grund: "keiner", art: "keine" };
+  function sbkKonfliktName(a, k) {
+    const S = window.Satzbau;
+    try {
+      if (k.feld === "zeit") { const z = S.ZEITEN.find((x) => x.id === k.wert); return z ? z.de : k.wert; }
+      if (k.feld === "ort") { const o = S.ORTE.find((x) => x.id === k.wert); return o ? S.ortsform(o, a.ortRolle || "wo") : k.wert; }
+      if (k.feld === "objekt") { const d = S.DINGE.find((x) => x.id === k.wert); return d ? S.nominalgruppe(d, a.verb.objekt || "akk", (d.begleiter && d.begleiter[0]) || "bestimmt", null, a.subjekt) : k.wert; }
+      if (k.feld === "person" || k.feld === "begleitung") { const p = S.PERSONEN.find((x) => x.id === k.wert); return p ? (k.feld === "begleitung" ? S.begleitungText(p, a.subjekt, "de") : S.nominalgruppe(p, "akk", p.begleiter || "possessiv", null, a.subjekt)) : k.wert; }
+      if (k.feld === "grund") { const g = S.GRUENDE.find((x) => x.id === k.wert); return g ? S.grundText(g, a.subjekt, a.zeitformEff, "de") : k.wert; }
+      if (k.feld === "art") { const r = S.ARTEN.find((x) => x.id === k.wert); return r ? r.de : k.wert; }
+      if (k.feld === "modal") { const m = S.MODALVERBEN.find((x) => x.id === k.wert); return m ? m.inf : k.wert; }
+      if (k.feld === "fragesatz") { const f = S.FRAGESAETZE.find((x) => x.id === k.wert); return f ? f.de : k.wert; }
+    } catch (e) {}
+    return k.wert;
+  }
+  function sbkSperre(a, satz) {
+    if (!a.konflikte || !a.konflikte.length) return null;
+    const S = window.Satzbau;
+    const ZN = S.ZEITFORM_NAMEN || {};
+    const texte = a.konflikte.slice(0, 2).map((k) => {
+      const name = sbkKonfliktName(a, k);
+      if (k.feld === "zeit") return "„" + name + "“ passt nicht zur Zeitform „" + ((ZN[a.zeitformEff] || {}).name || a.zeitformEff) + "“ — so klingt der Satz komisch.";
+      return "„" + name + "“ passt nicht zu dem, was sonst im Satz steht — so klingt der Satz komisch.";
+    });
+    /* Vorschläge: (1) das Unpassende weglassen, (2) die letzte Änderung
+       zurücknehmen, (3) statt des Unpassenden etwas Passendes derselben Art. */
+    const alt = sbkStand();
+    const kandidaten = [];
+    const ohne = JSON.parse(JSON.stringify(alt));
+    a.konflikte.forEach((k) => { if (k.feld === "modal") ohne.modal = ""; else ohne.wahl[k.feld] = SBK_LEER[k.feld] || ""; });
+    kandidaten.push(ohne);
+    if (sbkZuletzt) {
+      const z = JSON.parse(JSON.stringify(alt));
+      if (sbkZuletzt.typ === "zeitform") z.zeitform = sbkZuletzt.wert;
+      else if (sbkZuletzt.typ === "modal") z.modal = sbkZuletzt.wert;
+      else if (sbkZuletzt.typ === "feld") z.wahl[sbkZuletzt.feld] = sbkZuletzt.wert;
+      kandidaten.push(z);
+    }
+    const listen = { zeit: a.zeiten, ort: a.orte, objekt: a.dinge, person: a.personen, grund: a.gruende, art: a.arten, begleitung: a.begleitung, fragesatz: a.fragesaetze, modal: a.modalListe };
+    a.konflikte.forEach((k) => {
+      const l = (listen[k.feld] || []).filter((x) => x.id !== (SBK_LEER[k.feld] || ""));
+      let passend = l;
+      if (k.feld === "zeit") { const z0 = S.ZEITEN.find((x) => x.id === k.wert); if (z0) passend = l.filter((x) => x.art === z0.art).concat(l.filter((x) => x.art !== z0.art)); }
+      passend.slice(0, 2).forEach((x) => { const z = JSON.parse(JSON.stringify(ohne)); if (k.feld === "modal") z.modal = x.id; else z.wahl[k.feld] = x.id; kandidaten.push(z); });
+    });
+    const vorschlaege = [], gesehen = new Set();
+    kandidaten.forEach((st) => {
+      if (vorschlaege.length >= 3) return;
+      sbkStandSetzen(st);
+      try {
+        const a2 = sbkAuswahl();
+        if (!a2.konflikte.length) {
+          const s2 = S.bauSatz(sbkBauWahl(a2));
+          if (!gesehen.has(s2.de) && s2.de !== satz.de) { gesehen.add(s2.de); vorschlaege.push({ stand: sbkStand(), de: s2.de }); }
+        }
+      } catch (e) {}
+    });
+    sbkStandSetzen(alt);
+    const html = `
+      <div class="question-card sit-sperre" data-sbk-sperre role="status">
+        <p class="sit-sperre-titel">⚠️ So klingt der Satz komisch</p>
+        ${texte.map((t) => `<p class="sit-sperre-text">${escapeHtml(t)}</p>`).join("")}
+        ${vorschlaege.length ? `<p class="sit-sperre-frage">Meintest du …?</p>
+        <div class="sit-vorschlaege">${vorschlaege.map((v, i) => `<button type="button" class="sit-vorschlag" data-sbk-vorschlag="${i}"><span class="sit-vorschlag-it">${escapeHtml(v.de)}</span></button>`).join("")}</div>` : `<p class="sit-sperre-text">Wähle unten etwas anderes.</p>`}
+      </div>`;
+    return { html, vorschlaege };
+  }
+
   function renderSatzbaukasten(zielId) {
     const area = document.getElementById(zielId || "satzbaukastenDeArea");
     if (!area) return;
@@ -71357,7 +71456,11 @@
       return;
     }
     sbkNiveau = applyDefaultCefrLevel(sbkNiveau, (v) => { sbkNiveau = v; }, "satzbaukasten");
-    const italienisch = sbkImItalienischraum();
+    /* FASSUNG 839 — XANDER (Funk 225): „die italienischen Wörter Sätze
+       und Inhalte gehören ausschließlich in den italienisch Raum“. Der
+       deutsche Baukasten zeigt nie mehr Italienisch; im Italienisch-Raum
+       gibt es den eigenen italienischen Baukasten (renderItSatzbaukasten). */
+    const italienisch = false;
     const a = sbkAuswahl();
     sbkWahl.verb = a.verb.id;
     sbkWahl.ortRolle = a.ortRolle;
@@ -71402,7 +71505,7 @@
          auftauchen". Unter jedem deutschen Beispielsatz stand auch im
          Deutsch-Raum die italienische Übersetzung (Prüfbericht 25.09.).
          Sie bleibt nur im Italienisch-Kurs. */
-      const mitItalienisch = zielId === "satzbaukastenItArea" || imItalienischraum();
+      const mitItalienisch = false;
       const artName = { aussage: "Aussage", frage: "Frage", nebensatz: "mit Nebensatz" };
       area.innerHTML = kopf + bereichsReihe + `
         <p class="empty-note" style="margin-top:14px;">${liste.length} Sätze auf ${sbkNiveau} — jeder einzeln geschrieben und durchgesehen, keiner aus Bausteinen zusammengesetzt.</p>
@@ -71426,7 +71529,7 @@
     /* FASSUNG 834: Im Deutsch-Raum keine italienische Zeile mehr unter
        dem Satz (XANDER: „diese italienischen Sachen dürfen auch nicht
        mehr auftauchen“) — nur im Italienisch-Kurs steht die Übersetzung. */
-    const mitZweitsprache = italienisch || zielId === "satzbaukastenItArea";
+    const mitZweitsprache = false;
     /* FASSUNG 835 — eine kleine Geschichte: die fertigen Sätze stehen
        davor, der Satz, der gerade gebaut wird, hängt mit seinem Bindewort
        dran. „Ich war am Wochenende in den Bergen. Dann bin ich …“ */
@@ -71471,9 +71574,10 @@
     const plusName = ["", "+ zweiter Satz", "+ dritter Satz", "+ vierter Satz"][nSaetze] || "";
     const plusGeht = nSaetze < 4 && (a.geschichte || satz.satzart === "aussage");
 
-    area.innerHTML = kopf + `
+    const sperre = sbkSperre(a, satz);
+    area.innerHTML = kopf + (sperre ? sperre.html : "") + `
       <div class="sbk-schwebe" aria-hidden="true" hidden></div>
-      <div class="sbk-klebe" aria-live="polite">
+      <div class="sbk-klebe" aria-live="polite"${sperre ? " hidden" : ""}>
         <p class="baustein-satz">${vorText ? `<span class="sbk-geschichte-vorher">${escapeHtml(vorText.trim())}</span> ` : ""}${teile.map((x, i) => {
           const t = i === 0 ? (ersterGross ? x.t.charAt(0).toUpperCase() + x.t.slice(1) : x.t) : x.t;
           /* Vor einem Komma darf kein Leerzeichen stehen — die Bausteine
@@ -71483,7 +71587,7 @@
           return trenner + `<span class="satzteil satzteil-${x.rolle}" title="${rollenName[x.rolle] || ""}">${t.replace(/^\s*,\s*/, ", ")}</span>`;
         }).join("")}${schlussZeichen}</p>
       </div>
-      <div class="question-card sbk-anzeige">
+      <div class="question-card sbk-anzeige"${sperre ? " hidden" : ""}>
         ${zweitsatz ? `<p class="baustein-satz-de">${zweitsatz}</p>` : ""}
         ${varianteHtml}
         <p class="empty-note sbk-hinweis">💡 ${satz.hinweis}</p>
@@ -71645,10 +71749,10 @@
       sbkNiveau = x.dataset.sbkNiveau; autoCefrLevel.satzbaukasten = null; renderSatzbaukasten(zielId);
     }));
     area.querySelectorAll("[data-sbk-zeitform]").forEach((x) => x.addEventListener("click", () => {
+      /* FASSUNG 839: passt die Zeitangabe nicht zur neuen Zeitform, kommt
+         der Hinweis mit Vorschlägen — nicht mehr still „keine“. */
+      sbkZuletzt = { typ: "zeitform", wert: sbkZeitform };
       sbkZeitform = x.dataset.sbkZeitform;
-      const S3 = window.Satzbau;
-      const zl = S3.zeitenFuer(sbkZeitform, sbkNiveau, { modal: a.modal, passiv: a.passiv }, a.verb);
-      if (!zl.some((z) => z.id === sbkWahl.zeit)) sbkWahl.zeit = "keine";
       renderSatzbaukasten(zielId);
     }));
     area.querySelectorAll("[data-sbk-satzart]").forEach((x) => x.addEventListener("click", () => {
@@ -71665,7 +71769,7 @@
       if (bw && bw.art === "umzu" && sbkGeschichte.length) sbkWahl.subjekt = sbkGeschichte[sbkGeschichte.length - 1].subjekt.id;
       renderSatzbaukasten(zielId);
     }));
-    area.querySelectorAll("[data-sbk-modal]").forEach((x) => x.addEventListener("click", () => { sbkModal = x.dataset.sbkModal; renderSatzbaukasten(zielId); }));
+    area.querySelectorAll("[data-sbk-modal]").forEach((x) => x.addEventListener("click", () => { sbkZuletzt = { typ: "modal", wert: sbkModal }; sbkModal = x.dataset.sbkModal; renderSatzbaukasten(zielId); }));
     area.querySelectorAll("[data-sbk-passiv]").forEach((x) => x.addEventListener("click", () => {
       sbkPassiv = x.dataset.sbkPassiv === "1";
       if (sbkPassiv) sbkWahl.vorfeld = "subjekt";
@@ -71685,6 +71789,7 @@
       if (jetztOffen) sbkOffeneGruppen.add(schluessel); else sbkOffeneGruppen.delete(schluessel);
     }));
     area.querySelectorAll("[data-sbk-feld]").forEach((x) => x.addEventListener("click", () => {
+      sbkZuletzt = { typ: "feld", feld: x.dataset.sbkFeld, wert: sbkWahl[x.dataset.sbkFeld] };
       sbkWahl[x.dataset.sbkFeld] = x.dataset.sbkWert;
       const S2 = window.Satzbau;
       if (x.dataset.sbkFeld === "verb") {
@@ -71709,6 +71814,13 @@
       renderSatzbaukasten(zielId);
     }));
     document.getElementById("sbkZufallBtn")?.addEventListener("click", () => { sbkZufall(); renderSatzbaukasten(zielId); });
+    area.querySelectorAll("[data-sbk-vorschlag]").forEach((x) => x.addEventListener("click", () => {
+      const v = sperre && sperre.vorschlaege[Number(x.dataset.sbkVorschlag)];
+      if (!v) return;
+      sbkStandSetzen(v.stand);
+      sbkZuletzt = null;
+      renderSatzbaukasten(zielId);
+    }));
     /* FASSUNG 835 — mehrere Sätze. Der fertige Satz wird festgehalten
        (samt der ganzen Auswahl, damit „zurück“ ihn wiederherstellt), der
        nächste beginnt mit derselben Person — Zeit, Grund und Art werden
@@ -71839,7 +71951,487 @@
   window.addEventListener("resize", sbkSchwebePflegen, { passive: true });
 
   function renderSatzbaukastenDe() { renderSatzbaukasten("satzbaukastenDeArea"); }
-  function renderItSatzbaukasten() { renderSatzbaukasten("satzbaukastenItArea"); }
+  /* ============================================================
+     FASSUNG 839 — DER ITALIENISCHE SATZBAUKASTEN
+     ------------------------------------------------------------
+     XANDER (Funk 225, wörtlich): „Mache mir auch den italienisch
+     satzbaukasten für den italienischen Kurs … die italienischen
+     Wörter Sätze und Inhalte gehören ausschließlich in den italienisch
+     Raum dort möchte ich … einen funktionierenden satzbaukasten auf
+     der Basis der italienischen originalen Grammatik haben … keine
+     Quatschsätze … dass das gesperrt wird wenn es Unsinn wird bzw dass
+     der Hinweis kommt dass … der Satz so wie er jetzt gebaut ist eher
+     komisch ist und dass dann eher Vorschläge kommen was man sagen
+     will und man dann geführt wird … 100% idiotensicher und
+     bulletproof“
+
+     Bisher lief im Italienisch-Raum derselbe DEUTSCHE Baukasten, nur
+     mit einer übersetzten Zeile. Jetzt baut satzbau-it.js (eigene
+     Datei, wird erst im Italienisch-Raum geladen) den Satz nach
+     italienischer Grammatik; darunter steht die deutsche Bedeutung,
+     die Erklärungen sind deutsch.
+       · Nur im Italienisch-Raum UND nur für Berechtigte
+         (darfItalienischraum): sonst bleibt die Fläche leer und die
+         Datei wird gar nicht erst geholt.
+       · Geführt: jede Reihe zeigt nur, was zu allem schon Gewählten
+         passt (SatzbauIt.angebote).
+       · Gesperrt: passt nach einer Änderung etwas nicht mehr, kommt
+         kein Satz, sondern „klingt komisch – meintest du …?“ mit zwei
+         bis drei fertigen Sätzen zum Antippen (SatzbauIt.vorschlaege).
+     ============================================================ */
+  let sitWahl = { niveau: "", kategorie: "alle", soggetto: "io", genus: "m", verbo: "andare", tempo: "presente", satzart: "aussage", rolle: "moto", luogo: "mare" };
+  let sitAnsicht = "bauen";
+  let sitGeschichte = [];          // die schon fertigen Sätze: [{ w, binder }]
+  let sitBinder = "e";
+  let sitZuletzt = null;           // die letzte Änderung — für „zurück“ in den Vorschlägen
+  let sitInfo = "";
+  let sitLegen = null;
+  const sitOffeneGruppen = new Set();
+  let sitLadeVersprechen = null;
+  const SIT_NIVEAU_KEY = "dma_sit_niveau";
+  try { const n = localStorage.getItem(SIT_NIVEAU_KEY); if (n && CEFR_LEVELS.includes(n)) sitWahl.niveau = n; } catch (e) {}
+  if (!sitWahl.niveau) sitWahl.niveau = "A1";
+
+  function sitDarf() { return imItalienischraum() && darfItalienischraum(); }
+  function sitEngineLaden() {
+    if (window.SatzbauIt) return Promise.resolve(true);
+    if (sitLadeVersprechen) return sitLadeVersprechen;
+    sitLadeVersprechen = new Promise((fertig) => {
+      const s = document.createElement("script");
+      s.src = (window.DMA_Q ? DMA_Q("satzbau-it.js") : "satzbau-it.js") + (window.DMA_V ? DMA_V("satzbau-it.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.onload = () => fertig(true);
+      s.onerror = () => { sitLadeVersprechen = null; fertig(false); };
+      document.head.appendChild(s);
+    });
+    return sitLadeVersprechen;
+  }
+
+  function renderItSatzbaukasten() {
+    const area = document.getElementById("satzbaukastenItArea");
+    if (!area) return;
+    if (!sitDarf()) { area.innerHTML = ""; return; }
+    if (!window.SatzbauIt) {
+      area.innerHTML = '<p class="empty-note">🧱 Der italienische Satzbaukasten wird geladen …</p>';
+      sitEngineLaden().then((ok) => {
+        if (!sitDarf()) { area.innerHTML = ""; return; }
+        if (ok) renderItSatzbaukasten();
+        else area.innerHTML = '<p class="empty-note">⚠️ Die Datei <strong>satzbau-it.js</strong> konnte nicht geladen werden. Bitte die Seite neu laden.</p>';
+      });
+      return;
+    }
+    sitZeichnen(area);
+  }
+
+  const SIT_ROLLE = { stato: { frage: "📍 Wo?", hinweis: "wo man ist" }, moto: { frage: "➡️ Wohin?", hinweis: "im Italienischen dieselbe Form wie „wo“: al mare = am Meer UND ans Meer" },
+    da: { frage: "⬅️ Woher?", hinweis: "da + Artikel: dal lavoro, dall'ufficio" }, per: { frage: "➡️ Wohin (Reise)?", hinweis: "partire per + Ziel: per Roma, per l'Italia" } };
+  const SIT_ZEIT_GRUPPE = { jetzt: "🕒 jetzt", heute: "📅 heute", stamattina: "📅 heute", abend: "📅 heute", zukunft: "➡️ Zukunft", samstag: "📅 Wochentag",
+    wochenende: "📅 Wochenende", vergangen: "⬅️ Vergangenheit", gewohnheit: "🔁 Gewohnheit", freqvorn: "🔁 Gewohnheit", saison: "🔁 Jahreszeit", freq: "🔁 wie oft",
+    mai: "🔁 wie oft", gia: "✔️ schon", kind: "🧒 früher", uhr: "⏰ Uhrzeit", seit: "⏳ wie lange", dauerpast: "⏳ wie lange", ganztag: "⏳ wie lange" };
+  const SIT_KAT_NAME = { alltag: "🏠 Alltag", einkaufen: "🛒 Einkaufen", arbeit: "💼 Arbeit", familie: "👪 Familie", freizeit: "⚽ Freizeit", essen: "🍝 Essen",
+    reisen: "🚆 Reisen", bildung: "📚 Lernen", gesundheit: "🩺 Gesundheit", verwaltung: "📄 Amt" };
+  const SIT_MODAL_DE = { potere: "können", dovere: "müssen", volere: "wollen", vorrei: "möchte", sapere: "können (gelernt)" };
+  const SIT_DET_DE = { indef: "ein/eine", def: "der/die/das", part: "etwas (Teilungsartikel)", poss: "mein/dein …", ohne: "ohne Artikel" };
+  const SIT_WORT_DE = { checosa: "was", chi: "wen", achi: "wem", conchi: "mit wem", dove: "wo/wohin", dadove: "woher", quando: "wann", come: "wie", perche: "warum" };
+
+  function sitReihe(frage, hinweis, feld, liste, aktuell, beschriften, leerText, gruppeVon) {
+    if (!liste.length && !leerText) return "";
+    const knopf = (e) => {
+      const [oben, unten] = beschriften(e);
+      return `<button type="button" class="baustein" data-sit-feld="${feld}" data-sit-wert="${escapeHtml(e.id)}" aria-selected="${aktuell === e.id}">${escapeHtml(oben)}${unten ? `<span class="baustein-de">${escapeHtml(unten)}</span>` : ""}</button>`;
+    };
+    const leer = leerText ? `<button type="button" class="baustein" data-sit-feld="${feld}" data-sit-wert="" aria-selected="${!aktuell}">${leerText}</button>` : "";
+    const kopf = `<p class="eyebrow sbk-frage">${frage}<span class="sbk-frage-hinweis">${hinweis}${liste.length > 11 ? " · " + liste.length + " passen" : ""}</span></p>`;
+    if (!gruppeVon || liste.length < 12) return kopf + `<div class="baustein-reihe">${leer}${liste.map(knopf).join("")}</div>`;
+    const gruppen = new Map();
+    liste.forEach((e) => { const g = gruppeVon(e) || "…"; if (!gruppen.has(g)) gruppen.set(g, []); gruppen.get(g).push(e); });
+    return kopf + [...gruppen.entries()].map(([g, eintraege], n) => {
+      const offen = eintraege.some((e) => e.id === aktuell) || sitOffeneGruppen.has(feld + "|" + g) || (n === 0 && !aktuell);
+      return `<button type="button" class="sbk-gruppe" data-sit-gruppe="${feld}|${escapeHtml(g)}" aria-expanded="${offen}"><span class="sbk-gruppe-pfeil">${offen ? "▾" : "▸"}</span><span>${escapeHtml(g)}</span><span class="sbk-gruppe-zahl">${eintraege.length}</span></button>
+      <div class="baustein-reihe"${offen ? "" : " hidden"}>${n === 0 ? leer : ""}${eintraege.map(knopf).join("")}</div>`;
+    }).join("");
+  }
+
+  function sitZeichnen(area) {
+    const S = window.SatzbauIt;
+    const w = sitWahl;
+    const lv = w.niveau || "A1";
+    /* Die Geschichte: alle schon fertigen Sätze plus der, der gerade entsteht */
+    const inGeschichte = sitGeschichte.length > 0;
+    if (inGeschichte) { w.satzart = "aussage"; w.einleitung = ""; w.tempo = sitGeschichte[0].w.tempo; if (w.causa && w.verbindung && w.verbindung !== "perche") w.causa = ""; }
+    const pr = S.pruefe(w);
+    let b = null, geschichte = null, sperre = null;
+    if (pr.ok) {
+      Object.assign(sitWahl, pr.w);
+      b = S.bauen(sitWahl);
+      if (inGeschichte) {
+        geschichte = S.geschichte(sitGeschichte.concat([{ w: sitWahl, binder: sitBinder }]));
+        if (!geschichte.ok) {
+          const andere = S.SATZBINDER.filter((x) => x.id !== sitBinder && S.geschichte(sitGeschichte.concat([{ w: sitWahl, binder: x.id }])).ok).slice(0, 3);
+          sperre = { texte: [geschichte.text || "Diese beiden Sätze passen so nicht zusammen."], vorschlaege: andere.map((x) => {
+            const g2 = S.geschichte(sitGeschichte.concat([{ w: sitWahl, binder: x.id }]));
+            return { binder: x.id, it: g2.it, de: g2.de };
+          }) };
+        }
+      }
+    } else {
+      sperre = { texte: pr.probleme.map((p) => p.text), vorschlaege: S.vorschlaege(w, sitZuletzt) };
+    }
+    const kopf = `
+      <p class="empty-note" style="margin-bottom:10px;">🧱 <strong>Satzbaukasten Italienisch</strong> — der Satz wird nach italienischer Grammatik gebaut; darunter steht, was er auf Deutsch heißt.</p>
+      <div class="baustein-reihe" style="margin-bottom:12px;">
+        <button type="button" class="baustein" data-sit-ansicht="bauen" aria-selected="${sitAnsicht === "bauen"}">🔧 Selbst bauen<span class="baustein-de">chi · che cosa · dove · quando · perché</span></button>
+        <button type="button" class="baustein" data-sit-ansicht="legen" aria-selected="${sitAnsicht === "legen"}">🧩 Satz legen<span class="baustein-de">Satzglieder in die richtige Reihenfolge</span></button>
+        <button type="button" class="baustein" data-sit-ansicht="beispiele" aria-selected="${sitAnsicht === "beispiele"}">📖 Beispiele lesen<span class="baustein-de">40 Sätze je Bereich und Niveau</span></button>
+      </div>
+      <p class="eyebrow sbk-frage">🧭 Niveau<span class="sbk-frage-hinweis">bestimmt die Wörter UND die Grammatik</span></p>
+      <div class="baustein-reihe">${CEFR_LEVELS.map((l) => `<button type="button" class="baustein" data-sit-niveau="${l}" aria-selected="${lv === l}">${l}</button>`).join("")}</div>
+      <p class="sbk-niveau-info"><strong>Auf ${lv} baust du:</strong> ${S.niveauInfo(lv).map(escapeHtml).join(" · ")}</p>
+      <details class="sbk-niveau-alle"><summary>Was kann ich auf A1 bis C2 bauen?</summary><dl>${CEFR_LEVELS.map((l) => `<dt>${l}</dt><dd>${S.niveauInfo(l).map(escapeHtml).join(" · ")}</dd>`).join("")}</dl></details>
+      <p class="eyebrow sbk-frage">🗂️ Bereich<span class="sbk-frage-hinweis">welche Verben angeboten werden</span></p>
+      <div class="baustein-reihe">
+        ${sitAnsicht !== "beispiele" ? `<button type="button" class="baustein" data-sit-kat="alle" aria-selected="${w.kategorie === "alle"}">🌍 Alle</button>` : ""}
+        ${S.KATEGORIEN.map((k) => `<button type="button" class="baustein" data-sit-kat="${k.id}" aria-selected="${w.kategorie === k.id}">${k.icon} ${escapeHtml(k.name)}</button>`).join("")}
+      </div>`;
+
+    if (sitAnsicht === "beispiele") {
+      const kat = w.kategorie === "alle" ? "alltag" : w.kategorie;
+      const liste = S.beispiele(kat, lv, 40);
+      area.innerHTML = kopf + `
+        <p class="empty-note" style="margin-top:14px;">${liste.length} Sätze auf ${lv} — alle mit demselben geprüften Baukasten gebaut (Grammatik und Sinn geprüft).</p>
+        <div class="beispiel-liste">${liste.map((x) => `
+          <div class="beispiel-satz"><p class="sit-beispiel-it">${escapeHtml(x.it)}</p><p class="sit-beispiel-de">${escapeHtml(x.de)}</p><span class="beispiel-art">${escapeHtml(x.art)}</span></div>`).join("")}</div>`;
+      sitBinden(area);
+      return;
+    }
+    if (sitAnsicht === "legen") {
+      if (!sitLegen) sitLegenStarten(b);
+      area.innerHTML = kopf + sitLegenHtml();
+      sitBinden(area);
+      return;
+    }
+
+    /* ---------- Satz oder Sperre ---------- */
+    let satzTeil;
+    if (sperre) {
+      satzTeil = `
+      <div class="question-card sit-sperre" data-sit-sperre role="status">
+        <p class="sit-sperre-titel">⚠️ So klingt der Satz komisch</p>
+        ${sperre.texte.slice(0, 2).map((t) => `<p class="sit-sperre-text">${escapeHtml(t)}</p>`).join("")}
+        ${sperre.vorschlaege.length ? `<p class="sit-sperre-frage">Meintest du …?</p>
+        <div class="sit-vorschlaege">${sperre.vorschlaege.map((v, i) => `<button type="button" class="sit-vorschlag" data-sit-vorschlag="${i}"><span class="sit-vorschlag-it">${escapeHtml(v.it)}</span><span class="sit-vorschlag-de">${escapeHtml(v.de)}</span></button>`).join("")}</div>` : `<p class="sit-sperre-text">Nimm die letzte Änderung zurück oder wähle unten etwas anderes.</p>`}
+      </div>`;
+    } else {
+      const teile = b.teile;
+      const vorher = inGeschichte ? S.geschichte(sitGeschichte) : null;
+      const itText = geschichte ? geschichte.it : b.it;
+      const deText = geschichte ? geschichte.de : b.de;
+      satzTeil = `
+      <div class="sbk-klebe" aria-live="polite">
+        <p class="baustein-satz" lang="it">${inGeschichte ? escapeHtml(itText) : sitTeileHtml(b)}</p>
+      </div>
+      <div class="question-card sbk-anzeige">
+        <p class="baustein-satz-de">${escapeHtml(deText)}</p>
+        ${b.hinweise.length ? `<p class="empty-note sbk-hinweis">💡 ${b.hinweise.map(escapeHtml).join("<br>💡 ")}</p>` : ""}
+        ${sitInfo ? `<p class="empty-note sbk-hinweis">ℹ️ ${escapeHtml(sitInfo)}</p>` : ""}
+        <div class="quiz-actions sbk-geschichte-knoepfe">
+          ${sitGeschichte.length < 3 && w.satzart === "aussage" && !w.einleitung && (!w.causa || (w.verbindung || "perche") === "perche") ? `<button type="button" class="btn" id="sitPlusSatz">${["+ zweiter Satz", "+ dritter Satz", "+ vierter Satz"][sitGeschichte.length]}</button>` : ""}
+          ${inGeschichte ? `<button type="button" class="btn btn-ghost" id="sitSatzZurueck">↩ letzten Satz zurück</button><button type="button" class="btn btn-ghost" id="sitNurEiner">nur ein Satz</button>` : ""}
+        </div>
+        <div class="quiz-actions" style="justify-content:flex-start; margin-top:8px; flex-wrap:wrap; gap:6px;">
+          <button type="button" class="btn btn-ghost" id="sitVorlesen">🔊 Vorlesen</button>
+          <button type="button" class="btn btn-ghost" id="sitZufall">🎲 Zufallssatz</button>
+          <button type="button" class="btn btn-ghost" id="sitLegenBtn">🧩 Diesen Satz legen</button>
+        </div>
+      </div>`;
+    }
+
+    /* ---------- Die Reihen ---------- */
+    const A = (f) => S.angebote(w, f);
+    const v = S.VERBI.find((x) => x.id === w.verbo);
+    const si = S.subjektInfo(S.SOGGETTI.find((x) => x.id === w.soggetto) || S.SOGGETTI[0], w.genus);
+    const reihen = [];
+    if (inGeschichte) {
+      reihen.push(`<p class="eyebrow sbk-frage">🔗 Wie hängt Satz ${sitGeschichte.length + 1} an?<span class="sbk-frage-hinweis">${escapeHtml((S.SATZBINDER.find((x) => x.id === sitBinder) || {}).hinweis || "")}</span></p>
+        <div class="baustein-reihe">${S.SATZBINDER.map((x) => `<button type="button" class="baustein" data-sit-binder="${x.id}" aria-selected="${sitBinder === x.id}">${x.it}<span class="baustein-de">${x.de}</span></button>`).join("")}</div>`);
+    }
+    /* Zeitform und Person: alle des Niveaus zeigen — passt eine nicht zum
+       Rest, sperrt der Baukasten und schlägt vor, statt sie zu verstecken. */
+    const zfListe = S.ZEITFORMEN.filter((z) => CEFR_LEVELS.indexOf(z.level) <= CEFR_LEVELS.indexOf(lv));
+    if (w.causa && (w.verbindung === "se2" || w.verbindung === "se3")) {
+      reihen.push(`<p class="eyebrow sbk-frage">⏳ Zeit<span class="sbk-frage-hinweis">beim „se“ (nicht wirklich) steht der Hauptsatz im ${w.verbindung === "se2" ? "condizionale" : "condizionale passato"}</span></p>`);
+    } else if (!inGeschichte) {
+      reihen.push(sitReihe("⏳ Zeit", "was dein Niveau kann", "tempo", zfListe, w.tempo, (z) => [z.name, z.it], ""));
+    } else {
+      reihen.push(`<p class="eyebrow sbk-frage">⏳ Zeit<span class="sbk-frage-hinweis">alle Sätze der Geschichte stehen in derselben Zeit: ${escapeHtml((S.ZEITFORMEN.find((z) => z.id === w.tempo) || {}).it || "")}</span></p>`);
+    }
+    if (!inGeschichte) {
+      reihen.push(`<p class="eyebrow sbk-frage">🎭 Satzart<span class="sbk-frage-hinweis">im Italienischen bleibt die Wortstellung — nur die Stimme geht hoch</span></p>
+      <div class="baustein-reihe">
+        <button type="button" class="baustein" data-sit-feld="satzart" data-sit-wert="aussage" aria-selected="${w.satzart === "aussage"}">Aussage<span class="baustein-de">Punkt</span></button>
+        <button type="button" class="baustein" data-sit-feld="satzart" data-sit-wert="frage" aria-selected="${w.satzart === "frage"}">Ja/Nein-Frage<span class="baustein-de">Fragezeichen</span></button>
+        <button type="button" class="baustein" data-sit-feld="satzart" data-sit-wert="wfrage" aria-selected="${w.satzart === "wfrage"}">W-Frage<span class="baustein-de">dove, quando, con chi …</span></button>
+      </div>`);
+      if (w.satzart === "wfrage") reihen.push(sitReihe("❔ Welches Fragewort?", "das Gefragte fällt im Satz weg", "wort", A("wort"), w.wort, (x) => [x.it, SIT_WORT_DE[x.id]], ""));
+      const ein = A("einleitung");
+      if (ein.length || w.einleitung) reihen.push(sitReihe("💬 Einleitung mit „che“", "Penso che, Spero che … + congiuntivo; So che … + Indikativ", "einleitung", ein, w.einleitung || "", (x) => [x.it + " …", x.de + " dass …"], "— ohne —"));
+    }
+    reihen.push(sitReihe("👤 Wer?", "das Pronomen (io, tu …) sagt man meist nicht mit", "soggetto", S.SOGGETTI.filter((x) => CEFR_LEVELS.indexOf(x.level || "A1") <= CEFR_LEVELS.indexOf(lv)), w.soggetto, (s) => [s.it, s.de], ""));
+    if (si.sog.pron && !si.sog.g) {
+      const mehr = si.p >= 3;
+      reihen.push(`<p class="eyebrow sbk-frage">⚧ ${mehr ? "Wer ist gemeint?" : "Wer spricht?"}<span class="sbk-frage-hinweis">bei essere und Adjektiven ändert sich die Endung: andato / andata</span></p>
+      <div class="baustein-reihe">
+        <button type="button" class="baustein" data-sit-feld="genus" data-sit-wert="m" aria-selected="${w.genus !== "f"}">${mehr ? "Männer oder gemischt" : "männlich"}<span class="baustein-de">-o / -i</span></button>
+        <button type="button" class="baustein" data-sit-feld="genus" data-sit-wert="f" aria-selected="${w.genus === "f"}">${mehr ? "nur Frauen" : "weiblich"}<span class="baustein-de">-a / -e</span></button>
+      </div>`);
+    }
+    if (si.sog.pron && w.satzart !== "wfrage") {
+      reihen.push(`<p class="eyebrow sbk-frage">🙋 Pronomen<span class="sbk-frage-hinweis">die Verbform zeigt schon, wer es ist</span></p>
+      <div class="baustein-reihe">
+        <button type="button" class="baustein" data-sit-feld="pronome" data-sit-wert="0" aria-selected="${!w.pronome}">weglassen<span class="baustein-de">so spricht man</span></button>
+        <button type="button" class="baustein" data-sit-feld="pronome" data-sit-wert="1" aria-selected="${Boolean(w.pronome)}">mitsprechen<span class="baustein-de">nur zur Betonung</span></button>
+      </div>`);
+    }
+    const verben = A("verbo");
+    reihen.push(sitReihe("🏃 Macht was?", "nach dem Verb gibt es nur passende Ergänzungen", "verbo", verben, w.verbo, (x) => {
+      const dv = S.DE_VERBEN[typeof x.de === "function" ? x.de(Object.assign({}, w, { verbo: x.id })) : x.de];
+      return [x.it, dv ? dv.inf : ""];
+    }, "", w.kategorie === "alle" ? (x) => SIT_KAT_NAME[x.kat.split(" ")[0]] || x.kat : null));
+    const modali = A("modale");
+    if (modali.length || w.modale) reihen.push(sitReihe("🔧 Mit Modalverb?", "das Modalverb wird gebeugt, das Verb steht im Infinitiv", "modale", modali, w.modale || "", (m) => [m.it, SIT_MODAL_DE[m.id]], "— ohne —"));
+    reihen.push(`<p class="eyebrow sbk-frage">🚫 Verneinung<span class="sbk-frage-hinweis">„non“ steht direkt vor dem Verb</span></p>
+      <div class="baustein-reihe">
+        <button type="button" class="baustein" data-sit-feld="neg" data-sit-wert="0" aria-selected="${!w.neg}">bejaht<span class="baustein-de">ohne non</span></button>
+        <button type="button" class="baustein" data-sit-feld="neg" data-sit-wert="1" aria-selected="${Boolean(w.neg)}">non …<span class="baustein-de">verneint</span></button>
+      </div>`);
+    if (v && v.stato) reihen.push(sitReihe("😐 Wie ist …?", "das Adjektiv richtet sich nach der Person: stanco / stanca / stanchi / stanche", "stato", A("stato"), w.stato, (x) => [x.it, x.de], ""));
+    const dinge = A("oggetto");
+    if ((v && v.obj) && (dinge.length || w.oggetto)) {
+      reihen.push(sitReihe("📦 Was?", v.objPflicht ? "dieses Verb braucht ein Objekt" : "das Objekt", "oggetto", dinge, w.oggetto || "", (o) => {
+        const d = S.angebote(Object.assign({}, w, { oggetto: o.id, det: "" }), "det")[0] || o.dets[0];
+        return [sitDing(S, v, o, d, null, si), o.de.n];
+      }, v.objPflicht ? "" : "— nichts —"));
+      if (w.oggetto) {
+        const dets = A("det");
+        const o = S.OGGETTI.find((x) => x.id === w.oggetto);
+        if (dets.length > 1) reihen.push(`<p class="eyebrow sbk-frage">🔤 Welcher Begleiter?<span class="sbk-frage-hinweis">un/una beim ersten Mal, il/la für etwas Bestimmtes, del/della = etwas davon</span></p>
+          <div class="baustein-reihe">${dets.map((d) => `<button type="button" class="baustein" data-sit-feld="det" data-sit-wert="${d}" aria-selected="${w.det === d}">${escapeHtml(sitDing(S, v, o, d, null, si))}<span class="baustein-de">${SIT_DET_DE[d]}</span></button>`).join("")}</div>`);
+        const aggs = A("agg");
+        if (aggs.length || w.agg) reihen.push(sitReihe("🎨 Wie ist es?", "die meisten Adjektive stehen HINTER dem Nomen", "agg", aggs, w.agg || "", (a) => [sitDing(S, v, o, w.det, a, si), a.de], "— ohne —"));
+      }
+    }
+    if (v && v.pers) {
+      const pers = A("persona");
+      if (pers.length || w.persona) reihen.push(sitReihe(v.pers.typ === "a" ? "🧑 Wem? (a …)" : "🧑 Wen?", v.pers.typ === "a" ? "mit „a“: a mia madre, al mio ragazzo, ai miei amici" : "ohne Präposition", "persona", pers, w.persona || "", (p) => [S.personIt(p, si, v.pers.typ === "a" ? "a" : ""), S.personDe(p, si, v.pers.typ === "a" ? "dat" : "akk")], v.persPflicht ? "" : "— niemanden —"));
+    }
+    if (v && v.ort) {
+      const rollen = Object.keys(v.ort);
+      if (rollen.length > 1) reihen.push(`<p class="eyebrow sbk-frage">🧭 Welche Ortsfrage?<span class="sbk-frage-hinweis">dieses Verb lässt mehrere zu</span></p>
+        <div class="baustein-reihe">${rollen.map((r) => `<button type="button" class="baustein" data-sit-feld="rolle" data-sit-wert="${r}" aria-selected="${w.rolle === r}">${SIT_ROLLE[r].frage}<span class="baustein-de">${r === "da" ? "da …" : r === "per" ? "per …" : "a / in …"}</span></button>`).join("")}</div>`);
+      const rolle = rollen.includes(w.rolle) ? w.rolle : rollen[0];
+      const orte = A("luogo");
+      if (orte.length || w.luogo) reihen.push(sitReihe(SIT_ROLLE[rolle].frage, SIT_ROLLE[rolle].hinweis, "luogo", orte, w.luogo || "", (l) => {
+        const it = rolle === "da" ? ((v.itDa && v.itDa[l.id]) || l.da) : rolle === "per" ? l.per : l.it;
+        const deR = (v.deRolle && v.deRolle[rolle]) || { stato: "wo", moto: "wohin", da: "woher", per: "wohin" }[rolle];
+        return [it, (v.deOrt && v.deOrt[l.id]) || l.de[deR]];
+      }, v.ortPflicht ? "" : "— ohne Ort —"));
+    }
+    if (v && v.mezzo) { const mz = A("mezzo"); if (mz.length || w.mezzo) reihen.push(sitReihe("🚆 Womit?", "in + Verkehrsmittel, ohne Artikel: in treno, in macchina — aber a piedi", "mezzo", mz, w.mezzo || "", (m) => [m.it, m.de], "— ohne —")); }
+    if (v && v.comp) { const cp = A("compagnia"); if (cp.length || w.compagnia) reihen.push(sitReihe("👥 Mit wem?", "con + Person; Verwandte in der Einzahl ohne Artikel: con mia sorella", "compagnia", cp, w.compagnia || "", (p) => [S.personIt(p, si, "con"), "mit " + S.personDe(p, si, "dat")], "— allein —")); }
+    const zeiten = A("quando");
+    reihen.push(sitReihe("🕒 Wann?", "passt sich der Zeitform an — gestern nur in der Vergangenheit", "quando", zeiten, w.quando || "", (t) => [t.id === "da_bambino" ? (si.pl ? (si.g === "f" ? "da bambine" : "da bambini") : (si.g === "f" ? "da bambina" : "da bambino")) : (t.id === "mai" ? "non … mai" : t.it), t.id === "mai" ? "nie" : (t.id === "da_bambino" ? (si.pl ? "als Kinder" : "als Kind") : t.de)], "— ohne —", (t) => SIT_ZEIT_GRUPPE[t.grp]));
+    const modi = A("modo");
+    if (modi.length || w.modo) reihen.push(sitReihe("✨ Wie?", "nur, was zu diesem Satz passt", "modo", modi, w.modo || "", (m) => [m.id === "da_solo" ? (si.pl ? (si.g === "f" ? "da sole" : "da soli") : (si.g === "f" ? "da sola" : "da solo")) : m.it, (v && v.deModo && v.deModo[m.id]) || m.de], v && v.modoPflicht ? "" : "— ohne —"));
+    const gruende = A("causa");
+    if (w.satzart !== "wfrage" || w.wort !== "perche") {
+      if (gruende.length || w.causa) reihen.push(sitReihe("❓ Warum? / Unter welcher Bedingung?", "nur Gründe, die zu diesem Satz passen — auch zur Verneinung", "causa", gruende, w.causa || "", (g) => {
+        const it = S.anzeigeWert(w, "causa", g.id);
+        const siDe = si;
+        return [it, S.deGrund(g, Boolean(g.gneg), siDe, "praes", "haupt", w, si.sog.pron ? si.sog.de : si.sog.de)];
+      }, "— ohne —"));
+      if (w.causa) {
+        const vbs = A("verbindung");
+        reihen.push(`<p class="eyebrow sbk-frage">🔗 Wie wird der Grund angehängt?<span class="sbk-frage-hinweis">${escapeHtml((S.VERBINDUNGEN.find((x) => x.id === (w.verbindung || "perche")) || {}).hinweis || "")}</span></p>
+        <div class="baustein-reihe">${vbs.map((x) => `<button type="button" class="baustein" data-sit-feld="verbindung" data-sit-wert="${x.id}" aria-selected="${(w.verbindung || "perche") === x.id}">${x.it}<span class="baustein-de">${escapeHtml(x.name)}</span></button>`).join("")}</div>`);
+      }
+    }
+
+    area.innerHTML = kopf + satzTeil + reihen.join("") ;
+    sitBinden(area, sperre, b, geschichte);
+    merkeZustand({ art: "Satzbaukasten Italienisch", niveau: lv, kategorie: w.kategorie, satz: b ? (geschichte && geschichte.ok ? geschichte.it : b.it) : "(gesperrt)", uebersetzung: b ? (geschichte && geschichte.ok ? geschichte.de : b.de) : "" });
+  }
+
+  function sitDing(S, v, o, det, agg, si) {
+    const d = det || o.dets[0];
+    if (o.a) return d === "def" ? S.verschmelze("a", S.nominal(o.n, "def", null, si.p)) : "a " + o.n.it;
+    const t = S.nominal(o.n, d, agg, si.p);
+    return v.objPraep ? v.objPraep + " " + t : t;
+  }
+  function sitTeileHtml(b) {
+    const rollen = { w: "konj", wer: "wer", verb: "verb", was: "was", wen: "wen", mitwem: "wen", wo: "wo", wohin: "wohin", woher: "woher", womit: "wie", wie: "wie", wann: "wann" };
+    // Der ganze Satz (samt Grund und Einleitung) steht in b.it; die Teile färben den Hauptsatz ein.
+    const haupt = b.teile.map((x) => x.t).join(" ");
+    const roh = b.it.replace(/[.?]$/, "");
+    const pos = roh.toLowerCase().indexOf(haupt.toLowerCase().replace(/\bdove è\b/, "dov'è"));
+    if (pos < 0) return escapeHtml(b.it);
+    let html = escapeHtml(roh.slice(0, pos));
+    let rest = roh.slice(pos);
+    b.teile.forEach((x, i) => {
+      const len = x.t.length;
+      const stueck = rest.slice(0, len);
+      html += (i ? " " : "") + `<span class="satzteil satzteil-${rollen[x.rolle] || "was"}">${escapeHtml(stueck)}</span>`;
+      rest = rest.slice(len).replace(/^ /, "");
+    });
+    return html + escapeHtml(rest ? " " + rest : "") + escapeHtml(b.it.slice(-1));
+  }
+
+  function sitBinden(area, sperre, b, geschichte) {
+    const S = window.SatzbauIt;
+    const neu = () => renderItSatzbaukasten();
+    area.querySelectorAll("[data-sit-ansicht]").forEach((x) => x.addEventListener("click", () => { sitAnsicht = x.dataset.sitAnsicht; sitLegen = null; neu(); }));
+    area.querySelectorAll("[data-sit-niveau]").forEach((x) => x.addEventListener("click", () => {
+      sitZuletzt = { feld: "niveau", wert: sitWahl.niveau };
+      sitWahl.niveau = x.dataset.sitNiveau;
+      try { localStorage.setItem(SIT_NIVEAU_KEY, sitWahl.niveau); } catch (e) {}
+      sitLegen = null; sitInfo = ""; neu();
+    }));
+    area.querySelectorAll("[data-sit-kat]").forEach((x) => x.addEventListener("click", () => { sitWahl.kategorie = x.dataset.sitKat; sitLegen = null; neu(); }));
+    area.querySelectorAll("[data-sit-gruppe]").forEach((x) => x.addEventListener("click", () => {
+      const reihe = x.nextElementSibling, auf = reihe.hidden;
+      reihe.hidden = !auf; x.setAttribute("aria-expanded", String(auf));
+      const pf = x.querySelector(".sbk-gruppe-pfeil"); if (pf) pf.textContent = auf ? "▾" : "▸";
+      if (auf) sitOffeneGruppen.add(x.dataset.sitGruppe); else sitOffeneGruppen.delete(x.dataset.sitGruppe);
+    }));
+    area.querySelectorAll("[data-sit-feld]").forEach((x) => x.addEventListener("click", () => {
+      const feld = x.dataset.sitFeld;
+      let wert = x.dataset.sitWert;
+      if (feld === "neg" || feld === "pronome") wert = wert === "1";
+      sitZuletzt = { feld: feld === "tempo" ? "zeitform" : feld, wert: sitWahl[feld] };
+      sitInfo = "";
+      sitWahl[feld] = wert;
+      if (feld === "oggetto") { sitWahl.det = ""; sitWahl.agg = ""; }
+      if (feld === "satzart" && wert !== "wfrage") sitWahl.wort = "";
+      if (feld === "satzart" && wert === "wfrage" && !sitWahl.wort) { const f = S.angebote(sitWahl, "wort"); sitWahl.wort = f.length ? f[0].id : ""; }
+      if (feld === "causa" && wert && !sitWahl.verbindung) sitWahl.verbindung = "perche";
+      if (feld === "causa" && !wert) sitWahl.verbindung = "";
+      if (feld === "quando" && wert === "mai") sitWahl.neg = true;
+      if (feld === "rolle") sitWahl.luogo = "";
+      if (feld === "verbo") {
+        /* Neues Verb: was zum alten gehörte und hier nicht passt, fällt weg — und das steht dann auch da. */
+        const weg = [];
+        ["oggetto", "persona", "luogo", "mezzo", "compagnia", "modo", "modale", "causa", "stato", "quando"].forEach((f) => {
+          if (!sitWahl[f]) return;
+          const a = S.angebote(Object.assign({}, sitWahl), f);
+          if (!a.some((y) => y.id === sitWahl[f])) { weg.push(S.FELD_NAMEN[f]); sitWahl[f] = ""; if (f === "oggetto") { sitWahl.det = ""; sitWahl.agg = ""; } if (f === "causa") sitWahl.verbindung = ""; }
+        });
+        sitWahl.rolle = "";
+        if (weg.length) sitInfo = "Zum neuen Verb passte nicht mehr: " + weg.join(", ") + " — deshalb weggelassen.";
+        sitZuletzt = null;
+      }
+      neu();
+    }));
+    area.querySelectorAll("[data-sit-binder]").forEach((x) => x.addEventListener("click", () => { sitBinder = x.dataset.sitBinder; neu(); }));
+    area.querySelectorAll("[data-sit-vorschlag]").forEach((x) => x.addEventListener("click", () => {
+      const v = sperre && sperre.vorschlaege[Number(x.dataset.sitVorschlag)];
+      if (!v) return;
+      if (v.binder) sitBinder = v.binder;
+      else sitWahl = Object.assign({}, v.w, { kategorie: sitWahl.kategorie });
+      sitZuletzt = null; sitInfo = "";
+      neu();
+    }));
+    const knopf = (id, fn) => { const e = area.querySelector("#" + id); if (e) e.addEventListener("click", fn); };
+    knopf("sitVorlesen", () => {
+      try {
+        const u = new SpeechSynthesisUtterance(geschichte && geschichte.ok ? geschichte.it : b.it);
+        u.lang = "it-IT"; speechSynthesis.cancel(); speechSynthesis.speak(u);
+      } catch (e) { showToast("Vorlesen klappt auf diesem Gerät gerade nicht."); }
+    });
+    knopf("sitZufall", () => {
+      const kat = sitWahl.kategorie === "alle" ? S.KATEGORIEN[Math.floor(Math.random() * S.KATEGORIEN.length)].id : sitWahl.kategorie;
+      const r = S.zufallsWahl(sitWahl.niveau, kat, Math.random, { satzart: sitGeschichte.length ? "aussage" : undefined, einleitung: sitGeschichte.length ? false : undefined });
+      if (r) { sitWahl = Object.assign({}, r.w, { kategorie: sitWahl.kategorie }); if (sitGeschichte.length) sitWahl.tempo = sitGeschichte[0].w.tempo; sitZuletzt = null; sitInfo = ""; }
+      neu();
+    });
+    knopf("sitPlusSatz", () => {
+      sitGeschichte.push({ w: JSON.parse(JSON.stringify(sitWahl)), binder: sitGeschichte.length ? sitBinder : "" });
+      sitBinder = "e";
+      ["quando", "causa", "verbindung", "modo", "modale"].forEach((f) => { sitWahl[f] = ""; });
+      sitWahl.neg = false; sitWahl.satzart = "aussage"; sitWahl.einleitung = "";
+      sitZuletzt = null; neu();
+    });
+    knopf("sitSatzZurueck", () => { const g = sitGeschichte.pop(); if (g) { sitWahl = Object.assign(g.w, { kategorie: sitWahl.kategorie }); sitBinder = g.binder || "e"; } neu(); });
+    knopf("sitNurEiner", () => { sitGeschichte = []; sitBinder = "e"; neu(); });
+    knopf("sitLegenBtn", () => { sitLegenStarten(b); sitAnsicht = "legen"; neu(); });
+    sitLegenBinden(area);
+  }
+
+  /* --- Satz legen: die Satzglieder in die richtige Reihenfolge ---- */
+  function sitLegenStarten(b) {
+    const S = window.SatzbauIt;
+    let satz = b;
+    if (!satz || satz.teile.length < 3) {
+      for (let i = 0; i < 30; i++) {
+        const kat = sitWahl.kategorie === "alle" ? S.KATEGORIEN[Math.floor(Math.random() * S.KATEGORIEN.length)].id : sitWahl.kategorie;
+        const r = S.zufallsWahl(sitWahl.niveau, kat, Math.random, { satzart: "aussage", einleitung: false });
+        if (r && !r.w.causa && r.teile.length >= 3) { satz = r; break; }
+      }
+    }
+    if (!satz) { sitLegen = null; return; }
+    const karten = satz.teile.map((x) => x.t);
+    const loesungen = [karten.join(" ")];
+    /* Eine Zeitangabe darf auch ans Ende: „Ieri sono andato al mare.“ = „Sono andato al mare ieri.“ */
+    const zi = satz.teile.findIndex((x) => x.rolle === "wann");
+    if (zi === 0 || (zi === 1 && satz.teile[0].rolle === "wer")) {
+      const ohne = karten.filter((_, i) => i !== zi);
+      loesungen.push(ohne.concat([karten[zi]]).join(" "));
+    }
+    let pool = karten.map((_, i) => i);
+    for (let n = 0; n < 20 && pool.map((i) => karten[i]).join(" ") === loesungen[0]; n++) pool = pool.sort(() => Math.random() - 0.5);
+    const rest = satz.it.slice(satz.teile.map((x) => x.t).join(" ").length);
+    sitLegen = { satz, karten, loesungen, pool, gelegt: [], ergebnis: null, zeichen: /\?$/.test(satz.it) ? "?" : ".", nachsatz: /perché|,/.test(rest) ? "" : "" };
+  }
+  function sitLegenHtml() {
+    const u = sitLegen;
+    if (!u) return '<p class="empty-note">Kein Satz zum Legen — tipp auf „Selbst bauen“.</p>';
+    const karte = (i, wo) => `<button type="button" class="sbk-karte" data-sit-karte="${i}" data-sit-wo="${wo}">${escapeHtml(u.karten[i])}</button>`;
+    return `
+      <div class="question-card sbk-ueben">
+        <p class="eyebrow" style="margin-top:0;">Satz legen<span class="sbk-frage-hinweis">tippe die Satzglieder in der richtigen Reihenfolge an</span></p>
+        <p class="baustein-satz-de">${escapeHtml(u.satz.de)}</p>
+        <div class="sbk-leiste" aria-label="Dein Satz">${u.gelegt.map((i) => karte(i, "gelegt")).join("") || '<span class="sbk-leer">Hier entsteht dein Satz.</span>'}<span class="sbk-schluss">${u.zeichen}</span></div>
+        <div class="sbk-leiste sbk-pool" aria-label="Satzglieder">${u.pool.map((i) => karte(i, "pool")).join("") || '<span class="sbk-leer">Alle Satzglieder liegen im Satz.</span>'}</div>
+        ${u.ergebnis ? `<p class="sbk-ergebnis ${u.ergebnis.gut ? "sbk-ergebnis-gut" : "sbk-ergebnis-falsch"}" role="status">${escapeHtml(u.ergebnis.text)}</p>` : ""}
+        <div class="quiz-actions sbk-ueben-knoepfe">
+          <button type="button" class="btn" id="sitLegenPruefen">Prüfen</button>
+          <button type="button" class="btn btn-ghost" id="sitLegenLoesung">Lösung zeigen</button>
+          <button type="button" class="btn btn-ghost" id="sitLegenNeu">Neuer Satz</button>
+        </div>
+      </div>`;
+  }
+  function sitLegenBinden(area) {
+    const u = sitLegen;
+    if (!u || sitAnsicht !== "legen") return;
+    const neu = () => renderItSatzbaukasten();
+    area.querySelectorAll("[data-sit-karte]").forEach((x) => x.addEventListener("click", () => {
+      const i = Number(x.dataset.sitKarte);
+      if (x.dataset.sitWo === "pool") { u.pool = u.pool.filter((k) => k !== i); u.gelegt.push(i); }
+      else { u.gelegt = u.gelegt.filter((k) => k !== i); u.pool.push(i); }
+      u.ergebnis = null; neu();
+    }));
+    const k = (id, fn) => { const e = area.querySelector("#" + id); if (e) e.addEventListener("click", fn); };
+    k("sitLegenPruefen", () => {
+      const text = u.gelegt.map((i) => u.karten[i]).join(" ");
+      if (u.pool.length) u.ergebnis = { gut: false, text: "Es liegen noch Satzglieder unten." };
+      else if (u.loesungen.includes(text)) u.ergebnis = { gut: true, text: "Richtig! " + u.satz.it };
+      else {
+        const verb = u.satz.teile.findIndex((x) => x.rolle === "verb");
+        const gelegtVerb = u.gelegt.indexOf(verb);
+        u.ergebnis = { gut: false, text: gelegtVerb > 2 ? "Noch nicht: Im Italienischen steht das Verb früh im Satz — meist direkt nach der Person oder der Zeitangabe." : "Noch nicht ganz. Tipp: Zeitangabe vorn, dann das Verb, dann was, wo, mit wem." };
+      }
+      neu();
+    });
+    k("sitLegenLoesung", () => { u.ergebnis = { gut: false, text: "Lösung: " + u.satz.it }; neu(); });
+    k("sitLegenNeu", () => { sitLegenStarten(null); neu(); });
+  }
 
   document.querySelector('#learnSubnav [data-sub="sub-satzbaukasten-de"]')?.addEventListener("click", () => renderSatzbaukastenDe());
 

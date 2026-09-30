@@ -8701,3 +8701,24 @@ body.hat-klassenzimmer { padding-bottom: 172px; }
    „--cream-50“ — das ist in den Themen die TEXTFARBE. Auf hellem Thema stand
    dunkle Schrift auf dunklem Grund. Jetzt der Kartengrund wie überall. */
 .sbk-klebe, .sbk-schwebe, .sbk-karte-geist { background: var(--plum-800, #fffaf0); color: var(--cream-50, #2e2a25); }
+
+/* FASSUNG 839 — italienischer Satzbaukasten: die Sperre mit Vorschlägen
+   („klingt komisch – meintest du …?“) und die Beispielliste. */
+.sit-sperre { border: 2px solid rgba(214, 120, 40, 0.55); background: rgba(242, 182, 50, 0.10); }
+.sit-sperre-titel { margin: 0 0 4px; font-weight: 800; font-size: 1rem; }
+.sit-sperre-text { margin: 2px 0; font-size: 0.86rem; line-height: 1.4; overflow-wrap: anywhere; }
+.sit-sperre-frage { margin: 10px 0 6px; font-weight: 700; font-size: 0.9rem; }
+.sit-vorschlaege { display: flex; flex-direction: column; gap: 6px; }
+.sit-vorschlag {
+  display: block; width: 100%; min-height: 44px; text-align: left; padding: 8px 12px; border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.15); background: rgba(255, 255, 255, 0.55); color: inherit; cursor: pointer; font: inherit;
+}
+.sit-vorschlag:focus-visible { outline: 3px solid #f2b632; outline-offset: 2px; }
+.sit-vorschlag-it { display: block; font-weight: 700; overflow-wrap: anywhere; }
+.sit-vorschlag-de { display: block; font-size: 0.78rem; opacity: 0.8; font-style: italic; overflow-wrap: anywhere; }
+.sit-beispiel-it { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.sit-beispiel-de { margin: 2px 0 0; font-size: 0.82rem; opacity: 0.8; font-style: italic; overflow-wrap: anywhere; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sit-vorschlag { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.18); }
+}
+:root[data-theme="dark"] .sit-vorschlag { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.18); }

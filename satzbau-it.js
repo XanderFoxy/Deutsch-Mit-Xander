@@ -2431,12 +2431,16 @@
     if (v.negNurMai && w.neg && w.quando !== "mai") probleme.push({ feld: "neg", wert: true, text: "„" + v.it + "“ verneint klingt komisch — außer mit „mai“ (nie): „Non ho mai perso …“." });
     probleme.forEach((p) => { p.text = p.text || problemText(w, p); });
     const gesehen = new Set();
-    const eindeutig = probleme.filter((p) => { const k = [p.feld, p.gegen || ""].sort().join("|") + (p.gegen ? "" : p.feld); if (p.gegen && gesehen.has(k)) return false; gesehen.add(k); return true; });
+    /* Beißen sich Zeitform und Zeitangabe, ist das DER Grund — dass der Ort
+       dann auch „nicht passt“, folgt nur daraus und wird nicht gemeldet. */
+    const zeitKern = probleme.some((p) => (p.feld === "zeitform" && p.gegen === "quando") || (p.feld === "quando" && p.gegen === "zeitform"));
+    const andere = probleme.some((p) => p.feld !== "zeitform");
+    const eindeutig = probleme.filter((p) => !(p.feld === "zeitform" && p.gegen !== "quando" && andere)).filter((p) => !(zeitKern && !["zeitform", "quando"].includes(p.feld) && ["zeitform", "quando"].includes(p.gegen))).filter((p) => { const k = [p.feld, p.gegen || ""].sort().join("|") + (p.gegen ? "" : p.feld); if (p.gegen && gesehen.has(k)) return false; gesehen.add(k); return true; });
     return { ok: probleme.length === 0, w, probleme: eindeutig };
   }
   /* Mit welchem anderen Feld beißt sich dieses? (das, ohne das es passt) */
   function schuld(w, f) {
-    const kandidaten = ["zeitform", "verbo", "oggetto", "luogo", "quando", "modo", "compagnia", "persona", "mezzo", "modale", "causa", "soggetto", "einleitung", "verbindung", "neg", "satzart"];
+    const kandidaten = ["quando", "zeitform", "oggetto", "luogo", "modo", "compagnia", "persona", "mezzo", "modale", "causa", "soggetto", "einleitung", "verbindung", "neg", "satzart"];
     for (const g of kandidaten) {
       if (g === f) continue;
       if (g === "neg" ? !w.neg : g === "zeitform" ? false : (g === "satzart" ? w.satzart === "aussage" : !feldAktiv(w, g))) continue;

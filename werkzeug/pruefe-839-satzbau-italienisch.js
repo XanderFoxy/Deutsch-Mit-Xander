@@ -556,7 +556,7 @@ async function oberflaeche() {
     pg.on("pageerror", (e) => pg.fehler.push(String(e.message || e)));
     await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); localStorage.setItem("dma_tutor", "aus"); } catch (e) {} });
     await pg.goto(basis, { waitUntil: "domcontentloaded" });
-    await pg.waitForFunction(() => window.Satzbau && window.ExerciseData && document.querySelector(".tape-tab[data-target=view-learn]"), null, { timeout: 90000 });
+    await pg.waitForFunction(() => window.Satzbau && typeof ExerciseData !== "undefined" && typeof Backend !== "undefined" && document.querySelector(".tape-tab[data-target=view-learn]"), null, { timeout: 90000 });
     await pg.waitForTimeout(400);
     return pg;
   };
