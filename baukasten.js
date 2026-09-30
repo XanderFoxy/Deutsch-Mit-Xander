@@ -67,6 +67,8 @@ const BK_VERB = {
   /* FASSUNG 836 */
   bauchlage: "liegt", seitenlage: "liegt", sitzen_angewinkelt: "sitzt", baden: "sitzt",
   graetschsitz: "sitzt", sitzen_ueberkreuz: "sitzt", anlehnen: "lehnt", laufen: "joggt",
+  /* FASSUNG 838 */
+  sitzen_zurueck: "sitzt",
   treppe: "steigt", buecken: "bückt", strecken: "streckt", arme_verschraenkt: "steht", haende_huefte: "steht",
 };
 /* FASSUNG 836 — XANDER (Funk 217): „ob sie im Schneidersitz sitzen ob sie
@@ -85,6 +87,8 @@ const BK_WENDUNG = {
   anlehnen: ["lehnt", "an der Wand"], laufen: ["joggt"], buecken: ["bückt", "sich"], strecken: ["streckt", "sich"],
   arme_verschraenkt: ["steht", "mit verschränkten Armen"], haende_huefte: ["steht", "mit den Händen in den Hüften"],
   treppe: ["steigt", "eine Stufe hinauf", "hinten"],
+  /* FASSUNG 838 */
+  sitzen_seit: ["sitzt", "seitlich"], sitzen_zurueck: ["sitzt", "zurückgelehnt"],
 };
 /* FASSUNG 834 — Verben, die im Satz noch etwas brauchen.
    „Die Frau hält am Tisch.“ ist kein Deutsch (halten ohne Objekt heißt
@@ -421,7 +425,7 @@ function bkMassstab(szene) {
    der rechten Bildhälfte, schaut sie in den Raum hinein — also nach
    links. Wer „umdrehen“ gedrückt hat, bestimmt es selbst. */
 const BK_BLICK = {
-  stehen: 24, kontrapost: 26, gehen: 70, sitzen: 36, lesen: 40, sitzen_seit: 70,
+  stehen: 24, kontrapost: 26, gehen: 70, sitzen: 36, lesen: 40, sitzen_seit: 70, sitzen_zurueck: 34,
   sitzen_boden: 50, schneidersitz: 30, fersensitz: 55, hocken: 55, knien: 40,
   knien_halb: 62, knien_vor: 60, krabbeln: 64, liegen: 90, winken: 22, halten: 30,
   zeigen: 40, servieren: 34,
@@ -464,7 +468,7 @@ function bkKleidungFuerFigur(z) {
    dabei „sitzt“ bzw. „liegt“. */
 function bkGezeichneteHaltung(z, haltung) {
   let h = haltung || z.haltung;
-  if ((h === "sitzen" || h === "lesen" || h === "sitzen_seit" || h === "sitzen_ueberkreuz") && z.platz && typeof z.platz.sitzY !== "number") h = "sitzen_boden";
+  if ((h === "sitzen" || h === "lesen" || h === "sitzen_seit" || h === "sitzen_ueberkreuz" || h === "sitzen_zurueck") && z.platz && typeof z.platz.sitzY !== "number") h = "sitzen_boden";
   /* FASSUNG 836: In der Wanne sitzt man mit angewinkelten Beinen im Wasser. */
   const pose = BK_BADHALTUNG[h] && z.platz && z.platz.bild === "baden" ? "baden" : h;
   return { haltung: h, pose };
@@ -509,7 +513,7 @@ function bkFigurSvg(z, hoehe, extra) {
    Hüfte. Sitzend am Gesäß — es liegt auf der Sitzfläche des Platzes
    (sitzY), die Füße fallen von selbst dorthin, wo sie hingehören. So
    „rastet“ die Figur auf dem Stuhl ein. */
-const BK_SITZHALTUNG = { sitzen: 1, lesen: 1, sitzen_seit: 1, fersensitz: 1, sitzen_ueberkreuz: 1,
+const BK_SITZHALTUNG = { sitzen: 1, lesen: 1, sitzen_seit: 1, fersensitz: 1, sitzen_ueberkreuz: 1, sitzen_zurueck: 1,
                          schneidersitz: 1, sitzen_boden: 1 };
 function bkFigurAnker(fig, platz, haltung) {
   if (!fig || !platz) return { x: 0, y: 0 };
@@ -604,7 +608,7 @@ function bkWinken(g, z, dauer) {
     let pose, blick;
     if (u < 0.15) { const w = u / 0.15; pose = M.mische(basis, oben, w * w * (3 - 2 * w)); blick = blick0 + (blick1 - blick0) * w; }
     else if (u < 0.85) {
-      const s = Math.sin((u - 0.15) / 0.7 * Math.PI * 2 * 3);
+      const s = Math.sin((u - 0.15) / 0.7 * Math.PI * 2 * Math.max(2, Math.round(T / 850)));
       pose = Object.assign({}, oben, { ellbogenR: W.ellbogenR - 10 + 22 * s, schulterR: Object.assign({}, W.schulterR, { seit: W.schulterR.seit + 6 * s }), handR: 8 + 12 * s });
       blick = blick1;
     } else { const w = (u - 0.85) / 0.15; pose = M.mische(oben, basis, w * w * (3 - 2 * w)); blick = blick1 + (blick0 - blick1) * w; }
@@ -862,7 +866,9 @@ const Baukasten = (function () {
     "zeigen", "servieren",
     /* FASSUNG 836 */
     "bauchlage", "seitenlage", "sitzen_angewinkelt", "baden", "graetschsitz", "sitzen_ueberkreuz", "anlehnen",
-    "laufen", "treppe", "buecken", "strecken", "arme_verschraenkt", "haende_huefte"];
+    "laufen", "treppe", "buecken", "strecken", "arme_verschraenkt", "haende_huefte",
+    /* FASSUNG 838 */
+    "sitzen_seit", "sitzen_zurueck"];
   function bkHaltungErlaubt(h) {
     if (zustand.alter === "saeugling") return ["sitzen_boden", "krabbeln", "liegen", "sitzen", "bauchlage", "seitenlage"].indexOf(h) >= 0;
     if (zustand.alter === "kleinkind") return ["servieren", "lesen", "sitzen_ueberkreuz", "anlehnen", "laufen"].indexOf(h) < 0;
@@ -938,7 +944,7 @@ const Baukasten = (function () {
     knien: "knien", knien_halb: "auf einem Knie", knien_vor: "vorgebeugt knien",
     krabbeln: "auf allen vieren", liegen: "liegen", winken: "winken",
     halten: "etwas halten", zeigen: "zeigen", servieren: "servieren",
-    sitzen_seit: "seitlich sitzen",
+    sitzen_seit: "seitlich sitzen", sitzen_zurueck: "zurückgelehnt sitzen",
     /* FASSUNG 836 */
     fersensitz: "auf den Fersen sitzen", knien: "aufrecht knien", hocken: "in der Hocke",
     liegen: "auf dem Rücken liegen", bauchlage: "auf dem Bauch liegen", seitenlage: "auf der Seite liegen",

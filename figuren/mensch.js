@@ -370,6 +370,21 @@
     /* Hände in den Hüften: die Handgelenke über dem Beckenkamm, die Ellbogen weit nach außen und etwas nach hinten. */
     haende_huefte: { lende: 1, brust: -2, nacken: 6, kopf: -6, huefteL: {vor:  3,  seit:  3,  dreh:  -6}, knieL: 3, fussL: 0, huefteR: {vor:  -3,  seit:  3,  dreh:  -6}, knieR: 2, fussR: 0, roll: 2, brustRoll: -2, schulterL: {vor:  -17,  seit:  37,  dreh:  -76}, ellbogenL: 97, schulterR: {vor:  -16,  seit:  41,  dreh:  -77}, ellbogenR: 97, unterarmL: -60, unterarmR: -60, handL: -25, handR: -25, fingerL: 0.2, fingerR: 0.2 },
   });
+  /* FASSUNG 838 — XANDER (Funk 222): „mal seitlich sitzen mal gerade …
+     jede Sitzhaltung möglich“. Seitlich: derselbe Sitz, gesehen mit dem
+     Blick von der Seite (der Baukasten zeigt sie im Profil, BK_BLICK 70).
+     Zurückgelehnt: das Becken kippt 10° nach hinten, der Rücken lehnt an,
+     der Kopf nickt wieder nach vorn, die Hände liegen locker auf den
+     Oberschenkeln; die Hüftbeugung gleicht das Kippen aus, damit die
+     Oberschenkel auf der Sitzfläche bleiben. */
+  POSEN.sitzen_seit = Object.assign({}, POSEN.sitzen);
+  POSEN.sitzen_zurueck = {
+    kipp: -10, lende: -12, brust: -2, nacken: 20, kopf: 0,
+    schulterL: { vor: 16, seit: 12 }, ellbogenL: 46, unterarmL: -72, handL: -12, fingerL: 0.3,
+    schulterR: { vor: 14, seit: 13 }, ellbogenR: 50, unterarmR: -74, handR: -14, fingerR: 0.3,
+    huefteL: { vor: 76, seit: 7, dreh: -4 }, knieL: 80, fussL: -4,
+    huefteR: { vor: 78, seit: 9, dreh: -6 }, knieR: 88, fussR: 0,
+  };
   /* Der Gang: ein Zyklus aus Winkelkurven (Phase 0…1). Standbein zurück,
      Schwungbein mit gebeugtem Knie nach vorn, Arme gegengleich. */
   function gehPose(p) {
@@ -410,7 +425,6 @@
   }
   function pose(name) {
     if (name && typeof name === "object") return name;
-    if (name === "sitzen_seit") return POSEN.sitzen;
     return POSEN[name] || POSEN.stehen;
   }
 
@@ -2840,9 +2854,11 @@
       "hocken", "knien", "knien_halb", "knien_vor", "krabbeln", "liegen", "winken", "halten", "zeigen", "werfen", "servieren",
       /* FASSUNG 836 */
       "bauchlage", "seitenlage", "sitzen_angewinkelt", "baden", "graetschsitz", "sitzen_ueberkreuz", "anlehnen", "laufen",
-      "treppe", "buecken", "strecken", "arme_verschraenkt", "haende_huefte"],
+      "treppe", "buecken", "strecken", "arme_verschraenkt", "haende_huefte",
+      /* FASSUNG 838 */
+      "sitzen_seit", "sitzen_zurueck"],
     /* Haltungen, bei denen das Gesäß auf einer Sitzfläche liegt */
-    SITZEND: { sitzen: 1, lesen: 1, sitzen_seit: 1, sitzen_ueberkreuz: 1 },
+    SITZEND: { sitzen: 1, lesen: 1, sitzen_seit: 1, sitzen_ueberkreuz: 1, sitzen_zurueck: 1 },
     /* FASSUNG 836: welche Körperteile in der Haltung auf dem Boden liegen
        (für die Sonde; Namen wie in zeichne({messen: true}).mess.hoehe). */
     BODEN: {

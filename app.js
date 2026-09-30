@@ -97495,7 +97495,7 @@ An einem Morgen lief ein kleiner Fuchs los…
             er einnimmt; die tritt für dieses Bild zur Seite. */ ""}
       ${(sz.teile || []).filter((t) => (z.platz.verdeckt || []).indexOf(t.id) < 0)
         .map((t) => `<g transform="translate(${t.x},${t.y})">${t.kunst}</g>`).join("")}
-      <g transform="translate(${r(anker.x)},${r(anker.y)})">${fig.svg}</g>
+      <g class="br-figur" transform="translate(${r(anker.x)},${r(anker.y)})">${fig.svg}</g>
     </svg></div>`;
   }
 
@@ -97663,6 +97663,15 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (ok) { brRunde.richtig += 1; Core.sound.correct(); } else { Core.sound.wrong(); }
     spielNotiz(ok, brZustand.saetze.find((x) => x.ok).text);
     renderBilderraetsel();
+    /* FASSUNG 838 — XANDER (Funk 222): „wenn … Bilderrätsel kommen und
+       sagen tippe den Mann im grünen T-Shirt an … dann soll er winken“.
+       Richtig gelesen → die Person im Bild winkt (dieselbe Bewegung wie
+       „Winken“ im Baukasten, bkWinken in baukasten.js). */
+    if (ok && typeof window.bkWinken === "function") {
+      const g = document.querySelector("#bilderraetselArea .br-figur");
+      /* noch bevor nach AUTO_WEITER_RICHTIG_MS das nächste Bild kommt */
+      if (g) window.bkWinken(g, brZustand, AUTO_WEITER_RICHTIG_MS - 60);
+    }
     autoWeiter(ok, () => {
       brRunde.nummer += 1; brRunde.letzte = null; brZustand = null;
       renderBilderraetsel();
