@@ -72307,7 +72307,10 @@
       if (feld === "neg" || feld === "pronome") wert = wert === "1";
       sitZuletzt = { feld: feld === "tempo" ? "zeitform" : feld, wert: sitWahl[feld] };
       sitInfo = "";
+      const warMai = sitWahl.quando === "mai";
       sitWahl[feld] = wert;
+      /* FASSUNG 839 — „mai“ bringt das „non“ mit; wer „mai“ wieder abwählt, nimmt auch das „non“ zurück */
+      if (feld === "quando" && warMai && wert !== "mai") sitWahl.neg = false;
       if (feld === "oggetto") { sitWahl.det = ""; sitWahl.agg = ""; }
       if (feld === "satzart" && wert !== "wfrage") sitWahl.wort = "";
       if (feld === "satzart" && wert === "wfrage" && !sitWahl.wort) { const f = S.angebote(sitWahl, "wort"); sitWahl.wort = f.length ? f[0].id : ""; }

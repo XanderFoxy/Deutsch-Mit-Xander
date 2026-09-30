@@ -45,7 +45,8 @@ const LESEN = process.env.LESEN === "1";
 let fehler = 0;
 const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  ok   " : "  FEHL ") + was + (zusatz ? "   " + zusatz : "")); };
 let samen = Number(process.env.SAMEN || 839);
-const zufall = () => { samen = (samen * 1103515245 + 12345) % 2147483648; return samen / 2147483648; };
+/* mulberry32 — die frühere LCG-Formel verlor in Gleitkomma Genauigkeit und lief bei manchen Samen im Kreis */
+const zufall = () => { samen = (samen + 0x6D2B79F5) | 0; let t = samen; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 
 global.window = {};
 let S = {};
@@ -353,8 +354,8 @@ const DE_DU = { essen: "isst", lesen: "liest", sehen: "siehst", fahren: "fährst
         "da bambino": "imperfetto", "da bambina": "imperfetto", "da bambini": "imperfetto", "da bambine": "imperfetto", "da tre anni": "presente", "per tre anni": "passato",
       };
       const SPERRE = [
-        [/\ba letto con\b/i, "ins Bett mit jemandem"], [/\bdorm\w* [^.?]*\bcon (mi|tu|su|nostr|vostr|il |la |i |le |un|Marco|Giulia)/i, "schlafen mit jemandem"],
-        [/\bin bagno con\b/i, "im Bad mit jemandem"], [/\bla doccia con\b/i, "duschen mit jemandem"],
+        [/\ba letto con (?!calma|attenzione)/i, "ins Bett mit jemandem"], [/\bdorm\w* [^.?]*\bcon (mi|tu|su|nostr|vostr|il |la |i |le |un|Marco|Giulia)/i, "schlafen mit jemandem"],
+        [/\bin bagno con (?!calma|attenzione)/i, "im Bad mit jemandem"], [/\bla doccia con\b/i, "duschen mit jemandem"],
         [/\bda bambin[oaie]\b[^.?]*(\bvino\b|\bbirra\b|\bcaffè\b|lavorav|discoteca|\bbanca\b|in comune)/i, "als Kind Wein/Kaffee/Arbeit"],
         [/\bogni (giorno|mattina|sera)\b[^.?]*(dal medico|dal dentista|in banca|in comune|in questura|all'aeroporto|in ospedale)/i, "jeden Tag zum Arzt/Amt"],
         [/\b(stasera|ieri sera|domani sera|ogni sera)\b[^.?]*colazione/i, "abends frühstücken"],
@@ -368,8 +369,25 @@ const DE_DU = { essen: "isst", lesen: "liest", sehen: "siehst", fahren: "fährst
         [/\bMarco\b[^.?]*\bda Marco\b|\bda Marco\b[^.?]*\bMarco\b(?! )/, "Marco bei Marco"],
         [/\bmai\b[^.?]*perché/i, "nie … weil"],
         [/\bda bambin[oaie]\b[^.?]*(apriv|chiudev|trasferiv)/i, "als Kind öffnete …"],
+        /* FASSUNG 839 — nachgelegt nach dem zweiten Lesen (je 60 Sätze pro Niveau) */
+        [/^Con chi [^?]*\ba letto\b/i, "Mit wem … im Bett?"],
+        [/(?<!^)\bnon\b[^,.?]*\bpoco\b|^Non (?!credo)[^,.?]*\bpoco\b/i, "nicht wenig"],
+        [/^Non credo che\b[^.?]*\bnon\b/i, "Non credo che … non"],
+        [/\bla città a (Roma|Milano|Venezia|Firenze|Napoli|Torino|Bologna|Berlino|Monaco|Vienna|Parigi)\b/, "die Stadt in einer Stadt"],
+        [/^(?!Non\b)(?:(?!\bnon\b)[^,.?])*\b(mai)\b/i, "„mai“ ohne „non“"],
+        [/\b(da Marco|dai nonni)\b[^.?]*\bda sol[oaie]\b|\bda sol[oaie]\b[^.?]*\b(da Marco|dai nonni)\b/i, "allein bei jemandem"],
+        [/^Che cosa (parl|parler)/i, "Che cosa parla?"],
+        [/\bfesteggi\w* compleanno\b/i, "compleanno ohne Artikel"],
+        [/\b(festegg|organizz)\w*\b[^.?]*perché c'(è|era|sarà) una festa|\bfesta\b[^.?]*perché c'(è|era|sarà) una festa/i, "Fest, weil Fest"],
+        [/compleanno di Luca[^.?]*\bNatale\b|\bNatale\b[^.?]*compleanno di Luca/i, "Geburtstag → Weihnachten"],
+        [/\b(perder|dimenticher)\w*\b/i, "Verlieren/Vergessen als Vorhersage"],
+        [/\b(vorrei|vorresti|vorrebbe|vorremmo|vorreste|vorrebbero)\b[^.?]*\bda (tre anni|un mese)\b/i, "möchte … seit drei Jahren"],
+        [/\bSper(o|avo) che\b[^.?]*\b(debba|debbano|dobbiamo|dobbiate|dovessi|dovesse|dovessimo|doveste|dovessero|abbia dovuto|abbiano dovuto|avesse dovuto|avessero dovuto|avessi dovuto|avessimo dovuto|aveste dovuto|abbiamo dovuto|abbiate dovuto)\b/i, "hoffen, dass man muss"],
+        [/^Quando (non )?(ho|hai|ha|abbiamo|avete|hanno|sono|sei|è|siamo|siete|fa|piove|c'è)\b[^,]*, (domani|dopodomani|stasera|sabato|domenica|oggi|adesso|alle|all'una|a mezzogiorno|la prossima|fra due)/i, "quando (immer wenn) + fester Termin"],
+        [/\b(piove|pioveva|pioverà|fa freddo|faceva freddo|farà freddo|malat\w|stanc\w|mal di testa|la febbre|l'influenza|traffico|sciopero|fretta|in ritardo|molto lavoro)\b[^.?]*, quindi (?!non )(posso|puoi|può|possiamo|potete|possono|potevo|potevi|poteva|potevamo|potevate|potevano|potrò|potrai|potrà|potremo|potrete|potranno|ho potuto|hai potuto|ha potuto|abbiamo potuto|avete potuto|hanno potuto|sono potut|sei potut|è potut|siamo potut|siete potut)/i, "Hindernis, deshalb kann man"],
       ];
       const kaputt = [], deKaputt = [];
+      const verschieden = new Set();
       let n = 0;
       const arten = ["aussage", "aussage", "aussage", "frage", "wfrage"];
       const vbs = ["", "perche", "quindi", "se", "quando", "se2", "se3"];
@@ -387,6 +405,7 @@ const DE_DU = { essen: "isst", lesen: "liest", sehen: "siehst", fahren: "fährst
         if (!b) continue;
         n++;
         const w = b.w, it = b.it, de = b.de;
+        verschieden.add(it);
         const f = (grund) => kaputt.push(grund + ": " + it);
         // Satzzeichen, Leerzeichen, Großschreibung
         if (!/^[A-ZÈ]/.test(it)) f("klein am Anfang");
@@ -466,7 +485,8 @@ const DE_DU = { essen: "isst", lesen: "liest", sehen: "siehst", fahren: "fährst
         if (LESEN && (lesen[lv] = lesen[lv] || []).length < 60) lesen[lv].push(it + "  —  " + de);
       }
       sage(n >= 20000, n + " italienische Zufallssätze gebaut (" + Math.round((Date.now() - t0) / 1000) + " s)");
-      sage(!kaputt.length, "Italienisch: Artikel, Verschmelzung, Elision, Verbform, Hilfsverb, Angleichung, non, Pronomen, congiuntivo, periodo ipotetico, Zeichen, Zeitangabe, Sinn", kaputt.length + " | " + kaputt.slice(0, 5).join(" || "));
+      sage(verschieden.size >= 15000, "davon verschieden: " + verschieden.size + " (mindestens 15000)");
+      sage(!kaputt.length, "Italienisch: Artikel, Verschmelzung, Elision, Verbform, Hilfsverb, Angleichung, non, Pronomen, congiuntivo, periodo ipotetico, Zeichen, Zeitangabe, Sinn", kaputt.length + " | " + kaputt.slice(0, process.env.ALLE ? 999 : 5).join(" || "));
       sage(!deKaputt.length, "Deutsche Bedeutung: Großschreibung, Verb am Ende im Nebensatz, W-Frage, kein „nicht kein“", deKaputt.length + " | " + deKaputt.slice(0, 5).join(" || "));
       if (LESEN) Object.keys(lesen).forEach((lv) => { console.log("\n  --- " + lv + " ---"); lesen[lv].forEach((x) => console.log("  " + x)); });
     }
@@ -494,6 +514,14 @@ const DE_DU = { essen: "isst", lesen: "liest", sehen: "siehst", fahren: "fährst
         ["condizionale ohne Anlass", { niveau: "B1", verbo: "compilare", oggetto: "modulo", tempo: "condizionale" }],
         ["zu viele Angaben", { niveau: "B1", verbo: "andare", luogo: "cinema", quando: "stasera", compagnia: "amici", mezzo: "autobus", modo: "volentieri", causa: "tempo", verbindung: "se", tempo: "presente" }],
         ["Penso che + io", { niveau: "B2", verbo: "andare", luogo: "mare", einleitung: "penso_che", soggetto: "io" }],
+        /* FASSUNG 839 — nach dem zweiten Lesen */
+        ["Mit wem im Bett (W-Frage)", { niveau: "A2", verbo: "restare", soggetto: "loro", tempo: "futuro", satzart: "wfrage", wort: "conchi", luogo: "letto" }],
+        ["allein bei Marco", { niveau: "A1", verbo: "essere_luogo", soggetto: "loro", luogo: "da_marco", modo: "da_solo" }],
+        ["Handy verlieren als Vorhersage", { niveau: "A2", verbo: "perdere", soggetto: "voi", tempo: "futuro", oggetto: "telefono" }],
+        ["möchten seit drei Jahren", { niveau: "B1", verbo: "fumare", soggetto: "loro", modale: "vorrei", quando: "da_tre_anni" }],
+        ["es regnet, deshalb kann man", { niveau: "A2", verbo: "prendere", soggetto: "voi", tempo: "futuro", modale: "potere", oggetto: "autobus", causa: "piove", verbindung: "quindi" }],
+        ["hoffen, dass man muss", { niveau: "C1", verbo: "stampare", soggetto: "tu", tempo: "presente", modale: "dovere", oggetto: "modulo", einleitung: "speravo_che" }],
+        ["Wo half mein Bruder Marco? (mehrdeutig)", { niveau: "A2", verbo: "aiutare", soggetto: "fratello", tempo: "presente", satzart: "wfrage", wort: "dove", persona: "marco" }],
         ["ma ohne Gegensatz", "geschichte"],
       ];
       faelle.forEach(([name, w]) => {
@@ -520,6 +548,7 @@ const DE_DU = { essen: "isst", lesen: "liest", sehen: "siehst", fahren: "fährst
           versuche++;
           const w2 = Object.assign({}, b.w, { [f]: x.id });
           if (f === "oggetto") { w2.det = ""; w2.agg = ""; }
+          if (f === "quando" && b.w.quando === "mai" && x.id !== "mai") w2.neg = false;   // wie die Oberfläche
           const r = S.pruefe(w2);
           if (!r.ok && !r.probleme.every((p) => p.feld === "zuviel")) schlecht.push(f + "=" + x.id + " bei " + b.it + " → " + r.probleme.map((p) => p.feld).join(","));
         });

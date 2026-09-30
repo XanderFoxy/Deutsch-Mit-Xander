@@ -2365,8 +2365,13 @@
     if (zeigePerson && !personZuerst) {
       deTeile.push(personTeil());
     }
-    if (wahl.art && wahl.art.de && artNachObjekt) deTeile.push({ t: wahl.art.de, rolle: "wie" });
+    /* FASSUNG 839 — XANDER (Funk 225): „mit allen Regeln die gehen“ — Gradwörter („sehr“,
+       „überhaupt nicht“) stehen direkt vor dem Verb: „Er hat im Kino sehr gelacht“, nicht
+       „Er hat sehr im Kino gelacht“. */
+    const artGradAmEnde = artNachObjekt && wahl.art.art === "grad";
+    if (wahl.art && wahl.art.de && artNachObjekt && !artGradAmEnde) deTeile.push({ t: wahl.art.de, rolle: "wie" });
     if (!ortVorPerson && wahl.ort && !ortVorne) deTeile.push({ t: ortsform(wahl.ort, ortRolle), rolle: ortRolle });
+    if (wahl.art && wahl.art.de && artGradAmEnde) deTeile.push({ t: wahl.art.de, rolle: "wie" });
 
     /* --- Italienisch --------------------------------------------------
        Zeitpunkte stehen vorn, Häufigkeiten und Art beim Verb, alles

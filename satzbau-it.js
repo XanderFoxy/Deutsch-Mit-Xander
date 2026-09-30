@@ -1353,7 +1353,8 @@
       keys: (w) => (w.luogo === "ristorante" || w.luogo === "pizzeria") ? ["essen", "ausser_haus_essen", "ausgehen"] : ["essen"] }),
     V({ id: "assaggiare", it: "assaggiare", v: R("assaggiare"), de: "probieren", level: "B1", kat: "essen",
       obj: ["vino", "torta", "formaggio", "risotto", "gelato", "zuppa"], objPflicht: true, dets: ["def", "indef"], modali: ["potere", "volere", "vorrei", "dovere"],
-      habit: "nein", keys: ["essen"] }),
+      /* FASSUNG 839 — „Avevano fame, quindi dovevano assaggiare il risotto“: probieren ist kein Sattessen */
+      habit: "nein", keys: ["probieren"] }),
     V({ id: "pagare", it: "pagare", v: R("pagare"), de: "bezahlen", level: "A1", kat: "einkaufen essen verwaltung",
       obj: ["conto", "affitto", "bolletta", "caffe", "biglietto"], objPflicht: true, dets: ["def"],
       ort: { stato: ["bar", "ristorante", "pizzeria", "posta", "banca"] },
@@ -1420,7 +1421,7 @@
         biblioteca: ["libro", "rivista", "romanzo", "giornale"], letto: LESESTOFF, divano: LESESTOFF, parco: LESESTOFF, spiaggia: LESESTOFF, giardino: LESESTOFF, soggiorno: LESESTOFF },
       modi: ["volentieri", "molto", "poco", "a_voce_alta", "con_attenzione", "con_calma"], modali: ["potere", "dovere", "volere", "vorrei"], dauer: true, kind: true, keys: ["lesen"] }),
     V({ id: "telefonare", it: "telefonare", v: R("telefonare"), level: "A1", kat: "familie arbeit alltag gesundheit",
-      de: (w) => w.persona ? "anrufen" : "telefonieren", deFall: "akk",
+      de: (w) => (w.persona || (w.satzart === "wfrage" && w.wort === "achi")) ? "anrufen" : "telefonieren", deFall: "akk",
       pers: { typ: "a", tags: "fam freunde partner name kollegen medico" }, ort: { da: ["casa", "ufficio"] }, deOrt: { casa: "von zu Hause", ufficio: "vom Büro aus" },
       modi: ["al_telefono"].filter(() => false), modali: ["potere", "dovere", "volere", "vorrei"], punkt: true, kind: true,
       keys: (w) => w.persona === "medico" ? ["arzt"] : ["sozial"] }),
@@ -1540,8 +1541,9 @@
     V({ id: "visitare", it: "visitare", v: R("visitare"), de: "besichtigen", level: "A2", kat: "reisen freizeit",
       obj: ["museo_obj", "citta_obj", "centro_storico", "mostra", "colosseo", "chiesa"], objPflicht: true, dets: ["indef", "def"],
       ort: { stato: FERN.filter((x) => orteMit("stadtname").includes(x)) },
-      ortObj: { roma: ["museo_obj", "citta_obj", "centro_storico", "mostra", "colosseo", "chiesa"] },
-      ortObjStandard: ["museo_obj", "citta_obj", "centro_storico", "mostra", "chiesa"], comp: FAM, modi: ["con_calma"], modali: ["potere", "volere", "vorrei"],
+      /* FASSUNG 839 — „visitato la città a Venezia“: die Stadt in der Stadt — „la città“ nur ohne Ortsnamen */
+      ortObj: { roma: ["museo_obj", "centro_storico", "mostra", "colosseo", "chiesa"] },
+      ortObjStandard: ["museo_obj", "centro_storico", "mostra", "chiesa"], comp: FAM, modi: ["con_calma"], modali: ["potere", "volere", "vorrei"],
       keys: ["kultur", "reise"] }),
     V({ id: "disegnare", it: "disegnare", v: R("disegnare"), de: "zeichnen", level: "B1", kat: "freizeit",
       ort: { stato: ["casa", "parco", "giardino"] }, modi: ["volentieri", "bene"], modali: ["potere", "volere", "sapere"], kind: true, keys: ["hobby"] }),
@@ -1550,7 +1552,7 @@
       pers: { typ: "dir", tags: "fam freunde partner name" }, persPflicht: true, mezzo: true, mezzoOrt: "nonni",
       comp: FAM, modi: ["volentieri"], modali: ["potere", "dovere", "volere", "vorrei"], kind: true, keys: ["sozial"] }),
     V({ id: "festeggiare", it: "festeggiare", v: R("festeggiare"), de: "feiern", level: "A2", kat: "familie freizeit",
-      obj: ["compleanno", "natale"], objPflicht: true, dets: ["poss", "def"], objDets: { compleanno: ["poss"], natale: ["def"] },
+      obj: ["compleanno", "natale"], objPflicht: true, dets: ["poss", "def"], possOk: true, objDets: { compleanno: ["poss"], natale: ["def"] },
       ort: { stato: ["casa", "ristorante", "nonni", "da_marco", "discoteca"] }, ortObj: { discoteca: ["compleanno"] }, comp: FAM + " kollegen",
       modi: ["insieme"], modali: ["volere", "vorrei", "potere"], habit: "nein", kind: true, keys: ["fest"] }),
     V({ id: "regalare", it: "regalare", v: R("regalare"), de: "schenken", level: "A2", kat: "familie einkaufen",
@@ -1678,7 +1680,7 @@
       de: (w) => (w.oggetto === "treno" || w.oggetto === "autobus") ? "verpassen" : "verlieren",
       obj: SACHEN.concat(["treno", "autobus"]), objPflicht: true, possOk: true, besitz: true, objDets: { treno: ["def"], autobus: ["def"] },
       ort: { stato: ["in_treno", "sull_autobus", "centro", "parco"] }, ortObj: { in_treno: SACHEN, sull_autobus: SACHEN, centro: SACHEN, parco: SACHEN },
-      habit: "freq", negNurMai: true, keys: (w) => (w.oggetto === "treno" || w.oggetto === "autobus") ? ["verpasst"] : ["verloren"] }),
+      habit: "freq", negNurMai: true, zeitformenNur: ["presente", "passato", "imperfetto", "trapassato"], keys: (w) => (w.oggetto === "treno" || w.oggetto === "autobus") ? ["verpasst"] : ["verloren"] }),
     V({ id: "trovare", it: "trovare", v: R("trovare"), de: "finden", level: "A1", kat: "alltag arbeit",
       obj: SACHEN.concat(["lavoro_nomen", "appartamento"]), objPflicht: true, possOk: true, besitz: true,
       ort: { stato: ["cucina", "camera", "in_macchina", "ufficio", "centro", "citta"].concat(FERN) },
@@ -1686,7 +1688,10 @@
       ortObjFern: ["appartamento", "lavoro_nomen"], habit: "nein", keys: ["gefunden"] }),
     V({ id: "dimenticare", it: "dimenticare", v: R("dimenticare"), de: "vergessen", level: "A2", kat: "alltag",
       obj: SACHEN, objPflicht: true, possOk: true, besitz: true,
-      ort: { stato: ["casa", "ufficio", "in_treno", "bar", "ristorante", "sull_autobus"] }, habit: "freq", modali: ["dovere"], modalNurNeg: true, keys: ["vergessen"] }),
+      ort: { stato: ["casa", "ufficio", "in_treno", "bar", "ristorante", "sull_autobus"] }, habit: "freq", modali: ["dovere"], modalNurNeg: true,
+      /* FASSUNG 839 — XANDER (Funk 225): „keine Quatschsätze achte ganz explizit darauf dass er niemals Unsinn rausgehen kann“
+         „Perderete il telefono?“ / „Dimenticherò le chiavi“ sagt niemand voraus — nur geschehen (oder „non devi dimenticare“). */
+      zeitformenNur: ["presente", "passato", "imperfetto", "trapassato"], keys: ["vergessen"] }),
   ];
   const VERBO = {}; VERBI.forEach((v) => { VERBO[v.id] = v; });
 
@@ -1762,6 +1767,9 @@
   function wFeld(w) { if (!istFrage(w)) return ""; const f = WFRAGEN.find((x) => x.id === w.wort); return f ? f.feld : ""; }
   function feldAktiv(w, feld) { return !leer(w[feld]) && wFeld(w) !== feld; }
 
+  /* FASSUNG 839 — „cucinato da Marco con Marco“: wer der Ort ist, kann nicht auch Begleitung/Objekt sein */
+  const ORT_PERSON = { da_marco: ["marco"], nonni: ["nonni", "nonno", "nonna"] };
+  function ortIstPerson(luogo, pid) { return Boolean(ORT_PERSON[luogo] && ORT_PERSON[luogo].includes(pid)); }
   function personenPassend(w, v, tagsStr, rolle) {
     const si = subjektInfo(wSubj(w), w.genus);
     const tags = (tagsStr || "").split(" ").filter(Boolean);
@@ -1772,7 +1780,8 @@
       && !(si.sog.fam && pe.tags.includes("fam"))
       && !(w.quando === "da_bambino" && (pe.tags.includes("partner") || pe.tags.includes("kollegen")))
       && !(rolle === "comp" && feldAktiv(w, "persona") && w.persona === pe.id)
-      && !(rolle === "pers" && feldAktiv(w, "compagnia") && w.compagnia === pe.id));
+      && !(rolle === "pers" && feldAktiv(w, "compagnia") && w.compagnia === pe.id)
+      && !(feldAktiv(w, "luogo") && ortIstPerson(w.luogo, pe.id)));
   }
 
   /* Die Sinn-Schlüssel eines Satzes — daran hängen die Gründe. */
@@ -1856,6 +1865,17 @@
     if (v.zeitNur && !v.zeitNur.includes(g)) return false;
     if (g === "saison" && v.id === "essere_luogo") return false;
     if (g === "seit" && v.id === "restare") return false;
+    /* FASSUNG 839 — „Stasera prepara la colazione“, „Stamattina ha organizzato la cena“:
+       Frühstück gehört nicht an den Abend, das Abendessen nicht an den Morgen.
+       „Domani mattina presto“ hieße auf Deutsch „morgen früh früh“. */
+    if (o && o.id === "colazione" && t.tz && t.tz.every((x) => x === "abend")) return false;
+    if (o && (o.id === "cena" || o.id === "cena_obj") && t.tz && t.tz.every((x) => x === "morgen")) return false;
+    if (t.id === "domani_mattina" && feldAktiv(w, "modo") && w.modo === "presto") return false;
+    /* „Vorrebbero fumare da tre anni“ — ein Wunsch „seit drei Jahren“ im Konditional ist schief */
+    if (["seit", "dauerpast"].includes(g) && (zf === "condizionale" || (feldAktiv(w, "modale") && w.modale === "vorrei"))) return false;
+    /* „Quando ho tempo, domani vado …“ — „quando“ mit Präsens heißt „immer wenn“;
+       ein fester Termin braucht dann das futuro (oder „se“). */
+    if (w.verbindung === "quando" && feldAktiv(w, "causa") && zf === "presente" && ["zukunft", "samstag", "abend", "wochenende", "uhr", "heute", "stamattina", "jetzt"].includes(g)) return false;
     if (g === "mai" && v.id === "cercare") return false;
     if (g === "freq" && feldAktiv(w, "modale") && w.modale === "volere") return false;
     if (v.id === "fumare" && o && !["jetzt", "heute", "uhr", "abend", "vergangen"].includes(g)) return false;
@@ -1926,6 +1946,14 @@
       if (r.id === "tardi" && t && !["stasera", "ieri_sera", "domani_sera"].includes(t.id)) return;
       if (r.id === "vacanza" && w.stato === "in_vacanza") return;
       if (r.id === "ritardo" && w.stato === "in_ritardo") return;
+      /* FASSUNG 839 — XANDER (Funk 225): „keine Quatschsätze achte ganz explizit darauf dass er niemals Unsinn rausgehen kann“
+         „Potevo organizzare la festa perché c'era una festa“ (doppelt gemoppelt),
+         „Se sarà il compleanno di Luca, festeggiano il Natale“ (widerspricht sich). */
+      if (r.id === "festa" && (w.oggetto === "festa_obj" || w.luogo === "festa" || v.id === "festeggiare" || v.id === "organizzare")) return;
+      if (r.id === "compleanno" && (["natale", "compleanno"].includes(w.oggetto) || vb === "se" || vb === "quando" || vb === "se2" || vb === "se3")) return;
+      /* „Pioverà, quindi potrete prendere l'autobus“ — ein Hindernis erlaubt nichts.
+         „können“ + weil/deshalb nur mit einem Grund, der etwas möglich macht. */
+      if (!neg && feldAktiv(w, "modale") && w.modale === "potere" && (vb === "perche" || vb === "quindi") && !["tempo", "bel_tempo", "vacanza", "saldi", "caldo"].includes(r.id)) return;
       const pro = r.pro.some((x) => k.includes(x)), contra = r.contra.some((x) => k.includes(x));
       const bedingung = vb === "se" || vb === "quando" || vb === "se2" || vb === "se3";
       const darfNeg = r.neg || (vb !== "quando" && bedingung && r.negBedingung);
@@ -1954,12 +1982,12 @@
      Damit kein Angebot eine frühere Wahl kaputt macht: angebote()
      prüft jedes Angebot gegen diese Felder, bevor es gezeigt wird. */
   const ABH = {
-    oggetto: ["causa", "quando", "modo", "luogo", "persona", "modale", "zeitform"],
+    oggetto: ["causa", "quando", "modo", "luogo", "persona", "modale", "zeitform", "compagnia"],
     det: ["modo"],
     luogo: ["causa", "quando", "modo", "oggetto", "persona", "compagnia", "mezzo", "modale"],
     mezzo: ["causa", "luogo"],
     persona: ["causa", "luogo", "oggetto", "compagnia", "soggetto"],
-    compagnia: ["causa", "luogo", "modo", "persona", "soggetto", "quando"],
+    compagnia: ["causa", "luogo", "modo", "persona", "soggetto", "quando", "modale"],
     quando: ["causa", "zeitform", "modo", "luogo", "oggetto", "modale"],
     modo: ["causa", "quando", "luogo", "oggetto", "compagnia", "soggetto", "modale"],
     modale: ["causa", "quando", "zeitform", "modo"],
@@ -1977,7 +2005,7 @@
   function angebote(w, feld) {
     const roh = angeboteRoh(w, feld);
     const abh = (ABH[feld] || []).filter((g) => g === "zeitform" || (feldAktiv(w, g) && wFeld(w) !== g));
-    const anlassFelder = ["modo", "modale", "quando", "verbindung", "causa", "zeitform", "einleitung"];
+    const anlassFelder = ["modo", "modale", "quando", "verbindung", "causa", "zeitform", "einleitung", "oggetto"];
     const vv = wVerb(w);
     const anlassJetztOk = vv && !condOhneAnlass(w, vv);
     if (!abh.length && !(anlassJetztOk && anlassFelder.includes(feld))) return roh;
@@ -1985,6 +2013,8 @@
       const id = idVon(x);
       const w2 = Object.assign({}, w, feld === "zeitform" ? { tempo: id } : { [feld]: id });
       if (feld === "oggetto") { w2.det = ""; w2.agg = ""; }
+      /* FASSUNG 839 — weg von „mai“ fällt auch das „non“ weg, das „mai“ mitgebracht hat (so macht es die Oberfläche) */
+      if (feld === "quando" && w.quando === "mai" && id !== "mai") w2.neg = false;
       if (feld === "quando" && id === "mai") { w2.neg = true; if (!abh.includes("modale") && feldAktiv(w, "modale") && !angeboteRoh(w2, "modale").some((y) => y.id === w.modale)) return false; if (feldAktiv(w, "modo") && !angeboteRoh(w2, "modo").some((y) => y.id === w.modo)) return false; if (feldAktiv(w, "oggetto") && !angeboteRoh(w2, "oggetto").some((y) => y.id === w.oggetto)) return false; }
       if (anlassJetztOk && anlassFelder.includes(feld) && feld !== "zeitform" && condOhneAnlass(w2, vv)) return false;
       return abh.every((g) => {
@@ -2009,6 +2039,7 @@
           && !(w.satzart === "wfrage" && w.wort === "chi" && !["tu", "noi", "voi", "loro"].includes(s.id))
           && !(w.satzart === "wfrage" && s.id === "noi" && basisZeit(w) !== "presente")
           && !(v && v.keinSubjekt && v.keinSubjekt.includes(s.id))
+          && !(w.satzart === "wfrage" && !["perche", "chi"].includes(w.wort) && !s.pron && v && v.pers && v.pers.typ === "dir" && (v.persPflicht || feldAktiv(w, "persona")))
           && !(s.id === "marco" && feldAktiv(w, "luogo") && w.luogo === "da_marco")
           && !((w.satzart === "frage" || w.satzart === "wfrage") && s.id === "noi" && ["passato", "imperfetto", "trapassato", "condPassato"].includes(basisZeit(w)))
           && !(feldAktiv(w, "modo") && w.modo === "insieme" && s.p < 3)
@@ -2054,6 +2085,9 @@
           && !(m.id === "vorrei" && zf !== "presente")
           && !(m.id === "sapere" && (feldAktiv(w, "luogo") || feldAktiv(w, "compagnia") || feldAktiv(w, "mezzo") || (feldAktiv(w, "quando") && w.quando !== "da_bambino") || feldAktiv(w, "oggetto") && v.id !== "parlare" && v.id !== "suonare" && v.id !== "giocare"))
           && !(m.id === "sapere" && w.verbindung && feldAktiv(w, "causa"))
+          && !(m.id === "sapere" && w.satzart === "wfrage" && w.wort === "quando")
+          /* „Speravo che tu dovessi stampare il modulo“ — niemand hofft auf ein Müssen */
+          && !(m.id === "dovere" && feldAktiv(w, "einleitung") && ["spero_che", "speravo_che"].includes(w.einleitung))
           && !(v.modalNurNeg && !w.neg)
           && !((m.id === "dovere" || m.id === "vorrei") && w.neg && w.satzart !== "aussage")
           && !(m.id === "dovere" && w.neg && !NICHT_MUESSEN.includes(v.id))
@@ -2158,6 +2192,8 @@
         if (v.exklusiv && v.exklusiv.includes("luogo") && v.exklusiv.some((f) => f !== "luogo" && feldAktiv(w, f))) return [];
         return ids.map((id) => LUOGO[id]).filter((l) => l && ab(l.level, lv)
           && !(l.id === "da_marco" && w.soggetto === "marco")
+          && !(feldAktiv(w, "compagnia") && ortIstPerson(l.id, w.compagnia))
+          && !(feldAktiv(w, "persona") && ortIstPerson(l.id, w.persona))
           && (!o || ortObjOk(v, l, o))
           && !(mz && !mezzoPasstZuOrt(mz, l))
           && !(feldAktiv(w, "persona") && v.persOrt && v.persOrt[l.id] !== undefined && !personenPassend(w, v, v.persOrt[l.id], "pers").some((p) => p.id === w.persona))
@@ -2169,6 +2205,8 @@
           && !(v.id === "andare" && RAUM_ORTE.includes(l.id) && (feldAktiv(w, "modo") || feldAktiv(w, "compagnia")))
           && !(feldAktiv(w, "modo") && w.modo === "volentieri" && ["andare", "tornare"].includes(v.id) && !l.tags.some((x) => FREIZEIT_ORT.includes(x)))
           && !(feldAktiv(w, "modo") && ["insieme", "da_solo"].includes(w.modo) && PRIVAT(l))
+          && !(feldAktiv(w, "modo") && w.modo === "da_solo" && l.tags.includes("person"))
+          && !(w.satzart === "wfrage" && w.wort === "conchi" && (l.id === "letto" || (PRIVAT(l) && v.id !== "restare")))
           && !(feldAktiv(w, "modo") && w.modo === "da_solo" && ["essere_luogo", "andare"].includes(v.id) && (!l.tags.some((x) => FREIZEIT_ORT.includes(x)) || l.tags.includes("ausflug")))
           && !(feldAktiv(w, "modale") && w.modale === "vorrei" && v.id === "essere_luogo" && !l.tags.some((x) => ["urlaub", "natur", "fern", "draussen"].includes(x)))
           && !(feldAktiv(w, "modo") && w.modo === "fino_tardi" && v.id === "restare" && l.id !== "ufficio")
@@ -2201,6 +2239,10 @@
         return v.modi.map((id) => MODO[id]).filter((m) => m && ab(m.level, lv)
           && !(m.id === "insieme" && (!si.pl || feldAktiv(w, "compagnia")))
           && !(m.id === "da_solo" && feldAktiv(w, "compagnia"))
+          /* „Non dorme poco“, „Ha potuto fumare poco?“ — „poco“ verträgt kein „non“ und kein Modalverb */
+          && !(m.id === "poco" && (w.neg || feldAktiv(w, "modale")))
+          /* „Sono da Marco da sole“ — bei jemandem ist man nicht allein */
+          && !(m.id === "da_solo" && l && l.tags.includes("person"))
           && !(["molto", "poco"].includes(m.id) && o && v.id !== "parlare")
           && !(["molto", "poco"].includes(m.id) && v.id === "parlare" && feldAktiv(w, "compagnia") && !o)
           && !(["bene", "male"].includes(m.id) && v.id === "parlare" && (!o || feldAktiv(w, "compagnia")))
@@ -2228,6 +2270,7 @@
           && prestoTardiOk(m.id, v, w, l ? l.id : "")
           && !(v.id === "andare" && l && RAUM_ORTE.includes(l.id))
           && !(["presto", "tardi", "fino_tardi"].includes(m.id) && t && t.grp === "uhr")
+          && !(m.id === "presto" && t && t.id === "domani_mattina")
           && !(m.id === "fino_tardi" && v.id === "restare" && (!l || l.id !== "ufficio"))
           && !(m.id === "al_telefono" && !feldAktiv(w, "compagnia"))
           && !(["in_italiano", "in_tedesco"].includes(m.id) && v.id === "scrivere" && !o && false)
@@ -2261,22 +2304,33 @@
           && !(e.nurPresente && zf !== "presente")
           && !(e.modus === "cong" && !(zf === "presente" || (ab("C1", lv) && (zf === "passato" || zf === "imperfetto"))))
           && !((e.modus === "cong" || e.modus === "congPast") && feldAktiv(w, "modale") && w.modale === "vorrei")
+          && !(["spero_che", "speravo_che"].includes(e.id) && feldAktiv(w, "modale") && w.modale === "dovere")
+          /* „Non credo che … non …“ — doppelt verneint, schwer zu verstehen */
+          && !(e.id === "non_credo_che" && w.neg)
           && !(e.modus === "congPast" && !(zf === "presente" || zf === "passato")));
       }
       case "wort": {
         if (!v) return [];
         const r = rolleVon(w, v);
         return WFRAGEN.filter((f) => {
-          if (f.id === "checosa") return Boolean(v.obj) && !["chiedere", "prepararsi", "giocare", "lavarsi", "avere", "chiamare", "usare", "dare"].includes(v.id) && !(v.exklusiv && feldAktiv(w, "persona"));
+          /* FASSUNG 839 — XANDER (Funk 225): „keine Quatschsätze achte ganz explizit darauf dass er niemals Unsinn rausgehen kann“
+             „Che cosa parlava?“ fragt nach keiner Sprache — dafür gibt es kein Fragewort hier. */
+          if (f.id === "checosa") return Boolean(v.obj) && !["chiedere", "prepararsi", "giocare", "lavarsi", "avere", "chiamare", "usare", "dare", "parlare"].includes(v.id) && !(v.exklusiv && feldAktiv(w, "persona"));
           /* „Chi aiuta Giulia?“ hieße „Wer hilft Giulia?“ — deshalb nur mit tu/noi/voi/loro */
           if (f.id === "chi") return v.pers && v.pers.typ === "dir" && !(v.exklusiv && feldAktiv(w, "oggetto")) && ["tu", "noi", "voi", "loro"].includes(w.soggetto);
           if (f.id === "achi") return v.pers && v.pers.typ === "a" && !(v.exklusiv && feldAktiv(w, "luogo"));
-          if (f.id === "conchi") return Boolean(v.comp) && !(feldAktiv(w, "modo") && ["insieme", "da_solo"].includes(w.modo));
+          /* „Mit wem bleibt er im Bett?“ — im Bett, im Schlafzimmer, zu Hause gibt es keine Begleitung (auch nicht als Frage). */
+          const lw = feldAktiv(w, "luogo") ? LUOGO[w.luogo] : null;
+          if (f.id === "conchi") return Boolean(v.comp) && !(feldAktiv(w, "modo") && ["insieme", "da_solo"].includes(w.modo))
+            && !(lw && (lw.id === "letto" || (PRIVAT(lw) && v.id !== "restare")));
+          /* „Dove aiutava mio fratello Marco?“ — wer hilft wem? Mit einem Namen/Nomen als Subjekt
+             und einer Person als direktem Objekt wird die W-Frage mehrdeutig: dann nur „Perché“. */
+          if (f.id !== "perche" && f.id !== "chi" && v.pers && v.pers.typ === "dir" && v.persPflicht && !wSubj(w).pron) return false;
           if (f.id === "dove") return Boolean(v.ort) && (r === "stato" || r === "moto") && !(v.exklusiv && feldAktiv(w, "persona"))
             && angeboteRoh(Object.assign({}, w, { satzart: "aussage", luogo: "" }), "luogo").length > 0;
           if (f.id === "dadove") return Boolean(v.ort) && r === "da" && v.id !== "telefonare" && v.id !== "uscire";
           if (f.id === "come") return Boolean(v.mezzo) && (!v.ort || feldAktiv(w, "luogo") || v.mezzoOrt);
-          if (f.id === "quando") return !(v.id === "avere" && basisZeit(w) === "passato") && !v.zeitNur;
+          if (f.id === "quando") return !(v.id === "avere" && basisZeit(w) === "passato") && !v.zeitNur && !(feldAktiv(w, "modale") && w.modale === "sapere");
           if (f.id === "perche") return true;
           return false;
         });
@@ -2351,7 +2405,8 @@
     if (v.modoPflicht && !w.modo) w.modo = erstes("modo");
     if (brauchtGewohnheit(w, v) && !w.quando) {
       const a = angebote(w, "quando");
-      const lieb = a.find((x) => x.id === "di_solito") || a.find((x) => x.id === "da_bambino") || a[0];
+      /* FASSUNG 839 — „mai“ nie von selbst einsetzen (bräuchte „non“: „Perdevate mai …“ wäre falsch) */
+      const lieb = a.find((x) => x.id === "di_solito") || a.find((x) => x.id === "da_bambino") || a.find((x) => x.id !== "mai");
       if (lieb) w.quando = lieb.id;
     }
     if (v.einsVon && !v.einsVon.some((f) => feldAktiv(w, f) || wf === f)) {
@@ -2421,6 +2476,8 @@
     if (v.einsVon && !v.einsVon.some((f) => feldAktiv(w, f) || wf === f)) probleme.push({ feld: v.einsVon[0], pflicht: true });
     if (v.exklusiv && v.exklusiv.filter((f) => feldAktiv(w, f)).length > 1) probleme.push({ feld: v.exklusiv[1], wert: w[v.exklusiv[1]] });
     if (w.satzart === "wfrage" && w.neg && w.wort !== "perche") probleme.push({ feld: "neg", wert: true });
+    /* FASSUNG 839 — eine W-Frage ohne (gültiges) Fragewort gibt es nicht */
+    if (w.satzart === "wfrage" && !WFRAGEN.some((f) => f.id === w.wort)) probleme.push({ feld: "wort", pflicht: true, text: "Wähle ein Fragewort (Che cosa, Dove, Quando …)." });
     /* Mehr als vier freie Angaben in einem Satz klingen nach Liste, nicht nach Sprache */
     const frei = ["quando", "modo", "compagnia", "mezzo", "agg", "causa"].filter((f) => feldAktiv(w, f)).length
       + (feldAktiv(w, "luogo") && !v.ortPflicht ? 1 : 0) + (feldAktiv(w, "persona") && !v.persPflicht ? 1 : 0)
@@ -2475,6 +2532,8 @@
         case "causa": { const c = CAUSA[String(x).replace(/^non:/, "")]; return c ? (/^non:/.test(x) ? "non " : "") + grundItKurz(c) : x; }
         case "stato": return (STATO[x] || {}).it || x;
         case "neg": return "non";
+        case "wort": return (WFRAGEN.find((f) => f.id === x) || {}).it || x;
+        case "einleitung": return (EINLEITUNGEN.find((e) => e.id === x) || {}).it || x;
         default: return String(x);
       }
     } catch (e) { return String(x); }
@@ -2743,6 +2802,9 @@
       else if (dz === "praet" || dz === "perf") finit = md.praet[dp];
       else if (dz === "fut") { finit = DE_WERDEN[dp]; rechts = [dv.inf, md.inf]; return { finit, rechts, doppel: true }; }
       else if (dz === "k2") finit = (md.k2 || md.praes)[dp];
+      /* FASSUNG 839 — „Pensavo che avessero dovuto mangiare …“ = „… dass sie hatten essen müssen“
+         (Ersatzinfinitiv: hatte + Infinitiv + Modalverb im Infinitiv), nicht „essen müssen“. */
+      else if (dz === "plusq") { finit = DE_HABEN.praet[dp]; rechts = [dv.inf, md.inf]; return { finit, rechts, doppel: true }; }
       else finit = md.praes[dp];
       rechts = [dv.inf];
     }
@@ -3012,7 +3074,7 @@
     }
     // 1. Das, was nicht passt, weglassen
     const ohne = Object.assign({}, w);
-    felder.forEach((f) => { if (f === "zeitform") ohne.tempo = "presente"; else if (f === "neg") ohne.neg = false; else if (f !== "verbo") ohne[f] = ""; });
+    felder.forEach((f) => { if (f === "zeitform") ohne.tempo = "presente"; else if (f === "neg") ohne.neg = false; else if (f === "wort") { ohne.wort = ""; ohne.satzart = "aussage"; } else if (f !== "verbo") ohne[f] = ""; });
     kand.push(ohne);
     // 2. Die letzte Änderung zurücknehmen
     if (zuletzt && zuletzt.feld) {
@@ -3025,7 +3087,14 @@
       if (f === "verbo" || f === "neg") return;
       const tmp = Object.assign({}, w); if (f === "zeitform") tmp.tempo = ""; else tmp[f] = "";
       const a = angebote(tmp, f);
-      a.slice(0, 2).forEach((x) => { const z = Object.assign({}, w); if (f === "zeitform") z.tempo = x.id; else z[f] = typeof x === "string" ? x : x.id; kand.push(z); });
+      a.slice(0, f === "zeitform" ? 4 : 2).forEach((x) => { const z = Object.assign({}, w); if (f === "zeitform") z.tempo = x.id; else z[f] = typeof x === "string" ? x : x.id; kand.push(z); });
+      /* FASSUNG 839 — passt nur eine andere Zeitform, dann auch mit einer passenden Zeitangabe anbieten
+         („Avete perso il telefono.“ · „Ieri avete perso il telefono.“) */
+      if (f === "zeitform" && !feldAktiv(w, "quando")) a.slice(0, 4).forEach((x) => {
+        const z = Object.assign({}, w, { tempo: x.id });
+        const q = angebote(z, "quando")[0];
+        if (q) kand.push(Object.assign({}, z, { quando: q.id }));
+      });
     });
     /* zuletzt: jede freie Angabe einzeln weglassen */
     FREI.forEach((f) => { if (feldAktiv(w, f)) { const z = Object.assign({}, w); z[f] = ""; kand.push(z); } });
