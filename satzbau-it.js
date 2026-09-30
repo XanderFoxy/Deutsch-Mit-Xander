@@ -496,6 +496,8 @@
       praet: ["wollte", "wolltest", "wollte", "wollten", "wolltet", "wollten"] },
     moechten: { inf: "möchten", praes: ["möchte", "möchtest", "möchte", "möchten", "möchtet", "möchten"] },
     sollen: { inf: "sollen", k2: ["sollte", "solltest", "sollte", "sollten", "solltet", "sollten"] },
+    duerfen: { inf: "dürfen", praes: ["darf", "darfst", "darf", "dürfen", "dürft", "dürfen"],
+      praet: ["durfte", "durftest", "durfte", "durften", "durftet", "durften"] },
   };
 
   /* ===================================================================
@@ -670,6 +672,9 @@
     L("da_casa_ho", "da casa", "", "von zu Hause||", "homeoffice", "A2"),
   ];
   const LUOGO = {}; LUOGHI.forEach((l) => { LUOGO[l.id] = l; });
+  /* Pizzeria, Kino, Disko … nicht am Morgen */
+  ["pizzeria", "ristorante", "discoteca", "cinema", "teatro", "concerto", "festa"].forEach((id) => { LUOGO[id].tzNicht = ["morgen"]; });
+  const RAUM_ORTE = ["cucina", "bagno", "soggiorno", "camera", "giardino", "balcone", "terrazza"];
   function orteMit(tag) { return LUOGHI.filter((l) => l.tags.includes(tag)).map((l) => l.id); }
 
   /* --- Wie ist es? (Adjektive) ---------------------------------------
@@ -798,7 +803,7 @@
     O("bolletta", "bolletta della luce", "f", 0, "def", "Stromrechnung", "f", "rechnung", "B1"),
     O("biglietto", "biglietto", "m", 0, "indef def", "Fahrkarte", "f", "ticket", "A1"),
     /* Größeres */
-    O("macchina", "macchina", "f", 0, "indef def poss", "Auto", "n", "fahrzeug", "A1", { adj: ["nuovo", "vecchio", "rosso", "piccolo", "grande"], einmalig: true }),
+    O("macchina", "macchina", "f", 0, "indef def poss", "Auto", "n", "fahrzeug", "A1", { adj: ["nuovo", "vecchio", "rosso", "piccolo"], einmalig: true }),
     O("bici", "bici", "f", 0, "indef def poss", "Fahrrad", "n", "fahrzeug", "A1", { adj: ["nuovo", "vecchio"], einmalig: true, kind: true }),
     O("appartamento", "appartamento", "m", 0, "indef", "Wohnung", "f", "wohnung", "A2", { adj: ["piccolo", "grande", "nuovo", "luminoso"], einmalig: true }),
     O("lavoro_nomen", "lavoro", "m", 0, "ohne indef", "Arbeit", "f", "arbeit", "A1", { deIndefN: "Stelle" }),
@@ -907,6 +912,11 @@
     O("appuntamento", "appuntamento", "m", 0, "indef", "Termin", "m", "termin", "A2"),
   ];
   const OGG = {}; OGGETTI.forEach((o) => { OGG[o.id] = o; });
+  /* Dinge, die man nicht jeden Tag / jede Woche tut („ogni sera scrivo una lettera“ ✗) */
+  ["lettera", "cartolina", "poesia", "rapporto", "pacco", "regalo", "profumo", "orologio", "contratto", "modulo", "documenti", "passaporto",
+    "carta_identita", "permesso", "abbonamento", "certificato", "viaggio", "volo", "festa_obj", "museo_obj", "mostra", "citta_obj", "colosseo",
+    "centro_storico", "compleanno", "natale", "esame", "camera_hotel", "taxi", "barzelletta", "riunione", "presentazione", "progetto", "sciarpa",
+    "giacca", "cappotto", "vestito", "scarpe", "maglione", "camicia", "borsa", "lampada", "medicina_fach", "economia", "corso_obj", "universita_obj"].forEach((id) => { if (OGG[id]) OGG[id].selten = true; });
   /* Deutsche Einzahl bei italienischer Mehrzahl: gli occhiali → die Brille */
   OGGETTI.forEach((o) => { if (o.deSg) o.de.pl = false; });
   AGG.importante = AGG.importante || { id: "importante", it: "importante", de: "wichtig", level: "B1" };
@@ -931,20 +941,20 @@
     T("domenica", "domenica", "am Sonntag", "samstag", "A1"),
     T("fine_settimana", "il fine settimana", "am Wochenende", "wochenende", "A1"),
     T("prossima_settimana", "la prossima settimana", "nächste Woche", "zukunft", "A1"),
-    T("mese_prossimo", "il mese prossimo", "nächsten Monat", "zukunft", "A2"),
-    T("anno_prossimo", "l'anno prossimo", "nächstes Jahr", "zukunft", "A2"),
+    T("mese_prossimo", "il mese prossimo", "nächsten Monat", "zukunft", "A2", { lang: true }),
+    T("anno_prossimo", "l'anno prossimo", "nächstes Jahr", "zukunft", "A2", { lang: true }),
     T("fra_due_giorni", "fra due giorni", "in zwei Tagen", "zukunft", "A2"),
-    T("prossima_estate", "la prossima estate", "nächsten Sommer", "zukunft", "B1"),
+    T("prossima_estate", "la prossima estate", "nächsten Sommer", "zukunft", "B1", { lang: true }),
     T("ieri", "ieri", "gestern", "vergangen", "A1"),
     T("ieri_sera", "ieri sera", "gestern Abend", "vergangen", "A1", { tz: ["abend"] }),
     T("ieri_mattina", "ieri mattina", "gestern Morgen", "vergangen", "A1", { tz: ["morgen"] }),
     T("altro_ieri", "l'altro ieri", "vorgestern", "vergangen", "A2"),
     T("sabato_scorso", "sabato scorso", "letzten Samstag", "vergangen", "A1"),
     T("settimana_scorsa", "la settimana scorsa", "letzte Woche", "vergangen", "A1"),
-    T("mese_scorso", "il mese scorso", "letzten Monat", "vergangen", "A2"),
-    T("anno_scorso", "l'anno scorso", "letztes Jahr", "vergangen", "A1"),
+    T("mese_scorso", "il mese scorso", "letzten Monat", "vergangen", "A2", { lang: true }),
+    T("anno_scorso", "l'anno scorso", "letztes Jahr", "vergangen", "A1", { lang: true }),
     T("due_giorni_fa", "due giorni fa", "vor zwei Tagen", "vergangen", "A2"),
-    T("estate_scorsa", "l'estate scorsa", "letzten Sommer", "vergangen", "A2"),
+    T("estate_scorsa", "l'estate scorsa", "letzten Sommer", "vergangen", "A2", { lang: true }),
     T("ogni_giorno", "ogni giorno", "jeden Tag", "gewohnheit", "A1", { taeglich: true }),
     T("ogni_mattina", "ogni mattina", "jeden Morgen", "gewohnheit", "A1", { taeglich: true, tz: ["morgen"] }),
     T("ogni_sera", "ogni sera", "jeden Abend", "gewohnheit", "A1", { taeglich: true, tz: ["abend"] }),
@@ -989,7 +999,7 @@
     mai: ["presente", "passato", "imperfetto", "futuro", "condizionale"],
     gia: ["passato", "trapassato"],
     kind: ["imperfetto"],
-    uhr: ["presente", "passato", "futuro", "imperfetto", "condizionale"],
+    uhr: ["presente", "passato", "futuro", "condizionale"],
     seit: ["presente"],
     dauerpast: ["passato"],
     ganztag: ["presente", "passato", "futuro"],
@@ -1010,8 +1020,8 @@
     M("da_solo", "da solo", "allein", "ende", "A1", { agr: true }),
     M("con_calma", "con calma", "in Ruhe", "ende", "A2"),
     M("in_fretta", "in fretta", "schnell", "ende", "A2"),
-    M("presto", "presto", "früh", "ende", "A1"),
-    M("tardi", "tardi", "spät", "ende", "A1"),
+    M("presto", "presto", "früh", "verb", "A1"),
+    M("tardi", "tardi", "spät", "verb", "A1"),
     M("fino_tardi", "fino a tardi", "bis spät", "ende", "A2"),
     M("a_voce_alta", "a voce alta", "laut", "ende", "B1"),
     M("con_attenzione", "con attenzione", "genau", "ende", "B1"),
@@ -1046,7 +1056,7 @@
     if (hat("weit")) return ["macchina", "treno", "autobus"].includes(id);
     if (id === "aereo") return false;
     if (hat("flughafen")) return ["autobus", "metro", "taxi", "macchina", "treno"].includes(id);
-    if (hat("haltestelle")) return ["piedi", "bici"].includes(id);
+    if (hat("haltestelle")) return false;
     if (l.id === "stazione") return ["piedi", "bici", "autobus", "metro", "taxi", "macchina"].includes(id);
     if (id === "treno") return hat("arbeit") || l.id === "universita" || l.id === "nonni" || l.id === "casa";
     if (hat("nah") || l.id === "zoo") return ["piedi", "bici", "autobus", "macchina"].includes(id) && !(id === "autobus" && l.id === "bosco");
@@ -1128,6 +1138,8 @@
       "", "kaufen_obj", {}),
   ];
   const CAUSA = {}; CAUSE.forEach((c) => { CAUSA[c.id] = c; });
+  /* Gründe, aus denen man etwas WILL — nicht MUSS („Mi annoio, quindi devo …“ klingt schief) */
+  ["annoio", "bel_tempo", "caldo", "tempo", "vacanza", "saldi", "festa"].forEach((id) => { CAUSA[id].wunsch = true; });
 
   /* Zustände für „essere + Adjektiv“ */
   const STATI = [
@@ -1248,7 +1260,7 @@
         "concerto", "ristorante", "bar", "pizzeria", "parco", "mare", "montagna", "lago", "campagna", "spiaggia", "citta", "centro", "stazione", "aeroporto",
         "albergo", "medico", "dentista", "ospedale", "nonni", "da_marco", "festa", "discoteca", "supermercato", "mercato", "banca", "posta", "zoo", "stadio",
         "letto", "corso"].concat(FERN) },
-      ortPflicht: true, comp: FAM + " kollegen", modi: ["da_solo"], modali: ["potere", "dovere", "vorrei"], punkt: true, dauer: true, zustand: true, kind: true }),
+      ortPflicht: true, comp: FAM + " kollegen", modi: ["da_solo"], modali: ["potere", "dovere", "vorrei"], punkt: true, dauer: true, zustand: true, kind: true, keinCond: true }),
     V({ id: "abitare", it: "abitare", v: R("abitare"), de: "wohnen", level: "A1", kat: "alltag familie reisen",
       ort: { stato: ["centro", "citta", "campagna", "montagna", "mare", "nonni"].concat(FERN) }, einsVon: ["luogo", "modo", "compagnia"],
       comp: "fam freunde partner name", deCompZusammen: true, modi: ["da_solo"], modali: ["volere", "vorrei", "potere"], habit: "nein", dauer: true, zustand: true, kind: true, keys: ["wohnen"] }),
@@ -1311,7 +1323,7 @@
       ort: { stato: ["casa", "cucina", "terrazza", "bar", "ristorante", "pizzeria", "ufficio", "nonni", "da_marco", "festa"] },
       ortObj: { bar: ["caffe", "cappuccino", "te", "acqua", "succo", "birra", "vino"], ristorante: ["acqua", "vino", "birra", "caffe"],
         pizzeria: ["birra", "acqua", "vino"], ufficio: ["caffe", "te", "acqua", "cappuccino"], festa: ["birra", "vino", "acqua", "succo"] },
-      comp: FAM + " kollegen", modi: ["volentieri", "molto", "poco", "insieme"], modali: ["potere", "dovere", "volere", "vorrei"], punkt: true, kind: true, keys: ["trinken"] }),
+      objPflicht: true, comp: FAM + " kollegen", modi: ["volentieri", "insieme"], modali: ["potere", "dovere", "volere", "vorrei"], punkt: true, kind: true, keys: ["trinken"] }),
     V({ id: "cucinare", it: "cucinare", v: R("cucinare"), de: "kochen", level: "A1", kat: "essen alltag familie",
       obj: ["pasta", "spaghetti", "zuppa", "risotto", "pesce", "carne", "verdura", "lasagne"], dets: ["def", "indef"],
       ort: { stato: ["casa", "cucina", "nonni", "da_marco"] }, comp: FAM, modi: ["volentieri", "bene", "con_calma", "insieme"],
@@ -1319,8 +1331,8 @@
     V({ id: "preparare", it: "preparare", v: R("preparare"), level: "A1", kat: "essen alltag familie",
       de: (w) => w.oggetto === "torta" ? "backen" : "machen",
       obj: ["cena", "pranzo", "colazione", "torta", "insalata", "panino", "caffe", "te"], objPflicht: true, dets: ["def", "indef"],
-      ort: { stato: ["casa", "cucina", "nonni"] }, comp: FAM, modi: ["con_calma", "in_fretta", "volentieri", "insieme"], modali: ["potere", "dovere", "volere", "vorrei"],
-      punkt: true, keys: (w) => w.oggetto === "torta" ? ["essen", "kochen", "kuchen"] : ["essen", "kochen"] }),
+      ort: { stato: ["casa", "cucina", "nonni"] }, comp: FAM, modi: ["in_fretta", "volentieri", "insieme"], modali: ["potere", "dovere", "volere", "vorrei"],
+      punkt: true, keys: (w) => w.oggetto === "torta" ? ["kuchen", "backen"] : (["caffe", "te"].includes(w.oggetto) ? ["heissgetraenk"] : ["essen", "kochen"]) }),
     V({ id: "ordinare", it: "ordinare", v: R("ordinare"), de: "bestellen", level: "A2", kat: "essen freizeit",
       obj: ["pizza", "pasta", "spaghetti", "risotto", "pesce", "insalata", "zuppa", "acqua", "vino", "birra", "torta", "caffe", "cappuccino", "te", "cornetto", "succo", "panino"],
       objPflicht: true, dets: ["indef", "def"],
@@ -1346,7 +1358,8 @@
       obj: ["conto", "affitto", "bolletta", "caffe", "biglietto"], objPflicht: true, dets: ["def"],
       ort: { stato: ["bar", "ristorante", "pizzeria", "posta", "banca"] },
       ortObj: { bar: ["conto", "caffe"], ristorante: ["conto"], pizzeria: ["conto"], posta: ["bolletta"], banca: ["affitto", "bolletta"] },
-      modi: ["con_carta", "contanti"], modali: ["potere", "dovere", "volere", "vorrei"], habit: "freq", keys: ["bezahlen"] }),
+      modi: ["con_carta", "contanti"], modali: ["potere", "dovere", "volere", "vorrei"], habit: "freq", keys: ["bezahlen"],
+      zeitNur: ["jetzt", "heute", "vergangen", "freq", "mai", "gewohnheit", "uhr"] }),
     /* ---------- Einkaufen ---------- */
     V({ id: "comprare", it: "comprare", v: R("comprare"), de: "kaufen", level: "A1", kat: "einkaufen alltag",
       obj: LEBENSMITTEL.concat(KLEIDUNG, LESESTOFF, ["cornetto", "regalo", "fiori", "profumo", "orologio", "biglietto", "telefono", "macchina", "bici", "appartamento", "medicina"]),
@@ -1357,7 +1370,7 @@
         panetteria: ["pane", "cornetto", "torta", "biscotti"], macelleria: ["carne"], farmacia: ["medicina"], libreria: ["libro", "rivista", "romanzo", "fumetto"],
         negozio: KLEIDUNG, centro_commerciale: KLEIDUNG.concat(["telefono", "profumo", "regalo", "orologio", "libro"]),
         centro: KLEIDUNG.concat(["regalo", "fiori", "libro", "telefono", "profumo", "orologio"]), stazione: ["biglietto", "giornale", "rivista"], gelateria: ["gelato"] },
-      comp: FAM, modi: ["da_solo"], modali: ["potere", "dovere", "volere", "vorrei"], kind: true,
+      comp: FAM, modali: ["potere", "dovere", "volere", "vorrei"], kind: true,
       keys: (w) => {
         const o = OGG[w.oggetto], k = ["einkauf", "kaufen_obj"];
         if (!o) return k;
@@ -1408,7 +1421,7 @@
       modi: ["volentieri", "molto", "poco", "a_voce_alta", "con_attenzione", "con_calma"], modali: ["potere", "dovere", "volere", "vorrei"], dauer: true, kind: true, keys: ["lesen"] }),
     V({ id: "telefonare", it: "telefonare", v: R("telefonare"), level: "A1", kat: "familie arbeit alltag gesundheit",
       de: (w) => w.persona ? "anrufen" : "telefonieren", deFall: "akk",
-      pers: { typ: "a", tags: "fam freunde partner name kollegen medico" }, ort: { stato: ["casa", "ufficio"] },
+      pers: { typ: "a", tags: "fam freunde partner name kollegen medico" }, ort: { da: ["casa", "ufficio"] }, deOrt: { casa: "von zu Hause", ufficio: "vom Büro aus" },
       modi: ["al_telefono"].filter(() => false), modali: ["potere", "dovere", "volere", "vorrei"], punkt: true, kind: true,
       keys: (w) => w.persona === "medico" ? ["arzt"] : ["sozial"] }),
     V({ id: "chiamare", it: "chiamare", v: R("chiamare"), level: "A1", kat: "familie arbeit gesundheit reisen",
@@ -1443,7 +1456,7 @@
     V({ id: "vedere", it: "vedere", v: C.vedere, de: "sehen", deFall: "akk", level: "A2", kat: "freizeit familie",
       pers: { typ: "dir", tags: "fam freunde partner name" }, persPflicht: true, ort: { stato: ["bar", "centro"] },
       modali: ["potere", "volere", "vorrei"], keys: ["sozial"] }),
-    V({ id: "aspettare", it: "aspettare", v: R("aspettare"), de: "warten", deFall: "aufAkk", level: "A1", kat: "reisen alltag familie gesundheit",
+    V({ id: "aspettare", it: "aspettare", v: R("aspettare"), de: "warten", deFall: "aufAkk", deObjPraep: "auf", level: "A1", kat: "reisen alltag familie gesundheit",
       obj: ["autobus", "treno", "taxi", "pacco"], pers: { typ: "dir", tags: "fam freunde partner name kollegen medico" }, einsVon: ["oggetto", "persona"], exklusiv: ["oggetto", "persona"],
       ort: { stato: ["fermata", "stazione", "aeroporto", "bar", "casa", "centro", "cinema", "ristorante"] },
       ortObj: { fermata: ["autobus"], stazione: ["treno", "taxi"], casa: ["pacco"], aeroporto: ["taxi"], bar: [], centro: [], cinema: [], ristorante: [] },
@@ -1462,9 +1475,9 @@
       obj: ["documenti", "biglietto", "foto", "modulo", "rapporto"], objPflicht: true, dets: ["def"], ort: { stato: ["ufficio", "casa", "biblioteca"] },
       modali: ["potere", "dovere", "volere"], habit: "nein", keys: ["arbeit_buero"] }),
     V({ id: "firmare", it: "firmare", v: R("firmare"), de: "unterschreiben", level: "B1", kat: "verwaltung arbeit",
-      obj: ["contratto", "modulo", "lettera"], objPflicht: true, dets: ["def"], modali: ["dovere", "potere"], habit: "nein", keys: ["amt"] }),
+      obj: ["contratto", "modulo", "lettera"], objPflicht: true, dets: ["def"], modali: ["dovere", "potere"], habit: "nein", keys: ["papier"] }),
     V({ id: "compilare", it: "compilare", v: R("compilare"), de: "ausfuellen", level: "B1", kat: "verwaltung",
-      obj: ["modulo"], objPflicht: true, dets: ["def", "indef"], modi: ["con_attenzione"], modali: ["dovere", "potere"], habit: "nein", keys: ["amt"] }),
+      obj: ["modulo"], objPflicht: true, dets: ["def", "indef"], modi: ["con_attenzione"], modali: ["dovere", "potere"], habit: "nein", keys: ["papier"] }),
     V({ id: "prenotare", it: "prenotare", v: R("prenotare"), level: "A2", kat: "reisen freizeit essen",
       de: (w) => (w.oggetto === "tavolo" || w.oggetto === "camera_hotel") ? "reservieren" : "buchen",
       obj: ["tavolo", "camera_hotel", "volo", "viaggio", "biglietto"], objPflicht: true, dets: ["indef"],
@@ -1474,16 +1487,16 @@
     V({ id: "rinnovare", it: "rinnovare", v: R("rinnovare"), de: "verlaengern", level: "B2", kat: "verwaltung",
       obj: ["passaporto", "carta_identita", "permesso", "contratto", "abbonamento"], objPflicht: true, possOk: true, dets: ["poss", "def"],
       ort: { stato: ["comune", "questura"] }, ortObj: { comune: ["carta_identita"], questura: ["passaporto", "permesso"] },
-      modali: ["dovere", "potere", "volere"], habit: "nein", keys: ["amt"] }),
+      modali: ["dovere", "potere", "volere"], habit: "nein", keys: ["papier"] }),
     V({ id: "richiedere", it: "richiedere", v: R("richiedere", { part: "richiesto" }), de: "beantragen", level: "B2", kat: "verwaltung",
       obj: ["passaporto", "carta_identita", "permesso", "certificato"], objPflicht: true, dets: ["indef", "def"],
       objDets: { passaporto: ["def", "indef"], carta_identita: ["def", "indef"], permesso: ["def", "indef"], certificato: ["indef"] },
       ort: { stato: ["comune", "questura"] }, ortObj: { comune: ["carta_identita", "certificato"], questura: ["passaporto", "permesso"] },
-      modali: ["dovere", "potere", "volere"], habit: "nein", keys: ["amt"] }),
+      modali: ["dovere", "potere", "volere"], habit: "nein", keys: ["papier"] }),
     V({ id: "consegnare", it: "consegnare", v: R("consegnare"), de: "abgeben", level: "B1", kat: "verwaltung bildung arbeit",
       obj: ["documenti", "modulo", "compiti", "rapporto"], objPflicht: true, dets: ["def"],
       ort: { stato: ["comune", "questura", "ufficio", "scuola"] }, ortObj: { comune: ["documenti", "modulo"], questura: ["documenti", "modulo"], ufficio: ["documenti", "rapporto", "modulo"], scuola: ["compiti"] },
-      modali: ["dovere", "potere"], habit: "nein", keys: (w) => w.oggetto === "compiti" ? ["lernen"] : ["amt"] }),
+      modali: ["dovere", "potere"], habit: "nein", keys: (w) => w.oggetto === "compiti" ? ["lernen"] : ["papier"] }),
     V({ id: "spedire", it: "spedire", v: R("spedire", { isc: true }), de: "schicken", level: "B1", kat: "verwaltung alltag",
       obj: ["pacco", "lettera", "cartolina"], objPflicht: true, dets: ["indef", "def"],
       pers: { typ: "a", tags: "fam freunde partner name" }, ort: { stato: ["posta"] }, modali: ["dovere", "potere", "volere", "vorrei"], habit: "nein", keys: ["post"] }),
@@ -1542,7 +1555,7 @@
       modi: ["insieme"], modali: ["volere", "vorrei", "potere"], habit: "nein", kind: true, keys: ["fest"] }),
     V({ id: "regalare", it: "regalare", v: R("regalare"), de: "schenken", level: "A2", kat: "familie einkaufen",
       obj: ["fiori", "libro", "profumo", "orologio", "borsa", "sciarpa", "cioccolato"], objPflicht: true, dets: ["indef", "part", "def"],
-      pers: { typ: "a", tags: "fam freunde partner name" }, modali: ["volere", "vorrei", "potere"], habit: "nein", keys: ["geschenk"] }),
+      pers: { typ: "a", tags: "fam freunde partner name" }, persPflicht: true, modali: ["volere", "vorrei", "potere"], habit: "nein", keys: ["geschenk"] }),
     V({ id: "portare", it: "portare", v: R("portare"), level: "A2", kat: "familie freizeit",
       de: (w) => w.persona ? "bringen" : "mitbringen",
       obj: ["fiori", "torta", "vino", "regalo", "libro", "biscotti"], objPflicht: true, dets: ["indef", "part", "def"],
@@ -1554,6 +1567,8 @@
     V({ id: "parlare", it: "parlare", v: R("parlare"), de: "sprechen", level: "A1", kat: "familie bildung arbeit freizeit",
       obj: ["italiano", "tedesco", "inglese", "spagnolo", "francese"], dets: ["ohne"], comp: FAM + " kollegen medico",
       einsVon: ["oggetto", "compagnia"], modi: ["bene", "male", "al_telefono", "molto", "poco"],
+      zeitNurObj: { italiano: ["jetzt", "kind", "seit", "freq", "mai", "heute"], tedesco: ["jetzt", "kind", "seit", "freq", "mai", "heute"], inglese: ["jetzt", "kind", "seit", "freq", "mai", "heute"],
+        spagnolo: ["jetzt", "kind", "seit", "freq", "mai", "heute"], francese: ["jetzt", "kind", "seit", "freq", "mai", "heute"] },
       modali: ["potere", "dovere", "volere", "vorrei", "sapere"], dauer: false, kind: true,
       keys: (w) => w.compagnia ? (w.compagnia === "medico" ? ["arzt"] : ["sozial"]) : ["sprache"] }),
     V({ id: "raccontare", it: "raccontare", v: R("raccontare"), de: "erzaehlen", level: "B1", kat: "familie freizeit",
@@ -1582,10 +1597,10 @@
       obj: ["vocaboli", "lezione", "grammatica", "frase"], objPflicht: true, dets: ["def"], modi: ["a_voce_alta", "con_calma"], modali: ["dovere", "potere", "volere"],
       keys: ["lernen"] }),
     V({ id: "capire", it: "capire", v: R("capire", { isc: true }), de: "verstehen", level: "A1", kat: "bildung arbeit",
-      obj: ["domanda", "lezione", "grammatica", "problema", "frase", "film"], objPflicht: true, dets: ["def"], modi: ["bene"], habit: "nein", zustand: true,
+      obj: ["domanda", "lezione", "grammatica", "problema", "frase", "film"], objPflicht: true, dets: ["def"], modi: ["bene"], habit: "nein",
       keys: ["verstehen"] }),
     V({ id: "fare_compiti", it: "fare i compiti", v: C.fare, fest: "i compiti", de: "machen", deFestObj: "Hausaufgaben", deFestDet: "def", level: "A1", kat: "bildung familie",
-      ort: { stato: ["casa", "camera", "biblioteca", "scuola"] }, comp: "freunde name fam", modi: ["con_calma", "in_fretta", "insieme"],
+      ort: { stato: ["casa", "camera", "biblioteca", "scuola"] }, comp: "freunde name fam", modi: ["con_calma", "in_fretta", "insieme"], keinSubjekt: ["genitori"],
       modali: ["potere", "dovere", "volere"], punkt: true, kind: true, keys: ["lernen"] }),
     V({ id: "frequentare", it: "frequentare", v: R("frequentare"), de: "besuchen", level: "B1", kat: "bildung",
       obj: ["corso_obj", "universita_obj"], objPflicht: true, dets: ["indef", "def"], objDets: { corso_obj: ["indef", "def"], universita_obj: ["def"] },
@@ -1605,6 +1620,7 @@
       obj: ["autobus", "treno", "metro", "taxi", "medicina", "pastiglia", "caffe", "cappuccino", "gelato", "ombrello"], objPflicht: true, possOk: true, besitz: true,
       objDets: { autobus: ["def"], treno: ["def"], metro: ["def"], taxi: ["indef"], medicina: ["indef", "def"], pastiglia: ["indef"], caffe: ["indef"], cappuccino: ["indef"], gelato: ["indef"], ombrello: ["def", "poss"] },
       ort: { stato: ["fermata", "stazione", "bar", "gelateria"] }, ortObj: { fermata: ["autobus"], stazione: ["treno", "taxi"], bar: ["caffe", "cappuccino"], gelateria: ["gelato"] },
+      objModali: { caffe: ["potere", "volere", "vorrei"], cappuccino: ["potere", "volere", "vorrei"], gelato: ["potere", "volere", "vorrei"] },
       modali: ["potere", "dovere", "volere", "vorrei"], punkt: true,
       keys: (w) => { const o = OGG[w.oggetto]; if (!o) return []; if (o.tags.includes("verkehr")) return o.tags.filter((t) => t !== "verkehr");
         if (o.tags.includes("medizin")) return ["medizin"]; if (o.id === "ombrello") return ["schirm"]; if (o.id === "gelato") return ["eis"]; return ["trinken", "heissgetraenk"]; } }),
@@ -1616,13 +1632,16 @@
         bici: ["indef"], cane_obj: ["indef"], gatto: ["indef"], problema: ["indef"], domanda: ["indef"] },
       ort: { stato: ["medico", "dentista", "comune", "banca", "parrucchiere", "questura"] }, ortObj: { medico: ["appuntamento"], dentista: ["appuntamento"], comune: ["appuntamento"],
         banca: ["appuntamento"], parrucchiere: ["appuntamento"], questura: ["appuntamento"] },
-      habit: "freq", zustand: true, kind: true, keys: (w) => ["zustand:" + (w.oggetto || "")] }),
+      habit: "freq", zustand: true, kind: true, keys: (w) => ["zustand:" + (w.oggetto || "")], objKeinPassato: ["fame", "sete", "tempo", "mal_testa"],
+      zeitNurObj: { macchina: ["kind", "seit", "dauerpast", "mai", "jetzt"], bici: ["kind", "seit", "dauerpast", "mai", "jetzt"], cane_obj: ["kind", "seit", "dauerpast", "mai", "jetzt"],
+        gatto: ["kind", "seit", "dauerpast", "mai", "jetzt"], febbre: ["jetzt", "heute", "stamattina", "vergangen", "dauerpast", "freq"], influenza: ["jetzt", "heute", "vergangen", "dauerpast"],
+        problema: ["jetzt", "heute", "vergangen"], domanda: ["jetzt", "heute"] } }),
     V({ id: "essere_agg", it: "essere", name: "essere (wie?)", v: ESSERE, de: "sein", level: "A1", kat: "alltag gesundheit arbeit familie",
       stato: true, habit: "freq", zustand: true, kind: true, keinPassato: true,
       keys: (w) => ["zst:" + (w.stato || "")] }),
     V({ id: "fumare", it: "fumare", v: R("fumare"), de: "rauchen", level: "A2", kat: "gesundheit alltag",
       obj: ["sigaretta"], dets: ["indef"], ort: { stato: ["balcone", "terrazza", "giardino"] }, modi: ["molto", "poco"], modali: ["potere", "volere", "vorrei"],
-      keys: ["rauchen"] }),
+      dauer: true, zeitNur: ["jetzt", "gewohnheit", "freq", "freqvorn", "mai", "seit"], keys: ["rauchen"] }),
     /* ---------- Haushalt ---------- */
     V({ id: "pulire", it: "pulire", v: R("pulire", { isc: true }), de: "putzen", level: "A1", kat: "alltag familie",
       obj: ["cucina_raum", "bagno_raum", "casa_obj", "finestre", "camera_mia"], objPflicht: true, dets: ["def", "poss"], objDets: { camera_mia: ["poss", "def"] }, possOk: true,
@@ -1659,7 +1678,7 @@
       de: (w) => (w.oggetto === "treno" || w.oggetto === "autobus") ? "verpassen" : "verlieren",
       obj: SACHEN.concat(["treno", "autobus"]), objPflicht: true, possOk: true, besitz: true, objDets: { treno: ["def"], autobus: ["def"] },
       ort: { stato: ["in_treno", "sull_autobus", "centro", "parco"] }, ortObj: { in_treno: SACHEN, sull_autobus: SACHEN, centro: SACHEN, parco: SACHEN },
-      habit: "freq", keys: (w) => (w.oggetto === "treno" || w.oggetto === "autobus") ? ["verpasst"] : ["verloren"] }),
+      habit: "freq", negNurMai: true, keys: (w) => (w.oggetto === "treno" || w.oggetto === "autobus") ? ["verpasst"] : ["verloren"] }),
     V({ id: "trovare", it: "trovare", v: R("trovare"), de: "finden", level: "A1", kat: "alltag arbeit",
       obj: SACHEN.concat(["lavoro_nomen", "appartamento"]), objPflicht: true, possOk: true, besitz: true,
       ort: { stato: ["cucina", "camera", "in_macchina", "ufficio", "centro", "citta"].concat(FERN) },
@@ -1670,3 +1689,1385 @@
       ort: { stato: ["casa", "ufficio", "in_treno", "bar", "ristorante", "sull_autobus"] }, habit: "freq", modali: ["dovere"], modalNurNeg: true, keys: ["vergessen"] }),
   ];
   const VERBO = {}; VERBI.forEach((v) => { VERBO[v.id] = v; });
+
+  /* ===================================================================
+     4. ZEITFORMEN, VERBINDUNGEN, EINLEITUNGEN JE NIVEAU
+     =================================================================== */
+  const ZEITFORMEN = [
+    { id: "presente", name: "Gegenwart", it: "presente", level: "A1" },
+    { id: "passato", name: "Vergangenheit", it: "passato prossimo", level: "A1" },
+    { id: "imperfetto", name: "Gewohnheit, Zustand früher", it: "imperfetto", level: "A2" },
+    { id: "futuro", name: "Zukunft", it: "futuro semplice", level: "A2" },
+    { id: "condizionale", name: "würde …", it: "condizionale", level: "B1" },
+    { id: "trapassato", name: "Vorvergangenheit", it: "trapassato prossimo", level: "C1" },
+    { id: "condPassato", name: "wäre/hätte … (Vergangenheit)", it: "condizionale passato", level: "C1" },
+  ];
+  const VERBINDUNGEN = [
+    { id: "perche", it: "perché", de: "weil", name: "Grund dahinter", level: "A1", hinweis: "„perché“ + Grund: das Verb bleibt an seinem Platz, anders als im deutschen „weil“-Satz." },
+    { id: "quindi", it: "quindi", de: "deshalb", name: "Grund davor", level: "A2", hinweis: "Grund zuerst, dann „quindi“ (deshalb) und die Folge." },
+    { id: "quando", it: "quando", de: "wenn", name: "immer wenn …", level: "A2", hinweis: "„quando“ = wenn/als. Bei der Zukunft steht auch im quando-Satz das futuro." },
+    { id: "se", it: "se", de: "wenn", name: "falls …", level: "A2", hinweis: "Wirkliche Bedingung: se + presente (oder futuro), dann der Hauptsatz." },
+    { id: "se2", it: "se", de: "wenn", name: "wenn … würde (nicht wirklich)", level: "B2", hinweis: "Periodo ipotetico: se + congiuntivo imperfetto, Hauptsatz im condizionale — „Se avessi tempo, andrei …“." },
+    { id: "se3", it: "se", de: "wenn … hätte", name: "wenn … gewesen wäre (verpasst)", level: "C1", hinweis: "Periodo ipotetico der Vergangenheit: se + congiuntivo trapassato, Hauptsatz im condizionale passato." },
+  ];
+  const EINLEITUNGEN = [
+    { id: "so_che", it: "So che", de: "Ich weiß,", level: "A2", modus: "ind", keinIo: true },
+    { id: "penso_che", it: "Penso che", de: "Ich glaube,", level: "B2", modus: "cong", keinIo: true },
+    { id: "credo_che", it: "Credo che", de: "Ich glaube,", level: "B2", modus: "cong", keinIo: true },
+    { id: "spero_che", it: "Spero che", de: "Ich hoffe,", level: "B2", modus: "cong", keinIo: true },
+    { id: "non_credo_che", it: "Non credo che", de: "Ich glaube nicht,", level: "B2", modus: "cong", keinIo: true },
+    { id: "importante_che", it: "È importante che", de: "Es ist wichtig,", level: "B2", modus: "cong", nurPresente: true },
+    { id: "pensavo_che", it: "Pensavo che", de: "Ich dachte,", level: "C1", modus: "congPast", keinIo: true },
+    { id: "speravo_che", it: "Speravo che", de: "Ich hoffte,", level: "C1", modus: "congPast", keinIo: true },
+  ];
+  const WFRAGEN = [
+    { id: "checosa", it: "Che cosa", feld: "oggetto" }, { id: "chi", it: "Chi", feld: "persona" }, { id: "achi", it: "A chi", feld: "persona" },
+    { id: "conchi", it: "Con chi", feld: "compagnia" }, { id: "dove", it: "Dove", feld: "luogo" }, { id: "dadove", it: "Da dove", feld: "luogo" },
+    { id: "quando", it: "Quando", feld: "quando" }, { id: "come", it: "Come", feld: "mezzo" }, { id: "perche", it: "Perché", feld: "causa" },
+  ];
+  const KATEGORIEN = [
+    { id: "alltag", name: "Haushalt & Alltag", icon: "🏠" }, { id: "einkaufen", name: "Einkaufen", icon: "🛒" },
+    { id: "arbeit", name: "Arbeit & Beruf", icon: "💼" }, { id: "familie", name: "Familie & Freunde", icon: "👪" },
+    { id: "freizeit", name: "Freizeit", icon: "⚽" }, { id: "essen", name: "Essen & Trinken", icon: "🍝" },
+    { id: "reisen", name: "Reisen & Unterwegs", icon: "🚆" }, { id: "bildung", name: "Schule & Lernen", icon: "📚" },
+    { id: "gesundheit", name: "Gesundheit", icon: "🩺" }, { id: "verwaltung", name: "Amt & Papierkram", icon: "📄" },
+  ];
+  const NIVEAU_INFO = {
+    A1: ["presente", "passato prossimo mit essere/avere", "Verneinung mit non", "Fragen (sì/no und dove, quando, con chi …)", "potere, dovere, volere, vorrei + Infinitiv", "e, ma, o, poi", "perché + Grund"],
+    A2: ["+ imperfetto (Gewohnheit, Zustand)", "+ futuro semplice", "+ sapere + Infinitiv (können)", "+ quindi, quando, se (wirklich)", "+ So che … (dass-Satz)", "+ già, da bambino, da tre anni"],
+    B1: ["+ condizionale (andrei, vorrei, potrei)", "+ mehr Wörter für Arbeit, Amt, Lernen"],
+    B2: ["+ congiuntivo presente nach Penso che, Credo che, Spero che, È importante che", "+ Se avessi …, andrei … (periodo ipotetico)", "+ Amt: rinnovare, richiedere"],
+    C1: ["+ congiuntivo passato und imperfetto (Penso che sia andato …, Pensavo che …)", "+ trapassato prossimo, condizionale passato", "+ Se avessi avuto …, sarei andato …"],
+    C2: ["alles aus A1 bis C1"],
+  };
+  function niveauInfo(lv) { return NIVEAU_INFO[lv] || NIVEAU_INFO.A1; }
+
+  /* ===================================================================
+     5. GEFÜHRTES BAUEN — was passt zu dem, was schon gewählt ist?
+     =================================================================== */
+  const leer = (x) => x === undefined || x === null || x === "";
+  function wVerb(w) { return VERBO[w.verbo] || null; }
+  function wSubj(w) { return SOGGETTI.find((s) => s.id === w.soggetto) || SOGGETTI[0]; }
+  function verbDe(w, v) { const d = typeof v.de === "function" ? v.de(w) : v.de; return d; }
+  function rollenVon(v) { return v.ort ? Object.keys(v.ort) : []; }
+  function rolleVon(w, v) { const r = rollenVon(v); return r.includes(w.rolle) ? w.rolle : r[0] || ""; }
+  /* Die Zeitform, auf die sich Zeitangaben und Gründe beziehen */
+  function basisZeit(w) {
+    if (w.verbindung === "se2") return "condizionale";
+    if (w.verbindung === "se3") return "condPassato";
+    return w.tempo || "presente";
+  }
+  const PRIVAT = (l) => l && (l.tags.includes("privat") || l.tags.includes("letto"));
+  function istFrage(w) { return w.satzart === "wfrage"; }
+  function wFeld(w) { if (!istFrage(w)) return ""; const f = WFRAGEN.find((x) => x.id === w.wort); return f ? f.feld : ""; }
+  function feldAktiv(w, feld) { return !leer(w[feld]) && wFeld(w) !== feld; }
+
+  function personenPassend(w, v, tagsStr, rolle) {
+    const si = subjektInfo(wSubj(w), w.genus);
+    const tags = (tagsStr || "").split(" ").filter(Boolean);
+    return PERSONE.filter((pe) => ab(pe.level, w.niveau)
+      && pe.tags.some((t) => tags.includes(t))
+      && pe.id !== si.sog.rel
+      && !(si.pl && pe.tags.includes("partner") && !pe.n.pl)
+      && !(si.sog.fam && pe.tags.includes("fam"))
+      && !(w.quando === "da_bambino" && (pe.tags.includes("partner") || pe.tags.includes("kollegen")))
+      && !(rolle === "comp" && feldAktiv(w, "persona") && w.persona === pe.id)
+      && !(rolle === "pers" && feldAktiv(w, "compagnia") && w.compagnia === pe.id));
+  }
+
+  /* Die Sinn-Schlüssel eines Satzes — daran hängen die Gründe. */
+  const ORT_SCHLUESSEL = {
+    shop: ["einkauf"], lebensmittel: ["vorrat"], kleidung: ["kleidung"], gastro: ["essen"], bar: ["trinken"], eisdiele: ["eis"],
+    kultur: ["ausgehen", "kultur"], fest: ["ausgehen", "fest"], sport: ["sport"], bad: ["bad"], draussen: ["draussen"], urlaub: ["urlaub"],
+    arbeit: ["arbeit"], bildung: ["lernen"], amt: ["amt"], arzt: ["arzt"], zahnarzt: ["zahnarzt"], friseur: ["friseur"], person: ["sozial"],
+    fern: ["reise"], hotel: ["urlaub"], stadt: ["stadt"],
+  };
+  function schluessel(w) {
+    const v = wVerb(w);
+    if (!v) return [];
+    let k = typeof v.keys === "function" ? v.keys(w) : (v.keys || []).slice();
+    k = k.slice();
+    const rolle = rolleVon(w, v);
+    if (feldAktiv(w, "luogo") && rolle !== "da") {
+      const l = LUOGO[w.luogo];
+      if (l && ["andare", "essere_luogo", "restare", "tornare", "arrivare", "partire", "trasferirsi"].includes(v.id)) {
+        l.tags.forEach((t) => { (ORT_SCHLUESSEL[t] || []).forEach((x) => k.push(x)); });
+        if (l.tags.includes("gastro") && !l.tags.includes("kantine")) k.push("ausgehen", "ausser_haus_essen");
+        if (l.id === "casa") k.push(rolle === "stato" ? "daheim" : "heim");
+        if (l.id === "letto") k.push(rolle === "stato" ? "ruhe" : "insbett", "ruhe");
+        if (l.id === "ufficio" && v.id === "restare") k.push("buero_bleiben");
+        if (l.id === "farmacia") k.push("medizin");
+        if (l.id === "gelateria") k.push("eis");
+      }
+    }
+    if (feldAktiv(w, "mezzo") && MEZZO[w.mezzo]) MEZZO[w.mezzo].keys.forEach((x) => k.push(x));
+    const o = feldAktiv(w, "oggetto") ? OGG[w.oggetto] : null;
+    if (o && v.id === "mangiare" && o.tags.includes("eis")) k.push("eis");
+    if (o && v.id === "bere") o.tags.forEach((t) => { if (["erfrischung", "heissgetraenk"].includes(t)) k.push(t); });
+    if (v.id === "restare" && w.luogo === "casa") k.push("daheim");
+    return Array.from(new Set(k));
+  }
+
+  function zeitPasstZumVerb(t, w, v, zf) {
+    const g = t.grp;
+    if (!(ZEIT_ZU_ZEITFORM[g] || []).includes(zf) && !(g === "uhr" && zf === "imperfetto" && v.zustand)) return false;
+    const habitGrp = ["gewohnheit", "saison", "freqvorn"].includes(g);
+    const l = feldAktiv(w, "luogo") ? LUOGO[w.luogo] : null;
+    const o = feldAktiv(w, "oggetto") ? OGG[w.oggetto] : null;
+    if (habitGrp && v.habit !== "ja" && !(g === "freqvorn" && v.habit === "freq")) return false;
+    if (g === "freq" && v.habit === "nein") return false;
+    if (g === "freq" && zf === "passato" && t.id === "sempre" && !(v.zustand || v.dauer)) return false;
+    if (g === "freq" && zf === "passato" && t.id === "spesso" && v.habit !== "ja") return false;
+    if (g === "uhr" && !v.punkt) return false;
+    if (["seit", "dauerpast", "ganztag"].includes(g) && !v.dauer) return false;
+    if (g === "kind" && !v.kind) return false;
+    if (g === "vergangen" && zf === "imperfetto" && !(v.zustand || feldAktiv(w, "modale"))) return false;
+    if (g === "gia" && (w.neg || feldAktiv(w, "modale"))) return false;
+    if (g === "mai" && feldAktiv(w, "modale") && zf === "passato") return false;
+    if (g === "freqvorn" && w.neg) return false;
+    if (v.tz && t.tz && !t.tz.some((x) => v.tz.includes(x))) return false;
+    if (v.tz && !t.tz && ["abend", "stamattina"].includes(g)) return false;
+    /* Gewohnheit nicht bei Anlässen, Reisen, großen Einmal-Käufen */
+    if ((t.taeglich || t.woechentlich || g === "freq" || g === "freqvorn") && l && (l.tags.includes("anlass") || l.tags.includes("fern") || l.tags.includes("weit") || l.tags.includes("hotel") || l.tags.includes("flughafen"))) return false;
+    /* „il mese prossimo“, „l'anno scorso“ … nur bei Dingen, die man nicht jeden Tag tut */
+    if (t.lang && !langOk(v, w, l, o)) return false;
+    /* bene/male/molto/poco nicht an einem Uhrzeit- oder Zukunftstermin */
+    if (feldAktiv(w, "modo") && ["bene", "male", "molto", "poco"].includes(w.modo) && !["gewohnheit", "freqvorn", "saison", "kind", "heute", "jetzt", "vergangen"].includes(g)) return false;
+    if (feldAktiv(w, "modo") && MODO[w.modo] && MODO[w.modo].pos === "verb" && !["presto", "tardi"].includes(w.modo) && (g === "freq" || g === "mai")) return false;
+    if (g === "uhr" && zf === "passato" && v.id === "essere_luogo") return false;
+    if (g === "freq" && istFrage(w) && (t.id === "sempre" || zf !== "presente")) return false;
+    if (v.zeitNurObj && o && v.zeitNurObj[o.id] && !v.zeitNurObj[o.id].includes(g) && !feldAktiv(w, "compagnia")) return false;
+    if (g === "saison") {
+      const k = schluessel(w);
+      if (!(l && (l.tags.includes("urlaub") || l.tags.includes("fern") || l.tags.includes("draussen") || l.tags.includes("bad")))
+        && !k.some((x) => ["draussen", "bad", "sport", "reise"].includes(x))) return false;
+    }
+    if (o && o.selten && (t.taeglich || t.woechentlich)) return false;
+    if (w.neg && t.taeglich) return false;
+    if (feldAktiv(w, "modale") && w.modale === "vorrei" && (habitGrp || g === "freq")) return false;
+    if (g === "mai" && zf === "imperfetto" && v.habit === "nein") return false;
+    if (g === "gia" && istFrage(w)) return false;
+    if (feldAktiv(w, "einleitung") && w.einleitung === "importante_che" && (habitGrp || g === "freq")) return false;
+    if (o && o.einmalig && (habitGrp || g === "freq" || g === "kind") && v.id !== "avere" && v.id !== "usare") return false;
+    if (g === "kind" && o && o.alk) return false;
+    if (g === "kind" && l && (l.tags.includes("arbeit") || l.tags.includes("amt") || l.tags.includes("fest") || l.tags.includes("hotel"))) return false;
+    if (g === "uhr" && feldAktiv(w, "modo") && ["presto", "tardi", "fino_tardi"].includes(w.modo)) return false;
+    if (g === "kind" && v.id === "lavorare") return false;
+    if (v.zeitNur && !v.zeitNur.includes(g)) return false;
+    if (["pranzare", "cenare", "fare_colazione"].includes(v.id) && (habitGrp || g === "freq") && !l) return false;
+    if ((w.verbindung === "se2" || w.verbindung === "se3") && feldAktiv(w, "causa") && (g === "uhr" || habitGrp || g === "freq")) return false;
+    if (feldAktiv(w, "modo") && (g === "freq" || g === "mai")) return false;
+    if (v.id === "essere_luogo" && ["seit", "dauerpast"].includes(g) && !(l && l.tags.some((x) => ["fern", "stadt", "urlaub"].includes(x)) && !feldAktiv(w, "compagnia"))) return false;
+    if (v.id === "andare" && w.luogo === "letto" && t.tz && !t.tz.includes("abend")) return false;
+    if (l && l.tzNicht && t.tz && t.tz.every((x) => l.tzNicht.includes(x))) return false;
+    if (["freq", "mai", "gia"].includes(g) && feldAktiv(w, "modale") && ["passato", "trapassato", "condPassato"].includes(zf)) return false;
+    if (v.id === "essere_luogo" && (habitGrp || g === "freq") && l && (l.tags.includes("verkehr") || l.tags.includes("anlass"))) return false;
+    if (["cercare", "trovare", "perdere", "dimenticare"].includes(v.id) && o && o.tags.includes("sachen") && !["jetzt", "heute", "stamattina", "vergangen", "freq", "mai", "gia", "freqvorn"].includes(g)) return false;
+    if (v.id === "andare" && l && RAUM_ORTE.includes(l.id) && !["jetzt", "uhr", "heute"].includes(g)) return false;
+    if (g === "freq" && zf === "passato" && istFrage(w)) return false;
+    if (feldAktiv(w, "modo") && ["molto", "poco"].includes(w.modo) && !["gewohnheit", "freqvorn", "saison", "kind", "heute", "jetzt", "vergangen"].includes(g)) return false;
+    /* Ein Grund aus einer bestimmten Lage passt nicht zu Gewohnheiten */
+    const ca = feldAktiv(w, "causa") ? CAUSA[String(w.causa).replace(/^non:/, "")] : null;
+    if (ca && (habitGrp || g === "freq" || g === "kind") && !ca.wieder) return false;
+    if (ca && (habitGrp || g === "freq" || g === "kind") && ["perche", "quindi"].includes(w.verbindung || "perche")) return false;
+    if (ca && ["perche", "quindi"].includes(w.verbindung || "perche") && !ca.zukunft && (g === "zukunft" || (g === "samstag" && zf !== "passato"))) return false;
+    if (ca && ca.id === "tardi" && !["stasera", "ieri_sera", "domani_sera"].includes(t.id)) return false;
+    return true;
+  }
+
+  const LANG_VERBEN = ["partire", "trasferirsi", "cominciare", "frequentare", "festeggiare", "organizzare", "prenotare", "visitare", "viaggiare",
+    "abitare", "studiare", "imparare", "superare", "giocare", "suonare", "fare_sport", "nuotare", "correre", "lavorare", "andare_trovare", "rinnovare", "richiedere"];
+  function langOk(v, w, l, o) {
+    if (LANG_VERBEN.includes(v.id)) return true;
+    if (["andare", "tornare", "restare", "essere_luogo", "arrivare"].includes(v.id)) return Boolean(l && l.tags.some((x) => ["fern", "urlaub", "weit"].includes(x)));
+    if (["comprare", "vendere"].includes(v.id)) return Boolean(o && o.einmalig);
+    if (["cercare", "trovare"].includes(v.id)) return Boolean(o && ["lavoro_nomen", "appartamento"].includes(o.id));
+    if (v.id === "avere") return Boolean(o && (o.einmalig || ["influenza", "febbre"].includes(o.id)));
+    return false;
+  }
+  /* Spricht der Satz über die Zukunft? (futuro, oder domani/la prossima settimana …) */
+  function zukunftBezug(w) {
+    const zf = basisZeit(w);
+    const t = feldAktiv(w, "quando") ? TEMPO[w.quando] : null;
+    return zf === "futuro" || Boolean(t && (t.grp === "zukunft" || (t.grp === "samstag" && zf !== "passato")));
+  }
+  /* Welche Gründe passen zu diesem Satz (und in welcher Richtung)? */
+  function gruendeFuer(w) {
+    const v = wVerb(w);
+    if (!v) return [];
+    const k = schluessel(w);
+    const neg = Boolean(w.neg);
+    const vb = w.verbindung || "perche";
+    const zf = basisZeit(w);
+    const t = feldAktiv(w, "quando") ? TEMPO[w.quando] : null;
+    const habit = t && ["gewohnheit", "saison", "freqvorn", "freq", "kind"].includes(t.grp);
+    const out = [];
+    /* „Prendo sempre l'autobus perché piove“ widerspricht sich — bei
+       Gewohnheiten nur „quando/se“: „… quando piove“. */
+    if (habit && (vb === "perche" || vb === "quindi")) return out;
+    const zb = zukunftBezug(w);
+    CAUSE.forEach((r) => {
+      if (!ab(r.level, w.niveau)) return;
+      if (vb === "quando" && !r.wieder) return;
+      if (habit && !r.wieder) return;
+      if (zb && (vb === "perche" || vb === "quindi") && !r.zukunft) return;
+      if (r.id === "costa" && !(feldAktiv(w, "oggetto") && v.id === "comprare")) return;
+      if (r.wunsch && feldAktiv(w, "modale") && w.modale === "dovere") return;
+      if (r.id === "tardi" && t && !["stasera", "ieri_sera", "domani_sera"].includes(t.id)) return;
+      if (r.id === "vacanza" && w.stato === "in_vacanza") return;
+      if (r.id === "ritardo" && w.stato === "in_ritardo") return;
+      const pro = r.pro.some((x) => k.includes(x)), contra = r.contra.some((x) => k.includes(x));
+      const bedingung = vb === "se" || vb === "quando" || vb === "se2" || vb === "se3";
+      const darfNeg = r.neg || (vb !== "quando" && bedingung && r.negBedingung);
+      if (!neg) {
+        if (pro && !contra && !(r.nurNegPerche && !bedingung)) out.push({ id: r.id, neg: false });
+        if (contra && !pro && darfNeg && bedingung) out.push({ id: "non:" + r.id, neg: true });
+      } else {
+        if (contra && !pro) out.push({ id: r.id, neg: false });
+        if (pro && !contra && darfNeg && !r.fixNeg && !(w.modale === "dovere" && feldAktiv(w, "modale"))
+          && !(w.modale === "potere" && feldAktiv(w, "modale") && r.id !== "tempo")) out.push({ id: "non:" + r.id, neg: true });
+      }
+    });
+    return out;
+  }
+
+  function detsFuer(v, o) {
+    if (!o) return [];
+    let d = (v.objDets && v.objDets[o.id]) || (v.dets ? v.dets.filter((x) => o.dets.includes(x)) : o.dets.slice());
+    if (!d.length) d = o.dets.slice(0, 1);
+    if (!v.possOk) d = d.filter((x) => x !== "poss");
+    if (v.possNur && !v.possNur.includes(o.id)) d = d.filter((x) => x !== "poss");
+    return d;
+  }
+
+  /* Die Angebote für ein Feld — immer abhängig von allem anderen. */
+  function angebote(w, feld) {
+    const v = wVerb(w);
+    const lv = w.niveau || "A1";
+    const zf = basisZeit(w);
+    switch (feld) {
+      case "verbo": return VERBI.filter((x) => ab(x.level, lv) && (!w.kategorie || w.kategorie === "alle" || x.kat.split(" ").includes(w.kategorie)));
+      case "soggetto": {
+        const e = EINLEITUNGEN.find((x) => x.id === w.einleitung && feldAktiv(w, "einleitung"));
+        return SOGGETTI.filter((s) => ab(s.level, lv)
+          && !(e && e.keinIo && s.id === "io")
+          && !((w.satzart === "frage" || w.satzart === "wfrage") && s.id === "io")
+          && !(w.satzart === "wfrage" && w.wort === "chi" && !["tu", "noi", "voi", "loro"].includes(s.id))
+          && !(w.satzart === "wfrage" && s.id === "noi" && basisZeit(w) !== "presente")
+          && !(v && v.keinSubjekt && v.keinSubjekt.includes(s.id))
+          && !((w.satzart === "frage" || w.satzart === "wfrage") && s.id === "noi" && ["passato", "imperfetto", "trapassato", "condPassato"].includes(basisZeit(w)))
+          && !(feldAktiv(w, "modo") && w.modo === "insieme" && s.p < 3)
+          && !(feldAktiv(w, "compagnia") && (w.compagnia === s.rel || (s.fam && (PERSONE.find((p) => p.id === w.compagnia) || { tags: [] }).tags.includes("fam"))))
+          && !(feldAktiv(w, "persona") && (w.persona === s.rel || (s.fam && (PERSONE.find((p) => p.id === w.persona) || { tags: [] }).tags.includes("fam")))));
+      }
+      case "zeitform": {
+        if (w.verbindung === "se2" || w.verbindung === "se3") return ZEITFORMEN.filter((z) => z.id === basisZeit(w));
+        const e = feldAktiv(w, "einleitung") ? EINLEITUNGEN.find((x) => x.id === w.einleitung) : null;
+        const m = feldAktiv(w, "modale") ? MODALE[w.modale] : null;
+        return ZEITFORMEN.filter((z) => {
+          if (!ab(z.level, lv)) return false;
+          if (v && v.keinPassato && ["passato", "trapassato", "condPassato"].includes(z.id)) return false;
+          if (v && v.objKeinPassato && v.objKeinPassato.includes(w.oggetto) && ["passato", "trapassato", "condPassato"].includes(z.id)) return false;
+          if (v && v.keinCond && ["condizionale", "condPassato"].includes(z.id) && !feldAktiv(w, "modale")) return false;
+          if (w.satzart === "wfrage" && ["condizionale", "condPassato"].includes(z.id)) return false;
+          if (z.id === "condizionale" && w.neg && w.quando !== "mai") return false;
+          if (w.neg && w.satzart === "frage" && !["presente", "passato"].includes(z.id)) return false;
+          if (w.satzart === "wfrage" && w.soggetto === "noi" && z.id !== "presente") return false;
+          if (e && e.id === "so_che" && !["presente", "passato", "futuro", "imperfetto"].includes(z.id)) return false;
+          if (m && !m.zeiten.includes(z.id)) return false;
+          if (e && e.nurPresente && z.id !== "presente") return false;
+          if (e && e.modus === "cong" && !(z.id === "presente" || (ab("C1", lv) && (z.id === "passato" || z.id === "imperfetto")))) return false;
+          if (e && e.modus === "congPast" && !(z.id === "presente" || z.id === "passato")) return false;
+          if (w.verbindung === "se" && feldAktiv(w, "causa") && !["presente", "futuro"].includes(z.id)) return false;
+          if (w.verbindung === "quando" && feldAktiv(w, "causa") && !["presente", "futuro", "passato", "imperfetto"].includes(z.id)) return false;
+          if (feldAktiv(w, "quando") && v && !zeitPasstZumVerb(TEMPO[w.quando], w, v, z.id)) return false;
+          if (z.id === "imperfetto" && v && !feldAktiv(w, "quando") && brauchtGewohnheit(Object.assign({}, w, { tempo: "imperfetto" }), v)
+            && !TEMPI.some((t) => ab(t.level, lv) && zeitPasstZumVerb(t, Object.assign({}, w, { tempo: "imperfetto" }), v, "imperfetto"))) return false;
+          if (feldAktiv(w, "causa")) {
+            const ww = Object.assign({}, w, { tempo: z.id });
+            if (!gruendeFuer(ww).some((g) => g.id === w.causa)) return false;
+          }
+          return true;
+        });
+      }
+      case "modale": {
+        if (!v) return [];
+        if (w.verbindung === "se3" || ["trapassato", "condPassato"].includes(zf)) return [];
+        return MODALI.filter((m) => ab(m.level, lv) && v.modali.includes(m.id) && m.zeiten.includes(zf === "condizionale" && m.id === "vorrei" ? "presente" : zf)
+          && !(m.id === "vorrei" && zf !== "presente")
+          && !(m.id === "sapere" && (feldAktiv(w, "luogo") || feldAktiv(w, "compagnia") || feldAktiv(w, "mezzo") || (feldAktiv(w, "quando") && w.quando !== "da_bambino") || feldAktiv(w, "oggetto") && v.id !== "parlare" && v.id !== "suonare" && v.id !== "giocare"))
+          && !(m.id === "sapere" && w.verbindung && feldAktiv(w, "causa"))
+          && !(v.modalNurNeg && !w.neg)
+          && !((m.id === "dovere" || m.id === "vorrei") && w.neg && w.satzart !== "aussage")
+          && !(m.id === "dovere" && w.neg && !NICHT_MUESSEN.includes(v.id))
+          && !(v.id === "essere_luogo" && !["presente", "futuro"].includes(zf))
+          && !(w.neg && w.satzart === "frage" && !(m.id === "potere" && zf === "presente"))
+          && !(m.id === "dovere" && feldAktiv(w, "einleitung") && w.einleitung === "importante_che")
+          && !(m.id === "vorrei" && feldAktiv(w, "einleitung") && EINLEITUNGEN.find((e) => e.id === w.einleitung).modus !== "ind")
+          && !(m.id === "dovere" && feldAktiv(w, "causa") && CAUSA[String(w.causa).replace(/^non:/, "")] && CAUSA[String(w.causa).replace(/^non:/, "")].wunsch)
+          && !(v.objModali && feldAktiv(w, "oggetto") && v.objModali[w.oggetto] && !v.objModali[w.oggetto].includes(m.id))
+          && !(m.id === "vorrei" && v.id === "essere_luogo" && feldAktiv(w, "luogo") && !LUOGO[w.luogo].tags.some((x) => ["urlaub", "natur", "fern", "draussen"].includes(x)))
+          && !(feldAktiv(w, "modo") && w.modo === "volentieri")
+          && !(feldAktiv(w, "quando") && ["gia"].includes(TEMPO[w.quando].grp))
+          && !(feldAktiv(w, "quando") && w.quando === "mai" && zf === "passato")
+          && !(feldAktiv(w, "quando") && TEMPO[w.quando].grp === "vergangen" && zf === "imperfetto" && !v.zustand && false));
+      }
+      case "oggetto": {
+        if (!v || !v.obj) return [];
+        const l = feldAktiv(w, "luogo") ? LUOGO[w.luogo] : null;
+        const t = feldAktiv(w, "quando") ? TEMPO[w.quando] : null;
+        return v.obj.map((id) => OGG[id]).filter((o) => o && ab(o.level, lv)
+          && ortObjOk(v, l, o)
+          && !(feldAktiv(w, "persona") && v.persObj && v.persObj[o.id] !== undefined && !personenPassend(w, v, v.persObj[o.id], "pers").some((p) => p.id === w.persona))
+          && !(t && t.grp === "kind" && (o.alk || (["pizza"].includes(o.id) && false)))
+          && !(t && t.grp === "kind" && ["caffe", "cappuccino"].includes(o.id))
+          && !(t && o.einmalig && ["gewohnheit", "saison", "freqvorn", "freq", "kind"].includes(t.grp) && v.id !== "avere" && v.id !== "usare")
+          && !(v.objKeinPassato && v.objKeinPassato.includes(o.id) && ["passato", "trapassato", "condPassato"].includes(zf))
+          && !(feldAktiv(w, "modo") && ["molto", "poco"].includes(w.modo) && v.id !== "parlare")
+          && !(feldAktiv(w, "modo") && w.modo === "volentieri" && !o.tags.some((x) => VOLENTIERI_DING.includes(x)))
+          && !(feldAktiv(w, "modo") && ["bene", "male"].includes(w.modo) && v.id === "parlare" && !o.tags.includes("sprache"))
+          && !(v.exklusiv && v.exklusiv.includes("oggetto") && v.exklusiv.some((f) => f !== "oggetto" && feldAktiv(w, f)))
+          && !(o.alk && l && (l.tags.includes("arbeit") || l.tags.includes("bildung") || l.tags.includes("kantine")))
+          && !(feldAktiv(w, "causa") && w.causa === "costa" && !o.tags.length));
+      }
+      case "det": {
+        const o = feldAktiv(w, "oggetto") ? OGG[w.oggetto] : null;
+        if (!v || !o) return [];
+        let d = detsFuer(v, o);
+        if (feldAktiv(w, "modo") && w.modo === "volentieri" && w.neg) d = d.filter((x) => x !== "indef");
+        return d;
+      }
+      case "agg": {
+        const o = feldAktiv(w, "oggetto") ? OGG[w.oggetto] : null;
+        if (!v || !o || o.a || v.id === "avere" || v.objPraep || w.neg) return [];
+        const det = w.det || detsFuer(v, o)[0];
+        if (det === "ohne") return [];
+        const ids = (v.objAdj && v.objAdj[o.id]) || o.adj || [];
+        /* „una buona pizza“ ja — „la buona pizza“ klingt schief */
+        return ids.map((id) => AGG[id]).filter((a) => a && ab(a.level, lv) && !(a.davor && det === "def" && !["nuovo", "vecchio"].includes(a.id)) && !(a.id === "buono" && det === "poss"));
+      }
+      case "stato": {
+        if (!v || !v.stato) return [];
+        return STATI.filter((s) => ab(s.level, lv) && !(feldAktiv(w, "causa") && String(w.causa).replace(/^non:/, "") === "vacanza" && s.id === "in_vacanza"));
+      }
+      case "persona": {
+        if (!v || !v.pers) return [];
+        const l = feldAktiv(w, "luogo") ? LUOGO[w.luogo] : null;
+        if (v.exklusiv && v.exklusiv.includes("persona") && v.exklusiv.some((f) => f !== "persona" && feldAktiv(w, f))) return [];
+        let tags = v.pers.tags;
+        const o = feldAktiv(w, "oggetto") ? OGG[w.oggetto] : null;
+        if (o && v.persObj && v.persObj[o.id] !== undefined) tags = v.persObj[o.id];
+        let liste = personenPassend(w, v, tags, "pers");
+        if (l && v.persOrt) {
+          const erlaubt = v.persOrt[l.id];
+          if (erlaubt !== undefined) liste = liste.filter((p) => p.tags.some((t) => erlaubt.split(" ").includes(t)));
+          else if (!v.persOrt[l.id]) liste = liste.filter(() => !v.persOrtStreng);
+        }
+        return liste;
+      }
+      case "compagnia": {
+        if (!v || !v.comp) return [];
+        const l = feldAktiv(w, "luogo") ? LUOGO[w.luogo] : null;
+        if (PRIVAT(l) && v.id !== "restare") return [];
+        if (v.id === "andare" && l && RAUM_ORTE.includes(l.id)) return [];
+        if (l && l.id === "letto") return [];
+        if (feldAktiv(w, "modo") && ["insieme", "da_solo"].includes(w.modo)) return [];
+        let liste = personenPassend(w, v, v.comp, "comp");
+        const nurKollegenOrt = l && (l.tags.includes("arbeit") || l.tags.includes("kantine"));
+        liste = liste.filter((p) => {
+          if (p.tags.includes("kollegen") && l && !(l.tags.includes("arbeit") || l.tags.includes("gastro") || l.tags.includes("stadt") || l.tags.includes("sport") || l.tags.includes("kantine"))) return false;
+          if (p.tags.includes("kollegen") && v.id === "andare" && !l) return false;
+          if (nurKollegenOrt && v.id !== "parlare" && !(p.tags.includes("kollegen") || p.tags.includes("name"))) return false;
+          if (p.tags.includes("cane") && l && !(l.tags.includes("nah") || l.tags.includes("draussen"))) return false;
+          if (p.tags.includes("medico") && v.id !== "parlare") return false;
+          if (l && (l.tags.includes("gesund") || l.tags.includes("amt")) && (p.tags.includes("kollegen") || p.tags.includes("freunde"))) return false;
+          if (l && l.tags.includes("fest") && p.tags.includes("fam") && ["nonno", "nonna", "nonni"].includes(p.id)) return false;
+          if (["nonno", "nonna", "nonni"].includes(p.id) && schluessel(w).some((k) => ["sport", "fest", "tanzen"].includes(k))) return false;
+          return true;
+        });
+        return liste;
+      }
+      case "rolle": return v ? rollenVon(v) : [];
+      case "luogo": {
+        if (!v || !v.ort) return [];
+        const rolle = rolleVon(w, v);
+        const ids = v.ort[rolle] || [];
+        const o = feldAktiv(w, "oggetto") ? OGG[w.oggetto] : null;
+        const t = feldAktiv(w, "quando") ? TEMPO[w.quando] : null;
+        const mz = feldAktiv(w, "mezzo") ? MEZZO[w.mezzo] : null;
+        if (v.exklusiv && v.exklusiv.includes("luogo") && v.exklusiv.some((f) => f !== "luogo" && feldAktiv(w, f))) return [];
+        return ids.map((id) => LUOGO[id]).filter((l) => l && ab(l.level, lv)
+          && (!o || ortObjOk(v, l, o))
+          && !(mz && !mezzoPasstZuOrt(mz, l))
+          && !(feldAktiv(w, "persona") && v.persOrt && v.persOrt[l.id] !== undefined && !personenPassend(w, v, v.persOrt[l.id], "pers").some((p) => p.id === w.persona))
+          && !(feldAktiv(w, "persona") && v.persOrt && v.persOrt[l.id] === undefined && v.id !== "aiutare" && false)
+          && !(feldAktiv(w, "compagnia") && (PRIVAT(l) && v.id !== "restare" || l.id === "letto"))
+          && !(t && !zeitPasstZumVerb(t, Object.assign({}, w, { luogo: l.id }), v, zf))
+          && !(o && o.alk && (l.tags.includes("arbeit") || l.tags.includes("bildung") || l.tags.includes("kantine")))
+          && !(feldAktiv(w, "modo") && !prestoTardiOk(w.modo, v, w, l.id))
+          && !(v.id === "andare" && RAUM_ORTE.includes(l.id) && (feldAktiv(w, "modo") || feldAktiv(w, "compagnia")))
+          && !(feldAktiv(w, "modo") && w.modo === "volentieri" && ["andare", "tornare"].includes(v.id) && !l.tags.some((x) => FREIZEIT_ORT.includes(x)))
+          && !(feldAktiv(w, "modale") && w.modale === "vorrei" && v.id === "essere_luogo" && !l.tags.some((x) => ["urlaub", "natur", "fern", "draussen"].includes(x)))
+          && !(feldAktiv(w, "modo") && w.modo === "fino_tardi" && v.id === "restare" && l.id !== "ufficio")
+          && !(feldAktiv(w, "modo") && w.modo === "volentieri" && !w.neg && (l.tags.includes("gesund") || l.tags.includes("amt") || l.tags.includes("anlass")))
+          && !(feldAktiv(w, "compagnia") && personIstKollege(w.compagnia) && !(l.tags.includes("arbeit") || l.tags.includes("gastro") || l.tags.includes("stadt") || l.tags.includes("sport") || l.tags.includes("kantine")))
+          && !(feldAktiv(w, "compagnia") && ["cane"].includes(w.compagnia) && !(l.tags.includes("nah") || l.tags.includes("draussen")))
+          && !(feldAktiv(w, "compagnia") && (l.tags.includes("gesund") || l.tags.includes("amt")) && personHatTag(w.compagnia, ["kollegen", "freunde"]))
+          && !(feldAktiv(w, "compagnia") && (l.tags.includes("arbeit") || l.tags.includes("kantine")) && v.id !== "parlare" && !personHatTag(w.compagnia, ["kollegen", "name"]))
+          && !(feldAktiv(w, "compagnia") && l.tags.includes("fest") && ["nonno", "nonna", "nonni"].includes(w.compagnia))
+          && !(feldAktiv(w, "stato") && false));
+      }
+      case "mezzo": {
+        if (!v || !v.mezzo) return [];
+        const l = feldAktiv(w, "luogo") ? LUOGO[w.luogo] : (v.mezzoOrt ? LUOGO[v.mezzoOrt] : null);
+        if (!l && v.ort) return [];
+        return MEZZI.filter((m) => ab(m.level, lv) && (!v.mezziNur || v.mezziNur.includes(m.id)) && (!l || mezzoPasstZuOrt(m, l))
+          && !(v.id === "tornare" && rolleVon(w, v) === "da" && m.id === "aereo" && !(l && l.tags.includes("fern"))));
+      }
+      case "quando": {
+        if (!v) return [];
+        return TEMPI.filter((t) => ab(t.level, lv) && zeitPasstZumVerb(t, w, v, zf) && !(t.grp === "mai" && istFrage(w))
+          && !(istFrage(w) && ["freqvorn", "gia"].includes(t.grp) && false));
+      }
+      case "modo": {
+        if (!v) return [];
+        const l = feldAktiv(w, "luogo") ? LUOGO[w.luogo] : null;
+        const o = feldAktiv(w, "oggetto") ? OGG[w.oggetto] : null;
+        const si = subjektInfo(wSubj(w), w.genus);
+        const t = feldAktiv(w, "quando") ? TEMPO[w.quando] : null;
+        return v.modi.map((id) => MODO[id]).filter((m) => m && ab(m.level, lv)
+          && !(m.id === "insieme" && (!si.pl || feldAktiv(w, "compagnia")))
+          && !(m.id === "da_solo" && feldAktiv(w, "compagnia"))
+          && !(["molto", "poco"].includes(m.id) && o && v.id !== "parlare")
+          && !(["molto", "poco"].includes(m.id) && v.id === "parlare" && feldAktiv(w, "compagnia") && !o)
+          && !(["bene", "male"].includes(m.id) && v.id === "parlare" && (!o || feldAktiv(w, "compagnia")))
+          && !(["molto", "poco", "bene", "male"].includes(m.id) && feldAktiv(w, "causa"))
+          && !(w.neg && feldAktiv(w, "causa"))
+          && !(w.neg && ["con_calma", "in_fretta", "a_voce_alta", "con_attenzione", "fino_tardi", "presto"].includes(m.id))
+          && !((w.verbindung === "se2" || w.verbindung === "se3") && feldAktiv(w, "causa") && ["con_calma", "in_fretta"].includes(m.id))
+          && !(w.neg && w.satzart === "frage")
+          && !(m.id === "volentieri" && feldAktiv(w, "causa") && !(CAUSA[String(w.causa).replace(/^non:/, "")] || {}).wunsch)
+          && !(["bene", "male"].includes(m.id) && v.id === "parlare" && w.satzart === "wfrage" && w.wort === "conchi")
+          && !(m.id === "da_solo" && v.id === "essere_luogo" && l && !l.tags.some((x) => FREIZEIT_ORT.includes(x)))
+          && !(m.id === "volentieri" && w.neg && w.satzart !== "aussage")
+          && !(m.id === "volentieri" && feldAktiv(w, "modale"))
+          && !(m.id === "volentieri" && w.neg && o && (w.det || detsFuer(v, o)[0]) === "indef")
+          && !(m.id === "volentieri" && !w.neg && l && (l.tags.includes("gesund") || l.tags.includes("amt") || l.tags.includes("anlass")))
+          && !(m.id === "volentieri" && ["andare", "tornare"].includes(v.id) && l && !l.tags.some((x) => FREIZEIT_ORT.includes(x)))
+          && !(m.id === "volentieri" && o && !o.tags.some((x) => VOLENTIERI_DING.includes(x)))
+          && !(["presto", "tardi", "fino_tardi"].includes(m.id) && istFrage(w))
+          && !(["molto", "poco"].includes(m.id) && istFrage(w) && w.wort === "quando")
+          && !(["molto", "poco"].includes(m.id) && t && !["gewohnheit", "freqvorn", "saison", "kind", "heute", "jetzt", "vergangen"].includes(t.grp))
+          && prestoTardiOk(m.id, v, w, l ? l.id : "")
+          && !(v.id === "andare" && l && RAUM_ORTE.includes(l.id))
+          && !(["presto", "tardi", "fino_tardi"].includes(m.id) && t && t.grp === "uhr")
+          && !(m.id === "fino_tardi" && v.id === "restare" && (!l || l.id !== "ufficio"))
+          && !(m.id === "al_telefono" && !feldAktiv(w, "compagnia"))
+          && !(["in_italiano", "in_tedesco"].includes(m.id) && v.id === "scrivere" && !o && false)
+          && !(m.id === "insieme" && feldAktiv(w, "persona") && false));
+      }
+      case "causa": {
+        if (!v) return [];
+        if (wFeld(w) === "causa") return [];
+        return gruendeFuer(w).map((g) => Object.assign({}, CAUSA[g.id.replace(/^non:/, "")], { id: g.id, gneg: g.neg }));
+      }
+      case "verbindung": {
+        if (!v) return [];
+        return VERBINDUNGEN.filter((b) => ab(b.level, lv)
+          && !(w.satzart === "wfrage")
+          && !(w.satzart === "frage" && b.id !== "perche")
+          && !(feldAktiv(w, "einleitung") && b.id !== "perche")
+          && !(b.id === "se" && !["presente", "futuro"].includes(w.tempo || "presente"))
+          && !(b.id === "quando" && !["presente", "futuro", "passato", "imperfetto"].includes(w.tempo || "presente"))
+          && !(b.id === "se2" && feldAktiv(w, "modale") && ["sapere", "vorrei"].includes(w.modale))
+          && !(b.id === "se3" && feldAktiv(w, "modale"))
+          && !((b.id === "se2" || b.id === "se3") && v.keinPassato && b.id === "se3")
+          && !((b.id === "se2" || b.id === "se3") && v.keinCond)
+          && !((b.id === "se2" || b.id === "se3") && feldAktiv(w, "quando") && !zeitPasstZumVerb(TEMPO[w.quando], Object.assign({}, w, { verbindung: b.id }), v, b.id === "se2" ? "condizionale" : "condPassato")));
+      }
+      case "einleitung": {
+        if (!v || w.satzart !== "aussage") return [];
+        if (feldAktiv(w, "verbindung") && w.verbindung !== "perche") return [];
+        const si = wSubj(w);
+        return EINLEITUNGEN.filter((e) => ab(e.level, lv) && !(e.keinIo && si.id === "io")
+          && !(e.id === "so_che" && !["presente", "passato", "futuro", "imperfetto"].includes(zf))
+          && !(e.nurPresente && zf !== "presente")
+          && !(e.modus === "cong" && !(zf === "presente" || (ab("C1", lv) && (zf === "passato" || zf === "imperfetto"))))
+          && !((e.modus === "cong" || e.modus === "congPast") && feldAktiv(w, "modale") && w.modale === "vorrei")
+          && !(e.modus === "congPast" && !(zf === "presente" || zf === "passato")));
+      }
+      case "wort": {
+        if (!v) return [];
+        const r = rolleVon(w, v);
+        return WFRAGEN.filter((f) => {
+          if (f.id === "checosa") return Boolean(v.obj) && !["chiedere", "prepararsi", "giocare", "lavarsi", "avere", "chiamare"].includes(v.id) && !(v.exklusiv && feldAktiv(w, "persona"));
+          /* „Chi aiuta Giulia?“ hieße „Wer hilft Giulia?“ — deshalb nur mit tu/noi/voi/loro */
+          if (f.id === "chi") return v.pers && v.pers.typ === "dir" && !(v.exklusiv && feldAktiv(w, "oggetto")) && ["tu", "noi", "voi", "loro"].includes(w.soggetto);
+          if (f.id === "achi") return v.pers && v.pers.typ === "a" && !(v.exklusiv && feldAktiv(w, "luogo"));
+          if (f.id === "conchi") return Boolean(v.comp) && !(feldAktiv(w, "modo") && ["insieme", "da_solo"].includes(w.modo));
+          if (f.id === "dove") return Boolean(v.ort) && (r === "stato" || r === "moto") && !(v.exklusiv && feldAktiv(w, "persona"))
+            && angebote(Object.assign({}, w, { satzart: "aussage", luogo: "" }), "luogo").length > 0;
+          if (f.id === "dadove") return Boolean(v.ort) && r === "da" && v.id !== "telefonare" && v.id !== "uscire";
+          if (f.id === "come") return Boolean(v.mezzo) && (!v.ort || feldAktiv(w, "luogo") || v.mezzoOrt);
+          if (f.id === "quando") return !(v.id === "avere" && basisZeit(w) === "passato") && !v.zeitNur;
+          if (f.id === "perche") return true;
+          return false;
+        });
+      }
+      default: return [];
+    }
+  }
+  /* „presto“ heißt früh — aber in „arriverà presto“ heißt es „bald“.
+     Deshalb nur, wo es eindeutig „früh“ ist. */
+  function prestoTardiOk(id, v, w, luogo) {
+    if (id !== "presto" && id !== "tardi") return true;
+    const zf = basisZeit(w);
+    if (v.id === "andare") return luogo === "letto";
+    if (v.id === "tornare" && luogo && luogo !== "casa") return false;
+    if (v.id === "arrivare" && luogo && !["lavoro", "ufficio", "scuola", "universita", "casa"].includes(luogo)) return false;
+    if (id === "presto" && ["arrivare", "tornare", "uscire", "partire"].includes(v.id) && !["passato", "imperfetto", "trapassato"].includes(zf)) return false;
+    return true;
+  }
+  /* „non devo …“ = „ich muss nicht …“ nur, wo man sonst müsste */
+  const NICHT_MUESSEN = ["alzarsi", "lavorare", "studiare", "andare", "fare_compiti", "fare_spesa", "pagare", "prendere", "cucinare", "tornare",
+    "pulire", "lavare", "stirare", "fare_bucato", "ripetere", "finire", "partire", "arrivare", "restare", "fare_sport", "dimenticare", "fumare", "perdere"];
+  const FREIZEIT_ORT = ["gastro", "kultur", "natur", "draussen", "sport", "fest", "person", "fern", "stadt", "shop", "urlaub", "bad", "ausflug"];
+  const VOLENTIERI_DING = ["essen", "trinken", "lesen", "musik", "film", "sport", "spiel_drinnen", "sprache", "instrument"];
+  function personIstKollege(id) { const p = PERSONE.find((x) => x.id === id); return Boolean(p && p.tags.includes("kollegen")); }
+  function personHatTag(id, tags) { const p = PERSONE.find((x) => x.id === id); return Boolean(p && p.tags.some((t) => tags.includes(t))); }
+  function ortObjOk(v, l, o) {
+    if (!l || !o) return true;
+    if (v.ortObj && v.ortObj[l.id]) return v.ortObj[l.id].includes(o.id);
+    if (v.ortObjFern && l.tags.includes("fern")) return v.ortObjFern.includes(o.id);
+    if (v.ortObjStandard) return v.ortObjStandard.includes(o.id);
+    return true;
+  }
+
+  /* ===================================================================
+     6. PRÜFEN — passt alles zusammen?
+     =================================================================== */
+  const FELDER = ["soggetto", "zeitform", "modale", "oggetto", "det", "agg", "stato", "persona", "compagnia", "rolle", "luogo", "mezzo",
+    "quando", "modo", "causa", "verbindung", "einleitung", "wort"];
+  const FELD_NAMEN = {
+    soggetto: "Wer", zeitform: "Zeitform", modale: "Modalverb", oggetto: "Was", det: "Begleiter", agg: "Eigenschaft", stato: "Wie ist …",
+    persona: "Wen/Wem", compagnia: "Mit wem", rolle: "Ortsfrage", luogo: "Wo/Wohin/Woher", mezzo: "Womit", quando: "Wann", modo: "Wie",
+    causa: "Warum", verbindung: "Verbindung", einleitung: "Einleitung", wort: "Fragewort", verbo: "Verb", neg: "Verneinung",
+  };
+  function wert(w, feld) { return feld === "zeitform" ? w.tempo : w[feld]; }
+  function effVerbindung(w) { return feldAktiv(w, "causa") ? (w.verbindung || "perche") : ""; }
+
+  /* Fehlende Pflichtteile mit dem ersten passenden Angebot füllen */
+  function normalisiere(w0) {
+    const w = Object.assign({ niveau: "A1", soggetto: "io", genus: "m", tempo: "presente", satzart: "aussage" }, w0 || {});
+    if (w.quando === "mai") w.neg = true;
+    if (!feldAktiv(w, "causa")) { w.verbindung = w.verbindung === "se2" || w.verbindung === "se3" ? "" : w.verbindung; }
+    if (feldAktiv(w, "causa") && (w.verbindung === "se2" || w.verbindung === "se3")) w.tempo = basisZeit(w);
+    if (w.satzart !== "aussage") w.einleitung = "";
+    if (w.satzart === "wfrage" && w.wort !== "perche") w.neg = w.quando === "mai" ? w.neg : false;
+    const v = wVerb(w);
+    if (!v) return w;
+    const r = rollenVon(v);
+    if (r.length && !r.includes(w.rolle)) w.rolle = r[0];
+    if (!r.length) w.rolle = "";
+    const wf = wFeld(w);
+    if (wf && !leer(w[wf])) w[wf] = "";
+    if (wf === "causa") w.verbindung = "";
+    const erstes = (feld) => { const a = angebote(w, feld); return a.length ? a[0].id : ""; };
+    if (v.stato && !w.stato) w.stato = erstes("stato");
+    if (v.objPflicht && !w.oggetto && wf !== "oggetto") w.oggetto = erstes("oggetto");
+    if (feldAktiv(w, "oggetto")) {
+      const d = angebote(w, "det");
+      if (!d.includes(w.det)) w.det = d[0] || "";
+    } else { w.det = ""; w.agg = ""; }
+    if (v.persPflicht && !w.persona && wf !== "persona") w.persona = erstes("persona");
+    if (v.ortPflicht && !w.luogo && wf !== "luogo") w.luogo = erstes("luogo");
+    if (v.modoPflicht && !w.modo) w.modo = erstes("modo");
+    if (brauchtGewohnheit(w, v) && !w.quando) {
+      const a = angebote(w, "quando");
+      const lieb = a.find((x) => x.id === "di_solito") || a.find((x) => x.id === "da_bambino") || a[0];
+      if (lieb) w.quando = lieb.id;
+    }
+    if (v.einsVon && !v.einsVon.some((f) => feldAktiv(w, f) || wf === f)) {
+      for (const f of v.einsVon) { const x = erstes(f); if (x) { w[f] = x; if (f === "oggetto") { const d = angebote(w, "det"); w.det = d[0] || ""; } break; } }
+    }
+    return w;
+  }
+
+  /* „Giocavo a calcio.“ allein klingt unfertig — bei Handlungen braucht
+     das imperfetto eine Gewohnheit (di solito, da bambino, ogni estate …)
+     oder einen „quando“-Satz. */
+  function brauchtGewohnheit(w, v) {
+    return basisZeit(w) === "imperfetto" && !v.zustand && !feldAktiv(w, "modale")
+      && !(effVerbindung(w) === "quando") && wFeld(w) !== "quando";
+  }
+  /* „Compilerebbe un modulo.“ klingt unfertig. Der condizionale braucht
+     einen Anlass: volentieri, ein Modalverb (potrei, dovrei), einen
+     se-Satz oder einen Zustand („sarei contento“). Das trapassato steht
+     allein nur mit „già“ („Avevo già mangiato.“). */
+  function condOhneAnlass(w, v) {
+    const zf = basisZeit(w);
+    const vb = effVerbindung(w);
+    if (feldAktiv(w, "einleitung")) return "";
+    if (zf === "condizionale" && vb !== "se2" && !feldAktiv(w, "modale") && w.modo !== "volentieri" && v.id !== "essere_agg")
+      return "Der condizionale („würde …“) braucht hier einen Anlass: volentieri (gern), ein Modalverb (potrei, dovrei) oder einen se-Satz.";
+    if (zf === "condPassato" && vb !== "se3" && w.modo !== "volentieri" && v.id !== "essere_agg")
+      return "Der condizionale passato („wäre/hätte …“) braucht hier „volentieri“ oder einen se-Satz („Se avessi avuto tempo, …“).";
+    if (zf === "trapassato" && w.quando !== "gia")
+      return "Das trapassato prossimo („hatte … gemacht“) steht allein nur mit „già“: „Avevo già mangiato.“";
+    return "";
+  }
+  function pruefe(w0) {
+    const w = normalisiere(w0);
+    const v = wVerb(w);
+    const probleme = [];
+    if (!v) return { ok: false, w, probleme: [{ feld: "verbo", text: "Kein Verb gewählt." }] };
+    if (!angebote(w, "verbo").some((x) => x.id === v.id)) probleme.push({ feld: "verbo", text: "„" + v.it + "“ gibt es auf diesem Niveau oder in diesem Bereich nicht." });
+    FELDER.forEach((f) => {
+      const x = wert(w, f);
+      if (leer(x)) return;
+      if (f === "det" || f === "rolle") {
+        const a = angebote(w, f);
+        if (a.length && !a.includes(x)) probleme.push({ feld: f, wert: x });
+        return;
+      }
+      if (f === "verbindung" && !feldAktiv(w, "causa")) return;
+      if (f === "wort" && w.satzart !== "wfrage") return;
+      if (wFeld(w) === f) return;
+      const a = angebote(w, f);
+      if (!a.some((y) => y.id === x)) probleme.push({ feld: f, wert: x });
+    });
+    const wf = wFeld(w);
+    const fehlt = (f) => !feldAktiv(w, f) && wf !== f;
+    if (v.objPflicht && fehlt("oggetto")) probleme.push({ feld: "oggetto", pflicht: true });
+    if (v.ortPflicht && fehlt("luogo")) probleme.push({ feld: "luogo", pflicht: true });
+    if (v.persPflicht && fehlt("persona")) probleme.push({ feld: "persona", pflicht: true });
+    if (v.stato && fehlt("stato")) probleme.push({ feld: "stato", pflicht: true });
+    if (v.modoPflicht && fehlt("modo")) probleme.push({ feld: "modo", pflicht: true });
+    const anlassFehlt = condOhneAnlass(w, v);
+    if (anlassFehlt) probleme.push({ feld: "condAnlass", text: anlassFehlt });
+    if (brauchtGewohnheit(w, v) && !feldAktiv(w, "quando")) probleme.push({ feld: "quando", pflicht: true, text: "Im imperfetto braucht eine Handlung eine Gewohnheit: di solito, da bambino, ogni estate … — oder nimm das passato prossimo." });
+    if (v.einsVon && !v.einsVon.some((f) => feldAktiv(w, f) || wf === f)) probleme.push({ feld: v.einsVon[0], pflicht: true });
+    if (v.exklusiv && v.exklusiv.filter((f) => feldAktiv(w, f)).length > 1) probleme.push({ feld: v.exklusiv[1], wert: w[v.exklusiv[1]] });
+    if (w.satzart === "wfrage" && w.neg && w.wort !== "perche") probleme.push({ feld: "neg", wert: true });
+    /* Mehr als vier freie Angaben in einem Satz klingen nach Liste, nicht nach Sprache */
+    const frei = ["quando", "modo", "compagnia", "mezzo", "agg", "causa"].filter((f) => feldAktiv(w, f)).length
+      + (feldAktiv(w, "luogo") && !v.ortPflicht ? 1 : 0) + (feldAktiv(w, "persona") && !v.persPflicht ? 1 : 0)
+      + (feldAktiv(w, "oggetto") && !v.objPflicht ? 1 : 0) + (feldAktiv(w, "modale") ? 1 : 0);
+    const grenze = (feldAktiv(w, "einleitung") || feldAktiv(w, "causa") || w.neg) ? 3 : 4;
+    if (frei > grenze) probleme.push({ feld: "zuviel", text: "Das sind zu viele Angaben für einen Satz — das klingt nach einer Liste. Lass eine weg oder erzähl mit „+ zweiter Satz“ weiter." });
+    if (w.quando === "gia" && w.neg) probleme.push({ feld: "neg", wert: true });
+    if (v.negNurMai && w.neg && w.quando !== "mai") probleme.push({ feld: "neg", wert: true, text: "„" + v.it + "“ verneint klingt komisch — außer mit „mai“ (nie): „Non ho mai perso …“." });
+    probleme.forEach((p) => { p.text = p.text || problemText(w, p); });
+    return { ok: probleme.length === 0, w, probleme };
+  }
+  function anzeigeWert(w, feld, x) {
+    const v = wVerb(w);
+    const si = subjektInfo(wSubj(w), w.genus);
+    try {
+      switch (feld) {
+        case "soggetto": return (SOGGETTI.find((s) => s.id === x) || {}).it || x;
+        case "zeitform": return (ZEITFORMEN.find((z) => z.id === x) || {}).it || x;
+        case "modale": return (MODALE[x] || {}).it || x;
+        case "oggetto": { const o = OGG[x]; return o ? o.n.it : x; }
+        case "persona": case "compagnia": { const p = PERSONE.find((q) => q.id === x); return p ? personIt(p, si, feld === "compagnia" ? "con" : "") : x; }
+        case "luogo": { const l = LUOGO[x]; return l ? l.it : x; }
+        case "mezzo": return (MEZZO[x] || {}).it || x;
+        case "quando": return (TEMPO[x] || {}).it || x;
+        case "modo": return (MODO[x] || {}).it || x;
+        case "causa": { const c = CAUSA[String(x).replace(/^non:/, "")]; return c ? (/^non:/.test(x) ? "non " : "") + grundItKurz(c) : x; }
+        case "stato": return (STATO[x] || {}).it || x;
+        case "neg": return "non";
+        default: return String(x);
+      }
+    } catch (e) { return String(x); }
+  }
+  function grundItKurz(c) {
+    const i = c.it;
+    if (i.v === "essere") return "essere " + (i.adj || i.fest);
+    if (i.v === "avere") return "avere " + i.rest;
+    if (i.v === "impers") return i.f.presente;
+    if (i.v === "fare3") return "fa " + i.rest;
+    if (i.v === "esserci") return (i.pl ? "ci sono " : "c'è ") + i.rest;
+    if (i.v === "essere3") return i.subj + " è " + i.adj;
+    if (i.v === "essere3v") return "è " + i.rest;
+    if (i.v === "rifl") return "annoiarsi";
+    if (i.v === "costare") return "costa troppo";
+    return c.id;
+  }
+  function problemText(w, p) {
+    const n = FELD_NAMEN[p.feld] || p.feld;
+    if (p.pflicht) return "Zu diesem Verb gehört noch „" + n + "“ — aber mit der jetzigen Wahl passt nichts dazu.";
+    return "„" + anzeigeWert(w, p.feld, p.wert) + "“ (" + n + ") passt nicht zu dem, was sonst im Satz steht.";
+  }
+
+  /* ===================================================================
+     7. DER ITALIENISCHE SATZ UND SEINE DEUTSCHE BEDEUTUNG
+     =================================================================== */
+  function itZeitVon(w) {
+    const base = basisZeit(w);
+    const e = w.satzart === "aussage" && feldAktiv(w, "einleitung") ? EINLEITUNGEN.find((x) => x.id === w.einleitung) : null;
+    if (e && e.modus === "cong") return { presente: "congiuntivo", passato: "congPassato", imperfetto: "congImperfetto", condizionale: "condizionale" }[base] || "congiuntivo";
+    if (e && e.modus === "congPast") return { presente: "congImperfetto", passato: "congTrapassato" }[base] || "congImperfetto";
+    return base;
+  }
+  function deZeitVon(w, dv, modal) {
+    const base = basisZeit(w);
+    const e = w.satzart === "aussage" && feldAktiv(w, "einleitung") ? EINLEITUNGEN.find((x) => x.id === w.einleitung) : null;
+    if (e && e.modus === "congPast") return base === "passato" ? "plusq" : "praes";
+    switch (base) {
+      case "presente": return "praes";
+      case "passato": return (modal || dv === DE_SEIN || dv === DE_HABEN) ? "praet" : "perf";
+      case "imperfetto": return "praet";
+      case "futuro": return "fut";
+      case "condizionale": return "k2";
+      case "trapassato": return "plusq";
+      case "condPassato": return "k2v";
+      default: return "praes";
+    }
+  }
+  function enklitisch(inf, p) { return inf.slice(0, -1) + RIFL[p]; }
+
+  /* Der Verbblock: non + mi/ti/si + Verb (+ già/sempre/mai/spesso) + Partizip/Infinitiv */
+  function itVerbblock(v, w, si, itZeit, freqWort0) {
+    const t = [];
+    /* sempre, mai, già stehen zwischen Hilfsverb und Partizip („non sono
+       mai stato“), spesso lieber dahinter („sono andato spesso“) */
+    const spaet = freqWort0 === "spesso";
+    const freqWort = spaet ? "" : freqWort0;
+    const m = feldAktiv(w, "modale") ? MODALE[w.modale] : null;
+    const rifl = Boolean(v.v.rifl);
+    const p = si.p;
+    if (w.neg) t.push("non");
+    if (!m) {
+      if (rifl) t.push(RIFL[p]);
+      if (istZusammengesetzt(itZeit)) {
+        const aux = hilfsverb(v.v);
+        t.push(hilfsForm(aux, itZeit, p));
+        if (freqWort) t.push(freqWort);
+        t.push(aux === "essere" ? partizipForm(v.v, si.g, si.pl) : partizip(v.v));
+      } else {
+        t.push(einfach(v.v, itZeit, p));
+        if (freqWort) t.push(freqWort);
+      }
+    } else {
+      const mz = m.festCond ? "condizionale" : itZeit;
+      const inf = rifl ? enklitisch(v.v.inf, p) : v.v.inf;
+      if (istZusammengesetzt(mz)) {
+        const aux = rifl ? "avere" : hilfsverb(v.v);
+        t.push(hilfsForm(aux, mz, p));
+        if (freqWort) t.push(freqWort);
+        t.push(aux === "essere" ? partizipForm(m.v, si.g, si.pl) : partizip(m.v));
+      } else {
+        t.push(einfach(m.v, mz, p));
+        if (freqWort) t.push(freqWort);
+      }
+      t.push(inf);
+    }
+    if (spaet) t.push(freqWort0);
+    return t;
+  }
+
+  function agrForm(basis, g, pl) {
+    // da solo → da sola / da soli / da sole ; stanco → stanca / stanchi / stanche
+    const teile = basis.split(" ");
+    const letztes = teile.pop();
+    return teile.concat([adjForm({ it: letztes }, g, pl)]).join(" ");
+  }
+
+  /* Teile des italienischen Hauptsatzes (ohne Grund/Einleitung)
+     Aussage:  [Pronomen] [Zeit] [Nomen-Subjekt] Verb … Ergänzungen
+     W-Frage:  Fragewort Verb … Ergänzungen [Subjekt] [Zeit]
+               („Con chi va al cinema Marco stasera?“) — bei „perché“
+               steht ein Subjekt vor dem Verb („Perché Marco resta a casa?“) */
+  function itTeileHaupt(w, v, si, opt) {
+    const itZeit = opt.itZeit;
+    const teile = [];
+    const t = feldAktiv(w, "quando") ? TEMPO[w.quando] : null;
+    const freq = t && t.verb ? t.it : "";
+    const zeitVorn = t && !t.verb ? (t.agr ? agrForm("da bambino", si.g, si.pl) : t.it) : "";
+    const subjSichtbar = !opt.subjVerschwiegen && (!si.sog.pron || (w.pronome && w.satzart !== "wfrage") || opt.pronZwang);
+    const subjTeil = subjSichtbar ? { t: si.sog.it, rolle: "wer" } : null;
+    const wfrage = w.satzart === "wfrage";
+    const warum = wfrage && w.wort === "perche";
+    if (wfrage) {
+      teile.push({ t: WFRAGEN.find((x) => x.id === w.wort).it, rolle: "w" });
+      if (warum && subjTeil) teile.push(subjTeil);
+    } else {
+      if (subjTeil && si.sog.pron) teile.push(subjTeil);
+      if (zeitVorn) teile.push({ t: zeitVorn, rolle: "wann" });
+      if (subjTeil && !si.sog.pron) teile.push(subjTeil);
+    }
+    const vb = itVerbblock(v, w, si, itZeit, freq);
+    teile.push({ t: vb.join(" "), rolle: "verb" });
+    const modo = feldAktiv(w, "modo") ? MODO[w.modo] : null;
+    if (modo && modo.pos === "verb") teile.push({ t: modo.it, rolle: "wie" });
+    if (v.fest) teile.push({ t: v.fest, rolle: "verb" });
+    const rest = [];
+    if (feldAktiv(w, "oggetto")) {
+      const o = OGG[w.oggetto];
+      let det = w.det || detsFuer(v, o)[0];
+      if (w.neg && det === "part") det = "ohne";
+      const agg = feldAktiv(w, "agg") ? AGG[w.agg] : null;
+      let ph;
+      if (o.a) ph = det === "def" ? verschmelze("a", nominal(o.n, "def", null, si.p)) : "a " + o.n.it;
+      else ph = nominal(o.n, det, agg, si.p);
+      if (v.objPraep) ph = v.objPraep + " " + ph;
+      rest.push({ t: ph, rolle: "was" });
+    }
+    if (feldAktiv(w, "stato")) {
+      const st = STATO[w.stato];
+      rest.push({ t: st.fest ? st.it : agrForm(st.it, si.g, si.pl), rolle: "was" });
+    }
+    if (feldAktiv(w, "persona")) {
+      const pe = PERSONE.find((x) => x.id === w.persona);
+      rest.push({ t: personIt(pe, si, v.pers.typ === "a" ? "a" : ""), rolle: "wen" });
+    }
+    if (feldAktiv(w, "luogo")) {
+      const l = LUOGO[w.luogo];
+      const r = rolleVon(w, v);
+      const txt = r === "da" ? ((v.itDa && v.itDa[l.id]) || l.da) : (r === "per" ? l.per : l.it);
+      rest.push({ t: txt, rolle: r === "da" ? "woher" : (r === "moto" || r === "per" ? "wohin" : "wo") });
+    }
+    if (feldAktiv(w, "mezzo")) rest.push({ t: MEZZO[w.mezzo].it, rolle: "womit" });
+    if (feldAktiv(w, "compagnia")) {
+      const pe = PERSONE.find((x) => x.id === w.compagnia);
+      rest.push({ t: personIt(pe, si, "con"), rolle: "mitwem" });
+    }
+    if (modo && modo.pos === "ende") rest.push({ t: modo.agr ? agrForm(modo.it, si.g, si.pl) : modo.it, rolle: "wie" });
+    rest.forEach((x) => teile.push(x));
+    if (wfrage && !warum && subjTeil) teile.push(subjTeil);
+    if (wfrage && zeitVorn) teile.push({ t: zeitVorn, rolle: "wann" });
+    return teile;
+  }
+
+  /* --- Der Grund als kleiner italienischer Satz ---------------------- */
+  function itGrund(c, neg, si, zeit, w) {
+    const i = c.it;
+    const non = neg || i.fixNeg ? "non " : "";
+    const p = si.p;
+    const E3 = (z) => z === "congTrapassato" ? null : einfach(ESSERE, z, 2);
+    switch (i.v) {
+      case "essere": {
+        const pr = i.fest ? i.fest : agrForm(i.adj, si.g, si.pl);
+        if (zeit === "congTrapassato") return non + einfach(ESSERE, "congImperfetto", p) + " " + partizipForm(ESSERE, si.g, si.pl) + " " + pr;
+        return non + einfach(ESSERE, zeit, p) + " " + pr;
+      }
+      case "avere":
+        if (zeit === "congTrapassato") return non + einfach(AVERE, "congImperfetto", p) + " avuto " + i.rest;
+        return non + einfach(AVERE, zeit, p) + " " + i.rest;
+      case "impers": return non + i.f[zeit];
+      case "fare3":
+        if (zeit === "congTrapassato") return non + "avesse fatto " + i.rest;
+        return non + einfach(C.fare, zeit, 2) + " " + i.rest;
+      case "esserci": {
+        const n = i.pl ? 5 : 2;
+        let f;
+        if (zeit === "congTrapassato") f = einfach(ESSERE, "congImperfetto", n) + " " + partizipForm(ESSERE, "m", i.pl);
+        else f = einfach(ESSERE, zeit, n);
+        const ci = /^[eè]/.test(f) ? "c'" : "ci ";
+        return non + ci + f + " " + i.rest;
+      }
+      case "essere3":
+        if (zeit === "congTrapassato") return i.subj + " " + non + "fosse stato " + i.adj;
+        return i.subj + " " + non + E3(zeit) + " " + i.adj;
+      case "essere3v": {
+        const g = /il compleanno/.test(i.rest) ? "m" : "m";
+        if (zeit === "congTrapassato") return non + "fosse stato " + i.rest;
+        return non + E3(zeit) + " " + i.rest;
+      }
+      case "rifl": {
+        const vv = R(i.inf, { rifl: true });
+        if (zeit === "congTrapassato") return non + RIFL[p] + " " + einfach(ESSERE, "congImperfetto", p) + " " + partizipForm(vv, si.g, si.pl);
+        return non + RIFL[p] + " " + einfach(vv, zeit, p);
+      }
+      case "costare": {
+        const o = OGG[w.oggetto];
+        const n = o && o.n.pl ? 5 : 2;
+        return non + einfach(R("costare"), zeit === "congTrapassato" ? "imperfetto" : zeit, n) + " troppo";
+      }
+      default: return "";
+    }
+  }
+  /* --- Der Grund auf Deutsch ----------------------------------------- */
+  const DE_PRON3 = { m: "er", f: "sie", n: "es", pl: "sie" };
+  function deGrund(c, neg, si, dz, art, w, subjDe) {
+    const d = c.de;
+    let subj, pp;
+    if (d.s === "S") { subj = subjDe; pp = si.dp; }
+    else if (d.s === "OBJ") { const o = OGG[w.oggetto]; subj = o.de.pl ? "sie" : DE_PRON3[o.de.g]; pp = o.de.pl ? 5 : 2; }
+    else { subj = d.s; pp = 2; }
+    const dv = d.v === "sein" ? DE_SEIN : d.v === "haben" ? DE_HABEN : DEV[d.v];
+    let praed = d.p || "";
+    let nicht = "";
+    if (neg) { if (d.n) praed = d.n; else nicht = "nicht"; }
+    let finit, rest = [];
+    if (dz === "praes") finit = dv.praes[pp];
+    else if (dz === "praet") finit = dv.praet[pp];
+    else if (dz === "fut") { finit = DE_WERDEN[pp]; rest = [dv.inf]; }
+    else if (dz === "k2") { if (dv === DE_SEIN) finit = DE_K2.sein[pp]; else if (dv === DE_HABEN) finit = DE_K2.haben[pp]; else { finit = DE_WUERDE[pp]; rest = [dv.inf]; } }
+    else if (dz === "k2v") { finit = (dv.hilf === "sein" ? DE_K2.sein : DE_K2.haben)[pp]; rest = [dv.part]; }
+    const refl = dv.refl ? DE_REFL[dv.refl][pp] : "";
+    const mitte = [refl, nicht, praed].filter(Boolean);
+    if (art === "haupt") return [subj, finit].concat(mitte, rest).filter(Boolean).join(" ");
+    return [subj].concat(mitte, rest, [finit]).filter(Boolean).join(" ");
+  }
+
+  /* --- Der deutsche Satz ------------------------------------------------
+     art: haupt (Verb an 2. Stelle), frage (Verb vorn), w (Fragewort vorn),
+          neben (Verb am Ende), invers (etwas anderes steht vorn: „deshalb“) */
+  function deFormen(dv, modal, dz, dp) {
+    let finit, rechts = [];
+    const sep = dv.pref ? dv.pref.trim() : "";
+    if (!modal) {
+      if (dz === "praes") { finit = dv.praes[dp]; if (sep) rechts = [sep]; }
+      else if (dz === "praet") { finit = dv.praet[dp]; if (sep) rechts = [sep]; }
+      else if (dz === "perf") { finit = (dv.hilf === "sein" ? DE_SEIN : DE_HABEN).praes[dp]; rechts = [dv.part]; }
+      else if (dz === "plusq") { finit = (dv.hilf === "sein" ? DE_SEIN : DE_HABEN).praet[dp]; rechts = [dv.part]; }
+      else if (dz === "fut") { finit = DE_WERDEN[dp]; rechts = [dv.inf]; }
+      else if (dz === "k2") {
+        if (dv === DE_SEIN) finit = DE_K2.sein[dp];
+        else if (dv === DE_HABEN) finit = DE_K2.haben[dp];
+        else { finit = DE_WUERDE[dp]; rechts = [dv.inf]; }
+      } else if (dz === "k2v") { finit = (dv.hilf === "sein" ? DE_K2.sein : DE_K2.haben)[dp]; rechts = [dv.part]; }
+    } else {
+      const md = DE_MODAL[modal];
+      if (dz === "praes") finit = md.praes[dp];
+      else if (dz === "praet" || dz === "perf") finit = md.praet[dp];
+      else if (dz === "fut") { finit = DE_WERDEN[dp]; rechts = [dv.inf, md.inf]; return { finit, rechts, doppel: true }; }
+      else if (dz === "k2") finit = (md.k2 || md.praes)[dp];
+      else finit = md.praes[dp];
+      rechts = [dv.inf];
+    }
+    return { finit, rechts, sep, doppel: false };
+  }
+  function deModalId(w) {
+    if (!feldAktiv(w, "modale")) return "";
+    const m = w.modale;
+    const base = basisZeit(w);
+    if (m === "potere" || m === "sapere") return "koennen";
+    if (m === "dovere") {
+      if (base === "condizionale") return "sollen";
+      /* „non devo dimenticare“ = ich darf nicht vergessen (Verbot);
+         „oggi non devo lavorare“ = ich muss heute nicht arbeiten */
+      if (w.neg && verbotLesart(w)) return "duerfen";
+      return "muessen";
+    }
+    if (m === "volere") return base === "condizionale" ? "moechten" : "wollen";
+    if (m === "vorrei") return "moechten";
+    return "";
+  }
+  /* Bei diesen Verben meint „il caffè“ Kaffee im Allgemeinen („Bevo il caffè“ = Ich trinke Kaffee) */
+  const GENERISCH = ["mangiare", "bere", "comprare", "cucinare", "ascoltare", "suonare", "parlare", "studiare", "imparare", "avere", "misurare", "festeggiare", "giocare", "ordinare", "assaggiare", "preparare", "prendere"];
+  function verbotLesart(w) {
+    const o = OGG[w.oggetto];
+    return ["dimenticare", "fumare", "perdere"].includes(w.verbo) || w.modo === "tardi" || Boolean(o && o.alk);
+  }
+  function deSatz(w, v, si, opt) {
+    const wf = wFeld(w);
+    const dvKey = verbDe(Object.assign({}, w, { rolle: rolleVon(w, v), [wf]: "" }), v);
+    const dv = DEV[dvKey];
+    const modal = deModalId(w);
+    const dz = opt.deZeit || deZeitVon(w, dv, modal);
+    const dp = si.dp;
+    const f = deFormen(dv, modal, dz, dp);
+    const t = feldAktiv(w, "quando") ? TEMPO[w.quando] : null;
+    const subj = opt.subjDe;
+    // Mittelfeld
+    const M = { refl: "", zeit: "", dat: "", akk: "", nicht: "", art: "", begl: "", mezzo: "", obj: "", ort: "", praep: "", praed: "" };
+    if (dv.refl) M.refl = DE_REFL[dv.refl][dp];
+    let zeitVorfeld = false;
+    const freqDe = t && t.verb ? (t.id === "mai" ? (basisZeit(w) === "passato" || basisZeit(w) === "trapassato" ? "noch nie" : "nie") : t.de) : "";
+    if (t && !t.verb) {
+      const txt = t.agr ? (si.pl ? "als Kinder" : "als Kind") : t.de;
+      if (opt.art === "haupt" && opt.vorfeldZeit !== false) { zeitVorfeld = txt; } else M.zeit = txt;
+    }
+    const modo = feldAktiv(w, "modo") ? MODO[w.modo] : null;
+    const artDe = modo ? ((v.deModo && v.deModo[modo.id]) || modo.de) : "";
+    // Objekt
+    let keinBenutzt = false;
+    const negMitAdverb = w.neg && (Boolean(artDe) || (t && t.grp === "freq"));
+    if (feldAktiv(w, "oggetto") && !(dvKey === "fernsehen")) {
+      const o = OGG[w.oggetto];
+      const det = w.det || detsFuer(v, o)[0];
+      let dd = det === "indef" ? "indef" : det === "part" ? "ohne" : det === "poss" ? "poss" : det === "ohne" ? "ohne" : null;
+      if (det === "def") dd = o.deDef === "possSachen" ? (v.besitz ? "poss" : "def") : (o.deDef === "ohne" && !GENERISCH.includes(v.id) ? "def" : (o.deDef || "def"));
+      const praep = v.deObjPraep || "";
+      if (w.neg && !praep && !negMitAdverb && !(t && t.id === "mai") && (dd === "indef" || dd === "ohne")) { dd = "kein"; keinBenutzt = true; }
+      const agg = feldAktiv(w, "agg") ? AGG[w.agg] : null;
+      const n = { n: o.de.n, g: o.de.g, pl: o.de.pl };
+      const txt = deNominal(n, "akk", dd, agg ? agg.de : "", si.dePoss);
+      if (praep) M.praep = praep + " " + txt;
+      else if (dd === "def" || dd === "poss") M.akk = txt;
+      else M.obj = txt;
+    }
+    if (v.deFestObj) {
+      const n = { n: v.deFestObj, g: v.deFestObj === "Sport" ? "m" : "f", pl: v.deFestObj === "Hausaufgaben" };
+      let dd = v.deFestDet || "ohne";
+      if (w.neg && !negMitAdverb && !(t && t.id === "mai") && dd === "ohne") { dd = "kein"; keinBenutzt = true; }
+      const txt = deNominal(n, "akk", dd, "", si.dePoss);
+      if (dd === "def") M.akk = txt; else M.obj = txt;
+    }
+    if (feldAktiv(w, "stato")) M.praed = STATO[w.stato].de;
+    if (feldAktiv(w, "persona")) {
+      const pe = PERSONE.find((x) => x.id === w.persona);
+      const fall = v.deFall || (v.pers.typ === "a" ? "dat" : "akk");
+      /* „Non incontro un amico“ → „Ich treffe keinen Freund“ */
+      const keinP = w.neg && pe.det === "indef" && fall !== "aufAkk" && !negMitAdverb && !(t && t.id === "mai") && !keinBenutzt;
+      const pd = (f2) => keinP ? deNominal({ n: pe.de.n, g: pe.de.g, pl: pe.de.pl }, f2, "kein", "", si.dePoss) : personDe(pe, si, f2);
+      if (keinP) keinBenutzt = true;
+      if (fall === "dat") M.dat = pd("dat");
+      else if (fall === "aufAkk") M.praep = "auf " + personDe(pe, si, "akk");
+      else M.akk = (M.akk ? M.akk + " " : "") + pd("akk");
+      if (v.id === "chiedere" && M.akk && M.praep) { /* „meinen Bruder um Hilfe“ */ }
+    }
+    if (feldAktiv(w, "luogo")) {
+      const l = LUOGO[w.luogo];
+      const r = rolleVon(w, v);
+      const deR = (v.deRolle && v.deRolle[r]) || { stato: "wo", moto: "wohin", da: "woher", per: "wohin" }[r];
+      M.ort = (v.deOrt && v.deOrt[l.id]) || l.de[deR];
+    }
+    if (feldAktiv(w, "mezzo") && !(dvKey.indexOf("fliegen") >= 0 && w.mezzo === "aereo")) M.mezzo = MEZZO[w.mezzo].de;
+    if (feldAktiv(w, "compagnia")) {
+      const pe = PERSONE.find((x) => x.id === w.compagnia);
+      M.begl = "mit " + personDe(pe, si, "dat") + (v.deCompZusammen ? " zusammen" : "");
+    }
+    if (artDe) M.art = artDe;
+    if (w.neg && !keinBenutzt && !(t && t.id === "mai")) M.nicht = "nicht";
+    if (freqDe) M.nicht = (M.nicht ? M.nicht + " " : "") + freqDe;
+    const mitte = [M.zeit, M.dat, M.akk, M.nicht, M.art, M.begl, M.mezzo, M.obj, M.ort, M.praep, M.praed].filter(Boolean);
+    // Satzbau
+    const rechts = f.rechts.slice();
+    if (opt.art === "neben") {
+      let fin = f.finit;
+      let r = rechts;
+      if (!modal && f.sep && (dz === "praes" || dz === "praet")) { fin = (dv.pref.endsWith(" ") ? dv.pref : f.sep) + fin; r = []; }
+      const ende = f.doppel ? [fin].concat(r) : r.concat([fin]);
+      return [opt.konj, subj, M.refl].concat(mitte, ende).filter(Boolean).join(" ");
+    }
+    /* „Wann wäscht sich Giulia?“ — das Reflexivpronomen rückt vor ein Nomen-Subjekt, hinter ein Pronomen */
+    const sr = si.sog.pron || /^(er|sie|es)$/.test(subj) ? [subj, M.refl] : [M.refl, subj];
+    if (opt.art === "frage") return [f.finit].concat(sr, mitte, rechts).filter(Boolean).join(" ");
+    if (opt.art === "w" || opt.art === "invers") return [opt.vorfeld, f.finit].concat(sr, mitte, rechts).filter(Boolean).join(" ");
+    // haupt
+    if (zeitVorfeld) return [zeitVorfeld, f.finit].concat(sr, mitte, rechts).filter(Boolean).join(" ");
+    return [subj, f.finit, M.refl].concat(mitte, rechts).filter(Boolean).join(" ");
+  }
+  function deWFrage(w, v) {
+    const r = rolleVon(w, v);
+    switch (w.wort) {
+      case "checosa": return v.id === "aspettare" ? "Worauf" : "Was";
+      case "chi": { const f = v.deFall || "akk"; return f === "dat" ? "Wem" : (f === "aufAkk" ? "Auf wen" : "Wen"); }
+      case "achi": return (v.deFall === "akk") ? "Wen" : "Wem";
+      case "conchi": return "Mit wem";
+      case "dove": { const deR = (v.deRolle && v.deRolle[r]) || { stato: "wo", moto: "wohin", per: "wohin" }[r]; return deR === "wohin" ? "Wohin" : "Wo"; }
+      case "dadove": return "Woher";
+      case "quando": return "Wann";
+      case "come": return "Wie";
+      case "perche": return "Warum";
+      default: return "";
+    }
+  }
+  function deSubjekt(si, schonGenannt) {
+    const s = si.sog;
+    if (s.pron) return s.de;
+    if (!schonGenannt) return s.de;
+    return si.pl ? "sie" : (si.g === "f" ? "sie" : "er");
+  }
+
+  function itKette(teile) {
+    let s = "";
+    teile.forEach((x) => {
+      const t = typeof x === "string" ? x : x.t;
+      if (!t) return;
+      if (!s) { s = t; return; }
+      if (/^,/.test(t)) { s += t; return; }
+      if (/'$/.test(s)) s += t; else s += " " + t;
+    });
+    return s.replace(/(^|\s)([Dd])ove è(?=\s|$|\?)/g, "$1$2ov'è").replace(/(^|\s)([Cc])ome è(?=\s|$|\?)/g, "$1$2om'è");
+  }
+
+  function bauen(w0) {
+    const pr = pruefe(w0);
+    const w = pr.w;
+    if (!pr.ok) return { ok: false, probleme: pr.probleme, w };
+    const v = wVerb(w);
+    const si = subjektInfo(wSubj(w), w.genus);
+    const itZeit = itZeitVon(w);
+    const e = w.satzart === "aussage" && feldAktiv(w, "einleitung") ? EINLEITUNGEN.find((x) => x.id === w.einleitung) : null;
+    const vb = effVerbindung(w);
+    const causaId = feldAktiv(w, "causa") ? String(w.causa) : "";
+    const c = causaId ? CAUSA[causaId.replace(/^non:/, "")] : null;
+    const cneg = /^non:/.test(causaId);
+    const cong = /^cong/.test(itZeit);
+    const pronZwang = cong && !si.pl && si.sog.pron;
+    const grundHatS = c && (c.de.s === "S");
+    const itGrundSubjVorn = c && vb !== "perche" && c.it.v !== "impers" && c.it.v !== "fare3" && c.it.v !== "esserci" && c.it.v !== "essere3" && c.it.v !== "essere3v" && c.it.v !== "costare";
+    // Hauptsatz italienisch
+    const subjImGrund = itGrundSubjVorn && (!si.sog.pron || w.pronome || pronZwang);
+    const teile = itTeileHaupt(w, v, si, { itZeit, pronZwang, subjVerschwiegen: subjImGrund });
+    // Zeit des Grundes
+    const base = basisZeit(w);
+    let gz = "presente", gdz = "praes";
+    if (vb === "se2") { gz = "congImperfetto"; gdz = "k2"; }
+    else if (vb === "se3") { gz = "congTrapassato"; gdz = "k2v"; }
+    else if (["passato", "imperfetto", "trapassato", "condPassato"].includes(base)) { gz = "imperfetto"; gdz = "praet"; }
+    else if (base === "futuro" && (vb === "se" || vb === "quando")) { gz = "futuro"; gdz = "praes"; }
+    else if (zukunftBezug(w) && (vb === "perche" || vb === "quindi") && c && c.zukunft === "futuro") { gz = "futuro"; gdz = "fut"; }
+    let it, de;
+    const deSubjErst = deSubjekt(si, false);
+    const hauptIt = () => itKette(teile);
+    if (!c) {
+      it = hauptIt();
+      if (w.satzart === "wfrage") de = deSatz(w, v, si, { art: "w", vorfeld: deWFrage(w, v), subjDe: deSubjErst });
+      else if (w.satzart === "frage") de = deSatz(w, v, si, { art: "frage", subjDe: deSubjErst });
+      else if (e) de = e.de + " " + deSatz(w, v, si, { art: "neben", konj: "dass", subjDe: deSubjErst });
+      else de = deSatz(w, v, si, { art: "haupt", subjDe: deSubjErst });
+    } else {
+      const gIt = itGrund(c, cneg, si, gz, w);
+      const gItMitS = subjImGrund ? si.sog.it + " " + gIt : gIt;
+      if (vb === "perche") {
+        it = hauptIt() + " perché " + gIt;
+        const deG = deGrund(c, cneg, si, gdz, "neben", w, deSubjekt(si, true));
+        let h;
+        if (w.satzart === "wfrage") h = deSatz(w, v, si, { art: "w", vorfeld: deWFrage(w, v), subjDe: deSubjErst });
+        else if (w.satzart === "frage") h = deSatz(w, v, si, { art: "frage", subjDe: deSubjErst });
+        else if (e) h = e.de + " " + deSatz(w, v, si, { art: "neben", konj: "dass", subjDe: deSubjErst });
+        else h = deSatz(w, v, si, { art: "haupt", subjDe: deSubjErst });
+        de = h + ", weil " + deG;
+      } else if (vb === "quindi") {
+        it = gItMitS + ", quindi " + hauptIt();
+        const deG = deGrund(c, cneg, si, gdz, "haupt", w, deSubjErst);
+        de = deG + ", deshalb " + deSatz(w, v, si, { art: "invers", vorfeld: "", subjDe: deSubjekt(si, grundHatS), vorfeldZeit: false }).replace(/^\s+/, "");
+      } else {
+        const konjIt = vb === "quando" ? "quando" : "se";
+        it = konjIt + " " + gItMitS + ", " + hauptIt();
+        const konjDe = vb === "quando" && base === "passato" ? "als" : "wenn";
+        const deG = deGrund(c, cneg, si, gdz, "neben", w, deSubjErst);
+        de = konjDe + " " + deG + ", " + deSatz(w, v, si, { art: "invers", vorfeld: "", subjDe: deSubjekt(si, grundHatS), vorfeldZeit: false }).replace(/^\s+/, "");
+      }
+    }
+    if (e) it = e.it + " " + it;
+    const zeichen = w.satzart === "haupt" || w.satzart === "aussage" ? "." : "?";
+    it = gross(it.trim()) + zeichen;
+    de = gross(de.trim()) + zeichen;
+    return { ok: true, w, it, de, teile, hinweise: hinweise(w, v, si, itZeit, teile), itZeit };
+  }
+
+  /* Kurze Erklärungen auf Deutsch — die wichtigste Regel dieses Satzes */
+  function hinweise(w, v, si, itZeit, teile) {
+    const h = [];
+    const alles = teile.map((x) => x.t).join(" ");
+    if (si.sog.pron && !w.pronome && !/^cong/.test(itZeit) && w.satzart !== "wfrage") {
+      const vb = teile.find((x) => x.rolle === "verb");
+      h.push("„" + si.sog.it + "“ fällt weg: die Verbform „" + (vb ? vb.t.replace(/^non /, "") : "") + "“ zeigt schon, wer es ist. Mitgesagt wird es nur zur Betonung.");
+    }
+    if (/^cong/.test(itZeit)) h.push("Nach „" + (EINLEITUNGEN.find((e) => e.id === w.einleitung) || { it: "che" }).it + "“ steht der congiuntivo. Weil io, tu, lui/lei dort gleich klingen, sagt man das Pronomen mit.");
+    if (istZusammengesetzt(itZeit) && !feldAktiv(w, "modale")) {
+      const aux = hilfsverb(v.v);
+      if (aux === "essere") h.push("Mit essere richtet sich das Partizip nach der Person: " + partizipForm(v.v, "m", false) + " / " + partizipForm(v.v, "f", false) + " / " + partizipForm(v.v, "m", true) + " / " + partizipForm(v.v, "f", true) + ".");
+      else h.push("Mit avere bleibt das Partizip gleich: „" + partizip(v.v) + "“ — egal wer.");
+    }
+    if (v.v.rifl) h.push(feldAktiv(w, "modale") ? "Reflexiv mit Modalverb: das Pronomen hängt am Infinitiv („" + enklitisch(v.v.inf, si.p) + "“)." : "Reflexiv: mi/ti/si/ci/vi/si steht vor dem Verb — in der Vergangenheit immer mit essere.");
+    if (w.neg && w.quando === "mai") h.push("„non … mai“ = nie: non vor dem Verb, mai dahinter.");
+    else if (w.neg) h.push("„non“ steht direkt vor dem Verb" + (v.v.rifl ? " (und vor mi/ti/si)" : "") + ".");
+    if (itZeit === "imperfetto") h.push("imperfetto: für Gewohnheiten und Zustände in der Vergangenheit.");
+    if (itZeit === "futuro") h.push("futuro semplice: Stamm + ò, ai, à, emo, ete, anno.");
+    if (itZeit === "condizionale") h.push("condizionale: Stamm + ei, esti, ebbe … — so klingt „ich würde“, höflich oder als Wunsch.");
+    const vs = alles.match(/\b(al|allo|all'|alla|ai|agli|alle|dal|dallo|dall'|dalla|dai|dagli|dalle|nel|nella|sul|sulla|del|della|dei|degli|delle|dell')\b/);
+    if (vs) h.push("„" + vs[0] + "“ ist verschmolzen: " + ({ al: "a + il", allo: "a + lo", "all'": "a + l'", alla: "a + la", ai: "a + i", agli: "a + gli", alle: "a + le", dal: "da + il", dallo: "da + lo", "dall'": "da + l'", dalla: "da + la", dai: "da + i", dagli: "da + gli", dalle: "da + le", nel: "in + il", nella: "in + la", sul: "su + il", sulla: "su + la", del: "di + il (etwas von)", della: "di + la (etwas von)", dei: "di + i (einige)", degli: "di + gli (einige)", delle: "di + le (einige)", "dell'": "di + l' (etwas von)" }[vs[0]] || "") + ".");
+    if (feldAktiv(w, "agg") && AGG[w.agg].davor) h.push("„" + AGG[w.agg].it + "“ steht meist VOR dem Nomen — die meisten Adjektive stehen dahinter.");
+    if (w.satzart === "frage") h.push("Ja/Nein-Frage: dieselbe Wortstellung wie in der Aussage, nur mit Fragezeichen (die Stimme geht hoch).");
+    if (w.satzart === "wfrage") h.push("W-Frage: das Fragewort steht vorn, ein Subjekt-Name rückt hinter das Verb.");
+    return h.slice(0, 3);
+  }
+
+  /* ===================================================================
+     8. VORSCHLÄGE, WENN ETWAS NICHT PASST
+     =================================================================== */
+  function vorschlaege(w0, zuletzt) {
+    const pr = pruefe(w0);
+    if (pr.ok) return [];
+    const w = pr.w;
+    const kand = [];
+    let felder = Array.from(new Set(pr.probleme.map((p) => p.feld)));
+    if (felder.includes("condAnlass")) {
+      felder = felder.filter((f) => f !== "condAnlass");
+      [{ modo: "volentieri" }, { modale: "potere" }, { modale: "dovere" }, { quando: "gia" }, { tempo: "presente" }, { tempo: "passato" }].forEach((x) => kand.push(Object.assign({}, w, x)));
+    }
+    if (felder.includes("zuviel")) {
+      felder = felder.filter((f) => f !== "zuviel");
+      ["agg", "modo", "mezzo", "compagnia", "causa", "quando", "modale"].forEach((f) => { if (feldAktiv(w, f)) { const z = Object.assign({}, w); z[f] = ""; kand.push(z); } });
+    }
+    // 1. Das, was nicht passt, weglassen
+    const ohne = Object.assign({}, w);
+    felder.forEach((f) => { if (f === "zeitform") ohne.tempo = "presente"; else if (f === "neg") ohne.neg = false; else if (f !== "verbo") ohne[f] = ""; });
+    kand.push(ohne);
+    // 2. Die letzte Änderung zurücknehmen
+    if (zuletzt && zuletzt.feld) {
+      const z = Object.assign({}, w);
+      if (zuletzt.feld === "zeitform") z.tempo = zuletzt.wert; else z[zuletzt.feld] = zuletzt.wert;
+      kand.push(z);
+    }
+    // 3. Das Problemfeld durch etwas Passendes ersetzen
+    felder.forEach((f) => {
+      if (f === "verbo" || f === "neg") return;
+      const tmp = Object.assign({}, w); if (f === "zeitform") tmp.tempo = ""; else tmp[f] = "";
+      const a = angebote(tmp, f);
+      a.slice(0, 2).forEach((x) => { const z = Object.assign({}, w); if (f === "zeitform") z.tempo = x.id; else z[f] = typeof x === "string" ? x : x.id; kand.push(z); });
+    });
+    const out = [], gesehen = new Set();
+    kand.forEach((k) => {
+      if (out.length >= 3) return;
+      const b = bauen(k);
+      if (b.ok && !gesehen.has(b.it)) { gesehen.add(b.it); out.push({ w: b.w, it: b.it, de: b.de }); }
+    });
+    return out;
+  }
+
+  /* ===================================================================
+     9. ZWEI UND MEHR SÄTZE: e, ma, poi, o
+     =================================================================== */
+  const SATZBINDER = [
+    { id: "e", it: "e", de: "und", level: "A1", komma: false, hinweis: "„e“ verbindet ohne Komma." },
+    { id: "ma", it: "ma", de: "aber", level: "A1", komma: true, hinweis: "Vor „ma“ steht ein Komma — es braucht einen Gegensatz (einer verneint, oder zwei Personen)." },
+    { id: "poi", it: "poi", de: "dann", level: "A1", komma: true, hinweis: "„poi“ = danach. Auf Deutsch rückt das Verb direkt hinter „dann“." },
+    { id: "o", it: "o", de: "oder", level: "A1", komma: false, hinweis: "„o“ stellt zwei Möglichkeiten nebeneinander." },
+  ];
+  /* Passen zwei Sätze mit diesem Bindewort zusammen? */
+  function binderPasst(b, w1, w2) {
+    const k1 = schluessel(w1), k2 = schluessel(w2);
+    const gleich = w1.verbo === w2.verbo && (w1.oggetto || "") === (w2.oggetto || "") && (w1.luogo || "") === (w2.luogo || "") && (w1.persona || "") === (w2.persona || "");
+    if (gleich) return { ok: false, text: "Zweimal dasselbe — das klingt komisch." };
+    const drinnen = (k) => k.includes("daheim") || k.includes("ruhe");
+    const raus = (k) => k.includes("ausgehen") || k.includes("reise") || k.includes("draussen");
+    if (b === "e" && ((drinnen(k1) && raus(k2)) || (raus(k1) && drinnen(k2))) && w1.soggetto === w2.soggetto && !w1.neg && !w2.neg)
+      return { ok: false, text: "Zu Hause bleiben UND ausgehen zugleich geht nicht — meinst du „poi“ (danach) oder „ma“?" };
+    if (b === "ma" && w1.neg === w2.neg && w1.soggetto === w2.soggetto)
+      return { ok: false, text: "„ma“ braucht einen Gegensatz: verneine einen der beiden Sätze oder nimm eine andere Person." };
+    if (b === "o" && (w1.neg || w2.neg)) return { ok: false, text: "„o“ (oder) mit Verneinung klingt komisch." };
+    if (b === "o" && w1.soggetto !== w2.soggetto) return { ok: false, text: "„o“ passt hier nur, wenn dieselbe Person entscheidet." };
+    return { ok: true };
+  }
+  function geschichte(liste) {
+    // liste: [{ w }, { w, binder }, …] — alle in derselben Zeitform
+    const teileIt = [], teileDe = [];
+    let vorher = null;
+    for (let i = 0; i < liste.length; i++) {
+      const w = Object.assign({}, liste[i].w, { satzart: "aussage", einleitung: "" });
+      if (i && vorher) w.tempo = vorher.tempo;
+      const b = i ? SATZBINDER.find((x) => x.id === liste[i].binder) || SATZBINDER[0] : null;
+      const selbe = vorher && vorher.soggetto === w.soggetto;
+      const zwing = vorher && !selbe;
+      if (zwing) { w.pronome = true; }
+      const r = bauen(w);
+      if (!r.ok) return { ok: false, index: i, probleme: r.probleme };
+      if (b) { const bp = binderPasst(b.id, vorher, r.w); if (!bp.ok) return { ok: false, index: i, binder: true, text: bp.text }; }
+      let it = r.it.replace(/[.?]$/, "");
+      let de = r.de.replace(/[.?]$/, "");
+      if (i === 0) {
+        teileIt.push(zwing ? it : it); teileDe.push(de);
+        if (liste.length > 1 && !selbe && liste[1] && liste[1].w.soggetto !== w.soggetto && subjektInfo(wSubj(w), w.genus).sog.pron && !w.pronome) {
+          // die erste Person auch nennen, wenn die zweite eine andere ist
+          const r0 = bauen(Object.assign({}, w, { pronome: true }));
+          teileIt[0] = r0.it.replace(/[.?]$/, "");
+        }
+      } else {
+        const itKlein = it.charAt(0).toLowerCase() + it.slice(1);
+        let deTeil;
+        const si = subjektInfo(wSubj(r.w), r.w.genus);
+        const subjDe = deSubjekt(si, selbe);
+        const v = wVerb(r.w);
+        if (b.id === "poi") deTeil = "dann " + deSatz(r.w, v, si, { art: "invers", vorfeld: "", subjDe, vorfeldZeit: false });
+        else deTeil = b.de + " " + (r.w.causa ? de.charAt(0).toLowerCase() + de.slice(1) : deSatz(r.w, v, si, { art: "haupt", subjDe }));
+        if (r.w.causa && b.id !== "poi") deTeil = b.de + " " + deKlein(de, si, selbe);
+        if (r.w.causa && b.id === "poi") deTeil = deTeil + de.slice(de.indexOf(", weil"));
+        teileIt.push((b.komma ? ", " : " ") + b.it + " " + (selbe && subjektInfo(wSubj(r.w), r.w.genus).sog.pron ? itKlein : itKlein));
+        teileDe.push((b.komma ? ", " : " ") + deTeil.replace(/\s+/g, " "));
+      }
+      vorher = r.w;
+    }
+    const it = gross(teileIt.join("").replace(/\s+,/g, ",")) + ".";
+    const de = gross(teileDe.join("").replace(/\s+,/g, ",")) + ".";
+    return { ok: true, it, de };
+  }
+  function deKlein(de, si, selbe) {
+    let s = de.charAt(0).toLowerCase() + de.slice(1);
+    if (!si.sog.pron && selbe) s = s.replace(new RegExp("^" + si.sog.de.charAt(0).toLowerCase() + si.sog.de.slice(1)), deSubjekt(si, true));
+    else if (!si.sog.pron) s = si.sog.de + s.slice(si.sog.de.length);
+    return s;
+  }
+
+  /* ===================================================================
+     10. ZUFALL UND BEISPIELE — nur aus geprüften Bausteinen
+     =================================================================== */
+  function zufallsWahl(niveau, kategorie, zufall, extra) {
+    const eins = (l) => l[Math.floor(zufall() * l.length)];
+    const ex = extra || {};
+    for (let versuch = 0; versuch < 40; versuch++) {
+      const verben = angebote({ niveau, kategorie }, "verbo").filter((v) => !ex.verbo || v.id === ex.verbo);
+      if (!verben.length) return null;
+      let w = { niveau, kategorie, verbo: eins(verben).id, soggetto: ex.soggetto || eins(SOGGETTI.filter((s) => ab(s.level, niveau))).id, genus: zufall() < 0.5 ? "m" : "f",
+        tempo: ex.tempo || eins(ZEITFORMEN.filter((z) => ab(z.level, niveau))).id, satzart: ex.satzart || "aussage", neg: ex.neg !== undefined ? ex.neg : zufall() < 0.2,
+        pronome: zufall() < 0.1 };
+      const v = wVerb(w);
+      if (v.modali.length && zufall() < 0.25) { const m = angebote(w, "modale"); if (m.length) w.modale = eins(m).id; }
+      const r = rollenVon(v); if (r.length) w.rolle = eins(r);
+      const reihenfolge = ["oggetto", "persona", "luogo", "mezzo", "compagnia", "quando", "modo", "stato"];
+      reihenfolge.sort(() => zufall() - 0.5);
+      w = normalisiere(w);
+      for (const f of reihenfolge) {
+        const a = angebote(w, f);
+        if (!a.length) continue;
+        const pflicht = (f === "oggetto" && v.objPflicht) || (f === "luogo" && v.ortPflicht) || (f === "persona" && v.persPflicht) || f === "stato";
+        if (pflicht || zufall() < 0.45) { w[f] = eins(a).id; if (f === "oggetto") { const d = angebote(w, "det"); w.det = eins(d) || ""; const ag = angebote(w, "agg"); if (ag.length && zufall() < 0.3) w.agg = eins(ag).id; } }
+      }
+      if (ex.mitGrund || zufall() < 0.3) {
+        const vbs = angebote(w, "verbindung");
+        if (vbs.length) {
+          const vb = ex.verbindung ? vbs.find((x) => x.id === ex.verbindung) : eins(vbs);
+          if (vb) {
+            const probe = Object.assign({}, w, { verbindung: vb.id });
+            if (vb.id === "se2") probe.tempo = "condizionale";
+            if (vb.id === "se3") probe.tempo = "condPassato";
+            const g = angebote(probe, "causa");
+            if (g.length) { Object.assign(w, probe); w.causa = eins(g).id; }
+          }
+        }
+      }
+      if (ex.einleitung !== false && (ex.einleitung || zufall() < 0.15)) {
+        const e = angebote(w, "einleitung");
+        if (e.length) w.einleitung = ex.einleitung && e.find((x) => x.id === ex.einleitung) ? ex.einleitung : eins(e).id;
+      }
+      if (w.satzart === "wfrage") { const wf = angebote(w, "wort"); if (!wf.length) continue; w.wort = eins(wf).id; }
+      const b = bauen(w);
+      if (b.ok) return b;
+    }
+    return null;
+  }
+  /* Beispiele je Bereich und Niveau: fest gesät, damit sie gleich bleiben */
+  const beispielCache = {};
+  function beispiele(kategorie, niveau, anzahl) {
+    const key = kategorie + "|" + niveau + "|" + (anzahl || 40);
+    if (beispielCache[key]) return beispielCache[key];
+    let samen = 839 + NIVEAUS.indexOf(niveau) * 1000 + KATEGORIEN.findIndex((k) => k.id === kategorie) * 37;
+    const zufall = () => { samen = (samen * 1103515245 + 12345) % 2147483648; return samen / 2147483648; };
+    const out = [], gesehen = new Set();
+    const arten = ["aussage", "aussage", "aussage", "frage", "wfrage"];
+    for (let i = 0; out.length < (anzahl || 40) && i < 600; i++) {
+      const b = zufallsWahl(niveau, kategorie, zufall, { satzart: arten[i % arten.length], mitGrund: i % 3 === 0 });
+      if (b && !gesehen.has(b.it)) { gesehen.add(b.it); out.push({ it: b.it, de: b.de, art: b.w.satzart === "aussage" ? (b.w.causa ? "mit Nebensatz" : "Aussage") : "Frage", zeit: b.itZeit }); }
+    }
+    beispielCache[key] = out;
+    return out;
+  }
+
+  const API = {
+    NIVEAUS, SOGGETTI, PERSONE, LUOGHI, OGGETTI, AGGETTIVI, TEMPI, MODI, MEZZI, CAUSE, STATI, MODALI, VERBI, ZEITFORMEN, VERBINDUNGEN,
+    EINLEITUNGEN, WFRAGEN, KATEGORIEN, SATZBINDER, FELD_NAMEN, DE_VERBEN: DEV, DE_MODAL,
+    angebote, pruefe, normalisiere, bauen, vorschlaege, geschichte, binderPasst, zufallsWahl, beispiele, niveauInfo, schluessel, anzeigeWert,
+    konj: { praesens, imperfetto, futuro, condizionale, congiuntivo, congImperfetto, partizip, partizipForm, hilfsverb, einfach, hilfsForm, enklitisch },
+    artikel, verschmelze, nominal, adjForm, adjVorForm, deNominal, subjektInfo, personIt, personDe, itGrund, deGrund, C, ESSERE, AVERE,
+  };
+  if (typeof window !== "undefined") window.SatzbauIt = API;
+  if (typeof module !== "undefined" && module.exports) module.exports = API;
+})();
