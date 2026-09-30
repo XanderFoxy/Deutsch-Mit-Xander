@@ -38629,6 +38629,108 @@
     }, 3000, "bumerang");
   }
 
+  /* --- FASSUNG 841: WO DER SAUGNAPF KLEBT ----------------------------
+     XANDER (Funk 230, wörtlich): „SAUGNAPF-PFEIL (/pfeil Name, saugpfeil):
+     Bei Nachbarplätzen bleibt der Schaft quer über dem Gesicht des
+     Schützen liegen, nur der Saugnapf berührt den Rand des Ziels. Soll
+     oben am Kopf des Ziels kleben, Gesichtsmitte frei. Beides ist fürs
+     Werbevideo nötig."
+
+     GEFUNDEN: der Napf sass auf dem Rand in Richtung des Schützen, und
+     der Schaft (112 % der Bildbreite) zeigte genau zum Schützen. Die
+     Plätze stehen aber nur gut eine Bildbreite auseinander (Telefon:
+     79 px Abstand bei 74 px Bild) – der Schaft lag also quer über dem
+     Gesicht nebenan. Dazu waren --ex/--ey Prozent der PFEIL-Box (in
+     der Höhe nur 31 % des Bildes): von oben getroffen sass der Napf
+     kaum über der Mitte.
+
+     JETZT, alles in Pixeln gerechnet: der Napf klebt oben am Kopf
+     (Stirn/Scheitel), der Schaft steht strahlenförmig vom Kopf weg nach
+     oben/außen. Welche Neigung, wird ausgerechnet: Kandidaten von 55°
+     links bis 55° rechts der Senkrechten, und genommen wird die, bei
+     der der Pfeil die Gesichtsmitte (mittleres Drittel) des Schützen
+     und des Ziels nicht berührt, möglichst auch keine anderen Gesichter,
+     im Fenster bleibt und – wenn das geht – zur Seite des Schützen
+     zeigt (von dort kam er ja). Der Flug ist ein Bogen (quadratische
+     Kurve) vom Schützen her, der genau in dieser Neigung ankommt. */
+  const LC_PFEIL_BREITE = 0.96;   /* Pfeillänge in Bildbreiten (vorher 1,12 – auf dem Telefon zu lang für Nachbarplätze) */
+  function lcSaugpfeilBahn(schicht, platz) {
+    const kreis = platz.querySelector(".lc-kreis") || platz;
+    const rk = kreis.getBoundingClientRect(), rp = platz.getBoundingClientRect();
+    const D = rk.width || rp.width;
+    if (!D) return null;
+    const R = D / 2, W = LC_PFEIL_BREITE * D, HALB = 0.14 * W;
+    /* Mitte des Ziels (Bildschirm) und Mitte der Schicht (sie deckt das Quadrat oben im Platz) */
+    const cx = rk.left + rk.width / 2, cy = rk.top + rk.height / 2;
+    const sx = rp.left + rp.width / 2, sy = rp.top + rp.width / 2;
+    const karte = document.getElementById("livechatKarte");
+    const quelle = (lcWurfVon ? lcPlatzMitNamen(lcWurfVon) : null) || (karte && karte.querySelector(".lc-platz-ich"));
+    const qk = quelle && quelle !== platz ? (quelle.querySelector(".lc-kreis") || quelle).getBoundingClientRect() : null;
+    const qx = qk ? qk.left + qk.width / 2 - cx : -0.74 * 2.3 * D, qy = qk ? qk.top + qk.height / 2 - cy : -0.67 * 2.3 * D;
+    /* Mittlere Drittel aller Gesichter (relativ zur Zielmitte) */
+    const mitte = (r) => ({ l: r.left + r.width / 3 - cx, r: r.right - r.width / 3 - cx, o: r.top + r.height / 3 - cy, u: r.bottom - r.height / 3 - cy });
+    const ziel = mitte(rk), schuetze = qk ? mitte(qk) : null;
+    const andere = [];
+    (karte || document).querySelectorAll(".lc-platz .lc-kreis").forEach((k) => {
+      if (k === kreis || (quelle && quelle.contains(k))) return;
+      const r = k.getBoundingClientRect();
+      if (r.width) andere.push(mitte(r));
+    });
+    const ro = 0.85 * R;                 /* dort berührt der Rand des Napfes den Kopf */
+    const ende = ro + 0.88 * W;          /* dort sitzt die Nocke (x = 3 von 100 in der Zeichnung) */
+    const trifft = (b, ux, uy) => {
+      for (let i = 0; i <= 24; i++) {
+        const d = ro + (ende - ro) * i / 24, x = ux * d, y = uy * d;
+        if (x > b.l - HALB && x < b.r + HALB && y > b.o - HALB && y < b.u + HALB) return true;
+      }
+      return false;
+    };
+    const B = document.documentElement.clientWidth || window.innerWidth;
+    /* Die Nocke soll in der Chat-Karte bleiben (am Rand-Platz sonst halb aus dem Bild) */
+    const kr = karte ? karte.getBoundingClientRect() : null;
+    const links = Math.max(2, kr && kr.width ? kr.left : 0) + HALB, rechts = Math.min(B - 2, kr && kr.width ? kr.right : B) - HALB;
+    const seite = Math.abs(qx) > 0.3 * D ? Math.sign(qx) : (cx < B / 2 ? 1 : -1);
+    let best = null;
+    for (let g = -55; g <= 55; g += 5) {
+      const w = g * Math.PI / 180, ux = Math.sin(w), uy = -Math.cos(w);
+      let kosten = Math.abs(Math.abs(g) - 35) * 0.2;                     /* schräg sieht nach Treffer aus, nicht wie eine Antenne */
+      if (schuetze && trifft(schuetze, ux, uy)) kosten += 1000;
+      if (trifft(ziel, ux, uy)) kosten += 1000;
+      andere.forEach((b) => { if (trifft(b, ux, uy)) kosten += 40; });
+      const exx = cx + ux * ende, exy = cy + uy * ende;
+      if (exx < links || exx > rechts) kosten += 60;
+      if (exy < 2) kosten += 20;
+      /* zur Seite des Schützen – liegt er höher, lieber weg von ihm (sonst zeigt der Schaft auf sein Gesicht) */
+      const zuIhm = Math.sign(g) === seite;
+      if (g !== 0 && (qy < -0.35 * D ? zuIhm : !zuIhm)) kosten += 8;
+      if (!best || kosten < best.kosten) best = { g: g, ux: ux, uy: uy, kosten: kosten };
+    }
+    const ux = best.ux, uy = best.uy;
+    /* Drehpunkt = rechte Kante der Zeichnung (100 von 100); der Napfrand liegt 9 % davor Richtung Schaft */
+    const hx = ux * (ro - 0.09 * W) + (cx - sx), hy = uy * (ro - 0.09 * W) + (cy - sy);
+    const dEnde = Math.atan2(-uy, -ux) * 180 / Math.PI;
+    /* Start beim Schützen – am oberen Rand seines Bildes, nicht mitten im Gesicht; die Kurve kommt tangential in der Endneigung an */
+    const s0x = qx + (cx - sx), s0y = qy - (qk ? 0.45 * qk.height : 0) + (cy - sy);
+    const weit = Math.hypot(hx - s0x, hy - s0y), k = Math.max(0.9 * D, 0.55 * weit);
+    const kx = hx + ux * k, ky = hy + uy * k;
+    const punkt = (t) => [(1 - t) * (1 - t) * s0x + 2 * (1 - t) * t * kx + t * t * hx, (1 - t) * (1 - t) * s0y + 2 * (1 - t) * t * ky + t * t * hy];
+    const winkel = (t) => { const tx = 2 * (1 - t) * (kx - s0x) + 2 * t * (hx - kx), ty = 2 * (1 - t) * (ky - s0y) + 2 * t * (hy - ky); return Math.atan2(ty, tx) * 180 / Math.PI; };
+    /* Winkel stetig halten (kein Sprung über ±180°), am Ende genau dEnde */
+    let vorher = null;
+    const stetig = (a) => { if (vorher != null) { while (a - vorher > 180) a -= 360; while (a - vorher < -180) a += 360; } vorher = a; return a; };
+    const T = [0, 0.3, 0.55, 0.78, 1];
+    const wn = T.map((t) => stetig(t === 1 ? dEnde : winkel(t)));
+    T.forEach((t, i) => {
+      const p = punkt(t);
+      schicht.style.setProperty("--pf" + i + "x", p[0].toFixed(1) + "px");
+      schicht.style.setProperty("--pf" + i + "y", p[1].toFixed(1) + "px");
+      schicht.style.setProperty("--pf" + i + "d", wn[i].toFixed(1) + "deg");
+    });
+    schicht.classList.add("lc-pfeil-841");
+    schicht.dataset.pfeilNeigung = String(best.g);
+    return best;
+  }
+
   /* --- DER SAUGNAPF-PFEIL ------------------------------------------ */
   function lcSaugpfeil(wen) {
     return lcAmPlatz(wen, "lc-pfeil", (schicht, platz) => {
@@ -38658,6 +38760,8 @@
          Kreisbahn, dieselbe Rechnung wie beim Schneeball). */
       schicht.style.setProperty("--ex", (r.x * 38).toFixed(1) + "%");
       schicht.style.setProperty("--ey", (r.y * 38).toFixed(1) + "%");
+      /* FASSUNG 841 — die Bahn in Pixeln, der Napf oben am Kopf (siehe lcSaugpfeilBahn) */
+      try { lcSaugpfeilBahn(schicht, platz); } catch (e) {}
       /* Die Aeste einer Feder: feine Striche, die vom Kiel schraeg
          nach hinten aussen laufen. Ohne sie ist eine Fahne nur eine
          Flaeche — mit ihnen sieht man, dass es eine Feder ist. */
@@ -56363,7 +56467,11 @@
      ===================================================================== */
   const LC_AUTO3D = {
     viper: { blatt: "auftritt_viper", radstand: 2.444, motor: "auftritt-viper", laut: 0.6 },
-    batmobil: { blatt: "auftritt_batmobil", radstand: 3.2, motor: "@batmobil", laut: 0.6, nachbrenner: true }
+    /* FASSUNG 841 — XANDER (Funk 230): „Das Auto fährt HINTER den Plätzen/Profilbildern durch (falscher Layer). Soll wie
+       in anderen Livestreams im VORDERGRUND über die Köpfe fahren, sauber einfahren und dann aussteigen."
+       vorn: true → keine Gesichter-Kopien über der Leinwand (Fassung 698 legte sie für alle Wagen darüber); das Batmobil
+       fährt über alle Plätze hinweg, nur das eigene Bild (die Person am Steuer, die aussteigt) liegt über dem Auto. */
+    batmobil: { blatt: "auftritt_batmobil", radstand: 3.2, motor: "@batmobil", laut: 0.6, nachbrenner: true, vorn: true }
   };
   const LC_AUTO3D_DAUER = 5200;
   const lcAuto3dLager = {};
@@ -56587,7 +56695,7 @@
     const rollIdx = (weg) => { const nR = M.roll.length, per = (M.roll[1] - M.roll[0]) * nR, rR = raeder.hl[2]; const grad = weg / rR * 180 / Math.PI; return Math.floor(((grad % per) + per) % per / per * nR) % nR; };
     let letzter = null;
     const spur = [];
-    window.DMA_AUTO3D = { art: art, richtung: rein ? "rein" : "raus", plan: { Ta: P.Ta, Th: P.Th, tKurve: P.tKurve, D: P.D, sg: sg, S: S_NAH, xh: Math.round(xh), N: N }, spur: spur, jetzt: () => letzter };
+    window.DMA_AUTO3D = { art: art, vorn: Boolean(C.vorn), richtung: rein ? "rein" : "raus", plan: { Ta: P.Ta, Th: P.Th, tKurve: P.tKurve, D: P.D, sg: sg, S: S_NAH, xh: Math.round(xh), N: N }, spur: spur, jetzt: () => letzter };
     const qualmMalen = (t, zAuto, vorne) => {
       for (const q of qualm) {
         const tau = (t - q.t) / q.lebt;
@@ -56806,6 +56914,8 @@
       if (richtung === "rein" && (versuch || 0) < 6) { setTimeout(() => lcAuftritt(id, art, richtung, (versuch || 0) + 1, geladen), 250); return true; }
       return false;
     }
+    /* FASSUNG 841 — „im VORDERGRUND über die Köpfe fahren": siehe LC_AUTO3D.batmobil.vorn */
+    const vorn = Boolean(auto3d && LC_AUTO3D[art].vorn);
     const rein = richtung !== "raus", D = auto3d ? LC_AUTO3D_DAUER : art === "transformer" ? 6400 : art === "liane" ? 3600 : (rein && LC_FRONTWAGEN[art]) ? 5400 : A.wagen ? 3600 : 2600;
     /* FASSUNG 710 — XANDER (Funk 156): „Die Profil Intro Animation … hängt vom Sound oft hinterher". Die Töne liefen ab dem
        Aufruf, die Animation erst ab ihrem ersten gezeichneten Bild – und das kam spät, wenn das Foto noch entpackt werden
@@ -56814,7 +56924,7 @@
     const tonPuffer = [];
     lcTonPuffer = tonPuffer; lcTonPufferSeit = Date.now();
     const buehne = document.createElement("div");
-    buehne.className = "lc-auftritt lc-auftritt-" + art + (rein ? " lc-auftritt-rein" : " lc-auftritt-raus");
+    buehne.className = "lc-auftritt lc-auftritt-" + art + (rein ? " lc-auftritt-rein" : " lc-auftritt-raus") + (vorn ? " lc-auftritt-vorn" : "");
     buehne.setAttribute("aria-hidden", "true");
     /* Die Bühne liegt auf der SEITE (nicht am Fenster): scrollt die Seite
        während der Fahrt, bleibt der Wagen trotzdem am Platz. */
@@ -56831,7 +56941,8 @@
        Abfahren das Nachbarbild zur Hälfte). Jetzt liegt auf der Bühne über jedem anderen
        besetzten Platz eine Kopie seines Bildes: die Fahrzeuge fahren HINTER den Gesichtern
        durch. Plätze mit laufender Kamera bleiben frei (ein Standbild würde das Video verdecken). */
-    if (art !== "zauber") {
+    /* FASSUNG 841 — nicht beim Batmobil (vorn): Xander will es jetzt ausdrücklich ÜBER den Köpfen sehen. */
+    if (art !== "zauber" && !vorn) {
       document.querySelectorAll("#lcPlaetze .lc-platz.lc-platz-belegt").forEach((pl) => {
         const vid = pl.querySelector("video");
         if (pl === platz || (vid && vid.srcObject && vid.offsetParent && getComputedStyle(vid).visibility !== "hidden")) return;
