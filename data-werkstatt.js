@@ -49,22 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 820: Tonserver-Fix ausgeliefert (Funk 233)",
+  stand: "Fassung 821: Italienisch nur noch im Italienischraum (Funk 225/232)",
 
   inArbeit: [
-    { seit: "2026-09-30T05:48",
-      text: "Italienisch außerhalb des Italienischraums entfernen (Funk 225/232)" },
-    { seit: "2026-09-30T05:48",
+    { seit: "2026-09-30T06:24",
       text: "Viper, KITT, Colt-Truck vorn? (Frage an Xander)" },
-    { seit: "2026-09-30T05:48",
+    { seit: "2026-09-30T06:24",
       text: "Italienischraum nur für Betreiber? (Frage an Xander)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-30T05:48",
+    { seit: "2026-09-30T06:24",
+      text: "Italienisch außerhalb des Italienischraums entfernt (843)" },
+    { seit: "2026-09-30T06:24",
       text: "Tonserver-Wächter mit Rückfall aufs Netz (842)" },
-    { seit: "2026-09-30T05:48",
-      text: "Batmobil vorn, Saugnapf oben am Kopf (841)" },
   ],
 };
