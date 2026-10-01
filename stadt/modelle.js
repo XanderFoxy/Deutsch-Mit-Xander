@@ -18,7 +18,9 @@ STADT.MODELL_DATEIEN = [
   "dampflok", "gueterwagen",
   "menschen",
   /* FASSUNG 811 — XANDER: „Tiere im Dorf: Hühner, Kühe, Schweine – nachts nicht draußen" (Laufblätter für die leichte Stadt) */
-  "kuh", "schwein", "huhn"
+  "kuh", "schwein", "huhn",
+  /* FASSUNG 833 — XANDER (Funk 255): „die Sachen die ich weiter baue tauchen niemals auf der Karte auf die Jagdhütte oder Kuhstall oder sowas" */
+  "schweinestall", "holzhuette", "jagdhuette", "sternwarte"
 ];
 /* Rundum gleiche Dinge: die Drehung ändert das Bild nicht → ein Bild im Speicher für alle Winkel */
 STADT.OHNE_DREHUNG = ["tanne", "laubbaum", "obstbaum"];

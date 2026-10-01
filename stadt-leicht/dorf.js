@@ -52,7 +52,7 @@
     brauerei: [[12, 10], 15], bibliothek: [[12, 10], 13], krankenhaus: [[12, 10], 13], labor: [[10, 10], 12] };
   for (const k in EIGEN) D.BILD[k] = ["g_" + k, "bau_" + k, EIGEN[k][0], EIGEN[k][1]];
   /* FASSUNG 833 — eigene Modelle der späten Häuser (stadt/modelle/<name>.js); der Marktstand ist die Marktbude */
-  const SPAET_BILD = { holzhuette: [[11, 9], 7], jagdhuette: [[11, 10], 8.5], schweinestall: [[11, 9], 6], sternwarte: [[11, 10], 10.5], marktstand: [[4, 3.2], 4.2] };
+  const SPAET_BILD = { holzhuette: [[11, 9], 6], jagdhuette: [[11, 10], 7], schweinestall: [[9, 11], 6], sternwarte: [[11, 10], 10], marktstand: [[4, 3.2], 4.2] };
   for (const k in SPAET_BILD) D.BILD[k] = ["g_" + k, "bau_" + k, SPAET_BILD[k][0], SPAET_BILD[k][1]];
   /* FASSUNG 818 — XANDER: „ich möchte dieses höhlenartige haben dass man instinktiv weiß da geht's in das Bergwerk
      hinein". Das Bergwerk ist wieder ein Felshügel mit Stolleneingang, Gleis und Lore (Modell bergstollen, 13 × 13 m);
