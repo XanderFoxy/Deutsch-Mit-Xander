@@ -12716,8 +12716,102 @@
     <p class="cat-pool-note">Geübt wird mit: ${meineWoerterName()} — ${anzahl} ${anzahl === 1 ? "Wort" : "Wörter"}.</p>`;
   }
 
+  /* ------------------------------------------------------------
+     FASSUNG 832 — BEUGUNG IM WÖRTERBUCH
+     XANDER (Funk 255, wörtlich): „Beugungsknöpfe (ich/du/er …) für
+     Verben im Wörterbuch wie im Duden".
+     Die Regeln stehen in konjugation.js (24 KB). Sie wird erst
+     geholt, wenn das Wörterbuch aufgeht — der Chat lädt dadurch
+     nichts mehr. Bis sie da ist, fehlt der Knopf einfach; danach
+     wird die Liste einmal neu gezeichnet.
+     Einen Knopf bekommen nur Verben (englisch „to …") und nur, wenn
+     die Regeln sicher sind (hängen, schaffen … bleiben ohne Tabelle).
+     ------------------------------------------------------------ */
+  let konjLaeuft = null;
+  let konjVerben = null, konjQuelle = null;
+  const konjTabellen = new Map();
+  function konjLaden() {
+    if (window.Konjugation) return Promise.resolve(true);
+    if (konjLaeuft) return konjLaeuft;
+    konjLaeuft = new Promise((fertig) => {
+      const weg = "konjugation.js";
+      const s = document.createElement("script");
+      s.src = (window.DMA_Q ? DMA_Q(weg) : weg) + (window.DMA_V ? DMA_V(weg) : "?v=" + (window.DMA_VERSION || "1"));
+      s.async = true;
+      s.onload = () => fertig(true);
+      s.onerror = () => { konjLaeuft = null; fertig(false); };
+      document.head.appendChild(s);
+    });
+    return konjLaeuft;
+  }
+  /* Die Tabelle zu einem Stichwort. Die Liste aller Verben braucht
+     konjugation.js, um „aufstehen" als „auf + stehen" zu erkennen; sie
+     wird neu gebaut, sobald der Wortschatz nachgeladen hat. */
+  function konjTabelle(wort) {
+    if (!window.Konjugation) return null;
+    const alle = buildDictionaryEntries();
+    if (alle !== konjQuelle) {
+      konjQuelle = alle;
+      konjTabellen.clear();
+      konjVerben = {};
+      alle.forEach((x) => { if (/^to /i.test(x.en || "")) konjVerben[String(x.word).replace(/^sich /, "")] = 1; });
+    }
+    if (konjTabellen.has(wort)) return konjTabellen.get(wort);
+    let t = null;
+    try { t = Konjugation.tabelle(wort, konjVerben); } catch (f) { t = null; }
+    konjTabellen.set(wort, t);
+    return t;
+  }
+  function dictBeugung(e) {
+    if (!window.Konjugation || !e || !/^to /i.test(e.en || "") || imItalienischraum()) return null;
+    return konjTabelle(e.word);
+  }
+  const KONJ_REITER = ["Präsens", "Präteritum", "Perfekt", "Imperativ"];
+  function dictBeugungHtml(t, zeit) {
+    const zeilen = zeit === "Imperativ" ? (t.imperativ || []) : t.zeiten[zeit] || [];
+    const wer = zeit === "Imperativ" ? ["(du)", "(ihr)", "(Sie)"] : null;
+    return `<div class="beug-reiter" role="tablist">${KONJ_REITER.filter((z) => z !== "Imperativ" || t.imperativ).map((z) =>
+        `<button type="button" class="beug-zeit ${z === zeit ? "an" : ""}" data-beugzeit="${z}" role="tab" aria-selected="${z === zeit}">${z}</button>`).join("")}</div>
+      <ul class="beug-liste">${zeilen.map((z, i) => `<li><button type="button" class="beug-zeile" data-beugsag="${escapeHtml(z)}">${wer ? `<span class="beug-wer">${wer[i]}</span> ` : ""}${escapeHtml(z)}</button></li>`).join("")}</ul>
+      <p class="beug-fuss">Partizip II: <strong>${escapeHtml(t.partizip)}</strong> · Perfekt mit <strong>${t.hilf}</strong></p>`;
+  }
+  function dictBeugungKlick(ev) {
+    const knopf = ev.target.closest(".beug-btn");
+    if (knopf) {
+      const karte = knopf.closest(".vocab-card");
+      const t = konjTabelle(knopf.dataset.beugung);
+      if (!karte || !t) return true;
+      let feld = karte.querySelector(".beug-panel");
+      if (feld) { feld.remove(); knopf.setAttribute("aria-expanded", "false"); knopf.classList.remove("an"); return true; }
+      feld = document.createElement("div");
+      feld.className = "beug-panel";
+      feld.dataset.wort = knopf.dataset.beugung;
+      feld.innerHTML = dictBeugungHtml(t, "Präsens");
+      karte.appendChild(feld);
+      knopf.setAttribute("aria-expanded", "true");
+      knopf.classList.add("an");
+      return true;
+    }
+    const reiter = ev.target.closest("[data-beugzeit]");
+    if (reiter) {
+      const feld = reiter.closest(".beug-panel");
+      const t = feld && konjTabelle(feld.dataset.wort);
+      if (t) feld.innerHTML = dictBeugungHtml(t, reiter.dataset.beugzeit);
+      return true;
+    }
+    const zeile = ev.target.closest("[data-beugsag]");
+    if (zeile) {
+      /* „er/sie/es geht" vorlesen als „er geht", „sie/Sie gehen" als „sie gehen" */
+      const satz = zeile.dataset.beugsag.replace(/^er\/sie\/es /, "er ").replace(/^sie\/Sie /, "sie ");
+      Core.speak(satz, "de");
+      return true;
+    }
+    return false;
+  }
+
   function dictKarte(e) {
     const gemerkt = imWortschatz(e.word);
+    const beug = dictBeugung(e);
     return `
           <div class="vocab-card">
             <div>
@@ -12732,6 +12826,7 @@
             </div>
             <div class="vocab-karte-knoepfe">
               <button type="button" class="speak-btn" data-word="${e.word.replace(/"/g, "&quot;")}" aria-label="Aussprache anhören">🔊</button>
+              ${beug ? `<button type="button" class="beug-btn" data-beugung="${e.word.replace(/"/g, "&quot;")}" aria-expanded="false" title="Beugung: ich, du, er …">ich/du</button>` : ""}
               <button type="button" class="merk-btn ${gemerkt ? "gemerkt" : ""}" data-merken="${e.word.replace(/"/g, "&quot;")}"
                 aria-pressed="${gemerkt}" title="${gemerkt ? "Aus meinem Wortschatz entfernen" : "In meinen Wortschatz aufnehmen"}">${gemerkt ? "★" : "☆"}</button>
             </div>
@@ -12929,6 +13024,9 @@
       <div id="dictVorschlagHost"></div>
     `;
     dictVorschlagZeichnen(list.length === 0);
+    /* FASSUNG 832: die Beugungsregeln erst jetzt holen, dann die Liste
+       einmal neu — die Karten bekommen ihren „ich/du"-Knopf. */
+    if (!window.Konjugation && !imItalienischraum()) konjLaden().then((ok) => { if (ok) dictListeErneuern(); });
     const suche = document.getElementById("dictSearch");
     suche.addEventListener("input", (e) => {
       dictFilterText = e.target.value;
@@ -12967,6 +13065,7 @@
       area.addEventListener("click", async (ev) => {
         const knopf = ev.target.closest(".speak-btn");
         if (knopf) { Core.speak(knopf.dataset.word, imItalienischraum() ? "it" : "de"); return; }
+        if (dictBeugungKlick(ev)) return;   // FASSUNG 832: Beugung
         const merken = ev.target.closest("[data-merken]");
         if (!merken) return;
         // Der Stern muss SOFORT reagieren; gespeichert wird nebenher.

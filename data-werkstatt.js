@@ -49,26 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 831 — Funk 255: Mine und Falltür im Kreis, verbesserte Waffen mit eigenem Glanz und Ton",
+  stand: "Fassung 832: Beugung im Wörterbuch (ich/du/er …, Präsens, Präteritum, Perfekt, Imperativ)",
 
   inArbeit: [
-    { seit: "2026-10-01T05:38",
-      text: "Äcker selbst versetzen" },
-    { seit: "2026-10-01T05:38",
-      text: "fehlende Häuser in der neuen Stadt + Bau-Rückmeldung" },
-    { seit: "2026-10-01T05:38",
-      text: "Wörterbuch: Beugungsknöpfe, Lücken; Satzbaukasten" },
-    { seit: "2026-10-01T05:38",
-      text: "Niveau A1–C2 für die Stadt-Quests" },
-    { seit: "2026-10-01T05:38",
-      text: "weitere Karten zur Auswahl" },
+    { seit: "2026-10-01T05:58",
+      text: "Äcker versetzen" },
+    { seit: "2026-10-01T05:58",
+      text: "fehlende Gebäude in der neuen Stadt + Bau-Feedback" },
+    { seit: "2026-10-01T05:58",
+      text: "Wörterbuch-Lücken, Satzbaukasten" },
+    { seit: "2026-10-01T05:58",
+      text: "Niveau A1–C2, Missionen nach Stadtstand" },
+    { seit: "2026-10-01T05:58",
+      text: "weitere Karten, WebGL-Plan" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-01T05:38",
-      text: "Mine und Falltür als eigene Symbole im Waffenkreis" },
-    { seit: "2026-10-01T05:38",
-      text: "Waffen-Verbesserungen sieht und hört man (★ ★★ ★★★), auch bei den anderen" },
+    { seit: "2026-10-01T05:58",
+      text: "Beugungsknöpfe im Wörterbuch" },
   ],
 };

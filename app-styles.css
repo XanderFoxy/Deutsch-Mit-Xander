@@ -4689,6 +4689,37 @@ body.lernraum-it .nur-deutsch { display: none; }
   color: var(--ink-400, #9a8f80);
 }
 .merk-btn.gemerkt { color: var(--amber-500, #e0a536); }
+/* FASSUNG 832 — Beugung im Wörterbuch (Funk 255: „Beugungsknöpfe
+   (ich/du/er …) für Verben im Wörterbuch wie im Duden"). Der Knopf sitzt
+   zwischen Vorlesen und Stern; die Tabelle klappt unter dem Eintrag auf,
+   über die ganze Kartenbreite. Jede Zeile liest sich beim Antippen vor. */
+.beug-btn {
+  border: 1px solid rgba(245,239,228,0.25);
+  background: transparent;
+  color: var(--teal-400, #4fc4b4);
+  font: 600 0.68rem/1 var(--font-mono, monospace);
+  padding: 5px 4px;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.beug-btn.an { background: rgba(79,196,180,0.22); border-color: var(--teal-400, #4fc4b4); }
+.beug-panel { flex: 1 1 100%; width: 100%; margin-top: 4px; border-top: 1px solid rgba(245,239,228,0.1); padding-top: 8px; }
+.beug-reiter { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.beug-zeit {
+  border: 1px solid rgba(245,239,228,0.2); background: transparent; color: inherit;
+  font-size: 0.75rem; padding: 4px 8px; border-radius: 999px; cursor: pointer; min-height: 28px;
+}
+.beug-zeit.an { background: rgba(79,196,180,0.22); border-color: var(--teal-400, #4fc4b4); font-weight: 700; }
+.beug-liste { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; }
+.beug-zeile {
+  width: 100%; text-align: left; border: none; background: transparent; color: inherit;
+  font-size: 0.86rem; padding: 4px 2px; cursor: pointer; border-radius: 5px; min-height: 28px;
+}
+.beug-zeile:hover, .beug-zeile:focus-visible { background: rgba(245,239,228,0.07); }
+.beug-wer { opacity: 0.6; font-size: 0.75rem; }
+.beug-fuss { margin: 6px 0 0; font-size: 0.75rem; opacity: 0.75; }
+@media (max-width: 360px) { .beug-liste { grid-template-columns: 1fr; } }
 .wortschatz-leiste { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 
 /* Rundenfortschritt — in jedem Spiel gleich: Balken plus Zahl, damit
