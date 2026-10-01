@@ -222,10 +222,8 @@ const sage = (gut, was, zusatz) => {
   sage(!ueber.length, "kein spätes Haus liegt über einem anderen (höchstens 20 % Überdeckung der Tippflächen)", ueber.join(", "));
   const tl = await pg.evaluate(() => [...document.querySelectorAll(".sp-dl-haus-gemalt")].filter((e) => ["holzhuette", "jagdhuette", "sternwarte"].includes(e.dataset.g)).length);
   if (process.env.BILD) {
-    await pg.evaluate(() => { const lw = document.querySelector("canvas.sp-dl-mal"); const c = document.createElement("canvas"); c.id = "__voll"; c.width = lw.width; c.height = lw.height; c.getContext("2d").drawImage(lw, 0, 0);
-      c.style.cssText = "position:fixed;left:0;top:0;width:" + Math.round(lw.width / 2.75) + "px;z-index:99999"; document.body.appendChild(c); });
-    await (await pg.$("#__voll")).screenshot({ path: process.env.BILD + "-altdorf.png" });
-    await pg.evaluate(() => document.getElementById("__voll").remove());
+    const url = await pg.evaluate(() => document.querySelector("canvas.sp-dl-mal").toDataURL("image/png"));
+    fs.writeFileSync(process.env.BILD + "-altdorf.png", Buffer.from(url.split(",")[1], "base64"));
   }
 
   console.log("\nBAUEN: SOFORT RÜCKMELDUNG\n");
