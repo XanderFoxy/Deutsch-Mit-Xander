@@ -1371,7 +1371,7 @@
       return;
     }
     if (n.ereignis === "schuss") {
-      geschossZeigen(n.von, n.zielChat, n.waffe, n.dx, n.dy, n.farbe, Boolean(n.schnell));
+      geschossZeigen(n.von, n.zielChat, n.waffe, n.dx, n.dy, n.farbe, Boolean(n.schnell), undefined, n.stufe);
     } else if (n.ereignis === "treffer") {
       trefferZeigen(n.zielChat, n);
       gegenwehrZeigen(n.zielChat, n.von, n);
@@ -1705,8 +1705,9 @@
     var ichChat = meineChatId();
     var farbe = waffe === "laser" ? S.laserfarbe : "";
     var puppe = istPuppe(p.id);
-    if (!puppe) senden({ ereignis: "schuss", zielChat: p.id, waffe: waffe, dx: dx, dy: dy, farbe: farbe, schnell: wirkt(S.ich, "tempo") > 0 });
-    var dauer = geschossZeigen(ichChat, p.id, waffe, dx, dy, farbe);
+    var wst = waffenStufe(S.ich, waffe);
+    if (!puppe) senden({ ereignis: "schuss", zielChat: p.id, waffe: waffe, dx: dx, dy: dy, farbe: farbe, schnell: wirkt(S.ich, "tempo") > 0, stufe: wst });
+    var dauer = geschossZeigen(ichChat, p.id, waffe, dx, dy, farbe, undefined, undefined, wst);
     /* Ausweichen (Funk 89: „sie kann ausweichen"): Getroffen wird erst
        beim Einschlag — und nur, wer dann noch auf diesem Platz sitzt. */
     var nummer = Number(knopf.dataset.lcPlatz);
@@ -1884,8 +1885,48 @@
     if (!r.width || !r.height) return null;
     return { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width / 2 };
   }
+  /* FASSUNG 831 — XANDER (Funk 255): „immer wenn man die Waffen verbessert müssen Sie neue Effekte … Grafik und … Sound"
+     (die Fächerlaser sahen nach dem Verbessern genauso aus wie vorher). Jede Stufe sieht und hört man jetzt – bei allen,
+     denn die Stufe reist im Schuss mit („stufe“):
+       ★   goldener Schimmer um das Geschoss, ein zweiter, etwas höherer Abschuss-Ton, goldene Funken beim Einschlag
+       ★★  heller, weiß-goldener Glanz, Ton noch höher und kräftiger, größerer Funkenkranz; der Fächerlaser feuert 7 statt
+           5 Strahlen, der Doppellaser 3
+       ★★★ (nur Energiewaffen) blau-weißes Leuchten mit Farbspiel, drei Töne übereinander, Schockwelle beim Einschlag */
+  function geschossZeigen(vonChat, zielChat, waffe, dx, dy, farbe, schnell, start, stufe) {
+    var st = Math.max(0, Math.min(3, Number(stufe) || 0));
+    if (!st) return geschossZeigenRoh(vonChat, zielChat, waffe, dx, dy, farbe, schnell, start);
+    var vor = document.body.lastElementChild;
+    S.schussStufe = st;
+    var dauer;
+    try { dauer = geschossZeigenRoh(vonChat, zielChat, waffe, dx, dy, farbe, schnell, start); } finally { S.schussStufe = 0; }
+    for (var e = vor ? vor.nextElementSibling : document.body.firstElementChild; e; e = e.nextElementSibling)
+      if (/\bsp-(laser|plasma|geschoss)/.test(e.className)) e.classList.add("sp-stufe", "sp-stufe" + st);
+    var w = WAFFEN[waffe] || WAFFEN.bogen;
+    tonTempo(w.ton, 0.32 + 0.06 * st, 1 + 0.12 * st, 70);
+    if (st >= 2) tonTempo(w.ton, 0.22, 1.5, 140);
+    if (st >= 3) tonTempo("lasertreffer", 0.25, 1.9, 200);
+    var z = mittelpunkt(zielChat);
+    if (z) {
+      var zx = z.x + (Number(dx) || 0) * z.r, zy = z.y + (Number(dy) || 0) * z.r;
+      setTimeout(function () {
+        var f = document.createElement("div");
+        f.className = "sp-stufe-funken sp-stufe" + st;
+        f.style.left = zx + "px"; f.style.top = zy + "px";
+        for (var i = 0; i < 6 + 4 * st; i++) { var k = document.createElement("i"), wi = i / (6 + 4 * st) * 360; k.style.setProperty("--w", wi + "deg"); k.style.setProperty("--d", (18 + 8 * st + (i % 3) * 5) + "px"); f.appendChild(k); }
+        document.body.appendChild(f);
+        setTimeout(function () { f.remove(); }, 750);
+      }, dauer || 0);
+    }
+    return dauer;
+  }
+  /* ein Ton etwas höher/später (für die Stufen) – dieselben Regeln wie ton() */
+  function tonTempo(name, laut, tempo, spaeter) {
+    if (!name || !toeneAn() || lautStufe() === 0) return;
+    if (!spielSichtbar() && !S.chatTonFrei && !S.schnellMenue && !(panel && !panel.hidden)) return;
+    setTimeout(function () { var ok = klangSpielen(name, laut * lautFaktor(), tempo); try { if (window.DMA_TONLOG) window.DMA_TONLOG.push({ name: name, tempo: tempo, wann: Math.round(performance.now()), weg: ok ? "webaudio" : "fehlt" }); } catch (e) {} }, spaeter || 0);
+  }
   /* Zeigt das Geschoss; gibt die Flugzeit zurück. */
-  function geschossZeigen(vonChat, zielChat, waffe, dx, dy, farbe, schnell, start) {
+  function geschossZeigenRoh(vonChat, zielChat, waffe, dx, dy, farbe, schnell, start) {
     var w = WAFFEN[waffe] || WAFFEN.bogen;
     /* FUNK 106 — Blitztrank: halbe Flugzeit. */
     if (schnell === undefined) schnell = vonChat === meineChatId() && wirkt(S.ich, "tempo") > 0;
@@ -1922,6 +1963,8 @@
       var strahlen = waffe === "doppellaser"
         ? [[0, -1, farbe || "#39c6ff"], [0, 1, farbe || "#39c6ff"]]
         : [[-14, 0, "#ff4fd8"], [-7, 0, "#9b6bff"], [0, 0, "#39c6ff"], [7, 0, "#3be38a"], [14, 0, "#ffd23a"]];
+      /* FASSUNG 831 — ab ★★ mehr Strahlen */
+      if ((S.schussStufe || 0) >= 2) strahlen = waffe === "doppellaser" ? strahlen.concat([[0, 0, "#ffffff"]]) : [[-21, 0, "#ff3a3a"]].concat(strahlen, [[21, 0, "#3af0ff"]]);
       strahlen.forEach(function (st) {
         var b = document.createElement("div");
         b.className = "sp-laser sp-laser-" + waffe + dmn;
@@ -4577,7 +4620,8 @@
     ["meister",  "Meister",  "#b8860b", ["weisswurst", "nudelholz"]],
     ["energie",  "Energie",  "#1f8fbf", ["doppellaser", "streulaser", "plasmastrahl", "kugelblitz"]],
     ["klasse",   "Klasse",   "#8a5ad8", ["arkanstab", "wurfdolch", "streithammer", "kraeuterschleuder", "nietenkanone", "duden"]],
-    ["fallen",   "Minen & Bomben", "#6f7a3a", ["mine", "falltuer", "kuckucksuhr"]]
+    /* FASSUNG 831 — Mine und Falltür stehen jetzt als eigene Symbole im Kreis (ringFallenHtml); hier bleibt die Bombe */
+    ["fallen",   "Bomben", "#6f7a3a", ["kuckucksuhr"]]
   ];
   var RING_FALLE = { mine: { name: "Mine", preis: 30 }, falltuer: { name: "Falltür", preis: 25 } };
   function ringFalleSvg(art) {
@@ -4608,6 +4652,20 @@
     return null;
   }
   function ringOffen() { return S.rad != null || S.zrad || S.langWahl; }
+  /* FASSUNG 831 — XANDER (Funk 255): „Mine und Falltür … innerhalb des Waffen Menüs als extrasymbole innerhalb des
+     Kreises". Zwei kleine Knöpfe im inneren Kreis, links und rechts der Mitte, genau in den Lücken zwischen den Zaubern
+     (r = 28 px: weder die Mitte noch ein Zauber wird berührt). Ein Tipp legt sie gleich an („tippe auf den Platz“); wer
+     zu wenig Punkte hat, sieht sie blass mit Preis. */
+  function ringFallenHtml(M, n) {
+    var ich = S.ich || {}, schritt = 2 * Math.PI / Math.max(1, n);
+    return ["falltuer", "mine"].map(function (x, i) {
+      /* Zauber liegen bei -90° + k·schritt; die Lücke, die 180° (links) bzw. 0° (rechts) am nächsten ist */
+      var ziel = i ? 0 : Math.PI, k = Math.round((ziel + Math.PI / 2) / schritt - 0.5), w = -Math.PI / 2 + (k + 0.5) * schritt;
+      var cx = M + Math.cos(w) * 28, cy = M + Math.sin(w) * 28, hat = ringHat(ich, x), f = RING_FALLE[x];
+      return '<button type="button" class="sp-rad-waffe sp-ring-falle' + (S.legen === x ? " sp-an" : "") + (hat ? "" : " sp-stumpf") + '" data-s="ringwahl" data-b="falle" data-w="' + x
+        + '" style="left:' + (cx - 11).toFixed(0) + "px;top:" + (cy - 11).toFixed(0) + 'px" title="' + esc(f.name + " legen · " + f.preis + " Punkte") + '">' + ringFalleSvg(x) + "<small>" + f.preis + "</small></button>";
+    }).join("");
+  }
   function ringHtml() {
     var ich = S.ich || {}, B = 216, M = B / 2, RO = 87, RI = 50, RM = 68;
     var bereiche = RING_BEREICHE.filter(function (b) { return b[3].some(function (d) { return ringHat(ich, d); }); });
@@ -4668,7 +4726,7 @@
       + '<svg class="sp-rad-sektoren" viewBox="0 0 ' + B + " " + B + '"><circle cx="' + M + '" cy="' + M + '" r="' + (M - 2) + '" class="sp-rad-scheibe"/>' + svg
       /* FASSUNG 654 blieb: über der Hand der Zauberer-Rang. */
       + '<text class="sp-ring-rang" x="' + M + '" y="' + (M - 23) + '" fill="#c9b8ff">' + zauberRang(ich).name + "</text></svg>"
-      + aussen + innen
+      + aussen + innen + ringFallenHtml(M, zReihe().length)
       + '<button type="button" class="sp-rad-mitte sp-ring-mitte" data-s="ringab" style="left:' + (M - 15) + "px;top:" + (M - 15) + 'px" title="Waffe und Zauber ablegen">'
       + '<svg viewBox="0 0 20 20"><path d="M5 11 V7 a1.5 1.5 0 0 1 3 0 V10 M8 9 V5.5 a1.5 1.5 0 0 1 3 0 V9.5 M11 9 V6.5 a1.5 1.5 0 0 1 3 0 V11 C14 15 12 17 9.5 17 C7 17 5.5 15.5 5 13 Z" fill="#fff"/></svg></button>'
       /* FASSUNG 678 blieb: „Zahl = Preis" – die Zahl am Zauber ist sein Mana-Preis, kein Vorrat. */

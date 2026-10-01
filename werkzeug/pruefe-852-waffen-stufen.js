@@ -1,10 +1,18 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 664: MEISTERWAFFEN AB EINEM LEVEL
+   SONDE — FASSUNG 831 (Arbeitsnummer 852): VERBESSERTE WAFFEN SIEHT UND
+   HÖRT MAN – AUCH BEI DEN ANDEREN
    ---------------------------------------------------------------------
-   XANDER: „Updates ab einem bestimmten Level irgendwelche Sachen, die
-   dann freigeschaltet werden können, die wir sonst nicht haben".
-   Weißwurst-Bumerang (Lv 6), Nudelholz (Lv 8), Kuckucksuhr-Bombe (Lv 10).
+   XANDER (Funk 255, wörtlich): „immer wenn man die Waffen verbessert
+   müssen Sie neue Effekte … Grafik und … Sound" (die Fächerlaser sahen
+   nach dem Verbessern genauso aus wie vorher).
+   Aufbau wie Sonde 719 (Telefon, Spiel mit nachgebautem Server).
+   Geprüft: ein ankommender Schuss mit „stufe“ – Glanz am Strahl, beim
+   Fächerlaser ab ★★ sieben statt fünf Strahlen, Zusatztöne höher, beim
+   Einschlag ein Funkenkranz (★★★ mit Schockwelle); ohne Stufe bleibt alles
+   wie vorher; der eigene Schuss schickt seine Stufe mit.
+   Mit dem Stand 830 ist das rot.
+   Aufruf: node werkzeug/pruefe-852-waffen-stufen.js
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -75,6 +83,7 @@ const sage = (gut, was, zusatz) => {
     const klient = { rpc: (name, args) => {
       window.__rufe.push({ name: name, args: args || {} });
       let data = { ok: true };
+      if (window.__extra && window.__extra[name]) return Promise.resolve({ data: window.__extra[name](args || {}, ich), error: null });
       if (name === "spiel_ich") data = ich;
       else if (name === "spiel_stand") data = [ich, bea];
       else if (name === "spiel_meine_fallen") data = window.__fallen;
@@ -82,6 +91,7 @@ const sage = (gut, was, zusatz) => {
       else if (name === "spiel_falle_pruefen") data = window.__falleAntwort;
       else if (name === "spiel_heilen") data = Object.assign({}, ich, { ok: true, geheilt: 25, fremd: Boolean(args.p_ziel), geheilter: Object.assign({}, bea, { lp: 75 }) });
       else if (name === "spiel_trophaeen") data = window.__troph || { ok: true, liste: [], neu: [], lohn: 0 };
+      else if (name === "spiel_verkaufen") { ich.waffen = ich.waffen.filter((w) => w !== args.p_ding); ich.punkte += 27; data = Object.assign({ ok: true, verkauft: args.p_ding, erloes: 27 }, ich); }
       else if (name === "spiel_fund_heben") data = window.__fundAntwort || { ok: true, fund: "erz" };
       else if (name === "spiel_bauen") { if (args.p_was === "reparatur") { ich.dorf.schmiede.lp = 20; ich.vorraete.erz -= 1; data = Object.assign({ ok: true, gebaut: "reparatur" }, ich); }
         else { const st = ((ich.dorf || {})[args.p_was] || {}).stufe || 0; ich.dorf = Object.assign({}, ich.dorf, { [args.p_was]: { stufe: st + 1, lp: 20 * (st + 1) } }); data = Object.assign({ ok: true, gebaut: args.p_was, stufe: st + 1 }, ich); } }
@@ -117,6 +127,7 @@ const sage = (gut, was, zusatz) => {
         data = { ok: true, zauber: args.p_zauber, schaden: R[1], abgewehrt: 0, mauer_riss: R[2], dauer: R[3], kaputt: false, lohn: 1,
                  ziel: Object.assign({}, bea, { lp: bea.lp - R[1] }), ich_voll: Object.assign({}, ich) };
       }
+      else if (name === "spiel_fusion") { window.__fusionArgs = args; const fr = { feuerfuchs: ["fuchs", "phoenix"] }[args.p_rezept]; const t = Object.assign({}, ich.tiere); fr.forEach((a) => delete t[a]); t[args.p_rezept] = { kraft: 38, stufe: 1 }; ich.tiere = t; ich.haustier = args.p_rezept; ich.haustier_leben = 38; ich.haustier_max = 38; ich.haustier_stufe = 1; ich.punkte -= 200; data = Object.assign({ ok: true, fusion: args.p_rezept }, ich); }
       else if (name === "spiel_treffer") data = { ok: true, zone: "koerper", schaden: 8, abgewehrt: 0, kaputt: false,
         ziel: Object.assign({}, bea, { lp: 42 }), ich: Object.assign({}, ich, { lp: 94 }), gegenwehr: 6,
         gegen_geschuetz: 4, gegen_tier: 2, tier: "fellmonster", lohn: 1, waffe: args.p_waffe };
@@ -140,50 +151,44 @@ const sage = (gut, was, zusatz) => {
 
   const tick = (ms) => pg.waitForTimeout(ms);
   const mitte = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel);
-  const tippe = async (sel) => { const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
+  const tippe = async (sel) => { await pg.evaluate((s) => { const e = document.querySelector(s); if (e) e.scrollIntoView({ block: "nearest" }); }, sel); const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
 
-  const seite = (chat) => pg.evaluate((c) => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + c + '"] .lc-kreis'); if (!k) return null; const r = k.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; }, chat);
-
-
-
-
-
-  console.log("\nIM LADEN\n");
-  await pg.evaluate(() => { window.__ich.level = 7; window.DMA_SPIEL.menue("waffen"); });
+  const B = process.env.BILD;
+  await pg.evaluate(() => { const ich = window.__ich; ich.level = 10; ich.punkte = 200; ich.mana = 60;
+    ich.waffen = ich.waffen.concat(["armbrust", "bazooka", "kuckucksuhr", "doppellaser"]); window.DMA_SPIEL.pruef.schnellZeichnen(true); });
   await tick(300);
-  const la = await pg.evaluate(() => { const z = (d) => { const b = document.querySelector('#spPanel [data-d="' + d + '"]'); if (b) return (b.disabled ? "zu:" : "auf:") + b.textContent.trim();
-    const zeile = [...document.querySelectorAll("#spPanel .sp-zeile")].find((r) => r.textContent.indexOf(d === "nudelholz" ? "Nudelholz" : "Kuckucksuhr") >= 0); return zeile ? "zu:" + zeile.querySelector("button").textContent : "fehlt"; };
-    return { wurst: z("weisswurst"), holz: z("nudelholz"), uhr: z("kuckucksuhr") }; });
-  sage(/auf:.*85 Punkte/.test(la.wurst) && /ab Level 8/.test(la.holz) && /ab Level 10/.test(la.uhr), "Level 7: Weißwurst-Bumerang kaufbar, Nudelholz ab Lv 8, Kuckucksuhr ab Lv 10", JSON.stringify(la));
-  await pg.evaluate(() => { const p = document.getElementById("spPanel"); if (p) p.hidden = true; });
 
-  console.log("\nIM WAFFENRAD\n");
-  await pg.evaluate(() => { window.__ich.waffen = window.__ich.waffen.concat(["weisswurst", "nudelholz", "kuckucksuhr"]); const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.ich = window.__ich; S.waffe = P.slots()[0]; S.rad = 0; P.schnellZeichnen(true); });
-  await tick(300);
-  /* Ab Fassung 719 (Funk 165): im kleinen Ring ein Feld je Bereich; die Kuckucksuhr-Bombe liegt bei „Minen & Bomben“. */
-  const rad = await pg.evaluate(() => { const f = (b) => document.querySelector('.sp-rad-voll .sp-ring-feld[data-b="' + b + '"]');
-    return { namen: [...document.querySelectorAll(".sp-rad-voll .sp-ring-feld")].map((t) => t.dataset.b).join(","), meister: f("meister") ? getComputedStyle(f("meister")).getPropertyValue("--klasse").trim() : "", bombe: f("fallen") ? f("fallen").dataset.w : "" }; });
-  sage(/meister/.test(rad.namen) && rad.meister === "#b8860b" && rad.bombe === "kuckucksuhr", "eigener Bereich „Meister“ im Ring (goldfarben), die Kuckucksuhr-Bombe bei „Bomben“ (FASSUNG 831)", JSON.stringify(rad));
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.rad = null; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  console.log("\nVERBESSERTE WAFFEN (Funk 255)\n");
+  const schuss = (waffe, stufe) => pg.evaluate((a) => new Promise((fertig) => {
+    window.DMA_TONLOG = [];
+    const vorher = new Set(document.body.children);
+    window.DMA_SPIEL.empfangen({ ereignis: "schuss", von: "bea", zielChat: "ich", waffe: a.waffe, dx: 0, dy: 0, farbe: "", stufe: a.stufe });
+    const neu = [...document.body.children].filter((e) => !vorher.has(e) && /sp-laser|sp-geschoss|sp-plasma/.test(e.className));
+    const strahlen = neu.length, glanz = neu.filter((e) => e.classList.contains("sp-stufe" + a.stufe)).length;
+    const filter = neu[0] ? getComputedStyle(neu[0]).filter : "";
+    setTimeout(() => { const f = document.querySelector(".sp-stufe-funken"); fertig({ strahlen, glanz, filter, funken: f ? f.children.length : 0, welle: f ? getComputedStyle(f, "::after").content !== "none" && f.classList.contains("sp-stufe3") : false,
+      toene: (window.DMA_TONLOG || []).map((t) => t.name + (t.tempo ? "@" + t.tempo.toFixed(2) : "")).join(",") }); }, 700);
+  }), { waffe, stufe });
+  await tick(600);
+  const s0 = await schuss("streulaser", 0);
+  sage(s0.strahlen === 5 && s0.glanz === 0 && s0.funken === 0, "ohne Verbesserung: Fächerlaser mit 5 Strahlen, kein Glanz, keine Funken (wie vorher)", JSON.stringify(s0));
+  await tick(500);
+  const s1 = await schuss("streulaser", 1);
+  sage(s1.strahlen === 5 && s1.glanz === 5 && /drop-shadow/.test(s1.filter) && s1.funken >= 10 && /@1\.12/.test(s1.toene), "★: goldener Glanz an allen Strahlen, Funkenkranz beim Einschlag, ein zweiter, höherer Ton", JSON.stringify(s1));
+  await tick(500);
+  const s2 = await schuss("streulaser", 2);
+  sage(s2.strahlen === 7 && s2.glanz === 7 && s2.funken >= 14 && /@1\.24/.test(s2.toene) && /@1\.50/.test(s2.toene), "★★: sieben Strahlen statt fünf, heller Glanz, größerer Funkenkranz, zwei Zusatztöne", JSON.stringify(s2));
+  await tick(500);
+  const s3 = await schuss("streulaser", 3);
+  sage(s3.strahlen === 7 && s3.glanz === 7 && s3.funken >= 18 && s3.welle && /lasertreffer@1\.90/.test(s3.toene), "★★★: blau-weißes Farbspiel, Schockwelle beim Einschlag, drei Töne übereinander", JSON.stringify(s3));
+  await tick(500);
+  const b2 = await schuss("bogen", 2);
+  sage(b2.strahlen >= 1 && b2.glanz === b2.strahlen && b2.funken >= 14, "auch andere Waffen (Bogen ★★): Glanz am Geschoss und Funken beim Einschlag", JSON.stringify(b2));
+  const sj = fs.readFileSync(path.join(WURZEL, "spiel.js"), "utf8");
+  sage(/ereignis: "schuss"[^\n]*stufe: wst/.test(sj) && /n\.stufe\)/.test(sj), "der eigene Schuss schickt seine Stufe mit – die anderen sehen und hören dasselbe");
 
-  console.log("\nFLUG UND EINSCHLAG\n");
-  const flug = await pg.evaluate(() => {
-    const aus = {};
-    ["weisswurst", "nudelholz", "kuckucksuhr"].forEach((w) => {
-      const dauer = window.DMA_SPIEL.pruef.geschossZeigen("ich", "bea", w, 0, 0);
-      const g = document.querySelector(".sp-geschoss.sp-g-" + w);
-      aus[w] = { svg: !!(g && g.querySelector("svg path, svg rect")), dauer };
-    });
-    return aus;
-  });
-  sage(flug.weisswurst.svg && flug.nudelholz.svg && flug.kuckucksuhr.svg, "jede Meisterwaffe fliegt mit eigener Zeichnung", JSON.stringify(flug));
-  await tick(1000);
-  const kk = await pg.evaluate(() => ({ kuckuck: document.querySelectorAll(".sp-kuckuck").length, gross: document.querySelectorAll(".sp-einschlag-gross").length }));
-  sage(kk.kuckuck >= 1, "die Kuckucksuhr ruft beim Einschlag „Kuckuck!“", JSON.stringify(kk));
-  await pg.screenshot({ path: "/tmp/claude-0/p-664.png" });
-
-  sage(konsolenFehler.length === 0, "keine Fehler in der Konsole", konsolenFehler.slice(0, 3).join(" | "));
-  console.log("\n" + (fehler ? "Fassung 664: " + fehler + " rot." : "Fassung 664 auf dem Telefon: alles grün.") + "\n");
+  sage(konsolenFehler.length === 0, "keine Fehler in der Konsole", konsolenFehler.join(" | "));
+  console.log("\nFassung 831 (852): " + (fehler ? fehler + " rot." : "alles grün."));
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);
-})().catch((e) => { console.error(e); process.exit(2); });
+})().catch((e) => { console.error(e); process.exit(1); });

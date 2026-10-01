@@ -2381,6 +2381,11 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-schnell .sp-rad-voll.sp-ring .sp-ring-zauber svg { width: 17px; height: 17px; }
 .sp-schnell .sp-rad-voll.sp-ring .sp-ring-zauber small { font-size: 7px; line-height: 10px; right: -5px; bottom: -3px; }
 .sp-schnell .sp-rad-voll.sp-ring .sp-rad-mitte.sp-ring-mitte { width: 30px; height: 30px; }
+/* FASSUNG 831 — Mine und Falltür als eigene kleine Symbole im inneren Kreis (Funk 255) */
+.sp-schnell .sp-rad-voll.sp-ring .sp-ring-falle { width: 22px; height: 22px; min-width: 0; min-height: 0; padding: 0; border-radius: 50%; background: #2a2f22; box-shadow: 0 0 0 1.5px #6f7a3a; }
+.sp-schnell .sp-rad-voll.sp-ring .sp-ring-falle svg { width: 15px; height: 15px; }
+.sp-schnell .sp-rad-voll.sp-ring .sp-ring-falle small { font-size: 6.5px; line-height: 9px; right: -6px; bottom: -4px; }
+.sp-schnell .sp-rad-voll.sp-ring .sp-ring-falle.sp-an { box-shadow: 0 0 0 2px #e8b923; }
 .sp-schnell .sp-rad-voll.sp-ring .sp-rad-mitte.sp-ring-mitte svg { width: 16px; height: 16px; }
 .sp-rad-sektoren path.sp-ring-bereich { fill: none; stroke-width: 40; stroke-linecap: butt; opacity: .34; }
 .sp-rad-sektoren circle.sp-ring-mana-spur { fill: none; stroke: rgba(143, 211, 255, .16); stroke-width: 4; }
@@ -3206,3 +3211,19 @@ button.sp-gesperrt, button.sp-gesperrt:disabled { opacity: 1; color: #d9ccb0; ba
 .sp-ls-lade-text em { display: block; height: 100%; width: 8%; background: #f3c35a; animation: sp-lade-balken 9s cubic-bezier(.2,.7,.3,1) forwards; }
 @keyframes sp-lade-balken { to { width: 92%; } }
 @media (prefers-reduced-motion: reduce) { .sp-ls-lade-fuchs, .sp-ls-lade-alex, .sp-ls-lade-herz { animation: none !important; } }
+
+/* FASSUNG 831 — verbesserte Waffen sieht man (Funk 255): Glanz am Geschoss, Funkenkranz beim Einschlag */
+.sp-stufe1 { filter: drop-shadow(0 0 3px #ffd23a) drop-shadow(0 0 6px rgba(255,210,58,.6)); }
+.sp-stufe2 { filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 8px #ffd23a) brightness(1.15); }
+.sp-stufe3 { filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 10px #39c6ff) brightness(1.2); animation: sp-stufe-farbe .5s linear infinite; }
+.sp-laser.sp-stufe2, .sp-laser.sp-stufe3 { height: 4px; }
+.sp-laser.sp-laser-streulaser.sp-stufe2, .sp-laser.sp-laser-streulaser.sp-stufe3 { height: 3px; }
+@keyframes sp-stufe-farbe { 0% { filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 10px #39c6ff) brightness(1.2); } 50% { filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 12px #c45cff) brightness(1.35); } 100% { filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 10px #39c6ff) brightness(1.2); } }
+.sp-stufe-funken { position: fixed; width: 0; height: 0; z-index: 9992; pointer-events: none; }
+.sp-stufe-funken i { position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%; background: #ffd23a; box-shadow: 0 0 6px #ffd23a; transform: rotate(var(--w)) translateX(0); animation: sp-stufe-funke .65s ease-out forwards; }
+.sp-stufe-funken.sp-stufe2 i { background: #fff6cf; box-shadow: 0 0 7px #fff, 0 0 12px #ffd23a; width: 5px; height: 5px; }
+.sp-stufe-funken.sp-stufe3 i { background: #e9f8ff; box-shadow: 0 0 8px #fff, 0 0 14px #39c6ff; width: 5px; height: 5px; }
+.sp-stufe-funken.sp-stufe3::after { content: ""; position: absolute; left: -10px; top: -10px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(160,225,255,.9); animation: sp-stufe-welle .6s ease-out forwards; }
+@keyframes sp-stufe-funke { to { transform: rotate(var(--w)) translateX(var(--d)); opacity: 0; } }
+@keyframes sp-stufe-welle { to { transform: scale(4.5); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .sp-stufe3 { animation: none; } }

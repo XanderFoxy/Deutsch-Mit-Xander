@@ -49,32 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 830 — Funk 256/257: Klassenzimmer bleibt an seinem Platz, freie Antworten in den Quests, Signalton",
+  stand: "Fassung 831 — Funk 255: Mine und Falltür im Kreis, verbesserte Waffen mit eigenem Glanz und Ton",
 
   inArbeit: [
-    { seit: "2026-10-01T05:21",
-      text: "Niveau A1–C2 für die Stadt-Quests in den Einstellungen" },
-    { seit: "2026-10-01T05:21",
-      text: "Missionen nach dem Stand der Stadt, kleine Gespräche über mehrere Sätze" },
-    { seit: "2026-10-01T05:21",
+    { seit: "2026-10-01T05:38",
       text: "Äcker selbst versetzen" },
-    { seit: "2026-10-01T05:21",
+    { seit: "2026-10-01T05:38",
       text: "fehlende Häuser in der neuen Stadt + Bau-Rückmeldung" },
-    { seit: "2026-10-01T05:21",
-      text: "Waffen-Upgrades sichtbar und hörbar; Mine und Falltür im Waffenrad" },
-    { seit: "2026-10-01T05:21",
+    { seit: "2026-10-01T05:38",
       text: "Wörterbuch: Beugungsknöpfe, Lücken; Satzbaukasten" },
+    { seit: "2026-10-01T05:38",
+      text: "Niveau A1–C2 für die Stadt-Quests" },
+    { seit: "2026-10-01T05:38",
+      text: "weitere Karten zur Auswahl" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-01T05:21",
-      text: "Nach dem großen Dorf-Menü steht das Klassenzimmer wieder an seinem Platz" },
-    { seit: "2026-10-01T05:21",
-      text: "Eigene Sätze in den Quests zählen, wenn sie zur Aufgabe passen und grammatisch stimmen" },
-    { seit: "2026-10-01T05:21",
-      text: "„Fast“ nur bei einem Grammatikfehler, mit Erklärung" },
-    { seit: "2026-10-01T05:21",
-      text: "Signalton beim Mikro-Start und am Ende" },
+    { seit: "2026-10-01T05:38",
+      text: "Mine und Falltür als eigene Symbole im Waffenkreis" },
+    { seit: "2026-10-01T05:38",
+      text: "Waffen-Verbesserungen sieht und hört man (★ ★★ ★★★), auch bei den anderen" },
   ],
 };

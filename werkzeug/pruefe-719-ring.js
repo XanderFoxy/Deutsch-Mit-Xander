@@ -177,7 +177,10 @@ const sage = (gut, was, zusatz) => {
   sage(r1.da && !r1.tueren, "langer Druck aufs eigene Bild: gleich der Ring, keine Tür „Zauber | Waffen“ davor", JSON.stringify(r1));
   sage(r1.breite <= 220 && r1.imBild, "der Ring ist klein (höchstens 220 px statt bis zu 360 px) und ganz im Bild", JSON.stringify({ breite: r1.breite, imBild: r1.imBild }));
   sage(r1.innenAb < r1.aussenAb && r1.zauber >= 9 && /standard/.test(r1.bereiche) && /lustig/.test(r1.bereiche) && /stark/.test(r1.bereiche), "zwei Ringe ineinander: außen die Waffen-Bereiche, innen die Zauber", JSON.stringify(r1));
-  sage(/fallen/.test(r1.bereiche), "Minen & Bomben haben einen eigenen Bereich im Ring", r1.bereiche);
+  /* FASSUNG 831 — XANDER (Funk 255): „Mine und Falltür … innerhalb des Waffen Menüs als extrasymbole innerhalb des Kreises" */
+  const fa = await pg.evaluate(() => { const r = document.querySelector(".sp-ring"), M = r.getBoundingClientRect(), mx = M.left + M.width / 2, my = M.top + M.height / 2;
+    return [...r.querySelectorAll(".sp-ring-falle")].map((b) => { const q = b.getBoundingClientRect(); return { w: b.dataset.w, ab: Math.round(Math.hypot(q.left + q.width / 2 - mx, q.top + q.height / 2 - my)), g: Math.round(q.width) }; }); });
+  sage(/fallen/.test(r1.bereiche) && fa.length === 2 && fa.every((x) => x.ab < r1.innenAb && x.g >= 20), "Mine und Falltür als eigene Symbole im inneren Kreis, die Bombe in ihrem Bereich", JSON.stringify({ b: r1.bereiche, fa, innen: r1.innenAb }));
   sage(r1.mana && r1.torte, "Mana-Bogen zwischen den Ringen, Torte/Manatrank bleiben griffbereit", JSON.stringify(r1));
   sage(r1.tippbar && r1.ueber === 0, "jedes Feld ist frei tippbar, nichts liegt übereinander", JSON.stringify({ tippbar: r1.tippbar, ueber: r1.ueber, paare: r1.paare }));
 
@@ -216,12 +219,13 @@ const sage = (gut, was, zusatz) => {
   const zu1 = await pg.evaluate(() => ({ leiste: Boolean(document.querySelector(".sp-ring-leiste")), ring: Boolean(document.querySelector(".sp-ring")) }));
   sage(!zu1.leiste && zu1.ring, "„Lustig ✕“ über der Leiste klappt nur die Leiste zu, der Ring bleibt", JSON.stringify(zu1));
   await tippe('.sp-ring-feld[data-b="fallen"]'); await tick(350);
-  const m1 = await pg.evaluate(() => { const l = document.querySelector(".sp-ring-leiste"); return { waffe: window.DMA_SPIEL.pruef.zustand().waffe, leiste: l ? [...l.querySelectorAll(".sp-ring-wahl")].map((b) => b.dataset.w).join(",") : "" }; });
-  sage(m1.waffe === "kuckucksuhr" && m1.leiste === "mine,falltuer,kuckucksuhr", "Bereich „Minen & Bomben“: Kuckucksuhr-Bombe angelegt, in der Leiste Mine, Falltür, Bombe", JSON.stringify(m1));
+  const m1 = await pg.evaluate(() => ({ waffe: window.DMA_SPIEL.pruef.zustand().waffe, ring: Boolean(document.querySelector(".sp-ring")) }));
+  sage(m1.waffe === "kuckucksuhr" && !m1.ring, "Bereich „Bomben“: ein Tipp legt die Kuckucksuhr-Bombe an, Ring zu (FASSUNG 831)", JSON.stringify(m1));
+  await pg.evaluate(() => { window.DMA_SPIEL.langAufEigen(null); }); await tick(400);
   await pg.waitForTimeout(700);
-  await tippe('.sp-ring-leiste .sp-ring-wahl[data-w="mine"]'); await tick(350);
+  await tippe('.sp-ring .sp-ring-falle[data-w="mine"]'); await tick(350);
   const m2 = await pg.evaluate(() => ({ legen: window.DMA_SPIEL.pruef.zustand().legen, klasse: document.body.classList.contains("sp-legen"), ring: Boolean(document.querySelector(".sp-ring")), h: window.__hinweise.slice(-1)[0] || "" }));
-  sage(m2.legen === "mine" && m2.klasse && !m2.ring && /Platz/.test(m2.h), "Mine antippen: Legen beginnt (auf einen Platz tippen), Ring zu", JSON.stringify(m2));
+  sage(m2.legen === "mine" && m2.klasse && !m2.ring && /Platz/.test(m2.h), "Mine im Kreis antippen: Legen beginnt (auf einen Platz tippen), Ring zu", JSON.stringify(m2));
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.legen = ""; document.body.classList.remove("sp-legen"); });
 
   console.log("\nZAUBER INNEN, ABLEGEN, LANGER DRUCK SCHLIESST\n");

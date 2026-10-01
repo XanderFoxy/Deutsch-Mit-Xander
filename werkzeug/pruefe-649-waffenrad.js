@@ -134,6 +134,7 @@ const sage = (gut, was, zusatz) => {
   const tippe = async (sel) => { const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
 
   console.log("\nDAS RAD ÖFFNEN\n");
+  const r649f = (r) => r.fallen === "falltuer,mine";
   await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.waffe = P.slots()[0]; P.schnellZeichnen(true); });
   await tick(200);
   await tippe('.sp-schnell .sp-s-slot[data-n="0"]');
@@ -143,14 +144,17 @@ const sage = (gut, was, zusatz) => {
     const knoepfe = [...r.querySelectorAll(".sp-rad-waffe")];
     const rr = r.getBoundingClientRect(), sr = slot.getBoundingClientRect();
     const alleTippbar = knoepfe.every((k) => { const b = k.getBoundingClientRect(); const o = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return o && (o === k || k.contains(o)); });
-    const ueberlapp = knoepfe.some((k, i) => knoepfe.some((j, n) => { if (n <= i) return false; const a = k.getBoundingClientRect(), b = j.getBoundingClientRect(); return Math.hypot(a.left - b.left, a.top - b.top) < 30; }));
+    /* (FASSUNG 831: runde Knöpfe – es zählt der Abstand der Mittelpunkte gegen die halben Breiten, wie in Sonde 719; seit
+       Mine und Falltür klein im inneren Kreis stehen, war der alte Ecken-Abstand von 30 px zu grob) */
+    const ueberlapp = knoepfe.some((k, i) => knoepfe.some((j, n) => { if (n <= i) return false; const a = k.getBoundingClientRect(), b = j.getBoundingClientRect(); return Math.hypot((a.left + a.width / 2) - (b.left + b.width / 2), (a.top + a.height / 2) - (b.top + b.height / 2)) < (a.width + b.width) / 2 - 1; }));
     const text = knoepfe.map((k) => k.textContent).join("|");
     /* Ab Fassung 719 (Funk 165) ist es der kleine Doppelring: außen ein Feld je Bereich, innen die Zauber;
        er schwebt mittig über der Leiste (seit 652), die Zahlen sind Schaden, Vorrat, Preis („30P“) oder Level („Lv4“). */
-    return { da: true, n: r.querySelectorAll(".sp-ring-feld").length, ueber: rr.bottom <= sr.top + 2, mittig: rr.left >= 0 && rr.right <= innerWidth && rr.top >= 0, alleTippbar, ueberlapp,
+    return { fallen: [...r.querySelectorAll(".sp-ring-falle")].map((b) => b.dataset.w).join(","), da: true, n: r.querySelectorAll(".sp-ring-feld").length, ueber: rr.bottom <= sr.top + 2, mittig: rr.left >= 0 && rr.right <= innerWidth && rr.top >= 0, alleTippbar, ueberlapp,
              nurZahlen: knoepfe.every((k) => /^[×\dLvP]+$/.test(k.textContent.trim())), text };
   });
-  sage(rad.da && rad.n >= 4, "Tipp auf die angelegte Waffe öffnet den Ring – ein Feld je Waffen-Bereich", rad.n + " Bereiche");
+  /* (831: Mine und Falltür sind eigene Symbole im Kreis – ohne Bombe ein Bereich weniger) */
+  sage(rad.da && rad.n >= 3 && r649f(rad), "Tipp auf die angelegte Waffe öffnet den Ring – ein Feld je Waffen-Bereich, Mine und Falltür im Kreis", rad.n + " Bereiche, Fallen: " + rad.fallen);
   sage(rad.ueber && rad.mittig, "das Rad steht über seinem Waffenplatz, ganz im Bild (am Rand wird es eingerückt)", JSON.stringify({ ueber: rad.ueber, mittig: rad.mittig }));
   sage(rad.alleTippbar && !rad.ueberlapp, "jede Waffe ist unter dem Finger erreichbar, nichts überlappt");
   sage(rad.nurZahlen, "kein Text – nur Bild und Zahl", rad.text);

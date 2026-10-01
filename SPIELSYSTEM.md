@@ -2934,3 +2934,12 @@ XANDER (Funk 256, wörtlich): „Wenn man in ein größeres Menü geht bei einer
 - **Signalton**: zwei kurze Töne aufwärts, wenn das Mikro an ist (die ersten 0,3 s werden nicht aufgenommen), zwei abwärts am Ende. Die Aufnahme wartet jetzt 1,8 s Pause statt 1,3 s (wer kurz nachdenkt, wird nicht abgeschnitten), höchstens 12 s.
 - **Noch nicht**: Niveau A1–C2 in den Einstellungen, Missionen nach dem Stand der Stadt (z. B. Wissenschaftler), echte Gespräche über mehrere Sätze, bessere Erkennung durch eine Wortliste je Aufgabe – Vorschläge im Funk.
 - **Sonden**: `pruefe-850-platz-nach-menue.js` (neu, mit 829 drei rot), `pruefe-851-freie-antworten.js` (neu, 41 Sätze + alle Vorschläge, mit 829 fünf rot); grün: 817, 799, 847, 849, 828, 816, 832, 846b, 848.
+
+## Fassung 831 — Mine und Falltür im Kreis, verbesserte Waffen sieht und hört man (Funk 255)
+
+XANDER (Funk 255, wörtlich): „Mine und Falltür … innerhalb des Waffen Menüs als extrasymbole innerhalb des Kreises" · „immer wenn man die Waffen verbessert müssen Sie neue Effekte … Grafik und … Sound" (der Fächerlaser sah nach dem Verbessern genauso aus wie vorher).
+
+- **Mine und Falltür (`spiel.js ringFallenHtml`)**: zwei kleine eigene Symbole im inneren Kreis des Rings, links und rechts der Mitte, genau in den Lücken zwischen den Zaubern (berühren weder Mitte noch Zauber). Ein Tipp: „tippe auf den Platz“; zu wenig Punkte → blass mit Preis. Der Bereich „Minen & Bomben“ heißt jetzt „Bomben“ und erscheint nur mit der Kuckucksuhr.
+- **Verbesserte Waffen (`geschossZeigen` mit `stufe`, `tonTempo`, CSS `.sp-stufe1–3`, `.sp-stufe-funken`)**: ★ goldener Schimmer, zweiter höherer Abschuss-Ton, Funkenkranz beim Einschlag; ★★ weiß-goldener Glanz, zwei Zusatztöne, größerer Kranz, Fächerlaser 7 statt 5 Strahlen, Doppellaser 3; ★★★ (Energiewaffen) blau-weißes Farbspiel, drei Töne, Schockwelle. Die Stufe reist im Schuss mit (`stufe`), also sehen und hören es alle. Ohne Verbesserung bleibt alles wie vorher.
+- **Gemessen (Leistung, Puls-Regel)**: CPU-Spur mit Chat und Stadt offen: nach dem Einschwingen keine Bild-Dekodierungen mehr, die Stadt ruht, wenn ihr Rahmen nicht zu sehen ist; der große Posten ist die Übergabe an die Grafik (im Software-Browser der Sonden überzeichnet). Ein Versuch mit ImageBitmap brachte im Dauerbetrieb nichts Messbares und wurde zurückgenommen.
+- **Sonden**: `pruefe-852-waffen-stufen.js` (neu, mit 830 fünf rot); 719, 649, 652, 664 auf die Symbole im Kreis umgestellt; grün: 719, 649, 652, 664, 695, 658, 668, 817. 686 (13 Gebäude) und 659 (Leitung) waren schon vorher rot.

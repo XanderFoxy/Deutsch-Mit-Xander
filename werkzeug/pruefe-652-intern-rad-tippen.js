@@ -191,15 +191,17 @@ const sage = (gut, was, zusatz) => {
     const r = document.querySelector(".sp-rad-voll"), rr = r.getBoundingClientRect(), M = { x: rr.left + rr.width / 2, y: rr.top + rr.height / 2 };
     /* Ab Fassung 719 (Funk 165): der kleine Doppelring – außen EIN Feld je Bereich (im Uhrzeigersinn), innen die Zauber. */
     const knoepfe = [...r.querySelectorAll(".sp-ring-feld")].map((b) => { const q = b.getBoundingClientRect(); let w = Math.atan2(q.top + q.height / 2 - M.y, q.left + q.width / 2 - M.x) + Math.PI / 2; if (w < 0) w += 2 * Math.PI; return { w, k: getComputedStyle(b).getPropertyValue("--klasse").trim(), b: b.dataset.b }; }).sort((a, b) => a.w - b.w);
-    const namen = knoepfe.map((x) => ({ standard: "Standard", lustig: "Lustig", arcade: "Arcade", stark: "Stark", meister: "Meister", energie: "Energie", fallen: "Minen & Bomben" }[x.b]));
+    const namen = knoepfe.map((x) => ({ standard: "Standard", lustig: "Lustig", arcade: "Arcade", stark: "Stark", meister: "Meister", energie: "Energie", fallen: "Bomben" }[x.b]));
     /* Jede Klasse liegt am Stück: die Farbe wechselt nur so oft, wie es Klassen gibt. */
     let wechsel = 0; knoepfe.forEach((x, i) => { if (i && x.k !== knoepfe[i - 1].k) wechsel++; });
     const tippbar = [...r.querySelectorAll(".sp-rad-waffe")].every((b) => { const q = b.getBoundingClientRect(); const o = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2); return o && (o === b || b.contains(o)); });
-    return { namen: namen.join(","), n: knoepfe.length, wechsel, klassen: namen.length, imBild: rr.left >= 0 && rr.right <= innerWidth && rr.top >= 0, tippbar, fest: getComputedStyle(r).position };
+    return { fallen: [...r.querySelectorAll(".sp-ring-falle")].map((b) => b.dataset.w).join(","), namen: namen.join(","), n: knoepfe.length, wechsel, klassen: namen.length, imBild: rr.left >= 0 && rr.right <= innerWidth && rr.top >= 0, tippbar, fest: getComputedStyle(r).position };
   });
   /* Die Probe-Person hat keine „starken" Waffen – dann fehlt der Sektor, die Reihenfolge bleibt. */
   /* Ab Fassung 719 kommt „Minen & Bomben“ dazu, sobald man sich eine Mine oder Falltür leisten kann. */
-  sage(rad.namen === "Standard,Lustig,Arcade,Minen & Bomben", "beschriftete Sektoren im Uhrzeigersinn in fester Reihenfolge (Standard, Lustig, Arcade, Stark – nur die eigenen)", rad.namen);
+  /* FASSUNG 831 — Mine und Falltür sind eigene Symbole im inneren Kreis (Funk 255); der Bereich „Bomben“ erscheint erst mit
+     der Kuckucksuhr-Bombe */
+  sage(rad.namen === "Standard,Lustig,Arcade" && rad.fallen === "falltuer,mine", "beschriftete Sektoren im Uhrzeigersinn in fester Reihenfolge (Standard, Lustig, Arcade, Stark – nur die eigenen)", rad.namen);
   sage(rad.wechsel === rad.klassen - 1, "jede Klasse liegt am Stück zusammen", rad.n + " Waffen, " + rad.wechsel + " Farbwechsel");
   sage(rad.imBild && rad.tippbar && rad.fest === "fixed", "das Rad schwebt frei, ganz im Bild, jede Waffe erreichbar", JSON.stringify(rad));
   await pg.touchscreen.tap(20, 20); await tick(250);
