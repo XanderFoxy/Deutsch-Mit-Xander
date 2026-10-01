@@ -252,7 +252,7 @@ const sage = (gut, was, zusatz) => {
       for (let fy = .55; fy < .95; fy += .1) for (let fx = .3; fx < .75; fx += .1) { const px = e.X - m.ax * e.k + m.w * e.k * fx, py = e.Y - m.ay * e.k + m.h * e.k * fy;
         if (px < 4 * K.dpr || py < 34 * K.dpr || px > K.W - 4 * K.dpr || py > K.H - 4 * K.dpr || (px < 42 * K.dpr && py > K.H - 42 * K.dpr)) continue;
         if (SZ.treffer(px, py) !== e.o) continue;
-        const b = document.elementFromPoint(px / K.dpr, py / K.dpr); if (b && b.closest && b.closest("button, .lk-schieber")) continue;   // (FASSUNG 812: nicht auf den Dreh-Schieber)
+        const b = document.elementFromPoint(px / K.dpr, py / K.dpr); if (b && b.closest && b.closest("button, .lk-schieber, .lk-zeichen")) continue;   // (FASSUNG 812: nicht auf den Dreh-Schieber; 829: nicht auf ein Zeichen – Acker 91 liegt seit Funk 255 zwischen Mühle und Bäckerei, sein Zeichen ragt über die Bäckerei)
         return { x: px / K.dpr, y: py / K.dpr }; } }
     if (false) return null; return { fehl: SZ.sichtbare.filter((e) => e.o.spiel === g).map((e) => [Math.round(e.X / K.dpr), Math.round(e.Y / K.dpr)]), z: [...document.querySelectorAll(".lk-zeichen")].filter((z) => getComputedStyle(z).display !== "none").map((z) => z.dataset.g + ":" + JSON.stringify(z.getBoundingClientRect())) }; }, g);
   const tippeHaus = async (g) => { const p = await hausPunkt(g), o = await lage(".sp-lstadt"); if (p && p.fehl) console.log("     (" + g + " nicht antippbar: " + JSON.stringify(p) + ")"); if (!p || p.fehl || !o) return null; await pg.touchscreen.tap(o.l + p.x, o.t + p.y); return p; };

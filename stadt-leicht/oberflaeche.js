@@ -763,7 +763,7 @@
       };
       /* FASSUNG 828 — die Äcker bekommen ihr Zeichen wie im alten Bild („Getreide reif" / „Getreide 2:30") */
       /* FASSUNG 844 — beim großen Acker in seiner Mitte (nur sichtbar, wenn der Acker im Bild ist, siehe zeichenLegen) */
-      const feldOrt = (nr) => () => { const f = (D.FELD_ORTE || []).find((q) => q.nr === nr) || { x: 0, y: 0 }; if (f.u0 != null) { const u = (f.u0 + f.u1) / 2, v = f.v1 != null ? (f.v0 + f.v1) / 2 : f.v0 + 4; return { x: (u + v) / 2, y: (v - u) / 2, h: 1.5 }; } return { x: f.x, y: f.y, h: 1.5 }; };
+      const feldOrt = (nr) => () => { const f = (D.FELD_ORTE || []).find((q) => q.nr === nr) || { x: 0, y: 0 }; if (f.u0 != null) { const u = (f.u0 + f.u1) / 2, v = f.v1 != null ? (f.v0 + f.v1) / 2 : f.v0 + 4; return { x: (u + v) / 2, y: (v - u) / 2, h: 1.5, u0: f.u0, u1: f.u1, v0: f.v0, v1: f.v1 != null ? f.v1 : f.v0 + 8 }; } return { x: f.x, y: f.y, h: 1.5 }; };
       const ORTE = {
         see: () => { const v = D.SEE_VERSATZ || [0, 0]; return { x: 66 + v[0], y: 56 + v[1] - 3, h: 2 }; },
         wald: wald,
@@ -953,6 +953,12 @@
         }
         if (!zeichenEbene.firstChild) return;
         const liste = [], sig = document.body.className, W = K.W / K.dpr;
+        let hausKaesten = null;
+        /* sichtbare Häuser als Kästen (Bildschirm-px, ein Zehntel am Rand abgezogen: dort ist das Bild meist leer) */
+        const hausKastenListe = () => SZ.sichtbare.filter((e) => e.o.art === "haus").map((e) => {
+          const m = e.meta, l = e.X - m.ax * e.k, o2 = e.Y - m.ay * e.k, w = m.w * e.k, h = m.h * e.k;
+          return [(l + w * 0.1) / K.dpr, (o2 + h * 0.1) / K.dpr, (l + w * 0.9) / K.dpr, (o2 + h * 0.9) / K.dpr];
+        });
         for (const b of zeichenEbene.children) {
           const ort = ORTE[b.dataset.g] && ORTE[b.dataset.g]();
           const o = haeuser[b.dataset.g] || (ort && Object.assign({ stufe: 1 }, ort, { hoehe: ort.h / 0.8 }));
@@ -966,8 +972,33 @@
           if (!drin) continue;
           /* FASSUNG 828 — Größe nur messen, wenn sich Inhalt oder Schalter geändert haben */
           if (!b._gr || b._grSig !== sig) { b._gr = [b.offsetWidth, b.offsetHeight]; b._grSig = sig; }
+          /* FASSUNG 829 — XANDER (Funk 255): der Acker liegt jetzt „zwischen der Bäckerei und der Mühle … hinter der
+             Bäckerei". In seiner Mitte lag das Zeichen über Mühle und Bäckerei (die waren nicht mehr antippbar). Das
+             Zeichen eines Ackers sucht sich darum einen freien Platz am Acker: Mitte, vorne darunter, links, rechts. */
+          let fx = x, fy = y;
+          if (feldZ && ort && ort.u0 != null) {
+            if (!hausKaesten) hausKaesten = hausKastenListe();
+            const w = b._gr[0], h = b._gr[1], um = (ort.u0 + ort.u1) / 2, vm = (ort.v0 + ort.v1) / 2;
+            const S = (u, v) => { const p = ST.proj((u + v) / 2, (v - u) / 2, 0); return [p[0] / K.dpr, p[1] / K.dpr]; };
+            const vo = S(um, ort.v1), hi = S(um, ort.v0), li = S(ort.u0, vm), re = S(ort.u1, vm), vl = S(ort.u0, ort.v1), vr = S(ort.u1, ort.v1);
+            const wahl = [[x, y], [vo[0], vo[1] + h + 1], [li[0] - w / 2 - 1, li[1] + h / 2], [re[0] + w / 2 + 1, re[1] + h / 2],
+              [vl[0], vl[1] + h + 1], [vr[0], vr[1] + h + 1], [hi[0], hi[1] - 1]];
+            let best = null, bf = Infinity;
+            /* 10 px Abstand zu jedem Haus: das Handy rückt einen Fingertipp neben einem Knopf auf den Knopf (so traf ein Tipp
+               auf den Fuß der Bäckerei das Acker-Zeichen darunter) */
+            const R = 10;
+            for (const c of wahl) {
+              const cy = Math.max(c[1], 62), l = c[0] - w / 2, r = c[0] + w / 2, o2 = cy - h;
+              if (l < 2 || r > W - 2 || cy > K.H / K.dpr - 2) continue;
+              let fl = 0;
+              for (const k of hausKaesten) fl += Math.max(0, Math.min(r, k[2] + R) - Math.max(l, k[0] - R)) * Math.max(0, Math.min(cy, k[3] + R) - Math.max(o2, k[1] - R));
+              if (fl < bf - 0.5) { bf = fl; best = c; }
+              if (!fl) break;
+            }
+            if (best) { fx = best[0]; fy = best[1]; }
+          }
           /* nicht unter die Kopfzeile (Kompass, Uhr, Ortsschild) rutschen */
-          liste.push({ b: b, x: x, y: Math.max(y, 62), w: b._gr[0], h: b._gr[1] });
+          liste.push({ b: b, x: fx, y: Math.max(fy, 62), w: b._gr[0], h: b._gr[1] });
         }
         /* FASSUNG 828 — Zeichen, die sich überdecken (Holz und Fleisch am Wald liegen dicht beisammen), rücken
            nebeneinander: jede Tippfläche ganz frei, keins liegt halb unter dem anderen. Fester Platz, kein Schweben. */
@@ -1547,7 +1578,10 @@
        (reif) oder hilft beim Wachsen. Knapp neben einem Baum (im Überblick sind sie winzig) zählt als Baum. */
     if (spielTipp) {
       if (ST.boden.wert(a[0], a[1], 1) > 0.4) { O.stationTun("see"); return; }
-      if (ST.boden.wert(a[0], a[1], 2) > 0.4) { const f = feldBei(a[0], a[1]); if (f) { O.stationTun("feld" + f.nr); return; } }
+      /* FASSUNG 829 — XANDER (Funk 255): „das Feld auf der rechten Seite ist auch noch nicht in einer geeigneten Position wo
+         ich locker drauf zugreifen kann". Gezählt hat nur der kleine Ladefleck des Kornwagens in der Mitte des Ackers; jetzt
+         erntet ein Tipp irgendwo auf dem gemalten Feld (Häuser und Bäume davor gehen weiter vor, siehe oben). */
+      { const f = feldBei(a[0], a[1]); if (f && (f.u0 != null || ST.boden.wert(a[0], a[1], 2) > 0.4)) { O.stationTun("feld" + f.nr); return; } }
       const nb = baumNahe(px, py);
       if (nb) { baumTun(nb); auswahlWeg(); return; }
       /* (FASSUNG 817: der Doppeltipp wird jetzt schon in O.tippen erkannt, für jede Stelle im Bild) */

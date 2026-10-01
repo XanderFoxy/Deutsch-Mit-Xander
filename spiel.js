@@ -1632,7 +1632,7 @@
       if (!(S.ich || {}).mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return true; }
       var zstF = S.stand[spielIdVon(p.id)];
       if (zstF && zstF.mitspielen === false) { hinweis("💤 " + (p.name || "Diese Person") + " spielt gerade nicht mit – nicht angreifbar."); return true; }
-      faehigNutzen(p);
+      faehigNutzen(p, typeof S.faehigZiel === "string" ? S.faehigZiel : "");
       return true;
     }
     /* FASSUNG 650 — ein bereiter Zauber gilt dem nächsten Gesicht. */
@@ -2349,20 +2349,33 @@
     if (!S.faehig && S.bereit && S.ich) {
       S.faehig = { art: "", bereitBis: 0, laedt: true };
       rpc("spiel_faehigkeit_setzen", { p_art: null }).then(function (r) {
-        if (r && r.ok) { S.faehig = { art: r.faehigkeit || "", bereitBis: Date.now() + (r.bereit_s || 0) * 1000 }; schnellZeichnen(); }
-        else S.faehig = { art: "", bereitBis: 0 };
+        if (r && r.ok) { S.faehig = faehigAus(r); schnellZeichnen(); }
+        else S.faehig = { art: "", bereitBis: 0, art2: "", bereitBis2: 0 };
       }).catch(function () { S.faehig = null; });
     }
-    return S.faehig || { art: "", bereitBis: 0 };
+    return S.faehig || { art: "", bereitBis: 0, art2: "", bereitBis2: 0 };
   }
+  /* FASSUNG 829 — XANDER (Funk 255): „bei den Tieren … ich habe beide aktiviert aber es geht immer nur eine". Jetzt sind
+     ZWEI Fähigkeiten ausrüstbar (Server: faehigkeit / faehigkeit2, je eigene 90-s-Pause); in der Leiste steht für jede ein
+     Knopf. Ein Tipp in der Liste rüstet aus, ein Tipp auf eine ausgerüstete legt sie ab; bei zweien geht beim dritten die
+     ältere. */
+  function faehigAus(r) {
+    var j = Date.now();
+    return { art: r.faehigkeit || "", bereitBis: j + (r.bereit_s || 0) * 1000, art2: r.faehigkeit2 || "", bereitBis2: j + (r.bereit2_s || 0) * 1000 };
+  }
+  function faehigBereitBis(art) { var f = faehigStand(); return art && art === f.art2 && art !== f.art ? f.bereitBis2 : f.bereitBis; }
+  function faehigBereitSetzen(art, bis) { var f = faehigStand(); if (art && art === f.art2 && art !== f.art) f.bereitBis2 = bis; else f.bereitBis = bis; }
   function faehigAusruesten(art) {
     if (!FAEHIG[art]) return;
-    rpc("spiel_faehigkeit_setzen", { p_art: art }).then(function (r) {
+    var f0 = faehigStand(), ab = art === f0.art || art === f0.art2;
+    rpc("spiel_faehigkeit_setzen", { p_art: art, p_ab: ab }).then(function (r) {
       if (!r || !r.ok) { hinweis("🐾 " + ((r && r.grund) || "ging nicht")); return; }
-      S.faehig = { art: r.faehigkeit, bereitBis: Date.now() + (r.bereit_s || 0) * 1000 };
+      S.faehig = faehigAus(r);
+      if (ab) { hinweis("🐾 " + FAEHIG[art][0] + " abgelegt."); schnellZeichnen(true); panelAuffrischen(); return; }
       tierLaut(art, "ruf", 0.45);
       S.kampfLeiste = true;   /* FASSUNG 755 — der versprochene Knopf muss auch zu sehen sein: die Kampf-Taschen klappen auf. */
-      hinweis("🐾 " + FAEHIG[art][0] + " ausgerüstet – der Knopf mit " + ((TIERE[art] || {}).name || art) + " steht jetzt in der Leiste.");
+      var zwei = S.faehig.art && S.faehig.art2;
+      hinweis("🐾 " + FAEHIG[art][0] + " ausgerüstet – der Knopf mit " + ((TIERE[art] || {}).name || art) + " steht jetzt in der Leiste" + (zwei ? " (zwei Fähigkeiten, jede mit eigener Pause)." : "."));
       schnellZeichnen(true); panelAuffrischen();
     }).catch(function (e) { hinweis("Ging nicht: " + (e && e.message ? e.message : e)); });
   }
@@ -2464,29 +2477,30 @@
   }
   function faehigKnopf() {
     var f = faehigStand();
-    if (!f.art || !FAEHIG[f.art]) return "";
-    var rest = Math.max(0, Math.ceil((f.bereitBis - Date.now()) / 1000)), d = FAEHIG[f.art];
-    return '<button type="button" class="sp-s-faehig' + (S.faehigZiel ? " sp-an" : "") + (rest ? " sp-ruht" : "") + '" data-s="faehigkeit" style="--rest:' + Math.round(rest / 90 * 100) + '%"'
-      + ' title="' + esc(d[0] + " – " + d[2] + (rest ? " (ruht noch " + rest + " s)" : " · 15 Mana")) + '">'
-      + '<span class="sp-tier-bild sp-tier-bild-mini sp-tier-bild-' + ((TIERE[f.art] || {}).flug ? "luft" : "boden") + '">' + tierSvg(f.art, true) + "</span>"
-      + (rest ? "<small>" + rest + "s</small>" : "") + "</button>";
+    return [f.art, f.art2].filter(function (a, i, l) { return a && FAEHIG[a] && l.indexOf(a) === i; }).map(function (art) {
+      var rest = Math.max(0, Math.ceil((faehigBereitBis(art) - Date.now()) / 1000)), d = FAEHIG[art];
+      return '<button type="button" class="sp-s-faehig' + (S.faehigZiel === art ? " sp-an" : "") + (rest ? " sp-ruht" : "") + '" data-s="faehigkeit" data-a="' + art + '" style="--rest:' + Math.round(rest / 90 * 100) + '%"'
+        + ' title="' + esc(d[0] + " – " + d[2] + (rest ? " (ruht noch " + rest + " s)" : " · 15 Mana")) + '">'
+        + '<span class="sp-tier-bild sp-tier-bild-mini sp-tier-bild-' + ((TIERE[art] || {}).flug ? "luft" : "boden") + '">' + tierSvg(art, true) + "</span>"
+        + (rest ? "<small>" + rest + "s</small>" : "") + "</button>";
+    }).join("");
   }
-  function faehigLos() {
-    var f = faehigStand(), d = FAEHIG[f.art];
+  function faehigLos(welche) {
+    var f = faehigStand(), art = welche && (welche === f.art || welche === f.art2) ? welche : f.art, d = FAEHIG[art];
     if (!d) { hinweis("🐾 Rüste erst eine Tier-Fähigkeit aus (Menü → Tiere)."); return; }
-    var rest = Math.ceil((f.bereitBis - Date.now()) / 1000);
-    if (rest > 0) { hinweis("🐾 " + ((TIERE[f.art] || {}).name || "Dein Tier") + " ruht sich noch " + rest + " s aus."); return; }
+    var rest = Math.ceil((faehigBereitBis(art) - Date.now()) / 1000);
+    if (rest > 0) { hinweis("🐾 " + ((TIERE[art] || {}).name || "Dein Tier") + " ruht sich noch " + rest + " s aus."); return; }
     if ((S.ich || {}).mana < 15) { hinweis("🐾 " + d[0] + " braucht 15 Mana – Deutschaufgaben füllen Mana."); return; }
     if (d[1] === "ziel") {
-      S.faehigZiel = !S.faehigZiel; S.zauber = ""; S.kampfZiel = false;
+      S.faehigZiel = S.faehigZiel === art ? false : art; S.zauber = ""; S.kampfZiel = false;
       if (S.faehigZiel) hinweis("🐾 " + d[0] + " bereit – tippe auf ein Gesicht.");
       schnellZeichnen(true);
       return;
     }
-    faehigNutzen(null);
+    faehigNutzen(null, art);
   }
-  function faehigNutzen(p) {
-    var f = faehigStand(), art = f.art, d = FAEHIG[art];
+  function faehigNutzen(p, welche) {
+    var f = faehigStand(), art = welche && (welche === f.art || welche === f.art2) ? welche : f.art, d = FAEHIG[art];
     if (!d) return;
     S.faehigZiel = false;
     var zielSid = p ? spielIdVon(p.id) : null;
@@ -2496,13 +2510,13 @@
     var n = { ereignis: "faehigkeit", sorte: art, von: meineChatId(), zielChat: p ? p.id : meineChatId(), start: true };
     faehigZeigen(n);
     senden(n);
-    rpc("spiel_tier_faehigkeit", { p_ziel: zielSid, p_raum: raum || null }).then(function (r) {
+    rpc("spiel_tier_faehigkeit", { p_ziel: zielSid, p_raum: raum || null, p_art: art }).then(function (r) {
       if (!r || !r.ok) {
         hinweis("🐾 " + ((r && r.grund) || "ging nicht"));
-        if (r && r.bereit_s) S.faehig.bereitBis = Date.now() + r.bereit_s * 1000;
+        if (r && r.bereit_s) faehigBereitSetzen(art, Date.now() + r.bereit_s * 1000);
         schnellZeichnen(); return;
       }
-      S.faehig.bereitBis = Date.now() + (r.bereit_s || 90) * 1000;
+      faehigBereitSetzen(art, Date.now() + (r.bereit_s || 90) * 1000);
       if (r.ziel) S.stand[r.ziel.id] = r.ziel;
       if (r.ich_voll) { S.ich = r.ich_voll; S.stand[r.ich_voll.id] = oeffentlich(r.ich_voll); }
       var w = { ereignis: "faehigkeit", sorte: art, von: meineChatId(), zielChat: n.zielChat, schaden: r.schaden || 0, heil: r.heil || 0, klau: r.klau || 0,
@@ -4841,9 +4855,9 @@
           + esc((TIERE[a] || {}).name || a) + " <small>" + (draussen ? "draußen · " : "") + kraft + " Kraft</small></button>";
       }).join("") + "</div>"
         /* FASSUNG 695 — die Fähigkeiten: eine ausrüsten. */
-        + '<p class="sp-sm-klein"><b>Fähigkeit ausrüsten</b> (15 Mana, dann 90 s Pause)'
-        + (FAEHIG[faehigStand().art] ? ": ★ " + esc(FAEHIG[faehigStand().art][0]) + " – " + esc(FAEHIG[faehigStand().art][2]) : "") + '</p><div class="sp-faehig-liste">' + besitz.filter(function (a) { return FAEHIG[a]; }).map(function (a) {
-          var an = faehigStand().art === a;
+        + '<p class="sp-sm-klein"><b>Fähigkeiten ausrüsten</b> (bis zu zwei · je 15 Mana, dann 90 s Pause · nochmal tippen legt ab)'
+        + [faehigStand().art, faehigStand().art2].filter(function (a) { return FAEHIG[a]; }).map(function (a) { return ": ★ " + esc(FAEHIG[a][0]) + " – " + esc(FAEHIG[a][2]); }).join(" ") + '</p><div class="sp-faehig-liste">' + besitz.filter(function (a) { return FAEHIG[a]; }).map(function (a) {
+          var an = faehigStand().art === a || faehigStand().art2 === a;
           return '<button type="button" data-s="faehig" data-a="' + a + '"' + (an ? ' class="sp-an"' : "") + ' title="' + esc(FAEHIG[a][2]) + '">'
             + '<span class="sp-tier-bild sp-tier-bild-mini sp-tier-bild-' + ((TIERE[a] || {}).flug ? "luft" : "boden") + '">' + tierSvg(a, true) + "</span>" + esc(FAEHIG[a][0]) + "</button>";
         }).join("") + "</div><p class=\"sp-sm-klein\">Tippen holt das Tier raus – eins am Boden, eins in der Luft. Keins geht verloren (nur bei einer Fusion gehen zwei in einem neuen auf).</p>"
@@ -5517,7 +5531,7 @@
     } else if (s === "tierraus") {
       tierWechseln(k.dataset.a); zu = true;
     } else if (s === "faehigkeit") {
-      faehigLos(); return;
+      faehigLos(k.dataset.a || ""); return;
     } else if (s === "kampfkraft") {
       kampfLos(); return;
     } else if (s === "faehig") {
@@ -7089,7 +7103,7 @@
             + '<button type="button" data-tu="fuettern" data-w="' + welches + '" data-f="sauerkraut"' + (vorrat(ich, "sauerkraut") && kraft < max ? "" : " disabled") + ">🥬 +8 (" + vorrat(ich, "sauerkraut") + ")</button>"
             + ((stufe || 1) < 3 ? '<button type="button" data-tu="kaufen" data-d="' + (welches === "boden" ? "tier_stufe" : "flugtier_stufe") + '"' + (ich.punkte >= 60 * (stufe || 1) ? "" : " disabled") + ">Stufe " + ((stufe || 1) + 1) + " · " + 60 * (stufe || 1) + "</button>" : "")
             + verkaufKnopf(art, tierErloes(art))
-            + (FAEHIG[art] ? '<button type="button" data-tu="faehig" data-a="' + art + '"' + (faehigStand().art === art ? ' class="sp-an"' : "") + ' title="' + esc(FAEHIG[art][2]) + '">' + (faehigStand().art === art ? "★ " : "Fähigkeit: ") + esc(FAEHIG[art][0]) + "</button>" : "")
+            + (FAEHIG[art] ? '<button type="button" data-tu="faehig" data-a="' + art + '"' + (faehigStand().art === art || faehigStand().art2 === art ? ' class="sp-an"' : "") + ' title="' + esc(FAEHIG[art][2]) + '">' + (faehigStand().art === art || faehigStand().art2 === art ? "★ " : "Fähigkeit: ") + esc(FAEHIG[art][0]) + "</button>" : "")
             + "</span></div>";
         }
         /* FASSUNG 646 — XANDER: „die Tiere die ich schon gekauft hab die
@@ -13649,7 +13663,7 @@
   /* Der Platzhalter im Rahmen – genau so groß wie das alte Bild (16:10). */
   function neueStadtRahmenHtml(ich) {
     var wahl = S.dorfWahl && !S.umbau && (DORF[S.dorfWahl] || S.dorfWahl === "bahnhof" || S.dorfWahl === "wald") ? S.dorfWahl : "";
-    return '<div class="sp-dl-rahmen sp-dl-ganz sp-dl-neustadt"' + dorfLuftAttr() + '><div class="sp-dl-fenster sp-dl-neustadt-platz"><span>Neue Stadt wird geladen …</span></div></div>'
+    return '<div class="sp-dl-rahmen sp-dl-ganz sp-dl-neustadt"' + dorfLuftAttr() + '><div class="sp-dl-fenster sp-dl-neustadt-platz">' + (LSTADT && LSTADT.bereit ? "" : lsLadeHtml()) + '</div></div>'
       /* FASSUNG 817 — „Umbauen" auch unter der neuen Stadt: dieselbe Leiste, gewählt wird mit einem Tipp in der Stadt. */
       + (S.umbau ? umbauLeisteHtml(ich, true) : "")
       /* FASSUNG 823 — der Bahnhof steht nicht mehr hier im Menü, sondern in seinem eigenen Fenster (bahnFenster). */
@@ -13827,12 +13841,62 @@
     if (S.dorfWahl === "bahnhof") bahnFensterEinpassen(); else bahnFenster();
   }
   /* FASSUNG 828 — Funk 249: in den Stadt-Quests antwortet man durch Sprechen – der Rahmen darf das Mikrofon benutzen */
+  /* FASSUNG 829 — XANDER (Funk 255): „wenn der Preloader kommt bei meiner Stadt kommt vorher mal ein grüner Bildschirm meistens
+     und dann kommt erst der Preloader du musst sofort im Bild sein … dann könntest du den kleinen Fuchs den wir vom Fuchs am
+     Fluss haben … dass er da in der Wartezeit umher springt und dass er da irgendwelche Faxen macht … in jeder Sekunde oder
+     in aller zwei Sekunden macht er irgendwie was anderes … meine Version von mir die da sitzt … die kann ja mit dem Fuchs ein
+     bisschen interagieren oder der Fuchs springt auf den Schoß … und dann streichle ich ihn".
+     Der grüne Schirm war der Platzhalter im Menü (#1d2a1f, „Neue Stadt wird geladen …"), bis die Stadt-Seite selbst ihr
+     Ladebild zeigte. Jetzt steht dasselbe Ladebild (Alex, Name der Stadt, Balken) sofort im Platzhalter UND über dem Rahmen,
+     bis die Stadt wirklich gemalt ist – ohne Wechsel dazwischen. Der Fuchs macht alle 1,7 s ein anderes Kunststück
+     (springen, rennen, Schwanz jagen, rollen, hüpfen, schnuppern, auf den Schoß – dort steigen Herzchen auf). */
+  var LADE_TRICKS = ["sitzt", "springt", "rennt", "schoss", "schwanz", "hops", "rolle", "schnuppert", "schoss"];
+  var ladeUhr = 0, ladeTrick = "sitzt";
+  function lsLadeHtml() {
+    var name = "";
+    try { name = localStorage.getItem("leicht_stadtname") || ""; } catch (e) {}
+    var f = window.DMA_FUCHS_SVG;
+    lsLadeUhr();
+    return '<div class="sp-ls-lade" aria-live="polite"><div class="sp-ls-lade-buehne">'
+      + '<img class="sp-ls-lade-alex" src="stadt-leicht/alex-lade.webp" alt="" width="129" height="230">'
+      + (f ? '<svg class="sp-ls-lade-fuchs" data-t="' + ladeTrick + '" viewBox="-30 -38 54 42" aria-hidden="true"><g class="sp-f-sitz">' + f("sitzen") + '</g><g class="sp-f-spring">' + f("springen") + "</g></svg>"
+           + '<span class="sp-ls-lade-herz" aria-hidden="true">♥</span><span class="sp-ls-lade-herz sp-h2" aria-hidden="true">♥</span>' : "")
+      + '</div><div class="sp-ls-lade-text"><b>' + esc(name || "Deine Stadt") + "</b><span>Gleich siehst du deine Stadt!</span><i><em></em></i></div></div>";
+  }
+  function lsLadeUhr() {
+    if (ladeUhr) return;
+    ladeUhr = setInterval(function () {
+      var alle = document.querySelectorAll(".sp-ls-lade-fuchs");
+      if (!alle.length) { clearInterval(ladeUhr); ladeUhr = 0; return; }
+      var n; do { n = LADE_TRICKS[(Math.random() * LADE_TRICKS.length) | 0]; } while (n === ladeTrick);
+      ladeTrick = n;
+      alle.forEach(function (x) { x.setAttribute("data-t", n); });
+    }, 1700);
+  }
+  /* weg, sobald die Stadt im Rahmen ihr eigenes Ladebild abgelegt hat (stadt-leicht.html #lLade fort oder ausgeblendet) */
+  function lsLadeFertig() {
+    var L = LSTADT;
+    if (!L || L.bereit) return;
+    var fertig = false;
+    try {
+      var d = L.rahmen.contentDocument, ll = d && d.getElementById("lLade");
+      fertig = !!(d && d.readyState === "complete" && L.rahmen.contentWindow.__fertig && (!ll || ll.classList.contains("weg")));
+    } catch (e) { fertig = true; }
+    if (!L.ladeAb) L.ladeAb = Date.now();
+    if (Date.now() - L.ladeAb > 25000) fertig = true;   // nie ewig davor stehen bleiben
+    if (!fertig) return;
+    L.bereit = true;
+    var o = L.el.querySelector(".sp-ls-lade");
+    if (o) { o.classList.add("sp-weg"); setTimeout(function () { if (o.parentNode) o.parentNode.removeChild(o); }, 450); }
+    document.querySelectorAll(".sp-dl-neustadt-platz .sp-ls-lade").forEach(function (x) { if (x.parentNode) x.parentNode.removeChild(x); });
+  }
   function lsAuf() {
     /* Ein noch ausstehender Aufruf aus dem Zeichnen darf die Stadt nach „Alte Version" nicht zurückholen. */
     if (LSTADT || !stadtNeu()) return;
     var el = document.createElement("div");
     el.className = "sp-lstadt";
     el.innerHTML = '<iframe class="sp-ls-rahmen" title="Neue Stadt" src="stadt-leicht.html?eingebettet=1&mini=1" allow="fullscreen; microphone; autoplay"></iframe>'
+      + lsLadeHtml()
       + '<button type="button" class="sp-ls-zu">Zurück</button>';
     document.body.appendChild(el);
     LSTADT = { el: el, rahmen: el.querySelector("iframe"), voll: false, ohne: 0 };
@@ -13847,12 +13911,21 @@
          sagt das Spiel „geht: 0" – dann bleibt der Dialog wie bisher im Bild. */
       if (ev.data.typ === "leicht-unten") {
         var lu = Math.max(0, Math.min(240, Number(ev.data.px) || 0));
-        LSTADT.unten = LSTADT.voll ? 0 : lu;
+        /* FASSUNG 829 — XANDER (Funk 255): das Quest-Fenster „kurz über dem Bild der Stadt", über den Plätzen. Zuerst oben
+           versuchen (der Rahmen wächst nach oben), passt es dort nicht auf den Bildschirm, unten (827), sonst im Bild. */
+        var lgOben = false, lg0 = false;
+        LSTADT.unten = 0; LSTADT.oben = 0;
+        if (lu && !LSTADT.voll && ev.data.oben) {
+          LSTADT.oben = lu; lsFolgen();
+          lgOben = LSTADT.obenGeht !== false && LSTADT.el.style.visibility !== "hidden";
+          if (!lgOben) LSTADT.oben = 0;
+        }
+        if (!lgOben) { LSTADT.unten = LSTADT.voll ? 0 : lu; }
         lsFolgen();
         if (lu) {
-          var lg0 = !LSTADT.voll && LSTADT.untenGeht !== false && LSTADT.el.style.visibility !== "hidden";
+          lg0 = lgOben || (!LSTADT.voll && LSTADT.untenGeht !== false && LSTADT.el.style.visibility !== "hidden");
           if (!lg0) { LSTADT.unten = 0; lsFolgen(); }
-          lsPost({ typ: "leicht-unten-lage", geht: lg0 ? 1 : 0, px: lu });
+          lsPost({ typ: "leicht-unten-lage", geht: lg0 ? 1 : 0, px: lu, oben: lgOben ? 1 : 0 });
         }
       }
       if (ev.data.typ === "leicht-voll") lsVoll(true);
@@ -14096,6 +14169,7 @@
     }
   }
   function lsTakt() {
+    if (LSTADT && !LSTADT.bereit) lsLadeFertig();   // FASSUNG 829
     if (!LSTADT) return;
     lsFolgen();
     lsZeichenSchicken();
@@ -14134,7 +14208,12 @@
     var un = L.unten || 0;
     L.untenGeht = !un || (r.bottom - ci[2] + un <= innerHeight + 1 && ci[2] < 2);
     if (un && L.untenGeht) ci[2] = 0; else un = 0;
-    st.left = r.left + "px"; st.top = r.top + "px"; st.width = r.width + "px"; st.height = (r.height + un) + "px";
+    /* FASSUNG 829 — der Streifen ÜBER dem Bild (L.oben): er liegt über den Plätzen; geht nur, wenn er ganz auf dem Bildschirm
+       ist und das Bild oben nicht beschnitten wird */
+    var ob = L.oben || 0;
+    L.obenGeht = !ob || (r.top - ob >= -1 && ci[0] < 2);
+    if (ob && L.obenGeht) ci[0] = 0; else ob = 0;
+    st.left = r.left + "px"; st.top = (r.top - ob) + "px"; st.width = r.width + "px"; st.height = (r.height + un + ob) + "px";
     st.clipPath = ci.some(Boolean) ? "inset(" + ci.map(function (x) { return x.toFixed(1) + "px"; }).join(" ") + " round 12px)" : "";
     if (!L.z) { var z = parseInt(getComputedStyle(schnellEl).zIndex, 10); L.z = String((isNaN(z) ? 30 : z) + 1); }
     st.zIndex = L.z;

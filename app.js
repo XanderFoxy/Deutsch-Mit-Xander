@@ -15557,6 +15557,7 @@
            der Nachricht mit. Wer nichts eingetragen hat, bekommt die
            Standardstimme; niemand wird geraten. */
         geschlecht: livechatGeschlecht(),
+        strom: wahl.strom || null,
         mitBild: wahl.mitBild === true
       }).then(() => {
         renderLiveChat();
@@ -15673,6 +15674,9 @@
       const alle = new MediaStream();
       if (strom) strom.getTracks().forEach((t) => alle.addTrack(t));
       if (video) video.getTracks().forEach((t) => alle.addTrack(t));
+      /* FASSUNG 829 — schon hinein- oder weggetippt, bevor die Abfrage fertig war: nicht liegen lassen (das Mikrofon
+         blieb sonst an, und der Chat holte es sich daneben ein zweites Mal) */
+      if (!kasten.isConnected) { alle.getTracks().forEach((t) => { try { t.stop(); } catch (e) {} }); return; }
       lcTorStrom = alle;
       const v = kasten.querySelector("#lcTorVideo");
       const wartet = kasten.querySelector("#lcTorWartet");
@@ -15688,9 +15692,12 @@
          Genau daran scheitert sonst das Hoeren auf iPhone und im
          Android-Safari — siehe tonFreischalten() in livechat.js. */
       try { if (LiveChat.tonFreischalten) LiveChat.tonFreischalten(); } catch (e) {}
+      /* FASSUNG 829 — Funk 255 („sofort im Chat da sein"): der laufende Strom geht mit hinein, statt hier gestoppt und im
+         Chat neu geholt zu werden (Android gibt das Mikrofon danach oft erst nach Sekunden wieder her) */
+      const mit = lcTorStrom; lcTorStrom = null;
       lcTorAufraeumen();
       kasten.remove();
-      weiter({ mitBild: mitBild });
+      weiter({ mitBild: mitBild, strom: mit });
     };
     kasten.querySelector("#lcTorRein").addEventListener("click", () => hinein(true));
     kasten.querySelector("#lcTorNurTon").addEventListener("click", () => hinein(false));
@@ -80086,6 +80093,8 @@
         <path d="M-3.4 -1.8 a1.8 1.8 0 0 1 3.4 0.4" stroke="${FUCHS_AUGE}" stroke-width="0.8" fill="none" stroke-linecap="round"/>
       </g>`;
   }
+  /* FASSUNG 829 — Funk 255: der Fuchs vom „Fuchs am Fluss" spielt auch im Ladebild der Stadt (spiel.js lsLadeHtml) */
+  window.DMA_FUCHS_SVG = function (h) { return fuchsFigurSvg(h); };
   function fuchsFigurSvg(haltung) {
     if (haltung === "springen") {
       // Gestreckt, leicht aufwärts gedreht, alle vier Läufe angezogen,

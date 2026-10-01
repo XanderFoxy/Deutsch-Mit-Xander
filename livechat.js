@@ -738,12 +738,30 @@ window.LiveChat = (function () {
       if (id && typeof sitzTausch[id] === "number") teil[id] = sitzTausch[id];
     });
     senden({ art: "sitzplatz", ordnung: teil, text: text });
+    sitzNachsenden("sitzplatz", ids);
   }
 
   function spielSitzSchicken(ids) {
     var teil = {};
     ids.forEach(function (id) { if (id && typeof spielSitz[id] === "number") teil[id] = spielSitz[id]; });
     senden({ art: "spielsitz", ordnung: teil });
+    sitzNachsenden("spielsitz", ids);
+  }
+  /* FASSUNG 829 — XANDER (Funk 255): „wenn ich den Platz tauschen will dauert es manchmal 5 Sekunden von einer Position zur
+     anderen". Bei mir selbst steht der neue Platz sofort (gemessen 20–400 ms). Bei den anderen kommt er mit EINER Meldung
+     über den Raumkanal; geht die unter (Supabase verwirft über 20 Meldungen je Sekunde, Netz kurz weg), stand er erst mit
+     dem nächsten Puls da – bis zu 6 s später. Jetzt geht dieselbe Ordnung nach 0,35 s und 1,2 s noch einmal hinaus,
+     ohne Chatzeile; sie setzt feste Plätze, doppelt angekommen ändert nichts. Geschickt wird der Stand im Augenblick des
+     Nachsendens (nicht der von vorhin) – ein schneller zweiter Tausch wird so nie zurückgedreht. */
+  function sitzNachsenden(art, ids) {
+    [350, 1200].forEach(function (ms) {
+      setTimeout(function () {
+        if (zustand.lage !== "drin") return;
+        var quelle = art === "spielsitz" ? spielSitz : sitzTausch, teil = {}, etwas = false;
+        ids.forEach(function (id) { if (id && typeof quelle[id] === "number") { teil[id] = quelle[id]; etwas = true; } });
+        if (etwas) senden({ art: art, ordnung: teil, nach: 1 });
+      }, ms);
+    });
   }
 
   function plaetzeBauen() {
@@ -2730,6 +2748,40 @@ window.LiveChat = (function () {
   function unsichererOrt() {
     return !(location.protocol === "https:" || location.hostname === "localhost"
              || location.hostname === "127.0.0.1");
+  }
+
+  /* FASSUNG 829 — der Strom aus dem Tor (app.js livechatTor): läuft er noch, wird er genommen statt neu geholt.
+     Ohne Kamera-Wunsch geht die Bildspur aus. null = nichts Brauchbares, dann holt stromHolen neu. */
+  function stromVomTor(strom, mitBild) {
+    try {
+      if (!strom || !strom.getAudioTracks) return null;
+      var ton = strom.getAudioTracks().filter(function (t) { return t.readyState === "live"; });
+      if (!ton.length) { strom.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} }); return null; }
+      var neu = new MediaStream();
+      neu.addTrack(ton[0]);
+      ton.slice(1).forEach(function (t) { try { t.stop(); } catch (e) {} });
+      strom.getVideoTracks().forEach(function (t, i) {
+        if (mitBild && i === 0 && t.readyState === "live") neu.addTrack(t); else { try { t.stop(); } catch (e) {} }
+      });
+      /* das Tor holte nur {audio: true} – Echo- und Rauschunterdrückung wie in stromHolen nachziehen */
+      try { ton[0].applyConstraints({ echoCancellation: true, noiseSuppression: true, autoGainControl: true }).catch(function () {}); } catch (e) {}
+      return Promise.resolve(neu);
+    } catch (e) { return null; }
+  }
+  /* FASSUNG 829 — das Mikrofon kam erst nach dem Betreten: einsetzen wie mikrofonDazuholen (ohne Abriss) */
+  function stromNachreichen(strom) {
+    var weg = function () { try { strom.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} };
+    if (zustand.lage !== "drin" && zustand.lage !== "verbindet") return weg();
+    if (zustand.eigenerStrom && zustand.eigenerStrom.getAudioTracks().length) return weg();   // schon selbst geholt
+    zustand.eigenerStrom = strom;
+    zustand.tonAn = strom.getAudioTracks().length > 0;
+    zustand.bildAn = strom.getVideoTracks().length > 0;
+    zustand.kameraFehler = "";
+    lautstaerkeVerfolgen(strom);
+    if (strom.getAudioTracks()[0]) spurTauschen("ton", strom.getAudioTracks()[0]);
+    if (strom.getVideoTracks()[0]) spurTauschen("bild", strom.getVideoTracks()[0]);
+    if (zustand.lage === "drin") senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn, bild: zustand.ichBild });
+    melden();
   }
 
   function stromHolen(mitBild) {
@@ -6691,11 +6743,21 @@ window.LiveChat = (function () {
         try { pcx.setConfiguration({ iceServers: VERMITTLER, iceCandidatePoolSize: 1 }); } catch (e) {}
       });
     });
+    /* FASSUNG 829 — XANDER (Funk 255): „wenn ich den Chat betrete dann muss ich sofort im Chat da sein und das darf nicht
+       erst fünf Minuten dauern … der denkt warum kommt er nicht". Bis hier wartete das Betreten OHNE Zeitgrenze auf das
+       Mikrofon (getUserMedia): erst danach meldete man sich im Raum an. Hängt das Mikrofon (Abfrage noch offen, von einer
+       anderen App oder dem Diktat belegt, Android gibt es nach dem Tor nur langsam wieder her), sah einen niemand.
+       Jetzt: das Tor reicht seinen schon laufenden Strom weiter (o.strom, kein zweites Holen), und auf ein neues Holen wird
+       höchstens 2 s gewartet. Kommt das Mikrofon später, wird es ohne Abriss nachgereicht (stromNachreichen). */
+    var stromZuSpaet = false;
+    var stromWeg = stromVomTor(o.strom, o.mitBild === true) || stromHolen(o.mitBild === true);
+    stromWeg.then(function (s) { if (stromZuSpaet && s) stromNachreichen(s); }, function () {});
     return Promise.all([
-      stromHolen(o.mitBild === true),
+      Promise.race([stromWeg, new Promise(function (r) { setTimeout(function () { stromZuSpaet = true; r(null); }, 2000); })]),
       Promise.race([relaisSpaet, new Promise(function (r) { setTimeout(function () { r(false); }, 2500); })])
     ]).then(function (beides) {
-      var strom = beides[0];
+      /* (kam das Mikrofon zwischen den 2 s und dem Relais, ist es schon nachgereicht – nicht wieder wegwerfen) */
+      var strom = beides[0] || zustand.eigenerStrom || null;
       zustand.eigenerStrom = strom;
       zustand.bildAn = Boolean(strom && strom.getVideoTracks().length);
       zustand.tonAn = Boolean(strom && strom.getAudioTracks().length);

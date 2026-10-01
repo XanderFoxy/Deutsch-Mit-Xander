@@ -844,6 +844,13 @@
     "html.lq-unten .lk-mini-modus .lq-dialog.lq-schwebe { position: fixed; top: auto; bottom: 0; left: 0; right: 0; max-height: var(--lq-unten, 190px); border-radius: 0 0 12px 12px; animation: none; background: rgba(22,28,48,.97); }",
     "html.lq-unten .lk-mini-modus .lq-schwebe .lq-text { margin: 1px 0 3px; }",
     "html.lq-unten .lk-mini-modus .lq-schwebe .lq-frage { margin: 0 0 4px; }",
+    /* FASSUNG 829 — schwebend ÜBER dem Bild (über den Plätzen): #lStadt rückt per transform nach unten, der Dialog darin
+       (position: fixed bezieht sich dann auf #lStadt) steht im Streifen darüber */
+    "html.lq-oben, html.lq-oben body { background: transparent; }",
+    "html.lq-oben #lStadt { bottom: var(--lq-unten); transform: translateY(var(--lq-unten)); }",
+    "html.lq-oben .lk-mini-modus .lq-dialog.lq-schwebe { position: fixed; top: calc(-1 * var(--lq-unten)); bottom: auto; left: 0; right: 0; max-height: var(--lq-unten, 190px); border-radius: 12px 12px 0 0; animation: none; background: rgba(22,28,48,.97); }",
+    "html.lq-oben .lk-mini-modus .lq-schwebe .lq-text { margin: 1px 0 3px; }",
+    "html.lq-oben .lk-mini-modus .lq-schwebe .lq-frage { margin: 0 0 4px; }",
     /* FASSUNG 846 — XANDER (Walkie 315): die Fragetafeln sind zu groß und verdecken alles; jetzt kompakt (höchstens gut
        die Hälfte des kleinen Bilds, im Vollbild 44 %), die Person bleibt darüber zu sehen */
     ".lq-suche { position: absolute; left: 50%; transform: translateX(-50%); top: 36px; max-width: calc(100% - 16px); box-sizing: border-box; display: flex; align-items: center; gap: 6px; padding: 3px 4px 3px 9px; border-radius: 12px; background: rgba(22,28,48,.9); color: #f3ead8; font: 600 11.5px/1.25 system-ui, sans-serif; z-index: 6; pointer-events: auto; box-shadow: 0 3px 10px rgba(0,0,0,.35); }",
@@ -1002,14 +1009,23 @@
      der Dialog über der halben Stadt – Weg und Person waren verdeckt. Jetzt wächst der Rahmen für die Frage nach unten (das
      Spiel legt ihn über den Chat darunter, spiel.js „leicht-unten"); das Stadtbild behält seine Größe und bleibt ganz frei.
      Reicht der Platz unten nicht (Antwort „leicht-unten-lage" mit geht: 0), bleibt der Dialog wie bisher im Bild. */
-  let untenPx = 0, untenWunsch = 0, untenH0 = 0;
-  function untenAnwenden(px) {
-    if (px === untenPx) return;
-    untenPx = px;
+  /* FASSUNG 829 — XANDER (Funk 255): „das sollte ein schwebendes Fenster sein was sich wenn nach Möglichkeit über den
+     Positionsfenstern öffnet also kurz über dem Bild der Stadt das ist niemals die Stadt verdeckt das habe ich schon mal
+     gesagt". Gewünscht wird jetzt zuerst ein Streifen ÜBER dem Bild (oben: 1); das Spiel legt den Rahmen dafür nach oben
+     über die Plätze. Passt er oben nicht auf den Bildschirm, kommt er darunter (wie 827), sonst bleibt der Dialog im Bild.
+     Oben: #lStadt rückt per transform um den Streifen nach unten (alles darin – Zeichen, Knöpfe, Dialog – wandert mit),
+     die Leinwand wird um ihn kürzer, Fingerpositionen zählen ab ihrer Oberkante (start.js, ST.obenPlatz). */
+  let untenPx = 0, untenWunsch = 0, untenH0 = 0, untenOben = false, obenLage = null;
+  function untenAnwenden(px, oben) {
+    oben = px > 0 && !!oben;
+    if (px === untenPx && oben === untenOben) return;
+    untenPx = px; untenOben = oben;
     const h = document.documentElement;
-    h.classList.toggle("lq-unten", px > 0);
+    h.classList.toggle("lq-unten", px > 0 && !oben);
+    h.classList.toggle("lq-oben", oben);
     h.style.setProperty("--lq-unten", px + "px");
     ST.untenPlatz = px;
+    ST.obenPlatz = oben ? px : 0;
     if (L().groesse) L().groesse();
     L().unruhe = 2;
   }
@@ -1018,18 +1034,18 @@
   function platzUnten(px) {
     px = Math.max(0, Math.round(px || 0));
     if (px > 0 && !(mini() && imRahmen)) return;
-    untenWunsch = px; untenH0 = window.innerHeight - untenPx;
+    untenWunsch = px; untenH0 = window.innerHeight - untenPx; obenLage = null;
     if (!px) untenAnwenden(0);
-    try { window.parent.postMessage({ typ: "leicht-unten", px: px }, location.origin); } catch (e) {}
+    try { window.parent.postMessage({ typ: "leicht-unten", px: px, oben: 1 }, location.origin); } catch (e) {}
   }
-  const untenBereit = () => { if (untenWunsch > 0 && dialog && dialog.el.classList.contains("lq-schwebe")) untenAnwenden(untenWunsch); };
-  window.addEventListener("resize", () => { if (untenWunsch > 0 && untenPx !== untenWunsch && window.innerHeight >= untenH0 + untenWunsch - 1) untenBereit(); });
+  const untenBereit = () => { if (untenWunsch > 0 && dialog && dialog.el.classList.contains("lq-schwebe")) untenAnwenden(untenWunsch, obenLage); };
+  window.addEventListener("resize", () => { if (untenWunsch > 0 && obenLage !== null && untenPx !== untenWunsch && window.innerHeight >= untenH0 + untenWunsch - 1) untenBereit(); });
   window.addEventListener("message", (ev) => {
     if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data) return;
     /* ins Vollbild: der Dialog kommt zurück ins (große) Bild */
     if (ev.data.typ === "leicht-modus" && ev.data.voll && dialog && (untenPx > 0 || untenWunsch > 0)) { dialog.el.classList.remove("lq-schwebe"); platzUnten(0); return; }
     if (ev.data.typ !== "leicht-unten-lage") return;
-    if (ev.data.geht === 1 && Number(ev.data.px) === untenWunsch) untenBereit();
+    if (ev.data.geht === 1 && Number(ev.data.px) === untenWunsch) { obenLage = ev.data.oben === 1; untenBereit(); }
     else if (ev.data.geht === 0 && dialog) { dialog.el.classList.remove("lq-schwebe"); platzUnten(0); }
   });
   Q.untenPx = () => untenPx;

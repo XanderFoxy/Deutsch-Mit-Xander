@@ -176,10 +176,11 @@ const sage = (gut, text, dazu) => {
         text: "Zora zieht Cem mit dem Lasso", wirkung: "lasso", wen: "Cem", ziel: 7, id: "z" + f });
     }, fremdId);
     try {
-      await pg.waitForFunction(() => (window.__pakete || []).some((p) => p.art === "sitzplatz"),
+      /* FASSUNG 829 — gezählt wird die eine Sitzordnung; ihre zwei Wiederholungen (nach: 1) sind dieselbe */
+      await pg.waitForFunction(() => (window.__pakete || []).some((p) => p.art === "sitzplatz" && !p.nach),
         { timeout: 4000, polling: 100 });
     } catch (e) {}
-    return pg.evaluate(() => (window.__pakete || []).filter((p) => p.art === "sitzplatz").length);
+    return pg.evaluate(() => (window.__pakete || []).filter((p) => p.art === "sitzplatz" && !p.nach).length);
   };
   const verliert = await vorfahrt("aaa");
   sage(verliert === 0, "Der andere hat die kleinere Kennung: mein Geraet laesst los",

@@ -49,18 +49,36 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 828: In den Stadt-Quests antwortet man durch Sprechen (Azure erkennt, ganze/halbe Punkte)",
+  stand: "Fassung 829 — Funk 255: sofort im Chat, Platzwechsel, Ladebild, Quest-Fenster über dem Bild, Acker hinter der Bäckerei, zwei Tier-Fähigkeiten",
 
   inArbeit: [
-    { seit: "2026-10-01T02:54",
-      text: "Was ist noch nicht anwählbar? (Frage an Xander)" },
+    { seit: "2026-10-01T04:55",
+      text: "Äcker selbst versetzen" },
+    { seit: "2026-10-01T04:55",
+      text: "Holzfällerhütte, Marktstand, Schweinestall, Jagdhütte, Sternwarte in der neuen Stadt (Modelle + Plätze) und Bau-Rückmeldung mit Ton/Vibration" },
+    { seit: "2026-10-01T04:55",
+      text: "Waffen-Upgrades sichtbar und hörbar; Mine und Falltür im Waffenrad" },
+    { seit: "2026-10-01T04:55",
+      text: "Wörterbuch: Beugungsknöpfe, Lücken füllen; Satzbaukasten" },
+    { seit: "2026-10-01T04:55",
+      text: "weitere Karten zur Auswahl" },
+    { seit: "2026-10-01T04:55",
+      text: "Bild: Alex sitzt und streichelt den Fuchs" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-01T02:54",
-      text: "Stadt-Quests durch Sprechen beantworten" },
-    { seit: "2026-10-01T02:54",
-      text: "Äcker: links auf der Wiese, rechts zwischen Krankenhaus und Tor" },
+    { seit: "2026-10-01T04:55",
+      text: "Chat: sofort drin, Mikrofon höchstens 2 s Wartezeit, kommt später ohne Abriss nach" },
+    { seit: "2026-10-01T04:55",
+      text: "Platzwechsel: Sitzordnung wird nach 0,35 s und 1,2 s nachgesendet" },
+    { seit: "2026-10-01T04:55",
+      text: "Stadt-Ladebild sofort statt grünem Schirm, Fuchs mit Tricks" },
+    { seit: "2026-10-01T04:55",
+      text: "Quest-Fenster schwebt über dem Stadtbild" },
+    { seit: "2026-10-01T04:55",
+      text: "Acker 91 zwischen Bäckerei und Mühle, Tipp aufs ganze Feld erntet, Zeichen hält Abstand zu den Häusern" },
+    { seit: "2026-10-01T04:55",
+      text: "zwei Tier-Fähigkeiten gleichzeitig" },
   ],
 };

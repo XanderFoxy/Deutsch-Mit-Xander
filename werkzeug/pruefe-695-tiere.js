@@ -298,7 +298,7 @@ const sage = (gut, was, zusatz) => {
   await klicke('.sp-schnell [data-s="faehigkeit"]');
   await tick(250);
   r = await pg.evaluate(() => window.DMA_SPIEL.pruef.zustand().faehigZiel);
-  sage(r === true, "Knopf → „tippe auf ein Gesicht“ (die Fähigkeit wirkt auf andere)");
+  sage(r === true || (typeof r === "string" && r.length > 0), "Knopf → „tippe auf ein Gesicht“ (die Fähigkeit wirkt auf andere)", JSON.stringify(r));   // (FASSUNG 829: zwei Fähigkeiten – faehigZiel trägt jetzt die Tierart)
   await pg.evaluate(() => { window.__raus = []; window.DMA_TONLOG = []; });
   await tippe('#lcPlaetze .lc-platz[data-lc-id="bea"] .lc-kreis');
   await tick(900);

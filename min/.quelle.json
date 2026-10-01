@@ -41,7 +41,6 @@
  "data-geraeusche.js": "ccd3574681544074a3055b3060bf92461b4883f7",
  "data-aussprache.js": "5504f23f236025427e0dc8ad05f1739436691384",
  "rueckfrage.js": "7de87f6e8e1dfd76fa649df2080351a71b2fa0f3",
- "spiel.css": "b5d60cf169dee7dc4738454c40e79a2097d7ca28",
  "satzbau.js": "9976917dd889b45f1b1075effde36a4836c72e92",
  "satzbau-it.js": "fb6467aeb56ac4ab8615e29de2e64f6b6535f44f",
  "app-styles.css": "775928fc7824ffaf6529f2dbf715b3a54fbae3df",
@@ -49,8 +48,9 @@
  "data-plaetze.js": "61824c9636dd4d1ed55f9a8c2992cb2f7b419199",
  "data-szenen.js": "facd9322aa9a85e01fb979df8f95dc077e1222b1",
  "korrekturen.css": "aae032bf4ce9495b1a9077b9480f1da78655baf1",
- "livechat.js": "d6936c82698dd3aba1cc17a20c5e641dc833a61a",
- "app.js": "f3eda448a583e995e76833bc51c8ab770f149c84",
- "spiel.js": "bbb7b715c94cfcad068c538f3d5b5eabc1fda04d",
- "data-werkstatt.js": "baf8032c31c7c10daf3c9ae120f5c982d80515b9"
+ "livechat.js": "f35e52d82cfca95e78ad6a4922fb1201870c6051",
+ "app.js": "64830058a0ca6c0487e5e4bad78e59e2a60767ef",
+ "spiel.css": "383a7d3e430e988642e40b31916258b5a98bebea",
+ "spiel.js": "824d9b77d8e5f3c241ac5da2abb4db14588d308a",
+ "data-werkstatt.js": "b29c3e404ceed7cb247453b6a4326c019d637b0d"
 }

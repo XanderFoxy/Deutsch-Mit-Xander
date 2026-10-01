@@ -70,16 +70,18 @@
   function schiebe(dx, dy) { const a = ST.aufBoden(K.W / 2 - dx, K.H / 2 - dy); K.x = a[0]; K.y = a[1]; begrenzen(); L.unruhe = 2; }
   L.zoomUm = zoomUm; L.schiebe = schiebe; L.begrenzen = begrenzen;
   const O = () => ST.oberflaeche || {};
+  /* FASSUNG 829 — liegt der Quest-Dialog im Streifen ÜBER dem Bild (quests.js, ST.obenPlatz), beginnt die Leinwand dort tiefer:
+     die Fingerposition zählt ab ihrer Oberkante */
   dingeC.addEventListener("pointerdown", (e) => {
     dingeC.setPointerCapture(e.pointerId);
-    zeiger.set(e.pointerId, { x: e.clientX * K.dpr, y: e.clientY * K.dpr });
-    schwung = [0, 0]; gezogen = false; startPunkt = { x: e.clientX * K.dpr, y: e.clientY * K.dpr, t: performance.now() };
+    zeiger.set(e.pointerId, { x: e.clientX * K.dpr, y: (e.clientY - (ST.obenPlatz || 0)) * K.dpr });
+    schwung = [0, 0]; gezogen = false; startPunkt = { x: e.clientX * K.dpr, y: (e.clientY - (ST.obenPlatz || 0)) * K.dpr, t: performance.now() };
     L.letzterFinger = performance.now();   // FASSUNG 846 — für die Quests: hat man seitdem selbst etwas angefasst?
     if (O().zeigerRunter) O().zeigerRunter(startPunkt);
   });
   dingeC.addEventListener("pointermove", (e) => {
     if (!zeiger.has(e.pointerId)) return;
-    const alt = zeiger.get(e.pointerId), neu = { x: e.clientX * K.dpr, y: e.clientY * K.dpr };
+    const alt = zeiger.get(e.pointerId), neu = { x: e.clientX * K.dpr, y: (e.clientY - (ST.obenPlatz || 0)) * K.dpr };
     /* FASSUNG 817 — Funk 207: „diese zweite Zoomstufe … auch in der kleinen Miniaturansicht": zwei Finger zoomen jetzt
        auch im kleinen Rahmen (Grenzen setzt oberflaeche.js: vom Überblick bis zur zweiten Stufe). */
     /* FASSUNG 820 — XANDER (Walkie 309): „Zwei-Finger-Drehen mit Einrasten in 8 Winkeln", Funk 207: „wie Google Maps".
@@ -119,7 +121,7 @@
     zeiger.delete(e.pointerId);
     if (zeiger.size < 2 && ST.drehen) ST.drehen.loslassen();   // FASSUNG 820 — weich auf den nächsten 45°-Schritt einrasten
     if (performance.now() - letzteBewegung > 80) schwung = [0, 0];
-    if (!gezogen && startPunkt && O().tippen) O().tippen(e.clientX * K.dpr, e.clientY * K.dpr);
+    if (!gezogen && startPunkt && O().tippen) O().tippen(e.clientX * K.dpr, (e.clientY - (ST.obenPlatz || 0)) * K.dpr);
     if (O().zeigerHoch) O().zeigerHoch(gezogen);
     if (zeiger.size === 0) { startPunkt = null; if (ST.oberflaeche) ST.oberflaeche._finger = 0; }   // FASSUNG 844 — Fingerzähler fürs lange Drücken
   };
@@ -131,8 +133,8 @@
   /* FASSUNG 820 — Umschalt+Mausrad dreht um 45° (weich, drehen.js); ein Rastschritt je 100 Einheiten, Touchpads sammeln */
   let radDreh = 0;
   dingeC.addEventListener("wheel", (e) => { if (document.body.classList.contains("lk-mini-modus")) return; e.preventDefault();
-    if (e.shiftKey && ST.drehen) { radDreh += e.deltaY || e.deltaX; if (Math.abs(radDreh) >= 100) { ST.drehen.um(radDreh > 0 ? 1 : -1, { px: e.clientX * K.dpr, py: e.clientY * K.dpr }); radDreh = 0; } return; }
-    zoomUm(e.clientX * K.dpr, e.clientY * K.dpr, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+    if (e.shiftKey && ST.drehen) { radDreh += e.deltaY || e.deltaX; if (Math.abs(radDreh) >= 100) { ST.drehen.um(radDreh > 0 ? 1 : -1, { px: e.clientX * K.dpr, py: (e.clientY - (ST.obenPlatz || 0)) * K.dpr }); radDreh = 0; } return; }
+    zoomUm(e.clientX * K.dpr, (e.clientY - (ST.obenPlatz || 0)) * K.dpr, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
 
   let flug = null;
   L.fliegeZu = function (x, y, s, dauer) { flug = { x0: K.x, y0: K.y, s0: K.s, x1: x, y1: y, s1: s || K.s, t0: performance.now(), d: dauer || 700 }; L.unruhe = 2; };

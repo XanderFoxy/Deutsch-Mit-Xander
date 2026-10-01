@@ -143,7 +143,9 @@ const ELTERN = (w, h, suche) => `<!doctype html><html><head><meta charset="utf-8
         return { nr: f.nr, flaeche: Math.round(flaeche), gedeckt: gedeckt / n };
       });
     });
-    sage(felder.length >= 2 && felder.every((f) => f.flaeche >= 250), "zwei große Äcker (je ≥ 250 m²)", JSON.stringify(felder));
+    /* FASSUNG 829 — XANDER (Funk 255): Acker 91 „standardmäßig zwischen der Bäckerei und der Mühle … hinter der Bäckerei";
+       dort ist weniger Platz – der Ort geht vor der Größe (91 ≥ 180 m², 92 weiter ≥ 250 m²) */
+    sage(felder.length >= 2 && felder.every((f) => f.flaeche >= (f.nr === 91 ? 180 : 250)), "zwei große Äcker (91 ≥ 180 m² hinter der Bäckerei, 92 ≥ 250 m²)", JSON.stringify(felder));
     sage(felder.length >= 2 && felder.every((f) => f.gedeckt <= 0.15), "kein Wahrzeichen, Haus oder Baum verdeckt die Äcker (≤ 15 % der Prüfpunkte)", JSON.stringify(felder.map((f) => f.gedeckt)));
     const halme = await pg.evaluate(() => {
       const c = document.getElementById("lDinge"), g = c.getContext("2d"), f = STADT.dorf.FELD_ORTE[0], P = STADT.proj(f.x, f.y, 0);

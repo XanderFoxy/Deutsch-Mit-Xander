@@ -733,7 +733,7 @@
          im Boden) und damit die Autos bleiben genau wie bis jetzt – so kommen sie weiter über den Markt (Sonde 830). Die
          kleinen Ackerflecken im Boden bleiben die Ladestellen des Kornwagens. */
       /* FASSUNG 827 — die Ladestellen liegen jetzt unter den gemalten Äckern (vorher lag die rechte als brauner Fleck am Weg) */
-      for (const [px, py, fw, fh] of [[-19, 162, 5, 5], [306, 151, 5, 5.5], [-19, 169, 3.5, 3.5]]) { const q = welt(px, py); rund(q[0], q[1], fw, fh, 2); }
+      for (const [px, py, fw, fh] of [[73, 104, 4.5, 4.5], [306, 151, 5, 5.5], [73, 110, 3, 3]]) { const q = welt(px, py); rund(q[0], q[1], fw, fh, 2); }
       /* FASSUNG 827 — XANDER (Funk 248): „die getreideäcker scheinen auf einem Gehweg zu sein" · „die Getreidefelder waren
          früher auf beiden Seiten". Der linke Acker (91) lag über dem Weg zu Kaserne und Krankenhaus; jetzt liegt er links
          auf der freien Wiese (unter Kuhstall und Mühle), der rechte (92) rechts zwischen Krankenhaus und Brandenburger Tor.
@@ -741,7 +741,10 @@
          und nichts Hohes steht im Bild davor (ein Tipp auf die Mühle traf sonst den Acker dahinter). Der Kölner Dom findet
          beim Versetzen weiter einen freien Platz (rechts neben Acker 92), und die Obstwiese beim Labor bleibt stehen (der
          Acker liegt weit genug darüber). Sonden 817, 828, 844, 847. */
-      for (const [um, vm, bu, bv, nr] of [[-119, 50, 18, 30, 91], [94, 31, 18, 30, 92]]) {
+      /* FASSUNG 829 — XANDER (Funk 255): „dass es standardmäßig zwischen der Bäckerei und der Mühle ist also hinter der
+         Bäckerei quasi". Acker 91 liegt jetzt dort (16 × 24, Mitte u −58, v −14: frei von Wegen, Wasser und Häusern); der
+         Kölner Dom hat damit seinen alten freien Platz auf der linken Wiese wieder. */
+      for (const [um, vm, bu, bv, nr] of [[-58, -14, 16, 24, 91], [94, 31, 18, 30, 92]]) {
         const u0 = um - bu / 2, u1 = um + bu / 2, v0 = vm - bv / 2, v1 = vm + bv / 2, q = vw(um, vm);
         D.FELD_ORTE.push({ nr: nr, x: +q[0].toFixed(2), y: +q[1].toFixed(2), r: Math.hypot(bu, bv) / 2 / Math.SQRT2, u0: u0, u1: u1, v0: v0, v1: v1 });
       }
