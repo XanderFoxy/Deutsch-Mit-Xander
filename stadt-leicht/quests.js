@@ -1144,7 +1144,8 @@
           if (e.i >= 0 && liste.children[e.i]) liste.children[e.i].classList.add("lq-richtig");
           for (const x of liste.children) x.disabled = true;
           mk.textContent = e.stufe === 1 ? "✓ Richtig gesagt" : "✓ Fast";
-          hinweis.textContent = (e.stufe === 1 ? "Richtig! " : "Fast! ") + e.grund + " " + qu.danke;
+          /* FASSUNG 830 — bei freien Antworten antwortet die Person auf das, was man gesagt hat */
+          hinweis.textContent = (e.stufe === 1 ? "Richtig! " : "Fast! ") + e.grund + " " + (e.antwort || qu.danke);
           qu.rot = null;
           losgehen(qu);
           setTimeout(() => { if (dialog && dialog.qu === qu) { dialog.el.remove(); dialog = null; platzUnten(0); } wegZeigen(qu.weg.pts, mini() ? 34 : 64, K.H / K.dpr - (mini() ? 8 : 70)); }, 2600);
@@ -1153,7 +1154,9 @@
         zurueck();
         hinweis.textContent = e.grund;
         if (e.stufe === 0) {
-          qu.versuche++;
+          /* FASSUNG 830 — was nicht zur Aufgabe passt oder falsch verstanden wurde, kostet keinen Versuch (Funk 257: „dazu muss
+             die Erkennung auch korrekt sein“); nur ein klar falscher Satz zählt */
+          if (!e.ohneVersuch) qu.versuche++;
           if (e.i >= 0 && liste.children[e.i]) { const b = liste.children[e.i]; b.disabled = true; b.classList.add("lq-falsch"); if (qu.antworten[e.i]) qu.antworten[e.i].falschGetippt = true; }
           if (e.weg) { qu.rot = { pts: e.weg, ab: performance.now(), bis: performance.now() + (Q.rotDauer || 5200) }; L().unruhe = 2; }
         }
@@ -1338,7 +1341,7 @@
       /* Auftritt: aus 8 m Entfernung auf dem Weg herein (weich eingeblendet) */
       const her = [p.slice()]; { let a = s, b = n.nb[s].find((x) => x !== r.R[1]) != null ? n.nb[s].find((x) => x !== r.R[1]) : r.R[1], lang = 0; for (let g = 0; g < 60 && lang < 8; g++) { her.push(n.kn[b].slice()); lang += Math.hypot(n.kn[b][0] - n.kn[a][0], n.kn[b][1] - n.kn[a][1]); const w = n.nb[b].filter((x) => x !== a); if (!w.length) break; a = b; b = w[0]; } }
       her.reverse();
-      const qu = { id: (Q._nr = (Q._nr || 0) + 1), v: v, ziel: z, an: an, s: s, route: r, weg: weg(r.pts), auftritt: weg(her), f: f, versuche: 0,
+      const qu = { id: (Q._nr = (Q._nr || 0) + 1), v: v, vars: vars, ziel: z, an: an, s: s, route: r, weg: weg(r.pts), auftritt: weg(her), f: f, versuche: 0,
         text: v.text(z, vars), frage: typeof v.frage === "function" ? v.frage(z, vars) : v.frage || "Welche Wegbeschreibung stimmt? Die Karte hilft dir.", antworten: mischen(antworten),
         danke: typeof v.danke === "function" ? v.danke(z, vars) : v.danke, mut: schwach().has(v.kat), zeit: performance.now() };
       /* der Hund sitzt am Eingang, etwas zur Seite (das Kind kommt daneben an) */
@@ -1530,27 +1533,47 @@
     return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).then((strom) => new Promise((fertig, fehler) => {
       const AC = window.AudioContext || window.webkitAudioContext, ctx = new AC();
       const quelle = ctx.createMediaStreamSource(strom), proz = ctx.createScriptProcessor(4096, 1, 1), stumm = ctx.createGain(); stumm.gain.value = 0;
-      const teile = []; let sprach = false, stilleSeit = 0, ab = performance.now(), aus = false;
+      /* FASSUNG 830 — XANDER (Funk 257): „Es fehlt der Signalton beim einsprechen bei den Aufgaben". Zwei kurze helle Töne
+         (aufwärts) = jetzt sprechen; die ersten 0,3 s (der Ton selbst) werden nicht aufgenommen. Am Ende zwei Töne abwärts. */
+      try { if (ctx.resume) ctx.resume(); } catch (e) {}
+      signal(ctx, true);
+      const teile = []; let sprach = false, stilleSeit = 0, ab = performance.now() + 300, aus = false;
       const stopp = () => {
         if (aus) return; aus = true; sprLauf = null;
         try { proz.disconnect(); quelle.disconnect(); stumm.disconnect(); } catch (e) {}
         strom.getTracks().forEach((t) => t.stop());
-        const rate = ctx.sampleRate; try { ctx.close(); } catch (e) {}
+        const rate = ctx.sampleRate; signal(ctx, false); setTimeout(() => { try { ctx.close(); } catch (e) {} }, 400);
         if (!sprach) { fehler(new Error("nichts-gehoert")); return; }
         fertig(wavBase64(teile, rate));
       };
       sprLauf = { stopp: stopp };
       proz.onaudioprocess = (e) => {
+        const jetzt = performance.now();
+        if (jetzt < ab || aus) return;
         const d = e.inputBuffer.getChannelData(0); teile.push(new Float32Array(d));
         let s = 0; for (let i = 0; i < d.length; i++) s += d[i] * d[i];
-        const rms = Math.sqrt(s / d.length), jetzt = performance.now();
+        const rms = Math.sqrt(s / d.length);
         if (pegel) pegel(Math.min(1, rms * 12));
         if (rms > 0.02) { sprach = true; stilleSeit = 0; } else if (sprach && !stilleSeit) stilleSeit = jetzt;
-        if ((sprach && stilleSeit && jetzt - stilleSeit > 1300) || jetzt - ab > 9000 || (!sprach && jetzt - ab > 6000)) stopp();
+        /* (830: 1,8 s Pause statt 1,3 s – wer beim Sprechen kurz nachdenkt, wird nicht mehr abgeschnitten; höchstens 12 s) */
+        if ((sprach && stilleSeit && jetzt - stilleSeit > 1800) || jetzt - ab > 12000 || (!sprach && jetzt - ab > 6000)) stopp();
       };
       quelle.connect(proz); proz.connect(stumm); stumm.connect(ctx.destination);
     }));
   };
+  /* zwei kurze Töne: an = aufwärts (jetzt sprechen), aus = abwärts (fertig) */
+  function signal(ctx, an) {
+    try {
+      const t0 = ctx.currentTime + 0.02, fr = an ? [880, 1320] : [1100, 740];
+      fr.forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain(), t = t0 + i * 0.11;
+        o.type = "sine"; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+        o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + 0.12);
+      });
+    } catch (e) {}
+  }
+  SPR.signal = signal;
   function wavBase64(teile, rate) {
     let n = 0; for (const t of teile) n += t.length;
     const f = rate / 16000, m = Math.floor(n / f), pcm = new Int16Array(m);
@@ -1576,6 +1599,171 @@
       return lesarten.slice(0, 4);
     });
   };
+
+  /* ---------- FASSUNG 830 — freie Antworten ----------
+     XANDER (Funk 257, wörtlich): „es sollen auch eigene Antworten möglich sein die müssen nicht festgenagelt an den Antworten
+     sein … z.B ich möchte 95 Brötchen kaufen bitte … dann muss das genauso gültig sein wie wenn man sagt ich möchte Brötchen
+     kaufen oder ich möchte ein Brot kaufen je nach Kontext der Aufgabe … es geht nur darum ob sie grammatikalisch richtig sind
+     aber die Variation soll groß sein … und dieses fast kannst du nur schreiben wenn er die Grammatik fast richtig hat".
+     Deshalb zwei getrennte Fragen statt „ähnelt der Satz einer Antwort?":
+       1. Erfüllt der Satz die Aufgabe? (FREI[id]: was in der Situation gesagt werden muss – eine Ware beim Bäcker, ein
+          Gericht im Gasthaus, „nach" + Stadt am Schalter, „Sie" beim fremden Herrn …; jede Formulierung zählt)
+       2. Stimmt die Grammatik? (grammatikPruefen: Verbformen nach der Person, Plural nach Zahlen, Artikel im Akkusativ
+          beim Bestellen, Infinitiv ans Ende nach „möchte/kann …", Perfekt mit „sein" bei Bewegung, trennbare Verben)
+     Beides ja → richtig (volle Punkte + Sprech-Bonus). Aufgabe erfüllt, aber ein Grammatikfehler → „Fast!" mit genau diesem
+     Fehler und wie es richtig heißt. Aufgabe nicht erfüllt → kein Abzug, nur ein Hinweis, was noch fehlt. */
+  const fw = (s) => " " + String(s || "").toLowerCase().replace(/[„“"'.,!?;:–—()]/g, " ").replace(/\s+/g, " ").trim() + " ";
+  /* Nomen der Situationen: Geschlecht und Plural (Duden) */
+  const NOMEN = { "brötchen": ["n", "brötchen"], "brot": ["n", "brote"], "brezel": ["f", "brezeln"], "breze": ["f", "brezen"], "kuchen": ["m", "kuchen"], "torte": ["f", "torten"],
+    "croissant": ["n", "croissants"], "semmel": ["f", "semmeln"], "schrippe": ["f", "schrippen"], "berliner": ["m", "berliner"], "krapfen": ["m", "krapfen"], "baguette": ["n", "baguettes"],
+    "schnitzel": ["n", "schnitzel"], "suppe": ["f", "suppen"], "salat": ["m", "salate"], "bratwurst": ["f", "bratwürste"], "wurst": ["f", "würste"], "kaffee": ["m", "kaffees"],
+    "tee": ["m", "tees"], "bier": ["n", "biere"], "saft": ["m", "säfte"], "kugel": ["f", "kugeln"], "waffel": ["f", "waffeln"], "fahrkarte": ["f", "fahrkarten"],
+    "ticket": ["n", "tickets"], "fahrschein": ["m", "fahrscheine"], "buch": ["n", "bücher"], "tretboot": ["n", "tretboote"], "boot": ["n", "boote"], "postkarte": ["f", "postkarten"],
+    "karte": ["f", "karten"], "apfel": ["m", "äpfel"], "regenschirm": ["m", "regenschirme"], "schirm": ["m", "schirme"], "pizza": ["f", "pizzen"], "knödel": ["m", "knödel"] };
+  const PLURAL = {}; for (const k in NOMEN) PLURAL[NOMEN[k][1]] = k;
+  const GROSS = (w) => w[0].toUpperCase() + w.slice(1);
+  /* eine Zahl über eins (Ziffern, Zahlwörter, „ein paar", „viele" …) */
+  const MEHRERE = /^(\d+|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|\w+zehn|\w*zig|\w*ßig|\w*hundert\w*|\w*tausend\w*|paar|viele|einige|mehrere)$/;
+  const BESTELLEN = /\b(hätte|hätten|möchte|möchten|nehme|nehmen|kaufe|kaufen|brauche|brauchen|bestelle|bestellen|bekomme|bekommen|kriege|kriegen|gib|geben|will|wollen|miete|mieten|leihen)\b/;
+  const PRAEP = /^(mit|von|vom|zu|zum|zur|aus|bei|beim|nach|in|im|an|am|auf|vor|für|ohne|um|neben|hinter|über|unter)$/;
+  const KONJ = [
+    [/ ich (möchten|möchtest|möchtet) /, "Mit „ich“ heißt es „ich möchte“."], [/ ich (bist|ist|sind|seid) /, "Mit „ich“ heißt es „ich bin“."],
+    [/ ich (hast|hat|haben) /, "Mit „ich“ heißt es „ich habe“."], [/ ich (kannst|können) /, "Mit „ich“ heißt es „ich kann“."],
+    [/ ich (musst|müssen) /, "Mit „ich“ heißt es „ich muss“."], [/ ich (willst|wollen) /, "Mit „ich“ heißt es „ich will“."],
+    [/ ich (darfst|dürfen) /, "Mit „ich“ heißt es „ich darf“."], [/ ich (kauft|kaufst|geht|gehst|braucht|brauchst|bestellt|nimmt|nimmst|kommt|macht|heißt|wohnt|sucht) /, "Mit „ich“ endet das Verb auf -e: ich kaufe, ich gehe, ich heiße …"],
+    [/ du (bin|ist|sind) /, "Mit „du“ heißt es „du bist“."], [/ du (darf|dürfen) /, "Mit „du“ hat das Verb ein -st: du darfst."], [/ du (kann|können) /, "Mit „du“: du kannst."],
+    [/ du (muss|müssen) /, "Mit „du“: du musst."], [/ du (will|wollen) /, "Mit „du“: du willst."], [/ du (möchte|möchten) /, "Mit „du“: du möchtest."], [/ du (habe|haben|hat) /, "Mit „du“: du hast."],
+    [/ (er|es) (bin|bist|sind) /, "Mit „er/es“ heißt es „ist“."], [/ wir (bin|bist|ist) /, "Mit „wir“ heißt es „wir sind“."]
+  ];
+  const PARTIZIP_FALSCH = { gegeht: "gegangen", gefahrt: "gefahren", gelauft: "gelaufen", gekommt: "gekommen", gesehet: "gesehen", geesst: "gegessen", getrinkt: "getrunken", geschwimmt: "geschwommen", gefliegt: "geflogen", geschreibt: "geschrieben" };
+  const INF_LISTE = /^(kaufen|haben|mieten|zurückgeben|abgeben|fahren|bestellen|gehen|essen|trinken|bezahlen|leihen|ausleihen|klettern|sehen|bekommen|nehmen)$/;
+  function grammatikPruefen(T) {
+    for (const k of KONJ) if (k[0].test(T)) return k[1];
+    const w = T.trim().split(" ");
+    for (let i = 0; i < w.length; i++) {
+      /* falsche Partizipien */
+      if (PARTIZIP_FALSCH[w[i]]) return "„" + w[i] + "“ gibt es nicht – es heißt „" + PARTIZIP_FALSCH[w[i]] + "“.";
+      /* Plural nach einer Zahl: „vier Brötchen“, „drei Äpfel“, „zwei Postkarten“ (nicht „Brötchens“, „Apfel“, „Postkarte“) */
+      if (MEHRERE.test(w[i]) && !(w[i] === "paar" && w[i - 1] !== "ein") && !PRAEP.test(w[i - 1] || "")) {
+        for (const n of [w[i + 1], w[i + 2]]) {
+          if (!n) continue;
+          if (PLURAL[n]) break;
+          const sing = NOMEN[n] ? n : Object.keys(NOMEN).find((k) => n !== NOMEN[k][1] && n.length > k.length && n.length <= k.length + 2 && n.indexOf(k) === 0);
+          if (sing && NOMEN[sing][1] !== sing) return "Mehrere – also Plural: " + (NOMEN[sing][0] === "m" ? "der " : NOMEN[sing][0] === "f" ? "die " : "das ") + GROSS(sing) + " – die " + GROSS(NOMEN[sing][1]) + ".";
+          if (sing && n !== NOMEN[sing][1]) return "Mehrere – also Plural: die " + GROSS(NOMEN[sing][1]) + ".";
+          if (sing) break;
+        }
+      }
+      /* Artikel beim Bestellen/Kaufen (Akkusativ): einen Kuchen, eine Brezel, ein Brot */
+      if ((w[i] === "ein" || w[i] === "eine" || w[i] === "einen") && !PRAEP.test(w[i - 1] || "") && BESTELLEN.test(T)) {
+        let n = w[i + 1]; if (n && !NOMEN[n] && /(e|en|es|er)$/.test(n) && NOMEN[w[i + 2]]) n = w[i + 2];
+        if (NOMEN[n]) {
+          const g = NOMEN[n][0], soll = g === "m" ? "einen" : g === "f" ? "eine" : "ein";
+          if (w[i] !== soll) return "Es heißt „" + (g === "m" ? "der" : g === "f" ? "die" : "das") + " " + GROSS(n) + "“ – also „" + soll + " " + GROSS(n) + "“.";
+        }
+      }
+    }
+    /* Nach „möchte, kann, will …“ steht das zweite Verb am Ende */
+    const m = / (möchte|möchtest|möchten|will|willst|wollen|kann|kannst|können|muss|musst|müssen|darf|darfst|dürfen|soll|sollst) (.*)$/.exec(T);
+    if (m) {
+      const rest = m[2].trim().split(" ");
+      for (let i = 0; i < rest.length - 1; i++) if (INF_LISTE.test(rest[i]) && rest.slice(i + 1).some((x) => NOMEN[x] || PLURAL[x] || /^(ein|eine|einen|das|die|der|den|\d+)$/.test(x)))
+        return "Nach „" + m[1] + "“ steht das zweite Verb ganz am Ende: … " + rest.filter((x, j) => j !== i).join(" ") + " " + rest[i] + ".";
+    }
+    if (/ geben zurück /.test(T) || / zurück (das|die|den) /.test(T)) return "„zurückgeben“ bleibt nach „möchte“ zusammen am Ende: … das Buch zurückgeben.";
+    if (/ (habe|hab|hast|hat|haben|habt) /.test(T) && / (gegangen|gefahren|gelaufen|gekommen|geflogen|geschwommen|gerannt|gewandert) /.test(T)) return "Bei Bewegung bildet man das Perfekt mit „sein“: ich bin gegangen, ich bin gefahren.";
+    return null;
+  }
+  /* Höflich? (beim Bestellen und Kaufen) */
+  const hoeflich = (T) => / (bitte|hätte|hätten|möchte|möchten|würde|würden|könnte|könnten|dürfte|gern|gerne) /.test(T);
+  const unhoeflich = (T) => / (schnell|sofort|gib|gebt) /.test(T) || (/ (will|wollen) /.test(T) && !/ bitte /.test(T));
+  const bestellung = (T, ware, wo) => {
+    if (!ware.test(T)) return null;
+    if (unhoeflich(T)) return { fehler: "Das Richtige bestellt – aber so klingt es unhöflich. Mit „bitte“ oder „Ich hätte gern …“ wird es freundlich." };
+    const z = /( \d+ | \w*zig | \w*hundert\w* )/.exec(T), zahl = z ? parseInt(z[1], 10) : 0;
+    return { ok: true, antwort: zahl >= 20 ? "„" + zahl + " Stück? Dafür brauche ich eine große Tüte – kommt sofort!“" : hoeflich(T) ? "„Gern, kommt sofort!“" : "„Kommt sofort!“" };
+  };
+  const FREI = {
+    baeckerei: (T) => bestellung(T, / (brötchen\w*|brot|brote\w*|brezel\w*|breze\w*|kuchen\w*|torte\w*|croissant\w*|semmel\w*|schrippe\w*|berliner|krapfen|baguette\w*|laugenstange\w*|hörnchen|plätzchen|keks\w*|teilchen|stück) /),
+    schnitzel: (T) => bestellung(T, / (schnitzel|suppe|salat|bratwurst|wurst|würstchen|pommes|braten|knödel|spätzle|bier|wasser|kaffee|tee|saft|schorle|apfelschorle|limo|limonade|pizza|nudeln|fisch|steak|kartoffeln|kuchen|eis|menü|tagesgericht|speisekarte|rechnung) /),
+    eis: (T) => bestellung(T, / (eis|kugel|kugeln|waffel|becher|\w+eis|eistüte|softeis) /),
+    fahrkarte: (T, qu) => {
+      const st = fw(qu.vars.stadt).trim();
+      if (T.indexOf(" zu " + st + " ") >= 0 || T.indexOf(" in " + st + " ") >= 0 || T.indexOf(" nach " + st) < 0 && T.indexOf(" " + st + " ") >= 0 && / (zu|in) /.test(T)) return { fehler: "Bei Städten ohne Artikel sagt man „nach“: nach " + qu.vars.stadt + "." };
+      if (!/ (fahrkarte|fahrkarten|ticket|tickets|fahrschein|karte|zug|fahren|fahre|reisen|einmal|zweimal) /.test(T) && T.indexOf(" nach " + st + " ") < 0) return null;
+      if (T.indexOf(" " + st + " ") < 0) return { fehlt: "Sag auch, wohin sie fährt: „… nach " + qu.vars.stadt + ", bitte.“" };
+      return { ok: true, antwort: "„Nach " + qu.vars.stadt + " – gern. Hin und zurück?“" };
+    },
+    sie_du: (T) => {
+      if (/ (du|dir|dich|dein|deine|komm|zeig) /.test(T)) return { fehler: "Einen fremden Erwachsenen sprichst du mit „Sie“ an: Kommen Sie mit, ich zeige Ihnen den Weg." };
+      if (/ (sie|ihnen|ihr|gern|gerne|natürlich|klar|ja|helfe|zeige|kommen|mitkommen|folgen) /.test(T)) return { ok: true };
+      return null;
+    },
+    tretboot: (T, qu, t) => / (tretboot|boot|tretboote) /.test(T) ? (/ mietet /.test(T) ? { fehler: "Nach „kann“ steht der Infinitiv am Ende: … mieten." }
+      : /\?\s*$/.test(t) && /^ ich (kann|darf|könnte|dürfte) /.test(T) ? { fehler: "Bei einer Ja/Nein-Frage steht das Verb vorn: „Kann ich …?“" } : { ok: true, antwort: "„Klar! Eine Stunde kostet fünf Euro.“" }) : null,
+    postkarten: (T) => / (postkarte\w*|karten?|ansichtskarte\w*) /.test(T) ? (/ postkartes /.test(T) ? { fehler: "Der Plural hat ein -n: die Postkarte – die Postkarten." } : { ok: true }) : null,
+    zurueckgeben: (T) => / (buch|bücher) /.test(T) && /(zurück|abgeben|abgebe|bringe)/.test(T) ? { ok: true, antwort: "„Danke! Hat es Ihnen gefallen?“" } : null,
+    arzt: (T) => {
+      if (!/ (kopf|kopfschmerzen|kopfweh|schmerzen|weh) /.test(T)) return null;
+      if (/ ich tut /.test(T)) return { fehler: "Bei „wehtun“ steht die Person im Dativ: Mir tut der Kopf weh." };
+      if (/ tun (der|mein) kopf /.test(T)) return { fehler: "Der Kopf – eins, also: Mir tut der Kopf weh." };
+      return { ok: true, antwort: "„Oh, das tut mir leid. Seit wann haben Sie die Schmerzen?“" };
+    },
+    vorstellen: (T) => {
+      if (!/ (heiße|heiß|name|bin|komme) /.test(T)) return null;
+      if (/ habe \w+ jahre /.test(T)) return { fehler: "Im Deutschen „ist“ man so alt: Ich bin acht Jahre alt." };
+      if (/ jahren alt /.test(T)) return { fehler: "Es heißt „acht Jahre alt“ – ohne n." };
+      return { ok: true };
+    },
+    geburtstag: (T) => {
+      if (/ guten geburtstag /.test(T)) return { fehler: "So sagt man das nicht. Richtig ist: „Alles Gute zum Geburtstag!“" };
+      if (/ alles gut zum /.test(T)) return { fehler: "Es heißt „Alles Gute“ – mit e." };
+      return /(geburtstag|gratuliere|glückwunsch|alles gute|happy birthday)/.test(T) ? { ok: true } : null;
+    },
+    hund: (T, qu) => {
+      const z = qu.ziel, nm = fw(z.name).trim();
+      if (!/ (hund|bello|er|sitzt|ist) /.test(T) || T.indexOf(nm) < 0) return null;
+      const gut = z.g === "die" ? new RegExp(" (der|deiner|bei der|an der|vor der|neben der|hinter der) (\\w+ )?" + nm) : new RegExp(" (dem|beim|am|im|vom) (\\w+ )?" + nm);
+      return gut.test(T) ? { ok: true } : { fehler: "„Wo?“ braucht den Dativ: vor " + dat(z) + "." };
+    },
+    schirm: (T) => / (\d+|euro|kostet|kosten|\w+zig|fünf|zehn|drei|vier|sechs|sieben|acht|neun|zwei|eins) /.test(T) ? (/ (sie|es) kostet /.test(T) ? { fehler: "der Regenschirm – also „er kostet …“." } : { ok: true }) : null,
+    mehl: (T) => / mehl / .test(T) ? (/ kilos /.test(T) ? { fehler: "Maßangaben bleiben ohne Plural: zwei Kilo." } : / mehls /.test(T) ? { fehler: "Nach der Menge folgt das Wort einfach so: zwei Kilo Mehl." } : { ok: true }) : null,
+    schluessel: (T) => / (schlüssel|er|liegt) /.test(T) && / (tisch|liegt|da|dort|drüben|hier|vor) /.test(T) ? (/ auf (den|der) tisch /.test(T) ? { fehler: "Wo? → Dativ: auf dem Tisch." } : { ok: true }) : null,
+    perfekt_kino: (T) => / (bin|bist|ist|sind|habe|hab|hast|hat|haben|war|waren) /.test(T) && (/ ge\w+(t|en) /.test(T) || / (war|waren) /.test(T)) ? { ok: true } : null,
+    modal_brunnen: (T) => / (nicht|kein|keine|nein|halt|stopp) /.test(T) && /(brunnen|klettern|klettere|kletterst|rein|hinein|wasser)/.test(T) ? { ok: true } : null,
+    plural_aepfel: (T) => / (äpfel|apfel|äpfeln|apfels) /.test(T) ? (/ \w+ äpfeln /.test(T) && !/ (den|mit|von) äpfeln /.test(T) ? { fehler: "Das -n kommt nur im Dativ dazu (mit den Äpfeln). Hier: drei Äpfel." } : { ok: true }) : null,
+    steigerung: (T, qu) => {
+      if (/ (hoher|mehr hoch) /.test(T)) return { fehler: "„hoch“ ist besonders: hoch – höher – am höchsten." };
+      if (!/ (höher|größer|am höchsten|kleiner|niedriger) /.test(T)) return null;
+      const nm = fw(qu.ziel.name).trim(), iz = T.indexOf(nm), ir = T.indexOf("rathaus"), komp = T.search(/ (höher|größer|am höchsten) /), klein = T.search(/ (kleiner|niedriger) /);
+      const recht = komp >= 0 ? (iz >= 0 && (ir < 0 || iz < ir || (ir < komp && iz < komp && iz < ir))) : (ir >= 0 && klein >= 0 && ir < klein);
+      return recht ? { ok: true } : { fehlt: "Schau noch einmal: " + Nom(qu.ziel) + " ist höher als das Rathaus." };
+    },
+    zug_an: (T) => {
+      if (/ wann der zug kommt /.test(T)) return { fehler: "Bei einer W-Frage steht das Verb an zweiter Stelle: Wann kommt der Zug an?" };
+      if (/ kommt an der /.test(T)) return { fehler: "„an“ gehört zu „ankommen“ und steht ganz am Ende: Wann kommt der Zug an?" };
+      return / (wann|verspätung|wie lange|wie spät|wie viel) /.test(T) && / (zug|kommt|ankommt|fährt) /.test(T) ? { ok: true, antwort: "„Der Zug kommt etwa zehn Minuten später.“" } : null;
+    },
+    artikel_ort: (T, qu) => {
+      const nm = fw(qu.ziel.name).trim(), m = new RegExp(" (der|die|das) " + nm).exec(T);
+      if (!m) return null;
+      return m[1] === qu.ziel.g ? { ok: true } : { fehler: "Es heißt „" + nom(qu.ziel) + "“." };
+    },
+    preis: (T) => {
+      if (/ euros /.test(T)) return { fehler: "„Euro“ bleibt im Plural ohne s: sieben Euro." };
+      if (/ komma /.test(T)) return { fehler: "Bei Preisen sagt man die Euro und dann die Cent: sieben Euro fünfzig." };
+      return / (sieben|7) /.test(T) && / (fünfzig|50) /.test(T) ? { ok: true } : null;
+    }
+  };
+  function freiPruefen(qu, t) {
+    const f = FREI[qu.v.id]; if (!f) return null;
+    const T = fw(t), r = f(T, qu, String(t || "").trim()); if (!r) return null;
+    if (r.fehlt) return { stufe: 0, text: t, grund: r.fehlt, frei: true, ohneVersuch: true };
+    const fehler = r.fehler || grammatikPruefen(T);
+    if (fehler) return { stufe: 0.5, text: t, grund: fehler, frei: true };
+    return { stufe: 1, text: t, grund: "So kann man das sagen – gut gemacht!", frei: true, antwort: r.antwort };
+  }
+  Q.freiPruefen = freiPruefen; Q.grammatikPruefen = (t) => grammatikPruefen(fw(t));
 
   /* ---------- Prüfen ---------- */
   const klein = (s) => String(s || "").toLowerCase().replace(/ß/g, "ss").replace(/[„“"'.,!?;:–—-]/g, " ").replace(/\s+/g, " ").trim();
@@ -1651,10 +1839,15 @@
         let bi = -1, bs = 0;
         qu.antworten.forEach((a, i) => { const s = aehnlich(t, ohneHtml(a.html)); if (s > bs) { bs = s; bi = i; } });
         const a = qu.antworten[bi];
-        if (a && a.richtig && bs >= 0.75) e = { stufe: 1, text: t, i: bi, grund: "Genau richtig!" };
+        /* (830: die freie Prüfung entscheidet, wo es sie gibt – „Eine Fahrkarte, bitte.“ ähnelt dem Vorschlag, sagt aber nicht wohin;
+           nur der Vorschlag selbst, Wort für Wort, zählt ohne sie) */
+        const genau = a && a.richtig && klein(t) === klein(ohneHtml(a.html)), fr = !genau && freiPruefen(qu, t);
+        if (genau) e = { stufe: 1, text: t, i: bi, grund: "Genau richtig!" };
+        else if (fr) e = fr;
+        else if (a && a.richtig && bs >= 0.75) e = { stufe: 1, text: t, i: bi, grund: "Genau richtig!" };
         else if (a && a.richtig && bs >= 0.45) e = { stufe: 0.5, text: t, i: bi, grund: "In etwa richtig – genau hieße es: „" + ohneHtml(a.html) + "“" };
         else if (a && !a.richtig && bs >= 0.45) e = { stufe: 0, text: t, i: bi, weg: a.weg, grund: a.hinweis || "Hm, das stimmt noch nicht." };
-        else e = { stufe: 0, text: t, grund: "Das passt noch nicht. Versuch es noch einmal!" };
+        else e = { stufe: 0, text: t, ohneVersuch: true, grund: "Das passt noch nicht zur Aufgabe. " + (qu.v.frei || "Sag es in einem ganzen Satz – mit deinen eigenen Worten.") };
       }
       if (!bestes || e.stufe > bestes.stufe) bestes = e;
       if (bestes.stufe === 1) break;

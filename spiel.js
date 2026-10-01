@@ -4221,6 +4221,9 @@
   function schnellZeichnen(sofort) {
     /* FASSUNG 686 — die Dorf-/Markt-Ansicht des Makroknopfs ist ein eigenes Fenster; ist das Menü zu, ist sie es auch. */
     if (!S.schnellMenue) S.blick = null;
+    /* FASSUNG 829 — Funk 256: Lage von Seite und Klassenzimmer beim Öffnen merken, beim Schließen zurück */
+    if (S.schnellMenue && S.blick === "dorfblick") { if (schnellEl) seiteMerken(); }
+    else if (S.seiteVorher) seiteZurueck(true);
     var form = document.getElementById("lcForm");
     var an = drin() && S.bereit && S.ich && form && form.style.display !== "none";
     if (!an) { if (schnellEl) schnellEl.hidden = true; bahnFenster(); return; }
@@ -5125,14 +5128,14 @@
       S.dorfKarte = false; S.dorfTippWeg = true; S.dorfWahl = DORF[hin] ? hin : "";
       ton("swoosh", 0.25);
       if (hq) dorfZoom(true, hq[0] / 320, Math.max(0, hq[1] - 10) / 200); else schnellZeichnen(true);
-      if (S.dorfWahl) setTimeout(function () { try { var st = schnellEl.querySelector(".sp-dl-station"); if (st) st.scrollIntoView({ block: "nearest" }); } catch (e) {} }, 60);
+      if (S.dorfWahl) setTimeout(function () { menueZeigen(schnellEl.querySelector(".sp-dl-station"), "nearest"); }, 60);
       return;
     } else if (s === "dorfzeichen") {
       /* FASSUNG 711 — Funk 158: „Das Dorf soll in der kleinen Sicht ohne die Symbole sein man kann die Symbole … optional dazu schalten". */
       S.dorfZeichen = !dorfZeichen(); try { localStorage.setItem("dma_dorf_zeichen", S.dorfZeichen ? "1" : "0"); } catch (e) {}
       ton("holzklopf", 0.2); schnellZeichnen(true); return;
     } else if (s === "dorfnachoben") {
-      try { var dr = schnellEl.querySelector(".sp-dl-rahmen"); if (dr) dr.scrollIntoView({ block: "start", behavior: "smooth" }); } catch (e) {}
+      menueZeigen(schnellEl.querySelector(".sp-dl-rahmen"), "start", true);
       return;
     } else if (s === "dorfname") {
       dorfNameFragen(); return;
@@ -5238,7 +5241,7 @@
       /* FASSUNG 823 — der Bahnhof: eigenes Fenster unten, das Dorfbild darüber bleibt stehen */
       if (S.dorfWahl === "bahnhof") { S.bahnMeldung = null; bahnFensterEinpassen(); return; }
       /* Die Knöpfe der Station sollen gleich zu sehen sein, ohne selbst zu scrollen. */
-      if (S.dorfWahl) setTimeout(function () { try { var st = schnellEl.querySelector(".sp-dl-station"); if (st) st.scrollIntoView({ block: "nearest" }); } catch (e) {} }, 60);
+      if (S.dorfWahl) setTimeout(function () { menueZeigen(schnellEl.querySelector(".sp-dl-station"), "nearest"); }, 60);
       return;
     } else if (s === "dorfteil") {
       /* FASSUNG 764 — ein Wahrzeichen im Dorfbild öffnet die Liste immer (schließt sie nicht). */
@@ -5246,7 +5249,7 @@
       S.dorfTeil = S.dorfTeil === k.dataset.t && !imBild ? "" : k.dataset.t;
       if (S.dorfTeil === "markt") handelLaden(false);
       /* FASSUNG 703 — vom Wahrzeichen-Band aus: gleich zur aufgeklappten Tafel. */
-      if (S.dorfTeil && (k.classList.contains("sp-wunderband") || imBild)) setTimeout(function () { try { var z = schnellEl.querySelector(".sp-dorf-auf"); if (z) z.scrollIntoView({ block: "start" }); } catch (e) {} }, 60);
+      if (S.dorfTeil && (k.classList.contains("sp-wunderband") || imBild)) setTimeout(function () { menueZeigen(schnellEl.querySelector(".sp-dorf-auf"), "start"); }, 60);
     } else if (s === "ausbilden") {
       /* FASSUNG 702 — Dorfbewohner ausbilden oder entlassen. */
       var bn = Number(k.dataset.n) || 0, bb = k.dataset.b, BB = BERUFE[bb];
@@ -5489,7 +5492,7 @@
     } else if (s === "leisteplusmenue") {
       S.schnellMenue = true; S.blick = null; S.schnellReiter = "mehr"; ringSchliessen(); S.radOffenSeit = Date.now();
       schnellZeichnen(true);
-      setTimeout(function () { try { var o = document.getElementById("spLeisteOrdnen"); if (o) o.scrollIntoView({ block: "center" }); } catch (e) {} }, 60);
+      setTimeout(function () { menueZeigen(document.getElementById("spLeisteOrdnen"), "center"); }, 60);
       return;
     } else if (s === "leisteschieb") {
       /* FASSUNG 710 — das gewählte Feld der Leiste nach links oder rechts; unten sofort genauso. */
@@ -9195,7 +9198,7 @@
     setTimeout(function () { try {
       var ziel = m.teil === "forschung" || m.teil === "markt" ? schnellEl.querySelector(".sp-dorf-auf") : m.teil === "volk" ? schnellEl.querySelector(".sp-volk") : m.teil === "ernte" ? schnellEl.querySelector('[data-s="ernte"]') : m.teil === "nachbarn" ? schnellEl.querySelector(".sp-nachbarn") : null;
       /* FASSUNG 817 — ohne eigenes Ziel: das Dorfbild passgenau (wie beim Öffnen) */
-      if (ziel) ziel.scrollIntoView({ block: "start" }); else dorfRahmenHin(false);
+      if (ziel) menueZeigen(ziel, "start"); else dorfRahmenHin(false);
       if (ziel) { ziel.classList.remove("sp-sprung-ziel"); void ziel.offsetWidth; ziel.classList.add("sp-sprung-ziel"); }
     } catch (e) {} }, 80);
   }
@@ -13678,6 +13681,42 @@
      springen". Beim Öffnen des Dorfs, beim Umschalten alt/neu, nach dem Vollbild und nach einer Aufgabe in der Station
      rollt das Dorf-Menü so, dass das Bild ganz zu sehen ist – die Überschrift („Mein Dorf“) darüber, soweit Platz ist –
      und, falls das Menü selbst aus dem Bildschirm ragt, auch die Seite. */
+  /* FASSUNG 829 — XANDER (Funk 256): „Wenn man in ein größeres Menü geht bei einer Aufgabe … dann schiebt sich der Chat im
+     Hintergrund bzw das Klassenzimmer nach oben und wenn man das erledigt hat und eingestellt hat dann springt es nicht wieder
+     zurück an den Platz". Zwei Ursachen: (1) scrollIntoView rollt nicht nur das Menü, sondern JEDEN Behälter darüber – die
+     Seite und das Klassenzimmer – und nichts rollte sie zurück; (2) ragte das Menü oben aus dem Bild, rollte das Dorf die
+     Seite nach, und nach der Aufgabe blieb sie dort. Jetzt rollt im Menü nur das Menü (menueZeigen). Beim Öffnen merkt sich
+     das Spiel, wo Seite und Klassenzimmer standen (seiteMerken); nach einer Aufgabe geht die Seite dorthin zurück, soweit
+     das Bild der Stadt dabei ganz zu sehen bleibt, beim Schließen ganz (seiteZurueck). */
+  function menueZeigen(el, block, sanft) {
+    var sc = el && el.closest && el.closest(".sp-schnellmenue");
+    if (!sc) return;
+    var r = el.getBoundingClientRect(), sr = sc.getBoundingClientRect(), o = sr.top + sc.clientTop, h = sc.clientHeight, d;
+    if (block === "start") d = r.top - o;
+    else if (block === "center") d = r.top + r.height / 2 - (o + h / 2);
+    else d = r.top < o ? r.top - o : r.bottom > o + h ? Math.min(r.bottom - (o + h), r.top - o) : 0;
+    var ziel = Math.max(0, Math.min(sc.scrollHeight - h, sc.scrollTop + d));
+    if (Math.abs(ziel - sc.scrollTop) >= 0.5) menueRollen(sc, ziel, sanft);
+  }
+  function seiteMerken() {
+    if (S.seiteVorher) return;
+    var behaelter = [], f = schnellEl && schnellEl.parentNode;
+    for (var e = f; e && e !== document.body && e !== document.documentElement; e = e.parentNode) behaelter.push([e, e.scrollTop]);
+    S.seiteVorher = { y: window.scrollY, b: behaelter };
+  }
+  function seiteZurueck(ganz) {
+    var v = S.seiteVorher;
+    if (!v) return;
+    v.b.forEach(function (x) { if (x[0].isConnected && Math.abs(x[0].scrollTop - x[1]) >= 1) x[0].scrollTop = x[1]; });
+    var y = v.y, rahmen = !ganz && schnellEl && !schnellEl.hidden && schnellEl.querySelector(".sp-dl-rahmen");
+    if (rahmen) {
+      /* das Bild der Stadt bleibt ganz im Bildschirm: so nah an der alten Lage wie möglich */
+      var fr = rahmen.getBoundingClientRect(), jetzt = window.scrollY;
+      if (fr.height) y = Math.max(jetzt + fr.bottom - innerHeight, Math.min(jetzt + fr.top, y));
+    }
+    if (ganz) S.seiteVorher = null;
+    if (Math.abs(window.scrollY - y) >= 1) { menueRollen(window, y, true); setTimeout(lsFolgen, 400); }
+  }
   function menueRollen(el, ziel, sanft) {
     if (el === window) { if (sanft && window.scrollTo) window.scrollTo({ top: ziel, behavior: "smooth" }); else window.scrollTo(0, ziel); return; }
     if (sanft && el.scrollTo) el.scrollTo({ top: ziel, behavior: "smooth" }); else el.scrollTop = ziel;
@@ -13728,7 +13767,7 @@
     }
     /* Die Seite: das Menü hängt über der Eingabezeile – ragt es oben aus dem Bildschirm, rollt die Seite nach. */
     var ft = fr.top - d, fb = fr.bottom - d, kf = kt - d;
-    if (ft < 0 || fb > innerHeight) menueEinpassen(window, ft, fb, kf < 0 ? kf : 0, sanft);
+    if (ft < 0 || fb > innerHeight) { seiteMerken(); menueEinpassen(window, ft, fb, kf < 0 ? kf : 0, sanft); }
     /* der Rahmen der Stadt sofort mit (nicht erst im nächsten Bild) */
     lsFolgen();
   }
@@ -13743,6 +13782,7 @@
     clearTimeout(S.lsStationUhr);
     setTimeout(function () { dorfRahmenEinpassen(true, true); }, 60);
     setTimeout(function () { dorfRahmenEinpassen(false, true); }, 750);
+    setTimeout(function () { seiteZurueck(false); }, 800);
   }
   /* FASSUNG 817 — „entweder springe ich runter zu der Dialogbox die unter dem Bild liegt": sanft bis die Station ganz zu
      sehen ist (so wenig wie nötig). */
