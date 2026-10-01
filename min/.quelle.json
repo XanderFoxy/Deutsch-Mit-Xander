@@ -51,7 +51,7 @@
  "app-styles.css": "252949e98e6fff038a4d4e1b43d030d927d942fe",
  "app.js": "27e99238aa8e40018cb0c6f0decf8719e1170192",
  "konjugation.js": "740bad9ac8234b00f3a6b64b3e0793ae54ecf619",
- "data-werkstatt.js": "8d782a886a16f9ced7792c5825b12fd382aca782",
  "spiel.css": "0d2ce1c2f1c078cb143898c5ec532a63f9a60ca2",
- "spiel.js": "5a0aeb0155e6c7283e4940ac2fb64fc7d531a24c"
+ "spiel.js": "5a0aeb0155e6c7283e4940ac2fb64fc7d531a24c",
+ "data-werkstatt.js": "aef59c91e93bb2da10435a9e17b3c26dbc0fc339"
 }

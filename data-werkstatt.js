@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 832: Beugung im Wörterbuch (ich/du/er …, Präsens, Präteritum, Perfekt, Imperativ)",
+  stand: "Fassung 833: gebaute Häuser (Holzfällerhütte, Marktstand, Schweinestall, Jagdhütte, Sternwarte) erscheinen, Bauen meldet sich sofort",
 
   inArbeit: [
-    { seit: "2026-10-01T05:58",
+    { seit: "2026-10-01T07:40",
       text: "Äcker versetzen" },
-    { seit: "2026-10-01T05:58",
-      text: "fehlende Gebäude in der neuen Stadt + Bau-Feedback" },
-    { seit: "2026-10-01T05:58",
+    { seit: "2026-10-01T07:40",
       text: "Wörterbuch-Lücken, Satzbaukasten" },
-    { seit: "2026-10-01T05:58",
+    { seit: "2026-10-01T07:40",
       text: "Niveau A1–C2, Missionen nach Stadtstand" },
-    { seit: "2026-10-01T05:58",
+    { seit: "2026-10-01T07:40",
       text: "weitere Karten, WebGL-Plan" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-01T05:58",
-      text: "Beugungsknöpfe im Wörterbuch" },
+    { seit: "2026-10-01T07:40",
+      text: "Bau-Rückmeldung (Ton, Zittern, Sperre)" },
+    { seit: "2026-10-01T07:40",
+      text: "Späte Häuser auf beiden Karten" },
   ],
 };

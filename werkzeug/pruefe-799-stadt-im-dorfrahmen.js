@@ -273,7 +273,10 @@ const sage = (gut, was, zusatz) => {
   /* FASSUNG 844 — die Grenze war schon vor 844 knapp überschritten (334 KB); 844 bringt das Ladebild (4 KB) und die neue
      Bedienung (langes Drücken, kleine Symbole, Stecknadel). Grenze jetzt 345 KB – große Bilder, Leute und das große
      Verzeichnis bleiben verboten. */
-  sage(!!last && last.gross === 0 && last.kb < 345, "der kleine Rahmen lädt unter 345 KB: nur Zwergbilder und das kleine Verzeichnis (keine großen Bilder, keine Leute, kein großes Verzeichnis)", JSON.stringify(last && { dateien: last.n, kb: Math.round(last.kb), gross: last.gross }));
+  /* FASSUNG 833 — die Beispielstadt zeigt die fünf späten Häuser (Holzfällerhütte, Marktstand, Schweinestall, Jagdhütte,
+     Sternwarte; Funk 255 „tauchen niemals auf der Karte auf"): ihre Zwergbilder (~6 KB) und ihre Einträge im kleinen
+     Verzeichnis (gepackt ~5 KB). Wer sie nicht gebaut hat, lädt nur die Einträge. Grenze jetzt 360 KB. */
+  sage(!!last && last.gross === 0 && last.kb < 360, "der kleine Rahmen lädt unter 360 KB: nur Zwergbilder und das kleine Verzeichnis (keine großen Bilder, keine Leute, kein großes Verzeichnis)", JSON.stringify(last && { dateien: last.n, kb: Math.round(last.kb), gross: last.gross }));
   const k0 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y }));
   const scMess = () => pg.evaluate(() => { const e = document.querySelector(".sp-dl-neustadt-platz"); let p = e.parentElement; while (p && p !== document.body && !(p.scrollHeight > p.clientHeight + 2 && /(auto|scroll)/.test(getComputedStyle(p).overflowY))) p = p.parentElement; return { menue: p && p !== document.body ? p.scrollTop : -1, seite: window.scrollY }; });
   const sc0 = await scMess();
