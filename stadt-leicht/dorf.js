@@ -26,8 +26,20 @@
     baeckerei: ["Bäckerei", 100, 0], schule: ["Schule", 150, 4], schmiede: ["Schmiede", 120, 0], brauerei: ["Brauerei", 130, 5],
     bibliothek: ["Bibliothek", 160, 6], rathaus: ["Rathaus", 200, 8], muehle: ["Mühle", 90, 3], huehnerstall: ["Hühnerstall", 60, 2],
     kuhstall: ["Kuhstall", 80, 3], krankenhaus: ["Krankenhaus", 140, 5], bergwerk: ["Bergwerk", 180, 7], labor: ["Labor", 250, 10],
-    kaserne: ["Kaserne", 140, 4], gasthaus: ["Gasthaus", 150, 6], gefaengnis: ["Gefängnis", 170, 7], flickstube: ["Flickstube", 110, 6]
+    kaserne: ["Kaserne", 140, 4], gasthaus: ["Gasthaus", 150, 6], gefaengnis: ["Gefängnis", 170, 7], flickstube: ["Flickstube", 110, 6],
+    /* FASSUNG 833 — XANDER (Funk 255): „die Sachen die ich weiter baue tauchen niemals auf der Karte auf die Jagdhütte oder
+       Kuhstall oder sowas und gibt es da einen standardplatz an dem sie gebaut werden wo man das sieht das ist bis jetzt
+       nicht da". Die fünf Häuser für höhere Level (spiel.js Fassung 813) kannte die Stadt nicht – sie wurden im Spiel
+       gebaut, hier aber nie gezeigt. */
+    holzhuette: ["Holzfällerhütte", 160, 12], marktstand: ["Marktstand", 220, 15], schweinestall: ["Schweinestall", 200, 18],
+    jagdhuette: ["Jagdhütte", 240, 22], sternwarte: ["Sternwarte", 350, 30]
   };
+  /* FASSUNG 833 — die späten Häuser haben keinen Platz im alten Dorfplan (LAGE): bekämen sie einen, verschöben sich alle
+     anderen Häuser, Wege und Bäume. Sie stehen untereinander auf dem freien Bauland links (Bildachsen u = x − y,
+     v = x + y; D.BAULAND[1], frei von Wald) – oben die Sternwarte zu den Bergen hin, dann Holzfäller- und Jagdhütte am
+     Waldrand, darunter Schweinestall und Marktstand zur Stadt hin. Ist die Stelle belegt (ein Wahrzeichen dort
+     aufgestellt), sucht sich das Haus die nächste freie (D.freiFuerWunder). Erst gebaut (oder im Bau) erscheinen sie. */
+  D.SPAET = { sternwarte: [-138, -18], holzhuette: [-138, 10], jagdhuette: [-138, 38], schweinestall: [-138, 66], marktstand: [-136, 92] };
   /* Bilder je Spielgebäude (vorläufig Fachwerkhäuser in eigener Farbe –
      eigene Modelle für Kuhstall, Bergwerk, Krankenhaus … folgen) */
   /* FASSUNG 809 — XANDER: „Vergiss die Windmühle nicht. Ich will den selben Look haben": die Windmühle des alten Dorfs
@@ -39,6 +51,9 @@
     kaserne: [[12, 10], 12], gefaengnis: [[9, 9], 15], bergwerk: [[12, 12], 16],
     brauerei: [[12, 10], 15], bibliothek: [[12, 10], 13], krankenhaus: [[12, 10], 13], labor: [[10, 10], 12] };
   for (const k in EIGEN) D.BILD[k] = ["g_" + k, "bau_" + k, EIGEN[k][0], EIGEN[k][1]];
+  /* FASSUNG 833 — eigene Modelle der späten Häuser (stadt/modelle/<name>.js); der Marktstand ist die Marktbude */
+  const SPAET_BILD = { holzhuette: [[11, 9], 7], jagdhuette: [[11, 10], 8.5], schweinestall: [[11, 9], 6], sternwarte: [[11, 10], 10.5], marktstand: [[4, 3.2], 4.2] };
+  for (const k in SPAET_BILD) D.BILD[k] = ["g_" + k, "bau_" + k, SPAET_BILD[k][0], SPAET_BILD[k][1]];
   /* FASSUNG 818 — XANDER: „ich möchte dieses höhlenartige haben dass man instinktiv weiß da geht's in das Bergwerk
      hinein". Das Bergwerk ist wieder ein Felshügel mit Stolleneingang, Gleis und Lore (Modell bergstollen, 13 × 13 m);
      das Fördergerüst steht klein oben auf der Kuppe. */
@@ -878,6 +893,16 @@
     };
   })();
 
+  /* FASSUNG 833 — Platz eines späten Hauses: seine Wunschstelle auf dem Bauland, sonst die nächste freie (wie bei den
+     Wahrzeichen); andere = schon gesetzte Wahrzeichen und späte Häuser. Ohne Bauland (Rundling) ein Platz außen am Ring. */
+  D.spaetPlatz = function (k, andere) {
+    const w = D.SPAET[k], f = D.BILD[k][2];
+    if (!w) return null;
+    let x = (w[0] + w[1]) / 2, y = (w[1] - w[0]) / 2;
+    if (!D.BAULAND) { const i = Object.keys(D.SPAET).indexOf(k), a = rad(200 + i * 18); x = Math.cos(a) * 60; y = Math.sin(a) * 60; }
+    else if (D.freiFuerWunder) { const q = D.freiFuerWunder({ fuss: f, fussS: f, pruefDreh: 3.5 }, x, y, andere || []); x = q[0]; y = q[1]; }
+    return { x: x, y: y, dreh: 3.5 };
+  };
   /* ---------------- Spielstand → Gebäude ---------------- */
   /* ich: Antwort von spiel_ich (dorf, dorf_plan, baustellen, volk) */
   D.aufbauen = function (ich, eigeneDeko) {
@@ -889,9 +914,11 @@
     for (const b of (ich && (ich.baustellen || (ich.volk && ich.volk.baustellen))) || []) bauen[b.was] = b;
     const jetzt = Date.now();
     const extra = (ST.leicht && ST.leicht.lage) || {};
+    const spaet = [];
     for (const k in D.GEBAEUDE) {
       const st = (dorf[k] && dorf[k].stufe) || 0, b = bauen[k];
       if (!st && !b) continue;
+      if (D.SPAET[k] && !D.PLAETZE[k]) { spaet.push(k); continue; }   // FASSUNG 833 — nach den Wahrzeichen (unten)
       const p = D.PLAETZE[platzVon(k)] || D.PLAETZE[k];
       const bild = D.BILD[k];
       let bau = null;
@@ -923,6 +950,22 @@
       SZ.neu({ art: "wunder", spiel: k, name: w.name, bild: w.bild, x: w.x, y: w.y, dreh: w.dreh, fuss: w.fussS || w.fuss, hoehe: w.hoehe * (w.mass || 1), stufe: w.mass || 1,
         platzX: w.px != null ? w.px : w.x, platzY: w.py != null ? w.py : w.y, platzDreh: 3.5 });
     }
+    /* FASSUNG 833 — die späten Häuser (D.SPAET) auf ihrem Bauland, frei von Wahrzeichen und voneinander */
+    const gesetzt = SZ.objekte.filter((o) => o.art === "wunder");
+    for (const k of spaet) {
+      const st = (dorf[k] && dorf[k].stufe) || 0, b = bauen[k], bild = D.BILD[k], p = D.spaetPlatz(k, gesetzt);
+      let bau = null;
+      if (b) {
+        const dauer = (b.dauer || 120) * 1000, bis = Date.parse(b.bis);
+        const anteil = isFinite(bis) ? Math.max(0, Math.min(1, 1 - (bis - jetzt) / dauer)) : 0.5;
+        bau = { p: st ? Math.max(0.72, anteil) : anteil, bis: bis, dauer: dauer, stufe: b.stufe };
+      }
+      const dreh = extra[k] && extra[k].dreh != null ? extra[k].dreh : p.dreh;
+      const dx = (extra[k] && +extra[k].dx) || 0, dy = (extra[k] && +extra[k].dy) || 0;
+      const o = SZ.neu({ art: "haus", spiel: k, name: D.GEBAEUDE[k][0], bild: bild[0], bauBild: bild[1], x: p.x + dx, y: p.y + dy, dreh: dreh, platzX: p.x, platzY: p.y, platzDreh: p.dreh,
+        stufe: D.STUFE[Math.max(0, Math.min(2, (st || 1) - 1))], stufenZahl: st, fuss: bild[2].slice(), hoehe: bild[3], bau: bau, spaet: 1 });
+      gesetzt.push(o || { x: p.x, y: p.y, fuss: bild[2], dreh: p.dreh });
+    }
     /* FASSUNG 822 — XANDER: „ich möchte im kleinen Menü einen Baum rausnehmen … der Baum ist halt direkt noch vorm Rathaus
        kriegt den da nicht weg". Jeder Baum der Stadt hat einen festen Schlüssel (Bild und Lage, wie er gewachsen ist);
        entfernte und versetzte Bäume stehen in ST.leicht.natur (gespeichert wie der Schmuck). */
@@ -940,7 +983,7 @@
     /* FASSUNG 809 — ein versetztes Haus verdrängt die Bäume und Büsche, auf denen es jetzt stünde */
     /* FASSUNG 826 — ebenso jedes Wahrzeichen und großer eigener Schmuck (Rathaus, Autos …); gefällte Bäume (L.gefaellt,
        Karte des Baums „Fällen") bleiben weg */
-    const verdraengt = SZ.objekte.filter((o) => (o.art === "haus" && o.platzX != null && (o.x !== o.platzX || o.y !== o.platzY)) || o.art === "wunder" || (o.art === "eigen" && o.fuss && Math.max(o.fuss[0], o.fuss[1]) > 4));
+    const verdraengt = SZ.objekte.filter((o) => (o.art === "haus" && (o.spaet || (o.platzX != null && (o.x !== o.platzX || o.y !== o.platzY)))) || o.art === "wunder" || (o.art === "eigen" && o.fuss && Math.max(o.fuss[0], o.fuss[1]) > 4));
     const gefaellt = new Set((ST.leicht && ST.leicht.gefaellt) || []);
     const schl = (n) => n.x.toFixed(1) + "," + n.y.toFixed(1);
     SZ.objekte = SZ.objekte.filter((n) => n.art !== "natur" || (!gefaellt.has(schl(n)) && (n.versetzt || !verdraengt.some((h) => Math.abs(n.x - h.x) < (h.fuss[0] + h.fuss[1]) * 0.32 + 1.5 && Math.abs(n.y - h.y) < (h.fuss[0] + h.fuss[1]) * 0.32 + 1.5))));
@@ -957,7 +1000,8 @@
   D.beispiel = function () {
     const dorf = {}, t = Date.now(), iso = (ms) => new Date(t + ms).toISOString();
     /* FASSUNG 818 — auch das Bergwerk (Felshügel mit Stolleneingang) steht in der Vorschau */
-    const st = { rathaus: 3, baeckerei: 3, schule: 2, gasthaus: 3, flickstube: 1, schmiede: 2, gefaengnis: 1, bibliothek: 2, brauerei: 3, kaserne: 2, muehle: 3, huehnerstall: 1, krankenhaus: 2, kuhstall: 2, bergwerk: 2 };
+    const st = { rathaus: 3, baeckerei: 3, schule: 2, gasthaus: 3, flickstube: 1, schmiede: 2, gefaengnis: 1, bibliothek: 2, brauerei: 3, kaserne: 2, muehle: 3, huehnerstall: 1, krankenhaus: 2, kuhstall: 2, bergwerk: 2,
+      holzhuette: 2, jagdhuette: 1, schweinestall: 1, sternwarte: 1, marktstand: 1 };   // FASSUNG 833 — auch die späten Häuser
     for (const k in st) dorf[k] = { stufe: st[k], lp: 20 * st[k] };
     return {
       id: "beispiel", name: "Beispiel", dorf_name: "Winterhausen", dorf: dorf, dorf_plan: {},

@@ -1998,6 +1998,321 @@
     "gross": 28,
     "klein": 14
    }
+  },
+  {
+   "bild": "g_holzhuette",
+   "id": "holzhuette",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "bau_holzhuette",
+   "id": "holzhuette",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "g_jagdhuette",
+   "id": "jagdhuette",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "bau_jagdhuette",
+   "id": "jagdhuette",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "g_schweinestall",
+   "id": "schweinestall",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "bau_schweinestall",
+   "id": "schweinestall",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "g_sternwarte",
+   "id": "sternwarte",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "bau_sternwarte",
+   "id": "sternwarte",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
+  },
+  {
+   "bild": "g_marktstand",
+   "id": "marktbude",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag",
+    "nacht"
+   ],
+   "bau": [
+    1
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18
+   }
+  },
+  {
+   "bild": "bau_marktstand",
+   "id": "marktbude",
+   "saat": 7,
+   "gier": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+   ],
+   "jahr": [
+    "winter",
+    "herbst"
+   ],
+   "zeit": [
+    "tag"
+   ],
+   "bau": [
+    0.08,
+    0.3,
+    0.55,
+    0.8
+   ],
+   "s": {
+    "gross": 56,
+    "klein": 18,
+    "bau": 26
+   }
   }
  ],
  "leute": [

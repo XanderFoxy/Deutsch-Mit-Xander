@@ -1288,7 +1288,8 @@
       b.addEventListener("click", (e) => {
         e.stopPropagation();
         bauLeisteZeigen(false);
-        const pk = platzVon(k), pl = D.PLAETZE[pk];
+        /* FASSUNG 833 — späte Häuser (Holzfällerhütte …): ihr Platz auf dem Bauland links */
+        const pk = platzVon(k), pl = D.PLAETZE[pk] || (haus ? { x: haus.x, y: haus.y } : D.spaetPlatz && D.SPAET[k] ? D.spaetPlatz(k, SZ.objekte.filter((x) => x.art === "wunder" || (x.art === "haus" && x.spaet))) : null);
         /* FASSUNG 817 — im kleinen Rahmen höchstens bis zur Grenze des Rahmens (und innerhalb des Überblicks) */
         if (pl) { const s = Math.min(K.max, Math.max(K.s, 16 * K.dpr)), z = O.klemmZiel ? O.klemmZiel(pl.x, pl.y, s) : [pl.x, pl.y]; L().fliegeZu(z[0], z[1], s, 800); }
         if (haus) waehlen(haus, { schonDa: schon }); else karteZeigen("bauplatz", null, pk);
@@ -1981,7 +1982,7 @@
       const preis = G[1], lv = G[2];
       zeile.textContent = "Preis " + preis + " Punkte" + (lv ? " · ab Level " + lv : "") + " · Bauzeit 2 min";
       const bau = el("button", "lk-text-knopf", SYM.hammer + "<span>Bauen</span>"); bau.type = "button";
-      bau.addEventListener("click", (e) => { e.stopPropagation(); aktion(() => ST.spiel.bauen(k), G[0] + " wird gebaut"); });
+      bau.addEventListener("click", (e) => { e.stopPropagation(); aktion(() => ST.spiel.bauen(k), G[0] + " wird gebaut", bau); });
       if (ST.spiel.beispiel) { bau.disabled = true; bau.title = "In der Beispielstadt wird nicht gebaut – bitte anmelden"; }
       knoepfe.append(bau, zu);
       return;
@@ -2068,7 +2069,7 @@
       } else if ((o.stufenZahl || 1) < 3) {
         /* FASSUNG 795 — Ausbau direkt am Haus (dieselbe Serverfunktion wie im Spiel) */
         const a = el("button", "lk-text-knopf", SYM.hammer + "<span>Ausbauen</span>"); a.type = "button";
-        a.addEventListener("click", (e) => { e.stopPropagation(); aktion(() => ST.spiel.bauen(o.spiel), o.name + " wird ausgebaut"); });
+        a.addEventListener("click", (e) => { e.stopPropagation(); aktion(() => ST.spiel.bauen(o.spiel), o.name + " wird ausgebaut", a); });
         if (ST.spiel.beispiel) { a.disabled = true; a.title = "In der Beispielstadt wird nicht gebaut – bitte anmelden"; }
         knoepfe.append(a);
       }
@@ -2139,11 +2140,39 @@
     const a = ST.aufBoden(P[0], P[1]), t = ST.aufBoden(W / 2, (oben + H) / 2);
     L().fliegeZu(K.x + a[0] - t[0], K.y + a[1] - t[1], K.s, 500);
   });
-  function aktion(fn, text) {
+  /* FASSUNG 833 — XANDER (Funk 255): „wenn ich das anklicke dann habe ich niemals irgendwie so ein responsives Feedback
+     oder irgend so ein haptisches Feedback wie ich das bei den anderen Sachen habe … manchmal drücke ich da fünfmal drauf
+     und wenn mir gar nicht sicher ob ich das jetzt gekauft habe". Bisher kam die Ansage erst mit der Antwort des Servers,
+     der Knopf blieb so lange drückbar. Jetzt sofort: Klopfen, kurzes Zittern, der Knopf zeigt „… läuft" mit Uhr und ist
+     gesperrt; ein zweiter Tipp in der Zeit zittert nur. Danach zwei Hammerschläge und doppeltes Zittern – oder der Knopf
+     ist wieder wie vorher, mit dem Grund. */
+  let aktionLaeuft = false;
+  function aktion(fn, text, knopf) {
+    /* gesperrt wird nur Bauen/Ausbauen (mit Knopf); „Helfen" darf man schnell hintereinander tippen */
+    if (knopf && aktionLaeuft) { O.summen(); return; }
+    if (knopf) aktionLaeuft = true;
+    O.summen();
+    try { if (ST.ton && ST.ton.klopf) ST.ton.klopf(0.55, 0, 0); } catch (e) {}
+    const vorher = knopf ? knopf.innerHTML : null;
+    if (knopf) {
+      knopf.disabled = true; knopf.classList.add("lk-laeuft");
+      knopf.innerHTML = '<span class="lk-uhr" aria-hidden="true"></span><span>' + (/ausgebaut$/.test(text) ? "wird ausgebaut …" : "wird gebaut …") + "</span>";
+    }
+    const frei = (gut) => {
+      if (knopf) aktionLaeuft = false;
+      if (knopf && knopf.isConnected) {
+        knopf.classList.remove("lk-laeuft");
+        if (gut) { knopf.classList.add("lk-fertig"); knopf.innerHTML = "<span>✓ " + text + "</span>"; }
+        else { knopf.innerHTML = vorher; knopf.disabled = false; }
+      }
+    };
     fn().then((r) => {
+      frei(true);
+      try { if (navigator.vibrate) navigator.vibrate([20, 60, 30]); } catch (e) {}
+      try { if (ST.ton && ST.ton.klopf) { ST.ton.klopf(0.7, 0, 0.05); ST.ton.klopf(0.7, 0, 0.32); } } catch (e) {}
       ansage(text);
       return ST.spiel.neuLaden().then((ich) => { if (ich) L().ich = ich; L().aufbauen(); });
-    }).catch((e) => { ansage((e && (e.message || e.hint)) || "Geht gerade nicht"); });
+    }).catch((e) => { frei(false); ansage((e && (e.message || e.hint)) || "Geht gerade nicht"); });
   }
 
   /* je Bild: Laden-Vorhang, Baufortschritt der Uhr nach */

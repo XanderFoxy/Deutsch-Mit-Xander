@@ -280,11 +280,11 @@
   let zaeune = [], zaunPlaene = [], sig = "";
   function staelle() {
     const aus = {};
-    for (const o of SZ.objekte) if (o.art === "haus" && (o.spiel === "kuhstall" || o.spiel === "huehnerstall") && (o.stufenZahl || 0) > 0) aus[o.spiel] = o;
+    for (const o of SZ.objekte) if (o.art === "haus" && (o.spiel === "kuhstall" || o.spiel === "huehnerstall" || o.spiel === "schweinestall") && (o.stufenZahl || 0) > 0) aus[o.spiel] = o;
     return aus;
   }
   function signatur(S) {
-    return ["kuhstall", "huehnerstall"].map((k) => S[k] ? [k, S[k].x.toFixed(1), S[k].y.toFixed(1), S[k].dreh, S[k].stufenZahl].join(":") : "").join("|");
+    return ["kuhstall", "huehnerstall", "schweinestall"].map((k) => S[k] ? [k, S[k].x.toFixed(1), S[k].y.toFixed(1), S[k].dreh, S[k].stufenZahl].join(":") : "").join("|");
   }
   function zaunSetzen() {
     zaeune = [];
@@ -326,10 +326,20 @@
         const n = 3 + (stufe >= 2 ? 1 : 0);
         for (let i = 0; i < n; i++) TI.liste.push(tierNeu("kuh", weide, i, rng, ARTEN.kuh.blaetter[i % 2]));
       }
-      const auslauf = gehegeSuchen(S.kuhstall, "schwein", [[8, 4]], sperr);
+      /* FASSUNG 833 — steht ein Schweinestall, wohnen die Schweine dort (unten), nicht mehr am Kuhstall */
+      const auslauf = S.schweinestall ? null : gehegeSuchen(S.kuhstall, "schwein", [[8, 4]], sperr);
       if (auslauf) {
         sperr.push(auslauf.R); TI.gehege.push(auslauf); zaunPlaene.push(...auslauf.zaun);
         const n = 2 + (stufe >= 3 ? 1 : 0);
+        for (let i = 0; i < n; i++) TI.liste.push(tierNeu("schwein", auslauf, i, rng, ARTEN.schwein.blaetter[0]));
+      }
+    }
+    if (S.schweinestall) {
+      const stufe = S.schweinestall.stufenZahl || 1;
+      const auslauf = gehegeSuchen(S.schweinestall, "schwein", [[9, 5], [8, 4]], sperr);
+      if (auslauf) {
+        sperr.push(auslauf.R); TI.gehege.push(auslauf); zaunPlaene.push(...auslauf.zaun);
+        const n = 3 + (stufe >= 2 ? 1 : 0);
         for (let i = 0; i < n; i++) TI.liste.push(tierNeu("schwein", auslauf, i, rng, ARTEN.schwein.blaetter[0]));
       }
     }

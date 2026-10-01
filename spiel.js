@@ -5446,7 +5446,16 @@
       });
       return;
     } else if (s === "bauen") {
+      /* FASSUNG 833 — XANDER (Funk 255): „wenn ich das anklicke dann habe ich niemals irgendwie so ein responsives
+         Feedback oder irgend so ein haptisches Feedback wie ich das bei den anderen Sachen habe … manchmal drücke ich da
+         fünfmal drauf und wenn mir gar nicht sicher ob ich das jetzt gekauft habe". Bisher geschah bis zur Antwort des
+         Servers nichts – kein Ton, kein Zittern, der Knopf blieb drückbar. Jetzt sofort: Klopfen, kurzes Zittern, der
+         Knopf wird zu „wird gebaut …" und ist gesperrt, bis die Antwort da ist; weitere Tipps in der Zeit zittern nur.
+         Danach: Erfolg = Hammer bzw. Jubel + doppeltes Zittern, Fehler = Knopf wieder wie vorher, mit Grund. */
+      if (S.bauLaeuft) { brummen(8); return; }
+      var bauKnopf = bauKnopfAn(k);
       rpc("spiel_bauen", { p_was: k.dataset.w }).then(function (r) {
+        bauKnopfAus(bauKnopf, r && r.ok !== false);
         if (!r || r.ok === false) { hinweis("🏗️ " + ((r && r.grund) || "Das ging nicht.")); return; }
         S.ich = r; S.stand[r.id] = oeffentlich(r); senden({ ereignis: "stand", stand: oeffentlich(r) });
         if (r.baustelle) {
@@ -5458,7 +5467,7 @@
         ton(r.gebaut === "reparatur" ? "hammerschlag" : "jubel", 0.5);
         hinweis(r.gebaut === "reparatur" ? "🔧 Alles repariert" + (r.mit === "holz" ? " (mit 2 Holz)" : " (mit 1 Erz)") + " – das Dorf arbeitet wieder." : "🏗️ " + DORF[r.gebaut].name + " steht – Stufe " + r.stufe + "!");
         schnellZeichnen(true);
-      }).catch(function () { hinweis("🏗️ Das ging gerade nicht."); });
+      }).catch(function () { bauKnopfAus(bauKnopf, false); hinweis("🏗️ Das ging gerade nicht."); });
     } else if (s === "ernte") {
       rpc("spiel_dorf_abholen", {}).then(function (r) {
         if (!r || r.ok === false) {
@@ -10335,8 +10344,14 @@
     /* FASSUNG 775 — Gasthaus am Weg zwischen Mühle und Rathaus, Gefängnis oben am Hang neben dem Bergwerk. */
     gasthaus: [150, 58], gefaengnis: [240, 64],
     /* FASSUNG 782 — Flickstube am Weg zwischen Mühle und Gasthaus. */
-    flickstube: [100, 70]
+    flickstube: [100, 70],
+    /* FASSUNG 833 — XANDER (Funk 255): „die Sachen die ich weiter baue tauchen niemals auf der Karte auf die Jagdhütte oder
+       Kuhstall oder sowas und gibt es da einen standardplatz an dem sie gebaut werden wo man das sieht das ist bis jetzt
+       nicht da". Die fünf Häuser für höhere Level (Fassung 813) hatten keinen Platz und wurden deshalb nie gemalt. Sie
+       stehen nur da, wenn sie gebaut sind (oder gebaut werden) – sonst zeigte jedes Dorf fünf leere Bauplätze mehr. */
+    holzhuette: [14, 86], jagdhuette: [306, 86], schweinestall: [20, 160], marktstand: [196, 120], sternwarte: [304, 160]
   };
+  var DORF_SPAET = { holzhuette: 1, jagdhuette: 1, schweinestall: 1, marktstand: 1, sternwarte: 1 };
   /* =================================================================
      FASSUNG 789 — PAKET D1 „DAS MODULARE DORF", SCHRITT 1: HÄUSER VERSETZEN
      XANDER (Funk 202): „vor ein paar Iterationen hast du mir im Walkie-Talkie noch gesagt dass wir den modularen Aufbau
@@ -10352,8 +10367,11 @@
   function dorfPlan(p) { return (p && p.dorf_plan) || {}; }
   function dorfPlatzVon(p, k) { var pl = dorfPlan(p).platz || {}; return pl[k] && DORF_LAGE[pl[k]] ? pl[k] : k; }
   function dorfLageVon(p) {
-    var raus = {};
-    Object.keys(DORF_LAGE).forEach(function (k) { raus[k] = DORF_LAGE[dorfPlatzVon(p, k)]; });
+    var raus = {}, dd = (p && p.dorf) || {};
+    Object.keys(DORF_LAGE).forEach(function (k) {
+      if (DORF_SPAET[k] && !((dd[k] && dd[k].stufe > 0) || baustelleVon(p, k))) return;   // FASSUNG 833
+      raus[k] = DORF_LAGE[dorfPlatzVon(p, k)];
+    });
     DM.spiegel = {}; (dorfPlan(p).spiegel || []).forEach(function (k) { DM.spiegel[k] = true; });
     return raus;
   }
@@ -11121,7 +11139,13 @@
         kaserne:      { w: 24, d: 14, h: 11, rh: 7, wand: "feldstein", dach: "schiefer", schornstein: false, fenster: 3, rahmen: "#d8d0bc", laden: "#4a5a3a", tuerB: 4.4 },
         gasthaus:     { w: 26, d: 14, h: 12, rh: 9, wand: "putz", fachwerk: true, dach: dachT, laden: "#2f6a3a", blumen: true, schornX: .22 },
         gefaengnis:   { w: 22, d: 13, h: 12, rh: 5, wand: "feldstein", dach: "schiefer", schornstein: false, fenster: 2, rahmen: "#3a3d44", laden: "#2a2d33", tuerB: 3.6 },
-        flickstube:   { w: 18, d: 12, h: 9, rh: 7, wand: "putz", fachwerk: true, dach: dachT, laden: "#7a4a22", fenster: 1, schornX: .7 }
+        flickstube:   { w: 18, d: 12, h: 9, rh: 7, wand: "putz", fachwerk: true, dach: dachT, laden: "#7a4a22", fenster: 1, schornX: .7 },
+        /* FASSUNG 833 — die späten Häuser: Blockhütten aus Brettern, Stall, Marktstand, Sternwarte (Kuppel unten) */
+        holzhuette:   { w: 18, d: 12, h: 8, rh: 7, wand: "bretter", dach: dachT, fenster: 1, schornX: .75, sockel: false },
+        jagdhuette:   { w: 17, d: 12, h: 8, rh: 9, wand: "bretter", dach: "schiefer", fenster: 1, schornX: .25, sockel: false, laden: "#3f4a2a" },
+        schweinestall: { w: 22, d: 13, h: 7, rh: 8, wand: "backstein", dach: dachT, schornstein: false, fenster: 2, tuerB: 4, seitFenster: false },
+        marktstand:   { w: 16, d: 10, h: 6, rh: 4, wand: "bretter", dach: dachT, schornstein: false, fenster: 0, tuerB: 8, sockel: false, seitFenster: false },
+        sternwarte:   { w: 18, d: 14, h: 11, rh: 3, wand: "putz", dach: "schiefer", schornstein: false, fenster: 2, rahmen: "#e8e2d4" }
       }[k] || { w: 22, d: 12, h: 10, rh: 8 };
       if (st >= 2) P.gaube = true;
       /* Stufe 3: ein Anbau links. */
@@ -11173,6 +11197,72 @@
         g.fillStyle = "#c9a26a"; g.beginPath(); g.ellipse(bx + 2.2, by - 2.7, 1.3, .6, 0, 0, 7); g.fill();
         var schuhF = ["#5a4030", "#6f5a48", "#4a3a2e"];
         for (var sh = 0; sh < 3; sh++) { g.fillStyle = schuhF[sh]; g.beginPath(); g.ellipse(L + 3 + sh * 1.8, y + 2.2 - (sh === 1 ? .8 : 0), 1.3, .65, sh * .5, 0, 7); g.fill(); }
+      } else if (k === "holzhuette") {
+        /* FASSUNG 833 — Holzfällerhütte: links ein Stapel gespaltener Scheite (helle Stirnseiten), davor Hackklotz mit Axt,
+           rechts ein Sägebock mit Stamm. */
+        for (var hr = 0; hr < 3; hr++) for (var hs = 0; hs < 5 - hr; hs++) {
+          var hx = L - 9 + hs * 1.7 + hr * .85, hy = y - .9 - hr * 1.5;
+          g.fillStyle = "#6b4521"; g.beginPath(); g.arc(hx, hy, .9, 0, 7); g.fill();
+          g.fillStyle = "#d9b27a"; g.beginPath(); g.arc(hx, hy, .62, 0, 7); g.fill();
+          g.strokeStyle = "rgba(120,80,40,.6)"; g.lineWidth = .15; g.beginPath(); g.arc(hx, hy, .3, 0, 7); g.stroke();
+        }
+        g.fillStyle = "#7a5230"; g.beginPath(); g.ellipse(x + 3, y + 3, 1.6, .7, 0, 0, 7); g.fill(); g.fillRect(x + 1.4, y + 1.2, 3.2, 1.8);
+        g.fillStyle = "#c9a26a"; g.beginPath(); g.ellipse(x + 3, y + 1.2, 1.6, .7, 0, 0, 7); g.fill();
+        g.strokeStyle = "#5a3a1a"; g.lineWidth = .4; g.beginPath(); g.moveTo(x + 3.4, y + 1); g.lineTo(x + 5.2, y - 2.2); g.stroke();
+        g.fillStyle = "#9aa0a8"; g.beginPath(); g.moveTo(x + 2.6, y + 1.3); g.lineTo(x + 3.8, y + .2); g.lineTo(x + 4.2, y + 1.4); g.closePath(); g.fill();
+        g.strokeStyle = "#6b4521"; g.lineWidth = .5; g.beginPath(); g.moveTo(R + 2, y + 1); g.lineTo(R + 3.5, y - 2); g.lineTo(R + 5, y + 1); g.moveTo(R + 5, y + 1); g.lineTo(R + 6.5, y - 2); g.lineTo(R + 8, y + 1); g.stroke();
+        g.fillStyle = "#8a5a2b"; g.beginPath(); g.ellipse(R + 5, y - 2.3, 4.2, .75, -.08, 0, 7); g.fill(); g.fillStyle = "#d9b27a"; g.beginPath(); g.ellipse(R + 9.1, y - 2.6, .5, .7, 0, 0, 7); g.fill();
+      } else if (k === "jagdhuette") {
+        /* FASSUNG 833 — Jagdhütte: Hirschgeweih über der Tür, daneben ein hölzerner Hochsitz mit Leiter und Kanzel. */
+        var gx = x, gy = y - P.h * .78;
+        g.strokeStyle = "#e8dcc0"; g.lineWidth = .45; g.lineCap = "round";
+        g.beginPath(); g.moveTo(gx - .6, gy); g.quadraticCurveTo(gx - 2.4, gy - 1.6, gx - 2.2, gy - 3.6); g.moveTo(gx - 1.6, gy - 1.2); g.lineTo(gx - 3, gy - 1.6); g.moveTo(gx - 2.3, gy - 2.6); g.lineTo(gx - 3.3, gy - 3.2);
+        g.moveTo(gx + .6, gy); g.quadraticCurveTo(gx + 2.4, gy - 1.6, gx + 2.2, gy - 3.6); g.moveTo(gx + 1.6, gy - 1.2); g.lineTo(gx + 3, gy - 1.6); g.moveTo(gx + 2.3, gy - 2.6); g.lineTo(gx + 3.3, gy - 3.2); g.stroke();
+        g.fillStyle = "#6b4521"; g.beginPath(); g.ellipse(gx, gy + .2, .9, .6, 0, 0, 7); g.fill(); g.lineCap = "butt";
+        var hx0 = R + 5, hy0 = y + 1;
+        g.strokeStyle = "#5a3a1a"; g.lineWidth = .55; g.beginPath(); g.moveTo(hx0 - 2, hy0); g.lineTo(hx0 - 1.2, hy0 - 13); g.moveTo(hx0 + 2, hy0); g.lineTo(hx0 + 1.2, hy0 - 13); g.stroke();
+        g.lineWidth = .3; g.beginPath(); for (var sp = 1; sp < 9; sp++) { var yy = hy0 - sp * 1.4, ww = 2 - sp * .09; g.moveTo(hx0 - ww, yy); g.lineTo(hx0 + ww, yy); } g.stroke();
+        g.fillStyle = "#7a5230"; g.fillRect(hx0 - 2.2, hy0 - 16.5, 4.4, 3.6); g.fillStyle = "#3a2a1a"; g.fillRect(hx0 - 1.5, hy0 - 15.6, 3, 1.3);
+        g.fillStyle = "#4a3a2a"; g.beginPath(); g.moveTo(hx0 - 2.8, hy0 - 16.4); g.lineTo(hx0, hy0 - 18.4); g.lineTo(hx0 + 2.8, hy0 - 16.4); g.closePath(); g.fill();
+        o.hochsitz = [hx0, hy0 - 16];
+      } else if (k === "schweinestall") {
+        /* FASSUNG 833 — Schweinestall: vorn ein Auslauf aus Latten mit Suhle, darin zwei rosa Schweine, ein Trog. */
+        var ax0 = L - 1, ay0 = y + 1.2, aw = P.w + 2, ah = 6;
+        g.fillStyle = "rgba(120,86,52,.85)"; g.beginPath(); g.ellipse(x - 2, ay0 + 3, 5, 1.8, 0, 0, 7); g.fill();
+        g.fillStyle = "rgba(160,120,80,.6)"; g.beginPath(); g.ellipse(x - 1, ay0 + 2.6, 2.4, .8, 0, 0, 7); g.fill();
+        [[x - 4, ay0 + 3.2, 1], [x + 3.4, ay0 + 2.2, -1]].forEach(function (sw) {
+          var px = sw[0], py = sw[1], d = sw[2];
+          g.fillStyle = "#f2b8b0"; g.beginPath(); g.ellipse(px, py, 1.7, 1, 0, 0, 7); g.fill();
+          g.beginPath(); g.ellipse(px + d * 1.6, py - .2, .75, .65, 0, 0, 7); g.fill();
+          g.fillStyle = "#e08f88"; g.beginPath(); g.ellipse(px + d * 2.25, py - .05, .32, .28, 0, 0, 7); g.fill();
+          g.fillStyle = "#c97a74"; g.fillRect(px - 1, py + .7, .35, .7); g.fillRect(px + .7, py + .7, .35, .7);
+        });
+        g.fillStyle = "#8a6a4a"; g.fillRect(R - 6, ay0 + 3.6, 4, 1); g.fillStyle = "#c9b27a"; g.fillRect(R - 5.7, ay0 + 3.5, 3.4, .35);
+        g.strokeStyle = "#8a5a2b"; g.lineWidth = .45; g.beginPath();
+        g.moveTo(ax0, ay0 + ah - 1.6); g.lineTo(ax0 + aw, ay0 + ah - 1.6); g.moveTo(ax0, ay0 + ah - 3); g.lineTo(ax0 + aw, ay0 + ah - 3);
+        for (var lp2 = 0; lp2 <= 6; lp2++) { var lx = ax0 + aw * lp2 / 6; g.moveTo(lx, ay0 + ah - .8); g.lineTo(lx, ay0 + ah - 3.8); }
+        g.stroke();
+      } else if (k === "marktstand") {
+        /* FASSUNG 833 — Marktstand: rot-weiß gestreifte Markise über der offenen Front, davor Kisten mit Obst und Gemüse. */
+        var my = y - P.h - .4;
+        for (var mi = 0; mi < 8; mi++) { g.fillStyle = mi % 2 ? "#f4efe6" : "#c8322a"; g.beginPath(); g.moveTo(L - 1 + mi * (P.w + 2) / 8, my); g.lineTo(L - 1 + (mi + 1) * (P.w + 2) / 8, my); g.lineTo(L - .4 + (mi + 1) * (P.w + 2) / 8, my + 2.4); g.lineTo(L - .4 + mi * (P.w + 2) / 8, my + 2.4); g.closePath(); g.fill(); }
+        g.strokeStyle = "rgba(60,30,20,.5)"; g.lineWidth = .2; g.beginPath(); g.moveTo(L - .4, my + 2.4); g.lineTo(R + 1.6, my + 2.4); g.stroke();
+        var frucht = [["#d8261f", "#e8a32a"], ["#3f8a2e", "#9ac64a"], ["#e8c22a", "#d87a2a"]];
+        for (var mk = 0; mk < 3; mk++) {
+          var kx2 = L + 1.4 + mk * 4.6, ky2 = y + 2.4;
+          g.fillStyle = "#a07444"; g.fillRect(kx2, ky2 - 1.8, 3.8, 1.8); g.strokeStyle = "#6b4521"; g.lineWidth = .2; g.strokeRect(kx2, ky2 - 1.8, 3.8, 1.8);
+          for (var fr = 0; fr < 5; fr++) { g.fillStyle = frucht[mk][fr % 2]; g.beginPath(); g.arc(kx2 + .5 + fr * .7, ky2 - 2 - (fr % 2) * .35, .45, 0, 7); g.fill(); }
+        }
+      } else if (k === "sternwarte") {
+        /* FASSUNG 833 — Sternwarte: auf dem flachen Bau eine silbrige Kuppel mit offenem Spalt, daraus das Fernrohr. */
+        var kx = x + P.d * .2, ky = y - P.h - P.rh * .5, kr = P.w * .3;
+        var kg2 = g.createLinearGradient(kx - kr, ky - kr, kx + kr, ky); kg2.addColorStop(0, "#eef1f4"); kg2.addColorStop(.55, "#b8c0c8"); kg2.addColorStop(1, "#7d8790");
+        g.fillStyle = kg2; g.beginPath(); g.moveTo(kx - kr, ky); g.arc(kx, ky, kr, Math.PI, 0); g.closePath(); g.fill();
+        g.strokeStyle = "rgba(60,70,80,.35)"; g.lineWidth = .2; g.beginPath(); for (var rp = 1; rp < 5; rp++) { var ax = kx - kr + rp * kr / 2.5; g.moveTo(ax, ky); g.quadraticCurveTo(kx + (ax - kx) * .6, ky - kr * .9, kx, ky - kr); } g.stroke();
+        g.fillStyle = "#1c2230"; g.beginPath(); g.moveTo(kx - .9, ky); g.lineTo(kx - .9, ky - kr * .82); g.quadraticCurveTo(kx, ky - kr * 1.02, kx + .9, ky - kr * .82); g.lineTo(kx + .9, ky); g.closePath(); g.fill();
+        g.strokeStyle = "#3a3f4a"; g.lineWidth = 1.1; g.lineCap = "round"; g.beginPath(); g.moveTo(kx, ky - kr * .45); g.lineTo(kx + kr * .75, ky - kr * 1.35); g.stroke();
+        g.strokeStyle = "#c9a44a"; g.lineWidth = .5; g.beginPath(); g.moveTo(kx + kr * .62, ky - kr * 1.18); g.lineTo(kx + kr * .8, ky - kr * 1.42); g.stroke(); g.lineCap = "butt";
+        o.kuppel = [kx, ky - kr * .6];
       } else if (k === "gefaengnis") {
         /* FASSUNG 775 — Gefängnis: Wachturm mit Zinnen an der Seite, davor ein Pranger. */
         var wx = R + .6, wy = y, th = P.h + P.rh + 9;
@@ -12077,7 +12167,8 @@
   var DM_MASS = {
     baeckerei: [24, 13, 11, 9], schule: [30, 13, 11, 9, 9], schmiede: [22, 13, 10, 8], brauerei: [24, 14, 12, 9], bibliothek: [26, 14, 13, 9],
     rathaus: [30, 15, 16, 11, 12], krankenhaus: [28, 14, 14, 8], kuhstall: [26, 15, 9, 10], huehnerstall: [14, 10, 6, 6], labor: [22, 14, 12, 5, 8], kaserne: [24, 14, 11, 7],
-    gasthaus: [26, 14, 12, 9], gefaengnis: [22, 13, 12, 5, 7], flickstube: [18, 12, 9, 7]
+    gasthaus: [26, 14, 12, 9], gefaengnis: [22, 13, 12, 5, 7], flickstube: [18, 12, 9, 7],
+    holzhuette: [18, 12, 8, 7], jagdhuette: [17, 12, 8, 9, 4], schweinestall: [22, 13, 7, 8], marktstand: [16, 10, 6, 4], sternwarte: [18, 14, 11, 3, 9]   // FASSUNG 833
   };
   function dmUmriss(k, st) {
     var u0 = dmUmrissRoh(k, st);
@@ -13538,6 +13629,12 @@
     gasthaus: ["#a8452c", '<circle cx="12" cy="12.5" r="7.2" fill="#fff"/><path d="M7.8 13.2c1.6-2.4 6.8-2.4 8.4 0" stroke="#a8452c" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M3 4.5v6M3 7.5h1.6M21 4.5v6.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>'],
     gefaengnis: ["#4b5059", '<path d="M4 4h16v16H4z" fill="none" stroke="#fff" stroke-width="2"/><path d="M8.5 4v16M12 4v16M15.5 4v16" stroke="#fff" stroke-width="1.8"/>'],
     flickstube: ["#7a4a22", '<path d="M7 3.5h5.6v8.2c0 1.2.8 1.8 2 2l4.6.9v3.9H7z" fill="#fff"/><path d="M7 19.4h12.2" stroke="#fff" stroke-width="1.6"/>'],
+    /* FASSUNG 833 — die späten Häuser: Axt, Geweih, Schwein, Markise, Fernrohr */
+    holzhuette: ["#7a5a2a", '<path d="M5 20.5L15.5 8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M13.2 4.2c3.2-.8 6 1.4 6.6 4.6l-4.6 1.2-3.4-3.2z" fill="#fff"/>'],
+    jagdhuette: ["#4f6a3a", '<path d="M12 20v-7M12 13c-2.5-1-4-3.5-4-7M8 9.5L5 8M12 13c2.5-1 4-3.5 4-7M16 9.5l3-1.5M8 6V3.5M16 6V3.5" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>'],
+    schweinestall: ["#d0707a", '<ellipse cx="12" cy="13" rx="7.5" ry="6" fill="#fff"/><ellipse cx="12" cy="15" rx="3" ry="2.1" fill="#d0707a"/><circle cx="10.9" cy="15" r=".7" fill="#fff"/><circle cx="13.1" cy="15" r=".7" fill="#fff"/><path d="M6 8.5L5 4.5l4 2.5M18 8.5l1-4-4 2.5" fill="#fff"/>'],
+    marktstand: ["#c8322a", '<path d="M3 9l2-4h14l2 4z" fill="#fff"/><path d="M5 9v11M19 9v11M4 15h16" stroke="#fff" stroke-width="1.8"/>'],
+    sternwarte: ["#2c3e66", '<path d="M4 20.5h16v-5H4zM6 15.5a6 6 0 0 1 12 0z" fill="#fff"/><path d="M12 12l6-7" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="19.5" cy="3.8" r="1.2" fill="#ffd34d"/>'],
     labor: ["#129c8c", '<path d="M9 3h6v1.8h-1v5.3l5.6 8.6c1 1.8.1 3.3-1.8 3.3H6.2c-1.9 0-2.8-1.5-1.8-3.3L10 10.1V4.8H9z" fill="#fff"/><path d="M7.6 15.5h8.8" stroke="#129c8c" stroke-width="1.4"/>']
   };
   function dorfPin(k) {
@@ -14542,6 +14639,30 @@
       + '<button type="button" data-s="dorfteil" data-t="ausblick" class="sp-dorf-ausblick' + (S.dorfTeil === "ausblick" ? " sp-an" : "") + '">Was kommt als Nächstes · Dorfstufe ' + (dorfStufe(ich) + 1) + " " + (S.dorfTeil === "ausblick" ? "▴" : "▾") + "</button></div>"
       + (S.dorfTeil === "bau" ? '<div class="sp-troph-liste">' + dorfBauListe(ich) + "</div>" : S.dorfTeil === "markt" ? marktHtml(ich) + handelHtml(ich)
         : S.dorfTeil === "forschung" ? forschungHtml(ich) : S.dorfTeil === "wunder" ? wunderHtml(ich) : S.dorfTeil === "ausblick" ? ausblickHtml(ich) : "") + fuss;
+  }
+  /* FASSUNG 833 — Rückmeldung beim Bauen (Funk 255, siehe „bauen" im Klick-Verteiler) */
+  function brummen(m) { try { if (navigator.vibrate) navigator.vibrate(m); } catch (e) {} }
+  function bauKnopfAn(k) {
+    S.bauLaeuft = { knopf: k, html: k.innerHTML, seit: Date.now() };
+    ton("holzklopf", 0.45); brummen(15);
+    k.disabled = true; k.classList.add("sp-bau-laeuft");
+    k.innerHTML = '<span class="sp-bau-uhr" aria-hidden="true"></span>' + (k.dataset.w === "reparatur" ? "wird repariert …" : "wird gebaut …");
+    /* hängt der Server, nach 15 s wieder frei */
+    var b = S.bauLaeuft;
+    b.uhr = setTimeout(function () { if (S.bauLaeuft === b) bauKnopfAus(b, false); }, 15000);
+    return b;
+  }
+  function bauKnopfAus(b, gut) {
+    if (!b) return;
+    clearTimeout(b.uhr);
+    if (S.bauLaeuft === b) S.bauLaeuft = null;
+    var k = b.knopf;
+    if (gut) brummen([20, 60, 30]);
+    if (k && k.isConnected && k.classList.contains("sp-bau-laeuft")) {
+      k.classList.remove("sp-bau-laeuft");
+      if (gut) { k.innerHTML = HAKEN_SVG + "gebaut"; k.classList.add("sp-bau-fertig"); }
+      else { k.innerHTML = b.html; k.disabled = false; }
+    }
   }
   function wirtschaft(name, args, fertig) {
     rpc(name, args).then(function (r) {

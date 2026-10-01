@@ -3227,3 +3227,12 @@ button.sp-gesperrt, button.sp-gesperrt:disabled { opacity: 1; color: #d9ccb0; ba
 @keyframes sp-stufe-funke { to { transform: rotate(var(--w)) translateX(var(--d)); opacity: 0; } }
 @keyframes sp-stufe-welle { to { transform: scale(4.5); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .sp-stufe3 { animation: none; } }
+
+/* FASSUNG 833 — Bauen gibt sofort Rückmeldung (Funk 255: „manchmal drücke ich da fünfmal drauf und wenn mir gar nicht
+   sicher ob ich das jetzt gekauft habe"): der Knopf wird zu „wird gebaut …" mit laufender Uhr, danach „gebaut" mit Haken. */
+button.sp-bau-laeuft, button.sp-bau-laeuft:disabled { opacity: 1; cursor: progress; background: rgba(214, 160, 60, .32); border-color: rgba(240, 190, 90, .8); color: inherit; animation: sp-bau-puls 0.9s ease-in-out infinite; }
+button.sp-bau-fertig, button.sp-bau-fertig:disabled { opacity: 1; background: rgba(58, 166, 85, .3); border-color: rgba(90, 200, 120, .85); }
+.sp-bau-uhr { display: inline-block; width: 0.95em; height: 0.95em; margin-right: 0.35em; vertical-align: -0.12em; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: sp-bau-dreh 0.7s linear infinite; }
+@keyframes sp-bau-puls { 50% { box-shadow: 0 0 0 3px rgba(240, 190, 90, .35); } }
+@keyframes sp-bau-dreh { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { button.sp-bau-laeuft, .sp-bau-uhr { animation: none; } }
