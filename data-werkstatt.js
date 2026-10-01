@@ -49,20 +49,18 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 827: Mühle zeigt immer die kleinen Symbole, Äcker links und rechts neben den Wegen, Quest-Frage schwebt unter dem Bild, ruhiger Einzug",
+  stand: "Fassung 828: In den Stadt-Quests antwortet man durch Sprechen (Azure erkennt, ganze/halbe Punkte)",
 
   inArbeit: [
-    { seit: "2026-09-30T23:24",
-      text: "Funk 249: Stadt-Quests durch Sprechen beantworten (Fassung 828)" },
-    { seit: "2026-09-30T23:24",
+    { seit: "2026-10-01T02:54",
       text: "Was ist noch nicht anwählbar? (Frage an Xander)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-30T23:24",
-      text: "Funk 248: Symbole am Haus statt großem Menü" },
-    { seit: "2026-09-30T23:24",
-      text: "Funk 248: Äcker nicht mehr auf dem Weg" },
+    { seit: "2026-10-01T02:54",
+      text: "Stadt-Quests durch Sprechen beantworten" },
+    { seit: "2026-10-01T02:54",
+      text: "Äcker: links auf der Wiese, rechts zwischen Krankenhaus und Tor" },
   ],
 };

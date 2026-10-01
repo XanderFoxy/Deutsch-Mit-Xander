@@ -27,9 +27,9 @@
 window.LEICHT_STEMPEL = "aabd5433c9";
 (function () {
   var q = /[?&]quelle=1/.test(location.search);
-  var liste = q ? ["stadt-leicht/kern.js","stadt/boden.js","stadt-leicht/bilder.js","stadt-leicht/szene.js","stadt-leicht/leute.js","stadt-leicht/boote.js","stadt-leicht/tiere.js","stadt-leicht/ton.js","stadt-leicht/bahn.js","stadt-leicht/fuhrwerk.js","stadt-leicht/autos.js","stadt-leicht/autoschau.js","stadt-leicht/windmuehle.js","stadt-leicht/himmel.js","stadt-leicht/dorf.js","stadt-leicht/spiel.js","stadt-leicht/drehen.js","stadt-leicht/oberflaeche.js","stadt-leicht/verwalten.js","stadt-leicht/start.js","stadt-leicht/quests.js"] : ["stadt-leicht/leicht.min.js?v=6d2bb54634"];
+  var liste = q ? ["stadt-leicht/kern.js","stadt/boden.js","stadt-leicht/bilder.js","stadt-leicht/szene.js","stadt-leicht/leute.js","stadt-leicht/boote.js","stadt-leicht/tiere.js","stadt-leicht/ton.js","stadt-leicht/bahn.js","stadt-leicht/fuhrwerk.js","stadt-leicht/autos.js","stadt-leicht/autoschau.js","stadt-leicht/windmuehle.js","stadt-leicht/himmel.js","stadt-leicht/dorf.js","stadt-leicht/spiel.js","stadt-leicht/drehen.js","stadt-leicht/oberflaeche.js","stadt-leicht/verwalten.js","stadt-leicht/start.js","stadt-leicht/quests.js"] : ["stadt-leicht/leicht.min.js?v=1d6143211e"];
   if (!q) window.LEICHT_AUTOSCHAU = "stadt-leicht/autoschau.min.js?v=420e0d00a3";
-  if (!q) window.LEICHT_QUESTS = "stadt-leicht/quests.min.js?v=91a117a331";
+  if (!q) window.LEICHT_QUESTS = "stadt-leicht/quests.min.js?v=e00359a69a";
   liste.forEach(function (s) { document.write('<script src="' + s + (q ? "?t=" + Date.now() : "") + '"><\/script>'); });
 })();
 </script>

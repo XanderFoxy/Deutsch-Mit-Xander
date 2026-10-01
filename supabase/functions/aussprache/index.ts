@@ -161,7 +161,7 @@ Deno.serve(async (anfrage: Request) => {
   /* FASSUNG 828 — XANDER (Funk 249): „über eine spracherkennungsdienst der automatisch das Mikro anschaltet nachdem die
      Person dich gefragt hat in der Mission antwortest du einfach was du antworten möchtest und das System erkennt dann ob es
      logisch ist". „erkennen" = freie Spracherkennung (ohne Referenztext): Azure schreibt auf, was gesagt wurde; ob es passt,
-     prüft die Stadt (stadt-leicht/sprechen.js). */
+     prüft die Stadt (stadt-leicht/quests.js, Teil 11. SPRECHEN). */
   if (aktion !== "bewerten" && aktion !== "vorlesen" && aktion !== "erkennen") return json({ fehler: "unbekannte-aktion" }, 400);
 
   const { schluessel, region } = await geheimnisse();

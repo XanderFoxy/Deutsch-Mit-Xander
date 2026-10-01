@@ -852,6 +852,13 @@
     ".lk-mini-modus .lq-suche { top: 32px; font-size: 11px; }",
     ".lq-los { min-height: 30px; margin-top: 4px; padding: 4px 12px; border: 0; border-radius: 10px; background: #2f7d46; color: #fff; font: 700 12px/1 system-ui, sans-serif; cursor: pointer; }",
     ".lq-kopf { display: flex; align-items: center; gap: 6px; }",
+    /* FASSUNG 828 — die Mikro-Leiste */
+    ".lq-mik { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 5px; }",
+    ".lq-mik button { min-height: 30px; padding: 4px 11px; border: 0; border-radius: 10px; background: #2f6fb5; color: #fff; font: 700 12px/1 system-ui, sans-serif; cursor: pointer; }",
+    ".lq-mik button.lq-hoert { background: #c0392b; box-shadow: 0 0 0 calc(var(--pegel, 0) * 7px + 1px) rgba(231,76,60,.35); }",
+    ".lq-mik button:disabled { opacity: .75; cursor: default; }",
+    ".lq-mik-status { flex: 1 1 140px; min-width: 0; font-size: 11.5px; color: #cfe3ff; font-style: italic; }",
+    ".lq-mik-status:empty { display: none; }",
     ".lq-titel { flex: 1; min-width: 0; font-weight: 800; font-size: 13px; color: #ffd75e; }",
     ".lk-mini-modus .lq-titel { font-size: 12px; }",
     ".lq-klein { flex: none; min-width: 32px; min-height: 32px; padding: 0 8px; border: 0; border-radius: 10px; background: rgba(255,255,255,.12); color: #f3ead8; font: 700 13px/1 system-ui, sans-serif; cursor: pointer; }",
@@ -1026,7 +1033,7 @@
     else if (ev.data.geht === 0 && dialog) { dialog.el.classList.remove("lq-schwebe"); platzUnten(0); }
   });
   Q.untenPx = () => untenPx;
-  function dialogZu() { if (dialog) { dialog.el.remove(); const qu = dialog.qu; dialog = null; platzUnten(0); if (qu.f.zustand === "offen") qu.f.zustand = "gefragt"; } }
+  function dialogZu() { if (dialog) { try { if (Q.sprechen) { Q.sprechen.stopp(); Q.sprechen.still(); } } catch (e) {} dialog.el.remove(); const qu = dialog.qu; dialog = null; platzUnten(0); if (qu.f.zustand === "offen") qu.f.zustand = "gefragt"; } }
   Q.dialogZu = dialogZu;
   function zeichenTipp(qu) {
     if (qu.f.zustand === "unterwegs" || qu.f.zustand === "jubel") { hinFliegen(qu); return; }
@@ -1076,13 +1083,66 @@
       b.addEventListener("click", (e) => { e.stopPropagation(); if (geisterKlick()) return; antworten(qu, i, b, hinweis, liste); });
       liste.appendChild(b);
     });
-    d.append(kopf, text, frage, liste, hinweis);
+    /* FASSUNG 828 — Funk 249: antworten durch Sprechen (siehe 11. SPRECHEN) */
+    let mik = null;
+    if (!qu.v.zeigen && SPR.moeglich()) {
+      mik = document.createElement("div"); mik.className = "lq-mik";
+      const mk = document.createElement("button"); mk.type = "button"; mk.textContent = "🎤 Antwort sprechen"; mk.setAttribute("aria-label", "Antwort sprechen");
+      const ms = document.createElement("span"); ms.className = "lq-mik-status"; ms.setAttribute("aria-live", "polite");
+      mk.addEventListener("click", (e) => { e.stopPropagation(); if (geisterKlick()) return; sprechenLos(qu, mk, ms, hinweis, liste); });
+      mik.append(mk, ms);
+    }
+    d.append(kopf, text, frage);
+    if (mik) d.append(mik);
+    d.append(liste, hinweis);
     ["pointerdown", "pointerup", "wheel"].forEach((t) => d.addEventListener(t, (e) => e.stopPropagation(), { passive: true }));
     d.addEventListener("pointerdown", () => { gedrueckt = true; }, { passive: true });
     wurzelEl.appendChild(d);
     dialog = { el: d, qu: qu };
     /* FASSUNG 827 — im kleinen Rahmen: der Dialog unter dem Bild, höchstens 190 px hoch, rollbar */
     if (mini() && imRahmen) { d.classList.add("lq-schwebe"); platzUnten(Math.min(190, d.scrollHeight + 2)); }
+    /* FASSUNG 828 — wer schon einmal gesprochen hat: die Person fragt laut, danach geht das Mikro von selbst an */
+    if (mik && SPR.auto()) {
+      SPR.vorlesen(qu.text, qu.v.person && qu.v.person.er).then(() => {
+        const mk = mik.querySelector("button");
+        if (dialog && dialog.qu === qu && qu.f.zustand === "offen" && !SPR.laeuft() && mk && !mk.disabled) sprechenLos(qu, mk, mik.querySelector(".lq-mik-status"), dialog.el.querySelector(".lq-hinweis"), dialog.el.querySelector(".lq-antworten"));
+      });
+    }
+  }
+  const SPR_FEHLER = { "nichts-gehoert": "Ich habe nichts gehört. Tippe auf 🎤 und sprich.", "nicht-angemeldet": "Zum Sprechen bitte anmelden.", "tagesgrenze": "Für heute ist das Sprechen aufgebraucht – morgen geht es wieder.", "kontingent": "Die Spracherkennung ist gerade ausgelastet.", "kein-zentraler-schluessel": "Die Spracherkennung ist noch nicht eingerichtet." };
+  function sprechenLos(qu, mk, ms, hinweis, liste) {
+    if (SPR.laeuft()) { SPR.stopp(); return; }
+    if (qu.f.zustand !== "offen") return;
+    SPR.still(); SPR.autoSetzen(true);
+    const zurueck = () => { mk.classList.remove("lq-hoert"); mk.textContent = "🎤 Noch einmal sprechen"; mk.disabled = false; };
+    mk.classList.add("lq-hoert"); mk.textContent = "● Ich höre zu … (tippen = fertig)"; ms.textContent = "";
+    SPR.aufnehmen((p) => mk.style.setProperty("--pegel", p.toFixed(2)))
+      .then((wav) => { mk.classList.remove("lq-hoert"); mk.textContent = "… ich verstehe"; mk.disabled = true; return SPR.erkennen(wav); })
+      .then((les) => {
+        if (!dialog || dialog.qu !== qu || qu.f.zustand !== "offen") return;
+        const e = SPR.pruefen(qu, les);
+        ms.textContent = e.text ? "Du: „" + e.text + "“" : "";
+        hinweis.classList.toggle("lq-gut", e.stufe > 0);
+        if (e.stufe > 0) {
+          qu.gesprochen = e.stufe;
+          if (e.i >= 0 && liste.children[e.i]) liste.children[e.i].classList.add("lq-richtig");
+          for (const x of liste.children) x.disabled = true;
+          mk.textContent = e.stufe === 1 ? "✓ Richtig gesagt" : "✓ Fast";
+          hinweis.textContent = (e.stufe === 1 ? "Richtig! " : "Fast! ") + e.grund + " " + qu.danke;
+          qu.rot = null;
+          losgehen(qu);
+          setTimeout(() => { if (dialog && dialog.qu === qu) { dialog.el.remove(); dialog = null; platzUnten(0); } wegZeigen(qu.weg.pts, mini() ? 34 : 64, K.H / K.dpr - (mini() ? 8 : 70)); }, 2600);
+          return;
+        }
+        zurueck();
+        hinweis.textContent = e.grund;
+        if (e.stufe === 0) {
+          qu.versuche++;
+          if (e.i >= 0 && liste.children[e.i]) { const b = liste.children[e.i]; b.disabled = true; b.classList.add("lq-falsch"); if (qu.antworten[e.i]) qu.antworten[e.i].falschGetippt = true; }
+          if (e.weg) { qu.rot = { pts: e.weg, ab: performance.now(), bis: performance.now() + (Q.rotDauer || 5200) }; L().unruhe = 2; }
+        }
+      })
+      .catch((err) => { zurueck(); const m = String(err && (err.name === "NotAllowedError" ? "mikro" : err.message) || ""); ms.textContent = m === "mikro" ? "Das Mikrofon ist gesperrt – bitte im Browser erlauben." : SPR_FEHLER[m] || "Die Spracherkennung antwortet gerade nicht."; });
   }
   /* FASSUNG 846 — SUCHEN: die Person wartet, man sucht das Gebäude selbst (verschieben, zoomen, drehen) und tippt es an.
      oberflaeche.js fragt bei jedem Tipp auf ein Haus zuerst Q.tippAuf(o). */
@@ -1340,15 +1400,17 @@
     try { if (navigator.vibrate) navigator.vibrate([12, 60, 12]); } catch (e) {}
     /* Punkte: 6, Wegbeschreibung 8, beim ersten Versuch +2, Schwäche +50 % (Mut-Bonus) */
     let pk = qu.v.richtung || qu.v.zeigen ? 8 : 6; if (!qu.versuche) pk += 2;
+    /* FASSUNG 828 — gesprochen: ein ganzer Satz +4 (Sprech-Bonus), nur ungefähr die halbe Punktzahl */
+    if (qu.gesprochen === 1) pk += 4; else if (qu.gesprochen === 0.5) pk = Math.ceil(pk / 2);
     const mut = qu.mut ? Math.ceil(pk * 0.5) : 0; pk += mut;
     const st = standLesen(); st.punkte += pk; st.geschafft++;
     let geschenk = null;
     if (st.geschafft % 3 === 0) geschenk = geschenkGeben(qu, st);
     standSchreiben(st);
-    plusZeigen(f.x, f.y, 2.6, "+" + pk + (mut ? " (Mut-Bonus)" : ""));
-    const text = "Geschafft: +" + pk + " Helferpunkte" + (mut ? " – mit Mut-Bonus für " + (KAT_NAME[qu.v.kat] || qu.v.kat) : "") + (geschenk ? ". Geschenk für deine Stadt: " + geschenk + "!" : ".");
+    plusZeigen(f.x, f.y, 2.6, "+" + pk + (mut ? " (Mut-Bonus)" : qu.gesprochen === 1 ? " (gesprochen)" : ""));
+    const text = "Geschafft: +" + pk + " Helferpunkte" + (qu.gesprochen === 1 ? " – mit Sprech-Bonus" : qu.gesprochen === 0.5 ? " – gesprochen, halbe Punktzahl" : "") + (mut ? " – mit Mut-Bonus für " + (KAT_NAME[qu.v.kat] || qu.v.kat) : "") + (geschenk ? ". Geschenk für deine Stadt: " + geschenk + "!" : ".");
     try { if (O().ansage) O().ansage(text); } catch (e) {}
-    Q.letzteMeldung = { typ: "leicht-quest", id: qu.v.id, titel: qu.v.titel, kat: qu.v.kat, punkte: pk, mut: mut, gesamt: st.punkte, geschafft: st.geschafft, geschenk: geschenk || "", versuche: qu.versuche };
+    Q.letzteMeldung = { typ: "leicht-quest", id: qu.v.id, titel: qu.v.titel, kat: qu.v.kat, punkte: pk, mut: mut, gesamt: st.punkte, geschafft: st.geschafft, geschenk: geschenk || "", versuche: qu.versuche, gesprochen: qu.gesprochen || 0 };
     try { if (imRahmen) window.parent.postMessage(Q.letzteMeldung, location.origin); } catch (e) {}
     L().unruhe = 2;
   }
@@ -1384,7 +1446,208 @@
   }
 
   /* =====================================================================
-     11. FÜR DIE SONDE (werkzeug/pruefe-832-quests.js)
+     11. SPRECHEN
+     FASSUNG 828 — XANDER (Funk 249): „ein System … auf der Basis von Azure … wo wir innerhalb der Stadtmissionen … in
+     echt mit den Menschen sprechen … nachdem die Person dich gefragt hat in der Mission antwortest du einfach was du
+     antworten möchtest und das System erkennt dann ob es logisch ist grammatikalisch korrektes Deutsch ist … wenn einer
+     dieser Sätze getriggert wird dann kriegt man die Punktzahl bzw kriege nur eine halbe Punktzahl wenn es nur in etwa der
+     Satz ist … um denen die Angst zu nehmen zu kommunizieren".
+     Ablauf: die Person stellt ihre Frage (Azure-Stimme, Edge Function „aussprache" / vorlesen), danach geht das Mikro von
+     selbst an (nach dem ersten Mal; das erste Mal tippt man 🎤). Man antwortet frei; Azure schreibt auf, was gesagt wurde
+     („erkennen"), und die Stadt prüft:
+       · Wegbeschreibung: die Richtungswörter (links, rechts, geradeaus, halb links …) werden auf dem echten Wegenetz
+         nachgegangen (dieselbe Prüfung wie bei den Antwortknöpfen, folgen()). Kommt die Person so ans Ziel, stimmt es –
+         egal wie der Satz gebaut ist („Gehen Sie …", „Du gehst …", „Biegen Sie …"). Auch eine Lagebeschreibung zählt
+         („Die Bäckerei ist neben dem Rathaus", „gegenüber vom Brunnen", „hinter …"), wenn das genannte Haus wirklich in
+         der Nähe steht.
+       · andere Fragen: der gesprochene Satz wird mit den Antworten verglichen (Wörter, Reihenfolge egal).
+     Volle Punkte (+ Sprech-Bonus) für einen ganzen Satz; die halbe Punktzahl, wenn es nur ungefähr passt (nur „links,
+     rechts" ohne Satz, oder der Satz weicht deutlich ab). Führt die Beschreibung woandershin, zeigt die rote Linie wohin. */
+  const SPR = (Q.sprechen = {});
+  const SPR_AUTO = "dma_quest_sprechen";
+  SPR.auto = () => { try { return localStorage.getItem(SPR_AUTO) === "1"; } catch (e) { return false; } };
+  SPR.autoSetzen = (an) => { try { localStorage.setItem(SPR_AUTO, an ? "1" : "0"); } catch (e) {} };
+  /* (die Anmeldung braucht es erst beim Sprechen: ohne sie sagt die Leiste „Zum Sprechen bitte anmelden") */
+  SPR.moeglich = () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && (window.AudioContext || window.webkitAudioContext) && (window.SUPABASE_CONFIG || Q._sprTest));
+  let sprKlient = null;
+  function sprMarke() {
+    try {
+      if (!window.supabase) return Promise.resolve("");
+      if (!sprKlient) sprKlient = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
+      return sprKlient.auth.getSession().then((a) => (a && a.data && a.data.session && a.data.session.access_token) || "").catch(() => "");
+    } catch (e) { return Promise.resolve(""); }
+  }
+  /* eine Anfrage an die Edge Function „aussprache" (roh: Antwort als Blob, sonst JSON) */
+  function sprRufen(koerper, roh) {
+    if (Q._sprTest) return Q._sprTest(koerper, roh);   // (Sonde: Azure-Antwort nachgestellt)
+    return sprMarke().then((m) => {
+      if (!m) throw new Error("nicht-angemeldet");
+      return fetch(window.SUPABASE_CONFIG.url + "/functions/v1/aussprache", {
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + m, apikey: window.SUPABASE_CONFIG.anonKey }, body: JSON.stringify(koerper)
+      }).then((r) => {
+        if (!r.ok) return r.json().catch(() => ({})).then((j) => { throw new Error(j.fehler || ("status-" + r.status)); });
+        return roh ? r.blob() : r.json();
+      });
+    });
+  }
+  /* Die Person stellt ihre Frage laut (der Teil in „…" aus dem Text) – Promise, wenn fertig gesprochen */
+  let sprAudio = null;
+  SPR.vorlesen = function (text, er) {
+    const m = /„([^“]+)“/.exec(text || ""), satz = (m ? m[1] : text || "").slice(0, 280);
+    if (!satz) return Promise.resolve();
+    return sprRufen({ aktion: "vorlesen", text: satz, sprache: "de-DE", stimme: er ? "m" : "w" }, true).then((blob) => new Promise((fertig) => {
+      try {
+        if (sprAudio) { sprAudio.pause(); sprAudio = null; }
+        const a = new Audio(URL.createObjectURL(blob)); sprAudio = a;
+        a.onended = a.onerror = () => fertig();
+        const p = a.play(); if (p && p.catch) p.catch(() => fertig());
+        setTimeout(fertig, 15000);
+      } catch (e) { fertig(); }
+    })).catch(() => {});
+  };
+  SPR.still = () => { try { if (sprAudio) sprAudio.pause(); } catch (e) {} sprAudio = null; };
+  /* Aufnehmen bis zur Pause nach dem Sprechen (höchstens 9 s) → WAV 16 kHz, Base64 */
+  let sprLauf = null;
+  SPR.laeuft = () => !!sprLauf;
+  SPR.stopp = () => { if (sprLauf) sprLauf.stopp(); };
+  SPR.aufnehmen = function (pegel) {
+    return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).then((strom) => new Promise((fertig, fehler) => {
+      const AC = window.AudioContext || window.webkitAudioContext, ctx = new AC();
+      const quelle = ctx.createMediaStreamSource(strom), proz = ctx.createScriptProcessor(4096, 1, 1), stumm = ctx.createGain(); stumm.gain.value = 0;
+      const teile = []; let sprach = false, stilleSeit = 0, ab = performance.now(), aus = false;
+      const stopp = () => {
+        if (aus) return; aus = true; sprLauf = null;
+        try { proz.disconnect(); quelle.disconnect(); stumm.disconnect(); } catch (e) {}
+        strom.getTracks().forEach((t) => t.stop());
+        const rate = ctx.sampleRate; try { ctx.close(); } catch (e) {}
+        if (!sprach) { fehler(new Error("nichts-gehoert")); return; }
+        fertig(wavBase64(teile, rate));
+      };
+      sprLauf = { stopp: stopp };
+      proz.onaudioprocess = (e) => {
+        const d = e.inputBuffer.getChannelData(0); teile.push(new Float32Array(d));
+        let s = 0; for (let i = 0; i < d.length; i++) s += d[i] * d[i];
+        const rms = Math.sqrt(s / d.length), jetzt = performance.now();
+        if (pegel) pegel(Math.min(1, rms * 12));
+        if (rms > 0.02) { sprach = true; stilleSeit = 0; } else if (sprach && !stilleSeit) stilleSeit = jetzt;
+        if ((sprach && stilleSeit && jetzt - stilleSeit > 1300) || jetzt - ab > 9000 || (!sprach && jetzt - ab > 6000)) stopp();
+      };
+      quelle.connect(proz); proz.connect(stumm); stumm.connect(ctx.destination);
+    }));
+  };
+  function wavBase64(teile, rate) {
+    let n = 0; for (const t of teile) n += t.length;
+    const f = rate / 16000, m = Math.floor(n / f), pcm = new Int16Array(m);
+    let t = 0, off = 0;
+    for (let i = 0; i < m; i++) {
+      const pos = i * f; while (t < teile.length && pos - off >= teile[t].length) { off += teile[t].length; t++; }
+      if (t >= teile.length) break;
+      const v = Math.max(-1, Math.min(1, teile[t][Math.floor(pos - off)])); pcm[i] = v < 0 ? v * 0x8000 : v * 0x7fff;
+    }
+    const buf = new ArrayBuffer(44 + pcm.length * 2), dv = new DataView(buf), w = (o, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
+    w(0, "RIFF"); dv.setUint32(4, 36 + pcm.length * 2, true); w(8, "WAVE"); w(12, "fmt "); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+    dv.setUint32(24, 16000, true); dv.setUint32(28, 32000, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true); w(36, "data"); dv.setUint32(40, pcm.length * 2, true);
+    new Int16Array(buf, 44).set(pcm);
+    const b = new Uint8Array(buf); let s = ""; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
+  /* Azure: was wurde gesagt? (die besten Lesarten) */
+  SPR.erkennen = function (wav) {
+    return sprRufen({ aktion: "erkennen", wav: wav, sprache: "de-DE" }).then((j) => {
+      const nb = Array.isArray(j && j.NBest) ? j.NBest : [];
+      const lesarten = nb.map((x) => String(x.Display || x.Lexical || "")).filter(Boolean);
+      if (j && j.DisplayText && lesarten.indexOf(j.DisplayText) < 0) lesarten.unshift(String(j.DisplayText));
+      return lesarten.slice(0, 4);
+    });
+  };
+
+  /* ---------- Prüfen ---------- */
+  const klein = (s) => String(s || "").toLowerCase().replace(/ß/g, "ss").replace(/[„“"'.,!?;:–—-]/g, " ").replace(/\s+/g, " ").trim();
+  /* Richtungswörter in der Reihenfolge des Satzes */
+  function richtungen(t) {
+    const w = klein(t).replace(/grade ?aus|gerade aus/g, "geradeaus").split(" "), aus = [];
+    for (let i = 0; i < w.length; i++) {
+      const a = w[i];
+      if ((a === "halb" || a === "schräg" || a === "schraeg") && /^(links|rechts|linke|rechte)/.test(w[i + 1] || "")) { aus.push({ k: "halb " + (/^link/.test(w[i + 1]) ? "links" : "rechts"), i: i }); i++; continue; }
+      if (/^(links|linke[nrs]?)$/.test(a)) aus.push({ k: "links", i: i });
+      else if (/^(rechts|rechte[nrs]?)$/.test(a)) aus.push({ k: "rechts", i: i });
+      else if (a === "geradeaus") aus.push({ k: "geradeaus", i: i });
+      else if (a === "zurück" || a === "zurueck" || a === "umdrehen") aus.push({ k: "zurueck", i: i });
+    }
+    return { worte: w, r: aus };
+  }
+  /* sind das ganze Sätze? (ein Verb in einer passenden Form und genug Wörter) */
+  const VERB = /\b(gehen|gehst|geh|gehe|geht|biegen|biegst|bieg|biege|laufen|läufst|laeufst|lauf|laufe|fahren|fährst|faehrst|nehmen|nimm|nimmst|ist|sind|liegt|befindet|findest|finden|siehst|sehen|kommst|kommen|folgen|folge|folgst|überqueren|ueberqueren|abbiegen)\b/;
+  const ganzerSatz = (t) => { const k = klein(t); return VERB.test(k) && k.split(" ").length >= 4; };
+  /* Wegbeschreibung auf dem Netz nachgehen: welche Lesarten der Richtungswörter führen ans Ziel? */
+  function wegPruefen(qu, text) {
+    const R = richtungen(text).r.map((x) => x.k), n = netz(), weiter = qu.route.R[1], kand = [];
+    if (!R.length) return null;
+    /* Lesarten: wie gesagt; ohne das „geradeaus bis zur Kreuzung" am Anfang; ohne das letzte Wort (Seite am Ziel) */
+    const ohneAnf = R[0] === "geradeaus" ? R.slice(1) : R;
+    for (const v of [R, ohneAnf, R.slice(0, -1), ohneAnf.slice(0, -1)]) {
+      const k = v.filter((x) => x !== "zurueck");
+      if (k.length && !kand.some((y) => y.join() === k.join())) kand.push(k);
+    }
+    for (const k of kand) { const sim = folgen(qu.an, qu.s, weiter, k); if (sim.ok) return { ok: true, klassen: k }; }
+    /* keine führt hin: die wörtlichste zeigen (rote Linie, wohin sie führt) */
+    const k = kand[1] || kand[0], sim = folgen(qu.an, qu.s, weiter, k);
+    const pts = sim && sim.R ? sim.R.map((i) => n.kn[i].slice()) : null;
+    return { ok: false, klassen: k, weg: pts, wo: pts ? wohinGekommen(pts) : null };
+  }
+  /* Lagebeschreibung: „neben/gegenüber/hinter/vor/bei/in der Nähe" + ein Haus, das wirklich nah am Ziel steht */
+  const LAGE = /\b(neben|gegenüber|gegenueber|hinter|vor|bei|nähe|naehe|nahe|zwischen|an)\b/;
+  function lagePruefen(qu, text) {
+    const k = klein(text); if (!LAGE.test(k)) return null;
+    const Z = ziele(), z = qu.ziel; let genannt = null;
+    for (const key in Z) { if (key === z.key) continue; const nm = klein(Z[key].name); if (nm && k.indexOf(nm) >= 0) { genannt = Z[key]; break; } }
+    if (!genannt) return null;
+    const d = Math.hypot(genannt.x - z.x, genannt.y - z.y);
+    const naechste = Object.values(Z).filter((y) => y.key !== z.key).map((y) => Math.hypot(y.x - z.x, y.y - z.y)).sort((a, b) => a - b);
+    const nah = d <= Math.max(38, (naechste[2] || 38) + 4);
+    return { ok: nah, genannt: genannt, abstand: Math.round(d) };
+  }
+  /* Wörter-Übereinstimmung (Dice) */
+  function aehnlich(a, b) {
+    const A = klein(a).split(" ").filter((x) => x.length > 1), B = klein(b).split(" ").filter((x) => x.length > 1);
+    if (!A.length || !B.length) return 0;
+    const rest = B.slice(); let g = 0;
+    for (const x of A) { const i = rest.indexOf(x); if (i >= 0) { g++; rest.splice(i, 1); } }
+    return 2 * g / (A.length + B.length);
+  }
+  const ohneHtml = (h) => String(h || "").replace(/<[^>]+>/g, "");
+  const vonDat = (z) => (z.g === "die" ? "von der " : "vom ") + z.name;   // vom Rathaus, von der Bäckerei
+  /* Ergebnis: { stufe: 1 (ganz) | 0.5 (in etwa) | 0 (falsch) | -1 (nicht verstanden), text, grund, weg, i } */
+  SPR.pruefen = function (qu, lesarten) {
+    lesarten = (lesarten || []).filter(Boolean);
+    if (!lesarten.length) return { stufe: -1, text: "", grund: "Ich habe dich nicht verstanden. Sprich noch einmal – etwas lauter." };
+    let bestes = null;
+    for (const t of lesarten) {
+      let e;
+      if (qu.v.richtung) {
+        const w = wegPruefen(qu, t), l = lagePruefen(qu, t);
+        if (w && w.ok) e = { stufe: ganzerSatz(t) ? 1 : 0.5, text: t, grund: ganzerSatz(t) ? "Genau so kommt " + (qu.v.person.er ? "er" : "sie") + " hin!" : "Die Richtung stimmt – als ganzer Satz gäbe es alle Punkte." };
+        else if (l && l.ok) e = { stufe: ganzerSatz(t) ? 1 : 0.5, text: t, grund: "Stimmt – " + nom(qu.ziel) + " ist ganz nah " + (l.genannt.g === "die" ? "bei der " : "beim ") + l.genannt.name + "." };
+        else if (w && !w.ok) e = { stufe: 0, text: t, weg: w.weg, grund: (w.wo && w.wo.key !== qu.ziel.key ? "Hm – so käme " + (qu.v.person.er ? "er" : "sie") + " " + zum(w.wo) + ", nicht " + zum(qu.ziel) + "." : "Hm – so würde " + (qu.v.person.er ? "er" : "sie") + " sich verlaufen.") + " Links und rechts gelten in der Laufrichtung." };
+        else if (l && !l.ok) e = { stufe: 0, text: t, grund: Nom(l.genannt) + " ist zu weit weg " + vonDat(qu.ziel) + "." };
+        else e = { stufe: 0, text: t, grund: "Sag, wie " + (qu.v.person.er ? "er" : "sie") + " gehen soll: geradeaus, links, rechts … oder wo " + nom(qu.ziel) + " ist (neben …)." };
+      } else {
+        let bi = -1, bs = 0;
+        qu.antworten.forEach((a, i) => { const s = aehnlich(t, ohneHtml(a.html)); if (s > bs) { bs = s; bi = i; } });
+        const a = qu.antworten[bi];
+        if (a && a.richtig && bs >= 0.75) e = { stufe: 1, text: t, i: bi, grund: "Genau richtig!" };
+        else if (a && a.richtig && bs >= 0.45) e = { stufe: 0.5, text: t, i: bi, grund: "In etwa richtig – genau hieße es: „" + ohneHtml(a.html) + "“" };
+        else if (a && !a.richtig && bs >= 0.45) e = { stufe: 0, text: t, i: bi, weg: a.weg, grund: a.hinweis || "Hm, das stimmt noch nicht." };
+        else e = { stufe: 0, text: t, grund: "Das passt noch nicht. Versuch es noch einmal!" };
+      }
+      if (!bestes || e.stufe > bestes.stufe) bestes = e;
+      if (bestes.stufe === 1) break;
+    }
+    return bestes;
+  };
+
+  /* =====================================================================
+     12. FÜR DIE SONDE (werkzeug/pruefe-832-quests.js)
      ===================================================================== */
   Q.pruef = {
     tempo: () => TEMPO,   // FASSUNG 846

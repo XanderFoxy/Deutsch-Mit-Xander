@@ -13826,12 +13826,13 @@
     /* FASSUNG 823 — ein offenes Bahnhof-Fenster wandert mit (ins Vollbild bzw. zurück unter das Dorfbild) */
     if (S.dorfWahl === "bahnhof") bahnFensterEinpassen(); else bahnFenster();
   }
+  /* FASSUNG 828 — Funk 249: in den Stadt-Quests antwortet man durch Sprechen – der Rahmen darf das Mikrofon benutzen */
   function lsAuf() {
     /* Ein noch ausstehender Aufruf aus dem Zeichnen darf die Stadt nach „Alte Version" nicht zurückholen. */
     if (LSTADT || !stadtNeu()) return;
     var el = document.createElement("div");
     el.className = "sp-lstadt";
-    el.innerHTML = '<iframe class="sp-ls-rahmen" title="Neue Stadt" src="stadt-leicht.html?eingebettet=1&mini=1" allow="fullscreen"></iframe>'
+    el.innerHTML = '<iframe class="sp-ls-rahmen" title="Neue Stadt" src="stadt-leicht.html?eingebettet=1&mini=1" allow="fullscreen; microphone; autoplay"></iframe>'
       + '<button type="button" class="sp-ls-zu">Zurück</button>';
     document.body.appendChild(el);
     LSTADT = { el: el, rahmen: el.querySelector("iframe"), voll: false, ohne: 0 };

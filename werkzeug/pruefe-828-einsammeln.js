@@ -200,6 +200,11 @@ window.schick=function(d){document.getElementById("f").contentWindow.postMessage
     const ohne = await uferPixel();
     sage(!!mit && !!ohne && mit.n >= 1 && mit.s !== ohne.s, "Fischer bei der Arbeit: am Ufer stehen Angler (gemalt), ohne Fischer ist das Ufer leer", JSON.stringify({ mit, ohne }));
     await schicke({ typ: "leicht-zeichen", z: { see: ["laeuft", "Fisch 2:10", "fisch"] } }); await tick(400);
+    /* FASSUNG 828 — Acker 92 liegt im kleinen Rahmen gleich rechts neben dem See-Zeichen: es darf ihn nicht verdecken.
+       Getippt wird danach ohne Zeichen (der Tipp sucht 16 px Abstand zu jedem Knopf). */
+    const seeFrei = await fr.evaluate(() => { const K = STADT.kamera, f = STADT.dorf.FELD_ORTE.find((q) => q.nr === 92), p = STADT.proj(f.x, f.y, 0), e = document.elementFromPoint(p[0] / K.dpr, p[1] / K.dpr); return !(e && e.closest && e.closest("button")); });
+    sage(seeFrei, "das See-Zeichen verdeckt den rechten Acker nicht");
+    await schicke({ typ: "leicht-zeichen", z: {} }); await tick(400);
     await leeren();
     const feld = await bodenPunkt(2, 92);
     if (feld) { await tipp(OFF.x + feld.x, OFF.y + feld.y); }

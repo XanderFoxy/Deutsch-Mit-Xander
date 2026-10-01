@@ -69,7 +69,7 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
       const falschK = kl.slice(); falschK[0] = falschK[0] === "links" ? "rechts" : "links";
       const falsch = "Gehen Sie bis zur Kreuzung, dann " + falschK.join(", dann ") + ".";
       /* ein nahes und ein fernes Haus zum Ziel */
-      const Z = {}; for (const o of STADT.szene.objekte) if (o.art === "haus" && o.spiel && o.spiel !== "bahnhof") Z[o.spiel] = o;
+      const Z = {}; for (const o of STADT.szene.objekte) if (o.art === "haus" && o.spiel && o.spiel !== "bahnhof" && !o.bau && !o.versteckt) Z[o.spiel] = o;
       const NAME = { baeckerei: "Bäckerei", schule: "Schule", schmiede: "Schmiede", rathaus: "Rathaus", muehle: "Mühle", krankenhaus: "Krankenhaus", kaserne: "Kaserne", bibliothek: "Bibliothek", brauerei: "Brauerei", gasthaus: "Gasthaus", kuhstall: "Kuhstall", huehnerstall: "Hühnerstall", labor: "Labor", gefaengnis: "Gefängnis", bergwerk: "Bergwerk", flickstube: "Flickstube" };
       const z = qu.ziel, ab = Object.keys(Z).filter((k) => NAME[k]).map((k) => [k, Math.hypot(Z[k].x - z.x, Z[k].y - z.y)]).sort((a, b) => a[1] - b[1]);
       const nah = ab[0], fern = ab[ab.length - 1];
@@ -111,6 +111,7 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     await pg.waitForFunction(() => document.querySelector(".lq-dialog .lq-mik button"), null, { timeout: 20000 }).catch(() => {});
     const knopf = await pg.evaluate(() => { const b = document.querySelector(".lq-dialog .lq-mik button"); if (!b) return null; const r = b.getBoundingClientRect(); return { text: b.textContent, h: Math.round(r.height) }; });
     sage(!!knopf && /sprechen/i.test(knopf.text) && knopf.h >= 28, "im Dialog steht der Knopf „🎤 Antwort sprechen“ (≥ 28 px)", JSON.stringify(knopf));
+    await pg.waitForTimeout(700);   // (Klicks in den ersten 0,5 s nach dem Aufgehen zählen als Geisterklick, Fassung 813)
     await pg.evaluate(() => document.querySelector(".lq-dialog .lq-mik button").click());
     await pg.waitForTimeout(700);
     const hoert = await pg.evaluate(() => { const b = document.querySelector(".lq-dialog .lq-mik button"); return b ? { rot: b.classList.contains("lq-hoert"), text: b.textContent } : null; });
