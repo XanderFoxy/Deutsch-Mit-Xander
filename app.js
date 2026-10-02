@@ -4342,19 +4342,41 @@
   const clockOut = document.getElementById("clockOut");
   const hourHand = document.getElementById("clockHour");
   const minuteHand = document.getElementById("clockMinute");
+  /* FASSUNG 838 — XANDER (Funk 263): „die Ladezeit … ca. 10 mal schneller". updateClock baute bei jedem Aufruf zwei neue
+     Datumsformate (toLocaleString mit Zeitzone und Intl.DateTimeFormat) – gemessen 71 ms beim Start auf einem gebremsten
+     Telefon. Die Formate werden jetzt je Zeitzone und Sprache einmal gebaut und gemerkt. BEWUSST var und erst beim
+     ersten Aufruf angelegt: updateClock() läuft schon weiter oben in dieser Datei (vor dieser Zeile). */
+  var uhrFormate;
+  function uhrFormat(sprache, zone, art) {
+    if (!uhrFormate) uhrFormate = new Map();
+    const k = art + "|" + sprache + "|" + zone;
+    let f = uhrFormate.get(k);
+    if (!f) {
+      f = art === "teile" ? new Intl.DateTimeFormat("en-US", { timeZone: zone, hour: "numeric", minute: "numeric", hourCycle: "h23" })
+        : new Intl.DateTimeFormat(sprache, { timeZone: zone, hour: "2-digit", minute: "2-digit" });
+      uhrFormate.set(k, f);
+    }
+    return f;
+  }
   function updateClock() {
     const ort = ortFuerLernraum();
     const now = new Date();
-    const dort = new Date(now.toLocaleString("en-US", { timeZone: ort.zone }));
-    const h = dort.getHours() % 12;
-    const m = dort.getMinutes();
+    let std = 0, min = 0;
+    try {
+      uhrFormat("", ort.zone, "teile").formatToParts(now).forEach((t) => { if (t.type === "hour") std = Number(t.value) % 24; else if (t.type === "minute") min = Number(t.value); });
+    } catch (e) {
+      const dort = new Date(now.toLocaleString("en-US", { timeZone: ort.zone }));
+      std = dort.getHours(); min = dort.getMinutes();
+    }
+    const h = std % 12;
+    const m = min;
     if (hourHand) hourHand.style.transform = `rotate(${h * 30 + m * 0.5}deg)`;
     if (minuteHand) minuteHand.style.transform = `rotate(${m * 6}deg)`;
     if (clockOut) {
-      clockOut.textContent = new Intl.DateTimeFormat(ort.sprache, { timeZone: ort.zone, hour: "2-digit", minute: "2-digit" }).format(now);
+      clockOut.textContent = uhrFormat(ort.sprache, ort.zone, "anzeige").format(now);
       clockOut.title = ort.name;
     }
-    updateDaytimeSky(dort.getHours() * 60 + dort.getMinutes());
+    updateDaytimeSky(std * 60 + min);
   }
 
   // Tageszeiten-Himmel: verläuft fließend über den ganzen Tag statt harter Umschaltpunkte

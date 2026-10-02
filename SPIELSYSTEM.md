@@ -3085,3 +3085,11 @@ Die Messung aus der Diagnose: Wer über „Wissen" ins Klassenzimmer ging, lud d
   - `pruefe-825-licht-klang.js`: Grenze für wieder angehende Fenster 15 % statt 12 %. Seit den späten Häusern sind es 312 Fenster; das gewollte kurze Aufleuchten (Nachteulen) liegt zufällig bei 13,5 % – auf main genauso, am Aussehen nichts geändert.
   - `pruefe-659-verbindung.js` war in 1 von 10 Läufen rot („Wege gebündelt" bei B, Zeitfrage); 837 ändert livechat.js nicht.
 - **Noch nicht umgesetzt (braucht Xanders Entscheidung, Regel 3):** direkter Einstieg ins Klassenzimmer, „erst zuhören, dann reden" ohne Erlaubnis-Dialog, das Klassenzimmer als eigenes schlankes Paket (app.js aufteilen).
+
+## Fassung 838 — Start rechnet weniger, Seiteninhalte nur einmal abgefragt (Funk 263, Puls)
+
+XANDER (Funk 263, wörtlich): „die Ladezeit … ca. 10 mal schneller". Zwei kleine Punkte aus der Ladezeit-Diagnose, ohne sichtbare Änderung:
+
+- **Uhr (`app.js`, `updateClock`)**: baute bei jedem Aufruf zwei neue Datumsformate (`toLocaleString` mit Zeitzone und `Intl.DateTimeFormat`), gemessen 71 ms beim Start auf einem gebremsten Telefon. Die Formate werden jetzt je Zeitzone und Sprache einmal gebaut und gemerkt (`uhrFormat`); Stunde und Minute kommen aus `formatToParts`. Der Merker ist `var` und wird erst beim ersten Aufruf angelegt, weil `updateClock()` schon weiter oben in app.js läuft. Gegengeprüft: in vier Zeitzonen über 24 h halbstündlich dieselbe Uhrzeit wie vorher.
+- **Seiteninhalte (`backend.js`, `getSiteContent`)**: Der 90-s-Merker griff erst nach der Antwort; fragten beim Start mehrere Bereiche gleichzeitig nach demselben Schlüssel, gingen alle Anfragen einzeln hinaus. Läuft schon eine, hängen sich die weiteren jetzt an (`siteContentLaeuft`).
+- Sonden grün: fremde-uhr (+Reihenfolge), 858, ladezeit, 694, 636, 837-italienisch-spiel, 843, runde18, tutor, einladungslink.

@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 837: Ladezeit – Wortschatz/Kalender mit Dateistempel, kein Wortschatz und keine Spieltöne auf dem Weg ins Klassenzimmer, preconnect (Funk 263)",
+  stand: "Fassung 838: Uhr rechnet beim Start weniger, Seiteninhalte nur einmal abgefragt (Funk 263)",
 
   inArbeit: [
-    { seit: "2026-10-02T20:17",
+    { seit: "2026-10-02T20:29",
       text: "Klassenzimmer als eigenes schlankes Paket und direkter Einstieg (wartet auf Xanders Entscheidung), Bilderwelt neu, Tiere/Übersichtskarte, Äcker versetzbar, sfu/aussprache neu ausliefern (wartet auf OK)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-02T20:17",
-      text: "Wortschatz nur nach Änderung neu, Klassenzimmer ohne Wortschatz-Ladung, Spieltöne erst beim Spielen" },
+    { seit: "2026-10-02T20:29",
+      text: "Uhr-Formate gemerkt, gleichzeitige Seiteninhalt-Abfragen zusammengelegt" },
   ],
 };

@@ -1074,11 +1074,22 @@ const Backend = (function () {
   function siteContentVergessen(key) {
     if (key === undefined) siteContentCache.clear(); else siteContentCache.delete(key);
   }
+  /* FASSUNG 838 — XANDER (Funk 263): „die Ladezeit … ca. 10 mal schneller". Der Merker greift erst NACH der Antwort;
+     fragten beim Start mehrere Bereiche gleichzeitig nach demselben Schlüssel, gingen alle Anfragen einzeln hinaus
+     (gemessen: dutzende site_content-Abrufe in den ersten Sekunden). Läuft schon eine Anfrage, hängen sich die
+     weiteren jetzt an sie an. */
+  const siteContentLaeuft = new Map();
   async function getSiteContent(key, frisch) {
     if (!frisch) {
       const merk = siteContentCache.get(key);
       if (merk && Date.now() - merk.zeit < SITE_CACHE_MS) return merk.wert;
+      if (siteContentLaeuft.has(key)) return siteContentLaeuft.get(key);
     }
+    const p = siteContentHolen(key);
+    siteContentLaeuft.set(key, p);
+    try { return await p; } finally { if (siteContentLaeuft.get(key) === p) siteContentLaeuft.delete(key); }
+  }
+  async function siteContentHolen(key) {
     let wert = null;
     if (client) {
       try {

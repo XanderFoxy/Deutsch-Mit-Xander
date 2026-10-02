@@ -3,7 +3,6 @@
  "aussprache-kreisel.js": "b84915102ee9baf8de2a7465296a51302bbe6683",
  "aussprache-pruefung.js": "bc7015f869c26a905ee940e07b4248b97f3a160c",
  "aussprache-tabelle.js": "0a910d56718ff9c2bdadd54a753d196603fb7c9c",
- "backend.js": "59eff5194c2035bfc79068f004e3e3f639307420",
  "bildverwaltung.js": "7826bca845a279707c963d333a59e18d5796fd2e",
  "core.js": "1521d9738253b056eb446f3a68cd5b51f00f311a",
  "data-aussprache-ton.js": "1594c4f349abb3b44bad7af577c1d9a5ac573c85",
@@ -52,6 +51,7 @@
  "livechat.js": "9f5ff7c87502cdf4f179c751ebc9e28cd1998a65",
  "data-vocab.js": "4d1c59095b00c2be502216599ba8328d5402a7fe",
  "spiel.js": "b72c43fc1d11a1b487042da21d14b0c711669247",
- "app.js": "62d54233b71ce94eba5955a60be909edd078540d",
- "data-werkstatt.js": "4115029e092cede86c52873653dfca8627fc02f9"
+ "app.js": "8b2ceb04725293b0c015c2f58bf01a4bb7fc9331",
+ "backend.js": "c6b366da16e1a5ec6e9a4f97c52686c9c151c7ed",
+ "data-werkstatt.js": "d9f3e5b73346c22d0506323e0589e3052d8c1f8c"
 }
