@@ -113,7 +113,9 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     sage(!!knopf && /sprechen/i.test(knopf.text) && knopf.h >= 28, "im Dialog steht der Knopf „🎤 Antwort sprechen“ (≥ 28 px)", JSON.stringify(knopf));
     await pg.waitForTimeout(700);   // (Klicks in den ersten 0,5 s nach dem Aufgehen zählen als Geisterklick, Fassung 813)
     await pg.evaluate(() => document.querySelector(".lq-dialog .lq-mik button").click());
-    await pg.waitForTimeout(700);
+    /* FASSUNG 836 — auf den Zustand warten statt fest 700 ms: unter Last braucht der Mikro-Start (getUserMedia + 0,3 s
+       Signalton + erster Block) länger, dann stand noch „Mikro geht an …“ und die Sonde war rot, obwohl alles stimmte. */
+    await pg.waitForFunction(() => { const b = document.querySelector(".lq-dialog .lq-mik button"); return b && /Ich höre zu/.test(b.textContent); }, null, { timeout: 5000 }).catch(() => {});
     const hoert = await pg.evaluate(() => { const b = document.querySelector(".lq-dialog .lq-mik button"); return b ? { rot: b.classList.contains("lq-hoert"), text: b.textContent, still: !!(STADT.ton && STADT.ton.stillAn) } : null; });
     sage(hoert && hoert.rot, "nach dem Tipp hört das Mikro zu (Knopf rot, „Ich höre zu …“)", JSON.stringify(hoert));
     /* FASSUNG 836 — „Ich höre zu" erst, wenn wirklich aufgenommen wird; die Stadt schweigt so lange */

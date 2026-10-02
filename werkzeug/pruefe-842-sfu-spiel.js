@@ -417,7 +417,7 @@ const MITHOEREN = () => {
   await A.close({ runBeforeUnload: true }).catch(() => {});
   await warte(800);
   const zuA = aufrufe.slice(n4b).concat(direkt).some((a) => a.aktion === "schliessen" && a.alles && a.sitzung === sitzA4);
-  sage(zuA, "beim Schliessen der Seite macht A seine Server-Sitzung zu", JSON.stringify(direkt));
+  sage(zuA, "beim Schliessen der Seite macht A seine Server-Sitzung zu", JSON.stringify(direkt) + " erwartet " + sitzA4);
   const A2 = await seite("aaa", ["bbb"]);
   seiten = [A2, B];
   await messNeu();

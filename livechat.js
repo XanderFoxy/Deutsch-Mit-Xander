@@ -3197,8 +3197,24 @@ window.LiveChat = (function () {
       /* FASSUNG 836 — Messung: wann die Leitung steht und über welchen Weg */
       if (pc.connectionState === "connected" && brueckeJe[anderId] === pc) { aufbauMerk(anderId, "steht"); aufbauWeg(anderId, pc); }
       if (pc.connectionState === "failed" || pc.connectionState === "closed") {
+        var warAktuell = brueckeJe[anderId] === pc;
         brueckeAbbauen(anderId);
         melden();
+        /* FASSUNG 836 — XANDER (Funk 263): „das Gespräch baut sich manchmal erst später auf". Melden sich zwei fast
+           gleichzeitig neu an (beide laden neu), kreuzen sich zwei Angebote; die Leitung scheitert, wird abgebaut – und
+           dann rief niemand mehr an, bis die Wache nach 6 s (beim nächsten Mal 12 s …) es tat. In Sonde 659 blieben so
+           beide Seiten 15 s ohne Leitung. Jetzt ruft die Seite mit der kleineren Kennung nach 0,4 s selbst neu an,
+           höchstens zweimal in 30 s; danach übernimmt wie bisher die Wache. */
+        if (warAktuell && zustand.ichId < anderId && zustand.lage === "drin") {
+          var jetztF = Date.now(), sf = schnellNeuJe[anderId] || (schnellNeuJe[anderId] = []);
+          while (sf.length && jetztF - sf[0] > 30000) sf.shift();
+          if (sf.length < 2) {
+            sf.push(jetztF);
+            setTimeout(function () {
+              if (zustand.lage === "drin" && !brueckeJe[anderId] && zustand.leute[anderId] && belegt() <= PLAETZE) anrufen(anderId);
+            }, 400);
+          }
+        }
       }
     };
     return pc;
@@ -4183,6 +4199,7 @@ window.LiveChat = (function () {
     delete kerzenLager[id];
   }
 
+  var schnellNeuJe = {};   /* FASSUNG 836 — schnelle Neuanrufe nach „failed“ je Gegenüber (Zeitpunkte) */
   function brueckeAbbauen(id) {
     wacheBeenden(id);
     tonAbklemmen(id);

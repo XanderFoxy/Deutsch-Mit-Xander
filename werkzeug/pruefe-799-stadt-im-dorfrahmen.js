@@ -276,7 +276,11 @@ const sage = (gut, was, zusatz) => {
   /* FASSUNG 833 — die Beispielstadt zeigt die fünf späten Häuser (Holzfällerhütte, Marktstand, Schweinestall, Jagdhütte,
      Sternwarte; Funk 255 „tauchen niemals auf der Karte auf"): ihre Zwergbilder (~6 KB) und ihre Einträge im kleinen
      Verzeichnis (gepackt ~5 KB). Wer sie nicht gebaut hat, lädt nur die Einträge. Grenze jetzt 360 KB. */
-  sage(!!last && last.gross === 0 && last.kb < 360, "der kleine Rahmen lädt unter 360 KB: nur Zwergbilder und das kleine Verzeichnis (keine großen Bilder, keine Leute, kein großes Verzeichnis)", JSON.stringify(last && { dateien: last.n, kb: Math.round(last.kb), gross: last.gross }));
+  /* FASSUNG 836 — die Menge schwankt mit dem Zug: fährt er gerade durchs Bild, kommen Lok, Tender und Wagen als
+     Zwergbilder dazu (~20 KB; gemessen 339 KB ohne, 359 KB mit Zug – auf main genauso). Dazu holt 836 ein Bild, das beim
+     ersten Mal nicht kam, nach 4 s noch einmal. Grenze jetzt 380 KB; große Bilder, Leute und das große Verzeichnis bleiben
+     verboten. */
+  sage(!!last && last.gross === 0 && last.kb < 380, "der kleine Rahmen lädt unter 380 KB: nur Zwergbilder und das kleine Verzeichnis (keine großen Bilder, keine Leute, kein großes Verzeichnis)", JSON.stringify(last && { dateien: last.n, kb: Math.round(last.kb), gross: last.gross }));
   const k0 = await imFrame(() => ({ x: window.STADT.kamera.x, y: window.STADT.kamera.y }));
   const scMess = () => pg.evaluate(() => { const e = document.querySelector(".sp-dl-neustadt-platz"); let p = e.parentElement; while (p && p !== document.body && !(p.scrollHeight > p.clientHeight + 2 && /(auto|scroll)/.test(getComputedStyle(p).overflowY))) p = p.parentElement; return { menue: p && p !== document.body ? p.scrollTop : -1, seite: window.scrollY }; });
   const sc0 = await scMess();

@@ -173,6 +173,8 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
   sage(/SFU_START_MS = 14000/.test(lc) && /\}, SFU_START_MS\);/.test(lc), "der ganze Tonserver-Start darf 14 s dauern");
   sage(/Math\.min\(120000, SFU_KURZ_SPERRE_MS \* Math\.pow\(2, sfu\.kurzFehler\+\+\)\)/.test(lc), "vorübergehender Rückfall sperrt 20/40/80 s statt 2 Minuten");
   sage(/if \(!sfuGenug\(halten\)\) \{ sfuBeenden\("allein"\)/.test(lc), "ein kurz Zurückgefallener reißt die anderen nicht mit");
+  /* FASSUNG 836 — nach „failed" ruft die kleinere Kennung nach 0,4 s selbst neu an (höchstens 2× in 30 s) */
+  sage(/schnellNeuJe\[anderId\]/.test(lc) && /if \(sf\.length < 2\)/.test(lc), "nach einer gescheiterten Leitung ruft die kleinere Kennung gleich neu an (nicht erst die Wache)");
 
   const f = A.__fehler.concat(B.__fehler);
   sage(f.length === 0, "keine Fehler in der Konsole", f.slice(0, 3).join(" | "));
