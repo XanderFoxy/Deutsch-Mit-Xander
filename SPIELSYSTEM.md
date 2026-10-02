@@ -3120,3 +3120,22 @@ XANDER (Funk 270, wörtlich): „Ich habe nicht gesagt Vollbild beim Klassenzimm
 - **Messwerkzeug `werkzeug/ladezeit-messen.js`**: Server wie GitHub Pages (gzip, ETag), Leitung 3G/4G, Rechner 4× gebremst, kalt und warm; misst erstes Bild, „bereit", Wissen → Klassenzimmer, KB und Rechenzeit je Datei. Fremde Adressen werden über CDP abgefangen (bei `route()` schaltet Playwright den Zwischenspeicher ab, „warm" wäre dann kalt). Stand 839, 4G: kalt bereit 2,9 s, Klassenzimmer bei 3,3–3,5 s, 3,2–3,6 MB insgesamt; warm 1,0 s / 1,5 s. 3G kalt: bereit 12,0 s. Mit 840: 2,6 MB insgesamt (Filme weg), Kalender nicht mehr auf dem Weg.
 - **Was die 10× wirklich braucht (nächste Schritte)**: Bis „bereit" gehen 2,2 MB über die Leitung, davon app.js 921 KB, spiel.js 273, data-exercises.js 235, satzbau.js 185, korrekturen.css 153. Im 3G sind das 12 s, und app.js ändert sich mit fast jeder Fassung. Als Nächstes: spiel.js, data-exercises.js, satzbau.js erst nach „bereit" laden (mit Rückfall auf das alte Laden, falls etwas fehlt), Tutorbild (176 KB) später.
 - **Sonden**: neu `pruefe-861-leitung-messen.js` (zwei echte Leitungen, beide Berichte mit Zeitleiste, Reihenfolge, Kandidaten, Weg, Größe, neue Zeitleiste nach neuem Gruss, Anruf vor Auftritt und Aufgabe). `pruefe-858-ladeweg.js` prüft zusätzlich: kein Kalendermonat auf dem Weg ins Klassenzimmer, beim Kompass nach ≈ 1,2 s. Grün: 861, 858, 856, 859, 659, einladungslink, runde18, tutor, kein-zoom, runde88-panels, runde23, film-befehl, 642-verlauf-laden, ladezeit.
+
+## Fassung 841 — Kein Angebots-Sturm mehr (Funk 271, erste Zeitleiste)
+
+XANDER (Funk 271, wörtlich): „alles insgesamt nur zehn Mal schneller".
+
+Erste Zeitleiste aus 840 (spiel_diagnose „leitung", 02.10., 22:43, Samsung, Gegenüber Linux-Chrome mit älterer Fassung): Das Handy bekam fünf Angebote, vier davon binnen 17 ms. Die erste Antwort ging erst 3,2 s nach dem ersten Angebot hinaus, die Leitung stand nach 8,7 s (Weg prflx). Vor dem ersten Angebot lagen 15 s, in denen drüben nichts geschah. Danach kamen Gruss und Angebote gesammelt, vermutlich weil die Seite drüben im Hintergrund lag. Das Handy erinnert alle 6 s per „hallo", und jedes gesammelte „hallo" riss drüben die gerade gebaute Leitung ab und baute eine neue, jede mit eigenem Angebot.
+
+- **Sitzung im Gruss (`livechat.js`, `zustand.sitzung`, „hallo")**: Jedes Betreten bekommt eine Kennung, jedes „hallo" trägt sie (in `senden`). Ist es dieselbe Sitzung und die Leitung zu ihm jünger als 8 s und nicht gescheitert, bleibt sie (Erinnerung, kein Neuladen; vermerkt als „halloErinnerung"). Neue Sitzung oder ältere Fassung ohne Kennung: wie bisher neu aufbauen. Das Alter der Leitung steht in `pc.__seit`.
+- **Anrufe bündeln (`anrufen`)**: Mehrere Anrufe binnen 1,5 s auf dieselbe Leitung, deren Angebot noch auf Antwort wartet, werden zu einem („angebotGebuendelt"). Ein Neustart der Wegesuche kommt nie innerhalb dieser 1,5 s (erst nach „disconnected"/„failed" oder von der Wache nach 6 s).
+- **Angebote der Reihe nach (`angebotAnnehmen`/`angebotVerarbeiten`)**: Je Gegenüber eine Reihe; von mehreren wartenden nur das neueste („angebotUeberholt"), höchstens 4 s je Angebot.
+- **Neue Leitung drüben erkennen (`fingerabdruck`)**: Hat ein Angebot einen anderen DTLS-Fingerabdruck als das zuletzt angenommene, gehört es zu einer neuen Leitung der Gegenseite. Dann wird die eigene sofort beim Eintreffen abgebaut („angebotNeueLeitung"), damit die Wege-Kandidaten, die direkt hinterherkommen, ins Zwischenlager gehen und nicht in die alte Leitung. Vorher scheiterte so ein Angebot in der alten Leitung, und es stand bis zur Wache nach 6–12 s nichts.
+- **Gefunden mit Sonde 659 (ältere Fassung drüben)**: Eine geschlossene Leitung lässt laufende Schritte (`setRemoteDescription`, `createAnswer`) für immer offen, so steht es in der WebRTC-Spezifikation. Die neue Reihe hing daran fest. Jetzt setzt `brueckeAbbauen` die Reihe zurück, und jedes Angebot hat höchstens 4 s.
+- **Prüf-Haken**: `LiveChat.pruefLeitungMess()` gibt die Zeitleisten zurück (nur Zahlen).
+- **Sonden**: neu `pruefe-862-angebotssturm.js`:
+  - drei „hallo" derselben Sitzung → ein Angebot, die Leitung steht nach 0,14–0,17 s;
+  - neue Sitzung → baut neu auf und steht;
+  - drei „hallo" ohne Sitzung → steht nach ≈ 0,2 s.
+  
+  `pruefe-659-verbindung.js` (ältere Fassung drüben): war mit dem ersten Entwurf dreimal rot, jetzt dreimal grün (61 ms). `pruefe-861` prüft den ersten Eintrag mit ≤ 5 ms statt genau 0 (Millisekundengrenze).

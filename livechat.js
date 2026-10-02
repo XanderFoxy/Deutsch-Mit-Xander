@@ -3059,6 +3059,7 @@ window.LiveChat = (function () {
        steht." iceCandidatePoolSize: der Browser beginnt schon beim
        Anlegen, Wege zu sammeln — nicht erst beim Angebot. */
     var pc = new RTCPeerConnection(pcKonfig());   // FASSUNG 836 — mit „max-bundle" (siehe pcKonfig)
+    pc.__seit = Date.now();   // FASSUNG 841 — Alter der Leitung (siehe „hallo")
     brueckeJe[anderId] = pc;
     /* Der Spielkanal muss VOR dem Angebot stehen, sonst steht er nicht
        in der Beschreibung (siehe datenkanalAnlegen). */
@@ -4221,6 +4222,9 @@ window.LiveChat = (function () {
     delete kanalJe[id]; delete kanalBereit[id];
     if (kerzenAusgang[id]) { clearTimeout(kerzenAusgang[id].uhr); delete kerzenAusgang[id]; }
     delete spurenJe[id];
+    /* FASSUNG 841 — eine geschlossene Leitung lässt laufende Schritte (setRemoteDescription, createAnswer) für immer
+       offen (so steht es in der WebRTC-Spezifikation); die Reihe der Angebote darf darauf nicht warten (Sonde 659). */
+    if (annahmeJe[id]) { annahmeJe[id].fp = ""; annahmeJe[id].kette = Promise.resolve(); }
     /* FASSUNG 827 — die Netz-Leitung ist weg, die Server-Stimme nicht:
        gleich wieder einhängen (tonAbklemmen hat das Element genommen). */
     if (sfu.empfang[id]) setTimeout(function () { sfuSpurEinsetzen(id); }, 0);
@@ -4245,8 +4249,20 @@ window.LiveChat = (function () {
     };
   }
 
+  /* FASSUNG 841 — mehrere Anrufe binnen 1,5 s auf DIESELBE Leitung, deren Angebot noch auf Antwort wartet, werden zu einem
+     (Gruss, Puls und Wache konnten im selben Augenblick anrufen; jedes neue Angebot machte das vorige wertlos, die Antwort
+     darauf passte nicht mehr). Ein Neustart der Wegesuche (restartIce) braucht ein neues Angebot – er kommt aber erst nach
+     „disconnected"/„failed" oder von der Wache nach 6 s, also nie innerhalb dieser 1,5 s. */
+  var angebotRaus = {};
+  var sitzungVon = {};
   function anrufen(anderId) {
     var pc = bruecke(anderId, true);
+    var vorher = angebotRaus[anderId];
+    if (vorher && vorher.pc === pc && pc.signalingState === "have-local-offer" && Date.now() - vorher.t < 1500) {
+      leitungMerk(anderId, "angebotGebuendelt");
+      return Promise.resolve();
+    }
+    angebotRaus[anderId] = { pc: pc, t: Date.now() };
     aufbauMerk(anderId, "angebot");   // FASSUNG 836 — Messung
     return pc.createOffer().then(function (angebot) {
       return pc.setLocalDescription(angebot).then(function () {
@@ -4256,10 +4272,39 @@ window.LiveChat = (function () {
     }).catch(function () {});
   }
 
+  /* FASSUNG 841 — Angebote je Gegenüber der Reihe nach, und von mehreren wartenden nur das NEUESTE: am 22:43 kamen vier
+     binnen 17 ms; alle liefen gleichzeitig in dieselbe Leitung, die erste Antwort ging erst nach 3,2 s hinaus und passte
+     nicht mehr zum letzten Angebot drüben. */
+  var annahmeJe = {};
   function angebotAnnehmen(vonId, beschreibung) {
-    var pc = bruecke(vonId, false);
     aufbauMerk(vonId, "angebotDa");   // FASSUNG 836 — Messung
     leitungMerk(vonId, "angebotDa");  // FASSUNG 840
+    var a = annahmeJe[vonId] || (annahmeJe[vonId] = { kette: Promise.resolve(), nr: 0, fp: "" });
+    /* Neue Leitung drüben? Gleich JETZT abbauen, nicht erst in der Reihe: die Wege-Kandidaten zum neuen Angebot kommen
+       direkt hinterher und müssen ins Zwischenlager (kerzenLager), nicht in die alte Leitung (Sonde 659). */
+    var neuFp = fingerabdruck(beschreibung && beschreibung.sdp);
+    var altPc = brueckeJe[vonId];
+    var altFp = a.fp || (altPc && altPc.remoteDescription && fingerabdruck(altPc.remoteDescription.sdp)) || "";
+    if (altPc && neuFp && altFp && neuFp !== altFp) {
+      leitungMerk(vonId, "angebotNeueLeitung");
+      brueckeAbbauen(vonId);
+    }
+    if (neuFp) a.fp = neuFp;
+    var meine = ++a.nr;
+    a.kette = a.kette.then(function () {
+      if (meine !== a.nr) { leitungMerk(vonId, "angebotUeberholt"); return; }
+      /* höchstens 4 s je Angebot – danach geht die Reihe weiter, auch wenn der Browser nie antwortet */
+      return Promise.race([angebotVerarbeiten(vonId, beschreibung), new Promise(function (r) { setTimeout(r, 4000); })]);
+    }).catch(function () {});
+    return a.kette;
+  }
+  /* FASSUNG 841 — kommt ein Angebot von einer NEUEN Leitung der Gegenseite (anderer DTLS-Fingerabdruck als die, mit der
+     wir gerade verhandeln), gehört es nicht in unsere alte Leitung: dort scheitert es (die Wege passen nicht), und es stand
+     bis zur Wache nach 6–12 s nichts. So kam es bei älteren Fassungen nach mehreren „hallo" und wenn ein Gruss verloren
+     ging. Dann wird hier frisch angefangen. */
+  function fingerabdruck(sdp) { var m = /a=fingerprint:(\S+ \S+)/.exec(String(sdp || "")); return m ? m[1] : ""; }
+  function angebotVerarbeiten(vonId, beschreibung) {
+    var pc = bruecke(vonId, false);
     return pc.setRemoteDescription(new RTCSessionDescription(beschreibung))
       .then(function () { spurenNachtragen(vonId, pc); return pc.createAnswer(); })
       .then(function (antwort) {
@@ -5116,6 +5161,7 @@ window.LiveChat = (function () {
     nutzlast.von = zustand.ichId;
     nutzlast.kf = 1;     /* Fassung 659: „ich verstehe gebündelte Kerzen" */
     if (nutzlast.art === "hallo") sfuHalloFelder(nutzlast);  /* FASSUNG 842 */
+    if (nutzlast.art === "hallo" && zustand.sitzung && !nutzlast.sitzung) nutzlast.sitzung = zustand.sitzung;   /* FASSUNG 841 */
     if (spielKennung && !nutzlast.spiel) nutzlast.spiel = spielKennung;
     /* Zum Nachmessen: die Pakete abfangen, ohne dass ein Raum offen
        sein muss. Im Betrieb ist der Haken immer null. */
@@ -5302,6 +5348,20 @@ window.LiveChat = (function () {
          beiden nicht". */
       /* FASSUNG 842 — nur der Raumkanal war kurz weg („wieder") und die
          Leitung zu ihm steht: dann bleibt sie. */
+      /* FASSUNG 841 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller". Die Zeitleiste vom 02.10., 22:43
+         (Samsung, Fassung 840) zeigt: das Handy bekam FÜNF Angebote, vier davon innerhalb von 17 ms. Das andere Gerät hatte
+         mehrere „hallo" auf einmal abgearbeitet (das Handy erinnert alle 6 s per „hallo", wenn keine Leitung steht; lag die
+         Seite drüben kurz im Hintergrund, kamen sie gesammelt an). Jedes „hallo" riss die gerade gebaute Leitung ab und
+         baute eine neue – jede mit eigenem Angebot. Das Handy beantwortete Angebote von Leitungen, die es drüben schon nicht
+         mehr gab; die Leitung stand erst nach 8,7 s. Jetzt trägt jedes „hallo" eine Kennung des Betretens (sitzung). Ist es
+         dieselbe Sitzung und die Leitung zu ihm jünger als 8 s und nicht gescheitert, bleibt sie – das ist eine Erinnerung,
+         kein Neuladen. Ohne Kennung (ältere Fassung) wie bisher. */
+      var halloPc = brueckeJe[n.von];
+      var halloErinnerung = Boolean(n.sitzung && sitzungVon[n.von] === n.sitzung && halloPc && !steht(halloPc)
+        && halloPc.connectionState !== "failed" && halloPc.connectionState !== "closed"
+        && Date.now() - (halloPc.__seit || 0) < 8000);
+      if (n.sitzung) sitzungVon[n.von] = n.sitzung;
+      if (halloErinnerung) { leitungMerk(n.von, "halloErinnerung"); return; }
       if (brueckeJe[n.von] && !(n.wieder === true && steht(brueckeJe[n.von]))) brueckeAbbauen(n.von);
       if (!(n.wieder === true && brueckeJe[n.von])) { delete leitungMess[n.von]; leitungMerk(n.von, "hallo"); }   // FASSUNG 840
       sfuNeustartVon(n.von, n);  /* FASSUNG 827/842 */
@@ -6924,6 +6984,9 @@ window.LiveChat = (function () {
     sitzTausch = {};              // und kein Tausch aus dem alten Raum
     spielSitz = {};
     zustand.seit = Date.now();
+    /* FASSUNG 841 — eine Kennung je Betreten (siehe „hallo"): damit unterscheidet die Gegenseite ein echtes Neuladen von
+       einer Erinnerung derselben Sitzung. */
+    zustand.sitzung = Math.random().toString(36).slice(2, 10);
     zustand.spricht = false;
     zustand.thema = gemerktesThema(zustand.raum);
     /* Und die Fokus-Regel dazu — siehe gemerkterFokus(). Ein
@@ -17358,6 +17421,8 @@ window.LiveChat = (function () {
     sfuBericht: sfuBericht,
     /* Fassung 659 — nur zum Nachprüfen: Stand des Spielkanals, und eine
        Gegenseite wie eine alte Fassung behandeln. */
+    /* FASSUNG 841 — nur zum Nachprüfen: die Zeitleisten je Gegenüber (siehe leitungMerk) */
+    pruefLeitungMess: function () { return JSON.parse(JSON.stringify(leitungMess)); },
     pruefKanal: function () { return { bereit: Object.keys(kanalBereit), offen: Object.keys(kanalJe).filter(function (id) { return kanalJe[id].readyState === "open"; }) }; },
     pruefBuendelVergessen: function (id) { delete buendelFaehig[id]; },
     pruefWarteschlange: function () { return liveWarteschlange.map(function (w) { return w.id; }); },

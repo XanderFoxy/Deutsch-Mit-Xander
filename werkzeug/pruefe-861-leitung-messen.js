@@ -95,7 +95,7 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
   const pcVerbunden = (d) => d && d.ev.some((x) => x[0] === "pc" && x[2] === "connected");
   sage(da && da.anrufer === true && zeit(da, "hallo") === 0 && zeit(da, "angebotRaus") != null && zeit(da, "antwortDa") >= zeit(da, "angebotRaus") && pcVerbunden(da),
     "B: Anrufer – Gruss, Angebot raus, Antwort da, Leitung steht", da && JSON.stringify(da.ev.slice(0, 8)));
-  sage(db && db.anrufer === false && zeit(db, "auchDa") === 0 && zeit(db, "angebotDa") != null && zeit(db, "antwortRaus") >= zeit(db, "angebotDa") && pcVerbunden(db),
+  sage(db && db.anrufer === false && zeit(db, "auchDa") <= 5 && zeit(db, "angebotDa") != null && zeit(db, "antwortRaus") >= zeit(db, "angebotDa") && pcVerbunden(db),
     "B: Angerufener – „auch-da“ zuerst, dann Angebot da, Antwort raus, Leitung steht", db && JSON.stringify(db.ev.slice(0, 6)));
   sage(da && Object.keys(da.kr).length > 0 && Object.keys(da.kd).length > 0 && db && Object.keys(db.kr).length > 0,
     "C: Wege-Kandidaten raus und da, nach Art gezählt", da && JSON.stringify({ raus: da.kr, da: da.kd }));

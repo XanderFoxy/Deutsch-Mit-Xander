@@ -49,30 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 840: Leitung je Gegenüber gemessen, Filme und Kalender nicht mehr auf dem Weg ins Klassenzimmer (Funk 271)",
+  stand: "Fassung 841: kein Angebots-Sturm mehr – Gruss mit Sitzung, Anrufe gebündelt, nur das neueste Angebot (Funk 271)",
 
   inArbeit: [
-    { seit: "2026-10-02T22:27",
+    { seit: "2026-10-02T22:54",
       text: "Schlanker Start: spiel.js, Übungen und Satzbau erst nach dem Aufbau laden, mit Rückfall (Funk 271)" },
-    { seit: "2026-10-02T22:27",
+    { seit: "2026-10-02T22:54",
       text: "Bilderwelt neu, Ort für Ort (Funk 263)" },
-    { seit: "2026-10-02T22:27",
+    { seit: "2026-10-02T22:54",
       text: "Tiere und Übersichtskarte, Äcker versetzbar" },
-    { seit: "2026-10-02T22:27",
+    { seit: "2026-10-02T22:54",
       text: "sfu/aussprache neu ausliefern (wartet auf OK)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-02T22:27",
-      text: "Zeitleiste je Leitung auf beiden Seiten (spiel_diagnose „leitung“)" },
-    { seit: "2026-10-02T22:27",
-      text: "Anruf beginnt gleich nach dem Gruss" },
-    { seit: "2026-10-02T22:27",
-      text: "Filme erst im Raum, wenn alle Leitungen stehen" },
-    { seit: "2026-10-02T22:27",
-      text: "Kalender erst, wenn der Kompass bleibt" },
-    { seit: "2026-10-02T22:27",
-      text: "Vollbild verworfen (Funk 270)" },
+    { seit: "2026-10-02T22:54",
+      text: "Wiederholter Gruss reisst eine junge Leitung nicht mehr ab" },
+    { seit: "2026-10-02T22:54",
+      text: "Mehrere Anrufe im selben Augenblick = ein Angebot" },
+    { seit: "2026-10-02T22:54",
+      text: "Angebote der Reihe nach, nur das neueste" },
+    { seit: "2026-10-02T22:54",
+      text: "Angebot einer neuen Leitung: sofort frisch anfangen" },
   ],
 };
