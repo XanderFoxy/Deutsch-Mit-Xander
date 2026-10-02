@@ -734,7 +734,7 @@
   function lautFaktor() { return LAUT_STUFEN[lautStufe()][1]; }
   function lautSetzen(n) {
     try { localStorage.setItem("dma_spiel_laut", String(n)); } catch (e) {}
-    if (KLANG.master && !KLANG.stillAufnahme && !KLANG.stillSprechen && !KLANG.stillUebung) try { KLANG.master.gain.value = 0.62 * lautFaktor(); } catch (e) {}
+    if (KLANG.master && !KLANG.stillAufnahme && !KLANG.stillSprechen && !KLANG.stillUebung && !KLANG.stillStadt) try { KLANG.master.gain.value = 0.62 * lautFaktor(); } catch (e) {}
   }
   /* FASSUNG 769 — XANDER (Funk 192): „wenn ich im Dorf bin und ich schicke dir eine Sprachnachricht dass er vorübergehend
      die Sounds von doof ausgeschaltet werden wenn ich eine Sprachnachricht schicke". Solange livechat.js aufnimmt, blendet
@@ -743,7 +743,7 @@
      spreche innerhalb des Livestreams". Still ist das Spiel jetzt, solange (a) eine Sprachnachricht aufgenommen wird,
      (b) man selbst am offenen Mikrofon spricht (livechat.js meldet es) oder (c) die Aussprache-Übung zuhört. */
   function stilleSetzen() {
-    var still = Boolean(KLANG.stillAufnahme || KLANG.stillSprechen || KLANG.stillUebung);
+    var still = Boolean(KLANG.stillAufnahme || KLANG.stillSprechen || KLANG.stillUebung || KLANG.stillStadt);
     var k = KLANG.ctx;
     if (!k || !KLANG.master) return;
     try { KLANG.master.gain.cancelScheduledValues(k.currentTime); KLANG.master.gain.setTargetAtTime(still ? 0 : 0.62 * lautFaktor(), k.currentTime, still ? 0.04 : 0.25); } catch (e) {}
@@ -14016,6 +14016,7 @@
     document.removeEventListener("scroll", lsFolgen, true);
     try { LSTADT.el.remove(); } catch (e) {}
     LSTADT = null;
+    if (KLANG.stillStadt) { KLANG.stillStadt = false; stilleSetzen(); }   // FASSUNG 836 — Rahmen weg mitten in der Aufnahme
     SF.el = null; SF.html = ""; SF.g = ""; SF.frei = "";   // FASSUNG 833 — das Stationsfenster lag im Rahmen
     bahnFenster();
   }
@@ -14102,6 +14103,8 @@
       if (!LSTADT || ev.origin !== location.origin || !ev.data || ev.source !== LSTADT.rahmen.contentWindow) return;
       if (ev.data.typ === "leicht-zu") lsVoll(false);
       if (ev.data.typ === "leicht-scroll") lsScroll(ev.data);
+      /* FASSUNG 836 — die Stadt nimmt für eine Quest auf: das Spiel drumherum schweigt so lange (wie bei Funk 199) */
+      if (ev.data.typ === "leicht-mikro") { KLANG.stillStadt = Boolean(ev.data.an); stilleSetzen(); }
       /* FASSUNG 827 — XANDER (Funk 248): „ein kleines kompaktes schwebendes Menü über dem Chat … damit man die Richtungen
          herausfinden kann und im Bild bleibt". Die Stadt braucht für den Quest-Dialog einen Streifen unter dem Bild: der Rahmen
          wächst um so viel nach unten und liegt dort über dem, was darunter kommt (Chat). Reicht der Platz im Fenster nicht,

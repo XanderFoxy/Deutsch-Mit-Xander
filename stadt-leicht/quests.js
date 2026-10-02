@@ -1125,19 +1125,39 @@
       });
     }
   }
+  /* FASSUNG 836 — BETREIBER-DIAGNOSE (nur für den Betreiber oder mit ?sprdiag=1): die letzte Aufnahme anhören, so wie
+     sie an Azure ging (16 kHz), und sehen, was Azure geliefert hat. Dann ist klar, ob das Audio selbst schlecht ist
+     oder Azure falsch rät. Gespeichert wird nichts, alles bleibt im Browser. */
+  let sprDiagUrl = "";
+  function sprDiagnose(wo) {
+    try {
+      const darf = (ST.spiel && ST.spiel.betreiber) || /[?&]sprdiag=1/.test(location.search);
+      const L0 = SPR.letzte; if (!darf || !wo || !L0 || !L0.wav) return;
+      let el = wo.querySelector(".lq-sprdiag"); if (!el) { el = document.createElement("div"); el.className = "lq-sprdiag"; el.style.cssText = "font-size:11px;opacity:.75;margin-top:3px;line-height:1.3"; wo.appendChild(el); }
+      if (sprDiagUrl) URL.revokeObjectURL(sprDiagUrl);
+      const b = atob(L0.wav), u8 = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u8[i] = b.charCodeAt(i);
+      sprDiagUrl = URL.createObjectURL(new Blob([u8], { type: "audio/wav" }));
+      const az = L0.azure || {}, nb = (az.nbest || []).map((x) => x.d + (x.l && x.l !== x.d ? " / " + x.l : "") + (x.c != null ? " (" + Math.round(x.c * 100) + " %)" : "")).join(" · ");
+      el.innerHTML = "";
+      const a = document.createElement("a"); a.href = sprDiagUrl; a.target = "_blank"; a.rel = "noopener"; a.textContent = "▶ Aufnahme"; a.addEventListener("click", (ev) => ev.stopPropagation());
+      el.append(a, document.createTextNode(" · Gerät " + L0.rate + " Hz → 16 kHz · Azure: " + (nb || az.text || "–")));
+    } catch (e) {}
+  }
   const SPR_FEHLER = { "nichts-gehoert": "Ich habe nichts gehört. Tippe auf 🎤 und sprich.", "nicht-angemeldet": "Zum Sprechen bitte anmelden.", "tagesgrenze": "Für heute ist das Sprechen aufgebraucht – morgen geht es wieder.", "kontingent": "Die Spracherkennung ist gerade ausgelastet.", "kein-zentraler-schluessel": "Die Spracherkennung ist noch nicht eingerichtet." };
   function sprechenLos(qu, mk, ms, hinweis, liste) {
     if (SPR.laeuft()) { SPR.stopp(); return; }
     if (qu.f.zustand !== "offen") return;
     SPR.still(); SPR.autoSetzen(true);
     const zurueck = () => { mk.classList.remove("lq-hoert"); mk.textContent = "🎤 Noch einmal sprechen"; mk.disabled = false; };
-    mk.classList.add("lq-hoert"); mk.textContent = "● Ich höre zu … (tippen = fertig)"; ms.textContent = "";
-    SPR.aufnehmen((p) => mk.style.setProperty("--pegel", p.toFixed(2)))
+    mk.classList.add("lq-hoert"); mk.textContent = "● Mikro geht an …"; ms.textContent = "";
+    SPR.aufnehmen((p) => mk.style.setProperty("--pegel", p.toFixed(2)), () => { if (mk.classList.contains("lq-hoert")) mk.textContent = "● Ich höre zu … (tippen = fertig)"; })
       .then((wav) => { mk.classList.remove("lq-hoert"); mk.textContent = "… ich verstehe"; mk.disabled = true; return SPR.erkennen(wav); })
       .then((les) => {
         if (!dialog || dialog.qu !== qu || qu.f.zustand !== "offen") return;
         const e = SPR.pruefen(qu, les);
-        ms.textContent = e.text ? "Du: „" + e.text + "“" : "";
+        const zeig = e.text && les && les.anzeige && les.anzeige[e.text] || e.text;
+        ms.textContent = zeig ? "Du: „" + zeig + "“" : "";
+        sprDiagnose(mk.parentNode);
         hinweis.classList.toggle("lq-gut", e.stufe > 0);
         if (e.stufe > 0) {
           qu.gesprochen = e.stufe;
@@ -1529,27 +1549,46 @@
   let sprLauf = null;
   SPR.laeuft = () => !!sprLauf;
   SPR.stopp = () => { if (sprLauf) sprLauf.stopp(); };
-  SPR.aufnehmen = function (pegel) {
-    return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).then((strom) => new Promise((fertig, fehler) => {
+  /* FASSUNG 836 — XANDER (Funk 263): „dann ist die Spracherkennung von Azure noch … unmöglich … sie hört oft falsche
+     Wörter". Die Diagnose fand den größten Teil in der eigenen Aufnahme, nicht bei Azure:
+     - Rauschunterdrückung und Pegelautomatik waren an. Der Aussprachetrainer hat beide längst aus, gemessen: „die
+       Rauschunterdrückung schneidet Reibelaute (s, sch, ch, f) weg, weil sie wie Rauschen aussehen" (57 % → 65 %).
+       Genau diese Laute tragen die Endungen (-st, -s, -en). Jetzt wie im Trainer: Echo weg, sonst nichts verbiegen.
+     - Die Umrechnung auf 16 kHz nahm einfach den nächsten Abtastwert: bei 48 kHz falten sich Zischlaute über 8 kHz
+       ungedämpft ins Sprachband zurück, bei 44,1 kHz kommt ein Zeitversatz dazu (siehe auf16k).
+     - Die Stadt spielte während der Aufnahme weiter (siehe T.still in ton.js) – und das Spiel drumherum auch.
+     - „Ich höre zu" stand schon da, bevor das Mikro lief; wer gleich losredete, verlor die erste Silbe. Jetzt steht
+       es erst, wenn wirklich aufgenommen wird (bereit). */
+  function stilleSetzen(an) {
+    try { if (ST.ton && ST.ton.still) ST.ton.still(an); } catch (e) {}
+    try { if (imRahmen) window.parent.postMessage({ typ: "leicht-mikro", an: !!an }, location.origin); } catch (e) {}
+  }
+  SPR.aufnehmen = function (pegel, bereit) {
+    return navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: false, autoGainControl: false } }).then((strom) => new Promise((fertig, fehler) => {
       const AC = window.AudioContext || window.webkitAudioContext, ctx = new AC();
       const quelle = ctx.createMediaStreamSource(strom), proz = ctx.createScriptProcessor(4096, 1, 1), stumm = ctx.createGain(); stumm.gain.value = 0;
+      stilleSetzen(true);
       /* FASSUNG 830 — XANDER (Funk 257): „Es fehlt der Signalton beim einsprechen bei den Aufgaben". Zwei kurze helle Töne
          (aufwärts) = jetzt sprechen; die ersten 0,3 s (der Ton selbst) werden nicht aufgenommen. Am Ende zwei Töne abwärts. */
       try { if (ctx.resume) ctx.resume(); } catch (e) {}
       signal(ctx, true);
-      const teile = []; let sprach = false, stilleSeit = 0, ab = performance.now() + 300, aus = false;
+      const teile = []; let sprach = false, stilleSeit = 0, ab = performance.now() + 300, aus = false, gemeldet = false;
       const stopp = () => {
         if (aus) return; aus = true; sprLauf = null;
         try { proz.disconnect(); quelle.disconnect(); stumm.disconnect(); } catch (e) {}
         strom.getTracks().forEach((t) => t.stop());
         const rate = ctx.sampleRate; signal(ctx, false); setTimeout(() => { try { ctx.close(); } catch (e) {} }, 400);
+        setTimeout(() => stilleSetzen(false), 350);
         if (!sprach) { fehler(new Error("nichts-gehoert")); return; }
-        fertig(wavBase64(teile, rate));
+        const wav = wavBase64(teile, rate);
+        SPR.letzte = { wav: wav, rate: rate, azure: null };   // FASSUNG 836 — für die Betreiber-Diagnose
+        fertig(wav);
       };
       sprLauf = { stopp: stopp };
       proz.onaudioprocess = (e) => {
         const jetzt = performance.now();
         if (jetzt < ab || aus) return;
+        if (!gemeldet) { gemeldet = true; try { if (bereit) bereit(); } catch (x) {} }
         const d = e.inputBuffer.getChannelData(0); teile.push(new Float32Array(d));
         let s = 0; for (let i = 0; i < d.length; i++) s += d[i] * d[i];
         const rms = Math.sqrt(s / d.length);
@@ -1574,15 +1613,42 @@
     } catch (e) {}
   }
   SPR.signal = signal;
-  function wavBase64(teile, rate) {
+  /* FASSUNG 836 — SAUBER AUF 16 kHz. Vorher: der nächste Abtastwert, ohne Filter. Das faltet alles über 8 kHz (die
+     Zischlaute) zurück ins Sprachband – ein 11-kHz-Anteil kam bei 48 kHz mit voller Stärke als 5 kHz an. Jetzt ein
+     Tiefpass bei 7 kHz (Sinc mit Blackman-Fenster, 24 Ausgabe-Abtastwerte breit) und Zwischenwerte an der genauen
+     Stelle, auch bei 44,1 kHz. Die Tabelle wird je Gerätefrequenz einmal gebaut; 12 s Aufnahme ≈ 9 Mio. Schritte. */
+  const SINC = {};
+  function auf16k(teile, rate) {
     let n = 0; for (const t of teile) n += t.length;
+    const x = new Float32Array(n); let o = 0; for (const t of teile) { x.set(t, o); o += t.length; }
     const f = rate / 16000, m = Math.floor(n / f), pcm = new Int16Array(m);
-    let t = 0, off = 0;
-    for (let i = 0; i < m; i++) {
-      const pos = i * f; while (t < teile.length && pos - off >= teile[t].length) { off += teile[t].length; t++; }
-      if (t >= teile.length) break;
-      const v = Math.max(-1, Math.min(1, teile[t][Math.floor(pos - off)])); pcm[i] = v < 0 ? v * 0x8000 : v * 0x7fff;
+    const zu = (v) => { v = v > 1 ? 1 : v < -1 ? -1 : v; return v < 0 ? v * 0x8000 : v * 0x7fff; };
+    if (Math.abs(f - 1) < 1e-6) { for (let i = 0; i < m; i++) pcm[i] = zu(x[i]); return pcm; }
+    const R = 32, N = Math.ceil(12 * Math.max(1, f)), fc = Math.min(7000, 0.44 * rate) / rate;
+    let h = SINC[rate];
+    if (!h) {
+      h = SINC[rate] = new Float32Array(2 * N * R + 2);
+      for (let j = 0; j < h.length; j++) {
+        const t = j / R - N; if (Math.abs(t) > N) continue;
+        const s = t === 0 ? 2 * fc : Math.sin(2 * Math.PI * fc * t) / (Math.PI * t);
+        h[j] = s * (0.42 + 0.5 * Math.cos(Math.PI * t / N) + 0.08 * Math.cos(2 * Math.PI * t / N));
+      }
     }
+    for (let i = 0; i < m; i++) {
+      const pos = i * f, k0 = Math.floor(pos), fr = pos - k0;
+      let s = 0, ws = 0;
+      for (let k = 1 - N; k <= N; k++) {
+        const j = k0 + k; if (j < 0 || j >= n) continue;
+        const t = (k - fr + N) * R, ti = t | 0, w = h[ti] + (h[ti + 1] - h[ti]) * (t - ti);
+        s += x[j] * w; ws += w;
+      }
+      pcm[i] = zu(ws > 1e-6 ? s / ws : 0);
+    }
+    return pcm;
+  }
+  SPR.auf16k = auf16k;   // für die Sonde
+  function wavBase64(teile, rate) {
+    const pcm = auf16k(teile, rate);
     const buf = new ArrayBuffer(44 + pcm.length * 2), dv = new DataView(buf), w = (o, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
     w(0, "RIFF"); dv.setUint32(4, 36 + pcm.length * 2, true); w(8, "WAVE"); w(12, "fmt "); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
     dv.setUint32(24, 16000, true); dv.setUint32(28, 32000, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true); w(36, "data"); dv.setUint32(40, pcm.length * 2, true);
@@ -1591,12 +1657,19 @@
     return btoa(s);
   }
   /* Azure: was wurde gesagt? (die besten Lesarten) */
+  /* FASSUNG 836 — Azure schreibt im Display-Feld Zahlen als Ziffern: „Heute ist der 2. Oktober" passt dann gleich gut
+     zu „zweite" wie zu „zwei", und „7,50 €" verdeckt „Komma" oder „Euros". Darum zählt jetzt auch die Lexical-Lesart
+     (so, wie es gesprochen wurde: „heute ist der zweite oktober"). Angezeigt wird weiter die Display-Fassung. */
   SPR.erkennen = function (wav) {
     return sprRufen({ aktion: "erkennen", wav: wav, sprache: "de-DE" }).then((j) => {
       const nb = Array.isArray(j && j.NBest) ? j.NBest : [];
-      const lesarten = nb.map((x) => String(x.Display || x.Lexical || "")).filter(Boolean);
-      if (j && j.DisplayText && lesarten.indexOf(j.DisplayText) < 0) lesarten.unshift(String(j.DisplayText));
-      return lesarten.slice(0, 4);
+      const lesarten = [], anzeige = {};
+      const dazu = (t, zeig) => { t = String(t || "").trim(); if (!t || lesarten.indexOf(t) >= 0) return; lesarten.push(t); anzeige[t] = String(zeig || t); };
+      if (j && j.DisplayText) dazu(j.DisplayText);
+      nb.slice(0, 4).forEach((x) => { dazu(x.Display || x.Lexical); if (x.Lexical) dazu(x.Lexical, x.Display || x.Lexical); });
+      if (SPR.letzte) SPR.letzte.azure = { text: j && j.DisplayText || "", nbest: nb.slice(0, 3).map((x) => ({ d: x.Display || "", l: x.Lexical || "", c: x.Confidence })) };
+      const r = lesarten.slice(0, 8); r.anzeige = anzeige;
+      return r;
     });
   };
 
@@ -1836,14 +1909,19 @@
         else if (l && !l.ok) e = { stufe: 0, text: t, grund: Nom(l.genannt) + " ist zu weit weg " + vonDat(qu.ziel) + "." };
         else e = { stufe: 0, text: t, grund: "Sag, wie " + (qu.v.person.er ? "er" : "sie") + " gehen soll: geradeaus, links, rechts … oder wo " + nom(qu.ziel) + " ist (neben …)." };
       } else {
-        let bi = -1, bs = 0;
-        qu.antworten.forEach((a, i) => { const s = aehnlich(t, ohneHtml(a.html)); if (s > bs) { bs = s; bi = i; } });
+        let bi = -1, bs = 0, bR = 0, bF = 0;
+        qu.antworten.forEach((a, i) => { const s = aehnlich(t, ohneHtml(a.html)); if (s > bs) { bs = s; bi = i; } if (a.richtig) bR = Math.max(bR, s); else bF = Math.max(bF, s); });
         const a = qu.antworten[bi];
+        /* FASSUNG 836 — liegen die beste richtige und die beste falsche Antwort gleichauf (weniger als 0,1 auseinander),
+           entschied bisher die Reihenfolge der Knöpfe. Jetzt: kein Urteil, kein Versuch weg – noch einmal sagen
+           (die Lexical-Lesart entscheidet meist schon vorher). */
+        const knapp = bR >= 0.45 && bF >= 0.45 && Math.abs(bR - bF) < 0.1;
         /* (830: die freie Prüfung entscheidet, wo es sie gibt – „Eine Fahrkarte, bitte.“ ähnelt dem Vorschlag, sagt aber nicht wohin;
            nur der Vorschlag selbst, Wort für Wort, zählt ohne sie) */
         const genau = a && a.richtig && klein(t) === klein(ohneHtml(a.html)), fr = !genau && freiPruefen(qu, t);
         if (genau) e = { stufe: 1, text: t, i: bi, grund: "Genau richtig!" };
         else if (fr) e = fr;
+        else if (knapp) e = { stufe: 0, text: t, ohneVersuch: true, grund: "Das habe ich nicht sicher verstanden – sag es bitte noch einmal, etwas deutlicher." };
         else if (a && a.richtig && bs >= 0.75) e = { stufe: 1, text: t, i: bi, grund: "Genau richtig!" };
         else if (a && a.richtig && bs >= 0.45) e = { stufe: 0.5, text: t, i: bi, grund: "In etwa richtig – genau hieße es: „" + ohneHtml(a.html) + "“" };
         else if (a && !a.richtig && bs >= 0.45) e = { stufe: 0, text: t, i: bi, weg: a.weg, grund: a.hinweis || "Hm, das stimmt noch nicht." };

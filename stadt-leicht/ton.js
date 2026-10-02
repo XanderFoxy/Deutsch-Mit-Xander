@@ -57,6 +57,15 @@
     return stufe() > 0;
   };
   T.faktor = function () { return ZWANG === "1" ? 1 : STUFEN[stufe()]; };
+  /* FASSUNG 836 — Diagnose zu Funk 263 („die Spracherkennung von Azure … hört falsch"): Während man in einer Quest spricht,
+     liefen Glocke, Baustelle, Motoren und Schienen weiter und landeten in der Aufnahme. Wie im Spiel seit Fassung 773
+     (XANDER, Funk 199: „die Töne des Spiels werden immer noch nicht stumm geschalten wenn ich mit dir spreche") blendet
+     die Stadt ihren Klang aus, solange das Mikro offen ist, und danach weich wieder ein. */
+  T.still = function (an) {
+    T.stillAn = !!an;
+    const k = T.ctx; if (!k || !master) return;
+    try { master.gain.cancelScheduledValues(k.currentTime); master.gain.setTargetAtTime(an ? 0 : 0.5, k.currentTime, an ? 0.04 : 0.25); } catch (e) {}
+  };
 
   /* Tonanlage erst nach einer Berührung (Browser-Regel) */
   function anlage() {

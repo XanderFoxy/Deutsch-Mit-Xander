@@ -114,8 +114,11 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     await pg.waitForTimeout(700);   // (Klicks in den ersten 0,5 s nach dem Aufgehen zählen als Geisterklick, Fassung 813)
     await pg.evaluate(() => document.querySelector(".lq-dialog .lq-mik button").click());
     await pg.waitForTimeout(700);
-    const hoert = await pg.evaluate(() => { const b = document.querySelector(".lq-dialog .lq-mik button"); return b ? { rot: b.classList.contains("lq-hoert"), text: b.textContent } : null; });
+    const hoert = await pg.evaluate(() => { const b = document.querySelector(".lq-dialog .lq-mik button"); return b ? { rot: b.classList.contains("lq-hoert"), text: b.textContent, still: !!(STADT.ton && STADT.ton.stillAn) } : null; });
     sage(hoert && hoert.rot, "nach dem Tipp hört das Mikro zu (Knopf rot, „Ich höre zu …“)", JSON.stringify(hoert));
+    /* FASSUNG 836 — „Ich höre zu" erst, wenn wirklich aufgenommen wird; die Stadt schweigt so lange */
+    sage(hoert && /Ich höre zu/.test(hoert.text), "836: „Ich höre zu“ steht, sobald das Mikro wirklich aufnimmt", hoert && hoert.text);
+    sage(hoert && hoert.still, "836: während der Aufnahme ist der Stadtklang ausgeblendet (STADT.ton.still)", JSON.stringify(hoert));
     /* das Probe-Mikro piept ohne Pause: nach höchstens 9 s ist Schluss (oder Tipp = fertig) */
     await pg.evaluate(() => document.querySelector(".lq-dialog .lq-mik button").click());
     await pg.waitForFunction((i) => { const q = STADT.quests.pruef.zustand().find((x) => x.id === i); return !q || ["unterwegs", "jubel", "geht", "fort"].indexOf(q.zustand) >= 0; }, id2, { timeout: 30000 }).catch(() => {});
@@ -124,6 +127,8 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     sage(!!er && er.riff === "RIFF" && er.wavLang > 4000, "Azure „erkennen“ bekommt eine WAV-Aufnahme (RIFF, 16 kHz)", JSON.stringify(er));
     sage(/unterwegs|jubel|geht|fort/.test(B.zustand), "richtig gesprochen → die Person geht los", B.zustand);
     sage(/Du: „/.test(B.du), "der erkannte Satz wird angezeigt („Du: …“)", B.du.slice(0, 80));
+    await pg.waitForTimeout(500);
+    sage(await pg.evaluate(() => !(STADT.ton && STADT.ton.stillAn)), "836: nach der Aufnahme kommt der Stadtklang wieder");
     await pg.waitForFunction((i) => { const q = STADT.quests.pruef.zustand().find((x) => x.id === i); return !q || ["jubel", "geht", "fort"].indexOf(q.zustand) >= 0; }, id2, { timeout: 90000 }).catch(() => {});
     const M = await pg.evaluate(() => STADT.quests.pruef.meldung());
     sage(M && M.gesprochen === 1 && M.punkte >= 14, "angekommen: Punkte mit Sprech-Bonus (8 + 2 + 4)", JSON.stringify(M && { punkte: M.punkte, gesprochen: M.gesprochen }));
@@ -136,6 +141,38 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     const C = await pg.evaluate(() => ({ az: window.__azure.map((x) => x.aktion + ":" + x.stimme + ":" + x.text.slice(0, 30)), hoert: !!document.querySelector(".lq-dialog .lq-mik button.lq-hoert") }));
     sage(C.az.some((x) => /^vorlesen:m:/.test(x)) && C.hoert, "danach: die Frage wird vorgelesen (Männerstimme) und das Mikro geht von selbst an", JSON.stringify(C));
     await pg.evaluate(() => STADT.quests.sprechen.stopp());
+
+    console.log("\nD  FASSUNG 836 — AUFNAHME UND AUSWERTUNG (Funk 263: „hört oft falsche Wörter“)\n");
+    /* sauber auf 16 kHz: Sprachband bleibt, Zischlaute über 8 kHz falten nicht zurück */
+    const R = await pg.evaluate(() => {
+      const f = STADT.quests.sprechen.auf16k; if (!f) return null;
+      const pegel = (rate, hz) => { const n = rate; const x = new Float32Array(n); for (let i = 0; i < n; i++) x[i] = 0.5 * Math.sin(2 * Math.PI * hz * i / rate);
+        const p = f([x.subarray(0, 4096), x.subarray(4096)], rate); let e = 0; for (let i = 2000; i < p.length - 2000; i++) e += (p[i] / 32767) ** 2;
+        return Math.round(20 * Math.log10(Math.sqrt(e / (p.length - 4000)) / (0.5 / Math.SQRT2)) * 10) / 10; };
+      return { d48_1k: pegel(48000, 1000), d48_3k: pegel(48000, 3000), d48_11k: pegel(48000, 11000), d44_3k: pegel(44100, 3000), d44_9k: pegel(44100, 9000), laenge: f([new Float32Array(48000)], 48000).length };
+    });
+    sage(R && R.laenge === 16000 && R.d48_1k > -0.5 && R.d48_3k > -0.5 && R.d44_3k > -0.5, "836: 1 s bei 48 kHz → 16000 Werte, Sprachband (1–3 kHz) unverändert", JSON.stringify(R));
+    sage(R && R.d48_11k < -40 && R.d44_9k < -40, "836: 11 kHz (48 kHz) und 9 kHz (44,1 kHz) kommen nicht als Geisterton an (< −40 dB)", JSON.stringify(R));
+    const quell = fs.readFileSync(path.join(WURZEL, "stadt-leicht/quests.js"), "utf8");
+    sage(/noiseSuppression: false, autoGainControl: false/.test(quell), "836: Rauschunterdrückung und Pegelautomatik aus (wie im Aussprachetrainer)");
+    sage(/typ: "leicht-mikro"/.test(quell) && /ev\.data\.typ === "leicht-mikro"/.test(fs.readFileSync(path.join(WURZEL, "spiel.js"), "utf8")), "836: das Spiel um die Stadt schweigt während der Aufnahme mit");
+    /* Display „2." passt gleich gut zu „zweite" und „zwei": kein Urteil, kein Versuch weg; die Lexical-Lesart entscheidet */
+    const D = await pg.evaluate(() => {
+      const Q = STADT.quests, i = Q.pruef.neu("datum"), qu = Q.liste.find((x) => x.id === i); if (!qu) return null;
+      const P = Q.sprechen.pruefen, ri = qu.antworten.find((a) => a.richtig).html.replace(/<[^>]+>/g, "").replace(/[„“]/g, "");
+      const w = ri.replace(/\.$/, "").split(" "), ziffer = w.slice(0, 3).concat(["2."], w.slice(4)).join(" ") + ".";
+      const lexR = ri.toLowerCase().replace(/[.„“]/g, ""), lexF = w.slice(0, 3).concat(["zwei"], w.slice(4)).join(" ").toLowerCase();
+      const e1 = P(qu, [ziffer]), e2 = P(qu, [ziffer, lexR]), e3 = P(qu, [ziffer, lexF]);
+      return { ziffer, lexR, lexF, nurZiffer: { s: e1.stufe, ohne: !!e1.ohneVersuch }, mitRichtig: e2.stufe, mitFalsch: { s: e3.stufe, ohne: !!e3.ohneVersuch } };
+    });
+    sage(D && D.nurZiffer.s === 0 && D.nurZiffer.ohne, "836: „Heute ist der 2. …“ (Ziffer) → nicht sicher, kein Versuch weg", JSON.stringify(D));
+    sage(D && D.mitRichtig === 1, "836: mit Lexical „… zweite …“ → richtig", JSON.stringify(D && D.lexR));
+    sage(D && D.mitFalsch.s === 0 && !D.mitFalsch.ohne, "836: mit Lexical „… zwei …“ → falsch (zählt als Versuch)", JSON.stringify(D && D.mitFalsch));
+    const E = await pg.evaluate(() => {
+      STADT.quests._sprTest = (k) => Promise.resolve({ RecognitionStatus: "Success", DisplayText: "Heute ist der 2. Oktober.", NBest: [{ Display: "Heute ist der 2. Oktober.", Lexical: "heute ist der zweite oktober", Confidence: 0.9 }] });
+      return STADT.quests.sprechen.erkennen("UklGRg==").then((l) => ({ l: l.slice(), anzeige: l.anzeige && l.anzeige["heute ist der zweite oktober"] }));
+    });
+    sage(E && E.l.indexOf("heute ist der zweite oktober") >= 0 && E.anzeige === "Heute ist der 2. Oktober.", "836: Azure-Lexical wird mitgeprüft, angezeigt bleibt die Display-Fassung", JSON.stringify(E));
     sage(!pf.length, "keine Seitenfehler", pf.join(" | ").slice(0, 200));
 
     console.log("\nC  SERVER UND RAHMEN\n");

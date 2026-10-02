@@ -137,6 +137,9 @@ const KOPF = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
+  /* FASSUNG 836 — (Funk 263: schneller verbinden) die Vorab-Anfrage (OPTIONS) des Browsers 2 h merken lassen statt 5 s:
+     sonst kostet fast jeder Aufruf einen zusätzlichen Weg hin und zurück – und weckt die Funktion dafür eigens auf. */
+  "Access-Control-Max-Age": "7200",
 };
 
 function json(koerper: unknown, status = 200) {

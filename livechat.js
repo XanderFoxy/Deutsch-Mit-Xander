@@ -811,6 +811,9 @@ window.LiveChat = (function () {
     sitzZaehler = (sitzZaehler + 1) % 1000;
     p.sn = Date.now() * 1000 + sitzZaehler;
     p.von = zustand.ichId;
+    /* FASSUNG 836 — Gegenprüfung: auch ein HIER gesetzter Platz gilt als frisch geändert. Sonst konnte ein Puls des
+       Tauschpartners, der vor dem Tausch abging, dessen alten Platz zurückholen (zwei auf einem Platz, bis zum nächsten Puls). */
+    if (p.ordnung) Object.keys(p.ordnung).forEach(function (id) { sitzGeaendertUm[p.art + "|" + id] = Date.now(); });
     direktSenden(p);
     senden(p);
   }
@@ -821,11 +824,19 @@ window.LiveChat = (function () {
      ohne Chatzeile; sie setzt feste Plätze, doppelt angekommen ändert nichts. Geschickt wird der Stand im Augenblick des
      Nachsendens (nicht der von vorhin) – ein schneller zweiter Tausch wird so nie zurückgedreht. */
   function sitzNachsenden(art, ids) {
+    var ab = Date.now();
     [350, 1200].forEach(function (ms) {
       setTimeout(function () {
         if (zustand.lage !== "drin") return;
         var quelle = art === "spielsitz" ? spielSitz : sitzTausch, teil = {}, etwas = false;
-        ids.forEach(function (id) { if (id && typeof quelle[id] === "number") { teil[id] = quelle[id]; etwas = true; } });
+        /* FASSUNG 836 — Gegenprüfung: den Platz eines ANDEREN (Tauschpartner) nur nachsenden, solange von ihm seither
+           keine eigene Sitzmeldung kam – hat er inzwischen weitergewechselt, würde sonst sein alter Platz mit neuem
+           Stempel hinausgehen und ihn überall (auch bei ihm selbst) zurücksetzen. */
+        ids.forEach(function (id) {
+          if (!id || typeof quelle[id] !== "number") return;
+          if (id !== zustand.ichId && (sitzAnkunftVon[art + "|" + id] || 0) > ab) return;
+          teil[id] = quelle[id]; etwas = true;
+        });
         if (etwas) sitzSenden({ art: art, ordnung: teil, nach: 1 });
       }, ms);
     });
@@ -4111,7 +4122,7 @@ window.LiveChat = (function () {
      sie nicht versteht. */
   var kanalJe = {}, kanalBereit = {};
   /* FASSUNG 836 — Stempel und Zeitpunkt der letzten Sitzänderung je Absender bzw. Person (siehe sitzSenden, Puls) */
-  var sitzSnVon = {}, sitzGeaendertUm = {};
+  var sitzSnVon = {}, sitzGeaendertUm = {}, sitzAnkunftVon = {};
   function datenkanalAnlegen(anderId, pc) {
     try {
       var dc = pc.createDataChannel("spiel", { negotiated: true, id: 7, ordered: false, maxRetransmits: 1 });
@@ -5217,9 +5228,9 @@ window.LiveChat = (function () {
         };
         heile(sitzTausch, n.sitz, "sitzplatz");
         heile(spielSitz, n.spielsitz, "spielsitz");
-        if (neuerSitz) melden();
+        if (neuerSitz) melden("plaetze");
       }
-      var neuDa = !zustand.leute[n.von];
+      var neuDa = !zustand.leute[n.von], pulsVorher = pulsBild(n.von);
       personMerken(n.von, n.name, n.bild);
       ankunftUebernehmen(n.von, n.seit);
       if (typeof n.tonAn === "boolean") zustand.leute[n.von].tonAn = n.tonAn;
@@ -5234,7 +5245,10 @@ window.LiveChat = (function () {
                       tonAn: zustand.tonAn, bildAn: zustand.bildAn, bild: zustand.ichBild,
                       seit: zustand.seit, buehne: zustand.buehne });
       }
-      melden();
+      /* FASSUNG 836 — Gegenprüfung zu Funk 263: jeder Puls (alle 6 s von jedem) zeichnete das ganze Klassenzimmer samt
+         allen Chatzeilen neu, auch wenn sich nichts geändert hatte – Dauerlast im Hauptfaden, die eingehende Sitzmeldungen
+         und das Tippen verzögert. Jetzt nur noch, wenn er neu ist oder sich an ihm etwas Sichtbares geändert hat. */
+      if (neuDa || pulsBild(n.von) !== pulsVorher) melden();
       return;
     }
 
@@ -5416,6 +5430,7 @@ window.LiveChat = (function () {
         if (sitzSnVon[snSchl] && n.sn <= sitzSnVon[snSchl]) return;
         sitzSnVon[snSchl] = n.sn;
       }
+      sitzAnkunftVon[n.art + "|" + n.von] = Date.now();
       var tabelle = n.art === "spielsitz" ? spielSitz : sitzTausch, anders = false;
       if (n.ordnung && typeof n.ordnung === "object") {
         Object.keys(n.ordnung).forEach(function (id) {
@@ -5989,6 +6004,12 @@ window.LiveChat = (function () {
   /* Was ein Anwesenheitspaket ueber jemanden sagt: wann er gekommen
      ist (bestimmt die Sitzordnung, ueberall gleich), ob er auf der
      Buehne sitzt oder nur zuschaut, und ob er gerade redet. */
+  /* FASSUNG 836 — alles, was der Puls an einer Person ändern kann und was man sieht (für „hat sich etwas geändert?") */
+  function pulsBild(id) {
+    var p = zustand.leute[id];
+    if (!p) return "";
+    return [p.name, p.bild, p.seit, p.tonAn, p.bildAn, p.sprechbild, p.buehne, p.spricht, platzJe[id], platzJe[zustand.ichId], sitzTausch[id], spielSitz[id]].join("|");
+  }
   function personEintragen(n) {
     var p = zustand.leute[n.von];
     if (!p) return;
