@@ -199,11 +199,16 @@
     if (jetzt - letztesBild >= takt) {
       letztesBild = jetzt;
       if (L.unruhe > 0) L.unruhe--;
-      if (ST.oberflaeche && ST.oberflaeche.vorBild) ST.oberflaeche.vorBild(jetzt);
-      const Z = SZ.zeitDaten();
-      B.zeichnen(jetzt / 1000, Z, SZ.jahr);
-      SZ.zeichnen(jetzt);
-      if (ST.oberflaeche && ST.oberflaeche.bild) ST.oberflaeche.bild(jetzt);
+      /* FASSUNG 836 — (Funk 263, „verschwindet einfach komplett") ein Fehler in einem einzigen Bild (z. B. iOS an der
+         Speichergrenze: getContext gibt null) hielt die Zeichenschleife für immer an – die Stadt stand still oder blieb
+         leer. Jetzt geht es mit dem nächsten Bild weiter. */
+      try {
+        if (ST.oberflaeche && ST.oberflaeche.vorBild) ST.oberflaeche.vorBild(jetzt);
+        const Z = SZ.zeitDaten();
+        B.zeichnen(jetzt / 1000, Z, SZ.jahr);
+        SZ.zeichnen(jetzt);
+        if (ST.oberflaeche && ST.oberflaeche.bild) ST.oberflaeche.bild(jetzt);
+      } catch (e) { L.bildFehler = (L.bildFehler || 0) + 1; if (L.bildFehler < 4) console.error(e); }
     }
     if (!L.still) requestAnimationFrame(bild);
   }

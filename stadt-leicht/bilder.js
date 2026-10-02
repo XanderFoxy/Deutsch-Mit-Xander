@@ -110,7 +110,7 @@
         const fertig = () => { e.img = img; e.fertig = true; e.laedt = false; laufend--; LB.neu = true; weiter(); };
         if (img.decode) img.decode().then(fertig, fertig); else fertig();
       };
-      img.onerror = () => { e.fehler = true; e.laedt = false; laufend--; weiter(); };
+      img.onerror = () => { e.fehler = true; e.fehlerT = Date.now(); e.versuche = (e.versuche || 0) + 1; e.laedt = false; laufend--; weiter(); };
       img.src = PFAD + name + ".webp" + (LB.version ? "?v=" + LB.version : "");
     }
   }
@@ -119,10 +119,27 @@
     let e = cache.get(name);
     if (!e) { e = { img: null, fertig: false }; cache.set(name, e); }
     if (e.fertig) { e.zuletzt = LB.takt; return e.img; }
+    /* FASSUNG 836 — XANDER (Funk 263): „Kölner Dom … manchmal weiß in einer bestimmten Zoomstufe oder verschwindet einfach
+       komplett". Ein Bild, das einmal nicht kam (Funkloch, Rahmen im Hintergrund), wurde bis zum Neuladen der Seite nie
+       wieder geholt – in dieser Zoomstufe fehlte das Haus dann dauerhaft. Jetzt: neuer Versuch nach 4 s, 15 s und 60 s
+       (höchstens vier), und sofort, wenn das Netz zurück ist oder die Seite wieder sichtbar wird. */
+    if (e.fehler && (e.versuche || 0) < 4 && Date.now() - (e.fehlerT || 0) > [4000, 15000, 60000][Math.min(2, (e.versuche || 1) - 1)]) e.fehler = false;
     if (!e.laedt && !e.fehler && warte.indexOf(name) < 0) { if (dringend) warte.unshift(name); else warte.push(name); weiter(); }
     return null;
   };
   LB.takt = 0;
+  const fehlerVergessen = () => { for (const [, e] of cache) if (e.fehler && (e.versuche || 0) < 6) e.fehler = false; LB.neu = true; };
+  window.addEventListener("online", fehlerVergessen);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) fehlerVergessen(); });
+  /* FASSUNG 836 — (Funk 263, Dom) die beste schon geladene Größe desselben Bildes. LB.wahl lieferte null, sobald die
+     gewünschte Größe noch nicht da war – die Szene ließ das Haus dann ganz weg, samt Schatten (beim Hineinzoomen über
+     die Schwelle von _z zu _k, gerade beim Dom mit seinen großen Bildern). Jetzt steht so lange die andere Größe da,
+     gestreckt oder gestaucht, und die gewünschte wird vorn in die Warteschlange gestellt. */
+  const GROESSEN = ["_k", "_g", "_z", "_m", "_n"];
+  function ersatz(basis) {
+    for (const gr of GROESSEN) { const meta = LB.vz[basis + gr]; if (meta && LB.fertig(basis + gr)) return { name: basis + gr, meta: meta }; }
+    return null;
+  }
   /* Große Bilder, die lange nicht gebraucht wurden, wieder freigeben
      (Speicher auf dem Telefon) */
   LB.aufraeumen = function () {
@@ -143,7 +160,12 @@
     if (m) return { name: basis + "_m", meta: m };
     /* FASSUNG 805 — im kleinen Rahmen das Zwergbild (_z, 40 %), solange es scharf genug ist (bis 1,35-fach). */
     const z = LB.nurKlein && LB.vz[basis + "_z"];
-    if (z && s * (stufe || 1) <= z.s * 1.35) return { name: basis + "_z", meta: z };
+    if (z && s * (stufe || 1) <= z.s * 1.35) {
+      /* FASSUNG 836 — das Zwergbild wurde ohne Ladeprüfung gewählt: fehlte es, malte die Szene kein Haus, aber seine
+         Lichter (beim Dom elf Bodenstrahler) – ein heller Fleck ohne Dom. Jetzt bis dahin eine geladene andere Größe. */
+      if (LB.bild(basis + "_z", true)) return { name: basis + "_z", meta: z };
+      return ersatz(basis) || { name: basis + "_z", meta: z };
+    }
     if (!k && !g) return null;
     const bedarf = s * (stufe || 1);
     /* ab dem 1,6-fachen der kleinen Auflösung lohnt das große Bild
@@ -154,13 +176,15 @@
        beim Herauszoomen gibt LB.freigeben sie wieder frei. */
     if (g && (!k || (bedarf > k.s * (LB.grossErlaubt ? 1.2 : 1.6) && (LB.grossErlaubt || (!LB.spar && !LB.nurKlein))))) {
       if (LB.fertig(basis + "_g")) return { name: basis + "_g", meta: g, img: LB.bild(basis + "_g") };
-      if (k && !LB.bild(basis + "_k", true)) return null;
+      if (k && !LB.bild(basis + "_k", true)) return ersatz(basis);
       LB.bild(basis + "_g");
       if (k) return { name: basis + "_k", meta: k };
-      return null;
+      return ersatz(basis);
     }
     if (LB.bild(basis + "_k")) return { name: basis + "_k", meta: k };
-    return null;
+    const er = ersatz(basis);
+    if (er) LB.bild(basis + "_k", true);
+    return er;
   };
   /* FASSUNG 817 — Bilder einer Größe freigeben, die seit ein paar Bildern nicht mehr gezeichnet wurden (Speicher im kleinen
      Rahmen: die großen nach der zweiten Zoomstufe, die kleinen nach dem Zurück in den Überblick). */

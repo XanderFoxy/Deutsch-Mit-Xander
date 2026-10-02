@@ -6808,7 +6808,9 @@
     try { haltPflegen(); requestAnimationFrame(haltPflegen); } catch (e) {}
     /* FUNK 111 — wer ankommt, prüft, ob dort eine Falle liegt. Kurz
        warten: der neue Platz muss erst in der Liste stehen. */
-    setTimeout(fallePruefen, 350);
+    /* FASSUNG 836 — (Funk 263, Zweikampf) ohne die 350 ms: platzGewechselt läuft jetzt im selben Ablauf direkt vor
+       melden() (livechat.js platzNehmen/platzTauschenMit) – mit 0 ms steht der neue Platz schon in der Liste */
+    setTimeout(fallePruefen, 0);
     if (!S.bereit || !S.ich || !(S.ich.mauer_lp > 0)) return;
     rpc("spiel_platzwechsel", {}).then(function (r) {
       /* FASSUNG 640 — XANDER (Funk 112): „Die Mauer … Muß Einem So Lange

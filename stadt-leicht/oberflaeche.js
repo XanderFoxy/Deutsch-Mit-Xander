@@ -574,7 +574,11 @@
         LB.grossErlaubt = st === 2;
         if (st === 2 && LB.vollLaden) LB.vollLaden().then(() => { L().unruhe = 2; });
         if (st < 2 && LB.freigeben) LB.freigeben(/_[gm]$/);   // FASSUNG 828 — auch die schärferen Baustellen (_m)
-        if (st === 0 && LB.freigeben) LB.freigeben(/_k$/);
+        /* FASSUNG 836 — (Funk 263, „Kölner Dom … verschwindet") die kleinen Bilder erst nach 20 s ununterbrochen im
+           Überblick freigeben, und die der Wahrzeichen nie: Kompass, Lupe oder ein Tipp auf den Dom springen sofort in die
+           Zoomstufe, in der er sein _k braucht – war es eben freigegeben, fehlte er dort, bis es neu geladen war. */
+        if (st === 0) { O._ueberblickSeit = O._ueberblickSeit || Date.now(); if (Date.now() - O._ueberblickSeit > 20000 && LB.freigeben) LB.freigeben(/^(?!w_).*_k$/); }
+        else O._ueberblickSeit = 0;
       }, 700);
       const vollK = knopf("voll", "Vollbild", () => { try { window.parent.postMessage({ typ: "leicht-voll" }, location.origin); } catch (e) {} }, "lk-nur-mini lk-vollknopf");
       /* FASSUNG 809 — XANDER: „Mir fehlen noch die items zum schmücken die finde ich hier in der kleinen Map noch gar nicht".

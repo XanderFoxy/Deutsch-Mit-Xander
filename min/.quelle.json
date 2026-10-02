@@ -47,11 +47,11 @@
  "data-plaetze.js": "61824c9636dd4d1ed55f9a8c2992cb2f7b419199",
  "data-szenen.js": "facd9322aa9a85e01fb979df8f95dc077e1222b1",
  "korrekturen.css": "aae032bf4ce9495b1a9077b9480f1da78655baf1",
- "livechat.js": "f35e52d82cfca95e78ad6a4922fb1201870c6051",
  "app-styles.css": "252949e98e6fff038a4d4e1b43d030d927d942fe",
- "app.js": "27e99238aa8e40018cb0c6f0decf8719e1170192",
  "konjugation.js": "740bad9ac8234b00f3a6b64b3e0793ae54ecf619",
  "spiel.css": "c22d2e8c176207f443f05851ae383ea3c9c7266f",
- "spiel.js": "e2165332a0fa24fcb289c90e29ca73d63a9b955c",
- "data-werkstatt.js": "eada34e478dea57e4ceb32d083091b8b128e4370"
+ "data-werkstatt.js": "eada34e478dea57e4ceb32d083091b8b128e4370",
+ "app.js": "749b33ef827399cde2e62702ffe8cc3a487ea0aa",
+ "spiel.js": "30d893c17f550e28540c3c780686c05e0c2e7f8b",
+ "livechat.js": "8345a72adbafab2a74cc9df71d60cf56515c3808"
 }

@@ -320,7 +320,7 @@ window.FAKE = (() => {
   async function rueckfallPruefen(name, m, grundMuster, grenzeMs) {
     const n0 = await neuAnfangen(m);
     const dStart = await bis(async () => aufrufe.slice(n0).some((a) => a.aktion === "sitzung"), 10000);
-    const d = await bis(async () => { const a = await stand(A), b = await stand(B); return a.lage === "rueckfall" && b.lage === "rueckfall"; }, 15000);
+    const d = await bis(async () => { const a = await stand(A), b = await stand(B); return a.lage === "rueckfall" && b.lage === "rueckfall"; }, 20000);
     const a = await stand(A);
     sage(dStart >= 0 && d >= 0 && d <= grenzeMs, name + ": beide zurück aufs Netz", "nach " + d + " ms, Grund: " + a.grund);
     sage(grundMuster.test(a.grund), name + ": Grund benannt", a.grund);
@@ -331,8 +331,10 @@ window.FAKE = (() => {
   console.log("\n  5) RÜCKFALL BEI FEHLER, ZEIT UND OHNE VERBINDUNG\n");
   await rueckfallPruefen("Funktion antwortet 500", { fehler: { sitzung: 1 } }, /kein-json|fehler/, 6000);
   await rueckfallPruefen("Funktion sagt budget beim Start", { aus: { sitzung: "budget" } }, /budget/, 6000);
-  await rueckfallPruefen("Funktion antwortet nie", { haengen: { sitzung: 1 } }, /zeit/, 11000);
-  await rueckfallPruefen("Verbindung zum Server steht nie", { ohneIce: true }, /zeit|ice/, 11000);
+  /* FASSUNG 836 — der ganze Start darf jetzt 14 s dauern (SFU_START_MS),
+     jeder einzelne Aufruf weiter 8 s. Der Netz-Ton läuft währenddessen. */
+  await rueckfallPruefen("Funktion antwortet nie", { haengen: { sitzung: 1 } }, /zeit/, 16000);
+  await rueckfallPruefen("Verbindung zum Server steht nie", { ohneIce: true }, /zeit|ice/, 16000);
 
   /* Und zum Schluss: ohne Störung kommen beide wieder zusammen. */
   await neuAnfangen({});

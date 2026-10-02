@@ -15668,6 +15668,10 @@
   }
 
   function livechatTor(raum, weiter) {
+    /* FASSUNG 836 — XANDER (Funk 263): „das Gespräch baut sich jetzt noch später auf". Die Relais-Zugangsdaten (TURN)
+       holt die Seite jetzt schon, während das Tor nach Mikrofon und Kamera fragt – beim Tipp auf „hinein" sind sie da
+       (vorher: erst danach, 0,9–1,4 s gemessen, bevor der Raum aufging). Unsichtbar; gespeicherte Daten werden genommen. */
+    try { if (window.LiveChat && LiveChat.relaisHolen) LiveChat.relaisHolen(false).catch(() => {}); } catch (e) {}
     document.getElementById("lcTor")?.remove();
     const kasten = document.createElement("div");
     kasten.id = "lcTor";
@@ -57612,7 +57616,19 @@
     if (lcAuto3dVorab) return;
     lcAuto3dVorab = true;
     const los = () => Object.keys(LC_AUTO3D).forEach((a, i) => setTimeout(() => { try { lcAuto3dLaden(a); } catch (e) {} }, i * 1500));
-    if (window.requestIdleCallback) setTimeout(() => requestIdleCallback(los, { timeout: 4000 }), 6000); else setTimeout(los, 8000);
+    /* FASSUNG 836 — XANDER (Funk 263): „das Gespräch baut sich jetzt noch später auf". Die Drehblätter (zusammen ≈ 2,5 MB)
+       kamen 6 s nach dem Betreten – auf ADSL oder Mobilfunk genau dann, wenn die Leitungen noch suchen. Jetzt erst,
+       wenn alle Leitungen stehen (höchstens 30 s warten), dann 10 s später; bei „Daten sparen" oder 2G/3G gar nicht
+       vorab (der Einzug lädt sie dann wie früher selbst). */
+    try { const n = navigator.connection; if (n && (n.saveData || /(^|-)(2g|3g)$/.test(n.effectiveType || ""))) return; } catch (e) {}
+    const start = Date.now();
+    const warte = () => {
+      let alle = true;
+      try { alle = (LiveChat.leitungen ? LiveChat.leitungen() : []).every((v) => v.steht); } catch (e) {}
+      if (!alle && Date.now() - start < 30000) { setTimeout(warte, 1000); return; }
+      if (window.requestIdleCallback) setTimeout(() => requestIdleCallback(los, { timeout: 4000 }), 10000); else setTimeout(los, 12000);
+    };
+    setTimeout(warte, 2000);
   }
   window.DMA_AUTO3D_VORLADEN = (a) => (a ? lcAuto3dLaden(a) : (lcAuto3dVorladen(), null));
   (function lcVorabAnmelden(n) {
@@ -68277,7 +68293,9 @@
             if (!warOben) {
               LiveChat.buehneSetzen(true);
               const erg = LiveChat.platzNehmen ? LiveChat.platzNehmen(nr) : null;
-              renderLiveChat();
+              /* FASSUNG 836 — (Funk 263, Platzwechsel-Latenz) ging es, hat platzNehmen schon gezeichnet (melden):
+                 kein zweites Neuzeichnen des ganzen Klassenzimmers */
+              if (!(erg && erg.ok)) renderLiveChat();
               showToast(erg && erg.ok ? "🪑 " + erg.text
                 : "🎤 Du bist auf der Bühne." + (erg && erg.warum ? " " + erg.warum : ""));
               return;
@@ -68301,7 +68319,7 @@
                Das ist das Anreise-Menue — langer Druck auf den freien
                Platz, siehe lcPlatzMenue. */
             const erg = LiveChat.platzNehmen ? LiveChat.platzNehmen(nr) : null;
-            renderLiveChat();
+            if (!(erg && erg.ok)) renderLiveChat();   // FASSUNG 836 — sonst schon gezeichnet (melden)
             if (erg && erg.ok) showToast("\ud83e\ude91 " + erg.text
               + "  (lang dr\u00fccken: fahren oder laufen)");
             else if (erg && erg.warum) showToast(erg.warum);
@@ -68336,7 +68354,7 @@
           /* Und der Platz eines anderen: tauschen. */
           const erg = LiveChat.platzTauschenMit ? LiveChat.platzTauschenMit(p.id) : null;
           if (erg && erg.ok) {
-            renderLiveChat();
+            /* FASSUNG 836 — platzTauschenMit hat schon gezeichnet (melden): kein zweites Neuzeichnen */
             showToast("🔄 " + erg.text + "  (lang drücken öffnet das Menü)");
             return;
           }
@@ -69049,8 +69067,17 @@
      Ansicht, die niemand sieht. Die VERBINDUNG bleibt bestehen:
      wer weiterblättert, bleibt im Raum. */
   if (window.LiveChat && !livechatAbmelden) {
-    livechatAbmelden = LiveChat.beiAenderung(() => {
-      if (document.getElementById("sub-livechat")?.dataset.active === "true") renderLiveChat();
+    livechatAbmelden = LiveChat.beiAenderung((l, art) => {
+      /* FASSUNG 836 — XANDER (Funk 263): „die Latenz bei dem Sitzplätzen wenn man sie wechselt ist immer noch
+         extrem". Jede Sitz- und Sprechmeldung zeichnete das ganze Klassenzimmer neu – samt Schleife über alle Chatzeilen
+         (im Hauptraum über 7 000) und erzwungenem Layout. Meldet LiveChat nur „plaetze", werden nur die Plätze und das
+         große Bild neu gezeichnet. */
+      if (document.getElementById("sub-livechat")?.dataset.active === "true") {
+        if (art === "plaetze" && livechatGeruest && l && l.lage === "drin" && !document.getElementById("lcPruefBuehne")) {
+          livechatPlaetzeAuffrischen(l);
+          livechatGrossAuffrischen(l);
+        } else renderLiveChat();
+      }
       klassenzimmerStreifen();
     });
     /* Jeder Ansichtswechsel entscheidet neu, ob der Streifen zu

@@ -200,6 +200,33 @@ window.LiveChat = (function () {
      Klassenzimmer faellt nie aus, weil das Relais fehlt.
      ========================================================= */
   var RELAIS_WEG = "/functions/v1/klassenzimmer";
+
+  /* FASSUNG 836 — DIE EDGE-FUNCTIONS LAUFEN NEBEN DER DATENBANK.
+     XANDER (Funk 263): „das Gespräch baut sich manchmal erst später
+     auf". Die Funktionen (Relais-Zugang, Tonserver) liefen bisher in
+     der Region, die dem Gerät am nächsten ist – Frankfurt oder Zürich.
+     Die Datenbank steht aber in London (eu-west-2), und jede Funktion
+     fragt sie mehrmals nacheinander (Anmeldung, Freischaltung, Budget).
+     Laut Supabase-Doku („Regional Invocations") lässt sich die Region
+     per ?forceFunctionRegion festlegen, auch bei CORS-Anfragen. Scheitert
+     die Anfrage mit Region schon im Netz (nicht wegen der Zeitgrenze),
+     geht dieselbe Anfrage sofort ohne Region raus, und für den Rest der
+     Sitzung bleibt die Region aus. Prüf-Adressen der Sonden bleiben
+     unverändert. */
+  var FUNKTION_REGION = "eu-west-2";
+  var funktionRegionAus = false;
+  function funktionsUrl(basis, weg, ohneRegion) {
+    var u = String(basis || "").replace(/\/+$/, "") + weg;
+    return (ohneRegion || funktionRegionAus) ? u : u + "?forceFunctionRegion=" + FUNKTION_REGION;
+  }
+  function funktionRufen(basis, weg, ohneRegion, init) {
+    var mitRegion = !(ohneRegion || funktionRegionAus);
+    return fetch(funktionsUrl(basis, weg, ohneRegion), init).catch(function (e) {
+      if (!mitRegion || (init && init.signal && init.signal.aborted)) throw e;
+      funktionRegionAus = true;
+      return fetch(funktionsUrl(basis, weg, true), init);
+    });
+  }
   var relaisStand = { geholt: 0, server: null, quelle: "oeffentlich", grund: "" };
   var relaisLaeuft = null;
 
@@ -211,7 +238,7 @@ window.LiveChat = (function () {
       if (!m) return { fehler: "nicht-angemeldet" };
       var abbruch = new AbortController();
       var uhr = setTimeout(function () { abbruch.abort(); }, 8000);
-      return fetch(window.SUPABASE_CONFIG.url.replace(/\/+$/, "") + RELAIS_WEG, {
+      return funktionRufen(window.SUPABASE_CONFIG.url, RELAIS_WEG, false, {
         method: "POST",
         signal: abbruch.signal,
         headers: {
@@ -324,15 +351,38 @@ window.LiveChat = (function () {
      Gerät nur, was jünger als eine Stunde ist; alle fünf Minuten nachsehen und nach einer Stunde frische holen; die
      neuen Daten gehen sofort an alle Leitungen. */
   var RELAIS_FRISCH_MS = 60 * 60 * 1000;
-  function relaisAusGeraet() {
+  /* FASSUNG 836 — XANDER (Funk 263): „das Gespräch baut sich jetzt noch später auf". Gemessen (Edge-Logs 01.10.): jedes
+     Betreten mit Daten älter als eine Stunde holte neue und wartete darauf 0,9–1,4 s, bevor der Raum überhaupt aufging.
+     Die Daten gelten aber zwei Stunden. Jetzt: aus dem Gerät bis 100 Minuten alt nehmen (zehn Minuten Luft vor dem
+     Erneuern, zwanzig vor dem Ablauf); ist es älter als eine Stunde, holt die Seite im Hintergrund frische und gibt sie
+     allen Leitungen (das Betreten wartet darauf nicht). */
+  var RELAIS_NUTZBAR_MS = RELAIS_GILT_MS - RELAIS_VORLAUF_MS - 10 * 60 * 1000;
+  function relaisAusGeraet(grenze) {
     try {
       var roh = localStorage.getItem(RELAIS_SCHLUESSEL);
       if (!roh) return null;
       var d = JSON.parse(roh);
       if (!d || !d.server || !d.server.length || !d.geholt) return null;
-      if (Date.now() - d.geholt > RELAIS_FRISCH_MS) return null;
+      if (Date.now() - d.geholt > (grenze || RELAIS_FRISCH_MS)) return null;
       return d;
     } catch (e) { return null; }
+  }
+  /* FASSUNG 836 — eine Einstellung für alle Netz-Leitungen. bundlePolicy „max-bundle": Ton, Bild und Spielkanal
+     teilen sich EINEN Transport – vorher sammelte der Anrufer Wege für bis zu drei getrennte (dreifache Relais-Belegung,
+     mehr Kerzen über den Server). Sie muss bei jedem setConfiguration gleich bleiben, sonst wirft der Browser. */
+  function pcKonfig() { return { iceServers: VERMITTLER, iceCandidatePoolSize: 1, bundlePolicy: "max-bundle" }; }
+  /* FASSUNG 836 — neue Relais-Daten an alle Leitungen geben. Mit neuSuchen suchen Leitungen, die noch nicht stehen,
+     sofort neu (setConfiguration allein wirkt erst bei der nächsten Wegesuche – vorher wartete das bis zur Wache nach
+     6 s und riss nach weiteren 6 s ab). Anrufen tut wie immer nur die Seite mit der kleineren Kennung. */
+  function relaisVerteilen(neuSuchen) {
+    Object.keys(brueckeJe).forEach(function (id) {
+      var pcx = brueckeJe[id];
+      if (!pcx || pcx.connectionState === "closed") return;
+      try { pcx.setConfiguration(pcKonfig()); } catch (e) {}
+      if (!neuSuchen || steht(pcx) || pcx.signalingState !== "stable" || !pcx.restartIce) return;
+      try { pcx.restartIce(); } catch (e) {}
+      if (zustand.ichId < id) setTimeout(function () { if (brueckeJe[id] === pcx && !steht(pcx)) anrufen(id); }, 150);
+    });
   }
   function relaisInsGeraet(server) {
     try {
@@ -347,7 +397,7 @@ window.LiveChat = (function () {
     }
     /* Erst nachsehen, was noch gilt — das spart den Abruf. */
     if (!neu && !relaisStand.server) {
-      var da = relaisAusGeraet();
+      var da = relaisAusGeraet(RELAIS_NUTZBAR_MS);
       if (da) {
         relaisStand.server = da.server;
         relaisStand.geholt = da.geholt;
@@ -355,6 +405,8 @@ window.LiveChat = (function () {
         relaisStand.grund = "";
         relaisStand.ausGeraet = true;
         VERMITTLER = mitRelais(da.server);
+        /* FASSUNG 836 — älter als eine Stunde: im Hintergrund erneuern, ohne dass jemand darauf wartet */
+        if (Date.now() - da.geholt > RELAIS_FRISCH_MS) setTimeout(function () { relaisHolen(true).then(function (ok) { if (ok) relaisVerteilen(false); }, function () {}); }, 0);
         return Promise.resolve(true);
       }
     }
@@ -553,7 +605,9 @@ window.LiveChat = (function () {
   var brueckeJe = {};   // id -> RTCPeerConnection
   var horcher = [];
 
-  function melden() { horcher.forEach(function (f) { try { f(lage()); } catch (e) {} }); }
+  /* FASSUNG 836 — art „plaetze": nur die Plätze haben sich geändert (Sitzwechsel, Sprechen an/aus). Die Oberfläche
+     zeichnet dann nur die Plätze und das große Bild neu, nicht den ganzen Chat (app.js, Zuhörer). */
+  function melden(art) { var l = lage(); horcher.forEach(function (f) { try { f(l, art); } catch (e) {} }); }
   function beiAenderung(f) {
     horcher.push(f);
     return function () { horcher = horcher.filter(function (g) { return g !== f; }); };
@@ -737,15 +791,28 @@ window.LiveChat = (function () {
     ids.forEach(function (id) {
       if (id && typeof sitzTausch[id] === "number") teil[id] = sitzTausch[id];
     });
-    senden({ art: "sitzplatz", ordnung: teil, text: text });
+    sitzSenden({ art: "sitzplatz", ordnung: teil, text: text });
     sitzNachsenden("sitzplatz", ids);
   }
 
   function spielSitzSchicken(ids) {
     var teil = {};
     ids.forEach(function (id) { if (id && typeof spielSitz[id] === "number") teil[id] = spielSitz[id]; });
-    senden({ art: "spielsitz", ordnung: teil });
+    sitzSenden({ art: "spielsitz", ordnung: teil });
     sitzNachsenden("spielsitz", ids);
+  }
+  /* FASSUNG 836 — XANDER (Funk 263): „die Latenz bei dem Sitzplätzen wenn man sie wechselt ist immer noch extrem … für
+     den Zweikampf … absolut unbrauchbar". Die Sitzordnung fuhr nur über den Supabase-Server (Gerät → London → Gerät);
+     der direkte Datenkanal zwischen den Geräten (Fassung 659) trug nur Spielereignisse. Jetzt geht jede Sitzmeldung
+     zuerst direkt (wie die Spielereignisse), dann über den Server als Sicherheit. Der Stempel sn steigt je Absender:
+     beim Empfänger dreht ein spätes oder doppeltes Paket nichts zurück, und die Chatzeile kommt nur einmal. */
+  var sitzZaehler = 0;
+  function sitzSenden(p) {
+    sitzZaehler = (sitzZaehler + 1) % 1000;
+    p.sn = Date.now() * 1000 + sitzZaehler;
+    p.von = zustand.ichId;
+    direktSenden(p);
+    senden(p);
   }
   /* FASSUNG 829 — XANDER (Funk 255): „wenn ich den Platz tauschen will dauert es manchmal 5 Sekunden von einer Position zur
      anderen". Bei mir selbst steht der neue Platz sofort (gemessen 20–400 ms). Bei den anderen kommt er mit EINER Meldung
@@ -759,7 +826,7 @@ window.LiveChat = (function () {
         if (zustand.lage !== "drin") return;
         var quelle = art === "spielsitz" ? spielSitz : sitzTausch, teil = {}, etwas = false;
         ids.forEach(function (id) { if (id && typeof quelle[id] === "number") { teil[id] = quelle[id]; etwas = true; } });
-        if (etwas) senden({ art: art, ordnung: teil, nach: 1 });
+        if (etwas) sitzSenden({ art: art, ordnung: teil, nach: 1 });
       }, ms);
     });
   }
@@ -2970,7 +3037,7 @@ window.LiveChat = (function () {
        du rausholen kannst damit die Verbindungen in Zukunft schneller
        steht." iceCandidatePoolSize: der Browser beginnt schon beim
        Anlegen, Wege zu sammeln — nicht erst beim Angebot. */
-    var pc = new RTCPeerConnection({ iceServers: VERMITTLER, iceCandidatePoolSize: 1 });
+    var pc = new RTCPeerConnection(pcKonfig());   // FASSUNG 836 — mit „max-bundle" (siehe pcKonfig)
     brueckeJe[anderId] = pc;
     /* Der Spielkanal muss VOR dem Angebot stehen, sonst steht er nicht
        in der Beschreibung (siehe datenkanalAnlegen). */
@@ -3031,6 +3098,7 @@ window.LiveChat = (function () {
     pc.ontrack = function (e) {
       var p = zustand.leute[anderId];
       if (!p) return;
+      if (e.track && e.track.kind === "audio") aufbauMerk(anderId, "ton");   // FASSUNG 836 — Messung
       /* FASSUNG 827 — hört man ihn schon über den Tonserver, bleibt die
          Netz-Stimme draussen (sonst gewönne sie als „neueste Spur" und
          hielte die Server-Stimme an). Beim Rückfall holt
@@ -3095,7 +3163,7 @@ window.LiveChat = (function () {
              abgelaufenen findet auch der Neustart keinen Weg. */
           var weiter = function () {
             if (brueckeJe[anderId] !== pc) return;
-            try { pc.setConfiguration({ iceServers: VERMITTLER, iceCandidatePoolSize: 1 }); } catch (e) {}
+            try { pc.setConfiguration(pcKonfig()); } catch (e) {}
             try { pc.restartIce(); } catch (e) {}
             if (zustand.ichId < anderId) setTimeout(function () { if (brueckeJe[anderId] === pc) anrufen(anderId); }, 150);
           };
@@ -3106,6 +3174,8 @@ window.LiveChat = (function () {
     };
     leitungsWacheStarten(anderId, pc);
     pc.onconnectionstatechange = function () {
+      /* FASSUNG 836 — Messung: wann die Leitung steht und über welchen Weg */
+      if (pc.connectionState === "connected" && brueckeJe[anderId] === pc) { aufbauMerk(anderId, "steht"); aufbauWeg(anderId, pc); }
       if (pc.connectionState === "failed" || pc.connectionState === "closed") {
         brueckeAbbauen(anderId);
         melden();
@@ -4040,6 +4110,8 @@ window.LiveChat = (function () {
      „dc-hallo" gesagt hat — eine ältere Fassung bekommt nichts, was
      sie nicht versteht. */
   var kanalJe = {}, kanalBereit = {};
+  /* FASSUNG 836 — Stempel und Zeitpunkt der letzten Sitzänderung je Absender bzw. Person (siehe sitzSenden, Puls) */
+  var sitzSnVon = {}, sitzGeaendertUm = {};
   function datenkanalAnlegen(anderId, pc) {
     try {
       var dc = pc.createDataChannel("spiel", { negotiated: true, id: 7, ordered: false, maxRetransmits: 1 });
@@ -4055,6 +4127,8 @@ window.LiveChat = (function () {
            auch auf diesem schnellen Weg (siehe sfuHoereSagen). */
         if (n.art === "sfu-hoere") { if (!n.an || n.an === zustand.ichId) sfuPaket(n); return; }
         if (n.art === "spiel" && n.ereignis) empfangen(n);
+        /* FASSUNG 836 — die Sitzordnung kommt auch auf diesem schnellen Weg (siehe sitzSenden) */
+        else if ((n.art === "sitzplatz" || n.art === "spielsitz") && typeof n.sn === "number" && n.ordnung) empfangen(n);
       };
       dc.onclose = function () { if (kanalJe[anderId] === dc) { delete kanalBereit[anderId]; } };
     } catch (e) {}
@@ -4124,6 +4198,7 @@ window.LiveChat = (function () {
 
   function anrufen(anderId) {
     var pc = bruecke(anderId, true);
+    aufbauMerk(anderId, "angebot");   // FASSUNG 836 — Messung
     return pc.createOffer().then(function (angebot) {
       return pc.setLocalDescription(angebot).then(function () {
         senden({ art: "angebot", an: anderId, name: zustand.ichName, beschreibung: alsDaten(pc.localDescription) });
@@ -4133,6 +4208,7 @@ window.LiveChat = (function () {
 
   function angebotAnnehmen(vonId, beschreibung) {
     var pc = bruecke(vonId, false);
+    aufbauMerk(vonId, "angebotDa");   // FASSUNG 836 — Messung
     return pc.setRemoteDescription(new RTCSessionDescription(beschreibung))
       .then(function () { spurenNachtragen(vonId, pc); return pc.createAnswer(); })
       .then(function (antwort) {
@@ -4181,6 +4257,19 @@ window.LiveChat = (function () {
      ========================================================= */
   var SFU_WEG = "/functions/v1/sfu";
   var SFU_WARTEN_MS = 8000;
+  /* FASSUNG 836 — Diagnose zu Funk 263: Am 30.09. brauchte ein einzelner
+     „sitzung"-Aufruf bis 6,9 s; mit Angebot, ICE und Bestätigung riss der
+     ganze Start dann an der 8-s-Grenze, und es folgten 2 Minuten Netz,
+     Abbau und wieder ein neuer Versuch. Jetzt: jeder Aufruf behält seine
+     8 s, der ganze Start bekommt 14 s (der Netz-Ton läuft währenddessen
+     ungestört weiter). Ein vorübergehender Grund (Zeit, kein Netz) sperrt
+     nur 20 s, beim nächsten Mal 40 s, dann 80 s, höchstens 2 Minuten. */
+  var SFU_START_MS = 14000;
+  var SFU_KURZ_SPERRE_MS = 20000;
+  /* FASSUNG 836 — fällt einer zurück, ist er meist gleich wieder da.
+     So lange zählt er für die anderen noch mit, damit bei vier Leuten
+     nicht alle zugleich „allein" zumachen. */
+  var SFU_NACHSICHT_MS = 60000;
   var SFU_PULS_MS = 60000;
   var SFU_ANSAGE_MS = 20000;
   var SFU_SPUR = "ton";
@@ -4195,7 +4284,7 @@ window.LiveChat = (function () {
     midZu: {},      // mid -> id
     hoertMich: {},  // id -> true — wer MICH über den Server hört (Netz-Ton zu ihm leer)
     kette: Promise.resolve(), aboWartet: false,
-    pulsUhr: 0, pulsFehler: 0, angesagt: 0, sperreBis: 0,
+    pulsUhr: 0, pulsFehler: 0, angesagt: 0, sperreBis: 0, kurzFehler: 0,
     aufrufe: 0, tonWunsch: undefined, verbrauchtGb: null, grenzeGb: null,
     pruefUrl: "", pruefMarke: "",
     /* FASSUNG 842 — siehe „DER TONSERVER HORCHT WEITER" */
@@ -4297,7 +4386,7 @@ window.LiveChat = (function () {
       sfu.letzteMarke = t;   /* FASSUNG 842 — nur im Speicher, für das Schliessen beim Weggehen */
       var abbruch = typeof AbortController === "function" ? new AbortController() : null;
       var uhr = setTimeout(function () { if (abbruch) abbruch.abort(); }, SFU_WARTEN_MS);
-      return fetch(basis.replace(/\/+$/, "") + SFU_WEG, {
+      return funktionRufen(basis, SFU_WEG, Boolean(sfu.pruefUrl), {
         method: "POST",
         signal: abbruch ? abbruch.signal : undefined,
         headers: {
@@ -4311,7 +4400,8 @@ window.LiveChat = (function () {
         return a.json().catch(function () { return { fehler: "kein-json" }; });
       }).catch(function () {
         clearTimeout(uhr);
-        return { fehler: "nicht-erreichbar" };
+        /* FASSUNG 836 — abgebrochen, weil die 8 s um sind, heisst „zeit". */
+        return { fehler: abbruch && abbruch.signal.aborted ? "zeit" : "nicht-erreichbar" };
       });
     }).catch(function () { return { fehler: "keine-marke" }; });
     /* Auch die Anmeldung darf nicht hängen: nach 9 s ist Schluss. */
@@ -4370,7 +4460,10 @@ window.LiveChat = (function () {
       var alt = sfu.andere[id] || {};
       sfu.andere[id] = { sitzung: sitz, kaputt: alt.sitzung === sitz ? Boolean(alt.kaputt) : false,
                          kaputtBis: alt.sitzung === sitz ? (alt.kaputtBis || 0) : 0,  /* FASSUNG 842 */
-                         aus: Boolean(n.aus) };
+                         aus: Boolean(n.aus),
+                         /* FASSUNG 836 — seit wann und warum er zurückgefallen ist */
+                         ausGrund: n.aus ? String(n.aus) : "",
+                         ausSeit: n.aus ? (alt.aus && alt.ausSeit ? alt.ausSeit : Date.now()) : 0 };
       /* Hört er mich laut seiner eigenen Liste NICHT (mehr) über den
          Server — oder hat er gar keinen —, geht meine Stimme wieder
          übers Netz zu ihm. So heilt sich auch ein verlorenes Paket. */
@@ -4462,6 +4555,12 @@ window.LiveChat = (function () {
     var da = Object.keys(sfu.andere);
     /* Wer selbst gerade im Rückfall steckt, zählt nicht als Grund. */
     var bereit = da.filter(function (id) { return !sfu.andere[id].aus; });
+    /* FASSUNG 836 — wer nur vorübergehend zurückfiel, hält eine laufende
+       Sitzung noch SFU_NACHSICHT_MS offen (starten tut man seinetwegen nicht). */
+    var halten = da.filter(function (id) {
+      var a = sfu.andere[id];
+      return !a.aus || (!SFU_ENDGUELTIG[a.ausGrund] && jetzt - (a.ausSeit || 0) < SFU_NACHSICHT_MS);
+    });
     if (sfu.lage === "rueckfall" && jetzt > sfu.sperreBis) { sfu.lage = "aus"; sfu.grund = ""; }
     if (sfu.lage === "aus") {
       /* Nur wenn wirklich jemand da ist, der den Server auch kann. */
@@ -4469,7 +4568,7 @@ window.LiveChat = (function () {
       return;
     }
     if (sfu.lage !== "laeuft") return;
-    if (!sfuGenug(bereit)) { sfuBeenden("allein"); return; }
+    if (!sfuGenug(halten)) { sfuBeenden("allein"); return; }
     var weg = [];
     Object.keys(sfu.empfang).forEach(function (id) {
       var e = sfu.empfang[id], a = sfu.andere[id];
@@ -4511,7 +4610,7 @@ window.LiveChat = (function () {
     var fertig = false;
     var uhr = setTimeout(function () {
       if (!fertig && sfu.versuch === v) { fertig = true; sfuRueckfall("zeit"); }
-    }, SFU_WARTEN_MS);
+    }, SFU_START_MS);
     var pc;
     try {
       pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.cloudflare.com:3478" }].concat(VERMITTLER || []),
@@ -4550,6 +4649,7 @@ window.LiveChat = (function () {
         if (sfu.versuch !== v || fertig) return;
         fertig = true; clearTimeout(uhr);
         sfu.lage = "laeuft";
+        sfu.kurzFehler = 0;   /* FASSUNG 836 */
         sfuAnsagen();
         clearInterval(sfu.pulsUhr);
         sfu.pulsFehler = 0;
@@ -4797,7 +4897,7 @@ window.LiveChat = (function () {
     if (!sitz || !t || !basis || typeof fetch !== "function") return;
     sfu.sitzung = "";
     try {
-      fetch(basis.replace(/\/+$/, "") + SFU_WEG, {
+      fetch(funktionsUrl(basis, SFU_WEG, Boolean(sfu.pruefUrl)), {
         method: "POST", keepalive: true,
         headers: { "Authorization": "Bearer " + t,
                    "apikey": (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.anonKey) || "",
@@ -4848,7 +4948,9 @@ window.LiveChat = (function () {
     sfuAbbauen(true);
     sfu.lage = "rueckfall";
     sfu.grund = String(grund || "fehler");
-    sfu.sperreBis = SFU_ENDGUELTIG[sfu.grund] ? Infinity : Date.now() + 120000;
+    /* FASSUNG 836 — vorübergehend: 20 s, 40 s, 80 s, höchstens 2 Minuten */
+    sfu.sperreBis = SFU_ENDGUELTIG[sfu.grund] ? Infinity
+      : Date.now() + Math.min(120000, SFU_KURZ_SPERRE_MS * Math.pow(2, sfu.kurzFehler++));
     try { console.info("[Klassenzimmer] Tonserver aus (" + sfu.grund + ") — alle Stimmen wieder direkt."); } catch (e) {}
     if (zustand.lage === "drin") sfuAnsagen();
     if (sitz && !SFU_ENDGUELTIG[sfu.grund]) sfuRufen({ aktion: "schliessen", sitzung: sitz, alles: true });
@@ -4861,7 +4963,7 @@ window.LiveChat = (function () {
     sfu.lage = "aus";
     sfu.grund = "";
     if (grund === "verlassen") {
-      sfu.andere = {}; sfu.angesagt = 0; sfu.sperreBis = 0; sfu.tonWunsch = undefined;
+      sfu.andere = {}; sfu.angesagt = 0; sfu.sperreBis = 0; sfu.kurzFehler = 0; sfu.tonWunsch = undefined;
     } else if (war !== "aus" && zustand.lage === "drin") {
       sfuAnsagen();
     }
@@ -4909,9 +5011,12 @@ window.LiveChat = (function () {
     /* Ein EIGENER Klient, absichtlich. Der Klient in backend.js
        trägt die Anmeldung des Nutzers; der hier braucht sie
        nicht und soll sie auch nicht anfassen. */
+    /* FASSUNG 836 — (Funk 263, Verbindung) Herzschlag alle 10 s statt 25 s: eine halbtote Leitung (Netzwechsel,
+       Funkloch) wird nach 10–20 s statt 25–50 s erkannt und neu verbunden. Bis dahin gingen Sitzwechsel und Chatzeilen
+       still verloren. Kostet eine kleine Meldung je 10 s. */
     sbKlient = window.supabase.createClient(
       window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey,
-      { realtime: { params: { eventsPerSecond: 20 } } }
+      { realtime: { params: { eventsPerSecond: 20 }, heartbeatIntervalMs: 10000 } }
     );
     return sbKlient;
   }
@@ -5099,6 +5204,19 @@ window.LiveChat = (function () {
             if (spielSitz[id] == null && typeof n.spielsitz[id] === "number") { spielSitz[id] = n.spielsitz[id]; neuerSitz = true; }
           });
         }
+        /* FASSUNG 836 — der Puls heilt auch einen VERALTETEN Platz: Gingen die Meldung eines Wechsels und ihre beiden
+           Nachsendungen verloren, saß der andere hier bisher so lange am alten Platz, bis er wieder wechselte (übernommen
+           wurde nur, was hier noch gar nicht stand). Jetzt gilt der eigene Platz des Absenders aus seinem Puls, wenn er
+           abweicht und hier in den letzten 2,5 s nicht geändert wurde (sonst könnte ein Puls, der vor einem frischen Tausch
+           abging, diesen zurückdrehen). Ein verlorener Wechsel steht so nach spätestens 6 s richtig. */
+        var heile = function (tabelle, quelle, art) {
+          var v = quelle && quelle[n.von];
+          if (typeof v !== "number" || tabelle[n.von] === v) return;
+          if (Date.now() - (sitzGeaendertUm[art + "|" + n.von] || 0) < 2500) return;
+          tabelle[n.von] = v; neuerSitz = true;
+        };
+        heile(sitzTausch, n.sitz, "sitzplatz");
+        heile(spielSitz, n.spielsitz, "spielsitz");
         if (neuerSitz) melden();
       }
       var neuDa = !zustand.leute[n.von];
@@ -5284,27 +5402,35 @@ window.LiveChat = (function () {
       melden();
       return;
     }
-    if (n.art === "spielsitz") {
-      /* FASSUNG 679 — still: keine Zeile im Chat, nur die Spiel-Tabelle. */
+    if (n.art === "spielsitz" || n.art === "sitzplatz") {
+      /* FASSUNG 679 — spielsitz: still, keine Zeile im Chat, nur die Spiel-Tabelle.
+         sitzplatz: Zwei Leute haben die Plaetze getauscht. Alle uebernehmen dieselbe Zuordnung — sonst sitzt man auf
+         jedem Bildschirm woanders.
+         FASSUNG 836 — (Funk 263, Platzwechsel-Latenz) die Meldung kommt jetzt doppelt (direkt und über den Server) und
+         wird nachgesendet: was einen älteren oder denselben Stempel trägt, ist schon da. Gezeichnet wird nur, wenn sich
+         ein Platz wirklich ändert – vorher zeichnete jede Meldung samt Nachsendungen das ganze Klassenzimmer neu (mit
+         allen Chatzeilen, im Hauptraum über 7 000), viermal je Wechsel. Die Chatzeile („… setzt sich auf Platz 3")
+         kommt erst nach dem nächsten Bild: zuerst steht der Platz, dann wird der Verlauf gespeichert. */
+      if (typeof n.sn === "number") {
+        var snSchl = n.art + "|" + n.von;
+        if (sitzSnVon[snSchl] && n.sn <= sitzSnVon[snSchl]) return;
+        sitzSnVon[snSchl] = n.sn;
+      }
+      var tabelle = n.art === "spielsitz" ? spielSitz : sitzTausch, anders = false;
       if (n.ordnung && typeof n.ordnung === "object") {
         Object.keys(n.ordnung).forEach(function (id) {
-          if (typeof n.ordnung[id] === "number") spielSitz[id] = n.ordnung[id];
+          if (typeof n.ordnung[id] === "number" && tabelle[id] !== n.ordnung[id]) {
+            tabelle[id] = n.ordnung[id];
+            sitzGeaendertUm[n.art + "|" + id] = Date.now();
+            anders = true;
+          }
         });
       }
-      melden();
-      return;
-    }
-    if (n.art === "sitzplatz") {
-      /* Zwei Leute haben die Plaetze getauscht. Alle uebernehmen
-         dieselbe Zuordnung — sonst sitzt man auf jedem Bildschirm
-         woanders. */
-      if (n.ordnung && typeof n.ordnung === "object") {
-        Object.keys(n.ordnung).forEach(function (id) {
-          if (typeof n.ordnung[id] === "number") sitzTausch[id] = n.ordnung[id];
-        });
+      if (anders) melden("plaetze");
+      if (n.art === "sitzplatz" && n.text) {
+        var satz = n.text;
+        (window.requestAnimationFrame || setTimeout)(function () { setTimeout(function () { systemZeile(satz); }, 0); });
       }
-      if (n.text) systemZeile(n.text);
-      melden();
       return;
     }
     if (n.art === "hintergrund") {
@@ -5511,8 +5637,9 @@ window.LiveChat = (function () {
     }
     if (n.art === "redet") {
       if (zustand.leute[n.von]) {
-        zustand.leute[n.von].spricht = Boolean(n.spricht);
-        melden();
+        /* FASSUNG 836 — Sprechen an/aus ändert nur den Platz (der Ring): nur die Plätze neu zeichnen, und nur bei Änderung */
+        var spricht = Boolean(n.spricht);
+        if (zustand.leute[n.von].spricht !== spricht) { zustand.leute[n.von].spricht = spricht; melden("plaetze"); }
       }
       return;
     }
@@ -6120,14 +6247,7 @@ window.LiveChat = (function () {
       if (zustand.lage !== "drin") { clearInterval(relaisPflegeUhr); relaisPflegeUhr = 0; return; }
       if (relaisStand.quelle !== "cloudflare") return;
       if (relaisStand.server && Date.now() - relaisStand.geholt < RELAIS_FRISCH_MS) return;
-      relaisHolen(true).then(function (ok) {
-        if (!ok) return;
-        Object.keys(brueckeJe).forEach(function (id) {
-          var pcx = brueckeJe[id];
-          if (!pcx || pcx.connectionState === "closed") return;
-          try { pcx.setConfiguration({ iceServers: VERMITTLER, iceCandidatePoolSize: 1 }); } catch (e) {}
-        });
-      });
+      relaisHolen(true).then(function (ok) { if (ok) relaisVerteilen(false); });
     }, 5 * 60 * 1000);
   }
   function steht(pc) {
@@ -6592,6 +6712,48 @@ window.LiveChat = (function () {
     }
   } catch (e) {}
 
+  /* FASSUNG 836 — XANDER (Funk 263): „das Gespräch baut sich jetzt noch später auf". Ob es später kommt, ließ sich bisher
+     nicht messen – es gab keine Zahl für „Zeit bis zum ersten Ton". Jetzt hält jedes Betreten fest (ms seit dem Tipp auf
+     „hinein"): Relais (Quelle, Dauer), Raumkanal steht, und je Person das erste Angebot, „Leitung steht" mit dem Weg
+     (relay = über Cloudflare, srflx/host = direkt) und die erste Stimme, dazu Neustarts und den Browser. 30 s nach dem
+     Betreten geht das einmal an den Betreiber (spiel_diagnose, art „verbindung"; der Server nimmt je Konto höchstens
+     40 Einträge am Tag). Nur Zahlen und der Browsername – keine Inhalte. */
+  var aufbau = null;
+  function aufbauStart() {
+    aufbau = { t0: Date.now(), raum: zustand.raum, ua: (navigator.userAgent || "").slice(0, 160), relais: null, kanal: null, je: {} };
+    var meins = aufbau;
+    setTimeout(function () { aufbauSenden(meins); }, 30000);
+  }
+  function aufbauMerk(id, feld, wert) {
+    if (!aufbau || !id) return;
+    var p = aufbau.je[id] || (aufbau.je[id] = {});
+    if (wert !== undefined) { p[feld] = wert; return; }
+    if (p[feld] == null) p[feld] = Date.now() - aufbau.t0;
+  }
+  function aufbauWeg(id, pc) {
+    if (!aufbau || !pc || !pc.getStats) return;
+    pc.getStats().then(function (st) {
+      var paar = null, lokal = {};
+      st.forEach(function (r) {
+        if (r.type === "transport" && r.selectedCandidatePairId) paar = paar || st.get(r.selectedCandidatePairId);
+        if (r.type === "candidate-pair" && r.nominated && r.state === "succeeded" && !paar) paar = r;
+        if (r.type === "local-candidate") lokal[r.id] = r.candidateType;
+      });
+      if (paar && lokal[paar.localCandidateId]) aufbauMerk(id, "weg", lokal[paar.localCandidateId]);
+    }).catch(function () {});
+  }
+  function aufbauSenden(a) {
+    if (!a || a.gesendet) return;
+    a.gesendet = true;
+    try {
+      var be = (typeof Backend !== "undefined" && Backend) || window.Backend;
+      var k = be && be.zugang && be.zugang();
+      if (!k || !k.rpc) return;
+      var d = { raum: a.raum, ua: a.ua, relais: a.relais, kanal: a.kanal, je: a.je, fassung: (window.DMA_VERSION || "") };
+      k.rpc("spiel_diagnose_senden", { p_art: "verbindung", p_daten: d }).then(function () {}, function () {});
+    } catch (e) {}
+  }
+
   function betreten(raumName, optionen) {
     var o = optionen || {};
     if (!moeglich()) {
@@ -6604,6 +6766,7 @@ window.LiveChat = (function () {
 
     zustand.raum = String(raumName || "").trim() || gemerkterRaum() || neuerRaumName();
     raumMerken(zustand.raum);
+    aufbauStart();   // FASSUNG 836 — Messung des Aufbaus
     /* Eine Aufgabe, die hier schon lief, gilt weiter — auch nach dem
        Aktualisieren der Seite. Sonst waere keine Antwort mehr eine
        Antwort, und der Notenknopf bliebe weg. */
@@ -6735,14 +6898,10 @@ window.LiveChat = (function () {
        los; kommt das Relais danach, bekommen alle Leitungen, die noch
        nicht stehen, die neue Liste und suchen damit neu. */
     var relaisSpaet = relaisHolen(false);
-    relaisSpaet.then(function (ok) {
-      if (!ok) return;
-      Object.keys(brueckeJe).forEach(function (id) {
-        var pcx = brueckeJe[id];
-        if (!pcx || steht(pcx)) return;
-        try { pcx.setConfiguration({ iceServers: VERMITTLER, iceCandidatePoolSize: 1 }); } catch (e) {}
-      });
-    });
+    relaisSpaet.then(function (ok) { if (aufbau && !aufbau.relais) aufbau.relais = { ms: Date.now() - aufbau.t0, quelle: relaisStand.quelle, ausGeraet: !!relaisStand.ausGeraet, ok: !!ok }; }, function () {});
+    /* FASSUNG 836 — kommt das Relais erst nach den 2,5 s, suchen die Leitungen, die noch nicht stehen, sofort neu
+       (relaisVerteilen mit Neustart); vorher bekamen sie nur die neue Liste und warteten bis zur Wache (6–12 s). */
+    relaisSpaet.then(function (ok) { if (ok) relaisVerteilen(true); });
     /* FASSUNG 829 — XANDER (Funk 255): „wenn ich den Chat betrete dann muss ich sofort im Chat da sein und das darf nicht
        erst fünf Minuten dauern … der denkt warum kommt er nicht". Bis hier wartete das Betreten OHNE Zeitgrenze auf das
        Mikrofon (getUserMedia): erst danach meldete man sich im Raum an. Hängt das Mikrofon (Abfrage noch offen, von einer
@@ -6774,6 +6933,7 @@ window.LiveChat = (function () {
       return new Promise(function (fertig) {
         kanal.subscribe(function (stand) {
           if (stand === "SUBSCRIBED") {
+            if (aufbau && aufbau.kanal == null) aufbau.kanal = Date.now() - aufbau.t0;   // FASSUNG 836 — Messung
             /* FASSUNG 842 — war man schon drin, hat sich nur der Raumkanal
                neu verbunden (Netzwechsel, Handy unter Last). Das „hallo"
                sagt es mit, damit die anderen keine stehende Leitung
@@ -8692,15 +8852,15 @@ window.LiveChat = (function () {
     }
     if (spielSicht()) {
       spielSitz[zustand.ichId] = n - 1;
+      spielSitzSchicken([zustand.ichId]);   // FASSUNG 836 — zuerst hinaus, dann die Spiel-Nacharbeit
       spielGewechselt();
-      spielSitzSchicken([zustand.ichId]);
-      melden();
+      melden("plaetze");
       return { ok: true, text: "Im Spiel sitzt du jetzt auf Platz " + n + " – im Chat bleibst du, wo du warst." };
     }
     sitzTausch[zustand.ichId] = n - 1;
+    sitzSchicken([zustand.ichId], zustand.ichName + " setzt sich auf Platz " + n + ".");   // FASSUNG 836 — zuerst hinaus
     spielGewechselt();
-    sitzSchicken([zustand.ichId], zustand.ichName + " setzt sich auf Platz " + n + ".");
-    melden();
+    melden("plaetze");
     return { ok: true, text: "Du sitzt jetzt auf Platz " + n + "." };
   }
 
@@ -8727,17 +8887,17 @@ window.LiveChat = (function () {
       spielSitz[zustand.ichId] = seiner.nummer - 1;
       var beide = [zustand.ichId];
       if (spieltMit(id)) { spielSitz[id] = meiner.nummer - 1; beide.push(id); }
+      spielSitzSchicken(beide);   // FASSUNG 836 — zuerst hinaus
       spielGewechselt();
-      spielSitzSchicken(beide);
-      melden();
+      melden("plaetze");
       return { ok: true, text: "Im Spiel habt ihr getauscht – im Chat sitzt ihr weiter wie vorher." };
     }
     sitzTausch[zustand.ichId] = seiner.nummer - 1;
     sitzTausch[id] = meiner.nummer - 1;
-    spielGewechselt();
     var satz = zustand.ichName + " und " + seiner.name + " haben die Plätze getauscht.";
-    sitzSchicken([zustand.ichId, id], satz);
-    melden();
+    sitzSchicken([zustand.ichId, id], satz);   // FASSUNG 836 — zuerst hinaus
+    spielGewechselt();
+    melden("plaetze");
     return { ok: true, text: satz };
   }
 

@@ -485,6 +485,7 @@
       const f = Math.min(1, 360 / Math.max(m.w, m.h)), W = Math.max(1, Math.round(m.w * f)), H = Math.max(1, Math.round(m.h * f));
       c = document.createElement("canvas"); c.width = W; c.height = H; c.schl = schl;
       const x = c.getContext("2d");
+      if (!x) return;   // FASSUNG 836 — iOS an der Leinwand-Speichergrenze: kein Schein statt eines abgebrochenen Bildes
       x.fillStyle = "#000"; x.fillRect(0, 0, W, H);
       x.globalCompositeOperation = "lighter";
       const P0 = ST.proj(o.x, o.y, 0), pxProM = K.s / k * f;   // Bildpunkte des Lichtbilds je Meter
@@ -645,7 +646,9 @@
       const P = ST.proj(o.x, o.y, o.z || 0);
       /* grob außerhalb? (Höhe großzügig) */
       const gross = (Math.max(o.fuss ? o.fuss[0] + o.fuss[1] : 4, (o.hoehe || 10) * 1.3)) * K.s * o.stufe;
-      if (P[0] < -gross - rand || P[0] > K.W + gross + rand || P[1] < -rand || P[1] > K.H + gross + rand + gross) continue;
+      /* FASSUNG 836 — (Funk 263, Dom) oben nicht nach dem Fußpunkt aussortieren: große Wahrzeichen reichen weit unter ihn
+         (der Dom 11 m, das Kolosseum 22 m) – ihr noch sichtbarer Vorderteil brach am oberen Bildrand schlagartig weg */
+      if (P[0] < -gross - rand || P[0] > K.W + gross + rand || P[1] < -rand - 0.5 * gross || P[1] > K.H + gross + rand + gross) continue;
       /* FASSUNG 820 — beim Drehen lädt das Bild des neuen Winkels erst: solange bleibt das zuletzt gezeigte stehen
          (o._gierDa), statt dass das Haus kurz verschwindet */
       let gier = SZ.gierVon(o);
@@ -662,7 +665,9 @@
       }
       /* Lichter: aus dem Nachtbild (dort sind sie gemessen) */
       const nb = e.lagen.find((l) => /_nacht_/.test(l[0]));
-      if (nb) { e.licht = nb[3] || LB.vz[nb[0]]; e.lk = nb[2] || k; }
+      /* FASSUNG 836 — (Funk 263, Dom) Lichter nur, wenn das Haus selbst gemalt werden kann: sonst blieb nachts ein heller
+         Fleck (Bodenstrahler, Fensterpunkte) ohne Gebäude stehen */
+      if (nb && LB.fertig(w0.name)) { e.licht = nb[3] || LB.vz[nb[0]]; e.lk = nb[2] || k; }
       sicht.push(e);
     }
     SZ.sichtbare = sicht;
