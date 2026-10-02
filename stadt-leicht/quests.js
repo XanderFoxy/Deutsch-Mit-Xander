@@ -1921,13 +1921,14 @@
         const genau = a && a.richtig && klein(t) === klein(ohneHtml(a.html)), fr = !genau && freiPruefen(qu, t);
         if (genau) e = { stufe: 1, text: t, i: bi, grund: "Genau richtig!" };
         else if (fr) e = fr;
-        else if (knapp) e = { stufe: 0, text: t, ohneVersuch: true, grund: "Das habe ich nicht sicher verstanden – sag es bitte noch einmal, etwas deutlicher." };
+        else if (knapp) e = { stufe: 0, text: t, ohneVersuch: true, unsicher: true, grund: "Das habe ich nicht sicher verstanden – sag es bitte noch einmal, etwas deutlicher." };
         else if (a && a.richtig && bs >= 0.75) e = { stufe: 1, text: t, i: bi, grund: "Genau richtig!" };
         else if (a && a.richtig && bs >= 0.45) e = { stufe: 0.5, text: t, i: bi, grund: "In etwa richtig – genau hieße es: „" + ohneHtml(a.html) + "“" };
         else if (a && !a.richtig && bs >= 0.45) e = { stufe: 0, text: t, i: bi, weg: a.weg, grund: a.hinweis || "Hm, das stimmt noch nicht." };
         else e = { stufe: 0, text: t, ohneVersuch: true, grund: "Das passt noch nicht zur Aufgabe. " + (qu.v.frei || "Sag es in einem ganzen Satz – mit deinen eigenen Worten.") };
       }
-      if (!bestes || e.stufe > bestes.stufe) bestes = e;
+      /* (836: eine eindeutige Lesart schlägt eine unsichere gleicher Stufe – sagt die Lexical-Fassung klar „zwei", zählt das) */
+      if (!bestes || e.stufe > bestes.stufe || (e.stufe === bestes.stufe && bestes.unsicher && !e.ohneVersuch)) bestes = e;
       if (bestes.stufe === 1) break;
     }
     return bestes;

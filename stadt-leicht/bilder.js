@@ -164,7 +164,8 @@
       /* FASSUNG 836 — das Zwergbild wurde ohne Ladeprüfung gewählt: fehlte es, malte die Szene kein Haus, aber seine
          Lichter (beim Dom elf Bodenstrahler) – ein heller Fleck ohne Dom. Jetzt bis dahin eine geladene andere Größe. */
       if (LB.bild(basis + "_z", true)) return { name: basis + "_z", meta: z };
-      return ersatz(basis) || { name: basis + "_z", meta: z };
+      /* (Sonde 857: ist gar keine Größe da, null – dann bleibt beim Drehen die alte Blickrichtung stehen, szene.js _gierDa) */
+      return ersatz(basis);
     }
     if (!k && !g) return null;
     const bedarf = s * (stufe || 1);
