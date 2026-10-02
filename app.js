@@ -243,6 +243,23 @@
   function bereichSichtbar(el) {
     return Boolean(el && el.offsetParent !== null);
   }
+  let wortschatzAufgeschoben = false, wortschatzUhr = 0;
+  function imKlassenzimmer() {
+    try {
+      if (bereichSichtbar(document.getElementById("sub-livechat"))) return true;
+      const l = window.LiveChat && window.LiveChat.lage && window.LiveChat.lage();
+      return Boolean(l && (l.lage === "drin" || l.lage === "verbindet"));
+    } catch (e) { return false; }
+  }
+  function wortschatzSpaeterHolen() {
+    clearTimeout(wortschatzUhr);
+    wortschatzUhr = setTimeout(() => {
+      if (!wortschatzAufgeschoben || VocabData.ladenLaeuft()) return;
+      if (imKlassenzimmer() || document.hidden) { wortschatzSpaeterHolen(); return; }
+      const los = () => { if (wortschatzAufgeschoben && !imKlassenzimmer()) { wortschatzAufgeschoben = false; VocabData.ladeWoerter(); } else wortschatzSpaeterHolen(); };
+      if (window.requestIdleCallback) requestIdleCallback(los, { timeout: 3000 }); else los();
+    }, 8000);
+  }
   function activateTab(targetId) {
     /* Der Wortschatz (Ordner „vokabeln", rund 3,4 MB) wird NICHT beim Start
        geladen, sondern beim ersten Wechsel nach „Lernen" oder „Wissen" —
@@ -257,10 +274,20 @@
        Zeit als leeren Bildschirm. Deshalb erst zeichnen lassen, dann
        laden — die Ansichten holen sich die Wörter über
        wortschatzNachziehen() ohnehin nach, sobald sie da sind. */
-    if ((targetId === "view-learn" || targetId === "view-knowledge") && typeof VocabData !== "undefined" && VocabData.ladeWoerter && !VocabData.ladenLaeuft()) {
+    if (targetId === "view-learn" && typeof VocabData !== "undefined" && VocabData.ladeWoerter && !VocabData.ladenLaeuft()) {
       const spaeter = () => VocabData.ladeWoerter();
       if (window.requestIdleCallback) requestIdleCallback(spaeter, { timeout: 1500 });
       else setTimeout(spaeter, 300);
+    }
+    /* FASSUNG 837 — XANDER (Funk 263): „die Ladezeit … ca. 10 mal schneller … sofort im Livestream wie HelloTalk".
+       Der Weg ins Klassenzimmer führt über „Wissen", und „Wissen" zog bisher nach 1,5 s den ganzen Wortschatz
+       (26 Dateien, 2,26 MB gepackt) – genau dann, wenn man den Raum betritt und die Leitung für Raumkanal, Verlauf und
+       Gespräch braucht (gemessen: im langsamen Netz über 10 s belegt). Jetzt wird er unter „Wissen" aufgeschoben:
+       Jede Ansicht, die Wörter braucht, holt ihn über wortschatzNachziehen() selbst; sonst kommt er nach 8 s Ruhe –
+       aber nicht, solange das Klassenzimmer offen ist oder man im Raum ist. */
+    if (targetId === "view-knowledge" && typeof VocabData !== "undefined" && VocabData.ladeWoerter && !VocabData.ladenLaeuft()) {
+      wortschatzAufgeschoben = true;
+      wortschatzSpaeterHolen();
     }
     tabs.forEach((t) => t.setAttribute("aria-selected", String(t.dataset.target === targetId)));
     views.forEach((v) => (v.dataset.active = String(v.id === targetId)));
@@ -9882,7 +9909,11 @@
     // Nicht selbst anstoßen: sonst würde schon der allererste Aufbau der Seite
     // den ganzen Wortschatz ziehen, obwohl niemand eine Wortansicht geöffnet
     // hat. Angestoßen wird beim Wechsel nach „Lernen"/„Wissen" (activateTab).
-    if (!VocabData.ladenLaeuft || !VocabData.ladenLaeuft()) return true;
+    if (!VocabData.ladenLaeuft || !VocabData.ladenLaeuft()) {
+      /* FASSUNG 837 — unter „Wissen" aufgeschoben (activateTab): eine Ansicht, die Wörter zeigt, holt sie jetzt selbst */
+      if (wortschatzAufgeschoben) { wortschatzAufgeschoben = false; return wortschatzHolenFuer(nachzeichnen); }
+      return true;
+    }
     wortschatzBereit().then(() => { try { nachzeichnen(); } catch (e) { /* Ansicht ist weg */ } });
     return true;
   }

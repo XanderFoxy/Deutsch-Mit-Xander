@@ -87,7 +87,9 @@ const VocabData = (function () {
     dateiLaeuft[datei] = new Promise((fertig) => {
       const melden = (wert) => { dateiFertig[datei] = true; fertig(wert); };
       const s = document.createElement('script');
-      s.src = 'vokabeln/' + datei + '.js?v=' + (window.DMA_VERSION || '1');
+      /* FASSUNG 837 — eigener Stempel je Datei (werkzeug/fassung-setzen.js, STEMPEL_EINZELN): nach einer neuen Fassung
+         kommt nur eine Wortdatei neu, die sich wirklich geändert hat. */
+      s.src = 'vokabeln/' + datei + '.js' + (window.DMA_V ? window.DMA_V('vokabeln/' + datei + '.js') : '?v=' + (window.DMA_VERSION || '1'));
       s.async = true;
       s.onload = () => melden(true);
       s.onerror = () => {

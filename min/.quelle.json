@@ -24,7 +24,6 @@
  "data-uebungen.js": "a613b7fc8f779a9da9728574581c5ffc5bb5963c",
  "data-umgangssprache.js": "6f66e75a4f51cdeceb472827d8a6337559637b7d",
  "data-vocab-extra.js": "3a4af25e41cf98fceee27dbc7ce270672ebcfd73",
- "data-vocab.js": "fb59dfb37d1fed1867ff537ca702fb7ce2a632db",
  "data-wegweiser.js": "29bb7522279725dffe7826052f655cf471572a2b",
  "data-witze.js": "e1cbf7185f74f87e5b4e67b293fab0d475a76108",
  "data-wortkategorien.js": "198133cbeabb3a8a58aa8e991936c7749d483e1d",
@@ -50,8 +49,9 @@
  "app-styles.css": "252949e98e6fff038a4d4e1b43d030d927d942fe",
  "konjugation.js": "740bad9ac8234b00f3a6b64b3e0793ae54ecf619",
  "spiel.css": "c22d2e8c176207f443f05851ae383ea3c9c7266f",
- "app.js": "749b33ef827399cde2e62702ffe8cc3a487ea0aa",
- "spiel.js": "5245ed1c38ee7778b7cbacb5803ffba0e11d22d2",
  "livechat.js": "9f5ff7c87502cdf4f179c751ebc9e28cd1998a65",
- "data-werkstatt.js": "1fe55be2eff52d79982aa96b672e2c898ade5cd4"
+ "data-werkstatt.js": "1fe55be2eff52d79982aa96b672e2c898ade5cd4",
+ "app.js": "57ae1e13f83156a022bbed1720436367aac42a71",
+ "data-vocab.js": "4d1c59095b00c2be502216599ba8328d5402a7fe",
+ "spiel.js": "b72c43fc1d11a1b487042da21d14b0c711669247"
 }

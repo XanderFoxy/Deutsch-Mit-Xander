@@ -63,6 +63,7 @@ const indexPfad = path.join(WURZEL, "index.html");
    ganzen Ordner (ändert sich ein Ton, gilt der neue Stempel für alle
    Töne — das ist selten und hält die Liste klein). */
 const STEMPEL_ORDNER = ["ton", "tutor", "szenen", "aussprache", "figuren", "bilderwelt-neu"];   // FASSUNG 840: neue Bilderwelt in eigenem Ordner
+const STEMPEL_EINZELN = ["vokabeln", "kalender"];   // FASSUNG 837: Stempel je Datei (siehe stempelSetzen)
 
 /* =========================================================
    FASSUNG 694 — DIE SEITE LÄDT VERKLEINERTE KOPIEN
@@ -169,6 +170,18 @@ function stempelSetzen() {
     const h = crypto.createHash("sha1");
     alleDateien(wo).forEach((f) => { h.update(path.relative(WURZEL, f)); h.update(fs.readFileSync(f)); });
     stempel[o + "/"] = h.digest("hex").slice(0, 10);
+  });
+  /* FASSUNG 837 — XANDER (Funk 263): „die Ladezeit … ca. 10 mal schneller". Wortschatz (vokabeln/, 2,26 MB gepackt)
+     und Kalender (kalender/) hingen an ?v=DMA_VERSION und kamen nach JEDER Fassung komplett neu – am 29. und 30.09.
+     waren das 24 bzw. 31 Fassungen am Tag. Jetzt hat jede Datei ihren eigenen Stempel aus dem Inhalt: neu geladen wird
+     nur, was sich wirklich geändert hat. Je Datei statt je Ordner, damit ein geändertes Wort nicht alle 33 Dateien
+     neu holt. */
+  STEMPEL_EINZELN.forEach((o) => {
+    const wo = path.join(WURZEL, o);
+    if (!fs.existsSync(wo)) return;
+    fs.readdirSync(wo).filter((n) => /\.js$/.test(n)).sort().forEach((n) => {
+      stempel[o + "/" + n] = crypto.createHash("sha1").update(fs.readFileSync(path.join(wo, n))).digest("hex").slice(0, 10);
+    });
   });
   const zeile = "<script>window.DMA_STEMPEL = " + JSON.stringify(stempel) + ";</script>";
   const muster = /<script>window\.DMA_STEMPEL = \{[^\n]*\};<\/script>/;

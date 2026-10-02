@@ -684,7 +684,11 @@
       /* Ein stiller Mini-Ton IM Tipp – manche Geräte schalten erst damit frei. */
       try { var q = k.createBufferSource(); q.buffer = k.createBuffer(1, 1, 22050); q.connect(k.destination); q.start(0); } catch (e) {}
     }
-    if (!KLANG.vorab) {
+    /* FASSUNG 837 — XANDER (Funk 263): „die Ladezeit … ca. 10 mal schneller". Der erste Tipp irgendwo auf der Seite
+       holte bisher alle 68 Spieltöne (333 KB) – auch beim Tipp auf „Wissen" oder „Klassenzimmer", auch für Leute, die
+       gar nicht spielen, und genau dann, wenn die Leitung fürs Betreten gebraucht wird. Jetzt erst, wenn man mitspielt;
+       einzelne Töne lädt klangLaden() bei Bedarf ohnehin selbst. Den Klang entsperrt weiter jeder Tipp (oben). */
+    if (!KLANG.vorab && spielSichtbar()) {
       KLANG.vorab = true;
       KLANG_VORAB.forEach(function (n, i) { setTimeout(function () { klangLaden(n); }, 200 + i * 60); });
       /* Einmal je Sitzung, nach einer Minute Spiel: was die Tonmaschine
