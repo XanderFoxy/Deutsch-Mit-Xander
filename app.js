@@ -327,8 +327,17 @@
     if (t.dataset.target === "view-learn" && ExerciseData.ladeUebungen && !ExerciseData.uebungenDa()) {
       ExerciseData.ladeUebungen().then(() => { dailyTaskPoolCache = null; renderSetup(); });
     }
+    /* FASSUNG 840 — XANDER (Funk 271): „unter Wissen und Klassenzimmer dann ins Klassenzimmer gehen wie immer auch
+       nur zehnmal schneller". Gemessen (werkzeug/ladezeit-messen.js): der Tipp auf „Wissen" holte sofort den
+       Kalendermonat (kalender/10.js, 229 KB) – genau in dem Moment, in dem man weiter ins Klassenzimmer tippt und
+       die Leitung dort gebraucht wird. Jetzt erst nach 1,2 s und nur, wenn dann wirklich der Kompass zu sehen ist;
+       wechselt man später zum Kompass, holt renderKompass ihn wie bisher selbst. */
     if (t.dataset.target === "view-knowledge" && ExerciseData.ladeKalender && !ExerciseData.kalenderDa()) {
-      ExerciseData.ladeKalender().then(() => renderKompass());
+      setTimeout(() => {
+        const k = document.getElementById("kompassArea");
+        if (ExerciseData.kalenderDa() || klassenzimmerOffen() || !k || !bereichSichtbar(k)) return;
+        ExerciseData.ladeKalender().then(() => renderKompass());
+      }, 1200);
     }
     if (!tabsFreshlyRendered.has(t.dataset.target)) {
       tabsFreshlyRendered.add(t.dataset.target);
@@ -21132,7 +21141,31 @@
       if (window.requestIdleCallback) window.requestIdleCallback(f, { timeout: 12000 });
       else setTimeout(f, 8000);
     };
-    spaeter(() => {
+    /* FASSUNG 840 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller". Gemessen (werkzeug/ladezeit-
+       messen.js, 4G): gleich nach dem Öffnen der Seite kamen katze, adler und lok2 (zusammen 1,6 MB) – im WLAN
+       ALLE Filme, auch der T-Rex mit 8 MB –, ohne dass jemand im Klassenzimmer war. Genau dann braucht die Leitung
+       der Seitenaufbau und danach der Raum. Filme spielen nur im Raum; also wird erst vorgeladen, wenn man drin
+       ist und alle Leitungen stehen (höchstens 30 s warten), dann 10 s später in einer Ruhepause – dieselbe Regel
+       wie bei den Drehblättern (836). Im Mobilfunk (3G/„cellular") und bei „Daten sparen" gar nicht vorab: dort
+       holt das Vorladen auf Zuruf (Schrägstrich, Anfangsbuchstabe) den einen Film, der gleich kommt. */
+    try {
+      const n = navigator.connection;
+      if (n && (n.type === "cellular" || /(^|-)(2g|3g)$/.test(n.effectiveType || ""))) return;
+    } catch (e) {}
+    const imRaumUndStehen = (weiter) => {
+      let seitDrin = 0;
+      const warte = () => {
+        let drin = false, alle = true;
+        try { drin = window.LiveChat && LiveChat.lage().lage === "drin"; } catch (e) {}
+        try { alle = (LiveChat.leitungen ? LiveChat.leitungen() : []).every((v) => v.steht); } catch (e) {}
+        if (!drin) { seitDrin = 0; setTimeout(warte, 3000); return; }
+        if (!seitDrin) seitDrin = Date.now();
+        if (!alle && Date.now() - seitDrin < 30000) { setTimeout(warte, 1000); return; }
+        setTimeout(() => spaeter(weiter), 10000);
+      };
+      warte();
+    };
+    imRaumUndStehen(() => {
       brDatei("filmspieler.js").then(() => {
         if (!window.DMA_FILM || !window.DMA_FILM.vorladen) return;
         namen.reduce((kette, name) =>
@@ -92047,6 +92080,7 @@
       </details>`;
   }
 
+  let kompassKalenderUhr = 0;   // FASSUNG 840
   async function renderKompass() {
     /* Der Kalender liegt seit dieser Fassung in einer eigenen Datei, die
        erst bei Bedarf geladen wird — beim Seitenstart wäre er mit 7,4 MB
@@ -92058,9 +92092,15 @@
          Seite, alles andere steht sofort bereit. Ist er da, zeichnen
          wir noch einmal — dann steht die Tagesgeschichte drin. */
       kalenderFehltNoch = true;
-      ExerciseData.ladeKalender().then(() => {
-        if (bereichSichtbar(kompassArea)) renderKompass();
-      }).catch(() => {});
+      /* FASSUNG 840 — nicht im selben Augenblick: wer über „Wissen" ins Klassenzimmer geht, sieht den Kompass nur
+         im Vorbeigehen (Funk 271, „zehnmal schneller"). Erst wenn er nach 1,2 s noch zu sehen ist. */
+      clearTimeout(kompassKalenderUhr);
+      kompassKalenderUhr = setTimeout(() => {
+        if (ExerciseData.kalenderDa() || !bereichSichtbar(kompassArea) || klassenzimmerOffen()) return;
+        ExerciseData.ladeKalender().then(() => {
+          if (bereichSichtbar(kompassArea)) renderKompass();
+        }).catch(() => {});
+      }, 1200);
     }
     // Das Sprachniveau wird IMMER gesetzt, nicht erst wenn der heutige Tag freigegeben ist.
     // Vorher blieb es an Tagen ohne freigegebenen Eintrag auf null — im Archiv stand dann

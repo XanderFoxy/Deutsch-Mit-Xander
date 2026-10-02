@@ -3111,6 +3111,7 @@ window.LiveChat = (function () {
 
     pc.onicecandidate = function (e) {
       kerzeRaus(anderId, e.candidate ? alsDaten(e.candidate) : null);
+      if (e.candidate) leitungKerze(anderId, e.candidate, true); else leitungMerk(anderId, "kerzenFertig");   // FASSUNG 840
     };
     /* Der Strom wird SELBST zusammengesetzt, Spur für Spur.
        Sich auf e.streams[0] zu verlassen geht schief, sobald die
@@ -3119,7 +3120,7 @@ window.LiveChat = (function () {
     pc.ontrack = function (e) {
       var p = zustand.leute[anderId];
       if (!p) return;
-      if (e.track && e.track.kind === "audio") aufbauMerk(anderId, "ton");   // FASSUNG 836 — Messung
+      if (e.track && e.track.kind === "audio") { aufbauMerk(anderId, "ton"); leitungMerk(anderId, "ton"); }   // FASSUNG 836/840 — Messung
       /* FASSUNG 827 — hört man ihn schon über den Tonserver, bleibt die
          Netz-Stimme draussen (sonst gewönne sie als „neueste Spur" und
          hielte die Server-Stimme an). Beim Rückfall holt
@@ -3163,6 +3164,7 @@ window.LiveChat = (function () {
       melden();
     };
     pc.oniceconnectionstatechange = function () {
+      if (brueckeJe[anderId] === pc) leitungMerk(anderId, "ice", pc.iceConnectionState);   // FASSUNG 840
       /* „disconnected" ist oft nur ein Netzwechsel (WLAN auf Mobilfunk).
          Ein Neustart der Wegesuche holt die Leitung zurück, ohne alles
          abzureissen. */
@@ -3197,6 +3199,14 @@ window.LiveChat = (function () {
     pc.onconnectionstatechange = function () {
       /* FASSUNG 836 — Messung: wann die Leitung steht und über welchen Weg */
       if (pc.connectionState === "connected" && brueckeJe[anderId] === pc) { aufbauMerk(anderId, "steht"); aufbauWeg(anderId, pc); }
+      if (brueckeJe[anderId] === pc) {   // FASSUNG 840 — Zeitleiste je Gegenüber; steht sie, nach 1,5 s (Weg) melden
+        leitungMerk(anderId, "pc", pc.connectionState);
+        var lm = leitungMess[anderId];
+        if (pc.connectionState === "connected" && lm && !lm.gesendet) {
+          leitungWeg(anderId, pc, lm);
+          setTimeout(function () { leitungSenden(anderId, lm); }, 1500);
+        }
+      }
       if (pc.connectionState === "failed" || pc.connectionState === "closed") {
         var warAktuell = brueckeJe[anderId] === pc;
         brueckeAbbauen(anderId);
@@ -4112,6 +4122,7 @@ window.LiveChat = (function () {
   }
   function kerzeAnnehmen(von, kerze) {
     if (!kerze) return;
+    leitungKerze(von, kerze, false);   // FASSUNG 840
     var pk = brueckeJe[von];
     /* Kerzen kommen oft VOR der Antwort an — der Browser wirft
        sie dann weg, weil er noch nicht weiss, wozu sie gehören.
@@ -4240,6 +4251,7 @@ window.LiveChat = (function () {
     return pc.createOffer().then(function (angebot) {
       return pc.setLocalDescription(angebot).then(function () {
         senden({ art: "angebot", an: anderId, name: zustand.ichName, beschreibung: alsDaten(pc.localDescription) });
+        leitungMerk(anderId, "angebotRaus");   // FASSUNG 840
       });
     }).catch(function () {});
   }
@@ -4247,11 +4259,13 @@ window.LiveChat = (function () {
   function angebotAnnehmen(vonId, beschreibung) {
     var pc = bruecke(vonId, false);
     aufbauMerk(vonId, "angebotDa");   // FASSUNG 836 — Messung
+    leitungMerk(vonId, "angebotDa");  // FASSUNG 840
     return pc.setRemoteDescription(new RTCSessionDescription(beschreibung))
       .then(function () { spurenNachtragen(vonId, pc); return pc.createAnswer(); })
       .then(function (antwort) {
         return pc.setLocalDescription(antwort).then(function () {
           senden({ art: "antwort", an: vonId, beschreibung: alsDaten(pc.localDescription) });
+          leitungMerk(vonId, "antwortRaus");   // FASSUNG 840
           wartendeKerzenNachreichen(vonId);
         });
       }).catch(function () {});
@@ -5289,6 +5303,7 @@ window.LiveChat = (function () {
       /* FASSUNG 842 — nur der Raumkanal war kurz weg („wieder") und die
          Leitung zu ihm steht: dann bleibt sie. */
       if (brueckeJe[n.von] && !(n.wieder === true && steht(brueckeJe[n.von]))) brueckeAbbauen(n.von);
+      if (!(n.wieder === true && brueckeJe[n.von])) { delete leitungMess[n.von]; leitungMerk(n.von, "hallo"); }   // FASSUNG 840
       sfuNeustartVon(n.von, n);  /* FASSUNG 827/842 */
       /* Abgeschlossener Raum: wer nicht auf der Einladungsliste steht,
          kommt nicht herein. So steht es in RFC 2811 für +i — „new
@@ -5304,9 +5319,6 @@ window.LiveChat = (function () {
       var warSchonDa = Boolean(zustand.leute[n.von]);
       personMerken(n.von, n.name, n.bild);
       personEintragen(n);
-      if (!warSchonDa) kommtUndGeht(n.name || "Jemand", true);
-      /* FASSUNG 687 — der eigene Auftritt des Ankömmlings (Sportwagen, Rakete …). */
-      if (!warSchonDa && n.auftritt) auftrittZeigen(n.von, n.auftritt, "rein");
       /* GEWÜNSCHT: „Wenn ich den Hintergrund einstelle, dass der für
          alle sichtbar ist."
 
@@ -5328,6 +5340,15 @@ window.LiveChat = (function () {
                seit: zustand.seit, buehne: zustand.buehne,
                raumHg: zustand.raumHg || "",
                abgeschlossen: zustand.abgeschlossen });
+      /* FASSUNG 840 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller". Die Messung vom 02.10. (zwei Geräte,
+         spiel_diagnose „verbindung") zeigt: das Angebot kam beim Neuen erst 3,1 s nach seinem „hallo" an. Bis hierhin
+         lief vor dem Anruf noch die Begrüssungszeile und der ganze Auftritt (Sportwagen, Rakete …) – auf einem
+         langsamen Handy spürbar – und die Aufgabe ging vor dem Angebot über den Kanal. Jetzt: erst „auch-da" (der Neue
+         muss uns kennen, sonst verwirft er die Spur), dann sofort der Anruf, danach alles andere. */
+      if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
+      if (!warSchonDa) kommtUndGeht(n.name || "Jemand", true);
+      /* FASSUNG 687 — der eigene Auftritt des Ankömmlings (Sportwagen, Rakete …). */
+      if (!warSchonDa && n.auftritt) auftrittZeigen(n.von, n.auftritt, "rein");
       /* Und die offene Aufgabe gleich hinterher — wer hereinkommt,
          soll nicht erst warten, bis die naechste gestellt wird. Ohne
          Loesung, siehe aufgabeVerkuenden(). */
@@ -5359,8 +5380,7 @@ window.LiveChat = (function () {
           if (stand) postSenden(n.von, { art: "tafel", tafel: stand });
         } catch (e) {}
       }, 900);
-      /* Wer die kleinere Kennung hat, ruft an. */
-      if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
+      /* Wer die kleinere Kennung hat, ruft an – FASSUNG 840: schon oben, gleich nach „auch-da". */
       melden();
       return;
     }
@@ -5418,6 +5438,7 @@ window.LiveChat = (function () {
     }
     if (n.art === "auch-da") {
       var neuHier = !zustand.leute[n.von];
+      leitungMerk(n.von, "auchDa");   // FASSUNG 840
       personMerken(n.von, n.name, n.bild);
       if (neuHier) kommtUndGeht(n.name || "Jemand", true);
       if (typeof n.haeuptling === "boolean") zustand.leute[n.von].haeuptling = n.haeuptling;
@@ -5558,6 +5579,7 @@ window.LiveChat = (function () {
     if (n.art === "angebot") { personMerken(n.von, n.name, n.bild); angebotAnnehmen(n.von, n.beschreibung); return; }
     if (n.art === "antwort") {
       var pc = brueckeJe[n.von];
+      leitungMerk(n.von, pc ? "antwortDa" : "antwortOhneLeitung");   // FASSUNG 840
       if (pc) {
         pc.setRemoteDescription(new RTCSessionDescription(n.beschreibung))
           .then(function () { wartendeKerzenNachreichen(n.von); })
@@ -6778,6 +6800,18 @@ window.LiveChat = (function () {
     if (wert !== undefined) { p[feld] = wert; return; }
     if (p[feld] == null) p[feld] = Date.now() - aufbau.t0;
   }
+  function leitungWeg(id, pc, m) {   /* FASSUNG 840 — welcher Weg (lokal ↔ entfernt) steht */
+    if (!pc || !pc.getStats) return;
+    pc.getStats().then(function (st) {
+      var paar = null, art = {};
+      st.forEach(function (r) {
+        if (r.type === "transport" && r.selectedCandidatePairId) paar = paar || st.get(r.selectedCandidatePairId);
+        if (r.type === "candidate-pair" && r.nominated && r.state === "succeeded" && !paar) paar = r;
+        if (r.type === "local-candidate" || r.type === "remote-candidate") art[r.id] = r.candidateType + (r.protocol ? "/" + r.protocol : "");
+      });
+      if (paar) m.weg = (art[paar.localCandidateId] || "?") + ">" + (art[paar.remoteCandidateId] || "?") + (paar.currentRoundTripTime != null ? " " + Math.round(paar.currentRoundTripTime * 1000) + "ms" : "");
+    }).catch(function () {});
+  }
   function aufbauWeg(id, pc) {
     if (!aufbau || !pc || !pc.getStats) return;
     pc.getStats().then(function (st) {
@@ -6790,6 +6824,54 @@ window.LiveChat = (function () {
       if (paar && lokal[paar.localCandidateId]) aufbauMerk(id, "weg", lokal[paar.localCandidateId]);
     }).catch(function () {});
   }
+  /* FASSUNG 840 — DIE LEITUNG JE GEGENÜBER, AUF BEIDEN SEITEN
+     XANDER (Funk 268/271): „die Latenz … ist immer noch bemerkbar … alles insgesamt nur zehn Mal schneller". Die
+     Messung aus 836 zählt nur ab dem eigenen Betreten und nur 30 s lang. Am 02.10. trafen sich zwei Geräte: einmal
+     stand der Ton nach 3,5 s, die Leitung erst nach 8,9 s – beim zweiten Mal ging ein Angebot raus und es kam nie
+     etwas zurück. Woran es hing, sagt die alte Messung nicht: die Seite, die schon im Raum war, meldet gar nichts.
+     Jetzt führt JEDES Gerät je Gegenüber eine Zeitleiste (ab dem ersten Kontakt): Gruss, Angebot raus/da, Antwort
+     raus/da, Wege-Kandidaten raus/da nach Art (host/srflx/relay), ICE- und Leitungszustand, erster Ton, und ob die
+     Seite dabei im Hintergrund lag (Android bremst dann Zeitgeber und Kanal). Gesendet wird, sobald die Leitung
+     steht (+1,5 s für den Weg) oder nach 30 s – als spiel_diagnose „leitung". Nur Zahlen, keine Inhalte. */
+  var leitungMess = {};
+  function leitungMerk(id, was, zusatz) {
+    if (!id || (zustand.lage !== "drin" && zustand.lage !== "verbindet")) return;
+    var m = leitungMess[id];
+    if (!m || m.gesendet) {
+      if (m && m.gesendet && was !== "hallo" && was !== "angebotRaus" && was !== "angebotDa") return;
+      m = leitungMess[id] = { t0: Date.now(), ev: [], kr: {}, kd: {}, gesendet: false, sichtbar: document.visibilityState || "" };
+      setTimeout(function () { leitungSenden(id, m); }, 30000);
+    }
+    if (m.ev.length < 60) m.ev.push(zusatz !== undefined ? [was, Date.now() - m.t0, zusatz] : [was, Date.now() - m.t0]);
+  }
+  function leitungKerze(id, k, raus) {
+    var m = leitungMess[id];
+    if (!m || m.gesendet || !k) return;
+    var typ = (/ typ (\w+)/.exec(k.candidate || "") || [])[1] || (k.candidate === "" ? "ende" : "?");
+    var z = raus ? m.kr : m.kd;
+    if (!z[typ]) z[typ] = [0, Date.now() - m.t0];
+    z[typ][0]++;
+  }
+  function leitungSenden(id, m) {
+    if (!m || m.gesendet) return;
+    m.gesendet = true;
+    try {
+      var be = (typeof Backend !== "undefined" && Backend) || window.Backend;
+      var k = be && be.zugang && be.zugang();
+      if (!k || !k.rpc) return;
+      var pc = brueckeJe[id];
+      var d = { mit: String(id).slice(0, 10), anrufer: zustand.ichId < id, raum: zustand.raum, ev: m.ev, kr: m.kr, kd: m.kd,
+                sichtbar: m.sichtbar, jetzt: pc ? [pc.signalingState, pc.iceConnectionState, pc.connectionState] : null,
+                weg: (aufbau && aufbau.je[id] && aufbau.je[id].weg) || m.weg || "", relais: relaisStand.quelle || "",
+                ua: (navigator.userAgent || "").slice(0, 120), fassung: (window.DMA_VERSION || "") };
+      k.rpc("spiel_diagnose_senden", { p_art: "leitung", p_daten: d }).then(function () {}, function () {});
+    } catch (e) {}
+  }
+  document.addEventListener("visibilitychange", function () {
+    var v = document.visibilityState;
+    Object.keys(leitungMess).forEach(function (id) { if (!leitungMess[id].gesendet) leitungMerk(id, "seite", v); });
+  });
+
   function aufbauSenden(a) {
     if (!a || a.gesendet) return;
     a.gesendet = true;

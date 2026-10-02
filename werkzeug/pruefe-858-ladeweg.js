@@ -89,6 +89,8 @@ const warte = (ms) => new Promise((r) => setTimeout(r, ms));
     sage(v.length === 0, "12 s im Klassenzimmer: keine Datei aus vokabeln/ geladen", v.length + " Dateien");
     sage(tone.length < 10, "die Tipps laden nicht die 68 Spieltöne", tone.length + " Töne");
     const k = anfragen.filter((a) => /^kalender\/\d+\.js/.test(a.u));
+    /* FASSUNG 840 — auch der Kalendermonat (≈ 229 KB) kommt auf dem Weg ins Klassenzimmer nicht mehr */
+    sage(!anfragen.some((a) => a.t >= t0 && /^kalender\/\d+\.js/.test(a.u)), "Fassung 840: auf dem Weg ins Klassenzimmer kein Kalendermonat", k.map((a) => a.u).join(", "));
     if (k.length) sage(k.every((a) => { const n = a.u.split("?")[0]; return a.u.endsWith("?v=" + stempel[n]); }), "der Kalender kommt mit seinem Dateistempel", k.map((a) => a.u).join(", "));
 
     console.log("\nC) LERNEN HOLT DEN WORTSCHATZ WEITER SOFORT\n");
@@ -110,6 +112,8 @@ const warte = (ms) => new Promise((r) => setTimeout(r, ms));
     let v = [];
     for (let i = 0; i < 80 && !v.length; i++) { await warte(250); v = vokAb(anfragen, t0); }
     sage(v.length > 0 && v[0].t - t0 >= 6000, "der Wortschatz kommt – aber erst nach der Ruhe (≥ 6 s), nicht beim Öffnen", v.length ? Math.round((v[0].t - t0) / 100) / 10 + " s" : "kam nicht in 20 s");
+    const kal = anfragen.filter((a) => a.t >= t0 && /^kalender\/\d+\.js/.test(a.u));
+    sage(kal.length > 0 && kal[0].t - t0 < 4000, "Fassung 840: beim Kompass kommt der Kalendermonat weiter gleich (nach ≈ 1,2 s)", kal.length ? Math.round((kal[0].t - t0) / 100) / 10 + " s" : "kam nicht");
     await ctx.close();
   }
 
