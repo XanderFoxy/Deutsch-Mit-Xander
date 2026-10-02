@@ -3139,3 +3139,9 @@ Erste Zeitleiste aus 840 (spiel_diagnose „leitung", 02.10., 22:43, Samsung, Ge
   - drei „hallo" ohne Sitzung → steht nach ≈ 0,2 s.
   
   `pruefe-659-verbindung.js` (ältere Fassung drüben): war mit dem ersten Entwurf dreimal rot, jetzt dreimal grün (61 ms). `pruefe-861` prüft den ersten Eintrag mit ≤ 5 ms statt genau 0 (Millisekundengrenze).
+- **Nachtrag aus Xanders Test 22:48–22:55 (sieben Berichte, Fassung 840 auf dem Samsung)**:
+  - *Kennung kippte*: Dasselbe Handy war einmal Anrufer, einmal Angerufener. Nach dem Neuladen kehrte es von selbst in den Raum zurück (`rueckkehrOffen`, app.js), aber ohne Konto, weil die Anmeldung da noch lädt. Es galt also eine Zufallskennung. Der andere sah eine neue Person, und die alte blieb als Geist stehen. Behoben: Die Rückkehr gibt das Konto mit, und livechat.js merkt sich die zuletzt bekannte Konto-Kennung (`dma_lc_konto`), solange keine neue mitkommt.
+  - *Doppelter Anruf*: „auch-da“ kam 0,2 s nach dem ersten Angebot und löste einen zweiten Anruf aus. Die Antwort auf das erste passte nicht mehr, und die Wegesuche begann erst nach 5 s. Behoben: „auch-da“ ruft nur noch an, wenn zu ihm keine lebende Leitung besteht. `anrufen` bündelt außerdem, solange das Angebot noch entsteht (gemessen bis 1,5 s auf dem Samsung).
+  - *Angebot langsam*: Das Angebot brauchte auf dem Handy 1,5 s, weil Begrüßungszeile und Auftritt im selben Augenblick rechneten. Jetzt kommen beide erst, wenn das Angebot draußen ist (höchstens 0,5 s warten).
+  - Sonde 862 prüft zusätzlich Gruß und „auch-da“ im selben Augenblick (ein Angebot, Leitung nach 0,17 s) und die Konto-Kennung.
+  - Grün: 862, 861, 659, 856, 859, 811, 816, 827, 842, 679, 850, 645, einladungslink, runde18, 858.

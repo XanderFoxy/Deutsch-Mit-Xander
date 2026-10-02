@@ -4258,18 +4258,22 @@ window.LiveChat = (function () {
   function anrufen(anderId) {
     var pc = bruecke(anderId, true);
     var vorher = angebotRaus[anderId];
-    if (vorher && vorher.pc === pc && pc.signalingState === "have-local-offer" && Date.now() - vorher.t < 1500) {
+    /* gebündelt wird, solange das Angebot noch entsteht (auf einem langsamen Handy gemessen bis 1,5 s) oder seit dem
+       Hinausgehen keine 1,5 s vergangen sind und noch keine Antwort kam */
+    if (vorher && vorher.pc === pc && (vorher.laeuft
+        || (pc.signalingState === "have-local-offer" && Date.now() - vorher.t < 1500))) {
       leitungMerk(anderId, "angebotGebuendelt");
-      return Promise.resolve();
+      return vorher.laeuft || Promise.resolve();
     }
-    angebotRaus[anderId] = { pc: pc, t: Date.now() };
+    var eintrag = angebotRaus[anderId] = { pc: pc, t: Date.now(), laeuft: null };
     aufbauMerk(anderId, "angebot");   // FASSUNG 836 — Messung
-    return pc.createOffer().then(function (angebot) {
+    eintrag.laeuft = pc.createOffer().then(function (angebot) {
       return pc.setLocalDescription(angebot).then(function () {
         senden({ art: "angebot", an: anderId, name: zustand.ichName, beschreibung: alsDaten(pc.localDescription) });
         leitungMerk(anderId, "angebotRaus");   // FASSUNG 840
       });
-    }).catch(function () {});
+    }).catch(function () {}).then(function () { eintrag.laeuft = null; eintrag.t = Date.now(); });
+    return eintrag.laeuft;
   }
 
   /* FASSUNG 841 — Angebote je Gegenüber der Reihe nach, und von mehreren wartenden nur das NEUESTE: am 22:43 kamen vier
@@ -5405,10 +5409,16 @@ window.LiveChat = (function () {
          lief vor dem Anruf noch die Begrüssungszeile und der ganze Auftritt (Sportwagen, Rakete …) – auf einem
          langsamen Handy spürbar – und die Aufgabe ging vor dem Angebot über den Kanal. Jetzt: erst „auch-da" (der Neue
          muss uns kennen, sonst verwirft er die Spur), dann sofort der Anruf, danach alles andere. */
-      if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
-      if (!warSchonDa) kommtUndGeht(n.name || "Jemand", true);
-      /* FASSUNG 687 — der eigene Auftritt des Ankömmlings (Sportwagen, Rakete …). */
-      if (!warSchonDa && n.auftritt) auftrittZeigen(n.von, n.auftritt, "rein");
+      var halloRuf = (zustand.ichId < n.von && belegt() <= PLAETZE) ? anrufen(n.von) : null;
+      /* FASSUNG 841 — Begrüssungszeile und Auftritt erst, wenn das Angebot draussen ist (höchstens 0,5 s warten): auf dem
+         Samsung brauchte das Angebot 1,5 s, weil der Auftritt im selben Augenblick rechnete. */
+      var halloNachher = function () {
+        if (!warSchonDa) kommtUndGeht(n.name || "Jemand", true);
+        /* FASSUNG 687 — der eigene Auftritt des Ankömmlings (Sportwagen, Rakete …). */
+        if (!warSchonDa && n.auftritt) auftrittZeigen(n.von, n.auftritt, "rein");
+      };
+      if (halloRuf) Promise.race([halloRuf, new Promise(function (r) { setTimeout(r, 500); })]).then(halloNachher, halloNachher);
+      else halloNachher();
       /* Und die offene Aufgabe gleich hinterher — wer hereinkommt,
          soll nicht erst warten, bis die naechste gestellt wird. Ohne
          Loesung, siehe aufgabeVerkuenden(). */
@@ -5520,7 +5530,12 @@ window.LiveChat = (function () {
       if (typeof n.tonAn === "boolean") zustand.leute[n.von].tonAn = n.tonAn;
       if (typeof n.bildAn === "boolean") zustand.leute[n.von].bildAn = n.bildAn;
       personEintragen(n);
-      if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
+      /* FASSUNG 841 — nur anrufen, wenn zu ihm noch keine Leitung entsteht: der Gruss hat schon angerufen. Am 22:54 kam
+         „auch-da" 0,2 s nach dem ersten Angebot; der zweite Anruf machte das erste Angebot wertlos, die Antwort darauf
+         passte nicht mehr, und die Wegesuche begann erst nach 5 s. */
+      var auchPc = brueckeJe[n.von];
+      if (zustand.ichId < n.von && belegt() <= PLAETZE
+          && (!auchPc || auchPc.connectionState === "failed" || auchPc.connectionState === "closed")) anrufen(n.von);
       melden();
       return;
     }
@@ -6962,6 +6977,15 @@ window.LiveChat = (function () {
        Antwort, und der Notenknopf bliebe weg. */
     aufgabeZurueckholen(zustand.raum);
     kontoId = String(o.konto || "");
+    /* FASSUNG 841 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller". Die Zeitleisten vom 02.10. (22:48–22:55)
+       zeigen dasselbe Handy einmal als Anrufer, einmal als Angerufenen: nach dem Neuladen kehrte es von selbst in den
+       Raum zurück (rueckkehrOffen in app.js) – ohne Konto, weil die Anmeldung da noch lädt. Dann galt eine Zufallskennung
+       statt „k2585…": der andere sah eine neue Person, die alte blieb als Geist stehen, und wer anruft, kippte. Jetzt
+       merkt sich das Gerät die zuletzt bekannte Konto-Kennung und nimmt sie, solange keine neue mitkommt. */
+    try {
+      if (kontoId) localStorage.setItem("dma_lc_konto", kontoId);
+      else kontoId = String(localStorage.getItem("dma_lc_konto") || "");
+    } catch (e) {}
     zustand.betreiber = Boolean(o.betreiber);
     zustand.ichId = eigeneId();
     zustand.ichName = o.name || "Gast";

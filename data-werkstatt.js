@@ -49,28 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 841: kein Angebots-Sturm mehr – Gruss mit Sitzung, Anrufe gebündelt, nur das neueste Angebot (Funk 271)",
+  stand: "Fassung 841: Verbindung – kein Angebots-Sturm, feste Kennung nach dem Neuladen, Anruf nur einmal (Funk 271)",
 
   inArbeit: [
-    { seit: "2026-10-02T22:54",
+    { seit: "2026-10-02T23:03",
       text: "Schlanker Start: spiel.js, Übungen und Satzbau erst nach dem Aufbau laden, mit Rückfall (Funk 271)" },
-    { seit: "2026-10-02T22:54",
+    { seit: "2026-10-02T23:03",
       text: "Bilderwelt neu, Ort für Ort (Funk 263)" },
-    { seit: "2026-10-02T22:54",
+    { seit: "2026-10-02T23:03",
       text: "Tiere und Übersichtskarte, Äcker versetzbar" },
-    { seit: "2026-10-02T22:54",
+    { seit: "2026-10-02T23:03",
       text: "sfu/aussprache neu ausliefern (wartet auf OK)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-02T22:54",
-      text: "Wiederholter Gruss reisst eine junge Leitung nicht mehr ab" },
-    { seit: "2026-10-02T22:54",
-      text: "Mehrere Anrufe im selben Augenblick = ein Angebot" },
-    { seit: "2026-10-02T22:54",
-      text: "Angebote der Reihe nach, nur das neueste" },
-    { seit: "2026-10-02T22:54",
-      text: "Angebot einer neuen Leitung: sofort frisch anfangen" },
+    { seit: "2026-10-02T23:03",
+      text: "Wiederholter Gruss reisst keine junge Leitung mehr ab" },
+    { seit: "2026-10-02T23:03",
+      text: "Nach dem Neuladen dieselbe Kennung (Konto)" },
+    { seit: "2026-10-02T23:03",
+      text: "Ein Anruf statt zwei bei Gruss + auch-da" },
+    { seit: "2026-10-02T23:03",
+      text: "Angebote der Reihe nach, neue Leitung sofort frisch" },
+    { seit: "2026-10-02T23:03",
+      text: "Auftritt erst nach dem Angebot" },
   ],
 };

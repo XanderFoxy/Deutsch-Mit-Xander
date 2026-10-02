@@ -143,7 +143,27 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
      Wie viele drüben ankamen und ob welche übersprungen wurden, steht hier nur zur Auskunft.) */
   console.log("   Auskunft: Angebote bei B " + bB.map((b) => zahl(b.d.ev, "angebotDa")).join("/") + ", übersprungen " + bB.map((b) => zahl(b.d.ev, "angebotUeberholt") + "+" + zahl(b.d.ev, "angebotNeueLeitung")).join("/"));
 
+  console.log("\nE) GRUSS UND „AUCH-DA“ IM SELBEN AUGENBLICK (22:54)\n");
+  /* B lädt neu (neue Sitzung); A bekommt den Gruss und gleich danach ein „auch-da“ – vorher rief A dabei zweimal an */
+  await B.evaluate(() => { window.__berichte.length = 0; window.LiveChat.tonNeuAufbauen(); });
+  await A.evaluate(() => {
+    window.__berichte.length = 0;
+    window.LiveChat.pruefEmpfangen({ art: "hallo", von: "bbb", name: "BBB", seit: 2000, kf: 1, sitzung: "s3" });
+    window.LiveChat.pruefEmpfangen({ art: "auch-da", von: "bbb", an: "aaa", name: "BBB", seit: 2000, kf: 1 });
+  });
+  const tE = Date.now();
+  const stehtE = await steht();
+  const dauerE = Date.now() - tE;
+  await schlaf(1800);
+  const berE = (await A.evaluate(() => window.__berichte)).filter((b) => b.art === "leitung").pop();
+  const evE = berE ? berE.d.ev : [];
+  console.log("   A: " + JSON.stringify(evE).slice(0, 400));
+  sage(stehtE, "E: die Leitung steht", dauerE + " ms");
+  sage(zahl(evE, "angebotRaus") === 1, "E: Gruss und „auch-da“ im selben Augenblick = EIN Angebot", zahl(evE, "angebotRaus") + " Angebote");
+
   console.log("\nD) QUELLTEXT\n");
+  sage(/localStorage\.setItem\("dma_lc_konto", kontoId\)/.test(fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8")), "D: die zuletzt bekannte Konto-Kennung wird gemerkt (keine Zufallskennung nach dem Neuladen)");
+  sage(/rueckkehrOffen[\s\S]{0,600}konto: \(Backend\.currentUser\(\) \|\| \{\}\)\.id/.test(fs.readFileSync(path.join(WURZEL, "app.js"), "utf8")), "D: die Rückkehr nach dem Neuladen gibt das Konto mit");
   const lc = fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8");
   sage(/nutzlast\.art === "hallo" && zustand\.sitzung && !nutzlast\.sitzung\) nutzlast\.sitzung = zustand\.sitzung/.test(lc), "D: jedes „hallo“ trägt die Sitzung");
   sage(/zustand\.sitzung = Math\.random\(\)/.test(lc), "D: die Sitzung entsteht je Betreten");

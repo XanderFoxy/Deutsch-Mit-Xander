@@ -69190,6 +69190,8 @@
     const zurueck = LiveChat.rueckkehrOffen && LiveChat.rueckkehrOffen();
     if (zurueck) {
       LiveChat.betreten(zurueck.raum, { name: zurueck.name || livechatName(),
+        /* FASSUNG 841 — auch bei der Rückkehr nach dem Neuladen das Konto mitgeben (sonst Zufallskennung, siehe livechat.js) */
+        konto: (Backend.currentUser() || {}).id || "",
         betreiber: Boolean(Backend.canModerate && Backend.canModerate()),
         geschlecht: livechatGeschlecht(),
         mitBild: zurueck.mitBild !== false })
