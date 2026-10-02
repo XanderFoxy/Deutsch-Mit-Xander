@@ -15727,6 +15727,8 @@
        holt die Seite jetzt schon, während das Tor nach Mikrofon und Kamera fragt – beim Tipp auf „hinein" sind sie da
        (vorher: erst danach, 0,9–1,4 s gemessen, bevor der Raum aufging). Unsichtbar; gespeicherte Daten werden genommen. */
     try { if (window.LiveChat && LiveChat.relaisHolen) LiveChat.relaisHolen(false).catch(() => {}); } catch (e) {}
+    /* FASSUNG 839 — (Funk 268) ebenso die Verbindung zum Raum-Server: der Kanal steht beim „hinein" schneller */
+    try { if (window.LiveChat && LiveChat.kanalVorwaermen) LiveChat.kanalVorwaermen(); } catch (e) {}
     document.getElementById("lcTor")?.remove();
     const kasten = document.createElement("div");
     kasten.id = "lcTor";

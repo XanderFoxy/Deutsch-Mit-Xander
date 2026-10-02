@@ -602,6 +602,7 @@ window.LiveChat = (function () {
   };
 
   var kanal = null;
+  var kanalVorab = null;   /* FASSUNG 839 — Raumkanal, der beim Betreten schon offen ist (betreten) */
   var brueckeJe = {};   // id -> RTCPeerConnection
   var horcher = [];
 
@@ -6796,7 +6797,7 @@ window.LiveChat = (function () {
       var be = (typeof Backend !== "undefined" && Backend) || window.Backend;
       var k = be && be.zugang && be.zugang();
       if (!k || !k.rpc) return;
-      var d = { raum: a.raum, ua: a.ua, relais: a.relais, kanal: a.kanal, je: a.je, fassung: (window.DMA_VERSION || "") };
+      var d = { raum: a.raum, ua: a.ua, relais: a.relais, kanal: a.kanal, kanalOffen: a.kanalOffen, je: a.je, fassung: (window.DMA_VERSION || "") };
       k.rpc("spiel_diagnose_senden", { p_art: "verbindung", p_daten: d }).then(function () {}, function () {});
     } catch (e) {}
   }
@@ -6957,6 +6958,26 @@ window.LiveChat = (function () {
        höchstens 2 s gewartet. Kommt das Mikrofon später, wird es ohne Abriss nachgereicht (stromNachreichen). */
     var stromZuSpaet = false;
     var stromWeg = stromVomTor(o.strom, o.mitBild === true) || stromHolen(o.mitBild === true);
+    /* FASSUNG 839 — XANDER (Funk 268): „die Latenz bei den Sitzplätzen ist immer noch bemerkbar … kümmere Dich jetzt
+       mal bitte intensiv um alles". Die Messung aus 836 (spiel_diagnose, Art „verbindung", sein Samsung) zeigt: bis der
+       Raumkanal steht, vergehen 1,6–9 s, einmal 29 s. Der Kanal wurde erst geöffnet, NACHDEM Mikrofon (bis 2 s) und
+       Relais (bis 2,5 s) fertig waren – erst dann baute der Browser überhaupt die Verbindung zum Supabase-Server auf.
+       Jetzt geht der Kanal sofort auf, gleichzeitig mit Mikrofon und Relais. „Drin" ist man wie bisher erst, wenn
+       auch beides da ist (das „hallo" braucht den eigenen Ton). Was im Raum in der Zwischenzeit gesendet wird, wird
+       gesammelt und danach verarbeitet – vorher kam es gar nicht an. */
+    var vorabKanal = klient().channel("dma-raum-" + zustand.raum, { config: { broadcast: { self: false } } });
+    var vorabPakete = [], vorabStand = null, kanalHandler = null;
+    kanalVorab = vorabKanal;
+    vorabKanal.on("broadcast", { event: "raum" }, function (nachricht) {
+      var nutz = nachricht && nachricht.payload;
+      if (kanalHandler) { empfangen(nutz); return; }
+      vorabPakete.push(nutz);
+      if (vorabPakete.length > 300) vorabPakete.shift();
+    });
+    vorabKanal.subscribe(function (stand) {
+      if (stand === "SUBSCRIBED" && aufbau && aufbau.kanalOffen == null) aufbau.kanalOffen = Date.now() - aufbau.t0;
+      if (kanalHandler) kanalHandler(stand); else vorabStand = stand;
+    });
     stromWeg.then(function (s) { if (stromZuSpaet && s) stromNachreichen(s); }, function () {});
     return Promise.all([
       Promise.race([stromWeg, new Promise(function (r) { setTimeout(function () { stromZuSpaet = true; r(null); }, 2000); })]),
@@ -6969,16 +6990,16 @@ window.LiveChat = (function () {
       zustand.tonAn = Boolean(strom && strom.getAudioTracks().length);
       lautstaerkeVerfolgen(strom);        // wer redet, bekommt einen Ring
 
-      var k = klient();
-      kanal = k.channel("dma-raum-" + zustand.raum, {
-        config: { broadcast: { self: false } }
-      });
-      kanal.on("broadcast", { event: "raum" }, function (nachricht) {
-        empfangen(nachricht && nachricht.payload);
-      });
+      /* FASSUNG 839 — der Kanal ist schon offen (oben, vorabKanal); hier wird er übernommen. Wurde inzwischen
+         verlassen, bleibt er weg. */
+      if (kanalVorab !== vorabKanal) return lage();
+      kanal = vorabKanal;
 
       return new Promise(function (fertig) {
-        kanal.subscribe(function (stand) {
+        kanalHandler = function (stand) {
+          /* FASSUNG 839 — inzwischen verlassen (verlassen() meldet den Kanal erst 350 ms später ab): eine späte
+             Bestätigung des alten Kanals holt einen nicht wieder hinein (Sonde 859 D) */
+          if (kanal !== vorabKanal) { fertig(lage()); return; }
           if (stand === "SUBSCRIBED") {
             if (aufbau && aufbau.kanal == null) aufbau.kanal = Date.now() - aufbau.t0;   // FASSUNG 836 — Messung
             /* FASSUNG 842 — war man schon drin, hat sich nur der Raumkanal
@@ -7098,7 +7119,11 @@ window.LiveChat = (function () {
             melden();
             fertig(lage());
           }
-        });
+        };
+        /* FASSUNG 839 — stand der Kanal schon, bevor Mikrofon und Relais fertig waren: jetzt nachholen, dann die
+           gesammelten Pakete in ihrer Reihenfolge verarbeiten */
+        if (vorabStand) { var st0 = vorabStand; vorabStand = null; kanalHandler(st0); }
+        if (vorabPakete.length) { var alle = vorabPakete.splice(0); alle.forEach(function (n) { try { empfangen(n); } catch (e) {} }); }
       });
     }).catch(function () {
       zustand.lage = "fehler";
@@ -7176,6 +7201,9 @@ window.LiveChat = (function () {
       kanal = null;
       setTimeout(function () { try { alterKanal.unsubscribe(); } catch (e) {} }, 350);
     }
+    /* FASSUNG 839 — ein Kanal, der beim Betreten schon aufging, aber noch nicht übernommen war */
+    if (kanalVorab && kanalVorab !== alterKanal) { var vk = kanalVorab; setTimeout(function () { try { vk.unsubscribe(); } catch (e) {} }, 350); }
+    kanalVorab = null;
     sfuBeenden("verlassen");  /* FASSUNG 827 — vor dem Abbau der Leitungen */
     Object.keys(brueckeJe).forEach(brueckeAbbauen);
     tonAlleAbklemmen();
@@ -16850,6 +16878,11 @@ window.LiveChat = (function () {
     },
     relaisGrundKlartext: relaisGrundKlartext,
     relaisHolen: relaisHolen,
+    /* FASSUNG 839 — die Verbindung zum Supabase-Server (Websocket) schon öffnen, während das Tor nach Mikrofon und
+       Kamera fragt: beim Tipp auf „hinein" muss der Raumkanal dann nur noch beitreten, nicht erst verbinden. */
+    kanalVorwaermen: function () {
+      try { var k = klient(); if (k && k.realtime && k.realtime.connect && !(k.realtime.isConnected && k.realtime.isConnected())) k.realtime.connect(); } catch (e) {}
+    },
     relaisRufen: relaisRufen,
     verlassen: verlassen,
     tonUmschalten: tonUmschalten,

@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 838: Uhr rechnet beim Start weniger, Seiteninhalte nur einmal abgefragt (Funk 263)",
+  stand: "Fassung 839: Raumkanal geht beim Betreten sofort auf, Verbindung wird schon am Tor vorgewärmt (Funk 268)",
 
   inArbeit: [
-    { seit: "2026-10-02T20:29",
-      text: "Klassenzimmer als eigenes schlankes Paket und direkter Einstieg (wartet auf Xanders Entscheidung), Bilderwelt neu, Tiere/Übersichtskarte, Äcker versetzbar, sfu/aussprache neu ausliefern (wartet auf OK)" },
+    { seit: "2026-10-02T21:05",
+      text: "Vollbild-Einstieg ins Klassenzimmer (Funk 268, als Nächstes), Bilderwelt neu, Tiere/Übersichtskarte, Äcker versetzbar, sfu/aussprache neu ausliefern (wartet auf OK)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-02T20:29",
-      text: "Uhr-Formate gemerkt, gleichzeitige Seiteninhalt-Abfragen zusammengelegt" },
+    { seit: "2026-10-02T21:05",
+      text: "Kanal parallel zu Mikrofon und Relais, Pakete aus der Wartezeit gehen nicht verloren" },
   ],
 };
