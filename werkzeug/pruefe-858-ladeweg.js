@@ -89,6 +89,8 @@ const warte = (ms) => new Promise((r) => setTimeout(r, ms));
     sage(v.length === 0, "12 s im Klassenzimmer: keine Datei aus vokabeln/ geladen", v.length + " Dateien");
     sage(tone.length < 10, "die Tipps laden nicht die 68 Spieltöne", tone.length + " Töne");
     const k = anfragen.filter((a) => /^kalender\/\d+\.js/.test(a.u));
+    /* FASSUNG 842 — satzbau.js steht nicht mehr in der Startliste und kommt im Klassenzimmer nicht */
+    sage(!anfragen.some((a) => /satzbau\.js/.test(a.u)), "Fassung 842: satzbau.js wird weder beim Start noch im Klassenzimmer geladen", anfragen.filter((a) => /satzbau/.test(a.u)).map((a) => a.u).join(", "));
     /* FASSUNG 840 — auch der Kalendermonat (≈ 229 KB) kommt auf dem Weg ins Klassenzimmer nicht mehr */
     sage(!anfragen.some((a) => a.t >= t0 && /^kalender\/\d+\.js/.test(a.u)), "Fassung 840: auf dem Weg ins Klassenzimmer kein Kalendermonat", k.map((a) => a.u).join(", "));
     if (k.length) sage(k.every((a) => { const n = a.u.split("?")[0]; return a.u.endsWith("?v=" + stempel[n]); }), "der Kalender kommt mit seinem Dateistempel", k.map((a) => a.u).join(", "));
@@ -98,6 +100,10 @@ const warte = (ms) => new Promise((r) => setTimeout(r, ms));
     await pg.click('.tape-tab[data-target="view-learn"]');
     let v2 = [];
     for (let i = 0; i < 40 && !v2.length; i++) { await warte(250); v2 = vokAb(anfragen, t1); }
+    let sb = [];
+    for (let i = 0; i < 40 && !sb.length; i++) { sb = anfragen.filter((a) => a.t >= t1 && /satzbau\.js/.test(a.u)); if (!sb.length) await warte(100); }
+    sage(sb.length > 0 && await pg.evaluate(() => new Promise((ok) => { let n = 0; const t = setInterval(() => { if (window.Satzbau || ++n > 50) { clearInterval(t); ok(Boolean(window.Satzbau)); } }, 100); })),
+      "Fassung 842: „Lernen“ holt satzbau.js sofort (Satzbaukasten bereit)", sb.length ? sb[0].u : "nicht geholt");
     sage(v2.length > 0, "nach dem Wechsel zu „Lernen“ kommt der Wortschatz", v2.length ? Math.round((v2[0].t - t1)) + " ms bis zur ersten Datei" : "nichts");
     const falsch = v2.filter((a) => { const n = a.u.split("?")[0]; return !a.u.endsWith("?v=" + stempel[n]); });
     sage(v2.length > 0 && !falsch.length && !v2.some((a) => a.u.endsWith("?v=" + fassung)), "jede Wortdatei mit ihrem eigenen Stempel (nicht ?v=" + fassung + ")", falsch.slice(0, 3).map((a) => a.u).join(", "));

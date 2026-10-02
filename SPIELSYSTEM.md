@@ -3145,3 +3145,20 @@ Erste Zeitleiste aus 840 (spiel_diagnose „leitung", 02.10., 22:43, Samsung, Ge
   - *Angebot langsam*: Das Angebot brauchte auf dem Handy 1,5 s, weil Begrüßungszeile und Auftritt im selben Augenblick rechneten. Jetzt kommen beide erst, wenn das Angebot draußen ist (höchstens 0,5 s warten).
   - Sonde 862 prüft zusätzlich Gruß und „auch-da“ im selben Augenblick (ein Angebot, Leitung nach 0,17 s) und die Konto-Kennung.
   - Grün: 862, 861, 659, 856, 859, 811, 816, 827, 842, 679, 850, 645, einladungslink, runde18, 858.
+
+## Fassung 842 — Der Satzbaukasten kommt erst, wenn er gebraucht wird (Funk 271)
+
+XANDER (Funk 271, wörtlich): „es soll doch unter wissen und Klassenzimmer dann ins Klassenzimmer gehen wie immer auch nur zehnmal schneller wie gesagt alles insgesamt nur zehn Mal schneller".
+
+- **satzbau.js nicht mehr in der Startliste (`index.html`)**: Bis die Seite reagiert, gingen 2,2 MB über die Leitung. satzbau.js macht davon 185 KB aus (640 KB Text) und wird nur vom Satzbaukasten (und den Verbformen im Vokabelmeister) gebraucht. Beim Start benutzt es nichts, alle Stellen in app.js stehen in Funktionen.
+- **Laden bei Bedarf (`app.js`, `satzbauLaden`)**:
+  - sofort beim Öffnen von „Lernen" (dort liegt der Satzbaukasten), im Satzbaukasten selbst („wird geladen …", danach zeichnet er sich) und im Vokabelmeister;
+  - sonst 6 s nach dem Laden in einer Ruhepause, aber nicht, solange man im Klassenzimmer ist (wie der Wortschatz in 837).
+  
+  Rückfall: Scheitert die verkleinerte Kopie (min/), wird einmal die Quelle geholt. Scheitert auch das, sagt der Satzbaukasten es wie bisher. `var` statt `let` und ein Microtask vor `brDatei`, weil `activateTab` schon beim Start (vor diesen Zeilen) nach „Lernen" gehen kann.
+- **Gemessen (werkzeug/ladezeit-messen.js, Rechner 4× gebremst)**:
+  - 4G kalt: bereit 2,9 → 2,8 s, Klassenzimmer bei 3,2 s; insgesamt 2,2 MB statt 3,6 MB zu Beginn dieser Runde (Filme in 840, Satzbau in 842);
+  - 3G kalt: bereit 12,0 → 11,1 s.
+  
+  Ehrlich: Der große Brocken bleibt app.js mit 921 KB. Das Zehnfache gibt es erst, wenn app.js geteilt wird oder bei einem Update nicht ganz neu kommt (nächste Schritte).
+- **Sonden**: `pruefe-858-ladeweg.js` prüft zusätzlich: kein satzbau.js beim Start und im Klassenzimmer; „Lernen" holt es sofort (Satzbaukasten bereit). Grün: 858, 834, 835, 839, 636, 837, runde18, tutor, einladungslink, kein-zoom, ladezeit, 862, runde88-panels.

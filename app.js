@@ -274,6 +274,7 @@
        Zeit als leeren Bildschirm. Deshalb erst zeichnen lassen, dann
        laden — die Ansichten holen sich die Wörter über
        wortschatzNachziehen() ohnehin nach, sobald sie da sind. */
+    if (targetId === "view-learn") satzbauLaden();   // FASSUNG 842 — der Satzbaukasten liegt unter „Lernen"
     if (targetId === "view-learn" && typeof VocabData !== "undefined" && VocabData.ladeWoerter && !VocabData.ladenLaeuft()) {
       const spaeter = () => VocabData.ladeWoerter();
       if (window.requestIdleCallback) requestIdleCallback(spaeter, { timeout: 1500 });
@@ -72128,6 +72129,12 @@
     const area = document.getElementById(zielId || "satzbaukastenDeArea");
     if (!area) return;
     const S = window.Satzbau;
+    /* FASSUNG 842 — satzbau.js kommt nicht mehr beim Start mit (siehe satzbauLaden); fehlt es, wird es jetzt geholt. */
+    if (!S && !satzbauGescheitert) {
+      area.innerHTML = '<p class="empty-note">🧱 Der Satzbaukasten wird geladen …</p>';
+      satzbauLaden().then(() => renderSatzbaukasten(zielId));
+      return;
+    }
     if (!S) {
       area.innerHTML = `
         <div class="question-card">
@@ -74212,6 +74219,7 @@
   let vmFinished = false;
   function vmBuildDictionary() {
     const words = new Set();
+    satzbauLaden();   // FASSUNG 842 — die Verbformen kommen aus satzbau.js (wird ab jetzt nachgeladen)
     wortschatzBereit();   // beim ersten Spiel anstoßen, falls noch nicht geschehen
     // Wörter mit Artikel-Präfix ("der Apfel") müssen für den Buchstaben-Abgleich bereinigt
     // werden — sonst würde "der Apfel" fälschlich unter "D" statt "A" gezählt.
@@ -98653,6 +98661,48 @@ An einem Morgen lief ein kleiner Fuchs los…
   let brRunde = null;        // { nummer, richtig, gesamt, letzte }
   const BR_RUNDEN = 8;
   const brDateien = {};
+  /* =================================================================
+     FASSUNG 842 — DER SATZBAUKASTEN KOMMT ERST, WENN ER GEBRAUCHT WIRD
+     -----------------------------------------------------------------
+     XANDER (Funk 271): „es soll doch unter Wissen und Klassenzimmer dann ins Klassenzimmer gehen wie immer auch nur
+     zehnmal schneller … alles insgesamt nur zehn Mal schneller". Gemessen (werkzeug/ladezeit-messen.js): bis die Seite
+     reagiert, gehen 2,2 MB über die Leitung; satzbau.js ist davon 185 KB (640 KB Text), und der Satzbaukasten ist das
+     Einzige, was es braucht (dazu die Verbformen im Vokabelmeister). Es stand trotzdem in der Startliste und hielt
+     „bereit" auf. Jetzt wird es geholt:
+       * sofort, wenn „Lernen" geöffnet wird (dort liegt der Satzbaukasten), beim Satzbaukasten selbst und im
+         Vokabelmeister;
+       * sonst 6 s nach dem Laden in einer Ruhepause – aber nicht, solange man im Klassenzimmer ist (wie der Wortschatz,
+         Fassung 837).
+     Rückfall: Klappt die verkleinerte Kopie (min/) nicht, wird einmal die Quelle geholt; klappt auch das nicht, sagt
+     der Satzbaukasten es wie bisher in klaren Worten. */
+  /* var, nicht let: activateTab kann schon beim Start (vor dieser Zeile) nach „Lernen" gehen */
+  var satzbauVersprechen = null, satzbauGescheitert = false;
+  function satzbauLaden() {
+    if (window.Satzbau) return Promise.resolve(true);
+    if (satzbauVersprechen) return satzbauVersprechen;
+    /* erst nach dem laufenden Skript (Microtask): brDatei und sein Speicher sind unten mit const angelegt */
+    satzbauVersprechen = Promise.resolve().then(() => brDatei("satzbau.js")).then((ok) => {
+      if (ok && window.Satzbau) return true;
+      return new Promise((fertig) => {
+        const s = document.createElement("script");
+        s.src = "satzbau.js" + (window.DMA_V ? DMA_V("satzbau.js") : "?v=" + (window.DMA_VERSION || "1"));
+        s.onload = () => fertig(Boolean(window.Satzbau));
+        s.onerror = () => fertig(false);
+        document.head.appendChild(s);
+      });
+    }).then((ok) => { if (!ok) { satzbauGescheitert = true; satzbauVersprechen = null; } return ok; });
+    return satzbauVersprechen;
+  }
+  window.DMA_SATZBAU_LADEN = satzbauLaden;
+  function satzbauSpaeter() {
+    setTimeout(() => {
+      if (window.Satzbau || satzbauVersprechen) return;
+      if (klassenzimmerOffen() || document.hidden) { satzbauSpaeter(); return; }
+      if (window.requestIdleCallback) requestIdleCallback(() => satzbauLaden(), { timeout: 3000 }); else satzbauLaden();
+    }, 6000);
+  }
+  if (document.readyState === "complete") satzbauSpaeter(); else window.addEventListener("load", satzbauSpaeter, { once: true });
+
   function brDatei(weg) {
     if (brDateien[weg]) return brDateien[weg];
     brDateien[weg] = new Promise((fertig) => {
