@@ -2156,7 +2156,7 @@
     const vorher = knopf ? knopf.innerHTML : null;
     if (knopf) {
       knopf.disabled = true; knopf.classList.add("lk-laeuft");
-      knopf.innerHTML = '<span class="lk-uhr" aria-hidden="true"></span><span>' + (/ausgebaut$/.test(text) ? "wird ausgebaut …" : "wird gebaut …") + "</span>";
+      knopf.innerHTML = '<span class="lk-bau-uhr" aria-hidden="true"></span><span>' + (/ausgebaut$/.test(text) ? "wird ausgebaut …" : "wird gebaut …") + "</span>";
     }
     const frei = (gut) => {
       if (knopf) aktionLaeuft = false;

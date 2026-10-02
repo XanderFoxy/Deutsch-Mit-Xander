@@ -341,7 +341,9 @@ body.lk-gehoben #lDinge { cursor: grabbing; }
 /* FASSUNG 833 — Bauen meldet sich sofort (Funk 255): Knopf mit laufender Uhr, gesperrt, danach Haken */
 .lk-text-knopf.lk-laeuft, .lk-text-knopf.lk-laeuft:disabled { opacity: 1; cursor: progress; background: #8a6a2e; animation: lk-puls .9s ease-in-out infinite; }
 .lk-text-knopf.lk-fertig { background: #3f8a4e; border-color: rgba(140,220,150,.7); }
-.lk-uhr { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: lk-dreh .7s linear infinite; }
+/* FASSUNG 834 — eigene Klasse: „.lk-uhr“ ist die Uhrzeit oben links (Zeile 122); 833 machte sie versehentlich zum drehenden
+   Kreis (Funk 263: „die Uhranzeige oder die Wetteranzeige … scheint beides zusammen in einem Klumpen sich zu drehen“) */
+.lk-bau-uhr { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: lk-dreh .7s linear infinite; }
 @keyframes lk-puls { 50% { box-shadow: 0 0 0 3px rgba(243,195,90,.35); } }
 @keyframes lk-dreh { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .lk-text-knopf.lk-laeuft, .lk-uhr { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .lk-text-knopf.lk-laeuft, .lk-bau-uhr { animation: none; } }

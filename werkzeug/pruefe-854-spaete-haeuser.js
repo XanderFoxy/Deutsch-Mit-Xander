@@ -288,6 +288,17 @@ const sage = (gut, was, zusatz) => {
   const dateien = SPAET.map((k) => "g_" + k + "_herbst_tag_f_315_g.webp").filter((n) => !fs.existsSync(path.join(WURZEL, "stadt-leicht", "bilder", n)));
   sage(!dateien.length, "gebackene Bilder liegen im Ordner (je Haus, Herbst, Tag, Grundansicht)", dateien.join(", "));
   sage(!fehlt.length, "keine fehlenden Bilder (404)", fehlt.slice(0, 5).join(", "));
+  /* FASSUNG 834 — die Bau-Uhr (833) hieß „.lk-uhr“ wie die Uhrzeit oben links: die Uhrzeit drehte sich als Kreis
+     (Funk 263: „die Uhranzeige oder die Wetteranzeige … scheint beides zusammen in einem Klumpen sich zu drehen“) */
+  const sp2 = await ctx2.newPage();
+  await sp2.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "commit" }).catch(() => {});
+  await sp2.setContent('<body style="margin:0"><iframe id="r" src="/stadt-leicht.html?eingebettet=1&mini=1&demo=1&zeit=tag&jahr=herbst&uhr=12:00" style="width:360px;height:225px;border:0;display:block"></iframe></body>');
+  let fr = null;
+  for (let i = 0; i < 120 && !fr; i++) { fr = sp2.frames().find((x) => /stadt-leicht\.html/.test(x.url())); if (!fr) await sp2.waitForTimeout(500); }
+  if (fr) await fr.waitForFunction(() => !!document.querySelector(".lk-kopfzeile .lk-uhr") && /\d/.test(document.querySelector(".lk-kopfzeile .lk-uhr").textContent), null, { timeout: 120000 }).catch(() => {});
+  const uhr = !fr ? null : await fr.evaluate(() => { const u = document.querySelector(".lk-kopfzeile .lk-uhr"); if (!u) return null; const c = getComputedStyle(u), r = u.getBoundingClientRect();
+    return { anim: c.animationName, rund: c.borderRadius, w: Math.round(r.width), text: u.textContent }; });
+  sage(!!uhr && uhr.anim === "none" && uhr.w > 22 && /\d/.test(uhr.text), "die Uhrzeit oben links steht still und zeigt die Zeit (kein drehender Kreis)", JSON.stringify(uhr));
   if (process.env.BILD) await sp.screenshot({ path: process.env.BILD + "-stadt.png" });
   sage(!fehler2.length, "keine Skriptfehler (Stadt)", JSON.stringify(fehler2.slice(0, 3)));
   const ol = fs.readFileSync(path.join(WURZEL, "stadt-leicht", "oberflaeche.js"), "utf8");
