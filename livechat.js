@@ -2646,6 +2646,16 @@ window.LiveChat = (function () {
     }, function () { lagerGelesen = true; return []; });
   }
 
+  /* FASSUNG 836 — Gegenprüfung zu Funk 263 („Seite flüssig"): chatSichern lief bei jeder neuen Zeile und legte dabei JEDES
+     Bild und jede Sprachnachricht des Verlaufs noch einmal ins Lager (im Hauptraum 59 Bilder – mehrere MB, die der
+     Browser jedes Mal kopiert). Was mit genau denselben Daten schon abgelegt wurde, bleibt jetzt liegen. */
+  var lagerSchonGelegt = {};
+  function lagerEinmal(id, raum, daten) {
+    var k = raum + "|" + id;
+    if (lagerSchonGelegt[k] === daten) return;
+    lagerSchonGelegt[k] = daten;
+    lagerLegen(id, raum, daten).then(function (ok) { if (!ok && lagerSchonGelegt[k] === daten) delete lagerSchonGelegt[k]; });
+  }
   function chatSichern() {
     if (!zustand.raum) return;
     var liste = zustand.nachrichten.slice(-CHAT_VERLAUF);
@@ -2663,7 +2673,7 @@ window.LiveChat = (function () {
          ein Dutzend davon haette ihn gesprengt und frueher schon
          einmal den GANZEN Verlauf mitgerissen. */
       if (n.sprach) {
-        lagerLegen("sprach:" + n.id, raum, n.sprach);
+        lagerEinmal("sprach:" + n.id, raum, n.sprach);
         var ohneTon = {};
         Object.keys(n).forEach(function (k) { ohneTon[k] = n[k]; });
         ohneTon.sprach = "";
@@ -2672,9 +2682,8 @@ window.LiveChat = (function () {
         return ohneTon;
       }
       if (!n.bildImChat) return n;
-      /* Ins Lager damit — und zwar jedes Mal, auch wenn es schon
-         drinliegt: put() ueberschreibt, das kostet nichts. */
-      lagerLegen(n.id, raum, n.bildImChat);
+      /* Ins Lager damit (FASSUNG 836: einmal je Bild – „put() kostet nichts" stimmte nicht: jedes put kopiert das ganze Bild) */
+      lagerEinmal(n.id, raum, n.bildImChat);
       var kopie = {};
       Object.keys(n).forEach(function (k) { kopie[k] = n[k]; });
       kopie.bildImChat = "";
