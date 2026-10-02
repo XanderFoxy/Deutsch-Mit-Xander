@@ -244,7 +244,7 @@
     return Boolean(el && el.offsetParent !== null);
   }
   let wortschatzAufgeschoben = false, wortschatzUhr = 0;
-  function imKlassenzimmer() {
+  function klassenzimmerOffen() {
     try {
       if (bereichSichtbar(document.getElementById("sub-livechat"))) return true;
       const l = window.LiveChat && window.LiveChat.lage && window.LiveChat.lage();
@@ -255,8 +255,8 @@
     clearTimeout(wortschatzUhr);
     wortschatzUhr = setTimeout(() => {
       if (!wortschatzAufgeschoben || VocabData.ladenLaeuft()) return;
-      if (imKlassenzimmer() || document.hidden) { wortschatzSpaeterHolen(); return; }
-      const los = () => { if (wortschatzAufgeschoben && !imKlassenzimmer()) { wortschatzAufgeschoben = false; VocabData.ladeWoerter(); } else wortschatzSpaeterHolen(); };
+      if (klassenzimmerOffen() || document.hidden) { wortschatzSpaeterHolen(); return; }
+      const los = () => { if (wortschatzAufgeschoben && !klassenzimmerOffen()) { wortschatzAufgeschoben = false; VocabData.ladeWoerter(); } else wortschatzSpaeterHolen(); };
       if (window.requestIdleCallback) requestIdleCallback(los, { timeout: 3000 }); else los();
     }, 8000);
   }
@@ -9910,8 +9910,10 @@
     // den ganzen Wortschatz ziehen, obwohl niemand eine Wortansicht geöffnet
     // hat. Angestoßen wird beim Wechsel nach „Lernen"/„Wissen" (activateTab).
     if (!VocabData.ladenLaeuft || !VocabData.ladenLaeuft()) {
-      /* FASSUNG 837 — unter „Wissen" aufgeschoben (activateTab): eine Ansicht, die Wörter zeigt, holt sie jetzt selbst */
-      if (wortschatzAufgeschoben) { wortschatzAufgeschoben = false; return wortschatzHolenFuer(nachzeichnen); }
+      /* FASSUNG 837 — unter „Wissen" aufgeschoben (activateTab): eine Ansicht, die Wörter zeigt, holt sie jetzt selbst –
+         nur nicht im Klassenzimmer. Dort fragt schon jeder Tipp (Betonung im Text) hier nach; das zog sofort wieder alle
+         26 Wortdateien (Sonde 858). Im Raum holt sie, wer sie wirklich braucht (lcWoerterbuchHolen, Betonung-Schalter). */
+      if (wortschatzAufgeschoben && !klassenzimmerOffen()) { wortschatzAufgeschoben = false; return wortschatzHolenFuer(nachzeichnen); }
       return true;
     }
     wortschatzBereit().then(() => { try { nachzeichnen(); } catch (e) { /* Ansicht ist weg */ } });

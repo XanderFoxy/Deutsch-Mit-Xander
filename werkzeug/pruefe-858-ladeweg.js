@@ -76,7 +76,13 @@ const warte = (ms) => new Promise((r) => setTimeout(r, ms));
     await pg.click('.tape-tab[data-target="view-knowledge"]');
     await warte(400);
     await pg.evaluate(() => { const b = document.querySelector('.subnav-pill[data-sub="sub-livechat"]'); if (b) b.click(); });
-    for (let i = 0; i < 4; i++) { await pg.mouse.click(200, 400); await warte(300); }
+    /* Tipps, die nichts Bestimmtes treffen (auf body): sie wecken den Klang wie jeder Tipp. Ein Tipp auf einen TEXT
+       schaltet dagegen ausdrücklich die Betonung an und holt dafür den Wortschatz – das ist gewollt (siehe app.js,
+       wortschatzHolenFuer) und wird hier nicht geprüft. */
+    for (let i = 0; i < 4; i++) {
+      await pg.evaluate(() => ["pointerup", "click"].forEach((t) => document.body.dispatchEvent(new MouseEvent(t, { bubbles: true }))));
+      await warte(300);
+    }
     await warte(12000);
     const v = vokAb(anfragen, t0);
     const tone = anfragen.filter((a) => a.t >= t0 && /^ton\//.test(a.u));
@@ -90,7 +96,7 @@ const warte = (ms) => new Promise((r) => setTimeout(r, ms));
     await pg.click('.tape-tab[data-target="view-learn"]');
     let v2 = [];
     for (let i = 0; i < 40 && !v2.length; i++) { await warte(250); v2 = vokAb(anfragen, t1); }
-    sage(v2.length > 0, "nach dem Wechsel zu „Lernen" kommt der Wortschatz", v2.length ? Math.round((v2[0].t - t1)) + " ms bis zur ersten Datei" : "nichts");
+    sage(v2.length > 0, "nach dem Wechsel zu „Lernen“ kommt der Wortschatz", v2.length ? Math.round((v2[0].t - t1)) + " ms bis zur ersten Datei" : "nichts");
     const falsch = v2.filter((a) => { const n = a.u.split("?")[0]; return !a.u.endsWith("?v=" + stempel[n]); });
     sage(v2.length > 0 && !falsch.length && !v2.some((a) => a.u.endsWith("?v=" + fassung)), "jede Wortdatei mit ihrem eigenen Stempel (nicht ?v=" + fassung + ")", falsch.slice(0, 3).map((a) => a.u).join(", "));
     await ctx.close();

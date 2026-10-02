@@ -3063,3 +3063,25 @@ Umgesetzt ist, was ohne sichtbare Änderung geht.
   - `pruefe-856-platz-direkt.js` prüft den schnellen Neuanruf nach „failed“.
   - `pruefe-827` erlaubt dem Tonserver-Start 16 s statt 8 s; `pruefe-runde18` erkennt die neue Abfrage vor `renderLiveChat()`.
   - `pruefe-842-sfu-spiel.js` wackelt schon auf main (2 von 5 Läufen rot: Lücke nach dem Stau, Schließen ohne keepalive-Aufruf); auf 836 waren 8 von 10 Läufen grün. Die Sonde zeigt jetzt die erwartete Sitzung mit an. Ursache noch offen.
+
+## Fassung 837 — Ladezeit: der Weg ins Klassenzimmer lädt nur, was er braucht (Funk 263)
+
+XANDER (Funk 263, wörtlich): „die Ladezeit … ca. 10 mal schneller … sofort im Livestream wie HelloTalk".
+
+Die Messung aus der Diagnose: Wer über „Wissen" ins Klassenzimmer ging, lud dabei den ganzen Wortschatz (26 Dateien, 2,26 MB gepackt), den Kalender und beim ersten Tipp 68 Spieltöne (333 KB) – genau dann, wenn die Leitung für Raumkanal, Verlauf und Gespräch gebraucht wird. Umgesetzt ist, was man nicht sieht:
+
+- **Eigener Stempel je Wort- und Kalenderdatei (`werkzeug/fassung-setzen.js`, `STEMPEL_EINZELN`, `data-vocab.js`)**
+  - `vokabeln/*.js` und `kalender/*.js` hingen an `?v=Fassung` und kamen nach jeder Fassung komplett neu (am 29./30.09. 24 bzw. 31 Fassungen am Tag). Jetzt hat jede Datei ihren Stempel aus dem Inhalt; neu geladen wird nur, was sich geändert hat. Je Datei, nicht je Ordner.
+  - Der Service Worker legt gestempelte Dateien wie bisher ab und räumt die alte Fassung derselben Datei weg.
+- **Kein Wortschatz auf dem Weg ins Klassenzimmer (`app.js`, `activateTab`, `wortschatzNachziehen`)**
+  - „Lernen" holt den Wortschatz wie bisher sofort.
+  - Unter „Wissen" wird er aufgeschoben: eine Ansicht, die Wörter zeigt, holt ihn selbst (außer im Klassenzimmer); sonst kommt er nach 8 s Ruhe – aber nicht, solange das Klassenzimmer offen ist oder man im Raum ist.
+  - Im Raum holt ihn, wer ihn wirklich braucht: Wörterbuch-Aufgaben (`lcWoerterbuchHolen`), der Betonung-Schalter, ein Tipp auf einen Text (Betonungsanzeige).
+  - Fehler unterwegs: Der Name `imKlassenzimmer` war in app.js schon vergeben (Online-Liste, `imKlassenzimmer(profilId)`), die spätere Funktion gewann; die neue heißt `klassenzimmerOffen`.
+- **Spieltöne erst beim Mitspielen (`spiel.js`, `klangWecken`)**: Jeder Tipp entsperrt weiter den Klang; die 68 Töne kommen erst, wenn man mitspielt. Einzelne Töne lädt `klangLaden` bei Bedarf selbst.
+- **preconnect (`index.html`)** zu `cdn.jsdelivr.net` (supabase-js) und zum Supabase-Projekt (mit `crossorigin`): DNS, TCP und TLS laufen parallel zum CSS.
+- **Sonden**
+  - Neu: `pruefe-858-ladeweg.js` – Dateistempel, preconnect, Wissen → Klassenzimmer 12 s ohne Wortschatz und ohne Spieltöne, „Lernen" holt ihn sofort mit Dateistempel, beim Kompass kommt er nach der Ruhe (gemessen 8,1 s).
+  - `pruefe-825-licht-klang.js`: Grenze für wieder angehende Fenster 15 % statt 12 %. Seit den späten Häusern sind es 312 Fenster; das gewollte kurze Aufleuchten (Nachteulen) liegt zufällig bei 13,5 % – auf main genauso, am Aussehen nichts geändert.
+  - `pruefe-659-verbindung.js` war in 1 von 10 Läufen rot („Wege gebündelt" bei B, Zeitfrage); 837 ändert livechat.js nicht.
+- **Noch nicht umgesetzt (braucht Xanders Entscheidung, Regel 3):** direkter Einstieg ins Klassenzimmer, „erst zuhören, dann reden" ohne Erlaubnis-Dialog, das Klassenzimmer als eigenes schlankes Paket (app.js aufteilen).
