@@ -2973,3 +2973,36 @@ XANDER (Funk 263, wörtlich): „Irgendwie spinnt jetzt die ohranzeige oder die 
 - **Uhrzeit (`stadt-leicht/leicht.css`, `oberflaeche.js`)**: Mein Fehler aus 833. Die Bau-Uhr am Knopf bekam die Klasse `.lk-uhr` – so heißt aber schon die Uhrzeit oben links im kleinen Rahmen. Die Uhrzeit wurde dadurch zu einem 14 px großen, sich drehenden Kreis, in den Ortsschild und Wetter hineinrutschten. Die Bau-Uhr heißt jetzt `.lk-bau-uhr`; alle übrigen neuen Klassen- und Keyframe-Namen von 832/833 sind geprüft (keine weiteren Doppelungen).
 - **Ladebild (`spiel.css .sp-ls-lade`)**: Das Ladebild der Stadt (`.lk-lade`) setzt Alex mit `row-reverse` nach rechts; das Ladebild im Spiel (829) hatte die Reihenfolge nicht übernommen. Jetzt sitzt Alex in beiden rechts und zeigt auf Namen und Balken.
 - **Sonde**: `pruefe-854-spaete-haeuser.js` prüft zusätzlich im eingebetteten Rahmen, dass die Uhrzeit stillsteht und die Zeit zeigt (mit 833 rot: `animation lk-dreh`, rund).
+
+## Fassung 835 — Getreidefelder wie echte Äcker (Funk 263)
+
+XANDER (Funk 263, wörtlich): „im Spiel lass die Getreidefelder mehr wie Getreidefelder aussehen nicht nur wie einfache Vierecke".
+
+- **Vorher**: Ein Acker der neuen Stadt war eine flache Fläche mit Farbverlauf und ein paar Linien, nah dran kurze Striche – von weitem ein orangefarbenes Viereck.
+- **Jetzt (`stadt-leicht/korn.js`, neu)**: wie ein Weizenacker aus der Luft.
+  - Das Korn hat Höhe (reif knapp 1 m). Vorn sieht man die Halmwand mit dunklem Saum am Fuß; nah dran stehen einzelne Halme mit Ähren und wiegen sich.
+  - Die Oberfläche ist eine einmal gebackene Textur: Ähren als Körnung, Drillreihen (in jeder Zoomstufe sichtbar, wie in Aufbauspielen etwas breiter gemalt), die Fahrgasse als doppelte Traktorspur, das Vorgewende an beiden Enden mit Querreihen und eigener Spur, hellere und dunklere Bahnen der Drillmaschine, Bodenflecken, eine vom Wind niedergedrückte Lagerstelle.
+  - Runde Ecken (dort wendet der Mähdrescher) und eine leicht ausgefranste Kante.
+  - Ringsum ein Feldrain mit hohem Gras, Mohn, Kornblumen und Kamille; im Herbst welker und mit weniger Blumen, im Winter Schnee.
+  - Kornwellen: Böen laufen als helle Wellen mit dunklem Tal über das Korn.
+  - Natürlichere Farben: Weizengelb statt Orange.
+- **Wachstum nach dem Spiel (`spiel.js`)**: Das Spiel schickt beim Zeichen `feld91`/`feld92` jetzt auch den Anteil bis zur Reife mit. Die Stadt malt danach:
+  - nach der Ernte ein Stoppelfeld mit Strohschwaden und Rundballen,
+  - dann Saatreihen auf brauner Erde,
+  - dann grünes, gelbes und schließlich reifes Korn.
+  - Ohne Spielstand (eigene Seite, Beispielstadt) ist der Acker reif; im Winter liegt Schnee mit durchstechenden Stoppeln.
+- **Schnell bleibt es**:
+  - Die Textur wird je Acker, Stufe und Zoomstufe einmal gebacken: die grobe sofort, die feine in Stücken von höchstens ~6 ms zwischen den Bildern.
+  - Je Bild kostet der Acker-Maler 0,1–0,4 ms.
+  - `korn.js` (≈ 5 KB gepackt) steckt nicht in `leicht.min.js`: `korn-laden.js` vertritt es, malt bis dahin eine einfache Fläche und holt `korn.min.js`, sobald die Stadt ihr erstes Bild hat.
+  - `leicht.min.js` ist dadurch sogar etwas kleiner als in 834 (131 statt 132 KB gepackt). Der kleine Rahmen lädt 343 KB (Sonde 799, Grenze 360 KB).
+- **Sonden**:
+  - `pruefe-855-kornfeld.js` (neu, 11 Punkte; mit dem Stand 834 sieben rot). Sie prüft:
+    - Stufen und Anteil;
+    - deckendes Korn mit wechselnden Reihen;
+    - Halmwand und runde Ecken;
+    - Stoppelfeld mit Ballen;
+    - Kosten je Bild;
+    - Nachladen erst nach der Stadt.
+  - Grün: 855, 799, 844, 828, 847, 817, 854, 830.
+  - 830 (Verkehr) war einmal zeitbedingt rot, bei der Wiederholung grün.

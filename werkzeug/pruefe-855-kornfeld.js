@@ -15,6 +15,8 @@
      - die Ecken sind rund (in der Ecke selbst kein Korn)
      - das Stoppelfeld ist heller als das reife Korn und hat Rundballen
      - der Acker-Maler kostet je Bild wenig (Median < 2 ms)
+     - die Äcker sind eine eigene Datei (korn.min.js), nachgeladen nach dem
+       ersten Bild der Stadt
      - keine Skriptfehler
    Mit dem Stand 834 ist das rot (flache Fläche ohne Wand, kein ST.korn).
    Aufruf: node werkzeug/pruefe-855-kornfeld.js   (QUELLE=1: Einzeldateien)
@@ -42,7 +44,16 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     const pf = []; pg.on("pageerror", (e) => pf.push(e.message));
     await pg.goto("http://127.0.0.1:" + srv.address().port + "/stadt-leicht.html?demo=1&leute=0&gaeste=0&quest=0&jahr=sommer&uhr=12:00" + (process.env.QUELLE ? "&quelle=1" : ""), { waitUntil: "load" });
     await pg.waitForFunction(() => window.__fertig || window.__fehler, null, { timeout: 120000 });
+    /* die Äcker kommen nach dem ersten Bild (korn.min.js) */
+    const kornDa = await pg.waitForFunction(() => !!window.STADT.korn, null, { timeout: 15000 }).then(() => true, () => false);
     await pg.waitForTimeout(1000);
+    if (!process.env.QUELLE) {
+      const html = fs.readFileSync(path.join(WURZEL, "stadt-leicht.html"), "utf8");
+      const geholt = await pg.evaluate(() => performance.getEntriesByType("resource").filter((r) => /korn\.min\.js/.test(r.name)).map((r) => Math.round(r.startTime)));
+      const fertigUm = await pg.evaluate(() => Math.round(performance.getEntriesByType("resource").filter((r) => /leicht\.min\.js/.test(r.name)).map((r) => r.responseEnd)[0] || 0));
+      sage(/LEICHT_KORN = "stadt-leicht\/korn\.min\.js\?v=/.test(html) && kornDa && geholt.length === 1 && geholt[0] > fertigUm,
+        "die Äcker sind eine eigene Datei (korn.min.js), geholt erst nach der Stadt – der kleine Rahmen lädt nicht langsamer", JSON.stringify({ geholt: geholt, buendel: fertigUm }));
+    }
 
     const stufen = await pg.evaluate(() => {
       const k = STADT.korn; if (!k) return null;
@@ -53,12 +64,15 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     sage(stufen && stufen.join(",") === "reif,reif,stoppel,saat,gruen,gelb,schnee,gelb", "Stufen: ohne Stand/fertig reif, dann Stoppel → Saat → grün → gelb, Winter Schnee, alter Stand ohne Anteil gelb", JSON.stringify(stufen));
 
     /* Kamera auf Acker 92, Spielstand setzen, ein paar Bilder abwarten */
+    /* nach dem Umstellen mindestens drei neue Bilder abwarten (gebündelt und unter Last dauert ein Bild länger) */
     const zeige = async (z, s) => {
-      await pg.evaluate(({ z, s }) => {
+      const t0 = await pg.evaluate(({ z, s }) => {
         STADT.oberflaeche.zeichenJetzt = z;
         const f = STADT.dorf.FELD_ORTE.find((q) => q.nr === 92), K = STADT.kamera; K.x = f.x; K.y = f.y; K.s = s * K.dpr; STADT.leicht.unruhe = 2;
+        return STADT.bilder.takt;
       }, { z, s });
-      await pg.waitForTimeout(1600);
+      await pg.waitForFunction((t0) => STADT.bilder.takt >= t0 + 3, t0, { timeout: 30000 });
+      await pg.waitForTimeout(1200);
     };
     /* Pixel in (u, v) des Ackers auf der Höhe z lesen */
     const lies = (punkte) => pg.evaluate((punkte) => {
@@ -94,13 +108,13 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     const st = await lies(Array.from({ length: 60 }, (_, i) => [0.2 + i * 0.01, 0.5, 0.12]));
     const hellSt = st.map((p) => p[0] * 0.3 + p[1] * 0.59 + p[2] * 0.11).reduce((a, b) => a + b, 0) / st.length;
     sage(hellSt > mitte + 8, "Stoppelfeld: heller (Stroh) als das reife Korn", hellSt.toFixed(0) + " gegen " + mitte.toFixed(0));
-    const ballen = await pg.evaluate(() => !!STADT.korn && /Rundballen/.test(String(STADT.szene.bodenMaler.find((q) => /KORN\.stufe/.test(String(q))))) && STADT.korn.schwaden(18 * STADT.korn.M).length >= 2);
-    sage(ballen, "Stoppelfeld: Strohschwaden mit Rundballen");
+    const ballen = await pg.evaluate(() => (STADT.korn ? STADT.korn.ballen : 0));
+    sage(ballen >= 2, "Stoppelfeld: Strohschwaden mit Rundballen (gemalt im letzten Bild)", ballen + " Ballen");
     if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-stoppel.png" });
 
     /* Kosten je Bild */
     const ms = await pg.evaluate(() => new Promise((ok) => {
-      const SZ = STADT.szene, i = SZ.bodenMaler.findIndex((q) => /KORN\.stufe/.test(String(q))), f = SZ.bodenMaler[i], l = [];
+      const SZ = STADT.szene, i = STADT.korn ? SZ.bodenMaler.indexOf(STADT.korn.maler) : -1, f = SZ.bodenMaler[i], l = [];
       if (i < 0) return ok(-1);
       SZ.bodenMaler[i] = function (g, t, Z) { const t0 = performance.now(); f(g, t, Z); l.push(performance.now() - t0); };
       STADT.oberflaeche.zeichenJetzt = {};

@@ -49,26 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 834: Uhrzeit oben links wieder normal, Alex im Ladebild wieder rechts (Funk 263)",
+  stand: "Fassung 835: Getreidefelder wie echte Äcker (Höhe, Reihen, Fahrgasse, Feldrain, Kornwellen, Stoppelfeld mit Ballen), nachgeladen ohne den kleinen Rahmen zu verlangsamen",
 
   inArbeit: [
-    { seit: "2026-10-02T09:47",
+    { seit: "2026-10-02T10:48",
+      text: "Verbindung: Platzwechsel-Latenz, Gesprächsaufbau, SFU (Diagnose läuft)" },
+    { seit: "2026-10-02T10:48",
       text: "Kölner Dom nachts weiß/weg" },
-    { seit: "2026-10-02T09:47",
-      text: "Platzwechsel-Latenz, Gesprächsaufbau" },
-    { seit: "2026-10-02T09:47",
-      text: "Spracherkennung" },
-    { seit: "2026-10-02T09:47",
+    { seit: "2026-10-02T10:48",
+      text: "Azure-Spracherkennung" },
+    { seit: "2026-10-02T10:48",
+      text: "Ladezeit deutlich senken" },
+    { seit: "2026-10-02T10:48",
       text: "Bilderwelt neu, Szene für Szene" },
-    { seit: "2026-10-02T09:47",
-      text: "Ladezeit" },
+    { seit: "2026-10-02T10:48",
+      text: "Tiere und Übersichtskarte" },
+    { seit: "2026-10-02T10:48",
+      text: "Äcker versetzbar, rechter Acker erreichbar" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-02T09:47",
-      text: "Uhrzeit-Fehler aus 833" },
-    { seit: "2026-10-02T09:47",
-      text: "Ladebild: Alex rechts" },
+    { seit: "2026-10-02T10:48",
+      text: "Getreidefelder wie echte Äcker (835)" },
+    { seit: "2026-10-02T10:48",
+      text: "Uhrzeit und Ladebild (834)" },
   ],
 };
