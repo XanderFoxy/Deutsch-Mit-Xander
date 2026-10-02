@@ -269,16 +269,31 @@ const sage = (gut, was, zusatz) => {
     "im Dorf rollen die Knöpfe nur das Menü (menueZeigen statt scrollIntoView)");
 
   /* 1) Station öffnen, Aufgabe erledigen */
+  /* FASSUNG 836 — ein Tipp auf ein Haus, dessen Station schon offen ist, schließt sie (spiel.js „S.dorfWahl === lg ? ''").
+     Bis 835 ging der Tipp manchmal verloren (das Haus fiel beim Zoomen kurz aus der Szene, Funk 263 „Dom verschwindet") –
+     die Sonde verließ sich unbemerkt darauf. Jetzt: tippen, bis die Knöpfe der Station da sind (höchstens dreimal). */
+  const stationKnopf = ".sp-dl-neustadt ~ .sp-dl-station .sp-dl-st-knoepfe button:not([disabled])";
+  const stationAuf = async () => {
+    let p = null;
+    for (let i = 0; i < 3; i++) {
+      if (await pg.evaluate((s) => !!document.querySelector(s), stationKnopf)) return p || true;
+      p = (await tippeHaus("schule")) || p; await tick(1700);
+    }
+    return (await pg.evaluate((s) => !!document.querySelector(s), stationKnopf)) ? (p || true) : null;
+  };
   let spS = null;
-  for (let i = 0; i < 4 && !spS; i++) { spS = await tippeHaus("schule"); if (!spS) await tick(1000); }
-  await tick(1700);
+  for (let i = 0; i < 4 && !spS; i++) { spS = await stationAuf(); if (!spS) await tick(1000); }
   const station = await lageSeite();
   await tippeHier(".sp-dl-neustadt ~ .sp-dl-station .sp-dl-st-knoepfe button:not([disabled])"); await tick(1800);
   const nach = await lageSeite();
   sage(!!spS && Math.abs(nach.y - offen.y) <= 2 && nach.b === offen.b, "Station → Aufgabe: die Seite steht wieder wie nach dem Öffnen, kein Behälter verrutscht", JSON.stringify({ vor, offen, station, nach }));
 
   /* 2) die Seite verrutscht, während die Station offen ist (z. B. durch das Telefon) – nach der Aufgabe kommt sie zurück */
-  await tippeHaus("schule"); await tick(1700);
+  /* (836: wie Schritt 2 bis 835 wirklich lief – Station zu, Schule wieder auf Stufe 1, dann frisch öffnen: so ist es
+     dieselbe Aufgabe wie in Schritt 1 und kein zweiter Ausbau hintereinander) */
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = ""; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(600);
+  await stand("ich.dorf.schule = { stufe: 1, lp: 20 };"); await tick(600);
+  await stationAuf();
   await pg.evaluate(() => window.scrollBy(0, -90)); await tick(400);
   const verrutscht = await lageSeite();
   await tippeHier(".sp-dl-neustadt ~ .sp-dl-station .sp-dl-st-knoepfe button:not([disabled])"); await tick(1800);

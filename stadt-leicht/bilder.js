@@ -106,11 +106,21 @@
       e.laedt = true; laufend++;
       const img = new Image();
       img.decoding = "async";
-      img.onload = () => {
-        const fertig = () => { e.img = img; e.fertig = true; e.laedt = false; laufend--; LB.neu = true; weiter(); };
-        if (img.decode) img.decode().then(fertig, fertig); else fertig();
+      /* FASSUNG 836 — (Funk 263, „verschwindet einfach komplett") jeder Ladeplatz wird genau einmal frei, auch wenn
+         img.decode() nie antwortet (Rahmen im Hintergrund oder 0 × 0 groß) oder die Antwort ausbleibt. Vorher blieb dann
+         ein Platz für immer belegt; waren alle belegt, kam in der ganzen Stadt kein Bild mehr. */
+      let erledigt = false;
+      const frei = (gut) => {
+        if (erledigt) return; erledigt = true; clearTimeout(uhr);
+        if (gut) { e.img = img; e.fertig = true; LB.neu = true; }
+        else { e.fehler = true; e.fehlerT = Date.now(); e.versuche = (e.versuche || 0) + 1; }
+        e.laedt = false; laufend--; weiter();
       };
-      img.onerror = () => { e.fehler = true; e.fehlerT = Date.now(); e.versuche = (e.versuche || 0) + 1; e.laedt = false; laufend--; weiter(); };
+      const uhr = setTimeout(() => { if (img.complete && img.naturalWidth) frei(true); else { frei(false); try { img.src = ""; } catch (x) {} } }, 20000);
+      img.onload = () => {
+        if (img.decode) { img.decode().then(() => frei(true), () => frei(true)); setTimeout(() => frei(true), 1500); } else frei(true);
+      };
+      img.onerror = () => frei(false);
       img.src = PFAD + name + ".webp" + (LB.version ? "?v=" + LB.version : "");
     }
   }

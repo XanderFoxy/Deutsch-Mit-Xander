@@ -98,8 +98,9 @@ const BRETT = (frei) => `
   pruefe("der Klick auf einen freien Platz schickt kein /fahren mehr",
     !/const zeile = "\/fahren " \+ nr;/.test(js),
     "„so wie es vorher auch war“");
+  /* FASSUNG 836 — gezeichnet wird nur noch, wenn platzNehmen es nicht schon selbst getan hat (Funk 263, Latenz) */
   pruefe("er nimmt den Platz direkt",
-    /LiveChat\.platzNehmen \? LiveChat\.platzNehmen\(nr\) : null;\s*\n\s*renderLiveChat\(\);/.test(js));
+    /LiveChat\.platzNehmen \? LiveChat\.platzNehmen\(nr\) : null;\s*\n(?:\s*\/\*[\s\S]*?\*\/\s*\n)?\s*(?:if \(!\(erg && erg\.ok\)\) )?renderLiveChat\(\);/.test(js));
   /* NACHGEBESSERT IN RUNDE 19, weil die Sache sich geaendert hat:
      GEMELDET: „In diesem Menue muss das Springen nicht drinstehen.
      Das ist dann Quatsch." Der kurze Tipp IST das Springen. Dafuer

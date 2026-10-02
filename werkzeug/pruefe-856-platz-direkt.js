@@ -162,7 +162,8 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
   sage(/sitzSchicken\(\[zustand\.ichId\], zustand\.ichName \+ " setzt sich auf Platz " \+ n \+ "\."\);[^\n]*\n\s*spielGewechselt\(\);/.test(lc), "der Wechsler sendet zuerst, dann die Spiel-Nacharbeit");
   sage(/n\.art === "sitzplatz" \|\| n\.art === "spielsitz"\) && typeof n\.sn === "number"/.test(lc), "der Datenkanal nimmt Sitzmeldungen mit Stempel an");
   const sp = fs.readFileSync(path.join(WURZEL, "spiel.js"), "utf8");
-  sage(/setTimeout\(fallePruefen, 0\)/.test(sp), "die Fallen-Prüfung wartet nicht mehr 350 ms");
+  /* (die 350 ms vor der Fallen-Prüfung bleiben – sie liegen hinter dem Senden; mit 0 ms brach Sonde 850) */
+  sage(/sitzSchicken\(\[zustand\.ichId\][^\n]*\n\s*spielGewechselt\(\);/.test(lc) && /setTimeout\(fallePruefen, 350\)/.test(sp), "die Spiel-Nacharbeit (Fallen-Prüfung) kommt erst nach dem Senden");
 
   /* Edge-Functions neben der Datenbank (London), mit Rückfall ohne Region; Sonden-Adressen unverändert */
   sage(/FUNKTION_REGION = "eu-west-2"/.test(lc) && /"\?forceFunctionRegion=" \+ FUNKTION_REGION/.test(lc), "Edge-Functions mit ?forceFunctionRegion=eu-west-2");

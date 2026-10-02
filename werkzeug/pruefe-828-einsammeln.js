@@ -374,7 +374,9 @@ window.schick=function(d){document.getElementById("f").contentWindow.postMessage
       await pg.evaluate(() => { const m = document.querySelector(".sp-schnell .sp-sm-blick"); if (m) m.scrollTop = 1e6; }); await tick(300);
       if (!(await pg.evaluate(() => !!document.querySelector(".sp-lstadt")))) { await tippe('[data-s="stadtversion"][data-v="neu"]'); await tick(900); }
       let fr = null;
-      for (let i = 0; i < 160 && !fr; i++) { const f = stadtFrame(); if (f && await f.evaluate(() => !!document.querySelector(".lk-lupe") && !!(window.STADT.oberflaeche.ueberblick && STADT.szene.sichtbare.length > 20)).catch(() => false)) fr = f; else await tick(250); }
+      /* FASSUNG 836 — ein Rahmen außerhalb des Bildschirms zeichnet nicht (requestAnimationFrame ruht); bis 835 standen trotzdem
+         über 20 Häuser in „sichtbare", auch ungeladene. Jetzt zählt nur, was ein Bild hat: also den Rahmen ins Bild holen. */
+      for (let i = 0; i < 160 && !fr; i++) { if (i % 8 === 7) await pg.evaluate(() => { const l = document.querySelector(".sp-lstadt iframe, .sp-lstadt"); if (l) l.scrollIntoView({ block: "nearest" }); }).catch(() => {}); const f = stadtFrame(); if (f && await f.evaluate(() => !!document.querySelector(".lk-lupe") && !!(window.STADT.oberflaeche.ueberblick && STADT.szene.sichtbare.length > 20)).catch(() => false)) fr = f; else await tick(250); }
       sage(!!fr, "die neue Stadt ist im Spiel geladen");
       await pg.evaluate(() => { const p = document.querySelector(".sp-dl-neustadt-platz"); if (p) p.scrollIntoView({ block: "center" }); }); await tick(2600);
       const imFrame = (fn, a) => fr.evaluate(fn, a);
