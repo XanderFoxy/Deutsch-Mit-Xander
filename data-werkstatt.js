@@ -49,30 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 835: Getreidefelder wie echte Äcker (Höhe, Reihen, Fahrgasse, Feldrain, Kornwellen, Stoppelfeld mit Ballen), nachgeladen ohne den kleinen Rahmen zu verlangsamen",
+  stand: "Fassung 836: Platzwechsel direkt, Leitung ruft nach Scheitern gleich neu an, Dom nachts, Spracherkennung (Funk 263)",
 
   inArbeit: [
-    { seit: "2026-10-02T10:48",
-      text: "Verbindung: Platzwechsel-Latenz, Gesprächsaufbau, SFU (Diagnose läuft)" },
-    { seit: "2026-10-02T10:48",
-      text: "Kölner Dom nachts weiß/weg" },
-    { seit: "2026-10-02T10:48",
-      text: "Azure-Spracherkennung" },
-    { seit: "2026-10-02T10:48",
-      text: "Ladezeit deutlich senken" },
-    { seit: "2026-10-02T10:48",
-      text: "Bilderwelt neu, Szene für Szene" },
-    { seit: "2026-10-02T10:48",
-      text: "Tiere und Übersichtskarte" },
-    { seit: "2026-10-02T10:48",
-      text: "Äcker versetzbar, rechter Acker erreichbar" },
+    { seit: "2026-10-02T19:11",
+      text: "Ladezeit ×10 (837), Bilderwelt neu, Tiere/Übersichtskarte, Äcker versetzbar (Funk 255 D), sfu/aussprache neu ausliefern (wartet auf OK)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-02T10:48",
-      text: "Getreidefelder wie echte Äcker (835)" },
-    { seit: "2026-10-02T10:48",
-      text: "Uhrzeit und Ladebild (834)" },
+    { seit: "2026-10-02T19:11",
+      text: "Platzwechsel über Datenkanal, Gespräch baut sich schneller auf, Tonserver geduldiger, Dom nachts sichtbar, Spracherkennung sauberer" },
   ],
 };

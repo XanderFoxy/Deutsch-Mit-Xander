@@ -3006,3 +3006,60 @@ XANDER (Funk 263, wörtlich): „im Spiel lass die Getreidefelder mehr wie Getre
     - Nachladen erst nach der Stadt.
   - Grün: 855, 799, 844, 828, 847, 817, 854, 830.
   - 830 (Verkehr) war einmal zeitbedingt rot, bei der Wiederholung grün.
+
+
+## Fassung 836 — Platzwechsel ohne Warten, Gespräch steht schneller, Dom nachts, Spracherkennung (Funk 263)
+
+XANDER (Funk 263, wörtlich): „kümmere Dich in der Priorität erstmal darum dass die Seite schnell läuft … die Verbindung …
+der Platzwechsel … im Zweikampf … absolut unbrauchbar … das Gespräch baut sich manchmal erst später auf". Dazu: „der Kölner
+Dom … ist nachts manchmal weiß in einer bestimmten Zoomstufe oder verschwindet einfach komplett" und „die Spracherkennung von
+Azure … hört oft falsche Wörter".
+
+Vorher lief eine Diagnose mit sechs getrennten Prüfern (Platzwechsel, Gesprächsaufbau, Tonserver, Dom, Sprache, Ladezeit).
+Umgesetzt ist, was ohne sichtbare Änderung geht.
+
+- **Platzwechsel (`livechat.js`, `app.js`, `spiel.js`)**
+  - Die Sitzmeldung geht zuerst direkt über den Datenkanal zum anderen Gerät, dann zusätzlich über den Server (`sitzSenden`).
+  - Jede Meldung trägt einen Stempel (`sn`); ältere oder doppelte (die Server-Kopie) werden verworfen.
+  - Der Empfänger malt nur die Plätze neu (`melden("plaetze")` → `livechatPlaetzeAuffrischen`), nicht das ganze Klassenzimmer. Die Chatzeile kommt ein Bild später.
+  - Wer wechselt, sendet vor der Spiel-Nacharbeit. Die Fallen-Prüfung danach bleibt bei 350 ms (mit 0 ms lief sie mitten in das Zurückrollen nach einer Dorf-Aufgabe, Funk 256, Sonde 850 rot); den Versand hält sie nicht mehr auf.
+  - Ging ein Paket verloren, heilt der Puls (alle 6 s) den Sitz des Absenders.
+- **Gesprächsaufbau**
+  - Relais-Zugang wird schon beim Öffnen des Klassenzimmers geholt und beim Betreten benutzt, solange er noch 100 min gilt.
+  - Alle Leitungen nutzen `bundlePolicy: "max-bundle"`, auch nach dem Auffrischen.
+  - Scheitert eine Leitung („failed“), ruft die Seite mit der kleineren Kennung nach 0,4 s selbst neu an (höchstens zweimal in 30 s). Vorher rief niemand, bis die Wache nach 6 s (beim nächsten Mal 12 s) es tat. Melden sich zwei fast gleichzeitig neu an, kreuzen sich die Angebote, und Sonde 659 blieb so in 9 bis 11 von 15 Läufen 15 s ohne Leitung (auch auf main). Mit der Änderung: 0 von 15.
+  - Kommt der eigene Relais-Zugang erst nach dem Aufbau, werden stehende Leitungen auf ihn umgestellt (ICE-Neustart).
+  - Der 3D-Klassenzimmer-Vorlader wartet, bis alle Gespräche stehen, und lädt auf langsamen Netzen gar nicht vor.
+  - Die Edge-Functions (Relais-Zugang, Tonserver) laufen mit `?forceFunctionRegion=eu-west-2` neben der Datenbank in London statt in Frankfurt oder Zürich. Scheitert das im Netz, geht dieselbe Anfrage sofort ohne Region.
+  - Die Edge-Functions schicken `Access-Control-Max-Age: 7200`. Der Browser fragt dann nicht vor jedem Aufruf neu nach (Standard 5 s). Ausgeliefert ist das bisher nur bei `klassenzimmer` (v6); `sfu` und `aussprache` warten auf Xanders OK.
+  - Messwerte: 30 s nach dem Betreten meldet jedes Gerät einmal, wie lange Kanal, Angebot, Verbindung und Ton gebraucht haben und über welchen Weg (`spiel_diagnose_senden`, Art `verbindung`).
+- **Tonserver (ab 4 Leuten)**
+  - Der ganze Start darf 14 s dauern (jeder Aufruf weiter 8 s).
+  - Ein vorübergehender Rückfall sperrt 20 s, dann 40 s, 80 s, höchstens 2 Minuten (vorher immer 2 Minuten).
+  - Fällt einer kurz zurück, zählt er für die anderen noch 60 s mit. Bei vier Leuten machen dann nicht alle zugleich zu.
+- **Kölner Dom nachts (`stadt-leicht/bilder.js`, `szene.js`, `oberflaeche.js`, `start.js`)**
+  - Fehlt die gewünschte Bildgröße, malt die Stadt die beste schon geladene (vorher: gar nichts) und holt die richtige vorrangig.
+  - Kleine Bilder werden erst nach 20 s im Überblick freigegeben, die der Wahrzeichen nie.
+  - Lichter nur, wenn das Gebäude selbst gemalt wird. Vorher blieb ein heller Fleck aus Strahlern ohne Dom.
+  - Am oberen Rand wird nicht mehr nach dem Fußpunkt aussortiert.
+  - Ein Bild, das nicht kam, wird nach 4, 15 und 60 s erneut versucht, und beim Zurückkommen ins Netz.
+  - Ein Fehler in einem Bild hält die Zeichenschleife nicht mehr an.
+  - Der Bildlader gibt jeden Ladeplatz sicher wieder frei: `decode()` darf höchstens 1,5 s dauern, eine Anfrage höchstens 20 s. Vorher konnte ein hängendes Bild einen der Plätze für immer belegen, bis keine Bilder mehr nachkamen.
+- **Spracherkennung in den Stadt-Quests (`stadt-leicht/quests.js`, `ton.js`, `spiel.js`)**
+  - Rauschunterdrückung und Pegelautomatik aus, wie im Aussprachetrainer. Die Rauschunterdrückung schnitt Reibelaute und Endungen weg.
+  - Saubere Umrechnung auf 16 kHz: Tiefpass bei 7 kHz statt „nächster Abtastwert". Vorher falteten sich Zischlaute über 8 kHz ins Sprachband zurück.
+  - Während der Aufnahme schweigen Stadt und Spiel (wie Funk 199 fürs Spiel).
+  - „Ich höre zu" steht erst, wenn das Mikro wirklich aufnimmt.
+  - Azure liefert Zahlen im Display-Feld als Ziffern („2. Oktober"). Jetzt zählt auch die Lexical-Lesart („zweite oktober").
+  - Liegen eine richtige und eine falsche Antwort gleichauf, gibt es kein Urteil und keinen Versuch weg.
+  - Für den Betreiber (oder mit `?sprdiag=1`): die letzte Aufnahme anhören und sehen, was Azure geliefert hat.
+- **Sonden**
+  - Neu: `pruefe-856-platz-direkt.js` (Sitz über den Datenkanal, Stempel, Teil-Neuzeichnen, Region, Tonserver-Grenzen) und `pruefe-857-dom-nacht.js` (alle Zoomstufen in 8 Richtungen, nachts).
+  - `pruefe-848-sprechen.js` prüft zusätzlich Umrechnung (Dämpfung über 8 kHz), Mikro-Einstellungen, Stille während der Aufnahme, Lexical-Lesart und Gleichstand.
+  - `pruefe-850-platz-nach-menue.js` öffnet die Station jetzt gezielt (vorher schloss ein zweiter Tipp sie wieder) und setzt die Schulstufe vor Schritt 2 zurück.
+  - `pruefe-828-einsammeln.js` holt den Stadtrahmen in den sichtbaren Bereich. Außerhalb zeichnet der Browser nicht (rAF pausiert), dann blieben die Bilder stehen.
+  - `pruefe-848-sprechen.js` wartet auf „Ich höre zu“, statt fest 700 ms (unter Last dauert der Mikro-Start länger).
+  - `pruefe-799-stadt-im-dorfrahmen.js`: Grenze 380 KB statt 360 KB. Fährt der Zug durchs Bild, kommen drei Zwergbilder dazu (~20 KB; 339 KB ohne, 359 KB mit Zug, auf main genauso).
+  - `pruefe-856-platz-direkt.js` prüft den schnellen Neuanruf nach „failed“.
+  - `pruefe-827` erlaubt dem Tonserver-Start 16 s statt 8 s; `pruefe-runde18` erkennt die neue Abfrage vor `renderLiveChat()`.
+  - `pruefe-842-sfu-spiel.js` wackelt schon auf main (2 von 5 Läufen rot: Lücke nach dem Stau, Schließen ohne keepalive-Aufruf); auf 836 waren 8 von 10 Läufen grün. Die Sonde zeigt jetzt die erwartete Sitzung mit an. Ursache noch offen.

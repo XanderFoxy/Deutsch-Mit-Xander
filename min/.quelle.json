@@ -50,8 +50,8 @@
  "app-styles.css": "252949e98e6fff038a4d4e1b43d030d927d942fe",
  "konjugation.js": "740bad9ac8234b00f3a6b64b3e0793ae54ecf619",
  "spiel.css": "c22d2e8c176207f443f05851ae383ea3c9c7266f",
- "data-werkstatt.js": "eada34e478dea57e4ceb32d083091b8b128e4370",
  "app.js": "749b33ef827399cde2e62702ffe8cc3a487ea0aa",
  "spiel.js": "5245ed1c38ee7778b7cbacb5803ffba0e11d22d2",
- "livechat.js": "9f5ff7c87502cdf4f179c751ebc9e28cd1998a65"
+ "livechat.js": "9f5ff7c87502cdf4f179c751ebc9e28cd1998a65",
+ "data-werkstatt.js": "1fe55be2eff52d79982aa96b672e2c898ade5cd4"
 }
