@@ -14249,7 +14249,8 @@
     DORF_FELDER.forEach(function (f) {
       var st = ackerStand(f.nr);
       /* reif: klein wie die anderen fertigen Zeichen – nur die Ähre und „×2" (gesät „×5", wie spiel_ernten) */
-      aus["feld" + f.nr] = st.reif ? ["fertig", (st.saat ? 5 : 2) + " Getreide", "getreide"] : ["laeuft", "Getreide " + uhrText(st.rest), "getreide"];
+      /* FASSUNG 835 — dazu der Anteil bis zur Reife: die Stadt malt danach Stoppelfeld, Saat, grünes, gelbes Korn (Funk 263) */
+      aus["feld" + f.nr] = st.reif ? ["fertig", (st.saat ? 5 : 2) + " Getreide", "getreide"] : ["laeuft", "Getreide " + uhrText(st.rest), "getreide", Math.round(st.anteil * 100) / 100];
     });
     return aus;
   }
