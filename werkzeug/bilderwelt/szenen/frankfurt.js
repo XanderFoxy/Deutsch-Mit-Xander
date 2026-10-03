@@ -123,6 +123,58 @@ const poly = (pts) => {
 };
 const linie = (pts) => { const q = nahClip(pts, true).map((p) => pr(p[0], p[1], p[2])); return q.length > 1 ? "M" + q.map(P).join(" L") : "M0 0"; };
 const mass = (x, y) => FOC / tief(x, y);
+/* Alles, was über den Bildrand hinausgeht, geometrisch abschneiden: sonst würde die
+   Trefferfläche (Umriss des Teils) weit aus dem Bild ragen. */
+const imRahmen = (svg) => {
+  const X0 = -0.5, Y0 = -0.5, X1 = 320.5, Y1 = 200.5;
+  const innen = ([x, y]) => x >= X0 && x <= X1 && y >= Y0 && y <= Y1;
+  const strecke = (a, b) => {   /* Liang-Barsky */
+    let t0 = 0, t1 = 1; const dx = b[0] - a[0], dy = b[1] - a[1];
+    for (const [pp, qq] of [[-dx, a[0] - X0], [dx, X1 - a[0]], [-dy, a[1] - Y0], [dy, Y1 - a[1]]]) {
+      if (pp === 0) { if (qq < 0) return null; continue; }
+      const t = qq / pp; if (pp < 0) { if (t > t1) return null; if (t > t0) t0 = t; } else { if (t < t0) return null; if (t < t1) t1 = t; }
+    }
+    return [[a[0] + dx * t0, a[1] + dy * t0], [a[0] + dx * t1, a[1] + dy * t1]];
+  };
+  const kreisPoly = (cx, cy, rx, ry) => { const q = []; for (let i = 0; i < 20; i++) { const w = i / 20 * Math.PI * 2; q.push([cx + Math.cos(w) * rx, cy + Math.sin(w) * ry]); } return q; };
+  const pfad = (pts) => { const q = randClip(pts); return q.length > 2 ? "M" + q.map(P).join(" L") + " Z" : ""; };
+  svg = svg.replace(/<path d="([^"]*)"([^>]*)\/>/g, (m, d, rest) => {
+    if (/transform=/.test(rest)) return m;
+    if (/^[MLZ0-9.\s-]+$/.test(d)) {
+      let aus = "";
+      for (const teil of d.split("M").filter((x) => x.trim())) {
+        const zu = /Z\s*$/.test(teil), zahlen = teil.replace(/[LZ]/g, " ").trim().split(/\s+/).map(Number), pts = [];
+        for (let i = 0; i + 1 < zahlen.length; i += 2) pts.push([zahlen[i], zahlen[i + 1]]);
+        if (pts.every(innen)) { aus += "M" + teil; continue; }
+        if (zu) { aus += pfad(pts); continue; }
+        let offen = null;
+        for (let i = 0; i + 1 < pts.length; i++) {
+          const c = strecke(pts[i], pts[i + 1]);
+          if (!c) { offen = null; continue; }
+          if (!offen || Math.abs(offen[0] - c[0][0]) > 0.01 || Math.abs(offen[1] - c[0][1]) > 0.01) aus += `M${P(c[0])}`;
+          aus += ` L${P(c[1])}`; offen = c[1];
+        }
+      }
+      return aus ? `<path d="${aus}"${rest}/>` : "";
+    }
+    const z = (d.match(/-?\d+(\.\d+)?/g) || []).map(Number), pts = [];
+    for (let i = 0; i + 1 < z.length; i += 2) pts.push([z[i], z[i + 1]]);
+    if (pts.length && pts.every((q) => q[0] < X0) || pts.every((q) => q[0] > X1) || pts.every((q) => q[1] < Y0) || pts.every((q) => q[1] > Y1)) return "";
+    return m;
+  });
+  svg = svg.replace(/<(ellipse|circle) ([^>]*)\/>/g, (m, tag, at) => {
+    if (/transform=/.test(at)) return m;
+    const g = (n) => { const v = at.match(new RegExp(`(?:^|\\s)${n}="([^"]*)"`)); return v ? +v[1] : 0; };
+    const cx = g("cx"), cy = g("cy"), rx = tag === "circle" ? g("r") : g("rx"), ry = tag === "circle" ? g("r") : g("ry");
+    if (cx - rx >= X0 && cx + rx <= X1 && cy - ry >= Y0 && cy + ry <= Y1) return m;
+    if (cx + rx < X0 || cx - rx > X1 || cy + ry < Y0 || cy - ry > Y1) return "";
+    const rest = at.replace(/(?:^|\s)(cx|cy|rx|ry|r)="[^"]*"/g, "");
+    const d = pfad(kreisPoly(cx, cy, rx, ry));
+    return d ? `<path d="${d}"${rest.startsWith(" ") ? rest : " " + rest}/>` : "";
+  });
+  return svg;
+};
+
 /* Figuren: Pfaddaten auf ganze Zahlen runden (unsichtbar klein, halbiert die Datei) */
 const rundeFigur = (svg) => svg.replace(/ d="([^"]*)"/g, (m, d) => {
   let q = d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n)));
@@ -142,10 +194,9 @@ const anX = (L, x) => { for (let i = 1; i < L.length; i++) if (x >= L[i][0]) { c
 {
   const leer = (svg) => svg.replace(/<path d="M0 0"[^>]*\/>/g, "");
   const teil0 = S.teil, hinten0 = S.hinten;
-  S.teil = (t) => { t.kunst = leer(t.kunst); if (!t.x && !t.y) t.kunst = `<g clip-path="url(#ffm_rahmen)">${t.kunst}</g>`; return teil0(t); };
+  S.teil = (t) => { t.kunst = leer(t.kunst); if (!t.x && !t.y) t.kunst = imRahmen(t.kunst); return teil0(t); };
   S.hinten = (svg) => hinten0(leer(svg));
 }
-S.def(`<clipPath id="ffm_rahmen"><rect x="0" y="0" width="320" height="200"/></clipPath>`);
 /* Fensterraster als Muster (für ferne Häuser, spart Tausende Einzelteile) */
 S.def(`<pattern id="ffm_fenster" width="1.7" height="1.9" patternUnits="userSpaceOnUse"><rect x=".45" y=".5" width=".7" height=".95" fill="#55616c"/></pattern>`);
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);

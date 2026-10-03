@@ -193,9 +193,9 @@ const mauerUnter = [];
   /* Mauer aus grauem Granit und Ziegeln, Lichtseite warm; dünn, weil weit weg */
   const mauer = (pts) => {
     const unten = pts.map(([x, y]) => [x, y + 1.7]).reverse();
-    let g = `<path d="${linie(pts, 0.25)} ${unten.map(([x, y]) => "L" + r(x) + " " + r(y)).join(" ")} Z" fill="${S.lg("mauerseite", [[0, "#9a9784"], [1, "#6e6d60"]])}"/>`;
-    g += `<path d="${linie(pts, 0.1)}" stroke="#c7c0a6" stroke-width=".55" fill="none" stroke-linejoin="round"/>`;
-    g += `<path d="${linie(pts, -0.25)}" stroke="#a9a48e" stroke-width=".7" stroke-dasharray=".44 .46" fill="none"/>`;
+    let g = `<path d="${linie(pts, 0.25)} ${unten.map(([x, y]) => "L" + r(x) + " " + r(y)).join(" ")} Z" fill="${S.lg("mauerseite", [[0, "#8a8a7c"], [1, "#66655a"]])}"/>`;
+    g += `<path d="${linie(pts, 0.1)}" stroke="#bdb7a0" stroke-width=".55" fill="none" stroke-linejoin="round"/>`;
+    g += `<path d="${linie(pts, -0.25)}" stroke="#9c9a8a" stroke-width=".7" stroke-dasharray=".44 .46" fill="none"/>`;
     return g;
   };
   k += mauer(KL) + mauer(KR);
@@ -204,11 +204,11 @@ const mauerUnter = [];
   /* Wachtürme: klein (ferne Berge), zwei Geschosse, Bogenfenster, Zinnenkranz */
   const turm = (x, y, s) => {
     const w = 6 * s, h = 6 * s, t = 1.5 * s;
-    let g = `<path d="M${r(x - w / 2)} ${r(y)} L${r(x - w / 2)} ${r(y - h)} L${r(x + w / 2)} ${r(y - h)} L${r(x + w / 2)} ${r(y)} Z" fill="${S.lg("turm", [[0, "#c2bba2"], [1, "#9a947e"]])}"/>`;
-    g += `<path d="M${r(x + w / 2)} ${r(y)} L${r(x + w / 2)} ${r(y - h)} L${r(x + w / 2 + t)} ${r(y - h - 0.6 * s)} L${r(x + w / 2 + t)} ${r(y - 0.6 * s)} Z" fill="#76735f"/>`;
-    for (let i = 0; i < 5; i++) g += `<rect x="${r(x - w / 2 + 0.1 * s + i * w / 5)}" y="${r(y - h - 1 * s)}" width="${r(w / 8)}" height="${r(1 * s)}" fill="#b6ae94"/>`;
+    let g = `<path d="M${r(x - w / 2)} ${r(y)} L${r(x - w / 2)} ${r(y - h)} L${r(x + w / 2)} ${r(y - h)} L${r(x + w / 2)} ${r(y)} Z" fill="${S.lg("turm", [[0, "#b5b2a2"], [1, "#94917f"]])}"/>`;
+    g += `<path d="M${r(x + w / 2)} ${r(y)} L${r(x + w / 2)} ${r(y - h)} L${r(x + w / 2 + t)} ${r(y - h - 0.6 * s)} L${r(x + w / 2 + t)} ${r(y - 0.6 * s)} Z" fill="#6e6c60"/>`;
+    for (let i = 0; i < 5; i++) g += `<rect x="${r(x - w / 2 + 0.1 * s + i * w / 5)}" y="${r(y - h - 1 * s)}" width="${r(w / 8)}" height="${r(1 * s)}" fill="#a9a696"/>`;
     for (let i = 0; i < 3; i++) { const fx = x - w / 2 + w * (0.2 + i * 0.3); g += `<path d="M${r(fx - 0.45 * s)} ${r(y - 1.2 * s)} L${r(fx - 0.45 * s)} ${r(y - 3 * s)} Q${r(fx)} ${r(y - 3.7 * s)} ${r(fx + 0.45 * s)} ${r(y - 3 * s)} L${r(fx + 0.45 * s)} ${r(y - 1.2 * s)} Z" fill="#3b372e"/>`; }
-    g += `<rect x="${r(x - w / 2)}" y="${r(y - 4.2 * s)}" width="${r(w)}" height="${r(0.4 * s)}" fill="#8a8470"/>`;
+    g += `<rect x="${r(x - w / 2)}" y="${r(y - 4.2 * s)}" width="${r(w)}" height="${r(0.4 * s)}" fill="#7e7c6e"/>`;
     return g;
   };
   const tuerme = [[3, KL], [12, KL], [24, KL], [34, KL], [46, KL], [57, KL], [68, KL], [80, KL], [92, KL], [104, KL], [262, KR], [276, KR], [290, KR], [304, KR], [318, KR], [331, KR], [345, KR], [358, KR], [371, KR], [385, KR], [397, KR]];
@@ -229,7 +229,7 @@ const mauerUnter = [];
    3 — DER DRACHEN (Pekinger Schwalbendrachen „Shayan“), Schnur in den Park
    ===================================================================== */
 {
-  let k = `<path d="M0 6 Q-30 40 -60 64 Q-84 80 -110 82" stroke="#f4f1ea" stroke-width=".2" fill="none" opacity=".85"/>`;
+  let k = `<path d="M0 6 Q-24 38 -46 60 Q-64 78 -82 87" stroke="#f4f1ea" stroke-width=".2" fill="none" opacity=".85"/>`;
   /* Schwalbe: breite Flügel, langer Gabelschwanz, kräftige Muster in Schwarz, Rot, Blau */
   const fl = (s) => `<path d="M0 -1.6 Q${3 * s} -5.4 ${7.4 * s} -4.6 Q${8.2 * s} -2.6 ${6.6 * s} -.6 Q${3.6 * s} -.6 ${1 * s} 1.6 Z" fill="#f7f2e4" stroke="#141414" stroke-width=".3"/>
     <path d="M${1.2 * s} -2 Q${4 * s} -4.6 ${7 * s} -4" stroke="#141414" stroke-width=".7" fill="none"/><path d="M${1.6 * s} -.6 Q${4 * s} -2.6 ${6.4 * s} -1.6" stroke="#c0392b" stroke-width=".6" fill="none"/>
@@ -237,7 +237,7 @@ const mauerUnter = [];
   k += fl(1) + fl(-1);
   k += `<path d="M-1 1.6 L-3.6 9.6 L-.5 4.6 L0 5.2 L.5 4.6 L3.6 9.6 L1 1.6 Z" fill="#f7f2e4" stroke="#141414" stroke-width=".3"/><path d="M-2.6 7.6 L-.8 3.4 M2.6 7.6 L.8 3.4" stroke="#c0392b" stroke-width=".45"/>`;
   k += `<ellipse cx="0" cy="-.6" rx="1.6" ry="2.6" fill="#f7f2e4" stroke="#141414" stroke-width=".3"/><circle cx="-.65" cy="-1.5" r=".55" fill="#fff" stroke="#141414" stroke-width=".25"/><circle cx=".65" cy="-1.5" r=".55" fill="#fff" stroke="#141414" stroke-width=".25"/><circle cx="-.65" cy="-1.5" r=".25" fill="#141414"/><circle cx=".65" cy="-1.5" r=".25" fill="#141414"/><path d="M-.9 .6 Q0 1.6 .9 .6" fill="#c0392b"/>`;
-  S.teil({ oben: true, id: "drachen", de: "der Drachen", syl: "DRA-chen", it: "l'aquilone", itSyl: "a-qui-LO-ne", en: "kite", x: 128, y: 22, kunst: k + flaeche(-8.6, -6, 17.2, 16),
+  S.teil({ oben: true, id: "drachen", de: "der Drachen", syl: "DRA-chen", it: "l'aquilone", itSyl: "a-qui-LO-ne", en: "kite", x: 100, y: 17, kunst: k + flaeche(-8.6, -6, 17.2, 16),
     tipp: "Der Schwalbendrachen ist der typische Drachen aus Peking. Im Herbst lässt man ihn im Park steigen." });
 }
 

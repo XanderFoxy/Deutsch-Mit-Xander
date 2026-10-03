@@ -299,7 +299,7 @@ const reptilAuge = (T, x, y, r, o = {}) => {
   const oben = `M${R(x - W)} ${R(y)}C${R(x - W * 0.5)} ${R(y - Ho * 1.25)} ${R(x + W * 0.45)} ${R(y - Ho * 1.3)} ${R(x + W)} ${R(y - Ho * 0.15)}`;
   const unten = `C${R(x + W * 0.5)} ${R(y + Hu * 1.1)} ${R(x - W * 0.45)} ${R(y + Hu * 1.15)} ${R(x - W)} ${R(y)}`;
   T.def(`<clipPath id="${id}"><path d="${oben}${unten}Z"/></clipPath>`);
-  let s = ell(x, y - r * 0.1, r * (o.hoehle || 2.5), r * 1.9, 0, T.rg("hoehle", [[0, "#000", 0.62], [0.55, "#000", 0.34], [1, "#000", 0]]));
+  let s = ell(x, y - r * 0.2, r * (o.hoehle || 2.6), r * 2, 0, T.rg("hoehle", [[0, "#000", 0.75], [0.5, "#000", 0.45], [1, "#000", 0]]));
   s += `<path d="${oben}${unten}Z" fill="#120a04"/>`;
   const iris = T.rg("iris" + (o.n || ""), [[0, o.hell || "#e8b84c"], [0.5, o.iris || "#c08a2c"], [0.82, o.rand || "#6a3c12"], [1, "#1a0c04"]], 0.4, 0.4, 0.62);
   s += `<g clip-path="url(#${id})"><circle cx="${R(x + r * 0.06)}" cy="${R(y - r * 0.08)}" r="${R(r)}" fill="${iris}"/>`;
@@ -385,7 +385,7 @@ const mosaik = (T, pts, g, haut, o = {}) => {
       if (fp <= 0) out.push(p); if ((fp < 0) !== (fq < 0)) { const t = fp / (fp - fq); out.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]); } }
     return out;
   };
-  let d = "", dl = "";
+  let d = "", dl = "", ds = "";
   for (const a of sd) {
     if (!T.inPoly(a[0], a[1], pts) && !pts.some(([px, py]) => Math.hypot(px - a[0], py - a[1]) < g)) continue;
     let c = [[a[0] - g * 1.5, a[1] - g * 1.5], [a[0] + g * 1.5, a[1] - g * 1.5], [a[0] + g * 1.5, a[1] + g * 1.5], [a[0] - g * 1.5, a[1] + g * 1.5]];
@@ -396,8 +396,11 @@ const mosaik = (T, pts, g, haut, o = {}) => {
     const poly = (q) => "M" + q.map(([x, y]) => zk(x) + " " + zk(y)).join("L").replace(/ -/g, "-") + "Z";
     d += poly(sh);
     dl += poly(sh.map(([x, y]) => [cx - g * 0.12 + (x - cx) * 0.5, cy - g * 0.14 + (y - cy) * 0.45]));
+    ds += poly(sh.map(([x, y]) => [cx + g * 0.14 + (x - cx) * 0.6, cy + g * 0.16 + (y - cy) * 0.55]));
   }
-  return flaeche(T, pts, o.dunkel || "#140e08", o.opF || 0.32) + `<path d="${d}" fill="${haut}" stroke="${haut}" stroke-width="${zk(g * 0.12)}" stroke-linejoin="round"/>` + weichG(T, R(g * 0.12) || 0.1, [x0 - g, y0 - g, x1 + g, y1 + g], `<path d="${dl}" fill="#fff4dc" opacity="${OP(o.opL || 0.14)}"/>`);
+  /* Fugen weich (keine Risslinien), jedes Schild gewölbt: Licht oben links, Schatten unten rechts */
+  return weichG(T, R(g * 0.1) || 0.1, [x0 - g, y0 - g, x1 + g, y1 + g], flaeche(T, pts, o.dunkel || "#140e08", (o.opF || 0.32) * 0.75)) + `<path d="${d}" fill="${haut}" stroke="${haut}" stroke-width="${zk(g * 0.16)}" stroke-linejoin="round"/>` +
+    weichG(T, R(g * 0.14) || 0.1, [x0 - g, y0 - g, x1 + g, y1 + g], `<path d="${dl}" fill="#fff4dc" opacity="${OP(o.opL || 0.14)}"/><path d="${ds}" fill="#140e08" opacity=".12"/>`);
 };
 
 /* ---------- Federn ---------- */
@@ -514,9 +517,10 @@ function tyrannosaurus(T) {
     weichG(T, 0.8, [92, -18, 112, -8], ell(FE[0] - 2.8, FE[1], 1.3, 1.5, 0, LI, 0.32 * st) + ell(FE[0] + 2.4, FE[1] + 0.4, 0.9, 1.2, 0, SC, 0.32 * st));
   if (F) {
     /* gewölbte Querschilde auf der Vorderseite des Mittelfußes */
-    const P = polyl([[FE[0] + 2.4, FE[1] + 0.6], [BA[0] + 2.4, BA[1] - 0.6]]); let qs = [];
-    for (let i = 0; i < 8; i++) { const [x, y] = P.at((i + 0.5) / 8); qs.push([x - 1, y, 0.5]); }
-    ubM += buckel(T, qs, haut, { opF: 0.22, opL: 0.12, lang: 1.6, flach: 1 });
+    /* echte Querschilde über die ganze Vorderseite des Mittelfußes: gewölbte Bänder, Fuge unten, Licht oben, nach unten kleiner */
+    ubM += reihe(T, [[FE[0] + 2.7, FE[1] + 0.4], [BA[0] + 2.7, BA[1] - 0.6]], 8, -5.4, "#120c06", 0.16, 0.32) + reihe(T, [[FE[0] + 2.7, FE[1] + 0.1], [BA[0] + 2.7, BA[1] - 0.9]], 8, -4.9, "#f2e2c0", 0.12, 0.2);
+
+
     ubM += buckel(T, gruppen(T, flaechenPunkte(T, glied(KN, FE, 10, 5, 0, 2, 0.3, 4), 1.4, 0.2, 0.3, 0.7)), null, { opF: 0.2, opL: 0.1 });
   }
   ubIn += geklippt(T, [iU], ubM);
@@ -529,7 +533,7 @@ function tyrannosaurus(T) {
   schIn += geklippt(T, [iSch], weichG(T, 2, [80, -66, 122, -20], ell(94, -50, 8, 5, -20, LI, 0.22 * st) + L([[[113, -50], [116, -40], [113, -31]]], SC, 4, 0.5 * st) + L([[[90, -40], [98, -32], [106, -28]]], SC, 3.2, 0.42 * st) + ell(110, -32, 3, 2.4, 0, LI, 0.2 * st)) +
     (F ? buckel(T, gruppen(T, flaechenPunkte(T, bz.schenkel, 1.5, 0.22, 0.34, 0.6)), null, { opF: 0.2, opL: 0.1 }) : ""));
   const iSG = T.id("schenkel");
-  T.def(`<g id="${iSG}" mask="${maskeY(T, "sch", [80, -66, 124, -20], -58, -47)}">${volZonen(T, "schv", schIn, [80, -66, 124, -20], [[0, 0, "a", { weich: 5, tiefe: 4.5, umgebung: 0.32 }]])}</g>`);
+  T.def(`<g id="${iSG}" mask="${maskeY(T, "sch", [80, -66, 124, -20], -58, -47)}">${volZonen(T, "schv", schIn, [80, -66, 124, -20], [[0, 0, "a", { weich: 5, tiefe: 2.8, umgebung: 0.45 }]])}</g>`);
 
   /* ---------- Arm (nah und fern) ---------- */
   let armIn = teil(T, arm, haut, { innen: fl([139, -47, 151, -36]), weich: 0.6,
@@ -578,7 +582,7 @@ function tyrannosaurus(T) {
   mal += L([drehe([[172, -50], [180, -49], [190, -50.6]], H[0], H[1], AUF).map(([x, y]) => [x - 3, y + 1.2])], SC, 3.4, 0.55) + ell(146.4, -35.6, 4.2, 1.4, 8, SC, 0.4) + ell(141.6, -46.6, 2.6, 1.2, 0, SC, 0.4);
   /* Kopf: Oberseite hell, Kiefermuskel-Wölbung, Antorbitalmulde, Schatten unter der Lippe, Kinn rund */
   let mk = L([[[172.2, -65], [175, -67.8], [180, -68.4], [186, -68], [192, -65.2], [197.4, -62]]], LI, 2.6, 0.5) + ell(174.8, -61.4, 2.2, 3, 0, LI, 0.3 * st) + L([[[173, -58.8], [175.2, -59.4], [177.2, -61]]], SC, 1.2, 0.5);
-  mk += ell(189, -61.4, 4.4, 1.6, -15, SC, 0.4 * st) + L([[[178, -58.4], [186, -58], [196, -57.8]]], SC, 1, 0.5) + L([drehe([[176, -51], [184, -51.2], [194, -53]], H[0], H[1], AUF)], SC, 2.2, 0.6);
+  mk += ell(189, -61.6, 3.8, 1.3, -15, SC, 0.25 * st) + L([[[178, -58.4], [186, -58], [196, -57.8]]], SC, 1, 0.5) + L([drehe([[176, -51], [184, -51.2], [194, -53]], H[0], H[1], AUF)], SC, 2.2, 0.6);
   mk += L([drehe([[176.4, -56.4], [184, -56.2], [194, -55.6]], H[0], H[1], AUF)], RF, 0.8, 0.4);
   /* Falten: Kehle (vom Kieferwinkel in den Hals), Achsel, Kniekehle */
   const falten = [[[173.4, -50.4], [169, -48.2], [164, -45.4]], [[146, -43.4], [147.4, -40.2], [147, -36.6]], [[99, -33.4], [103.6, -32.6], [108.4, -34]]];
@@ -598,8 +602,8 @@ function tyrannosaurus(T) {
     inn += mosaik(T, [[180, -61.4], [181, -66.6], [188.6, -66.6], [193.8, -64.6], [198.2, -60.8], [198.8, -58.2], [194, -57.6], [186, -58.2], [181, -59]], 2.3, haut, { opF: 0.4, opL: 0.16 });
     inn += buckel(T, flaechenPunkte(T, [[171.4, -62], [172.2, -66], [175.6, -67.2], [176.2, -61], [173.4, -59.6]], 0.9, 0.24, 0.34), null, { opF: 0.22, opL: 0.12 });
     { const lk = drehe([[176.6, -55.6], [181, -55.2], [186, -54.8], [191, -54.6], [195.6, -54.6]], H[0], H[1], AUF), P = polyl(lk), q = [];
-      for (let i = 0; i < 9; i++) { const [x, y] = P.at((i + 0.5) / 9); q.push([x - 0.9, y + 0.3, 0.55]); }
-      inn += mosaik(T, kiefer, 1.9, haut, { opF: 0.34, opL: 0.12 }) + buckel(T, q, haut, { opF: 0.3, opL: 0.14, lang: 3, flach: 1 }); }
+      for (let i = 0; i < 11; i++) { const [x, y] = P.at((i + 0.3 + T.rnd() * 0.4) / 11); q.push([x - 0.6, y + 0.35, 0.3 + 0.12 * (i / 10)]); }
+      inn += mosaik(T, kiefer, 1.9, haut, { opF: 0.28, opL: 0.14 }) + buckel(T, q, haut, { opF: 0.2, opL: 0.12, lang: 2.4, flach: 1 }); }
     inn += buckel(T, flaechenPunkte(T, [[150, -57.4], [160, -61], [170, -65], [172, -58], [168, -52], [158, -48], [150, -46]], 1.3, 0.2, 0.3, 0.5), null, { opF: 0.2, opL: 0.1 });
     /* raue Höcker (Lacrimale, Postorbitale): dicht gepackte kleine Knochenbuckel, Schlagschatten aufs obere Auge */
     /* raue Knochenhöcker: flache Erhebung mit unregelmäßigem Rand, Licht oben, harte Schattenkante darunter */
@@ -619,7 +623,7 @@ function tyrannosaurus(T) {
 
   let s = h + volZonen(T, "leib", k, [0, -72, 200, 0], [[0, 0, "r", { weich: 6.5, tiefe: 5, umgebung: 0.3 }], [-10, 72, "s", { weich: 2.6, tiefe: 4, umgebung: 0.3 }],
     [148, 171, "h", { weich: 4, tiefe: 4.5, umgebung: 0.3 }], [171, 210, "k", { weich: 2.2, tiefe: 3.5, umgebung: 0.35 }]], 10);
-  s += `<use href="#${iUB}" filter="${dunkler(T, 0.9)}"/>` + `<use href="#${iSG}"/>` + `<use href="#${iA}"/>`;
+  s += `<use href="#${iUB}" filter="${dunkler(T, 0.9)}"/>` + `<use href="#${iSG}"/>` + `<use href="#${iA}" filter="${dunkler(T, 0.9)}"/>`;
   s += kontakt(T, [[100, 104], [105.4, 108.4], [109.6, 112.6], [111.6, 116], [101, 107]]);
   if (F) s = `<g filter="${T.relief("haut", { f: 3, tiefe: 0.045, okt: 2 })}">${s}</g>`;
   s += reptilAuge(T, 179.6, -64.6, 0.95, { n: "r" });
@@ -859,7 +863,7 @@ function spinosaurus(T) {
 
   /* ---------- Schwanz: Mittellinie mit leichter S-Biegung, tief bis weit nach hinten, runde schmale Spitze ---------- */
   const cT = yBei([[0, -34.2], [4, -33.6], [12, -32.8], [25, -32], [40, -32.6], [60, -34.4], [80, -35.6]]);
-  const dT = yBei([[0, 1.2], [4, 2.6], [12, 4.6], [25, 6.4], [40, 7.4], [60, 8.6], [80, 10.4]]);
+  const dT = yBei([[0, 1.2], [3, 3.4], [8, 6], [16, 7.6], [26, 8.2], [40, 8.6], [60, 9.2], [80, 10.4]]);
   const sOben = [], sUnten = [];
   for (let x = 2; x <= 80; x += F ? 3 : 8) { sOben.push([x, cT(x) - dT(x) - (F ? 0.4 * Math.sin(x * 1.3) : 0)]); sUnten.push([x, cT(x) + dT(x)]); }
   /* ---------- Rumpf, Hals ---------- */
@@ -868,7 +872,7 @@ function spinosaurus(T) {
   const leib = [[-0.6, -34.2]].concat(sOben, ruecken, [[156.6, -52.4], [157.4, -46]], unten, sUnten.slice().reverse());
   /* ---------- Kopf: Maullinie S-förmig mit Kerbe hinter der Rosette ---------- */
   const lippe = [[178.4, -45.8], [176.6, -45.4], [174.4, -45.6], [172.2, -46.4], [170.4, -47.4], [168.6, -47.8], [166.6, -47.4], [164, -46.9], [160, -46.7], [157, -46.6], [155.6, -46.2]];
-  const schaedel = [[154.4, -49.4], [155, -52.6], [157, -54.4], [159.4, -55], [161.4, -54.8], [163.6, -55], [165.6, -54.4], [167.4, -53.4], [170, -52.2], [173, -51.2], [175.6, -50.6], [177.4, -49.9], [178.7, -48.6],
+  const schaedel = [[154.4, -49.4], [155, -52.6], [157, -54.4], [159.4, -55], [161.4, -54.8], [163.6, -55], [165.6, -54.2], [167.4, -52.8], [170, -51.4], [173, -50.4], [175.6, -49.8], [177.4, -49.3], [178.7, -48.3],
     [179.1, -47.2], [178.8, -46.2]].concat(lippe, [[154.6, -46.6]]);
   const kiefer = [[155.2, -47], [158, -47.2], [162, -47.4], [166, -47.8], [168.6, -48.2], [171, -47.8], [173.6, -46.8], [176, -46.2], [178.2, -46.1], [178.6, -44.6], [177.2, -43.4], [174.4, -43.4], [172, -44],
     [168, -43.8], [163, -43.2], [159, -42.4], [156.4, -42], [154.6, -43], [154.2, -45]];
@@ -914,7 +918,8 @@ function spinosaurus(T) {
   let ubM = weichG(T, 0.7, [90, -12, 104, 0], flaeche(T, bz.mf, "#000", 0.12));
   ubM += weichG(T, 0.9, [88, -22, 106, 0], L([[[KN[0] + 2, KN[1] + 1.6], [FE[0] + 2.6, FE[1] - 1.4]]], LI, 1.4, 0.3) + L([[[KN[0] - 4, KN[1] + 2.4], [FE[0] - 2, FE[1] - 1.4]]], SC, 2, 0.45) + L([[[FE[0] - 1.4, FE[1] + 1.6], [BA[0] - 1.8, BA[1] - 0.8]]], SC, 0.9, 0.35));
   ubM += weichG(T, 0.3, [88, -20, 104, -6], L([sehne], LI, 0.4, 0.7) + L([verschiebe(sehne, 0.5, 0.2)], SC, 0.32, 0.5)) + weichG(T, 0.6, [88, -12, 104, -5], ell(FE[0] - 1.9, FE[1], 0.9, 1.1, 0, LI, 0.3 * st) + ell(FE[0] + 1.8, FE[1] + 0.3, 0.7, 1, 0, SC, 0.3 * st));
-  if (F) { const P = polyl([[FE[0] + 1.8, FE[1] + 0.6], [BA[0] + 1.8, BA[1] - 0.4]]); const qs = []; for (let i = 0; i < 5; i++) { const [x, y] = P.at((i + 0.5) / 5); qs.push([x - 0.7, y, 0.4]); } ubM += buckel(T, qs, haut, { opF: 0.22, opL: 0.12, lang: 1.5, flach: 1 }); }
+  if (F) { /* echte Querschilde über die ganze Vorderseite des Mittelfußes: gewölbte Bänder, Fuge unten, Licht oben, nach unten kleiner */
+    ubM += reihe(T, [[FE[0] + 2.0, FE[1] + 0.4], [BA[0] + 2.0, BA[1] - 0.6]], 6, -4, "#120c06", 0.16, 0.32) + reihe(T, [[FE[0] + 2.0, FE[1] + 0.1], [BA[0] + 2.0, BA[1] - 0.9]], 6, -3.6, "#f2e2c0", 0.12, 0.2); }
   ubIn += geklippt(T, [iU], ubM);
   /* Zehe IV vorn, mit Gelenkfalten */
   ubIn += teil(T, z4, "#6c6450", { innen: F ? reihe(T, z4.slice(0, 5), 4, 1.6, "#100c06", 0.14, 0.5, -0.05) : "", mal: L([[[84, -0.4], [90, -0.4], [95.4, -0.3]]], SC, 0.55, 0.8) + L([[[84, -3], [89, -2.8], [95, -1.2]]], LI, 0.45, 0.5) });
@@ -923,7 +928,7 @@ function spinosaurus(T) {
   const iSch = pfad(T, bz.schenkel);
   let schIn = fuell(iSch, haut) + geklippt(T, [iSch], weichG(T, 1.4, [80, -42, 110, -10], ell(91, -30, 5, 3, -20, LI, 0.2 * st) + L([[[103.6, -30], [105, -23], [102.6, -17]]], SC, 2.6, 0.5 * st) + L([[[86, -24], [92, -18], [97, -15.6]]], SC, 2, 0.4 * st)));
   const iSG = T.id("schenkel");
-  T.def(`<g id="${iSG}" mask="${maskeY(T, "sch", [80, -42, 110, -10], -36, -28)}">${volZonen(T, "schv", schIn, [80, -42, 110, -10], [[0, 0, "a", { weich: 3, tiefe: 4.5, umgebung: 0.32 }]])}</g>`);
+  T.def(`<g id="${iSG}" mask="${maskeY(T, "sch", [80, -42, 110, -10], -36, -28)}">${volZonen(T, "schv", schIn, [80, -42, 110, -10], [[0, 0, "a", { weich: 3, tiefe: 2.8, umgebung: 0.45 }]])}</g>`);
 
   /* ---------- Arm: Muskelkeule mit Schulteransatz, kräftiger Unterarm, große Daumenkralle ---------- */
   let armIn = teil(T, uarm, haut, { weich: 0.7, mal: L([[[129.4, -25], [133, -20.4]]], LI, 1, 0.45) + L([[[132, -27], [136.4, -20.6]]], SC, 1.2, 0.5) }) +
@@ -943,20 +948,19 @@ function spinosaurus(T) {
   k += zaehne(T, oz.map(([x, Lz, kr]) => [x, yBei(lippe.slice().reverse())(x) - 0.25, Lz + 0.3, (Lz + 0.3) * 0.4, kr]), 1, "s");
   k += fuell(iS, haut);
   /* untere Rosettenzähne greifen außen über den Oberkiefer in die Kerbe */
-  k += zaehne(T, [[170.6, -47.5, 1.7, 0.7, 0.1], [168.6, -47.9, 1.4, 0.6, -0.05], [166.4, -47.5, 0.9, 0.42, -0.1]], -1, "u");
+  k += zaehne(T, [[170.4, -47.4, 1, 0.5, 0.1]], -1, "u");
   let inn = fl([0, -66, 180, -18]);
   /* Schwanz: Muskelkern (mittlere 40 %) mit Lichtkante oben und Kernschatten unten; Flossensäume oben/unten heller,
      wärmer, mit feinen schrägen Rippen; Querbänder auf den Säumen schwächer */
   const kernO = [], kernU = [];
   for (let x = 2; x <= 84; x += 4) { kernO.push([x, cT(x) - dT(x) * 0.4]); kernU.push([x, cT(x) + dT(x) * 0.4]); }
   if (F) {
-    inn += flaeche(T, [[-1, -40]].concat(kernO, [[86, -38], [86, -60], [-1, -60]]), "#c09a68", 0.13) + flaeche(T, [[-1, -28]].concat(kernU, [[86, -28], [86, -10], [-1, -10]]), "#c09a68", 0.13);
+    inn += flaeche(T, [[-1, -40]].concat(kernO, [[86, -38], [86, -60], [-1, -60]]), "#c09a68", 0.05) + flaeche(T, [[-1, -28]].concat(kernU, [[86, -28], [86, -10], [-1, -10]]), "#c09a68", 0.05);
     let rp = "";
     for (let x = 4; x < 82; x += 1.3) {
       const o1 = cT(x) - dT(x) * 0.42, o2 = cT(x) - dT(x) * 0.95, u1 = cT(x) + dT(x) * 0.42, u2 = cT(x) + dT(x) * 0.95;
       rp += `M${zk(x)} ${zk(o1)}L${zk(x - (o1 - o2) * 0.22)} ${zk(o2)}M${zk(x)} ${zk(u1)}L${zk(x - (u2 - u1) * 0.3)} ${zk(u2)}`;
     }
-    inn += `<path d="${rp.replace(/ -/g, "-")}" stroke="#2a2010" stroke-width=".2" stroke-opacity=".2"/>`;
   }
   let bd = "";
   for (const x of [10, 21, 32, 43, 54, 65, 76]) { const y0 = cT(x) - dT(x), y1 = cT(x) + dT(x); bd += `M${R(x)} ${R(y0)}l${R(-0.6)} ${R(y1 - y0)}h2.4l${R(0.6)} ${R(y0 - y1)}z`; }
@@ -964,7 +968,7 @@ function spinosaurus(T) {
   const yO = yBei(sOben.concat(ruecken)), yU = yBei(sUnten.concat(unten.slice().reverse())), band = (v, x0, x1) => { const p = []; for (let x = x0; x <= x1; x += 5) p.push([x, yO(x) + (yU(x) - yO(x)) * v]); return p; };
   /* Licht: obere Flanke hell, Terminator auf 55–60 %, unteres Drittel dunkel, Bodenreflex; Muskelkern des Schwanzes */
   let mal = L([band(0.12, 84, 152)], LI, 3.4, 0.36) + L([band(0.8, 84, 152)], SC, 7, 0.5) + L([band(0.97, 88, 150)], RF, 1.2, 0.4);
-  mal += F ? L([kernO.map(([x, y]) => [x, y + 0.4])], LI, 1.2, 0.36) + L([kernU.map(([x, y]) => [x, y - 0.4])], SC, 1.4, 0.45) : L([sUnten], SC, 2.2, 0.4);
+  mal += F ? L([kernO.map(([x, y]) => [x, y + 1.6])], LI, 2.4, 0.22) + L([kernO.map(([x, y]) => [x, y + 0.4])], LI, 1.2, 0.36) + L([kernU.map(([x, y]) => [x, y - 0.4])], SC, 1.4, 0.45) : L([sUnten], SC, 2.2, 0.4);
   /* Okklusion an der Segelbasis, Kopf auf Hals, Arm, Bein; Oberschenkel nur oben/hinten hell */
   mal += L([[[84, -43.4], [100, -41.2], [126, -41.4]]], SC, 1.6, 0.4) + ell(128, -24, 3, 3, 0, SC, 0.4) + L([[[105, -29], [106, -22]]], SC, 3, 0.45);
   mal += L([[[151.6, -43.6], [146, -42.8], [143.4, -40]]], SC, 2.6, 0.5);
@@ -979,7 +983,7 @@ function spinosaurus(T) {
   if (F) {
     /* große Scuta auf der Rückenlinie und der Schnauzenoberseite, mittlere Flanke, feine Bauchschilde */
     const rp2 = [];
-    for (let x = 4; x < 154; x += 1.6 + T.rnd() * 1.2) if ((x > 128 || x < 72) && T.rnd() > 0.2) rp2.push([x - 0.4, yO(x) + 0.6, 0.45 + 0.15 * Math.sin(Math.PI * x / 154) + T.rnd() * 0.1]);
+    for (let x = 4; x < 154; x += 1.6 + T.rnd() * 1.2) if (x > 128 && T.rnd() > 0.2) rp2.push([x - 0.4, yO(x) + 0.6, 0.45 + 0.15 * Math.sin(Math.PI * x / 154) + T.rnd() * 0.1]);
     inn += buckel(T, gruppen(T, rp2, 0.22, -0.4), haut, { opF: 0.3, opL: 0.16, lang: 1.4, flach: 1 });
     inn += buckel(T, tuberkelReihen(T, ruecken, unten.slice().reverse(), 86, 152, [[0.06, 0.3, 1.4, 0.2, 0.32, 0.5], [0.3, 0.62, 1.3, 0.15, 0.2, 0.28]]), null, { opF: 0.2, opL: 0.1 });
     inn += reihe(T, band(0.92, 90, 150), 28, 1.8, "#1c1a10", 0.12, 0.22, -0.6);
@@ -996,7 +1000,7 @@ function spinosaurus(T) {
 
   let s = h + volZonen(T, "leib", k, [-2, -60, 181, 0], [[0, 0, "r", { weich: 5, tiefe: 5, umgebung: 0.3 }], [-10, 78, "s", { weich: 2.6, tiefe: 4, umgebung: 0.3 }],
     [134, 155, "h", { weich: 3, tiefe: 4.5, umgebung: 0.3 }], [155, 190, "k", { weich: 1.8, tiefe: 3.5, umgebung: 0.35 }]], 8);
-  s += `<use href="#${iUB}" filter="${dunkler(T, 0.92)}"/>` + `<use href="#${iSG}"/>` + `<use href="#${iA}"/>`;
+  s += `<use href="#${iUB}" filter="${dunkler(T, 0.92)}"/>` + `<use href="#${iSG}"/>` + `<use href="#${iA}" filter="${dunkler(T, 0.9)}"/>`;
   s += kontakt(T, [[96, 100], [100.4, 104], [106, 109.4], [110, 113], [98, 104]]);
   if (F) s = `<g filter="${T.relief("haut", { f: 4, tiefe: 0.04, okt: 2 })}">${s}</g>`;
   s += reptilAuge(T, 157.8, -51.5, 1.1, { n: "s", hell: "#e2b44a", iris: "#b8862c" });
@@ -1063,9 +1067,10 @@ function allosaurus(T) {
   ubM += weichG(T, 0.3, [92, -28, 110, -7], L([sehne], LI, 0.5, 0.7) + L([verschiebe(sehne, 0.6, 0.2)], SC, 0.38, 0.5)) +
     weichG(T, 0.7, [92, -16, 110, -6], ell(FE[0] - 2.2, FE[1], 1, 1.2, 0, LI, 0.32 * st) + ell(FE[0] + 1.9, FE[1] + 0.4, 0.7, 1, 0, SC, 0.32 * st));
   if (F) {
-    const P = polyl([[FE[0] + 1.9, FE[1] + 0.6], [BA[0] + 1.9, BA[1] - 0.5]]); const qs = [];
-    for (let i = 0; i < 7; i++) { const [x, y] = P.at((i + 0.5) / 7); qs.push([x - 0.8, y, 0.42]); }
-    ubM += buckel(T, qs, haut, { opF: 0.22, opL: 0.12, lang: 1.6, flach: 1 });
+    /* echte Querschilde über die ganze Vorderseite des Mittelfußes: gewölbte Bänder, Fuge unten, Licht oben, nach unten kleiner */
+    ubM += reihe(T, [[FE[0] + 2.1, FE[1] + 0.4], [BA[0] + 2.1, BA[1] - 0.6]], 7, -4.2, "#120c06", 0.16, 0.32) + reihe(T, [[FE[0] + 2.1, FE[1] + 0.1], [BA[0] + 2.1, BA[1] - 0.9]], 7, -3.8, "#f2e2c0", 0.12, 0.2);
+
+
   }
   ubIn += geklippt(T, [iU], ubM);
   ubIn += teil(T, z4, "#7c6648", { klein: 1, innen: F ? reihe(T, z4.slice(0, 5), 9, 1.6, "#120c06", 0.11, 0.42, -0.05) : "", mal: L([z4.slice(5).reverse()], SC, 0.55, 0.8) + L([z4.slice(0, 5)], LI, 0.45, 0.5) });
@@ -1076,7 +1081,7 @@ function allosaurus(T) {
   let schIn = fuell(iSch, haut) + geklippt(T, [iSch], weichG(T, 1.6, [78, -58, 116, -16], ell(93, -43, 6.4, 4, -20, LI, 0.22 * st) + L([[[108, -44], [110.6, -35], [108, -27]]], SC, 3.2, 0.5 * st) + L([[[88, -34], [95, -27], [101, -24]]], SC, 2.6, 0.42 * st)) +
     (F ? buckel(T, gruppen(T, flaechenPunkte(T, bz.schenkel, 1.4, 0.2, 0.3, 0.6)), null, { opF: 0.2, opL: 0.1 }) : ""));
   const iSG = T.id("schenkel");
-  T.def(`<g id="${iSG}" mask="${maskeY(T, "sch", [78, -58, 118, -16], -50, -41)}">${volZonen(T, "schv", schIn, [78, -58, 118, -16], [[0, 0, "a", { weich: 4, tiefe: 4.5, umgebung: 0.32 }]])}</g>`);
+  T.def(`<g id="${iSG}" mask="${maskeY(T, "sch", [78, -58, 118, -16], -50, -41)}">${volZonen(T, "schv", schIn, [78, -58, 118, -16], [[0, 0, "a", { weich: 4, tiefe: 2.8, umgebung: 0.45 }]])}</g>`);
 
   /* ---------- Arm (kräftig, drei Finger) ---------- */
   let armIn = teil(T, arm, haut, { weich: 0.7,
@@ -1142,7 +1147,7 @@ function allosaurus(T) {
 
   let s = h + volZonen(T, "leib", k, [0, -68, 202, 0], [[0, 0, "r", { weich: 5, tiefe: 5, umgebung: 0.3 }], [-10, 76, "s", { weich: 2.2, tiefe: 4, umgebung: 0.3 }],
     [150, 177, "h", { weich: 3, tiefe: 4.5, umgebung: 0.3 }], [177, 210, "k", { weich: 1.8, tiefe: 3.5, umgebung: 0.35 }]], 9);
-  s += `<use href="#${iUB}" filter="${dunkler(T, 0.92)}"/>` + `<use href="#${iSG}"/>` + `<use href="#${iA}"/>`;
+  s += `<use href="#${iUB}" filter="${dunkler(T, 0.92)}"/>` + `<use href="#${iSG}"/>` + `<use href="#${iA}" filter="${dunkler(T, 0.9)}"/>`;
   s += kontakt(T, [[102, 106], [107, 110.6], [111, 114], [112.6, 116.4], [104, 108.6]]);
   if (F) s = `<g filter="${T.relief("haut", { f: 3.4, tiefe: 0.045, okt: 2 })}">${s}</g>`;
   s += reptilAuge(T, 183.2, -61.9, 1.12, { n: "a", hell: "#f0c25a", iris: "#c4902e" });

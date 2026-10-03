@@ -508,77 +508,70 @@ const HAUT_S = { n: "s", c: ["#231c18", "#2a221e", "#332924"], cf: ["#161210", "
 const HAUT_O = { n: "o", c: ["#2e2420", "#362a25", "#40322b"], cf: ["#1c1614", "#211a17", "#261e1a"], l: "#b09a8a", lf: "#5e4e44",
   g: [[0, "#5a463c"], [0.55, "#3a2e28"], [1, "#1a1412"]], gf: [[0, "#3a2e28"], [0.6, "#211a17"], [1, "#100c0a"]], na: "#8a7464", nf: "#463a32", sohle: "#94806e" };
 
-/* Knöchelhand (wie im Foto von der Seite): Mittelhand senkrecht unter dem Handgelenk (y ≈ −19,6); darunter die vier
-   gebeugten Finger: ihre Mittelglieder liegen als gewölbte Walzen nebeneinander auf dem Boden (Mittelfinger am längsten,
-   nach außen kürzer), matte, hellere Knöchelpolster mit Querfalten; Endglieder unter die Hand geschlagen (Schattenspalt,
-   flache Nagelkuppe); kurzer Daumen hinten ohne Bodenkontakt. */
+/* Knöchelhand (Seitenansicht): Mittelhand senkrecht unter dem Handgelenk (y ≈ −19,6), ≈ 110 % der Handgelenksbreite;
+   die Grundglieder laufen schräg nach vorn unten, die Mittelglieder liegen als waagerechte Walzen auf dem Boden und zeigen
+   nach vorn (Mittelfinger am längsten); ihre Oberseite vorn ist das matte, hellere Knöchelpolster mit Querfalten;
+   die Endglieder sind darunter eingeschlagen (von der Seite unsichtbar); kurzer Daumenstummel hinten innen.
+   o: { mh: Länge der Mittelhand (Faktor), vor: Versatz der Finger nach vorn, lang: Fingerlänge (Faktor) } */
 function knoechelhand(W, T, wx, fern, pal = HAUT_G, o = {}) {
   const C = fern ? pal.cf : pal.c, LI = fern ? pal.lf : pal.l;
-  const mh = o.mh || 1, vor = o.vor || 0, top = -6.2 - 13.6 * mh;
+  const mh = o.mh || 1, vor = o.vor || 0, lang = o.lang || 1, top = -6.2 - 13.6 * mh, hb = 6.6;
+  const PO = fern ? "#1e1c1b" : pal.polster || "#3a3532";
   let s = "";
-  if (!T.fein) {
-    /* Szene: Mittelhand + vier Knöchelwalzen als eine Fläche, Polster hell */
-    return `<path d="${G([[wx - 5.4, top], [wx + 5.4, top], [wx + 6.6 + vor, -8], [wx + 6 + vor, -0.6], [wx + 2.6 + vor, 0, 1], [wx - 5.8 + vor, 0, 1], [wx - 6.2 + vor, -3], [wx - 5.8, -12]])}" fill="${C[1]}"/>` +
-      `<path d="M${f1(wx - 5 + vor)} -1.4h10.6" stroke="${pal.polster || "#3a3532"}" stroke-width="1.6" stroke-dasharray="2.4 .6"/>`;
-  }
-  /* Daumen (hinten, frei) */
-  s += W.glied([[wx - 4.6 + vor * 0.5, -12.4], [wx - 6.2 + vor * 0.6, -9.8], [wx - 6.4 + vor * 0.6, -8.2]], 2.5, fern ? "#0c0b0b" : C[0], "");
-  s += `<ellipse cx="${f1(wx - 6.5 + vor * 0.6)}" cy="-8.4" rx=".6" ry=".8" fill="${fern ? pal.nf : pal.na}"/>`;
-  /* Mittelhand mit Grundgelenk-Wülsten unten */
-  const hand = [[wx - 5.4, top], [wx + 5.4, top], [wx + 6.4 + vor * 0.5, -13], [wx + 6.8 + vor, -7.8], [wx + 4 + vor, -6.2], [wx + vor, -6], [wx - 4 + vor, -6.4], [wx - 5.8 + vor, -8.4], [wx - 5.8 + vor * 0.4, -13.6]];
-  s += W.teil(hand, !T.fein ? C[1] : T.lg((fern ? "hdf" : "hd") + pal.n, fern ? pal.gf : pal.g, 0, 0, 1, 0.3),
-    W.weich([[wx - 2.4 + vor * 0.4, -15.6, 2.6, 4, 0, LI, fern ? 0.2 : 0.4], [wx + 5.4 + vor * 0.6, -12, 1.4, 5, 0, "#000", 0.55], [wx + vor, -7, 6, 1.4, 0, "#000", 0.35]], 1) +
-    W.falten([`M${f1(wx - 3.6 + vor * 0.4)} -15.6q2.2 -.6 4.4 0`, `M${f1(wx - 3.2 + vor * 0.5)} -13.2q2.4 -.5 5 .2`, `M${f1(wx - 4 + vor * 0.6)} -10.8q1.6 -.4 3 0`], 0.12, "#000", LI, 0.6, 0.25),
-  { rand: 0.45, vol: false });
-  /* Fingerwalzen: Zeigefinger (vorn, fern) … kleiner Finger (hinten, nah); Länge = Höhe des Bogens */
-  const F = [[4.2, 2.9, 4.6], [1.2, 3, 5.4], [-1.8, 2.9, 5], [-4.6, 2.6, 4.2]];
-  F.forEach(([dx, br, h], i) => {
-    const cx = wx + dx + vor, c = fern ? (pal.walzeF || ["#0b0a0a", "#0d0c0c", "#0f0e0e", "#121110"])[i] : C[Math.min(2, i)];
-    /* Walze: oben aus der Mittelhand, unten rund auf dem Boden */
-    const walze = [[cx - br / 2, -6.8], [cx + br / 2, -6.8], [cx + br / 2 + 0.2, -h * 0.45], [cx + br * 0.4, -0.5], [cx, 0, 1], [cx - br * 0.45, -0.4], [cx - br / 2 - 0.1, -h * 0.45]];
-    s += W.teil(walze, c, (fern ? "" : W.weich([[cx - br * 0.18, -h * 0.62, br * 0.18, h * 0.25, 0, LI, 0.4], [cx + br * 0.38, -h * 0.4, br * 0.14, h * 0.4, 0, "#000", 0.6]], 0.35)) +
-      /* Knöchelpolster: matt, heller, unten vorn, Querfalten */
-      `<ellipse cx="${f1(cx)}" cy="${f1(-1.5)}" rx="${f1(br * 0.42)}" ry="1.3" fill="${fern ? "#1e1c1b" : pal.polster || "#3a3532"}" opacity=".85"/>` +
-      (fern ? "" : W.falten([`M${f1(cx - br * 0.3)} -2.6q${f1(br * 0.3)} -.3 ${f1(br * 0.6)} 0`, `M${f1(cx - br * 0.32)} -1.6q${f1(br * 0.32)} -.25 ${f1(br * 0.64)} 0`, `M${f1(cx - br * 0.26)} -3.6q${f1(br * 0.26)} -.3 ${f1(br * 0.52)} 0`], 0.09, "#000", "#9a948e", 0.6, 0.3)),
-    { rand: fern ? 0.3 : 0.55, rw: 0.3, vol: false });
-    /* eingeschlagenes Endglied: Schattenspalt hinten am Boden mit flacher Nagelkuppe */
-    s += `<ellipse cx="${f1(cx - br * 0.55)}" cy="-.5" rx="${f1(br * 0.22)}" ry=".45" fill="${fern ? pal.nf : pal.na}"/>`;
+  if (!T.fein) return `<path d="${G([[wx - hb, top], [wx + hb, top], [wx + hb + 1, -6], [wx + hb + 5 * lang + vor, -4.6], [wx + hb + 5.6 * lang + vor, -1.6], [wx + hb + 4.6 * lang + vor, 0, 1], [wx - hb + 1, 0, 1], [wx - hb, -4]])}" fill="${C[1]}"/>` +
+    `<path d="M${f1(wx + hb + 2 * lang + vor)} -4.2h${f1(3 * lang)}" stroke="${PO}" stroke-width="1.4"/>`;
+  /* Daumenstummel hinten innen, ohne Bodenkontakt */
+  s += W.glied([[wx - hb + 1, -12], [wx - hb - 0.8, -9.6], [wx - hb - 1, -8.2]], 2.4, fern ? "#0c0b0b" : C[0], "");
+  /* Finger: fern (Zeige-) → nah (kleiner Finger); Front = Knöchel (PIP) */
+  const F = [[1.4, -1.2, 5.2, 5.2], [0.8, -0.8, 6, 5.4], [0.3, -0.4, 5.6, 5.4], [0, 0, 4.4, 5]];
+  F.forEach(([dz, dy, L, h], i) => {
+    const x0 = wx - hb + 1.6, x1 = wx + hb + (L * lang) + vor + dz;
+    const pts = [[x0, -7 + dy], [wx + hb - 0.6, -7.4 + dy], [x1 - h * 0.6, -h + dy], [x1 - h * 0.1, -h * 0.62 + dy], [x1, -h * 0.25], [x1 - h * 0.35, 0, 1], [x0 + 0.6, 0, 1], [x0 - 0.4, -2.6]];
+    const c = fern ? (pal.walzeF || ["#0b0a0a", "#0d0c0c", "#0f0e0e", "#121110"])[i] : [C[0], C[0], C[1], C[2]][i];
+    s += W.teil(pts, i < 3 && !fern ? T.lg("fw" + pal.n + i, [[0, "#1e1c1b"], [1, c]], 0, 0, 1, 0) : c,
+      /* Knöchelpolster vorn oben: matt, heller, Querfalten */
+      W.weich([[x1 - h * 0.45, -h * 0.66 + dy, h * 0.42, h * 0.22, -20, PO, i === 3 ? 0.95 : 0.6], [x0 + (x1 - x0) * 0.5, -0.6, (x1 - x0) * 0.5, 0.6, 0, "#000", 0.6]], 0.35) +
+      (i === 3 && !fern ? W.falten([`M${f1(x1 - h * 0.6)} ${f1(-h * 0.92)}q.6 .8 .4 1.8`, `M${f1(x1 - h * 0.35)} ${f1(-h * 0.84)}q.6 .7 .4 1.6`, `M${f1(x1 - h * 0.85)} ${f1(-h * 0.94)}q.5 .7 .3 1.6`,
+        `M${f1(wx + hb - 0.2)} -6.8q.8 .4 1.2 1.2`], 0.1, "#000", "#7a746e", 0.7, 0.18) : "") +
+      (i === 3 && !fern ? W.L([`M${f1(x0 + 1)} ${f1(-h * 0.98)}L${f1(x1 - h * 0.7)} ${f1(-h * 0.98)}`], "#000", 0.14, 0.45) : ""),
+    { rand: fern ? 0.3 : 0.5, rw: 0.3, vol: false });
   });
+  /* Mittelhand (senkrecht), Handrücken mit Querfalten, Ballen hinten */
+  const hand = [[wx - hb + 0.4, top], [wx + hb - 0.4, top], [wx + hb, -12], [wx + hb - 0.4, -7.6], [wx + 2, -6.6], [wx - hb + 1, -6.8], [wx - hb, -11]];
+  s += W.teil(hand, T.lg((fern ? "hdf" : "hd") + pal.n, fern ? pal.gf : pal.g, 0, 0, 1, 0.3),
+    W.weich([[wx - 2.4, -14.6, 2.6, 4, 0, LI, fern ? 0.15 : 0.3], [wx + hb - 1, -12, 1.2, 5, 0, "#000", 0.55]], 1) +
+    W.falten([`M${f1(wx - 3.6)} -15.6q1.6 -.5 3.4 0`, `M${f1(wx + 0.6)} -15.2q1 -.2 2 .2`, `M${f1(wx - 3.2)} -12.8q2.2 -.5 4.2 .2`, `M${f1(wx - 4)} -10.4q1.4 -.4 2.6 0`], 0.1, "#000", LI, 0.6, 0.15),
+  { rand: 0.45, vol: false });
   return s;
 }
 
-/* Gorillafuß (Sohlengänger): runde Ferse, flache Sohle, faltige matte Haut; dicke, kurze Großzehe (innen, nach
-   vorn-innen gespreizt) ragt mit Nagel VOR die anderen Zehen; Zehen 2–5 kurz, leicht gekrümmt, flache Nägel. */
+/* Gorillafuß (Sohlengänger): flache Sohle, gerundete matte Ferse, Querfalten an den Zehenansätzen; Großzehe dick und
+   kurz, 30–40° nach vorn innen abgesetzt, mit eigenem Nagel; Zehen 2–5 kurz, einzeln gerundet, flache Nägel. */
 function gorillaFuss(W, T, dx, fern, pal = HAUT_G) {
   const P = (x, y) => [x + dx, y];
   const C = fern ? pal.cf.concat(pal.cf[2]) : pal.c.concat(pal.c[2]), LI = fern ? pal.lf : pal.l;
   let s = "";
-  if (!T.fein) return `<path d="${G([P(21, -14.4), P(17.4, -9), P(18, -2.6), P(22, 0, 1), P(41.6, 0, 1), P(42.4, -2.6), P(39.6, -6.4), P(33, -8.6), P(26, -12.6)])}" fill="${C[1]}"/>` +
-    `<path d="M${f1(dx + 34)} -.6h7" stroke="${pal.na}" stroke-width=".9" stroke-dasharray="1 .8"/>`;
-  const nagel = (x, y, w, rot) => `<ellipse cx="${f1(x + dx)}" cy="${f1(y)}" rx="${f1(w)}" ry="${f1(w * 0.55)}" transform="rotate(${rot} ${f1(x + dx)} ${f1(y)})" fill="${fern ? pal.nf : pal.na}"/>` +
-    (fern || !T.fein ? "" : `<path d="M${f1(x + dx - w * 0.7)} ${f1(y - w * 0.3)}q${f1(w * 0.6)} ${f1(-w * 0.4)} ${f1(w * 1.3)} 0" fill="none" stroke="#d8d0c6" stroke-opacity=".45" stroke-width=".12"/>`);
-  /* Großzehe (innen, vorn-innen gespreizt), dick und kurz – vor den übrigen Zehen */
-  s += W.glied([P(33.6, -4.2), P(38.8, -2.8), P(42, -2.2)], 4.3, fern ? "#0b0a0a" : C[0], LI, { la: 0.22 }) + nagel(42.2, -3.7, 1.25, 16);
-  /* Zehen 2–4 (fern → nah): kurz, gekrümmt, Spitze am Boden, Lücken dunkel */
+  if (!T.fein) return `<path d="${G([P(21, -14.4), P(17.4, -9), P(18, -2.6), P(22, 0, 1), P(41.6, 0, 1), P(42.4, -2.6), P(39.6, -6.4), P(33, -8.6), P(26, -12.6)])}" fill="${C[1]}"/>`;
+  const nagel = (x, y, w, rot) => `<ellipse cx="${f1(x + dx)}" cy="${f1(y)}" rx="${f1(w)}" ry="${f1(w * 0.45)}" transform="rotate(${rot} ${f1(x + dx)} ${f1(y)})" fill="${fern ? pal.nf : "#4a4440"}"/>`;
+  /* Großzehe (innen, fern): dicker Wulst, nach vorn-innen, vor den anderen Zehen */
+  s += W.teil([P(33, -6.4), P(38.4, -5.8), P(42.6, -4.4), P(44, -2.2), P(42.6, -0.2), P(38, 0, 1), P(33.6, -1.4)], fern ? C[0] : T.lg("gz", [[0, "#2c2a28"], [1, "#0e0d0d"]], 0, 0, 0, 1),
+    W.weich([[dx + 40, -4.4, 2.6, 0.8, 0, LI, fern ? 0.1 : 0.3]], 0.4), { rand: 0.5, rw: 0.3, vol: false }) + nagel(42.4, -3.6, 1.15, 20);
+  /* Zehen 2–5: einzeln gerundet, kurz, leicht gekrümmt */
   const zehe = (i) => {
-    const [bx, by, tx, b] = [[33.4, -7.6, 39.8, 3.5], [33, -6.8, 39.2, 3.4], [32.6, -6, 38.4, 3.3], [32, -5.2, 37.4, 3.2]][i];
-    /* Zehe als gefüllte Wurst: oben gewölbt, Spitze rund auf dem Boden, Unterseite mit Ballen */
-    const f = [P(bx, by - b / 2), P(bx + (tx - bx) * 0.55, by - b * 0.42), P(tx - b * 0.35, -b * 0.92), P(tx, -b * 0.45), P(tx - b * 0.3, 0, 1), P(bx + (tx - bx) * 0.45, -0.2), P(bx, by + b / 2)];
-    let z = W.teil(f, fern ? C[i] : T.lg("ze" + pal.n, [[0, "#3a3634"], [0.5, C[2]], [1, "#080808"]], 0, 0, 0.3, 1),
-      W.weich([[tx - b * 0.55 + dx, -b * 0.8, b * 0.35, b * 0.18, 20, LI, fern ? 0.15 : 0.45]], 0.4), { rand: 0.6, rw: 0.25, vol: false });
-    z += nagel(tx - 1, -b + 0.35, 0.95, 30);
-    if (T.fein && !fern) z += W.falten([`M${f1(bx + 2 + dx)} ${f1(by - b / 2 + 0.4)}q.4 .8 .2 1.6`, `M${f1(bx + 3.2 + dx)} ${f1(by - b / 2 + 0.6)}q.4 .7 .2 1.4`], 0.09, "#000", LI, 0.6, 0.25);
-    return z;
+    const [bx, tx, h] = [[33.4, 39.6, 3.6], [33, 38.8, 3.5], [32.4, 37.8, 3.4], [31.8, 36.6, 3.2]][i];
+    const pts = [P(bx, -h - 0.6), P(tx - h * 0.5, -h), P(tx, -h * 0.5), P(tx - h * 0.3, 0, 1), P(bx, 0, 1)];
+    return W.teil(pts, fern ? C[i] : T.lg("ze" + pal.n, [[0, "#2c2a28"], [0.6, C[2]], [1, "#0c0b0b"]], 0, 0, 0.2, 1),
+      W.weich([[tx - h * 0.5 + dx, -h * 0.75, h * 0.35, h * 0.16, 15, LI, fern ? 0.1 : 0.28]], 0.35) +
+      (fern ? "" : W.falten([`M${f1(bx + 1.6 + dx)} ${f1(-h + 0.3)}q.3 .6 .2 1.2`], 0.08, "#000", LI, 0.6, 0.12)),
+    { rand: 0.55, rw: 0.25, vol: false }) + nagel(tx - 1.1, -h + 0.45, 0.8, 26);
   };
   s += zehe(0) + zehe(1) + zehe(2);
-  const fussPts = [P(21, -14.4), P(18.4, -12.2), P(17.2, -8.4), P(17.6, -4.2), P(19.6, -1), P(22.6, 0, 1), P(33, 0, 1), P(35.2, -1.4), P(35.6, -4.4), P(34.2, -7.2), P(30, -9.8), P(26, -12.6)];
-  s += W.teil(fussPts, !T.fein ? C[2] : T.lg((fern ? "fuf" : "fu") + pal.n, fern ? pal.gf : pal.g),
-    W.weich([[dx + 26.6, -10.4, 6, 2, -24, LI, fern ? 0.2 : 0.4], [dx + 26, -0.8, 9, 1.3, 0, "#000", 0.6], [dx + 18.6, -7, 1.4, 3.4, 0, LI, fern ? 0.15 : 0.35]], 0.9) +
-    W.falten(["M29 -9.4q2.4 1 4 2.8", "M24.8 -7.6q2.8 .8 4.6 2.6", "M21.4 -4.2q1.8 .5 3.2 1.8", "M19.6 -10q1 1.6 1 3.4", "M23 -10.8q1.6 1.2 2.2 3", "M27 -4.4q2 .3 3.6 1.4"].map((d) => d.replace(/^M([\d.]+)/, (m, x) => "M" + f1(+x + dx))), 0.12, "#000", LI, 0.6, 0.3),
+  const fussPts = [P(21, -14.4), P(18.4, -12.2), P(17.2, -8.4), P(17.6, -4.2), P(19.6, -1), P(22.6, 0, 1), P(33, 0, 1), P(35, -1.4), P(35.4, -4.4), P(34, -7.2), P(30, -9.8), P(26, -12.6)];
+  s += W.teil(fussPts, T.lg((fern ? "fuf" : "fu") + pal.n, fern ? pal.gf : [[0, "#2c2a28"], [0.6, "#1c1a19"], [1, "#0e0d0c"]]),
+    W.weich([[dx + 26.6, -10.4, 6, 2, -24, LI, fern ? 0.1 : 0.25], [dx + 26, -0.8, 9, 1.3, 0, "#000", 0.6], [dx + 18.6, -6, 1.4, 3.4, 0, LI, fern ? 0.08 : 0.2]], 0.9) +
+    W.falten(["M29.4 -9q2.2 1 3.6 2.6", "M31.6 -7.4q1.4 .8 2.2 2.2", "M25 -7.6q2.6 .7 4.2 2.4", "M21.4 -4.2q1.6 .4 2.8 1.6", "M19.6 -10q.8 1.4 .8 3"].map((d) => d.replace(/^M([\d.]+)/, (m, x) => "M" + f1(+x + dx))), 0.11, "#000", LI, 0.6, 0.12),
   { rand: 0.5, vol: false });
   s += zehe(3);
-  /* Sohlenkante: etwas heller, staubig */
-  s += W.L([`M${f1(dx + 18.4)} ${f1(-2.2)}q1.2 1.8 4 2h10.4q1.6 0 2.4 -.8`], fern ? pal.lf : pal.sohle, 0.45, 0.45);
   return s;
 }
 

@@ -583,7 +583,7 @@ module.exports = [
       /* Kopf: kleiner, keilförmig zum Schnabel; feine orangerote Federn nach hinten, gehen ohne Kante in den Behang über */
       const kopf = [[13.8, -50.2], [14.8, -52.6], [17, -53.6], [19.8, -52.9], [21.4, -51.8], [21.6, -49.8], [20.6, -47.8], [17.8, -46.8], [15, -47.6]];
       let hals = teil(T, kopf, T.lg("kopfF", [[0, "#e8a040"], [0.5, "#d8782a"], [1, "#b8501a"]]),
-        F ? T.haare(kopf, 90, (x, y) => 176 + (y + 50) * 5, 0.8, { farben: [["#f8cf70", 1, 0.06, 0.55], ["#a8401a", 1, 0.06, 0.5]], streuung: 12, kruemmung: 0.15 }) : "", { licht: T.lg("kopfL", [[0, "#fff", 0.12], [0.5, "#fff", 0], [1, "#000", 0.12]]) });
+        F ? T.haare(kopf, 76, (x, y) => 176 + (y + 50) * 5, 0.8, { farben: [["#f8cf70", 1, 0.06, 0.55], ["#a8401a", 1, 0.06, 0.5]], streuung: 12, kruemmung: 0.15 }) : "", { licht: T.lg("kopfL", [[0, "#fff", 0.12], [0.5, "#fff", 0], [1, "#000", 0.12]]) });
       /* Halsbehang: Unterlage, Schlagschatten auf Schulter und Brust, dann die Lanzettfedern (oben kurz, unten lang),
          in der unteren Hälfte mit schwarzem Schaftstrich */
       const kante = [[-2.4, -38.4], [3, -36.2], [8.6, -34.6], [13.6, -33.8], [17.2, -33.8]];
