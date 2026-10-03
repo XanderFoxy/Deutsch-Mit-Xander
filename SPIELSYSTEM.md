@@ -3194,3 +3194,28 @@ Die Ursache stand in Diagnose 323: Das Samsung antwortete erst 4,5 s nach dem An
   - neu `pruefe-863-chatfenster.js` (Fenster, Anziehen außerhalb, neue Zeile, Rollen/Antippen lädt nach, Lesestelle bleibt, keine Doppelten, Konsole). Mit `VERGLEICH=<Verzeichnis>` misst sie einen alten Stand.
   - Grün: 863, anziehen, nachgehende-uhr-effekte, benoten, fluestern, antwort-gehoert-dazu, note-ankommen, stimmzeilen, raumverlauf, verlauf-doppelt, verlauf-kein-reset, verlauf-nachfassen, 642-verlauf-laden, 736, scrollen, runde88-panels, runde18, 856, 858, 861, 862, einladungslink, tutor, fokus-merker, schrei-wackeln, gluecksrad, runde98-fokus, 749.
   - `pruefe-runde24`: drei rote Punkte (Lesetafel festhalten/Fokusband). Sie sind auf Stand 843 genauso rot, also nicht durch 844. Die neuere Messung dazu (runde98-fokus) ist grün.
+
+## Fassung 845 — Uhr ohne Zeitzonen-Tabellen, Änderungsliste ins Archiv (Funk 271)
+
+XANDER (Funk 271, wörtlich): „alles insgesamt nur zehn Mal schneller".
+
+Puls nach 844: Es gab nichts Neues im Funk oder Walkie. Zeitleiste 326 (00:30) zeigt, dass beide Handys noch auf alten Fassungen liefen: Das Oppo meldet 842, das Samsung erscheint dort noch unter der Zufallskennung, die erst 843 behebt. Das Samsung antwortete nach 7,4 s, also genau das Zeichnen, das 844 behebt. Der Wächter in index.html bietet die neue Fassung alle 2 Minuten über die Blase an. 844 wirkt, sobald die Geräte neu laden.
+
+Startprofil (Rechner 4× gebremst, Quellen):
+- app.js rechnet beim Start 428 ms; dazu kommt das Einlesen von 3,1 MB Code (zusammen 859 ms, siehe Trace). Stile und Layout brauchen 380 ms, korrekturen.css allein 71 ms zum Einlesen.
+- **Uhr (`updateClock`, `mezWandzeit`)**: 125 ms kostete allein der erste Zeitzonen-Formatierer, weil der Browser dabei seine Zeitzonen-Tabellen lädt. Berlin und Rom folgen derselben festen EU-Regel: MEZ, Sommerzeit vom letzten Sonntag im März bis zum letzten Sonntag im Oktober, jeweils 01:00 UTC. Das rechnet jetzt eine kleine Funktion ohne Intl. Gilt für die Uhr und für den Feiertagsbalken (`updateSpecialDayBar`). Andere Zonen gehen weiter über Intl.
+  - Geprüft gegen Intl: 37.617 Zeitpunkte je Zone (2024–2030 und jede Minute rund um acht Umstellungen), keine Abweichung.
+  - Beim Start wird kein Zeitzonen-Formatierer mehr gebaut (`updateClock` 142 → 15 ms).
+- **Änderungsliste**: `APP_VERSION` steht seit Langem auf „175“, gelesen wird nur dieser Eintrag. Die 26 älteren Einträge aus `APP_CHANGELOG` und die 8 älteren aus `APP_CHANGELOG_INTERN` (110 KB) wurden bei jedem Start mitübersetzt. Sie liegen jetzt in `werkzeug/archiv/app-changelog-alt.js` und werden nicht geladen. Der Eintrag „175“ ist vor und nach dem Auslagern gleich.
+- **Gemessen** (`werkzeug/ladezeit-messen.js`, 4G, Rechner 4× gebremst):
+  - kalt: bereit 3,0 → 2,9 s, Klassenzimmer bei 3,4 s (vorher 3,65 s);
+  - warm: bereit 1,46 → 1,38 s, Klassenzimmer bei 1,9 s (vorher 2,0 s).
+- **Sonden**:
+  - neu `pruefe-864-uhr-ohne-intl.js`. Grün: 864, 863, 858, runde18, tutor, einladungslink, 843, 636, 753, 862, 856, runde88-panels.
+  - `pruefe-708-dorf-wetter`: Die Leistungsprüfung des Gewitters (4× gebremst) ist rot, auf Stand 844 aber genauso (dort sogar 48 Bilder/s mit 31 langen Bildern, jetzt 61 mit 14). Nicht durch 845.
+- **Nächste Schritte zur Ladezeit, ehrlich**: Der große Brocken bleibt das Einlesen von app.js (3,1 MB). Weitere Auslagerkandidaten:
+  - Lesetexte (220 KB): Sie enthalten Bildaufrufe und werden an mehreren Stellen ohne Warten gezeichnet;
+  - Kreuzworträtsel (54 KB);
+  - Effektbildchen (123 KB).
+  
+  Das Zehnfache braucht eine Aufteilung von app.js nach Bereichen.

@@ -49,22 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 844: Chat zeichnet nur die letzten 120 Zeilen – Betreten im Hauptraum 18 s → 0,2 s (gebremst)",
+  stand: "Fassung 845: Uhr ohne Zeitzonen-Tabellen, alte Änderungsliste ins Archiv – Start schneller",
 
   inArbeit: [
-    { seit: "2026-10-03T00:28",
-      text: "app.js teilen" },
-    { seit: "2026-10-03T00:28",
+    { seit: "2026-10-03T00:42",
+      text: "app.js nach Bereichen teilen (Lesetexte, Kreuzworträtsel, Effektbildchen zuerst)" },
+    { seit: "2026-10-03T00:42",
       text: "spiel.js nach dem Aufbau" },
-    { seit: "2026-10-03T00:28",
+    { seit: "2026-10-03T00:42",
       text: "Bilderwelt neu (Funk 263)" },
-    { seit: "2026-10-03T00:28",
+    { seit: "2026-10-03T00:42",
       text: "sfu/aussprache: OK abwarten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-03T00:28",
-      text: "Chat-Fenster: nur die letzten Zeilen, ältere beim Hochrollen" },
+    { seit: "2026-10-03T00:42",
+      text: "Chat-Fenster (844)" },
+    { seit: "2026-10-03T00:42",
+      text: "Uhr ohne Intl, Änderungsliste-Archiv (845)" },
   ],
 };
