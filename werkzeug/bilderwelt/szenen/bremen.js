@@ -920,12 +920,13 @@ let STUHL = "";
   g += `<path d="M${TX + 3.6} ${TY - 5.4} Q${TX + 6.4} ${TY - 5.2} ${TX + 6} ${TY - 3.4} Q${TX + 5.6} ${TY - 2} ${TX + 3.6} ${TY - 2.2}" stroke="#efede8" stroke-width=".9" fill="none"/>`;
   g += `<path d="M${TX - 6} ${TY + .4} L${TX - 1.6} ${TY - .6}" stroke="#a9adb1" stroke-width=".7" stroke-linecap="round"/>`;
   g += `<path d="M${TX - .6} ${TY - 8} q-1.4 -2.2 0 -4.2 q1.4 -2 0 -4 M${TX + 1.4} ${TY - 8} q-1.2 -1.8 0 -3.6" stroke="#fff" stroke-width=".45" fill="none" opacity=".6"/>`;
-  const k = `<g transform="translate(${t2(c[0])} ${t2(c[1])}) scale(${sk.toFixed(4)})">${g}</g>`;
+  const k = STUHL + figSchatten(X, Y, .75, .4) + `<g transform="translate(${t2(c[0])} ${t2(c[1])}) scale(${sk.toFixed(5)})">${g}</g>`;
   const U = (x, y) => [c[0] + x * sk, c[1] + y * sk];
   const uL = U(LX, LY - 2), uK = U(KX, KY - 4), uT = U(TX, TY - 3);
   const zw = 2 * R * sk + 10, zh = zw * 2 / 3;
   S.teil({ oben: true, id: "tisch", de: "der Tisch", syl: "TISCH", it: "il tavolino", itSyl: "ta-vo-LI-no", en: "table", x: 0, y: 0, kunst: k,
-    zoom: { x: r(Math.max(0, c[0] - zw / 2)), y: r(HO - zh), w: r(zw), h: r(zh) },
+    tipp: "Im Café auf dem Marktplatz sitzt man draußen am Tisch.",
+    zoom: { x: r(Math.max(0, c[0] - 15)), y: r(c[1] - 14), w: 30, h: 20 },
     unter: [
       { id: "labskaus", de: "das Labskaus", syl: "LABS-kaus", it: "il Labskaus (piatto dei marinai)", itSyl: "LABS-kaus", en: "lobscouse", x: uL[0], y: uL[1], kunst: flaecheEllipse(0, 0, 14 * sk, 6 * sk),
         tipp: "Labskaus ist ein Essen der Seeleute: Kartoffeln, Fleisch und Rote Bete, dazu Spiegelei, Rollmops und Gurke." },

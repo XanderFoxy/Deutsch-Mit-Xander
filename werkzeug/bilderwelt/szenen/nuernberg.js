@@ -373,8 +373,11 @@ let choerleinPunkt = null;
   /* Nordseite: d ≈ 95 m, Fuß bei y ≈ 126, 2,84 E/m; Schattengrenze bei ≈ 11,7 m */
   const D = 95, s = em(D), fuss = bodenY(D), grenze = fuss - 11.7 * s;
   let lichter = "";
+  let hausZ = 0;
   const haus = (x, wm, hm, dm, opt) => {
     const w = wm * s, h = hm * s, dch = dm * s, top = fuss - h;
+    /* jedes Haus hat seine eigene Geschosshöhe, Achsenzahl und Gesimsform — keine durchlaufenden Linien */
+    const sh = 2.9 + rnd() * 0.7, ng = Math.floor((hm - 4.6) / sh), nr = hausZ++;
     const f = PUTZ[Math.floor(rnd() * PUTZ.length)];
     let g = `<rect x="${r(x)}" y="${r(top)}" width="${r(w)}" height="${r(h)}" fill="${f}"/>`;
     /* Erdgeschoss aus Sandstein mit beleuchteten Läden (Arkaden) */
@@ -389,9 +392,9 @@ let choerleinPunkt = null;
       for (let j = 0; j < 3; j++) for (const i of [0, 3]) { const xa = x + i * (w - 0.6) / 4, ya = fy0 + (j + 1) * (fy1 - fy0) / 3; g += `<path d="M${r(xa + 0.3)} ${r(ya)} L${r(xa + (w - 0.6) / 8)} ${r(ya - (fy1 - fy0) / 6)} L${r(xa + (w - 0.6) / 4)} ${r(ya)}" stroke="#5a3424" stroke-width=".45" fill="none"/>`; }
     }
     /* Fenster der Obergeschosse */
-    const sp = Math.max(2, Math.round(wm / 2.6));
-    for (let j = 0; j < Math.floor((hm - 4.4) / 3.2); j++) for (let i = 0; i < sp; i++) {
-      const fx = x + (i + 0.3) * w / sp, fy = fuss - (5.6 + j * 3.2) * s - 1.6 * s;
+    const sp = Math.max(2, Math.min(Math.round(wm / 2.3), 3 + Math.floor(rnd() * 3))), paar = sp >= 4 && rnd() < 0.4;
+    for (let j = 0; j < ng; j++) for (let i = 0; i < sp; i++) {
+      const fx = x + (i + 0.5) * w / sp - 0.45 * s + (paar ? (i % 2 ? -0.18 : 0.18) * w / sp : 0), fy = fuss - (4.6 + 0.6 + j * sh) * s - 1.6 * s;
       const an = rnd() < 0.3;
       g += `<rect x="${r(fx)}" y="${r(fy)}" width="${r(0.9 * s)}" height="${r(1.5 * s)}" fill="${an ? LICHT : "#4a4250"}"/>`;
       if (an && fy > grenze - 2) lichter += `<rect x="${r(fx)}" y="${r(fy)}" width="${r(0.9 * s)}" height="${r(1.5 * s)}" fill="${LICHT}" opacity=".75"/>`;
@@ -430,7 +433,7 @@ let choerleinPunkt = null;
       for (let i = 0; i < 3; i++) g += `<path d="M${r(x + w * (0.16 + i * 0.3))} ${r(top - dch * 0.3)} l1 -1.4 l1 1.4 Z" fill="#7a3424"/>`;
     }
     /* Gesimse zwischen den Geschossen und eine Tannengirlande mit Lichtern über den Läden */
-    for (let j = 0; j < Math.floor((hm - 4.4) / 3.2); j++) g += `<rect x="${r(x)}" y="${r(fuss - (4.4 + j * 3.2) * s - 0.4)}" width="${r(w)}" height=".7" fill="#000" opacity=".1"/><rect x="${r(x)}" y="${r(fuss - (4.4 + j * 3.2) * s - 1)}" width="${r(w)}" height=".5" fill="#fff" opacity=".25"/>`;
+    if (nr % 2 === 0) for (let j = 0; j < ng; j++) { const gy = fuss - (4.6 + j * sh) * s; g += `<rect x="${r(x)}" y="${r(gy - 0.5 * s)}" width="${r(w)}" height="${r(0.45 * s)}" fill="#e2c49c"/><rect x="${r(x)}" y="${r(gy - 0.05 * s)}" width="${r(w)}" height="${r(0.3 * s)}" fill="#000" opacity=".16"/>`; }
     let gir = `M${r(x + 0.5)} ${r(fuss - 4.3 * s)}`;
     for (let i = 0; i < 4; i++) gir += ` q${r(w / 8)} ${r(0.8 * s)} ${r(w / 4 - 0.25)} 0`;
     g += `<path d="${gir}" stroke="#2e5a32" stroke-width="${r(0.45 * s)}" fill="none"/>`;
