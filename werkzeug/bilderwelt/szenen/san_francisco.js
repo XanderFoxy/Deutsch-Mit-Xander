@@ -831,8 +831,8 @@ const LOMB = {};
 {
   /* parkt mit der Nase bergab (nach Norden) am Ostbordstein; wir sehen Heck und rechte Seite.
      Das rechte Vorderrad ist zum Bordstein eingeschlagen (Pflicht am Hang). */
-  const C = { X: -2.5, d: 24 };
-  const W3 = (u, v, h) => PN(C.X + v, C.d + u, zH(C.d + u) + h);
+  const C = { X: -2.55, d: 15.8 }, psi = 5 * Math.PI / 180;   /* ein wenig schräg geparkt: rechte Flanke gut sichtbar */
+  const W3 = (u, v, h) => { const X = C.X - u * Math.sin(psi) + v * Math.cos(psi), d = C.d + u * Math.cos(psi) + v * Math.sin(psi); return PN(X, d, zH(d) + h); };
   const [ox, oy] = W3(0, 0, 0);
   const P = (u, v, h) => { const [x, y] = W3(u, v, h); return [x - ox, y - oy]; };
   const Q = (pts, f, ex = "") => `<path d="M${pts.map((q) => pr(P(...q))).join(" L")} Z" fill="${f}"${ex}/>`;
@@ -926,15 +926,24 @@ const LOMB = {};
   /* der Gripman (Fahrer) am Greifhebel, Mitte des offenen Teils */
   {
     const [gx, gy] = P(1.3, 0, 0.95);
-    const m = B.mensch({ id: "sfo_grip", geschlecht: "m", pose: "halten", blick: 12, frisur: "kurz", haarfarbe: "grau", haut: "hell",
+    const greif = { lende: 0, brust: 6, nacken: 2, kopf: 4, schulterL: { vor: 34, seit: 10 }, ellbogenL: 62, unterarmL: 0, handL: 0, fingerL: 0.8, schulterR: { vor: 38, seit: 8 }, ellbogenR: 58, unterarmR: 0, handR: 0, fingerR: 0.8,
+      huefteL: { vor: 4, seit: 3, dreh: 0 }, knieL: 4, fussL: 0, huefteR: { vor: -2, seit: 3, dreh: 0 }, knieR: 2, fussR: 0 };
+    const m = B.mensch({ id: "sfo_grip", geschlecht: "m", pose: greif, blick: 12, frisur: "kurz", haarfarbe: "grau", haut: "hell",
       kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "weste", farbe: "#2b3a55" }, unterteil: { stueck: "anzughose", farbe: "#2b3a55" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, kopf: { stueck: "kappe", farbe: "#2b3a55" } } }, 1.76 * s);
     k += `<g transform="translate(${r(gx)} ${r(gy)})">${figur(grob(flach(m.svg)), 2, 8)}</g>`;
-    k += L2([0.7, -0.1, 0.95], [0.85, -0.15, 1.95], "#2c2c2c", 0.45);
+    /* der Greifhebel: aus dem Boden bis Brusthöhe, oben der Griff — beide Hände daran */
+    const hs = [m.z.handL, m.z.handR].filter(Boolean).map((h) => [gx + h.x * m.k, gy + h.y * m.k]), hm = hs.length ? [hs.reduce((a, h) => a + h[0], 0) / hs.length, Math.min(...hs.map((h) => h[1]))] : P(0.9, 0, 2.2);
+    const fb = P(0.85, 0, 0.95);
+    k += `<path d="M${pr(fb)} L${pr([hm[0], hm[1] - 0.6])}" stroke="#3a3632" stroke-width="${r(0.06 * s)}"/><path d="M${pr([hm[0] - 0.08 * s, hm[1] - 0.6])} L${pr([hm[0] + 0.08 * s, hm[1] - 0.6])}" stroke="#1d1b19" stroke-width="${r(0.05 * s)}" stroke-linecap="round"/>`;
+    /* auf der Außenbank sitzende Fahrgäste (Köpfe und Schultern über der Bank, nach außen gewandt) */
+    for (const [u, c, hc] of [[0.45, "#3d6fa8", "#3a2a1c"], [2.35, "#4f8a5a", "#c9a46a"]]) { const sh = P(u, HB - 0.3, 1.95), hd = P(u, HB - 0.3, 2.22), q = 0.1 * s;
+      k += `<path d="M${r(sh[0] - 2.4 * q)} ${r(sh[1] + 2.2 * q)} Q${r(sh[0] - 2.3 * q)} ${r(sh[1] - 0.4 * q)} ${r(sh[0])} ${r(sh[1] - 0.5 * q)} Q${r(sh[0] + 2.3 * q)} ${r(sh[1] - 0.4 * q)} ${r(sh[0] + 2.4 * q)} ${r(sh[1] + 2.2 * q)} Z" fill="${c}"/><ellipse cx="${r(hd[0])}" cy="${r(hd[1])}" rx="${r(1 * q)}" ry="${r(1.25 * q)}" fill="#e2b994"/><path d="M${r(hd[0] - q)} ${r(hd[1] - 0.2 * q)} Q${r(hd[0])} ${r(hd[1] - 1.7 * q)} ${r(hd[0] + q)} ${r(hd[1] - 0.2 * q)} Z" fill="${hc}"/>`; }
   }
   /* rechte (östliche, uns zugewandte) Seite: Schürze, Trittbrett, Kabine */
   k += Q([-0.05, HB, 0.42], [LEN, HB, 0.42], [LEN, HB, 0.95], [-0.05, HB, 0.95], WEINROT);
   k += L2([-0.05, HB, 0.62], [LEN, HB, 0.62], GOLDS, 0.22);
-  k += Q([0.1, HB, 0.42], [OFF, HB, 0.42], [OFF, HB + 0.35, 0.42], [0.1, HB + 0.35, 0.42], "#4a3a2a");
+  /* das Trittbrett: helles Holzbrett entlang der Flanke unter dem offenen Teil, dunkle Unterkante */
+  k += Q([0.1, HB, 0.42], [OFF, HB, 0.42], [OFF, HB + 0.38, 0.42], [0.1, HB + 0.38, 0.42], "#c49a62") + Q([0.1, HB + 0.38, 0.3], [OFF, HB + 0.38, 0.3], [OFF, HB + 0.38, 0.42], [0.1, HB + 0.38, 0.42], "#3a2a1c");
   k += Q([0.2, HB, 0.95], [OFF - 0.1, HB, 0.95], [OFF - 0.1, HB, 1.35], [0.2, HB, 1.35], "#7a5032");
   k += Q([OFF, HB, 0.95], [LEN - 0.6, HB, 0.95], [LEN - 0.6, HB, 1.6], [OFF, HB, 1.6], WEINROT);
   k += Q([OFF, HB, 1.6], [LEN - 0.6, HB, 1.6], [LEN - 0.6, HB, 2.55], [OFF, HB, 2.55], CREME);
@@ -949,8 +958,6 @@ const LOMB = {};
   k += L2([0, -HB, 1.67], [0, HB, 1.67], GOLDS, 0.28) + L2([0, -HB, 0.6], [0, HB, 0.6], GOLDS, 0.2);
   { const n = P(0, 0.55, 0.85); k += `<text x="${r(n[0])}" y="${r(n[1])}" font-size="${r(0.42 * s)}" text-anchor="middle" fill="${GOLDS}" font-family="Georgia,serif" font-weight="bold">12</text>`; const l = P(0, -0.45, 1.05); k += `<circle cx="${r(l[0])}" cy="${r(l[1])}" r="${r(0.2 * s)}" fill="${S.rg("lampe", [[0, "#fffbe6"], [0.6, "#ffe9a6"], [1, "#c99a3a"]])}" stroke="#2c2c2c" stroke-width=".25"/>`; }
   for (const v of [-HB + 0.05, HB - 0.05]) k += L2([0, v, 1.75], [0, v, RF], CREME, 0.55);
-  /* senkrechte Haltestange am Trittbrett, an der sich die Fahrgästin festhält */
-  k += L2([1.42, HB + 0.04, 0.95], [1.42, HB + 0.04, RF], "#e9dfc4", 0.32);
   /* der Fahrgast auf dem Trittbrett, hält sich an der Stange */
   let fg;
   {
@@ -959,6 +966,9 @@ const LOMB = {};
       kleidung: { oberteil: { stueck: "pullover", farbe: "#e2b13c" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh", farbe: "weiss" } } }, 1.66 * s);
     k += `<g transform="translate(${r(fx)} ${r(fy)})">${figur(grob(flach(m.svg)), 2, 8)}</g>`;
     fg = [fx + ox, fy + oy, 1.66 * s];
+    /* die senkrechte Haltestange genau durch ihre obere Hand (vom Trittbrett bis unters Dach) */
+    const hh = [m.z.handL, m.z.handR].filter(Boolean).map((h) => [fx + h.x * m.k, fy + h.y * m.k]).sort((a, b) => a[1] - b[1])[0];
+    if (hh) { const top = P(1.0, HB, RF)[1]; k += `<path d="M${r(hh[0])} ${r(fy)} L${r(hh[0])} ${r(top)}" stroke="#e9dfc4" stroke-width=".42"/><circle cx="${r(hh[0])}" cy="${r(hh[1])}" r=".5" fill="#8a5a3c"/>`; }
   }
   /* Dach mit Laternendach (Oberlicht) — nicht breiter als der Wagenkasten */
   k += Q([-0.1, -HB, RF], [-0.1, HB, RF], [LEN, HB, RF], [LEN, -HB, RF], S.lg("dach", [[0, "#efe9dc"], [1, "#cfc6b4"]], 0, 0, 1, 0));
@@ -992,39 +1002,42 @@ const LOMB = {};
 
 /* =====================================================================
    15 — DIE TOURISTIN fotografiert den Blick die Hyde Street hinunter auf
-   Alcatraz; 16 — DAS SAUERTEIGBROT: Brotschale mit Clam Chowder (Boudin)
-   auf der Gartenmauer neben ihr, daneben eine Ghirardelli-Tüte
+   Alcatraz; 16 — DAS SAUERTEIGBROT in ihrer Boudin-Tüte an ihren Füßen,
+   daneben steckt eine Ghirardelli-Tafel
    ===================================================================== */
 {
   const d = 10.9, X = 0.5, [tx, ty] = PN(X, d, 0), s = F / d;
+  /* Arme gestreckt nach vorn, Handy auf Armlänge leicht rechts vor dem Kopf, etwas über Augenhöhe */
   const foto = {
-    lende: 1, brust: -3, nacken: 2, kopf: -2,
-    schulterL: { vor: 62, seit: 18 }, ellbogenL: 112, unterarmL: 40, handL: 10, fingerL: 0.5,
-    schulterR: { vor: 60, seit: 20 }, ellbogenR: 114, unterarmR: 40, handR: 10, fingerR: 0.5,
+    lende: 0, brust: -2, nacken: 3, kopf: 4,
+    schulterL: { vor: 88, seit: 4 }, ellbogenL: 18, unterarmL: 30, handL: 10, fingerL: 0.6,
+    schulterR: { vor: 90, seit: 2 }, ellbogenR: 16, unterarmR: 30, handR: 10, fingerR: 0.6,
     huefteL: { vor: 4, seit: 3, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -4, seit: 3, dreh: -6 }, knieR: 2, fussR: 0,
   };
+
   const m = B.mensch({ id: "sfo_tour", geschlecht: "w", pose: foto, blick: 192, frisur: "zopf", haarfarbe: "braun", haut: "hell",
     kleidung: { oberteil: { stueck: "pullover", farbe: "creme" }, jacke: { stueck: "jacke", farbe: "#c0392b" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh", farbe: "weiss" } } }, 1.66 * s);
   const hs = [m.z.handL, m.z.handR].filter(Boolean), hx = hs.reduce((a, h) => a + h.x, 0) / hs.length * m.k, hy = Math.min(...hs.map((h) => h.y)) * m.k;
   const pw = 0.075 * s, ph = 0.15 * s;
-  let handy = `<rect x="${r(hx - pw / 2)}" y="${r(hy - ph * 0.8)}" width="${r(pw)}" height="${r(ph)}" rx=".2" fill="#1c1e22"/>`;
+  /* Handy mit Bildschirm (von hinten zu sehen): die Bucht mit Alcatraz als Mini-Bild */
+  const pX = hx + pw * 0.2, pY = hy - ph * 0.55;
+  let handy = `<rect x="${r(pX - pw / 2)}" y="${r(pY - ph / 2)}" width="${r(pw)}" height="${r(ph)}" rx=".25" fill="#1c1e22"/><rect x="${r(pX - pw / 2 + 0.25)}" y="${r(pY - ph / 2 + 0.3)}" width="${r(pw - 0.5)}" height="${r(ph * 0.45)}" fill="#a9cbe6"/><rect x="${r(pX - pw / 2 + 0.25)}" y="${r(pY - ph / 2 + 0.3 + ph * 0.45)}" width="${r(pw - 0.5)}" height="${r(ph * 0.47 - 0.6)}" fill="#4f7d9a"/><path d="M${r(pX - pw * 0.25)} ${r(pY + ph * 0.02)} q${r(pw * 0.25)} ${r(-ph * 0.08)} ${r(pw * 0.5)} 0 Z" fill="#8a8170"/>`;
   /* scharfer Schatten nach rechts hinten (Länge 0,9 × Körpergröße) */
   const L = 1.66 * SL, T = PN(X + L * SE_, d + L * SN_, 0), A = PN(X - 0.2, d, 0), Bp = PN(X + 0.2, d, 0);
   const sch = `<path d="M${pr([A[0] - tx, A[1] - ty])} L${pr([T[0] - tx - 1.2, T[1] - ty])} L${pr([T[0] - tx + 1.2, T[1] - ty])} L${pr([Bp[0] - tx, Bp[1] - ty])} Z" fill="#1d2433" opacity=".3"/>`;
   S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x: tx, y: ty, kunst: sch + figur(grob(m.svg, 0.8), 1.0, 3.5) + handy,
     tipp: "Die Touristin fotografiert den Blick die Hyde Street hinunter auf die Bucht und Alcatraz." });
-  /* Brotschale mit Clam Chowder auf der Gartenmauer (Mauerkrone bei X 2,25–2,75, 0,62 m hoch) */
-  const db = 13, [bx, by] = PN(2.5, db, zH(db) + 0.62), sb = F / db, bw = 0.24 * sb;
-  let k = `<ellipse cx="0" cy="0" rx="${r(bw * 0.62)}" ry="${r(bw * 0.14)}" fill="#1b120a" opacity=".3"/>`;
-  k += `<path d="M${r(-bw / 2)} ${r(-bw * 0.05)} Q${r(-bw / 2)} ${r(-bw * 0.62)} 0 ${r(-bw * 0.62)} Q${r(bw / 2)} ${r(-bw * 0.62)} ${r(bw / 2)} ${r(-bw * 0.05)} Q0 ${r(bw * 0.08)} ${r(-bw / 2)} ${r(-bw * 0.05)} Z" fill="${S.rg("brot", [[0, "#f0cf98"], [0.7, "#c9934e"], [1, "#9a6630"]], 0.35, 0.3, 0.8)}"/>`;
-  k += `<ellipse cx="0" cy="${r(-bw * 0.5)}" rx="${r(bw * 0.38)}" ry="${r(bw * 0.12)}" fill="#f3ecd9"/><ellipse cx="${r(-bw * 0.08)}" cy="${r(-bw * 0.52)}" rx="${r(bw * 0.12)}" ry="${r(bw * 0.04)}" fill="#e8d9a8"/>`;
-  k += `<path d="M${r(bw * 0.1)} ${r(-bw * 0.52)} L${r(bw * 0.42)} ${r(-bw * 0.95)}" stroke="#b9bcc0" stroke-width="${r(bw * 0.05)}" stroke-linecap="round"/>`;
-  k += `<path d="M${r(-bw * 0.2)} ${r(-bw * 0.7)} q${r(bw * 0.1)} ${r(-bw * 0.2)} 0 ${r(-bw * 0.4)} M${r(bw * 0.05)} ${r(-bw * 0.72)} q${r(bw * 0.1)} ${r(-bw * 0.2)} 0 ${r(-bw * 0.4)}" stroke="#fff" stroke-width="${r(bw * 0.04)}" fill="none" opacity=".7"/>`;
-  /* daneben die braune Ghirardelli-Tüte (Schokolade vom Ghirardelli Square) */
-  const [gx, gy] = PN(2.5, 14.6, zH(14.6) + 0.62), sg = F / 14.6, gw = 0.22 * sg, gh = 0.28 * sg;
-  k += `<g transform="translate(${r(gx - bx)} ${r(gy - by)})"><path d="M${r(-gw / 2)} 0 L${r(gw / 2)} 0 L${r(gw * 0.47)} ${r(-gh)} L${r(-gw * 0.47)} ${r(-gh)} Z" fill="#5b3a26"/><rect x="${r(-gw * 0.42)}" y="${r(-gh * 0.62)}" width="${r(gw * 0.84)}" height="${r(gh * 0.22)}" fill="#e9dcc0"/><text x="0" y="${r(-gh * 0.46)}" font-size="${r(gw * 0.13)}" text-anchor="middle" fill="#5b3a26" font-family="Georgia,serif" font-weight="bold">GHIRARDELLI</text></g>`;
+  /* ihre Papiertüte von Boudin an ihren Füßen: oben schaut der runde Sauerteiglaib heraus, daneben eine Ghirardelli-Tafel */
+  const db = 11.15, [bx, by] = PN(1.3, db, 0), sb = F / db, bw = 0.3 * sb, bh = 0.36 * sb;
+  const Ls = 0.4 * SL, Tb = PN(1.3 + Ls * SE_, db + Ls * SN_, 0);
+  let k = `<path d="M${r(-bw / 2)} 0 L${r(Tb[0] - bx - bw * 0.3)} ${r(Tb[1] - by)} L${r(Tb[0] - bx + bw * 0.4)} ${r(Tb[1] - by)} L${r(bw / 2)} 0 Z" fill="#1d2433" opacity=".3"/>`;
+  k += `<path d="M${r(-bw / 2)} 0 L${r(bw / 2)} 0 L${r(bw * 0.46)} ${r(-bh)} L${r(-bw * 0.46)} ${r(-bh)} Z" fill="${S.lg("tuete", [[0, "#dcbc8c"], [1, "#b48c5c"]], 0, 0, 1, 0)}"/><path d="M${r(bw * 0.18)} 0 L${r(bw * 0.15)} ${r(-bh)}" stroke="#a37c4c" stroke-width=".3"/>`;
+  k += `<path d="M${r(-bw * 0.42)} ${r(-bh)} Q${r(-bw * 0.4)} ${r(-bh - bw * 0.5)} ${r(-bw * 0.02)} ${r(-bh - bw * 0.52)} Q${r(bw * 0.3)} ${r(-bh - bw * 0.5)} ${r(bw * 0.3)} ${r(-bh)} Z" fill="${S.rg("brot", [[0, "#f0cf98"], [0.7, "#c9934e"], [1, "#9a6630"]], 0.4, 0.35, 0.7)}"/>`;
+  k += `<path d="M${r(-bw * 0.28)} ${r(-bh - bw * 0.25)} l${r(bw * 0.16)} ${r(-bw * 0.12)} M${r(-bw * 0.05)} ${r(-bh - bw * 0.3)} l${r(bw * 0.16)} ${r(-bw * 0.12)}" stroke="#8a5a2a" stroke-width=".35"/>`;
+  k += `<g transform="translate(${r(bw * 0.38)} ${r(-bh)}) rotate(14)"><rect x="${r(-bw * 0.1)}" y="${r(-bw * 0.62)}" width="${r(bw * 0.24)}" height="${r(bw * 0.7)}" fill="#3a2418"/><rect x="${r(-bw * 0.1)}" y="${r(-bw * 0.3)}" width="${r(bw * 0.24)}" height="${r(bw * 0.12)}" fill="#e3c35a"/></g>`;
+  k += `<text x="0" y="${r(-bh * 0.42)}" font-size="${r(bw * 0.19)}" text-anchor="middle" fill="#5a3a1f" font-family="Georgia,serif" font-weight="bold">BOUDIN</text>`;
   S.teil({ oben: true, id: "sauerteigbrot", de: "das Sauerteigbrot", syl: "SAU-er-teig-brot", it: "il pane a lievitazione naturale", itSyl: "PA-ne a lie-vi-ta-ZIO-ne na-tu-RA-le", en: "sourdough bread", x: bx, y: by,
-    kunst: k + flaeche(-bw * 0.7, -bw * 1.1, bw * 1.4, bw * 1.25, 0.4),
+    kunst: k + flaeche(-bw * 0.6, -bh - bw * 0.55, bw * 1.2, bh + bw * 0.55, 0.4),
     tipp: "Das Sauerteigbrot ist eine Spezialität von San Francisco. Ausgehöhlt isst man daraus Muschelsuppe (Clam Chowder)." });
 }
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/san_francisco.js"));

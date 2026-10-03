@@ -783,24 +783,32 @@ const FERNBAUM = dunst("fernbaum", 0.22, [0.78, 0.85, 0.93]);
     k += `<path d="M${l(0, 0)} L${l(0, -0.12)}" stroke="#a8760f" stroke-width="${m(0.025)}"/><path d="M${l(-0.06, -0.12)} L${l(0.06, -0.12)} L${l(0.07, -0.34)} L${l(-0.07, -0.34)} Z" fill="#fff3c4" stroke="${GOLD}" stroke-width="${m(0.02)}"/><path d="M${l(-0.08, -0.34)} L${l(0, -0.42)} L${l(0.08, -0.34)} Z" fill="${GOLD}"/>`;
   }
   k += `<path d="M${P(0.72, -1.55)} L${P(0.9, -2.7)} Q${P(1.2, -2.9)} ${P(1.5, -2.6)}" stroke="#2a2a2a" stroke-width=".3" fill="none"/>`;
-  /* der Kutscher mit Melone auf dem Bock */
-  const pose = Object.assign({}, M0.POSEN.sitzen, { schulterL: { vor: 40, seit: 10, dreh: -10 }, ellbogenL: 60, unterarmL: 30, handL: 0, fingerL: 0.75,
-    schulterR: { vor: 35, seit: 14, dreh: -10 }, ellbogenR: 70, unterarmR: 30, handR: 0, fingerR: 0.75 });
-  const kut = B.mensch({ id: "wie_kut", geschlecht: "m", pose, blick: -80, frisur: "kurz", haarfarbe: "grau", haut: "hell",
-    kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "jacke", farbe: "#26262c" }, unterteil: { stueck: "anzughose" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, kopf: { stueck: "melone" } } }, m(1.76));
+  /* der Kutscher auf dem Bock, nach links: dunkler Rock, weißes Hemd mit
+     Mascherl, grauer Schnurrbart, die Melone; die Füße stehen auf dem
+     Fußbrett, die Hände halten die Zügel (in Metern gezeichnet) */
   const sitz = { x: m(0.45), y: m(-1.66) };
-  const kx = r(sitz.x - kut.z.sitz.x * kut.k), ky = r(sitz.y - kut.z.sitz.y * kut.k);
-  k += `<g transform="translate(${kx} ${ky})">${kompakt(kut.svg)}</g>`;
-  const hand = { x: kx + kut.z.handL.x * kut.k, y: ky + kut.z.handL.y * kut.k };
+  {
+    let g = `<path d="M.1 .02 L-.08 -.04 Q-.3 -.12 -.4 -.06 L-.44 .02 Q-.3 .06 -.06 .1 Z" fill="#2a2a30"/>`;
+    g += `<path d="M-.44 -.02 L-.54 .5 L-.44 .52 L-.34 .02 Z" fill="#26262c"/><path d="M-.6 .5 Q-.62 .56 -.56 .58 L-.36 .58 Q-.36 .52 -.44 .5 Z" fill="#111"/>`;
+    g += `<path d="M.14 .04 L-.08 .04 Q-.13 -.3 -.07 -.56 Q.02 -.62 .1 -.56 Q.16 -.3 .14 .04 Z" fill="${S.lg("rock", [[0, "#3c3c46"], [1, "#1c1c22"]], 0, 0, 1, 0)}"/>`;
+    g += `<path d="M-.04 -.56 L.02 -.6 L.04 -.48 L-.02 -.44 Z" fill="#f4f2ec"/><path d="M-.05 -.55 l-.03 -.02 l0 .04 Z M-.02 -.55 l.03 -.02 l0 .04 Z" fill="#141414"/>`;
+    g += `<path d="M.04 -.54 Q-.06 -.42 -.14 -.32 Q-.24 -.34 -.31 -.36 L-.32 -.31 Q-.2 -.25 -.12 -.26 Q.02 -.34 .1 -.48 Z" fill="#2e2e36"/><ellipse cx="-.33" cy="-.335" rx=".035" ry=".028" fill="#e0b08e"/>`;
+    g += `<path d="M.01 -.6 L.0 -.66 L.06 -.66 L.06 -.6 Z" fill="#dcac88"/>`;
+    g += `<path d="M.07 -.66 Q.1 -.8 .02 -.84 Q-.06 -.86 -.09 -.79 L-.1 -.75 L-.125 -.72 L-.1 -.71 L-.1 -.68 Q-.08 -.645 -.03 -.65 Q.03 -.64 .07 -.66 Z" fill="#dcac88"/>`;
+    g += `<path d="M-.1 -.7 Q-.06 -.715 -.03 -.69 Q-.06 -.68 -.1 -.685 Z" fill="#b9b4ac"/><circle cx="-.06" cy="-.765" r=".009" fill="#2a1d14"/><path d="M.03 -.79 q.03 -.01 .04 .05 q-.03 .03 -.05 .02" fill="#a9a49c"/><path d="M.0 -.77 q.02 -.02 .03 0" stroke="#b98a6c" stroke-width=".012" fill="none"/>`;
+    g += `<ellipse cx=".0" cy="-.805" rx=".13" ry=".022" fill="#141418"/><path d="M-.085 -.81 Q-.09 -.92 0 -.925 Q.09 -.92 .085 -.81 Z" fill="${S.rg("melone", [[0, "#4a4a52"], [1, "#141418"]], 0.35, 0.3, 0.8)}"/><path d="M-.085 -.825 h.17" stroke="#0a0a0c" stroke-width=".02"/>`;
+    k += `<g transform="translate(${sitz.x} ${sitz.y}) scale(${r(s)})">${g}</g>`;
+  }
+  const hand = { x: sitz.x + m(-0.33), y: sitz.y + m(-0.335) };
   k += `<path d="M${r(hand.x)} ${r(hand.y)} Q${m(-1)} ${m(-1.9)} ${m(PB - 1.42)} ${m(-1.84)} M${r(hand.x)} ${r(hand.y + 0.3)} Q${m(-1)} ${m(-1.8)} ${m(PB - 1.6)} ${m(-1.8)}" stroke="#2b1d12" stroke-width=".22" fill="none"/>`;
-  const kopf = { x: kx + kut.z.kopf.x * kut.k, y: ky + kut.z.kopf.y * kut.k };
+  const kopf = { x: sitz.x, y: sitz.y + m(-0.74) };
   S.teil({ id: "fiaker", de: "der Fiaker", syl: "fi-A-ker", it: "la carrozza", itSyl: "car-ROZ-za", en: "horse-drawn carriage", x: X0, y: Y, kunst: k,
     tipp: "Ein Fiaker ist eine Kutsche mit zwei Pferden. Gäste fahren damit gemütlich durch die Altstadt.",
     zoom: { x: X0 - 52, y: Y - 44, w: 96, h: 48 },
     unter: [
       { id: "pferd", de: "das Pferd", syl: "PFERD", it: "il cavallo", itSyl: "ca-VAL-lo", en: "horse", x: X0 + m(PB), y: Y - m(1.0), kunst: flaeche(-m(1.7), -m(1.4), m(2.8), m(1.3), 0.6),
         tipp: "Fiaker-Pferde dürfen nur an bestimmten Tagen arbeiten und machen oft Pause." },
-      { id: "kutscher", de: "der Kutscher", syl: "KUT-scher", it: "il cocchiere", itSyl: "coc-CHIE-re", en: "coachman", x: r(X0 + sitz.x), y: r(Y + sitz.y), kunst: flaeche(-m(0.5), -m(0.75), m(1), m(0.85), 0.6),
+      { id: "kutscher", de: "der Kutscher", syl: "KUT-scher", it: "il cocchiere", itSyl: "coc-CHIE-re", en: "coachman", x: r(X0 + sitz.x), y: r(Y + sitz.y), kunst: flaeche(-m(0.62), -m(0.66), m(0.8), m(1.24), 0.6),
         tipp: "Der Kutscher erzählt seinen Fahrgästen viel über Wien." },
       { id: "melone", de: "die Melone", syl: "me-LO-ne", it: "la bombetta", itSyl: "bom-BET-ta", en: "bowler hat", x: r(X0 + kopf.x), y: r(Y + kopf.y - 1.2), kunst: flaeche(-3.2, -3, 6.4, 4.2, 0.4),
         tipp: "Im Dienst trägt der Fiaker-Kutscher eine Melone – einen runden, schwarzen Hut." },
@@ -848,7 +856,7 @@ const PODEST = yp(3.6);
   k += kasten(96, 196) + kasten(206, 252);
   /* ein zweiter Tisch (2,5 m) mit Thonet-Stuhl; darauf ein Einspänner im Glas */
   {
-    const X = 150, sc = F / 2.5, m = (v) => r(v * sc), ty = r(HOR + 0.5 * sc), fuss = yp(2.5);
+    const X = 82, sc = F / 2.5, m = (v) => r(v * sc), ty = r(HOR + 0.5 * sc), fuss = yp(2.5);
     const HOLZ = S.lg("bugholz2", [[0, "#6b4228"], [1, "#2f1b0e"]], 0, 0, 1, 0);
     const cs = F / 3.1, c = (v) => r(v * cs), cy = yp(3.1), cx = X + 14;
     k += `<path d="M${r(cx - c(0.16))} ${cy} L${r(cx - c(0.17))} ${r(cy - c(0.48))} Q${r(cx - c(0.2))} ${r(cy - c(0.86))} ${cx} ${r(cy - c(0.9))} Q${r(cx + c(0.2))} ${r(cy - c(0.86))} ${r(cx + c(0.17))} ${r(cy - c(0.48))} L${r(cx + c(0.16))} ${cy}" stroke="${HOLZ}" stroke-width="${c(0.026)}" fill="none"/>`;

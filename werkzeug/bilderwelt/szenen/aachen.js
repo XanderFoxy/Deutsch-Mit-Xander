@@ -213,7 +213,7 @@ const DOM_SICHT = 104;                 /* bis hierhin (y) ist der Dom über den 
   const sicht = DOM_SICHT - DOM.y;
   S.teil({ id: "dom", de: "der Aachener Dom", syl: "AA-che-ner DOM", it: "il Duomo di Aquisgrana", itSyl: "DUO-mo di a-qui-SGRA-na", en: "Aachen Cathedral",
     x: DOM.x, y: DOM.y, kunst: k, tipp: "Karl der Große hat den Dom um das Jahr 800 bauen lassen. Er war das erste Welterbe in Deutschland.",
-    zoom: { x: 0, y: 48, w: 81, h: 54 },
+    zoom: { x: 17, y: 48, w: 81, h: 54 },
     unter: [
       { id: "kirchenfenster", de: "das Kirchenfenster", syl: "KIR-chen-fens-ter", it: "la vetrata", itSyl: "ve-TRA-ta", en: "church window", x: DOM.x + 14.7, y: DOM.y + sicht, kunst: flaeche(-3.4, -(33 * DOM.u) - sicht, 6.8, 33 * DOM.u + sicht - 0.5 * DOM.u, 0.5),
         tipp: "Die Fenster der Chorhalle sind über 25 Meter hoch. Darum nennen die Aachener die Chorhalle „Glashaus“." },
