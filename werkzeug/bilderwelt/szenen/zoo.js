@@ -783,7 +783,11 @@ S.hinten(``);
    ===================================================================== */
 {
   let k = `<path d="M0 152 L320 152 L320 200 L0 200 Z" fill="${S.lg("weg", [[0, "#c9c1b3"], [1, "#b3aa9b"]])}"/>`;
-  for (let i = -16; i <= 16; i++) k += `<line x1="${r(160 + i * 12)}" y1="152" x2="${r(160 + i * 12 * 1.5)}" y2="200" stroke="#968c7d" stroke-width=".25" opacity=".6"/>`;
+  for (let i = -13; i <= 13; i++) {
+    /* Fuge von der Wegkante nach vorn, am Bildrand abgeschnitten */
+    const xa = 160 + i * 12, xb = 160 + i * 18, t = xb < 0 ? (0 - xa) / (xb - xa) : xb > 320 ? (320 - xa) / (xb - xa) : 1;
+    k += `<line x1="${r(xa)}" y1="152" x2="${r(xa + (xb - xa) * t)}" y2="${r(152 + 48 * t)}" stroke="#968c7d" stroke-width=".25" opacity=".6"/>`;
+  }
   for (const y of [155, 158.6, 162.8, 167.6, 173, 179, 185.6, 192.8]) k += `<line x1="0" y1="${y}" x2="320" y2="${y}" stroke="#968c7d" stroke-width=".25" opacity=".6"/>`;
   k += `<rect x="0" y="151.6" width="320" height="1.6" fill="#8d8579"/><rect x="0" y="151.6" width="320" height=".5" fill="#e4ddd0"/>`;
   k += `<rect x="0" y="152" width="320" height="48" fill="${S.lg("weglicht", [[0, "#000", 0.12], [0.3, "#000", 0], [1, "#fff", 0.05]])}"/>`;
@@ -798,10 +802,10 @@ S.hinten(``);
   k += `<path d="M-3 0 Q-2.4 -40 -2 -80 L2 -80 Q2.6 -40 4 0 Z" fill="${S.lg("stamm", [[0, "#5b4634"], [0.5, "#7a6048"], [1, "#4a382a"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M-1.6 -70 Q-10 -80 -16 -88 M1.6 -74 Q10 -84 14 -96 M0 -78 L0 -104" stroke="#5b4634" stroke-width="1.8" fill="none"/>`;
   for (let i = 0; i < 12; i++) k += `<path d="M${r(-2 + rnd() * 4)} ${r(-4 - rnd() * 50)} q.4 -2 0 -4" stroke="#3a2c20" stroke-width=".3" fill="none"/>`;
-  const krone = [[-14, -104, 16], [6, -116, 18], [16, -96, 14], [-4, -92, 12], [-22, -94, 10], [22, -110, 11], [-10, -122, 13]];
+  const krone = [[-16, -104, 16], [2, -116, 16], [6, -96, 10], [-4, -92, 12], [-24, -94, 10], [-12, -122, 13]];
   for (const [x, y, rr] of krone) k += `<circle cx="${x}" cy="${y}" r="${rr}" fill="${S.rg("krone", [[0, "#7fa65a"], [0.7, "#5a8240"], [1, "#466a32"]], 0.4, 0.35, 0.7)}"/>`;
   for (let i = 0; i < 45; i++) { const [x, y, rr] = krone[i % krone.length], a = rnd() * 6.28, d = rnd() * rr; k += `<circle cx="${r(x + Math.cos(a) * d)}" cy="${r(y + Math.sin(a) * d)}" r="${r(1 + rnd() * 1.6)}" fill="${rnd() < 0.5 ? "#9cc072" : "#3e5f2c"}" opacity=".5"/>`; }
-  S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 316, y: 168, kunst: k });
+  S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 302, y: 168, kunst: k });
 }
 
 /* =====================================================================
