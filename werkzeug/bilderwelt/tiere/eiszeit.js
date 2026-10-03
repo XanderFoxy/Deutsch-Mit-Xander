@@ -1109,7 +1109,7 @@ function riesenhirsch(T) {
   /* ---------- Kopfdetails (Kopfkoordinaten) ---------- */
   let k = KG;
   const kl = (x, y) => Math.max(0, Math.min(1, 0.85 - (y + 2) / 40));
-  k += FELL(T, kopfL, 150, (x, y) => (y > 26 ? 175 : 180 + (y - 10) * 0.6), 1.3, kl, FT, { streuung: 10, szene: 0.06 });
+  k += FELL(T, kopfL, 135, (x, y) => (y > 26 ? 175 : 180 + (y - 10) * 0.6), 1.3, kl, FT, { streuung: 10, szene: 0.06 });
   k += WEICH(T,
     /* Nasenrücken mit Glanzlinie, Gesichtsleiste unter dem Auge (Licht, Rinne darunter), Kaumuskel, Augenhöhle, Ganasche */
     FO([[28, 1], [48, 8], [56, 11], [56, 13], [46, 10.6], [28, 3.6]], HL, 0.36) + FO([[14, 11], [32, 11.6], [38, 13], [26, 13.6], [14, 13]], HL, 0.3) +
