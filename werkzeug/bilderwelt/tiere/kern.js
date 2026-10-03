@@ -279,14 +279,15 @@ function setze(S, art, x, y, epm, o = {}) {
   let svg = "";
   /* FASSUNG 854 — Kritiker (Runde 1, alle Raubsaurier): „Bodenschatten riesige harte Scheibe, nach links verschoben …
      unter die Füße zentrieren, Rand weich, dunkle Kontaktschatten an den Zehen". Gibt zeichne() z.fuesse ([x in cm, …])
-     zurück, liegt der Schatten genau unter den Füßen, mit je einem dunklen Kontaktkern; sonst unter der Mitte, kürzer. */
+     zurück, liegt der Schatten genau unter den Füßen, mit je einem dunklen Kontaktkern; sonst unter der Mitte, kürzer.
+     Der Abstand zum Boden wächst mit der Tiergröße (vorher fest 3 cm – bei der Maus mehrere Körperhöhen). */
   if (o.schatten !== false && !art.fliegt && !art.schwimmt) {
     const fu = Array.isArray(z.fuesse) && z.fuesse.length ? z.fuesse : null;
     const a = fu ? Math.min(...fu) : x0 + (x1 - x0) * 0.2, b = fu ? Math.max(...fu) : x1 - (x1 - x0) * 0.2;
     const sx = ((a + b) / 2 - mx) * k * dir, L = Math.max((b - a) * k / 2 + (x1 - x0) * k * 0.12, (x1 - x0) * k * 0.3);
     const g = S._tschatten || (S._tschatten = S.rg("tschatten", [[0, "#000", 0.3], [0.55, "#000", 0.16], [1, "#000", 0]]));
-    svg += `<ellipse cx="${r(sx)}" cy="${r(0.3 * k * 10)}" rx="${r(L)}" ry="${r(Math.max(0.6, L * 0.16))}" fill="${g}"/>`;
-    if (fu) for (const f of fu) svg += `<ellipse cx="${r((f - mx) * k * dir)}" cy="${r(0.2 * k * 10)}" rx="${r(Math.max(0.5, (x1 - x0) * k * 0.035))}" ry="${r(Math.max(0.25, (x1 - x0) * k * 0.008))}" fill="#000" opacity=".38"/>`;
+    svg += `<ellipse cx="${r(sx)}" cy="${r((x1 - x0) * k * 0.004)}" rx="${r(L)}" ry="${r(Math.max(0.6, L * 0.16))}" fill="${g}"/>`;
+    if (fu) for (const f of fu) svg += `<ellipse cx="${r((f - mx) * k * dir)}" cy="${r((x1 - x0) * k * 0.002)}" rx="${r(Math.max(0.5, (x1 - x0) * k * 0.035))}" ry="${r(Math.max(0.25, (x1 - x0) * k * 0.008))}" fill="#000" opacity=".38"/>`;
   }
   svg += `<g transform="scale(${r4(dir * k)} ${r4(k)}) translate(${r(-mx)} 0)">${z.svg}</g>`;
   const box = [(dir === 1 ? x0 - mx : -(x1 - mx)) * k, y0 * k, (dir === 1 ? x1 - mx : -(x0 - mx)) * k, y1 * k];
