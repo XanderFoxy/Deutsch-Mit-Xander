@@ -5,6 +5,8 @@
         [--breite 1800] [--massstab]
    Ohne --massstab: jedes Tier füllt seine Kachel (zum Begutachten).
    Mit  --massstab: alle Tiere im echten Größenverhältnis nebeneinander.
+   Mit  --gross <id>: EIN Tier groß (für den Kritiker) + <ausgabe>-kopf.png (Kopfbereich in voller Auflösung)
+        und <ausgabe>-szene.png (so klein wie in einer Bilderwelt-Szene, mit T.fein = false).
    ===================================================================== */
 "use strict";
 const path = require("path"), fs = require("fs");
@@ -19,9 +21,11 @@ const nur = wert("--nur", "");
 const spalten = Number(wert("--spalten", 6));
 const breitePx = Number(wert("--breite", 1800));
 const massstab = arg.includes("--massstab");
+const gross = wert("--gross", "");
 
 let arten = alleArten();
-if (nur) {
+if (gross) arten = arten.filter((a) => a.id === gross);
+if (nur && !gross) {
   const teile = nur.split(",");
   arten = arten.filter((a) => teile.includes(a.id) || teile.includes(a.datei) || teile.includes(a.datei.replace(/\.js$/, "")));
 }
@@ -30,8 +34,18 @@ if (!arten.length) { console.error("keine Arten"); process.exit(1); }
 const S = neueSzene({ id: "tierblatt", kuerzel: "tb", titel: "Tiere", emoji: "", thema: "", fassung: 854 });
 let inhalt = "", W, H;
 const schrift = `font-family="Nunito, Arial, sans-serif"`;
+const T_HG = "#ece6da";
 
-if (!massstab) {
+if (gross) {
+  const a = arten[0];
+  const k = Math.min(1500 / a.laenge, 900 / a.hoehe);
+  W = 1600; H = Math.round(a.hoehe * k + 80);
+  const s1 = setze(S, a, W / 2, H - 40, k, { praefix: a.id });
+  inhalt = `<rect width="${W}" height="${H}" fill="${T_HG}"/>` + s1.svg;
+  /* klein wie in einer Szene: 1 m = 30 Einheiten, ohne Feinheit, rechts unten eingeblendet */
+  const s2 = setze(S, a, W - 20 - a.laenge * 15, H - 12, 30, { praefix: a.id + "_sz", fein: false });
+  inhalt += `<g opacity=".98">${s2.svg}</g>`;
+} else if (!massstab) {
   const ZB = 160, ZH = 120;
   const zeilen = Math.ceil(arten.length / spalten);
   W = spalten * ZB; H = zeilen * ZH;
@@ -81,7 +95,15 @@ const html = `<!doctype html><html><head><style>body{margin:0;background:#fff}sv
   const pg = await br.newPage({ viewport: { width: breitePx, height: Math.round(breitePx * H / W) } });
   await pg.setContent(html);
   await pg.screenshot({ path: aus, fullPage: true });
+  if (gross) {
+    /* Kopf: Blick nach rechts → rechtes Drittel, obere zwei Drittel, in doppelter Auflösung */
+    const hPx = Math.round(breitePx * H / W);
+    await pg.setViewportSize({ width: breitePx, height: hPx });
+    const pg2 = await br.newPage({ viewport: { width: breitePx, height: hPx }, deviceScaleFactor: 2 });
+    await pg2.setContent(html);
+    await pg2.screenshot({ path: aus.replace(/\.png$/, "") + "-kopf.png", clip: { x: Math.round(breitePx * 0.58), y: 0, width: Math.round(breitePx * 0.42), height: Math.round(hPx * 0.7) } });
+  }
   await br.close();
-  const bytes = arten.map((a) => { const T = require("./kern").werkzeug(neueSzene({ id: "x", kuerzel: "x" }), a.id); return [a.id, a.zeichne(T).svg.length]; });
-  console.log(aus, arten.length + " Arten", "SVG-Größe je Art (Bytes):", bytes.map(([i, n]) => i + " " + n).join(", "));
+  const groesse = (a, fein) => { const S2 = neueSzene({ id: "x", kuerzel: "x" }); const T = require("./kern").werkzeug(S2, a.id); T.fein = fein; return a.zeichne(T).svg.length + S2.defs.join("").length; };
+  console.log(aus, arten.length + " Arten", "Größe je Art in Bytes (fein / Szene):", arten.map((a) => a.id + " " + groesse(a, true) + " / " + groesse(a, false)).join(", "));
 })();

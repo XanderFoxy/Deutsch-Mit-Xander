@@ -66,3 +66,53 @@ module.exports = [
    PNG ansehen (Read). Streng kritisieren, verbessern, wieder ansehen – mindestens zweimal je Art. Zum Schluss einmal
    `--massstab` für deine Gruppe (stimmen die Größen zueinander?).
 3. Nur deine Datei schreiben. Kein git, keine anderen Dateien, keine Szenen ändern.
+
+---
+
+## MASSSTAB 2 – gilt ab sofort und hat Vorrang (Xander, 03.10., zweiter Auftrag)
+
+XANDER, wörtlich: „Die sollen fast fotorealistisch sein … mehr Struktur, mehr Details, mehr Wiedererkennungswert … Ich will
+Augen sehen. Ich will Wimpern sehen … jede Pore … jedes einzelne Haar … Zähne, Augen, Glieder, Muskeln, Sehnen, Pupillen,
+Krallen, Pfotenfell, Fellstruktur … alles mit Licht und Schatten realistisch plastisch massiv … Nimm dir für jedes einzelne
+Tier mindestens 10 Minuten … Sag deinem Kritiker, dass er das Schärfste durchdenken soll, bevor er überhaupt ein Okay gibt …
+viel mehr Vielfalt bei den Tieren.“
+
+**Ziel: so nah am Naturfoto, wie Vektorgrafik kommt.** Vorbild ist hochwertige naturkundliche Illustration (Field-Guide-
+Tafeln, Museumsillustration), nicht Clipart.
+
+### Was jetzt Pflicht ist
+1. **Augen** mit `T.augeReal`: Lidspalte, Iris mit Fasern und dunklem Rand, artgerechte Pupille (Katzen: rund bei Großkatzen,
+   Schlitz bei Hauskatze/Fuchs; Ziege/Schaf/Pferd: quer; Krokodil: senkrechter Schlitz), Lidschatten, Glanzlicht, feuchter
+   Lidrand, Wimpern wo das Tier welche hat (Pferd, Kuh, Kamel, Giraffe, Elefant: ja – lang; Katzen: kaum; Vögel/Reptilien: nein,
+   dafür Nickhaut/Augenring).
+2. **Fell Haar für Haar**: `T.haare` in Wuchsrichtung, mehrere Lagen (dunkle Unterwolle, Deckhaar, helle Haarspitzen am Licht),
+   Fellstrich folgt dem Körper (Wirbel an Schulter/Flanke, Bauchkante, Ohrrand, Mähne lang und strähnig). Dazu `T.textur`
+   mit `T.rauschen` (gestreckt in Wuchsrichtung) für die feine Grundstruktur.
+3. **Haut, Poren, Schuppen, Runzeln** mit `T.relief` (Elefant, Nashorn, Nilpferd, Krokodil, Saurier, Füße, Nasen):
+   fein dosiert – zuerst schwach (tiefe 0,3–0,8), am Bild prüfen; es darf nie nach Stein/Rinde aussehen, außer es IST so.
+4. **Anatomie sichtbar**: Muskelgruppen (Schulter, Oberarm, Oberschenkel, Hals) als weiche Licht-/Schattenformen, Sehnen an
+   den Läufen, Gelenke (Ellbogen, Handwurzel, Knie, Sprunggelenk), Zehenballen, Krallen (Farbe, Krümmung, Glanz), Hufe mit
+   Kronrand, Zähne (Eckzähne, Schneidezähne, Zahnfleisch) wo das Maul offen oder die Zähne sichtbar sind, Nasenspiegel mit
+   Nasenlöchern und feuchtem Glanz, Ohrmuschel mit Innenhaar, Tasthaare.
+5. **Licht und Schatten**: Licht von links oben; Eigenschatten unter Bauch, Hals, Kinn; Kernschatten und Reflexlicht an der
+   Unterseite; Glanz auf Nase, Augen, Krallen, Hufen, nasser Haut. Plastisch, massiv.
+6. **Wiedererkennungswert**: Ein Kind erkennt das Tier sofort – und ein Biologe findet keinen Fehler.
+
+### Größe (neu)
+- Volle Feinheit (`T.fein = true`): ≤ 70 KB je Art (Saurier ≤ 90 KB) – `blatt.js` zeigt „fein / Szene“.
+- Szene (`T.fein = false`, kleine Darstellung): ≤ 25 KB. `T.haare` macht das von selbst (ein Viertel der Haare); eigene
+  Mikrodetails (Poren-Linien, einzelne Schuppen) ebenfalls nur bei `T.fein` zeichnen.
+
+### Ablauf je Tier (mindestens 10 Minuten, mit unabhängigem Kritiker)
+1. Recherche (Websuche): Naturfotografie-Beschreibungen, Anatomie, Fell-/Federzonen, Farben – als `RECHERCHE`-Kommentar.
+2. Zeichnen; `node werkzeug/bilderwelt/tiere/blatt.js <ordner>/<id>.png --gross <id> --breite 1600` erzeugt
+   `<id>.png` (ganz groß, rechts unten zusätzlich klein wie in einer Szene) und `<id>-kopf.png` (Kopf in doppelter Auflösung).
+   Beide ansehen (Read).
+3. **Kritiker**: Starte für jedes Tier einen eigenen, frischen Kritiker (Agent-Werkzeug, Typ general-purpose) mit den drei
+   Bildpfaden, der Art und deinen Recherche-Stichpunkten. Auftrag an ihn: „Du bist der strengste Art Director der Welt und
+   Biologe. Recherchiere selbst (Websuche) das Aussehen der Art. Sieh dir die Bilder an. Bewerte 1–10: Anatomie/Proportionen,
+   Kopf/Gesicht, Augen, Fell/Haut/Federn, Details (Zähne, Krallen, Hufe, Muskeln, Sehnen), Licht/Schatten/Plastizität,
+   Wiedererkennung, Wirkung klein in der Szene. Gib eine Liste konkreter Mängel mit Ort und genauer Korrektur. OK NUR, wenn
+   jede Note ≥ 9. Im Zweifel: nicht OK.“
+4. Mängel beheben, neu rendern, **wieder einen frischen Kritiker** fragen – bis OK (höchstens 5 Runden; danach die
+   verbleibenden Mängel ehrlich melden).

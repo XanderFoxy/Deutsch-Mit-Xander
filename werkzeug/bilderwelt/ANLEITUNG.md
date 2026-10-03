@@ -90,3 +90,32 @@ Der Maßstab ist die Bäckerei: `werkzeug/bilderwelt/szenen/baeckerei.js`. Lies 
   - Fehlt etwas im Baukasten, baue es als Hilfsfunktion in deine Bau-Datei.
 - Vorschaubilder nur in den Arbeitsordner, den dir der Auftrag nennt, nicht ins Repo.
 - Kein Browser außer den beiden Werkzeugen oben; keine Netzwerkdienste außer der Websuche.
+
+## Sehenswürdigkeiten, Städte und Länder (FASSUNG 854)
+
+XANDER (03.10.), wörtlich: „die bekannten Sehenswürdigkeiten … mit Recherche zu den einzelnen Städten in Deutschland, was es
+dort zu sehen gibt … und zu den bekanntesten Städten in anderen Ländern, die berühmt für irgendetwas sind … als perfekter
+Spieledesigner, als Profi-Grafikdesigner auf Hollywood-Niveau … komprimiert in einer Übersicht, die ihresgleichen sucht“ –
+und (Funk 291): „mit größter Sorgfalt und Präzision auf höchstem Niveau“.
+
+- **Neue Szene je Stadt/Ort** (`neueSzene({ id, titel, emoji, thema, kuerzel, fassung: 854 })`; thema „Deutschland“ für
+  deutsche Städte, „Länder“ für die Welt). Größe 320×200, bei vielen Wahrzeichen bis 400×260.
+- **Ein echter Standort**: Wähle den berühmtesten Blick (Postkartenmotiv), recherchiere ihn genau (Websuche, mehrere
+  Quellen): Silhouette, Proportionen (Höhen in Metern), Anzahl der Türme/Bögen/Fenster, Baustil, Materialien, Farben,
+  Dachformen, Schmuck. Wo nicht alles in einen Blick passt, ordne nach echten Himmelsrichtungen und schreibe das in den
+  RECHERCHE-Kommentar.
+- **Wahrzeichen wiedererkennbar und präzise**: Jedes Wahrzeichen ist ein eigenes Teil mit Wort; Details (Uhr, Figur, Portal,
+  Fenster, Kuppel) als Lupen-Teile (`unter` + `zoom`). Licht und Schatten, Steinstruktur (`T.relief`-ähnlich über eigene
+  Filter oder Verläufe), Spiegelungen im Wasser, Himmel passend zur Tageszeit.
+- **Typisches der Stadt** im Vordergrund: Speise, Verkehrsmittel, Brauch, Souvenir (z. B. Frankfurt: Apfelwein/Bembel; Nürnberg:
+  Lebkuchen, Christkindlesmarkt; Bremen: Stadtmusikanten; New York: Yellow Cab, Hotdog; Venedig: Gondel, Gondoliere).
+- **Wörter**: 15–30 je Szene, Duden, mit Artikel, Silben, it/itSyl/en; Eigennamen der Wahrzeichen dürfen Wörter sein
+  („das Brandenburger Tor“), dazu Gattungswörter („der Turm“, „die Kuppel“). Kurzer, wahrer `tipp` bei 4–8 Teilen.
+- **Übersichtskarten** (`deutschlandkarte`, `weltkarte`): echte Umrisse (vereinfacht, aber richtig), Relief/Wasser, an jedem
+  Ort ein kleines, sofort erkennbares Wahrzeichen-Bild; jedes ist ein Teil mit `lupe: "<szenen-id>"` (führt in die Stadt-
+  oder Länderszene). Auch auf vorhandene Szenen verweisen (berlin, muenchen, koeln, hamburg, dresden, leipzig, magdeburg,
+  rom, aegypten, italien, frankreich, spanien, grossbritannien, griechenland, tuerkei, japan).
+- **Kritiker**: Für jede Szene einen frischen, unabhängigen Kritiker (Agent, general-purpose) mit den Vorschaubildern fragen:
+  „strengster Art Director und Reiseführer-Autor; recherchiere selbst; Noten 1–10 für Wiedererkennung, Genauigkeit der
+  Wahrzeichen, Perspektive/Logik, Licht/Material, Details/Lupen, Typisches der Stadt, Antippbarkeit; OK nur bei allen ≥ 9“.
+  Mängel beheben, neuer Kritiker, bis OK (höchstens 5 Runden).
