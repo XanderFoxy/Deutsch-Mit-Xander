@@ -17,10 +17,11 @@
      ein PROTOKOLL.
    - Durchs Fenster des Wachraums sieht man auf den Hof: der STREIFEN-
      WAGEN, silbern mit blauen Flächen, „POLIZEI“ und Blaulichtbalken.
-   Maßstab: Kamera 2,3 m hoch, Horizont y = 66; Einheiten je Meter =
-   (y − 66) / 2,3. Die Ebene von Tresen und Bürgerwand liegt bei y = 150
-   (≈ 36,5 je Meter), die Rückwand des Wachraums bei y = 116.
-   Blick: von links, Fluchtpunkt (230 | 66) — der Tresen läuft nach
+   Maßstab: Kamera 1,96 m hoch, Horizont y = 60; Einheiten je Meter =
+   (y − 60) / 1,96. Die Ebene von Scheibe und Bürgerwand liegt bei
+   y = 150 (≈ 46 je Meter), der Tresen ragt 0,25 m davor, die Rückwand
+   des Wachraums steht bei y = 112.
+   Blick: von links, Fluchtpunkt (230 | 60) — der Tresen läuft nach
    rechts weg in den Wachraum. Farben: Weißgrau, Anthrazit, Polizeiblau.
    ===================================================================== */
 "use strict";
@@ -31,8 +32,8 @@ const B = require("../bau");
 const S = neueSzene({ id: "polizeiwache", titel: "Die Polizeiwache", emoji: "🚓", thema: "Behörden", kuerzel: "pwa", fassung: 852 });
 const rnd = zufall(110);
 const r = B.r;
-const VP = { x: 230, y: 66 };
-const SK = (y) => (y - VP.y) / 2.3;
+const VP = { x: 230, y: 60 };
+const SK = (y) => (y - VP.y) / 1.96;
 const auf = (x0, y0, y) => VP.x + (x0 - VP.x) * (y - VP.y) / (y0 - VP.y);
 
 function figur(spec, hoehe) {
@@ -57,7 +58,7 @@ const SCHWARZ = S.lg("geraet", [[0, "#3a3e44"], [1, "#1c1f23"]]);
    ===================================================================== */
 const EB = 150, GX = 118;                 // Ebene Tresen/Bürgerwand, linke Kante der Scheibe
 const DECKE = EB - 2.7 * SK(EB);           // Deckenhöhe in der Ebene
-const RW = 116, RWO = RW - 2.7 * SK(RW);   // Rückwand Wachraum: Fuß, Oberkante
+const RW = 112, RWO = RW - 2.7 * SK(RW);   // Rückwand Wachraum: Fuß, Oberkante
 const xRW0 = auf(GX, EB, RW), xRW1 = auf(320, EB, RW);
 const FEN = { x0: 186, x1: 266, yo: RW - 2.25 * SK(RW), yu: RW - 0.9 * SK(RW) };
 {
@@ -68,13 +69,13 @@ const FEN = { x0: 186, x1: 266, yo: RW - 2.25 * SK(RW), yu: RW - 0.9 * SK(RW) };
     k += `<line x1="${xb}" y1="${r(DECKE)}" x2="${r(x2)}" y2="0" stroke="#cfd3d6" stroke-width=".35"/>`;
   }
   k += `<path d="M40 ${r(DECKE - 8)} L92 ${r(DECKE - 8)} L86 ${r(DECKE - 4)} L44 ${r(DECKE - 4)} Z" fill="#fbfdff" stroke="#d6dadd" stroke-width=".3"/>`;
-  /* Wachraum: Decke, Seitenwand rechts, Rückwand mit Fenster */
-  k += `<path d="M${GX} ${r(DECKE)} L320 ${r(DECKE)} L320 ${r(auf(320, EB, RW) > 320 ? RWO : RWO)} L${r(xRW1)} ${r(RWO)} L${r(xRW0)} ${r(RWO)} Z" fill="#e9ebec"/>`;
+  /* Wachraum: Decke, Seitenwände, Rückwand mit Fenster, Boden */
+  const ext = (xp, yp, x) => VP.y + (yp - VP.y) * (x - VP.x) / (xp - VP.x);   // Fluchtlinie durch (xp|yp) bis x
+  k += `<path d="M${GX} ${r(DECKE)} L320 ${r(DECKE)} L320 ${r(ext(xRW1, RWO, 320))} L${r(xRW1)} ${r(RWO)} L${r(xRW0)} ${r(RWO)} Z" fill="#e9ebec"/>`;
   k += `<path d="M${GX} ${r(DECKE)} L${r(xRW0)} ${r(RWO)} L${r(xRW0)} ${RW} L${GX} ${EB} Z" fill="#d9dde0"/>`;
   k += `<rect x="${r(xRW0)}" y="${r(RWO)}" width="${r(xRW1 - xRW0)}" height="${r(RW - RWO)}" fill="${S.lg("rw", [[0, "#f1f2f3"], [1, "#e3e6e8"]])}"/>`;
-  k += `<path d="M${r(xRW1)} ${r(RWO)} L320 ${r(RWO - (320 - xRW1) * (VP.y - RWO) / (xRW1 - VP.x) * -1)} L320 ${r(RW + (320 - xRW1) * (RW - VP.y) / (xRW1 - VP.x))} L${r(xRW1)} ${RW} Z" fill="#d4d8db"/>`;
-  /* Boden des Wachraums (grauer Kautschuk) */
-  k += `<path d="M${GX} ${EB} L${r(xRW0)} ${RW} L${r(xRW1)} ${RW} L320 ${r(RW + (320 - xRW1) * (RW - VP.y) / (xRW1 - VP.x))} L320 ${EB} Z" fill="#8c9296"/>`;
+  k += `<path d="M${r(xRW1)} ${r(RWO)} L320 ${r(ext(xRW1, RWO, 320))} L320 ${r(ext(xRW1, RW, 320))} L${r(xRW1)} ${RW} Z" fill="#d4d8db"/>`;
+  k += `<path d="M${GX} ${EB} L${r(xRW0)} ${RW} L${r(xRW1)} ${RW} L320 ${r(ext(xRW1, RW, 320))} L320 ${EB} Z" fill="#8c9296"/>`;
   /* Fenster: draußen der Hof — Himmel, Mauer, Asphalt (der Wagen ist ein eigenes Teil) */
   k += `<rect x="${FEN.x0}" y="${r(FEN.yo)}" width="${FEN.x1 - FEN.x0}" height="${r(FEN.yu - FEN.yo)}" fill="${S.lg("hof", [[0, "#bcd9ee"], [0.55, "#dfeaf0"], [0.56, "#a9a59c"], [0.7, "#bdb8ad"], [0.71, "#77797b"], [1, "#5f6264"]])}"/>`;
   k += `<rect x="${FEN.x0}" y="${r(FEN.yo + (FEN.yu - FEN.yo) * 0.36)}" width="${FEN.x1 - FEN.x0}" height="3" fill="#8fb57a" opacity=".7"/>`;
@@ -99,7 +100,7 @@ const FEN = { x0: 186, x1: 266, yo: RW - 2.25 * SK(RW), yu: RW - 0.9 * SK(RW) };
    1 — DER STREIFENWAGEN (draußen auf dem Hof, durch das Fenster)
    ===================================================================== */
 {
-  const s = SK(98);          // Hof: ≈ 14 Einheiten je Meter
+  const s = SK(91);          // Hof: ≈ 16 Einheiten je Meter
   const L = 4.9 * s, H = 1.5 * s;
   let k = `<ellipse cx="0" cy=".4" rx="${r(L / 2)}" ry="1.2" fill="#1b1d1f" opacity=".45"/>`;
   /* Karosserie (silber), Kombi */
@@ -118,7 +119,7 @@ const FEN = { x0: 186, x1: 266, yo: RW - 2.25 * SK(RW), yu: RW - 0.9 * SK(RW) };
   for (const x of [-L * 0.31, L * 0.3]) k += `<circle cx="${r(x)}" cy="${r(-H * 0.2)}" r="${r(H * 0.22)}" fill="#1b1d1f"/><circle cx="${r(x)}" cy="${r(-H * 0.2)}" r="${r(H * 0.12)}" fill="#b9c0c6"/>`;
   k += `<path d="M${r(-L / 2 + 1)} ${r(-H * 0.55)} L${r(L / 2 - 1)} ${r(-H * 0.55)}" stroke="#fff" stroke-width=".5" opacity=".7"/>`;
   k += `<rect x="${r(L / 2 - 1.6)}" y="${r(-H * 0.5)}" width="1.6" height="${r(H * 0.1)}" fill="#fff4c4"/>`;
-  S.teil({ id: "pw_streifenwagen", de: "der Streifenwagen", syl: "STREI-fen-wa-gen", it: "l'auto della polizia", itSyl: "AU-to della po-li-ZI-a", en: "patrol car", x: 228, y: 98, kunst: k,
+  S.teil({ id: "pw_streifenwagen", de: "der Streifenwagen", syl: "STREI-fen-wa-gen", it: "l'auto della polizia", itSyl: "AU-to della po-li-ZI-a", en: "patrol car", x: 228, y: 91, kunst: k,
     tipp: "Die Polizei in fast ganz Deutschland fährt blau-silberne Streifenwagen. Notruf: 110." });
   /* Fensterrahmen und Spiegelung darüber (Kulisse vor dem Wagen: als „davor“ würde er alles überdecken — hier reicht die Wand) */
 }
@@ -138,7 +139,7 @@ const FEN = { x0: 186, x1: 266, yo: RW - 2.25 * SK(RW), yu: RW - 0.9 * SK(RW) };
    ===================================================================== */
 const pinnUnter = [];
 {
-  const cx = 50, cy = 95, w = 66, h = 40;
+  const cx = 38, cy = 92, w = 64, h = 40;
   let k = `<rect x="${-w / 2 - 1.4}" y="${-h / 2 - 1.4}" width="${w + 2.8}" height="${h + 2.8}" rx="1" fill="${STAHL}"/>`;
   k += `<rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" fill="${S.lg("filz", [[0, "#2f4f7d"], [1, "#253f66"]])}"/>`;
   const plakat = (x, y, pw, ph, kopf, kf, dreh, inhalt) => `<g transform="rotate(${dreh} ${x} ${y})"><rect x="${x - pw / 2}" y="${y - ph / 2}" width="${pw}" height="${ph}" fill="#fdfdfb"/><rect x="${x - pw / 2}" y="${y - ph / 2}" width="${pw}" height="${r(ph * 0.17)}" fill="${kf}"/>${T(x, y - ph / 2 + ph * 0.13, r(ph * 0.11), kopf, "#fff", ' font-weight="bold"')}${inhalt}<circle cx="${x}" cy="${r(y - ph / 2 + 0.8)}" r=".6" fill="#e0a526"/></g>`;
@@ -188,7 +189,7 @@ const pinnUnter = [];
   k += `<rect x="${r(-w / 2 + 3)}" y="${r(-h + 5)}" width="${r(w - 6)}" height="14" rx=".5" fill="#9fb3bf" stroke="#7d868d" stroke-width=".4"/><path d="M${r(-w / 2 + 3)} ${r(-h + 5)} l${r(w - 6)} 14" stroke="#7d868d" stroke-width=".25"/><path d="M${r(w / 2 - 3)} ${r(-h + 5)} l${r(-(w - 6))} 14" stroke="#7d868d" stroke-width=".25"/>`;
   k += `<rect x="${r(-w / 2 + 3)}" y="${r(-h + 22)}" width="${r(w - 6)}" height="6" fill="#fff"/>` + T(0, -h + 26.2, 2.4, "Kein Zutritt", "#b8272a", ' font-weight="bold"');
   k += `<rect x="${r(w / 2 - 5)}" y="${r(-h * 0.5)}" width="3.6" height="1.2" rx=".5" fill="${STAHL}"/><rect x="${r(w / 2 + 2.2)}" y="${r(-h * 0.56)}" width="2.4" height="3.6" rx=".4" fill="#2a2e33"/><circle cx="${r(w / 2 + 3.4)}" cy="${r(-h * 0.56 + 1)}" r=".5" fill="#3ca35a"/>`;
-  S.teil({ id: "pw_tuer", de: "die Tür", syl: "TÜR", it: "la porta", itSyl: "POR-ta", en: "door", x: 100, y: EB, steht: true, kunst: k,
+  S.teil({ id: "pw_tuer", de: "die Tür", syl: "TÜR", it: "la porta", itSyl: "POR-ta", en: "door", x: 95, y: EB, steht: true, kunst: k,
     tipp: "Diese Tür öffnet nur die Polizei — mit einem Summer." });
 }
 
@@ -204,7 +205,7 @@ const pinnUnter = [];
   /* Schulterklappe mit Sternen (Polizeimeisterin) */
   const sl = m.z.punkte.schulterL || m.z.punkte.schulterR;
   if (sl) auf_ += `<rect x="${r(sl[0] * m.k - 1.6)}" y="${r(sl[1] * m.k - 0.7)}" width="3.2" height="1.4" rx=".3" fill="#1b2c4f"/><circle cx="${r(sl[0] * m.k - 0.6)}" cy="${r(sl[1] * m.k)}" r=".35" fill="#cfd6df"/><circle cx="${r(sl[0] * m.k + 0.6)}" cy="${r(sl[1] * m.k)}" r=".35" fill="#cfd6df"/>`;
-  S.teil({ id: "pw_polizistin", de: "die Polizistin", syl: "Po-li-ZIS-tin", it: "la poliziotta", itSyl: "po-li-ZIOT-ta", en: "police officer", x: 226, y: fy, kunst: m.svg + auf_,
+  S.teil({ id: "pw_polizistin", de: "die Polizistin", syl: "Po-li-ZIS-tin", it: "la poliziotta", itSyl: "po-li-ZIOT-ta", en: "police officer", x: 194, y: fy, kunst: m.svg + auf_,
     tipp: "In fast allen Bundesländern trägt die Polizei Blau — nur Bayern hatte lange Grün." });
 }
 
@@ -212,11 +213,11 @@ const pinnUnter = [];
    5 — DER TRESEN (Edelstahl und Anthrazit) mit der Arbeitsfläche hinter
        der Scheibe — Lupe: Anzeige, Ausweis, Protokoll, Kugelschreiber
    ===================================================================== */
-const TR = { x0: GX, x1: 320, yf: EB + 26, ytief: 0.75 };   // Fußlinie vorn y=176, Tiefe 0,75 m
+const TR = { x0: GX, x1: 320, yf: EB + 12, yb: 140 };   // Fußlinie vorn und hinten
 const tresenUnter = [];
 const SCH = { yb: 0 };
 {
-  const s = SK(TR.yf), hT = 1.05 * s, yb = TR.yf - 0.75 * s / 2.2;    // Hinterkante (Fußlinie)
+  const s = SK(TR.yf), hT = 1.05 * s, yb = TR.yb;    // Hinterkante (Fußlinie)
   const xb0 = auf(TR.x0, TR.yf, yb), xb1 = auf(TR.x1, TR.yf, yb), sb = SK(yb);
   const cx = (TR.x0 + TR.x1) / 2;
   const P = (x, y) => `${r(x - cx)} ${r(y - TR.yf)}`;
@@ -242,11 +243,11 @@ const SCH = { yb: 0 };
   k += `<rect x="${r(TR.x0 - cx)}" y="${r(-hT + 2)}" width="${TR.x1 - TR.x0}" height="1.2" fill="#fff" opacity=".18"/>`;
   /* Arbeitsfläche hinter der Scheibe: Tastatur */
   const yP = (t) => TR.yf - hT + (yb - 1.05 * sb - (TR.yf - hT)) * t;   // Höhe der Platte zwischen vorn (0) und hinten (1)
-  k += `<path d="M${P(262, yP(0.72))} L${P(282, yP(0.72))} L${P(283, yP(0.86))} L${P(261, yP(0.86))} Z" fill="#2a2e33"/>`;
+  k += `<path d="M${P(262, yP(0.84))} L${P(282, yP(0.84))} L${P(283, yP(0.95))} L${P(261, yP(0.95))} Z" fill="#2a2e33"/>`;
   /* Dinge auf dem Tresen (Lupe) */
   const dok = [];
   {  /* Anzeigeformular in der Durchreiche (vorn, Bürgerseite) */
-    const x = 176, y = yP(0.18);
+    const x = 228, y = yP(0.2);
     let g = `<path d="M${P(x - 6, y + 1.6)} L${P(x + 6, y + 1.6)} L${P(x + 5.4, y - 2.2)} L${P(x - 5.4, y - 2.2)} Z" fill="#fcfcfa" stroke="#c9ccc9" stroke-width=".15"/>`;
     g += `<rect x="${r(x - 5 - cx)}" y="${r(y - 1.8 - TR.yf)}" width="10" height=".7" fill="${PBLAU}"/>`;
     for (let i = 0; i < 3; i++) g += `<rect x="${r(x - 4.6 - cx)}" y="${r(y - 0.7 + i * 0.7 - TR.yf)}" width="${8 - i * 2}" height=".25" fill="#8a8f95"/>`;
@@ -255,7 +256,7 @@ const SCH = { yb: 0 };
       tipp: "Eine Anzeige kann man bei jeder Polizeiwache erstatten — auch online." });
   }
   {  /* Personalausweis (Bürgerseite) */
-    const x = 158, y = yP(0.22);
+    const x = 180, y = yP(0.24);
     let g = `<path d="M${P(x - 3.4, y + 1.4)} L${P(x + 3.4, y + 1.4)} L${P(x + 3, y - 1.4)} L${P(x - 3, y - 1.4)} Z" fill="${S.lg("ausweis", [[0, "#e8eef5"], [0.5, "#f1ecd9"], [1, "#e3d7ee"]], 0, 0, 1, 0)}" stroke="#9aa5b0" stroke-width=".15"/>`;
     g += `<rect x="${r(x - 2.8 - cx)}" y="${r(y - 1 - TR.yf)}" width="1.6" height="2" fill="#a88b74"/><rect x="${r(x - 0.6 - cx)}" y="${r(y - 0.9 - TR.yf)}" width="3" height=".4" fill="#5a6a80"/><rect x="${r(x - 0.6 - cx)}" y="${r(y - 0.1 - TR.yf)}" width="2.4" height=".3" fill="#8a96a3"/>`;
     k += g;
@@ -267,7 +268,7 @@ const SCH = { yb: 0 };
     dok.push({ id: "pw_kugelschreiber", de: "der Kugelschreiber", syl: "KU-gel-schrei-ber", it: "la penna a sfera", itSyl: "PEN-na a SFE-ra", en: "ballpoint pen", x, y: y + 1.6, w: 8, h: 3.6 });
   }
   {  /* Protokoll (hinter der Scheibe, bei der Polizistin) */
-    const x = 244, y = yP(0.72);
+    const x = 246, y = yP(0.84);
     let g = `<path d="M${P(x - 5, y + 1.6)} L${P(x + 5, y + 1.6)} L${P(x + 4.4, y - 2)} L${P(x - 4.4, y - 2)} Z" fill="#fbfbf8" stroke="#c9ccc9" stroke-width=".15"/>`;
     for (let i = 0; i < 4; i++) g += `<rect x="${r(x - 4 - cx)}" y="${r(y - 1.6 + i * 0.75 - TR.yf)}" width="${7.6 - (i % 2) * 2}" height=".25" fill="#5a6a80"/>`;
     k += g;
@@ -277,7 +278,7 @@ const SCH = { yb: 0 };
   SCH.yb = yb; SCH.yP = yP; SCH.hT = hT;
   dok.forEach((d) => tresenUnter.push({ id: d.id, de: d.de, syl: d.syl, it: d.it, itSyl: d.itSyl, en: d.en, tipp: d.tipp, x: d.x, y: d.y, kunst: flaeche(-d.w / 2, -d.h, d.w, d.h, 0.6) }));
   S.teil({ id: "pw_tresen", de: "der Tresen", syl: "TRE-sen", it: "il bancone", itSyl: "ban-CO-ne", en: "front desk", x: cx, y: TR.yf, steht: true, kunst: k,
-    zoom: { x: 140, y: 104, w: 150, h: 50 * 2 / 2 + 4 }, unter: tresenUnter,
+    zoom: { x: 140, y: 78, w: 150, h: 54 }, unter: tresenUnter,
     tipp: "Am Tresen der Wache spricht man durch die Scheibe mit der Polizei." });
 }
 
@@ -285,7 +286,7 @@ const SCH = { yb: 0 };
    6 — AUF DEM TRESEN hinter der Scheibe: Computer, Telefon, Funkgerät
    ===================================================================== */
 {
-  const y = SCH.yP(0.62);
+  const y = SCH.yP(0.8);
   let k = schatten(0, 0.3, 7, 0.9, 0.3);
   k += `<path d="M-3.4 0 L3.4 0 L2.6 -1.2 L-2.6 -1.2 Z" fill="#30353a"/><rect x="-.9" y="-4.4" width="1.8" height="3.6" fill="#3a3f44"/>`;
   k += `<path d="M-10 -19 L10 -20 L10 -4.6 L-10 -4 Z" fill="#1c1f23"/><path d="M-9 -18 L9 -18.9 L9 -5.4 L-9 -5 Z" fill="${S.lg("bild", [[0, "#e7eef6"], [1, "#c9d7e6"]])}"/>`;
@@ -295,7 +296,7 @@ const SCH = { yb: 0 };
   S.teil({ oben: true, id: "pw_computer_pw", de: "der Computer", syl: "Com-PU-ter", it: "il computer", itSyl: "com-PU-ter", en: "computer", x: 272, y, steht: true, kunst: k });
 }
 {
-  const y = SCH.yP(0.5);
+  const y = SCH.yP(0.7);
   let k = schatten(0, 0.2, 5, 0.7, 0.3);
   k += `<path d="M-4.6 0 L4.6 0 L4 -3.4 L-4 -3.4 Z" fill="${SCHWARZ}"/><rect x="-2" y="-3.2" width="4" height="1.6" rx=".3" fill="#9cc6d8"/>`;
   for (let i = 0; i < 6; i++) k += `<rect x="${-2.6 + (i % 3) * 1.8}" y="${-1.2 + Math.floor(i / 3) * 0.6}" width="1.2" height=".4" fill="#596068"/>`;
@@ -305,7 +306,7 @@ const SCH = { yb: 0 };
 }
 {
   /* DAS FUNKGERÄT — Handfunkgerät (Digitalfunk) in der Ladeschale */
-  const y = SCH.yP(0.45);
+  const y = SCH.yP(0.66);
   let k = schatten(0, 0.2, 4, 0.6, 0.3);
   k += `<path d="M-3.4 0 L3.4 0 L3 -3 L-3 -3 Z" fill="#2a2e33"/><circle cx="2.2" cy="-1.4" r=".45" fill="#3ca35a"/>`;
   k += `<rect x="-2" y="-12.4" width="4" height="10.4" rx=".8" fill="${S.lg("funk", [[0, "#3d4248"], [1, "#1c1f23"]], 0, 0, 1, 0)}"/>`;
@@ -321,7 +322,7 @@ const SCH = { yb: 0 };
        Durchreiche und dem Schild „Notruf 110“
    ===================================================================== */
 {
-  const s = SK(EB + 13), hT = SCH.hT, yo = DECKE + 1, yu = TR.yf - hT - 1.2 - (TR.yf - hT - (SCH.yb - 1.05 * SK(SCH.yb))) * 0.42;
+  const yo = DECKE + 1, yu = EB - 1.05 * SK(EB);
   const x0 = GX + 2, x1 = 320;
   let k = "";
   /* Profile oben und an den Stößen (grüne Glaskante) */
@@ -379,11 +380,27 @@ const SCH = { yb: 0 };
    9 — DIE BÜRGERIN (vor dem Tresen, erstattet eine Anzeige)
    ===================================================================== */
 {
-  const fy = 186, s = SK(fy);
+  const fy = 180, s = SK(fy);
   const m = figur({ id: "pwa_bue", geschlecht: "w", pose: "stehen", blick: 148, frisur: "lang", haarfarbe: "rot", haut: "hell",
     kleidung: { oberteil: { stueck: "pullover", farbe: "#d8ad3a" }, jacke: { stueck: "jacke", farbe: "#2f3035" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "#7a3b3b" } } }, s * 1.66);
-  S.teil({ id: "pw_buergerin", de: "die Bürgerin", syl: "BÜR-ge-rin", it: "la cittadina", itSyl: "cit-ta-DI-na", en: "member of the public", x: 138, y: fy, kunst: m.svg,
+  S.teil({ id: "pw_buergerin", de: "die Bürgerin", syl: "BÜR-ge-rin", it: "la cittadina", itSyl: "cit-ta-DI-na", en: "member of the public", x: 146, y: fy, kunst: m.svg,
     tipp: "Ihr Fahrrad wurde gestohlen. Sie erstattet eine Anzeige." });
+}
+
+/* =====================================================================
+   10 — DAS SCHILD (hängt vor der Scheibe) und DIE ÜBERWACHUNGSKAMERA
+   ===================================================================== */
+{
+  let k = `<line x1="-20" y1="-9" x2="-20" y2="-4" stroke="#8a9196" stroke-width=".5"/><line x1="20" y1="-9" x2="20" y2="-4" stroke="#8a9196" stroke-width=".5"/>`;
+  k += `<rect x="-30" y="-4" width="60" height="11" rx="1" fill="${PBLAU}"/><rect x="-29" y="-3" width="58" height="9" rx=".6" fill="none" stroke="#c9d3e3" stroke-width=".35"/>`;
+  k += T(0, 1.4, 3.6, "Anzeigenaufnahme", "#ffffff", ' font-weight="bold"') + T(0, 5, 2.2, "Auskunft · Fundsachen · Bitte hier warten", "#c9d3e3");
+  S.teil({ id: "pw_schild", de: "das Schild", syl: "SCHILD", it: "il cartello", itSyl: "car-TEL-lo", en: "sign", x: 236, y: r(DECKE + 4), kunst: k });
+}
+{
+  let k = `<rect x="-3.4" y="-1" width="6.8" height="1.6" rx=".4" fill="#e6e8ea"/><path d="M-3.6 .6 A3.6 3.6 0 0 0 3.6 .6 Z" fill="${S.rg("kuppel", [[0, "#5a646d"], [1, "#1c2126"]], 0.4, 0.3, 0.7)}"/>`;
+  k += `<circle cx="-.6" cy="2" r=".9" fill="#0d1014"/><circle cx="-.9" cy="1.7" r=".3" fill="#9fc6ff" opacity=".8"/><path d="M-2.8 1 A3 3 0 0 0 -1 3.6" stroke="#fff" stroke-width=".4" opacity=".4" fill="none"/>`;
+  S.teil({ oben: true, id: "pw_kamera", de: "die Überwachungskamera", syl: "Ü-ber-WA-chungs-ka-me-ra", it: "la telecamera di sorveglianza", itSyl: "te-le-CA-me-ra di sor-ve-GLIAN-za", en: "security camera", x: 70, y: 14, kunst: k + flaeche(-4.4, -1.4, 8.8, 6),
+    tipp: "Der Vorraum der Wache wird mit Kameras überwacht." });
 }
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/polizeiwache.js"));

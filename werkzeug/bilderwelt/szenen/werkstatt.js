@@ -85,6 +85,19 @@ const FEN = { x0: 154, x1: 222, y0: 28, y1: 82 };
 }
 
 /* =====================================================================
+   0 — DIE LAMPE (zwei LED-Werkstattleuchten an Ketten)
+   ===================================================================== */
+{
+  let k = "";
+  for (const x of [-62, 62]) {
+    k += `<path d="M${x - 16} -12 L${x - 14} -1 M${x + 16} -12 L${x + 14} -1" stroke="#7d868d" stroke-width=".4" stroke-dasharray=".8 .5"/>`;
+    k += `<rect x="${x - 20}" y="-1.6" width="40" height="3.6" rx="1.4" fill="${S.lg("leuchte", [[0, "#f4f6f6"], [1, "#b9c0c4"]])}"/><rect x="${x - 19}" y="1.4" width="38" height="1.2" rx=".6" fill="#ffffff"/>`;
+    k += `<path d="M${x - 19} 2.6 L${x - 34} 26 L${x + 34} 26 L${x + 19} 2.6 Z" fill="${S.lg("kegel", [[0, "#ffffff", 0.3], [1, "#ffffff", 0]])}" pointer-events="none"/>`;
+  }
+  S.teil({ id: "ws_lampe", de: "die Lampe", syl: "LAM-pe", it: "la lampada", itSyl: "LAM-pa-da", en: "lamp", x: 130, y: 14, kunst: k });
+}
+
+/* =====================================================================
    1 — DIE WERKZEUGWAND (OSB-Platte) — Lupe mit dem Handwerkzeug
    ===================================================================== */
 const WW = { x0: 8, x1: 100, y0: 38, y1: 90 };
@@ -330,7 +343,6 @@ const BANK = { x0: 10, x1: 102, oben: 97 };
     for (let j = 0; j < (i === 3 ? 3 : 4); j++) { const off = (j % 2) * 2; k += brett(yy, d, f, -cx + x0 - 2 + off, x1 - cx + 1 - off); yy -= d + 0.2; }
   });
   /* Stirnholz-Andeutung (Jahresringe) an den linken Enden */
-  for (let i = 0; i < 4; i++) k += `<ellipse cx="${-cx + x0 - 1}" cy="${-9.2 - i * 2.6}" rx=".6" ry="1" fill="#e2c48d" stroke="#a8823f" stroke-width=".15"/>`;
   S.teil({ id: "ws_holz", de: "das Holz", syl: "HOLZ", it: "il legno", itSyl: "LE-gno", en: "timber", x: cx, y: WAND_UNTEN, steht: true, kunst: k,
     tipp: "Im Regal liegt das Holz: Fichte ist hell und weich, Eiche ist hart." });
 }
@@ -341,11 +353,15 @@ const BANK = { x0: 10, x1: 102, oben: 97 };
 const SAEGE = { x: 186, y: 172 };
 let haende = null;
 {
-  const m = B.mensch({ id: "ws_tischler", geschlecht: "m", pose: "halten", blick: 8, frisur: "kurz", haarfarbe: "braun", haut: "hell", bart: true,
-    kleidung: { oberteil: { stueck: "hemd", farbe: "#8a3a33" }, schuerze: { stueck: "schuerze", farbe: "#3f4a3a" }, unterteil: { stueck: "arbeitshose", farbe: "#2f3a2f" }, schuhe: { stueck: "stiefel", farbe: "braun" }, zubehoer: { stueck: "brille" } } }, 0.25 * (148 + 4) * 1.8);
+  /* eigene Haltung „schieben“: leicht vorgebeugt, Arme nach vorn unten aufs Brett */
+  B.mensch({ pose: "stehen" }, 10);
+  const MEN = globalThis.DMA_MENSCH;
+  MEN.POSEN.ws_schieben = Object.assign({}, MEN.POSEN.halten, { lende: 14, brust: 8, nacken: -4, kopf: 4, schulterL: { vor: 40, seit: -8 }, schulterR: { vor: 40, seit: -8 }, ellbogenL: 25, ellbogenR: 25, unterarmL: 20, unterarmR: 20 });
+  const m = B.mensch({ id: "ws_tischler", geschlecht: "m", pose: "ws_schieben", blick: 8, frisur: "kurz", haarfarbe: "braun", haut: "hell", bart: true,
+    kleidung: { oberteil: { stueck: "hemd", farbe: "#8a3a33" }, schuerze: { stueck: "schuerze", farbe: "#3f4a3a" }, unterteil: { stueck: "arbeitshose", farbe: "#2f3a2f" }, schuhe: { stueck: "stiefel", farbe: "braun" }, zubehoer: { stueck: "brille" } } }, M(150) * 1.8);
   const hs = [m.z.handL, m.z.handR].filter(Boolean);
-  haende = { x: hs.reduce((s, h) => s + h.x, 0) / hs.length * m.k, y: Math.max(...hs.map((h) => h.y)) * m.k };
-  S.teil({ id: "tischler", de: "der Tischler", syl: "TISCH-ler", it: "il falegname", itSyl: "fa-le-GNA-me", en: "carpenter", x: SAEGE.x, y: 148, kunst: m.svg,
+  haende = { x0: Math.min(...hs.map((h) => h.x)) * m.k, x1: Math.max(...hs.map((h) => h.x)) * m.k, y: Math.max(...hs.map((h) => h.y)) * m.k };
+  S.teil({ id: "tischler", de: "der Tischler", syl: "TISCH-ler", it: "il falegname", itSyl: "fa-le-GNA-me", en: "carpenter", x: SAEGE.x, y: 150, kunst: m.svg,
     tipp: "In Süddeutschland sagt man „Schreiner“, im Norden „Tischler“." });
 }
 {
@@ -369,8 +385,8 @@ let haende = null;
   /* Sägeblatt ragt durch den Tisch; Spaltkeil; Schutzhaube darüber */
   k += `<path d="M-1.2 ${r(-T - 4)} A6 3 0 0 1 1.6 ${r(-T - 9)} L1.6 ${r(-T - 4)} Z" fill="#c9cfd4" opacity=".9"/>`;
   k += `<rect x="-.8" y="${r(-T - 14)}" width="1.6" height="6" fill="#59616a"/>`;
-  k += `<path d="M-3.4 ${r(-T - 9)} L3.4 ${r(-T - 9)} L3 ${r(-T - 15)} L-3 ${r(-T - 15)} Z" fill="${S.lg("haube", [[0, "#f4f6f6", 0.85], [1, "#c9cfd4", 0.75]])}" stroke="#7d868d" stroke-width=".3"/>`;
-  k += `<rect x="-.6" y="${r(-T - 22)}" width="1.2" height="7" fill="#7d868d"/><path d="M-.6 ${r(-T - 22)} L-14 ${r(-T - 22)} L-14 ${r(-T - 24)}" stroke="#7d868d" stroke-width="1.2" fill="none"/>`;
+  /* die Schutzhaube sitzt auf dem Brett — als Bild davor (fängt keinen Tipp ab) */
+  S.davor(`<g transform="translate(${SAEGE.x} ${SAEGE.y})"><path d="M-3.4 ${r(-T - 7)} L3.4 ${r(-T - 7)} L3 ${r(-T - 13)} L-3 ${r(-T - 13)} Z" fill="#e6eaec" opacity=".92" stroke="#7d868d" stroke-width=".3"/><rect x="-.6" y="${r(-T - 20)}" width="1.2" height="7" fill="#7d868d"/><path d="M-.6 ${r(-T - 20)} L-14 ${r(-T - 20)} L-14 ${r(-T - 22)}" stroke="#7d868d" stroke-width="1.2" fill="none"/></g>`);
   /* Absaugschlauch hinten */
   k += `<path d="M${r(-w / 2 + 3)} ${r(-T + 14)} Q${r(-w / 2 - 14)} ${r(-T + 20)} ${r(-w / 2 - 18)} -2" stroke="#2a2d31" stroke-width="2.4" fill="none"/>`;
   k += `<rect x="${r(-w / 2 + 4)}" y="${r(-T - 1)}" width="${r(w - 8)}" height=".6" fill="#fff" opacity=".4"/>`;
@@ -380,11 +396,11 @@ let haende = null;
 {
   /* DAS BRETT: liegt auf dem Sägetisch, reicht nach hinten bis in die Hände des Tischlers */
   const s = M(SAEGE.y), T = 0.87 * s;
-  const yv = SAEGE.y - T - 0.6, yh = 148 + haende.y + 1.4;
-  const xh = haende.x;
-  let k = `<path d="M${r(-6.4)} ${r(yv - SAEGE.y)} L${r(4.6)} ${r(yv - SAEGE.y)} L${r(xh + 3.6)} ${r(yh - SAEGE.y)} L${r(xh - 4.6)} ${r(yh - SAEGE.y)} Z" fill="${FICHTE}"/>`;
+  const yv = SAEGE.y - T - 0.6, yh = 150 + haende.y + 1.2;
+  const xa = haende.x0 - 0.6, xb = haende.x1 + 0.6, xh = (xa + xb) / 2;
+  let k = `<path d="M${r(-6.4)} ${r(yv - SAEGE.y)} L${r(4.6)} ${r(yv - SAEGE.y)} L${r(xb)} ${r(yh - SAEGE.y)} L${r(xa)} ${r(yh - SAEGE.y)} Z" fill="${FICHTE}"/>`;
   k += `<rect x="-6.4" y="${r(yv - SAEGE.y)}" width="11" height="1.4" fill="#c9a26a"/>`;
-  for (let i = 0; i < 4; i++) k += `<path d="M${r(-5 + i * 2.6)} ${r(yv - SAEGE.y)} L${r(xh - 3.4 + i * 1.9)} ${r(yh - SAEGE.y)}" stroke="#c9a26a" stroke-width=".25" opacity=".8"/>`;
+  for (let i = 0; i < 4; i++) k += `<path d="M${r(-5 + i * 2.6)} ${r(yv - SAEGE.y)} L${r(xa + 1 + i * (xb - xa - 2) / 3)} ${r(yh - SAEGE.y)}" stroke="#c9a26a" stroke-width=".25" opacity=".8"/>`;
   k += `<path d="M-2 ${r(yv - SAEGE.y - 2)} q1 -2 2.6 -1.2 M1 ${r(yv - SAEGE.y - 3)} q.6 -1.6 2 -1" stroke="#e2c48d" stroke-width=".6" fill="none"/>`;
   S.teil({ oben: true, id: "brett", de: "das Brett", syl: "BRETT", it: "l'asse", itSyl: "AS-se", en: "board", x: SAEGE.x, y: SAEGE.y, kunst: k,
     tipp: "Das Brett wird der Länge nach gesägt — man sagt: Es wird „aufgetrennt“." });

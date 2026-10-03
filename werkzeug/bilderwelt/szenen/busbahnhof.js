@@ -150,13 +150,13 @@ const GRUEN = "#1f7a3e", GELB = "#f6d21f";
    2 — DIE WARTEHALLE (Glaspavillon am Ende des Bussteigs)
    ===================================================================== */
 {
-  const Z = 42, X0 = 1.5, X1 = 9, H = 4.2;
+  const Z = 46, X0 = 6, X1 = 12.5, H = 4.4;
   let k = poly(fZ(Z, X0, X1, 0, H), S.lg("halle", [[0, "#3c4a55"], [1, "#2a343c"]]));
   /* warm beleuchtetes Inneres hinter Glas */
   k += poly(fZ(Z, X0 + 0.3, X1 - 0.3, 0.1, H - 0.9), S.lg("halleinnen", [[0, "#f4dfae"], [1, "#d7b981"]]));
   for (let X = X0 + 0.3; X < X1; X += 1.2) k += linie(P(X, Z, 0.1), P(X, Z, H - 0.9), "#46525c", ".5");
   /* Menschen drinnen als Schatten, Bänke */
-  for (const X of [3.2, 5.8]) { const p = P(X, Z + 0.2, 0); k += `<rect x="${r(p[0] - 0.6)}" y="${r(p[1] - 6.8)}" width="1.2" height="6.6" rx=".6" fill="#6b5a44" opacity=".7"/><circle cx="${p[0]}" cy="${r(p[1] - 7.6)}" r=".9" fill="#6b5a44" opacity=".7"/>`; }
+  for (const X of [7.6, 10.4]) { const p = P(X, Z + 0.2, 0); k += `<rect x="${r(p[0] - 0.6)}" y="${r(p[1] - 6.8)}" width="1.2" height="6.6" rx=".6" fill="#6b5a44" opacity=".7"/><circle cx="${p[0]}" cy="${r(p[1] - 7.6)}" r=".9" fill="#6b5a44" opacity=".7"/>`; }
   /* Dach und Schriftzug ZOB */
   k += poly(fZ(Z, X0 - 0.4, X1 + 0.4, H - 0.9, H + 0.2), "#e9ecee");
   const s = P((X0 + X1) / 2, Z, H - 0.62);
@@ -215,7 +215,7 @@ let busUnter = [];
   /* Zierstreifen: blau mit gelber Linie */
   k += poly([P(X0, Z0 + 1.3, 1.55 + SPUR), P(X0, Z1, 1.2 + SPUR), P(X0, Z1, 1.62 + SPUR), P(X0, Z0 + 1.3, 1.8 + SPUR)], "#1f5fa0");
   k += poly([P(X0, Z0 + 1.3, 1.82 + SPUR), P(X0, Z1, 1.64 + SPUR), P(X0, Z1, 1.7 + SPUR), P(X0, Z0 + 1.3, 1.88 + SPUR)], GELB);
-  { const a = P(X0, 19.95, 0.62 + SPUR), b = P(X0, 23.7, 0.62 + SPUR), L = 40, h = 0.42 * M(X0, 21.8) / 7;
+  { const a = P(X0, 23.85, 1.02 + SPUR), b = P(X0, 21.35, 1.02 + SPUR), L = 40, h = 0.36 * M(X0, 22.6) / 7;
     k += `<text transform="matrix(${r((b[0] - a[0]) / L * 100) / 100} ${r((b[1] - a[1]) / L * 100) / 100} 0 ${r(h * 100) / 100} ${a[0]} ${a[1]})" font-size="7" textLength="${L}" lengthAdjust="spacingAndGlyphs" fill="#1f5fa0" font-family="Arial" font-weight="bold" font-style="italic">FernExpress</text>`; }
   /* Schürze unten */
   k += poly(fX(X0, Z0, Z1, H0, H0 + 0.24), "#3a3f44");
@@ -240,7 +240,9 @@ let busUnter = [];
   const kof = [[15.45, 15.95, 0.45, 1.1, "#b8473a"], [15.95, 16.6, 0.45, 0.95, "#2f5f95"], [16.6, 16.9, 0.45, 1.25, "#4f8a46"]];
   kof.forEach(([a, b, h0, h1, f]) => { k += poly(fX(X0 + 0.15, a, b, h0 + SPUR, h1 + SPUR), f); });
   /* offene Klappe, nach oben geschwenkt */
-  k += poly([P(X0, GF.Za, 1.5 + SPUR), P(X0, GF.Zb, 1.5 + SPUR), P(X0 - 0.95, GF.Zb, 1.86 + SPUR), P(X0 - 0.95, GF.Za, 1.86 + SPUR)], S.lg("klappe", [[0, "#dfe4e8"], [1, "#b5bcc2"]]));
+  k += poly([P(X0, GF.Za, 1.5 + SPUR), P(X0, GF.Zb, 1.5 + SPUR), P(X0 - 0.8, GF.Zb, 2.25 + SPUR), P(X0 - 0.8, GF.Za, 2.25 + SPUR)], S.lg("klappe", [[0, "#9aa3aa"], [1, "#c9d0d6"]]));
+  k += linie(P(X0 - 0.8, GF.Za, 2.25 + SPUR), P(X0 - 0.8, GF.Zb, 2.25 + SPUR), "#eef1f3", ".6");
+  k += linie(P(X0 - 0.4, (GF.Za + GF.Zb) / 2, 1.88 + SPUR), P(X0, (GF.Za + GF.Zb) / 2, 1.2 + SPUR), "#5b6670", ".5");
   /* Vordertür (offen, Treppe sichtbar) */
   k += poly(fX(X0, TUER.Z0, TUER.Z1, SPUR + 0.3, 3.25 + SPUR), "#151a1f");
   for (const h of [0.35, 0.62, 0.9]) k += poly(fX(X0 - 0.02, TUER.Z0 + 0.05, TUER.Z1 - 0.05, h + SPUR, h + 0.05 + SPUR), "#8d969e");
@@ -259,7 +261,7 @@ let busUnter = [];
   for (const X of [X0 + 0.5, X0 + 1.5]) k += linie(P(X, Z0, 1.3 + SPUR), P(X + 0.6, Z0, 2.1 + SPUR), "#15181b", ".5");
   /* Zielanzeige: LED-Schrift */
   k += fr(X0 + 0.25, X1 - 0.25, 3.3 + SPUR, 3.62 + SPUR, "#121417");
-  { const a = P(X0 + 0.32, Z0, 3.36 + SPUR), b = P(X1 - 0.32, Z0, 3.36 + SPUR); const s = r(0.27 * M(X0, Z0));
+  { const a = P(X0 + 0.32, Z0, 3.36 + SPUR), b = P(X1 - 0.32, Z0, 3.36 + SPUR); const s = r(0.2 * M(X0, Z0));
     k += T(a[0] + 0.6, a[1] - 0.5, s, "042", "#ffb21e", "start", "bold", "monospace") + T(b[0] - 0.6, b[1] - 0.5, s, "Leipzig", "#ffb21e", "end", "bold", "monospace"); }
   /* Scheinwerfer, Stoßfänger, Kennzeichen */
   k += fr(X0 + 0.1, X0 + 0.65, 0.62 + SPUR, 0.82 + SPUR, "#dfe9f0", ` stroke="#7d868d" stroke-width=".3"`) + fr(X1 - 0.65, X1 - 0.1, 0.62 + SPUR, 0.82 + SPUR, "#dfe9f0", ` stroke="#7d868d" stroke-width=".3"`);
@@ -277,7 +279,7 @@ let busUnter = [];
   const u = (id, de, syl, it, itSyl, en, box, tipp) => { const [x0, y0, x1, y1] = box, cx = r((x0 + x1) / 2); return { id, de, syl, it, itSyl, en, tipp, x: cx, y: r(y1), kunst: flaeche(x0 - cx, y0 - y1, x1 - x0, y1 - y0) }; };
   const sp = P(X0 - 0.3, Z0 - 0.6, 2.75 + SPUR);
   busUnter = [
-    u("bb_gepaeckfach", "das Gepäckfach", "Ge-PÄCK-fach", "il bagagliaio", "ba-ga-GLIA-io", "luggage hold", ff([...fX(X0, GF.Za, GF.Zb, 0.42 + SPUR, 1.86 + SPUR), P(X0 - 0.95, GF.Za, 1.86 + SPUR)]), "Die Klappe an der Seite. Jeder Koffer bekommt einen Aufkleber."),
+    u("bb_gepaeckfach", "das Gepäckfach", "Ge-PÄCK-fach", "il bagagliaio", "ba-ga-GLIA-io", "luggage hold", ff([...fX(X0, GF.Za, GF.Zb, 0.42 + SPUR, 1.5 + SPUR), P(X0 - 0.8, GF.Za, 2.25 + SPUR), P(X0 - 0.8, GF.Zb, 2.25 + SPUR)]), "Die Klappe an der Seite. Jeder Koffer bekommt einen Aufkleber."),
     u("bb_tuer", "die Tür", "TÜR", "la porta", "POR-ta", "door", ff(fX(X0, TUER.Z0, TUER.Z1, SPUR + 0.3, 3.25 + SPUR)), "Vorne steigt man ein und zeigt dem Fahrer das Ticket."),
     u("bb_zielanzeige", "die Zielanzeige", "ZIEL-an-zei-ge", "l'indicatore di destinazione", "in-di-ca-TO-re di de-sti-na-ZIO-ne", "destination display", ff(fZ(Z0, X0 + 0.25, X1 - 0.25, 3.3 + SPUR, 3.62 + SPUR), 0.6), "Hier steht, wohin der Bus fährt."),
     u("bb_spiegel", "der Außenspiegel", "AU-ßen-spie-gel", "lo specchietto retrovisore", "spec-CHIET-to re-tro-vi-SO-re", "wing mirror", [sp[0] - 2.4, sp[1] - 6, sp[0] + 2.4, sp[1] + 2.4], null),
@@ -373,7 +375,7 @@ let bankUnter = null;
    7 — DAS HALTESTELLENSCHILD (grünes H auf gelbem Kreis)
    ===================================================================== */
 {
-  const X = 1.45, Z = 8.45, m = M(X, Z), p = P(X, Z);
+  const X = 2.45, Z = 8.6, m = M(X, Z), p = P(X, Z);
   let k = schatten(0, 0, 0.3 * m, 0.07 * m, 0.3);
   k += `<rect x="${r(-0.04 * m)}" y="${r(-2.55 * m)}" width="${r(0.08 * m)}" height="${r(2.55 * m)}" fill="${S.lg("mast", [[0, "#9aa3aa"], [0.5, "#e1e5e8"], [1, "#7d868d"]], 0, 0, 1, 0)}"/>`;
   const R = 0.23 * m, cy = -2.4 * m;
@@ -381,7 +383,7 @@ let bankUnter = null;
   k += T(0, cy + R * 0.48, r(R * 1.35), "H", GRUEN, "middle", "bold");
   /* darunter das Haltestellen-Täfelchen mit Name und Linie */
   k += `<rect x="${r(-0.24 * m)}" y="${r(-2.12 * m)}" width="${r(0.48 * m)}" height="${r(0.34 * m)}" rx=".5" fill="#ffffff" stroke="${GRUEN}" stroke-width=".3"/>`;
-  k += T(0, -2.0 * m, r(0.075 * m), "ZOB · Bussteig B3", "#222", "middle", "bold") + `<rect x="${r(-0.17 * m)}" y="${r(-1.94 * m)}" width="${r(0.15 * m)}" height="${r(0.1 * m)}" fill="#ffb21e"/>` + T(-0.095 * m, -1.865 * m, r(0.07 * m), "042", "#222", "middle", "bold");
+  k += T(0, -2.0 * m, r(0.06 * m), "ZOB · Bussteig B3", "#222", "middle", "bold") + `<rect x="${r(-0.17 * m)}" y="${r(-1.94 * m)}" width="${r(0.15 * m)}" height="${r(0.1 * m)}" fill="#ffb21e"/>` + T(-0.095 * m, -1.865 * m, r(0.07 * m), "042", "#222", "middle", "bold");
   S.teil({ id: "bb_haltestellenschild", de: "das Haltestellenschild", syl: "HAL-te-stel-len-schild", it: "il cartello della fermata", itSyl: "car-TEL-lo del-la fer-MA-ta", en: "bus stop sign", x: p[0], y: p[1], steht: true, kunst: k + flaeche(-0.12 * m, -2.6 * m, 0.24 * m, 2.6 * m),
     tipp: "Das grüne H auf gelbem Grund heißt: Hier hält der Bus." });
 }
