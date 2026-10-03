@@ -449,7 +449,7 @@ const D_HALLE = 260, Y_HALLE = HOR + F * (EYE - 1.5) / D_HALLE;   // Kaioberkant
   /* Ladetüren übereinander in der Mitte, Kranbalken im Giebel */
   for (let fy = Y0 - hh + 0.9; fy < Y0 - 1; fy += 3.6) k += `<rect x="${x + w / 2 - 2}" y="${r(fy)}" width="4" height="2.5" fill="#3f5a3a" stroke="#efe6d6" stroke-width=".25"/>`;
   k += `<path d="M${x + w / 2} ${r(Y0 - hh - 2)} l0 -1.2 l4 0" stroke="#3a3530" stroke-width=".5" fill="none"/><line x1="${x + w / 2 + 3.6}" y1="${r(Y0 - hh - 3.2)}" x2="${x + w / 2 + 3.6}" y2="${r(Y0 - hh + 0.8)}" stroke="#3a3530" stroke-width=".18"/>`;
-  k += `<rect x="${x}" y="${r(Y0 - hh)}" width="3" height="${hh}" fill="#000" opacity=".12"/>`;
+  k += `<rect x="${x}" y="${r(Y0 - hh)}" width="3" height="${hh}" fill="#000" opacity=".12"/><rect x="${x + w - 1.4}" y="${r(Y0 - hh)}" width="1.4" height="${hh}" fill="#ffc890" opacity=".35"/>`;
   S.teil({ id: "lagerhaus", de: "das Lagerhaus", syl: "LA-ger-haus", it: "il magazzino", itSyl: "ma-gaz-ZI-no", en: "warehouse", x: 0, y: 0, kunst: k,
     tipp: "In den alten Lagerhäusern aus Backstein sind heute Läden, Restaurants und Hotels." });
 }
@@ -467,12 +467,16 @@ const turmUnter = [];
      Hafenhallen, Drehpfeiler unter dem linken Ende */
   const BA = [174, TURM.y - 0.4], BB = [206, Y_HALLE - 0.3], bl = (t, dy) => `${r(BA[0] + (BB[0] - BA[0]) * t)} ${r(BA[1] + (BB[1] - BA[1]) * t + dy * (1 - t * 0.5))}`;
   q += `<path d="M${bl(0, 0)}L${bl(1, 0)}L${bl(1, 0.9)}L${bl(0, 0.9)}Z" fill="#e9ecee"/>`;
-  let fw = `M${bl(0, -2.6)}L${bl(1, -2.6)}`;
-  for (let t = 0; t <= 1.001; t += 0.125) fw += `M${bl(t, 0)}L${bl(t, -2.6)}`;
-  for (let t = 0; t < 1; t += 0.25) fw += `M${bl(t, 0)}L${bl(t + 0.125, -2.6)}L${bl(t + 0.25, 0)}`;
-  q += `<path d="${fw}" stroke="#f4f6f7" stroke-width=".35" fill="none"/><rect x="176" y="${r(TURM.y + 0.5)}" width="3" height="${r(Wl - TURM.y - 0.5)}" fill="#a9a59c"/>`;
+  let fw = `M${bl(0, -3.8)}L${bl(1, -3.8)}`;
+  for (let t = 0; t <= 1.001; t += 0.125) fw += `M${bl(t, 0)}L${bl(t, -3.8)}`;
+  for (let t = 0; t < 1; t += 0.25) fw += `M${bl(t, 0)}L${bl(t + 0.125, -3.8)}L${bl(t + 0.25, 0)}`;
+  let gel = `M${bl(0, -1.4)}L${bl(1, -1.4)}`;
+  for (let t = 0; t <= 1.001; t += 0.0625) gel += `M${bl(t, 0)}L${bl(t, -1.4)}`;
+  q += `<path d="${gel}" stroke="#c9ced2" stroke-width=".2" fill="none"/><path d="${fw}" stroke="#f4f6f7" stroke-width=".45" fill="none"/>`;
+  q += `<path d="M${bl(0, 0)}L${bl(1, 0)}" stroke="#9aa0a4" stroke-width=".9"/>`;
+  q += `<rect x="176" y="${r(TURM.y + 0.5)}" width="3" height="${r(Wl - TURM.y - 0.5)}" fill="#a9a59c"/>`;
   /* Spaziergänger auf dem Turmkai (≈ 1,7 m), Farben und Schritte verschieden */
-  for (const [x, f, schritt] of [[80, "#c0392b", 1], [88, "#2f6fb6", -1], [137, "#f2c62f", 1], [146, "#3c8f5a", 0], [160, "#e58fa1", -1]]) {
+  for (const [x, f, schritt] of [[76, "#c0392b", 1], [82, "#f4f1ea", 0], [90, "#2f6fb6", -1], [99, "#e2722d", 1], [134, "#f2c62f", 1], [141, "#7b4a9a", -1], [148, "#3c8f5a", 0], [158, "#e58fa1", -1], [166, "#2a2a2a", 1]]) {
     const h = 1.7 * s, y = TURM.y - 0.2;
     q += `<path d="M${x - 0.5} ${r(y)}l${r(0.5 + schritt * 0.4)} ${r(-h * 0.45)}l${r(0.5 - schritt * 0.4)} ${r(h * 0.45)}" stroke="#3a3f48" stroke-width=".5" fill="none"/><rect x="${r(x - 0.65)}" y="${r(y - h * 0.84)}" width="1.3" height="${r(h * 0.42)}" rx=".4" fill="${f}"/><circle cx="${x}" cy="${r(y - h * 0.92)}" r=".55" fill="#8a5a3c"/>`;
   }
@@ -494,6 +498,7 @@ const turmUnter = [];
   k += `<path d="${zieg}" stroke="#6e2219" stroke-width=".12" opacity=".35"/>`;
   /* weiße Ecklisenen und Gesimse */
   for (const x of fl) k += `<rect x="${g(x - 0.16)}" y="${g(-HT)}" width="${g(0.32)}" height="${g(HT - 1.2)}" fill="#efe9de"/>`;
+  k += `<rect x="${g(fl[3] - 0.5)}" y="${g(-HT)}" width="${g(0.3)}" height="${g(HT - 1.2)}" fill="#ffc890" opacity=".55"/>`;
   for (const z of [1.2, 5.4, 9.6]) k += `<rect x="${g(fl[0] - 0.1)}" y="${g(-z - 0.25)}" width="${g(fl[3] - fl[0] + 0.2)}" height="${g(0.4)}" fill="#f3eee4"/>`;
   /* Spitzbogenfenster mit weißem Rahmen; auf den Schrägseiten schmaler */
   const fenster = (cx, cy, w, h) => `<path d="M${g(cx - w / 2)} ${g(cy)} L${g(cx - w / 2)} ${g(cy - h * 0.62)} Q${g(cx - w / 2)} ${g(cy - h)} ${g(cx)} ${g(cy - h - 0.15)} Q${g(cx + w / 2)} ${g(cy - h)} ${g(cx + w / 2)} ${g(cy - h * 0.62)} L${g(cx + w / 2)} ${g(cy)} Z" fill="#f4efe6"/>` +
@@ -621,6 +626,11 @@ const KAI = 214;   // Vorderkante des Kais, auf dem der Betrachter steht
   k += `<ellipse cx="${g(-4.6)}" cy="${g(-4.6)}" rx="${g(1.6)}" ry="${g(1)}" fill="#3d6b4a"/>`;
   for (const [x, y] of [[-8.6, -4.4], [-7.4, -4.6], [9.4, -6]]) k += `<circle cx="${g(x)}" cy="${g(y)}" r="${g(0.5)}" fill="#f07a1e"/>`;
   k += `<path d="M${g(-11)} ${g(0.3)} q${g(11)} ${g(0.6)} ${g(22)} 0" stroke="#e8f0f0" stroke-width="${g(0.2)}" fill="none" opacity=".6"/>`;
+  /* Netzhaufen achtern (grün, Maschen), zwei Möwen auf Ausleger und Ruderhaus, warme Lichtkante rechts */
+  S.def(`<pattern id="${S.id("netz")}" width="1.2" height="1.2" patternUnits="userSpaceOnUse"><path d="M0 0l1.2 1.2M1.2 0L0 1.2" stroke="#1f4a2a" stroke-width=".25"/></pattern>`);
+  k += `<path d="M${g(-9.6)} ${g(-3.5)}Q${g(-9.2)} ${g(-6)} ${g(-6.4)} ${g(-6.2)}Q${g(-3.6)} ${g(-5.8)} ${g(-3.4)} ${g(-3.8)}Z" fill="#3d7a4a"/><path d="M${g(-9.6)} ${g(-3.5)}Q${g(-9.2)} ${g(-6)} ${g(-6.4)} ${g(-6.2)}Q${g(-3.6)} ${g(-5.8)} ${g(-3.4)} ${g(-3.8)}Z" fill="url(#${S.id("netz")})"/>`;
+  for (const [x, y, d] of [[-6.4, -9.2, 1], [5.4, -9.8, -1]]) k += `<g transform="translate(${g(x)} ${g(y)}) scale(${d} 1)"><path d="M${g(-0.7)} 0q${g(0.2)} ${g(-0.8)} ${g(0.9)} ${g(-0.7)}q${g(0.5)} ${g(0.1)} ${g(0.4)} ${g(0.6)}z" fill="#f6f6f4"/><path d="M${g(-0.6)} ${g(-0.3)}q${g(0.5)} ${g(-0.3)} ${g(1)} ${g(-0.1)}" stroke="#2a2c30" stroke-width="${g(0.25)}" fill="none"/><circle cx="${g(0.4)}" cy="${g(-0.75)}" r="${g(0.3)}" fill="#fff"/><path d="M${g(0.65)} ${g(-0.75)}l${g(0.35)} ${g(0.08)}" stroke="#f2c62f" stroke-width="${g(0.12)}"/></g>`;
+  k += `<path d="M${g(11.4)} ${g(-5)}Q${g(10.6)} ${g(-1.6)} ${g(8.2)} ${g(-0.2)}M${g(8.3)} ${g(-8.4)}L${g(8.4)} ${g(-4.8)}" stroke="#ffd9a0" stroke-width="${g(0.25)}" fill="none" opacity=".8"/>`;
   S.teil({ id: "fischerboot", de: "das Fischerboot", syl: "FI-scher-boot", it: "il peschereccio", itSyl: "pe-sche-REC-cio", en: "fishing boat", x: X, y: Y, kunst: k,
     tipp: "Am Kai laden die Fischer ihren Fang aus – oft Seehecht und Snoek." });
 }

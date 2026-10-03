@@ -216,14 +216,14 @@ const baum = (x, y, h, breite, farben, seed) => {
   /* gelappte Krone: einzelne Laubpartien, Licht von hinten rechts, erstes Herbstlaub als Fläche */
   const z = zufall(seed), cx = x, cy = y - H * 0.62, ry = H * 0.36;
   const lappen = (lx, ly, lr, f1, f2) => {
-    const n = 9, p = [];
+    const n = 7, p = [];
     for (let i = 0; i < n; i++) { const w = i / n * Math.PI * 2, q = 0.78 + 0.32 * z(); p.push([lx + Math.cos(w) * lr * q, ly + Math.sin(w) * lr * 0.85 * q]); }
     const d = (sc, dx, dy) => { const P = p.map(([a, b]) => [lx + (a - lx) * sc + dx, ly + (b - ly) * sc + dy]); let t = `M${r((P[0][0] + P[n - 1][0]) / 2)} ${r((P[0][1] + P[n - 1][1]) / 2)}`; for (let i = 0; i < n; i++) { const a = P[i], b = P[(i + 1) % n]; t += ` Q${r(a[0])} ${r(a[1])} ${r((a[0] + b[0]) / 2)} ${r((a[1] + b[1]) / 2)}`; } return t + " Z"; };
     return `<path d="${d(1, 0, 0)}" fill="${f1}"/><path d="${d(0.62, lr * 0.22, -lr * 0.2)}" fill="${f2}"/>`;
   };
-  const L = [[-0.5, -0.4], [0.3, -0.55], [-0.1, -0.78], [0.62, -0.2], [-0.7, 0.05], [-0.2, -0.2], [0.25, -0.05], [0.65, 0.3], [-0.5, 0.45], [0, 0.35], [0.3, 0.6], [-0.2, 0.68]];
+  const L = [[-0.45, -0.45], [0.3, -0.55], [-0.05, -0.8], [0.62, -0.15], [-0.65, 0.1], [-0.1, -0.1], [0.5, 0.4], [-0.4, 0.5], [0.05, 0.55]];
   const FARBEN = [["#4d6538", "#6f8a48"], ["#56703c", "#88a052"], ["#5f7440", "#93a85a"], ["#a98a34", "#d2b452"], ["#9c6a2e", "#c98f46"]];
-  L.forEach(([a, b], i) => { const [f1, f2] = FARBEN[(i === 2 || i === 6 || i === 3) ? 3 + (seed + i) % 2 : (seed + i) % 3]; g += lappen(cx + a * R, cy + b * ry, R * (0.3 + 0.1 * z()), f1, f2); });
+  L.forEach(([a, b], i) => { const [f1, f2] = FARBEN[(i === 2 || i === 6 || i === 3) ? 3 + (seed + i) % 2 : (seed + i) % 3]; g += lappen(cx + a * R, cy + b * ry, R * (0.34 + 0.1 * z()), f1, f2); });
   return g;
 };
 
@@ -327,7 +327,7 @@ const FT = { x: 306, y: 85, s: 31 / 86.4 };
     for (let i = 1; i < HAEUSER.length; i++) if (x <= HAEUSER[i][0]) { const [a, ya] = HAEUSER[i - 1], [b, yb] = HAEUSER[i]; return ya + (yb - ya) * (x - a) / Math.max(0.01, b - a); }
     return 108;
   };
-  const xs = []; for (let x = 0; x <= 106; x += 4) xs.push(x);
+  const xs = []; for (let x = 0; x <= 108; x += 6) xs.push(x);
   const oben = (x) => Math.min(unten(x), rand(x));
   const kurve = (f) => xs.map((x) => `${x} ${r(f(x))}`);
   const band = (a, b) => `M${kurve(a).join(" L")} L${xs.slice().reverse().map((x) => `${x} ${r(b(x))}`).join(" L")} Z`;

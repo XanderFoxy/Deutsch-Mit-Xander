@@ -265,18 +265,18 @@ S.hinten(`<rect width="400" height="${HOR + 2}" fill="${S.lg("himmel", [[0, "#3d
 /* Sonne steht links hinten: der Himmel links etwas heller und wärmer */
 S.hinten(`<rect width="400" height="${HOR + 2}" fill="${S.lg("sonnenseite", [[0, "#fff1d6", 0.35], [0.45, "#fff1d6", 0], [1, "#fff1d6", 0]], 0, 0, 1, 0)}"/>`);
 {
-  /* Haufenwolken mit klarer Kontur: Kuppen aus Kreisen, ein gemeinsamer Verlauf (im Bildraum) von der
-     sonnigen Oberseite zur flachen graublauen Unterseite; Basis gerade abgeschnitten */
-  let c = "", nr = 0;
-  const wolke = (x, y, s) => {
-    const id = S.id("wk" + nr++), top = y - 16 * s;
-    S.def(`<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(top)}" x2="0" y2="${r(y)}"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#f3f6f9"/><stop offset="1" stop-color="#b9c6d4"/></linearGradient>`);
-    S.def(`<clipPath id="${id}c"><rect x="${r(x - 40 * s)}" y="${r(top - 2)}" width="${r(80 * s)}" height="${r(y - top + 2)}"/></clipPath>`);
-    let g = "";
-    for (const [dx, dy, rr] of [[-15, -2, 6], [-7, -6, 8], [3, -8, 9.5], [13, -5, 7.5], [20, -2, 5], [-1, -1, 9]]) g += `<circle cx="${r(x + dx * s)}" cy="${r(y + dy * s)}" r="${r(rr * s)}"/>`;
-    return `<g clip-path="url(#${id}c)" fill="url(#${id})">${g}</g><path d="M${r(x - 20 * s)} ${r(y - 0.5)} L${r(x + 24 * s)} ${r(y - 0.5)}" stroke="#aebccb" stroke-width="${r(1 * s)}"/>`;
+  /* Ein flacher Zug Haufenwolken über dem Dunst des Alpenvorlands: sonnige Oberkanten links (Sonne Südwest),
+     grau-violette, flache Unterseite; nach hinten (zum Horizont) kleiner und flacher */
+  S.def(`<linearGradient id="${S.id("wolke")}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset=".5" stop-color="#eeeaf0"/><stop offset=".8" stop-color="#bdb6cc"/><stop offset="1" stop-color="#a39cb6"/></linearGradient>`);
+  S.def(`<linearGradient id="${S.id("wolkenlicht")}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff2d8" stop-opacity=".9"/><stop offset=".45" stop-color="#fff2d8" stop-opacity="0"/></linearGradient>`);
+  let c = "";
+  const wolke = (x, y, b, h) => {
+    let d = "";
+    const n = Math.max(3, Math.round(b / h * 1.4));
+    for (let i = 0; i < n; i++) { const t = (i + 0.5) / n, rr = h * (0.45 + Math.sin(t * Math.PI) * 0.55) * (0.8 + rnd() * 0.35), cx = x - b / 2 + t * b; d += `M${r(cx - rr)} ${r(y)} A${r(rr)} ${r(rr)} 0 0 1 ${r(cx + rr)} ${r(y)} Z `; }
+    return `<g><path d="${d}" fill="url(#${S.id("wolke")})"/><path d="${d}" fill="url(#${S.id("wolkenlicht")})"/><ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(b / 2 + h * 0.4)}" ry="${r(h * 0.22)}" fill="#a49db8"/></g>`;
   };
-  c += wolke(330, 30, 1.15) + wolke(388, 20, 0.7) + wolke(268, 40, 0.6) + wolke(52, 26, 0.8) + wolke(110, 46, 0.5);
+  for (const [x, y, b, h] of [[46, 24, 60, 9], [126, 36, 42, 6], [318, 22, 74, 10], [384, 34, 40, 6], [196, 46, 34, 4], [262, 49, 28, 3.4], [96, 52, 30, 3], [356, 54, 24, 2.6], [20, 56, 22, 2.2], [228, 57, 18, 1.8]]) c += wolke(x, y, b, h);
   S.hinten(c);
 }
 /* ferne Hügel des Allgäus am Horizont, im Dunst */
