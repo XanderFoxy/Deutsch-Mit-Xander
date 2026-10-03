@@ -352,6 +352,55 @@ const schnitt = (pts, test, cut) => { const out = []; for (let i = 0; i < pts.le
 const kappY = (pts, ym) => schnitt(pts, (p) => p[1] <= ym, (a, b) => { const t = (ym - a[1]) / (b[1] - a[1]); return [a[0] + (b[0] - a[0]) * t, ym]; });
 const kappX = (pts, x0, x1) => { let p = schnitt(pts, (q) => q[0] >= x0, (a, b) => { const t = (x0 - a[0]) / (b[0] - a[0]); return [x0, a[1] + (b[1] - a[1]) * t]; }); return schnitt(p, (q) => q[0] <= x1, (a, b) => { const t = (x1 - a[0]) / (b[0] - a[0]); return [x1, a[1] + (b[1] - a[1]) * t]; }); };
 const vl = (pts, fill, ex = "") => pts.length > 2 ? `<path d="M${pts.map(pr).join(" L")} Z" fill="${fill}"${ex}/>` : "";
+const kappO = (pts, ym) => schnitt(pts, (p) => p[1] >= ym, (a, b) => { const t = (ym - a[1]) / (b[1] - a[1]); return [a[0] + (b[0] - a[0]) * t, ym]; });
+const rahmen = (pts) => pts.length > 2 ? kappO(kappY(kappX(pts, -5, 405), 265), -5) : [];
+const vr = (pts, fill, ex = "") => vl(rahmen(pts), fill, ex);
+const hex3 = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const misch = (h, ziel, t) => { const a = hex3(h), b = hex3(ziel); return "#" + a.map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, "0")).join(""); };
+const dunst = (h, d) => misch(h, "#c9d3da", Math.min(0.42, d / 2200));
+/* Kiste (Haus als Quader) für eine Kamera P(quer, tief, z): sichtbar sind die Vorderseite (tief = d0),
+   die Seite zur Blickachse und — unter Augenhöhe — das Dach. gz(quer, tief) = Gelände. */
+const kiste = (P, gz, a0, a1, d0, d1, H, c) => {
+  const g00 = gz(a0, d0), g10 = gz(a1, d0), g01 = gz(a0, d1), g11 = gz(a1, d1), zt = Math.max(g00, g10, g01, g11) + H;
+  let g = "";
+  if (zt < E) {
+    g += vr([P(a0, d0, zt), P(a1, d0, zt), P(a1, d1, zt), P(a0, d1, zt)], c.dach);
+    if (c.aufbau) { const u0 = a0 + (a1 - a0) * 0.2, u1 = a0 + (a1 - a0) * 0.55, e0 = d0 + (d1 - d0) * 0.3, e1 = d0 + (d1 - d0) * 0.6; g += vr([P(u0, e0, zt), P(u0, e0, zt + 2.4), P(u1, e0, zt + 2.4), P(u1, e0, zt)], c.vorn) + vr([P(u0, e0, zt + 2.4), P(u1, e0, zt + 2.4), P(u1, e1, zt + 2.4), P(u0, e1, zt + 2.4)], c.dach2); }
+    if (c.terrasse) g += vr([P(a0 + (a1 - a0) * 0.5, d0 + 0.6, zt), P(a1 - 0.5, d0 + 0.6, zt), P(a1 - 0.5, d1 - 0.6, zt), P(a0 + (a1 - a0) * 0.5, d1 - 0.6, zt)], "#7f9160");
+  }
+  if (a0 > 0) g += vr([P(a0, d0, g00), P(a0, d0, zt), P(a0, d1, zt), P(a0, d1, g01)], c.seite);
+  if (a1 < 0) g += vr([P(a1, d0, g10), P(a1, d0, zt), P(a1, d1, zt), P(a1, d1, g11)], c.seite);
+  g += vr([P(a0, d0, g00), P(a0, d0, zt), P(a1, d0, zt), P(a1, d0, g10)], c.vorn);
+  if (c.fen) {
+    const n = Math.max(1, Math.round(H / 3.2));
+    for (let j = 0; j < n; j++) { const z0 = zt - H + 1.2 + j * (H - 1.6) / n; if (z0 + 1.2 > zt - 0.4) continue; g += vr([P(a0 + 0.9, d0, z0), P(a0 + 0.9, d0, z0 + 1.2), P(a1 - 0.9, d0, z0 + 1.2), P(a1 - 0.9, d0, z0)], c.fen); }
+  }
+  if (c.kante) g += `<path d="M${pr(P(a0, d0, zt))} L${pr(P(a1, d0, zt))}" stroke="${c.kante}" stroke-width="${r(Math.max(0.12, 5 / d0))}"/>`;
+  return g;
+};
+const FASS = ["#efe6d2", "#e8d6c0", "#dfe3df", "#f1ddd0", "#e6dcc0", "#d9e1e6", "#f2eadf", "#e9d8d8", "#d8d2c4", "#e4e9dc", "#f3e2bf"];
+const DACH = ["#b8b0a2", "#a59d90", "#c2baac", "#9a9389", "#b3a99a", "#8f8a82"];
+/* Häuserblöcke als Kisten (Ränder bebaut, Höfe mit Bäumen); liefert Einträge {t: Tiefe, s: svg} */
+const bloecke = (P, gz, spalten, reihen, frei, fenster, haz, rnd2, maxH) => {
+  const L = [];
+  const haus = (a0, a1, d0, d1) => {
+    if (frei(a0, a1, d0, d1)) return;
+    let H = 7.5 + rnd2() * 4.6; if (rnd2() < 0.08) H += 6;
+    H = Math.min(H, maxH(a0, a1, d0, d1, H));
+    if (H < 3.5) return;
+    const f = FASS[Math.floor(rnd2() * FASS.length)], dk = DACH[Math.floor(rnd2() * DACH.length)], dd = d0;
+    const c = { vorn: dunst(haz.vorn(f), dd), seite: dunst(haz.seite(f), dd), dach: dunst(dk, dd), dach2: dunst(misch(dk, "#ffffff", 0.2), dd),
+      aufbau: rnd2() < 0.18, terrasse: rnd2() < 0.14, fen: d0 < fenster ? dunst("#56636e", dd) : "", kante: d0 < 160 ? dunst("#fbf8f0", dd) : "" };
+    L.push({ t: d0 + 0.001 * Math.abs(a0), s: kiste(P, gz, a0, a1, d0, d1, H, c) });
+  };
+  for (const [A0, A1] of spalten) for (const [D0, D1] of reihen) {
+    const T = 24;
+    for (let d = D0; d < D1 - 0.5;) { const w = Math.min(6.5 + rnd2() * 3, D1 - d); haus(A0, A0 + T, d, d + w); haus(A1 - T, A1, d, d + w); d += w; }
+    for (let a = A0 + T; a < A1 - T - 0.5;) { const w = Math.min(6.5 + rnd2() * 3, A1 - T - a); haus(a, a + w, D0, D0 + T); haus(a, a + w, D1 - T, D1); a += w; }
+    for (let i = 0; i < 4; i++) { const a = A0 + T + rnd2() * (A1 - A0 - 2 * T), d = D0 + T + rnd2() * Math.max(1, D1 - D0 - 2 * T); if (frei(a, a, d, d)) continue; const q = P(a, d, gz(a, d) + 5 + rnd2() * 3), rr = F * (2.4 + rnd2() * 1.6) / d; if (q[0] > -5 && q[0] < 405) L.push({ t: d + 0.0005, s: `<circle cx="${r(q[0])}" cy="${r(q[1])}" r="${r(rr)}" fill="${dunst(rnd2() < 0.5 ? "#4f6a3a" : "#5f7b45", d)}"/>` }); }
+  }
+  return L;
+};
 const SONNE = { az: 215, el: 52 };
 const SL = 1 / Math.tan(SONNE.el * Math.PI / 180), SE_ = Math.sin(SONNE.az * Math.PI / 180 + Math.PI), SN_ = Math.cos(SONNE.az * Math.PI / 180 + Math.PI);
 
@@ -423,56 +472,80 @@ const HAUS = {};
     { w: "#cfdcc4", t: "#ffffff", a: "#7a2f3c" }, { w: "#f2d3c4", t: "#ffffff", a: "#5a3a5e" }, { w: "#dcd6ea", t: "#ffffff", a: "#4e3b78" }, { w: "#f3ead8", t: "#ffffff", a: "#8b3a2c" },
   ];
   const schatt = (hex, a) => { const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)); return "#" + c.map((v) => Math.round(v * a).toString(16).padStart(2, "0")).join(""); };
-  /* Ostseite der Hyde Street (fern, Dächer von oben) */
-  for (let d0 = 556; d0 >= 45; d0 -= d0 > 200 ? 15 : 8) {
-    const d1 = d0 + (d0 > 200 ? 15 : 8), zr = zH((d0 + d1) / 2) + 10.5, f = farben[Math.round(d0) % 7];
-    if (zr < E - 0.3) k += vl(kappX([PN(2, d0, zr), PN(24, d0, zr), PN(24, d1, zr), PN(2, d1, zr)], -6, 252), "#a59b8c");
-    k += vl([PN(2, d0, zH(d0)), PN(2, d0, zr), PN(2, d1, zr), PN(2, d1, zH(d1))], schatt(f.w, 0.8));
-  }
+  /* Die Blöcke hinter der Ostseite der Hyde Street (Nordblick) und entlang der Lombard Street bis
+     North Beach (Ostblick): Häuser als Kisten in echter Perspektive, Höfe mit Bäumen, Dachterrassen */
+  const rnd2 = zufall(4711);
+  const LPP = [[0, 0], [2, 0], [126, -33.5], [147, -36], [273, -50], [294, -51], [420, -62], [441, -63], [567, -72], [588, -73], [714, -80], [1500, -82]];
+  const zLP = (d) => { for (let i = 1; i < LPP.length; i++) if (d <= LPP[i][0]) { const [d0, z0] = LPP[i - 1], [d1, z1] = LPP[i]; return z0 + (z1 - z0) * (d - d0) / (d1 - d0); } return -82; };
+  const gzN = (X, d) => Math.max(-86, zH(d) + 0.85 * zLP(Math.max(0, X - 2)));
+  const gzE = (lat, d) => Math.max(-86, zLP(d) - 0.13 * Math.max(0, -lat - 15) + 0.08 * Math.max(0, lat - 5));
+  const zeichne = (L) => L.sort((a, b) => b.t - a.t).map((e) => e.s).join("");
+  /* Nordblick: Spalten Hyde–Leavenworth, Leavenworth–Jones; Reihen zwischen den Querstraßen.
+     Häuser im Blickfeld auf Alcatraz bleiben unter der Sichtlinie (sonst wäre die Insel verdeckt). */
+  const freiN = (a0, a1, d0, d1) => (a0 < 35 && d0 < 45) || d0 < 40 || VN + F * a0 / d1 > 262;
+  const maxN = (a0, a1, d0, d1) => { const x0 = VN + F * a0 / d1, x1 = VN + F * a1 / d0; if (x1 < 170 || x0 > 228) return 99; return E - 13 * d0 / F - Math.max(gzN(a0, d0), gzN(a1, d0), gzN(a0, d1), gzN(a1, d1)); };
+  const LN = bloecke(PN, gzN, [[2, 126], [147, 273]], [[15, 135], [150, 272], [287, 410], [425, 550], [565, 690]], freiN, 200,
+    { vorn: (f) => f, seite: (f) => misch(f, "#000000", 0.1) }, rnd2, maxN);
+  for (let d = 45; d < 690; d += 10) { const d1 = Math.min(690, d + 10), xs = [2, 40, 90, 126, 147, 210, 273, 330]; LN.push({ t: d1 - 0.01, s: vr([...xs.map((X) => PN(X, d, gzN(X, d))), ...xs.slice().reverse().map((X) => PN(X, d1, gzN(X, d1)))], dunst("#8b897f", d)) }); }
+  k += zeichne(LN);
+  /* Ostblick: nördlich und südlich der Lombard Street, Blöcke bis zur Mason Street (≈ 0,7 km) */
+  const freiE = (a0, a1, d0, d1) => (a1 <= 0 ? VO + F * a1 / d1 < 230 : VO + F * a0 / d1 > 405) || d1 > 715 || (a0 >= -39.2 && a1 <= -14.9 && d1 <= 126.1) || (a1 <= 0 && d0 < 30);
+  const reihenE = [[2, 126], [147, 273], [294, 420], [441, 567], [588, 714]];
+  const LE = [
+    ...bloecke(PO, gzE, [[-272, -150], [-135, -15]], reihenE, freiE, 160, { vorn: (f) => misch(f, "#000000", 0.08), seite: (f) => f }, rnd2, () => 99),
+    ...bloecke(PO, gzE, [[5, 125]], reihenE, freiE, 160, { vorn: (f) => misch(f, "#000000", 0.08), seite: (f) => misch(f, "#000000", 0.26) }, rnd2, () => 99),
+  ];
+  for (let d = 126; d < 714; d += 12) { const d1 = Math.min(714, d + 12), ls = [-330, -150, -135, -15, 5, 40, 120]; LE.push({ t: d1 - 0.01, s: vr([...ls.map((l) => PO(l, d, gzE(l, d))), ...ls.slice().reverse().map((l) => PO(l, d1, gzE(l, d1)))], dunst("#8b897f", d)) }); }
+  k += zeichne(LE);
   /* Westseite der Hyde Street: fern vereinfacht, nah mit Erker, Gesims, Garage, Treppe */
-  for (let d0 = 545; d0 >= 29.4; d0 -= d0 > 130 ? 15 : 7.6) {
-    const fern_ = d0 > 130, d1 = d0 + (fern_ ? 15 : 7.6), i = Math.round(d0 / 7.6), f = farben[i % 7];
+  const WL = [];
+  for (let d0 = 15; d0 < 134; d0 += 7.6) WL.push([d0, Math.min(d0 + 7.6, 135)]);
+  for (const [A, Bq] of [[150, 272], [287, 410], [425, 550], [565, 690]]) { const n = Math.ceil((Bq - A) / 15); for (let j = 0; j < n; j++) WL.push([A + (Bq - A) * j / n, A + (Bq - A) * (j + 1) / n]); }
+  const ersteImBlock = new Set([15, 150, 287, 425, 565]);
+  for (const [d0, d1] of WL.reverse()) {
+    const fern_ = d0 > 130, i = Math.round(d0 / 7.6), f = farben[i % 7];
     const zb0 = zH(d0), zb1 = zH(d1), zr = Math.max(zb0, zb1) + (fern_ ? 10 : 10.8), giebel = !fern_ && i % 7 === 6;
     const W = schatt(f.w, 0.74), WT = schatt(f.t, 0.8);
-    if (zr < E - 0.3) k += vl([PN(-17, d0, zr), PN(-28, d0, zr), PN(-28, d1, zr), PN(-17, d1, zr)], "#9c9488");
-    k += vl([PN(-17, d0, zb0), PN(-17, d0, zr), PN(-17, d1, zr), PN(-17, d1, zb1)], W);
+    if (zr < E - 0.3) k += vr([PN(-17, d0, zr), PN(-28, d0, zr), PN(-28, d1, zr), PN(-17, d1, zr)], "#9c9488");
+    if (ersteImBlock.has(d0)) k += vr([PN(-28, d0, zb0), PN(-28, d0, zr), PN(-17, d0, zr), PN(-17, d0, zb0)], schatt(f.w, 0.93));
+    k += vr([PN(-17, d0, zb0), PN(-17, d0, zr), PN(-17, d1, zr), PN(-17, d1, zb1)], W);
     if (fern_) { k += `<path d="M${pr(PN(-17, d0, zr))} L${pr(PN(-17, d1, zr))}" stroke="${WT}" stroke-width=".3"/>`; continue; }
     /* Gesims mit Konsolen (von unten gesehen) */
-    k += vl([PN(-17, d0, zr - 0.7), PN(-16.4, d0, zr - 0.7), PN(-16.4, d1, zr - 0.7), PN(-17, d1, zr - 0.7)], schatt(f.t, 0.55));
-    k += vl([PN(-16.4, d0, zr - 0.7), PN(-16.4, d0, zr), PN(-16.4, d1, zr), PN(-16.4, d1, zr - 0.7)], WT);
+    k += vr([PN(-17, d0, zr - 0.7), PN(-16.4, d0, zr - 0.7), PN(-16.4, d1, zr - 0.7), PN(-17, d1, zr - 0.7)], schatt(f.t, 0.55));
+    k += vr([PN(-16.4, d0, zr - 0.7), PN(-16.4, d0, zr), PN(-16.4, d1, zr), PN(-16.4, d1, zr - 0.7)], WT);
     let kon = "";
     for (let t = 0.05; t < 1; t += 0.09) { const d = d0 + t * 7.6; kon += `M${pr(PN(-16.6, d, zr - 0.7))} L${pr(PN(-16.6, d, zr - 1.3))} `; }
     k += `<path d="${kon}" stroke="${schatt(f.t, 0.6)}" stroke-width="${r(Math.max(0.15, 9 / d0))}"/>`;
-    if (giebel) { const gm = (d0 + d1) / 2; k += vl([PN(-16.4, d0, zr), PN(-16.4, gm, zr + 3.6), PN(-16.4, d1, zr)], W) + `<path d="M${pr(PN(-16.3, d0, zr))} L${pr(PN(-16.3, gm, zr + 3.6))} L${pr(PN(-16.3, d1, zr))}" stroke="${WT}" stroke-width="${r(10 / d0)}" fill="none"/>`; }
+    if (giebel) { const gm = (d0 + d1) / 2; k += vr([PN(-16.4, d0, zr), PN(-16.4, gm, zr + 3.6), PN(-16.4, d1, zr)], W) + `<path d="M${pr(PN(-16.3, d0, zr))} L${pr(PN(-16.3, gm, zr + 3.6))} L${pr(PN(-16.3, d1, zr))}" stroke="${WT}" stroke-width="${r(10 / d0)}" fill="none"/>`; }
     /* Garage (talseitig) */
-    k += vl([PN(-16.95, d0 + 4.4, zb1), PN(-16.95, d0 + 4.4, zb1 + 2.4), PN(-16.95, d1 - 0.4, zb1 + 2.4), PN(-16.95, d1 - 0.4, zb1)], schatt(f.t, 0.82));
+    k += vr([PN(-16.95, d0 + 4.4, zb1), PN(-16.95, d0 + 4.4, zb1 + 2.4), PN(-16.95, d1 - 0.4, zb1 + 2.4), PN(-16.95, d1 - 0.4, zb1)], schatt(f.t, 0.82));
     for (let j = 1; j < 5; j++) k += `<path d="M${pr(PN(-16.94, d0 + 4.5, zb1 + j * 0.46))} L${pr(PN(-16.94, d1 - 0.5, zb1 + j * 0.46))}" stroke="#9a948a" stroke-width="${r(Math.max(0.08, 3 / d0))}"/>`;
     /* Treppe zur Haustür (bergseitig), Tür */
-    for (let j = 0; j < 5; j++) { const zz = zb0 + 0.2 * (j + 1), xx = -16.2 + j * 0.2; k += vl([PN(xx, d0 + 0.4, zz), PN(xx, d0 + 1.8, zz), PN(xx, d0 + 1.8, zz - 0.2), PN(xx, d0 + 0.4, zz - 0.2)], j % 2 ? "#c9c3b8" : "#dcd6cb"); }
-    k += vl([PN(-16.95, d0 + 0.6, zb0 + 1), PN(-16.95, d0 + 0.6, zb0 + 3.4), PN(-16.95, d0 + 1.6, zb0 + 3.4), PN(-16.95, d0 + 1.6, zb0 + 1)], f.a);
+    for (let j = 0; j < 5; j++) { const zz = zb0 + 0.2 * (j + 1), xx = -16.2 + j * 0.2; k += vr([PN(xx, d0 + 0.4, zz), PN(xx, d0 + 1.8, zz), PN(xx, d0 + 1.8, zz - 0.2), PN(xx, d0 + 0.4, zz - 0.2)], j % 2 ? "#c9c3b8" : "#dcd6cb"); }
+    k += vr([PN(-16.95, d0 + 0.6, zb0 + 1), PN(-16.95, d0 + 0.6, zb0 + 3.4), PN(-16.95, d0 + 1.6, zb0 + 3.4), PN(-16.95, d0 + 1.6, zb0 + 1)], f.a);
     /* der schräge Erker (Bay Window) über zwei Geschosse; die Südseite schaut zu uns */
     const e0 = d0 + 2, e1 = d0 + 5.6, ez0 = zb0 + 3.4, ez1 = zr - 1.4;
-    k += vl([PN(-17, e0, ez0), PN(-16, e0 + 0.8, ez0), PN(-16, e0 + 0.8, ez1), PN(-17, e0, ez1)], schatt(f.w, 0.9));
-    k += vl([PN(-16, e0 + 0.8, ez0), PN(-16, e1 - 0.8, ez0), PN(-16, e1 - 0.8, ez1), PN(-16, e0 + 0.8, ez1)], W);
+    k += vr([PN(-17, e0, ez0), PN(-16, e0 + 0.8, ez0), PN(-16, e0 + 0.8, ez1), PN(-17, e0, ez1)], schatt(f.w, 0.9));
+    k += vr([PN(-16, e0 + 0.8, ez0), PN(-16, e1 - 0.8, ez0), PN(-16, e1 - 0.8, ez1), PN(-16, e0 + 0.8, ez1)], W);
     for (const zf of [ez0 + 0.6, ez0 + 3.3]) {
-      k += vl([PN(-16.85, e0 + 0.12, zf), PN(-16.12, e0 + 0.7, zf), PN(-16.12, e0 + 0.7, zf + 1.9), PN(-16.85, e0 + 0.12, zf + 1.9)], "#5a6f82", ` stroke="${WT}" stroke-width="${r(Math.max(0.1, 6 / d0))}"`);
-      k += vl([PN(-15.98, e0 + 1, zf), PN(-15.98, e1 - 1, zf), PN(-15.98, e1 - 1, zf + 1.9), PN(-15.98, e0 + 1, zf + 1.9)], "#3e4c5a", ` stroke="${WT}" stroke-width="${r(Math.max(0.1, 6 / d0))}"`);
+      k += vr([PN(-16.85, e0 + 0.12, zf), PN(-16.12, e0 + 0.7, zf), PN(-16.12, e0 + 0.7, zf + 1.9), PN(-16.85, e0 + 0.12, zf + 1.9)], "#5a6f82", ` stroke="${WT}" stroke-width="${r(Math.max(0.1, 6 / d0))}"`);
+      k += vr([PN(-15.98, e0 + 1, zf), PN(-15.98, e1 - 1, zf), PN(-15.98, e1 - 1, zf + 1.9), PN(-15.98, e0 + 1, zf + 1.9)], "#3e4c5a", ` stroke="${WT}" stroke-width="${r(Math.max(0.1, 6 / d0))}"`);
       k += `<path d="M${pr(PN(-16.5, e0 + 0.4, zf + 0.95))} L${pr(PN(-16.1, e0 + 0.7, zf + 0.95))}" stroke="${WT}" stroke-width="${r(Math.max(0.08, 4 / d0))}"/>`;
     }
-    k += vl([PN(-16, e0 + 0.8, ez1), PN(-16, e1 - 0.8, ez1), PN(-16, e1 - 0.8, ez1 + 0.4), PN(-16, e0 + 0.8, ez1 + 0.4)], f.a);
+    k += vr([PN(-16, e0 + 0.8, ez1), PN(-16, e1 - 0.8, ez1), PN(-16, e1 - 0.8, ez1 + 0.4), PN(-16, e0 + 0.8, ez1 + 0.4)], f.a);
     if (d0 < 45 && !HAUS.erker) HAUS.erker = { p: PN(-16.5, e0 + 0.4, ez0), q: PN(-16.5, e0 + 0.4, ez1), g: PN(-16.95, d0 + 5.5, zb1), g2: PN(-16.95, d0 + 5.5, zb1 + 2.4), d: d0 };
   }
   /* Nordseite der Lombard Street (Ostblick): Fassaden nach Süden, sonnig */
   for (let d0 = 118; d0 >= 35; d0 -= 7.6) {
     const d1 = d0 + 7.6, i = Math.round(d0 / 7.6) + 3, f = farben[i % 7], zb0 = zL(d0), zb1 = zL(d1), zr = zb0 + 10;
-    if (zr < E - 0.3) k += vl([PN(0, 1, 0).length ? PO(-15, d0, zr) : 0, PO(-26, d0, zr), PO(-26, d1, zr), PO(-15, d1, zr)], "#a89f92");
-    k += vl([PO(-15, d0, zb0), PO(-15, d0, zr), PO(-15, d1, zr), PO(-15, d1, zb1)], f.w);
-    k += vl([PO(-15, d0, zr - 0.6), PO(-14.5, d0, zr - 0.6), PO(-14.5, d1, zr - 0.6), PO(-15, d1, zr - 0.6)], f.t);
+    if (zr < E - 0.3) k += vr([PO(-15, d0, zr), PO(-26, d0, zr), PO(-26, d1, zr), PO(-15, d1, zr)], "#a89f92");
+    k += vr([PO(-15, d0, zb0), PO(-15, d0, zr), PO(-15, d1, zr), PO(-15, d1, zb1)], f.w);
+    k += vr([PO(-15, d0, zr - 0.6), PO(-14.5, d0, zr - 0.6), PO(-14.5, d1, zr - 0.6), PO(-15, d1, zr - 0.6)], f.t);
     const e0 = d0 + 2, e1 = d0 + 5.4, ez0 = zb0 + 2.8, ez1 = zr - 1.2;
-    k += vl([PO(-15, e0, ez0), PO(-14, e0 + 0.8, ez0), PO(-14, e0 + 0.8, ez1), PO(-15, e0, ez1)], schatt(f.w, 1.0));
-    k += vl([PO(-14, e0 + 0.8, ez0), PO(-14, e1 - 0.8, ez0), PO(-14, e1 - 0.8, ez1), PO(-14, e0 + 0.8, ez1)], schatt(f.w, 0.92));
-    for (const zf of [ez0 + 0.5, ez0 + 3.2]) k += vl([PO(-14.85, e0 + 0.12, zf), PO(-14.12, e0 + 0.7, zf), PO(-14.12, e0 + 0.7, zf + 1.8), PO(-14.85, e0 + 0.12, zf + 1.8)], "#4f6274", ` stroke="${f.t}" stroke-width=".15"`);
-    k += vl([PO(-14.95, d0 + 5.8, zb1), PO(-14.95, d0 + 5.8, zb1 + 2.3), PO(-14.95, d1 - 0.3, zb1 + 2.3), PO(-14.95, d1 - 0.3, zb1)], "#e2ddd2");
+    k += vr([PO(-15, e0, ez0), PO(-14, e0 + 0.8, ez0), PO(-14, e0 + 0.8, ez1), PO(-15, e0, ez1)], schatt(f.w, 1.0));
+    k += vr([PO(-14, e0 + 0.8, ez0), PO(-14, e1 - 0.8, ez0), PO(-14, e1 - 0.8, ez1), PO(-14, e0 + 0.8, ez1)], schatt(f.w, 0.92));
+    for (const zf of [ez0 + 0.5, ez0 + 3.2]) k += vr([PO(-14.85, e0 + 0.12, zf), PO(-14.12, e0 + 0.7, zf), PO(-14.12, e0 + 0.7, zf + 1.8), PO(-14.85, e0 + 0.12, zf + 1.8)], "#4f6274", ` stroke="${f.t}" stroke-width=".15"`);
+    k += vr([PO(-14.95, d0 + 5.8, zb1), PO(-14.95, d0 + 5.8, zb1 + 2.3), PO(-14.95, d1 - 0.3, zb1 + 2.3), PO(-14.95, d1 - 0.3, zb1)], "#e2ddd2");
   }
   const er = HAUS.erker;
   S.teil({ id: "holzhaus", de: "das Holzhaus", syl: "HOLZ-haus", it: "la casa di legno", itSyl: "CA-sa di LE-gno", en: "wooden house", x: 0, y: 0, kunst: k,

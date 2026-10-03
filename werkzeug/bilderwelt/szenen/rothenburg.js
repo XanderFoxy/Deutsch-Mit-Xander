@@ -64,6 +64,16 @@ const P = (X, D, H, g) => [VPX + F * X / D, HOR - ((g === undefined ? gG(X, D) :
 const pt = (q) => `${r(q[0])} ${r(q[1])}`;
 const poly = (...qs) => "M" + qs.map(pt).join(" L") + " Z";
 /* Vieleck auf das Bild beschneiden (Sutherland–Hodgman) */
+/* Strecke auf das Bild beschneiden (Liang–Barsky); null, wenn ganz draußen */
+function strecke(a, b, x0 = -1, y0 = -1, x1 = 401, y1 = 261) {
+  let t0 = 0, t1 = 1; const dx = b[0] - a[0], dy = b[1] - a[1];
+  for (const [p, q] of [[-dx, a[0] - x0], [dx, x1 - a[0]], [-dy, a[1] - y0], [dy, y1 - a[1]]]) {
+    if (p === 0) { if (q < 0) return null; continue; }
+    const t = q / p;
+    if (p < 0) { if (t > t1) return null; if (t > t0) t0 = t; } else { if (t < t0) return null; if (t < t1) t1 = t; }
+  }
+  return [[a[0] + dx * t0, a[1] + dy * t0], [a[0] + dx * t1, a[1] + dy * t1]];
+}
 const pz = (...qs) => { const z = zuschnitt(qs); return z.length > 2 ? poly(...z) : "M0 0"; };
 function zuschnitt(pts, x0 = -1, y0 = -1, x1 = 401, y1 = 261) {
   const kanten = [[(p) => p[0] >= x0, (a, b) => [x0, a[1] + (b[1] - a[1]) * (x0 - a[0]) / (b[0] - a[0])]], [(p) => p[0] <= x1, (a, b) => [x1, a[1] + (b[1] - a[1]) * (x1 - a[0]) / (b[0] - a[0])]],
@@ -129,6 +139,9 @@ function blumen(d, c, s = 1) {
   return g;
 }
 /* Fenster auf der Fassade der rechten bzw. linken Zeile (Ebene X = const) */
+/* Schrift Buchstabe für Buchstabe: Lage nach geschätzter Zeichenbreite (statt gleicher Abstände) */
+const ZB = (c) => "il.·,'| ".includes(c) ? 0.32 : "fjrt".includes(c) ? 0.42 : "mwMW".includes(c) ? 0.9 : c === c.toUpperCase() && /[A-ZÄÖÜ]/.test(c) ? 0.72 : 0.56;
+const zeichenLage = (txt) => { const w = [...txt].map(ZB), sum = w.reduce((a, b) => a + b, 0); let acc = 0; return w.map((b) => { const m = (acc + b / 2) / sum; acc += b; return m; }); };
 const wandFenster = (X, d0, d1, h0, h1, opt) => fensterQ(P(X, d0, h1), P(X, d1, h1), P(X, d1, h0), P(X, d0, h0), opt);
 
 /* =====================================================================
@@ -202,8 +215,6 @@ const ST = { d: 45, L0: -3.6, L1: 3.6, traufe: 21, spitze: 29 };
     tipp: "Der Siebersturm (1385) war ein Tor der Stadtmauer. Heute führt die Gasse durch ihn zum Spital.",
     zoom: { x: r(xm - 30), y: r(ys - 12), w: 60, h: 40 },
     unter: [
-      { id: "wappen", de: "das Wappen", syl: "WAP-pen", it: "lo stemma", itSyl: "STEM-ma", en: "coat of arms", x: wx, y: wy + 4, kunst: flaeche(-3.6, -8.4, 7.2, 8.6),
-        tipp: "Das Wappen von Rothenburg zeigt eine rote Burg." },
       { id: "wetterfahne", de: "die Wetterfahne", syl: "WET-ter-fah-ne", it: "la banderuola", itSyl: "ban-de-RUO-la", en: "weather vane", x: xm, y: ys, kunst: flaeche(-3, -10, 9, 9),
         tipp: "Die Wetterfahne dreht sich mit dem Wind." },
     ] });
@@ -218,12 +229,17 @@ const ST = { d: 45, L0: -3.6, L1: 3.6, traufe: 21, spitze: 29 };
   t += `<path d="M${r(ax)} ${r(ay)} L${r(ix0)} ${r(ay - 0.6)} L${r(ix0)} ${r(iy + 1.6)} Q${r(ax + 0.4)} ${r(iy)} ${r(ax)} ${r(ty)} Z" fill="#14100e" opacity=".7"/>`;
   t += `<path d="M${r(ax - 1.4)} ${r(ay)} L${r(bx + 1.4)} ${r(ay)}" stroke="#8a7d6c" stroke-width=".6"/>`;
   S.teil({ oben: true, id: "torbogen", de: "der Torbogen", syl: "TOR-bo-gen", it: "l'arco della porta", itSyl: "AR-co DEL-la POR-ta", en: "archway", x: 0, y: 0, kunst: t,
-    tipp: "Durch diesen Torbogen fuhren früher die Fuhrwerke." });
+    tipp: "Durch diesen Torbogen fuhren früher die Fuhrwerke.",
+    zoom: { x: r(xm - 31), y: r(wy - 9), w: 62, h: 41 },
+    unter: [
+      { id: "wappen", de: "das Wappen", syl: "WAP-pen", it: "lo stemma", itSyl: "STEM-ma", en: "coat of arms", x: wx, y: wy + 4, kunst: flaeche(-3.6, -8.4, 7.2, 8.6),
+        tipp: "Das Wappen von Rothenburg zeigt eine rote Burg." },
+    ] });
 }
 
 /* =====================================================================
-   2 — DAS KOBOLZELLER TOR (Doppeltor mit Zwinger, unten an der Steige)
-   3 — DIE STADTMAUER mit überdachtem Wehrgang (Lupe: der Wehrgang)
+   2 — DAS KOBOLZELLER TOR (Doppeltor mit Zwinger, unten an der Steige;
+       die Stadtmauer selbst ist von hier hinter den Häusern verborgen)
    ===================================================================== */
 const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 2.5); return { X, D, g: steigeG(KTt), s: F / D }; })();
 {
@@ -258,7 +274,7 @@ const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 2.5); return { X, D, g: ste
     g += `<path d="${pz(a, b, c, d)}" fill="${putz}"/><path d="${pz(a, b, c, d)}" fill="${PUTZ}"/>`;
     /* Dach: Traufe zur Gasse, First dahinter (vom Betrachter weg) */
     const off = w > 2.5 ? 4.5 : -4.5;
-    g += `<path d="${pz(d, c, PS(t1, w + off, first), PS(t0, w + off, first))}" fill="${DACHZ}"/><path d="M${pt(d)} L${pt(c)}" stroke="#5e2414" stroke-width=".6"/>`;
+    g += `<path d="${pz(d, c, PS(t1, w + off, first), PS(t0, w + off, first))}" fill="${DACHZ}"/>${(() => { const q = strecke(d, c); return q ? `<path d="M${pt(q[0])} L${pt(q[1])}" stroke="#5e2414" stroke-width=".6"/>` : ""; })()}`;
     if (fw) { let p = ""; for (const h of [3.2, 6]) p += `M${pt(PS(t0, w, h))} L${pt(PS(t1, w, h))} `; for (let i = 0; i <= 4; i++) { const t = t0 + (t1 - t0) * i / 4; p += `M${pt(PS(t, w, 3.2))} L${pt(PS(t, w, traufe))} `; } g += `<path d="${p}" stroke="${BALKEN}" stroke-width=".6" fill="none"/>`; }
     for (const [h0, h1] of [[1, 2.4], [4, 5.4], [6.8, 8.1]]) if (h1 < traufe) for (const f of [0.25, 0.65]) { const ta = t0 + (t1 - t0) * f, tb = ta + (t1 - t0) * 0.14; g += fensterQ(PS(ta, w, h1), PS(tb, w, h1), PS(tb, w, h0), PS(ta, w, h0), { rb: 0.3, licht: rnd() < 0.25 }); }
     g += `<path d="${poly(a, b, PS(t1, w, 0.5), PS(t0, w, 0.5))}" fill="#9a8a72"/>`;
@@ -273,23 +289,6 @@ const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 2.5); return { X, D, g: ste
   k += `<path d="${pz(PS(13.6, 0, 10), PS(64, 0, 10), PS(64, 0, 0), PS(13.6, 0, 0))}" fill="${SCHATTEN}" opacity=".3"/>`;
   S.teil({ id: "haus", de: "das Haus", syl: "HAUS", it: "la casa", itSyl: "CA-sa", en: "house", x: 0, y: 0, kunst: k,
     tipp: "Die Häuser an der Kobolzeller Steige stehen immer tiefer – die Gasse ist sehr steil." });
-}
-
-/* =====================================================================
-   5 — DIE GASSE (Kobolzeller Steige: fällt hinter der Kante sichtbar ab)
-   ===================================================================== */
-{
-  const L = [], R = [];
-  for (let t = -11.7; t <= 62; t += t < 4 ? 3.9 : 6) { L.push(PS(t, 4.6, 0)); R.push(PS(t, 0.4, 0)); }
-  let k = `<path d="${poly(...L, ...R.slice().reverse())}" fill="${S.lg("steige", [[0, "#7c7468"], [1, "#a39684"]])}"/>`;
-  /* Rinne und Bordsteinlinien fallen mit der Steige */
-  k += `<path d="M${L.map(pt).join(" L")}" stroke="#5a5248" stroke-width=".6" fill="none"/><path d="M${R.map(pt).join(" L")}" stroke="#5a5248" stroke-width=".6" fill="none"/>`;
-  const M = []; for (let t = -11.7; t <= 62; t += 5) M.push(PS(t, 2.5, 0.02));
-  k += `<path d="M${M.map(pt).join(" L")}" stroke="#4a443c" stroke-width=".9" fill="none" opacity=".6"/>`;
-  for (let t = 4; t < 60; t += 3) { const a = PS(t, 0.4, 0), b = PS(t, 4.6, 0); k += `<path d="M${pt(a)} Q${r((a[0] + b[0]) / 2)} ${r((a[1] + b[1]) / 2 - 0.4)} ${pt(b)}" stroke="#6a6256" stroke-width=".25" fill="none"/>`; }
-  k += `<path d="${poly(...L, ...R.slice().reverse())}" fill="${SCHATTEN}" opacity=".25"/>`;
-  S.teil({ id: "gasse", de: "die Gasse", syl: "GAS-se", it: "il vicolo", itSyl: "VI-co-lo", en: "lane", x: 0, y: 0, kunst: k,
-    tipp: "Die Kobolzeller Steige ist eine steile Gasse. Sie führt hinunter zum Kobolzeller Tor." });
 }
 
 /* =====================================================================
@@ -399,7 +398,7 @@ const PLOEN_UNTER = [];
   });
   S.teil({ id: "fachwerkhaus", de: "das Fachwerkhaus", syl: "FACH-werk-haus", it: "la casa a graticcio", itSyl: "CA-sa a gra-TIC-cio", en: "half-timbered house", x: 0, y: 0, kunst: PLOEN,
     tipp: "Das schmale gelbe Fachwerkhaus am Plönlein ist eines der bekanntesten Fotomotive Deutschlands.",
-    zoom: { x: 158, y: 30, w: 96, h: 64 }, unter });
+    zoom: { x: 150, y: 40, w: 120, h: 105 }, unter });
 }
 
 /* =====================================================================
@@ -528,7 +527,7 @@ const LL = -8;
     return id;
   };
   const yD = (D) => HOR + EYE * F / D;
-  const flaecheP = zuschnitt([[-1, 262], P(LL, 3.4, 0), P(LL, 9.3, 0), PS(-11.7, 4.6, 0), PS(0, 4.6, 0), PS(0, 0.4, 0), P(PH.L0, PH.d, 0), P(PH.L1, PH.d, 0), P(PH.L1, 21.05, 0, 0), P(4, 21.05, 0, 0), P(4, 3.3, 0), [401, 262]]);
+  const flaecheP = zuschnitt([[-1, 262], P(LL, 3.4, 0), P(LL, 9.3, 0), PS(-11.7, 5, 0), PS(2.4, 5, 0), PS(2.4, 0, 0), P(PH.L0, PH.d, 0), P(PH.L1, PH.d, 0), P(PH.L1, 21.05, 0, 0), P(4, 21.05, 0, 0), P(4, 3.3, 0), [401, 262]]);
   S.def(`<clipPath id="${S.id("pflclip")}"><path d="${poly(...flaecheP)}"/></clipPath>`);
   let b = "";
   let D = 3.2, n = 1, nr = 0;
@@ -543,15 +542,15 @@ const LL = -8;
   }
   let k = `<path d="${poly(...flaecheP)}" fill="#8f8474"/><g clip-path="url(#${S.id("pflclip")})">${b}`;
   /* Rinne aus Granitplatten in der Mitte (läuft zum Fluchtpunkt) */
-  k += `<path d="${poly(P(-0.17, 3.3, 0), P(0.17, 3.3, 0), P(0.17, 21, 0), P(-0.17, 21, 0))}" fill="#6a6258" opacity=".5"/>`;
+  k += `<path d="${poly(P(-0.17, 3.3, 0), P(0.17, 3.3, 0), P(0.17, 21, 0), P(-0.17, 21, 0))}" fill="#6e665a" opacity=".32"/>`;
   k += `<path d="M${pt(P(0.17, 3.3, 0))} L${pt(P(0.17, 21, 0))}" stroke="#b3a690" stroke-width=".35" opacity=".6"/>`;
   for (let d = 3.6; d < 21; d *= 1.14) k += `<path d="M${pt(P(-0.17, d, 0))} L${pt(P(0.17, d, 0))}" stroke="#4e483f" stroke-width=".25" opacity=".6"/>`;
   /* Abendschatten über der ganzen Gasse, Lichtstreifen aus der Lücke rechts (schräg nach links vorn) */
-  k += `<rect x="-1" y="${HOR - 2}" width="402" height="${264 - HOR}" fill="${SCHATTEN}" opacity=".3"/>`;
+  k += `<rect x="-1" y="${HOR - 2}" width="402" height="${263 - HOR}" fill="${SCHATTEN}" opacity=".3"/>`;
   const strahl = (Dx) => [P(4, Dx, 0), P(-7.8 + (Dx - 15.2) * 1.7, 22, 0)];
   const [a1, a2] = strahl(15.2), [b1, b2] = strahl(16.4);
   k += `<path d="${poly(a1, b1, b2, a2)}" fill="#ffcc78" opacity=".5"/><path d="${poly(a1, b1, b2, a2)}" fill="#fff0c0" opacity=".2" filter="url(#${S.id("dunst")})"/>`;
-  k += `<rect x="-1" y="${HOR - 2}" width="402" height="${264 - HOR}" fill="${S.lg("pflnah", [[0, "#000", 0], [0.6, "#000", 0.04], [1, "#120c08", 0.22]])}"/></g>`;
+  k += `<rect x="-1" y="${HOR - 2}" width="402" height="${263 - HOR}" fill="${S.lg("pflnah", [[0, "#000", 0], [0.6, "#000", 0.04], [1, "#120c08", 0.22]])}"/></g>`;
   /* rechte Gasse zum Siebersturm: steigt sichtbar an (Fugenreihen, Bordstein, Rinne) */
   const G = [P(PH.L1, 21.05, 0, 0), P(4, 21.05, 0, 0), P(4, 44.6, 0), P(-3.5, 44.6, 0)];
   k += `<path d="${poly(...G)}" fill="${S.lg("gasserechts", [[0, "#9a8c78"], [1, "#857868"]])}"/>`;
@@ -560,6 +559,25 @@ const LL = -8;
   k += `<path d="${poly(...G)}" fill="${SCHATTEN}" opacity=".26"/>`;
   S.teil({ id: "pflaster", de: "das Kopfsteinpflaster", syl: "KOPF-stein-pflas-ter", it: "il selciato", itSyl: "sel-CIA-to", en: "cobblestones", x: 0, y: 0, kunst: k,
     tipp: "Die Pflastersteine liegen in Bögen. Rechts steigt die Gasse sanft zum Siebersturm an." });
+}
+
+/* =====================================================================
+   5 — DIE GASSE (Kobolzeller Steige: fällt hinter der Kante sichtbar ab)
+   ===================================================================== */
+{
+  /* Die Steige ist ab der Kuppe (t ≈ 2) verdeckt: man sieht nur den Anfang und die Kante, dahinter fallen Häuser und Tor weg */
+  const TK = 2.4, L = [], R = [];
+  for (let t = -11.7; t <= TK + 0.01; t += (TK + 11.7) / 6) { L.push(PS(t, 5, 0)); R.push(PS(t, 0, 0)); }
+  let k = `<path d="${poly(...L, ...R.slice().reverse())}" fill="${S.lg("steige", [[0, "#4a4038", 0.28], [1, "#6a5e50", 0.12]], 0, 0, 0, 1)}"/>`;
+  /* Pflasterbögen quer zur Steige, zur Kuppe hin enger */
+  for (let t = -11; t < TK; t += Math.max(0.5, (TK - t) * 0.16)) { const a2 = PS(t, 0.1, 0), b2 = PS(t, 4.9, 0), m2 = PS(t + 0.25, 2.5, 0); k += `<path d="M${pt(a2)} Q${pt(m2)} ${pt(b2)}" stroke="#6e6457" stroke-width="${r(Math.max(0.15, 0.5 * 12 / (SX(t, 2.5)[1])))}" fill="none" opacity=".75"/>`; }
+  /* Rinne in der Mitte und Bordsteine, die zur Kuppe laufen */
+  k += `<path d="M${pt(PS(-11.7, 2.5, 0))} L${pt(PS(TK, 2.5, 0))}" stroke="#5a5248" stroke-width="1.1" opacity=".55"/>`;
+  k += `<path d="M${L.map(pt).join(" L")}" stroke="#c9b898" stroke-width=".6" fill="none"/><path d="M${R.map(pt).join(" L")}" stroke="#c9b898" stroke-width=".6" fill="none"/>`;
+  /* die Kuppe: heller Grat, dahinter fällt die Gasse steil ab (warmer Dunst aus dem Tal) */
+  k += `<path d="M${pt(PS(TK, 5, 0))} L${pt(PS(TK, 0, 0))}" stroke="#d8c8a8" stroke-width=".7"/>`;
+  S.teil({ id: "gasse", de: "die Gasse", syl: "GAS-se", it: "il vicolo", itSyl: "VI-co-lo", en: "lane", x: 0, y: 0, kunst: k,
+    tipp: "Die Kobolzeller Steige ist eine steile Gasse. Sie führt hinunter zum Kobolzeller Tor." });
 }
 
 /* =====================================================================
@@ -603,9 +621,9 @@ const LL = -8;
   /* Ladenschild: Schrift perspektivisch (jeder Buchstabe auf seiner Tiefe) */
   k += `<path d="${poly(P(LL, d0 - 0.1, 3.3), P(LL, d1 + 0.1, 3.3), P(LL, d1 + 0.1, 2.9), P(LL, d0 - 0.1, 2.9))}" fill="#3e2414"/>`;
   {
-    const txt = "Bäckerei · Konditorei", n = txt.length;
+    const txt = "Bäckerei · Konditorei", n = txt.length, lage = zeichenLage(txt);
     for (let i = 0; i < n; i++) {
-      const d = d0 + 0.15 + (d1 - d0 - 0.3) * (i + 0.5) / n, [x, y] = P(LL, d, 2.98), fs = 0.32 * F / d;
+      const d = d0 + 0.15 + (d1 - d0 - 0.3) * lage[i], [x, y] = P(LL, d, 2.98), fs = 0.32 * F / d;
       const [, yt] = P(LL, d, 3.24), sk = Math.atan2((P(LL, d + 0.1, 2.98)[1] - y), (P(LL, d + 0.1, 2.98)[0] - x)) * 180 / Math.PI;
       if (txt[i] !== " ") k += `<text x="${r(x)}" y="${r(y)}" font-size="${r(fs)}" text-anchor="middle" fill="#e8c56a" font-family="Georgia,serif" font-weight="bold" transform="rotate(${r(sk)} ${r(x)} ${r(y)})">${txt[i]}</text>`;
       void yt;
@@ -685,7 +703,7 @@ const LL = -8;
   { const [x, y] = STERN, rr = 0.2 * F / 13, [, yo] = P(Li, 13, h1 - 0.12); k += `<line x1="${r(x)}" y1="${r(yo)}" x2="${r(x)}" y2="${r(y - rr)}" stroke="#d9b86a" stroke-width=".25"/>`; let st = ""; for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2, q = i % 2 ? rr * 0.42 : rr; st += `${i ? "L" : "M"}${r(x + Math.cos(a) * q)} ${r(y + Math.sin(a) * q)} `; } k += `<path d="${st}Z" fill="#f6d65a" stroke="#c99a2a" stroke-width=".2"/><circle cx="${r(x)}" cy="${r(y)}" r="${r(rr * 1.6)}" fill="#ffe7a0" opacity=".35"/>`; }
   /* Schild über dem Fenster, Schrift perspektivisch */
   k += `<path d="${poly(P(L, d0, 3.4), P(L, d1, 3.4), P(L, d1, 3.0), P(L, d0, 3.0))}" fill="#6e1e22"/>`;
-  { const txt = "Weihnachtsschmuck", n = txt.length; for (let i = 0; i < n; i++) { const d = d1 - 0.2 - (d1 - d0 - 0.4) * (i + 0.5) / n, [x, y] = P(L, d, 3.08), fs = 0.3 * F / d; const nx = P(L, d - 0.1, 3.08), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="${r(x)}" y="${r(y)}" font-size="${r(fs)}" text-anchor="middle" fill="#f2d27a" font-family="Georgia,serif" font-weight="bold" transform="rotate(${r(sk)} ${r(x)} ${r(y)})">${txt[i]}</text>`; } }
+  { const txt = "Weihnachtsschmuck", n = txt.length, lage = zeichenLage(txt); for (let i = 0; i < n; i++) { const d = d1 - 0.2 - (d1 - d0 - 0.4) * lage[i], [x, y] = P(L, d, 3.08), fs = 0.3 * F / d; const nx = P(L, d - 0.1, 3.08), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="${r(x)}" y="${r(y)}" font-size="${r(fs)}" text-anchor="middle" fill="#f2d27a" font-family="Georgia,serif" font-weight="bold" transform="rotate(${r(sk)} ${r(x)} ${r(y)})">${txt[i]}</text>`; } }
   const [ax, ay] = P(L, d0 - 0.2, h1 + 0.5), [bx, by] = P(L, d1 + 0.2, h0 - 0.1);
   const zh = Math.max(by - ay + 8, (Math.abs(bx - ax) + 18) / 1.5), zw = zh * 1.5;
   S.teil({ id: "schaufenster", de: "das Schaufenster", syl: "SCHAU-fens-ter", it: "la vetrina", itSyl: "ve-TRI-na", en: "shop window", x: 0, y: 0, kunst: k,
@@ -798,7 +816,12 @@ const HAENDE = [NP("handL"), NP("handR")].sort((a, b) => a[0] - b[0]);
   const [bx, by] = NP("huefteR");
   k += `<path d="M${r(bx - 1)} ${r(by)} q3 1 4 4 l-1.4 .4 q-.8 -2.4 -3 -3.2 Z" fill="#c9a46a" stroke="#7a5a2a" stroke-width=".25"/>`;
   S.teil({ id: "nachtwaechter", de: "der Nachtwächter", syl: "NACHT-wäch-ter", it: "la guardia notturna", itSyl: "GUAR-dia not-TUR-na", en: "night watchman", x: NW.x, y: NW.y, kunst: k,
-    tipp: "Am Abend führt der Nachtwächter mit Schlapphut und Horn die Gäste durch die Altstadt." });
+    tipp: "Am Abend führt der Nachtwächter mit Schlapphut und Horn die Gäste durch die Altstadt.",
+    zoom: { x: r(NW.x + kx - 26), y: r(NW.y + ky2 - 8), w: 52, h: 34 },
+    unter: [
+      { id: "hut", de: "der Hut", syl: "HUT", it: "il cappello", itSyl: "cap-PEL-lo", en: "hat", x: NW.x + kx, y: NW.y + ky2, kunst: flaeche(-7.8, -5, 15.6, 9),
+        tipp: "Der Nachtwächter trägt einen breiten schwarzen Schlapphut." },
+    ] });
 }
 {
   /* Hellebarde: die linke Hand umfasst die Stange; Fläche nur Stange und Klinge */

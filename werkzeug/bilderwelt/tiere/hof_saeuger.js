@@ -402,7 +402,7 @@ function huf2(T, F, xh, xt, h, winkel, farbe, haarFarbe) {
     innen += [0.4, 0.7].map((t) => strich([[xh + 0.5, -hh * (1 - t) - 0.2], [xo - (xo - xh) * 0.5, -h * (1 - t) * 0.86], [xt - tw * t, -h * (1 - t)]], "#000", 0.2, 0.16, 0.1)).join("");
   }
   innen += F.kante(xo - tw * 0.05, -h * 0.85, xt - tw * 0.5, -h * 0.25, 0.7, 0.4) + F.schatten(xh + 1, -hh * 0.4, 2.2, 2.2, 0.55);
-  let s = stueck(T, p, T.lg("huf" + farbe.slice(1), [[0, farbe], [1, "#000"]], 0, 0, 1, 0.3), innen, { licht: 0.8, q: 0.1 });
+  let s = stueck(T, p, T.lg("huf" + farbe.slice(1), [[0, farbe], [1, "#000"]], 0, 0, 1, 0.3), innen, { licht: 0.8, hell: 0.15, q: 0.1 });
   s += saum2(T, [[xh + 1, -hh - 0.3], [xo - (xo - xh) * 0.45, -h * 0.82], [xo + 0.2, -h - 0.2]], 13, 95, 1.6, haarFarbe, 0.12, 0.8, { ab: 0.7 });
   return s;
 }
@@ -596,9 +596,9 @@ function pferd(T) {
       fellZone(T, beinH, pts, 90, 0.8) + (vorn ? kast(cx - 1.2, -64) : kast(cx - 1.6, -49));
     return stueck(T, pts, fern, innen, { licht: 1.2, dunkel: 0.7, hell: 0.35 });
   };
-  const hufP = (cx, h, f, haar) => huf2(T, F, cx + 2, cx + 9.4 + h / Math.tan(53 * Math.PI / 180), h, 53, f, haar);
-  s += vol(T, "bein", 3, fernBein(false, 10)) + hufP(P_HCX + 10, 8.6, "#2a2420", "#0c0908");
-  s += vol(T, "bein", 3, fernBein(true, -12)) + hufP(P_VCX - 12, 9, "#2a2420", "#0c0908");
+  const hufP = (cx, h, f, haar) => huf2(T, F, cx + 2.2, cx + 9.4 + h / Math.tan(53 * Math.PI / 180), h, 53, f, haar);
+  s += vol(T, "bein", 3, fernBein(false, 10)) + hufP(P_HCX + 10, 9.6, "#2a2420", "#0c0908");
+  s += vol(T, "bein", 3, fernBein(true, -12)) + hufP(P_VCX - 12, 10, "#2a2420", "#0c0908");
   /* ---------- Rumpf, Hals und nahe Beine: EIN Umriss ---------- */
   const rumpf = P_HB.concat(P_HV, [[75, -106], [79, -105.5], [84, -103], [96, -99], [112, -94], [130, -90], [146, -88.5], [156, -89.5], [161, -92]],
     P_VB, P_VV, [[192.6, -100.6], [198.6, -106.4], [204.4, -113.4], [208.4, -121], [210.2, -129], [210.8, -138], [211, -150], [211.6, -162], [212.6, -174],
@@ -609,7 +609,7 @@ function pferd(T) {
   const zRumpf = [[76, -175], [160, -175], [158, -130], [160, -86], [80, -92], [88, -140]];
   const zSchulter = [[160, -175], [170, -175], [205, -122], [195, -92], [188, -60], [160, -60], [160, -86], [158, -130]];
   const zHals = [[170, -175], [240, -230], [222, -190], [206, -120], [205, -122]];
-  const zBeine = [[[P_HCX - 14, -64], [P_HCX + 24, -64], [P_HCX + 24, 0], [P_HCX - 14, 0]], [[P_VCX - 12, -66], [P_VCX + 18, -66], [P_VCX + 18, 0], [P_VCX - 12, 0]]];
+  const zBeine = [[[P_HCX - 14, -56], [P_HCX + 24, -56], [P_HCX + 24, 0], [P_HCX - 14, 0]], [[P_VCX - 12, -60], [P_VCX + 18, -60], [P_VCX + 18, 0], [P_VCX - 12, 0]]];
   const zLicht = [[20, -170], [90, -170], [150, -168], [170, -178], [230, -222], [222, -196], [190, -170], [160, -146], [100, -146], [40, -140], [22, -130]];
   const innen =
     /* Fell in Wuchsrichtung (Muster je Zone): Hinterhand abwärts, Rumpf nach hinten, Schulter abwärts, Hals schräg */
@@ -632,7 +632,7 @@ function pferd(T) {
     F.licht(68.6, -104, 2.4, 3.4, 0.4) + F.rinne(72, -106, 80, -126, 1.6, 0.4) + F.schatten(86, -134, 7, 12, 0.22) +
     /* Schulter: Schulterblattgräte (~48°) als Lichtkante, Mulde des Trizepsansatzes dahinter, Trizepswulst über dem Ellbogen,
        Buggelenk als Höcker vorn, Gurtrinne; 3 schwache Rippenbögen */
-    F.kante(168, -164, 197, -126, 2.2, 0.5) + F.rinne(163, -156, 186, -118, 2.6, 0.3) + F.glanz(171, -110, 8, 6, 0.45, -20) +
+    F.kante(168, -164, 197, -126, 2.2, 0.5) + F.rinne(163, -156, 186, -118, 2.6, 0.3) + F.kante(164, -112, 178, -106, 2.4, 0.35) +
     F.rinne(162, -101, 182, -101, 1.8, 0.35) + F.licht(201, -122, 2.6, 5, 0.4, -25) + F.schatten(196, -106, 5, 6, 0.4) +
     F.schatten(157, -112, 6, 16, 0.35) + [120, 130, 140].map((x) => F.rinne(x, -132, x - 4, -106, 3, 0.09)).join("") +
     /* Hals: Kamm mit Glanzband, Drosselrinne mit Licht darüber, Kehle */
@@ -647,11 +647,11 @@ function pferd(T) {
       `<path d="M${P_HCX - 14} -64C${P_HCX - 8} -72 ${P_HCX - 2} -66 ${P_HCX + 4} -71C${P_HCX + 9} -75 ${P_HCX + 14} -69 ${P_HCX + 22} -74L${P_HCX + 24} 2L${P_HCX - 14} 2Z" fill="${schwarz}"/>`, 2) +
     zBeine.map((z0) => fellZone(T, beinH, z0, 90)).join("") +
     laufP(T, F, P_VCX, true) + laufP(T, F, P_HCX, false);
-  s += vol(T, "rumpf", 11, stueck(T, rumpf, fell, innen, { licht: 2.2, hell: 0.6, hellFarbe: "#ffd2a8", q: T.fein ? 0.2 : 0.5 }), { tiefe: 4, umgebung: 0.35 });
+  s += vol(T, "rumpf", 11, stueck(T, rumpf, fell, innen, { licht: 2.2, hell: 0.3, hellFarbe: "#ffd2a8", q: T.fein ? 0.2 : 0.5 }), { hell: 0.14, licht: "#ffc890" });
   const rk = T._clip;
   /* Kötenhaar am Fesselkopf (Sporn) */
   s += saum2(T, [[P_VCX - 6.8, -23], [P_VCX - 6.2, -18.6]], 16, 112, 2.8, "#0c0908", 0.12, 0.8, { ab: 0.3 }) + saum2(T, [[P_HCX - 6.8, -24], [P_HCX - 6.2, -19.6]], 16, 112, 2.8, "#0c0908", 0.12, 0.8, { ab: 0.3 });
-  s += hufP(P_HCX, 8.6, "#3a322c", "#0c0908") + hufP(P_VCX, 9, "#3a322c", "#0c0908");
+  s += hufP(P_HCX, 9.6, "#3a322c", "#0c0908") + hufP(P_VCX, 10, "#3a322c", "#0c0908");
   /* ---------- Mähne: Haarmasse auf dem Kamm, darüber 12 Strähnenbündel, die auf die nahe Seite fallen ---------- */
   const kammAuf = (t, dy = 0) => { const q = punktAuf(P_KAMM, t); return [q[0], q[1] + dy]; };
   const mBasis = [];
@@ -688,8 +688,8 @@ function pferd(T) {
     haare2(T, schweif, 80, (x, y) => 90 + (x - 18) * 0.5 + (y < -125 ? 25 : 0), 22,
       { farben: [["#000", 1.5, 0.18, 0.6], ["#5a4a42", 1, 0.13, 0.5], ["#a89888", 0.3, 0.1, 0.4]], streuung: 5, kruemmung: 0.1, szene: 0.08 }),
     { licht: 1.2, dunkel: 0.9, hell: 0.5 });
-  s += stueck(T, ruebe, T.lg("rb", [[0, "#7a3c1c"], [0.3, "#4a2614"], [0.7, "#1c1512"], [1, "#100c0b"]], 0, 0, 0.6, 1),
-    haare2(T, ruebe, 26, 118, 3.2, { farben: [["#000", 1, 0.12, 0.55], ["#5a4a40", 0.7, 0.1, 0.45]], streuung: 14, szene: 0 }), { licht: 1, dunkel: 0.8, hell: 0.5 });
+  s += stueck(T, ruebe, T.lg("rb", [[0, "#8a4a22", 0.9], [0.5, "#4a2814", 0.9], [1, "#16110f"]], 0, 0, 0.5, 1),
+    haare2(T, ruebe, 26, 118, 3.2, { farben: [["#000", 1, 0.12, 0.55], ["#5a4a40", 0.7, 0.1, 0.45]], streuung: 14, szene: 0 }), { licht: 0.6, dunkel: 0.5, hell: 0 });
   s += saum2(T, [[12, -51], [24, -50]], 26, 92, 3, "#0e0b0a", 0.14, 0.7, { ab: 0.4, streuung: 10 });
   /* ---------- Kopf: Achse Genick → Maul, 55° geneigt, Länge 62 cm ---------- */
   const G = [232, -214.5], W = 55, K = (pts) => dreh(pts, G[0], G[1], W), P = (x, y) => K([[x, y]])[0];

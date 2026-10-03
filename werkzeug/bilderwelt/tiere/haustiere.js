@@ -389,6 +389,7 @@ function kralle(T, x, y, l, a, farbe = "#2a2018", dicke = 0.32) {
    fellSatz(T, key, o): o = { L (Haarlänge cm), w (Wurzelbreite), k (Haare je Büschel), dunkel, hell, od: [Deckkraft je
    Stufe], oh: [...], krumm } → { d: [marker-ids], h: [marker-ids], L } */
 function fellSatz(T, key, o) {
+  if (!T.fein) return null;
   const L = o.L, w = o.w || L * 0.075, k = o.k || 6, formen = o.formen || 2, dez = 2;
   const sh = [];
   for (let f = 0; f < formen; f++) {
@@ -436,7 +437,7 @@ const weichform = (T, pts, farbe, op, b) => mal(T, b, form(T, pts, farbe, ` opac
 /* Fläche füllen. o = { n (Büschelpaare je Ton), flow(x,y) Grad, licht(x,y) 0…1, st (Abstand der 2 Büschel, cm), streu (Grad),
    wo(x,y), hell (Anteil heller Büschel, Standard 1 = gleich viele) } */
 function fell(T, pts, satz, o) {
-  if (!T.fein || !o.n) return "";
+  if (!T.fein || !o.n || !satz) return "";
   const [x0, y0, x1, y1] = T.box(pts), liste = [];
   const st = o.st || satz.L * 0.6, nh = Math.round(o.n * (o.hell != null ? o.hell : 1)), nm = Math.round(o.n * (o.mittel != null ? o.mittel : 0.5));
   for (const [ton, n] of [["d", o.n], ["m", nm], ["h", nh]]) {
@@ -455,30 +456,83 @@ function fell(T, pts, satz, o) {
   }
   return bueschelPfade(liste);
 }
-/* Fellsaum über die Kontur: alle `abstand` cm ein Büschel, Wurzel innen, Spitze nach außen in Flussrichtung.
-   o = { abstand, flow, ab (0…1 nach außen), wo(x,y), tief (Wurzel innen, × L), licht } – satz mit deckenden Farben */
-function saum(T, pts, satz, o) {
-  if (!T.fein) return "";
-  const k = kurve(pts, 10), m = k.length, liste = [];
-  let acc = 0;
-  for (let i = 0; i < m; i++) {
-    const p = k[i], q = k[(i + 1) % m];
-    acc += Math.hypot(q[0] - p[0], q[1] - p[1]);
-    if (acc < o.abstand * (0.6 + T.rnd() * 0.8)) continue;
-    acc = 0;
-    if (o.wo && !o.wo(p[0], p[1])) continue;
-    let tx = q[0] - p[0], ty = q[1] - p[1]; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
-    let nx = ty, ny = -tx;
-    if (T.inPoly(p[0] + nx * 0.05, p[1] + ny * 0.05, pts)) { nx = -nx; ny = -ny; }
-    const fa = (o.flow(p[0], p[1]) + (T.rnd() - 0.5) * 16) * Math.PI / 180, ab = o.ab != null ? o.ab : 0.35;
-    let dx = nx * ab + Math.cos(fa) * (1 - ab), dy = ny * ab + Math.sin(fa) * (1 - ab);
-    const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
-    const t = satz.L * (o.tief != null ? o.tief : 0.25), l = satz.L * 0.35;
-    const li = o.licht ? klemm(o.licht(p[0], p[1])) : 0.5, ids = li > 0.5 && satz.h ? satz.h : satz.d;
-    const s = stufe(li > 0.5 ? (li - 0.5) * 2 : 1 - li * 2, T.rnd(), ids.length, 0.4);
-    liste.push([ids[s][Math.floor(T.rnd() * ids[s].length)], p[0] - nx * t - dx * l * 0.3, p[1] - ny * t - dy * l * 0.3, dx * l, dy * l]);
+/* Fellsaum: Büschel entlang der Kontur als Polylinie (je Büschel ≈ 6 Bytes). Der Marker zeigt schräg nach außen –
+   „mit“ (Haar läuft in Pfadrichtung) oder „gegen“ (Haar läuft gegen die Pfadrichtung); gewählt nach dem Flussfeld.
+   randSatz(T, key, o): o = { L, w, k, winkel (Grad nach außen), tief (Wurzel innen × L), dunkel, hell, od, oh } */
+function randSatz(T, key, o) {
+  if (!T.fein) return null;
+  const L = o.L, w = o.w || L * 0.08, k = o.k || 5, al = (o.winkel || 28) * Math.PI / 180, tief = (o.tief != null ? o.tief : 0.3) * L;
+  const ids = {};
+  for (const [r, sg] of [["m", 1], ["g", -1]]) {
+    const sh = [];
+    for (let f = 0; f < 2; f++) {
+      let d = "";
+      for (let i = 0; i < k; i++) {
+        const a = sg > 0 ? -al * (0.5 + T.rnd()) : Math.PI + al * (0.5 + T.rnd());
+        const x = (T.rnd() - 0.5) * L * 0.5, y = tief * (0.5 + T.rnd() * 0.8), len = L * (0.55 + T.rnd() * 0.75), ww = w * (0.6 + T.rnd() * 0.7);
+        const tx = x + Math.cos(a) * len, ty = y + Math.sin(a) * len, nx = -Math.sin(a) * ww / 2, ny = Math.cos(a) * ww / 2;
+        const cb = (T.rnd() - 0.5) * 0.15 * len, mx = (x + tx) / 2 - Math.sin(a) * cb, my = (y + ty) / 2 + Math.cos(a) * cb, ax = x + nx, ay = y + ny;
+        d += "M" + folge([ax, ay]) + "q" + folge([mx + nx * 0.45 - ax, my + ny * 0.45 - ay, tx - ax, ty - ay]) + "q" + folge([mx - nx * 0.45 - tx, my - ny * 0.45 - ty, x - nx - tx, y - ny - ty]) + "z";
+      }
+      const id = T.id("rs" + key + r + f);
+      T.def(`<path id="${id}" d="${d}"/>`);
+      sh.push(id);
+    }
+    for (const [ton, farbe, ops] of [["d", o.dunkel, o.od || [0.8, 1]], ["h", o.hell, o.oh || [0.8, 1]]]) {
+      if (!farbe) continue;
+      ids[r + ton] = ops.map((op, lv) => sh.map((sid, f) => {
+        const id = T.id("rm" + key + r + ton + lv + f);
+        T.def(`<marker id="${id}" markerUnits="userSpaceOnUse" orient="auto" overflow="visible" markerWidth="1" markerHeight="1"><use href="#${sid}" fill="${farbe}" fill-opacity="${op}"/></marker>`);
+        return id;
+      }));
+    }
   }
-  return bueschelPfade(liste);
+  return { L, ids };
+}
+/* o = { abstand, flow(x,y) Grad, licht(x,y) 0…1, wo(x,y), lauf (Büschel je Lauf, Standard 7) } */
+function saum(T, pts, satz, o) {
+  if (!T.fein || !satz) return "";
+  const k = kurve(pts, 12), m = k.length;
+  /* Umlaufsinn: „links der Laufrichtung“ muss außen sein (Bildschirm: im Uhrzeigersinn) */
+  let fl = 0;
+  for (let i = 0; i < m; i++) { const a = k[i], b = k[(i + 1) % m]; fl += a[0] * b[1] - b[0] * a[1]; }
+  const P = fl > 0 ? k : k.slice().reverse();
+  /* gleichmäßig abtasten */
+  const pkt = [];
+  let acc = 0, ziel = o.abstand * (0.7 + T.rnd() * 0.6);
+  for (let i = 0; i < m; i++) {
+    const p = P[i], q = P[(i + 1) % m], l = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    acc += l;
+    if (acc >= ziel) { acc = 0; ziel = o.abstand * (0.7 + T.rnd() * 0.6); const tx = (q[0] - p[0]) / (l || 1), ty = (q[1] - p[1]) / (l || 1); pkt.push([p[0], p[1], tx, ty]); }
+  }
+  const lauf = o.lauf || 7, wahl = [];
+  let cur = null;
+  for (const [x, y, tx, ty] of pkt) {
+    if (o.wo && !o.wo(x, y)) { cur = null; continue; }
+    const fa = o.flow(x, y) * Math.PI / 180, r = Math.cos(fa) * tx + Math.sin(fa) * ty >= 0 ? "m" : "g";
+    const li = o.licht ? klemm(o.licht(x, y)) : 0.5, ton = li > 0.5 && satz.ids[r + "h"] ? "h" : "d";
+    const key = r + ton;
+    if (!cur || cur.key !== key || cur.p.length >= lauf) {
+      const ids = satz.ids[key], lv = stufe(ton === "h" ? (li - 0.5) * 2 : 1 - li * 2, T.rnd(), ids.length, 0.4);
+      cur = { key, id: ids[lv][Math.floor(T.rnd() * ids[lv].length)], p: [] };
+      wahl.push(cur);
+    }
+    cur.p.push([x, y]);
+  }
+  const by = {};
+  for (const c of wahl) if (c.p.length > 1) (by[c.id] = by[c.id] || []).push(c.p);
+  return Object.keys(by).map((id) => {
+    let d = "", px = 0, py = 0;
+    for (const lst of by[id]) {
+      const X = +zahl(lst[0][0], 1), Y = +zahl(lst[0][1], 1);
+      d += (d ? "m" + folge([X - px, Y - py], 1) : "M" + folge([X, Y], 1)) + "l";
+      px = X; py = Y;
+      const z = [];
+      for (const [x, y] of lst.slice(1)) { const U = +zahl(x - px, 1), W = +zahl(y - py, 1); z.push(U, W); px += U; py += W; }
+      d += folge(z, 1);
+    }
+    return `<path d="${d}" fill="none" marker-start="url(#${id})" marker-mid="url(#${id})" marker-end="url(#${id})"/>`;
+  }).join("");
 }
 
 module.exports = [
@@ -508,10 +562,11 @@ module.exports = [
       const SCH = "#8a5a28", TIEF = "#5e3812", HELL = "#fff4da";
       const EIMER = [["#93612c", 0, 0.42, 0, "s"], ["#b5843f", 0, 0.36, 0, "s"], ["#d2a462", 0, 0.3, 0, "s"], ["#e6c58a", 0, 0.3, 0, "s"], ["#f4dfb4", 0, 0.32, 0, "s"]];
       /* Fell-Sätze: Körper (lang), Kopf (kurz); Saum deckend in Körperfarbe */
-      const FK = fellSatz(T, "k", { L: 1.25, k: 7, w: 0.1, dunkel: "#6a3c10", od: [0.1, 0.16, 0.24], mittel: "#b67a30", om: [0.1, 0.16, 0.22], hell: "#fff0c8", oh: [0.05, 0.16, 0.3] });
-      const FS = fellSatz(T, "s", { L: 0.9, k: 5, w: 0.09, breit: 0.3, dunkel: "#b88a4c", od: [0.7, 0.85, 1], hell: "#e6c48a", oh: [0.75, 0.9, 1] });
-      const FKo = fellSatz(T, "o", { L: 0.6, k: 6, w: 0.065, dunkel: "#6a3c10", od: [0.1, 0.16, 0.24], mittel: "#b67a30", om: [0.1, 0.16, 0.2], hell: "#fff0c8", oh: [0.06, 0.16, 0.28] });
-      const FSo = fellSatz(T, "so", { L: 0.5, k: 4, w: 0.06, breit: 0.3, dunkel: "#c0924f", od: [0.7, 0.85, 1], hell: "#e8c88e", oh: [0.75, 0.9, 1] });
+      const FK = fellSatz(T, "k", { L: 1.05, k: 8, w: 0.075, dunkel: "#6a3c10", od: [0.06, 0.1, 0.15], mittel: "#b67a30", om: [0.06, 0.1, 0.14], hell: "#fff3d2", oh: [0.04, 0.12, 0.24] });
+      const FKo = fellSatz(T, "o", { L: 0.55, k: 7, w: 0.05, dunkel: "#6a3c10", od: [0.06, 0.1, 0.15], mittel: "#b67a30", om: [0.06, 0.1, 0.14], hell: "#fff3d2", oh: [0.04, 0.12, 0.22] });
+      const FS = randSatz(T, "s", { L: 0.62, k: 5, w: 0.06, winkel: 16, dunkel: "#b8884a", od: [0.75, 0.95], hell: "#e4c48c", oh: [0.8, 1] });
+      const FSo = randSatz(T, "so", { L: 0.4, k: 4, w: 0.045, winkel: 22, dunkel: "#bf904f", od: [0.75, 0.95], hell: "#e6c890", oh: [0.8, 1] });
+      const FSb = randSatz(T, "sb", { L: 0.95, k: 5, w: 0.06, winkel: 40, dunkel: "#b8884a", od: [0.75, 0.95] });
       /* Silhouette: Rumpf, Hals und die nahen Beine als EIN Umriss.
          Vorderlauf: Ellbogen als Rundung hinten, Unterarm verjüngt, Handwurzel verdickt, Mittelfuß 12°, Pfote mit 3 Knöchelbögen */
       const vorne = [[17.2, -29.4], [16.9, -24], [16.55, -17], [16.3, -12.8], [16.75, -11.2], [16.85, -9.6], [17.25, -7.6], [17.9, -6.15],
@@ -528,11 +583,11 @@ module.exports = [
       /* Kopf: Schädel höher und gewölbt, Stopp mit Stufe, Fang kastenförmig (vorn ≥ 90 % so tief wie am Stopp),
          Unterkiefer tiefer, Nase bündig mit dem Nasenrücken (Überstand ≈ 0,4 cm) */
       const kopf = [[24.2, -69.4], [25.4, -72.4], [28, -74], [31.6, -74.4], [34.5, -73.6], [36.3, -72.3], [37.1, -70.6], [38.3, -69.2], [41.5, -68.75], [44.6, -68.45], [46.6, -68.25],
-        [48.4, -68.05], [49.25, -67.3], [49.45, -65.9], [49.25, -64.8], [48.85, -64.35], [48.95, -63], [48.85, -61.6], [48.35, -60.5], [46.8, -59.6], [44.6, -59.1], [42, -58.4], [38.6, -57.7], [35, -57.3],
+        [48.4, -68.05], [49.25, -67.3], [49.45, -65.9], [49.25, -64.8], [48.85, -64.35], [48.95, -63], [48.95, -61.2], [48.7, -60.1], [47.6, -59.55], [45.4, -59.25], [42.6, -58.7], [39, -57.9], [35, -57.3],
         [31.6, -57.8], [28.9, -59.8], [26.6, -63.2]];
       const kopfId = pfad(T, kopf);
       /* Ohr: Dreieck (Breite oben 100 %, Mitte 80 %, unten 45 %), Basis angehoben und gefaltet, Spitze gerundet */
-      const ohr = [[26.2, -71.4], [28.6, -72.9], [31.4, -72.9], [33.2, -71.6], [33.4, -69.6], [32.9, -67], [32.2, -64.4], [31.4, -62.4], [30.4, -61.2], [29.4, -61.3], [28.5, -62.6], [27.3, -65.6], [26.4, -68.8]];
+      const ohr = [[26, -71.2], [28.4, -72.6], [31.6, -72.7], [33.3, -71.7, 1], [33.25, -69.4], [32.9, -66.6], [32.2, -64], [31.4, -62.1], [30.6, -61.1], [29.8, -61.2], [29.1, -62.4], [28.1, -64.6], [26.9, -67.6], [26.2, -69.8]];
       const ohrId = pfad(T, ohr);
       /* Licht-Feld und Wuchsrichtung */
       const lf = feld(leib, 8, (x, y) => (y < -50 ? 0.08 : 0) - (y > -42 && y < -28 && x > -14 && x < 10 ? 0.2 : 0));
@@ -569,8 +624,8 @@ module.exports = [
       for (const [P, x, w] of [[fernH, -29.5 + 5.6, 7.3], [fernV, 13.5 - 4.4, 7.7]]) {
         const fl = feld(P, 3);
         s += `<g filter="${V("hf" + x, 1.4, 5, 0.3)}">` + teil(T, P, fernF, {
-          innen: weichform(T, schieb(P, 0.9, 0.4), TIEF, 0.22, 0.9) + fell(T, P, FK, { n: 70, flow: () => 94, licht: (xx, yy) => (fl(xx, yy) + 0.2) / 1.4 - 0.2, hell: 0.6 }) + pfote(x, w, 1),
-          ueber: saum(T, P, FS, { abstand: 0.35, flow: () => 94, ab: 0.3, wo: (xx, yy) => yy < -1.2, licht: () => 0.2 }),
+          innen: weichform(T, schieb(P, 0.9, 0.4), TIEF, 0.22, 0.9) + fell(T, P, FK, { n: 50, flow: () => 94, licht: (xx, yy) => (fl(xx, yy) + 0.2) / 1.4 - 0.2, hell: 0.6 }) + pfote(x, w, 1),
+          ueber: saum(T, P, FSo, { abstand: 0.3, flow: () => 94, wo: (xx, yy) => yy < -1.2, licht: () => 0.2 }),
         }) + krallen(x, w, 1) + "</g>";
       }
       /* --- Otterrute: fällt aus der Kruppe ab, 6,5 → 2,3 cm, stumpf, unten büschelig --- */
@@ -579,9 +634,9 @@ module.exports = [
       const rflow = (x, y) => (y < -46 ? 150 : y < -40 ? 118 : 96);
       const rl = feld(rute, 2.4);
       s += `<g filter="${V("rute", 1.4, 5, 0.3)}">` + teil(T, rute, T.lg("rute", [[0, "#dcb072"], [0.6, "#d4a564"], [1, "#b8884a"]], 0, 0, 1, 0), {
-        innen: fell(T, rute, FK, { n: 110, flow: rflow, licht: (x, y) => (rl(x, y) + 0.3) / 1.1 }),
-        ueber: saum(T, rute, FS, { abstand: 0.22, flow: rflow, ab: 0.35, licht: (x, y) => (rl(x, y) + 0.3) / 1.1 }) +
-          saum(T, rute, FS, { abstand: 0.3, flow: (x, y) => rflow(x, y) - 20, ab: 0.7, tief: 0.1, wo: (x, y) => x > -39 && y > -44, licht: () => 0.3 }),
+        innen: fell(T, rute, FK, { n: 80, flow: rflow, licht: (x, y) => (rl(x, y) + 0.3) / 1.1 }),
+        ueber: saum(T, rute, FS, { abstand: 0.22, flow: rflow, licht: (x, y) => (rl(x, y) + 0.3) / 1.1, wo: (x, y) => !(x > -39.5 && y > -45) }) +
+          saum(T, rute, FSb, { abstand: 0.2, flow: rflow, licht: () => 0.3, wo: (x, y) => x > -39.5 && y > -45 }),
       }) + "</g>";
       /* --- Leib --- */
       const kopfVers = (pts) => schieb(pts, -1.5, 3.8);
@@ -590,7 +645,7 @@ module.exports = [
           /* Schulterblatt als eigene Lichtfläche (45°), Schattenkante hinten; Keule als Kugel (Glanz oben vorn, Sichel hinten unten);
              Ellbogen als Volumen; Kernschatten-Band bei 65 % Rumpftiefe kommt aus dem Verlauf */
           weichform(T, [[12.4, -56.4], [16.4, -57.2], [21.2, -51], [24.4, -44.4], [22.6, -42.4], [18.6, -46], [13.8, -51.6]], HELL, 0.32, 1.1) +
-          weichform(T, [[11.4, -55.6], [12.6, -55.8], [17.4, -46.6], [21.6, -41.8], [20.4, -41], [15.6, -46.2]], SCH, 0.35, 0.45) +
+          weichform(T, [[11.4, -55.6], [12.6, -55.8], [16.4, -49.6], [15.6, -47.6]], SCH, 0.18, 0.7) +
           weichform(T, [[-29.6, -50.4], [-22.4, -52.6], [-17.4, -48.6], [-19.6, -43], [-25.6, -42.6], [-29.4, -45.6]], HELL, 0.38, 1.6) +
           weichform(T, [[-33.6, -42.4], [-27.6, -35.6], [-19.4, -32.8], [-15.6, -34.6], [-18.6, -30.4], [-27.4, -30.2], [-32.8, -35.6]], SCH, 0.42, 1.2) +
           weichform(T, [[8.6, -30.6], [11.6, -31.4], [12.6, -28.6], [10.6, -26.4], [9.2, -27.4]], HELL, 0.3, 0.5) +
@@ -600,19 +655,16 @@ module.exports = [
           weichform(T, [[17.6, -33], [20.6, -34.6], [19.4, -30.6], [17.4, -28.6]], TIEF, 0.35, 0.7) +
           weichform(T, [[-12.4, -36], [-10.6, -33.6], [-13.2, -30.6], [-14.4, -33.4]], TIEF, 0.3, 0.6) +
           /* Fell */
-          fell(T, leib, FK, { n: 620, flow, licht: lic, wo: (x, y) => y < -6 }) +
-          fell(T, leib, FKo, { n: 160, flow, licht: lic, wo: (x, y) => y > -14 && y < -2 }) +
+          fell(T, leib, FK, { n: 420, hell: 0.8, mittel: 0.4, flow, licht: lic, wo: (x, y) => y < -6 }) +
+          fell(T, leib, FKo, { n: 110, flow, licht: lic, wo: (x, y) => y > -14 && y < -2 }) +
           pfote(-29.5, 7.3) + pfote(13.5, 7.7),
-        ueber: saum(T, leib, FS, { abstand: 0.24, flow, ab: 0.32, licht: lic, wo: (x, y) => y < -6.5 && !(x > 24 && y < -57) }) +
-          saum(T, leib, FSo, { abstand: 0.18, flow: () => 98, ab: 0.4, licht: lic, wo: (x, y) => y < -0.8 && y > -6.5 }) +
-          /* Haarbüschel zwischen den Zehen */
-          saum(T, [[19.5, -5.1], [20.5, -4.1], [21.25, -2.8], [21.4, -1.6]], FSo, { abstand: 0.2, flow: () => 70, ab: 0.6, tief: 0.05, licht: () => 0.6 }) +
-          saum(T, [[-23.5, -5.0], [-22.6, -4.1], [-21.8, -2.9], [-21.65, -1.7]], FSo, { abstand: 0.2, flow: () => 70, ab: 0.6, tief: 0.05, licht: () => 0.6 }) +
-          /* Saum am Bauch etwas länger und hängend */
-          saum(T, [[-12.4, -34.6], [-6, -31.2], [-1, -29.4], [5, -28.6], [9.2, -29.4]], FS, { abstand: 0.2, flow: () => 100, ab: 0.8, tief: 0.15, licht: () => 0.3 }),
+        ueber: saum(T, leib, FS, { abstand: 0.26, flow, licht: lic, wo: (x, y) => y < -6.5 && !(x > 24 && y < -57) && !(y > -35 && y < -27.5 && x > -12.5 && x < 9) }) +
+          /* Pfoten fein, Büschel zwischen den Zehen; Bauch etwas länger und hängend */
+          saum(T, leib, FSo, { abstand: 0.17, flow: () => 98, licht: lic, wo: (x, y) => y < -0.6 && y > -6.5 }) +
+          saum(T, leib, FSb, { abstand: 0.2, flow: () => 175, licht: () => 0.3, wo: (x, y) => y > -35 && y < -27.5 && x > -12.5 && x < 9 }),
       }) + krallen(-29.5, 7.3) + krallen(13.5, 7.7) +
         /* Afterkralle: innen am Vordermittelfuß, halb im Fell */
-        (T.fein ? kralle(T, 12.95, -6.8, 0.55, 118, "#3a2e26", 0.45) + saum(T, [[12.9, -7.6], [12.75, -6.3]], FSo, { abstand: 0.12, flow: () => 100, ab: 0.2, tief: 0, licht: () => 0.4 }) : "") + "</g>";
+        (T.fein ? kralle(T, 12.95, -6.9, 0.5, 118, "#3a2e26", 0.45) + `<path d="M12.6 -7.7q.5 .4 .45 1.1" fill="none" stroke="#c99a5a" stroke-width=".22" stroke-linecap="round"/>` : "") + "</g>";
       /* --- Kopf (Gruppe: etwas tiefer und zurück getragen) --- */
       s += `<g transform="translate(-1.5 3.8)">`;
       const kl = feld(kopf, 3.4, (x, y) => (x > 39 && y > -62 ? 0.1 : 0));
@@ -627,13 +679,14 @@ module.exports = [
           weichform(T, [[30.6, -66.4], [35.4, -66.6], [37.6, -63.6], [35.4, -60.6], [31.6, -61.4]], HELL, 0.16, 1) +
           weichform(T, [[29.6, -61.4], [36.6, -60], [38.6, -58.2], [31.6, -58]], TIEF, 0.3, 0.8) +
           /* Lefze: hängt 0,6 cm über, Schatten darunter, schwarzer Lefzenrand, Mundwinkel-Falte unter dem vorderen Augenwinkel */
-          mal(T, 0.22, `<path d="M48.7 -60.4Q46 -59.5 42.8 -59.4Q40 -59.6 37.6 -61Q38.4 -59.6 41 -58.9Q44.6 -58.3 48.2 -59.6Z" fill="${TIEF}" opacity=".55"/>`) +
-          `<path d="M48.85 -61.2Q48.5 -60.5 47.6 -60.3Q45 -59.85 42.6 -59.9Q39.8 -60.2 37.7 -61.3" fill="none" stroke="#1c120a" stroke-width=".26" stroke-linecap="round"/>` +
-          `<path d="M48.6 -61.6Q45.5 -61 42.6 -61.1Q40 -61.4 38 -62.2" fill="none" stroke="${HELL}" stroke-width=".5" stroke-opacity=".22"/>` +
-          `<path d="M37.8 -61.2q-.55 .15 -.75 .85q0 .5 .35 .8" fill="none" stroke="#5a3818" stroke-width=".16" stroke-opacity=".55"/>` +
+          /* Unterkiefer unter der Lefze im Schatten; Lefzenrand fast gerade nach hinten ansteigend (kastenförmiger Fang) */
+          mal(T, 0.3, `<path d="M48.5 -60.1Q45 -59.9 41.5 -60.4Q39.2 -60.8 37.7 -61.5Q38.6 -59.3 41 -58.6Q44.6 -58.6 47.8 -59.4Z" fill="${TIEF}" opacity=".5"/>`) +
+          `<path d="M48.75 -60.3Q47.9 -60.05 46.2 -60.05Q43.4 -60.1 41.2 -60.5Q39.2 -60.9 37.8 -61.55" fill="none" stroke="#1c120a" stroke-width=".24" stroke-linecap="round"/>` +
+          `<path d="M48.4 -60.7Q45.5 -60.6 42.6 -60.9Q40.2 -61.2 38.4 -61.9" fill="none" stroke="${HELL}" stroke-width=".55" stroke-opacity=".2"/>` +
+          `<path d="M37.85 -61.5q-.5 .2 -.6 .8q.05 .45 .4 .7" fill="none" stroke="#5a3818" stroke-width=".15" stroke-opacity=".5"/>` +
           schlag(T, ohrId, 0.6, 0.9, 0.45, TIEF, 0.5) +
-          fell(T, kopf, FKo, { n: 300, flow: kflow, licht: klic, wo: (x, y) => !(x > 48 && y < -63.5) }),
-        ueber: saum(T, kopf, FSo, { abstand: 0.2, flow: kflow, ab: 0.3, licht: klic, wo: (x, y) => (x < 46.5 && y < -61.5) || (y > -59.5 && x < 46) }),
+          fell(T, kopf, FKo, { n: 210, flow: kflow, licht: klic, wo: (x, y) => !(x > 48 && y < -63.5) }),
+        ueber: saum(T, kopf, FSo, { abstand: 0.2, flow: kflow, licht: klic, wo: (x, y) => (x < 46.5 && y < -61.5) || (y > -59.5 && x < 46) }),
       });
       /* Auge: 1,3 : 1, Oberlid deckt 15 % der Iris, Schatten im oberen Drittel, Unterlidlinie, kleine Nickhaut-Sichel */
       s += auge(T, 35.3, -69.2, 0.78, { ratio: 1.3, spitz: 0.35, winkel: 6, iris: "#8a541e", iris2: "#3a1d08", mitte: "#b47a34", pr: 0.4, ir: 0.92, lid: "#1a0f08", lidw: 0.16, wimpern: [9, 0.5, "#4a3018"], nick: "#6a5048" });
@@ -641,7 +694,7 @@ module.exports = [
       s += tasthaar(T, [36.2, -71.4, 0.6, 0.2, 1, 4], -112, -80, 2.6, ["#3a2814", "#c9a874"], 0.05, 0.7);
       /* Nase: oben bündig, vorn fast senkrecht, Philtrum als Kerbe in der Nase, Komma-Nasenloch mit hellem Flügelrand,
          kleiner scharfer Glanz + Mikroglanz auf dem Pflaster */
-      const nase = [[46.4, -68.3], [48.4, -68.1], [49.25, -67.35], [49.5, -66], [49.35, -64.9], [48.95, -64.45], [48.65, -64.75], [48.3, -64.45], [47.4, -64.65], [46.6, -65.4], [46.1, -66.8]];
+      const nase = [[46.3, -68.3], [48.4, -68.12], [49.2, -67.45], [49.42, -66.1], [49.3, -64.95], [48.95, -64.45], [48.65, -64.75], [48.3, -64.45], [47.5, -64.55], [47, -65.3], [46.5, -66.6]];
       s += teil(T, nase, T.lg("nase", [[0, "#4a3e38"], [0.4, "#221a16"], [1, "#0c0908"]]), {
         innen: (T.fein ? `<rect x="46" y="-68.4" width="3.6" height="4.2" fill="#2e2622" filter="${T.relief("nase", { f: 3.4, tiefe: 0.4, okt: 2 })}" opacity=".45"/>` : "") +
           `<path d="M49.45 -66.15C48.85 -66.3 48.35 -66 48.2 -65.55C48.05 -65.15 47.85 -64.95 47.5 -64.95C47.9 -64.75 48.4 -64.9 48.65 -65.25C48.85 -65.55 49.1 -65.7 49.45 -65.7Z" fill="#000"/>` +
@@ -656,9 +709,8 @@ module.exports = [
       const ol = feld(ohr, 1.6);
       s += `<g filter="${V("ohr", 0.8, 5, 0.32)}">` + teil(T, "#" + ohrId, T.lg("hohr", [[0, "#d2a462"], [0.5, "#c99a58"], [1, "#c29152"]]), {
         innen: weichform(T, [[26.6, -71.4], [29, -72.4], [32.6, -71.4], [33, -70.2], [29.6, -70.6], [27, -70]], TIEF, 0.3, 0.3) +
-          `<path d="M26.8 -70.6Q29.6 -71.6 33 -70.4" fill="none" stroke="${HELL}" stroke-width=".35" stroke-opacity=".3"/>` +
           fell(T, ohr, FKo, { n: 70, flow: () => 98, licht: (x, y) => (ol(x, y) + 0.2) / 1.2 - 0.1 }),
-        ueber: saum(T, ohr, FSo, { abstand: 0.2, flow: () => 98, ab: 0.4, licht: () => 0.35, wo: (x, y) => y > -70.5 }),
+        ueber: saum(T, ohr, FSo, { abstand: 0.2, flow: () => 98, licht: () => 0.35, wo: (x, y) => y > -70.5 }),
       }) + "</g>";
       s += "</g>";
       return { svg: s, box: [-42.4, -70.6, 47.9, 0], fuesse: [-25.6, -19.9, 13.6, 17.2], kopf: [22.5, -71, 48.5, -53] };
