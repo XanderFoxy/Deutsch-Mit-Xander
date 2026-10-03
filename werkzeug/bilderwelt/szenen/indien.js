@@ -83,7 +83,7 @@ const P = (pts) => {
 const schattenLang = (s, d, hoehe, breite, form = "zypresse") => {
   const L = 1.6 * hoehe, oben = [], unten = [];
   for (let i = 0; i <= 8; i++) {
-    const t = i / 8, st = s - L * t, dt = d + 0.3 * L * t;
+    const t = i / 8, st = s - L * t, dt = d + 0.12 * L * t;
     const hw = breite / 2 * (form === "zypresse" ? Math.sin(Math.PI * Math.pow(1 - t, 0.85) * 0.5) : t < 0.78 ? 1 - 0.25 * t : 0.8 * (1 - t) / 0.22);
     oben.push([xAt(st, dt + hw), yAt(dt + hw)]); unten.push([xAt(st, Math.max(1, dt - hw)), yAt(Math.max(1, dt - hw))]);
   }
@@ -449,7 +449,7 @@ S.teil({ anker: [375, 108], id: "gaestehaus", de: "das Gästehaus", syl: "GÄS-t
     /* Lichtsicheln auf der Ostseite (rechts oben) */
     for (const a of [-1.2, -0.6, -0.05]) { const bx = cx + Math.cos(a) * RX * 0.62, by = cy + Math.sin(a) * RY * 0.62, br = RX * 0.26; g += `<path d="M${r(bx - br * 0.2)} ${r(by - br * 0.75)} A${r(br)} ${r(br * 0.8)} 0 0 1 ${r(bx + br * 0.75)} ${r(by + br * 0.35)} A${r(br * 0.8)} ${r(br * 0.6)} 0 0 0 ${r(bx - br * 0.2)} ${r(by - br * 0.75)} Z" fill="#7a9a58"/>`; }
     /* Lücken im Laub: dunkle Einschnitte statt heller Punkte */
-    for (const [a, q] of [[-2.3, 0.6], [2.5, 0.55]]) g += `<ellipse cx="${r(cx + Math.cos(a) * RX * q)}" cy="${r(cy + Math.sin(a) * RY * q)}" rx="${r(RX * 0.12)}" ry="${r(RY * 0.08)}" fill="#152618"/>`;
+    for (const [a, q, c, o] of [[-2.3, 0.6, "#e9dcd2", 0.7], [2.5, 0.55, "#1f3524", 1]]) { const lx = cx + Math.cos(a) * RX * q, ly = cy + Math.sin(a) * RY * q, e = RX * 0.11; g += `<path d="M${r(lx - e)} ${r(ly)} Q${r(lx - e * 0.3)} ${r(ly - e * 0.8)} ${r(lx + e * 0.6)} ${r(ly - e * 0.4)} Q${r(lx + e * 1.1)} ${r(ly + e * 0.2)} ${r(lx + e * 0.2)} ${r(ly + e * 0.6)} Z" fill="${c}" opacity="${o}"/>`; }
     return g;
   };
   /* Bäume liegen außerhalb des Taj-Bereichs (|x − 200| > 98) oder bleiben unter dem Sockel */
@@ -464,13 +464,14 @@ S.teil({ anker: [375, 108], id: "gaestehaus", de: "das Gästehaus", syl: "GÄS-t
     if (top < 126 && ((x + w > 8 && x - w < 66) || (x + w > 334 && x - w < 392))) continue;   /* Moschee und Gästehaus frei lassen */
     k += krone(Math.max(w * 1.08, Math.min(400 - w * 1.08, x)), yAt(d), w, hh * u);
   }
+  S.baumBild = k; k = "";
   /* große Schattenbäume in den vorderen Gartenvierteln (Mango, Neem), Stamm sichtbar, langer Schatten nach Westen */
   for (const sd of [-1, 1]) for (const [s, d, hh] of [[18.5, 92, 6.2], [26, 128, 7.5], [16.5, 60, 3.9]]) {
     const u = uAt(d), x = xAt(sd * s, d), w = hh * 0.42 * u;
     k += `<path d="${schattenLang(sd * s, d, hh, hh * 0.7)}" fill="#1d3320" opacity=".28" pointer-events="none"/>`;
     k += krone(x, yAt(d), w, hh * u);
   }
-  S.baumBild = k;
+  S.baumNah = k;
 }
 
 /* =====================================================================
@@ -571,8 +572,8 @@ const schattenWest = (s, d, hoehe, breite) => { const u = uAt(d), y = yAt(d); re
     }
     /* niedrige Hecke (Buchs), 0,6 m */
     const ha = sd < 0 ? -BEET[1] : BEET[1] - 0.35, hb = ha + 0.35;
-    k += `<path d="${P([[xAt(ha, D_FERN), yAt(D_FERN, 0.6)], [xAt(hb, D_FERN), yAt(D_FERN, 0.6)], [xAt(hb, D_UNTEN), yAt(D_UNTEN, 0.6)], [xAt(ha, D_UNTEN), yAt(D_UNTEN, 0.6)]])}" fill="#2f5a2e"/>`;
-    k += `<path d="${P([[xAt(ha, D_FERN), yAt(D_FERN, 0.6)], [xAt(ha, D_FERN), yAt(D_FERN)], [xAt(ha, D_UNTEN), yAt(D_UNTEN)], [xAt(ha, D_UNTEN), yAt(D_UNTEN, 0.6)]])}" fill="${sd < 0 ? "#3d6a36" : "#24462a"}"/>`;
+    for (const [dA, dB] of [[D_UNTEN, D_BECKEN[0]], [D_BECKEN[1] + 14, D_FERN]]) k += `<path d="${P([[xAt(ha, dB), yAt(dB, 0.6)], [xAt(hb, dB), yAt(dB, 0.6)], [xAt(hb, dA), yAt(dA, 0.6)], [xAt(ha, dA), yAt(dA, 0.6)]])}" fill="#2f5a2e"/>`;
+    for (const [dA, dB] of [[D_UNTEN, D_BECKEN[0]], [D_BECKEN[1] + 14, D_FERN]]) k += `<path d="${P([[xAt(ha, dB), yAt(dB, 0.6)], [xAt(ha, dB), yAt(dB)], [xAt(ha, dA), yAt(dA)], [xAt(ha, dA), yAt(dA, 0.6)]])}" fill="${sd < 0 ? "#3d6a36" : "#24462a"}"/>`;
   }
   /* abgesenkte Beete in den Vierteln (Parterres) mit Sandsteinrand und Blütenreihen */
   for (const sd of [-1, 1]) for (const [s0, s1, d0, d1] of [[14, 38, 92, 118], [14, 38, 172, 212], [52, 76, 172, 212]]) {
@@ -589,7 +590,7 @@ const schattenWest = (s, d, hoehe, breite) => { const u = uAt(d), y = yAt(d); re
     tipp: "In den Beeten blühen Studentenblumen und Rosen. Hinter ihnen wächst eine niedrige Hecke." });
 }
 /* der Baum nach Rasen, Weg und Beeten: die Bäume stehen davor */
-S.teil({ anker: [16, 104], id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: S.baumBild + `<path d="M0 ${HOR - 18} H112 V${HOR + 8} H0 Z M288 ${HOR - 18} H400 V${HOR + 8} H288 Z" fill="${S.lg("gartendunst", [[0, "#f4e4d4", 0], [0.6, "#f4e4d4", 0.4], [1, "#f4e4d4", 0.15]])}" pointer-events="none"/>`,
+S.teil({ anker: [16, 104], id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: S.baumBild + `<path d="M0 ${HOR - 18} H112 V${HOR + 8} H0 Z M288 ${HOR - 18} H400 V${HOR + 8} H288 Z" fill="${S.lg("gartendunst", [[0, "#f4e4d4", 0], [0.6, "#f4e4d4", 0.4], [1, "#f4e4d4", 0]])}" pointer-events="none"/>` + S.baumNah,
   tipp: "Früher wuchsen in den vier Gartenvierteln Obstbäume und Blumen. Heute sind dort vor allem Rasen und große Schattenbäume." });
 /* Wasserfläche als Schnittmaske für das Spiegelbild */
 const WASSER = [band(-KANAL, KANAL, D_NAH, D_BECKEN[0]), band(-KANAL, KANAL, D_BECKEN[1], D_FERN)].join(" ");
@@ -649,15 +650,15 @@ const BECKEN_OBEN = P([[xAt(-12, D_BECKEN[1]), yAt(D_BECKEN[1], 1.2)], [xAt(12, 
   for (const d of tiefen.reverse()) {
     for (const sd of [-1, 1]) {
       /* kleine Unterschiede in Höhe und Neigung (±5 %) */
-      const hz = (d < 90 ? 6.4 : 5.6) * (0.95 + rnd() * 0.1), u = uAt(d), y = yAt(d), w = 0.62 * u * (0.95 + rnd() * 0.1), h = hz * u;
+      const zf = 0.95 + rnd() * 0.1, hz = (d < 90 ? 6.4 : 5.6) * (d < 40 ? 0.92 : zf), u = uAt(d), y = yAt(d), w = 0.62 * u * (0.95 + rnd() * 0.1), h = hz * u;
       const x = xAt(sd * ZY, d);
-      sch += `<path d="${schattenLang(sd * ZY + 0.3, d, hz, 3.0)}" fill="#1d3320"/>`;
+      sch += `<path d="${schattenLang(sd * ZY + 0.3, d, hz, 3.5)}" fill="#1d3320"/>`;
       if (d > D_BECKEN[1]) fern += zyp(x, y, w, h); else nah += zyp(x, y, w, h);
     }
   }
   /* Maske: alles außer dem Marmorbecken (gerade Regel: evenodd) */
   S.def(`<clipPath id="${S.id("ohnebecken")}"><path clip-rule="evenodd" d="M-10 -10 H410 V270 H-10 Z ${BECKEN_OBEN}"/></clipPath>`);
-  const k = `<g opacity=".34" pointer-events="none">${sch}</g><g clip-path="url(#${S.id("ohnebecken")})">${fern}</g>${nah}`;
+  const k = `<g opacity=".4" pointer-events="none">${sch}</g><g clip-path="url(#${S.id("ohnebecken")})">${fern}</g>${nah}`;
   S.teil({ anker: [xAt(-ZY, 44), yAt(44, 3.6)], id: "zypresse", de: "die Zypresse", syl: "zy-PRES-se", it: "il cipresso", itSyl: "ci-PRES-so", en: "cypress", x: 0, y: 0, kunst: k,
     tipp: "Zypressen bleiben immer grün. In persischen Gärten stehen sie für das ewige Leben." });
 }
@@ -701,13 +702,13 @@ const BECKEN_OBEN = P([[xAt(-12, D_BECKEN[1]), yAt(D_BECKEN[1], 1.2)], [xAt(12, 
    ===================================================================== */
 {
   /* Besucherin im Sari: steht mit dem Rücken zum Taj und schaut zum Fotografen (rechts vorn) */
-  const d = 27, u = uAt(d), x = xAt(3.6, d), y = yAt(d);
+  const d = 28, u = uAt(d), x = xAt(5.0, d), y = yAt(d);    /* auf der Linie vom Fotografen zum Taj */
   const m = B.mensch({ id: "ind_sari", geschlecht: "w", pose: "kontrapost", blick: 42, frisur: "zopf", haarfarbe: "schwarz", haut: "mittel", laecheln: true,
     kleidung: { oberteil: { stueck: "tshirt", farbe: "gelb" }, unterteil: { stueck: "rock", farbe: "orange" }, schuhe: { stueck: "sandale", farbe: "braun" } } }, 1.6 * u);
   const p = (n) => { const q = m.z.punkte[n]; return [q[0] * m.k, q[1] * m.k]; };
   const [sLx, sLy] = p("schulterL"), [hLx, hLy] = p("huefteL"), [hRx, hRy] = p("huefteR"), [kLx] = p("knoechelL"), [kRx] = p("knoechelR"), [tLx, tLy] = p("tailleL"), [tRx, tRy] = p("tailleR"), [bx, by] = p("brust");
   const rx0 = Math.min(hLx, hRx) - 0.7, rx1 = Math.max(hLx, hRx) + 0.7, ry0 = Math.min(tLy, tRy) - 0.2, fl = Math.min(kLx, kRx) - 1.6, fr = Math.max(kLx, kRx) + 1.6;
-  let sari = `<path d="${schattenLang(3.6 + 0.1, d, 1.6, 0.42, "figur")}" fill="#2a1a10" opacity=".32" transform="translate(${r(-x)} ${r(-y)})"/>`;
+  let sari = `<path d="${schattenLang(5.0 + 0.1, d, 1.6, 0.42, "figur")}" fill="#2a1a10" opacity=".32" transform="translate(${r(-x)} ${r(-y)})"/>`;
   sari += `<ellipse cx="0" cy=".2" rx="${r(0.35 * u)}" ry="${r(0.06 * u)}" fill="#2a1a10" opacity=".35"/>`;
   /* eng gewickelter Rock bis zu den Knöcheln, vorn Falten, unten Goldborte */
   sari += `<path d="M${r(rx0)} ${r(ry0)} L${r(rx1)} ${r(ry0)} Q${r(rx1 + 0.4)} ${r((ry0 - 1) / 2)} ${r(fr)} -1.1 Q${r((fl + fr) / 2)} -.4 ${r(fl)} -1.1 Q${r(rx0 - 0.4)} ${r((ry0 - 1) / 2)} ${r(rx0)} ${r(ry0)} Z" fill="${S.lg("sari", [[0, "#b8341a"], [0.55, "#de5420"], [1, "#a82a14"]], 0, 0, 1, 0)}"/>`;

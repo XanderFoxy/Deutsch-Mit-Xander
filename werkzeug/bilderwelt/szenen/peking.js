@@ -252,7 +252,7 @@ const mauerUnter = [];
    ===================================================================== */
 {
   /* die Schnur liegt vorn ohne Trefferwirkung (S.davor) und endet in den Bäumen hinter der Palastmauer */
-  S.davor(`<path d="M100 23 Q76 55 54 77 Q40 89 24 92" stroke="#f4f1ea" stroke-width=".2" fill="none" opacity=".85" pointer-events="none"/>`);
+  S.davor(`<path d="M100 23 Q74 56 50 80" stroke="#f4f1ea" stroke-width=".2" fill="none" opacity=".85" pointer-events="none"/>`);
   let k = "";
   /* Schwalbe: breite Flügel, langer Gabelschwanz, kräftige Muster in Schwarz, Rot, Blau */
   const fl = (s) => `<path d="M0 -1.6 Q${3 * s} -5.4 ${7.4 * s} -4.6 Q${8.2 * s} -2.6 ${6.6 * s} -.6 Q${3.6 * s} -.6 ${1 * s} 1.6 Z" fill="#f7f2e4" stroke="#141414" stroke-width=".3"/>
@@ -293,6 +293,8 @@ const ty = (h) => yAt(TOR_D, h);
     return g;
   };
   k += mauer(0, 32) + mauer(328, 400);
+  /* unterer Teil der Drachenschnur: verschwindet hinter Bäumen und Mauer */
+  k = `<path d="M50 80 Q36 92 24 108" stroke="#f4f1ea" stroke-width=".2" fill="none" opacity=".85"/>` + k;
   S.teil({ anker: [12, 116], id: "palastmauer", de: "die Palastmauer", syl: "pa-LAST-mau-er", it: "il muro del palazzo", itSyl: "MU-ro del pa-LAZ-zo", en: "palace wall", x: 0, y: 0, kunst: k,
     tipp: "Die roten Mauern mit gelben Ziegeln umgaben einst die Kaiserstadt." });
 }
@@ -527,6 +529,7 @@ const brX = (br, d) => xAt(br.s, d), brW = (br, d) => br.b * uAt(d);
     const TS = [0, 0.25, 0.5, 0.75, 1];
     k += `<path d="M${TS.map((t) => kante(-1, t).map(r).join(" ")).join(" L")} L${[...TS].reverse().map((t) => kante(1, t).map(r).join(" ")).join(" L")} Z" fill="${S.lg("fahrbahn", [[0, "#c9c2b0"], [1, "#b3ab98"]])}"/>`;
     { const [x1, y1] = kante(-1, 0.86), [x2] = kante(1, 0.86); k += `<path d="M${r(x1)} ${r(y1 + 0.3)} Q${r((x1 + x2) / 2)} ${r(y1 - 0.9)} ${r(x2)} ${r(y1 + 0.3)}" stroke="#ece6d6" stroke-width=".7" fill="none"/>`; }
+    if (br.mitte) k += `<rect x="${r(xC - w * 1.15)}" y="${r(yC - 0.8)}" width="${r(2.3 * w)}" height=".8" fill="#a9a190"/>`;
     if (br.mitte) k += `<path d="M${r(xN - wn * 0.22)} ${r(yN)} L${r(xC - w * 0.22)} ${r(yC)} L${r(xC + w * 0.22)} ${r(yC)} L${r(xN + wn * 0.22)} ${r(yN)} Z" fill="#ddd7c8"/>`;
     /* vordere Hälfte der Seitengeländer: steigt vom Ufer zum Scheitel, mit Pfosten und Knäufen */
     for (const sd of [-1, 1]) {
@@ -562,12 +565,13 @@ const KANTE0 = (y) => 180 - 0.3125 * (y - HOR);
   k += `<rect x="0" y="${r(yAt(D_STR[0]) - 0.4)}" width="400" height="1.6" fill="#d9d4c8"/>`;
   /* Autos (nicht antippbar: Kulisse auf der Straße) */
   const auto = (x, d, farbe, rechts) => {
-    const u = uAt(d), y = yAt(d), l = 4.5 * u, h = 1.45 * u, sd = rechts ? 1 : -1;
+    const u = uAt(d), y = yAt(d), l = 4.5 * u, h = 1.45 * u, sd = 1;
     let g = `<ellipse cx="${r(x)}" cy="${r(y + 0.2)}" rx="${r(l * 0.55)}" ry="${r(0.4 * u)}" fill="#000" opacity=".25"/>`;
     g += `<path d="M${r(x - l / 2)} ${r(y - 0.25 * u)} L${r(x - l / 2)} ${r(y - 0.75 * u)} Q${r(x - l * 0.45)} ${r(y - 0.85 * u)} ${r(x - l * 0.3 * sd)} ${r(y - 0.85 * u)} L${r(x - l * 0.18 * sd)} ${r(y - h)} L${r(x + l * 0.22 * sd)} ${r(y - h)} L${r(x + l * 0.36 * sd)} ${r(y - 0.85 * u)} Q${r(x + l * 0.5)} ${r(y - 0.8 * u)} ${r(x + l / 2)} ${r(y - 0.5 * u)} L${r(x + l / 2)} ${r(y - 0.25 * u)} Z" fill="${farbe}"/>`;
     g += `<path d="M${r(x - l * 0.16 * sd)} ${r(y - h + 0.15 * u)} L${r(x + l * 0.2 * sd)} ${r(y - h + 0.15 * u)} L${r(x + l * 0.31 * sd)} ${r(y - 0.88 * u)} L${r(x - l * 0.27 * sd)} ${r(y - 0.88 * u)} Z" fill="#2a3440"/>`;
     for (const t of [-0.3, 0.3]) g += `<circle cx="${r(x + t * l)}" cy="${r(y - 0.3 * u)}" r="${r(0.33 * u)}" fill="#1a1a1a"/><circle cx="${r(x + t * l)}" cy="${r(y - 0.3 * u)}" r="${r(0.15 * u)}" fill="#9aa3aa"/>`;
-    return g + `<path d="M${r(x - l / 2)} ${r(y - 0.6 * u)} H${r(x + l / 2)}" stroke="#fff" stroke-width="${r(0.06 * u)}" opacity=".35"/>`;
+    g += `<path d="M${r(x - l / 2)} ${r(y - 0.6 * u)} H${r(x + l / 2)}" stroke="#fff" stroke-width="${r(0.06 * u)}" opacity=".35"/>`;
+    return rechts ? g : `<g transform="translate(${r(2 * x)} 0) scale(-1 1)">${g}</g>`;
   };
   k += auto(18, 79, "#2a2c30", false) + auto(118, 72.5, "#c9ccd0", false) + auto(255, 66, "#7a1e1e", false) + auto(14, 44, "#e8e6e0", true) + auto(124, 49, "#f2c21a", true);
   S.teil({ anker: [36, 166], id: "strasse", de: "die Straße", syl: "STRA-ße", it: "la strada", itSyl: "STRA-da", en: "street", x: 0, y: 0, kunst: `<g clip-path="url(#${S.id("ohneterrasse")})">${k}</g>`,
@@ -580,7 +584,7 @@ const KANTE0 = (y) => 180 - 0.3125 * (y - HOR);
   k += `<path d="M${r(-l / 2)} ${r(-0.35 * u)} L${r(-l / 2)} ${r(-h + 0.3 * u)} Q${r(-l / 2)} ${r(-h)} ${r(-l / 2 + 0.4 * u)} ${r(-h)} L${r(l / 2 - 0.6 * u)} ${r(-h)} Q${r(l / 2)} ${r(-h)} ${r(l / 2)} ${r(-h + 0.6 * u)} L${r(l / 2)} ${r(-0.35 * u)} Z" fill="${S.lg("bus", [[0, "#f4f2ee"], [0.45, "#e9e6e0"], [0.46, "#c8281e"], [1, "#9a1a12"]])}"/>`;
   for (let i = 0; i < 7; i++) k += `<rect x="${r(-l / 2 + 0.6 * u + i * 1.6 * u)}" y="${r(-h + 0.45 * u)}" width="${r(1.35 * u)}" height="${r(0.95 * u)}" rx=".3" fill="#2f3c48"/>`;
   k += `<rect x="${r(l / 2 - 0.45 * u)}" y="${r(-h + 0.4 * u)}" width="${r(0.4 * u)}" height="${r(1.6 * u)}" fill="#2f3c48"/>`;
-  k = `<g transform="scale(-1 1)">${k}</g>` + `<text x="${r(-l / 2 + 1.2 * u)}" y="${r(-h + 0.35 * u)}" font-size="${r(0.5 * u)}" fill="#f2c21a" font-family="Arial">1</text>`;
+  k = `<g transform="scale(-1 1)">${k}</g><path d="M${r(-l / 2 + 0.05 * u)} ${r(-h + 0.4 * u)} L${r(-l / 2 + 0.45 * u)} ${r(-h + 0.4 * u)} L${r(-l / 2 + 0.45 * u)} ${r(-h + 1.9 * u)} L${r(-l / 2 + 0.05 * u)} ${r(-h + 2.1 * u)} Z" fill="#26323e"/><circle cx="${r(-l / 2 + 0.25 * u)}" cy="${r(-0.75 * u)}" r="${r(0.16 * u)}" fill="#ffe08a"/>` + `<text x="${r(-l / 2 + 1.2 * u)}" y="${r(-h + 0.35 * u)}" font-size="${r(0.5 * u)}" fill="#f2c21a" font-family="Arial">1</text>`;
   for (const t of [-0.32, 0.3]) k += `<circle cx="${r(t * l)}" cy="${r(-0.38 * u)}" r="${r(0.5 * u)}" fill="#1a1a1a"/><circle cx="${r(t * l)}" cy="${r(-0.38 * u)}" r="${r(0.22 * u)}" fill="#9aa3aa"/>`;
   S.teil({ id: "bus", de: "der Bus", syl: "BUS", it: "l'autobus", itSyl: "AU-to-bus", en: "bus", x, y, steht: true, kunst: k,
     tipp: "Die Buslinie 1 fährt die Chang'an-Straße entlang, direkt am Tor vorbei. Hier fährt sie nach Westen." });
@@ -688,8 +692,10 @@ const KANTE0 = (y) => 180 - 0.3125 * (y - HOR);
   leute += `<line x1="${r(xAt(25.9, 100.6))}" y1="${r(yAt(100.6, 0.85))}" x2="${r(xAt(25.9, 100.6))}" y2="${r(yAt(100.6, 2.6))}" stroke="#555" stroke-width=".2"/><path d="M${r(xAt(25.9, 100.6))} ${r(yAt(100.6, 2.6))} l1.8 .4 l-1.8 .4 Z" fill="#2a7ad0"/>`;
   S.davor(`<g pointer-events="none">${leute}</g>`);
   g += `<line x1="${r((xAt(-27.6, d) - 0.9))}" y1="${r(yAt(d, 0.85))}" x2="${r((xAt(-27.6, d) - 0.9))}" y2="${r(yAt(d, 2.6))}" stroke="#555" stroke-width=".2"/><path d="M${r((xAt(-27.6, d) - 0.9))} ${r(yAt(d, 2.6))} l2 .4 l-2 .4 Z" fill="#e8b81a"/>`;
-  g += flaeche(xAt(-29.6, d), yAt(d, 2.6) - 0.6, 15, 8.4);
-  S.teil({ anker: [xAt(-25.3, 100), yAt(100, 2.4)], id: "reisegruppe", de: "die Reisegruppe", syl: "REI-se-grup-pe", it: "il gruppo turistico", itSyl: "GRUP-po tu-RI-sti-co", en: "tour group", x: 0, y: 0, kunst: g,
+  /* gemeinsamer Bodenschatten (Sonne im Südwesten: nach rechts versetzt) und eine echte Fangfläche ohne bw-flaeche */
+  g = `<ellipse cx="${r(xAt(-24.9, d) + 1.6)}" cy="${r(yAt(d) - 0.4)}" rx="9" ry="1.4" fill="#1b120a" opacity=".14"/>` + g;
+  g += `<rect x="${r(xAt(-24.9, d) - 11)}" y="${r(yAt(d) - 7.4)}" width="22" height="8.2" fill="rgba(255,255,255,0.001)"/>`;
+  S.teil({ anker: [r(xAt(-24.9, d)), r(yAt(d) - 4.3)], id: "reisegruppe", de: "die Reisegruppe", syl: "REI-se-grup-pe", it: "il gruppo turistico", itSyl: "GRUP-po tu-RI-sti-co", en: "tour group", x: 0, y: 0, kunst: g,
     tipp: "Die Reisegruppe trägt rote Kappen. So verliert die Reiseleiterin mit dem Fähnchen niemanden." });
 }
 
@@ -895,9 +901,9 @@ const yBoden = (d) => yAt(d, BODEN);
     k += `<ellipse cx="${x}" cy="${y}" rx="${r(11 * s)}" ry="${r(12.2 * s)}" fill="${S.rg("laterne2", [[0, "#e8704a"], [0.5, "#c82418"], [1, "#7e0e08"]], 0.4, 0.38, 0.7)}"/>`;
     for (const fx of [-0.75, -0.42, 0, 0.42, 0.75]) k += `<path d="M${r(x + fx * 6 * s)} ${r(y - 11.8 * s)} Q${r(x + fx * 13 * s)} ${y} ${r(x + fx * 6 * s)} ${r(y + 11.8 * s)}" stroke="#a8140c" stroke-width=".45" fill="none"/>`;
     k += `<text x="${x}" y="${r(y + 3 * s)}" font-size="${r(8 * s)}" text-anchor="middle" fill="#f6d36a" font-family="serif" font-weight="bold">福</text>`;
-    k += `<path d="M${r(x - 3 * s)} ${r(y + 14 * s)} L${r(x - 3.6 * s)} ${r(y + 24 * s)} L${r(x + 3.6 * s)} ${r(y + 24 * s)} L${r(x + 3 * s)} ${r(y + 14 * s)} Z" fill="#f2c23a"/>`;
-    for (let i = 0; i < 6; i++) k += `<line x1="${r(x - 3 * s + i * 1.2 * s)}" y1="${r(y + 16 * s)}" x2="${r(x - 3.4 * s + i * 1.36 * s)}" y2="${r(y + 24 * s)}" stroke="#c99a1a" stroke-width=".25"/>`;
-    k += `<ellipse cx="${r(x - 4 * s)}" cy="${r(y - 5 * s)}" rx="${r(2.6 * s)}" ry="${r(4 * s)}" fill="#fff" opacity=".18"/>`;
+    k += `<path d="M${r(x - 3 * s)} ${r(y + 14 * s)} L${r(x - 3.4 * s)} ${r(y + 20 * s)} L${r(x + 3.4 * s)} ${r(y + 20 * s)} L${r(x + 3 * s)} ${r(y + 14 * s)} Z" fill="#f2c23a"/>`;
+    for (let i = 0; i < 6; i++) k += `<line x1="${r(x - 3 * s + i * 1.2 * s)}" y1="${r(y + 16 * s)}" x2="${r(x - 3.4 * s + i * 1.36 * s)}" y2="${r(y + 20 * s)}" stroke="#c99a1a" stroke-width=".25"/>`;
+    k += `<ellipse cx="${r(x - 4 * s)}" cy="${r(y - 5 * s)}" rx="${r(2.6 * s)}" ry="${r(4 * s)}" fill="#fff" opacity=".12"/><ellipse cx="${x}" cy="${r(y - 5 * s)}" rx="${r(10.4 * s)}" ry="${r(7 * s)}" fill="#1a0604" opacity=".25"/><ellipse cx="${r(x + 1.5 * s)}" cy="${r(y + 7.5 * s)}" rx="${r(4 * s)}" ry="${r(2 * s)}" fill="#ffc890" opacity=".35"/>`;
   }
   S.teil({ oben: true, id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "la lanterna", itSyl: "lan-TER-na", en: "lantern", x: 0, y: 0, anker: [316, 40], kunst: k,
     tipp: "Rote Laternen bringen Glück. Das Zeichen 福 heißt „Glück“." });
@@ -977,7 +983,7 @@ const enteUnter = [];
   enteUnter.push({ id: "gurke", de: "die Gurke", syl: "GUR-ke", it: "il cetriolo", itSyl: "ce-tri-O-lo", en: "cucumber", x: gx + 5.4 * qg, y: gy + 1.8 * qg, kunst: flaeche(-2.6 * qg, -5.6 * qg, 6 * qg, 4.2 * qg),
     tipp: "Die Gurke wird in dünne Stifte geschnitten. Sie macht die Pekingente frisch." });
   S.teil({ oben: true, id: "pekingente", de: "die Pekingente", syl: "PE-king-en-te", it: "l'anatra alla pechinese", itSyl: "A-na-tra al-la pe-chi-NE-se", en: "Peking duck", x: 0, y: 0, anker: [r(px), r(py - 6 * q)], kunst: k + flaeche(px - 23 * q, py - 11.4 * q, 41 * q, 15 * q),
-    zoom: { x: 216, y: 188, w: 108, h: 72 }, unter: enteUnter,
+    zoom: { x: 234, y: 188, w: 120, h: 72 }, unter: enteUnter,
     tipp: "Die Ente wird im Ofen über Obstholz gebraten. Ihre Haut wird ganz knusprig und glänzt." });
 }
 {

@@ -177,13 +177,14 @@ S.hinten(`<rect x="0" y="${HOR - 22}" width="400" height="24" fill="${S.lg("duns
    Halbschatten, Fensterreihen und Gesimse), rechts die Westwand des Gefängnisses im
    tiefen Schatten, dazwischen der dunkle Kanal mit Wasser und Lichtstreifen */
 {
-  let k = `<rect x="227" y="100" width="16" height="${r(MOLO - 100)}" fill="${S.lg("rio", [[0, "#6d625e"], [1, "#3a3336"]])}"/>`;
+  let k = `<rect x="227" y="100" width="16" height="${r(MOLO - 100)}" fill="${S.lg("rio", [[0, "#b8ac9b"], [0.7, "#9a8e7e"], [1, "#4a4244"]])}"/>`;
+  for (const y of [106, 112, 118]) k += `<path d="M233 ${y} H238.4" stroke="#d6ccbb" stroke-width=".35"/><rect x="234.2" y="${y + 1.2}" width="1" height="2.2" fill="#6e6458"/><rect x="236.4" y="${y + 1.2}" width="1" height="2.2" fill="#6e6458"/>`;
   k += `<path d="M227 99 L233 102.4 L233 ${MOLO} L227 ${MOLO} Z" fill="${S.lg("ostwand", [[0, "#e2d8ca"], [1, "#c3b6a5"]], 0, 0, 1, 0)}"/>`;
   for (const y of [104.6, 111.4, 118.4, 124.6]) k += `<path d="M227 ${y} L233 ${r(y + 1.6)}" stroke="#f3ece0" stroke-width=".45"/>`;
   for (const [y, h] of [[105.6, 3.6], [112.4, 4], [119.4, 3.4], [125.6, 3]]) for (const x of [227.6, 229.4, 231.2]) k += `<path d="M${x} ${r(y + 0.6 + (x - 227) * 0.27)} q.5 -.7 1 -.4" stroke="#f6f0e6" stroke-width=".3" fill="none"/>`;
   for (const [y, h] of [[105.6, 3.6], [112.4, 4], [119.4, 3.4], [125.6, 3]]) for (const x of [227.6, 229.4, 231.2]) k += `<path d="M${x} ${r(y + (x - 227) * 0.27)} l1.4 .4 l0 ${h} l-1.4 -.4 Z" fill="#544a49"/>`;
-  k += `<path d="M243 103 L238.4 105 L238.4 ${MOLO} L243 ${MOLO} Z" fill="${S.lg("prigwest", [[0, "#7f776d"], [1, "#655e57"]], 0, 0, 1, 0)}"/>`;
-  for (const y of [108, 115, 122]) k += `<rect x="239.6" y="${y}" width="1.6" height="2.6" fill="#3e3836"/>`;
+  k += `<path d="M243 103 L238.4 105 L238.4 ${MOLO} L243 ${MOLO} Z" fill="${S.lg("prigwest", [[0, "#b3a796"], [1, "#988c7c"]], 0, 0, 1, 0)}"/>`;
+  for (const y of [107, 113.6, 120.2]) k += `<path d="M238.4 ${r(y - 1.2)} L243 ${r(y - 1.6)}" stroke="#d3c9b8" stroke-width=".35"/><rect x="239.6" y="${y}" width="1.4" height="2.6" fill="#5e564e"/><rect x="241.4" y="${r(y - 0.2)}" width="1.2" height="2.6" fill="#5e564e"/>`;
   k += `<rect x="233" y="${r(MOLO - 2.6)}" width="5.4" height="2.8" fill="#2f4446"/><path d="M233.6 ${r(MOLO - 1.6)} l3.8 0 M234.4 ${r(MOLO - 0.8)} l2.4 0" stroke="#bcd3cf" stroke-width=".25" opacity=".8"/>`;
   S.hinten(G(k));
 }
@@ -331,11 +332,9 @@ S.hinten(`<rect x="0" y="${HOR - 22}" width="400" height="24" fill="${S.lg("duns
   for (let i = 0; i < 4; i++) k += `<rect x="${r(lx + 0.3 + i * 4)}" y="${r(FUSS - 6)}" width=".6" height="6" fill="#efe7da"/>`;
   k += `<rect x="${r(lx - 0.3)}" y="${r(FUSS - 8.9)}" width="13.6" height=".9" fill="#efe7da"/>`;
   S.teil({ id: "campanile", de: "der Campanile", syl: "cam-pa-NI-le", it: "il campanile", itSyl: "cam-pa-NI-le", en: "bell tower",
-    x: 0, y: 0, kunst: G(k), tipp: "Der Campanile ist fast 99 Meter hoch. 1902 stürzte er ein – er wurde genau so wieder aufgebaut.",
+    x: 0, y: 0, kunst: G(k), tipp: "Der Campanile ist fast 99 Meter hoch, oben hängen fünf Glocken. 1902 stürzte er ein – er wurde genau so wieder aufgebaut.",
     zoom: Z({ x: 70, y: 22, w: 58, h: 56 }),
     unter: [
-      { id: "glocke", de: "die Glocke", syl: "GLO-cke", it: "la campana", itSyl: "cam-PA-na", en: "bell", x: CX - 4.5, y: y(52), kunst: flaeche(-5, -7, 10, 7) ,
-        tipp: "In der Glockenstube hängen fünf Glocken. Die größte heißt „Marangona“." },
       { id: "engel", de: "der Engel", syl: "EN-gel", it: "l'angelo", itSyl: "AN-ge-lo", en: "angel", x: spitze[0], y: spitze[1], kunst: flaeche(-3.6, -7.8, 6.4, 8.2, 0.6),
         tipp: "Ganz oben dreht sich ein goldener Engel im Wind: der Erzengel Gabriel." },
     ].map(U) });
@@ -407,7 +406,7 @@ S.hinten(`<rect x="0" y="${HOR - 22}" width="400" height="24" fill="${S.lg("duns
   }
   k += `<path d="M${x0} ${sy(x0, T)} L${x1} ${T} L${x1} ${MOLO} L${x0} ${MOLO} Z" fill="${S.lg("libstirn", [[0, "#ff9e4c", 0.3], [1, "#ffb466", 0.38]], 0, 0, 1, 0)}"/>`;
   /* die lange Seite zur Piazzetta, perspektivisch (21 Joche, fern kleiner) */
-  const wA = 1 / 455, wB = 1 / 760, TE = 109.6, ME = 120.8, FE = 130.6;
+  const wA = 455, wB = 700, TE = 109.6, ME = 120.8, FE = 130.6;
   const P = (t, a, b) => (a * wA * (1 - t) + b * wB * t) / (wA * (1 - t) + wB * t);
   const xs = (t) => P(t, x1, 92), top = (t) => P(t, T, TE), fuss = (t) => P(t, MOLO, FE), mitte = (t) => P(t, 117, ME);
   k += `<path d="M${x1} ${T} L92 ${TE} L92 ${FE} L${x1} ${MOLO} Z" fill="${S.lg("libs", [[0, "#cdc1ae"], [1, "#c1b6a6"]], 0, 0, 1, 0)}"/>`;
@@ -504,10 +503,12 @@ const PAL = { x0: 132, x1: 228, fuss: MOLO, porT: 121.6, logT: 111.8, top: 98.6 
   for (const x of [x0 + 0.5, x1 - 0.5]) k += `<rect x="${r(x - 0.7)}" y="${porT}" width="1.4" height="${r(fuss - porT)}" fill="#fbf6ec"/>`;
   /* Eckskulpturen auf Höhe der Kapitelle: links Adam und Eva, rechts die Trunkenheit Noahs */
   k += `<path d="M${x0 + 0.1} ${porT + 4} l.25 -2.6 q.25 -.5 .5 0 l.25 2.6 Z M${x0 + 0.8} ${porT + 4} l.2 -2.3 q.25 -.5 .5 0 l.2 2.3 Z" fill="#ddd0bc"/>`;
-  /* Trunkenheit Noahs: der liegende Noah, zwei Söhne, darüber der Weinstock */
+  /* Trunkenheit Noahs: der liegende Noah, zwei Söhne, darüber der Weinstock (vergrößert, damit man sie liest) */
+  k += `<g transform="translate(${x1 - 1.2} ${porT + 4.4}) scale(1.6) translate(${-(x1 - 1.2)} ${-(porT + 4.4)})">`;
   k += `<path d="M${x1 - 3.6} ${porT + 4.4} q.7 -1.3 2 -1 l1.4 .4 l-.1 .6 Z" fill="#f2eadc" stroke="#9a8c78" stroke-width=".12"/><circle cx="${r(x1 - 3.4)}" cy="${r(porT + 3.4)}" r=".45" fill="#f2eadc" stroke="#9a8c78" stroke-width=".1"/>`;
   k += `<path d="M${x1 - 1.4} ${porT + 4.4} l.15 -3 q.4 -.7 .8 0 l.15 3 Z M${x1 + 0.1} ${porT + 4.4} l.15 -2.8 q.4 -.7 .8 0 l.15 2.8 Z" fill="#f2eadc" stroke="#9a8c78" stroke-width=".12"/><circle cx="${r(x1 - 1)}" cy="${r(porT + 0.9)}" r=".42" fill="#f2eadc"/><circle cx="${r(x1 + 0.5)}" cy="${r(porT + 1.1)}" r=".42" fill="#f2eadc"/>`;
   k += `<path d="M${x1 - 3.4} ${porT + 1.4} q1.2 -1.2 2.4 -.4 q1.2 .8 2 -.4" stroke="#7d6e52" stroke-width=".25" fill="none"/>` + [[-2.8, 1.1], [-1.6, 0.8], [-0.4, 1.2], [0.6, 0.7]].map(([dx, dy]) => `<path d="M${r(x1 + dx)} ${r(porT + dy)} q.4 -.6 .8 0 q-.4 .5 -.8 0 Z" fill="#9fb38a"/>`).join("") + `<circle cx="${r(x1 - 1)}" cy="${r(porT + 1.9)}" r=".25" fill="#6b5a7a"/>`;
+  k += `</g>`;
   /* Zinnen: weiße Blattzinnen mit Spitzen, Eck-Tabernakel */
   for (let x = x0 + 1.2; x < x1 - 1; x += 2.62) k += `<path d="M${r(x - 0.75)} ${top} L${r(x - 0.75)} ${r(top - 1.4)} Q${r(x)} ${r(top - 2.2)} ${r(x)} ${r(top - 3)} Q${r(x)} ${r(top - 2.2)} ${r(x + 0.75)} ${r(top - 1.4)} L${r(x + 0.75)} ${top} Z" fill="#fbf7ef"/><line x1="${r(x + 1.31)}" y1="${top}" x2="${r(x + 1.31)}" y2="${r(top - 1.3)}" stroke="#f3ecdf" stroke-width=".3"/>`;
   k += `<rect x="${x0}" y="${r(top - 0.2)}" width="${W}" height=".8" fill="#f6efe2"/>`;
@@ -600,7 +601,7 @@ const PAL = { x0: 132, x1: 228, fuss: MOLO, porT: 121.6, logT: 111.8, top: 98.6 
   /* San Todaro (weißer Marmor): steht mit Speer und Schild auf dem Krokodil */
   const T0 = 86, q0 = (dx, dy) => `${r(T0 + dx)} ${r(110.2 + dy)}`;
   /* das Krokodil liegt quer unter seinen Füßen: Kopf mit Schnauze links, Schwanz rechts hochgerollt */
-  let todaro = `<path d="M${q0(-3.8, -0.3)} L${q0(-2.8, -0.75)} Q${q0(-2.2, -1.2)} ${q0(-1.2, -1.05)} L${q0(1.8, -1.05)} Q${q0(2.9, -1)} ${q0(3.5, -0.6)} Q${q0(4.4, -0.7)} ${q0(4.5, -1.6)} Q${q0(4.9, -0.5)} ${q0(3.8, -0.1)} L${q0(-2.6, -0.05)} Z" fill="#d6cfc1" stroke="#8c867c" stroke-width=".12"/>`;
+  let todaro = `<path d="M${q0(-3.2, -0.55)} L${q0(-2.3, -0.95)} L${q0(-3.3, -0.85)} L${q0(-2.4, -1.15)} Q${q0(-1.8, -1.3)} ${q0(-1.0, -1.1)} L${q0(1.4, -1.1)} Q${q0(2.4, -1)} ${q0(2.8, -0.7)} Q${q0(3.6, -0.8)} ${q0(3.8, -1.5)} Q${q0(4.1, -0.5)} ${q0(3, -0.25)} L${q0(-2.2, -0.3)} Z" fill="#d6cfc1" stroke="#8c867c" stroke-width=".12"/><path d="M${q0(-1.4, -0.3)} l-.3 .35 M${q0(-0.6, -0.3)} l.2 .35 M${q0(1, -0.3)} l-.2 .35 M${q0(1.8, -0.3)} l.3 .35" stroke="#8c867c" stroke-width=".2"/><path d="M${q0(-1, -1.1)} l.25 -.3 l.25 .3 l.25 -.3 l.25 .3 l.25 -.3 l.25 .3 l.25 -.3 l.25 .3" stroke="#a49c8e" stroke-width=".12" fill="none"/>`;
   todaro += `<path d="M${q0(-3.8, -0.3)} L${q0(-2.6, -0.4)}" stroke="#7d776d" stroke-width=".12"/><circle cx="${r(T0 - 2.6)}" cy="${r(110.2 - 0.75)}" r=".12" fill="#4a4540"/><path d="M${q0(-1.6, -0.1)} l-.2 .25 M${q0(1.4, -0.1)} l.2 .25 M${q0(-0.8, -0.95)} h2.2" stroke="#8c867c" stroke-width=".14"/>`;
   /* der Krieger frontal: Beine, Tunika, Brustpanzer, Kopf; Licht von links, Schatten kühl */
   todaro += `<path d="M${q0(-0.5, -1)} L${q0(-0.45, -2.6)} L${q0(0.45, -2.6)} L${q0(0.5, -1)} Z" fill="#e9e4da"/><path d="M${q0(-0.8, -2.4)} L${q0(0.8, -2.4)} L${q0(0.58, -3.4)} L${q0(-0.58, -3.4)} Z" fill="#f2eee6"/>`;
@@ -636,9 +637,12 @@ const PAL = { x0: 132, x1: 228, fuss: MOLO, porT: 121.6, logT: 111.8, top: 98.6 
    ===================================================================== */
 const UFER = 243;   /* Kante des Platzes vor San Giorgio (33 m vor uns) */
 const W1 = 133.9;  /* Unterkante des Wasserstreifens am Molo (Molo-Koordinaten) */
+/* vertäute Gondeln, zweite Gondel und Wassertaxi werden in der Lagune gebaut,
+   aber als eigene Wörter gesetzt (die Lagune ist nur das offene Wasser) */
+let GONDELN_MOLO = "", GONDEL2 = "", WASSERTAXI = "";
 /* Wellenverschiebung für alle Spiegelungen: nur seitlich, in vielen dünnen
    Streifen, mit weichen Übergängen (keine Treppen) */
-S.def(`<filter id="${S.id("welle")}" x="-8%" y="-10%" width="116%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035 1.5" numOctaves="2" seed="9"/><feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 .5  0 0 1 0 0  0 0 0 0 1"/><feDisplacementMap in="SourceGraphic" scale="3.4" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".25 .05"/></filter>`);
+S.def(`<filter id="${S.id("welle")}" x="-8%" y="-10%" width="116%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035 1.5" numOctaves="2" seed="9"/><feColorMatrix type="matrix" values="1 0 0 0 0  0 .4 0 0 .3  0 0 1 0 0  0 0 0 0 1"/><feDisplacementMap in="SourceGraphic" scale="3.6" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".25 .05"/></filter>`);
 {
   const Y0 = Y(WASSER0 + 0.2);
   let k = `<rect x="0" y="${Y0}" width="400" height="${r(UFER - Y0 - 0.4)}" fill="${S.lg("wasser", [[0, "#93b4b1"], [0.1, "#78a3a0"], [0.5, "#4d8784"], [1, "#2b6466"]])}"/>`;
@@ -655,10 +659,10 @@ S.def(`<filter id="${S.id("welle")}" x="-8%" y="-10%" width="116%" height="120%"
     sp += R(89.6, 76, 104.2, 130.2, "#7a4a40") + R(89.4, 63, 104.4, 76, "#b8aa98") + R(89.6, 54, 104.2, 63, "#a48f7c") + `<path d="M89.4 54.2 L98.4 28 L104.4 54.2 Z" fill="#4b7064"/>`;
     sp += R(100, 122, 114, 131.2, "#7a564c") + R(85.2, 104, 86.8, 131.2, "#8f7a72") + R(123.2, 104, 124.8, 131.2, "#6e7174");
     sp += R(132, 95.4, 228, 111.8, "#c08f80") + R(132, 111.8, 228, 121.6, "#c6bcb2") + R(132, 121.6, 228, 131.2, "#373146");
-    sp += `<path d="M132 114.4 H228" stroke="#5e5560" stroke-width="1.6" stroke-dasharray="1.6 1.2"/><path d="M${Array.from({ length: 16 }, (_, i) => r(132 + (i + 1) * 96 / 17)).map((x) => `${x} 125.4 V131.2`).join(" M")}" stroke="#8f8790" stroke-width="1.1"/>`;
+    sp += `<path d="M${Array.from({ length: 16 }, (_, i) => r(132 + (i + 1) * 96 / 17)).map((x) => `${x} 125.4 V131.2`).join(" M")}" stroke="#8f8790" stroke-width="1.1"/>`;
     sp += R(227, 100, 243, 131.2, "#4b4850") + R(225, 125.6, 245, 131.2, "#c7c0b5");
     sp += R(243, 104, 297, 131.2, "#a69c8f") + R(243, 120.4, 297, 131.2, "#403a4a") + R(297, 100, 320, 131.8, "#8c4c42");
-    S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="-10" y="${WASSER0}" width="420" height="${TIEF + 2}"><rect x="-10" y="${WASSER0}" width="420" height="${TIEF}" fill="${S.lg("spfade", [[0, "#fff", 0.9], [0.35, "#fff", 0.62], [1, "#fff", 0]])}"/></mask>`);
+    S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="-10" y="${WASSER0}" width="420" height="${TIEF + 2}"><rect x="-10" y="${WASSER0}" width="420" height="${TIEF}" fill="${S.lg("spfade", [[0, "#fff", 0.88], [0.22, "#fff", 0.6], [0.6, "#fff", 0.22], [1, "#fff", 0]])}"/></mask>`);
     k += G(`<g mask="url(#${S.id("spmaske")})"><g filter="url(#${S.id("welle")})"><g transform="matrix(1 0 0 ${-SQ} 0 ${r(WASSER0 * (1 + SQ))})">${sp}</g></g></g>`);
   }
   /* die vertäuten Gondeln am Molo: unregelmäßig, leicht verdreht, manche mit
@@ -677,7 +681,7 @@ S.def(`<filter id="${S.id("welle")}" x="-8%" y="-10%" width="116%" height="120%"
       x += len + 0.8 + z() * 1.8;
       if (z() < 0.5) { const px = r(x - 0.6), c = ["#2f4f8a", "#b02a34", "#2f6a4a"][Math.floor(z() * 3)], h = 3 + z() * 1.2; g += `<rect x="${px}" y="${r(WASSER0 + 1 - h)}" width=".4" height="${r(h)}" fill="#f1f1ee"/><rect x="${px}" y="${r(WASSER0 + 1.4 - h)}" width=".4" height=".5" fill="${c}"/><rect x="${px}" y="${r(WASSER0 + 2.4 - h)}" width=".4" height=".5" fill="${c}"/>`; }
     }
-    k += G(g);
+    GONDELN_MOLO = G(g);
   }
   const Y1 = Y(W1);
   /* breiter Glitzerpfad der tiefen Sonne (links außerhalb des Bildes):
@@ -696,7 +700,7 @@ S.def(`<filter id="${S.id("welle")}" x="-8%" y="-10%" width="116%" height="120%"
   /* ein Wassertaxi (lackiertes Mahagoni, weißes Kabinendach) in 250 m, fährt nach rechts */
   {
     const s = r(F / 250), X = 52, Yw = wl(250);
-    k += `<g filter="url(#${S.id("welle")})" opacity=".55"><g transform="translate(${X} ${Yw}) scale(${s} ${r(-s * 0.6)})"><path d="M0 -1.1 L8.6 -1.1 Q10.2 -1.15 10.7 -1.6 Q10.3 -.3 8.8 0 L.3 0 Z" fill="#3e1e0e"/><path d="M2.4 -1.1 L2.4 -2.5 L7.4 -2.5 L8.3 -1.1 Z" fill="#8f8a84"/></g></g>`;
+    WASSERTAXI += `<g filter="url(#${S.id("welle")})" opacity=".55"><g transform="translate(${X} ${Yw}) scale(${s} ${r(-s * 0.6)})"><path d="M0 -1.1 L8.6 -1.1 Q10.2 -1.15 10.7 -1.6 Q10.3 -.3 8.8 0 L.3 0 Z" fill="#3e1e0e"/><path d="M2.4 -1.1 L2.4 -2.5 L7.4 -2.5 L8.3 -1.1 Z" fill="#8f8a84"/></g></g>`;
     let t = "";
     t += `<path d="M.2 .1 Q-4 .2 -8.6 .9 M.4 .3 Q-3 .7 -6.4 1.7" stroke="#f4f8f6" stroke-width=".14" fill="none" opacity=".8"/>`;
     t += `<path d="M0 -1.1 L8.6 -1.1 Q10.2 -1.15 10.7 -1.6 Q10.3 -.3 8.8 0 L.3 0 Z" fill="${S.lg("mahagoni", [[0, "#b06434"], [1, "#5e2a12"]])}"/>`;
@@ -705,13 +709,13 @@ S.def(`<filter id="${S.id("welle")}" x="-8%" y="-10%" width="116%" height="120%"
     t += `<path d="M2.2 -2.3 L7.1 -2.3 Q7.5 -2.3 7.6 -2.55 L2.2 -2.55 Z" fill="#f8f6f0"/>`;
     t += `<path d="M10.6 -.9 q.5 .2 .8 .9 M10.2 -.4 q.4 .3 .6 .7" stroke="#f4f8f6" stroke-width=".12" fill="none"/>`;
     t += `<rect x="1" y="-2.6" width=".42" height="1.5" rx=".15" fill="#f1efe8"/><circle cx="1.21" cy="-2.8" r=".2" fill="#c99a7a"/>`;
-    k += `<g transform="translate(${X} ${Yw}) scale(${s})">${t}</g>`;
+    WASSERTAXI += `<g transform="translate(${X} ${Yw}) scale(${s})">${t}</g>`;
   }
   /* eine zweite Gondel in 137 m, fährt nach links (wir sehen die Backbordseite,
      das Ruder liegt dahinter) */
   {
     const s = r(F / 137), X = 248, Yw = wl(137);
-    k += `<g filter="url(#${S.id("welle")})" opacity=".6"><g transform="translate(${X} ${Yw}) scale(${s} ${r(-s * 0.6)})"><path d="M-5.5 -1.5 Q-4.8 -.8 -3.8 -.6 Q0 -.35 3.8 -.6 Q4.9 -.9 5.5 -1.6 L5.5 -1.4 Q5 -.5 4.2 0 L-4.2 0 Q-5 -.5 -5.5 -1.5 Z M3.8 -.7 L3.8 -2.6 L4.2 -2.6 L4.2 -.7 Z" fill="#0c1c1e"/></g></g>`;
+    GONDEL2 += `<g filter="url(#${S.id("welle")})" opacity=".6"><g transform="translate(${X} ${Yw}) scale(${s} ${r(-s * 0.6)})"><path d="M-5.5 -1.5 Q-4.8 -.8 -3.8 -.6 Q0 -.35 3.8 -.6 Q4.9 -.9 5.5 -1.6 L5.5 -1.4 Q5 -.5 4.2 0 L-4.2 0 Q-5 -.5 -5.5 -1.5 Z M3.8 -.7 L3.8 -2.6 L4.2 -2.6 L4.2 -.7 Z" fill="#0c1c1e"/></g></g>`;
     let g = "";
     g += `<path d="M5.5 .4 q1.6 .2 3 .8 M5 .7 q1.2 .4 2.2 1" stroke="#e6f1ee" stroke-width=".1" fill="none" opacity=".7"/>`;
     g += `<path d="M3.6 -2.1 L2.5 -.3" stroke="#c8a46a" stroke-width=".09"/>`;
@@ -725,7 +729,7 @@ S.def(`<filter id="${S.id("welle")}" x="-8%" y="-10%" width="116%" height="120%"
     g += `<rect x="3.77" y="-2.32" width=".46" height=".76" rx=".1" fill="#f6f6f2"/><path d="M3.77 -2.1 h.46 M3.77 -1.9 h.46 M3.77 -1.7 h.46" stroke="#1d2f5e" stroke-width=".07"/>`;
     g += `<path d="M3.9 -2.15 L3.62 -1.95 M4.1 -2.15 L3.5 -2.05" stroke="#f6f6f2" stroke-width=".1"/>`;
     g += `<circle cx="4" cy="-2.46" r=".13" fill="#d6a886"/><ellipse cx="4" cy="-2.58" rx=".24" ry=".05" fill="#e3c97e"/><rect x="3.88" y="-2.69" width=".24" height=".11" fill="#e3c97e"/><rect x="3.88" y="-2.62" width=".24" height=".03" fill="#b3242c"/>`;
-    k += `<g transform="translate(${X} ${Yw}) scale(${s})">${g}</g>`;
+    GONDEL2 += `<g transform="translate(${X} ${Yw}) scale(${s})">${g}</g>`;
   }
   /* Leben auf dem Molo: Spaziergänger in Gruppen (≈ 2,2 hoch = 1,7 m), dicht vor
      dem Palast und an den Säulen, lockerer an der Riva; Laternen, Souvenirstände
@@ -760,16 +764,21 @@ S.def(`<filter id="${S.id("welle")}" x="-8%" y="-10%" width="116%" height="120%"
     g += `<use href="#${S.id("mn")}" x="129" y="${r(MOLO + 0.95)}" color="#2f4f7a"/><use href="#${S.id("fr")}" x="129.6" y="${r(MOLO + 0.95)}" color="#e6889f"/>`;
     for (const [sx, c] of [[84.4, "#f2c230"], [87.8, "#7fa7c9"], [122.6, "#e8e4dc"], [125.6, "#c0392b"]]) g += `<rect x="${r(sx - 0.28)}" y="${r(MOLO - 2.9)}" width=".56" height=".9" rx=".16" fill="${c}"/><circle cx="${sx}" cy="${r(MOLO - 3.1)}" r=".18" fill="#d8a986"/><path d="M${r(sx - 0.2)} ${r(MOLO - 2)} l.3 .9 M${r(sx + 0.2)} ${r(MOLO - 2)} l.3 .9" stroke="#33353d" stroke-width=".18"/>`;
     leute.sort((a, b) => a[1] - b[1]);
+    /* an der Riva viele: Köpfe und Schultern über der Kabinenkante des Vaporetto */
+    for (let i = 0; i < 14; i++) leute.push([238 + rnd() * 62, rnd() * 0.5]);
+    g += `<path d="M319.4 ${r(boden(319) - 3.6)} V${r(boden(319) + 0.3)}" stroke="#6b5a4c" stroke-width=".15"/><path d="M316.6 ${r(boden(319) - 3.4)} Q319.4 ${r(boden(319) - 5)} 322.2 ${r(boden(319) - 3.4)} Z" fill="#e8e0d0"/><path d="M317.6 ${r(boden(319) - 3.45)} Q319.4 ${r(boden(319) - 4.9)} 321.2 ${r(boden(319) - 3.45)}" stroke="#c0392b" stroke-width=".3" fill="none"/><rect x="317.6" y="${r(boden(319) - 0.9)}" width="3.6" height="1.2" fill="#e9e2d4"/>`;
     for (const [x, tiefe] of leute) {
       const y = r(boden(x) + tiefe * 0.9), c = FARBEN[Math.floor(rnd() * FARBEN.length)], typ = rnd() < 0.5 ? "fr" : "mn";
       if (rnd() < 0.45) g += `<path d="M${r(x + 0.2)} ${y} l1.8 -.36 v.24 l-1.8 .32 z" fill="#4a3a5a" opacity=".35"/>`;
       g += `<use href="#${S.id(typ)}" x="${r(x)}" y="${y}" color="${c}"/>`;
       if (rnd() < 0.18) g += `<ellipse cx="${r(x)}" cy="${r(y - 2.24)}" rx=".32" ry=".08" fill="#f3efe4"/>`;
     }
-    k += G(g);
+    k += `<g pointer-events="none">${G(g)}</g>`;
   }
   S.teil({ id: "lagune", de: "die Lagune", syl: "la-GU-ne", it: "la laguna", itSyl: "la-GU-na", en: "lagoon", x: 0, y: 0, kunst: k,
     tipp: "Venedig steht auf über 100 kleinen Inseln mitten in der Lagune." });
+  S.teil({ id: "wassertaxi", de: "das Wassertaxi", syl: "WAS-ser-ta-xi", it: "il taxi acqueo", itSyl: "TA-xi AC-que-o", en: "water taxi", x: 0, y: 0, kunst: WASSERTAXI,
+    tipp: "In Venedig ist das Taxi ein Boot aus glänzendem Holz." });
 }
 
 /* =====================================================================
@@ -877,7 +886,7 @@ const haende = [gondoliere.z.handL, gondoliere.z.handR].map((h) => ({ x: (GOND.f
   k += `<path d="M${r(blattX - 3.4)} ${r(1.2 - 3.4 * steig - 0.5)} L${r(blattX + 0.6)} ${r(1.2 + 0.6 * steig - 0.5)} L${r(blattX + 0.6)} ${r(1.2 + 0.6 * steig + 0.7)} L${r(blattX - 3.4)} ${r(1.2 - 3.4 * steig + 0.3)} Z" fill="${ruder}"/>`;
   k += `<rect x="${r(blattX - 4)}" y=".05" width="5.4" height="2.4" fill="#2f6a6c" opacity=".55"/>`;
   k += `<ellipse cx="${r(blattX - 1.2)}" cy=".2" rx="3.2" ry=".7" fill="none" stroke="#e9f4f1" stroke-width=".3" opacity=".9"/><ellipse cx="${r(blattX - 1.2)}" cy=".25" rx="5.4" ry="1.2" fill="none" stroke="#d3e8e3" stroke-width=".25" opacity=".6"/>`;
-  S.teil({ id: "gondel", de: "die Gondel", syl: "GON-del", it: "la gondola", itSyl: "GON-do-la", en: "gondola", x: GX, y: GY, kunst: `<g transform="scale(${GS})">${k}</g>`,
+  S.teil({ id: "gondel", de: "die Gondel", syl: "GON-del", it: "la gondola", itSyl: "GON-do-la", en: "gondola", x: GX, y: GY, kunst: `<g transform="scale(${GS})">${k}</g><g transform="translate(${-GX} ${-GY})">${GONDELN_MOLO}${GONDEL2}</g>`,
     tipp: "Eine Gondel ist fast 11 Meter lang und immer schwarz. Sie ist schief gebaut – so fährt sie geradeaus, obwohl nur auf einer Seite gerudert wird.",
     zoom: { x: GX - 76, y: GY - 44, w: 152, h: 54 },
     unter: [
@@ -909,7 +918,8 @@ const haende = [gondoliere.z.handL, gondoliere.z.handR].map((h) => ({ x: (GOND.f
    ===================================================================== */
 const PF = { x: 42, y: wl(48), s: r(F / 48 / 19.5) };   /* gezeichnet mit 19,5 je Meter */
 {
-  let k = `<g filter="url(#${S.id("welle")})" opacity=".7"><g transform="scale(1 -.38)"><path d="M-8.6 0 L-8.4 -72 Q-5.6 -74 -2.8 -72 L-2.8 -78 Q0 -80 2.8 -78 L2.8 -70 Q5.6 -72 8.6 -70 L8.6 0 Z" fill="${S.lg("pfsp", [[0, "#3a3226", 0.85], [0.5, "#3a3226", 0.4], [1, "#3a3226", 0]])}"/><rect x="-8.6" y="-9" width="17.2" height="9" fill="#1c2618" opacity=".7"/></g></g>`;
+  S.def(`<clipPath id="${S.id("pfclip")}"><rect x="-20" y="-1" width="40" height="${r((UFER - 0.6 - PF.y) / PF.s + 1)}"/></clipPath>`);
+  let k = `<g clip-path="url(#${S.id("pfclip")})"><g filter="url(#${S.id("welle")})" opacity=".7"><g transform="scale(1 -.38)"><path d="M-8.6 0 L-8.4 -72 Q-5.6 -74 -2.8 -72 L-2.8 -78 Q0 -80 2.8 -78 L2.8 -70 Q5.6 -72 8.6 -70 L8.6 0 Z" fill="${S.lg("pfsp", [[0, "#3a3226", 0.85], [0.5, "#3a3226", 0.4], [1, "#3a3226", 0]])}"/><rect x="-8.6" y="-9" width="17.2" height="9" fill="#1c2618" opacity=".7"/></g></g></g>`;
   for (let i = 0; i < 6; i++) k += `<path d="M${-9 + i * 0.6} ${r(2 + i * 2.6)} q4.5 -.8 9 0 q4.5 .8 9 0" stroke="#1d3c3e" stroke-width=".5" fill="none" opacity=".5"/>`;
   const pfahl = (dx, top, neig) => {
     let g = `<path d="M${dx - 3} 0 L${r(dx - 2.8 + neig)} ${top + 1} Q${r(dx + neig)} ${top - 1.4} ${r(dx + 2.8 + neig)} ${top + 1} L${dx + 3} 0 Z" fill="${S.lg("eiche", [[0, "#8a7a64"], [0.4, "#a9977b"], [1, "#5e5244"]], 0, 0, 1, 0)}"/>`;
@@ -969,7 +979,7 @@ const PF = { x: 42, y: wl(48), s: r(F / 48 / 19.5) };   /* gezeichnet mit 19,5 j
     const P = (a, b, t) => r(a + (b - a) * t);
     k += `<path d="M-26 ${y1} L-26 ${r(y1 + 1.4)} L-2 ${r(y0 + 1)} L-2 ${y0} Z" fill="#4e4c48"/>`;
     k += `<path d="M-2 ${y0} L10 ${y0} L-6 ${y1} L-26 ${y1} Z" fill="${S.lg("steg", [[0, "#a29d95"], [1, "#857f77"]])}"/>`;
-    for (let i = 1; i < 12; i++) { const t = i / 12; k += `<line x1="${P(-2, -26, t)}" y1="${P(y0, y1, t)}" x2="${P(10, -6, t)}" y2="${P(y0, y1, t)}" stroke="#625d56" stroke-width="${r(0.3 + t * 0.35)}"/>`; }
+    for (let i = 1; i < 12; i++) { const t = Math.pow(i / 12, 1.5); k += `<line x1="${P(-2, -26, t)}" y1="${P(y0, y1, t)}" x2="${P(10, -6, t)}" y2="${P(y0, y1, t)}" stroke="#625d56" stroke-width="${r(0.3 + t * 0.35)}"/>`; }
     /* Handläufe auf Pfosten (etwa alle 1 m) */
     for (const [a, b] of [[-2, -26], [10, -6]]) {
       let p = "";
@@ -1007,7 +1017,7 @@ const schattenFigur = (x, y, f) => {
   const s2 = (y - HOR) / 4;   /* Einheiten je Meter an dieser Stelle */
   const kind = B.mensch({ id: "ven_kind", alter: "kind", geschlecht: "w", blick: 14, frisur: "zopf", haarfarbe: "dunkelbraun", haut: "mittel", laecheln: true,
     pose: { lende: 1, brust: -2, nacken: 12, kopf: 14, schulterL: { vor: 3, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.38,
-      schulterR: { vor: 62, seit: 16, dreh: 20 }, ellbogenR: 118, unterarmR: 40, handR: 10, fingerR: 0.7,
+      schulterR: { vor: 40, seit: 22, dreh: 20 }, ellbogenR: 104, unterarmR: 40, handR: 10, fingerR: 0.7,
       huefteL: { vor: 6, seit: 3, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
     kleidung: { oberteil: { stueck: "tshirt", farbe: "gelb" }, unterteil: { stueck: "shorts", farbe: "jeans" }, schuhe: { stueck: "turnschuh" }, kopf: { stueck: "kappe", farbe: "rot" } } }, r(1.28 * s2));
   const hand = { x: x + kind.z.handR.x * kind.k, y: y + kind.z.handR.y * kind.k };

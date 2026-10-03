@@ -94,8 +94,14 @@ const linie = (pts) => {
   return q.length > 1 ? "M" + q.map(P).join(" L") : "M0 0";
 };
 /* Menschen klein im Bild: Pfaddaten auf ganze Zentimeter runden (unsichtbar, halbiert die Datei) */
-const rundeFigur = (svg) => {
+const rundeFigur = (svg, unten) => {
   const k = +((svg.match(/scale\(([\d.]+)\)/) || [0, 1])[1]), lim = .07 / k;
+  /* hinter einer Theke: Teile, die ganz unterhalb der Kante (Bildeinheiten, relativ zum Fuß) liegen, sieht niemand */
+  if (unten != null) {
+    const yc = unten / k + 8;
+    svg = svg.replace(/<path[^>]* d="([MLQCSZ\d\s.,-]*)"[^>]*\/>/g, (m, d) => { const n = d.match(/-?[\d.]+/g) || []; for (let i = 1; i < n.length; i += 2) if (+n[i] < yc) return m; return ""; })
+      .replace(/<ellipse[^>]* cy="(-?[\d.]+)"[^>]* ry="([\d.]+)"[^>]*\/>/g, (m, cy, ry) => (+cy - +ry > yc ? "" : m));
+  }
   /* Haarsträhnen, Brauen und Nähte, die im Bild dünner als ein Viertelpixel wären, fallen weg */
   return svg.replace(/<path(?=[^>]*fill="none")[^>]*stroke-width="([\d.]+)"[^>]*\/>/g, (m, w) => (+w < lim ? "" : m))
     .replace(/ d="([^"]*)"/g, (m, d) => ` d="${d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n)))}"`)
@@ -166,10 +172,10 @@ const toroeffnung = (Y, xm, w, zKampf, zScheitel, spitz) => [[xm - w / 2, Y, 0],
      Fünf Muster in Stufen, weich ineinander geblendet — so werden die Kiesel nach hinten stufenlos kleiner. */
   const FARB = ["#b9ab97", "#a39582", "#cfc2ae", "#8f8270", "#c4b49c", "#9c8f80", "#d8ccb8"];
   const stufe = (i, d) => {
-    const rx = .044 * d, ry = Math.max(.05, rx * d / FOC), n = 6, w = rx * 2.25 * n, h = ry * 9.6;
+    const rx = .044 * d, ry = Math.max(.05, rx * d / FOC), n = 5, w = rx * 2.25 * n, h = ry * 14.4, Z = 6;
     let m = `<rect width="${r(w)}" height="${r(h)}" fill="#7d705f"/>`;
-    for (let z = 0; z < 4; z++) for (let j = 0; j < n; j++) {
-      const x = (j + (z % 2) * .5 + (rnd() - .5) * .35) * w / n, y = (z + .5) * h / 4 + (rnd() - .5) * ry * .7, ax = rx * (.7 + rnd() * .45), ay = ry * (.75 + rnd() * .45);
+    for (let z = 0; z < Z; z++) for (let j = 0; j < n; j++) {
+      const x = (j + (z * .618) % 1 + (rnd() - .5) * .35) * w / n, y = (z + .5) * h / Z + (rnd() - .5) * ry * .7, ax = rx * (.7 + rnd() * .45), ay = ry * (.75 + rnd() * .45);
       for (const dx of [0, w, -w]) {
         if (dx && (x + dx < -ax || x + dx > w + ax)) continue;
         m += `<ellipse cx="${r(x + dx)}" cy="${r(y + ay * .25)}" rx="${r(ax)}" ry="${r(ay)}" fill="#5e5346" opacity=".5"/><ellipse cx="${r(x + dx)}" cy="${r(y)}" rx="${r(ax)}" ry="${r(ay)}" fill="${FARB[Math.floor(rnd() * FARB.length)]}"/>`;
@@ -308,7 +314,7 @@ const toroeffnung = (Y, xm, w, zKampf, zScheitel, spitz) => [[xm - w / 2, Y, 0],
       const x = a[0] + (b[0] - a[0]) * d / L, y = a[1] + (b[1] - a[1]) * d / L, s = FOC / tief(x, y);
       if (s < 2.2) continue;
       fu += `${linie([[x + q[0] * .55, y + q[1] * .55, 0], [x + q[0] * .32, y + q[1] * .32, 0]])} ${linie([[x - q[0] * .55, y - q[1] * .55, 0], [x - q[0] * .32, y - q[1] * .32, 0]])} `;
-      if (rnd() < .7) { const o = (rnd() - .5) * .3, p = pr(x + q[0] * o, y + q[1] * o, -.14); if (p[0] > 0 && p[0] < 320 && p[1] < 240) k += `<ellipse cx="${r(p[0])}" cy="${r(p[1])}" rx="${r(.13 * s)}" ry="${r(.035 * s)}" fill="#f4fcff" opacity=".85"/>`; }
+      if (rnd() < .7) { const o = (rnd() - .5) * .3, p = pr(x + q[0] * o, y + q[1] * o, -.14); if (p[0] > 0 && p[0] < 320 && p[1] < 240) k += `<ellipse cx="${r(p[0])}" cy="${r(p[1])}" rx="${r(.08 * s)}" ry="${r(.02 * s)}" fill="#f4fcff" opacity=".7"/>`; }
     }
   }
   k += `<path d="${fu}" stroke="#8f8a80" stroke-width=".3"/>`;
@@ -320,9 +326,11 @@ const toroeffnung = (Y, xm, w, zKampf, zScheitel, spitz) => [[xm - w / 2, Y, 0],
    3 — DAS KIESELMOSAIK (Freiburger Wappen, aus weißen, roten und schwarzen Kieseln gesetzt)
    ===================================================================== */
 {
-  const M = [59.8, -47.4];
+  const M = [61, -51];
   /* Ortskoordinaten: u nach rechts, v in die Tiefe (Meter) */
-  const W = (u, v) => [M[0] + u * RV[0] + v * FV[0], M[1] + u * RV[1] + v * FV[1], 0];
+  /* das Wappen schaut zur Kamera: v zeigt vom Betrachter weg, u quer dazu */
+  const LM = Math.hypot(M[0] - CAM[0], M[1] - CAM[1]), VV = [(M[0] - CAM[0]) / LM, (M[1] - CAM[1]) / LM], UU = [VV[1], -VV[0]];
+  const W = (u, v) => [M[0] + u * UU[0] + v * VV[0], M[1] + u * UU[1] + v * VV[1], 0];
   const P2 = (u, v) => pr(...W(u, v));
   const schild = (u, v) => Math.abs(u) <= .62 && v <= .7 && (v >= -.05 || (u / .62) ** 2 + ((v + .05) / .75) ** 2 <= 1);
   /* Grundflächen (projiziert): schwarzer Rand, weißes Feld, rotes Kreuz */
@@ -446,7 +454,7 @@ const TM = {};
     TM.kb = { x: TX(0), y: TY(112.2), h: TS * 5 };
   }
   TM.uhr = { x: uhr[0], y: uhr[1], r: ur };
-  const zx = 188, zy = 10;
+  const zx = 212, zy = 12;
   S.teil({ id: "muensterturm", de: "der Münsterturm", syl: "MÜNS-ter-turm", it: "il campanile del duomo", itSyl: "cam-pa-NI-le del DUO-mo", en: "Minster tower", x: 0, y: 0, kunst: t.join(""),
     tipp: "Der Turm ist 116 Meter hoch und war schon um 1330 fertig — als einziger großer gotischer Kirchturm Deutschlands noch im Mittelalter. Jacob Burckhardt nannte ihn „den schönsten Turm auf Erden“.",
     zoom: { x: zx, y: zy, w: 320 - zx, h: r((320 - zx) / 1.5) },
@@ -555,7 +563,7 @@ const TM = {};
   const sp = SP[SP.length - 1];
   S.teil({ id: "muenster", de: "das Freiburger Münster", syl: "FREI-bur-ger MÜNS-ter", it: "la cattedrale di Friburgo", itSyl: "cat-te-DRA-le di fri-BUR-go", en: "Freiburg Minster",
     x: 0, y: 0, kunst: k, tipp: "Das Münster wurde ab etwa 1200 aus rotem Sandstein gebaut. Der Chor wurde erst 1513 geweiht.",
-    zoom: { x: 206, y: 104, w: 114, h: 76 },
+    zoom: { x: 226, y: 112, w: 94, h: 63 },
     unter: [
       { id: "wasserspeier", de: "der Wasserspeier", syl: "WAS-ser-spei-er", it: "il doccione", itSyl: "doc-CIO-ne", en: "gargoyle", x: sp.x, y: sp.y, kunst: flaeche(-3, -2.4, 6, 4.4, 0.5),
         tipp: "Durch die Wasserspeier fließt das Regenwasser vom Dach. Am Münster sehen viele wie Tiere und Fratzen aus." },
@@ -733,7 +741,7 @@ const CAFE = {};
   for (const [t, dx] of [[t1, -.15], [t2, .1]]) { const { f } = t, s = f.s; k += `<path d="M${r(f.x + dx * s - .05 * s)} ${r(f.y - .78 * s)} h${r(.1 * s)} v${r(-.06 * s)} h${r(-.1 * s)} Z" fill="#fbfaf6"/><ellipse cx="${r(f.x + dx * s)}" cy="${r(f.y - .78 * s)}" rx="${r(.08 * s)}" ry="${r(.02 * s)}" fill="#f2f0ea"/>`; }
   /* die Schwarzwälder Kirschtorte auf dem Tortenständer: Schokoböden, Sahne, Schokoraspel, Sahnetupfen mit Kirschen */
   {
-    const f = t1.f, s = f.s, tx = f.x + .12 * s, ty = f.y - .76 * s, tr = .15 * s, th = .12 * s;
+    const f = t1.f, s0 = f.s, tx = f.x + .05 * s0, ty = f.y - .76 * s0, s = s0 * 1.5, tr = .15 * s, th = .12 * s;
     let g = `<path d="M${r(tx)} ${r(ty)} v${r(-.06 * s)}" stroke="#c9c2b4" stroke-width="${r(.02 * s)}"/><ellipse cx="${r(tx)}" cy="${r(ty - .06 * s)}" rx="${r(tr * 1.18)}" ry="${r(tr * .26)}" fill="#f2efe8"/>`;
     const y0 = ty - .065 * s;
     g += `<path d="M${r(tx - tr)} ${r(y0)} v${r(-th)} a${r(tr)} ${r(tr * .25)} 0 0 1 ${r(2 * tr)} 0 v${r(th)} a${r(tr)} ${r(tr * .25)} 0 0 1 ${r(-2 * tr)} 0 Z" fill="${S.lg("sahne", [[0, "#fbf8f1"], [0.7, "#efe9dc"], [1, "#d9d0bf"]], 0, 0, 1, 0)}"/>`;
@@ -759,7 +767,7 @@ const CAFE = {};
   }
   S.teil({ id: "cafe", de: "das Café", syl: "ca-FÉ", it: "il caffè", itSyl: "caf-FÈ", en: "café", x: 0, y: 0, kunst: k,
     tipp: "Rund um den Münsterplatz sitzt man im Café und schaut auf den Markt.",
-    zoom: { x: 14, y: 168, w: 66, h: 44 },
+    zoom: { x: 16, y: 178, w: 51, h: 34 },
     unter: [
       { id: "kirschtorte", de: "die Schwarzwälder Kirschtorte", syl: "SCHWARZ-wäl-der KIRSCH-tor-te", it: "la torta Foresta Nera", itSyl: "TOR-ta fo-RE-sta NE-ra", en: "Black Forest cake", x: CAFE.torte.x, y: CAFE.torte.y, kunst: flaeche(-1.6, -1.6, 3.2, 2.6, 0.4),
         tipp: "Schokoladenbiskuit, Sahne, Kirschen und ein Schuss Kirschwasser — die berühmteste Torte aus dem Schwarzwald." },
@@ -864,7 +872,7 @@ const MS = {};
   }
   for (let i = 0; i < 2; i++) k += `<circle cx="${r(x + 1.36 * s)}" cy="${r(y - 1 * s - i * .06 * s)}" r="${r(.11 * s - i * .03 * s)}" fill="${i ? "#9ac85a" : "#6a9a3a"}"/>`;
   /* Preistafeln */
-  k += `<rect x="${r(x - .4 * s)}" y="${r(y - .72 * s)}" width="${r(.8 * s)}" height="${r(.28 * s)}" fill="#2a2e2a"/><text x="${r(x)}" y="${r(y - .52 * s)}" font-size="${r(.16 * s)}" text-anchor="middle" fill="#f4f0e2" font-family="Comic Sans MS,cursive">Kirschen 6 €</text>`;
+  k += `<rect x="${r(x - .48 * s)}" y="${r(y - .72 * s)}" width="${r(1 * s)}" height="${r(.28 * s)}" fill="#2a2e2a"/><text x="${r(x + .02 * s)}" y="${r(y - .52 * s)}" font-size="${r(.16 * s)}" text-anchor="middle" fill="#f4f0e2" font-family="Comic Sans MS,cursive">Kirschen 6 €</text>`;
   k += `<rect x="${r(x - 1.4 * s)}" y="${r(y - .72 * s)}" width="${r(.66 * s)}" height="${r(.28 * s)}" fill="#2a2e2a"/><text x="${r(x - 1.07 * s)}" y="${r(y - .52 * s)}" font-size="${r(.15 * s)}" text-anchor="middle" fill="#f4f0e2" font-family="Comic Sans MS,cursive">Spargel</text>`;
   /* großer Marktschirm (orange-weiß) */
   let sch = "";
@@ -903,14 +911,14 @@ const SV = {};
     for (const d of [-.08, .08]) u += `<path d="M${r(cx + d * g)} ${r(cy)} V${r(cy + .18 * g)}" stroke="#8a8a8a" stroke-width="${r(.01 * g)}"/><ellipse cx="${r(cx + d * g)}" cy="${r(cy + .22 * g)}" rx="${r(.03 * g)}" ry="${r(.06 * g)}" fill="#5a3418"/>`;
     return u;
   };
-  const UH = [[x - .85 * s, y - 1.35 * s, s * 1.1], [x, y - 1.4 * s, s * 1.35], [x + .85 * s, y - 1.3 * s, s]];
+  const UH = [[x - .38 * s, y - 1.35 * s, s * 1.1], [x + .38 * s, y - 1.4 * s, s * 1.3], [x + 1.04 * s, y - 1.3 * s, s * .95]];
   for (const [a, b, g] of UH) k += uhr(a, b, g);
   /* Theke mit Bollenhut auf dem Hutständer */
   k += `<rect x="${r(x - W / 2 - .1 * s)}" y="${r(y - .95 * s)}" width="${r(W + .2 * s)}" height="${r(.12 * s)}" fill="#c99a62"/><rect x="${r(x - W / 2)}" y="${r(y - .83 * s)}" width="${r(W)}" height="${r(.83 * s)}" fill="${HOLZ}"/>`;
   for (let i = 0; i < 6; i++) k += `<path d="M${r(x - W / 2 + (i + .5) * W / 6)} ${r(y - .8 * s)} V${r(y)}" stroke="#4a3220" stroke-width="${r(.03 * s)}"/>`;
   {
     /* der Bollenhut auf einem Hutkopf: breite weiße Krempe, darauf 14 rote Wollbollen (von vorn sieht man elf) */
-    const bx = x - .95 * s, by = y - .95 * s, g = s * 1.35;
+    const bx = x - 1.02 * s, by = y - .95 * s, g = s * 1.25;
     k += `<path d="M${r(bx - .05 * g)} ${r(by)} v${r(-.18 * g)} h${r(.1 * g)} v${r(.18 * g)} Z" fill="#7a5230"/><ellipse cx="${r(bx)}" cy="${r(by - .24 * g)}" rx="${r(.08 * g)}" ry="${r(.1 * g)}" fill="#c99a62"/>`;
     k += `<ellipse cx="${r(bx)}" cy="${r(by - .3 * g)}" rx="${r(.3 * g)}" ry="${r(.075 * g)}" fill="${S.lg("krempe", [[0, "#ffffff"], [1, "#dcd6ca"]])}" stroke="#bdb6a6" stroke-width="${r(.01 * g)}"/>`;
     k += `<path d="M${r(bx - .07 * g)} ${r(by - .28 * g)} q-${r(.02 * g)} ${r(.14 * g)} ${r(.02 * g)} ${r(.22 * g)} M${r(bx + .07 * g)} ${r(by - .28 * g)} q${r(.02 * g)} ${r(.14 * g)} -${r(.02 * g)} ${r(.22 * g)}" stroke="#1d1d1d" stroke-width="${r(.018 * g)}" fill="none"/>`;
@@ -985,7 +993,7 @@ const WS = fuss(50, -54);
       { id: "broetchen", de: "das Brötchen", syl: "BRÖT-chen", it: "il panino", itSyl: "pa-NI-no", en: "bread roll", x: bk.x, y: bk.y - .12 * s, kunst: flaeche(-.38 * s, -.18 * s, .76 * s, .3 * s, 0.3),
         tipp: "Die Wurst kommt in ein Brötchen — aber sie ist so lang, dass sie links und rechts herausschaut." },
     ] });
-  S.teil({ id: "verkaeufer", de: "der Verkäufer", syl: "ver-KÄU-fer", it: "il venditore", itSyl: "ven-di-TO-re", en: "vendor", x: x + .3 * s, y: y - .1 * s, kunst: `<g clip-path="url(#${S.id("theke")})">${rundeFigur(m.svg)}</g>`,
+  S.teil({ id: "verkaeufer", de: "der Verkäufer", syl: "ver-KÄU-fer", it: "il venditore", itSyl: "ven-di-TO-re", en: "vendor", x: x + .3 * s, y: y - .1 * s, kunst: `<g clip-path="url(#${S.id("theke")})">${rundeFigur(m.svg, -tz * s + .1 * s)}</g>`,
     tipp: "Der Verkäufer legt die Wurst ins Brötchen und gibt Senf dazu." });
 }
 
