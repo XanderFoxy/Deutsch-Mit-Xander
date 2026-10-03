@@ -786,6 +786,20 @@ const PODEST = yp(3.6);
     k += `<path d="M${r(cx - c(0.16))} ${cy} L${r(cx - c(0.17))} ${r(cy - c(0.48))} Q${r(cx - c(0.2))} ${r(cy - c(0.86))} ${cx} ${r(cy - c(0.9))} Q${r(cx + c(0.2))} ${r(cy - c(0.86))} ${r(cx + c(0.17))} ${r(cy - c(0.48))} L${r(cx + c(0.16))} ${cy}" stroke="${HOLZ}" stroke-width="${c(0.026)}" fill="none"/>`;
     k += `<path d="M${r(cx - c(0.1))} ${r(cy - c(0.5))} Q${r(cx - c(0.13))} ${r(cy - c(0.76))} ${cx} ${r(cy - c(0.79))} Q${r(cx + c(0.13))} ${r(cy - c(0.76))} ${r(cx + c(0.1))} ${r(cy - c(0.5))}" stroke="${HOLZ}" stroke-width="${c(0.018)}" fill="none"/>`;
     k += `<ellipse cx="${cx}" cy="${r(cy - c(0.46))}" rx="${c(0.22)}" ry="${c(0.05)}" fill="${HOLZ}"/><ellipse cx="${cx}" cy="${r(cy - c(0.465))}" rx="${c(0.19)}" ry="${c(0.04)}" fill="#d9b97e"/>`;
+    {
+      /* der Gast liest Zeitung; der Ober bringt ihm gleich seine Melange */
+      const gst = B.mensch({ id: "wie_gast", geschlecht: "m", pose: "lesen", blick: -58, frisur: "kurz", haarfarbe: "grau", haut: "hell",
+        kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "jacke", farbe: "#55606e" }, unterteil: { stueck: "anzughose", farbe: "#3a3c44" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, r(1.76 * cs));
+      const gx = r(cx - gst.z.sitz.x * gst.k), gy = r(cy - c(0.47) - gst.z.sitz.y * gst.k);
+      k += schlag(cx, cy, c(0.5), 8, 0.2) + `<g transform="translate(${gx} ${gy})">${schlank(gst.svg, 1, true)}</g>`;
+      const hl = [gst.z.handL, gst.z.handR].map((h) => [gx + h.x * gst.k, gy + h.y * gst.k]);
+      const xa = Math.min(hl[0][0], hl[1][0]) - c(0.1), xb = Math.max(hl[0][0], hl[1][0]) + c(0.06), yb = Math.max(hl[0][1], hl[1][1]) + c(0.03), ya = yb - c(0.42), xm = (xa + xb) / 2;
+      k += `<path d="M${r(xa)} ${r(ya + 1)} L${r(xm)} ${r(ya)} L${r(xm)} ${r(yb)} L${r(xa)} ${r(yb + 0.8)} Z" fill="#ece8de" stroke="#bdb7aa" stroke-width=".25"/><path d="M${r(xm)} ${r(ya)} L${r(xb)} ${r(ya + 1.4)} L${r(xb)} ${r(yb + 1)} L${r(xm)} ${r(yb)} Z" fill="#dcd7cb" stroke="#bdb7aa" stroke-width=".25"/>`;
+      let zeilen = "";
+      for (let i = 1; i < 9; i++) { const t = i / 9; zeilen += `M${r(xa + 1)} ${r(ya + 1 + t * (yb - ya))}L${r(xm - 0.8)} ${r(ya + 0.2 + t * (yb - ya))}M${r(xm + 0.8)} ${r(ya + 0.3 + t * (yb - ya))}L${r(xb - 1)} ${r(ya + 1.4 + t * (yb - ya))}`; }
+      k += `<path d="${zeilen}" stroke="#9a958c" stroke-width=".35"/><rect x="${r(xa + 1)}" y="${r(ya + 1.6)}" width="${r((xm - xa) * 0.7)}" height="1.6" fill="#6d6a66" transform="rotate(-6 ${r(xa + 1)} ${r(ya + 1.6)})"/>`;
+      for (const [hx, hy] of hl) k += `<circle cx="${r(hx)}" cy="${r(hy)}" r="${c(0.035)}" fill="#e0b494"/>`;
+    }
     k += schlag(X, fuss, m(0.5), 10, 0.22);
     k += `<path d="M${X - 2} ${r(ty + 2)} L${X - 1.6} ${fuss} L${X + 1.6} ${fuss} L${X + 2} ${r(ty + 2)} Z" fill="#3a3a3c"/><ellipse cx="${X}" cy="${fuss}" rx="${m(0.18)}" ry="1.4" fill="#2a2a2c"/>`;
     k += `<path d="M${r(X - m(0.3))} ${ty} A${m(0.3)} ${m(0.06)} 0 0 0 ${r(X + m(0.3))} ${ty} L${r(X + m(0.3))} ${r(ty + 1.4)} A${m(0.3)} ${m(0.06)} 0 0 1 ${r(X - m(0.3))} ${r(ty + 1.4)} Z" fill="#b5ada0"/>`;
@@ -905,21 +919,36 @@ const PODEST = yp(3.6);
     g += `<ellipse cx="1" cy="1" rx="23" ry="7.6" fill="#d9d4ca"/><ellipse cx="1" cy=".2" rx="23" ry="7.6" fill="#fbfaf6"/><ellipse cx="1" cy=".2" rx="17.6" ry="5.6" fill="none" stroke="#e6e1d6" stroke-width=".5"/>`;
     /* großer, flacher Lappen mit sanft gewelltem Rand, golden gebacken,
        die Panier wirft Blasen (souffliert) und hängt über den Tellerrand */
-    const pkt = [[-25, 0.4], [-22, -2.8], [-16, -4.4], [-9, -4.8], [-2, -5.4], [5, -5], [11, -4.4], [15.6, -2.8], [17.6, -0.4], [16, 2], [10, 3], [3, 3.6], [-4, 3.2], [-11, 3.6], [-18, 3], [-23.4, 2.2]];
+    const pkt = [[-27.6, 0.8], [-24, -2.6], [-16, -4.4], [-9, -4.8], [-2, -5.4], [5, -5], [11, -4.4], [15.6, -2.8], [17.6, -0.4], [16, 2], [10, 3], [3, 3.6], [-4, 3.2], [-11, 3.6], [-18, 3.2], [-25.4, 2.8]];
     const rand = "M" + pkt.map(([x, yy], i) => { const n = pkt[(i + 1) % pkt.length]; return `${x} ${yy} Q${r((x + n[0]) / 2 + (i % 2 ? 0.5 : -0.5))} ${r((yy + n[1]) / 2 + (i % 2 ? -0.6 : 0.6))}`; }).join(" ") + ` ${pkt[0][0]} ${pkt[0][1]} Z`;
     g += `<path d="${rand}" fill="#9a5a1e" transform="translate(.4 1)" opacity=".5"/>`;
-    g += `<path d="${rand}" fill="${S.rg("panade", [[0, "#f0b95a"], [0.65, "#d6913a"], [1, "#a8611f"]], 0.42, 0.38, 0.72)}"/>`;
-    for (let i = 0; i < 20; i++) { const x = -20 + rnd() * 34, yy = -3.8 + rnd() * 6.4, w2 = 1 + rnd() * 2; g += `<path d="M${r(x - w2)} ${r(yy)} Q${r(x)} ${r(yy - w2 * 0.7)} ${r(x + w2)} ${r(yy)} Q${r(x)} ${r(yy + w2 * 0.35)} ${r(x - w2)} ${r(yy)} Z" fill="#f6cf7e" opacity=".75"/><path d="M${r(x - w2)} ${r(yy)} Q${r(x)} ${r(yy + w2 * 0.35)} ${r(x + w2)} ${r(yy)}" stroke="#9e5a1c" stroke-width=".2" fill="none" opacity=".7"/>`; }
-    for (let i = 0; i < 30; i++) g += `<circle cx="${r(-21 + rnd() * 36)}" cy="${r(-4 + rnd() * 6.8)}" r="${r(0.2 + rnd() * 0.25)}" fill="#8a4a14" opacity=".55"/>`;
-    g += `<path d="M-17 -2 Q-8 -4.6 4 -3.6 Q12 -3.8 16 -2" stroke="#fff3cf" stroke-width=".7" opacity=".5" fill="none"/>`;
+    g += `<path d="${rand}" fill="${S.rg("panade", [[0, "#c98436"], [0.6, "#b06a26"], [1, "#8a4a16"]], 0.42, 0.38, 0.72)}"/>`;
+    /* die Panier wirft große, wellige Blasen: drei, vier Kämme mit Licht von
+       links oben, dazwischen dunklere Täler */
+    const blase = (cx, cy, rx, ry, rot, n) => {
+      const p = [];
+      for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, f = 0.82 + rnd() * 0.3, x = Math.cos(a) * rx * f, yy = Math.sin(a) * ry * f, c = Math.cos(rot), s = Math.sin(rot); p.push([cx + x * c - yy * s, cy + x * s + yy * c]); }
+      return "M" + p.map((q, i) => { const nq = p[(i + 1) % n]; return `${r((q[0] + nq[0]) / 2)} ${r((q[1] + nq[1]) / 2)} Q${r(nq[0])} ${r(nq[1])}`; }).join(" ") + ` ${r((p[0][0] + p[1][0]) / 2)} ${r((p[0][1] + p[1][1]) / 2)} Z`;
+    };
+    for (const [cx, cy, rx, ry, rot] of [[-16, -1.2, 8, 2.8, -0.12], [-3, -2.2, 8.6, 2.6, 0.08], [9, -1.4, 6.6, 2.4, -0.1], [-7, 1.6, 7, 1.7, 0.05]]) {
+      const d = blase(cx, cy, rx, ry, rot, 11);
+      g += `<path d="${d}" fill="#6e3a10" opacity=".45" transform="translate(.5 .8)"/>`;
+      g += `<path d="${d}" fill="${S.rg("blase", [[0, "#ffe2a0"], [0.45, "#ecb460"], [1, "#c27c30"]], 0.35, 0.3, 0.75)}"/>`;
+      g += `<ellipse cx="${r(cx - rx * 0.3)}" cy="${r(cy - ry * 0.35)}" rx="${r(rx * 0.32)}" ry="${r(ry * 0.22)}" fill="#fff4cc" opacity=".55"/>`;
+    }
+    for (let i = 0; i < 16; i++) g += `<circle cx="${r(-21 + rnd() * 36)}" cy="${r(-4 + rnd() * 6.8)}" r="${r(0.18 + rnd() * 0.2)}" fill="#7a3e10" opacity=".5"/>`;
     g += `<path d="M22 4 L32 -1.4 M21.6 5.2 L23 4.4" stroke="#b9c0c6" stroke-width=".9" stroke-linecap="round"/>`;
     g += `<ellipse cx="38" cy=".2" rx="6.6" ry="2.4" fill="#e6eef0" stroke="#b9cfd6" stroke-width=".3"/>`;
     for (let i = 0; i < 9; i++) g += `<ellipse cx="${r(34.4 + rnd() * 7)}" cy="${r(-1.4 + rnd() * 2.4)}" rx="1.1" ry=".7" fill="#f2df9a" stroke="#d9c070" stroke-width=".15"/>`;
     g += `<path d="M33 -.6 q1 -1 2 0 M39 -1 q1 -1 2 0" stroke="#4f8a3a" stroke-width=".4" fill="none"/>`;
     lege("schnitzel", -22, 7, g, flaeche(-24, -7, 46, 12, 0.6), { de: "das Wiener Schnitzel", syl: "WIE-ner SCHNIT-zel", it: "la cotoletta alla viennese", itSyl: "co-to-LET-ta AL-la vien-NE-se", en: "Wiener schnitzel",
       tipp: "Das echte Wiener Schnitzel ist aus Kalbfleisch: dünn geklopft, paniert und in Butterschmalz goldgelb gebacken." });
-    let z = `<path d="M-4.6 0 Q0 -3.6 4.6 0 Z" fill="#f3d94e" stroke="#d2b030" stroke-width=".3"/><path d="M-3.8 -.4 Q0 -2.8 3.8 -.4 Z" fill="#fbef9a"/>`;
-    for (const a of [-0.9, -0.45, 0, 0.45, 0.9]) z += `<line x1="0" y1="-.3" x2="${r(Math.sin(a) * 3.4)}" y2="${r(-0.3 - Math.cos(a) * 2)}" stroke="#f3d94e" stroke-width=".25"/>`;
+    let z = `<ellipse cx=".4" cy=".5" rx="5" ry=".9" fill="#b9b3a6" opacity=".45"/>`;
+    z += `<path d="M-5 .2 Q-4.6 -3.8 0 -4.2 Q4.6 -3.8 5 .2 Q0 1.2 -5 .2 Z" fill="#f2cc2a" stroke="#c49a14" stroke-width=".25"/>`;
+    z += `<path d="M-4.2 -.1 Q-3.8 -3.1 0 -3.4 Q3.8 -3.1 4.2 -.1 Q0 .7 -4.2 -.1 Z" fill="#fbf0b8"/>`;
+    z += `<path d="M-3.8 -.2 Q-3.4 -2.7 0 -3 Q3.4 -2.7 3.8 -.2 Q0 .5 -3.8 -.2 Z" fill="#f6e06a"/>`;
+    for (const a of [-1.05, -0.5, 0.05, 0.6]) z += `<path d="M0 .2 L${r(Math.sin(a) * 3.7)} ${r(0.1 - Math.cos(a) * 2.9)}" stroke="#fdf6d0" stroke-width=".32"/>`;
+    z += `<ellipse cx="1.5" cy="-1.3" rx=".55" ry=".3" fill="#f7f1da" stroke="#cdbf8a" stroke-width=".12" transform="rotate(-30 1.5 -1.3)"/><path d="M-2.6 -1.6 Q-1.6 -2.4 -.4 -2.5" stroke="#fffbe6" stroke-width=".35" opacity=".8" fill="none"/>`;
     lege("zitrone", -7, 13.6, z, flaeche(-5, -4, 10, 4.6, 0.6), { de: "die Zitrone", syl: "zi-TRO-ne", it: "il limone", itSyl: "li-MO-ne", en: "lemon",
       tipp: "Über das Schnitzel träufelt man frischen Zitronensaft." });
   }
@@ -927,6 +956,44 @@ const PODEST = yp(3.6);
     tipp: "Kaffeehaustische haben eine runde Platte aus Marmor.",
     zoom: { x: 280, y: TY - 26, w: 112, h: 46 },
     unter: ding.map((u) => Object.assign(u, { x: r(u.x), y: r(u.y) })) });
+}
+
+/* =====================================================================
+   VORN (nicht antippbar): zwei große Platanen der Mittelallee in 20 m
+   rahmen das Bild, ihre Kronen ragen oben hinaus; auf der nahen Spur
+   (10 m) fährt ein schwarzes Wiener Taxi nach links (der Ring ist eine
+   Einbahn im Uhrzeigersinn)
+   ===================================================================== */
+{
+  let v = "";
+  const platane = (bx, sx) => {
+    const fy = ys(20), kb = r(fy - 6.2 * F / 20);
+    /* Platanenrinde: grau-grün mit hellen, abblätternden Flecken */
+    let g = `<path d="M${r(bx - 2.6)} ${fy} Q${r(bx - 2.2)} ${r(fy - 20)} ${r(bx - 1.9)} ${kb} L${r(bx + 1.9)} ${kb} Q${r(bx + 2.2)} ${r(fy - 20)} ${r(bx + 2.6)} ${fy} Z" fill="${S.lg("rinde", [[0, "#b5ad94"], [0.5, "#8f8a74"], [1, "#5e5a4c"]], 0, 0, 1, 0)}"/>`;
+    for (let i = 0; i < 14; i++) g += `<ellipse cx="${r(bx - 1.6 + rnd() * 3.2)}" cy="${r(kb + 2 + rnd() * (fy - kb - 4))}" rx="${r(0.4 + rnd() * 0.7)}" ry="${r(0.8 + rnd() * 1.4)}" fill="${["#d8d2b6", "#9aa184", "#c9c3a4"][i % 3]}" opacity=".85"/>`;
+    g += `<path d="M${bx} ${r(kb + 2)} q${sx * 6} -14 ${sx * 16} -26 M${bx} ${r(kb + 4)} q${-sx * 4} -18 ${-sx * 2} -40 M${r(bx + sx * 6)} ${r(kb - 10)} q${sx * 8} -8 ${sx * 18} -8" stroke="#6e6a58" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
+    return g;
+  };
+  v += platane(5, 1) + platane(397, -1);
+  v += `<g>${krone(36, 26, 44, 34, 46, 7, 12)}${krone(14, 64, 20, 16, 14, 6, 9)}</g>`;
+  v += `<g>${krone(386, 18, 22, 26, 26, 6.5, 10.5)}</g>`;
+  /* das Taxi (4,9 m lang, 1,48 m hoch) mit gelbem Dachschild */
+  {
+    const s = r(F / 10), X = 22, Y = ys(10);
+    let t = `<ellipse cx="2.45" cy=".02" rx="2.6" ry=".09" fill="#1b120a" opacity=".45"/>`;
+    t += `<path d="M.08 -.32 Q0 -.72 .26 -.8 L1.08 -.9 Q1.46 -1.4 2.02 -1.46 L3.62 -1.46 Q4.22 -1.42 4.52 -1.02 L4.84 -.92 Q4.96 -.6 4.88 -.32 Z" fill="${S.lg("taxi", [[0, "#5a5c62"], [0.18, "#1c1d21"], [1, "#0a0a0c"]])}"/>`;
+    t += `<path d="M1.22 -.95 Q1.56 -1.36 2.02 -1.38 L2.74 -1.38 L2.74 -.95 Z M2.86 -.95 L2.86 -1.38 L3.56 -1.38 Q4.02 -1.34 4.32 -.97 Z" fill="${S.lg("taxiglas", [[0, "#9fb4c4"], [1, "#2c3a44"]])}"/>`;
+    t += `<circle cx="2.3" cy="-1.16" r=".11" fill="#1d1d22"/><path d="M2.14 -.95 Q2.3 -1.08 2.46 -.95 Z" fill="#1d1d22"/>`;
+    t += `<path d="M.3 -.72 L4.7 -.7" stroke="#8d939a" stroke-width=".03"/><path d="M2.8 -.95 L2.8 -.36 M1.4 -.92 L1.3 -.4 M4.2 -.95 L4.3 -.4" stroke="#000" stroke-width=".025"/>`;
+    t += `<rect x="1.95" y="-.74" width=".16" height=".04" fill="#9aa0a6"/><rect x="3.3" y="-.74" width=".16" height=".04" fill="#9aa0a6"/>`;
+    t += `<path d="M.1 -.62 L.32 -.66 L.3 -.54 L.1 -.52 Z" fill="#f6f2dc"/><path d="M4.88 -.66 L4.72 -.68 L4.72 -.56 L4.9 -.55 Z" fill="#c8302a"/>`;
+    t += `<path d="M1.1 -1.0 L1.02 -1.08 L.92 -1.06 L.96 -.98 Z" fill="#111"/>`;
+    t += `<path d="M.5 -.84 Q2.5 -1.0 4.4 -.86" stroke="#d8dde2" stroke-width=".05" opacity=".7" fill="none"/>`;
+    t += `<rect x="2.38" y="-1.64" width=".66" height=".18" rx=".03" fill="#f6d22e" stroke="#c9a51c" stroke-width=".02"/><text x="2.71" y="-1.506" font-size=".13" text-anchor="middle" fill="#1d1d1d" font-family="Arial,sans-serif" font-weight="bold">TAXI</text>`;
+    for (const wx of [0.86, 4.0]) t += `<circle cx="${wx}" cy="-.33" r=".33" fill="#141416"/><circle cx="${wx}" cy="-.33" r=".19" fill="#b9bfc5"/><circle cx="${wx}" cy="-.33" r=".07" fill="#55595e"/>`;
+    v += `<g transform="translate(${X} ${Y}) scale(${s})">${t}</g>`;
+  }
+  S.davor(v);
 }
 
 /* Licht: warmer Nachmittag, die Sonne hinter uns links (fängt keinen Tipp ab) */

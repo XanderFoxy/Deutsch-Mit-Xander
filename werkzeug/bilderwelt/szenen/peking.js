@@ -226,7 +226,7 @@ const mauerUnter = [];
     tipp: "Hinter den Zinnen konnten sich die Soldaten schützen. Durch die Scharten schossen sie." });
   mauerUnter.push({ id: "treppe", de: "die Treppe", syl: "TREP-pe", it: "la scalinata", itSyl: "sca-li-NA-ta", en: "stairs", x: 30, y: r(kammY(KL, 30) + 1), kunst: flaeche(-6.5, -6.4, 11, 8),
     tipp: "Wo der Berg sehr steil ist, wird die Mauer zur Treppe." });
-  S.teil({ anker: [58, 52], id: "grosse_mauer", de: "die Große Mauer", syl: "GRO-ße MAU-er", it: "la Grande Muraglia", itSyl: "GRAN-de mu-RA-glia", en: "Great Wall", x: 0, y: 0, kunst: k,
+  S.teil({ anker: [76, r(kammY(KL, 76) + 0.6)], id: "grosse_mauer", de: "die Große Mauer", syl: "GRO-ße MAU-er", it: "la Grande Muraglia", itSyl: "GRAN-de mu-RA-glia", en: "Great Wall", x: 0, y: 0, kunst: k,
     zoom: { x: 18, y: 27, w: 54, h: 36 }, unter: mauerUnter,
     tipp: "Die Große Mauer (auch Chinesische Mauer) ist mit allen Teilen über 20 000 km lang." });
 }
@@ -432,7 +432,7 @@ const X = (m) => CX + m;
       for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) k += `<circle cx="${r(xa + (xb - xa) * (0.3 + j * 0.4))}" cy="${r(ys + 2 + i * (yFuss - ys - 3) / 4)}" r=".28" fill="#e8c35a"/>`;
     }
   }
-  S.teil({ anker: [X(-75), ty(3)], id: "torbogen", de: "der Torbogen", syl: "TOR-bo-gen", it: "l'arco della porta", itSyl: "AR-co del-la POR-ta", en: "archway", x: 0, y: 0, kunst: k,
+  S.teil({ anker: [X(75), ty(3)], id: "torbogen", de: "der Torbogen", syl: "TOR-bo-gen", it: "l'arco della porta", itSyl: "AR-co del-la POR-ta", en: "archway", x: 0, y: 0, kunst: k,
     tipp: "Der Torbau hat fünf Torbögen. Durch den mittleren, größten durfte früher nur der Kaiser gehen." });
 }
 
@@ -544,7 +544,7 @@ const KANTE0 = (y) => 180 - 0.3125 * (y - HOR);
     k += `<path d="M${r(x - 1.1)} ${r(h(8.8))} L${r(x - 1.1)} ${r(h(9.3))} Q${r(x - 1.2)} ${r(h(9.9))} ${r(x - 0.3)} ${r(h(10))} Q${r(x + 0.5)} ${r(h(10.2))} ${r(x + 0.8)} ${r(h(9.7))} L${r(x + 1.1)} ${r(h(9.5))} L${r(x + 0.7)} ${r(h(9.3))} L${r(x + 1)} ${r(h(8.8))} Z" fill="#efece4" stroke="#bdb8aa" stroke-width=".15"/>`;
     k += `<rect x="${r(x - 1.25)}" y="${r(h(8.2))}" width=".45" height="${r(h(2.2) - h(8.2))}" fill="#fff" opacity=".45"/>`;
   }
-  S.teil({ anker: [xAt(-17, d), yAt(d, 5)], id: "marmorsaeule", de: "die Marmorsäule", syl: "MAR-mor-säu-le", it: "la colonna di marmo", itSyl: "co-LON-na di MAR-mo", en: "marble column", x: 0, y: 0, kunst: k,
+  S.teil({ anker: [xAt(-17, d), yAt(d, 2.2)], id: "marmorsaeule", de: "die Marmorsäule", syl: "MAR-mor-säu-le", it: "la colonna di marmo", itSyl: "co-LON-na di MAR-mo", en: "marble column", x: 0, y: 0, kunst: k,
     tipp: "Diese Säulen heißen Huabiao. Um jede windet sich ein Drache aus Marmor, oben sitzt ein Fabeltier." });
 }
 {
@@ -565,7 +565,7 @@ const KANTE0 = (y) => 180 - 0.3125 * (y - HOR);
     if (sp < 0) k += `<circle cx="${r(x - 0.5 * u)}" cy="${r(h(2.05))}" r="${r(0.4 * u)}" fill="#b5af9e" stroke="#8a8474" stroke-width=".2"/><path d="M${r(x - 0.8 * u)} ${r(h(2.05))} q${r(0.3 * u)} -.6 ${r(0.6 * u)} 0" stroke="#8a8474" stroke-width=".2" fill="none"/>`;
     else k += `<path d="M${r(x + 0.15 * u)} ${r(h(1.65))} q.2 -1.6 1.2 -1.7 q1 .1 .9 1.7 Z" fill="#aaa493"/><circle cx="${r(x + 0.35 * u)}" cy="${r(h(2.4))}" r="${r(0.18 * u)}" fill="#aaa493"/>`;
   }
-  S.teil({ anker: [xAt(-10.5, d), yAt(d, 3)], id: "loewe", de: "der Löwe", syl: "LÖ-we", it: "il leone", itSyl: "le-O-ne", en: "lion", x: 0, y: 0, kunst: k,
+  S.teil({ anker: [xAt(10.5, d), yAt(d, 3)], id: "loewe", de: "der Löwe", syl: "LÖ-we", it: "il leone", itSyl: "le-O-ne", en: "lion", x: 0, y: 0, kunst: k,
     tipp: "Steinlöwen bewachen das Tor: links die Löwin mit ihrem Jungen, rechts der Löwe mit dem Ball unter der Pfote." });
 }
 {
@@ -600,7 +600,7 @@ const KANTE0 = (y) => 180 - 0.3125 * (y - HOR);
     }
     k += `<circle cx="${r(x)}" cy="${r(h(8.6))}" r="1.2" fill="${S.rg("kugel", [])}"/><path d="M${r(x)} ${r(h(8.6) - 1.2)} v-1" stroke="#c9a24a" stroke-width=".3"/>`;
   }
-  S.teil({ anker: [xAt(-30, d), yAt(d, 4)], id: "strassenlaterne", de: "die Straßenlaterne", syl: "STRA-ßen-la-ter-ne", it: "il lampione", itSyl: "lam-PIO-ne", en: "street lamp", x: 0, y: 0, kunst: k,
+  S.teil({ anker: [xAt(30, d), yAt(d, 4)], id: "strassenlaterne", de: "die Straßenlaterne", syl: "STRA-ßen-la-ter-ne", it: "il lampione", itSyl: "lam-PIO-ne", en: "street lamp", x: 0, y: 0, kunst: k,
     tipp: "Die weißen Laternen an der Chang'an-Straße heißen „Huadeng“. Sie sehen aus wie Magnolienblüten." });
 }
 {

@@ -237,7 +237,7 @@ const KT = { x: 108, z: -46, h: 20, stufen: 4, sh: 3, tw: 10 };   /* Tempel der 
   { const [cx, cy] = P(CXk - tx - 3.2, 12, CZk); k += `<path d="M${r(cx - 1.4)} ${r(cy)} l.3 -.6 l.8 .1 l.5 -.8 l.4 .8 l.8 0 l.3 .5 Z" fill="#d6b07a"/><circle cx="${r(cx - 1.2)}" cy="${r(cy - 0.8)}" r=".32" fill="#d6b07a"/>`; }
   /* Gesims, Verwitterung */
   k += flaech([[CXk - tx - 0.2, 17.5, CZk - tz - 0.2], [CXk - tx - 0.2, 17.5, CZk + tz + 0.2], [CXk - tx - 0.2, 18, CZk + tz + 0.2], [CXk - tx - 0.2, 18, CZk - tz - 0.2]], "#f3d8a6");
-  S.teil({ id: "kriegertempel", de: "der Tempel der Krieger", syl: "TEM-pel der KRIE-ger", it: "il Tempio dei Guerrieri", itSyl: "TEM-pio dei guer-RIE-ri", en: "Temple of the Warriors", x: P(CXk - 16, 8, CZk)[0], y: P(CXk - 16, 8, CZk)[1], kunst: um(...P(CXk - 16, 8, CZk), k),
+  S.teil({ id: "kriegertempel", de: "der Tempel der Krieger", syl: "TEM-pel der KRIE-ger", it: "il Tempio dei Guerrieri", itSyl: "TEM-pio dei guer-RIE-ri", en: "Temple of the Warriors", x: 23, y: 112, kunst: um(23, 112, k),
     tipp: "Oben vor dem Tempel der Krieger liegt die Steinfigur Chac Mool mit einer Schale auf dem Bauch." });
 
   /* Säulenreihen vor der Westseite: viereckige Pfeiler, Westseite im Licht, Nordseite im Schatten */
@@ -411,21 +411,34 @@ const pyrUnter = [];
   k += flaech([[-3.6, 27.4, TW + 0.04], [3.6, 27.4, TW + 0.04], [3.6, 27.9, TW + 0.04], [-3.6, 27.9, TW + 0.04]], "#a39d8f");
   /* die zwei Schlangensäulen: Kopf mit offenem Maul am Boden, gefiederter Schaft, Rassel oben nach vorn gebogen */
   for (const x of [-1.22, 1.22]) {
-    k += flaech([[x - 0.3, TY0 + 0.7, TW + 0.1], [x + 0.3, TY0 + 0.7, TW + 0.1], [x + 0.3, 27.1, TW + 0.1], [x - 0.3, 27.1, TW + 0.1]], "#c9c2b0");
-    for (let y = TY0 + 1; y < 27; y += 0.42) { const [a, b] = [P(x - 0.3, y, TW + 0.12), P(x + 0.3, y + 0.2, TW + 0.12)]; k += `<line x1="${r(a[0])}" y1="${r(a[1])}" x2="${r(b[0])}" y2="${r(b[1])}" stroke="#958f80" stroke-width=".07"/>`; }
-    /* Kopf: Block am Boden, ragt nach vorn, Maul offen */
-    k += flaech([[x - 0.42, TY0, TW + 1.1], [x + 0.42, TY0, TW + 1.1], [x + 0.42, TY0 + 0.75, TW + 1.0], [x - 0.42, TY0 + 0.75, TW + 1.0]], "#b9b2a0");
-    k += flaech([[x - 0.42, TY0 + 0.75, TW + 1.0], [x + 0.42, TY0 + 0.75, TW + 1.0], [x + 0.36, TY0 + 0.9, TW + 0.2], [x - 0.36, TY0 + 0.9, TW + 0.2]], "#a49d8c");
-    k += flaech([[x - 0.3, TY0 + 0.25, TW + 1.12], [x + 0.3, TY0 + 0.25, TW + 1.12], [x + 0.3, TY0 + 0.5, TW + 1.12], [x - 0.3, TY0 + 0.5, TW + 1.12]], "#2b2219");
-    /* Rassel: nach vorn gebogenes Kapitell unter dem Sturz */
-    k += flaech([[x - 0.34, 27.1, TW + 0.1], [x + 0.34, 27.1, TW + 0.1], [x + 0.34, 27.4, TW + 0.7], [x - 0.34, 27.4, TW + 0.7]], "#d6cfbd");
-    for (const t of [0.25, 0.5]) { const [a, b] = [P(x - 0.34, 27.1 + t * 0.3, TW + 0.1 + t * 0.6), P(x + 0.34, 27.1 + t * 0.3, TW + 0.1 + t * 0.6)]; k += `<line x1="${r(a[0])}" y1="${r(a[1])}" x2="${r(b[0])}" y2="${r(b[1])}" stroke="#958f80" stroke-width=".08"/>`; }
+    const zf = TW + 0.1;
+    /* Schaft: Schlangenleib mit Federschuppen (Winkel) */
+    k += flaech([[x - 0.34, TY0 + 0.8, zf], [x + 0.34, TY0 + 0.8, zf], [x + 0.34, 27.1, zf], [x - 0.34, 27.1, zf]], "#cfc7b3");
+    k += flaech([[x + 0.12, TY0 + 0.8, zf + 0.01], [x + 0.34, TY0 + 0.8, zf + 0.01], [x + 0.34, 27.1, zf + 0.01], [x + 0.12, 27.1, zf + 0.01]], "#a39b88", ` opacity=".55"`);
+    let fe = "";
+    for (let y = TY0 + 1.1; y < 26.9; y += 0.36) { const [a, m, c] = [P(x - 0.3, y + 0.16, zf + 0.02), P(x, y, zf + 0.02), P(x + 0.3, y + 0.16, zf + 0.02)]; fe += `M${r(a[0])} ${r(a[1])} L${r(m[0])} ${r(m[1])} L${r(c[0])} ${r(c[1])}`; }
+    k += `<path d="${fe}" stroke="#8a8372" stroke-width=".07" fill="none"/>`;
+    /* Kopf am Boden: massiger Block, ragt nach vorn, Maul weit offen mit Fangzähnen, Auge, Nasenschnecke, Federbusch */
+    const zk = TW + 1.5, hk = 1.05, bk = 0.55;
+    k += flaech([[x - bk, TY0, zf], [x - bk, TY0, zk], [x - bk, TY0 + hk, zk - 0.1], [x - bk, TY0 + hk, zf]], "#e3c48e");
+    k += flaech([[x - bk, TY0 + hk, zf], [x + bk, TY0 + hk, zf], [x + bk, TY0 + hk, zk - 0.1], [x - bk, TY0 + hk, zk - 0.1]], "#d3ccb8");
+    k += flaech([[x - bk, TY0, zk], [x + bk, TY0, zk], [x + bk, TY0 + hk, zk - 0.1], [x - bk, TY0 + hk, zk - 0.1]], "#bdb5a1");
+    k += flaech([[x - bk + 0.1, TY0 + 0.15, zk + 0.01], [x + bk - 0.1, TY0 + 0.15, zk + 0.01], [x + bk - 0.1, TY0 + 0.55, zk + 0.01], [x - bk + 0.1, TY0 + 0.55, zk + 0.01]], "#2b2219");
+    for (const dx of [-0.3, 0.3]) { const [u, v] = P(x + dx, TY0 + 0.55, zk + 0.02), [u2, v2] = P(x + dx, TY0 + 0.15, zk + 0.02); k += `<path d="M${r(u - 0.12)} ${r(v)} L${r(u + 0.12)} ${r(v)} L${r(u)} ${r(v + 0.32)} Z M${r(u2 - 0.1)} ${r(v2)} L${r(u2 + 0.1)} ${r(v2)} L${r(u2)} ${r(v2 - 0.25)} Z" fill="#f2ead6"/>`; }
+    { const [u, v] = P(x, TY0 + 0.45, zk + 0.02); k += `<path d="M${r(u - 0.1)} ${r(v - 0.1)} q.05 .35 -.12 .5 q.1 .05 .3 -.1" stroke="#9c3b2e" stroke-width=".12" fill="none"/>`; }
+    for (const dx of [-0.32, 0.32]) { const [u, v] = P(x + dx, TY0 + 0.82, zk - 0.05); k += `<circle cx="${r(u)}" cy="${r(v)}" r=".13" fill="#2b2219"/><path d="M${r(u - 0.2)} ${r(v - 0.18)} q.2 -.12 .4 0" stroke="#7d7464" stroke-width=".06" fill="none"/>`; }
+    { const [u, v] = P(x, TY0 + hk, zk - 0.05); k += `<path d="M${r(u - 0.18)} ${r(v + 0.05)} q-.05 -.3 .18 -.32 q.2 .02 .14 .2 q-.08 .1 -.16 0" stroke="#7d7464" stroke-width=".07" fill="none"/>`; }
+    { const [u, v] = P(x, TY0 + hk, zf + 0.3); k += `<path d="M${r(u - 0.45)} ${r(v)} q.1 -.35 .25 -.05 q.1 -.4 .2 0 q.1 -.4 .2 0 q.15 -.3 .25 .05" fill="#ece3cc" stroke="#9c9584" stroke-width=".04"/>`; }
+    /* Rassel: Schwanz biegt oben nach vorn und trägt den Sturz, mit Ringen */
+    k += flaech([[x - 0.38, 27.0, zf], [x + 0.38, 27.0, zf], [x + 0.38, 27.4, zf + 0.9], [x - 0.38, 27.4, zf + 0.9]], "#ddd5c1");
+    k += flaech([[x - 0.38, 27.4, zf + 0.9], [x + 0.38, 27.4, zf + 0.9], [x + 0.38, 27.4, zf + 0.9], [x + 0.38, 27.0, zf + 0.9], [x - 0.38, 27.0, zf + 0.9]], "#bdb5a1");
+    for (const t of [0.2, 0.4, 0.6, 0.8]) { const [a, b] = [P(x - 0.38, 27.0 + t * 0.4, zf + t * 0.9), P(x + 0.38, 27.0 + t * 0.4, zf + t * 0.9)]; k += `<line x1="${r(a[0])}" y1="${r(a[1])}" x2="${r(b[0])}" y2="${r(b[1])}" stroke="#8a8372" stroke-width=".08"/>`; }
   }
   /* Westeingang (eine Tür) */
   k += flaech([[-TW - 0.02, TY0 + 0.1, 1.2], [-TW - 0.02, TY0 + 0.1, -1.2], [-TW - 0.02, 27.4, -1.2], [-TW - 0.02, 27.4, 1.2]], "#3a2c1f");
-  const [x0, y0] = P(0, 26, TW), [x1, y1] = P(-1.22, TY0, TW + 1.1);
+  const [x0, y0] = P(0, 26, TW), [x1, y1] = P(-1.22, TY0, TW + 1.5), [x2] = P(1.22, TY0, TW + 1.5), sh = y1 - P(-1.22, 27.4, TW + 0.1)[1];
   const [ra, rb2] = [P(-TW - 0.3, TY0, TW + 1.4), P(TW + 0.3, 30.2, TW + 1.4)];
-  const unter = [{ id: "schlangensaeule", de: "die Schlangensäule", syl: "SCHLAN-gen-säu-le", it: "la colonna serpentina", itSyl: "co-LON-na ser-pen-TI-na", en: "serpent column", x: x1, y: y1, kunst: flaeche(-0.8, -3.6, 1.6, 3.8, 0.2) + flaeche(P(1.22, TY0, TW + 1.1)[0] - x1 - 0.8, -3.6, 1.6, 3.8, 0.2),
+  const unter = [{ id: "schlangensaeule", de: "die Schlangensäule", syl: "SCHLAN-gen-säu-le", it: "la colonna serpentina", itSyl: "co-LON-na ser-pen-TI-na", en: "serpent column", x: x1, y: y1, kunst: [-1.22, 1.22].map((xs) => { const h = P(xs, TY0, TW + 1.5)[0], o = P(xs, 27.4, TW + 0.1)[0], a = Math.min(h, o) - 0.75, b = Math.max(h, o) + 0.75; return flaeche(a - x1, -sh, b - a, sh + 0.3, 0.2); }).join(""),
     tipp: "Zwei Säulen in Form von Schlangen tragen den Eingang: unten der Kopf, oben die Schwanzrassel." }];
   const zx = (ra[0] + rb2[0]) / 2, zyM = (y0 + y1) / 2 - 1;
   S.teil({ oben: true, id: "tempel", de: "der Tempel", syl: "TEM-pel", it: "il tempio", itSyl: "TEM-pio", en: "temple", x: x0, y: y0, kunst: um(x0, y0, k),

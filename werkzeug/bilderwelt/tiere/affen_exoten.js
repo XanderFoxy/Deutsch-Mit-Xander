@@ -517,7 +517,7 @@ function knoechelhand(W, T, wx, fern, pal = HAUT_G, o = {}) {
   const mh = o.mh || 1, vor = o.vor || 0, lang = o.lang || 1, top = -6.2 - 13.6 * mh, hb = 6.6;
   const PO = fern ? "#1e1c1b" : pal.polster || "#3a3532";
   let s = "";
-  if (!T.fein || fern) return `<path d="${G([[wx - hb, top], [wx + hb, top], [wx + hb + 1, -6], [wx + hb + 5 * lang + vor, -4.6], [wx + hb + 5.6 * lang + vor, -1.6], [wx + hb + 4.6 * lang + vor, 0, 1], [wx - hb + 1, 0, 1], [wx - hb, -4]])}" fill="${fern ? C[0] : C[1]}"/>` +
+  if (!T.fein || (fern && !o.voll)) return `<path d="${G([[wx - hb, top], [wx + hb, top], [wx + hb + 1, -6], [wx + hb + 5 * lang + vor, -4.6], [wx + hb + 5.6 * lang + vor, -1.6], [wx + hb + 4.6 * lang + vor, 0, 1], [wx - hb + 1, 0, 1], [wx - hb, -4]])}" fill="${fern ? C[0] : C[1]}"/>` +
     (fern && T.fein ? [3.6, 5.4, 4.6, 2.6].map((L, i) => `<ellipse cx="${f1(wx + hb + L * lang + vor - 2)}" cy="${f1(-3.6 + i * 0.3)}" rx="1.8" ry="1.3" fill="${["#1e1c1b", "#262422", "#2e2b29", "#363230"][i]}"/>`).join("") +
       W.L([`M${f1(wx + hb + 1)} -6.4q${f1(3 * lang)} 1 ${f1(4.6 * lang)} 4`, `M${f1(wx + hb - 1)} -6q${f1(2 * lang)} 1.4 ${f1(3.4 * lang)} 4.6`], "#000", 0.2, 0.7) :
       `<path d="M${f1(wx + hb + 2 * lang + vor)} -4.2h${f1(3 * lang)}" stroke="${PO}" stroke-width="1.4"/>`);
@@ -528,7 +528,7 @@ function knoechelhand(W, T, wx, fern, pal = HAUT_G, o = {}) {
   F.forEach(([dz, dy, L, h], i) => {
     const x0 = wx - hb + 1.6, x1 = wx + hb + (L * lang) + vor + dz;
     const pts = [[x0, -7 + dy], [wx + hb - 0.6, -7.4 + dy], [x1 - h * 0.6, -h + dy], [x1 - h * 0.1, -h * 0.62 + dy], [x1, -h * 0.25], [x1 - h * 0.35, 0, 1], [x0 + 0.6, 0, 1], [x0 - 0.4, -2.6]];
-    const c = fern ? (pal.walzeF || ["#0b0a0a", "#0d0c0c", "#0f0e0e", "#121110"])[i] : [C[0], C[0], C[1], C[2]][i];
+    const c = fern ? (pal.walzeF || (o.voll ? [C[0], C[0], C[1], C[2]] : ["#0b0a0a", "#0d0c0c", "#0f0e0e", "#121110"]))[i] : [C[0], C[0], C[1], C[2]][i];
     s += W.teil(pts, i < 3 && !fern ? T.lg("fw" + pal.n + i, [[0, "#1e1c1b"], [1, c]], 0, 0, 1, 0) : c,
       /* Knöchelpolster vorn oben: matt, heller, Querfalten */
       W.weich([[x1 - h * 0.42, -h * 0.62 + dy, h * 0.45, h * 0.3, -25, PO, 1], [x1 - h * 0.5, -h * 0.78 + dy, h * 0.28, h * 0.13, -25, fern ? PO : "#8a847e", 0.8], [x0 + (x1 - x0) * 0.5, -0.6, (x1 - x0) * 0.5, 0.6, 0, "#000", 0.6]], 0.3) +
@@ -687,7 +687,7 @@ function schimpanse(T) {
   const beinF = [[6, -54], [14, -52], [20, -44], [22, -34], [18, -26], [14, -18], [12, -11], [7, -9.6], [4, -12], [4, -20], [6, -28], [2, -38], [1, -46]];
   s += W.vol("v", 2.4, W.teil(beinF, hautG("bf", "#1e1a18", "#0e0c0b"), W.musterFlaeche(beinF, CM(104), 0.8) + fell(beinF, 40, 100, 3, { licht: (x, y) => licht(x, y) * 0.5 }), { rand: 0 }) +
     kante([[4, -22], [4, -12], [7, -9.6]], 14, 96, 2.4), { tiefe: 3, umgebung: 0.5 });
-  s += W.skaliert(80, 0, 0.7, () => knoechelhand(W, T, 0, true, HAUT_S, { mh: 1.3, vor: 1, lang: 1.3 }));
+  s += W.skaliert(80, 0, 0.7, () => knoechelhand(W, T, 0, true, HAUT_S, { mh: 1.3, vor: 1, lang: 1.3, voll: 1 }));
   const armF = [[64, -76], [72, -74], [76, -64], [77.6, -52], [78.4, -44], [79.6, -36], [80.6, -28], [81.4, -17.4], [76, -17.4], [74.4, -26], [72.4, -36], [70.4, -44], [68.4, -52], [66.4, -62]];
   s += W.vol("v", 2.2, W.teil(armF, hautG("af", "#201c1a", "#0e0c0b"), W.musterFlaeche(armF, CM(98), 0.8) + fell(armF, 50, 98, 4, { licht: (x, y) => licht(x, y) * 0.55 }), { rand: 0 }) +
     kante([[66.4, -62], [68.4, -52], [70.4, -44], [72.4, -36], [74.4, -26], [76, -17.6]], 30, 106, 4.4) + kante([[81.6, -18.6], [78.8, -18], [76, -17.6]], 12, 92, 2.4), { tiefe: 3, umgebung: 0.5 });
@@ -789,7 +789,8 @@ function schimpansenKopf(T, W, SCH, STR, licht) {
   s += W.vol("ckf", 3, W.teil(kopf, T.lg("ckf", [[0, "#2a292c"], [0.6, "#151516"], [1, "#09090a"]]),
     W.musterFlaeche(kopf, W.haarMuster("chimp", 10, 7, 60, 4.4, [["#000", 0.13, 0.85], ["#121214", 0.12, 0.8], ["#26262a", 0.12, 0.7], ["#5a5a62", 0.1, 0.55]], 0.6)(150)) +
     W.haare(kopf, 110, (x, y) => (y < -95 ? 200 : x < 80 ? 120 : 104), 2, SCH, { licht: (x, y) => licht(x, y) + 0.1, buendel: 3, krumm: 0.35, szene: 0.08 }) +
-    schimpansenGesicht(T, W, gesicht, profil) +
+    /* Gesicht weich ins Kopfhaar übergehen lassen (nur hinten/oben unscharf, Profilseite bleibt scharf) */
+    (T.fein ? `<g mask="url(#${W.maskeForm("cg", [[87.4, -98.2], [94, -96], [101, -88], [101, -70], [85.4, -71.6], [83.6, -74], [82.6, -76.4], [82.2, -80], [82.8, -84.6], [83.8, -89], [84.6, -93.6], [85.6, -96.8]], 0.9)})">${schimpansenGesicht(T, W, gesicht, profil)}</g>` : schimpansenGesicht(T, W, gesicht, profil)) +
     (T.fein ? W.haare([[81.4, -98.2], [85, -98], [83.6, -90], [82.6, -82], [83.4, -76], [85.6, -73], [82, -73], [80.4, -80], [81, -90]], 50,
       (x, y) => (y < -90 ? 200 : 185), 1.4, [["#050505", 0.06, 0.6], ["#151516", 0.06, 0.55], ["#26262a", 0.05, 0.5]], { mix: 0.8 }) : ""),
   { rand: 0, vol: false, maske: W.maskeForm("ckf", [[71, -82], [74, -96], [84, -104], [100, -94], [100, -70], [84, -70], [78, -73], [74, -76]], 1.6) }) +

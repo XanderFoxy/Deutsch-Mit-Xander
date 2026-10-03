@@ -142,14 +142,16 @@ const plattenG = (T, Rr, ts, vs, o = {}) => {
       let a0 = sp[i], a1 = sp[i + 1];
       const dt0 = a1 - a0;
       if (o.jit) { a0 += (T.rnd() - 0.5) * o.jit * dt0; a1 += (T.rnd() - 0.5) * o.jit * dt0; }
-      const dt = a1 - a0, f = o.fuge || 0.09, fv = o.fugeV || f * 1.2, ta = a0 + dt * f, tb = a1 - dt * f * 0.7, va = v0 + dv * fv, vb = v1 - dv * fv * 0.8;
+      const sv = o.var ? 1 + (T.rnd() - 0.5) * o.var * 4 : 1, dt = a1 - a0, f = (o.fuge || 0.09) * sv, fv = (o.fugeV || f * 1.2) * sv, ta = a0 + dt * f, tb = a1 - dt * f * 0.7, va = v0 + dv * fv, vb = v1 - dv * fv * 0.8;
       const A = Rr.P(ta, va), B = Rr.P(tb, va), C = Rr.P(tb, vb), D = Rr.P(ta, vb);
       const g = o.grad(j, T.rnd());
-      (gruppen[g] = gruppen[g] || []).push(`<path d="M${R(A[0] - ox)} ${R(A[1] - oy)}${rel(A, B)}${rel(B, C)}${rel(C, D)}z"/>`);
+      if (o.oval) { const M = (U, V) => [(U[0] + V[0]) / 2 - ox, (U[1] + V[1]) / 2 - oy], q = (U, V) => `Q${R(U[0] - ox)} ${R(U[1] - oy)} ${R(V[0])} ${R(V[1])}`, m1 = M(A, B), m2 = M(B, C), m3 = M(C, D), m4 = M(D, A);
+        (gruppen[g] = gruppen[g] || []).push(`<path d="M${R(m4[0])} ${R(m4[1])}${q(A, m1)}${q(B, m2)}${q(C, m3)}${q(D, m4)}"/>`); }
+      else (gruppen[g] = gruppen[g] || []).push(`<path d="M${R(A[0] - ox)} ${R(A[1] - oy)}${rel(A, B)}${rel(B, C)}${rel(C, D)}z"/>`);
       /* Kiel: kurzer Grat in der oberen Plattenhälfte (Licht oben, Schatten darunter) */
       if (o.linse && o.linse.includes(j) && T.fein) {
         /* Längskiel als erhabene Linse: Lichtkante oben, Schattenseite unten (Verlauf je Linse) */
-        const vm = va + (vb - va) * 0.45, k0 = Rr.P(ta + dt * 0.1, vm), k1 = Rr.P(tb - dt * 0.06, vm), hk = Math.abs(Rr.P(ta, vb)[1] - Rr.P(ta, va)[1]) * (o.linseH || 0.32);
+        const vm = va + (vb - va) * 0.45, k0 = Rr.P(ta + dt * 0.16, vm), k1 = Rr.P(tb - dt * 0.12, vm), hk = Math.abs(Rr.P(ta, vb)[1] - Rr.P(ta, va)[1]) * (o.linseH || 0.32);
         (linsen = linsen || []).push(`<path d="M${R(k0[0] - ox)} ${R(k0[1] - oy)}q${R((k1[0] - k0[0]) / 2)} ${R((k1[1] - k0[1]) / 2 - hk)} ${R(k1[0] - k0[0])} ${R(k1[1] - k0[1])}q${R(-(k1[0] - k0[0]) / 2)} ${R(-(k1[1] - k0[1]) / 2 + hk)} ${R(k0[0] - k1[0])} ${R(k0[1] - k1[1])}z"/>`);
       }
       if (o.kiel && o.kiel.includes(j) && T.fein && o.kielStrich !== false) {
@@ -159,7 +161,7 @@ const plattenG = (T, Rr, ts, vs, o = {}) => {
       }
     }
   }
-  const kG = linsen ? T.lg("kielL", [[0, "#fff6d8", 0.55], [0.42, "#fff6d8", 0.12], [0.55, "#000", 0.18], [1, "#000", 0.5]]) : "";
+  const kG = linsen ? T.lg("kielL", [[0, "#fff6d8", 0.42], [0.45, "#fff6d8", 0.08], [0.55, "#000", 0.12], [1, "#000", 0.4]]) : "";
   return `<g transform="translate(${ox} ${oy})">` + Object.entries(gruppen).map(([g, l]) => `<g fill="${g}" stroke="${g}" stroke-width="${o.sw || 0.5}" stroke-linejoin="round">${l.join("")}</g>`).join("") +
     (linsen ? `<g fill="${kG}">${linsen.join("")}</g>` : "") +
     (kS ? `<path d="${kS}" fill="none" stroke="#0c0b06" stroke-width="${R2((o.kw || 0.4) * 1.3)}" stroke-opacity="${o.opK || 0.3}" stroke-linecap="round"/><path d="${kL}" fill="none" stroke="${o.hell || "#ece2bc"}" stroke-width="${R2((o.kw || 0.4) * 0.6)}" stroke-opacity="${o.opKL || 0.34}" stroke-linecap="round"/>` : "") + "</g>";
@@ -306,8 +308,8 @@ const gliedBein = (T, o) => {
     const kr = [];
     for (const [x, y, l, w, b, kl] of o.ziffern) {
       const a = w * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a), P = (u, v) => [x + c * u - sn * v, y + sn * u + c * v];
-      const pts = [P(0, -b / 2), P(l * 0.5, -b * 0.42), P(l * 0.92, -b * 0.24), P(l, 0), P(l * 0.92, b * 0.26), P(l * 0.5, b * 0.46), P(0, b / 2)];
-      d += pfad(T, pts);
+      const Q = (u, v) => { const q = P(u, v); return R(q[0]) + " " + R(q[1]); };
+      d += `M${Q(0, -b / 2)}Q${Q(l * 0.8, -b * 0.56)} ${Q(l, 0)}Q${Q(l * 0.8, b * 0.56)} ${Q(0, b / 2)}Z`;
       if (F) { for (const u of [0.38, 0.7]) { const q0 = P(l * u, -b * 0.4), q1 = P(l * u + b * 0.12, b * 0.1); dQ += `M${R(q0[0])} ${R(q0[1])}L${R(q1[0])} ${R(q1[1])}`; } const l0 = P(l * 0.1, -b * 0.22), l1 = P(l * 0.82, -b * 0.14); dL += `M${R(l0[0])} ${R(l0[1])}L${R(l1[0])} ${R(l1[1])}`; }
       if (kl) { const t = P(l * 0.96, 0); kr.push([t[0], t[1], b * 1.25, b * 0.42, w + 12, 0.45]); }
     }
@@ -496,11 +498,11 @@ const schuppenReihen = (T, Rr, t0, t1, reihen, grads, o = {}) => {
       /* Kreis im gestauchten Raum = quer gestreckte Ellipse */
       const rr = b * (o.r || 0.47) * (0.92 + T.rnd() * 0.14);
       (gr[g] = gr[g] || []).push(`<circle cx="${R(x - ox)}" cy="${R((y - oy) / fl)}" r="${R(rr)}"/>`);
-      if (o.kiel) kl.push(`<ellipse cx="${R(x - ox)}" cy="${R((y - oy) / fl - rr * 0.08)}" rx="${R(rr * 0.78)}" ry="${R(rr * 0.24)}"/>`);
+      if (o.kiel) kl.push(`<ellipse cx="${R(x - ox)}" cy="${R((y - oy) / fl - rr * 0.1)}" rx="${R(rr * 0.6)}" ry="${R(rr * 0.15)}"/>`);
     }
   }
   return `<g transform="translate(${ox} ${oy}) scale(1 ${fl})">` + Object.entries(gr).map(([g, l]) => `<g fill="${g}">${l.join("")}</g>`).join("") +
-    (kl.length ? `<g fill="${T.lg("kielL", [[0, "#fff6d8", 0.55], [0.42, "#fff6d8", 0.12], [0.55, "#000", 0.18], [1, "#000", 0.5]])}">${kl.join("")}</g>` : "") + "</g>";
+    (kl.length ? `<g fill="${T.lg("kielL", [[0, "#fff6d8", 0.42], [0.45, "#fff6d8", 0.08], [0.55, "#000", 0.12], [1, "#000", 0.4]])}">${kl.join("")}</g>` : "") + "</g>";
 };
 /* fertige Art: Zeichenraum → Zentimeter; fuesse (x der Fußmitten) und kopf (Ausschnitt) ebenfalls in Einheiten */
 const fertig = (f, svg, box, fuesse, kopf) => {
@@ -535,34 +537,35 @@ function panzer(T, A) {
     inn += `<path d="${z}" fill="${C.flanke}" opacity=".85" filter="${weich(T, "zg", 0.3)}"/>`;
   }
   let bd = "";
-  for (const b of A.bindenT) { const w = 0.016 + b * 0.012, j = () => (T.rnd() - 0.5) * w * 0.6; bd += pfad(T, [Rr.P(b - w * 0.2 + j(), -1.3), Rr.P(b + w + j(), -1.3), Rr.P(b + w * 1.3 + j(), -0.4), Rr.P(b + w * 1.1 + j(), 0.3), Rr.P(b + w * 0.8 + j(), 0.75), Rr.P(b - w * 0.2 + j(), 0.7), Rr.P(b - w * 0.4 + j(), 0)]); }
-  if (A.flecken) for (let i = 0; i < (F ? 16 : 8); i++) { const t = tH + (tS + 0.04 - tH) * (i + T.rnd() * 0.6) / (F ? 16 : 8), v = -0.36 + T.rnd() * 0.5, [x, y] = Rr.P(t, v), r = 1.2 + T.rnd() * 1.6, Q = []; for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2, rr = r * (0.55 + T.rnd() * 0.7); Q.push([x + Math.cos(a) * rr * 1.4, y + Math.sin(a) * rr * 0.9]); } bd += pfad(T, Q); }
-  inn += `<path d="${bd}" fill="${C.binde}" opacity="${A.binden}" filter="${weich(T, "b", 0.2)}"/>`;
+  for (const b of A.bindenT) { const w = 0.018 + b * 0.014, j = () => (T.rnd() - 0.5) * w * 0.35, vs = [-1.3, -0.8, -0.3, 0.2, 0.62]; bd += poly(vs.map((v) => Rr.P(b + w + j() + v * w * 0.25, v)).concat(vs.slice().reverse().map((v) => Rr.P(b + j() + v * w * 0.25, v)))); }
+  if (A.flecken) for (let i = 0; i < (F ? 30 : 12); i++) { const t = tH - 0.02 + (tS + 0.06 - tH) * (i + T.rnd() * 0.8) / (F ? 30 : 12), v = -0.4 + T.rnd() * 0.62, [x, y] = Rr.P(t, v), r = 0.7 + T.rnd() * 1.1, Q = []; for (let k = 0; k < 6; k++) { const a = (k + T.rnd() * 0.5) / 6 * Math.PI * 2, rr = r * (0.5 + T.rnd() * 0.8); Q.push([x + Math.cos(a) * rr * 1.5, y + Math.sin(a) * rr * 0.9]); } bd += poly(Q); }
+  const binden = `<path d="${bd}" fill="${C.binde}" opacity="${A.binden}" filter="${weich(T, "b", 0.2)}"/>`;
   const tsR = []; for (let i = 0; i <= 17; i++) tsR.push(tH + (tS - tH) * i / 17);
   const tsS = []; { let t = 0.014; while (t < tH - 0.01) { tsS.push(t); t += 0.0114 + t * 0.012; } tsS.push(tH); }
   /* Rückenpanzer: Reihen nach oben perspektivisch gestaucht; Schwanzringe zum Rand hin verkürzt (Zylinderwölbung) */
   const vR = [-1.03, -0.93, -0.8, -0.64, -0.44], vS = [-1.03, -0.9, -0.7, -0.42, -0.08, 0.28, 0.6, 0.84, 0.97, 1.04];
   const beinOhne = A.beinOhne;
   if (F) {
-    const pK = plattenGrad(T, "k", false, 1.05), pK2 = plattenGrad(T, "k2", false, 1.35);
-    const bF = T.rg("bfl", [[0, "#fff", 0.12], [0.6, "#fff", 0], [0.86, "#000", 0.07], [1, "#000", 0.24]], 0.4, 0.32, 0.7), bF2 = T.rg("bfl2", [[0, "#fff", 0.06], [0.6, "#fff", 0], [0.86, "#000", 0.1], [1, "#000", 0.3]], 0.4, 0.32, 0.7);
-    inn += form(T, poly(Rr.band(-1.05, -0.43, tH - 0.004, tS + 0.004, 12)), "#000", ' opacity=".3"');
-    inn += plattenG(T, Rr, tsR, vR, { jit: 0.3, sw: 0.4, fuge: 0.1, fugeV: 0.1, linse: [0, 1, 2, 3], linseH: A.kielH, kielStrich: false, grad: (j, z) => z < 0.4 ? pK2 : pK });
+    const pK = plattenGrad(T, "k", false, 0.8), pK2 = plattenGrad(T, "k2", false, 1.05), pR = plattenGrad(T, "r", false, 0.45);
+    const bF = T.rg("bfl", [[0, "#fff", 0.1], [0.6, "#fff", 0], [0.86, "#000", 0.05], [1, "#000", 0.16]], 0.4, 0.32, 0.7), bF2 = T.rg("bfl2", [[0, "#fff", 0.05], [0.6, "#fff", 0], [0.86, "#000", 0.07], [1, "#000", 0.2]], 0.4, 0.32, 0.7);
+    inn += form(T, poly(Rr.band(-1.05, -0.43, tH - 0.004, tS + 0.004, 12)), "#000", ' opacity=".14"');
+    inn += plattenG(T, Rr, tsR, vR, { oval: true, jit: 0.35, var: 0.15, sw: 0.9, fuge: 0.05, fugeV: 0.06, linse: [0, 1, 2, 3], linseH: A.kielH, kielStrich: false, grad: () => pR });
     /* Flanke: oben zwei Reihen gekielter Höcker (unregelmäßig), darunter flache, quer gestreckte Schuppen in Reihen */
     inn += schuppenReihen(T, Rr, tH - 0.02, tS + 0.02, [[-0.35, 3.4, 0, 0.75], [-0.2, 3, 0, 0.7]], [bF, bF2], { ohne: beinOhne, flach: 0.6, kiel: true });
-    inn += schuppenReihen(T, Rr, tH - 0.02, tS + 0.02, [[-0.06, 2.6], [0.1, 2.3], [0.25, 2], [0.38, 1.7]], [bF, bF2], { ohne: beinOhne, flach: 0.5, r: 0.5 });
-    /* Hals: flache Schuppen in lockeren Querreihen (keine Knöpfe) */
-    inn += schuppenReihen(T, Rr, tS + 0.012, 1, [[-0.62, 2.2, 0, 0.9], [-0.3, 2, 0, 0.9], [0, 1.8, 0, 0.9], [0.3, 1.6, 0, 0.9]], [bF, bF2], { flach: 0.55, r: 0.5 });
+    /* flache, quer gestreckte Schuppen (Flanke und Hals) als Muster: wenig Tonwert, keine Kugeln */
+    const mF = musterBeulen(T, "fl", 2.2, { flach: 0.55, hell: 0.1, dunkel: 0.16, grund: 0.07 });
+    inn += form(T, poly(Rr.band(-0.42, 0.5, tH - 0.02, tS, 12)), mF) + form(T, poly(Rr.band(-0.95, 0.5, tS, 1, 6)), mF);
     /* Bauchschilde (helle Fugen) */
     const tsB = []; for (let t = tH; t < 1; t += 0.026) tsB.push(t);
     inn += gitter(T, Rr, tsB, [0.55, 0.72, 0.88, 1.04], { versatz: true, w: 0.14, opS: 0.2, opL: 0.36, hell: "#fff8e0", dunkel: "#3a3420", schritt: 70, lichtQuer: false });
     /* Schwanz: helle Fugen (30 % heller), gewölbte Kacheln, obere Reihen mit Kiel-Linse */
-    inn += gitter(T, Rr, tsS, vS, { licht: false, w: 0.3, opS: 0.5, dunkel: C.fuge, schritt: 30 });
-    inn += plattenG(T, Rr, tsS.filter((t) => t > 0.06), vS.slice(0, 5), { sw: 0.25, fuge: 0.1, linse: [1, 2], linseH: A.kielH * 0.8, kielStrich: false, grad: (j, z) => z < 0.4 ? pK2 : pK });
+    inn += gitter(T, Rr, tsS, vS, { licht: false, w: 0.26, opS: 0.32, dunkel: C.fuge, schritt: 30 });
+    inn += plattenG(T, Rr, tsS.filter((t) => t > 0.06), vS.slice(0, 3), { sw: 0.4, fuge: 0.1, var: 0.1, linse: [1], linseH: A.kielH * 0.8, kielStrich: false, grad: (j, z) => z < 0.4 ? pK2 : pK });
   } else {
     inn += gitter(T, Rr, tsR.filter((_, i) => i % 2 === 0), [-1.02, -0.8, -0.45], { w: 0.5, opS: 0.4, licht: false, schritt: 40 });
     inn += gitter(T, Rr, tsS.filter((_, i) => i % 2 === 0), [-0.55, 0.45], { w: 0.5, opS: 0.3, dunkel: C.fuge, licht: false, schritt: 40 });
   }
+  inn += binden;
   /* Kernschatten im unteren Flankendrittel, Reflexlicht am Bauchrand, feuchte Lichtkante auf dem Rücken */
   inn += `<g filter="${weich(T, "kl", 1.2)}">` + form(T, poly(Rr.band(0.2, 0.62, tH - 0.03, 0.99, 10)), "#000", ' opacity=".26"') + form(T, poly(Rr.band(0.86, 1.1, 0.45, 0.97, 6)), "#f8f0d0", ' opacity=".22"') +
     form(T, poly(Rr.band(-1.06, -0.9, 0.2, 0.97, 10)), "#fff8e0", ' opacity=".14"') + "</g>";
@@ -572,7 +575,7 @@ function panzer(T, A) {
   const zahn = (t0, t1, Hh, dx, dy) => {
     const [, , nx, ny] = Rr.at((t0 + t1) / 2), a = Rr.P(t0 + (t1 - t0) * 0.1, -1), b = Rr.P(t1 - (t1 - t0) * 0.1, -1);
     const c = [a[0] + (b[0] - a[0]) * 0.28 + nx * Hh + dx, a[1] + (b[1] - a[1]) * 0.28 + ny * Hh + dy], d2 = [a[0] + (b[0] - a[0]) * 0.74 + nx * Hh * 0.9 + dx, a[1] + (b[1] - a[1]) * 0.74 + ny * Hh * 0.9 + dy];
-    return [`M${R(a[0] + dx)} ${R(a[1] + 0.6 + dy)}L${R(c[0] - 0.2)} ${R(c[1] + 0.25)}Q${R((c[0] + d2[0]) / 2)} ${R(Math.min(c[1], d2[1]) - 0.35)} ${R(d2[0] + 0.2)} ${R(d2[1] + 0.2)}L${R(b[0] + dx)} ${R(b[1] + 0.6 + dy)}Z`, `M${R(a[0] + dx + 0.3)} ${R(a[1] + dy)}L${R(c[0] - 0.05)} ${R(c[1] + 0.4)}`];
+    return [`M${R(a[0] + dx)} ${R(a[1] + 0.6 + dy)}L${R(c[0])} ${R(c[1])}L${R(d2[0])} ${R(d2[1] + 0.15)}L${R(b[0] + dx)} ${R(b[1] + 0.6 + dy)}Z`, `M${R(a[0] + dx + 0.3)} ${R(a[1] + dy)}L${R(c[0] - 0.05)} ${R(c[1] + 0.4)}`];
   };
   const sch = F ? 1 : 2;
   for (let i = 0; i < tsS.length - 1; i += sch) {
@@ -590,7 +593,12 @@ function panzer(T, A) {
   h += `<path d="${kam}" fill="${T.lg("kamm", [[0, C.kamm[0]], [0.55, C.kamm[1]], [1, C.kamm[2]]], 0, -40, 0, -10, US)}" stroke="#14140c" stroke-width=".2" stroke-opacity=".5" stroke-linejoin="round"/>`;
   if (kamL) h += `<path d="${kamL}" fill="none" stroke="#f0e8c4" stroke-width=".24" stroke-opacity=".38" stroke-linecap="round"/>`;
   /* ---------- nahe Beine (eine Silhouette je Bein, Beugefalten statt Nähte, Finger/Zehen einzeln) ---------- */
-  for (const b of A.beine.nah) h += `<g filter="${rund(T, "kb", { weich: 1.6, tiefe: 3.4 })}">` + gliedBein(T, Object.assign({ farben: C.bein, muster: mB, krallenFarbe: "#2a2418" }, b)) + "</g>";
+  for (const b of A.beine.nah) {
+    /* Flecken auf Ober- und Unterschenkel (färben die Schuppen) */
+    let fl = "";
+    if (A.beinFlecken && F) { for (let i = 0; i < b.kette.length - 2; i++) { const [x, y, w] = b.kette[i], Q = []; for (let k = 0; k < 6; k++) { const a = (k + T.rnd() * 0.5) / 6 * Math.PI * 2, r = w * (0.1 + T.rnd() * 0.12); Q.push([x + (T.rnd() - 0.5) * w * 0.5 + Math.cos(a) * r, y + Math.sin(a) * r * 0.8]); } fl += poly(Q); } fl = `<path d="${fl}" fill="${C.binde}" opacity=".4"/>`; }
+    h += `<g filter="${rund(T, "kb", { weich: 1.6, tiefe: 3.4 })}">` + gliedBein(T, Object.assign({ farben: C.bein, muster: mB, krallenFarbe: "#2a2418", innen: fl }, b)) + "</g>";
+  }
   /* Rumpf wirft Schatten auf die Oberseite von Oberarm und Oberschenkel */
   h += `<path d="${A.beinSchatten}" fill="none" stroke="#000" stroke-width="2.4" stroke-opacity=".24" filter="${weich(T, "bs", 0.9)}"/>`;
   return h + A.kopf;
@@ -598,13 +606,13 @@ function panzer(T, A) {
 /* Nackenschild: 2 kleine Hinterhauptschilde, Hautlücke, 4 große + 2 kleine gekielte Platten (kompakte Gruppe) */
 const nackenSchild = (T, x0, y0, f, op = 1) => {
   if (!T.fein) return "";
-  const g = plattenGrad(T, "nk", false, 1.3), kG = T.lg("kielL", [[0, "#fff6d8", 0.55], [0.42, "#fff6d8", 0.12], [0.55, "#000", 0.18], [1, "#000", 0.5]]);
+  const g = plattenGrad(T, "nk", false, 0.85), kG = T.lg("kielL", [[0, "#fff6d8", 0.42], [0.45, "#fff6d8", 0.08], [0.55, "#000", 0.12], [1, "#000", 0.4]]);
   const pl = [[12.4, -0.6, 1.6, 1.1], [14.4, -0.8, 1.4, 1], [0, 0, 3.2, 2.5], [3.6, -0.3, 3.2, 2.5], [0.4, 2.8, 2.8, 2.1], [3.8, 2.4, 2.8, 2.1], [6.6, 0.4, 1.8, 1.6], [6.6, 2.6, 1.6, 1.4]];
   let p = "", k = "";
   for (const [dx, dy, w, hh] of pl) {
     const x = x0 + dx * f, y = y0 + dy * f, W = w * f, H = hh * f;
     p += `<path d="M${R(x - W / 2)} ${R(y)}q${R(W * 0.06)} ${R(-H * 0.55)} ${R(W / 2)} ${R(-H * 0.6)}q${R(W * 0.44)} 0 ${R(W / 2)} ${R(H * 0.6)}q0 ${R(H * 0.42)} ${R(-W / 2)} ${R(H * 0.42)}q${R(-W / 2)} 0 ${R(-W / 2)} ${R(-H * 0.42)}z"/>`;
-    k += `<ellipse cx="${R(x)}" cy="${R(y - H * 0.12)}" rx="${R(W * 0.36)}" ry="${R(H * 0.16 * op)}"/>`;
+    k += `<ellipse cx="${R(x)}" cy="${R(y - H * 0.1)}" rx="${R(W * 0.3)}" ry="${R(H * 0.09 * op)}"/>`;
   }
   return `<g fill="${g}" stroke="${g}" stroke-width=".3" stroke-linejoin="round">${p}</g><g fill="${kG}">${k}</g>`;
 };
@@ -631,12 +639,12 @@ function kopfKrokodil(T) {
   /* ---------- Kopf: ≈ 14 % der Länge, 3° angehoben ---------- */
   let k = "";
   /* Unterkiefer: vorn schlank, hinten tief, geht weich in die Kehle über; dunkle Flecken; Unterkante cremegelb */
-  const uk = [[300.2, -22.2], [300.5, -21], [299.6, -19.9], [296.6, -19.2], [290, -18.8], [282, -18.3], [274, -17.8], [266, -17.4], [260, -17.2], [254, -17.2], [246, -17.6], [238, -18.4], [236, -21.6], [240, -25.2], [251, -25.8], [255, -25.8], [258, -24.6], [266, -23.4], [276, -23], [286, -23.2], [292, -24.4], [297, -23.6]];
-  let ui = `<g filter="${weich(T, "k", 0.6)}">` + form(T, poly([[236, -17.6], [262, -17.4], [280, -18.4], [298, -19.6], [298, -20.6], [280, -20], [262, -19.8], [250, -21.2], [238, -21.6]]), "#d6cc9c") + form(T, poly([[238, -24.6], [248, -25.2], [252, -22], [240, -22]]), "#4e4f2c", ' opacity=".7"') + "</g>";
+  const uk = [[300.2, -22.2], [300.5, -21], [299.6, -19.9], [296.6, -19.2], [290, -18.8], [282, -18.3], [274, -17.8], [266, -17.4], [260, -17.2], [254, -17.3], [249, -17.9], [245.6, -19.6], [245, -22.4], [247, -24.8], [251, -25.8], [255, -25.8], [258, -24.6], [266, -23.4], [276, -23], [286, -23.2], [292, -24.4], [297, -23.6]];
+  let ui = `<g filter="${weich(T, "k", 0.6)}">` + form(T, poly([[244, -17.4], [262, -17.4], [280, -18.4], [298, -19.6], [298, -20.6], [280, -20], [262, -19.6], [250, -19.8], [244, -20.2]]), "#d6cc9c") + "</g>";
   ui += `<path d="${[[258, -21.4, 0.9], [263.6, -20.8, 0.7], [268.4, -21.5, 1], [274, -21, 0.75], [279.4, -21.4, 0.95], [285, -20.9, 0.7], [290.4, -21.2, 0.85], [295.6, -21, 0.6]].map(([x, y, g], i) => `M${R(x - g)} ${y}a${R(g)} ${R(g * 0.55)} ${(i * 37) % 50 - 25} 1 0 ${R(2 * g)} 0a${R(g)} ${R(g * 0.55)} ${(i * 37) % 50 - 25} 1 0 ${R(-2 * g)} 0`).join("")}" fill="#2b2816" opacity=".5" filter="${weich(T, "f", 0.2)}"/>`;
   if (F) {
     ui += `<rect x="252" y="-26" width="49" height="9" fill="${musterNetz(T, "s", 0.62, { op: 0.2, opL: 0.12 })}"/>`;
-    { const qs = []; for (let x = 237; x < 256; x += 1.6) qs.push([[x, -17.8], [x + 0.3, -20.4]]); ui += linien(T, qs, "#5a5030", 0.14, 0.35); }
+    { const qs = []; for (let x = 246.4; x < 258; x += 1.5) qs.push([[x, -17.8], [x + 0.3, -20.4]]); ui += linien(T, qs, "#5a5030", 0.14, 0.35); }
     ui += punkte(T, [[256, -23.2], [298, -22.2], [298, -21], [256, -21.4]], 12, 0.12, "#14120a", 0.7) + punkte(T, [[256, -21.4], [298, -21], [298, -19.8], [256, -19.6]], 10, 0.11, "#14120a", 0.55);
     ui += lippen(T, [[253, -24.8], [262, -23.6], [274, -23], [288, -23], [297, -23.4]], 12, 1.2, { w: 0.1, op: 0.35, opL: 0.3 });
   }
@@ -665,7 +673,10 @@ function kopfKrokodil(T) {
   const mid = T.id("kmask");
   T.def(`<linearGradient id="${mid}g" gradientUnits="userSpaceOnUse" x1="241" y1="0" x2="251.5" y2="0"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient>` +
     `<mask id="${mid}" maskUnits="userSpaceOnUse" x="230" y="-45" width="80" height="35"><rect x="230" y="-45" width="80" height="35" fill="url(#${mid}g)"/></mask>`);
-  const unten = `<g filter="${rund(T, "kkopf", { weich: 3.2, tiefe: 4, umgebung: 0.4 })}">` + teil(T, uk, "#8a845c", { innen: ui, rw: 0.26, randA: 0.32, kante: [uk.slice(1, 12)] }) + "</g>";
+  const uid = T.id("ukmask");
+  T.def(`<linearGradient id="${uid}g" gradientUnits="userSpaceOnUse" x1="245" y1="0" x2="249.5" y2="0"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient>` +
+    `<mask id="${uid}" maskUnits="userSpaceOnUse" x="230" y="-45" width="80" height="35"><rect x="230" y="-45" width="80" height="35" fill="url(#${uid}g)"/></mask>`);
+  const unten = `<g mask="url(#${uid})"><g filter="${rund(T, "kkopf", { weich: 3.2, tiefe: 4, umgebung: 0.4 })}">` + teil(T, uk, "#8a845c", { innen: ui, rw: 0.26, randA: 0.32, kante: [uk.slice(1, 10)] }) + "</g></g>";
   let kopf = "";
   /* weicher Schlagschatten des überstehenden Oberkieferrandes auf dem Unterkiefer */
   kopf += `<path d="M257 -24.8Q270 -21.8 284 -20.4Q290 -20.6 298 -21" fill="none" stroke="#000" stroke-width="1.1" stroke-opacity=".38" filter="${weich(T, "ls", 0.4)}"/>`;
@@ -708,19 +719,19 @@ function krokodil(T) {
       { n: "kfh", kette: [[128, -17, 9], [134, -10.5, 5.6], [130.6, -3, 3.6], [134.4, -1.6, 2.8], [137.4, -1.2, 2.4]], maske: [-22, -15],
         ziffern: [[137.6, -0.7, 5.6, 3, 1, 0], [137.8, -1.3, 6.8, -5, 1, 1], [137.6, -1.9, 6, -13, 0.95, 1], [137.2, -2.3, 4.4, -22, 0.9, 1]], schwimm: [[138, -0.8], [141.4, -0.8], [142, -2.2], [140.6, -3.2], [138, -2.6]] },
       { n: "kfv", kette: [[236, -16, 8], [233, -10, 5], [236, -4.4, 3.8], [238.6, -1.6, 3.2], [241, -1.2, 2.4]], maske: [-20, -14],
-        ziffern: [[241.2, -0.6, 3.4, 6, 0.8, 0], [241.4, -1, 4.2, -6, 0.8, 0], [241.2, -1.5, 4, -18, 0.8, 1], [240.8, -1.9, 3.4, -32, 0.75, 1], [240.2, -2.2, 2.6, -48, 0.7, 1]] }],
+        ziffern: [[241.2, -0.5, 3, 6, 1, 0], [241.4, -0.95, 3.6, -6, 1, 0], [241.2, -1.4, 3.4, -18, 1, 1], [240.8, -1.85, 3, -32, 0.95, 1], [240.2, -2.2, 2.4, -48, 0.9, 1]] }],
     nah: [
       { n: "knh", kette: [[144, -24, 15], [152, -20, 12], [160, -13.5, 7], [157.5, -8, 5.4], [154.6, -3.2, 4.4], [158.6, -1.7, 3.4], [162.6, -1.3, 2.6]], maske: [-29, -21],
-        ferse: [153.6, -1.7, 2.4, 1.7], falten: [[[156, -14.8], [158.2, -12.6], [158.4, -10.4]], [[152.6, -4.6], [155.4, -3.4], [156.2, -1.8]], [[150, -18.6], [153, -17.4], [155.8, -17.4]]],
+        falten: [[[156, -14.8], [158.2, -12.6], [158.4, -10.4]], [[152.6, -4.6], [155.4, -3.4], [156.2, -1.8]], [[150, -18.6], [153, -17.4], [155.8, -17.4]]],
         ziffern: [[162, -0.65, 7.2, 4, 1.25, 0], [162.4, -1.25, 9.2, -2, 1.25, 1], [162.6, -1.9, 8.6, -7, 1.2, 1], [162.2, -2.4, 6.4, -12, 1.1, 1]],
         schwimm: [[162.6, -0.7], [166.6, -0.5], [167.2, -1.8], [166.6, -3.2], [162.6, -2.8]] },
-      { n: "knv", kette: [[226, -24, 12], [222.5, -18.5, 8], [219, -12.5, 6], [220.6, -7.5, 4.6], [222.6, -2.8, 3.6], [225.2, -1.5, 3]], maske: [-28, -20],
+      { n: "knv", kette: [[226, -24, 13], [222.5, -18.5, 9.4], [219.2, -12.5, 6.8], [220.6, -7.5, 5], [222.6, -2.8, 3.8], [225.2, -1.5, 3]], maske: [-28, -20],
         falten: [[[221.4, -14.8], [221.2, -12.2], [222.4, -10]], [[220.8, -3.8], [222.8, -2.4], [224.6, -2.6]]],
-        ziffern: [[226, -0.5, 4.2, 6, 0.95, 0], [226.2, -0.95, 5.2, -6, 0.95, 0], [226, -1.45, 5, -18, 0.95, 1], [225.6, -1.95, 4.4, -32, 0.9, 1], [225, -2.35, 3.4, -48, 0.85, 1]] }]
+        ziffern: [[226, -0.62, 3.6, 6, 1.25, 0], [226.2, -1.1, 4.4, -5, 1.25, 0], [226, -1.6, 4.2, -16, 1.2, 1], [225.6, -2.1, 3.6, -30, 1.15, 1], [225, -2.5, 2.8, -46, 1.1, 1]] }]
   };
-  let h = panzer(T, { sp, tH: 146, tS: 236, kielH: 1, kamm: 1, binden: 0.62, flecken: true, beine,
+  let h = panzer(T, { sp, tH: 146, tS: 236, kielH: 0.42, kamm: 1, binden: 0.62, flecken: true, beine,
     bindenT: [0.035, 0.1, 0.165, 0.23, 0.295, 0.36, 0.425],
-    farben: { ol: "#6b6a3e", ruecken: "#4e4f2c", flanke: "#8a8452", bauch: "#d6cc9c", fern: ["#6a6a4e", "#545440", "#36362a"], bein: ["#7a784f", "#636140", "#3e3d2a"],
+    farben: { ol: "#6b6a3e", ruecken: "#4e4f2c", flanke: "#8a8452", bauch: "#d6cc9c", fern: ["#727254", "#5c5c44", "#3e3e2e"], bein: ["#8c8858", "#726f49", "#4c4a32"],
       binde: "#24240f", fuge: "#9a9668", kamm: ["#7a7850", "#55553a", "#3a3a26"], kammF: "#4a4a30" },
     beinOhne: [[[136, -30], [160, -30], [168, -12], [140, -12]], [[218, -26], [232, -26], [232, -8], [218, -8]]],
     beinSchatten: "M218 -24.6Q225 -22.4 231 -24.6M138 -25.6Q148 -22.6 158 -24.8", kopf: "" });
