@@ -169,6 +169,17 @@ function streif(T, mitte, w, farbe, op, a = 0, b = 1) {
   const k = abschnitt(mitte, 0.01, a, b, 3).slice(0, 4);
   return T.linie(k, farbe, Array.isArray(w) ? w[1] : w, ` stroke-opacity="${op}"`);
 }
+/* Nagerfuß von der Seite: Ballen/Sohle als schmale Form, n Zehen nach vorn mit hellen Krallen.
+   x = Ferse, l = Fußlänge, h = Höhe, farbe = Haut */
+function nagerfuss(T, x, l, h, n, farbe, kfarbe = "#efe4da") {
+  let s = T.form([[x, -h * 0.6], [x + l * 0.55, -h], [x + l * 0.75, -h * 0.55], [x + l * 0.7, 0, 1], [x - l * 0.05, 0, 1]], farbe);
+  for (let i = 0; i < n; i++) {
+    const zx = x + l * (0.5 + i * 0.5 / n), zl = l * (0.3 + 0.08 * (n - i));
+    s += T.form([[zx, -h * (0.62 - i * 0.08)], [zx + zl * 0.6, -h * (0.55 - i * 0.07)], [zx + zl, -h * 0.18], [zx + zl * 0.9, 0, 1], [zx + zl * 0.1, 0, 1]], mix(farbe, "#000000", 0.06 * i));
+    if (T.fein) s += kralle(T, zx + zl * 0.9, -h * 0.12, l * 0.14, 50, kfarbe, 0.3);
+  }
+  return s;
+}
 /* Lichtwert → Eimer: v (0 = Schatten, 1 = Licht) plus Zufall */
 const stufe = (v, z, n, streu = 0.35) => Math.round(Math.max(0, Math.min(1, v + (z - 0.5) * streu)) * (n - 1));
 /* Gaußhügel für Lichtkarten: [x, y, rx, ry, gewicht] */
@@ -483,5 +494,439 @@ module.exports = [
       s += T.schnurrhaare(26.4, -23.1, 7, 6.6, 12, 46, "#f6f2ea", 0.055) + T.schnurrhaare(26, -22.9, 5, 5.4, 168, 36, "#f6f2ea", 0.045);
       s += T.schnurrhaare(24.8, -27.9, 3, 2.4, -75, 30, "#f6f2ea", 0.04);
       return { svg: s, box: [-32.4, -34.5, 28.3, 0] };
+    } },
+  /* =================================================================
+     KANINCHEN — Hauskaninchen, wildfarben (agouti), sitzend
+     RECHERCHE: mittelgroße Rassen 35–45 cm Körperlänge, 2–4 kg; Ohren aufrecht 10–12 cm, löffelförmig,
+     an der Spitze gerundet, Rand bei Wildfarbe dunkel gesäumt; große, seitlich stehende Augen (Rundum-
+     blick), dunkelbraun mit hellem Augenring; gespaltene Oberlippe, Nasenlöcher als schräge Schlitze,
+     lange Tasthaare; Hinterläufe lang und kräftig, in Ruhe liegt der ganze Hinterfuß flach am Boden
+     (Ferse hinten), die Keule bildet eine große Rundung; Vorderläufe kurz; Stummelschwanz („Blume“) oben
+     dunkel, unten weiß; Fell dicht und weich, Agouti-Haare (graue Basis, gelbbraunes Band, schwarze
+     Spitze), Rücken dunkler gestichelt, Nacken rostbraun, Bauch, Kinn und Schwanzunterseite weiß.
+     ================================================================= */
+  { id: "kaninchen", de: "das Kaninchen", syl: "Ka-NIN-chen", it: "il coniglio", itSyl: "co-NI-glio", en: "rabbit",
+    gruppe: "Haustiere", lebensraum: "Zuhause",
+    laenge: 0.4, hoehe: 0.34,
+    zeichne(T) {
+      T.RW = 0.08;
+      const DK = "#2a2018";
+      const EIMER = [["#3e3227", 0.045, 0.32], ["#5f4e3c", 0.045, 0.3], ["#85704f", 0.04, 0.3], ["#a99674", 0.04, 0.32], ["#cfc0a2", 0.035, 0.34]];
+      const licht = (x, y) => 0.15 + 0.65 * Math.max(0, Math.min(1, (-y - 3) / 16)) + huegel(x, y, [[-9, -12, 5, 4, 0.2], [-6, -18, 8, 2, 0.15]]) - huegel(x, y, [[10, -6, 4, 2, 0.3], [-2, -4, 5, 2, 0.25]]);
+      const flow = (x, y) => (y > -5 ? (x > 10 ? 95 : 175) : x < -8 ? 120 : 175 - 40 * Math.max(0, Math.min(1, (-y - 18) / -12)));
+      const wahl = (x, y, z) => stufe(licht(x, y), z, 5);
+      let s = "";
+      /* fernes Vorderbein und ferner Hinterfuß (dunkler) */
+      const fernV = [[10, -8], [12.6, -8.4], [12.6, -3.4], [13.6, -1.6], [15, -0.6], [14.8, 0, 1], [10.6, 0, 1], [10.4, -2], [10.4, -5]];
+      s += teil(T, fernV, "#6e5c48", { rand: DK, randA: 0.2, volx: true, innen: fell(T, fernV, 30, () => 95, 0.5, EIMER, (x, y, z) => stufe(0.2, z, 5)) });
+      const fernH = [[-8, -4], [4, -3], [5.4, -1.6], [5.6, -0.4], [5, 0, 1], [-9, 0, 1], [-9.6, -2]];
+      s += teil(T, fernH, "#7a6852", { rand: DK, randA: 0.2, innen: fell(T, fernH, 30, () => 178, 0.6, EIMER, (x, y, z) => stufe(0.25, z, 5)) });
+      /* Leib */
+      const leib = [[-14.8, -2.2], [-17.2, -6.4], [-17.9, -10], [-16.8, -14], [-14.4, -16.8], [-11, -18.6], [-4, -19.8], [3, -18.8], [8, -17.4], [13, -15], [15.4, -10.8], [15.4, -7.4], [15.2, -3.4], [16.2, -1.7], [17.8, -0.7], [17.6, 0, 1],
+        [12.8, 0, 1], [12.6, -2], [12.8, -5], [12, -6.6], [9, -6], [5, -4.2], [3.4, -2.4], [3.9, -0.8], [3.4, 0, 1], [-12.4, 0, 1]];
+      const keule = [[-15.6, -4], [-16.4, -9], [-14.6, -14], [-9.6, -15.4], [-4.6, -13.4], [-2.4, -9], [-3, -5.2], [-7, -3.2], [-12, -2.8]];
+      s += teil(T, leib, T.lg("kan", [[0, "#7c6750"], [0.45, "#94805f"], [0.75, "#a99576"], [1, "#c9bba2"]]), {
+        rand: DK, randA: 0.1,
+        innen: tex(T, "kn", { fx: 5, fy: 0.9, farbe: DK, staerke: 2.4, schwelle: 0.55, okt: 3 }, 170, 0.32, [-18, -20, 18, 0]) +
+          mal(T, "kn", 0.7,
+            /* Nacken rostbraun, Rücken dunkler gestichelt, Keule als Rundung, Bauch weiß, Schatten unten */
+            T.form([[4, -18.4], [9, -17.4], [11, -15.6], [7, -15.4], [3, -16.6]], "#b07a48", ` opacity=".55"`) +
+            T.form([[-15.6, -14.6], [-10.6, -18.6], [-4, -19.8], [3, -18.6], [2, -17], [-4, -18], [-10.4, -16.8], [-14.4, -13]], "#3a2c20", ` opacity=".35"`) +
+            T.form([[-15, -12], [-12, -15], [-8, -15.2], [-5.6, -13.4], [-9, -13.6], [-13, -11.4]], "#f6ecd6", ` opacity=".35"`) +
+            T.form([[-4.6, -13.4], [-2.4, -9], [-3, -5.2], [-1, -4], [0.4, -8], [-1.6, -13]], "#2a1e14", ` opacity=".28"`) + T.form([[-16.6, -8], [-15, -13], [-10.4, -15.2], [-6, -14], [-9.6, -13.2], [-14, -10.6]], "#f6ecd6", ` opacity=".22"`) +
+            T.form([[9.6, -6.6], [12, -7], [15.2, -8.6], [15.2, -10.4], [12, -9.4], [8, -8.4], [4, -6.4], [3.4, -4.4]], "#efe6d6", ` opacity=".55"`) +
+            T.form([[3.4, -2], [5, -4.2], [9, -6], [12, -6.6], [12.8, -5], [9, -4.2], [5, -2.6]], "#2a1e14", ` opacity=".35"`) +
+            T.form([[-12.4, -0.2], [3, -0.2], [3.4, -1.6], [-11, -2]], "#2a1e14", ` opacity=".18"`) + T.form([[-9, -3.2], [-4, -3.8], [0, -3.6], [2.6, -2.8], [0, -2.6], [-4, -2.7], [-9, -2.4]], "#2a1e14", ` opacity=".4"`) + T.form([[-6, -2.4], [0, -2.5], [3, -2], [3.6, -1], [1.6, -1.6], [-4, -1.8]], "#e6dac4", ` opacity=".35"`) +
+            T.form([[13, -8], [15.2, -7.4], [15, -3.4], [13.6, -3.6]], "#2a1e14", ` opacity=".25"`)) +
+          fell(T, leib, 750, flow, 0.6, EIMER, wahl, { kr: 0.15, szene: 0.1 }) +
+          fell(T, keule, 160, () => 150, 0.8, EIMER, (x, y, z) => stufe(licht(x, y) + 0.15, z, 5)) +
+          (T.fein ? [0, 1].map((i) => falte(T, [[16 - i * 1.1, -1.6], [16.4 - i * 1.1, -0.3]], DK, 0.1, 0.4)).join("") : ""),
+        nach: randhaare(T, leib, { n: 340, L: 0.8, flow, ab: 0.55, eimer: EIMER, wahl, wo: (x, y) => y < -0.8, szene: 0.1 }),
+      });
+      /* Blume (Schwanz): rundes Wollknäuel, oben graubraun, unten weiß, flauschiger Rand */
+      const blume = [[-16.4, -10.4], [-18.2, -10.6], [-19.4, -9.2], [-19.5, -7.2], [-18.4, -5.8], [-16.6, -5.8]];
+      s += teil(T, blume, T.lg("blume", [[0, "#7a6650"], [0.38, "#9c8a72"], [0.5, "#e8e2d8"], [1, "#fbf8f2"]]), { rand: false,
+        innen: mal(T, "bl", 0.4, fleck(T, -18.4, -8.6, 1.2, 0.9, "#ffffff", 0.6)) + fell(T, blume, 50, (x, y) => (y < -8.6 ? 200 : 160), 0.5, EIMER, (x, y, z) => (y > -8.4 ? 4 : stufe(0.4, z, 5))),
+        nach: randhaare(T, blume, { n: 90, L: 0.7, flow: () => 190, ab: 0.75, eimer: [["#8a7660", 0.05, 0.6], ["#f6f2ea", 0.05, 0.8]], wahl: (x, y) => (y > -8.4 ? 1 : 0), kr: 0.3 }) });
+      if (T.fein) s += kralle(T, 3.3, -0.45, 0.7, 62, "#4a3a2e", 0.3) + kralle(T, 2.1, -0.4, 0.65, 66, "#4a3a2e", 0.3);
+      /* Kopf */
+      const kopf = [[7.8, -20.6], [11, -22.2], [14.6, -21.6], [18.4, -19], [20.4, -17], [21.3, -15.4], [21.2, -14.3], [20.6, -13.5], [19.6, -12.7], [17.6, -12.2], [15.2, -12.6],
+        [12.4, -13.2], [10, -14.6], [8.2, -17]];
+      const kflow = (x, y) => (x > 16 ? 192 : y > -15 ? 150 : 185);
+      const klicht = (x, y) => 0.4 + 0.5 * Math.max(0, Math.min(1, (-y - 12.5) / 9)) - huegel(x, y, [[12, -14, 3, 1.4, 0.3]]) + huegel(x, y, [[19.6, -15.6, 1.4, 1.4, 0.2]]);
+      s += teil(T, kopf, T.lg("kopfkn", [[0, "#7e6a52"], [0.5, "#9c8768"], [1, "#cdbfa6"]]), { rand: false,
+        innen: tex(T, "knk", { fx: 4.6, fy: 0.8, farbe: DK, staerke: 2.2, schwelle: 0.58, okt: 2 }, 185, 0.22, [7, -23, 22, -12]) +
+          mal(T, "knk", 0.45, fleck(T, 14.4, -18.4, 2.4, 1.9, "#efe2c8", 0.7) + T.form([[18, -14.8], [21, -14.6], [20.6, -13.4], [18.6, -12.6], [16.4, -12.6], [16.8, -13.8]], "#efe6d6", ` opacity=".7"`) +
+            fleck(T, 12.4, -14, 3.6, 1.4, "#2a1e14", 0.3) + fleck(T, 11.6, -21.4, 3, 0.9, "#f6ecd6", 0.3)) +
+          fell(T, kopf, 380, kflow, 0.45, EIMER, (x, y, z) => stufe(klicht(x, y), z, 5)),
+        nach: randhaare(T, kopf, { n: 120, L: 0.4, flow: kflow, ab: 0.5, eimer: EIMER, wahl: (x, y, z) => stufe(klicht(x, y), z, 5), wo: (x, y) => x < 20 }),
+      });
+      /* Nase: Nasenloch-Schlitz, gespaltene Oberlippe */
+      s += `<path d="M21.05 -15.35q-.45 .1 -.75 .55M20.9 -14.5q-.2 .35 -.55 .5" fill="none" stroke="#2a1812" stroke-width=".13" stroke-linecap="round"/>`;
+      s += `<path d="M20.4 -14.1q-.1 .4 -.4 .7q-.4 .2 -1 .1" fill="none" stroke="#2a1812" stroke-width=".11" stroke-linecap="round" opacity=".8"/>`;
+      s += `<ellipse cx="20.6" cy="-15.9" rx=".5" ry=".22" fill="#fff" opacity=".25"/>`;
+      /* Auge: groß, seitlich, fast schwarz, heller Augenring */
+      s += T.augeReal(14.4, -18.4, 0.95, { iris: "#3a2210", iris2: "#140a04", offen: 0.9, winkel: -6, lid: "#140c08" });
+      /* Tasthaare */
+      s += T.schnurrhaare(19.6, -14.4, 7, 6, 10, 46, "#2a2018", 0.04) + T.schnurrhaare(19.2, -14.2, 4, 5, 172, 30, "#efe8dc", 0.04);
+      s += T.schnurrhaare(14.6, -19.8, 3, 1.8, -80, 30, "#2a2018", 0.035);
+      /* Ohren: fernes dunkler; nahes mit rosa Innenseite vorn, dunkler Saum an der Spitze */
+      const ohrN = [[8.6, -20.4], [7.8, -24.6], [7, -28.6], [6.8, -31.6], [7.6, -33.3], [9, -33], [10.2, -30.6], [11.6, -26], [12.8, -21.4]];
+      const ohrF = ohrN.map(([x, y]) => { const a = -0.2, dx = x - 11, dy = y + 21; return [11 + 1.2 + dx * Math.cos(a) - dy * Math.sin(a), -21 + 0.4 + dx * Math.sin(a) + dy * Math.cos(a)]; });
+      s += teil(T, ohrF, T.lg("ohrf", [[0, "#3c2e22"], [1, "#6a5642"]]), { rand: false, vol: true });
+      s += teil(T, ohrN, T.lg("ohrn", [[0, "#55432f"], [0.3, "#7e6a50"], [1, "#9a8466"]]), { rand: DK, randA: 0.25,
+        innen: mal(T, "oi", 0.25, T.form([[9.1, -32.4], [10, -30.4], [11.3, -26], [12.4, -21.8], [11.2, -22.8], [10.2, -26.2], [9.3, -29.8]], "#c49a90", ` opacity=".55"`)) +
+          falte(T, [[6.9, -30.4], [7.1, -32.4], [7.8, -33.2], [8.9, -33], [9.8, -31.6]], "#1e1610", 0.35, 0.75) +
+          mal(T, "on", 0.3, T.form([[7.8, -30], [8.6, -25], [9.6, -21.4], [9, -21.2], [8, -25], [7.4, -29]], "#f2e6d0", ` opacity=".35"`)) +
+          fell(T, ohrN, 90, () => 100, 0.4, EIMER, (x, y, z) => stufe(0.35 + (x < 9 ? 0.2 : 0), z, 5)) +
+          T.schnurrhaare(11.6, -23, 5, 1.2, -70, 40, "#f2ece2", 0.03) });
+      return { svg: s, box: [-19.7, -33.5, 21.4, 0] };
+    } },
+  /* =================================================================
+     MEERSCHWEINCHEN — Hausmeerschweinchen, Glatthaar, dreifarbig (schildpatt-weiß)
+     RECHERCHE: Körperlänge 20–25 cm, 0,7–1,2 kg, walzenförmiger Körper ohne sichtbaren Schwanz und
+     ohne abgesetzten Hals; großer Kopf mit stumpfer, gewölbter Nase (Ramsnase), Nasenlöcher schräg,
+     Oberlippe gespalten, lange Tasthaare; Augen dunkel, groß, leicht vorstehend, seitlich; Ohren als
+     „Rosenohren“ – dünne, fast nackte, blütenblattförmige Ohrmuscheln, nach unten geklappt; kurze
+     Beine, vorn 4 Zehen, hinten 3 Zehen mit Krallen, nackte rosa Sohlen; Glatthaar 2–3 cm, glänzend,
+     liegt vom Kopf zum Hinterteil an; Dreifarbig: unregelmäßige Platten in Schwarz, Rot (Orange) und
+     Weiß, oft weiße Blesse auf der Nase.
+     ================================================================= */
+  { id: "meerschweinchen", de: "das Meerschweinchen", syl: "MEER-schwein-chen", it: "la cavia", itSyl: "CA-via", en: "guinea pig",
+    gruppe: "Haustiere", lebensraum: "Zuhause",
+    laenge: 0.265, hoehe: 0.125,
+    zeichne(T) {
+      T.RW = 0.05;
+      const DK = "#1a1512";
+      /* Lichtwert und Farbe der Platte am Ort (x, y): 0 = weiß, 1 = rot, 2 = schwarz */
+      const rot = [[-6.4, -12.4], [-2, -12.4], [1.8, -12.2], [2.6, -10.4], [3.4, -8.6], [2.2, -6.8], [1.6, -4.6], [-0.6, -3.6], [-2.6, -4.4], [-4, -6], [-5.8, -7.2], [-6.6, -9.6]];
+      const schwarzH = [[-14, -7], [-12.6, -10.6], [-9.4, -12.4], [-7.6, -11.4], [-7.2, -9.6], [-8.4, -7.6], [-8, -5.6], [-9.6, -4], [-11.2, -2.6], [-14, -2.4]];
+      const schwarzK = [[4.4, -12.4], [8.4, -11.6], [10.4, -10.4], [10.8, -9.2], [10.3, -8], [10.8, -6.4], [10.2, -5], [9.6, -3.4], [7.4, -2.8], [5.6, -3.6], [4.6, -5.4], [3.6, -7.6], [4.2, -9.8]];
+      const platte = (x, y) => (T.inPoly(x, y, schwarzK) ? 2 : T.inPoly(x, y, schwarzH) ? 2 : T.inPoly(x, y, rot) ? 1 : 0);
+      const licht = (x, y) => 0.2 + 0.7 * Math.max(0, Math.min(1, (-y - 2) / 9)) - huegel(x, y, [[0, -2.6, 8, 1.4, 0.3]]) + huegel(x, y, [[-4, -10, 6, 1.4, 0.15]]);
+      const FARB = [
+        [["#9a948a", 0.035, 0.35], ["#c9c3b6", 0.03, 0.32], ["#fbf8f2", 0.03, 0.3]],
+        [["#7a3c16", 0.035, 0.42], ["#a8561a", 0.03, 0.38], ["#e09a52", 0.03, 0.3]],
+        [["#050404", 0.035, 0.5], ["#2a2622", 0.03, 0.4], ["#5a5652", 0.028, 0.3]],
+      ];
+      const EIMER = FARB[0].concat(FARB[1], FARB[2]);
+      const wahl = (x, y, z) => platte(x, y) * 3 + Math.round(Math.max(0, Math.min(1, licht(x, y) + (z - 0.5) * 0.4)) * 2);
+      const flow = (x, y) => (y > -3.4 ? 160 : 178 - 30 * Math.max(0, Math.min(1, (-y - 11) / -8)));
+      let s = "";
+      /* ferne Füße */
+      s += nagerfuss(T, 5.8, 2, 1, 3, "#9a7a72", "#e4d8cc") + nagerfuss(T, -7.4, 2.6, 1, 3, "#94746c", "#e4d8cc");
+      /* nahe Füße: rosa Sohlen, Zehen mit Krallen */
+      s += nagerfuss(T, 7.8, 2.1, 1.1, 4, "#ad8a80", "#e8dcd0") + nagerfuss(T, -5.8, 2.6, 1.1, 3, "#a5847a", "#e8dcd0");
+      /* Leib + Kopf als ein Umriss (kein abgesetzter Hals) */
+      const leib = [[-13.4, -4.4], [-13.3, -7.8], [-11.4, -10.6], [-7, -12.2], [-2, -12.5], [3, -11.8], [7, -11], [9.8, -9.9], [11.8, -8.3], [12.8, -6.6], [13.15, -5.5], [12.85, -4.8],
+        [13, -4.25], [12.5, -3.75], [12, -3.3], [10.8, -2.7], [8.4, -1.6], [4, -0.7], [-2, -0.6], [-8, -0.6], [-12, -0.9]];
+      s += teil(T, leib, "#d8d0c2", {
+        rand: DK, randA: 0.15,
+        innen: `<g${zottel(T, "a", "1.8 .8", 0.6)}>` + mal(T, "pl", 0.22, T.form(rot, "#c46a24") + T.form(schwarzH, "#1c1816") + T.form(schwarzK, "#1c1816")) + "</g>" +
+          tex(T, "ms", { fx: 4, fy: 0.7, farbe: "#000", staerke: 2, schwelle: 0.6, okt: 2 }, 175, 0.18, [-13, -12, 13, -1]) +
+          mal(T, "ms", 0.5, T.form([[-11.6, -2.4], [-4, -2.8], [4, -2.8], [10, -3.4], [10, -2.2], [4, -1.4], [-4, -1.2], [-11, -1.4]], "#000", ` opacity=".32"`) +
+            T.form([[-11, -9.2], [-6, -11], [2, -11], [7, -10.4], [2, -9.8], [-6, -9.8], [-10.4, -8]], "#fff", ` opacity=".3"`) +
+            fleck(T, 6.2, -5, 2.4, 1.6, "#000", 0.25) + T.form([[11.4, -7.6], [11.9, -6], [11.6, -4.6], [11.1, -3.6], [10.8, -4.8], [10.9, -6.4]], "#000", ` opacity=".14"`) + fleck(T, 12.3, -6.2, 0.8, 0.9, "#fff", 0.3)) +
+          fell(T, leib, 1000, flow, 0.6, EIMER, wahl, { kr: 0.1, szene: 0.1 }),
+        nach: randhaare(T, leib, { n: 260, L: 0.6, flow, ab: 0.45, eimer: EIMER, wahl, wo: (x, y) => y < -1.8 && x < 11.6, szene: 0.1 }),
+      });
+      /* Nase, Mund */
+      s += `<path d="M13 -5.9q-.35 .05 -.6 .4" fill="none" stroke="#3a2420" stroke-width=".09" stroke-linecap="round"/>`;
+      s += `<path d="M12.85 -4.8q-.25 .2 -.3 .5M12.45 -3.8q-.4 .1 -.9 -.05" fill="none" stroke="#3a2420" stroke-width=".07" stroke-linecap="round"/><ellipse cx="12.5" cy="-6.4" rx=".35" ry=".14" fill="#fff" opacity=".3"/>`;
+      /* Auge: dunkel, rund, vorstehend */
+      s += T.augeReal(8.6, -7.9, 0.62, { iris: "#3a2214", iris2: "#100804", offen: 0.95, lid: "#0a0706" });
+      
+      /* Rosenohr: dünn, fast nackt, nach unten geklappt */
+      const ohr = [[4.6, -11.4], [6, -12.3], [7.3, -11.9], [7.4, -10.8], [6.6, -10.1], [5.4, -10.4]];
+      s += teil(T, ohr, T.lg("ohrm", [[0, "#5a4a48"], [1, "#2a2220"]]), { rand: DK, randA: 0.3,
+        innen: T.form([[5.3, -11.8], [7, -11.9], [6.9, -11.1], [5.8, -10.9]], "#8a6e6c", ` opacity=".5"`) + `<path d="M5 -11.1q1.1 -.6 2.3 -.5" fill="none" stroke="#000" stroke-width=".07" opacity=".55"/>` });
+      /* Tasthaare */
+      s += T.schnurrhaare(11.8, -4.9, 6, 3.8, 15, 46, "#1a1512", 0.03) + T.schnurrhaare(11.6, -4.8, 4, 3.4, 165, 30, "#efe8dc", 0.03);
+      return { svg: s, box: [-13.45, -12.55, 13.05, 0] };
+    } },
+  /* =================================================================
+     HAMSTER — Goldhamster (Syrischer Hamster), Wildfarbe
+     RECHERCHE: Kopf-Rumpf 15–18 cm, 110–140 g, Stummelschwanz ca. 1 cm (im Fell verborgen); gedrungener,
+     rundlicher Körper, kurze Beine, Bauch nah am Boden; Rücken goldbraun (agouti, dunkle Haarspitzen),
+     Bauch und Kehle weiß bis cremefarben, scharfe Grenze an der Flanke; dunkelgraue bis schwarze
+     „Backenbinde“ vom Wangenbereich nach hinten zur Schulter, darunter ein weißer Halbmond; große
+     Backentaschen; runde, aufrechte, fast nackte graue Ohren; große, schwarze, vorstehende Augen;
+     rosa Nase, weiße Schnauze, lange Tasthaare; rosa Pfoten, vorn 4, hinten 5 Zehen mit hellen Krallen.
+     ================================================================= */
+  { id: "hamster", de: "der Hamster", syl: "HAMS-ter", it: "il criceto", itSyl: "cri-CE-to", en: "hamster",
+    gruppe: "Haustiere", lebensraum: "Zuhause",
+    laenge: 0.17, hoehe: 0.098,
+    zeichne(T) {
+      T.RW = 0.03;
+      const DK = "#2a1a10";
+      const bauch = (x, y) => y > -3.3 + 0.9 * Math.exp(-(((x + 1) / 5) ** 2)) * -1 - (x > 5 ? (x - 5) * 0.5 : 0);
+      const backe = [[6.2, -3.9], [4.8, -4.2], [3.2, -4], [1.8, -3.5], [0.8, -2.8], [1.8, -2.95], [3.2, -3.35], [4.8, -3.55]];
+      const licht = (x, y) => 0.2 + 0.7 * Math.max(0, Math.min(1, (-y - 1.5) / 6)) - huegel(x, y, [[-1, -1.6, 5, 0.8, 0.3]]);
+      const FARB = [[["#7a4a1c", 0.03, 0.45], ["#b5722e", 0.028, 0.38], ["#e0aa66", 0.026, 0.32]], [["#b8b0a4", 0.028, 0.35], ["#e2dcd0", 0.026, 0.35], ["#fdfaf4", 0.025, 0.35]], [["#1a1412", 0.03, 0.5], ["#3a3230", 0.028, 0.4], ["#5a524e", 0.026, 0.35]]];
+      const EIMER = FARB[0].concat(FARB[1], FARB[2]);
+      const zone = (x, y) => (T.inPoly(x, y, backe) ? 2 : bauch(x, y) ? 1 : 0);
+      const wahl = (x, y, z) => zone(x, y) * 3 + Math.round(Math.max(0, Math.min(1, licht(x, y) + (z - 0.5) * 0.45)) * 2);
+      const flow = (x, y) => (x > 4.6 ? (y > -3.4 ? 150 : 192) : y > -2.6 ? 165 : 182 - 30 * Math.max(0, Math.min(1, (-y - 7.6) / -5)));
+      let s = "";
+      /* ferne Pfoten */
+      s += nagerfuss(T, 3.2, 1.6, 0.8, 3, "#b98580") + nagerfuss(T, -4.6, 2, 0.8, 3, "#b2807a");
+      /* nahe Pfoten (vom Fell überdeckt) */
+      s += nagerfuss(T, 4.5, 1.7, 0.9, 4, "#d29890") + nagerfuss(T, -5.4, 2.3, 0.9, 4, "#cc938b");
+      /* Ohren: rund, fast nackt, grau; fernes dahinter */
+      const ohrF = [[4.1, -6.9], [4.4, -8.3], [4.95, -8.7], [5.4, -8.3], [5.3, -6.7]];
+      s += teil(T, ohrF, "#5e504c", { rand: false });
+      const ohr = [[2.4, -7.2], [2.45, -8.7], [3, -9.5], [3.75, -9.55], [4.4, -8.9], [4.7, -7]];
+      s += teil(T, ohr, T.lg("ohrh", [[0, "#6e5e5a"], [1, "#9a827c"]]), { rand: DK, randA: 0.18,
+        innen: mal(T, "oh", 0.08, T.form([[3.05, -9.25], [3.8, -9.3], [4.3, -8.7], [4.45, -7.5], [3.8, -7.9], [3.3, -8.6]], "#cfa49c", ` opacity=".6"`)) + T.schnurrhaare(4, -7.8, 5, 0.6, -80, 60, "#d8ccc4", 0.015) });
+      /* Leib */
+      const leib = [[-8.2, -2.6], [-8.6, -4.8], [-7.6, -6.9], [-5.2, -8.3], [-2, -8.6], [1, -8.1], [3.2, -7.4], [5, -6.6], [6.6, -5.4], [7.5, -4.6], [8.05, -3.95], [8.32, -3.35], [8.2, -2.85], [7.85, -2.5],
+        [7.2, -2.1], [6, -1.55], [4.6, -1], [1, -0.7], [-3, -0.7], [-6.4, -0.95]];
+      s += teil(T, leib, T.lg("ham", [[0, "#c47f36"], [0.5, "#cf9048"], [0.62, "#ead9bf"], [1, "#f4eee4"]]), {
+        rand: DK, randA: 0.1,
+        innen: `<g${zottel(T, "a", "2.4 1", 0.22)}>` + mal(T, "hb", 0.08,
+            T.form([[-8.6, -2.2], [-6, -2.8], [-2, -3.3], [1.4, -3.1], [4, -3], [6.2, -3.6], [8.4, -3.4], [8.6, 0], [-8.6, 0]], "#f6f1e8") +
+            T.form(backe, "#2e2826") + T.form([[1.2, -2.6], [2.8, -2.9], [4.4, -3.25], [6, -3.5], [5.6, -2.9], [4, -2.4], [2.2, -2.2]], "#ffffff")) + "</g>" +
+          tex(T, "hm", { fx: 7, fy: 1.2, farbe: DK, staerke: 2.2, schwelle: 0.58, okt: 2 }, 175, 0.22, [-8.4, -8, 8.3, -0.8]) +
+          mal(T, "hm", 0.35, T.form([[-7, -1.2], [-2, -1.4], [3, -1.4], [6, -1.8], [6, -1], [3, -0.8], [-2, -0.8], [-7, -0.9]], "#000", ` opacity=".25"`) +
+            T.form([[-6.4, -6.6], [-3.6, -7.6], [0, -7.6], [-0.6, -6.8], [-3.6, -6.8]], "#fff2d8", ` opacity=".4"`) +
+            fleck(T, 7, -3.4, 1.1, 0.7, "#fff", 0.6) + fleck(T, 5.3, -5.3, 0.8, 0.7, "#3a2010", 0.15) + T.form([[-6.4, -7.2], [-3.6, -8.3], [0, -8.2], [-0.6, -7.4], [-3.6, -7.4]], "#fff2d8", ` opacity=".25"`)) +
+          fell(T, leib, 1100, flow, 0.42, EIMER, wahl, { kr: 0.15, szene: 0.1 }),
+        nach: randhaare(T, leib, { n: 300, L: 0.35, flow, ab: 0.5, eimer: EIMER, wahl, wo: (x, y) => y < -0.9 && x < 7.8, szene: 0.1 }),
+      });
+      /* Nase rosa, Mund */
+      s += T.form([[7.95, -3.95], [8.22, -3.8], [8.33, -3.45], [8.12, -3.27], [7.92, -3.5]], "#d39088") + `<path d="M8.25 -3.5q-.12 .03 -.2 .16" fill="none" stroke="#5a2a28" stroke-width=".045"/>`;
+      s += `<path d="M8.1 -3.28q0 .2 -.12 .32M7.98 -2.96q-.15 .1 -.35 .08" fill="none" stroke="#7a4a44" stroke-width=".04" stroke-linecap="round"/>`;
+      /* Auge: schwarz, groß, vorstehend */
+      s += T.augeReal(5.4, -5.3, 0.46, { iris: "#1a0e08", iris2: "#050302", offen: 0.98, lid: "#0a0604" });
+      /* Tasthaare */
+      s += T.schnurrhaare(7.7, -3.2, 7, 3, 12, 50, "#f4efe8", 0.018) + T.schnurrhaare(7.6, -3.1, 4, 2.6, 168, 30, "#3a2a20", 0.016);
+      return { svg: s, box: [-8.65, -9.8, 8.36, 0] };
+    } },
+  /* =================================================================
+     MAUS — Hausmaus (Mus musculus)
+     RECHERCHE: Kopf-Rumpf 7,5–10 cm, Schwanz 5–10 cm (etwa körperlang), 12–30 g; spitze Schnauze,
+     große, runde, dünne und fast nackte Ohren (grau-rosa, durchscheinend), große schwarze vorstehende
+     Augen, lange Tasthaare; Fell oben graubraun (agouti), Bauch etwas heller grau bis gelblichgrau,
+     ohne scharfe Grenze; Schwanz fast nackt mit Schuppenringen, oben etwas dunkler; Hinterfüße lang
+     und schmal, rosa-grau, vorn 4, hinten 5 Zehen; Körperhaltung geduckt, Rücken gerundet.
+     ================================================================= */
+  { id: "maus", de: "die Maus", syl: "MAUS", it: "il topo", itSyl: "TO-po", en: "mouse",
+    gruppe: "Haustiere", lebensraum: "Zuhause",
+    laenge: 0.175, hoehe: 0.05,
+    zeichne(T) {
+      T.RW = 0.015;
+      const DK = "#1e1814";
+      const EIMER = [["#2a221c", 0.016, 0.45], ["#4e4338", 0.015, 0.4], ["#766a5a", 0.014, 0.38], ["#a09482", 0.013, 0.4], ["#cfc6b6", 0.012, 0.42]];
+      const licht = (x, y) => 0.15 + 0.75 * Math.max(0, Math.min(1, (-y - 0.6) / 3.2)) - huegel(x, y, [[0, -0.7, 3, 0.4, 0.25]]);
+      const flow = (x, y) => (x > 2.6 ? (y > -1.6 ? 160 : 192) : y > -1.2 ? 170 : 180 - 25 * Math.max(0, Math.min(1, (-y - 3.6) / -2.6)));
+      const wahl = (x, y, z) => stufe(licht(x, y), z, 5);
+      let s = "";
+      /* Schwanz: lang, fast nackt, Schuppenringe */
+      const sc = [[-3.8, -1.1], [-5.6, -0.62], [-7.6, -0.34], [-9.6, -0.42], [-11.1, -0.9], [-12.5, -1.15]];
+      const sw = [0.5, 0.38, 0.3, 0.24, 0.18, 0.1];
+      const schw = schlauch(sc, sw);
+      let ringe = "";
+      if (T.fein) for (let i = 1; i < 40; i++) { const k = abschnitt(sc, sw.map((w) => w * 1.2), i / 40, i / 40 + 0.004, 1); ringe += `M${folge(k[0], 2)}L${folge(k[k.length - 1], 2)}`; }
+      s += teil(T, schw, T.lg("mschw", [[0, "#8a7468"], [0.5, "#b0948a"], [1, "#c8aca2"]]), { rand: DK, randA: 0.2, rw: 0.01,
+        innen: (ringe ? `<path d="${ringe}" stroke="#5a463e" stroke-width=".012" stroke-opacity=".6" fill="none"/>` : "") +
+          T.form(abschnitt(sc.map((p) => [p[0], p[1] - 0.06]), sw.map((w) => w * 0.3), 0, 1, 10), "#fff", ` opacity=".25"`) });
+      /* Füße */
+      s += nagerfuss(T, 0.9, 0.7, 0.26, 3, "#b8948c") + nagerfuss(T, -2.6, 1.3, 0.26, 3, "#b08c84") + nagerfuss(T, 1.8, 0.85, 0.3, 4, "#cba79f") + nagerfuss(T, -3.7, 1.7, 0.32, 4, "#c4a098");
+      /* Ohren (hinter der Kopfkontur): groß, rund, dünn, durchscheinend */
+      const ohrF = [[2.1, -3.2], [2.2, -3.95], [2.6, -4.35], [3, -4.15], [3.1, -3.5], [2.9, -3]];
+      s += teil(T, ohrF, T.lg("mohrf", [[0, "#8e726a"], [1, "#6a5650"]]), { rand: false });
+      const ohr = [[0.9, -3.3], [0.75, -4.2], [1.15, -4.85], [1.9, -5], [2.5, -4.55], [2.6, -3.7], [2.3, -3.05]];
+      s += teil(T, ohr, T.lg("mohr", [[0, "#b49088"], [0.6, "#a07e76"], [1, "#7a605a"]]), { rand: DK, randA: 0.25, rw: 0.012,
+        innen: mal(T, "mo", 0.06, T.form([[1.1, -4.3], [1.4, -4.75], [2, -4.8], [2.35, -4.4], [2.35, -3.7], [1.8, -3.6], [1.3, -3.8]], "#d8aaa2", ` opacity=".7"`)) +
+          `<path d="M1.3 -4.2q.5 .2 .9 .7M1.5 -4.55q.4 .1 .7 .45" fill="none" stroke="#8a5e58" stroke-width=".02" opacity=".5"/>` });
+      /* Leib */
+      const leib = [[-4.6, -1.7], [-4.6, -3], [-3.4, -3.95], [-1.4, -4.2], [0.6, -3.8], [2, -3.25], [3.2, -2.7], [4.1, -2.1], [4.65, -1.65], [4.78, -1.38], [4.45, -1.15], [3.8, -0.92],
+        [2.6, -0.6], [1, -0.42], [-1.6, -0.38], [-3.2, -0.46], [-4.2, -0.85]];
+      s += teil(T, leib, T.lg("maus", [[0, "#6a5c4c"], [0.55, "#857664"], [0.8, "#a89c8a"], [1, "#bdb2a2"]]), {
+        rand: DK, randA: 0.12,
+        innen: tex(T, "mm", { fx: 14, fy: 2.4, farbe: DK, staerke: 2.2, schwelle: 0.56, okt: 2 }, 175, 0.25, [-4.6, -4, 4.8, -0.5]) +
+          mal(T, "mm", 0.1, T.form([[-3.6, -0.7], [0, -0.8], [3, -1], [3, -0.6], [0, -0.5], [-3.6, -0.6]], "#000", ` opacity=".3"`) +
+            T.form([[-3.4, -3.2], [-1.4, -3.75], [0.6, -3.5], [0, -3.1], [-1.6, -3.2]], "#fff", ` opacity=".25"`) + fleck(T, 3.9, -1.6, 0.4, 0.3, "#d8cfc0", 0.6)) +
+          fell(T, leib, 900, flow, 0.26, EIMER, wahl, { kr: 0.15, szene: 0.1 }),
+        nach: randhaare(T, leib, { n: 260, L: 0.2, flow, ab: 0.5, eimer: EIMER, wahl, wo: (x, y) => y < -0.6 && x < 4.4, szene: 0.1 }),
+      });
+      /* Nase rosa, Mund */
+      s += T.form([[4.55, -1.72], [4.78, -1.62], [4.84, -1.42], [4.68, -1.3], [4.52, -1.45]], "#d09088") + `<path d="M4.62 -1.33q.02 .12 -.08 .2" fill="none" stroke="#6a3c36" stroke-width=".02"/>`;
+      /* Auge: schwarz, groß, vorstehend */
+      s += T.augeReal(3, -2.42, 0.27, { iris: "#140c08", iris2: "#040202", offen: 1, lid: "#0a0604" });
+      /* Tasthaare */
+      s += T.schnurrhaare(4.3, -1.4, 8, 2.8, 10, 50, "#2a221c", 0.01) + T.schnurrhaare(4.2, -1.35, 5, 2.4, 170, 30, "#d8d0c4", 0.009);
+      return { svg: s, box: [-12.6, -5.02, 4.86, 0] };
+    } },
+  /* =================================================================
+     WELLENSITTICH — Wildfarbe grün (Hahn)
+     RECHERCHE: Gesamtlänge ca. 18 cm (davon Schwanz 8–9 cm), 30–40 g; Bauch, Brust und Bürzel
+     hellgrün; Stirn, Gesicht und Kehle gelb („Maske“); Hinterkopf, Nacken und Rücken gelb mit feiner
+     schwarzer Wellenzeichnung; Flügeldecken schwarz mit gelben Säumen (Schuppenmuster); Schwungfedern
+     schwärzlich mit grünlichen Säumen; violettblauer Wangenfleck, an der Kehle je Seite drei schwarze
+     Kehlpunkte (der äußere am Wangenfleck); Wachshaut über dem Schnabel beim Hahn blau, bei der Henne
+     braun; kleiner, stark gebogener, oliv-gelblicher Schnabel, größtenteils von Federn umgeben; Auge
+     dunkel mit hellem Irisring (erwachsen); Schwanz lang, gestuft, dunkel kobaltblau, äußere Federn mit
+     gelbem Fleck; Füße blaugrau, Zehen paarig (2 vorn, 2 hinten).
+     ================================================================= */
+  { id: "wellensittich", de: "der Wellensittich", syl: "WEL-len-sit-tich", it: "il pappagallino", itSyl: "pap-pa-gal-LI-no", en: "budgie",
+    gruppe: "Haustiere", lebensraum: "Zuhause",
+    laenge: 0.12, hoehe: 0.143,
+    zeichne(T) {
+      T.RW = 0.03;
+      const DK = "#141410";
+      let s = "";
+      /* Schwanz: lang, gestuft, kobaltblau */
+      const sc = [[-2.2, -3.8], [-3.8, -2.6], [-5.6, -1.45], [-7.2, -0.6]];
+      for (const [d, f, w] of [[0.5, "#1c2f6a", 1.1], [0, "#24408c", 0.9], [-0.35, "#2e56a8", 0.7]]) {
+        const c = sc.map((p, i) => [p[0] + d * 0.4 * i / 3, p[1] - d * 0.35 * i / 3 + (d > 0 ? 0.25 * i / 3 : 0)]);
+        const k = schlauch(c, [w, w * 0.95, w * 0.85, w * 0.5]);
+        s += teil(T, k, f, { rand: DK, randA: 0.35, rw: 0.02, innen: falte(T, c, "#0e1a40", 0.04, 0.6) + T.form(abschnitt(c, w * 0.25, 0, 1, 4).map((p) => [p[0] - 0.12, p[1] - 0.1]), "#7ab0e8", ` opacity=".3"`) });
+      }
+      /* Füße: blaugrau, 2 Zehen vorn, 2 hinten, dunkle Krallen */
+      const fuss = (x, f) => T.linie([[x - 0.1, -1.7], [x, -1.1], [x + 0.1, -0.5]], f, 0.42) +
+        T.linie([[x, -0.45], [x + 0.9, -0.25], [x + 1.7, -0.18]], f, 0.26) + T.linie([[x, -0.45], [x + 0.6, -0.15], [x + 1.25, -0.12]], f, 0.24) +
+        T.linie([[x, -0.45], [x - 0.6, -0.2], [x - 1.05, -0.14]], f, 0.24) +
+        kralle(T, x + 1.65, -0.2, 0.32, 70, "#2a2a30", 0.28) + kralle(T, x + 1.2, -0.14, 0.28, 75, "#2a2a30", 0.28) + kralle(T, x - 1.0, -0.17, 0.26, 115, "#2a2a30", 0.28);
+      s += fuss(0.9, "#7d8496") + fuss(0.2, "#9aa2b6");
+      if (T.fein) s += `<path d="M.05 -1.5l.32 .08M.1 -1.1l.3 .06M.15 -.75l.3 .04" stroke="#6a7084" stroke-width=".04" opacity=".7"/>`;
+      /* Leib + Kopf */
+      const leib = [[-1.8, -2.2], [0.4, -1.5], [2.2, -3], [3.4, -5.8], [3.75, -8.2], [3.65, -9.4], [3.9, -10.3], [4.25, -11], [4.45, -11.8], [4.05, -12.9], [3, -13.9], [1.6, -14.15],
+        [0.2, -13.45], [-0.6, -12], [-1.4, -10], [-2.6, -6.4], [-3.1, -3.8]];
+      const maske = [[3.7, -9.2], [3.4, -9.6], [2.4, -9.4], [1.4, -10.2], [0.8, -11.6], [1.2, -12.9], [2.2, -13.7], [3.2, -13.6], [4.3, -12.6], [4.5, -11.4], [4.1, -10.2]];
+      /* Schuppenreihen der Brust (Federspitzen) */
+      let schuppen = "";
+      if (T.fein) for (let i = 0; i < 260; i++) {
+        const x = -2.6 + T.rnd() * 6.4, y = -9.4 + T.rnd() * 7.2;
+        if (!T.inPoly(x, y, leib) || T.inPoly(x, y, maske)) continue;
+        schuppen += `M${folge([x - 0.22, y], 2)}q${folge([0.22, 0.2, 0.44, 0], 2)}`;
+      }
+      /* Wellenzeichnung Hinterkopf/Nacken: feine schwarze Bögen */
+      let wellen = "";
+      for (let i = 0; i < 18; i++) {
+        const y = -13.95 + i * 0.25, x0 = 0.4 - i * 0.07, x1 = Math.min(2.2, 1.3 + i * 0.09) - (i > 10 ? (i - 10) * 0.2 : 0);
+        wellen += `M${folge([x0 - 0.8, y + 0.12], 2)}Q${folge([(x0 + x1) / 2 - 0.3, y - 0.12], 2)} ${folge([(x0 + x1) / 2 + 0.2, y + 0.04], 2)}T${folge([x1, y + 0.02], 2)}`;
+      }
+      s += teil(T, leib, T.lg("welli", [[0, "#f2e04a"], [0.3, "#e8dc3c"], [0.42, "#7ccc3a"], [0.75, "#58b432"], [1, "#4a9c2c"]]), {
+        rand: DK, randA: 0.12,
+        innen: mal(T, "w", 0.25, T.form(maske, "#f4e24c") + T.form([[-1.4, -10], [-0.6, -12], [0.4, -12.4], [0.6, -10.4], [-0.6, -8]], "#d8d040", ` opacity=".6"`) +
+            fleck(T, 2.8, -6, 1.6, 2.6, "#c8f0a0", 0.35) + fleck(T, 0.4, -3.6, 2.4, 1.2, "#1a4a10", 0.3)) +
+          `<path d="${wellen}" fill="none" stroke="#1a1a12" stroke-width=".075" stroke-linecap="round"/>` +
+          (schuppen ? `<path d="${schuppen}" fill="none" stroke="#2e7a1e" stroke-width=".04" stroke-opacity=".28"/>` : "") +
+          fell(T, leib, 260, (x, y) => (y < -9 ? 110 : 100), 0.35, [["#3a8a24", 0.03, 0.35], ["#8ad84a", 0.03, 0.35], ["#e8d438", 0.03, 0.3]], (x, y, z) => (T.inPoly(x, y, maske) ? 2 : z < 0.5 ? 0 : 1), { kr: 0.2 }),
+        nach: randhaare(T, leib, { n: 90, L: 0.22, flow: () => 100, ab: 0.6, eimer: [["#4a9c2c", 0.03, 0.5], ["#efdc48", 0.03, 0.5]], wahl: (x, y) => (y < -9.4 ? 1 : 0), szene: 0.2 }),
+      });
+      /* Wangenfleck violettblau, Kehlpunkte */
+      s += `<ellipse cx="3.05" cy="-10.45" rx=".55" ry=".42" fill="#5a46b4" transform="rotate(-20 3.05 -10.45)"/><ellipse cx="2.95" cy="-10.55" rx=".28" ry=".18" fill="#9a8ae6" opacity=".6"/>`;
+      s += [[2.85, -9.75, 0.2], [3.45, -9.45, 0.17], [2.25, -9.95, 0.15]].map(([x, y, rr]) => `<circle cx="${x}" cy="${y}" r="${rr}" fill="#111"/>`).join("");
+      /* Flügel: Deckfedern schwarz mit gelben Säumen (Schuppenmuster), Schwingen dunkel mit grünen Säumen */
+      const fluegel = [[-0.3, -11], [0.9, -10.4], [1.7, -8.6], [1.6, -6.4], [0.8, -4.4], [-0.6, -3], [-2.4, -2.2], [-3.7, -1.9, 1], [-3.3, -3.2], [-2.6, -5.6], [-1.9, -8.2], [-1.2, -10.2]];
+      let fl = "";
+      /* Schwungfedern (unten, lang) */
+      for (let i = 0; i < 6; i++) {
+        const t = i / 5, x0 = -1.6 + t * 2.6, y0 = -6.2 + t * 0.4;
+        const k = schlauch([[x0, y0], [x0 - 1.2 - t * 0.4, y0 + 2.2], [x0 - 2.3 - t * 0.5, y0 + 4 - t * 0.5]], [0.9, 0.85, 0.3]);
+        fl += T.form(k, i % 2 ? "#1e2420" : "#262c26") + falte(T, k.slice(0, 3), "#6aa848", 0.06, 0.6);
+      }
+      /* Deckfedern in Reihen, von unten nach oben (obere überdecken die unteren) */
+      const reihen = T.fein ? 10 : 6;
+      for (let reihe = reihen - 1; reihe >= 0; reihe--) {
+        const n = (T.fein ? 7 : 4) - Math.floor(reihe / 4);
+        const q = 7 / reihen;
+        for (let j = 0; j < n; j++) {
+          const cx = -1.5 + j * (2.9 / n) + (reihe % 2) * 0.2 + reihe * 0.04 * q, cy = -10.1 + reihe * 0.6 * q + j * 0.16;
+          if (!T.inPoly(cx, cy, fluegel)) continue;
+          const w = 0.42 * q, h = 0.48 * q;
+          const f = [[cx - w, cy - h], [cx + w, cy - h], [cx + w * 0.9, cy + h * 0.2], [cx, cy + h * 0.75], [cx - w * 0.9, cy + h * 0.2]];
+          fl += T.form(f, "#e8d24a") + T.form(f.map(([x, y]) => [cx + (x - cx) * 0.8, cy - h * 0.12 + (y - cy) * 0.8]), "#161812");
+        }
+      }
+      s += teil(T, fluegel, "#1e221c", { rand: DK, randA: 0.3, vol: true, innen: fl + mal(T, "fl", 0.3, fleck(T, -0.6, -9.6, 1.4, 1, "#fff", 0.15)) });
+      /* Schnabel: klein, stark gebogen, oliv-gelblich; Wachshaut blau */
+      s += T.form([[4.05, -11.3], [4.55, -11.35], [4.78, -10.95], [4.68, -10.45], [4.45, -10.15, 1], [4.38, -10.55], [4.1, -10.75]], "#c8b88e") +
+        T.form([[4.42, -10.2], [4.3, -10.55], [4.05, -10.65], [4.15, -10.35]], "#8a7a5a") + `<path d="M4.2 -11.15q.38 .15 .45 .6" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width=".05"/>`;
+      s += T.form([[4.0, -11.85], [4.42, -11.95], [4.62, -11.6], [4.52, -11.3], [4.05, -11.3]], "#4a6ad0") + `<circle cx="4.42" cy="-11.65" r=".06" fill="#1a2a60"/><ellipse cx="4.25" cy="-11.8" rx=".15" ry=".05" fill="#fff" opacity=".45"/>`;
+      /* Auge mit hellem Irisring */
+      s += `<circle cx="2.65" cy="-12.25" r=".42" fill="#f2efe2"/>` + T.augeReal(2.68, -12.25, 0.3, { iris: "#d8d2c0", iris2: "#8a8270", offen: 1, lid: "#3a3a2a" });
+      return { svg: s, box: [-7.4, -14.3, 4.87, 0] };
+    } },
+  /* =================================================================
+     GOLDFISCH — gewöhnlicher Goldfisch (Carassius auratus), Kometen-/Normalform
+     RECHERCHE: im Aquarium/Teich meist 10–20 cm; Körper wie die Giebel (Karausche): seitlich
+     abgeflacht, gestreckt-hochrückig, Rücken- und Bauchlinie gleichmäßig gebogen, kleiner Kopf ohne
+     Barteln, endständiges kleines Maul; lange Rückenflosse (über 15 Strahlen, vorn ein kräftiger
+     Hartstrahl), einfache, tief gegabelte Schwanzflosse, kurze Afterflosse, Bauchflossen unter der
+     Brustflossen-Mitte, Brustflossen hinter dem Kiemendeckel; große Rundschuppen in schrägen Reihen,
+     Seitenlinie; Farbe orange-gold mit hellerem Bauch, Flossen durchscheinend orange; Auge groß mit
+     goldener Iris.
+     ================================================================= */
+  { id: "goldfisch", de: "der Goldfisch", syl: "GOLD-fisch", it: "il pesce rosso", itSyl: "PE-sce ROS-so", en: "goldfish",
+    gruppe: "Haustiere", lebensraum: "Zuhause", schwimmt: true,
+    laenge: 0.153, hoehe: 0.077,
+    zeichne(T) {
+      T.RW = 0.03;
+      const DK = "#5a2008";
+      let s = "";
+      const flosse = (pts, strahlen, op = 0.7) => teil(T, pts, T.lg("flosse", [[0, "#f39a3a", 0.9], [1, "#f6c27a", 0.55]]), { rand: "#a8400c", randA: 0.35, rw: 0.02, vol: false,
+        innen: `<path d="${strahlen}" fill="none" stroke="#c0500e" stroke-width=".035" stroke-opacity="${op}"/>` });
+      const strahlen = (a, b, n, kr = 0.1) => {
+        let d = "";
+        for (let i = 0; i <= n; i++) {
+          const t = i / n, ax = a[0][0] + (a[1][0] - a[0][0]) * t, ay = a[0][1] + (a[1][1] - a[0][1]) * t;
+          const bx = b[0][0] + (b[1][0] - b[0][0]) * t, by = b[0][1] + (b[1][1] - b[0][1]) * t;
+          d += `M${folge([ax, ay], 2)}Q${folge([(ax + bx) / 2 + kr, (ay + by) / 2 - kr], 2)} ${folge([bx, by], 2)}`;
+        }
+        return d;
+      };
+      /* ferne Brust- und Bauchflosse (blasser) */
+      s += `<g opacity=".55">` + flosse([[2.8, -2.3], [1.4, -1.2], [0.6, -0.6], [1, -1.5], [2, -2.5]], strahlen([[2.8, -2.3], [2, -2.5]], [[1.2, -1], [0.6, -0.6]], 4)) + "</g>";
+      /* Schwanzflosse: tief gegabelt */
+      const schwanz = [[-5.2, -4.3], [-6.6, -5.4], [-8.2, -6.4], [-8.7, -6.2, 1], [-8.1, -5.1], [-7.3, -3.7, 1], [-8.1, -2.2], [-8.7, -1, 1], [-8.2, -0.8], [-6.6, -1.8], [-5.2, -2.8]];
+      s += flosse(schwanz, strahlen([[-5.3, -4.2], [-5.3, -3.6]], [[-8.6, -6.2], [-7.4, -3.75]], 9, 0.15) + strahlen([[-5.3, -3.5], [-5.3, -2.9]], [[-7.4, -3.65], [-8.6, -1]], 9, -0.15));
+      /* Rückenflosse: lang, vorn hoch */
+      const ruecken = [[2, -5.9], [1.4, -7.1], [0.9, -7.7, 1], [-0.4, -7.3], [-1.8, -6.6], [-3, -5.9], [-2.8, -5.6], [0, -5.9]];
+      s += flosse(ruecken, strahlen([[1.8, -5.9], [-2.8, -5.7]], [[0.95, -7.65], [-2.9, -5.95]], 12, 0.05));
+      /* Afterflosse, Bauchflosse */
+      s += flosse([[-2, -2.1], [-2.9, -1.2], [-3.9, -0.7, 1], [-3.8, -1.4], [-3.4, -2.3]], strahlen([[-2, -2.1], [-3.4, -2.3]], [[-2.9, -1.2], [-3.85, -0.75]], 5));
+      s += flosse([[1.9, -1.6], [1.2, -0.7], [0.4, 0, 1], [0.5, -0.8], [0.9, -1.6]], strahlen([[1.9, -1.6], [0.9, -1.6]], [[1.2, -0.6], [0.45, -0.05]], 5));
+      /* Körper */
+      const leib = [[6.65, -3.5], [6.2, -4.4], [5.4, -5.05], [3.4, -5.8], [1.6, -6.05], [-1.6, -5.85], [-3.6, -5.1], [-4.8, -4.45], [-5.7, -4.05], [-5.75, -2.95], [-4.8, -2.6],
+        [-2.6, -2], [0.6, -1.55], [2.4, -1.65], [4.4, -2.15], [5.8, -2.75], [6.55, -3.15]];
+      /* Schuppen: Bögen (hinterer Rand) in schrägen Reihen */
+      let schuppen = "";
+      const sw = 0.62;
+      for (let c = 0; c < 18; c++) for (let rI = 0; rI < 9; rI++) {
+        const x = 4 - c * sw * 0.85, y = -6 + rI * sw * 0.72 + (c % 2) * sw * 0.36;
+        if (!T.inPoly(x, y, leib) || x > 4.2) continue;
+        if (!T.fein && (c + rI) % 2) continue;
+        schuppen += `M${folge([x, y - sw * 0.42], 2)}Q${folge([x - sw * 0.55, y], 2)} ${folge([x, y + sw * 0.42], 2)}`;
+      }
+      let glanz = "";
+      if (T.fein) for (let c = 0; c < 16; c++) for (let rI = 0; rI < 4; rI++) {
+        const x = 3.8 - c * sw * 0.85 - 0.12, y = -5.6 + rI * sw * 0.72 + (c % 2) * sw * 0.36;
+        if (!T.inPoly(x, y, leib)) continue;
+        glanz += `M${folge([x - 0.05, y - sw * 0.3], 2)}q${folge([-sw * 0.3, sw * 0.2, -0.02, sw * 0.5], 2)}`;
+      }
+      s += teil(T, leib, T.lg("gold", [[0, "#c2501a"], [0.3, "#e8761e"], [0.62, "#f39a32"], [0.85, "#f8c27a"], [1, "#f6d4a0"]]), {
+        rand: DK, randA: 0.3,
+        innen: `<path d="${schuppen}" fill="none" stroke="#9a3a0a" stroke-width=".05" stroke-opacity=".55"/>` +
+          (glanz ? `<path d="${glanz}" fill="none" stroke="#ffe8b8" stroke-width=".06" stroke-opacity=".5" stroke-linecap="round"/>` : "") +
+          mal(T, "gf", 0.25, T.form([[5.2, -5], [3.2, -5.7], [0, -5.85], [-3, -5.2], [-2.6, -4.7], [0, -5.1], [3, -5], [4.8, -4.3]], "#fff1d0", ` opacity=".45"`) +
+            T.form([[-5.6, -3], [-2.6, -2.1], [0.6, -1.6], [3, -1.8], [3, -2.4], [0, -2.3], [-3, -2.8]], "#ffe6c0", ` opacity=".35"`)) +
+          falte(T, [[4.4, -4.6], [2, -4.3], [-0.5, -4.1], [-3, -3.9], [-5.4, -3.6]], "#8a2e08", 0.06, 0.45) +
+          (T.fein ? `<path d="M3.8 -4.5h.01M3.2 -4.42h.01M2.6 -4.36h.01M2 -4.3h.01M1.4 -4.24h.01M.8 -4.18h.01M.2 -4.12h.01M-.4 -4.06h.01M-1 -4h.01M-1.6 -3.96h.01M-2.2 -3.92h.01M-2.8 -3.86h.01M-3.4 -3.8h.01M-4 -3.72h.01M-4.6 -3.66h.01" stroke="#6a2006" stroke-width=".09" stroke-linecap="round" opacity=".55"/>` : "") +
+          /* Kopf ohne Schuppen, Kiemendeckel */
+          T.form([[6.7, -3.5], [6.2, -4.45], [5.4, -5.1], [4.6, -5.4], [4.3, -4], [4.5, -2.4], [5.8, -2.7], [6.6, -3.1]], "#f08a28") +
+          mal(T, "gk", 0.12, fleck(T, 5.4, -4.7, 0.8, 0.4, "#fff2d8", 0.6)) +
+          falte(T, [[4.7, -5.3], [4.3, -4.4], [4.25, -3.4], [4.55, -2.4]], "#8a2e08", 0.09, 0.7) + falte(T, [[4.9, -5.1], [4.5, -4.3], [4.45, -3.4], [4.75, -2.5]], "#ffd6a0", 0.05, 0.5),
+      });
+      /* Maul */
+      s += `<path d="M6.7 -3.35q-.25 .05 -.5 0" fill="none" stroke="#7a2a08" stroke-width=".05" stroke-linecap="round"/>`;
+      /* Auge: groß, goldene Iris */
+      s += `<circle cx="5.2" cy="-4.05" r=".56" fill="#d8a040"/>` + `<circle cx="5.2" cy="-4.05" r=".5" fill="${T.rg("fiauge", [[0, "#f8d880"], [0.7, "#d09030"], [1, "#7a4a10"]], 0.4, 0.4, 0.6)}"/>` +
+        `<circle cx="5.25" cy="-4.05" r=".27" fill="#050302"/><ellipse cx="5.07" cy="-4.2" rx=".12" ry=".08" fill="#fff" opacity=".9"/><circle cx="5.36" cy="-3.9" r=".04" fill="#fff" opacity=".5"/>`;
+      /* nahe Brustflosse, durchscheinend */
+      s += flosse([[3.6, -2.9], [2.4, -2.2], [1.2, -1.2], [1.6, -2.1], [2.9, -3.1]], strahlen([[3.6, -2.9], [2.9, -3.1]], [[2, -1.8], [1.25, -1.25]], 5), 0.55);
+      return { svg: s, box: [-8.75, -7.75, 6.72, 0] };
     } },
 ];
