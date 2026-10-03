@@ -390,7 +390,7 @@ function tisch(a, b, decke, liste, extra) {
   k += `<path d="M${r(ah)} ${HINT}H${r(bh)}L${b} ${VORN}H${a}Z" fill="${decke}"/>`;
   k += `<path d="M${a} ${VORN}H${b}v2.6H${a}z" fill="${decke === "url(#ger_holzplatte)" ? "#4e2f17" : "#e9e4d8"}"/>`;
   if (extra) k += extra(at);
-  const pos = liste.map(([id, u, w]) => { const [x, y] = at(u, w); return [id, x, y, SK + (1 - SK) * w]; });
+  const pos = liste.map(([id, u, w]) => { const [x, y] = at(u, w); return [id, x, y, 1.22 * (SK + (1 - SK) * w)]; });
   const { g, unter } = gruppe(pos, 16.6, 12.8);
   return { k: k + g, unter };
 }
