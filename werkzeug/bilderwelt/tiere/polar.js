@@ -1394,7 +1394,7 @@ function moschusochse(T) {
   const wuchs = (x, y) => (x > 226 ? 70 : x > 196 ? (y < -100 ? 100 : 90) : x < 44 ? 104 + (44 - x) * 0.8 : y < -118 ? 100 + (x - 150) * 0.12 : 88 + (x - 120) * 0.04);
   const rumpfH = rumpf.filter((p) => p[0] < 226);
   n += locke(rumpfH, 150, wuchs, 14, 0.9);
-  n += strang(rumpfH, 380, wuchs, 10);
+  n += strang(rumpfH, 330, wuchs, 10);
   /* Sattel: kürzere, wolligere, hellere Haare */
   n += fein(T, haare(T, [[82, -126], [104, -129], [130, -137], [124, -126], [100, -120]], 160, 150, 1.6, [["#d8c6a8", 1, 0.09, 0.6], ["#7a6450", 0.7, 0.09, 0.5]], 50, 0.6));
   /* Gesicht: feine, kurze Strichel nach vorn unten */
@@ -1407,6 +1407,13 @@ function moschusochse(T) {
   s += haarSaum(T, [[30, -108], [25.4, -96], [22.6, -82], [21.4, -66], [22.4, -50], [25.6, -36], [30.6, -26]], 90, 5, [["#2a1e16", 1, 0.2, 0.7], ["#4a3526", 0.8, 0.18, 0.6], ["#7a6048", 0.3, 0.14, 0.5]], 1, 0.7);
   /* Rocksaum: unregelmäßig, in der Bauchmitte und an der Brust am längsten, an den Beinen angehoben; einzelne,
      spitz auslaufende Strähnen-Enden (Länge schwankt stark) */
+  /* ---- nahe Beine: helle Strümpfe, kurz, raues Haar nach unten, Fesselgelenk; Rockschatten oben ---- */
+  const sock = verlauf(T, "msock", 0, -21, 0, -5, [[[0, -21], "#6a5c4c"], [[0, -16], "#b0a28a"], [[0, -11], "#c9bca4"], [[0, -5], "#a89a84"]]);
+  const beinN = (x) => bein(x).map(([a, b]) => [a, Math.max(b, -21)]);
+  s += `<g filter="${vol(T, "mbN", { weich: 1.8, tiefe: 3.5 })}">${silhouette(T, vereint(T, [beinN(187), beinN(55)]), sock,
+    haare(T, beinN(187).concat(beinN(55)), 120, 94, 1.3, [["#4a3d31", 1, 0.1, 0.5], ["#efe6d4", 0.8, 0.1, 0.5]], 16, 0.25, 0.1) + weich([[50, -30], [60, -30], [60, -22], [50, -22]], "#0a0705", 0.55, 1.6) + weich([[182, -30], [192, -30], [192, -22], [182, -22]], "#0a0705", 0.55, 1.6))}</g>`;
+  s += huf(188, false, 1.08) + huf(56, false);
+
   {
     /* Strähnen: an der Wurzel breit, lang, leicht gewellt und spitz auslaufend, in zwei Tönen */
     let d1 = "", d2 = "", d3 = "";
@@ -1421,13 +1428,6 @@ function moschusochse(T) {
     }
     s += `<path d="${d1}" fill="#1a120d"/><path d="${d2}" fill="#32241a"/><path d="${d3}" fill="#5a4434"/>`;
   }
-  /* ---- nahe Beine: helle Strümpfe, kurz, raues Haar nach unten, Fesselgelenk; Rockschatten oben ---- */
-  const sock = verlauf(T, "msock", 0, -30, 0, -5, [[[0, -30], "#5a4e40"], [[0, -22], "#b0a28a"], [[0, -12], "#c9bca4"], [[0, -5], "#a89a84"]]);
-  s += `<g filter="${vol(T, "mbN", { weich: 1.8, tiefe: 3.5 })}">${silhouette(T, vereint(T, [bein(187), bein(55)]), sock,
-    haare(T, bein(187).concat(bein(55)), 120, 94, 1.3, [["#4a3d31", 1, 0.1, 0.5], ["#efe6d4", 0.8, 0.1, 0.5]], 16, 0.25, 0.1) + weich([[50, -30], [60, -30], [60, -22], [50, -22]], "#0a0705", 0.55, 1.6) + weich([[182, -30], [192, -30], [192, -22], [182, -22]], "#0a0705", 0.55, 1.6))}</g>`;
-  s += haarSaum(T, [[48, -22], [55, -24], [62, -22]], 18, 4, [["#1e1610", 1, 0.2, 0.75]], -1, 0) + haarSaum(T, [[180, -22], [187, -24], [194, -22]], 18, 4, [["#1e1610", 1, 0.2, 0.75]], -1, 0);
-  s += huf(188, false, 1.08) + huf(56, false);
-
   /* ---- Bart: langes Haar unter Kinn und Kehle geht in die Halsmähne über ---- */
   s += haarSaum(T, [[239, -62.6], [233, -62], [226, -60], [220, -54.4], [214, -45], [208, -36], [200, -28]], 80, 6, [["#1e1610", 1, 0.2, 0.75], ["#3e2e22", 0.7, 0.18, 0.65]], 1, 0.4);
 

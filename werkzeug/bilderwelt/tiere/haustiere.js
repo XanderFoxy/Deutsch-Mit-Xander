@@ -748,7 +748,7 @@ module.exports = [
       const DK = "#2b2118", SCH = "#5e4426", TIEF = "#3a2a18", HELL = "#fff6e4";
       const V = (n, w, t, u) => T.volumen(n, { weich: w, tiefe: t, umgebung: u });
       const FK = fellSatz(T, "k", { L: 0.6, k: 7, w: 0.045, dunkel: "#241a10", od: [0.1, 0.2], mittel: "#8a6a44", om: [0.08, 0.14], hell: "#fff4dc", oh: [0.06, 0.22] });
-      const FKo = fellSatz(T, "o", { L: 0.36, k: 6, w: 0.032, dunkel: "#241a10", od: [0.1, 0.2], hell: "#fff4dc", oh: [0.06, 0.22] });
+      const FKo = fellSatz(T, "o", { L: 0.36, k: 6, w: 0.03, dunkel: "#241a10", od: [0.07, 0.14], hell: "#fff4dc", oh: [0.05, 0.16] });
       const FS = randSatz(T, "s", { L: 0.42, k: 5, w: 0.035, winkel: 20, dunkel: "#8a7050", od: [0.75, 0.95], hell: "#c9b08a", oh: [0.8, 1] });
       const FSc = randSatz(T, "c", { L: 0.5, k: 5, w: 0.035, winkel: 35, dunkel: "#cbb894", od: [0.9], hell: "#ece0c6", oh: [0.95] });
       const FSk = randSatz(T, "kr", { L: 0.62, k: 5, w: 0.04, winkel: 30, dunkel: "#9a8060", od: [0.9], hell: "#c6ae86", oh: [0.95] });
@@ -929,7 +929,6 @@ module.exports = [
           weichform(T, [[15.6, -26.2], [19.6, -25.6], [20.8, -25.2], [16.4, -24.8]], TIEF, 0.3, 0.35) +
           schlag(T, ohrId, 0.25, 0.4, 0.22, TIEF, 0.35) +
           fell(T, kopf, FKo, { n: 125, flow: kflow, licht: klic, hell: 0.5 }),
-        blende: [0, 0.5, 0.2, 0.5, 0.1, 1],
         ueber: saum(T, kopf, FS, { abstand: 0.16, flow: kflow, licht: klic, wo: (x, y) => x > 15.6 && y < -29.5 && x < 22.2 }) +
           /* Backenkrause: Haare nach hinten unten über den Hals */
           saum(T, kopf, FSk, { abstand: 0.13, flow: () => 120, licht: (x, y) => 0.3, wo: (x, y) => (x < 16.6 && y > -32) || (y > -25.4 && x < 21.4) }),

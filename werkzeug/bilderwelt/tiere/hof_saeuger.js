@@ -132,7 +132,7 @@ function flecken(T, glanzFarbe = "#ffe2b8", schattenFarbe = "#000") {
   const warm = T.rg("warm", [[0, glanzFarbe, 0.6], [0.5, glanzFarbe, 0.25], [1, glanzFarbe, 0]]);
   const dunkel = T.rg("dunkel", [[0, schattenFarbe, 0.5], [1, schattenFarbe, 0]]);
   const f = (fill) => (x, y, rx, ry, op = 1, g = 0) => {
-    if (!FEIN && op < 0.45) return "";
+    if (!FEIN && (op < 0.45 || rx * ry < 5)) return "";     // Szene: zarte und winzige Flecken unsichtbar
     const q = Math.min(rx, ry) < 2 ? 0.1 : Math.min(rx, ry) < 6 ? 0.2 : 0.5, X = z(x, q), Y = z(y, q);
     return `<ellipse ${g ? `transform="translate(${folge([X, Y])})rotate(${Math.round(g)})"` : `cx="${X}" cy="${Y}"`} rx="${z(rx, q)}" ry="${z(ry, q)}" fill="${fill}"${op !== 1 ? ` opacity="${kurz(Math.round(op * 100) / 100)}"` : ""}/>`;
   };
@@ -849,8 +849,8 @@ function kuh(T) {
   const weiss = T.lg("weiss", [[0, "#fbf9f5"], [0.3, "#efebe4"], [0.46, "#d9d3c9"], [0.52, "#cfc9be"], [0.6, "#e2ded6"], [0.78, "#ece9e3"], [1, "#dedad2"]], 0, -152, 0, 0, U);
   const fernW = T.lg("fernW", [[0, "#9a968f"], [0.5, "#b8b4ac"], [1, "#aaa69e"]], 0, -90, 0, 0, U);
   const schwarz = "#1c1b1e";
-  const wH = fellMuster(T, "w", 1.4, 80, [["#8a8276", 1, 0.06, 0.2]], 10, 6);
-  const sH = fellMuster(T, "s", 1.2, 80, [["#6a7280", 1, 0.05, 0.16]], 8, 6);
+  const wH = fellMuster(T, "w", 1.4, 64, [["#8a8276", 1, 0.06, 0.2]], 10, 6);
+  const sH = fellMuster(T, "s", 1.2, 64, [["#6a7280", 1, 0.05, 0.16]], 8, 6);
   let s = "";
   /* ---------- ferne Beine: kühler, 20 % dunkler, mit Zylinder-Licht ---------- */
   const fernBein = (vorn, dx) => {
@@ -869,7 +869,7 @@ function kuh(T) {
   const rumpf = K_HB.concat(K_HV.slice(0, 13), euterUnten,
     [[104, -71.2], [116, -69.6], [128, -69], [140, -70], [150, -72.6], [156, -76.4]], K_VB, K_VV,
     /* Triel 6–8 cm vor den Vorderbeinen, Buggelenk, Halsunterlinie zur Ganasche */
-    [[181.4, -78.6], [185, -79.4], [188.6, -82.4], [191.6, -86.6], [193.8, -91.6], [195.4, -96.6], [197.6, -100.6], [200.4, -104], [204, -107], [207.6, -109.4],
+    [[181, -79.6], [184.4, -82.4], [187.8, -86.2], [190.6, -90.8], [192.8, -96], [195.4, -100.6], [198.8, -104.2], [204, -107], [207.6, -109.4],
       [212, -112.4], [218, -118], [224, -125], [227, -130.6],
       /* Hals fällt vom Widerrist leicht zum Genick; Widerrist leicht erhaben; gerader Rücken; Hüfthöcker als Buckel; Kruppe fällt zum Sitzbeinhöcker */
       [224, -133], [218, -134.4], [208, -137.6], [194, -142.4], [180, -146.6], [170, -149.2], [164, -149.4], [156, -148.2], [144, -147.4], [128, -147.2],
@@ -901,7 +901,7 @@ function kuh(T) {
     /* Platten mit Haarsaum und Fell */
     platten.map((p) => form(T.fein ? p : vieleck(p), schwarz, "", 0.3)).join("") +
     fein(T, platten.map((p) => fellZone(T, sH, p, p === p1 ? 112 : p === p2 ? 160 : 100, 1)).join("")) +
-    fein(T, platten.map((p, i) => { const r = p.concat([p[0]]), n = i < 3 ? 36 : 12;
+    fein(T, platten.map((p, i) => { const r = p.concat([p[0]]), n = i < 3 ? 32 : 10;
       return saum2(T, r, n, wuchs, 1.6, schwarz, 0.07, 0.75, { streuung: 30 }) + saum2(T, r, Math.round(n * 0.5), wuchs, 1.5, "#f2eee6", 0.07, 0.7, { streuung: 30 }); }).join("")) +
     /* Glanz auf Schwarz: breite Bänder in Haarrichtung */
     F.licht(40, -148, 20, 1.8, 0.35, 10) + F.licht(110, -150, 22, 1.8, 0.3, 2) + F.licht(186, -146, 20, 1.6, 0.3, 14) + F.licht(160, -130, 2, 12, 0.22, -30) +
@@ -922,8 +922,7 @@ function kuh(T) {
     /* Läufe als Zylinder: Licht links, Kernschatten rechts; Sehne; Fersenhöcker; Achillessehne; Vorderfußwurzel */
     [K_HCX, K_VCX].map((cx) => F.licht(cx - 2.6, -30, 1.8, 12, 0.7) + F.schatten(cx + 3.6, -30, 1.6, 12, 0.3) + F.rinne(cx - 1, -36, cx - 1, -20, 0.6, 0.3)).join("") +
     F.licht(K_HCX - 7.8, -45.6, 1.2, 1.6, 0.55) + F.kante(K_HCX - 5, -63, K_HCX - 7, -48, 0.8, 0.55) + F.rinne(K_HCX - 2.6, -62, K_HCX - 4.4, -48, 0.7, 0.35) +
-    F.licht(K_VCX - 5.6, -40.6, 1.2, 1.6, 0.5) + F.licht(K_VCX - 3, -60, 2.4, 10, 0.45) + F.schatten(K_VCX, -78, 9, 5, 0.35) +
-    wirbel(T, 84, -112, 3, 24, "#8a8276", 0.08, 0.45, 1.6);
+    F.licht(K_VCX - 5.6, -40.6, 1.2, 1.6, 0.5) + F.licht(K_VCX - 3, -60, 2.4, 10, 0.45) + F.schatten(K_VCX, -78, 9, 5, 0.35);
   s += vol(T, "rumpf", 5, stueck(T, rumpf, weiss, innen, { licht: 1.6, dunkel: 0.3, hell: 0.5, q: T.fein ? 0.2 : 0.5 }), { dunkel: 0.4, hell: 0.25 });
   const rk = T._clip;
   s += klK(K_HCX, "#4e4b47") + klK(K_VCX, "#4e4b47");
@@ -935,14 +934,14 @@ function kuh(T) {
   const schwanz = [[27.6, -142.8], [24, -142.4], [21.4, -139.6], [20, -133], [19.4, -122], [19.4, -106], [19.8, -90], [20.2, -77], [22.8, -77], [22.8, -90],
     [22.6, -106], [22.8, -122], [23.6, -131], [25.6, -136.4], [28.2, -138.8]];
   s += stueck(T, schwanz, T.lg("schw", [[0, schwarz], [0.48, "#26252a"], [0.56, "#e8e4dc"], [1, "#d4cfc6"]], 0, -144, 0, -77, U),
-    fein(T, saum2(T, [[19.6, -104], [22.6, -104]], 16, 92, 2.4, schwarz, 0.08, 0.8, { streuung: 10 })) + F.kante(20.4, -130, 20.2, -82, 0.6, 0.35) +
+    F.kante(20.4, -130, 20.2, -82, 0.6, 0.35) +
     F.schatten(22.6, -110, 0.8, 26, 0.3), { licht: 0.7, dunkel: 0.5, hell: 0.3 });
   /* Quaste: kein Löffel – dichter Kern ohne Kante, darüber lange, gewellte Strähnen, unten ausgefranst, 15 % grau */
   const quaste = [[19.4, -80], [22.8, -80], [24.2, -70], [24.6, -60], [23.6, -52], [21.2, -48], [18.8, -52], [17.8, -60], [18.2, -70]];
   const qAchse = [[20.4, -84], [21, -70], [21.2, -56], [21.2, -50]];
   s += form(quaste, T.lg("qu", [[0, "#f2efe8"], [1, "#cdc7bd"]], 0, 0, 1, 0), "", 0.2) +
-    saum2(T, qAchse, 46, (x, y) => 90 + (y + 66) * 0.4, 12, "#b0a89c", 0.1, 0.7, { ab: 0, streuung: 16, szene: 0.25 }) +
-    saum2(T, qAchse, 96, (x, y) => 90 + (y + 66) * 0.4, 12.5, "#f6f3ec", 0.1, 0.85, { ab: 0, streuung: 14, szene: 0.25 }) +
+    saum2(T, qAchse, 36, (x, y) => 90 + (y + 66) * 0.4, 12, "#b0a89c", 0.1, 0.7, { ab: 0, streuung: 16, szene: 0.25 }) +
+    saum2(T, qAchse, 82, (x, y) => 90 + (y + 66) * 0.4, 12.5, "#f6f3ec", 0.1, 0.85, { ab: 0, streuung: 14, szene: 0.25 }) +
     F.schatten(23.4, -58, 1.6, 10, 0.3);
   /* ---------- Kopf: Achse Genick → Flotzmaul, 56° geneigt, 53 cm ---------- */
   const G = [227, -131], W = 56, K = (pts) => dreh(pts, G[0], G[1], W), P = (x, y) => K([[x, y]])[0];
@@ -958,7 +957,7 @@ function kuh(T) {
   const flotz = K([[45, -5.8], [49.6, -4], [51.8, -1.4], [53.4, 3], [53.8, 7.4], [53.2, 11], [51.8, 13.2], [48.6, 12.8], [46.2, 8], [44.8, 2]]);
   const kInnen =
     fellZone(T, sH, kopf, W - 180, 0.9) + form(blesse, "#f3efe8", "", 0.1) + fellZone(T, wH, blesse, W - 180, 0.9) +
-    saum2(T, blesse.concat([blesse[0]]), 40, W - 180, 1.2, schwarz, 0.06, 0.7, { streuung: 30 }) +
+    saum2(T, blesse.concat([blesse[0]]), 30, W - 180, 1.2, schwarz, 0.06, 0.7, { streuung: 30 }) +
     wirbel(T, ...P(9, -5.4), 2, 20, "#9a958c", 0.07, 0.6, 1.1) +
     /* Stirn breit-flach im Licht; Augenbogen; Kaumuskel (Licht oben, Kernschatten am Unterkieferrand); Ganasche; Gesichtsleiste */
     F.licht(...P(20, -4.6), 14, 2.4, 0.25, W) + F.licht(...P(12, 13), 8.6, 6, 0.2, W) + F.schatten(...P(15, 23), 10, 2.6, 0.55, W) +
@@ -990,10 +989,10 @@ function kuh(T) {
   s += imRumpf(rk, F.schatten(OX[0] - 10, OX[1] + 4.6, 11, 3, 0.45, 18));
   s += stueck(T, ohrA, schwarz, form(ohrI, T.lg("ohri", [[0, "#2a2628"], [1, "#6e6668"]], 1, 0, 0, 0), "", 0.05) +
     F.schatten(...dreh([[10, -0.6]], OX[0], OX[1], OW)[0], 8, 1.6, 0.5, OW) +
-    haare2(T, ohrI, 36, OW + 196, 3.8, { farben: [["#f4f0e8", 1, 0.06, 0.85]], streuung: 14, kruemmung: 0.2, szene: 0.3 }) +
+    haare2(T, ohrI, 28, OW + 196, 3.8, { farben: [["#f4f0e8", 1, 0.06, 0.85]], streuung: 14, kruemmung: 0.2, szene: 0.3 }) +
     F.licht(...dreh([[11, 4.6]], OX[0], OX[1], OW)[0], 8, 1, 0.5, OW) + F.licht(...dreh([[2, 0]], OX[0], OX[1], OW)[0], 2.4, 3.6, 0.25, OW),
     { licht: 0.5, dunkel: 0.4, hell: 0.4, hellFarbe: "#c8ccd8", q: 0.05 });
-  s += saum2(T, dreh([[3, -3.4], [10, -4.6], [17, -3.8], [21.6, -1.4]], OX[0], OX[1], OW), 24, OW + 200, 3.2, "#f4f0e8", 0.06, 0.8, { ab: 0.2, streuung: 18 });
+  s += saum2(T, dreh([[3, -3.4], [10, -4.6], [17, -3.8], [21.6, -1.4]], OX[0], OX[1], OW), 18, OW + 200, 3.2, "#f4f0e8", 0.06, 0.8, { ab: 0.2, streuung: 18 });
   /* Ohrmarke (gelb, Pflicht), etwas kleiner */
   const m = dreh([[6, 0.6], [6, -2.8]], OX[0], OX[1], OW);
   s += strich([m[0], m[1]], "#d8a800", 0.5, 0.95, 0.05);

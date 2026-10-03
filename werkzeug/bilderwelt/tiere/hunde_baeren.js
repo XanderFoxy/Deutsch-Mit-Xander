@@ -90,10 +90,24 @@ function volumen(T, w, tiefe, amb) {
    Gruppe mit Licht-Filter (Rundung, Licht links oben, Kernschatten unten entstehen aus der eigenen Silhouette).
    o.weich = 20–30 % der Teildicke (cm); o.einblenden = [y0, y1] → oberer Rand weich ausgeblendet (Bein wächst aus dem Rumpf),
    o.einblendenX = [x0, x1] → linker Rand weich (Kopf wächst aus dem Hals). Liefert { svg, id }. */
+/* glatte geschlossene Kurve wie T.glatt, aber relativ in Zehntel-cm (Pfad bekommt scale(.1)) – ≈ 35 % kürzer */
+function glattR(pts) {
+  const n = pts.length, P = (i) => pts[(i + n) % n];
+  let cx = G(pts[0][0]), cy = G(pts[0][1]), d = `M${cx} ${cy}`;
+  for (let i = 0; i < n; i++) {
+    const p0 = P(i - 1), p1 = P(i), p2 = P(i + 1), p3 = P(i + 2);
+    const c1 = p1[2] ? p1 : [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2 = p2[2] ? p2 : [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    const ex = G(p2[0]), ey = G(p2[1]);
+    d += `c${G(c1[0]) - cx} ${G(c1[1]) - cy} ${G(c2[0]) - cx} ${G(c2[1]) - cy} ${ex - cx} ${ey - cy}`;
+    cx = ex; cy = ey;
+  }
+  return d + "z";
+}
 function teil(T, name, pts, fill, innen = "", aussen = "", o = {}) {
-  const d = typeof pts === "string" ? pts : T.glatt(gleich(pts));
   const id = T.id("t" + name);
-  T.def(`<path id="${id}" d="${d}"/><clipPath id="${id}c"><use href="#${id}"/></clipPath>`);
+  if (typeof pts === "string") T.def(`<path id="${id}" d="${pts}"/><clipPath id="${id}c"><use href="#${id}"/></clipPath>`);
+  else T.def(`<path id="${id}" transform="scale(.1)" d="${glattR(gleich(pts))}"/><clipPath id="${id}c"><use href="#${id}"/></clipPath>`);
   let k = `<use href="#${id}" fill="${fill}"/>` + (innen ? `<g clip-path="url(#${id}c)">${innen}</g>` : "") + (o.ueber ? `<use href="#${id}" fill="${o.ueber}"/>` : "") + aussen;
   const mb = o.box || [-300, -400, 400, 50];
   /* erst Licht-Filter (sieht die volle Form), DANN die Ausblend-Maske – sonst entstünde am weichen Rand ein heller Lichtsaum */
@@ -398,7 +412,7 @@ function wolf(T) {
     [63.6, -53.6], [62.4, -47.6], [60, -41.6], [55.4, -36], [51, -31.6], [46, -30.4], [41.6, -32],                       // Kniefalte, Knie, Unterschenkel läuft aus
     [38.6, -38.4], [35.6, -48.4], [34.2, -57], [34.8, -65.4],                                                            // Hinterbacke, Sitzbeinecke
   ];
-  const kopf = [[128, -82], [129.4, -87.6], [133, -89.6], [135.4, -89.4], [138.4, -91.6], [142.6, -92.8], [147, -92], [150.4, -90], [152.8, -87.4, 1], [156, -86.2], [160, -84.8], [163.4, -83.7],
+  const kopf = [[128, -82], [129.4, -84.4], [133, -87], [135.4, -89.4], [138.4, -91.6], [142.6, -92.8], [147, -92], [150.4, -90], [152.8, -87.4, 1], [156, -86.2], [160, -84.8], [163.4, -83.7],
     [165.2, -82.4], [165.2, -80.4], [163.8, -79.2], [162.8, -78.4], [162.2, -77.4, 1], [160, -76.6], [155, -75.9], [150, -75.2], [145.6, -74], [141, -73.4], [136, -74.6], [131, -76.6]];
   /* nahe Läufe (unter dem Rumpf): Vorderlauf mit Handwurzel + Karpalballen, Vordermittelfuß ≈ 12° vorgeneigt */
   const vbN = [[111, -44], [108.8, -36.4], [109.6, -28], [110.2, -21.4], [109.6, -18.6], [110.6, -15.8], [111.4, -11], [112.6, -6.6]]
@@ -530,7 +544,7 @@ function fuchs(T) {
     [33.6, -23.8], [32.8, -20.4], [31, -16.8], [28.6, -14.2], [26, -13.4], [23.6, -14.6],                                                         // Knie, Unterschenkel läuft aus
     [22.2, -18.4], [21.6, -24.2], [22, -29.6], [23.2, -33.4],                                                                                     // Hose hinten
   ];
-  const kopf = [[74.4, -40.4], [75, -44.6], [77, -46.4], [79.4, -46.4], [80.6, -47.6], [82.6, -48.8], [85.2, -49.1], [87.6, -48.3], [89, -46.6, 1], [91.4, -45.4], [94, -44.1], [95.8, -43.3],
+  const kopf = [[74.4, -40.4], [74.6, -41.8], [77, -43.8], [79.4, -45.2], [80.6, -47.2], [82.6, -48.8], [85.2, -49.1], [87.6, -48.3], [89, -46.6, 1], [91.4, -45.4], [94, -44.1], [95.8, -43.3],
     [97.2, -42.3], [97.7, -40.9], [96.9, -40], [95.6, -39.6], [94.9, -38.8, 1], [92.6, -38.2], [89.4, -37.7], [86, -37.3], [83, -37.4], [80.4, -38.2], [77.6, -39.4]];
   const vbN = [[63.4, -21.6], [62.2, -17], [62.6, -13], [63, -9.6], [62.8, -8], [63.4, -6.6], [63.8, -4.2], [64.4, -2.6]].concat(pfoteZ(66, 5.8, 2.7),
     [[67.1, -3.2], [66.9, -5.4], [67.2, -7.2], [67.6, -8.8], [67.6, -12], [68.2, -16], [69.8, -20], [70.4, -23]]);

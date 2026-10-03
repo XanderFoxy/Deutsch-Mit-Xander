@@ -953,8 +953,8 @@ function elch(T) {
       H.haare(Q, 18, 93, 1.4, [["#140e0a", 1, 0.1, 0.35]], { streu: 10, spitze: ["#9a8e80", 0.5, 0.08, 0.35] }), { rand: false });
   };
   s += H.vol("bein", 2, fernBein(fH, [[38, -128], [76, -128]], laufH(fH[5][0] - 51.4, 0.6), 54) + fernBein(fV, [[148, -112], [170, -112]], laufV(-11, 0.6), 165), { tiefe: 3 }) + fernDet;
-  s += after(fH[14][0] - 0.6, 0) + after(fV[13][0] - 0.6, 0);
-  s += H.schale(fH[13][0] - 0.4, fH[10][0] + 2.4, 7.4, { farbe: "#2a2420", fern: "#14100e", haar: "#8a8278" }) + H.schale(fV[12][0] - 0.4, fV[9][0] + 2.4, 7.6, { farbe: "#2a2420", fern: "#14100e", haar: "#8a8278" });
+  s += after(fH[14][0] + 0.8, 0) + after(fV[13][0] + 0.8, 0);
+  s += H.schale(fH[13][0] - 5.2, fH[12][0] + 3.0, 7.4, { farbe: "#2a2420", fern: "#14100e", haar: "#8a8278" }) + H.schale(fV[12][0] - 5.2, fV[11][0] + 3.0, 7.6, { farbe: "#2a2420", fern: "#14100e", haar: "#8a8278" });
   /* ferne Schaufel und kurzer Wedel (unter der Kruppenkante) */
   const schB = K(10.6, -8.4), ohrB = K(3.4, -6.6);
   s += schaufel(schB[0] + 14, schB[1] - 6, 0.7, 8, true);
@@ -992,7 +992,7 @@ function elch(T) {
   };
   const [BV, lv] = laufN([[158, -110], [184, -110]].concat(vorne), 177), [BH, lh] = laufN([[30, -132], [76, -132]].concat(hinten), 48);
   s += `<g mask="${H.maskeY("b", -112, -100)}">` + H.vol("bein", 2, lv + lh, { tiefe: 3 }) + BV.clip(laufV(0, 1)) + BH.clip(laufH(0, 1)) + `</g>`;
-  s += after(43.8, 1) + after(170.8, 1);
+  s += after(47.2, 1) + after(174.4, 1);
   s += H.schale(47.4, 61.6, 7.4, { haar: "#a8a094" }) + H.schale(174.4, 188.6, 7.6, { haar: "#a8a094" });
   /* ---- Glocke (Wamme): flacher Hautlappen, oben breit an der Kehle, unten schmaler, lange Haarquaste; Lichtkante vorn ---- */
   const wamme = [[183.4, -144.6], [188.8, -139.6], [190.8, -130], [190.4, -120], [188.6, -110], [186.4, -102], [184.2, -100], [182.6, -106], [181.6, -120], [180.6, -134]];
