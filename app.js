@@ -1968,6 +1968,16 @@
 
   function wechsleLernraum(raum, merken) {
     if (!ExerciseData.setLernraum) return;
+    /* FASSUNG 850 — die Daten des Italienisch-Raums kommen erst beim Betreten
+       (data-italienisch.js). Bis sie da sind, bleibt alles, wie es ist; danach
+       geht der Wechsel weiter wie bisher. */
+    if (raum === "it" && ExerciseData.italienischDa && !ExerciseData.italienischDa()) {
+      ExerciseData.ladeItalienisch().then((ok) => {
+        if (ok) wechsleLernraum(raum, merken);
+        else showToast("🇮🇹 Der Italienisch-Raum konnte nicht geladen werden – bitte noch einmal versuchen.");
+      });
+      return;
+    }
     ExerciseData.setLernraum(raum);
     document.body.classList.toggle("lernraum-it", raum === "it");
     zeigeLernraumBanner();

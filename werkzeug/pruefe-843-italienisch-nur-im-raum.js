@@ -144,8 +144,10 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
   /* ---------------------------------------------------------------- 3 */
   console.log("\n3 · DER ITALIENISCHRAUM BLEIBT\n");
   const s2 = await neueSeite();
-  await s2.pg.evaluate(() => {
+  await s2.pg.evaluate(async () => {
     window.__owner = true;
+    /* FASSUNG 850: die Daten des Italienisch-Raums kommen erst beim Betreten */
+    if (ExerciseData.ladeItalienisch) await ExerciseData.ladeItalienisch();
     ExerciseData.setLernraum("it");
     document.body.classList.add("lernraum-it");
   });

@@ -121,8 +121,10 @@ const sage = (gut, was, zusatz) => {
       text: p ? p.textContent : ""
     };
   });
-  const lernraum = (raum, owner) => pg.evaluate(([raum, owner]) => {
+  const lernraum = (raum, owner) => pg.evaluate(async ([raum, owner]) => {
     window.__owner = owner;
+    /* FASSUNG 850: die Daten des Italienisch-Raums kommen erst beim Betreten */
+    if (raum === "it" && ExerciseData.ladeItalienisch) await ExerciseData.ladeItalienisch();
     ExerciseData.setLernraum(raum);
     document.body.classList.toggle("lernraum-it", raum === "it");
     window.__rufe = [];

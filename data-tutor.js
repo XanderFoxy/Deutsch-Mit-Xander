@@ -286,7 +286,7 @@ window.DMA_TUTOR_BEREICHE = {
      abgeglichen mit den Ueberschriften, die renderKompass wirklich
      zeichnet. */
   "sub-kompass": {
-    ton: "b-kompass2",
+    ton: "", tonGeplant: "b-kompass2",   /* FASSUNG 850 — nie aufgenommen: jeder Besuch holte eine Datei, die es nicht gibt (404). Läuft nach Lesezeit wie bisher. */
     text: "Der Kompass ist zum Lesen da, und er hat sieben Bereiche. "
       + "In „Es war einmal in Deutschland“ findest du jeden Tag eine neue Geschichte, passend zum Datum: das bekannteste historische Ereignis in Deutschland an genau diesem Tag. Das ist deine Leseübung — in jedem Sprachniveau und in viele Sprachen übersetzt. "
       + "Bei „Dichter und Denker“ geht es um berühmte Deutsche. "
@@ -296,15 +296,15 @@ window.DMA_TUTOR_BEREICHE = {
       + "Und „Kleine Wörter, große Wirkung“ sind die Wörtchen wie doch, mal, eben oder halt — die stehen in keiner Regel, aber ohne sie klingt kein Satz deutsch.",
   },
   "sub-tips": {
-    ton: "b-schwarm2",
+    ton: "", tonGeplant: "b-schwarm2",   /* FASSUNG 850 — nie aufgenommen: jeder Besuch holte eine Datei, die es nicht gibt (404). Läuft nach Lesezeit wie bisher. */
     text: "Das Schwarmwissen ist gesammeltes Wissen von den Leuten selbst. Hier zeigen sie einander, was ihnen beim Lernen geholfen hat oder gerade hilft — damit dieses Wissen in der Gemeinschaft bleibt und nicht jeder bei null anfängt. Keine Ratschläge von oben herab, sondern Erfahrungen von Leuten, die denselben Weg gehen.",
   },
   "sub-community": {
-    ton: "b-beitraege",
+    ton: "", tonGeplant: "b-beitraege",   /* FASSUNG 850 — nie aufgenommen: jeder Besuch holte eine Datei, die es nicht gibt (404). Läuft nach Lesezeit wie bisher. */
     text: "Bei den eigenen Beiträgen kannst du selbst etwas zur Verfügung stellen, und zwar in allen Sprachniveaus. Andere lesen es, kommentieren und mögen es. Wenn du etwas herausgefunden hast, das dir keiner gesagt hat: schreib es auf, dann muss der Nächste nicht suchen.",
   },
   "sub-dialekt": {
-    ton: "b-dialekt2",
+    ton: "", tonGeplant: "b-dialekt2",   /* FASSUNG 850 — nie aufgenommen: jeder Besuch holte eine Datei, die es nicht gibt (404). Läuft nach Lesezeit wie bisher. */
     text: "Dasselbe Ding, sieben Namen. Hier siehst du, wie ein Wort in Bayern heißt, bei den Schwaben, in Sachsen, im Ruhrgebiet, in Berlin, in Österreich und in der Schweiz. Hochdeutsch lernst du im Kurs — verstanden wirst du erst, wenn du den Rest auch kennst.",
   },
   "sub-livechat": {
@@ -338,27 +338,27 @@ window.DMA_TUTOR_BEREICHE = {
     ],
   },
   "sub-music": {
-    ton: "b-musik",
+    ton: "", tonGeplant: "b-musik",   /* FASSUNG 850 — nie aufgenommen: jeder Besuch holte eine Datei, die es nicht gibt (404). Läuft nach Lesezeit wie bisher. */
     text: "Der Musikplayer läuft nebenher, während du übst. Deutsche Lieder zum Mitlesen — Musik bleibt besser hängen als eine Liste, das ist keine Meinung, das merkt man.",
   },
   "sub-wegweiser": {
-    ton: "b-wegweiser",
+    ton: "", tonGeplant: "b-wegweiser",   /* FASSUNG 850 — nie aufgenommen: jeder Besuch holte eine Datei, die es nicht gibt (404). Läuft nach Lesezeit wie bisher. */
     text: "Der Wegweiser zeigt dir für alle deutschsprachigen Länder, wie du ankommst und dich einlebst — Deutschland, Österreich, die Schweiz. Acht Bereiche, jeder mit den Schritten der Reihe nach, den geprüften Quellen und den Tipps und Tricks, die dir sonst keiner sagt. Zu finden ist das alles auch woanders; hier steht es an einer Stelle und kurz.",
   },
   "sub-feste": {
-    ton: "b-feste",
+    ton: "", tonGeplant: "b-feste",   /* FASSUNG 850 — nie aufgenommen: jeder Besuch holte eine Datei, die es nicht gibt (404). Läuft nach Lesezeit wie bisher. */
     text: "Wie in Deutschland gefeiert wird und welche Feiertage es gibt — und vor allem: ob ein Tag ein gesetzlicher Feiertag ist, ob es nur Brauch ist, und in welchem Bundesland er überhaupt gilt. Dazu das Ungeschriebene: Pünktlichkeit, Ruhezeiten, Mülltrennung, Pfand, Behörden und Vereine.",
   },
   "sub-album": {
-    ton: "b-album",
+    ton: "", tonGeplant: "b-album",   /* FASSUNG 850 — nie aufgenommen: jeder Besuch holte eine Datei, die es nicht gibt (404). Läuft nach Lesezeit wie bisher. */
     text: "Im Sticker-Album stehen alle Füchse, die du gesammelt hast. Jeder Fuchs ist eine Belohnung für etwas, das du geschafft hast — und man sieht auf einen Blick, was noch fehlt. Das ist der ganze Sinn: fleißig sein lohnt sich sichtbar.",
   },
   "sub-friends": {
-    ton: "b-freunde",
+    ton: "", tonGeplant: "b-freunde",   /* FASSUNG 850 — nie aufgenommen: jeder Besuch holte eine Datei, die es nicht gibt (404). Läuft nach Lesezeit wie bisher. */
     text: "Hier findest du Freunde, verbindest dich mit ihnen und forderst sie zu Duellen heraus — gleiche Fragen, getrennt gespielt, danach wird verglichen. Du kannst auch Leute einladen, die noch nicht dabei sind; dafür bekommst du Punkte. Und Punkte bringen dich im Rang weiter.",
   },
   "sub-settings": {
-    ton: "b-einstellungen",
+    ton: "", tonGeplant: "b-einstellungen",   /* FASSUNG 850 — nie aufgenommen: jeder Besuch holte eine Datei, die es nicht gibt (404). Läuft nach Lesezeit wie bisher. */
     text: "In den Einstellungen findest du alles, was die Seite an dich anpasst: die Sprache der Erklärungen, ob die Umgangssprache oder die Wörterbuchform oben steht, ob die Betonung auf der ganzen Seite angezeigt wird, ob du Beta-Tester werden möchtest — und ob ich hier überhaupt auftauche. Als Foto oder als Comic, ganz wie du magst.",
   },
 };

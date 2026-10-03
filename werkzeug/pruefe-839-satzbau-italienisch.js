@@ -613,6 +613,8 @@ async function oberflaeche() {
   const italienischRaum = async (pg, owner) => pg.evaluate(async (owner) => {
     Backend.isOwner = () => owner;
     Backend.currentUser = () => ({ id: "xander" });
+    /* FASSUNG 850: die Daten des Italienisch-Raums kommen erst beim Betreten */
+    if (ExerciseData.ladeItalienisch) await ExerciseData.ladeItalienisch();
     if (typeof window.__dmaLernraum === "function") window.__dmaLernraum("it");
     else ExerciseData.setLernraum("it");
     document.body.classList.add("lernraum-it");

@@ -9,7 +9,6 @@
  "data-beitraege.js": "dc2277c6fd8b6b0f298bc59298b9968b828400ce",
  "data-dialekt.js": "d0957b47a3831db51dcad31a9ab849334d4471bf",
  "data-dialoge.js": "0990ba60d4d4a783f5c97ff690dd6e7dfbaab86f",
- "data-exercises.js": "082a749782abb7fb3db4d33c9643da28faaef996",
  "data-feste.js": "2bfbeea38df7896adbfcc9509a3577cbfe028138",
  "data-grossgeschenke.js": "11c032bdea7b9b2fbf4376af469d0a11dee5f510",
  "data-history-extra.js": "2396d882d67c0a6af90af3ed479528b518979ded",
@@ -50,9 +49,11 @@
  "backend.js": "c6b366da16e1a5ec6e9a4f97c52686c9c151c7ed",
  "korrekturen.css": "c1456e499871381e8578d99582982bfe530a02ee",
  "data-lesetexte.js": "3896db02514c24a24d57d055e51b388a8730fd3b",
- "data-tutor.js": "4fc6adcf2822fa09a7a82fb2dd7aa73e8c2b6642",
- "app.js": "eb5f7d9337e54ce2bf19b7d04930ce3e2d423527",
  "livechat.js": "bd311610c24aa6e49f027177690e9e46a435e82b",
  "spiel.js": "3ed8ffe780b33b144ad8b6c790955341fc899769",
- "data-werkstatt.js": "2e581d335c5994ce47deaca59899de18e406e2f9"
+ "data-werkstatt.js": "2e581d335c5994ce47deaca59899de18e406e2f9",
+ "app.js": "51fb9d5e2fbdf37e903ff7795c69de2a41dd5f91",
+ "data-exercises.js": "e21006849b6c9ad63a952d939d5c85bff9d0d9d5",
+ "data-italienisch.js": "705ae2d7e61ddf90c9fd83e7c653602b299bd710",
+ "data-tutor.js": "8ac5d581188aabfe22784be7260db93d01265aba"
 }
