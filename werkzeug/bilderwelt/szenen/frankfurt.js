@@ -261,7 +261,7 @@ const lappen = (lx, ly, lr, f, n = 8) => { const p = []; for (let i = 0; i < n; 
    Lichtballen links (Sonne), Himmelslöcher; Stamm mit Plattenborke */
 const platane = (x, fuss, s, hoch, breit, himmel = "#a9c6e0", nb = 15) => {
   let g = "";
-  const st = 0.45 * s;
+  const st = 0.28 * s;
   /* Stamm und zwei Hauptäste */
   g += `<path d="M${r(x - st)} ${r(fuss)} C${r(x - st * 0.9)} ${r(fuss - hoch * 0.25)} ${r(x - st * 0.6)} ${r(fuss - hoch * 0.4)} ${r(x - st * 1.8)} ${r(fuss - hoch * 0.62)} L${r(x - st * 1.1)} ${r(fuss - hoch * 0.64)} C${r(x - st * 0.2)} ${r(fuss - hoch * 0.48)} ${r(x + st * 0.2)} ${r(fuss - hoch * 0.48)} ${r(x + st * 1.4)} ${r(fuss - hoch * 0.66)} L${r(x + st * 2)} ${r(fuss - hoch * 0.63)} C${r(x + st * 0.8)} ${r(fuss - hoch * 0.4)} ${r(x + st * 0.9)} ${r(fuss - hoch * 0.25)} ${r(x + st)} ${r(fuss)} Z" fill="${S.lg("rinde", [[0, "#8f8a74"], [0.45, "#6f6a58"], [1, "#4a4639"]], 0, 0, 1, 0)}"/>`;
   /* Plattenborke: unregelmäßige Flecken in Oliv, Creme und Grau */

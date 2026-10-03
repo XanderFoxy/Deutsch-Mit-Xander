@@ -66,6 +66,12 @@
    - RUNDE 4: Joggerin mit Hund auf dem Uferweg (Morgen), Picknick in echter
      Zentralperspektive (Fluchtpunkt auf dem Horizont), Glaswände innerhalb der
      Schalenöffnungen. UNSICHER: Lage der Glaswand des Konzertsaals im Blick.
+   - RUNDE 5: neues Wort „der Hund“ (Kelpie: australischer Hütehund, Stehohren,
+     buschige Rute, lohfarbene Abzeichen; UNSICHER: Farbschlag). Port-Jackson-
+     Feige mit Stützwurzeln, die zum Boden hin breiter werden; Tafoni als Gruppen
+     unregelmäßiger Höhlen im Hawkesbury-Sandstein; Felstümpel mit Napfschnecken.
+     Fliesen der Opernschalen als Rautenraster aus glänzenden und matten Kacheln
+     (≈ 1 Million Fliesen, zwei Sorten; UNSICHER: Muster in dieser Entfernung).
    Maßstab: Bild 34° breit (≈ 11,9 Einheiten je Grad), Augenhöhe y = 146
    (6 m über dem Wasser). Ferne Dinge werden mit einer echten
    Zentralprojektion gesetzt (proj), ihre Spiegelbilder mit derselben

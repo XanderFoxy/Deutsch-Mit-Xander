@@ -68,8 +68,18 @@ const HOR = 182, F = 640, EYE = 1.7, CX = 200;
 const sk = (D) => F / D;
 const yG = (D, h = 0) => HOR + (EYE - h) * F / D;
 const xG = (D, X) => CX + X * F / D;
+const schattenListe = [];
+/* Sonne im Südwesten, etwa 28° hoch: Schatten 1,9 × so lang wie das Ding hoch ist, nach Nordosten (rechts hinten) */
+const bodenSchatten = (D, X, w, h, a = 0.3) => {
+  const L = 1.9 * h, dx = 0.6 * L, dz = 0.8 * L;
+  const p = [[X - w / 2, D], [X + w / 2, D], [X + dx + w * 0.3, D + dz], [X + dx - w * 0.3, D + dz]];
+  schattenListe.push(`<path d="M${p.map(([x2, d2]) => `${r(Math.min(400, Math.max(0, xG(d2, x2))))} ${r(yG(d2))}`).join(" L")} Z" fill="#3b3020" opacity="${a}"/>`);
+};
 /* Figuren klein halten: Koordinaten ganzzahlig (1 cm) — bei dieser Größe unsichtbar */
+/* feine Nähte und Falten (dünne Linien ohne Füllung) sieht man in dieser Größe nicht — weg damit */
+const schlank = (svg, min = 0.35) => svg.replace(/<path [^>]*fill="none"[^>]*\/>/g, (p) => { const m = p.match(/stroke-width="([\d.]+)"/); return m && +m[1] < min ? "" : p; });
 const kompakt = (svg, Q = 1) => {
+  svg = schlank(svg);
   const rund = (n) => { const v = Math.round(+n / Q) * Q; return String(v === 0 ? 0 : v); };
   return svg.replace(/ d="([^"]+)"/g, (a, p) => ` d="${p.replace(/-?\d*\.?\d+/g, rund)}"`)
     .replace(/ (x|y|x1|y1|x2|y2|cx|cy|fx|fy)="(-?\d*\.?\d+)"/g, (a, k, n) => ` ${k}="${rund(n)}"`);
@@ -138,10 +148,14 @@ S.hinten(`<rect x="0" y="${HOR - 2}" width="400" height="${260 - HOR + 2}" fill=
   const krone = (cx, cy, w, h, seed, herbst) => {
     const z = zufall(seed);
     let g = "";
-    const N = Math.round(w * h / 140);
+    const N = Math.round(w * h / 110);
     const bueschel = [];
     for (let i = 0; i < N; i++) { const a = z() * Math.PI * 2, d = Math.sqrt(z()) * 0.92; bueschel.push([cx + Math.cos(a) * d * w / 2, cy + Math.sin(a) * d * h / 2, 5 + z() * 4, z() < herbst]); }
     bueschel.sort((p, q) => p[1] - q[1]);
+    /* geschlossene Grundmasse der Krone (dunkel), damit keine Löcher bleiben */
+    let basis = "";
+    for (const [x, y, rr] of bueschel) basis += `<circle cx="${r(x + 0.6)}" cy="${r(y + 0.8)}" r="${r(rr * 0.95)}"/>`;
+    g += `<g fill="#36562b">${basis}</g>`;
     for (const [x, y, rr, gelb] of bueschel) {
       const id = S.id("bl" + bz++);
       let c = "";
@@ -159,8 +173,8 @@ S.hinten(`<rect x="0" y="${HOR - 2}" width="400" height="${260 - HOR + 2}" fill=
     k += `<path d="M${x - w} ${y0} L${r(x - w * 0.5)} ${y1} L${r(x + w * 0.5)} ${y1} L${x + w} ${y0} Z" fill="${STAMM}"/>`;
     k += `<path d="M${x} ${y1 + 12} q${w * 2} -6 ${w * 3} -14 M${x} ${y1 + 8} q${-w * 2} -5 ${-w * 3} -12" stroke="#4a3b2c" stroke-width="${r(w * 0.4)}" fill="none"/>`;
   }
-  k += krone(24, 124, 62, 96, 21, 0.28) + krone(52, 156, 40, 46, 22, 0.35);
-  k += krone(376, 122, 60, 98, 23, 0.32) + krone(348, 156, 40, 44, 24, 0.2);
+  k += krone(30, 124, 50, 96, 21, 0.28) + krone(54, 156, 36, 46, 22, 0.35);
+  k += krone(370, 122, 50, 98, 23, 0.32) + krone(346, 156, 36, 44, 24, 0.2);
   S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: k,
     tipp: "Im Park Sanssouci stehen viele alte Bäume. Im Oktober färbt sich das Laub." });
 }
@@ -282,7 +296,8 @@ const terrUnter = [];
 {
   const z = zufall(77);
   let t = "";
-  for (let i = 0; i < 9; i++) t += `<ellipse cx="${r(z() * 4)}" cy="${r(z() * 3.4)}" rx="${r(0.6 + z() * 0.3)}" ry="${r(0.45 + z() * 0.2)}" fill="${["#557a33", "#6f9440", "#b4a43e", "#5f8a3a", "#86a94a"][i % 5]}"/>`;
+  t += `<rect width="4" height="3.4" fill="#6a8f3e" opacity=".55"/>`;
+  for (let i = 0; i < 14; i++) t += `<ellipse cx="${r(z() * 4)}" cy="${r(z() * 3.4)}" rx="${r(0.55 + z() * 0.3)}" ry="${r(0.42 + z() * 0.2)}" fill="${["#4f7430", "#6f9440", "#b9a640", "#5f8a3a", "#8cae4e", "#3f6328", "#c9b555"][i % 7]}"/>`;
   t += `<path d="M.4 .2 L3.6 .2 M.4 1.9 L3.6 1.9" stroke="#8a7a5a" stroke-width=".12" opacity=".5"/>`;
   t += `<ellipse cx="2.2" cy="2.6" rx=".32" ry=".5" fill="#4a3566"/><ellipse cx="2.45" cy="2.45" rx=".22" ry=".3" fill="#5d4580"/>`;
   S.def(`<pattern id="${S.id("spalier")}" patternUnits="userSpaceOnUse" width="4" height="3.4">${t}</pattern>`);
@@ -310,7 +325,7 @@ const NISCHE = S.lg("nischeglas", [[0, "#b9cfd6"], [0.3, "#5e7c72"], [0.6, "#2f4
       for (let j = 0; j < n; j++) {
         const Xn = s * (TREPPE + 1.2 + (j + 0.5) * abst);
         const D = wandD(i, Xn), u = sk(D), xn = xG(D, Xn), yb = yG(D, h0 + 0.2), yt = yG(D, h1 - 0.35);
-        const nw = 1.6 * u / 2, ar = nw * 0.9;
+        const nw = 1.3 * u / 2, ar = nw;
         nische += `M${r(xn - nw)} ${r(yb)} L${r(xn - nw)} ${r(yt + ar)} Q${r(xn - nw)} ${r(yt)} ${r(xn)} ${r(yt)} Q${r(xn + nw)} ${r(yt)} ${r(xn + nw)} ${r(yt + ar)} L${r(xn + nw)} ${r(yb)} Z `;
       }
       k += `<path d="${nische}" fill="${NISCHE}" stroke="#f4f0e4" stroke-width="${r(0.14 * sk(TD(i)))}"/><path d="${nische}" fill="url(#${S.id("sprossen")})" opacity=".75"/>`;
@@ -335,6 +350,48 @@ const NISCHE = S.lg("nischeglas", [[0, "#b9cfd6"], [0.3, "#5e7c72"], [0.6, "#2f4
 S.teile[S.teile.length - 1].unter = terrUnter;
 
 /* =====================================================================
+   10 — MENSCHEN: Gärtner, Touristin, Tourist, Kind
+   ===================================================================== */
+/* Jede Figur wird einmal in <defs> gelegt (100 Einheiten hoch) und mit <use> gezeichnet:
+   vorn groß, auf der Treppe noch einmal ganz klein. */
+const FIG = {};
+const mensch = (name, spec, groesse, D, X, Q = 2) => {
+  const m = B.mensch(spec, 100);
+  S.def(`<g id="${S.id("fig" + name)}">${kompakt(m.svg, Q)}</g>`);
+  const f = { m, x: r(xG(D, X)), y: r(yG(D)), u: sk(D), hoehe: 100 / groesse, s: groesse * sk(D) / 100 };
+  /* Hände und Kopf in Bildkoordinaten */
+  f.p = (q) => ({ x: f.x + q.x * m.k * f.s, y: f.y + q.y * m.k * f.s });
+  f.svg = `<use href="#${S.id("fig" + name)}" transform="scale(${f.s.toFixed(5)})"/>`;
+  FIG[name] = f;
+  return f;
+};
+/* DER GÄRTNER mit Rechen, neben der Schubkarre (rechts) */
+const G = mensch("G", { id: "pdm_gaert", geschlecht: "m", blick: -60, frisur: "kurz", haarfarbe: "grau", haut: "hell", pose: "halten",
+  kleidung: { oberteil: { stueck: "pullover", farbe: "gruen_d" }, unterteil: { stueck: "arbeitshose" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "kappe", farbe: "gruen_d" } } }, 1.78, 33, 6.6);
+const GH = [G.m.z.handL, G.m.z.handR].map((h) => G.p(h)).sort((a, b) => a.x - b.x);
+bodenSchatten(33, 6.6, 0.5, 1.78, 0.26);
+/* DIE TOURISTIN fotografiert mit dem Handy (von hinten, etwas schräg) */
+const T = mensch("T", { id: "pdm_tour", geschlecht: "w", blick: 160, frisur: "zopf", haarfarbe: "blond", haut: "hell",
+  pose: { lende: 1, brust: -2, nacken: 2, kopf: -6, schulterL: { vor: 62, seit: 12, dreh: 10 }, ellbogenL: 96, unterarmL: 30, handL: 4, fingerL: 0.5,
+    schulterR: { vor: 64, seit: 14, dreh: 10 }, ellbogenR: 92, unterarmR: 30, handR: 4, fingerR: 0.5,
+    huefteL: { vor: 4, seit: 3, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -6, seit: 4, dreh: -8 }, knieR: 10, fussR: 6 },
+  kleidung: { oberteil: { stueck: "pullover", farbe: "creme" }, jacke: { stueck: "jacke", farbe: "rot" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "tasche", farbe: "braun" } } }, 1.68, 22, -3.6);
+bodenSchatten(22, -3.6, 0.45, 1.68, 0.26);
+/* DER TOURIST zeigt zum Schloss hinauf, mit Rucksack */
+const M2 = mensch("M2", { id: "pdm_tourist", geschlecht: "m", blick: 196, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel",
+  pose: { lende: 1, brust: -4, nacken: -8, kopf: -14, schulterL: { vor: 3, seit: 7 }, ellbogenL: 12, unterarmL: 10, handL: 6, fingerL: 0.38,
+    schulterR: { vor: 128, seit: 10, dreh: 0 }, ellbogenR: 6, unterarmR: 0, handR: 6, fingerR: "zeigen",
+    huefteL: { vor: 5, seit: 3, dreh: -6 }, knieL: 5, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
+  kleidung: { oberteil: { stueck: "tshirt", farbe: "hellblau" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh" }, zubehoer: { stueck: "rucksack", farbe: "orange" } } }, 1.82, 25, -1.0);
+bodenSchatten(25, -1.0, 0.5, 1.82, 0.26);
+/* DAS KIND mit der Kartoffel (für das Grab des Königs) */
+const K = mensch("K", { id: "pdm_kind", alter: "kind", geschlecht: "m", blick: 24, frisur: "kurz", haarfarbe: "hellblond", haut: "hell", laecheln: true,
+  pose: { lende: 1, brust: -2, nacken: 8, kopf: 8, schulterL: { vor: 3, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.38,
+    schulterR: { vor: 58, seit: 26, dreh: 10 }, ellbogenR: 48, unterarmR: 60, handR: 10, fingerR: 0.6,
+    huefteL: { vor: 6, seit: 3, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
+  kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, kopf: { stueck: "muetze", farbe: "blau" } } }, 1.22, 17.5, 1.5);
+bodenSchatten(17.5, 1.5, 0.4, 1.22, 0.26);
+/* =====================================================================
    4 — DIE TREPPE (Freitreppe, 132 Stufen in sechs Läufen)
    ===================================================================== */
 {
@@ -353,15 +410,10 @@ S.teile[S.teile.length - 1].unter = terrUnter;
       else k += `<path d="M${Q(D, -TREPPE, hb)} L${Q(D, TREPPE, hb)}" stroke="#a89878" stroke-width=".22"/>`;
     }
   }
-  /* kleine Besucher auf der Treppe (dieselben Figuren, sehr fern) */
-  const fern1 = B.mensch({ id: "pdm_f1", geschlecht: "w", blick: 170, frisur: "lang", haarfarbe: "braun", haut: "hell", pose: "gehen",
-    kleidung: { oberteil: { stueck: "pullover", farbe: "rot" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } }, 170);
-  const fern2 = B.mensch({ id: "pdm_f2", geschlecht: "m", blick: 190, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell", pose: "gehen",
-    kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh" } } }, 170);
-  S.def(`<g id="${S.id("fern1")}">${kompakt(fern1.svg, 6)}</g><g id="${S.id("fern2")}">${kompakt(fern2.svg, 6)}</g>`);
-  for (const [f, i, j, X] of [[1, 1, 12, -1.6], [2, 1, 12, -0.9], [2, 3, 6, 1.9], [1, 4, 16, -1.2]]) {
-    const D = TD(i) - 4 + j * 8 / 22, h = TH * i + (j + 1) * TH / 22;
-    k += `<use href="#${S.id("fern" + f)}" transform="translate(${r(xG(D, X))} ${r(yG(D, h))}) scale(${(sk(D) / 100).toFixed(5)})"/>`;
+  /* kleine Besucher auf der Treppe: dieselben Figuren wie vorn (über <use>), sehr fern */
+  for (const [f, i, j, X, gr] of [["T", 1, 12, -1.6, 1.68], ["M2", 1, 12, -0.9, 1.82], ["K", 1, 11, -0.4, 1.22], ["T", 3, 6, 1.9, 1.68], ["M2", 4, 16, -1.2, 1.82]]) {
+    const D = TD(i) - 4 + j * 8 / 22, h = TH * i + (j + 1) * TH / 22, ref = FIG[f];
+    k += `<use href="#${S.id("fig" + f)}" transform="translate(${r(xG(D, X))} ${r(yG(D, h))}) scale(${(gr * sk(D) / 100).toFixed(5)})"/>`;
   }
   S.teil({ id: "treppe", de: "die Treppe", syl: "TREP-pe", it: "la scalinata", itSyl: "sca-li-NA-ta", en: "staircase", x: 0, y: 0, kunst: k,
     tipp: "132 Stufen führen vom Garten hinauf zum Schloss." });
@@ -375,7 +427,7 @@ S.teile[S.teile.length - 1].unter = terrUnter;
   const RASEN = S.lg("rasen", [[0, "#86a856"], [1, "#5f8a3a"]]);
   for (const s of [-1, 1]) {
     const pts = [[s * 27, 60], [s * 70, 60], [s * 70, 148], [s * 9, 148], [s * 9, 112], [s * 27, 100]];
-    k += `<path d="M${pts.map(([X, D]) => `${r(xG(D, X))} ${r(yG(D))}`).join(" L")} Z" fill="${RASEN}"/>`;
+    k += `<path d="M${pts.map(([X, D]) => `${r(Math.min(400, Math.max(0, xG(D, X))))} ${r(yG(D))}`).join(" L")} Z" fill="${RASEN}"/>`;
     /* Buchsbaumkante zum Kies */
     k += `<path d="M${r(xG(60, s * 27))} ${r(yG(60))} L${r(xG(100, s * 27))} ${r(yG(100))}" stroke="#3f6b2e" stroke-width="1.1"/>`;
   }
@@ -389,7 +441,7 @@ const FD = 80, RB = 20, RS = 23.5;      /* Mitte der Fontäne, Beckenradius, Fig
 const statuen = [];
 for (let a = 15; a < 360; a += 30) {
   const w = a * Math.PI / 180, X = RS * Math.sin(w), D = FD - RS * Math.cos(w), x = xG(D, X);
-  if (x > -6 && x < 406) statuen.push({ a, X, D, x, y: yG(D), u: sk(D) });
+  if (x > 6 && x < 394) statuen.push({ a, X, D, x, y: yG(D), u: sk(D) });
 }
 statuen.sort((p, q) => q.D - p.D);
 const SOCKEL = S.lg("sockel", [[0, "#f4f1ea"], [0.5, "#dcd7cc"], [1, "#a9a39a"]], 0, 0, 1, 0);
@@ -467,20 +519,13 @@ const figur = (u, art) => {
 /* =====================================================================
    8 — DER WEG (heller Kies um die Fontäne) mit den Schlagschatten
    ===================================================================== */
-const schattenListe = [];
-/* Sonne im Südwesten, etwa 28° hoch: Schatten 1,9 × so lang wie das Ding hoch ist, nach Nordosten (rechts hinten) */
-const bodenSchatten = (D, X, w, h, a = 0.3) => {
-  const L = 1.9 * h, dx = 0.6 * L, dz = 0.8 * L;
-  const p = [[X - w / 2, D], [X + w / 2, D], [X + dx + w * 0.3, D + dz], [X + dx - w * 0.3, D + dz]];
-  schattenListe.push(`<path d="M${p.map(([x2, d2]) => `${r(xG(d2, x2))} ${r(yG(d2))}`).join(" L")} Z" fill="#3b3020" opacity="${a}"/>`);
-};
 const WEG = { teil: null };
 
 /* =====================================================================
    9 — DIE ORANGENBÄUME in grünen Holzkübeln (Reihen links und rechts)
    ===================================================================== */
 const ORANGEN = [];
-for (const s of [-1, 1]) for (const D of [58, 46, 37]) ORANGEN.push({ X: s * (D < 40 ? 11.6 : 12.4), D });
+for (const s of [-1, 1]) for (const D of [58, 46, 37]) ORANGEN.push({ X: s * (D < 40 ? 10.6 : 12.0), D });
 ORANGEN.sort((a, b) => b.D - a.D);
 let kuebelUnter = null;
 const KUEBEL = S.lg("kuebel", [[0, "#5d8c64"], [0.5, "#3f6e48"], [1, "#2a4d33"]], 0, 0, 1, 0);
@@ -512,39 +557,6 @@ const ORKRONE = S.rg("orkrone", [[0, "#7fb055"], [0.6, "#4a7a33"], [1, "#2c5222"
       kunst: flaeche(-0.62 * u, -1 * u, 1.24 * u, 1 * u, 0.5), tipp: "Die Kübel sind aus Holz. So kann man die Bäume tragen." }] });
 }
 
-/* =====================================================================
-   10 — MENSCHEN: Gärtner, Touristin, Tourist, Kind
-   ===================================================================== */
-const mensch = (spec, groesse, D, X) => {
-  const m = B.mensch(spec, groesse * sk(D));
-  return { m, x: r(xG(D, X)), y: r(yG(D)), u: sk(D) };
-};
-/* DER GÄRTNER mit Rechen, neben der Schubkarre (rechts) */
-const G = mensch({ id: "pdm_gaert", geschlecht: "m", blick: -60, frisur: "kurz", haarfarbe: "grau", haut: "hell", pose: "halten",
-  kleidung: { oberteil: { stueck: "pullover", farbe: "gruen_d" }, unterteil: { stueck: "arbeitshose" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "kappe", farbe: "gruen_d" } } }, 1.78, 33, 6.6);
-const GH = [G.m.z.handL, G.m.z.handR].map((h) => ({ x: G.x + h.x * G.m.k, y: G.y + h.y * G.m.k })).sort((a, b) => a.x - b.x);
-bodenSchatten(33, 6.6, 0.5, 1.78, 0.26);
-/* DIE TOURISTIN fotografiert mit dem Handy (von hinten, etwas schräg) */
-const T = mensch({ id: "pdm_tour", geschlecht: "w", blick: 160, frisur: "zopf", haarfarbe: "blond", haut: "hell",
-  pose: { lende: 1, brust: -2, nacken: 2, kopf: -6, schulterL: { vor: 62, seit: 12, dreh: 10 }, ellbogenL: 96, unterarmL: 30, handL: 4, fingerL: 0.5,
-    schulterR: { vor: 64, seit: 14, dreh: 10 }, ellbogenR: 92, unterarmR: 30, handR: 4, fingerR: 0.5,
-    huefteL: { vor: 4, seit: 3, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -6, seit: 4, dreh: -8 }, knieR: 10, fussR: 6 },
-  kleidung: { oberteil: { stueck: "pullover", farbe: "creme" }, jacke: { stueck: "jacke", farbe: "rot" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "tasche", farbe: "braun" } } }, 1.68, 22, -3.6);
-bodenSchatten(22, -3.6, 0.45, 1.68, 0.26);
-/* DER TOURIST zeigt zum Schloss hinauf, mit Rucksack */
-const M2 = mensch({ id: "pdm_tourist", geschlecht: "m", blick: 196, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel",
-  pose: { lende: 1, brust: -4, nacken: -8, kopf: -14, schulterL: { vor: 3, seit: 7 }, ellbogenL: 12, unterarmL: 10, handL: 6, fingerL: 0.38,
-    schulterR: { vor: 128, seit: 10, dreh: 0 }, ellbogenR: 6, unterarmR: 0, handR: 6, fingerR: "zeigen",
-    huefteL: { vor: 5, seit: 3, dreh: -6 }, knieL: 5, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
-  kleidung: { oberteil: { stueck: "tshirt", farbe: "hellblau" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh" }, zubehoer: { stueck: "rucksack", farbe: "orange" } } }, 1.82, 25, -1.0);
-bodenSchatten(25, -1.0, 0.5, 1.82, 0.26);
-/* DAS KIND mit der Kartoffel (für das Grab des Königs) */
-const K = mensch({ id: "pdm_kind", alter: "kind", geschlecht: "m", blick: 24, frisur: "kurz", haarfarbe: "hellblond", haut: "hell", laecheln: true,
-  pose: { lende: 1, brust: -2, nacken: 8, kopf: 8, schulterL: { vor: 3, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.38,
-    schulterR: { vor: 58, seit: 26, dreh: 10 }, ellbogenR: 48, unterarmR: 60, handR: 10, fingerR: 0.6,
-    huefteL: { vor: 6, seit: 3, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
-  kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, kopf: { stueck: "muetze", farbe: "blau" } } }, 1.22, 17.5, 1.5);
-bodenSchatten(17.5, 1.5, 0.4, 1.22, 0.26);
 /* DER WEGWEISER (links vorn) */
 const WW = { D: 24, X: -5.1 };
 bodenSchatten(WW.D, WW.X, 0.12, 2.7, 0.2);
@@ -587,7 +599,7 @@ for (const p of statuen) bodenSchatten(p.D, p.X, 1.2, 3.9, 0.2);
     const w = 1.62;
     const p = s > 0 ? `M.06 ${y} L${w} ${y} L${w + 0.14} ${r(y + 0.13)} L${w} ${r(y + 0.26)} L.06 ${r(y + 0.26)} Z` : `M-.06 ${y} L${-w} ${y} L${-w - 0.14} ${r(y + 0.13)} L${-w} ${r(y + 0.26)} L-.06 ${r(y + 0.26)} Z`;
     g += `<path d="${p}" fill="#f7f5ee" stroke="#2f5a3c" stroke-width=".025"/>`;
-    g += `<text x="${s > 0 ? 0.13 : -0.13}" y="${r(y + 0.185)}" font-size=".118" ${s > 0 ? "" : `text-anchor="end" `}fill="#2f5a3c" font-family="Arial,sans-serif" font-weight="bold">${t}</text>`;
+    g += `<text x="${s > 0 ? 0.13 : -0.13}" y="${r(y + 0.185)}" font-size=".108" ${s > 0 ? "" : `text-anchor="end" `}fill="#2f5a3c" font-family="Arial,sans-serif" font-weight="bold">${t}</text>`;
   }
   S.teil({ id: "wegweiser", de: "der Wegweiser", syl: "WEG-wei-ser", it: "il cartello stradale", itSyl: "car-TEL-lo stra-DA-le", en: "signpost", x: r(xG(WW.D, WW.X)), y: r(yG(WW.D)), steht: true,
     kunst: `<g transform="scale(${u.toFixed(4)})">${g}</g>`, tipp: "Potsdam hat auch ein Brandenburger Tor. Es ist älter als das Tor in Berlin." });
@@ -603,7 +615,7 @@ for (const p of statuen) bodenSchatten(p.D, p.X, 1.2, 3.9, 0.2);
   S.teil({ oben: true, id: "schubkarre", de: "die Schubkarre", syl: "SCHUB-kar-re", it: "la carriola", itSyl: "car-RIO-la", en: "wheelbarrow", x: r(xG(SK.D, SK.X)), y: r(yG(SK.D)), steht: true,
     kunst: `<g transform="scale(${u.toFixed(4)})">${g}</g>`, tipp: "Der Gärtner sammelt das Laub in der Schubkarre." });
 }
-S.teil({ id: "gaertner", de: "der Gärtner", syl: "GÄRT-ner", it: "il giardiniere", itSyl: "giar-di-NIE-re", en: "gardener", x: G.x, y: G.y, kunst: kompakt(G.m.svg, 2),
+S.teil({ id: "gaertner", de: "der Gärtner", syl: "GÄRT-ner", it: "il giardiniere", itSyl: "giar-di-NIE-re", en: "gardener", x: G.x, y: G.y, kunst: G.svg,
   tipp: "Im Park Sanssouci arbeiten viele Gärtner. Sie pflegen die Beete, die Bäume und die Wege." });
 {
   /* Rechen: Stiel durch beide Hände, Zinken unten auf dem Kies */
@@ -619,26 +631,26 @@ S.teil({ id: "gaertner", de: "der Gärtner", syl: "GÄRT-ner", it: "il giardinie
 }
 {
   /* Handy in den Händen der Touristin */
-  const hs = [T.m.z.handL, T.m.z.handR].map((h) => ({ x: T.x + h.x * T.m.k, y: T.y + h.y * T.m.k }));
+  const hs = [T.m.z.handL, T.m.z.handR].map((h) => T.p(h));
   const hx = (hs[0].x + hs[1].x) / 2, hy = Math.min(hs[0].y, hs[1].y);
-  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x: T.x, y: T.y, kunst: kompakt(T.m.svg, 2),
+  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x: T.x, y: T.y, kunst: T.svg,
     tipp: "Die Touristin macht ein Foto vom Schloss." });
   const g = `<rect x="-1.6" y="-3.1" width="3.2" height="5.6" rx=".6" fill="#1d2127" stroke="#8a9198" stroke-width=".25"/><rect x="-1.2" y="-2.6" width="2.4" height="4.6" rx=".3" fill="${S.lg("display", [[0, "#9cc0e2"], [0.55, "#f0c75e"], [1, "#9cbf63"]])}"/><circle cx="0" cy="-.9" r=".4" fill="#5f8f74"/>`;
   S.teil({ oben: true, id: "handy", de: "das Handy", syl: "HAN-dy", it: "il cellulare", itSyl: "cel-lu-LA-re", en: "mobile phone", x: r(hx), y: r(hy - 0.6), kunst: g + flaeche(-2, -3.5, 4, 6.4, 0.5),
     tipp: "Mit dem Handy macht man schnell ein Foto." });
 }
 {
-  const kopf = { x: M2.x + M2.m.z.kopf.x * M2.m.k, y: M2.y + M2.m.z.kopf.y * M2.m.k };
-  S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: M2.x, y: M2.y, kunst: kompakt(M2.m.svg, 2),
+  const kopf = M2.p(M2.m.z.kopf);
+  S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: M2.x, y: M2.y, kunst: M2.svg,
     tipp: "Der Tourist zeigt nach oben: „Da ist das Schloss!“",
     zoom: { x: r(M2.x - 30), y: r(M2.y - 62), w: 60, h: 40 },
     unter: [{ id: "rucksack", de: "der Rucksack", syl: "RUCK-sack", it: "lo zaino", itSyl: "ZAI-no", en: "backpack", x: r(M2.x), y: r(kopf.y + 0.62 * M2.u * 1),
       kunst: flaeche(-0.24 * M2.u, 0, 0.48 * M2.u, 0.5 * M2.u, 0.5) }] });
 }
 {
-  S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "il bambino", itSyl: "bam-BI-no", en: "child", x: K.x, y: K.y, kunst: kompakt(K.m.svg, 2),
+  S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "il bambino", itSyl: "bam-BI-no", en: "child", x: K.x, y: K.y, kunst: K.svg,
     tipp: "Das Kind bringt eine Kartoffel zum Grab des Königs." });
-  const h = { x: K.x + K.m.z.handR.x * K.m.k, y: K.y + K.m.z.handR.y * K.m.k };
+  const h = K.p(K.m.z.handR);
   let g = `<ellipse cx="0" cy="0" rx="1.7" ry="1.25" fill="${S.rg("knolle", [[0, "#e3c48c"], [0.6, "#c49a5c"], [1, "#8e6a3a"]], 0.38, 0.32, 0.75)}" transform="rotate(-18)"/>`;
   g += `<circle cx="-.6" cy="-.3" r=".12" fill="#7a5530"/><circle cx=".7" cy=".2" r=".12" fill="#7a5530"/><circle cx=".1" cy=".6" r=".1" fill="#7a5530"/><path d="M-1 -.7 q.6 -.5 1.3 -.4" stroke="#f2dfb6" stroke-width=".25" fill="none" opacity=".7"/>`;
   S.teil({ oben: true, id: "kartoffel", de: "die Kartoffel", syl: "kar-TOF-fel", it: "la patata", itSyl: "pa-TA-ta", en: "potato", x: r(h.x), y: r(h.y - 1.2), kunst: g + flaeche(-2.2, -1.9, 4.4, 3.8, 0.6),

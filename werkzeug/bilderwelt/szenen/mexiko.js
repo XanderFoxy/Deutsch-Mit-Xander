@@ -162,7 +162,7 @@ const KT = { x: 108, z: -46, h: 20, stufen: 4, sh: 3, tw: 10 };   /* Tempel der 
   /* Yucatán ist flach: eine gerade Baumlinie, oben nur kleine Kronenbuckel, dunstig blaugrün */
   let d = `M0 ${HY + 1} L0 127.5`;
   /* hinter dem Tempel der Krieger (Ostseite der Plaza) stehen die Bäume näher: Baumlinie dort höher */
-  const hoch = (x) => x < 70 ? 7.5 * Math.min(1, (70 - x) / 22) : 0;
+  const hoch = (x) => x < 76 ? 12 * Math.min(1, (76 - x) / 20) : 0;
   for (let x = 0; x <= 320; x += 2.5) d += ` Q${r(x + 1.25)} ${r(126.2 - hoch(x + 1.25) - rnd() * 1.6)} ${r(x + 2.5)} ${r(127.6 - hoch(x + 2.5) + rnd() * 0.6)}`;
   d += ` L320 ${HY + 1} Z`;
   k += `<path d="${d}" fill="${WALD}"/><path d="${d}" fill="${S.lg("waldluft", [[0, "#b9c4bc", 0.62], [1, "#7d9a86", 0.35]])}"/>`;

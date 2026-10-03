@@ -1157,8 +1157,9 @@ const tischUnter = [];
   const T = (x, y) => [200 + (x - SCX) * SK, HOR + (y - HOR) * SK];
   for (const t of S.teile) {
     if (!["tafelberg", "devils_peak", "lions_head", "hubschrauber", "innenstadt", "lagerhaus", "uhrturm", "hafen", "segelboot", "fischerboot", "robbe"].includes(t.id)) continue;
-    [t.x, t.y] = T(t.x, t.y);
-    t.kunst = `<g transform="scale(${SK})">${t.kunst}</g>`;
+    /* Teile, deren Zeichnung schon in Bildkoordinaten liegt (Anker 0|0), behalten ihren Anker */
+    if (t.x === 0 && t.y === 0) t.kunst = bg(t.kunst);
+    else { [t.x, t.y] = T(t.x, t.y); t.kunst = `<g transform="scale(${SK})">${t.kunst}</g>`; }
     for (const u of t.unter || []) { [u.x, u.y] = T(u.x, u.y); u.kunst = `<g transform="scale(${SK})">${u.kunst}</g>`; }
     if (t.zoom) { const [zx, zy] = T(t.zoom.x, t.zoom.y); t.zoom = { x: r(zx), y: r(zy), w: r(t.zoom.w * SK), h: r(t.zoom.h * SK) }; }
   }

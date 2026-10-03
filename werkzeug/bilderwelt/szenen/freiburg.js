@@ -34,7 +34,7 @@
      KIESELMOSAIKE aus Rheinkieseln im Pflaster. Typisch für den
      Schwarzwald: Kuckucksuhr, Bollenhut (rote Bollen = unverheiratet),
      Schwarzwälder Kirschtorte; Freiburg: Fahrradstadt und Solarstadt.
-   Jahreszeit: Juni, Vormittag (Kirschen, Spargel), Sonne von links hinten.
+   Jahreszeit: Juni, Vormittag (Kirschen, Spargel), Sonne aus Ostsüdost (115°, 40° hoch).
    Maßstab: echte Kamera (Augenhöhe 1,6 m, y = 190 ist der Horizont; Bild 320 × 240,
    damit der 116 m hohe Turm ganz hineinpasst).
    ===================================================================== */
@@ -113,9 +113,39 @@ const fuss = (x, y) => { const p = pr(x, y, 0); return { x: p[0], y: p[1], s: FO
 const SCH = [-0.906 * 1.19, 0.423 * 1.19];
 const schlag = (x, y, w, h, op = .3) => `<path d="${poly([[x + w / 2, y, 0], [x - w / 2, y, 0], [x - w / 2 + SCH[0] * h, y + SCH[1] * h, 0], [x + w / 2 + SCH[0] * h, y + SCH[1] * h, 0]])}" fill="#2a1e14" opacity="${op}"/>`;
 
+/* EINE Sonne für alles: Vormittag im Juni, aus Ostsüdost (Azimut 115°), 40° hoch. Im Bild kommt das Licht
+   von links (etwas von hinten); Schlagschatten fallen nach rechts in die Tiefe (Westnordwest). */
+const SONNE = [Math.sin(115 * Math.PI / 180), Math.cos(115 * Math.PI / 180)];
+const hex3 = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const mische = (a, b, t) => { const A = hex3(a), Bb = hex3(b); return "#" + A.map((v, i) => Math.round(v + (Bb[i] - v) * t).toString(16).padStart(2, "0")).join(""); };
+/* Farbe einer senkrechten Fläche mit Außennormale (nx, ny): im Licht wärmer und heller, abgewandt kühler und dunkler */
+const licht = (f, nx, ny) => { const l = nx * SONNE[0] + ny * SONNE[1]; return l > 0 ? mische(f, "#ffe6c8", l * .32) : mische(f, "#2a1822", -l * .42 + .14); };
+/* senkrechtes Prisma (Grundriss gegen den Uhrzeigersinn, von oben) z0…z1: nur die sichtbaren Seiten, hinten zuerst */
+const prisma = (plan, z0, z1, f) => {
+  const seiten = [];
+  for (let i = 0; i < plan.length; i++) {
+    const a = plan[i], b = plan[(i + 1) % plan.length], nx = b[1] - a[1], ny = a[0] - b[0], L = Math.hypot(nx, ny) || 1;
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    if ((CAM[0] - mx) * nx + (CAM[1] - my) * ny <= 0) continue;
+    seiten.push([tief(mx, my), `<path d="${poly([[a[0], a[1], z0], [b[0], b[1], z0], [b[0], b[1], z1], [a[0], a[1], z1]])}" fill="${licht(f, nx / L, ny / L)}"/>`]);
+  }
+  return seiten.sort((u, v) => v[0] - u[0]).map((u) => u[1]).join("");
+};
+/* Schlagschatten eines Körpers: seine Punkte (x, y, z) auf den Boden geworfen, als Umriss (konvexe Hülle) */
+const wurf = (pts, op = .28) => {
+  const q = pts.map(([x, y, z]) => [x + SCH[0] * z, y + SCH[1] * z]).concat(pts.map(([x, y]) => [x, y]));
+  q.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const kr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], hi = [];
+  for (const p of q) { while (lo.length > 1 && kr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+  for (const p of q.slice().reverse()) { while (hi.length > 1 && kr(hi[hi.length - 2], hi[hi.length - 1], p) <= 0) hi.pop(); hi.push(p); }
+  const h = lo.slice(0, -1).concat(hi.slice(0, -1));
+  return `<path d="${poly(h.map(([x, y]) => [x, y, 0]))}" fill="#2a1e14" opacity="${op}"/>`;
+};
+
 S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
-/* roter Buntsandstein des Münsters — Sonne von links hinten (Süden) */
+/* roter Buntsandstein des Münsters */
 const SAND = S.lg("sand", [[0, "#c27a62"], [0.5, "#b4644d"], [1, "#9c5240"]], 0, 0, 1, 0);
 const SAND_L = S.lg("sandl", [[0, "#d9937a"], [1, "#c27a62"]], 0, 0, 1, 0);
 const SAND_D = S.lg("sandd", [[0, "#8a4636"], [1, "#6e3529"]], 0, 0, 1, 0);
@@ -570,7 +600,6 @@ const TM = {};
     ] });
 }
 
-/* Schlagschatten: Sonne aus Ostsüdost (115°), 40° hoch → Schatten fallen nach Westnordwest in die Tiefe */
 
 /* =====================================================================
    6 — DAS HISTORISCHE KAUFHAUS (Nordfassade im Schatten) mit Laubengang
@@ -1128,7 +1157,7 @@ const MANN = { w: [54.4, -46.4] };
 }
 function sw2(s) { return r(.02 * s); }
 
-/* Licht über allem: Mittagssonne von links (Süden), leichte Vignette (fängt keinen Tipp ab) */
+/* Licht über allem: Vormittagssonne von links (Ostsüdost), leichte Vignette (fängt keinen Tipp ab) */
 S.davor(`<rect width="320" height="240" fill="${S.rg("sonne", [[0, "#fff4d6", 0.2], [0.55, "#fff4d6", 0.05], [1, "#fff4d6", 0]], 0, 0.1, 0.9)}"/><rect width="320" height="240" fill="${S.rg("vignette", [[0, "#000", 0], [0.72, "#000", 0], [1, "#1a1008", 0.2]], 0.5, 0.5, 0.75)}"/>`);
 
 

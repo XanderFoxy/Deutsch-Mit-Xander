@@ -61,7 +61,7 @@ const km = (y) => (y - HOR) / AUGE;
 const proj = (lat, d) => [r(200 + lat * F / d), r(HOR + AUGE * F / d)];
 
 S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="1.3"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation=".8"/></filter>`);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("dunst")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".35"/></filter>`);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("laub")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".25"/></filter>`);
 /* Streiflicht von rechts (Sonne im Südwesten): warme Lichtkante rechts, weicher Eigenschatten links */
@@ -69,8 +69,8 @@ S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("licht")}" x="-10%"
 const licht = (svg) => `<g filter="url(#${S.id("licht")})">${svg}</g>`;
 
 /* Stoffe: Lübecker Backstein (tiefrot), schwarz glasierte Lagen, Schiefer, Kupfer */
-const ZIEGEL = S.lg("ziegel", [[0, "#5e2419"], [0.25, "#83351f"], [0.62, "#b2512f"], [0.8, "#c46238"], [1, "#9a4228"]], 0, 0, 1, 0);
-const ZIEGEL_M = S.lg("ziegelm", [[0, "#7a3020"], [0.5, "#9c4329"], [1, "#a94b2d"]], 0, 0, 1, 0);
+const ZIEGEL = S.lg("ziegel", [[0, "#561f16"], [0.25, "#7a301e"], [0.62, "#a6492b"], [0.8, "#b85a35"], [1, "#8e3c25"]], 0, 0, 1, 0);
+const ZIEGEL_M = S.lg("ziegelm", [[0, "#6e2b1d"], [0.5, "#8f3d26"], [1, "#9c4429"]], 0, 0, 1, 0);
 const GLASUR = S.lg("glasur", [[0, "#140f0e"], [0.3, "#2a1d19"], [0.62, "#4a3a33"], [0.78, "#6d5a4e"], [1, "#30231e"]], 0, 0, 1, 0);
 const TERRA = S.lg("terra", [[0, "#1d1512"], [0.6, "#3d2b22"], [0.8, "#5a4232"], [1, "#2c201a"]], 0, 0, 1, 0);
 const SCHIEFER = S.lg("schiefer", [[0, "#1e252d"], [0.35, "#2f3a46"], [0.65, "#4e5c6a"], [0.82, "#6b7986"], [1, "#3b4652"]], 0, 0, 1, 0);
@@ -81,6 +81,13 @@ const LANG = S.lg("lang", [[0, "#2b2420", 0.75], [1, "#2b2420", 0.2]], 0, 1, 0, 
 /* Ziegelverband (Läufer, versetzt) als Muster in Tor-Einheiten */
 S.def(`<pattern id="${S.id("verband")}" patternUnits="userSpaceOnUse" width="1.2" height=".76"><path d="M0 .38 H1.2 M0 .76 H1.2 M.6 0 V.38 M0 .38 V.76 M1.2 .38 V.76" stroke="#e7c3a3" stroke-width=".07" fill="none"/></pattern>`);
 
+/* einzelne dunklere und hellere Ziegel (Brandfarben), unregelmäßig verteilt */
+{
+  const z = zufall(77);
+  let p = "";
+  for (let i = 0; i < 26; i++) { const row = Math.floor(z() * 10), col = Math.floor(z() * 6) + (row % 2 ? 0.5 : 0); p += `<rect x="${r(col * 1.2 + 0.05)}" y="${r(row * 0.38 + 0.05)}" width="1.1" height=".29" fill="${z() < 0.6 ? "#3a140d" : "#d27a52"}" opacity="${r(0.25 + z() * 0.3)}"/>`; }
+  S.def(`<pattern id="${S.id("brand")}" patternUnits="userSpaceOnUse" width="7.2" height="3.8">${p}</pattern>`);
+}
 /* Schlagschatten der Dinge: die Sonne steht hinten rechts (SW), Höhe ≈ 32° —
    jeder Schatten fällt vom Betrachter weg nach links (Länge ≈ 1,6 × Höhe).
    Die Schatten liegen auf dem Boden (Rasen/Weg), nicht am Ding. */
@@ -168,7 +175,8 @@ S.hinten(wolke(78, 26, 1.05, 3) + wolke(300, 18, 0.8, 17) + wolke(366, 58, 0.55,
    Gezeichnet zuerst (ganz hinten); die Schlagschatten kommen am Ende dazu.
    ===================================================================== */
 const WEG = (d) => [proj(-2.1, d), proj(2.1, d)];
-const WEGPFAD = (() => { const [a1, b1] = WEG(95), [a2, b2] = WEG(8.29); return `M${a1[0]} ${a1[1]} L${b1[0]} ${b1[1]} L${b2[0]} ${b2[1]} L${a2[0]} ${a2[1]} Z`; })();
+const TORD = 82;
+const WEGPFAD = (() => { const [a1, b1] = WEG(TORD), [a2, b2] = WEG(8.29); return `M${a1[0]} ${a1[1]} L${b1[0]} ${b1[1]} L${b2[0]} ${b2[1]} L${a2[0]} ${a2[1]} Z`; })();
 S.def(`<clipPath id="${S.id("wegclip")}"><path d="${WEGPFAD}"/></clipPath>`);
 S.def(`<clipPath id="${S.id("rasenclip")}"><path clip-rule="evenodd" d="M0 ${HOR} H${W} V${HH} H0 Z ${WEGPFAD}"/></clipPath>`);
 let WEG_TEIL, RASEN_TEIL;
@@ -176,7 +184,7 @@ let WEG_TEIL, RASEN_TEIL;
   let k = `<path d="${WEGPFAD}" fill="${S.lg("wegstein", [[0, "#a59a8b"], [1, "#bdb2a1"]])}"/>`;
   /* Reihen aus Granitpflaster in Fluchtperspektive */
   let i = 0;
-  for (let d = 95; d > 8.6; d /= 1.06, i++) {
+  for (let d = TORD; d > 8.6; d /= 1.06, i++) {
     const [[x1, y1], [x2]] = WEG(d), [[x3, y3], [x4]] = WEG(d / 1.06), h = y3 - y1, s = km((y1 + y3) / 2);
     const st = Math.max(0.6, 0.14 * s), gap = Math.max(0.12, 0.025 * s);
     k += `<line x1="${x3}" y1="${r((y1 + y3) / 2)}" x2="${x4}" y2="${r((y1 + y3) / 2)}" stroke="${["#998d7d", "#aea291", "#a19584"][i % 3]}" stroke-width="${r(h * 0.82)}" stroke-dasharray="${r(st)} ${r(gap)}" stroke-dashoffset="${r((i * 7 % 10) / 10 * st)}" clip-path="url(#${S.id("wegclip")})"/>`;
@@ -187,16 +195,29 @@ let WEG_TEIL, RASEN_TEIL;
 {
   let k = `<g clip-path="url(#${S.id("rasenclip")})"><rect x="0" y="${HOR}" width="${W}" height="${HH - HOR}" fill="${S.lg("rasen", [[0, "#7d9a4d"], [0.3, "#6b8f3e"], [1, "#4f7a2c"]])}"/>`;
   /* Mähstreifen und Halme (vorn größer) */
-  for (let j = 0; j < 7; j++) { const y0 = HOR + 4 + j * j * 1.7; k += `<rect x="0" y="${r(y0)}" width="${W}" height="${r(1 + j * 0.9)}" fill="#a5bf62" opacity=".16"/>`; }
+  /* Mähstreifen, die zum Tor laufen (Fluchtpunkt), hell und dunkel im Wechsel */
+  for (let i = -16; i < 16; i++) {
+    const kl = (v) => Math.max(0, Math.min(W, v));
+    const [a1] = proj(i * 1.6, 80), [a2] = proj((i + 1) * 1.6, 80), [b1] = proj(i * 1.6, 8.29), [b2] = proj((i + 1) * 1.6, 8.29);
+    if (b2 < 0 || b1 > W) continue;
+    k += `<path d="M${kl(a1)} ${r(HOR + 8.3)} L${kl(a2)} ${r(HOR + 8.3)} L${kl(b2)} ${HH} L${kl(b1)} ${HH} Z" fill="${i % 2 ? "#c2d67a" : "#2f4a1a"}" opacity=".07"/>`;
+  }
+  k += `<ellipse cx="80" cy="${HOR + 16}" rx="70" ry="5" fill="#2f4a1a" opacity=".18" filter="url(#bw_weich)"/><ellipse cx="320" cy="${HOR + 12}" rx="60" ry="4" fill="#2f4a1a" opacity=".16" filter="url(#bw_weich)"/>`;
   let halme = "";
   for (let n = 0; n < 340; n++) {
     const y = HOR + 6 + Math.pow(rnd(), 0.7) * (HH - HOR - 6), x = rnd() * W, s = km(y) * 0.05;
     halme += `M${r(x)} ${r(y)} l${r((rnd() - 0.5) * s)} ${r(-s * (1 + rnd()))} `;
   }
   k += `<path d="${halme}" stroke="#3d6324" stroke-width=".35" opacity=".55" fill="none"/>`;
+  /* Gänseblümchen im Rasen (vorn größer) */
+  for (let n = 0; n < 70; n++) {
+    const y = HOR + 20 + Math.pow(rnd(), 0.6) * (HH - HOR - 22), x = rnd() * W, s = km(y) * 0.025;
+    if (Math.abs(x - 200) < (y - HOR) * 2.5) continue;
+    k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(s)}" fill="#f8f6ee"/><circle cx="${r(x)}" cy="${r(y)}" r="${r(s * 0.4)}" fill="#f0c64a"/>`;
+  }
   k += `<rect x="0" y="${HOR}" width="${W}" height="${HH - HOR}" fill="${S.lg("rasenlicht", [[0, "#2a3a1a", 0.25], [0.5, "#000", 0], [1, "#ffd9a0", 0.14]], 0, 0, 1, 0)}"/>`;
   /* Rasenkante aus Granit am Weg */
-  const [[a1x, a1y], [b1x, b1y]] = WEG(95), [[a2x, a2y], [b2x, b2y]] = WEG(8.29);
+  const [[a1x, a1y], [b1x, b1y]] = WEG(TORD), [[a2x, a2y], [b2x, b2y]] = WEG(8.29);
   k += `<path d="M${a1x} ${a1y} L${a2x} ${a2y}" stroke="#d6cdbb" stroke-width="1.2"/><path d="M${b1x} ${b1y} L${b2x} ${b2y}" stroke="#e2d9c6" stroke-width="1.2"/></g>`;
   RASEN_TEIL = S.teil({ id: "rasen", de: "der Rasen", syl: "RA-sen", it: "il prato", itSyl: "PRA-to", en: "lawn", x: 0, y: 0, kunst: k,
     tipp: "Rund um das Holstentor liegt eine Grünanlage. Hier machen viele Leute eine Pause." });
@@ -208,21 +229,35 @@ let WEG_TEIL, RASEN_TEIL;
 {
   const K = F / 500, fuss = r(HOR + AUGE * K);
   let k = "";
-  for (const cx of [50, 68]) {
-    const w = 10.5 * K, mh = 72 * K, sp = 53 * K;
+  const MAR = S.lg("mar", [[0, "#6a2f22"], [0.55, "#93452f"], [1, "#ad5a3c"]], 0, 0, 1, 0);
+  /* Westbau zwischen den Türmen (Giebel des Mittelschiffs mit großem Fenster) */
+  k += `<rect x="40" y="${r(fuss - 44 * K)}" width="12" height="${r(44 * K)}" fill="#7f3a28"/>`;
+  k += `<path d="M40 ${r(fuss - 44 * K)} L46 ${r(fuss - 58 * K)} L52 ${r(fuss - 44 * K)} Z" fill="#8a4029"/>`;
+  k += `<path d="M44.4 ${r(fuss - 20 * K)} V${r(fuss - 38 * K)} L46 ${r(fuss - 42 * K)} L47.6 ${r(fuss - 38 * K)} V${r(fuss - 20 * K)} Z" fill="#3a1d16"/>`;
+  for (const cx of [34, 58]) {
+    const w = 13.5 * K, mh = 74 * K, sp = 51 * K;
     const top = fuss - mh;
-    k += `<rect x="${r(cx - w / 2)}" y="${r(top)}" width="${r(w)}" height="${r(mh)}" fill="${S.lg("mar", [[0, "#6e3326"], [0.6, "#94452f"], [1, "#a8543a"]], 0, 0, 1, 0)}"/>`;
-    /* Blendnischen und Schallarkaden der oberen Geschosse */
-    for (let j = 0; j < 4; j++) {
-      const y = top + 3 + j * 6.4;
-      for (const dx of [-2.3, 0, 2.3]) k += `<path d="M${r(cx + dx - 0.7)} ${r(y + 4.4)} V${r(y + 1.2)} L${r(cx + dx)} ${r(y)} L${r(cx + dx + 0.7)} ${r(y + 1.2)} V${r(y + 4.4)} Z" fill="${j === 0 ? "#2c1712" : "#5a2a1f"}"/>`;
+    k += `<rect x="${r(cx - w / 2)}" y="${r(top)}" width="${r(w)}" height="${r(mh)}" fill="${MAR}"/>`;
+    /* Eckpfeiler (Lisenen) und Gesimse */
+    k += `<rect x="${r(cx - w / 2)}" y="${r(top)}" width="1" height="${r(mh)}" fill="#5e2a1e"/><rect x="${r(cx + w / 2 - 1)}" y="${r(top)}" width="1" height="${r(mh)}" fill="#b8644a"/>`;
+    for (let j = 0; j < 8; j++) k += `<rect x="${r(cx - w / 2)}" y="${r(top + j * 6.6 - 0.25)}" width="${r(w)}" height=".5" fill="#d0a684" opacity=".55"/>`;
+    /* je Geschoss zwei hohe Spitzbogen-Blenden, oben die offenen Schallarkaden */
+    for (let j = 0; j < 7; j++) {
+      const y = top + 1.1 + j * 6.6;
+      for (const dx of [-2.6, 0, 2.6]) {
+        if (j > 1 && dx === 0) continue;
+        k += `<path d="M${r(cx + dx - 0.75)} ${r(y + 4.9)} V${r(y + 1.3)} L${r(cx + dx)} ${r(y)} L${r(cx + dx + 0.75)} ${r(y + 1.3)} V${r(y + 4.9)} Z" fill="${j < 2 ? "#24130f" : "#5e2a1e"}"/>`;
+      }
     }
-    for (let j = 0; j < 7; j++) k += `<rect x="${r(cx - w / 2)}" y="${r(top + j * 6.4 - 0.3)}" width="${r(w)}" height=".5" fill="#c9a07e" opacity=".5"/>`;
-    /* vier Giebel am Fuß des Helms, darüber der schlanke achteckige Kupferhelm */
-    k += `<path d="M${r(cx - w / 2)} ${r(top)} L${r(cx - w / 4)} ${r(top - 2.6)} L${r(cx)} ${r(top)} L${r(cx + w / 4)} ${r(top - 2.6)} L${r(cx + w / 2)} ${r(top)} Z" fill="#8a3f2b"/>`;
-    k += `<path d="M${r(cx - w * 0.42)} ${r(top)} L${r(cx)} ${r(top - sp)} L${r(cx + w * 0.42)} ${r(top)} Z" fill="${KUPFER}"/>`;
-    k += `<path d="M${r(cx)} ${r(top - sp)} L${r(cx + w * 0.14)} ${r(top)}" stroke="#a9d8c2" stroke-width=".3" opacity=".7"/>`;
-    k += `<path d="M${r(cx)} ${r(top - sp)} V${r(top - sp - 3)} M${r(cx - 0.8)} ${r(top - sp - 2)} H${r(cx + 0.8)}" stroke="#c9a640" stroke-width=".35"/>`;
+    /* Uhr am oberen Geschoss */
+    k += `<circle cx="${cx}" cy="${r(top + 15.8)}" r="1.5" fill="#1d2a24" stroke="#c9a640" stroke-width=".3"/>`;
+    /* vier Giebel am Helmfuß, Ecktürmchen, der schlanke achteckige Kupferhelm */
+    k += `<path d="M${r(cx - w / 2)} ${r(top)} L${r(cx - w / 4)} ${r(top - 3.4)} L${r(cx)} ${r(top)} L${r(cx + w / 4)} ${r(top - 3.4)} L${r(cx + w / 2)} ${r(top)} Z" fill="#8a3f2b"/>`;
+    for (const ex of [-w / 2 + 0.4, w / 2 - 0.4]) k += `<path d="M${r(cx + ex - 0.5)} ${r(top)} L${r(cx + ex)} ${r(top - 4.6)} L${r(cx + ex + 0.5)} ${r(top)} Z" fill="${KUPFER}"/>`;
+    k += `<path d="M${r(cx - w * 0.36)} ${r(top - 1)} L${r(cx - 0.25)} ${r(top - sp)} L${r(cx + 0.25)} ${r(top - sp)} L${r(cx + w * 0.36)} ${r(top - 1)} Z" fill="${KUPFER}"/>`;
+    k += `<path d="M${r(cx + 0.1)} ${r(top - sp)} L${r(cx + w * 0.12)} ${r(top - 1)}" stroke="#a9d8c2" stroke-width=".35" opacity=".7"/>`;
+    k += `<path d="M${r(cx - w * 0.36)} ${r(top - 1)} L${r(cx - w * 0.15)} ${r(top - 1)} L${r(cx - 0.1)} ${r(top - sp)} Z" fill="#2f5a4a" opacity=".45"/>`;
+    k += `<path d="M${r(cx)} ${r(top - sp)} V${r(top - sp - 3.4)} M${r(cx - 0.9)} ${r(top - sp - 2.3)} H${r(cx + 0.9)}" stroke="#c9a640" stroke-width=".4"/><circle cx="${r(cx)}" cy="${r(top - sp - 0.6)}" r=".55" fill="${GOLD}"/>`;
   }
   k = `<g filter="url(#${S.id("dunst")})" opacity=".92">${k}</g>`;
   S.teil({ id: "marienkirche", de: "die Marienkirche", syl: "ma-RI-en-kir-che", it: "la chiesa di Santa Maria", itSyl: "CHIE-sa di SAN-ta ma-RI-a", en: "St Mary's Church",
@@ -233,7 +268,7 @@ let WEG_TEIL, RASEN_TEIL;
    2 — DIE PETRIKIRCHE (ein Turm, 108 m, ≈ 410 m)
    ===================================================================== */
 {
-  const K = F / 410, fuss = HOR + AUGE * K, cx = 112;
+  const K = F / 410, fuss = HOR + AUGE * K, cx = 96;
   const w = 12 * K, mh = 60 * K, sp = 48 * K, top = fuss - mh;
   let k = `<rect x="${r(cx - w / 2)}" y="${r(top)}" width="${r(w)}" height="${r(mh)}" fill="${S.lg("pet", [[0, "#6e3326"], [0.6, "#98482f"], [1, "#ae5a3d"]], 0, 0, 1, 0)}"/>`;
   for (let j = 0; j < 4; j++) {
@@ -340,7 +375,7 @@ const SPEICHER = { x0: 296, d: 210 };
    5 — DAS HOLSTENTOR (Feldseite) — Lupe: Turm, Kegeldach, Inschrift,
        Schießscharte, Fries, Backstein, Durchfahrt
    ===================================================================== */
-const GD = 95, GK = F / GD, GX = 200, GY = r(HOR + AUGE * GK);
+const GD = 82, GK = F / GD, GX = 200, GY = r(HOR + AUGE * GK);
 const M = (m) => r(m * GK);                       /* Meter → Einheiten am Tor */
 const TURM = { R: 5.8, cx: 10.4, H: 20, kegel: 12.4, Rk: 6.45 };
 const bogen = (h, R) => r((h - AUGE) * F * R / (GD * GD));   /* wie stark sich ein Ring in Höhe h nach oben wölbt */
@@ -351,6 +386,7 @@ let TOR_UNTER = [];
   const mw = 4.7, mh = 19.2, gh = 7.6;
   let mb = `<rect x="${-M(mw)}" y="${-M(mh)}" width="${M(2 * mw)}" height="${M(mh)}" fill="${ZIEGEL_M}"/>`;
   mb += `<rect x="${-M(mw)}" y="${-M(mh)}" width="${M(2 * mw)}" height="${M(mh)}" fill="url(#${S.id("verband")})" opacity=".35"/>`;
+  mb += `<rect x="${-M(mw)}" y="${-M(mh)}" width="${M(2 * mw)}" height="${M(mh)}" fill="url(#${S.id("brand")})"/>`;
   for (const h of [3.2, 10.4, 12.0, 17.2]) mb += `<rect x="${-M(mw)}" y="${-M(h + 0.45)}" width="${M(2 * mw)}" height="${M(0.45)}" fill="${GLASUR}"/>`;
   /* Giebel über dem Mittelbau: gestuft, mit Blendnischen */
   let gp = `M${-M(mw)} ${-M(mh)} `;
@@ -367,7 +403,7 @@ let TOR_UNTER = [];
   for (const dx of [-2.8, 0, 2.8]) mb += `<rect x="${M(dx - 0.35)}" y="${-M(16.4)}" width="${M(0.7)}" height="${M(0.9)}" fill="#1c1310"/><rect x="${M(dx - 0.55)}" y="${-M(15.5)}" width="${M(1.1)}" height="${M(0.22)}" fill="#a9a59b"/>`;
   /* Inschriftband */
   mb += `<rect x="${-M(4.3)}" y="${-M(9.15)}" width="${M(8.6)}" height="${M(1.25)}" fill="#2a1a15"/><rect x="${-M(4.3)}" y="${-M(9.15)}" width="${M(8.6)}" height=".25" fill="#c9a640" opacity=".7"/><rect x="${-M(4.3)}" y="${-M(7.9) - 0.25}" width="${M(8.6)}" height=".25" fill="#c9a640" opacity=".7"/>`;
-  mb += `<text x="0" y="${r(-M(8.2))}" font-size="2.3" text-anchor="middle" fill="${GOLD}" font-family="Georgia,'Times New Roman',serif" font-weight="bold" letter-spacing=".22" textLength="${M(8.1)}" lengthAdjust="spacingAndGlyphs">CONCORDIA DOMI FORIS PAX</text>`;
+  mb += `<text x="0" y="${r(-M(8.2))}" font-size="2.3" text-anchor="middle" fill="${GOLD}" font-family="Georgia,'Times New Roman',serif" font-weight="bold" textLength="${M(8.1)}" lengthAdjust="spacingAndGlyphs">CONCORDIA DOMI FORIS PAX</text>`;
   /* Durchfahrt: Rundbogen mit gestuftem Gewände, innen dunkel, hinten Licht der Stadtseite */
   const bw = 2.15, bh = 4.4;
   for (const [o, f] of [[0.6, "#7a3020"], [0.35, "#5e2419"], [0, "#120c0a"]]) mb += `<path d="M${-M(bw + o)} 0 V${-M(bh)} A${M(bw + o)} ${M(bw + o)} 0 0 1 ${M(bw + o)} ${-M(bh)} V0 Z" fill="${f}"/>`;
@@ -387,6 +423,9 @@ let TOR_UNTER = [];
     /* Körper mit Ziegelverband, Granitsockel */
     t += `<path d="M${-R} 0 V${-Hh} A${R} ${ring(TURM.H)} 0 0 1 ${R} ${-Hh} V0 A${R} .4 0 0 1 ${-R} 0 Z" fill="${ZIEGEL}"/>`;
     t += `<path d="M${-R} 0 V${-Hh} A${R} ${ring(TURM.H)} 0 0 1 ${R} ${-Hh} V0 Z" fill="url(#${S.id("verband")})" opacity=".32"/>`;
+    t += `<path d="M${-R} 0 V${-Hh} A${R} ${ring(TURM.H)} 0 0 1 ${R} ${-Hh} V0 Z" fill="url(#${S.id("brand")})"/>`;
+    /* Wetterspuren: dunkle Fahnen unter den Scharten und am Fuß */
+    t += `<path d="M${-R} 0 V${-M(3)} A${R} 1 0 0 1 ${R} ${-M(3)} V0 Z" fill="${S.lg("fuss", [[0, "#1a0805", 0], [1, "#1a0805", 0.35]])}"/>`;
     t += band(0, 1.1, S.lg("sockel", [[0, "#4b4740"], [0.7, "#8d877b"], [1, "#6a655c"]], 0, 0, 1, 0));
     /* Lagen aus schwarz glasierten Ziegeln */
     for (const h of [2.0, 3.6, 5.2, 9.0, 10.6, 12.2, 15.6, 17.2]) t += band(h, h + 0.42, GLASUR, 0.92);
@@ -394,11 +433,12 @@ let TOR_UNTER = [];
     for (const h of [6.6, 13.6]) {
       t += band(h, h + 0.62, TERRA);
       t += band(h - 0.12, h, "#d9c9a8", 0.8) + band(h + 0.62, h + 0.74, "#d9c9a8", 0.8);
-      for (let a = -78; a <= 78; a += 9.5) {
+      for (let a = -84; a <= 84; a += 5.6) {
         const s = Math.sin(a * Math.PI / 180), c = Math.cos(a * Math.PI / 180);
         const x = r(R * s), y = r(-M(h + 0.31) - ring(h + 0.31) * c), w = r(M(0.55) * c);
         if (w < 0.4) continue;
-        t += `<ellipse cx="${x}" cy="${y}" rx="${r(w * 0.3)}" ry=".75" fill="#8a6a4a" opacity="${r(0.35 + 0.55 * (s + 1) / 2)}"/>`;
+        t += `<rect x="${r(x - w * 0.46)}" y="${r(y - 1.35)}" width="${r(w * 0.92)}" height="2.7" fill="#4a3428" stroke="#1a110d" stroke-width=".15"/>`;
+        t += `<circle cx="${x}" cy="${y}" r="${r(Math.min(0.85, w * 0.3))}" fill="none" stroke="#a5835e" stroke-width=".25" opacity="${r(0.4 + 0.5 * (s + 1) / 2)}"/><circle cx="${x}" cy="${y}" r=".25" fill="#a5835e" opacity="${r(0.4 + 0.5 * (s + 1) / 2)}"/>`;
       }
     }
     /* Schießscharten: drei je Geschoss (EG, 1. OG, 2. OG), oben kleine Fenster */
@@ -458,7 +498,7 @@ let TOR_UNTER = [];
   ];
   S.teil({ id: "holstentor", de: "das Holstentor", syl: "HOL-sten-tor", it: "la Porta di Holsten", itSyl: "POR-ta di HOL-sten", en: "Holsten Gate",
     x: GX, y: GY, kunst: torSvg, tipp: "Das Holstentor wurde 1478 fertig. Früher schützte es die reiche Hansestadt, heute ist darin ein Museum.",
-    zoom: { x: 120, y: 44, w: 204, h: 136 }, unter: TOR_UNTER });
+    zoom: { x: 102, y: 22, w: 246, h: 164 }, unter: TOR_UNTER });
 }
 
 /* =====================================================================
@@ -596,7 +636,7 @@ const [BX0, BY] = proj(BANK.lat0, BANK.d), [BX1] = proj(BANK.lat1, BANK.d), BK =
 }
 {
   /* DIE FRAU sitzt links auf der Bank (die rechte Banhälfte bleibt frei) */
-  const m = figur({ id: "lbk_frau", geschlecht: "w", pose: "sitzen", blick: 30, frisur: "lang", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true,
+  const m = figur({ id: "lbk_frau", geschlecht: "w", pose: "sitzen", blick: 24, frisur: "lang", haarfarbe: "hellbraun", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "bluse", farbe: "#f3efe6" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "#2f5f95" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, 1.66 * BK);
   const sitzY = m.z.sitz.y * m.k;
   const x = r(BXM - 0.35 * BK);
@@ -628,7 +668,7 @@ let MARZ = null;
 }
 {
   /* DAS MARZIPAN: ein Marzipanbrot in Schokolade, angebrochen, in den Händen des Kindes */
-  const s = KK;
+  const s = KK * 1.35;
   let k = `<rect x="${r(-0.08 * s)}" y="${r(-0.05 * s)}" width="${r(0.16 * s)}" height="${r(0.05 * s)}" rx="${r(0.02 * s)}" fill="${S.lg("schoko", [[0, "#5a3420"], [1, "#2e180c"]])}"/>`;
   k += `<rect x="${r(0.04 * s)}" y="${r(-0.05 * s)}" width="${r(0.045 * s)}" height="${r(0.05 * s)}" fill="#f1dcae"/>`;
   k += `<path d="M${r(-0.08 * s)} ${r(-0.03 * s)} h${r(0.1 * s)}" stroke="#7a4a2a" stroke-width=".25"/>`;

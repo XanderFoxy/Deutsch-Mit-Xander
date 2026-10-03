@@ -651,7 +651,10 @@ const KUP = { x: kgP(40, 0)[0], m: 300 / 140 };
   k += quad(0.62, 1, -2, xe, SANDK);
   let fen = "";
   for (let u = 2; u < 134; u += 4) { const x = xU(u), x2 = xU(u + 1.6); fen += `M${r(x)} ${r(at(x, 0.7))} L${r(x2)} ${r(at(x2, 0.7))} L${r(x2)} ${r(at(x2, 0.9))} L${r(x)} ${r(at(x, 0.9))} Z `; }
-  k += `<path d="${fen}" fill="#59616b"/>`;
+  let pil = "", soh = "";
+  for (let u = 0; u < 135; u += 8) { const x = xU(u), x2 = xU(u + 0.7); pil += `M${r(x)} ${r(at(x, 0.63))} L${r(x2)} ${r(at(x2, 0.63))} L${r(x2)} ${r(at(x2, 0.99))} L${r(x)} ${r(at(x, 0.99))} Z `; }
+  for (let u = 1.6; u < 134; u += 4) { const x = xU(u), x2 = xU(u + 2.4); soh += `M${r(x)} ${r(at(x, 0.69))} L${r(x2)} ${r(at(x2, 0.69))} `; }
+  k += `<path d="${pil}" fill="#ece0c4"/><path d="${fen}" fill="#55606b" stroke="#f3ead6" stroke-width=".25"/><path d="${soh}" stroke="#f6efdf" stroke-width=".4"/>`;
   k += quad(1, 1.07, -2, xe, "#f3ead6");
   k += quad(1.07, 1.12, -2, xe, "#7d8896");
   k += quad(0.58, 0.62, -2, xe, "#f4ecda");
@@ -661,7 +664,7 @@ const KUP = { x: kgP(40, 0)[0], m: 300 / 140 };
   k += quad(0.52, 0.58, -2, xe, "#efe5cf");
   k += quad(0.5, 0.52, -2, xe, "#d6c7a8");
   /* Halle hinter den Säulen: Schatten, Schaufenster warm beleuchtet */
-  k += quad(0, 0.5, -2, xe, S.lg("halle", [[0, "#6d6152"], [1, "#4a4138"]]));
+  k += quad(0, 0.5, -2, xe, S.lg("halle", [[0, "#5e5245"], [1, "#3e352d"]]));
   let lad = "";
   for (let u = 1; u < 134; u += 4) { const x = xU(u), x2 = xU(u + 2.4); lad += `M${r(x)} ${r(at(x, 0.04))} L${r(x2)} ${r(at(x2, 0.04))} L${r(x2)} ${r(at(x2, 0.36))} L${r(x)} ${r(at(x, 0.36))} Z `; }
   k += `<path d="${lad}" fill="${S.lg("laden", [[0, "#f6d79a"], [1, "#c99a55"]])}" opacity=".8"/>`;
@@ -671,7 +674,7 @@ const KUP = { x: kgP(40, 0)[0], m: 300 / 140 };
   S.def(`<g id="${S.id("kap")}"><rect x="-.62" y=".02" width="1.24" height=".22" fill="#efe4cc"/><circle cx="-.6" cy=".26" r=".2" fill="#f4ead6" stroke="#a8956f" stroke-width=".07"/><circle cx="-.6" cy=".26" r=".07" fill="#a8956f"/><circle cx=".6" cy=".26" r=".2" fill="#f4ead6" stroke="#a8956f" stroke-width=".07"/><circle cx=".6" cy=".26" r=".07" fill="#a8956f"/><rect x="-.82" y="-.18" width="1.64" height=".2" fill="#f7f0e0"/></g><g id="${S.id("basis")}"><rect x="-.72" y="-.2" width="1.44" height=".2" fill="#ddd0b4"/><rect x="-.62" y="-.36" width="1.24" height=".17" rx=".08" fill="#efe5d0"/></g>`);
   const SAEULE_K = S.lg("koensaeule", [[0, "#b9a988"], [0.3, "#dccfb2"], [0.62, "#f6eedd"], [0.85, "#e6dabf"], [1, "#c4b493"]], 0, 0, 1, 0);
   for (let i = 0; i < 34; i++) {
-    const u = i * 4.09, x = xU(u), w = Math.max(0.3, 300 * 1.0 / (81 + u) * 0.82);
+    const u = i * 4.09, x = xU(u), w = Math.max(0.25, Math.min(300 * 1.0 / (81 + u) * 0.82, (xU(u + 4.09) - x) * 0.6));
     const yb = at(x, 0), yt = at(x, 0.5);
     k += `<rect x="${r(x - w / 2)}" y="${r(yt)}" width="${r(w)}" height="${r(yb - yt)}" fill="${SAEULE_K}"/>`;
     if (w > 2) {
@@ -766,6 +769,8 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
   for (const p of leute) k += p.schatten;
   for (const [u, v, h, b, s] of BAEUME) { const [x, y] = boden(u, v); k += baum(x, y, h, b, HERBST, s); }
   for (const p of leute) k += p.bild;
+  /* Boden zwischen Treppenfuß und Rasen: fängt den Tipp in der Treppenöffnung */
+  k += vieleck([boden(-14, -2), boden(10, -2), boden(10, 45), boden(-14, 45)], `fill="#d5c8b0" opacity=".001"`, 167);
   S.teil({ id: "schlossplatz", de: "der Schlossplatz", syl: "SCHLOSS-platz", it: "la piazza del castello", itSyl: "PIAZ-za del ca-STEL-lo", en: "Palace Square", x: 0, y: 0, kunst: k,
     tipp: "Der Schlossplatz ist der größte Platz in der Mitte von Stuttgart." });
 }
@@ -797,7 +802,7 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
   let pa = "", ps2 = "";
   for (const [n, u, v, sp] of ps) { const [x, y] = boden(u, v); ps2 += wurf(x, y, 1.7, 0.45, false, 0.2, 0.3); pa += figur(n, x, y, 1.72 * mY(y), sp); }
   k += sch + ps2 + lat + pa;
-  S.teil({ id: "koenigstrasse", de: "die Königstraße", syl: "KÖ-nig-stra-ße", it: "la Königstraße (via dello shopping)", itSyl: "KÖ-nig-stras-se", en: "Königstraße (shopping street)",
+  S.teil({ id: "koenigstrasse", de: "die Königstraße", syl: "KÖ-nigs-stra-ße", it: "la Königstraße (via dello shopping)", itSyl: "KÖ-nigs-stra-ße", en: "Königstraße (shopping street)",
     x: 0, y: 0, kunst: k, tipp: "Die Königstraße ist die lange Einkaufsstraße vom Hauptbahnhof bis zum Rotebühlplatz." });
 }
 
@@ -813,7 +818,8 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
   k += `<path d="M${r(-0.32 * m)} ${r(-h - 0.6 * m)} L${r(0.32 * m)} ${r(-h - 0.6 * m)} L0 ${r(-h - 0.85 * m)} Z" fill="${EIS}"/>`;
   const [sx, sy] = spitze(x, y, 4.6, false);
   k = `<path d="M${r(-0.1 * m)} 0 L${r(sx - x - 0.05 * m)} ${r(sy - y)} L${r(sx - x + 0.05 * m)} ${r(sy - y)} L${r(0.1 * m)} 0 Z" fill="#2a2216" opacity=".22"/>` + k;
-  S.teil({ id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "il lampione", itSyl: "lam-PIO-ne", en: "street lamp", x, y, steht: true, kunst: k });
+  S.teil({ id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "il lampione", itSyl: "lam-PIO-ne", en: "street lamp", x, y, steht: true, kunst: k + `<rect x="-3" y="${r(-4.6 * m - 3.5)}" width="6" height="${r(4.6 * m + 4)}" fill="#fff" opacity=".001"/>`,
+    tipp: "Abends leuchten die Laternen in der Königstraße." });
 }
 
 /* =====================================================================
@@ -1034,6 +1040,13 @@ const P2 = (p) => `${r(p[0])} ${r(p[1])}`;
   f += `M316 0 L316 ${r((a[1] + b[1]) / 2)} `;
   k += `<path d="${f}" stroke="#4d5a63" stroke-width=".35"/><path d="M312 0 L312 ${r(a[1])}" stroke="#39444b" stroke-width=".9"/>`;
   k += `<path d="M313 10 L319.5 4 M313 40 L319.5 30 M313.2 70 L319.5 62" stroke="#ffffff" stroke-width=".7" opacity=".35"/>`;
+  /* rechte Wange (Mauer zur Treppe hin) und die Fläche des Kleinen Schlossplatzes unter dem Museum */
+  { const w0 = WANGE * 300 / 160, w1 = KD + TT * NST;
+  const wt0 = T3(WANGE, w0, 0), wt1 = T3(WANGE, w1, 0), wb0 = T3(WANGE, w0, stufeZ(w0)), wb1 = T3(WANGE, w1, -TS * NST);
+  k += `<path d="M${P2(wt0)} L${P2(wt1)} L${P2(wb1)} L${P2(wb0)} Z" fill="${S.lg("wange3", [[0, "#cbbf9f"], [1, "#e2d7bc"]], 0, 0, 1, 0)}"/>`;
+  let fu = ""; for (let z = -0.5; z > -4.3; z -= 0.55) { const p = T3(WANGE, w0, z), q = T3(WANGE, w1, z); fu += strecke(p, q, 0, 0, 320, 200); }
+  k += `<path d="${fu}" stroke="#ab9f84" stroke-width=".2"/>`;
+  k += `<path d="M${P2(wt0)} L${P2(wt1)} L${P2(T3(WANGE + 2, w1, 0))} L312 ${r(T3(WANGE + 2, (WANGE + 2) * 300 / 152, 0)[1])} L320 ${r(T3(WANGE + 2, (WANGE + 2) * 300 / 160, 0)[1])} Z" fill="#ddd5c5"/>`; }
   S.teil({ id: "museum", de: "das Museum", syl: "mu-SE-um", it: "il museo", itSyl: "mu-SE-o", en: "museum", x: 0, y: 0, kunst: k,
     tipp: "Das Kunstmuseum ist ein Würfel aus Glas – innen ist ein Kern aus Stein." });
 }
@@ -1056,13 +1069,6 @@ const P2 = (p) => `${r(p[0])} ${r(p[1])}`;
   for (const d of [5.4, 6.2]) pf += `M0 ${r(T3(0, d, 0)[1])} L320 ${r(T3(0, d, 0)[1])} `;
   k += `<path d="${pf}" stroke="#aba393" stroke-width=".3" opacity=".7"/>`;
   k += `<path d="M0 ${r(KANTE)} L320 ${r(KANTE)}" stroke="#f8f4ec" stroke-width=".7"/><path d="M0 ${r(KANTE + 0.6)} L320 ${r(KANTE + 0.6)}" stroke="#7d7a74" stroke-width=".35"/>`;
-  /* rechte Wange (Mauer zur Treppe hin) und die Fläche des Kleinen Schlossplatzes unter dem Museum */
-  const w0 = WANGE * 300 / 160, w1 = KD + TT * NST;
-  const wt0 = T3(WANGE, w0, 0), wt1 = T3(WANGE, w1, 0), wb0 = T3(WANGE, w0, stufeZ(w0)), wb1 = T3(WANGE, w1, -TS * NST);
-  k += `<path d="M${P2(wt0)} L${P2(wt1)} L${P2(wb1)} L${P2(wb0)} Z" fill="${S.lg("wange3", [[0, "#cbbf9f"], [1, "#e2d7bc"]], 0, 0, 1, 0)}"/>`;
-  let fu = ""; for (let z = -0.5; z > -4.3; z -= 0.55) { const p = T3(WANGE, w0, z), q = T3(WANGE, w1, z); fu += strecke(p, q, 0, 0, 320, 200); }
-  k += `<path d="${fu}" stroke="#ab9f84" stroke-width=".2"/>`;
-  k += `<path d="M${P2(wt0)} L${P2(wt1)} L${P2(T3(WANGE + 2, w1, 0))} L312 ${r(T3(WANGE + 2, (WANGE + 2) * 300 / 152, 0)[1])} L320 ${r(T3(WANGE + 2, (WANGE + 2) * 300 / 160, 0)[1])} Z" fill="#ddd5c5"/>`;
   /* Menschen auf der Treppe (sie stehen tiefer als wir) */
   for (const [n, d, X, h] of [["runter", 14, -1.5, 1.72], ["rauf", 18, 2, 1.68]]) { const z = stufeZ(d), p = T3(X, d, z); k += figur(n, p[0], p[1], h * 300 / d); }
   S.teil({ id: "treppe", de: "die Freitreppe", syl: "FREI-trep-pe", it: "la scalinata", itSyl: "sca-li-NA-ta", en: "outdoor staircase", x: 0, y: 0, kunst: k,
@@ -1111,7 +1117,7 @@ const P2 = (p) => `${r(p[0])} ${r(p[1])}`;
     g += `<path d="M${X(0)} ${Y(-0.65)} l0 ${r(0.65 * s)} l${r(0.4 * s * sp)} 0 M${X(0.7)} ${Y(-0.6)} l0 ${r(0.6 * s)} l${r(0.4 * s * sp)} 0" stroke="#c9605a" stroke-width="${r(0.22 * s)}" fill="none" stroke-linecap="round"/>`;
     return g;
   };
-  S.teil({ id: "taube", de: "die Taube", syl: "TAU-be", it: "il piccione", itSyl: "pic-CIO-ne", en: "pigeon", x: 128, y: 194, kunst: taube(0, 0, 2.1, 1, false) + taube(24, -4, 1.95, -1, true) });
+  S.teil({ id: "taube", de: "die Taube", syl: "TAU-be", it: "il piccione", itSyl: "pic-CIO-ne", en: "pigeon", tipp: "Auf dem Schlossplatz warten die Tauben auf Brezelkrümel.", x: 128, y: 194, kunst: taube(0, 0, 2.1, 1, false) + taube(24, -4, 1.95, -1, true) });
 }
 
 /* =====================================================================
@@ -1125,7 +1131,8 @@ const TISCH = { x: 268, y: 186, rx: 46, ry: 13.8 };
   k += `<ellipse cx="0" cy="0" rx="46" ry="13.8" fill="none" stroke="#a49a88" stroke-width=".6"/>`;
   k += `<path d="M-30 -6 Q-10 -9 18 -7.5 M-20 2 Q4 -1 30 1.5" stroke="#cfc8bb" stroke-width=".35" fill="none" opacity=".7"/>`;
   k += `<ellipse cx="14" cy="-5" rx="20" ry="3.6" fill="#fff" opacity=".22"/>`;
-  S.teil({ id: "tisch", de: "der Tisch", syl: "TISCH", it: "il tavolo", itSyl: "TA-vo-lo", en: "table", x: TISCH.x, y: TISCH.y, kunst: k });
+  S.teil({ id: "tisch", de: "der Tisch", syl: "TISCH", it: "il tavolo", itSyl: "TA-vo-lo", en: "table", x: TISCH.x, y: TISCH.y, kunst: k,
+    tipp: "Draußen am Tisch isst man schwäbisch: Brezel, Maultaschen, Linsen mit Spätzle." });
 }
 const tellerSchatten = (rx, ry) => `<ellipse cx="${r(-rx * 0.12)}" cy="${r(-ry * 0.35)}" rx="${r(rx * 1.02)}" ry="${r(ry * 1.05)}" fill="#3a3024" opacity=".22" filter="url(#${S.id("sanft")})"/>`;
 const teller = (rx, ry, id) => `<ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="${S.lg(id, [[0, "#ffffff"], [0.7, "#eeece7"], [1, "#cfccc4"]])}"/><ellipse cx="0" cy="${r(ry * 0.08)}" rx="${r(rx * 0.74)}" ry="${r(ry * 0.7)}" fill="#f4f3ef" stroke="#dcd9d2" stroke-width=".25"/>`;

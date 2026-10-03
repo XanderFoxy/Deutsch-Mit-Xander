@@ -106,7 +106,7 @@ const schlag = (x, y, w, h, a = 0.45) => {
 };
 const gegen = (svg) => `<g filter="url(#${S.id("gegen")})">${svg}</g>`;
 /* Mensch aus dem Baukasten, ohne seinen runden Bodenschatten, Pfade sparsam gerundet (Ladezeit) */
-function figur(spec, hoehe, fein = 1) {
+function figur(spec, hoehe, fein = 1, extra = "") {
   const m = B.mensch(spec, hoehe);
   const kopfY = -0.83 * (m.z.hoehe || 170);
   let z = m.z.svg.replace(/(<g class="mensch">(?:<defs>.*?<\/defs>)?)<ellipse[^>]*\/>/s, "$1");
@@ -117,8 +117,11 @@ function figur(spec, hoehe, fein = 1) {
     const q = Math.min(...ys) < kopfY ? fein : Math.max(...ys) > -14 ? 0.25 : 1;
     return ` d="${v.replace(/-?\d+\.\d+/g, (x) => String(Math.round(+x / q) * q))}"`;
   }).replace(/ (x1|y1|x2|y2)="(-?\d+\.\d+)"/g, (a, n, v) => ` ${n}="${Math.round(+v)}"`);
-  return { svg: `<g transform="scale(${m.k.toFixed(4)})">${z}</g>`, k: m.k, z: m.z };
+  return { svg: `<g transform="scale(${m.k.toFixed(4)})">${z}${extra}</g>`, k: m.k, z: m.z };
 }
+/* geschlossene Halbschuhe (Seitenansicht nach links) über den Baukasten-Füßen, in Figur-Maßen */
+const SCHUHE_LINKS = (c) => `<path d="M-1.6 -7.5 Q-6 -7.4 -15.5 -3.6 Q-18.8 -2.2 -17.6 -.9 Q-16 .2 -4 -.6 Q-1.2 -.9 -1.4 -3.4 Z" fill="${c}"/><path d="M-17.6 -.9 Q-16 .2 -4 -.6 Q-1.2 -.9 -1.4 -3.4" stroke="#2a1a10" stroke-width="1.1" fill="none"/>` +
+  `<g transform="translate(5.5 2.4)"><path d="M3.2 -5.9 Q-3 -6.1 -15 -3.2 Q-18.6 -1.9 -17.4 -.6 Q-15.5 .5 -2 -.4 Q5.6 -.7 5.4 -3.2 Q5 -5.4 3.2 -5.9 Z" fill="${c}"/><path d="M-17.4 -.6 Q-15.5 .5 -2 -.4 Q5.6 -.7 5.4 -3.2" stroke="#2a1a10" stroke-width="1.1" fill="none"/><path d="M-14 -3.3 Q-9 -4.5 -4 -5" stroke="#fff" stroke-width=".7" opacity=".15" fill="none"/></g>`;
 /* kleiner Passant in der Ferne (unter ≈ 14 Einheiten): Kopf mit Haar, Schultern, Arme, Beine im Schritt */
 function passant(x, y, h, o = {}) {
   const { hemd = "#3d5a80", hose = "#2f3640", haar = "#4a3426", haut = "#e3b796", schritt = 0.1, rock = false, tasche = null, rueck = false } = o;
@@ -954,7 +957,7 @@ const FASS = { d: 21.5, l: -1.9 };
   /* DER GAST — eine Frau am Fass, ein Altbier in der Hand */
   const p = P(22.2, -1.15, 0), s = F / 22.2;
   const m = figur({ id: "dus_gast", geschlecht: "w", pose: "halten", blick: -62, frisur: "lang", haarfarbe: "blond", haut: "hell", laecheln: true,
-    kleidung: { oberteil: { stueck: "bluse", farbe: "#f3efe6" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "#b8473a" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, 1.68 * s);
+    kleidung: { oberteil: { stueck: "bluse", farbe: "#f3efe6" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "#b8473a" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, 1.68 * s, 1, SCHUHE_LINKS("#6b4528"));
   const hand = m.z.handL.y < m.z.handR.y ? m.z.handL : m.z.handR, hx = hand.x * m.k, hy = hand.y * m.k;
   const glas = `<g transform="translate(${r(hx)} ${r(hy + 0.4)})"><rect x="-.6" y="-2.6" width="1.2" height="2.6" fill="#7a3e17"/><rect x="-.6" y="-2.9" width="1.2" height=".5" rx=".2" fill="#f4ead6"/><rect x=".15" y="-2.3" width=".25" height="1.9" fill="#fff" opacity=".4"/></g>`;
   S.teil({ id: "gast", de: "der Gast", syl: "GAST", it: "l'ospite", itSyl: "O-spi-te", en: "guest", x: p[0], y: p[1], kunst: schlag(0, 0.3, 5, 1.68 * s, 0.45) + gegen(m.svg) + glas,
