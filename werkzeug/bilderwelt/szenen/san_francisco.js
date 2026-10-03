@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SAN FRANCISCO (FASSUNG 854, Runde 2) — Bilderwelt neu
+   SAN FRANCISCO (FASSUNG 854, Runde 3) — Bilderwelt neu
    ---------------------------------------------------------------------
    RECHERCHE (SFMTA „Routes with a View“ Powell-Hyde, Market Street
    Railway „Cable Cars“, Golden Gate Bridge District „Color & Art Deco
@@ -50,9 +50,12 @@
      Häuser beidseits; die Kehren werden zum Fluchtpunkt hin klein.
    - TYPISCHES: Sauerteigbrot (Boudin, „Clam Chowder“ in der Brotschale),
      Seelöwen am Pier 39, Segelschiff Balclutha (1886) am Hyde Street Pier.
-   Licht: früher Nachmittag (≈ 14 Uhr, Sommerzeit), Sonne im Südsüdwesten (≈ 215°, 52° hoch):
-   Fassaden der Westseite im Schatten, Schatten fallen nach Nordosten
-   (im Nordblick nach rechts hinten).
+   Licht: Nachmittag (≈ 15:15 Uhr, Sommerzeit), Sonne im Westsüdwesten (≈ 245°, 48° hoch):
+   die Straßenfassaden der Westseite liegen im Eigenschatten (kühler), ihr
+   Schlagschatten fällt über Gehweg und die westliche Spur; alle Schatten
+   fallen scharf nach Nordosten (im Bild nach rechts hinten).
+   NAHT der zwei Blicke: am Eckmast mit Straßenschild (x ≈ 231), unten
+   schräg an der Ostkante der Kreuzung, wo die Ziegel-Einfahrt beginnt.
    ===================================================================== */
 "use strict";
 const path = require("path");

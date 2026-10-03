@@ -116,10 +116,10 @@ S.def(`<filter id="${S.id("dunst")}" x="-30%" y="-60%" width="160%" height="220%
 S.def(`<pattern id="${S.id("wald")}" width="2.6" height="2" patternUnits="userSpaceOnUse"><rect width="2.6" height="2" fill="#376b47"/><circle cx=".7" cy=".7" r=".7" fill="#3f774f"/><circle cx="2" cy="1.5" r=".75" fill="#30603d"/><circle cx="2.1" cy=".3" r=".45" fill="#468252"/><circle cx=".4" cy="1.7" r=".4" fill="#2c5938"/></pattern>`);
 S.def(`<pattern id="${S.id("mosaik")}" width=".5" height=".44" patternUnits="userSpaceOnUse"><rect width=".5" height=".44" fill="#ece8dc"/><path d="M0 .44 L.25 0 L.5 .44 Z" fill="#dcd6c6"/><path d="M0 .44 L.25 0" stroke="#bdb5a2" stroke-width=".03"/></pattern>`);
 /* Sonne vorn rechts (Nordosten): dem Betrachter zugewandte Seiten im Schatten, rechts ein warmer Lichtsaum */
-S.def(`<filter id="${S.id("gegenlicht")}" x="-20%" y="-10%" width="140%" height="120%"><feComponentTransfer in="SourceGraphic" result="d"><feFuncR type="linear" slope=".78"/><feFuncG type="linear" slope=".78"/><feFuncB type="linear" slope=".84"/></feComponentTransfer><feOffset in="SourceAlpha" dx="-.45" dy=".2" result="v"/><feComposite in="SourceAlpha" in2="v" operator="out" result="kante"/><feGaussianBlur in="kante" stdDeviation=".12" result="kw"/><feFlood flood-color="#fff0c4" flood-opacity=".6"/><feComposite in2="kw" operator="in" result="l"/><feComposite in="l" in2="SourceAlpha" operator="in" result="l2"/><feMerge><feMergeNode in="d"/><feMergeNode in="l2"/></feMerge></filter>`);
+S.def(`<filter id="${S.id("gegenlicht")}" x="-20%" y="-10%" width="140%" height="120%" color-interpolation-filters="sRGB"><feComponentTransfer in="SourceGraphic" result="d"><feFuncR type="linear" slope=".78"/><feFuncG type="linear" slope=".78"/><feFuncB type="linear" slope=".84"/></feComponentTransfer><feOffset in="SourceAlpha" dx="-.4" dy=".3" result="v"/><feComposite in="SourceAlpha" in2="v" operator="out" result="kante"/><feGaussianBlur in="kante" stdDeviation=".12" result="kw"/><feFlood flood-color="#fff0c4" flood-opacity=".6"/><feComposite in2="kw" operator="in" result="l"/><feComposite in="l" in2="SourceAlpha" operator="in" result="l2"/><feMerge><feMergeNode in="d"/><feMergeNode in="l2"/></feMerge></filter>`);
 const GEGENLICHT = `url(#${S.id("gegenlicht")})`;
 /* im Kiosk: nur Schatten, kein Lichtsaum */
-S.def(`<filter id="${S.id("innen")}"><feComponentTransfer><feFuncR type="linear" slope=".8"/><feFuncG type="linear" slope=".8"/><feFuncB type="linear" slope=".85"/></feComponentTransfer></filter>`);
+S.def(`<filter id="${S.id("innen")}" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncR type="linear" slope=".8"/><feFuncG type="linear" slope=".8"/><feFuncB type="linear" slope=".85"/></feComponentTransfer></filter>`);
 const INNEN = `url(#${S.id("innen")})`;
 const WALD = `url(#${S.id("wald")})`;
 const MOSAIK = `url(#${S.id("mosaik")})`;
@@ -133,8 +133,11 @@ const DUNST = `url(#${S.id("dunst")})`;
   k += `<rect width="320" height="101" fill="${S.rg("sonne", [[0, "#fff9dc", 0.95], [0.18, "#fff3c4", 0.55], [0.55, "#fff3c4", 0.12], [1, "#fff3c4", 0]], 0.98, 0.02, 0.75)}"/>`;
   /* Haufenwolken über den Bergen, weich */
   for (const [x, y, w] of [[150, 40, 18], [172, 34, 12], [192, 44, 14], [128, 30, 9], [262, 22, 16], [284, 30, 10]]) {
-    k += `<ellipse cx="${x}" cy="${y + 2}" rx="${w * 1.3}" ry="${r(w * 0.22)}" fill="#c9d7e2" opacity=".55" filter="${DUNST}"/>`;
-    for (let i = 0; i < 4; i++) k += `<circle cx="${r(x - w * 0.7 + i * w * 0.46)}" cy="${r(y - Math.sin((i + 0.5) / 4 * Math.PI) * w * 0.32)}" r="${r(w * (0.3 + 0.12 * Math.sin((i + 0.5) / 4 * Math.PI)))}" fill="#fbfdff" opacity=".85" filter="${DUNST}"/>`;
+    /* klarer Umriss oben (Licht von rechts oben), weiche graublaue Unterseite */
+    let c1 = "", c2 = "";
+    for (let i = 0; i < 4; i++) { const cx = x - w * 0.7 + i * w * 0.46, cy = y - Math.sin((i + 0.5) / 4 * Math.PI) * w * 0.32, rr = w * (0.3 + 0.12 * Math.sin((i + 0.5) / 4 * Math.PI)); c1 += `<circle cx="${r(cx)}" cy="${r(cy)}" r="${r(rr)}"/>`; c2 += `<circle cx="${r(cx + rr * 0.12)}" cy="${r(cy - rr * 0.14)}" r="${r(rr * 0.9)}"/>`; }
+    k += `<g fill="#d9e3ec">${c1}</g><g fill="#fdfeff">${c2}</g>`;
+    k += `<ellipse cx="${x}" cy="${r(y + w * 0.08)}" rx="${r(w * 1.15)}" ry="${r(w * 0.2)}" fill="#c3d2df" opacity=".8" filter="${DUNST}"/>`;
   }
   /* Fregattvögel (lange, abgewinkelte Flügel, gegabelter Schwanz) */
   for (const [x, y, s] of [[146, 16, 1], [168, 24, 0.75], [250, 12, 0.6]]) {
@@ -220,7 +223,7 @@ const CX = 88, CY = 27;   /* Oberkante der Aussichtsplattform = Fuß des Sockels
   k += `<rect x="${M(-2.3)}" y="${M(yp)}" width="${M(4.5)}" height="${M(0.7)}" fill="#d8d3c5"/><path d="M${M(-1.3)} ${M(yp)} q${M(0.5)} ${M(-0.5)} ${M(1)} 0 Z M${M(0.4)} ${M(yp)} q${M(0.5)} ${M(-0.5)} ${M(1)} 0 Z" fill="#cfc9b9"/>`;
   const robe = `M${M(-2.25)} ${M(yp - 0.35)} L${M(-2.6)} ${M(yb - 11)} Q${M(-2.85)} ${M(ys + 2)} ${M(-2.8)} ${M(ys)} L${M(2.75)} ${M(ys)} Q${M(2.85)} ${M(ys + 2)} ${M(2.65)} ${M(yb - 11)} L${M(2.3)} ${M(yp - 0.35)} Z`;
   k += `<path d="${robe}" fill="${L}"/><path d="${robe}" fill="url(#${S.id("mosaik2")})" opacity=".5"/>`;
-  for (const x of [-1.6, -0.5, 0.7, 1.8]) k += `<path d="M${M(x)} ${M(yb - 0.3)} Q${M(x + 0.2)} ${M(yb - 10)} ${M(x * 0.9)} ${M(ys + 1.4)}" stroke="#bdb6a4" stroke-width=".035" fill="none"/>`;
+  for (const x of [-1.6, -0.5, 0.7, 1.8]) k += `<path d="M${M(x * 0.92)} ${M(yp - 0.6)} Q${M(x + 0.2)} ${M(yb - 10)} ${M(x * 0.9)} ${M(ys + 1.4)}" stroke="#bdb6a4" stroke-width=".035" fill="none"/>`;
   /* Kordel um die Taille, zwei Enden hängen herab */
   k += `<path d="M${M(-2.75)} ${M(yb - 10.6)} Q0 ${M(yb - 10)} ${M(2.95)} ${M(yb - 10.6)}" stroke="#b5ad9a" stroke-width=".05" fill="none"/><path d="M${M(0.2)} ${M(yb - 10.3)} L${M(0.1)} ${M(yb - 5.4)} M${M(0.7)} ${M(yb - 10.3)} L${M(0.8)} ${M(yb - 6)}" stroke="#b5ad9a" stroke-width=".035"/>`;
   /* Arme waagrecht; schräg gesehen (die Statue schaut nach Osten) wirken sie kürzer.
@@ -284,14 +287,18 @@ const HUEGEL = [[140, 104], [146, 96], [152, 89], [160, 82], [170, 77], [181, 74
 {
   const X = 214;
   const um1 = [[203.5, 100], [204.6, 82], [206.6, 73.4], [209.4, 67.4], [212.6, 64.4], [215.6, 64], [218.6, 65.6], [221.4, 69.6], [223.4, 76], [224.8, 86], [225.4, 100]];
-  let k = `<path d="M${pts(um1)} Z" fill="${S.lg("zh", [[0, "#7f858d"], [0.5, "#9a9da0"], [0.85, "#bdbab2"], [1, "#d3cfc3"]], 0, 0, 1, 0)}"/>`;
+  let k = `<path d="M${pts(um1)} Z" fill="${S.lg("zh", [[0, "#8c9197"], [0.55, "#a2a4a5"], [1, "#c6c2b8"]], 0, 0, 1, 0)}"/>`;
   /* dunkle Regenstreifen im Granit */
-  for (let i = 0; i < 10; i++) { const x = 206 + i * 1.8 + rnd() * 0.6; const y0 = 66 + Math.abs(i - 4.5) * 0.9; k += `<path d="M${r(x)} ${r(y0)} q${r(-0.2 + rnd() * 0.4)} 5 ${r(-0.3 + rnd() * 0.6)} ${r(10 + rnd() * 6)}" stroke="#5f6064" stroke-width="${r(0.22 + rnd() * 0.3)}" opacity=".45" fill="none"/>`; }
-  /* bewachsene Kuppe */
-  k += `<path d="M209.6 67.2 Q214.4 62.8 219.4 66 Q216.6 65.4 214.4 65.6 Q211.8 65.8 209.6 67.2 Z" fill="#647e6a"/>`;
-  k += `<path d="M205.4 79 q2.6 -1.4 4.6 .6 q-2 .8 -4.6 1.2 Z" fill="#647e6a" opacity=".8"/>`;
+  let rs = "";
+  for (let i = 0; i < 9; i++) { const x = 206.4 + i * 1.95 + (rnd() - 0.5) * 1.2, y0 = 66.4 + Math.abs(i - 4.3) * 1.1 + rnd() * 2, l = 5 + rnd() * 12, b2 = (x - 214) * 0.06; rs += `M${r(x)} ${r(y0)} q${r(b2 + (rnd() - 0.5) * 0.8)} ${r(l * 0.5)} ${r(b2 * 1.6 + (rnd() - 0.5))} ${r(l)}`; }
+  k += `<path d="${rs}" stroke="#606267" stroke-width=".35" opacity=".4" fill="none"/>`;
+  /* bewachsene Kuppe, unregelmäßig ausgefranst */
+  let kp = "M209.4 67.4";
+  for (let x = 210; x <= 219.6; x += 0.8) kp += ` L${r(x)} ${r(64.6 + Math.pow((x - 214.6) / 5, 2) * 1.8 + (rnd() < 0.5 ? 0.9 + rnd() * 0.9 : 0.2))}`;
+  kp += " L219.8 66.2 Q217 62.9 214.4 63.9 Q211.6 64.2 209.4 67.4 Z";
+  k += `<path d="${kp}" fill="#647e6a"/>`;
+  k += `<path d="M205.4 79 q1.2 -1.6 2.6 -.6 q1 -.4 2 .9 q-1.4 .4 -2.2 1.4 q-1.1 -.9 -2.4 -1.7 Z" fill="#647e6a" opacity=".8"/>`;
   /* Gegenlicht: Lichtsaum rechts, Dunst der Ferne */
-  k += `<path d="M218.6 65.6 Q221.4 69.6 223.4 76" stroke="#fff3d8" stroke-width=".5" fill="none" opacity=".7"/>`;
   k += `<path d="M${pts(um1)} Z" fill="#d3e4ec" opacity=".3"/>`;
   const cid = S.id("zhclip");
   S.def(`<clipPath id="${cid}"><path d="M0 0 L320 0 L320 ${HUEGEL[17][1]} L${pts(HUEGEL.slice(0, 18).reverse())} L0 104 Z"/></clipPath>`);
@@ -344,7 +351,7 @@ const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Flu
   /* kahle Felswand von Leme zum Meer (rechts, besonnt) */
   k += `<path d="M242 81.4 L246 86 L249 92 L252.5 100.6 L246.6 100.6 L245 93 L242.6 86 Z" fill="${S.lg("lemefels", [[0, "#8f8a80"], [1, "#c9c0ae"]], 0, 0, 1, 0)}"/>`;
   /* das Fort Duque de Caxias oben auf Leme */
-  k += `<path d="M226.5 77.9 L227 75.6 L233.6 75.4 L234 77.8 Z" fill="#c9c4b6"/><rect x="228.4" y="74.4" width="3.6" height="1.2" fill="#d9d4c6"/><line x1="232.8" y1="75.4" x2="232.8" y2="71.8" stroke="#555" stroke-width=".15"/><rect x="232.85" y="71.8" width="1.6" height="1" fill="#2f8a4a"/>`;
+  k += `<path d="M226.5 77.9 L227 75.6 L233.6 75.4 L234 77.8 Z" fill="#c9c4b6"/><rect x="228.4" y="74.4" width="3.6" height="1.2" fill="#d9d4c6"/><line x1="232.8" y1="75.4" x2="232.8" y2="71.8" stroke="#555" stroke-width=".15"/><rect x="232.85" y="71.8" width="1.6" height="1" fill="#009b3a"/><path d="M233.05 72.3 L233.65 71.95 L234.25 72.3 L233.65 72.65 Z" fill="#fedf00"/><circle cx="233.65" cy="72.3" r=".18" fill="#1d3f8f"/>`;
   k += `<path d="M${pts(HUEGEL.slice(0, 18))}" stroke="#5e8f66" stroke-width=".5" fill="none" opacity=".6"/>`;
   S.teil({ id: "huegel", de: "der Hügel", syl: "HÜ-gel", it: "la collina", itSyl: "col-LI-na", en: "hill", x: 236, y: 88, kunst: um(236, 88, k),
     tipp: "Am Ende der Copacabana liegt der Hügel Leme. Oben steht ein altes Fort." });
@@ -356,15 +363,15 @@ const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Flu
    dicht gestaffelt; je Farbe ein einziger Pfad (klein und schnell).
    ===================================================================== */
 {
-  const farben = ["#c9653f", "#dca56b", "#ece4d2", "#b44c3b", "#9fb8c2", "#e4c35c", "#a06e50", "#da8a72", "#f1ede2"];
+  const farben = ["#cd7350", "#ddae7c", "#ebe6d8", "#ba5d4e", "#a8c0ca", "#e3c56c", "#a87c62", "#da9682", "#f0eee6"];
   const hang = (x) => {
     for (let i = 0; i < HUEGEL.length - 2; i++) { const [x1, y1] = HUEGEL[i], [x2, y2] = HUEGEL[i + 1]; if (x >= x1 && x <= x2) return y1 + (y2 - y1) * (x - x1) / (x2 - x1); }
     return 100;
   };
   const wege = farben.map(() => []), fenster = [], tanks = [], schatten2 = [];
-  for (let y = 80; y < 92; y += 0.95) {
+  for (let y = 80; y < 95; y += 0.95) {
     for (let x = 150 + rnd(); x < 212; x += 0.85 + rnd() * 0.7) {
-      if (y < hang(x) + 1.6) continue;
+      if (y < hang(x) + 1.6 || y > 90.5 + 2.2 * Math.sin(x * 0.37) + Math.sin(x * 1.3)) continue;
       /* Babilônia (links) dichter, Chapéu Mangueira (rechts unten) lockerer, dazwischen Wald */
       const dicht = x < 196 ? 0.78 : (x > 203 && y > 84 ? 0.6 : 0.25);
       if (rnd() > dicht) continue;
@@ -380,7 +387,6 @@ const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Flu
   k += `<path d="${schatten2.join("")}" fill="#000" opacity=".18"/><path d="${fenster.join("")}" fill="#3a2f2a"/><path d="${tanks.join("")}" fill="#2f6fb5"/>`;
   /* Bäume zwischen den Häusern und Luftdunst */
   for (let i = 0; i < 14; i++) { const x = 152 + rnd() * 58, y = Math.max(hang(x) + 2, 80) + rnd() * 10; if (y < 92) k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.6 + rnd() * 0.5)}" fill="#46754e"/>`; }
-  k += `<rect x="150" y="79" width="64" height="14" fill="#cfe2ea" opacity=".16"/>`;
   const cid = S.id("favclip");
   S.def(`<clipPath id="${cid}"><path d="M${pts(HUEGEL.slice(0, 18))} L252 100 L140 100 Z"/></clipPath>`);
   S.teil({ id: "favela", de: "die Favela", syl: "Fa-VE-la", it: "la favela", itSyl: "fa-VE-la", en: "favela", x: 175, y: 86, kunst: halb(um(175, 86, `<g clip-path="url(#${cid})">${k}</g>`)),
@@ -399,7 +405,7 @@ const XF = -84.8;
   const bauten = [];
   let Z = 58;
   const hoehen = [41, 36, 30, 24, 27, 35, 22, 30, 38, 26, 33, 28, 36, 24, 31, 35, 27, 30, 33, 25, 30, 28, 32, 26, 30, 28, 30, 26];
-  for (let i = 0; Z < 1900; i++) {
+  for (let i = 0; Z < 1300; i++) {
     const w = 18 + rnd() * 14, H = hoehen[i % hoehen.length];
     bauten.push({ z0: Z, z1: Z + w, H, c: farben[i % farben.length], tief: 16 + rnd() * 8, glas: i % 3 === 1 });
     Z += w + (rnd() < 0.25 ? 6 + rnd() * 6 : 0.5);
@@ -440,10 +446,12 @@ const XF = -84.8;
       k += vieleck(quad(b.z0, b.z1, 0, 3), `fill="#3b3a3a" opacity=".55"`);
       if (breit > 8) for (let j = 0; j < 3; j++) { const za = b.z0 + (j + 0.15) * (b.z1 - b.z0) / 3, zb = za + (b.z1 - b.z0) / 4; k += vieleck(quad(za, zb, 3.3, 2.6, 0, -1.5), `fill="${["#c0392b", "#2e7d5b", "#e0a83a"][j]}"`); }
       /* Dachaufbauten: Maschinenraum, Wassertank */
+      if (breit > 4) {
       const zm = b.z0 + (b.z1 - b.z0) * 0.35;
       /* Maschinenraum als Quader 3 m hinter der Dachkante: Front und Seitenwand */
       k += vieleck([[fx(zm, 3), fy(zm, b.H)], [fx(zm, 7), fy(zm, b.H)], [fx(zm, 7), fy(zm, b.H + 2.6)], [fx(zm, 3), fy(zm, b.H + 2.6)]], `fill="${b.c[1]}" opacity=".9"`);
       k += vieleck(quad(zm, zm + 4, b.H, b.H + 2.6, 3, 3), `fill="${b.c[0]}"`);
+      }
     }
     /* Lichtkante an der vorderen Ecke, Dachkante */
     if (xa > 0 && breit > 1.5) k += `<line x1="${r(xa)}" y1="${r(Math.max(0, ta))}" x2="${r(xa)}" y2="${r(ya)}" stroke="#ffffff" stroke-width="${r(Math.min(0.6, breit * 0.05))}" opacity=".6"/>`;
@@ -792,14 +800,14 @@ const kioskUnter = [];
    14 — DER VERKÄUFER im Kiosk (hinter der Theke, man sieht den Oberkörper)
    ===================================================================== */
 {
-  const m = B.mensch({ id: "rio_verk", geschlecht: "m", alter: "erwachsen", pose: "servieren", blick: -18, frisur: "kurz", haarfarbe: "schwarz", haut: "dunkel", laecheln: true,
+  const m = B.mensch({ id: "rio_verk", geschlecht: "m", alter: "erwachsen", pose: { traghand: "R", roll: 2.5, lende: 1, brust: -3, brustRoll: -4, brustDreh: 6, nacken: 5, kopf: -2, kopfDreh: 10, kopfRoll: 2, schulterL: { vor: -4, seit: 8 }, ellbogenL: 18, unterarmL: 8, handL: 6, fingerL: 0.4, schulterR: { vor: 18, seit: 30, dreh: 20 }, ellbogenR: 108, unterarmR: 0, handR: 20, fingerR: 0, huefteL: { vor: 10, seit: 1, dreh: -12 }, knieL: 15, fussL: 4, huefteR: { vor: -2, seit: 4, dreh: -4 }, knieR: 1, fussR: 0 }, blick: -18, frisur: "kurz", haarfarbe: "schwarz", haut: "dunkel", laecheln: true,
     kleidung: { oberteil: { stueck: "tshirt", farbe: "#2e7d5b" }, unterteil: { stueck: "shorts", farbe: "beige" }, kopf: { stueck: "kappe", farbe: "#2e7d5b" } } }, 1.76 * sy(KI.y - 3));
   const X = KI.x + 14, Y = KI.y - 3;
   const cid = S.id("verkclip");
   /* nur der Teil über der Theke ist zu sehen */
   S.def(`<clipPath id="${cid}" clipPathUnits="userSpaceOnUse"><rect x="-30" y="-80" width="60" height="${r(80 - (Y - THEKE))}"/></clipPath>`);
   const AY = Y - 30;   /* Bezugspunkt auf der Brust (über der Theke) */
-  S.teil({ id: "verkaeufer", de: "der Verkäufer", syl: "ver-KÄU-fer", it: "il venditore", itSyl: "ven-di-TO-re", en: "vendor", x: X, y: AY, kunst: `<g transform="translate(0 ${r(Y - AY)})"><g clip-path="url(#${cid})"><g filter="${INNEN}">${knapp(nurOben(m.svg, (THEKE - Y) / m.k + 3))}</g></g></g>`,
+  S.teil({ id: "verkaeufer", de: "der Verkäufer", syl: "ver-KÄU-fer", it: "il venditore", itSyl: "ven-di-TO-re", en: "vendor", x: X, y: AY, kunst: `<g transform="translate(0 ${r(Y - AY)})"><g clip-path="url(#${cid})"><g filter="${INNEN}">${halb(nurOben(m.svg, (THEKE - Y) / m.k + 3))}</g></g></g>`,
     tipp: "Der Verkäufer sagt: „Bom dia!“ – das heißt „Guten Morgen!“" });
 }
 /* Glas vor dem Kiosk: Spiegelstreifen (fangen keinen Tipp ab) */
@@ -863,9 +871,6 @@ const SCH = { x: 284, y: 152 };
     const [x, y] = welt(u, v), sk = F / (Zc + (v - TT / 2)) / 1;
     k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.065 * sk)}" ry="${r(0.026 * sk)}" fill="#f6d21e"/><ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.028 * sk)}" ry="${r(0.011 * sk)}" fill="#c0392b"/>`;
   }
-  /* Falte und Licht */
-  /* weiche Falte: heller Grat und Schatten daneben */
-  k += `<path d="M${pts([welt(0.3, 0.62), welt(0.75, 0.58), welt(1.1, 0.66)])}" stroke="#fff3e6" stroke-width=".8" fill="none" opacity=".35"/><path d="M${pts([welt(0.3, 0.66), welt(0.75, 0.62), welt(1.1, 0.7)])}" stroke="#8a2f14" stroke-width=".9" fill="none" opacity=".18"/>`;
   k += `<path d="M${pts(rahmen(0))} Z" fill="${S.lg("tuchlicht", [[0, "#fff", 0.1], [1, "#000", 0.08]], 0, 0, 1, 0)}"/>`;
   S.teil({ id: "strandtuch", de: "das Strandtuch", syl: "STRAND-tuch", it: "il telo da mare", itSyl: "TE-lo da MA-re", en: "beach towel", x: X0, y: Y0, kunst: k,
     tipp: "In Brasilien nimmt man ein buntes Tuch mit an den Strand: die „Canga“." });
@@ -904,7 +909,7 @@ const AM = { x: 148, y: 156 };
   const k = fass(Math.min(hux, hvx) * m.k - wf * 0.55, huy * m.k - 0.5, "LIMÃO", "#c9a21a") + fass(fxR, fyR, "MATE", "#2e7d5b");
   const ax = fxR, ay = fyR + 0.21 * s;    /* Bezugspunkt: Mitte des Mate-Fasses */
   S.teil({ oben: true, id: "fass", de: "das Fass", syl: "FASS", it: "il barile", itSyl: "ba-RI-le", en: "keg", x: AM.x + ax, y: AM.y + ay, kunst: `<g transform="translate(${r(-ax)} ${r(-ay)})">${k}</g>`,
-    tipp: "In den Fässern aus Aluminium ist eiskalter Mate-Tee und Limonade. Man trinkt ihn aus Plastikbechern." });
+    tipp: "In den Fässern sind eiskalter Mate-Tee und Limonade. Man trinkt beides aus Plastikbechern." });
 }
 
 const ST = { x: 246, y: 160 };
@@ -933,14 +938,16 @@ const ST = { x: 246, y: 160 };
   k += `<line x1="${r(-w / 2 + 0.6)}" y1="${r(sitz - 0.18 * s)}" x2="${r(-w / 2 + 1)}" y2="${r(sitz)}" stroke="#c3c9cc" stroke-width=".7"/><line x1="${r(w / 2 - 0.6)}" y1="${r(sitz - 0.18 * s)}" x2="${r(w / 2 - 1)}" y2="${r(sitz)}" stroke="#c3c9cc" stroke-width=".7"/>`;
   S.teil({ id: "klappstuhl", de: "der Klappstuhl", syl: "KLAPP-stuhl", it: "la sedia pieghevole", itSyl: "SE-dia pie-GHE-vo-le", en: "folding chair", x: ST.x, y: ST.y, steht: true, kunst: k,
     tipp: "Die leichten Klappstühle aus Aluminium leiht man an der Barraca, der Strandbude." });
-  /* DAS TAMBURIN (Pandeiro) liegt auf dem Sitz */
+  /* DAS TAMBURIN (Pandeiro) steht aufrecht auf dem Sitz, an die Lehne gelehnt, das Fell zum Betrachter */
   {
-    const d = 0.26 * s;
-    let g = `<ellipse cx="0" cy="0" rx="${r(d / 2)}" ry="${r(d * 0.16)}" fill="#8a5a2a"/>`;
-    g += `<path d="M${r(-d / 2)} 0 L${r(-d / 2)} -1.4 A${r(d / 2)} ${r(d * 0.16)} 0 0 1 ${r(d / 2)} -1.4 L${r(d / 2)} 0 A${r(d / 2)} ${r(d * 0.16)} 0 0 1 ${r(-d / 2)} 0 Z" fill="${S.lg("holzring", [[0, "#c98a4a"], [1, "#8a5626"]])}"/>`;
-    g += `<ellipse cx="0" cy="-1.4" rx="${r(d / 2 - 0.4)}" ry="${r(d * 0.16 - 0.15)}" fill="#f1e6cf"/>`;
-    for (let i = 0; i < 5; i++) { const a = Math.PI * (0.15 + i * 0.175); g += `<ellipse cx="${r(-Math.cos(a) * d / 2)}" cy="${r(-0.7 + Math.sin(a) * d * 0.16)}" rx=".75" ry=".55" fill="#d8dcdf" stroke="#8b9196" stroke-width=".12"/>`; }
-    S.teil({ oben: true, id: "tamburin", de: "das Tamburin", syl: "TAM-bu-rin", it: "il tamburello", itSyl: "tam-bu-REL-lo", en: "tambourine", x: ST.x + 0.6, y: ST.y + r(sitz - tief * 0.5), kunst: g,
+    const d = 0.25 * s, R = d / 2, cy = sitz - tief * 0.6 - R * 0.96;
+    let g = `<ellipse cx=".6" cy=".5" rx="${r(R)}" ry="${r(R * 0.96)}" fill="#000" opacity=".18"/>`;
+    g += `<ellipse cx="0" cy="0" rx="${r(R)}" ry="${r(R * 0.96)}" fill="${S.lg("holzring", [[0, "#d29a58"], [1, "#8a5626"]])}"/>`;
+    g += `<ellipse cx="0" cy="0" rx="${r(R - 1.1)}" ry="${r(R * 0.96 - 1.1)}" fill="${S.rg("fell", [[0, "#fbf3e2"], [1, "#e6d6b6"]], 0.4, 0.35)}"/>`;
+    /* fünf Schellenpaare in Schlitzen im Holzrand */
+    for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * 2 * Math.PI / 5, x = Math.cos(a) * (R - 0.55), y = Math.sin(a) * (R * 0.96 - 0.55), deg = r(a * 180 / Math.PI + 90); g += `<g transform="translate(${r(x)} ${r(y)}) rotate(${deg})"><rect x="-1.1" y="-.45" width="2.2" height=".9" fill="#5a3818"/><ellipse cx="-.45" cy="0" rx=".55" ry=".42" fill="#e3e7ea" stroke="#868c91" stroke-width=".1"/><ellipse cx=".45" cy="0" rx=".55" ry=".42" fill="#cfd4d8" stroke="#868c91" stroke-width=".1"/></g>`; }
+    g += `<path d="M${r(-R * 0.55)} ${r(-R * 0.5)} A${r(R * 0.75)} ${r(R * 0.72)} 0 0 1 ${r(R * 0.2)} ${r(-R * 0.72)}" stroke="#fff" stroke-width=".35" fill="none" opacity=".6"/>`;
+    S.teil({ oben: true, id: "tamburin", de: "das Tamburin", syl: "TAM-bu-rin", it: "il tamburello", itSyl: "tam-bu-REL-lo", en: "tambourine", x: ST.x + 1, y: ST.y + r(cy), kunst: g,
       tipp: "In Brasilien heißt es Pandeiro. Ohne Pandeiro gibt es keinen Samba." });
   }
 }
@@ -948,30 +955,49 @@ const ST = { x: 246, y: 160 };
 /* =====================================================================
    18 — DER JUNGE (Brasilien-Trikot) und 19 — DER FUSSBALL
    ===================================================================== */
-const JU = { x: 190, y: 188 };
+const JU = { x: 188, y: 188 };
+let BALL;
 {
   const s = sy(JU.y);
-  const m = B.mensch({ id: "rio_junge", geschlecht: "m", alter: "kind", pose: "werfen", blick: 40, frisur: "locken", haarfarbe: "schwarz", haut: "dunkel", laecheln: true,
-    kleidung: { oberteil: { stueck: "badeshirt", farbe: "#f6d21e" }, unterteil: { stueck: "badehose", farbe: "#1d4fa0" } } }, 1.34 * s);
+  /* Pose „Altinha“: Standbein rechts, das linke Spielbein gehoben (Knie gebeugt, Spann flach unter
+     dem Ball), Arme zur Balance seitlich offen, Kopf und Blick zum Ball gesenkt */
+  const altinha = { lende: 2, brust: 4, brustDreh: 6, nacken: 16, kopf: 16, kopfDreh: 10,
+    schulterL: { vor: 12, seit: 58 }, ellbogenL: 28, unterarmL: 0, handL: 0, fingerL: 0.25,
+    schulterR: { vor: -6, seit: 62 }, ellbogenR: 22, unterarmR: 0, handR: 0, fingerR: 0.25,
+    huefteL: { vor: 58, seit: 10, dreh: 8 }, knieL: 72, fussL: -6,
+    huefteR: { vor: -3, seit: 5, dreh: -4 }, knieR: 8, fussR: 0 };
+  const m = B.mensch({ id: "rio_junge", geschlecht: "m", alter: "kind", pose: altinha, blick: 34, frisur: "locken", haarfarbe: "schwarz", haut: "dunkel", laecheln: true,
+    kleidung: { oberteil: { stueck: "tshirt", farbe: "#f6d21e" }, unterteil: { stueck: "badehose", farbe: "#1d4fa0" } } }, 1.34 * s);
+  /* schwarzes Haar: graue Glanzlichter der Bibliothek blauschwarz färben */
+  const svg = halb(m.svg).replace(/#([0-9a-f]{6})\b/gi, (h, c) => { const v = [0, 2, 4].map((i) => parseInt(c.slice(i, i + 2), 16)); const mx = Math.max(...v), mn = Math.min(...v), av = (v[0] + v[1] + v[2]) / 3; return mx - mn < 20 && av > 50 && av < 228 ? "#2c3346" : h; });
   /* Schatten fällt nach links vorn (Sonne vorn rechts) */
-  const sch = `<ellipse cx="-16" cy="5" rx="17" ry="3" fill="#6b4a1e" opacity=".22" filter="url(#bw_weich)" transform="rotate(-24 -16 5)"/>`;
-  /* grüner Kragen wie beim Trikot der Seleção */
-  const [hx, hy] = m.z.punkte.hals;
-  const kragen = `<path d="M${r(hx * m.k - 2.6)} ${r(hy * m.k + 1.6)} Q${r(hx * m.k)} ${r(hy * m.k + 3.6)} ${r(hx * m.k + 2.6)} ${r(hy * m.k + 1.6)}" stroke="#139a43" stroke-width=".9" fill="none"/>`;
+  const sch = `<ellipse cx="-14" cy="4" rx="15" ry="2.6" fill="#6b4a1e" opacity=".3" transform="rotate(-24 -14 4)"/>`;
+  /* grüner Kragen und grüne Ärmelsäume wie beim Trikot der Seleção */
+  const P = m.z.punkte, k = m.k, q = (n) => [P[n][0] * k, P[n][1] * k];
+  const [hx, hy] = q("hals");
+  let kragen = `<path d="M${r(hx - 2.6)} ${r(hy + 1.6)} Q${r(hx)} ${r(hy + 3.6)} ${r(hx + 2.6)} ${r(hy + 1.6)}" stroke="#139a43" stroke-width=".9" fill="none"/>`;
+  for (const sd of ["L", "R"]) { const [ax, ay] = q("schulter" + sd), [ex, ey] = q("ellbogen" + sd), mx = ax + (ex - ax) * 0.24, my = ay + (ey - ay) * 0.24, dx = ex - ax, dy = ey - ay, l = Math.hypot(dx, dy), nx = -dy / l * 2.4, ny = dx / l * 2.4; kragen += `<path d="M${r(mx - nx)} ${r(my - ny)} L${r(mx + nx)} ${r(my + ny)}" stroke="#139a43" stroke-width=".8" stroke-linecap="round"/>`; }
+  const [fx, fy] = q("fussL"), [zx, zy] = q("zehL");
+  BALL = { x: JU.x + (fx + zx) / 2 + 3.4, y: JU.y + Math.min(fy, zy) - 11, boden: JU.y + 1.2 };
   const AY = JU.y - 0.62 * 1.34 * s;   /* Bezugspunkt auf der Brust */
-  S.teil({ id: "junge", de: "der Junge", syl: "JUN-ge", it: "il ragazzo", itSyl: "ra-GAZ-zo", en: "boy", x: JU.x, y: AY, kunst: `<g transform="translate(0 ${r(JU.y - AY)})">${sch}<g>${halb(m.svg)}${kragen}</g></g>`,
+  S.teil({ id: "junge", de: "der Junge", syl: "JUN-ge", it: "il ragazzo", itSyl: "ra-GAZ-zo", en: "boy", x: JU.x, y: AY, kunst: `<g transform="translate(0 ${r(JU.y - AY)})">${sch}<g filter="${GEGENLICHT}">${svg}${kragen}</g></g>`,
     tipp: "Der Junge trägt das gelbe Trikot der brasilianischen Fußballmannschaft." });
 }
 {
-  /* der Ball fliegt in Kniehöhe vor dem Jungen (Altinha), sein Schatten liegt darunter im Sand */
-  const s = sy(JU.y + 2), d = 0.22 * s, hoch = 0.5 * s;
-  let g = `<ellipse cx="-7" cy="${r(hoch + 1.5)}" rx="${r(d * 0.7)}" ry="${r(d * 0.16)}" fill="#6b4a1e" opacity=".28" filter="url(#bw_weich)"/>`;
+  /* der Ball springt über dem Spann des Jungen (Altinha); sein Schatten liegt genau darunter im Sand */
+  const s = sy(BALL.boden), d = 0.22 * s;
+  let g = `<ellipse cx="-1.2" cy="${r(BALL.boden - BALL.y)}" rx="${r(d * 0.55)}" ry="${r(d * 0.14)}" fill="#6b4a1e" opacity=".45"/>`;
   g += `<circle cx="0" cy="0" r="${r(d / 2)}" fill="${S.rg("ball", [[0, "#ffffff"], [0.7, "#e4e4e0"], [1, "#a9aaa6"]], 0.7, 0.25, 0.85)}"/>`;
-  const fuenf = (cx, cy, rr) => `<path d="M${[0, 1, 2, 3, 4].map((i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; return `${r(cx + Math.cos(a) * rr)} ${r(cy + Math.sin(a) * rr)}`; }).join(" L")} Z" fill="#1d1d1f"/>`;
-  g += fuenf(0.3, -0.3, d * 0.16) + fuenf(-d * 0.34, -d * 0.12, d * 0.1) + fuenf(d * 0.32, d * 0.24, d * 0.1) + fuenf(-d * 0.1, d * 0.38, d * 0.08) + fuenf(d * 0.2, -d * 0.36, d * 0.08);
-  g += `<path d="M.3 -.3 L${r(-d * 0.34)} ${r(-d * 0.12)} M.3 -.3 L${r(d * 0.32)} ${r(d * 0.24)} M.3 -.3 L${r(d * 0.2)} ${r(-d * 0.36)}" stroke="#8d8e8a" stroke-width=".18"/>`;
+  /* klassisches Muster: Mittelfünfeck, rundherum Sechsecknähte, am Rand angeschnittene Fünfecke */
+  const ecke = (cx, cy, rr, n, rot = -Math.PI / 2) => [...Array(n).keys()].map((i) => { const a = rot + i * 2 * Math.PI / n; return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]; });
+  const c0 = ecke(0, 0, d * 0.15, 5);
+  g += `<path d="M${pts(c0)} Z" fill="#1d1d1f"/>`;
+  let naht = "";
+  c0.forEach(([x, y], i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; naht += `M${r(x)} ${r(y)} L${r(Math.cos(a) * d * 0.3)} ${r(Math.sin(a) * d * 0.3)}`; });
+  g += `<path d="${naht}" stroke="#9a9b97" stroke-width=".12"/>`;
+  for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + Math.PI / 5 + i * 2 * Math.PI / 5; g += `<path d="M${pts(ecke(Math.cos(a) * d * 0.43, Math.sin(a) * d * 0.43, d * 0.09, 5, a + Math.PI))} Z" fill="#1d1d1f"/>`; }
   g += `<path d="M${r(-d * 0.42)} ${r(-d * 0.1)} A${r(d / 2)} ${r(d / 2)} 0 0 1 ${r(d * 0.1)} ${r(-d * 0.48)}" stroke="#fff" stroke-width=".4" fill="none" opacity=".6"/>`;
-  S.teil({ oben: true, id: "fussball", de: "der Fußball", syl: "FUSS-ball", it: "il pallone", itSyl: "pal-LO-ne", en: "football", x: JU.x + 28, y: JU.y + 2 - hoch, kunst: g,
+  S.teil({ oben: true, id: "fussball", de: "der Fußball", syl: "FUSS-ball", it: "il pallone", itSyl: "pal-LO-ne", en: "football", x: BALL.x, y: BALL.y, kunst: g,
     tipp: "Am Strand spielen die Kinder „Altinha“: Der Ball soll nicht auf den Sand fallen." });
 }
 
@@ -991,13 +1017,13 @@ const JU = { x: 190, y: 188 };
     g += `<path d="M${r(0.3 * l)} 0 Q${r(0.12 * l)} ${r(-0.06 * l)} ${r(-0.06 * l)} ${r(-0.17 * l)} M${r(0.3 * l)} 0 Q${r(0.12 * l)} ${r(0.06 * l)} ${r(-0.06 * l)} ${r(0.17 * l)}" stroke="#000" stroke-width="${r(0.05 * l)}" fill="none" opacity=".2" transform="translate(-.6 .5)"/>`;
     g += `<path d="M${r(0.3 * l)} 0 Q${r(0.12 * l)} ${r(-0.06 * l)} ${r(-0.06 * l)} ${r(-0.17 * l)} M${r(0.3 * l)} 0 Q${r(0.12 * l)} ${r(0.06 * l)} ${r(-0.06 * l)} ${r(0.17 * l)}" stroke="${c2}" stroke-width="${r(0.05 * l)}" fill="none" stroke-linecap="round"/>`;
     g += `<circle cx="${r(0.3 * l)}" cy="0" r="${r(0.03 * l)}" fill="${c2}"/>`;
-    g += `<rect x="${r(0.08 * l)}" y="${r(-0.1 * l)}" width="${r(0.07 * l)}" height="${r(0.05 * l)}" fill="#009b3a"/><path d="M${r(0.085 * l)} ${r(-0.075 * l)} L${r(0.115 * l)} ${r(-0.095 * l)} L${r(0.145 * l)} ${r(-0.075 * l)} L${r(0.115 * l)} ${r(-0.055 * l)} Z" fill="#fedf00"/>`;
+    g += `<rect x="${r(0.06 * l)}" y="${r(-0.115 * l)}" width="${r(0.105 * l)}" height="${r(0.075 * l)}" fill="#009b3a"/><path d="M${r(0.068 * l)} ${r(-0.0775 * l)} L${r(0.1125 * l)} ${r(-0.107 * l)} L${r(0.157 * l)} ${r(-0.0775 * l)} L${r(0.1125 * l)} ${r(-0.048 * l)} Z" fill="#fedf00"/><circle cx="${r(0.1125 * l)}" cy="${r(-0.0775 * l)}" r="${r(0.018 * l)}" fill="#1d3f8f"/>`;
     g += `</g>`;
     return g;
   };
   /* von schräg oben gesehen: in der Tiefe auf etwa die Hälfte verkürzt */
   let k = schatten(-1.6, 0.6, L * 0.62, 1.4, 0.2);
-  k += `<g transform="scale(1 .5)">${sohle(-5.5, 0, -72, false)}${sohle(5.5, -1, -64, true)}</g>`;
+  k += `<g transform="scale(1 .5)">${sohle(-3.7, 0, -68, true)}${sohle(3.7, 0, -68, false)}</g>`;
   S.teil({ oben: true, id: "flipflops", de: "die Flipflops", syl: "FLIP-flops", it: "le infradito", itSyl: "in-fra-DI-to", en: "flip-flops", x: 62, y: 192, kunst: k,
     tipp: "Die bunten Flipflops aus Brasilien heißen Havaianas." });
 }

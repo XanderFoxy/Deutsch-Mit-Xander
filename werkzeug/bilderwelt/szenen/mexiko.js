@@ -107,8 +107,12 @@ const schattenAuf = (X, Y, Z) => [X + Y * SD[0], 0, Z + Y * SD[1]];
 const bildSchatten = (x, y, h, b, a = 0.24) => {
   const [X, Z] = BODEN(x, y), d = b / 2;
   const q = kappe([[X, Z - d], [X, Z + d], [X + h * SD[0], Z + d + h * SD[1]], [X + h * SD[0], Z - d + h * SD[1]]].map(([u, v]) => P(u, 0, v)), 1, -3, 319, 203).map(([u, v]) => [u - x, v - y]);
-  return `<path d="M${pts(q)} Z" fill="#26341a" opacity="${a}" filter="url(#bw_weich)"/>`;
+  return `<path d="M${pts(q)} Z" fill="${LANGSCHATTEN}" opacity="${r(Math.min(1, a / 0.24))}"/>`;
 };
+/* langer, schmaler Schatten vom Fuß nach links in die Tiefe: am Fuß kräftig, am Ende weich */
+S.def(`<linearGradient id="${S.id("langschatten")}" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#1f2c14" stop-opacity=".34"/><stop offset=".7" stop-color="#1f2c14" stop-opacity=".16"/><stop offset="1" stop-color="#1f2c14" stop-opacity="0"/></linearGradient>`);
+const LANGSCHATTEN = `url(#${S.id("langschatten")})`;
+
 const huelle = (punkte) => {
   const p = punkte.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   const kreuz = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
@@ -461,22 +465,25 @@ const pyrUnter = [];
   const TOP = -14 * s;
   k += `<path d="M-3 -11 Q-2.6 -40 -2.2 ${r(TOP + 6)} Q-2.4 ${r(TOP + 2)} -5 ${r(TOP - 1)} L-1.2 ${r(TOP - 2)} L1.6 ${r(TOP - 4)} L2.6 ${r(TOP - 1.5)} L6 ${r(TOP)} Q2.6 ${r(TOP + 2)} 2.4 ${r(TOP + 6)} Q2.8 -40 3.2 -11 Z" fill="${S.lg("ceiba", [[0, "#55604a"], [0.45, "#7c866c"], [0.8, "#b8b294"], [1, "#9a9a82"]], 0, 0, 1, 0)}"/>`;
   for (let i = 0; i < 7; i++) { const y = -16 - rnd() * (-TOP - 22); k += `<path d="M${r(-1.6 + rnd() * 3.2)} ${r(y)} q.3 -3 0 -5" stroke="#5a6450" stroke-width=".4" fill="none" opacity=".55"/>`; }
-  /* Hauptäste: fast waagrecht, an den Enden die Laubschirme (zwei Stockwerke) */
-  const aeste = [[-5, TOP - 1, -38, TOP - 8], [6, TOP, 34, TOP - 6], [-1.2, TOP - 2, -20, TOP - 22], [1.6, TOP - 4, 22, TOP - 24], [0, TOP - 3, 2, TOP - 34]];
-  for (const [ax, ay, ex, ey] of aeste) k += `<path d="M${ax} ${r(ay)} Q${r((ax + ex) / 2)} ${r(ay - 1)} ${ex} ${r(ey)}" stroke="#7a836a" stroke-width="${ey < TOP - 20 ? 1.1 : 1.6}" fill="none" stroke-linecap="round"/>`;
-  const KR = S.lg("krone", [[0, "#2f4a24"], [0.55, "#4e6f30"], [1, "#9aaa52"]], 0, 0, 1, 0);
-  const schirm = (cx, cy, rx, ry) => {
-    let g = "";
-    /* locker: einzelne Laubbüschel mit Lücken, unten dunkel, oben rechts goldenes Licht */
-    for (let i = 0; i < 11; i++) {
-      const t = i / 10, x = cx - rx + t * rx * 2, y = cy - Math.sin(t * Math.PI) * ry * 0.6 + (rnd() - 0.5) * ry * 0.4;
-      if (rnd() < 0.15) continue;
-      g += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(rx * (0.16 + rnd() * 0.08))}" ry="${r(ry * (0.5 + rnd() * 0.25))}" fill="${KR}"/>`;
+  /* Krone: breiter, flacher Schirm (Breite ≈ 4 × Höhe), oben fast eben. Zuerst die dicken, fast
+     waagrechten Hauptäste (am Ansatz ≈ 40 % der Stammdicke), weit zur Seite verzweigt */
+  const ASTF = S.lg("ast", [[0, "#5d6852"], [1, "#9b9c80"]]);
+  const ast = (x0, y0, x1, y1, d0, d1, bog) => { const mx = (x0 + x1) / 2, my = (y0 + y1) / 2 - bog, nx = -(y1 - y0), ny = x1 - x0, l = Math.hypot(nx, ny), ux = nx / l, uy = ny / l;
+    return `<path d="M${r(x0 + ux * d0)} ${r(y0 + uy * d0)} Q${r(mx + ux * (d0 + d1) / 2)} ${r(my + uy * (d0 + d1) / 2)} ${r(x1 + ux * d1)} ${r(y1 + uy * d1)} L${r(x1 - ux * d1)} ${r(y1 - uy * d1)} Q${r(mx - ux * (d0 + d1) / 2)} ${r(my - uy * (d0 + d1) / 2)} ${r(x0 - ux * d0)} ${r(y0 - uy * d0)} Z" fill="${ASTF}"/>`; };
+  const T = TOP;
+  for (const [x1, y1, d, b2] of [[-44, T - 9, 1.1, 3], [42, T - 8, 1.05, 3], [-24, T - 15, 0.9, 2], [22, T - 16, 0.9, 2]]) k += ast(x1 < 0 ? -1.4 : 1.4, T + 1, x1, y1, d, 0.3, b2);
+  /* Nebenäste zu den Laubbüscheln */
+  for (const [x0, y0, x1, y1] of [[-30, T - 7.5, -36, T - 16], [-40, T - 9, -52, T - 13], [-14, T - 9, -10, T - 19], [30, T - 7, 36, T - 16], [38, T - 8, 50, T - 12], [12, T - 10, 8, T - 20], [-2, T - 1, 1, T - 21]]) k += ast(x0, y0, x1, y1, 0.45, 0.15, 1);
+  /* luftiges Laub: unregelmäßige Büschel aus kleinen Blattklumpen, Himmel scheint durch; oben rechts goldenes Abendlicht */
+  const lagen = [[], [], [], []];
+  for (const [cx, cy, rx] of [[-50, T - 14, 7], [-38, T - 17, 8], [-25, T - 20, 8], [-11, T - 21, 7], [2, T - 22, 8], [15, T - 21, 7], [28, T - 19, 8], [41, T - 16, 7], [52, T - 13, 5], [-31, T - 12, 5], [34, T - 11, 5]]) {
+    for (let i = 0; i < 13; i++) {
+      const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()), x = cx + Math.cos(a) * rx * d, y = cy + Math.sin(a) * rx * 0.4 * d, rr = 1.1 + rnd() * 1.3;
+      const oben = y < cy - 0.6 && x > cx - 2;
+      lagen[y > cy + 1 ? 0 : oben ? 3 : rnd() < 0.5 ? 1 : 2].push(`<circle cx="${r(x)}" cy="${r(y)}" r="${r(rr)}"/>`);
     }
-    g += `<path d="M${r(cx - rx * 0.9)} ${r(cy + ry * 0.15)} Q${cx} ${r(cy + ry * 0.9)} ${r(cx + rx * 0.9)} ${r(cy + ry * 0.15)}" stroke="#1f3218" stroke-width="${r(ry * 0.5)}" fill="none" opacity=".35"/>`;
-    return g;
-  };
-  k += schirm(-38, TOP - 9, 16, 5) + schirm(34, TOP - 7, 13, 4.5) + schirm(-20, TOP - 23, 14, 4.5) + schirm(22, TOP - 25, 12, 4.2) + schirm(2, TOP - 35, 15, 5);
+  }
+  ["#4f6b33", "#6c8a42", "#7f9c4c", "#b3bd62"].forEach((c, i) => { k += `<g fill="${c}">${lagen[i].join("")}</g>`; });
   const ax0 = 0, ay0 = -60;   /* Bezugspunkt: Stamm über dem Dach */
   S.teil({ id: "kapokbaum", de: "der Kapokbaum", syl: "KA-pok-baum", it: "la ceiba", itSyl: "CEI-ba", en: "kapok tree", x: X + ax0, y: Y + ay0, kunst: `<g transform="translate(${-ax0} ${-ay0})">${k}</g>`,
     tipp: "Für die Maya war der Kapokbaum (Ceiba) heilig: Er verbindet Himmel, Erde und Unterwelt." });
@@ -486,34 +493,114 @@ const pyrUnter = [];
    6 — DIE TOURISTEN (Besucher zur Tagundnachtgleiche, mit Führerin und
        Schirm) — im Raum maßstäblich, lange Schatten nach links
    ===================================================================== */
+/* Figuren der Bibliothek, für kleine Größen vereinfacht: Zahlen auf q Einheiten gerundet, winzige
+   Teile weggelassen, Verläufe durch ihre Mittelfarbe ersetzt (klein und schnell) */
+const GQ = 3, GM = 6;
+/* Pfad zu Vieleck: Kurven durch End- und Mittelpunkte ersetzen, auf q runden, doppelte und
+   gerade durchlaufende Punkte streichen */
+const vereinfache = (d, q) => {
+  const tok = d.match(/[A-Za-z]|-?\d*\.?\d+(?:e-?\d+)?/g) || [];
+  if (tok.some((t) => /^[a-zHVATt]$/.test(t))) return null;
+  const R = (v) => Math.round(v / q) * q;
+  const teile = []; let pkt = [], cmd = "", i = 0, cx = 0, cy = 0;
+  const neu = (x, y) => { cx = x; cy = y; const p = [R(x), R(y)], l = pkt[pkt.length - 1]; if (!l || l[0] !== p[0] || l[1] !== p[1]) pkt.push(p); };
+  while (i < tok.length) {
+    if (/[A-Z]/.test(tok[i])) { cmd = tok[i++]; if (cmd === "Z") { if (pkt.length) teile.push(pkt); pkt = []; continue; } if (cmd === "M") { if (pkt.length) teile.push(pkt); pkt = []; } }
+    const n = (k) => +tok[i + k];
+    if (cmd === "M" || cmd === "L") { neu(n(0), n(1)); i += 2; if (cmd === "M") cmd = "L"; }
+    else if (cmd === "C") { neu((cx + 3 * n(0) + 3 * n(2) + n(4)) / 8, (cy + 3 * n(1) + 3 * n(3) + n(5)) / 8); neu(n(4), n(5)); i += 6; }
+    else if (cmd === "S") { neu((cx + 3 * n(0) + 4 * n(2)) / 8, (cy + 3 * n(1) + 4 * n(3)) / 8); neu(n(2), n(3)); i += 4; }
+    else if (cmd === "Q") { neu((cx + 2 * n(0) + n(2)) / 4, (cy + 2 * n(1) + n(3)) / 4); neu(n(2), n(3)); i += 4; }
+    else return null;
+  }
+  if (pkt.length) teile.push(pkt);
+  return teile.map((p) => { const o = p.filter((a, j) => { const b = p[j - 1], c = p[j + 1]; return !b || !c || (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]) !== 0; }); return o.length > 1 ? "M" + o.map((a) => a.join(" ")).join("L") + "Z" : ""; }).join("");
+};
+const grob = (svg, q, min) => {
+  const rund = (v) => v.replace(/-?\d*\.?\d+(e-?\d+)?/g, (n) => String(Math.round(+n / q) * q));
+  svg = svg.replace(/<(path|ellipse|circle|line|rect)\b[^>]*\/>/g, (el) => {
+    const d = el.match(/ d="([^"]*)"/);
+    if (d && !/[a-z]/.test(d[1].replace(/e-?\d/g, ""))) { const v = (d[1].match(/-?\d*\.?\d+/g) || []).map(Number), xs = v.filter((_, i) => i % 2 === 0), ys = v.filter((_, i) => i % 2);
+      if (xs.length && Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) < min) return ""; }
+    const rr = el.match(/ (?:r|rx)="([^"]*)"/); if (rr && !d && +rr[1] * 2 < min * 0.6) return "";
+    if (d) { const v = vereinfache(d[1], q); if (v !== null) { if (!v) return ""; const offen = /fill="none"/.test(el); return el.replace(/ d="[^"]*"/, ` d="${offen ? v.replace(/Z/g, "") : v}"`); } }
+    return el.replace(/ (d|x1|y1|x2|y2|cx|cy|rx|ry|r|x|y|width|height)="([^"]*)"/g, (m, a2, v) => ` ${a2}="${rund(v)}"`);
+  });
+  const farbe = {};
+  svg = svg.replace(/<(linearGradient|radialGradient)\b[^>]*id="([^"]+)"[^>]*>([\s\S]*?)<\/\1>/g, (m, t, id, inner) => { const st = [...inner.matchAll(/stop-color="([^"]+)"/g)].map((x) => x[1]); farbe[id] = st[Math.floor(st.length / 2)] || "#888"; return ""; });
+  return svg.replace(/url\(#([^)]+)\)/g, (m, id) => farbe[id] || m).replace(/<defs><\/defs>/g, "");
+};
+/* Abendlicht auf Figuren: Sonne rechts (Westen, tief) — Körper kühler und dunkler, rechts ein goldener Saum */
+S.def(`<filter id="${S.id("abend")}" x="-20%" y="-10%" width="140%" height="120%" color-interpolation-filters="sRGB"><feComponentTransfer in="SourceGraphic" result="d"><feFuncR type="linear" slope=".8"/><feFuncG type="linear" slope=".79"/><feFuncB type="linear" slope=".86"/></feComponentTransfer><feOffset in="SourceAlpha" dx="-.2" dy=".1" result="v"/><feComposite in="SourceAlpha" in2="v" operator="out" result="kante"/><feFlood flood-color="#ffcb70" flood-opacity=".7"/><feComposite in2="kante" operator="in" result="l"/><feMerge><feMergeNode in="d"/><feMergeNode in="l"/></feMerge></filter>`);
+const ABEND = `url(#${S.id("abend")})`;
+const langSchatten = (x, y, h, b) => {
+  const [X, Z] = BODEN(x, y), d = b / 2;
+  const q = kappe([[X, Z - d], [X, Z + d], [X + h * SD[0], Z + d * 0.6 + h * SD[1]], [X + h * SD[0], Z - d * 0.6 + h * SD[1]]].map(([u, v]) => P(u, 0, v)), 0, 0, 320, 200);
+  return q.length > 2 ? `<path d="M${pts(q)} Z" fill="${LANGSCHATTEN}"/>` : "";
+};
 {
-  const figur = (x, y, kl, haut, hut, arm) => {
-    const s = sy(y), h = 1.7 * s;
-    let g = bildSchatten(x, y, 1.7, 0.45, 0.22).replace("<path", `<path transform="translate(${r(x)} ${r(y)})"`);
-    const X = (v) => r(x + v * s), Y = (v) => r(y - v * s);
-    g += `<path d="M${X(-0.1)} ${Y(0)} L${X(-0.08)} ${Y(0.82)} M${X(0.1)} ${Y(0)} L${X(0.08)} ${Y(0.82)}" stroke="${kl[1]}" stroke-width="${r(0.13 * s)}" stroke-linecap="round"/>`;
-    g += `<path d="M${X(-0.2)} ${Y(0.8)} L${X(0.2)} ${Y(0.8)} L${X(0.22)} ${Y(1.42)} Q${X(0)} ${Y(1.5)} ${X(-0.22)} ${Y(1.42)} Z" fill="${kl[0]}"/>`;
-    g += `<path d="M${X(0.14)} ${Y(1.4)} L${X(0.04)} ${Y(1.4)} L${X(0.04)} ${Y(0.85)} L${X(0.2)} ${Y(0.85)} Z" fill="#000" opacity=".12"/>`;
-    g += `<path d="M${X(-0.2)} ${Y(1.38)} l${r(arm[0] * s)} ${r(-arm[1] * s)} M${X(0.2)} ${Y(1.38)} l${r(arm[2] * s)} ${r(-arm[3] * s)}" stroke="${haut}" stroke-width="${r(0.08 * s)}" stroke-linecap="round"/>`;
-    g += `<circle cx="${X(0)}" cy="${Y(1.58)}" r="${r(0.11 * s)}" fill="${haut}"/>`;
-    if (hut) g += `<ellipse cx="${X(0)}" cy="${Y(1.67)}" rx="${r(0.2 * s)}" ry="${r(0.04 * s)}" fill="${hut}"/><path d="M${X(-0.1)} ${Y(1.66)} a${r(0.1 * s)} ${r(0.09 * s)} 0 0 1 ${r(0.2 * s)} 0 Z" fill="${hut}"/>`;
-    else g += `<path d="M${X(-0.11)} ${Y(1.6)} a${r(0.11 * s)} ${r(0.11 * s)} 0 0 1 ${r(0.22 * s)} 0 Z" fill="#3a2a1e"/>`;
-    /* goldener Lichtsaum rechts (Sonne im Westen) */
-    g += `<path d="M${X(0.21)} ${Y(1.4)} L${X(0.2)} ${Y(0.82)}" stroke="#ffe0a6" stroke-width="${r(0.03 * s)}" opacity=".8"/>`;
+  let k = "", sch = "";
+  const figur = (x, y, spec, m0) => {
+    const s = sy(y), h = (spec.alter === "kind" ? 1.3 : spec.alter === "alt" ? 1.66 : spec.geschlecht === "w" ? 1.65 : 1.76) * s;
+    const m = m0 || B.mensch(Object.assign({ haut: "mittel", laecheln: true, ohneSchatten: true }, spec), h);
+    sch += langSchatten(x, y, h / s, 0.45);
+    return { m, svg: `<g transform="translate(${r(x)} ${r(y)})" filter="${ABEND}">${grob(m.svg, GQ, GM)}</g>`, x, y };
+  };
+  const kl = (o, u, hut, schuh = "turnschuh") => Object.assign({ oberteil: { stueck: "tshirt", farbe: o }, unterteil: { stueck: u[0], farbe: u[1] }, schuhe: { stueck: schuh, farbe: "braun" } }, hut ? { kopf: { stueck: "hut", farbe: hut } } : {});
+  /* Gruppe 1: Familie am Weg, das Kind sitzt dem Vater auf den Schultern */
+  const vater = figur(80, 146.4, { id: "mx_vater", geschlecht: "m", alter: "erwachsen", pose: "stehen", blick: 20, frisur: "kurz", haarfarbe: "braun", kleidung: kl("#f4f1e8", ["shorts", "beige"], "#e9e2c8") });
+  const kind = B.mensch({ id: "mx_kind", geschlecht: "w", alter: "kind", haut: "mittel", laecheln: true, ohneSchatten: true, frisur: "zopf", haarfarbe: "braun", blick: 20,
+    pose: { lende: 4, brust: 2, nacken: 4, kopf: -4, schulterL: { vor: 40, seit: 24 }, ellbogenL: 90, unterarmL: 0, handL: 0, fingerL: 0.5, schulterR: { vor: 40, seit: 24 }, ellbogenR: 90, unterarmR: 0, handR: 0, fingerR: 0.5, huefteL: { vor: 70, seit: 34, dreh: 0 }, knieL: 80, fussL: 10, huefteR: { vor: 70, seit: 34, dreh: 0 }, knieR: 80, fussR: 10 },
+    kleidung: { oberteil: { stueck: "tshirt", farbe: "#e8590c" }, unterteil: { stueck: "shorts", farbe: "#2f5f95" } } }, 1.3 * sy(146.4));
+  {
+    const vm = vater.m, [nx, ny] = vm.z.punkte.nacken, [gx, gy] = kind.z.punkte.gesaess;
+    const dx = 80 + nx * vm.k - gx * kind.k, dy = 146.4 + ny * vm.k - gy * kind.k - 0.6;
+    /* Kopf des Vaters noch einmal über dem Kind (er sitzt davor) */
+    const kopfY = (ny * vm.k) / vm.k + 2;
+    const kopf = vm.svg.replace(/<(path|ellipse|circle)\b[^>]*\/>/g, (el) => { const v = (el.match(/ (?:d|cy)="([^"]*)"/) || [, ""])[1].match(/-?\d*\.?\d+/g) || []; const ys = el.includes(' d="') ? v.filter((_, i) => i % 2).map(Number) : v.map(Number); return ys.length && Math.max(...ys) < kopfY ? el : ""; });
+    k += vater.svg + `<g transform="translate(${r(dx)} ${r(dy)})" filter="${ABEND}">${grob(kind.svg, GQ, GM)}</g>` + `<g transform="translate(80 146.4)" filter="${ABEND}">${grob(kopf, GQ, GM)}</g>`;
+  }
+  k += figur(87.5, 147, { id: "mx_mutter", geschlecht: "w", alter: "erwachsen", pose: "kontrapost", blick: -14, frisur: "zopf", haarfarbe: "dunkelbraun", kleidung: kl("#7fb3d5", ["hose", "#e9e2d0"], "#f1e9d2") }).svg;
+  /* Gruppe 2: Führerin mit erhobenem Schirm (damit die Gruppe sie findet) und zwei Besucher */
+  const fuehrerin = figur(118, 149, { id: "mx_guide", geschlecht: "w", alter: "erwachsen", pose: "winken", blick: 10, frisur: "dutt", haarfarbe: "schwarz", haut: "dunkel", kleidung: kl("#f4f1e8", ["hose", "#3f4a5a"], "#2f6a3e") });
+  k += fuehrerin.svg;
+  { const fm = fuehrerin.m, hx = 118 + fm.z.handR.x * fm.k, hy = 149 + fm.z.handR.y * fm.k, s = sy(149); k += `<line x1="${r(hx)}" y1="${r(hy + 0.3)}" x2="${r(hx)}" y2="${r(hy - 0.7 * s)}" stroke="#444" stroke-width=".22"/><path d="M${r(hx - 0.5 * s)} ${r(hy - 0.55 * s)} Q${r(hx)} ${r(hy - 0.9 * s)} ${r(hx + 0.5 * s)} ${r(hy - 0.55 * s)} Z" fill="#e8590c"/>`; }
+  k += figur(126.5, 148.4, { id: "mx_t1", geschlecht: "m", alter: "alt", pose: "stehen", blick: 30, frisur: "kurz", haarfarbe: "grau", haut: "hell", kleidung: kl("#f4f1e8", ["hose", "#e9e2d0"], "#f1e9d2") }).svg;
+  k += figur(133, 148.8, { id: "mx_t2", geschlecht: "w", alter: "erwachsen", pose: "stehen", blick: 40, frisur: "lang", haarfarbe: "schwarz", kleidung: kl("#c2255c", ["hose", "#2a3a5a"], null, "sandale") }).svg;
+  /* Gruppe 3 vor der Westseite */
+  k += figur(188, 144.6, { id: "mx_t3", geschlecht: "m", alter: "jugendlich", pose: "gehen", blick: -30, frisur: "kurz", haarfarbe: "schwarz", kleidung: Object.assign(kl("#f4f1e8", ["shorts", "#3f4a5a"]), { kopf: { stueck: "kappe", farbe: "#c8102e" } }) }).svg;
+  k += figur(194, 145, { id: "mx_t4", geschlecht: "w", alter: "erwachsen", pose: "stehen", blick: 30, frisur: "lang", haarfarbe: "blond", haut: "hell", kleidung: kl("#f4f1e8", ["rock", "#7fb3d5"], "#f1e9d2", "sandale") }).svg;
+  /* zwei weitere kleine Gruppen weiter hinten auf dem Rasen (≈ 8 Einheiten hoch: Kopf mit Haar, Hemd mit
+     Ärmeln, Arme mit Händen, Beine, Schuhe; manche mit Hut oder Kamera) */
+  const klein = (x, y, hemd, hose, haut, haar, hut, kamera, schritt) => {
+    const s = sy(y), H = 1.72 * s, X = (v) => r(x + v * s), Y = (v) => r(y - v * s);
+    sch += langSchatten(x, y, 1.72, 0.45);
+    let g = `<path d="M${X(-0.09)} ${Y(0)} L${X(-0.08 - schritt)} ${Y(0)} L${X(-0.1)} ${Y(0.84)} L${X(0.1)} ${Y(0.84)} L${X(0.08 + schritt)} ${Y(0)} L${X(0.11)} ${Y(0)} L${X(0.13)} ${Y(0.86)} L${X(-0.13)} ${Y(0.86)} Z" fill="${hose}"/>`;
+    g += `<path d="M${X(-0.14 - schritt)} ${Y(0)} h${r(0.13 * s)} v${r(-0.05 * s)} h${r(-0.1 * s)} Z M${X(0.04 + schritt)} ${Y(0)} h${r(0.13 * s)} v${r(-0.05 * s)} h${r(-0.1 * s)} Z" fill="#3a2f28"/>`;
+    g += `<path d="M${X(-0.16)} ${Y(0.82)} L${X(0.16)} ${Y(0.82)} L${X(0.2)} ${Y(1.42)} L${X(0.26)} ${Y(1.3)} L${X(0.21)} ${Y(1.44)} Q${X(0)} ${Y(1.5)} ${X(-0.21)} ${Y(1.44)} L${X(-0.26)} ${Y(1.3)} L${X(-0.2)} ${Y(1.42)} Z" fill="${hemd}"/>`;
+    const armR = kamera ? `M${X(0.22)} ${Y(1.32)} L${X(0.16)} ${Y(1.2)} L${X(0.06)} ${Y(1.38)}` : `M${X(0.24)} ${Y(1.32)} L${X(0.27)} ${Y(0.9)}`;
+    g += `<path d="M${X(-0.24)} ${Y(1.32)} L${X(-0.27)} ${Y(0.9)} ${armR}" stroke="${haut}" stroke-width="${r(0.075 * s)}" stroke-linecap="round" fill="none"/>`;
+    if (kamera) g += `<rect x="${X(-0.04)}" y="${Y(1.44)}" width="${r(0.14 * s)}" height="${r(0.09 * s)}" fill="#222"/>`;
+    g += `<rect x="${X(-0.035)}" y="${Y(1.53)}" width="${r(0.07 * s)}" height="${r(0.06 * s)}" fill="${haut}"/><ellipse cx="${X(0)}" cy="${Y(1.62)}" rx="${r(0.09 * s)}" ry="${r(0.11 * s)}" fill="${haut}"/>`;
+    g += hut ? `<ellipse cx="${X(0)}" cy="${Y(1.7)}" rx="${r(0.18 * s)}" ry="${r(0.035 * s)}" fill="${hut}"/><path d="M${X(-0.09)} ${Y(1.69)} Q${X(0)} ${Y(1.83)} ${X(0.09)} ${Y(1.69)} Z" fill="${hut}"/>` : `<path d="M${X(-0.095)} ${Y(1.6)} Q${X(-0.1)} ${Y(1.76)} ${X(0)} ${Y(1.75)} Q${X(0.1)} ${Y(1.76)} ${X(0.095)} ${Y(1.62)} L${X(0.06)} ${Y(1.68)} L${X(-0.07)} ${Y(1.67)} Z" fill="${haar}"/>`;
     return g;
   };
-  let k = "";
-  /* Gruppe 1 links am Weg (Familie), Gruppe 2 mit der Führerin und dem Schirm, Gruppe 3 vor der Westseite */
-  k += figur(36, 146, ["#f4f1e8", "#5a6a8a"], "#d9a37a", "#e9e2c8", [-0.1, -0.5, 0.1, -0.5]) + figur(42, 146.6, ["#2f8fbf", "#e9e2d0"], "#a87050", null, [-0.12, -0.5, 0.25, 0.1]);
-  k += figur(48, 147.4, ["#f4f1e8", "#f4f1e8"], "#e8bf9a", "#f1e9d2", [-0.1, -0.5, 0.1, -0.5]);
-  k += figur(118, 149, ["#f4f1e8", "#3f4a5a"], "#c99062", "#2f6a3e", [-0.1, -0.45, 0.3, 0.55]);
-  /* Schirm der Führerin (damit die Gruppe sie findet) */
-  { const s = sy(149), x = 118 + 0.5 * s, y = 149 - 1.93 * s; k += `<line x1="${r(x)}" y1="${r(y)}" x2="${r(x)}" y2="${r(y - 0.6 * s)}" stroke="#444" stroke-width=".25"/><path d="M${r(x - 0.5 * s)} ${r(y - 0.5 * s)} Q${r(x)} ${r(y - 0.85 * s)} ${r(x + 0.5 * s)} ${r(y - 0.5 * s)} Z" fill="#e8590c"/>`; }
-  k += figur(126, 148.4, ["#f4f1e8", "#e9e2d0"], "#e0b48c", "#f1e9d2", [-0.12, -0.5, 0.12, -0.5]) + figur(132.6, 148.8, ["#c2255c", "#2a3a5a"], "#8a5a3b", null, [-0.12, -0.5, 0.12, -0.5]);
-  k += figur(188, 144.6, ["#f4f1e8", "#f4f1e8"], "#d7a179", null, [-0.2, 0.45, 0.12, -0.5]) + figur(194, 145, ["#7fb3d5", "#3f4a5a"], "#e8bf9a", "#f1e9d2", [-0.12, -0.5, 0.12, -0.5]);
+  let kl2 = "";
+  kl2 += klein(150, 141.2, "#f4f1e8", "#3f4a5a", "#c99062", "#2a1d16", "#f1e9d2", true, 0.06) + klein(154, 141.5, "#f6d21e", "#f4f1e8", "#8a5a3b", "#1a1210", null, false, 0);
+  kl2 += klein(204, 142.4, "#f4f1e8", "#e9e2d0", "#e8bf9a", "#6b4a32", "#e9e2c8", false, 0.05) + klein(208.4, 142.8, "#2f9e6e", "#f4f1e8", "#d7a179", "#1a1210", null, true, 0) + klein(211.6, 143.2, "#f4f1e8", "#7fb3d5", "#a87050", "#1a1210", null, false, 0.07);
+  k = `<g filter="${ABEND}">${kl2}</g>` + k;
+  /* in der Ferne: dichte Menschenlinie am Fuß der Pyramide (viele in Weiß), vor der Treppe frei */
+  let menge = "";
+  const kleid = ["#f4f1e8", "#f4f1e8", "#f4f1e8", "#7fb3d5", "#e8590c", "#f4f1e8", "#c2255c", "#f6d21e", "#f4f1e8", "#2f9e6e"];
+  for (let x = 42; x < 206; x += 1.15 + rnd() * 0.9) {
+    if (x > 54 && x < 104) continue;
+    const y = 137.2 + rnd() * 1.6, s = sy(y), h = (1.55 + rnd() * 0.25) * s, c = kleid[Math.floor(rnd() * kleid.length)], w = 0.42 * s;
+    menge += `<path d="M${r(x - w / 2)} ${r(y - h * 0.5)} L${r(x + w / 2)} ${r(y - h * 0.5)} L${r(x + w * 0.4)} ${r(y - h * 0.84)} L${r(x - w * 0.4)} ${r(y - h * 0.84)} Z" fill="${c}"/><path d="M${r(x - w * 0.3)} ${r(y)} L${r(x - w * 0.3)} ${r(y - h * 0.5)} M${r(x + w * 0.3)} ${r(y)} L${r(x + w * 0.3)} ${r(y - h * 0.5)}" stroke="${rnd() < 0.5 ? "#3f4a5a" : "#e9e2d0"}" stroke-width="${r(w * 0.4)}"/><circle cx="${r(x)}" cy="${r(y - h * 0.91)}" r="${r(h * 0.075)}" fill="${rnd() < 0.3 ? "#f1e9d2" : "#5a3a26"}"/>`;
+  }
+  S.hinten(sch);
   const [ax, ay] = [126, 140];
-  S.teil({ id: "touristen", de: "die Touristen", syl: "Tou-RIS-ten", it: "i turisti", itSyl: "tu-RI-sti", en: "tourists", x: ax, y: ay, kunst: um(ax, ay, k),
-    tipp: "Zur Tagundnachtgleiche kommen Tausende Besucher, um die Schlange aus Licht zu sehen. Hinaufklettern darf man nicht." });
+  S.teil({ id: "touristen", de: "die Touristen", syl: "Tou-RIS-ten", it: "i turisti", itSyl: "tu-RI-sti", en: "tourists", x: ax, y: ay, kunst: um(ax, ay, `<g filter="${ABEND}">${menge}</g>` + k),
+    tipp: "Klatscht man vor der Treppe in die Hände, antwortet ein Echo – es klingt wie der Ruf des Quetzal-Vogels." });
 }
 
 /* =====================================================================
@@ -870,7 +957,7 @@ const standUnter = [];
   const AY = Y - 30;
   S.hinten(`<g transform="translate(${r(X)} ${r(Y)})">${bildSchatten(X, Y, 1.56, 0.45, 0.2)}</g>`);
   S.teil({ id: "verkaeuferin", de: "die Verkäuferin", syl: "ver-KÄU-fe-rin", it: "la venditrice", itSyl: "ven-di-TRI-ce", en: "saleswoman", x: X, y: AY,
-    kunst: `<g transform="translate(0 ${r(Y - AY)})">${hinten}${halb(m.svg)}${st}</g>`,
+    kunst: `<g transform="translate(0 ${r(Y - AY)})" filter="${ABEND}">${hinten}${halb(m.svg)}${st}</g>`,
     tipp: "Sie trägt einen Huipil: ein weißes Kleid mit bunt gestickten Blumen – typisch für die Maya in Yucatán." });
 }
 /* DIE PIÑATA — Stern mit sieben Zacken, hängt an einer Schnur vom Dachbalken */

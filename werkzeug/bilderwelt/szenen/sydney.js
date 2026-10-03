@@ -60,6 +60,9 @@
      der Picknickdecke mit Fish and Chips, Kühlbox („Esky“), Flip-Flops
      („Thongs“), Bumerang (Souvenir mit Punktmalerei), Sonnencreme
      („Slip, Slop, Slap, Seek, Slide“).
+   - RUNDE 3: Fußweg zwischen Fels und Rasen und Regenpfütze auf der
+     Felsplatte (UNSICHER: genaue Führung des Wegs am Point). Touristin von
+     Hand gezeichnet (fotografiert die Oper), Picknick als Lupe.
    Maßstab: Bild 34° breit (≈ 11,9 Einheiten je Grad), Augenhöhe y = 146
    (6 m über dem Wasser). Ferne Dinge werden mit einer echten
    Zentralprojektion gesetzt (proj), ihre Spiegelbilder mit derselben
@@ -988,7 +991,7 @@ let deckeKunst = "";
 }
 S.teil({ id: "picknickdecke", de: "die Picknickdecke", syl: "PICK-nick-de-cke", it: "la coperta da picnic", itSyl: "co-PER-ta da PIC-nic", en: "picnic blanket", x: ANKER_DECKE.x, y: ANKER_DECKE.y, kunst: deckeKunst,
   tipp: "Ein Picknick am Hafen: Auf der Decke liegen Fish and Chips, Sonnencreme und ein Bumerang.",
-  zoom: { x: 266, y: 182, w: 124, h: 78 }, unter: deckeUnter });
+  zoom: { x: 252, y: 165, w: 128, h: 80 }, unter: deckeUnter });
 {
   /* Kühlbox („Esky“): blau, weißer Deckel mit Griff, seitlicher Tragebügel; Vorderseite und Deckel im
      Licht, linke Seite im Schatten; Schlagschatten nach links hinten */

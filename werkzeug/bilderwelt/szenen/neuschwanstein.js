@@ -6,9 +6,12 @@
    Grafikdesigner auf Hollywood-Niveau … mit größter Sorgfalt und
    Präzision auf höchstem Niveau“.
 
-   STANDORT (Runde 2: echte Kamera): auf dem Deck der MARIENBRÜCKE
-   (Schwangau, Ostallgäu), etwa 1 m hinter dem nördlichen Geländer,
-   Augenhöhe 1,65 m über den Bohlen. Die Brücke liegt SÜDÖSTLICH des
+   STANDORT (echte Kamera): auf dem Deck der MARIENBRÜCKE (Schwangau,
+   Ostallgäu), 1,5 m hinter dem nördlichen Geländer, Augenhöhe 1,65 m über
+   den Bohlen. Die Brücke läuft quer (West–Ost) zum Blick: das Rautengitter
+   des Geländers liegt schräg im unteren Bilddrittel, man schaut darüber in
+   die Schlucht. Das Deck selbst liegt bei waagrechtem Blick unter dem
+   Bildrand (es wäre erst bei gesenkter Kamera zu sehen). Die Brücke liegt SÜDÖSTLICH des
    Schlosses; man schaut nach Nordwesten (Blickrichtung 319°) über die
    Pöllatschlucht auf das Schloss, etwa 30 m über dem oberen Schlosshof
    (≈ 40 m über dem Palasfuß). Oktober-Nachmittag, Sonne aus Südwest
@@ -44,11 +47,11 @@
      Forggensee 320°–350° (4–12 km). Füssen (≈ 293°), Hohenschwangau
      und Alpsee (≈ 270°) sowie der Säuling (≈ 235°) liegen links
      AUSSERHALB des Bildes und fehlen darum.
-   - Vor Ort typisch: Wanderer mit Rucksack und Kamera auf dem Weg vom
-     Schloss zur Brücke, die Infotafel mit König Ludwig II.,
-     Pferdekutschen (bringen Gäste vom Dorf zum Schloss; hier auf der
-     Zufahrt unter dem Torbau — UNSICHER, ob man genau diese Stelle von
-     der Brücke sieht), Herbstwald aus Buchen, Lärchen und Fichten.
+   - Vor Ort typisch: Pferdekutschen (bringen Gäste von Hohenschwangau
+     zum Schloss; hier auf der Zufahrt an der Ostseite unter dem Torbau —
+     Verlauf UNSICHER), Herbstwald aus Buchen, Lärchen und Fichten, die
+     Pöllat tief unten in der Schlucht. Wanderer und Infotafel stehen am
+     Brückenkopf hinter uns bzw. außerhalb des Bildes und fehlen darum.
    Kamera: Brennweite 580 Einheiten, Augenhöhe y 66 (Horizont).
    Schloss in ≈ 390 m ≈ 1,5 Einheiten je Meter.
    ===================================================================== */
@@ -703,7 +706,7 @@ const STRASSE = [[112, -1, -10], [116, 8, -11], [119, 20, -12.5], [123, 34, -14.
   let k = `<path d="M${STRASSE.map(Pt).join(" L")}" stroke="#5e4c2c" stroke-width="3.6" fill="none" stroke-linecap="round" transform="translate(-1 -.8)"/>`;
   k += `<path d="M${STRASSE.map(Pt).join(" L")}" stroke="#d6c9ad" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
   k += `<path d="M${STRASSE.map(Pt).join(" L")}" stroke="#a89878" stroke-width=".4" fill="none" transform="translate(.6 .6)"/>`;
-  k += saum(STRASSE.slice(1).map(([x, y]) => [x + 2.2, y + 1]), 1.3, 2.6, 0.4);
+  k += saum(STRASSE.slice(1).map(([x, y]) => [x + 1, y + 3.6]), 1.2, 3.4, 0.45);
   /* Kutsche in Fahrtrichtung (bergauf zum Torbau): Seitenansicht, entlang der Straße geschert */
   const x = STRASSE[1][0] + (STRASSE[2][0] - STRASSE[1][0]) * 0.5, y = STRASSE[1][1] + (STRASSE[2][1] - STRASSE[1][1]) * 0.5 + 0.6, s = k1(127, -14) * 1.05;
   const sa = STRASSE[1], sb = STRASSE[2], winkel = Math.atan2(sb[1] - sa[1], sb[0] - sa[0]) * 180 / Math.PI;
@@ -748,11 +751,11 @@ const STRASSE = [[112, -1, -10], [116, 8, -11], [119, 20, -12.5], [123, 34, -14.
   const L = SOHLE.map(([x, y], i) => [x - 12 + i * 1.6 + (i % 2 ? 2 : -1), y + 1]), R = SOHLE.map(([x, y], i) => [x + 14 - i * 2 + (i % 2 ? -2 : 1), y + 2]);
   let k = `<path d="${poly([...L, ...R.slice().reverse()])}" fill="${S.lg("schluchtgrund", [[0, "#34352e"], [1, "#141518"]])}"/>`;
   /* Ufersteine */
-  for (let i = 0; i < 8; i++) { const t = rnd(), j = Math.min(SOHLE.length - 2, Math.floor(t * (SOHLE.length - 1))), tt = t * (SOHLE.length - 1) - j; const side = rnd() < 0.5 ? L : R; const x = side[j][0] + (side[j + 1][0] - side[j][0]) * tt + (side === L ? 2 : -2), y = side[j][1] + (side[j + 1][1] - side[j][1]) * tt - 1; const q = 1 + (y - 200) / 30; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(q * 1.6)}" ry="${r(q * 0.8)}" fill="#6e6a5e"/><ellipse cx="${r(x - q * 0.4)}" cy="${r(y - q * 0.3)}" rx="${r(q * 0.7)}" ry="${r(q * 0.3)}" fill="#a39d8a"/>`; }
+  for (let i = 0; i < 8; i++) { const t = rnd(), j = Math.min(SOHLE.length - 2, Math.floor(t * (SOHLE.length - 1))), tt = t * (SOHLE.length - 1) - j; const side = rnd() < 0.5 ? L : R; const x = side[j][0] + (side[j + 1][0] - side[j][0]) * tt + (side === L ? 2 : -2), y = Math.min(254, side[j][1] + (side[j + 1][1] - side[j][1]) * tt - 1); const q = 1 + (y - 200) / 30; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(q * 1.6)}" ry="${r(q * 0.8)}" fill="#6e6a5e"/><ellipse cx="${r(x - q * 0.4)}" cy="${r(y - q * 0.3)}" rx="${r(q * 0.7)}" ry="${r(q * 0.3)}" fill="#a39d8a"/>`; }
   /* die Pöllat: graugrünes Wasser, unten breiter, mit weißen Schwällen zwischen den Blöcken */
   const WL = SOHLE.map(([x, y], i) => [x - 3.4 + i * 0.5, y]), WR = SOHLE.map(([x, y], i) => [x + 3.6 - i * 0.55, y + 0.6]);
   k += `<path d="${poly([...WL, ...WR.slice().reverse()])}" fill="${S.lg("pwasser", [[0, "#5f7c7c"], [1, "#3e5656"]])}"/>`;
-  for (let i = 0; i < 16; i++) { const t = rnd(), j = Math.min(SOHLE.length - 2, Math.floor(t * (SOHLE.length - 1))), tt = t * (SOHLE.length - 1) - j; const x = SOHLE[j][0] + (SOHLE[j + 1][0] - SOHLE[j][0]) * tt + (rnd() - 0.5) * 3, y = SOHLE[j][1] + (SOHLE[j + 1][1] - SOHLE[j][1]) * tt; const q = 0.8 + (y - 205) / 28; k += `<path d="M${r(x - q * 1.6)} ${r(y)} q${r(q * 0.8)} ${r(-q * 0.7)} ${r(q * 1.6)} ${r(-q * 0.2)} q${r(q * 0.8)} ${r(q * 0.5)} ${r(q * 1.5)} ${r(q * 0.3)} q${r(-q * 1.5)} ${r(q * 0.5)} ${r(-q * 3.1)} ${r(-q * 0.1)} Z" fill="#eef5f4" opacity=".9"/>`; }
+  for (let i = 0; i < 16; i++) { const t = rnd(), j = Math.min(SOHLE.length - 2, Math.floor(t * (SOHLE.length - 1))), tt = t * (SOHLE.length - 1) - j; const x = SOHLE[j][0] + (SOHLE[j + 1][0] - SOHLE[j][0]) * tt + (rnd() - 0.5) * 3, y = Math.min(255, SOHLE[j][1] + (SOHLE[j + 1][1] - SOHLE[j][1]) * tt); const q = 0.8 + (y - 205) / 28; k += `<path d="M${r(x - q * 1.6)} ${r(y)} q${r(q * 0.8)} ${r(-q * 0.7)} ${r(q * 1.6)} ${r(-q * 0.2)} q${r(q * 0.8)} ${r(q * 0.5)} ${r(q * 1.5)} ${r(q * 0.3)} q${r(-q * 1.5)} ${r(q * 0.5)} ${r(-q * 3.1)} ${r(-q * 0.1)} Z" fill="#eef5f4" opacity=".9"/>`; }
   for (const [x, y, w] of [[140, 246, 3.4], [158, 234, 2.8], [174, 224, 2.2], [128, 257, 4.2]]) k += `<ellipse cx="${x - 1}" cy="${y}" rx="${w}" ry="${r(w * 0.45)}" fill="#5c5850"/><ellipse cx="${r(x - 1 - w * 0.3)}" cy="${r(y - w * 0.15)}" rx="${r(w * 0.45)}" ry="${r(w * 0.16)}" fill="#8f897a"/>`;
   /* Uferhänge: die Schlucht wird zum Grund hin dunkel; Kronen hängen von beiden Seiten über */
   k += `<path d="${poly([...L.map(([x, y]) => [x - 16, y - 4]), ...L.slice().reverse()])}" fill="#0e1018" opacity=".4"/>`;

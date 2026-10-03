@@ -9,12 +9,14 @@
    STANDORT: das PLÖNLEIN („kleiner Platz“) am Südende der Oberen
    Schmiedgasse — eines der bekanntesten Fotomotive Deutschlands. Man
    steht in der Gasse (Augenhöhe 1,65 m) und schaut nach Süden auf die
-   Gabelung. Sommerabend gegen acht: die Sonne steht tief im Nordwesten
-   (≈ 300°, 7° hoch, hinter uns rechts). Die Gasse liegt im Schatten der
-   westlichen Häuserzeile; nur Giebel, Dächer und der obere Siebersturm
-   leuchten golden. Durch eine Lücke rechts fällt ein Lichtstreifen schräg
-   über das Pflaster bis an das gelbe Haus. Die Laternen brennen schon,
-   gleich beginnt die Nachtwächterführung.
+   Gabelung. Sommerabend: die Sonne steht tief im Westen (Azimut 275°,
+   18° hoch, rechts). Ein Sonnenmodell (schattenH) rechnet die Schatten
+   der giebelständigen rechten Zeile: die Gasse liegt im Schatten, auf
+   den Fassaden links und am gelben Haus steigt die Schattenkante als
+   Sägezahn der Giebel an, nur Obergeschosse, Giebel und der obere
+   Siebersturm leuchten. Durch die Seitengasse rechts fällt ein Lichtband
+   quer über das Pflaster. Die Laternen brennen, gleich beginnt die
+   Nachtwächterführung.
 
    RECHERCHE (rothenburg-tourismus.de, Wikipedia „Plönlein“,
    „Siebersturm“, „Kobolzeller Tor“, „Rothenburger Schneeballen“;
@@ -41,8 +43,12 @@
      (Mürbeteigstreifen, zur Kugel geformt und gebacken, mit Puderzucker
      oder Schokolade), Weihnachtsschmuck das ganze Jahr.
    KAMERA: Fluchtpunkt (268 | 158), Brennweite 210 Einheiten. Gasse eben,
-   rechte Gasse steigt ab 21 m um 10 % (bis 2,4 m), die Steige fällt um
-   14 % (Kobolzeller Tor ≈ 10 m tiefer, 80 m entfernt). Plönleinhaus in
+   rechte Gasse steigt ab 21 m als Rampe mit 7 % (bis 1,7 m) zum
+   Siebersturm. Die Steige fällt ab der Platzkante erst 6,5 %, ab der
+   Kante 12 m weiter 21 %: dahinter sind nur noch Dächer (Querhaus an der
+   Biegung) und Helm und Obergeschoss des Kobolzeller Tors zu sehen
+   (≈ 13 m tiefer, 80 m entfernt; Gefälle UNSICHER, Größenordnung aus
+   Fachwissen). Plönleinhaus in
    22 m ≈ 9,5 je Meter, Siebersturm in 45 m ≈ 4,7, Nachtwächter in 7,4 m
    ≈ 28 je Meter (1,78 m ≈ 50 Einheiten).
    ===================================================================== */
@@ -165,7 +171,7 @@ function blumen(d, c, s = 1) {
 }
 /* Fenster auf der Fassade der rechten bzw. linken Zeile (Ebene X = const) */
 /* Schrift Buchstabe für Buchstabe: Lage nach geschätzter Zeichenbreite (statt gleicher Abstände) */
-const ZB = (c) => "il.·,'| ".includes(c) ? 0.32 : "fjrt".includes(c) ? 0.42 : "mwMW".includes(c) ? 0.9 : c === c.toUpperCase() && /[A-ZÄÖÜ]/.test(c) ? 0.72 : 0.56;
+const ZB = (c) => c === " " ? 0.5 : "il.·,'|".includes(c) ? 0.32 : "fjrt".includes(c) ? 0.42 : "mwMW".includes(c) ? 0.9 : c === c.toUpperCase() && /[A-ZÄÖÜ]/.test(c) ? 0.72 : 0.56;
 const zeichenLage = (txt) => { const w = [...txt].map(ZB), sum = w.reduce((a, b) => a + b, 0); let acc = 0; return w.map((b) => { const m = (acc + b / 2) / sum; acc += b; return m; }); };
 const wandFenster = (X, d0, d1, h0, h1, opt) => fensterQ(P(X, d0, h1), P(X, d1, h1), P(X, d1, h0), P(X, d0, h0), opt);
 
@@ -267,9 +273,9 @@ const ST = { d: 45, L0: -3.6, L1: 3.6, traufe: 21, spitze: 29 };
         tipp: "Die Wetterfahne dreht sich mit dem Wind." },
     ] });
   /* DER TORBOGEN: spitzbogige Durchfahrt mit tiefer Laibung, hinten die Spitalgasse im Licht */
-  /* Durchfahrt als echter Tunnel: Außenbogen in der Front (D 45), Innenbogen 3,2 m tiefer; man sieht beide
+  /* Durchfahrt als echter Tunnel: Außenbogen in der Front (D 45), Innenbogen 6,5 m tiefer; man sieht beide
      Laibungen, das Gewölbe und hinten die Spitalgasse im Abendlicht */
-  const T = (X, D, H) => P(X, D, H, g0), DA = ST.d, DI = ST.d + 3.2;
+  const T = (X, D, H) => P(X, D, H, g0), DA = ST.d, DI = ST.d + 6.5;
   const bogenPkt = (D, w, n = 10) => { const out = []; for (let i = 0; i <= n; i++) { const t2 = i / n; out.push(T(-w + 2 * w * t2, D, 3.5 + 2.1 * (1 - Math.pow(Math.abs(2 * t2 - 1), 1.7)))); } return out; };
   const aussen = bogenPkt(DA, 1.8), innen = bogenPkt(DI, 1.8), gewaende = bogenPkt(DA - 0.02, 2.2);
   const [ax, ay] = T(-1.8, DA, 0), [bx] = T(1.8, DA, 0);
@@ -601,7 +607,7 @@ const LL = -8;
     }
     return d;
   };
-  const STEINE = ["#9c907e", "#a89a84", "#928677", "#ad9e88", "#8c8173", "#a2947f"];
+  const STEINE = ["#ab9c84", "#b6a68c", "#a0917b", "#bcab92", "#998b77", "#ae9e86"];
   let b = "", D = 3.4, i = 0;
   for (; D < 22; D += RH, i++) {
     const Dc = D + RH / 2, dy = yD(D) - yD(D + RH);
@@ -613,14 +619,16 @@ const LL = -8;
   const yNah = yD(D);
   let f = "";
   for (let acc = 0; D < 22; D += RH) { acc += yD(D) - yD(D + RH); if (acc >= 0.78) { f += reihe(D) + " "; acc = 0; } }
-  let k = `<path d="${poly(...flaecheP)}" fill="#8b8072"/><g clip-path="url(#${S.id("pflclip")})"><rect x="-1" y="${r(yNah)}" width="402" height="${r(262 - yNah)}" fill="#675e53"/>${b}<path d="${f}" stroke="#5e554a" stroke-width=".26" fill="none" opacity=".8"/>`;
+  let k = `<path d="${poly(...flaecheP)}" fill="#998b77"/><g clip-path="url(#${S.id("pflclip")})"><rect x="-1" y="${r(yNah)}" width="402" height="${r(262 - yNah)}" fill="#76695a"/>${b}<path d="${f}" stroke="#5e554a" stroke-width=".26" fill="none" opacity=".8"/>`;
   /* Rinne aus Granit-Längssteinen in der Mitte, nass glänzend */
   k += `<path d="${poly(P(-0.2, 3.3, 0, 0), P(0.2, 3.3, 0, 0), P(0.2, 21, 0, 0), P(-0.2, 21, 0, 0))}" fill="#7a736a"/>`;
   { let q = ""; for (let d = 3.5; d < 21; d += 0.6) q += `M${pt(P(-0.2, d, 0, 0))} L${pt(P(0.2, d, 0, 0))} `; k += `<path d="${q}" stroke="#4e483f" stroke-width=".3"/>`; }
   k += `<path d="M${pt(P(-0.2, 3.3, 0, 0))} L${pt(P(-0.2, 21, 0, 0))} M${pt(P(0.2, 3.3, 0, 0))} L${pt(P(0.2, 21, 0, 0))}" stroke="#4a443c" stroke-width=".4"/>`;
   k += `<path d="M${pt(P(0.02, 3.3, 0, 0))} L${pt(P(0.02, 21, 0, 0))}" stroke="#dfe6ea" stroke-width=".5" opacity=".45"/>`;
+  /* Kanaldeckel mit Stadtwappen-Relief im Vordergrund */
+  { const [cx, cy] = P(-1.6, 5.2, 0, 0), sx = F / 5.2 * 0.32, sy = sx * (yD(5.04) - yD(5.36)) / (F / 5.2 * 0.64); k += `<ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${r(sx + 0.8)}" ry="${r(sy + 0.5)}" fill="#5a544c"/><ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${r(sx)}" ry="${r(sy)}" fill="#3e3a35"/><ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${r(sx * 0.62)}" ry="${r(sy * 0.62)}" fill="none" stroke="#6a6258" stroke-width=".5"/><path d="M${r(cx - sx * 0.9)} ${r(cy)} H${r(cx + sx * 0.9)} M${r(cx)} ${r(cy - sy * 0.9)} V${r(cy + sy * 0.9)}" stroke="#6a6258" stroke-width=".4"/>`; }
   /* Abendschatten: die ganze Gasse liegt im Schatten der rechten Zeile; durch die Seitengasse fällt ein Lichtband */
-  k += `<rect x="-1" y="${HOR - 2}" width="402" height="${263 - HOR}" fill="${SCHATTEN}" opacity=".32"/>`;
+  k += `<rect x="-1" y="${HOR - 2}" width="402" height="${263 - HOR}" fill="${SCHATTEN}" opacity=".26"/>`;
   {
     const lo = [], hi = [];
     for (let X = 4; X >= -9.5; X -= 0.5) {
@@ -912,8 +920,10 @@ const LL = -8;
    19 — DER LATERNE
    ===================================================================== */
 const NW = (() => { const d = 7.4, [x, y] = P(1.0, d, 0); return { x, y, s: F / d }; })();
+/* gebaut wird in 7,4 m Abstand, gestellt wird er näher (5,9 m): alles um NF vergrößert, Fußpunkt neu */
+const NF = 7.4 / 5.9, NWp = (() => { const [x, y] = P(1.0, 5.9, 0); return { x, y }; })(), NS = (g) => `<g transform="scale(${r(NF * 1000) / 1000})">${g}</g>`;
 const nw = B.mensch({ id: "rtb_nachtwaechter", geschlecht: "m", pose: "stehen", blick: 330, frisur: "kurz", haarfarbe: "grau", haut: "hell",
-  kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "stiefel", farbe: "#1a1a1a" }, kopf: { stueck: "hut", farbe: "#17161a" } } }, 1.78 * NW.s);
+  kleidung: { oberteil: { stueck: "hemd", farbe: "#2a2830" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "stiefel", farbe: "#1a1a1a" }, kopf: { stueck: "hut", farbe: "#17161a" } } }, 1.78 * NW.s);
 const NP = (n) => { const q = nw.z.punkte[n]; return [q[0] * nw.k, q[1] * nw.k]; };
 const HAENDE = [NP("handL"), NP("handR")].sort((a, b) => a[0] - b[0]);
 /* Hellebarde: in der Hand, oben leicht nach außen geneigt; hinter dem Umhang verdeckt */
@@ -943,13 +953,13 @@ const STANGE = (() => {
   k += `<path d="${HORN}" fill="${S.lg("horn", [[0, "#efe0bc"], [0.6, "#c9a46a"], [1, "#7a5a2a"]], 0, 0, 1, 1)}" stroke="#5a4020" stroke-width=".25"/>`;
   k += `<path d="M${r(bx + 3.4)} ${r(by + 2.2)} L${r(bx + 2.6)} ${r(by + 3.3)}" stroke="#c9a640" stroke-width=".8"/><circle cx="${r(bx - 1)}" cy="${r(by - 1.1)}" r=".55" fill="#c9a640"/>`;
   k += `<ellipse cx="${r(bx + 5.1)}" cy="${r(by + 3.1)}" rx=".55" ry="1.5" fill="#3a2a14"/>`;
-  S.teil({ id: "nachtwaechter", de: "der Nachtwächter", syl: "NACHT-wäch-ter", it: "la guardia notturna", itSyl: "GUAR-dia not-TUR-na", en: "night watchman", x: NW.x, y: NW.y, kunst: k,
+  S.teil({ id: "nachtwaechter", de: "der Nachtwächter", syl: "NACHT-wäch-ter", it: "la guardia notturna", itSyl: "GUAR-dia not-TUR-na", en: "night watchman", x: NWp.x, y: NWp.y, kunst: NS(k),
     tipp: "Am Abend führt der Nachtwächter mit Schlapphut und Horn die Gäste durch die Altstadt.",
-    zoom: { x: r(NW.x + kx - 30), y: r(NW.y + ky2 - 6), w: 60, h: 40 },
+    zoom: { x: r(NWp.x + (kx - 30) * NF), y: r(NWp.y + (ky2 - 6) * NF), w: r(60 * NF), h: r(40 * NF) },
     unter: [
-      { id: "hut", de: "der Hut", syl: "HUT", it: "il cappello", itSyl: "cap-PEL-lo", en: "hat", x: NW.x + kx, y: NW.y + ky2 + 3, kunst: flaeche(-7.2, -8, 14.4, 7.6),
+      { id: "hut", de: "der Hut", syl: "HUT", it: "il cappello", itSyl: "cap-PEL-lo", en: "hat", x: NWp.x + kx * NF, y: NWp.y + (ky2 + 3) * NF, kunst: NS(flaeche(-7.2, -8, 14.4, 7.6)),
         tipp: "Der Nachtwächter trägt einen breiten schwarzen Schlapphut." },
-      { id: "horn", de: "das Horn", syl: "HORN", it: "il corno", itSyl: "COR-no", en: "horn", x: NW.x + bx + 2, y: NW.y + by + 4.8, kunst: flaeche(-3.6, -7, 8, 7.6),
+      { id: "horn", de: "das Horn", syl: "HORN", it: "il corno", itSyl: "COR-no", en: "horn", x: NWp.x + (bx + 2) * NF, y: NWp.y + (by + 4.8) * NF, kunst: NS(flaeche(-3.6, -7, 8, 7.6)),
         tipp: "Mit dem Horn bläst der Nachtwächter zur vollen Stunde." },
     ] });
 }
@@ -968,7 +978,7 @@ const STANGE = (() => {
   k += `<ellipse cx="${r(hx)}" cy="${r(hy - 0.6)}" rx="1.3" ry="1.15" fill="#e8c4a2"/><path d="M${r(hx - 1.1)} ${r(hy - 1)} h2.2 M${r(hx - 1.1)} ${r(hy - 0.3)} h2.2" stroke="#c49a7a" stroke-width=".25"/>`;
   /* Trefferfläche: schmale Polster um die sichtbaren Stücke und um die Klinge */
   k += `<path class="bw-flaeche" d="M${r(fuss[0] - 1.6)} 0 L${r(fuss[0] + 1.6)} 0 L${r(X(umhangU) + 1.6)} ${r(umhangU)} L${r(X(umhangU) - 1.6)} ${r(umhangU)} Z M${r(top[0] - 4.5)} ${r(top[1] - 10)} L${r(top[0] + 7.6)} ${r(top[1] - 10)} L${r(X(schulter) + 1.8)} ${r(schulter)} L${r(X(schulter) - 1.8)} ${r(schulter)} Z" fill="rgba(255,255,255,0.001)"/>`;
-  S.teil({ oben: true, id: "hellebarde", de: "die Hellebarde", syl: "hel-le-BAR-de", it: "l'alabarda", itSyl: "a-la-BAR-da", en: "halberd", x: NW.x + ox, y: NW.y + oy, kunst: `<g transform="translate(${-ox} ${-oy})">${k}</g>`,
+  S.teil({ oben: true, id: "hellebarde", de: "die Hellebarde", syl: "hel-le-BAR-de", it: "l'alabarda", itSyl: "a-la-BAR-da", en: "halberd", x: NWp.x + ox * NF, y: NWp.y + oy * NF, kunst: NS(`<g transform="translate(${-ox} ${-oy})">${k}</g>`),
     tipp: "Die Hellebarde ist halb Axt, halb Spieß. Damit schützte der Nachtwächter früher die Stadt." });
 }
 {
@@ -981,7 +991,7 @@ const STANGE = (() => {
   k += `<path d="M${r(lx - 2.2)} ${r(ly - 3.6)} v6.8 M${r(lx + 2.2)} ${r(ly - 3.6)} v6.8 M${r(lx)} ${r(ly - 3.6)} v6.8" stroke="#8a6a2a" stroke-width=".35"/>`;
   k += `<rect x="${r(lx - 2.6)}" y="${r(ly + 3.2)}" width="5.2" height="1" fill="${GOLD}"/>`;
   const ox = r(lx), oy = r(ly + 4.4);
-  S.teil({ oben: true, id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "la lanterna", itSyl: "lan-TER-na", en: "lantern", x: NW.x + ox, y: NW.y + oy, kunst: `<g transform="translate(${-ox} ${-oy})">${k + flaeche(lx - 3, ly - 6, 6, 11)}</g>`,
+  S.teil({ oben: true, id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "la lanterna", itSyl: "lan-TER-na", en: "lantern", x: NWp.x + ox * NF, y: NWp.y + oy * NF, kunst: NS(`<g transform="translate(${-ox} ${-oy})">${k + flaeche(lx - 3, ly - 6, 6, 11)}</g>`),
     tipp: "Früher gab es keine Straßenlampen. Der Nachtwächter trug eine Laterne." });
 }
 /* Vordergrund links: Holzkübel mit Geranien vor der Bäckerei (Dekor, fängt keinen Tipp) */

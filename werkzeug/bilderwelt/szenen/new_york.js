@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =====================================================================
-   NEW YORK (FASSUNG 854, Runde 2) — Bilderwelt neu: eine echte Stadtansicht
+   NEW YORK (FASSUNG 854, Runde 3) — Bilderwelt neu: eine echte Stadtansicht
    ---------------------------------------------------------------------
    RECHERCHE (NPS „Statue of Liberty – Statistics“, Brooklyn Bridge Park,
    NYC DOT „Brooklyn Bridge“ / „Manhattan Bridge“, SOM „One World Trade
@@ -51,9 +51,13 @@
      gelbem Schirm (Hotdog, Brezeln, Getränkedosen), Bank aus Holzbohlen
      mit Bagel und dem blau-weißen Anthora-Becher, Jogger, Touristin mit
      Handy, Yellow Cab (Toyota Camry, 4,9 m, Lizenznummer am Dach) auf
-     dem Kopfsteinpflaster der Uferstraße. Rechts hinten die Backstein-
-     häuser von Fulton Ferry/DUMBO mit Feuertreppe und hölzernem Wasser-
-     tank (etwas ins Bild gerückt; die echten stehen ≈ 65–72°).
+     dem Kopfsteinpflaster der Uferstraße. Rechts hinten, an Land HINTER
+     dem Brooklyn-Pfeiler: das Backsteinhaus an der Fulton Ferry (310 m,
+     Feuertreppe, Wassertank) und die Empire Stores (430 m, fünf Geschosse,
+     Rundbogenfenster mit Eisenläden) über Kaimauer und Fähranleger.
+     Ganz vorn die unterste Stufe der Granite Prospect, Parklaternen,
+     eine Citi-Bike-Station und Tauben. Lupe „Midtown“ am Empire State
+     Building (mit dem Chrysler Building daneben).
    Licht: Vormittag im Oktober, Sonne im Südosten (≈ 135°, 35° hoch), fast
    genau hinter uns: Schatten fallen nach vorn (Nordwesten), leicht links.
    Vorne gilt: Einheiten je Meter = (y − 150) / 5.
@@ -186,9 +190,10 @@ const BBB = enu(40.70420, -73.99460), BBM = enu(40.70663, -73.99935);
     const L = lokal(BBB[0], BBB[1]), [x0, yw] = L.p(0, 0, 0), wp = K * 18 / L.d;
     k += `<path d="M${r(x0 - wp / 2)} ${r(yw)} L${r(x0 + wp / 2 + 2)} ${r(yw)} L${r(x0 + wp / 2 + 3)} ${r(yw + 24)} L${r(x0 - wp / 2 - 1)} ${r(yw + 24)} Z" fill="${S.lg("bbspiegel", [[0, "#3d4a4e", 0.55], [1, "#3d4a4e", 0]])}" filter="url(#${S.id("spiegel")})"/>`;
   }
-  for (let i = 0; i < 170; i++) {
-    const t = Math.pow(rnd(), 1.4), y = Y0 + 1 + t * (Y1 - Y0 - 2), w = 1.2 + t * 7 * (0.5 + rnd());
-    const x = rnd() * 400;
+  /* Wellen: hinten dicht und klein, vorn lange Glanzbänder */
+  for (let i = 0; i < 190; i++) {
+    const t = Math.pow(rnd(), 2), y = Y0 + 0.6 + t * (Y1 - Y0 - 1.6), w = 0.6 + t * t * 16 * (0.5 + rnd());
+    const x = rnd() * (400 - w);
     k += `<path d="M${r(x)} ${r(y)} q${r(w / 2)} -${r(0.3 + t * 0.5)} ${r(w)} 0" stroke="${rnd() < 0.62 ? "#e9f2f5" : "#27404c"}" stroke-width="${r(0.15 + t * 0.4)}" fill="none" opacity="${r(0.3 + rnd() * 0.35)}"/>`;
   }
   S.teil({ id: "east_river", de: "der East River", syl: "EAST RI-ver", it: "l'East River", itSyl: "EAST RI-ver", en: "East River", x: 0, y: 0, kunst: k,
@@ -538,7 +543,7 @@ const haus = (lat, lon, H, W, art, muster, extra) => {
    ≈ 63°/0,64 km (?) — rechts hinter den Häusern
    ===================================================================== */
 {
-  const MM = polar(381.8, 1000), MB = polar(423.1, 639);
+  const MM = polar(384, 1000), MB = polar(423.1, 639);
   const ax = [MM[0] - MB[0], MM[1] - MB[1]], La = Math.hypot(ax[0], ax[1]), u = [ax[0] / La, ax[1] / La], p = [u[1], -u[0]];
   const BL = S.lg("mbblau", [[0, "#9db2c2"], [0.5, "#7f97a9"], [1, "#5f7486"]], 0, 0, 1, 0);
   let k = "";
@@ -780,7 +785,7 @@ const haus = (lat, lon, H, W, art, muster, extra) => {
 /* Schlagschatten eines Körpers (Breite b, Höhe h in m) auf der Promenade */
 const wurf = (X, Z, b, h, op = 0.2) => {
   const a = NP(X - b / 2, Z), c = NP(X + b / 2, Z), e = NP(X + b / 2 + SCH.dx * h, Z + SCH.dz * h), f = NP(X - b / 2 + SCH.dx * h, Z + SCH.dz * h);
-  return `<path d="M${pr(a)} L${pr(c)} L${pr(e)} L${pr(f)} Z" fill="#1b120a" opacity="${op}" filter="url(#bw_weich)"/>`;
+  return `<path d="M${pr(a)} L${pr(c)} L${pr(e)} L${pr(f)} Z" fill="#1d2230" opacity="${r(op + 0.1)}"/>`;
 };
 
 /* =====================================================================
@@ -790,9 +795,18 @@ const wurf = (X, Z, b, h, op = 0.2) => {
 const WAGEN = { X: -4.8, Z: 18.75 };
 {
   const Zv = WAGEN.Z + 0.7, [vx, vy] = NP(WAGEN.X + 0.5, Zv);
-  const m = B.mensch({ id: "nyc_verk", geschlecht: "m", pose: "servieren", blick: 25, frisur: "kurz", haarfarbe: "schwarz", haut: "mittel", laecheln: true,
+  /* Haltung: beide Unterarme vor zur Arbeitsfläche — eine Hand mit der Zange am Hotdog, die andere auf dem Wagen */
+  const arbeit = { lende: 0, brust: 5, nacken: 2, kopf: 8,
+    schulterL: { vor: 28, seit: 14 }, ellbogenL: 58, unterarmL: 10, handL: 5, fingerL: 0.3,
+    schulterR: { vor: 30, seit: 10 }, ellbogenR: 62, unterarmR: -10, handR: 5, fingerR: 0.6,
+    huefteL: { vor: 2, seit: 3, dreh: 0 }, knieL: 2, fussL: 0, huefteR: { vor: -2, seit: 3, dreh: 0 }, knieR: 2, fussR: 0 };
+  const m = B.mensch({ id: "nyc_verk", geschlecht: "m", pose: arbeit, blick: 25, frisur: "kurz", haarfarbe: "schwarz", haut: "mittel", laecheln: true,
     kleidung: { oberteil: { stueck: "tshirt", farbe: "weiss" }, schuerze: { stueck: "schuerze", farbe: "weiss" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh", farbe: "schwarz" }, kopf: { stueck: "kappe", farbe: "blau" } } }, 1.76 * K / Zv);
-  S.teil({ id: "verkaeufer", de: "der Verkäufer", syl: "ver-KÄU-fer", it: "il venditore", itSyl: "ven-di-TO-re", en: "vendor", x: vx, y: vy, kunst: knapp(m.svg),
+  /* Grillzange von der näheren Hand zum Hotdog */
+  const sw = K / WAGEN.Z, [WX0, WY0] = NP(WAGEN.X, WAGEN.Z), hd = [WX0 + 8 + 0.1 * sw - vx, WY0 - 0.95 * sw - 1.1 - vy];
+  const hn = [m.z.handL, m.z.handR].filter(Boolean).map((h) => [h.x * m.k, h.y * m.k]).sort((a, b) => Math.hypot(a[0] - hd[0], a[1] - hd[1]) - Math.hypot(b[0] - hd[0], b[1] - hd[1]))[0];
+  const zange = hn ? `<path d="M${pr(hn)} L${pr([hd[0] - 0.5, hd[1] - 0.2])} M${pr([hn[0], hn[1] + 0.3])} L${pr([hd[0] - 0.4, hd[1] + 0.3])}" stroke="#b9c1c7" stroke-width=".28" stroke-linecap="round"/>` : "";
+  S.teil({ id: "verkaeufer", de: "der Verkäufer", syl: "ver-KÄU-fer", it: "il venditore", itSyl: "ven-di-TO-re", en: "vendor", x: vx, y: vy, kunst: knapp(m.svg) + zange,
     tipp: "Der Verkäufer fragt: „With everything?“ — also mit Senf, Zwiebeln und Sauerkraut?" });
 }
 {
@@ -868,12 +882,12 @@ const WAGEN = { X: -4.8, Z: 18.75 };
   k += Q([P3(-0.95, -0.25, 0.46), P3(0.95, -0.25, 0.46), P3(0.95, 0.25, 0.46), P3(-0.95, 0.25, 0.46)], S.lg("sitz", [[0, "#d6a76b"], [1, "#b98a52"]]));
   for (const dz of [-0.08, 0.09]) k += `<path d="M${pr([P3(-0.95, dz, 0.46)[0] - bx, P3(-0.95, dz, 0.46)[1] - by])} L${pr([P3(0.95, dz, 0.46)[0] - bx, P3(0.95, dz, 0.46)[1] - by])}" stroke="#8f6538" stroke-width=".18"/>`;
   /* der Kaffeebecher „Anthora“ (blau, griechisches Muster, 12 cm) */
-  const [cx, cy] = P3(-0.45, 0, 0.46), ch = 0.12 * s, cw = 0.08 * s;
+  const [cx, cy] = P3(-0.8, 0, 0.46), ch = 0.12 * s, cw = 0.08 * s;
   k += `<path d="M${r(cx - bx - cw / 2)} ${r(cy - by - ch)} L${r(cx - bx + cw / 2)} ${r(cy - by - ch)} L${r(cx - bx + cw * 0.4)} ${r(cy - by)} L${r(cx - bx - cw * 0.4)} ${r(cy - by)} Z" fill="#f4f6f8"/>`;
   k += `<rect x="${r(cx - bx - cw * 0.48)}" y="${r(cy - by - ch * 0.82)}" width="${r(cw * 0.96)}" height="${r(ch * 0.55)}" fill="#2556a8"/><path d="M${r(cx - bx - cw * 0.4)} ${r(cy - by - ch * 0.45)} h.25 v-.25 h.25 v.25 h.25 v-.25 h.25 v.25" stroke="#f4f6f8" stroke-width=".07" fill="none"/>`;
   k += `<rect x="${r(cx - bx - cw * 0.55)}" y="${r(cy - by - ch - 0.25)}" width="${r(cw * 1.1)}" height=".28" rx=".1" fill="#e8ecef"/>`;
   /* der Bagel (11 cm) mit Frischkäse auf Wachspapier */
-  const [gx, gy] = P3(0.2, 0.02, 0.46), gw = 0.11 * s;
+  const [gx, gy] = P3(0.35, 0.02, 0.46), gw = 0.11 * s;
   k += `<path d="M${r(gx - bx - gw * 0.8)} ${r(gy - by + 0.2)} L${r(gx - bx + gw * 0.85)} ${r(gy - by + 0.2)} L${r(gx - bx + gw * 0.6)} ${r(gy - by - 0.4)} L${r(gx - bx - gw * 0.55)} ${r(gy - by - 0.4)} Z" fill="#f3efe4"/>`;
   k += `<ellipse cx="${r(gx - bx)}" cy="${r(gy - by - 0.5)}" rx="${r(gw / 2)}" ry="${r(gw * 0.2)}" fill="${S.rg("bagel", [[0, "#f0be70"], [0.7, "#c98238"], [1, "#9a5a22"]], 0.45, 0.35, 0.7)}"/>`;
   k += `<ellipse cx="${r(gx - bx)}" cy="${r(gy - by - 0.58)}" rx="${r(gw * 0.14)}" ry="${r(gw * 0.06)}" fill="#5e3a18"/><path d="M${r(gx - bx - gw * 0.48)} ${r(gy - by - 0.45)} Q${r(gx - bx)} ${r(gy - by - 0.2)} ${r(gx - bx + gw * 0.48)} ${r(gy - by - 0.45)}" stroke="#fbf6ea" stroke-width=".2" fill="none"/>`;
@@ -881,9 +895,9 @@ const WAGEN = { X: -4.8, Z: 18.75 };
     tipp: "Auf der langen Holzbank sitzt man mit Blick aufs Wasser.",
     zoom: { x: r(bx - 18), y: r(by - 16), w: 36, h: 24 },
     unter: [
-      { id: "bagel", de: "der Bagel", syl: "BA-gel", it: "il bagel", itSyl: "BA-gel", en: "bagel", x: gx, y: gy, kunst: flaeche(-gw * 0.85, -1.2, gw * 1.7, 1.6, 0.3),
+      { id: "bagel", de: "der Bagel", syl: "BA-gel", it: "il bagel", itSyl: "BA-gel", en: "bagel", x: gx, y: gy, kunst: flaeche(-2.4, -2.6, 4.8, 3.4, 0.3),
         tipp: "Der Bagel wird erst gekocht und dann gebacken. Mit Frischkäse ist er das typische Frühstück in New York." },
-      { id: "kaffeebecher", de: "der Kaffeebecher", syl: "KAF-fee-be-cher", it: "il bicchiere da caffè", itSyl: "bic-CHIE-re da caf-FÈ", en: "coffee cup", x: cx, y: cy, kunst: flaeche(-cw * 0.7, -ch - 0.4, cw * 1.4, ch + 0.5, 0.3),
+      { id: "kaffeebecher", de: "der Kaffeebecher", syl: "KAF-fee-be-cher", it: "il bicchiere da caffè", itSyl: "bic-CHIE-re da caf-FÈ", en: "coffee cup", x: cx, y: cy, kunst: flaeche(-2, -3.8, 4, 4.2, 0.3),
         tipp: "Der blau-weiße Pappbecher mit dem griechischen Muster ist ein Symbol von New York." },
     ] });
 }
@@ -918,7 +932,7 @@ const WAGEN = { X: -4.8, Z: 18.75 };
    3-D-Körper, schräg von vorn links und von oben gesehen
    ===================================================================== */
 {
-  const C = { X: 7.6, Z: 17.2 }, yaw = 22 * Math.PI / 180;
+  const C = { X: 7.5, Z: 16.5 }, yaw = 22 * Math.PI / 180;
   const fw = [-Math.cos(yaw), -Math.sin(yaw)];             /* vorwärts: nach links, leicht zu uns */
   const li = [-fw[1], fw[0]];                                 /* linke Wagenseite (Fahrer), uns zugewandt */
   const W = (u, v, h) => NP(C.X + u * fw[0] + v * li[0], C.Z + u * fw[1] + v * li[1], h);
@@ -938,17 +952,17 @@ const WAGEN = { X: -4.8, Z: 18.75 };
   k += rad(1.42, -0.86, true) + rad(-1.42, -0.86, true);
   /* Karosserie: Front, linke Seite, Motorhaube, Kofferraumdeckel, Kabine */
   if (sicht([1, 0])) {
-    k += poly([[2.45, -0.9, 0.3], [2.45, 0.9, 0.3], [2.45, 0.9, 0.82], [2.42, -0.9, 0.82]], S.lg("taxifront", [[0, "#f4bd17"], [1, "#c98f05"]]));
-    k += poly([[2.46, -0.62, 0.48], [2.46, 0.62, 0.48], [2.46, 0.62, 0.62], [2.46, -0.62, 0.62]], "#26292c");
-    for (const v of [-0.72, 0.72]) k += poly([[2.46, v - 0.16, 0.66], [2.46, v + 0.16, 0.66], [2.46, v + 0.16, 0.76], [2.46, v - 0.16, 0.76]], "#fdfbe8");
+    k += poly([[2.45, -0.9, 0.3], [2.45, 0.9, 0.3], [2.45, 0.9, 0.72], [2.42, -0.9, 0.72]], S.lg("taxifront", [[0, "#f4bd17"], [1, "#c98f05"]]));
+    k += poly([[2.46, -0.5, 0.42], [2.46, 0.5, 0.42], [2.46, 0.44, 0.54], [2.46, -0.44, 0.54]], "#26292c");
+    for (const v of [-0.66, 0.66]) k += poly([[2.46, v - 0.22 * Math.sign(v), 0.58], [2.46, v + 0.2 * Math.sign(v), 0.6], [2.45, v + 0.18 * Math.sign(v), 0.67], [2.45, v - 0.12 * Math.sign(v), 0.64]], "#fdfbe8");
     k += poly([[2.5, -0.92, 0.26], [2.5, 0.92, 0.26], [2.5, 0.92, 0.4], [2.5, -0.92, 0.4]], "#2a2b2c");
   }
-  const seite = [[2.45, 0.92, 0.3], [2.45, 0.92, 0.84], [2.2, 0.92, 0.95], [1.02, 0.92, 0.99], [-1.6, 0.92, 0.99], [-2.38, 0.92, 0.98], [-2.45, 0.92, 0.9], [-2.45, 0.92, 0.3]];
+  const seite = [[2.45, 0.92, 0.3], [2.48, 0.92, 0.7], [2.2, 0.92, 0.82], [1.02, 0.92, 0.99], [-1.6, 0.92, 0.99], [-2.38, 0.92, 0.98], [-2.45, 0.92, 0.9], [-2.45, 0.92, 0.3]];
   k += poly(seite, TAXIGELB);
   k += poly([[2.5, 0.94, 0.26], [-2.5, 0.94, 0.26], [-2.5, 0.94, 0.4], [2.5, 0.94, 0.4]], "#2a2b2c");
   /* Radläufe und linke Räder */
   for (const uc of [1.42, -1.42]) { const pts = []; for (let i = 0; i <= 10; i++) { const a = i / 10 * Math.PI; pts.push([uc + Math.cos(a) * 0.42, 0.93, 0.3 + Math.sin(a) * 0.42]); } k += poly(pts, "#2a2621"); k += rad(uc, 0.95, false); }
-  k += poly([[2.42, -0.9, 0.84], [2.42, 0.92, 0.84], [1.02, 0.86, 0.99], [1.02, -0.86, 0.99]], S.lg("haube", [[0, "#ffe37c"], [1, "#f2b812"]]));
+  k += poly([[2.42, -0.9, 0.73], [2.42, 0.92, 0.73], [1.02, 0.86, 0.99], [1.02, -0.86, 0.99]], S.lg("haube", [[0, "#ffe37c"], [1, "#f2b812"]]));
   k += poly([[-1.6, -0.86, 1.0], [-1.6, 0.86, 1.0], [-2.38, 0.9, 0.98], [-2.38, -0.9, 0.98]], "#f2bd1e");
   /* Kabine: linke Seitenfläche (Fenster), Windschutzscheibe, Dach */
   k += poly([[1.02, 0.86, 0.99], [-1.6, 0.86, 0.99], [-1.05, 0.72, 1.47], [0.25, 0.72, 1.47]], "#e7ad0d");
@@ -956,10 +970,10 @@ const WAGEN = { X: -4.8, Z: 18.75 };
   k += poly([[-0.33, 0.83, 1.02], [-1.52, 0.85, 1.02], [-1.02, 0.735, 1.42], [-0.3, 0.735, 1.42]], S.lg("tfenster", [[0, "#7b8f9e"], [0.5, "#2f3c47"], [1, "#1c252c"]]));
   /* der Fahrer (Kopf und Schulter hinter der getönten Scheibe) */
   const [dx, dy] = W(0.35, 0.5, 1.22);
-  k += `<ellipse cx="${r(dx - ox)}" cy="${r(dy - oy)}" rx="${r(0.1 * K / C.Z)}" ry="${r(0.12 * K / C.Z)}" fill="#15191d" opacity=".75"/><path d="M${P(0.6, 0.5, 1.05)} Q${P(0.35, 0.5, 1.16)} ${P(0.1, 0.5, 1.05)}" stroke="#15191d" stroke-width="${r(0.12 * K / C.Z)}" opacity=".7" fill="none"/>`;
+  k += `<ellipse cx="${r(dx - ox)}" cy="${r(dy - oy)}" rx="${r(0.1 * K / C.Z)}" ry="${r(0.12 * K / C.Z)}" fill="#8a6650" opacity=".9"/><path d="M${r(dx - ox - 0.1 * K / C.Z)} ${r(dy - oy - 0.02 * K / C.Z)} Q${r(dx - ox)} ${r(dy - oy - 0.2 * K / C.Z)} ${r(dx - ox + 0.1 * K / C.Z)} ${r(dy - oy - 0.02 * K / C.Z)} Z" fill="#1d1a18"/><path d="M${P(0.6, 0.5, 1.05)} Q${P(0.35, 0.5, 1.16)} ${P(0.1, 0.5, 1.05)}" stroke="#15191d" stroke-width="${r(0.12 * K / C.Z)}" opacity=".7" fill="none"/>`;
   k += poly([[1.02, 0.86, 0.99], [1.02, -0.86, 0.99], [0.25, -0.72, 1.47], [0.25, 0.72, 1.47]], S.lg("tscheibe", [[0, "#9db4c4"], [0.6, "#3c4c58"], [1, "#25313a"]]));
   k += poly([[0.9, 0.6, 1.06], [0.65, 0.5, 1.2], [0.5, 0.3, 1.28], [0.75, 0.42, 1.12]], "#fff", ` opacity=".25"`);
-  k += poly([[0.25, -0.72, 1.47], [0.25, 0.72, 1.47], [-1.05, 0.72, 1.47], [-1.05, -0.72, 1.47]], "#f7c62a");
+  k += poly([[0.25, -0.72, 1.44], [0.25, 0.72, 1.44], [-0.4, 0.72, 1.48], [-1.05, 0.72, 1.44], [-1.05, -0.72, 1.44], [-0.4, -0.72, 1.48]], "#f7c62a");
   /* Dachschild mit Lizenznummer */
   k += poly([[-0.15, -0.36, 1.48], [-0.15, 0.36, 1.48], [-0.15, 0.36, 1.66], [-0.15, -0.36, 1.66]], "#f4f2ea");
   k += poly([[-0.15, 0.36, 1.48], [-0.5, 0.36, 1.48], [-0.5, 0.36, 1.66], [-0.15, 0.36, 1.66]], "#e2dfd5");
@@ -973,10 +987,46 @@ const WAGEN = { X: -4.8, Z: 18.75 };
   /* Türfugen, Griffe, Spiegel, Glanzlinie */
   for (const u of [1.0, -0.3, -1.55]) k += `<path d="M${P(u, 0.93, 0.38)} L${P(u, 0.93, 0.98)}" stroke="#9b7506" stroke-width=".25"/>`;
   for (const u of [0.15, -1.1]) k += poly([[u, 0.935, 0.83], [u - 0.18, 0.935, 0.83], [u - 0.18, 0.935, 0.87], [u, 0.935, 0.87]], "#6b5206");
-  k += poly([[1.0, 0.86, 1.0], [0.85, 1.06, 1.0], [0.85, 1.06, 1.1], [1.0, 0.86, 1.1]], "#d8a20c");
+  k += poly([[1.0, 0.86, 0.98], [0.82, 1.12, 0.98], [0.82, 1.12, 1.13], [1.0, 0.86, 1.12]], "#d8a20c") + poly([[0.98, 0.9, 1.0], [0.84, 1.1, 1.0], [0.84, 1.1, 1.11], [0.98, 0.9, 1.1]], "#2b3238") + poly([[1.0, -0.86, 0.98], [0.82, -1.12, 0.98], [0.82, -1.12, 1.13], [1.0, -0.86, 1.12]], "#c99608");
   k += `<path d="M${P(2.3, 0.935, 0.9)} L${P(-2.35, 0.935, 0.92)}" stroke="#fff6c8" stroke-width=".45" opacity=".7"/>`;
   S.teil({ id: "taxi", de: "das Taxi", syl: "TA-xi", it: "il taxi", itSyl: "TA-xi", en: "taxi", x: ox, y: oy, kunst: k,
     tipp: "Die gelben Taxis (Yellow Cabs) sind ein Wahrzeichen von New York. Man winkt sie am Straßenrand heran." });
+}
+/* =====================================================================
+   VORNE (nicht antippbar): die unterste Stufe der Granite Prospect, auf
+   der wir stehen, schwarze Parklaternen, eine Citi-Bike-Station, Tauben
+   ===================================================================== */
+{
+  const rv = zufall(1883);
+  let v = "";
+  /* Granitstufe: grob gespaltene, warmgraue Blöcke (Stirnseite 0,45 m, Z = 14,5 m) */
+  { const yt = NP(0, 14.5, 0.45)[1], yb = 262; let x = -2;
+    while (x < 150) { const w = 9 + rv() * 9, c = ["#b3a998", "#a89e8c", "#bdb3a2", "#9f9584"][Math.floor(rv() * 4)], dy = rv() * 0.8;
+      v += `<path d="M${r(x)} ${r(yt + dy)} L${r(x + w * 0.4)} ${r(yt - 0.3 + rv() * 0.4)} L${r(x + w)} ${r(yt + rv() * 0.8)} L${r(x + w)} ${yb} L${r(x)} ${yb} Z" fill="${c}"/><path d="M${r(x + w)} ${r(yt)} V${yb}" stroke="#6f675b" stroke-width=".35"/>`;
+      v += `<path d="M${r(x)} ${r(yt + dy)} L${r(x + w * 0.4)} ${r(yt - 0.3)} L${r(x + w)} ${r(yt)}" stroke="#ddd5c6" stroke-width=".4" fill="none"/>`;
+      for (let i = 0; i < 3; i++) v += `<circle cx="${r(x + rv() * w)}" cy="${r(yt + 1.5 + rv() * 5)}" r="${r(0.3 + rv() * 0.5)}" fill="#7e7566" opacity=".5"/>`;
+      x += w; }
+    const sch = NP(0, 14.5, 0)[1]; v += `<path d="M150 ${r(yt + 0.5)} L156 ${r(sch)} L150 ${r(sch)} Z" fill="#8e8576"/>`; }
+  /* zwei schwarze Laternen des Brooklyn Bridge Park (4 m) an der Kaikante */
+  for (const X of [-13, 12.5]) { const [x0, y0] = NP(X, 30, 0), [, y1] = NP(X, 30, 4), w = K * 0.12 / 30;
+    v += `<path d="M${r(x0 - w)} ${r(y0)} L${r(x0 - w * 0.6)} ${r(y1)} L${r(x0 + w * 0.6)} ${r(y1)} L${r(x0 + w)} ${r(y0)} Z" fill="#1f2220"/><rect x="${r(x0 - w * 1.6)}" y="${r(y0 - 0.8)}" width="${r(w * 3.2)}" height=".8" fill="#1f2220"/>`;
+    v += `<path d="M${r(x0 - 1.2)} ${r(y1)} L${r(x0 - 0.8)} ${r(y1 - 2.4)} L${r(x0 + 0.8)} ${r(y1 - 2.4)} L${r(x0 + 1.2)} ${r(y1)} Z" fill="#eef0e6" stroke="#1f2220" stroke-width=".3"/><path d="M${r(x0 - 1.1)} ${r(y1 - 2.4)} L${r(x0)} ${r(y1 - 3.4)} L${r(x0 + 1.1)} ${r(y1 - 2.4)} Z" fill="#1f2220"/>`;
+    const [sx, sy] = NP(X + SCH.dx * 4, 30 + SCH.dz * 4, 0); v += `<path d="M${r(x0 - w)} ${r(y0)} L${r(sx - 0.2)} ${r(sy)} L${r(sx + 0.2)} ${r(sy)} L${r(x0 + w)} ${r(y0)} Z" fill="#1d2230" opacity=".25"/>`; }
+  /* Citi-Bike-Station: blaue Leihräder im Dock, Säule mit Bildschirm */
+  { const Z = 24, s = K / Z;
+    const [kx, ky] = NP(-12.6, Z, 0); v += `<rect x="${r(kx - 0.25 * s)}" y="${r(ky - 1.6 * s)}" width="${r(0.5 * s)}" height="${r(1.6 * s)}" rx=".5" fill="#1f5fa8"/><rect x="${r(kx - 0.17 * s)}" y="${r(ky - 1.35 * s)}" width="${r(0.34 * s)}" height="${r(0.28 * s)}" fill="#cfe3f2"/>`;
+    for (let i = 0; i < 5; i++) { const X = -11.9 + i * 0.75, [bx, by] = NP(X, Z, 0), rr = 0.33 * s, L = 0.55 * s;
+      v += `<rect x="${r(bx - 0.1 * s)}" y="${r(by - 0.45 * s)}" width="${r(0.2 * s)}" height="${r(0.45 * s)}" fill="#6d7378"/>`;
+      v += `<circle cx="${r(bx - L)}" cy="${r(by - rr)}" r="${r(rr)}" fill="none" stroke="#1d1f20" stroke-width=".9"/><circle cx="${r(bx + L)}" cy="${r(by - rr)}" r="${r(rr)}" fill="none" stroke="#1d1f20" stroke-width=".9"/>`;
+      v += `<path d="M${r(bx - L)} ${r(by - rr)} L${r(bx - 0.05 * s)} ${r(by - rr)} L${r(bx + 0.3 * s)} ${r(by - 0.85 * s)} L${r(bx - 0.35 * s)} ${r(by - 0.85 * s)} Z M${r(bx + 0.3 * s)} ${r(by - 0.85 * s)} L${r(bx + L)} ${r(by - rr)}" stroke="#2f73c0" stroke-width="1.1" fill="none"/>`;
+      v += `<rect x="${r(bx - 0.48 * s)}" y="${r(by - 0.98 * s)}" width="${r(0.26 * s)}" height="${r(0.08 * s)}" rx=".3" fill="#222"/><path d="M${r(bx + 0.24 * s)} ${r(by - 0.95 * s)} h${r(0.18 * s)}" stroke="#222" stroke-width=".9"/><rect x="${r(bx + 0.3 * s)}" y="${r(by - 0.9 * s)}" width="${r(0.22 * s)}" height="${r(0.14 * s)}" fill="#2f73c0"/>`; } }
+  /* Tauben auf dem Pflaster (≈ 30 cm) */
+  for (const [X, Z, d] of [[-1.3, 15.6, 1], [-0.6, 15.3, -1], [0.2, 15.8, 1], [0.9, 15.4, 1], [-0.1, 16.4, -1]]) { const [x, y] = NP(X, Z, 0), q = K * 0.1 / Z;
+    v += `<ellipse cx="${r(x)}" cy="${r(y + 0.3)}" rx="${r(1.6 * q)}" ry="${r(0.35 * q)}" fill="#1d2230" opacity=".3"/>`;
+    v += `<path d="M${r(x - 1.5 * q * d)} ${r(y - 0.9 * q)} Q${r(x - 0.2 * q * d)} ${r(y - 1.9 * q)} ${r(x + 1.1 * q * d)} ${r(y - 1.2 * q)} Q${r(x + 0.4 * q * d)} ${r(y - 0.2 * q)} ${r(x - 0.6 * q * d)} ${r(y - 0.3 * q)} L${r(x - 2.2 * q * d)} ${r(y - 0.6 * q)} Z" fill="#8a909a"/>`;
+    v += `<circle cx="${r(x + 1.25 * q * d)}" cy="${r(y - 1.75 * q)}" r="${r(0.42 * q)}" fill="#5e6470"/><path d="M${r(x + 0.9 * q * d)} ${r(y - 1.4 * q)} q${r(0.3 * q * d)} ${r(0.2 * q)} ${r(0.5 * q * d)} 0" stroke="#5f8f7a" stroke-width="${r(0.3 * q)}" fill="none"/>`;
+    v += `<path d="M${r(x + 1.6 * q * d)} ${r(y - 1.8 * q)} l${r(0.35 * q * d)} ${r(0.1 * q)}" stroke="#d9a05a" stroke-width="${r(0.15 * q)}"/><path d="M${r(x)} ${r(y - 0.2 * q)} v${r(0.25 * q)} M${r(x + 0.3 * q * d)} ${r(y - 0.2 * q)} v${r(0.25 * q)}" stroke="#c4605a" stroke-width="${r(0.12 * q)}"/>`; }
+  S.davor(v);
 }
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/new_york.js"));
 console.log(aus);
