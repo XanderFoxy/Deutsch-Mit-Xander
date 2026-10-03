@@ -300,7 +300,7 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
   S.teil({ id: "alcatraz", de: "die Insel Alcatraz", syl: "IN-sel AL-ca-traz", it: "l'isola di Alcatraz", itSyl: "I-so-la di AL-ca-traz", en: "Alcatraz Island", x: X, y: Y,
     kunst: `<g ${fern(1)} transform="scale(${r(s * 1000) / 1000})"><ellipse cx="0" cy="2" rx="200" ry="6" fill="#3b5b6e" opacity=".3"/>${k}</g>`,
     tipp: "Auf Alcatraz war bis 1963 ein berühmtes Gefängnis. Heute fahren Besucher mit dem Schiff hin.",
-    zoom: { x: r(X - 20), y: r(Y - 19), w: 39, h: 26 },
+    zoom: { x: r(X - 17), y: r(Y - 19), w: 39, h: 26 },
     unter: [
       { id: "leuchtturm", de: "der Leuchtturm", syl: "LEUCHT-turm", it: "il faro", itSyl: "FA-ro", en: "lighthouse", x: L(-76, -44)[0], y: L(-76, -44)[1], kunst: flaeche(-1.4, -9, 2.8, 9.2, 0.3),
         tipp: "Hier stand 1854 der erste Leuchtturm der Westküste; der heutige Turm ist von 1909." },
@@ -548,7 +548,7 @@ const SL = 1 / Math.tan(SONNE.el * Math.PI / 180), SE_ = Math.sin(SONNE.az * Mat
   /* Kreuzung (Lombard Street), Asphalt bis zum unteren Rand */
   s += vl(kappY([PN(-60, 8.1, 0), PN(-60, 10.7, 0), PN(90, 10.7, 0), PN(90, 8.1, 0)], 262), "#7c7975");
   s += vl(band(-13.5, -1.5, 10, 150, 40), S.lg("asphalt", [[0, "#5f5c59"], [1, "#8a8784"]]));
-  s += vl(band(-17, -13.5, 10.6, 150, 30), "#c9c2b6") + vl(band(-1.5, 2, 10.6, 150, 30), "#cfc9be");
+  s += vl(band(-17, -13.5, 10.6, 150, 30), "#c9c2b6") + vl(band(-1.5, 2.3, 10.6, 150, 30), "#cfc9be");
   /* Schatten der Westhäuser auf Gehweg und Rand der Fahrbahn (Sonne SSW) */
   { /* Schlagschatten der Westhäuser (Sonne 245°, 48°): fällt über Gehweg und die westliche Spur */
     const sp = [], fu = [];
@@ -795,7 +795,7 @@ const LOMB = {};
     for (let i = 0; i < (d < 40 ? 9 : d < 70 ? 6 : 4); i++) { const a = rnd() * Math.PI, rr = 1.45 * s * Math.sqrt(rnd()), c = rnd() < 0.7 ? fb : farbenH[Math.floor(rnd() * 6)]; g += `<circle cx="${r(x + Math.cos(a) * rr)}" cy="${r(y - 0.45 * s - Math.sin(a) * rr * 0.75)}" r="${r(s * (0.2 + rnd() * 0.1))}" fill="${c}"/>`; }
     return g; };
   /* Büsche außen an den Schenkeln (an den Treppen) — vor den Kehren gezeichnet, je nach Tiefe */
-  const aussen = [{ t: 15.5, s: busch(15, 0.8, 1.2) + busch(17.5, 3, 1) }]; for (let d = 20; d < 122; d += 7.2) { aussen.push({ t: d + 0.5, s: busch(d, -11.9, 0.9) }); aussen.push({ t: d + 0.5, s: busch(d + 3.6, 1.6, 0.9) }); }
+  const aussen = [{ t: 15.5, s: busch(15.5, -0.6, 0.8) + busch(17, 1.6, 0.75) + busch(19, -0.2, 0.8) }]; for (let d = 20; d < 122; d += 7.2) { aussen.push({ t: d + 0.5, s: busch(d, -11.9, 0.9) }); aussen.push({ t: d + 0.5, s: busch(d + 3.6, 1.6, 0.9) }); }
   const teile = [...stuecke.map((st) => ({ t: st.t, st })), ...aussen].sort((a, b) => b.t - a.t);
   for (const e of teile) {
     if (!e.st) { k += e.s; continue; }

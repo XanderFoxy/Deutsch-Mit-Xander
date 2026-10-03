@@ -623,7 +623,7 @@ function giraffe(T) {
   /* ---- Umrisse ---- */
   /* Rumpf + Hals: Widerrist deutlich höchster Rückenpunkt, Rücken fällt ~24° zur Kruppe, Hüfthöcker, Brust weit vor dem Vorderbein */
   const rumpf = [[40, -292], [62, -300], [80, -304], [92, -309], [106, -306], [140, -322], [180, -343], [214, -362], [234, -374], [262, -410], [300, -460], [328, -496], [346, -516],
-    [366, -486], [358, -470], [346, -452], [330, -422], [314, -386], [300, -344], [293, -312], [297, -286], [294, -258], [282, -236], [266, -220], [246, -210], [214, -203], [180, -201], [150, -205],
+    [360, -494], [356, -478], [346, -456], [330, -422], [314, -386], [300, -344], [293, -312], [297, -286], [294, -258], [282, -236], [266, -220], [246, -210], [214, -203], [180, -201], [150, -205],
     [126, -214], [110, -222], [94, -228], [66, -240], [46, -258], [38, -276]];
   /* Zellen: Rumpf groß, Hals mittel, Beine klein (nach unten kleiner), Kopf winzig */
   const halsSeite = (x, y) => 80 * (y + 365) - 80 * (x - 225) < 0;
@@ -690,7 +690,7 @@ function giraffe(T) {
   const maehne = aussen.concat(kamm.slice().reverse().map((p) => [p[0] + 0.5, p[1] + 1.5]));
   const mWurzel = kamm.map((p) => [p[0], p[1] + 1]);
   s += teil(maehne, T.lg("mae", [[0, "#6a3c1c"], [1, "#9a6438"]], 0, 0, 0.6, 0.6), {
-    oben: H.straehnen(kamm.map((p) => [p[0] + 1, p[1] + 1.5]), F ? 80 : 16, (t) => 3 + Math.sin(Math.min(1, t * 1.3) * Math.PI) * 10, (x, y) => -138 + (x - 280) * 0.02, [["#3a1c0a", 3, 0.6, 0.9], ["#9a6a3c", 2, 0.55, 0.85], ["#c89a68", 1, 0.5, 0.7]], { streu: 12, welle: 0.12, szene: 1, duenn: 0.7 }) });
+    oben: H.straehnen(kamm.map((p) => [p[0] + 1, p[1] + 1.5]), F ? 74 : 16, (t) => 3 + Math.sin(Math.min(1, t * 1.3) * Math.PI) * 10, (x, y) => -138 + (x - 280) * 0.02, [["#3a1c0a", 3, 0.6, 0.9], ["#9a6a3c", 2, 0.55, 0.85], ["#c89a68", 1, 0.5, 0.7]], { streu: 12, welle: 0.12, szene: 1, duenn: 0.7 }) });
   /* ---- Kopf: Kopfachse 24° nach unten; Ramsnase, stumpfes Maul mit überhängender Oberlippe, Kinn, Kaumuskel, Kehlgang ---- */
   const wa = 24 * Math.PI / 180, P0 = [350, -520];
   const K = (u, v) => [P0[0] + u * Math.cos(wa) - v * Math.sin(wa), P0[1] + u * Math.sin(wa) + v * Math.cos(wa)];

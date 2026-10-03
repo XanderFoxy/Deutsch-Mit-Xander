@@ -765,9 +765,9 @@ function braunbaer(T) {
     fellKante(T, [[164.6, -103], [164.6, -107.6], [167, -111.2], [170.4, -111.4], [172.4, -107.8]], 34, 0, -1.6, "#6a4a2c", 0.15, 0.65), { weich: 1.2 });
 
   /* ---- ferne Läufe: Körperton, kühler und 20 % dunkler; oben vom Rumpf verdeckt + Schlagschatten ---- */
-  s += teil(T, "bvbF", vbF, fellF, bueschel(T, vbF, 40, 96, 5, 0.4, ["#8a6a48", 0.35], ["#0a0603", 0.3]) + okk(-38, -24, "F"),
+  s += teil(T, "bvbF", vbF, fellF, fellMuster(T, "bB", 9.1, 30, 4.2, 0.3, ["#a0805a", 0.26], ["#0a0603", 0.26], 96, [98, -52, 135, 0]) + bueschel(T, vbF, 20, 96, 5, 0.4, ["#8a6a48", 0.35], ["#0a0603", 0.3]) + okk(-38, -24, "F"),
     kralleB(T, 126.6, -4.4, 4, 6.4, 1.8, "#9a8c76", "#4a3c2e", 0.6, T.fein !== false), { weich: 6 });
-  s += teil(T, "bhbF", hbF, fellF, bueschel(T, hbF, 40, 98, 5, 0.4, ["#8a6a48", 0.35], ["#0a0603", 0.3]) + okk(-38, -24, "F"),
+  s += teil(T, "bhbF", hbF, fellF, fellMuster(T, "bB", 9.1, 30, 4.2, 0.3, ["#a0805a", 0.26], ["#0a0603", 0.26], 96, [25, -50, 70, 0]) + bueschel(T, hbF, 20, 98, 5, 0.4, ["#8a6a48", 0.35], ["#0a0603", 0.3]) + okk(-38, -24, "F"),
     kralleB(T, 61.4, -2.6, 4, 3.4, 1.6, "#3e3428", "#2a221a", 0.6, T.fein !== false), { weich: 6 });
 
   /* ---- Rumpf ---- */
@@ -870,9 +870,9 @@ function eisbaer(T) {
     fellKante(T, [[184, -89.6], [184.4, -93.2], [186, -95.2], [188.2, -94.8]], 20, -0.2, -0.9, "#fff", 0.1, 0.75), { weich: 1.2 });
   /* ---- ferne Läufe: kühl blaugrau, nur 20–25 % dunkler, mit Fell ---- */
   const okk = (y0, y1, n, op) => `<rect x="0" y="-60" width="180" height="60" fill="${hoehenVerlauf(T, "eOkk" + n, y0, y1, [[y0, "#3a4658", op], [y1, "#3a4658", 0]])}"/>`;
-  s += teil(T, "evbF", vbF, fellF, bueschel(T, vbF, 40, 96, 5, 0.4, ["#eef2f4", 0.45], ["#5a6474", 0.25]) + okk(-40, -24, "F", 0.3),
+  s += teil(T, "evbF", vbF, fellF, fellMuster(T, "eB", 9.1, 30, 4, 0.32, ["#ffffff", 0.5], ["#8a98aa", 0.22], 96, [100, -52, 145, 0]) + bueschel(T, vbF, 20, 96, 5, 0.4, ["#eef2f4", 0.45], ["#5a6474", 0.25]) + okk(-40, -24, "F", 0.3),
     fellKante(T, [[112.6, 0], [138, 0]], 30, 0.4, 1.2, "#c4c6c2", 0.16, 0.6) + kralleB(T, 138.4, -3.2, 3, 3.2, 2.4, "#1d1814", "#1d1814", 0.8, T.fein !== false), { weich: 6 });
-  s += teil(T, "ehbF", hbF, fellF, bueschel(T, hbF, 40, 98, 5, 0.4, ["#eef2f4", 0.45], ["#5a6474", 0.25]) + okk(-40, -24, "F", 0.3),
+  s += teil(T, "ehbF", hbF, fellF, fellMuster(T, "eB", 9.1, 30, 4, 0.32, ["#ffffff", 0.5], ["#8a98aa", 0.22], 96, [30, -50, 75, 0]) + bueschel(T, hbF, 20, 98, 5, 0.4, ["#eef2f4", 0.45], ["#5a6474", 0.25]) + okk(-40, -24, "F", 0.3),
     fellKante(T, [[35.4, 0], [70, 0]], 30, 0.4, 1.2, "#c4c6c2", 0.16, 0.6) + kralleB(T, 70.4, -2.6, 3, 2.8, 2.2, "#1d1814", "#1d1814", 0.8, T.fein !== false), { weich: 6 });
 
   /* ---- Rumpf ---- */

@@ -876,8 +876,8 @@ function kobra(T) {
   /* Windungen als Ellipsenbögen am Boden (Aufsicht ≈ 20°): E1 innen, E2 außen; Spirale vom Hals nach außen */
   const E1 = [102, -33, 56, 14], E2 = [100, -30, 76, 24];
   const bog = (a0, a1, n, r0, r1, blend) => { const p = []; for (let i = 0; i <= n; i++) { const u = i / n, a = (a0 + (a1 - a0) * u) * Math.PI / 180, b = typeof blend === "function" ? blend(a0 + (a1 - a0) * u) : blend || 0, E = E1.map((v, k) => v + (E2[k] - v) * b); p.push([E[0] + E[2] * Math.cos(a), E[1] + E[3] * Math.sin(a), r0 + (r1 - r0) * u]); } return p; };
-  const P1 = bog(-55, -180, 12, 6.6, 6.8, 1), P2 = bog(-94, -180, 6, 6.2, 6.4), C = bog(182, -57, 19, 6.4, 6.6, (a) => (a < 0 ? Math.min(1, -a / 55) : 0));
-  const D = bog(182, 14, 17, 6.8, 6.8, 1).map((p, i, A) => { const u = i / (A.length - 1); p[2] = u < 0.8 ? 6.8 : 6.8 - (u - 0.8) / 0.2 * 6.2; return p; });
+  const P1 = bog(-55, -180, 12, 6.6, 6.8, 1), P2 = bog(-96, -180, 6, 6.2, 6.4), C = bog(180, -55, 19, 6.4, 6.6, (a) => (a < 0 ? Math.min(1, -a / 55) : 0));
+  const D = bog(180, 14, 17, 6.8, 6.8, 1).map((p, i, A) => { const u = i / (A.length - 1); p[2] = u < 0.8 ? 6.8 : 6.8 - (u - 0.8) / 0.2 * 6.2; return p; });
   /* Windungen und Hals in EINEM Lichtfilter (keine Nähte an den Übergängen): äußere hintere (dunkler, am weitesten weg),
      innere hintere, Hals, innere vordere (Bogen rechts hinauf in die äußere), äußere vordere + Schwanz; tiefe Berührungsfugen */
   let w = "";
@@ -886,7 +886,7 @@ function kobra(T) {
   w += schlangenRohr(T, P2, opt({ innen: tief(0.1), farbe: haut, bauch: null, bauchSeite: -1, licht: 1, lt: [0.05, 0.85], binden: [[0.5, 0.05]] })).svg + "";
   /* Hals: steigt aus der Mitte (vom inneren Rückenbogen) auf, unter dem Schild am dünnsten, nach unten ≈ 30 % dicker; Kehlseite (hell, mit
      zwei dunklen Kehlbändern) dreht sich rechts zum Betrachter; Fuß weich in die Windung ausgeblendet */
-  const hals = [[102, -48.5, 6.1], [101.2, -60, 5.9], [103.6, -72, 5.5], [109, -86, 5.1], [114, -99, 4.7], [116.6, -110, 4.5], [117.4, -122, 4.4]];
+  const hals = [[100.6, -46.4, 6.1], [101, -60, 5.9], [103.6, -72, 5.5], [109, -86, 5.1], [114, -99, 4.7], [116.6, -110, 4.5], [117.4, -122, 4.4]];
   { const mk = T.id("hfm");
     T.def(`<linearGradient id="${mk}g" gradientUnits="userSpaceOnUse" x1="0" y1="-39" x2="0" y2="-43"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${mk}" maskUnits="userSpaceOnUse" x="80" y="-130" width="60" height="90"><rect x="80" y="-130" width="60" height="90" fill="url(#${mk}g)"/></mask>`);
     const kehle = (Rr) => `<path d="${poly(Rr.band(0.62, 1.2, 0.72, 0.77, 3))}${poly(Rr.band(0.62, 1.2, 0.84, 0.88, 3))}" fill="#2a1a0c" opacity=".55" filter="${weich(T, "kb", 0.5)}"/>`;

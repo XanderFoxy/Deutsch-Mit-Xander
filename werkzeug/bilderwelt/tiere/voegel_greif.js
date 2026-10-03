@@ -560,7 +560,7 @@ function greif(T, P) {
   const hoseFU = lauf ? [[-7, -37], [-2.6, -40], [-1.6, -31], [-2.6, -26.4], [-5, -25.2], [-8, -27], [-8.8, -31]] : [[-7, -37], [-2.6, -40], [-1.6, -30], [-3.2, -22], [-4.8, -17.6], [-7.6, -17.4], [-8.6, -24], [-8.8, -31]];
   s += vg(T, "hoseF", 2, rot(teil(T, "hoseF", G(hoseFU), mische(P.hoseFarbe, "#000", 0.35), federFeld(T, hoseFU, { typen: hose, abst: 5, L: 7, W: 2.4, winkel: () => 95, streu: 16 }) + fl(G(hoseFU), "#1a1008", 0.35))));
   const usdU = [[-12.8, -38.4], [-6, -36], [-4.6, -31], [-7, -27.6], [-11, -27.4], [-14.4, -31.6]];
-  s += vg(T, "usd", 2, rot(teil(T, "usd", G(usdU), P.usd || P.hoseFarbe, federFeld(T, usdU, { typen: hose, abst: 4.2, L: 6, W: 2.4, winkel: () => 118, streu: 16 }) + (P.usdMuster ? P.usdMuster(T, usdU) : ""))));
+  s += vg(T, "usd", 2, rot(teil(T, "usd", G(usdU), P.usd || P.hoseFarbe, federFeld(T, usdU, { typen: P.usdF ? mk("u", P.usdF, "flaum", { weich: 1 }) : hose, abst: 4.2, L: 6, W: 2.4, winkel: () => 118, streu: 16 }) + (P.usdMuster ? P.usdMuster(T, usdU) : ""))));
 
   /* ---- Rumpf ---- */
   const rumpf = P.rumpf || [[-7.8, -78.6], [-10.6, -72.4], [-12.4, -65.6], [-13.4, -57.6], [-13.4, -49], [-12, -41], [-9.4, -35.4], [-5.6, -32.4], [-0.6, -31.6], [5, -33.6], [9.6, -38], [12.8, -44], [14.8, -50.4], [15.4, -56.6], [14.6, -62.4], [12.6, -67.2], [10.6, -70.6], [9.6, -73.6], [6, -77.6], [0, -80]];
@@ -739,7 +739,118 @@ const STEINADLER = {
 };
 const steinadler = (T) => greif(T, STEINADLER);
 
+/* =====================================================================
+   WEISSKOPFSEEADLER
+   ===================================================================== */
+/* RECHERCHE Weißkopfseeadler (Haliaeetus leucocephalus) – aus Fachwissen (Wappenvogel der USA; im Deutschen „der
+   Seeadler“ als Wort, gemeint ist der bekannteste Seeadler mit weißem Kopf): Länge 70–102 cm, Spannweite 180–230 cm,
+   Gewicht 3–6,3 kg. Altvogel: Kopf, Hals und Schwanz (samt Ober- und Unterschwanzdecken) reinweiß, Körper und Flügel
+   schokoladenbraun, Federn mit etwas hellerem Saum. Schnabel sehr groß und hoch (First 5–7 cm), ganz gelb, ebenso
+   Wachshaut und Mundwinkel; Iris blassgelb (Jungvögel braun), kräftiger Überaugenwulst. Lauf nur oben befiedert, unten
+   nackt und gelb (Unterschied zu den Echten Adlern!), Zehen gelb mit Spicula, Krallen schwarz, Hinterkralle bis 5 cm.
+   Schwanz keilförmig gerundet, im Sitzen ragt er etwas über die Flügelspitzen hinaus. Sitzt gern auf Treibholz und
+   abgestorbenen Bäumen am Wasser. */
+const SEEADLER = {
+  k: 1.05,
+  sitz: (T) => vg(T, "holz", 2, stumpf(T, "holz", { x0: -12.6, x1: 15.4, oben: -16, holz: "#b8b0a2", dunkel: "#5a5248" })), sitzBox: [[-14, 0], [17.4, 0]], fuesse: [-11, -2, 8, 14],
+  brust: [["#3a2416", "#4c3222"], ["#2e1e12", "#40291a"]], hose: [["#3c2618", "#523624"], ["#30200f", "#44301e"]], hoseFarbe: "#3a2618",
+  usd: "#ece8e0", usdF: [["#e8e4dc", "#ffffff"], ["#dedad2", "#f8f6f0"]],
+  nacken: [["#f0eee8", "#ffffff"], ["#e4e2dc", "#fbfaf6"], ["#d8d6ce", "#f4f2ec"]],
+  decke: [["#3e2a1a", "#5e4430"], ["#36241a", "#523c2a"]], mittel: [["#432e1e", "#6a4e36"], ["#3a281a", "#5e4430"]], schulter: [["#36241a", "#4e3828"]],
+  rumpfFarbe: "#3a2416", deckFarbe: "#3e2a1a", lauf: true,
+  quH: [[0, "#4a3c30"], [1, "#120c08"]], quA: [[0, "#54443a"], [1, "#160f0b"]],
+  schwanz: { quer: [[0, "#ffffff"], [1, "#c8c4bc"]], schaft: "#d8d4cc", saum: ["#ffffff", 0.5, 0.2], lang: 1.08 },
+  zehen: { hell: "#ffe27a", mittel: "#eab83a", dunkel: "#9a6a10", schilde: 6 },
+  kG: [[0, "#ffffff"], [0.45, "#f2f0ea"], [1, "#b4b0a8"]],
+  kopfStriche: [["#9a968e", 1, 0.05, 0.35], ["#ffffff", 0.8, 0.045, 0.6]], borsten: "#8a8680",
+  wulstFarbe: [[0, "#ffffff"], [0.45, "#e6e4dc"], [1, "#9a968c"]], wulstStriche: [["#8a867e", 1, 0.05, 0.4], ["#ffffff", 0.8, 0.045, 0.6]],
+  auge: { iris: "#f4e08a", iris2: "#b8983a", pupille: 0.4, lid: "#4a4238" },
+  schnabel: { k: 1.2, horn: [[0, "#ffe680"], [0.4, "#f4c838"], [0.8, "#dca020"], [1, "#a8700e"]], hornU: [[0, "#f6d860"], [0.5, "#e8b42c"], [1, "#a8700e"]], wachs: [[0, "#fff090"], [0.5, "#f2c840"], [1, "#b8860e"]], borsten: "#8a8680" },
+};
+const seeadler = (T) => greif(T, SEEADLER);
+
+/* =====================================================================
+   WANDERFALKE
+   ===================================================================== */
+/* RECHERCHE Wanderfalke (Falco peregrinus) – aus Fachwissen: Länge 34–50 cm (Männchen ca. 40, Weibchen ca. 48),
+   Spannweite 80–120 cm, Gewicht 0,6–1,3 kg. Kompakt, breite Brust, spitze Flügel, im Sitzen reichen die
+   Handschwingen fast bis zur Schwanzspitze. Altvogel: Oberseite schiefer-blaugrau mit dunkleren Querbinden, Bürzel
+   heller grau; Kopfplatte, Nacken und Wange schwarz („Kapuze“) mit breitem schwarzem Bartstreif senkrecht unter dem
+   Auge; Kehle und Wangenfleck weiß; Brust weiß bis lachsfarben-rahm mit kleinen Tropfenflecken, Bauch, Flanken und
+   Hosen dicht schwarz quergebändert; Schwanz grau mit 6–8 dunklen Binden und hellem Endsaum. Auge sehr groß, dunkel-
+   braun, nackter gelber Augenring; Schnabel kurz, stark gekrümmt, blaugrau mit dunkler Spitze und „Falkenzahn“
+   (Hornzahn am Oberschnabel), rundes Nasenloch mit Knochenzapfen; Wachshaut gelb. Lauf nackt, gelb, Zehen lang. */
+const fBinde = `<path d="M.36-.6h.11v1.2h-.11zM.66-.6h.09v1.2h-.09z" fill="#1a1e24" opacity=".5"/><path d="M.15 0L.95 0" stroke="#1a1e24" stroke-width=".06" opacity=".5"/>`;
+const binden = (dicht, farbe, abst, lang, dick, op, sz = 0.35) => (T, poly, w) => muster(T, poly, w, { abst, lang, dick, farbe, op, bogen: 0.3, dichte: dicht, sz });
+const FALKE = {
+  k: 0.5, kopfK: 1.1,
+  sitz: (T) => felsGranit(T, { hell: "#dcd6ca", mittel: "#b8b0a2", dunkel: "#7e7668", flechten: [[-10, -12.6, 1.1, "#c8c49c"], [-17, -7.4, 0.9, "#d0cca8"], [0.6, -6, 1.4, "#e0a848"], [12, -5, 0.8, "#c8c49c"]] }), sitzBox: FELS_BOX, fuesse: FELS_FUESSE,
+  brust: [["#efe6d6", "#fbf6ee"], ["#e4d8c4", "#f4ecde"]], hose: [["#e6dcca", "#f6f0e4"], ["#dccfba", "#efe6d6"]], hoseFarbe: "#e2d6c2", usd: "#ebe2d2",
+  rumpfFarbe: "#e6dac6", brustStriche: [["#9a8a72", 1, 0.05, 0.3], ["#ffffff", 0.8, 0.045, 0.55]], hoseStriche: [["#9a8a72", 1, 0.05, 0.3], ["#ffffff", 0.8, 0.045, 0.5]],
+  brustMuster: (T, poly, w) => binden((x, y) => (y > -55 ? 1 : 0), "#22242a", 1.9, 2.4, 0.55, 0.85, 0.5)(T, poly, w) +
+    muster(T, poly, w, { art: "tropfen", abst: 2.4, lang: 0.9, dick: 0.55, farbe: "#2a2a30", op: 0.75, dichte: (x, y) => (y <= -55 && y > -66 ? 0.8 : 0), sz: 0.4 }),
+  hoseMuster: binden(null, "#22242a", 1.7, 2.2, 0.5, 0.85, 0.5),
+  usdMuster: (T, poly) => binden(null, "#2a2c32", 1.8, 2, 0.4, 0.7)(T, poly, 110),
+  nacken: [["#2a2e34", "#40464e"], ["#22262c", "#383e46"]],
+  decke: [["#4e5864", "#8a94a0", fBinde], ["#444e5a", "#7a8490", fBinde]], mittel: [["#56606c", "#949ea8", fBinde], ["#4a5460", "#848e9a", fBinde]], schulter: [["#3e4650", "#6e7884", fBinde]],
+  deckFarbe: "#4a525c", schaft: "#1e2228",
+  quH: [[0, "#4a4e56"], [1, "#15171b"]], quA: [[0, "#5e6672"], [1, "#22262c"]], armBinden: [5, "#16181c", 0.4, 0.55, 0.25, 0.92], schirmBinden: [4, "#16181c", 0.4, 0.6, 0.25, 0.9], handSaum: ["#c8c4bc", 0.4, 0.15], remSchaft: "#2a2e34",
+  schwanz: { quer: [[0, "#7e8894"], [1, "#3a4048"]], binden: [7, "#16181e", 0.55, 0.65, 0.1, 0.85], saum: ["#efe8da", 0.8, 0.28], endbinde: "#16181e", schaft: "#2a2e34" },
+  lauf: true, zehen: { hell: "#ffe468", mittel: "#f0bc2a", dunkel: "#9a6a08", schilde: 7 }, krallenK: 0.9,
+  kG: [[0, "#3c424a"], [0.5, "#2a2e34"], [1, "#16181c"]], kopfStriche: [["#0e1014", 1, 0.05, 0.5], ["#7a828c", 0.6, 0.045, 0.4]], borsten: "#0a0a0c",
+  /* weißer Wangenfleck und Kehle, darüber der breite schwarze Bartstreif */
+  kopfMuster: (T) => weich(T, G([[0.6, -76.6], [4.6, -77.2], [9.6, -76.8], [10.6, -73.8], [9.8, -70.4], [4, -69.2], [-0.6, -70.6], [-1.2, -73.6]]), "#f4eee2", 0.97, 0.3, true) +
+    weich(T, G([[4.8, -79], [9, -78.6], [9.4, -75.6], [9, -72.6], [7.8, -70], [6, -70.2], [5.6, -73.4], [4.6, -76.4]]), "#16181c", 0.97, 0.3, true) +
+    weich(T, G([[-2, -79], [3.4, -80], [4.4, -77], [1.4, -76.4], [-1.8, -75]]), "#16181c", 0.9, 0.4, true) +
+    (T.fein ? striche(T, [[0.6, -76.2], [4.4, -76.6], [4.6, -71], [0, -71]], 30, 120, 0.9, [["#ffffff", 1, 0.05, 0.6], ["#9a948a", 0.6, 0.045, 0.35]], { streu: 16 }) : ""),
+  wangeStriche: [["#0e1014", 1, 0.045, 0.4], ["#6a727c", 0.5, 0.04, 0.3]],
+  wulst: 0.35, wulstFarbe: [[0, "#4a5058"], [0.45, "#2a2e34"], [1, "#101216"]], wulstStriche: [["#0a0a0c", 1, 0.05, 0.5], ["#8a929c", 0.6, 0.045, 0.4]],
+  augeK: 1.15, auge: { iris: "#3a2414", iris2: "#100804", pupille: 0.52, ring: ["#f2c840", 0.36], lid: "#c89a20", hoehle: 0.3 },
+  schnabel: { k: 0.82, zahn: true, nasenHoecker: true, horn: [[0, "#a4b0c0"], [0.4, "#6e7e94"], [0.75, "#2a3240"], [1, "#0c0e12"]], hornU: [[0, "#e8c858"], [0.3, "#8e9aaa"], [1, "#2a3038"]], wachs: [[0, "#ffe46a"], [0.5, "#f2c434"], [1, "#b8880e"]] },
+};
+const falke = (T) => greif(T, FALKE);
+
+/* =====================================================================
+   MÄUSEBUSSARD
+   ===================================================================== */
+/* RECHERCHE Mäusebussard (Buteo buteo) – aus Fachwissen: Länge 46–58 cm, Spannweite 110–140 cm, Gewicht 0,5–1,2 kg.
+   Sehr variabel (hell bis fast schwarzbraun); häufigster Typ: Oberseite dunkelbraun mit helleren Federsäumen, Kopf
+   rund, braun mit heller, gestrichelter Kehle; Brust oben braun gestrichelt, darunter ein helles, rahmweißes Brustband
+   („U“), Bauch und Flanken braun quergebändert, Hosen braun gebändert. Schwanz graubraun mit 10–12 feinen dunklen
+   Binden und breiterer dunkler Endbinde. Schnabel klein, dunkelgrau mit hellerer Basis, Wachshaut gelb; Auge dunkel-
+   braun (Altvogel), schwacher Überaugenwulst; Lauf nackt, gelb (nur oben befiedert), Zehen gelb, Krallen schwarz.
+   Sitzt gern aufrecht und rundlich auf Pfählen und Baumstümpfen am Feldrand. */
+const BUSSARD = {
+  k: 0.6, kopfK: 1.08,
+  sitz: (T) => vg(T, "stumpf", 2, stumpf(T, "stumpf", { x0: -11.6, x1: 14.2, oben: -16, holz: "#b09470", rinde: "#5a4634", dunkel: "#2a1e14", moos: [[-11.6, -6], [-8, -8.6], [-5, -4], [-6, 0], [-11.8, 0]] })), sitzBox: [[-13, 0], [16.2, 0]], fuesse: [-10, -2, 7, 13],
+  brust: [["#6a4a2e", "#8a6a48"], ["#5a3e26", "#7a5a3c"]], hose: [["#6e5034", "#9a7a56"], ["#5e422a", "#86684a"]], hoseFarbe: "#6a4c30", usd: "#d8c8aa", usdF: [["#d0c0a0", "#efe4cc"]],
+  rumpfFarbe: "#6a4a2e",
+  brustMuster: (T, poly, w) => weich(T, G([[3, -55], [9, -57], [15.6, -55], [14.6, -45], [9, -43], [3, -46]]), "#ebdfc6", 0.95, 1, true) +
+    muster(T, poly, w, { art: "tropfen", abst: 2, lang: 2, dick: 0.7, farbe: "#5a3c22", op: 0.7, dichte: (x, y) => (y > -56 && y < -45 ? 0.35 : 0), sz: 0.4 }) +
+    binden((x, y) => (y >= -45 ? 0.95 : 0), "#5a3c24", 2.2, 2.8, 0.9, 0.8, 0.5)(T, poly, w) +
+    weich(T, G([[6, -70], [10.4, -71.4], [12.4, -66], [9, -64.6], [6, -66]]), "#e4d6ba", 0.8, 0.6, true),
+  hoseMuster: binden(null, "#3e2a18", 2.4, 2.6, 0.8, 0.6, 0.4),
+  nacken: [["#6a4a2e", "#9a7652", goldM(0.12, 0.5)], ["#5a3e26", "#8a6a46", goldM(0.14, 0.55)]],
+  decke: [["#5a3e26", "#9a7a52"], ["#4e3622", "#8a6a46"]], mittel: [["#5e4228", "#b08a5c"], ["#54392a", "#a07e54"]], schulter: [["#4a3220", "#7a5a3a"]],
+  deckFarbe: "#5a3e26",
+  quH: [[0, "#4a3a2c"], [1, "#140e0a"]], quA: [[0, "#6a5848"], [1, "#2a2018"]], armBinden: [6, "#1e1610", 0.35, 0.45, 0.2, 0.85], schirmBinden: [4, "#2a1e14", 0.3, 0.5, 0.2, 0.85],
+  schwanz: { quer: [[0, "#a0907a"], [1, "#5e4e3e"]], binden: [10, "#3a2a1e", 0.5, 0.38, 0.08, 0.8], saum: ["#e4d8c4", 0.6, 0.2], endbinde: "#2a1e16" },
+  lauf: true, zehen: { hell: "#fadc6a", mittel: "#e6b030", dunkel: "#946414", schilde: 7 }, krallenK: 0.85,
+  kG: [[0, "#9a7854"], [0.45, "#6a4a30"], [1, "#3a2818"]], kopfStriche: [["#2a1a0c", 1, 0.05, 0.5], ["#c8a87c", 0.7, 0.045, 0.45]],
+  kopfMuster: (T) => weich(T, G([[3, -74.6], [8.6, -75.2], [10.2, -72.4], [7, -70.4], [2.6, -71]]), "#dcc8a4", 0.85, 0.5, true) +
+    (T.fein ? striche(T, [[3, -74.4], [8.6, -75], [9.6, -72], [3, -71.2]], 24, 100, 0.9, [["#5a3c20", 1, 0.06, 0.6]], { streu: 10 }) : ""),
+  wulst: 0.55, auge: { iris: "#5a3418", iris2: "#24120a", pupille: 0.5 },
+  schnabel: { k: 0.78, horn: [[0, "#8a8e96"], [0.4, "#4e525a"], [0.75, "#1e2024"], [1, "#0a0a0c"]], hornU: [[0, "#e0c060"], [0.3, "#8a8c90"], [1, "#2a2c30"]], wachs: [[0, "#fadc6a"], [0.5, "#e6b030"], [1, "#a8780e"]] },
+};
+const bussard = (T) => greif(T, BUSSARD);
+
 module.exports = [
   { id: "steinadler", de: "der Adler", syl: "AD-ler", it: "l'aquila", itSyl: "A-qui-la", en: "golden eagle",
     gruppe: "Greifvögel und Eulen", lebensraum: "Gebirge", laenge: 0.5, hoehe: 0.85, zeichne: steinadler },
+  { id: "seeadler", de: "der Seeadler", syl: "SEE-ad-ler", it: "l'aquila di mare testabianca", itSyl: "A-qui-la di MA-re te-sta-BIAN-ca", en: "bald eagle",
+    gruppe: "Greifvögel und Eulen", lebensraum: "Küste und Seen", laenge: 0.55, hoehe: 0.89, zeichne: seeadler },
+  { id: "falke", de: "der Falke", syl: "FAL-ke", it: "il falco pellegrino", itSyl: "FAL-co pel-le-GRI-no", en: "peregrine falcon",
+    gruppe: "Greifvögel und Eulen", lebensraum: "Felsen und Städte", laenge: 0.25, hoehe: 0.43, zeichne: falke },
+  { id: "bussard", de: "der Bussard", syl: "BUS-sard", it: "la poiana", itSyl: "po-IA-na", en: "common buzzard",
+    gruppe: "Greifvögel und Eulen", lebensraum: "Feld und Waldrand", laenge: 0.3, hoehe: 0.52, zeichne: bussard },
 ];

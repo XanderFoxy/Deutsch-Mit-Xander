@@ -824,7 +824,7 @@ function buckelwal(T) {
   }
   const PL = (z) => z.map((q) => "M" + q.map((p) => f(p[0]) + " " + f(p[1])).join(" ")).join("");
   k += (F ? L(furchen, "#2d3238", 2.4, 0.32) : `<path d="${PL(furchen)}" fill="none" stroke="#2d3238" stroke-width="3" stroke-opacity=".3"/>`);
-  if (F) k += L(furchen.filter((z, i) => i % 3 === 0).map((z) => z.map((p) => [p[0], p[1] + 2.6])), "#ffffff", 2.8, 0.32) + L(furchen.filter((z, i) => i % 3).map((z) => z.map((p) => [p[0], p[1] + 2.4])), "#ffffff", 1.6, 0.26);
+  if (F) k += L(furchen.map((z, i) => z.map((p) => [p[0], p[1] + 2.4 + (i % 3 === 0 ? 0.3 : 0)])), "#ffffff", 2.2, 0.3);
   /* Licht von oben: Himmelslicht, EIN weicher Kernschatten, Reflexlicht am Bauch */
   k += weichF(R.band(20, 1398, -0.05, 0.1), "#9fb0bd", 0.16, 10);
   k += weichF(R.band(70, 1390, 0.55, 0.8), "#0d151d", 0.25, 18);

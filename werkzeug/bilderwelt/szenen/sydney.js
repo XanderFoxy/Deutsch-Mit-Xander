@@ -890,8 +890,11 @@ let deckeKunst = "";
   S.def(`<path id="${S.id("deckep")}" d="${d}"/><clipPath id="${S.id("decke")}"><use href="#${S.id("deckep")}"/></clipPath>`);
   k += `<use href="#${S.id("deckep")}" fill="#b8302c"/>`;
   k += `<g clip-path="url(#${S.id("decke")})">`;
-  for (let i = -6; i <= 6; i++) { const x0 = i * 0.12 * s, x1 = i * 0.143 * s; k += `<path d="M${r(x0)} ${r(pts[0][1])} L${r(x1)} ${r(pts[2][1])}" stroke="${i % 3 ? "#1f2f5a" : "#e9d9a8"}" stroke-width="${i % 3 ? 2.4 : 0.6}" opacity="${i % 3 ? 0.55 : 0.8}"/>`; }
-  for (let j = 0; j < 6; j++) { const y = pts[0][1] + (pts[2][1] - pts[0][1]) * (j / 5.5); k += `<path d="M${r(-0.9 * s)} ${r(y)} L${r(0.9 * s)} ${r(y)}" stroke="${j % 2 ? "#1f2f5a" : "#e9d9a8"}" stroke-width="${j % 2 ? 2 : 0.5}" opacity="${j % 2 ? 0.5 : 0.75}"/>`; }
+  /* Schottenmuster: dunkelblaue breite und cremefarbene schmale Streifen, perspektivisch zum Fluchtpunkt */
+  let nv = "", cv = "", nh = "", ch = "";
+  for (let i = -6; i <= 6; i++) { const t = `M${r(i * 0.12 * s)} ${r(pts[0][1])}L${r(i * 0.143 * s)} ${r(pts[2][1])}`; if (i % 3) nv += t; else cv += t; }
+  for (let j = 0; j < 6; j++) { const y = pts[0][1] + (pts[2][1] - pts[0][1]) * (j / 5.5), t = `M${r(-0.9 * s)} ${r(y)}H${r(0.9 * s)}`; if (j % 2) nh += t; else ch += t; }
+  k += `<path d="${nv}" stroke="#1f2f5a" stroke-width="2.4" opacity=".55"/><path d="${nh}" stroke="#1f2f5a" stroke-width="2" opacity=".5"/><path d="${cv}${ch}" stroke="#e9d9a8" stroke-width=".55" opacity=".78"/>`;
   /* Falten und Sonnenlicht von rechts */
   k += `<path d="M${r(-0.5 * s)} ${r(pts[0][1] + 2)} q6 3 14 1 M${r(0.2 * s)} ${r(pts[2][1] - 3)} q8 -2 16 0" stroke="#7a1d1b" stroke-width=".6" fill="none" opacity=".4"/>`;
   k += `<rect x="0" y="${r(pts[0][1])}" width="${r(0.9 * s)}" height="${r(pts[2][1] - pts[0][1])}" fill="#ffd9a0" opacity=".12"/>`;
@@ -908,7 +911,7 @@ let deckeKunst = "";
   let k = `<path d="M${g(-15)} 0 L${g(-11)} ${g(-6.4)} L${g(-17)} ${g(-7.4)} L${g(-21)} ${g(-1)} Z" fill="#1a1a1a" opacity=".16" filter="url(#bw_weich)"/>`;
   k += `<path d="M${g(-15)} 0 L${g(-11)} ${g(-6.4)} L${g(12)} ${g(-7)} L${g(16)} ${g(-0.6)} L${g(3)} ${g(1.6)} Z" fill="#fbfbf6" stroke="#d9d9d0" stroke-width=".3"/>`;
   k += `<path d="M${g(-15)} 0 L${g(-9)} ${g(-1.6)} L${g(3)} ${g(1.6)} Z" fill="#ecece4"/>`;
-  for (let i = 0; i < 14; i++) { const x = -8 + rnd() * 10, y = -4.6 + rnd() * 3.4, a = -40 + rnd() * 80; k += `<rect x="${g(x)}" y="${g(y)}" width="${g(4.4)}" height="${g(0.9)}" rx="${g(0.3)}" fill="${rnd() < 0.5 ? "#f2c45a" : "#e6ad3c"}" transform="rotate(${r(a)} ${g(x + 2.2)} ${g(y + 0.45)})"/>`; }
+  for (let i = 0; i < 9; i++) { const x = -8 + rnd() * 10, y = -4.6 + rnd() * 3.4, a = -40 + rnd() * 80; k += `<rect x="${g(x)}" y="${g(y)}" width="${g(4.4)}" height="${g(0.9)}" rx="${g(0.3)}" fill="${rnd() < 0.5 ? "#f2c45a" : "#e6ad3c"}" transform="rotate(${r(a)} ${g(x + 2.2)} ${g(y + 0.45)})"/>`; }
   k += `<path d="M${g(1)} ${g(-2.4)} Q${g(4)} ${g(-6.6)} ${g(10)} ${g(-5)} Q${g(13)} ${g(-3.8)} ${g(11)} ${g(-1.6)} Q${g(6)} ${g(-0.4)} ${g(1)} ${g(-2.4)} Z" fill="${S.rg("teig", [[0, "#f4c56c"], [0.7, "#d99436"], [1, "#b8712a"]], 0.45, 0.35, 0.7)}"/>`;
   k += `<path d="M${g(4)} ${g(-4.4)}h.1M${g(6.4)} ${g(-3.2)}h.1M${g(8.6)} ${g(-4.6)}h.1M${g(10)} ${g(-2.8)}h.1" stroke="#fbe2a4" stroke-width=".7" stroke-linecap="round"/>`;
   k += `<path d="M${g(-11)} ${g(-2.2)} Q${g(-9)} ${g(-5)} ${g(-6.6)} ${g(-2.6)} Z" fill="#f6e04a" stroke="#e2c330" stroke-width=".3"/>`;
@@ -957,13 +960,13 @@ let deckeKunst = "";
     const halb = (t) => t < 0.1 ? 2.3 * Math.sqrt(t / 0.1) : t < 0.45 ? 2.3 - (t - 0.1) * 0.6 : t < 0.75 ? 2.1 + (t - 0.45) * 3.3 : 3.1 * Math.sqrt(Math.max(0, 1 - Math.pow((t - 0.75) / 0.25, 2)));
     const N = 12, li = [], re = [];
     for (let i = 0; i <= N; i++) { const t = i / N, u = -8.5 + 17 * t; li.push(T(u, -halb(t))); re.push(T(u, halb(t))); }
-    const um = `M${li.map((q) => q.join(" ")).join(" L")} L${re.reverse().map((q) => q.join(" ")).join(" L")} Z`;
-    let g = `<path d="${um}" fill="#1a1d10" opacity=".25" transform="translate(-1.2 .9)" filter="url(#bw_weich)"/>`;
-    g += `<path d="${um}" fill="${oben ? "#d9a514" : "#1f3f78"}" transform="translate(0 .8)"/>`;
-    g += `<path d="${um}" fill="${oben ? "#f6c51a" : "#2f5aa0"}"/>`;
+    const id = S.id("sohle" + (oben ? 1 : 2)), um = `href="#${id}"`;
+    S.def(`<path id="${id}" d="M${li.map((q) => q.join(" ")).join(" L")} L${re.reverse().map((q) => q.join(" ")).join(" L")} Z"/>`);
+    let g = `<use ${um} fill="#1a1d10" opacity=".25" transform="translate(-1.2 .9)" filter="url(#bw_weich)"/>`;
+    g += `<use ${um} fill="${oben ? "#d9a514" : "#1f3f78"}" transform="translate(0 .8)"/>`;
+    g += `<use ${um} fill="${oben ? "#f6c51a" : "#2f5aa0"}"/>`;
     if (oben) {
-      const inn = um;   // Fußbett: etwas kleiner
-      g += `<path d="${inn}" fill="#2f6fb6" transform="translate(${r(ox * 0.12)} ${r(oy * 0.12)}) scale(.88)"/>`;
+      g += `<use ${um} fill="#2f6fb6" transform="translate(${r(ox * 0.12)} ${r(oy * 0.12)}) scale(.88)"/>`;
       const steg = T(5.2, 0), l = T(-0.6, -2.3), rr = T(-0.6, 2.3);
       g += `<path d="M${l.join(" ")} Q${r((l[0] + steg[0]) / 2)} ${r(steg[1] - 3)} ${steg.join(" ")} Q${r((rr[0] + steg[0]) / 2)} ${r(steg[1] - 2.4)} ${rr.join(" ")}" stroke="#1d2f55" stroke-width=".9" fill="none" stroke-linecap="round"/>`;
       g += `<circle cx="${steg[0]}" cy="${steg[1]}" r=".45" fill="#1d2f55"/>`;
@@ -1024,9 +1027,58 @@ S.teil({ id: "picknickdecke", de: "die Picknickdecke", syl: "PICK-nick-de-cke", 
     tipp: "Der Molukkenibis (Australischer Weißer Ibis) holt sich gern Reste aus dem Picknick – darum heißt er in Sydney „Bin Chicken“." });
 }
 
-/* Kleiner Ausgabe: SVG-Attribute mit einfachen Anführungszeichen (spart im JSON die Rückstriche) */
+/* Kleinere Ausgabe (gleiches Bild): Pfaddaten werden je Segment absolut oder relativ geschrieben – was
+   kürzer ist –, ohne überflüssige Trennzeichen; SVG-Attribute mit einfachen Anführungszeichen (spart im
+   JSON die Rückstriche). */
+const kurzPfad = (d) => {
+  const tok = d.match(/[MmLlHhVvCcSsQqTtAaZz]|[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?/g) || [];
+  const N = { M: 2, L: 2, H: 1, V: 1, C: 6, S: 4, Q: 4, T: 2, A: 7, Z: 0 };
+  const zahl = (v) => { let t = String(Math.round(v * 1000) / 1000); if (t === "-0") t = "0"; return t.replace(/^(-?)0\./, "$1."); };
+  let out = "", letzter = "", cx = 0, cy = 0, sx = 0, sy = 0, i = 0, cmd = "";
+  const schreibe = (c, zahlen) => {
+    let t = c === letzter && c !== "M" && c !== "m" ? "" : c;
+    for (const z of zahlen) { const v = zahl(z); if (t && !/[A-Za-z]$/.test(t) && !(v[0] === "-" || (v[0] === "." && /\.\d*$/.test(t.split(/[^\d.]/).pop())))) t += " "; t += v; }
+    if (t && t[0] !== c && out && /[\d.]$/.test(out) && !(t[0] === "-" || (t[0] === "." && /\.\d*$/.test(out.split(/[^\d.]/).pop())))) t = " " + t;
+    out += t; letzter = c === "M" ? "L" : c === "m" ? "l" : c;
+  };
+  while (i < tok.length) {
+    if (/[A-Za-z]/.test(tok[i])) cmd = tok[i++];
+    const C = cmd.toUpperCase(), rel = cmd !== C, n = N[C];
+    if (C === "Z") { out += "z"; letzter = "z"; cx = sx; cy = sy; continue; }
+    const a = tok.slice(i, i + n).map(Number); i += n;
+    if (a.length < n || a.some(isNaN)) break;
+    /* absolute Zielwerte */
+    const abs = a.slice();
+    if (C === "H") { if (rel) abs[0] += cx; } else if (C === "V") { if (rel) abs[0] += cy; }
+    else if (C === "A") { if (rel) { abs[5] += cx; abs[6] += cy; } }
+    else if (rel) for (let j = 0; j < n; j += 2) { abs[j] += cx; abs[j + 1] += cy; }
+    let ex, ey;
+    if (C === "H") { ex = abs[0]; ey = cy; } else if (C === "V") { ex = cx; ey = abs[0]; } else { ex = abs[n - 2]; ey = abs[n - 1]; }
+    const R = (v, b) => Math.round((v - b) * 1000) / 1000;
+    let A1, A2;
+    if (C === "M") { A1 = ["M", [ex, ey]]; A2 = ["m", [R(ex, cx), R(ey, cy)]]; if (!out) A2 = A1; }
+    else if (C === "A") { A1 = ["A", abs]; A2 = ["a", [...abs.slice(0, 5), R(ex, cx), R(ey, cy)]]; }
+    else if (C === "H" || C === "V" || C === "L") {
+      if (Math.abs(ey - cy) < 1e-9) { A1 = ["H", [ex]]; A2 = ["h", [R(ex, cx)]]; }
+      else if (Math.abs(ex - cx) < 1e-9) { A1 = ["V", [ey]]; A2 = ["v", [R(ey, cy)]]; }
+      else { A1 = ["L", [ex, ey]]; A2 = ["l", [R(ex, cx), R(ey, cy)]]; }
+    } else { A1 = [C, abs]; A2 = [C.toLowerCase(), abs.map((v, j) => R(v, j % 2 ? cy : cx))]; }
+    const len = (x) => x[1].map(zahl).join(" ").length + (x[0] === letzter ? 0 : 1);
+    const w = len(A2) < len(A1) ? A2 : A1;
+    schreibe(w[0], w[1]);
+    /* gerenderte Position nachführen (keine Rundungsdrift) */
+    if (w[0] === w[0].toLowerCase()) { if (w[0] === "h") cx += w[1][0]; else if (w[0] === "v") cy += w[1][0]; else { cx += w[1][w[1].length - 2]; cy += w[1][w[1].length - 1]; } }
+    else { if (w[0] === "H") cx = w[1][0]; else if (w[0] === "V") cy = w[1][0]; else { cx = w[1][w[1].length - 2]; cy = w[1][w[1].length - 1]; } }
+    if (C === "M") { sx = cx; sy = cy; }
+    if (C === "M") cmd = rel ? "l" : "L";
+  }
+  return out;
+};
 {
-  const q = (t) => { if (t.includes("'")) throw new Error("Apostroph im SVG: " + t.slice(t.indexOf("'") - 40, t.indexOf("'") + 10)); return t.replace(/"/g, "'"); };
+  const q = (t) => {
+    if (t.includes("'")) throw new Error("Apostroph im SVG: " + t.slice(t.indexOf("'") - 40, t.indexOf("'") + 10));
+    return (process.env.ROH ? t : t.replace(/ d="([^"]*)"/g, (m, d) => ` d="${kurzPfad(d)}"`)).replace(/"/g, "'");
+  };
   S.defs = S.defs.map(q); S.kulisse = S.kulisse.map(q);
   for (const t of S.teile) { t.kunst = q(t.kunst); for (const u of t.unter || []) u.kunst = q(u.kunst); }
 }

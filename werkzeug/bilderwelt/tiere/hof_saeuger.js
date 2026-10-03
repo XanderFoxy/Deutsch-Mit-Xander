@@ -1620,18 +1620,18 @@ function ziege(T) {
      Sitzbeinhöcker; darunter Hinterbacke, Kniekehle, Unterschenkel nach vorn eingezogen, Fersenbeinhöcker; Euter zwischen den
      Hinterbeinen (nahes Bein davor); Bauch tief und gerundet, Flanke aufgezogen; Bugspitze vor dem Bein; Hals mit Kehle */
   const euterUnten = [[30, -33.8], [33.4, -32.4], [37, -32.2], [40.6, -33.6], [43.2, -36.6], [44.8, -40.6], [46.6, -44]];
-  const keule = [[13.4, -75.2], [12.8, -71.4], [13.2, -67], [14.8, -62], [17, -56], [19, -49.4], [20.4, -43], [20.8, -38], [20.6, -34.6]].concat(Z_H.h.slice(6));
+  const keule = [[14, -75.4], [12.8, -72.4], [12.6, -68.6], [13.4, -64.6], [14.8, -62], [17, -56], [19, -49.4], [20.4, -43], [20.8, -38], [20.6, -34.6]].concat(Z_H.h.slice(6));
   const rumpf = keule.concat(Z_H.v.slice(0, 12), euterUnten,
     [[50, -45.4], [54, -44.2], [60, -42.8], [66, -42], [72, -42.2], [75.6, -43.2]], Z_V.h, Z_V.v,
-    [[91, -45.6], [94.4, -48.4], [96.8, -52.4], [98, -57], [98.2, -61.6], [99, -67.4], [100.4, -73.4], [102.4, -79.4], [104.4, -85], [106.4, -90.4], [107.6, -94.4],
-      [108, -98.6], [105, -102.6], [101.4, -101.6], [96.4, -97.6], [91, -92.4], [86, -87.6], [81.4, -83.8], [78, -82.2], [72, -80.8], [64, -80], [56, -80.2],
+    [[91, -45.6], [94.4, -48.4], [96.8, -52.4], [98, -57], [98, -61.6], [98.2, -67], [98.8, -73], [99.8, -79], [101, -85], [102.2, -90.4], [103, -94.6],
+      [103.4, -99], [100, -104.2], [97, -102.6], [93, -98.4], [89, -93.4], [85.4, -88.6], [82, -84.6], [78.6, -82.4], [72, -80.8], [64, -80], [56, -80.2],
       [48, -80.8], [42, -81.8], [37, -83], [33, -82.8], [27, -80.6], [20.4, -77.8], [15.6, -76]]);
   const wuchs = richtung([[12, 92], [30, 100], [36, 165], [74, 166], [82, 100], [98, 125]]);
   const euter = [[20, -56], [32, -50], [42, -47], [46.6, -44]].concat(euterUnten.slice().reverse(), [[26, -38], [20, -44]]);
   const hinterbein = keule.slice(3).concat(Z_H.v, [[39, -48], [32, -55], [16, -62]]);
   const zHinten = [[0, -86], [38, -86], [42, -60], [30, -30], [10, -30]];
   const zRumpf = [[38, -86], [78, -86], [78, -46], [40, -46], [42, -60]];
-  const zVorn = [[78, -86], [110, -110], [100, -86], [94, -50], [78, -46]];
+  const zVorn = [[78, -86], [104, -110], [104, -86], [94, -50], [78, -46]];
   /* BDE-Zeichnung: dunkler Bauch nur als schmaler Saum (6–7 cm) mit unregelmäßiger, schräger Grenze; Vorderbeine dunkel ab
      Ellbogen, Hinterbeine ab Mitte Unterschenkel; Übergang weich (keine Haarfransen auf der Farbgrenze) */
   const bauchDunkel = `<path d="M30 -37C34 -40 38 -43.4 43 -46.6C47 -48.6 50 -47.6 54 -48.8C58 -50 61 -48.6 65 -49.6C69 -50.6 72 -49.2 76 -49.4C80 -49.6 84 -48 88 -49L92 -44L90 -30L74 -27L74 2L92 2L92 -26L36 -26L36 -30C32 -36 26 -40 22 -40C18 -40 14 -38 12 -36L10 2L40 2L40 -26Z" fill="${schwarz}" opacity=".88"/>`;
@@ -1650,19 +1650,19 @@ function ziege(T) {
     form(hinterbein, fell, "", 0.1) + fellZone(T, dH, hinterbein, 92) + strich(Z_H.v.slice(9), "#3a2414", 0.5, 0.3) +
     weich(T, bauchDunkel, 1.6) +
     /* Aalstrich: Widerrist/Lende breit, Hals schmal, zum Schwanz auslaufend; 0,5 cm innerhalb der Kontur, Unterkante weich */
-    weich(T, form([[104.6, -101.8], [100.6, -100.6], [95.6, -96.4], [90.4, -91.4], [85.6, -86.8], [81.4, -83.2], [74, -81.2], [64, -80.6], [54, -80.8], [44, -81.8],
+    weich(T, form([[99.6, -103.4], [96.6, -101.8], [92.6, -97.6], [88.6, -92.6], [85, -87.8], [81.4, -83.4], [74, -81.2], [64, -80.6], [54, -80.8], [44, -81.8],
       [37, -83.2], [32, -83], [26, -80.8], [20, -78], [22, -77.4], [27, -79.4], [33, -81.2], [38, -81.2], [46, -79.6], [56, -78.4], [66, -78.4], [75, -79.6],
-      [82.6, -82], [87.4, -86.4], [92, -91], [96.4, -95.4], [101, -98.8]], schwarz, ` opacity=".8"`, 0.2), 0.4) +
+      [82.6, -82.2], [86.4, -86.6], [90, -91.4], [93.6, -96], [97.4, -100.2]], schwarz, ` opacity=".8"`, 0.2), 0.4) +
     /* Läufe: Zylinderlicht, Gelenke, Sehne; Rumpfschatten auf den Beinansätzen */
     [Z_HCX, Z_VCX].map((cx) => F.licht(cx - 1.4, -16, 0.7, 5, 0.35) + F.rinne(cx - 0.2, -18, cx - 0.2, -11, 0.35, 0.4)).join("") +
     F.licht(Z_HCX - 3.4, -28.4, 0.6, 0.9, 0.4) + F.licht(Z_VCX - 2.6, -21.6, 0.6, 0.9, 0.35) + F.kante(Z_HCX - 1.6, -37, Z_HCX - 2.8, -30, 0.45, 0.4);
   s += vol(T, "rumpf", 4, stueck(T, rumpf, fell, innen, { licht: 1.1, dunkel: 0.5, hell: 0.5, hellFarbe: "#ffe2b8", q: T.fein ? 0.1 : 0.5 }), { dunkel: 0.45, hell: 0.2, licht: "#ffd8a0" });
   const rk = T._clip;
   /* Silhouette mit Haarspitzen gebrochen: Rückenkamm (leicht aufgestellt), Bauch, Keule („Hosen“), Kehle */
-  s += saum2(T, [[15.6, -76], [27, -80.6], [37, -83], [48, -80.8], [64, -80], [78, -82.2], [86, -87.6], [96.4, -97.6], [101.4, -101.6]], 80, wuchs, 2, schwarz, 0.06, 0.7, { ab: 0.15, streuung: 18 });
+  s += saum2(T, [[15.6, -76], [27, -80.6], [37, -83], [48, -80.8], [64, -80], [78.6, -82.4], [85.4, -88.6], [93, -98.4], [97, -102.6]], 80, wuchs, 2, schwarz, 0.06, 0.7, { ab: 0.15, streuung: 18 });
   s += saum2(T, [[50, -45.4], [54, -44.2], [60, -42.8], [66, -42], [72, -42.2]], 24, 100, 2.2, schwarz, 0.06, 0.7, { ab: 0.2, streuung: 24 });
   s += saum2(T, keule.slice(1, 7), 24, 115, 2.2, "#5a3a20", 0.06, 0.65, { ab: 0.2 });
-  s += saum2(T, [[98.2, -61.6], [99, -67.4], [100.4, -73.4], [102.4, -79.4], [104.4, -85]], 18, 160, 1.6, "#8a5428", 0.05, 0.6, { ab: 0.2 });
+  s += saum2(T, [[98, -61.6], [98.2, -67], [98.8, -73], [99.8, -79], [101, -85]], 18, 160, 1.6, "#8a5428", 0.05, 0.6, { ab: 0.2 });
   s += klZ(Z_HCX, "#3a332e") + klZ(Z_VCX, "#3a332e");
   /* Zitzen: zwei Kegel, leicht nach vorn-unten; ferne versetzt, dunkler; Glanzkante */
   const zitze = (x, y, f, k) => stueck(T, dreh([[-1.1, 0], [1.1, 0], [0.8, 2.8], [0.5, 4], [-0.5, 4], [-0.8, 2.8]], x, y, -12), f,
@@ -1675,7 +1675,7 @@ function ziege(T) {
     saum2(T, [[20.6, -77.6], [18.4, -77.6], [16.2, -79.2], [14.8, -81.6], [14.2, -84.2]], 26, -170, 1.4, "#6a4224", 0.05, 0.8, { ab: 0.3, streuung: 40 });
   s += imRumpf(rk, F.schatten(19, -76.4, 3, 1.6, 0.45, -20));
   /* Kopf: gerades Profil, Stirnwölbung; 55° geneigt, 24 cm; Kieferwinkel unter dem Ohr, Kehlgang, Kinn */
-  const G = [105, -102.6], W = 55, K = (pts) => dreh(pts, G[0], G[1], W), P = (x, y) => K([[x, y]])[0];
+  const G = [100, -104], W = 55, K = (pts) => dreh(pts, G[0], G[1], W), P = (x, y) => K([[x, y]])[0];
   const kopf = K([[-1, -2.4], [4, -3.9], [9, -3.6], [15, -2.8], [20, -1.6], [23, 0.2], [24.4, 2.6], [24.4, 5], [23.6, 6.4], [22.6, 7], [22.2, 7.8], [22.4, 8.6],
     [21, 9.8], [18, 9.8], [14.6, 9.8], [10.6, 10.8], [6.8, 12.4], [3.4, 12.6], [0.6, 10.6], [-1.4, 4.4]]);
   s += imRumpf(rk, F.schatten(...P(2, 12), 4, 3, 0.55, W) + F.schatten(...P(-2.4, 5), 2.4, 5, 0.4, W));
