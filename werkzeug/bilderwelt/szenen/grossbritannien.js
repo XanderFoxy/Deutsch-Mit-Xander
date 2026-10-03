@@ -48,6 +48,8 @@ const B = require("../bau");
 const S = neueSzene({ id: "grossbritannien", titel: "Großbritannien", emoji: "🇬🇧", thema: "Länder", kuerzel: "b25a", fassung: 852 });
 /* Verläufe nur einmal anlegen, auch wenn sie in Schleifen gebraucht werden */
 { const lg = S.lg, rg = S.rg, schon = {}; S.lg = (n, ...a) => schon["l" + n] || (schon["l" + n] = lg(n, ...a)); S.rg = (n, ...a) => schon["r" + n] || (schon["r" + n] = rg(n, ...a)); }
+/* Wortmarke: Teile, die in Bildkoordinaten gezeichnet sind, bekommen ihren Ankerpunkt in die Mitte */
+{ const teil = S.teil; S.teil = (t) => { if (t.anker) { const [ax, ay] = t.anker; t.kunst = `<g transform="translate(${B.r(t.x - ax)} ${B.r(t.y - ay)})">${t.kunst}</g>`; t.x = ax; t.y = ay; delete t.anker; } return teil(t); }; }
 const rnd = zufall(1859);
 const r = B.r;
 const HOR = 110;
@@ -194,7 +196,7 @@ S.hinten(`<circle cx="60" cy="20" r="70" fill="${S.rg("licht", [[0, "#fff6dc", 0
   }
   /* Dunst über dem Fuß (hinter dem Platz) */
   k += `<rect x="-110" y="-6" width="216" height="6" fill="${S.lg("fussdunst", [[0, "#d7dde2", 0], [1, "#d7dde2", 0.55]])}"/>`;
-  S.teil({ id: "schloss", de: "das Schloss", syl: "SCHLOSS", it: "il castello", itSyl: "ca-STEL-lo", en: "castle", x: X, y: Y, kunst: k,
+  S.teil({ anker: [250, 96], id: "schloss", de: "das Schloss", syl: "SCHLOSS", it: "il castello", itSyl: "ca-STEL-lo", en: "castle", x: X, y: Y, kunst: k,
     tipp: "Der Palace of Westminster ist ein Königsschloss. Heute tagt hier das britische Parlament." });
 }
 
@@ -561,7 +563,7 @@ const kioskUnter = [];
   /* Laterne an der Wand */
   k += `<path d="M28 -66 L34 -66" stroke="#111" stroke-width=".6"/><path d="M31 -66 L29.4 -64 L29.8 -59 L32.2 -59 L32.6 -64 Z" fill="#f6dc8a" stroke="#111" stroke-width=".4"/>`;
   k += `<rect x="-28" y="-1.6" width="60" height="1.6" fill="#0b1510"/>`;
-  S.teil({ id: "pub", de: "das Pub", syl: "PUB", it: "il pub", itSyl: "PUB", en: "pub", x: 28, y: Y, steht: true, kunst: k,
+  S.teil({ anker: [28, 104], id: "pub", de: "das Pub", syl: "PUB", it: "il pub", itSyl: "PUB", en: "pub", x: 28, y: Y, steht: true, kunst: k,
     tipp: "Im Pub trinkt man Tee, Bier oder Limonade und isst Fish and Chips." });
 }
 
@@ -662,7 +664,7 @@ const PLATTE = TISCH_Y - 0.75 * TU;
   k += `<path d="M${r(cx - 10)} ${r(cy - 2)} Q${r(cx - 6)} ${r(cy - 6.4)} ${r(cx)} ${r(cy - 7)}" stroke="#fff" stroke-width=".7" opacity=".25" fill="none"/>`;
   k += `<line x1="${r(cx)}" y1="${r(cy - 7.4)}" x2="${r(cx)}" y2="${r(cy - 9)}" stroke="#2a2a2a" stroke-width=".6"/>`;
   for (let i = 0; i < 5; i++) k += `<circle cx="${r(cx - 12 + i * 6)}" cy="${r(cy + 4.6 + (i % 2) * 1.2)}" r=".35" fill="#cfe0ee" opacity=".8"/>`;
-  S.teil({ oben: true, id: "regenschirm", de: "der Regenschirm", syl: "RE-gen-schirm", it: "l'ombrello", itSyl: "om-BREL-lo", en: "umbrella", x: X, y: Y, kunst: k,
+  S.teil({ anker: [149, 146], oben: true, id: "regenschirm", de: "der Regenschirm", syl: "RE-gen-schirm", it: "l'ombrello", itSyl: "om-BREL-lo", en: "umbrella", x: X, y: Y, kunst: k,
     tipp: "In London hat man immer einen Regenschirm dabei." });
 }
 

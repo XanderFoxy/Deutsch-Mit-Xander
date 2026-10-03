@@ -39,6 +39,8 @@ const B = require("../bau");
 const S = neueSzene({ id: "griechenland", titel: "Griechenland", emoji: "🇬🇷", thema: "Länder", kuerzel: "b25b", fassung: 852 });
 /* Verläufe nur einmal anlegen, auch wenn sie in Schleifen gebraucht werden */
 { const lg = S.lg, rg = S.rg, schon = {}; S.lg = (n, ...a) => schon["l" + n] || (schon["l" + n] = lg(n, ...a)); S.rg = (n, ...a) => schon["r" + n] || (schon["r" + n] = rg(n, ...a)); }
+/* Wortmarke: Teile, die in Bildkoordinaten gezeichnet sind, bekommen ihren Ankerpunkt in die Mitte */
+{ const teil = S.teil; S.teil = (t) => { if (t.anker) { const [ax, ay] = t.anker; t.kunst = `<g transform="translate(${B.r(t.x - ax)} ${B.r(t.y - ay)})">${t.kunst}</g>`; t.x = ax; t.y = ay; delete t.anker; } return teil(t); }; }
 const rnd = zufall(1580);
 const r = B.r;
 const HOR = 104, F = 253, AUGE = 1.6;
@@ -132,7 +134,7 @@ S.hinten(`<circle cx="40" cy="14" r="60" fill="${S.rg("sonne", [[0, "#fffbe6", 0
   for (let i = 0; i < 70; i++) { const y = 2 + rnd() * 34, w = 2 + rnd() * (3 + y * 0.25); k += `<rect x="${r(rnd() * 230)}" y="${r(y)}" width="${r(w)}" height="${r(0.2 + y * 0.012)}" rx=".2" fill="#e8fbff" opacity="${r(0.25 + rnd() * 0.4)}"/>`; }
   /* Sonnenglitzern */
   k += `<ellipse cx="80" cy="6" rx="40" ry="2.4" fill="#fff" opacity=".12"/>`;
-  S.teil({ id: "meer", de: "das Meer", syl: "MEER", it: "il mare", itSyl: "MA-re", en: "sea", x: 0, y: HOR, kunst: k,
+  S.teil({ anker: [120, 124], id: "meer", de: "das Meer", syl: "MEER", it: "il mare", itSyl: "MA-re", en: "sea", x: 0, y: HOR, kunst: k,
     tipp: "Das Mittelmeer ist hier im Sommer etwa 25 Grad warm und ganz klar." });
 }
 
@@ -206,7 +208,7 @@ const akroUnter = [];
   akroUnter.push({ id: "burgmauer", de: "die Burgmauer", syl: "BURG-mau-er", it: "le mura del castello", itSyl: "MU-ra del ca-STEL-lo", en: "castle wall", x: X - 49, y: Y - 92, kunst: flaeche(-23, -28, 30, 28),
     tipp: "Die Ritter des Johanniterordens bauten im Mittelalter eine Burg um die alte Akropolis." });
   akroUnter.push({ id: "felsen", de: "der Felsen", syl: "FEL-sen", it: "la roccia", itSyl: "ROC-cia", en: "rock", x: X + 40, y: Y - 40, kunst: flaeche(-24, -36, 52, 36) });
-  S.teil({ id: "akropolis", de: "die Akropolis", syl: "A-KRO-po-lis", it: "l'Acropoli", itSyl: "a-CRO-po-li", en: "Acropolis", x: X, y: Y, kunst: k,
+  S.teil({ anker: [220, 62], id: "akropolis", de: "die Akropolis", syl: "A-KRO-po-lis", it: "l'Acropoli", itSyl: "a-CRO-po-li", en: "Acropolis", x: X, y: Y, kunst: k,
     zoom: { x: 124, y: 2, w: 198, h: 132 }, unter: akroUnter,
     tipp: "Akropolis heißt „Oberstadt“: die Burg auf dem Hügel. Die berühmteste steht in Athen, diese hier in Lindos auf Rhodos." });
 }
@@ -242,7 +244,7 @@ const akroUnter = [];
   }
   for (let i = 0; i < 16; i++) k += `<circle cx="${r(-70 + rnd() * 165)}" cy="${r(-26 + rnd() * 40)}" r="${r(1 + rnd() * 1.2)}" fill="${rnd() < 0.6 ? "#d23a8a" : "#e05aa0"}" opacity=".9"/>`;
   k += `<rect x="-80" y="-34" width="184" height="58" fill="${S.lg("dorflicht", [[0, "#fff", 0], [1, "#e9d9bd", 0.25]])}"/>`;
-  S.teil({ id: "dorf", de: "das Dorf", syl: "DORF", it: "il villaggio", itSyl: "vil-LAG-gio", en: "village", x: 218, y: 126, kunst: k,
+  S.teil({ anker: [262, 102], id: "dorf", de: "das Dorf", syl: "DORF", it: "il villaggio", itSyl: "vil-LAG-gio", en: "village", x: 218, y: 126, kunst: k,
     tipp: "Die Häuser werden jedes Jahr frisch gekalkt. Das Weiß hält sie im Sommer kühl." });
 }
 
@@ -295,7 +297,7 @@ const akroUnter = [];
   k += `<rect x="${fx - 6}" y="${r(fy + 13)}" width="12" height="1.2" fill="#f2efe7"/>`;
   /* Sockel und Schatten der Mauerkante */
   k += `<rect x="-2" y="-3" width="62" height="3" fill="#d6d0c4"/><rect x="56" y="${r(-4 * u)}" width="4" height="${r(4 * u)}" fill="${KALK_S}" opacity=".6"/>`;
-  S.teil({ id: "haus", de: "das weiße Haus", syl: "WEI-ße HAUS", it: "la casa bianca", itSyl: "CA-sa BIAN-ca", en: "white house", x: 0, y: Y, kunst: k,
+  S.teil({ anker: [30, yAt(8)], id: "haus", de: "das weiße Haus", syl: "WEI-ße HAUS", it: "la casa bianca", itSyl: "CA-sa BIAN-ca", en: "white house", x: 0, y: Y, kunst: k,
     tipp: "Weiße Wände und blaue Türen: So sehen die Häuser auf den griechischen Inseln aus." });
 }
 {
@@ -309,7 +311,7 @@ const akroUnter = [];
   }
   for (const [x, y] of bl) k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(1.2 + rnd() * 1.1)}" fill="${["#d01f7c", "#e0469a", "#b8166a", "#f06ab0"][Math.floor(rnd() * 4)]}"/>`;
   for (let i = 0; i < 30; i++) { const [x, y] = bl[Math.floor(rnd() * bl.length)]; k += `<ellipse cx="${r(x + 1)}" cy="${r(y + 1)}" rx="1.2" ry=".7" fill="#3f7a35"/>`; }
-  S.teil({ oben: true, id: "bougainvillea", de: "die Bougainvillea", syl: "Bu-gän-VIL-lea", it: "la bouganville", itSyl: "bu-gan-VIL-le", en: "bougainvillea", x: 0, y: Y, kunst: k,
+  S.teil({ oben: true, anker: [18, 96], id: "bougainvillea", de: "die Bougainvillea", syl: "Bu-gän-VIL-lea", it: "la bouganville", itSyl: "bu-gan-VIL-le", en: "bougainvillea", x: 0, y: Y, kunst: k,
     tipp: "Die Bougainvillea blüht den ganzen Sommer pink und lila." });
 }
 
@@ -339,7 +341,7 @@ const MAUER_Y = yAt(7), MAUER_O = yAt(7, 0.72);
   for (let i = 0; i < 40; i++) k += `<circle cx="${r(rnd() * 174)}" cy="${r(MAUER_O - MAUER_Y + 3 + rnd() * (MAUER_Y - MAUER_O - 5))}" r="${r(0.3 + rnd() * 0.5)}" fill="#e3ded3" opacity=".8"/>`;
   k += `<rect x="0" y="-2" width="174" height="2" fill="#d1cbbd"/>`;
   k += `<rect x="170" y="${r(MAUER_O - MAUER_Y)}" width="4" height="${r(MAUER_Y - MAUER_O)}" fill="${KALK_S}" opacity=".8"/>`;
-  S.teil({ id: "mauer", de: "die Mauer", syl: "MAU-er", it: "il muretto", itSyl: "mu-RET-to", en: "wall", x: 58, y: MAUER_Y, steht: true, kunst: k });
+  S.teil({ anker: [96, 150], id: "mauer", de: "die Mauer", syl: "MAU-er", it: "il muretto", itSyl: "mu-RET-to", en: "wall", x: 58, y: MAUER_Y, steht: true, kunst: k });
 }
 
 /* =====================================================================

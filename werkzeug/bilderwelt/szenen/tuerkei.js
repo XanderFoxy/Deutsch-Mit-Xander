@@ -40,6 +40,8 @@ const B = require("../bau");
 const S = neueSzene({ id: "tuerkei", titel: "Türkei — Istanbul", emoji: "🇹🇷", thema: "Länder", kuerzel: "b25c", fassung: 852 });
 /* Verläufe nur einmal anlegen, auch wenn sie in Schleifen gebraucht werden */
 { const lg = S.lg, rg = S.rg, schon = {}; S.lg = (n, ...a) => schon["l" + n] || (schon["l" + n] = lg(n, ...a)); S.rg = (n, ...a) => schon["r" + n] || (schon["r" + n] = rg(n, ...a)); }
+/* Wortmarke: Teile, die in Bildkoordinaten gezeichnet sind, bekommen ihren Ankerpunkt in die Mitte */
+{ const teil = S.teil; S.teil = (t) => { if (t.anker) { const [ax, ay] = t.anker; t.kunst = `<g transform="translate(${B.r(t.x - ax)} ${B.r(t.y - ay)})">${t.kunst}</g>`; t.x = ax; t.y = ay; delete t.anker; } return teil(t); }; }
 const rnd = zufall(1616);
 const r = B.r;
 const HOR = 118, F = 300, AUGE = 1.6;
@@ -148,7 +150,7 @@ S.hinten(`<circle cx="290" cy="96" r="70" fill="${S.rg("sonne", [[0, "#fff1cf", 
   /* Leanderturm auf seiner Insel */
   k += `<ellipse cx="22" cy="2.6" rx="4.6" ry=".9" fill="#7a7468"/><rect x="17.4" y="-1.4" width="9.2" height="4" fill="#ece6da"/><rect x="20.6" y="-6.8" width="2.8" height="5.4" fill="#f2ede3"/><path d="M20.2 -6.8 L22 -10 L23.8 -6.8 Z" fill="#7d8996"/><line x1="22" y1="-10" x2="22" y2="-11.4" stroke="${GOLD}" stroke-width=".25"/>`;
   k += `<rect x="0" y="0" width="96" height="${r(Y0 - HOR)}" fill="${S.lg("wasserlicht", [[0, "#ffe2b8", 0.25], [1, "#ffe2b8", 0]], 0, 0, 1, 0)}"/>`;
-  S.teil({ id: "bosporus", de: "der Bosporus", syl: "BOS-po-rus", it: "il Bosforo", itSyl: "BO-sfo-ro", en: "Bosphorus", x: 224, y: HOR, kunst: k,
+  S.teil({ anker: [256, 112], id: "bosporus", de: "der Bosporus", syl: "BOS-po-rus", it: "il Bosforo", itSyl: "BO-sfo-ro", en: "Bosphorus", x: 224, y: HOR, kunst: k,
     tipp: "Der Bosporus trennt Europa und Asien. Istanbul liegt auf beiden Seiten." });
 }
 {
@@ -230,7 +232,7 @@ const basarUnter = [];
   k += kan;
   basarUnter.push({ id: "kanne", de: "die Kanne", syl: "KAN-ne", it: "la brocca", itSyl: "BROC-ca", en: "jug", x: c + 11, y: Y - 1, kunst: flaeche(-10, -8, 20, 8) });
   k += `<rect x="0" y="${-H - 3}" width="226" height="${H + 3}" fill="${S.lg("basarlicht", [[0, "#ffe2b8", 0.3], [1, "#ffe2b8", 0]], 0, 0, 1, 0)}"/>`;
-  S.teil({ id: "basar", de: "der Basar", syl: "Ba-SAR", it: "il bazar", itSyl: "ba-ZAR", en: "bazaar", x: 0, y: Y, kunst: k,
+  S.teil({ anker: [176, 96], id: "basar", de: "der Basar", syl: "Ba-SAR", it: "il bazar", itSyl: "ba-ZAR", en: "bazaar", x: 0, y: Y, kunst: k,
     zoom: { x: 52, y: Y - H - 4, w: 120, h: 80 }, unter: basarUnter,
     tipp: "Der Arasta-Basar gehört zur Blauen Moschee. Hier gibt es Teppiche, Keramik und Lampen." });
 }
@@ -351,7 +353,7 @@ const IMB = { d: 9 };
   k += `<rect x="46" y="${r(-2.6 * u + 13)}" width="14" height="${r(2.6 * u - 13)}" fill="#3a2818"/><rect x="48" y="${r(-2.6 * u + 16)}" width="10" height="${r(2.6 * u - 30)}" fill="${S.lg("tuerglas", [[0, "#8aa3b5"], [1, "#4f6577"]])}"/>`;
   k += `<rect x="-2" y="-1.4" width="66" height="1.4" fill="#6d6559"/>`;
   k += `<rect x="62" y="${r(-4 * u)}" width="2" height="${r(4 * u)}" fill="#000" opacity=".15"/>`;
-  S.teil({ id: "imbiss", de: "der Imbiss", syl: "IM-biss", it: "la tavola calda", itSyl: "TA-vo-la CAL-da", en: "snack bar", x: 0, y: Y, steht: true, kunst: k });
+  S.teil({ anker: [31, yAt(IMB.d)], id: "imbiss", de: "der Imbiss", syl: "IM-biss", it: "la tavola calda", itSyl: "TA-vo-la CAL-da", en: "snack bar", x: 0, y: Y, steht: true, kunst: k });
 }
 {
   const u = uAt(IMB.d);
@@ -362,7 +364,7 @@ const IMB = { d: 9 };
   k += `<path d="M-5.6 ${r(top)} L-3 ${r(bot)}" stroke="#3a1a08" stroke-width=".6"/>`;
   k += `<rect x="-4" y="${r(top - 2)}" width="8" height="1.4" rx=".4" fill="#c9cfd4"/><rect x="-3" y="${r(bot)}" width="6" height="1.2" fill="#c9cfd4"/>`;
   k += `<path d="M2.6 ${r(top + 6)} L7.4 ${r(top + 4)} L7.8 ${r(top + 5)}" stroke="#d9dde0" stroke-width=".7" fill="none"/>`;
-  S.teil({ oben: true, id: "doener", de: "der Döner", syl: "DÖ-ner", it: "il kebab", itSyl: "ke-BAB", en: "kebab", x: 22, y: yAt(IMB.d), kunst: k + flaeche(-6.4, top - 3, 12.8, bot - top + 4.4),
+  S.teil({ anker: [22, 130], oben: true, id: "doener", de: "der Döner", syl: "DÖ-ner", it: "il kebab", itSyl: "ke-BAB", en: "kebab", x: 22, y: yAt(IMB.d), kunst: k + flaeche(-6.4, top - 3, 12.8, bot - top + 4.4),
     tipp: "Döner heißt „der Drehende“: Das Fleisch dreht sich am Spieß vor dem Grill." });
 }
 
@@ -397,7 +399,7 @@ const WAG = { x: 92, d: 8 };
     return g;
   };
   for (let row = 0; row < 4; row++) for (let i = 0; i < 4; i++) k += ring(-W / 2 + 7 + i * 9.6 + (row % 2) * 2, -H - 3 - row * 4.2, 1);
-  S.teil({ oben: true, id: "simit", de: "der Sesamring", syl: "SE-sam-ring", it: "la ciambella al sesamo", itSyl: "ciam-BEL-la al SE-sa-mo", en: "sesame ring", x: WAG.x, y: yAt(WAG.d), steht: true, kunst: k + flaeche(-W / 2 + 1, -H - 0.55 * u, W - 2, 0.55 * u),
+  S.teil({ anker: [92, 132], oben: true, id: "simit", de: "der Sesamring", syl: "SE-sam-ring", it: "la ciambella al sesamo", itSyl: "ciam-BEL-la al SE-sa-mo", en: "sesame ring", x: WAG.x, y: yAt(WAG.d), steht: true, kunst: k + flaeche(-W / 2 + 1, -H - 0.55 * u, W - 2, 0.55 * u),
     tipp: "Auf Türkisch heißt er „Simit“ – das Frühstück für unterwegs, außen knusprig mit Sesam." });
 }
 
@@ -429,7 +431,7 @@ const SCH = { x: 130, d: 7.4 };
   let k = `<path d="M-5.6 ${r(cy)} Q-6 ${r(cy - 9)} 0 ${r(cy - 9.4)} Q6 ${r(cy - 9)} 5.6 ${r(cy)} Q4 ${r(cy + 4)} 1.6 ${r(cy + 5.6)} L-1.6 ${r(cy + 5.6)} Q-4 ${r(cy + 4)} -5.6 ${r(cy)} Z" fill="${S.lg("ballon", [[0, "#d94a3a"], [0.2, "#d94a3a"], [0.2, "#f1c232"], [0.4, "#f1c232"], [0.4, "#3a7fc0"], [0.6, "#3a7fc0"], [0.6, "#f1c232"], [0.8, "#f1c232"], [0.8, "#d94a3a"], [1, "#d94a3a"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M-5.6 ${r(cy)} Q-6 ${r(cy - 9)} 0 ${r(cy - 9.4)} Q6 ${r(cy - 9)} 5.6 ${r(cy)} Q4 ${r(cy + 4)} 1.6 ${r(cy + 5.6)} L-1.6 ${r(cy + 5.6)} Q-4 ${r(cy + 4)} -5.6 ${r(cy)} Z" fill="${S.rg("ballonlicht", [[0, "#fff", 0.35], [1, "#000", 0.15]], 0.35, 0.3, 0.8)}"/>`;
   k += `<path d="M-1.4 ${r(cy + 5.6)} L-1.1 ${r(cy + 8)} M1.4 ${r(cy + 5.6)} L1.1 ${r(cy + 8)}" stroke="#4a3a2a" stroke-width=".25"/><rect x="-1.4" y="${r(cy + 8)}" width="2.8" height="1.8" rx=".3" fill="#8a5a32"/>`;
-  S.teil({ oben: true, id: "ballon", de: "der Heißluftballon", syl: "HEISS-luft-bal-lon", it: "la mongolfiera", itSyl: "mon-gol-FIE-ra", en: "hot-air balloon", x: SCH.x, y: yAt(SCH.d), kunst: k + flaeche(-6.4, cy - 10, 12.8, 20.4),
+  S.teil({ anker: [130, 160], oben: true, id: "ballon", de: "der Heißluftballon", syl: "HEISS-luft-bal-lon", it: "la mongolfiera", itSyl: "mon-gol-FIE-ra", en: "hot-air balloon", x: SCH.x, y: yAt(SCH.d), kunst: k + flaeche(-6.4, cy - 10, 12.8, 20.4),
     tipp: "In Kappadokien steigen bei Sonnenaufgang oft über 100 Heißluftballons gleichzeitig auf." });
 }
 
