@@ -115,7 +115,7 @@ const QUADER = `url(#${S.id("quader")})`;
 /* =====================================================================
    KULISSE — Himmel (Oktoberabend), Wolken unten warm angestrahlt, ferne Höhen
    ===================================================================== */
-S.hinten(`<rect width="320" height="150" fill="${S.lg("himmel", [[0, "#3f78bc"], [0.6, "#7fa8d6"], [1, "#b4cfe6"]], 0, 0, 0, 1, ' gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="62"')}"/>`);
+S.hinten(`<rect width="320" height="150" fill="${S.lg("himmel", [[0, "#3f78bc"], [0.6, "#7fa8d6"], [1, "#b4cfe6"]], 0, 0, 0, 62, ' gradientUnits="userSpaceOnUse"')}"/>`);
 {
   let w = "";
   for (const [x, y, s] of [[44, 13, 0.9], [150, 6, 1.1], [300, 10, 0.8], [96, 29, 0.55], [12, 36, .6]]) {
@@ -172,7 +172,7 @@ const kammY = (x) => { for (let i = 1; i < kamm.length; i++) if (x <= kamm[i][0]
   g += `<g filter="url(#${S.id("weichberg")})">${rip}</g>`;
   /* der Schlossberg (Jettenbühl): der Hang unter dem Schloss tritt hervor */
   g += `<path d="M104 72 Q128 62 160 64 Q184 66 196 78 Q206 94 214 112 L92 112 Q96 86 104 72 Z" fill="#f2d890" opacity=".14" filter="url(#${S.id("weichberg")})"/>`;
-  g += `<path d="${d}" fill="${S.lg("waldluft", [[0, "#aec2d0", 0.72], [0.28, "#aec2d0", 0.34], [0.6, "#aec2d0", 0.08], [1, "#aec2d0", 0]], 0, 0, 0, 1, ' gradientUnits="userSpaceOnUse" x1="0" y1="14" x2="0" y2="110"')}"/>`;
+  g += `<path d="${d}" fill="${S.lg("waldluft", [[0, "#aec2d0", 0.72], [0.28, "#aec2d0", 0.34], [0.6, "#aec2d0", 0.08], [1, "#aec2d0", 0]], 0, 14, 0, 110, ' gradientUnits="userSpaceOnUse"')}"/>`;
   g += `<path d="${d}" fill="${S.lg("waldlicht", [[0, "#10200c", 0.26], [0.5, "#10200c", 0.04], [1, "#ffcf8a", 0.12]], 0, 0, 1, 0)}"/>`;
   k += `<g clip-path="url(#${S.id("berg")})">${g}</g>`;
   /* Herbstbäume frei verstreut (keine Muster), je weiter weg desto kleiner und blasser */
@@ -397,9 +397,9 @@ const bogenZ = (t) => 2.2 + 7.6 * Math.pow(Math.sin(Math.PI * t), 0.75);
   const oben = []; for (let x = 0; x <= 320; x += 4) oben.push([x, suedY(x)]);
   const unten = []; for (let x = 320; x >= 0; x -= 4) unten.push([x, nordY(x) + 2]);
   const fl = pfad([...oben, ...unten]);
-  let k = `<path d="${fl}" fill="${S.lg("wasser", [[0, "#8fa6a4"], [0.3, "#6a8786"], [1, "#46625f"]], 0, 0, 0, 1, ' gradientUnits="userSpaceOnUse" x1="0" y1="112" x2="0" y2="174"')}"/>`;
+  let k = `<path d="${fl}" fill="${S.lg("wasser", [[0, "#8fa6a4"], [0.3, "#6a8786"], [1, "#46625f"]], 0, 112, 0, 174, ' gradientUnits="userSpaceOnUse"')}"/>`;
   /* Himmel spiegelt sich hell in der Ferne (links im Tal) */
-  k += `<path d="${fl}" fill="${S.lg("wasserhimmel", [[0, "#dfe8ea", 0.5], [0.4, "#dfe8ea", 0.1], [1, "#dfe8ea", 0]], 0, 0, 0, 1, ' gradientUnits="userSpaceOnUse" x1="0" y1="112" x2="0" y2="150"')}"/>`;
+  k += `<path d="${fl}" fill="${S.lg("wasserhimmel", [[0, "#dfe8ea", 0.5], [0.4, "#dfe8ea", 0.1], [1, "#dfe8ea", 0]], 0, 112, 0, 150, ' gradientUnits="userSpaceOnUse"')}"/>`;
   /* weiche Spiegelungen: Häuserzeile, Tor, Wald — mit Maske nach unten ausgeblendet */
   S.def(`<linearGradient id="${S.id("spg")}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><mask id="${S.id("spm")}" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#${S.id("spg")})"/></mask>`);
   let sp_ = "";

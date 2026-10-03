@@ -357,7 +357,7 @@ const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Flu
     for (let x = VX + 4; x < 322; x += 1.2) vorn.push([x, wy(x, WASSER_R + 0.9) - (rnd() < 0.5 ? 0.15 + rnd() * 0.5 : 0)]);
     k += `<path d="M${pts(w2.un)} L${pts(vorn.slice().reverse())} Z" fill="#eef8f6"/>`;
     let lo = "";
-    for (let i = 0; i < 18; i++) { const x = VX + 30 + rnd() * 105, y = wy(x, 107.5 + rnd() * 1.6); lo += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.4 + rnd() * 1.2)}" ry=".18"/>`; }
+    for (let i = 0; i < 18; i++) { const x = VX + 30 + rnd() * (320 - VX - 33), y = wy(x, 107.5 + rnd() * 1.6); lo += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.4 + rnd() * 1.2)}" ry=".18"/>`; }
     k += `<g fill="#7fbcc4" opacity=".6">${lo}</g>`;
   }
   /* Insel Cotunduba vor Leme und ein Frachter auf dem Weg in die Bucht */
@@ -690,7 +690,7 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
     k += spieler(0.4, 24, "#5e3a26", "#139a43", [-0.3, 0.35, 0.3, -0.5]) + spieler(4, 24, "#d7a179", "#f6d21e", [-0.3, 0.4, 0.28, 0.35]);
   }
   S.teil({ id: "strand", de: "der Strand", syl: "STRAND", it: "la spiaggia", itSyl: "SPIAG-gia", en: "beach", x: 118, y: 176, kunst: halb(um(118, 176, k)),
-    tipp: "Die Copacabana ist vier Kilometer lang. Hier spielt man Futevôlei – Volleyball, aber ohne Hände!" });
+    tipp: "Die Copacabana ist einer der berühmtesten Strände der Welt. Hier spielt man Futevôlei – Volleyball, aber ohne Hände!" });
 }
 
 /* =====================================================================
@@ -782,7 +782,7 @@ const kioskUnter = [];
     };
     g += nuss(-21, TT(-21), 0.9, false) + nuss(-15.8, TT(-15.8), 0.95, false) + nuss(-10.4, TT(-10.4), 1, true);
     k += g;
-    kioskUnter.push({ id: "kokosnuss", de: "die Kokosnuss", syl: "KO-kos-nuss", it: "la noce di cocco", itSyl: "NO-ce di COC-co", en: "coconut", x: KI.x - 15.6, y: KI.y + TT(-15.6), kunst: flaeche(-8, -10.2, 16, 10.6, 0.6),
+    kioskUnter.push({ id: "kokosnuss", de: "die Kokosnuss", syl: "KO-kos-nuss", it: "la noce di cocco", itSyl: "NO-ce di COC-co", en: "coconut", x: KI.x - 15.6, y: KI.y + TT(-15.6) - 6, kunst: flaeche(-8, -4.2, 16, 10.6, 0.6),
       tipp: "Das Kokoswasser trinkt man mit einem Strohhalm direkt aus der grünen Nuss." });
   }
   /* DIE AÇAÍ-SCHALE — lila Açaí mit Müsli und Bananenscheiben */
@@ -794,7 +794,7 @@ const kioskUnter = [];
     for (const [dx, dy] of [[1, -3.6], [1.9, -3.1], [0.4, -3]]) g += `<ellipse cx="${x + dx}" cy="${y + dy}" rx=".55" ry=".32" fill="#f6eab0" stroke="#e2cf7a" stroke-width=".08"/>`;
     k += g;
     kioskUnter.push({ id: "acai", de: "die Açaí-Schale", syl: "a-ça-Í-scha-le", it: "la ciotola di açaí", itSyl: "CIO-to-la di a-ça-Ì", en: "açaí bowl", x: KI.x + x, y: KI.y + y, kunst: flaeche(-3.6, -4.8, 7.2, 5, 0.6),
-      tipp: "Açaí sind lila Beeren aus dem Amazonas. Man isst sie gefroren, mit Müsli und Banane." });
+      tipp: "Açaí sind lila Beeren aus dem Amazonas-Regenwald. Man isst sie als kaltes Mus mit Müsli und Banane." });
   }
   /* ein Becher Maracujasaft neben der Schale */
   { const x = 5.4, y = TT(5.4); k += `<path d="M${x - 1.4} ${y - 5} L${x + 1.4} ${y - 5} L${x + 1.1} ${y} L${x - 1.1} ${y} Z" fill="#f2c94c" opacity=".9"/><path d="M${x - 1.4} ${y - 5} L${x + 1.4} ${y - 5}" stroke="#fff" stroke-width=".3"/><path d="M${x + 0.3} ${y - 5} L${x + 0.9} ${y - 7.4}" stroke="#2e7d5b" stroke-width=".35"/>`; }
@@ -855,7 +855,7 @@ const SCH = { x: 284, y: 152 };
   const rand = (a) => P(X0 + R * Math.cos(a), 2.0, Z0 + R * Math.sin(a));
   const nabe = P(X0 + 0.05, 2.27, Z0);
   const s = sy(SCH.y);
-  let k = `<ellipse cx="${r(-1.1 * s)}" cy="${r(0.25 * s)}" rx="${r(1.05 * s)}" ry="${r(0.22 * s)}" fill="#7a5a2a" opacity=".22" filter="url(#bw_weich)"/>`;
+  let k = `<ellipse cx="${r(-1.3 * s)}" cy="${r(0.32 * s)}" rx="${r(0.95 * s)}" ry="${r(0.2 * s)}" fill="#7a5a2a" opacity=".24"/>`;
   k += `<line x1="0" y1="0" x2="${r(nabe[0])}" y2="${r(nabe[1])}" stroke="${S.lg("mast", [[0, "#d8dcde"], [1, "#9aa1a6"]], 0, 0, 1, 0)}" stroke-width="1.2"/>`;
   const farben = ["#f3c623", "#1e8a4c", "#2f6fc0", "#f4f1e6"];
   const innen = ["#b88f14", "#14603a", "#244f8c", "#bdb7a6"];
@@ -871,7 +871,7 @@ const SCH = { x: 284, y: 152 };
   for (let i = n / 2; i < n; i++) { const [p1, p2] = [rand(i * 2 * Math.PI / n), rand((i + 1) * 2 * Math.PI / n)]; k += `<path d="M${r(p1[0])} ${r(p1[1])} Q${r((p1[0] + p2[0]) / 2)} ${r((p1[1] + p2[1]) / 2 + 2.2)} ${r(p2[0])} ${r(p2[1])} Z" fill="${farben[Math.floor(i / 2) % 4]}"/>`; }
   k += `<circle cx="${r(nabe[0])}" cy="${r(nabe[1] - 0.6)}" r=".9" fill="#d8dcde"/>`;
   S.teil({ id: "sonnenschirm", de: "der Sonnenschirm", syl: "SON-nen-schirm", it: "l'ombrellone", itSyl: "om-brel-LO-ne", en: "beach umbrella", x: SCH.x, y: SCH.y, steht: true, kunst: k,
-    tipp: "Sonnenschirme und Stühle leiht man an den Strandbuden aus." });
+    tipp: "Die Sonne in Rio ist sehr stark. Unter dem Sonnenschirm bleibt es schattig." });
 }
 /* DAS STRANDTUCH (Canga) liegt rechts vorn im Sand — jeder Punkt des
    Musters wird einzeln perspektivisch in die Bildebene gerechnet */
@@ -919,7 +919,7 @@ const AM = { x: 148, y: 156 };
   const AY = AM.y - 0.95 * 1.72 * s;
   S.teil({ id: "strandverkaeufer", de: "der Strandverkäufer", syl: "STRAND-ver-käu-fer", it: "il venditore ambulante", itSyl: "ven-di-TO-re am-bu-LAN-te", en: "beach vendor", x: AM.x, y: AY,
     kunst: `<g transform="translate(0 ${r(AM.y - AY)})">${sch}<g filter="${GEGENLICHT}">${knapp(m.svg)}${gurt}</g></g>`,
-    tipp: "Der Strandverkäufer ruft: „Olha o mate! Limão!“ – kalter Mate-Tee und Limonade." });
+    tipp: "Der Strandverkäufer läuft den ganzen Tag barfuß durch den heißen Sand und ruft: „Olha o mate!“" });
   /* DAS FASS — zwei Aluminiumfässer mit Zapfhahn, an den Händen getragen */
   const fass = (cx, top, label, c) => {
     const w = 0.27 * s, h = 0.42 * s;
@@ -944,7 +944,9 @@ const ST = { x: 246, y: 160 };
 {
   const s = sy(ST.y);                          /* ≈ 47,5 Einheiten je Meter */
   const AL = S.lg("alu", [[0, "#eef1f2"], [0.5, "#b9c0c4"], [1, "#dfe3e5"]], 0, 0, 1, 0);
-  let k = schatten(-0.3 * s, 0, 0.42 * s, 0.07 * s, 0.3);
+  /* Schatten als Form: Lehne und Sitz fallen als schräges Parallelogramm nach links vorn, Beine als Striche */
+  const w0 = 0.56 * s;
+  let k = `<path d="M${r(-w0 / 2)} .3 L${r(w0 / 2)} .3 L${r(w0 / 2 - 0.62 * s)} ${r(0.17 * s)} L${r(-w0 / 2 - 0.62 * s)} ${r(0.17 * s)} Z M${r(-w0 / 2 - 0.62 * s)} ${r(0.17 * s)} L${r(w0 / 2 - 0.62 * s)} ${r(0.17 * s)} L${r(w0 / 2 - 0.9 * s)} ${r(0.25 * s)} L${r(-w0 / 2 - 0.9 * s)} ${r(0.25 * s)} Z" fill="#6b4a1e" opacity=".28"/>`;
   /* Klappstuhl aus Aluminium, Sitz 0,25 m, Lehne schräg nach hinten (vom Betrachter weg = nach oben) */
   const w = 0.56 * s, sitz = -0.26 * s, tief = 0.09 * s, lehne = -0.88 * s;
   k += `<line x1="${r(-w / 2)}" y1="0" x2="${r(-w / 2 + 2)}" y2="${r(sitz - tief)}" stroke="${AL}" stroke-width="1"/><line x1="${r(w / 2)}" y1="0" x2="${r(w / 2 - 2)}" y2="${r(sitz - tief)}" stroke="${AL}" stroke-width="1"/>`;
@@ -1067,5 +1069,8 @@ let BALL;
 /* Licht: warmer Schein der Morgensonne von rechts oben (fängt nichts ab) */
 S.davor(`<rect width="320" height="200" fill="${S.rg("morgenlicht", [[0, "#fff4cf", 0.22], [0.45, "#fff4cf", 0.05], [1, "#fff4cf", 0]], 1, 0, 0.9)}"/>`);
 
+/* Silbenschreibung einheitlich: nur die betonten Silben groß, alles andere klein */
+const silben = (t) => { if (!t) return t; const st = t.split(/([- ])/); const gross = (x) => x.length && x === x.toUpperCase() && x !== x.toLowerCase(); const lang = st.some((x) => gross(x) && x.length > 1); return st.map((x) => (/^[- ]$/.test(x) ? x : (gross(x) && (x.length > 1 || !lang) ? x : x.toLowerCase()))).join(""); };
+for (const t of S.teile) for (const u of [t, ...(t.unter || [])]) { u.syl = silben(u.syl); u.itSyl = silben(u.itSyl); }
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/rio.js"));
 console.log(aus);

@@ -98,6 +98,15 @@ S.def(`<filter id="${S.id("spiegel")}" x="-10%" y="-20%" width="120%" height="14
    KULISSE — Himmel: Südostwind, tiefblau und klar
    ===================================================================== */
 S.hinten(`<rect width="400" height="${HOR + 4}" fill="${S.lg("himmel", [[0, "#1d5aa8"], [0.5, "#4a8acb"], [0.82, "#9fc4e3"], [1, "#d9e6ec"]])}"/>`);
+{
+  /* Leben am Himmel: drei Möwen im Flug (weiß, schwarze Flügelspitzen), ein Flugzeug im Landeanflug
+     (weit und klein, mit Landelicht), ein ferner Hubschrauber */
+  let h = "";
+  for (const [x, y, w, a] of [[58, 44, 7, -6], [84, 30, 5, 8], [338, 66, 6, -4], [356, 58, 3.6, 10]]) h += `<g transform="translate(${x} ${y}) rotate(${a})"><path d="M${-w} ${r(-w * 0.1)}Q${r(-w * 0.5)} ${r(-w * 0.45)} 0 0Q${r(w * 0.5)} ${r(-w * 0.45)} ${w} ${r(-w * 0.1)}Q${r(w * 0.5)} ${r(-w * 0.25)} 0 ${r(w * 0.12)}Q${r(-w * 0.5)} ${r(-w * 0.25)} ${-w} ${r(-w * 0.1)}Z" fill="#f6f7f8"/><path d="M${-w} ${r(-w * 0.1)}l${r(w * 0.25)} ${r(-w * 0.04)}M${w} ${r(-w * 0.1)}l${r(-w * 0.25)} ${r(-w * 0.04)}" stroke="#1d1f24" stroke-width="${r(w * 0.12)}"/><ellipse cx="0" cy="${r(w * 0.03)}" rx="${r(w * 0.12)}" ry="${r(w * 0.08)}" fill="#e8eaec"/></g>`;
+  h += `<g transform="translate(150 24) rotate(6)"><path d="M-6 0h11q1.6 0 2 .6q-.4.5-2 .5h-11z" fill="#eef1f4"/><path d="M-1.6 .4l-2.6 3.2h1.4l3.6-3.2zM-1.6 .4l-1.4-2.4h1l2.4 2.4zM-5.4 .2l-1.2-1.8h.9l1.4 1.8z" fill="#cfd6dc"/><circle cx="6.6" cy=".9" r=".35" fill="#ffeeaa"/></g>`;
+  h += `<g transform="translate(332 96)" opacity=".75"><ellipse cx="0" cy="0" rx="1.6" ry=".8" fill="#2f3a44"/><path d="M-1.4 0h-2.2M-2.6 -1.1h5.2" stroke="#2f3a44" stroke-width=".25"/></g>`;
+  S.hinten(h);
+}
 
 /* =====================================================================
    1 — DIE BERGE: Devil's Peak, Tafelberg, Lion's Head (eine Kammlinie,
@@ -349,14 +358,22 @@ const bergUnter = [];
     `<circle cx="8.9" cy="1.7" r="1.3" fill="#3f5a30"/><circle cx="9.7" cy="2.2" r="1" fill="#4f6a3a"/>` +
     `<rect x="10.4" y="1.2" width="1.6" height="1.8" fill="#ddd2bd"/><rect x="10.3" y="1" width="1.8" height=".3" fill="#6f7276"/>` +
     `<path d="M0 .9h.5v2.1H0zM2.9 1.3h.4V3h-.4zM5.3 .6h.5V3h-.5z" fill="#000" opacity=".12"/></g></pattern>`);
-  hausKachel("haus", 1); hausKachel("hausfern", 0.75);
+  hausKachel("haus", 1); hausKachel("hausfern", 0.62);
+  /* zweite Kachel: Häuser mit roten und grauen Satteldächern */
+  S.def(`<pattern id="${S.id("hausdach")}" width="13" height="3.2" patternUnits="userSpaceOnUse"><rect x=".2" y="1.4" width="2.6" height="1.8" fill="#efe8da"/><path d="M0 1.5l1.5-1 1.5 1z" fill="#a24a36"/><rect x="3.4" y="1.2" width="2.2" height="2" fill="#f5f1e8"/><path d="M3.2 1.3l1.3-.9 1.3.9z" fill="#6f7276"/><circle cx="7.4" cy="2" r="1.3" fill="#40592f"/><rect x="9" y="1" width="3" height="2.2" fill="#e9e1cf"/><rect x="8.9" y=".8" width="3.2" height=".3" fill="#fbf9f4"/><rect x="10" y="1.6" width=".5" height=".5" fill="#3e4a55"/><path d="M.2 1.4h.5v1.8h-.5zM3.4 1.2h.4v2h-.4z" fill="#000" opacity=".12"/></pattern>`);
+  S.def(`<pattern id="${S.id("hausdachfern")}" href="#${S.id("hausdach")}"/>`);
   let h = "", nr = 0;
   /* Reihen: [x0, x1, y unten, Maßstab, Kachel]; jede Reihe mit eigener Musterkopie (Maßstab, Versatz) */
-  for (const [x0, x1, yb, sc, id] of [[96, 236, 129.4, 0.55, "hausfern"], [96, 236, 132.4, 0.7, "hausfern"], [96, 236, 135.6, 0.85, "haus"], [96, 236, 139.2, 1, "haus"], [292, 400, 128.4, 0.6, "hausfern"], [292, 400, 131.6, 0.75, "hausfern"], [292, 400, 135.2, 0.9, "haus"], [292, 400, 139, 1, "haus"], [236, 292, 139.6, 1, "haus"]]) {
+  /* nach hinten deutlich kleiner und blasser; die Reihen wechseln zwischen Flach- und Satteldächern */
+  for (const [x0, x1, yb, sc, id, op] of [[96, 236, 128.6, 0.38, "hausfern", 0.7], [96, 236, 130.8, 0.5, "hausdach", 0.7], [96, 236, 133.6, 0.66, "hausfern", 0.85], [96, 236, 136.4, 0.82, "hausdach", 1], [96, 236, 139.4, 1, "haus", 1], [292, 400, 127.6, 0.42, "hausdach", 0.7], [292, 400, 130.2, 0.56, "hausfern", 0.8], [292, 400, 133.4, 0.72, "hausdach", 0.9], [292, 400, 136.4, 0.86, "haus", 1], [292, 400, 139.4, 1, "hausdach", 1], [236, 292, 139.6, 1, "haus", 1]]) {
     const hh = 3 * sc, pid = S.id("hr" + nr++);
     S.def(`<pattern id="${pid}" href="#${S.id(id)}" patternTransform="translate(${r(rnd() * 12)} ${r(yb - hh)}) scale(${sc})"/>`);
-    h += `<path d="M${x0} ${r(yb)}V${r(yb - hh)}H${x1}V${r(yb)}Z" fill="url(#${pid})"/>`;
+    h += `<path d="M${x0} ${r(yb)}V${r(yb - hh)}H${x1}V${r(yb)}Z" fill="url(#${pid})" opacity="${op}"/>`;
   }
+  /* Straßen, die schräg den Hang hinauflaufen */
+  let strassen = "";
+  for (const x of [108, 134, 160, 188, 214, 304, 330, 356, 384]) strassen += `M${x} 140l${r(9 + (x % 7))} -13`;
+  h += `<path d="${strassen}" stroke="#d9d1bd" stroke-width=".7" opacity=".75"/><path d="${strassen}" stroke="#8f8a78" stroke-width=".2" opacity=".5" transform="translate(.4 0)"/>`;
   /* Bo-Kaap: knallbunte Flachdachhäuser in Reihen am Hang zum Signal Hill, Minarett der Auwal-Moschee */
   S.def(`<pattern id="${S.id("bokaap")}" width="16.4" height="2.6" patternUnits="userSpaceOnUse" patternTransform="translate(236 0) skewY(-4)">` +
     [["#e8608e", 0, 2.2], ["#f4efe6", 2.4, 2], ["#4fc0c2", 4.6, 2.4], ["#f2c43a", 7.2, 2], ["#a3cf58", 12, 2], ["#b88ad6", 14.2, 2]].map(([f, x, w]) => `<rect x="${x}" y=".7" width="${w}" height="1.9" fill="${f}"/><rect x="${r(x - 0.1)}" y=".45" width="${r(w + 0.2)}" height=".3" fill="#fbf8f0"/><rect x="${r(x + w * 0.35)}" y="1.3" width=".5" height=".7" fill="#2f3a44" opacity=".6"/>`).join("") + `<circle cx="10.4" cy="1.6" r="1.2" fill="#4f6a3a"/></pattern>`);
@@ -379,9 +396,12 @@ const bergUnter = [];
   }
   /* Portside Tower (139 m, höchstes Haus der Stadt) mit abgestufter Krone und Mast */
   const PT = hy(139, 1500);
-  tk += `<path d="M43 ${HOR}V${r(PT + 3)}h1V${r(PT + 1.5)}h1V${r(PT)}h3V${r(PT + 1.5)}h1V${r(PT + 3)}h1V${HOR}Z" fill="#c3cfd7"/><path d="M46.5 ${r(PT)}v-3.4" stroke="#aebdc7" stroke-width=".35"/>`;
-  sch += `M43 ${r(PT + 3)}h2.4V${HOR}H43z`;
-  fe += `M43.5 ${r(PT + 4)}h6V${HOR - 2}h-6z`;
+  const GLASD = S.lg("glasdunkel", [[0, "#5d7891"], [0.5, "#7d98ae"], [1, "#4d6478"]], 0, 0, 1, 0);
+  tk += `<path d="M42 ${HOR}V${r(PT + 4)}h1.4V${r(PT + 2)}h1.4V${r(PT)}h4.4V${r(PT + 2)}h1.4V${r(PT + 4)}h1.4V${HOR}Z" fill="${GLASD}"/><path d="M47 ${r(PT)}v-4" stroke="#8fa4b6" stroke-width=".4"/>`;
+  tk += `<path d="M42 ${r(PT + 14)}l10 -6v5l-10 6z" fill="#cfe2f2" opacity=".35"/><path d="M45.6 ${r(PT + 2)}h1.6V${HOR}h-1.6z" fill="#a9c4da" opacity=".3"/>`;
+  tk += `<rect x="64" y="${r(HOR - 27)}" width="7" height="27" fill="${GLASD}"/><path d="M64 ${r(HOR - 18)}l7 -5v4l-7 5z" fill="#cfe2f2" opacity=".35"/>`;
+  sch += `M42 ${r(PT + 4)}h2.6V${HOR}H42z`;
+  fe += `M42.6 ${r(PT + 5)}h8.8V${HOR - 2}h-8.8z`;
   k += tk + `<path d="${sch}" fill="#7f909c" opacity=".22"/><path d="${fe}" fill="url(#${S.id("fenster")})"/>`;
   S.teil({ id: "innenstadt", de: "die Innenstadt", syl: "IN-nen-stadt", it: "il centro", itSyl: "CEN-tro", en: "city centre", x: 0, y: 0, kunst: k,
     tipp: "Die Innenstadt liegt wie in einer Schüssel zwischen den Bergen – man nennt sie „City Bowl“. Die bunten Häuser gehören zum Bo-Kaap." });
@@ -617,36 +637,38 @@ const KAI = 214;   // Vorderkante des Kais, auf dem der Betrachter steht
   for (let x = -2.2; x < 2.2; x += 0.35) k += `<line x1="${g(x)}" y1="${g(-0.74)}" x2="${g(x * 1.18)}" y2="${g(-0.42)}" stroke="#8a7458" stroke-width=".25"/>`;
   k += `<path d="M${g(-3.2)} ${g(0.15)} q${g(3.2)} ${g(0.25)} ${g(6.4)} 0" stroke="#d8eaea" stroke-width=".5" fill="none" opacity=".6"/>`;
   /* Kap-Pelzrobbe in Seitenansicht (Blick nach rechts, dir = −1 spiegelt) */
-  const robbe = (x, y, l, kopfHoch, dir, nass) => {
+  /* Kap-Pelzrobbe (Ohrenrobbe) in Seitenansicht, Blick nach rechts (dir = −1 spiegelt): Torpedokörper,
+     Brust auf den Vorderflossen aufgerichtet, langer, biegsamer Hals (hals = 0 … 1), kleiner Kopf mit
+     spitzer Schnauze, kleines Ohr, Schnurrhaare; Hinterflossen nach vorn unter den Körper gedreht;
+     Glanzkante auf dem Rücken */
+  const robbe = (x, y, l, hals, dir, nass) => {
     const q = (n) => r(n * s * l);
-    const fell = nass ? S.rg("robbenass", [[0, "#5a4636"], [0.5, "#3a2c22"], [1, "#1e1610"]], 0.45, 0.25, 0.85) : S.rg("robbetrocken", [[0, "#b08a62"], [0.55, "#8a6848"], [1, "#4a3828"]], 0.45, 0.25, 0.85);
+    const fell = nass ? S.rg("robbenass", [[0, "#5a4636"], [0.5, "#33261c"], [1, "#1a130d"]], 0.45, 0.25, 0.85) : S.rg("robbetrocken", [[0, "#b8926a"], [0.55, "#8a6848"], [1, "#4a3828"]], 0.45, 0.25, 0.85);
+    const hx = 0.5 + 0.06 * hals, hy = -0.46 - 0.3 * hals;   // Kopfmitte
     let g2 = `<g transform="translate(${g(x)} ${g(y)}) scale(${dir} 1)">`;
-    /* Hinterflossen: nach vorn unter den Körper gedreht, gespreizt */
-    g2 += `<path d="M${q(-0.7)} ${q(-0.06)} Q${q(-0.5)} ${q(0.02)} ${q(-0.28)} ${q(0.02)} L${q(-0.22)} ${q(-0.05)} Q${q(-0.45)} ${q(-0.08)} ${q(-0.6)} ${q(-0.14)} Z" fill="#2a2018"/>`;
-    g2 += `<path d="M${q(-0.7)} ${q(-0.08)} Q${q(-0.62)} ${q(0.03)} ${q(-0.44)} ${q(0.04)}" stroke="#1a130d" stroke-width="${q(0.02)}" fill="none"/>`;
-    /* Körper: Rücken, Brust aufgerichtet */
-    g2 += `<path d="M${q(-0.78)} ${q(-0.05)} Q${q(-0.7)} ${q(-0.3)} ${q(-0.25)} ${q(-0.38)} Q${q(0.15)} ${q(-0.45)} ${q(0.34)} ${q(kopfHoch ? -0.62 : -0.38)} L${q(0.48)} ${q(kopfHoch ? -0.5 : -0.2)} Q${q(0.42)} ${q(-0.12)} ${q(0.3)} 0 L${q(-0.6)} 0 Z" fill="${fell}"/>`;
-    /* Kopf: spitze Schnauze, kleines Außenohr, Schnurrhaare */
-    const kx = kopfHoch ? 0.46 : 0.6, ky = kopfHoch ? -0.72 : -0.3;
-    g2 += `<path d="M${q(kx - 0.16)} ${q(ky + 0.08)} Q${q(kx - 0.12)} ${q(ky - 0.12)} ${q(kx + 0.06)} ${q(ky - 0.1)} Q${q(kx + 0.2)} ${q(ky - 0.06)} ${q(kx + 0.3)} ${q(ky + 0.02)} Q${q(kx + 0.22)} ${q(ky + 0.09)} ${q(kx + 0.06)} ${q(ky + 0.1)} Q${q(kx - 0.04)} ${q(ky + 0.16)} ${q(kx - 0.16)} ${q(ky + 0.08)} Z" fill="${fell}"/>`;
-    g2 += `<circle cx="${q(kx + 0.27)}" cy="${q(ky + 0.01)}" r="${q(0.022)}" fill="#0b0806"/>`;
-    g2 += `<circle cx="${q(kx + 0.05)}" cy="${q(ky - 0.03)}" r="${q(0.028)}" fill="#0b0806"/><circle cx="${q(kx + 0.058)}" cy="${q(ky - 0.038)}" r="${q(0.008)}" fill="#fff"/>`;
-    g2 += `<path d="M${q(kx - 0.08)} ${q(ky - 0.08)} l${q(-0.03)} ${q(-0.06)} l${q(0.04)} ${q(0.02)}" stroke="#2b2119" stroke-width="${q(0.03)}" fill="none"/>`;
-    g2 += `<path d="M${q(kx + 0.22)} ${q(ky + 0.04)} l${q(0.2)} ${q(0.01)} M${q(kx + 0.22)} ${q(ky + 0.05)} l${q(0.18)} ${q(0.07)} M${q(kx + 0.21)} ${q(ky + 0.06)} l${q(0.14)} ${q(0.12)}" stroke="#efe6d4" stroke-width="${q(0.01)}" opacity=".9"/>`;
-    /* Vorderflosse aufgestützt */
-    g2 += `<path d="M${q(0.18)} ${q(-0.28)} Q${q(0.28)} ${q(-0.12)} ${q(0.4)} ${q(0.01)} L${q(0.18)} ${q(0.02)} Q${q(0.14)} ${q(-0.12)} ${q(0.1)} ${q(-0.22)} Z" fill="#2a2018"/>`;
-    /* Glanz */
-    g2 += `<path d="M${q(-0.6)} ${q(-0.26)} Q${q(-0.2)} ${q(-0.4)} ${q(0.2)} ${q(-0.4)}" stroke="${nass ? "#c9b49a" : "#e8d2b0"}" stroke-width="${q(0.035)}" fill="none" opacity=".6"/>`;
+    /* Hinterflossen nach vorn gedreht */
+    g2 += `<path d="M${q(-0.66)} ${q(-0.05)}Q${q(-0.5)} ${q(0.02)} ${q(-0.3)} ${q(0.02)}L${q(-0.28)} ${q(-0.03)}Q${q(-0.44)} ${q(-0.07)} ${q(-0.56)} ${q(-0.13)}ZM${q(-0.6)} ${q(-0.03)}Q${q(-0.46)} ${q(0.03)} ${q(-0.36)} ${q(0.03)}" fill="#2a2018" stroke="#2a2018" stroke-width="${q(0.02)}"/>`;
+    /* Körper (Torpedo) mit Hals und Kopf in einem Umriss */
+    g2 += `<path d="M${q(-0.78)} ${q(-0.04)}Q${q(-0.76)} ${q(-0.2)} ${q(-0.48)} ${q(-0.25)}Q${q(-0.12)} ${q(-0.3)} ${q(0.12)} ${q(-0.34)}Q${q(0.3)} ${q(-0.38)} ${q(hx - 0.14)} ${q(hy + 0.04)}Q${q(hx - 0.08)} ${q(hy - 0.08)} ${q(hx + 0.04)} ${q(hy - 0.08)}Q${q(hx + 0.14)} ${q(hy - 0.07)} ${q(hx + 0.27)} ${q(hy + 0.02)}Q${q(hx + 0.2)} ${q(hy + 0.07)} ${q(hx + 0.06)} ${q(hy + 0.08)}Q${q(hx - 0.04)} ${q(hy + 0.12)} ${q(hx - 0.06)} ${q(hy + 0.2)}Q${q(0.36)} ${q(-0.2)} ${q(0.28)} ${q(-0.06)}Q${q(0.22)} ${q(0)} ${q(0.12)} 0L${q(-0.6)} 0Z" fill="${fell}"/>`;
+    /* Vorderflosse lang und flach, aufgestützt */
+    g2 += `<path d="M${q(0.14)} ${q(-0.26)}Q${q(0.24)} ${q(-0.1)} ${q(0.38)} ${q(0.01)}L${q(0.18)} ${q(0.02)}Q${q(0.12)} ${q(-0.1)} ${q(0.06)} ${q(-0.2)}Z" fill="#2a2018"/>`;
+    /* Auge, Nase, Ohr, Schnurrhaare */
+    g2 += `<circle cx="${q(hx + 0.03)}" cy="${q(hy - 0.02)}" r="${q(0.026)}" fill="#0b0806"/><circle cx="${q(hx + 0.038)}" cy="${q(hy - 0.028)}" r="${q(0.009)}" fill="#fff"/><circle cx="${q(hx + 0.25)}" cy="${q(hy + 0.02)}" r="${q(0.018)}" fill="#0b0806"/>`;
+    g2 += `<path d="M${q(hx - 0.08)} ${q(hy - 0.05)}l${q(-0.03)} ${q(-0.06)} ${q(0.045)} ${q(0.025)}" stroke="#2b2119" stroke-width="${q(0.025)}" fill="none"/>`;
+    g2 += `<path d="M${q(hx + 0.2)} ${q(hy + 0.04)}l${q(0.2)} ${q(0.01)}M${q(hx + 0.2)} ${q(hy + 0.05)}l${q(0.18)} ${q(0.07)}M${q(hx + 0.19)} ${q(hy + 0.06)}l${q(0.13)} ${q(0.12)}" stroke="#efe6d4" stroke-width="${q(0.01)}" opacity=".9"/>`;
+    /* Glanzkante (nasses Fell glänzt stärker) */
+    g2 += `<path d="M${q(-0.6)} ${q(-0.24)}Q${q(-0.1)} ${q(-0.33)} ${q(0.2)} ${q(-0.38)}Q${q(hx - 0.2)} ${q(hy + 0.06)} ${q(hx - 0.06)} ${q(hy - 0.06)}" stroke="${nass ? "#d8c4a8" : "#f0dcbc"}" stroke-width="${q(0.03)}" fill="none" opacity="${nass ? 0.75 : 0.55}"/>`;
     return g2 + `</g>`;
   };
-  k += robbe(-1.5, -0.74, 1.1, false, 1, false) + robbe(1.4, -0.74, 1.15, true, -1, true) + robbe(0.1, -0.76, 1, true, 1, false);
-  /* eine Robbe schwimmt daneben: Kopf mit Schnauze, Ohr, Schnurrhaaren, Wellenring */
+  k += robbe(-1.5, -0.74, 1.1, 0.2, 1, false) + robbe(1.4, -0.74, 1.15, 1, -1, true) + robbe(0.1, -0.76, 1, 0.7, 1, false);
+  /* eine Robbe schwimmt daneben: Kopf mit spitzer Schnauze, Ohr, Schnurrhaaren, nasser Glanz, Wellenring */
   const SW = [4.8, 0.05];
   k += `<g transform="translate(${g(SW[0])} ${g(SW[1])})">`;
   k += `<ellipse cx="0" cy="${g(0.08)}" rx="${g(0.9)}" ry="${g(0.16)}" fill="none" stroke="#e2f0f0" stroke-width=".45" opacity=".8"/><ellipse cx="0" cy="${g(0.08)}" rx="${g(1.4)}" ry="${g(0.24)}" fill="none" stroke="#e2f0f0" stroke-width=".3" opacity=".45"/>`;
-  k += `<path d="M${g(-0.3)} ${g(0.05)} Q${g(-0.32)} ${g(-0.3)} ${g(-0.05)} ${g(-0.38)} Q${g(0.25)} ${g(-0.38)} ${g(0.45)} ${g(-0.25)} Q${g(0.3)} ${g(-0.15)} ${g(0.2)} ${g(-0.12)} Q${g(0.25)} ${g(0.02)} ${g(0.25)} ${g(0.06)} Z" fill="#2c2119"/>`;
-  k += `<circle cx="${g(0.1)}" cy="${g(-0.26)}" r="${g(0.03)}" fill="#000"/><circle cx="${g(0.43)}" cy="${g(-0.24)}" r="${g(0.02)}" fill="#000"/><path d="M${g(-0.16)} ${g(-0.34)} l${g(-0.04)} ${g(-0.07)}" stroke="#2c2119" stroke-width="${g(0.03)}"/>`;
-  k += `<path d="M${g(0.36)} ${g(-0.2)} l${g(0.22)} ${g(0.03)} M${g(0.36)} ${g(-0.19)} l${g(0.2)} ${g(0.09)}" stroke="#efe6d4" stroke-width="${g(0.012)}"/>`;
+  k += `<path d="M${g(-0.32)} ${g(0.06)}Q${g(-0.34)} ${g(-0.3)} ${g(-0.08)} ${g(-0.4)}Q${g(0.16)} ${g(-0.44)} ${g(0.3)} ${g(-0.33)}L${g(0.58)} ${g(-0.24)}Q${g(0.52)} ${g(-0.18)} ${g(0.3)} ${g(-0.15)}Q${g(0.26)} ${g(0)} ${g(0.26)} ${g(0.06)}Z" fill="#2c2119"/>`;
+  k += `<path d="M${g(-0.24)} ${g(-0.2)}Q${g(-0.14)} ${g(-0.38)} ${g(0.12)} ${g(-0.4)}" stroke="#bfa98a" stroke-width="${g(0.03)}" fill="none" opacity=".8"/>`;
+  k += `<circle cx="${g(0.14)}" cy="${g(-0.3)}" r="${g(0.032)}" fill="#000"/><circle cx="${g(0.152)}" cy="${g(-0.31)}" r="${g(0.01)}" fill="#fff"/><circle cx="${g(0.55)}" cy="${g(-0.23)}" r="${g(0.02)}" fill="#000"/><path d="M${g(-0.12)} ${g(-0.38)} l${g(-0.05)} ${g(-0.08)}" stroke="#2c2119" stroke-width="${g(0.03)}"/>`;
+  k += `<path d="M${g(0.46)} ${g(-0.2)} l${g(0.24)} ${g(0.03)} M${g(0.46)} ${g(-0.19)} l${g(0.22)} ${g(0.1)} M${g(0.45)} ${g(-0.18)} l${g(0.16)} ${g(0.15)}" stroke="#efe6d4" stroke-width="${g(0.012)}"/>`;
   k += `</g>` + flaeche(Number(g(SW[0])) - 9, -10, 18, 13);
   S.teil({ id: "robbe", de: "die Robbe", syl: "ROB-be", it: "la foca", itSyl: "FO-ca", en: "seal", x: X, y: Y, kunst: k,
     tipp: "Die Kap-Pelzrobben ruhen im Hafen auf einer schwimmenden Plattform – nur für sie gebaut. Nass ist ihr Fell fast schwarz, trocken hellbraun." });
@@ -725,7 +747,7 @@ const HAUT = "#6b4430", HAUTS = "#4a2c1e";
      Sie steht auf einem kleinen Podest, dreht Kopf und Schultern zu ihm (Band-Gefühl) und spielt: Ellbogen
      gebeugt, ein Schlägel liegt auf einem Stab, der andere holt aus. Die Bass-Marimba ist größer als die
      erste: sechs breite, tiefe Stäbe und sehr lange Rohre fast bis zum Boden. Ursprung = Fußpunkt. */
-  const X = 104, Y = 219, s = vorn(Y) / 51.25;
+  const X = 98, Y = 219, s = vorn(Y) / 51.25;
   let k = `<g transform="scale(${r(s * 100) / 100})">`;
   /* Oberkörper, Schultern zum Musiker (nach links) gedreht */
   k += `<path d="M-7.6 -40Q-10.4 -54 -10.4 -63Q-8 -67.4 -3 -67.8L4 -67.6Q8.6 -66.6 9.4 -62.6Q8.6 -54 7.4 -40Z" fill="${S.lg("kleid2", [[0, "#2f6fb6"], [1, "#1f4f8f"]], 0, 0, 1, 0)}"/>`;
@@ -745,7 +767,7 @@ const HAUT = "#6b4430", HAUTS = "#4a2c1e";
   k += `</g>`;
   /* Bass-Marimba davor (eigener Fußpunkt 6 Einheiten näher): sechs breite Stäbe, lange Rohre */
   const mb = (n) => r(n * s);
-  const MY = 6, BH = 6 - 41, BW = 44, NB = 6, bb = (2 * BW) / NB;
+  const MY = 6, BH = 6 - 41, BW = 37, NB = 6, bb = (2 * BW) / NB;
   let m = `<g transform="translate(${mb(8)} ${mb(MY)})">${schlag(Number(mb(80)), 0.4, vorn(Y) * 1.0, 0.28)}</g>`;
   m += `<path d="M${mb(-BW - 2)} ${mb(MY)}L${mb(-BW)} ${mb(BH)}M${mb(-BW + 4)} ${mb(MY)}L${mb(-BW)} ${mb(BH)}M${mb(BW + 2)} ${mb(MY)}L${mb(BW)} ${mb(BH)}M${mb(BW - 4)} ${mb(MY)}L${mb(BW)} ${mb(BH)}M${mb(-BW + 2)} ${mb(MY - 10)}H${mb(BW - 2)}" stroke="#5a3a22" stroke-width="${mb(1.6)}"/>`;
   let ro = "";
@@ -839,7 +861,9 @@ const TISCH = { x: 312, y: 247 };
   k += `<path d="M${g(-0.02)} ${g(-1.45)}Q${g(-0.11)} ${g(-1.6)} ${g(-0.075)} ${g(-1.95)}L${g(-0.01)} ${g(-2.3)}L${g(0.03)} ${g(-2.3)}L${g(0.075)} ${g(-1.95)}Q${g(0.11)} ${g(-1.6)} ${g(0.02)} ${g(-1.45)}Z" fill="${S.lg("schirm", [[0, "#cfc6b4"], [0.55, "#f3efe4"], [1, "#e0d8c6"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M${g(-0.06)} ${g(-1.55)}Q${g(-0.03)} ${g(-1.9)} ${g(-0.005)} ${g(-2.25)}M${g(0.04)} ${g(-1.56)}Q${g(0.03)} ${g(-1.9)} ${g(0.012)} ${g(-2.25)}M${g(-0.02)} ${g(-1.5)}Q${g(0.01)} ${g(-1.8)} ${g(0.002)} ${g(-2.2)}" stroke="#b5ab96" stroke-width=".45" fill="none"/>`;
   k += `<path d="M${g(-0.085)} ${g(-1.74)}L${g(0.085)} ${g(-1.72)}" stroke="#2f4a6a" stroke-width="1.1"/><path d="M${g(-0.03)} ${g(-2.3)}L${g(0)} ${g(-2.38)}L${g(0.03)} ${g(-2.3)}Z" fill="#9a9488"/>`;
-  S.teil({ id: "sonnenschirm", de: "der Sonnenschirm", syl: "SON-nen-schirm", it: "l'ombrellone", itSyl: "om-brel-LO-ne", en: "parasol", x: X, y: Y, steht: true, kunst: k,
+  /* Wortmarke in der Schirmmitte, damit das Wort ganz im Bild steht */
+  const AX = 386, AY = 190;
+  S.teil({ id: "sonnenschirm", de: "der Sonnenschirm", syl: "SON-nen-schirm", it: "l'ombrellone", itSyl: "om-brel-LO-ne", en: "parasol", x: AX, y: AY, kunst: `<g transform="translate(${X - AX} ${Y - AY})">${k}</g>`,
     tipp: "Bei starkem Südostwind bleiben die Sonnenschirme zu – sonst fliegen sie weg." });
 }
 const tischUnter = [];
@@ -882,7 +906,10 @@ const tischUnter = [];
   k += `<path d="M${g(TX - 0.045)} ${g(TOP - 0.1)} L${g(TX - 0.048)} ${g(TOP - 0.125)} L${g(TX + 0.048)} ${g(TOP - 0.125)} L${g(TX + 0.045)} ${g(TOP - 0.1)}" fill="#e8f1f2" opacity=".5"/>`;
   k += `<path d="M${g(TX - 0.03)} ${g(TOP - 0.09)} L${g(TX - 0.03)} ${g(TOP - 0.03)}" stroke="#fff" stroke-width=".35" opacity=".6"/>`;
   k += `<path d="M${g(TX + 0.045)} ${g(TOP - 0.09)} q${g(0.03)} ${g(0.02)} 0 ${g(0.06)}" stroke="#d9e4e6" stroke-width=".4" fill="none"/>`;
-  k += `<path d="M${g(TX + 0.02)} ${g(TOP - 0.135)} q${g(-0.02)} ${g(-0.03)} 0 ${g(-0.06)} q${g(0.02)} ${g(-0.03)} 0 ${g(-0.06)}" stroke="#fff" stroke-width=".3" opacity=".5" fill="none"/>`;
+  /* Dampf: der Südost weht ihn flach nach rechts vorn weg */
+  k += `<path d="M${g(TX + 0.01)} ${g(TOP - 0.13)} q${g(0.03)} ${g(-0.025)} ${g(0.08)} ${g(-0.01)} t${g(0.09)} ${g(0.012)} M${g(TX + 0.02)} ${g(TOP - 0.12)} q${g(0.04)} ${g(-0.01)} ${g(0.1)} ${g(0.008)}" stroke="#fff" stroke-width=".35" opacity=".55" fill="none"/>`;
+  /* Serviette unter dem Glas, eine Ecke flattert im Wind */
+  k += `<path d="M${g(TX + 0.05)} ${g(TOP + 0.02)}l${g(0.1)} ${g(-0.012)}l${g(0.03)} ${g(-0.03)}q${g(0.04)} ${g(-0.03)} ${g(0.07)} ${g(-0.012)}q${g(-0.03)} ${g(0.02)} ${g(-0.05)} ${g(0.05)}l${g(-0.06)} ${g(0.024)}z" fill="#f8f6f0" stroke="#d8d2c4" stroke-width=".2"/>`;
   /* Wortmarken versetzt: Tee und Koeksister unten am Tischrand, Protea oben an der Blüte, Pinguin rechts */
   const AT = [TISCH.x + Number(g(TX)) - 2, TISCH.y + Number(g(TOP + 0.08))];
   tischUnter.push({ id: "rooibostee", de: "der Rooibostee", syl: "ROI-bos-tee", it: "il tè rooibos", itSyl: "TÈ ROI-bos", en: "rooibos tea", x: AT[0], y: AT[1],
@@ -903,7 +930,7 @@ const tischUnter = [];
   }
   k += `<path d="${zopf}" fill="${KOEK}" stroke="#6a2e0c" stroke-width=".25"/><path d="${fuge}" stroke="#6a2e0c" stroke-width=".3" fill="none"/><path d="${glanz}" stroke="#fff3cc" stroke-width=".3" stroke-dasharray=".7 .5" opacity=".9"/>`;
   tischUnter.push({ id: "koeksister", de: "der Koeksister", syl: "KUK-sis-ter", it: "il koeksister", itSyl: "KUK-sis-ter", en: "koeksister", x: TISCH.x + Number(g(KX)) + 2, y: TISCH.y + Number(g(TOP + 0.16)),
-    kunst: flaeche(-2 - Number(g(0.11)), Number(g(-0.2)), Number(g(0.22)), Number(g(0.12)), 0.6), tipp: "Koeksisters sind geflochtenes, frittiertes Gebäck, das in kaltem Sirup getränkt wird – sehr süß!" });
+    kunst: flaeche(-2 - Number(g(0.11)), Number(g(-0.24)), Number(g(0.22)), Number(g(0.17)), 0.6), tipp: "Koeksisters sind geflochtenes, frittiertes Gebäck, das in kaltem Sirup getränkt wird – sehr süß!" });
   /* Königsprotea in einer Vase: ein tiefer Kelch, schräg von oben: hinten die hellen Innenseiten der steifen
      Hochblätter, in der Mitte die silbrig-weiße, behaarte Kuppel, vorn die kräftig rosa Außenseiten;
      ledrige grüne Blätter mit rötlichem Rand am dicken Stiel */
@@ -948,7 +975,7 @@ const tischUnter = [];
   pin += `<path d="M${pg(QX - 0.03)} ${pg(TOP)} l${pg(-0.012)} ${pg(0.004)} l${pg(0.03)} 0 Z M${pg(QX + 0.012)} ${pg(TOP)} l${pg(0.03)} ${pg(0.004)} l${pg(-0.012)} ${pg(-0.004)} Z" fill="#f08a1e"/>`;
   k += pin;
   tischUnter.push({ id: "pinguin", de: "der Pinguin", syl: "PIN-gu-in", it: "il pinguino", itSyl: "pin-GUI-no", en: "penguin", x: TISCH.x + Number(g(QX)) + 5, y: TISCH.y + Number(g(TOP - 0.06)),
-    kunst: flaeche(-5 - Number(g(0.065)), -Number(g(0.14)), Number(g(0.13)), Number(g(0.21)), 0.6), tipp: "Ein Pinguin aus Draht und Glasperlen – Kunsthandwerk aus Kapstadt. Echte Brillenpinguine leben am Boulders Beach." });
+    kunst: flaeche(-5 - Number(g(0.085)), -Number(g(0.14)), Number(g(0.17)), Number(g(0.21)), 0.6), tipp: "Ein Pinguin aus Draht und Glasperlen – Kunsthandwerk aus Kapstadt. Echte Brillenpinguine leben am Boulders Beach." });
   S.teil({ id: "tisch", de: "der Tisch", syl: "TISCH", it: "il tavolino", itSyl: "ta-vo-LI-no", en: "table", x: TISCH.x, y: TISCH.y, steht: true, kunst: k,
     tipp: "Im Café am Kai trinkt man Rooibostee mit Blick auf den Tafelberg.",
     zoom: { x: TISCH.x - 38, y: TISCH.y - 80, w: 76, h: 50 }, unter: tischUnter });

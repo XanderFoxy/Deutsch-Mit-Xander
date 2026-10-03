@@ -1003,5 +1003,8 @@ const standUnter = [];
 /* Abendlicht: warmer Schein von rechts (fängt nichts ab) */
 S.davor(`<rect width="320" height="200" fill="${S.rg("abendlicht", [[0, "#ffcf86", 0.24], [0.5, "#ffcf86", 0.06], [1, "#ffcf86", 0]], 1, 0.45, 0.9)}"/>`);
 
+/* Silbenschreibung einheitlich: nur die betonten Silben groß, alles andere klein */
+const silben = (t) => { if (!t) return t; const st = t.split(/([- ])/); const gross = (x) => x.length && x === x.toUpperCase() && x !== x.toLowerCase(); const lang = st.some((x) => gross(x) && x.length > 1); return st.map((x) => (/^[- ]$/.test(x) ? x : (gross(x) && (x.length > 1 || !lang) ? x : x.toLowerCase()))).join(""); };
+for (const t of S.teile) for (const u of [t, ...(t.unter || [])]) { u.syl = silben(u.syl); u.itSyl = silben(u.itSyl); }
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/mexiko.js"));
 console.log(aus);

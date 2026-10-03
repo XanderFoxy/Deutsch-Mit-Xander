@@ -213,7 +213,17 @@ const HERBST = ["#5d6f3a", "#86914a", "#b6ad5a", "#c98f3a"], SOMMER = ["#4f6a3a"
 const baum = (x, y, h, breite, farben, seed) => {
   const m = mY(y), H = h * m, R = breite * m / 2;
   let g = `<path d="M${r(x - 0.18 * m)} ${r(y)} L${r(x - 0.12 * m)} ${r(y - H * 0.5)} L${r(x + 0.12 * m)} ${r(y - H * 0.5)} L${r(x + 0.18 * m)} ${r(y)} Z" fill="#5d4c3a"/>`;
-  g += krone(x, y - H * 0.62, R, H * 0.36, farben, seed);
+  /* gelappte Krone: einzelne Laubpartien, Licht von hinten rechts, erstes Herbstlaub als Fläche */
+  const z = zufall(seed), cx = x, cy = y - H * 0.62, ry = H * 0.36;
+  const lappen = (lx, ly, lr, f1, f2) => {
+    const n = 9, p = [];
+    for (let i = 0; i < n; i++) { const w = i / n * Math.PI * 2, q = 0.78 + 0.32 * z(); p.push([lx + Math.cos(w) * lr * q, ly + Math.sin(w) * lr * 0.85 * q]); }
+    const d = (sc, dx, dy) => { const P = p.map(([a, b]) => [lx + (a - lx) * sc + dx, ly + (b - ly) * sc + dy]); let t = `M${r((P[0][0] + P[n - 1][0]) / 2)} ${r((P[0][1] + P[n - 1][1]) / 2)}`; for (let i = 0; i < n; i++) { const a = P[i], b = P[(i + 1) % n]; t += ` Q${r(a[0])} ${r(a[1])} ${r((a[0] + b[0]) / 2)} ${r((a[1] + b[1]) / 2)}`; } return t + " Z"; };
+    return `<path d="${d(1, 0, 0)}" fill="${f1}"/><path d="${d(0.62, lr * 0.22, -lr * 0.2)}" fill="${f2}"/>`;
+  };
+  const L = [[-0.5, -0.4], [0.3, -0.55], [-0.1, -0.78], [0.62, -0.2], [-0.7, 0.05], [-0.2, -0.2], [0.25, -0.05], [0.65, 0.3], [-0.5, 0.45], [0, 0.35], [0.3, 0.6], [-0.2, 0.68]];
+  const FARBEN = [["#4d6538", "#6f8a48"], ["#56703c", "#88a052"], ["#5f7440", "#93a85a"], ["#a98a34", "#d2b452"], ["#9c6a2e", "#c98f46"]];
+  L.forEach(([a, b], i) => { const [f1, f2] = FARBEN[(i === 2 || i === 6 || i === 3) ? 3 + (seed + i) % 2 : (seed + i) % 3]; g += lappen(cx + a * R, cy + b * ry, R * (0.3 + 0.1 * z()), f1, f2); });
   return g;
 };
 
@@ -344,7 +354,7 @@ const FT = { x: 306, y: 85, s: 31 / 86.4 };
   k += `<path d="${ma}" fill="${MAUER}"/><path d="${sch}" stroke="#6d6450" stroke-width=".22" fill="none" opacity=".75"/>`;
   k += `<path d="${dr}" stroke="#d8d0b4" stroke-width=".05" fill="none" opacity=".8"/><path d="${pf}" stroke="#4d4030" stroke-width=".1" stroke-dasharray=".08 1.1" fill="none"/>`;
   for (const [rz, f, [c1, c2]] of reihen) {
-    k += `<path d="M${kurve(rz).join(" L")}" stroke="${c2}" stroke-width="${r(0.85 * f)}" stroke-dasharray="${r(0.7 * f)} ${r(0.4 * f)}" fill="none"/>`;
+    k += `<path d="M${kurve(rz).join(" L")}" stroke="${c2}" stroke-width="${r(0.85 * f)}" stroke-dasharray="${r(0.25 * f)} ${r(0.85 * f)}" stroke-linecap="round" fill="none"/>`;
     k += `<path d="M${kurve((x) => rz(x) - 0.12 * f).join(" L")}" stroke="${c1}" stroke-width="${r(0.45 * f)}" stroke-dasharray="${r(0.45 * f)} ${r(0.65 * f)}" fill="none"/>`;
   }
   /* Wald auf der Kuppe: unregelmäßiger Saum, zwei Töne */
@@ -511,8 +521,11 @@ const NS = { x: 170, y: 117 };
     for (const y of [-25.25, -24.45, -23.65]) w += `<path d="${LOEWE}" transform="translate(.12 ${y}) scale(.105)" fill="#1d1d1d"/>`;
     w += `<path d="M-1.2 -25.5 L-1.2 -26.3 L-.7 -25.9 L-.35 -26.6 L0 -26 L.35 -26.6 L.7 -25.9 L1.2 -26.3 L1.2 -25.5 Z" fill="${GOLD}" stroke="#6b5420" stroke-width=".08"/>`;
     /* Schildhalter als Steinrelief */
-    w += `<path d="${LOEWE}" transform="translate(-2.15 -25.5) rotate(-58) scale(-.32 .32)" fill="#fbf6ea" stroke="#857555" stroke-width=".4"/>`;
-    w += `<g transform="translate(3.3 -22.15) rotate(16) scale(-.27 .27)"><path d="${HIRSCH}" fill="#fbf6ea" stroke="#857555" stroke-width=".4"/><path d="${GEWEIH}" stroke="#857555" stroke-width=".55" fill="none"/></g>`;
+    /* Schildhalter als Sandsteinrelief: links ein steigender Löwe, rechts ein Hirsch */
+    const RELIEF = S.lg("relief_st", [[0, "#b9a988"], [0.45, "#e9dcc0"], [1, "#fbf3e2"]], 0, 0, 1, 0);
+    const LOEWE_STEIGEND = "M0 0 L.7 0 L1 -2.3 L1.8 -3.8 Q2.5 -4.8 2.4 -5.9 L3 -7.2 L4.3 -6.6 L4.5 -7 L3.4 -7.9 L4.5 -8.3 L4.7 -8.8 L3.6 -8.9 L3.5 -9.3 L3.9 -9.7 L3.3 -10.3 L2.4 -10.5 Q1.1 -10.1 1.1 -8.7 Q.5 -7.5 .9 -6.1 Q.3 -4.6 .1 -3.6 Q-1 -3.8 -1.5 -5.1 Q-1.9 -6.6 -1.1 -6.9 Q-1.5 -6 -1 -4.8 Q-.5 -3.4 -.2 -2.6 Z";
+    w += `<path d="${LOEWE_STEIGEND}" transform="translate(-3.9 -21.9) scale(.34)" fill="${RELIEF}" stroke="#8a7a58" stroke-width=".35"/><path d="M1.2 -8.6 Q.9 -9.6 1.9 -10.2 M2 -9.4 Q1.6 -8.6 2.1 -8" transform="translate(-3.9 -21.9) scale(.34)" stroke="#9c8a64" stroke-width=".3" fill="none"/>`;
+    w += `<g transform="translate(3.3 -22.15) rotate(16) scale(-.27 .27)"><path d="${HIRSCH}" fill="${RELIEF}" stroke="#8a7a58" stroke-width=".4"/><path d="${GEWEIH}" stroke="#8a7a58" stroke-width=".6" fill="none"/></g>`;
     w += `<path d="M-6.6 -22.3 Q-5 -22.8 -3.2 -22.4 M3.4 -22.4 Q5 -22.8 6.6 -22.3" stroke="#cdbf9f" stroke-width=".3" fill="none"/>`;
     k += w;
   }
@@ -612,6 +625,78 @@ const KUP = { x: kgP(40, 0)[0], m: 300 / 140 };
     unter: [
       { id: "hirsch", de: "der Hirsch", syl: "HIRSCH", it: "il cervo", itSyl: "CER-vo", en: "stag",
         x: KUP.x, y: HOR + (6 - 30.05) * KUP.m, kunst: flaeche(-3.4, -7.4, 6.6, 7.6, 0.4), tipp: "Der goldene Hirsch auf dem Kunstgebäude ist das Wappentier Württembergs." },
+    ] });
+}
+
+/* =====================================================================
+   12 — DER KÖNIGSBAU (links: die Kolonnade läuft zum Bahnhofsturm hin)
+   ===================================================================== */
+{
+  let k = "";
+  /* Flucht zum Bahnhofsturm: oben (0|62) → (96|112), unten (0|136) → (96|112) */
+  const VX = 96, oben0 = 62, unten0 = 136;
+  const xU = (u) => VX * (1 - 90 / (90 + u));             /* u = Meter von der Südecke */
+  const oy = (x) => oben0 + (HOR - oben0) * x / VX, uy = (x) => unten0 + (HOR - unten0) * x / VX;
+  const at = (x, t) => uy(x) + (oy(x) - uy(x)) * t;          /* t = Anteil der Höhe */
+  const xe = xU(135);
+  const quad = (t0, t1, x0, x1, f) => `<path d="M${r(x0)} ${r(at(x0, t0))} L${r(x1)} ${r(at(x1, t0))} L${r(x1)} ${r(at(x1, t1))} L${r(x0)} ${r(at(x0, t1))} Z" fill="${f}"/>`;
+  /* die Platzseite liegt im Streiflicht (Sonne fast in der Flucht der Fassade) */
+  const SANDK = S.lg("koenig", [[0, "#e2d3b4"], [1, "#cdbd9b"]]);
+  k += quad(0.62, 1, -2, xe, SANDK);
+  let fen = "";
+  for (let u = 2; u < 134; u += 4) { const x = xU(u), x2 = xU(u + 1.6); fen += `M${r(x)} ${r(at(x, 0.7))} L${r(x2)} ${r(at(x2, 0.7))} L${r(x2)} ${r(at(x2, 0.9))} L${r(x)} ${r(at(x, 0.9))} Z `; }
+  k += `<path d="${fen}" fill="#59616b"/>`;
+  k += quad(1, 1.07, -2, xe, "#f3ead6");
+  k += quad(1.07, 1.12, -2, xe, "#7d8896");
+  k += quad(0.58, 0.62, -2, xe, "#f4ecda");
+  let bal = "";
+  for (let u = 0.6; u < 135; u += 1.2) { const x = xU(u); bal += `M${r(x)} ${r(at(x, 0.585))} L${r(x)} ${r(at(x, 0.62))} `; }
+  k += `<path d="${bal}" stroke="#d2c4a5" stroke-width=".22"/>`;
+  k += quad(0.52, 0.58, -2, xe, "#efe5cf");
+  k += quad(0.5, 0.52, -2, xe, "#d6c7a8");
+  /* Halle hinter den Säulen: Schatten, Schaufenster warm beleuchtet */
+  k += quad(0, 0.5, -2, xe, S.lg("halle", [[0, "#6d6152"], [1, "#4a4138"]]));
+  let lad = "";
+  for (let u = 1; u < 134; u += 4) { const x = xU(u), x2 = xU(u + 2.4); lad += `M${r(x)} ${r(at(x, 0.04))} L${r(x2)} ${r(at(x2, 0.04))} L${r(x2)} ${r(at(x2, 0.36))} L${r(x)} ${r(at(x, 0.36))} Z `; }
+  k += `<path d="${lad}" fill="${S.lg("laden", [[0, "#f6d79a"], [1, "#c99a55"]])}" opacity=".8"/>`;
+  /* Boden der Kolonnade */
+  k += `<path d="M-2 ${r(at(-2, 0))} L${r(xe)} ${r(at(xe, 0))} L${r(xe)} ${r(at(xe, 0) + 0.5)} L-2 ${r(at(-2, 0) + 1.6)} Z" fill="#b8ab93"/>`;
+  /* 34 ionische Säulen: vorn mit attischer Basis, Kannelur und Volutenkapitell */
+  S.def(`<g id="${S.id("kap")}"><rect x="-.62" y=".02" width="1.24" height=".22" fill="#efe4cc"/><circle cx="-.6" cy=".26" r=".2" fill="#f4ead6" stroke="#a8956f" stroke-width=".07"/><circle cx="-.6" cy=".26" r=".07" fill="#a8956f"/><circle cx=".6" cy=".26" r=".2" fill="#f4ead6" stroke="#a8956f" stroke-width=".07"/><circle cx=".6" cy=".26" r=".07" fill="#a8956f"/><rect x="-.82" y="-.18" width="1.64" height=".2" fill="#f7f0e0"/></g><g id="${S.id("basis")}"><rect x="-.72" y="-.2" width="1.44" height=".2" fill="#ddd0b4"/><rect x="-.62" y="-.36" width="1.24" height=".17" rx=".08" fill="#efe5d0"/></g>`);
+  const SAEULE_K = S.lg("koensaeule", [[0, "#b9a988"], [0.3, "#dccfb2"], [0.62, "#f6eedd"], [0.85, "#e6dabf"], [1, "#c4b493"]], 0, 0, 1, 0);
+  for (let i = 0; i < 34; i++) {
+    const u = i * 4.09, x = xU(u), w = Math.max(0.3, 300 * 1.0 / (81 + u) * 0.82);
+    const yb = at(x, 0), yt = at(x, 0.5);
+    k += `<rect x="${r(x - w / 2)}" y="${r(yt)}" width="${r(w)}" height="${r(yb - yt)}" fill="${SAEULE_K}"/>`;
+    if (w > 2) {
+      k += `<path d="M${r(x - w * 0.25)} ${r(yt + w * 0.5)} L${r(x - w * 0.25)} ${r(yb - w * 0.55)} M${r(x)} ${r(yt + w * 0.5)} L${r(x)} ${r(yb - w * 0.55)} M${r(x + w * 0.25)} ${r(yt + w * 0.5)} L${r(x + w * 0.25)} ${r(yb - w * 0.55)}" stroke="#bfae8c" stroke-width="${r(w * 0.07)}" opacity=".75"/>`;
+      k += `<path d="M${r(x - w * 0.38)} ${r(yt + w * 0.5)} L${r(x - w * 0.38)} ${r(yb - w * 0.55)} M${r(x + w * 0.12)} ${r(yt + w * 0.5)} L${r(x + w * 0.12)} ${r(yb - w * 0.55)}" stroke="#fffaf0" stroke-width="${r(w * 0.05)}" opacity=".6"/>`;
+      /* attische Basis: Plinthe, zwei Wülste, Hohlkehle */
+      k += `<rect x="${r(x - w * 0.72)}" y="${r(yb - w * 0.2)}" width="${r(w * 1.44)}" height="${r(w * 0.2)}" fill="#ddd0b4"/>`;
+      k += `<rect x="${r(x - w * 0.65)}" y="${r(yb - w * 0.36)}" width="${r(w * 1.3)}" height="${r(w * 0.17)}" rx="${r(w * 0.08)}" fill="#efe5d0"/>`;
+      k += `<rect x="${r(x - w * 0.54)}" y="${r(yb - w * 0.47)}" width="${r(w * 1.08)}" height="${r(w * 0.12)}" rx="${r(w * 0.06)}" fill="#e9dfc8"/>`;
+      /* Kapitell: Echinus mit Eierstab, Voluten als Spiralen, Abakus */
+      k += `<rect x="${r(x - w * 0.62)}" y="${r(yt + w * 0.02)}" width="${r(w * 1.24)}" height="${r(w * 0.22)}" fill="#efe4cc"/>`;
+      k += `<path d="M${r(x - w * 0.45)} ${r(yt + w * 0.13)} h${r(w * 0.9)}" stroke="#bba88a" stroke-width="${r(w * 0.07)}" stroke-dasharray="${r(w * 0.08)} ${r(w * 0.06)}"/>`;
+      for (const s of [-1, 1]) {
+        const vx = x + s * w * 0.6, vy = yt + w * 0.26, q = w * 0.2;
+        k += `<path d="M${r(vx - s * q * 1.3)} ${r(vy - q * 1.1)} Q${r(vx + s * q * 0.4)} ${r(vy - q * 1.3)} ${r(vx + s * q)} ${r(vy - q * 0.1)} A${r(q)} ${r(q)} 0 1 ${s > 0 ? 1 : 0} ${r(vx - s * q * 0.6)} ${r(vy + q * 0.6)} A${r(q * 0.6)} ${r(q * 0.6)} 0 1 ${s > 0 ? 1 : 0} ${r(vx + s * q * 0.3)} ${r(vy - q * 0.15)} A${r(q * 0.3)} ${r(q * 0.3)} 0 1 ${s > 0 ? 1 : 0} ${r(vx)} ${r(vy + q * 0.2)}" stroke="#a8956f" stroke-width="${r(w * 0.065)}" fill="#f4ead6"/>`;
+      }
+      k += `<rect x="${r(x - w * 0.82)}" y="${r(yt - w * 0.18)}" width="${r(w * 1.64)}" height="${r(w * 0.2)}" fill="#f7f0e0"/>`;
+    } else if (w > 0.6) {
+      k += `<use href="#${S.id("kap")}" transform="translate(${r(x)} ${r(yt)}) scale(${w.toFixed(2)})"/><use href="#${S.id("basis")}" transform="translate(${r(x)} ${r(yb)}) scale(${w.toFixed(2)})"/>`;
+    }
+  }
+  /* Stirnseite (Südecke) im Licht, mit Pilastern */
+  k += `<path d="M-2 ${r(at(-2, 0))} L-2 ${r(at(-2, 1.07))} L-6 ${r(at(-2, 1.07) + 1)} L-6 ${r(at(-2, 0) + 0.6)} Z" fill="#efe2c4"/>`;
+  const SU = 16.36, sx = xU(SU), sw = 300 / (81 + SU) * 0.82;
+  S.teil({ id: "koenigsbau", de: "der Königsbau", syl: "KÖ-nigs-bau", it: "il Königsbau (il palazzo del re)", itSyl: "KÖ-nigs-bau", en: "Königsbau",
+    x: 0, y: 0, kunst: k, tipp: "Der Königsbau hat eine 135 Meter lange Säulenhalle mit 34 Säulen, mit Läden und Cafés.",
+    zoom: { x: 5, y: 97, w: 56, h: 35 },
+    unter: [
+      { id: "saeule", de: "die Säule", syl: "SÄU-le", it: "la colonna", itSyl: "co-LON-na", en: "column",
+        x: sx, y: at(sx, 0), kunst: flaeche(-sw * 0.85, -(at(sx, 0) - at(sx, 0.52)), sw * 1.7, at(sx, 0) - at(sx, 0.52), 0.4),
+        tipp: "Die Säulen des Königsbaus sind ionisch: Oben haben sie zwei Schnecken, die Voluten." },
     ] });
 }
 
@@ -730,6 +815,7 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
    ===================================================================== */
 {
   const [cx, cy, D] = PAV;
+  S.def(`<pattern id="${S.id("gitter")}" width=".7" height=".7" patternUnits="userSpaceOnUse"><path d="M0 0 L.7 .7 M.7 0 L0 .7" stroke="#3f5a4b" stroke-width=".1"/></pattern>`);
   /* Punkt am Pavillon: Winkel w (0 = zu uns), Radius R (m), Höhe z (m) */
   const P = (w, R, z) => { const X = Math.sin(w * RAD) * R, dD = -Math.cos(w * RAD) * R; return [cx + X * 300 / (D + dD), HOR + (6 - z) * 300 / (D + dD)]; };
   const Pp = (p) => `${r(p[0])} ${r(p[1])}`;
@@ -754,6 +840,8 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
     const breit = (b[0] - a[0]) * 0.13;
     let g = `<path d="M${Pp(a)} C${r(a[0] - breit)} ${r(m[1] + 0.3)} ${r(m[0] - (b[0] - a[0]) * 0.32)} ${r(m[1])} ${Pp(m)} C${r(m[0] + (b[0] - a[0]) * 0.32)} ${r(m[1])} ${r(b[0] + breit)} ${r(m[1] + 0.3)} ${Pp(b)}" stroke="${dunkel ? "#2c3833" : "#5f7a6a"}" stroke-width="${dunkel ? 0.25 : 0.4}" fill="none"/>`;
     if (!dunkel) {
+      const f0 = P(w0, R, 4.6), f1 = P(w1, R, 4.6);
+      g = `<path d="M${Pp(f0)} L${Pp(f1)} L${Pp(b)} C${r(b[0] + breit)} ${r(m[1] + 0.3)} ${r(m[0] + (b[0] - a[0]) * 0.32)} ${r(m[1])} ${Pp(m)} C${r(m[0] - (b[0] - a[0]) * 0.32)} ${r(m[1])} ${r(a[0] - breit)} ${r(m[1] + 0.3)} ${Pp(a)} Z" fill="url(#${S.id("gitter")})"/>` + g.replace('stroke-width="0.4"', 'stroke-width=".75"');
       const o = P((w0 + w1) / 2, R, 4.85);
       g += `<circle cx="${r(o[0])}" cy="${r(o[1])}" r=".42" fill="none" stroke="#5f7a6a" stroke-width=".16"/><circle cx="${r(o[0])}" cy="${r(o[1])}" r=".14" fill="#5f7a6a"/>`;
       for (const s of [-1, 1]) { const q = P((w0 + w1) / 2 + s * 13, R, 4.8); g += `<path d="M${r(q[0] - 0.25)} ${r(q[1])} q.25 -.4 .5 0 q-.25 .3 -.5 0" stroke="#5f7a6a" stroke-width=".12" fill="none"/>`; }
@@ -915,78 +1003,6 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
 }
 
 /* =====================================================================
-   12 — DER KÖNIGSBAU (links: die Kolonnade läuft zum Bahnhofsturm hin)
-   ===================================================================== */
-{
-  let k = "";
-  /* Flucht zum Bahnhofsturm: oben (0|62) → (96|112), unten (0|136) → (96|112) */
-  const VX = 96, oben0 = 62, unten0 = 136;
-  const xU = (u) => VX * (1 - 90 / (90 + u));             /* u = Meter von der Südecke */
-  const oy = (x) => oben0 + (HOR - oben0) * x / VX, uy = (x) => unten0 + (HOR - unten0) * x / VX;
-  const at = (x, t) => uy(x) + (oy(x) - uy(x)) * t;          /* t = Anteil der Höhe */
-  const xe = xU(135);
-  const quad = (t0, t1, x0, x1, f) => `<path d="M${r(x0)} ${r(at(x0, t0))} L${r(x1)} ${r(at(x1, t0))} L${r(x1)} ${r(at(x1, t1))} L${r(x0)} ${r(at(x0, t1))} Z" fill="${f}"/>`;
-  /* die Platzseite liegt im Streiflicht (Sonne fast in der Flucht der Fassade) */
-  const SANDK = S.lg("koenig", [[0, "#e2d3b4"], [1, "#cdbd9b"]]);
-  k += quad(0.62, 1, -2, xe, SANDK);
-  let fen = "";
-  for (let u = 2; u < 134; u += 4) { const x = xU(u), x2 = xU(u + 1.6); fen += `M${r(x)} ${r(at(x, 0.7))} L${r(x2)} ${r(at(x2, 0.7))} L${r(x2)} ${r(at(x2, 0.9))} L${r(x)} ${r(at(x, 0.9))} Z `; }
-  k += `<path d="${fen}" fill="#59616b"/>`;
-  k += quad(1, 1.07, -2, xe, "#f3ead6");
-  k += quad(1.07, 1.12, -2, xe, "#7d8896");
-  k += quad(0.58, 0.62, -2, xe, "#f4ecda");
-  let bal = "";
-  for (let u = 0.6; u < 135; u += 1.2) { const x = xU(u); bal += `M${r(x)} ${r(at(x, 0.585))} L${r(x)} ${r(at(x, 0.62))} `; }
-  k += `<path d="${bal}" stroke="#d2c4a5" stroke-width=".22"/>`;
-  k += quad(0.52, 0.58, -2, xe, "#efe5cf");
-  k += quad(0.5, 0.52, -2, xe, "#d6c7a8");
-  /* Halle hinter den Säulen: Schatten, Schaufenster warm beleuchtet */
-  k += quad(0, 0.5, -2, xe, S.lg("halle", [[0, "#6d6152"], [1, "#4a4138"]]));
-  let lad = "";
-  for (let u = 1; u < 134; u += 4) { const x = xU(u), x2 = xU(u + 2.4); lad += `M${r(x)} ${r(at(x, 0.04))} L${r(x2)} ${r(at(x2, 0.04))} L${r(x2)} ${r(at(x2, 0.36))} L${r(x)} ${r(at(x, 0.36))} Z `; }
-  k += `<path d="${lad}" fill="${S.lg("laden", [[0, "#f6d79a"], [1, "#c99a55"]])}" opacity=".8"/>`;
-  /* Boden der Kolonnade */
-  k += `<path d="M-2 ${r(at(-2, 0))} L${r(xe)} ${r(at(xe, 0))} L${r(xe)} ${r(at(xe, 0) + 0.5)} L-2 ${r(at(-2, 0) + 1.6)} Z" fill="#b8ab93"/>`;
-  /* 34 ionische Säulen: vorn mit attischer Basis, Kannelur und Volutenkapitell */
-  S.def(`<g id="${S.id("kap")}"><rect x="-.62" y=".02" width="1.24" height=".22" fill="#efe4cc"/><circle cx="-.6" cy=".26" r=".2" fill="#f4ead6" stroke="#a8956f" stroke-width=".07"/><circle cx="-.6" cy=".26" r=".07" fill="#a8956f"/><circle cx=".6" cy=".26" r=".2" fill="#f4ead6" stroke="#a8956f" stroke-width=".07"/><circle cx=".6" cy=".26" r=".07" fill="#a8956f"/><rect x="-.82" y="-.18" width="1.64" height=".2" fill="#f7f0e0"/></g><g id="${S.id("basis")}"><rect x="-.72" y="-.2" width="1.44" height=".2" fill="#ddd0b4"/><rect x="-.62" y="-.36" width="1.24" height=".17" rx=".08" fill="#efe5d0"/></g>`);
-  const SAEULE_K = S.lg("koensaeule", [[0, "#b9a988"], [0.3, "#dccfb2"], [0.62, "#f6eedd"], [0.85, "#e6dabf"], [1, "#c4b493"]], 0, 0, 1, 0);
-  for (let i = 0; i < 34; i++) {
-    const u = i * 4.09, x = xU(u), w = Math.max(0.3, 300 * 1.0 / (81 + u) * 0.82);
-    const yb = at(x, 0), yt = at(x, 0.5);
-    k += `<rect x="${r(x - w / 2)}" y="${r(yt)}" width="${r(w)}" height="${r(yb - yt)}" fill="${SAEULE_K}"/>`;
-    if (w > 2) {
-      k += `<path d="M${r(x - w * 0.25)} ${r(yt + w * 0.5)} L${r(x - w * 0.25)} ${r(yb - w * 0.55)} M${r(x)} ${r(yt + w * 0.5)} L${r(x)} ${r(yb - w * 0.55)} M${r(x + w * 0.25)} ${r(yt + w * 0.5)} L${r(x + w * 0.25)} ${r(yb - w * 0.55)}" stroke="#bfae8c" stroke-width="${r(w * 0.07)}" opacity=".75"/>`;
-      k += `<path d="M${r(x - w * 0.38)} ${r(yt + w * 0.5)} L${r(x - w * 0.38)} ${r(yb - w * 0.55)} M${r(x + w * 0.12)} ${r(yt + w * 0.5)} L${r(x + w * 0.12)} ${r(yb - w * 0.55)}" stroke="#fffaf0" stroke-width="${r(w * 0.05)}" opacity=".6"/>`;
-      /* attische Basis: Plinthe, zwei Wülste, Hohlkehle */
-      k += `<rect x="${r(x - w * 0.72)}" y="${r(yb - w * 0.2)}" width="${r(w * 1.44)}" height="${r(w * 0.2)}" fill="#ddd0b4"/>`;
-      k += `<rect x="${r(x - w * 0.65)}" y="${r(yb - w * 0.36)}" width="${r(w * 1.3)}" height="${r(w * 0.17)}" rx="${r(w * 0.08)}" fill="#efe5d0"/>`;
-      k += `<rect x="${r(x - w * 0.54)}" y="${r(yb - w * 0.47)}" width="${r(w * 1.08)}" height="${r(w * 0.12)}" rx="${r(w * 0.06)}" fill="#e9dfc8"/>`;
-      /* Kapitell: Echinus mit Eierstab, Voluten als Spiralen, Abakus */
-      k += `<rect x="${r(x - w * 0.62)}" y="${r(yt + w * 0.02)}" width="${r(w * 1.24)}" height="${r(w * 0.22)}" fill="#efe4cc"/>`;
-      k += `<path d="M${r(x - w * 0.45)} ${r(yt + w * 0.13)} h${r(w * 0.9)}" stroke="#bba88a" stroke-width="${r(w * 0.07)}" stroke-dasharray="${r(w * 0.08)} ${r(w * 0.06)}"/>`;
-      for (const s of [-1, 1]) {
-        const vx = x + s * w * 0.6, vy = yt + w * 0.26, q = w * 0.2;
-        k += `<path d="M${r(vx - s * q * 1.3)} ${r(vy - q * 1.1)} Q${r(vx + s * q * 0.4)} ${r(vy - q * 1.3)} ${r(vx + s * q)} ${r(vy - q * 0.1)} A${r(q)} ${r(q)} 0 1 ${s > 0 ? 1 : 0} ${r(vx - s * q * 0.6)} ${r(vy + q * 0.6)} A${r(q * 0.6)} ${r(q * 0.6)} 0 1 ${s > 0 ? 1 : 0} ${r(vx + s * q * 0.3)} ${r(vy - q * 0.15)} A${r(q * 0.3)} ${r(q * 0.3)} 0 1 ${s > 0 ? 1 : 0} ${r(vx)} ${r(vy + q * 0.2)}" stroke="#a8956f" stroke-width="${r(w * 0.065)}" fill="#f4ead6"/>`;
-      }
-      k += `<rect x="${r(x - w * 0.82)}" y="${r(yt - w * 0.18)}" width="${r(w * 1.64)}" height="${r(w * 0.2)}" fill="#f7f0e0"/>`;
-    } else if (w > 0.6) {
-      k += `<use href="#${S.id("kap")}" transform="translate(${r(x)} ${r(yt)}) scale(${w.toFixed(2)})"/><use href="#${S.id("basis")}" transform="translate(${r(x)} ${r(yb)}) scale(${w.toFixed(2)})"/>`;
-    }
-  }
-  /* Stirnseite (Südecke) im Licht, mit Pilastern */
-  k += `<path d="M-2 ${r(at(-2, 0))} L-2 ${r(at(-2, 1.07))} L-6 ${r(at(-2, 1.07) + 1)} L-6 ${r(at(-2, 0) + 0.6)} Z" fill="#efe2c4"/>`;
-  const SU = 16.36, sx = xU(SU), sw = 300 / (81 + SU) * 0.82;
-  S.teil({ id: "koenigsbau", de: "der Königsbau", syl: "KÖ-nigs-bau", it: "il Königsbau (il palazzo del re)", itSyl: "KÖ-nigs-bau", en: "Königsbau",
-    x: 0, y: 0, kunst: k, tipp: "Der Königsbau hat eine 135 Meter lange Säulenhalle mit 34 Säulen, mit Läden und Cafés.",
-    zoom: { x: 5, y: 97, w: 56, h: 35 },
-    unter: [
-      { id: "saeule", de: "die Säule", syl: "SÄU-le", it: "la colonna", itSyl: "co-LON-na", en: "column",
-        x: sx, y: at(sx, 0), kunst: flaeche(-sw * 0.85, -(at(sx, 0) - at(sx, 0.52)), sw * 1.7, at(sx, 0) - at(sx, 0.52), 0.4),
-        tipp: "Die Säulen des Königsbaus sind ionisch: Oben haben sie zwei Schnecken, die Voluten." },
-    ] });
-}
-
-/* =====================================================================
    13 — DAS MUSEUM, DIE FREITREPPE, DAS GELÄNDER
    Auge 1,7 m über der Terrasse; die Kante liegt 7 m vor uns (y ≈ 185). Die breite Sitz- und
    Gehtreppe (Tritt 0,9 m, Steigung 0,148 m, 29 Stufen) führt 4,3 m hinab zur Königstraße
@@ -1110,17 +1126,18 @@ const teller = (rx, ry, id) => `<ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fil
 {
   /* DIE BREZEL liegt flach auf dem Teller: dicker Bauch vorn, dünne Ärmchen, verschlungen */
   let k = tellerSchatten(10.5, 3.2) + teller(10.5, 3.2, "teller1");
+  const ARM = S.lg("lauge2", [[0, "#8a4a16"], [1, "#4e2608"]]);
   const LAUGE = S.lg("lauge", [[0, "#c88742"], [0.5, "#99561e"], [1, "#6a3610"]]);
   const P = (x, y) => `${r(x * 0.95)} ${r(y * 0.36 - 0.4)}`;
   const bauch = `M${P(-6.5, -2)} C${P(-7.6, 1)} ${P(-5.6, 5.4)} ${P(0, 5.6)} C${P(5.6, 5.4)} ${P(7.6, 1)} ${P(6.5, -2)}`;
   const armR = `M${P(6.5, -2)} C${P(7.4, -5.6)} ${P(3.6, -7.6)} ${P(1.4, -5.2)} C${P(0.2, -3.8)} ${P(-1.6, -0.6)} ${P(-3, 3.6)}`;
   const armL = `M${P(-6.5, -2)} C${P(-7.4, -5.6)} ${P(-3.6, -7.6)} ${P(-1.4, -5.2)} C${P(-0.2, -3.8)} ${P(1.6, -0.6)} ${P(3, 3.6)}`;
   k += `<path d="${bauch}" stroke="#2c1a0c" stroke-width="3" fill="none" stroke-linecap="round" opacity=".3" transform="translate(-.7 -.6)" filter="url(#${S.id("sanft")})"/>`;
-  for (const d of [armR]) k += `<path d="${d}" stroke="#5a300c" stroke-width="1.6" fill="none" stroke-linecap="round" transform="translate(0 .35)"/><path d="${d}" stroke="${LAUGE}" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#e0aa6c" stroke-width=".35" fill="none" stroke-linecap="round" opacity=".8" transform="translate(.1 -.3)"/>`;
-  k += `<path d="${bauch}" stroke="#5a300c" stroke-width="3" fill="none" stroke-linecap="round" transform="translate(0 .45)"/>`;
-  k += `<path d="${bauch}" stroke="${LAUGE}" stroke-width="2.7" fill="none" stroke-linecap="round"/>`;
-  k += `<path d="${bauch}" stroke="#ecc994" stroke-width=".8" fill="none" stroke-dasharray="1.2 .4 .7 .5" opacity=".9" transform="translate(0 -.5)"/>`;
-  k += `<path d="${armL}" stroke="#5a300c" stroke-width="1.6" fill="none" stroke-linecap="round" transform="translate(0 .35)"/><path d="${armL}" stroke="${LAUGE}" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="${armL}" stroke="#e0aa6c" stroke-width=".35" fill="none" stroke-linecap="round" opacity=".8" transform="translate(.1 -.3)"/>`;
+  for (const d of [armR]) k += `<path d="${d}" stroke="#3e1f06" stroke-width="1.15" fill="none" stroke-linecap="round" transform="translate(0 .3)"/><path d="${d}" stroke="${ARM}" stroke-width=".85" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#c98a4c" stroke-width=".25" fill="none" stroke-linecap="round" opacity=".8" transform="translate(.1 -.3)"/>`;
+  k += `<path d="${bauch}" stroke="#5a300c" stroke-width="3.6" fill="none" stroke-linecap="round" transform="translate(0 .5)"/>`;
+  k += `<path d="${bauch}" stroke="${LAUGE}" stroke-width="3.3" fill="none" stroke-linecap="round"/>`;
+  k += `<path d="${bauch}" stroke="#f2d7a6" stroke-width="1.1" fill="none" stroke-dasharray="1.4 .3 .9 .4" transform="translate(0 -.55)"/><path d="${bauch}" stroke="#d9a868" stroke-width=".3" fill="none" stroke-dasharray=".5 .4" transform="translate(0 -.55)"/>`;
+  k += `<path d="${armL}" stroke="#3e1f06" stroke-width="1.15" fill="none" stroke-linecap="round" transform="translate(0 .3)"/><path d="${armL}" stroke="${ARM}" stroke-width=".85" fill="none" stroke-linecap="round"/><path d="${armL}" stroke="#c98a4c" stroke-width=".25" fill="none" stroke-linecap="round" opacity=".8" transform="translate(.1 -.3)"/>`;
   for (let i = 0; i < 16; i++) { const t = -0.85 + i * 0.11, x = t * 7.2 * 0.95, y = (5.4 - Math.abs(t) * 4.6) * 0.36 - 1.0 + (i % 2) * 0.35; k += `<rect x="${r(x)}" y="${r(y)}" width=".45" height=".32" fill="#fffdf6"/>`; }
   S.teil({ oben: true, id: "brezel", de: "die Brezel", syl: "BRE-zel", it: "il pretzel", itSyl: "PRET-zel", en: "pretzel",
     x: 247, y: 179.5, steht: true, kunst: k, tipp: "Die schwäbische Brezel hat dünne Ärmchen und einen dicken Bauch." });
@@ -1145,16 +1162,18 @@ const teller = (rx, ry, id) => `<ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fil
   k += `<ellipse cx="0" cy=".35" rx="9.2" ry="2.85" fill="${S.lg("mulde", [[0, "#cfccc4"], [0.45, "#f2f1ed"], [1, "#ffffff"]])}"/>`;
   k += `<ellipse cx="0" cy=".7" rx="8.6" ry="2.45" fill="${S.lg("bruehe", [[0, "#c99a3c"], [0.5, "#e3b95a"], [1, "#f0d189"]])}" opacity=".9"/>`;
   k += `<ellipse cx="2.4" cy=".2" rx="3.6" ry=".55" fill="#fff6dc" opacity=".45"/>`;
-  const TEIG = S.lg("teig", [[0, "#fbf0d2"], [0.6, "#efdcab"], [1, "#d9bf82"]]);
+  const TEIG = S.lg("teig", [[0, "#fdf6e2"], [0.5, "#f5e8c6"], [1, "#e6d3a2"]]);
   const tasche = (cx, cy, w, h, a, offen) => {
     const c = Math.cos(a * RAD), s = Math.sin(a * RAD);
     const p = [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]].map(([x, y]) => [cx + x * c - y * s, cy + (x * s + y * c) * 0.32]);
     const Pp = (q) => `${r(q[0])} ${r(q[1])}`;
-    let g = `<path d="M${Pp(p[3])} L${Pp(p[2])} L${r(p[2][0])} ${r(p[2][1] + 0.9)} L${r(p[3][0])} ${r(p[3][1] + 0.9)} Z" fill="#c8a868"/>`;
-    g += `<path d="M${p.map(Pp).join(" L")} Z" fill="${TEIG}" stroke="#d2b578" stroke-width=".35" stroke-linejoin="round"/>`;
+    const m0 = [(p[0][0] + p[1][0] + p[2][0] + p[3][0]) / 4, (p[0][1] + p[1][1] + p[2][1] + p[3][1]) / 4];
+    let g = `<path d="M${Pp(p[3])} Q${r(m0[0])} ${r(p[3][1] + 1.3)} ${Pp(p[2])} L${r(p[2][0])} ${r(p[2][1] + 0.5)} Q${r(m0[0])} ${r(p[3][1] + 1.6)} ${r(p[3][0])} ${r(p[3][1] + 0.5)} Z" fill="#ead9ad"/>`;
+    g += `<path d="M${Pp(p[0])} Q${r(m0[0])} ${r(p[0][1] - 0.5)} ${Pp(p[1])} Q${r(p[1][0] + 0.5)} ${r(m0[1])} ${Pp(p[2])} Q${r(m0[0])} ${r(p[2][1] + 0.4)} ${Pp(p[3])} Q${r(p[3][0] - 0.5)} ${r(m0[1])} ${Pp(p[0])} Z" fill="${TEIG}" stroke="#e0cb98" stroke-width=".3" stroke-linejoin="round"/>`;
+    g += `<ellipse cx="${r(m0[0] + 0.3)}" cy="${r(m0[1] - 0.25)}" rx="${r(w * 0.25)}" ry=".35" fill="#fffaf0" opacity=".7"/>`;
     g += `<path d="M${r(p[0][0] + 0.5)} ${r(p[0][1] + 0.25)} L${r(p[1][0] - 0.5)} ${r(p[1][1] + 0.25)} M${r(p[3][0] + 0.5)} ${r(p[3][1] - 0.25)} L${r(p[2][0] - 0.5)} ${r(p[2][1] - 0.25)}" stroke="#c7a76a" stroke-width=".3" stroke-dasharray=".25 .3"/>`;
     g += `<path d="M${r(cx - w * 0.2)} ${r(cy - 0.1)} Q${r(cx)} ${r(cy - 0.4)} ${r(cx + w * 0.25)} ${r(cy - 0.15)}" stroke="#a4b56a" stroke-width=".5" fill="none" opacity=".45"/>`;
-    if (offen) g += `<path d="M${Pp(p[1])} L${Pp(p[2])} L${r(p[2][0])} ${r(p[2][1] + 0.9)} L${r(p[1][0])} ${r(p[1][1] + 0.9)} Z" fill="#6f7b3a"/><path d="M${r(p[1][0] + 0.05)} ${r(p[1][1] + 0.35)} L${r(p[2][0] + 0.05)} ${r(p[2][1] + 0.4)}" stroke="#8d5d42" stroke-width=".45"/>`;
+    if (offen) g += `<path d="M${Pp(p[1])} L${r(p[2][0] - 0.8)} ${r(p[2][1] + 0.2)} L${r(p[2][0] - 0.8)} ${r(p[2][1] + 1)} L${r(p[1][0])} ${r(p[1][1] + 0.8)} Z" fill="#f0e2bd"/><path d="M${r(p[1][0] - 0.15)} ${r(p[1][1] + 0.3)} L${r(p[2][0] - 0.9)} ${r(p[2][1] + 0.45)} L${r(p[2][0] - 0.9)} ${r(p[2][1] + 0.8)} L${r(p[1][0] - 0.15)} ${r(p[1][1] + 0.65)} Z" fill="#6f8a3e"/><path d="M${r(p[1][0] - 0.2)} ${r(p[1][1] + 0.45)} L${r(p[2][0] - 0.95)} ${r(p[2][1] + 0.6)}" stroke="#d9958a" stroke-width=".22" stroke-dasharray=".3 .2"/>`;
     return g;
   };
   k += tasche(-3.6, 0.3, 6.2, 4.4, -12, false) + tasche(3, -0.4, 6, 4.2, 10, true) + tasche(0.4, 1.4, 5.6, 3.6, 4, false);
@@ -1176,7 +1195,8 @@ const teller = (rx, ry, id) => `<ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fil
   }
   k += `<path d="M2.6 -.6 Q3.4 -2.6 6.8 -2.4 Q10.2 -2 9.8 .2 Q9 1.8 5.6 1.8 Q2.6 1.6 2.6 -.6 Z" fill="${S.lg("linsen", [[0, "#8a6440"], [0.6, "#6b4a2c"], [1, "#54381f"]])}"/>`;
   for (let i = 0; i < 34; i++) k += `<circle cx="${r(3.2 + sp() * 6.2)}" cy="${r(-1.8 + sp() * 3.2)}" r=".26" fill="${sp() < 0.5 ? "#7a5634" : "#5a3d24"}"/>`;
-  k += `<path d="M4.4 -1.4 Q6.2 -2 8.2 -1.4" stroke="#c9a57c" stroke-width=".25" fill="none" opacity=".7"/>`;
+  for (let i = 0; i < 12; i++) k += `<circle cx="${r(3.6 + sp() * 5.6)}" cy="${r(-1.7 + sp() * 2.8)}" r=".12" fill="#fff3dc" opacity=".8"/>`;
+  for (let i = 0; i < 6; i++) { const x = 3.6 + sp() * 5.2, y = -1.4 + sp() * 2.4; k += `<rect x="${r(x)}" y="${r(y)}" width=".55" height=".4" fill="#d9a593" stroke="#a2584a" stroke-width=".08"/>`; }
   const SAITE = S.lg("saite", [[0, "#d48b62"], [0.5, "#b0663f"], [1, "#7e4426"]]);
   for (const [d, dy] of [["M-2 1.9 Q3 .7 9 1.1", 0], ["M-1.4 2.9 Q3.6 1.7 9.4 2.2", 0]]) k += `<path d="${d}" stroke="#5e331c" stroke-width="1.55" stroke-linecap="round" fill="none" transform="translate(0 ${dy + 0.25})"/><path d="${d}" stroke="${SAITE}" stroke-width="1.3" stroke-linecap="round" fill="none"/><path d="${d}" stroke="#f0b48e" stroke-width=".3" stroke-linecap="round" fill="none" transform="translate(0 -.35)" opacity=".8"/>`;
   S.teil({ oben: true, id: "spaetzle", de: "die Spätzle", syl: "SPÄTZ-le", it: "gli spätzle", itSyl: "SPÄTZ-le", en: "spaetzle",
