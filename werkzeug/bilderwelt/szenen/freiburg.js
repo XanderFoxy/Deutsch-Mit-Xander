@@ -144,7 +144,6 @@ const wurf = (pts, op = .28) => {
 };
 
 S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
 /* roter Buntsandstein des Münsters */
 const SAND = S.lg("sand", [[0, "#c27a62"], [0.5, "#b4644d"], [1, "#9c5240"]], 0, 0, 1, 0);
 const SAND_L = S.lg("sandl", [[0, "#d9937a"], [1, "#c27a62"]], 0, 0, 1, 0);
@@ -161,11 +160,14 @@ const KYS = -80;                                      // Fassadenebene der Süds
 S.hinten(`<rect width="320" height="${HOR + 6}" fill="${S.lg("himmel", [[0, "#4f86c6"], [0.55, "#9cc0e2"], [1, "#e4ecee"]])}"/>`);
 {
   let w = "";
-  for (const [x, y, s] of [[60, 20, 1.1], [150, 36, 0.8], [196, 12, 0.9], [118, 70, 0.6], [178, 128, 1.3], [118, 146, 0.9], [226, 150, 0.8]]) {
-    w += `<g filter="url(#${S.id("wolke")})" opacity=".92">`;
-    for (const [dx, dy, rx, ry] of [[0, 0, 17, 4.6], [-11, 1.5, 10, 3.4], [11, 1, 12, 3.8], [-3, -3.4, 9, 4.4], [5, -2.8, 7, 3.8]])
-      w += `<ellipse cx="${r(x + dx * s)}" cy="${r(y + dy * s)}" rx="${r(rx * s)}" ry="${r(ry * s)}" fill="#fff"/>`;
-    w += `<ellipse cx="${x}" cy="${r(y + 3 * s)}" rx="${r(17 * s)}" ry="${r(2.2 * s)}" fill="#dfe5ec"/></g>`;
+  /* Schönwetterwolken (Cumulus), klar gezeichnet: flacher Boden im Schatten, Quellköpfe oben im Licht von links */
+  for (const [x, y, s] of [[60, 22, 1.1], [150, 38, 0.8], [200, 14, 0.9], [112, 72, 0.6], [178, 128, 1.2], [116, 148, 0.85], [228, 152, 0.75]]) {
+    const K = [[0, -3.2, 6.2], [-8, -.8, 4.6], [8.5, -1.2, 5], [-14, 1.2, 3], [14.5, 1, 3.2], [-3.5, -5.5, 4.2], [4.5, -5, 3.6]];
+    const kreis = (dx, dy, rr) => `M${r(x + (dx - rr) * s)} ${r(y + dy * s)}a${r(rr * s)} ${r(rr * s)} 0 1 0 ${r(2 * rr * s)} 0a${r(rr * s)} ${r(rr * s)} 0 1 0 ${r(-2 * rr * s)} 0`;
+    const basis = `M${r(x - 17 * s)} ${r(y + 3.6 * s)}H${r(x + 17.5 * s)}a${r(1.5 * s)} ${r(1.2 * s)} 0 0 0 0 ${r(-2.4 * s)}H${r(x - 17 * s)}a${r(1.5 * s)} ${r(1.2 * s)} 0 0 0 0 ${r(2.4 * s)}`;
+    w += `<path d="${K.map(([a, b, c]) => kreis(a, b + .9, c)).join("")}${basis}" fill="#c9d5e3"/>`;
+    w += `<path d="${K.map(([a, b, c]) => kreis(a - .6, b - .4, c * .92)).join("")}" fill="#fbfcfd"/>`;
+    w += `<path d="${K.slice(0, 3).map(([a, b, c]) => kreis(a - 1.6, b - 1.4, c * .55)).join("")}" fill="#fff"/>`;
   }
   /* Mauersegler über dem Platz */
   for (const [x, y, g] of [[150, 64, 1], [158, 70, .8], [166, 61, .9], [205, 88, .7], [140, 92, .6], [176, 76, .75]]) w += `<path d="M${x - 2.4 * g} ${y} q${r(1.2 * g)} ${r(-.9 * g)} ${r(2.4 * g)} 0 q${r(1.2 * g)} ${r(-.9 * g)} ${r(2.4 * g)} 0 q${r(-1.2 * g)} ${r(-.2 * g)} ${r(-2.4 * g)} ${r(.5 * g)} q${r(-1.2 * g)} ${r(-.7 * g)} ${r(-2.4 * g)} ${r(-.5 * g)} Z" fill="#2a2e36" opacity=".8"/>`;
