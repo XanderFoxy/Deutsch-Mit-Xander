@@ -272,18 +272,20 @@ function vol(T, n, o = {}) {
   if (T.fein === false) return "none";
   /* stufenlos wie T.volumen (kern.js): Innen-Schatten unten rechts, Innen-Glanz oben links aus der weich verschobenen
      Silhouette; Filterbereich großzügig (sonst entsteht am Rand eine Kante, wo der verschobene Weichzeichner abreißt) */
-  const w = o.weich || 6, st = Math.min(1, 0.09 * (o.tiefe || 5)), amb = o.umgebung != null ? o.umgebung : 0.3;
-  const d = w * 0.9, sch = Z2(st * (1 - amb) * 0.95), gl = Z2(st * (1 - amb) * 0.38);
-  const id = T.id("pv" + n + "_" + String(w).replace(".", "_"));
+  /* gleiche Einstellungen → derselbe Filter (kleine Datei): weich und Stärke auf Stufen runden */
+  const w = [0.5, 0.8, 1.2, 1.6, 2.2, 3, 4.5, 7, 9, 12, 16].reduce((b, v) => (Math.abs(Math.log(v / (o.weich || 6))) < Math.abs(Math.log(b / (o.weich || 6))) ? v : b), 6);
+  const st = Math.min(1, 0.09 * (o.tiefe || 5)), amb = o.umgebung != null ? o.umgebung : 0.3;
+  const d = w * 0.9, sch = Z2(Math.round(st * (1 - amb) * 0.95 * 20) / 20), gl = Z2(Math.round(st * (1 - amb) * 0.38 * 20) / 20);
+  const id = T.id("pv" + String(w).replace(".", "_") + sch.replace(".", "") + gl.replace(".", "") + (o.schatten || "").slice(1) + (o.licht || "").slice(1));
   T._pv = T._pv || new Set();
   if (!T._pv.has(id)) {
     T._pv.add(id);
     T.def(`<filter id="${id}" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">` +
-      `<feGaussianBlur in="SourceAlpha" stdDeviation="${w}" result="b"/><feOffset in="b" dx="${Z2(-d)}" dy="${Z2(-d)}" result="bu"/><feOffset in="b" dx="${Z2(d * 0.8)}" dy="${Z2(d * 0.8)}" result="bo"/>` +
-      `<feComposite in="SourceAlpha" in2="bu" operator="out" result="ms"/><feComposite in="SourceAlpha" in2="bo" operator="out" result="mg"/>` +
-      `<feFlood flood-color="${o.schatten || "#1a1008"}" flood-opacity="${sch}"/><feComposite in2="ms" operator="in" result="s"/>` +
-      `<feFlood flood-color="${o.licht || "#fff6e6"}" flood-opacity="${gl}"/><feComposite in2="mg" operator="in" result="g"/>` +
-      `<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="s"/><feMergeNode in="g"/></feMerge><feComposite in2="SourceGraphic" operator="in"/></filter>`);
+      `<feGaussianBlur in="SourceAlpha" stdDeviation="${w}" result="b"/><feOffset dx="${Z2(-d)}" dy="${Z2(-d)}" result="u"/><feOffset in="b" dx="${Z2(d * 0.8)}" dy="${Z2(d * 0.8)}" result="o"/>` +
+      `<feComposite in="SourceAlpha" in2="u" operator="out" result="u"/><feComposite in="SourceAlpha" in2="o" operator="out" result="o"/>` +
+      `<feFlood flood-color="${o.schatten || "#1a1008"}" flood-opacity="${sch}"/><feComposite in2="u" operator="in" result="u"/>` +
+      `<feFlood flood-color="${o.licht || "#fff6e6"}" flood-opacity="${gl}"/><feComposite in2="o" operator="in"/>` +
+      `<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="u"/><feMergeNode/></feMerge><feComposite in2="SourceGraphic" operator="in"/></filter>`);
   }
   return `url(#${id})`;
 }
@@ -1271,9 +1273,9 @@ function rentier(T) {
   /* Fell: Wuchsrichtung Kopf → hinten, Flanke nach hinten unten, Beine nach unten; Längen variieren
      (Rumpf kurz, Hals und Bauch länger, Beine kurz und anliegend) */
   const wuchs = (x, y) => (x > 176 ? 168 : x > 146 ? 112 : y > -64 ? 94 : 168 + (y + 90) * 0.6);
-  n += haarL(rumpf.filter((p) => p[0] < 186), 480, wuchs, 1.6);
+  n += haarL(rumpf.filter((p) => p[0] < 186), 400, wuchs, 1.6);
   n += haare(T, [[150, -124], [166, -132], [172, -116], [168, -100], [162, -88], [154, -76], [148, -92]], 120, 104, 3.2, [["#ffffff", 1, 0.11, 0.6], ["#a99a80", 0.6, 0.11, 0.45]], 14, 0.3, 0.03);
-  n += haarL([[60, -70], [100, -64], [136, -62], [130, -57.6], [100, -59.6], [62, -66]], 80, 100, 2.4, "#2b2219", "#a8987e");
+  n += haarL([[60, -70], [100, -64], [136, -62], [130, -57.6], [100, -59.6], [62, -66]], 50, 100, 2.4, "#2b2219", "#a8987e");
   n += haarL(vbN, 70, 92, 1.1, "#1a140f", "#8a7a64") + haarL(hbN, 100, (x, y) => (y < -62 ? 125 : y < -44 ? 70 : 94), 1.2, "#1a140f", "#8a7a64");
   n += haare(T, [[196, -116], [208, -117], [214, -110], [212, -102], [196, -101]], 70, 196, 0.7, [["#7a6a56", 1, 0.07, 0.5], ["#efe7d8", 0.8, 0.07, 0.6]], 20, 0.2, 0.1);
   s += `<g filter="${vol(T, "rrumpf", { weich: 9, tiefe: 8, umgebung: 0.3 })}">${silhouette(T, kD, fell, n)}</g>`;

@@ -561,7 +561,7 @@ function krokodil(T) {
   inn += `<path d="${bd}" fill="#24240f" opacity=".45" filter="${weich(T, "b", 0.45)}"/>`;
   /* Schuppen: Rückenpanzer, Flanke in Reihen (oben gekielte Höcker), Bauchschilde, Schwanzringe mit Zylinderwölbung */
   const tsR = []; for (let i = 0; i <= 17; i++) tsR.push(tH + (tS - tH) * i / 17);
-  const tsS = []; { let t = 0.014; while (t < tH - 0.01) { tsS.push(t); t += 0.0108 + t * 0.012; } tsS.push(tH); }
+  const tsS = []; { let t = 0.014; while (t < tH - 0.01) { tsS.push(t); t += 0.0114 + t * 0.012; } tsS.push(tH); }
   const vR = [-1.02, -0.86, -0.66, -0.43], vS = [-1.02, -0.8, -0.48, -0.1, 0.3, 0.66, 0.9, 1.04];
   const beinOhne = [[[136, -30], [160, -30], [168, -12], [140, -12]], [[218, -26], [232, -26], [232, -8], [218, -8]]];
   if (F) {

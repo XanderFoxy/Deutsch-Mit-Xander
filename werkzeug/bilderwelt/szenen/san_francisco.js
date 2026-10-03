@@ -405,7 +405,7 @@ const dunst = (h, d) => misch(h, "#c9d3da", Math.min(0.42, d / 2200));
    Liefert Vielecke {p, f} (schon am Rahmen beschnitten). */
 const kiste = (P, gz, a0, a1, d0, d1, H, c) => {
   const g00 = gz(a0, d0), g10 = gz(a1, d0), g01 = gz(a0, d1), g11 = gz(a1, d1), zt = Math.max(g00, g10, g01, g11) + H;
-  const V = [], add = (pts, f, o) => { const q = rahmen(pts); if (q.length > 2) V.push({ p: q, f, o }); };
+  const V = [], add = (pts, f, o) => { const q = rahmen(pts); if (q.length < 3) return; let A = 0; for (let i = 0; i < q.length; i++) { const a = q[i], b = q[(i + 1) % q.length]; A += a[0] * b[1] - b[0] * a[1]; } if (Math.abs(A) / 2 > 0.3) V.push({ p: q, f, o }); };
   if (zt < E) {
     add([P(a0, d0, zt), P(a1, d0, zt), P(a1, d1, zt), P(a0, d1, zt)], c.dach);
     if (c.aufbau) { const u0 = a0 + (a1 - a0) * 0.2, u1 = a0 + (a1 - a0) * 0.55, e0 = d0 + (d1 - d0) * 0.3, e1 = d0 + (d1 - d0) * 0.6; add([P(u0, e0, zt), P(u0, e0, zt + 2.4), P(u1, e0, zt + 2.4), P(u1, e0, zt)], c.vorn); add([P(u0, e0, zt + 2.4), P(u1, e0, zt + 2.4), P(u1, e1, zt + 2.4), P(u0, e1, zt + 2.4)], c.dach2); }
@@ -444,9 +444,9 @@ const bloecke = (P, gz, spalten, reihen, frei, fenster, haz, rnd2, maxH, kurz = 
   };
   for (const [A0, A1] of spalten) for (const [D0, D1] of reihen) {
     const T = 24;
-    for (let d = D0; d < D1 - 0.5;) { const w = Math.min(7.5 + rnd2() * 4, D1 - d); haus(A0, A0 + T, d, d + w); haus(A1 - T, A1, d, d + w); d += w; }
-    for (let a = A0 + T; a < A1 - T - 0.5;) { const w = Math.min(7.5 + rnd2() * 4, A1 - T - a); haus(a, a + w, D0, D0 + T); haus(a, a + w, D1 - T, D1); a += w; }
-    for (let i = 0; i < 4; i++) { const a = A0 + T + rnd2() * (A1 - A0 - 2 * T), d = D0 + T + rnd2() * Math.max(1, D1 - D0 - 2 * T); if (frei(a, a, d, d)) continue; const q = P(a, d, gz(a, d) + 5 + rnd2() * 3), rr = F * (2.4 + rnd2() * 1.6) / d; if (q[0] > -5 && q[0] < 405) L.push({ t: d + 0.0005, baum: [q[0], q[1], rr, dunst(rnd2() < 0.5 ? "#4f6a3a" : "#5f7b45", d)] }); }
+    for (let d = D0; d < D1 - 0.5;) { const w0 = 7.5 + rnd2() * 4 + Math.max(0, d - 150) * 0.025, w = D1 - d - w0 < 4 ? D1 - d : w0; haus(A0, A0 + T, d, d + w); haus(A1 - T, A1, d, d + w); d += w; }
+    for (let a = A0 + T; a < A1 - T - 0.5;) { const w0 = 7.5 + rnd2() * 4 + Math.max(0, D0 - 150) * 0.025, w = A1 - T - a - w0 < 4 ? A1 - T - a : w0; haus(a, a + w, D0, D0 + T); haus(a, a + w, D1 - T, D1); a += w; }
+    for (let i = 0; i < 2; i++) { const a = A0 + T + rnd2() * (A1 - A0 - 2 * T), d = D0 + T + rnd2() * Math.max(1, D1 - D0 - 2 * T); if (frei(a, a, d, d)) continue; const q = P(a, d, gz(a, d) + 5 + rnd2() * 3), rr = F * (2.4 + rnd2() * 1.6) / d; if (q[0] > -5 && q[0] < 405) L.push({ t: d + 0.0005, baum: [q[0], q[1], rr, dunst(rnd2() < 0.5 ? "#4f6a3a" : "#5f7b45", d)] }); }
   }
   return L;
 };
@@ -477,6 +477,7 @@ const zeichneListe = (L) => {
     raus.push(e);
   }
   let s = "";
+  if (process.env.SFDBG) { const st = { box: 0, baum: 0, boden: 0, poly: 0, fen: 0 }; for (const e of raus) { if (e.baum) st.baum++; else if (e.L !== undefined) { st.box++; st.poly += e.V.length; st.fen += e.V.filter((v) => v.o).length; } else st.boden++; } console.error(JSON.stringify(st)); }
   for (const e of raus.reverse()) {
     const g = e.t > 250 ? 1 : e.t > 90 ? 2 : 10;
     if (e.baum) { const [x, y, rr, f] = e.baum; s += `<circle cx="${zahl(x, g)}" cy="${zahl(y, g)}" r="${zahl(rr, 10)}" fill="${f}"/>`; continue; }
@@ -571,18 +572,18 @@ const HAUS = {};
      Häuser im Blickfeld auf Alcatraz bleiben unter der Sichtlinie (sonst wäre die Insel verdeckt). */
   const freiN = (a0, a1, d0, d1) => (a0 < 30 && d0 < 60) || d0 < 40 || VN + F * a0 / d1 > 262;
   const maxN = (a0, a1, d0, d1) => { const x0 = VN + F * a0 / d1, x1 = VN + F * a1 / d0; if (x1 < 170 || x0 > 228) return 99; return E - 13 * d0 / F - Math.max(gzN(a0, d0), gzN(a1, d0), gzN(a0, d1), gzN(a1, d1)); };
-  const LN = bloecke(PN, gzN, [[2, 126], [147, 273]], [[15, 135], [150, 272], [287, 410], [425, 550], [565, 690]], freiN, 200,
+  const LN = bloecke(PN, gzN, [[2, 126], [147, 273]], [[15, 135], [150, 272], [287, 410], [425, 550], [565, 690]], freiN, 125,
     { vorn: (f) => f, seite: (f) => misch(f, "#000000", 0.1) }, rnd2, maxN, (a0, a1, d0) => a0 === 2 && d0 < 135 ? 18 : a1);
-  for (let d = 45; d < 690; d += 10) { const d1 = Math.min(690, d + 10), xs = [2, 40, 90, 126, 147, 210, 273, 330]; LN.push({ t: d1 - 0.01, V: [{ p: rahmen([...xs.map((X) => PN(X, d, gzN(X, d))), ...xs.slice().reverse().map((X) => PN(X, d1, gzN(X, d1)))]), f: dunst("#8b897f", d) }] }); }
+  for (let d = 45; d < 690; d += d < 150 ? 10 : 20) { const d1 = Math.min(690, d + (d < 150 ? 10 : 20)), xs = [2, 60, 126, 210, 330]; LN.push({ t: d1 - 0.01, V: [{ p: rahmen([...xs.map((X) => PN(X, d, gzN(X, d))), ...xs.slice().reverse().map((X) => PN(X, d1, gzN(X, d1)))]), f: dunst("#8b897f", d) }] }); }
   /* Ostblick: nördlich und südlich der Lombard Street, Blöcke bis zur Mason Street (≈ 0,7 km) */
   const freiE = (a0, a1, d0, d1) => (a1 <= 0 ? VO + F * a1 / d1 < 230 : VO + F * a0 / d1 > 405) || d1 > 715 || (a0 >= -39.2 && a1 <= -14.9 && d1 <= 126.1) || (a1 <= 0 && d0 < 30);
   const reihenE = [[2, 126], [147, 273], [294, 420], [441, 567], [588, 714]];
   KLIP[0] = 236;
   const LE = [
-    ...bloecke(PO, gzE, [[-272, -150], [-135, -15]], reihenE, freiE, 160, { vorn: (f) => misch(f, "#000000", 0.08), seite: (f) => f }, rnd2, () => 99),
-    ...bloecke(PO, gzE, [[5, 125]], reihenE, freiE, 160, { vorn: (f) => misch(f, "#000000", 0.08), seite: (f) => misch(f, "#000000", 0.34) }, rnd2, (a0, a1, d0) => d0 < 130 ? 10.5 : 99),
+    ...bloecke(PO, gzE, [[-272, -150], [-135, -15]], reihenE, freiE, 105, { vorn: (f) => misch(f, "#000000", 0.08), seite: (f) => f }, rnd2, () => 99),
+    ...bloecke(PO, gzE, [[5, 125]], reihenE, freiE, 140, { vorn: (f) => misch(f, "#000000", 0.08), seite: (f) => misch(f, "#000000", 0.34) }, rnd2, (a0, a1, d0) => d0 < 130 ? 10.5 : 99),
   ];
-  for (let d = 20; d < 714; d += d < 126 ? 8 : 12) { const d1 = Math.min(714, d + (d < 126 ? 8 : 12)), ls = [-330, -150, -135, -15, 5, 40, 120]; LE.push({ t: d1 - 0.01, V: [{ p: rahmen([...ls.map((l) => PO(l, d, gzE(l, d))), ...ls.slice().reverse().map((l) => PO(l, d1, gzE(l, d1)))]), f: dunst("#8b897f", d) }] }); }
+  for (let d = 20; d < 714; d += d < 126 ? 12 : 22) { const d1 = Math.min(714, d + (d < 126 ? 12 : 22)), ls = [-330, -135, -15, 5, 60]; LE.push({ t: d1 - 0.01, V: [{ p: rahmen([...ls.map((l) => PO(l, d, gzE(l, d))), ...ls.slice().reverse().map((l) => PO(l, d1, gzE(l, d1)))]), f: dunst("#8b897f", d) }] }); }
   KLIP[0] = -5;
   /* Westseite der Hyde Street: fern vereinfacht, nah mit Erker, Gesims, Garage, Treppe */
   const WL = [];

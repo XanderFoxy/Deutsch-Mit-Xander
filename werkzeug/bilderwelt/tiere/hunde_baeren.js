@@ -99,7 +99,7 @@ function teil(T, name, pts, fill, innen = "", aussen = "", o = {}) {
   /* erst Licht-Filter (sieht die volle Form), DANN die Ausblend-Maske – sonst entstünde am weichen Rand ein heller Lichtsaum */
   /* Runde 3: kern.js T.volumen (stufenlos: Innen-Schatten unten rechts, Innen-Glanz oben links) – deutlicher als Diffuslicht */
   /* Filter je Weichheit nur EINMAL (der Name im Filter-Id wäre sonst je Teil neu) */
-  const wv = o.weich || 4;
+  const wv = [1.2, 2.2, 3.6, 6, 10].reduce((b, v) => (Math.abs(v - (o.weich || 4)) < Math.abs(b - (o.weich || 4)) ? v : b), 3.6);
   const f = T.volumen ? T.volumen("v" + String(o.tiefe || 7).replace(".", "") + "_", { weich: wv, tiefe: o.tiefe || 7, umgebung: o.umgebung != null ? o.umgebung : 0.25 }) : "none";
   if (f !== "none") k = `<g filter="${f}">${k}</g>`;
   if (o.einblenden || o.einblendenX || o.blende) {
@@ -389,7 +389,7 @@ function wolf(T) {
      zum Unterschenkel – die Läufe liegen DARUNTER (keine Platten, keine Nähte). Ferne Läufe: Hüfte/Schulter hinter dem Rumpf,
      sichtbar erst ab Knie/Ellbogen, halber Schritt versetzt. Fell als Büschel (heller Kopf, dunkle Kerbe) in Wuchsrichtung.
      Widerristhöhe 82 cm; Kopf ≈ 30 cm (≈ 37 %); Brust 44 %, Lauf 56 %; Sprunggelenk 26 %, Handwurzel 19 %. */
-  T.dichte = 0.6;
+  T.dichte = 0.55;
   const rumpf = [
     [38, -72], [44, -76.4], [52, -77.8], [64, -77.2], [78, -77.4], [92, -79.4], [103, -82], [109, -82.8], [115, -82.2],   // Kruppe, Rücken, Widerrist-Kuppe
     [121, -82.6], [127, -84.6], [133, -87.6], [139, -86], [143, -78], [142.4, -71.4],                                    // Nackensenke, Nacken → unter den Kopf
@@ -460,7 +460,7 @@ function wolf(T) {
   /* Büschel: graues Deckhaar (heller Kopf, dunkle Kerbe), schwarzgespitzte Grannen im Sattel, lange helle Halskrause */
   n += bueschel(T, rumpf, 200, wuchs, 5.4, 0.3, hellB, dunkB);
   n += haare(T, rumpf.filter((p) => p[1] < -60), 120, wuchs, 4.6, [["#100d0a", 1, 0.12, 0.6]], 10, 0.3);
-  n += haare(T, rumpf, 110, wuchs, 4.4, grau, 10, 0.3);
+  n += haare(T, rumpf, 60, wuchs, 4.4, grau, 10, 0.3);
   n += bueschel(T, [[124, -84], [134, -88], [142, -78], [140, -66], [132, -54], [126, -60], [122, -72]], 40, (x, y) => 128 - (y + 70) * 0.4, 6.4, 0.32, ["#f2eadb", 0.45], ["#2a241e", 0.26]);
   s += teil(T, "wrumpf", rumpf, fell, n,
     fellKante(T, [[44, -76.4], [52, -77.8], [64, -77.2], [78, -77.4], [92, -79.4], [103, -82]], 50, -2, -0.3, "#4a433b", 0.09, 0.6) +
