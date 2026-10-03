@@ -671,7 +671,9 @@ const ZB = 12.2, ZP = 13.6;
   { const o = [], u = []; for (let i = 0; i <= 20; i++) { const s = -0.02 + i / 20 * 1.08; o.push(bp(s, ZB, OST)); u.push(bp(s, ZB, WEST)); } k += `<path d="${pfad([...o, ...u.reverse()])}" fill="#b9a690"/>`; }
   for (let i = 0; i < 26; i++) {
     const s = 0.03 + rnd() * 1.0, seite = [WEST[0] * (rnd() * 1.6 - .8), WEST[1] * (rnd() * 1.6 - .8)], p = bp(s, ZB, seite), sk = FOC / tief(BN[0] + (BS[0] - BN[0]) * s, BN[1] + (BS[1] - BN[1]) * s);
-    k += `<path d="M${r(p[0])} ${r(p[1])} v${r(-1.4 * sk)}" stroke="${["#b8473a", "#2f5f95", "#e8e4da", "#3a3a3a", "#d8ad3a", "#4f8a46", "#e07a2e"][i % 7]}" stroke-width="${r(.55 * sk)}" stroke-linecap="round"/><circle cx="${r(p[0])}" cy="${r(p[1] - 1.65 * sk)}" r="${r(.24 * sk)}" fill="#e2b48e"/>`;
+    /* Menschen in echter Größe (≈ 1,75 m): Beine, Oberkörper, Kopf; Licht von rechts */
+    const c = ["#b8473a", "#2f5f95", "#e8e4da", "#3a3a3a", "#d8ad3a", "#4f8a46", "#e07a2e"][i % 7], h = 2.6 * sk;
+    k += `<path d="M${r(p[0] - .12 * sk)} ${r(p[1])} v${r(-h * .45)} M${r(p[0] + .12 * sk)} ${r(p[1])} v${r(-h * .45)}" stroke="#3a3a44" stroke-width="${r(.2 * sk)}"/><path d="M${r(p[0])} ${r(p[1] - h * .42)} v${r(-h * .38)}" stroke="${c}" stroke-width="${r(.55 * sk)}" stroke-linecap="round"/><circle cx="${r(p[0])}" cy="${r(p[1] - h * .9)}" r="${r(.17 * h)}" fill="#e2b48e"/>`;
   }
   /* Ansichtsfläche der Westseite — im Abendlicht */
   { const o = [], u = []; for (let i = 0; i <= 30; i++) { const s = -0.02 + i / 30 * 1.08; o.push(bp(s, ZP)); u.push(bp(s, s > 1.01 ? 6 : 0)); } k += `<path d="${pfad([...o, ...u.reverse()])}" fill="${S.lg("bruecke", [[0, "#a84d38"], [0.5, "#c86448"], [1, "#d9785a"]], 0, 0, 1, 0)}"/>`; }
@@ -679,20 +681,27 @@ const ZB = 12.2, ZP = 13.6;
   for (let j = 0; j < 9; j++) {
     const [a, b] = BOGEN(j), pts = [];
     for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push(bp(a + (b - a) * t, bogenZ(t))); }
-    k += `<path d="${pfad([bp(a, 0), ...pts, bp(b, 0)])}" fill="${S.lg("bogen", [[0, "#24181a"], [0.6, "#3b302d"], [1, "#5d6d69"]])}"/>`;
+    k += `<path d="${pfad([bp(a, 0), ...pts, bp(b, 0)])}" fill="${S.lg("bogen", [[0, "#24181a"], [0.5, "#3b302d"], [0.78, "#56645f"], [0.9, "#9ab4ae"], [1, "#c8dad2"]])}"/>`;
     k += `<path d="${pfad(pts, false)}" stroke="#eca07e" stroke-width=".55" fill="none"/><path d="${pfad(pts.slice(0, 6), false)}" stroke="#7a3428" stroke-width=".3" fill="none" transform="translate(-.2 .3)"/>`;
     if (j < 8) {
       const s = (j + 1) / 9, p0 = bp(s - PFEILER, 0), p1 = bp(s + PFEILER, 0), top = bp(s, 4.8), tl = bp(s - PFEILER, 3.4), tr = bp(s + PFEILER, 3.4);
       k += `<path d="${pfad([p0, tl, top, tr, p1])}" fill="#d97a5c"/><path d="${pfad([tl, top, tr], false)}" stroke="#f2b294" stroke-width=".3" fill="none"/>`;
+      /* Gischt am Pfeilerfuß */
+      const g0 = bp(s - PFEILER * 1.5, -.2), g1 = bp(s + PFEILER * 1.5, -.2);
+      k += `<path d="M${P(g0)} Q${r((g0[0] + g1[0]) / 2)} ${r((g0[1] + g1[1]) / 2 + .7)} ${P(g1)}" stroke="#f4faf8" stroke-width=".45" fill="none" opacity=".85"/>`;
       k += `<path d="${pfad([bp(s + PFEILER * .6, 4.2), bp(s + PFEILER * .6, ZB - .6)], false)}" stroke="#eca07e" stroke-width=".35"/>`;
     }
   }
+  /* Brüstung aus rotem Sandstein: eigener Streifen mit Fugen und heller Deckplatte */
+  { const o = [], u = [], fu = []; for (let i = 0; i <= 30; i++) { const s = -0.02 + i / 30 * 1.08; o.push(bp(s, ZP + .3)); u.push(bp(s, ZB - .3)); }
+    for (let i = 1; i < 60; i++) { const s = -0.02 + i / 60 * 1.08; fu.push(`M${P(bp(s, ZB - .2))} L${P(bp(s, ZP + .2))}`); }
+    k += `<path d="${pfad([...o, ...u.reverse()])}" fill="#c4684c"/><path d="${fu.join(" ")}" stroke="#7a3428" stroke-width=".12" opacity=".6"/>`; }
   /* Gesims und Brüstungskrone */
   { const g = [], t = []; for (let i = 0; i <= 30; i++) { const s = -0.02 + i / 30 * 1.08; g.push(bp(s, ZB)); t.push(bp(s, ZP)); } k += `<path d="${pfad(g, false)}" stroke="#f0aa88" stroke-width=".6" fill="none"/><path d="${pfad(t, false)}" stroke="#ffd0b0" stroke-width=".5" fill="none"/>`; }
   /* Laternen auf der Brüstung */
   const LAT = [];
   for (const s of [0.11, 0.33, 0.44, 0.56, 0.67, 0.89, 1.0]) {
-    const a = bp(s, ZP), b = bp(s, ZP + 4.4), sk = FOC / tief(BN[0] + (BS[0] - BN[0]) * s, BN[1] + (BS[1] - BN[1]) * s);
+    const sk = FOC / tief(BN[0] + (BS[0] - BN[0]) * s, BN[1] + (BS[1] - BN[1]) * s), a = bp(s, ZP), b = [a[0], a[1] - 4.4 * sk * 1.1];
     k += `<path d="M${P(a)} L${P(b)}" stroke="#2f2a28" stroke-width="${r(.32 * sk)}"/><path d="M${r(b[0] - .5 * sk)} ${r(b[1] + .3 * sk)} h${r(sk)} l${r(-.2 * sk)} ${r(-1.1 * sk)} h${r(-.6 * sk)} Z" fill="#f6e6b8" stroke="#2f2a28" stroke-width=".12"/>`;
     LAT.push([b[0], b[1]]);
   }
@@ -713,32 +722,37 @@ const ZB = 12.2, ZP = 13.6;
    ===================================================================== */
 {
   let k = "";
-  const STEIN = S.lg("denkmal", [[0, "#6e6a5e"], [0.5, "#b2ad98"], [1, "#e6dfc8"]], 0, 0, 1, 0);
+  /* Postament rot (Neckartäler Sandstein); Minerva hell-rötlich, Karl Theodor mit dunklerer Patina */
+  const POST = S.lg("postament", [[0, "#8a3c2c"], [.6, "#c0644a"], [1, "#e89474"]], 0, 0, 1, 0);
   const denkmal = (s, minerva) => {
-    const fuss = bp(s, ZP), sk = FOC / tief(BN[0] + (BS[0] - BN[0]) * s, BN[1] + (BS[1] - BN[1]) * s), x = fuss[0], y = fuss[1];
-    /* gestuftes Postament mit Sockel und Gesims */
-    let g = `<rect x="${r(x - 1.5 * sk)}" y="${r(y - .8 * sk)}" width="${r(3 * sk)}" height="${r(.8 * sk)}" fill="#a88a72"/>`;
-    g += `<rect x="${r(x - 1.1 * sk)}" y="${r(y - 3.6 * sk)}" width="${r(2.2 * sk)}" height="${r(2.8 * sk)}" fill="${STEIN}"/><rect x="${r(x - 1.35 * sk)}" y="${r(y - 3.9 * sk)}" width="${r(2.7 * sk)}" height="${r(.35 * sk)}" fill="#ece6d4"/>`;
-    g += `<rect x="${r(x - .6 * sk)}" y="${r(y - 3 * sk)}" width="${r(1.2 * sk)}" height="${r(1.4 * sk)}" fill="#8f897a"/>`;
-    const fy = y - 3.9 * sk;
+    const fuss = bp(s, ZP), sk = FOC / tief(BN[0] + (BS[0] - BN[0]) * s, BN[1] + (BS[1] - BN[1]) * s) * 1.3, x = fuss[0], y = fuss[1];
+    const STEIN = minerva ? S.lg("minerva", [[0, "#9a5a46"], [.6, "#d0907a"], [1, "#f0b89c"]], 0, 0, 1, 0) : S.lg("kurfuerst", [[0, "#4a463e"], [.6, "#7a7466"], [1, "#a8a090"]], 0, 0, 1, 0);
+    /* hohes, gestuftes Postament über dem Pfeiler */
+    let g = `<rect x="${r(x - 1.4 * sk)}" y="${r(y - .9 * sk)}" width="${r(2.8 * sk)}" height="${r(.9 * sk)}" fill="#a85640"/>`;
+    g += `<rect x="${r(x - 1 * sk)}" y="${r(y - 3.4 * sk)}" width="${r(2 * sk)}" height="${r(2.5 * sk)}" fill="${POST}"/><rect x="${r(x - 1.25 * sk)}" y="${r(y - 3.7 * sk)}" width="${r(2.5 * sk)}" height="${r(.32 * sk)}" fill="#f0a684"/>`;
+    g += `<rect x="${r(x - .55 * sk)}" y="${r(y - 2.8 * sk)}" width="${r(1.1 * sk)}" height="${r(1.2 * sk)}" fill="#8a4434"/>`;
+    const fy = y - 3.7 * sk;
     if (minerva) {
-      /* Minerva: Helm mit Busch, Schild, Lanze */
-      g += `<path d="M${r(x - .5 * sk)} ${r(fy)} L${r(x - .35 * sk)} ${r(fy - 2.6 * sk)} Q${r(x)} ${r(fy - 2.9 * sk)} ${r(x + .35 * sk)} ${r(fy - 2.6 * sk)} L${r(x + .55 * sk)} ${r(fy)} Z" fill="${STEIN}" stroke="#5e5950" stroke-width=".1"/>`;
-      g += `<circle cx="${r(x)}" cy="${r(fy - 3.15 * sk)}" r="${r(.32 * sk)}" fill="#d8d2c0"/><path d="M${r(x - .35 * sk)} ${r(fy - 3.35 * sk)} Q${r(x)} ${r(fy - 4.2 * sk)} ${r(x + .5 * sk)} ${r(fy - 3.3 * sk)}" fill="#a8a290"/>`;
-      g += `<ellipse cx="${r(x - .62 * sk)}" cy="${r(fy - 1 * sk)}" rx="${r(.42 * sk)}" ry="${r(.62 * sk)}" fill="#9a9480" stroke="#5e5950" stroke-width=".1"/>`;
-      g += `<path d="M${r(x + .7 * sk)} ${r(fy + .1)} L${r(x + .7 * sk)} ${r(fy - 4.6 * sk)}" stroke="#4e4a42" stroke-width="${r(.14 * sk)}"/><path d="M${r(x + .7 * sk)} ${r(fy - 4.6 * sk)} l${r(-.14 * sk)} ${r(.5 * sk)} h${r(.28 * sk)} Z" fill="#4e4a42"/>`;
+      /* Minerva: Helm mit Busch, runder Schild, Lanze */
+      g += `<path d="M${r(x - .5 * sk)} ${r(fy)} L${r(x - .35 * sk)} ${r(fy - 2.6 * sk)} Q${r(x)} ${r(fy - 2.9 * sk)} ${r(x + .35 * sk)} ${r(fy - 2.6 * sk)} L${r(x + .55 * sk)} ${r(fy)} Z" fill="${STEIN}"/>`;
+      g += `<circle cx="${r(x)}" cy="${r(fy - 3.15 * sk)}" r="${r(.32 * sk)}" fill="#e0a084"/><path d="M${r(x - .38 * sk)} ${r(fy - 3.3 * sk)} Q${r(x - .1 * sk)} ${r(fy - 4.4 * sk)} ${r(x + .55 * sk)} ${r(fy - 3.4 * sk)} Q${r(x + .1 * sk)} ${r(fy - 3.7 * sk)} ${r(x - .38 * sk)} ${r(fy - 3.3 * sk)} Z" fill="#8a4a38"/>`;
+      g += `<circle cx="${r(x - .62 * sk)}" cy="${r(fy - 1.1 * sk)}" r="${r(.6 * sk)}" fill="#b87058"/><circle cx="${r(x - .62 * sk)}" cy="${r(fy - 1.1 * sk)}" r="${r(.25 * sk)}" fill="#d89478"/>`;
+      g += `<path d="M${r(x + .7 * sk)} ${r(fy + .1)} L${r(x + .7 * sk)} ${r(fy - 4.8 * sk)}" stroke="#6a3a2c" stroke-width="${r(.13 * sk)}"/><path d="M${r(x + .7 * sk)} ${r(fy - 4.8 * sk)} l${r(-.14 * sk)} ${r(.5 * sk)} h${r(.28 * sk)} Z" fill="#6a3a2c"/>`;
     } else {
-      /* Karl Theodor im Kurfürstenmantel mit Hermelinkragen, Stab */
-      g += `<path d="M${r(x - .7 * sk)} ${r(fy)} Q${r(x - .6 * sk)} ${r(fy - 1.6 * sk)} ${r(x - .35 * sk)} ${r(fy - 2.6 * sk)} Q${r(x)} ${r(fy - 2.9 * sk)} ${r(x + .35 * sk)} ${r(fy - 2.6 * sk)} Q${r(x + .7 * sk)} ${r(fy - 1.4 * sk)} ${r(x + .75 * sk)} ${r(fy)} Z" fill="${STEIN}" stroke="#5e5950" stroke-width=".1"/>`;
-      g += `<path d="M${r(x - .42 * sk)} ${r(fy - 2.5 * sk)} Q${r(x)} ${r(fy - 2.1 * sk)} ${r(x + .42 * sk)} ${r(fy - 2.5 * sk)}" stroke="#f2ecdc" stroke-width="${r(.22 * sk)}" fill="none"/>`;
-      g += `<circle cx="${r(x)}" cy="${r(fy - 3.15 * sk)}" r="${r(.32 * sk)}" fill="#d8d2c0"/><path d="M${r(x + .45 * sk)} ${r(fy - 1.8 * sk)} L${r(x + .85 * sk)} ${r(fy - 2.9 * sk)}" stroke="#4e4a42" stroke-width="${r(.12 * sk)}"/>`;
+      /* Karl Theodor im Kurfürstenmantel mit Hermelinkragen (weiß mit Schwänzchen), Stab */
+      g += `<path d="M${r(x - .75 * sk)} ${r(fy)} Q${r(x - .6 * sk)} ${r(fy - 1.6 * sk)} ${r(x - .35 * sk)} ${r(fy - 2.6 * sk)} Q${r(x)} ${r(fy - 2.9 * sk)} ${r(x + .35 * sk)} ${r(fy - 2.6 * sk)} Q${r(x + .7 * sk)} ${r(fy - 1.4 * sk)} ${r(x + .8 * sk)} ${r(fy)} Z" fill="${STEIN}"/>`;
+      g += `<path d="M${r(x - .45 * sk)} ${r(fy - 2.5 * sk)} Q${r(x)} ${r(fy - 2 * sk)} ${r(x + .45 * sk)} ${r(fy - 2.5 * sk)}" stroke="#f2ecdc" stroke-width="${r(.3 * sk)}" fill="none"/>`;
+      for (const dx of [-.25, 0, .25]) g += `<circle cx="${r(x + dx * sk)}" cy="${r(fy - 2.3 * sk)}" r="${r(.05 * sk)}" fill="#1d1d1d"/>`;
+      g += `<circle cx="${r(x)}" cy="${r(fy - 3.15 * sk)}" r="${r(.32 * sk)}" fill="#9a9484"/><path d="M${r(x + .5 * sk)} ${r(fy - 1.6 * sk)} L${r(x + .95 * sk)} ${r(fy - 3 * sk)}" stroke="#3a3630" stroke-width="${r(.12 * sk)}"/>`;
     }
+    /* Lichtkante rechts (Westsonne) */
+    g += `<path d="M${r(x + 1 * sk)} ${r(y - .9 * sk)} V${r(y - 3.4 * sk)}" stroke="#ffd0b0" stroke-width="${r(.12 * sk)}" opacity=".7"/>`;
     return { g, top: [x, fy - 3.6 * sk], sk };
   };
   const mi = denkmal(2 / 9, true), kt = denkmal(7 / 9, false);
   k += mi.g + kt.g;
   S.teil({ id: "denkmal", de: "das Denkmal", syl: "DENK-mal", it: "il monumento", itSyl: "mo-nu-MEN-to", en: "monument", x: kt.top[0], y: kt.top[1] + 3, kunst: `<g transform="translate(${r(-kt.top[0])} ${r(-kt.top[1] - 3)})">${k}</g>`,
-    tipp: "Auf zwei Pfeilern stehen Denkmäler: Kurfürst Karl Theodor, der die Brücke bauen ließ, und Minerva, die Göttin der Weisheit." });
+    tipp: "Auf zwei Pfeilern stehen Denkmäler: auf der Altstadtseite Kurfürst Karl Theodor, der die Brücke bauen ließ, auf der Neuenheimer Seite Minerva, die Göttin der Weisheit." });
 }
 
 /* =====================================================================
@@ -788,6 +802,9 @@ const ZB = 12.2, ZP = 13.6;
   /* Ostturm (links, weiter weg) */
   const ost = turm(-8, true);
   k += ost.g;
+  /* das Ende der Brückenfahrbahn liegt vor dem Ostturm und führt in die Durchfahrt */
+  k += `<path d="${pfad([gp(...at(-3.6, 1.2), ZB), gp(...at(3.6, 1.2), ZB), gp(...at(3.6, 16), ZB), gp(...at(-3.6, 16), ZB)])}" fill="#b9a690"/>`;
+  k += `<path d="${pfad([gp(...at(-3.6, 1.2), ZB), gp(...at(-3.6, 16), ZB), gp(...at(-3.6, 16), ZP + .3), gp(...at(-3.6, 1.2), ZP + .3)])}" fill="#a24a37"/>`;
   /* Mittelbau: Front zwischen den Türmen, Schieferdach, Durchfahrt mit Spitzbogen und Fallgatternische */
   {
     const fr = (u, z) => gp(...at(u, 1.2), z);
@@ -810,7 +827,7 @@ const ZB = 12.2, ZP = 13.6;
   /* Abendschatten der Türme nach links auf die Häuser dahinter */
   k += `<path d="M${r(ost.cx - ost.R)} ${r(ost.f[1] - 3)} l-7 -2.6 l0 -15 l7 2.6 Z" fill="#1d140c" opacity=".14"/>`;
   /* der Brückenaffe (Bronze) auf Fahrbahnhöhe rechts neben der Durchfahrt, mit Spiegel; daneben zwei Mäuse */
-  const A = gp(...at(3.4, 3.4), ZB), sa = FOC / tief(...at(3.4, 3.4)) * GE * 1.5;
+  const A = gp(...at(6.4, 4.6), ZB), sa = FOC / tief(...at(6.4, 4.6)) * GE * 1.5;
   const BR = S.lg("bronze", [[0, "#3e2c18"], [0.5, "#7d5e32"], [1, "#d4ac62"]], 0, 0, 1, 0);
   k += `<rect x="${r(A[0] - .75 * sa)}" y="${r(A[1] - .45 * sa)}" width="${r(1.5 * sa)}" height="${r(.45 * sa)}" fill="#a89a88"/>`;
   k += `<ellipse cx="${r(A[0])}" cy="${r(A[1] - .95 * sa)}" rx="${r(.42 * sa)}" ry="${r(.52 * sa)}" fill="${BR}"/><circle cx="${r(A[0])}" cy="${r(A[1] - 1.66 * sa)}" r="${r(.3 * sa)}" fill="${BR}"/><ellipse cx="${r(A[0] + .05 * sa)}" cy="${r(A[1] - 1.58 * sa)}" rx="${r(.17 * sa)}" ry="${r(.13 * sa)}" fill="#a88450"/>`;

@@ -163,9 +163,9 @@ figurDef("runter", { geschlecht: "m", pose: "gehen", blick: 182, frisur: "kurz",
   kleidung: { oberteil: { stueck: "pullover", farbe: "#3d6b4a" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } }, "mittel");
 figurDef("rauf", { geschlecht: "w", pose: "gehen", blick: 12, frisur: "zopf", haarfarbe: "blond", haut: "hell",
   kleidung: { oberteil: { stueck: "pullover", farbe: "#8a3c4a" }, unterteil: { stueck: "jeans" }, schuhe: SCHUH } }, "mittel");
-figurDef("sitzend", { geschlecht: "w", pose: "sitzen", blick: 200, frisur: "zopf", haarfarbe: "hellbraun", haut: "hell",
+figurDef("sitzend", { geschlecht: "w", pose: "schneidersitz", blick: 200, frisur: "zopf", haarfarbe: "hellbraun", haut: "hell",
   kleidung: { oberteil: { stueck: "pullover", farbe: "#c0623a" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } });
-figurDef("sitzend2", { geschlecht: "m", pose: "sitzen", blick: 160, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell",
+figurDef("sitzend2", { geschlecht: "m", pose: "sitzen_angewinkelt", blick: 160, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell",
   kleidung: { oberteil: { stueck: "pullover", farbe: "#3f5f8a" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } });
 /* Bronzefiguren der Säule: Concordia (Kontrapost, die Rechte hebt den Kranz) und die sitzenden Frauen am Sockel */
 const KONTRA = { roll: 3, lende: 1, brust: -2, brustRoll: -5, nacken: 5, kopf: -6, kopfRoll: 3,
@@ -793,7 +793,14 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
   /* Leute auf dem Platz */
   const leute = [mensch("rauf", 22, 4.5), mensch("runter", 36, 7.5, true), mensch("runter", 41, 18.5, true), mensch("rauf", 62, 27, true),
     mensch("runter", 98, 13), mensch("rauf", 118, 22), mensch("rauf", 30, vRand(30) + 3), mensch("runter", 72, vRand(72) + 2.5)];
-  for (const [u, v, sp] of [[20, 36, 0], [24, 37, 1], [50, 45, 1], [66, 40, 0], [14, 12.5, 1], [42, 14, 0], [74, 54, 1], [112, 40, 0]]) leute.push(Object.assign(mensch(sp ? "sitzend2" : "sitzend", u, v, 0), { schatten: "" }));
+  /* Sitzende im Gras (Schneidersitz, Knie angezogen), ein Paar auf einer Decke; weicher Schatten unter Gesäß und Füßen */
+  k += vieleck([boden(20.2, 35.2), boden(23.6, 35.2), boden(23.6, 37.4), boden(20.2, 37.4)], `fill="#b8423c"`);
+  { let f = ""; for (let i = 1; i < 4; i++) f += strecke(boden(20.2 + i * 0.85, 35.2), boden(20.2 + i * 0.85, 37.4)) + strecke(boden(20.2, 35.2 + i * 0.55), boden(23.6, 35.2 + i * 0.55));
+    k += `<path d="${f}" stroke="#f1e6d4" stroke-width=".25" opacity=".8"/>`; }
+  for (const [u, v, sp] of [[21.2, 36.1, 0], [22.6, 36.4, 1], [50, 45, 1], [66, 40, 0], [14, 13.5, 1], [42, 15, 0], [74, 54, 1], [112, 40, 0]]) {
+    const p = mensch(sp ? "sitzend2" : "sitzend", u, v, sp), m = mY(p.y);
+    p.schatten = `<ellipse cx="${r(p.x - 0.15 * m)}" cy="${r(p.y - 0.05 * m)}" rx="${r(0.5 * m)}" ry="${r(0.16 * m)}" fill="#2a2216" opacity=".28"/>`; leute.push(p);
+  }
   for (const p of leute) k += p.schatten;
   for (const [u, v, h, b, s] of BAEUME) { const [x, y] = boden(u, v); k += baum(x, y, h, b, HERBST, s); }
   for (const p of leute) k += p.bild;
@@ -1107,7 +1114,12 @@ const P2 = (p) => `${r(p[0])} ${r(p[1])}`;
   k += `<path d="M0 ${r(KANTE)} L320 ${r(KANTE)}" stroke="#f8f4ec" stroke-width=".7"/><path d="M0 ${r(KANTE + 0.6)} L320 ${r(KANTE + 0.6)}" stroke="#7d7a74" stroke-width=".35"/>`;
   /* Menschen auf der Treppe (sie stehen tiefer als wir) */
   /* Leute sitzen auf der Sitztreppe (von hinten gesehen) */
-  for (const [d, X, sp] of [[15.8, -4.6, 0], [12.4, -3.6, 1], [16.5, 5.6, 1], [12.8, 4.3, 0]]) { const z = stufeZ(d), p = T3(X, d, z); k += figur(sp ? "sitzend2" : "sitzend", p[0], p[1], 1.7 * 300 / d, sp); }
+  /* Gesäß auf dem Tritt, die Füße eine Stufe tiefer (von hinten vom Rumpf verdeckt); Schattenkeil nach vorn links */
+  for (const [d, X, sp] of [[20.4, -7, 1], [14.2, -3.4, 0], [15.2, 3.7, 1], [21.3, 8.4, 0]]) {
+    const z = stufeZ(d) + 0.02, p = T3(X, d, z), m = 300 / d;
+    k += `<path d="M${r(p[0] - 0.3 * m)} ${r(p[1])} L${r(p[0] - 0.75 * m)} ${r(p[1] - 0.22 * m)} L${r(p[0] + 0.05 * m)} ${r(p[1] - 0.25 * m)} L${r(p[0] + 0.3 * m)} ${r(p[1])} Z" fill="#2a2216" opacity=".22"/>`;
+    k += figur(sp ? "sitzend2" : "sitzend", p[0], p[1], 1.7 * m, sp);
+  }
   for (const [n, d, X, h] of [["runter", 14, -1.5, 1.72], ["rauf", 18, 2, 1.68]]) { const z = stufeZ(d), p = T3(X, d, z); k += figur(n, p[0], p[1], h * 300 / d); }
   S.teil({ id: "treppe", de: "die Freitreppe", syl: "FREI-trep-pe", it: "la scalinata", itSyl: "sca-li-NA-ta", en: "outdoor staircase", x: 0, y: 0, kunst: k,
     tipp: "Über die breite Freitreppe geht man vom Kleinen Schlossplatz hinunter zur Königstraße." });
