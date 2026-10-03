@@ -1414,9 +1414,9 @@ function katta(T) {
     [[36.2, -16], [37.8, -13], [38.6, -8], [38.4, -12.6]], [[41.6, -19, 1.2, 3, 0, "#eeeae6", 0.4], [36.6, -14.4, 0.9, 1, 0, "#2a2826", 0.45], [40.8, -5.4, 0.8, 0.8, 0, "#2a2826", 0.35]]);
 
   /* ---------- Hals: schlank, schräg nach vorn oben, ohne Kante; Kehle weiß, Nacken grau; Kopf wirft Schatten ---------- */
-  const hals = [[39.6, -25.6], [43.6, -29.6], [47.4, -33.2], [51, -34.4], [53.4, -31], [52, -28], [49.6, -25.4], [45.6, -23.4], [42, -23]];
+  const hals = [[39.6, -25.6], [43.6, -28.4], [46.6, -30.6], [49.6, -31.4], [52.2, -28.6], [51.2, -25.6], [48.6, -23.6], [45.6, -22.8], [42, -23]];
   s += W.vol("v", 1.6, W.teil(hals, T.lg("khs", [[0, "#8a8a8c"], [0.5, "#b4b0ae"], [1, "#ece6dc"]], 0, 0, 0.7, 1),
-    W.musterFlaeche(hals, KG(205)) + (T.fein ? `<g mask="url(#${W.maskeForm("kke", [[53.6, -31.4], [52.4, -28], [49.8, -24.8], [47, -22], [44.6, -22.4], [47.6, -26], [50.4, -30.4]], 0.5)})">${W.musterFlaeche(hals, KW(110))}</g>` : "") +
+    W.musterFlaeche(hals, KG(205)) + (T.fein ? `<g mask="url(#${W.maskeForm("kke", [[53, -29.4], [51.8, -25.6], [48.8, -23.2], [45.6, -22.4], [44.6, -23.4], [48, -25.6], [50.2, -28.6]], 0.5)})">${W.musterFlaeche(hals, KW(110))}</g>` : "") +
     W.weich([[50, -31, 3, 1.2, -30, "#2a2826", 0.45]], 0.6),
   { rand: 0, maske: W.maske("khs", [36, -38, 56, -16], 38, 0, 42, 0) }));
 
@@ -1445,11 +1445,13 @@ function katta(T) {
      fernes Ohr kleiner und dunkler dahinter */
   const ohr = (dx, dy, k2) => [[48.6, -36.6], [47.4, -38.8], [46.4, -40.6], [48.6, -39.8], [50.2, -38]].map(([x, y]) => [48.6 + (x - 48.6) * k2 + dx, -37 + (y + 37) * k2 + dy]);
   const oF = ohr(1.6, -1.2, 0.75), oN = ohr(0, 0, 1);
+  s += `<g transform="translate(-1.5 3.4)">`;
   s += W.teil(oF, "#b8b4ae", W.haare(oF, 10, 225, 0.7, WEISS.slice(0, 2), { licht: () => 0.5, gerade: true, szene: 0 }), { rand: 0 });
   s += W.vol("v", 1.6, k);
   s += W.vol("v", 0.6, W.teil(oN, "#e2ded8", W.weich([[47.8, -38.4, 0.5, 1.1, 30, "#6a6668", 0.45]], 0.25) + W.haare(oN, 30, 220, 0.9, WEISS, { licht: () => 0.85, gerade: true, szene: 0.05 }), { rand: 0 }) +
     W.saum([[47.4, -38.8], [46.4, -40.6], [48.6, -39.8]], 20, 230, 0.7, WEISS, { licht: () => 0.9, gerade: true, szene: 0.05 }));
-  return W.fertig(s, 1, [45, -43, 65, -29], [10, 16, 40, 45]);
+  s += `</g>`;
+  return W.fertig(s, 1, [43.5, -39.6, 63.5, -25.6], [10, 16, 40, 45]);
 }
 
 /* Eukalyptusblatt: lanzettlich, sichelförmig, graugrün, hängend; (x, y) Stielansatz, winkel, Länge */

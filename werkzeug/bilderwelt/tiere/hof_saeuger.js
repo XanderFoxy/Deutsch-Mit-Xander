@@ -463,13 +463,15 @@ function bildeBein(tpl, cx, xs, ymap) {
    Seitenansicht: Keil mit Dorsalwand ~48°, Zehe leicht gerundet, Kronsaum fällt flach nach hinten zum weichen Ballen,
    der Ballen ist Teil derselben Form (hellere, weiche Haut), getrennt nur durch eine weiche Furche. Die innere Klaue
    liegt etwas versetzt davor, dazwischen ein dunkles V vom Kronsaum bis zur Spitze. Hornrillen, Glanz auf der Wand. */
+const abdunkeln = (f, k) => "#" + [1, 3, 5].map((i) => Math.round(parseInt(f.slice(i, i + 2), 16) * k).toString(16).padStart(2, "0")).join("");
 function klaue3(T, F, xh, L, h, farbe, haar = "#e8e4dc", ballen = "#a89894") {
   const w = h / Math.tan(48 * Math.PI / 180), xt = xh + L, xo = xt - w;
   const kl = (dx, hh, f, id) => {
     const X = (u) => xh + dx + u * L;
     const pts = [[X(0.1), 0, 1], [X(0.02), -hh * 0.14], [X(0.01), -hh * 0.34], [X(0.08), -hh * 0.5], [X(0.24), -hh * 0.64], [X(0.42), -hh * 0.82],
       [xo + dx - L * 0.03, -hh], [xo + dx + L * 0.05, -hh * 0.93], [xt + dx - L * 0.05, -hh * 0.16], [xt + dx - L * 0.01, -hh * 0.05], [xt + dx - L * 0.07, 0, 1]];
-    const g = T.lg("k3" + id + farbe.slice(1) + ballen.slice(1), [[0, ballen], [0.26, ballen], [0.4, f], [1, "#141210"]], 0, 0, 1, 0.4);
+    const dk = abdunkeln(f, 0.42);
+    const g = T.lg("k3" + id + farbe.slice(1) + ballen.slice(1), [[0, ballen], [0.26, ballen], [0.4, f], [1, dk]], 0, 0, 1, 0.4);
     let innen = F.kante(xo + dx, -hh * 0.8, xt + dx - L * 0.14, -hh * 0.22, hh * 0.12, 0.55) + F.rinne(X(0.3), -hh * 0.66, X(0.36), -hh * 0.04, L * 0.035, 0.6) +
       F.licht(X(0.12), -hh * 0.36, L * 0.07, hh * 0.14, 0.4) + F.schatten(X(0.5), -hh * 0.12, L * 0.4, hh * 0.18, 0.5);
     if (T.fein) {
@@ -482,7 +484,7 @@ function klaue3(T, F, xh, L, h, farbe, haar = "#e8e4dc", ballen = "#a89894") {
   /* innere Klaue (davor, versetzt, dunkler), Spalt-Schatten, äußere Klaue */
   /* Runde 4: Spalt deutlich (Kritik: „einteilig“) – innere Klaue 18 % vor, dunkler Keil vom Kronsaum bis zwischen die
      beiden Zehenspitzen, unten ≈ 8 % der Klauenlänge breit; zwei getrennte, gerundete Zehenspitzen */
-  let s = kl(L * 0.18, h * 0.93, "#2a2624", "i");
+  let s = kl(L * 0.18, h * 0.93, abdunkeln(farbe, 0.72), "i");
   s += form([[xo + L * 0.02, -h * 0.99], [xo + L * 0.12, -h * 0.97], [xt + L * 0.11, -h * 0.08], [xt + L * 0.08, 0, 1], [xt - L * 0.03, 0, 1], [xt - L * 0.04, -h * 0.1]],
     "#050403", ` opacity=".92"`, 0.05);
   s += kl(0, h, farbe, "a");
@@ -1356,7 +1358,7 @@ function schwein(T) {
   const borsten = fellMuster(T, "b", 1.6, 26, [["#fff8f0", 1, 0.05, 0.6], ["#c8907e", 0.5, 0.05, 0.4]], 18, 6);
   const poren = fellMuster(T, "p", 0.06, 110, [["#a86a5a", 1, 0.1, 0.1]], 180, 7);
   let s = "";
-  const klS = (cx, f, b) => klaue3(T, F, cx + 0.6, 7.4, 4.6, f, "#f4e0d4", b) + afterklaue2(T, cx - 1.9, -5.8, 1.1, "#a49488", "#f4e0d4");
+  const klS = (cx, f, b) => klaue3(T, F, cx + 0.6, 7.4, 4.6, f, "#f4e0d4", b) + afterklaue2(T, cx - 1, -6, 1, "#a49488", "#f4e0d4");
   const fernBein = (vorn, dx) => {
     const cx = (vorn ? S_VCX : S_HCX) + dx;
     const pts = verschiebe(vorn ? S_V.h.concat(S_V.v) : S_H.h.slice(2).concat(S_H.v), dx).concat(vorn ? [[cx + 10, -48], [cx - 8, -48]] : [[cx + 22, -46], [cx - 6, -46]]);

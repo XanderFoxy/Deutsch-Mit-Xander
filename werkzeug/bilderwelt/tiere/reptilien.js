@@ -924,14 +924,14 @@ function kobra(T) {
   /* Brille: zwei gefüllte cremeweiße Ringflecken (schwarzer Saum, dunkler Kern), verbunden durch einen flachen,
      weich durchhängenden Bügel gleicher Breite, der innen-unten ohne Absatz in die Ringe übergeht; leicht unsymmetrisch */
   const kreis = (cx, cy, r, n, j) => { const p = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; const rr = r * (1 + (T.rnd() - 0.5) * j); p.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * 0.94]); } return Q(p); };
-  const cre = "#e8d6a6", sw = "#1e1208", yB = -1.6;
+  const cre = "#dcc48e", sw = "#1e1208", yB = -1.6;
   const bueg = Q([[-8.4, yB + 2.2], [-4, yB + 3.5], [0, yB + 3.8], [4, yB + 3.4], [8.6, yB + 1.9]]);
   let br = `<path d="${T.glatt(bueg, false)}" fill="none" stroke="${sw}" stroke-width="3.4" stroke-linecap="round"/>`;
   const ringe = [[-13.4, yB, 5.6], [13.6, yB - 0.4, 5.4]];
-  for (const [cx, cy, r] of ringe) br += `<path d="${T.glatt(kreis(cx, cy, r + 0.55, 12, 0.08))}" fill="${sw}"/>`;
+  for (const [cx, cy, r] of ringe) br += `<path d="${T.glatt(kreis(cx, cy, r + 0.55, 14, 0.12))}" fill="${sw}"/>`;
   br += `<path d="${T.glatt(bueg, false)}" fill="none" stroke="${cre}" stroke-width="2.3" stroke-linecap="round"/>`;
   for (const [cx, cy, r] of ringe) br += `<path d="${T.glatt(kreis(cx, cy, r, 12, 0.06))}" fill="${cre}"/><path d="${T.glatt(kreis(cx + 0.4, cy - 0.2, r * 0.52, 10, 0.1))}" fill="${sw}"/><path d="${T.glatt(kreis(cx + 0.4, cy - 0.2, r * 0.42, 10, 0.1))}" fill="#3a2614"/>`;
-  hi += `<g opacity=".92" filter="${weich(T, "br", 0.18)}">${br}</g>`;
+  hi += `<g opacity=".88" filter="${weich(T, "br", 0.22)}">${br}</g>`;
   /* Schatten von Kopf und Nacken auf der Schildoberkante */
   hi += `<ellipse cx="5" cy="-27" rx="10" ry="3" fill="#000" opacity=".16" filter="${weich(T, "hk", 1.6)}"/>`;
   let hood = teil(T, hs, hg, { innen: hi, rand: "#1a1008", randA: 0.25, rw: 0.45 });

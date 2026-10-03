@@ -640,6 +640,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   /* Felsbänke: die Platte fällt in Stufen zum Betrachter ab. Jede Stufe: oben die helle Trittfläche,
      vorn die Stirn (Morgensonne von hinten rechts → hell, warm), darunter eine dunkle Schattenfuge */
   const baenke = [[200, 3.2], [214, 4.2], [232, 5.6], [250, 6.4]];
+  S.def(`<pattern id="${S.id("kreuz")}" width="15" height="4.4" patternUnits="userSpaceOnUse" patternTransform="rotate(-4)"><path d="M0 .6q4 .8 8.5 2.8M7 2.6q3.5.5 7.6 1.6M10 .2q2.6.4 5 1.4" stroke="#9a6d3c" stroke-width=".25" fill="none" opacity=".55"/></pattern>`);
   baenke.forEach(([y0, h], i) => {
     const wav = (x) => y0 + Math.sin(x / 27 + i * 2) * 1.6 + Math.sin(x / 9 + i) * 0.5;
     let top = "", bot = "";
@@ -650,9 +651,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
     k += `<path d="M${xs.slice().reverse().map((x) => `${r(x)} ${r(wav(x) + h + Math.sin(x / 13) * 0.6)}`).join(" L")}" stroke="#6f4a26" stroke-width="${r(0.6 + i * 0.25)}" fill="none" opacity=".55"/>`;
     k += `<path d="M${top}" stroke="#f4dfb2" stroke-width="${r(0.5 + i * 0.2)}" fill="none" opacity=".9"/>`;
     /* Kreuzschichtung in der Stirn: feine schräge Lagen */
-    let kr = "";
-    for (let x = rnd() * 12; x < 236; x += 9 + rnd() * 10) { const y = wav(x) + 0.6; kr += `M${r(x)} ${r(y + h * 0.15)} q${r(h * 0.9)} ${r(h * 0.25)} ${r(h * 1.8)} ${r(h * 0.75)}`; }
-    k += `<path d="${kr}" stroke="#9a6d3c" stroke-width=".25" fill="none" opacity=".5"/>`;
+    k += `<path d="M${top} L${bot} Z" fill="url(#${S.id("kreuz")})"/>`;
     /* Waben (Tafoni) in der Stirn */
     for (let j = 0; j < 2 + i; j++) { const x = 12 + rnd() * 200; k += taf(x, wav(x) + h * 0.55, r(0.5 + i * 0.25)); }
   });

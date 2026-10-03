@@ -122,6 +122,8 @@ const GLAS_S = "#2c3440";
 const GOLD = S.lg("gold", [[0, "#f6dd84"], [1, "#b48a2c"]]);
 S.def(`<pattern id="${S.id("quader")}" width="4" height="1.5" patternUnits="userSpaceOnUse"><path d="M0 1.45 H4 M2 0 V.75 M0 .75 H4 M0 .75 V1.5" stroke="#9c917e" stroke-width=".1" fill="none"/></pattern>`);
 const QUADER = `url(#${S.id("quader")})`;
+S.def(`<pattern id="${S.id("schiefer")}" width="1.6" height="1.1" patternUnits="userSpaceOnUse"><path d="M0 1.05 Q.4 .55 .8 1.05 Q1.2 .55 1.6 1.05 M-.8 .5 Q-.4 0 0 .5 Q.4 0 .8 .5 Q1.2 0 1.6 .5 Q2 0 2.4 .5" stroke="#2c323a" stroke-width=".12" fill="none" opacity=".7"/></pattern>`);
+const SCHIEFER = `url(#${S.id("schiefer")})`;
 S.def(`<pattern id="${S.id("zv")}" width="2" height=".9" patternUnits="userSpaceOnUse"><path d="M0 .85 H2 M0 .42 H2 M1 0 V.42 M0 .42 V.9" stroke="#e8c9ae" stroke-width=".09" opacity=".8"/></pattern>`);
 const ZV = `url(#${S.id("zv")})`;
 
@@ -479,13 +481,16 @@ let SCHLOSS = "";
   k += `<path d="${wandFl(PO1, 0, 26, -2, ZT)}" fill="${QUADER}" opacity=".5"/>`;
   for (const z of [6.2, 12.4, 18.6, 24.2]) k += `<path d="M${Pt(PO1(0, z))} L${Pt(PO1(26, z))} L${Pt(PO2(26.05, z - 0.3))}" stroke="#9ea2ad" stroke-width=".45" fill="none"/>`;
   /* Fenster der Hofseite: unten gekuppelt, 3. Stock dreiteilig, 4. Stock: Sängersaal-Arkaden */
-  for (const [W, s0, n] of [[PO1, 3, 4], [PO2, 2, 4]]) {
-    for (let i = 0; i < n; i++) {
-      const s = s0 + i * 5.8 + (i === 2 ? 0.6 : 0);
-      k += bogen(W, s, 7.4, 2.4, 3.6, 2, GLAS, "#d9dbe2") + bogen(W, s, 13.6, 2.4, 3.8, 2, GLAS, "#d9dbe2") + bogen(W, s - 0.3, 19.4, 3, 3.8, 3, GLAS, "#d9dbe2");
-    }
+  /* Hofseite: Achsen unregelmäßig, Geschosse verschieden hoch; oben die Arkaden des Sängersaals */
+  for (const [W, achsen] of [[PO1, [2.6, 7.9, 14.1, 19.3]], [PO2, [2.2, 8.4, 13.6, 20.2]]]) {
+    achsen.forEach((s, i) => {
+      k += bogen(W, s + (i % 2) * 0.3, 7.2, i === 2 ? 1.8 : 2.4, 3.3, i === 2 ? 1 : 2, GLAS, "#d9dbe2") + bogen(W, s, 13.4, 2.4, 4.1, 2, GLAS, "#d9dbe2") + bogen(W, s - 0.4, 19.2, i % 2 ? 2.6 : 3.2, 4, i % 2 ? 2 : 3, GLAS, "#d9dbe2");
+    });
   }
-  for (let i = 0; i < 9; i++) { const W = i < 5 ? PO1 : PO2, s = i < 5 ? 1.2 + i * 4.9 : 0.6 + (i - 5) * 6; k += bogen(W, s, 25.2, 3.6, 4.2, 3, GLAS, "#e3e5ea"); }
+  const SAAL = S.lg("saalglas", [[0, "#aab8cc"], [1, "#6c7d96"]]);
+  k += `<path d="${poly([PO1(0.4, 24.6), PO1(26, 24.6), PO2(25.6, 24.4), PO2(25.6, 30.4), PO1(26, 30.6), PO1(0.4, 30.6)])}" fill="#e9eaee"/>`;
+  for (let i = 0; i < 10; i++) { const W = i < 5 ? PO1 : PO2, s = i < 5 ? 1 + i * 5 : 0.8 + (i - 5) * 5; k += bogen(W, s, 25.2, 4.2, 5.2, 3, SAAL, "#f4f4f6"); }
+  k += `<path d="M${Pt(PO1(0.4, 25))} L${Pt(PO1(26, 25))} L${Pt(PO2(25.6, 24.8))}" stroke="#c6c8d0" stroke-width=".55" fill="none"/>`;
   /* Südseite mit Giebel (im Licht) */
   k += `<path d="${poly([PS(0, -12), PS(24, -4), PS(24, ZT), PS(0, ZT)])}" fill="${KALK_SUED}"/>`;
   k += `<path d="${poly([PS(0, ZT), PS(24, ZT), PS(12, ZF)])}" fill="${S.lg("giebel", [[0, "#fff8ea"], [1, "#efe4ce"]])}"/>`;
@@ -501,8 +506,8 @@ let SCHLOSS = "";
   /* Giebel: Fensterchen und Ladeluke */
   k += bogen(PS, 9.6, 33.4, 4.8, 3.8, 3) + bogen(PS, 11, 40.6, 2, 3, 2);
   /* Dach: steile Schieferfläche zur Hofseite (Schatten), Ortgang am Südgiebel */
-  k += `<path d="${dachFl([12, -26], [12, 0], ZT, -12, 0, ZF)}" fill="${SCHIEFER_OST}"/>`;
-  k += `<path d="${poly([C(12, 0, ZT - 0.2), C(13.6, 26, ZT - 0.6), C(1.6, 26, ZF - 0.6), C(0, 0, ZF)])}" fill="${S.lg("schieferost2", [[0, "#56606c"], [1, "#3d4450"]])}"/>`;
+  k += `<path d="${dachFl([12, -26], [12, 0], ZT, -12, 0, ZF)}" fill="${SCHIEFER_OST}"/><path d="${dachFl([12, -26], [12, 0], ZT, -12, 0, ZF)}" fill="${SCHIEFER}" opacity=".55"/>`;
+  k += `<path d="${poly([C(12, 0, ZT - 0.2), C(13.6, 26, ZT - 0.6), C(1.6, 26, ZF - 0.6), C(0, 0, ZF)])}" fill="${S.lg("schieferost2", [[0, "#56606c"], [1, "#3d4450"]])}"/><path d="${poly([C(12, 0, ZT - 0.2), C(13.6, 26, ZT - 0.6), C(1.6, 26, ZF - 0.6), C(0, 0, ZF)])}" fill="${SCHIEFER}" opacity=".5"/>`;
   k += `<path d="M${Pt(C(0, -26, ZF))} L${Pt(C(0, 0, ZF))} L${Pt(C(1.6, 26, ZF - 0.6))}" stroke="#b0b8c2" stroke-width=".6" fill="none"/>`;
   k += `<path d="M${Pt(PS(0, ZT - 0.2))} L${Pt(PS(12, ZF + 0.2))} L${Pt(PS(24, ZT - 0.2))}" stroke="#ece4d4" stroke-width=".9" fill="none"/>`;
   /* Gauben (Zwerchhäuschen) auf der Hofseite und Schieferstreifen */
@@ -512,13 +517,13 @@ let SCHLOSS = "";
   }
   for (let i = 1; i < 6; i++) { const zz = ZT + (ZF - ZT) * i / 6, du = -12 * i / 6; k += `<path d="M${Pt(C(12 + du, -26, zz))} L${Pt(C(12 + du, 0, zz))}" stroke="#3b424c" stroke-width=".18" opacity=".6"/>`; }
   /* Kamine */
-  for (const v of [-8, 12]) { const a = C(4, v, 44), b = C(4, v, 50); const w = 0.9 * k1(4, v); k += `<rect x="${r(a[0] - w)}" y="${r(b[1])}" width="${r(2 * w)}" height="${r(a[1] - b[1])}" fill="#e8e2d6"/><rect x="${r(a[0] - w - 0.3)}" y="${r(b[1] - 0.6)}" width="${r(2 * w + 0.6)}" height=".8" fill="#cfc8b8"/>`; }
+  for (const v of [-8, 12]) { const a = C(4, v, 42.6), b = C(4, v, 50); const w = 0.9 * k1(4, v); k += `<rect x="${r(a[0] - w)}" y="${r(b[1])}" width="${r(2 * w)}" height="${r(a[1] - b[1])}" fill="#ece6da"/><rect x="${r(a[0])}" y="${r(b[1])}" width="${r(w)}" height="${r(a[1] - b[1])}" fill="#b9b4aa"/><rect x="${r(a[0] - w - 0.3)}" y="${r(b[1] - 0.6)}" width="${r(2 * w + 0.6)}" height=".8" fill="#cfc8b8"/><path d="M${r(a[0] - w - 0.6)} ${r(a[1])} L${r(a[0] + w + 0.6)} ${r(a[1] - 0.4)}" stroke="#3a4048" stroke-width=".6"/>`; }
   /* Ecktürmchen am Südgiebel (achteckig, aus Konsolen) und an der Nordostecke */
   k += rundturm(13.6, 26, 1.9, 18, 38, 10, { acht: true, fenster: [[30, 0]] });
   for (const [u, v] of [[-12, -26], [12, -26]]) {
     const c0 = C(u, v, 16);
     k += `<path d="M${r(c0[0] - 1.9 * k1(u, v))} ${r(c0[1])} Q${r(c0[0])} ${r(c0[1] + 4.2)} ${r(c0[0] + 1.9 * k1(u, v))} ${r(c0[1])} Z" fill="${u < 0 ? "#efe6d4" : "#c9c4ba"}"/>`;
-    k += rundturm(u, v, 1.9, 16, 39, 11, { acht: true, fenster: [[22, 0], [31, 0]] });
+    k += rundturm(u, v, 1.9, 16, 39, 13.5, { acht: true, fenster: [[22, 0], [31, 0]] });
   }
   SCHLOSS_UNTER.push({ id: "palas", de: "der Palas", syl: "PA-las", it: "il palazzo", itSyl: "pa-LAZ-zo", en: "great hall", pts: [PS(0, -12), PS(24, -4), PS(24, 18.6), PS(0, 18.6)],
     tipp: "Der Palas ist das Hauptgebäude: fünf Stockwerke, außen heller Kalkstein." });
@@ -566,13 +571,13 @@ let SCHLOSS = "";
     k += `<path d="${wandFl(KS, 0, 26, -4, 18)}" fill="${KALK_SUED}"/><path d="${wandFl(KS, 0, 26, -4, 18)}" fill="${QUADER}" opacity=".55"/>`;
     k += `<path d="${wandFl(KO, 0, 12, -4, 18)}" fill="${KALK_OST}"/>`;
     k += `<path d="${poly([C(38, -26, 18), C(38, -14, 18), C(38, -20, 26)])}" fill="#bcbec8"/>`;
-    k += `<path d="${dachFl([12, -26], [38, -26], 18, 0, 6, 26)}" fill="${SCHIEFER_SUED}"/>`;
+    k += `<path d="${dachFl([12, -26], [38, -26], 18, 0, 6, 26)}" fill="${SCHIEFER_SUED}"/><path d="${dachFl([12, -26], [38, -26], 18, 0, 6, 26)}" fill="${SCHIEFER}" opacity=".45"/>`;
     k += `<path d="M${Pt(C(12, -20, 26))} L${Pt(C(38, -20, 26))}" stroke="#b6bec8" stroke-width=".5"/>`;
     for (const z of [5.4, 11.6]) k += `<path d="M${Pt(KS(0, z))} L${Pt(KS(26, z))}" stroke="#ddd0b8" stroke-width=".45"/>`;
     for (const s of [3, 9, 15.4, 21]) k += bogen(KS, s, 0.6, 2.4, 3.4, 2) + bogen(KS, s, 6.8, 2.4, 3.6, 2) + bogen(KS, s - 0.2, 12.8, 2.8, 3.8, 3);
     for (const s of [7, 17]) { const a = C(12 + s, -25.4, 21.8), b = C(12 + s + 2.2, -25.4, 21.8), sp = C(12 + s + 1.1, -25.4, 24), u1 = C(12 + s, -25.4, 19.6), u2 = C(12 + s + 2.2, -25.4, 19.6); k += `<path d="${poly([u1, a, sp, b, u2])}" fill="#f3ead8"/><path d="${poly([C(12 + s + 0.6, -25.6, 19.9), C(12 + s + 1.6, -25.6, 19.9), C(12 + s + 1.6, -25.6, 21.4), C(12 + s + 0.6, -25.6, 21.4)])}" fill="${GLAS_S}"/>`; }
     /* schlanker Rundturm an der Südostecke */
-    k += rundturm(38.6, -26.6, 1.9, -2, 27, 11, { fenster: [[4, 0], [10, 0], [16, 0], [22, 0]] });
+    k += rundturm(38.6, -26.6, 2.1, -2, 25, 7.5, { fenster: [[4, 0], [10, 0], [16, 0], [21, 0]] });
     SCHLOSS_UNTER.push({ id: "kemenate", de: "die Kemenate", syl: "ke-me-NA-te", it: "la camera delle dame", itSyl: "CA-me-ra DEL-le DA-me", en: "bower", pts: [KS(0, -4), KS(26, -4), KS(26, 24), KS(0, 24)],
       tipp: "Die Kemenate war als Haus für die Damen gedacht. Sie hat drei Geschosse." });
   }

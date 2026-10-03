@@ -846,6 +846,69 @@ const BUSSARD = {
 };
 const bussard = (T) => greif(T, BUSSARD);
 
+/* =====================================================================
+   GÄNSEGEIER
+   ===================================================================== */
+/* RECHERCHE Gänsegeier (Gyps fulvus) – aus Fachwissen: Länge 93–122 cm, Spannweite 230–280 cm, Gewicht 6–11 kg.
+   Kopf klein, Kopf und langer Hals nur mit kurzen weißlichen Dunen bedeckt (Haut bläulich-grau scheint durch), am
+   Halsansatz eine dichte Halskrause aus langen, schmalen, rahmweißen Federn; in Ruhe zieht er den Hals S-förmig ein,
+   der Kopf ruht fast in der Krause. Schnabel kräftig, lang, hell horngelb, Wachshaut dunkelgrau, Iris gelbbraun bis
+   bernstein, über dem Auge kurze dunkle Borsten. Körper und Flügeldecken sandbraun bis hell lohfarben mit hellen
+   Federschäften/Säumen, Unterseite mit hellen Schaftstreifen; Schwung- und Steuerfedern schwarzbraun, Schwanz kurz,
+   gerundet. Läufe kurz, oben befiedert, Zehen grau, Krallen eher stumpf (Aasfresser, kein Greifen von Beute).
+   Sitzhaltung gebeugt, Körper waagerechter als beim Adler, Schultern hochgezogen. */
+function geierKopf(T, c) {
+  const F = T.fein;
+  Q = 20;
+  let kp = "";
+  /* Halskrause: lange, schmale rahmweiße Federn rund um den Halsansatz */
+  const krause = c.mk("kr", [["#e8dcc4", "#fbf6ea"], ["#dccfb4", "#f4ecdc"], ["#d0c2a6", "#eee4d0"]], "spitz", { weich: 1 });
+  const krU = [[-13.6, -62], [-9.6, -70], [-3, -74.4], [4, -74.2], [9.4, -70.6], [11.6, -65.4], [6, -63], [-2, -62.4], [-9, -60.6]];
+  kp += teil(T, "krause", G(krU), "#dccfb6", federFeld(T, krU, { typen: krause, abst: 2.4, L: 6.4, W: 1.8, zeile: 0.45, winkel: (x, y) => 105 - x * 2.6, streu: 18, sz: 1 }) +
+    (F ? striche(T, krU, 70, (x, y) => 100 - x * 2.4, 2.2, [["#ffffff", 1, 0.06, 0.6], ["#8a7a60", 0.6, 0.05, 0.4]], { streu: 20, krumm: 0.3 }) : "") +
+    weich(T, G([[-6, -66], [8, -67], [10, -64], [0, -62.6], [-8, -63]]), "#3a2a14", 0.35, 1));
+  /* Hals (eingezogen) und kleiner Kopf: Dunen weißlich, Haut bläulich-grau */
+  const hals = [[-1.6, -71.4], [0.2, -76.4], [3.4, -80.6], [6.8, -83.6], [10.6, -84.4], [13.2, -82.8], [13.6, -80.2], [12, -78.4], [9, -77.8], [6.8, -76], [5.6, -72.4]];
+  let hi = "";
+  if (F) {
+    hi += striche(T, hals, 210, (x, y) => (x > 7 ? 200 : 235 - (y + 76) * 4), 0.8, [["#ffffff", 1, 0.06, 0.75], ["#f4f0e8", 1, 0.05, 0.6], ["#6a6c76", 0.5, 0.04, 0.4]], { streu: 30, krumm: 0.4 });
+    hi += T.textur(G(hals), T.rauschen("dune", { fx: 3, fy: 3, farbe: "#ffffff", staerke: 2.6, okt: 2 }), 0, 0.55, box(hals));
+  }
+  hi += weich(T, G([[6, -84.2], [11, -85], [13, -83], [9, -82.4]]), "#ffffff", 0.5, 0.5);
+  hi += weich(T, G([[2, -74], [6, -73], [7, -76.6], [4, -77]]), "#3a3a44", 0.35, 0.6);
+  kp += teil(T, "hals", G(hals), verlauf(T, "halsG", 0, -84, 6, -72, [[0, "#e8e8ee"], [0.6, "#c4c4cc"], [1, "#9a9aa6"]]), hi);
+  /* Auge: bernstein, dunkle Borstenbraue */
+  kp += greifAuge(T, 10.6, -81.8, 0.62, { iris: "#c89a48", iris2: "#6a4618", pupille: 0.45, lid: "#3a3238", hoehle: 0.35, offen: 0.88 });
+  if (F) kp += striche(T, [[9.4, -82.6], [11.8, -83], [12, -82.4], [9.6, -82.2]], 18, 195, 0.7, [["#2a2228", 1, 0.04, 0.8]], { streu: 10 });
+  /* Schnabel: lang, hell horngelb, Wachshaut dunkelgrau, Haken hell */
+  const sO = [[12.2, -83.4], [14.4, -83.4], [16.4, -82.8], [18, -81.4], [18.8, -79.6], [18.6, -78], [18, -77.2, 1], [17.6, -78.2], [16.8, -79], [15.2, -79.5], [13.2, -79.8], [11.6, -80.2, 1], [11.8, -82]];
+  const sU = [[11.8, -80.1, 1], [14, -79.6], [16.4, -79], [17.2, -78.7], [16.4, -78.3], [14.2, -78.5], [12.4, -79]];
+  let sn = teil(T, "schnU", G(sU), verlauf(T, "gU", 12, -80, 17, -78, [[0, "#9a9070"], [1, "#d8c898"]]));
+  sn += teil(T, "schnO", G(sO), verlauf(T, "gO", 12, -83.4, 18.6, -77.6, [[0, "#c8b888"], [0.4, "#e6d8a8"], [0.8, "#d2c08a"], [1, "#a89660"]]),
+    (F ? zug(GO([[14.4, -83.1], [16.4, -82.5], [17.8, -81.2], [18.5, -79.4]]), "#fff", 0.14, 0.6) : "") + weich(T, G([[13, -80.2], [16.6, -79.4], [18, -78], [16.4, -78.6], [13, -79.6]]), "#000", 0.3, 0.2));
+  const wa = [[11.4, -83.6], [13.8, -83.5], [14.1, -82.4], [13.8, -80.4], [12.4, -80], [11.4, -80.4]];
+  sn += teil(T, "wachs", G(wa), T.lg("wachsG", [[0, "#7a7884"], [1, "#3e3c46"]], 0, 0, 0.4, 1));
+  sn += fl(`M${J(12.3, -82.2)}c${J(0.3, -0.35, 0.9, -0.4, 1.1, -0.2)}c${J(-0.1, 0.25, -0.6, 0.45, -1, 0.35)}Z`, "#141218");
+  sn += zug(GO([[10.6, -80.4], [12.2, -80.2], [14.4, -79.6], [16.6, -78.8], [17.3, -78.6]]), "#2a2418", 0.1, 0.8);
+  Q = 10;
+  return [kp, sn];
+}
+const GEIER = {
+  k: 1.12, dreh: 16, kdreh: -14, kopfY: 4,
+  kopf: geierKopf, boxExtra: [[18.8, -79.6], [10.6, -84.6], [-13.6, -62]],
+  sitz: (T) => felsGranit(T, { hell: "#dcc6a2", mittel: "#b4966e", dunkel: "#6e5840", flechten: [[-10, -12.6, 1.1, "#e0dcc0"], [-17, -7.4, 0.9, "#c8c09a"], [0.6, -6, 1.4, "#e8e4d0"], [12, -5, 0.8, "#c49040"]] }), sitzBox: FELS_BOX, fuesse: FELS_FUESSE,
+  brust: [["#9a7650", "#b8946a"], ["#8a6844", "#a8865c"]], hose: [["#b49470", "#d4bc98"], ["#a48660", "#c4aa84"]], hoseFarbe: "#b09070", usd: "#a8865e",
+  rumpfFarbe: "#987450", brustStriche: [["#4a3420", 1, 0.06, 0.4], ["#e8d4b0", 1, 0.05, 0.5]],
+  brustMuster: (T, poly, w) => muster(T, poly, w, { art: "tropfen", abst: 2.6, lang: 3.4, dick: 0.35, farbe: "#e2cca6", op: 0.7, sz: 0.3 }),
+  nacken: [["#a07c54", "#c8a87a"]], kehle: [["#9a7650", "#b8946a"]],
+  decke: [["#a8865c", "#dcc49c"], ["#9a784e", "#ceb48a"]], mittel: [["#b08e64", "#e4cea6"], ["#a07e56", "#d4bc94"]], schulter: [["#8a6a46", "#b8986c"]],
+  deckFarbe: "#a07e56", schaft: "#e8d8b8",
+  quH: [[0, "#3a3028"], [1, "#0e0b08"]], quA: [[0, "#4a3e32"], [1, "#16120e"]], remSchaft: "#6a5a4a", schirmSaum: ["#8a7a62", 0.5, 0.2],
+  schwanz: { quer: [[0, "#3e342a"], [1, "#120e0a"]], lang: 0.82, schaft: "#6a5a4a" },
+  lauf: true, zehen: { hell: "#b4b0aa", mittel: "#8a8680", dunkel: "#4a4642", schilde: 6, fuge: "#3a3632" }, krallenK: 0.75,
+};
+const geier = (T) => greif(T, GEIER);
+
 module.exports = [
   { id: "steinadler", de: "der Adler", syl: "AD-ler", it: "l'aquila", itSyl: "A-qui-la", en: "golden eagle",
     gruppe: "Greifvögel und Eulen", lebensraum: "Gebirge", laenge: 0.5, hoehe: 0.85, zeichne: steinadler },
@@ -855,4 +918,6 @@ module.exports = [
     gruppe: "Greifvögel und Eulen", lebensraum: "Felsen und Städte", laenge: 0.25, hoehe: 0.43, zeichne: falke },
   { id: "bussard", de: "der Bussard", syl: "BUS-sard", it: "la poiana", itSyl: "po-IA-na", en: "common buzzard",
     gruppe: "Greifvögel und Eulen", lebensraum: "Feld und Waldrand", laenge: 0.3, hoehe: 0.52, zeichne: bussard },
+  { id: "geier", de: "der Geier", syl: "GEI-er", it: "il grifone", itSyl: "gri-FO-ne", en: "griffon vulture",
+    gruppe: "Greifvögel und Eulen", lebensraum: "Gebirge", laenge: 0.6, hoehe: 0.9, zeichne: geier },
 ];
