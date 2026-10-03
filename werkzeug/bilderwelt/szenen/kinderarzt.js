@@ -299,7 +299,7 @@ const KIND = { x: 150 - kind.z.sitz.x * kind.k, y: LI.top - 5 - kind.z.sitz.y * 
 {
   const brust = [KIND.x + kind.z.punkte.brust[0] * kind.k + 1.2, KIND.y + kind.z.punkte.brust[1] * kind.k];
   const m = B.mensch({ id: "b03c_aerztin", geschlecht: "w", pose: "b03c_abhoeren", blick: -62, frisur: "dutt", haarfarbe: "dunkelbraun", haut: "mittel",
-    kleidung: { oberteil: { stueck: "bluse", farbe: "#9fd3e6" }, jacke: { stueck: "arztkittel" }, unterteil: { stueck: "hose", farbe: "#2a3b55" }, schuhe: { stueck: "turnschuh" } } }, 96);
+    kleidung: { oberteil: { stueck: "arztkittel" }, unterteil: { stueck: "hose", farbe: "#2a3b55" }, schuhe: { stueck: "turnschuh" } } }, 96);
   const h = m.z.handL.x < m.z.handR.x ? m.z.handL : m.z.handR;
   const x = brust[0] - h.x * m.k, y = brust[1] - h.y * m.k;
   /* Bodenhöhe prüfen: die Ärztin steht vor der Liege */
@@ -332,7 +332,7 @@ const KIND = { x: 150 - kind.z.sitz.x * kind.k, y: LI.top - 5 - kind.z.sitz.y * 
   k += `<path d="M-11 -24 L-12 -44 Q-12 -46 -9.6 -46 L-7 -46 L-6.4 -24 Z" fill="${S.lg("lehne", [[0, "#f2a65a"], [1, "#d9853a"]], 0, 0, 1, 0)}"/>`;
   /* Handtasche der Mutter auf dem Sitz */
   k += `<path d="M-2 -24 L-1 -32 L9 -32 L10 -24 Z" fill="#7d4a2c"/><path d="M1 -32 Q4 -38 7 -32" stroke="#5a341e" stroke-width=".8" fill="none"/><rect x="3" y="-29.4" width="2" height="1" fill="#d6b56a"/>`;
-  S.teil({ id: "ka_wartestuhl_ka", de: "der Wartestuhl", syl: "WAR-te-stuhl", it: "la sedia d'attesa", itSyl: "SE-dia d'at-TE-sa", en: "waiting chair", x: 306, y: 166, kunst: k });
+  S.teil({ id: "ka_wartestuhl_ka", de: "der Wartestuhl", syl: "WAR-te-stuhl", it: "la sedia d'attesa", itSyl: "SE-dia d'at-TE-sa", en: "waiting chair", x: 302, y: 166, kunst: k });
 }
 
 /* =====================================================================
