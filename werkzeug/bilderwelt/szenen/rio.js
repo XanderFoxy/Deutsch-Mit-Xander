@@ -331,8 +331,8 @@ const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Flu
     /* links noch ungebrochen (nur eine helle Kante), rechts bricht die Welle: weißes Wasser stürzt vorn
        über die Wand herab, unten gezackt; dazwischen die dunkle Röhre unter der Lippe */
     g += `<path d="M${pts(ob)}" stroke="#d8f0ee" stroke-width=".3" fill="none"/>`;
-    const i0 = Math.floor(ob.length * 0.55), weiss = [], unten = [];
-    for (let i = i0; i < ob.length; i++) { const f = (i - i0) / (ob.length - 1 - i0), h = un[i][1] - ob[i][1]; weiss.push([ob[i][0] - 0.3, ob[i][1] - 0.2 - h * 0.15 * f]); unten.push([ob[i][0] + 0.4 * f, ob[i][1] + h * (0.2 + 0.75 * f) + (i % 2 ? h * 0.12 * f : 0)]); }
+    const i0 = Math.floor(ob.length * 0.7), weiss = [], unten = [];
+    for (let i = i0; i < ob.length; i++) { const f = (i - i0) / (ob.length - 1 - i0), h = un[i][1] - ob[i][1]; weiss.push([ob[i][0] - 0.3, ob[i][1] - 0.2 - h * 0.15 * f]); unten.push([ob[i][0] + 0.4 * f, ob[i][1] + h * (0.12 + 0.38 * f) + (i % 2 ? h * 0.1 * f : 0)]); }
     g += `<path d="M${pts(weiss)} L${pts(unten.slice().reverse())} Z" fill="#f7fcfb"/>`;
     { const [x, y] = ob[i0], h = un[i0][1] - y; g += `<path d="M${r(x - 1.5)} ${r(y + 0.1)} Q${r(x + 0.4)} ${r(y - h * 0.5)} ${r(x + 1.2)} ${r(y + h * 0.35)} Q${r(x + 0.2)} ${r(y + h * 0.1)} ${r(x - 1.5)} ${r(y + 0.1)} Z" fill="#0f4152" opacity=".7"/><path d="M${r(x - 1.6)} ${r(y)} Q${r(x + 0.4)} ${r(y - h * 0.6)} ${r(x + 1.4)} ${r(y + h * 0.3)}" stroke="#f7fcfb" stroke-width=".35" fill="none"/>`; }
     if (mitGischt) { let sp = ""; for (let i = 0; i < 26; i++) { const t = 0.6 + rnd() * 0.4, x = VX + t * (320 - VX), y = wy(x, yr) - H * Math.pow(t, 1.6) - rnd() * 1.4 * t; sp += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.12 + rnd() * 0.25)}"/>`; } g += `<g fill="#ffffff" opacity=".8">${sp}</g>`; }

@@ -387,7 +387,10 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
     g += `<path d="${rip}" stroke="#cfc3a8" stroke-width=".18" fill="none"/>`;
     /* Lippe als helles Band (Schalenstärke ≈ 0,6), Grat mit Lichtkante */
     g += `<path d="M${P(B0)} Q${P(cg2)} ${P(Ta)}" stroke="#fffdf6" stroke-width=".8" fill="none"/>`;
-    g += `<path d="M${P(Ta)} Q${P(Tn)} ${P(Tb)} Q${P(cl)} ${P(Pp)}" stroke="#fffaf0" stroke-width="1.3" fill="none"/><path d="M${P(Ta)} Q${P(Tn)} ${P(Tb)}" stroke="#fff6dc" stroke-width="2" fill="none"/></g>`;
+    g += `<path d="M${P(Ta)} Q${P(Tn)} ${P(Tb)} Q${P(cl)} ${P(Pp)}" stroke="#fffaf0" stroke-width="1.3" fill="none"/></g>`;
+    /* stumpfe, dicke Nase (r ≈ 0,85), leicht überhängend */
+    const nase = lerp(T, mT, 0.15);
+    g += `<circle cx="${r(nase[0])}" cy="${r(nase[1])}" r=".85" fill="#fff7e2"/><path d="M${r(nase[0] - 0.7)} ${r(nase[1] + 0.5)}q.7 .5 1.5-.1" stroke="#d8cdb6" stroke-width=".25" fill="none"/>`;
     return { svg: g, T, Pp, B0, cl, Tb, cg };
   };
   /* Innenseite einer Rückschale (Süden): deutlich dunkler, kühles Grau mit Rippen */
@@ -536,8 +539,8 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   /* Streifenmaske: Zeilen aus Strichen zufälliger Länge, nach unten dicker, lückiger und blasser */
   let mk = "";
   for (let y = 147.6; y < 192;) {
-    const h = 0.45 + (y - 148) * 0.03, gap = 0.25 + (y - 148) * 0.04;
-    for (let x = -rnd() * 8; x < 400;) { const l = 2 + rnd() * (6 + (y - 148) * 0.4); mk += `M${r(x)} ${r(y)}h${r(l)}v${r(h)}h${r(-l)}z`; x += l + 0.4 + rnd() * (1 + (y - 148) * 0.18); }
+    const h = 0.6 + (y - 148) * 0.03, gap = 0.12 + (y - 148) * 0.035;
+    for (let x = rnd() * 4; x < 396;) { const l = Math.min(4 + rnd() * (14 + (y - 148) * 0.3), 399 - x); mk += `M${r(x)} ${r(y)}h${r(l)}v${r(h)}h${r(-l)}z`; x += l + 0.3 + rnd() * (0.6 + (y - 148) * 0.14); }
     y += h + gap;
   }
   S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="0" y="146" width="400" height="50"><path d="${mk}" fill="${S.lg("spfade", [[0, "#fff"], [0.55, "#bbb"], [1, "#000"]], 0, 146, 0, 190, ' gradientUnits="userSpaceOnUse"')}"/></mask>`);
