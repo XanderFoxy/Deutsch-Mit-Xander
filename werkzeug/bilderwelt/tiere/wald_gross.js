@@ -907,21 +907,20 @@ function elch(T) {
      Dicke gewölbte Platte: Innenseite hell oben, dunkel in der Mulde; sichtbare Dicke an der Kante; Adernrinnen; Perlung an der Stange. ---- */
   const schaufel = (bx, by, s0, w0, fern) => {
     const P = (pts) => H.tr(pts, bx, by, w0, s0);
-    const haupt = P([[-3, -12], [-14, -18], [-26, -24.6], [-38, -31.4], [-48, -38], [-55, -43], [-61.6, -46.2], [-58, -50.4], [-63, -56.6], [-57.6, -60.4], [-61, -67.8],
-      [-54.4, -68.6], [-54.6, -77.4], [-47.6, -75], [-45.4, -83.8], [-39.4, -79], [-35, -87.4], [-30, -80.6], [-24.4, -86.2], [-21, -78.6], [-14.4, -81], [-12.4, -72.6],
-      [-10.2, -62], [-9.2, -48], [-8.0, -34], [-5.6, -22]]);
+    const haupt = P([[-3, -12], [-12, -20], [-22, -29], [-32, -38], [-40, -46], [-46.6, -51], [-52.4, -52.6], [-49.8, -57], [-55.6, -61.4], [-50.4, -64.2], [-54.6, -71],
+      [-47.6, -71.2], [-49.2, -79.4], [-42, -77.4], [-40.6, -86], [-34.6, -81], [-30.8, -89], [-26.4, -82], [-21.4, -87.4], [-18.6, -79.6], [-12.6, -81.6], [-11.4, -73.4],
+      [-9.6, -62], [-8.4, -48], [-7.0, -34], [-5.0, -22]]);
     const brow = P([[-2, -10], [6, -12.4], [13.6, -15.6], [19.6, -20.6], [23.6, -26.6], [18.8, -24.6], [17.2, -31], [13.0, -25.4], [8.8, -30.2], [6.8, -23.4], [1.4, -18]]);
     const gS = fern ? "#4e3e2c" : T.rg("sch", [[0, "#e2d2b2"], [0.45, "#b8a07a"], [1, "#6e5638"]], 0.7, 0.15, 0.95);
-    const dicke = (Q) => F ? `<path d="${G2(Q)}" fill="${fern ? "#2e2418" : "#4a3a26"}" transform="translate(${f(1.4 * s0)} ${f(1.6 * s0)})"/>` : "";
+    const dicke = (Q) => F ? `<path d="${G2(Q)}" fill="${fern ? "#2e2418" : "#4a3a26"}" transform="translate(${f(0.8 * s0)} ${f(1.0 * s0)})"/>` : "";
     const SH = H.flaeche(haupt), SB = H.flaeche(brow);
     const adern = (zuege) => F && !fern ? H.L(zuege.map((q) => P(q)), "#5a4430", 0.3, 0.55) + H.L(zuege.map((q) => P(q).map((p) => [p[0] - 0.3, p[1] - 0.3])), "#fff4e0", 0.18, 0.4) : "";
     let g = dicke(brow) + H.teil(SB, gS, (fern ? "" : fl(...P([[9, -18]])[0].slice(0, 2), 7, 4, w0, "#4a3622", 0.45) + fl(...P([[20, -24]])[0].slice(0, 2), 4, 4, 0, "#f4ead8", 0.6)) +
       adern([[[0, -13], [9, -18], [17, -26]], [[1, -15], [8, -22], [9, -28]]]) + H.rim(SB, 2.2, 0.9), { rw: 0.2, randA: 0.5 });
-    g += dicke(haupt) + H.teil(SH, gS, (fern ? "" : fl(...P([[-30, -42]])[0].slice(0, 2), 18, 12, w0, "#3a2a1a", 0.5) + fl(...P([[-36, -74]])[0].slice(0, 2), 22, 6, w0, "#fff6e4", 0.5)) +
-      adern([[[-6, -18], [-22, -30], [-40, -40], [-56, -48]], [[-7, -22], [-20, -38], [-34, -54], [-50, -66]], [[-8, -26], [-14, -46], [-22, -66], [-30, -80]], [[-9, -30], [-11, -54], [-14, -74]]]) +
+    g += dicke(haupt) + H.teil(SH, gS, (fern ? "" : fl(...P([[-24, -46]])[0].slice(0, 2), 14, 11, w0, "#3a2a1a", 0.5) + fl(...P([[-32, -76]])[0].slice(0, 2), 18, 6, w0, "#fff6e4", 0.5)) +
+      adern([[[-6, -18], [-20, -32], [-34, -44], [-48, -54]], [[-7, -22], [-18, -40], [-30, -56], [-44, -70]], [[-8, -26], [-13, -46], [-20, -66], [-28, -82]], [[-9, -30], [-10, -54], [-12, -74]]]) +
       H.rim(SH, 3.4, 0.9), { rw: 0.2, randA: 0.5 });
     /* Lichtkante an der oberen Schaufelkante (Dicke im Licht) */
-    if (F && !fern) g += H.L([P([[-61, -67.8], [-54.6, -77.4], [-45.4, -83.8], [-35, -87.4], [-24.4, -86.2], [-14.4, -81]])], "#fff8ec", 0.5, 0.5);
     /* kurze dicke Stange mit Perlung, Rose auf dem Schädel */
     const st = H.kette(P([[0, 0, 3.2, 3.2], [-1.6, -6, 3.0, 3.0], [-3.4, -12.6, 2.8, 2.8]])), SS = H.flaeche(st.pts);
     g += H.teil(SS, fern ? "#3a2c1e" : "#5a4430", F && !fern ? H.punkte(Array.from({ length: 18 }, () => [st.L[0][0] + (st.R[2][0] - st.L[0][0]) * T.rnd(), st.L[0][1] + (st.R[2][1] - st.L[0][1]) * T.rnd(), 0.4 + T.rnd() * 0.4]), "#2a1e12", 0.6) + H.rim(SS, 1.6, 0.9) : "", { rw: 0.2, randA: 0.5 });
@@ -958,7 +957,7 @@ function elch(T) {
   s += H.schale(fH[13][0] - 0.4, fH[10][0] + 2.4, 7.4, { farbe: "#2a2420", fern: "#14100e", haar: "#8a8278" }) + H.schale(fV[12][0] - 0.4, fV[9][0] + 2.4, 7.6, { farbe: "#2a2420", fern: "#14100e", haar: "#8a8278" });
   /* ferne Schaufel und kurzer Wedel (unter der Kruppenkante) */
   const schB = K(10.6, -8.4), ohrB = K(3.4, -6.6);
-  s += schaufel(schB[0] + 8, schB[1] - 3, 0.8, -12, true);
+  s += schaufel(schB[0] + 9, schB[1] - 4, 0.72, -6, true);
   s += T.form([[23, -156], [20.4, -153], [19.6, -146], [21.0, -142], [23.4, -146]], "#241a12");
   /* ---- Körper ---- */
   let inn = "", sch = "";
@@ -996,15 +995,15 @@ function elch(T) {
   s += after(43.8, 1) + after(170.8, 1);
   s += H.schale(47.4, 61.6, 7.4, { haar: "#a8a094" }) + H.schale(174.4, 188.6, 7.6, { haar: "#a8a094" });
   /* ---- Glocke (Wamme): flacher Hautlappen, oben breit an der Kehle, unten schmaler, lange Haarquaste; Lichtkante vorn ---- */
-  const wamme = [[187.2, -137], [189.6, -128], [190.0, -118], [188.8, -108], [186.6, -100], [184.4, -98], [183.0, -104], [183.4, -116], [184.0, -128]];
+  const wamme = [[188.6, -139], [190.6, -130], [190.2, -120], [188.6, -110], [186.4, -102], [184.2, -100], [182.8, -106], [182.6, -118], [182.8, -132]];
   const WA = H.flaeche(wamme);
   s += `<path d="${G2(wamme)}" fill="#000" opacity=".3" transform="translate(-3 2)"${F ? ` filter="${H.blur(1.3)}"` : ""}/>` +
     H.teil(WA, "#2a2018", H.haare(wamme, 40, 94, 3, [["#080604", 1, 0.12, 0.5]], { szene: 0, spitze: ["#7a6a58", 0.5, 0.1, 0.45] }) + wl([[[189.4, -128], [189.6, -118], [188.2, -108]]], "#c8b4a0", 1, 0.3, 0.5) + H.rim(WA, 2.4, 0.9), { rand: false }) +
-    H.saum([[186.6, -100], [184.4, -98], [183.2, -101]], F ? 50 : 10, 94, 9, [["#080604", 1, 0.14, 0.65], ["#5a4a3a", 0.5, 0.12, 0.5]], { offen: true, krumm: 0.25, streu: 18, szene: 0.4 });
+    H.saum([[186.4, -102], [184.2, -100], [182.9, -103]], F ? 50 : 10, 94, 9, [["#080604", 1, 0.14, 0.65], ["#5a4a3a", 0.5, 0.12, 0.5]], { offen: true, krumm: 0.25, streu: 18, szene: 0.4 });
   /* ---- Lauscher unter der Schaufel (mit Schlagschatten), nahe Schaufel, Auge ---- */
-  s += ohrZ(ohrB[0], ohrB[1], -64, false);
+  s += ohrZ(ohrB[0], ohrB[1], -38, false);
   if (F) s += `<path d="${G2([[schB[0] - 6, schB[1] - 4], [schB[0] - 26, schB[1] + 2], [schB[0] - 30, schB[1] + 12], [schB[0] - 8, schB[1] + 8]])}" fill="#000" opacity=".25" filter="${H.blur(2)}"/>`;
-  s += schaufel(schB[0], schB[1], 0.86, -4, false);
+  s += schaufel(schB[0], schB[1], 0.82, 2, false);
   const au = K(21, 0.6);
   s += H.auge(au[0], au[1], 1.9, { iris: "#24140a", iris2: "#4a2a14", offen: 0.66, winkel: KW - 16, wimpern: 7, wimpernLaenge: 0.6, hoehle: "#140c08" });
   if (F) s += T.schnurrhaare(...K(66, 16), 7, 4.6, KW + 40, 50, "#1a140e", 0.08);
