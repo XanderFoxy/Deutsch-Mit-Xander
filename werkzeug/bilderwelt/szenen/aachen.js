@@ -84,9 +84,11 @@ const LANG = S.lg("lang", [[0, "#2b2420", 0.2], [0.55, "#2b2420", 0.75], [1, "#2
    vom Betrachter weg: dx ≈ −0,95·L, dy ≈ −0,12·L (hinten flacher), Länge ≈ 4,5 × Höhe. Die Schatten liegen auf dem Pflaster
    (Teil „Marktplatz“), damit sie keine Trefferfläche vergrößern. X, Y absolut; „bis“ = wo der Schatten spätestens endet. */
 const SCHATTEN = [];
-const schlag = (X, Y, w, h, a = 0.5, bis = -4, spitz = 0.55) => {
-  const L = Math.max(0, Math.min(4.5 * h, (X - w * spitz / 2 - bis) / 0.95)), dx = -0.95 * L, dy = -0.12 * L * Math.min(1, (Y - HOR) / 50);
-  SCHATTEN.push(`<path d="M${r(X + w / 2)} ${r(Y)} L${r(X - w / 2)} ${r(Y)} L${r(X - w * spitz / 2 + dx)} ${r(Y + dy)} L${r(X + w * spitz / 2 + dx)} ${r(Y + dy - w * 0.04)} Z" fill="${LANG}" opacity="${a}"/>`);
+const schlag = (X, Y, w, h, a = 0.5, bis = -4, spitz = 0.55, t = 0.35) => {
+  const L = Math.max(0, Math.min(4.5 * h, (X - w / 2 - bis) / 0.95)), dx = -0.95 * L, dy = -0.12 * L * Math.min(1, (Y - HOR) / 50);
+  /* Breite des Schattenstreifens auf dem Boden (t Meter quer zur Richtung), perspektivisch verkürzt */
+  const k = km(Y), th = Math.max(0.45, k * k * AUGE * t / F), tt = Math.max(0.3, th * spitz * Math.pow((Y + dy - HOR) / (Y - HOR), 2));
+  SCHATTEN.push(`<path d="M${r(X + w / 2)} ${r(Y + th / 2)} L${r(X + w / 2)} ${r(Y - th / 2)} L${r(X - w / 2 + dx)} ${r(Y + dy - tt / 2)} L${r(X - w / 2 + dx)} ${r(Y + dy + tt / 2)} Z" fill="${LANG}" opacity="${a}"/>`);
   return "";
 };
 /* Streiflicht von rechts: warme Lichtkante rechts, links ein weicher Eigenschatten */
@@ -524,8 +526,8 @@ const TREPPE = { m0: 22.6, m1: 47.4, pa: 31.6, pb: 38.4, h: 6.6 };
    ===================================================================== */
 const KB = { x: 206, y: 146.4 };
 {
-  schlag(KB.x - 1, KB.y + 0.5, 58, 7.4, 0.5, -4, 1);
-  schlag(KB.x - 2, KB.y + 0.5, 3.6, 37, 0.4, 60, 0.8);
+  schlag(KB.x - 1, KB.y - 0.4, 58, 7.4, 0.5, -4, 1, 7);
+  schlag(KB.x - 2, KB.y - 1, 3.6, 37, 0.42, 60, 0.8, 1.2);
   let k = "";
   /* Rokoko-Becken aus Blaustein: Stufe, geschwungener Rand */
   k += `<path d="M-31 0 L31 0 L30 -1.4 L-30 -1.4 Z" fill="#5d6368"/><path d="M-31 0 L31 0" stroke="#3e4347" stroke-width=".4"/>`;
@@ -659,7 +661,7 @@ const stuhl = (X, y, mitLehne = true) => {
 }
 {
   const s = km(TISCH.y), TH = 0.75 * s, R = 0.36 * s;
-  schlag(TISCH.x, TISCH.y + 0.4, 2 * R, TH, 0.48, -4, 0.9);
+  schlag(TISCH.x, TISCH.y + 0.4, 2 * R, TH, 0.48, -4, 0.9, 0.6);
   let k = "";
   k += `<path d="M-3 0 L3 0 L.7 -2 L-.7 -2 Z" fill="#2c3236"/><rect x="-.55" y="${r(-TH)}" width="1.1" height="${r(TH - 1.6)}" fill="#3a4045"/>`;
   k += `<ellipse cx="0" cy="${r(-TH)}" rx="${r(R)}" ry="${r(R * 0.22)}" fill="#8b9298"/><ellipse cx="0" cy="${r(-TH - 0.5)}" rx="${r(R)}" ry="${r(R * 0.22)}" fill="${S.lg("marmor", [[0, "#f3f1ec"], [1, "#d6d2c8"]])}"/>`;
@@ -693,7 +695,7 @@ const stuhl = (X, y, mitLehne = true) => {
    ===================================================================== */
 {
   const s = km(191), H = 1 * s, W = 0.62 * s;
-  schlag(98, 191.3, W, H, 0.5, -4, 0.8);
+  schlag(98, 191.3, W, H, 0.5, -4, 0.8, 0.5);
   let k = "";
   k += `<path d="M${r(-W / 2 - 1)} 0 L${r(-W / 2 + 1.6)} ${r(-H)} L${r(W / 2 - 1.6)} ${r(-H)} L${r(W / 2 + 1)} 0" stroke="#5b3a1f" stroke-width="1.2" fill="none"/>`;
   k += `<path d="M${r(-W / 2 + 0.2)} -3 L${r(-W / 2 + 1.9)} ${r(-H + 2)} L${r(W / 2 - 1.9)} ${r(-H + 2)} L${r(W / 2 - 0.2)} -3 Z" fill="${S.lg("tafel", [[0, "#2e3a33"], [1, "#212a25"]])}"/>`;
@@ -763,7 +765,7 @@ const LAT = { x: 248, y: 170 };
   k += `<path d="M${r(P.x)} ${r(P.y)} L${r(P.x - 2.4)} 0" stroke="#4a5055" stroke-width=".45"/>`;
   k += `<circle cx="${r(P.x)}" cy="${r(P.y)}" r="1.3" fill="none" stroke="#5a6166" stroke-width=".4"/><path d="M${r(P.x)} ${r(P.y)} L${r(P.x + 1.6)} ${r(P.y + 1.4)}" stroke="#5a6166" stroke-width=".4"/>`;
   const lenkerX = LAT.x - (vx + 3.4);
-  schlag(lenkerX + 0.4, Y + 0.4, 1.2 * s, 0.75 * s, 0.32, -4, 1);
+  schlag(lenkerX + 0.4, Y + 0.4, 1.2 * s, 0.75 * s, 0.32, -4, 1, 0.3);
   S.teil({ id: "fahrrad", de: "das Fahrrad", syl: "FAHR-rad", it: "la bicicletta", itSyl: "bi-ci-CLET-ta", en: "bicycle", x: r(lenkerX + 0.4), y: Y, steht: true, kunst: k,
     tipp: "In Aachen studieren sehr viele junge Leute — viele fahren mit dem Fahrrad." });
 }
@@ -815,7 +817,7 @@ const LAT = { x: 248, y: 170 };
     if (gast) g += `<rect x="${r(X - 0.06 * s)}" y="${r(Y - 0.82 * s)}" width="${r(0.07 * s)}" height="${r(0.06 * s)}" fill="#fff"/>`;
     return g;
   };
-  t += tischchen(31, 147.6, ["#6b8f71", "#3a2a20"]) + tischchen(16, 152.4, null) + tischchen(36, 160, ["#b94b5a", "#c9a466"]);
+  t += tischchen(31, 147.6, ["#6b8f71", "#3a2a20"]) + tischchen(14, 152.4, null) + tischchen(46, 158.6, null);
   /* alle langen Schatten liegen auf dem Pflaster unter den Dingen, weich gezeichnet */
   MARKT.kunst += `<g filter="url(#${S.id("schw")})">${SCHATTEN.join("")}</g>` + t;
 }

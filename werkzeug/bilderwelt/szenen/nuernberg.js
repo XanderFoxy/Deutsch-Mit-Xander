@@ -835,7 +835,7 @@ const MARKT = { bude: null, lichter: null, leute: null, wurst: null, christkind:
     ] });
 }
 
-S.teil({ id: "hauptmarkt", de: "der Hauptmarkt", syl: "HAUPT-markt", it: "la piazza del mercato", itSyl: "PIAZ-za del mer-CA-to", en: "main market square", x: 140, y: 158, kunst: flaeche(-10, -12, 20, 14),
+S.teil({ id: "hauptmarkt", de: "der Hauptmarkt", syl: "HAUPT-markt", it: "la piazza del mercato", itSyl: "PIAZ-za del mer-CA-to", en: "main market square", x: 167, y: 147, kunst: flaeche(-7, -10, 14, 14),
   tipp: "Der Hauptmarkt ist der größte Platz der Altstadt. Im Advent steht hier der Christkindlesmarkt." });
 
 /* =====================================================================
@@ -857,7 +857,7 @@ S.teil({ id: "hauptmarkt", de: "der Hauptmarkt", syl: "HAUPT-markt", it: "la pia
   deko += `<rect x="7" y="152" width="40" height="30" fill="${S.rg("beschlagl", [[0, "#ffffff", 0.18], [1, "#ffffff", 0]], 0, 1, 1)}"/><rect x="274" y="152" width="40" height="30" fill="${S.rg("beschlagr", [[0, "#ffffff", 0.18], [1, "#ffffff", 0]], 1, 1, 1)}"/>`;
   deko += `<path d="M196 5 L224 5 L120 182 L92 182 Z" fill="${S.lg("spiegelung", [[0, "#ffffff", 0], [0.5, "#ffffff", 0.07], [1, "#ffffff", 0]], 0, 0, 1, 0)}"/>`;
   k += `<g pointer-events="none">${deko}</g>`;
-  S.teil({ id: "fenster", de: "das Fenster", syl: "FENS-ter", it: "la finestra", itSyl: "fi-NE-stra", en: "window", x: 160, y: 3, kunst: anker(160, 3, k),
+  S.teil({ id: "fenster", de: "das Fenster", syl: "FENS-ter", it: "la finestra", itSyl: "fi-NE-stra", en: "window", x: 160, y: 11, kunst: anker(160, 11, k),
     tipp: "Aus dem Fenster des Cafés sieht man über den ganzen Markt." });
 }
 {
@@ -958,7 +958,7 @@ const DS = 190;        /* Einheiten je Meter für die Dinge */
   z += `<path d="M-1.6 ${r(y - 8.8)} L1.6 ${r(y - 8.8)} L.9 ${r(y - 9.3)} L.7 ${r(y - 10.8)} L-.7 ${r(y - 10.8)} L-.9 ${r(y - 9.3)} Z" fill="#2a2a2a"/>`;
   z += `<line x1="1.7" y1="${r(y - 4.6)}" x2="2.4" y2="${r(y)}" stroke="#7a5a3a" stroke-width=".25"/>`;
   k += `<g transform="scale(${sk})">${z}</g>`;
-  S.teil({ oben: true, id: "zwetschgenmaennchen", de: "das Zwetschgenmännchen", syl: "ZWETSCH-gen-männ-chen", it: "l'omino di prugne", itSyl: "o-MI-no di PRU-gne", en: "prune man", x: X, y: 172, steht: true, kunst: `<g transform="translate(0 ${BANK - 172})">${k}</g>`,
+  S.teil({ oben: true, id: "zwetschgenmaennchen", de: "das Zwetschgenmännchen", syl: "ZWETSCH-gen-männ-chen", it: "l'omino di prugne", itSyl: "o-MI-no di PRU-gne", en: "prune man", x: X - 3, y: 168, steht: true, kunst: `<g transform="translate(3 ${BANK - 168})">${k}</g>`,
     tipp: "Ein Männchen aus getrockneten Zwetschgen und Nüssen – auf Fränkisch „Zwetschgermännla“." });
 }
 {
@@ -975,7 +975,7 @@ const DS = 190;        /* Einheiten je Meter für die Dinge */
   g += `<path d="M-.5 -.4 L-1.4 1.6 M.5 -.4 L1.4 1.6" stroke="#f1c74a" stroke-width=".3"/>`;
   let k = schatten(0, 0.6, 10, 1.8, 0.35) + `<g transform="translate(0 ${r(-4.6 * sk)}) scale(${sk})">${g}</g>`;
   k += `<circle cx="0" cy="${r(-6 * sk)}" r="${r(4 * sk)}" fill="#ffe8a0" opacity=".12"/>`;
-  S.teil({ oben: true, id: "rauschgoldengel", de: "der Rauschgoldengel", syl: "RAUSCH-gold-en-gel", it: "l'angelo d'oro", itSyl: "AN-ge-lo D'O-ro", en: "gold-foil angel", x: X + 2, y: 178, steht: true, kunst: `<g transform="translate(-2 ${BANK - 178})">${k}</g>`,
+  S.teil({ oben: true, id: "rauschgoldengel", de: "der Rauschgoldengel", syl: "RAUSCH-gold-en-gel", it: "l'angelo d'oro", itSyl: "AN-ge-lo D'O-ro", en: "gold-foil angel", x: X + 3, y: 181, steht: true, kunst: `<g transform="translate(-3 ${BANK - 181})">${k}</g>`,
     tipp: "Der Rauschgoldengel aus goldener Folie ist ein typischer Nürnberger Weihnachtsschmuck." });
 }
 {

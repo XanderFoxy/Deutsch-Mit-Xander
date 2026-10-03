@@ -95,7 +95,7 @@ const linie = (pts) => {
 };
 /* Menschen klein im Bild: Pfaddaten auf ganze Zentimeter runden (unsichtbar, halbiert die Datei) */
 const rundeFigur = (svg, unten) => {
-  const k = +((svg.match(/scale\(([\d.]+)\)/) || [0, 1])[1]), lim = .12 / k;
+  const k = +((svg.match(/scale\(([\d.]+)\)/) || [0, 1])[1]), lim = .1 / k;
   /* hinter einer Theke: Teile, die ganz unterhalb der Kante (Bildeinheiten, relativ zum Fuß) liegen, sieht niemand */
   if (unten != null) {
     const yc = unten / k + 8;
@@ -172,13 +172,13 @@ const toroeffnung = (Y, xm, w, zKampf, zScheitel, spitz) => [[xm - w / 2, Y, 0],
      Fünf Muster in Stufen, weich ineinander geblendet — so werden die Kiesel nach hinten stufenlos kleiner. */
   const FARB = ["#b9ab97", "#a39582", "#cfc2ae", "#8f8270", "#c4b49c", "#9c8f80", "#d8ccb8"];
   const stufe = (i, d) => {
-    const rx = .044 * d, ry = Math.max(.05, rx * d / FOC), n = 5, w = rx * 2.25 * n, h = ry * 14.4, Z = 6;
+    const rx = .044 * d, ry = Math.max(.05, rx * d / FOC), n = d < 8 ? 4 : 5, w = rx * 2.25 * n, Z = d < 8 ? 4 : 6, h = ry * 2.4 * Z;
     let m = `<rect width="${r(w)}" height="${r(h)}" fill="#7d705f"/>`;
     for (let z = 0; z < Z; z++) for (let j = 0; j < n; j++) {
       const x = (j + (z * .618) % 1 + (rnd() - .5) * .35) * w / n, y = (z + .5) * h / Z + (rnd() - .5) * ry * .7, ax = rx * (.7 + rnd() * .45), ay = ry * (.75 + rnd() * .45);
       for (const dx of [0, w, -w]) {
         if (dx && (x + dx < -ax || x + dx > w + ax)) continue;
-        m += `<ellipse cx="${r(x + dx)}" cy="${r(y + ay * .25)}" rx="${r(ax)}" ry="${r(ay)}" fill="#5e5346" opacity=".5"/><ellipse cx="${r(x + dx)}" cy="${r(y)}" rx="${r(ax)}" ry="${r(ay)}" fill="${FARB[Math.floor(rnd() * FARB.length)]}"/>`;
+        m += `${d < 8 ? "" : `<ellipse cx="${r(x + dx)}" cy="${r(y + ay * .25)}" rx="${r(ax)}" ry="${r(ay)}" fill="#5e5346" opacity=".5"/>`}<ellipse cx="${r(x + dx)}" cy="${r(y)}" rx="${r(ax)}" ry="${r(ay)}" fill="${FARB[Math.floor(rnd() * FARB.length)]}"/>`;
       }
     }
     S.def(`<pattern id="${S.id("kies" + i)}" width="${r(w)}" height="${r(h)}" patternUnits="userSpaceOnUse">${m}</pattern>`);
@@ -854,7 +854,7 @@ const MS = {};
     let g = `<path d="M${r(cx - bw / 2)} ${r(cy - bh)} L${r(cx - bw / 2 + .03 * s)} ${r(cy)} H${r(cx + bw / 2 - .03 * s)} L${r(cx + bw / 2)} ${r(cy - bh)} Z" fill="#dcc08a"/>`;
     for (let j = 1; j < 4; j++) g += `<path d="M${r(cx - bw / 2 + .01 * s)} ${r(cy - bh + j * bh / 4)} H${r(cx + bw / 2 - .01 * s)}" stroke="#b89a60" stroke-width="${r(.008 * s)}"/>`;
     /* Kirschen: dichte Haufen, oben gewölbt */
-    for (let j = 0; j < 26; j++) {
+    for (let j = 0; j < 19; j++) {
       const u = rnd() * 2 - 1, px = cx + u * bw * .46, py = cy - bh - .015 * s - (1 - u * u) * .05 * s + rnd() * .02 * s;
       g += `<circle cx="${r(px)}" cy="${r(py)}" r="${r(.016 * s)}" fill="${rnd() < .55 ? "#6e0a18" : "#8e1424"}"/>`;
       if (j % 3 === 0) g += `<path d="M${r(px)} ${r(py - .012 * s)} q${r(.01 * s)} ${r(-.03 * s)} ${r(.025 * s)} ${r(-.04 * s)}" stroke="#5a6a2a" stroke-width="${r(.004 * s)}" fill="none"/>`;
