@@ -221,15 +221,15 @@ const AUS = { X0: -3.1, X1: 0.95, z0: 0.45, z1: 1.0, H: 0.9 };
   const haufen = (X, hoch, f) => { const pts = []; for (let i = 0; i <= 12; i++) { const t = i / 12, xx = X - 0.24 + t * 0.48; pts.push(P(xx, H + 0.05 + Math.sin(t * Math.PI) * hoch, ZB)); } pts.push(P(X + 0.24, H + 0.05, ZB), P(X - 0.24, H + 0.05, ZB)); return poly(pts, f); };
   const punkte = (X, n, farben, rx, ry, hoch) => { let g = ""; for (let i = 0; i < n; i++) { const t = 0.1 + rnd() * 0.8, [x, y] = P(X - 0.24 + t * 0.48, H + 0.05 + Math.sin(t * Math.PI) * hoch * rnd(), ZB); g += `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${farben[i % farben.length]}"/>`; } return g; };
   const speisen = [
-    [-2.4, "Nudeln", "#efd27e", 0.07, (X) => { let g = ""; for (let i = 0; i < 9; i++) { const t = 0.1 + i * 0.09, [x, y] = P(X - 0.24 + t * 0.48, H + 0.05 + Math.sin(t * Math.PI) * 0.06, ZB); g += `<path d="M${r(x - 1.6)} ${r(y + 0.6)} q.8 -1.4 1.6 0 t1.6 0" stroke="#d9b65a" stroke-width=".35" fill="none"/>`; } return g; },
+    [-2.0, "Nudeln", "#efd27e", 0.07, (X) => { let g = ""; for (let i = 0; i < 9; i++) { const t = 0.1 + i * 0.09, [x, y] = P(X - 0.24 + t * 0.48, H + 0.05 + Math.sin(t * Math.PI) * 0.06, ZB); g += `<path d="M${r(x - 1.6)} ${r(y + 0.6)} q.8 -1.4 1.6 0 t1.6 0" stroke="#d9b65a" stroke-width=".35" fill="none"/>`; } return g; },
       ["nudeln", "die Nudeln", "NU-deln", "la pasta", "PA-sta", "pasta", "Heute gibt es Spaghetti."]],
-    [-1.8, "Soße", "#a8341f", 0.035, (X) => punkte(X, 7, ["#c9503a", "#7a2414"], 0.6, 0.3, 0.03),
+    [-1.42, "Soße", "#a8341f", 0.035, (X) => punkte(X, 7, ["#c9503a", "#7a2414"], 0.6, 0.3, 0.03),
       ["sosse", "die Soße", "SO-ße", "il sugo", "SU-go", "sauce", "Bolognese ist eine Soße mit Hackfleisch und Tomaten."]],
-    [-1.2, "Curry", "#e2a33a", 0.045, (X) => punkte(X, 12, ["#e07b3a", "#4f9a3a", "#f2c94c", "#d84a3a"], 0.55, 0.4, 0.045),
+    [-0.84, "Curry", "#e2a33a", 0.045, (X) => punkte(X, 12, ["#e07b3a", "#4f9a3a", "#f2c94c", "#d84a3a"], 0.55, 0.4, 0.045),
       ["gemuese", "das Gemüse", "ge-MÜ-se", "la verdura", "ver-DU-ra", "vegetables", "Im Gemüsecurry sind Karotten, Erbsen und Paprika."]],
-    [-0.6, "Pommes", "#e8b64a", 0.06, (X) => { let g = ""; for (let i = 0; i < 12; i++) { const t = 0.08 + rnd() * 0.84, [x, y] = P(X - 0.24 + t * 0.48, H + 0.05 + Math.sin(t * Math.PI) * 0.06 * (0.4 + rnd() * 0.6), ZB); g += `<rect x="${x}" y="${y}" width="2.2" height=".55" fill="${i % 2 ? "#f6cf62" : "#e9b443"}" transform="rotate(${Math.round(rnd() * 70 - 35)} ${x} ${y})"/>`; } return g; },
+    [-0.26, "Pommes", "#e8b64a", 0.06, (X) => { let g = ""; for (let i = 0; i < 12; i++) { const t = 0.08 + rnd() * 0.84, [x, y] = P(X - 0.24 + t * 0.48, H + 0.05 + Math.sin(t * Math.PI) * 0.06 * (0.4 + rnd() * 0.6), ZB); g += `<rect x="${x}" y="${y}" width="2.2" height=".55" fill="${i % 2 ? "#f6cf62" : "#e9b443"}" transform="rotate(${Math.round(rnd() * 70 - 35)} ${x} ${y})"/>`; } return g; },
       ["pommes", "die Pommes", "POM-mes", "le patatine fritte", "pa-ta-TI-ne FRIT-te", "fries", "„Pommes“ ist kurz für Pommes frites."]],
-    [0.0, "Salat", "#6fb04a", 0.07, (X) => punkte(X, 14, ["#9ed06a", "#4f8f32", "#d84a3a", "#f4f0e2"], 0.9, 0.5, 0.07),
+    [0.32, "Salat", "#6fb04a", 0.07, (X) => punkte(X, 14, ["#9ed06a", "#4f8f32", "#d84a3a", "#f4f0e2"], 0.9, 0.5, 0.07),
       ["salat", "der Salat", "sa-LAT", "l'insalata", "in-sa-LA-ta", "salad", null]],
   ];
   for (const [X, name, farbe, hoch, deko, wort] of speisen) {
@@ -257,7 +257,7 @@ const AUS = { X0: -3.1, X1: 0.95, z0: 0.45, z1: 1.0, H: 0.9 };
   for (const [hh, zz] of [[0.84, z1 + 0.08], [0.86, z1 + 0.18], [0.88, z1 + 0.28]]) k += L(P(X0 - 0.1, hh, zz), P(X1 + 0.05, hh, zz), 0.9, "#c9cfd4");
   for (let X = X0; X <= X1; X += 1.0) k += L(P(X, 0.84, z1 + 0.06), P(X, 0.84, z1 + 0.3), 0.7, "#aeb6bd") + L(P(X, 0.84, z1 + 0.2), P(X, 0.84, z1), 0.7, "#aeb6bd");
   S.teil({ id: "me_ausgabe", de: "die Essensausgabe", syl: "ES-sens-aus-ga-be", it: "la distribuzione dei pasti", itSyl: "di-stri-bu-ZIO-ne dei PA-sti", en: "servery", x: ax, y: ay, steht: true, kunst: um(ax, ay, k),
-    zoom: { x: r(P(-2.75, H, 1)[0] - 2), y: r(P(-2.75, H, 1)[1] - 34), w: 114, h: 76 },
+    zoom: { x: r(P(-2.38, H, 1)[0] - 2), y: r(P(-2.38, H, 1)[1] - 34), w: 114, h: 76 },
     unter: U,
     tipp: "An der Essensausgabe schiebt man das Tablett auf den Stangen entlang." });
   /* Glas des Hustenschutzes (vor allem, fängt keinen Tipp) */
@@ -398,9 +398,9 @@ const START = { X: -3.15, z: 1.42 };
   k += L(P(X0, H, z1), P(X1, H, z1), 0.4, "#fff", ' opacity=".45"');
   const U = [];
   /* Tablett mit leerem Teller (jemand ist schon fertig) */
-  k += poly(blatt(-2.9, 2.85, 0.46, 0.34, 0.08, H + 0.01), "#8a5a3a") + poly(ellipseB(-2.95, 2.85, 0.13, 0.11, H + 0.02), "#f7f7f4") + poly(ellipseB(-2.95, 2.85, 0.07, 0.06, H + 0.022), "#efe2c8");
+  k += poly(blatt(-2.45, 2.85, 0.46, 0.34, 0.08, H + 0.01), "#8a5a3a") + poly(ellipseB(-2.5, 2.85, 0.13, 0.11, H + 0.02), "#f7f7f4") + poly(ellipseB(-2.5, 2.85, 0.07, 0.06, H + 0.022), "#efe2c8");
   /* Serviettenspender, Salz, Pfeffer */
-  const [sx, sy] = P(-2.05, H, 2.82), s = sk(2.82) / S0;
+  const [sx, sy] = P(-1.75, H, 2.82), s = sk(2.82) / S0;
   k += `<path d="M${r(sx - 3 * s)} ${sy} L${r(sx + 3 * s)} ${sy} L${r(sx + 2.8 * s)} ${r(sy - 4 * s)} L${r(sx - 2.8 * s)} ${r(sy - 4 * s)} Z" fill="${STAHL}"/><path d="M${r(sx - 2.4 * s)} ${r(sy - 4 * s)} L${r(sx + 2.4 * s)} ${r(sy - 4 * s)} L${r(sx + 1.8 * s)} ${r(sy - 6 * s)} L${r(sx - 1.8 * s)} ${r(sy - 6 * s)} Z" fill="#fff"/>`;
   U.push({ id: "serviette", de: "die Serviette", syl: "Ser-VI-et-te", it: "il tovagliolo", itSyl: "to-va-GLIO-lo", en: "napkin", x: sx, y: r(sy + 0.5), kunst: flaeche(-3.6 * s, -6.6 * s, 7.2 * s, 7.2 * s) });
   for (const [dx, f, id, de, syl, it, itSyl, en, tipp] of [[1.55, "#ffffff", "salz", "das Salz", "SALZ", "il sale", "SA-le", "salt", "Bitte das Salz! – Bitte schön."], [2.75, "#3a3a3a", "pfeffer", "der Pfeffer", "PFEF-fer", "il pepe", "PE-pe", "pepper", null]]) {
@@ -410,7 +410,7 @@ const START = { X: -3.15, z: 1.42 };
     if (tipp) o.tipp = tipp;
     U.push(o);
   }
-  const [zx, zy] = P(-3.35, H, 2.9);
+  const [zx, zy] = P(-2.75, H, 2.9);
   S.teil({ id: "me_esstisch", de: "der Esstisch", syl: "ESS-tisch", it: "il tavolo", itSyl: "TA-vo-lo", en: "dining table", x: ax, y: ay, steht: true, kunst: um(ax, ay, k),
     zoom: { x: Math.max(0, r(zx - 6)), y: r(zy - 26), w: 78, h: 52 },
     unter: U.map((u) => Object.assign(u, { x: r(u.x), y: r(u.y) })),

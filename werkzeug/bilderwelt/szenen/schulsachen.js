@@ -164,7 +164,7 @@ const TI = { X0: -0.72, X1: 0.72, z0: 0, z1: 0.66 };
   const { X0, X1, z0, z1 } = TI;
   let k = "";
   /* vordere Beine (weißes Metall), Rest liegt unter der Platte */
-  for (const X of [X0 + 0.03, X1 - 0.03]) { const a = P(X, HT - 0.03, z1 - 0.03), b = P(X, 0, z1 - 0.03); k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#e8e8e4" stroke-width="${r(0.04 * sk(z1))}"/>`; }
+  for (const X of [X0 + 0.03, X1 - 0.03]) { const a = P(X, HT - 0.03, z1 - 0.03), b = [P(X, 0, z1 - 0.03)[0], 199.5]; k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#e8e8e4" stroke-width="${r(0.04 * sk(z1))}"/>`; }
   k += poly(blatt(X0, X1, z0, z1), S.lg("platte", [[0, "#efe1c4"], [1, "#e3cfa6"]]));
   /* Holzmaserung */
   for (let i = 0; i < 16; i++) { const z = z0 + 0.02 + rnd() * (z1 - 0.04); const a = P(X0 + 0.02, HT, z), b = P(X1 - 0.02, HT, z + (rnd() - 0.5) * 0.02); k += `<path d="M${a[0]} ${a[1]} Q${r((a[0] + b[0]) / 2)} ${r((a[1] + b[1]) / 2 + (rnd() - 0.5) * 2)} ${b[0]} ${b[1]}" stroke="#c9ad7d" stroke-width=".3" fill="none" opacity=".45"/>`; }
@@ -302,7 +302,6 @@ const TI = { X0: -0.72, X1: 0.72, z0: 0, z1: 0.66 };
   g += `<rect x="-10.3" y="14" width="20.6" height="1.6" fill="#f3efe4"/><rect x="-10.3" y="15.4" width="20.6" height=".5" fill="#e07a1f"/>`;
   const [ax, ay] = P(X, HT, z + 0.16);
   const k = flach(X, z, g, dr, 0.012);
-  const ecken = [P(X - 0.13, HT, z - 0.15), P(X + 0.13, HT, z + 0.16)];
   S.teil({ id: "schulbuch", de: "das Schulbuch", syl: "SCHUL-buch", it: "il libro di scuola", itSyl: "LI-bro di SCUO-la", en: "textbook", x: ax, y: ay, kunst: um(ax, ay, k), lupe: "buch_detail" });
 }
 
