@@ -697,7 +697,7 @@ const vierFl = (pts, ref) => `<path class="bw-flaeche" d="M${pts.map((p) => `${r
 /* =====================================================================
    10 — DIE KUTSCHE auf der Zufahrt unter dem Torbau (Lupe: das Pferd)
    ===================================================================== */
-const STRASSE = [[112, -4, -10], [122, -10, -12], [132, -18, -15], [140, -30, -19], [146, -44, -24]].map(([u, v, z]) => C(u, v, z));
+const STRASSE = [[112, -1, -10], [116, 8, -11], [119, 20, -12.5], [123, 34, -14.5], [128, 52, -17.5]].map(([u, v, z]) => C(u, v, z));
 {
   /* Zufahrt als Schneise: Böschung bergseits (dunkel), Fahrbahn, Kronen talseits überhängend */
   let k = `<path d="M${STRASSE.map(Pt).join(" L")}" stroke="#5e4c2c" stroke-width="3.6" fill="none" stroke-linecap="round" transform="translate(-1 -.8)"/>`;

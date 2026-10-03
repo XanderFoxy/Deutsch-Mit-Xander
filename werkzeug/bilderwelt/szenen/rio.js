@@ -959,7 +959,7 @@ const JU = { x: 190, y: 188 };
   const [hx, hy] = m.z.punkte.hals;
   const kragen = `<path d="M${r(hx * m.k - 2.6)} ${r(hy * m.k + 1.6)} Q${r(hx * m.k)} ${r(hy * m.k + 3.6)} ${r(hx * m.k + 2.6)} ${r(hy * m.k + 1.6)}" stroke="#139a43" stroke-width=".9" fill="none"/>`;
   const AY = JU.y - 0.62 * 1.34 * s;   /* Bezugspunkt auf der Brust */
-  S.teil({ id: "junge", de: "der Junge", syl: "JUN-ge", it: "il ragazzo", itSyl: "ra-GAZ-zo", en: "boy", x: JU.x, y: AY, kunst: `<g transform="translate(0 ${r(JU.y - AY)})">${sch}<g filter="${GEGENLICHT}">${halb(m.svg)}${kragen}</g></g>`,
+  S.teil({ id: "junge", de: "der Junge", syl: "JUN-ge", it: "il ragazzo", itSyl: "ra-GAZ-zo", en: "boy", x: JU.x, y: AY, kunst: `<g transform="translate(0 ${r(JU.y - AY)})">${sch}<g>${halb(m.svg)}${kragen}</g></g>`,
     tipp: "Der Junge trägt das gelbe Trikot der brasilianischen Fußballmannschaft." });
 }
 {

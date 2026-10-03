@@ -184,29 +184,29 @@ const bergUnter = [];
   k += `<path d="M${r(S0[0])} ${r(S0[1])} Q${r(CS[0])} ${r(CS[1])} ${r(S1[0])} ${r(S1[1])}" stroke="#2c2c2c" stroke-width=".22" fill="none"/>`;
   const KAB = [0.25 * S0[0] + 0.5 * CS[0] + 0.25 * S1[0], 0.25 * S0[1] + 0.5 * CS[1] + 0.25 * S1[1]];
   k += `<line x1="${r(KAB[0])}" y1="${r(KAB[1])}" x2="${r(KAB[0])}" y2="${r(KAB[1] + 1.1)}" stroke="#2c2c2c" stroke-width=".25"/><ellipse cx="${r(KAB[0])}" cy="${r(KAB[1] + 1.9)}" rx="1.3" ry="1" fill="#eeece6"/><rect x="${r(KAB[0] - 1.25)}" y="${r(KAB[1] + 1.6)}" width="2.5" height=".55" fill="#c23a2b"/><rect x="${r(KAB[0] - 0.9)}" y="${r(KAB[1] + 1.2)}" width="1.8" height=".35" fill="#5a6a78"/>`;
-  /* DAS TISCHTUCH: Wolkendecke auf dem Plateau (nur so breit wie das Plateau, an den Enden dünn),
-     rollt dick über die Vorderkante und fällt als Wasserfall in Zungen hinab, die sich auflösen */
+  /* DAS TISCHTUCH: flache Wolkendecke auf dem Plateau (nur so breit wie das Plateau), deren Vorderkante als
+     zusammenhängender, unten gewellter Vorhang über die Wand fällt (oben dicht, unten durchsichtig), in
+     den Rinnen tiefer; darunter abgerissene Fetzen, die sich auflösen */
   const T0 = 106, T1 = 288;
   const dick = (x) => Math.sin(Math.max(0, Math.min(1, (x - T0) / (T1 - T0))) * Math.PI);
-  let decke = `M${T0} ${r(TOP + 0.5)}`;
-  for (let x = T0; x <= T1; x += 3 + rnd() * 4) decke += ` Q${r(x - 2)} ${r(TOP - 2.5 - 8 * Math.pow(dick(x), 0.6) - 2.2 * rnd())} ${r(x)} ${r(TOP - 1.5 - 6.5 * Math.pow(dick(x), 0.6) - Math.sin(x * 0.11) * 1.2)}`;
-  decke += ` L${T1} ${r(TOP + 0.5)} Z`;
-  let rolle = `M${T0 + 4} ${r(TOP)}`;
-  for (let x = T0 + 4; x <= T1 - 4; x += 5) rolle += ` L${x} ${r(TOP + 0.5 + (2.5 + 7.5 * Math.pow(dick(x), 0.8)) * (0.85 + 0.3 * Math.sin(x * 0.7)))}`;
-  rolle += ` L${T1 - 4} ${r(TOP)} Z`;
-  let tuch = `<g filter="url(#${S.id("fein")})"><path d="${decke}" fill="${S.lg("decke", [[0, "#ffffff"], [0.7, "#f4f6f8"], [1, "#d9e1ea"]])}"/>`;
-  tuch += `<path d="${rolle}" fill="${S.lg("rolle", [[0, "#fbfcfd"], [0.6, "#e9eef3"], [1, "#c9d4df"]])}"/></g>`;
-  const ZUNGE = S.lg("zunge", [[0, "#f6f8fa", 0.95], [0.45, "#eef2f6", 0.75], [1, "#ffffff", 0]]);
-  let zu = "";
-  for (let x = T0 + 8; x < T1 - 6; x += 4.6 + rnd() * 3) {
-    const dk = dick(x), l = (12 + rnd() * 9) * Math.pow(dk, 0.6), w = 1.8 + rnd() * 2, y0 = TOP + 3 + 7 * dk;
-    if (l < 3) continue;
-    zu += `<path d="M${r(x - w)} ${r(y0)} Q${r(x - w * 0.9)} ${r(y0 + l * 0.6)} ${r(x - 0.2)} ${r(y0 + l)} Q${r(x + w * 0.7)} ${r(y0 + l * 0.55)} ${r(x + w)} ${r(y0)} Z" fill="${ZUNGE}"/>`;
-  }
-  tuch += `<g filter="url(#${S.id("wolke")})">${zu}</g>`;
-  tuch += `<path d="${rolle.replace(/L(\d+) ([\d.]+)/g, (m, x, y) => `L${x} ${r(Number(y) - 1.2)}`)}" fill="none" stroke="#b9c6d4" stroke-width=".8" opacity=".45" filter="url(#${S.id("fein")})"/>`;
+  const decke = [[T0, TOP + 0.5]];
+  for (let x = T0 + 4; x < T1; x += 9) decke.push([x, TOP - 1.4 - 4.6 * Math.pow(dick(x), 0.5) - Math.sin(x / 19) * 0.6]);
+  decke.push([T1, TOP + 0.5]);
+  let tuch = `<path d="${glatt(decke)}Z" fill="${S.lg("decke", [[0, "#ffffff"], [0.75, "#f1f4f7"], [1, "#d6dee7"]])}"/>`;
+  const rinnen = [128, 152, 176, 205, 236, 258, 276];
+  const tiefe = (x) => (3 + 9 * Math.pow(dick(x), 0.7)) + rinnen.reduce((a, g) => a + 5 * Math.exp(-Math.pow((x - g) / 3.2, 2)), 0) + Math.sin(x * 0.45) * 1.2;
+  const saum = [];
+  for (let x = T1 - 3; x >= T0 + 3; x -= 3) saum.push([x, TOP + tiefe(x) * Math.min(1, dick(x) * 3)]);
+  const VOR = S.lg("vorhang", [[0, "#fbfcfd", 0.96], [0.45, "#eef2f6", 0.75], [1, "#ffffff", 0]], 0, TOP - 1, 0, TOP + 17, ' gradientUnits="userSpaceOnUse"');
+  tuch += `<path d="M${T0 + 2} ${r(TOP - 1.6)}L${T1 - 2} ${r(TOP - 1.6)}L${r(saum[0][0])} ${r(saum[0][1])}${glatt(saum).replace(/^M[-\d. ]+/, "")}Z" fill="${VOR}" filter="url(#${S.id("fein")})"/>`;
+  /* Wulst der rollenden Vorderkante: heller Rand, darunter leichter Schatten */
+  tuch += `<path d="M${T0 + 6} ${r(TOP + 0.6)}Q197 ${r(TOP + 2.4)} ${T1 - 6} ${r(TOP + 0.6)}" stroke="#ffffff" stroke-width="1.6" fill="none" filter="url(#${S.id("fein")})"/><path d="M${T0 + 10} ${r(TOP + 2.6)}Q197 ${r(TOP + 5)} ${T1 - 10} ${r(TOP + 2.6)}" stroke="#b9c6d4" stroke-width=".8" fill="none" opacity=".4" filter="url(#${S.id("fein")})"/>`;
+  /* abgerissene Fetzen unterhalb */
+  let fe = "";
+  for (const [x, y, w] of [[150, TOP + 17, 7], [184, TOP + 20, 5], [214, TOP + 23, 8], [246, TOP + 19, 6], [270, TOP + 15, 4]]) fe += `M${x - w} ${r(y)}q${r(w * 0.4)} ${r(-w * 0.32)} ${w} ${r(-w * 0.18)}q${r(w * 0.6)} ${r(-w * 0.1)} ${w} ${r(w * 0.2)}q${-w} ${r(w * 0.22)} ${-2 * w} 0z`;
+  tuch += `<path d="${fe}" fill="#f4f7fa" opacity=".55" filter="url(#${S.id("wolke")})"/>`;
   /* dünne Fahnen über dem Sattel und am Kloof Nek */
-  tuch += `<g filter="url(#${S.id("wolke")})" opacity=".55"><ellipse cx="100" cy="${r(SATTEL[1] - 2)}" rx="7" ry="2"/><ellipse cx="294" cy="${r(TOP + 6)}" rx="6" ry="2.4"/></g>`.replace(/<ellipse /g, '<ellipse fill="#ffffff" ');
+  tuch += `<g filter="url(#${S.id("wolke")})" opacity=".55" fill="#ffffff"><ellipse cx="100" cy="${r(SATTEL[1] - 2)}" rx="7" ry="2"/><ellipse cx="294" cy="${r(TOP + 6)}" rx="6" ry="2.4"/></g>`;
   k += tuch;
   bergUnter.push(
     { id: "tischtuch", de: "das Tischtuch", syl: "TISCH-tuch", it: "la tovaglia", itSyl: "to-VA-glia", en: "tablecloth", x: 197, y: TOP + 8,
