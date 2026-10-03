@@ -338,13 +338,23 @@ const BURG = { x: 118, y: 76, s: 0.72 };
   k += `<path d="M41 ${r(Y(36))} L47 ${r(Y(46))} L60 ${r(Y(46))} L64 ${r(Y(36))} Z" fill="${ZIEGEL_F}"/>`;
   for (let i = 0; i < 3; i++) k += `<path d="M${r(48.6 + i * 4.4)} ${r(Y(39.4))} l.9 -1.6 l.9 1.6 Z" fill="#7a3424"/>`;
   k += `<path d="M41 ${r(Y(36))} L47 ${r(Y(46))}" stroke="#ffb08a" stroke-width=".5"/>`;
-  /* hoher Ostchor (Hallenchor): Wand mit Strebepfeilern und hohen Fenstern, steiles Walmdach */
-  k += `<path d="M59 ${r(Y(24))} L59 ${r(Y(40))} L73 ${r(Y(40))} L73 ${r(Y(24))} Z" fill="${S.lg("sebchor", [[0, "#c8987e"], [1, "#9a7468"]], 0, 0, 1, 0)}"/>`;
-  for (const x of [61.2, 66.4]) k += `<path d="M${x} ${r(Y(26))} L${x} ${r(Y(36))} L${x + 1.6} ${r(Y(37.6))} L${x + 3.2} ${r(Y(36))} L${x + 3.2} ${r(Y(26))} Z" fill="#3a3448"/><path d="M${x + 1.6} ${r(Y(26))} L${x + 1.6} ${r(Y(37))} M${x} ${r(Y(31))} L${x + 3.2} ${r(Y(31))}" stroke="#a07c6c" stroke-width=".3"/>`;
-  for (const x of [59, 65, 71]) k += `<path d="M${x} ${r(Y(24))} L${x} ${r(Y(38.6))} L${x + 1} ${r(Y(39.6))} L${x + 2} ${r(Y(38.6))} L${x + 2} ${r(Y(24))} Z" fill="#b08672"/><path d="M${x} ${r(Y(24))} L${x} ${r(Y(38.6))}" stroke="#ffd0a8" stroke-width=".3" opacity=".6"/>`;
-  k += `<path d="M57.6 ${r(Y(40))} L61 ${r(Y(52))} L71 ${r(Y(52))} L74.6 ${r(Y(40))} Z" fill="${ZIEGEL}"/><path d="M71 ${r(Y(52))} L74.6 ${r(Y(40))} L71.6 ${r(Y(40))} Z" fill="#000" opacity=".16"/>`;
-  for (let i = 0; i < 3; i++) k += `<path d="M${r(61.6 + i * 3.6)} ${r(Y(44))} l.8 -1.5 l.8 1.5 Z" fill="#7a3424"/>`;
-  k += `<path d="M57.6 ${r(Y(40))} L61 ${r(Y(52))}" stroke="#ffb08a" stroke-width=".5"/><path d="M66 ${r(Y(52))} L66 ${r(Y(55))}" stroke="${DUNKEL}" stroke-width=".3"/>`;
+  /* der Hallenchor: breiter und höher als das Langhaus, Traufe höher, First klar über dem Langhausfirst;
+     drei Polygonseiten (links schräg im Licht, Mitte frontal, rechts schräg im Schatten), Strebepfeiler mit Fialen */
+  const sp = (x0, x1, v0, v1) => { const m = (x0 + x1) / 2; return `M${r(x0)} ${r(Y(v0))} L${r(x0)} ${r(Y(v1))} Q${r(x0 + (x1 - x0) * 0.1)} ${r(Y(v1 + (x1 - x0) * 0.5))} ${r(m)} ${r(Y(v1 + (x1 - x0) * 0.62))} Q${r(x1 - (x1 - x0) * 0.1)} ${r(Y(v1 + (x1 - x0) * 0.5))} ${r(x1)} ${r(Y(v1))} L${r(x1)} ${r(Y(v0))} Z`; };
+  k += `<path d="M54 ${r(Y(24))} L54 ${r(Y(39))} L59 ${r(Y(39.4))} L59 ${r(Y(24))} Z" fill="#dcae8c"/>`;
+  k += `<path d="M59 ${r(Y(24))} L59 ${r(Y(39.4))} L76 ${r(Y(39.4))} L76 ${r(Y(24))} Z" fill="${S.lg("sebchor", [[0, "#c89a80"], [1, "#a8806e"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M76 ${r(Y(24))} L76 ${r(Y(39.4))} L81 ${r(Y(39))} L81 ${r(Y(24))} Z" fill="#8a6a64"/>`;
+  for (const [x0, x1] of [[55.4, 57.8], [63.6, 71.4], [77.2, 79.6]]) {
+    k += `<path d="${sp(x0, x1, 26, 35.4)}" fill="#3a3448"/>`;
+    const n = x1 - x0 > 4 ? 3 : 1;
+    for (let i = 1; i <= n; i++) { const x = x0 + (x1 - x0) * i / (n + 1); k += `<path d="M${r(x)} ${r(Y(26))} L${r(x)} ${r(Y(36))}" stroke="#a07c6c" stroke-width=".3"/>`; }
+    k += `<path d="M${r(x0)} ${r(Y(31))} L${r(x1)} ${r(Y(31))}" stroke="#a07c6c" stroke-width=".25"/>`;
+  }
+  for (const x of [59, 76]) k += `<path d="M${x - 1.1} ${r(Y(24))} L${x - 1.1} ${r(Y(37.5))} L${x - 0.6} ${r(Y(39.6))} L${x} ${r(Y(44))} L${x + 0.6} ${r(Y(39.6))} L${x + 1.1} ${r(Y(37.5))} L${x + 1.1} ${r(Y(24))} Z" fill="#b48a74"/><path d="M${x - 1.1} ${r(Y(24))} L${x - 1.1} ${r(Y(37.5))} L${x - 0.6} ${r(Y(39.6))} L${x} ${r(Y(44))}" stroke="#ffd0a8" stroke-width=".3" fill="none" opacity=".7"/>`;
+  k += `<path d="M53.4 ${r(Y(39))} L58 ${r(Y(56))} L68 ${r(Y(56))} L81.6 ${r(Y(39))} Z" fill="${ZIEGEL}"/>`;
+  k += `<path d="M68 ${r(Y(56))} L81.6 ${r(Y(39))} L75.6 ${r(Y(39.4))} Z" fill="#000" opacity=".18"/><path d="M58 ${r(Y(56))} L53.4 ${r(Y(39))} L59 ${r(Y(39.4))} Z" fill="#ffd0a8" opacity=".2"/>`;
+  for (const [x, v] of [[60, 43], [64.4, 43], [68.8, 43], [62.2, 48.5], [66.6, 48.5]]) k += `<path d="M${x} ${r(Y(v))} l.8 -1.5 l.8 1.5 Z" fill="#7a3424"/>`;
+  k += `<path d="M53.4 ${r(Y(39))} L58 ${r(Y(56))} L68 ${r(Y(56))}" stroke="#ffb08a" stroke-width=".5" fill="none"/><path d="M63 ${r(Y(56))} L63 ${r(Y(59))}" stroke="${DUNKEL}" stroke-width=".3"/>`;
   k += turm(36, 0.95, true) + turm(27, 1, false);
   const AX = 34, AY = 50;
   S.teil({ id: "sebalduskirche", de: "die Sebalduskirche", syl: "se-BAL-dus-kir-che", it: "la chiesa di San Sebaldo", itSyl: "KIE-sa di san se-BAL-do", en: "St. Sebald's Church",

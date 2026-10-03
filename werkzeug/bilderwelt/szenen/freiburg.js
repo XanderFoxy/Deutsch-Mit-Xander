@@ -119,7 +119,7 @@ const SONNE = [Math.sin(115 * Math.PI / 180), Math.cos(115 * Math.PI / 180)];
 const hex3 = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const mische = (a, b, t) => { const A = hex3(a), Bb = hex3(b); return "#" + A.map((v, i) => Math.round(v + (Bb[i] - v) * t).toString(16).padStart(2, "0")).join(""); };
 /* Farbe einer senkrechten Fläche mit Außennormale (nx, ny): im Licht wärmer und heller, abgewandt kühler und dunkler */
-const licht = (f, nx, ny) => { const l = nx * SONNE[0] + ny * SONNE[1]; return l > 0 ? mische(f, "#ffe6c8", l * .32) : mische(f, "#2a1822", -l * .42 + .14); };
+const licht = (f, nx, ny) => { const l = nx * SONNE[0] + ny * SONNE[1]; return l > 0 ? mische(f, "#ffc49a", l * .42) : mische(f, "#2a1822", -l * .42 + .14); };
 /* senkrechtes Prisma (Grundriss gegen den Uhrzeigersinn, von oben) z0…z1: nur die sichtbaren Seiten, hinten zuerst */
 const prisma = (plan, z0, z1, f) => {
   const seiten = [];
@@ -544,7 +544,7 @@ const TM = {};
   let k = "";
   const Y_SS = -15, Y_OG = -7, ZF = 35.5;
   const xs = (i) => -46 + i * 7.43;
-  const ST0 = "#bb6e55";
+  const ST0 = "#a65842";
   const SUED = licht(ST0, 0, -1), OST = licht(ST0, 1, 0), UNTEN = mische(ST0, "#2a1822", .42), KANTE = "#f2c0a2";
   const PATINA = S.lg("patina", [[0, "#2a1814", 0.55], [0.6, "#2a1814", 0.18], [1, "#2a1814", 0]]);
   /* Wetterspuren: grauschwarze Läufe unter Gesimsen; Steine in anderen Rottönen */
@@ -559,10 +559,13 @@ const TM = {};
     for (let i = 1; i < bahnen; i++) { const x = xm - w / 2 + i * w / bahnen; st += linie([[x, Y, z0], [x, Y, zb]]) + " "; }
     for (let i = 0; i < bahnen; i++) { const x = xm - w / 2 + (i + .5) * w / bahnen; st += linie(fbogen(Y, x, w / bahnen, zb - .1, zb + w / bahnen * .7, true, 6)) + " "; }
     g += `<path d="${st}" stroke="${steg}" stroke-width="${r(Math.max(.18, sc * .12))}" fill="none"/>`;
-    const c = pr(xm, Y, z1 - w * .5), rr = sc * w * .3;
+    /* Rose auf der Wand (perspektivisch verkürzt): Kreis, darin ein Vierpass */
+    const ring = (cx, cz, rad) => { const pts = []; for (let j = 0; j <= 16; j++) { const a = j / 16 * Math.PI * 2; pts.push([cx + Math.cos(a) * rad, Y, cz + Math.sin(a) * rad]); } return linie(pts); };
+    const zc = z1 - w * .52, rad = w * .3, rr = sc * rad;
     if (rr > .35) {
-      g += `<circle cx="${r(c[0])}" cy="${r(c[1])}" r="${r(rr)}" fill="none" stroke="${steg}" stroke-width="${r(Math.max(.16, rr * .14))}"/>`;
-      if (rr > .9) for (let j = 0; j < 4; j++) { const a = j * Math.PI / 2; g += `<circle cx="${r(c[0] + Math.cos(a) * rr * .45)}" cy="${r(c[1] + Math.sin(a) * rr * .45)}" r="${r(rr * .42)}" fill="none" stroke="${steg}" stroke-width="${r(rr * .1)}"/>`; }
+      let rs = ring(xm, zc, rad);
+      if (rr > .9) for (let j = 0; j < 4; j++) { const a = j * Math.PI / 2 + Math.PI / 4; rs += " " + ring(xm + Math.cos(a) * rad * .46, zc + Math.sin(a) * rad * .46, rad * .44); }
+      g += `<path d="${rs}" fill="none" stroke="${steg}" stroke-width="${r(Math.max(.16, rr * .11))}"/>`;
     }
     return g;
   };
@@ -611,7 +614,7 @@ const TM = {};
   /* je Joch: Strebebogen (quer zur Wand, gekrümmte Unterseite), Strebepfeiler mit Wasserschlägen, Fiale, Wasserspeier —
      von hinten nach vorn, damit die näheren die ferneren verdecken */
   const SP = [];
-  const bogen = (xb) => { const pts = []; for (let j = 0; j <= 10; j++) { const t = j / 10 * Math.PI / 2; pts.push([xb, Y_OG - 8.4 * Math.cos(t), 15.2 + 7.8 * Math.sin(t)]); } return pts; };
+  const bogen = (xb) => { const pts = []; for (let j = 0; j <= 10; j++) { const t = j / 10 * Math.PI / 2; pts.push([xb, Y_OG - 8.4 * Math.cos(t), 14.8 + 9.4 * Math.sin(t)]); } return pts; };
   for (let i = 0; i <= 7; i++) {
     const xb = xs(i);
     /* Unterseite (Laibung) des Bogens: von unten zu sehen, im Schatten */
@@ -635,7 +638,9 @@ const TM = {};
   k += `<path d="${poly([[6, QY, 26.6], [18, QY, 26.6], [18, 0, ZF + 1], [6, 0, ZF + 1]])}" fill="${S.lg("dachq", [[0, "#5d5250"], [1, "#7c6e68"]])}"/>`;
   k += `<path d="${poly([[18, QY, 0], [18, -15, 0], [18, -15, 26.6], [18, QY, 26.6]])}" fill="${OST}"/>`;
   k += `<path d="${poly([[6, QY, 0], [18, QY, 0], [18, QY, 26.6], [12, QY, 36.4], [6, QY, 26.6]])}" fill="${SUED}"/>`;
-  k += steine(QY, 6.5, 17.5, 8, 26, 8) + spuren(QY, 6.5, 17.5, 26.4, 6) + spuren(QY, 9, 15, 33, 2);
+  k += steine(QY, 6.5, 17.5, 1, 30, 22) + spuren(QY, 6.5, 17.5, 26.4, 8) + spuren(QY, 9, 15, 33, 3) + spuren(QY, 6.5, 17.5, 10.4, 6);
+  let gs = ""; for (const z of [10.6, 26.6]) gs += linie([[6, QY - .1, z], [18, QY - .1, z], [18, -15, z]]) + " "; for (let z = 1.2; z < 26; z += .9) gs += linie([[6, QY, z], [18, QY, z]]) + " ";
+  k += `<path d="${gs}" stroke="#7a3a2c" stroke-width=".12" opacity=".3" fill="none"/>`;
   k += `<path d="${poly([[6.4, QY - .3, 27.2], [12, QY - .3, 36.4], [17.6, QY - .3, 27.2]])}" fill="none" stroke="${KANTE}" stroke-width=".6"/>`;
   let kr = ""; for (let t = .08; t < 1; t += .12) for (const sd of [-1, 1]) { const x = 12 + sd * 5.6 * (1 - t), z = 27.2 + 9.2 * t; kr += linie([[x, QY - .4, z], [x + sd * .5, QY - .4, z + .6]]) + " "; }
   k += `<path d="${kr}" stroke="#e4a58a" stroke-width=".45" stroke-linecap="round"/>`;
@@ -646,7 +651,7 @@ const TM = {};
     k += prisma([[xb - .9, QY - 1.8], [xb + .9, QY - 1.8], [xb + .9, QY], [xb - .9, QY]], 0, 24, ST0);
     let wl = ""; for (const z of [7, 14, 20]) wl += linie([[xb - .9, QY - 1.85, z], [xb + .9, QY - 1.85, z], [xb + .9, QY, z]]) + " ";
     k += `<path d="${wl}" stroke="${KANTE}" stroke-width=".32" fill="none"/>`;
-    k += fiale(xb, QY - 1.8, QY, 24, 31.4, .7);
+    k += fiale(xb, QY - 1.8, QY, 24, xb < 10 ? 28.2 : 31.4, .7);
     const w0 = pr(xb, QY - 1.8, 15.6), w1 = pr(xb, QY - 4.2, 15.9), ws = FOC / tief(xb, QY - 2);
     k += speier(w0, w1, ws * 1.1);
     SP.push({ x: (w0[0] + w1[0]) / 2, y: (w0[1] + w1[1]) / 2 });

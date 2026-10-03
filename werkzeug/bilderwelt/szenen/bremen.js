@@ -779,18 +779,16 @@ const SCH = { x0: 8, x1: 40, y: -57, T: 15 };
     for (const [s, z] of [[1.4, 12.6], [2.6, 14.6], [4, 16.4], [5, 18.4], [10, 18.4], [11, 16.4], [12.4, 14.6], [13.6, 12.6]]) k += pfad(fp(Wg, [[s - .14, z], [s + .14, z], [s, z + 1.3]]), "#d4c4a2");
     k += pfad(fr(Wg, -.05, 0, .5, ZT), "#b5a88e");
   }
-  const pt = rhTeile.portal;
   S.teil({ id: "schuetting", de: "der Schütting", syl: "SCHÜT-ting", it: "lo Schütting (casa dei mercanti)", itSyl: "SCHÜT-ting", en: "Schütting (merchants' hall)", x: 0, y: 0, kunst: k,
-    tipp: "Im Schütting trafen sich früher die Kaufleute. Heute sitzt hier die Handelskammer.",
-    zoom: { x: r(pt[0] - 22), y: r(pt[1] - 24), w: 44, h: 30 },
-    unter: [
-      { id: "portal", de: "das Portal", syl: "por-TAL", it: "il portale", itSyl: "por-TA-le", en: "portal", x: pt[0], y: pt[1], kunst: flaeche(-3.6, -6.4, 7.2, 9),
-        tipp: "Über der Tür steht: „buten un binnen – wagen un winnen“ — draußen und drinnen, wagen und gewinnen." },
-    ] });
+    tipp: "Im Schütting trafen sich früher die Kaufleute, heute die Handelskammer. Über der Tür steht: „buten un binnen – wagen un winnen“." });
 }
 
 /* =====================================================================
-   8 — DIE TOURISTIN und 9 — DER TOURIST (vor dem Rathaus, sie zeigt zum Roland)
+   8 — MENSCHEN AUF DEM PLATZ: die Touristin (Wort) und Bildleben ohne
+       Wort — eine Stadtführung vor dem Rathaus, Gäste an den Stadt-
+       musikanten, ein Kind bei den Tauben, ein Paar. Die Figuren ohne
+       Wort sind Kopien von vier B.mensch-Figuren (über <use>), liegen
+       in der Lichtschicht und fangen keinen Tipp ab.
    ===================================================================== */
 /* kleine Figuren: Verläufe durch ihre Mittelfarbe ersetzen, Pfade auf ganze Zentimeter runden (die Seite lädt schnell) */
 const kleineFigur = (svg) => {
@@ -803,36 +801,56 @@ const kleineFigur = (svg) => {
   svg = svg.replace(/url\(#([^)]+)\)/g, (q, id) => farbe[id] || q).replace(/<defs><\/defs>/g, "");
   return svg.replace(/ d="([^"]*)"/g, (q, d) => ` d="${d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n)))}"`);
 };
-const figur = (X, Y, spec, h) => { const fu = pr(X, Y, 0), mk = mass(X, Y); const m = B.mensch(spec, h * mk); return { x: fu[0], y: fu[1], svg: schatten(.4 * mk, .2, .5 * mk, .12 * mk, .28) + kleineFigur(m.svg) }; };
+/* Schlagschatten einer Figur der Höhe h (m) auf dem Pflaster, nach Nordnordosten */
+const figSchatten = (X, Y, h, b = .22) => pfad(poly([[X - b, Y, 0], [X + b, Y, 0], [X + b * .5 + h * .414, Y + h * 1.546, 0], [X - b * .5 + h * .414, Y + h * 1.546, 0]], 1), "#1f2430", ` opacity=".3"`);
+const VORLAGE = {};
+const vorlage = (name, spec) => { const m = B.mensch(Object.assign({ id: "hbr_" + name }, spec), 1); S.def(`<g id="${S.id("fig_" + name)}">${kleineFigur(m.svg)}</g>`); VORLAGE[name] = `#${S.id("fig_" + name)}`; };
+vorlage("frau", { geschlecht: "w", pose: "stehen", blick: 200, frisur: "lang", haarfarbe: "blond", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "weiss" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "rot" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "tasche", farbe: "braun" } } });
+vorlage("mann", { geschlecht: "m", pose: "stehen", blick: 170, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel", kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "beige" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "rucksack", farbe: "blau" } } });
+vorlage("fuehrerin", { geschlecht: "w", pose: "winken", blick: 30, frisur: "dutt", haarfarbe: "dunkelbraun", haut: "hell", kleidung: { oberteil: { stueck: "bluse", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "schwarz" }, jacke: { stueck: "mantel", farbe: "gelb" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } } });
+vorlage("kind", { geschlecht: "m", alter: "kind", pose: "laufen", blick: 60, frisur: "kurz", haarfarbe: "blond", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } });
 {
-  const f = figur(15.4, -25.2, { id: "hbr_tour", geschlecht: "w", pose: "zeigen", blick: 205, frisur: "zopf", haarfarbe: "dunkelbraun", haut: "hell",
-    kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "blau" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "rot" } } }, 1.68);
-  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist (woman)", x: f.x, y: f.y, kunst: f.svg,
-    tipp: "Sie zeigt auf den Roland: „Schau mal, der Ritter mit dem Schwert!“" });
+  const leute = [   // [Vorlage, x, y, Höhe m, gespiegelt]
+    ["mann", -5.6, 3.2, 1.8, false], ["frau", -4.2, 4.8, 1.68, true], ["frau", -3.4, 2.4, 1.62, false],
+    ["fuehrerin", 11.8, -17.2, 1.7, false], ["frau", 13.6, -19, 1.66, true], ["mann", 10.4, -19.6, 1.8, true], ["mann", 14.8, -17.6, 1.76, false], ["frau", 9.6, -17.8, 1.6, false],
+    ["mann", 9.2, -27.2, 1.82, true], ["frau", 10, -26.6, 1.66, false],
+    ["kind", -3.2, -21.4, 1.25, false],
+  ].sort((a, b) => weit(b[1], b[2]) - weit(a[1], a[2]));
+  let sch = "", fig = "";
+  for (const [v, X, Y, h, sp] of leute) {
+    const p = pr(X, Y, 0), H = h * mass(X, Y);
+    sch += figSchatten(X, Y, h);
+    fig += `<use href="${VORLAGE[v]}" transform="translate(${t2(p[0])} ${t2(p[1])}) scale(${(sp ? -H : H).toFixed(4)} ${H.toFixed(4)})"/>`;
+  }
+  S.davor(sch + fig);
 }
 {
-  const f = figur(16.8, -26.4, { id: "hbr_tour2", geschlecht: "m", pose: "stehen", blick: 190, frisur: "kurz", haarfarbe: "blond", haut: "hell",
-    kleidung: { oberteil: { stueck: "tshirt", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "beige" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, schuhe: { stueck: "turnschuh" } } }, 1.8);
-  S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist (man)", x: f.x, y: f.y, kunst: f.svg,
-    tipp: "Viele Gäste kommen wegen der Stadtmusikanten und des Rolands nach Bremen." });
+  const X = 6, Y = -22, fu = pr(X, Y, 0), mk = mass(X, Y);
+  const m = B.mensch({ id: "hbr_tour", geschlecht: "w", pose: "zeigen", blick: 205, frisur: "zopf", haarfarbe: "dunkelbraun", haut: "hell",
+    kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "blau" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "rot" } } }, 1.68 * mk);
+  const sch = figSchatten(X, Y, 1.68);
+  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x: 0, y: 0, kunst: sch + `<g transform="translate(${t2(fu[0])} ${t2(fu[1])})">${kleineFigur(m.svg)}</g>`,
+    tipp: "Sie zeigt auf den Roland: „Schau mal, der Ritter mit dem Schwert!“" });
 }
 
 /* =====================================================================
-   10 — DIE TAUBEN auf dem Platz, 11 — DIE MÖWEN von der Weser
+   9 — DIE TAUBEN auf dem Platz, 10 — DIE MÖWEN von der Weser
    ===================================================================== */
 {
-  const taube = (x, y, s, spiegel) => {
-    const p = pr(x, y, 0), k = mass(x, y) * s;
-    return `<g transform="translate(${t2(p[0])} ${t2(p[1])}) scale(${spiegel ? -k.toFixed(3) : k.toFixed(3)} ${k.toFixed(3)})"><ellipse cx="0" cy=".3" rx="2.4" ry=".5" fill="#1b140c" opacity=".25"/><path d="M-2.6 -1.4 Q-1.6 -2.8 .6 -2.6 L2 -2.2 Q2.6 -2.6 3 -3.4 Q3.4 -4 4 -3.6 L4.4 -3.4 L4 -3 Q3.6 -2 3 -1.4 Q1.6 -.4 -.6 -.6 L-2.8 -1 Z" fill="#8a8f98"/><path d="M-1.8 -1.8 Q0 -2.6 1.6 -2 Q.2 -1.2 -1.8 -1.8 Z" fill="#6c717a"/><path d="M2.6 -2.2 Q3 -2.8 3.6 -2.6 Q3.4 -1.8 2.8 -1.6 Z" fill="#6f9a86"/><circle cx="3.8" cy="-3.4" r=".18" fill="#c46a2a"/><path d="M.6 -.6 V0 M1.4 -.7 V0" stroke="#c96a6a" stroke-width=".25"/></g>`;
+  const taube = (x, y, spiegel) => {
+    const p = pr(x, y, 0), k = mass(x, y) * .05;
+    return figSchatten(x, y, .22, .12) + `<g transform="translate(${t2(p[0])} ${t2(p[1])}) scale(${(spiegel ? -k : k).toFixed(4)} ${k.toFixed(4)})"><path d="M-2.6 -1.4 Q-1.6 -2.8 .6 -2.6 L2 -2.2 Q2.6 -2.6 3 -3.4 Q3.4 -4 4 -3.6 L4.4 -3.4 L4 -3 Q3.6 -2 3 -1.4 Q1.6 -.4 -.6 -.6 L-2.8 -1 Z" fill="#8a8f98"/><path d="M-1.8 -1.8 Q0 -2.6 1.6 -2 Q.2 -1.2 -1.8 -1.8 Z" fill="#6c717a"/><path d="M-2.4 -1.6 Q-1 -2.6 1 -2.4" stroke="#c9ccd2" stroke-width=".25" fill="none"/><path d="M2.6 -2.2 Q3 -2.8 3.6 -2.6 Q3.4 -1.8 2.8 -1.6 Z" fill="#6f9a86"/><circle cx="3.8" cy="-3.4" r=".18" fill="#c46a2a"/><path d="M.6 -.6 V0 M1.4 -.7 V0" stroke="#c96a6a" stroke-width=".25"/></g>`;
   };
-  const T1 = [CAM[0] + 5.2 * Math.sin(40 * GRAD), CAM[1] + 5.2 * Math.cos(40 * GRAD)], T2 = [CAM[0] + 6.4 * Math.sin(46 * GRAD), CAM[1] + 6.4 * Math.cos(46 * GRAD)];
-  const a = pr(T1[0], T1[1], 0), b = pr(T2[0], T2[1], 0);
-  S.teil({ oben: true, id: "taube", de: "die Taube", syl: "TAU-be", it: "il piccione", itSyl: "pic-CIO-ne", en: "pigeon", x: 0, y: 0, kunst: taube(T2[0], T2[1], .05, true) + taube(T1[0], T1[1], .05, false),
+  const a = pr(-1.4, -22.6, 0);
+  S.teil({ oben: true, id: "taube", de: "die Taube", syl: "TAU-be", it: "il piccione", itSyl: "pic-CIO-ne", en: "pigeon", x: 0, y: 0, kunst: taube(-.4, -21.2, true) + taube(-1.4, -22.6, false) + taube(.6, -22.2, false) + flaeche(a[0] - 2, a[1] - 5, 14, 6),
     tipp: "Tauben suchen auf dem Marktplatz nach Krümeln." });
 }
 {
-  const moewe = (x, y, s, fl) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-5 ${fl} Q-2.6 -1.6 0 0 Q2.6 -1.6 5 ${fl} Q2.6 -.6 .4 .8 L0 1.1 L-.4 .8 Q-2.6 -.6 -5 ${fl} Z" fill="#f6f6f2"/><path d="M-5 ${fl} L-4 ${fl + .2} M5 ${fl} L4 ${fl + .2}" stroke="#2a2a2a" stroke-width=".5"/><path d="M-.5 .4 Q0 1.6 .5 .4" fill="#d9d9d4"/><path d="M0 1.2 l.3 .5" stroke="#e1b53a" stroke-width=".3"/></g>`;
-  S.teil({ oben: true, id: "moewe", de: "die Möwe", syl: "MÖ-we", it: "il gabbiano", itSyl: "gab-BIA-no", en: "seagull", x: 0, y: 0, kunst: moewe(118, 76, 1, -1.8) + moewe(131, 70, .8, -.6) + flaeche(110, 64, 28, 16),
+  const moewe = (x, y, s, fl, spiegel) => `<g transform="translate(${x} ${y}) scale(${spiegel ? -s : s} ${s})"><path d="M-6 ${fl} Q-3 ${fl - .6} -1 -.6 L1 -.6 Q3 ${fl - .6} 6 ${fl} Q3.4 ${fl + .9} 1 .4 L-1 .4 Q-3.4 ${fl + .9} -6 ${fl} Z" fill="#f4f4f0"/><path d="M-6 ${fl} L-4.6 ${fl + .1} L-5.4 ${fl + .5} Z M6 ${fl} L4.6 ${fl + .1} L5.4 ${fl + .5} Z" fill="#1d1d1d"/><ellipse cx="0" cy="0" rx="2.2" ry=".9" fill="#fbfbf8"/><circle cx="-2" cy="-.3" r=".7" fill="#fbfbf8"/><path d="M-2.6 -.3 L-3.6 -.1 L-2.6 .1 Z" fill="#e8b82a"/><path d="M-1.4 -.6 Q0 -1.2 1.4 -.6" stroke="#b9c1c8" stroke-width=".3" fill="none"/></g>`;
+  /* eine dritte sitzt oben auf dem rechten Nebengiebel des Rathauses */
+  const gp = pr(9 * BAY, RH.WAND, 22.6), gm = mass(9 * BAY, RH.WAND) / 100;
+  const sitzend = `<g transform="translate(${t2(gp[0])} ${t2(gp[1])}) scale(${gm.toFixed(5)})"><path d="M-20 -6 Q-14 -18 6 -16 L20 -12 Q24 -10 18 -8 L4 -4 Q-10 -2 -20 -6 Z" fill="#9aa4ac"/><path d="M-20 -6 Q-10 -1 4 -4 L6 -10 Q-8 -12 -20 -6 Z" fill="#f4f4f0"/><path d="M14 -10 L26 -12 L18 -8 Z" fill="#1d1d1d"/><circle cx="-16" cy="-12" r="6" fill="#fbfbf8"/><path d="M-22 -12 L-30 -11 L-22 -10 Z" fill="#e8b82a"/><circle cx="-18" cy="-13" r=".9" fill="#111"/><path d="M-6 -2 V4 M0 -3 V4" stroke="#e0a03a" stroke-width="1.4"/></g>`;
+  S.teil({ oben: true, id: "moewe", de: "die Möwe", syl: "MÖ-we", it: "il gabbiano", itSyl: "gab-BIA-no", en: "seagull", x: 0, y: 0, kunst: moewe(118, 70, 1.1, -2.2, false) + moewe(134, 62, .85, -1, true) + sitzend + flaeche(108, 54, 34, 22),
     tipp: "Bremen liegt an der Weser. Bis zur Nordsee sind es rund 60 Kilometer — darum fliegen hier Möwen." });
 }
 
@@ -840,11 +858,12 @@ const figur = (X, Y, spec, h) => { const fu = pr(X, Y, 0), mk = mass(X, Y); cons
    12 — DER TISCH im Café (wir sitzen daran) mit 13 — DEM STUHL gegenüber
         Lupe: Labskaus, Klaben, Kaffee
    ===================================================================== */
-const TI = { b: 19.5, d: 1.6, z: .74, R: .36 };
+const TI = { b: 11, d: 6.4, z: .74, R: .36 };
+let STUHL = "";
 {
   /* DER STUHL gegenüber: Bistrostuhl aus Rattan, man sieht die Lehne über dem Tisch */
-  const X = CAM[0] + 2.4 * Math.sin(23 * GRAD), Y = CAM[1] + 2.4 * Math.cos(23 * GRAD), fu = pr(X, Y, 0), sk = mass(X, Y) / 100, t = (AUGE - .46) / weit(X, Y);
-  const unten = r((HO - fu[1]) / sk);       /* die Beine enden am unteren Bildrand */
+  const X = CAM[0] + 7.1 * Math.sin(14.5 * GRAD), Y = CAM[1] + 7.1 * Math.cos(14.5 * GRAD), fu = pr(X, Y, 0), sk = mass(X, Y) / 100, t = (AUGE - .46) / weit(X, Y);
+  const unten = 0;
   const RAT = S.lg("rattan", [[0, "#8a5a2a"], [0.5, "#c08a4a"], [1, "#9a6a34"]], 0, 0, 1, 0);
   let g = "";
   for (const [x0, x1] of [[-19, -21], [19, 21], [-12, -13], [12, 13]]) g += `<path d="M${x0} -46 L${r(x0 + (x1 - x0) * (46 + unten) / 46)} ${unten}" stroke="#1f1f1f" stroke-width="2.2"/>`;
@@ -854,7 +873,7 @@ const TI = { b: 19.5, d: 1.6, z: .74, R: .36 };
   for (let i = -2; i <= 2; i++) g += `<path d="M${i * 6} -87.6 L${i * 6.4} -69.6" stroke="#6e4620" stroke-width=".8" opacity=".55"/>`;
   for (const y of [-83, -78, -73]) g += `<path d="M-15 ${y} C-6 ${y - 2} 6 ${y - 2} 15 ${y}" stroke="#6e4620" stroke-width=".7" fill="none" opacity=".5"/>`;
   g += `<path d="M-16 -79.6 C-6 -82 6 -82 16 -79.6" stroke="#e8c48a" stroke-width=".9" fill="none" opacity=".7"/>`;
-  S.teil({ id: "stuhl", de: "der Stuhl", syl: "STUHL", it: "la sedia", itSyl: "SE-dia", en: "chair", x: fu[0], y: fu[1], kunst: `<g transform="scale(${sk.toFixed(4)})">${g}</g>` });
+  STUHL = figSchatten(X, Y, .9, .25) + `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(5)})">${g}</g>`;
 }
 {
   const X = CAM[0] + TI.d * Math.sin(TI.b * GRAD), Y = CAM[1] + TI.d * Math.cos(TI.b * GRAD);
@@ -862,8 +881,8 @@ const TI = { b: 19.5, d: 1.6, z: .74, R: .36 };
   const R = TI.R * 100;
   let g = "";
   /* Tischplatte (Marmor, rund) mit Kante, Säulenfuß (läuft unten aus dem Bild) */
-  const unten = r((HO - c[1]) / sk);
-  g += `<path d="M-5 ${r(R * t)} L-4.4 ${unten} L4.4 ${unten} L5 ${r(R * t)} Z" fill="#2c2c2a"/>`;
+  const unten = r((pr(X, Y, 0)[1] - c[1]) / sk);
+  g += `<path d="M-3 ${r(R * t)} L-2.6 ${unten - 3} L2.6 ${unten - 3} L3 ${r(R * t)} Z" fill="#2c2c2a"/><path d="M-22 ${unten} L22 ${unten} L16 ${unten - 3} L-16 ${unten - 3} Z" fill="#2c2c2a"/>`;
   g += `<ellipse cx="0" cy="3.4" rx="${R}" ry="${r(R * t)}" fill="#3a3a38"/>`;
   g += `<ellipse cx="0" cy="0" rx="${R}" ry="${r(R * t)}" fill="${S.rg("platte", [[0, "#ffffff"], [0.6, "#efede8"], [1, "#d6d3cc"]], 0.42, 0.3, 0.8)}"/>`;
   g += `<path d="M-20 ${r(-R * t * .5)} q10 4 22 1 q8 -2 16 3" stroke="#c9c6be" stroke-width=".5" fill="none" opacity=".6"/>`;
@@ -901,8 +920,6 @@ const TI = { b: 19.5, d: 1.6, z: .74, R: .36 };
   g += `<path d="M${TX + 3.6} ${TY - 5.4} Q${TX + 6.4} ${TY - 5.2} ${TX + 6} ${TY - 3.4} Q${TX + 5.6} ${TY - 2} ${TX + 3.6} ${TY - 2.2}" stroke="#efede8" stroke-width=".9" fill="none"/>`;
   g += `<path d="M${TX - 6} ${TY + .4} L${TX - 1.6} ${TY - .6}" stroke="#a9adb1" stroke-width=".7" stroke-linecap="round"/>`;
   g += `<path d="M${TX - .6} ${TY - 8} q-1.4 -2.2 0 -4.2 q1.4 -2 0 -4 M${TX + 1.4} ${TY - 8} q-1.2 -1.8 0 -3.6" stroke="#fff" stroke-width=".45" fill="none" opacity=".6"/>`;
-  /* Zuckertütchen mit dem Bremer Schlüssel */
-  g += `<g transform="translate(${TX - 9} ${TY + 4}) rotate(-12)"><rect x="-2.2" y="-.9" width="4.4" height="1.8" rx=".3" fill="#fff" stroke="#c4202c" stroke-width=".25"/><path d="M-.9 0 h1.6 M.4 0 v.6" stroke="#c4202c" stroke-width=".3"/><circle cx="-1.1" cy="0" r=".4" fill="none" stroke="#c4202c" stroke-width=".25"/></g>`;
   const k = `<g transform="translate(${t2(c[0])} ${t2(c[1])}) scale(${sk.toFixed(4)})">${g}</g>`;
   const U = (x, y) => [c[0] + x * sk, c[1] + y * sk];
   const uL = U(LX, LY - 2), uK = U(KX, KY - 4), uT = U(TX, TY - 3);

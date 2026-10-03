@@ -582,11 +582,11 @@ const ORKRONE = S.rg("orkrone", [[0, "#7fb055"], [0.6, "#4a7a33"], [1, "#2c5222"
     for (let i = 0; i < 9; i++) { const a = z() * 6.28, d = Math.sqrt(z()) * 0.62; g += `<circle cx="${r(Math.cos(a) * d)}" cy="${r(-2.55 + Math.sin(a) * d)}" r=".075" fill="#f29a1e"/>`; }
     k += `<g transform="translate(${r(x)} ${r(y)}) scale(${u.toFixed(4)})">${g}</g>`;
   }
-  const o = ORANGEN.filter((q) => q.D === 46 && q.X > 0)[0], u = sk(o.D);
+  const o = ORANGEN.filter((q) => q.D === 37 && q.X < 0)[0], u = sk(o.D);
   kuebelUnter = { x: r(xG(o.D, o.X)), y: r(yG(o.D)), u };
   S.teil({ id: "orangenbaum", de: "der Orangenbaum", syl: "o-RAN-gen-baum", it: "l'arancio", itSyl: "a-RAN-cio", en: "orange tree", x: 0, y: 0, kunst: k,
     tipp: "Im Sommer stehen die Orangenbäume draußen im Park. Im Winter kommen sie in die Orangerie.",
-    zoom: { x: r(Math.min(326, kuebelUnter.x - 36)), y: r(kuebelUnter.y - 52), w: 72, h: 54 },
+    zoom: { x: r(Math.max(0, kuebelUnter.x - 36)), y: r(kuebelUnter.y - 58), w: 75, h: 60 },
     unter: [{ id: "kuebel", de: "der Kübel", syl: "KÜ-bel", it: "il vaso", itSyl: "VA-so", en: "planter", x: kuebelUnter.x, y: kuebelUnter.y,
       kunst: flaeche(-0.62 * u, -1 * u, 1.24 * u, 1 * u, 0.5), tipp: "Die Kübel sind aus Holz. So kann man die Bäume tragen." }] });
 }
@@ -678,8 +678,8 @@ S.teil({ id: "gaertner", de: "der Gärtner", syl: "GÄRT-ner", it: "il giardinie
   S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: M2.x, y: M2.y, kunst: M2.svg,
     tipp: "Der Tourist zeigt nach oben: „Da ist das Schloss!“",
     zoom: { x: r(M2.x - 30), y: r(M2.y - 62), w: 60, h: 40 },
-    unter: [{ id: "rucksack", de: "der Rucksack", syl: "RUCK-sack", it: "lo zaino", itSyl: "ZAI-no", en: "backpack", x: r(M2.x), y: r(kopf.y + 0.62 * M2.u * 1),
-      kunst: flaeche(-0.24 * M2.u, 0, 0.48 * M2.u, 0.5 * M2.u, 0.5) }] });
+    unter: [{ id: "rucksack", de: "der Rucksack", syl: "RUCK-sack", it: "lo zaino", itSyl: "ZAI-no", en: "backpack", x: r(M2.x), y: r(kopf.y + 0.2 * M2.u),
+      kunst: flaeche(-0.2 * M2.u, 0, 0.42 * M2.u, 0.44 * M2.u, 0.5) }] });
 }
 {
   S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "il bambino", itSyl: "bam-BI-no", en: "child", x: K.x, y: K.y, kunst: K.svg,
