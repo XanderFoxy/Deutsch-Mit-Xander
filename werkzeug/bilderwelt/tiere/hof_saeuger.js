@@ -1077,7 +1077,13 @@ function kalb(T) {
   s += vol(T, "bein", 1.8, fernBein(false, 8)) + klK(KA_HCX + 8, "#3e3a37");
   s += vol(T, "bein", 1.8, fernBein(true, -7)) + klK(KA_VCX - 7, "#3e3a37");
   /* Rumpf: Länge ≈ 1,0 × WH, Kruppe etwas höher als der Widerrist, aufgezogene Flanke; Hals mit Knick 28° nach vorn-oben, dünn */
-  const rumpf = [[13.4, -79], [14.6, -75.6]].concat(KA_H.h, KA_H.v, [[44.4, -54], [48, -55], [54, -54.2], [62, -52.8], [72, -51.6], [80, -51], [84.6, -51.2]], KA_V.h, KA_V.v,
+  /* PROPORTIONEN Kalb (Holstein, 4–6 Wochen) in Kopflängen (KL = 29 cm): Widerrist 2,9 KL (85), Kruppe 3 KL (87),
+     Rumpflänge Bug–Sitzbein 3 KL (88), Brusttiefe 1,15 KL (Brustboden 51 = 60 % WH), Ellbogen 1,75 KL, Vorderfußwurzel 0,9 KL (26),
+     Fesselgelenk 0,38 KL (11), Kniegelenk 1,7 KL (50, Bauchlinie), Fersenhöcker 1,07 KL (31 = 36 % WH), Hals 28° steigend,
+     Genick 3,4 KL (99), Kopfwinkel 50°, Gesicht (Auge–Maul) 0,55 KL, Stirn gewölbt.
+     Hinterkontur: unter dem Sitzbeinhöcker zur Kniekehle eingezogen, gerade Achillessehne, Fersenhöcker 2,5 cm vorspringend. */
+  const hinten = [[13.4, -79], [12.8, -76], [13.4, -71], [15, -64], [17.4, -57], [19.6, -49], [21.2, -42.6], [22.2, -37.6]].concat(KA_H.h.slice(7));
+  const rumpf = hinten.concat(KA_H.v, [[44.4, -54], [48, -55], [54, -54.2], [62, -52.8], [72, -51.6], [80, -51], [84.6, -51.2]], KA_V.h, KA_V.v,
     [[100.4, -53.4], [101.2, -56.6], [101, -60], [100.8, -63.6], [101.2, -68], [101.8, -72.6], [102.6, -77], [103.8, -80.6], [105.6, -84], [108, -88], [110.4, -92.6],
       [112, -96.6], [110.6, -99.4], [106, -97.2], [100, -93.8], [94, -90.4], [88.6, -87.4], [84, -85.8], [79, -85.2], [70, -84.8], [60, -85], [50, -85.6], [40, -86.4],
       [33, -87.2], [29, -87.6], [25, -87], [20.4, -85.6], [16.6, -83.6]]);
@@ -1116,7 +1122,7 @@ function kalb(T) {
   s += saum2(T, [[16.6, -83.6], [25, -87], [33, -87.2], [50, -85.6], [70, -84.8], [84, -85.8], [94, -90.4], [106, -97.2]], 90, (x) => (x < 44 ? 160 : x < 86 ? 178 : 205), 1.5, schwarz, 0.06, 0.75, { ab: 0.8, streuung: 16 });
   s += saum2(T, [[44.4, -54], [54, -54.2], [72, -51.6], [84.6, -51.2]], 30, 112, 1.8, "#e8e4dc", 0.05, 0.75, { ab: 0.4, streuung: 30 });
   s += saum2(T, [[101, -60], [101.2, -68], [102.6, -77], [105.6, -84]], 16, 60, 1.4, "#ece8e0", 0.05, 0.7, { ab: 0.4, streuung: 30 });
-  s += saum2(T, [[14.6, -75.6], [17.3, -72], [18.5, -51.5], [21.8, -38]], 20, 125, 1.4, "#ece8e0", 0.06, 0.7, { ab: 0.3 });
+  s += saum2(T, hinten.slice(1, 7), 20, 125, 1.4, "#ece8e0", 0.06, 0.7, { ab: 0.3 });
   s += klK(KA_HCX, "#4e4b47") + klK(KA_VCX, "#4e4b47");
   /* Schwanz: Ansatz zwischen den Sitzbeinhöckern, liegt an der Hinterbacke, verjüngt; kurze dünne Quaste bis zum Sprunggelenk */
   const schwanz = [[17.6, -84.4], [15, -84], [13.2, -81.4], [12.4, -75], [12.2, -64], [12.4, -52], [12.8, -44], [14.4, -44], [14.4, -52], [14.4, -64],
@@ -1128,8 +1134,10 @@ function kalb(T) {
     saum2(T, qA, 22, (x, y) => 90 + (y + 40) * 0.5, 7, "#b0a89c", 0.07, 0.7, { ab: 0, streuung: 16, szene: 0.3 }) +
     saum2(T, qA, 50, (x, y) => 90 + (y + 40) * 0.5, 7.4, "#f6f3ec", 0.07, 0.85, { ab: 0, streuung: 14, szene: 0.3 });
   /* Kopf: groß (≈ 37 % WH), kurzes Gesicht, gewölbte Stirn, stumpfes tiefes Maul; Genick über der Rückenlinie, 50° geneigt */
-  const G = [111, -99], W = 50, K = (pts) => dreh(pts, G[0], G[1], W), P = (x, y) => K([[x, y]])[0];
-  const kopf = K([[-0.8, -2], [3, -5.2], [7, -6.8], [11, -7], [15, -6.2], [19, -5], [23, -4.2], [26, -3.6], [28.6, -2.2], [30.2, 0.6], [30.8, 4], [30.4, 7.4],
+  /* Gesicht kindlich kurz: alles vor dem Auge (x > 11) um 20 % gestaucht */
+  const G = [111, -99], W = 50, kurzG = (p) => [p[0] <= 11 ? p[0] : 11 + (p[0] - 11) * 0.8, p[1]].concat(p[2] ? [1] : []);
+  const K = (pts) => dreh(pts.map(kurzG), G[0], G[1], W), P = (x, y) => K([[x, y]])[0];
+  const kopf = K([[-0.8, -2.4], [3, -6], [7, -7.8], [11, -7.6], [15, -6.4], [19, -5], [23, -4.2], [26, -3.6], [28.6, -2.2], [30.2, 0.6], [30.8, 4], [30.4, 7.4],
     [29.2, 9.4], [28.4, 10.2], [27.6, 11.4], [24.6, 12], [20, 12.2], [15, 13], [10, 14.8], [6.4, 15.8], [3.4, 15.2], [1.4, 12.4], [-0.6, 8], [-1.4, 3]]);
   /* Kehlgang und Schatten hinter dem Kieferwinkel auf den Hals */
   s += imRumpf(rk, F.schatten(...P(3, 15), 4.4, 3.6, 0.55, W) + F.schatten(...P(-3, 6), 3, 7, 0.4, W));
@@ -1160,7 +1168,7 @@ function kalb(T) {
   const A = P(11.4, 0.6);
   s += auge2(T, F, A[0], A[1], 2.1, { winkel: 18, iris: "#3a2214", iris2: "#120804", hoehe: 0.72, wimpern: 16, wl: 0.9, wr: 14, wf: "#0c0c0e", haut: "#c8ccd8", mulde: 0.35, licht: 0.9 });
   /* Ohr: Blatt (≈ 45 % Kopflänge), schmaler Grund am Genick, waagerecht nach hinten-seitlich – bricht die Silhouette */
-  const OX = P(2.6, 1.6), OW = 178;
+  const OX = P(3, 4), OW = 166;
   const ohrA = dreh([[-0.6, 1.2], [3, 2], [7, 3.2], [11, 3.6], [14.6, 3], [17, 1.4], [17.6, -0.2], [16.4, -1.8], [12.6, -3], [8, -3.2], [3.4, -2.2], [-0.6, -1.2]], OX[0], OX[1], OW);
   const ohrI = dreh([[2.4, 0.4], [6.4, 1.4], [10.6, 1.8], [14.6, 1.2], [16.4, -0.2], [15, -1.4], [11, -2.2], [6, -2], [2.6, -1]], OX[0], OX[1], OW);
   s += imRumpf(rk, F.schatten(OX[0] - 8, OX[1] + 3.4, 7, 2, 0.45, 12));

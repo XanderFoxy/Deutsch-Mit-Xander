@@ -424,12 +424,21 @@ const haus = (lat, lon, H, W, art, muster, extra) => {
   add(haus(40.7085, -74.0090, 248, 52, "dunkel", "steinv", dachtech));                      /* 28 Liberty */
   add(haus(40.7061, -74.0091, 226, 34, "stein2", "steinr", (x, yb, w, h) => `<rect x="${r(x - w * 0.36)}" y="${r(yb - h - 3)}" width="${r(w * 0.72)}" height="3" fill="${VERL.stein2}"/><rect x="${r(x - w * 0.2)}" y="${r(yb - h - 6)}" width="${r(w * 0.4)}" height="3" fill="${VERL.stein2}"/>`)); /* 20 Exchange Place */
   add(haus(40.7059, -74.0079, 227, 40, "hell", "steinr", (x, yb, w, h) => `<path d="M${r(x - w * 0.3)} ${r(yb - h)} L${r(x)} ${r(yb - h - 4)} L${r(x + w * 0.3)} ${r(yb - h)} Z" fill="#e7e4dc"/>`)); /* 60 Wall */
-  add(haus(40.7063, -74.00918, 260, 34, "stein", "steinr", (x, yb, w, h, s) => `<path d="M${r(x - w / 2 + 0.6)} ${r(yb - h)} L${r(x)} ${r(yb - h - 17 * s * 1.6)} L${r(x + w / 2 - 0.6)} ${r(yb - h)} Z" fill="${S.lg("kupfer", [[0, "#8fc4ae"], [1, "#4f8a74"]], 0, 0, 1, 0)}"/>` + `<line x1="${r(x)}" y1="${r(yb - h - 27 * s)}" x2="${r(x)}" y2="${r(yb - h - 23 * s - 6)}" stroke="#9aa3a9" stroke-width=".3"/>`)); /* 40 Wall */
+  /* 40 Wall Street (1930): grüne Kupferpyramide mit Gauben, Laterne und Spitze */
+  add(haus(40.7063, -74.00918, 238, 34, "stein", "steinr", (x, yb, w, h, s) => { const y0 = yb - h; let g = `<path d="M${r(x - w / 2 + 0.5)} ${r(y0)} L${r(x)} ${r(y0 - 30 * s)} L${r(x + w / 2 - 0.5)} ${r(y0)} Z" fill="${S.lg("kupfer", [[0, "#8fc4ae"], [1, "#4f8a74"]], 0, 0, 1, 0)}"/>`;
+    for (const [t, n] of [[0.25, 4], [0.55, 2]]) for (let i = 0; i < n; i++) { const yy = y0 - 30 * s * t, hw = (w / 2 - 0.5) * (1 - t), xx = x - hw + (i + 0.5) * 2 * hw / n; g += `<rect x="${r(xx - 0.3)}" y="${r(yy - 0.7)}" width=".6" height=".7" fill="#e9e2c8"/>`; }
+    g += `<rect x="${r(x - 0.6)}" y="${r(y0 - 34 * s)}" width="1.2" height="${r(4 * s)}" fill="#cfe2d6"/><line x1="${r(x)}" y1="${r(y0 - 34 * s)}" x2="${r(x)}" y2="${r(y0 - 45 * s)}" stroke="#7fa79a" stroke-width=".3"/>`;
+    return g; }));
   add(haus(40.70637, -74.00754, 236, 38, "stein2", "steinv", (x, yb, w, h, s) => `<rect x="${r(x - w * 0.38)}" y="${r(yb - h - 14 * s)}" width="${r(w * 0.76)}" height="${r(14 * s)}" fill="${VERL.stein2}"/><rect x="${r(x - w * 0.24)}" y="${r(yb - h - 26 * s)}" width="${r(w * 0.48)}" height="${r(12 * s)}" fill="${VERL.stein2}"/><path d="M${r(x - w * 0.14)} ${r(yb - h - 26 * s)} L${r(x)} ${r(yb - h - 40 * s)} L${r(x + w * 0.14)} ${r(yb - h - 26 * s)} Z" fill="#d9e4ea"/>` + spitze(14)(x, yb - 40 * s, w, h, s))); /* 70 Pine */
   add(haus(40.70185, -74.01207, 195, 56, "braun", "steinr", dachtech));                     /* 1 New York Plaza */
   add(haus(40.7025, -74.0122, 165, 40, "hell", "glasr", null));                             /* 17 State St */
   add(haus(40.7035, -74.0090, 210, 70, "schwarz", "glasr", dachtech));                      /* 55 Water St */
-  add(haus(40.7120, -74.0086, 241, 28, "hell", "steinv", (x, yb, w, h, s) => `<rect x="${r(x - w * 0.4)}" y="${r(yb - h - 20 * s)}" width="${r(w * 0.8)}" height="${r(20 * s)}" fill="${VERL.hell}"/><path d="M${r(x - w * 0.3)} ${r(yb - h - 20 * s)} L${r(x)} ${r(yb - h - 36 * s)} L${r(x + w * 0.3)} ${r(yb - h - 20 * s)} Z" fill="${S.lg("kupfer2", [[0, "#9ccdb6"], [1, "#5a957c"]], 0, 0, 1, 0)}"/>` + spitze(8)(x, yb - 36 * s, w, h, s))); /* Woolworth */
+  /* Woolworth Building (1913): Schaft bis 185 m, darüber die neugotische Krone mit Ecktürmchen, Kupferpyramide, Laterne */
+  add(haus(40.7120, -74.0086, 185, 28, "hell", "steinv", (x, yb, w, h, s) => { const y0 = yb - h; let g = `<rect x="${r(x - w * 0.42)}" y="${r(y0 - 16 * s)}" width="${r(w * 0.84)}" height="${r(16 * s)}" fill="${VERL.hell}"/>`;
+    for (const dx of [-0.42, -0.14, 0.14, 0.42]) g += `<path d="M${r(x + dx * w - 0.35)} ${r(y0 - 16 * s)} L${r(x + dx * w)} ${r(y0 - 26 * s)} L${r(x + dx * w + 0.35)} ${r(y0 - 16 * s)} Z" fill="#e6e3da"/>`;
+    g += `<path d="M${r(x - w * 0.3)} ${r(y0 - 18 * s)} L${r(x)} ${r(y0 - 46 * s)} L${r(x + w * 0.3)} ${r(y0 - 18 * s)} Z" fill="${S.lg("woolk", [[0, "#9cbfae"], [1, "#5f8574"]], 0, 0, 1, 0)}"/>`;
+    g += `<rect x="${r(x - 0.5)}" y="${r(y0 - 50 * s)}" width="1" height="${r(5 * s)}" fill="#d9d4c6"/><line x1="${r(x)}" y1="${r(y0 - 50 * s)}" x2="${r(x)}" y2="${r(y0 - 56 * s)}" stroke="#9aa3a9" stroke-width=".25"/>`;
+    return g; }));
   add(haus(40.7107, -74.0055, 265, 40, "hell", null, (x, yb, w, h) => { let s = ""; for (let xx = x - w / 2 + 0.6; xx < x + w / 2; xx += 1.1) s += `<path d="M${r(xx)} ${r(yb - h + 1)} q.4 5 0 10 t0 10 t0 10 t0 10 t0 10 t0 10 t0 10" stroke="#8a959c" stroke-width=".18" fill="none" opacity=".75"/>`; return s; })); /* 8 Spruce */
   /* Municipal Building: breit, Kolonnade unten, Mittelturm gestuft, goldene Civic Fame */
   {
@@ -437,7 +446,8 @@ const haus = (lat, lon, H, W, art, muster, extra) => {
     let m = `<rect x="${r(x - 50 * s)}" y="${r(yb - 128 * s)}" width="${r(100 * s)}" height="${r(128 * s)}" fill="${VERL.stein}"/><rect x="${r(x - 50 * s)}" y="${r(yb - 128 * s)}" width="${r(100 * s)}" height="${r(128 * s)}" fill="url(#${S.id("steinr")})"/>`;
     m += `<rect x="${r(x - 18 * s)}" y="${r(yb - 150 * s)}" width="${r(36 * s)}" height="${r(22 * s)}" fill="${VERL.stein}"/><rect x="${r(x - 12 * s)}" y="${r(yb - 164 * s)}" width="${r(24 * s)}" height="${r(14 * s)}" fill="${VERL.stein}"/>`;
     for (const dx of [-14, 14]) m += `<rect x="${r(x + dx * s - 3 * s)}" y="${r(yb - 158 * s)}" width="${r(6 * s)}" height="${r(8 * s)}" fill="${VERL.stein}"/>`;
-    m += `<path d="M${r(x - 0.5)} ${r(yb - 164 * s)} L${r(x)} ${r(yb - 177 * s)} L${r(x + 0.5)} ${r(yb - 164 * s)} Z" fill="${GOLD}"/>`;
+    /* Laterne und die vergoldete Figur „Civic Fame“ (7,6 m) obenauf */
+    m += `<rect x="${r(x - 4 * s)}" y="${r(yb - 172 * s)}" width="${r(8 * s)}" height="${r(8 * s)}" fill="${VERL.stein}"/><path d="M${r(x - 0.25)} ${r(yb - 172 * s)} L${r(x - 0.12)} ${r(yb - 178 * s)} L${r(x + 0.12)} ${r(yb - 178 * s)} L${r(x + 0.25)} ${r(yb - 172 * s)} Z M${r(x - 0.5)} ${r(yb - 177 * s)} L${r(x + 0.5)} ${r(yb - 178.5 * s)}" fill="${GOLD}" stroke="#d9a62a" stroke-width=".12"/><circle cx="${r(x)}" cy="${r(yb - 179.2 * s)}" r=".16" fill="${GOLD}"/>`;
     m += `<rect x="${r(x - 50 * s)}" y="${r(yb - 128 * s)}" width="${r(100 * s)}" height="${r(128 * s)}" fill="${LICHT}"/>`;
     liste.push({ d, s: m });
   }
@@ -450,7 +460,10 @@ const haus = (lat, lon, H, W, art, muster, extra) => {
   for (let b = 268; b < 392; b += 1.3 + rnd() * 1.6) {
     const d = (b > 333 ? 880 : b > 310 ? 760 : 900) + rnd() * 260, h = 18 + rnd() * (b > 333 ? 34 : 28), w = 18 + rnd() * 30;
     const art = ["ziegel", "stein", "stein2", "braun", "glas2", "ziegel"][Math.floor(rnd() * 6)], x = XM(b), yb = HOR + K * (EYE - 3) / d, s = K / d;
-    let m = `<rect x="${r(x - w * s / 2)}" y="${r(yb - h * s)}" width="${r(w * s)}" height="${r(h * s)}" fill="${VERL[art]}"/><rect x="${r(x - w * s / 2)}" y="${r(yb - h * s)}" width="${r(w * s)}" height="${r(h * s)}" fill="url(#${S.id("steinr")})"/>`;
+    const mu = ["steinr", "steinv", "glasr", ""][Math.floor(rnd() * 4)];
+    let m = `<rect x="${r(x - w * s / 2)}" y="${r(yb - h * s)}" width="${r(w * s)}" height="${r(h * s)}" fill="${VERL[art]}"/>` + (mu ? `<rect x="${r(x - w * s / 2)}" y="${r(yb - h * s)}" width="${r(w * s)}" height="${r(h * s)}" fill="url(#${S.id(mu)})"/>` : "");
+    if (rnd() < 0.35) m += `<rect x="${r(x - w * s * 0.3)}" y="${r(yb - h * s - 4 * s)}" width="${r(w * s * 0.6)}" height="${r(4 * s)}" fill="${VERL[art]}"/>`;
+    else if (rnd() < 0.4) m += `<rect x="${r(x + w * s * 0.1)}" y="${r(yb - h * s - 2.5 * s)}" width="${r(w * s * 0.25)}" height="${r(2.5 * s)}" fill="#6f747a"/>`;
     if (art === "ziegel" && rnd() < 0.5) m += `<rect x="${r(x - 1.3 * s * 2)}" y="${r(yb - h * s - 3 * s)}" width="${r(4 * s)}" height="${r(3 * s)}" fill="#7a5a3a"/><path d="M${r(x - 2.8 * s)} ${r(yb - h * s - 3 * s)} L${r(x)} ${r(yb - h * s - 4.6 * s)} L${r(x + 2.8 * s)} ${r(yb - h * s - 3 * s)} Z" fill="#4e3b28"/>`;
     liste.push({ d, s: m });
   }
@@ -494,7 +507,7 @@ const haus = (lat, lon, H, W, art, muster, extra) => {
   const [px, py] = [XM(297.1), HOR + K * (EYE - 3) / 1066];
   S.teil({ id: "skyline", de: "die Skyline", syl: "SKY-line", it: "lo skyline", itSyl: "SKY-line", en: "skyline", x: 0, y: 0, kunst: k,
     tipp: "Die Skyline von Lower Manhattan: Hochhäuser dicht an dicht — hinten das Woolworth Building (1913), vorn am Wasser Pier 17 und der FDR Drive.",
-    zoom: { x: r(px - 21), y: r(py - 96), w: 42, h: 28 },
+    zoom: { x: 122, y: 68, w: 84, h: 56 },
     unter: [
       { id: "wolkenkratzer", de: "der Wolkenkratzer", syl: "WOL-ken-krat-zer", it: "il grattacielo", itSyl: "grat-ta-CIE-lo", en: "skyscraper", x: px, y: py, kunst: flaeche(-6, -103, 12, 103, 0.6),
         tipp: "70 Pine Street ist ein Wolkenkratzer im Art-déco-Stil von 1932 — 290 Meter hoch." },

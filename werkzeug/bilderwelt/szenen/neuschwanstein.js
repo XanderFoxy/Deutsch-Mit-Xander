@@ -705,7 +705,7 @@ const STRASSE = [[112, -4, -10], [122, -10, -12], [132, -18, -15], [140, -30, -1
   k += `<path d="M${STRASSE.map(Pt).join(" L")}" stroke="#a89878" stroke-width=".4" fill="none" transform="translate(.6 .6)"/>`;
   k += saum(STRASSE.slice(1).map(([x, y]) => [x + 2.2, y + 1]), 1.3, 2.6, 0.4);
   /* Kutsche in Fahrtrichtung (bergauf zum Torbau): Seitenansicht, entlang der Straße geschert */
-  const [x, y] = C(127, -13.8, -13.5), s = k1(127, -13.8) * 1.05;
+  const x = STRASSE[1][0] + (STRASSE[2][0] - STRASSE[1][0]) * 0.5, y = STRASSE[1][1] + (STRASSE[2][1] - STRASSE[1][1]) * 0.5 + 0.6, s = k1(127, -14) * 1.05;
   const sa = STRASSE[1], sb = STRASSE[2], winkel = Math.atan2(sb[1] - sa[1], sb[0] - sa[0]) * 180 / Math.PI;
   let g = schatten(0, 0.2, 4.6 * s, 0.5 * s, 0.3);
   const pferd = (dx, f, dunkel) => {
@@ -728,13 +728,13 @@ const STRASSE = [[112, -4, -10], [122, -10, -12], [132, -18, -15], [140, -30, -1
   g += `<circle cx="${r(0.9 * s)}" cy="${r(-0.4 * s)}" r="${r(0.4 * s)}" fill="none" stroke="#d8a830" stroke-width="${r(0.12 * s)}"/><circle cx="${r(2.4 * s)}" cy="${r(-0.5 * s)}" r="${r(0.5 * s)}" fill="none" stroke="#d8a830" stroke-width="${r(0.12 * s)}"/>`;
   g += `<rect x="${r(0.6 * s)}" y="${r(-2.2 * s)}" width="${r(0.45 * s)}" height="${r(0.7 * s)}" fill="#2f4a2f"/><circle cx="${r(0.82 * s)}" cy="${r(-2.4 * s)}" r="${r(0.21 * s)}" fill="#e0b896"/><rect x="${r(0.57 * s)}" y="${r(-2.7 * s)}" width="${r(0.5 * s)}" height="${r(0.17 * s)}" fill="#1c1c1c"/>`;
   g += `<rect x="${r(1.5 * s)}" y="${r(-2 * s)}" width="${r(0.4 * s)}" height="${r(0.6 * s)}" fill="#b8473a"/><circle cx="${r(1.7 * s)}" cy="${r(-2.15 * s)}" r="${r(0.19 * s)}" fill="#e8c39e"/><rect x="${r(1.95 * s)}" y="${r(-1.95 * s)}" width="${r(0.35 * s)}" height="${r(0.55 * s)}" fill="#2f5f95"/><circle cx="${r(2.12 * s)}" cy="${r(-2.1 * s)}" r="${r(0.18 * s)}" fill="#d9a882"/>`;
-  const scher = `translate(${r(x)} ${r(y)}) skewY(${r(Math.max(-40, Math.min(40, winkel)) * 0.85)}) scale(.82 1)`;
+  const scher = `translate(${r(x)} ${r(y)}) skewY(${r(Math.max(-22, Math.min(22, winkel * 0.45)))}) scale(.78 1)`;
   k += `<g transform="${scher}">${g}</g>`;
   S.teil({ oben: true, id: "kutsche", de: "die Kutsche", syl: "KUT-sche", it: "la carrozza", itSyl: "car-ROZ-za", en: "carriage", x: 0, y: 0, kunst: k + `<g transform="${scher}">${flaeche(-5.6 * s, -3 * s, 9.6 * s, 3.2 * s)}</g>`,
     tipp: "Pferdekutschen bringen Gäste vom Dorf Hohenschwangau hinauf zum Schloss.",
     zoom: { x: r(x - 19), y: r(y - 20), w: 36, h: 24 },
     unter: [
-      { id: "pferd", de: "das Pferd", syl: "PFERD", it: "il cavallo", itSyl: "ca-VAL-lo", en: "horse", x, y, kunst: `<g transform="translate(0 0) skewY(${r(Math.max(-40, Math.min(40, winkel)) * 0.85)}) scale(.82 1)">${flaeche(-4.3 * s, -2.7 * s, 3.2 * s, 2.7 * s)}</g>`,
+      { id: "pferd", de: "das Pferd", syl: "PFERD", it: "il cavallo", itSyl: "ca-VAL-lo", en: "horse", x, y, kunst: `<g transform="skewY(${r(Math.max(-22, Math.min(22, winkel * 0.45)))}) scale(.78 1)">${flaeche(-4.3 * s, -2.7 * s, 3.2 * s, 2.7 * s)}</g>`,
         tipp: "Zwei Pferde ziehen die Kutsche den steilen Weg hinauf." },
     ] });
 }

@@ -236,7 +236,7 @@ const mauerUnter = [];
     tipp: "Hinter den Zinnen konnten sich die Soldaten schützen. Durch die Scharten schossen sie." });
   mauerUnter.push({ id: "treppe", de: "die Treppe", syl: "TREP-pe", it: "la scalinata", itSyl: "sca-li-NA-ta", en: "stairs", x: 31, y: r(kammY(KL, 31) + 0.6), kunst: flaeche(-7, -6.4, 11.4, 8),
     tipp: "Wo der Berg sehr steil ist, wird die Mauer zur Treppe." });
-  S.teil({ anker: [330, r(kammY(KR, 330) + 0.6)], id: "grosse_mauer", de: "die Große Mauer", syl: "GRO-ße MAU-er", it: "la Grande Muraglia", itSyl: "GRAN-de mu-RA-glia", en: "Great Wall", x: 0, y: 0, kunst: k,
+  S.teil({ anker: [284, r(kammY(KR, 284) + 0.6)], id: "grosse_mauer", de: "die Große Mauer", syl: "GRO-ße MAU-er", it: "la Grande Muraglia", itSyl: "GRAN-de mu-RA-glia", en: "Great Wall", x: 0, y: 0, kunst: k,
     zoom: { x: 18, y: 27, w: 54, h: 36 }, unter: mauerUnter,
     tipp: "Die Große Mauer (auch Chinesische Mauer) ist mit allen Teilen über 20 000 km lang." });
 }
@@ -781,9 +781,9 @@ const RI = { d: 24.5, x: 84 };
   for (let i = 0; i < 8; i++) { const t = i / 7, x = 0.1 + t * 0.2, y = -1.72 + t * 0.06 - Math.sin(t * Math.PI) * 0.08; k += `<line x1="${m(x)}" y1="${m(y)}" x2="${m(x)}" y2="${m(y + 0.09)}" stroke="#f2c23a" stroke-width=".35"/>`; }
   k += rad(m(0.7), r(-RR), RR);
   k += `<line x1="${m(1.02)}" y1="${m(-1.4)}" x2="${m(1.08)}" y2="${m(-2.2)}" stroke="#555" stroke-width=".25"/><rect x="${m(1.08)}" y="${m(-2.2)}" width="${m(0.22)}" height="${m(0.15)}" fill="#de2910"/><circle cx="${r(m(1.08) + 0.04 * u)}" cy="${r(m(-2.2) + 0.05 * u)}" r=".3" fill="#ffde00"/>`;
-  S.teil({ anker: [r(RI.x + 0.6 * u), r(Y - 1.3 * u)], id: "rikscha", de: "die Rikscha", syl: "RIK-scha", it: "il risciò", itSyl: "ri-SCIÒ", en: "rickshaw", x: RI.x, y: Y, steht: true, kunst: k,
+  S.teil({ anker: [r(RI.x + 0.75 * u), r(Y - 0.45 * u)], id: "rikscha", de: "die Rikscha", syl: "RIK-scha", it: "il risciò", itSyl: "ri-SCIÒ", en: "rickshaw", x: RI.x, y: Y, steht: true, kunst: k,
     tipp: "Mit der Fahrradrikscha fahren Besucher durch die alten Gassen von Peking, die Hutongs." });
-  S.teil({ anker: [r(RI.x + SA[0] + 0.05 * u), r(Y + SA[1] - 0.5 * u)], id: "fahrer", de: "der Rikschafahrer", syl: "RIK-scha-fah-rer", it: "il conducente del risciò", itSyl: "con-du-CEN-te del ri-SCIÒ", en: "rickshaw driver", x: RI.x, y: Y, kunst: `<g transform="translate(${r(ox)} ${r(oy)})">${vereinfache(f.svg, 1.5)}</g>`,
+  S.teil({ anker: [r(RI.x + SA[0] + 0.05 * u), r(Y - 2.1 * u)], id: "fahrer", de: "der Rikschafahrer", syl: "RIK-scha-fah-rer", it: "il conducente del risciò", itSyl: "con-du-CEN-te del ri-SCIÒ", en: "rickshaw driver", x: RI.x, y: Y, kunst: `<g transform="translate(${r(ox)} ${r(oy)})">${vereinfache(f.svg, 1.5)}</g>`,
     tipp: "Er tritt in die Pedale. Gleich holt er Gäste ab und fährt mit ihnen durch die Hutongs." });
 }
 
@@ -947,9 +947,9 @@ const enteUnter = [];
   k += schattenAuf(gx, gy, 10.6 * qg, 1.6 * qg, qg, 0.2) + g(gx, gy, qg, gem);
   enteUnter.push({ id: "sosse", de: "die Soße", syl: "SO-ße", it: "la salsa", itSyl: "SAL-sa", en: "sauce", x: sx, y: sy, kunst: flaeche(-4.4 * qs, -1.8 * qs, 8.8 * qs, 3.4 * qs),
     tipp: "Die dunkle, süße Bohnensoße gehört zur Pekingente." });
-  enteUnter.push({ id: "fruehlingszwiebel", de: "die Frühlingszwiebel", syl: "FRÜH-lings-zwie-bel", it: "il cipollotto", itSyl: "ci-pol-LOT-to", en: "spring onion", x: gx - 5.6 * qg, y: gy, kunst: flaeche(-2.8 * qg, -3.6 * qg, 6 * qg, 4 * qg),
+  enteUnter.push({ id: "fruehlingszwiebel", de: "die Frühlingszwiebel", syl: "FRÜH-lings-zwie-bel", it: "il cipollotto", itSyl: "ci-pol-LOT-to", en: "spring onion", x: gx - 5.6 * qg, y: gy - 2.4 * qg, kunst: flaeche(-2.8 * qg, -1.2 * qg, 6 * qg, 4 * qg),
     tipp: "Die Frühlingszwiebel wird in feine Streifen geschnitten." });
-  enteUnter.push({ id: "gurke", de: "die Gurke", syl: "GUR-ke", it: "il cetriolo", itSyl: "ce-tri-O-lo", en: "cucumber", x: gx + 5.4 * qg, y: gy + 1.4 * qg, kunst: flaeche(-2.6 * qg, -5.2 * qg, 6 * qg, 4.2 * qg),
+  enteUnter.push({ id: "gurke", de: "die Gurke", syl: "GUR-ke", it: "il cetriolo", itSyl: "ce-tri-O-lo", en: "cucumber", x: gx + 5.4 * qg, y: gy + 1.8 * qg, kunst: flaeche(-2.6 * qg, -5.6 * qg, 6 * qg, 4.2 * qg),
     tipp: "Die Gurke wird in dünne Stifte geschnitten. Sie macht die Pekingente frisch." });
   S.teil({ oben: true, id: "pekingente", de: "die Pekingente", syl: "PE-king-en-te", it: "l'anatra alla pechinese", itSyl: "A-na-tra al-la pe-chi-NE-se", en: "Peking duck", x: 0, y: 0, anker: [r(px), r(py - 6 * q)], kunst: k + flaeche(px - 23 * q, py - 11.4 * q, 41 * q, 15 * q),
     zoom: { x: 216, y: 188, w: 108, h: 72 }, unter: enteUnter,

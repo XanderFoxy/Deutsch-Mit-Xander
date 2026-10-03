@@ -109,8 +109,11 @@ const FUSS = 130, SATTEL = [96, hy(778, 6150)], NEK = [312, hy(330, 4950)];
 const TOP = hy(1062, 6250);
 /* gemeinsamer Hangverlauf (Weltkoordinaten), damit an den Grenzen keine Kante entsteht */
 const HANG = S.lg("hang", [[0, "#9a9474"], [0.35, "#7f8460"], [1, "#56653f"]], 0, 80, 0, FUSS, ' gradientUnits="userSpaceOnUse"');
-const fynbos = (x0, x1, y0, y1, n, op = 0.5) => { let g = ""; for (let i = 0; i < n; i++) { const x = x0 + rnd() * (x1 - x0), y = y0 + rnd() * (y1 - y0); g += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.8 + rnd() * 1.4)}" ry="${r(0.4 + rnd() * 0.5)}" fill="${["#4f5a3a", "#99956f", "#6b7350", "#3f4a30", "#8a7a52"][i % 5]}" opacity="${op}"/>`; } return g; };
-const wald = (x0, x1, y0, y1, n) => { let g = ""; for (let i = 0; i < n; i++) g += `<circle cx="${r(x0 + rnd() * (x1 - x0))}" cy="${r(y0 + rnd() * (y1 - y0))}" r="${r(0.9 + rnd() * 1.2)}" fill="${["#34502c", "#47643a", "#2b4426"][i % 3]}" opacity=".9"/>`; return g; };
+/* Fynbos und Wald als Musterkacheln (statt vieler Einzelflecken) */
+S.def(`<pattern id="${S.id("fynbos")}" width="9" height="4" patternUnits="userSpaceOnUse"><ellipse cx="1" cy="1" rx="1.2" ry=".5" fill="#4f5a3a"/><ellipse cx="4.5" cy="2.6" rx="1.4" ry=".5" fill="#99956f"/><ellipse cx="7.5" cy="1" rx="1" ry=".4" fill="#6b7350"/><ellipse cx="2.6" cy="3.4" rx=".9" ry=".4" fill="#3f4a30"/><ellipse cx="6.8" cy="3.6" rx="1.1" ry=".45" fill="#8a7a52"/></pattern>`);
+S.def(`<pattern id="${S.id("wald")}" width="7" height="3.6" patternUnits="userSpaceOnUse"><circle cx="1.2" cy="1.4" r="1.4" fill="#34502c"/><circle cx="3.8" cy="2.4" r="1.6" fill="#47643a"/><circle cx="6" cy="1" r="1.2" fill="#2b4426"/><circle cx="5.4" cy="3.4" r="1" fill="#34502c"/></pattern>`);
+const fynbos = (x0, x1, y0, y1, n, op = 0.5) => `<rect x="${x0}" y="${r(y0)}" width="${x1 - x0}" height="${r(y1 - y0)}" fill="url(#${S.id("fynbos")})" opacity="${op}"/>`;
+const wald = (x0, x1, y0, y1) => { let d = `M${x0} ${r(y1)}`; for (let x = x0; x <= x1; x += 8) d += `L${x} ${r(y0 + 2 + Math.sin(x * 0.37) * 1.6 + Math.sin(x * 0.13) * 1.2)}`; return `<path d="${d}L${x1} ${r(y1)}Z" fill="url(#${S.id("wald")})" opacity=".9"/>`; };
 const rinne = (x0, y0, x1, y1, w) => `<path d="M${x0 - w} ${y0} Q${r((x0 + x1) / 2 - 1)} ${r((y0 + y1) / 2)} ${x1} ${y1} Q${r((x0 + x1) / 2 + 1)} ${r((y0 + y1) / 2)} ${x0 + w} ${y0} Z" fill="#3f4733" opacity=".28"/><path d="M${x0 + w * 0.8} ${y0 + 0.5} Q${r((x0 + x1) / 2 + 1.4)} ${r((y0 + y1) / 2)} ${x1 + 0.6} ${y1}" stroke="#cdbf94" stroke-width=".5" fill="none" opacity=".35"/>`;
 const bergUnter = [];
 {
@@ -120,44 +123,56 @@ const bergUnter = [];
   S.def(`<clipPath id="${S.id("tafel")}"><path d="${um}"/></clipPath>`);
   k += `<path d="${um}" fill="${HANG}"/>`;
   k += `<g clip-path="url(#${S.id("tafel")})">`;
-  /* Nordwand: Höhe in der Mitte am größten, zu den Enden kleiner; Unterkante treppig je Pfeiler */
+  /* Hang unter der Wand: Fynbos (Muster), Rinnen, Wald am Fuß */
+  k += fynbos(96, 318, TOP - 2, FUSS, 0, 0.6);
+  for (const [x0, x1] of [[128, 122], [152, 147], [176, 171], [236, 241], [258, 266]]) k += rinne(x0, TOP + 16, x1, FUSS - 4, 1.2);
+  k += wald(96, 316, FUSS - 13, FUSS);
+  /* Nordwand: Höhe in der Mitte am größten. Pfeiler stark verschieden breit, Unterkanten treppig und
+     kantig; Nachmittagslicht aus Nordwest färbt die Wand warm-golden */
   const H = (x) => 9 + 12 * Math.sin(Math.max(0, Math.min(1, (x - 104) / 188)) * Math.PI);
   const pfeiler = [];
-  for (let x = 102; x < 296;) { const w = 3 + Math.pow(rnd(), 1.6) * 15; pfeiler.push([x, Math.min(w, 296 - x)]); x += w; }
+  for (let x = 102; x < 296;) { const w = 2 + Math.pow(rnd(), 2.2) * 22; pfeiler.push([x, Math.min(w, 296 - x)]); x += w; }
   let wand = `M102 ${r(TOP - 4)} L296 ${r(TOP - 4)}`;
-  for (let i = pfeiler.length - 1; i >= 0; i--) { const [x, w] = pfeiler[i], yb = TOP + H(x + w / 2) + (rnd() - 0.5) * 3; wand += ` L${r(x + w)} ${r(yb - 0.6)} L${r(x + w * 0.55)} ${r(yb)} L${r(x)} ${r(yb + 0.4)}`; }
-  k += `<path d="${wand} Z" fill="${S.lg("wand", [[0, "#d8c49a"], [0.4, "#c2ab84"], [1, "#9c8a6c"]], 0, TOP - 4, 0, TOP + 22, ' gradientUnits="userSpaceOnUse"')}"/>`;
-  /* Pfeiler: rechte Seite im warmen Nachmittagslicht, linke Kluft dunkel; manche rostig */
+  const unten = [];
+  for (let i = pfeiler.length - 1; i >= 0; i--) {
+    const [x, w] = pfeiler[i], y0 = TOP + H(x + w / 2) + (rnd() - 0.5) * 4, st = (rnd() - 0.5) * 4;
+    unten.push([x, w, y0, st]);
+    wand += ` L${r(x + w)} ${r(y0 + st)} L${r(x + w * 0.45)} ${r(y0 + st)} L${r(x + w * 0.45)} ${r(y0)} L${r(x)} ${r(y0)}`;
+  }
+  S.def(`<path id="${S.id("wandp")}" d="${wand} Z"/><clipPath id="${S.id("wandclip")}"><use href="#${S.id("wandp")}"/></clipPath>`);
+  k += `<use href="#${S.id("wandp")}" fill="${S.lg("wand", [[0, "#ecd09a"], [0.35, "#d7b47c"], [0.75, "#b8946a"], [1, "#8f7656"]], 0, TOP - 4, 0, TOP + 22, ' gradientUnits="userSpaceOnUse"')}"/>`;
+  k += `<g clip-path="url(#${S.id("wandclip")})">`;
+  /* Schichtbänke: gerade, leicht nach rechts fallende Kanten; dazwischen Bänder in Ocker und Grau;
+     Licht auf der Oberkante, Schatten darunter */
+  const bank = (c, x) => TOP + c + (x - 200) * 0.014;
+  const kanten = [2.4, 5.6, 8.2, 11.6, 14.4, 18];
+  let ton = "", li = "", fu = "";
+  kanten.forEach((c, i) => {
+    if (i < kanten.length - 1 && i % 2 === 0) ton += `<path d="M100 ${r(bank(c, 100))}L300 ${r(bank(c, 300))}L300 ${r(bank(kanten[i + 1], 300))}L100 ${r(bank(kanten[i + 1], 100))}Z" fill="${i % 4 ? "#8f8b80" : "#a8743e"}" opacity=".2"/>`;
+    fu += `M100 ${r(bank(c, 100))}L300 ${r(bank(c, 300))}`;
+    li += `M100 ${r(bank(c, 100) - 0.6)}L300 ${r(bank(c, 300) - 0.6)}`;
+  });
+  k += ton + `<path d="${li}" stroke="#fbe8bf" stroke-width=".55" opacity=".8"/><path d="${fu}" stroke="#4f4434" stroke-width=".75" opacity=".7"/>`;
+  /* Pfeiler: linke Kluft dunkel, rechte Stirn im warmen Licht, manche mit Rostfahnen */
   let licht = "", kluft = "", rost = "";
-  for (const [x, w] of pfeiler) {
-    const yb = TOP + H(x + w / 2);
-    if (w > 4) licht += `M${r(x + w * 0.62)} ${r(TOP - 0.5)} L${r(x + w - 0.5)} ${r(TOP - 0.5)} L${r(x + w - 0.7)} ${r(yb - 2)} L${r(x + w * 0.66)} ${r(yb - 2.4)} Z`;
-    kluft += `M${r(x)} ${r(TOP - 0.5)} L${r(x + 0.3)} ${r(yb)}`;
-    if (rnd() < 0.3) rost += `M${r(x + w * 0.2)} ${r(TOP + H(x) * 0.3)} l${r(w * 0.5)} 0 l0 ${r(H(x) * 0.35)} l${r(-w * 0.5)} 0 Z`;
+  for (const [x, w, y0, st] of unten) {
+    if (w > 3) licht += `M${r(x + w * 0.58)} ${r(TOP - 0.5)}H${r(x + w - 0.4)}V${r(y0 + st - 0.8)}H${r(x + w * 0.62)}Z`;
+    kluft += `M${r(x - 0.5)} ${r(TOP - 0.5)}h1.1L${r(x + 0.3)} ${r(y0)}h-.6z`;
+    if (rnd() < 0.3) rost += `M${r(x + w * 0.2)} ${r(TOP + 4)}h${r(w * 0.4)}l-.4 ${r(H(x) * 0.5)}h${r(-w * 0.3)}z`;
   }
-  k += `<path d="${licht}" fill="#f2deb0" opacity=".45"/><path d="${rost}" fill="#a8582e" opacity=".22"/>`;
-  k += `<path d="${kluft}" stroke="#4f4636" stroke-width=".45" opacity=".75"/>`;
-  /* waagerechte Bänke: Fuge (Schatten unten) und Lichtkante darüber, durchgehend */
-  let fu = "", li = "";
-  for (const f of [0.2, 0.42, 0.63, 0.82]) {
-    let a = "", b = "";
-    for (let x = 102; x <= 296; x += 6) { const y = TOP + H(x) * f + Math.sin(x * 0.21 + f * 9) * 0.35; a += `${a ? " L" : "M"}${x} ${r(y)}`; b += `${b ? " L" : "M"}${x} ${r(y - 0.55)}`; }
-    fu += a; li += b;
-  }
-  k += `<path d="${li}" stroke="#f4e3bb" stroke-width=".5" fill="none" opacity=".7"/><path d="${fu}" stroke="#5a4f3c" stroke-width=".7" fill="none" opacity=".75"/>`;
-  /* Rinnen: dunkle V-Kerben in der Wand, darunter helle Schuttfächer */
+  k += `<path d="${licht}" fill="#ffe2a6" opacity=".38"/><path d="${rost}" fill="#a8582e" opacity=".22"/><path d="${kluft}" fill="#3e3427" opacity=".8"/>`;
+  /* Rinnen als V-Kerben: links Schattenseite, rechts im Licht */
   const PX = 205;
-  for (const [x, tief, anteil] of [[128, 0.7, 0.6], [152, 0.6, 1], [176, 0.85, 0.75], [PX, 1, 1], [236, 0.65, 0.55], [258, 0.9, 1], [276, 0.55, 0.7]]) {
-    const yb = TOP + H(x) * anteil + 1, w = x === PX ? 3.2 : 1 + tief * 1.2;
-    k += `<path d="M${r(x - w)} ${r(TOP - 0.6)} L${r(x + w)} ${r(TOP - 0.6)} L${r(x + 0.4)} ${r(yb)} L${r(x - 0.4)} ${r(yb)} Z" fill="#433b2e" opacity="${tief}"/>`;
-    k += `<path d="M${r(x + w)} ${r(TOP - 0.6)} L${r(x + 0.4)} ${r(yb)}" stroke="#f0dcae" stroke-width=".35" opacity=".7"/>`;
-    k += `<path d="M${r(x - 0.4)} ${r(yb)} Q${r(x - 3 * tief)} ${r(yb + 5 * tief)} ${r(x - 4.5 * tief)} ${r(yb + 9 * tief)} Q${r(x)} ${r(yb + 10 * tief)} ${r(x + 4.5 * tief)} ${r(yb + 9 * tief)} Q${r(x + 3 * tief)} ${r(yb + 5 * tief)} ${r(x + 0.4)} ${r(yb)} Z" fill="${S.lg("schutt", [[0, "#cdbf9c", 0.7], [1, "#cdbf9c", 0]])}"/>`;
+  for (const [x, w, t] of [[128, 2, 0.75], [152, 1.6, 0.6], [176, 2.2, 0.8], [PX, 4.2, 1], [236, 1.8, 0.65], [258, 2.4, 0.85], [276, 1.6, 0.55]]) {
+    const yb = TOP + H(x) + 2;
+    k += `<path d="M${r(x - w)} ${r(TOP - 0.6)}L${x} ${r(TOP - 0.6)}L${r(x + 0.2)} ${r(yb)}Z" fill="#2f281e" opacity="${t}"/><path d="M${x} ${r(TOP - 0.6)}L${r(x + w)} ${r(TOP - 0.6)}L${r(x + 0.2)} ${r(yb)}Z" fill="#8a7458" opacity="${r(t * 0.8)}"/>`;
   }
-  k += `<rect x="100" y="${r(TOP - 4)}" width="200" height="26" fill="${S.lg("wandtiefe", [[0, "#ffe2a8", 0.14], [0.5, "#fff", 0], [1, "#2f2a20", 0.18]])}"/>`;
-  /* Hang unter der Wand: Fynbos, Schluchten, Wald am Fuß */
-  k += fynbos(100, 316, TOP + 14, FUSS, 130, 0.55);
-  for (const [x0, x1] of [[128, 122], [152, 147], [176, 171], [PX, 198], [236, 241], [258, 266]]) k += rinne(x0, TOP + H(x0) + 9, x1, FUSS - 4, 1.2);
-  k += wald(96, 316, FUSS - 12, FUSS, 70);
+  k += `</g>`;
+  /* Schuttfächer unter der Platteklip-Schlucht und den großen Rinnen: Fynbos-Grün und Grau */
+  for (const [x, f] of [[PX, 1], [176, 0.6], [258, 0.7], [128, 0.5]]) {
+    const yb = TOP + H(x) + 1.5;
+    k += `<path d="M${r(x - 1)} ${r(yb)}L${r(x - 7 * f)} ${r(yb + 11 * f)}Q${x} ${r(yb + 13 * f)} ${r(x + 7 * f)} ${r(yb + 11 * f)}L${r(x + 1.4)} ${r(yb)}Z" fill="${S.lg("schutt", [[0, "#8d8878", 0.85], [0.6, "#6b7350", 0.5], [1, "#6b7350", 0]])}"/>`;
+  }
   k += `</g>`;
   /* Lichtkante der Plateaukante */
   k += `<path d="${glatt(kamm(109, 284))}" stroke="#f6e7c4" stroke-width=".7" fill="none" opacity=".8"/>`;

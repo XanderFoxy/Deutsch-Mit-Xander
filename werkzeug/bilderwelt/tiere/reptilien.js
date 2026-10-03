@@ -13,6 +13,14 @@ const R = (n) => Math.round(n * 10) / 10;
 const R2 = (n) => Math.round(n * 100) / 100;
 
 /* ---------- allgemeine Hilfen ---------- */
+/* geschlossene, weiche Form mit relativen Quadrik-Bögen über die Kantenmitten (kompakt, für viele kleine Flecken) */
+const kz = (n) => String(R(n)).replace(/^(-?)0\./, "$1.");
+const rundZu = (pts) => {
+  const n = pts.length, M = (i) => { const a = pts[(i + n) % n], b = pts[(i + 1) % n]; return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; };
+  let [px, py] = M(-1).map(R), d = `M${kz(px)} ${kz(py)}`;
+  for (let i = 0; i < n; i++) { const c = pts[i], m = M(i), ex = R(m[0] - px), ey = R(m[1] - py); d += `q${kz(c[0] - px)} ${kz(c[1] - py)} ${kz(ex)} ${kz(ey)}`; px = R(px + ex); py = R(py + ey); }
+  return d + "z";
+};
 const mehr = (T, arr) => arr.map((p) => (T.fein ? T.glatt(p, false) : "M" + p.map((q) => R(q[0]) + " " + R(q[1])).join("L"))).join("");
 const linien = (T, arr, farbe, w, op) => arr.length ? `<path d="${mehr(T, arr)}" fill="none" stroke="${farbe}" stroke-width="${w}" stroke-opacity="${op}" stroke-linecap="round" stroke-linejoin="round"/>` : "";
 const LICHT = (T) => T.rg("licht", [[0, "#fff", 0.55], [1, "#fff", 0]]);
@@ -391,7 +399,7 @@ const schlangenRohr = (T, sp, o = {}) => {
   if (o.innen) inn += o.innen(Rr);
   /* Licht: Glanzband auf der Lichtseite, Kernschatten, Reflex auf der Schattenseite */
   const kS = o.kern != null ? o.kern : 0.46;
-  inn += `<g filter="${weich(T, "sl", o.weich || 0.9)}">` + form(T, poly(Rr.band(L * 1.2, L * 0.5, lt0, lt1, 12)), o.glanzF || "#fff", ` opacity="${o.glanz || 0.24}"`) +
+  if (!o.ohneLicht) inn += `<g filter="${weich(T, "sl", o.weich || 0.9)}">` + form(T, poly(Rr.band(L * 1.2, L * 0.5, lt0, lt1, 12)), o.glanzF || "#fff", ` opacity="${o.glanz || 0.24}"`) +
     form(T, poly(Rr.band(L * 0.1, -L * 0.3, lt0, lt1, 12)), "#000", ` opacity="${R2(kS * 0.26)}"`) +
     form(T, poly(Rr.band(-L * 0.25, -L * 0.88, lt0, lt1, 12)), "#000", ` opacity="${kS}"`) + form(T, poly(Rr.band(-L * 0.9, -L * 1.1, lt0, lt1, 12)), "#fff", ' opacity=".12"') + "</g>";
   /* seidiges Glanzband, das in einzelne Schuppenlichter zerfällt (fein) */
