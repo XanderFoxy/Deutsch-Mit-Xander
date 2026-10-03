@@ -90960,7 +90960,7 @@
          deshalb auf ein Mindestmass gebracht, um ihre Mitte herum. Am
          Bild ändert sich nichts; nur der Bereich, in dem ein Tipp noch
          zählt, ist so gross, wie eine Fingerkuppe nun einmal ist. */
-      const MINDEST = Math.max(14, Math.round(sgBreite(svg) * 0.055));
+      const MINDEST = window.DMA_BILDERWELT_NEU ? Math.max(14, Math.round(sgBreite(svg) * 0.055)) / (svg.classList.contains("bw-bild-zoom") && bwZoom && bwZoom.k > 1 ? bwZoom.k : 1) : Math.max(14, Math.round(sgBreite(svg) * 0.055));   // FASSUNG 840: Weiche — FASSUNG 852: die Flächen liegen in der vergrößerten Gruppe; in der Lupe wuchsen sie mit und deckten sich gegenseitig zu (Funk 286: „dass sich nichts mehr blockiert“). Geteilt durch die Vergrößerung bleiben sie fingerbreit.
       kaesten.forEach((o) => {
         const feld = document.createElementNS(ns, "rect");
         feld.setAttribute("class", "bw-treffflaeche");
@@ -91010,7 +91010,7 @@
         const dach = document.createElementNS(ns, "g");
         dach.setAttribute("class", "bw-treffer-oben");
         dach.setAttribute("aria-hidden", "true");
-        const MINDEST_OBEN = Math.max(14, Math.round(sgBreite(svg) * 0.055));
+        const MINDEST_OBEN = window.DMA_BILDERWELT_NEU ? Math.max(14, Math.round(sgBreite(svg) * 0.055)) / (svg.classList.contains("bw-bild-zoom") && bwZoom && bwZoom.k > 1 ? bwZoom.k : 1) : Math.max(14, Math.round(sgBreite(svg) * 0.055));   // FASSUNG 840: Weiche — FASSUNG 852: wie oben
         obenTeile.forEach((o) => {
           const feld = document.createElementNS(ns, "rect");
           feld.setAttribute("data-bw-treff", o.id);
@@ -91022,6 +91022,7 @@
           feld.setAttribute("fill", "transparent");
           dach.appendChild(feld);
         });
+        if (window.DMA_BILDERWELT_NEU) obenTeile.forEach((o) => { const echt = document.createElementNS(ns, "rect"); echt.setAttribute("data-bw-treff", o.id); echt.setAttribute("x", o.x.toFixed(1)); echt.setAttribute("y", o.y.toFixed(1)); echt.setAttribute("width", o.w.toFixed(1)); echt.setAttribute("height", o.h.toFixed(1)); echt.setAttribute("fill", "transparent"); dach.appendChild(echt); });   // FASSUNG 840: Weiche — FASSUNG 852: über den fingerbreiten Rändern noch die echten Umrisse (groß unten, klein oben): wer auf die Tischplatte tippt, bekommt die Tischplatte, nicht die Kante daneben, deren Rand darüber reicht
         heim.appendChild(dach);
       }
     });

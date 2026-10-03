@@ -39,7 +39,7 @@ const BILD = process.env.BILD || "";
    Abschnitten von app.js — jede ist in SPIELSYSTEM.md (Fassung 840)
    einzeln aufgeführt. Eine weitere Stelle ist eine undokumentierte
    Änderung an der alten Bilderwelt. */
-const WEICHE_STELLEN = 12;   // FASSUNG 851: + Glas-Ebene „vorne“ in bwBildHtml
+const WEICHE_STELLEN = 15;   // FASSUNG 851: + Glas-Ebene „vorne“ in bwBildHtml; FASSUNG 852: + Mindest-Fangfläche in der Lupe (zwei Stellen), echte Umrisse über den Rändern
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml" };
 
 let fehler = 0;
@@ -91,7 +91,9 @@ const lies = (f) => { const p = path.join(WURZEL, f); return fs.existsSync(p) ? 
   const zeileVon = (muster) => zeilen.findIndex((z) => z.includes(muster)) + 1;
   /* Die Abschnitte im alten app.js, von Kopfkommentar zu Kopfkommentar */
   const BEREICHE = [[zeileVon("DIE BILDERWELT — Räume, in denen jedes Ding anklickbar ist") - 1, zeileVon("DIE SAUBERE STIMME — ueberall da") - 2],
-                    [zeileVon("     DAS BILDERRÄTSEL") - 1, zeileVon("WAS DIE APP KOSTET — offen aufgeschrieben") - 2]];
+                    [zeileVon("     DAS BILDERRÄTSEL") - 1, zeileVon("WAS DIE APP KOSTET — offen aufgeschrieben") - 2],
+                    /* FASSUNG 852 — die Treffer-Ebenen der Bilderwelt stehen in bwBinden (hinter „DIE SAUBERE STIMME“) */
+                    [zeileVon("  function bwBinden(area) {"), zeileVon("  function bwAlleVorlesen() {") - 1]];
   const stuecke = [];
   diff.split("\n").forEach((z) => {
     const m = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/.exec(z);

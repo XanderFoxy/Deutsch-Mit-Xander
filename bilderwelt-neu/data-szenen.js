@@ -890,7 +890,7 @@ window.DMA_SZENEN = [
   "hoehe": 200,
   "zahl": 41,
   "lupen": [],
-  "stellen": 0
+  "stellen": 2
  },
  {
   "id": "muelltrennung",
