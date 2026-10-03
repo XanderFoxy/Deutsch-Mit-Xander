@@ -700,5 +700,6 @@ const HOCKER = [[-2.05, 3.95], [-1.0, 3.95]];
     tipp: "Er steht am Tresen — das ist in einer Kneipe ganz normal." });
 }
 
+S.defs = [...new Set(S.defs)];   /* doppelte Verläufe nur einmal */
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/kneipe.js"));
 console.log(aus);

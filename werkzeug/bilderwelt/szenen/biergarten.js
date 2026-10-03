@@ -502,5 +502,6 @@ const masskrug = (x, y, m, voll = 1, henkel = 1) => {
   S.davor(v);
 }
 
+S.defs = [...new Set(S.defs)];   /* doppelte Verläufe nur einmal */
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/biergarten.js"));
 console.log(aus);

@@ -385,6 +385,7 @@ const kleinUnter = [];
     k += `<path d="M${x - 6.8} ${yS - 9.6} L${x + 6.8} ${yS - 9.6} L${x + 7.4} ${yS - 1} L${x - 7.4} ${yS - 1} Z" fill="#2b2f33" stroke="#474c51" stroke-width=".35"/>`;
     k += `<rect x="${x - 3}" y="${yS - 6.4}" width="6" height="1.8" rx=".8" fill="#5a6066"/>`;
     k += `<path d="M${x - 5.4} ${yS - 15} Q${x - 6} ${yS - 9} ${x - 6} ${yS - 3}" stroke="#fff" stroke-width=".6" opacity=".25" fill="none"/>`;
+    /* Silben korrigiert: betonte Silbe in Großbuchstaben „HEISS“ (vorher „HEIß“, ß hat keine Großform im Silbenbild) */
     U("fritteuse", "die Heißluftfritteuse", "HEISS-luft-frit-teu-se", "la friggitrice ad aria", "frig-gi-TRI-ce ad A-ria", "air fryer", x, flaeche(-7.8, -17.4, 15.6, 17.6),
       "Die Heißluftfritteuse macht Pommes mit heißer Luft statt mit viel Öl.");
   }
