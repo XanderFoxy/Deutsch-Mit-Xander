@@ -254,35 +254,35 @@ const KT = { X0: 1.0, X1: 2.95, z0: 1.0, z1: 1.5, H: 0.74 };
   const U = [];
   /* Kursbuch (aufgeschlagen) */
   {
-    const pts = blatt(1.5, 1.22, 0.42, 0.28, -0.08, H + 0.01);
+    const pts = blatt(1.98, 1.22, 0.42, 0.28, -0.08, H + 0.01);
     k += poly(pts, "#f8f6ef", 'stroke="#c8c2b5" stroke-width=".2"');
-    const m0 = P(1.5, H + 0.01, 1.08), m1 = P(1.5, H + 0.01, 1.36);
+    const m0 = P(1.98, H + 0.01, 1.08), m1 = P(1.98, H + 0.01, 1.36);
     k += `<line x1="${m0[0]}" y1="${m0[1]}" x2="${m1[0]}" y2="${m1[1]}" stroke="#a49c8c" stroke-width=".35"/>`;
-    const bild = blatt(1.38, 1.2, 0.14, 0.1, -0.08, H + 0.012);
+    const bild = blatt(1.86, 1.2, 0.14, 0.1, -0.08, H + 0.012);
     k += poly(bild, "#7fb3d5");
-    const [bx, by] = P(1.5, H, 1.36);
-    k += poly([P(1.29, H + 0.01, 1.37), P(1.71, H + 0.01, 1.34), P(1.71, H - 0.005, 1.35), P(1.29, H - 0.005, 1.38)], ROT);
+    const [bx, by] = P(1.98, H, 1.36);
+    k += poly([P(1.77, H + 0.01, 1.37), P(2.19, H + 0.01, 1.34), P(2.19, H - 0.005, 1.35), P(1.77, H - 0.005, 1.38)], ROT);
     U.push({ id: "sp_kursbuch", de: "das Kursbuch", syl: "KURS-buch", it: "il libro di corso", itSyl: "LI-bro di COR-so", en: "course book", x: bx, y: by + 1,
       tipp: "Im Kursbuch stehen Texte, Dialoge und Übungen.", w: 22 });
   }
   /* Arbeitsblatt */
   {
-    const pts = blatt(2.18, 1.2, 0.22, 0.3, 0.14, H + 0.008);
+    const pts = blatt(2.42, 1.2, 0.22, 0.3, 0.14, H + 0.008);
     k += poly(pts, "#ffffff", 'stroke="#c8c2b5" stroke-width=".2"');
-    for (let i = 0; i < 5; i++) { const a = P(2.1 + i * 0.006, H + 0.01, 1.1 + i * 0.045), b = P(2.26 + i * 0.006, H + 0.01, 1.12 + i * 0.045); k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#8a8a8a" stroke-width=".25"/>`; }
-    const [bx, by] = P(2.18, H, 1.36);
+    for (let i = 0; i < 5; i++) { const a = P(2.34 + i * 0.006, H + 0.01, 1.1 + i * 0.045), b = P(2.5 + i * 0.006, H + 0.01, 1.12 + i * 0.045); k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#8a8a8a" stroke-width=".25"/>`; }
+    const [bx, by] = P(2.42, H, 1.36);
     /* Bleistift */
-    const p0 = P(2.05, H + 0.012, 1.4), p1 = P(2.3, H + 0.012, 1.42);
+    const p0 = P(2.29, H + 0.012, 1.4), p1 = P(2.54, H + 0.012, 1.42);
     k += `<line x1="${p0[0]}" y1="${p0[1]}" x2="${p1[0]}" y2="${p1[1]}" stroke="#f2b632" stroke-width=".8" stroke-linecap="round"/>`;
     U.push({ id: "sp_arbeitsblatt", de: "das Arbeitsblatt", syl: "AR-beits-blatt", it: "la scheda di lavoro", itSyl: "SCHE-da di la-VO-ro", en: "worksheet", x: bx, y: by + 1.4,
       tipp: "Auf dem Arbeitsblatt übt man die neuen Wörter.", w: 14 });
   }
   /* Wörterliste (Karteikarten-Liste, gelb) */
   {
-    const pts = blatt(2.66, 1.22, 0.2, 0.26, -0.2, H + 0.008);
+    const pts = blatt(1.12, 1.18, 0.2, 0.26, -0.2, H + 0.008);
     k += poly(pts, "#fff5c2", 'stroke="#d8c98a" stroke-width=".2"');
-    for (let i = 0; i < 6; i++) { const a = P(2.58, H + 0.01, 1.12 + i * 0.035), b = P(2.72, H + 0.01, 1.1 + i * 0.035); k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#7a6a3a" stroke-width=".22"/>`; }
-    const [bx, by] = P(2.66, H, 1.36);
+    for (let i = 0; i < 6; i++) { const a = P(1.04, H + 0.01, 1.08 + i * 0.035), b = P(1.18, H + 0.01, 1.06 + i * 0.035); k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#7a6a3a" stroke-width=".22"/>`; }
+    const [bx, by] = P(1.12, H, 1.32);
     U.push({ id: "sp_woerterliste", de: "die Wörterliste", syl: "WÖR-ter-lis-te", it: "la lista di vocaboli", itSyl: "LI-sta di vo-CA-bo-li", en: "vocabulary list", x: bx, y: by + 1,
       tipp: "Auf der Wörterliste stehen die neuen Wörter mit Artikel.", w: 12 });
   }
@@ -316,7 +316,7 @@ const stuhl = (X, z, mitSitz) => {
   const m = B.mensch({ id: "b09b_tn", geschlecht: "m", pose: "lesen", blick: 186, frisur: "kurz", haarfarbe: "schwarz", haut: "dunkel",
     kleidung: { oberteil: { stueck: "pullover", farbe: "#c27a2c" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } }, 1.76 * sk(z - 0.2));
   S.teil({ id: "sp_kursteilnehmer", de: "der Kursteilnehmer", syl: "KURS-teil-neh-mer", it: "il corsista", itSyl: "cor-SI-sta", en: "course participant", x: ax, y: ay, kunst: m.svg,
-    tipp: "Er ist schon im Kurs A2 und liest im Kursbuch." });
+    tipp: "Er meldet sich: „Ich habe eine Frage!“" });
 }
 {
   const X = 1.42, z = 1.78;
@@ -324,7 +324,7 @@ const stuhl = (X, z, mitSitz) => {
   S.teil({ id: "sp_stuhl_links", de: "der Stuhl", syl: "STUHL", it: "la sedia", itSyl: "SE-dia", en: "chair", x: ax, y: ay, steht: true, kunst: um(ax, ay, schatten(ax, ay - 1, 10, 1, 0.22) + stuhl(X, z, false)) });
 }
 {
-  const X = 2.42, z = 1.86;
+  const X = 2.66, z = 1.86;
   const [ax, ay] = P(X, 0, z);
   S.teil({ id: "sp_stuhl_rechts", de: "der zweite Stuhl", syl: "ZWEI-te STUHL", it: "la seconda sedia", itSyl: "se-CON-da SE-dia", en: "second chair", x: ax, y: ay, steht: true, kunst: um(ax, ay, schatten(ax, ay - 1, 10, 1, 0.22) + stuhl(X, z, true)),
     tipp: "Der zweite Stuhl ist noch frei – gleich kommt die neue Teilnehmerin." });
@@ -420,7 +420,7 @@ const RZ = { X0: -3.5, X1: -1.02, z0: 0.62, z1: 1.12, H: 1.1 };
    11 — DIE KURSTEILNEHMERIN (neu, an der Rezeption beim Einstufungstest)
    ===================================================================== */
 {
-  const [ax, ay] = P(-0.7, 0, 1.6);
+  const [ax, ay] = P(-0.48, 0, 1.6);
   const m = B.mensch({ id: "b09b_tnin", geschlecht: "w", pose: "kontrapost", blick: -62, frisur: "locken", haarfarbe: "schwarz", haut: "oliv",
     kleidung: { oberteil: { stueck: "pullover", farbe: "#2f6db5" }, jacke: { stueck: "jacke", farbe: "#d8c7a6" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "#4f5a3a" } } }, 1.64 * sk(1.66));
   S.teil({ id: "sp_kursteilnehmerin", de: "die Kursteilnehmerin", syl: "KURS-teil-neh-me-rin", it: "la corsista", itSyl: "cor-SI-sta", en: "course participant", x: ax, y: ay, kunst: m.svg,

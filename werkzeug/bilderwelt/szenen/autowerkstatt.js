@@ -367,9 +367,10 @@ const RV = -44, RH = 46, RY = -8.5;   /* Radmitten (lokal) */
 {
   let k = "";
   /* Radkästen innen dunkel */
-  for (const x of [RV, RH]) k += `<circle cx="${x}" cy="-10.5" r="12.6" fill="#141517"/>`;
+  for (const x of [RV, RH]) k += `<path d="M${r(x + 12.2)} -6 A12.6 12.6 0 1 0 ${r(x - 12.2)} -6 Z" fill="${S.rg("radkasten", [[0, "#3a3d41"], [1, "#141517"]], 0.5, 0.7, 0.6)}"/>`;
   /* Fahrwerk hinten: Feder und Stoßdämpfer im Radkasten */
-  k += `<path d="M${RH - 2} -20 l4 1.2 l-4 1.2 l4 1.2 l-4 1.2 l4 1.2" stroke="#7a8288" stroke-width=".8" fill="none"/><rect x="${RH + 3}" y="-21" width="1.6" height="9" fill="#4a5258"/>`;
+  for (let i = 0; i < 5; i++) k += `<ellipse cx="${RH}" cy="${r(-20.4 + i * 1.5)}" rx="2.4" ry=".55" fill="none" stroke="#8a9298" stroke-width=".55"/>`;
+  k += `<rect x="${RH - 0.5}" y="-22" width="1" height="8" fill="#4a5258"/><rect x="${RH + 3.4}" y="-19" width="5" height="1.2" rx=".5" fill="#4a5258"/>`;
   /* Karosserie */
   const body = `M-74 -6 L-75.6 -17 Q-75.8 -22.6 -72 -24.6 L-44 -30.6 Q-37 -31.8 -33 -34 L-19.6 -45.4 Q-16 -48.2 -10 -48.6 L37 -48.8 Q45 -48.6 51 -45.6 L63.6 -37 Q71.8 -33.4 74.4 -28 L75.8 -13 Q76 -7.6 73 -6 L${r(RH + 12.2)} -6 A12.6 12.6 0 1 0 ${r(RH - 12.2)} -6 L${r(RV + 12.2)} -6 A12.6 12.6 0 1 0 ${r(RV - 12.2)} -6 Z`;
   k += `<path d="${body}" fill="${LACK}"/>`;
