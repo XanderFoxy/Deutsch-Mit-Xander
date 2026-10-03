@@ -876,7 +876,7 @@ const SCH = { x: 284, y: 152 };
   const rand = (a) => P(X0 + R * Math.cos(a), 2.0, Z0 + R * Math.sin(a));
   const nabe = P(X0 + 0.05, 2.27, Z0);
   const s = sy(SCH.y);
-  let k = `<ellipse cx="${r(-1.3 * s)}" cy="${r(0.32 * s)}" rx="${r(0.95 * s)}" ry="${r(0.2 * s)}" fill="#7a5a2a" opacity=".24"/>`;
+  let k = `<ellipse cx="${r(-0.55 * s)}" cy="${r(0.17 * s)}" rx="${r(0.95 * s)}" ry="${r(0.2 * s)}" fill="#7a5a2a" opacity=".24"/>`;
   k += `<line x1="0" y1="0" x2="${r(nabe[0])}" y2="${r(nabe[1])}" stroke="${S.lg("mast", [[0, "#d8dcde"], [1, "#9aa1a6"]], 0, 0, 1, 0)}" stroke-width="1.2"/>`;
   const farben = ["#f3c623", "#1e8a4c", "#2f6fc0", "#f4f1e6"];
   const innen = ["#b88f14", "#14603a", "#244f8c", "#bdb7a6"];
@@ -1021,7 +1021,7 @@ let BALL;
   const m = B.mensch({ id: "rio_junge", geschlecht: "m", alter: "kind", pose: altinha, blick: 34, frisur: "locken", haarfarbe: "schwarz", haut: "dunkel", laecheln: true,
     kleidung: { oberteil: { stueck: "unterhemd", farbe: "#f6d21e" }, unterteil: { stueck: "badehose", farbe: "#1d4fa0" } } }, 1.34 * s);
   /* schwarzes Haar: graue Glanzlichter der Bibliothek blauschwarz färben */
-  const svg = halb(m.svg).replace(/#([0-9a-f]{6})\b/gi, (h, c) => { const v = [0, 2, 4].map((i) => parseInt(c.slice(i, i + 2), 16)); const mx = Math.max(...v), mn = Math.min(...v), av = (v[0] + v[1] + v[2]) / 3; return mx - mn < 20 && av > 50 && av < 228 ? "#2c3346" : h; }).replace(/#cca795/g, "#2c3346");
+  const svg = halb(m.svg).replace(/#([0-9a-f]{6})\b/gi, (h, c) => { const v = [0, 2, 4].map((i) => parseInt(c.slice(i, i + 2), 16)); const mx = Math.max(...v), mn = Math.min(...v), av = (v[0] + v[1] + v[2]) / 3; return mx - mn < 20 && av > 50 && av < 228 ? "#2c3346" : h; }).replace(/#cca795|#ad9c8d|#dca69a/g, "#2c3346");
   /* Schatten fällt nach links vorn (Sonne vorn rechts) */
   const sch = `<ellipse cx="-14" cy="4" rx="15" ry="2.6" fill="#6b4a1e" opacity=".3" transform="rotate(-24 -14 4)"/>`;
   /* grüner Kragen und grüne Ärmelsäume wie beim Trikot der Seleção */
@@ -1030,7 +1030,7 @@ let BALL;
   let kragen = `<path d="M${r(hx - 2.6)} ${r(hy + 1.6)} Q${r(hx)} ${r(hy + 3.6)} ${r(hx + 2.6)} ${r(hy + 1.6)}" stroke="#139a43" stroke-width=".9" fill="none"/>`;
   kragen = trikot(m, "#f2cc1c", "#fbe36a", "#139a43", "#139a43");
   const [fx, fy] = q("fussL"), [zx, zy] = q("zehL");
-  BALL = { x: JU.x + zx + 2.4, y: JU.y + Math.min(fy, zy) - 13, boden: JU.y + 1.2 };
+  BALL = { x: JU.x + zx + 7, y: JU.y + Math.min(fy, zy) - 13, boden: JU.y + 1.2 };
   const AY = JU.y - 0.62 * 1.34 * s;   /* Bezugspunkt auf der Brust */
   S.teil({ id: "junge", de: "der Junge", syl: "JUN-ge", it: "il ragazzo", itSyl: "ra-GAZ-zo", en: "boy", x: JU.x, y: AY, kunst: `<g transform="translate(0 ${r(JU.y - AY)})">${sch}<g filter="${GEGENLICHT}">${svg}${kragen}</g></g>`,
     tipp: "Der Junge trägt das gelbe Trikot der brasilianischen Fußball-Nationalmannschaft." });

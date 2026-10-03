@@ -364,7 +364,7 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
   /* Fliesen-Muster: glänzend weiße Chevron-Bänder auf matt cremefarbenem Grund (eine Kachel, gedreht je Schale) */
   /* Fliesen-Muster: im Wechsel eine Reihe glänzend weißer Chevrons (mit Glanzpunkt) und eine Reihe matt
      cremefarbener (eine Kachel, gedreht je Schale) */
-  S.def(`<pattern id="${S.id("chev")}" width="2.6" height="4" patternUnits="userSpaceOnUse"><path d="M0 0L1.3 .9L2.6 0V.6L1.3 1.5L0 .6Z" fill="#fffefa"/><circle cx="1.3" cy=".95" r=".2" fill="#fff"/><path d="M0 2L1.3 2.9L2.6 2V2.6L1.3 3.5L0 2.6Z" fill="#e9dfc9" opacity=".75"/><path d="M0 .6L1.3 1.5L2.6 .6M0 2.6L1.3 3.5L2.6 2.6" stroke="#d6c8aa" stroke-width=".1" fill="none"/></pattern>`);
+  S.def(`<pattern id="${S.id("chev")}" width="2.6" height="2.4" patternUnits="userSpaceOnUse"><path d="M0 .6L.65 0L1.3 .6L.65 1.2ZM1.3 1.8L1.95 1.2L2.6 1.8L1.95 2.4Z" fill="#fffefa"/><path d="M1.3 .6L1.95 0L2.6 .6L1.95 1.2ZM0 1.8L.65 1.2L1.3 1.8L.65 2.4Z" fill="#e6dbc3" opacity=".8"/><circle cx=".75" cy=".5" r=".16" fill="#fff"/><circle cx="2.05" cy="1.7" r=".16" fill="#fff"/><path d="M0 .6L1.3 1.8L2.6 .6M0 1.8L1.3 .6L2.6 1.8" stroke="#d3c5a6" stroke-width=".07" fill="none"/></pattern>`);
   const schale = (e, b, t, p, rueck, hinten = 0) => {
     const B0 = op(b[0], e, b[1]), T = op(t[0], e, t[1]), Pp = op(p[0], e, SOCKEL_Z), B0f = op(b[0] + (rueck ? 5 : -5), e, SOCKEL_Z);
     const dir = rueck ? -1 : 1;

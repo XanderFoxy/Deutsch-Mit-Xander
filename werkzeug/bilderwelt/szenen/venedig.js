@@ -143,7 +143,7 @@ S.hinten(`<rect width="400" height="${WASSER + 2}" fill="${S.rg("sonne", [[0, "#
     const id = S.id("wk" + wz++), cy0 = y - h * 0.5;
     S.def(`<clipPath id="${id}c"><rect x="${r(x - w)}" y="${r(y - h * 3)}" width="${r(w * 2)}" height="${r(h * 3)}"/></clipPath><g id="${id}">${c.map(([a, b, rr]) => `<circle cx="${r(a)}" cy="${r(b)}" r="${r(rr)}"/>`).join("")}</g>`);
     const lage = (dx, dy, f, fill, extra = "") => `<use href="#${id}" fill="${fill}" transform="translate(${r(x + dx)} ${r(cy0 + dy)}) scale(${f}) translate(${r(-x)} ${r(-cy0)})"${extra}/>`;
-    return `<g clip-path="url(#${id}c)">${lage(0, 0, 1, WF[0], ` filter="url(#${S.id("wolke")})"`)}${lage(-0.4, -1.8, 0.93, WF[1])}${lage(-1.2, -3.6, 0.8, WF[2])}</g>`;
+    return `<g filter="url(#${S.id("wolke")})"><g clip-path="url(#${id}c)">${lage(0, 0, 1, WF[0])}</g></g><g clip-path="url(#${id}c)">${lage(-0.4, -1.8, 0.93, WF[1])}${lage(-1.2, -3.6, 0.8, WF[2])}</g>`;
   };
 
   S.hinten(wolke(64, 42, 58, 30, 11) + wolke(336, 54, 48, 25, 37) + wolke(230, 78, 22, 7, 23) + wolke(152, 86, 16, 5, 41) + wolke(292, 90, 12, 3.6, 53));

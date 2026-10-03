@@ -113,12 +113,12 @@ const krone = (cx, cy, R, fam, n = 16) => {
 {
   let k = "";
   /* ferne Stadt hinter dem Park (dunstig) */
-  for (const [x0, x1, h] of [[-104, -86, 18], [86, 104, 20]]) k += `<g opacity=".55" filter="url(#${S.id("dunst")})">${pfad(fr(40, x0, 0, x1, h), "#c9c7c0")}${pfad(fe(40, [[x0, h], [x1, h], [x1 - 3, h + 3], [x0 + 3, h + 3]]), "#9aa3a0")}</g>`;
+  for (const [x0, x1, h] of [[-80, -66, 18], [66, 80, 20]]) k += `<g opacity=".55" filter="url(#${S.id("dunst")})">${pfad(fr(40, x0, 0, x1, h), "#c9c7c0")}${pfad(fe(40, [[x0, h], [x1, h], [x1 - 3, h + 3], [x0 + 3, h + 3]]), "#9aa3a0")}</g>`;
   /* Rasen und Weg am Nordufer vor dem Rathaus */
   k += `<rect x="0" y="${r(pr(0, -2, 0)[1])}" width="${BR}" height="${r(pr(0, -24, 0)[1] - pr(0, -2, 0)[1])}" fill="${S.lg("rasenfern", [[0, "#7f9a50"], [1, "#94a85e"]])}"/>`;
   /* Baumgruppen links (Westen) und rechts (Osten) des Rathauses, Stämme am Boden */
   const gruppe = (x, y, h, fam, n) => { const p = pr(x, y, 0), m = mass(y); let g = `<rect x="${r(p[0] - .35 * m)}" y="${r(p[1] - h * .45 * m)}" width="${r(.7 * m)}" height="${r(h * .45 * m)}" fill="#4a3a2c"/>`; g += krone(p[0], p[1] - h * .66 * m, h * .38 * m, fam, n); return g; };
-  for (const [x, y, h, f] of [[-86, -8, 23, 1], [-74, -14, 21, 0], [-64, -18, 17, 3], [86, -10, 23, 0], [74, -15, 21, 2], [64, -19, 17, 1]]) k += gruppe(x, y, h, f, 18);
+  for (const [x, y, h, f] of [[-71, -8, 22, 1], [-65, -14, 20, 0], [-60, -19, 16, 3], [71, -10, 22, 0], [65, -15, 20, 2], [60, -19, 16, 1]]) k += gruppe(x, y, h, f, 18);
   S.teil({ id: "maschpark", de: "der Maschpark", syl: "MASCH-park", it: "il parco Masch", itSyl: "PAR-co MASCH", en: "Maschpark", x: 0, y: 0, kunst: k,
     tipp: "Der Maschpark ist der älteste Bürgerpark Hannovers. Hannover ist eine der grünsten Großstädte Deutschlands." });
 }
