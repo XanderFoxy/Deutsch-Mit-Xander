@@ -119,7 +119,7 @@ const RECHTS = [
 const SONNE = { x: Math.sin(117 * Math.PI / 180), d: Math.cos(117 * Math.PI / 180), tan: Math.tan(11 * Math.PI / 180) };
 const DACH = [{ d0: -8, d1: 4.6, traufe: 10, first: 14.6 }, ...RECHTS];
 const HR = (D) => { for (const h of DACH) if (D >= h.d0 && D <= h.d1) { const dm = (h.d0 + h.d1) / 2, half = (h.d1 - h.d0) / 2; return gG(4, D) + h.traufe + (h.first - h.traufe) * (1 - Math.abs(D - dm) / half); } return -99; };
-const schattenH = (X, D) => { let m = -99; for (let sx = 0; sx <= 6; sx += 0.5) { const dist = (4 + sx - X) / SONNE.x; if (dist < 0) continue; m = Math.max(m, HR(D + SONNE.d * dist) - SONNE.tan * dist); } return m; };
+const schattenH = (X, D, tiefe = 6) => { let m = -99; for (let sx = 0; sx <= tiefe; sx += 0.5) { const dist = (4 + sx - X) / SONNE.x; if (dist < 0) continue; m = Math.max(m, HR(D + SONNE.d * dist) - SONNE.tan * dist); } return m; };
 /* Schatten (kühl) und Abendlicht (warm) auf einer Wand: Q(u, h) projiziert, sh(u) = Schattenhöhe, u von a bis b */
 function lichtWand(Q, sh, a, b, h0, h1, n = 48, opS = 0.34, opL = 0.2) {
   const unten = [], kante = [], oben = [];
@@ -681,10 +681,9 @@ const LL = -8;
     const lo = [], hi = [];
     for (let X = 4; X >= -9.5; X -= 0.5) {
       let a2 = null, b2 = null;
-      for (let d = 12; d < 22; d += 0.05) { const lit = schattenH(X, d) <= 0; if (lit && a2 === null) a2 = d; if (lit) b2 = d; }
+      for (let d = 12; d < 22; d += 0.05) { const lit = schattenH(X, d, 2) <= 0;   /* die Seitengasse weitet sich hinter der Häuserfront */ if (lit && a2 === null) a2 = d; if (lit) b2 = d; }
       if (a2 !== null) { lo.push(P(X, a2, 0, 0)); hi.push(P(X, b2, 0, 0)); }
     }
-    console.error("LICHTBAHN", lo.length, JSON.stringify(lo.slice(0,3)), JSON.stringify(hi.slice(0,3)));
     if (lo.length > 1) k += `<path d="${poly(...lo, ...hi.slice().reverse())}" fill="#ffc477" opacity=".6" filter="url(#${S.id("dunst")})"/>`;
   }
   k += `<rect x="-1" y="${HOR - 2}" width="402" height="${263 - HOR}" fill="${S.lg("pflnah", [[0, "#000", 0], [0.6, "#000", 0.04], [1, "#120c08", 0.2]])}"/></g>`;

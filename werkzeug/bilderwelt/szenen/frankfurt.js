@@ -263,7 +263,7 @@ const platane = (x, fuss, s, hoch, breit, himmel = "#a9c6e0", nb = 15) => {
   let g = "";
   const st = 0.45 * s;
   /* Stamm und zwei Hauptäste */
-  g += `<path d="M${r(x - st)} ${r(fuss)} C${r(x - st * 0.9)} ${r(fuss - hoch * 0.25)} ${r(x - st * 0.6)} ${r(fuss - hoch * 0.4)} ${r(x - st * 1.8)} ${r(fuss - hoch * 0.62)} L${r(x - st * 1.1)} ${r(fuss - hoch * 0.64)} C${r(x - st * 0.2)} ${r(fuss - hoch * 0.48)} ${r(x + st * 0.2)} ${r(fuss - hoch * 0.48)} ${r(x + st * 1.4)} ${r(fuss - hoch * 0.66)} L${r(x + st * 2)} ${r(fuss - hoch * 0.63)} C${r(x + st * 0.8)} ${r(fuss - hoch * 0.4)} ${r(x + st * 0.9)} ${r(fuss - hoch * 0.25)} ${r(x + st)} ${r(fuss)} Z" fill="${S.lg("rinde", [[0, "#d8d0b4"], [0.45, "#b3aa8c"], [1, "#7c7562"]], 0, 0, 1, 0)}"/>`;
+  g += `<path d="M${r(x - st)} ${r(fuss)} C${r(x - st * 0.9)} ${r(fuss - hoch * 0.25)} ${r(x - st * 0.6)} ${r(fuss - hoch * 0.4)} ${r(x - st * 1.8)} ${r(fuss - hoch * 0.62)} L${r(x - st * 1.1)} ${r(fuss - hoch * 0.64)} C${r(x - st * 0.2)} ${r(fuss - hoch * 0.48)} ${r(x + st * 0.2)} ${r(fuss - hoch * 0.48)} ${r(x + st * 1.4)} ${r(fuss - hoch * 0.66)} L${r(x + st * 2)} ${r(fuss - hoch * 0.63)} C${r(x + st * 0.8)} ${r(fuss - hoch * 0.4)} ${r(x + st * 0.9)} ${r(fuss - hoch * 0.25)} ${r(x + st)} ${r(fuss)} Z" fill="${S.lg("rinde", [[0, "#b8b29a"], [0.45, "#948d74"], [1, "#5f5a4a"]], 0, 0, 1, 0)}"/>`;
   /* Plattenborke: unregelmäßige Flecken in Oliv, Creme und Grau */
   for (let i = 0; i < (nb > 10 ? 5 : 0); i++) {
     const yy = fuss - rnd() * hoch * 0.55, xx = x - st * 0.7 + rnd() * st * 1.2, w = st * (0.35 + rnd() * 0.4), h = st * (0.5 + rnd() * 0.9);
@@ -374,8 +374,8 @@ S.hinten(`<rect width="320" height="${HOR + 8}" fill="${S.lg("sonnenseite", [[0,
   {
     let gl = "", gl2 = "";
     for (let i = 0; i < 170; i++) {
-      const t = Math.pow(rnd(), 1.6), y = 99.5 + t * 30 + rnd() * 2, mitte = 95 - t * 70 + (rnd() - 0.5) * (30 + t * 90), w = 0.3 + t * 2.2 * rnd();
-      if (mitte < 30 || mitte > 300) continue;
+      const t = Math.pow(rnd(), 1.6), y = 99.5 + t * 30 + rnd() * 2, mitte = 70 - t * 40 + (rnd() - 0.5) * (30 + t * 40) - rnd() * 20, w = 0.3 + t * 2.2 * rnd();
+      if (mitte < 30 || mitte > 110 + (1 - t) * 30) continue;
       const seg = `M${r(mitte)} ${r(y)} h${r(w)} `;
       if (rnd() < 0.55) gl += seg; else gl2 += seg;
     }
@@ -853,7 +853,8 @@ const DOMM = {};
     let g = `<path d="M${P(sd.at(0, O0))} L${P(sd.at(1, O0))} L${P(sd.at(1, O1))} L${P(sd.at(0, O1))} Z" fill="${QUADER}"/>`;
     g += `<path d="M${P(sd.at(0.22, O0 + 3))} L${P(sd.at(0.22, O1 - 6))} Q${P(sd.at(0.24, O1 - 3))} ${P(sd.at(0.5, O1 - 2))} Q${P(sd.at(0.76, O1 - 3))} ${P(sd.at(0.78, O1 - 6))} L${P(sd.at(0.78, O0 + 3))} Z" fill="#2f2a2a"/>`;
     g += `<path d="M${P(sd.at(0.5, O0 + 3))} L${P(sd.at(0.5, O1 - 4))}" stroke="${sd.sonne > 0 ? "#f0b6a2" : "#b46a5a"}" stroke-width="${r(0.3 * s)}"/>`;
-    const tc = sd.at(0.5, O1 - 4.4); g += `<circle cx="${r(tc[0])}" cy="${r(tc[1])}" r="${r(0.75 * s)}" fill="none" stroke="${sd.sonne > 0 ? "#f0b6a2" : "#b46a5a"}" stroke-width="${r(0.2 * s)}"/>`;
+    const breit = Math.abs(sd.at(1, O1)[0] - sd.at(0, O1)[0]);
+    const tc = sd.at(0.5, O1 - 4.4); if (breit > 3) g += `<circle cx="${r(tc[0])}" cy="${r(tc[1])}" r="${r(0.75 * s)}" fill="none" stroke="${sd.sonne > 0 ? "#f0b6a2" : "#b46a5a"}" stroke-width="${r(0.2 * s)}"/>`;
     /* Wimperg: spitzer Ziergiebel mit Krabben, ragt über die Traufe */
     WIMP.push(sd);
     return g;
@@ -863,7 +864,7 @@ const DOMM = {};
     const hell = sd.sonne > 0;
     g += `<path d="M${P(sd.at(0.12, O1 - 3.5))} L${P(sd.at(0.5, O1 + 6.5))} L${P(sd.at(0.88, O1 - 3.5))} Z" fill="${hell ? "#df9c86" : "#9a5446"}"/>`;
     g += `<path d="M${P(sd.at(0.26, O1 - 2.4))} L${P(sd.at(0.5, O1 + 3.8))} L${P(sd.at(0.74, O1 - 2.4))} Z" fill="${hell ? "#a85a4a" : "#6e3529"}"/>`;
-    const pc = sd.at(0.5, O1 - 0.2); g += `<circle cx="${r(pc[0])}" cy="${r(pc[1])}" r="${r(0.7 * s)}" fill="none" stroke="${hell ? "#f0b6a2" : "#b46a5a"}" stroke-width="${r(0.18 * s)}"/>`;
+    const pc = sd.at(0.5, O1 - 0.2), breit = Math.abs(sd.at(1, O1)[0] - sd.at(0, O1)[0]); if (breit > 3) g += `<circle cx="${r(pc[0])}" cy="${r(pc[1])}" r="${r(0.7 * s)}" fill="none" stroke="${hell ? "#f0b6a2" : "#b46a5a"}" stroke-width="${r(0.18 * s)}"/>`;
     for (let i = 1; i < 7; i++) for (const sg of [-1, 1]) { const q = sd.at(0.5 + sg * (0.38 - i * 0.054), O1 - 3.5 + i * 1.43); g += `<circle cx="${r(q[0] + sg * 0.15 * s)}" cy="${r(q[1] - 0.2 * s)}" r="${r(0.2 * s)}" fill="#c98472"/>`; }
     const kb = sd.at(0.5, O1 + 6.8); g += `<circle cx="${r(kb[0])}" cy="${r(kb[1])}" r="${r(0.35 * s)}" fill="#c98472"/>`;
     return g;
@@ -886,8 +887,8 @@ const DOMM = {};
       for (let i = 0; i <= 14; i++) { const t = i / 14, z = K0 + (K1 - K0) * t, rr = prof(t); rib.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, z]); }
       if (tief(rib[0][0], rib[0][1]) > tief(cx, cy) + 1) continue;
       k += `<path d="M${rib.map((p) => P(pr(...p))).join(" L")}" stroke="#7a3e33" stroke-width="${r(0.45 * s)}" fill="none"/>`;
-      let kr = ""; for (let i = 2; i < 14; i += 2) { const q = pr(...rib[i]); kr += `M${r(q[0])} ${r(q[1])} q${r(0.45 * s)} ${r(-0.1 * s)} ${r(0.35 * s)} ${r(-0.55 * s)} `; }
-      k += `<path d="${kr}" stroke="#d48b77" stroke-width="${r(0.22 * s)}" fill="none"/>`;
+      let kr = ""; for (let i = 2; i < 14; i += 2) { const q = pr(...rib[i]); kr += `M${r(q[0])} ${r(q[1])} h.01 `; }
+      k += `<path d="${kr}" stroke="#d48b77" stroke-width="${r(0.5 * s)}" stroke-linecap="round" fill="none"/>`;
     }
     for (const sd of WIMP) k += wimperg(sd);
     /* Kranz kleiner Fialen am Kuppelfuß */
@@ -959,7 +960,11 @@ const DOMM = {};
       return `<path d="M${P(sd.at(0.06, KAI + 1))} L${P(sd.at(0.94, KAI + 1))} L${P(sd.at(0.94, KAI + h - 0.8))} L${P(sd.at(0.06, KAI + h - 0.8))} Z" fill="url(#ffm_fenster)"/>`;
     });
     if (giebel) g += `<path d="${poly([[x, y0, KAI + h], [x + w, y0, KAI + h], [x + w / 2, y0, KAI + h + w * 0.55]])}" fill="${f}"/><path d="${poly([[x + w, y0, KAI + h], [x + w / 2, y0, KAI + h + w * 0.55], [x + w / 2, y0 + 14, KAI + h + w * 0.55], [x + w, y0 + 14, KAI + h]])}" fill="${SCHIEFER}"/>`;
-    else g += `<path d="${poly([[x, y0, KAI + h], [x + w, y0, KAI + h], [x + w, y0 + 7, KAI + h + 4], [x, y0 + 7, KAI + h + 4]])}" fill="${SCHIEFER_L}"/>`;
+    else {
+      g += `<path d="${poly([[x, y0, KAI + h], [x + w, y0, KAI + h], [x + w, y0 + 7, KAI + h + 5], [x, y0 + 7, KAI + h + 5]])}" fill="${SCHIEFER}"/>`;
+      g += `<path d="${linie([[x, y0 + 7, KAI + h + 5], [x + w, y0 + 7, KAI + h + 5]])}" stroke="#2f363d" stroke-width=".35"/><path d="${linie([[x, y0 - 0.3, KAI + h], [x + w, y0 - 0.3, KAI + h]])}" stroke="#e8e0d0" stroke-width=".4"/>`;
+      for (const t of [0.3, 0.7]) { const gx = x + w * t; g += `<path d="${poly([[gx - 1, y0 + 2.5, KAI + h + 1.8], [gx + 1, y0 + 2.5, KAI + h + 1.8], [gx + 1, y0 + 2.5, KAI + h + 3.3], [gx, y0 + 2.5, KAI + h + 4.1], [gx - 1, y0 + 2.5, KAI + h + 3.3]])}" fill="#e9e1d2"/><path d="${poly([[gx - 0.5, y0 + 2.45, KAI + h + 2], [gx + 0.5, y0 + 2.45, KAI + h + 2], [gx + 0.5, y0 + 2.45, KAI + h + 3.1], [gx - 0.5, y0 + 2.45, KAI + h + 3.1]])}" fill="#4b545c"/>`; }
+    }
     return g;
   };
   for (const hs of haeuser.filter(([x]) => x < -229)) k += haus(hs);
@@ -1206,6 +1211,7 @@ const KELLNER = (() => { const th = -95.5 * Math.PI / 180, d = 9; return [CAM[0]
     k += platane(f[0], f[1], s * 0.9, 15 * s, 13 * s, "#b9cfe2", 5);
   }
   k += `<path d="${poly([...mauer.map(([x, y]) => [x, y + 0.2, 6.5]), ...mauer.slice().reverse().map(([x, y]) => [x, y - 1, 7.4])])}" fill="#5f7a44"/>`;
+  k += `<path d="${linie(mauer.map(([x, y]) => [x, y + 0.1, 7.45]))}" stroke="#25302b" stroke-width=".35" fill="none"/>`;
   /* Ufermauer zur Straße (Sandstein), Boden der Promenade */
   k += `<path d="${poly([...mauer.map(([x, y]) => [x, y, PROM]), ...mauer.slice().reverse().map(([x, y]) => [x, y, 6.5])])}" fill="${S.lg("ufermauer", [[0, "#b49c90"], [1, "#8f7a70"]])}"/>`;
   k += `<path d="${poly([...mauer.map(([x, y]) => [x, y, PROM]), ...mauer.slice().reverse().map(([x, y]) => [x, y, 6.5])])}" fill="${QUADER}"/>`;
@@ -1238,6 +1244,7 @@ const KELLNER = (() => { const th = -95.5 * Math.PI / 180, d = 9; return [CAM[0]
     const { c, w, d } = HUT;
     const sh = [[c[0] - w / 2, c[1] + d / 2], [c[0] + w / 2, c[1] + d / 2], [c[0] + w / 2, c[1] - d / 2]].map(([x, y]) => [...SCH(x, y, 3), PROM]);
     k += `<path d="${poly([[c[0] - w / 2, c[1] + d / 2, PROM], [c[0] + w / 2, c[1] - d / 2, PROM], sh[2], sh[1], sh[0]])}" fill="#2e2418" opacity=".2"/>`;
+    { const c = [266.5, -63.6], L = 1.9, sh = (u) => SCH(c[0] + u, c[1] + 0.2, 0.85); k += `<path d="${poly([[c[0] - L / 2, c[1] + 0.25, PROM], [c[0] + L / 2, c[1] + 0.25, PROM], [...sh(L / 2), PROM], [...sh(-L / 2), PROM]])}" fill="#2e2418" opacity=".22"/>`; }
     for (const [gx, gy] of GARTEN_TISCHE) { const a = SCH(gx - 1.1, gy, 0.75), b = SCH(gx + 1.1, gy, 0.75); k += `<path d="${poly([[gx - 1.1, gy - 0.3, PROM], [gx + 1.1, gy - 0.3, PROM], [b[0], b[1] - 0.3, PROM], [a[0], a[1] - 0.3, PROM]])}" fill="#2e2418" opacity=".18"/>`; }
     const [wx, wy] = KELLNER, s2 = mass(wx, wy), sh2 = SCH(wx, wy, 1.78), a = pr(wx, wy, PROM), b = pr(sh2[0], sh2[1], PROM);
     k += `<path d="M${r(a[0] - 0.25 * s2)} ${r(a[1])} L${r(b[0] - 0.12 * s2)} ${r(b[1])} L${r(b[0] + 0.25 * s2)} ${r(b[1] + 0.1 * s2)} L${r(a[0] + 0.25 * s2)} ${r(a[1])} Z" fill="#2e2418" opacity=".25"/>`;
@@ -1282,8 +1289,7 @@ const BANK_K = (() => {
   const c = [266.5, -63.6], L = 1.9;
   const W = (u, q, z) => [c[0] + u, c[1] + q, z];
   let k = "";
-  const sh = (u) => SCH(c[0] + u, c[1] + 0.2, 0.85);
-  k += `<path d="${poly([W(-L / 2, 0.25, PROM), W(L / 2, 0.25, PROM), [...sh(L / 2), PROM], [...sh(-L / 2), PROM]])}" fill="#2e2418" opacity=".22"/>`;
+
   for (const u of [-L / 2 + 0.15, L / 2 - 0.15]) k += `<path d="${linie([W(u, -0.2, PROM), W(u, -0.2, PROM + 0.45), W(u, -0.25, PROM + 0.9)])}" stroke="#2f3532" stroke-width="1.2" fill="none"/><path d="${linie([W(u, 0.25, PROM), W(u, 0.25, PROM + 0.45)])}" stroke="#2f3532" stroke-width="1.2"/>`;
   for (let i = 0; i < 4; i++) k += `<path d="${poly([W(-L / 2, -0.25 + i * 0.13, PROM + 0.45), W(L / 2, -0.25 + i * 0.13, PROM + 0.45), W(L / 2, -0.15 + i * 0.13, PROM + 0.45), W(-L / 2, -0.15 + i * 0.13, PROM + 0.45)])}" fill="${i % 2 ? "#8a6038" : "#9a6d42"}"/>`;
   for (let i = 0; i < 3; i++) k += `<path d="${poly([W(-L / 2, -0.25, PROM + 0.55 + i * 0.13), W(L / 2, -0.25, PROM + 0.55 + i * 0.13), W(L / 2, -0.25, PROM + 0.64 + i * 0.13), W(-L / 2, -0.25, PROM + 0.64 + i * 0.13)])}" fill="${i % 2 ? "#7a5532" : "#946840"}"/>`;
@@ -1333,14 +1339,14 @@ const BANK_K = (() => {
   const xF = c[0] + w / 2 + 0.05;
   k += `<path d="${poly([[xF, c[1] - 1.2, PROM + 2.6], [xF, c[1] + 1.2, PROM + 2.6], [xF, c[1] + 1.2, PROM + 3.3], [xF, c[1] - 1.2, PROM + 3.3]])}" fill="#1f3d2a"/>`;
   {
-    const B = (u, v) => [xF + 0.01, c[1] - 0.45 + u, PROM + 2.95 + v];
+    const B = (u, v) => [xF + 0.01, c[1] + 0.55 + u * 0.8, PROM + 2.95 + v];
     const bem = [[-0.16, -0.25], [-0.22, -0.05], [-0.14, 0.12], [-0.08, 0.17], [-0.09, 0.24], [0.09, 0.24], [0.08, 0.17], [0.14, 0.12], [0.22, -0.05], [0.16, -0.25]].map(([u, v]) => B(u, v));
     k += `<path d="${poly(bem)}" fill="#e9dcae"/><path d="${linie([B(0.18, 0.12), B(0.32, 0.06), B(0.3, -0.1), B(0.2, -0.14)])}" stroke="#e9dcae" stroke-width=".3" fill="none"/>`;
     k += `<path d="${poly([B(0.5, -0.25), B(0.66, -0.25), B(0.68, 0.12), B(0.48, 0.12)])}" fill="#e9dcae"/><path d="${poly([B(0.51, -0.2), B(0.65, -0.2), B(0.66, 0.02), B(0.5, 0.02)])}" fill="#d9b24a"/>`;
     k += `<path d="${poly([[xF, c[1] - 1.2, PROM + 2.6], [xF, c[1] + 1.2, PROM + 2.6], [xF, c[1] + 1.2, PROM + 3.3], [xF, c[1] - 1.2, PROM + 3.3]])}" fill="none" stroke="#c9a44a" stroke-width=".25"/>`;
   }
   /* der grüne Kranz aus Fichtenzweigen am Ausleger: dicht, Zweigspitzen nach außen, rot-weiße Bänder */
-  const kz = pr(c[0] + w / 2 + 0.62, c[1] + d / 2 + 0.28, PROM + 2.05), ks = mass(c[0] + w / 2, c[1] + d / 2);
+  const kz = pr(c[0] + w / 2 + 0.62, c[1] + d / 2 + 0.28, PROM + 2.22), ks = mass(c[0] + w / 2, c[1] + d / 2);
   const ka = pr(c[0] + w / 2, c[1] + d / 2, PROM + 2.55), kb2 = pr(c[0] + w / 2 + 0.7, c[1] + d / 2 + 0.3, PROM + 2.55);
   k += `<path d="M${P(ka)} L${P(kb2)}" stroke="#3a2a1a" stroke-width="${r(0.06 * ks)}"/>`;
   k += `<path d="M${r(kb2[0] - 0.2 * ks)} ${r(kb2[1])} L${r(kz[0] - 0.12 * ks)} ${r(kz[1] - 0.2 * ks)} M${r(kb2[0] + 0.05 * ks)} ${r(kb2[1])} L${r(kz[0] + 0.12 * ks)} ${r(kz[1] - 0.2 * ks)}" stroke="#6b5a40" stroke-width=".15"/>`;
@@ -1352,7 +1358,7 @@ const BANK_K = (() => {
     let z1 = "", z2 = "", z3 = "";
     for (let i = 0; i < 80; i++) {
       const a = i / 80 * Math.PI * 2 + zz() * 0.1, rr = R + (zz() - 0.5) * 0.12 * ks, x0 = kz[0] + Math.cos(a) * rr, y0 = kz[1] + Math.sin(a) * rr * 0.95;
-      const aus = (zz() < 0.5 ? 1 : -1) * (0.03 + zz() * 0.035) * ks, wi = a + (zz() - 0.5) * 0.9;
+      const aus = (zz() < 0.68 ? 1 : -1) * (0.035 + zz() * 0.06) * ks, wi = a + (zz() - 0.5) * 0.9;
       const seg = `M${r(x0)} ${r(y0)} l${r(Math.cos(wi) * aus)} ${r(Math.sin(wi) * aus)} `;
       if (i % 3 === 0) z1 += seg; else if (i % 3 === 1) z2 += seg; else z3 += seg;
     }
@@ -1414,7 +1420,8 @@ const tischSchatten = (u, v, h, breit) => {
   /* Licht von links; die Schlagschatten aller Dinge auf dem Tisch (damit ihre Trefferflächen klein bleiben) */
   k += `<path d="${poly([T(-L, -D), T(L, -D), T(L, D), T(-L, D)])}" fill="${S.lg("tischlicht", [[0, "#fff3d6", 0.2], [0.5, "#fff3d6", 0], [1, "#000", 0.08]], 0, 0, 1, 0)}"/>`;
   k += tischSchatten(-0.6, 0.24, 0.28, 0.16) + tischSchatten(-0.22, 0.02, 0.13, 0.08) + tischSchatten(0.36, 0.3, 0.13, 0.08) + tischSchatten(0.6, 0.22, 0.03, 0.24) + tischSchatten(0.16, -0.12, 0.04, 0.28) + tischSchatten(0.9, 0.3, 0.12, 0.3);
-  S.teil({ id: "tisch", de: "der Tisch", syl: "TISCH", it: "il tavolo", itSyl: "TA-vo-lo", en: "table", x: 0, y: 0, kunst: k });
+  S.teil({ id: "tisch", de: "der Tisch", syl: "TISCH", it: "il tavolo", itSyl: "TA-vo-lo", en: "table", x: 0, y: 0, kunst: k,
+    tipp: "Im Apfelweinlokal sitzt man an langen Holztischen – oft mit fremden Leuten zusammen." });
 }
 {
   /* DER BEMBEL: graues Steinzeug, Kobaltmalerei, Henkel, Ausguss */
@@ -1446,21 +1453,26 @@ const tischSchatten = (u, v, h, breit) => {
   }
   k += `<ellipse cx="${r(p[0])}" cy="${r(p[1] - h)}" rx="${r(w * 1.06)}" ry="${r(w * 0.32)}" fill="none" stroke="#f4f8f7" stroke-width=".3"/>`;
   k += `<path d="M${r(p[0] - w * 0.8)} ${r(p[1] - h * 0.9)} L${r(p[0] - w * 0.72)} ${r(p[1] - 1)}" stroke="#fff" stroke-width=".45" opacity=".6"/>`;
+  S.teil({ oben: true, id: "geripptes", de: "das Gerippte", syl: "ge-RIPP-te", it: "il bicchiere a rombi", itSyl: "bic-CHIE-re a ROM-bi", en: "ribbed cider glass", x: 0, y: 0, kunst: k,
+    tipp: "Das Apfelweinglas heißt „Geripptes“ – wegen seines Rautenmusters.",
+    zoom: { x: r(p[0] - 18), y: 151, w: 36, h: 24 },
+    unter: [
+      { id: "apfelwein", de: "der Apfelwein", syl: "AP-fel-wein", it: "il sidro", itSyl: "SI-dro", en: "cider",
+        x: r(p[0]), y: r(p[1] - 0.6), kunst: flaeche(-w, -h * 0.8, 2 * w, h * 0.8, 0.3), tipp: "Die Frankfurter sagen „Äppler“ oder „Ebbelwoi“." },
+    ] });
+}
+{
+  /* DAS ZWEITE GERIPPTE (halb leer): eigenes Teil ohne „oben“, damit kein großes Rechteck entsteht */
+  let k = "";
   {
-    /* das zweite Gerippte, halb leer */
     const q = TP(0.36, 0.3), t = TS(0.3), w2 = 0.037 * t, h2 = 0.13 * t;
     k += `<path d="M${r(q[0] - w2)} ${r(q[1])} L${r(q[0] - w2 * 1.06)} ${r(q[1] - h2)} L${r(q[0] + w2 * 1.06)} ${r(q[1] - h2)} L${r(q[0] + w2)} ${r(q[1])} Z" fill="#e8f0ee" opacity=".55"/>`;
     k += `<path d="M${r(q[0] - w2 * 0.97)} ${r(q[1] - 0.4)} L${r(q[0] - w2)} ${r(q[1] - h2 * 0.4)} L${r(q[0] + w2)} ${r(q[1] - h2 * 0.4)} L${r(q[0] + w2 * 0.97)} ${r(q[1] - 0.4)} Z" fill="${S.lg("aeppler2", [[0, "#f2d77e"], [1, "#d8b24a"]])}" opacity=".9"/><ellipse cx="${r(q[0])}" cy="${r(q[1] - h2 * 0.4)}" rx="${r(w2)}" ry="${r(w2 * 0.3)}" fill="#f7e7a8"/>`;
     for (let j = 0; j < 6; j++) for (let i = 0; i < 4; i++) { const cx = q[0] - w2 * 0.75 + i * w2 * 0.5, cy = q[1] - h2 * 0.1 - j * h2 * 0.15, d = h2 * 0.07; k += `<path d="M${r(cx)} ${r(cy - d)} L${r(cx + d * 0.75)} ${r(cy)} L${r(cx)} ${r(cy + d)} L${r(cx - d * 0.75)} ${r(cy)} Z" fill="none" stroke="#ffffff" stroke-width=".2" opacity=".7"/>`; }
     k += `<ellipse cx="${r(q[0])}" cy="${r(q[1] - h2)}" rx="${r(w2 * 1.06)}" ry="${r(w2 * 0.32)}" fill="none" stroke="#f4f8f7" stroke-width=".3"/>`;
   }
-  S.teil({ oben: true, id: "geripptes", de: "das Gerippte", syl: "ge-RIPP-te", it: "il bicchiere a rombi", itSyl: "bic-CHIE-re a ROM-bi", en: "ribbed cider glass", x: 0, y: 0, kunst: k,
-    tipp: "Das Apfelweinglas heißt „Geripptes“ – wegen seines Rautenmusters.",
-    zoom: { x: r(p[0] - 18), y: 143, w: 36, h: 24 },
-    unter: [
-      { id: "apfelwein", de: "der Apfelwein", syl: "AP-fel-wein", it: "il sidro", itSyl: "SI-dro", en: "cider",
-        x: r(p[0]), y: r(p[1] - 0.6), kunst: flaeche(-w, -h * 0.8, 2 * w, h * 0.8, 0.3), tipp: "Die Frankfurter sagen „Äppler“ oder „Ebbelwoi“." },
-    ] });
+  S.teil({ id: "geripptes2", de: "das Gerippte", syl: "ge-RIPP-te", it: "il bicchiere a rombi", itSyl: "bic-CHIE-re a ROM-bi", en: "ribbed cider glass", x: 0, y: 0, kunst: k,
+    tipp: "Das Apfelweinglas heißt „Geripptes“ – wegen seines Rautenmusters." });
 }
 {
   /* DIE FRANKFURTER WÜRSTCHEN: ein Paar, Senf, Brot */
@@ -1500,5 +1512,7 @@ const tischSchatten = (u, v, h, breit) => {
     tipp: "Grüne Soße macht man aus sieben Kräutern. Dazu gibt es Eier und Kartoffeln." });
 }
 
+/* warmes Licht des späten Nachmittags von links (liegt über allem, fängt keinen Tipp) */
+S.davor(`<rect width="320" height="200" fill="${S.lg("abendlicht", [[0, "#ffcf8a", 0.16], [0.45, "#ffd9a0", 0.05], [1, "#7f9fc0", 0.06]], 0, 0, 1, 0)}" pointer-events="none"/>`);
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/frankfurt.js"));
 console.log(aus);

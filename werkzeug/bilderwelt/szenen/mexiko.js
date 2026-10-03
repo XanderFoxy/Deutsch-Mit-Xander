@@ -503,7 +503,7 @@ const pyrUnter = [];
     tipp: "Zwei Säulen in Form von Schlangen tragen den Eingang: unten der Kopf, oben die Schwanzrassel." }];
   const zx = (ra[0] + rb2[0]) / 2, zyM = (y0 + y1) / 2 - 1;
   S.teil({ oben: true, id: "tempel", de: "der Tempel", syl: "TEM-pel", it: "il tempio", itSyl: "TEM-pio", en: "temple", x: x0, y: y0, kunst: um(x0, y0, k),
-    zoom: { x: r(zx - 18.5), y: r(zyM - 16.5), w: 30, h: 20 },
+    zoom: { x: r(zx - 19.5), y: r(zyM - 15), w: 30, h: 20 },
     unter,
     tipp: "Oben auf der Pyramide steht ein Tempel für Kukulcán. Sein Eingang zeigt nach Norden." });
 }
@@ -814,7 +814,7 @@ const tischUnter = [];
     g += `<path d="M${x - 0.6} ${y - 6.4} Q${x + 0.4} ${y - 4.6} ${x - 0.4} ${y - 2.8} L${x - 2} ${y - 1.2}" stroke="#3b8f4a" stroke-width=".25" fill="none"/>`;
     for (const [dx, dy, c] of [[-0.4, -5.6, "#d6336c"], [0, -4.4, "#7048e8"], [-0.6, -3.2, "#e8590c"], [-1.6, -1.8, "#d6336c"], [-3.2, -1.5, "#2f9e6e"]]) g += `<circle cx="${r(x + dx)}" cy="${r(y + dy)}" r=".4" fill="${c}"/><circle cx="${r(x + dx)}" cy="${r(y + dy)}" r=".14" fill="#f9d64a"/>`;
     k += g;
-    tischUnter.push({ id: "tortilla", de: "die Tortilla", syl: "Tor-TIL-la", it: "la tortilla", itSyl: "tor-TI-glia", en: "tortilla", x: TI.x + x, y: TI.y + y, kunst: flaeche(-6.4, -6.8, 12.8, 7, 0.4),
+    tischUnter.push({ id: "tortilla", de: "die Tortilla", syl: "Tor-TIL-la", it: "la tortilla", itSyl: "tor-TIL-la", en: "tortilla", x: TI.x + x, y: TI.y + y, kunst: flaeche(-6.4, -6.8, 12.8, 7, 0.4),
       tipp: "Tortillas sind dünne Fladen aus Maismehl – frisch und warm im Tuch." });
   }
   /* DER TACO — drei weiche, gefaltete Maistortillas mit Cochinita pibil und rosa Zwiebeln */
@@ -833,6 +833,7 @@ const tischUnter = [];
       for (let i = 0; i < 4; i++) g += `<circle cx="${r(x + dx - 1.3 + i * 0.85)}" cy="${r(y - 1.5 - (i % 2) * 0.45)}" r=".16" fill="#b98a46" opacity=".8"/>`;
       g += `</g>`;
     }
+    g += `<ellipse cx="${x}" cy="${y - 2}" rx="6.4" ry="2.4" fill="${S.lg("tacolicht", [[0, "#3a1a08", 0.22], [0.55, "#fff", 0], [1, "#fff4d0", 0.3]], 0, 0, 1, 0)}"/>`;
     k += g;
     tischUnter.push({ id: "taco", de: "der Taco", syl: "TA-co", it: "il taco", itSyl: "TA-co", en: "taco", x: TI.x + x, y: TI.y + y, kunst: flaeche(-6.2, -5, 12.4, 5.4, 0.4),
       tipp: "In Yucatán isst man Tacos mit Cochinita pibil – Schweinefleisch mit rosa Zwiebeln." });
@@ -855,8 +856,10 @@ const tischUnter = [];
     let g = `<ellipse cx="${x - 2.4}" cy="${y - 1.4}" rx="1.6" ry="2" fill="#2f4a1c" transform="rotate(-30 ${x - 2.4} ${y - 1.4})"/>`;
     g += `<path d="M${x} ${y} Q${x - 2.2} ${y - 0.4} ${x - 2} ${y - 2.6} Q${x - 1.4} ${y - 4.4} ${x + 0.2} ${y - 4.2} Q${x + 2} ${y - 3.8} ${x + 2} ${y - 1.6} Q${x + 1.8} ${y + 0.2} ${x} ${y} Z" fill="#355e1e"/>`;
     g += `<path d="M${x} ${y - 0.5} Q${x - 1.6} ${y - 0.8} ${x - 1.4} ${y - 2.6} Q${x - 1} ${y - 3.8} ${x + 0.2} ${y - 3.6} Q${x + 1.5} ${y - 3.3} ${x + 1.4} ${y - 1.6} Q${x + 1.3} ${y - 0.4} ${x} ${y - 0.5} Z" fill="#d8e88a"/>`;
-    g += `<circle cx="${x}" cy="${y - 1.8}" r=".95" fill="#8a5a2a"/><circle cx="${x - 0.3}" cy="${y - 2.1}" r=".3" fill="#c48a52"/>`;
-    k += g;
+    g += `<circle cx="${x}" cy="${y - 1.8}" r=".95" fill="${S.rg("kern", [[0, "#c48a52"], [0.6, "#8a5a2a"], [1, "#5e3a18"]], 0.35, 0.3)}"/><circle cx="${x - 0.3}" cy="${y - 2.1}" r=".25" fill="#f0c890"/>`;
+    /* glänzende Schale der ganzen Avocado, Schatten auf dem Wachstuch */
+    g += `<ellipse cx="${x - 2.1}" cy="${y - 2.2}" rx=".35" ry=".7" fill="#8fb46a" opacity=".7" transform="rotate(-30 ${x - 2.1} ${y - 2.2})"/><ellipse cx="${x - 3.6}" cy="${y + 0.2}" rx="2.4" ry=".45" fill="#5a3a1a" opacity=".3"/>`;
+    k = k + g;
     tischUnter.push({ id: "avocado", de: "die Avocado", syl: "A-vo-CA-do", it: "l'avocado", itSyl: "a-vo-CA-do", en: "avocado", x: TI.x + x, y: TI.y + y, kunst: flaeche(-4.4, -4.8, 7, 5.2, 0.4),
       tipp: "Die Avocado stammt aus Mexiko. Schon die Maya und Azteken haben sie gegessen." });
   }
