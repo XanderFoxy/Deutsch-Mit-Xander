@@ -429,7 +429,8 @@ bodenSchatten(17.5, 1.5, 0.4, 1.22, 0.26);
     const pts = [[s * 27, 60], [s * 70, 60], [s * 70, 148], [s * 9, 148], [s * 9, 112], [s * 27, 100]];
     k += `<path d="M${pts.map(([X, D]) => `${r(Math.min(400, Math.max(0, xG(D, X))))} ${r(yG(D))}`).join(" L")} Z" fill="${RASEN}"/>`;
     /* Buchsbaumkante zum Kies */
-    k += `<path d="M${r(xG(66, s * 27))} ${r(yG(66))} L${r(xG(100, s * 27))} ${r(yG(100))}" stroke="#3f6b2e" stroke-width="1.1"/>`;
+    const kx = (D) => r(Math.min(400, Math.max(0, xG(D, s * 27))));
+    k += `<path d="M${kx(72)} ${r(yG(72))} L${kx(100)} ${r(yG(100))}" stroke="#3f6b2e" stroke-width="1.1"/>`;
   }
   S.teil({ id: "rasen", de: "der Rasen", syl: "RA-sen", it: "il prato", itSyl: "PRA-to", en: "lawn", x: 0, y: 0, kunst: k });
 }

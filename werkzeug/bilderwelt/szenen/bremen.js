@@ -242,73 +242,86 @@ const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
 }
 
 /* =====================================================================
-   2 — DER DOM ST. PETRI (zwei Westtürme hinter der Bürgerschaft)
-       Lupe: Turmspitze, Fensterrose
+   2 — DER DOM ST. PETRI (zwei Westtürme hinter der Bürgerschaft; der
+       Nordturm steht über der Lücke neben dem Rathaus) — Lupe:
+       Turmspitze, Turm, Fensterrose
    ===================================================================== */
-const DOM = { x: 75, ys: [-38, -26], yn: [-14, -2], top: 56, spitze: 97 };
+const DOM = { x: 75, top: 56, spitze: 97 };
 const domTeile = {};
 {
   let k = "";
-  const W = ebene(DOM.x, -2, 0, -1);     // Westfront: s = 0 (Norden) … 36 (Süden), im Bild nach rechts
-  /* Kirchenschiff dahinter (Dach aus Kupfer) */
-  k += pfad(poly([[DOM.x + 6, -26, 30], [DOM.x + 70, -26, 30], [DOM.x + 70, -20, 42], [DOM.x + 6, -20, 42]], 6), KUPFER_D);
-  /* Mittelteil mit Giebel und Fensterrose (leicht zurück) */
-  const M = ebene(DOM.x + 0.8, -2, 0, -1);
-  k += pfad(fp(M, [[12, 0], [24, 0], [24, 36], [18, 45], [12, 36]]), DOMSTEIN);
-  k += `<path d="${fl(M, [[11.6, 36], [18, 45.4], [24.4, 36]])}" stroke="#a89b80" stroke-width=".5" fill="none"/>`;
-  /* Fensterrose: Kreis mit Maßwerk */
+  const W = ebene(DOM.x, 8, 0, -1);           // Westfront: s = 0 (Nordecke) … 36 (Südecke), im Bild nach rechts
+  const M = ebene(DOM.x + 0.8, 8, 0, -1);
+  /* Stein: hell, nach rechts (Süden) zunehmend im Streiflicht der Südsonne */
+  const ST = S.lg("domst", [[0, "#cbbfa5"], [0.6, "#dccfb2"], [1, "#eadfc4"]], 0, 0, 1, 0);
+  const ST_D = "#a99c80", FUGE = "#9a8e74";
+  /* Kirchenschiff dahinter: Kupferdach */
+  k += pfad(poly([[DOM.x + 6, -16, 30], [DOM.x + 70, -16, 30], [DOM.x + 70, -10, 42], [DOM.x + 6, -10, 42]], 6), KUPFER_D);
+  /* Mittelteil: Portalzone (verdeckt), Zwerggalerie, Fensterrose mit Rahmen, Giebel */
+  k += pfad(fp(M, [[12, 0], [24, 0], [24, 36], [18, 45], [12, 36]]), ST);
+  k += `<path d="${fl(M, [[11.6, 36], [18, 45.4], [24.4, 36]])}" stroke="${ST_D}" stroke-width=".6" fill="none"/>`;
+  for (let i = 0; i < 7; i++) { const c = 13.2 + i * 1.6; k += pfad(fp(M, bogen(c, 1, 20.4, 22.6, 4)), "#4a443c") + pfad(fr(M, c + .62, 20.4, c + .98, 23.3), "#efe4c9"); }
+  k += pfad(fr(M, 12.6, 23.4, 23.4, 24), "#d9ccaf") + pfad(fr(M, 12.6, 20, 23.4, 20.4), "#d9ccaf");
   {
-    const c = pr(...M(18, 29)), rr = 4.2 * mass(DOM.x, -20);
-    let g = `<circle cx="${r(c[0])}" cy="${r(c[1])}" r="${r(rr * 1.18)}" fill="#c3b598"/><circle cx="${r(c[0])}" cy="${r(c[1])}" r="${r(rr)}" fill="${S.rg("rose", [[0, "#6a7f95"], [0.6, "#3e4b5a"], [1, "#2c3540"]])}"/>`;
-    for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; g += `<line x1="${r(c[0] + Math.cos(a) * rr * .28)}" y1="${r(c[1] + Math.sin(a) * rr * .28)}" x2="${r(c[0] + Math.cos(a) * rr)}" y2="${r(c[1] + Math.sin(a) * rr)}" stroke="#cfc2a6" stroke-width=".35"/>`; }
-    g += `<circle cx="${r(c[0])}" cy="${r(c[1])}" r="${r(rr * .28)}" fill="none" stroke="#cfc2a6" stroke-width=".4"/><circle cx="${r(c[0])}" cy="${r(c[1])}" r="${r(rr * .66)}" fill="none" stroke="#cfc2a6" stroke-width=".3"/>`;
+    const c = pr(...M(18, 30)), rr = 4 * mass(DOM.x, -10);
+    let g = `<circle cx="${r(c[0])}" cy="${r(c[1])}" r="${r(rr * 1.24)}" fill="#c3b598"/><circle cx="${r(c[0])}" cy="${r(c[1])}" r="${r(rr * 1.12)}" fill="#e9dec4"/><circle cx="${r(c[0])}" cy="${r(c[1])}" r="${r(rr)}" fill="${S.rg("rose", [[0, "#7d8fa6"], [0.6, "#45536a"], [1, "#2c3540"]])}"/>`;
+    for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; g += `<line x1="${r(c[0] + Math.cos(a) * rr * .3)}" y1="${r(c[1] + Math.sin(a) * rr * .3)}" x2="${r(c[0] + Math.cos(a) * rr)}" y2="${r(c[1] + Math.sin(a) * rr)}" stroke="#d8cbb0" stroke-width=".4"/><circle cx="${r(c[0] + Math.cos(a + .26) * rr * .78)}" cy="${r(c[1] + Math.sin(a + .26) * rr * .78)}" r="${r(rr * .14)}" fill="none" stroke="#d8cbb0" stroke-width=".25"/>`; }
+    g += `<circle cx="${r(c[0])}" cy="${r(c[1])}" r="${r(rr * .3)}" fill="#8c6a3a" stroke="#d8cbb0" stroke-width=".45"/>`;
     k += g;
     domTeile.rose = { x: c[0], y: c[1], rr };
   }
-  /* zwei Türme */
-  const turm = (s0, s1, sued) => {
-    let g = fp(W, [[s0, 0], [s1, 0], [s1, DOM.top], [s0, DOM.top]]);
-    g = `<path d="${g}" fill="${DOMSTEIN}"/>`;
-    /* Südseite des Südturms: schmal sichtbar, in voller Sonne */
-    if (sued) g += pfad(poly([[DOM.x, -38, 0], [DOM.x + 12, -38, 0], [DOM.x + 12, -38, DOM.top], [DOM.x, -38, DOM.top]]), "#efe6d2");
-    /* Lisenen an den Kanten, Gesimse */
-    for (const s of [s0, s1 - 1.2]) g += pfad(fr(W, s, 0, s + 1.2, DOM.top), DOMSTEIN_D, ` opacity=".55"`);
-    for (const z of [18, 28, 38, 47.6, 55]) g += pfad(fr(W, s0 - .2, z, s1 + .2, z + .7), "#c4b697");
-    /* Fenster: unten schmale Rundbögen, oben gekuppelte Schallarkaden */
+  /* zwei Türme: Geschosse mit Gesimsen und Bogenfriesen, gekuppelte Schallfenster mit Mittelsäule,
+     am Helmfuß je Seite ein Giebel mit Fenster und vier Ecktürmchen, darüber der achteckige Kupferhelm */
+  const turm = (s0, s1) => {
     const m = (s0 + s1) / 2;
-    for (const z of [21, 31]) g += pfad(fp(W, bogen(m, 1.4, z, z + 3.8, 6)), "#3a3631");
-    for (const d of [-2.6, 0, 2.6]) g += pfad(fp(W, bogen(m + d, 1.5, 40, 44.6, 6)), "#2f2c29");
-    for (const d of [-3.4, -1.15, 1.15, 3.4]) g += pfad(fp(W, bogen(m + d, 1.3, 49.4, 53.4, 6)), "#2b2826");
-    /* Uhr am Turm (unsicher, nur am Südturm) */
-    /* Abschluss: vier kleine Giebel und Ecktürmchen, darüber der Kupferhelm */
-    g += pfad(fp(W, [[s0 + 1, DOM.top], [m, DOM.top + 5.4], [s1 - 1, DOM.top]]), DOMSTEIN);
-    g += pfad(fp(W, bogen(m, 1.6, DOM.top + .4, DOM.top + 2.4, 6)), "#2f2c29");
-    for (const s of [s0 + .6, s1 - .6]) g += pfad(fp(W, [[s - .6, DOM.top], [s + .6, DOM.top], [s + .2, DOM.top + 4.6], [s, DOM.top + 6], [s - .2, DOM.top + 4.6]]), DOMSTEIN_D);
-    const a = W(s0 + 1.2, DOM.top + 2), b = W(s1 - 1.2, DOM.top + 2), mm = W(m, 0);
-    const spitze = pr(mm[0] + 6, mm[1], DOM.spitze), fa = pr(...a), fb = pr(...b), fm = pr(mm[0] - 0.5, mm[1], DOM.top + 2);
-    g += `<path d="M${P(fa)} L${P(spitze)} L${P(fb)} Z" fill="${KUPFER_D}"/><path d="M${P(fm)} L${P(spitze)} L${P(fb)} Z" fill="${KUPFER}"/>`;
-    g += `<path d="M${P(fm)} L${P(spitze)}" stroke="#9fd0b8" stroke-width=".35"/>`;
-    /* Kreuz und Knauf */
-    g += `<circle cx="${r(spitze[0])}" cy="${r(spitze[1] - .8)}" r=".7" fill="${GOLD}"/><path d="M${r(spitze[0])} ${r(spitze[1] - 1.4)} V${r(spitze[1] - 5.4)} M${r(spitze[0] - 1.2)} ${r(spitze[1] - 4.2)} H${r(spitze[0] + 1.2)}" stroke="#c9a23c" stroke-width=".45"/>`;
-    return { g, spitze, m };
+    let g = pfad(fp(W, [[s0, 0], [s1, 0], [s1, DOM.top], [s0, DOM.top]]), ST);
+    for (const s of [s0, s1 - 1.3]) g += pfad(fr(W, s, 0, s + 1.3, DOM.top), ST_D, ` opacity=".45"`);
+    for (let z = 3; z < DOM.top; z += 1.2) g += `<path d="${fl(W, [[s0, z], [s1, z]])}" stroke="${FUGE}" stroke-width=".1" opacity=".35" fill="none"/>`;
+    for (const z of [12, 22, 32, 42]) {
+      g += pfad(fr(W, s0 - .25, z, s1 + .25, z + .7), "#e9dcbd") + pfad(fr(W, s0 - .25, z - .25, s1 + .25, z), "#8c7f66", ` opacity=".6"`);
+      let fr2 = ""; for (let t = s0 + 1.3; t < s1 - 1.4; t += 1.15) fr2 += fl(W, bogen(t + .55, 1, z - 1.1, z - .7, 4).slice(1, -1)) + " ";
+      g += `<path d="${fr2}" stroke="${ST_D}" stroke-width=".25" fill="none"/>`;
+    }
+    g += pfad(fp(W, bogen(m, 1.3, 15, 19, 6)), "#3a3631") + pfad(fp(W, bogen(m, 1.3, 25, 29, 6)), "#3a3631");
+    /* Glockengeschoss: zwei gekuppelte Schallfenster mit Mittelsäule und Läden */
+    for (const d of [-2.6, 2.6]) {
+      g += pfad(fp(W, bogen(m + d, 3.6, 33.6, 39.6, 8)), "#bcae90");
+      for (const e of [-.85, .85]) g += pfad(fp(W, bogen(m + d + e, 1.4, 34, 38.6, 6)), "#2c2926");
+      for (let z = 34.6; z < 38.6; z += .7) g += `<path d="${fl(W, [[m + d - 1.5, z], [m + d + 1.5, z]])}" stroke="#6a5f50" stroke-width=".22"/>`;
+      g += pfad(fr(W, m + d - .16, 34, m + d + .16, 38.8), "#efe4c9");
+    }
+    for (const d of [-3.4, -1.15, 1.15, 3.4]) g += pfad(fp(W, bogen(m + d, 1.5, 44.6, 49.4, 6)), "#2c2926") + pfad(fr(W, m + d + .82, 44.6, m + d + 1.06, 50.6), "#efe4c9");
+    g += pfad(fr(W, s0 - .3, 52.6, s1 + .3, DOM.top), "#e9dcbd");
+    /* Helm: hinter den Giebeln aufsteigend, Westflanke und Südwestflanke */
+    const fuss = DOM.top + 2.2, spitze = pr(DOM.x + 6, 8 - m, DOM.spitze);
+    const hl = pr(...W(s0 + 1.6, fuss)), hm = pr(DOM.x + .4, 8 - m, fuss), hr = pr(...W(s1 - 1.6, fuss));
+    g += `<path d="M${P(hl)} L${P(spitze)} L${P(hm)} Z" fill="${KUPFER_D}"/><path d="M${P(hm)} L${P(spitze)} L${P(hr)} Z" fill="${KUPFER}"/>`;
+    g += `<path d="M${P(hm)} L${P(spitze)}" stroke="#a7d8c0" stroke-width=".35"/>`;
+    for (let i = 1; i < 6; i++) { const t = i / 6; const a = [hl[0] + (spitze[0] - hl[0]) * t, hl[1] + (spitze[1] - hl[1]) * t], b = [hr[0] + (spitze[0] - hr[0]) * t, hr[1] + (spitze[1] - hr[1]) * t]; g += `<path d="M${P(a)} L${P(b)}" stroke="#3f6e5e" stroke-width=".2" opacity=".6"/>`; }
+    /* Giebel mit Fenster und Ecktürmchen davor */
+    g += pfad(fp(W, [[s0 + 1, DOM.top], [s1 - 1, DOM.top], [m, DOM.top + 6.2]]), ST);
+    g += `<path d="${fl(W, [[s0 + .8, DOM.top], [m, DOM.top + 6.4], [s1 - .8, DOM.top]])}" stroke="#efe4c9" stroke-width=".5" fill="none"/>`;
+    g += pfad(fp(W, bogen(m, 1.6, DOM.top + .5, DOM.top + 2.6, 6)), "#2c2926");
+    for (const s of [s0 + .65, s1 - .65]) g += pfad(fp(W, [[s - .65, DOM.top], [s + .65, DOM.top], [s + .65, DOM.top + 2.6], [s, DOM.top + 6.6], [s - .65, DOM.top + 2.6]]), ST) + pfad(fr(W, s + .2, DOM.top, s + .65, DOM.top + 2.6), ST_D);
+    g += `<circle cx="${r(spitze[0])}" cy="${r(spitze[1] - .8)}" r=".7" fill="${GOLD}"/><path d="M${r(spitze[0])} ${r(spitze[1] - 1.4)} V${r(spitze[1] - 5.2)} M${r(spitze[0] - 1.1)} ${r(spitze[1] - 4.1)} H${r(spitze[0] + 1.1)}" stroke="#c9a23c" stroke-width=".45"/>`;
+    return { g, spitze, hl, hr };
   };
-  const tn = turm(0, 12, false), ts = turm(24, 36, true);
+  const tn = turm(0, 12), ts = turm(24, 36);
   k += tn.g + ts.g;
+  /* Luftperspektive: ein Hauch Himmelsblau über dem ganzen Dom (90 m entfernt) */
+  k = k + `<g opacity=".14">${k.replace(/fill="[^"]*"/g, 'fill="#bcd0e4"').replace(/stroke="[^"]*"/g, 'stroke="none"')}</g>`;
   domTeile.spitze = ts.spitze;
-  domTeile.belfry = pr(...W(6, 47));
-  /* Licht: Westseiten im Streiflicht, Dunst der Entfernung */
-  /* Dunst der Entfernung nur über dem Mauerwerk (nicht über dem Himmel) */
-  for (const [a, b] of [[0, 12], [12, 24], [24, 36]]) k += pfad(fp(W, [[a, 0], [b, 0], [b, a === 12 ? 36 : DOM.top], [a, a === 12 ? 36 : DOM.top]]), S.lg("domluft", [[0, "#c7d6e2", 0.3], [1, "#c7d6e2", 0.08]]));
-  const sp = domTeile.spitze;
+  const sp = ts.spitze, hl = ts.hl, hr = ts.hr, tA = pr(...W(0, 22)), tB = pr(...W(12, DOM.top));
   S.teil({ id: "dom", de: "der Dom", syl: "DOM", it: "il duomo", itSyl: "DUO-mo", en: "cathedral", x: 0, y: 0, kunst: k,
-    tipp: "Der Dom St. Petri ist über 1200 Jahre alt. Seine zwei Türme sind fast 100 Meter hoch.",
-    zoom: { x: r(domTeile.rose.x - 64), y: r(domTeile.rose.y - 70), w: 128, h: 85 },
+    tipp: "An dieser Stelle steht seit über 1200 Jahren eine Kirche. Der Dom aus Stein ist fast 1000 Jahre alt; seine Türme sind fast 100 Meter hoch.",
+    zoom: { x: r(domTeile.rose.x - 66), y: r(sp[1] - 4), w: 132, h: 88 },
     unter: [
-      { id: "turmspitze", de: "die Turmspitze", syl: "TURM-spit-ze", it: "la guglia", itSyl: "GU-glia", en: "spire", x: sp[0], y: domTeile.rose.y - 62, kunst: flaeche(-7, -6, 14, 10),
+      { id: "turmspitze", de: "die Turmspitze", syl: "TURM-spit-ze", it: "la guglia", itSyl: "GU-glia", en: "spire", x: sp[0], y: sp[1],
+        kunst: `<path class="bw-flaeche" d="M-1.5 -2 L${r(hl[0] - sp[0] - 1)} ${r(hl[1] - sp[1] + 1)} L${r(hr[0] - sp[0] + 1)} ${r(hr[1] - sp[1] + 1)} L1.5 -2 Z" fill="rgba(255,255,255,0.001)"/>`,
         tipp: "Die Turmspitzen sind mit Kupfer gedeckt. Mit der Zeit wird Kupfer grün." },
-      { id: "glockenturm", de: "der Glockenturm", syl: "GLO-cken-turm", it: "il campanile", itSyl: "cam-pa-NI-le", en: "bell tower", x: domTeile.belfry[0], y: domTeile.belfry[1], kunst: flaeche(-7, -9, 14, 16),
-        tipp: "Hinter den hohen Bogenfenstern oben im Turm hängen die Glocken." },
-      { id: "fensterrose", de: "die Fensterrose", syl: "FENS-ter-ro-se", it: "il rosone", itSyl: "ro-SO-ne", en: "rose window", x: domTeile.rose.x, y: domTeile.rose.y, kunst: flaecheEllipse(0, 0, domTeile.rose.rr * 1.25, domTeile.rose.rr * 1.25),
+      { id: "turm", de: "der Turm", syl: "TURM", it: "la torre", itSyl: "TOR-re", en: "tower", x: (tA[0] + tB[0]) / 2, y: tB[1], kunst: flaeche(-(tB[0] - tA[0]) / 2 - .5, 0, tB[0] - tA[0] + 1, tA[1] - tB[1]),
+        tipp: "Oben im Turm hängen hinter den Schallfenstern die Glocken." },
+      { id: "fensterrose", de: "die Fensterrose", syl: "FENS-ter-ro-se", it: "il rosone", itSyl: "ro-SO-ne", en: "rose window", x: domTeile.rose.x, y: domTeile.rose.y, kunst: flaecheEllipse(0, 0, domTeile.rose.rr * 1.3, domTeile.rose.rr * 1.3),
         tipp: "Die runde Fensterrose sitzt über dem Hauptportal zwischen den Türmen." },
     ] });
 }
