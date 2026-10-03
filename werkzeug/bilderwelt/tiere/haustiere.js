@@ -1148,15 +1148,15 @@ module.exports = [
       const TIEF = "#2a2420", W1 = "#f6f2ea", W2 = "#d9d3c8", W3 = "#a8a7aa";
       const V = (n, w, t, u) => T.volumen(n, { weich: w, tiefe: t, umgebung: u });
       /* Fell je Platte: flache, lange Strähnen (2–3 cm), Kontrast höchstens ±12 % */
-      const satz = (k, d, od, h, oh, L = 1.9) => fellSatz(T, k, { L, k: 5, w: 0.055, breit: 0.28, facher: 0.12, krumm: 0.08, dunkel: d, od, hell: h, oh });
-      const FW = satz("w", "#8a8478", [0.08, 0.14], "#ffffff", [0.2, 0.4]);
-      const FR = satz("r", "#8a4416", [0.22, 0.34], "#f0b070", [0.18, 0.32]);
-      const FB = satz("b", "#000000", [0.3, 0.5], "#5a6070", [0.14, 0.28]);
-      const FWk = satz("wk", "#8a8478", [0.08, 0.14], "#ffffff", [0.2, 0.4], 0.6), FBk = satz("bk", "#000000", [0.3, 0.5], "#5a6070", [0.12, 0.24], 0.6);
+      const satz = (k, d, od, h, oh, L = 1.4) => fellSatz(T, k, { L, k: 5, w: 0.055, breit: 0.28, facher: 0.12, krumm: 0.08, dunkel: d, od, hell: h, oh });
+      const FW = satz("w", "#8a8478", [0.05, 0.1], "#ffffff", [0.12, 0.26]);
+      const FR = satz("r", "#8a4416", [0.14, 0.24], "#f0b070", [0.12, 0.22]);
+      const FB = satz("b", "#000000", [0.18, 0.32], "#5a6070", [0.08, 0.16]);
+      const FWk = satz("wk", "#8a8478", [0.05, 0.1], "#ffffff", [0.12, 0.26], 0.6), FBk = satz("bk", "#000000", [0.18, 0.32], "#5a6070", [0.07, 0.14], 0.6);
       const rs = (k, d, h, L = 0.42, wi = 22) => randSatz(T, k, { L, k: 4, w: 0.04, winkel: wi, dunkel: d, od: [0.9], hell: h, oh: [0.95] });
-      const SW = rs("w", "#cfc9be", "#f8f5ee"), SR = rs("r", "#9a5020", "#c87a40"), SB = rs("b", "#0e0c0b", "#34363c"), SP = rs("p", "#9a5020", "#c87a40", 0.7, 14), SPb = rs("pb", "#0e0c0b", "#2a2c30", 0.7, 14);
+      const SW = rs("w", "#cfc9be", "#f8f5ee"), SR = rs("r", "#9a5020", "#c87a40"), SB = rs("b", "#0e0c0b", "#34363c"), SP = rs("p", "#9a5020", "#c87a40", 0.5, 14), SPb = rs("pb", "#0e0c0b", "#2a2c30", 0.45, 14);
       /* ---------- Silhouette: schweres Hinterteil, kein Hals, Ramsnase, Lippenstufe, kleines Kinn, konkave Kehle ---------- */
-      const leib = [[-10.6, -1.0], [-12.3, -2.6], [-13.2, -5.2], [-12.9, -8.0], [-11.4, -10.4], [-8.6, -11.9], [-4.6, -12.5], [-0.4, -12.4], [3.4, -12.0], [6.2, -11.6], [8.4, -10.9], [10.1, -9.7],
+      const leib = [[-10.6, -1.0], [-12.3, -2.6], [-13.2, -5.2], [-12.9, -8.0], [-11.4, -10.4], [-8.6, -11.9], [-4.6, -12.5], [-0.4, -12.4], [2.6, -11.9], [4.0, -11.75], [5.6, -11.95], [7.0, -11.75], [8.6, -11.1], [10.1, -9.7],
         [11.35, -8.3], [12.15, -6.9], [12.5, -5.7], [12.48, -4.95], [12.2, -4.55], [11.9, -4.3], [11.92, -3.75], [11.7, -3.48], [11.78, -3.2], [11.55, -2.85], [11.0, -2.62], [10.3, -2.35], [9.5, -1.75],
         [8.2, -1.2], [4, -0.85], [0, -0.62], [-3, -0.5], [-4.8, -0.28], [-6.2, -0.12], [-8, -0.14], [-9.4, -0.6]];
       const leibId = pfad(T, leib);
@@ -1174,7 +1174,6 @@ module.exports = [
       const lf = feld(leib, 4.2, (x, y) => (y > -2 ? 0.1 : 0));
       const lic = (x, y) => (lf(x, y) + 0.3) / 1.05;
       const flow = (x, y) => {
-        if (Math.hypot(x - 7.7, y + 7.5) < 1.6) return Math.atan2(y + 7.5, x - 7.7) * 57 + 90;   // um das Auge
         if (x > 9.6) return 196;
         return 180 + (y > -7 ? 14 * klemm((y + 7) / 5) : -4 * klemm((-y - 9) / 3));            // Rumpf ±5°, Flanke nach hinten unten
       };

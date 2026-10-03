@@ -491,7 +491,6 @@ const zeichneListe = (L) => {
     raus.push(e);
   }
   let s = "";
-  if (process.env.SFDBG) { const st = { box: 0, baum: 0, boden: 0, poly: 0, fen: 0 }; for (const e of raus) { if (e.baum) st.baum++; else if (e.L !== undefined) { st.box++; st.poly += e.V.length; st.fen += e.V.filter((v) => v.o).length; } else st.boden++; } console.error(JSON.stringify(st)); }
   for (const e of raus.reverse()) {
     const g = e.t > 250 ? 1 : e.t > 90 ? 2 : 10;
     if (e.baum) { const [x, y, rr, f] = e.baum; s += `<circle cx="${zahl(x, g)}" cy="${zahl(y, g)}" r="${zahl(rr, 10)}" fill="${f}"/>`; continue; }
@@ -656,7 +655,6 @@ const HAUS = {};
   DECK.forEach((q) => q.length > 2 && decke(q));
   decke(GARTEN); decke(BEET);
   const sE = zeichneListe(LE), sN = zeichneListe(LN);
-  if (process.env.SFDBG) { const z = require("zlib"); console.error("N", sN.length, z.gzipSync(sN).length, "E", sE.length, z.gzipSync(sE).length, "rest", k.length, z.gzipSync(k).length); }
   k = sN + sE + k;
   const er = HAUS.erker;
   S.teil({ id: "holzhaus", de: "das Holzhaus", syl: "HOLZ-haus", it: "la casa di legno", itSyl: "CA-sa di LE-gno", en: "wooden house", x: 0, y: 0, kunst: k,

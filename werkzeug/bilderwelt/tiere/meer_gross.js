@@ -755,7 +755,7 @@ function buckelwal(T) {
   const DUNKEL = "#22272d", WEISS = "#e6e7e2";
   /* Rückenlinie mit breitem Buckel unter der Finne, Knoten auf der Schnauze, Knöchelreihe auf dem Schwanzstiel */
   const oben = H.buckel([[1401, -226], [1399.5, -231.5], [1395, -235.6], [1384, -240.5], [1352, -250], [1302, -262], [1242, -274], [1182, -285], [1124, -294], [1092, -301], [1074, -305], [1040, -313], [980, -326], [910, -337], [830, -345], [750, -349], [680, -350], [640, -351], [600, -353], [560, -357], [522, -360], [490, -357], [452, -349], [410, -337], [370, -323], [330, -308], [280, -289], [230, -271], [180, -256], [130, -245], [90, -239], [60, -236], [32, -232], [8, -229.5]],
-    [[1350, 2, 6], [1300, 2.6, 7], [1232, 3, 8], [1160, 2.6, 8], [1100, 2, 7], [434, 5, 15], [396, 4.6, 14], [358, 4.2, 13], [320, 3.8, 12], [282, 3.4, 12], [244, 3, 11], [206, 2.6, 10]]);
+    (F ? [[1350, 2, 6], [1300, 2.6, 7], [1232, 3, 8], [1160, 2.6, 8], [1100, 2, 7]] : []).concat([[434, 5, 15], [396, 4.6, 14], [358, 4.2, 13], [320, 3.8, 12], [282, 3.4, 12], [244, 3, 11], [206, 2.6, 10]]));
   const R = H.rumpf(oben,
     [[1401, -226], [1402.5, -216], [1400, -205], [1393, -196], [1382, -188], [1362, -176], [1332, -158], [1292, -136], [1242, -113], [1182, -90], [1112, -70], [1040, -56], [970, -49], [910, -49], [850, -55], [780, -67], [700, -85], [620, -108], [540, -132], [460, -155], [400, -169], [340, -182], [280, -192], [220, -200], [160, -206], [116, -210], [84, -213], [60, -216], [32, -221], [8, -226.5]]);
   const P = R.P;
@@ -786,7 +786,8 @@ function buckelwal(T) {
     furchen.push(z);
     if (F && (i === 3 || i === 7 || i === 10)) { const g = z.slice(5).map((p, j) => [p[0], p[1] + j * 2.4]); furchen.push(g); }
   }
-  k += L(furchen, "#2d3238", 2.4, 0.3) + (F ? L(furchen.map((z) => z.map((p) => [p[0], p[1] + 2.6])), "#ffffff", 2.4, 0.3) : "");
+  const PL = (z) => z.map((q) => "M" + q.map((p) => f(p[0]) + " " + f(p[1])).join(" ")).join("");
+  k += (F ? L(furchen, "#2d3238", 2.4, 0.3) : `<path d="${PL(furchen)}" fill="none" stroke="#2d3238" stroke-width="3" stroke-opacity=".3"/>`) + (F ? L(furchen.map((z) => z.map((p) => [p[0], p[1] + 2.6])), "#ffffff", 2.4, 0.3) : "");
   /* Licht von oben: Himmelslicht, EIN weicher Kernschatten, Reflexlicht am Bauch */
   k += weichF(R.band(60, 1398, -0.05, 0.28), "#c4d4e0", 0.1, 16);
   k += weichF(R.band(70, 1390, 0.5, 0.95), "#0d151d", 0.28, 22);
@@ -827,20 +828,21 @@ function buckelwal(T) {
   const B = [992, -132], E = [562, 40];
   const hoecker = [[0.08, 9], [0.17, 8.5], [0.26, 8], [0.34, 7], [0.43, 7], [0.51, 6], [0.6, 5.5], [0.67, 5], [0.75, 4.5], [0.82, 4], [0.88, 3]].map(([u, a]) => [u + (T.rnd() - 0.5) * 0.03, a * (0.8 + T.rnd() * 0.4)]);
   const prof = [];
-  for (let i = 0; i <= 44; i++) {
-    const u = i / 44;
+  const NF = F ? 44 : 22;
+  for (let i = 0; i <= NF; i++) {
+    const u = i / NF;
     const w = u < 0.27 ? 64 + (u / 0.27) * 32 : 96 * Math.pow(1 - (u - 0.27) / 0.73, 0.7) + 4 * (1 - u);
     const h = hoecker.reduce((a, [hu, ha]) => a + ha * Math.max(0, 1 - Math.abs(u - hu) / 0.035), 0);
     prof.push([u, w * 0.42 + h, w * 0.58 + 2 * Math.sin(u * 14) * (u > 0.2 ? 1 : 0)]);
   }
   const BF = H.flosse(B, E, prof, -14);
   let fo = "";
-  fo += weichF(BF.hinten.slice(4, 40).concat(BF.hinten.slice(4, 40).reverse().map((p) => [p[0] - BF.n[0] * 14, p[1] - BF.n[1] * 14])), "#000", 0.16, 6);
-  fo += weichF(BF.vorn.slice(2, 40).map((p) => [p[0] - BF.n[0] * 10, p[1] - BF.n[1] * 10]).concat(BF.vorn.slice(2, 40).reverse()), "#ffffff", 0.45, 4);
+  fo += weichF(BF.hinten.slice(Math.round(NF * 0.09), Math.round(NF * 0.9)).concat(BF.hinten.slice(Math.round(NF * 0.09), Math.round(NF * 0.9)).reverse().map((p) => [p[0] - BF.n[0] * 14, p[1] - BF.n[1] * 14])), "#000", 0.16, 6);
+  fo += weichF(BF.vorn.slice(Math.round(NF * 0.05), Math.round(NF * 0.9)).map((p) => [p[0] - BF.n[0] * 10, p[1] - BF.n[1] * 10]).concat(BF.vorn.slice(Math.round(NF * 0.05), Math.round(NF * 0.9)).reverse()), "#ffffff", 0.45, 4);
   fo += weichF([[1010, -168], [960, -158], [930, -118], [970, -98], [1000, -116]], DUNKEL, 0.45, 18);
   if (F) fo += [[0.24, 0.2, 24, 7, -24], [0.3, -0.12, 12, 4, -22], [0.36, 0.26, 9, 3, -20]].map(([u, v, rx, ry, w]) => { const cx = B[0] + (E[0] - B[0]) * u + BF.n[0] * v * 80, cy = B[1] + (E[1] - B[1]) * u + BF.n[1] * v * 80; return `<ellipse cx="${f(cx)}" cy="${f(cy)}" rx="${rx}" ry="${ry}" transform="rotate(${w} ${f(cx)} ${f(cy)})" fill="#3c454c" opacity=".35" filter="${H.weich(1.5, [cx - rx - 2, cy - rx - 2, cx + rx + 2, cy + rx + 2])}"/>`; }).join("");
   const sp2 = [];
-  for (let i = 0; i < (F ? 7 : 3); i++) { const u = 0.5 + i * 0.055, p = BF.vorn[Math.round(u * 44)]; sp2.push([p[0] + BF.n[0] * 4, p[1] + BF.n[1] * 4, 3.2 + T.rnd() * 1.6]); }
+  for (let i = 0; i < (F ? 7 : 3); i++) { const u = 0.5 + i * 0.055, p = BF.vorn[Math.round(u * NF)]; sp2.push([p[0] + BF.n[0] * 4, p[1] + BF.n[1] * 4, 3.2 + T.rnd() * 1.6]); }
   const flG = T.lg("bwFlosse", [[0, "#e4e7e5"], [1, "#c3c8c9"]], B[0] + 30, B[1] + 60, B[0] + 50, B[1] - 20, H.US);
   const bfB = T.box(BF.pts);
   s += weichF([[1000, -150], [960, -150], [930, -110], [980, -100]], "#000", 0.35, 10);
