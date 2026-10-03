@@ -543,7 +543,7 @@ function delfin(T) {
   k += weichL([[[248, -60], [256, -62.5], [264, -63.5]]], "#2a3138", 1.6, 0.25, 0.8);
   /* Licht von oben: schwaches Himmelslicht, EIN weicher Kernschatten, Reflexlicht am Bauchrand */
   k += weichF(R.band(10, 280, -0.05, 0.22), "#dce8f0", 0.07, 4);
-  k += weichF(R.band(20, 268, 0.45, 0.7), "#16202a", 0.16, 14);
+  k += weichF(R.band(20, 268, 0.42, 0.88), "#16202a", 0.09, 18);
   k += weichF(R.band(60, 262, 0.95, 1.05), "#dfe9ef", 0.35, 1);
   /* Okklusion unter dem Kopf zur Brustflosse */
   k += weichF([[244, -44], [232, -40], [222, -36], [228, -44], [238, -48]], "#16202a", 0.22, 3);

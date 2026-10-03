@@ -728,9 +728,9 @@ const LOMB = {};
     k += `<path d="${gk}" stroke="#3c3a36" stroke-width=".22" fill="none"/>`;
   }
   /* Mittellinie: Haarnadeln um Mittelpunkte links (−8,2) und rechts (−2,4), Radius 2,6 m */
-  const RHO = 2.6, DT = (i) => 12 + 14.5 * i, LA = (i) => (i % 2 ? -2.4 : -8.2);
+  const RHO = 2.6, DT = (i) => 14 + 14.4 * i, LA = (i) => (i % 2 ? -2.4 : -8.2);
   const stuecke = [];
-  let vor = [0, -5];
+  let vor = [9, -5];
   for (let i = 0; i < 8; i++) {
     const dc = DT(i), lc = LA(i), links = i % 2 === 0, bog = [];
     for (let j = 0; j <= 10; j++) { const t = Math.PI + (links ? 1 : -1) * Math.PI * j / 10; bog.push([dc + RHO * Math.cos(t), lc + RHO * Math.sin(t)]); }
