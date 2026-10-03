@@ -11,12 +11,17 @@
      4,6 m über der Kreuzung, ≈ 93 m über der Bucht.
    - ZWEI ECHTE BLICKE, aneinandergesetzt wie ein Panorama:
      links der Blick nach NORDEN die Hyde Street hinunter (Lochkamera,
-     Brennweite 300, Fluchtpunkt der Straße 168/131, Gefälle 13 % bis
-     Chestnut, dann 17–20 %; hinter der Kuppe bei Chestnut verschwindet
-     die Straße, dahinter erscheinen Dächer und die Bucht);
+     Brennweite 300, Fluchtpunkt der Straße 168/131, Gefälle 13–19 %,
+     dazwischen flache Kreuzungen (Chestnut, Francisco, Bay, North Point)
+     als Stufen; hinter der Kuppe bei Chestnut verschwindet die Straße,
+     erst am Fuß (Beach Street, Hyde Street Pier) taucht sie wieder auf);
      rechts der Blick nach OSTEN die kurvige Lombard Street hinunter
      (Fluchtpunkt 365/173, Gefälle 27 %), darüber der Coit Tower.
-     Dazwischen der Garten an der Nordostecke (?).
+     Dazwischen der Garten an der Nordostecke (?) mit einem Baum auf der
+     Nahtstelle. Die Blöcke dahinter (bis Jones bzw. Mason Street) sind
+     als Häuserkisten in echter Perspektive gebaut: Ränder bebaut, Höfe
+     mit Bäumen, Dachterrassen; Häuser im Blickfeld auf Alcatraz bleiben
+     unter der Sichtlinie.
      Ferne Wahrzeichen in echter Größe (300 · Höhe / Entfernung), nur
      die Richtungen gestaucht: Golden Gate Bridge −80° bis −66° (5,2–5,8 km,
      links), Alcatraz −8° (2,8 km), Angel Island direkt dahinter (6,6 km),
@@ -133,10 +138,9 @@ const WEINROT = S.lg("weinrot", [[0, "#9a2c38"], [1, "#6b1724"]]);
 const CREME = "#f1e7d0", HBLAU = "#8bb8de", GOLDS = "#e3c06a";
 
 /* =====================================================================
-   KULISSE — Himmel (Sonne links), Wolken, ferne Hügel, Pazifik im Gate
+   KULISSE — Himmel (Sonne hinter uns links, kein Sonnenfleck), Wolken, ferne Hügel, Pazifik im Gate
    ===================================================================== */
 S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b8fd0"], [0.55, "#9fc3e4"], [0.88, "#e2e1d6"], [1, "#f1e3c8"]])}"/>`);
-S.hinten(`<ellipse cx="-30" cy="20" rx="170" ry="110" fill="${S.rg("sonne", [[0, "#fff1c8", 0.7], [0.5, "#ffe9b8", 0.2], [1, "#ffe9b8", 0]])}"/>`);
 {
   let w = "";
   for (const [x, y, s] of [[230, 22, 1.1], [330, 36, 0.8], [140, 12, 0.7], [380, 12, 0.9], [270, 60, 0.5]]) {
@@ -310,9 +314,10 @@ S.hinten(`<ellipse cx="-30" cy="20" rx="170" ry="110" fill="${S.rg("sonne", [[0,
     g += `<path d="M${r(x - 4 * s)} ${r(y + 1 * s)} q${r(4 * s)} ${r(0.6 * s)} ${r(8 * s)} 0" stroke="#e8f1f4" stroke-width=".15" fill="none" opacity=".8"/>`;
     return g;
   };
-  /* Boot 12 m Mast: 1,2 km → 3 Einheiten; 1,6 km → 2,3 */
-  k += boot(118, FY(1200, 0), 0.34, false) + boot(246, FY(1600, 0), 0.26, true);
-  S.teil({ oben: true, id: "segelboot", de: "das Segelboot", syl: "SE-gel-boot", it: "la barca a vela", itSyl: "BAR-ca a VE-la", en: "sailboat", x: 0, y: 0, kunst: k + flaeche(112, 113, 12, 7, 0.4) + flaeche(240, 106, 12, 6, 0.4),
+  /* Boot 12 m Mast: 1,2 km → 3 Einheiten; 1,3 km → 2,8 (beide im freien Wasser, nicht hinter Häusern) */
+  const B1 = [150, FY(1200, 0)], B2 = [263, FY(1300, 0)];
+  k += boot(B1[0], B1[1], 0.34, false) + boot(B2[0], B2[1], 0.3, true);
+  S.teil({ oben: true, id: "segelboot", de: "das Segelboot", syl: "SE-gel-boot", it: "la barca a vela", itSyl: "BAR-ca a VE-la", en: "sailboat", x: 0, y: 0, kunst: k + flaeche(r(B1[0] - 6), r(B1[1] - 6), 12, 7.5, 0.4) + flaeche(r(B2[0] - 6), r(B2[1] - 6), 12, 7.5, 0.4),
     tipp: "Am Wochenende segeln viele Boote in der Bucht — der Wind kommt vom Pazifik." });
 }
 
@@ -526,6 +531,8 @@ const SL = 1 / Math.tan(SONNE.el * Math.PI / 180), SE_ = Math.sin(SONNE.az * Mat
   let gl = "", sl = "";
   for (const Xc of [-9.4, -5.6]) { for (const u of [-0.53, 0.53]) gl += `M${kante(Xc + u, 8.3, 140, 30).map(pr).join(" L")} `; sl += `M${kante(Xc, 8.3, 140, 30).map(pr).join(" L")} `; }
   s += `<path d="${gl}" stroke="#bcb9b2" stroke-width=".55" fill="none"/><path d="${sl}" stroke="#2b2926" stroke-width=".6" fill="none"/>`;
+  /* Kanaldeckel und Haltelinie in der Kreuzung */
+  for (const [X, d] of [[-7.5, 9.2], [-28, 9.6]]) { const [x, y] = PN(X, d, 0), q = F / d; s += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.4 * q)}" ry="${r(0.4 * q * 4.6 / d)}" fill="#55524e"/><ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.3 * q)}" ry="${r(0.3 * q * 4.6 / d)}" fill="none" stroke="#7a7671" stroke-width=".4"/>`; }
   for (let i = 0; i < 16; i++) { const d = 14 + rnd() * 40, X = -13 + rnd() * 11; s += `<circle cx="${r(PN(X, d, 0)[0])}" cy="${r(PN(X, d, zH(d))[1])}" r="${r(14 / d)}" fill="${rnd() < 0.5 ? "#6d6a66" : "#9a9692"}" opacity=".4"/>`; }
   S.hinten(s);
 }

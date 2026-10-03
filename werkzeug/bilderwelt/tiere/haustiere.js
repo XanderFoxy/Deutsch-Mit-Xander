@@ -994,7 +994,7 @@ module.exports = [
       const FSc = randSatz(T, "sc", { L: 0.62, k: 5, w: 0.05, winkel: 40, dunkel: "#c8bca2", od: [0.9], hell: "#f2eadc", oh: [0.95] });
       const FSo = randSatz(T, "so", { L: 0.22, k: 4, w: 0.025, winkel: 30, dunkel: "#6e5a42", od: [0.9], hell: "#a28c6a", oh: [0.9] });
       /* ---------- Formen (Rumpf 15 % kürzer als in Runde 2) ---------- */
-      const leib = [[-12.4, -1.25], [-14.6, -1.4], [-15.9, -2.6], [-17.3, -5.2], [-17.8, -9], [-17, -13.2], [-14.6, -17], [-10.4, -19.6], [-5.6, -19.4], [-1.6, -18.1], [1.6, -16.4], [3.6, -16.5], [5.4, -13],
+      const leib = [[-12.4, -1.25], [-14.6, -1.4], [-15.9, -2.6], [-17.3, -5.2], [-17.8, -9], [-17, -13.2], [-14.6, -17], [-10.4, -19.6], [-5.6, -19.4], [-1.6, -18.4], [1.6, -17.6], [3.4, -18.2], [5.4, -13],
         [5.0, -10.4], [6.9, -9], [8.9, -8.1], [10.1, -7], [10.35, -5.4], [10.25, -3.4], [10.5, -2.2], [11.2, -1.75], [11.75, -1.25], [12.0, -0.5], [11.65, 0, 1], [8.6, 0, 1],
         [8.35, -0.9], [8.4, -3.2], [8.0, -4.4], [5.5, -3.5], [1, -2.7], [-3, -2.4], [-5.6, -2.15], [-8.4, -1.7], [-10.6, -1.35]];
       const leibId = pfad(T, leib);
@@ -1100,10 +1100,11 @@ module.exports = [
           /* echter Fellring um das Auge: creme, innen scharf, außen ausgefranst, hinten 20 % breiter */
           `<path d="M${folge([10.5 - 1.42, -16.35])}a1.36 1.12 0 1 0 2.72 0a1.36 1.12 0 1 0 -2.72 0zM${folge([10.5 - 0.98, -16.3])}a.92 .8 0 1 1 1.84 0a.92 .8 0 1 1 -1.84 0z" fill="#e6d9bf" fill-rule="evenodd" opacity=".9"${zottel(T, "2 1", 0.12)}/>` +
           fell(T, kopf, FKo, { n: 120, flow: kflow, licht: klic, hell: 0.7, wo: (x, y) => Math.hypot(x - 10.5, y + 16.3) > 1.5 }),
+        blende: [0, 0.5, 0.2, 0.5, 0.15, 1],
         ueber: saum(T, kopf, FS, { abstand: 0.12, flow: kflow, licht: klic, wo: (x, y) => x > 9 && y < -12 && !(x > 15.4 && y > -15.8) }) +
           /* Hinterkopf, Wange und Kehle laufen mit langem Haarsaum über Nacken und Brust */
-          saum(T, kopf, FS, { abstand: 0.1, flow: (x, y) => (y > -12 ? 120 : 150), licht: () => 0.35, wo: (x, y) => x < 9 && y > -17.4 }) +
-          saum(T, kopf, FSc, { abstand: 0.1, flow: () => 120, licht: () => 0.9, wo: (x, y) => y > -11.2 && x < 14.4 }) +
+          saum(T, kopf, FS, { abstand: 0.1, flow: (x, y) => (y > -12 ? 120 : 150), licht: () => 0.35, wo: (x, y) => x < 11 && y > -17.4 }) +
+          saum(T, kopf, FSc, { abstand: 0.12, flow: () => 120, licht: () => 0.3, wo: (x, y) => y > -11.2 && x > 11 && x < 14.4 }) +
           /* Haare vom Auge weg an der Außenkante des Rings */
           (T.fein ? saum(T, [[9.12, -16.35], [9.5, -17.3], [10.5, -17.5], [11.5, -17.3], [11.86, -16.35], [11.5, -15.4], [10.5, -15.2], [9.5, -15.4]], FSo, { abstand: 0.12, flow: (x, y) => Math.atan2(y + 16.3, x - 10.5) * 57, licht: () => 0.3 }) : ""),
       }) + "</g>";
