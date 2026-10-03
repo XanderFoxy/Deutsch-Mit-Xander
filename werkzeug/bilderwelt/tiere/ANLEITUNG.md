@@ -1,6 +1,6 @@
 # Tier-Bibliothek – Anleitung für jede Gruppe (FASSUNG 854)
 
-XANDER (Funk 290), wörtlich: „ich möchte, dass die großen Tiere und die anderen Kleintiere noch mal richtig überarbeitet werden
+XANDER (Auftrag vom 03.10., Antwort Funk 290), wörtlich: „ich möchte, dass die großen Tiere und die anderen Kleintiere noch mal richtig überarbeitet werden
 … die sollen ihren natürlichen Original entsprechen … Ich möchte einen perfekten Löwen. Ich möchte einen perfekten Tiger, einen
 perfekten Wolf, einen perfekten Fuchs. Ich möchte perfekte Dinosaurier unmissverständlich auf höchstem Niveau wie in Jurassic
 Park … als perfekter Spieledesigner, als Profi-Grafikdesigner auf Hollywood-Niveau, sei ein schärfster Chef, ein strengster

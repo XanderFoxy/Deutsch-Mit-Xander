@@ -1,7 +1,7 @@
 /* =====================================================================
    TIER-BIBLIOTHEK — KERN (FASSUNG 854)
    ---------------------------------------------------------------------
-   XANDER (Funk 290): „ich möchte, dass die großen Tiere und die anderen
+   XANDER (Auftrag vom 03.10., Antwort Funk 290): „ich möchte, dass die großen Tiere und die anderen
    Kleintiere noch mal richtig überarbeitet werden … die sollen ihren
    natürlichen Original entsprechen … einen perfekten Löwen … perfekte
    Dinosaurier unmissverständlich auf höchstem Niveau wie in Jurassic Park".
