@@ -153,76 +153,82 @@ S.hinten(ci(60, 16, 60, RG("sonne", [[0, "#fff8dc", 0.6], [1, "#fff8dc", 0]])));
    HINTERE REIHE (Fuß y 136): Baumarkt, Fachmarktzentrum, Getränkemarkt
    ===================================================================== */
 {
-  const X0 = 2, X1 = 150, T = 98;
+  const X0 = 2, X1 = 150, T = 80;
   let k = pl([[X0, T], [X1, T], [X1 - 3, T - 3], [X0 + 3, T - 3]], "#9aa1a6");
   k += blech(X0, T, X1 - X0, 136 - T, LG("bmblech", [[0, "#d7dadc"], [1, "#b9bec1"]]));
-  k += re(X0, T, X1 - X0, 10, LG("bmband", [[0, "#f28c28"], [1, "#d96f12"]]));
-  k += tx(58, T + 8, 8.4, "BAUMARKT", "#fff", ' font-weight="bold" letter-spacing=".8"') + tx(122, T + 6.6, 3.2, "Haus · Garten · Werkzeug", "#fff");
+  k += re(X0, T, X1 - X0, 13, LG("bmband", [[0, "#f28c28"], [1, "#d96f12"]]));
+  k += tx(54, T + 10.4, 10.6, "BAUMARKT", "#fff", ' font-weight="bold" letter-spacing=".8"') + tx(124, T + 8.6, 3.6, "Haus · Garten · Werkzeug", "#fff");
   /* Eingang mit Glasschiebetür und Vordach */
-  k += re(36, 116, 34, 20, "#4a5157") + re(37, 117, 32, 19, GLAS) + li(53, 117, 53, 136, "#4a5157", 0.6) + re(33, 113.4, 40, 2.8, "#d96f12");
-  k += tx(53, 115.4, 2, "EINGANG", "#fff");
-  /* Werbebanner und Lieferrampe */
-  k += re(80, 113, 22, 12, "#fff") + tx(91, 118, 3, "Farben", "#d96f12", ' font-weight="bold"') + tx(91, 122, 2.4, "−20 %", "#c0262d", ' font-weight="bold"');
-  k += re(6, 120, 22, 16, "#7a8288") + li(6, 124, 28, 124, "#5f676c", 0.4) + li(6, 128, 28, 128, "#5f676c", 0.4) + li(6, 132, 28, 132, "#5f676c", 0.4) + tx(17, 118.6, 2, "Baustoffe", "#5f676c");
-  /* Gartencenter mit Zaun, Pflanzen und Erde-Paletten */
-  k += re(106, 112, 44, 24, LG("gcglas", [[0, "#e4f0e6"], [1, "#b7d2bc"]])) + tx(128, 116, 2.8, "Gartencenter", "#2e7d32", ' font-weight="bold"');
-  for (let i = 0; i < 7; i++) k += ci(110 + i * 6, 128 + (i % 2), 3 + (i % 3) * 0.6, ["#5d9c47", "#79b04f", "#4f8a3c"][i % 3]) + ci(110 + i * 6 + 1, 126.6, 0.8, ["#e63946", "#ffd23f", "#f06292"][i % 3]);
-  for (let x = 106; x <= 150; x += 2) k += li(x, 124, x, 136, "#2e5e3a", 0.3);
-  k += re(106, 124, 44, 0.6, "#2e5e3a");
-  k += re(76, 130, 10, 6, "#8a6a40") + re(76, 128, 10, 2, "#c99a5a") + re(88, 130, 10, 6, "#3f6b3a") + tx(93, 134, 1.6, "Erde", "#fff");
-  teil("vg_baumarkt", 18, 108, k, { tipp: "Im Baumarkt gibt es Werkzeug, Farbe, Holz und Pflanzen." });
+  k += re(34, 106, 38, 30, "#4a5157") + re(35, 107, 36, 29, GLAS) + li(53, 107, 53, 136, "#4a5157", 0.7) + re(31, 102, 44, 3.4, "#d96f12");
+  k += tx(53, 104.6, 2.4, "EINGANG", "#fff");
+  k += pl([[35, 128], [46, 107], [51, 107], [35, 136]], "#fff", ' opacity=".15"');
+  /* Werbebanner und Baustoff-Tor */
+  k += re(78, 100, 24, 15, "#fff") + tx(90, 106.4, 3.6, "Farben", "#d96f12", ' font-weight="bold"') + tx(90, 112, 3.4, "−20 %", "#c0262d", ' font-weight="bold"');
+  k += re(5, 106, 25, 30, "#7a8288");
+  for (let y = 110; y < 136; y += 4) k += li(5, y, 30, y, "#5f676c", 0.45);
+  k += tx(17.5, 104.4, 2.6, "Baustoffe", "#4a5157", ' font-weight="bold"');
+  /* Gartencenter (Glashaus) mit Zaun, Pflanzen und Erde-Paletten */
+  k += pl([[106, 100], [150, 100], [150, 136], [106, 136]], LG("gcglas", [[0, "#e4f0e6"], [1, "#b7d2bc"]]));
+  for (let x = 110; x < 150; x += 6) k += li(x, 100, x, 136, "#9fbfa6", 0.35);
+  k += re(106, 99, 44, 1.4, "#6f8f76") + tx(128, 105.6, 3.4, "Gartencenter", "#2e7d32", ' font-weight="bold"');
+  for (let i = 0; i < 7; i++) k += ci(110 + i * 6, 126 + (i % 2), 3.4 + (i % 3) * 0.7, ["#5d9c47", "#79b04f", "#4f8a3c"][i % 3]) + ci(110 + i * 6 + 1, 124.4, 0.9, ["#e63946", "#ffd23f", "#f06292"][i % 3]);
+  for (let x = 106; x <= 150; x += 2) k += li(x, 122, x, 136, "#2e5e3a", 0.3);
+  k += re(106, 122, 44, 0.7, "#2e5e3a");
+  k += re(76, 128, 12, 8, "#8a6a40") + re(76, 125.6, 12, 2.4, "#c99a5a") + re(90, 128, 12, 8, "#3f6b3a") + tx(96, 133, 2, "Erde", "#fff");
+  teil("vg_baumarkt", 18, 118, k, { tipp: "Im Baumarkt gibt es Werkzeug, Farbe, Holz und Pflanzen." });
 }
 /* Fachmarktzentrum: fünf Läden nebeneinander */
-const FM = { x0: 154, w: 36, top: 104 };
+const FM = { x0: 154, w: 36, top: 88 };
 S.hinten(re(FM.x0 - 1, FM.top - 4, FM.w * 5 + 2, 4, "#8c9398"));
 function laden(i, name, farbe, schrift, inhalt) {
   const x = FM.x0 + i * FM.w, T = FM.top;
   let k = blech(x, T, FM.w, 136 - T, LG("fmblech", [[0, "#e5e6e4"], [1, "#c9ccc9"]]), 2.4);
-  k += re(x + 1.5, T + 1.5, FM.w - 3, 8, farbe) + tx(x + FM.w / 2, T + 7.2, 4.2, schrift, "#fff", ' font-weight="bold"');
-  k += re(x + 2, T + 12, FM.w - 4, 24, "#3f464b") + re(x + 3, T + 13, FM.w - 6, 23, LG("fmglas", [[0, "#e9f1f5"], [1, "#b9ccd8"]]));
-  k += inhalt(x + 3, T + 13);
-  k += pl([[x + 3, T + 30], [x + 13, T + 13], [x + 17, T + 13], [x + 3, T + 36]], "#fff", ' opacity=".15"');
+  k += re(x + 1.5, T + 1.5, FM.w - 3, 10, farbe) + tx(x + FM.w / 2, T + 8.4, schrift.length > 10 ? 3.6 : 4.6, schrift, "#fff", ' font-weight="bold"');
+  k += re(x + 2, T + 15, FM.w - 4, 136 - T - 15, "#3f464b") + re(x + 3, T + 16, FM.w - 6, 136 - T - 16, LG("fmglas", [[0, "#e9f1f5"], [1, "#b9ccd8"]]));
+  k += `<g transform="translate(${r(x + 3)} 108) scale(1.05) translate(${r(-x - 3)} -108)">${inhalt(x + 3, 108)}</g>`;
+  k += re(x + 3, 133.6, FM.w - 6, 2.4, "#9aa1a6");
+  k += pl([[x + 3, T + 34], [x + 15, T + 16], [x + 19, T + 16], [x + 3, T + 44]], "#fff", ' opacity=".15"');
   k += li(x, T, x, 136, "#9aa1a6", 0.5);
   return k;
 }
 {
   const inhalt = (x, y) => { let g = ""; for (const [dx, dy, w, h] of [[2, 3, 13, 8], [17, 4, 11, 7], [3, 13, 9, 6], [14, 14, 13, 7]]) g += re(x + dx, y + dy, w, h, "#1d2226") + re(x + dx + 0.6, y + dy + 0.6, w - 1.2, h - 1.2, LG("tv", [[0, "#4fb3e8"], [0.5, "#7b5fd6"], [1, "#e85f9c"]], 0, 0, 1, 1)); return g + re(x + 2, y + 21, 26, 2, "#9aa1a6"); };
-  teil("vg_technik", FM.x0 + 9, 128, laden(0, "technik", "#c0262d", "TECHNIK", inhalt), { tipp: "Im Elektromarkt gibt es Fernseher, Handys und Computer." });
+  teil("vg_technik", FM.x0 + 9, 116, laden(0, "technik", "#c0262d", "TECHNIK", inhalt), { tipp: "Im Elektromarkt gibt es Fernseher, Handys und Computer." });
 }
 {
   const inhalt = (x, y) => re(x + 1, y + 6, 28, 3, "#fbfaf6") + re(x + 1, y + 13, 28, 9, "#fbfaf6") + re(x + 1, y + 12, 28, 1, "#6b5a48") + re(x + 9, y + 15, 9, 6, "#2b2f33") + re(x + 10, y + 16, 7, 4, "#45505a") + re(x + 21, y + 4, 7, 18, STAHL) + re(x + 10, y + 10.4, 6, 1.4, "#222") + li(x + 8, y + 13, x + 8, y + 22, "#ccc", 0.3) + li(x + 19, y + 13, x + 19, y + 22, "#ccc", 0.3);
-  teil("vg_kuechengeraete", FM.x0 + FM.w + 9, 128, laden(1, "kueche", "#2a7f62", "KÜCHEN", inhalt), { tipp: "Im Küchenstudio stehen Herd, Kühlschrank und Spülmaschine zur Ansicht." });
+  teil("vg_kuechengeraete", FM.x0 + FM.w + 9, 116, laden(1, "kueche", "#2a7f62", "KÜCHEN", inhalt), { tipp: "Im Küchenstudio stehen Herd, Kühlschrank und Spülmaschine zur Ansicht." });
 }
 {
   const inhalt = (x, y) => re(x + 3, y + 8, 8, 10, "#2a6fb4") + re(x + 4, y + 9, 6, 3, "#ffd23f") + `<path d="M${x + 4} ${y + 8} q3 -3 6 0" stroke="#1d4f82" stroke-width=".8" fill="none"/>` + re(x + 14, y + 12, 5, 7, "#e63946") + re(x + 19.6, y + 12, 5, 7, "#2a9d8f") + re(x + 25, y + 12, 4, 7, "#ffd23f") + li(x + 15, y + 6, x + 27, y + 2, "#f4a261", 1.4) + re(x + 1, y + 19, 28, 3, "#b98552");
-  teil("vg_schulsachen", FM.x0 + 2 * FM.w + 9, 128, laden(2, "buero", "#2a6fb4", "BÜRO &amp; SCHULE", inhalt), { tipp: "Vor dem Schulanfang kauft man hier Schulranzen, Hefte und Stifte." });
+  teil("vg_schulsachen", FM.x0 + 2 * FM.w + 9, 116, laden(2, "buero", "#2a6fb4", "BÜRO &amp; SCHULE", inhalt), { tipp: "Vor dem Schulanfang kauft man hier Schulranzen, Hefte und Stifte." });
 }
 {
   const inhalt = (x, y) => ci(x + 7, y + 12, 4, "#b07a45") + ci(x + 4.4, y + 8.6, 1.6, "#b07a45") + ci(x + 9.6, y + 8.6, 1.6, "#b07a45") + el(x + 7, y + 18, 4.4, 3.6, "#b07a45") + ci(x + 20, y + 16, 4, "#e63946") + `<path d="M${x + 16} ${y + 16} h8" stroke="#fff" stroke-width=".6"/>` + re(x + 14, y + 4, 4, 4, "#ffd23f") + re(x + 18.4, y + 4, 4, 4, "#2a9d8f") + re(x + 16.2, y + 0.4, 4, 4, "#e76f51") + re(x + 1, y + 21, 28, 2, "#9b5de5");
-  teil("vg_spielzeug", FM.x0 + 3 * FM.w + 9, 128, laden(3, "spiel", "#f4a100", "SPIELWELT", inhalt), { tipp: "Im Spielwarenladen gibt es Teddys, Bälle und Bausteine." });
+  teil("vg_spielzeug", FM.x0 + 3 * FM.w + 9, 116, laden(3, "spiel", "#f4a100", "SPIELWELT", inhalt), { tipp: "Im Spielwarenladen gibt es Teddys, Bälle und Bausteine." });
 }
 {
   const inhalt = (x, y) => `<path d="M${x + 6} ${y + 20} q-4 -1 -3 -5 q1 -3 3 -3 q-1 -3 2 -4 q3 1 2 4 q2 0 3 3 q1 4 -3 5 Z" fill="#c8742c"/>` + ci(x + 7.4, y + 15.4, 1.1, "#3b2412") + re(x + 7, y + 1, 1, 10, "#3b2412") + el(x + 21, y + 17, 6, 2, "#c0392b") + re(x + 15, y + 15, 12, 5, "#e74c3c") + el(x + 21, y + 15, 6, 2, "#f3f0ea") + ci(x + 25, y + 7, 3, "#d9a520") + li(x + 25, y + 4, x + 25, y + 10, "#8a6a10", 0.4) + re(x + 1, y + 21, 28, 2, "#3b2412");
-  teil("vg_instrumente", FM.x0 + 4 * FM.w + 9, 128, laden(4, "musik", "#3b2a63", "MUSIKHAUS", inhalt), { tipp: "Im Musikhaus kann man Gitarren und Schlagzeuge ausprobieren." });
+  teil("vg_instrumente", FM.x0 + 4 * FM.w + 9, 116, laden(4, "musik", "#3b2a63", "MUSIKHAUS", inhalt), { tipp: "Im Musikhaus kann man Gitarren und Schlagzeuge ausprobieren." });
 }
 {
-  const X0 = 338, X1 = 398, T = 106;
+  const X0 = 338, X1 = 398, T = 92;
   let k = blech(X0, T, X1 - X0, 136 - T, LG("gmblech", [[0, "#dfe6ea"], [1, "#c1ccd2"]]));
-  k += re(X0, T, X1 - X0, 9, LG("gmband", [[0, "#1f6fb2"], [1, "#16558a"]])) + tx((X0 + X1) / 2, T + 6.4, 4.6, "GETRÄNKEMARKT", "#fff", ' font-weight="bold"');
-  k += re(X0 + 4, 120, 18, 16, "#4a5157") + re(X0 + 5, 121, 16, 15, GLAS);
+  k += re(X0, T, X1 - X0, 11, LG("gmband", [[0, "#1f6fb2"], [1, "#16558a"]])) + tx((X0 + X1) / 2, T + 7.8, 5, "GETRÄNKEMARKT", "#fff", ' font-weight="bold"');
+  k += re(X0 + 3, 110, 20, 26, "#4a5157") + re(X0 + 4, 111, 18, 25, GLAS) + li(X0 + 13, 111, X0 + 13, 136, "#4a5157", 0.5) + re(X0 + 1, 107, 24, 2.6, "#16558a");
   /* Kästen gestapelt (rot, grün, gelb, blau) und Leergut-Schild */
   const kisten = ["#c0392b", "#2e8b57", "#f2b632", "#2a6fb4", "#c0392b", "#2e8b57"];
-  for (let j = 0; j < 3; j++) for (let i = 0; i < 5; i++) { const x = X0 + 26 + i * 6.2, y = 136 - (j + 1) * 4.2; if (j === 2 && i > 2) continue; k += re(x, y, 5.8, 4, kisten[(i + j) % 6]) + re(x + 0.6, y + 0.5, 4.6, 1, "#000", ' opacity=".25"'); for (let b = 0; b < 3; b++) k += re(x + 0.8 + b * 1.6, y - 1.2, 0.9, 1.4, "#3d6b3a"); }
-  k += re(X0 + 44, 117, 13, 4.4, "#fff") + tx(X0 + 50.5, 120.2, 2.4, "Leergut", "#1f6fb2", ' font-weight="bold"');
-  teil("vg_getraenkemarkt", X0 + 10, 112, k, { tipp: "Im Getränkemarkt kauft man Wasser und Saft in Kästen und bringt das Leergut zurück." });
+  for (let j = 0; j < 4; j++) for (let i = 0; i < 5; i++) { const x = X0 + 26 + i * 6.2, y = 136 - (j + 1) * 4.6; if (j === 3 && i > 2) continue; k += re(x, y, 5.8, 4, kisten[(i + j) % 6]) + re(x + 0.6, y + 0.5, 4.6, 1, "#000", ' opacity=".25"'); for (let b = 0; b < 3; b++) k += re(x + 0.8 + b * 1.6, y - 1.2, 0.9, 1.4, "#3d6b3a"); }
+  k += re(X0 + 42, 106, 15, 5, "#fff") + tx(X0 + 49.5, 109.6, 2.8, "Leergut", "#1f6fb2", ' font-weight="bold"');
+  teil("vg_getraenkemarkt", X0 + 13, 122, k, { tipp: "Im Getränkemarkt kauft man Wasser und Saft in Kästen und bringt das Leergut zurück." });
 }
 /* Parkplatz mit Stellplätzen und parkenden Autos (ein Teil, ohne Lupe) */
 {
   let k = re(0, 136, 400, 34, ASPHALT);
   for (let i = 0; i < 160; i++) k += ci(rnd() * 400, 137 + rnd() * 32, 0.15 + rnd() * 0.2, rnd() < 0.5 ? "#8c9094" : "#55595d", ' opacity=".6"');
-  for (let x = 4; x < 400; x += 11) k += li(x, 152, VPX + (x - VPX) * 1.08, 168, "#f2f2ee", 0.45);
+  for (let x = 14; x < 390; x += 11) k += li(x, 152, VPX + (x - VPX) * 1.08, 168, "#f2f2ee", 0.45);
   k += re(0, 151.6, 400, 0.5, "#f2f2ee");
-  for (const [x, f] of [[38, "#c0392b"], [71, "#e9ecef"], [104, "#2c3e50"], [170, "#2a6fb4"], [214, "#7f8c8d"], [247, "#f2f2ee"], [302, "#2e8b57"], [357, "#c0392b"], [379, "#34495e"]]) k += auto(x, 166, 20, f, x % 2 ? 1 : -1);
+  for (const [x, f] of [[38, "#c0392b"], [71, "#e9ecef"], [104, "#2c3e50"], [170, "#2a6fb4"], [214, "#7f8c8d"], [247, "#f2f2ee"], [302, "#2e8b57"], [340, "#c0392b"], [374, "#34495e"]]) k += auto(x, 167, 25, f, x % 2 ? 1 : -1);
   k += pl([[124, 152], [148, 152], [149, 143], [123, 143]], "none", ' stroke="#2e7d32" stroke-width=".5"');
   teil("vg_parkplatz", 140, 158, k, { tipp: "Vor den großen Märkten ist ein großer Parkplatz." });
 }
@@ -293,8 +299,8 @@ function laden(i, name, farbe, schrift, inhalt) {
 }
 {
   /* Tankstelle: Shop hinten, Dach über den Zapfsäulen, Preismast */
-  let k = re(48, 204, 68, 32, "#eef0f1") + re(48, 204, 68, 6, "#2e7d32") + tx(82, 208.6, 3.6, "SHOP · BISTRO · 24 h", "#fff", ' font-weight="bold"');
-  k += re(52, 213, 40, 20, GLAS) + re(96, 213, 16, 23, LG("ftuer", [[0, "#d4e8f2"], [1, "#8db3c9"]])) + re(56, 216, 10, 6, "#ffd23f") + tx(61, 220, 2, "Kaffee", "#7a4a00");
+  let k = re(48, 200, 68, 36, "#eef0f1") + re(48, 206.5, 68, 6, "#2e7d32") + tx(82, 211.1, 3.6, "SHOP · BISTRO · 24 h", "#fff", ' font-weight="bold"');
+  k += re(52, 215, 40, 18, GLAS) + re(96, 213, 16, 23, LG("ftuer", [[0, "#d4e8f2"], [1, "#8db3c9"]])) + re(56, 216, 10, 6, "#ffd23f") + tx(61, 220, 2, "Kaffee", "#7a4a00");
   /* Waschanlage-Schild */
   k += re(4, 214, 40, 22, "#cfd5da") + re(8, 218, 32, 18, "#2a3b4a") + tx(24, 216.8, 2.2, "Waschanlage", "#2e7d32", ' font-weight="bold"');
   for (let i = 0; i < 4; i++) k += re(12 + i * 7, 219, 2, 16, i % 2 ? "#e63946" : "#2a6fb4", ' opacity=".7"');
@@ -309,8 +315,8 @@ function laden(i, name, farbe, schrift, inhalt) {
   /* Preismast */
   k += re(-1, 216, 3, 76, "#5f676c");
   k += re(0, 216, 20, 32, "#1d2a35") + re(1, 217, 18, 6, "#2e7d32") + tx(10, 221.4, 3, "TANKEN", "#fff", ' font-weight="bold"');
-  for (const [i, n, p] of [[0, "Super E10", "1,72"], [1, "Super E5", "1,78"], [2, "Diesel", "1,64"]]) k += tx(6, 228 + i * 7, 2, n, "#fff") + `<text x="18" y="${r(229.6 + i * 7)}" font-size="3.6" text-anchor="end" fill="#ffd23f" font-family="monospace" font-weight="bold">${p}</text>`;
-  teil("vg_tankstelle", 59, 214, k, { tipp: "An der Tankstelle tankt man Benzin oder Diesel und bezahlt im Shop." });
+  for (const [i, n, p] of [[0, "Super E10", "1,72"], [1, "Super E5", "1,78"], [2, "Diesel", "1,64"]]) k += `<text x="1.6" y="${r(228.6 + i * 7)}" font-size="1.8" fill="#fff" font-family="Arial">${n}</text>` + `<text x="18" y="${r(229.6 + i * 7)}" font-size="3.6" text-anchor="end" fill="#ffd23f" font-family="monospace" font-weight="bold">${p}</text>`;
+  teil("vg_tankstelle", 72, 226, k, { tipp: "An der Tankstelle tankt man Benzin oder Diesel und bezahlt im Shop." });
 }
 
 /* =====================================================================
@@ -329,7 +335,7 @@ function laden(i, name, farbe, schrift, inhalt) {
   }
   k += re(146, 280, 100, 4, "#2c3439");
   for (const x of [140, 205, 226]) k += ci(x, 286, 5.4, "#1c1f22") + ci(x, 286, 2.6, "#9aa3aa");
-  teil("vg_getraenke", 170, 252, k, { tipp: "Der Lastwagen bringt Kästen mit Wasser, Saft, Limo und Bier." });
+  teil("vg_getraenke", 138, 268, k, { tipp: "Der Lastwagen bringt Kästen mit Wasser, Saft, Limo und Bier." });
 }
 {
   const X0 = 252, X1 = 400;
@@ -352,7 +358,7 @@ function laden(i, name, farbe, schrift, inhalt) {
   k += cont(297, "#c0392b", "Metall", (x) => ci(x + 8, 262, 3, "none", ' stroke="#9aa3aa" stroke-width="1"') + re(x + 14, 260.4, 12, 2, "#8c949a", ' transform="rotate(-12 ' + (x + 20) + ' 261)"') + re(x + 20, 261.6, 8, 3, "#b5bcc2"));
   k += cont(332, "#2a6fb4", "Papier", (x) => { let g = ""; for (let i = 0; i < 5; i++) g += re(x + 3 + i * 5.4, 260.4 - (i % 2), 6, 4.6, i % 2 ? "#c99a5a" : "#d8b07a", ' transform="rotate(' + (i * 9 - 18) + ' ' + (x + 6 + i * 5.4) + ' 262)"'); return g; });
   k += cont(367, "#f2b632", "Plastik", (x) => ci(x + 8, 262, 2.6, "#e63946") + re(x + 13, 259.6, 5, 4, "#4fb3e8") + ci(x + 22, 262, 2.4, "#fff") + re(x + 24, 260, 4, 3, "#2a9d8f"));
-  teil("vg_materialien", 270, 252, k, { tipp: "Am Wertstoffhof trennt man Holz, Metall, Papier und Kunststoff." });
+  teil("vg_materialien", 256, 266, k, { tipp: "Am Wertstoffhof trennt man Holz, Metall, Papier und Kunststoff." });
 }
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/viertel_gewerbe.js"));

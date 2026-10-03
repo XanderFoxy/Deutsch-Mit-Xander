@@ -48,7 +48,7 @@ S.hinten(`<rect width="320" height="70" fill="${S.lg("himmel", [[0, "#6aa6dc"], 
   /* Halle (Wertstoffhalle) rechts hinten und Bäume */
   k += `<path d="M170 64 L170 36 L318 36 L318 64 Z" fill="${S.lg("halle", [[0, "#c9cfd4"], [1, "#a9b1b8"]])}"/><path d="M166 37 L244 24 L322 37 Z" fill="#7d858c"/>`;
   for (let x = 172; x < 318; x += 3) k += `<line x1="${x}" y1="37" x2="${x}" y2="64" stroke="#98a1a9" stroke-width=".3"/>`;
-  k += `<rect x="196" y="42" width="64" height="7" fill="#2e8b57"/><text x="228" y="47.3" font-size="4.6" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">WERTSTOFFHOF</text>`;
+  k += `<rect x="250" y="42" width="64" height="7" fill="#2e8b57"/><text x="282" y="47.3" font-size="4.6" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">WERTSTOFFHOF</text>`;
   for (const [x, y, rr, f] of [[14, 42, 16, "#4f8a3c"], [40, 36, 18, "#5c9a46"], [76, 44, 14, "#4a823a"], [110, 38, 17, "#5c9a46"], [146, 46, 13, "#4f8a3c"]]) k += `<rect x="${x - 1.4}" y="${y + rr * 0.6}" width="2.8" height="16" fill="#6b4a2a"/><circle cx="${x}" cy="${y}" r="${rr}" fill="${f}"/><circle cx="${x - rr * 0.3}" cy="${y - rr * 0.35}" r="${rr * 0.55}" fill="#7fbf5f" opacity=".45"/>`;
   /* Zaun (Stabmatten) vor Bäumen und Halle */
   k += `<rect x="0" y="54" width="320" height="12" fill="#3f6a3a" opacity=".25"/>`;
@@ -89,11 +89,11 @@ const container = (x0, x1, hoehe, farbe, schild, schildFarbe) => {
   g += `<line x1="${(x0 + x1) / 2}" y1="${r(yTop + 2)}" x2="${(x0 + x1) / 2}" y2="${REIHE - 2}" stroke="#000" stroke-width=".4" opacity=".3"/>`;
   for (const xx of [x0 + 10, x1 - 10]) g += `<rect x="${xx - 0.6}" y="${r(yTop + 4)}" width="1.2" height="${r(REIHE - yTop - 8)}" fill="${STAHL}" opacity=".85"/>`;
   g += `<rect x="${x0 + 2}" y="${REIHE - 2}" width="${x1 - x0 - 4}" height="2" fill="#2a2d31"/>`;
-  /* Schild am Pfosten über dem Container */
-  const sx = (x0 + x1) / 2;
-  g += `<rect x="${sx - 0.6}" y="${r(yTop - 12)}" width="1.2" height="12" fill="#5b636b"/>`;
-  g += `<rect x="${sx - 17}" y="${r(yTop - 19)}" width="34" height="8" rx="1" fill="${schildFarbe}" stroke="#fff" stroke-width=".5"/><text x="${sx}" y="${r(yTop - 13.4)}" font-size="4.4" text-anchor="middle" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-weight="bold">${schild}</text>`;
-  return { svg: g, yTop };
+  /* Schild am Pfosten über dem Container (wird nach dem Inhalt gezeichnet, steht über dem Haufen) */
+  const sx = (x0 + x1) / 2, sw = Math.max(30, schild.replace("&amp;", "&").length * 2.6 + 8);
+  g += `<rect x="${sx - 0.6}" y="${r(yTop - 22)}" width="1.2" height="22" fill="#5b636b"/>`;
+  let sch = `<rect x="${r(sx - sw / 2)}" y="${r(yTop - 30)}" width="${r(sw)}" height="8" rx="1" fill="${schildFarbe}" stroke="#fff" stroke-width=".5"/><text x="${sx}" y="${r(yTop - 24.4)}" font-size="4.4" text-anchor="middle" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-weight="bold">${schild}</text>`;
+  return { svg: g, yTop, schild: sch };
 };
 
 /* =====================================================================
@@ -108,7 +108,7 @@ const container = (x0, x1, hoehe, farbe, schild, schildFarbe) => {
   k += `<g transform="rotate(-14 22 ${t - 10})"><rect x="10" y="${t - 14}" width="24" height="2" fill="${HOLZ}"/><rect x="10" y="${t - 10}" width="24" height="2" fill="${HOLZ}"/><rect x="11" y="${t - 14}" width="2.4" height="6" fill="#b07c45"/><rect x="21" y="${t - 14}" width="2.4" height="6" fill="#b07c45"/><rect x="31" y="${t - 14}" width="2.4" height="6" fill="#b07c45"/></g>`;
   for (const [x, y, w, a] of [[30, t - 15, 26, 18], [36, t - 9, 22, -8], [14, t - 6, 18, 6]]) k += `<rect x="${x}" y="${y}" width="${w}" height="1.6" fill="${HOLZ}" transform="rotate(${a} ${x} ${y})"/><rect x="${x}" y="${y}" width="${w}" height=".4" fill="#f0c890" transform="rotate(${a} ${x} ${y})"/>`;
   k += `<path d="M44 ${t - 18} L44 ${t - 8} M44 ${t - 12} L51 ${t - 12} L51 ${t - 6} M44 ${t - 18} L48 ${t - 18}" stroke="#7a4a22" stroke-width="1.4" fill="none"/>`;
-  S.teil({ id: "holz", de: "das Holz", syl: "HOLZ", it: "il legno", itSyl: "LE-gno", en: "wood", x: 32, y: REIHE, steht: true, kunst: absolut(k, 32),
+  S.teil({ id: "holz", de: "das Holz", syl: "HOLZ", it: "il legno", itSyl: "LE-gno", en: "wood", x: 32, y: REIHE, steht: true, kunst: absolut(k + c.schild, 32),
     tipp: "Altes Holz – Bretter, Paletten, Möbel – kommt in den Altholz-Container." });
 }
 
@@ -131,19 +131,18 @@ const container = (x0, x1, hoehe, farbe, schild, schildFarbe) => {
   const dx = X1 - 13, dy = t - 2;
   k += `<ellipse cx="${dx}" cy="${dy}" rx="5" ry="3.6" fill="none" stroke="#b9c0c6" stroke-width=".55"/><ellipse cx="${dx}" cy="${dy}" rx="4.2" ry="3" fill="none" stroke="#9aa2a9" stroke-width=".45"/><ellipse cx="${dx + 0.4}" cy="${dy}" rx="3.4" ry="2.4" fill="none" stroke="#c9ced3" stroke-width=".45"/>`;
   k += `<path d="M${dx + 4} ${dy + 2} q3 3 1 8 q-1 3 2 6" stroke="#b9c0c6" stroke-width=".5" fill="none"/>`;
-  /* Kleinteile-Wanne vor dem Container: Schrauben; daneben Dosen */
-  const wx = X0 + 14;
-  k += `<path d="M${wx - 8} ${REIHE - 7} L${wx + 8} ${REIHE - 7} L${wx + 7} ${REIHE} L${wx - 7} ${REIHE} Z" fill="#5b636b"/><rect x="${wx - 8.4}" y="${REIHE - 7.6}" width="16.8" height="1.2" rx=".4" fill="#7d858c"/>`;
-  k += `<text x="${wx}" y="${REIHE - 2.4}" font-size="2.4" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">Kleinmetall</text>`;
-  for (let i = 0; i < 6; i++) { const sx = wx - 6 + i * 2.4, a = -30 + rnd() * 60; k += `<g transform="rotate(${r(a)} ${r(sx)} ${REIHE - 9})"><rect x="${r(sx - 0.35)}" y="${REIHE - 12}" width=".7" height="4.4" fill="#c9ced3"/><rect x="${r(sx - 1)}" y="${REIHE - 12.6}" width="2" height=".8" rx=".3" fill="#e1e5e8"/>${[0, 1, 2, 3].map((j) => `<line x1="${r(sx - 0.4)}" y1="${r(REIHE - 11.2 + j)}" x2="${r(sx + 0.4)}" y2="${r(REIHE - 10.8 + j)}" stroke="#8a929a" stroke-width=".2"/>`).join("")}</g>`; }
-  const dsx = X1 - 12;
-  for (const [ox, f] of [[0, "#c0392b"], [3.4, "#2f7fd0"], [1.7, "#e1e5e8"]]) k += `<rect x="${dsx + ox - 1.5}" y="${REIHE - (ox === 1.7 ? 9.6 : 5)}" width="3" height="5" rx=".5" fill="${f}"/><rect x="${dsx + ox - 1.5}" y="${REIHE - (ox === 1.7 ? 9.6 : 5)}" width="3" height=".6" fill="${STAHL}"/><rect x="${dsx + ox - 1.5}" y="${REIHE - (ox === 1.7 ? 9.6 : 5) + 4.4}" width="3" height=".6" fill="${STAHL}"/>`;
+  /* Eimer mit alten Schrauben oben auf dem Haufen; daneben Dosen */
+  const wx = X0 + 14, wy = t - 1;
+  for (let i = 0; i < 5; i++) { const sx = wx - 3.2 + i * 1.6, a = -25 + rnd() * 50; k += `<g transform="rotate(${r(a)} ${r(sx)} ${wy - 7})"><rect x="${r(sx - 0.3)}" y="${wy - 10.6}" width=".6" height="4" fill="#c9ced3"/><rect x="${r(sx - 0.8)}" y="${wy - 11.1}" width="1.6" height=".7" rx=".3" fill="#e1e5e8"/></g>`; }
+  k += `<path d="M${wx - 5} ${wy - 7} L${wx + 5} ${wy - 7} L${wx + 4} ${wy} L${wx - 4} ${wy} Z" fill="${S.lg("eimerm", [[0, "#9aa2a9"], [1, "#5b636b"]], 0, 0, 1, 0)}"/><ellipse cx="${wx}" cy="${wy - 7}" rx="5" ry="1" fill="#3a3d42"/><path d="M${wx - 5} ${wy - 7} Q${wx} ${wy - 13} ${wx + 5} ${wy - 7}" stroke="#5b636b" stroke-width=".35" fill="none"/>`;
+  const dsx = X0 + 28, dsy = t - 2;
+  for (const [ox, oy, f] of [[-2, 0, "#c0392b"], [1.6, 0, "#2f7fd0"], [-0.2, -4.6, "#e1e5e8"]]) k += `<rect x="${dsx + ox - 1.5}" y="${dsy + oy - 4.6}" width="3" height="4.6" rx=".5" fill="${f}"/><rect x="${dsx + ox - 1.5}" y="${dsy + oy - 4.6}" width="3" height=".6" fill="${STAHL}"/><rect x="${dsx + ox - 0.6}" y="${dsy + oy - 3}" width=".6" height="2" fill="#fff" opacity=".4"/>`;
   const unter = [
-    { id: "schraube", de: "die Schraube", syl: "SCHRAU-be", it: "la vite", itSyl: "VI-te", en: "screw", x: wx, y: REIHE, kunst: flaeche(-9, -14, 18, 14) },
+    { id: "schraube", de: "die Schraube", syl: "SCHRAU-be", it: "la vite", itSyl: "VI-te", en: "screw", x: wx, y: wy, kunst: flaeche(-6, -12, 12, 12.4) },
     { id: "draht", de: "der Draht", syl: "DRAHT", it: "il filo", itSyl: "FI-lo", en: "wire", x: dx + 1, y: dy + 4, kunst: flaeche(-6.6, -10, 13, 16), tipp: "Draht ist ein langer, dünner Faden aus Metall." },
-    { id: "dose", de: "die Dose", syl: "DO-se", it: "la lattina", itSyl: "lat-TI-na", en: "tin can", x: dsx + 1.7, y: REIHE, kunst: flaeche(-4, -10.4, 8.6, 10.4), tipp: "Dosen sind aus Aluminium oder Weißblech." },
+    { id: "dose", de: "die Dose", syl: "DO-se", it: "la lattina", itSyl: "lat-TI-na", en: "tin can", x: dsx, y: dsy, kunst: flaeche(-4.4, -9.8, 8.8, 10), tipp: "Dosen sind aus Aluminium oder Weißblech." },
   ];
-  S.teil({ id: "metall", de: "das Metall", syl: "Me-TALL", it: "il metallo", itSyl: "me-TAL-lo", en: "metal", x: cx, y: REIHE, steht: true, kunst: absolut(k, cx),
+  S.teil({ id: "metall", de: "das Metall", syl: "Me-TALL", it: "il metallo", itSyl: "me-TAL-lo", en: "metal", x: cx, y: REIHE, steht: true, kunst: absolut(k + c.schild, cx),
     zoom: { x: X0 - 4, y: t - 22, w: 66, h: 44 }, unter,
     tipp: "Metall wird eingeschmolzen und wieder neu verwendet." });
 }
@@ -164,7 +163,7 @@ const container = (x0, x1, hoehe, farbe, schild, schildFarbe) => {
   for (let i = 0; i < 8; i++) k += `<circle cx="${r(bx - 5 + rnd() * 10)}" cy="${r(by - 3 + rnd() * 5)}" r=".35" fill="#7d786f"/>`;
   k += `<path d="M${bx + 2} ${by - 4} q2 -4 5 -5 M${bx - 3} ${by - 5} q-1 -3 1 -6" stroke="#8a4a22" stroke-width=".55" fill="none"/>`;
   /* Ziegel: rote Mauerziegel, zwei noch mit Mörtel verbunden */
-  const zx = cx + 1, zy = t - 9;
+  const zx = cx + 1, zy = t - 13;
   k += `<rect x="${zx - 6}" y="${zy}" width="8" height="3" rx=".3" fill="${S.lg("ziegel", [[0, "#c8573a"], [1, "#9a3a22"]])}"/><rect x="${zx - 6}" y="${zy + 3}" width="8" height=".6" fill="#ddd6c8"/><rect x="${zx - 4}" y="${zy + 3.6}" width="8" height="3" rx=".3" fill="${S.lg("ziegel", [[0, "#c8573a"], [1, "#9a3a22"]])}"/>`;
   k += `<rect x="${zx + 3.2}" y="${zy - 1.4}" width="6" height="2.6" rx=".3" fill="#b44a2e" transform="rotate(-18 ${zx + 6} ${zy})"/>`;
   /* Fliesen: weiße und blaue Bruchstücke */
@@ -172,16 +171,15 @@ const container = (x0, x1, hoehe, farbe, schild, schildFarbe) => {
   k += `<path d="M${fx - 5} ${fy} L${fx - 3} ${fy - 6} L${fx + 3} ${fy - 5} L${fx + 2} ${fy + 1} Z" fill="#f4f6f8" stroke="#c9ced3" stroke-width=".3"/><path d="M${fx - 3} ${fy - 6} L${fx + 3} ${fy - 5}" stroke="#fff" stroke-width=".5"/>`;
   k += `<path d="M${fx + 1} ${fy - 2} L${fx + 4} ${fy - 8} L${fx + 8} ${fy - 6} L${fx + 6} ${fy} Z" fill="#5aa7d8" stroke="#3d82b0" stroke-width=".3"/><path d="M${fx + 4} ${fy - 8} L${fx + 8} ${fy - 6}" stroke="#bfe3ff" stroke-width=".5"/>`;
   /* Pflaster: graue Pflastersteine vorn auf dem Rand */
-  const px = cx + 2, py = REIHE - 4;
+  const px = cx, py = t + 0.4;
   for (const [ox, oy] of [[-6, 0], [-1.6, 0], [2.8, 0], [-3.8, -2.6], [0.6, -2.6]]) k += `<rect x="${px + ox}" y="${py + oy - 2.4}" width="4.2" height="2.4" rx=".4" fill="${S.lg("pflstein", [[0, "#9a958d"], [1, "#6f6a62"]])}" stroke="#5b574f" stroke-width=".2"/>`;
-  k += `<rect x="${px - 7}" y="${py}" width="15" height="1" fill="#5b574f" opacity=".5"/>`;
   const unter = [
     { id: "beton", de: "der Beton", syl: "Be-TON", it: "il cemento", itSyl: "ce-MEN-to", en: "concrete", x: bx, y: by + 3, kunst: flaeche(-8, -10, 16, 10.6), tipp: "Beton macht man aus Zement, Sand, Kies und Wasser." },
-    { id: "ziegel", de: "der Ziegel", syl: "ZIE-gel", it: "il mattone", itSyl: "mat-TO-ne", en: "brick", x: zx, y: zy + 7, kunst: flaeche(-7, -9.6, 17, 10) },
+    { id: "ziegel", de: "der Ziegel", syl: "ZIE-gel", it: "il mattone", itSyl: "mat-TO-ne", en: "brick", x: zx, y: zy + 7, kunst: flaeche(-7, -9.6, 17, 9) },
     { id: "fliese", de: "die Fliese", syl: "FLIE-se", it: "la piastrella", itSyl: "pia-STREL-la", en: "tile", x: fx + 1.6, y: fy + 1, kunst: flaeche(-7, -9.6, 16, 10) },
-    { id: "pflaster", de: "das Pflaster", syl: "PFLA-ster", it: "il selciato", itSyl: "sel-CIA-to", en: "paving", x: px + 0.6, y: py + 1, kunst: flaeche(-7.6, -6.4, 15.6, 6.4), tipp: "Mit Pflastersteinen macht man Wege und Plätze – wie diesen Hof." },
+    { id: "pflaster", de: "das Pflaster", syl: "PFLA-ster", it: "il selciato", itSyl: "sel-CIA-to", en: "paving", x: px + 0.6, y: py, kunst: flaeche(-7.6, -5.6, 15.6, 5.8), tipp: "Mit Pflastersteinen macht man Wege und Plätze – wie diesen Hof." },
   ];
-  S.teil({ id: "bauschutt", de: "der Bauschutt", syl: "BAU-schutt", it: "le macerie", itSyl: "ma-CE-rie", en: "rubble", x: cx, y: REIHE, steht: true, kunst: absolut(k, cx),
+  S.teil({ id: "bauschutt", de: "der Bauschutt", syl: "BAU-schutt", it: "le macerie", itSyl: "ma-CE-rie", en: "rubble", x: cx, y: REIHE, steht: true, kunst: absolut(k + c.schild, cx),
     zoom: { x: X0 - 5, y: t - 24, w: 60, h: 40 }, unter,
     tipp: "Bauschutt kostet auf dem Wertstoffhof eine Gebühr." });
 }
@@ -210,7 +208,7 @@ const container = (x0, x1, hoehe, farbe, schild, schildFarbe) => {
     { id: "pappe", de: "die Pappe", syl: "PAP-pe", it: "il cartone", itSyl: "car-TO-ne", en: "cardboard", x: X0 + 14, y: t + 1, kunst: flaeche(-11, -17, 22, 17.6), tipp: "Kartons faltet man flach, bevor man sie wegbringt." },
     { id: "papier", de: "das Papier", syl: "Pa-PIER", it: "la carta", itSyl: "CAR-ta", en: "paper", x: zx, y: zy, kunst: flaeche(-9, -15, 18, 15.4), tipp: "Aus altem Papier macht man neues Papier: Recyclingpapier." },
   ];
-  S.teil({ id: "container", de: "der Container", syl: "Con-TAI-ner", it: "il container", itSyl: "con-TAI-ner", en: "skip", x: cx, y: REIHE, steht: true, kunst: absolut(k, cx),
+  S.teil({ id: "container", de: "der Container", syl: "Con-TAI-ner", it: "il container", itSyl: "con-TAI-ner", en: "skip", x: cx, y: REIHE, steht: true, kunst: absolut(k + c.schild, cx),
     zoom: { x: X0 - 6, y: t - 22, w: 66, h: 44 }, unter,
     tipp: "In jeden Container kommt nur ein Material." });
 }
@@ -290,17 +288,27 @@ const container = (x0, x1, hoehe, farbe, schild, schildFarbe) => {
    ===================================================================== */
 {
   const y = 180, s = sAuf(y);
-  const R = 0.31 * s, H = 0.2 * s, ry = R * 0.22;
-  let k = schatten(0, 0, R + 4, 2, .35);
-  for (let i = 0; i < 4; i++) {
-    const yy = -i * H;
-    k += `<path d="M${-R} ${r(yy - ry)} L${-R} ${r(yy - ry - H)} A${r(R)} ${r(ry)} 0 0 1 ${r(R)} ${r(yy - ry - H)} L${r(R)} ${r(yy - ry)} A${r(R)} ${r(ry)} 0 0 1 ${-r(R)} ${r(yy - ry)} Z" fill="${S.lg("reifen", [[0, "#3a3c40"], [0.5, "#26282b"], [1, "#151618"]], 0, 0, 1, 0)}"/>`;
-    for (let j = -4; j <= 4; j++) k += `<line x1="${r(j * R / 4.6)}" y1="${r(yy - ry - H + 1)}" x2="${r(j * R / 4.6)}" y2="${r(yy - ry + ry * 0.7)}" stroke="#4a4d52" stroke-width=".6" opacity=".7"/>`;
+  const R = 0.31 * s, H = 0.2 * s, ry = R * 0.2;
+  const GUMMI = S.lg("reifen", [[0, "#151618"], [0.25, "#3a3c40"], [0.5, "#2a2c2f"], [1, "#101113"]]);
+  let k = schatten(4, 0, R + 10, 2, .35);
+  const sx0 = -6;
+  for (let i = 0; i < 3; i++) {
+    const yu = -i * H, yo = yu - H;
+    /* Lauffläche mit runden Flanken (wulstig) */
+    k += `<path d="M${r(sx0 - R)} ${r(yo - ry * 0.2)} Q${r(sx0 - R - 2.4)} ${r((yu + yo) / 2)} ${r(sx0 - R)} ${r(yu)} A${r(R)} ${r(ry)} 0 0 0 ${r(sx0 + R)} ${r(yu)} Q${r(sx0 + R + 2.4)} ${r((yu + yo) / 2)} ${r(sx0 + R)} ${r(yo - ry * 0.2)} Z" fill="${GUMMI}"/>`;
+    for (let j = -5; j <= 5; j++) k += `<line x1="${r(sx0 + j * R / 5.8)}" y1="${r(yo + 1.6)}" x2="${r(sx0 + j * R / 5.8)}" y2="${r(yu + ry * Math.sqrt(Math.max(0, 1 - (j / 5.8) ** 2)) - 1.4)}" stroke="#4a4d52" stroke-width=".7" opacity=".55"/>`;
+    k += `<path d="M${r(sx0 - R)} ${r(yu)} A${r(R)} ${r(ry)} 0 0 0 ${r(sx0 + R)} ${r(yu)}" stroke="#08090a" stroke-width=".8" fill="none"/>`;
   }
-  const top = -4 * H - ry;
-  k += `<ellipse cx="0" cy="${r(top)}" rx="${r(R)}" ry="${r(ry)}" fill="#2a2c2f"/><ellipse cx="0" cy="${r(top)}" rx="${r(R * 0.6)}" ry="${r(ry * 0.6)}" fill="#0d0e10"/>`;
-  k += `<path d="M${r(-R * 0.9)} ${r(top - ry * 0.2)} A${r(R)} ${r(ry)} 0 0 1 ${r(-R * 0.2)} ${r(top - ry * 0.95)}" stroke="#5b5f64" stroke-width=".8" fill="none"/>`;
-  k += `<rect x="${r(R - 6)}" y="${r(-H * 1.6)}" width="12" height="6" rx=".5" fill="#fff" transform="rotate(-6 ${r(R)} ${r(-H)})"/><text x="${r(R)}" y="${r(-H * 1.6 + 4.2)}" font-size="3" text-anchor="middle" fill="#c0392b" font-family="Arial" font-weight="bold" transform="rotate(-6 ${r(R)} ${r(-H)})">3 € / St.</text>`;
+  const top = -3 * H;
+  k += `<ellipse cx="${sx0}" cy="${r(top)}" rx="${r(R)}" ry="${r(ry)}" fill="#33363a"/><ellipse cx="${sx0}" cy="${r(top)}" rx="${r(R * 0.58)}" ry="${r(ry * 0.58)}" fill="#0b0c0d"/>`;
+  k += `<ellipse cx="${sx0}" cy="${r(top)}" rx="${r(R * 0.8)}" ry="${r(ry * 0.8)}" fill="none" stroke="#4a4d52" stroke-width=".4" stroke-dasharray="1.6 1"/>`;
+  /* ein Reifen steht hochkant davor */
+  const rx = sx0 + R * 0.95, Rs = R * 0.98;
+  k += `<circle cx="${r(rx)}" cy="${r(-Rs)}" r="${r(Rs)}" fill="${S.rg("reifenst", [[0, "#3a3c40"], [0.62, "#2a2c2f"], [0.63, "#1a1b1e"], [1, "#0d0e10"]])}"/>`;
+  for (let j = 0; j < 36; j++) { const a = j * Math.PI / 18; k += `<line x1="${r(rx + Math.cos(a) * Rs * 0.9)}" y1="${r(-Rs + Math.sin(a) * Rs * 0.9)}" x2="${r(rx + Math.cos(a) * Rs)}" y2="${r(-Rs + Math.sin(a) * Rs)}" stroke="#4a4d52" stroke-width=".9"/>`; }
+  k += `<circle cx="${r(rx)}" cy="${r(-Rs)}" r="${r(Rs * 0.56)}" fill="#a29c91"/><circle cx="${r(rx)}" cy="${r(-Rs)}" r="${r(Rs * 0.56)}" fill="none" stroke="#08090a" stroke-width="1.2"/>`;
+  k += `<path d="M${r(rx - Rs * 0.75)} ${r(-Rs * 1.5)} A${r(Rs * 0.75)} ${r(Rs * 0.75)} 0 0 1 ${r(rx + Rs * 0.2)} ${r(-Rs * 1.72)}" stroke="#55585d" stroke-width=".8" fill="none"/>`;
+  k += `<rect x="${r(rx - 6)}" y="${r(-Rs - 3)}" width="12" height="6" rx=".5" fill="#fff"/><text x="${r(rx)}" y="${r(-Rs + 1.2)}" font-size="3" text-anchor="middle" fill="#c0392b" font-family="Arial" font-weight="bold">3 € / St.</text>`;
   S.teil({ id: "gummi", de: "der Gummi", syl: "GUM-mi", it: "la gomma", itSyl: "GOM-ma", en: "rubber", x: 34, y, steht: true, kunst: k,
     tipp: "Autoreifen sind aus Gummi. Altreifen kosten auf dem Wertstoffhof eine Gebühr." });
 }

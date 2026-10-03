@@ -185,7 +185,7 @@ const RUECK = [
   { b: 8, H: 13, dach: "mansard", wand: "#f1e0a8", d: "#5f6b72", fen: 3, art: "portal", sockel: "#e3cf96", name: "STANDESAMT", fs: 2, sims: "#fff",
     w: { id: "vb_standesamt", de: "das Standesamt", syl: "STAN-des-amt", it: "l'ufficio di stato civile", itSyl: "uf-FI-cio di STA-to ci-VI-le", en: "registry office", lupe: "standesamt" },
     extra: (X0, X1) => { const m = (X0 + X1) / 2; let g = ""; for (const X of [m - 1.9, m + 1.9]) g += `<path d="M${r(bx(X) - 1.6)} ${r(by(0))}l.4 -3h2.4l.4 3z" fill="#8a6a45"/><circle cx="${r(bx(X))}" cy="${r(by(0) - 4.4)}" r="2.2" fill="#3f7d3a"/><circle cx="${r(bx(X) - 0.8)}" cy="${r(by(0) - 5)}" r=".6" fill="#fff"/><circle cx="${r(bx(X) + 0.9)}" cy="${r(by(0) - 4)}" r=".6" fill="#f8c8d8"/>`;
-      g += `<path d="M${r(bx(m - 1.4))} ${r(by(4.5))}q${r(K * 1.4)} 2 ${r(K * 2.8)} 0" stroke="#7fb069" stroke-width=".9" fill="none"/>`; return g; } },
+      g += `<path d="M${r(bx(m - 1.4))} ${r(by(5.3))}q${r(K * 1.4)} 2 ${r(K * 2.8)} 0" stroke="#7fb069" stroke-width=".9" fill="none"/>`; return g; } },
   { b: 16, H: 16, dach: "traufe", wand: "#d8b48a", d: "#4f5b61", fen: 6, art: "rathaus", sockel: "#c39a6c", name: "RATHAUS",
     w: { id: "vb_rathaus", de: "das Rathaus", syl: "RAT-haus", it: "il municipio", itSyl: "mu-ni-CI-pio", en: "town hall", lupe: "typisch_deutsch" },
     extra: (X0, X1) => {
@@ -294,11 +294,14 @@ const seitInhalt = (farben, reihen = 3) => (Q, fl) => { let g = ""; for (let i =
 /* Auto vor einer Seitenfassade (frontal gesehen: es steht quer zur Blickrichtung? nein — längs der Häuser) */
 const autoSeite = (Q, seite, farbe, dach) => {
   const p = (u, v, d) => Q(u, v, seite * (WX - d));
-  let g = `<path d="${quad(p(0.1, 0, 1.6), p(0.95, 0, 1.6), p(0.95, 0.9, 1.6), p(0.1, 0.9, 1.6))}" fill="${farbe}"/>`;
-  g += `<path d="${quad(p(0.3, 0.9, 1.6), p(0.8, 0.9, 1.6), p(0.75, 1.45, 1.6), p(0.35, 1.45, 1.6))}" fill="#2c3a44"/>`;
-  g += `<path d="${quad(p(0.1, 0.9, 1.6), p(0.95, 0.9, 1.6), p(0.95, 0.9, 3.4), p(0.1, 0.9, 3.4))}" fill="${dunkel(farbe, 0.85)}"/>`;
+  /* Karosserie, Fensterband, Dach — das Auto parkt längs vor dem Haus */
+  let g = `<path d="${quad(p(0.08, 0.2, 1.6), p(0.97, 0.2, 1.6), p(0.97, 0.95, 1.6), p(0.08, 0.95, 1.6))}" fill="${farbe}"/>`;
+  g += `<path d="${quad(p(0.08, 0.95, 1.6), p(0.97, 0.95, 1.6), p(0.97, 0.95, 3.3), p(0.08, 0.95, 3.3))}" fill="${dunkel(farbe, 0.88)}"/>`;
+  g += `<path d="${quad(p(0.28, 0.95, 1.75), p(0.82, 0.95, 1.75), p(0.74, 1.5, 1.9), p(0.36, 1.5, 1.9))}" fill="${S.lg("autoglas", [[0, "#8fa9b8"], [1, "#3c4c58"]])}"/>`;
+  g += `<path d="${quad(p(0.36, 1.5, 1.9), p(0.74, 1.5, 1.9), p(0.74, 1.5, 3.1), p(0.36, 1.5, 3.1))}" fill="${farbe}"/>`;
+  g += `<path d="M${pt(p(0.55, 0.95, 1.75))}L${pt(p(0.55, 1.5, 1.9))}" stroke="${farbe}" stroke-width=".6"/>`;
   if (dach) g += dach(p);
-  for (const u of [0.25, 0.8]) { const c = p(u, 0.33, 1.55); g += `<ellipse cx="${r(c[0])}" cy="${r(c[1])}" rx="${r(Math.abs(p(u + 0.06, 0, 1.55)[0] - p(u, 0, 1.55)[0]) + 0.6)}" ry="1.3" fill="#1b1b1b"/>`; }
+  for (const u of [0.24, 0.82]) { const c = p(u, 0.33, 1.55); g += `<ellipse cx="${r(c[0])}" cy="${r(c[1])}" rx="${r(Math.abs(p(u + 0.08, 0, 1.55)[0] - p(u, 0, 1.55)[0]) + 0.8)}" ry="${r(Math.abs(p(u, 0.66, 1.55)[1] - c[1]))}" fill="#1b1b1b"/>`; }
   return g;
 };
 [
@@ -369,7 +372,7 @@ const kZ = (Z) => F / Z;
   g += `<rect x="${r(cx - 0.9)}" y="${r(gy - 3.3 * k)}" width="1.8" height="${r(3.3 * k)}" fill="${S.lg("mast", [[0, "#5d6a72"], [0.5, "#3c464d"], [1, "#2a3237"]], 0, 0, 1, 0)}"/>`;
   const schilder = [["Deutschland", 1, ["#000", "#dd0000", "#ffce00"]], ["Österreich", -1, ["#ed2939", "#fff", "#ed2939"]], ["Schweiz", 1, ["#d52b1e"]]];
   schilder.forEach(([t, sg, fl], i) => {
-    const y = gy - 3.1 * k + i * 6.2, L = 23;
+    const y = gy - 3.1 * k + i * 6.2, L = 27;
     g += `<path d="${sg > 0 ? `M${r(cx)} ${r(y)}h${L}l2.6 2.4l-2.6 2.4h${-L}z` : `M${r(cx)} ${r(y)}h${-L}l-2.6 2.4l2.6 2.4h${L}z`}" fill="#fbfbf6" stroke="#2a3237" stroke-width=".45"/>`;
     const fx = sg > 0 ? cx + 1.2 : cx - 6.2;
     if (fl.length === 3) fl.forEach((c, j) => { g += `<rect x="${r(fx)}" y="${r(y + 0.9 + j * 1)}" width="5" height="1" fill="${c}"/>`; });
@@ -377,6 +380,27 @@ const kZ = (Z) => F / Z;
     g += `<text x="${r(sg > 0 ? cx + 7.4 : cx - 7.4)}" y="${r(y + 3.4)}" font-size="2.9" text-anchor="${sg > 0 ? "start" : "end"}" fill="#2a3237" font-family="Arial" font-weight="bold">${t}</text>`;
   });
   teil({ id: "vb_wegweiser", de: "der Wegweiser DACH", syl: "WEG-wei-ser", it: "la guida DACH", itSyl: "GUI-da DACH", en: "guide DE-AT-CH", ...anker(cx, gy - 1.6 * k), lupe: "wegweiser_dach", tipp: TIPP }, g);
+}
+{
+  /* DER BRIEFKASTEN — gelb, an einem Pfosten (links vorne) */
+  const Z = 15.5, X = -7, k = kZ(Z), [cx, gy] = P(X, 0, Z), w = 0.42 * k, h = 0.55 * k;
+  let g = schatten(cx + 2, gy, 4, 1, 0.3);
+  g += `<rect x="${r(cx - 0.8)}" y="${r(gy - 0.9 * k)}" width="1.6" height="${r(0.9 * k)}" fill="#4a4f55"/>`;
+  g += `<path d="M${r(cx - w / 2)} ${r(gy - 0.85 * k)}v${r(-h)}q0 ${r(-w * 0.3)} ${r(w / 2)} ${r(-w * 0.3)}q${r(w / 2)} 0 ${r(w / 2)} ${r(w * 0.3)}v${r(h)}z" fill="${S.lg("gelb", [[0, "#ffd84d"], [0.6, "#f5c400"], [1, "#d9a900"]], 0, 0, 1, 0)}"/>`;
+  g += `<rect x="${r(cx - w * 0.32)}" y="${r(gy - 0.85 * k - h * 0.82)}" width="${r(w * 0.64)}" height="1.4" rx=".5" fill="#222"/>`;
+  g += `<path d="M${r(cx - 2.4)} ${r(gy - 0.85 * k - h * 0.35)}c0 -2 1.8 -2.8 3.4 -2.2c1.4 .6 1.5 2.2 .5 2.9M${r(cx - 2.4)} ${r(gy - 0.85 * k - h * 0.35)}h4.6l1.3 1.2" stroke="#111" stroke-width=".6" fill="none"/>`;
+  teil({ id: "briefkasten", de: "der Briefkasten", syl: "BRIEF-kas-ten", it: "la cassetta delle lettere", itSyl: "cas-SET-ta del-le LET-te-re", en: "postbox", x: cx, y: gy,
+    tipp: "Der gelbe Briefkasten: Hier wirft man Briefe und Postkarten ein." }, g);
+}
+{
+  /* DIE SITZBANK — vor dem Rathaus */
+  const Z = 19, X = -1.8, k = kZ(Z), [cx, gy] = P(X, 0, Z), w = 1.8 * k;
+  let g = schatten(cx + 2, gy, w * 0.55, 1.4, 0.3);
+  g += `<path d="M${r(cx - w * 0.42)} ${r(gy)}v${r(-0.45 * k)}M${r(cx + w * 0.42)} ${r(gy)}v${r(-0.45 * k)}" stroke="#3c464d" stroke-width="1.4"/>`;
+  g += `<rect x="${r(cx - w / 2)}" y="${r(gy - 0.48 * k)}" width="${r(w)}" height="${r(0.07 * k)}" fill="#8a5a30"/><rect x="${r(cx - w / 2)}" y="${r(gy - 0.4 * k)}" width="${r(w)}" height="${r(0.06 * k)}" fill="#a06a3a"/>`;
+  for (const v of [0.62, 0.74]) g += `<rect x="${r(cx - w / 2)}" y="${r(gy - v * k)}" width="${r(w)}" height="${r(0.08 * k)}" fill="#946034"/>`;
+  g += `<path d="M${r(cx - w * 0.42)} ${r(gy - 0.48 * k)}v${r(-0.32 * k)}M${r(cx + w * 0.42)} ${r(gy - 0.48 * k)}v${r(-0.32 * k)}" stroke="#3c464d" stroke-width="1"/>`;
+  teil({ id: "sitzbank", de: "die Sitzbank", syl: "SITZ-bank", it: "la panchina", itSyl: "pan-CHI-na", en: "bench", x: cx, y: gy }, g);
 }
 {
   /* DER STUDENT — mit Rucksack auf dem Weg zur Universität */

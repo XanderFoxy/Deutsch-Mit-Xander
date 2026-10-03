@@ -20,7 +20,7 @@
      Tür; auf dem Platz: Marktbrunnen, Wochenmarkt mit Ständen,
      Zeitungskiosk, Laternen, Fahrradständer. Pflaster aus Granit.
    - Über den Dächern der Turm der Marktkirche.
-   Perspektive: ein Fluchtpunkt (200|149), Augenhöhe 6 m (Blick vom
+   Perspektive: ein Fluchtpunkt (200|129), Augenhöhe 6 m (Blick vom
    ersten Stock), Rückfront 80 m entfernt: 3,5 Einheiten je Meter dort.
    ===================================================================== */
 "use strict";
