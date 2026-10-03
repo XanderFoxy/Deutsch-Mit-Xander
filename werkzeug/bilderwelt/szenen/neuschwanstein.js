@@ -854,7 +854,7 @@ const STRASSE = [[402, 161], [374, 158], [346, 156], [320, 154.6], [300, 153.6]]
   k += `<path d="M${oben.map(Pt).join(" L")}" stroke="#6e5c3a" stroke-width=".4" fill="none"/>`;
   /* Wendeplatz: ausgefahrene Ausbuchtung der Fahrbahn zur Talseite, mit Böschungskante darunter */
   k += `<path d="M296.5 152.6 Q297 156.6 303 157 Q310 157.2 314 155.6 L314 156.4 Q310 158.6 302.6 158.4 Q296 158 295.8 153.4 Z" fill="#4a3a22"/>`;
-  k += `<path d="M296 152.4 L314 154.4 L314 155.6 Q310 157.2 303 157 Q297 156.6 296.5 152.6 Z" fill="#bfb293"/>`;
+  k += `<path d="M296 152.4 L314 154.4 L314 155.6 Q310 157.2 303 157 Q297 156.6 296.5 152.6 Z" fill="#b3a586"/>`;
   /* Fußweg zum Tor mit drei Besuchern */
   k += `<path d="M298 152.6 L288 150.2 L276 147.6 L266 144.4" stroke="#d2c6a8" stroke-width="1" fill="none"/>`;
   for (const [x, y, f] of [[289, 150.4, "#b8473a"], [280, 148.4, "#2f5f95"], [271, 146, "#3e6a3a"]]) k += `<rect x="${x - 0.5}" y="${y - 2.6}" width="1" height="1.6" fill="${f}"/><rect x="${x - 0.4}" y="${y - 1}" width=".8" height="1" fill="#3a3a44"/><circle cx="${x}" cy="${y - 3}" r=".45" fill="#e2b896"/>`;
@@ -960,7 +960,7 @@ const STRASSE = [[402, 161], [374, 158], [346, 156], [320, 154.6], [300, 153.6]]
 }
 {
   /* eine Buche als Figur: glatter silbergrauer Stamm mit Licht- und Schattenseite, jeder Ballen sitzt an einem Astende */
-  const STAMM = S.lg("buchenstamm", [[0, "#a9aca8"], [0.45, "#7f827e"], [1, "#454844"]], 0, 0, 1, 0);
+  const STAMM = S.lg("buchenstamm", [[0, "#8f928e"], [0.45, "#6c6f6b"], [1, "#3e413d"]], 0, 0, 1, 0);
   let k = `<path d="M0 261 L0 240 Q13 228 29 213 L34 218 Q18 236 10 261 Z" fill="${STAMM}"/>`;
   k += `<path d="M7 261 Q15 238 33 218 L34 218 Q18 236 10 261 Z" fill="#5c6b3a" opacity=".55"/>`;
   for (const [x, y, w] of [[6, 246, 2.2], [14, 236, 1.6], [21, 228, 1.4], [4, 255, 1.2], [26, 220, 1]]) k += `<ellipse cx="${x}" cy="${y}" rx="${w}" ry="${r(w * 0.45)}" fill="#5e615c" opacity=".7" transform="rotate(-40 ${x} ${y})"/>`;
@@ -968,14 +968,14 @@ const STRASSE = [[402, 161], [374, 158], [346, 156], [320, 154.6], [300, 153.6]]
   const ast = (x0, y0, x1, y1, w0, w1) => {
     const L = Math.hypot(x1 - x0, y1 - y0), nx = -(y1 - y0) / L, ny = (x1 - x0) / L, mx = (x0 + x1) / 2 + nx * L * 0.08, my = (y0 + y1) / 2 + ny * L * 0.08;
     const wm = (w0 + w1) / 2;
-    return `<path d="M${r(x0 + nx * w0 / 2)} ${r(y0 + ny * w0 / 2)} Q${r(mx + nx * wm / 2)} ${r(my + ny * wm / 2)} ${r(x1 + nx * w1 / 2)} ${r(y1 + ny * w1 / 2)} L${r(x1 - nx * w1 / 2)} ${r(y1 - ny * w1 / 2)} Q${r(mx - nx * wm / 2)} ${r(my - ny * wm / 2)} ${r(x0 - nx * w0 / 2)} ${r(y0 - ny * w0 / 2)} Z" fill="#6f726e"/><path d="M${r(x0 - nx * w0 * 0.3)} ${r(y0 - ny * w0 * 0.3)} Q${r(mx - nx * wm * 0.3)} ${r(my - ny * wm * 0.3)} ${r(x1 - nx * w1 * 0.3)} ${r(y1 - ny * w1 * 0.3)}" stroke="#a7aaa6" stroke-width="${r(w1 * 0.4 + 0.1)}" fill="none" opacity=".7"/>`;
+    return `<path d="M${r(x0 + nx * w0 / 2)} ${r(y0 + ny * w0 / 2)} Q${r(mx + nx * wm / 2)} ${r(my + ny * wm / 2)} ${r(x1 + nx * w1 / 2)} ${r(y1 + ny * w1 / 2)} L${r(x1 - nx * w1 / 2)} ${r(y1 - ny * w1 / 2)} Q${r(mx - nx * wm / 2)} ${r(my - ny * wm / 2)} ${r(x0 - nx * w0 / 2)} ${r(y0 - ny * w0 / 2)} Z" fill="#5f625e"/><path d="M${r(x0 - nx * w0 * 0.3)} ${r(y0 - ny * w0 * 0.3)} Q${r(mx - nx * wm * 0.3)} ${r(my - ny * wm * 0.3)} ${r(x1 - nx * w1 * 0.3)} ${r(y1 - ny * w1 * 0.3)}" stroke="#8f928e" stroke-width="${r(w1 * 0.35 + 0.1)}" fill="none" opacity=".6"/>`;
   };
   /* drei Hauptäste, jeder gabelt sich Y-förmig; an jedem Astende ein Laubballen (außen kleiner) */
-  const gabeln = [[31, 214, 26, 202, [[16, 192], [30, 190]]], [32, 215, 46, 202, [[54, 192], [44, 188]]], [33, 217, 52, 212, [[66, 210], [62, 202]]]];
+  const gabeln = [[20, 226, 12, 212, [[4, 204], [16, 196]]], [29, 215, 36, 200, [[30, 188], [48, 190]]], [33, 218, 50, 210, [[64, 208], [58, 198]]]];
   let ballen = "";
   for (const [x0, y0, gx, gy, enden] of gabeln) {
     k += ast(x0, y0, gx, gy, 2.2, 1.3);
-    enden.forEach(([ex, ey], i) => { k += ast(gx, gy, ex, ey, 1.2, 0.6); const q = 8.5 - i * 1.6 - Math.hypot(ex - 30, ey - 210) * 0.04; ballen += laubBusch(ex, ey, q, q * 0.72); });
+    enden.forEach(([ex, ey], i) => { k += ast(gx, gy, ex, ey, 1.2, 0.6); const q = 10 - i * 1.4 - Math.hypot(ex - 30, ey - 210) * 0.05; ballen += laubBusch(ex, ey, q, q * 0.72); });
   }
   k += ballen;
   S.teil({ id: "buche", de: "die Buche", syl: "BU-che", it: "il faggio", itSyl: "FAG-gio", en: "beech", x: 0, y: 0, kunst: k,
