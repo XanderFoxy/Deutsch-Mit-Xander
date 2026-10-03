@@ -49,24 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 842: Satzbaukasten wird erst bei Bedarf geladen (Funk 271)",
+  stand: "Fassung 843: Wache mit Geduld, feste Kennung aus der gespeicherten Anmeldung (Test 23:53)",
 
   inArbeit: [
-    { seit: "2026-10-02T23:28",
-      text: "app.js teilen bzw. bei Updates nicht ganz neu laden (der größte Brocken, 921 KB)" },
-    { seit: "2026-10-02T23:28",
-      text: "spiel.js nach dem Aufbau laden (viele Verknüpfungen – sorgfältig)" },
-    { seit: "2026-10-02T23:28",
+    { seit: "2026-10-03T00:06",
+      text: "app.js teilen bzw. bei Updates nicht ganz neu laden (921 KB)" },
+    { seit: "2026-10-03T00:06",
+      text: "spiel.js nach dem Aufbau laden" },
+    { seit: "2026-10-03T00:06",
       text: "Bilderwelt neu, Ort für Ort (Funk 263)" },
-    { seit: "2026-10-02T23:28",
+    { seit: "2026-10-03T00:06",
       text: "sfu/aussprache neu ausliefern (wartet auf OK)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-02T23:28",
-      text: "satzbau.js (185 KB) nicht mehr beim Start" },
-    { seit: "2026-10-02T23:28",
-      text: "3G: bereit 12,0 → 11,1 s" },
+    { seit: "2026-10-03T00:06",
+      text: "Kein Neustart 2 s nach der Antwort mehr" },
+    { seit: "2026-10-03T00:06",
+      text: "Geduld wächst, solange die Gegenseite (Hintergrund) nicht antwortet" },
+    { seit: "2026-10-03T00:06",
+      text: "Samsung-Kennung aus der gespeicherten Anmeldung" },
   ],
 };

@@ -3162,3 +3162,13 @@ XANDER (Funk 271, wörtlich): „es soll doch unter wissen und Klassenzimmer dan
   
   Ehrlich: Der große Brocken bleibt app.js mit 921 KB. Das Zehnfache gibt es erst, wenn app.js geteilt wird oder bei einem Update nicht ganz neu kommt (nächste Schritte).
 - **Sonden**: `pruefe-858-ladeweg.js` prüft zusätzlich: kein satzbau.js beim Start und im Klassenzimmer; „Lernen" holt es sofort (Satzbaukasten bereit). Grün: 858, 834, 835, 839, 636, 837, runde18, tutor, einladungslink, kein-zoom, ladezeit, 862, runde88-panels.
+
+## Fassung 843 — Wache mit Geduld, feste Kennung aus der gespeicherten Anmeldung (Funk 271, Test 23:53–23:57)
+
+Echte Zeitleisten vom 02.10., 23:17–23:57: Xanders Samsung (841/842) mit einem zweiten Handy (Oppo CPH1937, Android 11, WebView, Fassung 842).
+- Antwortet die Gegenseite, steht die Leitung nach 3–9 s (23:53: Ton 2,4 s, steht 5,4 s; 23:54: steht 7,6–9,2 s). Weg: srflx oder Relais.
+- **Wache zu ungeduldig**: Lag das Samsung im Hintergrund, schickte das Oppo alle 6–7 s ein neues Angebot, mit neuer Wegesuche und neuem Angebot. Kam die Antwort dann doch (23:57 nach 19,3 s), riss die Wache 2 s später wieder alles neu an. Jetzt:
+  - Wartet die Leitung noch auf eine Antwort, wächst die Geduld (6, 12, 18 … höchstens 30 s).
+  - Eine Antwort oder der Beginn der Wegesuche („checking") setzt die Uhr der Wache zurück.
+- **Zufallskennung bei der Rückkehr**: Das Samsung kam weiter als „pvvqnljpk196" statt „k2585…". `dma_lc_konto` aus 841 gab es auf dem Gerät noch nicht, und bei der Rückkehr nach dem Neuladen ist die Anmeldung noch nicht geladen. Jetzt liest livechat.js die von Supabase im Gerät abgelegte Sitzung (`sb-…-auth-token`, `user.id`), die sofort da ist. Danach folgen `dma_lc_konto` und erst dann der Zufall.
+- Sonden grün: 862 (+3 Quelltext-Prüfungen für 843), 861, 659, 856, 859, 811, 816, 827, einladungslink, runde18. `pruefe-842-sfu-spiel`: Im ersten Lauf stürzte die Browserseite beim Neuladen ab („Target crashed", keine rote Prüfung); der zweite Lauf war ganz grün.

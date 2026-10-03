@@ -3166,6 +3166,8 @@ window.LiveChat = (function () {
     };
     pc.oniceconnectionstatechange = function () {
       if (brueckeJe[anderId] === pc) leitungMerk(anderId, "ice", pc.iceConnectionState);   // FASSUNG 840
+      /* FASSUNG 843 — die Wegesuche läuft: der Wache die volle Geduld geben, nicht mitten hinein neu starten */
+      if (pc.iceConnectionState === "checking" && brueckeJe[anderId] === pc && versuchJe[anderId]) versuchJe[anderId].seit = Date.now();
       /* „disconnected" ist oft nur ein Netzwechsel (WLAN auf Mobilfunk).
          Ein Neustart der Wegesuche holt die Leitung zurück, ohne alles
          abzureissen. */
@@ -5654,6 +5656,8 @@ window.LiveChat = (function () {
     if (n.art === "angebot") { personMerken(n.von, n.name, n.bild); angebotAnnehmen(n.von, n.beschreibung); return; }
     if (n.art === "antwort") {
       var pc = brueckeJe[n.von];
+      var vAntwort = versuchJe[n.von];   // FASSUNG 843 — Fortschritt: die Wache wartet wieder volle 6 s
+      if (vAntwort) { vAntwort.seit = Date.now(); vAntwort.ohneAntwort = 0; }
       leitungMerk(n.von, pc ? "antwortDa" : "antwortOhneLeitung");   // FASSUNG 840
       if (pc) {
         pc.setRemoteDescription(new RTCSessionDescription(n.beschreibung))
@@ -6435,7 +6439,15 @@ window.LiveChat = (function () {
         if (steht(pc)) { delete versuchJe[id]; return; }
         var v = versuchJe[id] || (versuchJe[id] = { seit: jetzt, stufe: 0, anlaeufe: 0 });
         if (!v.seit) v.seit = jetzt;
-        if (jetzt - v.seit < GEDULD_MS) return;
+        /* FASSUNG 843 — Zeitleisten vom 02.10., 23:55–23:57 (Oppo ruft das Samsung): lag das andere Gerät im
+           Hintergrund, ging alle 6–7 s ein neues Angebot hinaus (Wegesuche neu, Angebot neu). Kam die Antwort dann
+           doch, war sie für ein älteres Angebot – oder die Wache riss 2 s nach der Antwort wieder alles neu an. Jetzt:
+           wartet die Leitung noch auf eine Antwort, wächst die Geduld (6, 12, 18 … höchstens 30 s); kommt eine Antwort
+           oder beginnt die Wegesuche, fängt die Uhr neu an (siehe „antwort" und oniceconnectionstatechange). */
+        var geduld = GEDULD_MS;
+        if (pc.signalingState === "have-local-offer") geduld = Math.min(30000, GEDULD_MS * (1 + (v.ohneAntwort || 0)));
+        if (jetzt - v.seit < geduld) return;
+        if (pc.signalingState === "have-local-offer") v.ohneAntwort = (v.ohneAntwort || 0) + 1;
         v.seit = jetzt;
         if (v.stufe === 0) {
           /* Erst das Billige: die Wegesuche neu starten. */
@@ -6983,6 +6995,18 @@ window.LiveChat = (function () {
        statt „k2585…": der andere sah eine neue Person, die alte blieb als Geist stehen, und wer anruft, kippte. Jetzt
        merkt sich das Gerät die zuletzt bekannte Konto-Kennung und nimmt sie, solange keine neue mitkommt. */
     try {
+      /* FASSUNG 843 — die Zeitleisten vom 02.10., 23:53–23:57 zeigen das Samsung weiter mit Zufallskennung: bei der
+         Rückkehr nach dem Neuladen ist die Anmeldung noch nicht geladen, und „dma_lc_konto" gab es auf dem Gerät noch
+         nicht. Supabase legt die Sitzung aber selbst im Gerät ab (sb-…-auth-token) – die Kennung steht dort sofort. */
+      if (!kontoId) {
+        for (var ki = 0; ki < localStorage.length && !kontoId; ki++) {
+          var kName = localStorage.key(ki) || "";
+          if (!/^sb-.+-auth-token$/.test(kName)) continue;
+          var kDaten = JSON.parse(localStorage.getItem(kName) || "null");
+          var kNutzer = kDaten && (kDaten.user || (kDaten.currentSession && kDaten.currentSession.user));
+          if (kNutzer && kNutzer.id) kontoId = String(kNutzer.id);
+        }
+      }
       if (kontoId) localStorage.setItem("dma_lc_konto", kontoId);
       else kontoId = String(localStorage.getItem("dma_lc_konto") || "");
     } catch (e) {}

@@ -167,6 +167,10 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
   const lc = fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8");
   sage(/nutzlast\.art === "hallo" && zustand\.sitzung && !nutzlast\.sitzung\) nutzlast\.sitzung = zustand\.sitzung/.test(lc), "D: jedes „hallo“ trägt die Sitzung");
   sage(/zustand\.sitzung = Math\.random\(\)/.test(lc), "D: die Sitzung entsteht je Betreten");
+  /* FASSUNG 843 */
+  sage(/\^sb-\.\+-auth-token\$/.test(lc) && /kNutzer && kNutzer\.id\) kontoId = String\(kNutzer\.id\)/.test(lc), "D (843): ohne Konto wird die gespeicherte Supabase-Anmeldung gelesen (keine Zufallskennung)");
+  sage(/pc\.signalingState === "have-local-offer"\) geduld = Math\.min\(30000, GEDULD_MS \* \(1 \+ \(v\.ohneAntwort \|\| 0\)\)\)/.test(lc), "D (843): die Wache wird geduldiger, solange keine Antwort kommt");
+  sage(/vAntwort\) \{ vAntwort\.seit = Date\.now\(\); vAntwort\.ohneAntwort = 0; \}/.test(lc) && /iceConnectionState === "checking" && brueckeJe\[anderId\] === pc && versuchJe\[anderId\]\) versuchJe\[anderId\]\.seit = Date\.now\(\)/.test(lc), "D (843): Antwort und beginnende Wegesuche setzen die Wache zurück");
   const f = A.__fehler.concat(B.__fehler);
   sage(f.length === 0, "keine Fehler in der Konsole", f.slice(0, 3).join(" | "));
   clearInterval(zaehlen);
