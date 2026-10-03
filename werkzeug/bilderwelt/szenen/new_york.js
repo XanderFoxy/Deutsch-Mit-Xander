@@ -146,8 +146,13 @@ S.hinten(`<rect width="400" height="${HOR + 3}" fill="${S.lg("himmel", [[0, "#3f
   for (let b = 229; b <= 243.4; b += 0.8) { const d = 2905 - (b - 229) / 14.4 * 880, [e, n] = polar(b, d); pts.push(PJ(e, n, b < 242.4 ? 9 : 4)); }
   const base = (b, d) => { const [e, n] = polar(b, d); return PJ(e, n, 1); };
   c += `<path d="M${pr(base(229, 2905))} ${pts.map((p) => `L${pr(p)}`).join(" ")} L${pr(base(243.4, 2025))} Z" fill="${S.lg("gov", [[0, "#7f9a64"], [1, "#5c7448"]])}" ${fern(1)}/>`;
-  const [ce, cn] = polar(244.2, 2174), cw = PJ(ce, cn, 18), cb = PJ(ce, cn, 2);
-  c += `<path d="M${r(cw[0] - 1.6)} ${r(cb[1])} L${r(cw[0] - 1.6)} ${r(cw[1])} Q${r(cw[0])} ${r(cw[1] - 0.4)} ${r(cw[0] + 1.6)} ${r(cw[1])} L${r(cw[0] + 1.6)} ${r(cb[1])} Z" fill="#b98e72" ${fern(1)}/>`;
+  /* Bäume (Nolan Park, Fort Jay) und gelbe Backsteinhäuser */
+  { let t = ""; for (let b = 229.6; b < 242.6; b += 0.55) { const d = 2905 - (b - 229) / 14.4 * 880, [e, n] = polar(b, d), q = PJ(e, n, 9 + 6 + rnd() * 5), rr = K * (6 + rnd() * 4) / d; t += `<circle cx="${r(q[0])}" cy="${r(q[1] + rr * 0.6)}" r="${r(rr)}" fill="${rnd() < 0.5 ? "#5c7a48" : "#6d8a55"}"/>`; if (rnd() < 0.25) { const h = PJ(e, n, 9 + 12); t += `<rect x="${r(h[0] - 0.8)}" y="${r(h[1])}" width="1.6" height="${r(K * 12 / d)}" fill="#d9c08a"/>`; } } c += `<g ${fern(1)}>${t}</g>`; }
+  /* Castle Williams: runde Sandsteinfestung (Durchmesser 64 m, 12 m hoch) an der Nordwestspitze */
+  const [ce, cn] = polar(244.2, 2174), cw = PJ(ce, cn, 12 + 3), cb = PJ(ce, cn, 3), hw = K * 32 / 2174;
+  c += `<g ${fern(1)}><path d="M${r(cw[0] - hw)} ${r(cb[1])} L${r(cw[0] - hw)} ${r(cw[1])} Q${r(cw[0])} ${r(cw[1] - 0.9)} ${r(cw[0] + hw)} ${r(cw[1])} L${r(cw[0] + hw)} ${r(cb[1])} Q${r(cw[0])} ${r(cb[1] + 0.8)} ${r(cw[0] - hw)} ${r(cb[1])} Z" fill="#c09474"/>`;
+  for (let i = -3; i <= 3; i++) c += `<rect x="${r(cw[0] + i * hw / 3.6 - 0.2)}" y="${r((cw[1] + cb[1]) / 2 - 0.3)}" width=".4" height=".6" fill="#5a3f30"/>`;
+  c += `</g>`;
   S.hinten(c);
 }
 /* Die Promenade (Granitplatten in Flucht) und rechts vorn das Kopfsteinpflaster */
@@ -200,8 +205,8 @@ const BBB = enu(40.70420, -73.99460), BBM = enu(40.70663, -73.99935);
   let k = "";
   /* Insel mit Bäumen */
   k += `<path d="M-130 1 Q-118 -14 -80 -16 L74 -17 Q118 -14 132 1 Z" fill="${S.lg("insel", [[0, "#6f8a5a"], [1, "#4b6340"]])}"/>`;
-  for (const [x, y, rr] of [[-104, -15, 9], [-88, -17, 10], [-70, -17, 8], [66, -17, 9], [86, -17, 10], [104, -14, 8], [-118, -9, 6], [120, -8, 6]])
-    k += `<circle cx="${x}" cy="${y}" r="${rr}" fill="${S.rg("baumi", [[0, "#7c9a62"], [1, "#405a36"]], 0.4, 0.35, 0.7)}"/>`;
+  for (const [x, y] of [[-108, -13], [-100, -15], [-92, -16], [-84, -16.5], [-76, -16.5], [-116, -9], [62, -16.5], [70, -16.5], [78, -16.5], [86, -16], [94, -15], [102, -13], [112, -10], [120, -7]])
+    k += `<circle cx="${x}" cy="${y}" r="3.8" fill="${S.rg("baumi", [[0, "#7c9a62"], [1, "#405a36"]], 0.4, 0.35, 0.7)}"/>`;
   /* Fort Wood: Elf-Zack-Stern aus Granit, sichtbare Mauerhöhe (≈ 7 m); vorne die Zacken, hinten die Mauerkrone */
   {
     const zack = [];
@@ -214,11 +219,15 @@ const BBB = enu(40.70420, -73.99460), BBM = enu(40.70663, -73.99935);
       mauer += `<path d="M${r(x0)} ${r(y0 - 6)} L${r(x1)} ${r(y1 - 6)} L${r(x1)} ${r(y1 - 1.6)} L${r(x0)} ${r(y0 - 1.6)} Z" fill="${hell ? "#e6dccb" : "#b9aa94"}"/>`;
     }
     k += `<ellipse cx="0" cy="-8" rx="34" ry="4.6" fill="#8fa476"/>`;
+    /* geschlossene Mauerkrone des ganzen Sterns (auch die hinteren Zacken) */
+    { const st = []; for (let i = 0; i < 22; i++) { const a = i / 22 * Math.PI * 2, rad = i % 2 ? 27 : 38; st.push(`${r(Math.cos(a) * rad)} ${r(Math.sin(a) * rad * 0.16 - 6)}`); } k += `<path d="M${st.join(" L")} Z" fill="#d6ccba"/><ellipse cx="0" cy="-6.3" rx="24" ry="3.3" fill="#8fa476"/>`; }
     k += mauer + `<path d="M${kr}" stroke="#f4ede1" stroke-width="1.2" fill="none"/>`;
   }
   /* Fundament: gestufter Pyramidenstumpf (20 m) */
-  k += `<path d="M-15 -6 L-11 -12.4 L11 -12.4 L15 -6 Z" fill="${S.lg("fund", [[0, "#ece5d8"], [0.55, "#d7cdbd"], [0.56, "#bcae99"], [1, "#a8998a"]], 0, 0, 1, 0)}"/>`;
-  for (const y of [-8, -10, -11.6]) k += `<line x1="${r(-14 + (-y - 6) * 0.6)}" y1="${y}" x2="${r(14 - (-y - 6) * 0.6)}" y2="${y}" stroke="#9c8f7d" stroke-width=".3"/>`;
+  k += `<path d="M-15 -6 L-10.6 -14 L10.6 -14 L15 -6 Z" fill="${S.lg("fund", [[0, "#ece5d8"], [0.55, "#d7cdbd"], [0.56, "#bcae99"], [1, "#a8998a"]], 0, 0, 1, 0)}"/>`;
+  for (const y of [-8, -10, -12, -13.6]) k += `<line x1="${r(-14 + (-y - 6) * 0.55)}" y1="${y}" x2="${r(14 - (-y - 6) * 0.55)}" y2="${y}" stroke="#9c8f7d" stroke-width=".3"/>`;
+  /* Sockel und Figur stehen auf dem 20 m hohen Fundament (Verhältnis Figur : Sockel : Fundament = 46 : 27 : 20) */
+  k += `<g transform="translate(0 -1.6)">`;
   /* Sockel (27 m): Bossenquader, Loggia mit vier Säulen je Seite, Schildband, Galerie */
   const P = (x0, x1, y0, y1, a, b) => `<path d="M${x0} ${y0} L${x0 + a} ${y1} L${x1 - b} ${y1} L${x1} ${y0} Z"`;
   k += `${P(-4.6, 0.6, -12.4, -29.2, 0.6, 0)} fill="${S.lg("sockl", [[0, "#efe3d3"], [1, "#d9c8b3"]], 0, 0, 1, 0)}"/>`;
@@ -295,20 +304,20 @@ const BBB = enu(40.70420, -73.99460), BBM = enu(40.70663, -73.99935);
   g += `<path d="M${f(-2.95, -27.6)} C${f(-3.35, -28.1)} ${f(-3.15, -28.8)} ${f(-2.9, -29.3)}" stroke="#fffbe0" stroke-width=".18" fill="none"/>`;
   /* Schatten auf der linken Flanke (im Bild rechts) */
   g += `<path d="M${f(1.4, 0.3)} C${f(1.2, -6)} ${f(1.6, -12)} ${f(2.2, -17.6)} L${f(2.6, -17.6)} C${f(3, -16)} ${f(3.2, -14)} ${f(3.3, -12.2)} C${f(3.6, -8)} ${f(4, -4)} ${f(4.2, 0)} Z" fill="#123a31" opacity=".2"/>`;
-  k += g;
+  k += `<g transform="scale(.9 1)">${g}</g></g>`;
   const sk = SK;
   S.teil({ id: "freiheitsstatue", de: "die Freiheitsstatue", syl: "FREI-heits-sta-tu-e", it: "la Statua della Libertà", itSyl: "STA-tua del-la li-ber-TÀ", en: "Statue of Liberty",
     x: SX, y: SY, kunst: `<g ${fern(0)} transform="scale(${r(SK * 1000) / 1000})">${k}</g>` + flaeche(-7, -20, 14, 22, 1),
     tipp: "Die Freiheitsstatue war ein Geschenk Frankreichs an die USA (1886). Mit dem Sockel ist sie 93 Meter hoch — von hier, 4 Kilometer weit, ist sie klein.",
-    zoom: { x: r(SX - 6), y: r(SY - 8.4), w: 12, h: 8 },
+    zoom: { x: r(SX - 6.9), y: r(SY - 8.8), w: 13.8, h: 9.2 },
     unter: [
-      { id: "fackel", de: "die Fackel", syl: "FA-ckel", it: "la fiaccola", itSyl: "FIAC-co-la", en: "torch", x: SX - 2.95 * sk, y: SY - 56.4 * sk, kunst: flaeche(-1.7 * sk, -3.6 * sk, 3.4 * sk, 4.2 * sk, 0.1),
+      { id: "fackel", de: "die Fackel", syl: "FA-ckel", it: "la fiaccola", itSyl: "FIAC-co-la", en: "torch", x: SX - 2.65 * sk, y: SY - 58 * sk, kunst: flaeche(-1.7 * sk, -3.6 * sk, 3.4 * sk, 4.2 * sk, 0.1),
         tipp: "Die Flamme der Fackel ist mit echtem Gold überzogen." },
-      { id: "krone", de: "die Krone", syl: "KRO-ne", it: "la corona", itSyl: "co-RO-na", en: "crown", x: SX - 0.1 * sk, y: SY - 51.4 * sk, kunst: flaeche(-2.8 * sk, -3 * sk, 5.6 * sk, 3.4 * sk, 0.1),
+      { id: "krone", de: "die Krone", syl: "KRO-ne", it: "la corona", itSyl: "co-RO-na", en: "crown", x: SX - 0.1 * sk, y: SY - 53 * sk, kunst: flaeche(-2.8 * sk, -3 * sk, 5.6 * sk, 3.4 * sk, 0.1),
         tipp: "Die Krone hat sieben Strahlen — für die sieben Meere und Kontinente." },
-      { id: "tafel", de: "die Tafel", syl: "TA-fel", it: "la tavoletta", itSyl: "ta-vo-LET-ta", en: "tablet", x: SX + 2.9 * sk, y: SY - 39.3 * sk, kunst: flaeche(-1.7 * sk, -6.6 * sk, 3.4 * sk, 6.8 * sk, 0.1),
+      { id: "tafel", de: "die Tafel", syl: "TA-fel", it: "la tavoletta", itSyl: "ta-vo-LET-ta", en: "tablet", x: SX + 2.6 * sk, y: SY - 40.9 * sk, kunst: flaeche(-1.7 * sk, -6.6 * sk, 3.4 * sk, 6.8 * sk, 0.1),
         tipp: "Auf der Tafel steht „JULY IV MDCCLXXVI“ — der 4. Juli 1776, der Tag der Unabhängigkeit." },
-      { id: "sockel", de: "der Sockel", syl: "SO-ckel", it: "il piedistallo", itSyl: "pie-di-STAL-lo", en: "pedestal", x: SX, y: SY - 12.4 * sk, kunst: flaeche(-4.6 * sk, -16.8 * sk, 9.2 * sk, 16.6 * sk, 0.1),
+      { id: "sockel", de: "der Sockel", syl: "SO-ckel", it: "il piedistallo", itSyl: "pie-di-STAL-lo", en: "pedestal", x: SX, y: SY - 14 * sk, kunst: flaeche(-4.6 * sk, -16.8 * sk, 9.2 * sk, 16.6 * sk, 0.1),
         tipp: "Der Sockel aus Granit wurde mit Spenden aus ganz Amerika bezahlt." },
     ] });
 }
@@ -319,17 +328,22 @@ const BBB = enu(40.70420, -73.99460), BBM = enu(40.70663, -73.99935);
    ===================================================================== */
 {
   const s = K / 5239, X = XM(369.9), Y = HOR + K * EYE / 5239;
-  const KALK = S.lg("kalk", [[0, "#eceae4"], [0.45, "#d9d6cd"], [0.55, "#b4b1a9"], [1, "#9c9992"]], 0, 0, 1, 0);
+  const KALK = S.lg("kalk", [[0, "#d8d3c8"], [0.45, "#c3bdb1"], [0.55, "#9d978c"], [1, "#857f75"]], 0, 0, 1, 0);
   let k = "";
   k += `<rect x="-65" y="-125" width="130" height="125" fill="${KALK}"/><rect x="-65" y="-125" width="130" height="125" fill="url(#${S.id("steinv")})" transform="scale(1 1)"/>`;
   k += `<rect x="-29" y="-300" width="58" height="176" fill="${KALK}"/>`;
   for (let x = -26; x < 28; x += 6) k += `<rect x="${x}" y="-298" width="3" height="172" fill="#6a7078" opacity=".4"/>`;
   k += `<rect x="-23" y="-322" width="46" height="23" fill="${KALK}"/><rect x="-18" y="-338" width="36" height="17" fill="${KALK}"/><rect x="-14" y="-350" width="28" height="13" fill="${KALK}"/>`;
-  k += `<path d="M-9 -350 L-7 -376 Q0 -382 7 -376 L9 -350 Z" fill="${S.lg("mast", [[0, "#e9edef"], [0.5, "#bfc7cc"], [1, "#8f989e"]], 0, 0, 1, 0)}"/>`;
+  /* Schultern der Rücksprünge hell abgesetzt, darüber der zylindrische Mast (Fenster-Ringe) und die Antenne */
+  for (const [y, w] of [[-125, 65], [-300, 29], [-322, 23], [-338, 18]]) k += `<rect x="${-w}" y="${y}" width="${2 * w}" height="3" fill="#ece8de"/>`;
+  k += `<path d="M-9 -350 L-9 -372 Q0 -377 9 -372 L9 -350 Z" fill="${S.lg("mast", [[0, "#e9edef"], [0.5, "#bfc7cc"], [1, "#8f989e"]], 0, 0, 1, 0)}"/>`;
+  for (const y of [-356, -362, -368]) k += `<rect x="-9" y="${y}" width="18" height="2" fill="#5d666d" opacity=".6"/>`;
   k += `<rect x="-3.5" y="-392" width="7" height="14" fill="#c4cbcf"/><rect x="-1.8" y="-443" width="3.6" height="52" fill="#9aa3a9"/>`;
   S.teil({ id: "empire_state_building", de: "das Empire State Building", syl: "EM-pire STATE BUIL-ding", it: "l'Empire State Building", itSyl: "EM-pire STATE BUIL-ding", en: "Empire State Building",
     x: X, y: Y, kunst: `<g ${fern(0)} transform="scale(${r(s * 10000) / 10000})">${k}</g>` + flaeche(-3, -29, 6, 29, 0.5),
-    tipp: "Das Empire State Building (1931) ist 443 Meter hoch. Oben im 86. und 102. Stock sind Aussichtsplattformen." });
+    tipp: "Das Empire State Building (1931) ist 443 Meter hoch. Oben im 86. und 102. Stock sind Aussichtsplattformen.",
+    /* Lupe „Midtown“: Empire State und Chrysler Building nebeneinander */
+    zoom: { x: r(X - 8), y: r(Y - 31), w: 30, h: 20 } });
 }
 {
   const s = K / 5788, X = XM(377.7), Y = HOR + K * EYE / 5788;
@@ -338,8 +352,8 @@ const BBB = enu(40.70420, -73.99460), BBM = enu(40.70663, -73.99935);
   const ST = S.lg("chrstahl", [[0, "#ffffff"], [0.35, "#d8dde1"], [0.6, "#9ea7ae"], [1, "#e6eaec"]], 0, 0, 1, 0);
   for (let i = 0; i < 7; i++) {
     const y = -236 - i * 7.2, w = 23 - i * 2.9;
-    k += `<path d="M${r(-w)} ${r(y)} Q${r(-w)} ${r(y - 9)} 0 ${r(y - 9.6)} Q${r(w)} ${r(y - 9)} ${r(w)} ${r(y)} Z" fill="${ST}"/>`;
-    for (const t of [-0.55, 0, 0.55]) if (w > 7) k += `<path d="M${r(t * w - 1.6)} ${r(y - 1)} L${r(t * w)} ${r(y - 5)} L${r(t * w + 1.6)} ${r(y - 1)} Z" fill="#2f3a44"/>`;
+    k += `<path d="M${r(-w)} ${r(y)} Q${r(-w)} ${r(y - 9)} 0 ${r(y - 9.6)} Q${r(w)} ${r(y - 9)} ${r(w)} ${r(y)} Z" fill="${ST}"/><path d="M${r(-w)} ${r(y)} Q${r(-w)} ${r(y - 9)} 0 ${r(y - 9.6)}" stroke="#ffffff" stroke-width="1.2" fill="none"/>`;
+    for (const t of [-0.6, -0.2, 0.2, 0.6]) if (w > 6) k += `<path d="M${r(t * w - 1.4)} ${r(y - 0.8)} L${r(t * w)} ${r(y - 6.4)} L${r(t * w + 1.4)} ${r(y - 0.8)} Z" fill="#1f2830"/>`;
   }
   k += `<path d="M-2.4 -284 L0 -319 L2.4 -284 Z" fill="${ST}"/>`;
   S.teil({ id: "chrysler_building", de: "das Chrysler Building", syl: "CHRYS-ler BUIL-ding", it: "il Chrysler Building", itSyl: "CHRYS-ler BUIL-ding", en: "Chrysler Building",

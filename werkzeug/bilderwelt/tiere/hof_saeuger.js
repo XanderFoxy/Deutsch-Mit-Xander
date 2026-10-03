@@ -393,13 +393,12 @@ function auge2(T, F, x, y, a, o = {}) {
    2 Wachstumsringe, Glanz oben auf der Wand, Haare über dem Kronrand. */
 function huf2(T, F, xh, xt, h, winkel, farbe, haarFarbe, tr = 0.42) {
   const tw = h / Math.tan(winkel * Math.PI / 180), xo = xt - tw, hh = h * tr;
-  const p = [[xh - 0.6, -0.4, 1], [xt, 0, 1], [xo, -h], [xo - (xo - xh) * 0.35, -h * 0.9], [xo - (xo - xh) * 0.7, -h * 0.66], [xh + 1.2, -hh], [xh - 0.4, -hh * 0.55]];
+  const p = [[xh - 0.6, -0.4, 1], [xt - 0.7, 0, 1], [xt - 0.1, -0.6], [xo, -h], [xo - (xo - xh) * 0.35, -h * 0.9], [xo - (xo - xh) * 0.7, -h * 0.66], [xh + 1.2, -hh], [xh - 0.4, -hh * 0.55]];
   let innen = "";
   if (T.fein) {
     let d = "";
     for (let i = 1; i < 9; i++) { const t = i / 9, x0 = xo - (xo - xh - 1) * t, y0 = -h + (h - hh) * t; d += `M${z(x0, 0.1)} ${z(y0, 0.1)}l${z(tw * (1 - t * 0.5), 0.1)} ${z(-y0, 0.1)}`; }
     innen += `<path d="${d}" stroke="#fff" stroke-opacity=".05" stroke-width=".15" fill="none"/>`;
-    innen += [0.4, 0.7].map((t) => strich([[xh + 0.5, -hh * (1 - t) - 0.2], [xo - (xo - xh) * 0.5, -h * (1 - t) * 0.86], [xt - tw * t, -h * (1 - t)]], "#000", 0.2, 0.16, 0.1)).join("");
   }
   innen += F.kante(xo - tw * 0.05, -h * 0.85, xt - tw * 0.5, -h * 0.25, 0.7, 0.4) + F.schatten(xh + 1, -hh * 0.4, 2.2, 2.2, 0.55);
   let s = stueck(T, p, T.lg("huf" + farbe.slice(1), [[0, farbe], [1, "#000"]], 0, 0, 1, 0.3), innen, { licht: 0.8, hell: 0.15, q: 0.1 });
@@ -593,8 +592,14 @@ function laufP(T, F, cx, vorn) {
 }
 const P_HCX = 38, P_VCX = 175;
 const P_H = bildeBein(HB_TPL, P_HCX, 1, [[0, 0], [-200, -200]]), P_V = bildeBein(VB_TPL, P_VCX, 1, [[0, 0], [-200, -200]]);
-const P_HB = P_H.h, P_HV = P_H.v, P_VB = P_V.h, P_VV = P_V.v;
-const P_KAMM = [[233, -217.5], [224, -214.5], [212, -209], [200, -201], [188, -191.5], [176, -180.5], [167, -172.5]];
+/* Hinterkontur: Sitzbeinhöcker, Halbsehnenmuskel-Wölbung, Kniekehle, gerade Achillessehne, Fersenbeinhöcker */
+const P_HB = [[24.4, -128], [23.8, -121], [24.6, -114], [26.6, -106], [29.4, -98], [32, -90], [33.6, -82], [34.2, -76]].concat(P_H.h.slice(6)), P_HV = P_H.v, P_VB = P_V.h, P_VV = P_V.v;
+/* PROPORTIONEN Pferd (Warmblut, Stockmaß 168) in Kopflängen (KL = 62 cm): Widerrist 2,7 KL, Kruppe 2,67 KL, Sitzbeinhöcker
+   2,2 KL (135), Rumpflänge Bug–Sitzbein 2,8 KL (175), Brusttiefe 1,15 KL (Brustboden 95), Ellbogen 1,6 KL (100), Vorderfußwurzel
+   0,8 KL (50), Fesselgelenk 0,37 KL (23), Kniegelenk 1,7 KL (106, vor dem Hüfthöcker-Lot), Fersenbeinhöcker 1 KL (62; Lot vom
+   Sitzbeinhöcker), Unterschenkel 55–60° nach hinten-unten, Hinterbacke unten zur Kniekehle eingezogen; Hals: Kamm 1,5 KL,
+   gewölbt, Halsunterlinie ≈ 68° vom Buggelenk (115) zur Kehle (190), Genick 3,45 KL (214), Kopfwinkel 55°. */
+const P_KAMM = [[245, -215.4], [236, -213.6], [226, -209.6], [216, -204], [206, -197.6], [196, -190.6], [186, -183.4], [176, -177], [167, -172.5]];
 function pferd(T) {
   FEIN = T.fein;
   const F = flecken(T, "#ffd2a0", "#1a0602");
@@ -624,14 +629,14 @@ function pferd(T) {
   s += vol(T, "bein", 3, fernBein(true, -12)) + hufP(P_VCX - 12, 10, "#2a2420", "#0c0908");
   /* ---------- Rumpf, Hals und nahe Beine: EIN Umriss ---------- */
   const rumpf = P_HB.concat(P_HV, [[75, -106], [79, -105.5], [84, -103], [96, -99], [112, -94], [130, -90], [146, -88.5], [156, -89.5], [161, -92]],
-    P_VB, P_VV, [[192.6, -100.6], [198.6, -106.4], [204.4, -113.4], [208.4, -121], [210.2, -129], [210.8, -138], [211, -150], [211.6, -162], [212.6, -174],
-      [213.8, -185], [215.4, -194], [219, -204], [226, -211]], P_KAMM,
-    [[163, -173], [157, -171], [150, -167.4], [142, -163.6], [130, -160], [116, -158], [102, -159], [90, -161], [78, -163.5], [68, -165], [60, -165], [52, -163.5],
+    P_VB, P_VV, [[192.6, -100.6], [198.6, -106.4], [204.4, -113.4], [208, -121], [210.8, -130], [213.6, -140], [217, -151], [220.6, -162], [224.2, -173],
+      [227.6, -183], [230.8, -191], [234, -197.4], [238, -204], [242, -210.4]], P_KAMM,
+    [[163, -173], [157, -171], [150, -167.6], [142, -164.4], [130, -161.6], [116, -160.6], [102, -161], [90, -162.4], [78, -164.2], [68, -165.2], [60, -165], [52, -163.5],
       [44, -160], [37, -155.5], [31, -150], [27.4, -143], [25.2, -135]]);
   const zHinten = [[0, -175], [76, -175], [88, -140], [80, -100], [62, -76], [50, -60], [20, -60]];
   const zRumpf = [[76, -175], [160, -175], [158, -130], [160, -86], [80, -92], [88, -140]];
   const zSchulter = [[160, -175], [170, -175], [205, -122], [195, -92], [188, -60], [160, -60], [160, -86], [158, -130]];
-  const zHals = [[170, -175], [240, -230], [222, -190], [206, -120], [205, -122]];
+  const zHals = [[170, -175], [252, -232], [236, -190], [210, -118], [205, -122]];
   const zBeine = [[[P_HCX - 14, -56], [P_HCX + 24, -56], [P_HCX + 24, 0], [P_HCX - 14, 0]], [[P_VCX - 12, -60], [P_VCX + 18, -60], [P_VCX + 18, 0], [P_VCX - 12, 0]]];
   const zLicht = [[20, -170], [90, -170], [150, -168], [170, -178], [230, -222], [222, -196], [190, -170], [160, -146], [100, -146], [40, -140], [22, -130]];
   const innen =
@@ -659,7 +664,7 @@ function pferd(T) {
     F.rinne(162, -101, 182, -101, 1.8, 0.35) + F.licht(201, -122, 2.6, 5, 0.4, -25) + F.schatten(196, -106, 5, 6, 0.4) +
     F.schatten(157, -112, 6, 16, 0.35) + [120, 130, 140].map((x) => F.rinne(x, -132, x - 4, -106, 3, 0.09)).join("") +
     /* Hals: Kamm mit Glanzband, Drosselrinne mit Licht darüber, Kehle */
-    F.glanz(196, -194, 30, 4, 0.4, -38) + F.rinne(211.5, -184, 207, -140, 1.8, 0.42) + F.kante(215.5, -184, 211, -142, 1.4, 0.35) + F.schatten(213, -194, 7, 6, 0.5) +
+    F.glanz(204, -194, 32, 4, 0.4, -34) + F.rinne(224, -182, 210, -138, 1.8, 0.42) + F.kante(227.6, -183, 214, -141, 1.4, 0.35) + F.schatten(230, -193, 7, 6, 0.5) +
     /* Glanzbänder (glattes Sommerfell) auf den Wölbungen, gestreckt in Haarrichtung */
     F.licht(46, -157, 18, 2.2, 0.38, 10) + F.licht(120, -153, 26, 2, 0.3) + F.licht(176, -150, 2, 13, 0.28, -32) + F.licht(36, -122, 1.8, 14, 0.25, 4) +
     /* Flankenwirbel vor der Kniefalte */
@@ -716,7 +721,7 @@ function pferd(T) {
     F.schatten(27, -142, 4, 3, 0.4), { licht: 0 });
   s += saum2(T, [[12, -51], [24, -50]], 26, 92, 3, "#0e0b0a", 0.14, 0.7, { ab: 0.4, streuung: 10 });
   /* ---------- Kopf: Achse Genick → Maul, 55° geneigt, Länge 62 cm ---------- */
-  const G = [232, -214.5], W = 55, K = (pts) => dreh(pts, G[0], G[1], W), P = (x, y) => K([[x, y]])[0];
+  const G = [244, -213], W = 55, K = (pts) => dreh(pts, G[0], G[1], W), P = (x, y) => K([[x, y]])[0];
   const kopfL = [[-1, -3.2], [8, -5.6], [18, -6.4], [30, -5.4], [42, -4.2], [52, -2.6], [57.5, -1], [60.6, 1.8], [62, 5.4], [62.2, 9], [61, 12.2],
     [58.8, 13.3], [59.4, 14.6], [58, 16.4], [55, 17.2], [52, 17], [49.5, 18.4], [46, 18], [40, 16.8], [32, 17.4], [26, 19.6], [19, 23.2], [12, 24.6],
     [6, 23], [1.6, 18.6], [-1.2, 12], [-2.2, 5]];
@@ -774,7 +779,7 @@ function pferd(T) {
     s += haare2(T, K([[-1, -7], [10, -7], [16, -2], [12, 0], [2, -2]]), 30, W + 8, 5, { farben: [["#000", 1, 0.08, 0.55], ["#7a6a60", 0.7, 0.07, 0.45]], streuung: 16, kruemmung: 0.3 });
   }
   const kb = T.box(kopf);
-  return { svg: s, box: [10, -234, 266, 0], fuesse: [P_HCX + 8, P_HCX + 18, P_VCX - 4, P_VCX + 8], kopf: [kb[0] - 4, kb[1] - 27, kb[2] + 2, kb[3] + 2] };
+  return { svg: s, box: [10, -235, 279, 0], fuesse: [P_HCX + 8, P_HCX + 18, P_VCX - 4, P_VCX + 8], kopf: [kb[0] - 4, kb[1] - 27, kb[2] + 2, kb[3] + 2] };
 }
 /* Punkt bei Anteil t (0–1) entlang einer Polylinie */
 function punktAuf(pts, t) {
@@ -1792,5 +1797,5 @@ module.exports = [
   { id: "kuh", de: "die Kuh", syl: "KUH", it: "la vacca", itSyl: "VAC-ca", en: "cow",
     gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 2.4, hoehe: 1.53, zeichne: kuh },
   { id: "pferd", de: "das Pferd", syl: "PFERD", it: "il cavallo", itSyl: "ca-VAL-lo", en: "horse",
-    gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 2.56, hoehe: 2.34, zeichne: pferd },
+    gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 2.67, hoehe: 2.33, zeichne: pferd },
 ];

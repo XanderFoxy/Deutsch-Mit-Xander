@@ -425,3 +425,164 @@ const KG_UMAX = kgU(320);
   S.teil({ id: "altesschloss", de: "das Alte Schloss", syl: "AL-te SCHLOSS", it: "il Castello Vecchio", itSyl: "ca-STEL-lo VEC-chio", en: "Old Castle",
     x: 0, y: 0, kunst: k, tipp: "Im Alten Schloss ist heute das Landesmuseum Württemberg." });
 }
+
+/* Wappentiere als Umrisse (Einheit ≈ 1/12 der Tierhöhe), für Wappen und Hirsch */
+const HIRSCH = "M-2.9 -5.6 C-2.4 -6.1 1.8 -6.1 2.9 -5.5 C3.4 -5.3 3.6 -4.6 3.3 -4.1 L3.1 -3.6 L3 -1.8 L3.3 0 L2.9 0 L2.5 -1.8 L2.3 -3.2 L1.9 -3.3 L1.7 -1.8 L1.9 0 L1.5 0 L1.2 -1.9 L1.3 -3.4 L-1.6 -3.4 L-1.9 -1.9 L-1.7 0 L-2.1 0 L-2.4 -1.9 L-2.4 -3.3 L-2.7 -3.3 L-2.9 -1.9 L-2.7 0 L-3.1 0 L-3.4 -1.9 L-3.3 -3.6 C-3.6 -4.2 -3.6 -5 -3.4 -5.8 L-3.7 -7.3 L-4.6 -7.9 L-4.9 -8.3 L-4 -8.7 L-3.3 -8.5 L-2.6 -6.8 Z M-3.4 -8.5 L-2.6 -9.1 L-3 -8.3 Z M3.3 -5.1 L3.8 -5.2 L3.5 -4.5 Z";
+const GEWEIH = "M-3.6 -8.6 C-3.4 -10 -2.7 -11 -2.1 -11.8 M-3.45 -9.3 L-4.2 -9.9 M-3 -10.4 L-3.6 -11.3 M-2.5 -11.2 L-2.6 -12.2 M-3.9 -8.6 C-4.1 -9.9 -4.6 -10.9 -5 -11.6 M-4.1 -9.4 L-4.9 -9.6 M-4.4 -10.4 L-5.3 -10.9";
+const LOEWE = "M1 3 Q.5 1.5 1.8 1 L2.4 .4 Q3 .2 3.2 1 L3.4 2.2 Q5.5 2 7.6 2.2 Q8.4 2.1 8.8 1.4 Q9.6 .4 9.4 1.6 Q9 2.8 8.4 2.8 L8.2 3.6 L8.6 5.8 L7.9 5.8 L7.5 4.2 L6.9 4.2 L7 5.8 L6.3 5.8 L5.9 4 L3.6 4 L3.4 5.8 L2.7 5.8 L2.8 4 L2.4 4 L2.1 5.8 L1.4 5.8 L1.4 4 Q1 3.6 1 3 Z";
+
+/* =====================================================================
+   5 — DAS NEUE SCHLOSS (Dreiflügelanlage mit Ehrenhof, Kuppel, Flagge)
+   ===================================================================== */
+const NS = { x: 170, y: 117 };
+{
+  let k = "";
+  const FEN = S.lg("nsfen", [[0, "#6c7a87"], [0.4, "#4a5562"], [1, "#39424c"]]);
+  const fenster = (x0, x1, yb, n, w, h, verdachung) => {
+    let g = "";
+    const sp = (x1 - x0) / n;
+    for (let i = 0; i < n; i++) {
+      const x = x0 + sp * (i + 0.5) - w / 2;
+      g += `<rect x="${r(x)}" y="${r(yb - h)}" width="${r(w)}" height="${r(h)}" fill="${FEN}"/>`;
+      if (verdachung) g += `<path d="M${r(x - 0.3)} ${r(yb - h - 0.2)} L${r(x + w / 2)} ${r(yb - h - 1.1)} L${r(x + w + 0.3)} ${r(yb - h - 0.2)} Z" fill="#f6efdf"/>`;
+    }
+    return g;
+  };
+  const fluegel = (x0, x1, yb, hc, hd, n, farbe) => {
+    let g = `<rect x="${x0}" y="${r(yb - hc)}" width="${r(x1 - x0)}" height="${hc}" fill="${farbe}"/>`;
+    g += `<rect x="${x0}" y="${r(yb - hc * 0.36)}" width="${r(x1 - x0)}" height=".5" fill="#f6efdf"/>`;
+    g += fenster(x0, x1, yb - 1, n, (x1 - x0) / n * 0.42, hc * 0.24, false);
+    g += fenster(x0, x1, yb - hc * 0.4, n, (x1 - x0) / n * 0.44, hc * 0.3, true);
+    g += fenster(x0, x1, yb - hc * 0.8, n, (x1 - x0) / n * 0.4, hc * 0.13, false);
+    g += `<rect x="${r(x0 - 0.3)}" y="${r(yb - hc - 0.6)}" width="${r(x1 - x0 + 0.6)}" height=".9" fill="#f6efdf"/>`;
+    g += `<path d="${Array.from({ length: Math.floor((x1 - x0 - 0.5) / 0.9) }, (_, i) => `M${r(x0 + 0.7 + i * 0.9)} ${r(yb - hc - 0.6)} V${r(yb - hc - 1.9)}`).join(" ")}" stroke="#e6dbc3" stroke-width=".4"/>`;
+    g += `<rect x="${x0}" y="${r(yb - hc - 2.2)}" width="${r(x1 - x0)}" height=".4" fill="#f6efdf"/>`;
+    g += `<path d="M${x0 + 0.4} ${r(yb - hc - 2.2)} L${x0 + 1.6} ${r(yb - hc - hd)} L${x1 - 1.6} ${r(yb - hc - hd)} L${x1 - 0.4} ${r(yb - hc - 2.2)} Z" fill="${SCHIEFER}"/>`;
+    for (let i = 0; i < n; i += 2) { const x = x0 + (x1 - x0) / n * (i + 0.5); g += `<rect x="${r(x - 0.5)}" y="${r(yb - hc - hd * 0.62)}" width="1" height="1.4" fill="#e9e1cf"/>`; }
+    for (let i = 0; i <= n; i += 2) { const x = x0 + (x1 - x0) / n * i; g += `<path d="M${r(x - 0.35)} ${r(yb - hc - 2.2)} L${r(x - 0.3)} ${r(yb - hc - 3.6)} Q${r(x)} ${r(yb - hc - 4.4)} ${r(x + 0.3)} ${r(yb - hc - 3.6)} L${r(x + 0.35)} ${r(yb - hc - 2.2)} Z" fill="#f2ead8"/>`; }
+    return g;
+  };
+  /* Innenseite des Nordflügels: schräg, sie schaut nach Südwesten und liegt voll in der Sonne */
+  k += `<path d="M-48 0 L-48 -21.4 L-36 -19.6 L-36 0 Z" fill="${S.lg("innen", [[0, "#ecdcb6"], [1, "#f4e7c6"]], 0, 0, 1, 0)}"/>`;
+  for (let i = 0; i < 4; i++) { const x = -46.6 + i * 2.9, t = (x + 48) / 12; for (const [yb, h] of [[-1.4, 4], [-8.6, 5], [-16.4, 2]]) k += `<rect x="${r(x)}" y="${r(yb - h + t * 0.3)}" width="1.3" height="${r(h - t * 0.3)}" fill="#4f5964"/>`; }
+  k += `<path d="M-48.4 -21.4 L-36 -19.6 L-36.6 -26.8 L-47.6 -29.4 Z" fill="${S.lg("innendach", [[0, "#7a8693"], [1, "#909baa"]], 0, 0, 1, 0)}"/><path d="M-48.4 -21.4 L-36 -19.6" stroke="#f2ead8" stroke-width=".6"/>`;
+  /* Mittelbau (Corps de Logis), Streiflicht von rechts */
+  k += fluegel(-36, 42, 0, 19.6, 7.2, 23, S.lg("corps", [[0, "#e2cfa8"], [0.6, "#ebdab6"], [1, "#f1e3c2"]], 0, 0, 1, 0));
+  /* Mittelrisalit: Säulen, Dreiecksgiebel mit dem königlichen Wappen, Figuren */
+  k += `<rect x="-9" y="-21" width="18" height="21" fill="${STEIN}"/>`;
+  for (const x of [-7.6, -4.6, -1.5, 1.5, 4.6, 7.6]) k += `<rect x="${x - 0.5}" y="-19.6" width="1" height="11.6" fill="${S.lg("nssaeule", [[0, "#d9ceb6"], [0.6, "#fbf7ee"], [1, "#e4dac4"]], 0, 0, 1, 0)}"/><rect x="${x - 0.7}" y="-20.2" width="1.4" height=".6" fill="#e6dcc6"/>`;
+  k += fenster(-9, 9, -9, 5, 1.5, 6.4, false) + fenster(-9, 9, -1, 5, 1.6, 4.6, false);
+  k += `<rect x="-9.6" y="-21.6" width="19.2" height="1" fill="#fbf7ee"/>`;
+  k += `<path d="M-10 -21.6 L0 -27.6 L10 -21.6 Z" fill="${STEIN}" stroke="#cdbf9f" stroke-width=".35"/>`;
+  k += `<path d="M-8.4 -22.2 L0 -27 L8.4 -22.2 Z" fill="#e9dfc8"/>`;
+  /* Wappen: Schild gespalten — vorn drei schwarze Hirschstangen, hinten drei schwarze Löwen, beides auf Gold; Krone; Schildhalter Löwe und Hirsch */
+  {
+    let w = `<path d="M-1.35 -25.4 L1.35 -25.4 L1.35 -23.6 Q1.35 -22.5 0 -22.1 Q-1.35 -22.5 -1.35 -23.6 Z" fill="${GOLD}" stroke="#6b5420" stroke-width=".12"/>`;
+    w += `<path d="M0 -25.4 L0 -22.1" stroke="#6b5420" stroke-width=".1"/>`;
+    for (const y of [-24.85, -24.1, -23.35]) w += `<path d="M-1.15 ${y} Q-.6 ${r(y - 0.12)} -.12 ${r(y + 0.02)} M-.95 ${r(y - 0.05)} L-1.02 ${r(y - 0.3)} M-.65 ${r(y - 0.09)} L-.7 ${r(y - 0.36)} M-.35 ${r(y - 0.06)} L-.38 ${r(y - 0.3)}" stroke="#1d1d1d" stroke-width=".13" fill="none" stroke-linecap="round"/>`;
+    for (const y of [-25.25, -24.45, -23.65]) w += `<path d="${LOEWE}" transform="translate(.12 ${y}) scale(.105)" fill="#1d1d1d"/>`;
+    w += `<path d="M-1.2 -25.5 L-1.2 -26.3 L-.7 -25.9 L-.35 -26.6 L0 -26 L.35 -26.6 L.7 -25.9 L1.2 -26.3 L1.2 -25.5 Z" fill="${GOLD}" stroke="#6b5420" stroke-width=".08"/>`;
+    /* Schildhalter als Steinrelief */
+    w += `<path d="${LOEWE}" transform="translate(-2.2 -25.4) rotate(-58) scale(-.3 .3)" fill="#f6efdf" stroke="#9e8f70" stroke-width=".35"/>`;
+    w += `<path d="${HIRSCH}" transform="translate(3.2 -22.2) rotate(18) scale(-.27 .27)" fill="#f6efdf" stroke="#9e8f70" stroke-width=".35"/>`;
+    w += `<path d="${GEWEIH}" transform="translate(3.2 -22.2) rotate(18) scale(-.27 .27)" stroke="#9e8f70" stroke-width=".6" fill="none"/>`;
+    w += `<path d="M-6.6 -22.3 Q-5 -22.8 -3.2 -22.4 M3.4 -22.4 Q5 -22.8 6.6 -22.3" stroke="#cdbf9f" stroke-width=".3" fill="none"/>`;
+    k += w;
+  }
+  for (const x of [-10, 0, 10]) k += `<path d="M${x - 0.4} ${x === 0 ? -27.6 : -21.6} L${x - 0.35} ${x === 0 ? -29.6 : -23.6} Q${x} ${x === 0 ? -30.6 : -24.6} ${x + 0.35} ${x === 0 ? -29.6 : -23.6} L${x + 0.4} ${x === 0 ? -27.6 : -21.6} Z" fill="#f2ead8"/>`;
+  /* Kuppel: Blechbahnen, Gesims mit Zahnschnitt, Laterne mit Bögen; darauf die Landesdienstflagge */
+  k += `<rect x="-7.6" y="-28" width="15.2" height="1.1" fill="#ece3cf"/><path d="${Array.from({ length: 19 }, (_, i) => `M${r(-7.2 + i * 0.8)} -27.2 v.3`).join(" ")}" stroke="#b8a985" stroke-width=".35"/>`;
+  k += `<path d="M-7 -28 L-7 -29.4 Q-6.4 -34.6 0 -35.6 Q6.4 -34.6 7 -29.4 L7 -28 Z" fill="${S.lg("kuppelns", [[0, "#56626f"], [0.45, "#7f8c9b"], [0.75, "#aab5c1"], [1, "#6b7785"]], 0, 0, 1, 0)}"/>`;
+  for (const x of [-6, -4.4, -2.9, -1.4, 0, 1.4, 2.9, 4.4, 6]) k += `<path d="M${x} -28 Q${r(x * 0.95)} -32.4 ${r(x * 0.22)} -35.4" stroke="${x < 0 ? "#465260" : "#5a6674"}" stroke-width=".16" fill="none"/>`;
+  k += `<path d="M-6.9 -29.6 Q0 -30.3 6.9 -29.6" stroke="#bfc8d2" stroke-width=".2" fill="none"/>`;
+  k += `<rect x="-1.4" y="-38.6" width="2.8" height="3.1" fill="${S.lg("laterne_ns", [[0, "#d9cdb2"], [0.6, "#f2ead8"], [1, "#e0d4ba"]], 0, 0, 1, 0)}"/>`;
+  for (const x of [-0.75, 0, 0.75]) k += `<path d="M${x - 0.24} -35.9 L${x - 0.24} -37.4 Q${x} -37.8 ${x + 0.24} -37.4 L${x + 0.24} -35.9 Z" fill="#4b5663"/>`;
+  k += `<path d="M-1.7 -38.6 Q0 -40.4 1.7 -38.6 Z" fill="#6b7785"/><circle cx="0" cy="-40.2" r=".35" fill="${GOLD}"/>`;
+  k += `<path d="M0 -40.5 L0 -54.2" stroke="#c4c9cd" stroke-width=".3"/><circle cx="0" cy="-54.4" r=".32" fill="${GOLD}"/>`;
+  {
+    /* Flagge: Schwarz über Gold, wehend; in der Mitte das kleine Landeswappen (drei schwarze Löwen auf Gold, Blattkrone) */
+    const welle = (y) => `M.2 ${r(y)} Q2.4 ${r(y - 0.9)} 4.6 ${r(y)} T8.8 ${r(y + 0.1)}`;
+    k += `<path d="${welle(-53.6)} L8.8 -50.4 Q6.7 -51.3 4.6 -50.5 T.2 -50.5 Z" fill="#1c1c1c"/>`;
+    k += `<path d="M.2 -50.5 Q2.4 -51.4 4.6 -50.5 T8.8 -50.4 L8.8 -47.2 Q6.7 -48.1 4.6 -47.3 T.2 -47.3 Z" fill="#f2c62f"/>`;
+    k += `<path d="${welle(-53.6)} L8.8 -47.2 Q6.7 -48.1 4.6 -47.3 T.2 -47.3 Z" fill="${S.lg("falten", [[0, "#000", 0], [0.18, "#000", 0.28], [0.32, "#fff", 0.18], [0.5, "#000", 0.05], [0.66, "#000", 0.3], [0.82, "#fff", 0.16], [1, "#000", 0.15]], 0, 0, 1, 0)}"/>`;
+    k += `<path d="M3.85 -51.6 L5.35 -51.6 L5.35 -50.2 Q5.35 -49.2 4.6 -48.9 Q3.85 -49.2 3.85 -50.2 Z" fill="#f2c62f" stroke="#1d1d1d" stroke-width=".12"/>`;
+    for (const y of [-51.4, -50.7, -50]) k += `<path d="${LOEWE}" transform="translate(4.1 ${y}) scale(.1)" fill="#1d1d1d"/>`;
+    k += `<path d="M3.95 -51.7 L3.95 -52.3 L4.3 -52 L4.6 -52.45 L4.9 -52 L5.25 -52.3 L5.25 -51.7 Z" fill="#f2c62f" stroke="#1d1d1d" stroke-width=".06"/>`;
+  }
+  /* Kopfbau des Nordflügels (links, näher) und des Südflügels (rechts, noch näher) */
+  k += fluegel(-66, -48, 0.6, 23.4, 8, 6, PUTZ);
+  k += `<path d="M-60.4 -23.8 L-57 -26.8 L-53.6 -23.8 Z" fill="${STEIN}"/>`;
+  k += fluegel(42, 66, 1.4, 25.6, 8.6, 7, PUTZ);
+  k += `<path d="M50 -24.6 L54 -28 L58 -24.6 Z" fill="${STEIN}"/><circle cx="54" cy="-25.6" r=".9" fill="${GOLD}"/>`;
+  k += `<path d="M-48 0 L42 0 L42 1.4 L-48 .6 Z" fill="#e4dac6"/>`;
+  S.teil({ id: "neuesschloss", de: "das Neue Schloss", syl: "NEU-e SCHLOSS", it: "il Castello Nuovo", itSyl: "ca-STEL-lo NUO-vo", en: "New Palace",
+    x: NS.x, y: NS.y, kunst: k, tipp: "Das Neue Schloss war das Schloss der Könige von Württemberg.",
+    zoom: { x: NS.x - 28, y: NS.y - 57, w: 56, h: 35 },
+    unter: [
+      { id: "fahne", de: "die Fahne", syl: "FAH-ne", it: "la bandiera", itSyl: "ban-DIE-ra", en: "flag",
+        x: NS.x + 4.5, y: NS.y - 47.2, kunst: flaeche(-4.6, -7, 9.2, 7.4, 0.4), tipp: "Auf der Kuppel weht die Fahne von Baden-Württemberg: Schwarz und Gold, mit drei Löwen im Wappen." },
+      { id: "wappen", de: "das Wappen", syl: "WAP-pen", it: "lo stemma", itSyl: "STEM-ma", en: "coat of arms",
+        x: NS.x, y: NS.y - 21.8, kunst: flaeche(-5, -5, 10, 5.2, 0.4), tipp: "Das Wappen der Könige von Württemberg: Hirschstangen und Löwen, gehalten von einem Löwen und einem Hirsch." },
+    ] });
+}
+
+/* =====================================================================
+   6 — DAS KUNSTGEBÄUDE (rechts, nah und verkürzt) mit Kuppel und Hirsch
+   ===================================================================== */
+const KUP = { x: kgP(40, 0)[0], m: 300 / 140 };
+{
+  let k = "";
+  const um = KG_UMAX;
+  const q = (u0, u1, z0, z1) => [kgP(u0, z0), kgP(Math.min(u1, um), z0), kgP(Math.min(u1, um), z1), kgP(u0, z1)];
+  /* Front zum Platz: Nordseite, im Schatten (Himmelslicht), zum Ende hin dunkler */
+  k += vieleck(q(0, um, 0, KG.H), `fill="${S.lg("kgf", [[0, "#c6b48f"], [0.6, "#b4a17c"], [1, "#a8956f"]], 0, 0, 1, 0)}"`);
+  k += vieleck(q(0, um, 0, 1.1), `fill="#93836a"`);
+  k += vieleck(q(0, um, 7, 7.7), `fill="#cdbb95"`);
+  k += vieleck(q(0, um, 12.3, 13.1), `fill="#76674f"`);
+  k += vieleck(q(0, um, 13.1, 14), `fill="#d2bf98"`);
+  /* flaches Ziegeldach hinter dem Gesims (Nordseite, im Schatten) */
+  k += vieleck([kgP(0, 14), kgP(um, 14), kgP(um, 15.8), kgP(0, 15.2)], `fill="${BIBER}"`);
+  k += vieleck([kgP(0, 14), kgP(um, 14), kgP(um, 15.8), kgP(0, 15.2)], `fill="#24160e" opacity=".42"`);
+  /* Achsen: Lisenen, hohe Rundbogenfenster unten, Rechteckfenster oben */
+  const GLAS = S.lg("kgglas", [[0, "#7f93a3"], [0.35, "#4d5d6b"], [1, "#36424d"]]);
+  for (let u = 0; u < um; u += 5.5) {
+    const a = kgP(u, 0), b = kgP(u + 5.5, 0);
+    if (b[0] - a[0] < 0.45) continue;
+    k += vieleck(q(u - 0.4, u + 0.4, 1.1, 12.3), `fill="#c9b792"`);
+    if (u + 2.75 > um) continue;
+    const c = u + 2.75, w1 = 1.15, p0 = kgP(c - w1, 1.8), p1 = kgP(c + w1, 1.8), p2 = kgP(c + w1, 5.6), p3 = kgP(c - w1, 5.6), top = kgP(c, 6.6);
+    k += `<path d="M${r(p0[0])} ${r(p0[1])} L${r(p1[0])} ${r(p1[1])} L${r(p2[0])} ${r(p2[1])} Q${r(p2[0])} ${r(top[1])} ${r(top[0])} ${r(top[1])} Q${r(p3[0])} ${r(top[1])} ${r(p3[0])} ${r(p3[1])} Z" fill="${GLAS}" stroke="#d8c7a2" stroke-width="${r(Math.max(0.08, (p1[0] - p0[0]) * 0.08))}"/>`;
+    k += vieleck(q(c - 0.8, c + 0.8, 8.4, 11.4), `fill="${GLAS}" stroke="#d8c7a2" stroke-width="${r(Math.max(0.06, (p1[0] - p0[0]) * 0.06))}"`);
+  }
+  /* Kuppelbau: achteckiger Tambour, Kupferkuppel mit Rippen, Laterne, der goldene Hirsch */
+  {
+    const m = KUP.m, X = KUP.x, Y = (z) => r(HOR + (6 - z) * m);
+    const R = 5 * m, fw = 2 * 5 * Math.sin(22.5 * RAD) * m;
+    const xs = [X - R, X - fw / 2, X + fw / 2, X + R];
+    k += `<path d="M${r(xs[0])} ${Y(14)} L${r(xs[0])} ${Y(19)} L${r(xs[1])} ${Y(19.2)} L${r(xs[2])} ${Y(19.2)} L${r(xs[3])} ${Y(19)} L${r(xs[3])} ${Y(14)} Z" fill="${S.lg("tambour", [[0, "#b9a582"], [0.3, "#cdb994"], [0.36, "#e3d2ad"], [0.66, "#eadaB8"], [0.7, "#f1e3c3"], [1, "#e6d5b0"]], 0, 0, 1, 0)}"/>`;
+    for (const x of xs) k += `<rect x="${r(x - 0.45)}" y="${Y(19.2)}" width=".9" height="${r(5.2 * m)}" fill="#efe1c0" opacity=".8"/>`;
+    for (let i = 0; i < 3; i++) {
+      const cx = (xs[i] + xs[i + 1]) / 2, w = (xs[i + 1] - xs[i]) * 0.36;
+      k += `<path d="M${r(cx - w)} ${Y(14.8)} L${r(cx - w)} ${Y(17.4)} Q${r(cx)} ${Y(18.5)} ${r(cx + w)} ${Y(17.4)} L${r(cx + w)} ${Y(14.8)} Z" fill="${GLAS}" stroke="#d9c8a2" stroke-width=".3"/>`;
+    }
+    k += `<path d="M${r(xs[0] - 0.6)} ${Y(19)} L${r(xs[3] + 0.6)} ${Y(19)} L${r(xs[3] + 0.3)} ${Y(19.7)} L${r(xs[0] - 0.3)} ${Y(19.7)} Z" fill="#e8d8b4"/>`;
+    const DR = 4.6 * m;
+    k += `<path d="M${r(X - DR)} ${Y(19.7)} C${r(X - DR)} ${Y(23.6)} ${r(X - DR * 0.52)} ${Y(26.4)} ${r(X)} ${Y(26.6)} C${r(X + DR * 0.52)} ${Y(26.4)} ${r(X + DR)} ${Y(23.6)} ${r(X + DR)} ${Y(19.7)} Z" fill="${S.lg("kupfer", [[0, "#4f7a68"], [0.4, "#6f9a86"], [0.72, "#9cc2ae"], [0.86, "#b2d1c0"], [1, "#77a08b"]], 0, 0, 1, 0)}"/>`;
+    for (const f of [-0.92, -0.62, -0.3, 0, 0.3, 0.62, 0.92]) k += `<path d="M${r(X + f * DR)} ${Y(19.7)} Q${r(X + f * DR * 0.95)} ${Y(23.8)} ${r(X + f * DR * 0.16)} ${Y(26.5)}" stroke="${f < 0 ? "#3f6556" : "#c6e0d2"}" stroke-width=".22" fill="none" opacity=".8"/>`;
+    k += `<path d="M${r(X - DR * 0.98)} ${Y(21.3)} Q${r(X)} ${Y(20.6)} ${r(X + DR * 0.98)} ${Y(21.3)}" stroke="#3f6556" stroke-width=".18" fill="none" opacity=".6"/>`;
+    const LR = 1.2 * m;
+    k += `<path d="M${r(X - LR)} ${Y(26.3)} L${r(X - LR)} ${Y(28.6)} L${r(X + LR)} ${Y(28.6)} L${r(X + LR)} ${Y(26.3)} Z" fill="${S.lg("laterne_kg", [[0, "#c9b690"], [0.6, "#f0e2c0"], [1, "#dccb a6".replace(" ", "")]], 0, 0, 1, 0)}"/>`;
+    for (const f of [-0.5, 0.5]) k += `<path d="M${r(X + f * LR - 0.5)} ${Y(26.6)} L${r(X + f * LR - 0.5)} ${Y(27.9)} Q${r(X + f * LR)} ${Y(28.35)} ${r(X + f * LR + 0.5)} ${Y(27.9)} L${r(X + f * LR + 0.5)} ${Y(26.6)} Z" fill="#46525c"/>`;
+    k += `<path d="M${r(X - LR - 0.5)} ${Y(28.6)} Q${r(X)} ${Y(29.9)} ${r(X + LR + 0.5)} ${Y(28.6)} Z" fill="#6f9a86"/><rect x="${r(X - 0.8)}" y="${Y(30.05)}" width="1.6" height=".5" fill="#c9a640"/>`;
+    /* der Hirsch: vergoldet, im Profil nach links, Sonne von hinten rechts */
+    const hs = 2.45 * m / 8.6, hy = HOR + (6 - 30.05) * m;
+    k += `<g transform="translate(${r(X + 0.3)} ${r(hy)}) scale(${hs.toFixed(3)})"><path d="${HIRSCH}" fill="${S.lg("hirschgold", [[0, "#7d560c"], [0.4, "#c99a22"], [0.75, "#f6d566"], [1, "#fff2b0"]], 0, 0, 1, 0)}" stroke="#6f4d0c" stroke-width=".14"/><path d="${GEWEIH}" stroke="#d9ab2c" stroke-width=".42" fill="none" stroke-linecap="round"/><path d="M-2.4 -5.85 C-.6 -6.05 1.6 -6 2.8 -5.55" stroke="#fff4c0" stroke-width=".22" fill="none"/><circle cx="-4.1" cy="-8.25" r=".14" fill="#3a2a08"/></g>`;
+  }
+  S.teil({ id: "kunstgebaeude", de: "das Kunstgebäude", syl: "KUNST-ge-bäu-de", it: "il Kunstgebäude (palazzo delle mostre)", itSyl: "pa-LAZ-zo del-le MO-stre", en: "Kunstgebäude (art exhibition hall)",
+    x: 0, y: 0, kunst: k, tipp: "Im Kunstgebäude von 1913 werden Kunstausstellungen gezeigt.",
+    zoom: { x: KUP.x - 12, y: 50.5, w: 24, h: 15 },
+    unter: [
+      { id: "hirsch", de: "der Hirsch", syl: "HIRSCH", it: "il cervo", itSyl: "CER-vo", en: "stag",
+        x: KUP.x, y: HOR + (6 - 30.05) * KUP.m, kunst: flaeche(-3.4, -6.9, 6.4, 7.2, 0.4), tipp: "Der goldene Hirsch auf dem Kunstgebäude ist das Wappentier Württembergs." },
+    ] });
+}

@@ -1779,7 +1779,7 @@ function kaenguru(T) {
     W.saum(sw.V.slice(1), 70, (x, y) => (x > 60 ? 128 : 184), 0.6, ROT, { licht: () => 0.65, gerade: true, szene: 0.08 }));
 
   /* ---------- ferner Arm ---------- */
-  s += kArm(W, T, 5, true, ROT);
+  s += kArm(W, T, 2.6, true, ROT);
 
   /* ---------- Rumpf: Rückenlinie läuft in EINEM Bogen über die Kruppe in die Schwanzoberseite; Lende dick ---------- */
   const rumpf = [[117, -147], [111, -138], [104, -128], [96.6, -115], [90.4, -100], [86, -86], [83.4, -76], [82.4, -66], [85, -58], [92, -56], [114, -62], [125, -68], [130.6, -76], [133.6, -88],
@@ -1802,14 +1802,14 @@ function kaenguru(T) {
   const fussN = kFuss(W, T, 0, false);
   const bein = [[94, -84], [106, -87], [116, -85], [123.6, -78.4], [128.4, -68], [130, -57], [128.4, -48.4], [124.4, -42.6], [119.4, -36.4], [114, -28], [109.6, -20.4], [105.6, -13.6],
     [100, -11.4], [96.6, -11.8], [93.6, -14.6], [96.4, -19], [100.6, -27], [104.2, -35.6], [106.4, -41.4], [99.6, -46], [91.4, -50.4], [85, -56], [82.6, -64], [85, -75]];
-  masse += W.teil(bein, KF,
-    W.musterFlaeche(bein, RM(108)) +
+  masse += `<g mask="url(#${W.maske("kbn", [78, -96, 134, -6], 0, -90, 0, -76)})">` + W.teil(bein, KF,
+    W.musterFlaeche(bein, RM(112)) +
     /* Birnenform des Oberschenkels nur als weiche Formschatten: Muskelzug Hüfte → Knie, Kniekante, Kniekehle */
-    W.weich([`<path d="M90 -82q16 -8 32 0q8 6 7 22" fill="none" stroke="#3a1a0a" stroke-opacity=".22" stroke-width="2.4"/>`, [106, -85, 12, 2.4, -6, "#f8c890", 0.35], [114, -66, 3, 16, 50, "#3a1a0a", 0.25], [100, -70, 8, 12, -30, "#3a1a0a", 0.15], [126.6, -56, 2.4, 9, 4, "#fff0dc", 0.4], [106, -45, 5, 2, -30, "#3a1a0a", 0.5], [112.6, -30, 2, 10, 36, "#f6cc98", 0.45],
+    W.weich([[114, -66, 3, 16, 50, "#3a1a0a", 0.25], [100, -70, 8, 12, -30, "#3a1a0a", 0.15], [126.6, -56, 2.4, 9, 4, "#fff0dc", 0.4], [106, -45, 5, 2, -30, "#3a1a0a", 0.5], [112.6, -30, 2, 10, 36, "#f6cc98", 0.45],
       [102.6, -27, 1.6, 9, 32, "#3a1a0a", 0.4]], 1.8) +
     W.L([G([[101.6, -32], [98.4, -22], [96.8, -15]], false)], "#fff0dc", 0.7, 0.35) +
     kurzHaar(bein, 340, (x, y) => (y < -50 ? 100 + (x - 100) * 0.8 : 66), { licht: (x, y) => clamp(licht(x, y) + 0.2) }),
-  { rand: 0, vol: false });
+  { rand: 0, vol: false }) + `</g>`;
   rand += W.saum([[85, -56], [91.4, -50.4], [99.6, -46]], 18, 108, 0.9, ROT, { licht: () => 0.45, gerade: true, szene: 0.08 }) +
     W.saum([[123.6, -78.4], [128.4, -68], [130, -57], [128.4, -48.4]], 24, 40, 0.8, ROT, { licht: () => 0.7, gerade: true, szene: 0.08 });
   s += fussN + W.vol("v", 9, masse + rand);
@@ -1866,14 +1866,17 @@ function kArm(W, T, dx, fern, ROT) {
      leicht gekrümmt, locker vor der Brust; Krallen nur an den Fingerenden, dunkel hornfarben mit heller Spitze, verschieden lang */
   const H = fern ? "#1e1612" : "#2c211b";
   s += W.teil([P(138.4, -93.6), P(141.4, -89), P(144.6, -88), P(141, -87.4), P(138, -90)], H, "", { rand: 0, vol: false });
-  s += W.teil([P(139.6, -96.6), P(143.6, -97.4), P(146.6, -94.4), P(147.6, -90.4), P(146, -88), P(142.6, -88.6), P(140.6, -90.8), P(139.2, -93.6)], fern ? "#7a4424" : T.lg("kp", [[0, "#d08a56"], [1, "#8a4e2a"]]),
-    W.haare([P(139.6, -96.6), P(143.6, -97.4), P(146.6, -94.4), P(147, -90.6), P(142.6, -90.6)], fern ? 0 : 30, 62, 0.7, ROT, { licht: () => 0.55, gerade: true, szene: 0 }), { rand: 0, vol: !fern });
-  const F = [[140.4, -89.6, 1.7, 1.1, 0.9], [142, -89, 2.6, 1.25, 1.3], [143.6, -88.6, 2.9, 1.3, 1.5], [145.2, -88.8, 2.7, 1.25, 1.2], [146.6, -89.6, 1.9, 1.05, 0.9]];
+  /* Mittelhand: schmal, vom Handgelenk nach vorn unten abgeknickt, Handrücken behaart */
+  s += W.teil([P(140, -97), P(143.6, -97.6), P(146.2, -95.2), P(147.4, -92.2), P(147, -90.2), P(144.2, -90.4), P(141.6, -92.4), P(139.8, -94.6)], fern ? "#6a3a20" : T.lg("kp", [[0, "#d08a56"], [1, "#8a4e2a"]]),
+    W.haare([P(140, -97), P(143.6, -97.6), P(146.2, -95.2), P(146.8, -91.4), P(143, -92)], fern ? 0 : 30, 55, 0.7, ROT, { licht: () => 0.55, gerade: true, szene: 0 }) +
+    (fern ? "" : W.L([`M${f1(142 + dx)} -92.6q1.6 .9 4.6 .8`], "#3a1a0a", 0.18, 0.5)), { rand: 0, vol: false });
+  /* Finger: schlank, gegliedert, hakenförmig eingekrümmt; Krallen deutlich, dunkel hornfarben mit heller Spitze */
+  const F = [[141.4, -91.2, 2.4, 0.85, 1.1], [142.8, -90.6, 3.4, 0.95, 1.6], [144.2, -90.4, 3.7, 0.95, 1.8], [145.6, -90.4, 3.4, 0.9, 1.5], [146.8, -90.8, 2.4, 0.8, 1.1]];
   for (const [x, y, L, w, kl] of F) {
-    const ex = x + 0.7, ey = y + L;
-    s += W.glied([P(x, y), P(x + 0.9, y + L * 0.5), P(ex, ey)], w, H, fern ? "" : "#8a766a", { la: 0.35 });
+    const ex = x + 0.2, ey = y + L;
+    s += W.glied([P(x, y), P(x + 1.1, y + L * 0.45), P(ex, ey)], w, H, fern ? "" : "#9a867a", { la: 0.35 });
     const cx = ex + dx;
-    s += `<path d="M${f1(cx - w * 0.4)} ${f1(ey)}q${f1(-0.1)} ${f1(kl * 0.6)} ${f1(-kl * 0.5)} ${f1(kl)}q${f1(kl * 0.25)} ${f1(-kl * 0.45)} ${f1(kl * 0.9)} ${f1(-kl * 0.9)}z" fill="${fern ? "#1a120c" : T.lg("kkl", [[0, "#2a1e16"], [0.6, "#5a4a3a"], [1, "#d8c8b0"]], 0, 0, 0, 1)}"/>`;
+    s += `<path d="M${f1(cx - w * 0.45)} ${f1(ey - 0.2)}q${f1(-0.3)} ${f1(kl * 0.6)} ${f1(-kl * 0.7)} ${f1(kl * 0.95)}q${f1(kl * 0.45)} ${f1(-kl * 0.3)} ${f1(kl * 1.15)} ${f1(-kl * 0.95)}z" fill="${fern ? "#1a120c" : T.lg("kkl", [[0, "#2a1e16"], [0.55, "#5a4a3a"], [1, "#e0d0b8"]], 1, 0, 0, 1)}"/>`;
   }
   return s;
 }

@@ -705,8 +705,8 @@ const STRASSE = [[112, -4, -10], [122, -10, -12], [132, -18, -15], [140, -30, -1
   k += `<path d="M${STRASSE.map(Pt).join(" L")}" stroke="#a89878" stroke-width=".4" fill="none" transform="translate(.6 .6)"/>`;
   k += saum(STRASSE.slice(1).map(([x, y]) => [x + 2.2, y + 1]), 1.3, 2.6, 0.4);
   /* Kutsche in Fahrtrichtung (bergauf zum Torbau): Seitenansicht, entlang der Straße geschert */
-  const [x, y] = C(117.5, -7.4, -11.1), s = k1(117.5, -7.4) * 1.05;
-  const sa = STRASSE[0], sb = STRASSE[1], winkel = Math.atan2(sb[1] - sa[1], sb[0] - sa[0]) * 180 / Math.PI;
+  const [x, y] = C(127, -13.8, -13.5), s = k1(127, -13.8) * 1.05;
+  const sa = STRASSE[1], sb = STRASSE[2], winkel = Math.atan2(sb[1] - sa[1], sb[0] - sa[0]) * 180 / Math.PI;
   let g = schatten(0, 0.2, 4.6 * s, 0.5 * s, 0.3);
   const pferd = (dx, f, dunkel) => {
     let p = "";

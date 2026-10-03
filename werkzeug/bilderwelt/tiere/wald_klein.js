@@ -1135,4 +1135,92 @@ module.exports = [
       s += tasthaar(T, [21.5, -6.4, 0.3, 0.1, 1, 3], -120, -80, 1.6, ["#140c08"], 0.025, 0.8);
       return { svg: s, box: [-19.85, -9.4, 24.8, 0], fuesse: [5.3, 7, 18.1, 16.3], kopf: [17.5, -10, 25.5, -2.4] };
     } },
+  /* =================================================================
+     HERMELIN — Großwiesel (Mustela erminea) im Sommerfell, stehend, Kopf erhoben
+     RECHERCHE (Fachwissen; Macdonald „Säugetiere Europas“, Deutsche Wildtier Stiftung): Kopf-Rumpf 22–32 cm
+     (hier 27, Männchen), Schwanz 8–12 cm (≈ ⅓ der Kopf-Rumpf-Länge) mit SCHWARZER Spitze (letztes Drittel, auch im
+     weißen Winterfell), 150–350 g; Körper sehr lang und schlank, Rücken beim Stehen gewölbt, Beine kurz, Hals
+     lang; Kopf klein, flach, dreieckig-rund, Ohren kurz, breit, gerundet mit hellem Saum; Auge schwarz, knopfartig;
+     Tasthaare lang. Sommerfell: Oberseite kastanienbraun, Unterseite (Oberlippe, Kinn, Kehle, Brust, Bauch,
+     Innenseite der Beine) gelblich-weiß, Grenze an der Flanke scharf und fast gerade; Füße hell, behaart.
+     Unterschied zum Mauswiesel: größer, schwarze Schwanzspitze, gerade Farbgrenze.
+     ================================================================= */
+  { id: "hermelin", de: "das Hermelin", syl: "her-me-LIN", it: "l'ermellino", itSyl: "er-mel-LI-no", en: "stoat",
+    gruppe: "Wald und Wiese", lebensraum: "Wiese",
+    laenge: 0.41, hoehe: 0.116,
+    zeichne(T) {
+      T.dez = 2; T.hq = 0.02; T.bereich = [-14, -14, 32, 1]; T.fellF = [14, 1.8]; T.fellD = "#140802"; T.fellH = "#e8b880";
+      const TIEF = "#24120a", WEISS = "#f6f0de";
+      const EI = [["#2a1408", 0.55, 1], ["#5a3218", 0.55, 1], ["#7e4a24", 0.55, 1], ["#a06a3a", 0.5, 1], ["#c8945e", 0.5, 0.9], ["#fbf6e8", 0.6, 1], ["#ddd2b8", 0.55, 1]];
+      let s = "";
+      const leib = [[1, -3.4], [-0.3, -5.2], [0.2, -7.2], [2.2, -8.8], [5.5, -9.6], [9, -9.4], [12.5, -8.4], [16, -7.4], [19, -7.2], [21.5, -7.9], [23.4, -9.1],
+        [25, -7], [22.8, -4.5], [20, -3.5], [16, -3.1], [11, -3.3], [6.5, -3.4], [3.5, -3]];
+      const kopf = [[23.6, -8.8], [24.4, -9.9], [25.6, -10.5], [27, -10.4], [28.1, -9.8], [29, -9], [29.5, -8.45], [29.6, -8], [29.25, -7.65], [28.4, -7.4], [27.2, -7.1], [25.8, -6.95], [24.6, -7.2], [23.6, -7.8]];
+      const ohr = [[24.75, -9.7], [24.6, -10.6], [25.05, -11.3], [25.8, -11.4], [26.25, -10.8], [26.2, -9.95]];
+      const vbein = [[19.4, -4.6], [21.2, -4.8], [21.3, -2.8], [21.5, -1], [22.6, -0.5], [23.3, -0.1], [23, 0, 1], [20.6, 0, 1], [20.3, -0.9], [19.8, -2.6]];
+      const hbein = [[3.2, -5.8], [7.2, -6], [8.2, -4.6], [6.6, -3.2], [5.6, -1.8], [6.8, -0.9], [8.2, -0.45], [8.7, -0.1], [8.4, 0, 1], [4, 0, 1], [3.4, -0.6], [3.4, -2.2], [3, -4]];
+      const sm = [[0.8, -6.3], [-1.8, -6.8], [-4.4, -7.05], [-7, -7.05], [-9.4, -6.8], [-11.2, -6.4]];
+      const schwanz = schlauch(sm, [1.35, 1.25, 1.3, 1.5, 1.55, 1.1], true);
+      const bauch = (x, y) => y > -4.6 + Math.max(0, x - 18) * -0.35 && x > 2 || (x > 22 && y > -7.6 + (x - 23) * 0.05);
+      const zehen = (x, n, dun) => { let z = ""; for (let i = 0; i < n; i++) z += kralle(T, x - i * 0.25, -0.1, 0.3, 35, dun ? "#3a2a1e" : "#5a4636", 0.25, 0.2); return z; };
+      const bein = (pts, f, fern) => teil(T, pts, f, {
+        licht: [0.45, 0.6, 50, 0.35],
+        blende: [0, 0, 0, 0.3, 0, 1],
+        haare: haar(T, pts, { n: 70, L: 0.32, strich: 0.02, flow: (x, y) => (y > -1 ? 175 : 100), eimer: EI, wahl: (x, y, z) => (fern ? (z < 0.5 ? 1 : 2) : y > -1.4 || x > 21 ? 5 : klemm(2 + Math.round(z * 2), 1, 4)), szene: 0 }),
+        ueber: randhaar(T, pts, { n: 40, L: 0.28, strich: 0.02, flow: () => 100, ab: 0.4, eimer: EI, wahl: (x, y, z) => (fern ? 1 : y > -1.4 ? 5 : 3), wo: (x, y) => y < -0.5, szene: 0 }),
+      });
+      /* ---------- ferne Beine (~28 % dunkler) ---------- */
+      s += bein(schieb(hbein, 1.7, -0.15), "#5e3a20", 1) + zehen(10.3, 3, 1);
+      s += bein(schieb(vbein, -1.9, -0.15), "#5e3a20", 1) + zehen(21.3, 3, 1);
+      /* ---------- Schwanz: braun, letztes Drittel schwarz, buschiger ---------- */
+      s += teil(T, schwanz, T.lg("hmsw", [[0, "#140c08"], [0.36, "#1e1410"], [0.42, "#7a4824"], [1, "#8a5630"]], 0, 0, 1, 0), {
+        licht: [0.45, 0.6, 50, 0.33],
+        haare: haar(T, schwanz, { n: 150, L: 0.6, strich: 0.026, flow: () => 182, eimer: [["#0e0806", 0.6, 1], ["#2a1a12", 0.55, 1], ["#7e4a24", 0.55, 1], ["#b07a46", 0.5, 1]], wahl: (x, y, z) => (x < -7 ? (z < 0.7 ? 0 : 1) : 2 + (z > 0.6 ? 1 : 0)), szene: 0 }),
+        ueber: randhaar(T, schwanz, { n: 160, L: 0.6, strich: 0.026, flow: () => 185, ab: 0.45, eimer: [["#0e0806", 0.6, 1], ["#7e4a24", 0.55, 1], ["#b07a46", 0.5, 1]], wahl: (x, y, z) => (x < -7 ? 0 : z < 0.6 ? 1 : 2), szene: 0.2 }),
+      });
+      /* ---------- Leib: Rücken kastanienbraun, Unterseite gelblich-weiß, Grenze scharf und gerade ---------- */
+      const leibId = pfad(T, leib), kopfId = pfad(T, kopf);
+      const lf = feld(leib, 2.4);
+      const wahlL = (x, y, z) => (bauch(x, y) ? (z < 0.65 ? 5 : 6) : z < 0.1 ? 0 : klemm(1 + Math.round((lf(x, y) + 0.4) / 1.2 * 2.8 + (z - 0.5) * 1.2), 1, 4));
+      const lflow = (x, y) => (x > 21 ? 135 : 182 - 8 * klemm((-y - 4) / 5));
+      s += teil(T, "#" + leibId, T.lg("hmleib", [[0, "#6e4022"], [0.5, "#7e4c28"], [1, "#8c5a32"]]), {
+        licht: [1.6, 2.2, 50, 0.33],
+        innen: `<g${zottel(T, 1.4, 0.3)}>` + form(T, [[2.2, -3.2], [5, -4.4], [10, -4.55], [15, -4.55], [18.5, -4.65], [21, -5.6], [23, -7.6], [25.2, -7.4], [24.4, -5.2], [22, -3.9], [18, -3.1], [12, -3.2], [6, -3.3], [3, -2.9]], WEISS) + `</g>` +
+          wulst(T, [[0.6, -5], [2.6, -8], [6.4, -8.2], [8.2, -5.8], [6.4, -3.8], [2.6, -3.4]], { a: 0.8, w: 1.2, b: 0.45, m: 0.6, s: [TIEF, 0.3], l: ["#b07a46", 0.35], al: 0.4, wl: 0.9 }) +
+          schlag(T, kopfId, 0.3, 0.5, 0.4, TIEF, 0.35),
+        nachInnen: mal(T, 0.4, linie(T, [[4, -3.3], [10, -3.4], [16, -3.2], [20, -3.6]], "#fff6e0", 0.5, 0.35)),
+        haare: fellgrund(T, "leib", [-0.3, -9.6, 25, -3], 180, 0.4, 0.3) +
+          haar(T, leib, { n: 420, L: 0.5, strich: 0.024, flow: lflow, eimer: EI, wahl: wahlL, szene: 0 }),
+        ueber: randhaar(T, leib, { n: 280, L: 0.45, strich: 0.022, flow: lflow, ab: 0.4, eimer: EI, wahl: wahlL, szene: 0.15, wo: (x, y) => x < 23.4 }),
+      });
+      /* ---------- nahe Beine ---------- */
+      s += bein(hbein, T.lg("hmhb", [[0, "#7e4a26"], [0.7, "#86522a"], [0.85, "#e4d6bc"], [1, "#f0e6d0"]], 0, 0, 0, 1)) + zehen(8.85, 4);
+      s += bein(vbein, T.lg("hmvb", [[0, "#efe6d0"], [0.75, "#e8dcc4"], [1, "#d8c8aa"]], 0, 0, 0, 1)) + zehen(23.4, 4);
+      /* ---------- Kopf: klein, flach; Oberlippe und Kinn weiß ---------- */
+      const kfl = feld(kopf, 1.5);
+      const kflow = (x, y) => (x > 27.8 ? 192 : 178);
+      const weissK = (x, y) => y > -7.75 + (x - 25) * 0.08;
+      const kwahl = (x, y, z) => (weissK(x, y) ? 5 : z < 0.08 ? 0 : klemm(1 + Math.round((kfl(x, y) + 0.4) / 1.2 * 2.8 + (z - 0.5) * 1.2), 1, 4));
+      s += teil(T, "#" + kopfId, T.lg("hmkopf", [[0, "#74462a"], [0.62, "#86522c"], [0.68, "#efe6d2"], [1, WEISS]], 0, 0, 0, 1), {
+        licht: [0.9, 1.3, 50, 0.33],
+        blende: [0, 0.5, 0.15, 0.45, 0, 1],
+        haare: fellgrund(T, "kopf", [23.6, -10.5, 29.6, -6.95], 180, 0.35, 0.2, { f: [18, 2.4] }) +
+          haar(T, kopf, { n: 170, L: 0.3, strich: 0.02, flow: kflow, eimer: EI, wahl: kwahl, szene: 0 }),
+        ueber: randhaar(T, kopf, { n: 110, L: 0.28, strich: 0.02, flow: kflow, ab: 0.45, eimer: EI, wahl: kwahl, szene: 0.1, wo: (x, y) => x > 24 && x < 29.2 }),
+      });
+      /* Nase: dunkel rosabraun, feucht; Maulspalte */
+      s += `<path d="M29.78 -8.1C29.74 -8.38 29.46 -8.5 29.26 -8.35C29.12 -8.2 29.16 -7.9 29.38 -7.82C29.58 -7.76 29.8 -7.88 29.78 -8.1Z" fill="${T.rg("hmnase", [[0, "#8a5a50"], [1, "#3a2018"]], 0.35, 0.3, 0.7)}"/>`;
+      s += `<ellipse cx="29.42" cy="-8.3" rx=".1" ry=".045" fill="#fff" opacity=".55"/><path d="M29.3 -7.75Q28.8 -7.5 28.2 -7.5" fill="none" stroke="#3a2018" stroke-width=".035" opacity=".6"/>`;
+      /* Auge: schwarz, glänzend, knopfartig */
+      s += auge(T, 27.05, -9.15, 0.32, { ratio: 1.12, winkel: -10, iris: "#140c08", iris2: "#040202", mitte: "#22160e", pr: 0.75, lid: "#0a0604", lidw: 0.16, hoehle: 0.25, fasern: false });
+      /* Ohr: kurz, breit, gerundet, mit hellem Saum */
+      s += teil(T, ohr, T.lg("hmohr", [[0, "#6a3e22"], [1, "#8a5630"]], 0, 0, 1, 0), {
+        licht: [0.22, 0.3, 50, 0.32],
+        innen: mal(T, 0.08, form(T, [[25.1, -9.95], [25.05, -10.7], [25.5, -11.05], [25.95, -10.65], [25.9, -10]], "#c8a090", ` opacity=".55"`)),
+        ueber: randhaar(T, ohr, { n: 50, L: 0.16, strich: 0.014, flow: () => -90, ab: 0.7, eimer: [["#f0e6d2", 0.75]], wahl: () => 0, szene: 0, wo: (x, y) => y < -10.3 }),
+      });
+      s += tasthaar(T, [29, -8.1, 1, 0.6, 3, 4], -20, 34, 3.6, ["#140c08", "#2a1e16", "#e0d8cc"], 0.03, 0.85, "#3a2a20");
+      s += tasthaar(T, [27.4, -9.9, 0.2, 0.1, 1, 2], -120, -80, 1.4, ["#140c08"], 0.022, 0.8);
+      return { svg: s, box: [-11.9, -11.5, 29.85, 0], fuesse: [6.2, 8, 21.8, 20], kopf: [23, -12.2, 30.6, -6.2] };
+    } },
 ];

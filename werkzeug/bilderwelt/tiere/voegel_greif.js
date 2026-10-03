@@ -912,6 +912,163 @@ const GEIER = {
 };
 const geier = (T) => greif(T, GEIER);
 
+/* =====================================================================
+   EULEN (Uhu, Waldkauz, Schleiereule) – derselbe Körperbau wie die Taggreife, aber runder, aufrechter, mit kurzem
+   Schwanz; der große Kopf ist zum Betrachter gedreht (Eulen drehen den Kopf bis 270°): Gesichtsschleier mit
+   strahlenförmigen Federn um die nach vorn gerichteten Augen, Randkranz, Schnabel fast ganz in Borsten versteckt.
+   ===================================================================== */
+const EULE_RUMPF = [[-7.8, -78.6], [-11.6, -72], [-13.8, -64], [-14.6, -55], [-14, -46], [-12, -39], [-9, -34.6], [-5, -32], [0, -31.2], [5.4, -32.8], [10.4, -37], [14, -43.4], [16, -50.4], [16.6, -57.6], [15.8, -64], [13.4, -69.6], [10.6, -73.6], [6, -77.6], [0, -80]];
+/* Eulenkopf von vorn (Kopf-Koordinaten der Taggreife, Gesichtsmitte cx, −80). o = { form: "rund" | "herz" | "uhu", kopf (Grundfarbe),
+   kopfMuster, schleier (Farbe), schleier2 (Rand innen), rand (Randkranz), auge: {…}, ar (Augenradius), aa (halber Augenabstand),
+   strahl: [dunkel, hell], braue, ohren: [farbe, saum], kehle, schnabel: [hell, dunkel] } */
+function eulenKopf(o) {
+  return (T, c) => {
+    const F = T.fein, cx = 3.2, cy = -80.4;
+    Q = 20;
+    let kp = "";
+    const R = o.R || 10.4;
+    /* Federohren (Uhu): Büschel langer, spitzer Federn, schräg nach außen */
+    if (o.ohren) {
+      const ohr = c.mk("oh", o.ohren, "spitz", { weich: 1 });
+      for (const sg of [-1, 1])
+        for (let i = 0; i < 5; i++) kp += feder(T, ohr[i % ohr.length], cx + sg * (5.6 + i * 0.5), cy - R - 4.6 + i * 0.6, -90 + sg * (24 + i * 7), 7.4 - i * 0.5, 1.9);
+    }
+    /* Hinterkopf / Scheitel */
+    const kopf = []; for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; kopf.push([cx + Math.cos(a) * R * (1.02 + (o.form === "herz" ? -0.04 : 0)), cy + Math.sin(a) * R * (Math.sin(a) > 0 ? 0.92 : 1)]); }
+    let ki = federFeld(T, kopf, { typen: c.nacken, abst: 2.4, L: 3.6, W: 2, zeile: 0.55, winkel: (x, y) => Math.atan2(y - cy, x - cx) * 180 / Math.PI, streu: 14, sz: 1 });
+    if (o.kopfMuster) ki += o.kopfMuster(T, kopf, cx, cy);
+    ki += weich(T, G([[cx - 8, cy - 7], [cx, cy - 10.4], [cx + 6, cy - 8], [cx, cy - 6]]), "#fff6e0", 0.3, 1);
+    kp += teil(T, "kopf", G(kopf), o.kopf, ki);
+    /* Gesichtsschleier */
+    const ax = o.aa || 3.7, ar = o.ar || 1.6;
+    let sch;
+    if (o.form === "herz") sch = [[cx, cy - 6.4], [cx - 2.6, cy - 8.8], [cx - 6.2, cy - 8.4], [cx - 8.2, cy - 4], [cx - 7.6, cy + 2], [cx - 4.6, cy + 6.6], [cx, cy + 9.6, 1], [cx + 4.6, cy + 6.6], [cx + 7.6, cy + 2], [cx + 8.2, cy - 4], [cx + 6.2, cy - 8.4], [cx + 2.6, cy - 8.8]];
+    else if (o.form === "uhu") sch = [[cx, cy - 4.6], [cx - 4, cy - 6.4], [cx - 8, cy - 4.6], [cx - 9, cy], [cx - 7.6, cy + 4.6], [cx - 3.6, cy + 6.6], [cx, cy + 6.2], [cx + 3.6, cy + 6.6], [cx + 7.6, cy + 4.6], [cx + 9, cy], [cx + 8, cy - 4.6], [cx + 4, cy - 6.4]];
+    else sch = [[cx, cy - 5.4], [cx - 4.2, cy - 7.4], [cx - 8, cy - 5], [cx - 9, cy + 0.4], [cx - 7.4, cy + 5.2], [cx - 3.4, cy + 7.6], [cx, cy + 7.2], [cx + 3.4, cy + 7.6], [cx + 7.4, cy + 5.2], [cx + 9, cy + 0.4], [cx + 8, cy - 5], [cx + 4.2, cy - 7.4]];
+    const rand = sch.map(([x, y, h]) => [cx + (x - cx) * 1.1, cy + (y - cy) * 1.08, h]);
+    kp += weich(T, G(rand), o.rand, 0.95, 0.3, true);
+    if (F) kp += striche(T, rand, 120, (x, y) => Math.atan2(y - cy, x - cx) * 180 / Math.PI, 1, [[o.rand, 1, 0.08, 0.8], [o.randHell || o.schleier2, 0.6, 0.06, 0.6]], { streu: 30 });
+    let si = "";
+    if (F) for (const sg of [-1, 1]) {
+      const ex = cx + sg * ax, half = sch.filter(([x]) => (x - cx) * sg >= -0.5);
+      si += striche(T, half.length > 3 ? [[cx, cy - 7], ...half, [cx, cy + 8]] : sch, 150, (x, y) => Math.atan2(y - cy + 0.4, x - ex) * 180 / Math.PI, 2.2, [[o.strahl[0], 1, 0.06, 0.55], [o.strahl[1], 1, 0.055, 0.55]], { streu: 8, krumm: 0.1 });
+    }
+    for (const sg of [-1, 1]) si += weich(T, `M${J(cx + sg * ax - ar * 2.2, cy)}a${J(ar * 2.2, ar * 2)} 0 1 0 ${J(ar * 4.4, 0)}a${J(ar * 2.2, ar * 2)} 0 1 0 ${J(-ar * 4.4, 0)}Z`, o.augenhof || o.schleier2, 0.55, 0.8);
+    if (o.braue) si += weich(T, G([[cx - 0.4, cy - 1.2], [cx - ax - 1, cy - ar - 1.2], [cx - ax - 2.6, cy - ar - 0.6], [cx - ax - 1, cy - ar - 2.2], [cx - 0.2, cy - 2.6], [cx + 0.2, cy - 2.6], [cx + ax + 1, cy - ar - 2.2], [cx + ax + 2.6, cy - ar - 0.6], [cx + ax + 1, cy - ar - 1.2], [cx + 0.4, cy - 1.2]]), o.braue, 0.85, 0.35, true);
+    if (o.steg) si += weich(T, G([[cx - 0.8, cy - 6], [cx + 0.8, cy - 6], [cx + 1.1, cy + 1], [cx, cy + 2.4], [cx - 1.1, cy + 1]]), o.steg, 0.6, 0.5, true);
+    si += weich(T, G([[cx - 8, cy - 6], [cx + 8, cy - 6], [cx + 6, cy - 3], [cx - 6, cy - 3]]), "#000", 0.1, 1.2);
+    kp += teil(T, "schleier", G(sch), T.rg("schl", [[0, o.schleier], [0.7, o.schleier], [1, o.schleier2]], 0.5, 0.45, 0.6), si);
+    if (o.kehle) kp += weich(T, G([[cx - 4.6, cy + 7], [cx + 4.6, cy + 7], [cx + 3.6, cy + 10.6], [cx - 3.6, cy + 10.6]]), o.kehle, 0.9, 0.6, true);
+    /* Augen nach vorn */
+    for (const sg of [-1, 1]) kp += greifAuge(T, cx + sg * ax, cy - 0.2, ar, Object.assign({ pupille: 0.5, hoehle: 0.45, offen: 0.88 }, o.auge));
+    /* Schnabel: kurz, hakig, nach unten, an der Basis in Borsten */
+    const sn0 = [[cx - 0.9, cy + 1.6], [cx + 0.9, cy + 1.6], [cx + 1, cy + 3.4], [cx + 0.55, cy + 4.8], [cx, cy + 5.6, 1], [cx - 0.55, cy + 4.8], [cx - 1, cy + 3.4]];
+    let sn = teil(T, "schnO", G(sn0), T.lg("eSchn", [[0, o.schnabel[0]], [1, o.schnabel[1]]], 0, 0, 1, 0.3), F ? zug(GO([[cx - 0.4, cy + 1.9], [cx - 0.5, cy + 3.6], [cx - 0.1, cy + 5]]), "#fff", 0.12, 0.5) : "");
+    if (F) sn += striche(T, [[cx - 1.8, cy - 1.2], [cx + 1.8, cy - 1.2], [cx + 1.4, cy + 3], [cx - 1.4, cy + 3]], 50, (x) => 90 + (x - cx) * 14, 1.5, [[o.borsten || o.schleier, 1, 0.07, 0.85], [o.strahl[0], 0.5, 0.05, 0.6]], { streu: 10 });
+    Q = 10;
+    return [kp, sn];
+  };
+}
+const fleckM = (farbe, op) => `<path d="M.55 0a.12.18 0 1 0 .24 0a.12.18 0 1 0-.24 0Z" fill="${farbe}" opacity="${op}"/>`;
+const schaftM = (farbe, op, b = 0.09) => `<path d="M.05 0Q.5-${b}.92 0Q.5 ${b}.05 0Z" fill="${farbe}" opacity="${op}"/>`;
+const eulenFuss = (hell, mittel, dunkel) => ({ hell, mittel, dunkel, schilde: 1, fuge: dunkel });
+
+/* =====================================================================
+   UHU
+   ===================================================================== */
+/* RECHERCHE Uhu (Bubo bubo) – aus Fachwissen: größte Eule Europas, Länge 59–73 cm, Spannweite 138–175 cm, Gewicht
+   1,6–4 kg. Lange, schwarzbraune Federohren mit lohfarbenem Saum, schräg nach außen; Augen sehr groß, leuchtend orange
+   (Iris), schwarzer Lidrand; Gesichtsschleier lohbraun, fein gebändert, zur Seite mit schwarzem Randkranz; weißer
+   Kehlfleck. Oberseite dunkelbraun-schwarz gefleckt auf lohbraunem Grund, Brust lohfarben mit breiten schwarzen
+   Längsstreifen oben, zum Bauch feinere Streifen mit feinen Querwellen; Läufe und Zehen dicht lohfarben befiedert,
+   Krallen schwarz, groß. Schnabel schwarz, fast in Borsten versteckt. Schwanz kurz, gebändert. Sitzt aufrecht und
+   massig auf Felsen in Steinbrüchen und Felswänden. */
+const UHU = {
+  k: 0.78, dreh: 3, kdreh: -2, rumpf: EULE_RUMPF, kopfBox: [[-11, -97], [17.4, -97], [17.4, -68], [-11, -68]], boxExtra: [[-6.8, -97], [13.2, -97]],
+  sitz: (T) => felsGranit(T, { hell: "#a8a49a", mittel: "#7a766c", dunkel: "#46423c", flechten: [[-10, -12.6, 1.4, "#6a7a3a"], [-17, -7.4, 1.2, "#5a6a2e"], [0.6, -6, 1, "#b8bc94"], [12, -5, 0.9, "#c49040"]] }), sitzBox: FELS_BOX, fuesse: FELS_FUESSE,
+  brust: [["#c08a4c", "#d8a868", schaftM("#1a1008", 0.85, 0.1)], ["#b47e44", "#d0a060", schaftM("#1a1008", 0.7, 0.06)]], hose: [["#c89a60", "#e0b880"], ["#b88a52", "#d4aa72"]], hoseFarbe: "#c49660", usd: "#c8a070",
+  rumpfFarbe: "#b88446", brustStriche: [["#2a1a0c", 1, 0.06, 0.5], ["#e8c890", 0.8, 0.05, 0.45]],
+  brustMuster: (T, poly, w) => muster(T, poly, w, { art: "tropfen", abst: 2.6, lang: 3.4, dick: 0.75, farbe: "#1a1008", op: 0.85, dichte: (x, y) => (y < -55 ? 0.9 : 0.5), sz: 0.5 }) +
+    muster(T, poly, w, { abst: 0.9, lang: 1.4, dick: 0.14, farbe: "#3a2410", op: 0.6, bogen: 0.25, dichte: (x, y) => (y > -58 ? 0.8 : 0.2), sz: 0.1 }),
+  hoseMuster: (T, poly, w) => muster(T, poly, w, { abst: 1.1, lang: 1.4, dick: 0.14, farbe: "#4a3018", op: 0.5, bogen: 0.25 }),
+  nacken: [["#b07a3e", "#d4a464", schaftM("#140c06", 0.85, 0.12)], ["#a06c34", "#c89a5a", schaftM("#140c06", 0.75, 0.08)]],
+  decke: [["#6a4a28", "#c8965a", schaftM("#140a04", 0.8, 0.14)], ["#5a3c20", "#b8864c", schaftM("#140a04", 0.8, 0.1)]], mittel: [["#7a5630", "#d0a064", schaftM("#140a04", 0.75, 0.12)], ["#6a4828", "#c08c50", schaftM("#140a04", 0.8, 0.1)]], schulter: [["#4a3018", "#a87a44", schaftM("#0e0804", 0.8, 0.14)]],
+  deckFarbe: "#5e4024", schaft: "#140a04",
+  quH: [[0, "#a8804e"], [1, "#4a3018"]], quA: [[0, "#b48a56"], [1, "#56381c"]], handBinden: [5, "#2a1a0c", 0.6, 0.9, 0.15, 0.9], armBinden: [5, "#2a1a0c", 0.6, 0.9, 0.15, 0.9], schirmBinden: [4, "#2a1a0c", 0.55, 0.9, 0.15, 0.9], remSchaft: "#2a1a0c",
+  schwanz: { quer: [[0, "#b48a56"], [1, "#5a3c1e"]], binden: [5, "#2a1a0c", 0.6, 0.9, 0.12, 0.86], saum: ["#d8b880", 0.5, 0.2], lang: 0.8 },
+  zehen: eulenFuss("#e0bc84", "#c49a62", "#7a5a34"), krallenK: 1.1,
+  kopf: eulenKopf({ form: "uhu", R: 10.8, kopf: "#b07a3e", schleier: "#c8965a", schleier2: "#a8763e", rand: "#1a0e06", randHell: "#c89a5a", strahl: ["#5a3a1a", "#e8c48a"],
+    ohren: [["#2a1a0c", "#b8864c"], ["#1e1208", "#a87a40"]], kehle: "#f4ece0", augenhof: "#d8a868", schnabel: ["#3a3434", "#0c0a0a"], borsten: "#e8d0a8",
+    kopfMuster: (T, poly, cx, cy) => muster(T, poly, 90, { art: "tropfen", abst: 1.6, lang: 1.6, dick: 0.5, farbe: "#140a04", op: 0.8, sz: 0.4 }),
+    ar: 1.9, aa: 3.9, auge: { iris: "#ff8a10", iris2: "#c84a04", lid: "#0e0806", pupille: 0.48 } }),
+};
+const uhu = (T) => greif(T, UHU);
+
+/* =====================================================================
+   WALDKAUZ
+   ===================================================================== */
+/* RECHERCHE Waldkauz (Strix aluco) – aus Fachwissen: Länge 37–43 cm, Spannweite 81–96 cm, Gewicht 0,4–0,6 kg.
+   Kopf groß und rund, OHNE Federohren; Augen groß, schwarzbraun (wirken schwarz), bläulich-rosa Lidrand; runder,
+   graubrauner Gesichtsschleier mit konzentrischen dunklen Ringen und dunklem Randkranz; helle „Augenbrauen“ bilden
+   ein V über dem hellen, gelblich-hornfarbenen Schnabel. Gefieder rindenfarben: rotbraune (häufig) oder graue Phase,
+   Oberseite mit dunklen Schaftstrichen und feinen Querwellen, eine Reihe weißer Flecken auf Schulter und
+   Flügeldecken; Unterseite heller, mit dunklen Längsstreifen und Querbändern. Läufe und Zehen befiedert (rahmweiß),
+   Krallen dunkel hornfarben. Sitzt tagsüber gut getarnt an Stämmen und auf Ästen im Wald. */
+const KAUZ = {
+  k: 0.5, dreh: 3, kdreh: -2, rumpf: EULE_RUMPF, kopfBox: [[-10, -93], [16.4, -93], [16.4, -68], [-10, -68]], boxExtra: [[3.2, -91.6]],
+  sitz: (T) => vg(T, "stumpf", 2, stumpf(T, "stumpf", { x0: -12.4, x1: 15, oben: -16, holz: "#a88a66", rinde: "#4e3e30", dunkel: "#241a12", moos: [[-12.4, -9], [-7, -12.6], [-2, -8], [-4, 0], [-12.6, 0]] })), sitzBox: [[-13.8, 0], [17, 0]], fuesse: [-10, -2, 7, 13],
+  brust: [["#b88a5a", "#d8b488", schaftM("#2a1608", 0.7, 0.07)], ["#a87a4c", "#ccaa7c", schaftM("#2a1608", 0.6, 0.05)]], hose: [["#e2cfae", "#f4e8d0"], ["#d6c09c", "#ecdcc0"]], hoseFarbe: "#dcc8a4", usd: "#d8c4a0",
+  rumpfFarbe: "#a87a4c", brustStriche: [["#3a2210", 1, 0.06, 0.45], ["#f0dcb8", 0.8, 0.05, 0.45]],
+  brustMuster: (T, poly, w) => muster(T, poly, w, { art: "tropfen", abst: 2.4, lang: 3, dick: 0.55, farbe: "#3a200c", op: 0.8, sz: 0.5 }) +
+    muster(T, poly, w, { abst: 1.6, lang: 1.8, dick: 0.3, farbe: "#4a2a10", op: 0.55, bogen: 0.3, sz: 0.2 }),
+  nacken: [["#8a5a32", "#b88452", schaftM("#2a1608", 0.8, 0.1)], ["#7a4e2a", "#a8784a", schaftM("#2a1608", 0.7, 0.07)]],
+  decke: [["#7a4e2a", "#b07c4a", schaftM("#1e0e04", 0.75, 0.1)], ["#6e4626", "#a07044", schaftM("#1e0e04", 0.7, 0.08)]],
+  mittel: [["#845632", "#b88654", schaftM("#1e0e04", 0.7, 0.1) + fleckM("#f4ead6", 0.95)], ["#7a4e2c", "#ac7c4c", schaftM("#1e0e04", 0.7, 0.08)]],
+  schulter: [["#6a4224", "#9e6e42", schaftM("#1e0e04", 0.75, 0.12) + fleckM("#f6eedc", 0.95)]],
+  deckFarbe: "#74492a", schaft: "#1e0e04",
+  quH: [[0, "#9a7048"], [1, "#4a2e18"]], quA: [[0, "#a87c50"], [1, "#56361c"]], handBinden: [5, "#2a1608", 0.55, 0.8, 0.15, 0.9], armBinden: [5, "#2a1608", 0.55, 0.8, 0.15, 0.9], schirmBinden: [4, "#2a1608", 0.5, 0.8, 0.15, 0.9], remSchaft: "#2a1608",
+  schwanz: { quer: [[0, "#a87c50"], [1, "#5a3a1e"]], binden: [5, "#2a1608", 0.55, 0.8, 0.12, 0.86], saum: ["#d8bc90", 0.5, 0.2], lang: 0.78 },
+  zehen: eulenFuss("#f0e2c8", "#d8c4a0", "#8a7454"), krallenK: 0.85,
+  kopf: eulenKopf({ form: "rund", R: 10.6, kopf: "#8a5a32", schleier: "#b89070", schleier2: "#8a6444", rand: "#3a200c", randHell: "#c8a070", strahl: ["#5a3a20", "#e0c4a0"],
+    braue: "#f2e6d0", schnabel: ["#f0dca0", "#b8a060"], borsten: "#e8d8b8", augenhof: "#a07a58",
+    kopfMuster: (T, poly) => muster(T, poly, 90, { art: "tropfen", abst: 1.5, lang: 1.4, dick: 0.4, farbe: "#2a1608", op: 0.7, sz: 0.4 }),
+    ar: 1.75, aa: 3.8, auge: { iris: "#2a1a12", iris2: "#0a0604", lid: "#5a4a5a", pupille: 0.55 } }),
+};
+const waldkauz = (T) => greif(T, KAUZ);
+
+/* =====================================================================
+   SCHLEIEREULE
+   ===================================================================== */
+/* RECHERCHE Schleiereule (Tyto alba) – aus Fachwissen: Länge 33–39 cm, Spannweite 80–95 cm, Gewicht 0,25–0,45 kg.
+   Herzförmiger, weißer Gesichtsschleier mit schmalem gelbbraunem bis rostbraunem Rand, zwischen den Augen ein
+   bräunlicher Steg zum Schnabel; Augen verhältnismäßig klein, schwarzbraun (wirken schwarz); Schnabel blass
+   elfenbein-rosa, lang, in Borsten. Oberseite goldgelb bis ockerfarben mit grauem Schleier (feine Wellen) und kleinen
+   weißen, schwarz gesäumten Perlflecken; Unterseite weiß (Westrasse alba) bis rahmgelb, mit wenigen feinen dunklen
+   Tupfen. Lange Beine mit kurzen weißen Federn, Zehen grau-rosa mit Borsten, Krallen dunkel; die langen Flügel
+   überragen im Sitzen den kurzen Schwanz. Sitzt gern auf Zaunpfählen und in Scheunen. */
+const SCHLEIER = {
+  k: 0.44, dreh: 2, kdreh: -2, rumpf: EULE_RUMPF, kopfBox: [[-8.6, -92], [15, -92], [15, -68], [-8.6, -68]], boxExtra: [[3.2, -90.8]],
+  sitz: (T) => vg(T, "pfahl", 2, stumpf(T, "pfahl", { x0: -9.6, x1: 12.6, oben: -16, holz: "#a8a196", dunkel: "#4a443c", moos: [[9, -12], [12.6, -10], [12.4, -4], [10, -6]] })), sitzBox: [[-11, 0], [14.4, 0]], fuesse: [-8, 0, 6, 11],
+  brust: [["#f4efe6", "#ffffff"], ["#ece6da", "#fcfaf4"]], hose: [["#f2ede4", "#ffffff"], ["#e8e2d6", "#faf6ee"]], hoseFarbe: "#efe9de", usd: "#f2ece2",
+  rumpfFarbe: "#ece6da", brustStriche: [["#a89c88", 1, 0.05, 0.3], ["#ffffff", 1, 0.05, 0.6]],
+  brustMuster: (T, poly, w) => muster(T, poly, w, { art: "tropfen", abst: 3.4, lang: 0.3, dick: 0.45, farbe: "#3a2a1a", op: 0.75, dichte: () => 0.5, sz: 0.4 }),
+  lauf: true,
+  nacken: [["#d8a454", "#ecc070", fleckM("#ffffff", 0.9)], ["#c89448", "#e0b464", schaftM("#8a8a8a", 0.5, 0.12)]], kehle: [["#f4efe6", "#ffffff"]],
+  decke: [["#d4a050", "#e8bc6c", schaftM("#9a9a9c", 0.6, 0.18) + fleckM("#ffffff", 0.95)], ["#c8944a", "#dcb064", schaftM("#9a9a9c", 0.5, 0.15)]],
+  mittel: [["#d8a654", "#ecc272", schaftM("#9a9a9c", 0.6, 0.2) + fleckM("#ffffff", 0.95)], ["#cc9a4c", "#e2b466", schaftM("#8a8a8c", 0.55, 0.16)]],
+  schulter: [["#c08c44", "#dcae60", schaftM("#8a8a8c", 0.6, 0.22) + fleckM("#ffffff", 0.95)]],
+  deckFarbe: "#c8944a", schaft: "#2a1e14",
+  deckMuster: (T, poly) => muster(T, poly, 120, { art: "tropfen", abst: 2.4, lang: 0.3, dick: 0.4, farbe: "#1a1410", op: 0.7, dichte: () => 0.5, sz: 0.3 }),
+  quH: [[0, "#e0b870"], [1, "#9a7444"]], quA: [[0, "#e8c27c"], [1, "#a8804c"]], handBinden: [4, "#7a6a5a", 0.45, 0.6, 0.2, 0.85], armBinden: [4, "#7a6a5a", 0.45, 0.6, 0.2, 0.85], schirmBinden: [3, "#7a6a5a", 0.4, 0.6, 0.2, 0.85], remSchaft: "#6a5034", handSaum: ["#f4e8d0", 0.5, 0.18],
+  schwanz: { quer: [[0, "#e8c27c"], [1, "#b08850"]], binden: [4, "#7a6a5a", 0.45, 0.6, 0.15, 0.85], saum: ["#f4ead6", 0.5, 0.2], lang: 0.7 },
+  zehen: { hell: "#d8c8c0", mittel: "#b0a098", dunkel: "#6a5c56", schilde: 6, fuge: "#5a4c46" }, krallenK: 0.8,
+  kopf: eulenKopf({ form: "herz", R: 9.4, kopf: "#d4a050", schleier: "#fbf8f2", schleier2: "#ece4d6", rand: "#b87a34", randHell: "#e8c08a", strahl: ["#c8bcaa", "#ffffff"],
+    steg: "#b8946a", schnabel: ["#f4e2d4", "#c8a898"], borsten: "#ffffff", augenhof: "#d8ccbc",
+    kopfMuster: (T, poly) => muster(T, poly, 90, { art: "tropfen", abst: 1.8, lang: 0.25, dick: 0.4, farbe: "#ffffff", op: 0.9, sz: 0.4 }) + weich(T, G(poly), "#9a9aa0", 0.25, 1),
+    ar: 1.25, aa: 3.3, auge: { iris: "#1e1210", iris2: "#060302", lid: "#3a2a24", pupille: 0.6 } }),
+};
+const schleiereule = (T) => greif(T, SCHLEIER);
+
 module.exports = [
   { id: "steinadler", de: "der Adler", syl: "AD-ler", it: "l'aquila", itSyl: "A-qui-la", en: "golden eagle",
     gruppe: "Greifvögel und Eulen", lebensraum: "Gebirge", laenge: 0.5, hoehe: 0.85, zeichne: steinadler },
@@ -923,4 +1080,10 @@ module.exports = [
     gruppe: "Greifvögel und Eulen", lebensraum: "Feld und Waldrand", laenge: 0.3, hoehe: 0.52, zeichne: bussard },
   { id: "geier", de: "der Geier", syl: "GEI-er", it: "il grifone", itSyl: "gri-FO-ne", en: "griffon vulture",
     gruppe: "Greifvögel und Eulen", lebensraum: "Gebirge", laenge: 0.63, hoehe: 0.89, zeichne: geier },
+  { id: "uhu", de: "der Uhu", syl: "U-hu", it: "il gufo reale", itSyl: "GU-fo re-A-le", en: "eagle owl",
+    gruppe: "Greifvögel und Eulen", lebensraum: "Felsen und Wald", laenge: 0.3, hoehe: 0.75, zeichne: uhu },
+  { id: "schleiereule", de: "die Schleiereule", syl: "SCHLEI-er-eu-le", it: "il barbagianni", itSyl: "bar-ba-GIAN-ni", en: "barn owl",
+    gruppe: "Greifvögel und Eulen", lebensraum: "Scheune und Feld", laenge: 0.15, hoehe: 0.4, zeichne: schleiereule },
+  { id: "waldkauz", de: "der Kauz", syl: "KAUZ", it: "l'allocco", itSyl: "al-LOC-co", en: "tawny owl",
+    gruppe: "Greifvögel und Eulen", lebensraum: "Wald", laenge: 0.2, hoehe: 0.46, zeichne: waldkauz },
 ];

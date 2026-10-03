@@ -223,7 +223,7 @@ const bergUnter = [];
   k += wald(-4, 92, FUSS - 14, FUSS, 40);
   k += `</g>`;
   k += `<path d="${glatt(kamm(28, 96))}" stroke="#ead9b0" stroke-width=".6" fill="none" opacity=".75"/>`;
-  S.teil({ id: "devils_peak", de: "der Devil's Peak", syl: "DE-vils-peak", it: "il Devil's Peak", itSyl: "DE-vils PIK", en: "Devil's Peak", x: 0, y: 0, kunst: k,
+  S.teil({ id: "devils_peak", de: "der Devil's Peak", syl: "DE-wils-PIIK", it: "il Devil's Peak", itSyl: "DE-vils PIK", en: "Devil's Peak", x: 0, y: 0, kunst: k,
     tipp: "Devil's Peak heißt „Teufelsspitze“. Die Sage erzählt: Jan van Hunks rauchte hier mit dem Teufel um die Wette – ihr Rauch ist das Tischtuch." });
 }
 {
@@ -249,7 +249,7 @@ const bergUnter = [];
   k += wald(312, 404, FUSS - 10, FUSS, 30);
   k += `</g>`;
   k += `<path d="${glatt(kamm(362, 404))}" stroke="#ead9b0" stroke-width=".6" fill="none" opacity=".7"/>`;
-  S.teil({ id: "lions_head", de: "der Lion's Head", syl: "LI-ons-head", it: "il Lion's Head", itSyl: "LA-ions HED", en: "Lion's Head", x: 0, y: 0, kunst: k,
+  S.teil({ id: "lions_head", de: "der Lion's Head", syl: "LAI-ens-HED", it: "il Lion's Head", itSyl: "LA-ions HED", en: "Lion's Head", x: 0, y: 0, kunst: k,
     tipp: "Lion's Head heißt „Löwenkopf“: Zusammen mit dem Signal Hill sieht er aus wie ein liegender Löwe." });
 }
 {
@@ -449,19 +449,19 @@ const KAI = 214;   // Vorderkante des Kais, auf dem der Betrachter steht
 {
   /* Wasserfläche; der Turmkai liegt näher im Becken: dort beginnt das Wasser erst unter seiner Kaimauer */
   const W0 = r(wy(D_HALLE) - 0.2), WT = r(wy(TURM.d));
-  let k = `<path d="M0 ${W0} L400 ${W0} L400 ${KAI} L0 ${KAI} Z M70 ${W0} L70 ${WT} L174 ${WT} L174 ${W0} Z" fill-rule="evenodd" fill="${S.lg("wasser", [[0, "#7aa0ab"], [0.18, "#3f7480"], [1, "#1c4752"]])}"/>`;
+  S.def(`<path id="${S.id("wasserp")}" d="M0 ${W0} L400 ${W0} L400 ${KAI} L0 ${KAI} Z M70 ${W0} L70 ${WT} L174 ${WT} L174 ${W0} Z" fill-rule="evenodd"/><clipPath id="${S.id("wasserclip")}"><use href="#${S.id("wasserp")}" clip-rule="evenodd"/></clipPath>`);
+  let k = `<use href="#${S.id("wasserp")}" fill="${S.lg("wasser", [[0, "#7aa0ab"], [0.18, "#3f7480"], [1, "#1c4752"]])}"/>`;
   k += `<g filter="url(#${S.id("spiegel")})" opacity=".5">`;
   for (let i = 0; i < 12; i++) k += `<rect x="${r(TURM.x - 6 + (i % 2) * 1.2)}" y="${r(wy(TURM.d) + 0.6 + i * 2.4)}" width="${r(12 - i * 0.5)}" height="1.6" fill="#b23a2b" opacity="${r(0.6 - i * 0.04)}"/>`;
   k += `<rect x="262" y="${r(wy(D_HALLE) + 0.4)}" width="34" height="5" fill="#b4583c" opacity=".4"/><rect x="184" y="${r(wy(D_HALLE) + 0.4)}" width="76" height="4" fill="#e6dfd0" opacity=".25"/>`;
   k += `</g>`;
-  /* Kräusel und Schaumköpfchen vom Südostwind */
-  let wl = "";
-  for (let i = 0; i < 230; i++) {
-    const y = wy(D_HALLE) + 1 + Math.pow(rnd(), 0.85) * (KAI - wy(D_HALLE) - 3), w = 1 + (y - HOR) * 0.25 * (0.5 + rnd());
-    wl += `<path d="M${r(rnd() * (398 - w))} ${r(y)} q${r(w / 2)} -.6 ${r(w)} 0" stroke="${rnd() < 0.5 ? "#cfe6e8" : "#123a44"}" stroke-width="${r(0.15 + (y - HOR) * 0.011)}" fill="none" opacity="${r(0.3 + rnd() * 0.45)}"/>`;
-  }
-  for (let i = 0; i < 16; i++) { const y = 160 + rnd() * 48, x = rnd() * 380, w = 1 + (y - HOR) * 0.08; wl += `<path d="M${r(x)} ${r(y)} q${r(w)} ${r(-w * 0.5)} ${r(w * 2)} 0" stroke="#ffffff" stroke-width="${r(0.3 + (y - HOR) * 0.008)}" fill="none" opacity=".8"/>`; }
-  k += wl;
+  /* Kräusel und Schaumköpfchen vom Südostwind: Musterkacheln in Tiefenbändern (vorn größer), dazu wenige
+     Schaumköpfchen */
+  const welle = (n, sc) => { S.def(`<pattern id="${S.id("w" + n)}" width="23" height="4.6" patternUnits="userSpaceOnUse" patternTransform="translate(${n * 7} 0) scale(${sc})"><path d="M1 1.2q1.8-.7 3.6 0M11 3.4q2.2-.8 4.4 0M17.4 .8q1.4-.5 2.8 0M6 3.9q1.2-.4 2.4 0" stroke="#cfe6e8" stroke-width=".38" fill="none" opacity=".7"/><path d="M5.4 2.4q1.8-.6 3.6 0M19 3q1.8-.6 3.6 0M13.4 1.3q1.2-.4 2.4 0" stroke="#123a44" stroke-width=".42" fill="none" opacity=".55"/></pattern>`); return `url(#${S.id("w" + n)})`; };
+  const W1 = wy(D_HALLE) + 0.6;
+  let wl = `<rect x="0" y="${r(W1)}" width="400" height="${r(150 - W1)}" fill="${welle(1, 0.4)}"/><rect x="0" y="150" width="400" height="14" fill="${welle(2, 0.7)}"/><rect x="0" y="164" width="400" height="20" fill="${welle(3, 1.1)}"/><rect x="0" y="184" width="400" height="${KAI - 184}" fill="${welle(4, 1.7)}"/>`;
+  for (let i = 0; i < 12; i++) { const y = 160 + rnd() * 48, x = rnd() * 380, w = 1 + (y - HOR) * 0.08; wl += `<path d="M${r(x)} ${r(y)} q${r(w)} ${r(-w * 0.5)} ${r(w * 2)} 0" stroke="#ffffff" stroke-width="${r(0.3 + (y - HOR) * 0.008)}" fill="none" opacity=".8"/>`; }
+  k += `<g clip-path="url(#${S.id("wasserclip")})">${wl}</g>`;
   S.teil({ id: "hafen", de: "der Hafen", syl: "HA-fen", it: "il porto", itSyl: "POR-to", en: "harbour", x: 0, y: 0, kunst: k,
     tipp: "Die Hafenbecken heißen Victoria und Alfred – nach Königin Victoria und ihrem Sohn Prinz Alfred." });
 }
@@ -672,7 +672,7 @@ const tischUnter = [];
     for (let j = 0; j < 3; j++) k += `<path d="M${r(-0.015 * s + j * 0.008 * s)} ${r(-0.07 * s)} q${r(0.03 * s)} ${r(0.035 * s)} 0 ${r(0.07 * s)} q${r(-0.03 * s)} ${r(0.035 * s)} 0 ${r(0.07 * s)}" stroke="${j % 2 ? "#a8601c" : "#c47a2a"}" stroke-width="${r(0.022 * s)}" fill="none" stroke-linecap="round" transform="translate(0 ${r(-0.035 * s)}) scale(1 .55)"/>`;
     k += `<ellipse cx="${r(-0.005 * s)}" cy="${r(-0.02 * s)}" rx="${r(0.012 * s)}" ry="${r(0.006 * s)}" fill="#fff4d0" opacity=".7"/></g>`;
   }
-  tischUnter.push({ id: "koeksister", de: "der Koeksister", syl: "KOOK-sis-ter", it: "il koeksister", itSyl: "KUK-sis-ter", en: "koeksister", x: TISCH.x + Number(g(KX)), y: TISCH.y + Number(g(TOP)),
+  tischUnter.push({ id: "koeksister", de: "der Koeksister", syl: "KUK-sis-ter", it: "il koeksister", itSyl: "KUK-sis-ter", en: "koeksister", x: TISCH.x + Number(g(KX)), y: TISCH.y + Number(g(TOP)),
     kunst: flaeche(-Number(g(0.1)), -Number(g(0.12)), Number(g(0.2)), Number(g(0.14)), 0.6), tipp: "Koeksisters sind geflochtenes, frittiertes Gebäck, das in kaltem Sirup getränkt wird – sehr süß!" });
   /* Königsprotea in einer Vase: Blüte ≈ 22 cm, Hochblätter als offener Kelch um die silbrig-rosa Mitte,
      ledrige, sattgrüne Blätter mit rötlichem Rand am dicken Stiel */

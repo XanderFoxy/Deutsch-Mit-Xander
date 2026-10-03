@@ -362,7 +362,7 @@ const X = (m) => CX + m;
   const latY = r((ySk + yStufe) / 2 - 1.4);
   for (let i = 0; i < 9; i++) if (i !== 4) k += laterne(X(-71 + (i + 0.5) * JOCH), latY, 0.9);
   /* Schatten der unteren Traufe: Keil, links tiefer als rechts (Nachmittagssonne aus Südwesten, etwa 30°) */
-  { const hh = yStufe - ySk; k += `<path d="M${X(-71)} ${r(ySk)} L${X(71)} ${r(ySk)} L${X(71)} ${r(ySk + hh * 0.34)} L${X(-71)} ${r(ySk + hh * 0.62)} Z" fill="#12060a" opacity=".38"/><path d="M${X(-71)} ${r(ySk + hh * 0.62)} L${X(71)} ${r(ySk + hh * 0.34)}" stroke="#ffd9a0" stroke-width=".25" opacity=".35"/>`; }
+  { const hh = yStufe - ySk; k += `<path d="M${X(-71)} ${r(ySk)} L${X(71)} ${r(ySk)} L${X(71)} ${r(ySk + hh * 0.34)} L${X(-71)} ${r(ySk + hh * 0.62)} Z" fill="#12060a" opacity=".38"/>`; }
   /* Obergeschoss: Wand mit Fenstern, Hexi-Balken, Konsolen */
   k += `<rect x="${X(-71)}" y="${r(yBal2)}" width="142" height="${r(yWand2 - yBal2)}" fill="${S.lg("wand2", [[0, "#5a1a10"], [1, "#9a2a1a"]])}"/>`;
   for (let i = 0; i < 9; i++) { const x0 = X(-71 + i * JOCH) + 2.2; k += `<rect x="${r(x0)}" y="${r(yBal2 + 1)}" width="${r(JOCH - 4.4)}" height="${r(yWand2 - yBal2 - 1.4)}" fill="#a83020"/><path d="M${r(x0)} ${r(yBal2 + 2.4)} h${r(JOCH - 4.4)}" stroke="#c99a4a" stroke-width=".2"/>`; }
@@ -465,14 +465,16 @@ const X = (m) => CX + m;
    7 — DIE BRÜCKE (Goldwasserfluss mit Geländer und fünf Brücken)
    ===================================================================== */
 const FLUSS = { nah: 112, fern: 124 };
-const brueckenX = BOEGEN.map(([m]) => [CX + m * uAt(118) / TU, (m === 0 ? 10 : m === 40 || m === -40 ? 7.5 : 6.5) * uAt(118) / 2, m === 0]);
+/* Brücken: Mitte in Metern (m / TU), halbe Breite in Metern; die Lage auf dem Bild hängt von der Entfernung ab (Fluchtlinien) */
+const BR = BOEGEN.map(([m]) => ({ s: m / TU, b: (m === 0 ? 10 : m === 40 || m === -40 ? 7.5 : 6.5) / 2, mitte: m === 0 }));
+const brX = (br, d) => xAt(br.s, d), brW = (br, d) => br.b * uAt(d);
 {
   /* DER FLUSS: Platzstreifen am Tor, fernes Ufergeländer, Wasser, nahes Geländer.
      Aus 9 m Höhe läge das Wasser fast ganz hinter dem nahen Geländer; das nahe Geländer ist darum
      durchbrochen gezeichnet (Handlauf, Pfosten, Sockel), damit man das grüne Wasser sieht. */
   const dn = FLUSS.nah, df = FLUSS.fern;
   let k = `<rect x="0" y="${r(yAt(TOR_D - 2))}" width="400" height="${r(yAt(df) - yAt(TOR_D - 2))}" fill="#cfc9bb"/>`;
-  const luecken = (d) => { const out = []; let a = 0; for (const [x, w] of [...brueckenX].sort((p, q) => p[0] - q[0])) { const wd = w * uAt(d) / uAt(118); out.push([a, x - wd]); a = x + wd; } out.push([a, 400]); return out; };
+  const luecken = (d) => { const out = []; let a = 0; for (const br of [...BR].sort((p, q) => p.s - q.s)) { out.push([a, brX(br, d) - brW(br, d)]); a = brX(br, d) + brW(br, d); } out.push([a, 400]); return out; };
   /* fernes Ufer: geschlossene Brüstung */
   for (const [a, b] of luecken(df)) {
     const yu = yAt(df), yo = yAt(df, 1.1), u = uAt(df);
@@ -497,24 +499,32 @@ const brueckenX = BOEGEN.map(([m]) => [CX + m * uAt(118) / TU, (m === 0 ? 10 : m
      und die beiden Seitengeländer, die zum Scheitel hin ansteigen (Buckel). Die mittlere ist breiter und höher. */
   const dn = FLUSS.nah, df = FLUSS.fern, dm = 118;
   let k = "";
-  for (const [x, w, mitte] of brueckenX) {
-    const hb = mitte ? 1.8 : 1.3, wn = w * uAt(dn) / uAt(dm);
-    const yN = yAt(dn), yC = yAt(dm, hb);
-    /* Wasser-Schatten unter dem Bogen, links und rechts neben der Brücke */
-    k += `<path d="M${r(x - wn - 1.2)} ${r(yN - 0.6)} L${r(x - w - 0.6)} ${r(yAt(df) - 0.4)} L${r(x - w + 1.5)} ${r(yAt(df) - 0.4)} L${r(x - wn + 1.5)} ${r(yN - 0.6)} Z M${r(x + wn + 1.2)} ${r(yN - 0.6)} L${r(x + w + 0.6)} ${r(yAt(df) - 0.4)} L${r(x + w - 1.5)} ${r(yAt(df) - 0.4)} L${r(x + wn - 1.5)} ${r(yN - 0.6)} Z" fill="#0f2019" opacity=".55"/>`;
-    /* Fahrbahn bis zum Scheitel */
-    k += `<path d="M${r(x - wn)} ${r(yN)} Q${r(x - (wn + w) / 2)} ${r(yC + 0.5)} ${r(x - w)} ${r(yC)} L${r(x + w)} ${r(yC)} Q${r(x + (wn + w) / 2)} ${r(yC + 0.5)} ${r(x + wn)} ${r(yN)} Z" fill="${S.lg("fahrbahn", [[0, "#c9c2b0"], [1, "#b3ab98"]])}"/>`;
-    for (let i = 1; i < 6; i++) { const t = i / 6, yy = yN + (yC - yN) * (1 - (1 - t) * (1 - t)); const ww = wn + (w - wn) * t; k += `<path d="M${r(x - ww)} ${r(yy)} H${r(x + ww)}" stroke="#a39b88" stroke-width=".2"/>`; }
-    if (mitte) k += `<path d="M${r(x - wn * 0.22)} ${r(yN)} L${r(x - w * 0.22)} ${r(yC)} L${r(x + w * 0.22)} ${r(yC)} L${r(x + wn * 0.22)} ${r(yN)} Z" fill="#ddd7c8"/>`;
-    /* Seitengeländer: steigen vom Ufer zum Scheitel an, mit Pfosten und Knäufen */
+  for (const br of BR) {
+    const hb = br.mitte ? 1.8 : 1.3;
+    const xN = brX(br, dn), wn = brW(br, dn), xC = brX(br, dm), w = brW(br, dm), xF = brX(br, df), wf = brW(br, df);
+    const yN = yAt(dn), yC = yAt(dm, hb), yF = yAt(df);
+    /* Schatten des Bogens im Wasser, beidseits */
+    for (const sd of [-1, 1]) k += `<path d="M${r(xN + sd * (wn + 1.4))} ${r(yN - 0.6)} L${r(xF + sd * (wf + 0.8))} ${r(yF - 0.4)} L${r(xF + sd * (wf - 1.2))} ${r(yF - 0.4)} L${r(xN + sd * (wn - 1.2))} ${r(yN - 0.6)} Z" fill="#0f2019" opacity=".55"/>`;
+    /* hintere Hälfte der Seitengeländer (fällt zum fernen Ufer ab; die Fahrbahn verdeckt ihren Fuß) */
     for (const sd of [-1, 1]) {
-      const xn = x + sd * wn, xc = x + sd * w, yNo = yAt(dn, 1.1), yCo = yAt(dm, hb + 1.1);
-      const top = (t) => [xn + (xc - xn) * t, yNo + (yCo - yNo) * (1 - (1 - t) * (1 - t))];
-      const bot = (t) => [xn + (xc - xn) * t, yN + (yC - yN) * (1 - (1 - t) * (1 - t))];
-      let d = "M" + [0, 0.25, 0.5, 0.75, 1].map((t) => top(t).map(r).join(" ")).join(" L") + " L" + [1, 0.75, 0.5, 0.25, 0].map((t) => bot(t).map(r).join(" ")).join(" L") + " Z";
+      const a = [xC + sd * w, yAt(dm, hb + 1.1)], b = [xF + sd * wf, yAt(df, 1.1)], c = [xF + sd * wf, yF], e = [xC + sd * w, yC];
+      k += `<path d="M${r(a[0])} ${r(a[1])} Q${r((a[0] + b[0]) / 2)} ${r(a[1] - 0.2)} ${r(b[0])} ${r(b[1])} L${r(c[0])} ${r(c[1])} L${r(e[0])} ${r(e[1])} Z" fill="#d8d3c6" stroke="#b9b3a4" stroke-width=".15"/>`;
+      k += `<rect x="${r(b[0] - 0.3)}" y="${r(b[1] - 0.4)}" width=".6" height="${r(c[1] - b[1] + 0.4)}" fill="#ece9e1"/><circle cx="${r(b[0])}" cy="${r(b[1] - 0.5)}" r=".4" fill="#f4f2ec"/>`;
+    }
+    /* Fahrbahn bis zum Scheitel (die Mitte der Kaiserbrücke heller) */
+    const fb = (t) => yN + (yC - yN) * (1 - (1 - t) * (1 - t));
+    const kante = (sd, t) => [xN + (xC - xN) * t + sd * (wn + (w - wn) * t), fb(t)];
+    const TS = [0, 0.25, 0.5, 0.75, 1];
+    k += `<path d="M${TS.map((t) => kante(-1, t).map(r).join(" ")).join(" L")} L${[...TS].reverse().map((t) => kante(1, t).map(r).join(" ")).join(" L")} Z" fill="${S.lg("fahrbahn", [[0, "#c9c2b0"], [1, "#b3ab98"]])}"/>`;
+    for (let t = 0.17; t < 0.95; t += 0.17) { const [x1, y1] = kante(-1, t), [x2] = kante(1, t); k += `<path d="M${r(x1)} ${r(y1)} H${r(x2)}" stroke="#a39b88" stroke-width=".2"/>`; }
+    if (br.mitte) k += `<path d="M${r(xN - wn * 0.22)} ${r(yN)} L${r(xC - w * 0.22)} ${r(yC)} L${r(xC + w * 0.22)} ${r(yC)} L${r(xN + wn * 0.22)} ${r(yN)} Z" fill="#ddd7c8"/>`;
+    /* vordere Hälfte der Seitengeländer: steigt vom Ufer zum Scheitel, mit Pfosten und Knäufen */
+    for (const sd of [-1, 1]) {
+      const top = (t) => { const [x, y] = kante(sd, t); return [x, y - (yAt(dn) - yAt(dn, 1.1)) * (1 - t) - (yAt(dm, hb) - yAt(dm, hb + 1.1)) * t]; };
+      const d = "M" + TS.map((t) => top(t).map(r).join(" ")).join(" L") + " L" + [...TS].reverse().map((t) => kante(sd, t).map(r).join(" ")).join(" L") + " Z";
       k += `<path d="${d}" fill="${sd < 0 ? "#f3f0e8" : "#e2ded3"}" stroke="#b9b3a4" stroke-width=".2"/>`;
-      k += `<path d="M${[0, 0.25, 0.5, 0.75, 1].map((t) => top(t).map(r).join(" ")).join(" L")}" stroke="#fffdf6" stroke-width=".45" fill="none"/>`;
-      for (const t of [0, 0.34, 0.67, 1]) { const [px, py] = top(t), [, qy] = bot(t); k += `<rect x="${r(px - 0.35)}" y="${r(py - 0.5)}" width=".7" height="${r(qy - py + 0.5)}" fill="#f8f6f0" stroke="#c4bfb2" stroke-width=".12"/><circle cx="${r(px)}" cy="${r(py - 0.65)}" r=".5" fill="#fbfaf6" stroke="#c4bfb2" stroke-width=".12"/>`; }
+      k += `<path d="M${TS.map((t) => top(t).map(r).join(" ")).join(" L")}" stroke="#fffdf6" stroke-width=".45" fill="none"/>`;
+      for (const t of [0, 0.34, 0.67, 1]) { const [px, py] = top(t), [, qy] = kante(sd, t); k += `<rect x="${r(px - 0.35)}" y="${r(py - 0.5)}" width=".7" height="${r(qy - py + 0.5)}" fill="#f8f6f0" stroke="#c4bfb2" stroke-width=".12"/><circle cx="${r(px)}" cy="${r(py - 0.65)}" r=".5" fill="#fbfaf6" stroke="#c4bfb2" stroke-width=".12"/>`; }
     }
   }
   S.teil({ anker: [CX, r(yAt(118, 1.8) - 2)], id: "bruecke", de: "die Brücke", syl: "BRÜ-cke", it: "il ponte", itSyl: "PON-te", en: "bridge", x: 0, y: 0, kunst: k,

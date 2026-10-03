@@ -307,25 +307,31 @@ const WASSER_R = 110;   /* Wasserlinie am rechten Bildrand */
 const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Fluchtpunkt */
 {
   let k = `<path d="M196 100 L320 100 L320 ${WASSER_R} L${VX} 100.3 Z" fill="${S.lg("meer", [[0, "#1c5a8e"], [0.45, "#2878a6"], [0.8, "#3d9fb4"], [1, "#77c8c2"]])}"/>`;
-  /* Sonnenglitzern Richtung Sonne (rechts) */
-  for (let i = 0; i < 40; i++) { const x = 238 + rnd() * 82, y = 100.2 + rnd() * (wy(x, 104) - 100.4); k += `<rect x="${r(x)}" y="${r(y)}" width="${r(0.8 + rnd() * 2.2 * (x - 230) / 90)}" height=".2" fill="#fffbe8" opacity="${r(0.35 + 0.5 * (x - 230) / 90)}"/>`; }
-  /* rollende Wellen: dunkle Wellenfront, darüber der weiße Schaumkamm */
-  for (const [yr, st] of [[103.4, 0.55], [105.6, 0.8], [108.3, 1.15]]) {
-    const ob = [], un = [], fr = [];
-    for (let x = VX + 6; x < 322.5; x += 2.5) {
-      const y = wy(x, yr), h = (y - 100) * 0.2 * st * (0.75 + 0.25 * Math.sin(x * 0.31 + yr));
-      ob.push([x, y - h * (0.8 + 0.4 * rnd())]); un.push([x, y]); fr.push([x, y + h * 1.3]);
+  /* Glitzerpfad unter der Morgensonne (rechts oben): kurze helle Striche, zur Sonne dichter */
+  let gl = "";
+  for (let i = 0; i < 46; i++) { const t = Math.pow(rnd(), 0.6), x = 322 - t * 70 * (0.4 + rnd() * 0.6), y = 100.2 + rnd() * (wy(x, 103.6) - 100.4); gl += `M${r(x)} ${r(y)}h${r(0.6 + (1 - t) * 2.4 * rnd())}`; }
+  k += `<path d="${gl}" stroke="#fffbe8" stroke-width=".22" opacity=".85"/>`;
+  /* zwei brechende Wellen: dunkle grünblaue Wellenwand, oben durchscheinend, weißer Kamm kippt nach vorn über */
+  const WAND = S.lg("wellenwand", [[0, "#5fbab0"], [0.3, "#1f7d8a"], [1, "#145a6e"]]);
+  for (const [yr, st] of [[104.2, 0.8], [108, 1.25]]) {
+    const ob = [], un = [], li = [];
+    for (let x = VX + 8; x < 323; x += 2) {
+      const y = wy(x, yr), h = (y - 100) * 0.34 * st * (0.82 + 0.18 * Math.sin(x * 0.23 + yr));
+      ob.push([x, y - h]); un.push([x, y]); li.push([x + 0.8, y - h * (0.45 + 0.15 * rnd())]);
     }
-    k += `<path d="M${pts(un)} L${pts(fr.slice().reverse())} Z" fill="#1d6c86" opacity=".55"/>`;
-    k += `<path d="M${pts(ob)} L${pts(un.slice().reverse())} Z" fill="#f6fbf9"/>`;
-    k += `<path d="M${pts(un)}" stroke="#cfe9ea" stroke-width="${r(0.25 * st)}" fill="none" opacity=".8"/>`;
+    k += `<path d="M${pts(ob)} L${pts(un.slice().reverse())} Z" fill="${WAND}"/>`;
+    /* Kamm und überkippende Lippe mit Gischt */
+    k += `<path d="M${pts(ob.map(([x, y], i) => [x - 0.6, y - 0.35 * st - 0.25 * rnd()]))} L${pts(li.slice().reverse())} Z" fill="#f6fbf9"/>`;
+    k += `<path d="M${pts(li)}" stroke="#cfe6e8" stroke-width="${r(0.3 * st)}" fill="none"/>`;
+    /* Schaum am Fuß der Welle */
+    k += `<path d="M${pts(un.map(([x, y]) => [x, y - 0.15]))} L${pts(un.map(([x, y]) => [x, y + (y - 100) * 0.07 * st + 0.3 * rnd()]).reverse())} Z" fill="#eef8f6"/>`;
   }
   /* auslaufendes Wasser auf dem Sand */
   k += `<path d="M${VX + 2} 100.5 L320 ${WASSER_R - 1} L320 ${WASSER_R} L${VX} 100.4 Z" fill="#f4fbf8" opacity=".85"/>`;
   /* Insel Cotunduba vor Leme und ein Frachter auf dem Weg in die Bucht */
   k += `<path d="M280 100.2 Q282 97.6 285 97.4 Q288 97.6 290.4 100.2 Z" fill="#6a8a72"/><path d="M280 100.2 L290.4 100.2" stroke="#e8f4f2" stroke-width=".3"/>`;
   k += `<path d="M300 99.7 L310 99.7 L309 100.4 L301 100.4 Z" fill="#40454c"/><rect x="307" y="98.5" width="1.6" height="1.2" fill="#e8e6e0"/><rect x="302" y="99.1" width="4.4" height=".6" fill="#b34a3a"/>`;
-  S.teil({ id: "meer", de: "das Meer", syl: "MEER", it: "il mare", itSyl: "MA-re", en: "sea", x: 298, y: 103.5, kunst: halb(um(298, 103.5, k)),
+  S.teil({ id: "meer", de: "das Meer", syl: "MEER", it: "il mare", itSyl: "MA-re", en: "sea", x: 298, y: 103.5, kunst: um(298, 103.5, k),
     tipp: "Das ist der Atlantische Ozean. Die Wellen brechen an der Copacabana oft kräftig am Strand." });
 }
 
@@ -565,7 +571,8 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
 {
   let k = `<path d="M-1 ${r(STRANDKANTE(-1))} L${VX} 100 L${VX} 100.3 L320 ${WASSER_R} L320 200 L-1 200 Z" fill="${S.lg("sand", [[0, "#f4e7c9"], [0.25, "#efdcb3"], [1, "#e6c993"]])}"/>`;
   /* nasser Sand an der Wasserlinie */
-  k += `<path d="M${VX} 100.35 L320 ${WASSER_R} L320 ${WASSER_R + 1.8} L${VX} 100.5 Z" fill="#cdb58a" opacity=".7"/>`;
+  k += `<path d="M${VX} 100.35 L320 ${WASSER_R} L320 ${WASSER_R + 1.8} L${VX} 100.5 Z" fill="#c7b089"/>`;
+  k += `<path d="M${VX + 30} 101.9 L320 ${WASSER_R + 0.5}" stroke="#eaf3f1" stroke-width=".45" opacity=".8"/><path d="M${VX + 60} 103.2 L320 ${WASSER_R + 1.2}" stroke="#d9e8ea" stroke-width=".25" opacity=".6"/>`;
   /* Kante zum Calçadão: niedrige Stufe */
   k += `<path d="M-1 ${r(STRANDKANTE(-1))} L${VX} 100 L-1 ${r(STRANDKANTE(-1) + 2.2)} Z" fill="#cbb489" opacity=".7"/>`;
   /* Windrippel und Fußspuren (perspektivisch kleiner) */
@@ -597,14 +604,28 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
       k += `<circle cx="${r(hx)}" cy="${r(y - 1.5 * s)}" r="${r(0.12 * s)}" fill="#2a1d16"/>`;
     }
   }
-  /* zwei Barracas (Strandbuden) mit Fahne, Kühlbox und gestapelten Stühlen */
-  for (const [X, Z, fahne] of [[11, 46, "#f2c230"], [5.5, 80, "#2f8fd0"]]) {
-    const [x, y] = boden(X, Z), s = F / Z;
-    k += `<line x1="${r(x)}" y1="${r(y)}" x2="${r(x)}" y2="${r(y - 3.2 * s)}" stroke="#6b6b66" stroke-width="${r(Math.max(0.12, 0.05 * s))}"/>`;
-    k += `<path d="M${r(x)} ${r(y - 3.2 * s)} l${r(1.1 * s)} ${r(0.15 * s)} l${r(-0.1 * s)} ${r(0.65 * s)} l${r(-1 * s)} ${r(-0.1 * s)} Z" fill="${fahne}"/>`;
-    k += `<rect x="${r(x + 0.2 * s)}" y="${r(y - 0.45 * s)}" width="${r(0.7 * s)}" height="${r(0.45 * s)}" fill="#f2f2ee"/><rect x="${r(x + 0.2 * s)}" y="${r(y - 0.45 * s)}" width="${r(0.7 * s)}" height="${r(0.1 * s)}" fill="#2f8fd0"/>`;
-    for (let j = 0; j < 4; j++) k += `<path d="M${r(x - 1.2 * s + j * 0.08 * s)} ${r(y - j * 0.12 * s)} l${r(0.55 * s)} 0 l${r(0.1 * s)} ${r(-0.5 * s)}" stroke="#c9ced2" stroke-width="${r(Math.max(0.1, 0.04 * s))}" fill="none"/>`;
-    for (let j = 0; j < 3; j++) { const [cx2, cy2] = boden(X - 1.6 - j * 1.4, Z + 1.2); k += `<rect x="${r(cx2 - 0.25 * s)}" y="${r(cy2 - 0.5 * s)}" width="${r(0.5 * s)}" height="${r(0.5 * s)}" fill="${["#f08a2c", "#3aa35a", "#f2c230"][j]}"/>`; }
+  /* eine Reihe Sonnenschirme den Strand entlang (im Raum, s = F/Z) */
+  for (const [Z, c] of [[175, "#f2c230"], [135, "#ffffff"], [105, "#2f8fd0"], [82, "#e84a3c"], [64, "#3aa35a"], [50, "#f08a2c"]]) {
+    const [x, y] = boden(6.5, Z), s = F / Z;
+    k += `<line x1="${r(x)}" y1="${r(y)}" x2="${r(x)}" y2="${r(y - 2.2 * s)}" stroke="#8a8a86" stroke-width="${r(Math.max(0.08, 0.04 * s))}"/><path d="M${r(x - 1.05 * s)} ${r(y - 1.95 * s)} Q${r(x)} ${r(y - 2.55 * s)} ${r(x + 1.05 * s)} ${r(y - 1.95 * s)} Z" fill="${c}"/><ellipse cx="${r(x - 0.5 * s)}" cy="${r(y)}" rx="${r(0.9 * s)}" ry="${r(0.12 * s)}" fill="#a88a5a" opacity=".3"/>`;
+  }
+  /* die Barraca: Sonnendach auf vier Stangen, Fahne, Kühlbox und zwei Stapel Klappstühle */
+  {
+    const X = 9.5, Z = 36, [x, y] = boden(X, Z), s = F / Z, [xh, yh] = boden(X - 0.6, Z + 2.2), sh = F / (Z + 2.2);
+    let g = `<ellipse cx="${r(x - 1.6 * s)}" cy="${r(y - 0.1 * s)}" rx="${r(1.9 * s)}" ry="${r(0.22 * s)}" fill="#a88a5a" opacity=".35"/>`;
+    for (const [px, py, ps] of [[xh - 1.05 * sh, yh, sh], [xh + 1.05 * sh, yh, sh], [x - 1.1 * s, y, s], [x + 1.1 * s, y, s]]) g += `<line x1="${r(px)}" y1="${r(py)}" x2="${r(px)}" y2="${r(py - 2.2 * ps)}" stroke="#d8d8d2" stroke-width="${r(0.06 * s)}"/>`;
+    g += `<path d="M${r(xh - 1.25 * sh)} ${r(yh - 2.25 * sh)} L${r(xh + 1.25 * sh)} ${r(yh - 2.25 * sh)} L${r(x + 1.3 * s)} ${r(y - 2.2 * s)} L${r(x - 1.3 * s)} ${r(y - 2.2 * s)} Z" fill="#1d6fb8"/>`;
+    /* Volant vorn: blau-gelb gestreift mit Zacken */
+    let vo = "";
+    for (let i = 0; i < 8; i++) { const xa = x - 1.3 * s + i * 0.325 * s; vo += `<path d="M${r(xa)} ${r(y - 2.25 * s)} h${r(0.325 * s)} v${r(0.42 * s)} l${r(-0.1625 * s)} ${r(0.14 * s)} l${r(-0.1625 * s)} ${r(-0.14 * s)} Z" fill="${i % 2 ? "#f2c230" : "#1d6fb8"}"/>`; }
+    g += vo;
+    /* Fahne der Barraca am hohen Mast */
+    g += `<line x1="${r(x - 1.1 * s)}" y1="${r(y - 2.2 * s)}" x2="${r(x - 1.1 * s)}" y2="${r(y - 3.6 * s)}" stroke="#d8d8d2" stroke-width="${r(0.05 * s)}"/><path d="M${r(x - 1.1 * s)} ${r(y - 3.6 * s)} l${r(0.9 * s)} ${r(0.1 * s)} l${r(-0.05 * s)} ${r(0.55 * s)} l${r(-0.85 * s)} ${r(-0.05 * s)} Z" fill="#139a43"/><circle cx="${r(x - 0.65 * s)}" cy="${r(y - 3.3 * s)}" r="${r(0.14 * s)}" fill="#f6d21e"/>`;
+    /* Kühlbox */
+    g += `<rect x="${r(x - 0.2 * s)}" y="${r(y - 0.5 * s)}" width="${r(0.75 * s)}" height="${r(0.5 * s)}" fill="#f4f4f0"/><rect x="${r(x - 0.24 * s)}" y="${r(y - 0.58 * s)}" width="${r(0.83 * s)}" height="${r(0.12 * s)}" fill="#1d6fb8"/>`;
+    /* zwei Stapel Klappstühle (Alu-Rahmen, bunte Sitze) */
+    for (const [dx, c] of [[-1.15, ["#f08a2c", "#3aa35a", "#f2c230", "#e84a3c"]], [-2.2, ["#3aa35a", "#f2c230", "#1d6fb8"]]]) c.forEach((f, j) => { const cx = x + dx * s, cy = y - j * 0.13 * s; g += `<path d="M${r(cx - 0.3 * s)} ${r(cy)} L${r(cx - 0.18 * s)} ${r(cy - 0.95 * s)} M${r(cx + 0.3 * s)} ${r(cy)} L${r(cx + 0.18 * s)} ${r(cy - 0.95 * s)}" stroke="#c9ced2" stroke-width="${r(0.04 * s)}"/><path d="M${r(cx - 0.22 * s)} ${r(cy - 0.85 * s)} L${r(cx + 0.22 * s)} ${r(cy - 0.85 * s)} L${r(cx + 0.27 * s)} ${r(cy - 0.35 * s)} L${r(cx - 0.27 * s)} ${r(cy - 0.35 * s)} Z" fill="${f}"/>`; });
+    k += g;
   }
   /* Futevôlei: Netz quer zum Strand, vier Spieler in Badekleidung (von der Seite gesehen) */
   {
