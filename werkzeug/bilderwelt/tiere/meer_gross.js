@@ -346,8 +346,9 @@ function mach(T, dez = 1) {
     const id = T.id("kn");
     if (!vorlage[id]) {
       vorlage[id] = 1;
-      T.def(`<g id="${id}"><ellipse cx=".28" cy=".42" rx="1.2" ry=".95" fill="${T.rg("knS", [[0, "#000", 0.38], [0.6, "#000", 0.18], [1, "#000", 0]])}"/>` +
-        `<ellipse cx="-.18" cy="-.26" rx=".85" ry=".68" fill="${T.rg("knH", [[0, "#c4d4e0", 0.34], [1, "#c4d4e0", 0]])}"/>` +
+      T.def(`<g id="${id}"><ellipse cx=".15" cy=".45" rx="1.15" ry=".8" fill="${T.rg("knS", [[0, "#000", 0.3], [0.6, "#000", 0.12], [1, "#000", 0]])}"/>` +
+        `<ellipse rx="1" ry=".82" fill="${haut}"/>` +
+        `<path d="M-.8 -.15A.95 .8 0 0 1 .75 -.35" fill="none" stroke="#c4d4e0" stroke-opacity=".28" stroke-width=".22" stroke-linecap="round"/>` +
         (F ? `<path d="M.05 -.05q.18 -.35 .5 -.62" fill="none" stroke="#cfc8b8" stroke-width=".05" stroke-opacity=".5"/>` : "") + `</g>`);
     }
     return liste.map(([x, y, r]) => `<use href="#${id}" transform="translate(${f(x)} ${f(y)}) scale(${r2(r)})"/>`).join("");
@@ -1592,10 +1593,4 @@ module.exports = [
     gruppe: "Meer", lebensraum: "Meer", laenge: 16.16, hoehe: 3.21, schwimmt: true, zeichne: pottwal },
   { id: "narwal", de: "der Narwal", syl: "NAR-wal", it: "il narvalo", itSyl: "NAR-va-lo", en: "narwhal",
     gruppe: "Meer", lebensraum: "Meer", laenge: 7.24, hoehe: 1.09, schwimmt: true, zeichne: narwal },
-];      /* flacher Höcker im Hautton: Füllung = Haut, nur Relief (Lichtsichel oben, weicher Schatten unten) */
-      T.def(`<g id="${id}"><ellipse cx=".15" cy=".45" rx="1.15" ry=".8" fill="${T.rg("knS", [[0, "#000", 0.3], [0.6, "#000", 0.12], [1, "#000", 0]])}"/>` +
-        `<ellipse rx="1" ry=".82" fill="${haut}"/>` +
-        `<path d="M-.8 -.15A.95 .8 0 0 1 .75 -.35" fill="none" stroke="#c4d4e0" stroke-opacity=".28" stroke-width=".22" stroke-linecap="round"/>` +
-        (F ? `<path d="M.05 -.05q.18 -.35 .5 -.62" fill="none" stroke="#cfc8b8" stroke-width=".05" stroke-opacity=".5"/>` : "") + `</g>`);
-    }
-
+];

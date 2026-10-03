@@ -717,7 +717,7 @@ const STRASSE = [[112, -4, -10], [122, -10, -12], [132, -18, -15], [140, -30, -1
   /* Bewuchs in Spalten und auf Bändern: kleine Kronen mit Licht und Schatten */
   for (let i = 0; i < 26; i++) { const x = 205 + rnd() * 190, yr = 147 + (401 - x) * 0.3, y = yr + 6 + rnd() * (262 - yr - 10); if (!drin(x, y, WAND)) continue; const q = 1.6 + (y - 160) / 40; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(q * 1.3)}" ry="${r(q)}" fill="${["#3e5a32", "#5a6e34", "#a8742a", "#c89a3a"][i % 4]}"/><ellipse cx="${r(x - q * 0.4)}" cy="${r(y - q * 0.35)}" rx="${r(q * 0.55)}" ry="${r(q * 0.4)}" fill="#fbe7a6" opacity=".35"/>`; }
   /* harte Schattenkante: der Schlossberg verschattet den unteren Teil der Wand */
-  k += `<path d="${poly([[200, 216], [290, 262], [401, 262], [401, 262], ...R.slice().reverse()].slice(0, 3).concat(R.slice().reverse()))}" fill="#1c2232" opacity=".42"/>`;
+  k += `<path d="${poly([[200, 216], [290, 262], ...R])}" fill="#1c2232" opacity=".42"/>`;
   /* Kronensaum an der Oberkante */
   k += saum(RIM.map(([x, y]) => [x, y + 1]), 2.6, 4.6, 0.5);
   /* Gischtdunst steigt aus der Tiefe (der Pöllatfall liegt direkt unter der Brücke) */

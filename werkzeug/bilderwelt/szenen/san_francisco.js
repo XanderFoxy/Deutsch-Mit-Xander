@@ -763,8 +763,8 @@ const LOMB = {};
   /* Gehweg-Treppen an beiden Seiten: Stufen, Wange, Geländer */
   for (const [l0, l1, gl] of [[-14.8, -12.9, -12.9], [2.7, 4.5, 2.7]]) {
     k += vk([PO(l0, 12, zL(12)), PO(l0, 132, zL(132)), PO(l1, 132, zL(132)), PO(l1, 12, zL(12))], "#d3ccbf");
-    let st = ""; for (let d = 14; d < 130; d += d < 50 ? 0.6 : 1.2) { const q = KL([PO(l0, d, zL(d)), PO(l1, d, zL(d)), PO(l1, d + 0.12, zL(d + 0.12)), PO(l0, d + 0.12, zL(d + 0.12))]); if (q.length > 2) st += `M${q.map(pr).join(" L")}Z`; }
-    k += `<path d="${st}" fill="#a49d90"/>`;
+    let st = ""; for (let d = 14; d < 120; d += d < 50 ? 0.8 : 2) { const q = KL([PO(l0, d, zL(d)), PO(l1, d, zL(d)), PO(l1, d, zL(d))]); if (q.length > 1) st += `M${pr(q[0])} L${pr(q[1])}`; }
+    k += `<path d="${st}" stroke="#a49d90" stroke-width=".3"/>`;
     const gel = []; for (let d = 14; d <= 130; d += 4) gel.push(PO(gl, d, zL(d) + 0.95));
     let g = ""; for (let i = 0; i + 1 < gel.length; i++) g += seg(gel[i], gel[i + 1]) + " ";
     for (let d = 16; d < 128; d += 6) g += seg(PO(gl, d, zL(d)), PO(gl, d, zL(d) + 0.95)) + " ";
@@ -777,7 +777,7 @@ const LOMB = {};
   let vor = [8.5, -5];
   for (let i = 0; i < 8; i++) {
     const dc = DT(i), lc = LA(i), links = i % 2 === 0, bog = [];
-    for (let j = 0; j <= 10; j++) { const t = Math.PI + (links ? 1 : -1) * Math.PI * j / 10; bog.push([dc + RHO * Math.cos(t), lc + RHO * Math.sin(t)]); }
+    for (let j = 0; j <= 6; j++) { const t = Math.PI + (links ? 1 : -1) * Math.PI * j / 6; bog.push([dc + RHO * Math.cos(t), lc + RHO * Math.sin(t)]); }
     stuecke.push({ p: [vor, bog[0]], t: (vor[0] + bog[0][0]) / 2 });
     stuecke.push({ p: bog, t: dc, mitte: [dc, lc], links });
     vor = bog[bog.length - 1];
@@ -790,7 +790,7 @@ const LOMB = {};
   const busch = (d, lat, gr = 1) => { const [x, y] = PO(lat, d, zL(d) + 0.2), s = F * 0.62 * gr / d; if (y > 257 || x - 1.9 * s < SEAM || x + 1.9 * s > 399.5) return "";
     let g = `<path d="M${r(x - 1.9 * s)} ${r(y)} Q${r(x - 1.9 * s)} ${r(y - 1.3 * s)} ${r(x - 0.6 * s)} ${r(y - 1.5 * s)} Q${r(x)} ${r(y - 2 * s)} ${r(x + 0.7 * s)} ${r(y - 1.5 * s)} Q${r(x + 1.9 * s)} ${r(y - 1.3 * s)} ${r(x + 1.9 * s)} ${r(y)} Z" fill="#2f4d24"/>`;
     const fb = farbenH[Math.floor(rnd() * 6)];
-    for (let i = 0; i < (d < 50 ? 11 : 5); i++) { const a = rnd() * Math.PI, rr = 1.45 * s * Math.sqrt(rnd()), c = rnd() < 0.7 ? fb : farbenH[Math.floor(rnd() * 6)]; g += `<circle cx="${r(x + Math.cos(a) * rr)}" cy="${r(y - 0.45 * s - Math.sin(a) * rr * 0.75)}" r="${r(s * (0.2 + rnd() * 0.1))}" fill="${c}"/>`; }
+    for (let i = 0; i < (d < 40 ? 9 : d < 70 ? 6 : 4); i++) { const a = rnd() * Math.PI, rr = 1.45 * s * Math.sqrt(rnd()), c = rnd() < 0.7 ? fb : farbenH[Math.floor(rnd() * 6)]; g += `<circle cx="${r(x + Math.cos(a) * rr)}" cy="${r(y - 0.45 * s - Math.sin(a) * rr * 0.75)}" r="${r(s * (0.2 + rnd() * 0.1))}" fill="${c}"/>`; }
     return g; };
   /* Büsche außen an den Schenkeln (an den Treppen) — vor den Kehren gezeichnet, je nach Tiefe */
   const aussen = [{ t: 15.5, s: busch(15, 0.8, 1.2) + busch(17.5, 3, 1) }]; for (let d = 20; d < 122; d += 7.2) { aussen.push({ t: d + 0.5, s: busch(d, -11.9, 0.9) }); aussen.push({ t: d + 0.5, s: busch(d + 3.6, 1.6, 0.9) }); }

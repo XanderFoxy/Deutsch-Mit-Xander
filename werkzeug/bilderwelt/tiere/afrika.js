@@ -547,8 +547,8 @@ function giraffe(T) {
   const SW = "#1a120b";
   /* Fell als Muster (dicht, Haar für Haar), je Körperzone eigene Wuchsrichtung */
   const haarF = [["#fff6e2", 2, 0.28, 0.32], ["#3a1d0a", 2, 0.3, 0.3]];
-  const fHals = F ? H.fellMuster("h", 62, haarF, { tile: 9, n: 30, len: 2.6 }) : "";
-  const fRumpf = F ? H.fellMuster("r", 168, haarF, { tile: 10, n: 30, len: 3 }) : "";
+  const fHals = F ? H.fellMuster("h", 62, [["#fff6e2", 2, 0.22, 0.16], ["#3a1d0a", 2, 0.22, 0.14]], { tile: 13, n: 90, len: 2.4, streu: 0.5 }) : "";
+  const fRumpf = F ? H.fellMuster("r", 168, [["#fff6e2", 2, 0.22, 0.16], ["#3a1d0a", 2, 0.22, 0.14]], { tile: 13, n: 90, len: 2.8, streu: 0.5 }) : "";
   const fBein = F ? H.fellMuster("b", 92, haarF, { tile: 7, n: 24, len: 2.2 }) : "";
   const fKopf = F ? H.fellMuster("k", 200, [["#fff6e2", 2, 0.15, 0.14], ["#3a1d0a", 2, 0.15, 0.12]], { tile: 6, n: 40, len: 1.3, streu: 0.5 }) : "";
   /* ---- Fleckenmosaik: echte Voronoi-Zellen, Fugen unterschiedlich breit, Ränder gelappt, Ecken rund,
@@ -623,8 +623,8 @@ function giraffe(T) {
   /* ---- Umrisse ---- */
   /* Rumpf + Hals: Widerrist deutlich höchster Rückenpunkt, Rücken fällt ~24° zur Kruppe, Hüfthöcker, Brust weit vor dem Vorderbein */
   const rumpf = [[40, -292], [62, -300], [80, -304], [92, -309], [106, -306], [140, -322], [180, -343], [214, -362], [234, -374], [262, -410], [300, -460], [328, -496], [346, -516],
-    [366, -486], [358, -470], [346, -452], [330, -422], [314, -386], [300, -344], [292, -304], [289, -268], [282, -238], [268, -216], [246, -206], [214, -202], [180, -199], [150, -202],
-    [126, -212], [110, -220], [94, -226], [66, -238], [46, -258], [38, -276]];
+    [366, -486], [358, -470], [346, -452], [330, -422], [314, -386], [300, -344], [293, -312], [297, -286], [294, -258], [282, -236], [266, -220], [246, -210], [214, -203], [180, -201], [150, -205],
+    [126, -214], [110, -222], [94, -228], [66, -240], [46, -258], [38, -276]];
   /* Zellen: Rumpf groß, Hals mittel, Beine klein (nach unten kleiner), Kopf winzig */
   const halsSeite = (x, y) => 80 * (y + 365) - 80 * (x - 225) < 0;
   feld(20, -380, 300, -190, 33, 3.8, (x, y) => !halsSeite(x, y));
@@ -645,22 +645,23 @@ function giraffe(T) {
   const vorder = (x) => [[x + 6, -300, 26, 26], [x + 2, -228, 21, 20], [x + 1, -180, 13, 12.5], [x, -140, 10, 9.5], [x, -119, 9.5, 9], [x, -109, 11.5, 10.5], [x, -97, 7.6, 7.6], [x + 0.5, -62, 6.2, 6.8], [x + 1, -42, 6, 6.4], [x + 2, -31, 8, 8], [x + 6, -22.5, 6.6, 6.6], [x + 9.5, -17, 6.6, 6.2]];
   const hinter = (x) => [[x + 18, -280, 12, 40], [x + 26, -225, 26, 24], [x + 20, -185, 15, 16], [x + 5, -140, 9.5, 12], [x - 1, -124, 8, 14, 2], [x, -108, 7.2, 7.8], [x + 2, -62, 6.2, 6.8], [x + 3, -42, 6, 6.4], [x + 4, -31, 8, 8], [x + 8, -22.5, 6.6, 6.6], [x + 11.5, -17, 6.6, 6.2]];
   const huf = (x, fern) => H.huf(x, 17, 7, 6.6, T.lg(fern ? "hufd" : "hufg", fern ? [[0, "#2a221c"], [1, "#130f0c"]] : [[0, "#40342a"], [1, "#1c1611"]]), true, { saum: fern ? "#a99a7e" : "#e8dcc0" });
-  const bein = (J, fern, vorn) => {
+  const bein = (J, fern, vorn, mitRumpf) => {
     const kk = kette(J), m = J.length - 1;
-    const fl = fleckSVG(flecken(kk.pts, { ymin: -235, r0: 5, nur: fern || !F ? (c) => c.g > 9 : null }), fern);
+    const fl = fleckSVG(flecken(kk.pts, { ymin: mitRumpf ? -999 : -235, r0: 5, nur: fern || !F ? (c) => c.g > 9 : null }), fern);
     const knie = vorn ? H.wf([[J[5][0] - 9, J[5][1] - 4], [J[5][0] + 11, J[5][1] - 1], [J[5][0] + 9, J[5][1] + 6], [J[5][0] - 8, J[5][1] + 5]], "#8a8070", 0.35, 1.2) : "";
-    return teil(kk.pts, fern ? laufFern : lauf, {
-      fell: [fBein], vol: [3.2, 4, 0.4],
+    return teil(kk.pts, fern ? laufFern : mitRumpf ? T.lg("laufr", [[0, "#e6d6b4"], [0.45, "#e9dabb"], [0.6, "#f1e7d2"], [1, "#e2d3b4"]], 0, -290, 0, -20, US) : lauf, {
+      fell: [fBein], vol: mitRumpf ? null : [3.2, 4, 0.4], ov: mitRumpf ? [licht] : [],
       innen: fl + knie +
 
         /* Beugesehne hinten am Röhrbein; beim Hinterbein die Achillessehne über dem Fersenhöcker */
         wf(G(H.laengs(kk, 0.2, vorn ? 6 : 5, m - 2), false), "#000", 0.22, 0.5, false, 1.2) +
         (vorn ? "" : wf(G(H.laengs(kk, 0.12, 2, 5), false), "#000", 0.22, 0.6, false, 1.4)) +
-        (fern ? wf([[J[0][0] - 30, -210], [J[0][0] + 30, -210]], "#000", 0.45, 6, false, 20) : wf([[J[0][0] - 30, -204], [J[0][0] + 30, -204]], "#3a2410", 0.35, 4, false, 12)),
+        (mitRumpf ? kerben([[[J[1][0] + 25, J[1][1] + 4], [J[1][0] + 20, J[1][1] - 14], [J[1][0] + 12, J[1][1] - 34]]], 2, 0.22, "#3a2410") + wf([[J[0][0] - 10, J[0][1] - 4], [J[0][0] + 12, J[0][1] - 8]], "#fff", 0.2, 4, false) :
+          fern ? wf([[J[0][0] - 30, -210], [J[0][0] + 30, -210]], "#000", 0.45, 6, false, 20) : wf([[J[0][0] - 30, -204], [J[0][0] + 30, -204]], "#3a2410", 0.35, 4, false, 12)),
     }) + huf(J[m][0], fern);
   };
   s += bein(vorder(208), 1, 1) + bein(hinter(118), 1, 0);
-  s += bein(vorder(246), 0, 1) + bein(hinter(80), 0, 0);
+  s += bein(vorder(246), 0, 1);
   /* ---- Schwanz: Rübe dick (oben gefleckt), verjüngt, Quaste dicht und voluminös, endet auf Höhe des Sprunggelenks ---- */
   const sk = kette([[42, -290, 4.6, 4.6], [36, -258, 3.4, 3.4], [30, -220, 2.4, 2.4], [26, -186, 1.9, 1.9], [24, -168, 1.8, 1.8]]);
   s += teil(sk.pts, creme, { fell: [fRumpf], ov: [lichtX], vol: [1, 4, 0.4], innen: `<path d="M38 -286Q42 -278 39 -268Q34 -276 38 -286Z" fill="${fleckFarben[0]}"/><path d="M34 -258Q37 -250 34 -242Q31 -250 34 -258Z" fill="${fleckFarben[1]}"/>` });
@@ -668,28 +669,28 @@ function giraffe(T) {
   /* ---- Rumpf und Hals ---- */
   const halsZone = [[200, -340], [240, -380], [300, -470], [350, -530], [400, -470], [330, -300], [300, -230], [260, -330]];
   const fl = fleckSVG(flecken(rumpf, { umriss: rumpf, r0: 20 }));
-  s += teil(rumpf, creme, {
-    ov: [licht, lichtX], vol: [16, 4, 0.4], rim: 10, rimD: G(rumpf.slice(0, 22), false),
+  const nahHinten = [[66, -282, 18, 24], [100, -228, 28, 26], [98, -185, 15, 16], [85, -140, 9.5, 12], [79, -124, 8, 14, 2], [80, -108, 7.2, 7.8], [82, -62, 6.2, 6.8], [83, -42, 6, 6.4], [84, -31, 8, 8], [88, -22.5, 6.6, 6.6], [91.5, -17, 6.6, 6.2]];
+  s += H.vol(teil(rumpf, creme, {
+    ov: [licht, lichtX], rim: 10, rimD: G(rumpf.slice(0, 22), false),
     innen: fl + (F ? `<path d="${G(halsZone)}" fill="${fHals}"/><path d="M0 -380H260L230 -190H0Z" fill="${fRumpf}"/>` : "") +
       /* Licht: Widerrist, Schulter, Kruppe; Hals: Mähnenseite hell, Kehlseite dunkel; Okklusion an den Beinansätzen */
       wf([[58, -296], [92, -304], [140, -317], [180, -338], [214, -356], [234, -368], [262, -404], [300, -454], [328, -490]], "#fff", 0.22, 4, false) +
 
       wf([[358, -470], [344, -448], [328, -418], [312, -382], [298, -342], [290, -300]], "#4a2c12", 0.32, 4, false, 16) +
       wf([[284, -300], [270, -250], [254, -218]], "#3a2410", 0.2, 6, false) +
-      kerben([[[120, -214], [116, -236], [110, -262]], [[268, -222], [272, -252], [276, -280]]], 1.6, 0.18, "#3a2410") +
+      kerben([[[268, -222], [272, -252], [276, -280]]], 1.6, 0.18, "#3a2410") + wf([[290, -300], [296, -282], [292, -262]], "#fff", 0.25, 2.5, false) +
       /* Schlagschatten des Kopfes auf den oberen Hals */
       wf([[340, -500], [354, -486], [362, -470]], "#2a1808", 0.35, 4, false, 14),
-  });
+  }) + bein(nahHinten, 0, 0, 1), [9, 4, 0.4]);
   /* ---- Stehmähne: aufrechter Kamm auf der Halsoberkante, gebändert, gezackt, flach auslaufend am Widerrist ---- */
   const kamm = [[214, -362], [234, -374], [262, -410], [300, -460], [328, -496], [346, -516]];
-  const hoehe = [2, 7, 11.5, 12.5, 12, 9];
+  const hoehe = [1.5, 5, 7, 7.5, 7, 5];
   const nAch = (i) => { const a = kamm[Math.max(0, i - 1)], b = kamm[Math.min(kamm.length - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy); return [dy / l, -dx / l]; };
   const aussen = kamm.map((p, i) => { const n = nAch(i); return [p[0] + n[0] * hoehe[i], p[1] + n[1] * hoehe[i]]; });
   const maehne = aussen.concat(kamm.slice().reverse().map((p) => [p[0] + 0.5, p[1] + 1.5]));
   const mWurzel = kamm.map((p) => [p[0], p[1] + 1]);
   s += teil(maehne, T.lg("mae", [[0, "#6a3c1c"], [1, "#9a6438"]], 0, 0, 0.6, 0.6), {
-    fell: F ? [H.fellMuster("m", -138, [["#2e1608", 2, 0.45, 0.8], ["#c0905c", 1, 0.4, 0.6]], { tile: 6, n: 24, len: 5, streu: 0.25 })] : [],
-    oben: H.straehnen(aussen.map((p, i) => { const n = nAch(i); return [p[0] - n[0] * 2.5, p[1] - n[1] * 2.5]; }), F ? 45 : 0, 5, (x, y) => -140 + (x - 280) * 0.02, [["#2e1608", 2, 0.5, 0.9], ["#8a5a32", 2, 0.45, 0.85]], { streu: 22, welle: 0.15, szene: 1 }) });
+    oben: H.straehnen(kamm.map((p) => [p[0] + 1, p[1] + 1.5]), F ? 160 : 30, (t) => 3 + Math.sin(Math.min(1, t * 1.3) * Math.PI) * 10, (x, y) => -138 + (x - 280) * 0.02, [["#3a1c0a", 3, 0.6, 0.9], ["#9a6a3c", 2, 0.55, 0.85], ["#c89a68", 1, 0.5, 0.7]], { streu: 12, welle: 0.12, szene: 1, dick: 1 }) });
   /* ---- Kopf: Kopfachse 24° nach unten; Ramsnase, stumpfes Maul mit überhängender Oberlippe, Kinn, Kaumuskel, Kehlgang ---- */
   const wa = 24 * Math.PI / 180, P0 = [350, -520];
   const K = (u, v) => [P0[0] + u * Math.cos(wa) - v * Math.sin(wa), P0[1] + u * Math.sin(wa) + v * Math.cos(wa)];
@@ -717,7 +718,7 @@ function giraffe(T) {
   });
   /* Auge: groß, vorstehend, fast schwarz, waagrechte Pupille, lange Wimpern oben, kurze unten */
   const [ax, ay] = K(29, -3.2);
-  k += H.auge(ax, ay, 3.2, { iris: "#3a2010", iris2: "#120804", offen: 0.8, pupille: "quer", wimpern: 16, wl: 1.7, lid: "#160d07", lidHaut: "#3c2614", winkel: 14, hoehleA: 0.22, feucht: "#a07a68", wimpernFarbe: "#1a120b" });
+  k += H.auge(ax, ay, 4.4, { iris: "#3a2010", iris2: "#120804", offen: 0.8, pupille: "quer", wimpern: 16, wl: 1.7, lid: "#160d07", lidHaut: "#3c2614", winkel: 14, hoehleA: 0.22, feucht: "#a07a68", wimpernFarbe: "#1a120b" });
   if (F) k += L([0.25, 0.4, 0.55, 0.7, 0.85].map((t, i) => { const x = ax - 3.6 + t * 7.6, y = ay + 2.4 - Math.sin(t * Math.PI) * 0.6; return [[x, y], [x + 0.6, y + 1.3 + (i % 2) * 0.4]]; }), "#2a1d12", 0.18, 0.7);
   /* Ossikone: nach hinten gekippt, leicht verjüngt, oben ein Knauf mit strahlenförmigem Haarbüschel, mit Kopffell überzogen */
   const oss = (u, fern) => {
@@ -726,7 +727,7 @@ function giraffe(T) {
       [tp[0] + Math.cos(a) * 2.6, tp[1] + Math.sin(a) * 2.6], [tp[0] - nx * 3.2, tp[1] - ny * 3.2], [b[0] + Math.cos(a) * h * 0.55 - nx * 2.7, b[1] + Math.sin(a) * h * 0.55 - ny * 2.7], [b[0] - nx * 3.4, b[1] - ny * 3.4]];
     let o = teil(pts, fern ? "#a88c68" : T.lg("ossf", [[0, "#ead9b8"], [1, "#b48d62"]], 0, 0, 1, 0), { fell: [fKopf], vol: [1.2, 4, 0.4] });
     const wurzeln = []; for (let i = 0; i <= 8; i++) { const q = i / 8 * Math.PI * 1.2 - Math.PI * 0.1; wurzeln.push([tp[0] + Math.cos(a + q - Math.PI / 2) * 2.4, tp[1] + Math.sin(a + q - Math.PI / 2) * 2.4]); }
-    o += H.straehnen(wurzeln, 18, 3.6, (x, y) => Math.atan2(y - tp[1] + Math.sin(a) * 1.2, x - tp[0] + Math.cos(a) * 1.2) * 180 / Math.PI, [[fern ? "#120b06" : "#1c130c", 3, 0.5, 0.95], ["#4e3a2a", 1, 0.45, 0.85]], { streu: 18, welle: 0.25, szene: 0.4 });
+    o += H.straehnen(wurzeln, 18, 3.6, (x, y) => Math.atan2(y - tp[1] + Math.sin(a) * 1.2, x - tp[0] + Math.cos(a) * 1.2) * 180 / Math.PI, [[fern ? "#2a1c12" : "#3a2818", 2, 0.45, 0.85], ["#6e5440", 2, 0.4, 0.8]], { streu: 22, welle: 0.25, szene: 0.4 });
     return o;
   };
   /* Ohr: lanzettlich (3 : 1), spitz, seitlich nach hinten, 15° unter der Waagrechten; innen Creme mit Haarbüscheln */

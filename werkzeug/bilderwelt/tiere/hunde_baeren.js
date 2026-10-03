@@ -748,7 +748,7 @@ function braunbaer(T) {
   const hbN = [[16, -38], [17.6, -28], [19.2, -20], [18.8, -13], [17.4, -7.2], [16.6, -3.4], [18.4, 0, 1], [49.6, 0, 1], [52.4, -2.4], [51.6, -5.8], [46.4, -7.6], [40.4, -9], [37, -12.4],
     [36.6, -19], [38.6, -27], [42, -34], [44, -40], [30, -40]];
   const versetzt = (p, dx) => p.map((q) => [q[0] + dx, q[1], q[2]]);
-  const vbF = versetzt(vbN, -15), hbF = versetzt(hbN, 13);
+  const vbF = versetzt(vbN, -15), hbF = versetzt(hbN.slice(0, -2).concat([[44, -47], [30, -47]]), 13);   // Oberkante in den Rumpf
 
   const fell = hoehenVerlauf(T, "fell", -114, 0, [[-114, "#6a4c2e"], [-102, "#583c22"], [-86, "#4a301b"], [-66, "#412915"], [-46, "#382212"], [-24, "#301d10"], [0, "#24150b"]]);
   const fellF = hoehenVerlauf(T, "fellF", -114, 0, [[-60, "#463020"], [-30, "#3a2818"], [0, "#28180e"]]);
@@ -776,7 +776,9 @@ function braunbaer(T) {
   n += `<rect x="0" y="-120" width="180" height="40" fill="${hoehenVerlauf(T, "spitzen", -114, -86, [[-114, "#e4c89c", 0.42], [-102, "#e4c89c", 0.16], [-86, "#e4c89c", 0]])}"/>`;
   /* Volumen: Schulterblatt (helle Oberkante, Schatten hinten), Oberschenkel als Kugel (Licht oben vorn), Rippenkorb */
   n += fleck(T, "!", 128, -94, 12, 10, "#e4c89c", 0.2) + fleck(T, "!", 108, -76, 6, 18, "#140a04", 0.2, 10) + fleck(T, "!", 30, -80, 14, 12, "#e4c89c", 0.15) + fleck(T, "!", 58, -60, 6, 14, "#140a04", 0.2, -15);
-  n += bueschel(T, rumpf, 230, wuchs, 8.4, 0.36, ["#d8b688", 0.32], ["#140a04", 0.26], { streu: 18 });
+  /* Runde 3: dichte, zottige Grundstruktur als nahtlose Büschel-Kachel, darüber Büschel in örtlicher Wuchsrichtung */
+  n += fellMuster(T, "bR", 13.3, 44, 5.4, 0.34, ["#d8b688", 0.26], ["#140a04", 0.26], 140, [0, -120, 180, -30]);
+  n += bueschel(T, rumpf, 150, wuchs, 8.4, 0.36, ["#d8b688", 0.32], ["#140a04", 0.26], { streu: 18 });
   n += haare(T, [[60, -100], [100, -106], [126, -116], [150, -106], [130, -98], [100, -94], [60, -92]], 80, wuchs, 6, [["#f0dab4", 1, 0.18, 0.6]], 14, 0.25);
   n += haare(T, rumpf, 70, wuchs, 6, [["#1a0e06", 1, 0.2, 0.5]], 14, 0.25);
   s += teil(T, "brumpf", rumpf, fell, n,
@@ -789,10 +791,10 @@ function braunbaer(T) {
   s += fellKante(T, [[13, -90], [11.6, -87.4]], 16, -2.4, -0.6, "#5a3e24", 0.22, 0.75);
 
   /* ---- nahe Läufe: über dem Rumpf, oben weich (Schlagschatten des Bauchbehangs) ---- */
-  let h = bueschel(T, hbN, 60, (x, y) => (y < -10 ? 100 : 95), 5, 0.42, ["#a0805a", 0.35], ["#0a0603", 0.3]) + haare(T, hbN, 50, 96, 3.6, lauf, 10) + okk(-36, -22, "H");
+  let h = fellMuster(T, "bB", 9.1, 30, 4.2, 0.3, ["#a0805a", 0.26], ["#0a0603", 0.26], 96, [10, -50, 56, 0]) + bueschel(T, hbN, 40, (x, y) => (y < -10 ? 100 : 95), 5, 0.42, ["#a0805a", 0.35], ["#0a0603", 0.3]) + haare(T, hbN, 50, 96, 3.6, lauf, 10) + okk(-36, -22, "H");
   s += teil(T, "bhbN", hbN, fell, h, fellKante(T, [[17.6, -28], [19.2, -20], [18.8, -13]], 14, -1.6, 1.2, "#3a2414", 0.18, 0.6) + fellKante(T, [[18.4, 0], [49.6, 0]], 40, 0.4, 0.9, "#3a2414", 0.16, 0.6) +
     kralleB(T, 48.4, -2.4, 4, 3.4, 1.8, "#4a3e30", "#2a221a", 0.6, T.fein !== false), { weich: 4, ueber: licht(T, "b", -112, -38), einblenden: [-38, -28] });
-  let v = bueschel(T, vbN, 60, 95, 5, 0.42, ["#a0805a", 0.35], ["#0a0603", 0.3]) + haare(T, vbN, 50, 95, 3.6, lauf, 10) + okk(-40, -26, "V");
+  let v = fellMuster(T, "bB", 9.1, 30, 4.2, 0.3, ["#a0805a", 0.26], ["#0a0603", 0.26], 96, [112, -52, 150, 0]) + bueschel(T, vbN, 40, 95, 5, 0.42, ["#a0805a", 0.35], ["#0a0603", 0.3]) + haare(T, vbN, 50, 95, 3.6, lauf, 10) + okk(-40, -26, "V");
   s += teil(T, "bvbN", vbN, fell, v, fellKante(T, [[116.4, -40], [118.6, -30], [121, -20]], 28, -2.6, 2, "#3a2414", 0.18, 0.65) +
     kralleB(T, 141.6, -4.2, 4, 6.6, 2.6, "#d2c3a6", "#6a5a46", 0.62, T.fein !== false) +
     (T.fein !== false ? `<path d="M139.4 -8.6q-1.2 3.6 -.4 8M134.4 -9q-1 3.6 -.4 8.4M129.4 -8.6q-1 3.4 -.4 8" stroke="#0d0805" stroke-width=".5" stroke-opacity=".5" fill="none"/>` : ""),
