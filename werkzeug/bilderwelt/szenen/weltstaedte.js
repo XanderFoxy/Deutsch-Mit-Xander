@@ -79,7 +79,7 @@ function plakat(key, himmel, bild, name, band) {
   let g = `<rect x="${x - 1.6}" y="${y - 1.6}" width="${PW + 3.2}" height="${PH + 3.2}" rx=".8" fill="${ALU}"/>`;
   g += `<rect x="${x - 1.6}" y="${y + PH + 1.6}" width="${PW + 3.2}" height=".8" fill="#000" opacity=".12"/>`;
   g += `<g transform="translate(${x} ${y})"><rect width="${PW}" height="${BH}" fill="${himmel}"/>${bild}`;
-  g += `<rect y="${BH}" width="${PW}" height="${PH - BH}" fill="${band}"/><text x="${PW / 2}" y="${BH + 3.6}" font-size="3" text-anchor="middle" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-weight="bold" letter-spacing=".4">${name}</text>`;
+  g += `<rect y="${BH}" width="${PW}" height="${PH - BH}" fill="${band}"/><text x="${PW / 2}" y="${BH + 3.6}" font-size="${name.length > 9 ? 2.2 : 3}" text-anchor="middle" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-weight="bold" letter-spacing="${name.length > 9 ? 0.1 : 0.4}">${name}</text>`;
   g += `<rect width="${PW}" height="${BH}" fill="${S.lg("leucht", [[0, "#fff", 0.18], [0.5, "#fff", 0], [1, "#fff", 0.06]], 0, 0, 1, 1)}"/></g>`;
   return { x: x + PW / 2, y: y + PH + 1.6, kunst: abs(x + PW / 2, y + PH + 1.6, g) };
 }
@@ -279,7 +279,7 @@ const H = (n, stops, a, b, c, d) => S.lg(n, stops, a, b, c, d);
   const X0 = 106, X1 = 214, Y0 = 32, Y1 = 84, cx = (X0 + X1) / 2;
   let k = `<rect x="${X0 - 2}" y="${Y0 - 2}" width="${X1 - X0 + 4}" height="${Y1 - Y0 + 4}" rx="1" fill="#3a3e42"/><rect x="${X0}" y="${Y0}" width="${X1 - X0}" height="${Y1 - Y0}" fill="#14181e"/>`;
   k += `<rect x="${X0}" y="${Y0}" width="${X1 - X0}" height="6" fill="#1e2a3a"/>`;
-  k += `<text x="${X0 + 3}" y="${Y0 + 4.4}" font-size="3.6" fill="#ffd23a" font-family="Arial,Helvetica,sans-serif" font-weight="bold">✈ Abflug</text><text x="${X1 - 3}" y="${Y0 + 4.4}" font-size="3" text-anchor="end" fill="#c9d4de" font-family="Arial,Helvetica,sans-serif">Departures</text>`;
+  k += `<path d="M${X0 + 3} ${Y0 + 3.2} l2.2 -.5 l1.6 -2 l.8 0 l-.8 2 l1.6 -.4 l.6 -.8 l.6 0 l-.4 1.2 l.4 1.2 l-.6 0 l-.6 -.8 l-1.6 -.4 l.8 2 l-.8 0 l-1.6 -2 Z" fill="#ffd23a"/><text x="${X0 + 10}" y="${Y0 + 4.4}" font-size="3.6" fill="#ffd23a" font-family="Arial,Helvetica,sans-serif" font-weight="bold">Abflug</text><text x="${X1 - 3}" y="${Y0 + 4.4}" font-size="3" text-anchor="end" fill="#c9d4de" font-family="Arial,Helvetica,sans-serif">Departures</text>`;
   const sp = [X0 + 3, X0 + 15, X0 + 32, X0 + 72, X0 + 84];
   ["Zeit", "Flug", "Ziel", "Gate", "Bemerkung"].forEach((t, i) => { k += `<text x="${sp[i]}" y="${Y0 + 9}" font-size="2.2" fill="#8a96a2" font-family="Arial,Helvetica,sans-serif">${t}</text>`; });
   const fluege = [["09:05", "DA 101", "PARIS", "A15", "Boarding", "#7cff8a"], ["09:20", "DA 207", "LONDON", "A22", "Gate offen", "#7cff8a"], ["09:35", "DA 314", "PISA", "A18", "pünktlich", "#e8eef2"],
@@ -287,8 +287,8 @@ const H = (n, stops, a, b, c, d) => S.lg(n, stops, a, b, c, d);
     ["10:40", "DA 745", "SAN FRANCISCO", "Z52", "verspätet", "#ffb03a"], ["11:00", "DA 850", "RIO DE JANEIRO", "Z55", "pünktlich", "#e8eef2"], ["11:15", "DA 912", "DELHI", "Z58", "pünktlich", "#e8eef2"],
     ["11:30", "DA 960", "PEKING", "Z60", "pünktlich", "#e8eef2"], ["11:45", "DA 999", "SYDNEY", "Z62", "über Singapur", "#e8eef2"]];
   fluege.forEach((f, i) => {
-    const y = Y0 + 13 + i * 3.9;
-    if (i % 2) k += `<rect x="${X0}" y="${r(y - 2.9)}" width="${X1 - X0}" height="3.9" fill="#fff" opacity=".04"/>`;
+    const y = Y0 + 12.8 + i * 3.6;
+    if (i % 2) k += `<rect x="${X0}" y="${r(y - 2.7)}" width="${X1 - X0}" height="3.6" fill="#fff" opacity=".05"/>`;
     f.slice(0, 5).forEach((t, j) => { k += `<text x="${sp[j]}" y="${r(y)}" font-size="2.6" fill="${j === 4 ? f[5] : j === 0 ? "#ffd23a" : "#e8eef2"}" font-family="Arial,Helvetica,sans-serif"${j === 2 ? ' font-weight="bold"' : ""}>${t}</text>`; });
   });
   k += `<path d="M${X0} ${Y0} L${X0 + 40} ${Y0} L${X0 + 20} ${Y1} L${X0} ${Y1} Z" fill="#fff" opacity=".04"/>`;
