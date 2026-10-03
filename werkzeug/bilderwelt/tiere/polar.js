@@ -709,7 +709,7 @@ function walross(T) {
   const vorne = (y) => 297.4 - Math.pow((y + 104) / 15, 2) * 3.2;
   if (F) {
     let d = "";
-    for (let r = 0; r < 10; r++) for (let i = 0; i < 12; i++) {
+    for (let r = 0; r < 9; r++) for (let i = 0; i < 11; i++) {
       const y = -120.4 + (i + 0.5) / 12 * 29.6 + r * 0.25, x = vorne(y) - 1.1 - r * 1.35 + (T.rnd() - 0.5) * 0.3;
       if (inPoly(x, y, polster)) d += `M${J(x, y)}h.01`;
     }
@@ -719,7 +719,7 @@ function walross(T) {
           gebogen; vorn abgenutzt kürzer, hinten und unten länger; hornfarben mit bräunlicher Basis und Glanzkante ---- */
   {
     let dS = "", dH = "";
-    const rows = F ? 10 : 5, per = F ? 11 : 6;
+    const rows = F ? 10 : 5, per = F ? 10 : 6;
     for (let r = 0; r < rows; r++) for (let i = 0; i < per; i++) {
       const t = (i + 0.5) / per, y = -120.4 + t * 29.6 + r * (F ? 0.25 : 0.6), x = vorne(y) - 1.1 - r * (F ? 1.35 : 3.5) + (T.rnd() - 0.5) * 0.3;
       if (!inPoly(x, y, polster)) continue;

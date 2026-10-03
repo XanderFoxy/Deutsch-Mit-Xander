@@ -231,23 +231,8 @@ function kit(T, box = [-60, -320, 620, 40], grob = 0.5) {
   /* Lauf als Zylinder: Lichtkante links, Kernschatten rechts, schmaler Reflex außen (gemeinsamer Verlauf, objektbezogen) */
   H.zyl = (pts, op = 1) => `<path d="${G(pts)}" fill="${T.lg("zyl", [[0, "#fff", 0.2], [0.22, "#fff", 0.04], [0.55, "#000", 0.1], [0.84, "#000", 0.32], [1, "#fff", 0.06]], 0, 0, 1, 0)}"${op < 1 ? ` opacity="${op}"` : ""}/>`;
   /* Volumen je Körperteil (kern.js T.volumen): Rundung, Kernschatten, Reflex aus der eigenen Silhouette */
-  /* wie T.volumen (kern.js), aber das Licht wird nach der Beleuchtung leicht geglättet: das 8-Bit-Alpha des Weichzeichners
-     erzeugt sonst Höhenlinien („Holzmaserung“) auf großen Flächen */
-  const volSchon = new Set();
-  H.vol = (n, weich, inn, o = {}) => {
-    if (!F) return inn;
-    const id = T.id("v" + n);
-    if (!volSchon.has(id)) {
-      volSchon.add(id);
-      const el = 50, amb = o.umgebung != null ? o.umgebung : 0.32;
-      T.def(`<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="${weich}" result="b"/>` +
-        `<feDiffuseLighting in="b" surfaceScale="${o.tiefe || 4}" diffuseConstant="1" lighting-color="#fff" result="d"><feDistantLight azimuth="225" elevation="${el}"/></feDiffuseLighting>` +
-        `<feGaussianBlur in="d" stdDeviation="${Math.round(weich * 0.18 * 100) / 100}" result="g"/>` +
-        `<feComposite in="g" in2="SourceGraphic" operator="arithmetic" k1="${Math.round((1 - amb) / Math.sin(el * Math.PI / 180) * 1000) / 1000}" k2="0" k3="${amb}" k4="0" result="m"/>` +
-        `<feComposite in="m" in2="SourceGraphic" operator="in"/></filter>`);
-    }
-    return `<g filter="url(#${id})">${inn}</g>`;
-  };
+  /* Volumen je Körperteil: kern.js T.volumen (stufenlos, Licht links oben, Kernschatten unten rechts) */
+  H.vol = (n, weich, inn, o = {}) => (F ? `<g filter="${T.volumen(n, Object.assign({ weich }, o))}">${inn}</g>` : inn);
   /* Maske: unterhalb y1 voll, oberhalb y0 unsichtbar (weicher Übergang Bein → Rumpf) */
   H.maskeY = (n, y0, y1) => {
     const id = T.id("mk" + n);
@@ -374,7 +359,7 @@ function reh(T) {
     const SV = H.flaeche(vorn.pts), SH = H.flaeche(hint.pts), SS = H.flaeche(stange.pts);
     let g = H.teil(SV, braun, elfen(P([[1.9, -13.8]])[0], 0.8) + perlen(vorn, 0.8, 6, 0.16) + H.rim(SV, 0.5, 0.9), { rw: 0.05, randA: 0.6 }) +
       H.teil(SH, braun, elfen(P([[-5.2, -17.2]])[0], 0.7) + H.rim(SH, 0.45, 0.9), { rw: 0.05, randA: 0.6 });
-    g += H.teil(SS, braun, elfen(P([[-0.8, -20]])[0], 1.0) + rinnen(stange, 6) + perlen(stange, 2.4, 70, 0.13) + perlen(stange, 4.2, 16, 0.09) + H.rim(SS, 0.9, 0.9), { rw: 0.05, randA: 0.6 });
+    g += H.teil(SS, braun, elfen(P([[-0.8, -20]])[0], 1.0) + rinnen(stange, 6) + perlen(stange, 2.4, 50, 0.13) + perlen(stange, 4.2, 12, 0.09) + H.rim(SS, 0.9, 0.9), { rw: 0.05, randA: 0.6 });
     /* Rose: geschlossener, knotiger Ring (1,35 × Stangendurchmesser) auf dem kurzen, behaarten Rosenstock */
     if (F) {
       const [rx, ry] = P([[0, -0.4]])[0], rose = [];
@@ -437,7 +422,7 @@ function reh(T) {
   inn += H.fellKorn("r1", [[6, -82], [86, -82], [92, -56], [92, -44], [80, -38], [30, -42], [6, -48]], 174, [["kd", "#2a1004", 0.55, 3], ["kh", "#ffe0b8", 0.4, 8]], { fx: 0.8, fy: 9 }) +
     H.fellKorn("r4", [[72, -82], [101, -102], [103.4, -93], [101, -84], [99, -56], [92, -44], [80, -52]], 118, [["kd", "#2a1004", 0.5, 3], ["kh", "#ffe0b8", 0.36, 8]], { fx: 0.8, fy: 9, ein: [76, -64, 86, -70] }) +
     H.fellKorn("r5", KT([[2.5, -4.6], [21, -4.6], [21, 11.5], [6.4, 11.5]]), KW + 184, [["kd", "#2a1a10", 0.35, 3], ["kh", "#f0e0cc", 0.25, 8]], { fx: 2.6, fy: 14 });
-  inn += H.haare(rumpf, 130, wuchs, laenge, [["#3e1c0a", 1, 0.05, 0.3], ["#6e3414", 0.5, 0.055, 0.25]], { krumm: 0.06, streu: 10, nur: (x, y) => !(x > 99.5 && y < -84) && y < -39, spitze: ["#f6c896", licht, 0.045, 0.45] });
+  inn += H.haare(rumpf, 100, wuchs, laenge, [["#3e1c0a", 1, 0.05, 0.3], ["#6e3414", 0.5, 0.055, 0.25]], { krumm: 0.06, streu: 10, nur: (x, y) => !(x > 99.5 && y < -84) && y < -39, spitze: ["#f6c896", licht, 0.045, 0.45] });
   inn += H.haare(KT([[1, -3], [16, 0.6], [16.6, 7], [8, 9.6], [2, 9.4]]), 80, KW + 184, 0.42, [["#3a2a20", 1, 0.03, 0.3]], { streu: 12, spitze: ["#e8d4c0", 0.55, 0.028, 0.4], szene: 0 });
   /* Licht und Anatomie (über dem Volumen, weich): helle Rückenkante, Kernschatten-Band 3,5 cm über der Bauchlinie, Reflexlicht,
      Schulterblatt (Hinterkante dunkler), Buggelenk, Ellbogenwulst, Rippenbogen mit Querschatten, Flankenmulde, Hüfthöcker,
@@ -455,7 +440,7 @@ function reh(T) {
     wl([KT([[10.6, -1.0], [14.0, 0.1], [17.2, 1.4]])], "#ffe6cc", 0.35, 0.45, 0.15) + fl(...K(12.2, 5.6), 3.8, 2.0, KW, DK, 0.18) + wl([KT([[8.8, 2.3], [9.8, 3.0]])], "#120a06", 0.32, 0.5, 0.1);
   sch += H.wf([K(6.2, 10.7), K(3.5, 11), [98.6, -80.2], [97.6, -76], [94, -79], [94.4, -88]], DK, 0.26, 1.4) + fl(...K(-0.4, -1.4), 2.4, 1.6, KW, DK, 0.35) + fl(...K(4.6, -3.0), 2.2, 1.0, KW, DK, 0.26);
   const koerper = H.teil(A, fell, inn, { rand: false }) +
-    H.saum(ruecken.concat(kehle.slice(0, 6)), 70, wuchs, (x, y) => laenge(x, y) * 0.7, [["#6e3a1a", 1, 0.04, 0.5], ["#d8a070", 0.5, 0.035, 0.4]], { offen: true, szene: 0 }) +
+    H.saum(ruecken.concat(kehle.slice(0, 6)), 60, wuchs, (x, y) => laenge(x, y) * 0.7, [["#6e3a1a", 1, 0.04, 0.5], ["#d8a070", 0.5, 0.035, 0.4]], { offen: true, szene: 0 }) +
     H.saum(bauch.concat(keule), 46, wuchs, (x, y) => laenge(x, y) * 0.7, [["#5a3a28", 1, 0.04, 0.5], ["#c8a07a", 0.5, 0.035, 0.4]], { offen: true, szene: 0 }) +
     /* Pinsel des Bocks: kleines dunkles Haarbüschel unter dem Bauch */
     H.saum([[50.6, -42.2], [51.4, -42.0]], F ? 16 : 3, 96, 1.4, [["#2a1a10", 1, 0.06, 0.8]], { offen: true, streu: 26, krumm: 0.25, szene: 0.5 });
