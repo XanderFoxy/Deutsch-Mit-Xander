@@ -959,7 +959,8 @@
         const liste = [], sig = document.body.className, W = K.W / K.dpr;
         let hausKaesten = null;
         /* sichtbare Häuser als Kästen (Bildschirm-px, ein Zehntel am Rand abgezogen: dort ist das Bild meist leer) */
-        const hausKastenListe = () => SZ.sichtbare.filter((e) => e.o.art === "haus").map((e) => {
+        /* FASSUNG 874 — (SZ.sichtbare fehlt, solange der Rahmen noch nie gemalt hat – Zeichen können vorher kommen) */
+        const hausKastenListe = () => (SZ.sichtbare || []).filter((e) => e.o.art === "haus").map((e) => {
           const m = e.meta, l = e.X - m.ax * e.k, o2 = e.Y - m.ay * e.k, w = m.w * e.k, h = m.h * e.k;
           return [(l + w * 0.1) / K.dpr, (o2 + h * 0.1) / K.dpr, (l + w * 0.9) / K.dpr, (o2 + h * 0.9) / K.dpr];
         });

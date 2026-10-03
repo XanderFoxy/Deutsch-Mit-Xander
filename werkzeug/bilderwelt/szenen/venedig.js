@@ -82,7 +82,6 @@ const wl = (d) => r(HOR + 5 * F / d);
 
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("spiegel")}" x="-10%" y="-20%" width="120%" height="140%"><feGaussianBlur stdDeviation=".9 .35"/></filter>`);
-S.def(`<filter id="${S.id("dunst")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".35"/></filter>`);
 /* Stoffe */
 const ISTRIA = S.lg("istria", [[0, "#fbf6ec"], [1, "#e2d8c6"]]);
 const ISTRIA_S = S.lg("istrias", [[0, "#cfc4b2"], [1, "#b2a693"]]);

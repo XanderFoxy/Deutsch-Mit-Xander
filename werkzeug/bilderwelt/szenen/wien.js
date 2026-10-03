@@ -116,8 +116,8 @@ const dunst = (name, a, [hr, hg, hb]) => {
   S.def(`<filter id="${S.id(name)}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="${m(0).join(" ")} 0 ${r(a * hr * 1000) / 1000} ${m(1).join(" ")} 0 ${r(a * hg * 1000) / 1000} ${m(2).join(" ")} 0 ${r(a * hb * 1000) / 1000} 0 0 0 1 0"/></filter>`);
   return `filter="url(#${S.id(name)})"`;
 };
-const FERN = dunst("fern", 0.3, [0.8, 0.86, 0.93]);
 const MITTEL = dunst("mittel", 0.13, [0.82, 0.88, 0.95]);
+const FERN3 = dunst("fern3", 0.55, [0.78, 0.85, 0.95]);   /* Wienerwald, 10 km */
 const SAND = S.lg("sand", [[0, "#ddcfae"], [0.5, "#cbb995"], [1, "#a89676"]], 0, 0, 1, 0);
 const SAND_S = S.lg("sands", [[0, "#9a8c72"], [1, "#776b58"]], 0, 0, 1, 0);
 const KUPFER = S.lg("kupfer", [[0, "#9bd0b4"], [0.5, "#73b396"], [1, "#4a8670"]], 0, 0, 1, 0);
@@ -187,7 +187,7 @@ S.hinten(`<rect width="400" height="${HOR + 12}" fill="${S.lg("himmel", [[0, "#4
   k += `<line x1="204" y1="105.6" x2="204" y2="90" stroke="#7d8c8e" stroke-width=".55"/><path d="M202.6 105.6 L204 95 L205.4 105.6" stroke="#7d8c8e" stroke-width=".25" fill="none"/><rect x="203.6" y="90" width=".8" height=".6" fill="#c0504a"/>`;
   k += `<rect x="229.4" y="105.8" width="4" height="2.6" fill="#a8b4b0"/><path d="M230.6 105.8 L231.4 103 L232.2 105.8 Z" fill="#a8b4b0"/>`;
   S.teil({ id: "wienerwald", de: "der Wienerwald", syl: "WIE-ner-wald", it: "il Bosco Viennese", itSyl: "BO-sco vien-NE-se", en: "Vienna Woods", x: 0, y: 0,
-    kunst: VED(`<g ${FERN}>${k}</g>`, 200, 1), tipp: "Im Norden liegen die Hügel des Wienerwalds. Auf dem Kahlenberg steht ein hoher Sendemast." });
+    kunst: VED(`<g ${FERN3}>${k}</g>`, 200, 1), tipp: "Im Norden liegen die Hügel des Wienerwalds. Auf dem Kahlenberg steht ein hoher Sendemast." });
 }
 
 /* =====================================================================
@@ -197,7 +197,7 @@ S.hinten(`<rect width="400" height="${HOR + 12}" fill="${S.lg("himmel", [[0, "#4
 /* Schönbrunn liegt 5 km weiter: eigener, ferner Plan, stark gedunstet
    (blaugrau), etwas gehoben; den Fuß verdecken die ferne Baumkante und das
    Dächerband (Altstadt). */
-const FERN2 = dunst("fern2", 0.42, [0.74, 0.82, 0.93]);
+const FERN2 = dunst("fern2", 0.36, [0.74, 0.82, 0.93]);
 const SB = (svg) => VED(`<g ${FERN2}><g transform="translate(0 -5)">${svg}</g></g>`, 92, 1, 4);
 {
   /* der Schönbrunner Berg als langer, flacher Rücken: Wald an den Seiten,
@@ -205,10 +205,10 @@ const SB = (svg) => VED(`<g ${FERN2}><g transform="translate(0 -5)">${svg}</g></
      unten das Parterre mit dem Neptunbrunnen */
   let k = `<path d="M14 142 L14 129 Q36 120 62 116.4 Q90 113.2 118 115.6 Q144 118.4 162 128 L164 142 Z" fill="${S.lg("huegel", [[0, "#6a8858"], [1, "#4b6a3f"]])}"/>`;
   /* Wald an den Flanken als dichtes Kronenmuster */
-  S.def(`<pattern id="${S.id("wald")}" patternUnits="userSpaceOnUse" width="4.4" height="3.2"><rect width="4.4" height="3.2" fill="#3e5c34"/><circle cx="1" cy="1" r="1.25" fill="#4d6e40"/><circle cx="3.2" cy="2.4" r="1.3" fill="#47683b"/><circle cx=".6" cy=".6" r=".5" fill="#6a8a56"/><circle cx="2.8" cy="2" r=".5" fill="#65864f"/></pattern>`);
-  k += `<path d="M15 141 L15 129.4 Q36 120.6 62 117 Q72 116 80 115.6 L76 139 Z M100 115.6 Q120 116 140 119 Q156 122 161 128.4 L163 141 L104 139 Z" fill="url(#${S.id("wald")})"/>`;
-  k += `<path d="M84 115 L96 115 L106 139 L74 139 Z" fill="#a9c28e"/>`;
-  k += `<path d="M90 116 L86.6 119.4 L93.4 122.6 L84.6 126.4 L95.6 130.2 L82.6 134.4 L97.6 138.6" stroke="#e9e2c8" stroke-width=".45" fill="none"/>`;
+  S.def(`<pattern id="${S.id("waldmuster")}" patternUnits="userSpaceOnUse" width="4.4" height="3.2"><rect width="4.4" height="3.2" fill="#3e5c34"/><circle cx="1" cy="1" r="1.25" fill="#4d6e40"/><circle cx="3.2" cy="2.4" r="1.3" fill="#47683b"/><circle cx=".6" cy=".6" r=".5" fill="#6a8a56"/><circle cx="2.8" cy="2" r=".5" fill="#65864f"/></pattern>`);
+  k += `<path d="M15 141 L15 129.4 Q36 120.6 62 117 Q72 116 80 115.6 L76 139 Z M100 115.6 Q120 116 140 119 Q156 122 161 128.4 L163 141 L104 139 Z" fill="url(#${S.id("waldmuster")})"/>`;
+  k += `<path d="M86 115.4 L94 115.4 L101 139 L79 139 Z" fill="#8fae72"/>`;
+  k += `<path d="M90 116 L87.4 119.4 L92.6 122.6 L85.8 126.4 L94.4 130.2 L83.6 134.4 L96.6 138.6" stroke="#d9d3b8" stroke-width=".4" fill="none"/>`;
   k += `<rect x="56" y="139" width="72" height="3" fill="#b9cc98"/><path d="M60 140.5 h64" stroke="#e2dcc0" stroke-width=".35" stroke-dasharray="3 1.4"/>`;
   k += `<path d="M84 139.6 Q90 136.4 96 139.6 Z" fill="#e8e3d6"/><ellipse cx="90" cy="139.8" rx="8" ry=".8" fill="#9fc3cc"/>`;
   /* Gloriette: Mitte als verglaster Triumphbogen, Arkadenflügel mit Doppelsäulen,
@@ -532,7 +532,8 @@ const SB = (svg) => VED(`<g ${FERN2}><g transform="translate(0 -5)">${svg}</g></
   k += reihe(206, 218, 121.5, 123.5, 143.6, true) + reihe(326, 346, 122.5, 125, 143.6, true);
   /* vordere Reihe */
   k += reihe(0, 48, 127, 131, 143.6, false) + reihe(132, 152, 129, 132, 143.6, false);
-  k += reihe(152, 207, 135.4, 136.6, 143.6, false);
+  /* vor dem Michaelertrakt der offene Michaelerplatz */
+  k += `<rect x="150" y="141.2" width="60" height="2.6" fill="#d9d1c3"/>`;
   k += reihe(207, 217, 126, 128, 143.6, false) + feuermauer(217, 127, 143.6, true);
   k += reihe(217, 330, 130.6, 132.4, 143.6, false);
   k += reihe(330, 343, 127.2, 129.6, 143.6, false) + feuermauer(330, 128, 143.6, false);
@@ -940,7 +941,7 @@ const PODEST = yp(3.6);
     const pkt = [[-27.6, 0.8], [-24, -2.6], [-16, -4.4], [-9, -4.8], [-2, -5.4], [5, -5], [11, -4.4], [15.6, -2.8], [17.6, -0.4], [16, 2], [10, 3], [3, 3.6], [-4, 3.2], [-11, 3.6], [-18, 3.2], [-25.4, 2.8]];
     const rand = "M" + pkt.map(([x, yy], i) => { const n = pkt[(i + 1) % pkt.length]; return `${x} ${yy} Q${r((x + n[0]) / 2 + (i % 2 ? 0.5 : -0.5))} ${r((yy + n[1]) / 2 + (i % 2 ? -0.6 : 0.6))}`; }).join(" ") + ` ${pkt[0][0]} ${pkt[0][1]} Z`;
     g += `<path d="${rand}" fill="#9a5a1e" transform="translate(.4 1)" opacity=".5"/>`;
-    g += `<path d="${rand}" fill="${S.rg("panade", [[0, "#c98436"], [0.6, "#b06a26"], [1, "#8a4a16"]], 0.42, 0.38, 0.72)}"/>`;
+    g += `<path d="${rand}" fill="${S.rg("panade", [[0, "#e2a650"], [0.6, "#c98a3c"], [1, "#9a5a1e"]], 0.42, 0.38, 0.72)}"/>`;
     /* die Panier wirft große, wellige Blasen: drei, vier Kämme mit Licht von
        links oben, dazwischen dunklere Täler */
     const blase = (cx, cy, rx, ry, rot, n) => {
@@ -948,11 +949,11 @@ const PODEST = yp(3.6);
       for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, f = 0.82 + rnd() * 0.3, x = Math.cos(a) * rx * f, yy = Math.sin(a) * ry * f, c = Math.cos(rot), s = Math.sin(rot); p.push([cx + x * c - yy * s, cy + x * s + yy * c]); }
       return "M" + p.map((q, i) => { const nq = p[(i + 1) % n]; return `${r((q[0] + nq[0]) / 2)} ${r((q[1] + nq[1]) / 2)} Q${r(nq[0])} ${r(nq[1])}`; }).join(" ") + ` ${r((p[0][0] + p[1][0]) / 2)} ${r((p[0][1] + p[1][1]) / 2)} Z`;
     };
-    for (const [cx, cy, rx, ry, rot] of [[-16, -1.2, 8, 2.8, -0.12], [-3, -2.2, 8.6, 2.6, 0.08], [9, -1.4, 6.6, 2.4, -0.1], [-7, 1.6, 7, 1.7, 0.05]]) {
+    const BL = S.rg("blase", [[0, "#f8cf7c"], [0.55, "#e2a854"], [1, "#d0913f", 0]], 0.38, 0.32, 0.7);
+    for (const [cx, cy, rx, ry, rot] of [[-19, -0.6, 6, 2.4, -0.2], [-10, -2.4, 6.4, 2, 0.1], [-1, -2.6, 6, 2.2, -0.05], [8.6, -1.6, 5.6, 2.2, 0.15], [-13, 1.8, 6, 1.4, 0.05], [-2, 1.2, 6.8, 1.6, -0.08], [9, 1.4, 4.6, 1.3, 0.1]]) {
       const d = blase(cx, cy, rx, ry, rot, 11);
-      g += `<path d="${d}" fill="#6e3a10" opacity=".45" transform="translate(.5 .8)"/>`;
-      g += `<path d="${d}" fill="${S.rg("blase", [[0, "#ffe2a0"], [0.45, "#ecb460"], [1, "#c27c30"]], 0.35, 0.3, 0.75)}"/>`;
-      g += `<ellipse cx="${r(cx - rx * 0.3)}" cy="${r(cy - ry * 0.35)}" rx="${r(rx * 0.32)}" ry="${r(ry * 0.22)}" fill="#fff4cc" opacity=".55"/>`;
+      g += `<path d="${d}" fill="#8a4c18" opacity=".3" transform="translate(.4 .6)"/><path d="${d}" fill="${BL}"/>`;
+      g += `<ellipse cx="${r(cx - rx * 0.25)}" cy="${r(cy - ry * 0.3)}" rx="${r(rx * 0.22)}" ry="${r(ry * 0.16)}" fill="#fff2c4" opacity=".5"/>`;
     }
     for (let i = 0; i < 16; i++) g += `<circle cx="${r(-21 + rnd() * 36)}" cy="${r(-4 + rnd() * 6.8)}" r="${r(0.18 + rnd() * 0.2)}" fill="#7a3e10" opacity=".5"/>`;
     g += `<path d="M22 4 L32 -1.4 M21.6 5.2 L23 4.4" stroke="#b9c0c6" stroke-width=".9" stroke-linecap="round"/>`;
@@ -984,15 +985,15 @@ const PODEST = yp(3.6);
    ===================================================================== */
 {
   let v = "";
-  const platane = (bx, sx) => {
-    const fy = ys(20), kb = r(fy - 6.2 * F / 20);
+  const platane = (bx, sx, kh = 6.2) => {
+    const fy = ys(20), kb = r(fy - kh * F / 20);
     /* Platanenrinde: grau-grün mit hellen, abblätternden Flecken */
     let g = `<path d="M${r(bx - 2.6)} ${fy} Q${r(bx - 2.2)} ${r(fy - 20)} ${r(bx - 1.9)} ${kb} L${r(bx + 1.9)} ${kb} Q${r(bx + 2.2)} ${r(fy - 20)} ${r(bx + 2.6)} ${fy} Z" fill="${S.lg("rinde", [[0, "#b5ad94"], [0.5, "#8f8a74"], [1, "#5e5a4c"]], 0, 0, 1, 0)}"/>`;
     for (let i = 0; i < 14; i++) g += `<ellipse cx="${r(bx - 1.6 + rnd() * 3.2)}" cy="${r(kb + 2 + rnd() * (fy - kb - 4))}" rx="${r(0.4 + rnd() * 0.7)}" ry="${r(0.8 + rnd() * 1.4)}" fill="${["#d8d2b6", "#9aa184", "#c9c3a4"][i % 3]}" opacity=".85"/>`;
     g += `<path d="M${bx} ${r(kb + 2)} q${sx * 6} -14 ${sx * 16} -26 M${bx} ${r(kb + 4)} q${-sx * 4} -18 ${-sx * 2} -40 M${r(bx + sx * 6)} ${r(kb - 10)} q${sx * 8} -8 ${sx * 18} -8" stroke="#6e6a58" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
     return g;
   };
-  v += platane(5, 1) + platane(397, -1);
+  v += platane(5, 1) + platane(397, -1, 13);
   /* Kronen: dunkle Grundmasse (Schatten im Inneren), darauf die Laubbüschel */
   const masse = (cx, cy, rx, ry, n) => {
     const p = [];
