@@ -225,7 +225,7 @@ S.hinten(`<ellipse cx="-30" cy="20" rx="170" ry="110" fill="${S.rg("sonne", [[0,
   S.teil({ id: "golden_gate_bridge", de: "die Golden Gate Bridge", syl: "GOL-den GATE BRIDGE", it: "il ponte del Golden Gate", itSyl: "PON-te del GOL-den GATE", en: "Golden Gate Bridge",
     x: 0, y: 0, kunst: k + `<rect class="bw-flaeche" x="${XA}" y="${r(TS - 2)}" width="${XB - XA}" height="${r(WS - TS + 2)}" fill="rgba(255,255,255,0.001)"/>`,
     tipp: "Die Golden Gate Bridge (1937) ist 2,7 Kilometer lang. Ihre Farbe heißt „International Orange“.",
-    zoom: { x: XS - 12, y: r(TS - 5), w: 30, h: 20 },
+    zoom: { x: XS - 9, y: r(TS - 4), w: 30, h: 20 },
     unter: [
       { id: "turm", de: "der Turm", syl: "TURM", it: "la torre", itSyl: "TOR-re", en: "tower", x: XS, y: WS, kunst: flaeche(-1.6, -(WS - TS) - 1.4, 3.2, WS - TS + 1.4, 0.3),
         tipp: "Die Türme sind 227 Meter hoch — höher als der Kölner Dom (157 m)." },
@@ -285,7 +285,7 @@ S.hinten(`<ellipse cx="-30" cy="20" rx="170" ry="110" fill="${S.rg("sonne", [[0,
   S.teil({ id: "alcatraz", de: "die Insel Alcatraz", syl: "IN-sel AL-ca-traz", it: "l'isola di Alcatraz", itSyl: "I-so-la di AL-ca-traz", en: "Alcatraz Island", x: X, y: Y,
     kunst: `<g ${fern(1)} transform="scale(${r(s * 1000) / 1000})"><ellipse cx="0" cy="2" rx="200" ry="6" fill="#3b5b6e" opacity=".3"/>${k}</g>`,
     tipp: "Auf Alcatraz war bis 1963 ein berühmtes Gefängnis. Heute fahren Besucher mit dem Schiff hin.",
-    zoom: { x: r(X - 25), y: r(Y - 16), w: 48, h: 32 },
+    zoom: { x: r(X - 20), y: r(Y - 19), w: 39, h: 26 },
     unter: [
       { id: "leuchtturm", de: "der Leuchtturm", syl: "LEUCHT-turm", it: "il faro", itSyl: "FA-ro", en: "lighthouse", x: L(-76, -44)[0], y: L(-76, -44)[1], kunst: flaeche(-1.4, -9, 2.8, 9.2, 0.3),
         tipp: "Hier stand 1854 der erste Leuchtturm der Westküste; der heutige Turm ist von 1909." },
@@ -560,8 +560,8 @@ const SL = 1 / Math.tan(SONNE.el * Math.PI / 180), SE_ = Math.sin(SONNE.az * Mat
    Schatten), Ostseite (nur Dächer und schmale Fassaden), Nordseite der
    Lombard Street (Fassaden nach Süden, in der Sonne)
    ===================================================================== */
-const GARTEN = kappY(kappX([PN(2.2, 10.6, 0), PN(2.2, 60, zH(60)), PN(26, 60, zH(60) - 5), PN(26, 10.6, -1)], -6, 236), 262);
-const BEET = kappX(kappY([PO(-14, 9, zL(9)), PO(-14, 132, zL(132)), PO(3, 132, zL(132)), PO(3, 9, zL(9))], 262), 205, 402);
+const GARTEN = kappY(kappX([PN(2.2, 10.6, 0), PN(2.2, 60, zH(60)), PN(26, 60, zH(60) - 5), PN(26, 10.6, -1)], -6, 236), 260.5);
+const BEET = kappX(kappY([PO(-14, 9, zL(9)), PO(-14, 132, zL(132)), PO(3, 132, zL(132)), PO(3, 9, zL(9))], 260.5), 205, 400.5);
 const HAUS = {};
 {
   let k = "";
@@ -631,7 +631,7 @@ const HAUS = {};
       k += strich(PN(-16.5, e0 + 0.4, zf + 0.95), PN(-16.1, e0 + 0.7, zf + 0.95), WT, r(Math.max(0.08, 4 / d0)));
     }
     k += vr([PN(-16, e0 + 0.8, ez1), PN(-16, e1 - 0.8, ez1), PN(-16, e1 - 0.8, ez1 + 0.4), PN(-16, e0 + 0.8, ez1 + 0.4)], f.a);
-    if (d0 < 45 && !HAUS.erker) HAUS.erker = { p: PN(-16.5, e0 + 0.4, ez0), q: PN(-16.5, e0 + 0.4, ez1), g: PN(-16.95, d0 + 5.5, zb1), g2: PN(-16.95, d0 + 5.5, zb1 + 2.4), d: d0 };
+    if (d0 >= 70 && d0 < 80) HAUS.erker = { p: PN(-16.5, e0 + 0.4, ez0), q: PN(-16.5, e0 + 0.4, ez1), g: PN(-16.95, d0 + 5.5, zb1), g2: PN(-16.95, d0 + 5.5, zb1 + 2.4), d: d0 };
   }
   const DECK = [], vd = (pts, f, ex = "") => { const q = rahmen(pts); if (!ex) DECK.push(q); return vl(q, f, ex); };
   /* Nordseite der Lombard Street (Ostblick): Fassaden nach Süden, sonnig */
@@ -654,7 +654,7 @@ const HAUS = {};
   const er = HAUS.erker;
   S.teil({ id: "holzhaus", de: "das Holzhaus", syl: "HOLZ-haus", it: "la casa di legno", itSyl: "CA-sa di LE-gno", en: "wooden house", x: 0, y: 0, kunst: k,
     tipp: "Die bunten Holzhäuser aus der Zeit um 1900 nennt man in San Francisco „Painted Ladies“ — bemalte Damen.",
-    zoom: { x: 0, y: r(er.q[1] - 8), w: r(er.g[1] - er.q[1] + 14) * 1.5, h: r(er.g[1] - er.q[1] + 14) },
+    zoom: { x: r(er.p[0] - (er.g[1] - er.q[1] + 14) * 0.75), y: r(er.q[1] - 8), w: r((er.g[1] - er.q[1] + 14) * 1.5), h: r(er.g[1] - er.q[1] + 14) },
     unter: [
       { id: "erker", de: "der Erker", syl: "ER-ker", it: "il bovindo", itSyl: "bo-VIN-do", en: "bay window", x: er.p[0], y: er.p[1], kunst: flaeche(-4, -(er.p[1] - er.q[1]), 10, er.p[1] - er.q[1], 0.5),
         tipp: "Durch die schrägen Erker kommt mehr Licht ins Haus — typisch für San Francisco." },
@@ -682,7 +682,7 @@ const HAUS = {};
   k += vl(BEET, S.lg("beet", [[0, "#3d5a2a"], [1, "#5a7a40"]]));
   /* Treppen-Gehwege an beiden Seiten */
   for (const [l0, l1] of [[-15, -14], [3, 4.4]]) {
-    k += vl(kappX(kappY([PO(l0, 12, zL(12)), PO(l0, 132, zL(132)), PO(l1, 132, zL(132)), PO(l1, 12, zL(12))], 262), 205, 402), "#cfc8bb");
+    k += vl(kappX(kappY([PO(l0, 12, zL(12)), PO(l0, 132, zL(132)), PO(l1, 132, zL(132)), PO(l1, 12, zL(12))], 260.5), 205, 400.5), "#cfc8bb");
     let st = ""; for (let d = 14; d < 130; d += d < 40 ? 0.9 : 1.8) { const a = PO(l0, d, zL(d)), b = PO(l1, d, zL(d)); if (a[1] < 262 && b[0] < 402) st += `M${pr(a)} L${pr(b)} `; }
     k += `<path d="${st}" stroke="#a49d90" stroke-width=".2" fill="none"/>`;
   }
@@ -692,9 +692,9 @@ const HAUS = {};
   const L = [], R = [];
   pl.forEach((p, i) => { const a = pl[Math.max(0, i - 1)], b = pl[Math.min(pl.length - 1, i + 1)], dd = b[0] - a[0], dl = b[1] - a[1], l = Math.hypot(dd, dl) || 1, nd = -dl / l * 2.3, nl = dd / l * 2.3; L.push([p[0] + nd, p[1] + nl]); R.push([p[0] - nd, p[1] - nl]); });
   const proj = (q) => PO(q[1], q[0], zL(q[0]));
-  const weg = kappX(kappY([...L.map(proj), ...R.reverse().map(proj)], 262), 205, 402);
+  const weg = kappX(kappY([...L.map(proj), ...R.reverse().map(proj)], 260.5), 205, 400.5);
   /* Hecken als Saum (Buchs), dann Ziegel */
-  const saum = (pts) => kappY(pts.map(proj), 262).filter((p) => p[0] > 206);
+  const saum = (pts) => kappY(pts.map(proj), 260.5).filter((p) => p[0] > 206 && p[0] < 400 && p[1] < 260);
   for (const sd of [L, R.slice().reverse()]) { const p = saum(sd); if (p.length > 1) k += `<path d="M${p.map(pr).join(" L")}" stroke="#24391d" stroke-width="2.2" fill="none" stroke-linejoin="round"/><path d="M${p.map(pr).join(" L")}" stroke="#55784a" stroke-width="1" fill="none" stroke-linejoin="round" transform="translate(0 -.5)"/>`; }
   k += vl(weg, S.lg("brick", [[0, "#a64a35"], [1, "#c25c42"]]));
   k += vl(weg, `url(#${S.id("ziegel")})`);
@@ -844,7 +844,7 @@ const HAUS = {};
   const tb = P(1.5, HB + 0.18, 0.42);
   S.teil({ id: "cable_car", de: "die Cable Car", syl: "CA-ble CAR", it: "il cable car", itSyl: "CA-ble CAR", en: "cable car", x: ox, y: oy, kunst: k,
     tipp: "Die Cable Car fährt seit 1873. Ein Stahlseil unter der Straße zieht sie mit 15 km/h den Berg hinauf.",
-    zoom: { x: r(ox - 18), y: r(oy - 41), w: 66, h: 44 },
+    zoom: { x: r(ox - 22), y: r(oy - 54), w: 87, h: 58 },
     unter: [
       { id: "glocke", de: "die Glocke", syl: "GLO-cke", it: "la campana", itSyl: "cam-PA-na", en: "bell", x: ox + gl[0], y: oy + gl[1], kunst: flaeche(-2.2, -3.4, 4.4, 3.8, 0.4),
         tipp: "Mit der Glocke warnt der Fahrer (der Gripman). Jedes Jahr gibt es einen Wettbewerb im Glockenläuten." },

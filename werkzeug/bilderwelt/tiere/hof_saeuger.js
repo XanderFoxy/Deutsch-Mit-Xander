@@ -452,32 +452,32 @@ function bildeBein(tpl, cx, xs, ymap) {
   const m = (pts) => pts.map((p) => [cx + p[0] * xs, Y(p[1])].concat(p[2] ? [1] : []));
   return { h: m(tpl.h), v: m(tpl.v) };
 }
-/* Paarhuferklaue, Runde 3: zwei deutlich getrennte Klauen (Kritik: „einteiliger Pferdehuf“). Die innere Klaue liegt
-   15–20 % versetzt davor (etwas dunkler), dazwischen ein dunkles V vom Kronsaum bis zur Spitze; Zehe gerundet,
-   Dorsalwand ~48°, Ballen weich ohne Kreis, Wachstumsrillen, Glanz auf der Wand, Haare über dem Kronsaum. */
+/* Paarhuferklaue, Runde 3: zwei getrennte Klauen (Kritik: „einteiliger Pferdehuf“, „Pantoffel mit Ballen-Klotz“).
+   Seitenansicht: Keil mit Dorsalwand ~48°, Zehe leicht gerundet, Kronsaum fällt flach nach hinten zum weichen Ballen,
+   der Ballen ist Teil derselben Form (hellere, weiche Haut), getrennt nur durch eine weiche Furche. Die innere Klaue
+   liegt etwas versetzt davor, dazwischen ein dunkles V vom Kronsaum bis zur Spitze. Hornrillen, Glanz auf der Wand. */
 function klaue3(T, F, xh, L, h, farbe, haar = "#e8e4dc", ballen = "#a89894") {
   const w = h / Math.tan(48 * Math.PI / 180), xt = xh + L, xo = xt - w;
-  const kl = (dx, dy, hh, f, id) => {
-    const pts = [[xh + dx + L * 0.12, -hh * 0.42], [xh + dx + L * 0.3, -hh * 0.86], [xo + dx - L * 0.04, -hh], [xo + dx + L * 0.08, -hh * 0.9],
-      [xt + dx - L * 0.06, -hh * 0.18], [xt + dx - L * 0.02, -hh * 0.04], [xt + dx - L * 0.1, 0, 1], [xh + dx + L * 0.16, 0, 1]];
-    let innen = F.kante(xo + dx, -hh * 0.82, xt + dx - L * 0.14, -hh * 0.22, hh * 0.12, 0.55);
+  const kl = (dx, hh, f, id) => {
+    const X = (u) => xh + dx + u * L;
+    const pts = [[X(0.1), 0, 1], [X(0.02), -hh * 0.14], [X(0.01), -hh * 0.34], [X(0.08), -hh * 0.5], [X(0.24), -hh * 0.64], [X(0.42), -hh * 0.82],
+      [xo + dx - L * 0.03, -hh], [xo + dx + L * 0.05, -hh * 0.93], [xt + dx - L * 0.05, -hh * 0.16], [xt + dx - L * 0.01, -hh * 0.05], [xt + dx - L * 0.07, 0, 1]];
+    const g = T.lg("k3" + id + farbe.slice(1) + ballen.slice(1), [[0, ballen], [0.26, ballen], [0.4, f], [1, "#141210"]], 0, 0, 1, 0.4);
+    let innen = F.kante(xo + dx, -hh * 0.8, xt + dx - L * 0.14, -hh * 0.22, hh * 0.12, 0.55) + F.rinne(X(0.3), -hh * 0.66, X(0.36), -hh * 0.04, L * 0.035, 0.6) +
+      F.licht(X(0.12), -hh * 0.36, L * 0.07, hh * 0.14, 0.4) + F.schatten(X(0.5), -hh * 0.12, L * 0.4, hh * 0.18, 0.5);
     if (T.fein) {
       let d = "";
-      for (let i = 1; i < 6; i++) { const t = i / 6; d += `M${z(xh + dx + L * (0.3 + 0.55 * t), 0.1)} ${z(-hh * (0.88 + 0.1 * t), 0.1)}l${z(w * 0.55, 0.1)} ${z(hh * 0.8, 0.1)}`; }
-      innen += `<path d="${d}" stroke="#000" stroke-opacity=".12" stroke-width="${z(h * 0.025, 0.01)}" fill="none"/>`;
-      innen += strich([[xh + dx + L * 0.3, -hh * 0.6], [xo + dx, -hh * 0.62], [xt + dx - L * 0.2, -hh * 0.42]], "#fff", h * 0.03, 0.12, 0.05);
+      for (let i = 1; i < 5; i++) { const t = i / 5; d += `M${z(X(0.36) + (xo + dx - X(0.36)) * t, 0.1)} ${z(-hh * (0.74 + 0.24 * t), 0.1)}l${z(w * 0.6, 0.1)} ${z(hh * 0.72, 0.1)}`; }
+      innen += `<path d="${d}" stroke="#000" stroke-opacity=".14" stroke-width="${z(h * 0.025, 0.01)}" fill="none"/>`;
     }
-    return stueck(T, pts, T.lg("k3" + id + farbe.slice(1), [[0, f], [1, "#141210"]], 0, 0, 1, 0.5), innen + F.schatten(xh + dx + L * 0.5, -hh * 0.2, L * 0.4, hh * 0.25, 0.5), { licht: 0, q: 0.05 });
+    return stueck(T, pts, g, innen, { licht: 0, q: 0.05 });
   };
-  /* innere Klaue (davor, versetzt), dann Spalt-Schatten, dann äußere Klaue */
-  let s = kl(L * 0.17, 0, h * 0.94, "#2a2624", "i");
-  s += form([[xo + L * 0.12, -h * 0.95], [xt + L * 0.06, -h * 0.05], [xt + L * 0.02, 0, 1], [xo + L * 0.02, -h * 0.9]], "#050403", ` opacity=".85"`, 0.05);
-  s += kl(0, 0, h, farbe, "a");
-  /* Ballen: weich, heller, geht ohne Kreis in die Klaue über */
-  s += form([[xh - 0.2, -h * 0.5], [xh + L * 0.28, -h * 0.6], [xh + L * 0.34, -h * 0.1], [xh + L * 0.12, 0, 1], [xh - 0.4, -h * 0.16]], ballen, ` opacity=".85"`, 0.05) +
-    F.licht(xh + L * 0.1, -h * 0.42, L * 0.08, h * 0.12, 0.45);
+  /* innere Klaue (davor, versetzt, dunkler), Spalt-Schatten, äußere Klaue */
+  let s = kl(L * 0.13, h * 0.95, "#2a2624", "i");
+  s += form([[xo + L * 0.1, -h * 0.97], [xt + L * 0.07, -h * 0.06], [xt + L * 0.03, 0, 1], [xo + L * 0.02, -h * 0.92]], "#050403", ` opacity=".85"`, 0.05);
+  s += kl(0, h, farbe, "a");
   /* Kronsaum: Haare fallen über den Rand */
-  s += saum2(T, [[xh, -h * 0.5], [xh + L * 0.3, -h * 0.9], [xo + L * 0.05, -h * 1.02]], 12, 100, h * 0.28, haar, h * 0.015, 0.85, { ab: 0.7, streuung: 30 });
+  s += saum2(T, [[xh + L * 0.04, -h * 0.5], [xh + L * 0.24, -h * 0.66], [xh + L * 0.42, -h * 0.84], [xo, -h * 1.02]], 12, 100, h * 0.26, haar, h * 0.015, 0.85, { ab: 0.7, streuung: 30 });
   return s;
 }
 /* Tasthaare: einzelne Haare, jedes aus eigenem Punkt entlang einer Linie (Oberlippe, Kinn), leicht gebogen */
@@ -860,7 +860,7 @@ function kuh(T) {
       F.licht(cx - 2.6, -30, 1.4, 10, 0.4) + F.rinne(cx - 1.4, -36, cx - 1.4, -20, 0.6, 0.4), { licht: 1.2, dunkel: 0.45, hell: 0.4 });
   };
   /* Klauen: zwei Klauen je Fuß mit Spalt; Ballen schiefergrau; Afterklauen hinten am Fesselgelenk */
-  const klK = (cx, f) => klaue3(T, F, cx + 0.6, 14.6, 7.4, f, "#ece8e0", "#6e6560") + afterklaue2(T, cx - 4.6, -12, 1.5, "#3a3634", "#ece8e0");
+  const klK = (cx, f) => klaue3(T, F, cx + 0.6, 14.6, 7.4, f, "#ece8e0", "#6e6560") + afterklaue2(T, cx - 3.2, -12.8, 1.3, "#54504c", "#ece8e0");
   s += vol(T, "bein", 3, fernBein(false, 14), { dunkel: 0.3 }) + klK(K_HCX + 14, "#3e3a37");
   s += vol(T, "bein", 3, fernBein(true, -12), { dunkel: 0.3 }) + klK(K_VCX - 12, "#3e3a37");
   /* ---------- Rumpf mit Hals, Euter und nahen Beinen ---------- */
@@ -1723,7 +1723,7 @@ module.exports = [
   { id: "kalb", de: "das Kalb", syl: "KALB", it: "il vitello", itSyl: "vi-TEL-lo", en: "calf",
     gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 1.29, hoehe: 0.9, zeichne: kalb },
   { id: "kuh", de: "die Kuh", syl: "KUH", it: "la vacca", itSyl: "VAC-ca", en: "cow",
-    gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 2.39, hoehe: 1.52, zeichne: kuh },
+    gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 2.4, hoehe: 1.53, zeichne: kuh },
   { id: "pferd", de: "das Pferd", syl: "PFERD", it: "il cavallo", itSyl: "ca-VAL-lo", en: "horse",
     gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 2.56, hoehe: 2.34, zeichne: pferd },
 ];
