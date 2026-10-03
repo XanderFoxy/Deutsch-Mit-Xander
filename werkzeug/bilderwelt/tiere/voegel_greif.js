@@ -569,7 +569,7 @@ function greif(T, P) {
   let ri = P.rumpfUnter ? P.rumpfUnter(T, brustU) : "";
   ri += federFeld(T, brustU, { typen: brust, abst: 4.8, L: 7, W: 3.7, zeile: 0.55, winkel: brW, gr: (x, y) => 0.72 + (y + 72) * 0.011, streu: 14 });
   if (P.brustMuster) ri += P.brustMuster(T, brustU, brW);
-  if (F) ri += striche(T, brustU, 64, brW, 2.4, P.brustStriche || [["#1a0e06", 1, 0.05, 0.45], ["#8a6444", 0.7, 0.045, 0.35]], { streu: 12, krumm: 0.12 });
+  if (F) ri += striche(T, brustU, 44, brW, 2.4, P.brustStriche || [["#1a0e06", 1, 0.05, 0.45], ["#8a6444", 0.7, 0.045, 0.35]], { streu: 12, krumm: 0.12 });
   ri += weich(T, G([[-4, -72], [6, -73], [10.4, -70], [4, -66.4], [-4, -66]]), "#000", 0.35, 1.2);   // Schlagschatten des Kopfes
   ri += weich(T, G([[-2, -35], [6, -34.6], [10.6, -38.6], [4, -31.6], [-3, -31.4]]), "#e8c898", 0.14, 0.9);   // Bodenreflex
   s += vg(T, "rumpf", 6.5, rot(teil(T, "rumpf", G(rumpf), P.rumpfFarbe, ri)));
@@ -580,7 +580,7 @@ function greif(T, P) {
   const hoW = (x, y) => 90 - (x - 3.5) * 1.6 + (y + 30) * 0.4;
   let hi = federFeld(T, hoseN, { typen: hose, abst: 4.8, L: 9, W: 3.3, zeile: 0.46, winkel: hoW, gr: (x, y) => 0.75 + (y + 42) * 0.012, streu: 20 });
   if (P.hoseMuster) hi += P.hoseMuster(T, hoseN, hoW);
-  if (F) hi += striche(T, hoseN, 54, hoW, 2.8, P.hoseStriche || [["#2a1606", 1, 0.05, 0.4], ["#c49a68", 0.8, 0.045, 0.35]], { streu: 18, krumm: 0.25 });
+  if (F) hi += striche(T, hoseN, 40, hoW, 2.8, P.hoseStriche || [["#2a1606", 1, 0.05, 0.4], ["#c49a68", 0.8, 0.045, 0.35]], { streu: 18, krumm: 0.25 });
   hi += weich(T, G([[-4, -43], [11.4, -43], [11, -37], [3, -35.4], [-4, -37]]), "#140a04", 0.5, 1.1);
   let hs = teil(T, "hose", G(hoseN), P.hoseFarbe, hi);
   hs += federReihe(T, lauf ? [[-1.6, -25.8], [1.4, -24.6], [4.4, -24.4], [7.6, -25.2]] : [[0.4, -17.4], [2.4, -16.9], [4.4, -16.8], [6.4, -17.6]], 7, { typen: hose, L: 3.4, W: 1.6, winkel: (t) => 98 - t * 26, streu: 20, reihenfolge: (t) => t });
@@ -616,7 +616,7 @@ function greif(T, P) {
   /* Flanke: Brustseitenfedern decken die Flügelunterkante, Schatten des Flügels */
   let fk = weich(T, G([[-12, -25], [-5, -31.6], [1.2, -38], [5, -44], [7.6, -50], [9.4, -55], [9.6, -50], [7, -42.4], [2.4, -35.6], [-5, -28.6], [-11.4, -23]]), "#0a0502", 0.3, 0.8);
   const flU = [...E.slice(0, 6).map(([x, y]) => [x - 0.6, y + 0.2]), ...E.slice(0, 6).reverse().map(([x, y]) => [x + 2.2, y + 1.2])];
-  fk += federFeld(T, flU, { typen: P.flanke ? mk("fl", P.flanke, "lanz", { weich: 1 }) : brust, abst: 3.5, L: 5.8, W: 2.7, zeile: 0.6, winkel: (x, y) => 100 + (-38 - y) * -0.9, ueber: 0, streu: 18 });
+  fk += federFeld(T, flU, { typen: P.flanke ? mk("fl", P.flanke, "lanz", { weich: 1 }) : brust, sz: P.flanke ? 1 : 0, abst: 3.5, L: 5.8, W: 2.7, zeile: 0.6, winkel: (x, y) => 100 + (-38 - y) * -0.9, ueber: 0, streu: 18 });
   s += vg(T, "flanke", 1.2, rot(fk));
 
   /* ---- Kopf ---- */
@@ -631,14 +631,16 @@ function greif(T, P) {
       const kf = P.kopfStriche || [["#1a1008", 1, 0.05, 0.5], ["#a07c50", 0.6, 0.045, 0.4]];
       ki += striche(T, [[3.2, -84], [9, -82], [9.8, -79], [4.4, -79.4], [3, -81.6]], 24, (x, y) => 186 - (x - 6) * 2, 1.2, kf, { streu: 10 });   // Stirn
       ki += striche(T, [[2.4, -77.4], [9.6, -77.6], [9.6, -74], [5, -72.6], [2, -74.6]], 34, (x, y) => 168 + (y + 76) * 6, 1.1, P.wangeStriche || kf, { streu: 12 });   // Wange
-      ki += striche(T, [[-6, -82], [3, -84], [2, -76], [-4, -72], [-9, -74]], 40, (x, y) => 172 - (y + 78) * 3, 1.4, kf, { streu: 10 });   // Hinterkopf
+      ki += striche(T, [[-6, -82], [3, -84], [2, -76], [-4, -72], [-9, -74]], 26, (x, y) => 172 - (y + 78) * 3, 1.4, kf, { streu: 10 });   // Hinterkopf
       ki += striche(T, [[8.8, -79.6], [10.6, -79.4], [10.4, -76.6], [8.6, -77]], 30, (x, y) => 192 + (y + 78) * 8, 0.8, [[P.borsten || "#0a0604", 1, 0.045, 0.7]], { streu: 16 });   // Zügelborsten
     }
     ki += weich(T, G([[4, -79.6], [9.6, -79.8], [9.2, -78.2], [5, -78.4]]), "#000", 0.5 * (P.wulst != null ? P.wulst : 1), 0.35);
     ki += weich(T, G([[3, -84.2], [-2, -85], [-6, -83], [-2, -82.4]]), "#fff2d0", 0.25, 0.8);   // Licht auf dem Scheitel
     ki += weich(T, G([[1.6, -72.4], [8.4, -74], [9.8, -72], [4, -70]]), "#000", 0.35, 0.8);   // Kinn im Schatten
     kp = teil(T, "kopf", G(kopf), verlauf(T, "kG", -7, -82, 7.5, -76, P.kG), ki);
-    kp += federReihe(T, [[-12.4, -64.6], [-9.2, -65.6], [-5.6, -67.6], [-2, -69], [1.6, -70.2]], 9, { typen: nacken, L: 4.6, W: 1.5, winkel: (t) => 112 - t * 25, streu: 14, reihenfolge: (t) => -t, gr: (t) => 1 - t * 0.3 });
+    kp += federReihe(T, P.saumKurz ? [[-12.4, -64.6], [-9.2, -65.6], [-5.6, -67.6]] : [[-12.4, -64.6], [-9.2, -65.6], [-5.6, -67.6], [-2, -69], [1.6, -70.2]], P.saumKurz ? 5 : 9, { typen: nacken, L: 4.6, W: 1.5, winkel: (t) => 112 - t * 25, streu: 14, reihenfolge: (t) => -t, gr: (t) => 1 - t * 0.3 });
+    /* Kehlsaum: Federspitzen fallen über die Brust – keine harte „Kapuzenkante“ */
+    kp += federReihe(T, [[1.6, -70.4], [4.6, -71.2], [7.4, -72.4], [9.2, -74]], 6, { typen: P.kehle ? mk("k", P.kehle, "lanz", { weich: 1 }) : brust, L: 3.6, W: 1.7, winkel: (t) => 108 - t * 30, streu: 14, reihenfolge: (t) => t });
     Q = 20;
     kp += greifAuge(T, 7, -78.9, 1.26 * (P.augeK || 1), Object.assign({ pupille: 0.46, lid: "#1e1610", hoehle: 0.5, offen: 0.9 }, P.auge));
     if (P.wulst !== 0) {
@@ -755,7 +757,7 @@ const SEEADLER = {
   sitz: (T) => vg(T, "holz", 2, stumpf(T, "holz", { x0: -12.6, x1: 15.4, oben: -16, holz: "#b8b0a2", dunkel: "#5a5248" })), sitzBox: [[-14, 0], [17.4, 0]], fuesse: [-11, -2, 8, 14],
   brust: [["#3a2416", "#4c3222"], ["#2e1e12", "#40291a"]], hose: [["#3c2618", "#523624"], ["#30200f", "#44301e"]], hoseFarbe: "#3a2618",
   usd: "#ece8e0", usdF: [["#e8e4dc", "#ffffff"], ["#dedad2", "#f8f6f0"]],
-  nacken: [["#f0eee8", "#ffffff"], ["#e4e2dc", "#fbfaf6"], ["#d8d6ce", "#f4f2ec"]],
+  nacken: [["#f0eee8", "#ffffff"], ["#e4e2dc", "#fbfaf6"], ["#d8d6ce", "#f4f2ec"]], kehle: [["#e8e6e0", "#ffffff"]],
   decke: [["#3e2a1a", "#5e4430"], ["#36241a", "#523c2a"]], mittel: [["#432e1e", "#6a4e36"], ["#3a281a", "#5e4430"]], schulter: [["#36241a", "#4e3828"]],
   rumpfFarbe: "#3a2416", deckFarbe: "#3e2a1a", lauf: true,
   quH: [[0, "#4a3c30"], [1, "#120c08"]], quA: [[0, "#54443a"], [1, "#160f0b"]],
@@ -781,6 +783,7 @@ const seeadler = (T) => greif(T, SEEADLER);
    braun, nackter gelber Augenring; Schnabel kurz, stark gekrümmt, blaugrau mit dunkler Spitze und „Falkenzahn“
    (Hornzahn am Oberschnabel), rundes Nasenloch mit Knochenzapfen; Wachshaut gelb. Lauf nackt, gelb, Zehen lang. */
 const fBinde = `<path d="M.36-.6h.11v1.2h-.11zM.66-.6h.09v1.2h-.09z" fill="#1a1e24" opacity=".5"/><path d="M.15 0L.95 0" stroke="#1a1e24" stroke-width=".06" opacity=".5"/>`;
+function fBinde2() { return `<path d="M.3-.6q.06.6 0 1.2h.13q.06-.6 0-1.2zM.62-.6q.06.6 0 1.2h.12q.06-.6 0-1.2z" fill="#22242a" opacity=".8"/>`; }
 const binden = (dicht, farbe, abst, lang, dick, op, sz = 0.35) => (T, poly, w) => muster(T, poly, w, { abst, lang, dick, farbe, op, bogen: 0.3, dichte: dicht, sz });
 const FALKE = {
   k: 0.5, kopfK: 1.1,
@@ -788,10 +791,11 @@ const FALKE = {
   brust: [["#efe6d6", "#fbf6ee"], ["#e4d8c4", "#f4ecde"]], hose: [["#e6dcca", "#f6f0e4"], ["#dccfba", "#efe6d6"]], hoseFarbe: "#e2d6c2", usd: "#ebe2d2",
   rumpfFarbe: "#e6dac6", brustStriche: [["#9a8a72", 1, 0.05, 0.3], ["#ffffff", 0.8, 0.045, 0.55]], hoseStriche: [["#9a8a72", 1, 0.05, 0.3], ["#ffffff", 0.8, 0.045, 0.5]],
   brustMuster: (T, poly, w) => binden((x, y) => (y > -55 ? 1 : 0), "#22242a", 1.9, 2.4, 0.55, 0.85, 0.5)(T, poly, w) +
-    muster(T, poly, w, { art: "tropfen", abst: 2.4, lang: 0.9, dick: 0.55, farbe: "#2a2a30", op: 0.75, dichte: (x, y) => (y <= -55 && y > -66 ? 0.8 : 0), sz: 0.4 }),
+    muster(T, poly, w, { art: "tropfen", abst: 2.2, lang: 0.6, dick: 0.5, farbe: "#2a2a30", op: 0.7, dichte: (x, y) => (y <= -55 && y > -66 ? 0.8 : 0), sz: 0.4 }),
   hoseMuster: binden(null, "#22242a", 1.7, 2.2, 0.5, 0.85, 0.5),
   usdMuster: (T, poly) => binden(null, "#2a2c32", 1.8, 2, 0.4, 0.7)(T, poly, 110),
   nacken: [["#2a2e34", "#40464e"], ["#22262c", "#383e46"]],
+  kehle: [["#efe6d6", "#fbf6ee"]], saumKurz: 1, flanke: [["#e6dac6", "#f4ecde", fBinde2()]],
   decke: [["#4e5864", "#8a94a0", fBinde], ["#444e5a", "#7a8490", fBinde]], mittel: [["#56606c", "#949ea8", fBinde], ["#4a5460", "#848e9a", fBinde]], schulter: [["#3e4650", "#6e7884", fBinde]],
   deckFarbe: "#4a525c", schaft: "#1e2228",
   quH: [[0, "#4a4e56"], [1, "#15171b"]], quA: [[0, "#5e6672"], [1, "#22262c"]], armBinden: [5, "#16181c", 0.4, 0.55, 0.25, 0.92], schirmBinden: [4, "#16181c", 0.4, 0.6, 0.25, 0.9], handSaum: ["#c8c4bc", 0.4, 0.15], remSchaft: "#2a2e34",
@@ -799,10 +803,9 @@ const FALKE = {
   lauf: true, zehen: { hell: "#ffe468", mittel: "#f0bc2a", dunkel: "#9a6a08", schilde: 7 }, krallenK: 0.9,
   kG: [[0, "#3c424a"], [0.5, "#2a2e34"], [1, "#16181c"]], kopfStriche: [["#0e1014", 1, 0.05, 0.5], ["#7a828c", 0.6, 0.045, 0.4]], borsten: "#0a0a0c",
   /* weißer Wangenfleck und Kehle, darüber der breite schwarze Bartstreif */
-  kopfMuster: (T) => weich(T, G([[0.6, -76.6], [4.6, -77.2], [9.6, -76.8], [10.6, -73.8], [9.8, -70.4], [4, -69.2], [-0.6, -70.6], [-1.2, -73.6]]), "#f4eee2", 0.97, 0.3, true) +
-    weich(T, G([[4.8, -79], [9, -78.6], [9.4, -75.6], [9, -72.6], [7.8, -70], [6, -70.2], [5.6, -73.4], [4.6, -76.4]]), "#16181c", 0.97, 0.3, true) +
-    weich(T, G([[-2, -79], [3.4, -80], [4.4, -77], [1.4, -76.4], [-1.8, -75]]), "#16181c", 0.9, 0.4, true) +
-    (T.fein ? striche(T, [[0.6, -76.2], [4.4, -76.6], [4.6, -71], [0, -71]], 30, 120, 0.9, [["#ffffff", 1, 0.05, 0.6], ["#9a948a", 0.6, 0.045, 0.35]], { streu: 16 }) : ""),
+  kopfMuster: (T) => weich(T, G([[0.2, -74.4], [4, -75], [5.2, -72.4], [4.4, -69.6], [0, -69.8], [-1.2, -72]]), "#f2ece0", 0.97, 0.25, true) +
+    weich(T, G([[8.8, -76.2], [10.6, -75.4], [10.6, -72], [9.6, -69.6], [7.4, -69.6], [8.4, -72.6]]), "#f2ece0", 0.97, 0.25, true) +
+    (T.fein ? striche(T, [[0.4, -74.2], [4, -74.6], [4.6, -70.4], [0, -70.4]], 22, 120, 0.8, [["#ffffff", 1, 0.05, 0.6], ["#9a948a", 0.6, 0.045, 0.35]], { streu: 16 }) : ""),
   wangeStriche: [["#0e1014", 1, 0.045, 0.4], ["#6a727c", 0.5, 0.04, 0.3]],
   wulst: 0.35, wulstFarbe: [[0, "#4a5058"], [0.45, "#2a2e34"], [1, "#101216"]], wulstStriche: [["#0a0a0c", 1, 0.05, 0.5], ["#8a929c", 0.6, 0.045, 0.4]],
   augeK: 1.15, auge: { iris: "#3a2414", iris2: "#100804", pupille: 0.52, ring: ["#f2c840", 0.36], lid: "#c89a20", hoehle: 0.3 },
@@ -827,8 +830,7 @@ const BUSSARD = {
   rumpfFarbe: "#6a4a2e",
   brustMuster: (T, poly, w) => weich(T, G([[3, -55], [9, -57], [15.6, -55], [14.6, -45], [9, -43], [3, -46]]), "#ebdfc6", 0.95, 1, true) +
     muster(T, poly, w, { art: "tropfen", abst: 2, lang: 2, dick: 0.7, farbe: "#5a3c22", op: 0.7, dichte: (x, y) => (y > -56 && y < -45 ? 0.35 : 0), sz: 0.4 }) +
-    binden((x, y) => (y >= -45 ? 0.95 : 0), "#5a3c24", 2.2, 2.8, 0.9, 0.8, 0.5)(T, poly, w) +
-    weich(T, G([[6, -70], [10.4, -71.4], [12.4, -66], [9, -64.6], [6, -66]]), "#e4d6ba", 0.8, 0.6, true),
+    binden((x, y) => (y >= -45 ? 0.95 : 0), "#5a3c24", 2.2, 2.8, 0.9, 0.8, 0.5)(T, poly, w),
   hoseMuster: binden(null, "#3e2a18", 2.4, 2.6, 0.8, 0.6, 0.4),
   nacken: [["#6a4a2e", "#9a7652", goldM(0.12, 0.5)], ["#5a3e26", "#8a6a46", goldM(0.14, 0.55)]],
   decke: [["#5a3e26", "#9a7a52"], ["#4e3622", "#8a6a46"]], mittel: [["#5e4228", "#b08a5c"], ["#54392a", "#a07e54"]], schulter: [["#4a3220", "#7a5a3a"]],

@@ -871,30 +871,32 @@ function kobra(T) {
   let h = "";
   const bauch = "#e2d3a4", haut = "#9a7444", hautD = "#86643a";
   const mS = F ? musterRauten(T, "k", 2.2, { hell: 0.12, dunkel: 0.1, rand: 0.1, rot: -10 }) : "";
-  const opt = (x) => Object.assign({ bauch, muster: mS, streif: false, glanz: 0.26, kern: 0.4, bindenOp: 0.34, bindenFarbe: "#3a2812", weich: 1.1, glanzband: 1.5, glanzOp: 0.13, glanzW: 0.3, offen: true }, x);
+  const opt = (x) => Object.assign({ bauch, muster: mS, streif: false, glanz: 0.26, kern: 0.4, bindenOp: 0.34, bindenFarbe: "#3a2812", weich: 1.1, glanzband: 1.5, glanzOp: 0.13, glanzW: 0.3, offen: true, n: 30 }, x);
   const kw = () => rund(T, "kw", { weich: 2.4, tiefe: 3.6, umgebung: 0.36 });
   /* Windungen als Ellipsenbögen am Boden (Aufsicht ≈ 20°): E1 innen, E2 außen; Spirale vom Hals nach außen */
   const E1 = [102, -33, 56, 14], E2 = [100, -30, 76, 24];
   const bog = (a0, a1, n, r0, r1, blend) => { const p = []; for (let i = 0; i <= n; i++) { const u = i / n, a = (a0 + (a1 - a0) * u) * Math.PI / 180, b = typeof blend === "function" ? blend(a0 + (a1 - a0) * u) : blend || 0, E = E1.map((v, k) => v + (E2[k] - v) * b); p.push([E[0] + E[2] * Math.cos(a), E[1] + E[3] * Math.sin(a), r0 + (r1 - r0) * u]); } return p; };
-  const P1 = bog(-55, -180, 12, 6.6, 6.8, 1), P2 = bog(-96, -180, 6, 6.2, 6.4), C = bog(180, -55, 19, 6.4, 6.6, (a) => (a < 0 ? Math.min(1, -a / 55) : 0));
-  const D = bog(180, 14, 17, 6.8, 6.8, 1).map((p, i, A) => { const u = i / (A.length - 1); p[2] = u < 0.8 ? 6.8 : 6.8 - (u - 0.8) / 0.2 * 6.2; return p; });
-  /* Windungen und Hals in EINEM Lichtfilter (keine Nähte an den Übergängen): äußere hintere (dunkler, am weitesten weg),
-     innere hintere, Hals, innere vordere (Bogen rechts hinauf in die äußere), äußere vordere + Schwanz; tiefe Berührungsfugen */
+  /* Stücke überlappen an den Stößen um ≈ 3° (gerade Schnittkanten, gleiche Farbe, ein Lichtfilter → keine Kerben) */
+  const P1 = bog(-52, -183, 40, 6.6, 6.8, 1), C = bog(183, -58, 60, 6.4, 6.6, (a) => (a < 0 ? Math.min(1, -a / 55) : 0));
+  const D = bog(183, 14, 50, 6.8, 6.8, 1).map((p, i, A) => { const u = i / (A.length - 1); p[2] = u < 0.8 ? 6.8 : 6.8 - (u - 0.8) / 0.2 * 6.2; return p; });
+  /* Hals + innerer Rückenbogen als EIN Rohr: vom Schild herab, hinten in weitem Bogen in die innere Windung (nach links);
+     Kehlseite (hell, zwei dunkle Kehlbänder) rechts, wo sich der Hals zum Betrachter dreht */
+  const HP = [[117.4, -122, 4.4], [116.6, -110, 4.5], [114, -99, 4.7], [109.6, -86, 5.1], [108.8, -72, 5.5], [109.6, -60, 5.9], [107.4, -51.6, 6.1], [101, -47.6, 6.2]].concat(bog(-100, -183, 24, 6.3, 6.4));
+  /* an den Stößen das jeweils letzte/erste Stück minimal dünner: Schnittecken verschwinden im Nachbarstück */
+  for (const A of [P1, C, D, HP]) for (const i of A === D ? [0] : A === HP ? [A.length - 1] : [0, A.length - 1]) A[i][2] *= 0.88;
+  /* Windungen und Hals in EINEM Lichtfilter: äußere hintere (dunkler, am weitesten weg), Hals mit innerem Rückenbogen,
+     innere vordere (Bogen rechts hinauf in die äußere), äußere vordere + Schwanz; tiefe Berührungsfugen */
   let w = "";
-  const tief = (op) => (Rr) => `<path d="${poly(Rr.band(-1.3, 1.3, 0.14, 0.86, 8))}" opacity="${op}" filter="${weich(T, "ti", 2)}"/>`;
-  w += schlangenRohr(T, P1, opt({ innen: tief(0.2), farbe: haut, bauch: null, bauchSeite: -1, licht: 1, lt: [0.1, 0.9], binden: [[0.25, 0.025], [0.62, 0.025]] })).svg + "";
-  w += schlangenRohr(T, P2, opt({ innen: tief(0.1), farbe: haut, bauch: null, bauchSeite: -1, licht: 1, lt: [0.05, 0.85], binden: [[0.5, 0.05]] })).svg + "";
-  /* Hals: steigt aus der Mitte (vom inneren Rückenbogen) auf, unter dem Schild am dünnsten, nach unten ≈ 30 % dicker; Kehlseite (hell, mit
-     zwei dunklen Kehlbändern) dreht sich rechts zum Betrachter; Fuß weich in die Windung ausgeblendet */
-  const hals = [[100.6, -46.4, 6.1], [101, -60, 5.9], [103.6, -72, 5.5], [109, -86, 5.1], [114, -99, 4.7], [116.6, -110, 4.5], [117.4, -122, 4.4]];
+  const tief = (op, t0 = 0.14, t1 = 0.86) => (Rr) => `<path d="${poly(Rr.band(-1.3, 1.3, t0, t1, 8))}" opacity="${op}" filter="${weich(T, "ti", 2)}"/>`;
+  w += schlangenRohr(T, P1, opt({ innen: tief(0.2), farbe: haut, bauch: null, bauchSeite: -1, licht: 1, lt: [0.1, 0.9], binden: [[0.25, 0.025], [0.62, 0.025]] })).svg;
   { const mk = T.id("hfm");
-    T.def(`<linearGradient id="${mk}g" gradientUnits="userSpaceOnUse" x1="0" y1="-39" x2="0" y2="-43"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${mk}" maskUnits="userSpaceOnUse" x="80" y="-130" width="60" height="90"><rect x="80" y="-130" width="60" height="90" fill="url(#${mk}g)"/></mask>`);
-    const kehle = (Rr) => `<path d="${poly(Rr.band(0.62, 1.2, 0.72, 0.77, 3))}${poly(Rr.band(0.62, 1.2, 0.84, 0.88, 3))}" fill="#2a1a0c" opacity=".55" filter="${weich(T, "kb", 0.5)}"/>`;
-    w += `<g mask="url(#${mk})">` + schlangenRohr(T, hals, opt({ farbe: haut, bauchSeite: 1, licht: -1, offen: false, bt: [0.45, 1], innen: kehle, binden: [[0.3, 0.03]], schilde: 0.03 })).svg + "</g>"; }
+    T.def(`<linearGradient id="${mk}g" gradientUnits="userSpaceOnUse" x1="0" y1="-124" x2="0" y2="-116"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${mk}" maskUnits="userSpaceOnUse" x="20" y="-130" width="120" height="100"><rect x="20" y="-130" width="120" height="100" fill="url(#${mk}g)"/></mask>`);
+    const kehle = (Rr) => `<path d="${poly(Rr.band(-0.62, -1.2, 0.07, 0.1, 3))}${poly(Rr.band(-0.62, -1.2, 0.14, 0.165, 3))}" fill="#2a1a0c" opacity=".55" filter="${weich(T, "kb", 0.5)}"/>` + tief(0.1, 0.62, 0.95)(Rr);
+    w += `<g mask="url(#${mk})">` + schlangenRohr(T, HP, opt({ farbe: haut, bauchSeite: -1, licht: 1, bt: [0, 0.4], lt: [0.02, 0.9], innen: kehle, binden: [[0.3, 0.02], [0.75, 0.03]], schilde: 0.012 })).svg + "</g>"; }
   w += `<path d="${mehr(T, [bog(160, 20, 10, 0, 0).map(([x, y]) => [x, y - 6.4])])}" fill="none" stroke="#000" stroke-width="2.6" stroke-opacity=".42" filter="${weich(T, "fu", 1)}"/>`;
   w += schlangenRohr(T, C, opt({ farbe: haut, bauchSeite: 1, licht: -1, lt: [0.14, 0.62], binden: [[0.2, 0.022], [0.46, 0.022], [0.8, 0.022]], schilde: 0.012 })).svg;
   w += `<path d="${mehr(T, [bog(165, 25, 10, 0, 0, 1).map(([x, y]) => [x, y - 6.6])])}" fill="none" stroke="#000" stroke-width="2.6" stroke-opacity=".42" filter="${weich(T, "fu", 1)}"/>`;
-  w += schlangenRohr(T, D, opt({ farbe: "#a07a48", bauchSeite: 1, licht: -1, lt: [0.12, 0.92], binden: [[0.24, 0.02], [0.5, 0.02], [0.74, 0.02]], schilde: 0.011 })).svg;
+  w += schlangenRohr(T, D, opt({ farbe: haut, bauchSeite: 1, licht: -1, lt: [0.12, 0.92], binden: [[0.24, 0.02], [0.5, 0.02], [0.74, 0.02]], schilde: 0.011 })).svg;
   h += `<g filter="${kw()}">${w}</g>`;
   h = `<ellipse cx="100" cy="-1" rx="80" ry="3.4" fill="${T.rg("ksohle", [[0, "#000", 0.6], [1, "#000", 0]])}" opacity=".7"/>` + h;
 

@@ -780,7 +780,7 @@ function zebra(T) {
     let p = kette(z.map((q, i) => [q[0], q[1], b[i], b[i]])).pts; if (flaeche(p) < 0) p = p.slice().reverse(); return G(p, true, 1, F);
   };
   const baender = (liste) => liste.map(([z, b]) => band(z, b)).join("");
-  const streifenSVG = (d, kante, farbe = SW) => `<path d="${d}" fill="${farbe}"${F && kante ? ` stroke="${kante}" stroke-width="1"` : ""}/>`;
+  const streifenSVG = (d, kante, farbe = SW) => `<path d="${d}" fill="${farbe}"/>`;
   const bog = (cx, cy, rx, ry, a0, a1, n) => { const p = []; for (let i = 0; i < n; i++) { const a = (a0 + (a1 - a0) * i / (n - 1)) * Math.PI / 180; p.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]); } return p; };
   /* ---- Beine: Unterarm kräftig, Vorderfußwurzel als Block, Röhrbein mit Beugesehne, Fesselkopf, Fessel 55°, Huf.
      Hinten Z: Knie vorn, Unterschenkel schräg nach hinten, Sprunggelenk mit Fersenhöcker ---- */
@@ -842,16 +842,18 @@ function zebra(T) {
   st.push([[[125, -126], [125, -104], [127, -84], [131, -67]], [2.6, 3.4, 2.8, 1.6]]);
   st.push([[[115.4, -125], [114.6, -104], [116.2, -84], [119.4, -66]], [2.6, 3.4, 2.8, 1.6]]);
   st.push([[[105.8, -125], [105, -105], [105.8, -90], [107.4, -78], [109.8, -66]], [2.6, 3.2, 2.8, 2.2, 1.4]]);
-  st.push([[[105.4, -99], [104.2, -90], [101.8, -80], [100.2, -69]], [2.6, 2.2, 1.8, 1.2]]);
+  st.push([[[105.4, -99], [104.2, -90], [101.8, -80], [100.4, -68]], [2.6, 2.4, 2.2, 1.8]]);
   /* Sattel: die hinteren Flankenstreifen biegen oben nach hinten und laufen als breite Bänder über die Keule;
      die oberen steigen zur Schwanzwurzel, die unteren biegen hinten auf den Oberschenkel nach unten */
-  st.push([[[95.4, -68], [93.8, -86], [90.6, -104], [84.2, -113], [73, -117.5], [61.8, -118.5], [55.4, -118]], [1.4, 2.4, 2.8, 2.8, 2.8, 2.4, 1.4]]);
-  st.push([[[87.4, -72], [84.2, -86], [77.8, -98], [68.2, -104], [57, -105], [49.8, -104]], [1.4, 2.6, 3.6, 4, 3.8, 2]]);
-  st.push([[[79.4, -76], [74.6, -84], [66.6, -88], [57, -89], [49.8, -88]], [1.4, 3, 3.8, 3.8, 2]]);
-  st.push([[[74.6, -73], [66.6, -74], [57.8, -74], [51.4, -72], [49, -66]], [1.2, 3, 3.6, 3.2, 1.6]]);
-  st.push([[[71.4, -66], [63.4, -63], [56.2, -60], [52.2, -56]], [1, 2.8, 3, 2]]);
-  /* Schattenstreifen mittig in den weißen Lücken der Keule */
-  const schatten = [[[89, -100], [81, -108], [69.8, -112], [58.6, -112]], [[81, -92], [73, -96], [61.8, -97], [52.2, -97]], [[73, -82], [65, -81.5], [55.4, -81], [49.8, -80]]];
+  /* Sattel: die hinteren Flankenstreifen steigen senkrecht auf und biegen erst im oberen Drittel nach hinten */
+  st.push([[[97, -67], [96, -88], [93, -106], [84, -116], [70, -120.5], [58, -122], [50, -121.5]], [1.4, 2.6, 2.9, 2.8, 2.7, 2.2, 1.6]]);
+  st.push([[[88, -71], [87, -88], [82, -101], [70, -107.5], [58, -109], [49, -108.5]], [1.5, 2.8, 3.2, 3.4, 3.2, 2]]);
+  /* Keule: fast waagerechte breite Bänder, leicht zum Schweif steigend; die unteren biegen hinten nach unten aufs Bein */
+  st.push([[[82, -95], [72, -96.4], [60, -96.6], [50, -95.4]], [1.8, 3.4, 3.6, 2.4]]);
+  st.push([[[80, -85], [70, -85.4], [59, -84.4], [50, -82]], [1.6, 3.4, 3.6, 2.4]]);
+  st.push([[[78, -75], [68, -74.6], [58, -72.4], [51.4, -68], [50, -62]], [1.4, 3, 3.4, 3, 1.8]]);
+  st.push([[[66, -65.5], [58, -63], [53.6, -58.5]], [1.2, 2.6, 1.6]]);
+  const schatten = [[[86, -111.5], [74, -114], [60, -115.5], [51, -115]], [[80, -101.5], [68, -102], [56, -102.4], [50, -101.8]], [[78, -90.2], [66, -90.6], [55, -89.6]], [[76, -80], [64, -79.4], [54, -77]]];
   /* Aalstrich (Rücken 2–2,5 cm, Kruppe 3,5–4 cm) und Bauchstreif */
   const aal = band([[55.4, -121.5], [66.6, -127], [77.8, -128], [97, -125.5], [121, -124.5], [140, -128.5], [152, -132.5]], [1.6, 2, 2, 1.4, 1.2, 1.2, 0.8]);
   const bauch = band([[87.4, -69.5], [105, -65.5], [125, -64.5], [148, -68]], [0.8, 1.5, 1.5, 0.8]);
@@ -867,22 +869,26 @@ function zebra(T) {
   });
   /* ---- Stehmähne: setzt die Halsstreifen fort (gleiche Zahl, gleicher Winkel), Spitzen dunkel, Oberkante gefranst ---- */
   const kammP = [[150, -132], [162, -142], [176, -155], [190, -167], [201, -177], [206, -182]];
-  const mh = [3, 7, 11, 12, 10, 7];
+  const mh = [2, 6, 10.5, 12.5, 11, 6];
   const mn = (i) => { const a = kammP[Math.max(0, i - 1)], b = kammP[Math.min(5, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy); return [dy / l, -dx / l]; };
   const aussen = kammP.map((p, i) => [p[0] + mn(i)[0] * mh[i], p[1] + mn(i)[1] * mh[i]]);
   const maehne = aussen.concat(kammP.slice().reverse().map((p) => [p[0] + 0.8, p[1] + 2]));
-  /* Mähnenbänder: gerade Vierecke vom Hals über die ganze Mähnenhöhe (gleiche Lage wie die Halsstreifen) */
-  const mStr = halsT.map((t, i) => {
-    const a = kamm(t), n = mn(Math.min(5, Math.round(t * 5))), d = [-n[1], n[0]], w = 3 - i * 0.12;
-    const P = (s, q) => [a[0] + n[0] * s + d[0] * q, a[1] + n[1] * s + d[1] * q];
-    return "M" + [P(-3, -w), P(20, -w * 0.9), P(20, w * 0.9), P(-3, w)].map((p) => H.f(p[0]) + " " + H.f(p[1])).join("L") + "Z";
+  /* Mähne: Basis als flache Haarmasse (keine Röhre) mit den fortgesetzten Halsbändern, darüber ein gefranster Haarsaum mit dunklen Spitzen */
+  const mLen = (t2) => 1.5 + Math.sin(Math.min(1, t2 * 1.15) * Math.PI) * 4;
+  const mWink = (x) => -128 + (x - 180) * 0.08;
+  const innenM = kammP.map((p, i) => [p[0] + mn(i)[0] * mh[i] * 0.72, p[1] + mn(i)[1] * mh[i] * 0.72]);
+  const mBasis = innenM.concat(kammP.slice().reverse().map((p) => [p[0] + 0.8, p[1] + 2]));
+  const mStr = halsT.map((t2, i) => {
+    const a = kamm(t2), n = mn(Math.min(5, Math.round(t2 * 5))), d = [-n[1], n[0]], w = 2.9 - i * 0.1;
+    const P = (q, r2) => [a[0] + n[0] * q + d[0] * r2, a[1] + n[1] * q + d[1] * r2];
+    return "M" + [P(-3, -w), P(16, -w * 0.85), P(16, w * 0.85), P(-3, w)].map((p) => H.f(p[0]) + " " + H.f(p[1])).join("L") + "Z";
   }).join("");
-  s += teil(maehne, T.lg("mg", [[0, "#f3efe6"], [1, "#d9d2c4"]], 0, 0, 1, 1), {
-    fell: F ? [H.fellMuster("m", -132, [["#000", 2, 0.2, 0.18], ["#fff", 1, 0.2, 0.35]], { tile: 4, n: 18, len: 4, streu: 0.15 })] : [],
-    innen: `<path d="${mStr}" fill="${SW}"/>` + wf(aussen.map((p, i) => [p[0] - mn(i)[0] * 0.8, p[1] - mn(i)[1] * 0.8]), "#1a1512", 0.55, 0.6, false, 1.8) +
-      wf(kammP.map((p) => [p[0] + 0.5, p[1] + 1]), "#000", 0.35, 1, false, 2.5) + wf(aussen.map((p, i) => [p[0] - mn(i)[0] * 4, p[1] - mn(i)[1] * 4]), "#fff", 0.18, 1.5, false, 3),
-    oben: H.straehnen(aussen.map((p, i) => [p[0] - mn(i)[0] * 1.5, p[1] - mn(i)[1] * 1.5]), F ? 45 : 0, 3, (x) => -132 + (x - 180) * 0.1, [[SW, 2, 0.3, 0.9], ["#d8d2c6", 1, 0.25, 0.7]], { streu: 22 }),
+  s += teil(mBasis, "#ece6da", {
+    fell: F ? [H.fellMuster("m", -128, [["#8a8478", 2, 0.25, 0.35], ["#fff", 1, 0.25, 0.5]], { tile: 4, n: 26, len: 3.2, streu: 0.12 })] : [],
+    innen: `<path d="${mStr}" fill="${SW}"/>` + (F ? `<path d="${mStr}" fill="${H.fellMuster("ms", -128, [["#5a5450", 1, 0.25, 0.6]], { tile: 4, n: 18, len: 3, streu: 0.12 })}"/>` : "") +
+      wf(kammP.map((p) => [p[0] + 0.5, p[1] + 1]), "#000", 0.3, 1, false, 2.5),
   });
+  s += H.straehnen(innenM.map((p, i) => [p[0] - mn(i)[0] * 1.2, p[1] - mn(i)[1] * 1.2]), F ? 110 : 24, (t2) => mLen(t2) + 1.2, mWink, [["#1e1b18", 3, 0.45, 0.9], ["#4a4540", 1, 0.4, 0.85], ["#ddd6c8", 1, 0.4, 0.8]], { streu: 16, welle: 0.15, szene: 1, dick: 1 });
   /* ---- Kopf: Achse 50° nach unten, ~52 cm; große runde Ganasche, Kehlgang, Gesichtsleiste, stumpfes Maul mit Nüster und Lippen ---- */
   const wa = 50 * Math.PI / 180, P0 = [205, -183];
   const K = (u, v) => [P0[0] + u * Math.cos(wa) - v * Math.sin(wa), P0[1] + u * Math.sin(wa) + v * Math.cos(wa)];
@@ -899,7 +905,7 @@ function zebra(T) {
   gs.push([[K(22, 2.6), K(30, 3.4), K(40, 3.4)], [0.5, 0.8, 0.4]]);
   let k = "";
   k += teil(kopf, weiss, {
-    fell: [fKopf], vol: [5, 4, 0.4], rim: 3, rimD: G(kopf.slice(0, 17), false),
+    fell: [fKopf], ov: [T.lg("kv", [[0, "#fff", 0.12], [0.45, "#fff", 0], [1, "#3a3226", 0.25]], 0, 0, 0.35, 1)], rim: 3, rimD: G(kopf.slice(1, 17), false),
     innen: streifenSVG(baender(gs), F ? H.fellMuster("kk", 52, [[SW, 1, 0.15, 0.9]], { tile: 2, n: 24, len: 0.6, streu: 0.5 }) : "") +
       /* dunkle Haut ums Auge, schwarzes samtiges Maul mit leichtem Glanz */
       wf([K(14, -4.5), K(17, -7), K(21, -4), K(17, -1.8)], "#1c1714", 0.85, 0.8) +

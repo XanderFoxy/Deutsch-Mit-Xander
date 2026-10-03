@@ -215,44 +215,57 @@ const CX = 88, CY = 27;   /* Oberkante der Aussichtsplattform = Fuß des Sockels
   k += `<path d="M${M(-0.7)} 0 L${M(-0.7)} ${M(-2.2)} Q0 ${M(-2.8)} ${M(0.7)} ${M(-2.2)} L${M(0.7)} 0 Z" fill="#5a5144"/>`;
   /* Gewand (8–31 m): unten 5 m breit, Schultern 6 m, glatte senkrechte Falten */
   const yb = -8, ys = -8 - 22.6;
-  const robe = `M${M(-2.5)} ${M(yb)} L${M(-2.7)} ${M(yb - 11)} Q${M(-2.9)} ${M(ys + 2)} ${M(-2.8)} ${M(ys)} L${M(3.0)} ${M(ys)} Q${M(3.1)} ${M(ys + 2)} ${M(2.9)} ${M(yb - 11)} L${M(2.7)} ${M(yb)} Z`;
+  const yp = yb - 0.7;   /* kleiner Plinthenblock, darauf die Füße */
+  k += `<rect x="${M(-2.3)}" y="${M(yp)}" width="${M(4.5)}" height="${M(0.7)}" fill="#d8d3c5"/><path d="M${M(-1.3)} ${M(yp)} q${M(0.5)} ${M(-0.5)} ${M(1)} 0 Z M${M(0.4)} ${M(yp)} q${M(0.5)} ${M(-0.5)} ${M(1)} 0 Z" fill="#cfc9b9"/>`;
+  const robe = `M${M(-2.25)} ${M(yp - 0.35)} L${M(-2.6)} ${M(yb - 11)} Q${M(-2.85)} ${M(ys + 2)} ${M(-2.8)} ${M(ys)} L${M(2.75)} ${M(ys)} Q${M(2.85)} ${M(ys + 2)} ${M(2.65)} ${M(yb - 11)} L${M(2.3)} ${M(yp - 0.35)} Z`;
   k += `<path d="${robe}" fill="${L}"/><path d="${robe}" fill="url(#${S.id("mosaik2")})" opacity=".5"/>`;
   for (const x of [-1.6, -0.5, 0.7, 1.8]) k += `<path d="M${M(x)} ${M(yb - 0.3)} Q${M(x + 0.2)} ${M(yb - 10)} ${M(x * 0.9)} ${M(ys + 1.4)}" stroke="#bdb6a4" stroke-width=".035" fill="none"/>`;
   /* Kordel um die Taille, zwei Enden hängen herab */
   k += `<path d="M${M(-2.75)} ${M(yb - 10.6)} Q0 ${M(yb - 10)} ${M(2.95)} ${M(yb - 10.6)}" stroke="#b5ad9a" stroke-width=".05" fill="none"/><path d="M${M(0.2)} ${M(yb - 10.3)} L${M(0.1)} ${M(yb - 5.4)} M${M(0.7)} ${M(yb - 10.3)} L${M(0.8)} ${M(yb - 6)}" stroke="#b5ad9a" stroke-width=".035"/>`;
   /* Arme waagrecht; schräg gesehen (die Statue schaut nach Osten) wirken sie kürzer.
      Der linke im Bild ist näher und etwas länger. Weite Ärmel hängen darunter. */
-  const aL = -10.4, aR = 9.4, ya = ys - 0.3, yd = ya + 2.2;
+  const aL = -10.4, aR = 8.65, ya = ys - 0.3, yd = ya + 2.2;
   k += `<path d="M${M(-2.6)} ${M(ya)} L${M(aL + 1.2)} ${M(ya - 0.3)} L${M(aL + 1.2)} ${M(yd - 0.5)} L${M(-2.6)} ${M(yd + 0.6)} Z" fill="${S.lg("armL", [[0, "#e6e2d6"], [1, "#cdc7b8"]])}"/>`;
   k += `<path d="M${M(-2.6)} ${M(yd)} L${M(aL * 0.6)} ${M(yd - 0.4)} Q${M(aL * 0.45)} ${M(yd + 2.4)} ${M(-2.65)} ${M(yd + 4.6)} Z" fill="#d0c9ba"/>`;
   k += `<path d="M${M(2.8)} ${M(ya)} L${M(aR - 1.1)} ${M(ya - 0.25)} L${M(aR - 1.1)} ${M(yd - 0.5)} L${M(2.8)} ${M(yd + 0.6)} Z" fill="#faf8f1"/>`;
   k += `<path d="M${M(2.8)} ${M(yd)} L${M(aR * 0.6)} ${M(yd - 0.4)} Q${M(aR * 0.45)} ${M(yd + 2.3)} ${M(2.85)} ${M(yd + 4.5)} Z" fill="#ebe7dc"/>`;
-  /* Hände: flach, Finger geschlossen, Handflächen nach vorn */
-  k += `<path d="M${M(aL + 1.25)} ${M(ya - 0.3)} L${M(aL)} ${M(ya - 0.2)} Q${M(aL - 0.6)} ${M(ya + 0.8)} ${M(aL)} ${M(yd - 0.4)} L${M(aL + 1.25)} ${M(yd - 0.5)} Z" fill="#ddd8ca"/>`;
-  k += `<path d="M${M(aR - 1.15)} ${M(ya - 0.25)} L${M(aR)} ${M(ya - 0.15)} Q${M(aR + 0.55)} ${M(ya + 0.8)} ${M(aR)} ${M(yd - 0.4)} L${M(aR - 1.15)} ${M(yd - 0.5)} Z" fill="#fbf9f3"/>`;
-  /* Kopf (3,75 m = 1/8), 10° nach vorn geneigt: Haar mit Mittelscheitel bis auf die
-     Schultern, Bart, ernstes Gesicht mit gesenktem Blick, gerader Mund */
-  const kh = ys - 0.5;
-  k += `<path d="M${M(-1.35)} ${M(kh + 0.6)} Q${M(-1.6)} ${M(kh - 2.2)} ${M(-0.9)} ${M(kh - 3.6)} Q${M(0.1)} ${M(kh - 4.3)} ${M(1.1)} ${M(kh - 3.6)} Q${M(1.8)} ${M(kh - 2.2)} ${M(1.55)} ${M(kh + 0.6)} Q${M(0.1)} ${M(kh + 0.1)} ${M(-1.35)} ${M(kh + 0.6)} Z" fill="#cfc9b9"/>`;
-  k += `<path d="M${M(0.12)} ${M(kh - 3.85)} L${M(0.15)} ${M(kh - 3.3)}" stroke="#a9a290" stroke-width=".025"/>`;
-  k += `<path d="M${M(-0.75)} ${M(kh - 3.2)} Q${M(0.15)} ${M(kh - 3.7)} ${M(1.05)} ${M(kh - 3.2)} L${M(1.05)} ${M(kh - 1.2)} Q${M(0.15)} ${M(kh + 0.1)} ${M(-0.75)} ${M(kh - 1.2)} Z" fill="${S.lg("gesicht", [[0, "#dfd9cb"], [1, "#fbf9f3"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M${M(-0.45)} ${M(kh - 2.4)} q${M(0.22)} ${M(0.2)} ${M(0.45)} 0 M${M(0.35)} ${M(kh - 2.4)} q${M(0.22)} ${M(0.2)} ${M(0.45)} 0" stroke="#aaa391" stroke-width=".022" fill="none"/><path d="M${M(0.15)} ${M(kh - 2.3)} L${M(0.2)} ${M(kh - 1.55)}" stroke="#c4bdab" stroke-width=".03"/>`;
-  k += `<path d="M${M(-0.1)} ${M(kh - 1.15)} h${M(0.5)}" stroke="#aaa391" stroke-width=".022"/>`;
-  k += `<path d="M${M(-0.7)} ${M(kh - 1.3)} Q${M(0.15)} ${M(kh + 0.4)} ${M(1.0)} ${M(kh - 1.3)}" stroke="#bdb6a4" stroke-width=".035" fill="none"/>`;
+  /* Hände: offen, Handfläche nach vorn, Daumen oben, Finger geschlossen (Fingerfugen) */
+  for (const [x0, sg, c] of [[aL + 1.2, -1, "#ddd8ca"], [aR - 1.1, 1, "#f6f3ea"]]) {
+    const xe = x0 + sg * 2.1, xm = x0 + sg * 0.75;
+    k += `<path d="M${M(x0)} ${M(ya - 0.2)} L${M(xm)} ${M(ya - 0.25)} Q${M(xm + sg * 0.2)} ${M(ya - 1.1)} ${M(xm + sg * 0.55)} ${M(ya - 0.95)} Q${M(xm + sg * 0.7)} ${M(ya - 0.6)} ${M(xm + sg * 0.45)} ${M(ya - 0.1)} L${M(xe - sg * 0.3)} ${M(ya - 0.05)} Q${M(xe + sg * 0.1)} ${M(ya + 0.6)} ${M(xe - sg * 0.3)} ${M(yd - 0.55)} L${M(x0)} ${M(yd - 0.5)} Z" fill="${c}"/>`;
+    k += `<path d="M${M(xm + sg * 0.35)} ${M(ya + 0.5)} L${M(xe - sg * 0.2)} ${M(ya + 0.5)} M${M(xm + sg * 0.35)} ${M(ya + 1.05)} L${M(xe - sg * 0.2)} ${M(ya + 1.05)} M${M(xm + sg * 0.35)} ${M(ya + 1.6)} L${M(xe - sg * 0.25)} ${M(ya + 1.6)}" stroke="#b9b29f" stroke-width=".02"/>`;
+  }
+  /* Kopf (3,75 m = 1/8 der Statue), 10° nach vorn geneigt: Haar mit Mittelscheitel in Strähnen
+     bis auf die Schultern (keine Kapuze), spitzer Art-déco-Bart mit Kerben, gesenkte Lider */
+  const kh = ys - 0.4, hx = 0.1;
+  k += `<path d="M${M(-1.3)} ${M(kh + 0.35)} Q${M(-1.5)} ${M(kh - 1.7)} ${M(-0.95)} ${M(kh - 2.85)} Q${M(hx)} ${M(kh - 3.4)} ${M(1.15)} ${M(kh - 2.85)} Q${M(1.7)} ${M(kh - 1.7)} ${M(1.5)} ${M(kh + 0.35)} L${M(0.9)} ${M(kh + 0.2)} L${M(-0.7)} ${M(kh + 0.2)} Z" fill="#d6d0c1"/>`;
+  let st = "";
+  for (const sg of [-1, 1]) for (const f of [0.35, 0.65, 0.95]) st += `M${M(hx + sg * 0.05)} ${M(kh - 3.25)} Q${M(hx + sg * (0.5 + f))} ${M(kh - 3.05 + f * 0.25)} ${M(hx + sg * (0.55 + f * 0.75))} ${M(kh + 0.25)}`;
+  k += `<path d="${st}" stroke="#b2ab99" stroke-width=".022" fill="none"/>`;
+  /* Gesicht: Stirn groß (Kopf geneigt), Haaransatz mit leichtem Scheitel-V */
+  k += `<path d="M${M(-0.68)} ${M(kh - 2.45)} Q${M(-0.3)} ${M(kh - 2.85)} ${M(hx)} ${M(kh - 2.62)} Q${M(0.5)} ${M(kh - 2.85)} ${M(0.9)} ${M(kh - 2.45)} L${M(0.9)} ${M(kh - 1.2)} Q${M(hx)} ${M(kh - 0.55)} ${M(-0.68)} ${M(kh - 1.2)} Z" fill="${S.lg("gesicht", [[0, "#dcd6c8"], [1, "#fbf9f3"]], 0, 0, 1, 0)}"/>`;
+  /* Bart: vom Kinn spitz bis zum Halsansatz, senkrechte Kerben */
+  k += `<path d="M${M(-0.66)} ${M(kh - 1.45)} Q${M(-0.62)} ${M(kh - 0.55)} ${M(-0.2)} ${M(kh - 0.1)} L${M(hx)} ${M(kh + 0.45)} L${M(0.4)} ${M(kh - 0.1)} Q${M(0.86)} ${M(kh - 0.55)} ${M(0.88)} ${M(kh - 1.45)} Q${M(hx)} ${M(kh - 0.95)} ${M(-0.66)} ${M(kh - 1.45)} Z" fill="#d9d3c4"/>`;
+  k += `<path d="M${M(-0.35)} ${M(kh - 0.95)} L${M(-0.08)} ${M(kh - 0.05)} M${M(-0.05)} ${M(kh - 0.85)} L${M(0.04)} ${M(kh + 0.15)} M${M(0.25)} ${M(kh - 0.85)} L${M(0.16)} ${M(kh + 0.15)} M${M(0.55)} ${M(kh - 0.95)} L${M(0.28)} ${M(kh - 0.05)}" stroke="#b2ab99" stroke-width=".02"/>`;
+  k += `<path d="M${M(-0.28)} ${M(kh - 1.32)} Q${M(hx)} ${M(kh - 1.5)} ${M(0.48)} ${M(kh - 1.32)}" stroke="#a9a290" stroke-width=".025" fill="none"/>`;
+  /* gesenkte Lider, Brauen, Nase */
+  k += `<path d="M${M(-0.46)} ${M(kh - 2.02)} q${M(0.22)} ${M(0.14)} ${M(0.44)} 0 M${M(0.2)} ${M(kh - 2.02)} q${M(0.22)} ${M(0.14)} ${M(0.44)} 0" stroke="#9f9886" stroke-width=".024" fill="none"/>`;
+  k += `<path d="M${M(-0.5)} ${M(kh - 2.28)} q${M(0.25)} ${M(-0.1)} ${M(0.5)} 0 M${M(0.16)} ${M(kh - 2.28)} q${M(0.25)} ${M(-0.1)} ${M(0.5)} 0" stroke="#bdb6a4" stroke-width=".02" fill="none"/><path d="M${M(hx + 0.05)} ${M(kh - 2.2)} L${M(hx + 0.1)} ${M(kh - 1.6)}" stroke="#c4bdab" stroke-width=".03"/>`;
   /* Herz auf der Brust */
   k += `<path d="M${M(-0.35)} ${M(ys + 3.2)} q${M(-0.5)} ${M(-0.7)} 0 ${M(-1)} q${M(0.3)} ${M(-0.15)} ${M(0.42)} ${M(0.18)} q${M(0.12)} ${M(-0.33)} ${M(0.42)} ${M(-0.18)} q${M(0.5)} ${M(0.3)} 0 ${M(1)} l${M(-0.42)} ${M(0.5)} Z" fill="none" stroke="#b3ab98" stroke-width=".03"/>`;
   /* Lichtkante rechts (Morgensonne von Osten) */
   k += `<path d="M${M(2.95)} ${M(ys + 0.5)} Q${M(3.05)} ${M(yb - 11)} ${M(2.65)} ${M(yb - 0.5)}" stroke="#ffffff" stroke-width=".07" fill="none" opacity=".85"/>`;
   /* Besucher auf der Plattform (0,55 Einheiten) — nur in der Lupe */
+  /* Besucher (1,7 m): von unten sieht man nur Kopf und Schultern über der Brüstung, locker verteilt */
   let besucher = "";
-  for (const [x, c] of [[-13, "#d24a3c"], [-11.6, "#2f6fb0"], [-9.8, "#f0c040"], [8.8, "#3a8a4a"], [10.6, "#ffffff"], [12.4, "#c43a8a"]]) besucher += `<rect x="${M(x)}" y="${M(-1.9)}" width="${M(0.9)}" height="${M(1.9)}" rx="${M(0.3)}" fill="${c}"/><circle cx="${M(x + 0.45)}" cy="${M(-2.25)}" r="${M(0.4)}" fill="#6b4a32"/>`;
+  for (const [x, c, h] of [[-13.4, "#d24a3c", 1.7], [-12.5, "#2f6fb0", 1.6], [-10.2, "#f0c040", 1.75], [-9.5, "#ffffff", 1.35], [7.6, "#3a8a4a", 1.7], [10.3, "#ffffff", 1.65], [11.1, "#c43a8a", 1.55], [13.8, "#2f6fb0", 1.75]]) besucher += `<path d="M${M(x - 0.25)} ${M(-1.1)} L${M(x - 0.22)} ${M(-h + 0.42)} Q${M(x)} ${M(-h + 0.32)} ${M(x + 0.22)} ${M(-h + 0.42)} L${M(x + 0.25)} ${M(-1.1)} Z" fill="${c}"/><circle cx="${M(x)}" cy="${M(-h + 0.17)}" r="${M(0.15)}" fill="${x > 0 ? "#6b4a32" : "#3a2a1e"}"/>`;
   const unterC = [
     { id: "arm", de: "der Arm", syl: "ARM", it: "il braccio", itSyl: "BRAC-cio", en: "arm", x: CX + M(aL * 0.55), y: CY + M(yd + 1.6), kunst: flaeche(M(aL * 0.5 - 0.7), M(-4.6), M(-aL * 0.9), M(5), 0.15),
       tipp: "Von einer Hand bis zur anderen sind es 28 Meter." },
     { id: "sockel", de: "der Sockel", syl: "SO-ckel", it: "il piedistallo", itSyl: "pie-di-STAL-lo", en: "pedestal", x: CX, y: CY, kunst: flaeche(M(-3.7), M(-8.1), M(7.4), M(8.1), 0.1),
       tipp: "Der Sockel ist 8 Meter hoch. Innen ist eine kleine Kapelle." },
     { id: "mosaik", de: "das Mosaik", syl: "Mo-sa-IK", it: "il mosaico", itSyl: "mo-SAI-co", en: "mosaic", x: CX, y: CY + M(yb), kunst: flaeche(M(-2.7), M(-10), M(5.6), M(10), 0.1),
-      tipp: "Die Statue ist mit Tausenden kleiner Dreiecke aus Speckstein beklebt." },
+      tipp: "Die Statue ist mit Millionen kleiner Dreiecke aus Speckstein beklebt." },
     { id: "aussichtsplattform", de: "die Aussichtsplattform", syl: "AUS-sichts-platt-form", it: "la terrazza panoramica", itSyl: "ter-RAZ-za pa-no-RA-mi-ca", en: "viewing platform", x: CX, y: CY + M(3.2), kunst: `<g transform="translate(0 ${-M(3.2)})">${besucher}</g>` + flaeche(M(-16), M(-6.4), M(11.5), M(6.4), 0.1) + flaeche(M(4.5), M(-6.4), M(11.5), M(6.4), 0.1),
       tipp: "Von der Plattform sieht man ganz Rio." },
   ];
@@ -311,7 +324,7 @@ const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Flu
   /* Insel Cotunduba vor Leme und ein Frachter auf dem Weg in die Bucht */
   k += `<path d="M280 100.2 Q282 97.6 285 97.4 Q288 97.6 290.4 100.2 Z" fill="#6a8a72"/><path d="M280 100.2 L290.4 100.2" stroke="#e8f4f2" stroke-width=".3"/>`;
   k += `<path d="M300 99.7 L310 99.7 L309 100.4 L301 100.4 Z" fill="#40454c"/><rect x="307" y="98.5" width="1.6" height="1.2" fill="#e8e6e0"/><rect x="302" y="99.1" width="4.4" height=".6" fill="#b34a3a"/>`;
-  S.teil({ id: "meer", de: "das Meer", syl: "MEER", it: "il mare", itSyl: "MA-re", en: "sea", x: 298, y: 103.5, kunst: um(298, 103.5, k),
+  S.teil({ id: "meer", de: "das Meer", syl: "MEER", it: "il mare", itSyl: "MA-re", en: "sea", x: 298, y: 103.5, kunst: halb(um(298, 103.5, k)),
     tipp: "Das ist der Atlantische Ozean. Die Wellen brechen an der Copacabana oft kräftig am Strand." });
 }
 
@@ -363,7 +376,7 @@ const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Flu
   k += `<rect x="150" y="79" width="64" height="14" fill="#cfe2ea" opacity=".16"/>`;
   const cid = S.id("favclip");
   S.def(`<clipPath id="${cid}"><path d="M${pts(HUEGEL.slice(0, 18))} L252 100 L140 100 Z"/></clipPath>`);
-  S.teil({ id: "favela", de: "die Favela", syl: "Fa-VE-la", it: "la favela", itSyl: "fa-VE-la", en: "favela", x: 175, y: 86, kunst: um(175, 86, `<g clip-path="url(#${cid})">${k}</g>`),
+  S.teil({ id: "favela", de: "die Favela", syl: "Fa-VE-la", it: "la favela", itSyl: "fa-VE-la", en: "favela", x: 175, y: 86, kunst: halb(um(175, 86, `<g clip-path="url(#${cid})">${k}</g>`)),
     tipp: "In der Favela wohnen viele Familien. Ihre Häuser am Hang haben sie oft selbst gebaut." });
 }
 
@@ -431,7 +444,7 @@ const XF = -84.8;
   }
   const cid = S.id("hausclip");
   S.def(`<clipPath id="${cid}"><path d="M0 0 L${VX} 0 L${VX} 100.2 L0 104.2 Z"/></clipPath>`);
-  S.teil({ id: "hochhaus", de: "das Hochhaus", syl: "HOCH-haus", it: "il palazzo", itSyl: "pa-LAZ-zo", en: "high-rise", x: 40, y: 62, kunst: um(40, 62, `<g clip-path="url(#${cid})">${k}</g>`),
+  S.teil({ id: "hochhaus", de: "das Hochhaus", syl: "HOCH-haus", it: "il palazzo", itSyl: "pa-LAZ-zo", en: "high-rise", x: 40, y: 62, kunst: halb(um(40, 62, `<g clip-path="url(#${cid})">${k}</g>`)),
     tipp: "An der Avenida Atlântica stehen die Hochhäuser dicht an dicht – alle mit Blick aufs Meer." });
 }
 
@@ -541,7 +554,7 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
   k += `<path d="M0 120.6 L${VX} 100 L0 ${r(STRANDKANTE(0))} Z" fill="${S.lg("calclicht", [[0, "#ffffff", 0], [0.6, "#ffffff", 0.06], [1, "#ffffff", 0.18]], 0, 0, 1, 0)}"/>`;
   /* Sand weht auf den Rand */
   for (let i = 0; i < 26; i++) { const x = rnd() * 196, y = STRANDKANTE(x) - rnd() * 2.4 * (STRANDKANTE(x) - 100) / 78; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.6 + (y - 100) * 0.05)}" ry="${r(0.2 + (y - 100) * 0.012)}" fill="#e9d6ab" opacity=".7"/>`; }
-  S.teil({ id: "promenade", de: "die Promenade", syl: "Pro-me-NA-de", it: "il lungomare", itSyl: "lun-go-MA-re", en: "promenade", x: 40, y: 150, kunst: um(40, 150, k),
+  S.teil({ id: "promenade", de: "die Promenade", syl: "Pro-me-NA-de", it: "il lungomare", itSyl: "lun-go-MA-re", en: "promenade", x: 40, y: 150, kunst: halb(um(40, 150, k)),
     tipp: "Das Wellenmuster aus schwarzen und weißen Steinen ist 4 Kilometer lang." });
 }
 
@@ -618,7 +631,7 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
     k += `<circle cx="${r(bx)}" cy="${r(HY + F * (1.6 - 2.9) / 26)}" r=".6" fill="#f6d21e" stroke="#1d4fa0" stroke-width=".15"/><ellipse cx="${r(bx - 1)}" cy="${r(by)}" rx=".7" ry=".2" fill="#7a5a2a" opacity=".3"/>`;
     k += spieler(0.4, 24, "#5e3a26", "#139a43", [-0.3, 0.35, 0.3, -0.5]) + spieler(4, 24, "#d7a179", "#f6d21e", [-0.3, 0.4, 0.28, 0.35]);
   }
-  S.teil({ id: "strand", de: "der Strand", syl: "STRAND", it: "la spiaggia", itSyl: "SPIAG-gia", en: "beach", x: 205, y: 122, kunst: um(205, 122, k),
+  S.teil({ id: "strand", de: "der Strand", syl: "STRAND", it: "la spiaggia", itSyl: "SPIAG-gia", en: "beach", x: 205, y: 122, kunst: halb(um(205, 122, k)),
     tipp: "Die Copacabana ist vier Kilometer lang. Hier spielt man Futevôlei – Volleyball, aber ohne Hände!" });
 }
 

@@ -42,7 +42,9 @@ function kit(T, box = [-60, -320, 620, 40], grob = 0.5, feinQ = 10) {
   H.blur = (sd) => {
     sd = [0.12, 0.25, 0.45, 0.8, 1.3, 2, 3, 4.5, 6.5].reduce((b, v) => (Math.abs(v - sd) < Math.abs(b - sd) ? v : b), 0.12);
     const id = T.id("b" + String(sd).replace(".", "_"));
-    if (!bl.has(id)) { bl.add(id); T.def(`<filter id="${id}" x="-.5" y="-.5" width="2" height="2" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${sd}"/></filter>`); }
+    /* große Radien: Filterbereich im Tierraum (sonst schneidet der bbox-Bereich dünner Linien den Weichzeichner hart ab → Lichtblöcke) */
+    const reg = sd >= 1.3 ? `filterUnits="userSpaceOnUse" x="${box[0]}" y="${box[1]}" width="${box[2] - box[0]}" height="${box[3] - box[1]}"` : `x="-.5" y="-.5" width="2" height="2"`;
+    if (!bl.has(id)) { bl.add(id); T.def(`<filter id="${id}" ${reg} color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${sd}"/></filter>`); }
     return `url(#${id})`;
   };
   /* Fläche: Pfad EINMAL in defs, Füllung/Innenzeichnung/Rand per <use> */
@@ -317,7 +319,7 @@ function reh(T) {
   const rumpf = ruecken.concat(kopf).concat(kehle).concat(vorne).concat(bauch).concat(hinten).concat(keule);
   const A = H.flaeche(rumpf);
   /* ---- Lauscher: breit-oval (1,8 : 1), stumpfe Spitze, eingeschnürter Ansatz mit Tütenfalte; Farbe wie der Kopf ---- */
-  const ohr = [[-0.9, 0], [-1.6, -1.6], [-2.3, -4.6], [-2.5, -7.8], [-2.0, -10.6], [-1.0, -12.4], [0.3, -13.0], [1.4, -12.2], [2.1, -10.2], [2.4, -7.2], [2.1, -4.0], [1.4, -1.4], [0.9, 0]];
+  const ohr = [[-1.5, 1.6], [-1.6, -1.6], [-2.3, -4.6], [-2.5, -7.8], [-2.0, -10.6], [-1.0, -12.4], [0.3, -13.0], [1.4, -12.2], [2.1, -10.2], [2.4, -7.2], [2.1, -4.0], [1.6, -1.0], [1.8, 1.8]];
   const ohrZ = (ox, oy, w, fern) => {
     const tr = (pts) => H.tr(pts, ox, oy, w);
     const P = tr(ohr), B = H.flaeche(P);
@@ -427,7 +429,7 @@ function reh(T) {
   inn += H.fellKorn("r1", [[6, -82], [86, -82], [92, -56], [92, -44], [80, -38], [30, -42], [6, -48]], 174, [["kd", "#2a1004", 0.2, 3], ["kh", "#ffe0b8", 0.1, 8]], { fx: 0.9, fy: 9 }) +
     H.fellKorn("r4", [[72, -82], [101, -94], [104, -86], [101, -76], [99, -56], [92, -44], [80, -52]], 118, [["kd", "#2a1004", 0.2, 3], ["kh", "#ffe0b8", 0.1, 8]], { fx: 0.9, fy: 9, ein: [76, -64, 86, -70] }) +
     H.fellKorn("r5", KT([[2.5, -4.6], [21, -4.6], [21, 11.5], [6.4, 11.5]]), KW + 184, [["kd", "#2a1a10", 0.35, 3], ["kh", "#f0e0cc", 0.25, 8]], { fx: 2.6, fy: 14 });
-  inn += H.haare(rumpf, 200, wuchs, laenge, [["#3e1c0a", 1, 0.06, 0.34], ["#6e3414", 0.5, 0.065, 0.3]], { krumm: 0.06, streu: 10, nur: (x, y) => !(x > 100 && y < -76 && x > 96 + (y + 92) * -0.2) && y < -39, spitze: ["#f6c896", licht, 0.045, 0.45] });
+  inn += H.haare(rumpf, 172, wuchs, laenge, [["#3e1c0a", 1, 0.06, 0.34], ["#6e3414", 0.5, 0.065, 0.3]], { krumm: 0.06, streu: 10, nur: (x, y) => !(x > 100 && y < -76 && x > 96 + (y + 92) * -0.2) && y < -39, spitze: ["#f6c896", licht, 0.045, 0.45] });
   inn += H.haare(KT([[1, -3], [16, 0.6], [16.6, 7], [8, 9.6], [2, 9.4]]), 60, KW + 184, 0.42, [["#3a2a20", 1, 0.03, 0.3]], { streu: 12, spitze: ["#e8d4c0", 0.55, 0.028, 0.4], szene: 0 });
   /* Licht und Anatomie (über dem Volumen, weich): helle Rückenkante, Kernschatten-Band 3,5 cm über der Bauchlinie, Reflexlicht,
      Schulterblatt (Hinterkante dunkler), Buggelenk, Ellbogenwulst, Rippenbogen mit Querschatten, Flankenmulde, Hüfthöcker,

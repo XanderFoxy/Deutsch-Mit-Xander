@@ -379,7 +379,7 @@ function WEICH(T, inhalt, sd) {
   if (T.fein === false || !inhalt) return inhalt;
   const id = T.id("bl" + String(sd).replace(".", "_"));
   T._b = T._b || {};
-  if (!T._b[id]) { T._b[id] = 1; T.def(`<filter id="${id}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="${sd}"/></filter>`); }
+  if (!T._b[id]) { T._b[id] = 1; T.def(`<filter id="${id}" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${sd}"/></filter>`); }
   return `<g filter="url(#${id})">${inhalt}</g>`;
 }
 let SZ = false, SZMIN = 0.25; // Szene (klein): schwache Malformen weglassen

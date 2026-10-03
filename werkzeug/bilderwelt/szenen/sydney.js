@@ -120,7 +120,7 @@ S.hinten(`<rect width="400" height="${HOR + 6}" fill="${S.lg("himmel", [[0, "#35
     let d = `M${r(pts[0][0])} ${y}`;
     for (let i = 1; i < pts.length; i++) { const q = pts[i], p0 = pts[i - 1], rr = Math.hypot(q[0] - p0[0], q[1] - p0[1]) * 0.56; d += ` A${r(rr)} ${r(rr)} 0 0 1 ${r(q[0])} ${r(q[1])}`; }
     w += `<path d="${d} Z" fill="${WL}"/>`;
-    for (let i = 1; i < pts.length - 1; i++) li += `M${r(pts[i][0])} ${r(pts[i][1])}q${r(b * 0.01)} ${r(b * 0.03)} ${r(b * 0.035)} ${r(b * 0.05)}`;
+    if (b > 20) for (let i = 1; i < pts.length - 1; i++) li += `M${r(pts[i][0])} ${r(pts[i][1])}q${r(b * 0.01)} ${r(b * 0.03)} ${r(b * 0.035)} ${r(b * 0.05)}`;
     li += `M${r(x - b * 0.36)} ${r(y - 0.6)}h${r(b * 0.72)}`;
   };
   wolke(62, 38, 40, [0.12, 0.22, 0.27, 0.16, 0.07]);
@@ -137,12 +137,14 @@ S.hinten(`<rect width="400" height="${HOR + 6}" fill="${S.lg("himmel", [[0, "#35
   let c = `<g filter="url(#${S.id("dunst")})">`;
   c += `<path d="M236 148.6 L236 141 Q260 137.6 290 139 Q330 135 360 136.4 Q384 133.4 400 134 L400 148.6 Z" fill="${S.lg("nordufer", [[0, "#93a69d"], [1, "#a9b6ad"]])}"/>`;
   const tuerme = [[328, 9, 18, "#b9c4cc"], [338, 7, 24, "#a8b6c2"], [346, 10, 20, "#c4ccd2"], [357, 6, 30, "#9fb0bf"], [364, 9, 26, "#b6c2cb"], [374, 8, 35, "#a4b4c1"], [383, 7, 29, "#c0cad1"], [391, 9, 23, "#aebcc7"], [244, 7, 10, "#c9cfcf"], [256, 9, 8, "#bfc8c6"], [268, 6, 12, "#c6cccc"], [282, 8, 9, "#bcc6c4"], [296, 7, 11, "#c8cecc"]];
+  let sch = "", et = "";
   for (const [x, w, h, f] of tuerme) {
     const y0 = 140 - (x > 320 ? 3 : 0);
     c += `<rect x="${x}" y="${r(y0 - h)}" width="${w}" height="${r(h + 6)}" fill="${f}"/>`;
-    c += `<rect x="${x}" y="${r(y0 - h)}" width="${r(w * 0.35)}" height="${r(h + 6)}" fill="#7d8d99" opacity=".22"/>`;
-    c += `<rect x="${x + 0.6}" y="${r(y0 - h + 1.6)}" width="${r(w - 1.2)}" height="${r(h - 1.6)}" fill="url(#${S.id("etage")})"/>`;
+    sch += `M${x} ${r(y0 - h)}h${r(w * 0.35)}V${y0 + 6}h${r(-w * 0.35)}z`;
+    et += `M${x + 0.6} ${r(y0 - h + 1.6)}h${r(w - 1.2)}V${y0}h${r(1.2 - w)}z`;
   }
+  c += `<path d="${sch}" fill="#7d8d99" opacity=".22"/><path d="${et}" fill="url(#${S.id("etage")})"/>`;
   c += `<rect x="236" y="144.6" width="164" height="4" fill="#8a9a92"/>`;
   c += `</g>`;
   /* Morgendunst über North Sydney */
@@ -179,14 +181,13 @@ const DECK_A = [randA(0, -900, 0), -60, 0, 120, 251.5, 380, 503, 560, randA(400,
     const oben = pts.map((a) => bp(a, c, zO(a))), unten = pts.map((a) => bp(a, c, zU(a)));
     g += `<path d="M${oben.map(P).join(" L")} L${unten.slice().reverse().map(P).join(" L")} Z" fill="${farbe}" opacity=".08"/>`;
     let st = "";
-    for (let i = 0; i <= N; i++) st += `M${P(oben[i])} L${P(unten[i])}`;
+    for (let i = 0; i <= N; i += ohneDiag ? 2 : 1) st += `M${P(oben[i])} L${P(unten[i])}`;
     if (!ohneDiag) for (let i = 0; i < N; i++) st += i < N / 2 ? `M${P(oben[i])} L${P(unten[i + 1])}` : `M${P(unten[i])} L${P(oben[i + 1])}`;
     g += `<path d="${st}" stroke="${farbe}" stroke-width="${dick * 0.42}" fill="none"/>`;
     g += `<path d="M${oben.map(P).join(" L")}" stroke="${farbe}" stroke-width="${dick}" fill="none" stroke-linejoin="round"/>`;
     g += `<path d="M${unten.map(P).join(" L")}" stroke="${farbe}" stroke-width="${dick * 1.25}" fill="none" stroke-linejoin="round"/>`;
     if (licht) {
       g += `<path d="M${oben.map((p) => P([p[0], p[1] - dick * 0.32])).join(" L")}" stroke="${licht}" stroke-width="${dick * 0.35}" fill="none"/>`;
-      g += `<path d="M${unten.map((p) => P([p[0], p[1] - dick * 0.4])).join(" L")}" stroke="${licht}" stroke-width="${dick * 0.4}" fill="none"/>`;
     }
     return g;
   };
@@ -408,7 +409,7 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
   /* Menschen auf dem Sockel und auf der Freitreppe (winzig, 1,7 m) */
   let leute = "";
   const farben = ["#c0392b", "#2f6fb6", "#f2c62f", "#ffffff", "#2a2a2a", "#3c8f5a", "#e58fa1"];
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 11; i++) {
     const s = i < 5 ? 6 + i * 6 : 40 + (i - 5) * 15 + rnd() * 6, e = i < 5 ? 30 + rnd() * 70 : 117, z = i < 5 ? stZ(Math.floor(s / TREPPE_S * N_ST)) + 0.4 : SOCKEL_Z;
     const f = op(s, e, z), h = F * 1.7 / f[2];
     leute += `<rect x="${r(f[0] - 0.25)}" y="${r(f[1] - h * 0.85)}" width=".5" height="${r(h * 0.6)}" fill="${farben[i % 7]}"/><circle cx="${r(f[0])}" cy="${r(f[1] - h * 0.92)}" r=".26" fill="#d9b08c"/><path d="M${r(f[0] - 0.15)} ${r(f[1] - h * 0.25)} L${r(f[0] - 0.15)} ${r(f[1])} M${r(f[0] + 0.15)} ${r(f[1] - h * 0.25)} L${r(f[0] + 0.15)} ${r(f[1])}" stroke="#3a3f48" stroke-width=".22"/>`;
@@ -504,7 +505,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   const welle = (n, sc) => { S.def(`<pattern id="${S.id("w" + n)}" width="26" height="4" patternUnits="userSpaceOnUse" patternTransform="scale(${sc})"><path d="M1 1q2-.7 4 0M12 3q2.5-.8 5 0M19 .8q1.6-.5 3.2 0" stroke="#dcecf3" stroke-width=".35" fill="none" opacity=".75"/><path d="M6 2.6q2-.6 4 0M21 3.2q2-.6 4 0" stroke="#163e56" stroke-width=".4" fill="none" opacity=".6"/></pattern>`); return `url(#${S.id("w" + n)})`; };
   k += `<rect x="0" y="149" width="400" height="9" fill="${welle(1, 0.45)}"/><rect x="0" y="158" width="400" height="14" fill="${welle(2, 0.8)}"/><rect x="0" y="172" width="400" height="22" fill="${welle(3, 1.35)}"/>`;
   let gl = "";
-  for (let i = 0; i < 22; i++) { const y = 152 + rnd() * 36, w = 1.5 + (y - 148) * 0.15; gl += `M${r(rnd() * 390)} ${r(y)}q${r(w / 2)} -.5 ${r(w)} 0`; }
+  for (let i = 0; i < 14; i++) { const y = 152 + rnd() * 36, w = 1.5 + (y - 148) * 0.15; gl += `M${r(rnd() * 390)} ${r(y)}q${r(w / 2)} -.5 ${r(w)} 0`; }
   k += `<path d="${gl}" stroke="#ffffff" stroke-width=".5" fill="none" opacity=".75"/>`;
   /* Dunst über dem Wasser am Horizont */
   k += `<rect x="0" y="147.5" width="400" height="6" fill="${S.lg("wdunst", [[0, "#e6eef2", 0.55], [1, "#e6eef2", 0]])}"/>`;
@@ -614,7 +615,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
     for (let i = 1; i <= n; i++) { const p0 = pts[i - 1], p1 = pts[i % n], m = [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2], o = [m[0] - cx, m[1] - cy], L = Math.hypot(o[0] / rx, o[1] / ry) || 1, bu = 0.22 + rnd() * 0.12; d += `Q${ri(Math.max(1, m[0] + o[0] / L * bu))} ${ri(Math.max(-202, m[1] + o[1] / L * bu * 1.4))} ${ri(p1[0])} ${ri(p1[1])}`; }
     return `<path d="${d}Z"/>`;
   };
-  const massen = [[16, -182, 24, 21, 11], [46, -193, 28, 12, 10], [58, -172, 22, 13, 10], [90, -189, 25, 13, 10], [120, -180, 20, 12, 9], [148, -171, 14, 9, 8], [22, -148, 18, 13, 9], [84, -163, 16, 9, 8], [128, -158, 12, 7, 7], [104, -199, 30, 7, 9], [159, -178, 7, 6, 6]];
+  const massen = [[16, -182, 24, 21, 9], [46, -193, 28, 12, 8], [58, -172, 22, 13, 8], [90, -189, 25, 13, 8], [120, -180, 20, 12, 8], [148, -171, 14, 9, 7], [22, -148, 18, 13, 8], [84, -163, 16, 9, 7], [128, -158, 12, 7, 6], [104, -199, 30, 7, 7], [159, -178, 7, 6, 5]];
   S.def(`<g id="${S.id("laubdach")}">${massen.map((m) => masse(...m)).join("")}</g>`);
   const LAUB0 = S.rg("laub", [[0, "#6f9f50"], [0.45, "#30602d"], [1, "#152d17"]], 0.68, 0.25, 0.8);
   k += `<use href="#${S.id("laubdach")}" fill="${LAUB0}"/><use href="#${S.id("laubdach")}" fill="url(#${S.id("blatt")})" opacity=".38"/>`;
@@ -645,7 +646,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
     const xs = [...Array(14)].map((_, j) => j * 18);
     top = xs.map((x) => `${r(x)} ${r(wav(x))}`).join(" L");
     bot = xs.slice().reverse().map((x) => `${r(x)} ${r(wav(x) + h + Math.sin(x / 13) * 0.6)}`).join(" L");
-    k += `<path d="M${top} L${bot} Z" fill="${S.lg("stirn" + i, [[0, "#d9b47a"], [0.6, "#c59a5f"], [1, "#a77a45"]])}"/>`;
+    k += `<path d="M${top} L${bot} Z" fill="${S.lg("stirn", [[0, "#d9b47a"], [0.6, "#c59a5f"], [1, "#a77a45"]])}"/>`;
     k += `<path d="M${xs.slice().reverse().map((x) => `${r(x)} ${r(wav(x) + h + Math.sin(x / 13) * 0.6)}`).join(" L")}" stroke="#6f4a26" stroke-width="${r(0.6 + i * 0.25)}" fill="none" opacity=".55"/>`;
     k += `<path d="M${top}" stroke="#f4dfb2" stroke-width="${r(0.5 + i * 0.2)}" fill="none" opacity=".9"/>`;
     /* Kreuzschichtung in der Stirn: feine schräge Lagen */
@@ -730,7 +731,7 @@ const bP = (u, l, w) => { const p = bq(u, l, w); return `${p[0]} ${p[1]}`; };
   /* senkrechte Klüfte und abgerundete, verwitterte Kanten */
   for (const [u, l, w] of [[-1.2, 0.2, 1.38], [-0.95, 0.85, 0.9], [-0.7, 1.5, 1.4], [-1.3, -0.3, 0.6]]) k += `<path d="M${bP(u, l, w)} l.7 ${r(0.12 * BS)} l-.5 ${r(0.1 * BS)} l.6 ${r(0.12 * BS)}" stroke="#6f4a24" stroke-width=".55" fill="none" opacity=".45"/>`;
   /* Flecken: Eisen (rostig), Flechten (dunkel), helle Abplatzungen */
-  for (let i = 0; i < 9; i++) { const p = bq(-1.4 + rnd() * 1.1, -0.5 + rnd() * 2.2, 0.15 + rnd() * 1.2), w = 2 + rnd() * 4; k += `<ellipse cx="${p[0]}" cy="${p[1]}" rx="${r(w)}" ry="${r(w * 0.45)}" fill="${["#9a4a1c", "#5a5040", "#f2deb4"][i % 3]}" opacity="${[0.22, 0.18, 0.4][i % 3]}"/>`; }
+  for (let i = 0; i < 5; i++) { const p = bq(-1.4 + rnd() * 1.1, -0.5 + rnd() * 2.2, 0.15 + rnd() * 1.2), w = 2 + rnd() * 4; k += `<ellipse cx="${p[0]}" cy="${p[1]}" rx="${r(w)}" ry="${r(w * 0.45)}" fill="${["#9a4a1c", "#5a5040", "#f2deb4"][i % 3]}" opacity="${[0.22, 0.18, 0.4][i % 3]}"/>`; }
   k += `<path d="M${bP(-1.3, -0.15, 1.36)} Q${bP(-1.0, 0.4, 1.5)} ${bP(-0.55, 1.35, 1.5)}" stroke="#f6e3b8" stroke-width="1.2" fill="none" opacity=".7"/>`;
   k += `<path d="M${bP(-1.4, -0.5, 0.75)} Q${bP(-1, 0.2, 0.95)} ${bP(-0.6, 0.9, 0.8)} L${bP(-0.6, 0.9, 0.7)} Q${bP(-1, 0.2, 0.84)} ${bP(-1.4, -0.5, 0.66)} Z" fill="#b0521f" opacity=".22"/>`;
   for (const [u, l, w, sk] of [[-1.3, -0.3, 0.5, 1.1], [-1.05, 0.5, 0.95, 0.9], [-0.8, 1.3, 0.35, 1.2], [-1.25, 0.2, 1.15, 0.7]]) { const m = bq(u, l, w); k += taf(m[0], m[1], sk); }
@@ -738,7 +739,7 @@ const bP = (u, l, w) => { const p = bq(u, l, w); return `${p[0]} ${p[1]}`; };
   k += `</g>`;
   /* Gras oben auf dem Fels */
   let gr = "";
-  for (let i = 0; i < 30; i++) { const t = i / 29, p = bq(-1.38 + t * 1.15, -0.4 + t * 2.35, 1.42 + Math.sin(t * 9) * 0.05); gr += `M${p[0]} ${p[1]} l${r(-0.5 + rnd())} ${r(-1.2 - rnd() * 1.6)}`; }
+  for (let i = 0; i < 20; i++) { const t = i / 19, p = bq(-1.38 + t * 1.15, -0.4 + t * 2.35, 1.42 + Math.sin(t * 9) * 0.05); gr += `M${p[0]} ${p[1]} l${r(-0.5 + rnd())} ${r(-1.2 - rnd() * 1.6)}`; }
   k += `<path d="${gr}" stroke="#6f9a40" stroke-width=".5"/>`;
   /* Rückwand der Nische (schaut nach rechts, Morgenlicht von rechts) */
   k += `<path d="M${bP(-0.3, 0, 0.45)} L${bP(-0.3, 0, 1.15)} L${bP(-0.3, 1.7, 1.15)} L${bP(-0.3, 1.7, 0.45)} Z" fill="${S.lg("nische", [[0, "#ddb67a"], [1, "#c99a5c"]], 0, 0, 1, 0)}"/>`;
@@ -877,7 +878,7 @@ const bP = (u, l, w) => { const p = bq(u, l, w); return `${p[0]} ${p[1]}`; };
    ===================================================================== */
 const DECKE = { x: 322, y: 244 };
 const ANKER_DECKE = { x: 272, y: 250 };   // Wortmarke an der linken vorderen Ecke
-const DINGE = { fish: [336, 242], creme: [326, 233.4], bumerang: [362, 248], flip: [322, 256.5] };
+const DINGE = { fish: [336, 242], creme: [326, 233.4], bumerang: [362, 248], flip: [322, 255.2] };
 const anDecke = (p, svg) => `<g transform="translate(${r(p[0] - ANKER_DECKE.x)} ${r(p[1] - ANKER_DECKE.y)})">${svg}</g>`;
 const deckeUnter = [];
 let deckeKunst = "";
