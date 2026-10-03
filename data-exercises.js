@@ -62,7 +62,8 @@ const ExerciseData = (function () {
           fetch(dmaUebAdresse()).then((a) => (a.ok ? a.text() : null)).then((t) => {
             if (!t || dmaUebDa) return;
             dmaUebText = t;
-            ruhig(() => { try { dmaUebEinsetzen(dmaUebText); } catch (e) { try { (window.DMA_TEIL_FEHLER = window.DMA_TEIL_FEHLER || []).push("uebung: " + e.message); } catch (x) {} } }, 3000);
+            /* eingesetzt erst 3,5 s nach dem Laden: die ersten Tipps sollen keine Rechenarbeit vorfinden */
+            setTimeout(() => ruhig(() => { try { dmaUebEinsetzen(dmaUebText); } catch (e) { try { (window.DMA_TEIL_FEHLER = window.DMA_TEIL_FEHLER || []).push("uebung: " + e.message); } catch (x) {} } }, 3000), 3500);
           }).catch(() => {});
         }, 2000);
       });

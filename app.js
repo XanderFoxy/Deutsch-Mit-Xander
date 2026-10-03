@@ -67,12 +67,19 @@
   /* Eingesetzt wird in Ruhepausen, ein Stück je Pause (jedes nur ein paar Dutzend Millisekunden Rechnen), die
      Stücke fürs Klassenzimmer zuerst. Wird vorher eine Funktion daraus gebraucht, setzt dmaTeilRuf ihr Stück
      sofort ein – geholt ist es dann meist schon, es wartet nichts auf die Leitung. */
+  /* Frühestens ab dmaTeilAb wird eingesetzt: 3 s nach dem Laden – die ersten Tipps (Wissen → Klassenzimmer) sollen
+     keine Rechenarbeit vorfinden; wer das Klassenzimmer öffnet, bekommt seine Stücke 0,5 s danach. */
+  var dmaTeilAb = Infinity;
   var dmaTeilSchlange = [];
   var dmaTeilSchlangeLaeuft = false;
   function dmaTeilSchlangeWeiter() {
     if (dmaTeilSchlangeLaeuft || !dmaTeilSchlange.length) return;
     dmaTeilSchlangeLaeuft = true;
-    const los = () => {
+    const warte = dmaTeilAb - Date.now();
+    if (warte > 0) { setTimeout(() => { dmaTeilSchlangeLaeuft = false; dmaTeilSchlangeWeiter(); }, Math.min(warte, 1000)); return; }
+    const los = (frist) => {
+      /* nur in einer echten Pause (oder wenn sie zu lange ausbleibt) */
+      if (frist && !frist.didTimeout && frist.timeRemaining() < 15) { requestIdleCallback(los, { timeout: 2500 }); return; }
       dmaTeilSchlangeLaeuft = false;
       const i = Math.max(0, dmaTeilSchlange.findIndex((x) => /^raum/.test(x.teil)));
       const x = dmaTeilSchlange.splice(i, 1)[0];
@@ -132,9 +139,10 @@
      spiel.js und die ganzen Stilblätter (index.html: dmaSpielLaden, dmaStileVoll). Geholt wird sofort; was
      rechnet, wartet, bis das Bild steht. */
   function raumVorbereiten() {
+    dmaTeilAb = Math.min(dmaTeilAb, Date.now() + 500);
     dmaTeilGruppe("raum");
     const weiter = () => {
-      try { if (window.dmaStileVoll) window.dmaStileVoll(); } catch (e) {}
+      try { if (window.dmaStileAn) window.dmaStileAn(); else if (window.dmaStileVoll) window.dmaStileVoll(); } catch (e) {}
       try { if (window.dmaSpielLaden) window.dmaSpielLaden(); } catch (e) {}
     };
     if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(weiter, 0)); else setTimeout(weiter, 0);
@@ -152,6 +160,7 @@
   if (DMA_TEILE_BAU) {
     try {
       window.addEventListener("load", () => {
+        dmaTeilAb = Math.min(dmaTeilAb, Date.now() + 3000);
         const los = () => { dmaTeilGruppe("raum"); dmaTeilGruppe("rest"); };
         if (window.requestIdleCallback) requestIdleCallback(los, { timeout: 2000 }); else setTimeout(los, 200);
       });

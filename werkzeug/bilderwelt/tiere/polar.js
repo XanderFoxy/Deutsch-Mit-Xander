@@ -54,7 +54,7 @@ const verlauf = (T, n, x0, y0, x1, y1, stops) => {
   return T.lg(n, stops.map(([p, c, a]) => [Math.round(Math.max(0, Math.min(1, ((p[0] - x0) * ax + (p[1] - y0) * ay) / L)) * 1000) / 1000, c, a]), Z(x0), Z(y0), Z(x1), Z(y1), ' gradientUnits="userSpaceOnUse"');
 };
 /* Silhouette: Pfad EINMAL in defs; Rand-Strich dahinter, Füllung, Innenleben geklippt */
-function silhouette(T, d, fill, innen, rand = "#1a1d22", rw = 0.5, ra = 0.5) {
+function silhouette(T, d, fill, innen, rand = "#000", rw = 0, ra = 0) {
   T._n = (T._n || 0) + 1;
   const id = T.id("s" + T._n);
   T.def(`<path id="${id}" d="${d}"/><clipPath id="${id}c"><use href="#${id}"/></clipPath>`);
@@ -136,6 +136,25 @@ function fellRand(T, pts, n, len, br, fill, seite = 1, zug = 0, sz = 0.2) {
   }
   return `<path d="${d}" fill="${fill}"/>`;
 }
+/* Haarsaum entlang einer Kontur: feine, gebogene Haare, Ansatz innen, Spitze nach außen (Normale, seite ±1) und mit
+   Zug in Laufrichtung; Längen stark gemischt → weiche, haarige Kante statt Sägezahn. farben wie haare(). */
+function haarSaum(T, pts, n, len, farben, seite = 1, zug = 0, sz = 0.15) {
+  const z = Math.round(n * (T.fein === false ? sz : 1));
+  if (z < 4) return "";
+  const eimer = farben.map(() => ""), sum = farben.reduce((q, f) => q + f[1], 0);
+  for (let i = 0; i < z; i++) {
+    const t = (i + T.rnd()) / z * (pts.length - 1), k = Math.min(pts.length - 2, Math.floor(t)), f = t - k;
+    const a = pts[k], b = pts[k + 1], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, tx = (b[0] - a[0]) / l, ty = (b[1] - a[1]) / l;
+    const nx = ty * seite, ny = -tx * seite, L = len * (0.3 + T.rnd() * T.rnd() * 1.6);
+    const x = a[0] + (b[0] - a[0]) * f - nx * L * 0.35, y = a[1] + (b[1] - a[1]) * f - ny * L * 0.35;
+    const dx = nx + tx * zug + (T.rnd() - 0.5) * 0.6, dy = ny + ty * zug + (T.rnd() - 0.5) * 0.6, dl = Math.hypot(dx, dy) || 1;
+    const ex = dx / dl * L, ey = dy / dl * L, kk = (T.rnd() - 0.5) * L * 0.5;
+    let u = T.rnd() * sum, c = 0;
+    while (c < farben.length - 1 && u > farben[c][1]) { u -= farben[c][1]; c++; }
+    eimer[c] += `M${J(x, y)}q${J(ex / 2 - ey / L * kk, ey / 2 + ex / L * kk, ex, ey)}`;
+  }
+  return eimer.map((d, i) => (d ? `<path d="${d}" fill="none" stroke="${farben[i][0]}" stroke-width="${farben[i][2]}" stroke-opacity="${farben[i][3]}" stroke-linecap="round"/>` : "")).join("");
+}
 /* Federschuppen: versetzte Reihen kleiner Bögen (Federspitzen) in der Fläche pts.
    o: { b (Breite), h (Reihenabstand), t (Wölbung), farbe, w (Strich), op, winkel f(x,y) (Neigung, Grad),
         p f(x,y) → Wahrscheinlichkeit 0..1, sz (Anteil in der Szene, Standard 0) } */
@@ -195,13 +214,13 @@ const federn = (T, x, y, w, h, n, b, hh, dunkel, hell, opD, opH, dreh, op, wk = 
   (T.fein === false ? "" : `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${federMuster(T, n, b, hh, dunkel, hell, opD, opH, dreh)}"${wk ? ` filter="${wackel(T)}"` : ""}${op < 1 ? ` opacity="${op}"` : ""}${maske ? ` mask="${maske()}"` : ""}/>`);
 /* leichtes Verwackeln (Turbulenz-Verschiebung): Kachelmuster wirkt wie gewachsen, nicht gestempelt */
 function wackel(T) {
-  if (!T._wk) { T._wk = T.id("wk"); T.def(`<filter id="${T._wk}" x="-2%" y="-2%" width="104%" height="104%"><feTurbulence type="fractalNoise" baseFrequency=".22" numOctaves="2" seed="9"/><feDisplacementMap in="SourceGraphic" scale=".8" xChannelSelector="R" yChannelSelector="G"/></filter>`); }
+  if (!T._wk) { T._wk = T.id("wk"); T.def(`<filter id="${T._wk}" x="-2%" y="-2%" width="104%" height="104%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".22" numOctaves="2" seed="9"/><feDisplacementMap in="SourceGraphic" scale=".8" xChannelSelector="R" yChannelSelector="G"/></filter>`); }
   return `url(#${T._wk})`;
 }
 /* fleckige Maske aus Rauschen (Federn liegen mal glatt, mal gesträubt): Muster nur stellenweise sichtbar. Nur fein. */
 function rauschMaske(T, n, f, x, y, w, h, k = 3, mitte = 0.45, seed = 4) {
   const id = T.id("nm" + n);
-  T.def(`<filter id="${id}f" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency="${f}" numOctaves="2" seed="${seed}"/>` +
+  T.def(`<filter id="${id}f" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="${f}" numOctaves="2" seed="${seed}"/>` +
     `<feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 ${k} 0 0 0 ${Z2(-k * mitte)}"/></filter>` +
     `<mask id="${id}" maskUnits="userSpaceOnUse" x="${x}" y="${y}" width="${w}" height="${h}"><rect x="${x}" y="${y}" width="${w}" height="${h}" filter="url(#${id}f)"/></mask>`);
   return `url(#${id})`;
@@ -239,7 +258,7 @@ function weichForm(T, pts, farbe, op, sd) {
 function blur(T, sd) {
   const id = T.id("bl" + String(sd).replace(".", ""));
   T._bl = T._bl || new Set();
-  if (!T._bl.has(id)) { T._bl.add(id); T.def(`<filter id="${id}" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="${sd}"/></filter>`); }
+  if (!T._bl.has(id)) { T._bl.add(id); T.def(`<filter id="${id}" x="-150%" y="-150%" width="400%" height="400%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${sd}"/></filter>`); }
   return `url(#${id})`;
 }
 /* Röhre entlang einer Mittellinie (Zehe, Kralle, Haar-Büschel): Breite w0 → w1, Spitze rund */

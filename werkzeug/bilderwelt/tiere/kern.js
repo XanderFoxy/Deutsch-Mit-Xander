@@ -290,7 +290,9 @@ function setze(S, art, x, y, epm, o = {}) {
     /* Kontaktkern nach der kleineren Abmessung (Länge oder Höhe) – Zeichner Reptilien: „bei langen, flachen Tieren
        (Krokodil, Alligator, Python) entstehen große dunkle Scheiben unter dem Boden" */
     const kern = Math.min((x1 - x0) * 0.035, Math.abs(y1 - y0) * 0.09) * k;
-    if (fu) for (const f of fu) svg += `<ellipse cx="${r((f - mx) * k * dir)}" cy="${r((x1 - x0) * k * 0.002)}" rx="${r(Math.max(0.5, kern))}" ry="${r(Math.max(0.25, kern * 0.23))}" fill="#000" opacity=".38"/>`;
+    /* weich auslaufend statt harter grauer Scheibe (Zeichner Haustiere: „Kontaktschatten liegen als graue Scheiben unter den Pfoten") */
+    const gk = S._tkern || (S._tkern = S.rg("tkern", [[0, "#000", 0.42], [0.5, "#000", 0.2], [1, "#000", 0]]));
+    if (fu) for (const f of fu) svg += `<ellipse cx="${r((f - mx) * k * dir)}" cy="${r((x1 - x0) * k * 0.002)}" rx="${r(Math.max(0.5, kern))}" ry="${r(Math.max(0.25, kern * 0.23))}" fill="${gk}"/>`;
   }
   svg += `<g transform="scale(${r4(dir * k)} ${r4(k)}) translate(${r(-mx)} 0)">${z.svg}</g>`;
   const box = [(dir === 1 ? x0 - mx : -(x1 - mx)) * k, y0 * k, (dir === 1 ? x1 - mx : -(x0 - mx)) * k, y1 * k];

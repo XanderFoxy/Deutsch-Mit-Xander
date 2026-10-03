@@ -352,16 +352,20 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
         await zeichenSchicken(ZEICHEN); await tick(pg, 1200);
         /* bequem: der Acker ganz im Bild, die größte freie Tippfläche – ein Quadrat, in dem jeder Tipp den Acker trifft: auf dem
            Acker oder bis 10 px daneben (FASSUNG 874), dort kein Knopf, kein Zeichen, kein Haus, kein Baum */
-        const bequem = (nr) => fr.evaluate((nr) => {
+        const bequem = (nr, nurAcker) => fr.evaluate(([nr, nurAcker]) => {
           const K = STADT.kamera, SZ = STADT.szene, f = STADT.dorf.FELD_ORTE.find((q) => q.nr === nr), W = innerWidth, H = innerHeight;
           const P = (u, v) => { const p = STADT.proj((u + v) / 2, (v - u) / 2, 0); return [p[0] / K.dpr, p[1] / K.dpr]; };
           const ecken = [P(f.u0, f.v0), P(f.u1, f.v0), P(f.u1, f.v1), P(f.u0, f.v1)];
           const ganz = ecken.every((e) => e[0] >= 2 && e[1] >= 2 && e[0] <= W - 2 && e[1] <= H - 2);
           const abst = (x, y) => { let innen = true, d = 1e9; for (let i = 0; i < 4; i++) { const A = ecken[i], B = ecken[(i + 1) % 4], ex = B[0] - A[0], ey = B[1] - A[1], l2 = ex * ex + ey * ey || 1;
             if (ex * (y - A[1]) - ey * (x - A[0]) < 0) innen = false; const t = Math.max(0, Math.min(1, ((x - A[0]) * ex + (y - A[1]) * ey) / l2)); d = Math.min(d, Math.hypot(x - A[0] - ex * t, y - A[1] - ey * t)); } return innen ? 0 : d; };
-          /* (das eigene Zeichen des Ackers zählt mit: ein Tipp darauf erntet ihn) */
+          /* (das eigene Zeichen des Ackers zählt mit: ein Tipp darauf erntet ihn; fremde Knöpfe und Zeichen brauchen 10 px Luft –
+             das Handy rückt einen Tipp daneben auf den Knopf) */
+          const eigen = nurAcker ? null : document.querySelector('.lk-zeichen[data-g="feld' + nr + '"]');
+          const fremd = [...document.querySelectorAll("button, .lk-zeichen, .lk-kopfzeile > *")].filter((b) => b !== eigen && !(eigen && eigen.contains(b)) && getComputedStyle(b).display !== "none" && getComputedStyle(b).visibility !== "hidden").map((b) => b.getBoundingClientRect()).filter((r) => r.width > 0);
           const frei = (x, y) => { if (x < 0 || y < 0 || x > W || y > H) return false; const e = document.elementFromPoint(x, y); if (!e) return false;
-            if (e.closest && e.closest('.lk-zeichen[data-g="feld' + nr + '"]')) return true;
+            if (fremd.some((r) => x > r.left - 10 && x < r.right + 10 && y > r.top - 10 && y < r.bottom + 10)) return false;
+            if (eigen && e.closest && e.closest('.lk-zeichen[data-g="feld' + nr + '"]')) return true;
             return e.id === "lDinge" && abst(x, y) <= 9 && !SZ.treffer(x * K.dpr, y * K.dpr); };
           let best = null;
           const xs = ecken.map((e) => e[0]), ys = ecken.map((e) => e[1]);
@@ -371,25 +375,27 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
             if (!best || r > best.r) best = { x: Math.round(x), y: Math.round(y), r: r };
           }
           return { ganz: ganz, ecken: ecken.map((e) => e.map(Math.round)), seite: best ? 2 * best.r + 1 : 0, punkt: best };
-        }, nr);
+        }, [nr, !!nurAcker]);
         for (const nr of [92, 91]) {
           const bq = await bequem(nr);
-          sage(bq.ganz && bq.seite >= 16, "Überblick mit den Zeichen des Spiels: Acker " + nr + " liegt ganz im Bild, mit freier Tippfläche (Quadrat " + bq.seite + " px ≥ 16 px; kein fremdes Zeichen, Knopf, Haus oder Baum darin)", JSON.stringify(bq));
+          sage(bq.ganz && bq.seite >= 15, "Überblick mit den Zeichen des Spiels: Acker " + nr + " liegt ganz im Bild, mit freier Tippfläche (Quadrat " + bq.seite + " px ≥ 15 px, ein Finger darf ±7 px danebengehen; kein fremdes Zeichen oder Knopf bis 10 px daneben, kein Haus, kein Baum)", JSON.stringify(bq));
           await pg.evaluate(() => { window.__msgs.length = 0; });
+          if (process.env.DEBUG && bq.punkt) console.log("    (vor dem Tipp: " + JSON.stringify(await fr.evaluate((p) => { const e = document.elementFromPoint(p.x, p.y), K = STADT.kamera, o = STADT.szene.treffer(p.x * K.dpr, p.y * K.dpr); return { e: e && (e.id || e.className), o: o && (o.name || o.bild), zeichen: [...document.querySelectorAll(".lk-zeichen")].map((z) => { const r = z.getBoundingClientRect(); return z.dataset.g + ":" + [r.left, r.top, r.right, r.bottom].map(Math.round).join(","); }) }; }, bq.punkt)) + ")");
           if (bq.punkt) { await pg.touchscreen.tap(off.l + bq.punkt.x, off.t + bq.punkt.y); await tick(pg, 900); }
-          const ms = await pg.evaluate(() => window.__msgs.filter((m) => m && /^leicht-(feld|haus|baum)$/.test(m.typ)).map((m) => m.typ + ":" + (m.nr || m.g || "")));
+          const ms = await pg.evaluate(() => window.__msgs.filter((m) => m && /^leicht-(feld|haus|baum)$/.test(m.typ)).map((m) => m.typ + ":" + (m.nr || m.g || "") + (m.zeichen ? "(zeichen)" : "") + (m.klein ? "(klein)" : "")));
           sage(ms.length === 1 && ms[0] === "leicht-feld:" + nr, "… ein Tipp darauf erntet im Spiel (leicht-feld " + nr + ")", JSON.stringify(ms));
           await zeichenSchicken(ZEICHEN); await tick(pg, 3000);   // (das geerntete Zeichen kommt zurück, wie wenn das Spiel den alten Stand schickt)
         }
         if (BILD) await pg.screenshot({ path: path.join(BILD, "b-ueberblick-" + W + ".png"), clip: { x: 0, y: off.t - 10, width: W, height: H + 20 } });
         /* langes Drücken auf den rechten Acker im Überblick → Menü mit „Versetzen" im Rahmen */
         await fr.evaluate(() => { STADT.oberflaeche.langMs = 1200; });
-        const bq92 = await bequem(92);
+        const bq92 = await bequem(92, true);   // (auf dem Acker selbst, nicht auf seinem Zeichen)
         let lm = null;
         if (bq92.punkt) { const cdp = await ctx.newCDPSession(pg), t0 = Date.now() / 1000, x = off.l + bq92.punkt.x, y = off.t + bq92.punkt.y;
           await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: x, y: y, id: 1 }], timestamp: t0 }); await tick(pg, 2000);
           await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [], timestamp: t0 + 2.01 }); await tick(pg, 1200);
           lm = await karteInfo(fr); }
+        if (!lm) console.log("    (langes Drücken: " + JSON.stringify({ bq92, karte: await fr.evaluate(() => { const k = document.querySelector(".lk-karte"); return k ? { hidden: k.hidden, t: k.textContent.slice(0, 60) } : null; }), msgs: await pg.evaluate(() => window.__msgs.slice(-4)) }) + ")");
         sage(!!lm && /Getreidefeld/.test(lm.titel) && lm.vs && lm.drin, "langes Drücken auf den rechten Acker: Menü „Getreidefeld“ mit „Versetzen“, ganz im Rahmen", JSON.stringify(lm && { titel: lm.titel, vs: lm.vs, drin: lm.drin, r: lm.r }));
         if (BILD) await pg.screenshot({ path: path.join(BILD, "b-menue-" + W + ".png"), clip: { x: 0, y: off.t - 10, width: W, height: H + 20 } });
         /* versetzt (Beispielstadt: im Browser gemerkt) – Tipp am neuen Platz erntet, Zeichen dort, nach Neuladen noch dort */
@@ -402,7 +408,7 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
           const neu = await mitte(fr, 92);
           sage(!!ziel && p && !!neu && Math.hypot(neu[0] - ziel[0], neu[1] - ziel[1]) < 2.5, "im Rahmen versetzt: Acker 92 liegt am neuen Platz", JSON.stringify({ ziel, neu }));
           await fr.evaluate(() => { if (STADT.oberflaeche.zurStartAnsicht) STADT.oberflaeche.zurStartAnsicht(false); }); await tick(pg, 1500);
-          const bq2 = await bequem(92);
+          const bq2 = await bequem(92, true);
           await pg.evaluate(() => { window.__msgs.length = 0; });
           if (bq2.punkt) { await pg.touchscreen.tap(off.l + bq2.punkt.x, off.t + bq2.punkt.y); await tick(pg, 900); }
           const ms2 = await pg.evaluate(() => window.__msgs.filter((m) => m && /^leicht-(feld|haus|baum)$/.test(m.typ)).map((m) => m.typ + ":" + (m.nr || m.g || "")));

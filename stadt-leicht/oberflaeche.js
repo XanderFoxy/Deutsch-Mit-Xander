@@ -1026,8 +1026,9 @@
            („Fisch 2:10“) fast ganz über dem rechten Acker: ein Tipp dorthin angelte, statt zu ernten (360 × 225: über seiner
            linken Kante). Jetzt liegt kein Zeichen mehr über einem Acker – auch nicht über einem selbst versetzten. Es rückt
            unter, über oder neben den Acker, wohin es am wenigsten weit hat und wo es nichts zudeckt; nur das Zeichen des
-           Ackers selbst darf auf ihm stehen (ein Tipp darauf erntet ihn ja). */
-        const aecker = feldKaesten(W, K.H / K.dpr);
+           Ackers selbst darf auf ihm stehen (ein Tipp darauf erntet ihn ja). Dazu 10 px Luft (wie bei den Häusern, Fassung 829):
+           das Handy rückt einen Tipp neben einem Knopf auf den Knopf (so traf ein Tipp auf Acker 91 das Zeichen des Kuhstalls). */
+        const aecker = feldKaesten(W, K.H / K.dpr).map((a) => ({ nr: a.nr, l: a.l - 10, r: a.r + 10, o: a.o - 10, u: a.u + 10 }));
         if (aecker.length) for (const q of sicht) {
           const fremd = aecker.filter((a) => q.b.dataset.g !== "feld" + a.nr);
           const flaeche = (x, y, a) => Math.max(0, Math.min(x + q.w / 2, a.r) - Math.max(x - q.w / 2, a.l)) * Math.max(0, Math.min(y, a.u) - Math.max(y - q.h, a.o));
