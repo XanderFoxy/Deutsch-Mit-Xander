@@ -1014,9 +1014,9 @@ const STEGM = {};
     let g = "", ober = [], unter = [];
     const n = 52;
     for (let i = 0; i <= n; i++) { const t = i / n; ober.push(W(t, q, deck(t) + hoch(t))); unter.push(W(t, q, deck(t))); }
-    for (let i = 0; i < n; i++) {
-      g += `<path d="M${P(pr(...unter[i]))} L${P(pr(...ober[i]))} M${P(pr(...unter[i]))} L${P(pr(...ober[i + 1]))} M${P(pr(...ober[i]))} L${P(pr(...unter[i + 1]))}" stroke="${farbe}" stroke-width="${dicke * 0.3}" fill="none"/>`;
-    }
+    let f = "";
+    for (let i = 0; i < n; i++) f += `M${P(pr(...unter[i]))} L${P(pr(...ober[i]))} M${P(pr(...unter[i]))} L${P(pr(...ober[i + 1]))} M${P(pr(...ober[i]))} L${P(pr(...unter[i + 1]))} `;
+    g += `<path d="${f}" stroke="${farbe}" stroke-width="${r(dicke * 0.3)}" fill="none"/>`;
     g += `<path d="M${ober.map((p) => P(pr(...p))).join(" L")}" stroke="${farbe}" stroke-width="${dicke}" fill="none" stroke-linejoin="round"/>`;
     g += `<path d="M${unter.map((p) => P(pr(...p))).join(" L")}" stroke="${farbe}" stroke-width="${dicke * 1.3}" fill="none"/>`;
     return g;
@@ -1149,16 +1149,10 @@ const KELLNER = (() => { const th = -95.5 * Math.PI / 180, d = 9; return [CAM[0]
   }
   /* Straße mit parkenden Autos, Platanen am Straßenrand, Hecke */
   k += `<path d="${poly([...mauer.map(([x, y]) => [x, y, 6.5]), ...mauer.slice().reverse().map(([x, y]) => [x, y - 22, 6.5])])}" fill="#8d8c88"/>`;
-  for (let x = -420; x < -120; x += 6.5) {
-    if (rnd() < 0.25) continue;
-    const y = anX(SUED, x) - 19, f = ["#2f4f7a", "#b8473a", "#d8d8d4", "#3a3a3a", "#8a9aa8", "#e0c060"][Math.floor(rnd() * 6)];
-    k += turmSeiten([[x, y - 0.9], [x + 4.3, y - 0.9], [x + 4.3, y + 0.9], [x, y + 0.9]], 6.6, 7.6, f, f);
-    k += `<path d="${poly([[x + 1.1, y + 0.9, 7.6], [x + 3.3, y + 0.9, 7.6], [x + 3, y + 0.8, 8.2], [x + 1.4, y + 0.8, 8.2]])}" fill="#33404a"/>`;
-  }
   for (let x = -430; x < 140; x += 14) {
     const y = anX(SUED, x) - 16.5, f = pr(x, y, 6.5), s = mass(x, y);
     if (f[0] + 7 * s < 22 || f[0] > 340 || tief(x, y) < 5) continue;
-    k += platane(f[0], f[1], s * 0.9, 15 * s, 13 * s, "#b9cfe2", 7);
+    k += platane(f[0], f[1], s * 0.9, 15 * s, 13 * s, "#b9cfe2", 5);
   }
   k += `<path d="${poly([...mauer.map(([x, y]) => [x, y + 0.2, 6.5]), ...mauer.slice().reverse().map(([x, y]) => [x, y - 1, 7.4])])}" fill="#5f7a44"/>`;
   /* Ufermauer zur Straße (Sandstein), Boden der Promenade */

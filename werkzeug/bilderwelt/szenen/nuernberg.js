@@ -338,6 +338,7 @@ let choerleinPunkt = null;
   const DACH = ["#b4553c", "#9a4632", "#a84e36", "#8c3e2c"];
   /* Nordseite: d ≈ 95 m, Fuß bei y ≈ 126, 2,84 E/m; Schattengrenze bei ≈ 11,7 m */
   const D = 95, s = em(D), fuss = bodenY(D), grenze = fuss - 11.7 * s;
+  let lichter = "";
   const haus = (x, wm, hm, dm, opt) => {
     const w = wm * s, h = hm * s, dch = dm * s, top = fuss - h;
     const f = PUTZ[Math.floor(rnd() * PUTZ.length)];
@@ -357,14 +358,29 @@ let choerleinPunkt = null;
     const sp = Math.max(2, Math.round(wm / 2.6));
     for (let j = 0; j < Math.floor((hm - 4.4) / 3.2); j++) for (let i = 0; i < sp; i++) {
       const fx = x + (i + 0.3) * w / sp, fy = fuss - (5.6 + j * 3.2) * s - 1.6 * s;
-      g += `<rect x="${r(fx)}" y="${r(fy)}" width="${r(0.9 * s)}" height="${r(1.5 * s)}" fill="${rnd() < 0.3 ? LICHT : "#4a4250"}"/>`;
+      const an = rnd() < 0.3;
+      g += `<rect x="${r(fx)}" y="${r(fy)}" width="${r(0.9 * s)}" height="${r(1.5 * s)}" fill="${an ? LICHT : "#4a4250"}"/>`;
+      if (an && fy > grenze - 2) lichter += `<rect x="${r(fx)}" y="${r(fy)}" width="${r(0.9 * s)}" height="${r(1.5 * s)}" fill="${LICHT}" opacity=".75"/>`;
     }
     if (opt.choerlein) {
-      const cx = x + w * (opt.cl || 0.5), cy = fuss - 5.2 * s;
-      g += `<path d="M${r(cx - 1 * s)} ${r(cy)} L${r(cx + 1 * s)} ${r(cy)} L${r(cx + 0.7 * s)} ${r(cy + 0.9 * s)} L${r(cx - 0.7 * s)} ${r(cy + 0.9 * s)} Z" fill="#b07a5e"/>`;
-      g += `<rect x="${r(cx - 1 * s)}" y="${r(cy - 2.6 * s)}" width="${r(2 * s)}" height="${r(2.6 * s)}" fill="${S.lg("choer", [[0, "#e0a47c"], [1, "#a8705a"]], 0, 0, 1, 0)}"/>`;
-      g += `<rect x="${r(cx - 0.7 * s)}" y="${r(cy - 2.2 * s)}" width="${r(0.55 * s)}" height="${r(1.5 * s)}" fill="${LICHT}"/><rect x="${r(cx + 0.15 * s)}" y="${r(cy - 2.2 * s)}" width="${r(0.55 * s)}" height="${r(1.5 * s)}" fill="${LICHT}"/>`;
-      g += `<path d="M${r(cx - 1.15 * s)} ${r(cy - 2.6 * s)} L${r(cx)} ${r(cy - 4.6 * s)} L${r(cx + 1.15 * s)} ${r(cy - 2.6 * s)} Z" fill="${ZIEGEL_D}"/>`;
+      /* Chörlein: dreiseitiger Erker auf einer ausladenden Sandsteinkonsole, Brüstungsfeld, Fensterband, kleines Walmdach */
+      const gr = !!opt.gross, bw = (gr ? 2.6 : 1.9) * s, bh = (gr ? 3.5 : 2.6) * s, cx = x + w * (opt.cl || 0.5), cy = fuss - (gr ? 5.6 : 6) * s;
+      const fw = bw * 0.56, l = cx - bw / 2, rr = cx + bw / 2, fl = cx - fw / 2, fr = cx + fw / 2, top = cy - bh;
+      g += `<path d="M${r(l - 0.2)} ${r(cy)} L${r(rr + 0.2)} ${r(cy)} L${r(cx + bw * 0.34)} ${r(cy + 0.45 * s)} L${r(cx + bw * 0.16)} ${r(cy + 1.3 * s)} L${r(cx - bw * 0.16)} ${r(cy + 1.3 * s)} L${r(cx - bw * 0.34)} ${r(cy + 0.45 * s)} Z" fill="${S.lg("konsole", [[0, "#e8b48c"], [1, "#9a6a50"]], 0, 0, 1, 0)}"/>`;
+      g += `<path d="M${r(cx - bw * 0.34)} ${r(cy + 0.45 * s)} L${r(cx + bw * 0.34)} ${r(cy + 0.45 * s)} M${r(cx - bw * 0.25)} ${r(cy + 0.9 * s)} L${r(cx + bw * 0.25)} ${r(cy + 0.9 * s)}" stroke="#7a4a36" stroke-width=".3"/>`;
+      g += `<path d="M${r(l)} ${r(top)} L${r(fl)} ${r(top + 0.2)} L${r(fl)} ${r(cy + 0.2)} L${r(l)} ${r(cy)} Z" fill="#e2a47a"/>`;
+      g += `<rect x="${r(fl)}" y="${r(top + 0.2)}" width="${r(fw)}" height="${r(bh)}" fill="#f2c49a"/>`;
+      g += `<path d="M${r(fr)} ${r(top + 0.2)} L${r(rr)} ${r(top)} L${r(rr)} ${r(cy)} L${r(fr)} ${r(cy + 0.2)} Z" fill="#a8705a"/>`;
+      /* Brüstungsfeld mit Relief, darüber das Fensterband */
+      g += `<rect x="${r(fl + 0.3)}" y="${r(cy - bh * 0.34)}" width="${r(fw - 0.6)}" height="${r(bh * 0.26)}" fill="#dca882" stroke="#a8705a" stroke-width=".25"/>`;
+      if (gr) g += `<path d="M${r(cx - fw * 0.3)} ${r(cy - bh * 0.2)} q${r(fw * 0.15)} ${r(-bh * 0.12)} ${r(fw * 0.3)} 0 t${r(fw * 0.3)} 0" stroke="#a8705a" stroke-width=".3" fill="none"/>`;
+      const ok = cy - bh * 0.9, uk = cy - bh * 0.42, n = gr ? 3 : 2;
+      for (let i = 0; i < n; i++) { const wx = fl + 0.3 + i * (fw - 0.6) / n; g += `<rect x="${r(wx + 0.15)}" y="${r(ok)}" width="${r((fw - 0.6) / n - 0.3)}" height="${r(uk - ok)}" fill="${i === 1 ? LICHT : "#5a5068"}"/>`; }
+      g += `<path d="M${r(l + 0.3)} ${r(ok + 0.1)} L${r(fl - 0.3)} ${r(ok + 0.25)} L${r(fl - 0.3)} ${r(uk + 0.2)} L${r(l + 0.3)} ${r(uk)} Z" fill="#5a5068"/><path d="M${r(fr + 0.3)} ${r(ok + 0.25)} L${r(rr - 0.3)} ${r(ok + 0.1)} L${r(rr - 0.3)} ${r(uk)} L${r(fr + 0.3)} ${r(uk + 0.2)} Z" fill="#3e3648"/>`;
+      g += `<path d="M${r(fl)} ${r(top + 0.2)} L${r(fl)} ${r(cy + 0.2)}" stroke="#ffe2c0" stroke-width=".3"/>`;
+      /* Walmdach */
+      g += `<path d="M${r(l - 0.5)} ${r(top + 0.1)} L${r(cx - fw * 0.22)} ${r(top - 1.5 * s)} L${r(cx + fw * 0.22)} ${r(top - 1.5 * s)} L${r(rr + 0.5)} ${r(top + 0.1)} Z" fill="${ZIEGEL_D}"/>`;
+      g += `<path d="M${r(fl)} ${r(top + 0.3)} L${r(cx - fw * 0.22)} ${r(top - 1.5 * s)} L${r(cx + fw * 0.22)} ${r(top - 1.5 * s)} L${r(fr)} ${r(top + 0.3)} Z" fill="#b4553c"/>`;
       if (!choerleinPunkt) choerleinPunkt = [cx, cy];
     }
     /* Dach: giebelständig mit Aufzugsgaube oder traufständig mit Zwerchhaus */
@@ -389,16 +405,17 @@ let choerleinPunkt = null;
     return g;
   };
   let nord = "";
-  const plan = [[68, 13, 15, 8, { giebel: true, choerlein: true }], [0, 11, 14, 9, { giebel: false, fach: true }], [0, 12, 16, 8, { giebel: true, choerlein: true, cl: 0.3 }], [0, 14, 15, 7, { giebel: false, choerlein: true }],
-    [0, 10, 14, 9, { giebel: true, fach: true }], [0, 13, 16, 8, { giebel: false, choerlein: true, cl: 0.7 }], [0, 12, 15, 9, { giebel: true, choerlein: true }], [0, 11, 14, 8, { giebel: false }]];
+  const plan = [[68, 13, 15, 8, { giebel: true, choerlein: true, gross: true }], [0, 11, 14, 9, { giebel: false }], [0, 12, 16, 8, { giebel: true, choerlein: true, cl: 0.3 }], [0, 14, 15, 7, { giebel: false, choerlein: true }],
+    [0, 10, 14, 9, { giebel: true }], [0, 13, 16, 8, { giebel: false, choerlein: true, cl: 0.7 }], [0, 12, 15, 9, { giebel: true, choerlein: true }], [0, 11, 14, 8, { giebel: false }]];
   let x = 68;
   for (const [, wm, hm, dm, opt] of plan) { if (x > 318) break; nord += haus(x, Math.min(wm, (320 - x) / s), hm, dm, opt); x = Math.min(320, x + wm * s + 0.2); }
   /* der Schatten der Häuser hinter uns (Sonne knapp über den Dächern) */
   /* Schattengrenze: gezackt wie die Dächer der Häuser hinter uns */
-  let zack = `M68 ${r(fuss)} L68 ${r(grenze + 3)}`;
-  for (let xx = 68; xx < x; xx += 9 + rnd() * 8) { const hgt = grenze + (rnd() - 0.5) * 8; zack += ` L${r(xx + 2)} ${r(hgt)} L${r(xx + 5)} ${r(hgt - 3 - rnd() * 3)} L${r(xx + 8)} ${r(hgt)}`; }
+  /* durch eine Gasse hinter uns fällt die Sonne noch tief auf das erste Haus: dort leuchtet das Chörlein */
+  let zack = `M68 ${r(fuss)} L68 ${r(fuss - 3.4 * s)} L102 ${r(fuss - 3.4 * s)} L106 ${r(grenze + 2)}`;
+  for (let xx = 106; xx < x; xx += 9 + rnd() * 8) { const hgt = grenze + (rnd() - 0.5) * 8; zack += ` L${r(xx + 2)} ${r(hgt)} L${r(xx + 5)} ${r(hgt - 3 - rnd() * 3)} L${r(xx + 8)} ${r(hgt)}`; }
   zack += ` L${r(x)} ${r(grenze)} L${r(x)} ${r(fuss)} Z`;
-  nord += `<path d="${zack}" fill="${SCHATTEN}" opacity=".26"/>`;
+  nord += `<path d="${zack}" fill="#4a4470" opacity=".33"/>` + lichter;
   /* Westseite: traufständige Häuser, Fassaden schauen nach Osten (ganz im Schatten), sie fluchten zum Augpunkt */
   let west = "";
   const Lw = -30;
@@ -426,11 +443,11 @@ let choerleinPunkt = null;
   k += west + nord;
   const AX = 196, AY = 84;
   S.teil({ id: "altstadt", de: "die Altstadt", syl: "ALT-stadt", it: "il centro storico", itSyl: "CEN-tro STO-ri-co", en: "old town",
-    x: AX, y: AY, kunst: anker(AX, AY, k), tipp: "Viele Nürnberger Häuser haben unten Sandstein, oben Putz oder Fachwerk und kleine Erker – die Chörlein.",
+    x: AX, y: AY, kunst: anker(AX, AY, k), tipp: "Viele Nürnberger Häuser haben unten Sandstein, oben Putz und kleine Erker – die Chörlein.",
     zoom: { x: 60, y: 62, w: 120, h: 66 },
     unter: [
       { id: "choerlein", de: "das Chörlein", syl: "CHÖR-lein", it: "il bovindo (l'erker)", itSyl: "bo-VIN-do", en: "oriel window", x: choerleinPunkt[0], y: choerleinPunkt[1] + 1 * em(95), kunst: flaeche(-2.2 * em(95), -5.8 * em(95), 4.4 * em(95), 6 * em(95)),
-        tipp: "Ein Chörlein ist ein kleiner Erker. Von dort sah man früher auf die Straße, ohne gesehen zu werden." },
+        tipp: "Ein Chörlein ist ein kleiner Erker. Von dort sieht man die Straße hinauf und hinunter." },
     ] });
 }
 
