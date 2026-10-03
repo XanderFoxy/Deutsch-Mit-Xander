@@ -227,6 +227,11 @@ function laubBusch(cx, cy, rx, ry) {
   for (let i = 0; i < 3; i++) { const x = cx + rx * (0.2 + rnd() * 0.5), y = cy + ry * (0.1 + rnd() * 0.5); g += `<path d="${wellig(x, y, rx * 0.22, ry * 0.2, 6)}" fill="#5a2a0e" opacity=".7"/>`; }
   return g;
 }
+const kuppe = (cx, cy, q, dunkel) => {
+  const P0 = dunkel ? ["#3a2410", "#7a4a1e", "#b07a34"] : ["#5a3212", "#a85e24", "#e0a040"];
+  return `<path d="${wellig(cx + q * 0.08, cy + q * 0.1, q, q * 0.72, 9)}" fill="${P0[0]}"/><path d="${wellig(cx - q * 0.14, cy - q * 0.14, q * 0.74, q * 0.52, 8)}" fill="${P0[1]}"/><path d="${wellig(cx - q * 0.34, cy - q * 0.3, q * 0.34, q * 0.24, 6)}" fill="${P0[2]}"/>`;
+};
+const sternFichte = (cx, cy, q) => { let g = ""; for (const [f, rr] of [["#1e3424", 1], ["#2c4a32", 0.72], ["#46684a", 0.42]]) { let d = ""; for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2 + rr, rad = (i % 2 ? 0.78 : 1) * q * rr * (0.9 + rnd() * 0.2); d += (i ? " L" : "M") + `${r(cx + Math.cos(a) * rad)} ${r(cy + Math.sin(a) * rad * 0.7)}`; } g += `<path d="${d} Z" fill="${f}"/>`; } return g + `<circle cx="${r(cx - q * 0.1)}" cy="${r(cy - q * 0.08)}" r="${r(q * 0.12)}" fill="#7a9a6a"/>`; };
 const BUCHE_PAL = ["#f0bf5a", "#d48d2e", "#a85a22", "#6e3a16"], LAERCHE_PAL = ["#f2d36a", "#d8b03e", "#a88a2a", "#6e5a1a"], AHORN_PAL = ["#f0a050", "#d4642a", "#a43c1e", "#6a2412"];
 const drin = (x, y, pg) => {
   let c = false;
@@ -396,10 +401,14 @@ const FELS_U = [[-20, -30, -46], [-10, -33, -44], [2, -34, -38], [14, -33, -28],
 const WALDKANTE = [...FELS_U, ...[[64, -27.4, -11], [80, -26.6, -12], [98, -26, -13], [112, -25, -13], [115, -6, -13], [117, 14, -16]].map(([u, v, z]) => C(u, v, z))];
 /* Die Pöllatschlucht von der Brücke aus: die Kerbe (tiefster, dunkelster Bereich) läuft von unten Mitte nach
    links oben unter die Palaswand und weiter ins Tal. Rechts unten der diesseitige Hang direkt unter uns. */
-const KERBE = [[184, 262], [160, 252], [132, 242], [108, 233], [90, 226]];
-const KEIL_L = [[132, 262], [118, 250], [104, 238], [94, 230], [86, 224]], KEIL_R = [[86, 224], [104, 232], [140, 241], [180, 249], [214, 256], [238, 262]];
+/* KERBE = Sohle des V (der Bach), KEIL_L/KEIL_R = Oberkanten der beiden Steilwände. Die Kerbe beginnt schon ÜBER dem
+   Handlauf direkt unter der Palaswand (Spitze am Felsfuß) und öffnet sich nach unten Mitte. */
+const KERBE = [[176, 262], [158, 254], [140, 246], [124, 238], [112, 227], [104, 214], [98, 201], [94, 190], [91, 181]];
+const KEIL_L = [[132, 262], [118, 250], [107, 238], [100, 226], [95, 212], [91, 198], [88, 188], [89, 178]];
+const KEIL_R = [[89, 178], [97, 185], [104, 196], [112, 210], [122, 224], [146, 238], [180, 248], [214, 256], [238, 262]];
 const NAH_OBEN = [[238, 262], [246, 244], [260, 226], [278, 207], [302, 191], [332, 180], [366, 173], [401, 168]];
-const LINKS_OBEN = [[86, 224], [62, 222], [34, 220], [-1, 219]];
+/* Oberkante des diesseitigen Westhangs links: unregelmäßig, fällt nach rechts zur Kerbe ab */
+const LINKS_OBEN = [[95, 212], [84, 205], [70, 208], [54, 201], [38, 204], [22, 198], [8, 201], [-1, 199]];
 
 /* =====================================================================
    4 — DER FELSEN (senkrechte Kalkwände unter Palas, Kemenate und Torbau)
@@ -845,11 +854,6 @@ const STRASSE = [[402, 161], [374, 158], [346, 156], [320, 154.6], [300, 153.6]]
    11 — DIE SCHLUCHT: die dunkle Kerbe mit dem Bachfaden, links und rechts
         die Hänge direkt unter uns (Kronen von oben). Lupe: der Bach
    ===================================================================== */
-const kuppe = (cx, cy, q, dunkel) => {
-  const P0 = dunkel ? ["#3a2410", "#7a4a1e", "#b07a34"] : ["#5a3212", "#a85e24", "#e0a040"];
-  return `<path d="${wellig(cx + q * 0.08, cy + q * 0.1, q, q * 0.72, 9)}" fill="${P0[0]}"/><path d="${wellig(cx - q * 0.14, cy - q * 0.14, q * 0.74, q * 0.52, 8)}" fill="${P0[1]}"/><path d="${wellig(cx - q * 0.34, cy - q * 0.3, q * 0.34, q * 0.24, 6)}" fill="${P0[2]}"/>`;
-};
-const sternFichte = (cx, cy, q) => { let g = ""; for (const [f, rr] of [["#1e3424", 1], ["#2c4a32", 0.72], ["#46684a", 0.42]]) { let d = ""; for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2 + rr, rad = (i % 2 ? 0.78 : 1) * q * rr * (0.9 + rnd() * 0.2); d += (i ? " L" : "M") + `${r(cx + Math.cos(a) * rad)} ${r(cy + Math.sin(a) * rad * 0.7)}`; } g += `<path d="${d} Z" fill="${f}"/>`; } return g + `<circle cx="${r(cx - q * 0.1)}" cy="${r(cy - q * 0.08)}" r="${r(q * 0.12)}" fill="#7a9a6a"/>`; };
 {
   let k = "";
   /* diesseits links (Westufer unter der Brücke, im Schatten) und rechts (Ostufer, Licht von links) */

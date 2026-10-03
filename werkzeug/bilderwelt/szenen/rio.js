@@ -196,6 +196,10 @@ const CX = 88, CY = 27;   /* Oberkante der Aussichtsplattform = Fuß des Sockels
   k += `<path d="M${pts(fels)} Z" fill="${S.lg("granit", [[0, "#858179"], [0.55, "#aca596"], [1, "#d8cfba"]], 0, 0, 1, 0)}"/>`;
   let str = "";
   for (let i = 0; i < 11; i++) { const x = 87.4 + i * 0.75 + (rnd() - 0.5) * 0.4, y = 29.2 + Math.max(0, (88.6 - x)) * 1.4 + rnd() * 1.2, l = 3 + rnd() * (6 + (x - 87) * 2.2); str += `M${r(x)} ${r(y)} q${r(0.15 + rnd() * 0.3)} ${r(l / 2)} ${r(0.3 + rnd() * 0.5)} ${r(l)}`; }
+  /* Gipfelfels: Risse im Gneis, rechts eine lichte Kante, links Schatten; Baumkronen schauen über die Kante */
+  k += `<path d="M84.6 27.6 L87.4 27.6 L87.2 31 L85.8 31.8 L84.8 30.5 L83.5 29.7 Z" fill="#4f4b45" opacity=".35"/>`;
+  k += `<path d="M86.2 27.7 l.5 1.6 l-.3 1.3 M89.4 27.6 l.3 1.9 l.4 1.1 M90.6 27.7 l-.4 1.4 l.3 1.6" stroke="#5f5b54" stroke-width=".14" fill="none"/><path d="M91.3 27.6 L92.4 29.4 L93.4 33" stroke="#f1e8d4" stroke-width=".22" fill="none"/>`;
+  k += `<path d="M82.3 30.9 q.1 -.9 .8 -.9 q.3 -.6 .9 -.4 q.5 -.4 .9 .1 q.5 .2 .3 .8 q.3 .6 -.3 .9 q-1.4 .5 -2.6 -.5 Z M83.6 29.2 q.1 -.6 .7 -.6 q.4 -.3 .7 .1 q.4 .3 .1 .7 q-.8 .4 -1.5 -.2 Z" fill="#2f5a3a"/>`;
   S.def(`<clipPath id="${S.id("felsclip")}"><path d="M${pts(fels)} Z"/></clipPath>`);
   k += `<path d="${str}" stroke="#5f5c56" stroke-width=".3" fill="none" opacity=".5" clip-path="url(#${S.id("felsclip")})"/>`;
   /* Waldkante am Umriss: deckende Kronen unregelmäßiger Größe */
@@ -219,6 +223,8 @@ const CX = 88, CY = 27;   /* Oberkante der Aussichtsplattform = Fuß des Sockels
   k += `<path d="M${M(-15.4)} 0 L${M(15.4)} 0" stroke="#8f897c" stroke-width=".06"/>`;
   k += `<path d="M${M(-15.2)} ${M(-1.1)} L${M(15.2)} ${M(-1.1)}" stroke="#7f7a70" stroke-width=".05"/>`;
   for (let x = -15; x <= 15; x += 2.5) k += `<line x1="${M(x)}" y1="0" x2="${M(x)}" y2="${M(-1.1)}" stroke="#7f7a70" stroke-width=".035"/>`;
+  /* seitliche Treppenzugänge am Plattformsockel */
+  for (const sg of [-1, 1]) { let tr = ""; for (let i = 0; i < 5; i++) tr += `M${M(sg * (14.6 - i * 0.7))} ${M(3.2 - i * 0.64)}h${M(-sg * 0.7)}`; k += `<path d="${tr}" stroke="#8f897c" stroke-width=".05" fill="none"/>`; }
   /* Sockel (8 m): Art-déco-Block, oben gestuft, senkrechte Rillen, Kapellentür */
   k += `<path d="M${M(-3.6)} 0 L${M(-3.2)} ${M(-6.6)} L${M(3.2)} ${M(-6.6)} L${M(3.6)} 0 Z" fill="${L}"/>`;
   k += `<rect x="${M(-3.5)}" y="${M(-7.4)}" width="${M(7)}" height="${M(0.8)}" fill="#f2efe6"/><rect x="${M(-3)}" y="${M(-8)}" width="${M(6)}" height="${M(0.6)}" fill="#dcd7ca"/>`;
@@ -276,7 +282,7 @@ const CX = 88, CY = 27;   /* Oberkante der Aussichtsplattform = Fuß des Sockels
   for (const [x, c, h] of [[-13.4, "#d24a3c", 1.7], [-12.5, "#2f6fb0", 1.6], [-10.2, "#f0c040", 1.75], [-9.5, "#ffffff", 1.35], [7.6, "#3a8a4a", 1.7], [10.3, "#ffffff", 1.65], [11.1, "#c43a8a", 1.55], [13.8, "#2f6fb0", 1.75]]) besucher += `<path d="M${M(x - 0.25)} ${M(-0.75)} L${M(x - 0.22)} ${M(-h + 0.42)} Q${M(x)} ${M(-h + 0.32)} ${M(x + 0.22)} ${M(-h + 0.42)} L${M(x + 0.25)} ${M(-0.75)} Z" fill="${c}"/><circle cx="${M(x)}" cy="${M(-h + 0.17)}" r="${M(0.15)}" fill="${x > 0 ? "#6b4a32" : "#3a2a1e"}"/>`;
   /* Wolkenfetzen unterhalb der Plattform: man spürt die Höhe */
   const WF = S.rg("wolkenfetzen", [[0, "#ffffff", 0.85], [0.6, "#ffffff", 0.45], [1, "#ffffff", 0]]);
-  for (const [x, y, w] of [[-24, 8, 7], [22, 10, 8], [-30, 14, 5]]) k += `<ellipse cx="${M(x)}" cy="${M(y)}" rx="${M(w)}" ry="${M(w * 0.22)}" fill="${WF}"/>`;
+  for (const [x, y, w] of [[-12, 9, 7], [13, 12, 8], [-26, 15, 5]]) k += `<ellipse cx="${M(x)}" cy="${M(y)}" rx="${M(w)}" ry="${M(w * 0.22)}" fill="${WF}"/>`;
   const unterC = [
     { id: "arm", de: "der Arm", syl: "ARM", it: "il braccio", itSyl: "BRAC-cio", en: "arm", x: CX + M(aL * 0.55), y: CY + M(yd + 1.6), kunst: flaeche(M(aL * 0.5 - 0.7), M(-4.6), M(-aL * 0.9), M(5), 0.15),
       tipp: "Von einer Hand bis zur anderen sind es 28 Meter." },
