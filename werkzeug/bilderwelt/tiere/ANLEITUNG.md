@@ -116,3 +116,32 @@ Tafeln, Museumsillustration), nicht Clipart.
    jede Note ≥ 9. Im Zweifel: nicht OK.“
 4. Mängel beheben, neu rendern, **wieder einen frischen Kritiker** fragen – bis OK (höchstens 5 Runden; danach die
    verbleibenden Mängel ehrlich melden).
+
+## Kritiker-Ablauf (gilt ab sofort) und die häufigsten Mängel aus Runde 1
+
+Subagenten haben kein Agent-Werkzeug. Den unabhängigen Kritiker startet der Hauptlauf: Die Gruppe meldet je Art die
+frisch gerenderten Pfade (`<id>.png`, `<id>-kopf.png`), der Hauptlauf lässt je Art einen Kritiker urteilen und schickt die
+Mängelliste (Datei in `scratchpad/kritik/<id>-r<N>.md`) zurück; dann neue Runde, bis alle Noten ≥ 9 (höchstens 5 Runden).
+
+Die fünf Raubsaurier bekamen in Runde 1 nur 2–7 von 10. Fast alle Mängel wiederholen sich – vor der Meldung selbst prüfen:
+1. **Beine als Säulen**: Hinterbeine von Zweibeinern/Vögeln/Laufvögeln und von digitigraden Säugern sind ein Z – Oberschenkel
+   schräg nach vorn, Knie, Unterschenkel schräg nach hinten, sichtbare Ferse (Sprunggelenk), Mittelfuß steil nach vorn,
+   nur die Zehen am Boden, Zehen einzeln mit Ballen/Schildern. Nie ein senkrechtes Oval-auf-Oval.
+2. **Ferne Gliedmaßen als schwarze Silhouette**: im Körperton, nur 25–30 % dunkler, Form und Textur sichtbar.
+3. **Keine Lichtrichtung**: EIN Licht oben links (vorn). Rückenkante hell, Kernschatten-Band im unteren Rumpfdrittel
+   (−30…−35 %), Bodenreflex am Bauch (+10 %), Okklusion an Ansätzen (Hals/Kopf, Arm, Bein), Schlagschatten (Kopf auf Hals,
+   Arm auf Brust). Keine zufälligen hellen „Airbrush-Flecken“.
+4. **Umrisslinien** um Teile (Arm, Kopf) wirken wie Aufkleber/Papierschnitt – weg; Teile in Körperfarbe, Übergänge weich.
+5. **Rauschen/Relief als Sandpapier**: Kontrast −50…−60 %, voll nur am Terminator; dafür gezeichnete Struktur in
+   Hierarchie (große Schilde/Scuta auf Rücken und Gesicht, mittlere an der Flanke, feine am Bauch; Fell: Strähnen in
+   Wuchsrichtung). Keine hellen „Risslinien“.
+6. **Augen zu klein, ohne Höhle**: Auge in einer Augenhöhle, Brauen-/Knochenwulst wirft Schatten auf das obere Drittel,
+   dicker Lidrand, Glanzpunkt; Größe nach Referenz (meist größer als gedacht).
+7. **Zähne als Pünktchen/Sägedreiecke**: echte Kegel, nach hinten gekrümmt, Größenfolge, Elfenbein mit dunklerer Basis,
+   Lippen/Zahnfleisch verdecken die Basis teilweise; Rachen nach hinten dunkel.
+8. **Kopfproportion**: an Schädelmaßen messen (z. B. T. rex Schädel ≈ 11,5 % der Länge, L:H ≈ 1,6).
+9. **Bodenschatten**: macht `setze()` jetzt selbst – gib in zeichne() `fuesse: [x, …]` (cm, Mitte jedes Fußes am Boden)
+   zurück, dann liegt der weiche Schatten genau unter den Füßen mit Kontaktkernen. Eigene Schattenellipsen weglassen.
+10. **Kopf-Ausschnitt**: gib `kopf: [x0, y0, x1, y1]` (cm) zurück, dann zeigt `<id>-kopf.png` genau den Kopf.
+11. **Klein in der Szene**: gleiche Farbwerte wie groß (kein Plastikglanz), Kopf/Auge/Krallen hell absetzen, die dunkelste
+    Masse nicht im Schwanz.

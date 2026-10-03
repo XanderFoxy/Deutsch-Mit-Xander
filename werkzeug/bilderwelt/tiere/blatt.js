@@ -32,7 +32,7 @@ if (nur && !gross) {
 if (!arten.length) { console.error("keine Arten"); process.exit(1); }
 
 const S = neueSzene({ id: "tierblatt", kuerzel: "tb", titel: "Tiere", emoji: "", thema: "", fassung: 854 });
-let inhalt = "", W, H;
+let inhalt = "", W, H, kopfBox = null, gx = 0, gy = 0, gk = 1, gmx = 0;
 const schrift = `font-family="Nunito, Arial, sans-serif"`;
 const T_HG = "#ece6da";
 
@@ -41,6 +41,8 @@ if (gross) {
   const k = Math.min(1500 / a.laenge, 900 / a.hoehe);
   W = 1600; H = Math.round(a.hoehe * k + 80);
   const s1 = setze(S, a, W / 2, H - 40, k, { praefix: a.id });
+  { const S3 = neueSzene({ id: "x", kuerzel: "x" }); const z = a.zeichne(require("./kern").werkzeug(S3, a.id)); kopfBox = z.kopf || null; gmx = (z.box[0] + z.box[2]) / 2; }
+  gx = W / 2; gy = H - 40; gk = k / 100;
   inhalt = `<rect width="${W}" height="${H}" fill="${T_HG}"/>` + s1.svg;
   /* klein wie in einer Szene: 1 m = 30 Einheiten, ohne Feinheit, rechts unten eingeblendet */
   const s2 = setze(S, a, W - 20 - a.laenge * 15, H - 12, 30, { praefix: a.id + "_sz", fein: false });
@@ -101,7 +103,15 @@ const html = `<!doctype html><html><head><style>body{margin:0;background:#fff}sv
     await pg.setViewportSize({ width: breitePx, height: hPx });
     const pg2 = await br.newPage({ viewport: { width: breitePx, height: hPx }, deviceScaleFactor: 2 });
     await pg2.setContent(html);
-    await pg2.screenshot({ path: aus.replace(/\.png$/, "") + "-kopf.png", clip: { x: Math.round(breitePx * 0.58), y: 0, width: Math.round(breitePx * 0.42), height: Math.round(hPx * 0.7) } });
+    /* FASSUNG 854 — gibt zeichne() z.kopf = [x0, y0, x1, y1] (cm) zurück, wird genau dieser Bereich (mit Rand) gezeigt
+       (Kritiker Pteranodon: „das Kopf-Bild zeigt nur die Schnabelspitze") */
+    let clip = { x: Math.round(breitePx * 0.58), y: 0, width: Math.round(breitePx * 0.42), height: Math.round(hPx * 0.7) };
+    if (kopfBox) {
+      const px = breitePx / W, [a, b, c, d] = kopfBox, rand = 0.12 * Math.max(c - a, d - b);
+      const X0 = (gx + (a - rand - gmx) * gk) * px, X1 = (gx + (c + rand - gmx) * gk) * px, Y0 = (gy + (b - rand) * gk) * px, Y1 = (gy + (d + rand) * gk) * px;
+      clip = { x: Math.max(0, Math.round(X0)), y: Math.max(0, Math.round(Y0)), width: Math.round(Math.min(breitePx, X1) - Math.max(0, X0)), height: Math.round(Math.min(hPx, Y1) - Math.max(0, Y0)) };
+    }
+    await pg2.screenshot({ path: aus.replace(/\.png$/, "") + "-kopf.png", clip });
   }
   await br.close();
   const groesse = (a, fein) => { const S2 = neueSzene({ id: "x", kuerzel: "x" }); const T = require("./kern").werkzeug(S2, a.id); T.fein = fein; return a.zeichne(T).svg.length + S2.defs.join("").length; };
