@@ -61,7 +61,7 @@ S.hinten(`<rect x="0" y="14" width="320" height="${WAND_UNTEN - 14}" fill="${S.l
   k += `<rect x="0" y="${WAND_UNTEN - 3}" width="320" height="3" fill="#1d2a28"/>`;
   /* Poster und Schilder */
   k += `<rect x="248" y="26" width="58" height="9" rx="1" fill="#d8b04a"/><text x="277" y="32.6" font-size="5" text-anchor="middle" fill="#2a1a10" font-family="Georgia,serif" font-weight="bold">Drums</text>`;
-  k += `<rect x="152" y="18" width="80" height="7" rx="1" fill="#d8b04a"/><text x="192" y="23.4" font-size="4.4" text-anchor="middle" fill="#2a1a10" font-family="Georgia,serif" font-weight="bold">Blasinstrumente</text>`;
+  k += `<rect x="164" y="18" width="76" height="7" rx="1" fill="#d8b04a"/><text x="202" y="23.4" font-size="4.4" text-anchor="middle" fill="#2a1a10" font-family="Georgia,serif" font-weight="bold">Blasinstrumente</text>`;
   k += `<rect x="6" y="14" width="70" height="6" fill="#2a1a10"/><text x="41" y="18.6" font-size="4" text-anchor="middle" fill="#d8b04a" font-family="Georgia,serif" font-weight="bold" letter-spacing=".6">GITARREN</text>`;
   S.hinten(k);
 }
@@ -147,7 +147,7 @@ const geige = (s) => {
   /* Bögen an einer Leiste daneben */
   k += `<rect x="26" y="-1" width="1.2" height="26" fill="#333"/><line x1="24" y1="0" x2="24" y2="25" stroke="#5a3210" stroke-width=".5"/><line x1="25" y1="0" x2="25" y2="25" stroke="#e8e0c8" stroke-width=".3"/>`;
   k += preis(0, 27, "ab 189 €");
-  S.teil({ id: "geige", de: "die Geige", syl: "GEI-ge", it: "il violino", itSyl: "vio-LI-no", en: "violin", x: 108, y: 30, kunst: k,
+  S.teil({ id: "geige", de: "die Geige", syl: "GEI-ge", it: "il violino", itSyl: "vio-LI-no", en: "violin", x: 126, y: 30, kunst: k,
     tipp: "Die Geige spielt man mit einem Bogen. Man sagt auch „Violine“." });
 }
 
@@ -174,7 +174,7 @@ const geige = (s) => {
   k += `<path d="M${-W / 2 + 2} ${-H + 2} L${-W / 2 + 12} ${-H + 2} L${-W / 2 + 2} -6 Z" fill="#fff" opacity=".05"/>`;
   /* Klavierbank davor */
   k += `<rect x="-14" y="-17" width="28" height="3.4" rx=".8" fill="#1d1f22"/><rect x="-12" y="-14" width="2" height="14" fill="#0b0c0e"/><rect x="10" y="-14" width="2" height="14" fill="#0b0c0e"/>`;
-  S.teil({ id: "klavier", de: "das Klavier", syl: "Kla-VIER", it: "il pianoforte", itSyl: "pia-no-FOR-te", en: "piano", x: 112, y: 132, steht: true, kunst: k,
+  S.teil({ id: "klavier", de: "das Klavier", syl: "Kla-VIER", it: "il pianoforte", itSyl: "pia-no-FOR-te", en: "piano", x: 130, y: 132, steht: true, kunst: k,
     tipp: "Das Klavier hat 88 Tasten – weiße und schwarze." });
 }
 {
@@ -182,7 +182,7 @@ const geige = (s) => {
   k += `<path d="M-3.4 0 L3.4 0 L1.4 -10 L-1.4 -10 Z" fill="${S.lg("metronom", [[0, "#8a4a22"], [1, "#5a2e12"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M-2.2 -1.4 L2.2 -1.4 L1 -8.6 L-1 -8.6 Z" fill="#f2e6c8"/>`;
   k += `<line x1="0" y1="-2" x2="1.8" y2="-9.4" stroke="${CHROM}" stroke-width=".35"/><rect x="1" y="-7.4" width="1" height="1" fill="${MESSING}"/>`;
-  S.teil({ oben: true, id: "metronom", de: "das Metronom", syl: "Me-tro-NOM", it: "il metronomo", itSyl: "me-TRO-no-mo", en: "metronome", x: 132, y: 81.4, steht: true, kunst: k,
+  S.teil({ oben: true, id: "metronom", de: "das Metronom", syl: "Me-tro-NOM", it: "il metronomo", itSyl: "me-TRO-no-mo", en: "metronome", x: 150, y: 81.4, steht: true, kunst: k,
     tipp: "Das Metronom tickt im Takt und hilft beim Üben." });
 }
 
@@ -190,7 +190,7 @@ const geige = (s) => {
    6 — DAS REGAL mit Glasböden (Blasinstrumente) — Lupe: Trompete,
        Saxofon, Querflöte, Klarinette, Blockflöte, Mundharmonika, Triangel
    ===================================================================== */
-const RG = { x0: 150, x1: 236, y1: WAND_UNTEN };
+const RG = { x0: 164, x1: 240, y1: WAND_UNTEN };
 const GB = [52, 76];       // Glasböden (Oberkante)
 {
   const W = RG.x1 - RG.x0, cx = (RG.x0 + RG.x1) / 2;
@@ -205,7 +205,7 @@ const GB = [52, 76];       // Glasböden (Oberkante)
   }
   /* Unterschrank mit Schubladen (Saiten, Blätter, Noten) */
   k += `<rect x="${X(RG.x0)}" y="${Y(96)}" width="${W}" height="36" fill="${S.lg("schrank", [[0, "#6b4322"], [1, "#4e2f17"]])}"/><rect x="${X(RG.x0)}" y="${Y(96)}" width="${W}" height="2" fill="#8a5a30"/>`;
-  for (let i = 0; i < 3; i++) k += `<rect x="${X(RG.x0 + 2 + i * 28)}" y="${Y(100)}" width="26" height="10" rx=".8" fill="none" stroke="#2a160a" stroke-width=".5"/><rect x="${X(RG.x0 + 12 + i * 28)}" y="${Y(104.4)}" width="6" height="1.2" rx=".6" fill="${MESSING}"/>`;
+  for (let i = 0; i < 3; i++) k += `<rect x="${X(RG.x0 + 2 + i * 24.4)}" y="${Y(100)}" width="22.4" height="10" rx=".8" fill="none" stroke="#2a160a" stroke-width=".5"/><rect x="${X(RG.x0 + 10.2 + i * 24.4)}" y="${Y(104.4)}" width="6" height="1.2" rx=".6" fill="${MESSING}"/>`;
   /* Notenhefte auf dem Unterschrank */
   for (let i = 0; i < 6; i++) k += `<rect x="${X(RG.x0 + 4 + i * 4.6)}" y="${Y(96) - 11 + (i % 2)}" width="4" height="${11 - (i % 2)}" fill="${["#c0392b", "#2f6fb8", "#e8c25a", "#3fa34d", "#8c4fa0", "#f4f1ea"][i]}"/>`;
   const unter = [];
@@ -226,7 +226,7 @@ const GB = [52, 76];       // Glasböden (Oberkante)
   }
   /* Boden 1: Saxofon auf Ständer */
   {
-    const b = GB[0], x = RG.x0 + 38;
+    const b = GB[0], x = RG.x0 + 33;
     let t = `<path d="M${X(x - 3)} ${Y(b)} L${X(x)} ${Y(b - 4)} L${X(x + 3)} ${Y(b)}" stroke="#2a2d31" stroke-width=".7" fill="none"/>`;
     t += `<path d="M${X(x - 1)} ${Y(b - 22)} Q${X(x - 2.6)} ${Y(b - 24)} ${X(x - 4.6)} ${Y(b - 23)}" stroke="${MESSING}" stroke-width=".9" fill="none"/><rect x="${X(x - 5.6)}" y="${Y(b - 23.4)}" width="1.2" height=".8" fill="#111"/>`;
     t += `<path d="M${X(x - 1.6)} ${Y(b - 22)} L${X(x - 0.4)} ${Y(b - 22)} L${X(x + 0.6)} ${Y(b - 6)} Q${X(x + 0.6)} ${Y(b - 2.6)} ${X(x + 4)} ${Y(b - 3)} Q${X(x + 6.4)} ${Y(b - 3.6)} ${X(x + 6.4)} ${Y(b - 7)} L${X(x + 6)} ${Y(b - 12)} L${X(x + 9)} ${Y(b - 13)} L${X(x + 7.6)} ${Y(b - 7)} Q${X(x + 7.6)} ${Y(b - 1.4)} ${X(x + 3.4)} ${Y(b - 1.2)} Q${X(x - 1.6)} ${Y(b - 1.4)} ${X(x - 1.6)} ${Y(b - 6)} Z" fill="${MESSING}"/>`;
@@ -237,7 +237,7 @@ const GB = [52, 76];       // Glasböden (Oberkante)
   }
   /* Boden 1: Querflöte auf zwei Gabeln */
   {
-    const b = GB[0], x = RG.x0 + 56;
+    const b = GB[0], x = RG.x0 + 48;
     let t = `<path d="M${X(x + 3)} ${Y(b)} v-3 M${X(x + 23)} ${Y(b)} v-3" stroke="#2a2d31" stroke-width=".6"/>`;
     t += `<rect x="${X(x)}" y="${Y(b - 4.4)}" width="27" height="1.2" rx=".5" fill="${SILBER}"/>`;
     for (let i = 0; i < 9; i++) t += `<circle cx="${X(x + 8 + i * 2)}" cy="${Y(b - 4.8)}" r=".6" fill="#e1e5e8" stroke="#8a929a" stroke-width=".12"/>`;
@@ -279,7 +279,7 @@ const GB = [52, 76];       // Glasböden (Oberkante)
   }
   /* Boden 2: Triangel an einem kleinen Galgen */
   {
-    const b = GB[1], x = RG.x0 + 66;
+    const b = GB[1], x = RG.x0 + 62;
     let t = `<path d="M${X(x - 4)} ${Y(b)} h8 M${X(x - 3)} ${Y(b)} v-18 h7" stroke="#2a2d31" stroke-width=".6" fill="none"/>`;
     t += `<line x1="${X(x + 3)}" y1="${Y(b - 18)}" x2="${X(x + 3)}" y2="${Y(b - 15.6)}" stroke="#c0392b" stroke-width=".3"/>`;
     t += `<path d="M${X(x + 3)} ${Y(b - 15.6)} L${X(x + 7.6)} ${Y(b - 6.6)} L${X(x - 1.4)} ${Y(b - 6.6)} L${X(x + 2.2)} ${Y(b - 14)}" stroke="${SILBER}" stroke-width=".7" fill="none" stroke-linejoin="round"/>`;
@@ -301,7 +301,7 @@ const GB = [52, 76];       // Glasböden (Oberkante)
   const P = -14;         // Podestoberkante
   const kessel = S.lg("kessel", [[0, "#2f6fb8"], [0.5, "#1d4f8f"], [1, "#0f2f5a"]], 0, 0, 1, 0);
   /* Becken auf Ständern: Crash links, Ride rechts, Hi-Hat ganz links */
-  const becken = (x, y, rx, a) => `<line x1="${x}" y1="${y}" x2="${x}" y2="${P}" stroke="${CHROM}" stroke-width=".6"/><ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${r(rx * 0.18)}" fill="${S.lg("becken", [[0, "#fff1b0"], [0.5, "#d8a838"], [1, "#a8781a"]], 0, 0, 1, 0)}" transform="rotate(${a} ${x} ${y})"/>`;
+  const becken = (x, y, rx, a) => `<line x1="${x}" y1="${y}" x2="${x}" y2="${P}" stroke="#c9ced3" stroke-width=".9"/><path d="M${x - 4} ${P} L${x} ${P - 5} L${x + 4} ${P}" stroke="#c9ced3" stroke-width=".7" fill="none"/><ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${r(rx * 0.18)}" fill="${S.lg("becken", [[0, "#fff1b0"], [0.5, "#d8a838"], [1, "#a8781a"]], 0, 0, 1, 0)}" transform="rotate(${a} ${x} ${y})"/>`;
   k += becken(-22, P - 46, 9, -10) + becken(22, P - 42, 10, 8);
   k += `<line x1="-30" y1="${P - 30}" x2="-30" y2="${P}" stroke="${CHROM}" stroke-width=".6"/><ellipse cx="-30" cy="${P - 30}" rx="6" ry="1" fill="#d8a838"/><ellipse cx="-30" cy="${P - 31.2}" rx="6" ry="1" fill="#e8c25a"/>`;
   /* Hängetoms */
@@ -342,22 +342,25 @@ const GB = [52, 76];       // Glasböden (Oberkante)
   const y = 176, s = sAuf(y);
   const H = 1.2 * s;
   let k = schatten(4, 0, 22, 1.4, .3);
-  /* Resonanzkörper schräg von unten links nach oben rechts */
-  k += `<path d="M-6 0 L2 0 L24 ${r(-H * 0.78)} L18 ${r(-H * 0.8)} Z" fill="${S.lg("harfenkorpus", [[0, "#c8853a"], [1, "#8a4a1c"]], 0, 0, 1, 0)}"/>`;
-  /* Säule links, Hals oben (geschwungen) */
-  k += `<rect x="-14" y="${r(-H)}" width="4" height="${r(H)}" rx="1.4" fill="${S.lg("saeule", [[0, "#b8702a"], [0.5, "#e0a050"], [1, "#9a5a1c"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M-13 ${r(-H + 2)} Q-6 ${r(-H - 6)} 4 ${r(-H + 4)} Q12 ${r(-H + 12)} 22 ${r(-H * 0.82)} L20 ${r(-H * 0.76)} Q10 ${r(-H + 18)} 2 ${r(-H + 9)} Q-6 ${r(-H)} -12 ${r(-H + 6)} Z" fill="${S.lg("hals", [[0, "#e0a050"], [1, "#9a5a1c"]])}"/>`;
-  /* Saiten (rot = C, blau = F) */
-  for (let i = 0; i < 18; i++) {
-    const t = i / 17, xs = -8 + t * 28;
-    const yOben = -H + 6 + Math.sin(t * Math.PI) * -2 + t * (H * 0.2) + (t < 0.4 ? t * 6 : 2.4);
-    const yUnten = r(-(xs + 6) * (H * 0.78) / 26 + 0.4);
-    if (yUnten < yOben + 2) continue;
-    k += `<line x1="${r(xs)}" y1="${r(yOben)}" x2="${r(xs)}" y2="${yUnten}" stroke="${i % 7 === 0 ? "#c0392b" : i % 7 === 3 ? "#2f6fb8" : "#f4ead0"}" stroke-width=".3"/>`;
+  const f = H / 80;                         // Zeichnung in 80er-Höhe, dann skaliert
+  let g = `<path d="M-8 0 L0 0 L22 -62 L17 -64 Z" fill="${S.lg("harfenkorpus", [[0, "#c8853a"], [1, "#8a4a1c"]], 0, 0, 1, 0)}"/>`;
+  g += `<path d="M-6 -1 L16 -62" stroke="#f0c070" stroke-width=".5" opacity=".6"/>`;
+  g += `<rect x="-14" y="-80" width="4" height="80" rx="1.4" fill="${S.lg("saeule", [[0, "#b8702a"], [0.5, "#e0a050"], [1, "#9a5a1c"]], 0, 0, 1, 0)}"/>`;
+  /* Hals: obere Kante geschwungen, untere Kante trägt die Saiten */
+  const q = (p0, p1, p2, t) => (1 - t) * (1 - t) * p0 + 2 * t * (1 - t) * p1 + t * t * p2;
+  const unten = [];
+  for (let i = 0; i <= 12; i++) { const t = i / 12; unten.push([q(21, 12, 6, t), q(-60, -64, -70, t)]); }
+  for (let i = 1; i <= 12; i++) { const t = i / 12; unten.push([q(6, -2, -10, t), q(-70, -78, -72, t)]); }
+  g += `<path d="M-14 -78 Q-4 -88 8 -76 Q14 -70 24 -66 L21 -60 Q12 -64 6 -70 Q-2 -78 -10 -72 Z" fill="${S.lg("hals", [[0, "#e0a050"], [1, "#9a5a1c"]])}"/>`;
+  const oben = (x) => { for (let i = 0; i < unten.length - 1; i++) { const [xa, ya] = unten[i], [xb, yb] = unten[i + 1]; if ((x <= xa && x >= xb) || (x >= xa && x <= xb)) return ya + (yb - ya) * (x - xa) / ((xb - xa) || 1); } return -70; };
+  let n = 0;
+  for (let x = -7; x <= 15.5; x += 1.25, n++) {
+    const yb = -(x + 8) * 64 / 25, yt = oben(x) + 0.6;
+    g += `<line x1="${r(x)}" y1="${r(yt)}" x2="${r(x)}" y2="${r(yb - 0.4)}" stroke="${n % 7 === 0 ? "#c0392b" : n % 7 === 3 ? "#2f6fb8" : "#f4ead0"}" stroke-width=".3"/>`;
   }
-  k += `<rect x="-16" y="-2" width="20" height="2" rx=".6" fill="#7a3f14"/>`;
-  k += `<path d="M-13 ${r(-H + 4)} L-13 -4" stroke="#fff" stroke-width=".6" opacity=".3"/>`;
-  S.teil({ id: "harfe", de: "die Harfe", syl: "HAR-fe", it: "l'arpa", itSyl: "AR-pa", en: "harp", x: 186, y, steht: true, kunst: k,
+  g += `<rect x="-16" y="-2" width="20" height="2" rx=".6" fill="#7a3f14"/><path d="M-13 -76 L-13 -4" stroke="#fff" stroke-width=".6" opacity=".3"/>`;
+  k += `<g transform="scale(${r(f * 100) / 100})">${g}</g>`;
+  S.teil({ id: "harfe", de: "die Harfe", syl: "HAR-fe", it: "l'arpa", itSyl: "AR-pa", en: "harp", x: 194, y, steht: true, kunst: k,
     tipp: "Die Harfe zupft man mit den Fingern. Die roten Saiten zeigen den Ton C." });
 }
 
@@ -366,7 +369,7 @@ const GB = [52, 76];       // Glasböden (Oberkante)
    ===================================================================== */
 {
   const y = 190, s = sAuf(y);
-  const L = 1.5 * s, K = 1.0 * s, Kd = 0.3 * s;        // Länge, Höhe bis Deckel, Zargenhöhe
+  const L = 1.35 * s, K = 1.0 * s, Kd = 0.3 * s;        // Länge, Höhe bis Deckel, Zargenhöhe
   const x0 = -L / 2, x1 = L / 2, top = -K;
   let k = schatten(0, 0, L / 2 + 6, 2.4, .35);
   /* Beine und Lyra mit Pedalen */
@@ -378,21 +381,23 @@ const GB = [52, 76];       // Glasböden (Oberkante)
   k += `<path d="M${r(x0 + 2)} ${r(top + 2)} L${r(x1 - 16)} ${r(top + 2)}" stroke="#fff" stroke-width=".8" opacity=".15"/>`;
   /* Tastatur vorne links (Tastenklappe offen) */
   k += `<rect x="${r(x0 - 6)}" y="${r(top + 3)}" width="8" height="${r(Kd - 6)}" fill="#16181b"/>`;
-  k += `<rect x="${r(x0 - 6)}" y="${r(top + 1)}" width="8" height="2.4" fill="#f6f2e8"/><rect x="${r(x0 - 6)}" y="${r(top + 1)}" width="8" height="1" fill="#111"/>`;
+  k += `<rect x="${r(x0 - 7)}" y="${r(top + 0.6)}" width="9" height="3" fill="#f6f2e8"/>`;
+  for (let i = 0; i < 4; i++) k += `<rect x="${r(x0 - 6.4 + i * 2.2)}" y="${r(top + 0.6)}" width="1.2" height="1.4" fill="#111"/>`;
+  k += `<rect x="${r(x0 - 8)}" y="${r(top - 0.6)}" width="2" height="${r(Kd + 0.6)}" fill="#16181b"/>`;
   /* Notenpult */
   k += `<path d="M${r(x0 + 6)} ${r(top)} L${r(x0 + 10)} ${r(top - 18)} L${r(x0 + 34)} ${r(top - 18)} L${r(x0 + 30)} ${r(top)} Z" fill="#1d1f22"/>`;
   /* Deckel, an der Stütze geöffnet (zeigt die Flügelform) */
-  k += `<path d="M${r(x0 + 30)} ${r(top)} Q${r(x0 + 50)} ${r(top - 44)} ${r(x1 - 22)} ${r(top - 40)} Q${r(x1 - 4)} ${r(top - 36)} ${r(x1)} ${r(top - 6)} L${r(x1 - 4)} ${r(top)} Z" fill="${S.lg("deckel", [[0, "#3a3d42"], [0.6, "#16181b"], [1, "#0b0c0e"]], 0, 0, 1, 1)}"/>`;
-  k += `<path d="M${r(x0 + 34)} ${r(top - 4)} Q${r(x0 + 52)} ${r(top - 40)} ${r(x1 - 22)} ${r(top - 37)}" stroke="#fff" stroke-width="1" opacity=".18" fill="none"/>`;
-  k += `<line x1="${r(x1 - 30)}" y1="${r(top)}" x2="${r(x1 - 26)}" y2="${r(top - 34)}" stroke="#2a2d31" stroke-width="1"/>`;
+  k += `<path d="M${r(x0 + 30)} ${r(top)} Q${r(x0 + 50)} ${r(top - 26)} ${r(x1 - 22)} ${r(top - 24)} Q${r(x1 - 4)} ${r(top - 22)} ${r(x1)} ${r(top - 4)} L${r(x1 - 4)} ${r(top)} Z" fill="${S.lg("deckel", [[0, "#3a3d42"], [0.6, "#16181b"], [1, "#0b0c0e"]], 0, 0, 1, 1)}"/>`;
+  k += `<path d="M${r(x0 + 34)} ${r(top - 3)} Q${r(x0 + 52)} ${r(top - 23)} ${r(x1 - 22)} ${r(top - 21.6)}" stroke="#fff" stroke-width="1" opacity=".18" fill="none"/>`;
+  k += `<line x1="${r(x1 - 30)}" y1="${r(top)}" x2="${r(x1 - 28)}" y2="${r(top - 21)}" stroke="#2a2d31" stroke-width="1"/>`;
   /* Saiten und Rahmen im Inneren (golden) unter dem Deckel */
   k += `<path d="M${r(x0 + 32)} ${r(top - 1)} L${r(x1 - 6)} ${r(top - 1)}" stroke="#d8a838" stroke-width="1.6"/>`;
   k += `<text x="${r(x0 + 50)}" y="${r(top + Kd - 6)}" font-size="3.4" fill="#d8b04a" font-family="Georgia,serif" letter-spacing=".5">SCHÄFER &amp; SÖHNE</text>`;
   k += preis(x1 - 10, top + Kd + 3, "18.900 €");
-  S.teil({ id: "fluegel", de: "der Flügel", syl: "FLÜ-gel", it: "il pianoforte a coda", itSyl: "pia-no-FOR-te a CO-da", en: "grand piano", x: 62, y, steht: true, kunst: k,
+  S.teil({ id: "fluegel", de: "der Flügel", syl: "FLÜ-gel", it: "il pianoforte a coda", itSyl: "pia-no-FOR-te a CO-da", en: "grand piano", x: 58, y, steht: true, kunst: k,
     tipp: "Der Flügel heißt so, weil seine Form wie ein Vogelflügel aussieht." });
   /* DIE NOTEN auf dem Pult */
-  const nx = 62 + x0 + 20, ny = y + top - 2;
+  const nx = 58 + x0 + 20, ny = y + top - 2;
   let n = `<path d="M-10 0 L-7 -14 L1 -14 L-2 0 Z" fill="#fbfaf5" stroke="#cfc8b8" stroke-width=".2"/><path d="M-2 0 L1 -14 L9 -14 L6 0 Z" fill="#f6f4ec" stroke="#cfc8b8" stroke-width=".2"/>`;
   for (let i = 0; i < 4; i++) for (const [a, b2] of [[-9, -2.6], [-1, 5.4]]) n += `<path d="M${r(a + 0.6 + (3 - i) * 0.0 + i * 0)} ${r(-2.6 - i * 3)} L${r(b2 + 0.6 + i * 0)} ${r(-2.6 - i * 3)}" stroke="#555" stroke-width=".12" transform="translate(${r(i * 0.62)} 0)"/>`;
   for (let i = 0; i < 9; i++) n += `<circle cx="${r(-7.6 + i * 1.6 + (i > 4 ? 1.2 : 0))}" cy="${r(-3.4 - (i % 4) * 2.6)}" r=".4" fill="#222"/>`;
@@ -440,7 +445,7 @@ const GB = [52, 76];       // Glasböden (Oberkante)
   /* Schlägel */
   k += `<line x1="${r(W / 2 - 14)}" y1="${r(-Hst - 1)}" x2="${r(W / 2 + 4)}" y2="${r(-Hst + 4)}" stroke="#e8c890" stroke-width=".7"/><circle cx="${r(W / 2 - 14)}" cy="${r(-Hst - 1)}" r="1.6" fill="#c0392b"/>`;
   k += `<line x1="${r(W / 2 - 18)}" y1="${r(-Hst + 1)}" x2="${r(W / 2 + 2)}" y2="${r(-Hst + 6)}" stroke="#e8c890" stroke-width=".7"/><circle cx="${r(W / 2 - 18)}" cy="${r(-Hst + 1)}" r="1.6" fill="#c0392b"/>`;
-  S.teil({ id: "xylofon", de: "das Xylofon", syl: "XY-lo-fon", it: "lo xilofono", itSyl: "xi-LO-fo-no", en: "xylophone", x: 214, y, steht: true, kunst: k,
+  S.teil({ id: "xylofon", de: "das Xylofon", syl: "XY-lo-fon", it: "lo xilofono", itSyl: "xi-LO-fo-no", en: "xylophone", x: 228, y, steht: true, kunst: k,
     tipp: "Beim Xylofon schlägt man mit Schlägeln auf Platten aus Holz." });
 }
 
