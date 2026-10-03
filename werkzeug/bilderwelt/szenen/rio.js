@@ -316,25 +316,40 @@ const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Flu
   let k = `<path d="M196 100 L320 100 L320 ${WASSER_R} L${VX} 100.3 Z" fill="${S.lg("meer", [[0, "#1c5a8e"], [0.45, "#2878a6"], [0.8, "#3d9fb4"], [1, "#77c8c2"]])}"/>`;
   /* Glitzerpfad unter der Morgensonne (rechts oben): kurze helle Striche, zur Sonne dichter */
   let gl = "";
-  for (let i = 0; i < 46; i++) { const t = Math.pow(rnd(), 0.6), x = 322 - t * 70 * (0.4 + rnd() * 0.6), y = 100.2 + rnd() * (wy(x, 103.6) - 100.4); gl += `M${r(x)} ${r(y)}h${r(0.6 + (1 - t) * 2.4 * rnd())}`; }
-  k += `<path d="${gl}" stroke="#fffbe8" stroke-width=".22" opacity=".85"/>`;
-  /* zwei brechende Wellen: dunkle grünblaue Wellenwand, oben durchscheinend, weißer Kamm kippt nach vorn über */
-  const WAND = S.lg("wellenwand", [[0, "#5fbab0"], [0.3, "#1f7d8a"], [1, "#145a6e"]]);
-  for (const [yr, st] of [[104.2, 0.8], [108, 1.25]]) {
-    const ob = [], un = [], li = [];
-    for (let x = VX + 8; x < 323; x += 2) {
-      const y = wy(x, yr), h = (y - 100) * 0.34 * st * (0.82 + 0.18 * Math.sin(x * 0.23 + yr));
-      ob.push([x, y - h]); un.push([x, y]); li.push([x + 0.8, y - h * (0.45 + 0.15 * rnd())]);
+  for (let i = 0; i < 70; i++) { const t = Math.pow(rnd(), 1.6), x = 321 - t * 80, y = 100.15 + rnd() * (wy(x, 103.2) - 100.3) * (0.4 + t); gl += `M${r(x)} ${r(y)}h${r(0.5 + (1 - t) * 2.6 * rnd())}`; }
+  k += `<path d="${gl}" stroke="#fffdf0" stroke-width=".26"/>`;
+  /* Brandung: eine ferne kleine Welle und vorn EINE brechende Welle — rechts am höchsten, nach links flach
+     auslaufend: durchscheinende, dunkel grünblaue Wand, oben der überkippende weiße Kamm mit Gischt */
+  const WAND = S.lg("wellenwand", [[0, "#6cc4b8", 0.85], [0.35, "#1f7d8a"], [1, "#134f63"]]);
+  const welle = (yr, H, mitGischt) => {
+    const ob = [], un = [], lip = [];
+    for (let x = VX + 6; x < 322; x += 1.5) {
+      const t = (x - VX) / (320 - VX), y = wy(x, yr), h = H * Math.pow(t, 1.6) * (0.9 + 0.1 * Math.sin(x * 0.4));
+      un.push([x, y]); ob.push([x, y - h]); lip.push([x + 0.6 * t, y - h * 0.62 + (rnd() - 0.5) * 0.2 * t]);
     }
-    k += `<path d="M${pts(ob)} L${pts(un.slice().reverse())} Z" fill="${WAND}"/>`;
-    /* Kamm und überkippende Lippe mit Gischt */
-    k += `<path d="M${pts(ob.map(([x, y], i) => [x - 0.6, y - 0.35 * st - 0.25 * rnd()]))} L${pts(li.slice().reverse())} Z" fill="#f6fbf9"/>`;
-    k += `<path d="M${pts(li)}" stroke="#cfe6e8" stroke-width="${r(0.3 * st)}" fill="none"/>`;
-    /* Schaum am Fuß der Welle */
-    k += `<path d="M${pts(un.map(([x, y]) => [x, y - 0.15]))} L${pts(un.map(([x, y]) => [x, y + (y - 100) * 0.07 * st + 0.3 * rnd()]).reverse())} Z" fill="#eef8f6"/>`;
+    let g = `<path d="M${pts(ob)} L${pts(un.slice().reverse())} Z" fill="${WAND}"/>`;
+    /* links noch ungebrochen (nur eine helle Kante), rechts bricht die Welle: weißes Wasser stürzt vorn
+       über die Wand herab, unten gezackt; dazwischen die dunkle Röhre unter der Lippe */
+    g += `<path d="M${pts(ob)}" stroke="#d8f0ee" stroke-width=".3" fill="none"/>`;
+    const i0 = Math.floor(ob.length * 0.55), weiss = [], unten = [];
+    for (let i = i0; i < ob.length; i++) { const f = (i - i0) / (ob.length - 1 - i0), h = un[i][1] - ob[i][1]; weiss.push([ob[i][0] - 0.3, ob[i][1] - 0.2 - h * 0.15 * f]); unten.push([ob[i][0] + 0.4 * f, ob[i][1] + h * (0.2 + 0.75 * f) + (i % 2 ? h * 0.12 * f : 0)]); }
+    g += `<path d="M${pts(weiss)} L${pts(unten.slice().reverse())} Z" fill="#f7fcfb"/>`;
+    { const [x, y] = ob[i0], h = un[i0][1] - y; g += `<path d="M${r(x - 1.5)} ${r(y + 0.1)} Q${r(x + 0.4)} ${r(y - h * 0.5)} ${r(x + 1.2)} ${r(y + h * 0.35)} Q${r(x + 0.2)} ${r(y + h * 0.1)} ${r(x - 1.5)} ${r(y + 0.1)} Z" fill="#0f4152" opacity=".7"/><path d="M${r(x - 1.6)} ${r(y)} Q${r(x + 0.4)} ${r(y - h * 0.6)} ${r(x + 1.4)} ${r(y + h * 0.3)}" stroke="#f7fcfb" stroke-width=".35" fill="none"/>`; }
+    if (mitGischt) { let sp = ""; for (let i = 0; i < 26; i++) { const t = 0.6 + rnd() * 0.4, x = VX + t * (320 - VX), y = wy(x, yr) - H * Math.pow(t, 1.6) - rnd() * 1.4 * t; sp += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.12 + rnd() * 0.25)}"/>`; } g += `<g fill="#ffffff" opacity=".8">${sp}</g>`; }
+    return { g, un };
+  };
+  k += welle(103.6, 0.9, false).g;
+  const w2 = welle(106.6, 2.4, true);
+  k += w2.g;
+  /* Schaumteppich davor mit spitzenartigem Rand und Löchern */
+  {
+    const vorn = [];
+    for (let x = VX + 4; x < 322; x += 1.2) vorn.push([x, wy(x, WASSER_R + 0.3) - (rnd() < 0.5 ? 0.15 + rnd() * 0.5 : 0)]);
+    k += `<path d="M${pts(w2.un)} L${pts(vorn.slice().reverse())} Z" fill="#eef8f6"/>`;
+    let lo = "";
+    for (let i = 0; i < 18; i++) { const x = VX + 30 + rnd() * 105, y = wy(x, 107.5 + rnd() * 1.6); lo += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.4 + rnd() * 1.2)}" ry=".18"/>`; }
+    k += `<g fill="#7fbcc4" opacity=".6">${lo}</g>`;
   }
-  /* auslaufendes Wasser auf dem Sand */
-  k += `<path d="M${VX + 2} 100.5 L320 ${WASSER_R - 1} L320 ${WASSER_R} L${VX} 100.4 Z" fill="#f4fbf8" opacity=".85"/>`;
   /* Insel Cotunduba vor Leme und ein Frachter auf dem Weg in die Bucht */
   k += `<path d="M280 100.2 Q282 97.6 285 97.4 Q288 97.6 290.4 100.2 Z" fill="#6a8a72"/><path d="M280 100.2 L290.4 100.2" stroke="#e8f4f2" stroke-width=".3"/>`;
   k += `<path d="M300 99.7 L310 99.7 L309 100.4 L301 100.4 Z" fill="#40454c"/><rect x="307" y="98.5" width="1.6" height="1.2" fill="#e8e6e0"/><rect x="302" y="99.1" width="4.4" height=".6" fill="#b34a3a"/>`;

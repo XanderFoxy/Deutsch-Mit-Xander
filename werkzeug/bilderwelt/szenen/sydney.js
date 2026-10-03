@@ -461,7 +461,7 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
     { id: "schale", de: "die Schale", syl: "SCHA-le", it: "il guscio", itSyl: "GU-scio", en: "roof shell", x: chA3.T[0] - 4, y: chA3.T[1] + 16,
       kunst: flaeche(-9, -16, 15, 16), tipp: "Die Dachschalen sehen aus wie Segel. Die höchste ist 67 Meter hoch." },
     { id: "fliese", de: "die Fliese", syl: "FLIE-se", it: "la piastrella", itSyl: "pia-STREL-la", en: "tile", x: mitteJ[0] + 4, y: mitteJ[1] + 9,
-      kunst: flaeche(-8, -10, 16, 10), tipp: "Über eine Million Fliesen aus Schweden: glänzend weiße und matt cremefarbene im Fischgrätmuster." },
+      kunst: flaeche(-8, -11, 16, 12), tipp: "Über eine Million Fliesen aus Schweden: glänzend weiße und matt cremefarbene im Fischgrätmuster." },
     { id: "glaswand", de: "die Glaswand", syl: "GLAS-wand", it: "la vetrata", itSyl: "ve-TRA-ta", en: "glass wall", x: (jA1.Pp[0] + gwFuss[0]) / 2 + 1, y: jA1.Pp[1],
       kunst: flaeche(-7, -15, 14, 15), tipp: "Die großen Glaswände sind topasfarben. Aus den Foyers schaut man durch sie auf den Hafen." },
     { id: "treppe", de: "die Treppe", syl: "TREP-pe", it: "la scalinata", itSyl: "sca-li-NA-ta", en: "steps", x: op(TREPPE_S * 0.55, 120, 0)[0], y: op(TREPPE_S * 0.55, 120, 0)[1],
@@ -550,8 +550,9 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
     let dk = "", hl = "";
     for (let y = y0; y < y1;) {
       const L = 0.9 + (y - 148) * 0.2;
-      for (let x = rnd() * L * 2; x < 400;) {
+      for (let x = rnd() * L * 2; x < 398;) {
         const l = Math.min(L * (0.6 + 0.8 * rnd()), 399.5 - x), hh = l * (0.1 + rnd() * 0.06);
+        if (l < 0.8) break;
         if (rnd() < 0.72) dk += `M${r(x)} ${r(y)}q${r(l / 2)} ${r(hh)} ${r(l)} 0`; else hl += `M${r(x)} ${r(y)}q${r(l / 2)} ${r(-hh)} ${r(l)} 0`;
         x += l * (1.2 + 1.8 * rnd());
       }

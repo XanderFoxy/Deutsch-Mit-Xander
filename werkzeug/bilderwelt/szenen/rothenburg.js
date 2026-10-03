@@ -736,7 +736,7 @@ const LL = -8;
   {
     const txt = "Bäckerei · Konditorei", n = txt.length, lage = zeichenLage(txt);
     for (let i = 0; i < n; i++) {
-      const fsM = fsFit(txt, d1 - d0 - 0.3, 0.32), d = zeichenD(txt, d0 + 0.15, d1 - 0.15, fsM)[i], [x, y] = P(LL, d, 2.98), fs = fsM * F / d;
+      const fsM = fsFit(txt, d1 - d0 - 0.3, 0.36), d = zeichenD(txt, d0 + 0.15, d1 - 0.15, fsM)[i], [x, y] = P(LL, d, 2.98), fs = fsM * F / d;
       const [, yt] = P(LL, d, 3.24), sk = Math.atan2((P(LL, d + 0.1, 2.98)[1] - y), (P(LL, d + 0.1, 2.98)[0] - x)) * 180 / Math.PI;
       if (txt[i] !== " ") k += `<text x="0" y="0" font-size="${r(fs)}" text-anchor="middle" fill="#e8c56a" font-family="Georgia,serif" font-weight="bold" transform="translate(${r(x)} ${r(y)}) rotate(${r(sk)}) scale(${kurz(LL, d, 2.98)} 1)">${txt[i]}</text>`;
       void yt;
@@ -837,7 +837,7 @@ const LL = -8;
   k += `<path d="${poly(P(L, d1, h1), P(Li, d1, h1), P(Li, d1, h0), P(L, d1, h0))}" fill="#4e1418"/>`;
   /* Schild über dem Fenster, Schrift perspektivisch */
   k += `<path d="${poly(P(L, d0, 3.4), P(L, d1, 3.4), P(L, d1, 3.0), P(L, d0, 3.0))}" fill="#6e1e22"/>`;
-  { const txt = "Weihnachten", n = txt.length, lage = zeichenLage(txt); for (let i = 0; i < n; i++) { const fsM = fsFit(txt, d1 - d0 - 0.4, 0.27), d = zeichenD(txt, d1 - 0.2, d0 + 0.2, fsM)[i], [x, y] = P(L, d, 3.08), fs = fsM * F / d; const nx = P(L, d - 0.1, 3.08), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="0" y="0" font-size="${r(fs)}" text-anchor="middle" fill="#f2d27a" font-family="Georgia,serif" font-weight="bold" transform="translate(${r(x)} ${r(y)}) rotate(${r(sk)}) scale(${kurz(L, d, 3.08)} 1)">${txt[i]}</text>`; } }
+  { const txt = "Weihnachten", n = txt.length, lage = zeichenLage(txt); for (let i = 0; i < n; i++) { const fsM = fsFit(txt, d1 - d0 - 0.4, 0.34), d = zeichenD(txt, d1 - 0.2, d0 + 0.2, fsM)[i], [x, y] = P(L, d, 3.08), fs = fsM * F / d; const nx = P(L, d - 0.1, 3.08), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="0" y="0" font-size="${r(fs)}" text-anchor="middle" fill="#f2d27a" font-family="Georgia,serif" font-weight="bold" transform="translate(${r(x)} ${r(y)}) rotate(${r(sk)}) scale(${kurz(L, d, 3.08)} 1)">${txt[i]}</text>`; } }
   const [ax, ay] = P(L, d0 - 0.2, h1 + 0.5), [bx, by] = P(L, d1 + 0.2, h0 - 0.1);
   void ax; void ay; void bx; void by;
   S.teil({ id: "schaufenster", de: "das Schaufenster", syl: "SCHAU-fens-ter", it: "la vetrina", itSyl: "ve-TRI-na", en: "shop window", x: 0, y: 0, kunst: k,
@@ -864,7 +864,7 @@ const LL = -8;
   k += `<path d="${poly(P(L, ta - 0.3, 0.2), P(L, tb + 0.3, 0.2), P(L - 0.45, tb + 0.3, 0.2), P(L - 0.45, ta - 0.3, 0.2))}" fill="#a8916c"/><path d="M${pt(P(L - 0.45, ta - 0.3, 0.2))} L${pt(P(L - 0.45, tb + 0.3, 0.2))}" stroke="#7a6a50" stroke-width=".6"/>`;
   /* Schriftzug über der Tür, Buchstabe für Buchstabe auf der Wand (Leserichtung von hinten nach vorn) */
   { const txt = "Zum Hirschen", n = txt.length, lage = zeichenLage(txt), da = 9.35, db = 7.0;
-    for (let i = 0; i < n; i++) { if (txt[i] === " ") continue; const fsM = fsFit(txt, da - db, 0.24), d = zeichenD(txt, da, db, fsM)[i], [x, y] = P(L, d, 2.95), fs = fsM * F / d, nx = P(L, d - 0.1, 2.95), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="0" y="0" font-size="${r(fs)}" text-anchor="middle" fill="#3a2a14" font-family="Georgia,serif" font-weight="bold" transform="translate(${r(x)} ${r(y)}) rotate(${r(sk)}) scale(${kurz(L, d, 2.95)} 1)">${txt[i]}</text>`; } }
+    for (let i = 0; i < n; i++) { if (txt[i] === " ") continue; const fsM = fsFit(txt, da - db, 0.3), d = zeichenD(txt, da, db, fsM)[i], [x, y] = P(L, d, 2.95), fs = fsM * F / d, nx = P(L, d - 0.1, 2.95), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="0" y="0" font-size="${r(fs)}" text-anchor="middle" fill="#3a2a14" font-family="Georgia,serif" font-weight="bold" transform="translate(${r(x)} ${r(y)}) rotate(${r(sk)}) scale(${kurz(L, d, 2.95)} 1)">${txt[i]}</text>`; } }
   /* Speisekarte an der Wand */
   k += `<path d="${poly(P(L, 8.3, 2.1), P(L, 8.9, 2.1), P(L, 8.9, 1.2), P(L, 8.3, 1.2))}" fill="#2e3a2a" stroke="#7a5a38" stroke-width=".5"/>`;
   for (let i = 0; i < 4; i++) k += `<path d="M${pt(P(L, 8.36, 1.95 - i * 0.18))} L${pt(P(L, 8.84, 1.95 - i * 0.18))}" stroke="#f4efe4" stroke-width=".35"/>`;
@@ -1034,7 +1034,7 @@ const SCHAFT = { x0: -0.36, x1: -0.44, top: -2.42 }, schaftX = (yy) => SCHAFT.x0
 {
   /* zwei Tauben picken rechts vorn zwischen den Steinen */
   let c = "";
-  for (const [X, D, sp] of [[1.9, 4.5, 1], [2.6, 4.25, -1]]) {
+  for (const [X, D, sp] of [[1.9, 4.5, 1], [0.8, 4.3, -1]]) {
     const [x, y] = P(X, D, 0, 0), s = F / D * 0.3;
     c += `<g transform="translate(${r(x)} ${r(y)}) scale(${sp} 1)"><ellipse cx="0" cy="${r(-0.05 * s)}" rx="${r(0.36 * s)}" ry="${r(0.06 * s)}" fill="#1a1612" opacity=".3"/><path d="M${r(-0.45 * s)} ${r(-0.38 * s)} Q${r(-0.1 * s)} ${r(-0.62 * s)} ${r(0.25 * s)} ${r(-0.5 * s)} Q${r(0.4 * s)} ${r(-0.3 * s)} ${r(0.1 * s)} ${r(-0.18 * s)} L${r(-0.55 * s)} ${r(-0.3 * s)} Z" fill="#8a8e98"/><path d="M${r(-0.3 * s)} ${r(-0.45 * s)} Q${r(0, s)} ${r(-0.55 * s)} ${r(0.15 * s)} ${r(-0.42 * s)}" stroke="#6a6e78" stroke-width="${r(0.06 * s)}" fill="none"/><circle cx="${r(0.32 * s)}" cy="${r(-0.6 * s)}" r="${r(0.1 * s)}" fill="#7a7e8a"/><path d="M${r(0.24 * s)} ${r(-0.52 * s)} q${r(0.06 * s)} ${r(0.06 * s)} ${r(0.14 * s)} 0" stroke="#5f8a7a" stroke-width="${r(0.05 * s)}" fill="none"/><path d="M${r(0.41 * s)} ${r(-0.6 * s)} l${r(0.08 * s)} ${r(0.03 * s)}" stroke="#d8a830" stroke-width="${r(0.03 * s)}"/><path d="M${r(0.02 * s)} ${r(-0.2 * s)} l0 ${r(0.15 * s)} M${r(0.1 * s)} ${r(-0.2 * s)} l0 ${r(0.15 * s)}" stroke="#c46a5a" stroke-width="${r(0.03 * s)}"/></g>`;
   }

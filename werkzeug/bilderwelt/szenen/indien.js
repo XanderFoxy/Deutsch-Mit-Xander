@@ -100,7 +100,7 @@ const glatt = (pts, zu = true) => {
 };
 /* Zwiebelprofil (Radius relativ zum Tambour, Höhe relativ zur Kuppelhöhe): größte Breite 1,3 × auf etwa 1/3 */
 /* Fuß etwa 0,78 × der größten Breite (Einzug zum Tambour), Wendepunkt bei etwa 3/4: oben konkav in den Hals */
-const ZWIEBEL = [[1.0, 0], [1.03, 0.03], [1.12, 0.08], [1.24, 0.16], [1.3, 0.25], [1.29, 0.34], [1.19, 0.47], [1.0, 0.58], [0.74, 0.68], [0.46, 0.77], [0.24, 0.84], [0.13, 0.9], [0.08, 0.95], [0.05, 0.985], [0, 1]];
+const ZWIEBEL = [[1.0, 0], [1.03, 0.03], [1.12, 0.08], [1.24, 0.16], [1.3, 0.25], [1.29, 0.34], [1.19, 0.46], [1.0, 0.56], [0.76, 0.64], [0.54, 0.7], [0.4, 0.745], [0.31, 0.79], [0.24, 0.84], [0.16, 0.9], [0.1, 0.95], [0.06, 0.985], [0, 1]];
 /* Umriss einer Zwiebelkuppel: Mitte x, Fuß y, Tambour-Halbbreite rb, Höhe hh (alles in Einheiten) */
 const zwiebel = (x, y, rb, hh) => {
   const links = ZWIEBEL.map(([q, t]) => [x - q * rb, y - t * hh]), rechts = ZWIEBEL.slice(0, -1).reverse().map(([q, t]) => [x + q * rb, y - t * hh]);
@@ -217,6 +217,8 @@ const KUP = { hT: 46.2, hh: 19.4, rT: 8.6 };       /* Tambour-Oberkante, Kuppelh
       const m = (t, h) => [xa + (xb - xa) * t, yB(h) + (yAt(328, h) - yB(h)) * t];
       const [p1x, p1y] = m(0.18, hu), [p2x, p2y] = m(0.82, hu), [p3x, p3y] = m(0.82, ho - 3), [p4x, p4y] = m(0.18, ho - 3), [pkx, pky] = m(0.5, ho);
       bau += `<path d="M${r(p1x)} ${r(p1y)} L${r(p4x)} ${r(p4y)} Q${r(pkx)} ${r(pky - 0.6)} ${r(p3x)} ${r(p3y)} L${r(p2x)} ${r(p2y)} Z" fill="${sd > 0 ? "#e2c3b2" : "#a399b3"}"/>`;
+      { const [f1x, f1y] = m(0.08, hu - 0.4), [f2x, f2y] = m(0.92, hu - 0.4), [f3x, f3y] = m(0.92, ho + 0.4), [f4x, f4y] = m(0.08, ho + 0.4), [z1x, z1y] = m(0.14, ho - 0.6), [z2x, z2y] = m(0.86, ho - 0.6);
+        bau += `<path d="M${r(f1x)} ${r(f1y)} L${r(f2x)} ${r(f2y)} L${r(f3x)} ${r(f3y)} L${r(f4x)} ${r(f4y)} Z" fill="none" stroke="${sd > 0 ? "#d4b4a2" : "#988ea8"}" stroke-width=".35"/><circle cx="${r(z1x)}" cy="${r(z1y)}" r=".3" fill="#b04a4a"/><circle cx="${r(z2x)}" cy="${r(z2y)}" r=".3" fill="#3f7a4a"/>`; }
     }
     bau += `<line x1="${r(xb)}" y1="${r(yb)}" x2="${r(xb)}" y2="${r(yb0)}" stroke="${sd > 0 ? "#fff1e2" : "#b1a8c2"}" stroke-width=".5"/>`;
   }
@@ -290,12 +292,11 @@ const KUP = { hT: 46.2, hh: 19.4, rT: 8.6 };       /* Tambour-Oberkante, Kuppelh
   kuppel += `<path d="${kp}" fill="${KUPPEL}"/>`;
   kuppel += `<path d="${kp}" fill="${S.rg("kuppelglanz", [[0, "#fff", 0.5], [1, "#fff", 0]], 0.66, 0.36, 0.42)}"/>`;
   kuppel += `<path d="${kp}" fill="none" stroke="#c9bfc6" stroke-width=".3"/>`;
-  /* zarte Fugen des Marmors */
-  kuppel += `<path d="M${r(CX - rbU * 1.28)} ${r(yTam - hhU * 0.3)} Q${CX} ${r(yTam - hhU * 0.26)} ${r(CX + rbU * 1.28)} ${r(yTam - hhU * 0.3)}" stroke="#d8cdd0" stroke-width=".22" fill="none"/>`;
+  /* (keine Naht quer über die Kuppel – das Original hat keine) */
   /* Lotuskappe: Kranz aus umgekehrten Blättern, die sich an die Kuppel schmiegen (Spitzen nach unten) */
   const qAt = (t) => { for (let i = 1; i < ZWIEBEL.length; i++) if (t <= ZWIEBEL[i][1]) { const [q0, t0] = ZWIEBEL[i - 1], [q1, t1] = ZWIEBEL[i]; return q0 + (q1 - q0) * (t - t0) / (t1 - t0); } return 0; };
   const yRing = (t, th) => yTam - 0.4 - t * hhU + Math.cos(th) * qAt(t) * rbU * 0.12;
-  const tO = 0.95, tU = 0.76;
+  const tO = 0.95, tU = 0.8;
   { const yS = yRing(tU, 0); kuppel += `<path d="M${r(CX - qAt(tU) * rbU * 0.96)} ${r(yRing(tU, 1.4) + 0.3)} Q${CX} ${r(yS + 1.1)} ${r(CX + qAt(tU) * rbU * 0.96)} ${r(yRing(tU, 1.4) + 0.3)}" stroke="#9e90a6" stroke-width=".55" fill="none" opacity=".45"/>`; }
   kuppel += `<path d="M${r(CX - qAt(tO) * rbU)} ${r(yRing(tO, 1.57))} Q${CX} ${r(yRing(tO, 0) + 0.8)} ${r(CX + qAt(tO) * rbU)} ${r(yRing(tO, 1.57))}" stroke="#d6cbd0" stroke-width=".5" fill="none"/>`;
   {
@@ -438,16 +439,17 @@ S.teil({ anker: [375, 108], id: "gaestehaus", de: "das Gästehaus", syl: "GÄS-t
 {
   let k = "";
   const krone = (x, y, w, h) => {
-    /* deckende Krone in drei Tonstufen, Licht von rechts */
-    let g = `<rect x="${r(x - w * 0.05)}" y="${r(y - h * 0.32)}" width="${r(w * 0.1)}" height="${r(h * 0.32)}" fill="#3a2e22"/>`;
-    /* unregelmäßige Laubballen: dunkle Schattenseite links unten, Mittelton, Licht nur rechts oben; Äste zwischen den Ballen */
-    const blobs = [];
-    for (let i = 0; i < 8; i++) { const a = rnd() * Math.PI * 2, q = Math.sqrt(rnd()) * 0.6; blobs.push([x + Math.cos(a) * w * q, y - h * 0.62 + Math.sin(a) * h * q * 0.4, w * (0.26 + rnd() * 0.16), 0.7 + rnd() * 0.5, rnd() * 60 - 30]); }
-    g += `<path d="M${r(x)} ${r(y - h * 0.3)} L${r(x - w * 0.35)} ${r(y - h * 0.62)} M${r(x)} ${r(y - h * 0.34)} L${r(x + w * 0.3)} ${r(y - h * 0.7)}" stroke="#3a2e22" stroke-width="${r(w * 0.06)}"/>`;
-    const blob = (bx, by, br, f, q, rot, c) => `<ellipse cx="${r(bx)}" cy="${r(by)}" rx="${r(br * f * (1 + rot / 120))}" ry="${r(br * f * q * 0.8)}" fill="${c}"/>`;
-    for (const [bx, by, br, q, rot] of blobs) g += blob(bx, by, br, 1, q, rot, "#22392a");
-    for (const [bx, by, br, q, rot] of blobs) g += blob(bx + br * 0.2, by - br * 0.18, br, 0.74, q, rot, "#36583a");
-    for (const [bx, by, br, q, rot] of blobs.filter(([bx, by]) => bx > x - w * 0.1 && by < y - h * 0.55)) g += blob(bx + br * 0.38, by - br * 0.32, br, 0.36, q * 1.2, rot, "#7a9a58");
+    /* Stamm mit Astansatz */
+    let g = `<path d="M${r(x - w * 0.06)} ${r(y)} L${r(x - w * 0.04)} ${r(y - h * 0.36)} L${r(x - w * 0.3)} ${r(y - h * 0.58)} M${r(x + w * 0.04)} ${r(y - h * 0.4)} L${r(x + w * 0.28)} ${r(y - h * 0.66)} M${r(x + w * 0.06)} ${r(y)} L${r(x + w * 0.04)} ${r(y - h * 0.36)}" stroke="#3a2e22" stroke-width="${r(w * 0.09)}" fill="none" stroke-linecap="round"/>`;
+    /* gelappter Umriss mit gezacktem Rand: Bögen zwischen unregelmäßigen Punkten */
+    const cx = x, cy = y - h * 0.64, RX = w * 0.95, RY = h * 0.38, N = 13, rr = [];
+    for (let j = 0; j < N; j++) rr.push(0.82 + rnd() * 0.22);
+    const lappen = (dx, dy, f) => { let d = ""; for (let j = 0; j <= N; j++) { const a = j / N * Math.PI * 2, q = rr[j % N] * f, px = cx + dx + Math.cos(a) * RX * q, py = cy + dy + Math.sin(a) * RY * q; if (!j) { d = `M${r(px)} ${r(py)}`; continue; } const am = (j - 0.5) / N * Math.PI * 2, qm = (rr[j % N] + rr[(j - 1) % N]) / 2 * f * 1.22; d += ` Q${r(cx + dx + Math.cos(am) * RX * qm)} ${r(cy + dy + Math.sin(am) * RY * qm)} ${r(px)} ${r(py)}`; } return d + " Z"; };
+    g += `<path d="${lappen(0, 0, 1)}" fill="#22392a"/><path d="${lappen(w * 0.1, -h * 0.04, 0.78)}" fill="#36583a"/>`;
+    /* Lichtsicheln auf der Ostseite (rechts oben) */
+    for (const a of [-1.2, -0.6, -0.05]) { const bx = cx + Math.cos(a) * RX * 0.62, by = cy + Math.sin(a) * RY * 0.62, br = RX * 0.26; g += `<path d="M${r(bx - br * 0.2)} ${r(by - br * 0.75)} A${r(br)} ${r(br * 0.8)} 0 0 1 ${r(bx + br * 0.75)} ${r(by + br * 0.35)} A${r(br * 0.8)} ${r(br * 0.6)} 0 0 0 ${r(bx - br * 0.2)} ${r(by - br * 0.75)} Z" fill="#7a9a58"/>`; }
+    /* Lücken im Laub: dunkle Einschnitte statt heller Punkte */
+    for (const [a, q] of [[-2.3, 0.6], [2.5, 0.55]]) g += `<ellipse cx="${r(cx + Math.cos(a) * RX * q)}" cy="${r(cy + Math.sin(a) * RY * q)}" rx="${r(RX * 0.12)}" ry="${r(RY * 0.08)}" fill="#152618"/>`;
     return g;
   };
   /* Bäume liegen außerhalb des Taj-Bereichs (|x − 200| > 98) oder bleiben unter dem Sockel */
@@ -465,7 +467,7 @@ S.teil({ anker: [375, 108], id: "gaestehaus", de: "das Gästehaus", syl: "GÄS-t
   /* große Schattenbäume in den vorderen Gartenvierteln (Mango, Neem), Stamm sichtbar, langer Schatten nach Westen */
   for (const sd of [-1, 1]) for (const [s, d, hh] of [[18.5, 92, 6.2], [26, 128, 7.5], [16.5, 60, 3.9]]) {
     const u = uAt(d), x = xAt(sd * s, d), w = hh * 0.42 * u;
-    k += `<path d="${schattenLang(sd * s, d, hh, hh * 0.7)}" fill="#1d3320" opacity=".28"/>`;
+    k += `<path d="${schattenLang(sd * s, d, hh, hh * 0.7)}" fill="#1d3320" opacity=".28" pointer-events="none"/>`;
     k += krone(x, yAt(d), w, hh * u);
   }
   S.baumBild = k;
@@ -523,9 +525,6 @@ const schattenWest = (s, d, hoehe, breite) => { const u = uAt(d), y = yAt(d); re
   S.teil({ anker: [390, 170], id: "rasen", de: "der Rasen", syl: "RA-sen", it: "il prato", itSyl: "PRA-to", en: "lawn", x: 0, y: 0, kunst: k,
     tipp: "Der Rasen wird jeden Tag gegossen – im heißen Agra bleibt er so grün." });
 }
-/* der Baum nach dem Rasen: die Bäume stehen auf dem Rasen */
-S.teil({ anker: [16, 104], id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: S.baumBild + `<path d="M0 ${HOR - 18} H112 V${HOR + 8} H0 Z M288 ${HOR - 18} H400 V${HOR + 8} H288 Z" fill="${S.lg("gartendunst", [[0, "#f4e4d4", 0], [0.6, "#f4e4d4", 0.4], [1, "#f4e4d4", 0.15]])}" pointer-events="none"/>`,
-  tipp: "In den vier Gartenvierteln wachsen große Schattenbäume. Der Garten soll das Paradies zeigen." });
 {
   /* Wege aus rotem Sandstein mit hellen Fugen, weiße Marmorkante zum Kanal */
   let k = "";
@@ -540,7 +539,7 @@ S.teil({ anker: [16, 104], id: "baum", de: "der Baum", syl: "BAUM", it: "l'alber
   /* Wege der Gartenviertel (Charbagh): Längswege und Querwege aus Sandstein, etwas erhöht */
   for (const sd of [-1, 1]) {
     const [a, b] = sd < 0 ? [-48, -44] : [44, 48];
-    k += `<path d="${band(a, b, D_UNTEN, D_FERN)}" fill="#a8664a"/>`;
+    k += `<path d="${band(a, b, D_UNTEN, D_FERN)}" fill="#a8664a"/><path d="${band(a - 0.25, a, D_UNTEN, D_FERN)}" fill="#e6c7b4"/><path d="${band(b, b + 0.25, D_UNTEN, D_FERN)}" fill="#e6c7b4"/>`;
     for (const [d0, d1] of [[66, 74], [222, 228]]) k += `<path d="${P([[xAt(sd * 8.3, d1), yAt(d1, 0.2)], [sd < 0 ? 0 : 400, yAt(d1, 0.2)], [sd < 0 ? 0 : 400, yAt(d0, 0.2)], [xAt(sd * 8.3, d0), yAt(d0, 0.2)]])}" fill="#b0694a"/><path d="M${r(xAt(sd * 8.3, d0))} ${r(yAt(d0, 0.2))} L${sd < 0 ? 0 : 400} ${r(yAt(d0, 0.2))}" stroke="#e6c7b4" stroke-width=".45"/><path d="M${r(xAt(sd * 8.3, d1))} ${r(yAt(d1, 0.2))} L${sd < 0 ? 0 : 400} ${r(yAt(d1, 0.2))}" stroke="#2f5a2e" stroke-width=".6"/>`;
   }
   S.teil({ anker: [154, 226], id: "weg", de: "der Weg", syl: "WEG", it: "il sentiero", itSyl: "sen-TIE-ro", en: "path", x: 0, y: 0, kunst: k,
@@ -589,6 +588,9 @@ S.teil({ anker: [16, 104], id: "baum", de: "der Baum", syl: "BAUM", it: "l'alber
   S.teil({ anker: [63, 191], id: "blume", de: "die Blume", syl: "BLU-me", it: "il fiore", itSyl: "FIO-re", en: "flower", x: 0, y: 0, kunst: k,
     tipp: "In den Beeten blühen Studentenblumen und Rosen. Hinter ihnen wächst eine niedrige Hecke." });
 }
+/* der Baum nach Rasen, Weg und Beeten: die Bäume stehen davor */
+S.teil({ anker: [16, 104], id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: S.baumBild + `<path d="M0 ${HOR - 18} H112 V${HOR + 8} H0 Z M288 ${HOR - 18} H400 V${HOR + 8} H288 Z" fill="${S.lg("gartendunst", [[0, "#f4e4d4", 0], [0.6, "#f4e4d4", 0.4], [1, "#f4e4d4", 0.15]])}" pointer-events="none"/>`,
+  tipp: "Früher wuchsen in den vier Gartenvierteln Obstbäume und Blumen. Heute sind dort vor allem Rasen und große Schattenbäume." });
 /* Wasserfläche als Schnittmaske für das Spiegelbild */
 const WASSER = [band(-KANAL, KANAL, D_NAH, D_BECKEN[0]), band(-KANAL, KANAL, D_BECKEN[1], D_FERN)].join(" ");
 S.def(`<clipPath id="${S.id("wasser")}"><path d="${WASSER}"/></clipPath>`);
@@ -597,7 +599,7 @@ S.def(`<clipPath id="${S.id("wasser")}"><path d="${WASSER}"/></clipPath>`);
   let k = `<path d="${WASSER}" fill="${S.lg("wasserhimmel", [[0, "#d9cbbc"], [0.25, "#9fb0b4"], [1, "#5f8088"]])}"/>`;
   for (let d = 18; d < 138; d *= 1.18) k += `<ellipse cx="${CX}" cy="${r(yAt(d, -0.3))}" rx="${r(Math.max(0.3, 0.12 * uAt(d)))}" ry="${r(Math.max(0.15, 0.04 * uAt(d)))}" fill="#6a5a3a" opacity=".7"/>`;
   S.teil({ anker: [176, 243], id: "wasserbecken", de: "das Wasserbecken", syl: "WAS-ser-be-cken", it: "la vasca", itSyl: "VA-sca", en: "pool", x: 0, y: 0, kunst: k,
-    tipp: "Das lange Wasserbecken teilt den Garten. Morgens sind die Düsen im langen Becken aus – so ist das Wasser ganz still." });
+    tipp: "Das lange Wasserbecken teilt den Garten. Morgens sind seine Düsen aus – so ist das Wasser ganz still." });
 }
 {
   /* das Spiegelbild: nur die gespiegelten Bauten sind „die Spiegelung“, dunkler, grünlich, mit feinen Wellen */
@@ -621,7 +623,7 @@ const BECKEN_OBEN = P([[xAt(-12, D_BECKEN[1]), yAt(D_BECKEN[1], 1.2)], [xAt(12, 
   /* Marmorbank (die „Diana-Bank“) vorn */
   { const db = d0 - 1.5, yS = yAt(db, 1.65), yU = yAt(db, 0); k += `<rect x="${r(xAt(-2.6, db))}" y="${r(yS)}" width="${r(5.2 * uAt(db))}" height=".7" fill="#fffaf2" stroke="#a99ea6" stroke-width=".15"/><rect x="${r(xAt(-2.2, db))}" y="${r(yS + 0.7)}" width="${r(0.5 * uAt(db))}" height="${r(yU - yS - 0.7)}" fill="#d8cfd2"/><rect x="${r(xAt(1.7, db))}" y="${r(yS + 0.7)}" width="${r(0.5 * uAt(db))}" height="${r(yU - yS - 0.7)}" fill="#efe2d8"/><path d="M${r(xAt(-2.6, db))} ${r(yU + 0.2)} L${r(xAt(-6, db + 3))} ${r(yU + 0.1)}" stroke="#1d3320" stroke-width=".5" opacity=".3"/>`; }
   /* fünf Lotusdüsen: kleine Sprudel mit Sprühkrone, weit unter der Türhöhe */
-  for (const [s, dd] of [[0, 151], [-4.5, 147], [4.5, 147], [-4.5, 155], [4.5, 155]]) {
+  for (const [s, dd] of [[0, 151], [-3, 147], [3, 147], [-3, 155], [3, 155]]) {
     const x = xAt(s, dd), y0 = yAt(dd, 1.1), y1 = yAt(dd, 1.65);
     k += `<path d="M${r(x - 0.5)} ${r(y0)} Q${r(x)} ${r(y1 - 0.4)} ${r(x + 0.5)} ${r(y0)}" fill="#f4f8fa" opacity=".85"/>`;
     for (const dx of [-0.8, 0, 0.8]) k += `<circle cx="${r(x + dx)}" cy="${r(y1 + 0.2)}" r=".22" fill="#fff" opacity=".8"/>`;
@@ -649,7 +651,7 @@ const BECKEN_OBEN = P([[xAt(-12, D_BECKEN[1]), yAt(D_BECKEN[1], 1.2)], [xAt(12, 
       /* kleine Unterschiede in Höhe und Neigung (±5 %) */
       const hz = (d < 90 ? 6.4 : 5.6) * (0.95 + rnd() * 0.1), u = uAt(d), y = yAt(d), w = 0.62 * u * (0.95 + rnd() * 0.1), h = hz * u;
       const x = xAt(sd * ZY, d);
-      sch += `<path d="${schattenLang(sd * ZY, d, hz, 1.25)}" fill="#1d3320"/>`;
+      sch += `<path d="${schattenLang(sd * ZY + 0.3, d, hz, 3.0)}" fill="#1d3320"/>`;
       if (d > D_BECKEN[1]) fern += zyp(x, y, w, h); else nah += zyp(x, y, w, h);
     }
   }
@@ -746,7 +748,7 @@ let KAMERA = null;
 {
   /* die Kamera (Spiegelreflex) vor seinem Gesicht, Objektiv zur Besucherin */
   let k = `<rect x="-3" y="-2" width="6" height="4" rx=".7" fill="#1e1e20"/><rect x="-2.4" y="-2.9" width="2.2" height="1" rx=".3" fill="#2a2a2c"/><circle cx="-3.2" cy=".1" r="1.9" fill="#2b2b2e" stroke="#5a5a5e" stroke-width=".3"/><circle cx="-3.6" cy=".1" r="1" fill="#3a5a7a"/><circle cx="-3.9" cy="-.2" r=".35" fill="#cfe4f4" opacity=".8"/><rect x="1.2" y="-1.4" width="1.4" height="1" fill="#c0392b"/>`;
-  S.teil({ oben: true, id: "kamera", de: "die Kamera", syl: "KA-me-ra", it: "la macchina fotografica", itSyl: "MAC-chi-na fo-to-GRA-fi-ca", en: "camera", x: r(KAMERA.x), y: r(KAMERA.y), anker: [r(KAMERA.x - 7), r(KAMERA.y + 1)], kunst: k + flaeche(-5.4, -3.2, 8.6, 5.6),
+  S.teil({ oben: true, id: "kamera", de: "die Kamera", syl: "KA-me-ra", it: "la macchina fotografica", itSyl: "MAC-chi-na fo-to-GRA-fi-ca", en: "camera", x: r(KAMERA.x), y: r(KAMERA.y), anker: [r(KAMERA.x - 7), r(KAMERA.y + 1)], kunst: k + flaeche(-26, -3.2, 26, 5.6),
     tipp: "Mit der Kamera macht er ein Foto. Für ein Bild bezahlt man ihm ein paar Rupien." });
 }
 
@@ -764,7 +766,7 @@ let KAMERA = null;
   k += `<rect x="0" y="${r(yK + 11)}" width="400" height=".8" fill="#f3ebe2" opacity=".8"/>`;
   k += `<rect x="0" y="${r(yK)}" width="400" height="${r(260 - yK)}" fill="${S.lg("terrassenlicht", [[0, "#000", 0.25], [0.5, "#000", 0], [1, "#ffd9a0", 0.15]], 0, 0, 1, 0)}"/>`;
   S.teil({ anker: [300, 254], id: "terrasse", de: "die Terrasse", syl: "ter-RAS-se", it: "la terrazza", itSyl: "ter-RAZ-za", en: "terrace", x: 0, y: 0, kunst: k,
-    tipp: "Hinter uns steht das große Tor aus rotem Sandstein. Aus seinem Bogen sieht man den Taj zum ersten Mal." });
+    tipp: "Wir stehen auf der Terrasse vor dem großen Tor aus rotem Sandstein. Durch seinen Bogen sieht man den Taj zum ersten Mal." });
 }
 {
   let k = `<path d="M5 .2 L-16 -.4 L-16 .8 L5 .9 Z" fill="#2a1408" opacity=".25"/><ellipse cx="0" cy=".2" rx="6" ry=".9" fill="#2a1408" opacity=".3"/>`;

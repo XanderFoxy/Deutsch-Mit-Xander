@@ -349,7 +349,7 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
   { const proFarbe = new Map(); let sch = "", bm = "";
     const xb = (y) => y >= 104 ? 311 + (122 - y) * 22 / 18 : 333 + (104 - y) * 2.2;
     for (let y = 97.5, z = 0; y < 125; z++) { const h = 0.9 + (y - 96) * 0.045; let x = xb(y) + 0.5 + (z % 2) * 1.2 + rnd();
-      while (x < 400) { const w = 1.4 + (y - 96) * 0.06 + rnd() * 1.2;
+      while (x < 400) { const w = 2 + (y - 96) * 0.07 + rnd() * 1.3;
         if (y < 101.5 && x > 349 && x < 383) { x += w + 0.6; continue; }
         if (rnd() < 0.24) bm += `M${r(x)} ${r(y - h * 0.4)}a${r(h * 0.75)} ${r(h * 0.6)} 0 1 0 .1 0z`;
         else { const f = ["#f1e9da", "#e7d9c1", "#dfe3e0", "#f0dfd3", "#e9e0c8", "#d8dfe6", "#f2e4cf"][Math.floor(rnd() * 7)]; proFarbe.set(f, (proFarbe.get(f) || "") + `M${r(x)} ${r(y - h)}h${r(w)}v${r(h)}h${r(-w)}z`); sch += `M${r(x + w - 0.3)} ${r(y - h)}h.3v${r(h)}h${r(-w)}v-.22h${r(w - 0.3)}z`; }
@@ -493,8 +493,8 @@ const bloecke = (P, gz, spalten, reihen, frei, fenster, haz, rnd2, maxH, kurz = 
   };
   for (const [A0, A1] of spalten) for (const [D0, D1] of reihen) {
     const T = 24;
-    for (let d = D0; d < D1 - 0.5;) { const w0 = 7.5 + rnd2() * 4 + Math.max(0, d - 150) * 0.025, w = D1 - d - w0 < 4 ? D1 - d : w0; haus(A0, A0 + T, d, d + w); haus(A1 - T, A1, d, d + w); d += w; }
-    for (let a = A0 + T; a < A1 - T - 0.5;) { const w0 = 7.5 + rnd2() * 4 + Math.max(0, D0 - 150) * 0.025, w = A1 - T - a - w0 < 4 ? A1 - T - a : w0; haus(a, a + w, D0, D0 + T); haus(a, a + w, D1 - T, D1); a += w; }
+    for (let d = D0; d < D1 - 0.5;) { const w0 = 7.5 + rnd2() * 4 + Math.max(0, d - 150) * 0.05, w = D1 - d - w0 < 4 ? D1 - d : w0; haus(A0, A0 + T, d, d + w); haus(A1 - T, A1, d, d + w); d += w; }
+    for (let a = A0 + T; a < A1 - T - 0.5;) { const w0 = 7.5 + rnd2() * 4 + Math.max(0, D0 - 150) * 0.05, w = A1 - T - a - w0 < 4 ? A1 - T - a : w0; haus(a, a + w, D0, D0 + T); haus(a, a + w, D1 - T, D1); a += w; }
     for (let i = 0; i < 2; i++) { const a = A0 + T + rnd2() * (A1 - A0 - 2 * T), d = D0 + T + rnd2() * Math.max(1, D1 - D0 - 2 * T); if (frei(a, a, d, d)) continue; const q = P(a, d, gz(a, d) + 5 + rnd2() * 3), rr = F * (2.4 + rnd2() * 1.6) / d; if (q[0] > -5 && q[0] < 405) L.push({ t: d + 0.0005, baum: [q[0], q[1], rr, dunst(rnd2() < 0.5 ? "#4f6a3a" : "#5f7b45", d)] }); }
   }
   return L;
@@ -570,7 +570,7 @@ const SL = 1 / Math.tan(SONNE.el * Math.PI / 180), SE_ = Math.sin(SONNE.az * Mat
   s += vl(band(-13.5, -1.5, 135, 150, 2), "#97938e");
   /* zwei Gleise: Schienen und Seilschlitz */
   let gl = "", sl = "";
-  for (const Xc of [-9.4, -5.6]) { for (const u of [-0.53, 0.53]) gl += `M${kante(Xc + u, 8.3, 140, 30).map(pr).join(" L")} `; sl += `M${kante(Xc, 8.3, 140, 30).map(pr).join(" L")} `; }
+  for (const Xc of [-9.4, -5.6]) { for (const u of [-0.53, 0.53]) gl += `M${kante(Xc + u, 8.3, 140, 12).map(pr).join(" L")} `; sl += `M${kante(Xc, 8.3, 140, 12).map(pr).join(" L")} `; }
   s += `<path d="${gl}" stroke="#bcb9b2" stroke-width=".55" fill="none"/><path d="${sl}" stroke="#2b2926" stroke-width=".6" fill="none"/>`;
   /* Kanaldeckel und Haltelinie in der Kreuzung */
   for (const [X, d] of [[-7.5, 9.2], [-28, 9.6]]) { const [x, y] = PN(X, d, 0), q = F / d; s += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.4 * q)}" ry="${r(0.4 * q * 4.6 / d)}" fill="#55524e"/><ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.3 * q)}" ry="${r(0.3 * q * 4.6 / d)}" fill="none" stroke="#7a7671" stroke-width=".4"/>`; }
@@ -629,7 +629,7 @@ const HAUS = {};
      Häuser im Blickfeld auf Alcatraz bleiben unter der Sichtlinie (sonst wäre die Insel verdeckt). */
   const freiN = (a0, a1, d0, d1) => (a0 < 30 && d0 < 60) || d0 < 40 || VN + F * a0 / d1 > 262;
   const maxN = (a0, a1, d0, d1) => { const x0 = VN + F * a0 / d1, x1 = VN + F * a1 / d0; if (x1 < 170 || x0 > 228) return 99; return E - 13 * d0 / F - Math.max(gzN(a0, d0), gzN(a1, d0), gzN(a0, d1), gzN(a1, d1)); };
-  const LN = bloecke(PN, gzN, [[2, 126], [147, 273]], [[15, 135], [150, 272], [287, 410], [425, 550], [565, 690]], freiN, 95,
+  const LN = bloecke(PN, gzN, [[2, 126], [147, 273]], [[15, 135], [150, 272], [287, 410], [425, 550], [565, 690]], freiN, 80,
     { vorn: (f) => misch(f, "#3e5070", 0.1), seite: (f) => misch(f, "#fff4e0", 0.1) }, rnd2, maxN, (a0, a1, d0) => a0 === 2 && d0 < 135 ? 18 : a1);
   for (let d = 45; d < 690; d += d < 150 ? 10 : 20) { const d1 = Math.min(690, d + (d < 150 ? 10 : 20)), xs = [2, 60, 126, 210, 330]; LN.push({ t: d1 - 0.01, V: [{ p: rahmen([...xs.map((X) => PN(X, d, gzN(X, d))), ...xs.slice().reverse().map((X) => PN(X, d1, gzN(X, d1)))]), f: dunst("#8b897f", d) }] }); }
   /* Ostblick: nördlich und südlich der Lombard Street, Blöcke bis zur Mason Street (≈ 0,7 km) */
@@ -637,8 +637,8 @@ const HAUS = {};
   const reihenE = [[2, 126], [147, 273], [294, 420], [441, 567], [588, 714]];
   KLIP[0] = SEAM;
   const LE = [
-    ...bloecke(PO, gzE, [[-272, -150], [-135, -15]], reihenE, freiE, 75, { vorn: (f) => misch(f, "#fff4e0", 0.1), seite: (f) => misch(f, "#3e5070", 0.08) }, rnd2, () => 99),
-    ...bloecke(PO, gzE, [[5, 125]], reihenE, freiE, 110, { vorn: (f) => misch(f, "#fff4e0", 0.1), seite: (f) => misch(f, "#3e5070", 0.36) }, rnd2, (a0, a1, d0) => d0 < 130 ? 10.5 : 99),
+    ...bloecke(PO, gzE, [[-272, -150], [-135, -15]], reihenE, freiE, 62, { vorn: (f) => misch(f, "#fff4e0", 0.1), seite: (f) => misch(f, "#3e5070", 0.08) }, rnd2, () => 99),
+    ...bloecke(PO, gzE, [[5, 125]], reihenE, freiE, 95, { vorn: (f) => misch(f, "#fff4e0", 0.1), seite: (f) => misch(f, "#3e5070", 0.36) }, rnd2, (a0, a1, d0) => d0 < 130 ? 10.5 : 99),
   ];
   for (let d = 20; d < 714; d += d < 126 ? 12 : 22) { const d1 = Math.min(714, d + (d < 126 ? 12 : 22)), ls = [-330, -135, -15, 5, 60]; LE.push({ t: d1 - 0.01, V: [{ p: rahmen([...ls.map((l) => PO(l, d, gzE(l, d))), ...ls.slice().reverse().map((l) => PO(l, d1, gzE(l, d1)))]), f: dunst("#8b897f", d) }] }); }
   KLIP[0] = -2.5;
@@ -652,7 +652,7 @@ const HAUS = {};
     const fern_ = d0 > 130, i = Math.round(d0 / 7.6), f = farben[i % 7];
     const zb0 = zH(d0), zb1 = zH(d1), zr = Math.max(zb0, zb1) + (fern_ ? 10 : 10.8), giebel = d0 < 60 && i % 7 === 6, nah = d0 < 62;
     /* Straßenfassaden zeigen nach Osten: am Nachmittag im Eigenschatten, kühler */
-    const W = misch(schatt(f.w, 0.76), "#3e5070", 0.18), WT = misch(schatt(f.t, 0.8), "#3e5070", 0.12);
+    const W = misch(schatt(f.w, 0.68), "#3e5070", 0.24), WT = misch(schatt(f.t, 0.76), "#3e5070", 0.16);
     if (zr < E - 0.3) k += vr([PN(-17, d0, zr), PN(-28, d0, zr), PN(-28, d1, zr), PN(-17, d1, zr)], "#9c9488");
     if (ersteImBlock.has(d0)) k += vr([PN(-28, d0, zb0), PN(-28, d0, zr), PN(-17, d0, zr), PN(-17, d0, zb0)], schatt(f.w, 0.93));
     k += vr([PN(-17, d0, zb0), PN(-17, d0, zr), PN(-17, d1, zr), PN(-17, d1, zb1)], W);
@@ -665,35 +665,40 @@ const HAUS = {};
     k += `<path d="${kon}" stroke="${schatt(WT, 0.55)}" stroke-width="${r(Math.max(0.2, 12 / d0))}"/>`;
     if (nah) { const zz = seg(PN(-16.5, d0, zr - 1.45), PN(-16.5, d1, zr - 1.45)); if (zz) k += `<path d="${zz}" stroke="${schatt(WT, 0.6)}" stroke-width="${r(9 / d0)}" stroke-dasharray=".22 .2"/>`; }
     if (giebel) { const gm = (d0 + d1) / 2; k += vr([PN(-16.4, d0, zr), PN(-16.4, gm, zr + 3.6), PN(-16.4, d1, zr)], W) + strich(PN(-16.3, d0, zr), PN(-16.3, gm, zr + 3.6), WT, r(10 / d0)) + strich(PN(-16.3, gm, zr + 3.6), PN(-16.3, d1, zr), WT, r(10 / d0)); }
-    /* Garage (talseitig): Tor waagerecht auf Gehweghöhe am oberen Ende, darunter der Sockel zum Gefälle */
-    { const ga = d0 + 4.4, gb = d1 - 0.4, zg = zH(ga);
+    /* Erdgeschoss: entweder Garage (Tor mit 4 × 2 Paneelen, Sturz, Bordsteinabsenkung davor)
+       oder Eingangstreppe (6 Stufen mit Wange und Geländer bis zur farbigen Tür mit Vordach) */
+    if (i % 2 === 0) {
+      const ga = d0 + 3.4, gb = d1 - 0.9, zg = zH(ga);
       k += vr([PN(-16.95, ga, zg), PN(-16.95, gb, zg), PN(-16.95, gb, zH(gb))], "#b8b2a6");
-      k += vr([PN(-16.95, ga, zg), PN(-16.95, ga, zg + 2.3), PN(-16.95, gb, zg + 2.3), PN(-16.95, gb, zg)], misch(WT, "#c8c0b0", 0.3));
-      for (let j = 1; j < 4; j += nah ? 1 : 2) k += strich(PN(-16.94, ga + 0.1, zg + j * 0.575), PN(-16.94, gb - 0.1, zg + j * 0.575), "#8a8478", r(Math.max(0.08, 3.5 / d0)));
-      if (nah) for (const t of [0.33, 0.66]) k += strich(PN(-16.94, ga + (gb - ga) * t, zg + 0.05), PN(-16.94, ga + (gb - ga) * t, zg + 2.25), "#8a8478", r(3 / d0)); }
-    /* Eingangstreppe mit Wange und Geländer hinauf zur Haustür mit Vordach (bergseitig) */
-    if (nah) {
-      const t0 = d0 + 0.4, t1 = d0 + 1.8, n = 5;
-      const wange = [PN(-15.5, t0, zb0)]; for (let j = 0; j < n; j++) { const xx = -15.5 - j * 0.29; wange.push(PN(xx, t0, zb0 + 0.2 * (j + 1)), PN(xx - 0.29, t0, zb0 + 0.2 * (j + 1))); } wange.push(PN(-16.95, t0, zb0));
-      for (let j = n - 1; j >= 0; j--) { const xx = -15.5 - j * 0.29, zz = zb0 + 0.2 * (j + 1); k += vr([PN(xx, t0, zz), PN(xx, t1, zz), PN(xx - 0.29, t1, zz), PN(xx - 0.29, t0, zz)], "#ddd7cb") + vr([PN(xx, t0, zz - 0.2), PN(xx, t1, zz - 0.2), PN(xx, t1, zz), PN(xx, t0, zz)], "#a9a397"); }
-      k += vr(wange, "#c4bdb0");
-      k += strich(PN(-15.5, t0, zb0 + 0.9), PN(-16.95, t0, zb0 + 1.95), "#2f2c28", r(Math.max(0.1, 5 / d0))) + strich(PN(-15.5, t0, zb0), PN(-15.5, t0, zb0 + 0.9), "#2f2c28", r(Math.max(0.1, 5 / d0)));
+      k += vr([PN(-16.95, ga - 0.2, zg), PN(-16.95, ga - 0.2, zg + 2.65), PN(-16.95, gb + 0.2, zg + 2.65), PN(-16.95, gb + 0.2, zg)], schatt(W, 0.8));
+      k += vr([PN(-16.93, ga, zg), PN(-16.93, ga, zg + 2.3), PN(-16.93, gb, zg + 2.3), PN(-16.93, gb, zg)], misch(WT, "#9f978a", 0.35));
+      if (nah) { k += strich(PN(-16.92, ga + 0.1, zg + 1.15), PN(-16.92, gb - 0.1, zg + 1.15), "#6f685e", r(4 / d0)); for (const t of [0.25, 0.5, 0.75]) k += strich(PN(-16.92, ga + (gb - ga) * t, zg + 0.1), PN(-16.92, ga + (gb - ga) * t, zg + 2.2), "#6f685e", r(3.5 / d0));
+        k += vr([PN(-16.9, ga, zH(ga)), PN(-14.2, ga, zH(ga)), PN(-14.2, gb, zH(gb)), PN(-16.9, gb, zH(gb))], "#dcd6ca"); }
+      k += vr([PN(-16.95, d0 + 0.6, zb0), PN(-16.95, d0 + 0.6, zb0 + 2.3), PN(-16.95, d0 + 1.6, zb0 + 2.3), PN(-16.95, d0 + 1.6, zb0)], f.a);
+    } else {
+      if (nah) {
+        const t0 = d0 + 0.4, t1 = d0 + 1.8, n = 6;
+        const wange = [PN(-15.2, t0, zb0)]; for (let j = 0; j < n; j++) { const xx = -15.2 - j * 0.29; wange.push(PN(xx, t0, zb0 + 0.2 * (j + 1)), PN(xx - 0.29, t0, zb0 + 0.2 * (j + 1))); } wange.push(PN(-16.95, t0, zb0));
+        for (let j = n - 1; j >= 0; j--) { const xx = -15.2 - j * 0.29, zz = zb0 + 0.2 * (j + 1); k += vr([PN(xx, t0, zz), PN(xx, t1, zz), PN(xx - 0.29, t1, zz), PN(xx - 0.29, t0, zz)], "#ddd7cb") + vr([PN(xx, t0, zz - 0.2), PN(xx, t1, zz - 0.2), PN(xx, t1, zz), PN(xx, t0, zz)], "#a9a397"); }
+        k += vr(wange, "#c4bdb0");
+        k += strich(PN(-15.2, t0, zb0 + 0.9), PN(-16.95, t0, zb0 + 2.1), "#2f2c28", r(Math.max(0.1, 5 / d0))) + strich(PN(-15.2, t0, zb0), PN(-15.2, t0, zb0 + 0.9), "#2f2c28", r(Math.max(0.1, 5 / d0)));
+      }
+      k += vr([PN(-16.95, d0 + 0.6, zb0 + 1.2), PN(-16.95, d0 + 0.6, zb0 + 3.4), PN(-16.95, d0 + 1.6, zb0 + 3.4), PN(-16.95, d0 + 1.6, zb0 + 1.2)], f.a);
+      if (nah) k += vr([PN(-16.95, d0 + 0.4, zb0 + 3.6), PN(-16.35, d0 + 0.4, zb0 + 3.45), PN(-16.35, d0 + 1.8, zb0 + 3.45), PN(-16.95, d0 + 1.8, zb0 + 3.6)], WT);
     }
-    k += vr([PN(-16.95, d0 + 0.6, zb0 + 1), PN(-16.95, d0 + 0.6, zb0 + 3.3), PN(-16.95, d0 + 1.6, zb0 + 3.3), PN(-16.95, d0 + 1.6, zb0 + 1)], f.a);
-    if (nah) k += vr([PN(-16.95, d0 + 0.4, zb0 + 3.55), PN(-16.35, d0 + 0.4, zb0 + 3.4), PN(-16.35, d0 + 1.8, zb0 + 3.4), PN(-16.95, d0 + 1.8, zb0 + 3.55)], WT);
     /* der schräge Erker (Bay Window) über zwei Geschosse; die Südseite schaut zu uns */
     const e0 = d0 + 2, e1 = d0 + 5.6, ez0 = zb0 + 3.4, ez1 = zr - 1.4;
-    k += vr([PN(-17, e0, ez0), PN(-16, e0 + 0.8, ez0), PN(-16, e0 + 0.8, ez1), PN(-17, e0, ez1)], schatt(f.w, 0.9));
+    k += vr([PN(-17, e0, ez0), PN(-16, e0 + 0.8, ez0), PN(-16, e0 + 0.8, ez1), PN(-17, e0, ez1)], misch(f.w, "#fff6e4", 0.12));
     k += vr([PN(-16, e0 + 0.8, ez0), PN(-16, e1 - 0.8, ez0), PN(-16, e1 - 0.8, ez1), PN(-16, e0 + 0.8, ez1)], W);
     for (const zf of [ez0 + 0.6, ez0 + 3.3]) {
       k += vr([PN(-16.85, e0 + 0.12, zf), PN(-16.12, e0 + 0.7, zf), PN(-16.12, e0 + 0.7, zf + 1.9), PN(-16.85, e0 + 0.12, zf + 1.9)], "#5a6f82", ` stroke="${WT}" stroke-width="${r(Math.max(0.1, 6 / d0))}"`);
       k += vr([PN(-15.98, e0 + 1, zf), PN(-15.98, e1 - 1, zf), PN(-15.98, e1 - 1, zf + 1.9), PN(-15.98, e0 + 1, zf + 1.9)], "#3e4c5a", ` stroke="${WT}" stroke-width="${r(Math.max(0.1, 6 / d0))}"`);
-      k += strich(PN(-16.5, e0 + 0.4, zf + 0.95), PN(-16.1, e0 + 0.7, zf + 0.95), WT, r(Math.max(0.08, 4 / d0)));
-      k += strich(PN(-15.97, e0 + 1, zf + 0.95), PN(-15.97, e1 - 1, zf + 0.95), WT, r(Math.max(0.08, 4 / d0)));
+      k += strich(PN(-16.5, e0 + 0.4, zf + 1.05), PN(-16.1, e0 + 0.7, zf + 1.05), WT, r(Math.max(0.12, 6 / d0)));
+      k += strich(PN(-15.97, e0 + 1, zf + 1.05), PN(-15.97, e1 - 1, zf + 1.05), WT, r(Math.max(0.12, 6 / d0)));
     }
     k += vr([PN(-16, e0 + 0.8, ez1), PN(-16, e1 - 0.8, ez1), PN(-16, e1 - 0.8, ez1 + 0.4), PN(-16, e0 + 0.8, ez1 + 0.4)], f.a);
     /* Schiebefenster neben dem Erker (Rahmen, Kämpfer in der Mitte) */
-    for (const zf of [ez0 + 0.6, ez0 + 3.3]) { k += vr([PN(-16.97, e1 + 0.2, zf), PN(-16.97, e1 + 1.3, zf), PN(-16.97, e1 + 1.3, zf + 1.9), PN(-16.97, e1 + 0.2, zf + 1.9)], "#46566a", ` stroke="${WT}" stroke-width="${r(Math.max(0.1, 6 / d0))}"`) + strich(PN(-16.96, e1 + 0.2, zf + 0.95), PN(-16.96, e1 + 1.3, zf + 0.95), WT, r(Math.max(0.08, 5 / d0))); }
+    for (const zf of [ez0 + 0.6, ez0 + 3.3]) { k += vr([PN(-16.97, e1 + 0.2, zf), PN(-16.97, e1 + 1.3, zf), PN(-16.97, e1 + 1.3, zf + 1.9), PN(-16.97, e1 + 0.2, zf + 1.9)], "#46566a", ` stroke="${WT}" stroke-width="${r(Math.max(0.1, 6 / d0))}"`) + strich(PN(-16.96, e1 + 0.2, zf + 1.05), PN(-16.96, e1 + 1.3, zf + 1.05), WT, r(Math.max(0.12, 6 / d0))); }
     if (d0 >= 70 && d0 < 80) HAUS.erker = { p: PN(-16.5, e0 + 0.4, ez0), q: PN(-16.5, e0 + 0.4, ez1), g: PN(-16.95, d0 + 5.5, zb1), g2: PN(-16.95, d0 + 5.5, zb1 + 2.4), d: d0 };
   }
   const DECK = [], vd = (pts, f, ex = "") => { const q = rahmen(pts); if (!ex) DECK.push(q); return vl(q, f, ex); };
@@ -793,7 +798,7 @@ const LOMB = {};
   let vor = [8.5, -5];
   for (let i = 0; i < 8; i++) {
     const dc = DT(i), lc = LA(i), links = i % 2 === 0, bog = [];
-    for (let j = 0; j <= 12; j++) { const t = Math.PI + (links ? 1 : -1) * Math.PI * j / 12; bog.push([dc + RHO * Math.cos(t), lc + RHO * Math.sin(t)]); }
+    for (let j = 0; j <= 9; j++) { const t = Math.PI + (links ? 1 : -1) * Math.PI * j / 9; bog.push([dc + RHO * Math.cos(t), lc + RHO * Math.sin(t)]); }
     stuecke.push({ p: [vor, bog[0]], t: (vor[0] + bog[0][0]) / 2 });
     stuecke.push({ p: bog, t: dc, mitte: [dc, lc], links });
     vor = bog[bog.length - 1];

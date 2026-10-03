@@ -833,7 +833,7 @@ const PODEST = yp(3.6);
   {
     const z = B.zufall(55);
     let fl = "";
-    for (let i = 0; i < 26; i++) { const x = z() * 400, yy = 200 + z() * 58, w = 3 + z() * 9 * (yy - 190) / 40; fl += `<ellipse cx="${r(x)}" cy="${r(yy)}" rx="${r(w)}" ry="${r(w * 0.22)}" fill="${z() < 0.55 ? "#fff3cf" : "#1b120a"}" opacity="${z() < 0.5 ? 0.14 : 0.09}"/>`; }
+    for (let i = 0; i < 26; i++) { const x = z() * 400, yy = 200 + z() * 58, w = 3 + z() * 9 * (yy - 190) / 40; fl += `<ellipse cx="${r(x)}" cy="${r(yy)}" rx="${r(w)}" ry="${r(w * 0.22)}" fill="${z() < 0.55 ? "#fff3cf" : "#1b120a"}" opacity="${z() < 0.5 ? 0.22 : 0.12}"/>`; }
     k += `<g filter="url(#bw_weich)">${fl}</g>`;
   }
   /* Leben auf dem nahen Gehsteig (5,2 m): eine Frau mit Einkaufstasche, ein
@@ -847,17 +847,17 @@ const PODEST = yp(3.6);
       const svg = p.svg.replace(/<path [^>]*d="([^"]+)"[^>]*\/>/g, (q, d) => { const n = d.match(/-?\d*\.?\d+/g).map(Number).filter((_, i) => i % 2 === 1); return Math.min(...n) > grenze ? "" : q; });
       return { svg: `<g transform="translate(${x} ${GY})">${schlank(svg, 2, true)}</g>`, p };
     };
-    const frau = passant({ id: "wie_frau", geschlecht: "w", blick: -75, frisur: "lang", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "bluse", farbe: "#e9d27a" }, unterteil: { stueck: "rock", farbe: "#2f4f6a" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "tasche", farbe: "#b34a3a" } } }, r(1.66 * F / 5.2), 142);
-    const mann = passant({ id: "wie_mann", geschlecht: "m", blick: 75, frisur: "kurz", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "hemd", farbe: "#9fc3e3" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, r(1.78 * F / 5.2), 182);
+    const frau = passant({ id: "wie_frau", geschlecht: "w", blick: -75, frisur: "lang", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "bluse", farbe: "#e9d27a" }, unterteil: { stueck: "rock", farbe: "#2f4f6a" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "tasche", farbe: "#b34a3a" } } }, r(1.66 * F / 5.2), 140);
+    const mann = passant({ id: "wie_mann", geschlecht: "m", blick: -75, frisur: "kurz", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "hemd", farbe: "#9fc3e3" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, r(1.78 * F / 5.2), 240);
     k += frau.svg + mann.svg;
     /* der Dackel läuft vorne in der Lücke zwischen den Kästen, an der Leine */
-    const hd = [mann.p.z.handL, mann.p.z.handR].map((h) => [182 + h.x * mann.p.k, GY + h.y * mann.p.k]).sort((a, b) => b[0] - a[0])[0];
+    const hd = [mann.p.z.handL, mann.p.z.handR].map((h) => [240 + h.x * mann.p.k, GY + h.y * mann.p.k]).sort((a, b) => a[0] - b[0])[0];
     const dx = 201, s5 = F / 5.2;
     let d = `<ellipse cx=".02" cy="-.13" rx=".27" ry=".085" fill="#8a4a22"/><path d="M-.2 -.08 L-.22 0 M-.14 -.08 L-.13 0 M.18 -.08 L.2 0 M.24 -.08 L.26 0" stroke="#6a361a" stroke-width=".04"/>`;
     d += `<path d="M.26 -.16 Q.33 -.22 .4 -.2 L.44 -.17 L.36 -.13 Z" fill="#8a4a22"/><path d="M.31 -.2 Q.3 -.12 .34 -.1 Q.36 -.16 .34 -.2 Z" fill="#5e2f14"/><circle cx=".37" cy="-.19" r=".008" fill="#111"/><path d="M-.24 -.15 Q-.33 -.2 -.36 -.26" stroke="#8a4a22" stroke-width=".03" fill="none"/>`;
-    k += `<g transform="translate(${dx} ${GY}) scale(${r(s5)})">${d}</g><path d="M${r(hd[0])} ${r(hd[1])} Q${r((hd[0] + dx) / 2 + 2)} ${r(GY - 2)} ${r(dx + 0.3 * s5)} ${r(GY - 0.17 * s5)}" stroke="#c8302a" stroke-width=".25" fill="none"/>`;
+    k += `<g transform="translate(${dx} ${GY}) scale(${r(-s5)} ${r(s5)})">${d}</g><path d="M${r(hd[0])} ${r(hd[1])} Q${r((hd[0] + dx) / 2)} ${r(GY - 4)} ${r(dx + 0.24 * s5)} ${r(GY - 0.17 * s5)}" stroke="#c8302a" stroke-width=".25" fill="none"/>`;
     /* der Radfahrer (nach links) */
-    const RY = ys(7.2), s7 = F / 7.2, RX = 232;
+    const RY = ys(7.2), s7 = F / 7.2, RX = 114;
     let rad = `<circle cx="-.6" cy="-.35" r=".34" fill="none" stroke="#222" stroke-width=".04"/><circle cx=".46" cy="-.35" r=".34" fill="none" stroke="#222" stroke-width=".04"/>`;
     rad += `<path d="M.46 -.35 L.04 -.38 L-.24 -.82 L.08 -.84 Z M-.24 -.82 L-.6 -.35 M-.32 -.86 L-.38 -1.02 L-.5 -1.04 M.08 -.84 L.06 -.94" stroke="#2f6aa8" stroke-width=".045" fill="none"/><path d="M-.02 -.96 L.14 -.96" stroke="#222" stroke-width=".05"/>`;
     rad += `<path d="M.05 -.93 L-.08 -.6 L-.1 -.38 M.05 -.93 L-.04 -.66 L.04 -.44" stroke="#2d2f3a" stroke-width=".11" stroke-linecap="round" fill="none"/>`;

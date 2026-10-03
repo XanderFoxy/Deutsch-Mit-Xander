@@ -532,7 +532,7 @@ const BRUECKE_LEUTE = [];
   const [mx, my, mk] = BRUECKE_LEUTE[0];
   S.teil({ id: "bruecke", de: "die Steinerne Brücke", syl: "STEI-ner-ne BRÜ-cke", it: "il Ponte di Pietra", itSyl: "PON-te di PIE-tra", en: "Stone Bridge",
     x: 268, y: 108, kunst: anker(268, 108, k), tipp: "Die Steinerne Brücke ist fast 900 Jahre alt (1135–1146) und über 300 Meter lang. Heute gehen hier nur Fußgänger und Radfahrer.",
-    zoom: { x: 232, y: 74, w: 88, h: 60 },
+    zoom: { x: 230, y: 74, w: 88, h: 60 },
     unter: [
       { id: "bogen", de: "der Bogen", syl: "BO-gen", it: "l'arco", itSyl: "AR-co", en: "arch", x: BX(bm), y: WAS(bm), kunst: flaeche(-bw / 2, -bh, bw, bh),
         tipp: "Die Brücke hatte 16 runde Bögen aus Stein." },
@@ -637,7 +637,7 @@ const Q = 1.45;                            /* Maßstab der Dinge auf dem Tisch *
   const mann = B.mensch({ id: "rgb_gast1", geschlecht: "m", pose: "sitzen", blick: 18, frisur: "kurz", haarfarbe: "braun", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "hemd", farbe: "hellblau" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } }, 1.78 * s);
   const frau = B.mensch({ id: "rgb_gast2", geschlecht: "w", pose: "sitzen", blick: -18, frisur: "lang", haarfarbe: "dunkelbraun", haut: "mittel", laecheln: true,
-    kleidung: { oberteil: { stueck: "bluse", farbe: "gelb" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "sandale" } } }, 1.66 * s);
+    kleidung: { oberteil: { stueck: "bluse", farbe: "gelb" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } }, 1.66 * s);
   let k = `<rect x="-34" y="${r(-0.47 * s - 2.6)}" width="68" height="2.8" rx=".5" fill="#8a5a30"/><rect x="-34" y="${r(-0.47 * s + 0.2)}" width="68" height="1" fill="#4a2e18"/>`;
   for (const sx of [-1, 1]) k += `<path d="M${sx * 26} 0 L${sx * 31} ${r(-0.45 * s)} M${sx * 31} 0 L${sx * 26} ${r(-0.45 * s)}" stroke="#3a3e44" stroke-width="1.3"/>`;
   k += `<g transform="translate(-16 0)">${leicht(frau.svg)}</g><g transform="translate(16 0)">${leicht(mann.svg)}</g>`;
