@@ -178,6 +178,26 @@ function werkzeug(S, praefix, seed = 4711) {
     }
     return `url(#${id})`;
   };
+  /* FASSUNG 854 — Volumen (Profi-Technik „Bump-Shading"): die eigene Silhouette einer Gruppe wird weich
+     geblurrt und als Höhenkarte von links oben beleuchtet – jede Form bekommt automatisch Rundung, Kernschatten
+     zur Unterkante und Licht zur Oberkante. Kritiker R1/R2: „Licht/Plastizität 3 … flach, wie Airbrush".
+     JE KÖRPERTEIL eine eigene Gruppe: `<g filter="${T.volumen("rumpf", { weich: 9 })}">…Rumpf…</g>`, ebenso jedes
+     Bein, Kopf, Hals, Schwanz. weich (cm) ≈ 20–30 % der Dicke des Teils; tiefe = Stärke (Standard 5);
+     umgebung = Anteil ohne Licht (Standard 0,3 – höher = sanfter). In Szenen (T.fein = false) ohne Filter. */
+  T.volumen = (n, o = {}) => {
+    if (!T.fein) return "none";
+    const w = o.weich || 6, el = o.hoehe || 50, amb = o.umgebung != null ? o.umgebung : 0.3;
+    const id = T.id("vol" + n + "_" + String(w).replace(".", "_"));
+    if (!filterSchon.has(id)) {
+      filterSchon.add(id);
+      T.def(`<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">` +
+        `<feGaussianBlur in="SourceAlpha" stdDeviation="${w}" result="b"/>` +
+        `<feDiffuseLighting in="b" surfaceScale="${o.tiefe || 5}" diffuseConstant="1" lighting-color="#fff" result="d"><feDistantLight azimuth="${o.azimut || 225}" elevation="${el}"/></feDiffuseLighting>` +
+        `<feComposite in="d" in2="SourceGraphic" operator="arithmetic" k1="${r4((1 - amb) / Math.sin(el * Math.PI / 180))}" k2="0" k3="${amb}" k4="0" result="m"/>` +
+        `<feComposite in="m" in2="SourceGraphic" operator="in"/></filter>`);
+    }
+    return `url(#${id})`;
+  };
   /* Echtes Auge (Seitenansicht): Lidspalte, Augapfel, Iris mit Fasern und dunklem Rand, Pupille, Lidschatten,
      zwei Glanzlichter, feuchter Unterlidrand, Tränenkarunkel, Lidfalte, Wimpern.
      o: { iris, iris2 (Rand), pupille: "rund"|"schlitz"|"quer"|"oval", offen (0–1), winkel (Grad), weiss (Lederhaut

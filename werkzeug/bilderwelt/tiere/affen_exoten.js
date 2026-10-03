@@ -213,6 +213,103 @@ function werk(T) {
     }
     return Object.entries(eimer).map(([c, d]) => `<path d="${kurz(d)}" fill="${c}" fill-opacity=".9" stroke="${o.kc || "#1a0802"}" stroke-opacity="${o.kante != null ? o.kante : 0.2}" stroke-width=".1"/>`).join("");
   };
+  /* Strähne (gefüllt, gebogen, spitz auslaufend) in Zehntel-cm: Basis (x, y), Winkel a (rad), Länge L, Breite bb, Biegung kr */
+  const strang = (x, y, a, L, bb, kr) => {
+    const ca = Math.cos(a), sa = Math.sin(a), nx = -sa, ny = ca;
+    const mx = x + ca * L * 0.5 + nx * kr, my = y + sa * L * 0.5 + ny * kr;
+    const tx = x + ca * L + nx * kr * 0.7, ty = y + sa * L + ny * kr * 0.7;
+    const P = [[x + nx * bb / 2, y + ny * bb / 2], [mx + nx * bb * 0.35, my + ny * bb * 0.35], [tx, ty], [mx - nx * bb * 0.35, my - ny * bb * 0.35], [x - nx * bb / 2, y - ny * bb / 2]].map((p) => [i10(p[0]), i10(p[1])]);
+    return `M${P[0][0]} ${P[0][1]}q${P[1][0] - P[0][0]} ${P[1][1] - P[0][1]} ${P[2][0] - P[0][0]} ${P[2][1] - P[0][1]}q${P[3][0] - P[2][0]} ${P[3][1] - P[2][1]} ${P[4][0] - P[2][0]} ${P[4][1] - P[2][1]}z`;
+  };
+  const strangGruppe = (eimer, o) => {
+    const p = Object.entries(eimer).map(([c, d]) => `<path d="${kurz(d)}" fill="${c}"${o.kante !== 0 ? ` stroke="${o.kc || "#000"}" stroke-opacity="${o.kante != null ? o.kante : 0.18}" stroke-width="${f1((o.kw || 0.08) * 10)}"` : ""}/>`).join("");
+    return p ? `<g transform="scale(.1)"${o.op ? ` opacity="${o.op}"` : ""}>${p}</g>` : "";
+  };
+  /* Strähnenfell in einer Fläche: n Strähnen, Wuchsrichtung w(x, y) (Grad), Länge L0…L1, Breite b, farbe(x, y, z) */
+  W.straehnen = (feld, n, w, L0, L1, b, farbe, o = {}) => {
+    const [x0, y0, x1, y1] = T.box(feld), eimer = {};
+    const ziel = Math.round(n * (T.fein ? 1 : (o.szene != null ? o.szene : 0.2)));
+    let v = 0, g = 0;
+    while (g < ziel && v < ziel * 30) {
+      v++;
+      const x = x0 + T.rnd() * (x1 - x0), y = y0 + T.rnd() * (y1 - y0);
+      if (!T.inPoly(x, y, feld)) continue;
+      const L = (L0 + T.rnd() * (L1 - L0)) * (o.laenge ? o.laenge(x, y) : 1);
+      const c = farbe(x, y, T.rnd());
+      eimer[c] = (eimer[c] || "") + strang(x, y, (w(x, y) + (T.rnd() - 0.5) * (o.streu || 14)) * RAD, L, b * (0.5 + T.rnd() * 0.8), (T.rnd() - 0.5) * L * (o.krumm || 0.35));
+      g++;
+    }
+    return strangGruppe(eimer, o);
+  };
+  /* Strähnen über eine Umrisskante hinaus (statt Sägezahn): Länge gemischt, gebogen, überlappend */
+  W.kantenStraehnen = (kante, n, w, L0, L1, b, farbe, o = {}) => {
+    const seg = []; let tot = 0;
+    for (let i = 0; i < kante.length - 1; i++) { const l = Math.hypot(kante[i + 1][0] - kante[i][0], kante[i + 1][1] - kante[i][1]); seg.push([kante[i], kante[i + 1], l]); tot += l; }
+    const eimer = {}, ziel = Math.round(n * (T.fein ? 1 : (o.szene != null ? o.szene : 0.3))), ein = o.ein != null ? o.ein : 0.45;
+    for (let k = 0; k < ziel; k++) {
+      let s2 = T.rnd() * tot, j = 0;
+      while (j < seg.length - 1 && s2 > seg[j][2]) { s2 -= seg[j][2]; j++; }
+      const [p, q, l] = seg[j], t = s2 / (l || 1), x = p[0] + (q[0] - p[0]) * t, y = p[1] + (q[1] - p[1]) * t;
+      const a = ((typeof w === "function" ? w(x, y) : w) + (T.rnd() - 0.5) * (o.streu || 18)) * RAD;
+      const z = T.rnd(), L = (L0 + Math.pow(T.rnd(), 1.6) * (L1 - L0)) * (o.laenge ? o.laenge(x, y) : 1);
+      const c = farbe(x, y, z);
+      eimer[c] = (eimer[c] || "") + strang(x - Math.cos(a) * L * ein, y - Math.sin(a) * L * ein, a, L, b * (0.5 + T.rnd() * 0.8), (T.rnd() - 0.5) * L * (o.krumm || 0.4));
+    }
+    return strangGruppe(eimer, o);
+  };
+  /* Falten als Paar: dunkle Rinne + helle Kante darüber (Licht oben links); zuege: Pfad-Strings */
+  W.falten = (zuege, w, dunkel = "#000", hell = "#9a948e", od = 0.7, oh = 0.4) => T.fein ?
+    `<path d="${zuege.join("")}" fill="none" stroke="${dunkel}" stroke-opacity="${od}" stroke-width="${w}" stroke-linecap="round"/>` +
+    `<path d="${zuege.join("")}" fill="none" stroke="${hell}" stroke-opacity="${oh}" stroke-width="${f1(w * 0.7) || 0.1}" stroke-linecap="round" transform="translate(${f1(-w * 0.3)} ${f1(-w * 0.9)})"/>` : "";
+  /* Auge mit Höhle (Seitenansicht, Blick nach rechts): Lidspalte, Lederhaut, Iris mit Rand und Fasern, Pupille,
+     dickes Oberlid (deckt lidDeck der Iris), Schatten des Lides, feuchter Unterlidrand, kleine Karunkel vorn,
+     kleiner (gedämpfter) Glanzpunkt. o: { iris, iris2, sklera, pupille, offen, winkel, lidDeck, lid (Hautfarbe Lid),
+     lidHell, rand, glanz (0–1), karunkel, hoehle (Farbe der Augenhöhle), wimpern } */
+  W.auge2 = (x, y, r, o = {}) => {
+    const id = T.id("a2" + (nr++));
+    const Wd = r * 1.35, Ho = r * (o.offen || 0.8), Hu = Ho * 0.75, deck = o.lidDeck != null ? o.lidDeck : 0.25;
+    const spalt = `M${f1(-Wd)} ${f1(Ho * 0.05)}C${f1(-Wd * 0.5)} ${f1(-Ho)} ${f1(Wd * 0.45)} ${f1(-Ho * 1.05)} ${f1(Wd)} ${f1(Ho * 0.15)}C${f1(Wd * 0.45)} ${f1(Hu * 1.1)} ${f1(-Wd * 0.45)} ${f1(Hu * 1.05)} ${f1(-Wd)} ${f1(Ho * 0.05)}Z`;
+    T.def(`<clipPath id="${id}"><path d="${spalt}"/></clipPath>`);
+    const ir = r * 0.92, ix = r * 0.12, iy = Ho * 0.12;
+    const ig = T.rg("ir" + (o.iris || "#3a2010").slice(1) + (o.iris2 || "#140804").slice(1), [[0, o.iris || "#3a2010"], [0.55, o.iris || "#3a2010"], [0.85, o.iris2 || "#140804"], [1, "#0a0402"]], 0.45, 0.45, 0.55);
+    let s = `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${o.winkel || 0})">`;
+    if (o.hoehle) s += W.weich([[-r * 0.1, -Ho * 0.3, Wd * 1.25, Ho * 1.7, 0, o.hoehle, 0.55]], r * 0.35);
+    s += `<path d="${spalt}" fill="${o.sklera || "#2a1a12"}"/><g clip-path="url(#${id})">`;
+    s += `<circle cx="${f1(ix)}" cy="${f1(iy)}" r="${f1(ir)}" fill="${ig}"/>`;
+    if (T.fein) {
+      let fa = "";
+      for (let i = 0; i < 22; i++) { const a = i / 22 * Math.PI * 2; fa += `M${f1(ix + Math.cos(a) * ir * 0.45)} ${f1(iy + Math.sin(a) * ir * 0.45)}L${f1(ix + Math.cos(a + 0.1) * ir * 0.9)} ${f1(iy + Math.sin(a + 0.1) * ir * 0.9)}`; }
+      s += `<path d="${fa}" stroke="${o.faser || "#000"}" stroke-opacity=".25" stroke-width="${f1(r * 0.05) || 0.05}" fill="none"/>`;
+    }
+    s += (o.pupille === "schlitz" ? `<ellipse cx="${f1(ix)}" cy="${f1(iy)}" rx="${f1(r * 0.13)}" ry="${f1(ir * 0.75)}" fill="#030202"/>` : `<circle cx="${f1(ix)}" cy="${f1(iy)}" r="${f1(r * (o.pupR || 0.4))}" fill="#030202"/>`);
+    /* Schatten des Oberlides auf dem Augapfel */
+    s += `<rect x="${f1(-Wd)}" y="${f1(-Ho * 1.1)}" width="${f1(2 * Wd)}" height="${f1(Ho * 1.3)}" fill="${T.lg("a2ls", [[0, "#000", 0.85], [0.6, "#000", 0.3], [1, "#000", 0]])}"/>`;
+    s += `<circle cx="${f1(ix + r * 0.3)}" cy="${f1(iy - r * 0.32)}" r="${f1(r * 0.14)}" fill="#fff" opacity="${o.glanz != null ? o.glanz : 0.75}"/>`;
+    s += `<circle cx="${f1(ix - r * 0.35)}" cy="${f1(iy + r * 0.3)}" r="${f1(r * 0.07)}" fill="#fff" opacity="${(o.glanz != null ? o.glanz : 0.75) * 0.4}"/></g>`;
+    /* dickes Oberlid: Hautwulst über der Lidspalte, Unterkante deckt die Iris */
+    const lu = -Ho + (2 * ir) * deck;
+    const lid = `M${f1(-Wd * 1.08)} ${f1(Ho * 0.02)}C${f1(-Wd * 0.6)} ${f1(-Ho * 1.25)} ${f1(Wd * 0.5)} ${f1(-Ho * 1.35)} ${f1(Wd * 1.06)} ${f1(Ho * 0.1)}` +
+      `C${f1(Wd * 0.5)} ${f1(lu - Ho * 0.15)} ${f1(-Wd * 0.45)} ${f1(lu - Ho * 0.1)} ${f1(-Wd * 1.08)} ${f1(Ho * 0.02)}Z`;
+    s += `<path d="${lid}" fill="${o.lid || "#2a2220"}"/>`;
+    s += `<path d="M${f1(-Wd * 0.9)} ${f1(lu * 0.3)}C${f1(-Wd * 0.45)} ${f1(lu + Ho * 0.05)} ${f1(Wd * 0.45)} ${f1(lu)} ${f1(Wd)} ${f1(Ho * 0.12)}" fill="none" stroke="${o.rand || "#050302"}" stroke-width="${f1(r * 0.16)}" stroke-linecap="round"/>`;
+    s += `<path d="M${f1(-Wd * 0.75)} ${f1(-Ho * 0.85)}C${f1(-Wd * 0.3)} ${f1(-Ho * 1.25)} ${f1(Wd * 0.3)} ${f1(-Ho * 1.25)} ${f1(Wd * 0.75)} ${f1(-Ho * 0.7)}" fill="none" stroke="${o.lidHell || "#8a8480"}" stroke-opacity=".45" stroke-width="${f1(r * 0.1)}" stroke-linecap="round"/>`;
+    /* Unterlid: feiner Rand, feuchter Glanz; Karunkel vorn (nasenseitig = rechts) */
+    s += `<path d="M${f1(Wd)} ${f1(Ho * 0.15)}C${f1(Wd * 0.45)} ${f1(Hu * 1.1)} ${f1(-Wd * 0.45)} ${f1(Hu * 1.05)} ${f1(-Wd)} ${f1(Ho * 0.05)}" fill="none" stroke="${o.rand || "#050302"}" stroke-width="${f1(r * 0.08)}"/>`;
+    s += `<path d="M${f1(Wd * 0.7)} ${f1(Hu * 0.75)}C${f1(Wd * 0.2)} ${f1(Hu * 1.3)} ${f1(-Wd * 0.4)} ${f1(Hu * 1.25)} ${f1(-Wd * 0.75)} ${f1(Hu * 0.6)}" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="${f1(r * 0.05) || 0.05}"/>`;
+    s += `<ellipse cx="${f1(Wd * 0.94)}" cy="${f1(Ho * 0.12)}" rx="${f1(r * 0.08)}" ry="${f1(r * 0.06)}" fill="${o.karunkel || "#6a5a66"}"/>`;
+    const nw = o.wimpern || 0;
+    if (nw && T.fein) {
+      let d = "";
+      const L = r * (o.wimpernLaenge || 0.5);
+      for (let i = 0; i < nw; i++) {
+        const t = 0.12 + 0.8 * i / Math.max(1, nw - 1), bx = -Wd + 2 * Wd * t, by = -Ho * 1.1 * Math.sin(Math.PI * t) + Ho * 0.08;
+        const a = -Math.PI / 2 - 0.8 + 1.4 * t, l = L * (0.7 + T.rnd() * 0.5);
+        d += `M${f1(bx)} ${f1(by)}q${f1(Math.cos(a) * l * 0.5)} ${f1(Math.sin(a) * l * 0.6)} ${f1(Math.cos(a + 0.4) * l)} ${f1(Math.sin(a + 0.4) * l * 0.8)}`;
+      }
+      s += `<path d="${d}" fill="none" stroke="${o.wimpernFarbe || "#140c08"}" stroke-width="${f1(r * 0.05) || 0.05}" stroke-linecap="round"/>`;
+    }
+    return s + `</g>`;
+  };
   /* Auge: volle Feinheit = T.augeReal, Szene = dunkle Lidspalte + Glanzpunkt (wenige Bytes) */
   W.auge = (x, y, rr, o) => T.fein ? T.augeReal(x, y, rr, o) :
     `<ellipse cx="${f1(x)}" cy="${f1(y)}" rx="${f1(rr * 1.3)}" ry="${f1(rr * (o.offen || 0.75))}" fill="${o.iris || "#3a2410"}" stroke="#000" stroke-width="${f1(rr * 0.25)}"/><circle cx="${f1(x + rr * 0.4)}" cy="${f1(y - rr * 0.3)}" r="${f1(rr * 0.25)}" fill="#fff" opacity=".8"/>`;

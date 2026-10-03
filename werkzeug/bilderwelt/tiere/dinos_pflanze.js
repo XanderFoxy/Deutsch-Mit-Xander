@@ -402,8 +402,8 @@ function hornForm(T, name, bx, by, winkel, L, B, kr = 0, sp = 0.04, farben) {
   pts[ts.length - 1].push(1);
   const lin = (u, t0 = 0.02, t1 = 0.96) => ts.filter((t) => t >= t0 && t <= t1).map((t) => P(t, u));
   const g = ulg(T, name, farben || [[0, "#3d3427"], [0.3, "#7d7058"], [0.7, "#cfc3a3"], [1, "#e4dbc2"]], bx, by, bx + d[0] * L, by + d[1] * L);
-  const innen = strich(T, [lin(0.5)], HELL, B * 0.16, 0.5, B * 0.05) + strich(T, [lin(-0.48)], DUNKEL, B * 0.3, 0.5, B * 0.08) +
-    strich(T, [lin(-0.88, 0.05, 0.9)], "#e8dcc0", B * 0.07, 0.3, B * 0.03) +
+  const innen = (T.fein ? strich(T, [lin(0.5)], HELL, B * 0.16, 0.5, B * 0.05) : "") + strich(T, [lin(-0.48)], DUNKEL, B * 0.3, 0.5, B * 0.08) +
+    (T.fein ? strich(T, [lin(-0.88, 0.05, 0.9)], "#e8dcc0", B * 0.07, 0.3, B * 0.03) : "") +
     (T.fein ? strich(T, [-0.6, -0.25, 0.1, 0.4, 0.7].map((u) => lin(u, 0.04, 0.75)), DUNKEL, B * 0.025, 0.25) : "");
   return { pts, svg: masse(T, [pts], g, innen) };
 }
@@ -724,11 +724,11 @@ function stegosaurus(T) {
   /* nahe Platten mit Hautkragen an der Basis, Rinnen, dunklem Rand */
   PL.forEach((p, i) => {
     if (!p[3]) return;
-    if (!F) { s += `<path d="${gl(formen[i])}" fill="${platteF}" stroke="#3a1a0c" stroke-width=".35" stroke-opacity=".6"/>`; return; }
+    if (!F) { s += `<path d="${gl(formen[i])}" fill="${platteF}" stroke="#3a1a0c" stroke-width=".4" stroke-opacity=".6"/>`; return; }
     s += masse(T, [formen[i]], platteF, rinnen(p[0], p[1], p[2], 0.24) + blob(T, formen[i].map(([x, y]) => [x - 0.25 * p[2] * 0.2, y - 0.2]), HELL, 0.08, 0.3) +
       strich(T, [formen[i].slice(1, 10)], "#3a1a0c", 0.42, 0.5, 0.12));
   });
-  s += strich(T, [RUECKEN.slice(3, 16).map(([x, y]) => [x, y + 0.45])], "#6e6644", 1.1, 0.9, 0.3);
+  s += strich(T, [RUECKEN.slice(3, 16).map(([x, y]) => [x, y + 0.45])], "#6a6242", 0.9, 0.6, 0.3);
   /* Thagomizer: nahes Paar (perspektivisch 15–20 % kürzer), Basis in Hautkragen */
   const st1 = hornForm(T, "st1", 9.6, -17.2, -150, 6, 2.2, -0.04, 0.05, sFarben), st2 = hornForm(T, "st2", 5.4, -15.2, -162, 5.8, 2.1, -0.03, 0.05, sFarben);
   s += st1.svg + st2.svg + oval(T, 9.4, -17, 1.3, 0.8, -20, "#5a5236", 1, 0.25) + oval(T, 5.2, -15, 1.2, 0.75, -15, "#544c32", 1, 0.25);

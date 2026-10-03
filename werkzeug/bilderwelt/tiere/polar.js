@@ -209,6 +209,28 @@ function federMuster(T, n, b, h, dunkel, hell, opD, opH, dreh = 0) {
   }
   return `url(#${id})`;
 }
+/* Lanzett-Federn als Kachel: sichtbar ist nur die spitze Federspitze jeder überlappenden Feder (Spitze nach unten) –
+   dunkler Spitzen-Schatten auf der Feder darunter, feiner Lichtsaum darüber. trans = patternTransform (Rundung: scale). */
+function lanzettMuster(T, n, b, h, dunkel, hell, opD, opH, trans = "") {
+  const id = T.id("lz" + n);
+  T._pm = T._pm || new Set();
+  if (!T._pm.has(id)) {
+    T._pm.add(id);
+    const w = b * 0.46, d = h * 0.9;
+    const v = (cx, cy, t) => `M${J(cx - w, cy)}Q${J(cx - w * 0.35, cy + d * 0.85 * t, cx, cy + d * t)}Q${J(cx + w * 0.35, cy + d * 0.85 * t, cx + w, cy)}Q${J(cx + w * 0.3, cy + d * 0.62 * t, cx, cy + d * 0.72 * t)}Q${J(cx - w * 0.3, cy + d * 0.62 * t, cx - w, cy)}z`;
+    const alle = (t, dy) => [[b / 2, dy], [0, h + dy], [b, h + dy]].map(([x, y]) => v(x, y, t)).join("");
+    T.def(`<pattern id="${id}" width="${Z2(b)}" height="${Z2(2 * h)}" patternUnits="userSpaceOnUse"${trans ? ` patternTransform="${trans}"` : ""}>` +
+      `<path d="${alle(1, 0.05)}" fill="${dunkel}" fill-opacity="${opD}"/>` + (hell ? `<path d="${alle(0.8, -h * 0.18)}" fill="${hell}" fill-opacity="${opH}"/>` : "") + `</pattern>`);
+  }
+  return `url(#${id})`;
+}
+/* Maske mit Radialverlauf (userSpaceOnUse): stops [[0..1, farbe]] – Weiß = sichtbar */
+function radialMaske(T, n, x, y, w, h, cx, cy, rr, stops, sy = 1) {
+  const id = T.id("rm" + n);
+  const g = T.rg("rmg" + n, stops, Z(cx), Z(cy), Z(rr), ` gradientUnits="userSpaceOnUse"${sy !== 1 ? ` gradientTransform="translate(0 ${Z(cy * (1 - sy))}) scale(1 ${sy})"` : ""}`);
+  T.def(`<mask id="${id}" maskUnits="userSpaceOnUse" x="${x}" y="${y}" width="${w}" height="${h}"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${g}"/></mask>`);
+  return `url(#${id})`;
+}
 /* Fläche mit Federmuster füllen (nur fein; in der Szene nichts) */
 const federn = (T, x, y, w, h, n, b, hh, dunkel, hell, opD, opH, dreh, op, wk = true, maske = null) =>
   (T.fein === false ? "" : `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${federMuster(T, n, b, hh, dunkel, hell, opD, opH, dreh)}"${wk ? ` filter="${wackel(T)}"` : ""}${op < 1 ? ` opacity="${op}"` : ""}${maske ? ` mask="${maske()}"` : ""}/>`);

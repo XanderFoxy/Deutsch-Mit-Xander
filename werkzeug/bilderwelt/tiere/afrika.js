@@ -519,131 +519,207 @@ function elefant(T) {
    auf cremefarbenem Netz, an Beinen kleiner, unten fast weiß. Große dunkle Augen mit langen Wimpern, seitlich.
    Paarhufer mit großen gespaltenen Hufen (~30 cm), Schwanz lang mit schwarzer Quaste. */
 function giraffe(T) {
-  const H = mach(T, T.fein ? 1 : 0, 0.8), { teil, L, fl, kette, kerben, G, wf, drin } = H, F = T.fein, US = H.US;
-  const creme = T.lg("creme", [[0, "#efe2c4"], [0.6, "#e6d4ad"], [1, "#d9c59c"]], 0, -550, 0, 0, US);
-  const fern = T.lg("fern", [[0, "#c2ad86"], [1, "#a38d68"]], 0, -300, 0, 0, US);
-  const licht = T.lg("licht", [[0, "#fff", 0.16], [0.35, "#fff", 0], [0.62, "#000", 0.08], [1, "#000", 0.26]], 0, -550, 0, 0, US);
-  const fleckF = T.lg("fleck", [[0, "#57290e"], [0.45, "#6f3614"], [0.7, "#83461d"], [1, "#9a5e2e"]], 0, -550, 0, -100, US);
-  const fleckFern = T.lg("fleckf", [[0, "#4a250e"], [1, "#6a3c1d"]], 0, -300, 0, -100, US);
+  const H = mach(T, T.fein ? 1 : 0, 0.8), { teil, L, kette, kerben, falte, G, wf, zyl, drin } = H, F = H.F, US = H.US;
+  /* Farben: Creme-Netz, Unterbeine heller (cremeweiß), Flecken kastanienbraun, zum Bauch heller */
+  const creme = T.lg("creme", [[0, "#efe3c7"], [0.6, "#e8d9b6"], [1, "#e4d3ad"]], 0, -560, 0, -100, US);
+  const creFern = T.lg("crf", [[0, "#cdbf9f"], [1, "#c3b392"]], 0, -330, 0, 0, US);
+  const lauf = T.lg("lauf", [[0, "#e6d6b2"], [0.4, "#efe4cc"], [0.6, "#f3ead6"], [1, "#e2d3b4"]], 0, -200, 0, -20, US);
+  const laufFern = T.lg("lauff", [[0, "#c5b796"], [0.5, "#cfc4ac"], [1, "#bdb095"]], 0, -200, 0, -20, US);
+  const licht = T.lg("licht", [[0, "#fff", 0.22], [0.25, "#fff", 0.04], [0.45, "#000", 0], [0.62, "#4a2e16", 0.24], [0.8, "#4a2e16", 0.38], [0.92, "#4a2e16", 0.2], [1, "#e8d2a8", 0.14]], 0, -372, 0, -196, US);
+  const lichtX = T.lg("lichtx", [[0, "#fff", 0.08], [0.5, "#fff", 0], [1, "#000", 0.1]], 0, 0, 1, 0);
   const SW = "#1a120b";
-  /* ---- Fleckenmuster als Voronoi-Mosaik: Zellgrenze in jede Richtung = nächste Mittelsenkrechte, minus cremefarbene Fuge ---- */
+  /* Fell als Muster (dicht, Haar für Haar), je Körperzone eigene Wuchsrichtung */
+  const haarF = [["#fff6e2", 2, 0.28, 0.32], ["#3a1d0a", 2, 0.3, 0.3]];
+  const fHals = F ? H.fellMuster("h", 62, haarF, { tile: 9, n: 46, len: 2.6 }) : "";
+  const fRumpf = F ? H.fellMuster("r", 168, haarF, { tile: 10, n: 46, len: 3 }) : "";
+  const fBein = F ? H.fellMuster("b", 92, haarF, { tile: 7, n: 36, len: 2.2 }) : "";
+  const fKopf = F ? H.fellMuster("k", 200, [["#fff6e2", 2, 0.2, 0.3], ["#3a1d0a", 2, 0.2, 0.28]], { tile: 6, n: 40, len: 1.5 }) : "";
+  /* ---- Fleckenmosaik: echte Voronoi-Zellen, Fugen unterschiedlich breit, Ränder gelappt, Ecken rund,
+     zum Umriss hin verkürzt (Rundung), zum Bauch kleiner und heller ---- */
   const zentren = [];
-  const feld = (x0, y0, x1, y1, g, fuge, dez, ok) => {
+  const feld = (x0, y0, x1, y1, g, fuge, ok) => {
     for (let y = y0, z = 0; y < y1; y += g * 0.87, z++) for (let x = x0 + (z % 2) * g / 2; x < x1; x += g) {
-      const c = [x + (T.rnd() - 0.5) * g * 0.55, y + (T.rnd() - 0.5) * g * 0.55, g, fuge, dez, Array.from({ length: 28 }, () => T.rnd())];
-      if (!ok || ok(c[0], c[1])) zentren.push(c);
+      const c = { x: x + (T.rnd() - 0.5) * g * 0.5, y: y + (T.rnd() - 0.5) * g * 0.5, g, fuge, r: Array.from({ length: 40 }, () => T.rnd()) };
+      if (!ok || ok(c.x, c.y)) zentren.push(c);
     }
   };
-  const flecken = (poly, rand = 0, ymin = -999) => {
-    let d = "";
+  const halbebene = (poly, nx, ny, d) => { /* behalte Punkte mit nx*x + ny*y <= d */
+    const out = [];
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i], b = poly[(i + 1) % poly.length], da = nx * a[0] + ny * a[1] - d, db = nx * b[0] + ny * b[1] - d;
+      if (da <= 0) out.push(a);
+      if (da * db < 0) { const t = da / (da - db); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); }
+    }
+    return out;
+  };
+  const qr = (pts, q) => { /* gerundetes Vieleck: Mittelpunkte verbunden, Ecken als Bögen (klein) */
+    const fm = (v) => String(Math.round(v * q) / q), n = pts.length, M = (i) => { const a = pts[i % n], b = pts[(i + 1) % n]; return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; };
+    const A = (i, t) => { const a = pts[(i + n) % n], b = pts[(i + 1) % n]; return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; };
+    let p0 = A(-1, 0.75), d = `M${fm(p0[0])} ${fm(p0[1])}`;
+    for (let i = 0; i < n; i++) { const p = pts[i], a = A(i, 0.25), b = A(i, 0.75); d += `Q${fm(p[0])} ${fm(p[1])} ${fm(a[0])} ${fm(a[1])}L${fm(b[0])} ${fm(b[1])}`; }
+    return d + "Z";
+  };
+  const umrisse = [];
+  const flecken = (poly, o = {}) => {
+    const kl = [[], [], []];
+    const rand = umrisse.length ? umrisse : [];
     for (const c of zentren) {
-      if (c[1] < ymin) continue;
-      if (!drin(poly, c[0], c[1]) && !rand) continue;
-      if (rand && !poly.some((p) => Math.abs(p[0] - c[0]) < c[2] * 1.5 && Math.abs(p[1] - c[1]) < c[2] * 1.5) && !drin(poly, c[0], c[1])) continue;
-      const nb = zentren.filter((n) => n !== c && Math.abs(n[0] - c[0]) < c[2] * 2.2 && Math.abs(n[1] - c[1]) < c[2] * 2.2);
-      const m = F ? 9 : 6, pts = [];
-      for (let k = 0; k < m; k++) {
-        const a = (k / m) * Math.PI * 2;
-        let rr = c[2] * 0.75;
-        for (const n of nb) {
-          const vx = n[0] - c[0], vy = n[1] - c[1], dd = Math.hypot(vx, vy), cs = (vx * Math.cos(a) + vy * Math.sin(a)) / dd;
-          if (cs > 0.05) rr = Math.min(rr, (dd / 2) / cs);
-        }
-        rr = Math.max(0.5, rr - c[3] * (0.75 + c[5][k] * 0.6) - (k % 2 && F ? c[3] * 0.6 * c[5][k + 14] : 0));
-        pts.push([c[0] + Math.cos(a) * rr, c[1] + Math.sin(a) * rr]);
+      if (o.ymin != null && c.y < o.ymin) continue;
+      const imm = drin(poly, c.x, c.y);
+      if (!imm && !(o.rand && poly.some((p) => Math.abs(p[0] - c.x) < c.g && Math.abs(p[1] - c.y) < c.g))) continue;
+      let zelle = [[c.x - c.g * 1.5, c.y - c.g * 1.5], [c.x + c.g * 1.5, c.y - c.g * 1.5], [c.x + c.g * 1.5, c.y + c.g * 1.5], [c.x - c.g * 1.5, c.y + c.g * 1.5]];
+      let k = 0;
+      for (const n of zentren) {
+        if (n === c || Math.abs(n.x - c.x) > c.g * 2.2 || Math.abs(n.y - c.y) > c.g * 2.2) continue;
+        const vx = n.x - c.x, vy = n.y - c.y, l = Math.hypot(vx, vy), nx = vx / l, ny = vy / l;
+        const fu = (c.fuge + n.fuge) / 4 * (0.5 + 1.1 * c.r[k++ % 40]);
+        zelle = halbebene(zelle, nx, ny, nx * (c.x + vx / 2) + ny * (c.y + vy / 2) - fu);
+        if (zelle.length < 3) break;
       }
-      const q = Math.pow(10, F ? c[4] : 0), rd = (v) => Math.round(v * q) / q;
-      let lx = rd(pts[0][0]), ly = rd(pts[0][1]);
-      d += `M${lx} ${ly}`;
-      for (let k = 1; k < m; k++) { const X = rd(pts[k][0]), Y = rd(pts[k][1]); d += `l${rd(X - lx)} ${rd(Y - ly)}`; lx = X; ly = Y; }
-      d += "z";
+      if (zelle.length < 3) continue;
+      /* gelappte Seiten: jede Kante mit 1–2 Zwischenpunkten, leicht nach innen/außen versetzt */
+      const pts = [];
+      for (let i = 0; i < zelle.length; i++) {
+        const a = zelle[i], b = zelle[(i + 1) % zelle.length], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy);
+        pts.push(a);
+        if (l > c.g * 0.22 && F && c.g > 10) { const am = (c.r[(i * 3 + 7) % 40] - 0.45) * c.g * 0.12; pts.push([a[0] + dx * 0.5 - dy / l * am, a[1] + dy * 0.5 + dx / l * am]); }
+      }
+      /* Verkürzung zum Umriss: senkrecht zum nächsten Randpunkt stauchen */
+      let best = 1e9, bx = 0, by = 0;
+      for (const p of (o.umriss || poly)) { const dd = Math.hypot(p[0] - c.x, p[1] - c.y); if (dd < best) { best = dd; bx = p[0]; by = p[1]; } }
+      const R0 = o.r0 || c.g * 1.2;
+      let fin = pts;
+      if (best < R0 && best > 0.01) {
+        const nx = (bx - c.x) / best, ny = (by - c.y) / best, sq = 0.55 + 0.45 * (best / R0);
+        fin = pts.map((p) => { const dx = p[0] - c.x, dy = p[1] - c.y, a = dx * nx + dy * ny; return [p[0] - nx * a * (1 - sq), p[1] - ny * a * (1 - sq)]; });
+      }
+      kl[Math.floor(c.r[39] * 3)].push(qr(fin, c.g > 14 || !F ? 1 : 10));
     }
-    return d;
+    return kl;
   };
-  /* Rumpf + Hals (ein Umriss) */
-  const rumpf = [[38, -287], [58, -304], [118, -318], [180, -336], [212, -354], [258, -408], [306, -468], [340, -504], [354, -516],
-    [362, -486], [350, -464], [328, -420], [304, -362], [284, -312], [274, -266], [262, -232], [242, -212], [200, -203], [150, -200], [112, -208], [92, -214], [58, -228], [38, -246], [30, -268]];
-  /* Zellen: Rumpf groß, Hals mittel, Beine klein, Kopf winzig */
-  feld(12, -350, 300, -190, 33, 2.4, 0);
-  feld(190, -525, 366, -350, 23.5, 1.9, 0);
-  feld(180, -300, 300, -100, F ? 13 : 19, 1.1, 1, (x, y) => y > -205);
-  feld(38, -300, 168, -100, F ? 13 : 19, 1.1, 1, (x, y) => y > -200);
-  const fRumpf = flecken(rumpf);
+  const fleckFarben = [T.lg("f1", [[0, "#5e2e10"], [0.5, "#74391a"], [1, "#9a6236"]], 0, -540, 0, -100, US), T.lg("f2", [[0, "#673512"], [0.5, "#7e431c"], [1, "#a46a3a"]], 0, -540, 0, -100, US),
+    T.lg("f3", [[0, "#55290d"], [0.5, "#6c3516"], [1, "#94592e"]], 0, -540, 0, -100, US)];
+  const fleckSVG = (kl, fern) => kl.map((d, i) => d.length ? `<path d="${d.join("")}" fill="${fern ? "#5c3418" : fleckFarben[i]}"${F ? ` stroke="#2e1406" stroke-width=".7" stroke-opacity=".35"` : ""}${fern ? ` opacity=".85"` : ""}/>` : "").join("");
+  /* ---- Umrisse ---- */
+  /* Rumpf + Hals: Widerrist deutlich höchster Rückenpunkt, Rücken fällt ~24° zur Kruppe, Hüfthöcker, Brust weit vor dem Vorderbein */
+  const rumpf = [[40, -292], [62, -300], [80, -304], [92, -309], [106, -306], [140, -322], [180, -343], [214, -362], [234, -374], [262, -410], [300, -460], [328, -496], [346, -516],
+    [366, -486], [358, -470], [346, -452], [330, -422], [314, -386], [300, -344], [292, -304], [289, -268], [282, -238], [268, -216], [246, -206], [214, -202], [180, -199], [150, -202],
+    [126, -212], [110, -220], [94, -226], [66, -238], [46, -258], [38, -276]];
+  /* Zellen: Rumpf groß, Hals mittel, Beine klein (nach unten kleiner), Kopf winzig */
+  const halsSeite = (x, y) => 80 * (y + 365) - 80 * (x - 225) < 0;
+  feld(20, -380, 300, -190, 31, 3.6, (x, y) => !halsSeite(x, y));
+  feld(200, -540, 380, -280, 22, 3, (x, y) => halsSeite(x, y));
+  const beinZellen = (x0, x1, yEnde) => {
+    for (let y = -200, z = 0; y < yEnde; z++) {
+      const g = 13 - Math.max(0, (y - (yEnde - 45)) / 45) * 7;
+      for (let x = x0 + (z % 2) * g / 2; x < x1; x += g) {
+        const c = { x: x + (T.rnd() - 0.5) * g * 0.45, y: y + (T.rnd() - 0.5) * g * 0.45, g, fuge: 2.6, r: Array.from({ length: 40 }, () => T.rnd()) };
+        if (c.y < yEnde - 18 + c.r[5] * 36) zentren.push(c);
+      }
+      y += g * 0.85;
+    }
+  };
+  beinZellen(186, 280, -128); beinZellen(70, 150, -138);
   let s = "";
-  /* Schwanz mit Quaste (bis zum Sprunggelenk) */
-  const quaste = [];
-  for (let i = 0; i < (F ? 26 : 8); i++) { const a = -0.5 + i / 25, l = 30 + T.rnd() * 22; quaste.push([[20, -152], [19 + a * 4, -152 + l * 0.5], [18 + a * 12, -152 + l]]); }
-  s += teil(kette([[36, -285, 2.6, 2.6], [29, -242, 2, 2], [23, -196, 1.6, 1.6], [20, -152, 1.6, 1.6]]).pts, creme, { ov: [licht], rw: 0.5 }) + L(quaste, SW, 1, 0.92) +
-    (F ? L(quaste.slice(0, 8).map((z) => z.map((p) => [p[0] + 1, p[1]])), "#4a3a2c", 0.6, 0.7) : "");
-  /* Beine: lange Vorderbeine, Handwurzel als Knubbel, langes Röhrbein, Fesselkopf; hinten Sprunggelenk spitz */
-  const vorder = (x) => [[x + 6, -300, 28, 30], [x + 4, -238, 22, 22], [x + 1, -190, 12.5, 11.5], [x, -150, 9.5, 8.5], [x, -114, 7.5, 7], [x, -104, 9, 8.5], [x, -92, 6.5, 6.5], [x + 1, -42, 5.4, 5.4], [x + 2, -31, 7.2, 7], [x + 6, -14, 6, 5.6]];
-  const hinter = (x) => [[x, -282, 6, 40], [x + 10, -226, 30, 30], [x + 12, -198, 22, 20], [x + 4, -160, 12.5, 13], [x - 4, -124, 7.5, 9.5, 2], [x - 3, -110, 6.5, 6.8], [x, -42, 5.4, 5.4], [x + 2, -31, 7.2, 7], [x + 6, -14, 6, 5.6]];
-  const huf = (x) => H.huf(x, 14, 6.5, 6, T.lg("hufg", [[0, "#3a2e25"], [1, "#1c1510"]]), true) +
-    (F ? `<path d="M${H.f(x - 6)} -14.5Q${H.f(x)} -16.5 ${H.f(x + 5.5)} -14.6" fill="none" stroke="#d8c8a6" stroke-width="1.2" stroke-opacity=".6"/>` : "");
-  const beinF = (J) => {
-    const kk = kette(J);
-    return teil(kk.pts, fern, { ov: [], rim: 10, innen: (F ? `<path d="${flecken(kk.pts, 0, -232)}" fill="${fleckFern}"/>` : "") + wf([[J[5][0] - 9, J[5][1]], [J[5][0] + 9, J[5][1]]], "#000", 0.2, 2, false) }) + huf(J[J.length - 1][0]);
+  /* ---- Beine (unter dem Rumpf; der Rumpf deckt Schulter und Keule) ---- */
+  const vorder = (x) => [[x + 6, -300, 26, 26], [x + 2, -228, 21, 20], [x + 1, -180, 13, 12.5], [x, -140, 10, 9.5], [x, -119, 9.5, 9], [x, -109, 11.5, 10.5], [x, -97, 7.6, 7.6], [x + 0.5, -62, 6.2, 6.8], [x + 1, -42, 6, 6.4], [x + 2, -31, 8, 8], [x + 6, -22.5, 6.6, 6.6], [x + 9.5, -17, 6.6, 6.2]];
+  const hinter = (x) => [[x + 18, -280, 12, 40], [x + 26, -225, 26, 24], [x + 20, -185, 15, 16], [x + 5, -140, 9.5, 12], [x - 1, -124, 8, 14, 2], [x, -108, 7.2, 7.8], [x + 2, -62, 6.2, 6.8], [x + 3, -42, 6, 6.4], [x + 4, -31, 8, 8], [x + 8, -22.5, 6.6, 6.6], [x + 11.5, -17, 6.6, 6.2]];
+  const huf = (x, fern) => H.huf(x, 17, 7, 6.6, T.lg(fern ? "hufd" : "hufg", fern ? [[0, "#2a221c"], [1, "#130f0c"]] : [[0, "#40342a"], [1, "#1c1611"]]), true, { saum: fern ? "#a99a7e" : "#e8dcc0" });
+  const bein = (J, fern, vorn) => {
+    const kk = kette(J), m = J.length - 1;
+    const fl = fleckSVG(flecken(kk.pts, { ymin: -235, r0: 5 }), fern);
+    const knie = vorn ? H.wf([[J[5][0] - 9, J[5][1] - 4], [J[5][0] + 11, J[5][1] - 1], [J[5][0] + 9, J[5][1] + 6], [J[5][0] - 8, J[5][1] + 5]], "#8a8070", 0.35, 1.2) : "";
+    return teil(kk.pts, fern ? laufFern : lauf, {
+      fell: [fBein],
+      innen: fl + knie +
+        zyl(kk, 1, 14, fern ? 1.3 : 1) +
+        /* Beugesehne hinten am Röhrbein; beim Hinterbein die Achillessehne über dem Fersenhöcker */
+        wf(G(H.laengs(kk, 0.18, vorn ? 6 : 5, m - 2), false), "#000", 0.2, 0.5, false, 1.2) + wf(G(H.laengs(kk, 0.3, vorn ? 6 : 5, m - 2), false), "#fff", 0.25, 0.4, false, 0.9) +
+        (vorn ? "" : wf(G(H.laengs(kk, 0.12, 2, 5), false), "#000", 0.22, 0.6, false, 1.4)) +
+        wf([[J[m - 2][0] - 8, J[m - 2][1] + 2], [J[m - 2][0] + 8, J[m - 2][1] + 2]], "#000", 0.18, 1, false) +
+        (fern ? wf([[J[0][0] - 30, -210], [J[0][0] + 30, -210]], "#000", 0.45, 6, false, 20) : wf([[J[0][0] - 30, -204], [J[0][0] + 30, -204]], "#3a2410", 0.35, 4, false, 12)),
+    }) + huf(J[m][0], fern);
   };
-  s += beinF(vorder(203)) + beinF(hinter(112));
-  /* nahe Beine UNTER dem Rumpf: der Rumpf deckt Schulter und Keule; Flecken aus demselben Mosaik → keine Naht */
-  const beinN = (J, i0, model) => {
-    const kk = kette(J);
-    return teil(kk.pts, creme, {
-      ov: [licht],
-      innen: `<path d="${flecken(kk.pts, 1, -232)}" fill="${fleckF}"/>` + model +
-        wf(G(kk.R.slice(1).map((p) => [p[0], p[1]]), false), "#000", 0.2, 4, false) + wf(G(kk.L.slice(2).map((p) => [p[0], p[1]]), false), "#fff", 0.16, 3, false) +
-        wf([[J[5][0] - 9, J[5][1] - 1], [J[5][0] + 9, J[5][1] - 1]], "#000", 0.16, 1.6, false) +
-        (F ? H.haare(kk.pts.slice(3, -3), 20, 95, 2.2, { farben: [["#2a170a", 1, 0.25, 0.2]], streuung: 10 }) : ""),
-    }) + huf(J[J.length - 1][0]);
-  };
-  s += beinN(hinter(80), 3, "") + beinN(vorder(242), 2, "");
-  /* Rumpf */
+  s += bein(vorder(208), 1, 1) + bein(hinter(118), 1, 0);
+  s += bein(vorder(246), 0, 1) + bein(hinter(80), 0, 0);
+  /* ---- Schwanz: Rübe dick (oben gefleckt), verjüngt, Quaste dicht und voluminös, endet auf Höhe des Sprunggelenks ---- */
+  const sk = kette([[42, -290, 4.6, 4.6], [36, -258, 3.4, 3.4], [30, -220, 2.4, 2.4], [26, -186, 1.9, 1.9], [24, -168, 1.8, 1.8]]);
+  s += teil(sk.pts, creme, { fell: [fRumpf], ov: [lichtX], rim: 1.5, innen: `<path d="M38 -286Q42 -278 39 -268Q34 -276 38 -286Z" fill="${fleckFarben[0]}"/><path d="M34 -258Q37 -250 34 -242Q31 -250 34 -258Z" fill="${fleckFarben[1]}"/>` });
+  s += H.straehnen([[24, -178], [24, -166]], 50, (t) => 34 + t * 6, (x, y, t) => 92 + (t - 0.5) * 24, [["#1a120b", 3, 0.9, 0.95], ["#3a2a1e", 2, 0.8, 0.9], ["#5a4535", 1, 0.7, 0.85]], { streu: 18, welle: 0.35, szene: 0.4 });
+  /* ---- Rumpf und Hals ---- */
+  const halsZone = [[200, -340], [240, -380], [300, -470], [350, -530], [400, -470], [330, -300], [300, -230], [260, -330]];
+  const fl = fleckSVG(flecken(rumpf, { umriss: rumpf, r0: 20 }));
   s += teil(rumpf, creme, {
-    ov: [licht], rim: 16, randD: G(rumpf.slice(22).concat(rumpf.slice(0, 16)), false) + G(rumpf.slice(17, 20), false),
-    innen: `<path d="${fRumpf}" fill="${fleckF}"/>` +
-      wf([[50, -299], [118, -312], [180, -328], [214, -348], [258, -400], [306, -460], [340, -496]], "#fff", 0.22, 6, false) +
-      wf([[160, -212], [200, -214], [244, -222]], "#000", 0.3, 7, false) + wf([[286, -320], [300, -362], [332, -412], [360, -456]], "#000", 0.2, 5, false) +
-      wf([[112, -300], [134, -260], [138, -222]], "#000", 0.14, 8, false) + wf([[58, -272], [88, -286], [114, -272]], "#fff", 0.2, 8, false) + wf([[236, -300], [262, -310], [284, -296]], "#fff", 0.18, 8, false) +
-      kerben([[[116, -214], [108, -250], [98, -276]], [[226, -208], [222, -240], [230, -270]]], 2.6, 0.28) +
-      (F ? H.haare(rumpf, 90, (x, y) => (y < -340 ? 125 : 168), 3.2, { farben: [["#2a170a", 2, 0.35, 0.22], ["#fff6e0", 1, 0.3, 0.22]], streuung: 18 }) : ""),
+    fell: F ? [] : [], ov: [licht, lichtX], rim: 18, rimD: G(rumpf.slice(0, 22), false),
+    innen: fl + (F ? `<path d="${G(halsZone)}" fill="${fHals}"/><path d="M0 -380H260L230 -190H0Z" fill="${fRumpf}"/>` : "") +
+      /* Licht: Widerrist, Schulter, Kruppe; Hals: Mähnenseite hell, Kehlseite dunkel; Okklusion an den Beinansätzen */
+      wf([[58, -296], [92, -304], [140, -317], [180, -338], [214, -356], [234, -368], [262, -404], [300, -454], [328, -490]], "#fff", 0.22, 4, false) +
+      wf([[226, -350], [250, -320], [262, -280], [270, -246]], "#fff", 0.12, 7, false) + wf([[70, -290], [96, -298]], "#fff", 0.14, 8, false) +
+      wf([[358, -470], [344, -448], [328, -418], [312, -382], [298, -342], [290, -300]], "#4a2c12", 0.32, 4, false, 16) +
+      wf([[284, -300], [270, -250], [254, -218]], "#3a2410", 0.25, 6, false) + wf([[110, -222], [124, -246], [128, -270]], "#3a2410", 0.18, 5, false) +
+      kerben([[[120, -214], [116, -236], [110, -262]], [[268, -222], [272, -252], [276, -280]]], 1.6, 0.18, "#3a2410") +
+      /* Schlagschatten des Kopfes auf den oberen Hals */
+      wf([[340, -500], [354, -486], [362, -470]], "#2a1808", 0.35, 4, false, 14),
   });
-  /* Stehmähne: kurze, dichte Bürste auf dem Halskamm, kastanienbraun, Spitzen dunkel */
-  const kamm = [[196, -343], [212, -354], [258, -408], [306, -468], [340, -504], [356, -514]];
-  const auss = kamm.map((p, i) => { const h = [4, 9, 12.5, 13, 12, 9][i]; return [p[0] - h * 0.76, p[1] - h * 0.65]; });
-  const maehne = auss.concat(kamm.slice().reverse().map((p) => [p[0] + 1.5, p[1] + 1.5]));
-  s += teil(maehne, T.lg("maehne", [[0, "#3a1f0c"], [0.45, "#6e3f1d"], [1, "#8a5630"]], 0, 0, 0.7, 0.6), { ov: [], rw: 0.3,
-    oben: F ? H.haare(maehne, 215, -146, 8, { farben: [["#24120a", 2, 0.6, 0.85], ["#a0683a", 1, 0.5, 0.75]], streuung: 10, kruemmung: 0.12 }) : "" });
-  if (F) s += H.haare(auss.map((p) => [p[0] + 2, p[1] + 2]).concat(auss.slice().reverse().map((p) => [p[0] - 1.5, p[1] - 1.5])), 60, -146, 2.6, { farben: [["#24120a", 1, 0.5, 0.8]], streuung: 22, kruemmung: 0.2 });
-  /* Kopf (als Gruppe leicht zurückgesetzt: Hals steiler): lang, Ramsnase angedeutet, tiefe Wange, Lippen */
+  /* ---- Stehmähne: aufrechter Kamm auf der Halsoberkante, gebändert, gezackt, flach auslaufend am Widerrist ---- */
+  const kamm = [[214, -362], [234, -374], [262, -410], [300, -460], [328, -496], [346, -516]];
+  const hoehe = [2, 7, 11.5, 12.5, 12, 9];
+  const nAch = (i) => { const a = kamm[Math.max(0, i - 1)], b = kamm[Math.min(kamm.length - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy); return [dy / l, -dx / l]; };
+  const aussen = kamm.map((p, i) => { const n = nAch(i); return [p[0] + n[0] * hoehe[i], p[1] + n[1] * hoehe[i]]; });
+  const maehne = aussen.concat(kamm.slice().reverse().map((p) => [p[0] + 0.5, p[1] + 1.5]));
+  const mWurzel = kamm.map((p) => [p[0], p[1] + 1]);
+  s += teil(maehne, T.lg("mae", [[0, "#6a3c1c"], [1, "#9a6438"]], 0, 0, 0.6, 0.6), { rim: 2,
+    oben: H.straehnen(mWurzel, F ? 260 : 50, (t) => 4 + Math.sin(Math.min(1, t * 1.3) * Math.PI) * 8, (x, y) => -142 + (x - 280) * 0.02, [["#3a1c0a", 2, 0.5, 0.9], ["#8a5a32", 3, 0.45, 0.85], ["#c0905c", 1, 0.4, 0.75]], { streu: 16, welle: 0.15, szene: 1 }) });
+  /* ---- Kopf: Kopfachse 24° nach unten; Ramsnase, stumpfes Maul mit überhängender Oberlippe, Kinn, Kaumuskel, Kehlgang ---- */
+  const wa = 24 * Math.PI / 180, P0 = [350, -520];
+  const K = (u, v) => [P0[0] + u * Math.cos(wa) - v * Math.sin(wa), P0[1] + u * Math.sin(wa) + v * Math.cos(wa)];
+  const kopfL = [[0, -2], [6, -9], [16, -11], [23, -11.5], [26, -12.6], [30, -11.4], [44, -9.2], [56, -7.6], [66, -6], [72.5, -3.6], [76.5, 1], [76.2, 5.4], [73, 6.8], [74.2, 8.6], [72, 11], [66, 12],
+    [52, 13.6], [40, 15.6], [28, 18.2], [19, 19], [12, 15], [5, 10], [0, 6], [-2, 1]];
+  const kopf = kopfL.map((p) => K(p[0], p[1]));
   let k = "";
-  const kopf = [[364, -510], [372, -520], [382, -524], [396, -523], [412, -516], [428, -508], [442, -498], [450, -490], [452, -483], [449, -478], [442, -476], [432, -475],
-    [418, -475], [404, -477], [392, -480], [380, -486], [370, -494]];
-  feld(356, -532, 450, -455, 9, 1, 1, (x, y) => (x < 388 && y > -518) || (x < 414 && y > -494));
+  zentren.length = 0;
+  feld(340, -545, 420, -470, 8.5, 1.8, (x, y) => true);
+  const kf = flecken(kopf, { umriss: kopf, r0: 6 });
+  const kopfMaske = [K(0, -12), K(30, -14), K(32, 20), K(0, 20)];
   k += teil(kopf, creme, {
-    ov: [licht], rim: 8, randD: G(kopf.slice(0, 16), false), rimD: G(kopf.slice(0, 16), false),
-    innen: `<path d="${flecken(kopf)}" fill="${fleckF}" opacity=".9"/>` +
-      wf([[386, -524], [410, -518], [432, -508], [446, -496]], "#8a5a34", 0.45, 3, false) +
-      wf([[430, -500], [446, -492], [452, -482], [444, -476], [432, -478], [428, -490]], "#6d4a2e", 0.5, 2.2) +
-      wf([[380, -520], [396, -524], [412, -518]], "#fff", 0.3, 2.5, false) + wf([[386, -482], [410, -476], [436, -476]], "#000", 0.25, 2.5, false) + wf([[402, -500], [422, -492]], "#000", 0.12, 3, false) +
-      wf([[396, -522], [400, -519]], "#000", 0.22, 1.6, false) +
-      kerben([[[441, -495], [445, -492.5], [448, -492]], [[451, -480], [444, -478.8], [436, -479.5]]], 1.2, 0.75) +
-      (F ? H.haare(kopf, 70, (x, y) => (x > 425 ? 155 : 175), 1.5, { farben: [["#2a170a", 1, 0.16, 0.25]], streuung: 16 }) +
-        T.schnurrhaare(448, -478, 7, 5, 100, 50, "#2a1d12", 0.15) : ""),
+    fell: [fKopf], ov: [lichtX, T.lg("kl", [[0, "#fff", 0.16], [0.4, "#fff", 0], [1, "#000", 0.14]])], rim: 6, rimD: G(kopf.slice(0, 21), false),
+    innen: `<g clip-path="url(#${T.id("km")})">${fleckSVG(kf)}</g>` +
+      /* warmer Hauch auf Stirn und Nasenrücken, warmes Maul */
+      wf([K(22, -10), K(46, -8), K(64, -5)].concat([K(64, 2), K(30, 0)]), "#b5814e", 0.35, 2.5) +
+      wf([K(62, -5), K(76, 0), K(74, 9), K(64, 11), K(58, 4)], "#b49a78", 0.75, 1.6) +
+      /* Kaumuskelplatte, Kehlgang, Augenhöhlenwulst */
+      wf([K(18, 6), K(34, 4), K(40, 12), K(24, 16)], "#fff", 0.14, 2.4) + wf([K(12, 17), K(30, 18.5), K(48, 14.5)], "#000", 0.22, 2, false) +
+      wf([K(4, 12), K(12, 16)], "#000", 0.3, 1.8, false) +
+      /* Nasenloch: schräger Schlitz mit erhabenem Rand; Maulspalte, Kinnfalte */
+      wf([K(59.5, -3), K(66, -5.5)], "#fff", 0.35, 0.6, false, 2.2) + kerben([[K(59, -1.5), K(62.5, -2.6), K(66.5, -4.2)]], 1.4, 0.85, "#140d08") +
+      kerben([[K(76, 5.6), K(73.5, 6.5), K(68, 6.8), K(62, 7.4)]], 0.9, 0.75, "#140d08") + wf([K(70, 9.5), K(73, 10.5)], "#000", 0.25, 0.7, false) +
+      (F ? T.schnurrhaare(...K(73, 7), 8, 4, 110, 60, "#2a1d12", 0.12) : ""),
   });
-  /* Auge: groß, dunkel, hoch am Kopf, lange Wimpern */
-  k += wf([[392, -513], [399, -516.5], [406, -514]], "#3a2614", 0.35, 0.8, false);
-  k += T.augeReal(399, -509, 2.6, { iris: "#4b2a12", iris2: "#1a0d05", offen: 0.75, wimpern: 15, wimpernLaenge: 1.6, lid: "#1d120a", haut: "#6b4a2c", winkel: 18 });
-  /* Ossikone mit schwarzem Haarbüschel (hinterer etwas versetzt), Ohren */
-  const oss = (x, fill, dunkel) => teil([[x - 4, -519], [x - 3.4, -531], [x - 4.2, -539], [x + 1, -543], [x + 5, -538], [x + 4, -530], [x + 4.6, -519]], fill, { rw: 0.5, ov: [T.lg("ossv", [[0, "#fff", 0.22], [1, "#000", 0.22]], 0, 0, 1, 0)] }) +
-    teil([[x - 4, -538], [x - 2.5, -542], [x + 1.5, -543.5], [x + 5, -540], [x + 4, -537], [x, -536.5]], dunkel ? "#120b07" : "#24170e", { ov: [], rw: 0.3 }) +
-    (F ? H.haare([[x - 5, -539], [x - 3, -545], [x + 2, -547], [x + 6, -542], [x + 4.5, -538]], 26, -92, 2.6, { farben: [["#140c06", 2, 0.32, 0.9], ["#5a4636", 1, 0.28, 0.8]], streuung: 46 }) : "");
-  const ohr = (dx, dy, fill, innen) => teil([[377 + dx, -515 + dy], [368 + dx, -521 + dy], [357 + dx, -524 + dy], [347 + dx, -520 + dy], [342 + dx, -515 + dy, 1], [348 + dx, -511 + dy], [358 + dx, -506 + dy], [368 + dx, -505 + dy], [375 + dx, -508 + dy]], fill,
-    { rw: 0.4, innen: innen ? `<path d="M${346 + dx} ${-515 + dy}C${354 + dx} ${-518 + dy} ${364 + dx} ${-516 + dy} ${373 + dx} ${-511 + dy}C${364 + dx} ${-509 + dy} ${354 + dx} ${-510 + dy} ${346 + dx} ${-515 + dy}Z" fill="#f6ecd8" opacity=".85"/>` +
-      `<path d="M${343 + dx} ${-515 + dy}L${350 + dx} ${-520 + dy}" stroke="${SW}" stroke-width="1.4" opacity=".6"/>` : "" });
-  k += ohr(3, -5, "#a98c66") + ohr(0, 0, "#dcc8a2", 1);
-  k += oss(377, "#b49773", 1) + oss(386, "#d7c39b");
-  s += `<g transform="translate(-18 -6)">${k}</g>`;
-  return { svg: s, box: [9, -555, 434, 0], fuesse: [248, 209, 86, 118], kopf: [328, -552, 436, -468] };
+  T.def(`<clipPath id="${T.id("km")}"><path d="${G(kopfMaske)}"/></clipPath>`);
+  /* Auge: groß, vorstehend, fast schwarz, waagrechte Pupille, lange Wimpern oben, kurze unten */
+  const [ax, ay] = K(29, -3.2);
+  k += H.auge(ax, ay, 3.2, { iris: "#3a2010", iris2: "#120804", offen: 0.8, pupille: "quer", wimpern: 16, wl: 1.7, lid: "#160d07", lidHaut: "#3c2614", winkel: 14, hoehleA: 0.22, feucht: "#a07a68", wimpernFarbe: "#1a120b" });
+  if (F) k += L([0.25, 0.4, 0.55, 0.7, 0.85].map((t, i) => { const x = ax - 3.6 + t * 7.6, y = ay + 2.4 - Math.sin(t * Math.PI) * 0.6; return [[x, y], [x + 0.6, y + 1.3 + (i % 2) * 0.4]]; }), "#2a1d12", 0.18, 0.7);
+  /* Ossikone: nach hinten gekippt, leicht verjüngt, oben ein Knauf mit strahlenförmigem Haarbüschel, mit Kopffell überzogen */
+  const oss = (u, fern) => {
+    const b = K(u, -11.2), a = (-90 - 22 + 24) * Math.PI / 180, h = 17, tp = [b[0] + Math.cos(a) * h, b[1] + Math.sin(a) * h], nx = -Math.sin(a), ny = Math.cos(a);
+    const pts = [[b[0] + nx * 3.4, b[1] + ny * 3.4], [b[0] + Math.cos(a) * h * 0.55 + nx * 2.7, b[1] + Math.sin(a) * h * 0.55 + ny * 2.7], [tp[0] + nx * 3.2, tp[1] + ny * 3.2],
+      [tp[0] + Math.cos(a) * 2.6, tp[1] + Math.sin(a) * 2.6], [tp[0] - nx * 3.2, tp[1] - ny * 3.2], [b[0] + Math.cos(a) * h * 0.55 - nx * 2.7, b[1] + Math.sin(a) * h * 0.55 - ny * 2.7], [b[0] - nx * 3.4, b[1] - ny * 3.4]];
+    let o = teil(pts, fern ? "#a88c68" : T.lg("ossf", [[0, "#ead9b8"], [1, "#b48d62"]], 0, 0, 1, 0), { fell: [fKopf], rim: 1.5, ov: [T.lg("ossv", [[0, "#fff", 0.2], [0.5, "#fff", 0], [1, "#000", 0.25]], 0, 0, 1, 0)] });
+    const wurzeln = []; for (let i = 0; i <= 8; i++) { const q = i / 8 * Math.PI * 1.2 - Math.PI * 0.1; wurzeln.push([tp[0] + Math.cos(a + q - Math.PI / 2) * 2.4, tp[1] + Math.sin(a + q - Math.PI / 2) * 2.4]); }
+    o += H.straehnen(wurzeln, 34, 3.6, (x, y) => Math.atan2(y - tp[1] + Math.sin(a) * 1.2, x - tp[0] + Math.cos(a) * 1.2) * 180 / Math.PI, [[fern ? "#120b06" : "#1c130c", 3, 0.5, 0.95], ["#4e3a2a", 1, 0.45, 0.85]], { streu: 18, welle: 0.25, szene: 0.4 });
+    return o;
+  };
+  /* Ohr: lanzettlich (3 : 1), spitz, seitlich nach hinten, 15° unter der Waagrechten; innen Creme mit Haarbüscheln */
+  const ohr = (fern) => {
+    const b = K(5, -6.5), a = (180 + 16) * Math.PI / 180, l = fern ? 16 : 23, w = 4, nx = -Math.sin(a), ny = Math.cos(a), P = (t, q) => [b[0] + Math.cos(a) * l * t + nx * w * q, b[1] + Math.sin(a) * l * t + ny * w * q];
+    const pts = [P(0, -0.8), P(0.3, -1.05), P(0.65, -0.8), P(1, 0, 1), P(0.65, 0.85), P(0.3, 1.1), P(0, 0.8)];
+    return teil(pts, fern ? "#9c8462" : "#d9c39c", { fell: [fKopf], rim: 1.5,
+      innen: fern ? "" : `<path d="${G([P(0.08, 0.1), P(0.35, -0.55), P(0.72, -0.35), P(0.95, 0.02), P(0.7, 0.45), P(0.3, 0.6)])}" fill="#f4e8d2"/>` + wf([P(0.15, 0.25), P(0.55, 0.1)], "#6a4a2a", 0.4, 0.8, false) +
+        H.straehnen([P(0.1, 0.2), P(0.5, 0.1)], 18, 3.5, (a * 180 / Math.PI) + 8, [["#fffaf0", 1, 0.25, 0.85]], { streu: 25, szene: 0.3 }) });
+  };
+  s += ohr(1) + k + oss(18, 1) + oss(21.5) + ohr(0);
+  return { svg: s, box: [12, -560, 435, 0], fuesse: [258, 220, 94, 132], kopf: [328, -566, 444, -452] };
 }
 
 /* =====================================================================

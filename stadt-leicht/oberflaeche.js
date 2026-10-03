@@ -1566,8 +1566,8 @@
        langes Halten es an wie bisher (Fassung 822). Der Finger danach ist kein Tipp. */
     const offen0 = karte && !karte.hidden && karte._ding;
     if (!geist && !zweiter) {
-      /* FASSUNG 874 — auch auf einem Acker (Häuser und Bäume davor gehen vor) */
-      const lo = SZ.treffer(p.x, p.y, (x) => x.art === "haus" || x.art === "wunder" || x.art === "eigen" || (x.art === "kulisse" && !!x.name) || (x.art === "natur" && istBaum(x) && !x.umland && !x.hinten)) || feldUnter(p.x, p.y);
+      /* FASSUNG 874 — auch auf einem Acker oder knapp daneben wie beim Tipp (Häuser und Bäume davor gehen vor) */
+      const lo = SZ.treffer(p.x, p.y, (x) => x.art === "haus" || x.art === "wunder" || x.art === "eigen" || (x.art === "kulisse" && !!x.name) || (x.art === "natur" && istBaum(x) && !x.umland && !x.hinten)) || feldUnter(p.x, p.y) || feldDing((feldNahe(p.x, p.y) || {}).f);
       if (lo && !(offen0 === lo && haltenErlaubt())) langUhr = setTimeout(() => { langUhr = 0; if (geist || (lo.art !== "feld" && SZ.objekte.indexOf(lo) < 0)) return; langMenue(lo); }, O.langMs || 500);
     }
     if (!geist && haltenErlaubt()) {

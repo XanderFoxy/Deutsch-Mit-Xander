@@ -139,13 +139,14 @@
      spiel.js und die ganzen Stilblätter (index.html: dmaSpielLaden, dmaStileVoll). Geholt wird sofort; was
      rechnet, wartet, bis das Bild steht. */
   function raumVorbereiten() {
-    dmaTeilAb = Math.min(dmaTeilAb, Date.now() + 500);
+    dmaTeilAb = Math.min(dmaTeilAb, Date.now() + 600);
     dmaTeilGruppe("raum");
     const weiter = () => {
       try { if (window.dmaStileAn) window.dmaStileAn(); else if (window.dmaStileVoll) window.dmaStileVoll(); } catch (e) {}
       try { if (window.dmaSpielLaden) window.dmaSpielLaden(); } catch (e) {}
     };
-    if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(weiter, 0)); else setTimeout(weiter, 0);
+    /* 0,3 s nach dem ersten Bild: so schnell tippt niemand auf „Betreten", und das Klassenzimmer steht schon */
+    if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(weiter, 300)); else setTimeout(weiter, 300);
   }
   /* Zum Nachsehen (werkzeug/pruefe-876-start-schlank.js): welche Teile es gibt, welche eingesetzt sind und ob ein
      Platzhalter je sofort nachladen musste. */

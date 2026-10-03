@@ -147,3 +147,12 @@ Die fünf Raubsaurier bekamen in Runde 1 nur 2–7 von 10. Fast alle Mängel wie
     Masse nicht im Schwanz.
 12. **Weichzeichner-Farbstich**: jeder eigene `<filter>` (feGaussianBlur usw.) braucht `color-interpolation-filters="sRGB"`,
     sonst verschiebt Chrome halbtransparente Farben (gemessen: Braun wird Oliv). Die Filter in kern.js haben es schon.
+13. **Volumen je Körperteil (neu, `T.volumen`)** – Profi-Technik gegen „flach wie Airbrush" (Licht 3–4 in fast allen
+    Kritiken): Jeder Körperteil kommt in eine eigene Gruppe mit `filter="${T.volumen("<teil>", { weich })}"` – Rumpf,
+    Hals, Kopf, jedes Bein (Ober- und Unterschenkel dürfen eine Gruppe sein), Schwanz, Ohr. Der Filter blurrt die
+    eigene Silhouette und beleuchtet sie von links oben: Rundung, Kernschatten zur Unterkante, Licht zur Oberkante
+    entstehen automatisch und passen zueinander. `weich` (cm) ≈ 20–30 % der Dicke des Teils (Rumpf eines Löwen ≈ 12,
+    Bein ≈ 3), `tiefe` 3–7, `umgebung` 0,25–0,45. Deine gemalten Verläufe bleiben (Farbe, Muster, Fell) – nur die
+    groben Airbrush-Schattenflecken fallen weg. Haare, die über den Rand ragen, gehören in dieselbe Gruppe. In Szenen
+    (`T.fein = false`) liefert der Helfer `"none"` – also kein Leistungsverlust. Ergebnis immer im Großbild prüfen:
+    zu starke `tiefe` wirkt wie Plastik.

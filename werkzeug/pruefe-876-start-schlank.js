@@ -145,14 +145,15 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
 
     console.log("\n3) GLEICH DANACH DIE GANZEN BLÄTTER\n");
     const vorher = await pg.evaluate(() => [".site-header", ".tape-tab", ".brand-name", "body", ".view[data-active=true]"].map((s) => { const e = document.querySelector(s); if (!e) return s + ":-"; const c = getComputedStyle(e); return s + ":" + [c.color, c.backgroundColor, c.fontSize, c.fontFamily, c.padding, c.display, Math.round(e.getBoundingClientRect().height)].join("/"); }));
+    /* Erst nur geholt (Zwischenspeicher), nicht eingehängt – eingehängt wird mit dmaStileAn */
+    const geholt = pfade(ab).filter((p) => /\/min\/(korrekturen|app-styles)\.css$/.test(p));
+    const vorAn = await pg.evaluate(() => [...document.querySelectorAll('link[rel="stylesheet"]')].filter((l) => /\/min\/(korrekturen|app-styles)\.css/.test(l.href)).length);
+    sage(geholt.length >= 2 && vorAn === 0, "die ganzen Blätter werden nach DOMContentLoaded geholt, aber noch nicht eingehängt", geholt.join(" ") + ", eingehängt: " + vorAn);
+    await pg.evaluate(() => window.dmaStileAn());
     await pg.waitForFunction(() => [...document.styleSheets].filter((s) => /\/min\/(korrekturen|app-styles)\.css/.test(s.href || "")).length === 2, null, { timeout: 20000 }).catch(() => {});
     const reihe = await pg.evaluate(() => [...document.querySelectorAll('link[rel="stylesheet"]')].map((l) => (l.getAttribute("href") || "").replace(/\?.*$/, "")).filter((h) => /^min\//.test(h)));
     const iK = reihe.indexOf("min/korrekturen-start.css"), iA = reihe.indexOf("min/app-styles-start.css");
-    sage(iK >= 0 && reihe[iK + 1] === "min/korrekturen.css" && iA >= 0 && reihe[iA + 1] === "min/app-styles.css", "korrekturen.css und app-styles.css stehen direkt hinter ihrem Startblatt", reihe.join(" "));
-    const wartet = await pg.evaluate(() => [...document.querySelectorAll('link[rel="stylesheet"]')].filter((l) => /\/min\/(korrekturen|app-styles)\.css/.test(l.href)).map((l) => l.media));
-    sage(wartet.length === 2 && wartet.every((m) => m === "print" || m === "all"), "die ganzen Blätter liegen bereit (bis zum Anwenden als print)", wartet.join(","));
-    await pg.evaluate(() => window.dmaStileAn());
-    await pg.waitForFunction(() => [...document.styleSheets].filter((s) => /\/min\/(korrekturen|app-styles)\.css/.test(s.href || "") && s.media.mediaText !== "print").length === 2, null, { timeout: 20000 }).catch(() => {});
+    sage(iK >= 0 && reihe[iK + 1] === "min/korrekturen.css" && iA >= 0 && reihe[iA + 1] === "min/app-styles.css", "eingehängt stehen korrekturen.css und app-styles.css direkt hinter ihrem Startblatt", reihe.join(" "));
     await schlaf(300);
     const nachher = await pg.evaluate(() => [".site-header", ".tape-tab", ".brand-name", "body", ".view[data-active=true]"].map((s) => { const e = document.querySelector(s); if (!e) return s + ":-"; const c = getComputedStyle(e); return s + ":" + [c.color, c.backgroundColor, c.fontSize, c.fontFamily, c.padding, c.display, Math.round(e.getBoundingClientRect().height)].join("/"); }));
     sage(JSON.stringify(vorher) === JSON.stringify(nachher), "Kopfzeile, Reiter und Ansicht sehen davor und danach gleich aus", vorher.filter((x, i) => x !== nachher[i]).join(" ≠ "));

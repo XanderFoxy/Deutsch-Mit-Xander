@@ -225,28 +225,46 @@ function feld(pts, R, extra) {
 }
 
 /* ---------- Haare ----------
-   Jede Strähne ist ein spitz zulaufendes, leicht gebogenes Haarbüschel (Wurzel breit → Spitze), je Farbe EIN Pfad,
-   nach Zeilen sortiert und relativ verkettet (klein). Eimer: [farbe, deckkraft]. */
-function ausgabe(eimer, listen, dez) {
+   Zwei Arten: (1) spitz zulaufende, leicht gebogene Strähnen (Wurzel breit → Spitze) für lange Haare;
+   (2) Strichhaare (o.strich = Strichbreite) für kurzes Deckhaar – billig. Je Farbe EIN Pfad, nach Zeilen sortiert
+   und relativ verkettet (klein). Eimer: [farbe, deckkraft]. */
+function ausgabe(eimer, listen, dez, strich) {
   return listen.map((h, i) => {
     if (!h.length) return "";
     h.sort((a, b) => (Math.round(a[1] * 2) - Math.round(b[1] * 2)) || (a[0] - b[0]));
+    /* Stift: relative Schritte werden gegen die GERUNDETE Stiftposition gerechnet → keine Drift */
     let d = "", px = 0, py = 0;
+    const zu = (x, y, cmd) => {
+      const dx = +zahl(x - px, dez), dy = +zahl(y - py, dez);
+      px += dx; py += dy;
+      return [dx, dy];
+    };
     for (const [x0, y0, x1, y1, w, k] of h) {
+      if (strich) {
+        d += d ? "m" + folge(zu(x0, y0), dez) : (px = +zahl(x0, dez), py = +zahl(y0, dez), "M" + folge([px, py], dez));
+        if (k) {
+          const l = Math.hypot(x1 - x0, y1 - y0), sx = px, sy = py;
+          const cx = (x0 + x1) / 2 - (y1 - y0) / l * k * l, cy = (y0 + y1) / 2 + (x1 - x0) / l * k * l;
+          const c = [+zahl(cx - sx, dez), +zahl(cy - sy, dez)], e = zu(x1, y1);
+          d += "q" + folge(c.concat(e), dez);
+        } else d += "l" + folge(zu(x1, y1), dez);
+        continue;
+      }
       const l = Math.hypot(x1 - x0, y1 - y0) || 1, nx = -(y1 - y0) / l * w / 2, ny = (x1 - x0) / l * w / 2;
-      const ax = x0 + nx, ay = y0 + ny;
-      d += d ? "m" + folge([ax - px, ay - py], dez) : "M" + folge([ax, ay], dez);
+      d += d ? "m" + folge(zu(x0 + nx, y0 + ny), dez) : (px = +zahl(x0 + nx, dez), py = +zahl(y0 + ny, dez), "M" + folge([px, py], dez));
       if (k) {
         /* gebogen: Kontrollpunkt seitlich versetzt (k = Biegung in Anteilen der Länge) */
         const mx = (x0 + x1) / 2 + nx / w * 2 * k * l, my = (y0 + y1) / 2 + ny / w * 2 * k * l;
-        d += "q" + folge([mx - ax, my - ay, x1 - ax, y1 - ay], dez) + "q" + folge([mx - x1, my - y1, x0 - nx - x1, y0 - ny - y1], dez);
-      } else d += "l" + folge([x1 - ax, y1 - ay, x0 - nx - x1, y0 - ny - y1], dez);
-      px = x0 - nx; py = y0 - ny;
+        const c1 = [+zahl(mx - px, dez), +zahl(my - py, dez)], e1 = zu(x1, y1);
+        const c2 = [+zahl(mx - px, dez), +zahl(my - py, dez)], e2 = zu(x0 - nx, y0 - ny);
+        d += "q" + folge(c1.concat(e1), dez) + "q" + folge(c2.concat(e2), dez);
+      } else d += "l" + folge(zu(x1, y1).concat(zu(x0 - nx, y0 - ny)), dez);
     }
+    if (strich) return `<path d="${d}" fill="none" stroke="${eimer[i][0]}" stroke-width="${zahl(strich * (eimer[i][2] || 1), 3)}"${eimer[i][1] < 1 ? ` stroke-opacity="${eimer[i][1]}"` : ""} stroke-linecap="round"/>`;
     return `<path d="${d}" fill="${eimer[i][0]}"${eimer[i][1] < 1 ? ` fill-opacity="${eimer[i][1]}"` : ""}/>`;
   }).join("");
 }
-/* Haare in einer Fläche. o: { n, L, w (Wurzelbreite), flow(x, y) Grad, streu, kr (Biegung), lf(x, y) Längenfaktor,
+/* Haare in einer Fläche. o: { n, L, w (Wurzelbreite) | strich, flow(x, y) Grad, streu, kr (Biegung), lf(x, y) Längenfaktor,
    wo(x, y), eimer, wahl(x, y, z) → Index, dez, szene (Anteil in der Szene) } */
 function haar(T, pts, o) {
   const [x0, y0, x1, y1] = T.box(pts);
@@ -266,7 +284,7 @@ function haar(T, pts, o) {
     listen[idx].push([x - ca * L * 0.15, y - sa * L * 0.15, x + ca * L, y + sa * L, (o.w || L * 0.08) * (0.7 + T.rnd() * 0.6) * (T.fein ? 1 : 1.6), k]);
     g++;
   }
-  return ausgabe(o.eimer, listen, o.dez || 2);
+  return ausgabe(o.eimer, listen, o.dez || 2, o.strich ? o.strich * (T.fein ? 1 : 1.7) : 0);
 }
 /* Haare über die Kontur hinaus (weicher Fellrand). o wie haar, dazu ab (Anteil nach außen 0–1), offen (Linie statt Umriss) */
 function randhaar(T, pts, o) {
@@ -289,28 +307,45 @@ function randhaar(T, pts, o) {
     const kk = o.kr ? o.kr * (T.rnd() - 0.5) * 2 : 0;
     listen[idx].push([sx, sy, sx + dx * l, sy + dy * l, (o.w || l * 0.08) * (0.7 + T.rnd() * 0.6) * (T.fein ? 1 : 1.6), kk]);
   }
-  return ausgabe(o.eimer, listen, o.dez || 2);
+  return ausgabe(o.eimer, listen, o.dez || 2, o.strich ? o.strich * (T.fein ? 1 : 1.7) : 0);
+}
+/* Fellstruktur (Rauschen, in Wuchsrichtung gestreckt) – nur fein, schwach. b = Box, winkel = Wuchsrichtung */
+function fellgrund(T, n, b, winkel, op, o = {}) {
+  if (!T.fein) return "";
+  const url = T.rauschen(n, Object.assign({ fx: 2.2, fy: 0.25, farbe: "#000", staerke: 2.6, schwelle: 0.55, okt: 2 }, o));
+  const cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2, R = Math.hypot(b[2] - b[0], b[3] - b[1]) / 2 + 1;
+  return `<rect x="${zahl(cx - R, 1)}" y="${zahl(cy - R, 1)}" width="${zahl(2 * R, 1)}" height="${zahl(2 * R, 1)}" filter="${url}" opacity="${op}" transform="rotate(${Math.round(winkel - 90)} ${folge([cx, cy], 1)})"/>`;
 }
 /* Licht → Eimer-Index (n Stufen) mit Zufall */
 const stufe = (v, z, n, streu = 0.3) => Math.round(klemm(v + (z - 0.5) * streu) * (n - 1));
-/* buschiger Schweif (Eichhörnchen-Schwanz, Pinsel, Mähne): Haare wachsen aus der Mittellinie schräg nach außen zur Spitze.
-   c = Mittellinie, hb(t) = halbe Breite bei t, o: { n, eimer, wahl(t, seite, rel, z), winkel (Grad gegen die Achse), kr, w, szene } */
+/* buschiger Schweif (Eichhörnchen-Schwanz, Pinsel): Locken aus b Haaren wachsen aus der Mittellinie schräg nach
+   außen zur Spitze, die Haare einer Locke laufen zu einer gemeinsamen Spitze zusammen (Strähnen statt Gleichverteilung).
+   c = Mittellinie, hb(t) = halbe Breite bei t, o: { n (Locken), b (Haare je Locke), eimer, wahl(t, seite, rel, z),
+   winkel (Grad gegen die Achse), kr, w | strich, lang, szene, t0, t1 } */
 function schweif(T, c, hb, o) {
   const f = laeufer(c), listen = o.eimer.map(() => []);
   const ziel = Math.round(o.n * (T.fein ? 1 : (o.szene != null ? o.szene : 0.15)));
+  const b = T.fein ? (o.b || 1) : Math.max(1, Math.round((o.b || 1) / 2));
   for (let j = 0; j < ziel; j++) {
-    const t = Math.pow(T.rnd(), o.potenz || 1) * (o.t1 || 1), [x, y, tx, ty] = f(t), seite = T.rnd() < 0.5 ? -1 : 1;
-    const rel = Math.pow(T.rnd(), 0.7);                                   // Wurzel: 0 = Achse … 1 = Rand
+    const t = (o.t0 || 0) + T.rnd() * ((o.t1 || 1) - (o.t0 || 0)), [x, y, tx, ty] = f(t), seite = T.rnd() < 0.5 ? -1 : 1;
+    const rel = Math.pow(T.rnd(), o.verteil || 0.7);                      // Wurzel: 0 = Achse … 1 = Rand
     const h = hb(t), wa = (o.winkel || 38) * (0.75 + T.rnd() * 0.5) * RAD;
     const nx = -ty * seite, ny = tx * seite;
-    const rx = x + nx * h * rel * 0.55, ry = y + ny * h * rel * 0.55;
+    const rx = x + nx * h * rel * 0.6, ry = y + ny * h * rel * 0.6;
     const dx = tx * Math.cos(wa) + nx * Math.sin(wa), dy = ty * Math.cos(wa) + ny * Math.sin(wa);
-    const L = h * (1 - rel * 0.45) / Math.max(0.35, Math.sin(wa)) * (0.75 + T.rnd() * 0.45) * (o.lang || 1);
-    const idx = klemm(o.wahl(t, seite, rel, T.rnd()), 0, o.eimer.length - 1);
+    const L = h * (1 - rel * 0.5) / Math.max(0.35, Math.sin(wa)) * (0.8 + T.rnd() * 0.4) * (o.lang || 1);
+    const idx0 = o.wahl(t, seite, rel, T.rnd());
     const kk = (o.kr || 0.12) * (T.rnd() - 0.3) * -seite;
-    listen[idx].push([rx, ry, rx + dx * L, ry + dy * L, (o.w || 0.12) * (0.7 + T.rnd() * 0.6) * (T.fein ? 1 : 1.8), kk]);
+    const ex = rx + dx * L, ey = ry + dy * L;
+    for (let i = 0; i < b; i++) {
+      const q = (i - (b - 1) / 2) * L * 0.07 + (T.rnd() - 0.5) * L * 0.04;
+      const sx = rx + tx * q - dx * L * 0.12 * T.rnd(), sy = ry + ty * q - dy * L * 0.12 * T.rnd();
+      const idx = klemm(idx0 + (b > 1 && T.rnd() < 0.3 ? (T.rnd() < 0.5 ? -1 : 1) : 0), 0, o.eimer.length - 1);
+      const tl = 0.82 + T.rnd() * 0.18;
+      listen[idx].push([sx, sy, sx + (ex - sx) * tl, sy + (ey - sy) * tl, (o.w || 0.12) * (0.7 + T.rnd() * 0.6) * (T.fein ? 1 : 1.8), kk]);
+    }
   }
-  return ausgabe(o.eimer, listen, o.dez || 2);
+  return ausgabe(o.eimer, listen, o.dez || 2, o.strich ? o.strich * (T.fein ? 1 : 1.8) : 0);
 }
 
 /* ---------- Auge ----------
