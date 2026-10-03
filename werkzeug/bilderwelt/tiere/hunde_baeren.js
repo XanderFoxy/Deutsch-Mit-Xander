@@ -482,7 +482,7 @@ function wolf(T) {
 function fuchs(T) {
   /* Kritik Runde 1 umgesetzt: Kopf ≈ 46 % der Widerristhöhe, Stirnwölbung + Stop, Auge→Nase : Auge→Hinterhaupt ≈ 1,0;
      Lunte ≈ 65 % der Kopf-Rumpf-Länge, schmale Wurzel, weiße Pinselspitze; Taille aufgezogen; Strümpfe nach Natur. */
-  T.dichte = 0.7;
+  T.dichte = 0.66;
   const rumpf = [
     [25, -36.4], [30, -38.8], [39, -39.6], [49, -38.8], [58, -39.4], [66, -40.6], [72, -42.4], [76.6, -44.6], [80, -45.4],  // Rücken, Widerrist, Nacken
     [83.4, -42], [84, -37.4], [82.4, -33.6], [79, -30.6], [75, -27.4], [71, -23.6], [67, -20.6],                          // unter dem Kopf, Kehle, Brust
@@ -741,7 +741,7 @@ function eisbaer(T) {
   /* Kritik Runde 1 umgesetzt: durchgehende Hinterkontur (Kruppe → Gesäß → Ferse), kein Sims; Beine im Körperton, ferne Beine
      kühl blaugrau; Hals zur Schulter dicker, Kehle gewölbt; kleiner Kopf mit Römernase, Brauenwulst, schlankem Unterkiefer;
      Weiß cremig, Schatten kühl blaugrau, keine grauen Kratzer. */
-  T.dichte = 0.8;
+  T.dichte = 0.74;
   const blau = "#7d8a9a";
   const rumpf = [
     [12, -82], [16, -94], [26, -104.6], [40, -110.4], [56, -112], [76, -110.6], [96, -107.4], [114, -104.4], [130, -101.6],     // hohe Hüfte → Schulter
@@ -1042,8 +1042,8 @@ function hyaene(T) {
   const kopf = [[137, -66], [139.4, -71.6], [144, -74.4], [150, -74.6], [155.4, -72.4], [159.8, -69], [163.4, -65.6], [166.4, -62.6], [168.6, -59.8], [169.4, -56.6], [169, -53.8],
     [167.6, -52.4], [165.6, -52, 1], [164.8, -50.6], [162, -49.6], [157, -49.2], [151, -49.8], [145.6, -51.2], [141, -54], [138, -59]];
   /* Vorderbein: Ellbogen unter dem Höcker, kräftiger gerader Unterarm, Handwurzel auf ≈ 15 %, Mittelhand vorgeneigt */
-  const vbN = [[102, -66], [101.4, -52], [102.6, -44], [103.4, -32], [104, -20], [104.4, -14], [104.2, -11.4], [105.2, -8.6], [106, -5]].concat(pfoteZ(108.8, 10.6, 4.6),
-    [[111.6, -6.2], [111, -9.4], [110.6, -12.4], [111, -15.4], [111.4, -22], [112, -32], [113.6, -42], [116, -52], [114, -64]]);
+  const vbN = [[100, -66], [99.4, -54], [101.4, -44], [103, -32], [104, -20], [104.4, -14], [104.2, -11.4], [105.2, -8.6], [106, -5]].concat(pfoteZ(108.8, 10.6, 4.6),
+    [[111.6, -6.2], [111, -9.4], [110.6, -12.4], [111, -15.4], [111.4, -22], [112.4, -32], [114.6, -42], [118, -52], [116, -64]]);
   /* Hinterbein: Oberschenkel als Teil der Rumpfkontur, Knie vorn, Sprunggelenk-Spitze ≈ 20 %, Mittelfuß senkrecht */
   const hbN = [[46, -70], [37.6, -63], [35.4, -54], [36.8, -44], [39.6, -34], [41.6, -26], [42, -20.6], [41, -17.2, 1], [42.4, -13], [43.2, -8], [43.4, -5]].concat(pfoteZ(46, 9.8, 4.4),
     [[48.4, -6], [48.4, -10], [48, -14.6], [49, -19], [52.6, -26], [57.6, -33], [62.6, -40], [65.4, -47], [65, -55], [60, -64], [52, -71]]);
@@ -1066,7 +1066,7 @@ function hyaene(T) {
       for (let i = 1; i <= 6; i++) { const q = P[i % 6], m = M(i); t += `q${q[0] - c[0]} ${q[1] - c[1]} ${m[0] - c[0]} ${m[1] - c[1]}`; c = m; }
       return t + "z";
     };
-    if (T.fein === false) n = Math.round(n * 0.55);
+    if (T.fein === false) n = Math.round(n * 0.45);
     for (const [x, y] of streuPunkte(T, pts, n * 1.6)) {
       const gg = g(x, y);
       if (T.rnd() > gg) continue;

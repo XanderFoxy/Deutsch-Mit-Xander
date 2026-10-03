@@ -206,7 +206,7 @@ function LOCKEN(T, poly, n, winkel, len, breite, licht, toene, o = {}) {
   const W = fn(winkel), L = fn(len), B = fn(breite), Li = fn(licht);
   const xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]);
   const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
-  const N = toene.length, eimer = toene.map(() => "");
+  const N = toene.length, eimer = toene.map(() => ""), hEimer = toene.map(() => ""), hz = o.haare || 0;
   const Z = o.genau ? z2 : zf;
   for (let i = 0, v = 0; i < ziel && v < ziel * 40; v++) {
     const x = x0 + T.rnd() * (x1 - x0), y = y0 + T.rnd() * (y1 - y0);
@@ -221,11 +221,21 @@ function LOCKEN(T, poly, n, winkel, len, breite, licht, toene, o = {}) {
     /* Linse (spindelförmig): Wurzel und Spitze spitz, Mitte so dick wie w – keine Schnittkante an der Wurzel */
     if (o.keil) eimer[j] += "M" + Z(x + px, y + py) + "q" + Z(mx - 0.4 * px, my - 0.4 * py, tx - px, ty - py) + "q" + Z(mx - 0.6 * px - tx, my - 0.6 * py - ty, -px - tx, -py - ty) + "z";
     else eimer[j] += "M" + Z(x, y) + "q" + Z(mx + 2 * px, my + 2 * py, tx, ty, mx - 2 * px - tx, my - 2 * py - ty, -tx, -ty);
+    /* Haare in der Strähne: 2–4 feine Linien, an der Wurzel gebündelt, Spitzen aufgespalten, Ton ±1–2 Stufen */
+    if (hz && fein) for (let h = 0; h < hz; h++) {
+      const u = (h + 0.5) / hz - 0.5, sp = (T.rnd() - 0.5) * 0.6 + u * 1.6, lh = 0.75 + T.rnd() * 0.35;
+      const jj = Math.max(0, Math.min(N - 1, j + (T.rnd() < 0.55 ? 1 : -1) * (1 + (T.rnd() < 0.3 ? 1 : 0))));
+      hEimer[jj] += "M" + zf(x + px * u * 0.6, y + py * u * 0.6) + "q" + zf(mx + px * u * 1.4, my + py * u * 1.4, tx * lh + px * sp, ty * lh + py * sp);
+    }
   }
   return eimer.map((d, j) => {
     if (!d) return "";
     const t = toene[j], f = Array.isArray(t) ? t[0] : t, op = Array.isArray(t) ? t[1] : 1;
     return `<path d="${d}" fill="${f}"${op < 1 ? ` fill-opacity="${op}"` : ""}/>`;
+  }).join("") + hEimer.map((d, j) => {
+    if (!d) return "";
+    const t = toene[j], f = Array.isArray(t) ? t[0] : t;
+    return `<path d="${d}" fill="none" stroke="${f}" stroke-width="${o.hb || 0.6}" stroke-linecap="round"/>`;
   }).join("");
 }
 /* Strähnen entlang einer Linie (Kontur brechen, Rock, Säume): Wurzeln auf L (+ Versatz nach innen), sonst wie LOCKEN */
@@ -263,14 +273,24 @@ function AUGE2(T, x, y, w, h, o = {}) {
   s += `<ellipse cx="${r2(cx + R0 * 0.3)}" cy="${r2(h * 0.3)}" rx="${r2(R0 * 0.22)}" ry="${r2(R0 * 0.07)}" fill="#fff" opacity=".18"/></g>`;
   /* Lidrand dunkel, Unterlid feucht hell, Lidfalten als Paare */
   s += `<path d="${A}" fill="none" stroke="#0a0604" stroke-width="${r2(h * 0.09)}" stroke-opacity=".9"/>`;
-  s += `<path d="M${z2(w * 0.42, h * 0.08)}C${z2(w * 0.2, h * 0.5, -w * 0.22, h * 0.52, -w * 0.44, h * 0.22)}" fill="none" stroke="#fff4e6" stroke-width="${r2(h * 0.05)}" stroke-opacity=".5"/>`;
+  s += `<path d="M${z2(w * 0.3, h * 0.32)}C${z2(w * 0.12, h * 0.46, -w * 0.08, h * 0.47, -w * 0.18, h * 0.44)}" fill="none" stroke="#fff4e6" stroke-width="${r2(h * 0.04)}" stroke-opacity=".4"/>`;
+  /* Hautfalten: unregelmäßig, unterbrochen, oben dichter als unten, jede als Paar dunkle Rinne + helle Kante;
+     dazu Krähenfüße, die vom hinteren Winkel fächerförmig auslaufen (keine konzentrischen Ringe) */
   const nf = o.falten != null ? o.falten : 2, hd = o.hautHell || "#c8a07a";
+  let dD = "", dH = "";
   for (let i = 0; i < nf; i++) {
-    const f = 1.35 + i * 0.32, d = `M${z2(-w * 0.5 * f, h * 0.1)}C${z2(-w * 0.3 * f, -h * 0.75 * f, w * 0.25 * f, -h * 0.8 * f, w * 0.5 * f, -h * 0.1)}`;
-    const du = `M${z2(-w * 0.45 * f, h * 0.35)}C${z2(-w * 0.2 * f, h * 0.7 * f, w * 0.2 * f, h * 0.68 * f, w * 0.42 * f, h * 0.2)}`;
-    s += `<path d="${d}${i < nf - 1 ? du : ""}" fill="none" stroke="#000" stroke-width="${r2(h * 0.08)}" stroke-opacity=".38"/>`;
-    s += `<path d="${d}" fill="none" stroke="${hd}" stroke-width="${r2(h * 0.06)}" stroke-opacity=".3" transform="translate(0 ${r2(h * 0.09)})"/>`;
+    const f = 1.25 + i * (0.26 + T.rnd() * 0.16), t0 = 0.05 + T.rnd() * 0.3, t1 = 0.62 + T.rnd() * 0.33, oben = i % 3 !== 2;
+    const bog = (t) => { const xx = -w * 0.55 * f + w * 1.1 * f * t, yy = oben ? -h * (0.55 + 0.2 * i) * f * Math.sin(Math.PI * (0.1 + 0.8 * t)) + h * 0.05 : h * 0.45 * f * Math.sin(Math.PI * (0.15 + 0.7 * t)) + h * 0.2; return [xx, yy + (T.rnd() - 0.5) * h * 0.12]; };
+    const a = bog(t0), m = bog((t0 + t1) / 2), e = bog(t1);
+    dD += "M" + z2(...a) + "Q" + z2(m[0] * 2 - (a[0] + e[0]) / 2, m[1] * 2 - (a[1] + e[1]) / 2, ...e);
+    dH += "M" + z2(a[0], a[1] + h * 0.1) + "Q" + z2(m[0] * 2 - (a[0] + e[0]) / 2, m[1] * 2 - (a[1] + e[1]) / 2 + h * 0.1, e[0], e[1] + h * 0.1);
   }
+  for (let i = 0; i < (o.kraehen != null ? o.kraehen : nf ? 2 : 0); i++) {
+    const a = (175 + (i - 0.5) * 22 + (T.rnd() - 0.5) * 10) * Math.PI / 180, L = w * (0.45 + T.rnd() * 0.35);
+    dD += "M" + z2(-w * 0.58, h * 0.1) + "q" + z2(Math.cos(a) * L * 0.5, Math.sin(a) * L * 0.5 - h * 0.08, Math.cos(a) * L, Math.sin(a) * L);
+  }
+  if (dD) s += `<path d="${dD}" fill="none" stroke="#000" stroke-width="${r2(h * 0.08)}" stroke-opacity=".32" stroke-linecap="round"/>` +
+    `<path d="${dH}" fill="none" stroke="${hd}" stroke-width="${r2(h * 0.06)}" stroke-opacity=".26" stroke-linecap="round"/>`;
   const nw = o.wimpern || 0;
   if (nw) {
     let d = "";
@@ -280,11 +300,50 @@ function AUGE2(T, x, y, w, h, o = {}) {
       const bx = -w / 2 + w * t, by = -h * 0.6 * Math.sin(Math.PI * t) + h * 0.06;
       const L = h * (o.wl || 1.4) * (0.6 + T.rnd() * 0.5) * (0.6 + t * 0.6);
       const a = wa - 0.5 + t * 0.6;
-      d += `M${z2(bx, by)}q${z2(Math.cos(a - 0.6) * L * 0.5, Math.sin(a - 0.6) * L * 0.5, Math.cos(a) * L, Math.sin(a) * L)}`;
+      const kb = o.wkrumm != null ? o.wkrumm : 0.6;
+      d += `M${z2(bx, by)}q${z2(Math.cos(a - kb) * L * 0.5, Math.sin(a - kb) * L * 0.5, Math.cos(a) * L, Math.sin(a) * L)}`;
     }
     s += `<path d="${d}" fill="none" stroke="#120a05" stroke-width="${r2(h * 0.045)}" stroke-linecap="round"/>`;
   }
   return s + "</g>";
+}
+/* HAARMUSTER: kachelbares Feld aus feinen, verjüngten Haaren (nach unten), einmal in den defs. Abgeleitete Muster
+   mit anderer Wuchsrichtung erben den Inhalt (href) und drehen nur – so kostet jede Richtung ~100 Byte.
+   farben: [[Farbe, Anteil, Breite, Deckkraft], …]; winkel in Grad (90 = nach unten). Nur volle Feinheit. */
+function HAARMUSTER(T, name, w, h, n, len, farben, winkel = 90, sk = 1) {
+  T._hm = T._hm || {};
+  const basis = T.id("hm_" + name);
+  if (!T._hm[name]) {
+    T._hm[name] = 1;
+    const summe = farben.reduce((a, f) => a + f[1], 0), eim = farben.map(() => "");
+    for (let i = 0; i < n; i++) {
+      let u = T.rnd() * summe, j = 0;
+      while (j < farben.length - 1 && u > farben[j][1]) { u -= farben[j][1]; j++; }
+      const x = T.rnd() * w, y = T.rnd() * h, l = len * (0.6 + T.rnd() * 0.8), k = (T.rnd() - 0.5) * l * 0.25, dx = (T.rnd() - 0.5) * l * 0.12;
+      for (const [ox, oy] of [[0, 0], [0, -h], [w, 0], [-w, 0], [w, -h], [-w, -h]]) {
+        const X = x + ox, Y = y + oy;
+        if (Y + l < 0 || Y > h || X + 2 < 0 || X - 2 > w) continue;
+        eim[j] += "M" + z2(X, Y) + "q" + z2(k, l / 2, dx, l);
+      }
+    }
+    T.def(`<pattern id="${basis}" width="${w}" height="${h}" patternUnits="userSpaceOnUse">` + eim.map((d, j) => d ? `<path d="${d}" fill="none" stroke="${farben[j][0]}" stroke-width="${farben[j][2]}" stroke-opacity="${farben[j][3]}" stroke-linecap="round"/>` : "").join("") + `</pattern>`);
+  }
+  const rot = Math.round(winkel - 90), key = name + "_" + rot + "_" + sk;
+  if (rot === 0 && sk === 1) return `url(#${basis})`;
+  const id = T.id("hm_" + key.replace(/[^\w]/g, "x"));
+  if (!T._hm[key]) { T._hm[key] = 1; T.def(`<pattern id="${id}" href="#${basis}" patternTransform="rotate(${rot})${sk !== 1 ? ` scale(${sk})` : ""}"/>`); }
+  return `url(#${id})`;
+}
+/* Fläche mit Haarmuster füllen (Zonen mit eigener Wuchsrichtung), geklippt auf den Körper (clip = Pfad d) */
+function HAARZONEN(T, d, zonen, muster) {
+  if (T.fein === false) return "";
+  T._n = (T._n || 0) + 1;
+  const cid = T.id("hz" + T._n);
+  T.def(`<clipPath id="${cid}"><path d="${d}"/></clipPath>`);
+  return `<g clip-path="url(#${cid})">` + zonen.map(([poly, winkel, op]) => {
+    const g = GEN; GEN = 1; const dd = glatt(poly); GEN = g;
+    return muster.map(([name, w, h, n, len, farben, sk]) => `<path d="${dd}" fill="${HAARMUSTER(T, name, w, h, n, len, farben, winkel, sk || 1)}" opacity="${op != null ? op : 1}"/>`).join("");
+  }).join("") + `</g>`;
 }
 /* Unterwolle als feines, gekräuseltes Kachelmuster (nur volle Feinheit): einmal in den defs, beliebig oft benutzt */
 function WOLLE(T, name, farbe, groesse = 24, n = 22, l = 5) {
