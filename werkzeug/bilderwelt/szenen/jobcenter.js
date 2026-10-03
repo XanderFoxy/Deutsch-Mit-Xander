@@ -160,7 +160,7 @@ const zRand = D * (1 - S0 / ZL);
     k += `<rect x="2" y="${r(y - 0.6)}" width="${r(w - 6)}" height=".6" fill="${PETROL}"/>`;
     k += `<rect x=".8" y="${r(y + 1.2)}" width="${r(w - 1.6)}" height="${r((h - 2) / 4 - 2.2)}" fill="#eef3f5" opacity=".7" stroke="#aebfc6" stroke-width=".2"/>`;
   }
-  S.teil({ id: "formular", de: "das Formular", syl: "for-mu-LAR", it: "il modulo", itSyl: "MO-du-lo", en: "form", x: x0 + w / 2, y: y1, kunst: um(w / 2, h, k),
+  S.teil({ id: "formular", de: "das Formular", syl: "For-mu-LAR", it: "il modulo", itSyl: "MO-du-lo", en: "form", x: x0 + w / 2, y: y1, kunst: um(w / 2, h, k),
     tipp: "Hier liegen Formulare, zum Beispiel für eine Veränderungsmitteilung." });
 }
 
@@ -222,7 +222,7 @@ const zRand = D * (1 - S0 / ZL);
     if (i === 13) k += `<circle cx="${r(cx)}" cy="${r(cy - 0.6)}" r="1.5" fill="none" stroke="#d23b30" stroke-width=".45"/>`;
   }
   k += `<rect x="1" y="${r(h - 4)}" width="${r(w - 2)}" height="3.2" fill="#fff4b0"/><text x="${r(w / 2)}" y="${r(h - 1.7)}" font-size="1.8" text-anchor="middle" fill="#333" font-family="Arial">14.: Termin 10:30</text>`;
-  S.teil({ id: "termin", de: "der Termin", syl: "ter-MIN", it: "l'appuntamento", itSyl: "ap-pun-ta-MEN-to", en: "appointment", x: x0 + w / 2, y: y1, kunst: um(w / 2, h, k),
+  S.teil({ id: "termin", de: "der Termin", syl: "Ter-MIN", it: "l'appuntamento", itSyl: "ap-pun-ta-MEN-to", en: "appointment", x: x0 + w / 2, y: y1, kunst: um(w / 2, h, k),
     tipp: "Zum Termin im Jobcenter muss man pünktlich kommen – sonst kann es Kürzungen geben." });
 }
 {
@@ -261,7 +261,7 @@ const zRand = D * (1 - S0 / ZL);
   st += `<ellipse cx="${px}" cy="${py}" rx="10" ry="1.6" fill="#2a2a2a"/>`;
   const m = B.mensch({ id: "b01d_berat", geschlecht: "w", pose: "sitzen", blick: 12, frisur: "dutt", haarfarbe: "blond", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "bluse", farbe: "#d8e6ee" }, jacke: { stueck: "jacke", farbe: "#3d4a5c" }, unterteil: { stueck: "hose", farbe: "#2f3035" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, zubehoer: { stueck: "brille" } } }, 1.68 * sk(z));
-  S.teil({ id: "beraterin", de: "die Beraterin", syl: "be-RA-te-rin", it: "la consulente", itSyl: "con-su-LEN-te", en: "adviser", x: bx, y: by, kunst: um(bx, by, st) + m.svg,
+  S.teil({ id: "beraterin", de: "die Beraterin", syl: "Be-RA-te-rin", it: "la consulente", itSyl: "con-su-LEN-te", en: "adviser", x: bx, y: by, kunst: um(bx, by, st) + m.svg,
     tipp: "Die Beraterin hilft bei der Arbeitssuche und prüft die Anträge." });
 }
 
@@ -332,7 +332,7 @@ const TI = { X0: -0.22, X1: 1.65, z0: 1.2, z1: 2.0 };
   k += papier(lebl) + linien(lebl, 6);
   const fp = P(0.12, HT + 0.012, 1.66);
   k += `<rect x="${r(fp[0])}" y="${r(fp[1] - 1.6)}" width="2" height="1.8" fill="#c9b49a"/><circle cx="${r(fp[0] + 1)}" cy="${r(fp[1] - 1)}" r=".55" fill="#7a5a44"/>`;
-  U.push(["bewerbung", mappe, "die Bewerbung", "be-WER-bung", "la candidatura", "can-di-da-TU-ra", "job application", "In die Bewerbungsmappe gehören Anschreiben, Lebenslauf und Zeugnisse."]);
+  U.push(["bewerbung", mappe, "die Bewerbung", "Be-WER-bung", "la candidatura", "can-di-da-TU-ra", "job application", "In die Bewerbungsmappe gehören Anschreiben, Lebenslauf und Zeugnisse."]);
   U.push(["lebenslauf", lebl, "der Lebenslauf", "LE-bens-lauf", "il curriculum", "cur-RI-cu-lum", "CV", "Im Lebenslauf stehen Schule, Ausbildung und Berufserfahrung."]);
   /* Antrag (Formular mit Kästchen) */
   const antr = blatt(0.42, 1.76, 0.21, 0.29, 0.05);
@@ -349,7 +349,7 @@ const TI = { X0: -0.22, X1: 1.65, z0: 1.2, z1: 2.0 };
   k += papier(besch) + linien(besch, 6, "#8a8a8a", 0.34);
   const bk = P(0.73, HT + 0.006, 1.53);
   k += `<rect x="${bk[0]}" y="${r(bk[1] - 0.9)}" width="4.6" height="1" fill="${ORANGE}"/>`;
-  U.push(["bescheid", besch, "der Bescheid", "be-SCHEID", "la decisione", "de-ci-SIO-ne", "official decision", "Im Bescheid steht, wie viel Geld man bekommt – und für wie lange."]);
+  U.push(["bescheid", besch, "der Bescheid", "Be-SCHEID", "la decisione", "de-ci-SIO-ne", "official decision", "Im Bescheid steht, wie viel Geld man bekommt – und für wie lange."]);
   /* Ausweis und Wartenummer (vorne) */
   const ausw = blatt(-0.1, 1.94, 0.12, 0.08, 0.2, HT + 0.006);
   k += poly(ausw, S.lg("ausweis", [[0, "#dbe9f3"], [1, "#b9d0de"]]), 'stroke="#8aa3b3" stroke-width=".2"');
@@ -383,7 +383,7 @@ const TI = { X0: -0.22, X1: 1.65, z0: 1.2, z1: 2.0 };
   const [tx, ty] = P(1.05, HT, 1.5);
   k += `<path d="M${r(tx - cx - 6)} ${r(ty - cy)} L${r(tx - cx + 6)} ${r(ty - cy - 0.4)} L${r(tx - cx + 5)} ${r(ty - cy - 2.4)} L${r(tx - cx - 6.4)} ${r(ty - cy - 2)} Z" fill="#2a2d31"/>`;
   k += `<ellipse cx="${r(tx - cx + 9.6)}" cy="${r(ty - cy - 1)}" rx="1.2" ry=".8" fill="#2a2d31"/>`;
-  S.teil({ oben: true, id: "computer", de: "der Computer", syl: "com-PU-ter", it: "il computer", itSyl: "com-PU-ter", en: "computer", x: cx, y: cy, steht: true, kunst: k,
+  S.teil({ oben: true, id: "computer", de: "der Computer", syl: "Com-PU-ter", it: "il computer", itSyl: "com-PU-ter", en: "computer", x: cx, y: cy, steht: true, kunst: k,
     tipp: "Im Computer sieht die Beraterin die Akte und passende Stellen." });
 }
 

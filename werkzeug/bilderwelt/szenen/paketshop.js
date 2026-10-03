@@ -207,7 +207,7 @@ const RG = { Xw: L, Xf: L + 0.5, z0: 0.15, z1: 1.45, H: 2.0 };
     { id: "ps_karton", de: "der Karton", syl: "kar-TON", it: "lo scatolone", itSyl: "sca-to-LO-ne", en: "cardboard box",
       kunst: fl([P(Xf, 0.13, z0 + 0.05), P(Xf, 0.13, z1 - 0.05), P(Xf, 0.47, z1 - 0.05), P(Xf, 0.47, z0 + 0.05)]) },
   ].map((u) => Object.assign(u, { x: ax, y: ay }));
-  S.teil({ id: "ps_regal_ps", de: "das Paketregal", syl: "pa-KET-re-gal", it: "lo scaffale dei pacchi", itSyl: "scaf-FA-le dei PAC-chi", en: "parcel shelf", x: ax, y: ay, steht: true, kunst: um(ax, ay, k),
+  S.teil({ id: "ps_regal_ps", de: "das Paketregal", syl: "Pa-KET-re-gal", it: "lo scaffale dei pacchi", itSyl: "scaf-FA-le dei PAC-chi", en: "parcel shelf", x: ax, y: ay, steht: true, kunst: um(ax, ay, k),
     zoom: { x: 0, y: 46, w: 90, h: 60 }, unter,
     tipp: "Im Paketregal warten die Pakete, bis sie abgeholt werden." });
 }
@@ -330,7 +330,7 @@ const PK = { A: -2.82, Bx: -2.42, za: 1.16, zb: 1.44, h0: HT + 0.035, h1: HT + 0
   k += `<line x1="${t0[0]}" y1="${t0[1]}" x2="${t1[0]}" y2="${t1[1]}" stroke="#a7834f" stroke-width="1.3" opacity=".75"/>`;
   const v0 = P(A + 0.2, h0, zb), v1 = P(A + 0.2, h1, zb);
   k += `<line x1="${v0[0]}" y1="${v0[1]}" x2="${v1[0]}" y2="${v1[1]}" stroke="#a7834f" stroke-width="1.3" opacity=".6"/>`;
-  S.teil({ oben: true, id: "ps_paket", de: "das Paket", syl: "pa-KET", it: "il pacco", itSyl: "PAC-co", en: "parcel", x: px, y: py, steht: true, kunst: um(px, py, k),
+  S.teil({ oben: true, id: "ps_paket", de: "das Paket", syl: "Pa-KET", it: "il pacco", itSyl: "PAC-co", en: "parcel", x: px, y: py, steht: true, kunst: um(px, py, k),
     tipp: "Ein Paket darf bei den meisten Paketdiensten bis zu 31,5 kg wiegen." });
 }
 {
@@ -342,7 +342,7 @@ const PK = { A: -2.82, Bx: -2.42, za: 1.16, zb: 1.44, h0: HT + 0.035, h1: HT + 0
   k += `<rect x=".6" y=".6" width="${r(w * 0.45)}" height=".7" fill="${ORANGE}"/>`;
   for (let i = 0; i < 4; i++) k += `<rect x=".6" y="${r(2 + i * 1.1)}" width="${r(w * (0.85 - i * 0.12))}" height=".35" fill="#333"/>`;
   for (let i = 0; i < 11; i++) k += `<rect x="${r(0.6 + i * (w - 1.2) / 11)}" y="${r(h - 2.6)}" width="${i % 3 ? 0.25 : 0.45}" height="2" fill="#111"/>`;
-  S.teil({ oben: true, id: "ps_adressaufkleber", de: "der Adressaufkleber", syl: "a-DRESS-auf-kle-ber", it: "l'etichetta", itSyl: "e-ti-CHET-ta", en: "address label", x: x0, y: y1, steht: true, kunst: um(0, h, k),
+  S.teil({ oben: true, id: "ps_adressaufkleber", de: "der Adressaufkleber", syl: "A-DRESS-auf-kle-ber", it: "l'etichetta", itSyl: "e-ti-CHET-ta", en: "address label", x: x0, y: y1, steht: true, kunst: um(0, h, k),
     tipp: "Auf dem Adressaufkleber stehen Empfänger, Absender und ein Strichcode." });
 }
 {
@@ -421,7 +421,7 @@ const PK = { A: -2.82, Bx: -2.42, za: 1.16, zb: 1.44, h0: HT + 0.035, h1: HT + 0
   const [bx, by] = P(-0.2, HT, 1.62);
   let k = `<path d="M-7 0 L5.6 0 L7.4 -4.2 L-5.2 -4.2 Z" fill="${S.lg("karte", [[0, "#ffd34d"], [1, "#f2b705"]])}" stroke="#b88a00" stroke-width=".2"/>`;
   k += `<path d="M-4.6 -3.4 h6 M-5 -2.4 h5 M-5.4 -1.4 h7" stroke="#5a4500" stroke-width=".3"/><rect x="3" y="-3.6" width="2.6" height="2.4" fill="#fff" opacity=".8"/>`;
-  S.teil({ oben: true, id: "ps_benachrichtigung", de: "die Benachrichtigungskarte", syl: "be-NACH-rich-ti-gungs-kar-te", it: "l'avviso di giacenza", itSyl: "av-VI-so di gia-CEN-za", en: "delivery note", x: bx, y: by, steht: true, kunst: k + flaeche(-7.4, -5.4, 15.2, 6),
+  S.teil({ oben: true, id: "ps_benachrichtigung", de: "die Benachrichtigungskarte", syl: "Be-NACH-rich-ti-gungs-kar-te", it: "l'avviso di giacenza", itSyl: "av-VI-so di gia-CEN-za", en: "delivery note", x: bx, y: by, steht: true, kunst: k + flaeche(-7.4, -5.4, 15.2, 6),
     tipp: "Die Karte war im Briefkasten: Das Paket liegt im Paketshop zur Abholung bereit." });
 }
 

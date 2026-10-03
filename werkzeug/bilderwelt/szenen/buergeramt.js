@@ -190,7 +190,7 @@ const HR = 3.4, ZL = 5.2, XR = 5.6;            // Raumhöhe, sichtbare Wandläng
   f += `<text x="15" y="32" font-size="2.8" text-anchor="middle" fill="#222" font-family="Arial" font-weight="bold">online buchen</text><text x="15" y="36" font-size="2.2" text-anchor="middle" fill="#555" font-family="Arial">oder am Automaten</text>`;
   const svg = tafelR(0.01, 4.15, 4.85, 1.15, 2.05, 30, 40, f);
   const [ax, ay] = P(4.5, 1.15, 0);
-  S.teil({ id: "bam_termin", de: "der Termin", syl: "ter-MIN", it: "l'appuntamento", itSyl: "ap-pun-ta-MEN-to", en: "appointment", x: ax, y: ay, kunst: um(ax, ay, svg),
+  S.teil({ id: "bam_termin", de: "der Termin", syl: "Ter-MIN", it: "l'appuntamento", itSyl: "ap-pun-ta-MEN-to", en: "appointment", x: ax, y: ay, kunst: um(ax, ay, svg),
     tipp: "Für das Bürgeramt bucht man meistens vorher einen Termin." });
 }
 
@@ -240,12 +240,12 @@ const TI = { X0: 2.0, X1: 3.75, Z0: 0.95, Z1: 1.75, H: 0.75 };
   k += poly(besch, "#fbfbf8", 'stroke="#cfccc4" stroke-width=".2"');
   const bs = P(3.38, H + 0.006, 1.2);
   k += `<circle cx="${bs[0]}" cy="${bs[1]}" r="1.1" fill="none" stroke="#2a4fa0" stroke-width=".35"/><rect x="${r(bs[0] - 4)}" y="${r(bs[1] - 4)}" width="5" height=".7" fill="${BLAU}"/>`;
-  U.push(["bam_bescheinigung", besch, "die Bescheinigung", "be-SCHEI-ni-gung", "il certificato", "cer-ti-FI-ca-to", "certificate", "Nach der Anmeldung bekommt man eine Meldebescheinigung."]);
+  U.push(["bam_bescheinigung", besch, "die Bescheinigung", "Be-SCHEI-ni-gung", "il certificato", "cer-ti-FI-ca-to", "certificate", "Nach der Anmeldung bekommt man eine Meldebescheinigung."]);
   /* Kundenseite: Formular mit Kugelschreiber, Personalausweis, Wartenummer */
   const form = blatt(2.45, 1.58, 0.21, 0.29, -0.2);
   k += poly(form, "#fbfbf8", 'stroke="#cfccc4" stroke-width=".2"');
   for (let i = 0; i < 5; i++) { const a = P(2.36 + i * 0.01, H + 0.007, 1.48 + i * 0.045), b = P(2.52 + i * 0.01, H + 0.007, 1.45 + i * 0.045); k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${i ? "#9aa" : BLAU}" stroke-width="${i ? 0.25 : 0.5}"/>`; }
-  U.push(["bam_formular", form, "das Formular", "for-mu-LAR", "il modulo", "MO-du-lo", "form", "Für die Anmeldung füllt man das Formular „Anmeldung bei der Meldebehörde“ aus."]);
+  U.push(["bam_formular", form, "das Formular", "For-mu-LAR", "il modulo", "MO-du-lo", "form", "Für die Anmeldung füllt man das Formular „Anmeldung bei der Meldebehörde“ aus."]);
   const k0 = P(2.6, H + 0.015, 1.5), k1 = P(2.82, H + 0.015, 1.62);
   k += `<line x1="${k0[0]}" y1="${k0[1]}" x2="${k1[0]}" y2="${k1[1]}" stroke="#1f3f8a" stroke-width="1" stroke-linecap="round"/>`;
   U.push(["bam_kugelschreiber", [[Math.min(k0[0], k1[0]) - 1, Math.min(k0[1], k1[1]) - 1.6], [Math.max(k0[0], k1[0]) + 1, Math.max(k0[1], k1[1]) + 1.6]], "der Kugelschreiber", "KU-gel-schrei-ber", "la penna a sfera", "PEN-na a SFE-ra", "ballpoint pen", null]);
@@ -253,7 +253,7 @@ const TI = { X0: 2.0, X1: 3.75, Z0: 0.95, Z1: 1.75, H: 0.75 };
   k += poly(ausw, S.lg("ausweis", [[0, "#dbe9f3"], [1, "#b9d0de"]]), 'stroke="#8aa3b3" stroke-width=".2"');
   const ap = P(3.01, H + 0.006, 1.63);
   k += `<rect x="${r(ap[0] - 0.8)}" y="${r(ap[1] - 1.2)}" width="1.6" height="1.4" fill="#a88b74"/><rect x="${r(ap[0] + 1.2)}" y="${r(ap[1] - 0.8)}" width="3" height=".4" fill="#6a8aa0"/>`;
-  U.push(["bam_personalausweis", ausw, "der Personalausweis", "per-so-NAL-aus-weis", "la carta d'identità", "CAR-ta d'i-den-ti-TÀ", "identity card", "Der Personalausweis ist zehn Jahre gültig (unter 24 Jahren: sechs)."]);
+  U.push(["bam_personalausweis", ausw, "der Personalausweis", "Per-so-NAL-aus-weis", "la carta d'identità", "CAR-ta d'i-den-ti-TÀ", "identity card", "Der Personalausweis ist zehn Jahre gültig (unter 24 Jahren: sechs)."]);
   const tick = blatt(3.45, 1.6, 0.07, 0.1, -0.3);
   k += poly(tick, "#fffdf0", 'stroke="#c9c09a" stroke-width=".2"');
   const tp = P(3.45, H + 0.006, 1.6);

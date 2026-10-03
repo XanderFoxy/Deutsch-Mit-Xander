@@ -224,7 +224,7 @@ const FX0 = 2, FX1 = 100, FY0 = P(0, 2.7, 0)[1];      // Oberkante Glas
     for (let j = 0; j < 3; j++) k += `<rect x="-4" y="${r(y + 1 + j * 1.3)}" width="${r(8 - j * 1.5)}" height=".35" fill="#999"/>`;
     k += `<path d="M-6 ${r(y + 1.6)} L6 ${r(y + 1.6)} L6 ${r(y + 6.2)} L-6 ${r(y + 6.2)} Z" fill="#e8f1f4" opacity=".55" stroke="#aebfc6" stroke-width=".3"/>`;
   }
-  S.teil({ id: "formular", de: "das Formular", syl: "for-mu-LAR", it: "il modulo", itSyl: "MO-du-lo", en: "form", x: 108, y: 76, kunst: k,
+  S.teil({ id: "formular", de: "das Formular", syl: "For-mu-LAR", it: "il modulo", itSyl: "MO-du-lo", en: "form", x: 108, y: 76, kunst: k,
     tipp: "Für ein Einschreiben oder einen Nachsendeauftrag füllt man ein Formular aus." });
 }
 
@@ -479,7 +479,7 @@ const ZH = ZT.hinten, ZG = ZT.glas, ZV = ZT.vorn, HT = ZT.H;
   for (let i = 0; i < 10; i++) k += `<rect x="${r(lx + 0.6 + i * 0.6)}" y="${r(ly + 2)}" width="${i % 3 ? 0.25 : 0.4}" height="1.8" fill="#222"/>`;
   const [bx0, by0] = P(1.06, HT + 0.25, 1.79), [bx1, by1] = P(1.34, HT + 0.25, 1.79);
   k += `<line x1="${bx0}" y1="${by0}" x2="${bx1}" y2="${by1}" stroke="#a7834f" stroke-width="1.4" opacity=".7"/>`;
-  S.teil({ oben: true, id: "paket", de: "das Paket", syl: "pa-KET", it: "il pacco", itSyl: "PAC-co", en: "parcel", x: px, y: py, steht: true, kunst: um(px, py, k) });
+  S.teil({ oben: true, id: "paket", de: "das Paket", syl: "Pa-KET", it: "il pacco", itSyl: "PAC-co", en: "parcel", x: px, y: py, steht: true, kunst: um(px, py, k) });
 }
 {
   /* DAS KARTENLESEGERÄT — in der Ladeschale, zur Kundschaft gedreht */

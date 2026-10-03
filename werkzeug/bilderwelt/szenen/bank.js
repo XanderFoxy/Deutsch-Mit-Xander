@@ -339,7 +339,7 @@ const HT = TK.H;
   const [fx, fy] = P(-0.66, HT, 1.24);
   let k = poly(q, "#fbfbf8", 'stroke="#cfccc4" stroke-width=".2"');
   for (let i = 0; i < 6; i++) { const t = 0.2 + i * 0.12, a = [q[3][0] + (q[0][0] - q[3][0]) * t, q[3][1] + (q[0][1] - q[3][1]) * t], b = [q[2][0] + (q[1][0] - q[2][0]) * t, q[2][1] + (q[1][1] - q[2][1]) * t]; k += `<line x1="${r(a[0] + 1)}" y1="${r(a[1])}" x2="${r(b[0] - 1)}" y2="${r(b[1])}" stroke="${i === 0 ? ROT : "#e3a0a4"}" stroke-width="${i === 0 ? 0.6 : 0.3}"/>`; }
-  S.teil({ oben: true, id: "formular", de: "das Formular", syl: "for-mu-LAR", it: "il modulo", itSyl: "MO-du-lo", en: "form", x: fx, y: fy, steht: true, kunst: um(fx, fy, k) + flaeche(q[3][0] - fx, q[3][1] - fy - 1.6, q[1][0] - q[3][0], q[1][1] - q[3][1] + 2.2),
+  S.teil({ oben: true, id: "formular", de: "das Formular", syl: "For-mu-LAR", it: "il modulo", itSyl: "MO-du-lo", en: "form", x: fx, y: fy, steht: true, kunst: um(fx, fy, k) + flaeche(q[3][0] - fx, q[3][1] - fy - 1.6, q[1][0] - q[3][0], q[1][1] - q[3][1] + 2.2),
     tipp: "Für eine Überweisung füllt man ein Formular aus – oder macht es online." });
   const [kx, ky] = P(-0.42, HT, 1.2);
   let g = `<path d="M-3.6 -.4 L5.4 -2.6 L5.8 -1.8 L-3.2 .3 Z" fill="${ROT}"/><path d="M5.4 -2.6 L6.8 -2.6 L5.8 -1.8 Z" fill="#ccc"/><rect x="-4.4" y="-.6" width="1.2" height="1" fill="#eee"/>`;
