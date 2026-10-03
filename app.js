@@ -90425,7 +90425,7 @@
            role="group" aria-label="${escapeHtml(szene.titel)}">
         <g ${rahmen}>
           <g class="bw-kulisse" aria-hidden="true">${szene.kulisse}</g>
-          ${alleTeile.map((t) => teilHtml(t, !(szene.teile || []).includes(t))).join("")}
+          ${alleTeile.map((t) => teilHtml(t, !(szene.teile || []).includes(t))).join("")}${window.DMA_BILDERWELT_NEU && szene.vorne ? '<g class="bw-vorne" pointer-events="none" aria-hidden="true">' + szene.vorne + "</g>" : "" /* FASSUNG 840: Weiche — FASSUNG 851: Glas und Licht vor den Dingen, ohne Tipps abzufangen */}
         </g>
         ${schleier}
       </svg>`;
@@ -98370,35 +98370,6 @@ An einem Morgen lief ein kleiner Fuchs los…
   });
   document.querySelector('#knowledgeSubnav [data-sub="sub-dialekt"]')?.addEventListener("click", renderDialekt);
 
-  /* ============================================================
-     DAS BILDERRÄTSEL
-     ------------------------------------------------------------
-     GEWÜNSCHT: „Ein Bild aus zwei Elementen (Mensch + Ort/Ding),
-     drei Sätze zur Auswahl, der richtige beschreibt das Bild. Die
-     beiden falschen müssen PLAUSIBEL falsch sein (falsches Verb,
-     falsche Präposition, falscher Kasus) — nicht offensichtlicher
-     Unsinn, sonst lernt man nichts.“
-
-     Das Bild wird bei jeder Aufgabe NEU zusammengesetzt: eine Kulisse
-     aus der Bilderwelt (szenen/<id>.js), ein Platz darin aus
-     data-plaetze.js, und eine Figur aus figuren/<alter>-<geschlecht>.js
-     — dieselben Bausteine wie im Baukasten. Deshalb gibt es keine
-     Liste fertiger Aufgaben, die irgendwann durch wäre.
-
-     UND DIE FALSCHEN SÄTZE werden aus demselben Zustand gebaut, mit
-     GENAU EINEM verdrehten Bestandteil:
-       Verb        sitzt → steht        (das Bild widerlegt es)
-       Kasus       auf der Toilette → auf die Toilette
-                   („wo?“ verlangt den Dativ, nicht den Akkusativ)
-       Präposition auf dem Teppich → unter dem Teppich
-       Kleidung    mit dem roten T-Shirt → mit dem blauen T-Shirt
-     Jeder falsche Satz ist für sich grammatisch tadellos; falsch ist
-     er erst gegenüber dem Bild. Genau daran lernt man etwas.
-     ============================================================ */
-  let brZustand = null;      // die laufende Aufgabe
-  let brRunde = null;        // { nummer, richtig, gesamt, letzte }
-  const BR_RUNDEN = 8;
-  const brDateien = {};
   /* =================================================================
      FASSUNG 842 — DER SATZBAUKASTEN KOMMT ERST, WENN ER GEBRAUCHT WIRD
      -----------------------------------------------------------------
@@ -98441,6 +98412,35 @@ An einem Morgen lief ein kleiner Fuchs los…
   }
   if (document.readyState === "complete") satzbauSpaeter(); else window.addEventListener("load", satzbauSpaeter, { once: true });
 
+  /* ============================================================
+     DAS BILDERRÄTSEL
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Ein Bild aus zwei Elementen (Mensch + Ort/Ding),
+     drei Sätze zur Auswahl, der richtige beschreibt das Bild. Die
+     beiden falschen müssen PLAUSIBEL falsch sein (falsches Verb,
+     falsche Präposition, falscher Kasus) — nicht offensichtlicher
+     Unsinn, sonst lernt man nichts.“
+
+     Das Bild wird bei jeder Aufgabe NEU zusammengesetzt: eine Kulisse
+     aus der Bilderwelt (szenen/<id>.js), ein Platz darin aus
+     data-plaetze.js, und eine Figur aus figuren/<alter>-<geschlecht>.js
+     — dieselben Bausteine wie im Baukasten. Deshalb gibt es keine
+     Liste fertiger Aufgaben, die irgendwann durch wäre.
+
+     UND DIE FALSCHEN SÄTZE werden aus demselben Zustand gebaut, mit
+     GENAU EINEM verdrehten Bestandteil:
+       Verb        sitzt → steht        (das Bild widerlegt es)
+       Kasus       auf der Toilette → auf die Toilette
+                   („wo?“ verlangt den Dativ, nicht den Akkusativ)
+       Präposition auf dem Teppich → unter dem Teppich
+       Kleidung    mit dem roten T-Shirt → mit dem blauen T-Shirt
+     Jeder falsche Satz ist für sich grammatisch tadellos; falsch ist
+     er erst gegenüber dem Bild. Genau daran lernt man etwas.
+     ============================================================ */
+  let brZustand = null;      // die laufende Aufgabe
+  let brRunde = null;        // { nummer, richtig, gesamt, letzte }
+  const BR_RUNDEN = 8;
+  const brDateien = {};
   function brDatei(weg) {
     if (brDateien[weg]) return brDateien[weg];
     brDateien[weg] = new Promise((fertig) => {

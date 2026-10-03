@@ -3353,3 +3353,46 @@ Was 848 ändert (livechat.js):
     - keine Konsolenfehler.
   - 837, 839 und 843 laden die Daten jetzt vor ihrem direkten `setLernraum("it")`.
   - Grün: 868, 636, 837, 839, 843, tutor, tutor-stuecke, tutorreiter, tutorbild62, 858, runde21, runde18, 865, 867, 864.
+
+## Fassung 851 — Neue Bilderwelt: die Bäckerei, neu gebaut nach Vorbild (Funk 263/271/280/284)
+
+XANDER (Funk 263): „jeder Ort soll identisch mit seinem Originalvorlage sein … recherchiere bis ins kleinste Detail … dass man
+auch wenn jemand auf dem Stuhl sitzt den Stuhl noch anwählen kann … mit der Lupen Funktion … zu erforschen sein".
+
+- **Nur die neue Bilderwelt** (`?bilderwelt=neu`, Schalter). Die alte Bäckerei bleibt Stand 53eaa31 mit 9 Teilen (Funk 225).
+- **Werkzeug im Repo** (`werkzeug/bilderwelt/`):
+  - `bau.js` ist der Baukasten: Verläufe, Teile, „unter“-Teile mit Lupe, Ebene „vorne“ für Glas und Licht.
+  - `szenen/baeckerei.js` ist die Quelle der Szene. Sie schreibt `bilderwelt-neu/szenen/baeckerei.js` (nicht von Hand ändern).
+  - `vorschau.js` erzeugt ein Bild der Szene, auf Wunsch mit Trefferrahmen und Lupen-Teilen.
+  - `pruefe-szene.js` prüft wie die App: Trefferebene unter den Zeichnungen, obere Ebene für `oben`-Teile, Mindestgröße. Jedes Teil
+    muss an mindestens 12 Rasterpunkten antippbar sein, Lupen-Teile in der Lupe.
+- **Vorbild**: deutsche Filial-Bäckerei.
+  - Hinten das Brotregal mit Holzfächern und Preisschildern.
+  - Davor die Bedientheke mit Kühlsockel, Lüftungsgitter und Tablettschiene.
+  - Darauf die gebogene Kuchenvitrine aus Glas.
+  - Kasse, Kartenterminal und Bon rechts; Kaffeemaschine mit Tassenstapel links.
+  - Kreidetafel, Uhr, Schild „seit 1928“, Blick durchs Fenster in die Backstube mit Ofen.
+  - Metro-Fliesen hinter den Buffets, Putzwand, Fliesenboden in Fluchtperspektive.
+- **22 Teile im Bild, 19 in der Lupe** (41 Wörter):
+  - Brotregal (Lupe): Roggen-, Misch-, Vollkorn-, Toast-, Dinkel-, Bauernbrot, Baguette, Laugenstange, Weizen-, Körner-, Mohn-
+    und Sesambrötchen.
+  - Vitrine (Lupe): Schwarzwälder Torte mit angeschnittenem Stück, Käsekuchen, Bienenstich, Streuselkuchen, Berliner, Croissant,
+    belegtes Brötchen.
+  - Kleine Dinge (Zange, Bon, Trinkgeld, Kartenlesegerät, Tüte, Brezel, Tasse) haben eine eigene obere Fangfläche: Sie liegen auf
+    oder in größeren Dingen und würden sonst von ihnen verdeckt.
+  - Menschen: Verkäuferin mit Tüte, Kundin. Sie stehen hinter bzw. vor der Theke und verdecken kein Regalfach.
+- **app.js `bwBildHtml`**: zwölfte Weiche — `szene.vorne` (Glas, Spiegelung) liegt über den Teilen, mit `pointer-events="none"`.
+  Nur in der neuen Bilderwelt.
+- **Aufgeräumt**:
+  - Der Satzbaukasten-Lader (842) stand im Bilderrätsel-Abschnitt. Er steht jetzt unverändert davor.
+  - Sonde 840 zählt als Leck nur echten Weichen-Code; die Ladezeit-Kommentare unter derselben Nummer 840 sind keiner.
+- **Sonden**:
+  - Neu `pruefe-869-baeckerei-neu.js`. Geprüft wird:
+    - der Bau und alle Treffer;
+    - die neue Bilderwelt lädt aus `bilderwelt-neu`, mit 22 Teilen;
+    - Glas fängt keinen Tipp ab, kein seitliches Scrollen;
+    - ein Tipp wählt die Verkäuferin;
+    - die Lupe der Vitrine zeigt 7 Teile, die Torte ist antippbar;
+    - der alte Modus zeigt die alte Bäckerei mit 9 Teilen und holt nichts aus `bilderwelt-neu`;
+    - keine Seitenfehler.
+  - Grün: 869, 840, 725, 834, 835, 839, 842, 858, 865, 867, runde18, runde21.

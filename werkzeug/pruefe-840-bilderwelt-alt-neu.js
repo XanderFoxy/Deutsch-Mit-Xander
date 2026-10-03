@@ -39,7 +39,7 @@ const BILD = process.env.BILD || "";
    Abschnitten von app.js — jede ist in SPIELSYSTEM.md (Fassung 840)
    einzeln aufgeführt. Eine weitere Stelle ist eine undokumentierte
    Änderung an der alten Bilderwelt. */
-const WEICHE_STELLEN = 11;
+const WEICHE_STELLEN = 12;   // FASSUNG 851: + Glas-Ebene „vorne“ in bwBildHtml
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml" };
 
 let fehler = 0;
@@ -131,7 +131,9 @@ const lies = (f) => { const p = path.join(WURZEL, f); return fs.existsSync(p) ? 
   bw.forEach((s) => console.log("         · alt Z. " + s.alt + ": −" + s.weg.length + " +" + s.neu.length + "  " + (s.neu.find((z) => z.includes("FASSUNG 840")) || "").trim().slice(0, 90)));
   sage(!bw843falsch.length, "app.js: Stellen „FASSUNG 843“ nehmen nur Italienisch heraus (alt = " + ALT + " abzüglich Italienisch)",
     bw843.length + " Stelle(n)" + (bw843falsch.length ? ", unklar: " + bw843falsch.map((s) => "alt Z. " + s.alt).join(" ") : ""));
-  const leck = rest.filter((s) => s.neu.some((z) => /FASSUNG 840|DMA_BILDERWELT_NEU|DMA_BW_PFAD/.test(z)));
+  /* FASSUNG 851 — die Ladezeit-Arbeit (Funk 271) lief ebenfalls unter der Nummer 840 und trägt „FASSUNG 840 —“ in
+     ihren Kommentaren; ein Leck ist nur echter Weichen-Code (Schalter, Pfad, Marke „FASSUNG 840: Weiche“). */
+  const leck = rest.filter((s) => s.neu.some((z) => /FASSUNG 840: Weiche|DMA_BILDERWELT_NEU|DMA_BW_PFAD/.test(z)));
   sage(!leck.length, "die Weiche reicht nicht in andere Teile von app.js (Satzbaukasten bleibt, wie er ist)", leck.map((s) => "alt Z. " + s.alt).join(" "));
 
   const html = String(lies("index.html"));

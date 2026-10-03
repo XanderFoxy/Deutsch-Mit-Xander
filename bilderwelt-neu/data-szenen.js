@@ -888,7 +888,7 @@ window.DMA_SZENEN = [
   "thema": "Essen & Trinken",
   "breite": 320,
   "hoehe": 200,
-  "zahl": 9,
+  "zahl": 41,
   "lupen": [],
   "stellen": 0
  },
