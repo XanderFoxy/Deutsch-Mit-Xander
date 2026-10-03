@@ -503,7 +503,7 @@ const pyrUnter = [];
     tipp: "Zwei Säulen in Form von Schlangen tragen den Eingang: unten der Kopf, oben die Schwanzrassel." }];
   const zx = (ra[0] + rb2[0]) / 2, zyM = (y0 + y1) / 2 - 1;
   S.teil({ oben: true, id: "tempel", de: "der Tempel", syl: "TEM-pel", it: "il tempio", itSyl: "TEM-pio", en: "temple", x: x0, y: y0, kunst: um(x0, y0, k),
-    zoom: { x: r(zx - 17.5), y: r(zyM - 12), w: 30, h: 20 },
+    zoom: { x: r(zx - 18.5), y: r(zyM - 16.5), w: 30, h: 20 },
     unter,
     tipp: "Oben auf der Pyramide steht ein Tempel für Kukulcán. Sein Eingang zeigt nach Norden." });
 }
@@ -904,6 +904,8 @@ const standUnter = [];
   for (let x = x0 + 4; x < xt1; x += 1.6) spitze += `<path d="M${r(x)} ${r(tv - 3)} q.8 1.3 1.6 0" stroke="#f4eee0" stroke-width=".35" fill="none"/>`;
   k += spitze;
   const yT = th - 1.4;
+  /* kleine Schlagschatten der Waren auf das Tischtuch (Sonne rechts → nach links) */
+  for (const [dx, b] of [[9.5, 3.4], [16.4, 3.2], [25, 3.2], [32.6, 3.2], [43.4, 2.4]]) k += `<ellipse cx="${r(x0 + dx - 1.6)}" cy="${r(yT - 0.1)}" rx="${b}" ry=".55" fill="#5a4a36" opacity=".35"/>`;
   /* DIE MASKE — zwei geschnitzte Holzmasken der Maya-Schnitzer: eine Jaguarmaske (Ohren, Rosetten,
      Fangzähne) und eine Maske des Regengottes Chaac mit langer, hochgerollter Rüsselnase */
   {
@@ -974,8 +976,15 @@ const standUnter = [];
       g += `<path d="M2.9 -9.4 l.7 .5 l.7 -.5 l-.2 .7 l-.5 .5 l-.5 -.5 Z" fill="#7a4a22"/><circle cx="3.75" cy="-9.55" r=".18" fill="#7a4a22"/><path d="M3.95 -9.5 q.4 .2 .3 .5 q-.2 .2 .1 .4" stroke="#3b8f4a" stroke-width=".12" fill="none"/></g>`;
     }
     k += g;
-    standUnter.push({ id: "flagge", de: "die Flagge", syl: "FLAG-ge", it: "la bandiera", itSyl: "ban-DIE-ra", en: "flag", x, y: yT, kunst: flaeche(-2.2, -15.2, 10, 15.4, 0.5),
+    standUnter.push({ id: "flagge", de: "die Flagge", syl: "FLAG-ge", it: "la bandiera", itSyl: "ban-DIE-ra", en: "flag", x, y: yT, kunst: flaeche(-2.2, -3.4, 4.4, 3.6, 0.4) + flaeche(-1.2, -15.2, 9.6, 5.4, 0.4),
       tipp: "Auf der Flagge Mexikos sitzt ein Adler auf einem Kaktus und hält eine Schlange im Schnabel." });
+  }
+  /* Licht und Material: Rundung (Licht rechts), Glanz auf glasiertem Ton, Schnitzkerben im Holz */
+  {
+    const RUND = S.lg("warenlicht", [[0, "#2a1a0e", 0.28], [0.5, "#ffffff", 0], [0.85, "#fff2d0", 0.25], [1, "#fff2d0", 0.05]], 0, 0, 1, 0);
+    for (const [dx, w2, h2] of [[9.5, 3.3, 6.2], [16.4, 3, 6], [25, 3.4, 8.4], [32.6, 3.6, 8]]) k += `<ellipse cx="${r(x0 + dx)}" cy="${r(yT - h2 / 2 - 0.2)}" rx="${w2}" ry="${r(h2 / 2)}" fill="${RUND}"/>`;
+    k += `<path d="M${r(x0 + 26.5)} ${r(yT - 7.6)} q1.2 .8 1.1 2.6 M${r(x0 + 34)} ${r(yT - 7.2)} q.9 .6 .9 1.8 M${r(x0 + 34.3)} ${r(yT - 3.6)} q.6 .6 .4 1.8" stroke="#fffaf0" stroke-width=".35" fill="none" stroke-linecap="round" opacity=".85"/>`;
+    k += `<path d="M${r(x0 + 7)} ${r(yT - 5.6)} q.4 2 .2 4.6 M${r(x0 + 11.8)} ${r(yT - 5.4)} q.3 2 -.1 4.4 M${r(x0 + 14.6)} ${r(yT - 5.8)} q.3 2.2 .1 4.8 M${r(x0 + 18.4)} ${r(yT - 5.6)} q-.2 2 0 4.4" stroke="#3a2412" stroke-width=".14" fill="none" opacity=".45"/>`;
   }
   /* vordere Pfosten */
   k += `<rect x="${x0 - 1}" y="${r(DACH - 4)}" width="2.4" height="${r(vorn - DACH + 4)}" fill="${HOLZ}"/><rect x="${x1 - 2}" y="${r(DACH - 4)}" width="2.4" height="${r(vorn - DACH + 4)}" fill="${HOLZ}"/>`;

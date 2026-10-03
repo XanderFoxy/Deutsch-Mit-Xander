@@ -663,12 +663,16 @@ const LL = -8;
   /* ferne Zone: Einzelsteine wären kleiner als ein Bildpunkt — dort trägt nur noch eine feine Steinkörnung den Tonwert */
   const yNah = yD(D);
   S.def(`<pattern id="${S.id("fern")}" width="1.1" height=".62" patternUnits="userSpaceOnUse"><rect width="1.1" height=".62" fill="#86796a"/><ellipse cx=".26" cy=".17" rx=".22" ry=".11" fill="#a99a83"/><ellipse cx=".82" cy=".46" rx=".2" ry=".1" fill="#9f9079"/><ellipse cx=".8" cy=".12" rx=".14" ry=".08" fill="#b2a38a"/><ellipse cx=".3" cy=".5" rx=".14" ry=".08" fill="#958772"/></pattern>`);
-  let k = `<path d="${poly(...flaecheP)}" fill="url(#${S.id("fern")})"/><g clip-path="url(#${S.id("pflclip")})"><rect x="-1" y="${r(yNah - 0.6)}" width="402" height="${r(262 - yNah + 0.6)}" fill="#76695a"/>${b}`;
+  /* Übergang nah → fern: kein Lineal, sondern ein flacher, weich überblendeter Bogen über ≈ 7 Einheiten */
+  S.def(`<filter id="${S.id("ueber")}" x="-5%" y="-50%" width="110%" height="200%"><feGaussianBlur stdDeviation="2.2"/></filter><mask id="${S.id("nahmaske")}" maskUnits="userSpaceOnUse" x="-2" y="0" width="404" height="264"><path d="M-2 ${r(yNah + 7)} Q200 ${r(yNah + 1.5)} 402 ${r(yNah + 7)} L402 264 L-2 264 Z" fill="#fff" filter="url(#${S.id("ueber")})"/></mask>`);
+  let k = `<path d="${poly(...flaecheP)}" fill="url(#${S.id("fern")})"/><g clip-path="url(#${S.id("pflclip")})"><g mask="url(#${S.id("nahmaske")})"><rect x="-1" y="${r(yNah - 0.6)}" width="402" height="${r(262 - yNah + 0.6)}" fill="#76695a"/>${b}</g>`;
   /* Rinne aus Granit-Längssteinen in der Mitte, nass glänzend */
-  k += `<path d="${poly(P(-0.2, 3.3, 0, 0), P(0.2, 3.3, 0, 0), P(0.2, 21, 0, 0), P(-0.2, 21, 0, 0))}" fill="#7a736a"/>`;
-  { let q = ""; for (let d = 3.5; d < 21; d += 0.6) q += `M${pt(P(-0.2, d, 0, 0))} L${pt(P(0.2, d, 0, 0))} `; k += `<path d="${q}" stroke="#4e483f" stroke-width=".3"/>`; }
-  k += `<path d="M${pt(P(-0.2, 3.3, 0, 0))} L${pt(P(-0.2, 21, 0, 0))} M${pt(P(0.2, 3.3, 0, 0))} L${pt(P(0.2, 21, 0, 0))}" stroke="#4a443c" stroke-width=".4"/>`;
-  k += `<path d="M${pt(P(0.02, 3.3, 0, 0))} L${pt(P(0.02, 21, 0, 0))}" stroke="#dfe6ea" stroke-width=".5" opacity=".45"/>`;
+  /* muldenförmig: Ränder heller, Mitte dunkler, nur eine schmale nasse Glanzlinie; oben mit einem Gullyrost */
+  const RW = 0.13;
+  k += `<path d="${poly(P(-RW, 3.3, 0, 0), P(RW, 3.3, 0, 0), P(RW, 20.6, 0, 0), P(-RW, 20.6, 0, 0))}" fill="${S.lg("mulde", [[0, "#8a8378"], [0.5, "#5e584f"], [1, "#8a8378"]], 0, 0, 1, 0)}"/>`;
+  { let q = ""; for (let d = 3.5; d < 20.6; d += 0.6) q += `M${pt(P(-RW, d, 0, 0))} L${pt(P(RW, d, 0, 0))} `; k += `<path d="${q}" stroke="#4e483f" stroke-width=".25"/>`; }
+  k += `<path d="M${pt(P(0.03, 3.3, 0, 0))} L${pt(P(0.03, 20.6, 0, 0))}" stroke="#dfe6ea" stroke-width=".35" opacity=".4"/>`;
+  { k += `<path d="${poly(P(-0.24, 20.6, 0, 0), P(0.24, 20.6, 0, 0), P(0.24, 21.05, 0, 0), P(-0.24, 21.05, 0, 0))}" fill="#3a352e"/>`; let q = ""; for (const L of [-0.14, -0.05, 0.05, 0.14]) q += `M${pt(P(L, 20.64, 0, 0))} L${pt(P(L, 21.0, 0, 0))} `; k += `<path d="${q}" stroke="#77706a" stroke-width=".3"/>`; }
   /* Kanaldeckel mit Stadtwappen-Relief im Vordergrund */
   { const [cx, cy] = P(-1.6, 5.2, 0, 0), sx = F / 5.2 * 0.32, sy = sx * (yD(5.04) - yD(5.36)) / (F / 5.2 * 0.64); k += `<ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${r(sx + 0.8)}" ry="${r(sy + 0.5)}" fill="#5a544c"/><ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${r(sx)}" ry="${r(sy)}" fill="#3e3a35"/><ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${r(sx * 0.62)}" ry="${r(sy * 0.62)}" fill="none" stroke="#6a6258" stroke-width=".5"/><path d="M${r(cx - sx * 0.9)} ${r(cy)} H${r(cx + sx * 0.9)} M${r(cx)} ${r(cy - sy * 0.9)} V${r(cy + sy * 0.9)}" stroke="#6a6258" stroke-width=".4"/>`; }
   /* Abendschatten: die ganze Gasse liegt im Schatten der rechten Zeile; durch die Seitengasse fällt ein Lichtband */
@@ -680,7 +684,8 @@ const LL = -8;
       for (let d = 12; d < 22; d += 0.05) { const lit = schattenH(X, d) <= 0; if (lit && a2 === null) a2 = d; if (lit) b2 = d; }
       if (a2 !== null) { lo.push(P(X, a2, 0, 0)); hi.push(P(X, b2, 0, 0)); }
     }
-    if (lo.length > 1) k += `<path d="${poly(...lo, ...hi.slice().reverse())}" fill="#ffc477" opacity=".42" filter="url(#${S.id("weichlicht")})"/>`;
+    console.error("LICHTBAHN", lo.length, JSON.stringify(lo.slice(0,3)), JSON.stringify(hi.slice(0,3)));
+    if (lo.length > 1) k += `<path d="${poly(...lo, ...hi.slice().reverse())}" fill="#ffc477" opacity=".6" filter="url(#${S.id("dunst")})"/>`;
   }
   k += `<rect x="-1" y="${HOR - 2}" width="402" height="${263 - HOR}" fill="${S.lg("pflnah", [[0, "#000", 0], [0.6, "#000", 0.04], [1, "#120c08", 0.2]])}"/></g>`;
   /* rechte Gasse zum Siebersturm: sanfte Rampe (7 %), feines Pflaster, Bordstein steigt mit */
