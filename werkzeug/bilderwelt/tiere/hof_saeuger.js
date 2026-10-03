@@ -1198,8 +1198,8 @@ function esel(T) {
     return stueck(T, pts, fern, fellZone(T, dH, pts, 92, 0.6) + F.schatten(cx + (vorn ? 0 : 10), -66, 9, 10, 0.6) + F.licht(cx - 2, -24, 1.2, 8, 0.3) +
       (vorn ? kastanie(cx - 4.4, -44) : ""), { licht: 0.9, dunkel: 0.5, hell: 0.3 });
   };
-  s += vol(T, "bein", 2.2, fernBein(false, 10)) + hufE(E_HCX + 10, "#2e2924", "#4a433a");
-  s += vol(T, "bein", 2.2, fernBein(true, -9)) + hufE(E_VCX - 9, "#2e2924", "#4a433a");
+  s += vol(T, "bein", 2.2, fernBein(false, 10)) + hufE(E_HCX + 10, "#3a3530", "#4a433a");
+  s += vol(T, "bein", 2.2, fernBein(true, -9)) + hufE(E_VCX - 9, "#3a3530", "#4a433a");
   /* Rumpf mit Hals und nahen Beinen: gerader Rücken, kaum Widerrist, Hüfthöcker als Beule, schmales Becken; Hals kurz und kräftig */
   const rumpf = [[13.4, -101], [13.2, -96], [15.4, -91.4]].concat(E_H.h, E_H.v, [[52, -67.6], [58, -64.4], [66, -61.8], [76, -60.6], [84, -61.6]], E_V.h, E_V.v,
     [[104.6, -66.4], [106, -71], [107, -76.6], [107.6, -82], [108.6, -88], [110.4, -95], [113, -102.6], [116.4, -110], [120.4, -118], [124.6, -126]], E_KAMM,
@@ -1209,22 +1209,21 @@ function esel(T) {
   const zVorn = [[86, -122], [132, -140], [112, -100], [104, -60], [86, -58]];
   const zLicht = [[10, -114], [86, -120], [128, -142], [118, -124], [86, -104], [40, -102], [12, -98]];
   const innen =
+    /* Schulterkreuz und Aalstrich zuerst (weich gezeichnet), das Fell liegt darüber: Pigment, keine Kante */
+    weich(T, form([[86.4, -116.6], [89.4, -116.6], [90.4, -110], [91.8, -102], [93.4, -94.6], [94.2, -91.4], [93.4, -91.4], [91.6, -96], [89.4, -103], [87.6, -110]], dunkel, ` opacity=".5"`, 0.1) +
+      form([[90, -116], [80, -115.4], [64, -115.6], [50, -116.4], [40, -117.6], [32, -117.2], [26, -115.6], [20.6, -112.2], [21.8, -110.6], [27, -113.4],
+        [33, -115], [40, -115.4], [50, -114.4], [64, -113.8], [80, -113.6], [90, -114]], dunkel, ` opacity=".55"`, 0.2), 0.5) +
     fellZone(T, dH, zHinten, 100) + fellZone(T, dH, zRumpf, 160) + fellZone(T, dH, zVorn, 116) + fellZone(T, dH, [[10, -42], [104, -42], [104, 0], [10, 0]], 90) +
     fellZone(T, hH, zLicht, 160, 0.9) +
     /* heller Bauch, helle Innenschenkel */
     hellF(66, -60, 22, 5.4, 0.9) + hellF(84, -62, 5, 4, 0.7) + hellF(48, -66, 4, 5, 0.6) + hellF(99, -48, 2.6, 9, 0.35) + hellF(31.4, -48, 2.4, 8, 0.3) +
     streifen(89.6, 98.6, -40, 4, 3) + streifen(22.6, 31, -36, 3, 3.4) +
-    /* Schulterkreuz: Pigmentband ohne eigenes Licht, oben 3 cm, unten 1 cm, leicht nach vorn gebogen, gefiederte Ränder */
-    form([[86, -117], [89.6, -117], [90.6, -110], [92, -102], [93.6, -94.6], [94.4, -91], [93.4, -91], [91.6, -96], [89.4, -103], [87.4, -110]], dunkel, ` opacity=".5"`, 0.1) +
-    fein(T, saum2(T, [[86.2, -114], [87.6, -106], [90, -98], [93, -92]], 22, 100, 1.2, dunkel, 0.07, 0.55, { streuung: 40 }) +
-      saum2(T, [[89.8, -114], [91, -106], [92.6, -98]], 16, 100, 1.2, dunkel, 0.07, 0.55, { streuung: 40 })) +
-    /* Aalstrich: 2–3 cm breit, knapp innerhalb der Oberlinie, von der Mähne bis in die Rübe, Ränder gefiedert */
-    form([[90, -116.8], [80, -116.2], [64, -116.4], [50, -117.2], [40, -118.4], [32, -118], [26, -116.4], [20, -113], [21.6, -110.8], [27, -113.8],
-      [33, -115.4], [40, -115.8], [50, -114.6], [64, -113.8], [80, -113.6], [90, -114]], dunkel, ` opacity=".55"`, 0.2) +
-    fein(T, saum2(T, [[88, -113.8], [64, -113.6], [40, -115.6], [26, -113.6]], 40, 100, 1.2, dunkel, 0.06, 0.55, { streuung: 40 })) +
+    fein(T, saum2(T, [[86.6, -114], [87.8, -106], [90, -98], [93, -92]], 22, 100, 1.2, dunkel, 0.07, 0.5, { streuung: 40 }) +
+      saum2(T, [[89.6, -114], [90.8, -106], [92.4, -98]], 16, 100, 1.2, dunkel, 0.07, 0.5, { streuung: 40 }) +
+      saum2(T, [[88, -113.8], [64, -113.6], [40, -115.4], [26, -113.4]], 40, 100, 1.2, dunkel, 0.06, 0.5, { streuung: 40 })) +
     rumpfLicht(F, 14, 104, -117, -59, 0.75) +
     /* Knochenpunkte: Hüfthöcker (Beule, Glanz), Sitzbein, Hüftgelenk, Kniescheibe, Kniefalte; Rippen; Schulterblatt, Buggelenk, Ellbogen */
-    F.licht(37, -116, 4, 1.4, 0.45, -10) + F.schatten(40, -110, 4, 3, 0.4) + F.licht(13.6, -100, 1, 2.4, 0.35) + F.schatten(28, -100, 5, 4, 0.25) +
+    F.licht(37, -116, 4, 1.4, 0.45, -10) + F.schatten(40, -111, 5, 2.4, 0.25) + F.licht(13.6, -100, 1, 2.4, 0.35) + F.schatten(28, -100, 5, 4, 0.25) +
     F.licht(48, -69, 1.4, 2.2, 0.35) + F.rinne(48, -70, 54, -84, 1.3, 0.4) + [60, 66, 72, 78].map((x) => F.rinne(x, -98, x - 4, -70, 1.6, 0.1)).join("") +
     F.kante(88, -112, 100, -86, 1.6, 0.3) + F.rinne(84, -110, 92, -80, 2, 0.2) + F.licht(106, -80, 2, 4, 0.45) + F.schatten(104, -72, 3, 3, 0.3) +
     F.schatten(88, -62, 4, 3, 0.5) + F.licht(86.6, -64.6, 1.4, 1.6, 0.3) +
@@ -1241,7 +1240,7 @@ function esel(T) {
   s += saum2(T, [[13.2, -96], [15.4, -91.4], [18.5, -88], [19.2, -78]], 14, 125, 1.4, "#8a8276", 0.06, 0.6, { ab: 0.3 });
   s += saum2(T, [[108.6, -88], [110.4, -95], [113, -102.6]], 10, 60, 1.4, "#9a9286", 0.06, 0.6, { ab: 0.3 });
   s += saum2(T, [[E_VCX - 4.8, -11], [E_VCX - 5, -15]], 8, 110, 1.6, "#3e372f", 0.07, 0.8, { ab: 0.3 }) + saum2(T, [[E_HCX - 4.8, -11], [E_HCX - 5, -15]], 8, 110, 1.6, "#3e372f", 0.07, 0.8, { ab: 0.3 });
-  s += hufE(E_HCX, "#3a342e", "#5a5248") + hufE(E_VCX, "#3a342e", "#5a5248");
+  s += hufE(E_HCX, "#4e4842", "#5a5248") + hufE(E_VCX, "#4e4842", "#5a5248");
   /* Stehmähne: ≥ 60 einzelne, aufrechte Strähnen; Wurzel dunkel, Spitzen hell; Oberkante unregelmäßig; läuft in den Aalstrich aus */
   const mo = [], mu = [];
   for (let i = 0; i <= 16; i++) {
@@ -1260,7 +1259,7 @@ function esel(T) {
     [21.4, -104], [26, -109]];
   s += stueck(T, ruebe, T.lg("rue", [[0, "#8e867a"], [0.55, "#7a7266"], [1, "#3e3730"]], 0, -114, 0, -74, U),
     haare2(T, ruebe, 40, (x, y) => 95 + (y + 90) * 0.4, 2, { farben: [["#4a433a", 1, 0.06, 0.45], ["#c8c0b2", 0.6, 0.05, 0.4]], streuung: 14, szene: 0 }) +
-    form([[24, -113.6], [19.6, -110], [16.8, -103], [15.4, -94], [15.2, -82], [16.4, -82], [16.6, -94], [18, -102], [21, -108.4], [25, -111.4]], dunkel, ` opacity=".5"`, 0.2) +
+    weich(T, form([[24, -113.6], [19.6, -110], [16.8, -103], [15.4, -94], [15.2, -82], [16.4, -82], [16.6, -94], [18, -102], [21, -108.4], [25, -111.4]], dunkel, ` opacity=".5"`, 0.2), 0.5) +
     F.licht(14.6, -96, 0.8, 10, 0.35), { licht: 0, q: 0.2 });
   s += imRumpf(rk, F.schatten(19, -98, 3, 12, 0.45));
   const qA = [[14.4, -92], [14.8, -80], [15, -66], [15, -56]];
@@ -1310,7 +1309,7 @@ function esel(T) {
     F.schatten(...dreh([[-0.4, -1]], ON[0], ON[1], -6)[0], 4, 3, 0.55), { licht: 0, q: 0.1 });
   s += saum2(T, dreh([[2.8, -4], [3.4, -12], [2.2, -20]], ON[0], ON[1], -6), 22, -60, 2, "#f2ece2", 0.06, 0.8, { ab: 0.4, streuung: 20 });
   const kb = T.box(kopf);
-  return { svg: s, box: [10, -164, 159, 0], fuesse: [E_HCX + 5, E_HCX + 17, E_VCX - 4, E_VCX + 6], kopf: [kb[0] - 4, kb[1] - 34, kb[2] + 2, kb[3] + 2] };
+  return { svg: s, box: [10, -164, 157, 0], fuesse: [E_HCX + 5, E_HCX + 17, E_VCX - 4, E_VCX + 6], kopf: [kb[0] - 4, kb[1] - 34, kb[2] + 2, kb[3] + 2] };
 }
 
 /* =====================================================================
@@ -1737,7 +1736,7 @@ module.exports = [
   { id: "schwein", de: "das Schwein", syl: "SCHWEIN", it: "il maiale", itSyl: "ma-IA-le", en: "pig",
     gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 1.81, hoehe: 0.89, zeichne: schwein },
   { id: "esel", de: "der Esel", syl: "E-sel", it: "l'asino", itSyl: "A-si-no", en: "donkey",
-    gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 1.49, hoehe: 1.64, zeichne: esel },
+    gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 1.43, hoehe: 1.62, zeichne: esel },
   { id: "kalb", de: "das Kalb", syl: "KALB", it: "il vitello", itSyl: "vi-TEL-lo", en: "calf",
     gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 1.19, hoehe: 1.02, zeichne: kalb },
   { id: "kuh", de: "die Kuh", syl: "KUH", it: "la vacca", itSyl: "VAC-ca", en: "cow",

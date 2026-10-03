@@ -276,7 +276,7 @@ S.hinten(`<rect width="320" height="${HOR + 8}" fill="${S.lg("sonnenseite", [[0,
   const spiegel = (x0, x1, y0, laenge, farbe, dichte = 1) => {
     let g = "";
     for (let y = y0; y < y0 + laenge; y += 0.75) {
-      const t = (y - y0) / laenge, n = Math.max(1, Math.round((x1 - x0) / 3.4 * dichte));
+      const t = (y - y0) / laenge, n = Math.max(1, Math.round((x1 - x0) / 4.5 * dichte));
       for (let i = 0; i < n; i++) {
         if (rnd() < t * 0.75) continue;
         const xa = x0 + (x1 - x0) * rnd(), w = 0.6 + rnd() * 2.6 * (1 - t * 0.5);
@@ -437,7 +437,7 @@ const glas = (name, hell) => S.lg(name, hell ? [[0, "#d4e3ec"], [0.5, "#a6c0d2"]
   let k = "";
   /* eckiger Steinturm hinten (170 m) */
   k += turmSeiten(rechteck(cx - 12, cy + 18, 30, 30, 0.2), G, G + 172, S.lg("mtsl", [[0, "#6f747a"], [1, "#5a5f65"]]), S.lg("mtss", [[0, "#45494e"], [1, "#383c40"]]),
-    (s) => { let g = ""; for (let z = G + 4; z < G + 170; z += 6) for (let t = 0.1; t < 0.95; t += 0.2) g += `<path d="M${P(s.at(t, z))} L${P(s.at(t + 0.06, z))}" stroke="#a9bccb" stroke-width=".28" opacity=".6"/>`; return g; });
+    (s) => { let g = ""; for (let z = G + 4; z < G + 170; z += 7) g += `<path d="M${P(s.at(0.08, z))} L${P(s.at(0.92, z))}" stroke="#a9bccb" stroke-width=".3" stroke-dasharray=".5 .6" opacity=".6"/>`; return g; });
   /* runder Glasturm: Zylinder, 16-eckig angenähert */
   const R = 17, ring = (z) => { const p = []; for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; p.push([cx + Math.cos(a) * R, cy + Math.sin(a) * R]); } return p; };
   const pts = ring(0);
@@ -753,7 +753,7 @@ const DOMM = {};
   }
   /* steinerne Kuppel: acht Rippen mit dichten Krabben */
   {
-    const K0 = O1, K1 = G + 86, prof = (t) => 2.3 + 5.2 * Math.pow(Math.cos(t * Math.PI / 2), 0.85) * (1 + 0.05 * Math.sin(t * Math.PI));
+    const K0 = O1, K1 = G + 86, prof = (t) => 2.2 + 4.6 * Math.pow(Math.cos(t * Math.PI / 2), 1.05) * (1 + 0.05 * Math.sin(t * Math.PI));
     const rand = [];
     for (let i = 0; i <= 12; i++) { const t = i / 12, z = K0 + (K1 - K0) * t, rr = prof(t); rand.push([pr(cx - rr * RV[0], cy - rr * RV[1], z), pr(cx + rr * RV[0], cy + rr * RV[1], z)]); }
     k += `<path d="M${rand.map((q) => P(q[0])).join(" L")} L${rand.slice().reverse().map((q) => P(q[1])).join(" L")} Z" fill="${S.lg("kuppel", [[0, "#dfa08c"], [0.35, "#c47a66"], [0.7, "#9a5446"], [1, "#7b4136"]], 0, 0, 1, 0)}"/>`;
@@ -1087,8 +1087,8 @@ const PROM = 2.2;
   const boden = poly([...kante, ...mauer.slice().reverse()]);
   k += `<path d="${boden}" fill="${S.lg("pflaster", [[0, "#cbc2b2"], [0.45, "#b9ae9c"], [1, "#a39785"]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${HOR}" x2="0" y2="200"`)}"/>`;
   /* Fugen der Granitplatten: längs zum Fluss und quer */
-  for (let q = 0.6; q < 15; q += 1.2) k += `<path d="${linie(xs.map((x) => [x, anX(SUED, x) - q, PROM]))}" stroke="#8d8270" stroke-width=".22" opacity=".55" fill="none"/>`;
-  for (let x = -240; x < 300; x += x > 240 ? 1.2 : x > 120 ? 3 : 8) k += `<path d="${linie([[x, anX(SUED, x), PROM], [x, anX(SUED, x) - 15, PROM]])}" stroke="#8d8270" stroke-width=".22" opacity=".5"/>`;
+  for (let q = 0.6; q < 15; q += 1.6) k += `<path d="${linie(xs.filter((x, i) => i % 2 === 0 || x > 200).map((x) => [x, anX(SUED, x) - q, PROM]))}" stroke="#8d8270" stroke-width=".22" opacity=".55" fill="none"/>`;
+  for (let x = -240; x < 300; x += x > 240 ? 1.6 : x > 120 ? 5 : 12) k += `<path d="${linie([[x, anX(SUED, x), PROM], [x, anX(SUED, x) - 15, PROM]])}" stroke="#8d8270" stroke-width=".22" opacity=".5"/>`;
   /* Lange Schatten der Mauer und der Straßenbäume auf dem Pflaster */
   for (let x = -200; x < 150; x += 12) {
     const y = anX(SUED, x) - 16.5, [sx, sy] = SCH(x, y, 10);
@@ -1169,10 +1169,12 @@ const PROM = 2.2;
     k += `<text x="0" y=".14" font-size=".42" text-anchor="middle" fill="#f3e2a8" font-family="Georgia,serif" font-weight="bold" transform="matrix(${r((p1[0] - p0[0]) / 2 * 100) / 100} ${r((p1[1] - p0[1]) / 2 * 100) / 100} 0 ${r(sv * 100) / 100} ${r(sm[0])} ${r(sm[1])})">Ebbelwoi</text>`;
   }
   /* der grüne Kranz (Fichtenzweige) am Eckpfosten */
-  const kz = pr(c[0] + w / 2 + 0.35, c[1] + d / 2 + 0.2, PROM + 2.05), ks = mass(c[0] + w / 2, c[1] + d / 2);
-  k += `<path d="M${r(kz[0])} ${r(kz[1] - 0.45 * ks)} v${r(-0.4 * ks)}" stroke="#4a3a2a" stroke-width=".2"/>`;
-  k += `<circle cx="${r(kz[0])}" cy="${r(kz[1])}" r="${r(0.32 * ks)}" fill="none" stroke="#2f5a2c" stroke-width="${r(0.17 * ks)}"/>`;
-  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; k += `<path d="M${r(kz[0] + Math.cos(a) * 0.32 * ks)} ${r(kz[1] + Math.sin(a) * 0.32 * ks)} l${r(Math.cos(a + 1.2) * 0.12 * ks)} ${r(Math.sin(a + 1.2) * 0.12 * ks)}" stroke="#4f8a46" stroke-width=".25"/>`; }
+  const kz = pr(c[0] + w / 2 + 0.62, c[1] + d / 2 + 0.28, PROM + 2.05), ks = mass(c[0] + w / 2, c[1] + d / 2);
+  const ka = pr(c[0] + w / 2, c[1] + d / 2, PROM + 2.55), kb2 = pr(c[0] + w / 2 + 0.7, c[1] + d / 2 + 0.3, PROM + 2.55);
+  k += `<path d="M${P(ka)} L${P(kb2)}" stroke="#4a3a2a" stroke-width="${r(0.06 * ks)}"/>`;
+  k += `<path d="M${r(kb2[0] - 0.2 * ks)} ${r(kb2[1])} L${r(kz[0] - 0.12 * ks)} ${r(kz[1] - 0.2 * ks)} M${r(kb2[0] + 0.05 * ks)} ${r(kb2[1])} L${r(kz[0] + 0.12 * ks)} ${r(kz[1] - 0.2 * ks)}" stroke="#6b5a40" stroke-width=".15"/>`;
+  k += `<ellipse cx="${r(kz[0])}" cy="${r(kz[1])}" rx="${r(0.24 * ks)}" ry="${r(0.22 * ks)}" fill="none" stroke="#2f5a2c" stroke-width="${r(0.11 * ks)}"/>`;
+  for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; k += `<path d="M${r(kz[0] + Math.cos(a) * 0.24 * ks)} ${r(kz[1] + Math.sin(a) * 0.22 * ks)} l${r(Math.cos(a + 1.2) * 0.09 * ks)} ${r(Math.sin(a + 1.2) * 0.09 * ks)}" stroke="#5f9a52" stroke-width=".22"/>`; }
   k += `<path d="M${r(kz[0] - 0.1 * ks)} ${r(kz[1] + 0.3 * ks)} l-.3 1.2 M${r(kz[0] + 0.1 * ks)} ${r(kz[1] + 0.3 * ks)} l.3 1.2" stroke="#b8473a" stroke-width=".3"/>`;
   S.teil({ id: "wirtschaft", de: "die Apfelweinwirtschaft", syl: "AP-fel-wein-wirt-schaft", it: "l'osteria del sidro", itSyl: "o-ste-RI-a del SI-dro", en: "cider tavern", x: 0, y: 0, kunst: k,
     tipp: "Hängt ein grüner Kranz aus Fichtenzweigen draußen, gibt es hier selbst gekelterten Apfelwein." });
@@ -1182,12 +1184,12 @@ const PROM = 2.2;
    17 — DIE PLATANE (großer Baum im Apfelweingarten, links)
    ===================================================================== */
 {
-  const c = [260.5, -69.6], f = pr(c[0], c[1], PROM), s = mass(...c);
+  const c = [263.4, -69.3], f = pr(c[0], c[1], PROM), s = mass(...c);
   /* Schattenband des Stamms und der Krone quer über das Pflaster */
   const sh = SCH(c[0], c[1], 9);
   let k = `<path d="${poly([[c[0] - 0.4, c[1], PROM], [c[0] + 0.4, c[1], PROM], [c[0] + 9, c[1] + 4, PROM], [c[0] + 8, c[1] + 5.4, PROM]])}" fill="#2e2418" opacity=".22"/>`;
   k += `<path d="${poly([[sh[0] - 4, sh[1] - 3, PROM], [sh[0] + 6, sh[1] - 6, PROM], [sh[0] + 9, sh[1] + 3, PROM], [sh[0] - 1, sh[1] + 6, PROM]])}" fill="#2e2418" opacity=".16"/>`;
-  k += platane(f[0], f[1], s, 16 * s, 13 * s, "#a9c6e0");
+  k += platane(f[0], f[1], s, 9.5 * s, 11 * s, "#a9c6e0", 12);
   S.teil({ id: "platane", de: "die Platane", syl: "pla-TA-ne", it: "il platano", itSyl: "PLA-ta-no", en: "plane tree", x: 0, y: 0, kunst: k,
     tipp: "Platanen erkennt man an ihrer hellen, fleckigen Rinde." });
 }
