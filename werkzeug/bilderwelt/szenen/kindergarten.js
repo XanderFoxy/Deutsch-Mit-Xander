@@ -69,12 +69,20 @@ const polyC = (pts, fill, extra = "") => { const c = clipX(pts); return c.length
 /* Fläche im Bild relativ zum Anker eines Teils */
 const fl = (ax, ay, x0, y0, x1, y1) => flaeche(x0 - ax, y0 - ay, x1 - x0, y1 - y0);
 
+/* Figuren schlanker: Koordinaten auf halbe Zentimeter runden (unsichtbar
+   bei dieser Größe, spart ein Drittel der Datei – die Seite lädt schneller) */
+const h2 = (n) => String(Math.round(parseFloat(n) * 2) / 2);
+const schlank = (svg) => svg.replace(/( d=")([^"]*)"/g, (a, b, c) => b + c.replace(/-?\d*\.\d+/g, h2) + '"')
+  .replace(/ (cx|cy|x1|y1|x2|y2|x|y)="(-?\d*\.\d+)"/g, (a, b, c) => ` ${b}="${h2(c)}"`)
+  .replace(/ (r|rx|ry|width|height)="(\d*\.\d+)"/g, (a, b, c) => ` ${b}="${parseFloat(c) < 1.5 ? c : h2(c)}"`);
+const figur = (spec, hoehe) => { const m = B.mensch(spec, hoehe); return { svg: `<g transform="scale(${m.k.toFixed(4)})">${schlank(m.z.svg)}</g>`, k: m.k, z: m.z }; };
+
 /* ---------- Haltungen ------------------------------------------------- */
 B.mensch({}, 10);
 const MP = globalThis.DMA_MENSCH.POSEN;
-MP.b10a_malen = Object.assign({}, MP.sitzen, { lende: 6, brust: 8, nacken: 14, kopf: 10,
-  schulterL: { vor: 38, seit: 14 }, ellbogenL: 62, unterarmL: -70, handL: 0, fingerL: 0.45,
-  schulterR: { vor: 42, seit: 10 }, ellbogenR: 66, unterarmR: -70, handR: -10, fingerR: 0.6 });
+MP.b10a_zeigen = Object.assign({}, MP.lesen, { nacken: 4, kopf: -4,
+  schulterL: { vor: 34, seit: 10 }, ellbogenL: 96, unterarmL: 70, handL: 10, fingerL: 0.5,
+  schulterR: { vor: 32, seit: 11 }, ellbogenR: 98, unterarmR: 70, handR: 10, fingerR: 0.5 });
 MP.b10a_bauen = Object.assign({}, MP.knien, { lende: 6, brust: 6, nacken: 8, kopf: 6,
   schulterR: { vor: 70, seit: 14 }, ellbogenR: 26, unterarmR: -40, handR: 4, fingerR: 0.5,
   schulterL: { vor: 22, seit: 10 }, ellbogenL: 40, unterarmL: -40, handL: 0, fingerL: 0.4 });
@@ -212,16 +220,14 @@ const FE = { X0: -1.85, X1: 0.6, H0: 0.72, H1: 2.32 };
 }
 
 /* =====================================================================
-   5 — DER HEIZKÖRPER (mit Holzverkleidung unter dem Fenster)
+   5 — DER HEIZKÖRPER (mit Holzverkleidung unter dem Fenster) — Kulisse
    ===================================================================== */
 {
   let k = kiste(-1.6, 0.35, 0.1, 0.6, 0, 0.12, { vorn: BIRKE, deckel: "#efe0bf", seite: BIRKE_S });
   const [x0, y0] = P(-1.6, 0.6, 0.12), [x1, y1] = P(0.35, 0.1, 0.12);
   for (let x = x0 + 2; x < x1 - 1; x += 2.2) k += `<rect x="${r(x)}" y="${r(y0 + 2)}" width="1.1" height="${r(y1 - y0 - 4)}" rx=".5" fill="#8f7a58" opacity=".75"/>`;
   k += `<rect x="${x0}" y="${y0}" width="${r(x1 - x0)}" height="1" fill="#fff" opacity=".4"/>`;
-  const [ax, ay] = P(-0.62, 0.1, 0.12);
-  S.teil({ id: "kg_heizkoerper", de: "der Heizkörper", syl: "HEIZ-kör-per", it: "il termosifone", itSyl: "ter-mo-si-FO-ne", en: "radiator", x: ax, y: ay, kunst: um(ax, ay, k),
-    tipp: "Die Holzverkleidung schützt die Kinder: So verbrennt sich niemand am heißen Heizkörper." });
+  S.hinten(k);   /* Kulisse: der Heizkörper ist kein eigenes Wort */
 }
 
 /* =====================================================================
@@ -239,7 +245,7 @@ const FE = { X0: -1.85, X1: 0.6, H0: 0.72, H1: 2.32 };
     const [kf, sym] = kisten[(1 - row) * 2 + c];
     /* Kunststoffkiste, ein wenig herausgezogen */
     const b0 = a + 0.05, b1 = a + fw - 0.05, h0 = H0 + 0.01, h1 = H0 + 0.27;
-    k += kiste(b0, b1, h0, h1, z1 - 0.2, z1 + 0.02, { vorn: kf, deckel: "#000" }).replace(/fill="#000"/, `fill="${kf}" opacity=".55"`);
+    k += kiste(b0, b1, h0, h1, z1 - 0.2, z1 + 0.02, { vorn: kf });
     const [px, py] = P(b0, h1, z1 + 0.02), s = sk(z1 + 0.02), bw = (b1 - b0) * s;
     k += `<rect x="${r(px)}" y="${r(py)}" width="${r(bw)}" height="1.2" fill="#fff" opacity=".3"/><rect x="${r(px + bw * 0.5 - 1.8)}" y="${r(py + 2.2)}" width="3.6" height="1" rx=".5" fill="#000" opacity=".25"/>`;
     /* Bildkarte statt Schrift */
@@ -268,7 +274,7 @@ const FE = { X0: -1.85, X1: 0.6, H0: 0.72, H1: 2.32 };
   const [ax, ay] = P((X0 + X1) / 2, 0, z1);
   const [zx0, zy0] = P(X0, 1.1, 0), [zx1] = P(X1, 0, z1);
   S.teil({ id: "kg_spielzeugregal", de: "das Spielzeugregal", syl: "SPIEL-zeug-re-gal", it: "lo scaffale dei giochi", itSyl: "scaf-FA-le dei GIO-chi", en: "toy shelf", x: ax, y: ay, steht: true, kunst: um(ax, ay, k),
-    zoom: { x: 0, y: r(zy0), w: r(zx1 + 4), h: r((zx1 + 4) / 1.5) },
+    zoom: { x: 0, y: r(zy0 - 5), w: 48, h: 32 },
     unter: unter.map((u) => Object.assign(u, { x: r(u.x), y: r(u.y) })),
     tipp: "Nach dem Spielen räumen alle zusammen auf: Jedes Spielzeug kommt in seine Kiste." });
 }
@@ -382,7 +388,6 @@ const FE = { X0: -1.85, X1: 0.6, H0: 0.72, H1: 2.32 };
     /* Doppelhaken */
     const [hx, hy] = P(Xm, 1.12, 0.005);
     k += `<rect x="${r(hx - 0.8)}" y="${r(hy - 1.6)}" width="1.6" height="2.4" rx=".4" fill="#9aa3aa"/><path d="M${hx} ${r(hy + 0.6)} q0 2.4 2 2 M${hx} ${r(hy + 0.6)} q0 2.4 -2 2" stroke="${STAHL}" stroke-width=".8" fill="none" stroke-linecap="round"/>`;
-    if (i === 3) U({ id: "kg_haken", de: "der Haken", syl: "HA-ken", it: "il gancio", itSyl: "GAN-cio", en: "hook", tipp: "Am Haken hängen Jacke und Matschhose." }, hx, hy + 3.4, [-3.2, -5.4, 6.4, 5.6]);
   }
   /* Platz 1: rote Jacke  */
   { const [hx, hy] = P(X0 + 0.5 * pw, 1.12, 0.03); k += `<path d="M${r(hx - 1)} ${r(hy + 1.6)} L${r(hx - 6)} ${r(hy + 4)} L${r(hx - 7)} ${r(hy + 18)} L${r(hx + 7)} ${r(hy + 18)} L${r(hx + 6)} ${r(hy + 4)} L${r(hx + 1)} ${r(hy + 1.6)} Z" fill="${S.lg("jacke1", [[0, "#e0553f"], [1, "#b73a28"]], 0, 0, 1, 0)}"/><path d="M${hx} ${r(hy + 2.4)} v15.4" stroke="#7d2416" stroke-width=".4"/><path d="M${r(hx - 3)} ${r(hy + 2.4)} q3 2.4 6 0" stroke="#b73a28" stroke-width="1.2" fill="none"/><rect x="${r(hx - 5)}" y="${r(hy + 12)}" width="3" height="2.4" fill="#b73a28"/><rect x="${r(hx + 2)}" y="${r(hy + 12)}" width="3" height="2.4" fill="#b73a28"/><path d="M${r(hx - 6.6)} ${r(hy + 16)} h13" stroke="#f6f0e0" stroke-width=".6" opacity=".7"/>`; }
@@ -417,7 +422,7 @@ const FE = { X0: -1.85, X1: 0.6, H0: 0.72, H1: 2.32 };
   const [ax, ay] = P((X0 + X1) / 2, 0, z1);
   const [zx0, zy0] = P(X0, 1.62, 0);
   S.teil({ id: "kg_garderobe", de: "die Garderobe", syl: "Gar-de-RO-be", it: "lo spogliatoio", itSyl: "spo-glia-TO-io", en: "cloakroom", x: ax, y: ay, steht: true, kunst: um(ax, ay, k),
-    zoom: { x: r(zx0 - 3), y: r(zy0 - 1), w: 84, h: 56 }, unter,
+    zoom: { x: 236, y: r(zy0 - 1), w: 84, h: 56 }, unter,
     tipp: "Jedes Kind hat in der Garderobe seinen eigenen Platz." });
 }
 
@@ -526,7 +531,7 @@ const bauUnter = [];
   const kis = Array.from({ length: n }, (_, i) => { const a = -Math.PI / 2 + i / n * Math.PI * 2; return { X: MK.X + Math.cos(a) * Rk, z: MK.z + Math.sin(a) * Rk, i }; }).sort((a, b) => a.z - b.z);
   const farben = ["#e0553f", "#f6c434", "#57b05a", "#3c7fd0", "#a1559e", "#f29a2e", "#3bb3c3"];
   for (const c of kis) {
-    const s = sk(c.z), [cx, cy] = P(c.X, 0, c.z), rx = 0.19 * s, ry = rx * 0.32, h = 0.07 * s;
+    const s = sk(c.z), [cx, cy] = P(c.X, 0, c.z), rx = 0.19 * s, ry = rx * 0.32, h = 0.05 * s;
     k += `<ellipse cx="${cx}" cy="${r(cy)}" rx="${r(rx)}" ry="${r(ry)}" fill="#000" opacity=".18"/>`;
     k += `<path d="M${r(cx - rx)} ${r(cy - h)} A${r(rx)} ${r(ry)} 0 0 0 ${r(cx + rx)} ${r(cy - h)} L${r(cx + rx)} ${r(cy - 0.6)} A${r(rx)} ${r(ry)} 0 0 1 ${r(cx - rx)} ${r(cy - 0.6)} Z" fill="${farben[c.i]}"/>`;
     k += `<path d="M${r(cx - rx)} ${r(cy - h)} A${r(rx)} ${r(ry)} 0 0 0 ${r(cx + rx)} ${r(cy - h)} L${r(cx + rx)} ${r(cy - 0.6)} A${r(rx)} ${r(ry)} 0 0 1 ${r(cx - rx)} ${r(cy - 0.6)} Z" fill="#000" opacity=".18"/>`;
@@ -537,9 +542,9 @@ const bauUnter = [];
 }
 {
   const z = MK.z - MK.R + 0.12, X = MK.X;
-  const [fx, fy] = P(X, 0.07, z + 0.02);
-  const m = B.mensch({ id: "b10a_erz", geschlecht: "w", pose: "schneidersitz", blick: 8, frisur: "lang", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true,
-    kleidung: { oberteil: { stueck: "bluse", farbe: "#5a8fb8" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh", farbe: "#e9e6de" } } }, 1.66 * sk(z));
+  const [fx, fy] = P(X, 0.05, z + 0.04);
+  const m = figur({ id: "b10a_erz", geschlecht: "w", pose: "fersensitz", blick: 14, frisur: "lang", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true,
+    kleidung: { oberteil: { stueck: "pullover", farbe: "#7f9c5c" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh", farbe: "#e9e6de" } } }, 1.66 * sk(z));
   S.teil({ id: "kg_erzieherin", de: "die Erzieherin", syl: "Er-ZIE-he-rin", it: "l'educatrice", itSyl: "e-du-ca-TRI-ce", en: "nursery teacher", x: fx, y: fy, kunst: m.svg,
     tipp: "Die Erzieherin sagt: „Guten Morgen, ihr Lieben! Wer ist heute alles da?“" });
 }
@@ -556,12 +561,37 @@ const bauUnter = [];
 
 const MT = { X0: 0.62, X1: 1.72, z0: 1.62, z1: 2.16, H: 0.53 };
 /* =====================================================================
+   15 — DAS MÄDCHEN (sitzt am Maltisch und malt)
+   ===================================================================== */
+{
+  const z = MT.z0 - 0.12, X = 1.18;
+  const kd = figur({ id: "b10a_maed", alter: "kind", geschlecht: "w", pose: "b10a_zeigen", blick: 6, frisur: "zopf", haarfarbe: "blond", haut: "hell", laecheln: true,
+    kleidung: { oberteil: { stueck: "pullover", farbe: "#e86aa0" }, unterteil: { stueck: "hose", farbe: "#3d5f8c" }, schuhe: { stueck: "turnschuh", farbe: "#f2f2f0" } } }, 1.12 * sk(z));
+  const [fx, fy] = P(X, 0, z);
+  /* ihr Kinderstuhl (Lehne hinter ihr, Sitz ragt seitlich heraus) */
+  let st = "";
+  for (const [dx, dz] of [[-0.15, -0.14], [0.15, -0.14], [-0.15, 0.14], [0.15, 0.14]]) { const a = P(X + dx, 0, z + dz), b = P(X + dx, 0.28, z + dz); st += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#c9a46a" stroke-width="1.1"/>`; }
+  st += kiste(X - 0.17, X + 0.17, 0.26, 0.29, z - 0.16, z + 0.16, { vorn: "#b98c55", deckel: "#3c7fd0", seite: "#b98c55" });
+  st += kiste(X - 0.16, X + 0.16, 0.42, 0.58, z - 0.16, z - 0.14, { vorn: "#3c7fd0" });
+  /* sie hält ihr Bild hoch: ein Regenbogen */
+  const hL = kd.z.handL, hR = kd.z.handR, mx = (hL.x + hR.x) / 2 * kd.k, my = (hL.y + hR.y) / 2 * kd.k;
+  const bw = 0.27 * sk(z), bh = 0.19 * sk(z);
+  let bild = `<g transform="translate(${r(mx)} ${r(my - bh * 0.35)}) rotate(-4)"><rect x="${r(-bw / 2)}" y="${r(-bh / 2)}" width="${r(bw)}" height="${r(bh)}" fill="#fffef8" stroke="#ddd8c8" stroke-width=".25"/>`;
+  ["#e0453a", "#f29a2e", "#f6d23a", "#57b05a", "#3c7fd0"].forEach((c, j) => { bild += `<path d="M${r(-bw * 0.38 + j * 0.7)} ${r(bh * 0.3)} A${r(bw * 0.38 - j * 0.7)} ${r(bw * 0.38 - j * 0.7)} 0 0 1 ${r(bw * 0.38 - j * 0.7)} ${r(bh * 0.3)}" stroke="${c}" stroke-width=".6" fill="none"/>`; });
+  bild += `<circle cx="${r(bw * 0.36)}" cy="${r(-bh * 0.3)}" r="1.3" fill="#f6c434"/><path d="M${r(-bw / 2)} ${r(bh * 0.42)} h${r(bw)}" stroke="#57b05a" stroke-width=".8"/></g>`;
+  /* Daumen vorn auf dem Blatt */
+  for (const h of [hL, hR]) bild += `<ellipse cx="${r(h.x * kd.k)}" cy="${r(h.y * kd.k - 0.4)}" rx=".55" ry=".8" fill="#eec6a4"/>`;
+  S.teil({ id: "kg_kind1", de: "das Mädchen", syl: "MÄD-chen", it: "la bambina", itSyl: "bam-BI-na", en: "girl", x: fx, y: fy, kunst: um(fx, fy, st) + kd.svg + bild,
+    tipp: "Das Mädchen zeigt sein Bild: „Schau mal, ein Regenbogen!“" });
+}
+
+/* =====================================================================
    16 — DER MALTISCH (niedrig, Buche, bunte Kante) — Lupe
    ===================================================================== */
 {
   const { X0, X1, z0, z1, H } = MT;
   let k = schatten(...P((X0 + X1) / 2, 0, (z0 + z1) / 2), 0.58 * sk(z1), 2, 0.28);
-  for (const [X, z] of [[X0 + 0.06, z0 + 0.06], [X1 - 0.06, z0 + 0.06], [X0 + 0.06, z1 - 0.06], [X1 - 0.06, z1 - 0.06]]) { const a = P(X, 0, z), b = P(X, H - 0.03, z); k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${S.lg("bein", [[0, "#d8b47c"], [1, "#b88c55"]], 0, 0, 1, 0)}" stroke-width="${r(0.045 * sk(z))}" stroke-linecap="round"/>`; }
+  for (const [X, z] of [[X0 + 0.06, z0 + 0.06], [X1 - 0.06, z0 + 0.06], [X0 + 0.06, z1 - 0.06], [X1 - 0.06, z1 - 0.06]]) { const a = P(X, 0, z), b = P(X, H - 0.03, z); k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#c9a06a" stroke-width="${r(0.045 * sk(z))}" stroke-linecap="round"/>`; }
   k += kiste(X0, X1, H - 0.03, H, z0, z1, { vorn: "#3a9a4c", deckel: S.lg("tischplatte", [[0, "#ecd7ae"], [1, "#dcc08e"]]), seite: "#2f7f3e" });
   const unter = [];
   /* Malpapier mit einem Regenbogen-Bild */
@@ -601,28 +631,11 @@ const MT = { X0: 0.62, X1: 1.72, z0: 1.62, z1: 2.16, H: 0.53 };
 }
 
 /* =====================================================================
-   15 — DAS MÄDCHEN (sitzt am Maltisch und malt)
-   ===================================================================== */
-{
-  const z = MT.z0 - 0.12, X = 1.18;
-  const kd = B.mensch({ id: "b10a_maed", alter: "kind", geschlecht: "w", pose: "b10a_malen", blick: 6, frisur: "zopf", haarfarbe: "blond", haut: "hell", laecheln: true,
-    kleidung: { oberteil: { stueck: "pullover", farbe: "#e86aa0" }, unterteil: { stueck: "hose", farbe: "#3d5f8c" }, schuhe: { stueck: "turnschuh", farbe: "#f2f2f0" } } }, 1.12 * sk(z));
-  const [fx, fy] = P(X, 0, z);
-  /* ihr Kinderstuhl (Lehne hinter ihr, Sitz ragt seitlich heraus) */
-  let st = "";
-  for (const [dx, dz] of [[-0.15, -0.14], [0.15, -0.14], [-0.15, 0.14], [0.15, 0.14]]) { const a = P(X + dx, 0, z + dz), b = P(X + dx, 0.28, z + dz); st += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#c9a46a" stroke-width="1.1"/>`; }
-  st += kiste(X - 0.17, X + 0.17, 0.26, 0.29, z - 0.16, z + 0.16, { vorn: "#b98c55", deckel: "#3c7fd0", seite: "#b98c55" });
-  st += kiste(X - 0.16, X + 0.16, 0.42, 0.58, z - 0.16, z - 0.14, { vorn: "#3c7fd0" });
-  S.teil({ id: "kg_kind1", de: "das Mädchen", syl: "MÄD-chen", it: "la bambina", itSyl: "bam-BI-na", en: "girl", x: fx, y: fy, kunst: um(fx, fy, st) + kd.svg,
-    tipp: "Das Mädchen malt einen Regenbogen." });
-}
-
-/* =====================================================================
    17 — DER JUNGE (kniet in der Bauecke und baut)
    ===================================================================== */
 {
   const z = 1.8, X = -1.75;
-  const kd = B.mensch({ id: "b10a_jung", alter: "kind", geschlecht: "m", pose: "b10a_bauen", blick: 58, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel", laecheln: true,
+  const kd = figur({ id: "b10a_jung", alter: "kind", geschlecht: "m", pose: "b10a_bauen", blick: 58, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel", laecheln: true,
     kleidung: { oberteil: { stueck: "tshirt", farbe: "#3c7fd0" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh", farbe: "#e0553f" } } }, 1.16 * sk(z));
   const [fx, fy] = P(X, 0, z);
   S.teil({ id: "kg_kind2", de: "der Junge", syl: "JUN-ge", it: "il bambino", itSyl: "bam-BI-no", en: "boy", x: fx, y: fy, kunst: kd.svg,
@@ -635,7 +648,7 @@ const MT = { X0: 0.62, X1: 1.72, z0: 1.62, z1: 2.16, H: 0.53 };
 {
   const X = 1.05, z = 2.42, s = sk(z);
   let k = schatten(...P(X, 0, z), 0.2 * s, 1.2, 0.26);
-  for (const [dx, dz] of [[-0.15, -0.14], [0.15, -0.14], [-0.15, 0.14], [0.15, 0.14]]) { const a = P(X + dx, 0, z + dz), b = P(X + dx, 0.29, z + dz); k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${S.lg("stuhlbein", [[0, "#d8b47c"], [1, "#b88c55"]], 0, 0, 1, 0)}" stroke-width="${r(0.035 * sk(z + dz))}" stroke-linecap="round"/>`; }
+  for (const [dx, dz] of [[-0.15, -0.14], [0.15, -0.14], [-0.15, 0.14], [0.15, 0.14]]) { const a = P(X + dx, 0, z + dz), b = P(X + dx, 0.29, z + dz); k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#c9a06a" stroke-width="${r(0.035 * sk(z + dz))}" stroke-linecap="round"/>`; }
   k += kiste(X - 0.17, X + 0.17, 0.27, 0.3, z - 0.16, z + 0.16, { vorn: "#c9985e", deckel: S.lg("sitzschale", [[0, "#f6d23a"], [1, "#e0b520"]]), seite: "#b98c55" });
   /* Lehne zum Betrachter (er sitzt mit dem Rücken zu uns) */
   for (const dx of [-0.15, 0.15]) { const a = P(X + dx, 0.3, z + 0.15), b = P(X + dx, 0.58, z + 0.15); k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#c9985e" stroke-width="${r(0.035 * s)}" stroke-linecap="round"/>`; }

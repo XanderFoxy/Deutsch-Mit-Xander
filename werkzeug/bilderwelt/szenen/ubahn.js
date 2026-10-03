@@ -8,7 +8,7 @@
    RECHERCHE (U-Bahnhöfe in Berlin und München, z. B. Münchner Freiheit,
    BVG-Bahnhöfe mit Seitenbahnsteig):
    - Ein U-Bahnhof liegt unter der Erde: niedrige Decke mit Lichtbändern,
-     gefliesteWände, Granit- oder Kunststeinboden.
+     geflieste Wände, Granit- oder Kunststeinboden.
    - Am Rand des BAHNSTEIGS die BAHNSTEIGKANTE (heller Kantenstein),
      dahinter die weiße SICHERHEITSLINIE mit Rillen für Blinde.
    - Im GLEIS zwei Schienen und die Stromschiene; der ZUG fährt mit
@@ -82,7 +82,7 @@ const BLAU = "#1e5aa8";
 const KANTE = -2.2, WR = 4.2, WL = -5.8, HD = 3.8, SCH = -1.0, ZE = 60;   // Kante, Wände, Decke, Schienenhöhe, Bahnhofsende
 
 /* =====================================================================
-   KULISSE — Decke mit Lichtbändern, gefliesteWände, Gleisbett, Ende
+   KULISSE — Decke mit Lichtbändern, geflieste Wände, Gleisbett, Ende
    ===================================================================== */
 {
   let k = `<rect width="320" height="200" fill="#2a2d30"/>`;
@@ -207,7 +207,7 @@ const ZUG = { X0: -5.02, X1: -2.38, Z0: 13, H0: SCH + 0.15, H1: 2.45 };
   let k = poly([P(KANTE, 3.2, 0), P(KANTE + 0.3, 3.2, 0), P(KANTE + 0.3, ZE, 0), P(KANTE, ZE, 0)], S.lg("kante", [[0, "#d9d4c4"], [1, "#efe9d8"]], 0, 0, 1, 0));
   k += poly([P(KANTE, 3.2, 0), P(KANTE, ZE, 0), P(KANTE, ZE, -0.05), P(KANTE, 3.2, -0.05)], "#8f8a7c");
   const p = P(KANTE + 0.15, 7.5);
-  S.teil({ id: "ub_bahnsteigkante", de: "die Bahnsteigkante", syl: "BAHN-steig-kan-te", it: "il bordo della banchina", itSyl: "BOR-do del-la ban-CHI-na", en: "platform edge", x: p[0], y: p[1], kunst: absolut(p[0], p[1], k),
+  S.teil({ id: "ub_bahnsteigkante", de: "die Bahnsteigkante", syl: "BAHN-steig-kan-te", it: "il bordo della banchina", itSyl: "BOR-do", en: "platform edge", x: p[0], y: p[1], kunst: absolut(p[0], p[1], k),
     tipp: "„Bitte zurücktreten.“ Genau davor warnt die Durchsage." });
 }
 {
@@ -219,7 +219,7 @@ const ZUG = { X0: -5.02, X1: -2.38, Z0: 13, H0: SCH + 0.15, H1: 2.45 };
 }
 
 /* =====================================================================
-   6 — DER LINIENPLAN und der Stationsname an der Wand
+   6 — DER STRECKENPLAN und der Stationsname an der Wand
    ===================================================================== */
 {
   const Z0 = 7.9, Z1 = 9.9, H0 = 0.85, H1 = 2.0;
@@ -231,7 +231,7 @@ const ZUG = { X0: -5.02, X1: -2.38, Z0: 13, H0: SCH + 0.15, H1: 2.45 };
   for (const [zz, hh] of [[0.5, 0.5], [0.3, 0.68], [0.7, 0.33], [0.62, 0.55]]) { const c = P(WR - 0.05, Z0 + zz * (Z1 - Z0), H0 + hh * (H1 - H0)); k += `<circle cx="${c[0]}" cy="${c[1]}" r="1.1" fill="#fff" stroke="#222" stroke-width=".4"/>`; }
   { const a = P(WR - 0.05, Z0 + 0.05, H1 - 0.04), b = P(WR - 0.05, Z1 - 0.05, H1 - 0.04); k += poly([a, b, P(WR - 0.05, Z1 - 0.05, H1 - 0.16), P(WR - 0.05, Z0 + 0.05, H1 - 0.16)], BLAU); }
   const b = kasten(fX(WR, Z0, Z1, H0, H1)), cx = r((b[0] + b[2]) / 2);
-  S.teil({ id: "ub_streckenplan", de: "der Linienplan", syl: "LI-ni-en-plan", it: "la mappa della rete", itSyl: "MAP-pa del-la RE-te", en: "network map", x: cx, y: r(b[3]), kunst: absolut(cx, r(b[3]), k),
+  S.teil({ id: "ub_streckenplan", de: "der Streckenplan", syl: "STRE-cken-plan", it: "la mappa della rete", itSyl: "MAP-pa", en: "network map", x: cx, y: r(b[3]), kunst: absolut(cx, r(b[3]), k),
     tipp: "Welche Linie fährt wohin, und wo muss man umsteigen." });
 }
 {
@@ -358,7 +358,7 @@ const ZUG = { X0: -5.02, X1: -2.38, Z0: 13, H0: SCH + 0.15, H1: 2.45 };
   k += `<rect x="${r(x + w * 0.2)}" y="${r(y + 1.15 * m)}" width="${r(w * 0.6)}" height="${r(0.16 * m)}" rx=".8" fill="#0d1e36"/>`;
   k += `<rect x="${r(x + 1)}" y="${r(y + 1)}" width="1.4" height="${r(h - 2)}" rx=".7" fill="#fff" opacity=".2"/>`;
   const cx = r(x + w / 2);
-  S.teil({ id: "ub_automat", de: "der Fahrkartenautomat", syl: "FAHR-kar-ten-au-to-mat", it: "il distributore di biglietti", itSyl: "di-stri-bu-TO-re di bi-GLIET-ti", en: "ticket machine", x: cx, y: b[1], steht: true, kunst: absolut(cx, b[1], k),
+  S.teil({ id: "ub_automat", de: "der Fahrkartenautomat", syl: "FAHR-kar-ten-au-to-mat", it: "il distributore di biglietti", itSyl: "di-stri-bu-TO-re", en: "ticket machine", x: cx, y: b[1], steht: true, kunst: absolut(cx, b[1], k),
     tipp: "Er nimmt Münzen, Scheine und Karte. Für den Automaten braucht man die Nummer der Zone." });
 }
 

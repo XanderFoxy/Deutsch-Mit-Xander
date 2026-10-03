@@ -334,7 +334,7 @@ const SES = { x: 254, y: 189, s: 58 };
   const m = B.mensch({ id: "ho_bes", geschlecht: "w", pose: "lesen", blick: 18, frisur: "lang", haarfarbe: "hellbraun", haut: "mittel",
     kleidung: { oberteil: { stueck: "bluse", farbe: "hellblau" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "buch", farbe: "#b8473a" } } }, 1.66 * SES.s);
   const oy = SES.y - 0.46 * SES.s + m.z.sitz.y * -m.k;
-  S.teil({ id: "besucherin", de: "die Besucherin", syl: "be-SU-che-rin", it: "la visitatrice", itSyl: "vi-si-ta-TRI-ce", en: "visitor", x: SES.x, y: r(oy), kunst: m.svg,
+  S.teil({ id: "besucherin", de: "die Besucherin", syl: "Be-SU-che-rin", it: "la visitatrice", itSyl: "vi-si-ta-TRI-ce", en: "visitor", x: SES.x, y: r(oy), kunst: m.svg,
     tipp: "Die Besucherin wartet in der Lobby auf einen Gast." });
 }
 
@@ -387,7 +387,7 @@ const TR = { x0: 66, x1: 206, oben: 118, kante: 126, fuss: 182 };
   /* Messing-Schriftzug in der Front */
   k += T(0, -28, 4.2, "REZEPTION", MESSING_H, "middle", "bold", "Georgia,serif", ' letter-spacing="1.6"');
   k += `<rect x="${-W / 2}" y="${-H + 3}" width="${W}" height="${H - 3}" fill="${S.lg("frontglanz", [[0, "#fff", 0.1], [0.3, "#fff", 0], [1, "#000", 0.15]])}"/>`;
-  S.teil({ id: "rezeption", de: "die Rezeption", syl: "re-zep-TION", it: "la reception", itSyl: "re-CEP-tion", en: "reception", x: cx, y: TR.fuss, steht: true, kunst: k,
+  S.teil({ id: "rezeption", de: "die Rezeption", syl: "Re-zep-TI-ON", it: "la reception", itSyl: "re-CEP-tion", en: "reception", x: cx, y: TR.fuss, steht: true, kunst: k,
     tipp: "An der Rezeption checkt man ein und bekommt den Schlüssel." });
 }
 /* Standfläche auf der Tresenplatte */
@@ -478,7 +478,7 @@ const PL = 124;
   for (const x of [-28, 28]) k += `<ellipse cx="${x}" cy="-60" rx="1.8" ry=".9" fill="${MESSING_H}"/>`;
   /* Räder */
   for (const [x, y, rr] of [[-26, -3.6, 3.6], [26, -3.6, 3.6]]) k += `<circle cx="${x}" cy="${y}" r="${rr}" fill="#1d1d1d"/><circle cx="${x}" cy="${y}" r="1.4" fill="${MESSING_H}"/>`;
-  S.teil({ id: "gepaeckwagen", de: "der Gepäckwagen", syl: "ge-PÄCK-wa-gen", it: "il carrello", itSyl: "car-REL-lo", en: "luggage trolley", x: 33, y: 195, steht: true, kunst: k,
+  S.teil({ id: "gepaeckwagen", de: "der Gepäckwagen", syl: "Ge-PÄCK-wa-gen", it: "il carrello", itSyl: "car-REL-lo", en: "luggage trolley", x: 33, y: 195, steht: true, kunst: k,
     tipp: "Mit dem Gepäckwagen bringt der Page die Koffer aufs Zimmer." });
 }
 
