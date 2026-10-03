@@ -240,8 +240,17 @@ S.hinten(`<rect x="0" y="${HOR - 22}" width="400" height="24" fill="${S.lg("duns
   /* Würfel (Attika) mit dem Markuslöwen und der Venezia */
   k += `<rect x="${L}" y="${y(70.5)}" width="${r(CX - L)}" height="${r(8.1 * s)}" fill="${S.lg("attika", [[0, "#e5d3c0"], [1, "#d2b9a2"]])}"/>`;
   k += `<rect x="${CX}" y="${y(70.5)}" width="${r(R - CX)}" height="${r(8.1 * s)}" fill="#a99280"/>`;
-  k += `<path d="M${r(CX - 7.2)} ${y(64.6)} q1.4 -2.2 3 -1.4 q.6 -1.6 1.8 -1 q.6 1 -.4 1.4 l1.6 1 l-.4 1.2 l-1.4 -.6 l-.6 .9 l-1.2 -.2 l-.4 -.8 l-1.2 .5 Z" fill="#c9a24a" opacity=".9"/>`;
-  k += `<path d="M${r(CX + 2)} ${y(64.4)} l.5 -3 q.5 -1 1 0 l.5 3 Z" fill="#7d6858"/>`;
+  /* Relief des geflügelten Markuslöwen (Stein) auf der Südseite */
+  k += `<rect x="${r(CX - 8)}" y="${y(69.4)}" width="7.4" height="${r(6.6 * s)}" fill="#dccab6" stroke="#b9a48d" stroke-width=".2"/>`;
+  {
+    const lx0 = CX - 7.2, ly = FUSS - 63.6 * s;   /* Fußlinie des Löwen */
+    const q = (dx, dy) => `${r(lx0 + dx)} ${r(ly + dy)}`;
+    k += `<path d="M${q(0.2, 0)} L${q(0.4, -1.3)} Q${q(0.2, -2.3)} ${q(1.2, -2.5)} L${q(3.6, -2.6)} Q${q(4.3, -2.5)} ${q(4.6, -2)} L${q(4.6, 0)} L${q(4.1, 0)} L${q(4, -1.2)} L${q(1.5, -1.2)} L${q(1.2, 0)} Z" fill="#a8896c"/>`;
+    k += `<circle cx="${r(lx0 + 4.7)}" cy="${r(ly - 3)}" r="1.05" fill="#9a7b60"/><circle cx="${r(lx0 + 5.3)}" cy="${r(ly - 2.9)}" r=".45" fill="#a8896c"/>`;
+    k += `<path d="M${q(1.6, -2.4)} Q${q(0.6, -4.6)} ${q(2.2, -5.4)} Q${q(2.4, -4.2)} ${q(3.4, -2.6)} Z" fill="#9a7b60"/><path d="M${q(1.9, -3.2)} L${q(2.3, -4.6)} M${q(2.5, -3)} L${q(2.6, -4.2)}" stroke="#c7b199" stroke-width=".15"/>`;
+    k += `<path d="M${q(0.3, -1.6)} q-.9 -.4 -.6 -1.4" stroke="#a8896c" stroke-width=".3" fill="none"/>`;
+    k += `<rect x="${r(lx0 + 5.1)}" y="${r(ly - 1)}" width="1.1" height="1" fill="#efe4d2" stroke="#a8896c" stroke-width=".12"/>`;
+  }
   k += `<rect x="${r(L - 0.4)}" y="${y(71)}" width="${r(R - L + 0.8)}" height=".8" fill="#f6f0e4"/>`;
   /* grüne Pyramide (zwei Seiten) und der goldene Engel */
   const spitze = [r(CX - 0.6), y(95.5)];
@@ -513,8 +522,8 @@ const UFER = 243;   /* Kante des Platzes vor San Giorgio (33 m vor uns) */
   /* Spiegelungen der Bauten (in Molo-Koordinaten): weich, unten zerrissen */
   let sp = `<g filter="url(#${S.id("spiegel")})" opacity=".55">`;
   sp += `<rect x="132" y="${WASSER0}" width="96" height="9" fill="#efcdbd"/><rect x="132" y="${WASSER0}" width="96" height="2.6" fill="#7a6058"/>`;
-  sp += `<rect x="90" y="${WASSER0}" width="14" height="22" fill="#b4644c"/><rect x="26" y="${WASSER0}" width="66" height="8" fill="#e6dccb"/><rect x="16" y="${WASSER0}" width="10" height="7" fill="#d9cfbd"/>`;
-  sp += `<rect x="243" y="${WASSER0}" width="54" height="8" fill="#d8ccb8"/><rect x="297" y="${WASSER0}" width="30" height="9" fill="#c56d5d"/>`;
+  sp += `<rect x="90" y="${WASSER0}" width="14" height="18" fill="#b4644c" opacity=".6"/><rect x="26" y="${WASSER0}" width="66" height="8" fill="#e6dccb"/><rect x="16" y="${WASSER0}" width="10" height="7" fill="#d9cfbd"/>`;
+  sp += `<rect x="243" y="${WASSER0}" width="54" height="8" fill="#d8ccb8"/><rect x="297" y="${WASSER0}" width="24" height="9" fill="#c56d5d"/>`;
   sp += `</g>`;
   /* die Gondeln liegen am Molo vor dem Palast, mit gestreiften Pfählen */
   for (let i = 0; i < 16; i++) {
@@ -611,7 +620,7 @@ const HAND = { x: GOND.fussX + gondoliere.z.handL.x * gondoliere.k, y: GOND.fuss
   /* Sitze mit rotem Polster, goldene Seepferdchen (cavalli), geschnitzte Lehne */
   k += `<path d="M-22 -4.2 L-22 -6.8 Q-20.6 -7.6 -19 -6.8 L-19 -4.2 Z M-6 -4.2 L-6 -6.2 L4 -6.2 L4 -4.2 Z" fill="${S.lg("polster", [[0, "#b8323f"], [1, "#7a1a26"]])}"/>`;
   k += `<path d="M-1.6 -4.4 L-1.6 -8.6 Q0 -9.8 1.8 -8.6 L1.8 -4.4 Z" fill="#1d1a1a" stroke="#d9a92e" stroke-width=".3"/>`;
-  for (const x of [-12.5, 8.6]) k += `<path d="M${x} -4.1 q-.5 -.9 .1 -1.7 q-.4 -.5 .1 -.9 q.6 -.2 .8 .3 l.5 -.1 l-.4 .5 q.3 .7 -.3 1.1 q.3 .5 .1 .8 Z" fill="${GOLD}" stroke="#8a5a10" stroke-width=".08"/>`;
+  k += `<path d="M-21.6 -6.6 Q-20.5 -7.2 -19.4 -6.6 M-5.6 -6 L3.6 -6" stroke="#d9a92e" stroke-width=".25" fill="none"/>`;
   /* Rumpf: schwarz lackiert, hoher Bug und Heck */
   k += `<path d="M-45.4 -7 Q-44 -5.2 -40 -4 Q-24 -3 0 -3.2 Q26 -3.4 40.6 -4.6 Q44 -5.6 45.2 -7.6 L45.6 -8.4 Q44.4 -5.2 38 0 L-37 0 Q-42 -2.6 -45.4 -7 Z" fill="${S.lg("lack", [[0, "#3a3a40"], [0.35, "#121214"], [1, "#050506"]])}"/>`;
   k += `<path d="M-42 -5.8 Q-26 -3.9 0 -3.9 Q26 -4 40 -5.2" stroke="#8e9096" stroke-width=".35" fill="none" opacity=".75"/>`;

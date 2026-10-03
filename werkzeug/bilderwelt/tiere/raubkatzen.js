@@ -115,7 +115,12 @@ function band(T, mp, w, stumpf = false) {
     const ww = w * Math.pow(Math.max(0.02, Math.sin(Math.PI * (stumpf ? 0.5 + t * 0.5 : t))), 0.55) * (0.78 + T.rnd() * 0.44) / 2;
     L.push([mp[i][0] - dy * ww, mp[i][1] + dx * ww]); R.push([mp[i][0] + dy * ww, mp[i][1] - dx * ww]);
   }
-  return G(L.concat(R.reverse()), true, T.fein ? 2 : 1);
+  const P = L.concat(R.reverse());
+  if (T.fein) return G(P, true, 2);
+  /* Szene: Vieleck mit relativen ganzen Zahlen (die Weichzeichnung rundet die Ecken) */
+  let d = `M${Math.round(P[0][0])} ${Math.round(P[0][1])}`, px = Math.round(P[0][0]), py = Math.round(P[0][1]);
+  for (let i = 1; i < P.length; i += (i % 2 ? 1 : 1)) { const x = Math.round(P[i][0]), y = Math.round(P[i][1]); if (x !== px || y !== py) d += `l${x - px} ${y - py}`; px = x; py = y; }
+  return kurz(d + "z");
 }
 /* Streifen von oben nach unten: Start (x, y), Länge L, Neigung a (Grad, + = untere Spitze nach hinten), Biegung b (cm), Wellen */
 function streifenLinie(T, x, y, L, a, b, n = 6) {
@@ -481,6 +486,54 @@ function loewe(T) {
    Beinen nur kurze Querbänder. Ohren rund, Rückseite schwarz mit großem weißem Fleck (Augenfleck). Schwanz gelb-orange
    mit ~10 schwarzen Ringen und schwarzer Spitze. Augen gelb-bernstein, runde Pupille. Nasenspiegel rosa.
    ===================================================================== */
+/* Grundriss einer Großkatze (Tiger-Maße, Schulterhöhe 100): Rumpf, Rückenlinie, Bauch, Läufe, Schwanz, Muskelformen.
+   bau(G, s, sx, bf) skaliert ihn für andere Arten (s = Höhe, sx = Länge, bf = Beinlänge unterhalb y = −50). */
+const GROSS = {
+    koerper: [[6, -86], [14, -92], [26, -95], [44, -93], [64, -89], [86, -88], [104, -92], [116, -98], [126, -100], [134, -97], [142, -91], [149, -83],
+    [153, -70], [150, -58], [144, -50], [132, -44], [116, -43], [96, -46], [80, -49], [66, -52], [56, -54], [47, -59], [38, -65], [18, -67], [4, -69],
+    [-2, -76], [0, -84]],
+  ruecken: [[2, -82], [14, -91], [26, -94], [44, -92], [64, -88], [86, -87], [104, -91], [116, -97], [126, -99], [140, -98]],
+  bauch: [[50, -57], [60, -54], [78, -50], [96, -47], [116, -44]],
+  hn: { V: [[36, -84], [41, -74], [43, -63], [42, -55], [36, -51], [28, -47], [22, -42], [18, -37], [16, -31], [15.5, -22], [16, -12.5]],
+    H: [[0, -82], [-3, -73], [-3, -64], [-1, -56], [1, -49], [2, -42], [1, -36], [0, -32], [3, -28], [5.5, -22], [7.5, -12.5]] },
+  hf: { V: [[56, -70], [61, -60], [60, -53], [54, -49], [47, -45], [41, -40], [38, -34], [36, -27], [36, -20], [37, -12.5]],
+    H: [[24, -70], [24, -60], [25, -51], [27, -43], [26, -36], [24, -31], [27, -27], [29, -21], [29.5, -12.5]] },
+  vn: { V: [[138, -80], [138, -66], [136, -54], [133, -44], [131, -34], [129, -25], [127.5, -18], [127.5, -12.5]],
+    H: [[112, -74], [111, -60], [110, -50], [113, -42], [116, -33], [118, -25], [118.5, -20], [118, -16.5], [120, -12.5]] },
+  vf: { V: [[148, -70], [148, -58], [146, -47], [146, -37], [148, -28], [150, -20], [151, -12.5]],
+    H: [[124, -62], [123, -52], [127, -43], [131, -34], [135, -26], [138, -20], [138, -17], [141.5, -12.5]] },
+  schwanz: [[8, -84, 4.4, 4.4], [-5, -81, 4.2, 4.2], [-15, -70, 4, 4], [-21, -54, 3.8, 3.8], [-23, -38, 3.6, 3.6], [-21, -24, 3.4, 3.4], [-15, -15, 3.2, 3.2], [-8, -12, 3, 3]],
+  weichSd: 4,
+  formen: [
+    /* Schulterblatt, Trizeps, Oberarm; Rippen; Oberschenkel; Lenden-Licht */
+    [[[118, -98], [132, -96], [138, -84], [126, -74], [116, -84]], "#fff0d8", 0.36], [108, -72, 4, 16, 12, "#2a1004", 0.32],
+    [[[128, -100], [142, -96], [146, -90], [134, -92]], "#fff0d8", 0.3], [[[146, -82], [150, -70], [149, -58], [144, -62], [143, -74]], "#2a1004", 0.3],
+    [148, -52, 6, 6, 0, "#2a1004", 0.3],
+    [[[24, -90], [40, -92], [44, -80], [32, -70], [14, -76]], "#fff0d8", 0.42], [[[30, -94], [70, -90], [104, -92], [104, -86], [70, -84], [30, -86]], "#fff0d8", 0.32],
+    [80, -76, 20, 7, 0, "#fff0d8", 0.2], [[[42, -84], [52, -78], [51, -64], [42, -64]], "#3a1404", 0.3],
+    [[[52, -58], [80, -54], [116, -50], [116, -44], [80, -48], [52, -52]], "#2a1004", 0.3], [109, -52, 3, 5, 0, "#2a1004", 0.3],
+    [0, -32, 2.5, 2.5, 0, "#fff0d8", 0.4],
+  ],
+  formenFein: [
+    [[[40, -82], [43, -70], [42, -58], [40.5, -58], [41, -70], [38, -80]], "#2a1004", 0.35],
+    [[[1, -74], [3, -64], [5, -56], [3.5, -56], [1.5, -64], [-1, -72]], "#2a1004", 0.18],
+  ],
+  sehnen: [
+    [[[4, -48], [3, -40], [2, -33]], 1, 0.25, "#fff4dc"], [[[10, -46], [8, -39], [6, -33]], 1.2, 0.28],
+  ],
+};
+function bau(Gr, s, sx = s, bf = 1, dx = 0) {
+  const Y = (y) => (y >= -50 ? y * bf : -50 * bf + (y + 50)) * s, X = (x) => x * sx + dx;
+  const pt = (p) => [X(p[0]), Y(p[1]), ...p.slice(2)];
+  const o = {};
+  for (const k of ["koerper", "ruecken", "bauch"]) o[k] = Gr[k].map(pt);
+  for (const k of ["hn", "hf", "vn", "vf"]) o[k] = { V: Gr[k].V.map(pt), H: Gr[k].H.map(pt) };
+  o.schwanz = Gr.schwanz.map(([x, y, a, b]) => [X(x), Y(y), a * s, b * s]);
+  o.formen = Gr.formen.map((f) => Array.isArray(f[0]) ? [f[0].map(pt), f[1], f[2]] : [X(f[0]), Y(f[1]), f[2] * sx, f[3] * s, f[4], f[5], f[6]]);
+  o.formenFein = Gr.formenFein.map((f) => [f[0].map(pt), f[1], f[2]]);
+  o.sehnen = Gr.sehnen.map((f) => [f[0].map(pt), f[1] * s, f[2], f[3]]);
+  return o;
+}
 function tiger(T) {
   const hs = 100;
   const A = {
@@ -490,38 +543,7 @@ function tiger(T) {
     beinHinten: "#f6efe4", schwanzBein: true,
     haarL: 2, haarBreite: 0.22, haarBein: 80, haarSchwanz: 30,
     haarFarben: [["#7a3a10", 1, 0.2, 0.3], ["#ffe2b8", 1, 0.2, 0.32]],
-    koerper: [[6, -86], [14, -92], [26, -95], [44, -93], [64, -89], [86, -88], [104, -92], [116, -98], [126, -100], [136, -98], [144, -93], [150, -84],
-      [153, -70], [150, -58], [144, -50], [132, -44], [116, -42], [96, -44], [78, -46], [62, -49], [52, -52], [44, -57], [36, -63], [18, -67], [4, -69],
-      [-2, -76], [0, -84]],
-    ruecken: [[2, -82], [14, -91], [26, -94], [44, -92], [64, -88], [86, -87], [104, -91], [116, -97], [126, -99], [140, -98]],
-    bauch: [[52, -53], [62, -50], [78, -47], [96, -45], [116, -43]],
-    hn: { V: [[36, -84], [41, -74], [43, -63], [42, -55], [36, -51], [28, -47], [22, -42], [18, -37], [16, -31], [15.5, -22], [16, -12.5]],
-      H: [[0, -82], [-3, -73], [-3, -64], [-1, -56], [1, -49], [2, -42], [1, -36], [0, -32], [3, -28], [5.5, -22], [7.5, -12.5]] },
-    hf: { V: [[56, -70], [61, -60], [60, -53], [54, -49], [47, -45], [41, -40], [38, -34], [36, -27], [36, -20], [37, -12.5]],
-      H: [[24, -70], [24, -60], [25, -51], [27, -43], [26, -36], [24, -31], [27, -27], [29, -21], [29.5, -12.5]] },
-    vn: { V: [[138, -80], [138, -66], [136, -54], [133, -44], [131, -34], [129, -25], [127.5, -18], [127.5, -12.5]],
-      H: [[112, -74], [111, -60], [110, -50], [113, -42], [116, -33], [118, -25], [118.5, -20], [118, -16.5], [120, -12.5]] },
-    vf: { V: [[148, -70], [148, -58], [146, -47], [146, -37], [148, -28], [150, -20], [151, -12.5]],
-      H: [[124, -62], [123, -52], [127, -43], [131, -34], [135, -26], [138, -20], [138, -17], [141.5, -12.5]] },
-    schwanz: [[8, -84, 4.4, 4.4], [-5, -81, 4.2, 4.2], [-15, -70, 4, 4], [-21, -54, 3.8, 3.8], [-23, -38, 3.6, 3.6], [-21, -24, 3.4, 3.4], [-15, -15, 3.2, 3.2], [-8, -12, 3, 3]],
-    weichSd: 4,
-    formen: [
-      /* Schulterblatt, Trizeps, Oberarm; Rippen; Oberschenkel; Lenden-Licht */
-      [[[118, -98], [132, -96], [138, -84], [126, -74], [116, -84]], "#fff0d8", 0.36], [108, -72, 4, 16, 12, "#2a1004", 0.32],
-      [[[128, -100], [142, -96], [146, -90], [134, -92]], "#fff0d8", 0.3], [[[146, -82], [150, -70], [149, -58], [144, -62], [143, -74]], "#2a1004", 0.3],
-      [148, -52, 6, 6, 0, "#2a1004", 0.3],
-      [[[24, -90], [40, -92], [44, -80], [32, -70], [14, -76]], "#fff0d8", 0.42], [[[30, -94], [70, -90], [104, -92], [104, -86], [70, -84], [30, -86]], "#fff0d8", 0.32],
-      [80, -76, 20, 7, 0, "#fff0d8", 0.2], [[[42, -84], [52, -78], [51, -64], [42, -64]], "#3a1404", 0.3],
-      [[[52, -58], [80, -54], [116, -50], [116, -44], [80, -48], [52, -52]], "#2a1004", 0.3], [109, -52, 3, 5, 0, "#2a1004", 0.3],
-      [0, -32, 2.5, 2.5, 0, "#fff0d8", 0.4],
-    ],
-    formenFein: [
-      [[[40, -82], [43, -70], [42, -58], [40.5, -58], [41, -70], [38, -80]], "#2a1004", 0.35],
-      [[[1, -74], [3, -64], [5, -56], [3.5, -56], [1.5, -64], [-1, -72]], "#2a1004", 0.18],
-    ],
-    sehnen: [
-      [[[4, -48], [3, -40], [2, -33]], 1, 0.25, "#fff4dc"], [[[10, -46], [8, -39], [6, -33]], 1.2, 0.28],
-    ],
+    ...bau(GROSS, 1),
     haarFelder(T, { vn, hn }) {
       const kw = (x, y) => { const t = Math.max(0, Math.min(1, (y + 95) / 48)); return x < 36 ? 128 + t * 6 : x > 108 ? 132 - t * 35 : 176 - t * 60; };
       const L = this.haarL;
@@ -531,7 +553,7 @@ function tiger(T) {
       ];
     },
     fransen: [
-      [[[50, -54], [90, -46], [120, -44], [120, -41], [90, -43], [50, -50]], 46, 98, 3.6, [["#f6efe2", 1, 0.26, 0.6], ["#d8cbb4", 0.5, 0.24, 0.5]], { szene: 0.3 }],
+      [[[50, -57], [90, -48], [120, -45], [120, -42], [90, -45], [50, -54]], 46, 98, 3.6, [["#f6efe2", 1, 0.26, 0.6], ["#d8cbb4", 0.5, 0.24, 0.5]], { szene: 0.3 }],
     ],
   };
   /* ---------- Streifen ---------- */
@@ -588,13 +610,13 @@ function tiger(T) {
     umriss: [[18, -30], [30, -38], [44, -41], [58, -40], [68, -37], [78, -32], [88, -26], [96, -21], [101, -16], [103.5, -9], [102, -3], [100.5, 4], [98, 11],
       [93, 15], [88, 17], [87.5, 21], [83, 26], [72, 29], [56, 30], [40, 28], [26, 22], [16, 10], [12, -8]],
     profil: [[44, -41], [58, -40], [68, -37], [78, -32], [88, -26], [96, -21], [101, -16], [103.5, -9], [102, -3], [100.5, 4], [98, 11], [93, 15], [88, 17], [87.5, 21], [83, 26], [72, 29], [62, 30]],
-    ohr: [[24, -33], [23, -43], [27, -50], [33, -51], [37, -45], [38, -36]], ohrFarbe: "#15100c", ohrVorn: true,
+    ohr: [[24, -33], [24, -42], [28, -48], [34, -48.5], [37.5, -43], [38, -35]], ohrFarbe: T.lg("ohr", [[0, "#1a120e"], [0.6, "#1e1510"], [0.85, "#8a4a1e"], [1, "#c8662a"]]), ohrVorn: true,
     formen: [
       [56, -38, 12, 4, -6, "#fff4dc", 0.45], [86, -24, 12, 2.5, 22, "#fff4dc", 0.45], [56, -10, 12, 6, -10, "#fff4dc", 0.3],
       [72, -21, 5, 3.5, 0, "#2a1004", 0.3], [80, 18, 12, 3, 0, "#2a1004", 0.3], [56, 27, 22, 4, 0, "#2a1004", 0.3], [92, 3, 6, 6, 0, "#fff", 0.4],
     ],
   };
-  K.ohrInnen = `<ellipse cx="30" cy="-43" rx="2.4" ry="3.3" transform="rotate(-15 30 -43)" fill="#f4efe6"/>` +
+  K.ohrInnen = `<path d="M36 -46q3 4 2 11l-3 1q1 -6 -1 -11z" fill="#c8662a"/><ellipse cx="29.5" cy="-42" rx="2" ry="2.7" transform="rotate(-15 29.5 -42)" fill="#efe8dc" filter="url(#${T.id("blst")})"/>` +
     haare(T, [[34, -37], [36, -47], [38, -37]], 10, 290, 4, [["#f8f2e8", 1, 0.4, 0.7]], { streu: 30 });
   const wst = (mp, w) => band(T, mp, w);
   K.zeichnung = weich(T, "kz", [
@@ -608,7 +630,7 @@ function tiger(T) {
     wst([[69, -26], [60, -25], [51, -21], [42, -15], [34, -10]], 2),
     wst([[63, -12], [56, -9], [48, -4], [40, 3], [31, 8]], 2.8), wst([[60, 3], [53, 8], [45, 13], [36, 19]], 2.5), wst([[52, -15], [46, -13], [41, -10]], 1.4),
     wst([[30, -28], [25, -20], [20, -11]], 2.2), wst([[26, -2], [20, 4], [14, 9]], 2),
-  ].join("")}" fill="#120c0a" opacity=".93"/>`;
+  ].join("")}" fill="#120c0a" opacity=".9" filter="url(#${T.id("blst")})"/>`;
   K.haare = (T) => haare(T, K.umriss, 130, (x, y) => (x > 80 && y < -5 ? 196 : y > 10 ? 165 : x < 50 ? 160 : 186), 2.2,
     [["#7a3a10", 1, 0.3, 0.3], ["#fff4e2", 0.9, 0.28, 0.36]], { szene: 0.15 });
   K.detailsSzene = `<path d="${G([[94, -18], [99.5, -15], [103, -9], [102.5, -4], [100, -2], [95.5, -3.5], [93, -10]], true, 10)}" fill="#c87a70"/>` +
@@ -638,10 +660,108 @@ function tiger(T) {
     const streif = [[[32, -20], [22, -12], [12, -6]], [[32, 4], [22, 10], [12, 14]], [[38, 20], [28, 27], [18, 30]]].map((m) => band(T, m.map((p) => tr(p, g)), 2.2)).join("");
     return weich(T, "rb", [`<path d="${G(band2)}" fill="#f2e8da"/>`], 0.8) +
       `<path d="${streif}" fill="#120c0a" opacity=".85"/>` +
-      bueschel(T, band2, 30, fk, 4, 8, hr, ht, { pro: 6, breite: 2.6, w: 0.36, op: 0.9, szene: 0.15 });
+      bueschel(T, band2, 40, fk, 4, 8, hr, ht, { pro: 6, breite: 2.6, w: 0.26, op: 0.85, szene: 0.15, biegung: 0.8 });
   };
   return katze(T, A);
 }
+/* =====================================================================
+   ALLGEMEINER KATZENKOPF (Profil) für Löwin, Leopard, Jaguar, Gepard, Luchs
+   Grundform = Löwenkopf; o.schnauze verkürzt die Schnauze (x > 66), o.stirn wölbt die Stirn, o.tief macht den Kopf
+   höher/flacher. Alle Merkmale werden durch dieselbe Punktabbildung gelegt, so bleibt alles stimmig.
+   ===================================================================== */
+function katzenKopf(T, o) {
+  const sf = o.schnauze || 1, st = o.stirn || 0, ti = o.tief || 1;
+  const P = (x, y) => {
+    const nx = x > 66 ? 66 + (x - 66) * sf : x;
+    const dome = x > 30 && x < 90 ? Math.sin((x - 30) / 60 * Math.PI) * st * (y < -20 ? 1 : 0) : 0;
+    return [nx, y * ti - dome];
+  };
+  const M = (pts) => pts.map(([x, y, h]) => { const q = P(x, y); return h ? [q[0], q[1], 1] : q; });
+  const p = (x, y) => P(x, y).map((v) => Math.round(v * 10) / 10).join(" ");
+  const umriss = M(o.umriss || [[22, -34], [34, -39], [46, -41], [58, -41], [68, -39], [78, -34], [88, -28], [97, -22], [102, -17], [104.5, -10], [103, -3], [101.5, 4], [99.5, 12],
+    [95, 16], [90, 18], [89, 22], [85, 27], [74, 30], [58, 31], [44, 29], [32, 22], [22, 10], [18, -10]]);
+  const profil = M([[46, -41], [58, -41], [68, -39], [78, -34], [88, -28], [97, -22], [102, -17], [104.5, -10], [103, -3], [101.5, 4], [99.5, 12], [95, 16], [90, 18], [89, 22], [85, 27], [74, 30], [62, 31]]);
+  const K = {
+    x: o.x, y: o.y, k: o.k, w: o.w || 10, fell: o.fell, umriss, profil,
+    ohr: M(o.ohr || [[26, -36], [26, -47], [31, -54], [38, -54], [42, -47], [42, -37]]), ohrFarbe: o.ohrFarbe || "#2a190e", ohrVorn: true,
+    formen: [[...P(70, -36), 10, 3.5, -8, "#fff4dc", 0.5], [...P(90, -26), 12, 2.5, 20, "#fff4dc", 0.45], [...P(60, -10), 11, 5, -10, "#fff4dc", 0.3],
+      [...P(77, -23), 5, 3.5, 0, "#2a1506", 0.3], [...P(82, 18), 13, 3, 0, "#2a1506", 0.35], [...P(62, 27), 22, 4, 0, "#2a1506", 0.32],
+      [...P(92, 3), 6, 6, 0, "#fff8ec", 0.45], [...P(34, -8), 8, 14, 0, "#5a3414", 0.25]],
+  };
+  const [ex, ey] = P(74, -27);
+  K.ohrInnen = (o.ohrInnen || "") + haare(T, M([[36, -40], [38, -52], [42, -40]]), 12, 285, 5, [[o.ohrHaar || "#f6ecdc", 1, 0.4, 0.8]], { streu: 30 });
+  K.zeichnung = weich(T, "kz", [
+    [M([[30, -38], [60, -41], [70, -38], [62, -35], [34, -33]]), o.stirnFarbe, 0.35],
+    [M([[80, -32], [90, -27], [99, -21], [98, -14], [86, -19], [78, -26]]), o.rueckenFarbe, 0.5],
+    [M([[74, 2], [84, -4], [98, -4], [101.5, 5], [99.5, 13], [90, 16], [78, 14]]), o.polster || "#f2e7d0", 0.9],
+    [M([[72, 20], [86, 19], [89, 23], [84, 28], [66, 30], [54, 29]]), o.kinn || "#faf6ee", 1],
+    [M([[66, -22], [74, -19.5], [83, -23], [80, -15], [68, -15]]), o.unterAuge || "#f8eedc", 0.85],
+    [M([[64, -35], [74, -34], [81, -31], [74, -30], [64, -31]]), o.ueberAuge || "#f2e2c2", 0.6],
+    ...(o.flaechen ? o.flaechen(M) : [])].filter((e) => e[1]), 1.1);
+  K.muster = o.muster ? o.muster(M, P) : "";
+  K.haare = (T) => haare(T, umriss, o.haarN || 130, (x, y) => (x > P(80, 0)[0] && y < -5 ? 196 : y > 10 ? 165 : x < 50 ? 160 : 186), o.haarL || 2.4,
+    o.haarFarben || [["#8a5e2e", 1, 0.3, 0.3], ["#fbeccc", 0.9, 0.28, 0.34]], { szene: 0.15 }) +
+    haare(T, M([[20, -32], [36, -38], [40, -14], [36, 10], [40, 24], [30, 22], [20, 8], [16, -12]]), o.wangeN || 40, (x, y) => 150 + y * 0.5, o.wangeL || 4,
+      o.wangeFarben || [["#8a5e2e", 1, 0.4, 0.45], ["#f2e2c4", 1, 0.38, 0.45]], { szene: 0.2, krumm: 0.3 });
+  const nasePts = M([[95, -20], [101, -16.5], [104.5, -10], [104, -5], [101.5, -2.5], [97, -4], [94, -11]]);
+  const mund = `M${p(101.5, 5)}Q${p(100.5, 12)} ${p(96, 14.5)}Q${p(88, 16)} ${p(74, 17.6)}`;
+  K.detailsSzene = `<path d="${G(nasePts, true, 10)}" fill="${o.nase || "#8c5a50"}"/><path d="${mund}" fill="none" stroke="#120b07" stroke-width="1.7" stroke-linecap="round"/>` +
+    `<ellipse cx="${r(ex)}" cy="${r(ey)}" rx="3.6" ry="2.4" fill="#120804"/><circle cx="${r(ex + 0.6)}" cy="${r(ey)}" r="1.8" fill="${o.iris || "#c99434"}"/>` + (o.szeneExtra || "");
+  K.details =
+    nase(T, nasePts, `M${p(101.5, -4.5)}Q${p(97.5, -5)} ${p(98, -9.5)}`, o.nase || "#8c5a50", `M${p(99, -17)}Q${p(102, -16)} ${p(103.5, -12.5)}`) +
+    `<path d="M${p(94, -11)}Q${p(97, -10)} ${p(99, -12)}M${p(95, -19.5)}Q${p(101, -18.5)} ${p(104.5, -11.5)}" fill="none" stroke="#2a1210" stroke-opacity=".5" stroke-width=".8"/>` +
+    `<path d="M${p(101.5, -1)}Q${p(102, 2)} ${p(101.5, 5)}" fill="none" stroke="#1d120c" stroke-width="1" stroke-linecap="round"/>` +
+    `<path d="${mund}" fill="none" stroke="#120b07" stroke-width="1.7" stroke-linecap="round"/>` +
+    `<path d="M${p(74, 17.6)}Q${p(69, 18)} ${p(66, 20)}" fill="none" stroke="#120b07" stroke-opacity=".45" stroke-width="1" stroke-linecap="round"/>` +
+    `<path d="M${p(89, 21.5)}Q${p(81, 24.5)} ${p(74, 24)}" fill="none" stroke="#5b4630" stroke-opacity=".3" stroke-width=".8"/>` +
+    punkte([[82, 0], [86, .5], [90, 1], [94, 1.4], [80, 4], [84, 4.5], [88, 5], [92, 5.4], [96, 5.6], [82, 8], [86, 8.6], [90, 9], [94, 9.4], [85, 11.6], [89, 12]].map(([x, y]) => P(x, y).map((v) => Math.round(v * 10) / 10)), 1.1) +
+    (o.vorAuge || "") +
+    T.augeReal(ex, ey, o.augeR || 3.1, { iris: o.iris || "#c99434", iris2: o.iris2 || "#6a3e12", offen: 0.76, winkel: 4, lid: "#0e0805", haut: o.augeHaut || "#efe0c2" }) +
+    `<path d="M${p(79, -24)}Q${p(83, -17)} ${p(86, -9)}" fill="none" stroke="#2a1a10" stroke-opacity="${o.traene || 0.4}" stroke-width="${o.traeneB || 1.1}" stroke-linecap="round"/>` +
+    `<path d="M${p(67, -32)}Q${p(74, -34.5)} ${p(81, -31)}" fill="none" stroke="#2a1a10" stroke-opacity=".3" stroke-width=".8"/>` +
+    T.schnurrhaare(...P(88, 3), 7, 30, 6, 46, "#fbf6ec", 0.3) + T.schnurrhaare(...P(84, 8), 5, 26, 34, 40, "#fbf6ec", 0.28) +
+    T.schnurrhaare(...P(75, -33), 3, 12, -60, 30, "#f6efe2", 0.25) + (o.extra ? o.extra(M, P) : "");
+  K.P = P; K.M = M;
+  return K;
+}
+
+/* Flecken/Rosetten verteilen: felder = [[polygon, größe, art]] (art: "punkt" | "rosette" | "jaguar" | "strich"),
+   abst = Grundabstand (cm). Liefert { schwarz, ring: [d nach Breite], innen } als Pfad-Daten. */
+function flecken(T, felder, abst, o = {}) {
+  const q = (v) => Math.round(v * 2) / 2, fz = (v) => String(q(v)).replace(/^(-?)0\./, "$1.");
+  const out = { schwarz: "", innen: "", ring: {} }, alle = [];
+  for (const [pts, g, art, dichte] of felder) {
+    const [x0, y0, x1, y1] = T.box(pts), a = abst * g, n = Math.round((x1 - x0) * (y1 - y0) / (a * a) * 1.6 * (dichte || 1) * (T.fein ? 1 : 0.8));
+    for (let v = 0, k = 0; k < n && v < n * 12; v++) {
+      const x = x0 + T.rnd() * (x1 - x0), y = y0 + T.rnd() * (y1 - y0);
+      if (!T.inPoly(x, y, pts) || alle.some(([ax, ay, aa]) => Math.hypot(ax - x, ay - y) < (aa + a) * 0.5)) continue;
+      alle.push([x, y, a]); k++;
+      const s = a * (0.32 + T.rnd() * 0.14);
+      const ell = (cx, cy, rx, ry, w) => { const c = Math.cos(w * RAD), sn = Math.sin(w * RAD); return `M${fz(cx - rx * c)} ${fz(cy - rx * sn)}a${fz(rx)} ${fz(ry)} ${Math.round(w)} 1 0 ${fz(2 * rx * c)} ${fz(2 * rx * sn)}a${fz(rx)} ${fz(ry)} ${Math.round(w)} 1 0 ${fz(-2 * rx * c)} ${fz(-2 * rx * sn)}z`; };
+      if (art === "punkt") out.schwarz += ell(x, y, s * (0.85 + T.rnd() * 0.4), s * (0.7 + T.rnd() * 0.3), T.rnd() * 180);
+      else if (art === "strich") out.schwarz += ell(x, y, s * 1.3, s * 0.45, (o.strichWinkel || 80) + (T.rnd() - 0.5) * 30);
+      else {
+        /* Rosette: unterbrochener Ring aus 3–5 Bögen, innen etwas dunkler; Jaguar: größer, dicker, mit Punkten innen */
+        const jag = art === "jaguar", R = s * (jag ? 1.25 : 1.05), nb = 3 + Math.floor(T.rnd() * (jag ? 3 : 2.5)), w0 = T.rnd() * 360;
+        const sw = Math.max(0.6, Math.round(R * (jag ? 0.42 : 0.36) * 2) / 2);
+        out.innen += ell(x, y, R * 0.9, R * 0.78, T.rnd() * 180);
+        let d = "";
+        for (let i = 0; i < nb; i++) {
+          const a0 = w0 + i * 360 / nb + T.rnd() * 10, a1 = a0 + 360 / nb - 22 - T.rnd() * 30, rr = R * (0.9 + T.rnd() * 0.25);
+          const sx = x + Math.cos(a0 * RAD) * rr, sy = y + Math.sin(a0 * RAD) * rr, tx = x + Math.cos(a1 * RAD) * rr, ty = y + Math.sin(a1 * RAD) * rr;
+          d += `M${fz(sx)} ${fz(sy)}A${fz(rr)} ${fz(rr * (0.8 + T.rnd() * 0.3))} 0 0 1 ${fz(tx)} ${fz(ty)}`;
+        }
+        out.ring[sw] = (out.ring[sw] || "") + d;
+        if (jag) for (let i = 0, m = 1 + Math.floor(T.rnd() * 2.4); i < m; i++) out.schwarz += ell(x + (T.rnd() - 0.5) * R * 0.6, y + (T.rnd() - 0.5) * R * 0.5, R * 0.18, R * 0.15, 0);
+      }
+    }
+  }
+  return out;
+}
+const fleckenSvg = (f, schwarz = "#16100a", innen = "#00000000") =>
+  (f.innen ? `<path d="${kurz(f.innen)}" fill="${innen}"/>` : "") +
+  Object.entries(f.ring).map(([w, d]) => `<path d="${kurz(d)}" fill="none" stroke="${schwarz}" stroke-width="${w}" stroke-linecap="round"/>`).join("") +
+  (f.schwarz ? `<path d="${kurz(f.schwarz)}" fill="${schwarz}"/>` : "");
 module.exports = [
   { id: "loewe", de: "der Löwe", syl: "LÖ-we", it: "il leone", itSyl: "le-O-ne", en: "lion", gruppe: "Raubtiere", lebensraum: "Savanne",
     laenge: 2.5, hoehe: 1.4, zeichne: loewe },

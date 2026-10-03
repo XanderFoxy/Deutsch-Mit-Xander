@@ -133,6 +133,9 @@ S.hinten(`<circle cx="6" cy="18" r="95" fill="${S.rg("sonne", [[0, "#fff6d8", 0.
   S.hinten(`<g filter="url(#${S.id("dunst")})">${c}</g>`);
 }
 
+/* Schaumainkai unter den Platanen (Straße, Hecken im Schatten) */
+S.hinten(`<path d="M0 99 L${VPX} 108.6 L${VPX} 111 L0 126 Z" fill="${S.lg("hecke", [[0, "#55663f"], [0.6, "#6e7a5a"], [1, "#8d8c80"]])}"/>`);
+
 /* =====================================================================
    1 — DER MAIN (das Wasser mit Spiegelungen)
    ===================================================================== */
@@ -147,7 +150,7 @@ for (const d of [400, 200, 100, 60, 40, 28, 20, 14, 10, 8, 6.6, 5.8]) {
 }
 {
   let top = "";
-  for (let x = VPX; x <= 320; x += 8) top += `L${r(x)} ${r(NORDKAI(x))} `;
+  for (let x = VPX; x < 320; x += 8) top += `L${r(x)} ${r(NORDKAI(x))} `;
   const poly = `M${VPX} ${HOR} ${top}L320 ${r(NORDKAI(320))} L320 200 L${SUEDKAI[SUEDKAI.length - 1][0]} 200 ${SUEDKAI.slice().reverse().map(([x, y]) => `L${x} ${y}`).join(" ")} Z`;
   let k = `<path d="${poly}" fill="${S.lg("wasser", [[0, "#b9cbd3"], [0.12, "#93aeb8"], [0.45, "#62818a"], [1, "#3b5a60"]], 0, 0, 0, 1)}"/>`;
   /* Himmelsglanz in der Ferne, Sonnenglitzern links */
@@ -163,12 +166,12 @@ for (const d of [400, 200, 100, 60, 40, 28, 20, 14, 10, 8, 6.6, 5.8]) {
   k += `<rect x="268" y="122" width="15" height="42" fill="#a5594b"/><rect x="282" y="122" width="34" height="14" fill="#8a5a4e"/><rect x="190" y="118" width="32" height="10" fill="#c98a7a"/>`;
   k += `<rect x="186" y="118" width="134" height="7" fill="#d7c9b4"/><rect x="152" y="115" width="34" height="9" fill="#c9b6a0"/>`;
   k += `</g>`;
-  k += `<g opacity=".55"><path d="M80 115.2 Q99 117.6 117 115.6 Q134 117.6 152 115.2" stroke="#2b3a44" stroke-width=".5" fill="none"/></g>`;
+  k += `<g filter="url(#${S.id("spiegel")})" opacity=".35"><rect x="80" y="114.4" width="72" height="1.6" fill="#2b3a44"/><rect x="98" y="114" width="2" height="7" fill="#8d5a4e"/><rect x="133" y="114" width="2" height="7" fill="#8d5a4e"/></g>`;
   /* Wellen: kurze Lichtstriche, nach vorn größer */
   for (let i = 0; i < 170; i++) {
     const t = Math.pow(rnd(), 0.75), y = 114 + t * 86;
     const xmin = SUEDKAI.find(([, sy]) => sy >= y) ? SUEDKAI.find(([, sy]) => sy >= y)[0] : VPX;
-    const x = xmin + rnd() * (320 - xmin), w = 1 + t * 7 * (0.5 + rnd());
+    const w = 1 + t * 7 * (0.5 + rnd()), x = xmin + rnd() * Math.max(1, 320 - xmin - w);
     k += `<path d="M${r(x)} ${r(y)} q${r(w / 2)} ${r(-0.3 - t * 0.6)} ${r(w)} 0" stroke="${rnd() < 0.55 ? "#e4eef1" : "#2c4a52"}" stroke-width="${r(0.15 + t * 0.5)}" fill="none" opacity="${r(0.25 + rnd() * 0.35)}"/>`;
   }
   /* Schatten der Kaimauer gegenüber */
@@ -199,10 +202,10 @@ const platane = (x, fuss, hoch, R, dunkel) => {
   const poly = `M0 200 L0 123 ${fern.slice(1).map(([x, y]) => `L${x} ${y}`).join(" ")} ${SUEDKAI.map(([x, y]) => `L${x} ${y}`).join(" ")} L${SUEDKAI[SUEDKAI.length - 1][0]} 200 Z`;
   let k = `<path d="${poly}" fill="${S.lg("pflaster", [[0, "#c9c0b0"], [0.4, "#b4aa98"], [1, "#9a8f7d"]], 0, 0, 0, 1)}"/>`;
   /* Fugen: Linien zum Fluchtpunkt und Querfugen */
-  for (let i = -16; i <= 4; i++) {
+  for (let i = -16; i <= 1; i++) {
     const lat = i * 1.2;
     const p = [];
-    for (const d of [300, 6]) { const th = Math.atan2(lat, d); p.push([r(X(th * 180 / Math.PI)), r(BODEN(Math.hypot(d, lat)))]); }
+    for (const d of [300, Math.max(6, Math.abs(lat) * 3.25)]) { const th = Math.atan2(lat, d); p.push([r(X(th * 180 / Math.PI)), r(BODEN(Math.hypot(d, lat)))]); }
     k += `<line x1="${p[0][0]}" y1="${p[0][1]}" x2="${p[1][0]}" y2="${p[1][1]}" stroke="#857a69" stroke-width=".25" opacity=".55"/>`;
   }
   for (const d of [8, 10, 12.5, 16, 21, 28, 40, 60, 100]) {
@@ -225,8 +228,10 @@ const platane = (x, fuss, hoch, R, dunkel) => {
   /* Bank am Wasser */
   {
     const d = 22, th = Math.atan2(-1.5, d) * 180 / Math.PI, x = X(th), y = BODEN(d), s = 340 / d;
-    k += `<rect x="${r(x - 0.9 * s)}" y="${r(y - 0.45 * s)}" width="${r(1.8 * s)}" height="${r(0.08 * s)}" fill="#7a5532"/><rect x="${r(x - 0.9 * s)}" y="${r(y - 0.85 * s)}" width="${r(1.8 * s)}" height="${r(0.25 * s)}" fill="#8a6038"/>`;
-    k += `<rect x="${r(x - 0.8 * s)}" y="${r(y - 0.45 * s)}" width=".7" height="${r(0.45 * s)}" fill="#3b3f3c"/><rect x="${r(x + 0.7 * s)}" y="${r(y - 0.45 * s)}" width=".7" height="${r(0.45 * s)}" fill="#3b3f3c"/>`;
+    k += `<ellipse cx="${r(x + 2)}" cy="${r(y + 0.3)}" rx="${r(1.1 * s)}" ry="1.2" fill="#3a3326" opacity=".28" filter="url(#bw_weich)"/>`;
+    for (const sx of [-0.78, 0.78]) k += `<path d="M${r(x + sx * s - 0.4)} ${r(y)} L${r(x + sx * s - 0.2)} ${r(y - 0.45 * s)} L${r(x + sx * s + 0.2)} ${r(y - 0.85 * s)} L${r(x + sx * s + 0.7)} ${r(y - 0.85 * s)} L${r(x + sx * s + 0.5)} ${r(y - 0.45 * s)} L${r(x + sx * s + 0.6)} ${r(y)} Z" fill="#2f3532"/>`;
+    for (let i = 0; i < 3; i++) k += `<rect x="${r(x - 0.95 * s)}" y="${r(y - 0.47 * s + i * 0.9)}" width="${r(1.9 * s)}" height=".7" rx=".2" fill="${i ? "#7a5532" : "#9a6d42"}"/>`;
+    for (let i = 0; i < 2; i++) k += `<rect x="${r(x - 0.92 * s)}" y="${r(y - 0.86 * s + i * 1.6)}" width="${r(1.84 * s)}" height="1.1" rx=".3" fill="#8a6038"/>`;
   }
   S.teil({ id: "mainufer", de: "das Mainufer", syl: "MAIN-u-fer", it: "la riva del Meno", itSyl: "RI-va del ME-no", en: "Main riverbank", x: 0, y: 0, kunst: k,
     tipp: "Am Mainufer gehen die Frankfurter spazieren, joggen und fahren Rad." });
@@ -249,9 +254,8 @@ const platane = (x, fuss, hoch, R, dunkel) => {
   k += `<path d="M-3.1 -37.6 L0 -46 L3.1 -37.6 Z" fill="${S.lg("pyramide", [[0, "#e6e9ec"], [0.5, "#aeb6bd"], [1, "#7d868e"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M-3.1 -37.6 L0 -46 L-.5 -37.6 Z" fill="#fff" opacity=".25"/><line x1="0" y1="-46" x2="0" y2="-47.2" stroke="#8d969d" stroke-width=".25"/>`;
   k += lichtUeber(-3.4, -31, 6.8, 25);
-  k += `<rect x="-4.6" y="-46" width="9.2" height="46" fill="#cfdbe4" opacity=".18"/>`;   /* Dunst der Entfernung */
   S.teil({ id: "messeturm", de: "der Messeturm", syl: "MES-se-turm", it: "la Torre della Fiera", itSyl: "TOR-re del-la FIE-ra", en: "Trade Fair Tower",
-    x: 99, y: HOR, kunst: k, tipp: "Wegen seiner spitzen Pyramide nennen ihn die Frankfurter „Bleistift“." });
+    x: 92, y: HOR, kunst: k, tipp: "Wegen seiner spitzen Pyramide nennen ihn die Frankfurter „Bleistift“." });
 }
 
 /* =====================================================================
@@ -266,20 +270,20 @@ const platane = (x, fuss, hoch, R, dunkel) => {
     return g + extra;
   };
   /* Silberturm (Aluminiumbänder, abgeschrägte Ecken) */
-  k += turm(70, 7.4, 36, S.lg("silber", [[0, "#e2e6ea"], [0.5, "#b6bec6"], [1, "#8d96a0"]], 0, 0, 1, 0), 0.9, 0.9);
+  k += turm(67, 7.4, 36, S.lg("silber", [[0, "#e2e6ea"], [0.5, "#b6bec6"], [1, "#8d96a0"]], 0, 0, 1, 0), 0.9, 0.9);
   /* Tower 185: heller Stein, breiter Sockelbau */
-  k += turm(80, 6.8, 37, S.lg("t185", [[0, "#e9e2d4"], [0.5, "#cfc6b4"], [1, "#a79f90"]], 0, 0, 1, 0), 0.3, 1.0);
-  k += `<rect x="75" y="${HOR - 10}" width="13" height="10" fill="#c9c1b0"/>`;
+  k += turm(77, 6.8, 37, S.lg("t185", [[0, "#e9e2d4"], [0.5, "#cfc6b4"], [1, "#a79f90"]], 0, 0, 1, 0), 0.3, 1.0);
+  k += `<rect x="72" y="${HOR - 10}" width="13" height="10" fill="#c9c1b0"/>`;
   /* Westend Tower (DZ Bank) mit der weißen „Krone“ */
   {
-    const x = 111, h = 41;
+    const x = 103, h = 41;
     k += turm(x, 8, h, S.lg("westend", [[0, "#ddd8cc"], [0.5, "#b9b7ae"], [1, "#8f8f8a"]], 0, 0, 1, 0), 1.2, 1.0);
     k += `<rect x="${x - 4.6}" y="${HOR - h - 0.6}" width="9.2" height="1.6" rx=".5" fill="#f6f6f2"/>`;
     for (let i = 0; i < 9; i++) { const t = -4.4 + i * 1.1; k += `<path d="M${r(x + t - 0.25)} ${HOR - h - 0.6} L${r(x + t * 1.25)} ${HOR - h - 4.6} L${r(x + t + 0.25)} ${HOR - h - 0.6} Z" fill="#fbfbf8"/>`; }
   }
   /* Trianon mit dreieckigem Kopf */
   {
-    const x = 122, h = 40;
+    const x = 114, h = 40;
     k += turm(x, 7.4, h, S.lg("trianon", [[0, "#e7c9b8"], [0.5, "#c9a79a"], [1, "#9a7f78"]], 0, 0, 1, 0), 0.4, 1.0);
     k += `<path d="M${x - 5} ${HOR - h - 3.6} L${x + 5} ${HOR - h - 3.6} L${x + 3.7} ${HOR - h + 0.6} L${x - 3.7} ${HOR - h + 0.6} Z" fill="#5d6c79"/>`;
     k += `<rect x="${x - 5}" y="${HOR - h - 4.2}" width="10" height=".8" fill="#e8e3da"/>`;
@@ -291,7 +295,7 @@ const platane = (x, fuss, hoch, R, dunkel) => {
     k += `<line x1="${x}" y1="${HOR}" x2="${x}" y2="${HOR - h + 0.2}" stroke="#d9e6f0" stroke-width=".25" opacity=".6"/>`;
   }
   /* niedrigere Bürotürme dazwischen (Japan Center mit Laternendach, Taunusturm, Marienturm …) */
-  for (const [x, w, h, f] of [[90, 5, 20, "#c3c7c9"], [139.5, 4.8, 30, "#b8c4cc"], [158.5, 5, 26, "#d4cdbf"], [180, 6, 22, "#c4ccd2"], [205, 7, 18, "#d1c8b8"], [214, 5, 14, "#bfc8cf"]]) {
+  for (const [x, w, h, f] of [[84.5, 5, 22, "#c3c7c9"], [139.5, 4.8, 30, "#b8c4cc"], [158.5, 5, 26, "#d4cdbf"], [205, 7, 18, "#d1c8b8"], [214, 5, 14, "#bfc8cf"]]) {
     k += turm(x, w, h, f, 0.3, 1.0);
   }
   k += `<path d="M156 ${HOR - 26} L158.5 ${HOR - 28.4} L161 ${HOR - 26} Z" fill="#5f6a72"/>`;
@@ -307,7 +311,6 @@ const platane = (x, fuss, hoch, R, dunkel) => {
     for (let y = HOR - 23.6; y > HOR - 32; y -= 1.4) k += `<rect x="${x - 3.6}" y="${r(y)}" width="10.4" height=".45" fill="#fafbfc"/>`;
     k += lichtUeber(x - 3.6, HOR - 32, 10.4, 9);
   }
-  k += `<rect x="64" y="${HOR - 40}" width="160" height="40" fill="${S.lg("skydunst", [[0, "#dbe5ec", 0], [1, "#dbe5ec", 0.35]])}"/>`;
   S.teil({ id: "skyline", de: "die Skyline", syl: "SKY-line", it: "lo skyline", itSyl: "SKY-line", en: "skyline", x: 0, y: 0, kunst: k,
     tipp: "Wegen der vielen Hochhäuser am Main nennt man Frankfurt auch „Mainhattan“." });
 }
@@ -333,7 +336,6 @@ const MT = { x: 151, y: HOR };
   for (let i = 0; i < 6; i++) k += `<rect x="-2.1" y="${r(-58.4 - i * 1.6)}" width=".9" height="1.6" fill="${i % 2 ? "#f2f2f0" : "#c9302c"}"/>`;
   k += `<line x1="-1.65" y1="-66" x2="-1.65" y2="-67.4" stroke="#c9302c" stroke-width=".3"/>`;
   k += `<rect x="4.4" y="-44.2" width="2.2" height="1.2" fill="#c9302c" opacity=".9"/>`;
-  k += `<rect x="-6.6" y="-68" width="14.4" height="68" fill="#d5e0e8" opacity=".1"/>`;
   S.teil({ id: "maintower", de: "der Main Tower", syl: "MAIN TOW-er", it: "il Main Tower", itSyl: "MAIN TOW-er", en: "Main Tower",
     x: MT.x, y: MT.y, kunst: k, tipp: "Auf den Main Tower kann man mit dem Aufzug hinauffahren.",
     zoom: { x: MT.x - 17, y: MT.y - 70, w: 30, h: 20 },
@@ -376,7 +378,6 @@ const CB = { x: 131.5, y: HOR };
   k += `<circle cx="0" cy="${-H - 18.2}" r=".4" fill="#e0312c"/>`;
   /* gelbes Firmenband oben an der Sonnenseite */
   k += `<path d="M${L + 1} ${-H + 4.6} q2.6 -1.6 5 0 l-.6 1.4 q-2 -1.2 -3.8 0 Z" fill="#f2c200"/>`;
-  k += `<rect x="${L}" y="${-H - 18}" width="${R - L}" height="${H + 18}" fill="#d4e0e8" opacity=".06"/>`;
   S.teil({ id: "hochhaus", de: "das Hochhaus", syl: "HOCH-haus", it: "il grattacielo", itSyl: "grat-ta-CIE-lo", en: "high-rise",
     x: CB.x, y: CB.y, kunst: k, tipp: "Der Commerzbank-Tower ist 259 Meter hoch, mit Antenne 300 Meter – das höchste Hochhaus Deutschlands.",
     zoom: { x: CB.x - 18, y: CB.y - 66, w: 36, h: 24 },
@@ -409,7 +410,7 @@ const CB = { x: 131.5, y: HOR };
   k += `<rect x="-3.2" y="-33.8" width="6.4" height=".9" fill="#e2b4a2"/>`;
   k += `<path d="M-2.6 -33.8 Q-2.4 -37 0 -37.6 Q2.4 -37 2.6 -33.8 Z" fill="#55636a"/>`;
   k += `<rect x="-.4" y="-39.2" width=".8" height="1.7" fill="#55636a"/><circle cx="0" cy="-39.6" r=".5" fill="#c7a640"/>`;
-  k += lichtUeber(-15, -27, 30, 27) + lichtUeber(-3.4, -39, 6.8, 39);
+  k += lichtUeber(-3.4, -27, 6.8, 27);
   S.teil({ id: "paulskirche", de: "die Paulskirche", syl: "PAULS-kir-che", it: "la chiesa di San Paolo", itSyl: "CHIE-sa di san PA-o-lo", en: "St Paul's Church",
     x: 236, y: HOR, kunst: k, tipp: "1848 tagte in der Paulskirche das erste frei gewählte Parlament für ganz Deutschland." });
 }
@@ -468,9 +469,6 @@ const RO = { x: 205.5, y: HOR };
     k += `<path d="M${sx} -25.4 L${sx - 0.6} -24.6 L${sx - 0.2} -24.7 L${sx - 0.4} -23.6 L${sx} -24 L${sx + 0.4} -23.6 L${sx + 0.2} -24.7 L${sx + 0.6} -24.6 Z" fill="#fff"/>`;
   }
   k += fenster(-0.6, -28.2, 1.2, 1.8, true);
-  k += lichtUeber(-16.5, -32, 43.5, 32);
-  /* der gesamte Römer etwas im Dunst der Entfernung */
-  k += `<rect x="-16.5" y="-32" width="43.5" height="32" fill="#e6edf0" opacity=".08"/>`;
   S.teil({ id: "roemer", de: "der Römer", syl: "RÖ-mer", it: "il Römer (il municipio)", itSyl: "RÖ-mer", en: "Römer (city hall)",
     x: RO.x, y: RO.y, kunst: k, tipp: "Der Römer ist seit über 600 Jahren das Rathaus von Frankfurt.",
     zoom: { x: RO.x - 19, y: RO.y - 35, w: 39, h: 26 },
@@ -533,8 +531,7 @@ const DOM = { x: 274, y: 108 };
   }
   k += `<rect x="-1.4" y="-78" width="2.8" height="3.4" fill="#b8695a"/><rect x="-.5" y="-77.4" width="1" height="2.2" fill="#34404a"/>`;
   k += `<path d="M-1.7 -78 L0 -81 L1.7 -78 Z" fill="#9b5244"/><line x1="0" y1="-81" x2="0" y2="-83.4" stroke="#7a3e33" stroke-width=".35"/><circle cx="0" cy="-81.8" r=".45" fill="#c7a640"/>`;
-  k += lichtUeber(-w0 - 1, -84, 2 * w0 + 2, 84);
-  k += `<rect x="-9" y="-84" width="55" height="84" fill="#e3ebef" opacity=".06"/>`;
+  k += lichtUeber(-w0, -36, 2 * w0, 36);
   S.teil({ id: "kaiserdom", de: "der Kaiserdom", syl: "KAI-ser-dom", it: "il Duomo imperiale", itSyl: "DUO-mo im-pe-RIA-le", en: "Imperial Cathedral",
     x: DOM.x, y: DOM.y, kunst: k, tipp: "Im Kaiserdom wurden die deutschen Kaiser gewählt und gekrönt. Sein Turm ist 95 Meter hoch.",
     zoom: { x: DOM.x - 15, y: DOM.y - 86, w: 30, h: 20 },
@@ -556,7 +553,7 @@ const DOM = { x: 274, y: 108 };
     else g += `<path d="M${r(x - 0.3)} ${r(KAI - h)} L${r(x + 0.8)} ${r(KAI - h - 2.4)} L${r(x + w - 0.8)} ${r(KAI - h - 2.4)} L${r(x + w + 0.3)} ${r(KAI - h)} Z" fill="${dach}"/>`;
     const sp = Math.max(1, Math.floor(w / 2.2));
     for (let j = 0; j < Math.floor(h / 2.6); j++) for (let i = 0; i < sp; i++) g += `<rect x="${r(x + 0.7 + i * (w - 1.2) / sp)}" y="${r(KAI - 1.8 - j * 2.6)}" width="${r(Math.min(0.9, (w - 1.2) / sp - 0.4))}" height="1.2" fill="#4f5b66" opacity=".85"/>`;
-    return g + lichtUeber(x, KAI - h - (giebel ? w * 0.62 : 2.4), w, h + (giebel ? w * 0.62 : 2.4));
+    return g + lichtUeber(x, KAI - h, w, h);
   };
   const farben = ["#efe6d6", "#e8d2bf", "#f2ead9", "#d9c7b3", "#e6dccb", "#dcc0aa", "#f0e2cc", "#e2d6c6"];
   /* Untermainkai westlich des Stegs (hinter der Brücke), Leonhardskirche */
@@ -574,13 +571,13 @@ const DOM = { x: 274, y: 108 };
   k += `<path d="M101 ${KAI - 10} L112 ${KAI - 10} L112 ${KAI} L101 ${KAI} Z" fill="${SANDST}"/><path d="M100.6 ${KAI - 10} L106.4 ${KAI - 14.6} L112.4 ${KAI - 10} Z" fill="${SCHIEFER}"/>`;
   /* Ostteil: Häuser vor Römer, Paulskirche und Dom (neue Altstadt, Weckmarkt) */
   x = 186;
-  const hoehen = [[186, 7, 11, 1], [193, 6, 10, 0], [199, 7, 12, 1], [206, 6, 10.5, 0], [212, 7, 11.8, 1], [219, 6.4, 11, 0], [225.4, 7, 12, 0], [232.4, 6.6, 11.4, 1], [239, 7.4, 12.4, 0], [246.4, 6.6, 11, 1], [253, 7, 12.6, 0], [260, 6.4, 11, 0], [266.4, 7.6, 12, 1], [274, 7, 11, 0], [281, 6.6, 12.6, 1], [287.6, 7.4, 11.6, 0], [295, 7, 12.8, 0], [302, 6.4, 11.4, 1], [308.4, 7.4, 12.2, 0], [315.8, 6, 11.6, 0]];
+  const hoehen = [[186, 7, 11, 1], [193, 6, 10, 0], [199, 7, 12, 1], [206, 6, 10.5, 0], [212, 7, 11.8, 1], [219, 6.4, 11, 0], [225.4, 7, 12, 0], [232.4, 6.6, 11.4, 1], [239, 7.4, 12.4, 0], [246.4, 6.6, 11, 1], [253, 7, 12.6, 0], [260, 6.4, 11, 0], [266.4, 7.6, 12, 1], [274, 7, 11, 0], [281, 6.6, 12.6, 1], [287.6, 7.4, 11.6, 0], [295, 7, 12.8, 0], [302, 6.4, 11.4, 1], [308.4, 7.4, 12.2, 0], [315.8, 4.2, 11.6, 0]];
   for (const [hx, w, h, g] of hoehen) k += haus(hx, w, h, farben[Math.floor(rnd() * farben.length)], "#5f6670", g);
   /* Platanen am Mainkai */
-  for (let tx = 189; tx < 322; tx += 9 + rnd() * 3) {
-    const R = 5 + rnd() * 1.6;
+  for (let tx = 189; tx < 314; tx += 8 + rnd() * 6) {
+    const R = Math.min(4.2 + rnd() * 2.6, (320 - tx) / 0.95);
     k += `<rect x="${r(tx - 0.4)}" y="${KAI - 5}" width=".8" height="5" fill="#a9a08a"/>`;
-    for (const [dx, dy, s] of [[0, 0, 1], [-3.2, 1.6, 0.7], [3.2, 1.4, 0.75], [0, -2.6, 0.7]]) k += `<circle cx="${r(tx + dx)}" cy="${r(KAI - 7.6 + dy)}" r="${r(R * 0.62 * s)}" fill="${rnd() < 0.5 ? LAUB1 : LAUB2}"/>`;
+    for (const [dx, dy, s] of [[0, 0, 1], [-R * 0.6, R * 0.3, 0.7], [R * 0.6, R * 0.26, 0.75], [R * 0.1, -R * 0.5, 0.7]]) k += `<circle cx="${r(tx + dx)}" cy="${r(KAI - R * 1.45 + dy)}" r="${r(R * 0.62 * s)}" fill="${[LAUB1, LAUB2, LAUB_F][Math.floor(rnd() * 3)]}"/>`;
   }
   /* Kaimauer aus rotem Sandstein bis zur Wasserlinie */
   let kai = `M150 ${KAI}`;
@@ -690,7 +687,7 @@ const STEG = { x0: 78, x1: 152, deck: 106.8, wasser: 114.2 };
     k += `<path d="M${r(ex - 0.95)} ${KAI - 22.4} L${r(ex)} ${KAI - 26.6} L${r(ex + 0.95)} ${KAI - 22.4} Z" fill="${SCHIEFER}"/>`;
   }
   k += `<line x1="${tx}" y1="${KAI - 31}" x2="${tx}" y2="${KAI - 32.6}" stroke="#3d454c" stroke-width=".3"/><circle cx="${tx}" cy="${KAI - 32.8}" r=".35" fill="#c7a640"/>`;
-  k += lichtUeber(154, KAI - 33, 34, 33);
+  k += lichtUeber(161, KAI - 11, 11.4, 11) + lichtUeber(tx - tw, KAI - 19, 2 * tw, 19);
   S.teil({ id: "museum", de: "das Museum", syl: "mu-SE-um", it: "il museo", itSyl: "mu-SE-o", en: "museum", x: 0, y: 0, kunst: k,
     tipp: "Im Historischen Museum am Main lernt man die Geschichte Frankfurts kennen." });
 }
@@ -717,6 +714,25 @@ const STEG = { x0: 78, x1: 152, deck: 106.8, wasser: 114.2 };
 }
 
 /* =====================================================================
+   13b — DAS RUDERBOOT (ein Vierer trainiert flussaufwärts)
+   ===================================================================== */
+{
+  let k = `<ellipse cx="0" cy=".5" rx="17" ry=".8" fill="#1f343a" opacity=".3"/>`;
+  /* Kielwasser und Ruderschläge */
+  k += `<path d="M14 .3 q6 .5 12 0 M14 1 q7 .4 14 0" stroke="#e9f2f4" stroke-width=".35" fill="none" opacity=".75"/>`;
+  k += `<path d="M-15 0 Q-16 -.9 -14 -1.2 L13 -1.2 Q15.4 -.8 14.6 0 Z" fill="${S.lg("ruder", [[0, "#f4f1e6"], [1, "#c9c2ad"]])}"/>`;
+  k += `<rect x="-14" y="-1.5" width="27" height=".35" fill="#2f5f95"/>`;
+  for (let i = 0; i < 4; i++) {
+    const x = -9 + i * 5.2, sx = i % 2 ? -1 : 1;
+    k += `<line x1="${x}" y1="-2" x2="${r(x - 4.6)}" y2="${r(0.6 + sx * 0.2)}" stroke="#d8d2c0" stroke-width=".3"/>`;
+    k += `<ellipse cx="${r(x - 4.7)}" cy=".7" rx=".7" ry=".2" fill="#e9f2f4" opacity=".8"/>`;
+    k += `<path d="M${x - 0.7} -1.3 L${x - 0.4} -3.4 L${x + 0.6} -3.4 L${x + 0.8} -1.3 Z" fill="${["#c9302c", "#f2f2ee", "#c9302c", "#f2f2ee"][i]}"/><circle cx="${x + 0.1}" cy="-4" r=".55" fill="#d9a07a"/>`;
+  }
+  S.teil({ id: "ruderboot", de: "das Ruderboot", syl: "RU-der-boot", it: "la barca a remi", itSyl: "BAR-ca a RE-mi", en: "rowing boat",
+    x: 214, y: 139, kunst: k, tipp: "Auf dem Main trainieren viele Rudervereine." });
+}
+
+/* =====================================================================
    14 — DER SCHWAN (zwei Höckerschwäne nahe am Ufer)
    ===================================================================== */
 {
@@ -738,7 +754,7 @@ const STEG = { x0: 78, x1: 152, deck: 106.8, wasser: 114.2 };
    15 — DIE PLATANE (der nächste Baum am Ufer, links)
    ===================================================================== */
 {
-  const d = 60, th = -Math.atan2(10, d) * 180 / Math.PI, rr = Math.hypot(d, 10);
+  const d = 60, th = -Math.atan2(9, d) * 180 / Math.PI, rr = Math.hypot(d, 9);
   const x = X(th), fuss = BODEN(rr);
   const k = platane(0, 0, 4896 / rr - 544 / rr, 340 * 6.5 / rr, false);
   S.teil({ id: "platane", de: "die Platane", syl: "pla-TA-ne", it: "il platano", itSyl: "PLA-ta-no", en: "plane tree", x, y: fuss, steht: true, kunst: k,
@@ -757,7 +773,7 @@ const STEG = { x0: 78, x1: 152, deck: 106.8, wasser: 114.2 };
   const hx = (hand.x != null ? hand.x : hand[0]) * m.k, hy = (hand.y != null ? hand.y : hand[1]) * m.k;
   /* kleiner Bembel in der Hand */
   const bem = `<g transform="translate(${r(hx)} ${r(hy - 3.2)})"><path d="M-1.6 3 Q-2.4 1 -1.4 -.6 L-.8 -2.2 L.8 -2.2 L1.4 -.6 Q2.4 1 1.6 3 Z" fill="#a9adb0"/><path d="M-1.5 .9 h3" stroke="#2f4f9a" stroke-width=".35"/><path d="M1.6 -.4 q1.2 .6 .4 2" stroke="#8d9194" stroke-width=".35" fill="none"/></g>`;
-  S.teil({ id: "kellner", de: "der Kellner", syl: "KELL-ner", it: "il cameriere", itSyl: "ca-me-RIE-re", en: "waiter", x, y, kunst: m.svg + bem,
+  S.teil({ id: "kellner", de: "der Kellner", syl: "KELL-ner", it: "il cameriere", itSyl: "ca-me-RIE-re", en: "waiter", x, y, kunst: schatten(1, 0.2, 6, 1.1, 0.3) + m.svg + bem,
     tipp: "Der Kellner fragt: „Noch en Bembel?“ – das ist Hessisch." });
 }
 
@@ -768,12 +784,12 @@ const TISCH = { y: 170 };
 {
   let k = "";
   /* Tischplatte in Perspektive, die Kanten laufen zum Fluchtpunkt */
-  const lx = (y) => -6 + (y - TISCH.y) * (-64 / 60), rx = (y) => 116 + (y - TISCH.y) * (58 / 60);
-  k += `<path d="M-6 ${TISCH.y} L116 ${TISCH.y} L${r(rx(200))} 200 L${r(lx(200))} 200 Z" fill="${S.lg("tischholz", [[0, "#b98a57"], [0.5, "#a67745"], [1, "#8c6036"]])}"/>`;
+  const lx = (y) => Math.max(0, -6 + (y - TISCH.y) * (-64 / 60)), rx = (y) => 83 + (y - TISCH.y) * (25 / 60);
+  k += `<path d="M0 ${TISCH.y} L83 ${TISCH.y} L${r(rx(200))} 200 L0 200 Z" fill="${S.lg("tischholz", [[0, "#b98a57"], [0.5, "#a67745"], [1, "#8c6036"]])}"/>`;
   for (const t of [0.12, 0.27, 0.45, 0.66, 0.9]) { const y = TISCH.y + 30 * t; k += `<line x1="${r(lx(y))}" y1="${r(y)}" x2="${r(rx(y))}" y2="${r(y)}" stroke="#6e4826" stroke-width="${r(0.25 + t * 0.35)}" opacity=".55"/>`; }
   for (let i = 0; i < 26; i++) { const y = TISCH.y + 1 + rnd() * 28, x = lx(y) + rnd() * (rx(y) - lx(y)); k += `<path d="M${r(x)} ${r(y)} q${r(3 + rnd() * 4)} -.3 ${r(7 + rnd() * 6)} 0" stroke="#c99a66" stroke-width=".25" fill="none" opacity=".5"/>`; }
-  k += `<path d="M-6 ${TISCH.y} L116 ${TISCH.y}" stroke="#d6a873" stroke-width=".8"/>`;
-  k += `<path d="M-6 ${TISCH.y} L116 ${TISCH.y} L${r(rx(200))} 200 L${r(lx(200))} 200 Z" fill="${S.lg("tischlicht", [[0, "#fff3d6", 0.18], [0.5, "#fff3d6", 0], [1, "#000", 0.12]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M0 ${TISCH.y} L83 ${TISCH.y}" stroke="#d6a873" stroke-width=".8"/><path d="M83 ${TISCH.y} L${r(rx(200))} 200" stroke="#7a5230" stroke-width=".6"/>`;
+  k += `<path d="M0 ${TISCH.y} L83 ${TISCH.y} L${r(rx(200))} 200 L0 200 Z" fill="${S.lg("tischlicht", [[0, "#fff3d6", 0.18], [0.5, "#fff3d6", 0], [1, "#000", 0.12]], 0, 0, 1, 0)}"/>`;
   S.teil({ id: "tisch", de: "der Tisch", syl: "TISCH", it: "il tavolo", itSyl: "TA-vo-lo", en: "table", x: 0, y: 0, kunst: k });
 }
 {
@@ -792,7 +808,7 @@ const TISCH = { y: 170 };
   k += `<path d="M-6 -12 Q-6.6 -6 -4.4 -1.4" stroke="#fff" stroke-width=".8" opacity=".45" fill="none"/>`;
   k += `<rect x="-4" y="-23.4" width="8" height=".8" rx=".4" fill="#c9cdd0"/>`;
   S.teil({ oben: true, id: "bembel", de: "der Bembel", syl: "BEM-bel", it: "la brocca del sidro", itSyl: "BROC-ca del SI-dro", en: "cider jug",
-    x: 40, y: 185, steht: true, kunst: k, tipp: "Aus dem Bembel, einem grau-blauen Steinkrug, schenkt man Apfelwein aus." });
+    x: 30, y: 184, steht: true, kunst: k, tipp: "Aus dem Bembel, einem grau-blauen Steinkrug, schenkt man Apfelwein aus." });
 }
 {
   /* DAS GERIPPTE: Apfelweinglas mit Rautenschliff, zwei Gläser */
@@ -813,8 +829,20 @@ const TISCH = { y: 170 };
   };
   const k = glas(0, 0, 1, 0.82) + glas(-44, 5.6, 1.12, 0.7);
   S.teil({ oben: true, id: "geripptes", de: "das Gerippte", syl: "ge-RIPP-te", it: "il bicchiere a rombi", itSyl: "bic-CHIE-re a ROM-bi", en: "ribbed cider glass",
-    x: 63, y: 189, steht: true, kunst: k, tipp: "Das Apfelweinglas heißt „Geripptes“ – wegen seines Rautenmusters." });
+    x: 52, y: 188.5, steht: true, kunst: k, tipp: "Das Apfelweinglas heißt „Geripptes“ – wegen seines Rautenmusters." });
 }
+{
+  /* DIE FRANKFURTER WÜRSTCHEN: ein Paar, Senf, Brot */
+  let k = schatten(0, 0.3, 10, 1.4, 0.25);
+  k += `<ellipse cx="0" cy="0" rx="10" ry="3" fill="${S.lg("teller2", [[0, "#ffffff"], [1, "#dcdcd6"]])}"/>`;
+  for (const dy of [-1.6, -0.2]) k += `<path d="M-7 ${dy} Q0 ${dy - 1.6} 7 ${dy} Q7.6 ${dy + 0.6} 7 ${dy + 0.9} Q0 ${dy - 0.6} -7 ${dy + 0.9} Q-7.6 ${dy + 0.5} -7 ${dy} Z" fill="${S.lg("wurst", [[0, "#e7a77a"], [0.6, "#cf8457"], [1, "#a85f3c"]])}"/>`;
+  k += `<path d="M-5 -2.4 Q0 -3.6 5 -2.4" stroke="#f3c9a8" stroke-width=".3" fill="none" opacity=".8"/>`;
+  k += `<ellipse cx="6.4" cy="1.3" rx="1.8" ry=".7" fill="#e3b52e"/>`;
+  k += `<path d="M-9.4 .4 Q-9 -2 -6.6 -2.2 L-5 1.6 Q-8 2 -9.4 .4 Z" fill="#c99a5c"/><path d="M-9 0 Q-8.4 -1.4 -6.8 -1.6" stroke="#f2deb8" stroke-width=".5" fill="none"/>`;
+  S.teil({ oben: true, id: "wuerstchen", de: "das Frankfurter Würstchen", syl: "FRANK-fur-ter WÜRST-chen", it: "il würstel di Francoforte", itSyl: "VÜR-stel di fran-co-FOR-te", en: "frankfurter sausage",
+    x: 69, y: 177.6, steht: true, kunst: k, tipp: "Frankfurter Würstchen sind aus Schweinefleisch. Man erwärmt sie nur im heißen Wasser." });
+}
+
 {
   /* DIE GRÜNE SOSSE: tiefer Teller, sieben Kräuter, halbe Eier, Kartoffeln */
   let k = schatten(1, 0.4, 15, 2, 0.28);
@@ -827,19 +855,7 @@ const TISCH = { y: 170 };
   for (const [x, y] of [[6.4, -1.2], [8.6, -.2], [5.6, .6]]) k += `<ellipse cx="${x}" cy="${y}" rx="1.9" ry="1.3" fill="${S.rg("kartoffel", [[0, "#f6dc92"], [1, "#d9b158"]], 0.4, 0.35, 0.7)}"/>`;
   k += `<ellipse cx="0" cy="0" rx="14" ry="4.4" fill="none" stroke="#c9c9c2" stroke-width=".25"/>`;
   S.teil({ oben: true, id: "gruenesosse", de: "die Grüne Soße", syl: "GRÜ-ne SO-ße", it: "la salsa verde", itSyl: "SAL-sa VER-de", en: "green sauce",
-    x: 92, y: 192, steht: true, kunst: k, tipp: "Grüne Soße macht man aus sieben Kräutern. Dazu gibt es Eier und Kartoffeln." });
+    x: 73, y: 193.4, steht: true, kunst: k, tipp: "Grüne Soße macht man aus sieben Kräutern. Dazu gibt es Eier und Kartoffeln." });
 }
-{
-  /* DIE FRANKFURTER WÜRSTCHEN: ein Paar, Senf, Brot */
-  let k = schatten(0, 0.3, 10, 1.4, 0.25);
-  k += `<ellipse cx="0" cy="0" rx="10" ry="3" fill="${S.lg("teller2", [[0, "#ffffff"], [1, "#dcdcd6"]])}"/>`;
-  for (const dy of [-1.6, -0.2]) k += `<path d="M-7 ${dy} Q0 ${dy - 1.6} 7 ${dy} Q7.6 ${dy + 0.6} 7 ${dy + 0.9} Q0 ${dy - 0.6} -7 ${dy + 0.9} Q-7.6 ${dy + 0.5} -7 ${dy} Z" fill="${S.lg("wurst", [[0, "#e7a77a"], [0.6, "#cf8457"], [1, "#a85f3c"]])}"/>`;
-  k += `<path d="M-5 -2.4 Q0 -3.6 5 -2.4" stroke="#f3c9a8" stroke-width=".3" fill="none" opacity=".8"/>`;
-  k += `<ellipse cx="6.4" cy="1.3" rx="1.8" ry=".7" fill="#e3b52e"/>`;
-  k += `<path d="M-9.4 .4 Q-9 -2 -6.6 -2.2 L-5 1.6 Q-8 2 -9.4 .4 Z" fill="#c99a5c"/><path d="M-9 0 Q-8.4 -1.4 -6.8 -1.6" stroke="#f2deb8" stroke-width=".5" fill="none"/>`;
-  S.teil({ oben: true, id: "wuerstchen", de: "das Frankfurter Würstchen", syl: "FRANK-fur-ter WÜRST-chen", it: "il würstel di Francoforte", itSyl: "VÜR-stel di fran-co-FOR-te", en: "frankfurter sausage",
-    x: 99, y: 178, steht: true, kunst: k, tipp: "Frankfurter Würstchen sind aus Schweinefleisch. Man erwärmt sie nur im heißen Wasser." });
-}
-
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/frankfurt.js"));
 console.log(aus);

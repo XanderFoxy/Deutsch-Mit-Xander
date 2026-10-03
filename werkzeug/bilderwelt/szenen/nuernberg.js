@@ -68,6 +68,8 @@ const spiegel = [];     /* Teile, die sich in der Pegnitz spiegeln */
 const gruppe = (id, x, y, svg) => { spiegel.push({ id, x, y }); return `<g id="${S.id("sp_" + id)}">${svg}</g>`; };
 
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+S.def(`<filter id="${S.id("weich")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".35"/></filter>`);
+S.def(`<filter id="${S.id("fleck")}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6"/></filter>`);
 S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
 S.def(`<filter id="${S.id("spiegel")}" x="-2%" y="-5%" width="104%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".012 .42" numOctaves="1" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".6 .25"/></filter>`);
 /* Nürnberger Burgsandstein: rötlich, Licht von links (Südwesten) */
@@ -123,20 +125,43 @@ S.hinten(`<rect x="0" y="${W - 3}" width="320" height="4" fill="${S.lg("kai", [[
 const BURG = { x: 118, y: 94 };
 {
   let k = "";
-  /* Burgberg: im Westen (links) der nackte Fels, sonst Hang mit Gärten */
-  k += `<path d="M-86 8 L-82 -2 Q-78 -12 -73 -22 L-68 -31 L-60 -34 L-30 -35 L-6 -36 L14 -31 L60 -29 L74 -22 Q82 -10 88 8 Z" fill="${S.lg("hang", [[0, "#9a7a64"], [1, "#7a6252"]])}"/>`;
-  k += `<path d="M-86 8 L-82 -2 Q-78 -12 -73 -22 L-68 -31 L-60 -34 L-34 -35 L-38 -26 Q-44 -14 -46 8 Z" fill="${FELS}"/>`;
-  for (let i = 0; i < 8; i++) { const y = -31 + i * 4.4; k += `<path d="M${r(-74 + i * 1.3)} ${r(y)} q${r(10 + rnd() * 8)} ${r(-0.4 + rnd() * 0.8)} ${r(24 - i * 1.2)} ${r(rnd() * 0.6)}" stroke="#8a5238" stroke-width=".3" fill="none" opacity=".55"/>`; }
-  for (let i = 0; i < 7; i++) k += `<path d="M${r(-70 + i * 4.6)} ${r(-31 + rnd() * 3)} l${r(-1 + rnd() * 2)} ${r(6 + rnd() * 8)}" stroke="#7a4430" stroke-width=".25" fill="none" opacity=".5"/>`;
-  k += `<path d="M-82 -2 Q-78 -12 -73 -22 L-68 -31" stroke="#f6cfa6" stroke-width=".9" fill="none" opacity=".7"/>`;
-  k += `<path d="M-46 8 Q-44 -14 -38 -26 L-34 -35" stroke="#6e4432" stroke-width=".6" fill="none" opacity=".5"/>`;
-  /* kahle Winterbäume und ein paar Nadelbäume in den Burggärten */
-  for (let i = 0; i < 22; i++) {
-    const x = -40 + rnd() * 120, y = -26 + rnd() * 20, s = 1.6 + rnd() * 1.8;
-    k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(s * 1.4)}" ry="${r(s)}" fill="#8a7470" opacity=".5"/>`;
-    k += `<path d="M${r(x)} ${r(y + s)} l0 ${r(-s * 1.4)} m0 ${r(s * 0.6)} l${r(-s * 0.8)} ${r(-s * 0.7)} m${r(s * 0.8)} ${r(s * 0.3)} l${r(s * 0.8)} ${r(-s * 0.7)}" stroke="#5e4a46" stroke-width=".22" fill="none" opacity=".7"/>`;
+  /* Burgberg: Hang mit Gärten und kahlen Winterbäumen (feiner bräunlich-violetter Schleier) */
+  const hangPfad = "M-86 8 L-82 -2 Q-78 -12 -73 -22 L-68 -31 L-60 -34 L-30 -35 L-6 -36 L14 -31 L60 -29 L74 -22 Q82 -10 88 8 Z";
+  S.def(`<clipPath id="${S.id("hangclip")}"><path d="${hangPfad}"/></clipPath>`);
+  k += `<path d="${hangPfad}" fill="${S.lg("hang", [[0, "#94786a"], [0.55, "#7a6256"], [1, "#624e46"]])}"/>`;
+  let bm = "", kr = "";
+  for (let i = 0; i < 230; i++) {
+    const x = -16 + rnd() * 104, y = -34 + rnd() * 40, s2 = 0.45 + rnd() * 0.8;
+    kr += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(s2 * 1.4)}" ry="${r(s2)}" fill="${["#a08274", "#86695e", "#b4927e", "#735a52"][i % 4]}" opacity=".75"/>`;
   }
-  for (const x of [-30, -12, 24, 50]) k += `<path d="M${x - 1.8} -22 L${x} -29 L${x + 1.8} -22 Z" fill="#3e5444"/>`;
+  bm += `<g filter="url(#${S.id("weich")})">${kr}</g>`;
+  for (let i = 0; i < 90; i++) {
+    const x = -16 + rnd() * 104, y = -32 + rnd() * 38, h = 1.2 + rnd() * 1.6;
+    bm += `<path d="M${r(x)} ${r(y)} l0 ${r(-h)} m0 ${r(h * 0.45)} l${r(-h * 0.4)} ${r(-h * 0.4)} m${r(h * 0.4)} ${r(h * 0.1)} l${r(h * 0.45)} ${r(-h * 0.45)}" stroke="#4e3c38" stroke-width=".14" fill="none" opacity=".55"/>`;
+  }
+  for (const [x, y] of [[12, -26], [22, -24], [46, -25], [66, -19]]) bm += `<path d="M${x - 1.1} ${y} L${x} ${y - 4} L${x + 1.1} ${y} Z" fill="${S.lg("fichte", [[0, "#5a6e56"], [1, "#34463a"]], 0, 0, 1, 0)}"/>`;
+  bm += `<path d="M-40 -14 Q10 -18 80 -12 M-36 -6 Q20 -9 84 -4" stroke="#b49478" stroke-width=".35" fill="none" opacity=".45"/>`;
+  k += `<g clip-path="url(#${S.id("hangclip")})">${bm}</g>`;
+  /* im Westen der nackte Burgfelsen aus rotem Sandstein: Bänke, Klüfte, Simse */
+  const felsRand = [[-86, 8], [-83, 0], [-80, -7], [-78, -10], [-76, -16], [-73, -21], [-71, -26], [-68, -31], [-63, -33], [-56, -34.6], [-46, -35], [-30, -35.4], [-14, -36], [-2, -36.2], [6, -33.4], [5, -29], [1, -24], [-4, -18], [-8, -11], [-12, -3], [-15, 8]];
+  const felsPfad = `M${felsRand.map(([x, y]) => x + " " + y).join(" L")} Z`;
+  S.def(`<clipPath id="${S.id("felsclip")}"><path d="${felsPfad}"/></clipPath>`);
+  k += `<path d="${felsPfad}" fill="${S.lg("felsv", [[0, "#e6ae84"], [0.5, "#c98a62"], [1, "#9a5e44"]])}"/>`;
+  let fz = `<path d="${felsPfad}" fill="${S.lg("felsh", [[0, "#fff0d8", 0.25], [0.55, "#000", 0], [1, "#3a1a10", 0.3]], 0, 0, 1, 0)}"/>`;
+  /* große Schattenflecken (weich), dann kurze Gesteinsbänke mit Lichtkante, dunkle Klüfte */
+  let fl = "";
+  for (let i = 0; i < 9; i++) fl += `<ellipse cx="${r(-78 + rnd() * 80)}" cy="${r(-30 + rnd() * 34)}" rx="${r(4 + rnd() * 6)}" ry="${r(2 + rnd() * 3)}" fill="${rnd() < 0.6 ? "#7a3e2a" : "#ffe2c0"}" opacity="${rnd() < 0.6 ? 0.28 : 0.22}"/>`;
+  fz += `<g filter="url(#${S.id("fleck")})">${fl}</g>`;
+  for (let y = -32; y < 8; y += 2.6 + rnd() * 1.8) {
+    for (let x = -88 + rnd() * 6; x < 8; x += 6 + rnd() * 10) {
+      const l = 3 + rnd() * 7, d = -0.4 + rnd() * 0.8;
+      fz += `<path d="M${r(x)} ${r(y)} l${r(l)} ${r(d)}" stroke="#7a4230" stroke-width="${r(0.25 + rnd() * 0.25)}" opacity=".55"/><path d="M${r(x + 0.4)} ${r(y - 0.4)} l${r(l * 0.8)} ${r(d)}" stroke="#ffe0bc" stroke-width=".22" opacity=".4"/>`;
+    }
+  }
+  for (let i = 0; i < 14; i++) { const x = -80 + rnd() * 84, y = -34 + rnd() * 30, h = 4 + rnd() * 8; fz += `<path d="M${r(x)} ${r(y)} l${r(-0.5 + rnd())} ${r(h * 0.5)} l${r(-0.5 + rnd())} ${r(h * 0.5)} l.7 0 l${r(-0.3 + rnd() * 0.6)} ${r(-h)} Z" fill="#5a2c1e" opacity=".45"/>`; }
+  for (let i = 0; i < 16; i++) { const x = -80 + rnd() * 80, y = -28 + rnd() * 34; fz += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.7 + rnd() * 0.8)}" ry=".5" fill="#6a6a44" opacity=".7"/>`; }
+  k += `<g clip-path="url(#${S.id("felsclip")})">${fz}</g>`;
+  k += `<path d="M-83 0 L-80 -7 L-78 -10 L-76 -16 L-73 -21 L-71 -26 L-68 -31" stroke="#ffe0bc" stroke-width=".9" fill="none" opacity=".75"/>`;
   /* Burgmauer an der Felskante, Bastei links */
   k += `<path d="M-66 -30 L-66 -38 L72 -36 L72 -27 L14 -29 L-6 -34 L-30 -33 Z" fill="${FERN}"/>`;
   for (let x = -62; x < 70; x += 7.4) k += `<rect x="${r(x)}" y="-35" width=".6" height="1.8" fill="#6e4532"/>`;
@@ -161,13 +186,15 @@ const BURG = { x: 118, y: 94 };
   /* SINWELLTURM: runder Schaft mit Buckelquadern, auskragendes Geschoss, Zeltdach, Haube */
   const SW = -4;
   k += `<path d="M${SW - 4.8} -34 L${SW - 4.6} -57 L${SW + 4.6} -57 L${SW + 4.8} -34 Z" fill="${S.lg("rund", [[0, "#c69478"], [0.22, "#f2cca8"], [0.55, "#cc9a78"], [1, "#8a5e4a"]], 0, 0, 1, 0)}"/>`;
+  /* Buckelquader: Lagen aus großen, rauen Blöcken, an den Rändern schmaler (runder Schaft) */
   for (let i = 0; i < 10; i++) {
-    const y = -35.6 - i * 2.2, off = (i % 2) * 0.9;
-    k += `<path d="M${SW - 4.7} ${r(y)} Q${SW} ${r(y + 0.6)} ${SW + 4.7} ${r(y)}" stroke="#8a5a44" stroke-width=".16" fill="none" opacity=".7"/>`;
-    for (let j = -2; j <= 2; j++) {
-      const x = SW + (j * 1.9 + off) * (1 - 0.04 * j * j);
-      if (Math.abs(x - SW) < 4.2) k += `<line x1="${r(x)}" y1="${r(y)}" x2="${r(x)}" y2="${r(y - 2.2)}" stroke="#8a5a44" stroke-width=".13" opacity=".55"/>`;
-      if (i < 6 && Math.abs(x + 0.95 - SW) < 4) k += `<ellipse cx="${r(x + 0.95)}" cy="${r(y - 1.1)}" rx=".75" ry=".7" fill="${j < 0 ? "#fff" : "#6a4030"}" opacity="${j < 0 ? 0.14 : 0.1}"/>`;
+    const y = -34.2 - i * 2.28, R = 4.7 - i * 0.012, off = (i % 2) * 0.32;
+    for (let j = -3; j < 3; j++) {
+      const a0 = Math.max(-1.45, (j + off) * 0.48), a1 = Math.min(1.45, (j + 1 + off) * 0.48);
+      if (a1 <= a0) continue;
+      const x0 = SW + Math.sin(a0) * R + 0.1, x1 = SW + Math.sin(a1) * R - 0.1, hell = Math.cos((a0 + a1) / 2 + 0.6);
+      k += `<rect x="${r(x0)}" y="${r(y - 2.1)}" width="${r(Math.max(0.2, x1 - x0))}" height="2" rx=".5" fill="${hell > 0.75 ? "#f2cba6" : hell > 0.4 ? "#d8a682" : hell > 0 ? "#b98462" : "#94634c"}" opacity=".75"/>`;
+      k += `<path d="M${r(x0 + 0.2)} ${r(y - 1.9)} L${r(x1 - 0.2)} ${r(y - 1.9)}" stroke="#fff0d8" stroke-width=".22" opacity="${r(Math.max(0, hell) * 0.6)}"/>`;
     }
   }
   k += `<path d="M${SW - 0.6} -46.6 L${SW - 0.6} -48.8 Q${SW} -49.6 ${SW + 0.6} -48.8 L${SW + 0.6} -46.6 Z" fill="${DUNKEL}"/><rect x="${SW + 1.8}" y="-41" width=".9" height="2" rx=".4" fill="${DUNKEL}"/>`;
@@ -453,7 +480,8 @@ const FK = { x: 266, y: W - 2 };
         x: FK.x, y: FK.y - 44.6, kunst: flaeche(-7, -6.2, 14, 6.2), tipp: "Jeden Tag um zwölf Uhr ziehen sieben Kurfürsten um Kaiser Karl IV. herum." },
       { id: "christkind", de: "das Christkind", syl: "CHRIST-kind", it: "il Christkind (l'angelo di Natale)", itSyl: "CHRIST-kind", en: "Christkind (Christmas angel)",
         x: FK.x, y: FK.y - 31.4, kunst: flaeche(-2.4, -6, 4.8, 6), tipp: "Das Nürnberger Christkind eröffnet den Christkindlesmarkt – mit einem Gedicht von der Empore der Frauenkirche." },
-      { id: "portal", de: "das Portal", syl: "por-TAL", it: "il portale", itSyl: "por-TA-le", en: "portal", x: FK.x, y: FK.y, kunst: flaeche(-7, -21, 14, 21) },
+      { id: "giebel", de: "der Giebel", syl: "GIE-bel", it: "il frontone", itSyl: "fron-TO-ne", en: "gable", x: FK.x - 22, y: FK.y - 34, kunst: flaeche(-6, -24, 12, 24),
+        tipp: "Der Giebel steigt in Stufen an – ein Treppengiebel mit kleinen Türmchen (Fialen)." },
     ] });
 }
 
@@ -549,7 +577,7 @@ S.def(`<pattern id="${S.id("streifen2")}" patternUnits="userSpaceOnUse" width="5
 {
   let sp = "";
   for (const s of spiegel) sp += `<use href="#${S.id("sp_" + s.id)}" transform="translate(${r(s.x)} ${r(2 * W - s.y)}) scale(1 -1)"/>`;
-  S.def(`<pattern id="${S.id("spiegelbild")}" patternUnits="userSpaceOnUse" x="0" y="${W}" width="320" height="${WU - W}"><g transform="translate(0 ${-W})"><rect x="0" y="${W}" width="320" height="${WU - W}" fill="${S.lg("wasser", [[0, "#7f9c9c"], [0.45, "#5e8082"], [1, "#405e62"]])}"/><g opacity=".62" filter="url(#${S.id("spiegel")})">${sp}</g></g></pattern>`);
+  S.def(`<pattern id="${S.id("spiegelbild")}" patternUnits="userSpaceOnUse" x="0" y="${W}" width="320" height="${WU - W}"><g transform="translate(0 ${-W})"><rect x="0" y="${W}" width="320" height="${WU - W}" fill="${S.lg("wasser", [[0, "#6f9090"], [0.45, "#4e7276"], [1, "#2e4c54"]])}"/><g opacity=".7" filter="url(#${S.id("spiegel")})">${sp}</g></g></pattern>`);
   let k = `<rect x="0" y="${W}" width="320" height="${WU - W}" fill="url(#${S.id("spiegelbild")})"/>`;
   k += `<rect x="0" y="${W}" width="320" height="${WU - W}" fill="${S.lg("wasserschleier", [[0, "#7a9898", 0.12], [0.5, "#5a7a7c", 0.26], [1, "#34525a", 0.5]])}"/>`;
   for (let i = 0; i < 150; i++) {

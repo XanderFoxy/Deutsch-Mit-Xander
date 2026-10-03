@@ -123,7 +123,7 @@ function mach(T) {
   /* Vieleck (für unscharfe Flächen genügen Geraden) */
   H.vieleck = (pts) => "M" + pts.map((p) => f(p[0]) + " " + f(p[1])).join(" ") + "Z";
   H.weichF = (pts, farbe, op, std, box) => {
-    const d = typeof pts === "string" ? pts : (std >= 2.5 && pts.length > 12 ? H.vieleck(pts) : G(pts));
+    const d = typeof pts === "string" ? pts : (!F && std >= 2.5 && pts.length > 12 ? H.vieleck(pts) : G(pts));
     const b = box || T.box(pts);
     return `<path d="${d}" fill="${farbe}"${op < 1 ? ` opacity="${op}"` : ""}${std ? ` filter="${H.weich(std, b)}"` : ""}/>`;
   };
@@ -338,14 +338,14 @@ function orca(T) {
 function delfin(T) {
   const H = mach(T), { G, L, teil, weichF, weichL, F } = H;
   const R = H.rumpf(
-    [[281, -46.5], [279.6, -49.4], [276.5, -51.4], [272.5, -52.5], [269.5, -53.4, 1], [268.2, -57], [266.6, -61], [263.8, -65.2], [259, -69.4], [252, -72.8], [243, -75.4], [232, -77.4], [215, -79.8], [195, -81.7], [172, -83], [150, -83.3], [128, -82.2], [108, -79.8], [88, -75.6], [68, -69.8], [50, -63.6], [36, -59], [24, -56]],
-    [[281, -46.5], [280.4, -44], [278, -42], [273, -40.4], [266, -39.1], [257, -37.7], [246, -35.7], [232, -33], [215, -30.2], [195, -28.3], [172, -27.5], [150, -28], [128, -29.8], [108, -33], [88, -37.5], [68, -42], [50, -45.8], [36, -48], [24, -49.2]],
+    [[281, -46.5], [279.6, -49.4], [276.5, -51.4], [272.5, -52.5], [269.5, -53.4, 1], [268.2, -57], [266.6, -61], [263.8, -65.2], [259, -69.4], [252, -72.8], [243, -75.4], [232, -77.4], [215, -80.2], [195, -82.3], [172, -83.4], [150, -83.4], [128, -82.2], [108, -79.8], [88, -75.6], [68, -69.8], [50, -63.6], [36, -59], [24, -56]],
+    [[281, -46.5], [280.4, -44], [278, -42], [273, -40.4], [266, -39.1], [257, -37.7], [246, -35.4], [232, -32.2], [215, -29.2], [195, -27.4], [172, -27], [150, -27.8], [128, -29.8], [108, -33], [88, -37.5], [68, -42], [50, -45.8], [36, -48], [24, -49.2]],
     [[12, -58], [0, -60.2], [-10, -62.4], [-18, -64.2], [-21.5, -63.8, 1], [-16, -60.4], [-9, -57], [-3, -54.4], [-0.5, -52.8, 1], [-4, -51], [-11, -47.8], [-19, -43.8], [-25, -40.2, 1], [-20.5, -39.8], [-8, -43.4], [4, -46.4], [14, -48]]);
   const P = R.P;
   const RUECKEN = "#434b55", FLANKE = "#949da5", BAUCH = "#ece9e4";
   let s = "";
   /* Rückenfinne: hoch, sichelförmig, Spitze nach hinten */
-  const fRand = [[170, -80.5], [163, -85.5], [154, -91.5], [144, -98], [133, -104], [122, -108.6], [113, -110.8], [107.5, -111, 1], [109.5, -107.4], [113.5, -102], [116.4, -95.6], [117.6, -89.4], [117.2, -85], [115, -82], [111, -80.6]];
+  const fRand = [[170, -80.5], [163, -85.5], [154, -91.5], [144, -98], [133, -104], [122, -108.6], [113, -110.8], [107.5, -111, 1], [109.5, -107.4], [113.5, -102], [116.4, -95.6], [117.6, -89.4], [117.2, -85], [115, -81.6], [110, -79]];
   let fi = weichF([[166, -83], [154, -90.5], [140, -99], [126, -106], [113, -110], [124, -105], [138, -97], [152, -88.5]], "#d2dee6", 0.55, 0.9);
   fi += weichF([[110, -108], [114, -101], [117, -93], [118, -85], [114, -82], [113, -92], [111, -101]], "#000", 0.35, 2);
   fi += weichF([[170, -79], [150, -86], [128, -86], [117, -80], [140, -77]], "#000", 0.3, 3);
@@ -367,17 +367,16 @@ function delfin(T) {
   k += H.rampe(R, 20, 280, [-0.1, -0.1, -0.1], 0.14, "#dce8f0", 0.06, 3) + H.rampe(R, 20, 280, [-0.1, -0.1], 0.26, "#dce8f0", 0.05, 5);
   k += H.rampe(R, 24, 268, [0.4, 0.5, 0.6, 0.7, 0.8], 0.98, "#16202a", 0.045, 5);
   k += weichF(R.band(60, 262, 0.86, 1.06), "#6f7d89", 0.3, 2.4);
-  k += weichF(R.band(70, 262, 0.96, 1.06), "#f2f2ee", 0.22, 1);
+  if (F) k += weichF(R.band(70, 262, 0.96, 1.06), "#f2f2ee", 0.22, 1);
   /* Form: Schatten unter der Melone zum Schnabel, Hals leicht eingezogen, Brustkorb gewölbt, Kiel am Schwanzstiel */
   k += weichF([[270, -54], [266, -58], [262, -60], [258, -56], [260, -50], [268, -49]], "#1c252e", 0.3, 1.6);
-  k += weichF(R.linse(205, 245, 0.3, 0.12), "#1c252e", 0.1, 3);
-  k += weichF(R.linse(130, 200, 0.42, 0.14), "#ffffff", 0.08, 4);
+  if (F) k += weichF(R.linse(205, 245, 0.3, 0.12), "#1c252e", 0.1, 3) + weichF(R.linse(130, 200, 0.42, 0.14), "#ffffff", 0.08, 4);
   k += weichF(R.linse(24, 100, 0.12, 0.03), "#e6eff5", 0.3, 0.8);
   k += weichF(R.linse(30, 95, 0.62, 0.2), "#16202a", 0.15, 2.5);
   /* Glanzlinsen der nassen Haut: Melone, Rücken, Flanke */
   k += weichF(R.saum(230, 281, 1.4, 4.2), "#ffffff", 0.75, 0.6);
   k += weichF(R.linse(172, 226, 0.09, 0.022), "#ffffff", 0.7, 0.6);
-  k += weichF(R.linse(122, 166, 0.085, 0.016), "#ffffff", 0.45, 0.5);
+  if (F) k += weichF(R.linse(122, 166, 0.085, 0.016), "#ffffff", 0.45, 0.5);
   k += weichF(R.linse(40, 112, 0.1, 0.022), "#ffffff", 0.55, 0.6);
   k += weichF(R.linse(150, 240, 0.3, 0.05), "#eaf2f7", 0.2, 2);
   k += weichF(R.linse(255, 278, (x, u) => 0.18 + u * 0.08, 0.06), "#ffffff", 0.5, 0.5);
@@ -386,7 +385,7 @@ function delfin(T) {
   k += weichF([[26, -57], [12, -58], [2, -55], [-1, -52.8], [2, -50], [12, -48], [26, -49], [18, -53]], "#000", 0.35, 1.8);
   k += weichF([[22, -57.5], [8, -59], [-6, -61.6], [-20, -64], [-8, -60.4], [6, -57.4]], "#e3edf3", 0.4, 0.6);
   k += weichF([[22, -48.6], [8, -47.4], [-6, -44.6], [-23, -40.6], [-9, -43.8], [6, -46.4]], "#e3edf3", 0.4, 0.6);
-  k += weichF([[-21, -63.6], [-16, -60.2], [-8, -56.4], [-1, -53], [-8, -55], [-16, -58.8]], "#000", 0.35, 0.9);
+  if (F) k += weichF([[-21, -63.6], [-16, -60.2], [-8, -56.4], [-1, -53], [-8, -55], [-16, -58.8]], "#000", 0.35, 0.9);
   /* Narben: helle Zahnharken in Gruppen (fast gerade, parallel), einzelne ältere Kratzer */
   if (F) {
     k += H.narbenG([[212, -67, -12, 15, 3, 0.85, 0.4], [190, -58, 4, 12, 4, 0.8, -0.3], [170, -71, -6, 16, 3, 0.85, 0.3], [138, -55, -10, 13, 3, 0.8, -0.3], [100, -66, 12, 12, 3, 0.8, 0.3], [228, -48, 22, 8, 2, 0.7, 0.3], [76, -60, -6, 10, 2, 0.7, 0]], "#e4eaee", 0.2, 0.38);
@@ -395,7 +394,7 @@ function delfin(T) {
   /* Kerbe Schnabel/Melone, Maullinie (leicht ansteigend), Lippenlicht, Blasloch, Ohröffnung */
   k += weichL([[[269.6, -53.6], [268.6, -52.2], [266.4, -50.8], [263, -49.4]]], "#1b2228", 0.6, 0.55, 0.35);
   k += weichL([[[268.4, -56.4], [267.4, -60.4], [265.2, -64.6]]], "#ffffff", 0.6, 0.35, 0.4);
-  const maul = [[281, -46.6], [276, -46.7], [268, -47.1], [261, -47.8], [255.5, -49], [252.4, -50.6], [251.2, -51.8]];
+  const maul = [[281, -46.6], [276, -46.7], [268, -47.1], [261, -47.7], [256, -48.6], [253, -49.6], [251.6, -50.6]];
   k += L([maul], "#141a1f", 0.55, 0.95) + L([maul.slice(0, 5).map((p) => [p[0], p[1] + 0.7])], "#ffffff", 0.35, 0.5);
   k += L([[[241, -76.2], [238.5, -76.6], [236, -76.5]]], "#20272d", 0.6, 0.6);
   s += teil(R.d, RUECKEN, { innen: k, randA: 0.45, rw: 0.4 });
@@ -411,9 +410,144 @@ function delfin(T) {
   return { svg: `<g transform="translate(0 ${-box[3]})">${s}</g>`, box: [box[0], box[1] - box[3], box[2], 0] };
 }
 
+/* =====================================================================
+   WEISSER HAI
+   ===================================================================== */
+/* RECHERCHE Weißer Hai (Carcharodon carcharias):
+   4–6 m (hier 4,5 m), schwerer Spindelkörper, größte Höhe ~21 % an der ersten Rückenflosse. Schnauze kegelig,
+   stumpf zugespitzt; Auge rund, schwarz (Iris sehr dunkelblau), ohne sichtbare Nickhaut, ~8 % hinter der Spitze.
+   Maul groß, unterständig, bogenförmig; Mundwinkel unter/hinter dem Auge. Oberkieferzähne breit dreieckig,
+   gesägt; Unterkieferzähne schmaler, spitzer. Fünf LANGE Kiemenspalten, alle VOR dem Brustflossenansatz.
+   Lorenzinische Ampullen: dunkle Poren auf Schnauze, um Auge und Nasenlöcher. Brustflossen groß, sichelförmig,
+   Spitzen unterseits abrupt schwarz, schwarzer Achselfleck. Erste Rückenflosse groß, dreieckig, Ursprung über
+   dem Innenrand der Brustflosse; zweite Rücken- und Afterflosse winzig. Schwanzstiel abgeflacht mit kräftigem
+   Seitenkiel bis auf die Schwanzflosse; Schwanzflosse halbmondförmig, fast symmetrisch (oberer Lappen etwas
+   länger). Färbung: oben schiefergrau bis bronzegrau, scharfe, unregelmäßig gezackte Grenze zum weißen Bauch
+   (jedes Tier eigen); Haut matt-samtig (Hautzähnchen), wenig Glanz, oft helle Narben. */
+function weisser_hai(T) {
+  const H = mach(T), { G, L, teil, weichF, weichL, F, f } = H;
+  const GRAU = "#5a6267", WEISS = "#efeee9";
+  const R = H.rumpf(
+    [[450, -88], [447.5, -95.5], [441, -103.5], [430, -111.5], [413, -119.5], [390, -127.5], [360, -134.5], [326, -140.5], [292, -143.8], [258, -143.6], [224, -139.8], [190, -133], [156, -124], [126, -115.5], [106, -110], [90, -106.5]],
+    [[450, -88], [448.4, -82.5], [444.5, -78.2], [438.6, -75], [432.5, -73.4, 1], [429.5, -68.4], [426, -64.6, 1], [419, -61.8], [408, -60], [395, -58.8], [380, -57.6], [362, -55.6], [340, -52.6], [315, -50.1], [285, -48.6], [255, -49.4], [225, -53.4], [195, -60.4], [165, -69.4], [140, -78.4], [118, -86.4], [101, -92.4], [90, -95.6]],
+    [[76, -113], [62, -124], [47, -140], [32, -159], [18, -178], [7, -192], [0.5, -198.5, 1], [5, -190], [15, -172], [28, -149], [40, -128], [49, -113], [53, -104.5, 1], [48, -95], [40, -82], [30, -66], [20, -52], [12.5, -41, 1], [22, -46], [40, -62], [58, -77], [76, -89]]);
+  const P = R.P;
+  let s = "";
+  /* ferne Brustflosse: nur die Spitze schaut unter dem Bauch hervor */
+  s += teil(G([[330, -60], [318, -44], [304, -28], [292, -16], [286, -14, 1], [292, -26], [300, -40], [306, -56]]), "#3c4348", { randA: 0.4, rw: 0.5 });
+  /* erste Rückenflosse: groß, dreieckig, Spitze leicht gerundet, Hinterrand konkav, freie Hinterspitze */
+  const r1 = [[316, -139], [309, -150], [300, -164], [290, -178], [280, -190], [272, -198], [266.5, -200.5], [263, -198.4], [262, -192], [259.5, -180], [254.5, -167], [248, -155.5], [242.5, -148.5], [238.5, -145.6, 1], [246, -144.6], [254, -142.6]];
+  let ri = weichF([[310, -147], [298, -165], [286, -181], [274, -194], [268, -199], [280, -186], [293, -170], [304, -153]], "#c9d2d8", 0.45, 1.4);
+  ri += weichF([[264, -196], [262, -185], [258, -172], [252, -160], [246, -150], [252, -151], [258, -164], [262, -178]], "#000", 0.45, 2.4);
+  ri += weichF([[318, -136], [290, -150], [260, -150], [240, -142], [280, -134]], "#000", 0.3, 4);
+  if (F) ri += H.narbenG([[292, -170, 60, 16, 2, 1.4, 0.6]], "#d7dde0", 0.35, 0.35);
+  s += teil(G(r1.concat([[280, -130]])), GRAU, { innen: ri, randD: G(r1, false), randA: 0.5, rw: 0.6 });
+  /* ---- Rumpf ---- */
+  let k = "";
+  /* Bauchweiß mit scharfer, unregelmäßiger Grenze (über dem Maul, unter dem Auge, durch die Kiemenspalten,
+     hinter der Brustflosse eine helle Zunge nach oben, dann zum Schwanzstiel hin abfallend) */
+  const grenze = [[456, 0.66], [440, 0.64], [426, 0.63], [412, 0.64], [398, 0.62], [386, 0.6], [376, 0.6], [368, 0.63], [360, 0.62], [351, 0.64], [342, 0.66], [334, 0.7], [326, 0.67], [318, 0.6], [312, 0.55], [306, 0.6], [300, 0.66], [290, 0.68], [278, 0.66], [266, 0.69], [252, 0.7], [238, 0.68], [224, 0.72], [210, 0.74], [196, 0.76], [180, 0.78], [164, 0.8], [148, 0.84], [132, 0.88], [118, 0.94], [104, 1.05], [96, 1.3]];
+  k += `<path d="${G(grenze.map((q) => P(q[0], q[1])).concat([[90, -40, 1], [460, -40, 1]]))}" fill="${WEISS}" filter="${H.weich(0.35, [85, -130, 462, -40])}"/>`;
+  /* Licht: Himmelslicht oben (matt), Eigenschatten unten, Reflexlicht am Bauch */
+  k += H.rampe(R, 90, 452, [-0.1, -0.1], 0.22, "#e7eef2", 0.07, 4) + H.rampe(R, 90, 452, [-0.1], 0.4, "#e7eef2", 0.05, 7);
+  k += H.rampe(R, 90, 448, [0.45, 0.58, 0.7, 0.8], 1.02, "#18222b", 0.06, 5);
+  k += weichF(R.band(120, 420, 0.9, 1.06), "#ffffff", 0.18, 2.4);
+  k += weichF(R.linse(170, 400, 0.08, 0.035), "#eef4f7", 0.35, 1.6);
+  k += weichF(R.saum(400, 452, 1.5, 6), "#eef4f7", 0.45, 1.2);
+  k += weichF(R.linse(96, 170, 0.12, 0.05), "#eef4f7", 0.25, 1.6);
+  /* Muskelbänder der Flanke (Myomere) als ganz weiche Licht-/Schattenzüge */
+  if (F) {
+    const myo = [];
+    for (let i = 0; i < 9; i++) { const x = 300 - i * 22; myo.push([P(x + 6, 0.2), P(x - 4, 0.4), P(x + 4, 0.6)]); }
+    k += weichL(myo, "#000", 3, 0.07, 2.2) + weichL(myo.map((z) => z.map((p) => [p[0] + 3, p[1]])), "#ffffff", 2, 0.06, 2);
+  }
+  /* Kiemenspalten: fünf lange, leicht geschwungene Spalten, hinter jeder ein heller Hautlappen */
+  const kiemen = [];
+  for (let i = 0; i < 5; i++) {
+    const x = 378 - i * 8.6, a = 0.27 + i * 0.012, b = 0.8 - i * 0.012;
+    kiemen.push([P(x + 1.5, a), P(x - 0.5, (a + b) * 0.45), P(x - 0.2, (a + b) * 0.55), P(x + 2, b)]);
+  }
+  k += weichL(kiemen.map((z) => z.map((p) => [p[0] - 2.2, p[1]])), "#000", 4, 0.22, 1.6);
+  k += L(kiemen, "#1a1e22", 1.1, 0.85) + L(kiemen.map((z) => z.map((p) => [p[0] + 1.2, p[1]])), "#dfe5e8", 0.7, 0.45);
+  /* Seitenkiel am Schwanzstiel (Lichtkante, Schatten darunter) */
+  k += weichL([[P(140, 0.5), P(110, 0.48), P(90, 0.47), [70, -102], [55, -104]]], "#eef3f6", 1.6, 0.45, 0.6);
+  k += weichL([[P(140, 0.6), P(110, 0.6), P(90, 0.6), [70, -99], [55, -101.5]]], "#000", 2.2, 0.3, 1);
+  /* Schwanzflosse: Licht auf den Vorderkanten, dunkler Hinterrand */
+  k += weichF([[80, -112], [60, -128], [40, -152], [20, -178], [4, -195], [14, -183], [32, -158], [52, -132], [70, -116]], "#d5dde2", 0.3, 1.4);
+  k += weichF([[2, -196], [12, -178], [26, -152], [40, -126], [50, -108], [44, -112], [32, -136], [18, -162], [6, -186]], "#000", 0.3, 1.6);
+  k += weichF([[78, -90], [58, -80], [38, -64], [20, -48], [14, -42], [26, -50], [44, -64], [62, -80]], "#d5dde2", 0.25, 1.4);
+  /* Narben (hell, alt) */
+  if (F) k += H.narbenG([[330, -118, -8, 22, 2, 1.6, 0.5], [262, -112, 10, 28, 3, 1.5, -0.4], [210, -102, -4, 16, 1, 1, 0.6], [355, -95, 30, 12, 2, 1.2, 0]], "#d9dfe2", 0.4, 0.4);
+  /* Lorenzinische Ampullen: dunkle Poren auf Schnauze und um das Auge */
+  if (F) {
+    let po = "";
+    for (let i = 0; i < 110; i++) {
+      const x = 402 + T.rnd() * 48, t = 0.15 + T.rnd() * 0.6;
+      const [px, py] = P(x, t);
+      if (Math.hypot(px - 412.5, py + 102) < 4) continue;
+      po += `M${f(px)} ${f(py)}h.01`;
+    }
+    k += `<path d="${po}" stroke="#14181b" stroke-width=".9" stroke-linecap="round" stroke-opacity=".55" fill="none"/>`;
+    k += `<path d="${po}" stroke="#ffffff" stroke-width=".9" stroke-linecap="round" stroke-opacity=".18" fill="none" transform="translate(.35 .4)"/>`;
+  }
+  /* Nasenloch (Unterseite der Schnauze, von der Seite als Schlitz) */
+  k += weichL([[[440, -80], [436, -79], [432, -79.4]]], "#1a1e22", 1.4, 0.55, 0.3);
+  /* Maul: leicht geöffnet – Oberkiefer mit breiten gesägten Dreieckszähnen, Unterkiefer mit schmaleren Zähnen */
+  const U = [[433, -73.6], [424, -72.4], [413, -72.6], [402, -73.8], [392, -75.6], [385, -77.6], [381.5, -79.2]];
+  const Uk = [[426.5, -65], [418, -63.6], [408, -64.2], [398, -66.4], [390, -70], [384.5, -74.6], [381.5, -79.2]];
+  let m = `<path d="${G(U.concat(Uk.slice(0, -1).reverse()), true)}" fill="#2a1416"/>`;
+  m += `<path d="${G(U.concat(U.slice().reverse().map((p) => [p[0], p[1] + 2.6])), true)}" fill="#a6616a" opacity=".9"/>`;
+  m += `<path d="${G(Uk.concat(Uk.slice().reverse().map((p) => [p[0], p[1] - 2])), true)}" fill="#9c5a62" opacity=".85"/>`;
+  /* Zähne entlang der Kiefer (vorn groß, zum Mundwinkel kleiner) */
+  const zahn = (A, n, h0, h1, b0, b1, ab, oben) => {
+    const dd = H.dicht(A, false, 6);
+    let z = "", sch = "";
+    for (let i = 0; i < n; i++) {
+      const u = (i + 0.4) / n, p = dd[Math.min(dd.length - 1, Math.floor(u * (dd.length - 1)))];
+      const h = h0 + (h1 - h0) * u, b = b0 + (b1 - b0) * u, sg = oben ? 1 : -1, x = p[0], y = p[1] + (oben ? 0.8 : -0.4) * sg;
+      z += `M${f(x + b / 2)} ${f(y)}L${f(x - b * 0.05)} ${f(y + h * sg)}L${f(x - b / 2)} ${f(y)}Z`;
+      if (F) sch += `M${f(x + b * 0.36)} ${f(y + h * 0.3 * sg)}l${f(-b * 0.06)} ${f(h * 0.1 * sg)}M${f(x + b * 0.24)} ${f(y + h * 0.55 * sg)}l${f(-b * 0.05)} ${f(h * 0.08 * sg)}M${f(x - b * 0.3)} ${f(y + h * 0.35 * sg)}l${f(b * 0.05)} ${f(h * 0.1 * sg)}`;
+    }
+    return `<path d="${z}" fill="${T.lg(oben ? "zahnO" : "zahnU", [[0, oben ? "#e8e0cc" : "#f6f1e2"], [1, oben ? "#fbf8ee" : "#d9cfb8"]])}" stroke="#6d6250" stroke-width=".25" stroke-opacity=".6"/>` + (sch ? `<path d="${sch}" stroke="#7a6e58" stroke-width=".18" stroke-opacity=".6" fill="none"/>` : "");
+  };
+  m += zahn(U.map((p) => [p[0], p[1] + 1.2]), 11, 4.6, 2.2, 3.6, 2, 0, true);
+  m += zahn(Uk.slice(0, 5).map((p) => [p[0], p[1] - 0.6]), 8, 3.2, 1.8, 1.9, 1.2, 0, false);
+  k += m;
+  /* Lippenkante oben (Licht), Kinn unten im Schatten */
+  k += L([U], "#20262a", 0.9, 0.7) + L([U.slice(0, 5).map((p) => [p[0], p[1] - 1])], "#ffffff", 0.6, 0.3);
+  k += L([Uk.slice(0, 6)], "#3a2a2c", 0.7, 0.6);
+  s += teil(R.d, GRAU, { innen: k, randA: 0.5, rw: 0.6 });
+  /* zweite Rückenflosse und Afterflosse: winzig */
+  s += teil(G([[126, -114.5], [118, -121], [112, -123.6], [108.6, -122.6], [108, -117], [105, -112.2], [116, -111]]), GRAU, { innen: weichF([[124, -116], [116, -121], [111, -122.6], [116, -119]], "#d5dde2", 0.3, 0.8), randA: 0.45, rw: 0.5 });
+  s += teil(G([[124, -88], [117, -82], [111, -78.8], [107.6, -79.6], [107, -84], [104, -90.4], [114, -91]]), "#6a7277", { randA: 0.45, rw: 0.5 });
+  /* Bauchflosse */
+  s += teil(G([[208, -59.6], [198, -50], [186, -41.6], [176, -36.4], [170.5, -36.6, 1], [173, -42], [176.5, -50], [184, -62]]), "#7d858a", { innen: weichF([[205, -56], [190, -46], [176, -38.4], [184, -46], [196, -55]], "#e9eef1", 0.35, 1) + weichF([[176, -40], [180, -50], [186, -60], [178, -58]], "#000", 0.3, 2), randA: 0.5, rw: 0.5 });
+  /* Brustflosse: groß, sichelförmig nach hinten-unten; Vorderkante im Licht, Spitze unterseits schwarz, Achselfleck */
+  const bf = [[352, -70], [347.5, -58], [338, -44], [324, -30], [308, -17.4], [292, -8], [281.5, -4.2, 1], [287, -9.6], [294.5, -18], [302, -29], [310, -42], [318, -55], [326, -66]];
+  let bi = weichF([[349, -64], [338, -46], [322, -30], [304, -16], [287, -6.6], [300, -16], [318, -30], [334, -46], [344, -60]], "#dbe3e8", 0.5, 1.4);
+  bi += weichF([[300, -14], [292, -9], [282, -4.2], [287, -10], [296, -20], [304, -26]], "#0e1113", 0.85, 1.2);
+  bi += weichF([[284, -8], [296, -22], [308, -38], [318, -52], [326, -64], [318, -62], [306, -46], [294, -28]], "#000", 0.4, 2.4);
+  bi += weichF([[356, -78], [330, -74], [322, -64], [346, -60]], "#000", 0.45, 3);
+  s += `<path d="${G([[330, -70], [322, -63], [314, -57], [318, -66]])}" fill="#0b0d0f" opacity=".8" filter="${H.weich(1.2, [310, -72, 334, -54])}"/>`;
+  s += teil(G(bf), GRAU, { innen: bi, randA: 0.5, rw: 0.6 });
+  /* Auge: schwarz, sehr dunkelblaue Iris, Glanzlicht, Hautrand */
+  const ax = 412.5, ay = -102, ar = 2.3;
+  s += `<ellipse cx="${ax}" cy="${ay}" rx="${f(ar * 2.4)}" ry="${f(ar * 2)}" fill="${T.rg("haiHoehle", [[0, "#000", 0.45], [0.6, "#000", 0.15], [1, "#000", 0]])}"/>`;
+  s += `<circle cx="${ax}" cy="${ay}" r="${f(ar * 1.18)}" fill="#3f474c"/>`;
+  s += `<circle cx="${ax}" cy="${ay}" r="${ar}" fill="${T.rg("haiAuge", [[0, "#05070a"], [0.5, "#0a0f16"], [0.82, "#1c2a3b"], [1, "#05070a"]], 0.48, 0.5, 0.5)}"/>`;
+  if (F) s += `<circle cx="${f(ax + 0.15)}" cy="${ay}" r="${f(ar * 0.45)}" fill="#020304"/>`;
+  s += `<ellipse cx="${f(ax + ar * 0.35)}" cy="${f(ay - ar * 0.4)}" rx="${f(ar * 0.3)}" ry="${f(ar * 0.2)}" fill="#fff" opacity=".85"/>`;
+  s += `<ellipse cx="${f(ax - ar * 0.3)}" cy="${f(ay + ar * 0.42)}" rx="${f(ar * 0.35)}" ry="${f(ar * 0.1)}" fill="#a9c2d6" opacity=".35"/>`;
+  s += `<path d="M${f(ax - ar * 1.3)} ${f(ay - ar * 0.6)}A${f(ar * 1.35)} ${f(ar * 1.35)} 0 0 1 ${f(ax + ar * 1.3)} ${f(ay - ar * 0.6)}" fill="none" stroke="#c9d2d8" stroke-width=".4" stroke-opacity=".35"/>`;
+  const box = [0.5, -200.5, 450, -4.2];
+  return { svg: `<g transform="translate(0 ${-box[3]})">${s}</g>`, box: [box[0], box[1] - box[3], box[2], 0] };
+}
+
 module.exports = [
   { id: "orca", de: "der Orca", syl: "OR-ca", it: "l'orca", itSyl: "OR-ca", en: "orca",
     gruppe: "Meer", lebensraum: "Meer", laenge: 7.64, hoehe: 3.95, schwimmt: true, zeichne: orca },
   { id: "delfin", de: "der Delfin", syl: "DEL-fin", it: "il delfino", itSyl: "del-FI-no", en: "dolphin",
     gruppe: "Meer", lebensraum: "Meer", laenge: 3.06, hoehe: 0.98, schwimmt: true, zeichne: delfin },
+  { id: "weisser_hai", de: "der Weiße Hai", syl: "WEI-ße HAI", it: "lo squalo bianco", itSyl: "SQUA-lo BIAN-co", en: "great white shark",
+    gruppe: "Meer", lebensraum: "Meer", laenge: 4.5, hoehe: 1.96, schwimmt: true, zeichne: weisser_hai },
 ];

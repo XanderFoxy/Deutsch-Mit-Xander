@@ -142,6 +142,7 @@ const kacheln = (T, Rr, ts, vs, o = {}) => {
 const plattenG = (T, Rr, ts, vs, o = {}) => {
   const gruppen = {};
   const rel = (A, B) => `l${R(B[0] - A[0])} ${R(B[1] - A[1])}`;
+  const O = Rr.P(ts[0], vs[0]), ox = Math.round(O[0]), oy = Math.round(O[1]);   // Ursprung: kurze Zahlen
   for (let j = 0; j < vs.length - 1; j++) {
     const v0 = vs[j], v1 = vs[j + 1], dv = v1 - v0, halb = o.versatz && j % 2;
     const sp = halb ? ts.slice(0, -1).map((t, i) => (t + ts[i + 1]) / 2) : ts;
@@ -149,30 +150,31 @@ const plattenG = (T, Rr, ts, vs, o = {}) => {
       let a0 = sp[i], a1 = sp[i + 1];
       const dt0 = a1 - a0;
       if (o.jit) { a0 += (T.rnd() - 0.5) * o.jit * dt0; a1 += (T.rnd() - 0.5) * o.jit * dt0; }
-      const dt = a1 - a0, f = o.fuge || 0.09, ta = a0 + dt * f, tb = a1 - dt * f * 0.7, va = v0 + dv * f * 1.2, vb = v1 - dv * f;
+      const dt = a1 - a0, f = o.fuge || 0.09, fv = o.fugeV || f * 1.2, ta = a0 + dt * f, tb = a1 - dt * f * 0.7, va = v0 + dv * fv, vb = v1 - dv * fv * 0.8;
       const A = Rr.P(ta, va), B = Rr.P(tb, va), C = Rr.P(tb, vb), D = Rr.P(ta, vb);
       const g = o.grad(j, T.rnd());
-      (gruppen[g] = gruppen[g] || []).push(`<path d="M${R(A[0])} ${R(A[1])}${rel(A, B)}${rel(B, C)}${rel(C, D)}z"/>`);
+      (gruppen[g] = gruppen[g] || []).push(`<path d="M${R(A[0] - ox)} ${R(A[1] - oy)}${rel(A, B)}${rel(B, C)}${rel(C, D)}z"/>`);
     }
   }
-  return Object.entries(gruppen).map(([g, l]) => `<g fill="${g}" stroke="${g}" stroke-width="${o.sw || 0.5}" stroke-linejoin="round">${l.join("")}</g>`).join("");
+  return `<g transform="translate(${ox} ${oy})">` + Object.entries(gruppen).map(([g, l]) => `<g fill="${g}" stroke="${g}" stroke-width="${o.sw || 0.5}" stroke-linejoin="round">${l.join("")}</g>`).join("") + "</g>";
 };
 /* Beulen: einzelne gewölbte Schuppen mit eigenem Radialverlauf (Licht oben links) in der Fläche pts.
    o: { flach, dichte, groesse(x, y), grads: [URL, …] (zufällig verteilt), winkel } */
 const beulen = (T, pts, g, o = {}) => {
   if (!T.fein && !o.immer) return "";
-  const [x0, y0, x1, y1] = T.box(pts);
+  const [x0, y0, x1, y1] = T.box(pts), fl = o.flach || 0.75, ox = Math.round(x0), oy = Math.round(y0);
   const gruppen = {};
   let z = 0;
   for (let y = y0 + g * 0.45; y < y1; y += g * (o.dy || 0.8), z++) for (let x = x0 + (z % 2) * g / 2; x < x1; x += g) {
     const jx = x + (T.rnd() - 0.5) * g * (o.jit != null ? o.jit : 0.3), jy = y + (T.rnd() - 0.5) * g * 0.22;
     if (!T.inPoly(jx, jy, pts) || (o.dichte && T.rnd() > o.dichte)) continue;
     const gg = o.groesse ? o.groesse(jx, jy) : 1;
-    const rx = g * 0.42 * gg * (0.85 + T.rnd() * 0.3), ry = rx * (o.flach || 0.75);
+    const rx = g * 0.42 * gg * (0.85 + T.rnd() * 0.3);
     const gr = o.grads[Math.floor(T.rnd() * o.grads.length)];
-    (gruppen[gr] = gruppen[gr] || []).push(`<ellipse cx="${R(jx)}" cy="${R(jy)}" rx="${R(rx)}" ry="${R(ry)}"/>`);
+    /* Kreis im gestauchten Raum (scale(1 fl)) = Ellipse – kürzer als <ellipse> */
+    (gruppen[gr] = gruppen[gr] || []).push(`<circle cx="${R(jx - ox)}" cy="${R((jy - oy) / fl)}" r="${R(rx)}"/>`);
   }
-  return Object.entries(gruppen).map(([gr, l]) => `<g fill="${gr}">${l.join("")}</g>`).join("");
+  return `<g transform="translate(${ox} ${oy}) scale(1 ${fl})">` + Object.entries(gruppen).map(([gr, l]) => `<g fill="${gr}">${l.join("")}</g>`).join("") + "</g>";
 };
 /* Schuppenmuster (Kachel mit gewölbten Einzelschuppen auf leicht dunklerem Grund) – für Beine, Kopfhaut, kleine
    Flächen: wenige Bytes für tausende Schuppen. g = Schuppenabstand, o: { rot, flach, grund (Deckkraft der Fugen), hell, dunkel } */
@@ -195,9 +197,9 @@ const musterBeulen = (T, n, g, o = {}) => {
 };
 /* Standard-Verläufe für Schuppen (einmal je Art angelegt) */
 const beulenGrad = (T, n, hell = 0.34, dunkel = 0.42) => T.rg("beule" + n, [[0, "#fff", hell], [0.42, "#fff", hell * 0.15], [0.75, "#000", dunkel * 0.25], [1, "#000", dunkel]], 0.36, 0.3, 0.78);
-const plattenGrad = (T, n, kiel = true, k = 1) => T.lg("platte" + n, kiel
-  ? [[0, "#fff", 0.3 * k], [0.18, "#fff", 0.06 * k], [0.3, "#fff", 0.34 * k], [0.4, "#000", 0.3 * k], [0.6, "#000", 0.04 * k], [0.86, "#000", 0.16 * k], [1, "#000", 0.42 * k]]
-  : [[0, "#fff", 0.28 * k], [0.25, "#fff", 0.05 * k], [0.7, "#000", 0.06 * k], [1, "#000", 0.38 * k]]);
+const plattenGrad = (T, n, kiel = true, k = 1, L = "#f3e9c4", D = "#120f06") => T.lg("platte" + n, kiel
+  ? [[0, L, 0.24 * k], [0.12, L, 0.05 * k], [0.3, L, 0.16 * k], [0.38, L, 0.3 * k], [0.47, D, 0.24 * k], [0.62, D, 0.04 * k], [0.86, D, 0.12 * k], [1, D, 0.32 * k]]
+  : [[0, L, 0.22 * k], [0.25, L, 0.04 * k], [0.7, D, 0.05 * k], [1, D, 0.3 * k]]);
 /* einzelne ovale Schuppen (Flanke, Beine, Hals) als kurze runde Striche: Schatten (unten versetzt), Schuppe, Glanz oben.
    Je Schuppe ~40 Zeichen. o: { flach, dichte, groesse(x,y), opS, opL, opF, fill, dunkel, hell, winkel (Grad) } */
 const ovale = (T, pts, g, o = {}) => {
@@ -372,45 +374,50 @@ function krokodil(T) {
   /* ---------- ferne Beine (im Schatten, dahinter) ---------- */
   const fern = "#3d3b2c";
   h += teil(T, [[235, -15], [240.6, -15.6], [242.2, -10.6], [243, -6.4], [246, -3.2], [251.4, -1.6], [254, -0.2, 1], [242, -0.2, 1], [240.6, -2.4], [239.6, -7], [236.4, -10.4]], fern, { rw: 0.25, randA: 0.5,
-    innen: fleck(T, "d", 238, -4, 4, 3, 0, 0.35) + "" });
+    innen: fleck(T, "l", 239, -11, 2.4, 4, 10, 0.3) + fleck(T, "l", 246, -2.6, 4, 1, 0, 0.3) + fleck(T, "d", 238, -4, 4, 3, 0, 0.35) + (F ? T.form([[234, -16], [244, -16], [256, 0], [240, 0]], musterBeulen(T, "bu", 1.15)) : "") });
   h += teil(T, [[129, -14], [139, -15.4], [141.8, -10.6], [141, -5.6], [141.8, -2.6], [147.4, -1.6], [149.4, -0.2, 1], [130.6, -0.2, 1], [131.4, -2.8], [133.4, -6], [131.6, -9.6]], fern, { rw: 0.25, randA: 0.5,
-    innen: fleck(T, "d", 136, -4, 5, 3, 0, 0.35) + "" });
+    innen: fleck(T, "l", 136, -11, 3, 3.6, 0, 0.28) + fleck(T, "l", 143, -2.4, 4, 1, 0, 0.3) + fleck(T, "d", 136, -4, 5, 3, 0, 0.35) + (F ? T.form([[128, -16], [142, -16], [150, 0], [130, 0]], musterBeulen(T, "bu", 1.15)) : "") });
   h += krallen(T, [[253.4, -0.9, 1.5, 0.5, 14, 0.4], [251, -0.7, 1.3, 0.45, 20, 0.4], [149, -0.8, 1.5, 0.5, 12, 0.4], [146.4, -0.7, 1.2, 0.45, 18, 0.4]], "#1b1810");
 
   /* ---------- Körper: Farbzonen, Binden, Flecken, Licht, Schuppen ---------- */
   let inn = "";
+  const nZ = F ? 10 : 6;
   inn += `<g filter="${weich(T, "z", 1.5)}">` +
-    T.form(Rr.band(-1.3, -0.42, 0, 1, 10), "#36352a") +
-    T.form(Rr.band(-0.15, 0.45, 0.12, 1, 10), "#857e58", ' opacity=".85"') +
-    T.form(Rr.band(0.45, 1.3, 0.1, 1, 10), "#cbc4a2") +
+    T.form(Rr.band(-1.3, -0.42, 0, 1, nZ), "#36352a") +
+    T.form(Rr.band(-0.15, 0.45, 0.12, 1, nZ), "#857e58", ' opacity=".85"') +
+    T.form(Rr.band(0.45, 1.3, 0.1, 1, nZ), "#cbc4a2") +
     T.form(Rr.band(0.2, 1.3, 0, 0.14, 4), "#736d4c", ' opacity=".8"') + "</g>";
   let bd = "";
   for (const b of [0.03, 0.085, 0.14, 0.195, 0.25, 0.305, 0.36, 0.415, 0.465]) { const w = 0.016 + b * 0.012; bd += T.glatt([Rr.P(b, -1.3), Rr.P(b + w, -1.3), Rr.P(b + w * 1.2, 0.1), Rr.P(b + w * 0.8, 0.6), Rr.P(b - w * 0.1, 0.5), Rr.P(b - w * 0.25, 0)]); }
-  for (const [t, v, w, hh] of [[0.56, -0.2, 0.011, 0.5], [0.6, 0.12, 0.009, 0.32], [0.64, -0.28, 0.012, 0.55], [0.685, 0.05, 0.011, 0.4], [0.725, -0.22, 0.01, 0.48], [0.77, -0.3, 0.012, 0.5], [0.81, 0.02, 0.01, 0.38], [0.85, -0.24, 0.011, 0.46], [0.53, 0.15, 0.009, 0.3], [0.9, -0.1, 0.01, 0.4]])
+  for (const [t, v, w, hh] of [[0.56, -0.2, 0.011, 0.5], [0.6, 0.12, 0.009, 0.32], [0.64, -0.28, 0.012, 0.55], [0.685, 0.05, 0.011, 0.4], [0.725, -0.22, 0.01, 0.48], [0.77, -0.3, 0.012, 0.5], [0.81, 0.02, 0.01, 0.38], [0.85, -0.24, 0.011, 0.46], [0.53, 0.15, 0.009, 0.3], [0.9, -0.1, 0.01, 0.4]].filter((_, i) => F || i % 2 === 0))
     bd += T.glatt([Rr.P(t - w, v - hh * 0.5), Rr.P(t + w, v - hh * 0.55), Rr.P(t + w * 1.7, v + hh * 0.5), Rr.P(t - w * 0.3, v + hh * 0.45)]);
   inn += `<path d="${bd}" fill="#1c1b12" opacity=".5" filter="${weich(T, "b", 0.6)}"/>`;
-  if (F) inn += T.textur(T.glatt(Rr.band(-0.5, 0.5, 0.42, 1, 8)), T.rauschen("spr", { fx: 0.32, fy: 0.45, okt: 2, staerke: 3, schwelle: 0.6, farbe: "#1a190f" }), 0, 0.5, [130, -40, 262, -6]);
   inn += `<g filter="${weich(T, "l", 1.3)}">` +
-    T.form(Rr.band(-1.1, -0.62, 0.02, 0.98, 10), "#fff3d0", ' opacity=".14"') +
-    T.form(Rr.band(0.3, 0.8, 0.04, 0.98, 10), "#000", ' opacity=".3"') +
+    T.form(Rr.band(-1.1, -0.62, 0.02, 0.98, nZ), "#fff3d0", ' opacity=".14"') +
+    T.form(Rr.band(0.3, 0.8, 0.04, 0.98, nZ), "#000", ' opacity=".3"') +
     T.form(Rr.band(0.9, 1.1, 0.5, 0.97, 6), "#f6edcc", ' opacity=".28"') + "</g>";
   const tsR = []; for (let i = 0; i <= 17; i++) tsR.push(tH + (tS - tH) * i / 17);
   const tsS = []; { let t = 0.014; while (t < tH - 0.012) { tsS.push(t); t += 0.0108 + t * 0.012; } tsS.push(tH); }
   const vR = [-1.02, -0.86, -0.66, -0.42], vS = [-1.02, -0.68, -0.35, -0.03, 0.3, 0.62, 0.88, 1.04];
+  /* Schuppen: Fugen dunkel, darauf Platten/Beulen mit eigenem Licht */
   if (F) {
-    /* Rückenschild: drei sichtbare Längsreihen gekielter Osteoderme */
-    inn += gitter(T, Rr, tsR, vR, { licht: false, w: 0.5, opS: 0.7, dunkel: "#0e0d08", schritt: 30 });
-    inn += kacheln(T, Rr, tsR, vR, { kiel: [0, 1, 2], kielV: 0.4, kw: 0.36, jit: 0.14, lw: 0.28, opL: 0.3, opS: 0.5, opK: 0.5, opKL: 0.38, farben: [["#fff", 0.07], ["#000", 0.16], ["#c9b98a", 0.1], null] });
-    /* Flanke: ovale, ungekielte Schuppen, nach unten kleiner; Hals: verstreute große Höcker */
-    inn += ovale(T, Rr.band(-0.42, 0.5, tH + 0.005, tS + 0.008, 16), 2.7, { flach: 0.66, opS: 0.36, opL: 0.3, groesse: (x, y) => 1.05 - Math.max(0, (y + 22) / 34) });
-    inn += ovale(T, Rr.band(-0.95, 0.35, tS + 0.008, 1, 6), 2.2, { flach: 0.75, dichte: 0.7, opS: 0.34, opL: 0.28 });
+    const pK = plattenGrad(T, "k", true), pK2 = plattenGrad(T, "k2", true, 1.35), pG = plattenGrad(T, "g", false), pG2 = plattenGrad(T, "g2", false, 1.35);
+    const bN = beulenGrad(T, "n", 0.28, 0.34), bH = beulenGrad(T, "h", 0.42, 0.26), bD = T.rg("beuled", [[0, "#3a3418", 0.25], [0.5, "#1a170c", 0.45], [1, "#000", 0.6]], 0.36, 0.3, 0.78);
+    /* Rückenschild: drei sichtbare Längsreihen gekielter Osteoderme (Knochenplatten) über dunklen Fugen */
+    inn += T.form(Rr.band(-1.05, -0.41, tH - 0.004, tS + 0.004, 8), "#000", ' opacity=".3"');
+    inn += plattenG(T, Rr, tsR, vR, { jit: 0.16, sw: 0.35, fuge: 0.12, fugeV: 0.1, grad: (j, z) => z < 0.35 ? pK2 : pK });
+    /* Flanke: gewölbte ovale Schuppen in lockeren Reihen, nach unten kleiner, manche dunkel (Fleckung) */
+    inn += T.form(Rr.band(-0.41, 0.5, tH, tS + 0.01, 8), "#000", ' opacity=".12"');
+    inn += beulen(T, Rr.band(-0.4, 0.5, tH + 0.005, tS + 0.008, 12), 2.1, { flach: 0.64, grads: [bN, bN, bN, bH, bD], groesse: (x, y) => 1.05 - Math.max(0, (y + 22) / 34) });
+    /* Hals: Nackenschilde seitlich, dazwischen kleinere Höcker */
+    inn += beulen(T, Rr.band(-0.95, 0.4, tS + 0.008, 1, 4), 2.1, { flach: 0.8, dichte: 0.85, grads: [bN, bH, bN] });
     /* Bauchschilde in Querreihen */
     const tsB = []; for (let t = tH - 0.02; t < 1; t += 0.0098) tsB.push(t);
     inn += gitter(T, Rr, tsB, [0.5, 0.66, 0.82, 0.98], { versatz: true, w: 0.16, g: 0.2, opS: 0.34, opL: 0.26, hell: "#fff6da", schritt: 40, lichtQuer: false });
-    /* Schwanzringe: alle Rillen; obere drei Reihen als gekielte Platten */
-    inn += gitter(T, Rr, tsS, vS, { licht: false, w: 0.42, opS: 0.66, dunkel: "#0e0d08", schritt: 30 });
-    inn += kacheln(T, Rr, tsS, vS.slice(0, 4), { kanten: false, kiel: [0, 1, 2], kielV: 0.42, kw: 0.34, opK: 0.45, opKL: 0.42, farben: [["#fff", 0.08], ["#000", 0.16], null] });
-    /* Querfalten an der Kehle */
+    /* Schwanzringe: Fugen, obere vier Reihen als Platten (drei gekielt), untere glatte Rechtecke */
+    inn += T.form(Rr.band(-1.05, 0.3, 0, tH, 14), "#000", ' opacity=".22"');
+    inn += gitter(T, Rr, tsS, vS, { licht: false, w: 0.4, opS: 0.55, dunkel: "#0e0d08", schritt: 30 });
+    inn += plattenG(T, Rr, tsS, vS.slice(0, 4), { sw: 0.35, fuge: 0.1, grad: (j, z) => j < 3 ? (z < 0.35 ? pK2 : pK) : (z < 0.35 ? pG2 : pG) });
     inn += linien(T, [[Rr.P(tx(246), 0.45), Rr.P(tx(245.4), 0.95)], [Rr.P(tx(250.4), 0.4), Rr.P(tx(250), 0.95)]], "#14120a", 0.22, 0.25);
   } else {
     inn += gitter(T, Rr, tsR.filter((_, i) => i % 2 === 0), [-1.02, -0.8, -0.45], { w: 0.5, opS: 0.45, licht: false, schritt: 40 });
@@ -427,16 +434,16 @@ function krokodil(T) {
     const s2 = [m[0] + nx * Hh - 0.25, m[1] + ny * Hh];
     kam += `M${R(a[0])} ${R(a[1] + 0.5)}Q${R(a[0] + (s2[0] - a[0]) * 0.55 - 0.3)} ${R(a[1] + (s2[1] - a[1]) * 0.6)} ${R(s2[0])} ${R(s2[1])}L${R(b[0])} ${R(b[1] + 0.5)}Z`;
     if (F) kamL += `M${R(a[0] + 0.35)} ${R(a[1] - 0.1)}L${R(s2[0] - 0.05)} ${R(s2[1] + 0.25)}`;
-    if (t0 > 0.23) { const mm = Rr.P(t0 + (t1 - t0) * 0.1, -1); kamF += `M${R(a[0] - 0.9)} ${R(a[1] + 0.5)}L${R(mm[0] + nx * Hh * 0.82 - 0.5)} ${R(mm[1] + ny * Hh * 0.82)}L${R(mm[0] + 0.7)} ${R(mm[1] + 0.5)}Z`; }
+    if (F && t0 > 0.23) { const mm = Rr.P(t0 + (t1 - t0) * 0.1, -1); kamF += `M${R(a[0] - 0.9)} ${R(a[1] + 0.5)}L${R(mm[0] + nx * Hh * 0.82 - 0.5)} ${R(mm[1] + ny * Hh * 0.82)}L${R(mm[0] + 0.7)} ${R(mm[1] + 0.5)}Z`; }
   }
   for (let i = 0; i < tsR.length - 1; i++) {
     const t0 = tsR[i], t1 = tsR[i + 1], a = Rr.P(t0 + (t1 - t0) * 0.08, -1), b = Rr.P(t1 - (t1 - t0) * 0.08, -1), m = Rr.P((t0 + t1) / 2, -1);
     const H2 = 0.7 + 0.22 * Math.sin(i * 1.7);
     kam += `M${R(a[0])} ${R(a[1] + 0.45)}Q${R(m[0] - 0.5)} ${R(m[1] - H2 * 1.7)} ${R(b[0])} ${R(b[1] + 0.45)}Z`;
-    kamF += `M${R(m[0] - 1.6)} ${R(m[1] + 0.4)}Q${R(m[0] + 0.6)} ${R(m[1] - H2 * 1.5)} ${R(m[0] + 2.6)} ${R(m[1] + 0.4)}Z`;
+    if (F) kamF += `M${R(m[0] - 1.6)} ${R(m[1] + 0.4)}Q${R(m[0] + 0.6)} ${R(m[1] - H2 * 1.5)} ${R(m[0] + 2.6)} ${R(m[1] + 0.4)}Z`;
     if (F) kamL += `M${R(a[0] + 0.2)} ${R(a[1] - 0.05)}Q${R(m[0] - 0.7)} ${R(m[1] - H2 * 1.35)} ${R(m[0] + 0.3)} ${R(m[1] - H2 * 0.75)}`;
   }
-  h += `<path d="${kamF}" fill="#24231a" stroke="#0f0e08" stroke-width=".2" stroke-opacity=".5"/>`;
+  if (kamF) h += `<path d="${kamF}" fill="#24231a" stroke="#0f0e08" stroke-width=".2" stroke-opacity=".5"/>`;
   h += `<path d="${kam}" fill="${T.lg("kamm", [[0, "#6c6849"], [0.55, "#47452f"], [1, "#2d2c1f"]], 0, -36, 0, -12, US)}" stroke="#12110a" stroke-width=".22" stroke-opacity=".65" stroke-linejoin="round"/>`;
   if (kamL) h += `<path d="${kamL}" fill="none" stroke="#efe6c6" stroke-width=".24" stroke-opacity=".4" stroke-linecap="round"/>`;
 
@@ -447,8 +454,8 @@ function krokodil(T) {
   hi += fleck(T, "l", 152, -19.4, 7, 3, -24, 0.45) + fleck(T, "l", 161.4, -13.4, 1.8, 3.4, 18, 0.32) + fleck(T, "d", 146, -13.6, 5.4, 2.2, -20, 0.5) + fleck(T, "d", 155.6, -5.6, 2.2, 2.6, 0, 0.35) + fleck(T, "d", 163, -1.2, 12, 1.2, 0, 0.5) + fleck(T, "l", 158, -4.6, 1.2, 2.4, 10, 0.25);
   hi += fleck(T, "d", 146, -21.6, 6, 2.2, -10, 0.35);
   if (F) {
-    hi += ovale(T, [[142, -20.6], [150, -22.4], [157, -21], [162, -16.4], [163.8, -12], [160.6, -8.6], [154.6, -10.6], [147, -13], [141.6, -16.4]], 1.9, { flach: 0.8, opS: 0.4, opL: 0.3 });
-    hi += ovale(T, [[154.4, -9], [160.4, -8.2], [160.8, -4], [174.6, -1.2], [151.6, -1], [152.4, -4.4]], 1.3, { flach: 0.7, opS: 0.4, opL: 0.26 });
+    hi += T.form([[140, -24], [158, -24], [166, -14], [161, -8], [153, -11], [140, -14]], musterBeulen(T, "bo", 1.7, { rot: -20, grund: 0.2 }));
+    hi += T.form([[152, -11], [161, -9], [162, -4], [178, -2], [178, 0], [149, 0], [150, -5]], musterBeulen(T, "bu", 1.15, { rot: 5, grund: 0.18 }));
     hi += reihe(T, [[154.4, -9.8], [153, -6.6], [151, -3.4]], 6, 1.1, "#120f08", 0.28, 0.5, -0.2);
   }
   hi += linien(T, [[[155.6, -10.2], [159.4, -9.6], [163, -10.6]]], "#120f08", 0.28, 0.38);
@@ -463,7 +470,7 @@ function krokodil(T) {
   const vb = [[221.4, -22.6], [229, -23.2], [230, -18.4], [228.4, -14.6], [227.2, -12], [228.6, -8.4], [229.6, -4.8], [230.6, -3], [233.8, -2.1], [237.8, -1.4], [240, -0.6], [240.6, -0.2, 1],
     [223.8, -0.2, 1], [223.6, -2.2], [223.8, -4.6], [222, -7.4], [220.2, -9.8], [220.6, -14], [221.8, -18.4]];
   let vi = fleck(T, "l", 225, -18.6, 3.4, 3, -30, 0.45) + fleck(T, "l", 227.4, -7.6, 1.2, 3, 8, 0.3) + fleck(T, "d", 221.6, -10.4, 2.4, 1.8, 0, 0.5) + fleck(T, "d", 230.4, -1.3, 9, 1.1, 0, 0.5) + fleck(T, "d", 228.4, -13.2, 2, 1.4, 0, 0.4) + fleck(T, "d", 225, -22.4, 5, 2, 0, 0.3);
-  if (F) vi += ovale(T, [[222, -22], [228.4, -22.6], [229.2, -18], [227.6, -14.4], [226.4, -12.2], [228.8, -5], [238.4, -1.1], [224.4, -1], [223.4, -6.4], [221, -10], [221.4, -17]], 1.45, { flach: 0.8, opS: 0.4, opL: 0.3 });
+  if (F) vi += T.form([[219, -24], [231, -24], [231, -13], [221, -11]], musterBeulen(T, "bo", 1.7)) + T.form([[221, -11], [231, -13], [233, -3], [241, 0], [222, 0]], musterBeulen(T, "bu", 1.15));
   vi += linien(T, [[[222.4, -10.4], [225.2, -9.6], [227.8, -10.6]], [[224.4, -4.2], [227.4, -3.6], [230, -4.4]]], "#120f08", 0.26, 0.4);
   h += teil(T, vb, "#5b583c", { innen: vi, rw: 0.3, randA: 0.5, kante: [vb.slice(1, 12), vb.slice(12, 19)] });
   h += teil(T, [[231.4, -2.3], [235.6, -2.9], [239.4, -2.5], [242.2, -1.3], [243, -0.2, 1], [237, -0.2, 1], [232.4, -0.8]], "#4e4b33", { rw: 0.22, randA: 0.45, innen: fleck(T, "l", 237.4, -2, 4, 0.6, 0, 0.3) });
@@ -472,13 +479,13 @@ function krokodil(T) {
   /* ---------- Kopf (als Gruppe 2 Einheiten tiefer: leicht gesenkt) ---------- */
   let k = "";
   /* Unterkiefer: vorn schlank, hinten tief; Seite mittelhell mit dunklen Flecken, Unterkante hell */
-  const uk = [[300.2, -22.2], [300.5, -21], [299.6, -19.9], [296.6, -19.2], [290, -18.8], [282, -18.3], [274, -17.8], [266, -17.4], [260, -17.3], [255, -17.8], [251, -19.8], [248.6, -22.6], [249.6, -25], [254, -25.6], [258, -24.6], [266, -22.8], [276, -22.2], [288, -21.8], [296, -22.4]];
+  const uk = [[300.2, -22.2], [300.5, -21], [299.6, -19.9], [296.6, -19.2], [290, -18.8], [282, -18.3], [274, -17.8], [266, -17.4], [260, -17.2], [254, -17.2], [248, -17.4], [244, -18], [243.6, -21], [246.6, -24.4], [251, -25.8], [255, -25.8], [258, -24.6], [266, -22.8], [276, -22.2], [288, -21.8], [296, -22.4]];
   let ui = "";
-  ui += `<g filter="${weich(T, "k", 0.6)}">` + T.form([[253, -18.4], [262, -17.6], [280, -18.4], [298, -19.6], [298, -20.4], [280, -19.6], [262, -19.2], [253, -20.2]], "#ddd5b2", ' opacity=".55"') + "</g>";
-  ui += fleck(T, "d", 262, -23, 12, 1.4, 0, 0.5) + fleck(T, "d", 251, -21, 3.4, 3, 0, 0.3) + fleck(T, "l", 255, -21.4, 3, 2.4, 0, 0.3);
+  ui += `<g filter="${weich(T, "k", 0.6)}">` + T.form([[243, -17.4], [262, -17.4], [280, -18.4], [298, -19.6], [298, -20.4], [280, -19.8], [262, -19.6], [250, -20.6], [243, -20.4]], "#d6ceaa", ' opacity=".6"') + T.form([[243, -21], [252, -25], [256, -24.8], [252, -21]], "#000", ' opacity=".25"') + "</g>";
+  ui += fleck(T, "d", 262, -23, 12, 1.4, 0, 0.5) + fleck(T, "l", 254.6, -21.6, 3.2, 2.2, 0, 0.35) + linien(T, [[[246, -18], [248.4, -20.6], [252.6, -21.6]], [[249.8, -17.6], [252.4, -19.6], [256.6, -20.4]]], "#1a160c", 0.2, 0.3);
   ui += `<path d="${[[257, -21.4], [262.4, -20.8], [268, -21.4], [273.6, -20.8], [279, -21.2], [284.6, -20.6], [290, -21], [295, -20.6]].map(([x, y], i) => `M${x} ${y}h${R(0.7 + (i % 2) * 0.6)}`).join("")}" stroke="#2b2816" stroke-width="1.1" stroke-linecap="round" opacity=".45"/>`;
   if (F) {
-    ui += T.textur(T.glatt(uk), T.rauschen("uk", { fx: 0.9, fy: 0.9, okt: 2, staerke: 3, schwelle: 0.6, farbe: "#1d1a0e" }), 0, 0.35, [248, -26, 301, -17]);
+    ui += `<rect x="248" y="-26" width="53" height="9" fill="${musterBeulen(T, "kf", 0.95, { flach: 0.7, grund: 0.05, hell: 0.13, dunkel: 0.18 })}"/>`;
     ui += reihe(T, [[253, -24.6], [262, -23.2], [274, -22.2], [288, -21.8], [299.6, -22.2]], 26, 2.2, "#18140a", 0.12, 0.38, -0.2);
     ui += punkte(T, [[256, -23.4], [298, -22.2], [298, -20.2], [256, -19.4]], 60, 0.12, "#1a160a", 0.65);
   }
@@ -494,8 +501,8 @@ function krokodil(T) {
   ki += `<path d="${[[262, -26.6], [267.4, -27.8], [273, -26.2], [277.8, -27.8], [282.2, -25.4], [287.4, -26.4], [292, -25], [270.6, -24.6], [259.6, -29.2], [276, -24.4]].map(([x, y], i) => `M${x} ${y}h${R(0.6 + (i % 3) * 0.4)}`).join("")}" stroke="#22200f" stroke-width="1.05" stroke-linecap="round" opacity=".4"/>`;
   if (F) {
     /* feine Körnung der Haut (Rauschen), Schädeldach gröber; Lippenschuppen; Sinnesorgane; Falten auf dem Schnauzenrücken */
-    ki += T.textur(T.glatt(ko), T.rauschen("ko", { fx: 0.9, fy: 0.9, okt: 2, staerke: 3, schwelle: 0.58, farbe: "#17150b" }), 0, 0.4, [246, -38, 301, -21]);
-    ki += T.textur(T.glatt([[247, -34.2], [262, -35.2], [266, -33.6], [262, -30.4], [255, -30], [249, -31]]), T.rauschen("sd", { fx: 0.55, fy: 0.55, okt: 3, staerke: 4, schwelle: 0.52, farbe: "#100e07" }), 0, 0.45, [246, -36, 267, -29]);
+    ki += `<rect x="246" y="-38" width="55" height="17" fill="${musterBeulen(T, "kf", 0.95, { flach: 0.7, grund: 0.05, hell: 0.13, dunkel: 0.18 })}"/>`;
+    ki += T.form([[247, -34.2], [262, -35.2], [266, -33.6], [262, -30.4], [255, -30], [249, -31]], musterBeulen(T, "sd", 1.5, { flach: 0.85, grund: 0.22, hell: 0.3, dunkel: 0.45 }));
     ki += punkte(T, [[262, -27.4], [298, -25.4], [298, -23.4], [262, -24.2]], 75, 0.11, "#14120a", 0.62);
     ki += reihe(T, [[257.4, -25], [265, -23.2], [275, -22.4], [286.4, -22], [289.6, -22.8], [291.6, -23.8], [293.6, -23.8], [297.6, -22.4]], 30, -1.1, "#16130a", 0.12, 0.4, 0.25);
     ki += linien(T, [[[276, -33.4], [284, -30], [292, -28.2]], [[275, -32], [283, -29.2], [291, -27.4]], [[277, -30.4], [284, -28.2]]], "#16130a", 0.16, 0.26);
@@ -508,11 +515,11 @@ function krokodil(T) {
   /* obere Zähne: außen über den Unterkiefer; größter am Oberkiefer-Buckel */
   const okZ = [[299.4, -22.5, 1.2, 0.6, -0.05], [297.4, -22, 1.6, 0.74, -0.06], [295.2, -22.4, 1.3, 0.66, -0.04], [289, -22.5, 1.5, 0.7, -0.04], [286.8, -21.8, 2.7, 1, -0.07], [284.2, -21.6, 2.1, 0.86, -0.05],
     [281.4, -21.7, 1.7, 0.76, -0.04], [278.6, -21.9, 1.6, 0.74, -0.04], [275.8, -22.1, 1.8, 0.76, -0.04], [273, -22.2, 1.7, 0.74, -0.04], [270.2, -22.4, 1.55, 0.7, -0.04], [267.4, -22.6, 1.4, 0.66, -0.03], [264.6, -22.8, 1.25, 0.62, -0.03], [262, -23.1, 1.05, 0.56, -0.03], [259.6, -23.6, 0.85, 0.48, -0.02]];
-  k += zaehne(T, okZ, 1, { n: "o", spitze: "#faf6ea", mitte: "#efe8d2", basis: "#c8b48c", rw: 0.1 });
+  k += zaehne(T, F ? okZ : okZ.filter((_, i) => i % 2 === 0), 1, { n: "o", spitze: "#faf6ea", mitte: "#efe8d2", basis: "#c8b48c", rw: 0.1 });
   /* untere Zähne: außen am Oberkiefer hoch; der große 4. greift in die Kerbe */
   const ukZ = [[298.6, -22.3, 1.3, 0.66, 0.05], [296.2, -22.5, 1.1, 0.6, 0.02], [294.6, -22.9, 1.1, 0.6, 0], [292.4, -23.4, 3.3, 1.12, -0.08], [288, -22.2, 1.1, 0.58, 0], [285.4, -21.9, 1.25, 0.62, 0],
     [282.8, -21.9, 1.4, 0.66, 0], [280, -22, 1.55, 0.68, 0], [277.2, -22.2, 1.5, 0.68, 0], [274.4, -22.3, 1.45, 0.66, 0], [271.6, -22.5, 1.35, 0.64, 0], [268.8, -22.6, 1.25, 0.62, 0], [266, -22.8, 1.15, 0.58, 0], [263.3, -23, 1.05, 0.54, 0], [260.8, -23.5, 0.85, 0.48, 0]];
-  k += zaehne(T, ukZ, -1, { n: "u", spitze: "#faf6ea", mitte: "#efe8d2", basis: "#c8b48c", rw: 0.1 });
+  k += zaehne(T, F ? ukZ : ukZ.filter((_, i) => i % 2 === 1 || i === 3), -1, { n: "u", spitze: "#faf6ea", mitte: "#efe8d2", basis: "#c8b48c", rw: 0.1 });
   /* Nackenschild: Hinterhauptschilde + große gekielte Nackenplatten */
   let nk = "";
   for (const [x, y, w, hh] of [[251, -35.1, 2.2, 0.9], [244, -34.6, 3.4, 2], [239.2, -34, 3, 1.7]]) nk += `M${R(x - w / 2)} ${R(y + 0.5)}Q${R(x - w * 0.15)} ${R(y - hh * 1.6)} ${R(x + w / 2)} ${R(y + 0.5)}Z`;
