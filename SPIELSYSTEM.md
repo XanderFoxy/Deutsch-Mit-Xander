@@ -3396,3 +3396,36 @@ auch wenn jemand auf dem Stuhl sitzt den Stuhl noch anwählen kann … mit der L
     - der alte Modus zeigt die alte Bäckerei mit 9 Teilen und holt nichts aus `bilderwelt-neu`;
     - keine Seitenfehler.
   - Grün: 869, 840, 725, 834, 835, 839, 842, 858, 865, 867, runde18, runde21.
+
+## Fassung 852 — Die ganze neue Bilderwelt nach dem Bäckerei-Schema; Wetter bleibt; Verbindung schneller (Funk 280/286)
+
+XANDER (Funk 286): „Du sollst die Bilderwelten komplett nach demselben Schema fertig machen dass sich nichts mehr blockiert und
+alle Hintergründe die logischen Stationen zeigen wo die Leute sind … ich will ein großes Update mit allen kompletten
+überarbeiteten Bilderwelten … und dann machst du kontinuierlich weiter mit den restlichen Verbindung Sachen".
+
+- **Nur die neue Bilderwelt** (`?bilderwelt=neu`). Die alte bleibt byte-gleich (Sonde 840, 872).
+- **146 Szenen neu gebaut** nach `werkzeug/bilderwelt/ANLEITUNG.md` (Maßstab Bäckerei), dazu der Garten:
+  - Bau-Dateien `werkzeug/bilderwelt/szenen/<id>.js`, je mit RECHERCHE-Kommentar (echtes Vorbild, Stationen, Maße).
+  - Jedes alte Wort bleibt mit id/de/syl/it/itSyl/en; jede `lupe` (Verweis in eine andere Szene) bleibt am selben Teil.
+    Korrigiert (mit Kommentar): u. a. Gericht „der Angeklagte“/„die Anklagebank“, „die Auffangwanne“, Silben bei
+    Wegweiser, Apotheke, Kastagnetten, Betonung „pe-DIA-tra“, „gla-CIA-le“.
+  - Kleines auf Größerem trägt `oben: true` (eigene Fangfläche oben); viele kleine Dinge stecken als „unter“-Teile in der Lupe.
+  - Alle gepackt unter 70 KB (meist 10–40 KB); geladen wird eine Szene erst beim Öffnen.
+  - Übersichten: `stadt` (Schrägluftbild, 7 Viertel), sieben Viertel als echte Straßenzüge (400×260 bzw. 400×300), alle
+    Sprünge in die Ortsszenen erhalten (Weg Stadt → Innenstadt → Bäckerei geprüft).
+  - **Garten**: die fünf Garten-Plätze in `bilderwelt-neu/data-plaetze.js` an die neue Szene angepasst (Baum, Bank, Teich,
+    Tor, Rasen). Die alte `data-plaetze.js` ist unverändert.
+  - Nicht neu gebaut: die 21 schon früher erneuerten Szenen (Wohnzimmer, Küche, Bad …) und die Anatomie-Tafeln.
+- **Werkzeug**: `woerter.js` zeigt auch `lupe`; `verzeichnis.js` trägt Maße/Zahlen der gebauten Szenen ins Verzeichnis und setzt
+  `NEUE_SZENEN` in index.html; `pruefe-szene.js` prüft zusätzlich Ränder (nichts ragt hinaus) und die gepackte Größe.
+- **app.js `bwBinden`** (Weichen 13–15, nur neu): Mindest-Trefferfläche wird im Zoom durch den Zoomfaktor geteilt; über
+  `oben`-Teilen liegt zusätzlich ihr echter Umriss.
+- **Wetter im Kopf (Funk 280)**: ein Fehlschlag löscht eine gute Messung nicht mehr (erst nach 1 h „—°“); neuer Versuch nach
+  15 s, 45 s, 120 s. Sonde `pruefe-870-wetter-bleibt.js`.
+- **Verbindung (Funk 286)** — Messung 839–842: Raumkanal bis 16,8 s, Angebot 8–21 s nach dem Betreten (tote Websocket-Leitung):
+  - Beitritt mit 4 s statt 10 s Wartegrenze; ein Ablauf ist kein Fehler (die Bibliothek tritt selbst neu bei), erst der dritte.
+  - Nach > 8 s Hintergrund und am Tor: sofort ein Herzschlag; bleibt die Antwort 2,5 s aus, baut die Bibliothek neu auf.
+  - Zweiter Gruß nach 1,2 s und 3 s, wenn noch keine Leitung im Aufbau ist (gleiche Sitzung → drüben nur Erinnerung).
+  - Messung meldet zusätzlich `joinTO`, `wsTot`, `halloNochmal`. Sonde `pruefe-871-leitung-frisch.js`.
+- **Sonden**: neu 870, 871, 872 (alle neuen Szenen in der App, Lupen-Weg, alte Welt unberührt). Grün: 659, 827, 840, 842, 858,
+  859, 861, 862, 866, 869, 870, 871, 872, runde21; `pruefe-szene` für alle 146 neu gebauten Szenen „gut erreichbar“.
