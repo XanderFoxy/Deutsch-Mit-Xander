@@ -195,7 +195,7 @@ const platte = (x0, x1, dxL = 0) => {
   for (let i = 0; i < 4; i++) k += `<ellipse cx="${69 + i * 2.6}" cy="${r(AP_V - 7)}" rx="1" ry="5.4" fill="#fbfbfa" stroke="#cfd4d8" stroke-width=".3"/>`;
   k += `<path d="M76 ${r(AP_V - 2)} L77.4 ${r(AP_V - 10)} L79.4 ${r(AP_V - 10)} L78.6 ${r(AP_V - 2)} Z" fill="#e7f0f4" opacity=".8" stroke="#b8c4ca" stroke-width=".3"/>`;
   S.teil({ id: "spuele", de: "die Spüle", syl: "SPÜ-le", it: "il lavello", itSyl: "la-VEL-lo", en: "sink",
-    x: 0, y: 0, kunst: k + flaeche(41, r(AP_H - 10), 41, r(AP_V - AP_H + 12)), tipp: "Die Spüle steht unter dem Fenster – so hat man beim Abwaschen Licht." });
+    x: 61, y: r(AP_V + 2.4), steht: true, kunst: `<g transform="translate(-61 ${-r(AP_V + 2.4)})">${k}</g>`, tipp: "Die Spüle steht unter dem Fenster – so hat man beim Abwaschen Licht." });
 }
 {
   /* DER WASSERHAHN — hohe Einhebelmischer-Armatur */
