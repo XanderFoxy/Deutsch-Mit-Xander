@@ -409,7 +409,7 @@ const sitzOben = (Z) => boden(Z) + 1.0;
       if (x + sw < 2) continue;
       const xl = Math.max(0, x + 0.5);
       k += `<path d="M${r(xl)} ${r(yu)} L${r(xl)} ${r(yo + 1.6)} Q${r(xl)} ${r(yo)} ${r(Math.max(xl, x + sw / 2))} ${r(yo - 0.4)} Q${r(x + sw - 0.5)} ${r(yo)} ${r(x + sw - 0.5)} ${r(yo + 1.6)} L${r(x + sw - 0.5)} ${r(yu)} Z" fill="${S.lg("lehne", [[0, "#b02a32"], [0.3, "#8a1820"], [1, "#4a080e"]])}"/>`;
-      k += `<path d="M${r(x + 1.5)} ${r(yo + 0.7)} Q${r(x + sw / 2)} ${r(yo - 0.1)} ${r(x + sw - 1.5)} ${r(yo + 0.7)}" stroke="#e8a0a0" stroke-width=".4" opacity=".25" fill="none"/>`;
+      if (x > 0) k += `<path d="M${r(x + 1.5)} ${r(yo + 0.7)} Q${r(x + sw / 2)} ${r(yo - 0.1)} ${r(x + sw - 1.5)} ${r(yo + 0.7)}" stroke="#e8a0a0" stroke-width=".4" opacity=".25" fill="none"/>`;
       if (x > 0.5) k += `<rect x="${r(x - 0.5)}" y="${r(yo + (yu - yo) * 0.35)}" width="1" height="${r((yu - yo) * 0.65)}" fill="${GOLD}" opacity=".7"/>`;
     }
     /* Reihennummer am Gang */
