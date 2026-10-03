@@ -79,12 +79,12 @@ const GOLD = S.lg("gold", [[0, "#fff1a8"], [0.4, "#f1c74a"], [1, "#a8781a"]], 0,
 const BRONZE = S.lg("bronze", [[0, "#2f4a3d"], [0.45, "#5f8270"], [0.75, "#8fb09c"], [1, "#4b6a5a"]], 0, 0, 1, 0);
 const DOMSTEIN = S.lg("domstein", [[0, "#9c9381"], [0.5, "#c9bfa9"], [1, "#ddd2b9"]], 0, 0, 1, 0);
 const GOLDLICHT = "#ffc977";                     /* Abendsonne, als Lasur über den Fassaden */
-const LANG = S.lg("lang", [[0, "#2b2420", 0.2], [0.55, "#2b2420", 0.75], [1, "#2b2420", 1]], 0, 0, 1, 0);
+const LANG = S.lg("lang", [[0, "#2b2420", 0.35], [0.5, "#2b2420", 0.85], [1, "#2b2420", 1]], 0, 0, 1, 0);
 /* Lange Abendschatten: Die Sonne steht tief im WNW (rechts, leicht hinter uns). Jeder Schatten fällt nach links und etwas
    vom Betrachter weg: dx ≈ −0,95·L, dy ≈ −0,12·L (hinten flacher), Länge ≈ 4,5 × Höhe. Die Schatten liegen auf dem Pflaster
    (Teil „Marktplatz“), damit sie keine Trefferfläche vergrößern. X, Y absolut; „bis“ = wo der Schatten spätestens endet. */
 const SCHATTEN = [];
-const schlag = (X, Y, w, h, a = 0.5, bis = -4, spitz = 0.55, t = 0.35) => {
+const schlag = (X, Y, w, h, a = 0.5, bis = -4, spitz = 0.55, t = 0.45) => {
   const L = Math.max(0, Math.min(4.5 * h, (X - w / 2 - bis) / 0.95)), dx = -0.95 * L, dy = -0.12 * L * Math.min(1, (Y - HOR) / 50);
   /* Breite des Schattenstreifens auf dem Boden (t Meter quer zur Richtung), perspektivisch verkürzt */
   const k = km(Y), th = Math.max(0.45, k * k * AUGE * t / F), tt = Math.max(0.3, th * spitz * Math.pow((Y + dy - HOR) / (Y - HOR), 2));
@@ -721,7 +721,7 @@ const stuhl = (X, y, mitLehne = true) => {
   const hand = m.z.handR.y < m.z.handL.y ? m.z.handR : m.z.handL, hx = hand.x * m.k, hy = hand.y * m.k;
   const ph = `<g transform="translate(${r(hx)} ${r(hy - 1.6)})"><rect x="-1.1" y="-1.9" width="2.2" height="3.6" rx=".35" fill="#1d1f22"/><rect x="-.9" y="-1.65" width="1.8" height="3.1" fill="#8fb3d6"/><rect x="-.7" y="-.2" width="1.4" height="1" fill="#c9bfa5"/><path d="M-.7 -.2 L0 -.9 L.7 -.2" fill="#4a545e"/></g>`;
   S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x: 140, y: Y,
-    kunst: (schlag(140, Y + 0.3, 7, H, 0.55, 75, 0.6, 0.5), licht(m.svg + rs) + ph), tipp: "Die Touristin fotografiert das Rathaus. Viele Touristen kommen nach Aachen, um den Dom und das Rathaus zu sehen." });
+    kunst: (schlag(140, Y + 0.3, 7, H, 0.58, 75, 0.6, 0.6), licht(m.svg + rs) + ph), tipp: "Die Touristin fotografiert das Rathaus. Viele Touristen kommen nach Aachen, um den Dom und das Rathaus zu sehen." });
 }
 
 /* =====================================================================

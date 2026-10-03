@@ -660,7 +660,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
      unten aufspalten und in Fransen enden; zwei Stränge sind zu Stelzwurzeln geworden (oben dünn, unten
      3–4× breiter) und reichen bis zum Boden. Alle links der Oper (x < 72). */
   let lw = "", fr = "";
-  for (const [x0, y0, n, lmax] of [[30, -118, 5, 70], [42, -126, 4, 55], [55, -134, 6, 46], [66, -140, 3, 30]]) {
+  for (const [x0, y0, n, lmax] of [[31, -118, 5, 72], [48, -130, 5, 52], [64, -139, 4, 34]]) {
     for (let i = 0; i < n; i++) {
       const x = x0 + (i - n / 2) * 1.1 + rnd(), l = lmax * (0.45 + rnd() * 0.55), b = (rnd() - 0.5) * 4;
       lw += `M${r(x)} ${y0}c${r(b)} ${r(l * 0.35)} ${r(-b * 0.8)} ${r(l * 0.65)} ${r(b * 0.4)} ${r(l)}`;
@@ -668,12 +668,12 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
       fr += `M${r(ex)} ${r(ey)}l-.8 ${r(2 + rnd() * 2)}M${r(ex)} ${r(ey)}l.2 ${r(3 + rnd() * 2)}M${r(ex)} ${r(ey)}l1 ${r(2 + rnd() * 1.5)}`;
     }
   }
-  k += `<path d="${lw}" stroke="#8a8274" stroke-width=".55" fill="none"/><path d="${fr}" stroke="#9a9282" stroke-width=".3" fill="none"/>`;
+  k += `<path d="${lw}" stroke="#8a8274" stroke-width=".6" fill="none"/><path d="${lw}" stroke="#b9b0a0" stroke-width=".25" fill="none" transform="translate(.3 0)"/><path d="${fr}" stroke="#9a9282" stroke-width=".3" fill="none"/>`;
   /* Stelzwurzeln bis zum Boden (unten hinter dem Felsen der Bank) */
   for (const [x0, y0, b] of [[36, -122, 2], [50, -130, -2.5]]) {
     let li = "", re = "";
-    for (let i = 0; i <= 10; i++) { const t = i / 10, y = y0 + (-y0) * t, x = x0 + Math.sin(t * 3.2) * b, w = 0.6 + t * t * 3.4; li += `${i ? "L" : "M"}${r(x - w / 2)} ${r(y)}`; re = `L${r(x + w / 2)} ${r(y)}` + re; }
-    k += `<path d="${li}${re}Z" fill="${S.lg("stelz", [[0, "#7c7466"], [0.5, "#9d9585"], [1, "#6c6558"]], 0, 0, 1, 0)}"/>`;
+    for (let i = 0; i <= 10; i++) { const t = i / 10, y = y0 + (-y0) * t, x = x0 + Math.sin(t * 3.2) * b, w = 0.7 + Math.pow(t, 0.8) * 5.4; li += `${i ? "L" : "M"}${r(x - w / 2)} ${r(y)}`; re = `L${r(x + w / 2)} ${r(y)}` + re; }
+    k += `<path d="${li}${re}Z" fill="${S.lg("stelz", [[0, "#7c7466"], [0.5, "#9d9585"], [1, "#6c6558"]], 0, 0, 1, 0)}"/><path d="M${r(x0 - 0.4)} ${r(y0 * 0.45)}q.6 -8 .1 -16M${r(x0 + 0.6)} ${r(y0 * 0.3)}q-.4 -6 .2 -12" stroke="#5a544a" stroke-width=".3" fill="none" opacity=".7"/>`;
   }
   /* Brettwurzeln nach rechts auslaufend */
   for (const [x0, x1, y1] of [[22, 58, -1], [20, 44, -0.5], [14, 32, 0]]) k += `<path d="M${x0} ${-26 - (x0 - 14)} Q${r((x0 + x1) / 2)} ${r(-10 - (x0 - 6) * 0.5)} ${x1} ${y1} L${x1 - 10} ${y1 + 0.8} Q${r((x0 + x1) / 2 - 6)} ${r(-4)} ${x0 - 6} 0 Z" fill="${RINDE}"/>`;
@@ -730,11 +730,22 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
     }
   }
   k += bg;
+  /* Lücken: unregelmäßig, meist am Rand der Massen offen (Himmel bricht durch die Blattgruppen) */
   let lo = "";
-  for (const [hx, hy, w] of [[52, -170, 4.2], [88, -186, 1.4], [14, -165, 1.8], [118, -184, 3.4], [72, -194, 1], [142, -172, 1.2], [36, -192, 2.6], [100, -194, 0.8], [26, -140, 1.6], [62, -180, 0.9]]) lo += `M${r(hx - w)} ${hy}q${r(w * 0.3)} ${r(-w * 0.9)} ${r(w)} ${r(-w * 0.7)}q${r(w * 0.9)} ${r(w * 0.1)} ${r(w)} ${r(w * 0.8)}q${r(-w * 0.6)} ${r(w * 0.7)} ${r(-w * 1.2)} ${r(w * 0.5)}z`;
-  k += `<path d="${lo}" fill="${S.lg("loch", [[0, "#4f86c4"], [1, "#6b9ed2"]])}"/><path d="${lo}" fill="none" stroke="#1b361d" stroke-width=".6" opacity=".7"/>`;
+  for (const [hx, hy, w, h] of [[44, -166, 5, 3.4], [84, -176, 3.4, 2.2], [120, -183, 4.2, 2.6], [150, -184, 2.6, 2], [92, -200, 3.4, 1.6], [58, -199, 2.6, 1.6], [12, -158, 2.4, 2], [70, -183, 1.6, 1.2]]) {
+    let d = "";
+    for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, f = 0.6 + rnd() * 0.6; d += `${i ? "L" : "M"}${r(hx + Math.cos(a) * w * f)} ${r(hy + Math.sin(a) * h * f)}`; }
+    lo += d + "Z";
+  }
+  k += `<path d="${lo}" fill="#5d93cc"/>`;
   /* Brettwurzel-Rippen am sichtbaren Stamm (der Fuß liegt hinter dem Felsen der Bank) */
-  k += `<path d="M24 -40 Q30 -56 38 -60 L36 -54 Q30 -48 27 -38 Z M-2 -40 Q-1 -52 4 -60 L5 -54 Q2 -48 2 -40 Z" fill="${RINDE}"/><path d="M38 -60 Q30 -56 24 -40 M4 -60 Q-1 -52 -2 -40" stroke="#d2cab8" stroke-width=".6" fill="none" opacity=".6"/>`;
+  /* zwei Brettwurzeln als flache, geschwungene Rippen, die in den Fels laufen (der Fuß liegt dahinter) */
+  k += `<path d="M18 -62 Q22 -50 34 -44 Q40 -41.6 46 -42 L45 -38 Q36 -38.4 28 -42 Q20 -48 14 -60 Z" fill="${RINDE}"/><path d="M18 -62 Q22 -50 34 -44 Q40 -41.6 46 -42" stroke="#d8cfba" stroke-width=".8" fill="none"/>`;
+  k += `<path d="M4 -60 Q2 -50 -1 -42 L3 -40 Q6 -50 8 -58 Z" fill="${RINDE}"/><path d="M8 -58 Q6 -50 3 -40" stroke="#d8cfba" stroke-width=".6" fill="none"/>`;
+  /* Rinde: senkrechte, gewellte Falten */
+  let falt = "";
+  for (const x of [1, 4.5, 8, 11.5, 15, 19, 22.5]) { let f = `M${x} -200`; for (let y = -190; y <= -44; y += 10) f += `Q${r(x + (rnd() - 0.5) * 2.4)} ${y - 5} ${r(x + (rnd() - 0.5) * 1.6 + (y > -110 ? (x - 10) * (-110 - y) * -0.004 : 0))} ${y}`; falt += f; }
+  k += `<path d="${falt}" stroke="#4a443c" stroke-width=".7" fill="none" opacity=".55"/><path d="${falt}" stroke="#b8b0a0" stroke-width=".35" fill="none" opacity=".5" transform="translate(.8 0)"/>`;
   S.teil({ id: "feigenbaum", de: "der Feigenbaum", syl: "FEI-gen-baum", it: "il fico", itSyl: "FI-co", en: "fig tree", x: X, y: Y, kunst: k,
     tipp: "Die Moreton-Bay-Feige hat riesige Brettwurzeln und Luftwurzeln. In Sydneys Parks stehen viele davon." });
 }
@@ -1133,25 +1144,29 @@ S.teil({ id: "picknickdecke", de: "die Picknickdecke", syl: "PICK-nick-de-cke", 
   /* Kühlbox („Esky“) in derselben Perspektive wie die Decke: Sie steht links vom Fluchtpunkt, darum
      sieht man ihre RECHTE Seite (schmal, etwas dunkler) und den Deckel, der nach hinten zum Fluchtpunkt
      ausweicht. Griff an der rechten Seite. Schlagschatten nach links hinten (Sonne rechts hinter uns). */
-  const XL = -0.5, D = 11.75, W2 = 0.28, T = 0.32, H = 0.38;
+  /* Esky 0,60 × 0,40 × 0,40 m, steht auf der Decke, um ≈ 18° gedreht (rechte Seite zum Betrachter) */
+  const XL = -0.8, D = 11.7, W2 = 0.3, T = 0.4, H = 0.4, dr = 18 * Math.PI / 180, cs = Math.cos(dr), sn = Math.sin(dr);
   const [X, Y] = PK(XL, D);
-  const Q = (dx, dd, h) => { const [x, y] = PK(XL + dx, D + dd, h); return [x - X, y - Y]; };
+  const Q = (u, v, h) => { const [x, y] = PK(XL + u * cs + v * sn, D - u * sn + v * cs, h); return [x - X, y - Y]; };
   const fl = Q(-W2, 0, 0), fr = Q(W2, 0, 0), flo = Q(-W2, 0, H), fro = Q(W2, 0, H), br = Q(W2, T, 0), bro = Q(W2, T, H), blo = Q(-W2, T, H);
-  let k = `<path d="M${P(fl)} L${P(fr)} L${P([fr[0] - 22, fr[1] - 4])} L${P([fl[0] - 24, fl[1] - 4])} Z" fill="#1d2a10" opacity=".3" filter="url(#bw_weich)"/>`;
-  k += `<path d="M${P(fl)} L${P(fr)}" stroke="#1a1a1a" stroke-width="1.4" opacity=".35"/>`;
-  /* rechte Seite */
-  k += `<path d="M${P(fr)} L${P(br)} L${P(bro)} L${P(fro)} Z" fill="${S.lg("eskyseite", [[0, "#2c64ad"], [1, "#22508f"]], 0, 0, 1, 0)}"/>`;
+  /* Schlagschatten kurz nach links hinten (Sonne rechts hinter uns), dunkler Kontaktstreifen */
+  let k = `<path d="M${P(fl)} L${P(fr)} L${P(br)} L${P([br[0] - 9, br[1] - 2.2])} L${P([fl[0] - 9, fl[1] - 2.6])} Z" fill="#1d2a10" opacity=".32" filter="url(#bw_weich)"/>`;
+  k += `<path d="M${P(fl)} L${P(fr)} L${P(br)}" stroke="#14100c" stroke-width="1.2" opacity=".45" fill="none"/>`;
+  /* rechte Seite (etwas dunkler) mit Tragegriff */
+  k += `<path d="M${P(fr)} L${P(br)} L${P(bro)} L${P(fro)} Z" fill="${S.lg("eskyseite", [[0, "#2f68b0"], [1, "#22508f"]], 0, 0, 1, 0)}"/>`;
+  const g1 = Q(W2, T * 0.22, H * 0.7), g2 = Q(W2, T * 0.78, H * 0.7), gm = Q(W2 + 0.03, T * 0.5, H * 0.98);
+  k += `<path d="M${P(g1)} Q${P(gm)} ${P(g2)}" stroke="#eef0f2" stroke-width="1.2" fill="none"/><path d="M${P(g1)} Q${P(gm)} ${P(g2)}" stroke="#9aa4ae" stroke-width=".4" fill="none" transform="translate(.3 .5)"/>`;
   /* Vorderseite mit Prägung, warmes Morgenlicht */
-  k += `<path d="M${P(fl)} L${P(fr)} L${P(fro)} L${P(flo)} Z" fill="${S.lg("esky", [[0, "#5698dc"], [1, "#3474ba"]])}"/>`;
-  const pr = [Q(-W2 + 0.03, 0, H - 0.07), Q(W2 - 0.03, 0, H - 0.07), Q(W2 - 0.03, 0, 0.05), Q(-W2 + 0.03, 0, 0.05)];
-  k += `<path d="M${pr.map(P).join(" L")} Z" fill="none" stroke="#6aa8e6" stroke-width=".7" stroke-linejoin="round"/>`;
-  /* Deckel: weiß, warm beschienen, mit Griffmulde; Deckelkante */
-  k += `<path d="M${P(flo)} L${P(fro)} L${P(bro)} L${P(blo)} Z" fill="#fbf7ee"/><path d="M${P(flo)} L${P(fro)} L${P(bro)}" stroke="#e1dcd2" stroke-width="2" fill="none"/>`;
-  const m1 = Q(-0.1, T * 0.5, H), m2 = Q(0.1, T * 0.5, H);
-  k += `<path d="M${P(m1)} L${P(m2)}" stroke="#cdd2d6" stroke-width="1.8" stroke-linecap="round"/>`;
-  /* Tragegriff an der rechten Seite */
-  const g1 = Q(W2, T * 0.25, H * 0.72), g2 = Q(W2, T * 0.75, H * 0.72), gm = Q(W2 + 0.02, T * 0.5, H * 1.02);
-  k += `<path d="M${P(g1)} Q${P(gm)} ${P(g2)}" stroke="#e8ebee" stroke-width="1.1" fill="none"/>`;
+  k += `<path d="M${P(fl)} L${P(fr)} L${P(fro)} L${P(flo)} Z" fill="${S.lg("esky", [[0, "#5a9cde"], [1, "#3474ba"]])}"/>`;
+  const pr = [Q(-W2 + 0.04, 0, H - 0.08), Q(W2 - 0.04, 0, H - 0.08), Q(W2 - 0.04, 0, 0.05), Q(-W2 + 0.04, 0, 0.05)];
+  k += `<path d="M${pr.map(P).join(" L")} Z" fill="none" stroke="#6eace8" stroke-width=".7" stroke-linejoin="round"/>`;
+  /* Deckel als sichtbare Fläche: Wulstkante, Griffmulde */
+  const lo = (u, v) => Q(u, v, H + 0.03);
+  const L4 = [lo(-W2 - 0.015, -0.015), lo(W2 + 0.015, -0.015), lo(W2 + 0.015, T + 0.01), lo(-W2 - 0.015, T + 0.01)];
+  k += `<path d="M${P(flo)} L${P(fro)} L${P(bro)} L${P(L4[2])} L${P(L4[1])} L${P(L4[0])} Z" fill="#dcd6cc"/>`;
+  k += `<path d="M${L4.map(P).join(" L")} Z" fill="#fbf7ee"/><path d="M${P(L4[0])} L${P(L4[1])} L${P(L4[2])}" stroke="#ffffff" stroke-width=".6" fill="none"/>`;
+  const m = [lo(-0.11, T * 0.42), lo(0.11, T * 0.42), lo(0.11, T * 0.6), lo(-0.11, T * 0.6)];
+  k += `<path d="M${m.map(P).join(" L")} Z" fill="#cfd4d8"/><path d="M${P(m[0])} L${P(m[1])}" stroke="#a8b0b8" stroke-width=".4"/>`;
   S.teil({ oben: true, id: "kuehlbox", de: "die Kühlbox", syl: "KÜHL-box", it: "la borsa frigo", itSyl: "BOR-sa FRI-go", en: "cool box", x: r(X), y: r(Y), steht: true, kunst: k,
     tipp: "In Australien heißt die Kühlbox „Esky“. Ohne sie geht niemand zum Picknick." });
 }

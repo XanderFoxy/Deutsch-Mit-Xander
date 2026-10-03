@@ -363,8 +363,9 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
   /* Fisherman's Wharf: Dächer, Uferstraße (Jefferson/Embarcadero), Palmen, das Krebs-Rundschild */
   for (let x = 236, i = 0; x < 312; x += 5 + (i++ % 3) * 2) { const y = 119.4 + (312 - x) * 0.04 * (x < 262 ? 1.6 : 1), w = 3.6 + (i % 2) * 1.6; c += `<rect x="${r(x)}" y="${r(y - 1.6)}" width="${r(w)}" height="1.6" fill="${["#9a8f80", "#c7bba6", "#8a7d6c"][i % 3]}"/><rect x="${r(x)}" y="${r(y - 1.9)}" width="${r(w)}" height=".35" fill="#6f665b"/>`; }
   c += `<path d="M234 125 L312 120.6" stroke="#e8e2d4" stroke-width=".35"/>`;
-  for (const x of [244, 268, 291, 305]) { const y = 120.3 + (312 - x) * 0.045; c += `<path d="M${x} ${r(y)} L${x + 0.2} ${r(y - 3.2)}" stroke="#6b5a42" stroke-width=".3"/><path d="M${x + 0.2} ${r(y - 3.2)} l-1.3 .7 M${x + 0.2} ${r(y - 3.2)} l1.3 .7 M${x + 0.2} ${r(y - 3.2)} l-.9 -.6 M${x + 0.2} ${r(y - 3.2)} l.9 -.6 M${x + 0.2} ${r(y - 3.2)} l0 1" stroke="#4d6b3a" stroke-width=".35"/>`; }
-  c += `<path d="M258 121.6 V118.4" stroke="#3c3a36" stroke-width=".3"/><circle cx="258" cy="117.2" r="1.9" fill="#f4efe2" stroke="#1f4f7a" stroke-width=".35"/><path d="M256.9 117.4 q1.1 -1.2 2.2 0 q-1.1 .9 -2.2 0 Z M256.9 117 l-.5 -.6 M259.1 117 l.5 -.6 M257.1 117.8 l-.5 .4 M258.9 117.8 l.5 .4" fill="#c8301f" stroke="#c8301f" stroke-width=".2"/>`;
+  for (const x of [244, 268, 291, 305]) { const y = 120.3 + (312 - x) * 0.045, t = [x + 0.25, y - 3.6]; c += `<path d="M${x} ${r(y)} Q${x - 0.2} ${r(y - 2)} ${r(t[0])} ${r(t[1])}" stroke="#6b5a42" stroke-width=".35" fill="none"/><path d="M${r(t[0])} ${r(t[1])} q-1 -.5 -1.9 .5 M${r(t[0])} ${r(t[1])} q1 -.5 1.9 .5 M${r(t[0])} ${r(t[1])} q-.8 -1 -1.5 -.5 M${r(t[0])} ${r(t[1])} q.8 -1 1.5 -.5 M${r(t[0])} ${r(t[1])} q-.2 -.9 .1 -1.2 M${r(t[0])} ${r(t[1])} q-1.2 .2 -1.6 1.3 M${r(t[0])} ${r(t[1])} q1.2 .2 1.6 1.3" stroke="#3f6a32" stroke-width=".4" fill="none" stroke-linecap="round"/>`; }
+  /* das runde Fisherman's-Wharf-Schild mit dem roten Dungeness-Krebs */
+  c += `<path d="M249 123 V118.6" stroke="#3c3a36" stroke-width=".4"/><circle cx="249" cy="116.4" r="2.3" fill="#f4efe2" stroke="#1f4f7a" stroke-width=".45"/><path d="M247.6 116.7 q1.4 -1.5 2.8 0 q-1.4 1.1 -2.8 0 Z M247.7 116.3 l-.7 -.8 l-.2 .5 M250.3 116.3 l.7 -.8 l.2 .5 M247.9 117.1 l-.7 .5 M250.1 117.1 l.7 .5 M248.3 117.3 l-.4 .7 M249.7 117.3 l.4 .7" fill="#c8301f" stroke="#c8301f" stroke-width=".25"/>`;
   S.hinten(c);
 }
 
@@ -397,7 +398,7 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
   const loewe = (x, y, dir, hoch) => { const X2 = (v) => r(x + v * dir), Y2 = (v) => r(y - v); return `M${X2(-2)} ${Y2(0)} Q${X2(-2.3)} ${Y2(0.5)} ${X2(-1.5)} ${Y2(0.6)} Q${X2(0)} ${Y2(0.9)} ${X2(0.9)} ${Y2(hoch ? 1.4 : 0.8)} L${X2(1.3)} ${Y2(hoch ? 2 : 0.9)} Q${X2(1.8)} ${Y2(hoch ? 2.2 : 0.9)} ${X2(2)} ${Y2(hoch ? 1.9 : 0.6)} L${X2(1.5)} ${Y2(hoch ? 1.2 : 0.3)} L${X2(1.2)} ${Y2(0)} Z`; };
   { let lw = ""; for (const [x0, y0] of [[-112, 1.5], [-96, 5], [-120, 7.5], [-84, 2]]) for (let x = x0 + 2; x < x0 + 21; x += 2.6 + rp() * 1.2) lw += loewe(x, y0 + 0.2, rp() < 0.5 ? 1 : -1, rp() < 0.3); k += `<path d="${lw}" fill="${LF}"/>`; }
   S.teil({ id: "pier_39", de: "der Pier 39", syl: "PIER NEUN-und-DREI-ßig", it: "il Pier 39", itSyl: "PIER TREN-ta-NO-ve", en: "Pier 39", x: X, y: Y,
-    kunst: `<g ${fern(2)} transform="scale(${r(s * 1000) / 1000})">${k}</g>` + `<g ${fern(2)}><rect x="${r(301 - X)}" y="${r(114.6 - Y)}" width="9" height="2.2" fill="#d9d2c2"/><rect x="${r(301 - X)}" y="${r(113.8 - Y)}" width="9" height=".8" fill="#8f877a"/><rect x="${r(301.5 - X)}" y="${r(116.8 - Y)}" width="8" height=".5" fill="#6f6658"/></g>` + flaeche(-36 * s * 3.4, -36 * s, 190 * s, 44 * s, 0.4),
+    kunst: `<g ${fern(2)} transform="scale(${r(s * 1000) / 1000})">${k}</g>` + `<g ${fern(2)}><rect x="${r(300 - X)}" y="${r(114 - Y)}" width="11" height="2.8" fill="#e2dccd"/><path d="M${r(299.6 - X)} ${r(114 - Y)} L${r(305.5 - X)} ${r(112.4 - Y)} L${r(311.4 - X)} ${r(114 - Y)} Z" fill="#8f877a"/><rect x="${r(300.5 - X)}" y="${r(116.8 - Y)}" width="10" height=".6" fill="#6f6658"/><text x="${r(305.5 - X)}" y="${r(116.2 - Y)}" font-size="1.3" text-anchor="middle" fill="#5a5048" font-family="Arial,sans-serif" font-weight="bold">PIER 33</text></g>` + flaeche(-36 * s * 3.4, -36 * s, 190 * s, 44 * s, 0.4),
     tipp: "Am Pier 39 gibt es Läden und Restaurants — und Hunderte Seelöwen.",
     zoom: { x: r(X - 126 * s), y: r(Y - 21), w: 54, h: 36 },
     unter: [
@@ -667,8 +668,8 @@ const HAUS = {};
     k += vr([PN(-16.4, d0, zr - 0.7), PN(-16.4, d0, zr), PN(-16.4, d1, zr), PN(-16.4, d1, zr - 0.7)], WT);
     let kon = "";
     for (let t = 0.05; t < 1 && d0 < 75; t += 0.09) { const d = d0 + t * 7.6; kon += seg(PN(-16.6, d, zr - 0.7), PN(-16.6, d, zr - 1.3)) + " "; }
-    k += `<path d="${kon}" stroke="${schatt(WT, 0.55)}" stroke-width="${r(Math.max(0.2, 12 / d0))}"/>`;
-    if (nah) { const zz = seg(PN(-16.5, d0, zr - 1.45), PN(-16.5, d1, zr - 1.45)); if (zz) k += `<path d="${zz}" stroke="${schatt(WT, 0.6)}" stroke-width="${r(9 / d0)}" stroke-dasharray=".22 .2"/>`; }
+    k += `<path d="${kon}" stroke="#efe9dc" stroke-width="${r(Math.max(0.25, 16 / d0))}"/>`;
+    if (nah) { const zz = seg(PN(-16.5, d0, zr - 1.45), PN(-16.5, d1, zr - 1.45)); if (zz) k += `<path d="${zz}" stroke="${schatt(WT, 0.45)}" stroke-width="${r(12 / d0)}"/><path d="${zz}" stroke="#f4efe4" stroke-width="${r(12 / d0)}" stroke-dasharray=".25 .22"/>`; }
     if (giebel) { const gm = (d0 + d1) / 2; k += vr([PN(-16.4, d0, zr), PN(-16.4, gm, zr + 3.6), PN(-16.4, d1, zr)], W) + strich(PN(-16.3, d0, zr), PN(-16.3, gm, zr + 3.6), WT, r(10 / d0)) + strich(PN(-16.3, gm, zr + 3.6), PN(-16.3, d1, zr), WT, r(10 / d0)); }
     /* Erdgeschoss: entweder Garage (Tor mit 4 × 2 Paneelen, Sturz, Bordsteinabsenkung davor)
        oder Eingangstreppe (6 Stufen mit Wange und Geländer bis zur farbigen Tür mit Vordach) */
@@ -684,26 +685,26 @@ const HAUS = {};
       if (nah) {
         const t0 = d0 + 0.4, t1 = d0 + 1.8, n = 6;
         const wange = [PN(-15.2, t0, zb0)]; for (let j = 0; j < n; j++) { const xx = -15.2 - j * 0.29; wange.push(PN(xx, t0, zb0 + 0.2 * (j + 1)), PN(xx - 0.29, t0, zb0 + 0.2 * (j + 1))); } wange.push(PN(-16.95, t0, zb0));
-        for (let j = n - 1; j >= 0; j--) { const xx = -15.2 - j * 0.29, zz = zb0 + 0.2 * (j + 1); k += vr([PN(xx, t0, zz), PN(xx, t1, zz), PN(xx - 0.29, t1, zz), PN(xx - 0.29, t0, zz)], "#ddd7cb") + vr([PN(xx, t0, zz - 0.2), PN(xx, t1, zz - 0.2), PN(xx, t1, zz), PN(xx, t0, zz)], "#a9a397"); }
+        for (let j = n - 1; j >= 0; j--) { const xx = -15.2 - j * 0.29, zz = zb0 + 0.2 * (j + 1); k += vr([PN(xx, t0, zz), PN(xx, t1, zz), PN(xx - 0.29, t1, zz), PN(xx - 0.29, t0, zz)], "#c9c2b5") + vr([PN(xx, t0, zz - 0.2), PN(xx, t1, zz - 0.2), PN(xx, t1, zz), PN(xx, t0, zz)], "#8f897e"); }
         k += vr(wange, "#c4bdb0");
         k += strich(PN(-15.2, t0, zb0 + 0.9), PN(-16.95, t0, zb0 + 2.1), "#2f2c28", r(Math.max(0.1, 5 / d0))) + strich(PN(-15.2, t0, zb0), PN(-15.2, t0, zb0 + 0.9), "#2f2c28", r(Math.max(0.1, 5 / d0)));
       }
       k += vr([PN(-16.95, d0 + 0.6, zb0 + 1.2), PN(-16.95, d0 + 0.6, zb0 + 3.4), PN(-16.95, d0 + 1.6, zb0 + 3.4), PN(-16.95, d0 + 1.6, zb0 + 1.2)], f.a);
-      if (nah) k += vr([PN(-16.95, d0 + 0.4, zb0 + 3.6), PN(-16.35, d0 + 0.4, zb0 + 3.45), PN(-16.35, d0 + 1.8, zb0 + 3.45), PN(-16.95, d0 + 1.8, zb0 + 3.6)], WT);
+      if (nah) k += vr([PN(-16.95, d0 + 0.4, zb0 + 3.6), PN(-16.35, d0 + 0.4, zb0 + 3.45), PN(-16.35, d0 + 1.8, zb0 + 3.45), PN(-16.95, d0 + 1.8, zb0 + 3.6)], schatt(W, 0.7));
     }
     /* der schräge Erker (Bay Window) über zwei Geschosse; die Südseite schaut zu uns */
     const e0 = d0 + 2, e1 = d0 + 5.6, ez0 = zb0 + 3.4, ez1 = zr - 1.4;
     k += vr([PN(-17, e0, ez0), PN(-16, e0 + 0.8, ez0), PN(-16, e0 + 0.8, ez1), PN(-17, e0, ez1)], misch(f.w, "#fff6e4", 0.12));
     k += vr([PN(-16, e0 + 0.8, ez0), PN(-16, e1 - 0.8, ez0), PN(-16, e1 - 0.8, ez1), PN(-16, e0 + 0.8, ez1)], W);
     for (const zf of [ez0 + 0.6, ez0 + 3.3]) {
-      k += vr([PN(-16.85, e0 + 0.12, zf), PN(-16.12, e0 + 0.7, zf), PN(-16.12, e0 + 0.7, zf + 1.9), PN(-16.85, e0 + 0.12, zf + 1.9)], "#5a6f82", ` stroke="${WT}" stroke-width="${r(Math.max(0.1, 6 / d0))}"`);
-      k += vr([PN(-15.98, e0 + 1, zf), PN(-15.98, e1 - 1, zf), PN(-15.98, e1 - 1, zf + 1.9), PN(-15.98, e0 + 1, zf + 1.9)], "#3e4c5a", ` stroke="${WT}" stroke-width="${r(Math.max(0.1, 6 / d0))}"`);
-      k += strich(PN(-16.5, e0 + 0.4, zf + 1.05), PN(-16.1, e0 + 0.7, zf + 1.05), WT, r(Math.max(0.12, 6 / d0)));
-      k += strich(PN(-15.97, e0 + 1, zf + 1.05), PN(-15.97, e1 - 1, zf + 1.05), WT, r(Math.max(0.12, 6 / d0)));
+      k += vr([PN(-16.85, e0 + 0.12, zf), PN(-16.12, e0 + 0.7, zf), PN(-16.12, e0 + 0.7, zf + 1.9), PN(-16.85, e0 + 0.12, zf + 1.9)], "#5a6f82", ` stroke="${WT}" stroke-width="${r(Math.max(0.28, 11 / d0))}"`);
+      k += vr([PN(-15.98, e0 + 1, zf), PN(-15.98, e1 - 1, zf), PN(-15.98, e1 - 1, zf + 1.9), PN(-15.98, e0 + 1, zf + 1.9)], "#3e4c5a", ` stroke="${WT}" stroke-width="${r(Math.max(0.28, 11 / d0))}"`);
+      k += strich(PN(-16.5, e0 + 0.4, zf + 1.05), PN(-16.1, e0 + 0.7, zf + 1.05), "#f4efe4", r(Math.max(0.22, 10 / d0)));
+      k += strich(PN(-15.97, e0 + 1, zf + 1.05), PN(-15.97, e1 - 1, zf + 1.05), "#f4efe4", r(Math.max(0.22, 10 / d0)));
     }
     k += vr([PN(-16, e0 + 0.8, ez1), PN(-16, e1 - 0.8, ez1), PN(-16, e1 - 0.8, ez1 + 0.4), PN(-16, e0 + 0.8, ez1 + 0.4)], f.a);
     /* Schiebefenster neben dem Erker (Rahmen, Kämpfer in der Mitte) */
-    for (const zf of [ez0 + 0.6, ez0 + 3.3]) { k += vr([PN(-16.97, e1 + 0.2, zf), PN(-16.97, e1 + 1.3, zf), PN(-16.97, e1 + 1.3, zf + 1.9), PN(-16.97, e1 + 0.2, zf + 1.9)], "#46566a", ` stroke="${WT}" stroke-width="${r(Math.max(0.1, 6 / d0))}"`) + strich(PN(-16.96, e1 + 0.2, zf + 1.05), PN(-16.96, e1 + 1.3, zf + 1.05), WT, r(Math.max(0.12, 6 / d0))); }
+    for (const zf of [ez0 + 0.6, ez0 + 3.3]) { k += vr([PN(-16.97, e1 + 0.2, zf), PN(-16.97, e1 + 1.3, zf), PN(-16.97, e1 + 1.3, zf + 1.9), PN(-16.97, e1 + 0.2, zf + 1.9)], "#46566a", ` stroke="${WT}" stroke-width="${r(Math.max(0.28, 11 / d0))}"`) + strich(PN(-16.96, e1 + 0.2, zf + 1.05), PN(-16.96, e1 + 1.3, zf + 1.05), "#f4efe4", r(Math.max(0.22, 10 / d0))); }
     if (d0 >= 70 && d0 < 80) HAUS.erker = { p: PN(-16.5, e0 + 0.4, ez0), q: PN(-16.5, e0 + 0.4, ez1), g: PN(-16.95, d0 + 5.5, zb1), g2: PN(-16.95, d0 + 5.5, zb1 + 2.4), d: d0 };
   }
   const DECK = [], vd = (pts, f, ex = "") => { const q = rahmen(pts); if (!ex) DECK.push(q); return vl(q, f, ex); };
@@ -867,18 +868,22 @@ const LOMB = {};
   { const L = 1.45 * SL, pts = []; for (const [u, v] of [[-2.3, -0.9], [2.3, -0.9], [2.3, 0.9], [-2.3, 0.9]]) { pts.push(P(u, v, 0)); pts.push(P(u + L * SN_, v + L * SE_, 0)); }
     var k = `<path d="M${huelle(pts).map(pr).join(" L")} Z" fill="#1d2433" opacity=".34"/>`; }
   /* Räder links (nur unten sichtbar) */
-  k += Q([[-1.75, -0.85, 0], [-1.15, -0.85, 0], [-1.15, -0.85, 0.3], [-1.75, -0.85, 0.3]], "#151515");
+  { const pts = []; for (let i = 0; i < 12; i++) { const a = Math.PI + i / 11 * Math.PI; pts.push([-1.45 + Math.cos(a) * 0.33, -0.86, 0.33 + Math.sin(a) * 0.33 * -1]); } k += Q(pts, "#151515"); }
   /* Karosserie: rechte Seite, Heck, Dach, Scheiben */
   const BLAU = S.lg("autoseite", [[0, "#7895b3"], [1, "#4a6684"]]);
   k += Q([[-2.3, 0.9, 0.3], [2.3, 0.9, 0.3], [2.25, 0.9, 0.95], [-2.3, 0.9, 0.95]], BLAU);
   k += Q([[-2.3, -0.9, 0.3], [-2.3, 0.9, 0.3], [-2.3, 0.9, 0.95], [-2.3, -0.9, 0.95]], "#55728f");
   k += Q([[-2.3, -0.9, 0.95], [-2.3, 0.9, 0.95], [2.25, 0.9, 0.95], [2.25, -0.9, 0.95]], "#86a3bf");
-  k += Q([[-1.55, -0.8, 0.95], [-1.55, 0.8, 0.95], [-1.1, 0.72, 1.42], [-1.1, -0.72, 1.42]], "#2f3c47");
+  k += Q([[-1.55, -0.8, 0.95], [-1.55, 0.8, 0.95], [-1.1, 0.72, 1.42], [-1.1, -0.72, 1.42]], "#3a4a58") + Q([[-1.5, -0.7, 0.99], [-1.5, 0.7, 0.99], [-1.13, 0.63, 1.37], [-1.13, -0.63, 1.37]], "#26313b");
   k += Q([[-1.1, -0.72, 1.42], [-1.1, 0.72, 1.42], [0.6, 0.72, 1.42], [0.6, -0.72, 1.42]], "#8fabc5");
   k += Q([[-1.55, 0.8, 0.95], [1.25, 0.8, 0.95], [0.6, 0.72, 1.42], [-1.1, 0.72, 1.42]], "#34424f");
   k += Q([[-0.3, 0.81, 0.97], [-0.22, 0.79, 1.4], [-0.15, 0.79, 1.4], [-0.23, 0.81, 0.97]], "#55728f");
   for (const v of [-0.62, 0.62]) k += Q([[-2.31, v - 0.2, 0.7], [-2.31, v + 0.2, 0.7], [-2.31, v + 0.2, 0.82], [-2.31, v - 0.2, 0.82]], "#c8232c");
   k += Q([[-2.31, -0.25, 0.42], [-2.31, 0.25, 0.42], [-2.31, 0.25, 0.55], [-2.31, -0.25, 0.55]], "#f2f0e8");
+  /* Radausschnitte (dunkle Bögen), Türfugen, Griff, Spiegel beidseits */
+  for (const uc of [-1.45, 1.45]) { const pts = []; for (let i = 0; i <= 8; i++) { const a = i / 8 * Math.PI; pts.push([uc + Math.cos(a) * 0.43, 0.905, 0.3 + Math.sin(a) * 0.42]); } k += Q(pts, "#2a3440"); }
+  k += `<path d="M${pr(P(-0.35, 0.91, 0.32))} L${pr(P(-0.35, 0.91, 0.95))} M${pr(P(0.95, 0.91, 0.32))} L${pr(P(0.95, 0.91, 0.95))}" stroke="#3d556e" stroke-width=".3"/>` + Q([[-0.6, 0.915, 0.78], [-0.42, 0.915, 0.78], [-0.42, 0.915, 0.82], [-0.6, 0.915, 0.82]], "#2a3440");
+  k += Q([[1.05, -0.9, 0.98], [1.05, -1.08, 1.0], [1.15, -1.08, 1.12], [1.15, -0.9, 1.1]], "#4a6684");
   /* Außenspiegel rechts */
   k += Q([[1.05, 0.9, 0.98], [1.05, 1.08, 1.0], [1.15, 1.08, 1.12], [1.15, 0.9, 1.1]], "#4a6684");
   /* Räder rechts: hinten gerade, vorn zum Bordstein (nach rechts) eingeschlagen — Reifen mit Felge */
@@ -961,10 +966,10 @@ const LOMB = {};
     /* der Greifhebel: aus dem Boden bis Brusthöhe, oben der Griff — beide Hände daran */
     const hs = [m.z.handL, m.z.handR].filter(Boolean).map((h) => [gx + h.x * m.k, gy + h.y * m.k]), hm = hs.length ? [hs.reduce((a, h) => a + h[0], 0) / hs.length, Math.min(...hs.map((h) => h[1]))] : P(0.9, 0, 2.2);
     const fb = P(0.85, 0, 0.95);
-    k += `<path d="M${pr(fb)} L${pr([hm[0], hm[1] - 0.6])}" stroke="#3a3632" stroke-width="${r(0.06 * s)}"/><path d="M${pr([hm[0] - 0.08 * s, hm[1] - 0.6])} L${pr([hm[0] + 0.08 * s, hm[1] - 0.6])}" stroke="#1d1b19" stroke-width="${r(0.05 * s)}" stroke-linecap="round"/>`;
+    const lt = hm[1] - 0.3 * (fb[1] - hm[1]); k += `<path d="M${pr(fb)} L${pr([hm[0], lt])}" stroke="#3a3632" stroke-width="${r(0.06 * s)}"/><path d="M${pr([hm[0] - 0.09 * s, lt])} L${pr([hm[0] + 0.09 * s, lt])}" stroke="#1d1b19" stroke-width="${r(0.06 * s)}" stroke-linecap="round"/>`;
     /* auf der Außenbank sitzende Fahrgäste (Köpfe und Schultern über der Bank, nach außen gewandt) */
     for (const [u, c, hc] of [[0.45, "#3d6fa8", "#3a2a1c"], [2.35, "#4f8a5a", "#c9a46a"]]) { const sh = P(u, HB - 0.3, 1.95), hd = P(u, HB - 0.3, 2.22), q = 0.1 * s;
-      k += `<path d="M${r(sh[0] - 2.4 * q)} ${r(sh[1] + 2.2 * q)} Q${r(sh[0] - 2.3 * q)} ${r(sh[1] - 0.4 * q)} ${r(sh[0])} ${r(sh[1] - 0.5 * q)} Q${r(sh[0] + 2.3 * q)} ${r(sh[1] - 0.4 * q)} ${r(sh[0] + 2.4 * q)} ${r(sh[1] + 2.2 * q)} Z" fill="${c}"/><ellipse cx="${r(hd[0])}" cy="${r(hd[1])}" rx="${r(1 * q)}" ry="${r(1.25 * q)}" fill="#e2b994"/><path d="M${r(hd[0] - q)} ${r(hd[1] - 0.2 * q)} Q${r(hd[0])} ${r(hd[1] - 1.7 * q)} ${r(hd[0] + q)} ${r(hd[1] - 0.2 * q)} Z" fill="${hc}"/>`; }
+      k += `<path d="M${r(sh[0] - 2.4 * q)} ${r(sh[1] + 2.2 * q)} Q${r(sh[0] - 2.3 * q)} ${r(sh[1] - 0.4 * q)} ${r(sh[0])} ${r(sh[1] - 0.5 * q)} Q${r(sh[0] + 2.3 * q)} ${r(sh[1] - 0.4 * q)} ${r(sh[0] + 2.4 * q)} ${r(sh[1] + 2.2 * q)} Z" fill="${c}"/><ellipse cx="${r(hd[0])}" cy="${r(hd[1])}" rx="${r(0.9 * q)}" ry="${r(1.2 * q)}" fill="#e2b994"/><path d="M${r(hd[0] + 0.8 * q)} ${r(hd[1] - 0.2 * q)} l${r(0.45 * q)} ${r(0.35 * q)} l${r(-0.45 * q)} ${r(0.15 * q)} Z" fill="#e2b994"/><path d="M${r(hd[0] - q)} ${r(hd[1] + 0.6 * q)} Q${r(hd[0] - 1.1 * q)} ${r(hd[1] - 1.6 * q)} ${r(hd[0] + 0.7 * q)} ${r(hd[1] - 1.1 * q)} Q${r(hd[0] - 0.1 * q)} ${r(hd[1] - 0.4 * q)} ${r(hd[0] - 0.2 * q)} ${r(hd[1] + 0.6 * q)} Z" fill="${hc}"/>`; }
   }
   /* rechte (östliche, uns zugewandte) Seite: Schürze, Trittbrett, Kabine */
   k += Q([-0.05, HB, 0.42], [LEN, HB, 0.42], [LEN, HB, 0.95], [-0.05, HB, 0.95], WEINROT);
@@ -1047,7 +1052,7 @@ const LOMB = {};
   const hs = [m.z.handL, m.z.handR].filter(Boolean), hx = hs.reduce((a, h) => a + h.x, 0) / hs.length * m.k, hy = Math.min(...hs.map((h) => h.y)) * m.k;
   const pw = 0.075 * s, ph = 0.15 * s;
   /* Handy mit Bildschirm (von hinten zu sehen): die Bucht mit Alcatraz als Mini-Bild */
-  const pX = hx + pw * 0.2, pY = hy - ph * 0.55;
+  const pX = hx, pY = hy - ph * 0.2;
   let handy = `<rect x="${r(pX - pw / 2)}" y="${r(pY - ph / 2)}" width="${r(pw)}" height="${r(ph)}" rx=".25" fill="#1c1e22"/><rect x="${r(pX - pw / 2 + 0.25)}" y="${r(pY - ph / 2 + 0.3)}" width="${r(pw - 0.5)}" height="${r(ph * 0.45)}" fill="#a9cbe6"/><rect x="${r(pX - pw / 2 + 0.25)}" y="${r(pY - ph / 2 + 0.3 + ph * 0.45)}" width="${r(pw - 0.5)}" height="${r(ph * 0.47 - 0.6)}" fill="#4f7d9a"/><path d="M${r(pX - pw * 0.25)} ${r(pY + ph * 0.02)} q${r(pw * 0.25)} ${r(-ph * 0.08)} ${r(pw * 0.5)} 0 Z" fill="#8a8170"/>`;
   /* scharfer Schatten nach rechts hinten (Länge 0,9 × Körpergröße) */
   const L = 1.66 * SL, T = PN(X + L * SE_, d + L * SN_, 0), A = PN(X - 0.2, d, 0), Bp = PN(X + 0.2, d, 0);

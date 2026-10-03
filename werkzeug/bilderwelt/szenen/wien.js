@@ -99,8 +99,10 @@ function schlank(svg, Q = 1, flach = false) {
     const farbe = {};
     s = s.replace(/<(linearGradient|radialGradient) id="([^"]+)"[^>]*>([\s\S]*?)<\/\1>/g, (a, t, id, inner) => {
       const st = [...inner.matchAll(/stop-color="([^"]+)"/g)].map((m) => m[1]);
-      farbe[id] = st[Math.floor(st.length / 2)] || st[0] || "#888"; return "";
+      /* halbtransparente Verläufe sind Schattier- oder Glanzschichten: weglassen statt als Fleck füllen */
+      farbe[id] = /stop-opacity="(0?\.\d+|0)"/.test(inner) ? "weg" : (st[Math.floor(st.length / 2)] || st[0] || "#888"); return "";
     });
+    s = s.replace(/<(path|ellipse|circle|rect)[^>]*url\(#([^)]+)\)[^>]*\/>/g, (q, t, id) => farbe[id] === "weg" ? "" : q);
     s = s.replace(/url\(#([^)]+)\)/g, (a, id) => farbe[id] || a).replace(/<defs>\s*<\/defs>/g, "");
   }
   return s;
@@ -865,7 +867,7 @@ let HUND = null;
       const p = B.mensch(Object.assign({ pose: "gehen", haut: "hell", ohneSchatten: true }, spec), h);
       const grenze = ganz ? 1e9 : (oben - GY) / p.k + 6;
       const svg = p.svg.replace(/<path [^>]*d="([^"]+)"[^>]*\/>/g, (q, d) => { const n = d.match(/-?\d*\.?\d+/g).map(Number).filter((_, i) => i % 2 === 1); return Math.min(...n) > grenze ? "" : q; });
-      return { svg: `<g transform="translate(${x} ${GY})">${figur(svg, p.z.kopf.y + 16, 2, false)}</g>`, p };
+      return { svg: `<g transform="translate(${x} ${GY})">${figur(svg, p.z.kopf.y + 16, 2, true)}</g>`, p };
     };
     const frau = passant({ id: "wie_frau", geschlecht: "w", blick: -75, frisur: "lang", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "bluse", farbe: "#e9d27a" }, unterteil: { stueck: "rock", farbe: "#2f4f6a" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "tasche", farbe: "#b34a3a" } } }, r(1.66 * F / 5.2), 140);
     const mann = passant({ id: "wie_mann", geschlecht: "m", blick: -75, frisur: "kurz", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "hemd", farbe: "#9fc3e3" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, r(1.78 * F / 5.2), 316, true);
