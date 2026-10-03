@@ -824,18 +824,39 @@ const kioskUnter = [];
     tipp: "Auf der Flagge Brasiliens steht „Ordem e Progresso“ – „Ordnung und Fortschritt“." });
 }
 
+/* Trikot/T-Shirt als EINE Form: Rumpf und Ärmel zusammen, Schulterlinie flach, Ärmel eng am Oberarm,
+   Seitennaht von der Achsel gerade nach unten, Saum am Ärmelende (statt der Puffärmel der Bibliothek) */
+const trikot = (m, farbe, licht, saum, kragen) => {
+  const P2 = m.z.punkte, k = m.k, q = (n) => [P2[n][0] * k, P2[n][1] * k];
+  const [hx, hy] = q("hals"), [hlx, hly] = q("huefteL"), [hrx, hry] = q("huefteR");
+  const seite = (sd) => {
+    const A = q("schulter" + sd), E = q("ellbogen" + sd), C = q("achsel" + sd), ux = E[0] - A[0], uy = E[1] - A[1], l = Math.hypot(ux, uy), nx = -uy / l, ny = ux / l;
+    const sg = nx * (C[0] - A[0]) + ny * (C[1] - A[1]) < 0 ? 1 : -1, w = Math.max(1.2, Math.hypot(C[0] - A[0], C[1] - A[1]) * 0.55), mx = A[0] + ux * 0.42, my = A[1] + uy * 0.42;
+    return { A, C, aus: [mx + sg * nx * w, my + sg * ny * w], ein: [mx - sg * nx * w, my - sg * ny * w] };
+  };
+  const L = seite("L"), R = seite("R"), aus = (p, f) => [hx + (p[0] - hx) * f, hy + (p[1] - hy) * f];
+  const hem = (a, b) => [a[0] + (b[0] - a[0]) * 0.5, a[1] + (b[1] - a[1]) * 0.5];
+  const pol = [aus(L.A, 0.35), [L.A[0], L.A[1] - 0.2], L.aus, L.ein, L.C, [hlx + (hlx - hrx) * 0.08, hly + 1], [hrx + (hrx - hlx) * 0.08, hry + 1], R.C, R.ein, R.aus, [R.A[0], R.A[1] - 0.2], aus(R.A, 0.35)];
+  const id = S.id("trikot" + farbe.slice(1));
+  let g = `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${farbe}"/><stop offset=".75" stop-color="${farbe}"/><stop offset="1" stop-color="${licht}"/></linearGradient>`;
+  g += `<path d="M${pts(pol)} Z" fill="url(#${id})"/>`;
+  g += `<path d="M${pts([L.aus, L.ein])} M${pts([R.ein, R.aus])}" stroke="${saum}" stroke-width=".7" stroke-linecap="round"/>`;
+  g += `<path d="M${pts([L.ein, L.C, [L.C[0] + (hlx - L.C[0]) * 0.6, L.C[1] + (hly - L.C[1]) * 0.6]])} M${pts([R.ein, R.C, [R.C[0] + (hrx - R.C[0]) * 0.6, R.C[1] + (hry - R.C[1]) * 0.6]])}" stroke="#000" stroke-width=".25" fill="none" opacity=".18"/>`;
+  if (kragen) g += `<path d="M${r(hx - 2.4)} ${r(hy + 0.8)} Q${r(hx)} ${r(hy + 3)} ${r(hx + 2.4)} ${r(hy + 0.8)}" stroke="${kragen}" stroke-width=".9" fill="none"/>`;
+  return g;
+};
 /* =====================================================================
    14 — DER VERKÄUFER im Kiosk (hinter der Theke, man sieht den Oberkörper)
    ===================================================================== */
 {
   const m = B.mensch({ id: "rio_verk", geschlecht: "m", alter: "erwachsen", pose: { traghand: "R", roll: 2.5, lende: 1, brust: -3, brustRoll: -4, brustDreh: 6, nacken: 5, kopf: -2, kopfDreh: 10, kopfRoll: 2, schulterL: { vor: -4, seit: 8 }, ellbogenL: 18, unterarmL: 8, handL: 6, fingerL: 0.4, schulterR: { vor: 18, seit: 30, dreh: 20 }, ellbogenR: 108, unterarmR: 0, handR: 20, fingerR: 0, huefteL: { vor: 10, seit: 1, dreh: -12 }, knieL: 15, fussL: 4, huefteR: { vor: -2, seit: 4, dreh: -4 }, knieR: 1, fussR: 0 }, blick: -18, frisur: "kurz", haarfarbe: "schwarz", haut: "dunkel", laecheln: true,
-    kleidung: { oberteil: { stueck: "tshirt", farbe: "#2e7d5b" }, unterteil: { stueck: "shorts", farbe: "beige" }, kopf: { stueck: "kappe", farbe: "#2e7d5b" } } }, 1.76 * sy(KI.y - 3));
+    kleidung: { oberteil: { stueck: "unterhemd", farbe: "#2e7d5b" }, unterteil: { stueck: "shorts", farbe: "beige" }, kopf: { stueck: "kappe", farbe: "#2e7d5b" } } }, 1.76 * sy(KI.y - 3));
   const X = KI.x + 14, Y = KI.y - 3;
   const cid = S.id("verkclip");
   /* nur der Teil über der Theke ist zu sehen */
   S.def(`<clipPath id="${cid}" clipPathUnits="userSpaceOnUse"><rect x="-30" y="-80" width="60" height="${r(80 - (Y - THEKE))}"/></clipPath>`);
   const AY = Y - 30;   /* Bezugspunkt auf der Brust (über der Theke) */
-  S.teil({ id: "verkaeufer", de: "der Verkäufer", syl: "ver-KÄU-fer", it: "il venditore", itSyl: "ven-di-TO-re", en: "vendor", x: X, y: AY, kunst: `<g transform="translate(0 ${r(Y - AY)})"><g clip-path="url(#${cid})"><g filter="${INNEN}">${halb(nurOben(m.svg, (THEKE - Y) / m.k + 3))}</g></g></g>`,
+  S.teil({ id: "verkaeufer", de: "der Verkäufer", syl: "ver-KÄU-fer", it: "il venditore", itSyl: "ven-di-TO-re", en: "vendor", x: X, y: AY, kunst: `<g transform="translate(0 ${r(Y - AY)})"><g clip-path="url(#${cid})"><g filter="${INNEN}">${halb(nurOben(m.svg, (THEKE - Y) / m.k + 3))}${trikot(m, "#2e7d5b", "#4f9a78", "#f4f1e8", "#f4f1e8")}</g></g></g>`,
     tipp: "Der Verkäufer sagt: „Bom dia!“ – das heißt „Guten Morgen!“" });
 }
 /* Glas vor dem Kiosk: Spiegelstreifen (fangen keinen Tipp ab) */
@@ -910,7 +931,7 @@ const AM = { x: 148, y: 156 };
 {
   const s = sy(AM.y);
   const m = B.mensch({ id: "rio_amb", geschlecht: "m", alter: "erwachsen", pose: "gehen", blick: 24, frisur: "kurz", haarfarbe: "schwarz", haut: "mittel", laecheln: true,
-    kleidung: { oberteil: { stueck: "tshirt", farbe: "#e8722c" }, unterteil: { stueck: "shorts", farbe: "beige" }, kopf: { stueck: "kappe", farbe: "#e8722c" }, schuhe: { stueck: "sandale", farbe: "braun" } } }, 1.72 * s);
+    kleidung: { oberteil: { stueck: "unterhemd", farbe: "#e8722c" }, unterteil: { stueck: "shorts", farbe: "beige" }, kopf: { stueck: "kappe", farbe: "#e8722c" }, schuhe: { stueck: "sandale", farbe: "braun" } } }, 1.72 * s);
   const sch = `<ellipse cx="-10" cy="2.6" rx="13" ry="2.2" fill="#6b4a1e" opacity=".22" filter="url(#bw_weich)" transform="rotate(-28 -10 2.6)"/>`;
   /* Tragegurt über der Schulter */
   const [sx1, sy1] = m.z.punkte.schulterR, [hlx, hly] = [m.z.handL.x, m.z.handL.y], [hrx, hry] = [m.z.handR.x, m.z.handR.y];
@@ -918,7 +939,7 @@ const AM = { x: 148, y: 156 };
   const gurt = `<path d="M${r(sx1 * m.k)} ${r(sy1 * m.k)} L${r(Math.min(hu1, hu2) * m.k - 2)} ${r(hu2y * m.k - 1)} M${r(sx1 * m.k)} ${r(sy1 * m.k)} L${r(Math.max(hu1, hu2) * m.k + 2)} ${r(hu2y * m.k - 1.5)}" stroke="#4a3a2a" stroke-width=".6"/>`;
   const AY = AM.y - 0.95 * 1.72 * s;
   S.teil({ id: "strandverkaeufer", de: "der Strandverkäufer", syl: "STRAND-ver-käu-fer", it: "il venditore ambulante", itSyl: "ven-di-TO-re am-bu-LAN-te", en: "beach vendor", x: AM.x, y: AY,
-    kunst: `<g transform="translate(0 ${r(AM.y - AY)})">${sch}<g filter="${GEGENLICHT}">${knapp(m.svg)}${gurt}</g></g>`,
+    kunst: `<g transform="translate(0 ${r(AM.y - AY)})">${sch}<g filter="${GEGENLICHT}">${knapp(m.svg)}${trikot(m, "#e8722c", "#f6a060", "#c95a1c")}${gurt}</g></g>`,
     tipp: "Der Strandverkäufer läuft den ganzen Tag barfuß durch den heißen Sand und ruft: „Olha o mate!“" });
   /* DAS FASS — zwei Aluminiumfässer mit Zapfhahn, an den Händen getragen */
   const fass = (cx, top, label, c) => {
@@ -999,19 +1020,14 @@ let BALL;
   const m = B.mensch({ id: "rio_junge", geschlecht: "m", alter: "kind", pose: altinha, blick: 34, frisur: "locken", haarfarbe: "schwarz", haut: "dunkel", laecheln: true,
     kleidung: { oberteil: { stueck: "unterhemd", farbe: "#f6d21e" }, unterteil: { stueck: "badehose", farbe: "#1d4fa0" } } }, 1.34 * s);
   /* schwarzes Haar: graue Glanzlichter der Bibliothek blauschwarz färben */
-  const svg = halb(m.svg).replace(/#([0-9a-f]{6})\b/gi, (h, c) => { const v = [0, 2, 4].map((i) => parseInt(c.slice(i, i + 2), 16)); const mx = Math.max(...v), mn = Math.min(...v), av = (v[0] + v[1] + v[2]) / 3; return mx - mn < 20 && av > 50 && av < 228 ? "#2c3346" : h; });
+  const svg = halb(m.svg).replace(/#([0-9a-f]{6})\b/gi, (h, c) => { const v = [0, 2, 4].map((i) => parseInt(c.slice(i, i + 2), 16)); const mx = Math.max(...v), mn = Math.min(...v), av = (v[0] + v[1] + v[2]) / 3; return mx - mn < 20 && av > 50 && av < 228 ? "#2c3346" : h; }).replace(/#cca795/g, "#2c3346");
   /* Schatten fällt nach links vorn (Sonne vorn rechts) */
   const sch = `<ellipse cx="-14" cy="4" rx="15" ry="2.6" fill="#6b4a1e" opacity=".3" transform="rotate(-24 -14 4)"/>`;
   /* grüner Kragen und grüne Ärmelsäume wie beim Trikot der Seleção */
   const P = m.z.punkte, k = m.k, q = (n) => [P[n][0] * k, P[n][1] * k];
   const [hx, hy] = q("hals");
   let kragen = `<path d="M${r(hx - 2.6)} ${r(hy + 1.6)} Q${r(hx)} ${r(hy + 3.6)} ${r(hx + 2.6)} ${r(hy + 1.6)}" stroke="#139a43" stroke-width=".9" fill="none"/>`;
-  /* Raglanärmel: flach von Hals zur Schulter geführt, eng am Oberarm, grüner Saum am Ärmelende */
-  for (const sd of ["L", "R"]) {
-    const [ax, ay] = q("schulter" + sd), [ex, ey] = q("ellbogen" + sd), dx = ex - ax, dy = ey - ay, l = Math.hypot(dx, dy), ux = dx / l, uy = dy / l, nx = -uy, ny = ux, w = 2.3, mx = ax + dx * 0.42, my = ay + dy * 0.42;
-    kragen += `<path d="M${r(hx + (ax - hx) * 0.12)} ${r(hy + 0.9)} L${r(ax - nx * w - ux * 1.2)} ${r(ay - ny * w - uy * 1.2)} L${r(mx - nx * w * 0.9)} ${r(my - ny * w * 0.9)} L${r(mx + nx * w * 0.9)} ${r(my + ny * w * 0.9)} L${r(ax + nx * w + ux * 1.6)} ${r(ay + ny * w + uy * 1.6)} Z" fill="#e9c41a"/>`;
-    kragen += `<path d="M${r(mx - nx * w * 0.95)} ${r(my - ny * w * 0.95)} L${r(mx + nx * w * 0.95)} ${r(my + ny * w * 0.95)}" stroke="#139a43" stroke-width=".8" stroke-linecap="round"/>`;
-  }
+  kragen = trikot(m, "#f2cc1c", "#fbe36a", "#139a43", "#139a43");
   const [fx, fy] = q("fussL"), [zx, zy] = q("zehL");
   BALL = { x: JU.x + (fx + zx) / 2 + 2.6, y: JU.y + Math.min(fy, zy) - 14.5, boden: JU.y + 1.2 };
   const AY = JU.y - 0.62 * 1.34 * s;   /* Bezugspunkt auf der Brust */

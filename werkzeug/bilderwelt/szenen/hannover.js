@@ -389,8 +389,8 @@ const WEGRAND = -140.6;      // Grenze Weg / Rasen (9,4 m vor uns)
   k += `<path d="M${r(p[0])} 60 Q${r(p[0] - 30)} 40 ${r(p[0] - 52)} 30 M${r(p[0] + 4)} 40 Q${r(p[0] - 10)} 18 ${r(p[0] - 30)} 6" stroke="#3a2c22" stroke-width="2.4" fill="none"/>`;
   const blatt = (x, y, s, rot, f) => { let g = `<g transform="translate(${t2(x)} ${t2(y)}) rotate(${rot}) scale(${s.toFixed(3)})">`; for (const [a, l] of [[-70, 6], [-36, 8.5], [0, 10], [36, 8.5], [70, 6]]) g += `<path d="M0 0 C${r(-1.2)} ${r(-l * .3)} ${r(-2.4)} ${r(-l * .75)} 0 ${-l} C${r(2.4)} ${r(-l * .75)} ${r(1.2)} ${r(-l * .3)} 0 0 Z" fill="${f}" transform="rotate(${a})"/><path d="M0 0 L0 ${r(-l * .85)}" stroke="#7a5a2a" stroke-width=".2" transform="rotate(${a})"/>`; return g + `</g>`; };
   let kr = "";
-  for (const [cx, cy, rx, ry, f] of [[p[0] - 18, 18, 52, 34, "#8a6a2a"], [p[0] - 46, 44, 26, 16, "#9a7a30"], [p[0] + 10, 50, 30, 22, "#7a5a26"]]) kr += `<ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${rx}" ry="${ry}" fill="${f}" opacity=".85"/>`;
-  for (let i = 0; i < 60; i++) { const x = p[0] - 70 + rnd() * 100, y = -6 + rnd() * 80; if ((x - p[0] + 20) ** 2 / 4000 + (y - 20) ** 2 / 2600 > 1) continue; kr += blatt(x, y, .55 + rnd() * .45, Math.round(rnd() * 360), ["#d9a53a", "#c98a2e", "#b8762e", "#9aa03a", "#e0b84a", "#c7702c"][Math.floor(rnd() * 6)]); }
+  for (const [cx, cy, rx, ry, f] of [[p[0] - 14, 8, 50, 30, "#a8762e"], [p[0] - 44, 36, 26, 18, "#b8862e"], [p[0] + 8, 44, 30, 22, "#8e6a2a"], [p[0] - 20, 30, 30, 18, "#c08a32"]]) { kr += `<ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${rx}" ry="${ry}" fill="${f}"/>`; for (let i = 0; i < 9; i++) kr += `<circle cx="${r(cx - rx * .8 + rnd() * rx * 1.6)}" cy="${r(cy - ry * .6 + rnd() * ry * 1.2)}" r="${r(ry * (.25 + rnd() * .2))}" fill="${["#c99a3a", "#9a7a2c", "#d8a840", "#7f6a2a"][Math.floor(rnd() * 4)]}"/>`; }
+  for (let i = 0; i < 80; i++) { const x = p[0] - 70 + rnd() * 100, y = -6 + rnd() * 80; if ((x - p[0] + 20) ** 2 / 4000 + (y - 20) ** 2 / 2600 > 1) continue; kr += blatt(x, y, .55 + rnd() * .45, Math.round(rnd() * 360), ["#d9a53a", "#c98a2e", "#b8762e", "#9aa03a", "#e0b84a", "#c7702c"][Math.floor(rnd() * 6)]); }
   k += kr;
   S.teil({ id: "kastanienbaum", de: "der Kastanienbaum", syl: "kas-TA-ni-en-baum", it: "l'ippocastano", itSyl: "ip-po-ca-STA-no", en: "horse chestnut tree", x: 0, y: 0, kunst: k,
     tipp: "Kastanienbäume haben Blätter wie eine Hand mit fünf Fingern." });
@@ -441,10 +441,11 @@ const kleineFigur = (svg) => {
 {
   const Y0 = -144.95, Y1 = -143.5, X0 = -2.7, X1 = -.5;
   const a = pr(X0, Y0, 0), b = pr(X1, Y0, 0), c = pr(X1 + .1, Y1, 0), d = pr(X0 + .2, Y1, 0);
-  let k = `<path d="M${P(a)} L${P(b)} L${P(c)} L${P(d)} Z" fill="${S.lg("decke", [[0, "#2f5f95"], [1, "#24497a"]])}"/>`;
-  for (let i = 1; i < 6; i++) { const t = i / 6; k += `<path d="M${r(a[0] + (b[0] - a[0]) * t)} ${r(a[1])} L${r(d[0] + (c[0] - d[0]) * t)} ${r(d[1])}" stroke="#e9e4d6" stroke-width="${i % 2 ? .5 : .25}"/>`; }
-  for (let i = 1; i < 3; i++) { const t = i / 3; k += `<path d="M${r(a[0] + (d[0] - a[0]) * t)} ${r(a[1] + (d[1] - a[1]) * t)} L${r(b[0] + (c[0] - b[0]) * t)} ${r(b[1] + (c[1] - b[1]) * t)}" stroke="#e9e4d6" stroke-width=".4"/>`; }
-  k += `<path d="M${P(a)} L${P(b)}" stroke="#1d3a62" stroke-width="1"/>`;
+  let k = `<path d="M${P(a)} L${P(b)} L${P(c)} L${P(d)} Z" fill="#f4efe6"/>`;
+  const L = (u, v) => [a[0] + (b[0] - a[0]) * u + (d[0] - a[0]) * v + (c[0] - b[0] - d[0] + a[0]) * u * v, a[1] + (b[1] - a[1]) * u + (d[1] - a[1]) * v + (c[1] - b[1] - d[1] + a[1]) * u * v];
+  for (let i = 0; i < 10; i += 2) k += `<path d="M${P(L(i / 10, 0))} L${P(L((i + 1) / 10, 0))} L${P(L((i + 1) / 10, 1))} L${P(L(i / 10, 1))} Z" fill="#c8323a" opacity=".55"/>`;
+  for (let j = 0; j < 6; j += 2) k += `<path d="M${P(L(0, j / 6))} L${P(L(1, j / 6))} L${P(L(1, (j + 1) / 6))} L${P(L(0, (j + 1) / 6))} Z" fill="#c8323a" opacity=".55"/>`;
+  k += `<path d="M${P(a)} L${P(b)}" stroke="#9a2a2e" stroke-width=".8"/>`;
   const auf = (x, y) => pr(x, y, 0);
   /* DER BUTTERKEKS: Packung und Kekse mit 52 Zähnen und der Prägung */
   const K = auf(-2.25, -144.25), km = mass(-143.95) / 100;
@@ -463,7 +464,7 @@ const kleineFigur = (svg) => {
   };
   let kg = `<path d="M-9 0 L1 0 L1 -2 L-9 -2 Z" fill="#d5b03a"/><path d="M-9 -2 L1 -2 L3 -3.2 L-7 -3.2 Z" fill="#f2cc4a"/><path d="M1 0 L3 -1.2 L3 -3.2 L1 -2 Z" fill="#b8902a"/><text x="-4" y="-.6" font-size="1.2" text-anchor="middle" fill="#7a1f1a" font-family="Arial" font-weight="bold">BUTTERKEKS</text>`;
   kg += keks(6, -.6, -8) + keks(11, .4, 12);
-  k += `<g transform="translate(${t2(K[0])} ${t2(K[1])}) scale(${km.toFixed(4)})">${kg}</g>`;
+  k += `<g transform="translate(${t2(K[0])} ${t2(K[1])}) scale(${(km * 1.6).toFixed(4)})">${kg}</g>`;
   /* DIE LÜTTJE LAGE: ein Glas dunkles Bier und ein Korn auf dem Holzbrettchen */
   const L0 = auf(-1.05, -143.95), lm = mass(-143.75) / 100;
   let lg = `<path d="M-5 0 L5 0 L5.6 -.8 L-4.4 -.8 Z" fill="#a8743f"/>`;
@@ -481,7 +482,7 @@ const kleineFigur = (svg) => {
     tipp: "Bei schönem Wetter machen viele ein Picknick im Maschpark.",
     zoom: { x: r(Math.max(0, a[0] - 15)), y: r(HO - zh), w: zw, h: zh },
     unter: [
-      { id: "butterkeks", de: "der Butterkeks", syl: "BUT-ter-keks", it: "il biscotto al burro", itSyl: "bi-SCOT-to al BUR-ro", en: "butter biscuit", x: K[0] + 4 * km, y: K[1] - 1 * km, kunst: flaeche(-14 * km, -5 * km, 30 * km, 7 * km, .3),
+      { id: "butterkeks", de: "der Butterkeks", syl: "BUT-ter-keks", it: "il biscotto al burro", itSyl: "bi-SCOT-to al BUR-ro", en: "butter biscuit", x: K[0] + 6 * km, y: K[1] - 1.5 * km, kunst: flaeche(-16 * km, -7 * km, 46 * km, 10 * km, .3),
         tipp: "Der Leibniz-Keks kommt aus Hannover und hat genau 52 Zähne." },
       { id: "luettje_lage", de: "die Lüttje Lage", syl: "LÜTT-je LA-ge", it: "la Lüttje Lage (birra e grappa)", itSyl: "LÜTT-je LA-ge", en: "Lüttje Lage (beer and schnapps)", x: L0[0], y: L0[1], kunst: flaeche(-5.5 * lm, -8.5 * lm, 11.5 * lm, 9.5 * lm, .3),
         tipp: "Bier und Korn trinkt man gleichzeitig aus zwei Gläsern in einer Hand — am besten beim Schützenfest, dem größten der Welt." },
@@ -491,15 +492,17 @@ const kleineFigur = (svg) => {
 }
 
 /* =====================================================================
-   13 — DIE LATERNE am Weg (links)
+   13 — DIE LATERNE am Weg (links): klassische Parkleuchte, 3,8 m
    ===================================================================== */
 {
-  const Y = -139.2, p = pr(-4.8, Y, 0), m = mass(Y);
-  let k = schatten(0, .2, .5 * m, .12 * m, .3);
-  k += `<rect x="${r(-.12 * m)}" y="${r(-3.6 * m)}" width="${r(.24 * m)}" height="${r(3.6 * m)}" fill="#26302c"/><rect x="${r(-.22 * m)}" y="${r(-.5 * m)}" width="${r(.44 * m)}" height="${r(.5 * m)}" fill="#26302c"/>`;
-  k += `<path d="M${r(-.4 * m)} ${r(-3.6 * m)} L${r(.4 * m)} ${r(-3.6 * m)} L${r(.55 * m)} ${r(-4.4 * m)} L${r(-.55 * m)} ${r(-4.4 * m)} Z" fill="#f4ead0" opacity=".9"/>`;
-  k += `<path d="M${r(-.7 * m)} ${r(-4.4 * m)} L${r(.7 * m)} ${r(-4.4 * m)} L0 ${r(-4.9 * m)} Z" fill="#26302c"/><circle cx="0" cy="${r(-5 * m)}" r="${r(.08 * m)}" fill="#26302c"/>`;
-  S.teil({ id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "il lampione", itSyl: "lam-PIO-ne", en: "street lamp", x: p[0], y: p[1], steht: true, kunst: k });
+  const Y = -138.9, p = pr(-5.2, Y, 0), m = mass(Y) / 100;     // Zentimeter
+  let g = `<ellipse cx="0" cy="2" rx="30" ry="6" fill="#1b140c" opacity=".3" filter="url(#bw_weich)"/>`;
+  g += `<path d="M-14 0 L14 0 L10 -30 L6 -40 L-6 -40 L-10 -30 Z" fill="#26302c"/><rect x="-4.5" y="-300" width="9" height="262" fill="${S.lg("mast", [[0, "#1e2724"], [0.5, "#3c4a44"], [1, "#1e2724"]], 0, 0, 1, 0)}"/>`;
+  for (const y of [-120, -240]) g += `<rect x="-6.5" y="${y}" width="13" height="5" fill="#26302c"/>`;
+  g += `<path d="M-9 -300 L9 -300 L5 -312 L-5 -312 Z" fill="#26302c"/>`;
+  g += `<path d="M-14 -312 L14 -312 L20 -350 L-20 -350 Z" fill="${S.lg("leuchte", [[0, "#fffbe8"], [1, "#e9dcb4"]])}" stroke="#26302c" stroke-width="2"/><path d="M0 -312 V-350" stroke="#26302c" stroke-width="1.4"/>`;
+  g += `<path d="M-26 -350 L26 -350 L0 -372 Z" fill="#26302c"/><circle cx="0" cy="-378" r="5" fill="#26302c"/>`;
+  S.teil({ id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "il lampione", itSyl: "lam-PIO-ne", en: "street lamp", x: p[0], y: p[1], steht: true, kunst: `<g transform="scale(${m.toFixed(4)})">${g}</g>` });
 }
 
 /* Licht über allem: warme Nachmittagssonne von links, Vignette (fängt keinen Tipp ab) */

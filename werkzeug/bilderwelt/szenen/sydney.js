@@ -99,15 +99,18 @@ S.def(`<filter id="${S.id("dunst")}" x="-10%" y="-10%" width="120%" height="120%
 S.def(`<filter id="${S.id("spiegel")}" x="-10%" y="-20%" width="120%" height="140%"><feGaussianBlur stdDeviation="1.4 .3"/></filter>`);
 /* Wiederverwendbar: Wabenverwitterung (Tafoni) als Gruppe, Meißelhiebe und Grasbüschel als Muster */
 {
-  /* Tafoni: Wabengruppe aus runden Löchern in drei Größen, jedes mit dunklem Inneren, Schattenrand oben
-     und heller, abgerundeter Unterlippe (Licht von oben rechts) */
-  let f = "", sch = "", l = "";
-  for (const [x, y, w] of [[0, 0, 1.5], [3, -0.4, 1.1], [-2.9, 0.3, 1.2], [1.4, 1.9, 0.8], [4.6, 1.3, 0.6], [-1.2, -1.9, 0.7], [-4.7, -0.6, 0.5], [2.4, -2.2, 0.5], [-0.9, 2.1, 0.5], [5.8, -0.5, 0.4]]) {
-    f += `M${r(x - w)} ${r(y)}a${w} ${r(w * 0.78)} 0 1 0 ${r(2 * w)} 0a${w} ${r(w * 0.78)} 0 1 0 ${r(-2 * w)} 0z`;
-    sch += `M${r(x - w * 0.8)} ${r(y - w * 0.2)}q${r(w * 0.8)} ${r(-w * 0.7)} ${r(w * 1.6)} 0`;
-    l += `M${r(x - w * 0.9)} ${r(y + w * 0.55)}q${r(w * 0.9)} ${r(w * 0.6)} ${r(w * 1.8)} 0`;
+  /* Tafoni: ein Wabenband aus unregelmäßig ovalen, sich teils überlappenden Löchern in drei Größen; jede
+     Kammer mit dunklem Inneren, Schattenrand oben und heller Unterlippe; zwei große Kammern sind nach oben
+     offen (die Felskante darüber ist ausgebrochen) */
+  let f = "", sch = "", l = "", gross = "";
+  for (const [x, y, w, h, a] of [[-5.4, -0.4, 1.6, 1.1, -12], [-2.4, 0.2, 1, 0.75, 20], [0.4, -0.6, 2, 1.4, 5], [3.4, 0.3, 1.2, 0.85, -25], [5.6, -0.6, 1.5, 1, 10], [-3.8, 1.8, 0.8, 0.6, 0], [-0.8, 1.9, 1.1, 0.75, -8], [2.2, 2.2, 0.7, 0.5, 30], [4.8, 1.8, 0.9, 0.6, 0], [-6.6, 1.4, 0.5, 0.4, 15], [7.4, 0.8, 0.6, 0.45, -10]]) {
+    const c = Math.cos(a * Math.PI / 180), sn = Math.sin(a * Math.PI / 180), pt = (u, v) => `${r(x + u * c - v * sn)} ${r(y + u * sn + v * c)}`;
+    f += `M${pt(-w, 0)}C${pt(-w, -h * 1.1)} ${pt(w, -h * 1.2)} ${pt(w, 0)}C${pt(w, h * 0.9)} ${pt(-w * 0.8, h)} ${pt(-w, 0)}Z`;
+    sch += `M${pt(-w * 0.9, -h * 0.2)}C${pt(-w * 0.6, -h * 0.95)} ${pt(w * 0.6, -h)} ${pt(w * 0.9, -h * 0.25)}`;
+    l += `M${pt(-w * 0.8, h * 0.55)}C${pt(-w * 0.3, h * 1.05)} ${pt(w * 0.4, h * 1)} ${pt(w * 0.85, h * 0.45)}`;
   }
-  S.def(`<g id="${S.id("taf")}"><path d="${f}" fill="#5a3618" opacity=".62"/><path d="${sch}" stroke="#2e1a0a" stroke-width=".3" fill="none" opacity=".6"/><path d="${l}" stroke="#f8e4b6" stroke-width=".45" fill="none"/></g>`);
+  gross = "";
+  S.def(`<g id="${S.id("taf")}"><path d="${f}${gross}" fill="#5a3618" opacity=".66"/><path d="${sch}" stroke="#2e1a0a" stroke-width=".3" fill="none" opacity=".55"/><path d="${l}" stroke="#f8e4b6" stroke-width=".42" fill="none"/></g>`);
   /* Grasbüschel in Felsfugen */
   S.def(`<g id="${S.id("bueschel")}"><path d="M0 0q-1.2-2.4-3.6-3.6M0 0q-.4-3-1.4-5.4M0 0q.3-3.4.4-6M0 0q.9-2.8 2.4-4.8M0 0q1.4-1.8 3.8-2.6" stroke="#5f8f36" stroke-width=".55" fill="none"/><path d="M.2 0q-.6-2.2-2-3.8M.2 0q.6-2.6 1.6-3.8" stroke="#9cc463" stroke-width=".4" fill="none"/></g>`);
   S.def(`<pattern id="${S.id("meissel")}" width="3.4" height="2.9" patternUnits="userSpaceOnUse" patternTransform="rotate(8)"><path d="M.4 .3l1.1 1.5M2.2 1.6l.8 1" stroke="#9c6e3a" stroke-width=".3"/></pattern>`);
@@ -419,9 +422,12 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
     /* Sockelpunkt senkrecht unter der Nase suchen */
     let sa = 100, sb = 220;
     for (let i = 0; i < 30; i++) { const m = (sa + sb) / 2; if (op(m, e, SOCKEL_Z)[0] < sch.Tb[0]) sa = m; else sb = m; }
+    /* Unterkante unter der ganzen Öffnung; die zwei Facetten knicken nach außen (Fußpunkt etwas vor der Nase) */
+    const breit = Math.max(3.4, (sch.Tb[0] - sch.Pp[0]) * 0.7);
+    for (let i = 0; i < 30; i++) { const m = (sa + sb) / 2; if (op(m, e, SOCKEL_Z)[0] < sch.Tb[0] + breit) sa = m; else sb = m; }
     const F0 = op((sa + sb) / 2, e, SOCKEL_Z), Pf = sch.Pp;
-    const K1 = lippe[4], K2 = lippe[8], B1 = lerp(F0, Pf, 0.33), B2 = lerp(F0, Pf, 0.66);
-    B1[0] += 0.8; B2[0] += 0.5;
+    const K1 = lippe[4], K2 = lippe[8], B1 = lerp(F0, Pf, 0.4), B2 = lerp(F0, Pf, 0.72);
+    B1[0] += 1.2; B2[0] += 0.6;
     S.def(`<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(sch.Tb[1])}" x2="0" y2="${r(F0[1])}"><stop offset="0" stop-color="#3e2812" stop-opacity=".85"/><stop offset=".45" stop-color="#9a6a32" stop-opacity=".68"/><stop offset="1" stop-color="#e0b478" stop-opacity=".58"/></linearGradient>`);
     const fac = [[sch.Tb, ...lippe.slice(1, 4), K1, B1, F0], [K1, ...lippe.slice(5, 8), K2, B2, B1], [K2, ...lippe.slice(9, 12), Pf, B2]];
     let g = fac.map((f, i) => `<path d="M${f.map(P).join(" L")} Z" fill="url(#${id})" opacity="${[1, 0.9, 0.8][i]}"/>`).join("");
@@ -447,7 +453,7 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
   const chA2 = schale(CH, [102, 42], [136, 56], [125], false, 1);
   const chB = schale(CH, [76, 30], [44, 47], [57], true, 1);
   const chA3 = schale(CH, [68, 29], [112, 67], [100], false, 1);
-  k += glasvorhang(chA1, CH) + chA1.svg + chA2.svg + unterseite(chB, CH, 42) + chB.svg + chA3.svg;
+  k += glasvorhang(chA1, CH) + chA1.svg + glasvorhang(chA2, CH) + chA2.svg + unterseite(chB, CH, 42) + chB.svg + chA3.svg;
   /* Ostgruppe: Joan Sutherland Theatre (vorn) */
   const jA1 = schale(JS, [124, 31], [156, 39], [148]);
   const jA2 = schale(JS, [99, 38], [132, 50], [122]);
@@ -776,7 +782,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
     /* Kreuzschichtung in der Stirn: feine schräge Lagen */
     k += `<path d="M${top} L${bot} Z" fill="url(#${S.id("kreuz")})"/>`;
     /* Waben (Tafoni) in der Stirn */
-    for (let j = 0; j < 1 + (i > 1); j++) { const x = 20 + rnd() * 180; k += taf(x, wav(x) + h * 0.5, r(0.6 + i * 0.3)); }
+    for (const x0 of [[150], [24, 188], [64], [112]][i]) { const sk = 0.5 + i * 0.2; k += taf(x0, wav(x0) + h * 0.45, r(sk)); }
   });
   /* rostrote Eisenbänder: scharfe, wellige Linien entlang der Schichten auf den Trittflächen */
   let eis = "", eis2 = "";
@@ -790,16 +796,20 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
     }
   });
   k += `<path d="${eis}" stroke="#a84e1c" stroke-width=".8" fill="none" opacity=".75"/><path d="${eis2}" stroke="#b8622a" stroke-width=".45" fill="none" opacity=".7"/>`;
-  /* Klüfte (senkrechte Risse) mit Grasbüscheln */
-  for (const [x, y0, y1] of [[58, 214, 232], [148, 200, 214], [96, 232, 250], [182, 214, 232]]) {
-    k += `<path d="M${x} ${y0} l1 ${r((y1 - y0) * 0.5)} l-.6 ${r((y1 - y0) * 0.5)}" stroke="#5e3f20" stroke-width=".8" fill="none" opacity=".6"/>`;
-    k += bueschel(x + 0.4, y0 + 1.2, r(0.9 + (y0 - 200) * 0.02));
+  /* Fugen im Fels: kurze, gezackte Spalten quer zur Platte, in denen Grasbüschel wachsen */
+  for (const [x, y, l] of [[54, 223, 9], [146, 207, 7], [92, 241, 11], [180, 224, 8]]) {
+    k += `<path d="M${x - l / 2} ${y}l${r(l * 0.3)} .7 ${r(l * 0.2)} -.5 ${r(l * 0.3)} .8 ${r(l * 0.2)} -.3" stroke="#4a2e16" stroke-width="1" fill="none" opacity=".65"/><path d="M${x - l / 2} ${r(y + 0.7)}l${r(l * 0.3)} .7 ${r(l * 0.2)} -.5 ${r(l * 0.3)} .8 ${r(l * 0.2)} -.3" stroke="#f6dfae" stroke-width=".4" fill="none" opacity=".8"/>`;
+    k += bueschel(x, y + 0.6, r(0.9 + (y - 200) * 0.02));
   }
   for (const [x, y, sk] of [[22, 219, 1.1], [120, 236, 1.3], [200, 222, 1.1], [40, 254, 1.7], [168, 252, 1.6]]) k += bueschel(x, y, sk);
-  /* Regenpfütze in einer Mulde der Felsplatte: spiegelt den Himmel; oben Schattenkante, unten Lichtkante */
-  k += `<ellipse cx="132" cy="247.6" rx="25" ry="4.4" fill="#6a4a28" opacity=".35"/><ellipse cx="132" cy="248" rx="23.6" ry="3.7" fill="${S.lg("pfuetze", [[0, "#4f86bd"], [0.6, "#86b2d9"], [1, "#c9dcea"]])}"/>`;
-  k += `<path d="M110 248.8q22 3.6 45 0" stroke="#f6e3b8" stroke-width=".6" fill="none"/><path d="M120 246.6h9M136 248.2h12" stroke="#e8f2f8" stroke-width=".35" opacity=".8"/>`;
-  k += taf(30, 238, 2) + taf(198, 250, 2.3) + taf(78, 256, 2.6);
+  /* Felsbecken in einer Mulde: dunkler, nasser Rand mit Lichtkante oben, sichtbare Innenwand, der
+     Wasserspiegel liegt tiefer und spiegelt den Himmel; Napfschnecken und eine Muschel am Rand */
+  k += `<ellipse cx="132" cy="247.6" rx="26.4" ry="5" fill="#5a3a1e" opacity=".55"/><path d="M106 247.4q26 -5.4 52 0" stroke="#fbe6b8" stroke-width=".7" fill="none"/>`;
+  k += `<ellipse cx="132" cy="247.8" rx="24.4" ry="4.2" fill="#7a5532"/><ellipse cx="132" cy="248.8" rx="22.6" ry="3.2" fill="${S.lg("pfuetze", [[0, "#3f74a8"], [0.6, "#7aa8d2"], [1, "#bcd4e6"]])}"/>`;
+  k += `<path d="M112 249.6q20 3 42 0" stroke="#f6e3b8" stroke-width=".45" fill="none" opacity=".8"/><path d="M121 247.6h8M137 249h11" stroke="#e8f2f8" stroke-width=".35" opacity=".8"/>`;
+  k += `<path d="M110.6 246.6l1.4-1.2 1.4 1.2zM152.4 245.8l1.2-1 1.2 1zM149 250.6l1-.8 1 .8z" fill="#c9b9a0" stroke="#7a6a54" stroke-width=".2"/><path d="M114.4 250.4q1.6-2 3.2 0q-1.6.8-3.2 0z" fill="#3a3f52"/><path d="M115 250.2l1.1-1.1M116 250.2l.6-1" stroke="#8a90a8" stroke-width=".18"/>`;
+  /* große Wabenkammern direkt unter der vordersten Kante */
+  k += taf(36, 256.6, 1.9) + taf(70, 257.2, 2.1);
   /* Ufermauer aus behauenen Sandsteinquadern entlang der Wasserkante: Deckplatte (hell), Stirn mit
      Fugen, Kontaktschatten darunter; an der Wasserseite ein dunkler, nasser Gezeitenstreifen */
   let qd = "", qfu = "", toene = ["#e8d3a2", "#dcc48e", "#ecdab0", "#d6bd88"];
