@@ -878,7 +878,7 @@ function panda(T) {
   n += fleck(T, "!", 108, -70, 8, 3, "#6a6660", 0.3, -15);
   n += straehnen(T, band, 40, 112, 4, 0.3, ["#000", 0.3], ["#5e5852", 0.25], 14) + haare(T, band, 60, 108, 2.4, sHaar, 12) + haare(T, hinten, 40, 118, 2, sHaar, 12);
   /* Haarkanten Schwarz ↔ Weiß (verzahnt, nicht glatt) */
-  n += fellKante(T, [[89, -76], [93.6, -66], [97.6, -52], [100, -40], [103, -30]], 50, -1.4, 0.6, "#1d1a17", 0.11, 0.8) + fellKante(T, [[91, -74], [95.4, -62], [98.6, -48]], 30, 1.4, 0.4, "#f1ece1", 0.1, 0.7);
+  n += fleck(T, "!", 93, -60, 3, 18, "#1d1a17", 0.35, 12) + fellKante(T, [[89, -76], [93.6, -66], [97.6, -52], [100, -40], [103, -30]], 90, -2.2, 0.9, "#1d1a17", 0.07, 0.6) + fellKante(T, [[91.6, -74], [96, -62], [99, -48]], 60, 1.8, 0.6, "#f1ece1", 0.07, 0.6);
   n += fellKante(T, [[118, -77], [121, -70], [126, -62], [129.4, -55]], 30, 1.2, -0.6, "#1d1a17", 0.11, 0.8) + fellKante(T, [[30, -65], [41, -64.6], [51, -58.4], [57, -48]], 40, 0.8, -1.2, "#1d1a17", 0.11, 0.75);
   s += teil(T, "prumpf", rumpf, weissV, n,
     fellKante(T, [[24, -60], [32, -68], [46, -73.6], [64, -75.6], [84, -76.4]], 40, -2, -0.3, "#fff", 0.14, 0.7) +
@@ -1033,6 +1033,7 @@ function hyaene(T) {
      lange Maulspalte; Flecken ohne Hof, dicht an Flanke/Keule, spärlich an Schulter/Hals, keine im Gesicht; kurze, raue Strähnen;
      Mähne flach nach hinten; Quaste als Haarpinsel; Sprunggelenk-Spitze, Handwurzel; Füße mit 4 Zehen, stumpfe Krallen. */
   T.dichte = 0.72;
+  const dS = T.fein === false ? 0.8 : 1;   // Szene: Randhaare/Haare etwas sparsamer (≤ 25 KB)
   const rumpf = [
     [36, -60], [38.4, -66], [46, -69.6], [60, -72.4], [74, -76], [88, -80.4], [100, -84.2], [110, -85.8], [117, -84.4],   // kurze Kruppe, Rücken steigt zum Höcker
     [124, -80.6], [131, -75.6], [137, -70.4], [143, -66], [146, -60], [143.6, -53],                                    // dicker Hals mit Mähne (unter den Kopf)
@@ -1104,13 +1105,13 @@ function hyaene(T) {
   /* ---- Rumpf: Flecken dicht an Flanke/Hüfte, spärlich und blass an Schulter und Hals ---- */
   let n = fleck(T, "!", 84, -44, 26, 3.4, "#d8c8a4", 0.5);
   const fleckZone = [[40, -64], [46, -68.4], [60, -71], [76, -74.6], [92, -79], [108, -82], [118, -80], [124, -72], [122, -58], [112, -44], [96, -41], [78, -45], [66, -50], [64, -62], [50, -66]];
-  n += flecken(fleckZone, 46, 1, 2.6, "#3e2c18", 0.72, (x) => Math.max(0.15, Math.min(1, (120 - x) / 55)));
+  n += flecken(fleckZone, Math.round(46 * dS), 1, 2.6, "#3e2c18", 0.72, (x) => Math.max(0.15, Math.min(1, (120 - x) / 55)));
   n += flecken([[118, -82], [130, -76], [140, -66], [138, -56], [126, -52], [120, -64]], 8, 0.8, 1.6, "#4a3820", 0.4);
   n += fleck(T, "!", 112, -84, 12, 3, "#4a3820", 0.45, 6) + fleck(T, "!", 128, -77, 9, 2.6, "#4a3820", 0.4, 35);
   n += straehnen(T, rumpf, 150, wuchs, 2.8, 0.2, ["#3a2c18", 0.28], ["#f4e8cc", 0.34], 12);
   n += haare(T, rumpf, 170, wuchs, 1.8, sand, 12, 0.18);
   s += teil(T, "hrumpf", rumpf, fell, n,
-    fellKante(T, [[88, -80.6], [100, -84.4], [110, -86], [117, -84.6], [124, -80.8], [131, -75.8], [137, -70.6]], 60, -2.6, -0.5, "#3a2a16", 0.1, 0.65) +
+    fellKante(T, [[88, -80.6], [100, -84.4], [110, -86], [117, -84.6], [124, -80.8], [131, -75.8], [137, -70.6]], 60 * dS, -2.6, -0.5, "#3a2a16", 0.1, 0.65) +
     fellKante(T, [[38.4, -66], [46, -69.6], [60, -72.4], [74, -76], [86, -79.8]], 40, -1.4, -0.3, "#8a7450", 0.09, 0.6) +
     fellKante(T, [[143.6, -53], [137, -50.4], [129, -46.6], [121, -41.6], [113, -38.4]], 30, -1, 1.4, "#c8b38a", 0.09, 0.7) +
     fellKante(T, [[104, -37.8], [94, -39.4], [84, -43.2], [74, -46.8], [64, -49.8]], 30, -0.8, 1.4, "#b8a27a", 0.09, 0.7), { weich: 6 });

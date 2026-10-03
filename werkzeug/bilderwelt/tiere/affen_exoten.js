@@ -63,7 +63,9 @@ function werk(T) {
       /* feiner Rand NUR innen (außen gäbe er auf hellem Grund einen grauen Saum) */
       (o.rand !== 0 && T.fein ? u(`fill="none" stroke="${o.rc || "#0a0806"}" stroke-opacity="${o.rand != null ? o.rand : 0.35}" stroke-width="${f1(2 * (o.rw || 0.4))}"`) : "");
     if (inn) s += `<g clip-path="url(#${id}c)">${inn}</g>`;
-    return o.maske ? `<g mask="url(#${o.maske})">${s}</g>` : s;
+    /* Maske: außen um die Volumen-Gruppe (sonst leuchtet die weich ausgeblendete Kante im Volumen-Licht auf) */
+    if (o.maske) { W._maske = o.maske; return s; }
+    return s;
   };
   /* Maske aus einer weich gezeichneten Fläche (Kante unscharf um weich cm) */
   W.maskeForm = (n, pts, weich) => {
@@ -116,7 +118,7 @@ function werk(T) {
     const seg = []; let tot = 0;
     for (let i = 0; i < kante.length - 1; i++) { const l = Math.hypot(kante[i + 1][0] - kante[i][0], kante[i + 1][1] - kante[i][1]); seg.push([kante[i], kante[i + 1], l]); tot += l; }
     const eimer = farben.map(() => "");
-    const ziel = Math.round(n * (T.fein ? 1 : (o.szene != null ? o.szene * 0.5 : 0.08)));
+    const ziel = Math.round(n * (W.saumDichte || 1) * (T.fein ? 1 : (o.szene != null ? o.szene * 0.5 : 0.08)));
     const mix = o.mix != null ? o.mix : 0.45, ein = o.ein != null ? o.ein : 0.4;
     for (let k = 0; k < ziel; k++) {
       let s = T.rnd() * tot, j = 0;
@@ -250,7 +252,13 @@ function werk(T) {
     return strangGruppe(eimer, o);
   };
   /* Volumen je Körperteil (kern.js T.volumen): Gruppe wird von links oben beleuchtet (Rundung, Kernschatten, Reflex) */
-  W.vol = (n, weich, svg, o = {}) => T.fein && T.volumen ? `<g filter="${T.volumen(n, Object.assign({ weich }, o))}">${svg}</g>` : svg;
+  W.vol = (n, weich, svg, o = {}) => {
+    const m = W._maske; W._maske = null;
+    /* gleiche Weichheit → gemeinsamer Filter (spart Bytes) */
+    const wq = weich < 1.2 ? 1 : weich < 2.5 ? 2 : weich < 3.5 ? 3 : weich < 5 ? 4 : weich < 7 ? 6 : weich < 10 ? 8 : 12;
+    const v = T.fein && T.volumen ? `<g filter="${T.volumen("v", Object.assign({}, o, { weich: wq }))}">${svg}</g>` : svg;
+    return m ? `<g mask="url(#${m})">${v}</g>` : v;
+  };
   /* Strähnen über eine Umrisskante hinaus (statt Sägezahn): Länge gemischt, gebogen, überlappend */
   W.kantenStraehnen = (kante, n, w, L0, L1, b, farbe, o = {}) => {
     const seg = []; let tot = 0;
@@ -356,7 +364,7 @@ function werk(T) {
    ===================================================================== */
 function gorilla(T) {
   const W = werk(T);
-  W.dichte = T.fein ? 0.37 : 0.7;
+  W.dichte = T.fein ? 0.35 : 0.7;
   const STR = ["#0a0909", "#151413", "#21201e", "#302e2c", "#45433f"];
   const SILBER = [["#4a4744", 0.12, 0.55], ["#6e6a65", 0.12, 0.55], ["#8e8a84", 0.11, 0.55], ["#aeaaa4", 0.1, 0.6], ["#cac6c0", 0.1, 0.6], ["#e2dfda", 0.09, 0.65]];
   const GLANZ = [["#5a5a60", 0.09, 0.5], ["#7a7a82", 0.08, 0.5]];
@@ -792,7 +800,8 @@ function schimpansenGesicht(T, W, gesicht, profil) {
    ===================================================================== */
 function orangUtan(T) {
   const W = werk(T);
-  W.dichte = T.fein ? 0.66 : 0.8;
+  W.dichte = T.fein ? 0.46 : 0.75;
+  W.saumDichte = T.fein ? 0.64 : 1;
   const OR = [["#2a0e04", 0.12, 0.6], ["#4e1e0a", 0.12, 0.6], ["#743012", 0.12, 0.55], ["#9a461c", 0.11, 0.55], ["#c0642c", 0.11, 0.6], ["#e08a4a", 0.1, 0.6]];
   const HAUT = { n: "o", c: ["#2e2622", "#362c28", "#40342e"], cf: ["#1c1614", "#211a17", "#261e1a"], l: "#9a8678", lf: "#4e4038",
     g: [[0, "#4e3e36"], [0.55, "#342a25"], [1, "#181210"]], gf: [[0, "#2e2420"], [0.6, "#1c1614"], [1, "#0e0a08"]], na: "#7a6658", nf: "#3a302a", sohle: "#7a6a5c", polster: "#4a3e36" };
@@ -840,13 +849,13 @@ function orangUtan(T) {
 
   /* ---------- naher Arm: sehr lang; Haarvorhang hängt vom Ober- und Unterarm; Faust am Boden ---------- */
   s += orangHand(W, T, 82, false, HAUT);
-  const armN = [[60, -90], [70, -97], [80, -96], [86, -88], [87.6, -76], [86.6, -64], [85.4, -54], [86, -44], [86.4, -34], [86.2, -24.6], [78, -24.6], [77, -34], [75.4, -44], [73, -54],
+  const armN = [[62, -86], [70, -92], [80, -95], [86, -88], [87.6, -76], [86.6, -64], [85.4, -54], [86, -44], [86.4, -34], [86.2, -24.6], [78, -24.6], [77, -34], [75.4, -44], [73, -54],
     [69.6, -64], [65, -74], [61, -82]];
   s += W.vol("oan", 3.2, W.teil(armN, hautG("an", "#5e2c14", "#40200e", "#1e0e06"), haarTex("oan", 98, [58, -100, 90, -22]) +
     W.weich([[76, -88, 8, 5, -15, "#d08848", 0.35], [66, -76, 3, 10, 10, "#0e0a08", 0.4], [84, -60, 2, 9, 0, "#c07a40", 0.3]], 1.8) +
     vorhang(armN, 300, (x, y) => (y < -64 ? (x < 72 ? 108 : 98) : 94), 7.5, { hell: 0.05 }),
   { rand: 0, vol: false, maske: W.maske("oan", [50, -104, 96, -10], 0, -96, 0, -84) }) +
-    W.saum([[61, -82], [65, -74], [69.6, -64], [73, -54], [75.4, -44], [77, -34], [78, -26]], 120, (x, y) => 96 + (y < -60 ? 6 : 0), 14, OR, { licht: (x, y) => clamp(0.55 + (-y - 50) / 120), krumm: 0.55, ein: 0.25, laenge: (x, y) => 0.5 + clamp((-y - 24) / 50) * 0.8, szene: 0.1 }) +
+    W.saum([[61, -82], [65, -74], [69.6, -64], [73, -54], [75.4, -44], [77, -34], [78, -26]], 170, (x, y) => 96 + (y < -60 ? 6 : 0), 16, OR.map(([c, w, o]) => [c, w * 1.4, o]), { licht: (x, y) => clamp(0.55 + (-y - 50) / 120), krumm: 0.55, ein: 0.25, laenge: (x, y) => 0.5 + clamp((-y - 24) / 50) * 0.8, szene: 0.1 }) +
     W.saum([[86.2, -26], [82, -25.4], [78, -25.4]], 26, 92, 6, OR.slice(1, 5), { licht: () => 0.55, krumm: 0.45, ein: 0.3, szene: 0.1 }), { tiefe: 3, umgebung: 0.5 });
 
   /* ---------- Brust/Hals unter dem Kopf: der Kehlsack liegt darauf (keine freie Unterkante) ---------- */

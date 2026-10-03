@@ -270,17 +270,20 @@ function hautLicht(T, n, o) {
    „weich“ (Rumpf) zeigt der 8-Bit-Alphaverlauf sonst Höhenlinien („Holzmaserung“) auf hellen Flächen. Szene: "none". */
 function vol(T, n, o = {}) {
   if (T.fein === false) return "none";
-  const w = o.weich || 6, el = o.hoehe || 50, amb = o.umgebung != null ? o.umgebung : 0.3;
+  /* stufenlos wie T.volumen (kern.js): Innen-Schatten unten rechts, Innen-Glanz oben links aus der weich verschobenen
+     Silhouette; Filterbereich großzügig (sonst entsteht am Rand eine Kante, wo der verschobene Weichzeichner abreißt) */
+  const w = o.weich || 6, st = Math.min(1, 0.09 * (o.tiefe || 5)), amb = o.umgebung != null ? o.umgebung : 0.3;
+  const d = w * 0.9, sch = Z2(st * (1 - amb) * 0.95), gl = Z2(st * (1 - amb) * 0.38);
   const id = T.id("pv" + n + "_" + String(w).replace(".", "_"));
   T._pv = T._pv || new Set();
   if (!T._pv.has(id)) {
     T._pv.add(id);
-    T.def(`<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">` +
-      `<feGaussianBlur in="SourceAlpha" stdDeviation="${w}" result="b"/>` +
-      `<feDiffuseLighting in="b" surfaceScale="${o.tiefe || 5}" diffuseConstant="1" lighting-color="#fff" result="d0"><feDistantLight azimuth="${o.azimut || 225}" elevation="${el}"/></feDiffuseLighting>` +
-      `<feGaussianBlur in="d0" stdDeviation="${Z2(Math.max(0.15, w * 0.22))}" result="d"/>` +
-      `<feComposite in="d" in2="SourceGraphic" operator="arithmetic" k1="${Math.round((1 - amb) / Math.sin(el * Math.PI / 180) * 1e4) / 1e4}" k2="0" k3="${amb}" k4="0" result="m"/>` +
-      `<feComposite in="m" in2="SourceGraphic" operator="in"/></filter>`);
+    T.def(`<filter id="${id}" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">` +
+      `<feGaussianBlur in="SourceAlpha" stdDeviation="${w}" result="b"/><feOffset in="b" dx="${Z2(-d)}" dy="${Z2(-d)}" result="bu"/><feOffset in="b" dx="${Z2(d * 0.8)}" dy="${Z2(d * 0.8)}" result="bo"/>` +
+      `<feComposite in="SourceAlpha" in2="bu" operator="out" result="ms"/><feComposite in="SourceAlpha" in2="bo" operator="out" result="mg"/>` +
+      `<feFlood flood-color="${o.schatten || "#1a1008"}" flood-opacity="${sch}"/><feComposite in2="ms" operator="in" result="s"/>` +
+      `<feFlood flood-color="${o.licht || "#fff6e6"}" flood-opacity="${gl}"/><feComposite in2="mg" operator="in" result="g"/>` +
+      `<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="s"/><feMergeNode in="g"/></feMerge><feComposite in2="SourceGraphic" operator="in"/></filter>`);
   }
   return `url(#${id})`;
 }
@@ -323,7 +326,7 @@ function reliefKachel(T, n, o) {
 function volSchicht(T, n, d, o = {}) {
   if (T.fein === false) return "";
   const w = o.weich || 6, v = Z2(w * (o.versatz || 0.7)), id = T.id("vs" + n);
-  T.def(`<filter id="${id}" x="-2%" y="-2%" width="104%" height="104%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="${w}" result="b"/>` +
+  T.def(`<filter id="${id}" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="${w}" result="b"/>` +
     `<feOffset in="b" dx="-${v}" dy="-${v}" result="bs"/><feComposite in="SourceAlpha" in2="bs" operator="out" result="ms"/>` +
     `<feOffset in="b" dx="${v}" dy="${v}" result="bl"/><feComposite in="SourceAlpha" in2="bl" operator="out" result="ml"/>` +
     `<feFlood flood-color="${o.schatten || "#1a0d08"}" flood-opacity="${o.ks || 0.6}"/><feComposite in2="ms" operator="in" result="s"/>` +
@@ -638,12 +641,12 @@ function walross(T) {
     const qk = (p, dx, dy) => { const [a0, m, e] = [p[0], p[Math.floor(p.length / 2)], p[p.length - 1]]; const cx = 2 * m[0] - (a0[0] + e[0]) / 2, cy = 2 * m[1] - (a0[1] + e[1]) / 2;
       return `M${J(a0[0] + dx, a0[1] + dy)}q${J(cx - a0[0], cy - a0[1], e[0] - a0[0], e[1] - a0[1])}`; };
     const dazu = (pts, c) => { const q = kl[c], w = q.w; q.s += qk(pts, w * 1.2, w * 1.5); q.k += qk(pts, 0, 0); q.c += qk(pts, -w * 0.8, -w * 1.1); };
-    const zone = [[194, -122], [228, -133.6], [258, -134], [262, -118], [264, -96], [266, -82], [262, -60], [252, -46], [232, -44], [214, -56], [200, -78], [192, -100]];
-    const ziel = F ? 36 : 10;
+    const zone = [[170, -118], [228, -133.6], [258, -134], [262, -118], [264, -96], [266, -82], [262, -60], [252, -46], [232, -44], [200, -50], [176, -70], [166, -96]];
+    const ziel = F ? 40 : 10;
     for (let i = 0, v = 0; i < ziel && v < 600; v++) {
       const x = 192 + T.rnd() * 74, y = -134 + T.rnd() * 90;
       if (!inPoly(x, y, zone)) continue;
-      if (T.rnd() > 0.35 + 0.65 * Math.max(0, 1 - Math.abs(x - 240) / 40)) continue;   // dichter an der Halsbasis
+      if (T.rnd() > 0.15 + 0.85 * Math.max(0, 1 - Math.abs(x - 238) / 50)) continue;   // dichter an der Halsbasis
       const quer = x > 255 && y > -92, L = 4 + Math.pow(T.rnd(), 1.4) * (quer ? 10 : 22);
       const a = ((quer ? 172 : 96 + (x - 230) * 0.5) + (T.rnd() - 0.5) * 34) * Math.PI / 180, b = (T.rnd() - 0.5) * L * 0.35;
       const dx = Math.cos(a), dy = Math.sin(a), px = -dy, py = dx;
@@ -664,7 +667,7 @@ function walross(T) {
   }
   /* große, weiche Fettwülste an Flanke und Hüfte (Kamm hell, darunter weiche Kerbe) */
   n += weich([[100, -30], [150, -38], [200, -44], [196, -40], [150, -33], [104, -26]], "#4a2418", 0.35, 2.4) + weich([[100, -34], [150, -43], [196, -49], [190, -46], [150, -40], [104, -31]], "#d89a80", 0.35, 2.4);
-  n += weich([[58, -40], [76, -56], [92, -66], [90, -60], [74, -50], [60, -34]], "#4a2418", 0.3, 2.4) + weich([[55, -44], [72, -60], [88, -70], [86, -66], [70, -55], [56, -39]], "#d89a80", 0.3, 2.4);
+  n += weich([[120, -96], [150, -104], [170, -104], [150, -98], [124, -90]], "#4a2418", 0.25, 2.4) + weich([[120, -99], [150, -107], [170, -107], [150, -101], [124, -93]], "#d89a80", 0.25, 2.4);
   /* schwere, quer laufende Kehlfalten */
   n += falte([[270.4, -80], [265, -77.6], [258.6, -78.4]], 1, 0.6) + falte([[269.6, -70], [262.4, -67.4], [255.4, -68]], 1.1, 0.6) + falte([[267, -59], [259.6, -56], [252.4, -56.8]], 1, 0.5);
   /* Schulter-/Achselfalte über der Vorderflosse (Fettwulst) */
@@ -683,7 +686,7 @@ function walross(T) {
   /* Narben: helle, leicht erhabene Striche (Kämpfe mit Stoßzähnen) */
   n += zart(T, [[216, -102], [224, -95], [229, -92]], "#e8c0aa", 0.5, 0.35) + zart(T, [[244, -90], [247, -81]], "#e8c0aa", 0.4, 0.3);
   /* spärliche kurze Haare, heller als die Haut, nach hinten; auf der Lichtseite sichtbar */
-  n += haare(T, [[50, -50], [100, -96], [170, -122], [230, -134], [262, -134], [256, -118], [200, -110], [130, -92], [70, -60]], 200, (x, y) => 172 + (x - 150) * 0.03, 0.5,
+  n += haare(T, [[50, -50], [100, -96], [170, -122], [230, -134], [262, -134], [256, -118], [200, -110], [130, -92], [70, -60]], 70, (x, y) => 172 + (x - 150) * 0.03, 0.5,
     [["#e9b89e", 1, 0.07, 0.5], ["#5a3022", 0.5, 0.06, 0.35]], 20, 0.3, 0.04);
   /* Kopf: Stirnwulst, Augenhöhle; Bartpolster geschwollen mit zwei Backenwölbungen, Glanz oben, Mundspalte darunter im Schatten */
   n += weich([[258, -128], [268, -130], [276, -126], [270, -124], [260, -124]], "#e8b29a", 0.5, 1.2);
@@ -716,7 +719,7 @@ function walross(T) {
           gebogen; vorn abgenutzt kürzer, hinten und unten länger; hornfarben mit bräunlicher Basis und Glanzkante ---- */
   {
     let dS = "", dH = "";
-    const rows = F ? 10 : 5, per = F ? 12 : 6;
+    const rows = F ? 10 : 5, per = F ? 11 : 6;
     for (let r = 0; r < rows; r++) for (let i = 0; i < per; i++) {
       const t = (i + 0.5) / per, y = -120.4 + t * 29.6 + r * (F ? 0.25 : 0.6), x = vorne(y) - 1.1 - r * (F ? 1.35 : 3.5) + (T.rnd() - 0.5) * 0.3;
       if (!inPoly(x, y, polster)) continue;
