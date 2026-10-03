@@ -727,7 +727,7 @@ function giraffe(T) {
       [tp[0] + Math.cos(a) * 2.6, tp[1] + Math.sin(a) * 2.6], [tp[0] - nx * 3.2, tp[1] - ny * 3.2], [b[0] + Math.cos(a) * h * 0.55 - nx * 2.7, b[1] + Math.sin(a) * h * 0.55 - ny * 2.7], [b[0] - nx * 3.4, b[1] - ny * 3.4]];
     let o = teil(pts, fern ? "#a88c68" : T.lg("ossf", [[0, "#ead9b8"], [1, "#b48d62"]], 0, 0, 1, 0), { fell: [fKopf], vol: [1.2, 4, 0.4] });
     const wurzeln = []; for (let i = 0; i <= 8; i++) { const q = i / 8 * Math.PI * 1.2 - Math.PI * 0.1; wurzeln.push([tp[0] + Math.cos(a + q - Math.PI / 2) * 2.4, tp[1] + Math.sin(a + q - Math.PI / 2) * 2.4]); }
-    o += H.straehnen(wurzeln, 18, 3.6, (x, y) => Math.atan2(y - tp[1] + Math.sin(a) * 1.2, x - tp[0] + Math.cos(a) * 1.2) * 180 / Math.PI, [[fern ? "#2a1c12" : "#3a2818", 2, 0.45, 0.85], ["#6e5440", 2, 0.4, 0.8]], { streu: 22, welle: 0.25, szene: 0.4 });
+    o += H.straehnen(wurzeln, 14, 3.6, (x, y) => Math.atan2(y - tp[1] + Math.sin(a) * 1.2, x - tp[0] + Math.cos(a) * 1.2) * 180 / Math.PI, [[fern ? "#2a1c12" : "#3a2818", 2, 0.45, 0.85], ["#6e5440", 2, 0.4, 0.8]], { streu: 22, welle: 0.25, szene: 0.4 });
     return o;
   };
   /* Ohr: lanzettlich (3 : 1), spitz, seitlich nach hinten, 15° unter der Waagrechten; innen Creme mit Haarbüscheln */
@@ -736,7 +736,7 @@ function giraffe(T) {
     const pts = [P(0, -0.8), P(0.3, -1.05), P(0.65, -0.8), P(1, 0, 1), P(0.65, 0.85), P(0.3, 1.1), P(0, 0.8)];
     return teil(pts, fern ? "#9c8462" : "#d9c39c", { fell: [fKopf], vol: [1.2, 3, 0.45],
       innen: fern ? "" : `<path d="${G([P(0.08, 0.1), P(0.35, -0.55), P(0.72, -0.35), P(0.95, 0.02), P(0.7, 0.45), P(0.3, 0.6)])}" fill="#f4e8d2"/>` + wf([P(0.15, 0.25), P(0.55, 0.1)], "#6a4a2a", 0.4, 0.8, false) +
-        H.straehnen([P(0.1, 0.2), P(0.5, 0.1)], 18, 3.5, (a * 180 / Math.PI) + 8, [["#fffaf0", 1, 0.25, 0.85]], { streu: 25, szene: 0.3 }) });
+        H.straehnen([P(0.1, 0.2), P(0.5, 0.1)], 10, 3.5, (a * 180 / Math.PI) + 8, [["#fffaf0", 1, 0.25, 0.85]], { streu: 25, szene: 0.3 }) });
   };
   s += ohr(1) + k + oss(18, 1) + oss(21.5) + ohr(0);
   return { svg: s, box: [12, -560, 435, 0], fuesse: [258, 220, 94, 132], kopf: [328, -566, 444, -452] };

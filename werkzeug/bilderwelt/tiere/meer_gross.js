@@ -845,7 +845,7 @@ function buckelwal(T) {
   /* Knoten: unregelmäßige Reihe auf dem Oberkiefer über der Lippe, auf der Schnauzenoberseite, verstreut am Unterkiefer */
   const kn = [];
   const mY = (x) => maul.reduce((a, p) => (Math.abs(p[0] - x) < Math.abs(a[0] - x) ? p : a))[1];
-  for (let x = 1380; x > 1080; x -= 22 + T.rnd() * 18) kn.push([x + (T.rnd() - 0.5) * 6, mY(x) - 11 - T.rnd() * 7, 3 + T.rnd() * 3]);
+  for (let x = 1380; x > 1080; x -= 26 + T.rnd() * 18) kn.push([x + (T.rnd() - 0.5) * 6, mY(x) - 11 - T.rnd() * 7, 3 + T.rnd() * 3]);
   for (let x = 1372; x > 1110; x -= 26 + T.rnd() * 20) kn.push([x, R.yo(x) + 8 + T.rnd() * 6, 3.2 + T.rnd() * 2.6]);
   for (let i = 0; i < 7; i++) { const x = 1385 - i * 28 + (T.rnd() - 0.5) * 10, [px, py] = P(x, 0.6 + T.rnd() * 0.08); kn.push([px, py, 3 + T.rnd() * 3]); }
   k += H.knoten(F ? kn : kn.filter((q, i) => i % 3 === 0));

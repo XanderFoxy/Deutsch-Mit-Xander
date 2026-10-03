@@ -380,6 +380,8 @@ const schlangenRohr = (T, sp, o = {}) => {
   const Rr = rohr(sp.map(([x, y, r]) => [x, y, r, r]), 6);
   const L = o.licht || -1, B = o.bauchSeite || 1, [lt0, lt1] = o.lt || [0, 1], [bt0, bt1] = o.bt || [lt0, lt1];
   const umr = Rr.zug(-1, 0, 1, o.n || 16).concat(Rr.zug(1, 0, 1, o.n || 16).reverse());
+  /* offene Teilstücke: Schnittkanten gerade (harte Ecken), damit Stücke ohne Kerbe aneinanderstoßen */
+  if (o.offen) { const m = umr.length / 2; for (const i of [0, m - 1, m, umr.length - 1]) umr[i] = [umr[i][0], umr[i][1], 1]; }
   let inn = "";
   /* Bauchschilde (hell) auf der Bauchseite */
   if (o.bauch) inn += `<g filter="${weich(T, "sb", 0.5)}">` + form(T, poly(Rr.band(B * 0.62, B * 1.3, bt0, bt1, 12)), o.bauch) + "</g>";
@@ -929,14 +931,11 @@ function kobra(T) {
   for (const [cx, cy, r] of ringe) br += `<path d="${T.glatt(kreis(cx, cy, r, 12, 0.06))}" fill="${cre}"/><path d="${T.glatt(kreis(cx + 0.4, cy - 0.2, r * 0.52, 10, 0.1))}" fill="${sw}"/><path d="${T.glatt(kreis(cx + 0.4, cy - 0.2, r * 0.42, 10, 0.1))}" fill="#3a2614"/>`;
   hi += `<g opacity=".92" filter="${weich(T, "br", 0.18)}">${br}</g>`;
   /* Schatten von Kopf und Nacken auf der Schildoberkante */
-  hi += `<ellipse cx="7" cy="-24.4" rx="12" ry="4.6" fill="#000" opacity=".3" filter="${weich(T, "hk", 1.6)}"/>`;
+  hi += `<ellipse cx="5" cy="-27" rx="10" ry="3" fill="#000" opacity=".16" filter="${weich(T, "hk", 1.6)}"/>`;
   let hood = teil(T, hs, hg, { innen: hi, rand: "#1a1008", randA: 0.25, rw: 0.45 });
   /* Schild wirft weichen Schatten auf den Hals darunter */
-  /* Schildunterkante läuft weich in den Hals aus (keine Muffe) */
-  const hm = T.id("hbm");
-  T.def(`<linearGradient id="${hm}g" gradientUnits="userSpaceOnUse" x1="0" y1="33" x2="0" y2="42"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient><mask id="${hm}" maskUnits="userSpaceOnUse" x="-40" y="-40" width="80" height="90"><rect x="-40" y="-40" width="80" height="90" fill="url(#${hm}g)"/></mask>`);
-  h += `<g filter="${rund(T, "kh", { weich: 6, tiefe: 4, umgebung: 0.38 })}"><g transform="translate(118 -152) rotate(3)"><g mask="url(#${hm})">${hood}</g></g></g>`;
-  /* 7) Kopf im Profil nach rechts, wächst aus der Schildmitte (Nacken weich angesetzt), Länge ≈ 35 % der Schildbreite */
+  /* 7) Kopf im Profil nach rechts – in der Rückansicht HINTER dem Schild: nur der obere Teil und die Schnauze ragen über die
+     Schildoberkante (kein abgeschnittenes Hinterende); Länge ≈ 35 % der Schildbreite */
   const kp = [[-1.6, -1.4], [0.4, -3.1], [3, -3.8], [7, -3.9], [10, -3.5], [12.6, -2.7], [14.4, -1.5], [15.1, 0], [14.7, 1.2], [13, 1.9], [10, 2.3], [6, 2.7], [2.4, 3.1], [-0.8, 3.4], [-2.4, 2.2]];
   let ki = `<g filter="${weich(T, "kk", 0.4)}">` + form(T, poly([[0.6, -2.6], [4, -3.6], [10, -3.3], [14, -1.4], [10, -2], [4, -2.2], [1, -1.4]]), "#f2ddae", ' opacity=".3"') +
     form(T, poly([[0.4, 2], [6, 2.4], [12, 1.8], [14.6, 1], [10, 0.8], [4, 1], [0.6, 1]]), "#000", ' opacity=".26"') + "</g>";
@@ -945,7 +944,7 @@ function kobra(T) {
   ki += `<g fill="${pg}" stroke="#2a1a0a" stroke-width=".09" stroke-opacity=".6">` + [[[0.8, -1.6], [6.6, -2.3], [6.8, -3.85], [3, -3.75], [0.6, -3]], [[6.9, -2.35], [10.6, -2.5], [10.8, -3.55], [7, -3.85]], [[10.8, -2.5], [12.6, -2.1], [12.7, -2.7], [10.9, -3.5]], [[12.8, -2.1], [14.2, -1.4], [14.4, -1.5], [12.8, -2.7]]].map((p) => `<path d="${poly(p)}"/>`).join("") + "</g>";
   /* 7 hohe Oberlippenschilde (3. und 4. berühren das Auge), Unterlippenschilde, Prä-/Postocularia, Temporalia */
   const ol = [14.6, 13.2, 11.8, 10.4, 8.6, 7, 5.2, 3.2], lg2 = T.lg("kol", [[0, "#f6e6bc", 0.3], [0.6, "#f6e6bc", 0], [1, "#000", 0.2]]);
-  ki += `<g fill="${lg2}" stroke="#2a1a0a" stroke-width=".09" stroke-opacity=".55">` + ol.slice(0, -1).map((x, i) => { const x2 = ol[i + 1], yt = i === 2 || i === 3 ? 0.05 : -0.25 - i * 0.02; return `<path d="${poly([[x, yt], [x2, yt + 0.15], [x2 - 0.1, 1.55 + i * 0.06], [x, 1.45 + i * 0.05]])}"/>`; }).join("") + "</g>";
+  ki += `<g fill="${lg2}" stroke="#2a1a0a" stroke-width=".08" stroke-opacity=".32">` + ol.slice(0, -1).map((x, i) => { const x2 = ol[i + 1], yt = i === 2 || i === 3 ? 0.05 : -0.25 - i * 0.02; return `<path d="${poly([[x, yt], [x2, yt + 0.15], [x2 - 0.1, 1.55 + i * 0.06], [x, 1.45 + i * 0.05]])}"/>`; }).join("") + "</g>";
   const sch = [[[11.2, -2.4], [11.4, -0.2]], [[8.1, -2.3], [7.9, -0.3]], [[7.9, -1.2], [6.6, -1.3], [5.4, -1.4], [5.6, 0.4]], [[5.4, -1.4], [3, -1.6]], [[3, -1.6], [2.4, 0.9]], [[14.4, -1.6], [14.6, -0.1]],
     [[13, 1.6], [12.8, 2.1]], [[11, 1.7], [10.8, 2.3]], [[9, 1.8], [8.8, 2.5]], [[7, 1.9], [6.8, 2.7]], [[5, 2.1], [4.8, 2.9]]];
   ki += linien(T, sch, "#2a1a0a", 0.1, 0.5);
@@ -959,7 +958,11 @@ function kobra(T) {
     `<path d="M20.2 1.45Q21.4 1.2 22.6 .55M20.3 1.7Q21.5 2.15 22.6 2.8" fill="none" stroke="#2a1420" stroke-width=".26" stroke-linecap="round"/>` +
     (F ? `<path d="M15.1 .58C16.8 .55 18.5 .86 20 1.42" fill="none" stroke="#fff" stroke-width=".1" stroke-opacity=".55"/>` : "");
   /* Nacken: weicher Ansatz aus der Schildmitte (kein abgeschnittenes Hinterende) */
-  h += `<g filter="${rund(T, "kk", { weich: 1.4, tiefe: 3, umgebung: 0.4 })}"><g transform="translate(116.4 -179.6) scale(1.2) rotate(5)">${kopf}</g></g>`;
+  h += `<g filter="${rund(T, "kk", { weich: 1.4, tiefe: 3, umgebung: 0.4 })}"><g transform="translate(115.6 -183.4) scale(1.2) rotate(5)">${kopf}</g></g>`;
+  /* Schildunterkante läuft weich in den Hals aus (keine Muffe) */
+  const hm = T.id("hbm");
+  T.def(`<linearGradient id="${hm}g" gradientUnits="userSpaceOnUse" x1="0" y1="33" x2="0" y2="42"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient><mask id="${hm}" maskUnits="userSpaceOnUse" x="-40" y="-40" width="80" height="90"><rect x="-40" y="-40" width="80" height="90" fill="url(#${hm}g)"/></mask>`);
+  h += `<g filter="${rund(T, "kh", { weich: 6, tiefe: 4, umgebung: 0.38 })}"><g transform="translate(118 -152) rotate(3)"><g mask="url(#${hm})">${hood}</g></g></g>`;
   return fertig(0.3, h, [16, -192, 186, 0], null, [108, -196, 148, -170]);
 }
 

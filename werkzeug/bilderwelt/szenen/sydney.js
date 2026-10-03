@@ -351,11 +351,11 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
     const d = `M${P(Pp)} L${P(B0f)} L${P(B0)} Q${P(cg2)} ${P(Ta)} Q${P(T)} ${P(Tb)} Q${P(cl)} ${P(Pp)} Z`;
     SPIEGEL_OP.push({ B0, T, Pp, e, b, t, p });
     const id = S.id("s" + schalenNr++);
-    S.def(`<clipPath id="${id}"><path d="${d}"/></clipPath>`);
+    S.def(`<path id="${id}p" d="${d}"/><clipPath id="${id}"><use href="#${id}p"/></clipPath>`);
     /* Kugelverlauf: oben rechts (Sonne Nordost) warm-hell, zum Fuß und zur linken Flanke kühles Grau */
     const mx = T[0] - (T[0] - B0[0]) * 0.2 + 3, my = T[1] + (Pp[1] - T[1]) * 0.22, rr = Math.max(gL, lL) * 1.05;
     S.def(`<radialGradient id="${id}g" gradientUnits="userSpaceOnUse" cx="${r(mx)}" cy="${r(my)}" r="${r(rr)}"><stop offset="0" stop-color="${hinten ? "#fbf6ea" : "#fff8e6"}"/><stop offset=".5" stop-color="${hinten ? "#ece6da" : "#f3ead6"}"/><stop offset="1" stop-color="${rueck ? "#b9b6b0" : "#c7c5c0"}"/></radialGradient>`);
-    let g = `<path d="${d}" fill="url(#${id}g)"/>`;
+    let g = `<use href="#${id}p" fill="url(#${id}g)"/>`;
     const ang = Math.atan2(T[1] - Pp[1], T[0] - Pp[0]) * 180 / Math.PI + 90;
     g += `<g clip-path="url(#${id})"><rect x="${r(Pp[0] - 40)}" y="${r(Pp[1] - 60)}" width="80" height="70" fill="url(#${S.id("chev")})" opacity="${hinten ? 0.55 : 0.75}" transform="rotate(${r(ang)} ${P(Pp)})"/>`;
     let rip = "";
@@ -608,9 +608,10 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   S.def(`<pattern id="${S.id("blatt")}" width="8" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-12) scale(.62)"><g fill="#86b062"><ellipse cx="1.5" cy="1.2" rx="1.4" ry=".6" transform="rotate(-25 1.5 1.2)"/><ellipse cx="5.6" cy="3.6" rx="1.3" ry=".6" transform="rotate(30 5.6 3.6)"/></g><g fill="#1b361d"><ellipse cx="3.8" cy="1.6" rx="1.3" ry=".55" transform="rotate(20 3.8 1.6)"/><ellipse cx="1.8" cy="4.6" rx="1.4" ry=".6" transform="rotate(-40 1.8 4.6)"/><ellipse cx="7" cy=".8" rx="1.1" ry=".5"/></g></pattern>`);
   const masse = (cx, cy, rx, ry, n) => {
     const pts = [];
-    for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2, f = 0.82 + rnd() * 0.3; pts.push([Math.max(0.3, cx + Math.cos(a) * rx * f), Math.max(-202.7, cy + Math.sin(a) * ry * f)]); }
-    let d = `M${r(pts[0][0])} ${r(pts[0][1])}`;
-    for (let i = 1; i <= n; i++) { const p0 = pts[i - 1], p1 = pts[i % n], m = [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2], o = [m[0] - cx, m[1] - cy], L = Math.hypot(o[0] / rx, o[1] / ry) || 1, bu = 0.22 + rnd() * 0.12; d += `Q${r(Math.max(0.3, m[0] + o[0] / L * bu))} ${r(Math.max(-202.7, m[1] + o[1] / L * bu * 1.4))} ${r(p1[0])} ${r(p1[1])}`; }
+    for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2, f = 0.82 + rnd() * 0.3; pts.push([Math.max(1, cx + Math.cos(a) * rx * f), Math.max(-202, cy + Math.sin(a) * ry * f)]); }
+    const ri = Math.round;
+    let d = `M${ri(pts[0][0])} ${ri(pts[0][1])}`;
+    for (let i = 1; i <= n; i++) { const p0 = pts[i - 1], p1 = pts[i % n], m = [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2], o = [m[0] - cx, m[1] - cy], L = Math.hypot(o[0] / rx, o[1] / ry) || 1, bu = 0.22 + rnd() * 0.12; d += `Q${ri(Math.max(1, m[0] + o[0] / L * bu))} ${ri(Math.max(-202, m[1] + o[1] / L * bu * 1.4))} ${ri(p1[0])} ${ri(p1[1])}`; }
     return `<path d="${d}Z"/>`;
   };
   const massen = [[16, -182, 24, 21, 11], [46, -193, 28, 12, 10], [58, -172, 22, 13, 10], [90, -189, 25, 13, 10], [120, -180, 20, 12, 9], [148, -171, 14, 9, 8], [22, -148, 18, 13, 9], [84, -163, 16, 9, 8], [128, -158, 12, 7, 7], [104, -199, 30, 7, 9], [159, -178, 7, 6, 6]];
@@ -632,8 +633,8 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   const grenze = rand.slice().reverse().map(([x, y]) => `L${x} ${y}`).join(" ");
   const kantePfad = [...Array(41)].map((_, i) => { const x = i * 10; return `L${x} ${r(KANTE(x))}`; }).join(" ");
   const umriss = `M0 ${r(KANTE(0))} ${kantePfad} ${rasenRand.slice().reverse().map((x) => `L${x} ${r(RASEN(x))}`).join(" ")} ${grenze} L0 260 Z`;
-  let k = `<path d="${umriss}" fill="${S.lg("fels", [[0, "#dcbf88"], [0.4, "#cda76b"], [1, "#b08250"]])}"/>`;
-  S.def(`<clipPath id="${S.id("felsclip")}"><path d="${umriss}"/></clipPath>`);
+  S.def(`<path id="${S.id("felsp")}" d="${umriss}"/><clipPath id="${S.id("felsclip")}"><use href="#${S.id("felsp")}"/></clipPath>`);
+  let k = `<use href="#${S.id("felsp")}" fill="${S.lg("fels", [[0, "#dcbf88"], [0.4, "#cda76b"], [1, "#b08250"]])}"/>`;
   k += `<g clip-path="url(#${S.id("felsclip")})">`;
   /* Felsbänke: die Platte fällt in Stufen zum Betrachter ab. Jede Stufe: oben die helle Trittfläche,
      vorn die Stirn (Morgensonne von hinten rechts → hell, warm), darunter eine dunkle Schattenfuge */
@@ -715,8 +716,8 @@ const bP = (u, l, w) => { const p = bq(u, l, w); return `${p[0]} ${p[1]}`; };
   /* der Felsblock: natürlicher, verwitterter Sandstein hinten links, Gras oben; rechts ist die Bank ausgehauen */
   const blockPts = [[-1.3, -0.7, 0], [-1.42, -0.66, 0.35], [-1.38, -0.62, 0.62], [-1.47, -0.55, 0.9], [-1.4, -0.4, 1.18], [-1.3, -0.15, 1.36], [-1.1, 0.25, 1.46], [-0.9, 0.6, 1.5], [-0.7, 1.0, 1.44], [-0.55, 1.35, 1.5], [-0.42, 1.7, 1.42], [-0.3, 2.0, 1.3], [-0.18, 2.2, 1.06], [-0.1, 2.26, 0.82], [0.62, 2.12, 0.76], [0.7, 2.2, 0]];
   const blockD = `M${blockPts.map(([u, l, w]) => bP(u, l, w)).join(" L")} Z`;
-  S.def(`<clipPath id="${S.id("bankblock")}"><path d="${blockD}"/></clipPath>`);
-  k += `<path d="${blockD}" fill="${FELS}"/>`;
+  S.def(`<path id="${S.id("blockp")}" d="${blockD}"/><clipPath id="${S.id("bankblock")}"><use href="#${S.id("blockp")}"/></clipPath>`);
+  k += `<use href="#${S.id("blockp")}" fill="${FELS}"/>`;
   k += `<g clip-path="url(#${S.id("bankblock")})">`;
   /* Bänke (Schichtung): unregelmäßig, gewellt, teils unterbrochen; Schattenfuge unten, Licht oben */
   for (let i = 0; i < 5; i++) {
@@ -886,15 +887,15 @@ let deckeKunst = "";
   const pts = [[-0.72 * s, yH - DECKE.y], [0.72 * s, yH - DECKE.y], [0.86 * s, yV - DECKE.y], [-0.86 * s, yV - DECKE.y]];
   let k = `<path d="M${r(pts[3][0] - 4)} ${r(pts[3][1] + 0.6)} L${r(pts[0][0] - 6)} ${r(pts[0][1])} L${r(pts[0][0])} ${r(pts[0][1])} L${r(pts[3][0])} ${r(pts[3][1])} Z" fill="#2a3a14" opacity=".18" filter="url(#bw_weich)"/>`;
   const d = `M${pts.map((p) => `${r(p[0])} ${r(p[1])}`).join(" L")} Z`;
-  S.def(`<clipPath id="${S.id("decke")}"><path d="${d}"/></clipPath>`);
-  k += `<path d="${d}" fill="#b8302c"/>`;
+  S.def(`<path id="${S.id("deckep")}" d="${d}"/><clipPath id="${S.id("decke")}"><use href="#${S.id("deckep")}"/></clipPath>`);
+  k += `<use href="#${S.id("deckep")}" fill="#b8302c"/>`;
   k += `<g clip-path="url(#${S.id("decke")})">`;
   for (let i = -6; i <= 6; i++) { const x0 = i * 0.12 * s, x1 = i * 0.143 * s; k += `<path d="M${r(x0)} ${r(pts[0][1])} L${r(x1)} ${r(pts[2][1])}" stroke="${i % 3 ? "#1f2f5a" : "#e9d9a8"}" stroke-width="${i % 3 ? 2.4 : 0.6}" opacity="${i % 3 ? 0.55 : 0.8}"/>`; }
   for (let j = 0; j < 6; j++) { const y = pts[0][1] + (pts[2][1] - pts[0][1]) * (j / 5.5); k += `<path d="M${r(-0.9 * s)} ${r(y)} L${r(0.9 * s)} ${r(y)}" stroke="${j % 2 ? "#1f2f5a" : "#e9d9a8"}" stroke-width="${j % 2 ? 2 : 0.5}" opacity="${j % 2 ? 0.5 : 0.75}"/>`; }
   /* Falten und Sonnenlicht von rechts */
   k += `<path d="M${r(-0.5 * s)} ${r(pts[0][1] + 2)} q6 3 14 1 M${r(0.2 * s)} ${r(pts[2][1] - 3)} q8 -2 16 0" stroke="#7a1d1b" stroke-width=".6" fill="none" opacity=".4"/>`;
   k += `<rect x="0" y="${r(pts[0][1])}" width="${r(0.9 * s)}" height="${r(pts[2][1] - pts[0][1])}" fill="#ffd9a0" opacity=".12"/>`;
-  k += `</g><path d="${d}" fill="none" stroke="#7a1d1b" stroke-width=".4"/>`;
+  k += `</g><use href="#${S.id("deckep")}" fill="none" stroke="#7a1d1b" stroke-width=".4"/>`;
   let fr = "";
   for (let x = -0.84 * s; x < 0.84 * s; x += 2) fr += `M${r(x)} ${r(pts[2][1])}l.2 1.6`;
   k += `<path d="${fr}" stroke="#9a2a26" stroke-width=".4"/>`;
