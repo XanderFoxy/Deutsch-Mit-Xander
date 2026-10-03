@@ -9,8 +9,8 @@
    STANDORT: das PLÖNLEIN („kleiner Platz“) am Südende der Unteren
    Schmiedgasse — eines der bekanntesten Fotomotive Deutschlands. Man
    steht in der Gasse (Augenhöhe 1,65 m) und schaut nach Süden auf die
-   Gabelung. Sommerabend: die Sonne steht tief im Westen (Azimut 275°,
-   18° hoch, rechts). Ein Sonnenmodell (schattenH) rechnet die Schatten
+   Gabelung. Sommerabend gegen 20 Uhr: die Sonne steht tief im Nordwesten
+   (Azimut 297°, 11° hoch, rechts hinten). Ein Sonnenmodell (schattenH) rechnet die Schatten
    der giebelständigen rechten Zeile: die Gasse liegt im Schatten, auf
    den Fassaden links und am gelben Haus steigt die Schattenkante als
    Sägezahn der Giebel an, nur Obergeschosse, Giebel und der obere
@@ -221,7 +221,7 @@ S.hinten(`<rect y="-2" width="400" height="200" fill="${S.lg("himmel", [[0, "#4f
   let kante = "M70 200 L70 149";
   for (let x = 70; x < 190; x += 1.6 + rnd() * 1.4) { const y = 146.5 + Math.sin(x / 13) * 1.6 + rnd() * 1.4; kante += ` Q${r(x + 0.8)} ${r(y - 1.4 - rnd())} ${r(x + 1.8)} ${r(y)}`; }
   let c = `<path d="${kante} L190 200 Z" fill="${S.lg("tal", [[0, "#6f8478"], [0.5, "#64786a"], [1, "#55695a"]])}"/>`;
-  for (const [x, y, w, h] of [[96, 156, 9, 2.2], [142, 160, 12, 2.6], [170, 154, 7, 1.8]]) c += `<ellipse cx="${x}" cy="${y}" rx="${w}" ry="${h}" fill="#a9b47e" opacity=".9"/>`;
+  for (const [x, y, w, h] of [[96, 157, 6, 1.2], [150, 160, 7, 1.4], [176, 154, 5, 1]]) c += `<ellipse cx="${x}" cy="${y}" rx="${w}" ry="${h}" fill="#9fae7c" opacity=".8"/>`;
   for (let i = 0; i < 80; i++) { const x = 72 + rnd() * 116, y = 149 + Math.pow(rnd(), 0.8) * 46, q = 1 + (y - 147) / 22; c += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(q * 1.3)}" ry="${r(q)}" fill="${["#5f7462", "#6d8270", "#7c8f86", "#56695a", "#73866c"][i % 5]}"/>`; }
   for (const [x, y] of [[138, 163], [143, 164.5], [148, 162.6]]) c += `<rect x="${x - 1.2}" y="${y - 0.9}" width="2.4" height="1.4" fill="#e8dfcc"/><path d="M${x - 1.5} ${y - 0.9} L${x} ${y - 2.2} L${x + 1.5} ${y - 0.9} Z" fill="#a85a3e"/>`;
   c += `<path d="M70 144 L190 144 L190 200 L70 200 Z" fill="${S.lg("taldunst", [[0, "#d8d4d8", 0.35], [0.6, "#c8cfd8", 0.18], [1, "#c8cfd8", 0.1]])}"/>`;
@@ -599,7 +599,7 @@ const PLOEN_UNTER = [];
     c += `<path d="M${pt(q(h.d1 - 0.2, h.traufe))} L${pt(q(h.d1 - 0.2, 0.2))}" stroke="#7d8388" stroke-width="${r(Math.max(0.4, 0.9 * 10 / dm))}"/>`;
     c += `<path d="M${pt(q(h.d0, 0))} L${pt(q(h.d0, h.traufe))}" stroke="#000" stroke-width=".4" opacity=".25"/>`;
     /* Hausnummer */
-    { const [nx, ny] = q(h.d0 + 0.4, 2.8); const ns = 0.3 * F / h.d0; c += `<rect x="${r(nx)}" y="${r(ny)}" width="${r(ns * 1.2)}" height="${r(ns)}" fill="#2a4a7a"/>`; }
+    { const [nx, ny] = q(h.d0 + 0.4, 2.8); const ns = 0.3 * F / h.d0; c += `<rect x="${r(nx)}" y="${r(ny)}" width="${r(ns * 1.2)}" height="${r(ns)}" fill="#2a4a7a"/><text x="${r(nx + ns * 0.6)}" y="${r(ny + ns * 0.82)}" font-size="${r(ns * 0.85)}" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">${[3, 5, 9, 11, 13][RECHTS.indexOf(h)]}</text>`; }
   }
   /* die ganze Zeile liegt im Abendschatten (die Sonne steht hinter ihr) */
   for (const h of RECHTS) { const dm = (h.d0 + h.d1) / 2; c += `<path d="${poly(P(L, h.d0, 0), P(L, h.d0, h.traufe), P(L, dm, h.first), P(L, h.d1, h.traufe), P(L, h.d1, 0))}" fill="${SCHATTEN}" opacity=".3"/>`; }
@@ -684,7 +684,7 @@ const LL = -8;
       for (let d = 12; d < 22; d += 0.05) { const lit = schattenH(X, d, 2) <= 0;   /* die Seitengasse weitet sich hinter der Häuserfront */ if (lit && a2 === null) a2 = d; if (lit) b2 = d; }
       if (a2 !== null) { lo.push(P(X, a2, 0, 0)); hi.push(P(X, b2, 0, 0)); }
     }
-    if (lo.length > 1) k += `<path d="${poly(...lo, ...hi.slice().reverse())}" fill="#ffc477" opacity=".6" filter="url(#${S.id("dunst")})"/>`;
+    if (lo.length > 1) k += `<path d="${poly(...lo, ...hi.slice().reverse())}" fill="#ffc477" opacity=".62" filter="url(#${S.id("dunst")})"/><path d="${poly(...lo, ...hi.slice().reverse())}" fill="#ffc477" opacity=".3" filter="url(#${S.id("weichlicht")})"/>`;
   }
   k += `<rect x="-1" y="${HOR - 2}" width="402" height="${263 - HOR}" fill="${S.lg("pflnah", [[0, "#000", 0], [0.6, "#000", 0.04], [1, "#120c08", 0.2]])}"/></g>`;
   /* rechte Gasse zum Siebersturm: sanfte Rampe (7 %), feines Pflaster, Bordstein steigt mit */
@@ -706,14 +706,14 @@ const LL = -8;
   for (let t = -6; t <= TK + 0.01; t += 1) { L.push(PS(t, 5, 0)); R.push(PS(t, 0, 0)); }
   let k = `<path d="${poly(...L, ...R.slice().reverse())}" fill="${S.lg("steige", [[0, "#837868"], [1, "#9a8d7a"]], 0, 0, 0, 1)}"/>`;
   /* Pflasterbögen quer zur Steige: so dicht, wie das Auge sie trennt */
-  { let d = "", yAlt = 999; for (let t = -6; t < TK; t += 0.15) { const y = PS(t, 2.5, 0)[1]; if (yAlt - y < 0.7) continue; yAlt = y; d += `M${pt(PS(t, 0.1, 0))} Q${pt(PS(t - 0.35, 2.5, 0))} ${pt(PS(t, 4.9, 0))} `; } k += `<path d="${d}" stroke="#5f564b" stroke-width=".28" fill="none" opacity=".8"/>`; }
+  { let d = "", yAlt = 999; for (let t = -6; t < TK; t += 0.15) { const y = PS(t, 2.5, 0)[1]; if (yAlt - y < 0.55) continue; yAlt = y; const bo = 0.35 * Math.min(1, (TK - t) / 4); d += `M${pt(PS(t, 0.1, 0))} Q${pt(PS(t - bo, 2.5, 0))} ${pt(PS(t, 4.9, 0))} `; } k += `<path d="${d}" stroke="#5f564b" stroke-width=".26" fill="none" opacity=".6"/>`; }
   /* Rinne in der Mitte, Bordsteine — alle fluchten abwärts */
   k += `<path d="M${pt(PS(-6, 2.5, 0))} L${pt(PS(TK, 2.5, 0))}" stroke="#575046" stroke-width=".9" opacity=".7"/>`;
   k += `<path d="M${L.map(pt).join(" L")}" stroke="#cdbb98" stroke-width=".7" fill="none"/><path d="M${R.map(pt).join(" L")}" stroke="#cdbb98" stroke-width=".7" fill="none"/>`;
   /* Mäuerchen an der Platzkante rechts: der Platz bleibt eben, die Steige sinkt daneben ab */
   k += `<path d="${poly(PS(-6, 0, 0), PS(0, 0, 0), PS(0, 0, 0.39 + 0.22), PS(-6, 0, 0.22))}" fill="#9c8a6c"/><path d="M${pt(PS(-6, 0, 0.22))} L${pt(PS(0, 0, 0.61))}" stroke="#cdbb98" stroke-width=".5"/>`;
   /* die Kante: heller Grat, dahinter warmer Dunst aus dem Tal */
-  k += `<path d="M${pt(PS(TK, 5, 0))} L${pt(PS(TK, 0, 0))}" stroke="#ddcdaa" stroke-width=".8"/>`;
+  k += `<path d="M${pt(PS(TK, 5, 0))} L${pt(PS(TK, 0, 0))}" stroke="#e6d4ae" stroke-width=".4" opacity=".7" filter="url(#${S.id("kante")})"/>`;
   k += `<path d="${poly(...L, ...R.slice().reverse())}" fill="${SCHATTEN}" opacity=".26"/>`;
   S.teil({ id: "gasse", de: "die Gasse", syl: "GAS-se", it: "il vicolo", itSyl: "VI-co-lo", en: "lane", x: 0, y: 0, kunst: k,
     tipp: "Die Kobolzeller Steige ist eine steile Gasse. Sie führt hinunter zum Kobolzeller Tor." });
@@ -755,7 +755,7 @@ const LL = -8;
       }
     }
   });
-  { const [x, y] = P(LL, 7.6, 1.55); k += `<rect x="${r(x - 8.4)}" y="${r(y + 0.4)}" width="16.8" height="2.4" rx=".3" fill="#fff" stroke="#b8a37a" stroke-width=".2"/><text x="${r(x)}" y="${r(y + 2.2)}" font-size="1.6" text-anchor="middle" fill="#3a2a18" font-family="Arial" font-weight="bold">Schneeballen 3,50 €</text>`; }
+  { const [x, y] = P(LL, 7.6, 1.55); k += `<rect x="${r(x - 8.4)}" y="${r(y + 0.4)}" width="16.8" height="2.4" rx=".3" fill="#fff" stroke="#b8a37a" stroke-width=".2"/><text x="${r(x)}" y="${r(y + 2.2)}" font-size="1.6" text-anchor="middle" fill="#3a2a18" font-family="Arial" font-weight="bold">Brezel 1,20 €</text>`; }
   k += `<path d="${poly(P(LL, d0 + 0.2, 2.7), P(LL, d0 + 0.6, 2.7), P(LL, d0 + 1.1, 0.6), P(LL, d0 + 0.7, 0.6))}" fill="#fff" opacity=".22"/>`;
   /* Ladenschild: Schrift perspektivisch (jeder Buchstabe auf seiner Tiefe) */
   k += `<path d="${poly(P(LL, d0 - 0.1, 3.3), P(LL, d1 + 0.1, 3.3), P(LL, d1 + 0.1, 2.9), P(LL, d0 - 0.1, 2.9))}" fill="#3e2414"/>`;
@@ -884,7 +884,9 @@ const LL = -8;
   const L = 4, ta = 6.9, tb = 7.7;
   let k = `<path d="${poly(P(L, ta - 0.2, 2.75), P(L, tb + 0.2, 2.75), P(L, tb + 0.2, 0), P(L, ta - 0.2, 0))}" fill="#cdb48a"/>`;
   k += `<path d="${poly(P(L, ta, 2.5), P(L, tb, 2.5), P(L, tb, 0.18), P(L, ta, 0.18))}" fill="${S.lg("gasttuer", [[0, "#6b3a1e"], [1, "#4a2412"]])}"/>`;
-  k += `<path d="${poly(P(L, ta, 2.5), P(L, tb, 2.5), P(L, tb, 2.05), P(L, ta, 2.05))}" fill="${GLAS_LICHT}"/>`;
+  /* Oberlicht: Rechteck mit zwei Sprossen über einer geraden Kämpferlinie (nicht als offene Tür lesbar) */
+  k += `<path d="${poly(P(L, ta, 2.5), P(L, tb, 2.5), P(L, tb, 2.12), P(L, ta, 2.12))}" fill="${S.lg("oberlicht", [[0, "#e8c890"], [1, "#b88a58"]])}"/>`;
+  { let q = `M${pt(P(L, ta, 2.08))} L${pt(P(L, tb, 2.08))} `; const sp = `M${pt(P(L, ta + (tb - ta) / 3, 2.5))} L${pt(P(L, ta + (tb - ta) / 3, 2.12))} M${pt(P(L, ta + 2 * (tb - ta) / 3, 2.5))} L${pt(P(L, ta + 2 * (tb - ta) / 3, 2.12))}`; k += `<path d="${q}" stroke="#2a1408" stroke-width="1"/><path d="${sp}" stroke="#3a2010" stroke-width=".45"/><path d="${poly(P(L, ta, 2.5), P(L, tb, 2.5), P(L, tb, 2.12), P(L, ta, 2.12))}" fill="none" stroke="#3a2010" stroke-width=".5"/>`; }
   for (const [h0, h1] of [[0.4, 1.1], [1.25, 1.9]]) k += `<path d="${poly(P(L, ta + 0.1, h1), P(L, tb - 0.1, h1), P(L, tb - 0.1, h0), P(L, ta + 0.1, h0))}" fill="none" stroke="#2a1408" stroke-width=".5"/>`;
   { const [x, y] = P(L, tb - 0.15, 1.15); k += `<circle cx="${r(x)}" cy="${r(y)}" r=".8" fill="${GOLD}"/>`; }
   k += `<path d="${poly(P(L, ta - 0.3, 0.2), P(L, tb + 0.3, 0.2), P(L - 0.45, tb + 0.3, 0.2), P(L - 0.45, ta - 0.3, 0.2))}" fill="#a8916c"/><path d="M${pt(P(L - 0.45, ta - 0.3, 0.2))} L${pt(P(L - 0.45, tb + 0.3, 0.2))}" stroke="#7a6a50" stroke-width=".6"/>`;
@@ -964,7 +966,7 @@ const FIG = (s) => ({ p: (x, y) => `${r(x * s)} ${r(y * s)}`, pg: (pts) => "M" +
   k += `<path d="${pg([[-0.155, -1.0], [0.155, -1.0], [0.14, -0.84], [-0.14, -0.84]])}" fill="#355886"/>`;
   k += `<path d="${pg([[-0.19, -1.43], [0.19, -1.43], [0.17, -0.95], [-0.17, -0.95]])}" fill="#3d6a8a"/><path d="${pg([[0.02, -1.43], [0.19, -1.43], [0.17, -0.95], [0.03, -0.95]])}" fill="#2f566f"/><path d="M${p(-0.17, -0.97)} L${p(0.17, -0.97)}" stroke="#2a4c62" stroke-width="${r(0.03 * s)}"/>`;
   /* Arme: Schulter → Ellenbogen (außen) → Hand am Handy */
-  const arm = (pts, f) => `<path d="M${pts.map(([a2, b2]) => p(a2, b2)).join(" L")}" stroke="${f}" stroke-width="${r(0.085 * s)}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const arm = (pts, f) => `<path d="M${p(...pts[0])} L${p(...pts[1])}" stroke="${f}" stroke-width="${r(0.095 * s)}" stroke-linecap="round"/><path d="M${p(...pts[1])} L${p(...pts[2])}" stroke="${f}" stroke-width="${r(0.07 * s)}" stroke-linecap="round"/><path d="M${p(pts[1][0] * 0.88, pts[1][1] + 0.03)} l${r((pts[1][0] > 0 ? -0.04 : 0.04) * s)} ${r(-0.02 * s)}" stroke="#1f3a4c" stroke-width="${r(0.014 * s)}" stroke-linecap="round"/>`;
   k += arm([[-0.16, -1.39], [-0.31, -1.5], [-0.04, -1.62]], "#3d6a8a") + arm([[0.16, -1.39], [0.33, -1.49], [0.19, -1.62]], "#2f566f");
   /* Handy (Bildschirm zu ihr, also zu uns): das gelbe Haus auf dem Bildschirm */
   k += `<g transform="rotate(8 ${r(0.13 * s)} ${r(-1.66 * s)})"><rect x="${r(0.09 * s)}" y="${r(-1.745 * s)}" width="${r(0.085 * s)}" height="${r(0.16 * s)}" rx=".4" fill="#1c1d20"/><rect x="${r(0.097 * s)}" y="${r(-1.735 * s)}" width="${r(0.071 * s)}" height="${r(0.14 * s)}" fill="#6f8fbf"/><path d="${pg([[0.105, -1.6], [0.105, -1.66], [0.132, -1.69], [0.159, -1.66], [0.159, -1.6]])}" fill="#f2c45c"/></g>`;
@@ -1004,10 +1006,10 @@ const SCHAFT = { x0: -0.36, x1: -0.44, top: -2.42 }, schaftX = (yy) => SCHAFT.x0
   k += `<path d="${HORN}" fill="#d8b37a"/><path d="M${p(0.27, -0.9)} L${p(0.31, -0.93)}" stroke="#a8842e" stroke-width="${r(0.02 * s)}"/><ellipse cx="${r(0.37 * s)}" cy="${r(-0.825 * s)}" rx="${r(0.012 * s)}" ry="${r(0.045 * s)}" fill="#4a3216"/>`;
   /* Kopf: Hals, Gesicht mit Augen, Brauen, Nase, Mund, graue Haare an den Schläfen */
   k += `<rect x="${r(-0.04 * s)}" y="${r(-1.53 * s)}" width="${r(0.08 * s)}" height="${r(0.06 * s)}" fill="#d9ac87"/>`;
-  k += `<ellipse cx="${r(-0.01 * s)}" cy="${r(-1.6 * s)}" rx="${r(0.085 * s)}" ry="${r(0.1 * s)}" fill="#e8c29e"/><path d="M${p(0.03, -1.69)} Q${p(0.09, -1.64)} ${p(0.07, -1.53)} Q${p(0.04, -1.51)} ${p(0.02, -1.51)} Z" fill="#d4a882"/>`;
+  k += `<ellipse cx="${r(-0.01 * s)}" cy="${r(-1.6 * s)}" rx="${r(0.085 * s)}" ry="${r(0.1 * s)}" fill="#e8c29e"/><path d="M${p(-0.02, -1.7)} Q${p(-0.11, -1.66)} ${p(-0.09, -1.55)} Q${p(-0.05, -1.5)} ${p(-0.025, -1.505)} Q${p(-0.045, -1.6)} ${p(-0.02, -1.7)} Z" fill="#c99a76"/>`;
   k += `<path d="M${p(-0.09, -1.66)} L${p(-0.095, -1.57)} M${p(0.075, -1.66)} L${p(0.08, -1.57)}" stroke="#a9a6a0" stroke-width="${r(0.03 * s)}"/>`;
   k += `<ellipse cx="${r(-0.042 * s)}" cy="${r(-1.615 * s)}" rx="${r(0.011 * s)}" ry="${r(0.008 * s)}" fill="#2a2420"/><ellipse cx="${r(0.022 * s)}" cy="${r(-1.615 * s)}" rx="${r(0.011 * s)}" ry="${r(0.008 * s)}" fill="#2a2420"/>`;
-  k += `<path d="M${p(-0.065, -1.64)} l${r(0.04 * s)} 0 M${p(0.005, -1.64)} l${r(0.04 * s)} 0" stroke="#8a8680" stroke-width="${r(0.01 * s)}"/><path d="M${p(-0.012, -1.6)} L${p(-0.02, -1.57)} L${p(-0.005, -1.565)}" stroke="#b88a66" stroke-width="${r(0.008 * s)}" fill="none"/><path d="M${p(-0.035, -1.535)} Q${p(-0.01, -1.525)} ${p(0.015, -1.535)}" stroke="#9a5a4a" stroke-width="${r(0.01 * s)}" fill="none"/>`;
+  k += `<path d="M${p(-0.068, -1.636)} l${r(0.044 * s)} ${r(-0.006 * s)} M${p(0.002, -1.642)} l${r(0.044 * s)} ${r(0.006 * s)}" stroke="#6a665e" stroke-width="${r(0.016 * s)}" stroke-linecap="round"/><path d="M${p(-0.012, -1.6)} L${p(-0.02, -1.57)} L${p(-0.005, -1.565)}" stroke="#b88a66" stroke-width="${r(0.008 * s)}" fill="none"/><path d="M${p(-0.035, -1.535)} Q${p(-0.01, -1.525)} ${p(0.015, -1.535)}" stroke="#9a5a4a" stroke-width="${r(0.01 * s)}" fill="none"/>`;
   /* Schlapphut: Kopf, Band, breite Krempe mit heller Oberkante */
   const [kx, ky2] = [0, -1.665];
   k += `<path d="M${p(-0.085, -1.665)} L${p(-0.075, -1.765)} Q${p(0, -1.79)} ${p(0.075, -1.765)} L${p(0.085, -1.665)} Z" fill="#161519"/><path d="M${p(-0.083, -1.69)} L${p(0.083, -1.69)}" stroke="#34313a" stroke-width="${r(0.018 * s)}"/>`;
@@ -1019,7 +1021,7 @@ const SCHAFT = { x0: -0.36, x1: -0.44, top: -2.42 }, schaftX = (yy) => SCHAFT.x0
       { id: "hut", de: "der Hut", syl: "HUT", it: "il cappello", itSyl: "cap-PEL-lo", en: "hat", x: NW.x + kx * s, y: NW.y + (ky2 + 0.04) * s, kunst: flaeche(-0.22 * s, -0.17 * s, 0.44 * s, 0.17 * s),
         tipp: "Der Nachtwächter trägt einen breiten schwarzen Schlapphut." },
       { id: "horn", de: "das Horn", syl: "HORN", it: "il corno", itSyl: "COR-no", en: "horn", x: NW.x + 0.27 * s, y: NW.y - 0.76 * s, kunst: flaeche(-0.14 * s, -0.26 * s, 0.28 * s, 0.26 * s),
-        tipp: "Mit dem Horn bläst der Nachtwächter zur vollen Stunde." },
+        tipp: "Früher blies der Nachtwächter jede Stunde ins Horn." },
     ] });
 }
 {

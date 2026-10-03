@@ -1131,5 +1131,64 @@ function sw2(s) { return r(.02 * s); }
 /* Licht über allem: Mittagssonne von links (Süden), leichte Vignette (fängt keinen Tipp ab) */
 S.davor(`<rect width="320" height="240" fill="${S.rg("sonne", [[0, "#fff4d6", 0.2], [0.55, "#fff4d6", 0.05], [1, "#fff4d6", 0]], 0, 0.1, 0.9)}"/><rect width="320" height="240" fill="${S.rg("vignette", [[0, "#000", 0], [0.72, "#000", 0], [1, "#1a1008", 0.2]], 0.5, 0.5, 0.75)}"/>`);
 
+
+/* ---------- zum Schluss: Pfaddaten verkürzen (relative Befehle, 0,1 genau — spart ein Fünftel der Ladezeit) ---------- */
+/* Pfaddaten verkürzen: relative Befehle, auf 0,1 gerundet (ohne Drift), kurze Zahlen */
+const pfadKurz = (() => {
+  const ARGS = { M: 2, L: 2, H: 1, V: 1, C: 6, S: 4, Q: 4, T: 2, A: 7, Z: 0 };
+  const q = (v) => Math.round(v * 10) / 10;
+  const zahl = (v) => { let s = String(q(v)); if (s === "-0") s = "0"; return s.replace(/^(-?)0\./, "$1."); };
+  return (d) => {
+    const tok = d.match(/[a-zA-Z]|-?(?:\d+\.?\d*|\.\d+)(?:e-?\d+)?/g);
+    if (!tok) return d;
+    let i = 0, cx = 0, cy = 0, sx = 0, sy = 0, rx = 0, ry = 0, srx = 0, sry = 0, cmd = null, last = "", out = "", prev = "";
+    const schreib = (t) => {
+      if (/^[a-zA-Z]$/.test(t)) { out += t; prev = ""; return; }
+      if (prev === "") out += t;
+      else if (t[0] === "-") out += t;
+      else if (t[0] === "." && prev.includes(".")) out += t;
+      else out += " " + t;
+      prev = t;
+    };
+    while (i < tok.length) {
+      if (/[a-zA-Z]/.test(tok[i])) cmd = tok[i++];
+      else if (cmd === "M") cmd = "L"; else if (cmd === "m") cmd = "l";
+      if (!cmd) return d;
+      const U = cmd.toUpperCase(), rel = cmd !== U, n = ARGS[U];
+      if (n === undefined) return d;
+      const a = tok.slice(i, i + n).map(Number); i += n;
+      if (a.length < n || a.some(isNaN)) return d;
+      let z, teile = [];
+      if (U === "Z") { z = "z"; cx = sx; cy = sy; rx = srx; ry = sry; }
+      else if (U === "H") { const x = rel ? cx + a[0] : a[0], dx = q(x - rx); z = "h"; teile = [zahl(dx)]; rx = q(rx + dx); cx = x; }
+      else if (U === "V") { const y = rel ? cy + a[0] : a[0], dy = q(y - ry); z = "v"; teile = [zahl(dy)]; ry = q(ry + dy); cy = y; }
+      else if (U === "A") {
+        const x = rel ? cx + a[5] : a[5], y = rel ? cy + a[6] : a[6], dx = q(x - rx), dy = q(y - ry);
+        z = "a"; teile = [zahl(a[0]), zahl(a[1]), zahl(a[2]), a[3] ? "1" : "0", a[4] ? "1" : "0", zahl(dx), zahl(dy)];
+        rx = q(rx + dx); ry = q(ry + dy); cx = x; cy = y;
+      } else {
+        const pts = []; for (let j = 0; j < n; j += 2) pts.push([rel ? cx + a[j] : a[j], rel ? cy + a[j + 1] : a[j + 1]]);
+        const [ex, ey] = pts[pts.length - 1];
+        if (out === "") { z = "M"; teile = [zahl(ex), zahl(ey)]; rx = q(ex); ry = q(ey); }
+        else {
+          z = U.toLowerCase();
+          for (const [px, py] of pts) teile.push(zahl(px - rx), zahl(py - ry));
+          rx = q(rx + q(ex - rx)); ry = q(ry + q(ey - ry));
+        }
+        cx = ex; cy = ey;
+        if (U === "M") { sx = ex; sy = ey; srx = rx; sry = ry; }
+      }
+      /* gleicher Befehl wie davor: Buchstabe weglassen (nicht nach M/m und nicht bei z) */
+      if (!(z === last && z !== "m" && z !== "M" && z !== "z")) schreib(z);
+      for (const t of teile) schreib(t);
+      last = z;
+    }
+    return out;
+  };
+})();
+const kuerzePfade = (svg) => svg.replace(/ d="([^"]*)"/g, (m, d) => ` d="${pfadKurz(d)}"`);
+for (const t of S.teile) { t.kunst = kuerzePfade(t.kunst); for (const u of t.unter || []) u.kunst = kuerzePfade(u.kunst); }
+for (const L of [S.defs, S.kulisse, S.vorne]) L.forEach((v, i) => { L[i] = kuerzePfade(v); });
+
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/freiburg.js"));
 console.log(aus);

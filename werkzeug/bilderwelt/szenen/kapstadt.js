@@ -60,9 +60,13 @@
      zu. Lion's Head: Felskopf nach Ansichten (UNSICHER: Schulterhöhe).
    - RUNDE 4: Kind und Kellner am Kai, Möwen, Flugzeug im Landeanflug (von
      Norden über die Tafelbucht, UNSICHER), Tafelberg Road als feine Linie
-     (UNSICHER: Höhe ≈ 360 m angenommen). Bildwinkel bleibt 66° (Vorschlag
-     für 52–55° liegt beim Auftraggeber).
-   Maßstab: Bild 66° breit (≈ 6 Einheiten je Grad), Augenhöhe y = 142
+     (UNSICHER: Höhe ≈ 360 m angenommen).
+   - RUNDE 5: Bildwinkel ≈ 55° (Hintergrund ab dem Becken 1,1 × gestreckt),
+     Tafelberg dadurch ≈ 10 % größer; Devil's Peak links angeschnitten,
+     Lion's Head ganz im Bild. Nachmittagssonne aus Nordwest ≈ 34° hoch
+     (UNSICHER, je nach Jahreszeit): Schatten ≈ 1,5 × Höhe nach Südost.
+     Kellner ≈ 1,75 m; Spaziergänger mit Kinderwagen auf dem Turmkai.
+   Maßstab: Hintergrund wie gezeichnet 60° breit, im Bild ≈ 55°; Augenhöhe y = 142
    (3,6 m über dem Wasser). Ferne Dinge: y = 142 − 347·(Höhe − 3,6)/Abstand.
    Vorne auf dem Kai: Einheiten je Meter = (y − 142) / 1,6.
    ===================================================================== */
@@ -98,6 +102,21 @@ const glatt = (pts) => {                                   // weiche Linie durch
 };
 /* Schlagschatten am Boden: Sonne rechts hinten (Nordwest, ≈ 55° hoch) → kurze Schatten nach links hinten */
 const schlag = (b, h, s, a = 0.3) => `<path d="M${r(-b / 2)} 0 L${r(b / 2)} 0 L${r(b / 2 - 0.7 * h * s)} ${r(-0.12 * h * s)} L${r(-b / 2 - 0.7 * h * s)} ${r(-0.12 * h * s)} Z" fill="#1d1810" opacity="${a}" filter="url(#bw_weich)"/>`;
+/* RUNDE 5: lange Nachmittagsschatten auf dem Kai. Sonne im Nordwesten, rechts hinter dem Betrachter,
+   ≈ 34° hoch: jeder Schatten ist ≈ 1,5 × so lang wie das Ding hoch ist und fällt nach links hinten
+   (Südost), perspektivisch verkürzt, alle mit demselben Winkel. Sie liegen in der Kulisse auf dem
+   Kaiboden (unter allen Teilen), werden nach hinten blasser und enden an der Kaikante. */
+const LANG = [];
+const lang = (X, Y, b, h, a = 0.26, kopf = 0) => {
+  const s = (Y - HOR) / 1.6, D = F / s, L = 1.5 * h, Lx = L * 0.74, Lz = L * 0.68;
+  const P = (xw, d) => [r(200 + xw * F / d), r(HOR + 1.6 * F / d)];
+  const xw = (X - 200) / s, bw = b / s, D2 = D + Lz;
+  const p = [P(xw - bw / 2, D), P(xw + bw / 2, D), P(xw + bw * 0.35 - Lx, D2), P(xw - bw * 0.35 - Lx, D2)];
+  let z = `<path d="M${p.map((q) => q.join(" ")).join("L")}Z" fill="${S.lg("langsch", [[0, "#1d1810", 1], [1, "#1d1810", 0.45]], 1, 1, 0, 0)}" opacity="${r(a * 1.6)}" filter="url(#${S.id("fein")})"/>`;
+  if (kopf) { const [cx, cy] = P(xw - Lx, D2), ss = F / D2; z += `<ellipse cx="${cx}" cy="${cy}" rx="${r(kopf * ss)}" ry="${r(kopf * ss * 0.3)}" fill="#1d1810" opacity="${r(a * 0.55)}" filter="url(#bw_weich)"/>`; }
+  z += `<ellipse cx="${r(X - b * 0.08)}" cy="${r(Y)}" rx="${r(b * 0.6)}" ry="${r(Math.max(0.7, b * 0.09))}" fill="#1d1810" opacity="${r(Math.min(0.5, a * 1.4))}" filter="url(#${S.id("fein")})"/>`;
+  LANG.push(z);
+};
 
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("wolke")}" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="1.2"/></filter>`);
@@ -524,10 +543,27 @@ const turmUnter = [];
   q += `<path d="${gel}" stroke="#c9ced2" stroke-width=".2" fill="none"/><path d="${fw}" stroke="#f4f6f7" stroke-width=".45" fill="none"/>`;
   q += `<path d="M${bl(0, 0)}L${bl(1, 0)}" stroke="#9aa0a4" stroke-width=".9"/>`;
   q += `<rect x="176" y="${r(TURM.y + 0.5)}" width="3" height="${r(Wl - TURM.y - 0.5)}" fill="#a9a59c"/>`;
-  /* Spaziergänger auf dem Turmkai (≈ 1,7 m), Farben und Schritte verschieden */
-  for (const [x, f, schritt] of [[76, "#c0392b", 1], [82, "#f4f1ea", 0], [90, "#2f6fb6", -1], [99, "#e2722d", 1], [134, "#f2c62f", 1], [141, "#7b4a9a", -1], [148, "#3c8f5a", 0], [158, "#e58fa1", -1], [166, "#2a2a2a", 1]]) {
-    const h = 1.7 * s, y = TURM.y - 0.2;
-    q += `<path d="M${x - 0.5} ${r(y)}l${r(0.5 + schritt * 0.4)} ${r(-h * 0.45)}l${r(0.5 - schritt * 0.4)} ${r(h * 0.45)}" stroke="#3a3f48" stroke-width=".5" fill="none"/><rect x="${r(x - 0.65)}" y="${r(y - h * 0.84)}" width="1.3" height="${r(h * 0.42)}" rx=".4" fill="${f}"/><circle cx="${x}" cy="${r(y - h * 0.92)}" r=".55" fill="#8a5a3c"/>`;
+  /* Spaziergänger auf dem Turmkai: Paare, eine Familie mit Kind, eine Gruppe, einer allein, eine Mutter
+     mit Kinderwagen; Abstände, Größen, Schritte und Gehrichtungen verschieden (r = 1 nach rechts) */
+  const MENSCH = (x, f, schritt, gr, rr, hose = "#3a3f48") => {
+    const h = gr * s, y = TURM.y - 0.2, kx = x + rr * 0.12;
+    return `<path d="M${r(x - 0.45)} ${r(y)}l${r(0.45 + schritt * 0.4)} ${r(-h * 0.46)}l${r(0.45 - schritt * 0.4)} ${r(h * 0.46)}" stroke="${hose}" stroke-width="${r(0.18 * s)}" fill="none"/>` +
+      `<path d="M${r(x - 0.6)} ${r(y - h * 0.44)}L${r(x - 0.5)} ${r(y - h * 0.8)}Q${r(x)} ${r(y - h * 0.84)} ${r(x + 0.5)} ${r(y - h * 0.8)}L${r(x + 0.6)} ${r(y - h * 0.44)}Z" fill="${f}"/>` +
+      `<path d="M${r(x + rr * 0.45)} ${r(y - h * 0.78)}l${r(rr * 0.25 + schritt * 0.2)} ${r(h * 0.3)}" stroke="${f}" stroke-width="${r(0.12 * s)}" opacity=".85"/>` +
+      `<circle cx="${r(kx)}" cy="${r(y - h * 0.91)}" r="${r(0.11 * s)}" fill="#8a5a3c"/>`;
+  };
+  for (const [x, f, sc, gr, rr, ho] of [
+    [74.6, "#c0392b", 1, 1.76, 1], [76.6, "#f4f1ea", -1, 1.62, 1, "#5b6f8e"],
+    [88.4, "#2f6fb6", 0, 1.82, -1],
+    [101.6, "#e2722d", 1, 1.72, -1], [103.6, "#3c8f5a", -1, 1.1, -1, "#2f4a6a"], [106, "#7b4a9a", 1, 1.64, -1, "#e9e4d8"],
+    [131.4, "#f2c62f", -1, 1.7, 1],
+    [141.2, "#2a2a2a", 1, 1.8, -1, "#b9b2a2"], [143.1, "#e58fa1", 0, 1.6, 1], [144.8, "#d8d2c4", -1, 1.7, -1],
+    [167, "#5a7ea8", 1, 1.68, -1, "#2a2d33"]]) q += MENSCH(x, f, sc, gr, rr, ho);
+  { /* Kinderwagen vor der Mutter (sie geht nach links) */
+    const y = TURM.y - 0.2, x = 163.4, u = s;
+    q += `<path d="M${r(x + 2.6)} ${r(y - 0.95 * u)}L${r(x + 1.4)} ${r(y - 0.62 * u)}" stroke="#2a2d33" stroke-width=".3"/>`;
+    q += `<path d="M${r(x - 0.9)} ${r(y - 0.3 * u)}h${r(1.9)}l.3 ${r(-0.36 * u)}h${r(-2.4)}z" fill="#3b4a5e"/><path d="M${r(x - 0.9)} ${r(y - 0.66 * u)}q.2 ${r(-0.5 * u)} ${r(1.3)} ${r(-0.5 * u)}v${r(0.5 * u)}z" fill="#2c3848"/>`;
+    q += `<circle cx="${r(x - 0.6)}" cy="${r(y - 0.12 * u)}" r=".42" fill="#1d1f22"/><circle cx="${r(x + 0.9)}" cy="${r(y - 0.12 * u)}" r=".42" fill="#1d1f22"/>`;
   }
   S.hinten(bg(q));
 }
@@ -560,9 +596,9 @@ const turmUnter = [];
   /* oberstes Geschoss: Uhren – vorn rund, auf den Schrägseiten perspektivisch verkürzt, alle mit Zeigern */
   const UY = -11.5, zeit = (cx, sx) => {
     let z = "";
-    const hz = [Math.sin(4.17 * Math.PI / 6) * 0.55 * sx, -Math.cos(4.17 * Math.PI / 6) * 0.55], mz = [Math.sin(2 * Math.PI / 6) * 0.82 * sx, -Math.cos(2 * Math.PI / 6) * 0.82];
-    z += `<line x1="${g(cx)}" y1="${g(UY)}" x2="${g(cx + hz[0])}" y2="${g(UY + hz[1])}" stroke="#1b1612" stroke-width="${g(0.12)}" stroke-linecap="round"/>`;
-    z += `<line x1="${g(cx)}" y1="${g(UY)}" x2="${g(cx + mz[0])}" y2="${g(UY + mz[1])}" stroke="#1b1612" stroke-width="${g(0.08)}" stroke-linecap="round"/>`;
+    const hz = [Math.sin(4.17 * Math.PI / 6) * 0.5 * sx, -Math.cos(4.17 * Math.PI / 6) * 0.5], mz = [Math.sin(2 * Math.PI / 6) * 0.92 * sx, -Math.cos(2 * Math.PI / 6) * 0.92];
+    z += `<line x1="${g(cx)}" y1="${g(UY)}" x2="${g(cx + hz[0])}" y2="${g(UY + hz[1])}" stroke="#1b1612" stroke-width="${g(0.17)}" stroke-linecap="round"/>`;
+    z += `<line x1="${g(cx)}" y1="${g(UY)}" x2="${g(cx + mz[0])}" y2="${g(UY + mz[1])}" stroke="#1b1612" stroke-width="${g(0.075)}" stroke-linecap="round"/>`;
     return z;
   };
   k += `<circle cx="0" cy="${g(UY)}" r="${g(1.1)}" fill="#fbfaf4" stroke="#2a2420" stroke-width="${g(0.12)}"/>`;
@@ -762,6 +798,7 @@ S.lg("poller", [[0, "#1f2226"], [0.45, "#5a6066"], [1, "#16181b"]], 0, 0, 1, 0);
   S.def(`<g id="${S.id("pol")}"><path d="M-4.6 1L-3.8 -13Q-6 -14.6 -6 -16.4L6 -16.4Q6 -14.6 3.8 -13L4.6 1Z" fill="url(#${S.id("poller")})"/><path d="M-5.6 -16.2Q0 -18 5.6 -16.2" stroke="#8a9096" stroke-width=".5" fill="none"/><ellipse cx="-6" cy="1" rx="6" ry="1.2" fill="#1d1810" opacity=".25"/></g>`);
   /* Kaikante: Poller, Fender und Leiter ragen über die Kante ins Bild des Wassers – darum liegen sie vor
      allen Teilen (davor); sie überdecken kein Wort-Teil */
+  for (const x of [190, 268]) lang(x, KAI + 1, 10, 0.45, 0.2);
   for (const x of [190, 268]) kante += `<use href="#${S.id("pol")}" transform="translate(${x} ${KAI})"/>`;
   /* offener Instrumentenkoffer der Musiker mit Münzen, Gullydeckel */
   k += `<path d="M98 246l26-1.2 3 5.6-28 1.4z" fill="#2a2420"/><path d="M100 246.6l22.6-1 2.2 4.2-24 1.1z" fill="#a8262e"/><path d="M106 248.6h.9M110 248h.9M114 249.2h.9M118 248.4h.9M108.6 249.6h.9" stroke="#e8c45a" stroke-width=".8" stroke-linecap="round"/><path d="M98 246l26-1.2-.6-3.6-24.6 1.1z" fill="#3a322c"/>`;
@@ -773,7 +810,7 @@ S.lg("poller", [[0, "#1f2226"], [0.45, "#5a6066"], [1, "#16181b"]], 0, 0, 1, 0);
   /* DER POLLER aus Gusseisen mit Festmacherleine, darauf die Dominikanermöwe */
   const X = 150, Y = 226, s = vorn(Y);
   const g = (n) => r(n * s);
-  let k = schlag(Number(g(0.5)), 0.6, s, 0.35);
+  let k = ""; lang(X, Y, 0.5 * s, 0.6, 0.3);
   const PG = `url(#${S.id("poller")})`;
   k += `<path d="M${g(-0.26)} 0 L${g(-0.24)} ${g(-0.05)} L${g(0.24)} ${g(-0.05)} L${g(0.26)} 0 Z" fill="#2a2d31"/>`;
   k += `<path d="M${g(-0.17)} ${g(-0.05)} Q${g(-0.16)} ${g(-0.3)} ${g(-0.12)} ${g(-0.4)} Q${g(-0.2)} ${g(-0.44)} ${g(-0.22)} ${g(-0.5)} Q${g(-0.2)} ${g(-0.58)} 0 ${g(-0.59)} Q${g(0.2)} ${g(-0.58)} ${g(0.22)} ${g(-0.5)} Q${g(0.2)} ${g(-0.44)} ${g(0.12)} ${g(-0.4)} Q${g(0.16)} ${g(-0.3)} ${g(0.17)} ${g(-0.05)} Z" fill="${PG}"/>`;
@@ -833,7 +870,7 @@ const HAUT = "#6b4430", HAUTS = "#4a2c1e";
   /* Bass-Marimba davor (eigener Fußpunkt 6 Einheiten näher): sechs breite Stäbe, lange Rohre */
   const mb = (n) => r(n * s);
   const MY = 6, BH = 6 - 41, BW = 37, NB = 6, bb = (2 * BW) / NB;
-  let m = `<g transform="translate(${mb(8)} ${mb(MY)})">${schlag(Number(mb(80)), 0.4, vorn(Y) * 1.0, 0.28)}</g>`;
+  let m = ""; lang(X + 8 * s, Y + MY * s, 74 * s, 0.9, 0.22); lang(X, Y - 1, 13, 1.8, 0.2, 0.11);
   m += `<path d="M${mb(-BW - 2)} ${mb(MY)}L${mb(-BW)} ${mb(BH)}M${mb(-BW + 4)} ${mb(MY)}L${mb(-BW)} ${mb(BH)}M${mb(BW + 2)} ${mb(MY)}L${mb(BW)} ${mb(BH)}M${mb(BW - 4)} ${mb(MY)}L${mb(BW)} ${mb(BH)}M${mb(-BW + 2)} ${mb(MY - 10)}H${mb(BW - 2)}" stroke="#5a3a22" stroke-width="${mb(1.6)}"/>`;
   let ro = "";
   for (let i = 0; i < NB; i++) { const x = -BW + i * bb + bb * 0.2, l = 22 + i * 2.8; ro += `M${mb(x)} ${mb(BH + 1)}h${mb(bb * 0.6)}v${mb(l)}a${mb(bb * 0.3)} ${mb(bb * 0.22)} 0 0 1 ${mb(-bb * 0.6)} 0z`; }
@@ -850,7 +887,8 @@ const HAUT = "#6b4430", HAUTS = "#4a2c1e";
      Unterarme gehen nach vorn-unten zu den Stäben, die Schlägelköpfe berühren die Stäbe; der rechte
      Fuß ist im Takt angehoben. Buntes Hemd, Strickmütze. Licht von rechts hinten (Nordwest).
      Ursprung = zwischen den Füßen. */
-  let k = schlag(18, 1.76, vorn(MUS.y) * 0.2, 0.3) + `<ellipse cx="-5.6" cy="-.6" rx="5.4" ry="1" fill="#1d1810" opacity=".4"/><ellipse cx="7.4" cy="-.8" rx="4.4" ry=".9" fill="#1d1810" opacity=".3"/>`;
+  lang(MUS.x, MUS.y, 18, 1.76, 0.28, 0.12);
+  let k = `<ellipse cx="-5.6" cy="-.6" rx="5.4" ry="1" fill="#1d1810" opacity=".4"/><ellipse cx="7.4" cy="-.8" rx="4.4" ry=".9" fill="#1d1810" opacity=".3"/>`;
   /* Beine (Hose), rechtes Knie leicht gebeugt */
   k += `<path d="M-8.6 -46L-.4 -46L-2.4 -3L-8.8 -3Q-9.4 -24 -8.6 -46ZM.4 -46L8.6 -46Q10.6 -26 9.8 -5.4L4 -5Q4.4 -24 .4 -40Z" fill="${S.lg("hose", [[0, "#24252a"], [0.6, "#3a3c42"], [1, "#2a2b30"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M-6 -44Q-6.4 -24 -5.6 -4M6.4 -30q1.6 3 1.4 7" stroke="#55585f" stroke-width=".5" fill="none"/>`;
@@ -883,7 +921,7 @@ const HAUT = "#6b4430", HAUTS = "#4a2c1e";
      auf zwei Schnurleisten; darunter die Resonanzrohre – sie hängen vor den Beinen des Spielers */
   const X = MUS.x + 14, Y = MUS.y + 8, s = vorn(Y);
   const g = (n) => r(n * s);
-  let k = `<g transform="translate(${g(0.3)} 0)">${schlag(Number(g(1.1)), 0.5, s, 0.28)}</g>`;
+  let k = ""; lang(X + 0.3 * s, Y, 1.1 * s, 0.85, 0.22);
   const L = 0.7, R = 0.55, H0 = 0.78, N = 12, bw = (L + R) / N;
   /* Gestell: A-Beine an den Enden, Querholz */
   k += `<path d="M${g(-L - 0.02)} 0L${g(-L + 0.04)} ${g(-H0 + 0.02)}M${g(-L + 0.12)} 0L${g(-L + 0.04)} ${g(-H0 + 0.02)}M${g(R + 0.02)} 0L${g(R - 0.04)} ${g(-H0 + 0.04)}M${g(R - 0.12)} 0L${g(R - 0.04)} ${g(-H0 + 0.04)}M${g(-L + 0.06)} ${g(-0.24)}H${g(R - 0.06)}" stroke="#5a3a22" stroke-width="${g(0.035)}"/>`;
@@ -913,45 +951,78 @@ const HAUT = "#6b4430", HAUTS = "#4a2c1e";
 {
   /* DAS KIND tanzt am linken Rand zur Marimba: Arme hoch, ein Bein angehoben, buntes T-Shirt; ≈ 1,1 m.
      Gezeichnet in 50 Einheiten je Meter, dann verkleinert. */
-  const X = 17, Y = 246, k0 = vorn(Y) / 50;
+  const X = 23, Y = 246, k0 = vorn(Y) / 50;
   const HK = "#7a4a30";
-  let c = schlag(14, 1.1, 50 * 0.2, 0.25);
+  let c = ""; lang(X, Y, 14 * k0, 1.1, 0.26, 0.1);
   c += `<path d="M-3 -24L-2.6 -2L-6.4 -1.6L-6 0h5.4L1 -24ZM2 -24L3.6 -14L9.4 -10.6L8.6 -8.6L1.6 -12.4L-1 -24Z" fill="${HK}"/>`;
   c += `<path d="M-5 -30L5 -30L5.4 -21Q0 -19.6 -5.4 -21Z" fill="#2f5aa0"/>`;
   c += `<path d="M-5.6 -43Q-7 -38 -6 -30L6 -30Q7 -38 5.6 -43Q0 -45 -5.6 -43Z" fill="#f2c62f"/><path d="M-5 -38h10M-5.6 -34h11.4" stroke="#e8608e" stroke-width="1.2"/>`;
-  c += `<path d="M-5 -42L-10 -48L-12 -55M5 -42L10 -49L9 -56" stroke="${HK}" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  /* Arme: Oberarm kräftiger, Unterarm schmaler, im Ellbogen ≈ 90° geknickt; kleine Hände mit Daumen */
+  c += `<path d="M-4.8 -41.6L-11.2 -45.4M4.8 -41.6L10.8 -46.4" stroke="${HK}" stroke-width="2.9" fill="none" stroke-linecap="round"/>`;
+  c += `<path d="M-11.2 -45.4L-11.6 -53.2M10.8 -46.4L8.8 -53.8" stroke="${HK}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  c += `<path d="M-12 -46.6q.7 1 1.8 .6M11.2 -47.6q-.6 1.1 -1.8 .8" stroke="#5a3420" stroke-width=".45" fill="none"/>`;
+  c += `<ellipse cx="-11.7" cy="-55.2" rx="1.35" ry="1.75" fill="${HK}"/><path d="M-10.6 -54.6l.9 -.9" stroke="${HK}" stroke-width=".8" stroke-linecap="round"/>`;
+  c += `<ellipse cx="8.6" cy="-55.8" rx="1.35" ry="1.75" transform="rotate(-14 8.6 -55.8)" fill="${HK}"/><path d="M7.4 -55.2l-.8 -.9" stroke="${HK}" stroke-width=".8" stroke-linecap="round"/>`;
+  c += `<path d="M-5.8 -43.4l-3.4 -1.8 1.2 -2.4 3.6 1.6zM5.8 -43.4l3.2 -2 -1.4 -2.2 -3.4 1.8z" fill="#f2c62f"/>`;
   c += `<circle cx=".4" cy="-49" r="5" fill="${HK}"/><path d="M-4.6 -50.6Q-4 -55.6 .6 -55.4Q5.4 -55 5.2 -50Q2 -53 -4.6 -50.6Z" fill="#1d120c"/><path d="M1 -48.6q.6.4 1.2 0M3.4 -48.8q.6.4 1.2 0M1.6 -46.2q1.2.8 2.4 0" stroke="#1d120c" stroke-width=".45" fill="none"/>`;
   c += `<path d="M-1 -1.6h-5.6l-.4 1.6h6.4zM8.4 -11.4l2.6 1.6-1 1.6-2.6-1.4z" fill="#f4f4f2"/>`;
   S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "il bambino", itSyl: "bam-BI-no", en: "child", x: X, y: Y, steht: true, kunst: `<g transform="scale(${r(k0 * 100) / 100})">${c}</g>`,
     tipp: "Das Kind tanzt zur Marimba-Musik. Die Mehrzahl ist: die Kinder." });
 }
 {
-  /* DER KELLNER bringt auf einem Tablett zwei Gläser zum Tisch: weißes Hemd, schwarze Weste und lange
-     Schürze, geht nach links; ≈ 1,75 m */
-  const X = 368, Y = 233, k0 = vorn(Y) / 50;
-  const HKE = "#c99a74";
-  let c = schlag(16, 1.75, 50 * 0.2, 0.25);
-  c += `<path d="M2 -44L5 -24L8 -3L4.4 -3L1 -24L-1 -42ZM-3 -44L-6 -24L-9 -3L-5.4 -3L-2.4 -24L0 -42Z" fill="#1d1f24"/>`;
-  c += `<path d="M-10.4 -3.4h6.4l.4 3.4h-7.6zM3.8 -3.4h6l.8 3.4h-7.2z" fill="#121316"/>`;
-  c += `<path d="M-7 -60Q-8.4 -50 -7 -42L7 -42Q8.4 -50 7 -60Q0 -63 -7 -60Z" fill="#f6f6f2"/><path d="M-6 -58L-4 -42L4 -42L6 -58L2 -56L0 -50L-2 -56Z" fill="#1d1f24"/>`;
-  c += `<path d="M-7 -44L-8.6 -14L8.6 -14L7 -44Z" fill="#26282e"/><path d="M-7 -44h14" stroke="#f6f6f2" stroke-width=".6"/>`;
-  /* Arme: rechts hängend, links hoch mit Tablett */
-  c += `<path d="M6.4 -58L9 -48L8 -40" stroke="#f6f6f2" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="-39" r="1.5" fill="${HKE}"/>`;
-  c += `<path d="M-6.4 -58L-12 -56L-15 -64" stroke="#f6f6f2" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="-15" cy="-65.4" r="1.5" fill="${HKE}"/>`;
-  c += `<ellipse cx="-15" cy="-67" rx="7" ry="1.3" fill="#c9cdd2"/><ellipse cx="-15" cy="-67.4" rx="7" ry="1.1" fill="#e6e9ec"/>`;
-  c += `<path d="M-19.6 -67.6l.4 -5h2.8l.4 5z" fill="#c8552c" opacity=".9"/><path d="M-12 -67.6l.3 -4.4h2.4l.3 4.4z" fill="#e8f1f2" opacity=".7"/><path d="M-11.4 -70h1.8" stroke="#f2c62f" stroke-width=".9"/>`;
-  c += `<path d="M-1.8 -60L-1.6 -63.6L2 -63.6L2.2 -60Z" fill="${HKE}"/><ellipse cx="-.4" cy="-68.4" rx="4.4" ry="5.2" fill="${HKE}"/><path d="M-4.6 -70Q-4.2 -74.6 0 -74.4Q4.4 -74.2 4 -69.4Q1.4 -72.2 -4.6 -70Z" fill="#3a2418"/>`;
-  c += `<path d="M-3.6 -68.8q.6.4 1.2 0M-1 -69q.6.4 1.2 0M-2.6 -65.6q1 .6 2 0" stroke="#3a2418" stroke-width=".45" fill="none"/><path d="M2.6 -64.6h1" stroke="#1d1f24" stroke-width=".8"/>`;
-  S.teil({ id: "kellner", de: "der Kellner", syl: "KELL-ner", it: "il cameriere", itSyl: "ca-me-RIE-re", en: "waiter", x: X, y: Y, steht: true, kunst: `<g transform="scale(${r(k0 * 100) / 100})">${c}</g>`,
+  /* DER KELLNER bringt auf einem Tablett zwei Gläser zum Tisch: weißes Hemd, schwarze Weste, lange
+     Bistro-Schürze mit zwei Falten; ≈ 1,75 m (Kopf oben bei 87,5 Einheiten, 50 je Meter). Gewicht auf dem
+     rechten Bein, das linke Knie leicht gebeugt; Schultern breiter als die Hüfte. Rechter Arm hoch mit
+     dem Tablett, der linke im Ellbogen gebeugt, über dem Unterarm das Serviertuch. Licht von rechts
+     (Nordwest): Hemd rechts hell, links im Schatten. Die Augen sind offen und schauen zum Tisch. */
+  const X = 368, Y = 233, k0 = vorn(Y) / 50, BRUST = 63;
+  const HKE = "#c99a74", HKS = "#a3734f", HAAR = "#3a2418";
+  const HEMD = S.lg("hemdk", [[0, "#c4c9ce"], [0.45, "#eeeee9"], [1, "#ffffff"]], 0, 0, 1, 0);
+  let c = ""; lang(X, Y, 15 * k0, 1.75, 0.26, 0.12);
+  /* Beine: Standbein rechts gerade, Spielbein links mit Knie nach vorn; Lichtkante rechts */
+  c += `<path d="M.6 -47.4L7.2 -46.6L6.4 -25L5.6 -4.2L1.8 -4.2L1.4 -25Z" fill="#1d1f24"/><path d="M6.8 -45L6 -25L5.3 -5" stroke="#4a4f58" stroke-width=".6" fill="none"/>`;
+  c += `<path d="M-7.4 -46.2L-.4 -47.4L-4.4 -25.4L-3.4 -4.4L-7.2 -4.4L-9.2 -25.8Z" fill="#26282e"/><path d="M-1 -46L-4.8 -25.6L-3.9 -5" stroke="#3d414a" stroke-width=".5" fill="none"/>`;
+  /* Schuhe mit Glanz; der linke Absatz leicht gehoben */
+  c += `<path d="M6.4 -4.6L1.4 -4.6Q-1.4 -4 -2.2 -1.2L-2.2 0L6.8 0Z" fill="#121316"/><path d="M-3.2 -4.8L-7.4 -4.6Q-10.4 -3.8 -11 -.8L-11 0L-5 0L-3 -1.8Z" fill="#121316"/>`;
+  c += `<path d="M.2 -3.6q1.4 -.6 3 -.4M-8.6 -3.4q1.2 -.6 2.6 -.5" stroke="#6a6f78" stroke-width=".5" fill="none"/>`;
+  /* Hemd: Schultern breit, Taille schmaler */
+  c += `<path d="M-9.8 -70Q-10.8 -61 -6.8 -51.6L6.8 -51.6Q10.6 -61 9.6 -70Q0 -74.2 -9.8 -70Z" fill="${HEMD}"/>`;
+  /* Weste mit V-Ausschnitt (weiße Hemdbrust bleibt sichtbar), Knöpfe, Lichtkante rechts */
+  c += `<path d="M-8 -69.2Q-8.8 -60 -6.6 -51L6.6 -51Q8.6 -60 7.6 -69.2L3.8 -68.6L.4 -57.6L-3.4 -68.6Z" fill="#1d1f24"/>`;
+  c += `<path d="M7 -68Q8 -60 6 -52" stroke="#4e535c" stroke-width=".7" fill="none"/><circle cx=".9" cy="-55.2" r=".45" fill="#5a5f68"/><circle cx="1.3" cy="-52.6" r=".45" fill="#5a5f68"/>`;
+  c += `<path d="M-9.4 -69Q-10.2 -61 -7 -53" stroke="#9aa1a8" stroke-width="1.2" fill="none" opacity=".5"/>`;
+  /* Schürze: vom Bund bis unter die Knie, unten etwas weiter, zwei Falten; Bund mit Schleife hinten */
+  c += `<path d="M-7.6 -52L7.6 -52L9.4 -14Q0 -12.4 -9.8 -14Z" fill="#2a2c32"/>`;
+  c += `<path d="M-2.4 -50Q-3.2 -32 -3.8 -14.4M3.6 -50Q4.6 -32 5 -14.2" stroke="#4a4e57" stroke-width=".8" fill="none"/><path d="M-1.7 -50Q-2.3 -32 -2.7 -14M4.3 -50Q5.3 -32 5.8 -14" stroke="#141519" stroke-width=".55" fill="none"/>`;
+  c += `<path d="M7.8 -51L9.3 -14.6" stroke="#50545d" stroke-width=".7"/><path d="M-7.6 -52H7.6" stroke="#3f434b" stroke-width="1.3"/><path d="M7.4 -52.4l2.2 3.4M7.6 -52l2.8 1.6" stroke="#3f434b" stroke-width=".9"/>`;
+  /* rechter Arm (im Bild links) hoch mit dem Tablett: Ellbogen außen, Hand unter dem Tablett */
+  c += `<path d="M-8.6 -68.6L-14.6 -60.6L-16.4 -66.6" stroke="#dfe2e4" stroke-width="3.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  c += `<path d="M-16.4 -66.6L-17.4 -72.4" stroke="${HKE}" stroke-width="2.6" stroke-linecap="round"/><path d="M-15.4 -61.8l-1.6 -1" stroke="#b9bec4" stroke-width=".5"/>`;
+  c += `<ellipse cx="-17.8" cy="-73.6" rx="1.9" ry="1.2" fill="${HKE}"/>`;
+  c += `<ellipse cx="-18.8" cy="-75" rx="8.6" ry="1.5" fill="#aeb3b8"/><ellipse cx="-18.8" cy="-75.4" rx="8.6" ry="1.25" fill="#e6e9ec"/><path d="M-12.6 -75.6q3 -.3 5 -1" stroke="#ffffff" stroke-width=".4" fill="none"/>`;
+  c += `<path d="M-24.2 -75.8l.4 -5.4h3l.4 5.4z" fill="#c8552c" opacity=".92"/><path d="M-23.6 -80.2h1.8" stroke="#e98a5c" stroke-width=".5"/><path d="M-16.4 -75.8l.3 -4.8h2.6l.3 4.8z" fill="#e8f1f2" opacity=".75"/><path d="M-15.8 -78.4h1.9" stroke="#f2c62f" stroke-width=".9"/>`;
+  /* linker Arm (im Bild rechts) im Ellbogen gebeugt, Unterarm vor dem Körper, Serviertuch darüber */
+  c += `<path d="M8.8 -68.6L10.8 -57.4L4.6 -53.6" stroke="#ffffff" stroke-width="3.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.4 -66.6l1.2 8.6" stroke="#c4c9ce" stroke-width=".5" fill="none"/>`;
+  c += `<ellipse cx="3.6" cy="-53.2" rx="1.6" ry="1.3" fill="${HKE}"/>`;
+  c += `<path d="M10 -58.6L5.2 -55.6L5.6 -44.8Q7.4 -44 9.4 -45L10.8 -55.4Z" fill="#f8f8f4"/><path d="M7.8 -55.8L7.6 -45M9.6 -56.6L9.8 -46" stroke="#c9ccd0" stroke-width=".45" fill="none"/>`;
+  /* Kragen, Fliege, Hals, Kopf zum Tisch gedreht (nach links), Augen offen */
+  c += `<path d="M-2 -71.6L-1.6 -76.2L2.4 -76.2L2.6 -71.6Z" fill="${HKS}"/>`;
+  c += `<path d="M-3.6 -71.8L0 -69.2L3.8 -71.8L2.8 -73.6L.2 -71.2L-2.6 -73.6Z" fill="#ffffff"/><path d="M-1.6 -70.6l1.6 .7 1.6 -.7v1.6l-1.6 -.7 -1.6 .7z" fill="#121316"/>`;
+  c += `<ellipse cx="-.6" cy="-81.5" rx="5" ry="6" fill="${HKE}"/><ellipse cx="1.8" cy="-81" rx="2.2" ry="3.6" fill="#ddb18c" opacity=".55"/>`;
+  c += `<path d="M-5.7 -82Q-5.9 -88.6 -.2 -88.4Q5.4 -88.2 4.8 -81Q4.5 -78.4 3.8 -77.8Q3.6 -82.2 1.4 -84.4Q-1.8 -83.6 -5.7 -82Z" fill="${HAAR}"/><ellipse cx="3.4" cy="-80.4" rx=".95" ry="1.5" fill="${HKS}"/>`;
+  c += `<ellipse cx="-3.7" cy="-81.6" rx=".95" ry=".62" fill="#ffffff"/><ellipse cx="-.7" cy="-81.8" rx="1" ry=".66" fill="#ffffff"/><circle cx="-4.1" cy="-81.5" r=".46" fill="#1d120c"/><circle cx="-1.1" cy="-81.7" r=".48" fill="#1d120c"/>`;
+  c += `<path d="M-4.8 -83.2q1 -.5 1.9 0M-1.7 -83.5q1 -.5 2 0" stroke="${HAAR}" stroke-width=".5" fill="none"/><path d="M-2.6 -81l-1 2.3.9.3" stroke="${HKS}" stroke-width=".45" fill="none"/><path d="M-3.4 -77.4q1 .5 2.1 .1" stroke="#8a4a3a" stroke-width=".5" fill="none"/>`;
+  /* Wortmarke auf der weißen Hemdbrust */
+  S.teil({ id: "kellner", de: "der Kellner", syl: "KELL-ner", it: "il cameriere", itSyl: "ca-me-RIE-re", en: "waiter", x: X, y: r(Y - BRUST * k0), steht: true, kunst: `<g transform="translate(0 ${r(BRUST * k0)}) scale(${r(k0 * 1000) / 1000})">${c}</g>`,
     tipp: "Der Kellner bringt Rooibostee. Eine Frau, die bedient, ist die Kellnerin." });
 }
 const TISCH = { x: 312, y: 247 };
 {
   /* Nachbartisch am rechten Rand (angeschnitten) mit zusammengebundenem Sonnenschirm: Bei Südostwind
      bleiben die Schirme zu. Mast mit Spitze, Stoff in Falten um den Mast gerollt, Halteband */
-  const X = 394, Y = 236, s = vorn(Y);
+  const X = 391, Y = 236, s = vorn(Y);
   const g = (n) => r(n * s);
-  let k = schlag(Number(g(0.4)), 2.4, s * 0.35, 0.22);
+  let k = ""; lang(X - 0.14 * s, Y, 0.5 * s, 2.4, 0.16, 0.12);
   const TT = -0.74;
   k += `<path d="M${g(-0.2)} 0L${g(0.1)} 0L${g(0.02)} ${g(-0.05)}L${g(-0.04)} ${g(-0.05)}Z" fill="#3a3d40"/><rect x="${g(-0.03)}" y="${g(TT)}" width="${g(0.05)}" height="${g(-TT)}" fill="#55595d"/>`;
   k += `<path d="M${g(-0.38)} ${g(TT + 0.02)}A${g(0.38)} ${g(0.075)} 0 0 0 ${g(0.1)} ${g(TT + 0.09)}V${g(TT - 0.06)}A${g(0.38)} ${g(0.075)} 0 0 0 ${g(-0.38)} ${g(TT + 0.02)}Z" fill="#8f8a82"/>`;
@@ -962,7 +1033,7 @@ const TISCH = { x: 312, y: 247 };
   k += `<path d="M${g(-0.06)} ${g(-1.55)}Q${g(-0.03)} ${g(-1.9)} ${g(-0.005)} ${g(-2.25)}M${g(0.04)} ${g(-1.56)}Q${g(0.03)} ${g(-1.9)} ${g(0.012)} ${g(-2.25)}M${g(-0.02)} ${g(-1.5)}Q${g(0.01)} ${g(-1.8)} ${g(0.002)} ${g(-2.2)}" stroke="#b5ab96" stroke-width=".45" fill="none"/>`;
   k += `<path d="M${g(-0.085)} ${g(-1.74)}L${g(0.085)} ${g(-1.72)}" stroke="#2f4a6a" stroke-width="1.1"/><path d="M${g(-0.03)} ${g(-2.3)}L${g(0)} ${g(-2.38)}L${g(0.03)} ${g(-2.3)}Z" fill="#9a9488"/>`;
   /* Wortmarke in der Schirmmitte, damit das Wort ganz im Bild steht */
-  const AX = 386, AY = 190;
+  const AX = 375, AY = 122;
   S.teil({ id: "sonnenschirm", de: "der Sonnenschirm", syl: "SON-nen-schirm", it: "l'ombrellone", itSyl: "om-brel-LO-ne", en: "parasol", x: AX, y: AY, kunst: `<g transform="translate(${X - AX} ${Y - AY})">${k}</g>`,
     tipp: "Bei starkem Südostwind bleiben die Sonnenschirme zu – sonst fliegen sie weg." });
 }
@@ -973,7 +1044,7 @@ const tischUnter = [];
   const s = vorn(TISCH.y - 6);
   const Fv = [-0.94 * s, 0.1 * s], Rv = [-0.34 * s, -0.28 * s];
   const P = (f, q, h) => `${r(Fv[0] * f + Rv[0] * q)} ${r(Fv[1] * f + Rv[1] * q - h * s)}`;
-  let k = schlag(Number(r(0.45 * s)), 0.9, s, 0.3);
+  let k = ""; lang(TISCH.x + 32 - 0.55 * s, TISCH.y - 7, 0.7 * s, 0.9, 0.2);
   const RAHMEN = "#4a4f55", LICHT = "#a9b0b6";
   const bein = (f, q) => `M${P(f * 1.08, q * 1.08, 0)}L${P(f, q, 0.45)}`;
   /* hintere (abgewandte) Seite: Beine, Seitenstrebe */
@@ -995,7 +1066,7 @@ const tischUnter = [];
   const s = vorn(TISCH.y);    // ≈ 66 Einheiten je Meter
   const g = (n) => r(n * s);
   const TOP = -0.74;
-  let k = schlag(Number(g(0.5)), 0.74, s, 0.3);
+  let k = ""; lang(TISCH.x, TISCH.y, 0.1 * s, 0.74, 0.3, 0.36);
   k += `<path d="M${g(-0.24)} 0 L${g(0.24)} 0 L${g(0.03)} ${g(-0.05)} L${g(-0.03)} ${g(-0.05)} Z" fill="#3a3d40"/><rect x="${g(-0.025)}" y="${g(TOP)}" width="${g(0.05)}" height="${g(-TOP)}" fill="#55595d"/>`;
   k += `<ellipse cx="0" cy="${g(TOP + 0.02)}" rx="${g(0.38)}" ry="${g(0.075)}" fill="#8f8a82"/>`;
   k += `<ellipse cx="0" cy="${g(TOP)}" rx="${g(0.38)}" ry="${g(0.075)}" fill="${S.rg("marmor", [[0, "#fbfaf6"], [1, "#dcd8cf"]], 0.4, 0.4, 0.7)}"/>`;
@@ -1139,6 +1210,8 @@ const kurzPfad = (d) => {
   }
   return out;
 };
+S.def(`<clipPath id="${S.id("kaiclip")}"><rect x="0" y="${KAI + 0.6}" width="400" height="${r(260 - KAI)}"/></clipPath>`);
+S.hinten(`<g clip-path="url(#${S.id("kaiclip")})">${LANG.join("")}</g>`);
 {
   const q = (t) => {
     if (t.includes("'")) throw new Error("Apostroph im SVG: " + t.slice(t.indexOf("'") - 40, t.indexOf("'") + 10));

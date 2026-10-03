@@ -263,7 +263,7 @@ const platane = (x, fuss, s, hoch, breit, himmel = "#a9c6e0", nb = 15) => {
   let g = "";
   const st = 0.45 * s;
   /* Stamm und zwei Hauptäste */
-  g += `<path d="M${r(x - st)} ${r(fuss)} C${r(x - st * 0.9)} ${r(fuss - hoch * 0.25)} ${r(x - st * 0.6)} ${r(fuss - hoch * 0.4)} ${r(x - st * 1.8)} ${r(fuss - hoch * 0.62)} L${r(x - st * 1.1)} ${r(fuss - hoch * 0.64)} C${r(x - st * 0.2)} ${r(fuss - hoch * 0.48)} ${r(x + st * 0.2)} ${r(fuss - hoch * 0.48)} ${r(x + st * 1.4)} ${r(fuss - hoch * 0.66)} L${r(x + st * 2)} ${r(fuss - hoch * 0.63)} C${r(x + st * 0.8)} ${r(fuss - hoch * 0.4)} ${r(x + st * 0.9)} ${r(fuss - hoch * 0.25)} ${r(x + st)} ${r(fuss)} Z" fill="${S.lg("rinde", [[0, "#b8b29a"], [0.45, "#948d74"], [1, "#5f5a4a"]], 0, 0, 1, 0)}"/>`;
+  g += `<path d="M${r(x - st)} ${r(fuss)} C${r(x - st * 0.9)} ${r(fuss - hoch * 0.25)} ${r(x - st * 0.6)} ${r(fuss - hoch * 0.4)} ${r(x - st * 1.8)} ${r(fuss - hoch * 0.62)} L${r(x - st * 1.1)} ${r(fuss - hoch * 0.64)} C${r(x - st * 0.2)} ${r(fuss - hoch * 0.48)} ${r(x + st * 0.2)} ${r(fuss - hoch * 0.48)} ${r(x + st * 1.4)} ${r(fuss - hoch * 0.66)} L${r(x + st * 2)} ${r(fuss - hoch * 0.63)} C${r(x + st * 0.8)} ${r(fuss - hoch * 0.4)} ${r(x + st * 0.9)} ${r(fuss - hoch * 0.25)} ${r(x + st)} ${r(fuss)} Z" fill="${S.lg("rinde", [[0, "#8f8a74"], [0.45, "#6f6a58"], [1, "#4a4639"]], 0, 0, 1, 0)}"/>`;
   /* Plattenborke: unregelmäßige Flecken in Oliv, Creme und Grau */
   for (let i = 0; i < (nb > 10 ? 5 : 0); i++) {
     const yy = fuss - rnd() * hoch * 0.55, xx = x - st * 0.7 + rnd() * st * 1.2, w = st * (0.35 + rnd() * 0.4), h = st * (0.5 + rnd() * 0.9);
@@ -963,7 +963,7 @@ const DOMM = {};
     else {
       g += `<path d="${poly([[x, y0, KAI + h], [x + w, y0, KAI + h], [x + w, y0 + 7, KAI + h + 5], [x, y0 + 7, KAI + h + 5]])}" fill="${SCHIEFER}"/>`;
       g += `<path d="${linie([[x, y0 + 7, KAI + h + 5], [x + w, y0 + 7, KAI + h + 5]])}" stroke="#2f363d" stroke-width=".35"/><path d="${linie([[x, y0 - 0.3, KAI + h], [x + w, y0 - 0.3, KAI + h]])}" stroke="#e8e0d0" stroke-width=".4"/>`;
-      for (const t of [0.3, 0.7]) { const gx = x + w * t; g += `<path d="${poly([[gx - 1, y0 + 2.5, KAI + h + 1.8], [gx + 1, y0 + 2.5, KAI + h + 1.8], [gx + 1, y0 + 2.5, KAI + h + 3.3], [gx, y0 + 2.5, KAI + h + 4.1], [gx - 1, y0 + 2.5, KAI + h + 3.3]])}" fill="#e9e1d2"/><path d="${poly([[gx - 0.5, y0 + 2.45, KAI + h + 2], [gx + 0.5, y0 + 2.45, KAI + h + 2], [gx + 0.5, y0 + 2.45, KAI + h + 3.1], [gx - 0.5, y0 + 2.45, KAI + h + 3.1]])}" fill="#4b545c"/>`; }
+      if (Math.abs(pr(x + w, y0, KAI + h)[0] - pr(x, y0, KAI + h)[0]) > 6) for (const t of [0.3, 0.7]) { const gx = x + w * t; g += `<path d="${poly([[gx - 1, y0 + 2.5, KAI + h + 1.8], [gx + 1, y0 + 2.5, KAI + h + 1.8], [gx + 1, y0 + 2.5, KAI + h + 3.3], [gx, y0 + 2.5, KAI + h + 4.1], [gx - 1, y0 + 2.5, KAI + h + 3.3]])}" fill="#e9e1d2"/><path d="${poly([[gx - 0.5, y0 + 2.45, KAI + h + 2], [gx + 0.5, y0 + 2.45, KAI + h + 2], [gx + 0.5, y0 + 2.45, KAI + h + 3.1], [gx - 0.5, y0 + 2.45, KAI + h + 3.1]])}" fill="#4b545c"/>`; }
     }
     return g;
   };
@@ -1011,10 +1011,11 @@ const DOMM = {};
     const gr = 0.7 + rnd() * 0.6, R = 7 * s * gr, ct = pr(x, y, KAI + 13 * gr), sl = (rnd() - 0.5) * 0.8 * s;
     k += `<path d="M${r(f[0] - 0.3 * s)} ${r(f[1])} L${r(ct[0] + sl - 0.22 * s)} ${r(ct[1] + R * 0.4)} L${r(ct[0] + sl + 0.22 * s)} ${r(ct[1] + R * 0.4)} L${r(f[0] + 0.3 * s)} ${r(f[1])} Z" fill="#cfc6a6"/>`;
     if (s > 0.8) k += `<path d="M${r(f[0] - 0.2 * s)} ${r(f[1] - 1.4 * s)} h${r(0.25 * s)} M${r(f[0])} ${r(f[1] - 2.6 * s)} h${r(0.2 * s)}" stroke="#8f8c6c" stroke-width="${r(0.25 * s)}"/>`;
-    k += lappen(ct[0] + sl, ct[1], R, LAUB, 12);
-    k += lappen(ct[0] + sl - R * 0.35, ct[1] - R * 0.2, R * 0.48, "#cfe08e", 8).replace("/>", ` opacity=".28"/>`);
-    k += lappen(ct[0] + sl + R * 0.3, ct[1] + R * 0.2, R * 0.45, "#1f2e1a", 8).replace("/>", ` opacity=".3"/>`);
-    if (rnd() < 0.45) k += lappen(ct[0] + sl + (rnd() - 0.5) * R, ct[1] - R * 0.25, R * 0.32, "#d2b54a", 7).replace("/>", ` opacity=".5"/>`);
+    if (f[0] + R < 0 || f[0] - R > 320) continue;
+    k += lappen(ct[0] + sl, ct[1], R, LAUB, 9);
+    k += lappen(ct[0] + sl - R * 0.35, ct[1] - R * 0.2, R * 0.48, "#cfe08e", 6).replace("/>", ` opacity=".28"/>`);
+    if (R > 3.5) k += lappen(ct[0] + sl + R * 0.3, ct[1] + R * 0.2, R * 0.45, "#1f2e1a", 6).replace("/>", ` opacity=".3"/>`);
+    if (rnd() < 0.4) k += lappen(ct[0] + sl + (rnd() - 0.5) * R, ct[1] - R * 0.25, R * 0.32, "#d2b54a", 6).replace("/>", ` opacity=".5"/>`);
   }
   /* Kaimauer aus rotem Sandstein bis zur Wasserlinie, Mainkai-Straße mit Geländer */
   const nk = NORD.filter(([x]) => x >= -470 && x <= 200);
@@ -1197,6 +1198,7 @@ const KELLNER = (() => { const th = -95.5 * Math.PI / 180, d = 9; return [CAM[0]
   /* Häuserzeile am Sachsenhäuser Ufer (Gründerzeit, Mansarddächer) */
   for (let x = -430; x < -140; x += 14) {
     const y = anX(SUED, x + 7) - 44, h = 17 + rnd() * 4;
+    if (pr(x + 14, y, 6.5)[0] < 24 && pr(x, y, 6.5)[0] < 24) continue;   /* liegt ganz hinter der Hütte */
     const f = ["#efe2c8", "#e6d6c0", "#f2ece0", "#dccbb0", "#e9dccb"][Math.floor(rnd() * 5)];
     k += turmSeiten([[x, y - 12], [x + 14, y - 12], [x + 14, y], [x, y]], 6.5, 6.5 + h, f, "#a8a090", (sd) => {
       return sd.sonne > -0.2 ? `<path d="M${P(sd.at(0.05, 8))} L${P(sd.at(0.95, 8))} L${P(sd.at(0.95, 6.5 + h - 1))} L${P(sd.at(0.05, 6.5 + h - 1))} Z" fill="url(#ffm_fenster)"/>` : "";
@@ -1337,13 +1339,13 @@ const BANK_K = (() => {
   k += `<path d="${sch}" stroke="#2e1d0e" stroke-width=".3" opacity=".7"/><path d="${linie([R0, R1])}" stroke="#8a6038" stroke-width=".5"/>`;
   /* Wirtshausschild: grünes Brett mit gemaltem Bembel und Glas */
   const xF = c[0] + w / 2 + 0.05;
-  k += `<path d="${poly([[xF, c[1] - 1.2, PROM + 2.6], [xF, c[1] + 1.2, PROM + 2.6], [xF, c[1] + 1.2, PROM + 3.3], [xF, c[1] - 1.2, PROM + 3.3]])}" fill="#1f3d2a"/>`;
+  k += `<path d="${poly([[xF, c[1] + 0.8, PROM + 2.55], [xF, c[1] + 2, PROM + 2.55], [xF, c[1] + 2, PROM + 3.35], [xF, c[1] + 0.8, PROM + 3.35]])}" fill="#1f3d2a"/>`;
   {
-    const B = (u, v) => [xF + 0.01, c[1] + 0.55 + u * 0.8, PROM + 2.95 + v];
+    const B = (u, v) => [xF + 0.01, c[1] + 1.3 + u * 0.75, PROM + 2.95 + v];
     const bem = [[-0.16, -0.25], [-0.22, -0.05], [-0.14, 0.12], [-0.08, 0.17], [-0.09, 0.24], [0.09, 0.24], [0.08, 0.17], [0.14, 0.12], [0.22, -0.05], [0.16, -0.25]].map(([u, v]) => B(u, v));
     k += `<path d="${poly(bem)}" fill="#e9dcae"/><path d="${linie([B(0.18, 0.12), B(0.32, 0.06), B(0.3, -0.1), B(0.2, -0.14)])}" stroke="#e9dcae" stroke-width=".3" fill="none"/>`;
     k += `<path d="${poly([B(0.5, -0.25), B(0.66, -0.25), B(0.68, 0.12), B(0.48, 0.12)])}" fill="#e9dcae"/><path d="${poly([B(0.51, -0.2), B(0.65, -0.2), B(0.66, 0.02), B(0.5, 0.02)])}" fill="#d9b24a"/>`;
-    k += `<path d="${poly([[xF, c[1] - 1.2, PROM + 2.6], [xF, c[1] + 1.2, PROM + 2.6], [xF, c[1] + 1.2, PROM + 3.3], [xF, c[1] - 1.2, PROM + 3.3]])}" fill="none" stroke="#c9a44a" stroke-width=".25"/>`;
+    k += `<path d="${poly([[xF, c[1] + 0.8, PROM + 2.55], [xF, c[1] + 2, PROM + 2.55], [xF, c[1] + 2, PROM + 3.35], [xF, c[1] + 0.8, PROM + 3.35]])}" fill="none" stroke="#c9a44a" stroke-width=".25"/>`;
   }
   /* der grüne Kranz aus Fichtenzweigen am Ausleger: dicht, Zweigspitzen nach außen, rot-weiße Bänder */
   const kz = pr(c[0] + w / 2 + 0.62, c[1] + d / 2 + 0.28, PROM + 2.22), ks = mass(c[0] + w / 2, c[1] + d / 2);
@@ -1383,7 +1385,7 @@ const BANK_K = (() => {
   const [wx, wy] = KELLNER;
   const f = pr(wx, wy, PROM), s = mass(wx, wy);
   const m = B.mensch({ id: "ffm_kellner", geschlecht: "m", pose: "gehen", blick: 62, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell",
-    kleidung: { oberteil: { stueck: "kellnerhemd" }, schuerze: { stueck: "schuerze", farbe: "#2c4a7a" }, unterteil: { stueck: "anzughose" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } } }, 1.78 * s);
+    kleidung: { oberteil: { stueck: "kellnerhemd" }, jacke: { stueck: "weste", farbe: "#2b2d33" }, schuerze: { stueck: "schuerze", farbe: "#2c4a7a" }, unterteil: { stueck: "anzughose" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } } }, 1.78 * s);
   const hand = m.z.handR.y > m.z.handL.y ? m.z.handR : m.z.handL;
   const hx = hand.x * m.k, hy = hand.y * m.k, q = 0.28 * s;
   /* Bembel am Henkel getragen: bauchig, graues Steinzeug, blaue Bemalung */
@@ -1391,7 +1393,7 @@ const BANK_K = (() => {
   const sh = SCH(wx, wy, 1.78), a = pr(wx, wy, PROM), b = pr(sh[0], sh[1], PROM);
   const schattenK = `<path d="M${r(a[0] - 0.25 * s)} ${r(a[1])} L${r(b[0] - 0.12 * s)} ${r(b[1])} L${r(b[0] + 0.25 * s)} ${r(b[1] + 0.1 * s)} L${r(a[0] + 0.25 * s)} ${r(a[1])} Z" fill="#2e2418" opacity=".25"/>`;
   S.teil({ id: "kellner", de: "der Kellner", syl: "KELL-ner", it: "il cameriere", itSyl: "ca-me-RIE-re", en: "waiter", x: r(f[0]), y: r(f[1]),
-    kunst: rundeFigurFein(m.svg) + bem,
+    kunst: rundeFigurFein(m.svg) + bem + (() => { const kp = m.z.kopf, q = m.k; return `<g transform="scale(${q.toFixed(4)}) translate(${r(kp.x + 1.5)} ${r(kp.y)})"><path d="M-6.5 21 L-7 12.5 Q0 15 7 12.5 L6.5 21 Q0 23 -6.5 21 Z" fill="#f4f1ea" stroke="#c9c2b4" stroke-width=".5"/><path d="M-3.4 19.4 L0 21 L-3.4 22.6 Z M3.4 19.4 L0 21 L3.4 22.6 Z" fill="#1d1d22"/></g>`; })(),
     tipp: "Der Kellner bringt den Apfelwein im Bembel an den Tisch." });
 }
 

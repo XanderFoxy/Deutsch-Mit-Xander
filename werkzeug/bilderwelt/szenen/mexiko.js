@@ -99,6 +99,8 @@ function kappe(p, x0 = 0, y0 = -3, x1 = 320, y1 = 203) {
   if (p.length) p = schnitt(p, (q) => q[1] >= y0, qy(y0)); if (p.length) p = schnitt(p, (q) => q[1] <= y1, qy(y1));
   return p;
 }
+const flaechD = (a) => { const q = kappe(a.map((p) => P(...p))); return q.length > 2 ? `M${pts(q)}Z` : ""; };
+const FELD_N = [], FELD_W = [], KIES = [];
 const flaech = (a, fill, extra = "") => { const q = kappe(a.map((p) => P(...p))); return q.length > 2 ? `<path d="M${pts(q)} Z" fill="${fill}"${extra}/>` : ""; };
 /* Sonne: 20° hoch im Westen (Azimut 260°) — Schatten fallen nach Ostnordost, 2,75 × Höhe */
 const SD = [0.985 * 2.75, 0.174 * 2.75];
@@ -170,7 +172,7 @@ const KT = { x: 108, z: -46, h: 20, stufen: 4, sh: 3, tw: 10 };   /* Tempel der 
   for (let i = 0; i < 12; i++) { const y = HY + 3 + Math.pow(rnd(), 1.3) * 62, x = rnd() * 320, s = sy(y); k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.7 * s)}" ry="${r(0.1 * s)}" fill="#b8a76a" opacity=".22"/>`; }
   /* festgetretener Kalkboden (Sascab) unter den Händlerständen am Wegrand – dort steht auch der Esstisch */
   k += `<path d="M164 200 Q168 184 192 178 Q226 170 270 171 Q306 173 322 178 L322 200 Z" fill="${S.lg("sascab", [[0, "#dccaa0", 0.75], [1, "#cdb486", 0.95]])}" filter="${DUNST}"/>`;
-  for (let i = 0; i < 26; i++) { const x = 176 + rnd() * 144, y = 177 + rnd() * 23; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.25 + rnd() * 0.4)}" ry=".18" fill="#9c8a62" opacity=".5"/>`; }
+  { let g2 = ""; for (let i = 0; i < 26; i++) { const x = 176 + rnd() * 144, y = 177 + rnd() * 23; g2 += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.25 + rnd() * 0.4)}" ry=".18"/>`; } k += `<g fill="#9c8a62" opacity=".5">${g2}</g>`; }
   /* Schatten der Pyramide: Hülle aus Fuß und den Schattenpunkten von Plattform und Tempel */
   const sp = [];
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) { sp.push([sx * W0, 0, sz * W0], schattenAuf(sx * WT, HT, sz * WT), schattenAuf(sx * 6, 30, sz * 6)); }
@@ -189,8 +191,9 @@ const KT = { x: 108, z: -46, h: 20, stufen: 4, sh: 3, tw: 10 };   /* Tempel der 
     const t = rnd(), j = Math.min(mitte.length - 2, Math.floor(t * (mitte.length - 1))), f = t * (mitte.length - 1) - j;
     const X = mitte[j][0] + (mitte[j + 1][0] - mitte[j][0]) * f + (rnd() - 0.5) * 2.2, Z = mitte[j][1] + (mitte[j + 1][1] - mitte[j][1]) * f;
     const [x, y] = P(X, 0, Z), s = sy(y);
-    k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(Math.max(0.15, 0.05 * s))}" ry="${r(Math.max(0.08, 0.025 * s))}" fill="#a99b7c" opacity=".55"/>`;
+    KIES.push(`<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(Math.max(0.15, 0.05 * s))}" ry="${r(Math.max(0.08, 0.025 * s))}"/>`);
   }
+  k += `<g fill="#a99b7c" opacity=".55">${KIES.join("")}</g>`;
   /* Schatten des Tempels der Krieger */
   const kh = [];
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) kh.push([KT.x + sx * 20, KT.z + sz * 20], schattenAuf(KT.x + sx * 12, 12, KT.z + sz * 12).filter((_, i) => i !== 1));
@@ -280,7 +283,7 @@ const KT = { x: 108, z: -46, h: 20, stufen: 4, sh: 3, tw: 10 };   /* Tempel der 
 
   /* Säulenreihen vor der Westseite: viereckige Pfeiler, Westseite im Licht, Nordseite im Schatten */
   const saeulen = [];
-  for (let reihe = 0; reihe < 5; reihe++) for (let j = 0; j < 21; j++) saeulen.push([CXk - 26 - reihe * 3.6, CZk - 20 + j * 3.4]);
+  for (let reihe = 0; reihe < 4; reihe++) for (let j = 0; j < 21; j++) saeulen.push([CXk - 26 - reihe * 3.6, CZk - 20 + j * 3.4]);
   saeulen.sort((a, b) => { const da = (a[0] - KAM.vx) * KAM.fx + (a[1] - KAM.vz) * KAM.fz, db = (b[0] - KAM.vx) * KAM.fx + (b[1] - KAM.vz) * KAM.fz; return db - da; });
   let sa = "";
   let anker = null;
@@ -321,9 +324,10 @@ const pyrUnter = [];
     const n = Math.max(2, Math.round((w0 - SB - BAL) / 2.6));
     for (let j = 0; j < n; j++) {
       const ua = SB + BAL + 0.5 + j * (w0 - SB - BAL - 0.9) / n, ub = ua + (w0 - SB - BAL - 0.9) / n - 0.55;
-      for (const sg of [-1, 1]) k += flaech([[sg * ua, fh0, sl(fh0)], [sg * ub, fh0, sl(fh0)], [sg * ub, fh1, sl(fh1)], [sg * ua, fh1, sl(fh1)]], "#7c7468", ` opacity=".5"`);
-      for (const sg of [-1, 1]) k += flaech([[-sl(fh0), fh0, sg * ua], [-sl(fh0), fh0, sg * ub], [-sl(fh1), fh1, sg * ub], [-sl(fh1), fh1, sg * ua]], "#b4844e", ` opacity=".5"`);
+      for (const sg of [-1, 1]) FELD_N.push(flaechD([[sg * ua, fh0, sl(fh0)], [sg * ub, fh0, sl(fh0)], [sg * ub, fh1, sl(fh1)], [sg * ua, fh1, sl(fh1)]]));
+      for (const sg of [-1, 1]) FELD_W.push(flaechD([[-sl(fh0), fh0, sg * ua], [-sl(fh0), fh0, sg * ub], [-sl(fh1), fh1, sg * ub], [-sl(fh1), fh1, sg * ua]]));
     }
+    k += `<path d="${FELD_N.splice(0).join("")}" fill="#7c7468" opacity=".5"/><path d="${FELD_W.splice(0).join("")}" fill="#b4844e" opacity=".5"/>`;
     /* weiche Laufspuren unter dem Gesims (Regen) */
     for (let j = 0; j < 4; j++) {
       const u = (rnd() * 2 - 1) * (w1 - 1), lang = 0.6 + rnd() * 1.4;
@@ -583,7 +587,7 @@ const pyrUnter = [];
    ===================================================================== */
 /* Figuren der Bibliothek, für kleine Größen vereinfacht: Zahlen auf q Einheiten gerundet, winzige
    Teile weggelassen, Verläufe durch ihre Mittelfarbe ersetzt (klein und schnell) */
-const GQ = 4, GM = 7;
+const GQ = 4, GM = 9;
 /* Pfad zu Vieleck: Kurven durch End- und Mittelpunkte ersetzen, auf q runden, doppelte und
    gerade durchlaufende Punkte streichen */
 const vereinfache = (d, q) => {
@@ -815,7 +819,7 @@ const tischUnter = [];
     for (const [dx, dy, c] of [[-0.4, -5.6, "#d6336c"], [0, -4.4, "#7048e8"], [-0.6, -3.2, "#e8590c"], [-1.6, -1.8, "#d6336c"], [-3.2, -1.5, "#2f9e6e"]]) g += `<circle cx="${r(x + dx)}" cy="${r(y + dy)}" r=".4" fill="${c}"/><circle cx="${r(x + dx)}" cy="${r(y + dy)}" r=".14" fill="#f9d64a"/>`;
     k += g;
     tischUnter.push({ id: "tortilla", de: "die Tortilla", syl: "Tor-TIL-la", it: "la tortilla", itSyl: "tor-TIL-la", en: "tortilla", x: TI.x + x, y: TI.y + y, kunst: flaeche(-6.4, -6.8, 12.8, 7, 0.4),
-      tipp: "Tortillas sind dünne Fladen aus Maismehl – frisch und warm im Tuch." });
+      tipp: "Tortillas sind dünne Fladen aus Maisteig – frisch und warm im Tuch." });
   }
   /* DER TACO — drei weiche, gefaltete Maistortillas mit Cochinita pibil und rosa Zwiebeln */
   {
