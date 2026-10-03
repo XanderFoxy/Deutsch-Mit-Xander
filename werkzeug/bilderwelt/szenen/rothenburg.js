@@ -283,7 +283,7 @@ const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 2.5); return { X, D, g: ste
   /* Südseite (hinter dem Plönleinhaus, schaut zu uns): von unten nach oben zeichnen */
   for (const [t0, t1, tr, fi, f, fw] of [[52, 64, 9, 14, "#e6d2b0", 0], [40, 52, 10, 15, "#dfb8a0", 1], [27, 40, 10, 15.6, "#efe2c4", 0], [13.6, 27, 9.4, 15, "#d9c08a", 1], [0, 13.6, 8.4, 16.6, "#e9b54c", 1]]) k += haus(t0, t1, 0, tr, fi, f, fw);
   /* Nordseite (fast streifend, links): zeigt vor allem Traufen und Dächer */
-  for (const [t0, t1, tr, fi, f, fw] of [[46, 60, 9, 14, "#e8d8b8", 0], [30, 46, 10, 15, "#d8a898", 1], [14, 30, 9.6, 15, "#ede0c2", 0], [-2, 14, 10.4, 16, "#e2c890", 1], [-11.7, -2, 11, 16.6, "#f0dcc0", 0]]) k += haus(t0, t1, 5, tr, fi, f, fw);
+  for (const [t0, t1, tr, fi, f, fw] of [[46, 60, 9, 14, "#e8d8b8", 0], [30, 46, 10, 15, "#d8a898", 1], [14, 30, 9.6, 15, "#ede0c2", 0], [-2, 14, 10.4, 16, "#e2c890", 1], [-12.4, -2, 11, 16.6, "#f0dcc0", 0]]) k += haus(t0, t1, 5, tr, fi, f, fw);
   /* alles liegt am Abend im Schatten der Häuser */
   k += `<path d="${pz(PS(-11.7, 5, 11), PS(60, 5, 11), PS(60, 5, 0), PS(-11.7, 5, 0))}" fill="${SCHATTEN}" opacity=".28"/>`;
   k += `<path d="${pz(PS(13.6, 0, 10), PS(64, 0, 10), PS(64, 0, 0), PS(13.6, 0, 0))}" fill="${SCHATTEN}" opacity=".3"/>`;
@@ -318,7 +318,7 @@ const PLOEN_UNTER = [];
     for (const [Da, Db, ha, hb, licht] of [[25.4, 27.2, 4, 5.2, 0], [28.8, 30.4, 4, 5.2, 1], [25.4, 27.2, 6.5, 7.7, 0], [28.8, 30.4, 6.5, 7.7, 0], [26, 27.6, 0.9, 2.3, 0]]) k += fensterQ(W(Da, hb, vk), W(Db, hb, vk), W(Db, ha, vk), W(Da, ha, vk), { rb: 0.4, licht });
     /* Dachfläche rechts (Ziegel), Rinne und Fallrohr */
     k += `<path d="${poly(W(d3, traufe, 2.5 * vk), W(D1, traufe, 2.5 * vk), P(Lm, D1, first), P(Lm, d3, first))}" fill="${DACHZ}"/>`;
-    k += `<path d="M${pt(W(d3, traufe, 2.6 * vk))} L${pt(W(D1, traufe, 2.6 * vk))}" stroke="#8a8f94" stroke-width=".7"/><path d="M${pt(W(23.4, traufe, 2.6 * vk))} L${pt(W(23.4, 0.3, 0.1))}" stroke="#8a8f94" stroke-width=".55"/>`;
+    k += `<path d="M${pt(W(d3, traufe, 2.6 * vk))} L${pt(W(D1, traufe, 2.6 * vk))}" stroke="#8a8f94" stroke-width=".7"/><path d="M${pt(W(23.4, traufe, 2.6 * vk))} L${pt(W(23.4, 5.9, 2 * vk))} L${pt(W(23.4, 3.4, 2 * vk))} L${pt(W(23.4, 3.1, vk))} L${pt(W(23.4, 3.1, 0.05))} L${pt(W(23.4, 0.3, 0.05))}" stroke="#8a8f94" stroke-width=".55" fill="none"/>`;
     /* Schatten der Häuser gegenüber bis ≈ 9,4 m, darüber Abendsonne */
     k += `<path d="${poly(W(D0, 0), W(D1, 0), W(D1, 9.4, 2 * vk), W(D0, 9.4, 2 * vk))}" fill="${SCHATTEN}" opacity=".3"/>`;
     k += `<path d="${poly(W(d3, traufe, 2.5 * vk), W(D1, traufe, 2.5 * vk), P(Lm, D1, first), P(Lm, d3, first))}" fill="#ffb060" opacity=".22"/>`;
@@ -555,7 +555,7 @@ const LL = -8;
   const G = [P(PH.L1, 21.05, 0, 0), P(4, 21.05, 0, 0), P(4, 44.6, 0), P(-3.5, 44.6, 0)];
   k += `<path d="${poly(...G)}" fill="${S.lg("gasserechts", [[0, "#9a8c78"], [1, "#857868"]])}"/>`;
   for (let d = 21.6; d < 44.6; d += 0.8) k += `<path d="M${pt(P(-3.5, d, 0))} Q${pt(P(0.2, d - 0.3, 0))} ${pt(P(4, d, 0))}" stroke="#6e6457" stroke-width=".25" fill="none" opacity=".8"/>`;
-  k += `<path d="M${pt(P(0, 21.05, 0, 0))} L${pt(P(0, 44.6, 0))}" stroke="#5a5248" stroke-width=".7"/><path d="M${pt(P(3.6, 21.05, 0.12, 0))} L${pt(P(3.6, 44.6, 0.12))}" stroke="#cbb898" stroke-width=".6"/>`;
+  k += `<path d="M${pt(P(3.6, 21.05, 0.12, 0))} L${pt(P(3.6, 44.6, 0.12))}" stroke="#cbb898" stroke-width=".6"/>`;
   k += `<path d="${poly(...G)}" fill="${SCHATTEN}" opacity=".26"/>`;
   S.teil({ id: "pflaster", de: "das Kopfsteinpflaster", syl: "KOPF-stein-pflas-ter", it: "il selciato", itSyl: "sel-CIA-to", en: "cobblestones", x: 0, y: 0, kunst: k,
     tipp: "Die Pflastersteine liegen in Bögen. Rechts steigt die Gasse sanft zum Siebersturm an." });
@@ -673,6 +673,8 @@ const LL = -8;
 {
   const L = 4, d0 = 10.1, d1 = 13.9, h0 = 0.6, h1 = 2.7, Li = 4.35;   /* Li: Auslage 35 cm hinter der Scheibe */
   let k = `<path d="${poly(P(L, d0 - 0.15, h1 + 0.25), P(L, d1 + 0.15, h1 + 0.25), P(L, d1 + 0.15, h0 - 0.15), P(L, d0 - 0.15, h0 - 0.15))}" fill="#6e1e22"/>`;
+  S.def(`<clipPath id="${S.id("sfclip")}"><path d="${poly(P(L, d0, h1), P(L, d1, h1), P(L, d1, h0), P(L, d0, h0))}"/></clipPath>`);
+  k += `<g clip-path="url(#${S.id("sfclip")})">`;
   k += `<path d="${poly(P(Li, d0, h1), P(Li, d1, h1), P(Li, d1, h0), P(Li, d0, h0))}" fill="${S.lg("weihnachtslicht", [[0, "#fff1c8"], [1, "#f2c278"]])}"/>`;
   /* Fensterbank mit roter Decke und Auslage */
   k += `<path d="${poly(P(Li - 0.05, d0, h0 + 0.12), P(Li - 0.05, d1, h0 + 0.12), P(Li + 0.3, d1, h0 + 0.12), P(Li + 0.3, d0, h0 + 0.12))}" fill="#b02028"/>`;
@@ -681,10 +683,10 @@ const LL = -8;
   /* Weihnachtsbaum (hinten) */
   { const d = 13.2, [x, y] = P(Li + 0.3, d, h0 + 0.12), s = F / d; k += `<path d="M${r(x - 0.38 * s)} ${r(y)} L${r(x)} ${r(y - 1.5 * s)} L${r(x + 0.38 * s)} ${r(y)} Z" fill="#2c5a30"/>`; for (let i = 0; i < 7; i++) k += `<circle cx="${r(x + (rnd() - 0.5) * 0.45 * s)}" cy="${r(y - (0.2 + rnd() * 1) * s)}" r=".6" fill="${["#c8202c", "#e8b830", "#e8e8ee"][i % 3]}"/>`; k += `<path d="M${r(x)} ${r(y - 1.62 * s)} l.5 1 l-1 0 Z" fill="#f2c83a"/>`; }
   /* Nussknacker: in der Fensterebene, mit Tiefe projiziert */
-  const KN = P(Li, 10.8, h0 + 0.12);
+  const KN = P(Li, 11.5, h0 + 0.12);
   {
-    const [x, y] = KN, s = F / 10.8;
-    const Q = (dd, H) => P(Li, 10.8 + dd, h0 + 0.12 + H);
+    const [x, y] = KN, s = F / 11.5;
+    const Q = (dd, H) => P(Li, 11.5 + dd, h0 + 0.12 + H);
     k += `<path d="${poly(Q(-0.1, 0.3), Q(0.1, 0.3), Q(0.1, 0), Q(-0.1, 0))}" fill="#1a1a1a"/>`;
     k += `<path d="${poly(Q(-0.14, 0.75), Q(0.14, 0.75), Q(0.14, 0.3), Q(-0.14, 0.3))}" fill="#c8202c"/><path d="M${pt(Q(-0.14, 0.52))} L${pt(Q(0.14, 0.52))}" stroke="#f2c83a" stroke-width=".7"/>`;
     k += `<path d="${poly(Q(-0.11, 0.98), Q(0.11, 0.98), Q(0.11, 0.75), Q(-0.11, 0.75))}" fill="#f2d2b0"/><path d="${poly(Q(-0.11, 0.86), Q(0.11, 0.86), Q(0.11, 0.77), Q(-0.11, 0.77))}" fill="#f6f4ee"/>`;
@@ -694,23 +696,26 @@ const LL = -8;
   }
   /* Christbaumkugeln an Fäden, Stern am Faden */
   const KU = [];
-  for (const [d, h, f] of [[11.5, 2.15, "#c8202c"], [11.9, 1.9, "#e8b830"], [12.3, 2.2, "#2f6ab0"], [11.7, 1.6, "#e8e8ee"]]) {
+  for (const [d, h, f] of [[12.1, 2.15, "#c8202c"], [12.5, 1.9, "#e8b830"], [12.9, 2.2, "#2f6ab0"], [12.3, 1.6, "#e8e8ee"]]) {
     const [x, y] = P(Li, d, h), [, yo] = P(Li, d, h1 - 0.12), rr = 0.11 * F / d;
     k += `<line x1="${r(x)}" y1="${r(yo)}" x2="${r(x)}" y2="${r(y - rr)}" stroke="#d9b86a" stroke-width=".25"/><circle cx="${r(x)}" cy="${r(y)}" r="${r(rr)}" fill="${f}"/><circle cx="${r(x - rr * 0.35)}" cy="${r(y - rr * 0.35)}" r="${r(rr * 0.3)}" fill="#fff" opacity=".7"/>`;
     KU.push([x, y]);
   }
-  const STERN = P(Li, 13.0, 2.05);
-  { const [x, y] = STERN, rr = 0.2 * F / 13, [, yo] = P(Li, 13, h1 - 0.12); k += `<line x1="${r(x)}" y1="${r(yo)}" x2="${r(x)}" y2="${r(y - rr)}" stroke="#d9b86a" stroke-width=".25"/>`; let st = ""; for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2, q = i % 2 ? rr * 0.42 : rr; st += `${i ? "L" : "M"}${r(x + Math.cos(a) * q)} ${r(y + Math.sin(a) * q)} `; } k += `<path d="${st}Z" fill="#f6d65a" stroke="#c99a2a" stroke-width=".2"/><circle cx="${r(x)}" cy="${r(y)}" r="${r(rr * 1.6)}" fill="#ffe7a0" opacity=".35"/>`; }
+  const STERN = P(Li, 13.55, 2.2);
+  { const [x, y] = STERN, rr = 0.2 * F / 13.55, [, yo] = P(Li, 13.55, h1 - 0.12); k += `<line x1="${r(x)}" y1="${r(yo)}" x2="${r(x)}" y2="${r(y - rr)}" stroke="#d9b86a" stroke-width=".25"/>`; let st = ""; for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2, q = i % 2 ? rr * 0.42 : rr; st += `${i ? "L" : "M"}${r(x + Math.cos(a) * q)} ${r(y + Math.sin(a) * q)} `; } k += `<path d="${st}Z" fill="#f6d65a" stroke="#c99a2a" stroke-width=".2"/><circle cx="${r(x)}" cy="${r(y)}" r="${r(rr * 1.6)}" fill="#ffe7a0" opacity=".35"/>`; }
+  k += `</g>`;
+  /* Laibung: die Wandstärke verdeckt den Rand der Auslage */
+  k += `<path d="${poly(P(L, d1, h1), P(Li, d1, h1), P(Li, d1, h0), P(L, d1, h0))}" fill="#4e1418"/>`;
   /* Schild über dem Fenster, Schrift perspektivisch */
   k += `<path d="${poly(P(L, d0, 3.4), P(L, d1, 3.4), P(L, d1, 3.0), P(L, d0, 3.0))}" fill="#6e1e22"/>`;
-  { const txt = "Weihnachtsschmuck", n = txt.length, lage = zeichenLage(txt); for (let i = 0; i < n; i++) { const d = d1 - 0.2 - (d1 - d0 - 0.4) * lage[i], [x, y] = P(L, d, 3.08), fs = 0.3 * F / d; const nx = P(L, d - 0.1, 3.08), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="${r(x)}" y="${r(y)}" font-size="${r(fs)}" text-anchor="middle" fill="#f2d27a" font-family="Georgia,serif" font-weight="bold" transform="rotate(${r(sk)} ${r(x)} ${r(y)})">${txt[i]}</text>`; } }
+  { const txt = "Weihnachten", n = txt.length, lage = zeichenLage(txt); for (let i = 0; i < n; i++) { const d = d1 - 0.2 - (d1 - d0 - 0.4) * lage[i], [x, y] = P(L, d, 3.08), fs = 0.27 * F / d; const nx = P(L, d - 0.1, 3.08), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="${r(x)}" y="${r(y)}" font-size="${r(fs)}" text-anchor="middle" fill="#f2d27a" font-family="Georgia,serif" font-weight="bold" transform="rotate(${r(sk)} ${r(x)} ${r(y)})">${txt[i]}</text>`; } }
   const [ax, ay] = P(L, d0 - 0.2, h1 + 0.5), [bx, by] = P(L, d1 + 0.2, h0 - 0.1);
   const zh = Math.max(by - ay + 8, (Math.abs(bx - ax) + 18) / 1.5), zw = zh * 1.5;
   S.teil({ id: "schaufenster", de: "das Schaufenster", syl: "SCHAU-fens-ter", it: "la vetrina", itSyl: "ve-TRI-na", en: "shop window", x: 0, y: 0, kunst: k,
     tipp: "In Rothenburg kann man das ganze Jahr Weihnachtsschmuck kaufen.",
     zoom: { x: r(Math.min(ax, bx) - (zw - Math.abs(bx - ax)) / 2), y: r(ay - 4), w: r(zw), h: r(zh) },
     unter: [
-      { id: "nussknacker", de: "der Nussknacker", syl: "NUSS-kna-cker", it: "lo schiaccianoci", itSyl: "schiac-cia-NO-ci", en: "nutcracker", x: KN[0], y: KN[1], kunst: flaeche(-3, -1.3 * F / 10.8, 6, 1.3 * F / 10.8),
+      { id: "nussknacker", de: "der Nussknacker", syl: "NUSS-kna-cker", it: "lo schiaccianoci", itSyl: "schiac-cia-NO-ci", en: "nutcracker", x: KN[0], y: KN[1], kunst: flaeche(-3, -1.3 * F / 11.5, 6, 1.3 * F / 11.5),
         tipp: "Der Nussknacker knackt Nüsse mit seinem großen Mund. Er kommt aus dem Erzgebirge." },
       { id: "christbaumkugel", de: "die Christbaumkugel", syl: "CHRIST-baum-ku-gel", it: "la pallina di Natale", itSyl: "pal-LI-na di na-TA-le", en: "Christmas bauble", x: KU[0][0], y: KU[0][1], kunst: flaeche(-3, -3, 6, 6) },
       { id: "stern", de: "der Stern", syl: "STERN", it: "la stella", itSyl: "STEL-la", en: "star", x: STERN[0], y: STERN[1], kunst: flaeche(-3.4, -3.4, 6.8, 6.8) },
@@ -797,7 +802,7 @@ const LL = -8;
    19 — DER LATERNE
    ===================================================================== */
 const NW = (() => { const d = 7.4, [x, y] = P(1.0, d, 0); return { x, y, s: F / d }; })();
-const nw = B.mensch({ id: "rtb_nachtwaechter", geschlecht: "m", pose: "stehen", blick: 300, frisur: "kurz", haarfarbe: "grau", haut: "hell", bart: "voll",
+const nw = B.mensch({ id: "rtb_nachtwaechter", geschlecht: "m", pose: "stehen", blick: 330, frisur: "kurz", haarfarbe: "grau", haut: "hell", bart: "voll",
   kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "mantel", farbe: "#1e1c21" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "stiefel", farbe: "#1a1a1a" }, kopf: { stueck: "hut", farbe: "#17161a" } } }, 1.78 * NW.s);
 const NP = (n) => { const q = nw.z.punkte[n]; return [q[0] * nw.k, q[1] * nw.k]; };
 const HAENDE = [NP("handL"), NP("handR")].sort((a, b) => a[0] - b[0]);

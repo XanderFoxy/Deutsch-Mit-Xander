@@ -87,7 +87,9 @@ function abschnitt(c, w, t0, t1, k = 5) {
 }
 
 /* ---------- Filter (einmal je Art) ---------- */
+const STUFEN = [0.06, 0.1, 0.15, 0.22, 0.3, 0.45, 0.65, 0.9, 1.3, 1.8, 2.6, 3.6, 5];
 function weich(T, sd) {
+  sd = STUFEN.reduce((b, v) => (Math.abs(Math.log(v / sd)) < Math.abs(Math.log(b / sd)) ? v : b), STUFEN[0]);
   const id = T.id("bl" + String(sd).replace(".", "_"));
   T._f = T._f || {};
   if (!T._f[id]) { T._f[id] = 1; T.def(`<filter id="${id}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="${sd}"/></filter>`); }
@@ -410,7 +412,7 @@ function fellSatz(T, key, o) {
   }
   const mk = (ton, farbe, ops) => ops.map((op, s) => sh.map((sid, f) => {
     const id = T.id("fm" + key + ton + s + f);
-    T.def(`<marker id="${id}" markerUnits="userSpaceOnUse" orient="auto" overflow="visible" markerWidth="1" markerHeight="1"><use href="#${sid}" fill="${farbe}" fill-opacity="${op}"/></marker>`);
+    T.def(`<marker id="${id}" orient="auto" overflow="visible"><use href="#${sid}" fill="${farbe}" fill-opacity="${op}"/></marker>`);
     return id;
   }));
   return { d: o.dunkel ? mk("d", o.dunkel, o.od || [0.12, 0.2, 0.28]) : null, m: o.mittel ? mk("m", o.mittel, o.om || [0.12, 0.2, 0.28]) : null,
@@ -429,7 +431,7 @@ function bueschelPfade(liste) {
       d += (d ? "m" + folge([X - px, Y - py], 1) : "M" + folge([X, Y], 1)) + "l" + folge([U, V], 1);
       px = X + U; py = Y + V;
     }
-    return d ? `<path d="${d}" fill="none" marker-start="url(#${m})" marker-mid="url(#${m})" marker-end="url(#${m})"/>` : "";
+    return d ? `<path d="${d}" fill="none" style="marker:url(#${m})"/>` : "";
   }).join("");
 }
 /* weiche Form (Licht-/Schattenfläche, Okklusion) */
@@ -465,7 +467,7 @@ function randSatz(T, key, o) {
   const ids = {};
   for (const [r, sg] of [["m", 1], ["g", -1]]) {
     const sh = [];
-    for (let f = 0; f < 2; f++) {
+    for (let f = 0; f < (o.formen || 1); f++) {
       let d = "";
       for (let i = 0; i < k; i++) {
         const a = sg > 0 ? -al * (0.5 + T.rnd()) : Math.PI + al * (0.5 + T.rnd());
@@ -482,7 +484,7 @@ function randSatz(T, key, o) {
       if (!farbe) continue;
       ids[r + ton] = ops.map((op, lv) => sh.map((sid, f) => {
         const id = T.id("rm" + key + r + ton + lv + f);
-        T.def(`<marker id="${id}" markerUnits="userSpaceOnUse" orient="auto" overflow="visible" markerWidth="1" markerHeight="1"><use href="#${sid}" fill="${farbe}" fill-opacity="${op}"/></marker>`);
+        T.def(`<marker id="${id}" orient="auto" overflow="visible"><use href="#${sid}" fill="${farbe}" fill-opacity="${op}"/></marker>`);
         return id;
       }));
     }
@@ -531,7 +533,7 @@ function saum(T, pts, satz, o) {
       for (const [x, y] of lst.slice(1)) { const U = +zahl(x - px, 1), W = +zahl(y - py, 1); z.push(U, W); px += U; py += W; }
       d += folge(z, 1);
     }
-    return `<path d="${d}" fill="none" marker-start="url(#${id})" marker-mid="url(#${id})" marker-end="url(#${id})"/>`;
+    return `<path d="${d}" fill="none" style="marker:url(#${id})"/>`;
   }).join("");
 }
 
@@ -562,28 +564,28 @@ module.exports = [
       const SCH = "#8a5a28", TIEF = "#5e3812", HELL = "#fff4da";
       const EIMER = [["#93612c", 0, 0.42, 0, "s"], ["#b5843f", 0, 0.36, 0, "s"], ["#d2a462", 0, 0.3, 0, "s"], ["#e6c58a", 0, 0.3, 0, "s"], ["#f4dfb4", 0, 0.32, 0, "s"]];
       /* Fell-Sätze: Körper (lang), Kopf (kurz); Saum deckend in Körperfarbe */
-      const FK = fellSatz(T, "k", { L: 1.05, k: 8, w: 0.075, dunkel: "#6a3c10", od: [0.06, 0.1, 0.15], mittel: "#b67a30", om: [0.06, 0.1, 0.14], hell: "#fff3d2", oh: [0.04, 0.12, 0.24] });
-      const FKo = fellSatz(T, "o", { L: 0.55, k: 7, w: 0.05, dunkel: "#6a3c10", od: [0.06, 0.1, 0.15], mittel: "#b67a30", om: [0.06, 0.1, 0.14], hell: "#fff3d2", oh: [0.04, 0.12, 0.22] });
+      const FK = fellSatz(T, "k", { L: 1.05, k: 8, w: 0.075, dunkel: "#6a3c10", od: [0.07, 0.14], mittel: "#b67a30", om: [0.07, 0.12], hell: "#fff3d2", oh: [0.06, 0.2] });
+      const FKo = fellSatz(T, "o", { L: 0.55, k: 7, w: 0.05, dunkel: "#6a3c10", od: [0.07, 0.14], mittel: "#b67a30", om: [0.07, 0.12], hell: "#fff3d2", oh: [0.06, 0.2] });
       const FS = randSatz(T, "s", { L: 0.62, k: 5, w: 0.06, winkel: 16, dunkel: "#b8884a", od: [0.75, 0.95], hell: "#e4c48c", oh: [0.8, 1] });
       const FSo = randSatz(T, "so", { L: 0.4, k: 4, w: 0.045, winkel: 22, dunkel: "#bf904f", od: [0.75, 0.95], hell: "#e6c890", oh: [0.8, 1] });
       const FSb = randSatz(T, "sb", { L: 0.95, k: 5, w: 0.06, winkel: 40, dunkel: "#b8884a", od: [0.75, 0.95] });
       /* Silhouette: Rumpf, Hals und die nahen Beine als EIN Umriss.
          Vorderlauf: Ellbogen als Rundung hinten, Unterarm verjüngt, Handwurzel verdickt, Mittelfuß 12°, Pfote mit 3 Knöchelbögen */
       const vorne = [[17.2, -29.4], [16.9, -24], [16.55, -17], [16.3, -12.8], [16.75, -11.2], [16.85, -9.6], [17.25, -7.6], [17.9, -6.15],
-        [18.75, -5.45], [19.45, -5.05], [19.75, -4.75], [20.35, -4.2], [20.6, -3.75], [21.1, -2.95], [21.45, -1.9], [21.35, -0.75], [20.8, -0.08], [20.2, 0, 1],
-        [13.5, 0, 1], [13.0, -0.7], [12.85, -2.6], [12.75, -4.8], [12.1, -7.2], [11.35, -9.2], [11.15, -10.6], [11.45, -12.2], [11.25, -15], [10.6, -21], [9.9, -25.2], [9.15, -27.8], [9.4, -29.6]];
+        [18.6, -5.6], [19.3, -5.4], [19.8, -4.7], [20.45, -4.4], [20.8, -3.55], [21.35, -2.9], [21.6, -1.6], [21.35, -0.6], [20.8, -0.08], [20.2, 0, 1],
+        [14.2, 0, 1], [13.35, -0.25], [13.0, -0.9], [12.85, -2.6], [12.75, -4.8], [12.1, -7.2], [11.35, -9.2], [11.15, -10.6], [11.45, -12.2], [11.25, -15], [10.6, -21], [9.9, -25.2], [9.15, -27.8], [9.4, -29.6]];
       /* Hinterlauf: Knie als Spitze vorn, Unterschenkel schräg nach hinten, Sprunggelenk tief, Mittelfuß senkrecht */
       const hinten = [[-13.8, -33.2], [-13.3, -30.2], [-13.7, -27.6], [-15.6, -25], [-18.8, -21.6], [-22.2, -18.4], [-24.4, -15.6], [-25.3, -13.2], [-25.3, -9], [-25.05, -6.3],
-        [-24.3, -5.5], [-23.65, -5.1], [-23.3, -4.85], [-22.7, -4.3], [-22.45, -3.85], [-21.95, -3.05], [-21.6, -2], [-21.7, -0.8], [-22.2, -0.08], [-22.8, 0, 1],
-        [-29.5, 0, 1], [-30, -1], [-30.1, -3], [-30.2, -6], [-30.3, -10], [-30.6, -13.4], [-31.7, -15.9], [-30.9, -18], [-30.3, -21.5], [-30.7, -26.5], [-31.6, -31.5], [-32.6, -36.5]];
-      const leib = [[-31.4, -53.4], [-25, -55.6], [-19.5, -56.2], [-12, -55.6], [-4, -55.4], [5, -55.8], [11, -56.8], [14.5, -57.6], [17.5, -60.4], [20.2, -64], [22.6, -66.4], [25.6, -67.6], [29.5, -65.2],
+        [-24.4, -5.65], [-23.7, -5.4], [-23.2, -4.7], [-22.55, -4.4], [-22.2, -3.55], [-21.65, -2.9], [-21.4, -1.6], [-21.65, -0.6], [-22.2, -0.08], [-22.8, 0, 1],
+        [-28.9, 0, 1], [-29.75, -0.3], [-30.05, -1.1], [-30.1, -3], [-30.2, -6], [-30.3, -10], [-30.6, -13.4], [-31.7, -15.9], [-30.9, -18], [-30.3, -21.5], [-30.7, -26.5], [-31.6, -31.5], [-32.6, -36.5]];
+      const leib = [[-31.4, -53.4], [-25, -55.6], [-19.5, -56.2], [-12, -55.6], [-4, -55.4], [5, -55.8], [11, -56.8], [14.5, -57.6], [17.5, -60.4], [20.2, -64.4], [22.6, -67.4], [25.6, -69.2], [28.6, -68.6], [29.9, -65.2],
         [29.8, -58], [29.2, -55.6], [28.2, -52.2], [26.6, -46.8], [24.4, -41.6], [22.8, -38.2], [20.9, -35], [18.7, -32.2]].concat(vorne,
         [[5, -28.6], [-1, -29.4], [-6, -31.2], [-10, -33.4], [-12.6, -34.6]], hinten, [[-33.7, -41.2], [-34.7, -45.4], [-34.3, -49.2], [-33.2, -51.8]]);
       const leibId = pfad(T, leib);
       /* Kopf: Schädel höher und gewölbt, Stopp mit Stufe, Fang kastenförmig (vorn ≥ 90 % so tief wie am Stopp),
          Unterkiefer tiefer, Nase bündig mit dem Nasenrücken (Überstand ≈ 0,4 cm) */
       const kopf = [[24.2, -69.4], [25.4, -72.4], [28, -74], [31.6, -74.4], [34.5, -73.6], [36.3, -72.3], [37.1, -70.6], [38.3, -69.2], [41.5, -68.75], [44.6, -68.45], [46.6, -68.25],
-        [48.4, -68.05], [49.25, -67.3], [49.45, -65.9], [49.25, -64.8], [48.85, -64.35], [48.95, -63], [48.95, -61.2], [48.7, -60.1], [47.6, -59.55], [45.4, -59.25], [42.6, -58.7], [39, -57.9], [35, -57.3],
+        [48.4, -68.05], [49.25, -67.3], [49.45, -65.9], [49.25, -64.8], [48.85, -64.35], [48.95, -63], [48.95, -61.2], [48.75, -59.9], [47.7, -59.25], [45.4, -58.95], [42.6, -58.55], [39, -58], [35, -57.4],
         [31.6, -57.8], [28.9, -59.8], [26.6, -63.2]];
       const kopfId = pfad(T, kopf);
       /* Ohr: Dreieck (Breite oben 100 %, Mitte 80 %, unten 45 %), Basis angehoben und gefaltet, Spitze gerundet */
@@ -607,24 +609,23 @@ module.exports = [
       const pfote = (x, w, fern) => {
         if (!T.fein) return "";
         let t = "";
-        const kn = [[0.57, -4.95], [0.74, -4.05], [0.9, -2.75]];
-        kn.forEach(([f, y], i) => {
-          const zx = x + w * f;
-          t += weichform(T, [[zx - 0.5, y + 0.15], [zx, y - 0.25], [zx + 0.45, y + 0.25], [zx + 0.1, y + 0.7]], HELL, fern ? 0.12 : 0.3, 0.15);
-          if (i < 2) t += falte(T, [[zx + 0.25, y + 0.05], [zx + 0.45, y + 1.4], [zx + 0.35, y + 2.6]], TIEF, 0.16, fern ? 0.25 : 0.4);
+        const kn = [[x + w * 0.75, -5.1], [x + w * 0.9, -4.1], [x + w * 1.02, -2.6]];
+        kn.forEach(([zx, y], i) => {
+          t += weichform(T, [[zx - 0.5, y + 0.1], [zx - 0.05, y - 0.3], [zx + 0.4, y + 0.2], [zx, y + 0.7]], HELL, 0.32, 0.15);
+          if (i < 2) t += falte(T, [[zx + 0.45, y + 0.35], [zx + 0.6, y + 1.2], [zx + 0.55, y + 1.9]], TIEF, 0.14, 0.4);
         });
         t += `<path d="M${zahl(x + w * 0.05)} -.1H${zahl(x + w * 0.96)}" stroke="#2a1d14" stroke-width=".16" stroke-opacity=".75"/>`;
         return t;
       };
-      const krallen = (x, w, fern) => T.fein ? [0, 1, 2].map((i) => kralle(T, x + w * [0.97, 0.86, 0.72][i], -1.35 + i * 0.1, 0.85 * [1, 0.85, 0.6][i], 58 - i * 4, fern ? "#3a322c" : "#2a2622", 0.4)).join("") : "";
+      const krallen = (x, w, fern) => T.fein ? [2, 1, 0].map((i) => kralle(T, x + w * [1.0, 0.88, 0.76][i], -1.45 + i * 0.2, 1.15 * [1, 0.85, 0.6][i], 62 - i * 6, fern ? "#3a322c" : "#2a2622", 0.36)).join("") : "";
       /* --- ferne Beine: gleiche Winkel, Körperton 15 % dunkler, Form und Fell --- */
       const fernV = schieb([[9, -36], [16, -36]].concat(vorne.slice(0, -1)), -4.4);
       const fernH = schieb([[-5, -38], [-12.6, -34.6]].concat(hinten, [[-31.6, -33], [-24, -40]]), 5.6);
       const fernF = T.lg("hfern", [[0, "#a0703a"], [0.4, "#bf9256"], [1, "#cba270"]]);
       for (const [P, x, w] of [[fernH, -29.5 + 5.6, 7.3], [fernV, 13.5 - 4.4, 7.7]]) {
         const fl = feld(P, 3);
-        s += `<g filter="${V("hf" + x, 1.4, 5, 0.3)}">` + teil(T, P, fernF, {
-          innen: weichform(T, schieb(P, 0.9, 0.4), TIEF, 0.22, 0.9) + fell(T, P, FK, { n: 50, flow: () => 94, licht: (xx, yy) => (fl(xx, yy) + 0.2) / 1.4 - 0.2, hell: 0.6 }) + pfote(x, w, 1),
+        s += `<g filter="${V("bein", 1.4, 5, 0.3)}">` + teil(T, P, fernF, {
+          innen: weichform(T, schieb(P, 0.9, 0.4), TIEF, 0.22, 0.9) + fell(T, P, FK, { n: 34, flow: () => 94, licht: (xx, yy) => (fl(xx, yy) + 0.2) / 1.4 - 0.2, hell: 0.6 }),
           ueber: saum(T, P, FSo, { abstand: 0.3, flow: () => 94, wo: (xx, yy) => yy < -1.2, licht: () => 0.2 }),
         }) + krallen(x, w, 1) + "</g>";
       }
@@ -633,9 +634,9 @@ module.exports = [
       const rute = schlauch(rc, [6.5, 6.1, 5.4, 4.6, 3.8, 3, 2.3], true);
       const rflow = (x, y) => (y < -46 ? 150 : y < -40 ? 118 : 96);
       const rl = feld(rute, 2.4);
-      s += `<g filter="${V("rute", 1.4, 5, 0.3)}">` + teil(T, rute, T.lg("rute", [[0, "#dcb072"], [0.6, "#d4a564"], [1, "#b8884a"]], 0, 0, 1, 0), {
-        innen: fell(T, rute, FK, { n: 80, flow: rflow, licht: (x, y) => (rl(x, y) + 0.3) / 1.1 }),
-        ueber: saum(T, rute, FS, { abstand: 0.22, flow: rflow, licht: (x, y) => (rl(x, y) + 0.3) / 1.1, wo: (x, y) => !(x > -39.5 && y > -45) }) +
+      s += `<g filter="${V("bein", 1.4, 5, 0.3)}">` + teil(T, rute, T.lg("rute", [[0, "#dcb072"], [0.6, "#d4a564"], [1, "#b8884a"]], 0, 0, 1, 0), {
+        innen: fell(T, rute, FK, { n: 60, flow: rflow, licht: (x, y) => (rl(x, y) + 0.3) / 1.1 }),
+        ueber: saum(T, rute, FS, { abstand: 0.26, flow: rflow, licht: (x, y) => (rl(x, y) + 0.3) / 1.1, wo: (x, y) => !(x > -39.5 && y > -45) }) +
           saum(T, rute, FSb, { abstand: 0.2, flow: rflow, licht: () => 0.3, wo: (x, y) => x > -39.5 && y > -45 }),
       }) + "</g>";
       /* --- Leib --- */
@@ -655,12 +656,12 @@ module.exports = [
           weichform(T, [[17.6, -33], [20.6, -34.6], [19.4, -30.6], [17.4, -28.6]], TIEF, 0.35, 0.7) +
           weichform(T, [[-12.4, -36], [-10.6, -33.6], [-13.2, -30.6], [-14.4, -33.4]], TIEF, 0.3, 0.6) +
           /* Fell */
-          fell(T, leib, FK, { n: 420, hell: 0.8, mittel: 0.4, flow, licht: lic, wo: (x, y) => y < -6 }) +
-          fell(T, leib, FKo, { n: 110, flow, licht: lic, wo: (x, y) => y > -14 && y < -2 }) +
+          fell(T, leib, FK, { n: 280, hell: 0.75, mittel: 0.35, flow, licht: lic, wo: (x, y) => y < -6 }) +
+          fell(T, leib, FKo, { n: 70, hell: 0.7, flow, licht: lic, wo: (x, y) => y > -14 && y < -2 }) +
           pfote(-29.5, 7.3) + pfote(13.5, 7.7),
-        ueber: saum(T, leib, FS, { abstand: 0.26, flow, licht: lic, wo: (x, y) => y < -6.5 && !(x > 24 && y < -57) && !(y > -35 && y < -27.5 && x > -12.5 && x < 9) }) +
+        ueber: saum(T, leib, FS, { abstand: 0.3, flow, licht: lic, wo: (x, y) => y < -6.5 && !(x > 24 && y < -57) && !(y > -35 && y < -27.5 && x > -12.5 && x < 9) }) +
           /* Pfoten fein, Büschel zwischen den Zehen; Bauch etwas länger und hängend */
-          saum(T, leib, FSo, { abstand: 0.17, flow: () => 98, licht: lic, wo: (x, y) => y < -0.6 && y > -6.5 }) +
+          saum(T, leib, FSo, { abstand: 0.22, flow: () => 98, licht: lic, wo: (x, y) => y < -0.6 && y > -6.5 }) +
           saum(T, leib, FSb, { abstand: 0.2, flow: () => 175, licht: () => 0.3, wo: (x, y) => y > -35 && y < -27.5 && x > -12.5 && x < 9 }),
       }) + krallen(-29.5, 7.3) + krallen(13.5, 7.7) +
         /* Afterkralle: innen am Vordermittelfuß, halb im Fell */
@@ -682,15 +683,16 @@ module.exports = [
           /* Unterkiefer unter der Lefze im Schatten; Lefzenrand fast gerade nach hinten ansteigend (kastenförmiger Fang) */
           mal(T, 0.3, `<path d="M48.5 -60.1Q45 -59.9 41.5 -60.4Q39.2 -60.8 37.7 -61.5Q38.6 -59.3 41 -58.6Q44.6 -58.6 47.8 -59.4Z" fill="${TIEF}" opacity=".5"/>`) +
           `<path d="M48.75 -60.3Q47.9 -60.05 46.2 -60.05Q43.4 -60.1 41.2 -60.5Q39.2 -60.9 37.8 -61.55" fill="none" stroke="#1c120a" stroke-width=".24" stroke-linecap="round"/>` +
-          `<path d="M48.4 -60.7Q45.5 -60.6 42.6 -60.9Q40.2 -61.2 38.4 -61.9" fill="none" stroke="${HELL}" stroke-width=".55" stroke-opacity=".2"/>` +
-          `<path d="M37.85 -61.5q-.5 .2 -.6 .8q.05 .45 .4 .7" fill="none" stroke="#5a3818" stroke-width=".15" stroke-opacity=".5"/>` +
+          `<path d="M48.4 -60.7Q45.5 -60.6 42.6 -60.9Q40.2 -61.2 38.4 -61.9" fill="none" stroke="${HELL}" stroke-width=".4" stroke-opacity=".1"/>` +
+          `<path d="M37.9 -61.5q-.45 -.35 -.55 -1.15" fill="none" stroke="#5a3818" stroke-width=".14" stroke-opacity=".45" stroke-linecap="round"/>` +
           schlag(T, ohrId, 0.6, 0.9, 0.45, TIEF, 0.5) +
-          fell(T, kopf, FKo, { n: 210, flow: kflow, licht: klic, wo: (x, y) => !(x > 48 && y < -63.5) }),
+          fell(T, kopf, FKo, { n: 150, hell: 0.75, flow: kflow, licht: klic, wo: (x, y) => !(x > 48 && y < -63.5) }),
+        blende: [0, 0.5, 0.24, 0.5, 0.12, 1],
         ueber: saum(T, kopf, FSo, { abstand: 0.2, flow: kflow, licht: klic, wo: (x, y) => (x < 46.5 && y < -61.5) || (y > -59.5 && x < 46) }),
       });
       /* Auge: 1,3 : 1, Oberlid deckt 15 % der Iris, Schatten im oberen Drittel, Unterlidlinie, kleine Nickhaut-Sichel */
       s += auge(T, 35.3, -69.2, 0.78, { ratio: 1.3, spitz: 0.35, winkel: 6, iris: "#8a541e", iris2: "#3a1d08", mitte: "#b47a34", pr: 0.4, ir: 0.92, lid: "#1a0f08", lidw: 0.16, wimpern: [9, 0.5, "#4a3018"], nick: "#6a5048" });
-      s += `<path d="M34.3 -68.25q1.1 .55 2.1 .1" fill="none" stroke="#7a5228" stroke-width=".12" stroke-opacity=".6"/>`;
+      s += `<path d="M34.4 -68.3q1 .45 1.9 .1" fill="none" stroke="#7a5228" stroke-width=".1" stroke-opacity=".35"/>`;
       s += tasthaar(T, [36.2, -71.4, 0.6, 0.2, 1, 4], -112, -80, 2.6, ["#3a2814", "#c9a874"], 0.05, 0.7);
       /* Nase: oben bündig, vorn fast senkrecht, Philtrum als Kerbe in der Nase, Komma-Nasenloch mit hellem Flügelrand,
          kleiner scharfer Glanz + Mikroglanz auf dem Pflaster */
@@ -698,7 +700,7 @@ module.exports = [
       s += teil(T, nase, T.lg("nase", [[0, "#4a3e38"], [0.4, "#221a16"], [1, "#0c0908"]]), {
         innen: (T.fein ? `<rect x="46" y="-68.4" width="3.6" height="4.2" fill="#2e2622" filter="${T.relief("nase", { f: 3.4, tiefe: 0.4, okt: 2 })}" opacity=".45"/>` : "") +
           `<path d="M49.45 -66.15C48.85 -66.3 48.35 -66 48.2 -65.55C48.05 -65.15 47.85 -64.95 47.5 -64.95C47.9 -64.75 48.4 -64.9 48.65 -65.25C48.85 -65.55 49.1 -65.7 49.45 -65.7Z" fill="#000"/>` +
-          `<path d="M47.7 -65.05Q47.95 -66.55 49.4 -66.6" fill="none" stroke="#8a7a72" stroke-width=".11" opacity=".8"/>` +
+          `<path d="M47.75 -65.1Q48 -66.5 49.4 -66.55" fill="none" stroke="#6a5a52" stroke-width=".09" opacity=".6"/>` +
           `<path d="M48.62 -64.75v-.5" stroke="#000" stroke-width=".14" opacity=".8"/>` +
           `<path d="M47.6 -67.75q.5 -.12 .9 -.05" stroke="#fff" stroke-width=".16" stroke-linecap="round" opacity=".75" fill="none"/>` +
           (T.fein ? `<path d="M46.8 -67.3h.01M47.3 -67.05h.01M46.9 -66.55h.01M47.75 -66.85h.01M48.6 -67.5h.01M48.9 -67.1h.01" stroke="#fff" stroke-width=".08" stroke-linecap="round" opacity=".5"/>` : ""),

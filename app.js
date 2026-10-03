@@ -148,6 +148,16 @@
     /* 0,3 s nach dem ersten Bild: so schnell tippt niemand auf „Betreten", und das Klassenzimmer steht schon */
     if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(weiter, 300)); else setTimeout(weiter, 300);
   }
+  /* Im Raum: Raum-Stücke sofort holen und, sobald sie da sind, alle auf einmal einsetzen (nicht erst in Ruhepausen). */
+  var dmaRaumDrin = false;
+  function raumDrin() {
+    if (dmaRaumDrin || !DMA_TEILE_BAU) return;
+    dmaRaumDrin = true;
+    raumVorbereiten();
+    dmaTeilGruppe("raum", true).then(() => {
+      DMA_TEILE_BAU.teile.forEach((t) => { if (/^raum/.test(t)) { try { dmaTeilEinsetzen(t); } catch (e) { dmaTeilFehler(t, e); } } });
+    });
+  }
   /* Zum Nachsehen (werkzeug/pruefe-876-start-schlank.js): welche Teile es gibt, welche eingesetzt sind und ob ein
      Platzhalter je sofort nachladen musste. */
   window.DMA_TEILE = {
@@ -69494,6 +69504,8 @@
      wer weiterblättert, bleibt im Raum. */
   if (window.LiveChat && !livechatAbmelden) {
     livechatAbmelden = LiveChat.beiAenderung((l, art) => {
+      /* FASSUNG 876 — wer drin ist (auf welchem Weg auch immer), braucht die Raum-Stücke jetzt: gleich einsetzen */
+      if (l && l.lage === "drin") raumDrin();
       /* FASSUNG 836 — XANDER (Funk 263): „die Latenz bei dem Sitzplätzen wenn man sie wechselt ist immer noch
          extrem". Jede Sitz- und Sprechmeldung zeichnete das ganze Klassenzimmer neu – samt Schleife über alle Chatzeilen
          (im Hauptraum über 7 000) und erzwungenem Layout. Meldet LiveChat nur „plaetze", werden nur die Plätze und das

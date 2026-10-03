@@ -76,8 +76,44 @@ const ANK = [[-100, 0], [-72.8, 127], [-8, 198], [47.8, 290], [88.7, 365], [100,
 const XM = (b) => { for (let i = 1; i < ANK.length; i++) if (b <= ANK[i][0] || i === ANK.length - 1) { const [b0, x0] = ANK[i - 1], [b1, x1] = ANK[i]; return x0 + (x1 - x0) * (b - b0) / (b1 - b0); } return 0; };
 const FY = (dist, h) => HOR + F * (EW - h) / dist;
 const vier = (a, b, c, e, fill, ex = "") => `<path d="M${pr(a)} L${pr(b)} L${pr(c)} L${pr(e)} Z" fill="${fill}"${ex}/>`;
-const knapp = (svg) => svg.replace(/ d="([^"]*)"/g, (m0, d) => ` d="${d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n)))}"`);
+const knapp = (svg) => svg.replace(/ d="([^"]*)"/g, (m0, d) => ` d="${d.replace(/-?\d*\.\d+/g, (n) => String(Math.round(+n)))}"`)
+  .replace(/ (x1|y1|x2|y2|cx|cy|fx|fy|rx|ry|r|x|y|width|height)="(-?\d*\.\d+)"/g, (m0, a, v) => ` ${a}="${Math.abs(+v) >= 4 ? Math.round(+v) : Math.round(+v * 10) / 10}"`)
+  .replace(/ (points)="([^"]*)"/g, (m0, a, v) => ` ${a}="${v.replace(/-?\d*\.\d+/g, (n) => String(Math.round(+n)))}"`);
 
+/* Pfade der Figuren verschlanken: gerundete Punktketten ausdünnen (Douglas–Peucker), winzige offene
+   Striche (Haarsträhnen unter einer halben Bildeinheit) weglassen. */
+const rdp = (P, eps) => { if (P.length < 3) return P; let im = 0, dm = 0; const [a, b] = [P[0], P[P.length - 1]], L2 = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1e-9;
+  for (let i = 1; i < P.length - 1; i++) { const dd = Math.abs((b[0] - a[0]) * (a[1] - P[i][1]) - (a[0] - P[i][0]) * (b[1] - a[1])) / L2; if (dd > dm) { dm = dd; im = i; } }
+  return dm > eps ? [...rdp(P.slice(0, im + 1), eps).slice(0, -1), ...rdp(P.slice(im), eps)] : [a, b]; };
+const NARG = { M: 2, L: 2, Q: 4, C: 6, S: 4 };
+const duenn = (d, eps, klein) => {
+  if (/[^MLQCSZ0-9.\-\s,e]/.test(d)) return d;
+  const tok = d.match(/[MLQCSZ]|-?\d*\.?\d+(?:e-?\d+)?/g); if (!tok) return d;
+  const subs = []; let cur = null, i = 0, cmd = null;
+  while (i < tok.length) {
+    if (/[MLQCSZ]/.test(tok[i])) { cmd = tok[i++]; if (cmd === "Z") { if (cur) cur.zu = true; cur = null; continue; } }
+    const n = NARG[cmd]; if (!n) return d;
+    const args = tok.slice(i, i + n).map(Number); i += n; if (args.length < n || args.some(isNaN)) return d;
+    if (cmd === "M") { cur = { s: [args[0], args[1]], seg: [], zu: false }; subs.push(cur); cmd = "L"; continue; }
+    if (!cur) return d;
+    cur.seg.push({ c: cmd, a: args });
+  }
+  let out = "";
+  const zz = (v) => String(Math.round(v * 10) / 10);
+  for (const sp of subs) {
+    const xs = [sp.s[0]], ys = [sp.s[1]]; sp.seg.forEach((g) => g.a.forEach((v, j) => (j % 2 ? ys : xs).push(v)));
+    if (!sp.zu && Math.hypot(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) < klein) continue;
+    let o = `M${zz(sp.s[0])} ${zz(sp.s[1])}`, last = sp.s, run = [];
+    const flush = () => { if (!run.length) return; const pts = rdp([last, ...run], eps).slice(1); pts.forEach((p) => (o += `L${zz(p[0])} ${zz(p[1])}`)); last = run[run.length - 1]; run = []; };
+    for (const g of sp.seg) {
+      if (g.c === "L") { const p = [g.a[0], g.a[1]], q = run.length ? run[run.length - 1] : last; if (p[0] !== q[0] || p[1] !== q[1]) run.push(p); continue; }
+      flush(); o += g.c + g.a.map(zz).join(" "); last = [g.a[g.a.length - 2], g.a[g.a.length - 1]];
+    }
+    flush(); if (sp.zu) o += "Z"; out += o;
+  }
+  return out.replace(/ -/g, "-");
+};
+const figur = (svg, eps = 0.7, klein = 2.6) => knapp(svg).replace(/ d="([^"]*)"/g, (m0, d) => ` d="${duenn(d, eps, klein)}"`).replace(/<path d=""[^>]*\/>/g, "");
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("nebel")}" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="1.6"/></filter>`);
 S.def(`<filter id="${S.id("nebelw")}" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation=".9"/></filter>`);
@@ -285,16 +321,21 @@ S.hinten(`<ellipse cx="-30" cy="20" rx="170" ry="110" fill="${S.rg("sonne", [[0,
   /* Telegraph Hill: durchgehender Hang von North Beach bis zur Kuppe (y ≈ 93,5) */
   c += `<path d="M296 122 Q312 112 326 104 Q342 96.4 356 94 Q366 93 376 93.6 Q390 95.2 400 98 L400 150 L296 150 Z" fill="${S.lg("telegraph", [[0, "#7a8a5e"], [1, "#5c6c43"]])}"/>`;
   for (let i = 0; i < 26; i++) { const x = 348 + rnd() * 36, y = 92.6 + rnd() * 5; c += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(1 + rnd() * 1.2)}" fill="${rnd() < 0.5 ? "#5e7046" : "#4b5c38"}"/>`; }
-  for (let y = 99; y < 148; y += 2.4) {
-    let x = Math.max(296, 300 + (122 - y) * 1.7) + rnd() * 2;
-    if (y > 120) x = 196 + (148 - y) * 1.3;
-    while (x < 400) {
-      const w = 1.6 + rnd() * 2.2 + (y - 99) * 0.03, h = 1.2 + (y - 99) * 0.03 + rnd() * 0.6;
-      if (y < 104 && x > 340 && x < 392) { x += w + 1; continue; }
-      if (rnd() < 0.16) c += `<circle cx="${r(x + w / 2)}" cy="${r(y - h / 2)}" r="${r(h * 0.75)}" fill="#55683f"/>`;
-      else c += `<rect x="${r(x)}" y="${r(y - h)}" width="${r(w)}" height="${r(h)}" fill="${["#f1e9da", "#e7d9c1", "#dfe3e0", "#f0dfd3", "#e9e0c8"][Math.floor(rnd() * 5)]}"/><rect x="${r(x + w * 0.65)}" y="${r(y - h)}" width="${r(w * 0.35)}" height="${r(h)}" fill="#000" opacity=".1"/>`;
-      x += w + 0.3 + rnd() * 0.8;
+  /* Häuser am Hang des Telegraph Hill: kleine Kuben, dazwischen viel Grün (Gärten der Filbert Steps) */
+  { const proFarbe = new Map(), baeume = [], schatten_ = [];
+    const xb = (y) => y >= 104 ? 296 + (122 - y) * 30 / 18 : 326 + (104 - y) * 3;
+    for (let y = 98.6; y < 125; y += 2.1) {
+      let x = xb(y) + 0.6 + rnd() * 1.5;
+      while (x < 400) {
+        const w = 1.6 + rnd() * 1.8 + (y - 98) * 0.03, h = 1 + rnd() * 0.8 + (y - 98) * 0.025;
+        if (y < 101 && x > 349 && x < 382) { x += w + 0.6; continue; }
+        if (rnd() < 0.28) baeume.push(`M${r(x)} ${r(y - h * 0.4)}a${r(h * 0.7)} ${r(h * 0.6)} 0 1 0 .1 0z`);
+        else { const f = ["#f1e9da", "#e7d9c1", "#dfe3e0", "#f0dfd3", "#e9e0c8", "#d8dfe6", "#f2e4cf"][Math.floor(rnd() * 7)]; proFarbe.set(f, (proFarbe.get(f) || "") + `M${r(x)} ${r(y - h)}h${r(w)}v${r(h)}h${r(-w)}z`); }
+        x += w + 0.25 + rnd() * 0.9;
+      }
     }
+    for (const [f, d] of proFarbe) c += `<path d="${d}" fill="${f}"/>`;
+    c += `<path d="${baeume.join("")}" fill="#55683f"/>`;
   }
   /* Fisherman's Wharf und der Hafen am Fuß (Uferlinie) */
   c += `<path d="M196 132 L218 128 L240 124 L262 121 L282 118.6 L300 118.4 L300 124 L196 136 Z" fill="#b9ad98"/>`;
@@ -353,53 +394,98 @@ const kappY = (pts, ym) => schnitt(pts, (p) => p[1] <= ym, (a, b) => { const t =
 const kappX = (pts, x0, x1) => { let p = schnitt(pts, (q) => q[0] >= x0, (a, b) => { const t = (x0 - a[0]) / (b[0] - a[0]); return [x0, a[1] + (b[1] - a[1]) * t]; }); return schnitt(p, (q) => q[0] <= x1, (a, b) => { const t = (x1 - a[0]) / (b[0] - a[0]); return [x1, a[1] + (b[1] - a[1]) * t]; }); };
 const vl = (pts, fill, ex = "") => pts.length > 2 ? `<path d="M${pts.map(pr).join(" L")} Z" fill="${fill}"${ex}/>` : "";
 const kappO = (pts, ym) => schnitt(pts, (p) => p[1] >= ym, (a, b) => { const t = (ym - a[1]) / (b[1] - a[1]); return [a[0] + (b[0] - a[0]) * t, ym]; });
-const rahmen = (pts) => pts.length > 2 ? kappO(kappY(kappX(pts, -5, 405), 265), -5) : [];
+const KLIP = [-5, 405];
+const rahmen = (pts) => pts.length > 2 ? kappO(kappY(kappX(pts, KLIP[0], KLIP[1]), 265), -5) : [];
 const vr = (pts, fill, ex = "") => vl(rahmen(pts), fill, ex);
 const hex3 = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const misch = (h, ziel, t) => { const a = hex3(h), b = hex3(ziel); return "#" + a.map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, "0")).join(""); };
 const dunst = (h, d) => misch(h, "#c9d3da", Math.min(0.42, d / 2200));
 /* Kiste (Haus als Quader) für eine Kamera P(quer, tief, z): sichtbar sind die Vorderseite (tief = d0),
-   die Seite zur Blickachse und — unter Augenhöhe — das Dach. gz(quer, tief) = Gelände. */
+   die Seite zur Blickachse und — unter Augenhöhe — das Dach. gz(quer, tief) = Gelände.
+   Liefert Vielecke {p, f} (schon am Rahmen beschnitten). */
 const kiste = (P, gz, a0, a1, d0, d1, H, c) => {
   const g00 = gz(a0, d0), g10 = gz(a1, d0), g01 = gz(a0, d1), g11 = gz(a1, d1), zt = Math.max(g00, g10, g01, g11) + H;
-  let g = "";
+  const V = [], add = (pts, f, o) => { const q = rahmen(pts); if (q.length > 2) V.push({ p: q, f, o }); };
   if (zt < E) {
-    g += vr([P(a0, d0, zt), P(a1, d0, zt), P(a1, d1, zt), P(a0, d1, zt)], c.dach);
-    if (c.aufbau) { const u0 = a0 + (a1 - a0) * 0.2, u1 = a0 + (a1 - a0) * 0.55, e0 = d0 + (d1 - d0) * 0.3, e1 = d0 + (d1 - d0) * 0.6; g += vr([P(u0, e0, zt), P(u0, e0, zt + 2.4), P(u1, e0, zt + 2.4), P(u1, e0, zt)], c.vorn) + vr([P(u0, e0, zt + 2.4), P(u1, e0, zt + 2.4), P(u1, e1, zt + 2.4), P(u0, e1, zt + 2.4)], c.dach2); }
-    if (c.terrasse) g += vr([P(a0 + (a1 - a0) * 0.5, d0 + 0.6, zt), P(a1 - 0.5, d0 + 0.6, zt), P(a1 - 0.5, d1 - 0.6, zt), P(a0 + (a1 - a0) * 0.5, d1 - 0.6, zt)], "#7f9160");
+    add([P(a0, d0, zt), P(a1, d0, zt), P(a1, d1, zt), P(a0, d1, zt)], c.dach);
+    if (c.aufbau) { const u0 = a0 + (a1 - a0) * 0.2, u1 = a0 + (a1 - a0) * 0.55, e0 = d0 + (d1 - d0) * 0.3, e1 = d0 + (d1 - d0) * 0.6; add([P(u0, e0, zt), P(u0, e0, zt + 2.4), P(u1, e0, zt + 2.4), P(u1, e0, zt)], c.vorn); add([P(u0, e0, zt + 2.4), P(u1, e0, zt + 2.4), P(u1, e1, zt + 2.4), P(u0, e1, zt + 2.4)], c.dach2); }
+    if (c.terrasse) add([P(a0 + (a1 - a0) * 0.5, d0 + 0.6, zt), P(a1 - 0.5, d0 + 0.6, zt), P(a1 - 0.5, d1 - 0.6, zt), P(a0 + (a1 - a0) * 0.5, d1 - 0.6, zt)], "#7f9160");
   }
-  if (a0 > 0) g += vr([P(a0, d0, g00), P(a0, d0, zt), P(a0, d1, zt), P(a0, d1, g01)], c.seite);
-  if (a1 < 0) g += vr([P(a1, d0, g10), P(a1, d0, zt), P(a1, d1, zt), P(a1, d1, g11)], c.seite);
-  g += vr([P(a0, d0, g00), P(a0, d0, zt), P(a1, d0, zt), P(a1, d0, g10)], c.vorn);
+  const seitL = a0 > 0 ? a0 : a1 < 0 ? a1 : null;
+  if (seitL !== null) {
+    add([P(seitL, d0, a0 > 0 ? g00 : g10), P(seitL, d0, zt), P(seitL, d1, zt), P(seitL, d1, a0 > 0 ? g01 : g11)], c.seite);
+    if (c.fenS) { const n = Math.max(1, Math.round(H / 3.1)), b = d1 - d0, m = Math.max(1, Math.round(b / 2.8)); for (let j = 0; j < n; j++) { const z0 = zt - H + 1.1 + j * (H - 1.4) / n; if (z0 + 1.3 > zt - 0.3) continue; for (let i = 0; i < m; i++) add([P(seitL, d0 + (i + 0.25) * b / m, z0), P(seitL, d0 + (i + 0.25) * b / m, z0 + 1.4), P(seitL, d0 + (i + 0.75) * b / m, z0 + 1.4), P(seitL, d0 + (i + 0.75) * b / m, z0)], c.fenS, 1); } }
+  }
+  add([P(a0, d0, g00), P(a0, d0, zt), P(a1, d0, zt), P(a1, d0, g10)], c.vorn);
   if (c.fen) {
-    const n = Math.max(1, Math.round(H / 3.2));
-    for (let j = 0; j < n; j++) { const z0 = zt - H + 1.2 + j * (H - 1.6) / n; if (z0 + 1.2 > zt - 0.4) continue; g += vr([P(a0 + 0.9, d0, z0), P(a0 + 0.9, d0, z0 + 1.2), P(a1 - 0.9, d0, z0 + 1.2), P(a1 - 0.9, d0, z0)], c.fen); }
+    /* einzelne Fenster auf der Vorderseite (je Geschoss), bei kleinen Häusern ein Band */
+    const n = Math.max(1, Math.round(H / 3.1)), b = a1 - a0, m = Math.max(1, Math.round(b / 2.6));
+    for (let j = 0; j < n; j++) { const z0 = zt - H + 1.1 + j * (H - 1.4) / n; if (z0 + 1.3 > zt - 0.3) continue;
+      if (F * b / d0 < 9) add([P(a0 + 0.8, d0, z0), P(a0 + 0.8, d0, z0 + 1.3), P(a1 - 0.8, d0, z0 + 1.3), P(a1 - 0.8, d0, z0)], c.fen, 1);
+      else for (let i = 0; i < m; i++) { const u0 = a0 + (i + 0.25) * b / m, u1 = a0 + (i + 0.75) * b / m; add([P(u0, d0, z0), P(u0, d0, z0 + 1.4), P(u1, d0, z0 + 1.4), P(u1, d0, z0)], c.fen, 1); } }
   }
-  if (c.kante) g += `<path d="M${pr(P(a0, d0, zt))} L${pr(P(a1, d0, zt))}" stroke="${c.kante}" stroke-width="${r(Math.max(0.12, 5 / d0))}"/>`;
-  return g;
+  return { V, L: c.kante ? [P(a0, d0, zt), P(a1, d0, zt), c.kante, Math.max(0.12, 5 / d0)] : null };
 };
 const FASS = ["#efe6d2", "#e8d6c0", "#dfe3df", "#f1ddd0", "#e6dcc0", "#d9e1e6", "#f2eadf", "#e9d8d8", "#d8d2c4", "#e4e9dc", "#f3e2bf"];
 const DACH = ["#b8b0a2", "#a59d90", "#c2baac", "#9a9389", "#b3a99a", "#8f8a82"];
-/* Häuserblöcke als Kisten (Ränder bebaut, Höfe mit Bäumen); liefert Einträge {t: Tiefe, s: svg} */
-const bloecke = (P, gz, spalten, reihen, frei, fenster, haz, rnd2, maxH) => {
+/* Häuserblöcke als Kisten (Ränder bebaut, Höfe mit Bäumen); liefert Einträge {t: Tiefe, V, L, baum} */
+const bloecke = (P, gz, spalten, reihen, frei, fenster, haz, rnd2, maxH, kurz = (a0, a1) => a1) => {
   const L = [];
   const haus = (a0, a1, d0, d1) => {
+    a1 = kurz(a0, a1, d0, d1);
     if (frei(a0, a1, d0, d1)) return;
     let H = 7.5 + rnd2() * 4.6; if (rnd2() < 0.08) H += 6;
     H = Math.min(H, maxH(a0, a1, d0, d1, H));
     if (H < 3.5) return;
     const f = FASS[Math.floor(rnd2() * FASS.length)], dk = DACH[Math.floor(rnd2() * DACH.length)], dd = d0;
     const c = { vorn: dunst(haz.vorn(f), dd), seite: dunst(haz.seite(f), dd), dach: dunst(dk, dd), dach2: dunst(misch(dk, "#ffffff", 0.2), dd),
-      aufbau: rnd2() < 0.18, terrasse: rnd2() < 0.14, fen: d0 < fenster ? dunst("#56636e", dd) : "", kante: d0 < 160 ? dunst("#fbf8f0", dd) : "" };
-    L.push({ t: d0 + 0.001 * Math.abs(a0), s: kiste(P, gz, a0, a1, d0, d1, H, c) });
+      aufbau: rnd2() < 0.18, terrasse: rnd2() < 0.14, fen: d0 < fenster ? dunst("#56636e", dd) : "", fenS: d0 < fenster * 0.6 ? dunst("#4a5560", dd) : "", kante: d0 < 160 ? dunst("#fbf8f0", dd) : "" };
+    L.push({ t: d0 + 0.001 * Math.abs(a0), ...kiste(P, gz, a0, a1, d0, d1, H, c) });
   };
   for (const [A0, A1] of spalten) for (const [D0, D1] of reihen) {
     const T = 24;
-    for (let d = D0; d < D1 - 0.5;) { const w = Math.min(6.5 + rnd2() * 3, D1 - d); haus(A0, A0 + T, d, d + w); haus(A1 - T, A1, d, d + w); d += w; }
-    for (let a = A0 + T; a < A1 - T - 0.5;) { const w = Math.min(6.5 + rnd2() * 3, A1 - T - a); haus(a, a + w, D0, D0 + T); haus(a, a + w, D1 - T, D1); a += w; }
-    for (let i = 0; i < 4; i++) { const a = A0 + T + rnd2() * (A1 - A0 - 2 * T), d = D0 + T + rnd2() * Math.max(1, D1 - D0 - 2 * T); if (frei(a, a, d, d)) continue; const q = P(a, d, gz(a, d) + 5 + rnd2() * 3), rr = F * (2.4 + rnd2() * 1.6) / d; if (q[0] > -5 && q[0] < 405) L.push({ t: d + 0.0005, s: `<circle cx="${r(q[0])}" cy="${r(q[1])}" r="${r(rr)}" fill="${dunst(rnd2() < 0.5 ? "#4f6a3a" : "#5f7b45", d)}"/>` }); }
+    for (let d = D0; d < D1 - 0.5;) { const w = Math.min(7.5 + rnd2() * 4, D1 - d); haus(A0, A0 + T, d, d + w); haus(A1 - T, A1, d, d + w); d += w; }
+    for (let a = A0 + T; a < A1 - T - 0.5;) { const w = Math.min(7.5 + rnd2() * 4, A1 - T - a); haus(a, a + w, D0, D0 + T); haus(a, a + w, D1 - T, D1); a += w; }
+    for (let i = 0; i < 4; i++) { const a = A0 + T + rnd2() * (A1 - A0 - 2 * T), d = D0 + T + rnd2() * Math.max(1, D1 - D0 - 2 * T); if (frei(a, a, d, d)) continue; const q = P(a, d, gz(a, d) + 5 + rnd2() * 3), rr = F * (2.4 + rnd2() * 1.6) / d; if (q[0] > -5 && q[0] < 405) L.push({ t: d + 0.0005, baum: [q[0], q[1], rr, dunst(rnd2() < 0.5 ? "#4f6a3a" : "#5f7b45", d)] }); }
   }
   return L;
+};
+/* Verdeckung: ein grobes Raster (0,5 Einheiten) merkt sich, was schon deckend gemalt ist; Häuser,
+   die ganz dahinter liegen, werden gar nicht erst geschrieben (spart Bytes). */
+const RAST = { w: 820, h: 550, z: new Uint8Array(820 * 550) };
+const rasterVieleck = (pts, fn) => {
+  let y0 = Infinity, y1 = -Infinity; for (const p of pts) { y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
+  for (let j = Math.max(0, Math.ceil((y0 + 5) * 2 - 0.5)); j < RAST.h && (j + 0.5) / 2 - 5 <= y1; j++) {
+    const y = (j + 0.5) / 2 - 5, xs = [];
+    for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; if ((a[1] <= y) !== (b[1] <= y)) xs.push(a[0] + (y - a[1]) * (b[0] - a[0]) / (b[1] - a[1])); }
+    xs.sort((u, v) => u - v);
+    for (let k2 = 0; k2 + 1 < xs.length; k2 += 2) for (let i = Math.max(0, Math.ceil((xs[k2] + 5) * 2 - 0.5)); i < RAST.w && (i + 0.5) / 2 - 5 <= xs[k2 + 1]; i++) if (fn(j * RAST.w + i)) return true;
+  }
+  return false;
+};
+const decke = (pts) => rasterVieleck(pts, (n) => { RAST.z[n] = 1; return false; });
+const offen = (pts) => rasterVieleck(pts, (n) => RAST.z[n] === 0);
+const zahl = (v, g) => { const q = Math.round(v * g) / g; return String(q).replace(/^(-?)0\./, "$1."); };
+const pfad = (pts, g) => `M${pts.map((p) => zahl(p[0], g) + " " + zahl(p[1], g)).join(" ")}Z`;
+/* zeichnet eine Liste von nah nach fern mit Verdeckungstest, gibt sie von fern nach nah aus */
+const zeichneListe = (L) => {
+  const raus = [];
+  for (const e of L.slice().sort((a, b) => a.t - b.t)) {
+    if (e.baum) { const [x, y, rr] = e.baum; if (offen([[x - rr, y - rr], [x + rr, y - rr], [x + rr, y + rr], [x - rr, y + rr]])) raus.push(e); continue; }
+    if (!e.V.length || !e.V.some((v) => !v.o && offen(v.p))) continue;
+    e.V.forEach((v) => { if (!v.o) decke(v.p); });
+    raus.push(e);
+  }
+  let s = "";
+  for (const e of raus.reverse()) {
+    const g = e.t > 250 ? 1 : e.t > 90 ? 2 : 10;
+    if (e.baum) { const [x, y, rr, f] = e.baum; s += `<circle cx="${zahl(x, g)}" cy="${zahl(y, g)}" r="${zahl(rr, 10)}" fill="${f}"/>`; continue; }
+    /* gleiche Farben einer Kiste in einem Pfad zusammenfassen */
+    const nachF = new Map(); for (const v of e.V) { const key = v.f + (v.o ? "o" : ""); nachF.set(key, (nachF.get(key) || "") + pfad(v.p, g)); }
+    for (const [key, d] of nachF) s += `<path d="${d}" fill="${key.replace(/o$/, "")}"${key.endsWith("o") ? ` opacity=".6"` : ""}/>`;
+    if (e.L) { const [a, b, st, w] = e.L; s += `<path d="M${zahl(a[0], g)} ${zahl(a[1], g)} ${zahl(b[0], g)} ${zahl(b[1], g)}" stroke="${st}" stroke-width="${zahl(w, 100)}"/>`; }
+  }
+  return s;
 };
 const SONNE = { az: 215, el: 52 };
 const SL = 1 / Math.tan(SONNE.el * Math.PI / 180), SE_ = Math.sin(SONNE.az * Math.PI / 180 + Math.PI), SN_ = Math.cos(SONNE.az * Math.PI / 180 + Math.PI);
@@ -413,14 +499,14 @@ const SL = 1 / Math.tan(SONNE.el * Math.PI / 180), SE_ = Math.sin(SONNE.az * Mat
   const kante = (X, d0, d1, n) => { const p = []; for (let i = 0; i <= n; i++) { const d = d0 + (d1 - d0) * i / n; p.push(PN(X, d, zH(d))); } return p; };
   const band = (Xa, Xb, d0, d1, n) => kappY([...kante(Xa, d0, d1, n), ...kante(Xb, d0, d1, n).reverse()], 262);
   /* Kreuzung (Lombard Street), Asphalt bis zum unteren Rand */
-  s += vl(kappY([PN(-60, 8.1, 0), PN(-60, 10, 0), PN(2, 10, 0), PN(2, 8.1, 0)], 262), "#7c7975");
+  s += vl(kappY([PN(-60, 8.1, 0), PN(-60, 10.7, 0), PN(2.2, 10.7, 0), PN(2.2, 8.1, 0)], 262), "#7c7975");
   s += vl(band(-13.5, -1.5, 10, 150, 40), S.lg("asphalt", [[0, "#5f5c59"], [1, "#8a8784"]]));
   s += vl(band(-17, -13.5, 10.6, 150, 30), "#c9c2b6") + vl(band(-1.5, 2, 10.6, 150, 30), "#cfc9be");
   /* Schatten der Westhäuser auf Gehweg und Rand der Fahrbahn (Sonne SSW) */
   s += vl(band(-17, -12.2, 29.4, 150, 30), "#1a1612", ` opacity=".22"`);
   /* Querrillen im steilen Gehweg, Bordsteine */
   let rl = "";
-  for (let d = 12; d < 120; d += d < 40 ? 1.1 : 2.6) { rl += `M${pr(PN(-1.4, d, zH(d)))} L${pr(PN(2, d, zH(d)))} `; rl += `M${pr(PN(-16.9, d, zH(d)))} L${pr(PN(-13.6, d, zH(d)))} `; }
+  for (let d = 12; d < 120; d += d < 40 ? 1.1 : 2.6) { rl += `M${pr(PN(-1.4, d, zH(d)))} L${pr(PN(2, d, zH(d)))} `; if (PN(-13.6, d, 0)[0] > 0) rl += `M${pr(PN(-16.9, d, zH(d)))} L${pr(PN(-13.6, d, zH(d)))} `; }
   s += `<path d="${rl}" stroke="#a49e92" stroke-width=".14" opacity=".4" fill="none"/>`;
   for (const X of [-13.5, -1.5]) s += `<path d="M${kante(X, 10.6, 150, 30).map(pr).join(" L")}" stroke="#e6e1d6" stroke-width=".7" fill="none"/>`;
   /* Zebrastreifen über die Hyde Street an der Nordseite der Kreuzung; Kreuzung Chestnut (flach) als hellere Stufe */
@@ -464,6 +550,8 @@ const SL = 1 / Math.tan(SONNE.el * Math.PI / 180), SE_ = Math.sin(SONNE.az * Mat
    Schatten), Ostseite (nur Dächer und schmale Fassaden), Nordseite der
    Lombard Street (Fassaden nach Süden, in der Sonne)
    ===================================================================== */
+const GARTEN = kappY(kappX([PN(2.2, 10.6, 0), PN(2.2, 60, zH(60)), PN(26, 60, zH(60) - 5), PN(26, 10.6, -1)], -6, 236), 262);
+const BEET = kappX(kappY([PO(-14, 9, zL(9)), PO(-14, 132, zL(132)), PO(3, 132, zL(132)), PO(3, 9, zL(9))], 262), 205, 402);
 const HAUS = {};
 {
   let k = "";
@@ -479,24 +567,23 @@ const HAUS = {};
   const zLP = (d) => { for (let i = 1; i < LPP.length; i++) if (d <= LPP[i][0]) { const [d0, z0] = LPP[i - 1], [d1, z1] = LPP[i]; return z0 + (z1 - z0) * (d - d0) / (d1 - d0); } return -82; };
   const gzN = (X, d) => Math.max(-86, zH(d) + 0.85 * zLP(Math.max(0, X - 2)));
   const gzE = (lat, d) => Math.max(-86, zLP(d) - 0.13 * Math.max(0, -lat - 15) + 0.08 * Math.max(0, lat - 5));
-  const zeichne = (L) => L.sort((a, b) => b.t - a.t).map((e) => e.s).join("");
   /* Nordblick: Spalten Hyde–Leavenworth, Leavenworth–Jones; Reihen zwischen den Querstraßen.
      Häuser im Blickfeld auf Alcatraz bleiben unter der Sichtlinie (sonst wäre die Insel verdeckt). */
-  const freiN = (a0, a1, d0, d1) => (a0 < 35 && d0 < 45) || d0 < 40 || VN + F * a0 / d1 > 262;
+  const freiN = (a0, a1, d0, d1) => (a0 < 30 && d0 < 60) || d0 < 40 || VN + F * a0 / d1 > 262;
   const maxN = (a0, a1, d0, d1) => { const x0 = VN + F * a0 / d1, x1 = VN + F * a1 / d0; if (x1 < 170 || x0 > 228) return 99; return E - 13 * d0 / F - Math.max(gzN(a0, d0), gzN(a1, d0), gzN(a0, d1), gzN(a1, d1)); };
   const LN = bloecke(PN, gzN, [[2, 126], [147, 273]], [[15, 135], [150, 272], [287, 410], [425, 550], [565, 690]], freiN, 200,
-    { vorn: (f) => f, seite: (f) => misch(f, "#000000", 0.1) }, rnd2, maxN);
-  for (let d = 45; d < 690; d += 10) { const d1 = Math.min(690, d + 10), xs = [2, 40, 90, 126, 147, 210, 273, 330]; LN.push({ t: d1 - 0.01, s: vr([...xs.map((X) => PN(X, d, gzN(X, d))), ...xs.slice().reverse().map((X) => PN(X, d1, gzN(X, d1)))], dunst("#8b897f", d)) }); }
-  k += zeichne(LN);
+    { vorn: (f) => f, seite: (f) => misch(f, "#000000", 0.1) }, rnd2, maxN, (a0, a1, d0) => a0 === 2 && d0 < 135 ? 18 : a1);
+  for (let d = 45; d < 690; d += 10) { const d1 = Math.min(690, d + 10), xs = [2, 40, 90, 126, 147, 210, 273, 330]; LN.push({ t: d1 - 0.01, V: [{ p: rahmen([...xs.map((X) => PN(X, d, gzN(X, d))), ...xs.slice().reverse().map((X) => PN(X, d1, gzN(X, d1)))]), f: dunst("#8b897f", d) }] }); }
   /* Ostblick: nördlich und südlich der Lombard Street, Blöcke bis zur Mason Street (≈ 0,7 km) */
   const freiE = (a0, a1, d0, d1) => (a1 <= 0 ? VO + F * a1 / d1 < 230 : VO + F * a0 / d1 > 405) || d1 > 715 || (a0 >= -39.2 && a1 <= -14.9 && d1 <= 126.1) || (a1 <= 0 && d0 < 30);
   const reihenE = [[2, 126], [147, 273], [294, 420], [441, 567], [588, 714]];
+  KLIP[0] = 236;
   const LE = [
     ...bloecke(PO, gzE, [[-272, -150], [-135, -15]], reihenE, freiE, 160, { vorn: (f) => misch(f, "#000000", 0.08), seite: (f) => f }, rnd2, () => 99),
-    ...bloecke(PO, gzE, [[5, 125]], reihenE, freiE, 160, { vorn: (f) => misch(f, "#000000", 0.08), seite: (f) => misch(f, "#000000", 0.26) }, rnd2, () => 99),
+    ...bloecke(PO, gzE, [[5, 125]], reihenE, freiE, 160, { vorn: (f) => misch(f, "#000000", 0.08), seite: (f) => misch(f, "#000000", 0.34) }, rnd2, (a0, a1, d0) => d0 < 130 ? 10.5 : 99),
   ];
-  for (let d = 126; d < 714; d += 12) { const d1 = Math.min(714, d + 12), ls = [-330, -150, -135, -15, 5, 40, 120]; LE.push({ t: d1 - 0.01, s: vr([...ls.map((l) => PO(l, d, gzE(l, d))), ...ls.slice().reverse().map((l) => PO(l, d1, gzE(l, d1)))], dunst("#8b897f", d)) }); }
-  k += zeichne(LE);
+  for (let d = 20; d < 714; d += d < 126 ? 8 : 12) { const d1 = Math.min(714, d + (d < 126 ? 8 : 12)), ls = [-330, -150, -135, -15, 5, 40, 120]; LE.push({ t: d1 - 0.01, V: [{ p: rahmen([...ls.map((l) => PO(l, d, gzE(l, d))), ...ls.slice().reverse().map((l) => PO(l, d1, gzE(l, d1)))]), f: dunst("#8b897f", d) }] }); }
+  KLIP[0] = -5;
   /* Westseite der Hyde Street: fern vereinfacht, nah mit Erker, Gesims, Garage, Treppe */
   const WL = [];
   for (let d0 = 15; d0 < 134; d0 += 7.6) WL.push([d0, Math.min(d0 + 7.6, 135)]);
@@ -535,18 +622,24 @@ const HAUS = {};
     k += vr([PN(-16, e0 + 0.8, ez1), PN(-16, e1 - 0.8, ez1), PN(-16, e1 - 0.8, ez1 + 0.4), PN(-16, e0 + 0.8, ez1 + 0.4)], f.a);
     if (d0 < 45 && !HAUS.erker) HAUS.erker = { p: PN(-16.5, e0 + 0.4, ez0), q: PN(-16.5, e0 + 0.4, ez1), g: PN(-16.95, d0 + 5.5, zb1), g2: PN(-16.95, d0 + 5.5, zb1 + 2.4), d: d0 };
   }
+  const DECK = [], vd = (pts, f, ex = "") => { const q = rahmen(pts); if (!ex) DECK.push(q); return vl(q, f, ex); };
   /* Nordseite der Lombard Street (Ostblick): Fassaden nach Süden, sonnig */
   for (let d0 = 118; d0 >= 35; d0 -= 7.6) {
     const d1 = d0 + 7.6, i = Math.round(d0 / 7.6) + 3, f = farben[i % 7], zb0 = zL(d0), zb1 = zL(d1), zr = zb0 + 10;
-    if (zr < E - 0.3) k += vr([PO(-15, d0, zr), PO(-26, d0, zr), PO(-26, d1, zr), PO(-15, d1, zr)], "#a89f92");
-    k += vr([PO(-15, d0, zb0), PO(-15, d0, zr), PO(-15, d1, zr), PO(-15, d1, zb1)], f.w);
-    k += vr([PO(-15, d0, zr - 0.6), PO(-14.5, d0, zr - 0.6), PO(-14.5, d1, zr - 0.6), PO(-15, d1, zr - 0.6)], f.t);
+    if (zr < E - 0.3) k += vd([PO(-15, d0, zr), PO(-26, d0, zr), PO(-26, d1, zr), PO(-15, d1, zr)], "#a89f92");
+    k += vd([PO(-15, d0, zb0), PO(-15, d0, zr), PO(-15, d1, zr), PO(-15, d1, zb1)], f.w);
+    k += vd([PO(-15, d0, zr - 0.6), PO(-14.5, d0, zr - 0.6), PO(-14.5, d1, zr - 0.6), PO(-15, d1, zr - 0.6)], f.t);
     const e0 = d0 + 2, e1 = d0 + 5.4, ez0 = zb0 + 2.8, ez1 = zr - 1.2;
-    k += vr([PO(-15, e0, ez0), PO(-14, e0 + 0.8, ez0), PO(-14, e0 + 0.8, ez1), PO(-15, e0, ez1)], schatt(f.w, 1.0));
-    k += vr([PO(-14, e0 + 0.8, ez0), PO(-14, e1 - 0.8, ez0), PO(-14, e1 - 0.8, ez1), PO(-14, e0 + 0.8, ez1)], schatt(f.w, 0.92));
-    for (const zf of [ez0 + 0.5, ez0 + 3.2]) k += vr([PO(-14.85, e0 + 0.12, zf), PO(-14.12, e0 + 0.7, zf), PO(-14.12, e0 + 0.7, zf + 1.8), PO(-14.85, e0 + 0.12, zf + 1.8)], "#4f6274", ` stroke="${f.t}" stroke-width=".15"`);
-    k += vr([PO(-14.95, d0 + 5.8, zb1), PO(-14.95, d0 + 5.8, zb1 + 2.3), PO(-14.95, d1 - 0.3, zb1 + 2.3), PO(-14.95, d1 - 0.3, zb1)], "#e2ddd2");
+    k += vd([PO(-15, e0, ez0), PO(-14, e0 + 0.8, ez0), PO(-14, e0 + 0.8, ez1), PO(-15, e0, ez1)], schatt(f.w, 1.0));
+    k += vd([PO(-14, e0 + 0.8, ez0), PO(-14, e1 - 0.8, ez0), PO(-14, e1 - 0.8, ez1), PO(-14, e0 + 0.8, ez1)], schatt(f.w, 0.92));
+    for (const zf of [ez0 + 0.5, ez0 + 3.2]) k += vd([PO(-14.85, e0 + 0.12, zf), PO(-14.12, e0 + 0.7, zf), PO(-14.12, e0 + 0.7, zf + 1.8), PO(-14.85, e0 + 0.12, zf + 1.8)], "#4f6274", ` stroke="${f.t}" stroke-width=".15"`);
+    k += vd([PO(-14.95, d0 + 5.8, zb1), PO(-14.95, d0 + 5.8, zb1 + 2.3), PO(-14.95, d1 - 0.3, zb1 + 2.3), PO(-14.95, d1 - 0.3, zb1)], "#e2ddd2");
   }
+  DECK.forEach((q) => q.length > 2 && decke(q));
+  decke(GARTEN); decke(BEET);
+  const sE = zeichneListe(LE), sN = zeichneListe(LN);
+  if (process.env.SFDBG) { const z = require("zlib"); console.error("N", sN.length, z.gzipSync(sN).length, "E", sE.length, z.gzipSync(sE).length, "rest", k.length, z.gzipSync(k).length); }
+  k = sN + sE + k;
   const er = HAUS.erker;
   S.teil({ id: "holzhaus", de: "das Holzhaus", syl: "HOLZ-haus", it: "la casa di legno", itSyl: "CA-sa di LE-gno", en: "wooden house", x: 0, y: 0, kunst: k,
     tipp: "Die bunten Holzhäuser aus der Zeit um 1900 nennt man in San Francisco „Painted Ladies“ — bemalte Damen.",
@@ -566,10 +659,16 @@ const HAUS = {};
 {
   let k = "";
   /* Eckgarten an der Nordostecke (?), im Nordblick */
-  k += vl(kappY(kappX([PN(2.2, 10.6, 0), PN(2.2, 45, zH(45)), PN(30, 45, -6), PN(30, 10.6, -1)], -6, 236), 262), S.lg("garten", [[0, "#5c7d43"], [1, "#46663a"]]));
-  for (let i = 0; i < 18; i++) { const d = 12 + rnd() * 30, X = 3 + rnd() * 20, p = PN(X, d, zH(d) + 0.6); if (p[0] < 234 && p[1] < 258) k += `<circle cx="${r(p[0])}" cy="${r(p[1])}" r="${r(F * (0.5 + rnd() * 0.5) / d)}" fill="${rnd() < 0.5 ? "#3e5a2e" : "#56794a"}"/>`; }
+  k += vl(GARTEN, S.lg("garten", [[0, "#5c7d43"], [1, "#46663a"]]));
+  /* Hecke entlang der Hyde Street (1,3 m), Sträucher, Bäume (bleiben unter der Sichtlinie auf Alcatraz) */
+  { const he = []; for (let d = 10.8; d <= 60; d += 2) he.push(d); k += vl(kappX([...he.map((d) => PN(2.3, d, zH(d))), ...he.slice().reverse().map((d) => PN(2.3, d, zH(d) + 1.3))], -6, 236), "#3f5f30"); }
+  for (let i = 0; i < 16; i++) { const d = 14 + rnd() * 40, X = 4 + rnd() * 20, p = PN(X, d, zH(d) - 0.03 * X + 0.6); if (p[0] < 234 && p[1] < 258) k += `<circle cx="${r(p[0])}" cy="${r(p[1])}" r="${r(F * (0.6 + rnd() * 0.5) / d)}" fill="${rnd() < 0.5 ? "#3e5a2e" : "#56794a"}"/>`; }
+  const baum = (X, d, h, rk) => { const g = zH(d) - 0.05 * X, [x, y] = PN(X, d, g), s2 = F / d, top = PN(X, d, g + h)[1], R = rk * s2; let b = `<path d="M${r(x - 0.18 * s2)} ${r(y)} L${r(x - 0.1 * s2)} ${r(top + R)} L${r(x + 0.1 * s2)} ${r(top + R)} L${r(x + 0.18 * s2)} ${r(y)} Z" fill="#4a3a2a"/>`;
+    for (const [dx, dy, rr, c] of [[0, 0.9, 1, "#2f4a25"], [-0.55, 0.45, 0.72, "#3d5b2e"], [0.5, 0.35, 0.75, "#3a5a2c"], [-0.15, 0.1, 0.62, "#4f7340"], [0.3, -0.15, 0.45, "#628a4c"]]) b += `<circle cx="${r(x + dx * R)}" cy="${r(top + R * (dy + 0.1))}" r="${r(rr * R)}" fill="${c}"/>`;
+    return b; };
+  k += baum(4.5, 31, 5.4, 1.6) + baum(11.9, 52, 11, 2.5);
   /* der Block der Lombard Street (Beete) */
-  k += vl(kappX(kappY([PO(-14, 9, zL(9)), PO(-14, 132, zL(132)), PO(3, 132, zL(132)), PO(3, 9, zL(9))], 262), 205, 402), S.lg("beet", [[0, "#3d5a2a"], [1, "#5a7a40"]]));
+  k += vl(BEET, S.lg("beet", [[0, "#3d5a2a"], [1, "#5a7a40"]]));
   /* Treppen-Gehwege an beiden Seiten */
   for (const [l0, l1] of [[-15, -14], [3, 4.4]]) {
     k += vl(kappX(kappY([PO(l0, 12, zL(12)), PO(l0, 132, zL(132)), PO(l1, 132, zL(132)), PO(l1, 12, zL(12))], 262), 205, 402), "#cfc8bb");
@@ -690,7 +789,7 @@ const HAUS = {};
     const [gx, gy] = P(1.3, 0, 0.95);
     const m = B.mensch({ id: "sfo_grip", geschlecht: "m", pose: "halten", blick: 12, frisur: "kurz", haarfarbe: "grau", haut: "hell",
       kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "weste", farbe: "#2b3a55" }, unterteil: { stueck: "anzughose", farbe: "#2b3a55" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, kopf: { stueck: "kappe", farbe: "#2b3a55" } } }, 1.76 * s);
-    k += `<g transform="translate(${r(gx)} ${r(gy)})">${knapp(m.svg)}</g>`;
+    k += `<g transform="translate(${r(gx)} ${r(gy)})">${figur(m.svg)}</g>`;
     k += L2([0.7, -0.1, 0.95], [0.85, -0.15, 1.95], "#2c2c2c", 0.45);
   }
   /* rechte (östliche, uns zugewandte) Seite: Schürze, Trittbrett, Kabine */
@@ -717,7 +816,7 @@ const HAUS = {};
     const [fx, fy] = P(1.0, HB + 0.25, 0.42);
     const m = B.mensch({ id: "sfo_fahrgast", geschlecht: "w", pose: "halten", blick: 70, frisur: "lang", haarfarbe: "dunkelbraun", haut: "mittel",
       kleidung: { oberteil: { stueck: "pullover", farbe: "#e2b13c" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh", farbe: "weiss" } } }, 1.66 * s);
-    k += `<g transform="translate(${r(fx)} ${r(fy)})">${knapp(m.svg)}</g>`;
+    k += `<g transform="translate(${r(fx)} ${r(fy)})">${figur(m.svg)}</g>`;
     fg = [fx + ox, fy + oy, 1.66 * s];
   }
   /* Dach mit Laternendach (Oberlicht) — nicht breiter als der Wagenkasten */
@@ -765,7 +864,7 @@ const HAUS = {};
   const pw = 0.075 * s, ph = 0.15 * s;
   let handy = `<rect x="${r(hx - pw / 2)}" y="${r(hy - ph * 0.8)}" width="${r(pw)}" height="${r(ph)}" rx=".2" fill="#1c1e22"/><rect x="${r(hx - pw / 2 + 0.15)}" y="${r(hy - ph * 0.8 + 0.15)}" width="${r(pw - 0.3)}" height="${r(ph - 0.3)}" fill="#7a2a33" opacity=".85"/>`;
   const sch = `<path d="M-2 0 L2 0 L${r(2 + SE_ * SL * 1.66 * s * 0.6)} ${r(-SN_ * SL * 1.66 * s * 0.25)} L${r(-2 + SE_ * SL * 1.66 * s * 0.6)} ${r(-SN_ * SL * 1.66 * s * 0.25)} Z" fill="#1b120a" opacity=".18" filter="url(#bw_weich)"/>`;
-  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x: tx, y: ty, kunst: sch + schatten(0, 0.3, 5, 1, 0.25) + knapp(m.svg) + handy,
+  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x: tx, y: ty, kunst: sch + schatten(0, 0.3, 5, 1, 0.25) + figur(m.svg) + handy,
     tipp: "Die Touristin fotografiert die Cable Car. Eine Fahrt gehört zu jedem Besuch in San Francisco." });
   /* die Papiertüte mit dem runden Sauerteigbrot neben ihr */
   const bx = tx + 0.42 * s, by = ty, bw = 0.3 * s, bh = 0.34 * s;
