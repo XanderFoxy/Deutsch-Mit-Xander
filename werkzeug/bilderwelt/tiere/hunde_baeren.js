@@ -389,7 +389,7 @@ function wolf(T) {
      zum Unterschenkel – die Läufe liegen DARUNTER (keine Platten, keine Nähte). Ferne Läufe: Hüfte/Schulter hinter dem Rumpf,
      sichtbar erst ab Knie/Ellbogen, halber Schritt versetzt. Fell als Büschel (heller Kopf, dunkle Kerbe) in Wuchsrichtung.
      Widerristhöhe 82 cm; Kopf ≈ 30 cm (≈ 37 %); Brust 44 %, Lauf 56 %; Sprunggelenk 26 %, Handwurzel 19 %. */
-  T.dichte = 0.55;
+  T.dichte = 0.52;
   const rumpf = [
     [38, -72], [44, -76.4], [52, -77.8], [64, -77.2], [78, -77.4], [92, -79.4], [103, -82], [109, -82.8], [115, -82.2],   // Kruppe, Rücken, Widerrist-Kuppe
     [121, -82.6], [127, -84.6], [133, -87.6], [139, -86], [143, -78], [142.4, -71.4],                                    // Nackensenke, Nacken → unter den Kopf

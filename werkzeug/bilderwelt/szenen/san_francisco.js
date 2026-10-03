@@ -113,6 +113,9 @@ const duenn = (d, eps, klein) => {
   }
   return out.replace(/ -/g, "-");
 };
+/* kleine Figuren: Verläufe durch ihre Mittelfarbe ersetzen (bei 3–4 mm Bildhöhe nicht zu sehen) */
+const flach = (svg) => { const farbe = {}; svg = svg.replace(/<(linearGradient|radialGradient) id="([^"]+)"[^>]*>(.*?)<\/\1>/g, (m0, t, id, inner) => { const st = [...inner.matchAll(/stop-color="([^"]+)"/g)].map((m) => m[1]); farbe[id] = st[Math.floor(st.length / 2)] || "#888"; return ""; });
+  return svg.replace(/url\(#([^)]+)\)/g, (m0, id) => farbe[id] || m0).replace(/<defs><\/defs>/g, ""); };
 const figur = (svg, eps = 0.7, klein = 2.6) => knapp(svg).replace(/ d="([^"]*)"/g, (m0, d) => ` d="${duenn(d, eps, klein)}"`).replace(/<path d=""[^>]*\/>/g, "");
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("nebel")}" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="1.6"/></filter>`);
@@ -790,7 +793,7 @@ const HAUS = {};
     const [gx, gy] = P(1.3, 0, 0.95);
     const m = B.mensch({ id: "sfo_grip", geschlecht: "m", pose: "halten", blick: 12, frisur: "kurz", haarfarbe: "grau", haut: "hell",
       kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "weste", farbe: "#2b3a55" }, unterteil: { stueck: "anzughose", farbe: "#2b3a55" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, kopf: { stueck: "kappe", farbe: "#2b3a55" } } }, 1.76 * s);
-    k += `<g transform="translate(${r(gx)} ${r(gy)})">${figur(m.svg)}</g>`;
+    k += `<g transform="translate(${r(gx)} ${r(gy)})">${figur(flach(m.svg), 1.3, 5)}</g>`;
     k += L2([0.7, -0.1, 0.95], [0.85, -0.15, 1.95], "#2c2c2c", 0.45);
   }
   /* rechte (östliche, uns zugewandte) Seite: Schürze, Trittbrett, Kabine */
@@ -817,7 +820,7 @@ const HAUS = {};
     const [fx, fy] = P(1.0, HB + 0.25, 0.42);
     const m = B.mensch({ id: "sfo_fahrgast", geschlecht: "w", pose: "halten", blick: 70, frisur: "lang", haarfarbe: "dunkelbraun", haut: "mittel",
       kleidung: { oberteil: { stueck: "pullover", farbe: "#e2b13c" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh", farbe: "weiss" } } }, 1.66 * s);
-    k += `<g transform="translate(${r(fx)} ${r(fy)})">${figur(m.svg)}</g>`;
+    k += `<g transform="translate(${r(fx)} ${r(fy)})">${figur(flach(m.svg), 1.3, 5)}</g>`;
     fg = [fx + ox, fy + oy, 1.66 * s];
   }
   /* Dach mit Laternendach (Oberlicht) — nicht breiter als der Wagenkasten */

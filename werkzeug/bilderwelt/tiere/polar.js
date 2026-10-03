@@ -1273,7 +1273,7 @@ function rentier(T) {
   /* Fell: Wuchsrichtung Kopf → hinten, Flanke nach hinten unten, Beine nach unten; Längen variieren
      (Rumpf kurz, Hals und Bauch länger, Beine kurz und anliegend) */
   const wuchs = (x, y) => (x > 176 ? 168 : x > 146 ? 112 : y > -64 ? 94 : 168 + (y + 90) * 0.6);
-  n += haarL(rumpf.filter((p) => p[0] < 186), 400, wuchs, 1.6);
+  n += haarL(rumpf.filter((p) => p[0] < 186), 340, wuchs, 1.6);
   n += haare(T, [[150, -124], [166, -132], [172, -116], [168, -100], [162, -88], [154, -76], [148, -92]], 120, 104, 3.2, [["#ffffff", 1, 0.11, 0.6], ["#a99a80", 0.6, 0.11, 0.45]], 14, 0.3, 0.03);
   n += haarL([[60, -70], [100, -64], [136, -62], [130, -57.6], [100, -59.6], [62, -66]], 50, 100, 2.4, "#2b2219", "#a8987e");
   n += haarL(vbN, 70, 92, 1.1, "#1a140f", "#8a7a64") + haarL(hbN, 100, (x, y) => (y < -62 ? 125 : y < -44 ? 70 : 94), 1.2, "#1a140f", "#8a7a64");

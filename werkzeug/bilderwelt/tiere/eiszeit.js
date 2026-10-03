@@ -918,9 +918,9 @@ function wollnashorn(T) {
   const bein = (P, cx, ferne) => {
     let b = K(T, P, ferne ? "#2c1d12" : T.lg("beinn", [[0, "#4e301a"], [0.6, "#3e2616"], [1, "#30200f"]], 0, -124, 0, 0, UB), { rand: false, vol: false, innen:
       fleck(T, cx, -96, 30, 24, S0, 0.5) }) + fuss(cx, ferne);
-    b += LOCKEN(T, [[cx - 24, -122], [cx + 24, -122], [cx + 19, -18], [cx - 19, -18]], ferne ? 30 : 60, 91, (x, y) => 6 + (y + 120) * 0.025, 1.6, beinLicht(P, ferne), ferne ? FERN : TON,
+    b += LOCKEN(T, [[cx - 24, -122], [cx + 24, -122], [cx + 19, -18], [cx - 19, -18]], ferne ? 24 : 50, 91, (x, y) => 6 + (y + 120) * 0.025, 1.6, beinLicht(P, ferne), ferne ? FERN : TON,
       { streuung: 9, szene: ferne ? 0 : 0.1, szeneB: 2.2, haare: ferne ? 0 : 1, hb: 0.35 });
-    b += LOCKENLINIE(T, [[cx - 17, -22], [cx + 18, -22]], ferne ? 8 : 15, [-4, 0], 92, (x) => 7 + ((x * 3.7) % 1) * 6, 2.2, beinLicht(P, ferne), ferne ? FERN : TON, { streuung: 14, szene: 0.3 });
+    b += LOCKENLINIE(T, [[cx - 18, -26], [cx + 19, -26]], ferne ? 10 : 20, [-4, 0], 92, (x) => 9 + ((x * 3.7) % 1) * 8, 2.4, beinLicht(P, ferne), ferne ? FERN : TON, { streuung: 14, szene: 0.3 });
     return `<g filter="${T.volumen(ferne ? "beinf" : "beinn", { weich: 7, tiefe: 5 })}">${b}</g>`;
   };
   const VF = vorderbein(214), HF = hinterbein(92), VN = vorderbein(234), HN = hinterbein(68);
@@ -953,17 +953,17 @@ function wollnashorn(T) {
       FO([[292, -74], [312, -78], [318, -76], [296, -71]], "#c89660", 0.35) + FO([[292, -71], [316, -74], [314, -71], [294, -68]], S0, 0.3) +
       FO([[288, -60], [300, -62], [304, -52], [292, -52]], S0, 0.35), 4) +
     /* nackte Schnauzenhaut: graubraun, mit Runzeln */
-    WEICH(T, FO([[340, -58], [352, -64], [361, -62], [361.4, -48], [356, -44], [342, -46]], "#4a3a32", 0.85), 1.5) });
+    WEICH(T, FO([[346, -58], [354, -66], [361, -63], [361.4, -48], [356, -44], [346, -46]], "#4a3a32", 0.7), 2) });
   k += HAARZONEN(T, dK, [
     [[[0, -175], [262, -175], [262, -110], [0, -110]], 112, 0.85],
     [[[0, -110], [262, -110], [262, -50], [0, -50]], 95, 0.85],
-    [[[262, -175], [340, -175], [340, -40], [262, -40]], 200, 0.7]], MU);
+    [[[262, -175], [340, -175], [340, -40], [262, -40]], 200, 0.45]], MU);
   if (fein) k += `<path d="M343-57q8-2 16-1M342-53q9-1 18 0M346-60q6-2 12-1" stroke="#1a120c" stroke-width=".5" opacity=".35" fill="none"/>`;
   /* Fell in Strähnen: Locken mit Einzelhaaren, Längen nach Zone; Töne gleiten über ~33 cm (kein harter Tonwechsel) */
   const rumpfZone = [[22, -118], [44, -129], [120, -133], [188, -150], [224, -159], [258, -149], [280, -132], [292, -114], [296, -84], [288, -60], [240, -64],
     [160, -65], [100, -66], [56, -80], [24, -100]];
-  k += LOCKEN(T, rumpfZone, 150, fluss, lang, 4.6, (x, y) => licht(x, y) * 0.88, TON, { streuung: 8, kruemmung: 0.12, szene: 0.14, szeneB: 2.2, jitter: 1, haare: 2, hb: 0.5 });
-  k += LOCKEN(T, rumpfZone, 90, fluss, (x, y) => lang(x, y) * 0.7, 3.2, licht, TON, { streuung: 8, kruemmung: 0.14, szene: 0.08, szeneB: 2.2, jitter: 1 });
+  k += LOCKEN(T, rumpfZone, 125, fluss, lang, 4.8, (x, y) => licht(x, y) * 0.88, TON, { streuung: 8, kruemmung: 0.12, szene: 0.14, szeneB: 2.2, jitter: 1, haare: 2, hb: 0.5 });
+  k += LOCKEN(T, rumpfZone, 70, fluss, (x, y) => lang(x, y) * 0.7, 3.2, licht, TON, { streuung: 8, kruemmung: 0.14, szene: 0.08, szeneB: 2.2, jitter: 1 });
   if (fein) k += LOCKEN(T, [[26, -122], [44, -131], [120, -135], [188, -152], [224, -161], [256, -152], [240, -144], [180, -136], [100, -126], [40, -114]],
     34, fluss, (x, y) => lang(x, y) * 0.8, 1.1, () => 1, SPITZ, { streuung: 6, jitter: 0.4 });
   /* Rückenkontur alle 4–7 cm durch Haarspitzen gebrochen */
@@ -975,9 +975,9 @@ function wollnashorn(T) {
 
   /* ---------- Kopf: kurzes Haar von der Nase zum Ohr; Augenzone frei von langen Strähnen ---------- */
   const auge = [304, -82];
-  const kopfZone = [[288, -126], [298, -122], [318, -102], [332, -90], [344, -82], [352, -76], [346, -68], [338, -60], [330, -50], [314, -44], [300, -46], [290, -60], [286, -100]];
+  const kopfZone = [[288, -126], [298, -122], [318, -102], [332, -90], [344, -82], [354, -76], [358, -70], [352, -66], [346, -58], [342, -50], [330, -46], [314, -44], [300, -46], [290, -60], [286, -100]];
   const kopfLicht = (x, y) => Math.max(0, Math.min(1, zyl(Math.max(0, (y + 126 - (x - 288) * 0.6) / 70)) + 0.06));
-  k += FELL(T, kopfZone, 260, (x, y) => (Math.hypot(x - auge[0], y - auge[1]) < 9 ? Math.atan2(y - auge[1], x - auge[0]) * 180 / Math.PI : 200 + (y + 90) * 0.3),
+  k += FELL(T, kopfZone, 220, (x, y) => (Math.hypot(x - auge[0], y - auge[1]) < 9 ? Math.atan2(y - auge[1], x - auge[0]) * 180 / Math.PI : 200 + (y + 90) * 0.3),
     (x, y) => (Math.hypot(x - auge[0], y - auge[1]) < 9 ? 1.6 : 4.5), kopfLicht, [["#2a190d", 0.7, 0.6], ["#3e2614", 0.7, 0.6], ["#5a3820", 0.65, 0.55], ["#7a4e2a", 0.6, 0.5], ["#a26c3a", 0.55, 0.45]], { szene: 0.12 });
   /* Querfalten am Übergang zum Hals, Mundwinkelfalte */
   k += `<path d="M294-62q4 6 4 14M288-64q4 5 4 12M282-66q3 5 3 10" stroke="#000" stroke-width="1" opacity=".3" fill="none"/>`;
@@ -989,10 +989,10 @@ function wollnashorn(T) {
     FO([[OHR[0][0] + 3, OHR[0][1] - 2], [OHR[1][0] + 3, OHR[1][1]], [OHR[3][0] + 1, OHR[3][1] + 4], [OHR[4][0] - 2, OHR[4][1] + 2], [OHR[5][0] - 3, OHR[5][1] - 1]], T.lg("muschel", [[0, "#3a2414"], [1, "#140a04"]], 0, 1, 0, 0), 0.9) +
     FELL(T, [[OHR[1][0] + 3, OHR[1][1]], [OHR[3][0] + 1, OHR[3][1] + 4], [OHR[4][0] - 2, OHR[4][1] + 2], [OHR[5][0] - 3, OHR[5][1] - 1]], 14, 280, 3, () => 1, [["#c8a07a", 0.3, 0.3]], { szene: 0 }) }) + "</g>";
   s += LOCKENLINIE(T, [OHR[1], OHR[2], OHR[3], OHR[4]], 22, [0, 1.5], (x, y) => 140 + (y + 140) * -2, (x, y) => 7 + T.rnd() * 6, 1.2, () => 0.55, TON, { streuung: 14, kruemmung: 0.3, szene: 0.2, haare: 1, hb: 0.3 });
-  s += LOCKEN(T, [[OHR[3][0] - 2, OHR[3][1] - 1], [OHR[3][0] + 2, OHR[3][1] - 1], [OHR[3][0] + 1, OHR[3][1] + 2]], 3, 200, 9, 1.4, () => 0.6, TON, { streuung: 20, kruemmung: 0.3, szene: 0, haare: 1, hb: 0.3 });
+  s += LOCKEN(T, [[OHR[3][0] - 2, OHR[3][1] - 1], [OHR[3][0] + 2, OHR[3][1] - 1], [OHR[3][0] + 1, OHR[3][1] + 2]], 3, 165, 9, 1.4, () => 0.6, TON, { streuung: 20, kruemmung: 0.3, szene: 0, haare: 1, hb: 0.3 });
 
   /* ---------- Maul: Oberlippe mit heller Kante oben und Schattenkerbe darunter, gerade Maulspalte bis 25 % der Kopflänge, Mundwinkelfalte ---------- */
-  s += WEICH(T, FO([[346, -52], [358, -52], [361, -50], [358, -49.4], [346, -50]], "#8a7468", 0.5), 0.5);
+  s += WEICH(T, FO([[346, -52], [358, -52], [361, -50], [358, -49.4], [346, -50]], "#8a7468", 0.3), 0.5) + FELL(T, [[344, -56], [361, -56], [361, -50], [344, -50]], 40, 175, 1.6, () => 0.4, [["#2a1c14", 0.5, 0.3], ["#6a5444", 0.4, 0.3]], { szene: 0 });
   s += LI([[360, -45.6], [350, -45], [340, -45.6], [334, -47]], "#0e0805", 0.9, ` opacity=".8"`) + LI([[334, -47], [331, -49.6], [331.4, -53]], "#0e0805", 0.7, ` opacity=".45"`);
   s += LI([[359, -44.4], [350, -44.2], [342, -44.6]], S0, 1.4, ` opacity=".3"`);
   /* Nasenloch: schräger Schlitz mit Wulst und Schattenkerbe, vor dem Horn auf halber Schnauzenhöhe */
@@ -1008,11 +1008,11 @@ function wollnashorn(T) {
   const horn = (h, w0, w1, n, name) => {
     let f = "";
     if (fein) {
-      for (let i = 0; i < n; i++) { const q = -0.88 + 1.76 * i / (n - 1) + (T.rnd() - 0.5) * 0.04, lo = Math.floor(T.rnd() * 2); f += LI(quer(h, w0, w1, q, 0.8).slice(lo, h.length - (i % 3 === 0 ? 1 : 0)), T.rnd() < 0.5 ? "#120c08" : "#a89a8a", 0.4, ` opacity="${(0.1 + T.rnd() * 0.12).toFixed(2)}"`); }
+      for (let i = 0; i < n; i++) { const q = -0.88 + 1.76 * i / (n - 1) + (T.rnd() - 0.5) * 0.04, lo = Math.floor(T.rnd() * 2); f += LI(quer(h, w0, w1, q, 0.8).slice(lo, h.length - (i % 3 === 0 ? 1 : 0)), T.rnd() < 0.5 ? "#120c08" : "#a89a8a", 0.35, ` opacity="${(0.05 + T.rnd() * 0.09).toFixed(2)}"`); }
       let w = "";
-      for (let i = 1; i < 9; i++) { const t = i * 0.035, p = entlang(h, t), q = entlang(h, t + 0.01), dx = q[0] - p[0], dy = q[1] - p[1], l = Math.hypot(dx, dy), ww = w0 / 2 * (1 - t * 0.6);
+      for (let i = 1; i < 7; i++) { const t = i * 0.045, p = entlang(h, t), q = entlang(h, t + 0.01), dx = q[0] - p[0], dy = q[1] - p[1], l = Math.hypot(dx, dy), ww = w0 / 2 * (1 - t * 0.6);
         w += "M" + zf(p[0] - dy / l * ww, p[1] + dx / l * ww) + "q" + zf(dy / l * ww + dx / l * 1.4, -dx / l * ww + dy / l * 1.4, 2 * dy / l * ww, -2 * dx / l * ww); }
-      f += `<path d="${w}" stroke="#000" stroke-width=".5" opacity=".14" fill="none"/>`;
+      f += `<path d="${w}" stroke="#000" stroke-width=".6" opacity=".08" fill="none"/>`;
     }
     const L = h.length;
     f += LI(quer(h, w0, w1, 0.78, 0.8).slice(0, Math.ceil(L * 0.6)), "#8e8274", w0 * 0.1, ` opacity=".7"`) +
@@ -1020,14 +1020,14 @@ function wollnashorn(T) {
       LI(quer(h, w0, w1, -0.74, 0.8).slice(1, 3), "#f2ebe0", 1, ` opacity=".5"`) + (L > 5 ? LI(quer(h, w0, w1, -0.74, 0.8).slice(4, L - 1), "#f2ebe0", 1, ` opacity=".5"`) : "");
     return K(T, rohr(h, w0, w1, true, 0.8), hornG(name), { rand: false, vol: false, innen: f });
   };
-  const h2 = [[310, -96], [312, -106], [315, -116], [315, -127]];
-  const h1 = [[340, -76], [354, -84], [368, -96], [382, -110], [394, -126], [404, -142], [412, -156]];
-  s += horn(h2, 18, 3.5, 14, "horn2") + horn(h1, 28, 4, 30, "horn1");
+  const h2 = [[311, -98], [313, -107], [315.4, -117], [315.4, -128]];
+  const h1 = [[345, -83], [357, -91], [370, -103], [383, -117], [395, -132], [405, -148], [413, -163]];
+  s += horn(h2, 18, 3.5, 12, "horn2") + horn(h1, 26, 4, 30, "horn1");
   /* Haarkranz aus kurzen, verfilzten Haaren umschließt die Hornbasen */
-  s += LOCKENLINIE(T, [[328, -76], [338, -82], [350, -82], [356, -76]], 26, [-2, 3], (x) => (x < 342 ? 110 : 60), 5, 1.4, () => 0.42, TON, { streuung: 25, szene: 0.2, haare: 1, hb: 0.3 });
-  s += LOCKENLINIE(T, [[302, -94], [310, -99], [320, -97]], 16, [-1, 2], 150, 4, 1.2, () => 0.5, TON, { streuung: 25, szene: 0.2 });
+  s += LOCKENLINIE(T, [[334, -90], [340, -92], [348, -84], [354, -76], [356, -72]], 40, [-1, 3], (x) => (x < 342 ? 120 : 70), (x) => 4 + ((x * 3.3) % 1) * 4, 1.2, () => 0.42, TON, { streuung: 30, kruemmung: 0.3, szene: 0.2, haare: 1, hb: 0.3 });
+  s += LOCKENLINIE(T, [[302, -95], [308, -100], [316, -101], [322, -98]], 22, [-1, 2], 140, (x) => 3 + ((x * 3.3) % 1) * 3, 1, () => 0.5, TON, { streuung: 30, kruemmung: 0.3, szene: 0.2 });
 
-  return { svg: s, box: [7, -165, 416, 0], fuesse: [235, 215, 69, 93], kopf: [270, -170, 418, -30] };
+  return { svg: s, box: [7, -168, 417, 0], fuesse: [235, 215, 69, 93], kopf: [270, -170, 418, -30] };
 }
 
 /* =====================================================================
@@ -1365,7 +1365,7 @@ module.exports = [
   { id: "saebelzahnkatze", de: "die Säbelzahnkatze", syl: "SÄ-bel-zahn-kat-ze", it: "la tigre dai denti a sciabola", itSyl: "TI-gre dai DEN-ti a SCIA-bo-la", en: "sabre-toothed cat",
     gruppe: "Eiszeit", lebensraum: "Eiszeit", laenge: 1.81, hoehe: 1.09, zeichne: saebelzahn },
   { id: "wollnashorn", de: "das Wollnashorn", syl: "WOLL-nas-horn", it: "il rinoceronte lanoso", itSyl: "ri-no-ce-RON-te la-NO-so", en: "woolly rhinoceros",
-    gruppe: "Eiszeit", lebensraum: "Eiszeit", laenge: 4.09, hoehe: 1.65, zeichne: wollnashorn },
+    gruppe: "Eiszeit", lebensraum: "Eiszeit", laenge: 4.1, hoehe: 1.68, zeichne: wollnashorn },
   { id: "riesenhirsch", de: "der Riesenhirsch", syl: "RIE-sen-hirsch", it: "il megacero", itSyl: "me-GA-ce-ro", en: "giant deer",
     gruppe: "Eiszeit", lebensraum: "Eiszeit", laenge: 3.22, hoehe: 3.42, zeichne: riesenhirsch },
   { id: "hoehlenbaer", de: "der Höhlenbär", syl: "HÖH-len-bär", it: "l'orso delle caverne", itSyl: "OR-so del-le ca-VER-ne", en: "cave bear",
