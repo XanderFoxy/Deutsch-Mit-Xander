@@ -176,7 +176,7 @@ const wolke = (x, y, w, h, n, seed) => {
   g += `<path d="M${r(x - w / 2)} ${r(y)} H${r(x + w / 2)}" stroke="#b9c5d1" stroke-width="${r(h * .12)}" opacity=".6"/>`;
   return `<g>${g}</g>`;
 };
-S.hinten(wolke(74, 38, 64, 14, 7, 3) + wolke(256, 20, 40, 9, 5, 7) + wolke(344, 66, 50, 12, 6, 11) + wolke(160, 92, 24, 6, 4, 5));
+S.hinten(wolke(74, 38, 64, 14, 7, 3) + wolke(206, 24, 38, 9, 5, 7) + wolke(344, 66, 50, 12, 6, 11) + wolke(160, 92, 24, 6, 4, 5));
 /* ferne Bauten in den Lücken: Liebfrauenkirche (Nordwesten), Domshof (Nordosten), Südostecke */
 const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
   /* Giebelhaus in einer senkrechten Ebene E (s nach rechts im Bild), Treppengiebel */

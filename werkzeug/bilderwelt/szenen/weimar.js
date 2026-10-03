@@ -134,17 +134,18 @@ S.hinten(`<rect x="0" y="${HOR}" width="400" height="${260 - HOR}" fill="#a49b8f
   let k = "";
   /* Haus: in der Fassadenebene D, von X0 bis X1, Traufe in m, Dachfirst in m */
   const haus = (D, X0, X1, traufe, first, farbe, fl, achsen, gaube) => {
-    const u = sk(D), x0 = xG(D, X0), x1 = xG(D, X1), y0 = yG(D, 0), yt = yG(D, traufe), yf = yG(D, first);
+    const u = sk(D), x0 = Math.max(0.6, xG(D, X0)), x1 = Math.min(399.4, xG(D, X1)), y0 = yG(D, 0), yt = yG(D, traufe), yf = yG(D, first);
     let g = `<rect x="${r(x0)}" y="${r(yt)}" width="${r(x1 - x0)}" height="${r(y0 - yt)}" fill="${farbe}"/>`;
     g += `<rect x="${r(x0)}" y="${r(yt)}" width="${r(x1 - x0)}" height="${r(y0 - yt)}" fill="${S.lg("hauslicht", [[0, "#fff4dc", 0.25], [1, "#000", 0.12]], 0, 0, 1, 0)}"/>`;
     g += `<path d="M${r(x0 - 0.6)} ${r(yt)} L${r(x0 + (x1 - x0) * 0.12)} ${r(yf)} L${r(x1 - (x1 - x0) * 0.12)} ${r(yf)} L${r(x1 + 0.6)} ${r(yt)} Z" fill="${DACH}"/>`;
     g += `<rect x="${r(x0 - 0.6)}" y="${r(yt - 0.6)}" width="${r(x1 - x0 + 1.2)}" height=".9" fill="#efe6d4"/>`;
-    const dx = (x1 - x0) / achsen, fh = (y0 - yt - 0.6 * u) / fl;
+    const dx = (xG(D, X1) - xG(D, X0)) / achsen, fh = (y0 - yt - 0.6 * u) / fl, xa = xG(D, X0);
     for (let f = 0; f < fl; f++) for (let i = 0; i < achsen; i++) {
-      const x = x0 + (i + 0.5) * dx, y = yt + 0.6 * u + f * fh;
+      const x = xa + (i + 0.5) * dx, y = yt + 0.6 * u + f * fh;
+      if (x < 2 || x > 398) continue;
       g += `<rect x="${r(x - 0.45 * u)}" y="${r(y + fh * 0.22)}" width="${r(0.9 * u)}" height="${r(fh * 0.55)}" fill="${GLAS}"/><rect x="${r(x - 0.6 * u)}" y="${r(y + fh * 0.18)}" width="${r(1.2 * u)}" height="${r(0.18 * u)}" fill="#f4ecdc"/>`;
     }
-    if (gaube) for (let i = 1; i < achsen; i += 2) { const x = x0 + (i + 0.5) * dx; g += `<path d="M${r(x - 0.5 * u)} ${r(yt - 0.4 * u)} L${r(x - 0.5 * u)} ${r(yt - 1.4 * u)} L${r(x)} ${r(yt - 1.9 * u)} L${r(x + 0.5 * u)} ${r(yt - 1.4 * u)} L${r(x + 0.5 * u)} ${r(yt - 0.4 * u)} Z" fill="#e9e1d0"/><rect x="${r(x - 0.3 * u)}" y="${r(yt - 1.3 * u)}" width="${r(0.6 * u)}" height="${r(0.8 * u)}" fill="#3f4a52"/>`; }
+    if (gaube) for (let i = 1; i < achsen; i += 2) { const x = xa + (i + 0.5) * dx; if (x < 4 || x > 396) continue; g += `<path d="M${r(x - 0.5 * u)} ${r(yt - 0.4 * u)} L${r(x - 0.5 * u)} ${r(yt - 1.4 * u)} L${r(x)} ${r(yt - 1.9 * u)} L${r(x + 0.5 * u)} ${r(yt - 1.4 * u)} L${r(x + 0.5 * u)} ${r(yt - 0.4 * u)} Z" fill="#e9e1d0"/><rect x="${r(x - 0.3 * u)}" y="${r(yt - 1.3 * u)}" width="${r(0.6 * u)}" height="${r(0.8 * u)}" fill="#3f4a52"/>`; }
     return g;
   };
   /* links (Süden), hinter den Bäumen: zwei Häuser in der Flucht des Theaters */
@@ -271,8 +272,8 @@ S.teile[S.teile.length - 1].unter = theaterUnter;
     k += `<path d="M${r(x)} ${r(yG(D, 5.5))} q${r(1.2 * u)} ${r(-0.8 * u)} ${r(2 * u)} ${r(-2.6 * u)} M${r(x)} ${r(yG(D, 6.2))} q${r(-1.1 * u)} ${r(-0.7 * u)} ${r(-1.8 * u)} ${r(-2.4 * u)}" stroke="#4a3b2c" stroke-width="${r(0.18 * u)}" fill="none" stroke-linecap="round"/>`;
     bodenSchatten(D, X, 1, 9, 0.18);
   }
-  k += krone(xG(34, -22.5), yG(34, 10), 44, 56, 31, 0.6) + krone(xG(28, -19.5), yG(28, 9.5), 44, 58, 32, 0.55);
-  k += krone(xG(33, 22), yG(33, 10), 44, 56, 33, 0.65) + krone(xG(27, 19), yG(27, 9.5), 44, 58, 34, 0.55);
+  k += krone(xG(34, -22.5), yG(34, 10), 38, 56, 31, 0.6) + krone(xG(28, -19.5), yG(28, 9.5), 36, 58, 32, 0.55);
+  k += krone(xG(33, 22), yG(33, 10), 38, 56, 33, 0.65) + krone(xG(27, 19), yG(27, 9.5), 36, 58, 34, 0.55);
   S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: k,
     tipp: "Im Oktober werden die Blätter der Linden gelb." });
 }
@@ -490,7 +491,7 @@ const ZW = { D: 13, X: -5.6 };
   for (const [cx, len, rot] of pos) g += zopf(cx, len, rot);
   /* Trockenblumen-Sträuße dazwischen */
   for (const cx of [0.1]) { g += `<path d="M${cx} -1.98 L${cx} -1.4" stroke="#7a8a4a" stroke-width=".03"/>`; for (let i = 0; i < 9; i++) g += `<circle cx="${r(cx - 0.14 + rnd() * 0.28)}" cy="${r(-1.42 + rnd() * 0.22)}" r=".04" fill="${["#d9b23a", "#b8435a", "#e8e0c8", "#8c5aa8"][i % 4]}"/>`; }
-  S.teil({ oben: true, id: "zwiebelzopf", de: "der Zwiebelzopf", syl: "ZWIE-bel-zopf", it: "la treccia di cipolle", itSyl: "TREC-cia di ci-POL-le", en: "onion braid", x: r(x), y: r(y), steht: true,
+  S.teil({ id: "zwiebelzopf", de: "der Zwiebelzopf", syl: "ZWIE-bel-zopf", it: "la treccia di cipolle", itSyl: "TREC-cia di ci-POL-le", en: "onion braid", x: r(x), y: r(y), steht: true,
     kunst: `<g transform="scale(${u.toFixed(4)})">${g}${flaeche(-1.45, -2.0, 1, 1.05, 0.05)}${flaeche(0.45, -2.0, 1.05, 1.05, 0.05)}</g>`,
     tipp: "Zwiebelzöpfe sind das Wahrzeichen des Weimarer Zwiebelmarkts. Den Markt gibt es seit 1653." });
   /* DIE ZWIEBEL: Kisten mit losen Zwiebeln auf der Theke */
@@ -542,7 +543,7 @@ const GR = { D: 12.5, X: 4.5 };
     g += `<rect x="${r(wx)}" y="-1.09" width=".26" height=".07" rx=".035" fill="${S.lg("wurst", [[0, "#c9773a"], [0.5, "#9a4f22"], [1, "#6e3414"]])}"/>`;
     g += `<path d="M${r(wx + 0.06)} -1.08 l.04 .05 M${r(wx + 0.14)} -1.08 l.04 .05" stroke="#3a1a0a" stroke-width=".012"/>`;
   }
-  g += `<g filter="url(#${S.id("rauch")})" opacity=".55"><path d="M-.6 -1.2 Q-.9 -1.8 -.5 -2.3 Q-.1 -2.8 -.5 -3.4 L-.1 -3.4 Q.3 -2.8 0 -2.3 Q-.3 -1.8 .1 -1.2 Z" fill="#e8e6e2"/></g>`;
+  S.davor(`<g transform="translate(${r(x)} ${r(y)}) scale(${u.toFixed(4)})" pointer-events="none"><g filter="url(#${S.id("rauch")})" opacity=".55"><path d="M-.6 -1.2 Q-.9 -1.8 -.5 -2.3 Q-.1 -2.8 -.5 -3.4 L-.1 -3.4 Q.3 -2.8 0 -2.3 Q-.3 -1.8 .1 -1.2 Z" fill="#e8e6e2"/></g></g>`);
   S.teil({ oben: true, id: "rostbratwurst", de: "die Rostbratwurst", syl: "ROST-brat-wurst", it: "la salsiccia alla griglia", itSyl: "sal-SIC-cia AL-la GRI-glia", en: "grilled sausage", x: r(x), y: r(y), steht: true,
     kunst: `<g transform="scale(${u.toFixed(4)})">${g}${flaeche(-1.05, -1.25, 2.1, 0.32, 0.05)}</g>`,
     tipp: "Die Thüringer Rostbratwurst isst man im Brötchen — mit Senf, ohne Ketchup." });
@@ -626,7 +627,14 @@ const TO = mensch("TO", { id: "wmr_tour", geschlecht: "m", blick: -32, frisur: "
   /* Querfugen (näher = weiter auseinander) und Längsfugen zum Fluchtpunkt */
   let fugen = "";
   for (let D = 8; D < 80; D *= 1.07) fugen += `M0 ${r(yG(D))} H400 `;
-  for (let X = -40; X <= 40; X += 1.2) fugen += `M${r(xG(80, X))} ${r(yG(80))} L${r(xG(6, X))} ${r(yG(6))} `;
+  for (let X = -40; X <= 40; X += 1.2) {
+    /* Längsfuge vom Horizont nach vorn, am Bildrand abgeschnitten */
+    let [ax, ay, bx, by] = [xG(80, X), yG(80), xG(6, X), yG(6)];
+    if (by > 260) { const t = (260 - ay) / (by - ay); bx = ax + (bx - ax) * t; by = 260; }
+    if (bx < 0 || bx > 400) { const xr = bx < 0 ? 0 : 400; const t = (xr - ax) / (bx - ax); if (t <= 0) continue; by = ay + (by - ay) * t; bx = xr; }
+    if (ax < 0 || ax > 400) continue;
+    fugen += `M${r(ax)} ${r(ay)} L${r(bx)} ${r(by)} `;
+  }
   k += `<path d="${fugen}" stroke="#7a7064" stroke-width=".22" fill="none" opacity=".6"/>`;
   {
     const z = zufall(9);

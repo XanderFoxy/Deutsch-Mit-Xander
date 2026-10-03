@@ -462,12 +462,12 @@ const WEGRAND = -140.6;
   const Y = -141, p = pr(4.2, Y, 0), m = mass(Y);
   let k = bodenSchatten(4.2, Y, .9, 9, .28).replace(/(-?\d+\.?\d*) (-?\d+\.?\d*)/g, (q, x, y) => `${Math.min(+x, BR + 4)} ${y}`);
   /* Stamm mit Längsrissen und Wurzelanlauf */
-  k += `<path d="M${r(p[0] - .9 * m)} ${r(p[1] + .2)} Q${r(p[0] - .5 * m)} ${r(p[1] - .4 * m)} ${r(p[0] - .42 * m)} ${r(p[1] - 1.4 * m)} C${r(p[0] - .3 * m)} ${r(p[1] - 4 * m)} ${r(p[0] - .4 * m)} ${r(p[1] - 6 * m)} ${r(p[0] - .2 * m)} 40 L${r(p[0] + .5 * m)} 40 C${r(p[0] + .45 * m)} ${r(p[1] - 6 * m)} ${r(p[0] + .38 * m)} ${r(p[1] - 4 * m)} ${r(p[0] + .48 * m)} ${r(p[1] - 1.4 * m)} Q${r(p[0] + .6 * m)} ${r(p[1] - .4 * m)} ${r(p[0] + .95 * m)} ${r(p[1] + .2)} Z" fill="${S.lg("stamm", [[0, "#8a7462"], [0.45, "#5a4838"], [1, "#2e241c"]], 0, 0, 1, 0)}"/>`;
-  { let d = ""; for (let i = 0; i < 9; i++) { const x = p[0] + (-.32 + i * .09) * m, y0 = p[1] - (1 + rnd() * 2) * m, y1 = 44 + rnd() * 40; d += `M${r(x)} ${r(y0)} C${r(x + 1)} ${r((y0 + y1) / 2)} ${r(x - 1)} ${r((y0 + y1) / 2)} ${r(x + .4)} ${r(y1)} `; } k += `<path d="${d}" stroke="#2a1f17" stroke-width=".55" fill="none" opacity=".55"/>`; }
+  k += `<path d="M${r(p[0] - .9 * m)} ${r(p[1] + .2)} Q${r(p[0] - .5 * m)} ${r(p[1] - .4 * m)} ${r(p[0] - .42 * m)} ${r(p[1] - 1.4 * m)} C${r(p[0] - .3 * m)} ${r(p[1] - 4 * m)} ${r(p[0] - .6 * m)} ${r(p[1] - 6 * m)} ${r(p[0] - 22)} 52 L${r(p[0] - 10)} 50 C${r(p[0] + .1 * m)} ${r(p[1] - 6 * m)} ${r(p[0] + .38 * m)} ${r(p[1] - 4 * m)} ${r(p[0] + .48 * m)} ${r(p[1] - 1.4 * m)} Q${r(p[0] + .6 * m)} ${r(p[1] - .4 * m)} ${r(p[0] + .95 * m)} ${r(p[1] + .2)} Z" fill="${S.lg("stamm", [[0, "#8a7462"], [0.45, "#5a4838"], [1, "#2e241c"]], 0, 0, 1, 0)}"/>`;
+  { let d = ""; for (let i = 0; i < 9; i++) { const x = p[0] + (-.32 + i * .09) * m, y0 = p[1] - (1 + rnd() * 2) * m, y1 = 70 + rnd() * 30; d += `M${r(x)} ${r(y0)} C${r(x + 1)} ${r((y0 + y1) / 2)} ${r(x - 1)} ${r((y0 + y1) / 2)} ${r(x + .4)} ${r(y1)} `; } k += `<path d="${d}" stroke="#2a1f17" stroke-width=".55" fill="none" opacity=".55"/>`; }
   /* Äste in die Krone */
   k += `<path d="M${r(p[0])} 64 Q${r(p[0] - 26)} 46 ${r(p[0] - 50)} 36 M${r(p[0] + 2)} 48 Q${r(p[0] - 12)} 28 ${r(p[0] - 30)} 18 M${r(p[0] + 4)} 56 Q${r(p[0] + 6)} 34 ${r(p[0] + 4)} 22" stroke="#3a2c22" stroke-width="2.6" fill="none"/>`;
   /* Laubmassen: Licht von links oben, Schatten rechts unten, Himmelslöcher */
-  for (const [cx, cy, rr] of [[p[0] - 34, 30, 25], [p[0] - 56, 46, 16], [p[0] - 12, 26, 18], [p[0] - 28, 54, 14], [p[0] - 2, 48, 12]]) k += `<circle cx="${r(cx)}" cy="${r(cy)}" r="${rr}" fill="#9a6e26"/><circle cx="${r(cx - rr * .2)}" cy="${r(cy - rr * .22)}" r="${r(rr * .8)}" fill="#c08a32"/><circle cx="${r(cx - rr * .4)}" cy="${r(cy - rr * .42)}" r="${r(rr * .42)}" fill="#e2b24a"/>`;
+  for (const [cx, cy, rr] of [[p[0] - 34, 30, 25], [p[0] - 56, 46, 16], [p[0] - 12, 26, 18], [p[0] - 24, 54, 16], [p[0] - 6, 50, 13]]) k += `<circle cx="${r(cx)}" cy="${r(cy)}" r="${rr}" fill="#9a6e26"/><circle cx="${r(cx - rr * .2)}" cy="${r(cy - rr * .22)}" r="${r(rr * .8)}" fill="#c08a32"/><circle cx="${r(cx - rr * .4)}" cy="${r(cy - rr * .42)}" r="${r(rr * .42)}" fill="#e2b24a"/>`;
   for (const [x, y] of [[p[0] - 40, 30], [p[0] - 14, 40], [p[0] - 2, 14]]) k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="3.2" ry="2.2" fill="#a9c6df"/>`;
   /* gefingerte Rosskastanienblätter */
   const blatt = (x, y, s, rot, f, rand) => {
@@ -599,7 +599,7 @@ const kleineFigur = (svg) => {
   const A = anker(L(.5, .1)[0], L(.5, .1)[1], k);
   S.teil({ oben: true, id: "decke", de: "die Decke", syl: "DE-cke", it: "la coperta", itSyl: "co-PER-ta", en: "picnic blanket", x: A.x, y: A.y, kunst: A.kunst,
     tipp: "Bei schönem Wetter machen viele ein Picknick im Maschpark.",
-    zoom: { x: r(Math.max(0, L(.45, .5)[0] - zw / 2)), y: HO - zh, w: zw, h: zh },
+    zoom: { x: r(Math.max(0, L(.05, .5)[0] - 3)), y: HO - 60, w: 90, h: 60 },
     unter: [
       { id: "butterkeks", de: "der Butterkeks", syl: "BUT-ter-keks", it: "il biscotto al burro", itSyl: "bi-SCOT-to al BUR-ro", en: "butter biscuit", x: K[0] + 1.5 * km * 1.15, y: K[1] - 2 * km * 1.15, kunst: flaeche(-15 * km, -5 * km, 34 * km, 8 * km, .3),
         tipp: "Der Leibniz-Keks kommt aus Hannover und hat genau 52 Zähne." },

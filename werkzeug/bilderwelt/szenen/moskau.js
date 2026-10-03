@@ -73,7 +73,34 @@ const F = 560, HOR = 172, EYE = 1.7;
 const X = (d, l) => 200 + F * l / d;
 const Y = (d, h = 0) => HOR + F * (EYE - h) / d;
 const P = (d, l, h = 0) => `${r(X(d, l))} ${r(Y(d, h))}`;
-const poly = (pts, fill, extra = "") => `<path d="M${pts.join(" L")}Z" fill="${fill}"${extra}/>`;
+/* Vielecke und Linien werden auf das Bild (0…400 × 0…260) beschnitten — nichts ragt hinaus */
+const BOX = [0, 0, 400, 260];
+function klipp(pts) {
+  let p = pts.map((q) => q.split(" ").map(Number));
+  const kante = [[(q) => q[0] >= BOX[0], (a, b) => [BOX[0], a[1] + (b[1] - a[1]) * (BOX[0] - a[0]) / (b[0] - a[0])]],
+    [(q) => q[0] <= BOX[2], (a, b) => [BOX[2], a[1] + (b[1] - a[1]) * (BOX[2] - a[0]) / (b[0] - a[0])]],
+    [(q) => q[1] >= BOX[1], (a, b) => [a[0] + (b[0] - a[0]) * (BOX[1] - a[1]) / (b[1] - a[1]), BOX[1]]],
+    [(q) => q[1] <= BOX[3], (a, b) => [a[0] + (b[0] - a[0]) * (BOX[3] - a[1]) / (b[1] - a[1]), BOX[3]]]];
+  for (const [innen, schnitt] of kante) {
+    const out = [];
+    for (let i = 0; i < p.length; i++) {
+      const a = p[i], b = p[(i + 1) % p.length];
+      if (innen(a)) { out.push(a); if (!innen(b)) out.push(schnitt(a, b)); } else if (innen(b)) out.push(schnitt(a, b));
+    }
+    p = out; if (!p.length) break;
+  }
+  return p.map(([x, y]) => `${r(x)} ${r(y)}`);
+}
+const poly = (pts, fill, extra = "") => { const q = klipp(pts); return q.length > 2 ? `<path d="M${q.join(" L")}Z" fill="${fill}"${extra}/>` : ""; };
+const strecke = (a, b) => {   /* Linie a→b auf das Bild beschnitten */
+  let [x1, y1] = a.split(" ").map(Number), [x2, y2] = b.split(" ").map(Number), t0 = 0, t1 = 1;
+  const dx = x2 - x1, dy = y2 - y1;
+  for (const [p, q] of [[-dx, x1 - BOX[0]], [dx, BOX[2] - x1], [-dy, y1 - BOX[1]], [dy, BOX[3] - y1]]) {
+    if (p === 0) { if (q < 0) return ""; continue; }
+    const t = q / p; if (p < 0) { if (t > t1) return ""; if (t > t0) t0 = t; } else { if (t < t0) return ""; if (t < t1) t1 = t; }
+  }
+  return `M${r(x1 + t0 * dx)} ${r(y1 + t0 * dy)} L${r(x1 + t1 * dx)} ${r(y1 + t1 * dy)}`;
+};
 /* Figuren klein halten: Koordinaten ganzzahlig (in Figur-Zentimetern) */
 const kompakt = (svg, Q = 1) => {
   const rund = (n) => { const v = Math.round(+n / Q) * Q; return String(v === 0 ? 0 : v); };
@@ -168,20 +195,20 @@ S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0
   let k = `<path d="M0 ${r(Y(104))} L${r(X(277, -38))} ${r(Y(277))} L${r(X(350, -20))} ${r(Y(350))} L${r(X(350, 30))} ${r(Y(350))} L${r(X(288.5, 38))} ${r(Y(288.5))} L${r(X(106, 38))} ${r(Y(106))} L400 ${r(Y(106))} L400 260 L0 260 Z" fill="${S.lg("pflaster", [[0, "#8e8c93"], [0.25, "#6f6c74"], [1, "#4b474e"]])}"/>`;
   /* Pflasterreihen in Flucht: Längslinien zum Fluchtpunkt, Querreihen dichter in der Ferne */
   let lin = "";
-  for (let l = -37; l <= 37; l += 1.6) lin += `M${r(X(11, l))} ${r(Y(11))} L${r(X(300, l))} ${r(Y(300))}`;
+  for (let l = -37; l <= 37; l += 1.6) lin += strecke(P(11, l), P(300, l));
   k += `<path d="${lin}" stroke="#35323a" stroke-width=".22" opacity=".45"/>`;
   let q = "";
-  for (let d = 11; d < 200; d *= 1.045) q += `M${r(Math.max(-5, X(d, -38)))} ${r(Y(d))} L${r(Math.min(405, X(d, 38)))} ${r(Y(d))}`;
+  for (let d = 11; d < 200; d *= 1.045) q += `M${r(Math.max(0, X(d, -38)))} ${r(Y(d))} L${r(Math.min(400, X(d, 38)))} ${r(Y(d))}`;
   k += `<path d="${q}" stroke="#2f2c33" stroke-width=".18" opacity=".5"/>`;
   /* die hellen Steinbänder des Platzes (alle 12 m) */
   let hb = "";
-  for (const d of [12, 24, 36, 48, 60, 72, 84, 96, 108, 132, 156, 180]) hb += `M${r(Math.max(-5, X(d, -38)))} ${r(Y(d))} L${r(Math.min(405, X(d, 38)))} ${r(Y(d))}`;
+  for (const d of [12, 24, 36, 48, 60, 72, 84, 96, 108, 132, 156, 180]) hb += `M${r(Math.max(0, X(d, -38)))} ${r(Y(d))} L${r(Math.min(400, X(d, 38)))} ${r(Y(d))}`;
   k += `<path d="${hb}" stroke="#a9a6ad" stroke-width=".55" opacity=".55"/>`;
   /* Steinkörnung im Vordergrund */
   let st = "";
   for (let i = 0; i < 260; i++) {
     const d = 11 + rnd() * 30, l = -16 + rnd() * 40, x = X(d, l), y = Y(d);
-    st += `M${r(x)} ${r(y)} h${r(0.4 + 24 / d)}`;
+    if (x > 2 && x < 396) st += `M${r(x)} ${r(y)} h${r(0.4 + 24 / d)}`;
   }
   k += `<path d="${st}" stroke="#9a97a0" stroke-width=".35" opacity=".35"/>`;
   /* Glanz der nassen Steine zur Sonne hin (rechts) */
@@ -199,13 +226,13 @@ S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0
   const fleck = (d, l, w, t) => {
     const n = 12, s0 = Math.round(d * 7 + l * 13);
     const pt = (f) => { const p = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, rr = (0.7 + (((i + s0) * 7919) % 13) / 30) * f; p.push(P(d + Math.sin(a) * t * rr, l + Math.cos(a) * w * rr)); } return p; };
-    return `<path d="M${pt(1).join(" L")}Z" fill="#c9d4e6" filter="url(#${S.id("weichs")})"/><path d="M${pt(0.82).join(" L")}Z" fill="${SCHNEE}" opacity=".9" filter="url(#${S.id("weichs")})"/>`;
+    return poly(pt(1), "#c9d4e6", ` filter="url(#${S.id("weichs")})"`) + poly(pt(0.82), SCHNEE, ` opacity=".9" filter="url(#${S.id("weichs")})"`);
   };
   k += fleck(12.6, -5.5, 3.2, 1.2) + fleck(15.5, 10, 2.6, 1.1) + fleck(25, -13, 4.5, 2.2) + fleck(31, 13, 3.4, 2.4) + fleck(46, -24, 5, 4) + fleck(70, 21, 4, 6) + fleck(11.8, 3.2, 1.4, 0.5) + fleck(38, -1, 2, 2);
   /* Schlagschatten der Dinge im Vordergrund (zur Bodenfläche) — Sonne rechts, knapp hinten */
   const schlag = (d, l, breite, lang, a = 0.32) => poly([P(d - 0.15, l + breite / 2), P(d + 0.15, l + breite / 2), P(d + 0.5, l - lang), P(d + 0.2, l - lang - 0.3), P(d - 0.15, l - breite / 2)], "#1b2247", ` opacity="${a}" filter="url(#bw_weich)"`);
-  k += poly([P(21, -4.5), P(23.6, -4.5), P(24.6, -14), P(21, -14)], "#1b2247", ` opacity=".3"`);    /* Marktstand */
-  k += schlag(19.5, -3.6, 0.5, 4.8) + schlag(16.5, 3.4, 0.45, 4.5) + schlag(11.5, 0.6, 0.18, 0.9, 0.25);
+  k += poly([P(21, -3.7), P(23.6, -3.7), P(24.6, -13.3), P(21, -13.3)], "#1b2247", ` opacity=".3"`);    /* Marktstand */
+  k += schlag(19.5, -2.7, 0.5, 4.8) + schlag(16.5, 3.4, 0.45, 4.5) + schlag(11.5, 0.6, 0.18, 0.9, 0.25);
   S.teil({ id: "roter_platz", de: "der Rote Platz", syl: "RO-te PLATZ", it: "la Piazza Rossa", itSyl: "PIAZ-za ROS-sa", en: "Red Square", x: 0, y: 0, kunst: k,
     tipp: "„Krasnaja“ heißt auf Altrussisch auch „schön“: Der Rote Platz ist also der schöne Platz." });
 }
@@ -527,7 +554,7 @@ const unterKathedrale = [];
    5 — DIE KREMLMAUER mit Schwalbenschwanz-Zinnen und dem Senatsturm
    ===================================================================== */
 {
-  const L = 38, D0 = 104, D1 = 288.5;
+  const L = 38, D0 = 106.5, D1 = 288.5;
   let k = "";
   /* Mauerkörper mit Zinnenkrone als ein Umriss */
   let u = `M${P(D0, L, 0)} L${P(D0, L, 10)}`;
@@ -607,7 +634,7 @@ const unterKathedrale = [];
     g += `<path d="M0 ${r(-h)} V${r(-h - 0.5)}" stroke="#2f5a58" stroke-width=".18"/></g>`;
     return g;
   };
-  const reihe = [[98, 10.4], [105, 9.6], [112, 10.8], [119, 9.8], [126, 10.6], [133, 10], [140, 10.6], [147, 9.6]];
+  const reihe = [[105.5, 9.6], [112, 10.8], [119, 9.8], [126, 10.6], [133, 10], [140, 10.6], [147, 9.6]];
   for (let i = reihe.length - 1; i >= 0; i--) k += baum(reihe[i][0], reihe[i][1], 40 + i);
   S.teil({ id: "fichte", de: "die Fichte", syl: "FICH-te", it: "l'abete rosso", itSyl: "a-BE-te ROS-so", en: "spruce", x: 0, y: 0, kunst: k,
     tipp: "Vor der Kremlmauer stehen Blaufichten. Sie sind auch im Winter grün." });
@@ -651,7 +678,7 @@ const unterKathedrale = [];
    8 — DAS KAUFHAUS GUM (242 m, links, in der Sonne)
    ===================================================================== */
 {
-  const L = -38, D0 = 100, D1 = 277, H = 20.5;
+  const L = -38, D0 = 106.5, D1 = 277, H = 20.5;
   let k = "";
   /* Dach (verschneit) hinter dem Gesims */
   k += poly([P(D0, L, H), P(D1, L, H), P(D1, L - 6, 23.6), P(D0, L - 6, 23.6)], SCHNEE);
@@ -667,7 +694,7 @@ const unterKathedrale = [];
   /* Fensterachsen: Erdgeschoss mit Schaufenstern (Rundbögen), oben gepaarte Bogenfenster */
   let fen = "", glanz = "", pil = "", rahmen = "";
   const bogen = (d0, d1, h0, h1) => { const m = (d0 + d1) / 2; return `M${P(d0, L, h0)} L${P(d0, L, h1)} Q${P(m, L, h1 + (h1 - h0) * 0.35)} ${P(d1, L, h1)} L${P(d1, L, h0)}Z`; };
-  for (let d = D0 - 1.2; d < D1 - 2; d += 4.4) {
+  for (let d = D0 + 0.1; d < D1 - 2; d += 4.4) {
     if (d > 146 && d < 166) continue;   /* Mittelportal */
     pil += `M${P(d, L, 1.4)} L${P(d, L, H - 0.9)}`;
     fen += bogen(d + 0.8, d + 3.6, 1.6, 5.2);
@@ -682,7 +709,7 @@ const unterKathedrale = [];
   k += `<path d="${glanz}" fill="#c9d8ee" opacity=".4"/>`;
   /* warmes Licht in den Schaufenstern */
   let wl = "";
-  for (let d = D0 + 0.4; d < 200; d += 4.4) if (!(d > 146 && d < 166)) wl += `M${P(d + 1.2, L, 1.7)} L${P(d + 3.2, L, 1.7)} L${P(d + 3.2, L, 2.6)} L${P(d + 1.2, L, 2.6)}Z`;
+  for (let d = D0 + 0.1; d < 200; d += 4.4) if (!(d > 146 && d < 166)) wl += `M${P(d + 1.2, L, 1.7)} L${P(d + 3.2, L, 1.7)} L${P(d + 3.2, L, 2.6)} L${P(d + 1.2, L, 2.6)}Z`;
   k += `<path d="${wl}" fill="#ffd27a" opacity=".55"/>`;
   /* Mittelportal (d 147–165): hoher Giebel mit großem Bogen, zwei Türme mit grünen Zeltdächern */
   {
@@ -706,7 +733,7 @@ const unterKathedrale = [];
       `<path d="M-.5 ${r(-t0 + 1.3)} v${r(t0 * 0.45)} h1 v${r(-t0 * 0.45)} Z" fill="#3b4660"/><rect x="-1.8" y="${r(-t0 - 0.5)}" width="3.6" height=".5" fill="${SCHNEE}"/>` +
       `<path d="M-1.6 ${-t0} L0 ${-t1} L1.6 ${-t0} Z" fill="${GRUEN_L}"/><path d="M-1.6 ${-t0} L0 ${-t1} L-.4 ${-t0} Z" fill="${GRUEN_M}"/><path d="M0 ${-t1} v-1.2" stroke="#d6a93a" stroke-width=".25"/></g>`;
   };
-  for (const [d, hoch] of [[276, true], [237, false], [197, false], [168, true], [144, true], [117, false], [96, false]]) k += turm(d, hoch);
+  for (const [d, hoch] of [[276, true], [237, false], [197, false], [168, true], [144, true], [117, false]]) k += turm(d, hoch);
   S.teil({ id: "kaufhaus", de: "das Kaufhaus", syl: "KAUF-haus", it: "il grande magazzino", itSyl: "GRAN-de ma-gaz-ZI-no", en: "department store",
     x: 0, y: 0, kunst: k, zoom: { x: 0, y: 104, w: 105, h: 70 },
     unter: [{ id: "schaufenster", de: "das Schaufenster", syl: "SCHAU-fens-ter", it: "la vetrina", itSyl: "ve-TRI-na", en: "shop window",
@@ -717,7 +744,7 @@ const unterKathedrale = [];
 /* =====================================================================
    9 — DER MARKTSTAND (Holzbude mit Schnitzwerk; 21 m vor dem Betrachter)
    ===================================================================== */
-const STAND = { d: 21, l0: -7.6, l1: -4.4, theke: 1.05 };
+const STAND = { d: 21, l0: -6.9, l1: -3.7, theke: 1.05 };
 {
   const { d, l0, l1, theke } = STAND, d1 = d + 2.4;
   let k = "";
@@ -780,7 +807,7 @@ const STAND = { d: 21, l0: -7.6, l1: -4.4, theke: 1.05 };
    10 — DIE VERKÄUFERIN (hinter der Theke, buntes Kopftuch)
    ===================================================================== */
 {
-  const d = 22.2, l = -6.3, x = r(X(d, l)), y = r(Y(d));
+  const d = 22.2, l = -5.6, x = r(X(d, l)), y = r(Y(d));
   const m = B.mensch({ id: "msk_verk", geschlecht: "w", blick: 38, neigung: 3, frisur: "dutt", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true, pose: "servieren",
     kleidung: { oberteil: { stueck: "pullover", farbe: "#e9e1cf" }, jacke: { stueck: "weste", farbe: "#6a2a2a" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "kopftuch", farbe: "#b8272a" } } }, r(1.64 * F / d));
   const theke = Y(STAND.d, STAND.theke) - y;
@@ -802,7 +829,7 @@ const STAND = { d: 21, l0: -7.6, l1: -4.4, theke: 1.05 };
    ===================================================================== */
 let KUNDE_HAND = null;
 {
-  const d = 19.5, l = -3.55, x = r(X(d, l)), y = r(Y(d));
+  const d = 19.5, l = -2.7, x = r(X(d, l)), y = r(Y(d));
   const pose = { kipp: 0, lende: 1, brust: 0, nacken: 4, kopf: -4, schulterL: { vor: 4, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.4,
     schulterR: { vor: 16, seit: 8, dreh: 14 }, ellbogenR: 92, unterarmR: 30, handR: 8, fingerR: 0.72,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -6, seit: 4, dreh: -6 }, knieR: 6, fussR: 2 };
@@ -834,7 +861,7 @@ let KUNDE_HAND = null;
 const THEKE_Y = (l) => Y(STAND.d + 0.15, STAND.theke + 0.03);
 {
   /* Samowar (links auf der Theke): Messing, Hahn, Teekanne obenauf */
-  const l = -7.15, x = r(X(STAND.d + 0.15, l)), y = r(THEKE_Y(l)), s = F / (STAND.d + 0.15);
+  const l = -6.45, x = r(X(STAND.d + 0.15, l)), y = r(THEKE_Y(l)), s = F / (STAND.d + 0.15);
   const MS = S.lg("messing", [[0, "#6b4a18"], [0.35, "#c9963c"], [0.6, "#ffe6a0"], [0.75, "#d9a446"], [1, "#7a5418"]], 0, 0, 1, 0);
   let k = `<g transform="scale(${s.toFixed(4)})">`;
   k += `<path d="M-.11 0 h.22 l.03 -.05 h-.28 Z M-.12 -.05 h.24 v-.03 h-.24 Z" fill="#7a5418"/>`;
@@ -848,7 +875,7 @@ const THEKE_Y = (l) => Y(STAND.d + 0.15, STAND.theke + 0.03);
 }
 {
   /* Matrjoschka: drei Puppen nebeneinander, die große vorne rechts */
-  const l = -4.95, x = r(X(STAND.d + 0.15, l)), y = r(THEKE_Y(l)), s = F / (STAND.d + 0.15);
+  const l = -4.25, x = r(X(STAND.d + 0.15, l)), y = r(THEKE_Y(l)), s = F / (STAND.d + 0.15);
   let k = `<g transform="scale(${s.toFixed(4)})">`;
   const puppe = (dx, h, rock) => {
     const w = h * 0.52;
@@ -867,7 +894,7 @@ const THEKE_Y = (l) => Y(STAND.d + 0.15, STAND.theke + 0.03);
 }
 {
   /* Pelmeni: Schale mit Teigtaschen und einem Klecks Schmand */
-  const l = -6.15, x = r(X(STAND.d + 0.15, l)), y = r(THEKE_Y(l)), s = F / (STAND.d + 0.15);
+  const l = -5.1, x = r(X(STAND.d + 0.15, l)), y = r(THEKE_Y(l)), s = F / (STAND.d + 0.15);
   let k = `<g transform="scale(${s.toFixed(4)})">`;
   k += `<path d="M-.11 -.06 Q-.1 0 0 0 Q.1 0 .11 -.06 Z" fill="#f4f2ec"/><path d="M-.11 -.06 Q-.1 0 0 0 Q.1 0 .11 -.06" stroke="#2f5fa0" stroke-width=".008" fill="none"/>`;
   k += `<path d="M-.11 -.06 h.22 l-.005 .012 h-.21 Z" fill="#2f5fa0"/>`;
@@ -878,7 +905,7 @@ const THEKE_Y = (l) => Y(STAND.d + 0.15, STAND.theke + 0.03);
 }
 {
   /* Tulaer Lebkuchen (Prjanik): flach, rechteckig, mit Zuckerguss-Muster, angelehnt */
-  const l = -5.7, x = r(X(STAND.d + 0.15, l)), y = r(THEKE_Y(l)), s = F / (STAND.d + 0.15);
+  const l = -4.75, x = r(X(STAND.d + 0.15, l)), y = r(THEKE_Y(l)), s = F / (STAND.d + 0.15);
   let k = `<g transform="scale(${s.toFixed(4)})">`;
   k += `<path d="M-.07 0 L-.05 -.16 L.07 -.15 L.08 0 Z" fill="#9a5a2a"/><path d="M-.05 -.16 L.07 -.15 L.075 -.13 L-.048 -.142 Z" fill="#b8763a"/>`;
   k += `<path d="M-.035 -.03 Q.0 -.12 .055 -.03 M-.02 -.08 h.05 M0 -.13 v.03" stroke="#f6e8cc" stroke-width=".008" fill="none"/>`;

@@ -256,22 +256,25 @@ const SEE_Y0 = HOR + 0.7, SEE_Y1 = 201;
   for (let i = 0; i <= 24; i++) {
     const x = xL + 4 + i * 8.8, yb = ybase(x), neig = 0.55 * Math.sin(i * 0.62 + 0.4), H = 19 + 6 * Math.cos(i * 0.62 + 0.4) + (i % 2) * 2.5;
     const pts = [];
-    for (let t = 0; t <= 1.001; t += 0.125) pts.push([x + neig * H * 0.9 * t * t, yb - H * (2 * t - t * t) * 1.0]);
-    k += strom(pts, 0.8, 2.6, 0.95);
+    for (let t = 0; t <= 1.001; t += 0.25) pts.push([x + neig * H * 0.9 * t * t, yb - H * (2 * t - t * t) * 1.0]);
+    k += strom(pts, 0.9, 2.8, 0.8);
     const e = pts[pts.length - 1];
-    k += `<ellipse cx="${r(e[0] + neig * 2)}" cy="${r(e[1] + 1)}" rx="3" ry="2" fill="#ffffff" opacity=".6" ${W05}/>`;
+    k += `<ellipse cx="${r(e[0] + neig * 2)}" cy="${r(e[1] + 1.5)}" rx="2.6" ry="2.2" fill="#ffffff" opacity=".45" ${W12}/>`;
     for (let j = 0; j < 5; j++) k += `<circle cx="${r(e[0] + neig * (2 + j * 1.3) + (rnd() - 0.5) * 2)}" cy="${r(e[1] + 1.5 + j * 1.8 + rnd())}" r="${r(0.25 + rnd() * 0.25)}" fill="#ffffff" opacity=".8"/>`;
   }
   /* Super Shooter: schlanke Säule, oben eine weite Nebelkrone, Nebel sinkt seitlich ab */
   for (const [x, H, lean] of [[166, 58, -0.04], [192, 66, -0.02], [262, 64, 0.02], [292, 55, 0.04]]) {
     const yb = ybase(x), pts = [];
-    for (let t = 0; t <= 1.001; t += 0.1) pts.push([x + lean * H * t, yb - H * t]);
+    for (let t = 0; t <= 1.001; t += 0.25) pts.push([x + lean * H * t, yb - H * t]);
     const tx = x + lean * H, ty = yb - H;
     k += `<path d="M${r(tx - 3)} ${r(ty + 4)} Q${r(tx - 10)} ${r(ty + 10)} ${r(tx - 9)} ${r(ty + H * 0.55)} L${r(tx - 5)} ${r(ty + H * 0.5)} Q${r(tx - 5)} ${r(ty + 12)} ${r(tx)} ${r(ty + 6)} Q${r(tx + 5)} ${r(ty + 12)} ${r(tx + 5)} ${r(ty + H * 0.5)} L${r(tx + 9)} ${r(ty + H * 0.55)} Q${r(tx + 10)} ${r(ty + 10)} ${r(tx + 3)} ${r(ty + 4)} Z" fill="#ffffff" opacity=".28" ${W12}/>`;
-    k += strom(pts, 2, 5.6, 1);
-    /* Nebelkrone: steigt weiter und treibt mit dem Wind etwas nach rechts */
-    for (let j = 0; j < 6; j++) k += `<ellipse cx="${r(tx + j * 1.6 - 0.5)}" cy="${r(ty + 2 - j * 2.6)}" rx="${r(3.4 + j * 0.9)}" ry="${r(2.6 + j * 0.7)}" fill="#ffffff" opacity="${r(0.75 - j * 0.11)}" ${W12}/>`;
-    k += `<path d="M${r(tx - 2.6)} ${r(ty + 3)} Q${r(tx - 1)} ${r(ty - 3)} ${r(tx + 1.4)} ${r(ty - 4.5)} Q${r(tx + 3)} ${r(ty - 1)} ${r(tx + 2.8)} ${r(ty + 3)} Z" fill="#ffffff" opacity=".9" ${W05}/>`;
+    k += strom(pts, 1.6, 8, 0.82);
+    /* Wasserfäden im Strahl: hell links, bläulich rechts */
+    for (const [o, c, w] of [[-0.25, "#ffffff", 0.45], [0.05, "#ffffff", 0.3], [0.3, "#9fb5c8", 0.35]]) k += `<path d="M${r(x + o * 1.2)} ${r(yb)} L${r(tx + o * 7)} ${r(ty + 3)}" stroke="${c}" stroke-width="${w}" opacity=".85"/>`;
+    /* Krone: der Strahl zerstäubt, Tropfen fallen nach beiden Seiten zurück */
+    for (const [ox, oy, rx, ry, o] of [[0, 3, 7, 5, 0.5], [-3.2, 1, 4.6, 3.6, 0.7], [3.2, 0.6, 4.6, 3.4, 0.65], [0, -2.2, 3.6, 2.8, 0.85]]) k += `<ellipse cx="${r(tx + ox)}" cy="${r(ty + oy)}" rx="${rx}" ry="${ry}" fill="#ffffff" opacity="${o}" ${W12}/>`;
+    for (let j = 0; j < 14; j++) { const sd = j % 2 ? 1 : -1, t = 0.2 + rnd() * 0.8, dx = sd * (3 + t * 8), dy = -2 + t * t * 22; k += `<circle cx="${r(tx + dx)}" cy="${r(ty + dy)}" r="${r(0.22 + rnd() * 0.25)}" fill="#ffffff" opacity="${r(0.9 - t * 0.5)}"/>`; }
+    k += `<path d="M${r(tx - 5)} ${r(ty + 4)} Q${r(tx - 10)} ${r(ty + 12)} ${r(tx - 10.5)} ${r(ty + 24)} L${r(tx - 7)} ${r(ty + 22)} Q${r(tx - 6)} ${r(ty + 11)} ${r(tx)} ${r(ty + 6)} Q${r(tx + 6)} ${r(ty + 11)} ${r(tx + 7)} ${r(ty + 22)} L${r(tx + 10.5)} ${r(ty + 24)} Q${r(tx + 10)} ${r(ty + 12)} ${r(tx + 5)} ${r(ty + 4)} Z" fill="#ffffff" opacity=".22" ${W12}/>`;
   }
   /* aufgewühltes Wasser und Spiegelung der Strahlen */
   for (let i = 0; i < 60; i++) { const x = xL + rnd() * (xR - xL), y = ybase(x) + 0.2 + rnd() * 1.4; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(1 + rnd() * 2.4)}" ry=".45" fill="#ffffff" opacity=".85"/>`; }
@@ -427,7 +430,7 @@ const FIG = {
   k += `<path d="${fu}" stroke="#fffaf0" stroke-width=".25" fill="none" opacity=".5" transform="translate(.35 .35)"/>`;
   /* Schlagschatten nach rechts (Sonne links): Pflanzkübel, Menschen, Tisch, Stühle */
   const sch = (x, y, l, b, a = 0.3) => `<path d="M${r(x - 2)} ${r(y)} Q${r(x + l * 0.5)} ${r(y - b)} ${r(x + l)} ${r(y - b * 0.3)} Q${r(x + l * 0.5)} ${r(y + b * 0.8)} ${r(x - 2)} ${r(y + 0.6)} Z" fill="#5a4630" opacity="${a}" ${W05}/>`;
-  for (const [n, l] of [["tourist", 46], ["mann", 40], ["frau", 36]]) { const f = FIG[n]; k += sch(f.x, yAt(f.d, DECK), l, 2.4); }
+  for (const [n, l] of [["tourist", 46], ["mann", 38], ["frau", 24]]) { const f = FIG[n]; k += sch(f.x, yAt(f.d, DECK), l, 2.4); }
   k += sch(FIG.tisch.x - 4, yAt(FIG.tisch.d, DECK), 30, 2.4, 0.26);
   k += `<path d="M84 200 L126 200 L120 212 L60 212 Z" fill="#5a4630" opacity=".22" ${W05}/>`;
   S.teil({ anker: [200, 238], id: "terrasse", de: "die Terrasse", syl: "ter-RAS-se", it: "la terrazza", itSyl: "ter-RAZ-za", en: "terrace", x: 0, y: 0, kunst: k,
@@ -440,7 +443,7 @@ const FIG = {
 {
   const u = uAt(4), yO = yAt(4, DECK + 1.1), yU = Y_KANTE;
   let k = `<g pointer-events="none"><rect x="0" y="${r(yO)}" width="400" height="${r(yU - yO)}" fill="${S.lg("glas", [[0, "#dff0ee", 0.18], [1, "#a9d0d0", 0.32]])}"/>`;
-  for (let i = 0; i < 9; i++) { const x = 18 + i * 46 + (i % 3) * 5; k += `<path d="M${r(x)} ${r(yU)} L${r(x + 9)} ${r(yO)} L${r(x + 13)} ${r(yO)} L${r(x + 4)} ${r(yU)} Z" fill="#ffffff" opacity=".13"/>`; }
+  for (let i = 0; i < 8; i++) { const x = 18 + i * 46 + (i % 3) * 5; k += `<path d="M${r(x)} ${r(yU)} L${r(x + 9)} ${r(yO)} L${r(x + 13)} ${r(yO)} L${r(x + 4)} ${r(yU)} Z" fill="#ffffff" opacity=".13"/>`; }
   k += `</g>`;
   /* Pfosten (alle 1,5 m), Bodenschiene, Handlauf aus Edelstahl */
   for (let s = -7.5; s <= 7.6; s += 1.5) { const x = klemm(xAt(s, 4), 0.9, 399.1); k += `<rect x="${r(x - 0.9)}" y="${r(yO)}" width="1.8" height="${r(yU - yO)}" fill="${S.lg("pfosten", [[0, "#f2f4f5"], [0.5, "#a9b2b8"], [1, "#6c757c"]], 0, 0, 1, 0)}"/>`; }
@@ -601,7 +604,7 @@ const tischUnter = [];
     return `<g transform="scale(${m.k.toFixed(4)})">${t}</g>`;
   };
   const yM = yAt(FIG.mann.d, DECK), yF = yAt(FIG.frau.d, DECK);
-  const k = `<g transform="translate(${FIG.frau.x - FIG.mann.x} ${r(yF - yM)})">${vereinfache(frau.svg, 1.5)}${tuch(frau, "#1d1d22", false)}</g>` + vereinfache(mann.svg, 1.5) + tuch(mann, W, true);
+  const k = `<g transform="translate(${FIG.frau.x - FIG.mann.x} ${r(yF - yM)})">${vereinfache(frau.svg, 1.8)}${tuch(frau, "#1d1d22", false)}</g>` + vereinfache(mann.svg, 1.8) + tuch(mann, W, true);
   S.teil({ id: "gewand", de: "das Gewand", syl: "ge-WAND", it: "la veste tradizionale", itSyl: "VE-ste tra-di-zio-NA-le", en: "traditional robe", x: FIG.mann.x, y: r(yM), kunst: k,
     tipp: "Viele Männer tragen die Kandura, ein langes weißes Gewand. Viele Frauen tragen die Abaya, ein langes schwarzes Gewand." });
 }
@@ -619,7 +622,7 @@ const tischUnter = [];
   };
   const m = B.mensch({ id: "dxb_tour", geschlecht: "m", pose: foto, blick: 186, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell",
     kleidung: { oberteil: { stueck: "tshirt", farbe: "#3f7fae" }, unterteil: { stueck: "shorts", farbe: "beige" }, kopf: { stueck: "kappe", farbe: "#f2f0ea" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "#b8452e" } } }, 1.8 * u);
-  S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: f.x, y: r(y), kunst: vereinfache(m.svg, 1.5),
+  S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: f.x, y: r(y), kunst: vereinfache(m.svg, 1.8),
     tipp: "Der Tourist filmt die Wasserspiele. Die Show dauert nur fünf bis sechs Minuten." });
   /* Das Handy (quer, 15 × 7,5 cm): der Bildschirm zeigt zu uns – darauf Turm und Fontänen */
   const hs = [m.z.handL, m.z.handR].filter(Boolean);
