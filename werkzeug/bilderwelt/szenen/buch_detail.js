@@ -83,7 +83,8 @@ const ZU_T = `rotate(${ZU.rot} ${ZU.x + ZU.w / 2} ${ZU.y + ZU.h / 2})`;
    ===================================================================== */
 const LINKS = `M22 31 C50 27 100 26 126 34 L128 188 C100 182 50 181 20 184 Z`;
 const RECHTS = `M234 31 C206 27 156 26 130 34 L128 188 C156 182 206 181 236 184 Z`;
-const zeile = (x, y, txt, w, extra = "") => `<text x="${x}" y="${y}" font-size="3.3" fill="#2c2620" font-family="${SERIF}"${w ? ` textLength="${w}" lengthAdjust="spacing"` : ""}${extra}>${txt}</text>`;
+/* Flattersatz wie in Kinder- und Jugendbüchern; Zeilen ≤ 40 Zeichen passen in den Satzspiegel */
+const zeile = (x, y, txt) => `<text x="${x}" y="${y}" font-size="3.8" fill="#2c2620" font-family="${SERIF}">${txt}</text>`;
 const BL = (i) => r(79.4 + i * 4.8);       /* Grundlinien rechts */
 {
   let k = "";
@@ -98,23 +99,15 @@ const BL = (i) => r(79.4 + i * 4.8);       /* Grundlinien rechts */
   /* Bildunterschrift */
   k += `<text x="76" y="143" font-size="2.9" text-anchor="middle" fill="#4a4036" font-family="${SERIF}" font-style="italic">Abb. 3: Der Steg am Morgen</text>`;
   /* Text auf der linken Seite unter dem Bild */
-  ["Am Abend war der See ganz still. Nur die", "Grillen zirpten im hohen Gras, und weit", "draußen sprang ein Fisch aus dem Wasser."].forEach((t, i) => { k += zeile(33, 152 + i * 4.8, t, i < 2 ? 85 : 0); });
+  ["Am Abend war der See ganz still. Nur", "die Grillen zirpten im hohen Gras, und", "draußen sprang ein Fisch aus dem See."].forEach((t, i) => { k += zeile(33, 152 + i * 4.8, t); });
   /* rechte Seite: zweiter und dritter Absatz (die markierte Zeile malt „die Zeile“) */
   const rest = [
-    [6, 144, "Am anderen Ufer lag ein weißes Segelboot.", 82],
-    [7, 140, "Ein Mann winkte herüber, und Mia winkte", 86],
-    [8, 140, "zurück. „Komm doch mit!“, rief er. Mia", 86],
-    [10, 140, "den Steg zurück und holte ihre Schuhe.", 0],
-    [11, 144, "Das Boot hieß „Möwe“ und war schon alt.", 82],
-    [12, 140, "Die Segel waren geflickt, aber sie hielten.", 86],
-    [13, 140, "Der Mann hieß Herr Jansen. Er wohnte seit", 86],
-    [14, 140, "vierzig Jahren am See und kannte jede Bucht,", 86],
-    [15, 140, "jede Insel und jeden Vogel am Ufer.", 0],
-    [16, 144, "„Weißt du, wie man ein Segel setzt?“,", 82],
-    [17, 140, "fragte er. Mia schüttelte den Kopf. „Dann", 86],
-    [18, 140, "lernst du es heute“, sagte er und lachte.", 0],
+    [6, 144, "Am anderen Ufer lag ein Segelboot."], [7, 140, "Ein Mann winkte herüber, und Mia"], [8, 140, "winkte zurück. „Komm doch mit!“, rief"],
+    [10, 140, "sprang auf und holte ihre Schuhe."],
+    [11, 144, "Das Boot hieß „Möwe“ und war alt."], [12, 140, "Die Segel waren geflickt, aber sie"], [13, 140, "hielten. Der Mann hieß Herr Jansen."], [14, 140, "Er kannte jede Bucht am See."],
+    [15, 144, "„Weißt du, wie man ein Segel setzt?“,"], [16, 140, "fragte er. Mia schüttelte den Kopf."], [17, 140, "„Dann lernst du es heute“, sagte er."],
   ];
-  for (const [i, x, t, w] of rest) k += zeile(x, BL(i), t, w);
+  for (const [i, x, t] of rest) k += zeile(x, BL(i), t);
   /* leichte Wölbung der Seiten: Licht oben, Schatten zur Mitte */
   k += `<path d="M24 34 C50 30 90 29.6 110 32" stroke="#fff" stroke-width="2" opacity=".5" fill="none" filter="url(#bw_weich)"/>`;
   S.teil({ id: "seite", de: "die Seite", syl: "SEI-te", it: "la pagina", itSyl: "PA-gi-na", en: "page", x: 190, y: 150, kunst: A(190, 150, k) });
@@ -153,10 +146,10 @@ const BL = (i) => r(79.4 + i * 4.8);       /* Grundlinien rechts */
     tipp: "Ein neues Kapitel beginnt oft auf einer neuen Seite." });
 }
 {
-  let k = kasten(139, 74.4, 89, 30.6);
-  const p1 = [[0, 154.4, "s war der heißeste Tag des Sommers.", 71.6], [1, 154.4, "Mia lief barfuß über die warmen Bretter", 71.6], [2, 154.4, "des Stegs bis ganz nach vorn. Dort setzte", 71.6],
-    [3, 140, "sie sich hin und ließ die Füße ins Wasser hängen.", 86], [4, 140, "Das Wasser war klar und kühl. Kleine Fische", 86], [5, 140, "schwammen zwischen den Steinen hin und her.", 0]];
-  for (const [i, x, t, w] of p1) k += zeile(x, BL(i), t, w);
+  let k = kasten(139, 74.4, 89, 31);
+  const p1 = [[0, 154.4, "s war der heißeste Tag des"], [1, 154.4, "Sommers. Mia lief barfuß über"], [2, 154.4, "die warmen Bretter des Stegs."],
+    [3, 140, "Ganz vorn setzte sie sich hin und ließ"], [4, 140, "die Füße ins Wasser hängen. Das Wasser"], [5, 140, "war klar und kühl."]];
+  for (const [i, x, t] of p1) k += zeile(x, BL(i), t);
   S.teil({ id: "absatz", de: "der Absatz", syl: "AB-satz", it: "il paragrafo", itSyl: "pa-RA-gra-fo", en: "paragraph", x: 183, y: 90, kunst: A(183, 90, k),
     tipp: "Ein neuer Absatz beginnt in einer neuen Zeile, oft etwas eingerückt." });
 }
@@ -167,8 +160,8 @@ const BL = (i) => r(79.4 + i * 4.8);       /* Grundlinien rechts */
     tipp: "Der große Anfangsbuchstabe heißt Initiale." });
 }
 {
-  let k = `<path d="M139 ${BL(9) - 3.4} q22 -.6 44 0 t44.6 .2 l.2 4.4 q-22 .5 -44.6 0 t-44.2 .1 Z" fill="#f7e15a" opacity=".6"/>`;
-  k += zeile(140, BL(9), "überlegte nicht lange. Sie sprang auf, lief", 86);
+  let k = `<path d="M139 ${r(BL(9) - 3.6)} q17 -.6 34 0 t34.6 .2 l.2 4.6 q-17 .5 -34.6 0 t-34.2 .1 Z" fill="#f7e15a" opacity=".6"/>`;
+  k += zeile(140, BL(9), "er. Mia überlegte nicht lange. Sie");
   S.teil({ id: "zeile", de: "die Zeile", syl: "ZEI-le", it: "la riga", itSyl: "RI-ga", en: "line", x: 183, y: BL(9) - 1, kunst: A(183, BL(9) - 1, k),
     tipp: "Diese Zeile hat jemand mit dem Textmarker gelb markiert." });
 }

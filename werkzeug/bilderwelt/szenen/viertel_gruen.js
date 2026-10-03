@@ -134,7 +134,7 @@ S.hinten(ci(330, 14, 60, RG("sonne", [[0, "#fff8dc", 0.65], [1, "#fff8dc", 0]]))
   for (let i = 0; i < 46; i++) { const x = 2 + rnd() * 132, top = x < 70 ? 44 + (70 - x) * 0.05 : 46 + (x - 70) * 0.28; p.push([x, top + 4 + rnd() * (82 - top - 6)]); }
   p.sort((a, b) => a[1] - b[1]);
   for (const [x, y] of p) k += rnd() < 0.55 ? tanne(x, y, 9 + rnd() * 5) : ci(x, y - 4, 3.6 + rnd() * 1.6, rnd() < 0.5 ? KRONE : KRONE_D);
-  teil("vn_wald", 104, 50, k, { tipp: "Im Wald wachsen Tannen, Fichten, Buchen und Eichen." });
+  teil("vn_wald", 66, 42, k, { tipp: "Im Wald wachsen Tannen, Fichten, Buchen und Eichen." });
 }
 {
   const X = 196, F = 48;
@@ -144,7 +144,7 @@ S.hinten(ci(330, 14, 60, RG("sonne", [[0, "#fff8dc", 0.65], [1, "#fff8dc", 0]]))
   k += li(X, F - 16, X + 4, F - 24, "#9aa3aa", 1.2);
   k += re(X - 4, F - 8, 8, 8, "#5c6b78") + re(X - 9, F - 9, 4, 4, "#9fc3dc") + re(X + 5, F - 9, 4, 4, "#9fc3dc");
   k += schild(X, F + 1.4, 22, 4.4, "STERNWARTE", "#1d3557", 2.4);
-  teil("vn_planeten", X - 14, 38, k, { tipp: "In der Sternwarte schaut man nachts durch das Fernrohr auf Mond, Planeten und Sterne." });
+  teil("vn_planeten", X + 20, 40, k, { tipp: "In der Sternwarte schaut man nachts durch das Fernrohr auf Mond, Planeten und Sterne." });
 }
 {
   let k = "";
@@ -159,7 +159,7 @@ S.hinten(ci(330, 14, 60, RG("sonne", [[0, "#fff8dc", 0.65], [1, "#fff8dc", 0]]))
   k += zaun(374, 398, 84, 3, "#f3ecdc");
   for (const [x, y] of [[380, 80], [391, 82]]) k += el(x, y - 2.4, 4, 2.2, "#fff") + el(x - 1, y - 2.6, 1.4, 1, "#222") + el(x + 1.6, y - 2, 1, 0.8, "#222") + ci(x + 4.2, y - 3.4, 1.4, "#fff") + re(x - 3, y - 1, 0.6, 2, "#ddd") + re(x + 2.4, y - 1, 0.6, 2, "#ddd");
   k += re(282, 77, 9, 4, "#2e7d32") + re(287, 73, 4, 4, "#2e7d32") + re(287.6, 73.6, 2.8, 2.4, "#cfe6f5") + ci(284, 81.4, 1.8, "#222") + ci(289.6, 81, 2.6, "#222");
-  teil("vn_bauernhof", 306, 44, k, { tipp: "Auf dem Bauernhof gibt es Kühe, eine Scheune, ein Silo und Felder." });
+  teil("vn_bauernhof", 352, 30, `<g transform="translate(64 -14) scale(.84)">${k}</g>`, { tipp: "Auf dem Bauernhof gibt es Kühe, eine Scheune, ein Silo und Felder." });
 }
 
 /* =====================================================================
@@ -179,7 +179,7 @@ S.hinten(ci(330, 14, 60, RG("sonne", [[0, "#fff8dc", 0.65], [1, "#fff8dc", 0]]))
   k += pl([[3, 72], [5, 60], [7, 72]], "#2f5a33") + pl([[42, 76], [44.5, 63], [47, 76]], "#2f5a33") + ci(88, 66, 8, KRONE_D) + re(87.4, 70, 1.2, 8, "#5a3d24");
   /* Friedhofsmauer mit Tor */
   k += re(2, 89, 94, 3.4, LG("mauer", [[0, "#c9c2b5"], [1, "#a39b8c"]])) + re(28, 86, 8, 6.4, "#4a4a4a") + li(32, 86, 32, 92, "#888", 0.4);
-  teil("vn_friedhof", 24, 64, k, { tipp: "Auf dem Friedhof stehen Grabsteine; daneben die kleine Kapelle." });
+  teil("vn_friedhof", 20, 76, k, { tipp: "Auf dem Friedhof stehen Grabsteine; daneben die kleine Kapelle." });
 }
 {
   /* Tierpark-Tor */
@@ -213,7 +213,7 @@ S.hinten(ci(330, 14, 60, RG("sonne", [[0, "#fff8dc", 0.65], [1, "#fff8dc", 0]]))
   for (const x of [200, 204.6, 209.4, 213]) k += re(x - 1.2, 86, 2.4, 5, "#8a9197");
   /* Zaun und Schild */
   k += zaun(X0, X1, 92, 4, "#7a5530") + schild(X0 + 14, 74, 22, 4.6, "Savanne", "#7a5530", 2.4, "#f3ecdc");
-  teil("vn_zoo2", X0 + 32, 58, k, { tipp: "Im Gehege leben die großen Tiere: Giraffen und Elefanten." });
+  teil("vn_zoo2", X0 + 76, 82, k, { tipp: "Im Gehege leben die großen Tiere: Giraffen und Elefanten." });
 }
 {
   /* Tropenhaus (Tiere der Welt) */
@@ -231,14 +231,14 @@ S.hinten(ci(330, 14, 60, RG("sonne", [[0, "#fff8dc", 0.65], [1, "#fff8dc", 0]]))
 {
   /* Aquarium „Welt der Meere“ */
   const X0 = 296, X1 = 362;
-  let k = schatten((X0 + X1) / 2, 92, 34, 1.6, 0.25) + re(X0, 72, X1 - X0, 20, "#eef2f4");
-  k += `<path d="M${X0 - 2} 73 Q${X0 + 10} 64 ${X0 + 22} 70 T${X0 + 46} 68 T${X1 + 2} 70 V74 H${X0 - 2} Z" fill="${LG("welle", [[0, "#3aa0d8"], [1, "#1d6fa8"]])}"/>`;
-  k += re(X0 + 4, 77, X1 - X0 - 8, 13, LG("aqua", [[0, "#3fb6e0"], [1, "#145f93"]]));
+  let k = schatten((X0 + X1) / 2, 92, 34, 1.6, 0.25) + re(X0, 75, X1 - X0, 17, "#eef2f4");
+  k += `<path d="M${X0 - 2} 76 Q${X0 + 10} 69 ${X0 + 22} 73 T${X0 + 46} 71.6 T${X1 + 2} 73 V77 H${X0 - 2} Z" fill="${LG("welle", [[0, "#3aa0d8"], [1, "#1d6fa8"]])}"/>`;
+  k += re(X0 + 4, 80.4, X1 - X0 - 8, 10, LG("aqua", [[0, "#3fb6e0"], [1, "#145f93"]]));
   /* Fische, ein Delfin, Luftblasen */
   for (const [x, y, c] of [[X0 + 12, 82, "#ffd23f"], [X0 + 20, 86, "#f4a261"], [X0 + 40, 81, "#ffd23f"], [X0 + 50, 86, "#e63946"]]) k += el(x, y, 2, 1.1, c) + pl([[x + 1.6, y], [x + 3.2, y - 1.2], [x + 3.2, y + 1.2]], c);
   k += `<path d="M${X0 + 26} 84 q6 -5 12 -1 l2 -2 l-.4 3 q-6 4 -13.6 0 Z" fill="#9fb3c2"/>` + ci(X0 + 28, 83.6, 0.35, "#222");
   for (let i = 0; i < 6; i++) k += ci(X0 + 34 + (i % 2), 81 - i * 0.7, 0.35, "#e8f7ff");
-  k += tx((X0 + X1) / 2, 76.6, 3, "AQUARIUM · Welt der Meere", "#1d6fa8", ' font-weight="bold"');
+  k += tx((X0 + X1) / 2, 79.6, 3, "AQUARIUM · Welt der Meere", "#1d6fa8", ' font-weight="bold"');
   teil("vn_meer", X1 - 8, 82, k, { tipp: "Im Aquarium sieht man Fische, Delfine und Quallen aus dem Meer." });
 }
 
@@ -395,7 +395,7 @@ S.hinten(ci(330, 14, 60, RG("sonne", [[0, "#fff8dc", 0.65], [1, "#fff8dc", 0]]))
   k += hund(178, 272, "#c8893e", 1.4) + hund(204, 290, "#3b3b3b", 1.5, -1) + ci(192, 284, 1.4, "#e63946");
   k += re(X1 - 6, 256, 1, 14, "#555") + re(X1 - 9, 254, 7, 5, "#2e7d32") + tx(X1 - 5.5, 257.4, 1.4, "Beutel", "#fff");
   k += ci(X0 + 52, 236.4, 1.6, "#6b6b6b") + el(X0 + 52, 239.6, 2, 2.6, "#6b6b6b") + pl([[X0 + 50.6, 235.4], [X0 + 51.4, 233.4], [X0 + 52, 235]], "#6b6b6b") + pl([[X0 + 52.6, 235], [X0 + 53.2, 233.4], [X0 + 53.6, 235.4]], "#6b6b6b") + `<path d="M${X0 + 54} 241 q3 0 2.6 -3" stroke="#6b6b6b" stroke-width=".7" fill="none"/>`;
-  teil("vn_haustiere", X0 + 10, 254, k, { tipp: "Auf der Hundewiese dürfen die Hunde ohne Leine rennen." });
+  teil("vn_haustiere", X0 + 50, 268, k, { tipp: "Auf der Hundewiese dürfen die Hunde ohne Leine rennen." });
 }
 {
   /* Insektenhotel */
@@ -427,7 +427,7 @@ S.hinten(ci(330, 14, 60, RG("sonne", [[0, "#fff8dc", 0.65], [1, "#fff8dc", 0]]))
   for (let x = X0; x <= X0 + 24; x += 1.6) k += li(x, T + 10, x, F, "#8a9197", 0.18);
   for (let y = T + 10; y <= F; y += 1.6) k += li(X0, y, X0 + 24, y, "#8a9197", 0.18);
   k += re(X0, T + 9, 24, 1, "#6d7378") + re(X0, T + 9, 1, F - T - 9, "#6d7378");
-  teil("vn_tierheim", X0 + 82, 266, k, { tipp: "Im Tierheim warten Hunde und Katzen auf eine neue Familie." });
+  teil("vn_tierheim", X0 + 34, 276, k, { tipp: "Im Tierheim warten Hunde und Katzen auf eine neue Familie." });
 }
 {
   const X0 = 350, X1 = 398, F = 296;
