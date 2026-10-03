@@ -157,12 +157,10 @@ figurDef("geht", { geschlecht: "w", pose: "gehen", blick: 70, frisur: "zopf", ha
   kleidung: { oberteil: { stueck: "pullover", farbe: "#b8473a" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "#e2d6bf" }, schuhe: SCHUH } });
 figurDef("mann", { geschlecht: "m", pose: "gehen", blick: 290, frisur: "kurz", haarfarbe: "blond", haut: "hell",
   kleidung: { oberteil: { stueck: "hemd", farbe: "#dfe6ef" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "#2f4f7a" }, schuhe: SCHUH } });
-figurDef("steht", { geschlecht: "m", pose: "stehen", blick: 30, frisur: "kurz", haarfarbe: "grau", haut: "hell",
-  kleidung: { oberteil: { stueck: "pullover", farbe: "#c9a640" }, unterteil: { stueck: "anzughose" }, schuhe: SCHUH } });
 figurDef("runter", { geschlecht: "m", pose: "gehen", blick: 182, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell",
   kleidung: { oberteil: { stueck: "pullover", farbe: "#3d6b4a" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } }, "mittel");
-figurDef("rauf", { geschlecht: "w", pose: "gehen", blick: 12, frisur: "lang", haarfarbe: "blond", haut: "hell",
-  kleidung: { oberteil: { stueck: "bluse", farbe: "#f2efe6" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "mantel", farbe: "#8a5a3c" }, schuhe: SCHUH } }, "mittel");
+figurDef("rauf", { geschlecht: "w", pose: "gehen", blick: 12, frisur: "zopf", haarfarbe: "blond", haut: "hell",
+  kleidung: { oberteil: { stueck: "pullover", farbe: "#8a3c4a" }, unterteil: { stueck: "jeans" }, schuhe: SCHUH } }, "mittel");
 /* Bronzefiguren der Säule: Concordia (Kontrapost, die Rechte hebt den Kranz) und die sitzenden Frauen am Sockel */
 const KONTRA = { roll: 3, lende: 1, brust: -2, brustRoll: -5, nacken: 5, kopf: -6, kopfRoll: 3,
   schulterL: { vor: 4, seit: 10 }, ellbogenL: 20, unterarmL: 10, handL: 6, fingerL: 0.36,
@@ -188,7 +186,7 @@ S.def(`<pattern id="${S.id("biber")}" width="1.2" height=".9" patternUnits="user
 const BIBER = `url(#${S.id("biber")})`;
 /* Trockenmauer und Rebzeilen als Muster (Weinberg) */
 S.def(`<pattern id="${S.id("mauer")}" width="2.4" height="1" patternUnits="userSpaceOnUse"><rect width="2.4" height="1" fill="#cbbd9b"/><path d="M0 .33 H2.4 M0 .66 H2.4 M.5 0 V.33 M1.6 0 V.33 M1 .33 V.66 M2.1 .33 V.66 M.3 .66 V1 M1.4 .66 V1" stroke="#8d7f63" stroke-width=".08"/><rect x=".1" y=".05" width=".6" height=".2" fill="#ddd2b5"/><rect x="1.2" y=".72" width=".7" height=".2" fill="#ddd2b5"/></pattern>`);
-S.def(`<pattern id="${S.id("reben")}" width="1.3" height="2.6" patternUnits="userSpaceOnUse"><rect width="1.3" height="2.6" fill="#7f8a4a"/><path d="M0 .9 H1.3 M0 1.5 H1.3" stroke="#d8d0b4" stroke-width=".05" opacity=".8"/><path d="M.2 2.5 Q.05 1.6 .3 .5 Q.55 .1 .7 .6 Q.95 1.5 .75 2.5 Z" fill="#8d8a3c"/><path d="M.25 1.9 Q.3 1 .5 .55 Q.7 1 .7 1.9 Z" fill="#b3a546"/><circle cx=".55" cy=".9" r=".22" fill="#c99a3e"/><circle cx=".35" cy="1.5" r=".18" fill="#a46a32"/><path d="M1.05 .2 V2.6" stroke="#4d4030" stroke-width=".12"/><path d="M.2 2.5 L.8 2.5" stroke="#5c5530" stroke-width=".2"/></pattern>`);
+if (0) S.def(`<pattern id="${S.id("reben")}" width="1.3" height="2.6" patternUnits="userSpaceOnUse"><rect width="1.3" height="2.6" fill="#7f8a4a"/><path d="M0 .9 H1.3 M0 1.5 H1.3" stroke="#d8d0b4" stroke-width=".05" opacity=".8"/><path d="M.2 2.5 Q.05 1.6 .3 .5 Q.55 .1 .7 .6 Q.95 1.5 .75 2.5 Z" fill="#8d8a3c"/><path d="M.25 1.9 Q.3 1 .5 .55 Q.7 1 .7 1.9 Z" fill="#b3a546"/><circle cx=".55" cy=".9" r=".22" fill="#c99a3e"/><circle cx=".35" cy="1.5" r=".18" fill="#a46a32"/><path d="M1.05 .2 V2.6" stroke="#4d4030" stroke-width=".12"/><path d="M.2 2.5 L.8 2.5" stroke="#5c5530" stroke-width=".2"/></pattern>`);
 const MAUER = `url(#${S.id("mauer")})`, REBEN = `url(#${S.id("reben")})`;
 
 /* Unregelmäßige Baumkrone: Umriss mit Zacken, Schattenseite links, Licht rechts */
@@ -323,29 +321,51 @@ const FT = { x: 306, y: 85, s: 31 / 86.4 };
   const kurve = (f) => xs.map((x) => `${x} ${r(f(x))}`);
   const band = (a, b) => `M${kurve(a).join(" L")} L${xs.slice().reverse().map((x) => `${x} ${r(b(x))}`).join(" L")} Z`;
   k += `<path d="${band(oben, unten)}" fill="${S.lg("weinhang", [[0, "#8f9c5c"], [0.6, "#8a9356"], [1, "#9a9a70"]])}"/>`;
-  /* Terrassen: Trockenmauern entlang der Höhenlinien, dazwischen die Rebzeilen */
-  let rb = "", ma = "", li = "";
+  /* Terrassen: Trockenmauern entlang der Höhenlinien; auf jeder Terrasse zwei Rebzeilen parallel zur Mauer
+     (Pfähle, Drahtrahmen, Laub im ersten Herbstgelb und -rot); nach oben kleiner und blasser */
+  const wz = zufall(808);
+  const LAUBF = [["#b8a43c", "#8f9a3e"], ["#c99a3e", "#9a8a3a"], ["#a9b04a", "#b4683a"], ["#c4aa48", "#8d963c"]];
+  let ma = "", sch = "", pf = "", dr = "";
+  const reihen = [];
   for (let i = 0; i < 9; i++) {
-    const a = (x) => Math.min(unten(x), rand(x) + 1.6 + i * 3.1), b = (x) => Math.min(unten(x), rand(x) + 1.6 + i * 3.1 + 2.2), c = (x) => Math.min(unten(x), rand(x) + 1.6 + i * 3.1 + 3.1);
-    rb += band(a, b); ma += band(b, c); li += `M${kurve(b).join(" L")}`;
+    const o = 1.6 + i * 3.1, f = 0.45 + i * 0.07;
+    const b = (x) => Math.min(unten(x), rand(x) + o + 2.2), c = (x) => Math.min(unten(x), rand(x) + o + 3.1);
+    const zack = xs.map((x) => `${x} ${r(b(x) - (wz() < 0.5 ? 0.12 : 0))}`);
+    ma += `M${zack.join(" L")} L${xs.slice().reverse().map((x) => `${x} ${r(c(x))}`).join(" L")} Z`;
+    sch += `M${kurve((x) => c(x) - 0.12).join(" L")} `;
+    for (const t of [0.75, 1.75]) {
+      const rz = (x) => Math.min(unten(x) - 0.3, rand(x) + o + t);
+      pf += `M${kurve((x) => rz(x) - 0.35 * f).join(" L")} `;
+      dr += `M${kurve((x) => rz(x) - 0.55 * f).join(" L")} `;
+      reihen.push([rz, f, LAUBF[(i + Math.round(t)) % 4]]);
+    }
   }
-  k += `<path d="${rb}" fill="${REBEN}"/><path d="${ma}" fill="${MAUER}"/><path d="${li}" stroke="#6d6450" stroke-width=".18" fill="none" opacity=".7"/>`;
-  /* Wald auf der Kuppe */
+  k += `<path d="${ma}" fill="${MAUER}"/><path d="${sch}" stroke="#6d6450" stroke-width=".22" fill="none" opacity=".75"/>`;
+  k += `<path d="${dr}" stroke="#d8d0b4" stroke-width=".05" fill="none" opacity=".8"/><path d="${pf}" stroke="#4d4030" stroke-width=".1" stroke-dasharray=".08 1.1" fill="none"/>`;
+  for (const [rz, f, [c1, c2]] of reihen) {
+    k += `<path d="M${kurve(rz).join(" L")}" stroke="${c2}" stroke-width="${r(0.85 * f)}" stroke-dasharray="${r(0.7 * f)} ${r(0.4 * f)}" fill="none"/>`;
+    k += `<path d="M${kurve((x) => rz(x) - 0.12 * f).join(" L")}" stroke="${c1}" stroke-width="${r(0.45 * f)}" stroke-dasharray="${r(0.45 * f)} ${r(0.65 * f)}" fill="none"/>`;
+  }
+  /* Wald auf der Kuppe: unregelmäßiger Saum, zwei Töne */
   {
-    const wz = zufall(4711);
-    k += `<path d="M${xs.filter((x) => x <= 76).map((x) => `${x} ${r(rand(x) - 0.6)}`).join(" L")} L76 ${r(rand(76) + 1.6)} L0 ${r(rand(0) + 1.6)} Z" fill="#46603a"/>`;
-    for (let x = 0.5; x < 76;) { const R = 1.3 + wz() * 1.2; k += krone(x, rand(x) - 0.4 - wz() * 0.8, R, R * 0.8, [wz() < 0.5 ? "#3f5a35" : "#4c6a3e", wz() < 0.6 ? "#6a8450" : "#8f8f4a"], 70 + Math.round(x * 10), 8); x += R * (1.1 + wz() * 0.8); }
+    let w1 = "M0 " + r(rand(0) + 2), w2 = "M0 " + r(rand(0) + 2.4);
+    for (let x = 0; x <= 76; x += 2.2) { const h = 1 + wz() * 1.6; w1 += ` Q${r(x + 1.1)} ${r(rand(x) - h - 0.6)} ${r(x + 2.2)} ${r(rand(x + 2.2) - 0.2)}`; w2 += ` Q${r(x + 0.6)} ${r(rand(x) - h * 0.5)} ${r(x + 2.2)} ${r(rand(x + 2.2) + 0.4)}`; }
+    k += `<path d="${w1} L76 ${r(rand(76) + 1.8)} L0 ${r(rand(0) + 1.8)} Z" fill="#43603a"/><path d="${w2} L76 ${r(rand(76) + 1.8)} L0 ${r(rand(0) + 1.8)} Z" fill="#5d7a47"/>`;
   }
-  /* Stäffele: steile Treppe aus Sandstein zwischen den Reben, mit Handlauf */
-  const ST = [[74, 84.4], [72.6, 87.6], [75, 90.4], [73.4, 93.4], [75.8, 96.4], [74.2, 99.4], [76.2, 103.2]];
-  const stp = "M" + ST.map((p) => p.join(" ")).join(" L");
-  k += `<path d="${stp}" stroke="#6b604b" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`;
-  k += `<path d="${stp}" stroke="#e4dabf" stroke-width="1.05" fill="none" stroke-linejoin="round"/>`;
-  for (let i = 0; i + 1 < ST.length; i++) {
-    const [x0, y0] = ST[i], [x1, y1] = ST[i + 1], n = Math.round(Math.hypot(x1 - x0, y1 - y0) / 0.42);
-    for (let j = 1; j < n; j++) { const t = j / n, x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t; k += `<path d="M${r(x - 0.5)} ${r(y)} L${r(x + 0.5)} ${r(y)}" stroke="#a2967a" stroke-width=".12"/>`; }
+  /* Stäffele: ein gerader, steiler Lauf den Hang hinauf, mit zwei Absätzen und Geländer */
+  {
+    const unt = [76, 103.3], obe = [74.2, 84.6], at = (t) => [unt[0] + (obe[0] - unt[0]) * t, unt[1] + (obe[1] - unt[1]) * t], br = (t) => 0.75 - 0.3 * t;
+    const L = [0, 0.33, 0.38, 0.68, 0.73, 1];
+    let bd = "", st = "";
+    const pts = [0, 1].map((s) => [0, 1].map((t) => at(t)));
+    bd = `M${r(at(0)[0] - br(0))} ${r(at(0)[1])} L${r(at(1)[0] - br(1))} ${r(at(1)[1])} L${r(at(1)[0] + br(1))} ${r(at(1)[1])} L${r(at(0)[0] + br(0))} ${r(at(0)[1])} Z`;
+    k += `<path d="${bd}" fill="#e6dcc2" stroke="#7a6f58" stroke-width=".22"/>`;
+    for (let t = 0.02; t < 1; t += 0.022) { if ((t > L[1] && t < L[2]) || (t > L[3] && t < L[4])) continue; const p = at(t); st += `M${r(p[0] - br(t))} ${r(p[1])} L${r(p[0] + br(t))} ${r(p[1])} `; }
+    k += `<path d="${st}" stroke="#a2967a" stroke-width=".1"/>`;
+    for (const t of [L[1], L[3]]) { const p = at(t + 0.025); k += `<path d="M${r(p[0] - br(t) - 0.3)} ${r(p[1] + 0.35)} L${r(p[0] + br(t) + 0.3)} ${r(p[1] + 0.35)} L${r(p[0] + br(t) + 0.3)} ${r(p[1] - 0.45)} L${r(p[0] - br(t) - 0.3)} ${r(p[1] - 0.45)} Z" fill="#efe7d2" stroke="#8d826a" stroke-width=".1"/>`; }
+    let gl = ""; for (let t = 0; t <= 1.001; t += 0.1) { const p = at(t); gl += `M${r(p[0] + br(t) + 0.15)} ${r(p[1])} L${r(p[0] + br(t) + 0.15)} ${r(p[1] - 0.7)} `; }
+    k += `<path d="${gl}M${r(at(0)[0] + br(0) + 0.15)} ${r(at(0)[1] - 0.7)} L${r(at(1)[0] + br(1) + 0.15)} ${r(at(1)[1] - 0.7)}" stroke="#3f3a30" stroke-width=".1" fill="none"/>`;
   }
-  k += `<path d="${ST.map((p, i) => (i ? "L" : "M") + r(p[0] + 0.7) + " " + r(p[1] - 0.5)).join(" ")}" stroke="#4a4438" stroke-width=".14" fill="none"/>`;
   /* Weinberghäusle */
   k += `<path d="M83 92.6 L83 89.8 L86.8 89.8 L86.8 92.6 Z" fill="${S.lg("haeusle", [[0, "#d9cdb2"], [1, "#efe6d2"]], 0, 0, 1, 0)}"/><path d="M82.5 89.9 L84.9 87.8 L87.3 89.9 Z" fill="${BIBER}"/><path d="M82.5 89.9 L84.9 87.8 L87.3 89.9" stroke="#6f3324" stroke-width=".18" fill="none"/>`;
   k += `<path d="M84.5 92.6 L84.5 90.8 Q84.9 90.4 85.3 90.8 L85.3 92.6 Z" fill="#5a4636"/><rect x="83.5" y="90.5" width=".6" height=".6" fill="#4b545c"/>`;
@@ -355,7 +375,7 @@ const FT = { x: 306, y: 85, s: 31 / 86.4 };
     zoom: { x: 60, y: 82, w: 32, h: 20 },
     unter: [
       { id: "staeffele", de: "die Treppe", syl: "TREP-pe", it: "la scalinata", itSyl: "sca-li-NA-ta", en: "steps",
-        x: 74.4, y: 103.4, kunst: flaeche(-3, -19.4, 6, 19.6, 0.4), tipp: "In Stuttgart gibt es über 400 Treppen an den Hängen – auf Schwäbisch „Stäffele“." },
+        x: 75.2, y: 103.4, kunst: flaeche(-2.6, -19.2, 5, 19.4, 0.4), tipp: "In Stuttgart gibt es über 400 Treppen an den Hängen – auf Schwäbisch „Stäffele“." },
     ] });
 }
 
@@ -649,8 +669,8 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
   const BAEUME = [[95, vRand(95) + 5, 8, 6, 31], [58, vRand(58) + 5, 8.5, 6.4, 32], [24, vRand(24) + 5.5, 7, 5.4, 33]];
   for (const [u, v, h, b] of BAEUME) { const [x, y] = boden(u, v); k += wurf(x, y, h, b * 0.7, false, 0.2, b * 0.6); }
   /* Leute auf dem Platz */
-  const leute = [mensch("geht", 22, 4.5), mensch("mann", 36, 7.5, true), mensch("steht", 41, 18.5), mensch("geht", 62, 27, true),
-    mensch("mann", 98, 13), mensch("steht", 118, 22, true), mensch("geht", 30, vRand(30) + 3), mensch("runter", 72, vRand(72) + 2.5)];
+  const leute = [mensch("geht", 22, 4.5), mensch("mann", 36, 7.5, true), mensch("mann", 41, 18.5, true), mensch("geht", 62, 27, true),
+    mensch("mann", 98, 13), mensch("geht", 118, 22), mensch("geht", 30, vRand(30) + 3), mensch("runter", 72, vRand(72) + 2.5)];
   for (const p of leute) k += p.schatten;
   for (const [u, v, h, b, s] of BAEUME) { const [x, y] = boden(u, v); k += baum(x, y, h, b, HERBST, s); }
   for (const p of leute) k += p.bild;

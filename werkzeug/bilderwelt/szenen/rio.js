@@ -136,13 +136,20 @@ const DUNST = `url(#${S.id("dunst")})`;
   let k = `<rect width="320" height="101" fill="${S.lg("himmel", [[0, "#2a6fbd"], [0.45, "#5aa0d8"], [0.82, "#a6d3ec"], [1, "#d9eef3"]])}"/>`;
   k += `<rect width="320" height="101" fill="${S.rg("sonne", [[0, "#fff9dc", 0.95], [0.18, "#fff3c4", 0.55], [0.55, "#fff3c4", 0.12], [1, "#fff3c4", 0]], 0.98, 0.02, 0.75)}"/>`;
   /* Haufenwolken über den Bergen, weich */
-  for (const [x, y, w] of [[150, 40, 18], [172, 34, 12], [192, 44, 14], [128, 30, 9], [262, 22, 16], [284, 30, 10]]) {
-    /* klarer Umriss oben (Licht von rechts oben), weiche graublaue Unterseite */
-    let c1 = "", c2 = "";
-    for (let i = 0; i < 4; i++) { const cx = x - w * 0.7 + i * w * 0.46, cy = y - Math.sin((i + 0.5) / 4 * Math.PI) * w * 0.32, rr = w * (0.3 + 0.12 * Math.sin((i + 0.5) / 4 * Math.PI)); c1 += `<circle cx="${r(cx)}" cy="${r(cy)}" r="${r(rr)}"/>`; c2 += `<circle cx="${r(cx + rr * 0.12)}" cy="${r(cy - rr * 0.14)}" r="${r(rr * 0.9)}"/>`; }
-    k += `<g fill="#d9e3ec">${c1}</g><g fill="#fdfeff">${c2}</g>`;
-    k += `<ellipse cx="${x}" cy="${r(y + w * 0.08)}" rx="${r(w * 1.15)}" ry="${r(w * 0.2)}" fill="#c3d2df" opacity=".8" filter="${DUNST}"/>`;
-  }
+  /* Haufenwolken: flache, graublaue Unterseite, oben unregelmäßige Buckel verschiedener Größe, Licht oben
+     rechts (Sonne im Nordosten); kein Schatten auf dem Himmel. Dazu ein flacher, zerfaserter Streifen. */
+  const WOLKE = S.lg("wolke", [[0, "#ffffff"], [0.55, "#f3f7fa"], [1, "#c6d4e0"]]), WOLKELICHT = S.lg("wolkelicht", [[0, "#c8d6e2", 0.35], [0.5, "#ffffff", 0], [1, "#fff6dc", 0.4]], 0, 0, 1, 0);
+  const wolke = (x, y, w, n) => {
+    const bu = []; let u = -w;
+    while (u < w) { const rr = w * (0.26 + rnd() * 0.24) * (1 - Math.abs(u) / w * 0.5); bu.push([u, rr]); u += rr * (0.9 + rnd() * 0.4); }
+    let d = `M${r(x - w)} ${y}`;
+    bu.forEach(([u2, rr], i) => { const xe = i === bu.length - 1 ? x + w : x + (u2 + bu[i + 1][0]) / 2 + rr * 0.2; d += ` A${r(rr)} ${r(rr)} 0 0 1 ${r(xe)} ${r(y - (i === bu.length - 1 ? 0 : rr * (0.7 + 0.5 * (1 - Math.abs(u2) / w))))}`; });
+    d += " Z";
+    return `<path d="${d}" fill="${WOLKE}"/><path d="${d}" fill="${WOLKELICHT}"/>`;
+  };
+  for (const [x, y, w] of [[152, 42, 20], [190, 46, 12], [130, 33, 9], [268, 25, 15]]) k += wolke(x, y, w);
+  /* flacher, zerfaserter Wolkenstreifen */
+  k += `<g fill="#f4f8fb" opacity=".75"><ellipse cx="240" cy="54" rx="22" ry="1.1"/><ellipse cx="252" cy="52.6" rx="12" ry=".7"/><ellipse cx="228" cy="55.6" rx="9" ry=".6"/></g>`;
   /* Fregattvögel (lange, abgewinkelte Flügel, gegabelter Schwanz) */
   for (const [x, y, s] of [[146, 16, 1], [168, 24, 0.75], [250, 12, 0.6]]) {
     k += `<path d="M${x - 6 * s} ${r(y - 1.2 * s)} L${r(x - 2.6 * s)} ${r(y + 0.4 * s)} L${x} ${y} L${r(x + 2.6 * s)} ${r(y + 0.4 * s)} L${x + 6 * s} ${r(y - 1.2 * s)} M${x} ${y} l${r(-0.5 * s)} ${r(2 * s)} M${x} ${y} l${r(0.5 * s)} ${r(2 * s)}" stroke="#2a2a33" stroke-width="${r(0.55 * s)}" fill="none" stroke-linejoin="round"/>`;
@@ -637,7 +644,7 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
   }
   /* die Barraca: Sonnendach auf vier Stangen, Fahne, Kühlbox und zwei Stapel Klappstühle */
   {
-    const X = 9.5, Z = 36, [x, y] = boden(X, Z), s = F / Z, [xh, yh] = boden(X - 0.6, Z + 2.2), sh = F / (Z + 2.2);
+    const X = -2.4, Z = 36, [x, y] = boden(X, Z), s = F / Z, [xh, yh] = boden(X - 0.6, Z + 2.2), sh = F / (Z + 2.2);
     let g = `<ellipse cx="${r(x - 1.6 * s)}" cy="${r(y - 0.1 * s)}" rx="${r(1.9 * s)}" ry="${r(0.22 * s)}" fill="#a88a5a" opacity=".35"/>`;
     for (const [px, py, ps] of [[xh - 1.05 * sh, yh, sh], [xh + 1.05 * sh, yh, sh], [x - 1.1 * s, y, s], [x + 1.1 * s, y, s]]) g += `<line x1="${r(px)}" y1="${r(py)}" x2="${r(px)}" y2="${r(py - 2.2 * ps)}" stroke="#d8d8d2" stroke-width="${r(0.06 * s)}"/>`;
     g += `<path d="M${r(xh - 1.25 * sh)} ${r(yh - 2.25 * sh)} L${r(xh + 1.25 * sh)} ${r(yh - 2.25 * sh)} L${r(x + 1.3 * s)} ${r(y - 2.2 * s)} L${r(x - 1.3 * s)} ${r(y - 2.2 * s)} Z" fill="#1d6fb8"/>`;
@@ -646,11 +653,14 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
     for (let i = 0; i < 8; i++) { const xa = x - 1.3 * s + i * 0.325 * s; vo += `<path d="M${r(xa)} ${r(y - 2.25 * s)} h${r(0.325 * s)} v${r(0.42 * s)} l${r(-0.1625 * s)} ${r(0.14 * s)} l${r(-0.1625 * s)} ${r(-0.14 * s)} Z" fill="${i % 2 ? "#f2c230" : "#1d6fb8"}"/>`; }
     g += vo;
     /* Fahne der Barraca am hohen Mast */
-    g += `<line x1="${r(x - 1.1 * s)}" y1="${r(y - 2.2 * s)}" x2="${r(x - 1.1 * s)}" y2="${r(y - 3.6 * s)}" stroke="#d8d8d2" stroke-width="${r(0.05 * s)}"/><path d="M${r(x - 1.1 * s)} ${r(y - 3.6 * s)} l${r(0.9 * s)} ${r(0.1 * s)} l${r(-0.05 * s)} ${r(0.55 * s)} l${r(-0.85 * s)} ${r(-0.05 * s)} Z" fill="#139a43"/><circle cx="${r(x - 0.65 * s)}" cy="${r(y - 3.3 * s)}" r="${r(0.14 * s)}" fill="#f6d21e"/>`;
+    /* Fahne der Barraca: weiß mit ihrer Nummer in Grün */
+    g += `<line x1="${r(x - 1.1 * s)}" y1="${r(y - 2.2 * s)}" x2="${r(x - 1.1 * s)}" y2="${r(y - 3.7 * s)}" stroke="#d8d8d2" stroke-width="${r(0.05 * s)}"/><path d="M${r(x - 1.1 * s)} ${r(y - 3.7 * s)} l${r(0.95 * s)} ${r(0.08 * s)} l${r(-0.04 * s)} ${r(0.6 * s)} l${r(-0.91 * s)} ${r(-0.04 * s)} Z" fill="#f7f7f2"/><text x="${r(x - 0.64 * s)}" y="${r(y - 3.22 * s)}" font-size="${r(0.42 * s)}" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#139a43">12</text>`;
     /* Kühlbox */
     g += `<rect x="${r(x - 0.2 * s)}" y="${r(y - 0.5 * s)}" width="${r(0.75 * s)}" height="${r(0.5 * s)}" fill="#f4f4f0"/><rect x="${r(x - 0.24 * s)}" y="${r(y - 0.58 * s)}" width="${r(0.83 * s)}" height="${r(0.12 * s)}" fill="#1d6fb8"/>`;
-    /* zwei Stapel Klappstühle (Alu-Rahmen, bunte Sitze) */
-    for (const [dx, c] of [[-1.15, ["#f08a2c", "#3aa35a", "#f2c230", "#e84a3c"]], [-2.2, ["#3aa35a", "#f2c230", "#1d6fb8"]]]) c.forEach((f, j) => { const cx = x + dx * s, cy = y - j * 0.13 * s; g += `<path d="M${r(cx - 0.3 * s)} ${r(cy)} L${r(cx - 0.18 * s)} ${r(cy - 0.95 * s)} M${r(cx + 0.3 * s)} ${r(cy)} L${r(cx + 0.18 * s)} ${r(cy - 0.95 * s)}" stroke="#c9ced2" stroke-width="${r(0.04 * s)}"/><path d="M${r(cx - 0.22 * s)} ${r(cy - 0.85 * s)} L${r(cx + 0.22 * s)} ${r(cy - 0.85 * s)} L${r(cx + 0.27 * s)} ${r(cy - 0.35 * s)} L${r(cx - 0.27 * s)} ${r(cy - 0.35 * s)} Z" fill="${f}"/>`; });
+    /* zwei Stapel zusammengeklappter Klappstühle, schräg an die Stange gelehnt (je 5–6) */
+    for (const [dx, c] of [[-1.45, ["#f08a2c", "#3aa35a", "#f2c230", "#e84a3c", "#1d6fb8", "#f2c230"], 14], [-2.05, ["#3aa35a", "#f2c230", "#1d6fb8", "#f08a2c", "#3aa35a"], 10]]) {
+      const n = c.length; c.forEach((f, j) => { const bx = x + (dx + j * 0.07) * s, by = y; g += `<g transform="translate(${r(bx)} ${r(by)}) rotate(${14 - j * 1.2})"><rect x="${r(-0.24 * s)}" y="${r(-1.05 * s)}" width="${r(0.48 * s)}" height="${r(1.05 * s)}" fill="none" stroke="#c9ced2" stroke-width="${r(0.035 * s)}"/><rect x="${r(-0.2 * s)}" y="${r(-0.95 * s)}" width="${r(0.4 * s)}" height="${r(0.62 * s)}" fill="${f}"/></g>`; });
+    }
     k += g;
   }
   /* Futevôlei: Netz quer zum Strand, vier Spieler in Badekleidung (von der Seite gesehen) */
@@ -679,7 +689,7 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
     k += `<circle cx="${r(bx)}" cy="${r(HY + F * (1.6 - 2.9) / 26)}" r=".6" fill="#f6d21e" stroke="#1d4fa0" stroke-width=".15"/><ellipse cx="${r(bx - 1)}" cy="${r(by)}" rx=".7" ry=".2" fill="#7a5a2a" opacity=".3"/>`;
     k += spieler(0.4, 24, "#5e3a26", "#139a43", [-0.3, 0.35, 0.3, -0.5]) + spieler(4, 24, "#d7a179", "#f6d21e", [-0.3, 0.4, 0.28, 0.35]);
   }
-  S.teil({ id: "strand", de: "der Strand", syl: "STRAND", it: "la spiaggia", itSyl: "SPIAG-gia", en: "beach", x: 205, y: 122, kunst: halb(um(205, 122, k)),
+  S.teil({ id: "strand", de: "der Strand", syl: "STRAND", it: "la spiaggia", itSyl: "SPIAG-gia", en: "beach", x: 118, y: 176, kunst: halb(um(118, 176, k)),
     tipp: "Die Copacabana ist vier Kilometer lang. Hier spielt man Futevôlei – Volleyball, aber ohne Hände!" });
 }
 

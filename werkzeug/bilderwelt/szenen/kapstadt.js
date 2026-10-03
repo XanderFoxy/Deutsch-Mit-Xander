@@ -695,16 +695,20 @@ S.lg("poller", [[0, "#1f2226"], [0.45, "#5a6066"], [1, "#16181b"]], 0, 0, 1, 0);
   k += `<path d="M${g(0.14)} ${g(-0.36)} Q${g(0.32)} ${g(-0.2)} ${g(0.32)} 0 M${g(0.3)} ${g(0.02)} Q${g(0.62)} ${g(0.06)} ${g(0.66)} ${g(0.0)} Q${g(0.68)} ${g(-0.06)} ${g(0.42)} ${g(-0.05)} Q${g(0.3)} ${g(-0.04)} ${g(0.38)} ${g(0.05)} Q${g(0.58)} ${g(0.1)} ${g(0.72)} ${g(0.04)}" stroke="#e6d6a8" stroke-width="${g(0.045)}" fill="none" stroke-linecap="round"/>`;
   S.teil({ id: "poller", de: "der Poller", syl: "POL-ler", it: "la bitta", itSyl: "BIT-ta", en: "bollard", x: X, y: Y, steht: true, kunst: k,
     tipp: "Am Poller wird das Schiff mit einer dicken Leine festgemacht." });
-  /* Dominikanermöwe, ≈ 60 cm: weißer Kopf und Bauch, Rücken und Flügel schieferschwarz mit weißem Hinterrand */
+  /* Dominikanermöwe, ≈ 60 cm, auf dem Poller: Rücken und Oberflügel eine zusammenhängende schwarze Decke von
+     der Schulter bis zu den Flügelspitzen, weißer Hinterrand und weiße Spitzenflecken; die Spitzen ragen
+     über den Schwanz hinaus. Olivgelbe Schwimmfüße. Licht von rechts hinten. */
   const m = (n) => r(n * s / 100);
-  let w = `<path d="M${m(-3)} 0 L${m(-2)} ${m(-10)} M${m(4)} 0 L${m(3.4)} ${m(-10)}" stroke="#d6c06a" stroke-width="${m(1.6)}" stroke-linecap="round"/>`;
-  w += `<path d="M${m(-28)} ${m(-22)} L${m(-14)} ${m(-25)} L${m(-16)} ${m(-18)} Z" fill="#141518"/>`;
-  w += `<path d="M${m(-24)} ${m(-22)} Q${m(-10)} ${m(-38)} ${m(10)} ${m(-35)} Q${m(19)} ${m(-32)} ${m(17)} ${m(-22)} Q${m(12)} ${m(-11)} ${m(-3)} ${m(-12)} Q${m(-17)} ${m(-14)} ${m(-24)} ${m(-22)} Z" fill="${S.rg("moewe", [[0, "#ffffff"], [1, "#e2e4e6"]], 0.6, 0.45, 0.7)}"/>`;
-  w += `<path d="M${m(-26)} ${m(-22.5)} Q${m(-10)} ${m(-34)} ${m(9)} ${m(-29)} Q${m(10)} ${m(-23)} ${m(2)} ${m(-19)} Q${m(-12)} ${m(-17)} ${m(-26)} ${m(-22.5)} Z" fill="#26282d"/>`;
-  w += `<path d="M${m(-25)} ${m(-21.6)} Q${m(-10)} ${m(-17.4)} ${m(2)} ${m(-18.4)}" stroke="#f2f2f2" stroke-width="${m(1.3)}" fill="none"/>`;
-  w += `<path d="M${m(-21)} ${m(-25)} l${m(-2)} ${m(1.6)} m${m(4)} ${m(-2.4)} l${m(-2)} ${m(1.6)}" stroke="#f4f4f4" stroke-width="${m(0.9)}"/>`;
-  w += `<circle cx="${m(14)}" cy="${m(-40)}" r="${m(6.4)}" fill="#ffffff"/><circle cx="${m(16.4)}" cy="${m(-41.6)}" r="${m(1.1)}" fill="#e8d36a"/><circle cx="${m(16.4)}" cy="${m(-41.6)}" r="${m(0.55)}" fill="#111"/>`;
-  w += `<path d="M${m(19.4)} ${m(-40.6)} L${m(29)} ${m(-38.8)} Q${m(29.6)} ${m(-37)} ${m(27.6)} ${m(-36.4)} L${m(19.4)} ${m(-37)} Z" fill="#f2c62f"/><circle cx="${m(26.4)}" cy="${m(-37.1)}" r="${m(1)}" fill="#d8321e"/>`;
+  let w = `<path d="M${m(-2)} ${m(-11)}L${m(-3)} 0M${m(4)} ${m(-11)}L${m(4.4)} 0" stroke="#c9b452" stroke-width="${m(1.6)}" stroke-linecap="round"/>`;
+  w += `<path d="M${m(-7)} ${m(0.4)}l${m(4)} ${m(-1.6)} ${m(3)} ${m(1.6)}zM${m(1.6)} ${m(0.4)}l${m(3)} ${m(-1.6)} ${m(4)} ${m(1.6)}z" fill="#c9b452"/>`;
+  w += `<path d="M${m(-22)} ${m(-21)}L${m(-14)} ${m(-25)}L${m(-12)} ${m(-18)}Z" fill="#f4f4f2"/>`;
+  w += `<path d="M${m(-17)} ${m(-19)}Q${m(-16)} ${m(-29)} ${m(2)} ${m(-31)}Q${m(14)} ${m(-31)} ${m(15)} ${m(-22)}Q${m(13)} ${m(-11)} ${m(1)} ${m(-10.4)}Q${m(-12)} ${m(-11)} ${m(-17)} ${m(-19)}Z" fill="${S.rg("moewe", [[0, "#ffffff"], [1, "#dfe2e6"]], 0.6, 0.45, 0.7)}"/>`;
+  w += `<path d="M${m(9)} ${m(-29)}Q${m(-4)} ${m(-33)} ${m(-18)} ${m(-27.6)}L${m(-33)} ${m(-22.4)}L${m(-30.6)} ${m(-20.6)}Q${m(-16)} ${m(-19.6)} ${m(-2)} ${m(-19.6)}Q${m(7)} ${m(-21)} ${m(9)} ${m(-29)}Z" fill="#1f2125"/>`;
+  w += `<path d="M${m(-2)} ${m(-20)}Q${m(-16)} ${m(-19.8)} ${m(-28)} ${m(-21.4)}" stroke="#f4f4f2" stroke-width="${m(1.3)}" fill="none"/><path d="M${m(4)} ${m(-29.4)}Q${m(-6)} ${m(-31.6)} ${m(-16)} ${m(-28)}" stroke="#4a4e56" stroke-width="${m(0.8)}" fill="none"/>`;
+  w += `<circle cx="${m(-29.4)}" cy="${m(-22)}" r="${m(0.8)}" fill="#f4f4f2"/><circle cx="${m(-25.6)}" cy="${m(-22.6)}" r="${m(0.7)}" fill="#f4f4f2"/>`;
+  w += `<circle cx="${m(14)}" cy="${m(-36)}" r="${m(6.2)}" fill="#ffffff"/><circle cx="${m(16.2)}" cy="${m(-37.4)}" r="${m(1.1)}" fill="#e8d36a"/><circle cx="${m(16.2)}" cy="${m(-37.4)}" r="${m(0.55)}" fill="#111"/>`;
+  w += `<path d="M${m(19.4)} ${m(-36.6)}L${m(29)} ${m(-34.8)}Q${m(29.6)} ${m(-33)} ${m(27.6)} ${m(-32.4)}L${m(19.4)} ${m(-33)}Z" fill="#f2c62f"/><circle cx="${m(26.4)}" cy="${m(-33.1)}" r="${m(1)}" fill="#d8321e"/>`;
+  w += `<path d="M${m(9)} ${m(-41)}Q${m(16)} ${m(-43.4)} ${m(19)} ${m(-38)}" stroke="#fff6e4" stroke-width="${m(1.2)}" fill="none"/>`;
   S.teil({ oben: true, id: "moewe", de: "die Möwe", syl: "MÖ-we", it: "il gabbiano", itSyl: "gab-BIA-no", en: "seagull", x: X, y: Y - Number(g(0.59)), kunst: w,
     tipp: "Die Dominikanermöwe ist groß, hat einen schwarzen Rücken und einen gelben Schnabel mit rotem Fleck." });
 }
@@ -717,29 +721,40 @@ const MUS = { x: 40, y: 224 };
 S.def(`<pattern id="${S.id("hemd")}" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(8)"><path d="M2.5 .5 4.5 2.5 2.5 4.5 .5 2.5Z" fill="#f2c62f"/><path d="M2.5 1.6 3.4 2.5 2.5 3.4 1.6 2.5Z" fill="#2f8a4a"/><circle cx="0" cy="0" r=".55" fill="#1d1d1d"/><circle cx="5" cy="5" r=".55" fill="#1d1d1d"/><circle cx="5" cy="0" r=".55" fill="#1d1d1d"/><circle cx="0" cy="5" r=".55" fill="#1d1d1d"/></pattern>`);
 const HAUT = "#6b4430", HAUTS = "#4a2c1e";
 {
-  /* DIE MUSIKERIN an der Bass-Marimba (dahinter, rechts): Kopftuch (Doek), blaues Kleid; die große
-     Bass-Marimba verdeckt sie bis zur Hüfte. Ursprung = Fußpunkt hinter der Marimba. */
-  const X = 98, Y = 219, s = vorn(Y) / 51.25;
+  /* DIE MUSIKERIN an der großen Bass-Marimba (rechts hinter dem Musiker): Doek (Kopftuch), blaues Kleid.
+     Sie steht auf einem kleinen Podest, dreht Kopf und Schultern zu ihm (Band-Gefühl) und spielt: Ellbogen
+     gebeugt, ein Schlägel liegt auf einem Stab, der andere holt aus. Die Bass-Marimba ist größer als die
+     erste: sechs breite, tiefe Stäbe und sehr lange Rohre fast bis zum Boden. Ursprung = Fußpunkt. */
+  const X = 104, Y = 219, s = vorn(Y) / 51.25;
   let k = `<g transform="scale(${r(s * 100) / 100})">`;
-  /* Oberkörper leicht vorgebeugt, Arme nach vorn-unten */
-  k += `<path d="M-8 -40Q-10 -54 -11 -63Q-9 -67 -4 -67.6L4.4 -67.8Q9.6 -67.2 10.6 -63Q9.4 -54 8 -40Z" fill="${S.lg("kleid2", [[0, "#2f6fb6"], [1, "#1f4f8f"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M-6 -60l3 3-3 3M2 -62l3 3-3 3M-2 -50l3 3-3 3M5 -52l3 3-3 3" stroke="#f4efe6" stroke-width=".7" fill="none" opacity=".8"/>`;
-  k += `<path d="M-10.6 -64Q-14.6 -58 -13.6 -50Q-12.4 -45 -9.6 -42.6L-7.4 -44Q-9.4 -48 -9.6 -54Q-8.6 -60 -7 -63ZM10.2 -64Q14.4 -58 13.6 -50Q12.6 -45 10 -42.4L7.8 -43.8Q9.8 -48 9.8 -54Q9 -60 7.4 -63Z" fill="${HAUT}"/>`;
-  k += `<path d="M-2.2 -67.6L-1.8 -70.6L2.6 -70.8L2.8 -67.8Z" fill="${HAUTS}"/><ellipse cx=".4" cy="-75.4" rx="5" ry="5.8" fill="${HAUT}"/>`;
-  k += `<path d="M-1.6 -76.4q.8 .5 1.6 0M2.2 -76.6q.8 .5 1.6 0M-.2 -72.6q1.4 .9 2.8 0" stroke="#1d120c" stroke-width=".45" fill="none"/><path d="M1.2 -76l.4 1.8-.8.2" stroke="${HAUTS}" stroke-width=".4" fill="none"/>`;
-  /* Doek: hoch gebundenes Kopftuch, gelb mit roten Bändern */
-  k += `<path d="M-5.2 -77Q-6.4 -84 -2 -87.6Q2.6 -90.4 6.4 -86.6Q7.4 -82 5.6 -77Q.4 -80 -5.2 -77Z" fill="#f2b51a"/><path d="M-4.6 -81Q.6 -83.4 6.2 -80.6M-3.4 -85.4Q1 -87.4 5.6 -85" stroke="#c8352a" stroke-width=".9" fill="none"/><path d="M5.4 -86.4q2.4 -1.6 2 -4q-1.6 1-2.6 2.6z" fill="#e2a012"/>`;
-  /* Schlägel (lang, große Köpfe) */
-  k += `<path d="M-9 -43.2L-7.6 -36.6M9 -43L10.6 -36.4" stroke="#7a5a3a" stroke-width=".8" stroke-linecap="round"/><circle cx="-7.4" cy="-36" r="2" fill="#2a2a2a"/><circle cx="10.8" cy="-35.8" r="2" fill="#2a2a2a"/><ellipse cx="-9" cy="-43.4" rx="1.6" ry="1.4" fill="${HAUT}"/><ellipse cx="9" cy="-43.2" rx="1.6" ry="1.4" fill="${HAUT}"/>`;
+  /* Oberkörper, Schultern zum Musiker (nach links) gedreht */
+  k += `<path d="M-7.6 -40Q-10.4 -54 -10.4 -63Q-8 -67.4 -3 -67.8L4 -67.6Q8.6 -66.6 9.4 -62.6Q8.6 -54 7.4 -40Z" fill="${S.lg("kleid2", [[0, "#2f6fb6"], [1, "#1f4f8f"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M-6 -60l3 3-3 3M2 -62l3 3-3 3M-2 -50l3 3-3 3M5 -52l3 3-3 3" stroke="#f4efe6" stroke-width=".7" fill="none" opacity=".8"/><path d="M-10 -62Q-8.6 -52 -7.4 -41" stroke="#163a6a" stroke-width="2" opacity=".35" fill="none"/>`;
+  /* Arme: Ellbogen gebeugt; links liegt der Schlägel auf dem Stab, rechts holt er aus */
+  k += `<path d="M-9.4 -64L-13.6 -53L-10.2 -45.2M8.6 -64L13.4 -56L11.2 -50.4" stroke="${HAUT}" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  k += `<path d="M-13.2 -53.6q1.2 .6 2.2 0M13 -56.4q-1 .8-2 .2" stroke="${HAUTS}" stroke-width=".5" fill="none"/>`;
+  k += `<path d="M-10.2 -45.2L-14 -34.6M11.2 -50.4L16.6 -42.4" stroke="#7a5a3a" stroke-width="1" stroke-linecap="round"/><ellipse cx="-14.2" cy="-34" rx="2.6" ry="2.1" fill="#26282c"/><ellipse cx="16.9" cy="-41.8" rx="2.6" ry="2.1" fill="#26282c"/>`;
+  k += `<ellipse cx="-10.2" cy="-45.4" rx="1.8" ry="1.5" fill="${HAUT}"/><ellipse cx="11.2" cy="-50.6" rx="1.8" ry="1.5" fill="${HAUT}"/>`;
+  /* Hals, Kopf zum Musiker gedreht (Gesicht nach links, Ohr rechts sichtbar) */
+  k += `<path d="M-2.2 -67.6L-1.8 -70.6L2.6 -70.8L2.8 -67.8Z" fill="${HAUTS}"/><ellipse cx="-.4" cy="-75.4" rx="5" ry="5.8" fill="${HAUT}"/><ellipse cx="4" cy="-75" rx=".8" ry="1.3" fill="${HAUTS}"/>`;
+  k += `<path d="M-4 -76.4q.8 .5 1.6 0M-.6 -76.6q.8 .5 1.6 0M-3.2 -72.6q1.4 .9 2.8 0" stroke="#1d120c" stroke-width=".45" fill="none"/><path d="M-2 -76l-.6 1.8.8.2" stroke="${HAUTS}" stroke-width=".4" fill="none"/>`;
+  /* Doek */
+  k += `<path d="M-6 -77Q-7.2 -84 -2.8 -87.6Q1.8 -90.4 5.6 -86.6Q6.6 -82 4.8 -77Q-.4 -80 -6 -77Z" fill="#f2b51a"/><path d="M-5.4 -81Q-.2 -83.4 5.4 -80.6M-4.2 -85.4Q.2 -87.4 4.8 -85" stroke="#c8352a" stroke-width=".9" fill="none"/><path d="M4.6 -86.4q2.4 -1.6 2 -4q-1.6 1-2.6 2.6z" fill="#e2a012"/>`;
+  /* Podest */
+  k += `<path d="M-14 -3.4h28V.6h-28z" fill="#7a5434"/><path d="M-14 -3.4h28" stroke="#b48654" stroke-width=".6"/>`;
   k += `</g>`;
-  /* Bass-Marimba davor: fünf breite Stäbe flach auf zwei Leisten, große Resonanzkästen, Gestell */
+  /* Bass-Marimba davor (eigener Fußpunkt 6 Einheiten näher): sechs breite Stäbe, lange Rohre */
   const mb = (n) => r(n * s);
-  let m = `<ellipse cx="0" cy="${mb(7)}" rx="${mb(22)}" ry="${mb(2.4)}" fill="#1d1810" opacity=".3" filter="url(#bw_weich)"/>`;
-  m += `<path d="M${mb(-19)} ${mb(7)}L${mb(-17)} ${mb(-32)}M${mb(19)} ${mb(7)}L${mb(17)} ${mb(-32)}" stroke="#5a3a22" stroke-width="${mb(1.6)}"/>`;
-  for (let i = 0; i < 5; i++) { const x = -16 + i * 6.6, l = 30 - i * 3; m += `<rect x="${mb(x)}" y="${mb(-31)}" width="${mb(5.4)}" height="${mb(l)}" rx="${mb(1)}" fill="${i % 2 ? "#3a3d42" : "#4a4e54"}"/>`; }
-  m += `<path d="M${mb(-19.4)} ${mb(-33)}H${mb(19.4)}V${mb(-31)}H${mb(-19.4)}Z" fill="#6b4426"/>`;
-  for (let i = 0; i < 5; i++) { const x = -16.4 + i * 6.6; m += `<path d="M${mb(x)} ${mb(-33)}l${mb(0.6)} ${mb(-6.4)}h${mb(5.2)}l${mb(0.6)} ${mb(6.4)}z" fill="url(#${S.id("kiaat")})" stroke="#6b3c1c" stroke-width=".25"/>`; }
-  m += `<path d="M${mb(-18)} ${mb(-34.4)}H${mb(18)}M${mb(-17.6)} ${mb(-37.6)}H${mb(17.6)}" stroke="#3a2416" stroke-width=".35"/>`;
+  const MY = 6, BH = 6 - 41, BW = 44, NB = 6, bb = (2 * BW) / NB;
+  let m = `<g transform="translate(${mb(8)} ${mb(MY)})">${schlag(Number(mb(80)), 0.4, vorn(Y) * 1.0, 0.28)}</g>`;
+  m += `<path d="M${mb(-BW - 2)} ${mb(MY)}L${mb(-BW)} ${mb(BH)}M${mb(-BW + 4)} ${mb(MY)}L${mb(-BW)} ${mb(BH)}M${mb(BW + 2)} ${mb(MY)}L${mb(BW)} ${mb(BH)}M${mb(BW - 4)} ${mb(MY)}L${mb(BW)} ${mb(BH)}M${mb(-BW + 2)} ${mb(MY - 10)}H${mb(BW - 2)}" stroke="#5a3a22" stroke-width="${mb(1.6)}"/>`;
+  let ro = "";
+  for (let i = 0; i < NB; i++) { const x = -BW + i * bb + bb * 0.2, l = 22 + i * 2.8; ro += `M${mb(x)} ${mb(BH + 1)}h${mb(bb * 0.6)}v${mb(l)}a${mb(bb * 0.3)} ${mb(bb * 0.22)} 0 0 1 ${mb(-bb * 0.6)} 0z`; }
+  m += `<path d="${ro}" fill="url(#${S.id("rohr")})"/>`;
+  m += `<path d="M${mb(-BW - 1)} ${mb(BH + 1)}H${mb(BW + 1)}v${mb(2)}H${mb(-BW - 1)}Z" fill="#6b4426"/>`;
+  let st = "", ka = "";
+  for (let i = 0; i < NB; i++) { const x = -BW + i * bb + 0.4, w = bb - 0.8, tief = 5.4 + i * 0.5; st += `M${mb(x)} ${mb(BH + 1)}h${mb(w)}l${mb(-0.6)} ${mb(-tief)}h${mb(-w + 1.2)}z`; ka += `M${mb(x)} ${mb(BH + 1)}h${mb(w)}`; }
+  m += `<path d="${st}" fill="url(#${S.id("kiaat")})" stroke="#5e3416" stroke-width=".3"/><path d="${ka}" stroke="#f0c48a" stroke-width=".5"/><path d="M${mb(-BW)} ${mb(BH - 1)}H${mb(BW)}M${mb(-BW + 1)} ${mb(BH - 4)}H${mb(BW - 1)}" stroke="#2a1a10" stroke-width=".35" opacity=".7"/>`;
   S.teil({ id: "musikerin", de: "die Musikerin", syl: "MU-si-ke-rin", it: "la musicista", itSyl: "mu-si-CI-sta", en: "musician", x: X, y: Y, kunst: k + m,
     tipp: "Die Musikerin spielt die große Bass-Marimba. Zusammen sind sie eine Marimba-Band." });
 }
@@ -748,7 +763,7 @@ const HAUT = "#6b4430", HAUTS = "#4a2c1e";
      Unterarme gehen nach vorn-unten zu den Stäben, die Schlägelköpfe berühren die Stäbe; der rechte
      Fuß ist im Takt angehoben. Buntes Hemd, Strickmütze. Licht von rechts hinten (Nordwest).
      Ursprung = zwischen den Füßen. */
-  let k = `<ellipse cx="1" cy=".4" rx="15" ry="2.2" fill="#1d1810" opacity=".32" filter="url(#bw_weich)"/>`;
+  let k = schlag(18, 1.76, vorn(MUS.y), 0.3) + `<ellipse cx="-5.6" cy="-.6" rx="5.4" ry="1" fill="#1d1810" opacity=".4"/><ellipse cx="7.4" cy="-.8" rx="4.4" ry=".9" fill="#1d1810" opacity=".3"/>`;
   /* Beine (Hose), rechtes Knie leicht gebeugt */
   k += `<path d="M-8.6 -46L-.4 -46L-2.4 -3L-8.8 -3Q-9.4 -24 -8.6 -46ZM.4 -46L8.6 -46Q10.6 -26 9.8 -5.4L4 -5Q4.4 -24 .4 -40Z" fill="${S.lg("hose", [[0, "#24252a"], [0.6, "#3a3c42"], [1, "#2a2b30"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M-6 -44Q-6.4 -24 -5.6 -4M6.4 -30q1.6 3 1.4 7" stroke="#55585f" stroke-width=".5" fill="none"/>`;
@@ -759,13 +774,14 @@ const HAUT = "#6b4430", HAUTS = "#4a2c1e";
   S.def(`<path id="${S.id("hemdp")}" d="M-9.6 -43Q-11 -56 -12.8 -66Q-11 -70.4 -5 -71L5.6 -71.4Q11.8 -71 13 -67Q11.6 -56 10 -43Q0 -41.4 -9.6 -43Z"/>`);
   k += `<use href="#${S.id("hemdp")}" fill="#c8401c"/><use href="#${S.id("hemdp")}" fill="url(#${S.id("hemd")})" opacity=".85"/>`;
   k += `<path d="M-9.6 -43Q-11 -56 -12.8 -66Q-11 -70.4 -6 -70.8Q-8.4 -58 -6.4 -42.6Z" fill="#3a1408" opacity=".3"/><path d="M-2.6 -71l2.8 4.4 3.2-4.6" stroke="#f6e7c8" stroke-width=".9" fill="none"/>`;
-  /* Arme: Ärmel mit Falten, zum Handgelenk schmaler; Unterarme nach vorn-unten */
-  const ARM = "M-12.8 -69Q-17.8 -64 -17.4 -54Q-16 -48 -12.6 -45.4L-9.8 -46.6Q-12.4 -50 -12.6 -56Q-11.2 -62 -8 -66ZM13.2 -69.4Q18 -64 17.6 -55Q16.6 -48 13.6 -44.8L10.8 -46Q13 -50 12.8 -56Q11.6 -62 8.6 -66.6Z";
-  k += `<path d="${ARM}" fill="#c8401c"/><path d="${ARM}" fill="url(#${S.id("hemd")})" opacity=".85"/>`;
-  k += `<path d="M-16.8 -56q1.6 .8 3.4 0M-16.4 -52.6q1.4.6 2.8-.2M16.8 -57q-1.6.8-3.4 0M16.2 -53.4q-1.4.6-2.8-.2" stroke="#7a2410" stroke-width=".45" fill="none"/>`;
-  /* Hände mit Schlägeln: Köpfe berühren die Stäbe */
-  k += `<path d="M-11.8 -44.8L-10 -38.4M12.6 -44L14.4 -38.6" stroke="#8a6a44" stroke-width=".7" stroke-linecap="round"/><circle cx="-9.8" cy="-38" r="1.5" fill="#a32a1e"/><circle cx="14.6" cy="-38.2" r="1.5" fill="#a32a1e"/>`;
-  k += `<ellipse cx="-11.4" cy="-45" rx="1.9" ry="1.6" fill="${HAUT}"/><ellipse cx="12.4" cy="-44.4" rx="1.9" ry="1.6" fill="${HAUT}"/><path d="M-12.6 -45.6q1.2-.6 2.4 0M11.2 -45q1.2-.6 2.4 0" stroke="${HAUTS}" stroke-width=".4" fill="none"/>`;
+  /* Arme: Ellbogen nach außen gebeugt, Unterarme nach vorn-unten (verkürzt); Ärmel mit Falten, zum
+     Handgelenk schmaler. Links liegt der Schlägelkopf auf einem Stab, rechts holt er gerade aus. */
+  const ARM = "M-12.4 -67.4L-17.2 -55.4L-11.4 -48.6M12.8 -67.4L18 -58L14.6 -53.8";
+  k += `<path d="${ARM}" stroke="#c8401c" stroke-width="4.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="${ARM}" stroke="url(#${S.id("hemd")})" stroke-width="4.6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>`;
+  k += `<path d="M-17.6 -57q1.6 .4 2.8-.8M-16.2 -53.4q1 .9 2.4.4M17.6 -59.6q-1.6.2-2.6-1M17.4 -56q-1 .8-2.4.2" stroke="#7a2410" stroke-width=".45" fill="none"/>`;
+  /* Schlägel: Stiel ≈ 35 cm, dicker Gummikopf */
+  k += `<path d="M-11.2 -48.4L-8.4 -37.4M14.4 -53.6L18.8 -45.8" stroke="#8a6a44" stroke-width=".85" stroke-linecap="round"/><ellipse cx="-8.2" cy="-36.8" rx="2.2" ry="1.7" fill="#a32a1e"/><ellipse cx="19" cy="-45.2" rx="2.2" ry="1.7" fill="#a32a1e"/><path d="M-9.4 -37.6q1-.6 2.2-.2M17.8 -46q1-.6 2.2-.2" stroke="#e05a44" stroke-width=".5" fill="none"/>`;
+  k += `<ellipse cx="-11.4" cy="-48.6" rx="1.9" ry="1.6" fill="${HAUT}"/><ellipse cx="14.6" cy="-53.8" rx="1.9" ry="1.6" fill="${HAUT}"/><path d="M-12.6 -49.2q1.2-.6 2.4 0M13.4 -54.4q1.2-.6 2.4 0" stroke="${HAUTS}" stroke-width=".4" fill="none"/>`;
   /* Hals, Kopf (Dreiviertel nach rechts, Blick nach unten auf die Stäbe), Strickmütze */
   k += `<path d="M-2.6 -70.6L-2.2 -74L3.2 -74.2L3.4 -70.8Z" fill="${HAUTS}"/>`;
   k += `<path d="M-4.2 -79.4Q-4.6 -85.4 1.2 -85.6Q6.8 -85.4 6.8 -79.4Q6.8 -74 3.6 -72.6Q1.2 -71.8 -1.4 -72.8Q-4 -74.6 -4.2 -79.4Z" fill="${HAUT}"/>`;
@@ -784,16 +800,17 @@ const HAUT = "#6b4430", HAUTS = "#4a2c1e";
   const L = 0.7, R = 0.55, H0 = 0.78, N = 12, bw = (L + R) / N;
   /* Gestell: A-Beine an den Enden, Querholz */
   k += `<path d="M${g(-L - 0.02)} 0L${g(-L + 0.04)} ${g(-H0 + 0.02)}M${g(-L + 0.12)} 0L${g(-L + 0.04)} ${g(-H0 + 0.02)}M${g(R + 0.02)} 0L${g(R - 0.04)} ${g(-H0 + 0.04)}M${g(R - 0.12)} 0L${g(R - 0.04)} ${g(-H0 + 0.04)}M${g(-L + 0.06)} ${g(-0.24)}H${g(R - 0.06)}" stroke="#5a3a22" stroke-width="${g(0.035)}"/>`;
-  /* Resonanzrohre: unter jedem Stab, links lang (tiefe Töne), rechts kurz */
+  /* Resonanzrohre: unter jedem Stab; die tiefen Töne liegen links vom Spieler – im Bild also rechts lang,
+     nach links stetig kürzer */
   let ro = "";
-  for (let i = 0; i < N; i++) { const x = -L + i * bw + bw * 0.22, l = 0.46 - i * 0.026; ro += `M${g(x)} ${g(-H0 + 0.02)}h${g(bw * 0.56)}v${g(l)}a${g(bw * 0.28)} ${g(bw * 0.2)} 0 0 1 ${g(-bw * 0.56)} 0z`; }
+  for (let i = 0; i < N; i++) { const x = -L + i * bw + bw * 0.22, l = 0.17 + i * 0.027; ro += `M${g(x)} ${g(-H0 + 0.02)}h${g(bw * 0.56)}v${g(l)}a${g(bw * 0.28)} ${g(bw * 0.2)} 0 0 1 ${g(-bw * 0.56)} 0z`; }
   k += `<path d="${ro}" fill="${S.lg("rohr", [[0, "#3a3d42"], [0.5, "#6a6f76"], [1, "#2e3135"]], 0, 0, 1, 0)}"/>`;
   /* zwei Leisten (vorn und hinten) */
   k += `<path d="M${g(-L - 0.04)} ${g(-H0 + 0.02)}H${g(R + 0.04)}v${g(0.04)}H${g(-L - 0.04)}Z" fill="#6b4426"/><path d="M${g(-L)} ${g(-H0 - 0.07)}H${g(R)}" stroke="#4a2e1a" stroke-width="${g(0.02)}"/>`;
   /* Stäbe: verkürzte Trapeze (Tiefe nach hinten), links länger; helle Vorderkante, Schnurlöcher */
   let st = "", ka = "";
   for (let i = 0; i < N; i++) {
-    const x = -L + i * bw + 0.004, w = bw - 0.012, tief = (0.42 - i * 0.016) * 0.26, y0 = -H0 + 0.01, y1 = y0 - tief, ein = (x + w / 2) * 0.03;
+    const x = -L + i * bw + 0.004, w = bw - 0.012, tief = (0.24 + i * 0.016) * 0.26, y0 = -H0 + 0.01, y1 = y0 - tief, ein = (x + w / 2) * 0.03;
     st += `M${g(x)} ${g(y0)}h${g(w)}l${g(-ein - 0.004)} ${g(-tief)}h${g(-w + 0.008)}z`;
     ka += `M${g(x)} ${g(y0)}h${g(w)}`;
   }

@@ -444,34 +444,43 @@ const TM = {};
     ] });
 }
 
+/* Schlagschatten: Sonne aus Ostsüdost (115°), 40° hoch → Schatten fallen nach Westnordwest in die Tiefe */
+const SCH = [-0.906 * 1.19, 0.423 * 1.19];
+const schlag = (x, y, w, h, op = .3) => `<path d="${poly([[x + w / 2, y, 0], [x - w / 2, y, 0], [x - w / 2 + SCH[0] * h, y + SCH[1] * h, 0], [x + w / 2 + SCH[0] * h, y + SCH[1] * h, 0]])}" fill="#2a1e14" opacity="${op}"/>`;
+
 /* =====================================================================
-   6 — DAS HISTORISCHE KAUFHAUS — Lupe: Kaiserfigur, Erker, Wappen
+   6 — DAS HISTORISCHE KAUFHAUS (Nordfassade im Schatten) mit Laubengang
+       Lupe: Figur, Erker, Wappen
    ===================================================================== */
 const KX0 = 8, KX1 = 44, KZE = 13.6;
 const KAUF = {};
 {
   let k = "";
-  const KRF = S.lg("kaufrot", [[0, "#8e2618"], [0.5, "#a3301f"], [1, "#952a1b"]], 0, 0, 1, 0);
-  const GL = S.lg("kaufglas", [[0, "#b6cde0"], [0.35, "#45525e"], [1, "#2a3038"]]);
-  /* bunt glasierte Ziegel als feines Rautenmuster für Türmchen und Gauben */
+  const KRF = S.lg("kaufrot", [[0, "#7c2016"], [0.5, "#922a1a"], [1, "#842418"]], 0, 0, 1, 0);
+  const GL = S.lg("kaufglas", [[0, "#a9bccc"], [0.35, "#3f4a56"], [1, "#262c34"]]);
+  const ST = "#c8a492";
   S.def(`<pattern id="${S.id("rauten")}" width="1.6" height="2" patternUnits="userSpaceOnUse"><rect width="1.6" height="2" fill="#2a2420"/><path d="M.8 0 L1.6 1 L.8 2 L0 1 Z" fill="#d6a62e"/><path d="M.8 .5 L1.2 1 L.8 1.5 L.4 1 Z" fill="#2f6e44"/><path d="M0 0 L.4 .5 L0 1 Z M1.6 1 L1.2 1.5 L1.6 2 Z" fill="#b8442a"/></pattern>`);
   const RAUTEN = `url(#${S.id("rauten")})`;
-  const HELMLICHT = S.lg("helmlicht", [[0, "#fff", 0.22], [0.5, "#fff", 0], [1, "#000", 0.32]], 0, 0, 1, 0);
-  /* --- Dach: Walmdach mit bunt glasierten Ziegeln im Rautenmuster --- */
+  const HELMLICHT = S.lg("helmlicht", [[0, "#fff", 0.25], [0.5, "#fff", 0], [1, "#000", 0.32]], 0, 0, 1, 0);
+  /* --- Dach: glasierte Ziegel in regelmäßigem Rautenmuster (Reihen, lückenlos) --- */
   const dachN = [[KX0, KYS, KZE], [KX1, KYS, KZE], [KX1 - 5, KYS - 10, 27], [KX0 + 5, KYS - 10, 27]];
   const dachO = [[KX1, KYS, KZE], [KX1, KYS - 20, KZE], [KX1 - 5, KYS - 10, 27]];
-  k += `<path d="${poly(dachO)}" fill="#5a3a22"/>`;
+  k += `<path d="${poly(dachO)}" fill="#4a3020"/>`;
   S.def(`<clipPath id="${S.id("dachclip")}"><path d="${poly(dachN)}"/></clipPath>`);
-  let fl = `<path d="${poly(dachN)}" fill="#6a3a22"/>`;
+  let fl = `<path d="${poly(dachN)}" fill="#7a3a22"/>`;
   const dp = (x, v) => [x, KYS - 10 * v, KZE + 13.4 * v];
-  for (let j = 0; j < 12; j++) for (let i = 0; i < 21; i++) {
-    const v0 = j / 12, v1 = (j + 1) / 12, vm = (v0 + v1) / 2, x = KX0 + (i + (j % 2) * 0.5) * 1.8;
-    const farbe = ["#d6a62e", "#2f6e44", "#1f1d1c", "#b8442a"][(i + j) % 4];
-    fl += `<path d="${poly([dp(x, v0), dp(x + .9, vm), dp(x, v1), dp(x - .9, vm)])}" fill="${farbe}"/>`;
+  const NR = 20, dv = 1 / NR, BW = 1.9, PAL = ["#d6a62e", "#2f6e44", "#1f1d1c", "#b8442a"];
+  let fugen = "";
+  for (let j = -1; j <= NR; j++) for (let i = -1; i < 21; i++) {
+    const vm = (j + .5) * dv, x = KX0 + (i + (j % 2 ? .5 : 0)) * BW;
+    const c = j % 4 === 0 ? 2 : ((i + (j >> 1)) % 2 ? 0 : (j % 4 === 2 ? 3 : 1));
+    const pts = [dp(x, vm - dv), dp(x + BW / 2, vm), dp(x, vm + dv), dp(x - BW / 2, vm)];
+    fl += `<path d="${poly(pts)}" fill="${PAL[c]}"/>`;
   }
-  k += `<g clip-path="url(#${S.id("dachclip")})">${fl}<path d="${poly(dachN)}" fill="${S.lg("dachglanz", [[0, "#fff", 0.18], [0.5, "#fff", 0], [1, "#000", 0.18]], 0, 0, 1, 0)}"/></g>`;
+  for (let j = 0; j <= NR; j++) { const v = j * dv; fugen += linie([dp(KX0, v), dp(KX1, v)]) + " "; }
+  k += `<g clip-path="url(#${S.id("dachclip")})">${fl}<path d="${fugen}" stroke="#2a1a12" stroke-width=".18" opacity=".5" fill="none"/><path d="${poly(dachN)}" fill="${S.lg("dachglanz", [[0, "#fff", 0.12], [0.5, "#000", 0.08], [1, "#000", 0.28]], 0, 0, 1, 0)}"/></g>`;
   k += `<path d="${linie([[KX1, KYS, KZE], [KX1 - 5, KYS - 10, 27], [KX0 + 5, KYS - 10, 27]])}" stroke="#3a2a20" stroke-width=".5" fill="none"/>`;
-  /* Gauben „wie in Beaune“: hohe Giebelgauben mit spitzen Helmen und Knäufen */
+  /* Gauben „wie in Beaune“ */
   for (const gx of [17.5, 26, 34.5]) {
     const y0 = KYS - 1.6, z0 = KZE + 2.2;
     k += `<path d="${poly([[gx - 1.5, y0, z0], [gx + 1.5, y0, z0], [gx + 1.5, y0, z0 + 3.8], [gx, y0, z0 + 6], [gx - 1.5, y0, z0 + 3.8]])}" fill="${KRF}"/>`;
@@ -481,46 +490,63 @@ const KAUF = {};
     const a = pr(gx, y0 - 2.2, z0 + 9.2), b = pr(gx, y0 - 2.2, z0 + 10.8);
     k += `<path d="M${P(a)} L${P(b)}" stroke="#d8b04a" stroke-width=".55"/><circle cx="${r(b[0])}" cy="${r(b[1])}" r=".5" fill="#e8c35a"/>`;
   }
-  /* --- Fassade: leuchtend rot, im Schatten der Mittagssonne --- */
+  /* --- Fassade (Nordseite: im Schatten, kühleres Rot) --- */
   k += `<path d="${fq(KYS, KX0, 0, KX1, KZE)}" fill="${KRF}"/>`;
-  k += `<path d="${fq(KYS, KX0, KZE - .8, KX1, KZE + .2)}" fill="${STEIN}"/><path d="${fq(KYS, KX0, 5.6, KX1, 6)}" fill="${STEIN}"/>`;
-  /* Balkon über dem Laubengang mit Maßwerkbrüstung */
-  k += `<path d="${poly([[KX0 + 3.6, KYS + .5, 6], [KX1 - 3.6, KYS + .5, 6], [KX1 - 3.6, KYS + .5, 7.1], [KX0 + 3.6, KYS + .5, 7.1]])}" fill="${STEIN}"/>`;
-  for (let x = KX0 + 4.1; x < KX1 - 3.8; x += 1.05) k += `<path d="${linie([[x, KYS + .5, 6.2], [x, KYS + .5, 6.9]])}" stroke="#8a3a2c" stroke-width=".4"/>`;
-  /* fünf Fenster des Obergeschosses mit Kreuzstock */
-  for (const xm of [12.4, 19.6, 26, 32.4, 39.6]) {
-    k += `<path d="${fq(KYS, xm - 1.5, 7.5, xm + 1.5, 12.4)}" fill="${STEIN}"/><path d="${fq(KYS, xm - 1.2, 7.7, xm + 1.2, 12.2)}" fill="${GL}"/>`;
-    k += `<path d="${linie([[xm, KYS, 7.7], [xm, KYS, 12.2]])} ${linie([[xm - 1.2, KYS, 10.4], [xm + 1.2, KYS, 10.4]])}" stroke="${STEIN}" stroke-width=".4"/>`;
+  k += `<path d="${fq(KYS, KX0, KZE - .8, KX1, KZE + .2)}" fill="${ST}"/><path d="${fq(KYS, KX0, 5.6, KX1, 6)}" fill="${ST}"/>`;
+  /* Laubengang: vier Spitzbögen auf Pfeilern, hinten Schaufenster */
+  for (const xm of [13.6, 21.2, 28.8, 36.4]) {
+    k += `<path d="${poly(toroeffnung(KYS, xm, 6.2, 2.6, 5.3, true))}" fill="${S.lg("lauben", [[0, "#40261f"], [1, "#1f120e"]])}"/>`;
+    k += `<path d="${linie(fbogen(KYS, xm, 6.8, 2.6, 5.7, true, 10))}" stroke="${ST}" stroke-width=".9" fill="none"/>`;
+    k += `<path d="${fq(KYS - 3, xm - 1.6, .6, xm + 1.6, 2.8)}" fill="#c9a86a" opacity=".5"/>`;
   }
-  /* die vier Habsburger: Maximilian I., Philipp der Schöne, Karl V., Ferdinand I. — bemalt, unter Baldachinen */
-  const kaiser = [];
-  [[16, "#8a1f22"], [22.8, "#1f3f7a"], [29.2, "#2a2a2a"], [36, "#3f6a2a"]].forEach(([xm, robe], i) => {
-    const y = KYS + .35, f0 = pr(xm, y, 7.5), f1 = pr(xm, y, 10.3), h = f0[1] - f1[1], x = f0[0];
-    let g = `<path d="${poly([[xm - .9, y, 7], [xm + .9, y, 7], [xm + .5, y, 7.5], [xm - .5, y, 7.5]])}" fill="${STEIN}"/>`;
-    g += `<path d="M${r(x - h * .16)} ${r(f0[1])} L${r(x - h * .11)} ${r(f1[1] + h * .3)} Q${r(x)} ${r(f1[1] + h * .22)} ${r(x + h * .11)} ${r(f1[1] + h * .3)} L${r(x + h * .16)} ${r(f0[1])} Z" fill="${robe}"/>`;
-    g += `<path d="M${r(x - h * .13)} ${r(f1[1] + h * .34)} Q${r(x)} ${r(f1[1] + h * .42)} ${r(x + h * .13)} ${r(f1[1] + h * .34)}" stroke="#e8dcc2" stroke-width="${r(h * .06)}" fill="none"/>`;
-    g += `<path d="M${r(x + h * .1)} ${r(f1[1] + h * .36)} L${r(x + h * .16)} ${r(f1[1] + h * .05)}" stroke="#e8c35a" stroke-width="${r(h * .035)}"/><circle cx="${r(x - h * .06)}" cy="${r(f1[1] + h * .5)}" r="${r(h * .045)}" fill="#e8c35a"/>`;
-    g += `<circle cx="${r(x)}" cy="${r(f1[1] + h * .16)}" r="${r(h * .09)}" fill="#e2b48e"/>`;
-    g += `<path d="M${r(x - h * .09)} ${r(f1[1] + h * .1)} l${r(h * .03)} ${r(-h * .1)} ${r(h * .045)} ${r(h * .05)} ${r(h * .03)} ${r(-h * .07)} ${r(h * .03)} ${r(h * .07)} ${r(h * .045)} ${r(-h * .05)} ${r(h * .03)} ${r(h * .1)} Z" fill="#e8c35a"/>`;
-    g += `<path d="${poly([[xm - .85, y, 10.5], [xm + .85, y, 10.5], [xm + .85, y, 11.3], [xm + .5, y, 11.3], [xm + .3, y, 12.2], [xm, y, 13.2], [xm - .3, y, 12.2], [xm - .5, y, 11.3], [xm - .85, y, 11.3]])}" fill="${STEIN}"/>`;
-    g += `<path d="${linie([[xm - .6, y, 10.6], [xm, y, 11.1], [xm + .6, y, 10.6]])}" stroke="#8a3a2c" stroke-width=".3" fill="none"/>`;
+  for (const xm of [9.8, 17.4, 25, 32.6, 40.2]) k += `<path d="${fq(KYS + .2, xm - .7, 0, xm + .7, 5.6)}" fill="${S.lg("pfeiler", [[0, "#6e1e12"], [1, "#94301f"]], 0, 0, 1, 0)}"/>`;
+  /* Balkon über dem Laubengang mit Maßwerkbrüstung; darauf die Wappenreihe */
+  k += `<path d="${poly([[KX0 + 3.6, KYS + .5, 6], [KX1 - 3.6, KYS + .5, 6], [KX1 - 3.6, KYS + .5, 7.1], [KX0 + 3.6, KYS + .5, 7.1]])}" fill="${ST}"/>`;
+  for (let x = KX0 + 4.1; x < KX1 - 3.8; x += 1.05) k += `<path d="${linie([[x, KYS + .5, 6.2], [x, KYS + .5, 6.9]])}" stroke="#7a3226" stroke-width=".4"/>`;
+  /* fünf Fenster mit Kreuzstock */
+  for (const xm of [12.4, 19.6, 26, 32.4, 39.6]) {
+    k += `<path d="${fq(KYS, xm - 1.5, 7.5, xm + 1.5, 12.4)}" fill="${ST}"/><path d="${fq(KYS, xm - 1.2, 7.7, xm + 1.2, 12.2)}" fill="${GL}"/>`;
+    k += `<path d="${linie([[xm, KYS, 7.7], [xm, KYS, 12.2]])} ${linie([[xm - 1.2, KYS, 10.4], [xm + 1.2, KYS, 10.4]])}" stroke="${ST}" stroke-width=".4"/>`;
+  }
+  /* die vier Habsburger, fast fensterhoch, farbig gefasst, unter Baldachinen; darunter Wappen */
+  const figur = [];
+  const WR = [["#c8202a", "#ffffff"], ["#e8c23a", "#1d1d1d"], ["#f2ead8", "#c8202a"], ["#c8202a", "#e8c23a"]];
+  [[16, "#8a1f22", "#e8c35a"], [22.8, "#1f3f7a", "#c9a227"], [29.2, "#2a2a2a", "#e8c35a"], [36, "#3f6a2a", "#d8b04a"]].forEach(([xm, robe, gold], i) => {
+    const y = KYS + .35, f0 = pr(xm, y, 7.3), f1 = pr(xm, y, 11.4), h = f0[1] - f1[1], x = f0[0];
+    let g = `<path d="${poly([[xm - .95, y, 6.8], [xm + .95, y, 6.8], [xm + .55, y, 7.3], [xm - .55, y, 7.3]])}" fill="${ST}"/>`;
+    /* Mantel, Hermelin, Zepter und Reichsapfel, Krone */
+    g += `<path d="M${r(x - h * .2)} ${r(f0[1])} Q${r(x - h * .19)} ${r(f1[1] + h * .45)} ${r(x - h * .12)} ${r(f1[1] + h * .22)} Q${r(x)} ${r(f1[1] + h * .16)} ${r(x + h * .12)} ${r(f1[1] + h * .22)} Q${r(x + h * .19)} ${r(f1[1] + h * .45)} ${r(x + h * .2)} ${r(f0[1])} Z" fill="${robe}"/>`;
+    g += `<path d="M${r(x - h * .05)} ${r(f1[1] + h * .25)} L${r(x - h * .07)} ${r(f0[1])} L${r(x + h * .07)} ${r(f0[1])} L${r(x + h * .05)} ${r(f1[1] + h * .25)} Z" fill="${gold}" opacity=".75"/>`;
+    g += `<path d="M${r(x - h * .13)} ${r(f1[1] + h * .23)} Q${r(x)} ${r(f1[1] + h * .32)} ${r(x + h * .13)} ${r(f1[1] + h * .23)}" stroke="#f2ecdc" stroke-width="${r(h * .055)}" fill="none"/>`;
+    g += `<path d="M${r(x + h * .13)} ${r(f1[1] + h * .5)} L${r(x + h * .19)} ${r(f1[1] + h * .1)}" stroke="#e8c35a" stroke-width="${r(h * .03)}"/><circle cx="${r(x - h * .12)}" cy="${r(f1[1] + h * .48)}" r="${r(h * .04)}" fill="#e8c35a"/>`;
+    g += `<circle cx="${r(x)}" cy="${r(f1[1] + h * .11)}" r="${r(h * .07)}" fill="#e2b48e"/>`;
+    g += `<path d="M${r(x - h * .075)} ${r(f1[1] + h * .07)} l${r(h * .02)} ${r(-h * .08)} ${r(h * .035)} ${r(h * .04)} ${r(h * .02)} ${r(-h * .055)} ${r(h * .02)} ${r(h * .055)} ${r(h * .035)} ${r(-h * .04)} ${r(h * .02)} ${r(h * .08)} Z" fill="#e8c35a"/>`;
+    /* reicher Baldachin mit Fiale */
+    g += `<path d="${poly([[xm - .95, y, 11.5], [xm + .95, y, 11.5], [xm + .95, y, 12.1], [xm + .55, y, 12.1], [xm + .3, y, 12.9], [xm, y, 13.5], [xm - .3, y, 12.9], [xm - .55, y, 12.1], [xm - .95, y, 12.1]])}" fill="${ST}"/>`;
+    g += `<path d="${linie([[xm - .7, y, 11.55], [xm - .35, y, 11.95], [xm, y, 11.55], [xm + .35, y, 11.95], [xm + .7, y, 11.55]])}" stroke="#7a3226" stroke-width=".28" fill="none"/>`;
+    /* Wappenschild in der Brüstung darunter */
+    const w0 = pr(xm, KYS + .55, 6.15), w1 = pr(xm, KYS + .55, 6.95), wh = w0[1] - w1[1], [c1, c2] = WR[i];
+    g += `<path d="M${r(w0[0] - wh * .42)} ${r(w1[1])} h${r(wh * .84)} v${r(wh * .5)} q0 ${r(wh * .42)} ${r(-wh * .42)} ${r(wh * .5)} q${r(-wh * .42)} ${r(-wh * .08)} ${r(-wh * .42)} ${r(-wh * .5)} Z" fill="${c1}" stroke="#d8b04a" stroke-width=".12"/><rect x="${r(w0[0] - wh * .42)}" y="${r(w1[1] + wh * .32)}" width="${r(wh * .84)}" height="${r(wh * .26)}" fill="${c2}"/>`;
     k += g;
-    kaiser.push({ x, y: f0[1], h });
+    figur.push({ x, y: f0[1], h });
   });
-  /* Erker an den Ecken: drei Seiten, Fenster, Wappen, Türmchen mit bunten Ziegeln */
-  const wappen = [["#c8202a", "#ffffff", "#c8202a"], ["#f2ead8", "#c8202a", "#f2ead8"]];
+  /* Erker auf Konsolen: polygonal, Maßwerkbrüstung, Wappen, Türmchen mit bunten Ziegeln */
+  const wappen = [["#c8202a", "#ffffff"], ["#f2ead8", "#c8202a"]];
   const erker = (xa, xb, wi) => {
     const yv = KYS + 1.4, xm = (xa + xb) / 2, ze = KZE + 1.2;
-    let g = `<path d="${poly([[xa, KYS, 5.8], [xb, KYS, 5.8], [xb - .9, yv, 5.8], [xm, yv + .2, 4.2], [xa + .9, yv, 5.8]])}" fill="${STEIN}"/>`;
-    g += `<path d="${poly([[xa, KYS, 5.8], [xa + .9, yv, 5.8], [xa + .9, yv, ze], [xa, KYS, ze]])}" fill="#7e2214"/>`;
+    let g = "";
+    /* gestufte Konsole */
+    for (const [z0, z1, e] of [[3.4, 4.2, .35], [4.2, 5, .7], [5, 5.8, 1]]) g += `<path d="${poly([[xa + .9 * (1 - e), KYS, z0], [xb - .9 * (1 - e), KYS, z0], [xb - .9, KYS + 1.4 * e, z1], [xm, KYS + 1.6 * e, z1], [xa + .9, KYS + 1.4 * e, z1]])}" fill="${["#a88472", "#b8927e", ST][Math.round(e * 2) - 1] || ST}"/>`;
+    g += `<path d="${poly([[xa, KYS, 5.8], [xa + .9, yv, 5.8], [xa + .9, yv, ze], [xa, KYS, ze]])}" fill="#6a1a10"/>`;
     g += `<path d="${poly([[xa + .9, yv, 5.8], [xb - .9, yv, 5.8], [xb - .9, yv, ze], [xa + .9, yv, ze]])}" fill="${KRF}"/>`;
-    g += `<path d="${poly([[xb - .9, yv, 5.8], [xb, KYS, 5.8], [xb, KYS, ze], [xb - .9, yv, ze]])}" fill="#b23a28"/>`;
-    g += `<path d="${poly([[xa + 1.2, yv, 9], [xb - 1.2, yv, 9], [xb - 1.2, yv, 12.2], [xa + 1.2, yv, 12.2]])}" fill="${GL}"/>`;
-    /* Wappenschild */
-    const w0 = pr(xm, yv, 6.3), w1 = pr(xm, yv, 8.4), wh = w0[1] - w1[1], [c1, c2] = wappen[wi];
+    g += `<path d="${poly([[xb - .9, yv, 5.8], [xb, KYS, 5.8], [xb, KYS, ze], [xb - .9, yv, ze]])}" fill="#c24a32"/>`;
+    /* Maßwerkbrüstung */
+    g += `<path d="${poly([[xa + .9, yv + .05, 8.2], [xb - .9, yv + .05, 8.2], [xb - .9, yv + .05, 8.9], [xa + .9, yv + .05, 8.9]])}" fill="${ST}"/>`;
+    for (let x = xa + 1.2; x < xb - 1; x += .45) g += `<path d="${linie([[x, yv + .06, 8.3], [x, yv + .06, 8.8]])}" stroke="#7a3226" stroke-width=".22"/>`;
+    g += `<path d="${poly([[xa + 1.2, yv, 9.2], [xb - 1.2, yv, 9.2], [xb - 1.2, yv, 12.3], [xa + 1.2, yv, 12.3]])}" fill="${GL}"/>`;
+    const w0 = pr(xm, yv, 6.2), w1 = pr(xm, yv, 8), wh = w0[1] - w1[1], [c1, c2] = wappen[wi];
     g += `<path d="M${r(w0[0] - wh * .38)} ${r(w1[1])} h${r(wh * .76)} v${r(wh * .55)} q0 ${r(wh * .38)} ${r(-wh * .38)} ${r(wh * .45)} q${r(-wh * .38)} ${r(-wh * .07)} ${r(-wh * .38)} ${r(-wh * .45)} Z" fill="${c1}" stroke="#d8b04a" stroke-width="${r(wh * .05)}"/>`;
     g += wi === 0 ? `<rect x="${r(w0[0] - wh * .38)}" y="${r(w1[1] + wh * .33)}" width="${r(wh * .76)}" height="${r(wh * .3)}" fill="${c2}"/>` : `<path d="M${r(w0[0] - wh * .07)} ${r(w1[1])} h${r(wh * .14)} v${r(wh * .95)} h${r(-wh * .14)} Z M${r(w0[0] - wh * .38)} ${r(w1[1] + wh * .3)} h${r(wh * .76)} v${r(wh * .14)} h${r(-wh * .76)} Z" fill="${c2}"/>`;
-    /* Türmchen: spitzer Helm, bunte Rauten, goldener Knauf */
     const tip = [xm, yv - .4, ze + 6.6];
     const helm = poly([[xa - .2, KYS, ze], [xa + .9, yv + .1, ze], [xm, yv + .2, ze], [xb - .9, yv + .1, ze], [xb + .2, KYS, ze], [...tip]]);
     g += `<path d="${helm}" fill="${RAUTEN}"/><path d="${helm}" fill="${HELMLICHT}"/>`;
@@ -530,88 +556,118 @@ const KAUF = {};
     return g;
   };
   k += erker(KX0, KX0 + 3.6, 1) + erker(KX1 - 3.6, KX1, 0);
-  /* Wasserspeier an der Traufe */
-
   KAUF.erker = pr(KX1 - 1.8, KYS + 1.4, 10.4);
-  KAUF.wappen = pr(KX1 - 1.8, KYS + 1.4, 7.4);
-  KAUF.kaiser = kaiser[3];
-  const zoom = { x: 14, y: 110, w: 96, h: 64 };
+  KAUF.wappen = pr(KX1 - 1.8, KYS + 1.4, 7.1);
+  KAUF.figur = figur[3];
   S.teil({ id: "kaufhaus", de: "das Historische Kaufhaus", syl: "his-TO-ri-sche KAUF-haus", it: "lo storico emporio", itSyl: "STO-ri-co em-PO-rio", en: "Historical Merchants' Hall",
-    x: 0, y: 0, kunst: k, tipp: "Das rote Kaufhaus ist fast 500 Jahre alt. Früher wurden hier die Waren der Händler gewogen und verzollt.",
-    zoom,
+    x: 0, y: 0, kunst: k, tipp: "Das rote Kaufhaus ist fast 500 Jahre alt. Früher wurden hier die Waren der Händler gewogen und verzollt. Unten ist ein Laubengang.",
+    zoom: { x: 14, y: 106, w: 96, h: 64 },
     unter: [
-      { id: "kaiserfigur", de: "die Kaiserfigur", syl: "KAI-ser-fi-gur", it: "la statua dell'imperatore", itSyl: "STA-tu-a del-lim-pe-ra-TO-re", en: "emperor statue", x: KAUF.kaiser.x, y: KAUF.kaiser.y, kunst: flaeche(-KAUF.kaiser.h * .32, -KAUF.kaiser.h * 1.3, KAUF.kaiser.h * .64, KAUF.kaiser.h * 1.35, 0.4),
-        tipp: "Vier Habsburger stehen an der Fassade: Maximilian I., Philipp der Schöne, Karl V. und Ferdinand I." },
-      { id: "erker", de: "der Erker", syl: "ER-ker", it: "il bovindo", itSyl: "bo-VIN-do", en: "oriel", x: KAUF.erker[0], y: KAUF.erker[1], kunst: flaeche(-5, -16, 10, 22),
-        tipp: "Der Erker ragt aus der Wand heraus. Oben trägt er ein Türmchen aus bunten Ziegeln." },
-      { id: "wappen", de: "das Wappen", syl: "WAP-pen", it: "lo stemma", itSyl: "STEM-ma", en: "coat of arms", x: KAUF.wappen[0], y: KAUF.wappen[1], kunst: flaeche(-3, -3.4, 6, 5, 0.6),
-        tipp: "Rot-weiß-rot ist das Wappen von Österreich. Freiburg gehörte fast 400 Jahre zu Habsburg." },
+      { id: "figur", de: "die Figur", syl: "fi-GUR", it: "la statua", itSyl: "STA-tu-a", en: "statue", x: KAUF.figur.x, y: KAUF.figur.y, kunst: flaeche(-KAUF.figur.h * .3, -KAUF.figur.h * 1.12, KAUF.figur.h * .6, KAUF.figur.h * 1.15, 0.4),
+        tipp: "Vier Habsburger stehen an der Fassade: Kaiser Maximilian I., sein Sohn Philipp der Schöne, Kaiser Karl V. und Kaiser Ferdinand I." },
+      { id: "erker", de: "der Erker", syl: "ER-ker", it: "il bovindo", itSyl: "bo-VIN-do", en: "oriel", x: KAUF.erker[0], y: KAUF.erker[1], kunst: flaeche(-4, -15, 8, 13),
+        tipp: "Der Erker ragt aus der Wand heraus und steht auf einer Konsole. Oben trägt er ein Türmchen aus bunten Ziegeln." },
+      { id: "wappen", de: "das Wappen", syl: "WAP-pen", it: "lo stemma", itSyl: "STEM-ma", en: "coat of arms", x: KAUF.wappen[0], y: KAUF.wappen[1], kunst: flaeche(-2.4, -2.6, 4.8, 3.8, 0.6),
+        tipp: "Rot-weiß-rot ist das Wappen von Österreich. Freiburg gehörte über 400 Jahre zu Habsburg (1368–1805)." },
     ] });
 }
 
 /* =====================================================================
-   7 — DER LAUBENGANG (vier Spitzbögen im Erdgeschoss des Kaufhauses)
+   7 — DAS CAFÉ (Platzhaus im Osten, Tische auf dem Platz) — Lupe:
+       Schwarzwälder Kirschtorte, Sonnenschirm
    ===================================================================== */
-{
-  let k = "";
-  for (const xm of [13.6, 21.2, 28.8, 36.4]) {
-    k += `<path d="${poly(toroeffnung(KYS, xm, 6.2, 2.6, 5.3, true))}" fill="${S.lg("lauben", [[0, "#40261f"], [1, "#1f120e"]])}"/>`;
-    k += `<path d="${linie(fbogen(KYS, xm, 6.8, 2.6, 5.7, true, 10))}" stroke="${STEIN}" stroke-width=".9" fill="none"/>`;
-    /* hinten im Gang: Schaufenster und Lampen */
-    k += `<path d="${fq(KYS - 3, xm - 1.6, .6, xm + 1.6, 2.8)}" fill="#c9a86a" opacity=".55"/>`;
-  }
-  for (const xm of [9.8, 17.4, 25, 32.6, 40.2]) k += `<path d="${fq(KYS + .2, xm - .7, 0, xm + .7, 5.6)}" fill="${S.lg("pfeiler", [[0, "#7e2214"], [1, "#a8352a"]], 0, 0, 1, 0)}"/>`;
-  S.teil({ id: "laubengang", de: "der Laubengang", syl: "LAU-ben-gang", it: "il porticato", itSyl: "por-ti-CA-to", en: "arcade", x: 0, y: 0, kunst: k,
-    tipp: "Unter dem Laubengang konnten die Händler auch bei Regen trocken stehen." });
-}
-
-/* =====================================================================
-   8 — DAS CAFÉ (Nachbarhaus im Osten, mit Sonnenschirmen davor)
-   ===================================================================== */
+const CAFE = {};
 {
   const X0 = 44, X1 = 64, H = 15;
-  let k = `<path d="${fq(KYS, X0, 0, X1, H)}" fill="#e9dcc2"/><path d="${fq(KYS, X0, 0, X1, H)}" fill="${S.lg("cafeschatten", [[0, "#2a2018", 0.16], [1, "#2a2018", 0.05]])}"/>`;
+  let k = `<path d="${fq(KYS, X0, 0, X1, H)}" fill="#e6d6b8"/><path d="${fq(KYS, X0, 0, X1, H)}" fill="${S.lg("cafeschatten", [[0, "#2a2018", 0.2], [1, "#2a2018", 0.08]])}"/>`;
   k += `<path d="${poly([[X0, KYS, H], [X1, KYS, H], [X1 - 1, KYS - 7, H + 6.4], [X0 + 1, KYS - 7, H + 6.4]])}" fill="${S.lg("cafedach", [[0, "#6b4a3e"], [1, "#8f6656"]])}"/>`;
-  k += `<path d="${fq(KYS, X0, H - .5, X1, H + .2)}" fill="#cbb89a"/><path d="${fq(KYS, X0, 3.8, X1, 4.2)}" fill="#cbb89a"/>`;
-  for (let e = 0; e < 3; e++) for (let i = 0; i < 5; i++) { const xm = X0 + 2 + i * 4, z = 5.4 + e * 3.2; k += `<path d="${fq(KYS, xm - .7, z, xm + .7, z + 2.2)}" fill="#4a5058"/><path d="${fq(KYS, xm - 1, z - .2, xm + 1, z)}" fill="#cbb89a"/>`; }
-  for (let i = 0; i < 4; i++) { const xm = X0 + 3 + i * 4.6; k += `<path d="${fq(KYS, xm - 1.4, .4, xm + 1.4, 3.2)}" fill="#3a3530"/>`; }
-  /* Markise und Schild */
-  k += `<path d="${poly([[X0 + .5, KYS, 4.4], [X1 - .5, KYS, 4.4], [X1 - .5, KYS + 2.2, 3.4], [X0 + .5, KYS + 2.2, 3.4]])}" fill="#7a2a2a"/>`;
-  for (let x = X0 + 1.5; x < X1 - .5; x += 2) k += `<path d="${poly([[x, KYS + .1, 4.35], [x + 1, KYS + .1, 4.35], [x + 1, KYS + 2.2, 3.4], [x, KYS + 2.2, 3.4]])}" fill="#efe3c8"/>`;
+  /* Gesimse, Fenster mit Gewänden und grünen Läden, Ladenzone mit Schaufenstern */
+  k += `<path d="${fq(KYS, X0, H - .6, X1, H + .2)}" fill="#c8b08e"/><path d="${fq(KYS, X0, 4, X1, 4.6)}" fill="#c8b08e"/><path d="${fq(KYS, X0, 8.8, X1, 9.1)}" fill="#d4c0a0"/>`;
+  for (let e = 0; e < 3; e++) for (let i = 0; i < 4; i++) {
+    const xm = X0 + 2.8 + i * 4.8, z = 5.4 + e * 3.1;
+    k += `<path d="${fq(KYS, xm - .9, z - .2, xm + .9, z + 2.3)}" fill="#cdb898"/><path d="${fq(KYS, xm - .7, z, xm + .7, z + 2.1)}" fill="#4a5058"/>`;
+    k += `<path d="${fq(KYS, xm - 1.45, z, xm - .95, z + 2.1)}" fill="#3f6a44"/><path d="${fq(KYS, xm + .95, z, xm + 1.45, z + 2.1)}" fill="#3f6a44"/>`;
+  }
+  for (let i = 0; i < 3; i++) { const xm = X0 + 4 + i * 6; k += `<path d="${fq(KYS, xm - 2, .5, xm + 2, 3.4)}" fill="#3a3530"/><path d="${fq(KYS, xm - 1.8, .7, xm + 1.8, 3.2)}" fill="#c9a86a" opacity=".35"/>`; }
+  k += `<path d="${poly([[X0 + .5, KYS, 4.4], [X1 - .5, KYS, 4.4], [X1 - .5, KYS + 2.2, 3.5], [X0 + .5, KYS + 2.2, 3.5]])}" fill="#7a2a2a"/>`;
+  for (let x = X0 + 1.5; x < X1 - .5; x += 2) k += `<path d="${poly([[x, KYS + .1, 4.35], [x + 1, KYS + .1, 4.35], [x + 1, KYS + 2.2, 3.5], [x, KYS + 2.2, 3.5]])}" fill="#efe3c8"/>`;
   const sc = pr(46.8, KYS + .1, 5.05), ss = FOC / tief(46.8, KYS);
   k += `<text x="${r(sc[0])}" y="${r(sc[1])}" font-size="${r(ss * 1.1)}" text-anchor="middle" fill="#7a2a2a" font-family="Georgia,serif" font-style="italic" font-weight="bold">Café</text>`;
-  /* Tische mit Sonnenschirmen vor dem Haus (im Schatten der Häuser) */
-  for (const [x, y] of [[48.6, -74.4], [46.4, -77.6]]) {
+  /* zwei Bistrotische mit Stühlen auf dem Platz */
+  const stuhl = (x, y, sd) => {
     const f = fuss(x, y), s = f.s;
-    k += `<path d="M${r(f.x)} ${r(f.y)} V${r(f.y - 2.3 * s)}" stroke="#d8d2c4" stroke-width="${r(.08 * s)}"/>`;
-    k += `<path d="M${r(f.x - 1.4 * s)} ${r(f.y - 2.1 * s)} Q${r(f.x)} ${r(f.y - 2.9 * s)} ${r(f.x + 1.4 * s)} ${r(f.y - 2.1 * s)} Z" fill="#efe3c8"/><path d="M${r(f.x - 1.4 * s)} ${r(f.y - 2.1 * s)} h${r(2.8 * s)}" stroke="#7a2a2a" stroke-width="${r(.12 * s)}"/>`;
-    k += `<ellipse cx="${r(f.x)}" cy="${r(f.y - .74 * s)}" rx="${r(.45 * s)}" ry="${r(.12 * s)}" fill="#c9c2b4"/><path d="M${r(f.x)} ${r(f.y)} V${r(f.y - .74 * s)}" stroke="#3a3a3a" stroke-width="${r(.06 * s)}"/>`;
-    for (const d of [-.6, .6]) k += `<path d="M${r(f.x + d * s)} ${r(f.y)} v${r(-.45 * s)} h${r(.25 * s * Math.sign(d))} v${r(-.4 * s)}" stroke="#3a3a3a" stroke-width="${r(.05 * s)}" fill="none"/>`;
+    let g = schlag(x, y, .4, .9, .22);
+    g += `<path d="M${r(f.x - .2 * s)} ${r(f.y)} L${r(f.x - .2 * s)} ${r(f.y - .46 * s)} M${r(f.x + .2 * s)} ${r(f.y)} L${r(f.x + .2 * s)} ${r(f.y - .46 * s)}" stroke="#2a2a2a" stroke-width="${r(.05 * s)}"/>`;
+    g += `<path d="M${r(f.x - .24 * s)} ${r(f.y - .46 * s)} h${r(.48 * s)} l${r(-.05 * s)} ${r(-.06 * s)} h${r(-.38 * s)} Z" fill="#6a4a30"/>`;
+    g += `<path d="M${r(f.x + sd * .2 * s)} ${r(f.y - .46 * s)} L${r(f.x + sd * .23 * s)} ${r(f.y - .9 * s)} M${r(f.x - sd * .1 * s)} ${r(f.y - .5 * s)} L${r(f.x - sd * .08 * s)} ${r(f.y - .86 * s)}" stroke="#2a2a2a" stroke-width="${r(.04 * s)}"/>`;
+    g += `<path d="M${r(f.x - sd * .1 * s)} ${r(f.y - .78 * s)} L${r(f.x + sd * .23 * s)} ${r(f.y - .82 * s)} L${r(f.x + sd * .22 * s)} ${r(f.y - .66 * s)} L${r(f.x - sd * .1 * s)} ${r(f.y - .62 * s)} Z" fill="#6a4a30"/>`;
+    return g;
+  };
+  const tisch = (x, y) => {
+    const f = fuss(x, y), s = f.s;
+    let g = schlag(x, y, .6, .75, .25);
+    g += `<path d="M${r(f.x)} ${r(f.y)} V${r(f.y - .74 * s)}" stroke="#3a3a3a" stroke-width="${r(.06 * s)}"/><path d="M${r(f.x - .25 * s)} ${r(f.y)} h${r(.5 * s)}" stroke="#3a3a3a" stroke-width="${r(.05 * s)}"/>`;
+    g += `<ellipse cx="${r(f.x)}" cy="${r(f.y - .75 * s)}" rx="${r(.36 * s)}" ry="${r(.09 * s)}" fill="#e8e2d6" stroke="#9a9488" stroke-width="${r(.015 * s)}"/>`;
+    return { g, f };
+  };
+  k += stuhl(50.8, -69.4, 1) + stuhl(44.8, -71.4, -1);
+  const t1 = tisch(50, -70), t2 = tisch(44, -72);
+  k += t1.g + t2.g;
+  /* Kaffeetassen */
+  for (const [t, dx] of [[t1, -.15], [t2, .1]]) { const { f } = t, s = f.s; k += `<path d="M${r(f.x + dx * s - .05 * s)} ${r(f.y - .78 * s)} h${r(.1 * s)} v${r(-.06 * s)} h${r(-.1 * s)} Z" fill="#fbfaf6"/><ellipse cx="${r(f.x + dx * s)}" cy="${r(f.y - .78 * s)}" rx="${r(.08 * s)}" ry="${r(.02 * s)}" fill="#f2f0ea"/>`; }
+  /* die Schwarzwälder Kirschtorte auf dem Tortenständer: Schokoböden, Sahne, Schokoraspel, Sahnetupfen mit Kirschen */
+  {
+    const f = t1.f, s = f.s, tx = f.x + .12 * s, ty = f.y - .76 * s, tr = .15 * s, th = .12 * s;
+    let g = `<path d="M${r(tx)} ${r(ty)} v${r(-.06 * s)}" stroke="#c9c2b4" stroke-width="${r(.02 * s)}"/><ellipse cx="${r(tx)}" cy="${r(ty - .06 * s)}" rx="${r(tr * 1.18)}" ry="${r(tr * .26)}" fill="#f2efe8"/>`;
+    const y0 = ty - .065 * s;
+    g += `<path d="M${r(tx - tr)} ${r(y0)} v${r(-th)} a${r(tr)} ${r(tr * .25)} 0 0 1 ${r(2 * tr)} 0 v${r(th)} a${r(tr)} ${r(tr * .25)} 0 0 1 ${r(-2 * tr)} 0 Z" fill="${S.lg("sahne", [[0, "#fbf8f1"], [0.7, "#efe9dc"], [1, "#d9d0bf"]], 0, 0, 1, 0)}"/>`;
+    for (let i = 0; i < 30; i++) g += `<rect x="${r(tx - tr + rnd() * 2 * tr)}" y="${r(y0 - th * .7 + rnd() * th * .7)}" width="${r(.012 * s)}" height="${r(.006 * s)}" fill="${rnd() < .5 ? "#3a2010" : "#5a3418"}"/>`;
+    /* angeschnitten: vorn fehlt ein Stück — man sieht die Schichten */
+    g += `<path d="M${r(tx - tr * .1)} ${r(y0 + tr * .05)} L${r(tx + tr * .55)} ${r(y0 + tr * .2)} L${r(tx + tr * .55)} ${r(y0 + tr * .2 - th)} L${r(tx - tr * .1)} ${r(y0 + tr * .05 - th)} Z" fill="#3a2010"/>`;
+    for (const z of [.25, .55, .8]) g += `<path d="M${r(tx - tr * .1)} ${r(y0 + tr * .05 - th * z)} L${r(tx + tr * .55)} ${r(y0 + tr * .2 - th * z)}" stroke="#fbf6ea" stroke-width="${r(th * .14)}"/>`;
+    g += `<path d="M${r(tx - tr * .1)} ${r(y0 + tr * .05 - th * .4)} L${r(tx + tr * .55)} ${r(y0 + tr * .2 - th * .4)}" stroke="#8a1424" stroke-width="${r(th * .07)}"/>`;
+    g += `<ellipse cx="${r(tx)}" cy="${r(y0 - th)}" rx="${r(tr)}" ry="${r(tr * .25)}" fill="#fffdf8"/>`;
+    for (let i = 0; i < 18; i++) g += `<rect x="${r(tx - tr * .5 + rnd() * tr)}" y="${r(y0 - th - .015 * s + rnd() * .02 * s)}" width="${r(.012 * s)}" height="${r(.006 * s)}" fill="#3a2010"/>`;
+    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, cx = tx + Math.cos(a) * tr * .75, cy = y0 - th + Math.sin(a) * tr * .19; g += `<circle cx="${r(cx)}" cy="${r(cy - .012 * s)}" r="${r(.018 * s)}" fill="#fffaf0"/><circle cx="${r(cx)}" cy="${r(cy - .03 * s)}" r="${r(.011 * s)}" fill="#7d0c1f"/>`; }
+    k += g;
+    CAFE.torte = { x: tx, y: y0 - th * .5, s };
+  }
+  /* der große Sonnenschirm über dem vorderen Tisch */
+  {
+    const f = fuss(50, -70), s = f.s;
+    k += `<path d="M${r(f.x - .02 * s)} ${r(f.y - .8 * s)} V${r(f.y - 2.45 * s)}" stroke="#d8d2c4" stroke-width="${r(.05 * s)}"/>`;
+    let g = "";
+    for (let i = 0; i < 8; i++) { const a = -1.5 + i * .375, b = a + .375; g += `<path d="M${r(f.x)} ${r(f.y - 2.9 * s)} L${r(f.x + a * s)} ${r(f.y - 2.28 * s)} Q${r(f.x + (a + b) / 2 * s)} ${r(f.y - 2.18 * s)} ${r(f.x + b * s)} ${r(f.y - 2.28 * s)} Z" fill="${i % 2 ? "#f4ecd8" : "#7a2a2a"}"/>`; }
+    k += g + `<path d="M${r(f.x - 1.5 * s)} ${r(f.y - 2.28 * s)} L${r(f.x)} ${r(f.y - 2.9 * s)} L${r(f.x + 1.5 * s)} ${r(f.y - 2.28 * s)}" stroke="#000" stroke-opacity=".15" stroke-width="${r(.04 * s)}" fill="none"/>`;
+    CAFE.schirm = { x: f.x, y: f.y - 2.5 * s, s };
   }
   S.teil({ id: "cafe", de: "das Café", syl: "ca-FÉ", it: "il caffè", itSyl: "caf-FÈ", en: "café", x: 0, y: 0, kunst: k,
-    tipp: "Rund um den Münsterplatz sitzt man im Café und schaut auf den Markt." });
+    tipp: "Rund um den Münsterplatz sitzt man im Café und schaut auf den Markt.",
+    zoom: { x: 14, y: 168, w: 66, h: 44 },
+    unter: [
+      { id: "kirschtorte", de: "die Schwarzwälder Kirschtorte", syl: "SCHWARZ-wäl-der KIRSCH-tor-te", it: "la torta Foresta Nera", itSyl: "TOR-ta fo-RE-sta NE-ra", en: "Black Forest cake", x: CAFE.torte.x, y: CAFE.torte.y, kunst: flaeche(-1.6, -1.6, 3.2, 2.6, 0.4),
+        tipp: "Schokoladenbiskuit, Sahne, Kirschen und ein Schuss Kirschwasser — die berühmteste Torte aus dem Schwarzwald." },
+      { id: "sonnenschirm", de: "der Sonnenschirm", syl: "SON-nen-schirm", it: "l'ombrellone", itSyl: "om-brel-LO-ne", en: "parasol", x: CAFE.schirm.x, y: CAFE.schirm.y, kunst: flaeche(-CAFE.schirm.s * 1.4, -CAFE.schirm.s * .4, CAFE.schirm.s * 2.8, CAFE.schirm.s * .6, 0.5) },
+    ] });
 }
 
-/* =====================================================================
-   9 — DER WOCHENMARKT (Stände im Hintergrund: Händler der Südseite)
-   ===================================================================== */
+/* ---------- die Stände im Hintergrund (gehören zum Wort „der Marktstand“) ---------- */
+let FERNSTAENDE = "";
 {
   let k = "";
   const zelt = (x, y, dach, waren) => {
     const f = fuss(x, y), s = f.s, w = 3 * s, h = 2.5 * s;
-    let g = schatten(f.x, f.y, w * .55, .25 * s, .25);
+    let g = schlag(x, y, 3, 2.6, .18);
     for (const d of [-.47, .47]) g += `<path d="M${r(f.x + d * w)} ${r(f.y)} V${r(f.y - h)}" stroke="#bfbab0" stroke-width="${r(Math.max(.2, .05 * s))}"/>`;
-    /* Tisch mit Waren in bunten Kisten */
     g += `<rect x="${r(f.x - w * .45)}" y="${r(f.y - .85 * s)}" width="${r(w * .9)}" height="${r(.85 * s)}" fill="#e9e4d8"/>`;
     for (let i = 0; i < 5; i++) g += `<rect x="${r(f.x - w * .42 + i * w * .17)}" y="${r(f.y - 1.05 * s)}" width="${r(w * .15)}" height="${r(.3 * s)}" fill="${waren[i % waren.length]}"/>`;
-    /* Zeltdach mit Behang */
     g += `<path d="M${r(f.x - w * .56)} ${r(f.y - h)} L${r(f.x - w * .3)} ${r(f.y - h - .55 * s)} L${r(f.x + w * .3)} ${r(f.y - h - .55 * s)} L${r(f.x + w * .56)} ${r(f.y - h)} Z" fill="${dach[0]}"/>`;
     g += `<rect x="${r(f.x - w * .56)}" y="${r(f.y - h)}" width="${r(w * 1.12)}" height="${r(.32 * s)}" fill="${dach[1]}"/>`;
     return g;
   };
   const schirm = (x, y, farben, waren) => {
     const f = fuss(x, y), s = f.s;
-    let g = schatten(f.x, f.y, 1.4 * s, .22 * s, .22);
+    let g = schlag(x, y, 2.4, 2.6, .16);
     g += `<rect x="${r(f.x - 1.2 * s)}" y="${r(f.y - .85 * s)}" width="${r(2.4 * s)}" height="${r(.85 * s)}" fill="#e9e4d8"/>`;
     for (let i = 0; i < 4; i++) g += `<rect x="${r(f.x - 1.15 * s + i * .58 * s)}" y="${r(f.y - 1.05 * s)}" width="${r(.5 * s)}" height="${r(.25 * s)}" fill="${waren[i % waren.length]}"/>`;
     g += `<path d="M${r(f.x)} ${r(f.y)} V${r(f.y - 2.4 * s)}" stroke="#d8d2c4" stroke-width="${r(Math.max(.2, .05 * s))}"/>`;
@@ -626,19 +682,13 @@ const KAUF = {};
     for (let x = x0 + rnd() * 2; x < x1; x += dx + rnd() * 2.4) {
       const y = yr + (rnd() - .5) * 2.6;
       const p = pr(x, y, 0);
-      if (p[0] < 128 && y < -60) continue;                       // Laubengang frei lassen
-      if (p[0] > 100 && p[0] < 162 && tief(x, y) < 30) continue; // nicht direkt hinter dem Wurststand
+      if (p[0] < 128 && y < -60) continue;
+      if (p[0] > 80 && p[0] < 162 && tief(x, y) < 34) continue;
       staende.push([x, y, rnd() < .3 ? "s" : "z", DACH[Math.floor(rnd() * DACH.length)], WAREN[Math.floor(rnd() * WAREN.length)]]);
     }
   }
   staende.sort((a, b) => tief(b[0], b[1]) - tief(a[0], a[1])).forEach(([x, y, art, d, w]) => { k += art === "s" ? schirm(x, y, d, w) : zelt(x, y, d, w); });
-  /* ein paar Tauben auf dem Pflaster */
-  for (const [x, y] of [[57.2, -45.6], [58.4, -45], [56, -44.4]]) {
-    const f = fuss(x, y), s = f.s;
-    k += `<ellipse cx="${r(f.x)}" cy="${r(f.y - .12 * s)}" rx="${r(.15 * s)}" ry="${r(.09 * s)}" fill="#8a8f98"/><circle cx="${r(f.x + .13 * s)}" cy="${r(f.y - .22 * s)}" r="${r(.05 * s)}" fill="#6a7078"/><path d="M${r(f.x + .17 * s)} ${r(f.y - .22 * s)} l${r(.05 * s)} ${r(.01 * s)}" stroke="#d8a832" stroke-width="${r(.02 * s)}"/><path d="M${r(f.x - .05 * s)} ${r(f.y - .14 * s)} q${r(.08 * s)} ${r(-.06 * s)} ${r(.16 * s)} 0" stroke="#5a6a7a" stroke-width="${r(.03 * s)}" fill="none"/>`;
-  }
-  S.teil({ id: "wochenmarkt", de: "der Wochenmarkt", syl: "WO-chen-markt", it: "il mercato settimanale", itSyl: "mer-CA-to set-ti-ma-NA-le", en: "weekly market", x: 0, y: 0, kunst: k,
-    tipp: "Auf der Nordseite verkaufen Bauern aus der Region, auf der Südseite Händler: Keramik, Bürsten, Holzwaren." });
+  FERNSTAENDE = k;
 }
 
 /* =====================================================================

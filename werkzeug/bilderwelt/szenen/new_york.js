@@ -170,6 +170,8 @@ S.hinten(`<rect width="400" height="${HOR + 3}" fill="${S.lg("himmel", [[0, "#3f
   /* Uferstraße rechts vorn (Belgian Blocks) mit Bordstein */
   f += `<path d="M268 260 Q290 232 352 226 L400 225 L400 260 Z" fill="${S.lg("pfl", [[0, "#7c756d"], [1, "#5d5751"]])}"/>`;
   f += `<path d="M268 260 Q290 232 352 226 L400 225 L400 260 Z" fill="url(#${S.id("pflaster")})"/>`;
+  /* Poller trennen die Promenade von der Zufahrt (Old Fulton / Furman Street) */
+  for (const [x, y] of [[272, 251], [289, 236.5], [316, 228.6], [348, 225.2]]) f += `<rect x="${x - 0.9}" y="${r(y - 6.5 * (y - 150) / 80)}" width="1.8" height="${r(6.5 * (y - 150) / 80)}" rx=".6" fill="#2a2d2c"/><rect x="${x - 0.9}" y="${r(y - 6.5 * (y - 150) / 80)}" width="1.8" height=".6" fill="#e9c42f"/>`;
   f += `<path d="M264 260 Q287 229.6 352 223.6 L400 222.6" stroke="${S.lg("bord", [[0, "#dcd6cb"], [1, "#a39c90"]])}" stroke-width="2.4" fill="none"/>`;
   f += `<rect x="0" y="${Y0}" width="400" height="60" fill="${S.lg("prolicht", [[0, "#fff", 0.08], [0.6, "#fff", 0], [1, "#000", 0.08]], 0, 0, 1, 0)}"/>`;
   S.hinten(f);
@@ -195,8 +197,10 @@ const BBB = enu(40.70420, -73.99460), BBM = enu(40.70663, -73.99935);
   for (let i = 0; i < 190; i++) {
     const t = Math.pow(rnd(), 2), y = Y0 + 0.6 + t * (Y1 - Y0 - 1.6), w = 0.6 + t * t * 16 * (0.5 + rnd());
     const x = rnd() * (400 - w);
-    k += `<path d="M${r(x)} ${r(y)} q${r(w / 2)} -${r(0.3 + t * 0.5)} ${r(w)} 0" stroke="${rnd() < 0.62 ? "#e9f2f5" : "#27404c"}" stroke-width="${r(0.15 + t * 0.4)}" fill="none" opacity="${r(0.3 + rnd() * 0.35)}"/>`;
+    k += `<path d="M${r(x)} ${r(y)} q${r(w / 2)} -${r(0.15 + t * 0.6)} ${r(w)} 0" stroke="${rnd() < 0.62 ? "#e9f2f5" : "#27404c"}" stroke-width="${r(0.06 + t * 0.45)}" fill="none" opacity="${r(0.15 + t * 0.35 + rnd() * 0.2)}"/>`;
   }
+  /* Glanzbänder im Gegenlicht vor den Pfeilern */
+  for (const [x, y, w] of [[214, 160, 22], [206, 167, 30], [318, 165, 28], [326, 174, 36], [222, 178, 26]]) k += `<path d="M${x} ${y} h${w}" stroke="#f4f8f8" stroke-width=".5" opacity=".45" stroke-linecap="round"/>`;
   S.teil({ id: "east_river", de: "der East River", syl: "EAST RI-ver", it: "l'East River", itSyl: "EAST RI-ver", en: "East River", x: 0, y: 0, kunst: k,
     tipp: "Der East River ist eigentlich kein Fluss, sondern ein Meeresarm zwischen Manhattan und Brooklyn." });
 }
@@ -796,7 +800,7 @@ const silhouette = (id, X, Z) => { const s = K / Z, dx = K * SCH.dx / Z - K * X 
    12 — DER VERKÄUFER und 13 — DER IMBISSWAGEN (Hotdogs, blau-gelber Schirm)
    Wagen 1,8 m lang, Arbeitsfläche 0,95 m, Schirm oben 2,4 m
    ===================================================================== */
-const WAGEN = { X: -4.8, Z: 18.75 };
+const WAGEN = { X: -3.9, Z: 18.75 };
 {
   const Zv = WAGEN.Z + 0.7, [vx, vy] = NP(WAGEN.X + 0.5, Zv);
   /* Haltung: beide Unterarme vor zur Arbeitsfläche — eine Hand mit der Zange am Hotdog, die andere auf dem Wagen */
@@ -980,7 +984,9 @@ const WAGEN = { X: -4.8, Z: 18.75 };
   k += poly([[-0.33, 0.83, 1.02], [-1.52, 0.85, 1.02], [-1.02, 0.735, 1.42], [-0.3, 0.735, 1.42]], S.lg("tfenster", [[0, "#7b8f9e"], [0.5, "#2f3c47"], [1, "#1c252c"]]));
   /* der Fahrer (Kopf und Schulter hinter der getönten Scheibe) */
   const [dx, dy] = W(0.35, 0.5, 1.22);
-  k += `<ellipse cx="${r(dx - ox)}" cy="${r(dy - oy)}" rx="${r(0.1 * K / C.Z)}" ry="${r(0.12 * K / C.Z)}" fill="#8a6650" opacity=".9"/><path d="M${r(dx - ox - 0.1 * K / C.Z)} ${r(dy - oy - 0.02 * K / C.Z)} Q${r(dx - ox)} ${r(dy - oy - 0.2 * K / C.Z)} ${r(dx - ox + 0.1 * K / C.Z)} ${r(dy - oy - 0.02 * K / C.Z)} Z" fill="#1d1a18"/><path d="M${P(0.6, 0.5, 1.05)} Q${P(0.35, 0.5, 1.16)} ${P(0.1, 0.5, 1.05)}" stroke="#15191d" stroke-width="${r(0.12 * K / C.Z)}" opacity=".7" fill="none"/>`;
+  { const q = K / C.Z, [sx2, sy2] = W(0.35, 0.5, 1.0), [wx2, wy2] = W(0.75, 0.55, 1.08);
+    k += `<path d="M${r(sx2 - ox - 0.22 * q)} ${r(sy2 - oy + 0.05 * q)} Q${r(sx2 - ox - 0.2 * q)} ${r(sy2 - oy - 0.12 * q)} ${r(sx2 - ox)} ${r(sy2 - oy - 0.13 * q)} Q${r(sx2 - ox + 0.2 * q)} ${r(sy2 - oy - 0.12 * q)} ${r(sx2 - ox + 0.22 * q)} ${r(sy2 - oy + 0.05 * q)} Z" fill="#2c3e5a"/><ellipse cx="${r(wx2 - ox)}" cy="${r(wy2 - oy)}" rx="${r(0.13 * q)}" ry="${r(0.05 * q)}" fill="none" stroke="#111" stroke-width="${r(0.025 * q)}"/><circle cx="${r(wx2 - ox - 0.08 * q)}" cy="${r(wy2 - oy)}" r="${r(0.035 * q)}" fill="#c99a78"/>`; }
+  k += `<ellipse cx="${r(dx - ox)}" cy="${r(dy - oy)}" rx="${r(0.1 * K / C.Z)}" ry="${r(0.12 * K / C.Z)}" fill="#d1a582"/><path d="M${r(dx - ox - 0.1 * K / C.Z)} ${r(dy - oy - 0.02 * K / C.Z)} Q${r(dx - ox)} ${r(dy - oy - 0.2 * K / C.Z)} ${r(dx - ox + 0.1 * K / C.Z)} ${r(dy - oy - 0.02 * K / C.Z)} Z" fill="#1d1a18"/><path d="M${P(0.6, 0.5, 1.05)} Q${P(0.35, 0.5, 1.16)} ${P(0.1, 0.5, 1.05)}" stroke="#15191d" stroke-width="${r(0.12 * K / C.Z)}" opacity=".7" fill="none"/>`;
   k += poly([[1.02, 0.86, 0.99], [1.02, -0.86, 0.99], [0.25, -0.72, 1.47], [0.25, 0.72, 1.47]], S.lg("tscheibe", [[0, "#9db4c4"], [0.6, "#3c4c58"], [1, "#25313a"]]));
   k += poly([[0.9, 0.6, 1.06], [0.65, 0.5, 1.2], [0.5, 0.3, 1.28], [0.75, 0.42, 1.12]], "#fff", ` opacity=".25"`);
   k += poly([[0.25, -0.72, 1.44], [0.25, 0.72, 1.44], [-0.4, 0.72, 1.48], [-1.05, 0.72, 1.44], [-1.05, -0.72, 1.44], [-0.4, -0.72, 1.48]], "#f7c62a");
@@ -1009,33 +1015,52 @@ const WAGEN = { X: -4.8, Z: 18.75 };
 {
   const rv = zufall(1883);
   let v = "";
-  /* Granitstufe: grob gespaltene, warmgraue Blöcke (Stirnseite 0,45 m, Z = 14,5 m) */
-  { const yt = NP(0, 14.5, 0.45)[1], yb = 262; let x = -2;
-    while (x < 150) { const w = 9 + rv() * 9, c = ["#b3a998", "#a89e8c", "#bdb3a2", "#9f9584"][Math.floor(rv() * 4)], dy = rv() * 0.8;
-      v += `<path d="M${r(x)} ${r(yt + dy)} L${r(x + w * 0.4)} ${r(yt - 0.3 + rv() * 0.4)} L${r(x + w)} ${r(yt + rv() * 0.8)} L${r(x + w)} ${yb} L${r(x)} ${yb} Z" fill="${c}"/><path d="M${r(x + w)} ${r(yt)} V${yb}" stroke="#6f675b" stroke-width=".35"/>`;
-      v += `<path d="M${r(x)} ${r(yt + dy)} L${r(x + w * 0.4)} ${r(yt - 0.3)} L${r(x + w)} ${r(yt)}" stroke="#ddd5c6" stroke-width=".4" fill="none"/>`;
-      for (let i = 0; i < 3; i++) v += `<circle cx="${r(x + rv() * w)}" cy="${r(yt + 1.5 + rv() * 5)}" r="${r(0.3 + rv() * 0.5)}" fill="#7e7566" opacity=".5"/>`;
-      x += w; }
-    const sch = NP(0, 14.5, 0)[1]; v += `<path d="M150 ${r(yt + 0.5)} L156 ${r(sch)} L150 ${r(sch)} Z" fill="#8e8576"/>`; }
+  /* die Granite Prospect: Stufen aus grob gespaltenen, warmgrauen Blöcken steigen links vorn zu uns
+     herauf (Stufe 0,45 m hoch, 0,9 m tief) — wir stehen oben auf der Treppe, darum die hohe Augenhöhe */
+  { const X1 = -3.5, stufen = [[14.5, 0.45], [13.6, 0.9], [12.7, 1.35], [11.8, 1.8], [10.9, 2.25]];
+    const farb = ["#b8ae9c", "#ada391", "#c2b8a6", "#a59b89"];
+    for (let i = 0; i < stufen.length; i++) { const [Zf, Y] = stufen[i], Zb = Zf - 0.9, Y0 = Y - 0.45, X0 = -202 * Zb / K;
+      /* Stirnseite (in der Sonne), Trittfläche, rechte Flanke */
+      const f1 = NP(X0, Zf, Y0), f2 = NP(X1, Zf, Y0), f3 = NP(X1, Zf, Y), f4 = NP(X0, Zf, Y);
+      v += `<path d="M${pr(f1)} L${pr(f2)} L${pr(f3)} L${pr(f4)} Z" fill="${farb[i % 4]}"/>`;
+      const t3 = NP(X1, Zb, Y), t4 = NP(X0, Zb, Y);
+      v += `<path d="M${pr(f4)} L${pr(f3)} L${pr(t3)} L${pr(t4)} Z" fill="#d3cab9"/>`;
+      v += `<path d="M${pr(f2)} L${pr(NP(X1, Zb, Y0))} L${pr(t3)} L${pr(f3)} Z" fill="#8f8574"/>`;
+      let fu = ""; for (let X = X1 - 1.3; X > X0; X -= 1.1 + ((i * 7 + Math.round(X * 3)) % 5) * 0.12) { const a = NP(X, Zf, Y0), b2 = NP(X, Zf, Y), c = NP(X, Zb, Y); fu += `M${pr(a)} L${pr(b2)} L${pr(c)} `; }
+      v += `<path d="${fu}" stroke="#7a705f" stroke-width=".35" fill="none"/><path d="M${pr(f4)} L${pr(f3)}" stroke="#ece4d4" stroke-width=".45"/>`; }
+  }
   /* zwei schwarze Laternen des Brooklyn Bridge Park (4 m) an der Kaikante */
   for (const X of [-13, 12.5]) { const [x0, y0] = NP(X, 30, 0), [, y1] = NP(X, 30, 4), w = K * 0.12 / 30;
     v += `<path d="M${r(x0 - w)} ${r(y0)} L${r(x0 - w * 0.6)} ${r(y1)} L${r(x0 + w * 0.6)} ${r(y1)} L${r(x0 + w)} ${r(y0)} Z" fill="#1f2220"/><rect x="${r(x0 - w * 1.6)}" y="${r(y0 - 0.8)}" width="${r(w * 3.2)}" height=".8" fill="#1f2220"/>`;
     v += `<path d="M${r(x0 - 1.2)} ${r(y1)} L${r(x0 - 0.8)} ${r(y1 - 2.4)} L${r(x0 + 0.8)} ${r(y1 - 2.4)} L${r(x0 + 1.2)} ${r(y1)} Z" fill="#eef0e6" stroke="#1f2220" stroke-width=".3"/><path d="M${r(x0 - 1.1)} ${r(y1 - 2.4)} L${r(x0)} ${r(y1 - 3.4)} L${r(x0 + 1.1)} ${r(y1 - 2.4)} Z" fill="#1f2220"/>`;
     const [sx, sy] = NP(X + SCH.dx * 4, 30 + SCH.dz * 4, 0); v += `<path d="M${r(x0 - w)} ${r(y0)} L${r(sx - 0.2)} ${r(sy)} L${r(sx + 0.2)} ${r(sy)} L${r(x0 + w)} ${r(y0)} Z" fill="#1d2230" opacity=".25"/>`; }
-  /* Citi-Bike-Station: blaue Leihräder im Dock, Säule mit Bildschirm */
+  /* Citi-Bike-Station quer zum Blick: Räder parallel nebeneinander, von vorn gesehen (schmal), Vorderrad
+     im Dock, tiefer Durchstiegsrahmen, Gepäckträger vorn; jedes mit schmalem Schatten nach hinten */
   { const Z = 24, s = K / Z;
-    const [kx, ky] = NP(-12.6, Z, 0); v += `<rect x="${r(kx - 0.25 * s)}" y="${r(ky - 1.6 * s)}" width="${r(0.5 * s)}" height="${r(1.6 * s)}" rx=".5" fill="#1f5fa8"/><rect x="${r(kx - 0.17 * s)}" y="${r(ky - 1.35 * s)}" width="${r(0.34 * s)}" height="${r(0.28 * s)}" fill="#cfe3f2"/>`;
-    for (let i = 0; i < 5; i++) { const X = -11.9 + i * 0.75, [bx, by] = NP(X, Z, 0), rr = 0.33 * s, L = 0.55 * s;
-      v += `<rect x="${r(bx - 0.1 * s)}" y="${r(by - 0.45 * s)}" width="${r(0.2 * s)}" height="${r(0.45 * s)}" fill="#6d7378"/>`;
-      v += `<circle cx="${r(bx - L)}" cy="${r(by - rr)}" r="${r(rr)}" fill="none" stroke="#1d1f20" stroke-width=".9"/><circle cx="${r(bx + L)}" cy="${r(by - rr)}" r="${r(rr)}" fill="none" stroke="#1d1f20" stroke-width=".9"/>`;
-      v += `<path d="M${r(bx - L)} ${r(by - rr)} L${r(bx - 0.05 * s)} ${r(by - rr)} L${r(bx + 0.3 * s)} ${r(by - 0.85 * s)} L${r(bx - 0.35 * s)} ${r(by - 0.85 * s)} Z M${r(bx + 0.3 * s)} ${r(by - 0.85 * s)} L${r(bx + L)} ${r(by - rr)}" stroke="#2f73c0" stroke-width="1.1" fill="none"/>`;
-      v += `<rect x="${r(bx - 0.48 * s)}" y="${r(by - 0.98 * s)}" width="${r(0.26 * s)}" height="${r(0.08 * s)}" rx=".3" fill="#222"/><path d="M${r(bx + 0.24 * s)} ${r(by - 0.95 * s)} h${r(0.18 * s)}" stroke="#222" stroke-width=".9"/><rect x="${r(bx + 0.3 * s)}" y="${r(by - 0.9 * s)}" width="${r(0.22 * s)}" height="${r(0.14 * s)}" fill="#2f73c0"/>`; } }
+    const [kx, ky] = NP(-12.8, Z, 0); v += `<rect x="${r(kx - 0.25 * s)}" y="${r(ky - 1.6 * s)}" width="${r(0.5 * s)}" height="${r(1.6 * s)}" rx=".5" fill="#1f5fa8"/><rect x="${r(kx - 0.17 * s)}" y="${r(ky - 1.35 * s)}" width="${r(0.34 * s)}" height="${r(0.28 * s)}" fill="#cfe3f2"/>`;
+    const [d0x, d0y] = NP(-12.2, Z, 0.08), [d1x] = NP(-7.6, Z, 0.08); v += `<rect x="${r(d0x)}" y="${r(d0y - 0.6)}" width="${r(d1x - d0x)}" height="1.2" fill="#8d9397"/>`;
+    for (let i = 0; i < 6; i++) { const X = -11.8 + i * 0.75, rw = 0.33, Zr = Z + 1.1, q = s;
+      const W2 = (dz, y) => NP(X, Z + dz, y), [fx, fy] = W2(0, 0), [hx2, hy2] = W2(1.1, 0);
+      const rx = (dz) => Math.abs(W2(dz + rw, rw)[0] - W2(dz - rw, rw)[0]) / 2 + 0.25;
+      const [sx, sy] = NP(X + SCH.dx * 1.1, Zr + SCH.dz * 1.1, 0); v += `<path d="M${r(fx - 0.6)} ${r(fy)} L${r(hx2 - 0.6)} ${r(hy2)} L${r(sx)} ${r(sy)} L${r(hx2 + 0.6)} ${r(hy2)} Z" fill="#1d2230" opacity=".22"/>`;
+      const ach = (dz) => W2(dz, rw), A = ach(1.1), Fr = ach(0), sat = W2(0.85, 0.9), len = W2(0.15, 1.05), tief = W2(0.55, 0.3);
+      v += `<ellipse cx="${r(A[0])}" cy="${r(A[1])}" rx="${r(rx(1.1))}" ry="${r(rw * K / Zr)}" fill="none" stroke="#1d1f20" stroke-width=".7"/>`;
+      v += `<path d="M${pr(A)} L${pr(tief)} L${pr(Fr)} M${pr(tief)} L${pr(sat)} M${pr(Fr)} L${pr(len)}" stroke="#2f73c0" stroke-width="1.1" fill="none"/><path d="M${r(sat[0] - 0.9)} ${r(sat[1])} h1.8" stroke="#222" stroke-width=".7"/><path d="M${r(len[0] - 1.6)} ${r(len[1])} h3.2" stroke="#222" stroke-width=".55"/>`;
+      v += `<ellipse cx="${r(Fr[0])}" cy="${r(Fr[1])}" rx="${r(rx(0))}" ry="${r(rw * K / Z)}" fill="none" stroke="#1d1f20" stroke-width=".7"/><rect x="${r(len[0] - 1.5)}" y="${r(len[1] + 0.6)}" width="3" height="1.6" fill="#2f73c0"/>`; } }
   /* Tauben auf dem Pflaster (≈ 30 cm) */
   for (const [X, Z, d] of [[-1.3, 15.6, 1], [-0.6, 15.3, -1], [0.2, 15.8, 1], [0.9, 15.4, 1], [-0.1, 16.4, -1]]) { const [x, y] = NP(X, Z, 0), q = K * 0.1 / Z;
     v += `<ellipse cx="${r(x)}" cy="${r(y + 0.3)}" rx="${r(1.6 * q)}" ry="${r(0.35 * q)}" fill="#1d2230" opacity=".3"/>`;
     v += `<path d="M${r(x - 1.5 * q * d)} ${r(y - 0.9 * q)} Q${r(x - 0.2 * q * d)} ${r(y - 1.9 * q)} ${r(x + 1.1 * q * d)} ${r(y - 1.2 * q)} Q${r(x + 0.4 * q * d)} ${r(y - 0.2 * q)} ${r(x - 0.6 * q * d)} ${r(y - 0.3 * q)} L${r(x - 2.2 * q * d)} ${r(y - 0.6 * q)} Z" fill="#8a909a"/>`;
     v += `<circle cx="${r(x + 1.25 * q * d)}" cy="${r(y - 1.75 * q)}" r="${r(0.42 * q)}" fill="#5e6470"/><path d="M${r(x + 0.9 * q * d)} ${r(y - 1.4 * q)} q${r(0.3 * q * d)} ${r(0.2 * q)} ${r(0.5 * q * d)} 0" stroke="#5f8f7a" stroke-width="${r(0.3 * q)}" fill="none"/>`;
     v += `<path d="M${r(x + 1.6 * q * d)} ${r(y - 1.8 * q)} l${r(0.35 * q * d)} ${r(0.1 * q)}" stroke="#d9a05a" stroke-width="${r(0.15 * q)}"/><path d="M${r(x)} ${r(y - 0.2 * q)} v${r(0.25 * q)} M${r(x + 0.3 * q * d)} ${r(y - 0.2 * q)} v${r(0.25 * q)}" stroke="#c4605a" stroke-width="${r(0.12 * q)}"/>`; }
+  /* ein Hund an der Leine, am linken Laternenmast angebunden */
+  { const [lx, ly] = NP(-13, 30, 0.9), [hx3, hy3] = NP(-12.3, 29.2, 0), q = K * 0.1 / 29.2;
+    v += `<path d="M${r(lx)} ${r(ly)} Q${r((lx + hx3) / 2)} ${r(ly + 2)} ${r(hx3 + 2.2 * q)} ${r(hy3 - 5.4 * q)}" stroke="#a03a2a" stroke-width=".25" fill="none"/>`;
+    v += `<path d="M${r(hx3 - 4 * q)} ${r(hy3 - 2.6 * q)} Q${r(hx3)} ${r(hy3 - 5.4 * q)} ${r(hx3 + 3 * q)} ${r(hy3 - 3.4 * q)} L${r(hx3 + 4.4 * q)} ${r(hy3 - 6.2 * q)} L${r(hx3 + 5.2 * q)} ${r(hy3 - 5.2 * q)} L${r(hx3 + 4 * q)} ${r(hy3 - 3)} L${r(hx3 + 3.4 * q)} ${r(hy3)} L${r(hx3 + 2.6 * q)} ${r(hy3)} L${r(hx3 + 2.4 * q)} ${r(hy3 - 2 * q)} L${r(hx3 - 2.6 * q)} ${r(hy3 - 2 * q)} L${r(hx3 - 2.8 * q)} ${r(hy3)} L${r(hx3 - 3.6 * q)} ${r(hy3)} L${r(hx3 - 3.8 * q)} ${r(hy3 - 2.4 * q)} L${r(hx3 - 5.4 * q)} ${r(hy3 - 4 * q)} Z" fill="#7a5532"/><ellipse cx="${r(hx3)}" cy="${r(hy3 + 0.2)}" rx="${r(5 * q)}" ry="${r(0.8 * q)}" fill="#1d2230" opacity=".25"/>`; }
+  /* Schild „Brooklyn Bridge Park“ am Geländer (schwarz-weiß, Ahornblatt) */
+  { const [gx, gy] = NP(4.5, 33, 1.1); v += `<rect x="${r(gx - 3.2)}" y="${r(gy - 2.6)}" width="6.4" height="2.6" fill="#141414"/><path d="M${r(gx - 2.5)} ${r(gy - 1.3)} l.35 -.55 l.1 .35 l.35 -.4 l.05 .5 l.35 .1 l-.4 .35 l.1 .4 l-.45 -.15 l-.05 .4 Z" fill="#fff"/><text x="${r(gx + 0.6)}" y="${r(gy - 1.55)}" font-size=".72" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-weight="bold">BROOKLYN BRIDGE</text><text x="${r(gx + 0.6)}" y="${r(gy - 0.65)}" font-size=".72" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-weight="bold">PARK</text>`; }
+  /* eine Möwe auf einem Geländerpfosten */
+  { const [mx, my] = NP(9.5, 33, 1.12), q = K * 0.1 / 33; v += `<path d="M${r(mx - 2.6 * q)} ${r(my - 2 * q)} Q${r(mx)} ${r(my - 3.6 * q)} ${r(mx + 2.4 * q)} ${r(my - 2.6 * q)} L${r(mx + 3.4 * q)} ${r(my - 3 * q)} L${r(mx + 2.6 * q)} ${r(my - 1.8 * q)} Q${r(mx)} ${r(my - 0.8 * q)} ${r(mx - 2.6 * q)} ${r(my - 2 * q)} Z" fill="#f4f4f2"/><path d="M${r(mx - 2.8 * q)} ${r(my - 2.2 * q)} Q${r(mx - 0.8 * q)} ${r(my - 2.6 * q)} ${r(mx + 1.2 * q)} ${r(my - 2.2 * q)}" stroke="#8c949a" stroke-width="${r(0.9 * q)}" fill="none"/><circle cx="${r(mx + 2.5 * q)}" cy="${r(my - 3.3 * q)}" r="${r(0.9 * q)}" fill="#f4f4f2"/><path d="M${r(mx + 3.3 * q)} ${r(my - 3.3 * q)} l${r(0.9 * q)} ${r(0.2 * q)}" stroke="#e8b42c" stroke-width="${r(0.4 * q)}"/><path d="M${r(mx)} ${r(my - 1)} V${r(my)}" stroke="#d9a35a" stroke-width=".12"/>`; }
   S.davor(v);
 }
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/new_york.js"));

@@ -373,8 +373,10 @@ const FELS_U = [[-20, -30, -46], [-10, -33, -44], [2, -34, -38], [14, -33, -28],
 const WALDKANTE = [...FELS_U, ...[[64, -27.4, -11], [80, -26.6, -12], [98, -26, -13], [112, -25, -13], [115, -6, -13], [117, 14, -16]].map(([u, v, z]) => C(u, v, z))];
 /* Die Pöllatschlucht von der Brücke aus: die Kerbe (tiefster, dunkelster Bereich) läuft von unten Mitte nach
    links oben unter die Palaswand und weiter ins Tal. Rechts unten der diesseitige Hang direkt unter uns. */
-const KERBE = [[190, 262], [174, 251], [154, 241], [130, 233], [106, 228], [82, 225], [56, 223], [28, 222], [-1, 221]];
-const NAH_OBEN = [[190, 262], [204, 240], [224, 220], [250, 203], [282, 189], [318, 179], [358, 172], [401, 168]];
+const KERBE = [[184, 262], [160, 252], [132, 242], [108, 233], [90, 226]];
+const KEIL_L = [[132, 262], [118, 250], [104, 238], [94, 230], [86, 224]], KEIL_R = [[86, 224], [104, 232], [140, 241], [180, 249], [214, 256], [238, 262]];
+const NAH_OBEN = [[238, 262], [246, 244], [260, 226], [278, 207], [302, 191], [332, 180], [366, 173], [401, 168]];
+const LINKS_OBEN = [[86, 224], [62, 222], [34, 220], [-1, 219]];
 
 /* =====================================================================
    4 — DER FELSEN (senkrechte Kalkwände unter Palas, Kemenate und Torbau)
@@ -428,17 +430,16 @@ const NAH_OBEN = [[190, 262], [204, 240], [224, 220], [250, 203], [282, 189], [3
 {
   /* Gegenhang unter dem Schloss: fällt ohne Absatz von der Felswand bis in die Kerbe. Oben im Nachmittagslicht,
      nach unten immer dunkler und blauer; Rinnen und Felsrippen laufen hangab, Fichten stehen in schrägen Reihen. */
-  const GEGEN = [[-1, 140], [24, 139], [50, 136], [72, 133], ...WALDKANTE.map(([x, y]) => [x, y - 2]), [298, 142], [330, 135], [370, 130], [401, 128], ...NAH_OBEN.slice().reverse(), ...KERBE.slice(1)];
+  const GEGEN = [[-1, 140], [24, 139], [50, 136], [72, 133], ...WALDKANTE.map(([x, y]) => [x, y - 2]), [298, 142], [330, 135], [370, 130], [401, 128], ...NAH_OBEN.slice().reverse(), ...KEIL_R.slice().reverse().slice(1), ...LINKS_OBEN.slice(1)];
   let k = waldflaeche("bergclip", GEGEN, 2.0, 30, "#5c4a26", 0.8, HERBST, -4);
-  k += saum(WALDKANTE.map(([x, y]) => [x, y + 1]), 2.1, 4, 0.42);
   k += saum([[0, 141], [36, 138], [72, 134]], 2.2, 3.6, 0.5);
   k += saum([[298, 143], [330, 136], [370, 131], [401, 129]], 1.6, 3.2, 0.5);
   S.def(`<clipPath id="${S.id("gegenclip")}"><path d="${poly(GEGEN)}"/></clipPath>`);
   let rinne = "";
   /* Rinnen (dunkel) und Rippen (Fels, hell) laufen steil hangab zur Kerbe */
-  for (const [x0, y0, x1, y1, hell] of [[96, 184, 70, 224, 0], [118, 166, 100, 228, 1], [142, 148, 128, 233, 0], [170, 150, 160, 245, 0], [200, 152, 196, 250, 1], [234, 156, 230, 222, 0], [24, 150, 14, 222, 0], [50, 146, 40, 222, 1]]) {
-    if (hell) { let d = `M${x0} ${y0}`, d2 = ""; for (let i = 1; i <= 6; i++) { const t = i / 6, x = x0 + (x1 - x0) * t + (rnd() - 0.5) * 3, y = y0 + (y1 - y0) * t; d += ` L${r(x)} ${r(y)}`; d2 = ` L${r(x + 3 + rnd() * 3)} ${r(y)}` + d2; } rinne += `<path d="${d}${d2} Z" fill="#cfc2a6" opacity=".55"/>`; }
-    else rinne += `<path d="M${x0} ${y0} Q${(x0 + x1) / 2 + 3} ${(y0 + y1) / 2} ${x1} ${y1} L${x1 + 5} ${y1} Q${(x0 + x1) / 2 + 6} ${(y0 + y1) / 2} ${x0 + 3} ${y0} Z" fill="#141018" opacity=".3"/>`;
+  for (const [x0, y0, x1, y1, hell] of [[96, 184, 80, 224, 0], [118, 166, 104, 230, 1], [134, 152, 124, 236, 0], [152, 150, 146, 240, 1], [170, 150, 166, 246, 0], [190, 151, 186, 250, 1], [212, 153, 210, 254, 0], [236, 156, 234, 250, 1], [260, 156, 260, 232, 0], [24, 150, 16, 218, 0], [50, 146, 42, 220, 1], [70, 140, 64, 220, 0]]) {
+    if (hell) { let d = `M${x0} ${y0}`, d2 = ` L${x0 + 3.5} ${y0}`; for (let i = 1; i <= 6; i++) { const t = i / 6, x = x0 + (x1 - x0) * t + (rnd() - 0.5) * 3, y = y0 + (y1 - y0) * t; d += ` L${r(x)} ${r(y)}`; d2 = ` L${r(x + 3 + rnd() * 3)} ${r(y)}` + d2; } rinne += `<path d="${d}${d2} Z" fill="#a89c84" opacity=".5"/><path d="${d}" stroke="#e2d8c2" stroke-width=".45" fill="none" opacity=".55"/>`; }
+    else rinne += `<path d="M${x0} ${y0} Q${(x0 + x1) / 2 + 3} ${(y0 + y1) / 2} ${x1} ${y1} L${x1 + 6} ${y1} Q${(x0 + x1) / 2 + 7} ${(y0 + y1) / 2} ${x0 + 3} ${y0} Z" fill="#141018" opacity=".42"/>`;
   }
   /* Fichten in schrägen Reihen am Hang (Licht links) */
   for (let reihe = 0; reihe < 7; reihe++) for (let i = 0; i < 9; i++) {
@@ -448,7 +449,7 @@ const NAH_OBEN = [[190, 262], [204, 240], [224, 220], [250, 203], [282, 189], [3
   }
   k += `<g clip-path="url(#${S.id("gegenclip")})">${rinne}</g>`;
   /* Luft und Licht: oben warm und dunstig, nach unten zur Kerbe kühl und dunkel */
-  k += `<path d="${poly(GEGEN)}" fill="${S.lg("bergtiefe", [[0, "#ffe0a8", 0.12], [0.3, "#c9d6e2", 0.06], [0.55, "#1a2236", 0.3], [1, "#06080e", 0.78]])}"/>`;
+  k += `<path d="${poly(GEGEN)}" fill="${S.lg("bergtiefe", [[0, "#d6e0ea", 0.3], [0.22, "#c9d6e2", 0.1], [0.48, "#1a2236", 0.36], [0.8, "#06080e", 0.7], [1, "#06080e", 0.86]])}"/>`;
   /* Schlagschatten des Torhauses nach rechts auf Straße und Wald */
   k += `<path d="M281 138 L312 146 L306 162 L276 152 Z" fill="#1a2030" opacity=".3"/>`;
   S.teil({ id: "wald", de: "der Wald", syl: "WALD", it: "il bosco", itSyl: "BO-sco", en: "forest", x: 0, y: 0, kunst: k,
@@ -716,16 +717,23 @@ const vierFl = (pts, ref) => `<path class="bw-flaeche" d="M${pts.map((p) => `${r
 /* =====================================================================
    10 — DIE KUTSCHE auf der Zufahrt unter dem Torbau (Lupe: das Pferd)
    ===================================================================== */
-const STRASSE = [[112, -1, -10], [116, 8, -11], [119, 20, -12.5], [123, 34, -14.5], [128, 52, -17.5]].map(([u, v, z]) => C(u, v, z));
+/* Fahrstraße: in den Hang geschnitten, steigt vom rechten Bildrand an und endet als Wendeplatz deutlich UNTER dem
+   Torhaus. Das letzte Stück bis zum Tor geht man zu Fuß (Fußweg mit Besuchern). */
+const STRASSE = [[402, 161], [374, 158], [346, 156], [320, 154.6], [300, 153.6]];
 {
-  /* Zufahrt als Schneise: Böschung bergseits (dunkel), Fahrbahn, Kronen talseits überhängend */
-  let k = `<path d="M${STRASSE.map(Pt).join(" L")}" stroke="#5e4c2c" stroke-width="3.6" fill="none" stroke-linecap="round" transform="translate(-1 -.8)"/>`;
-  k += `<path d="M${STRASSE.map(Pt).join(" L")}" stroke="#d6c9ad" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
-  k += `<path d="M${STRASSE.map(Pt).join(" L")}" stroke="#a89878" stroke-width=".4" fill="none" transform="translate(.6 .6)"/>`;
-  k += saum(STRASSE.slice(1).map(([x, y]) => [x + 1, y + 3.6]), 1.2, 3.4, 0.45);
-  /* Kutsche in Fahrtrichtung (bergauf zum Torbau): Seitenansicht, entlang der Straße geschert */
-  const x = STRASSE[1][0] + (STRASSE[2][0] - STRASSE[1][0]) * 0.5, y = STRASSE[1][1] + (STRASSE[2][1] - STRASSE[1][1]) * 0.5 + 0.6, s = k1(127, -14) * 1.05;
-  const sa = STRASSE[1], sb = STRASSE[2], winkel = Math.atan2(sb[1] - sa[1], sb[0] - sa[0]) * 180 / Math.PI;
+  const breite = (x) => 1.8 + (x - 300) / 100 * 1.8;
+  const oben = STRASSE.map(([x, y]) => [x, y - breite(x) / 2]), unten = STRASSE.map(([x, y]) => [x, y + breite(x) / 2]);
+  let k = `<path d="${poly([...unten.map(([x, y]) => [x, y + 0.2]), ...unten.slice().reverse().map(([x, y]) => [x, y + 2.4 + (x - 300) / 60])])}" fill="#4a3a22"/>`;
+  k += `<path d="${poly([...oben, ...unten.slice().reverse()])}" fill="${S.lg("fahrbahn", [[0, "#cbbfa2"], [1, "#a89878"]])}"/>`;
+  k += `<path d="M${oben.map(Pt).join(" L")}" stroke="#6e5c3a" stroke-width=".4" fill="none"/>`;
+  k += `<ellipse cx="300" cy="153.4" rx="5" ry="1.6" fill="#c2b598"/>`;
+  /* Fußweg zum Tor mit drei Besuchern */
+  k += `<path d="M298 152.6 L288 150.2 L276 147.6 L266 144.4" stroke="#d2c6a8" stroke-width="1" fill="none"/>`;
+  for (const [x, y, f] of [[289, 150.4, "#b8473a"], [280, 148.4, "#2f5f95"], [271, 146, "#3e6a3a"]]) k += `<rect x="${x - 0.5}" y="${y - 2.6}" width="1" height="1.6" fill="${f}"/><rect x="${x - 0.4}" y="${y - 1}" width=".8" height="1" fill="#3a3a44"/><circle cx="${x}" cy="${y - 3}" r=".45" fill="#e2b896"/>`;
+  /* Kronen talseits vor der Böschung */
+  k += saum(unten.map(([x, y]) => [x, y + 3.4]), 1.4, 3.4, 0.45);
+  /* Kutsche fährt bergauf nach links (zum Schloss), Pferde vorn */
+  const x = 352, y = 156.6, s = 1.9, winkel = -4;
   let g = schatten(0, 0.2, 4.6 * s, 0.5 * s, 0.3);
   const pferd = (dx, f, dunkel) => {
     let p = "";
@@ -747,14 +755,14 @@ const STRASSE = [[112, -1, -10], [116, 8, -11], [119, 20, -12.5], [123, 34, -14.
   g += `<circle cx="${r(0.9 * s)}" cy="${r(-0.4 * s)}" r="${r(0.4 * s)}" fill="none" stroke="#d8a830" stroke-width="${r(0.12 * s)}"/><circle cx="${r(2.4 * s)}" cy="${r(-0.5 * s)}" r="${r(0.5 * s)}" fill="none" stroke="#d8a830" stroke-width="${r(0.12 * s)}"/>`;
   g += `<rect x="${r(0.6 * s)}" y="${r(-2.2 * s)}" width="${r(0.45 * s)}" height="${r(0.7 * s)}" fill="#2f4a2f"/><circle cx="${r(0.82 * s)}" cy="${r(-2.4 * s)}" r="${r(0.21 * s)}" fill="#e0b896"/><rect x="${r(0.57 * s)}" y="${r(-2.7 * s)}" width="${r(0.5 * s)}" height="${r(0.17 * s)}" fill="#1c1c1c"/>`;
   g += `<rect x="${r(1.5 * s)}" y="${r(-2 * s)}" width="${r(0.4 * s)}" height="${r(0.6 * s)}" fill="#b8473a"/><circle cx="${r(1.7 * s)}" cy="${r(-2.15 * s)}" r="${r(0.19 * s)}" fill="#e8c39e"/><rect x="${r(1.95 * s)}" y="${r(-1.95 * s)}" width="${r(0.35 * s)}" height="${r(0.55 * s)}" fill="#2f5f95"/><circle cx="${r(2.12 * s)}" cy="${r(-2.1 * s)}" r="${r(0.18 * s)}" fill="#d9a882"/>`;
-  const scher = `translate(${r(x)} ${r(y)}) skewY(${r(Math.max(-22, Math.min(22, winkel * 0.45)))}) scale(.78 1)`;
+  const scher = `translate(${r(x)} ${r(y)}) rotate(${winkel})`;
   k += `<g transform="${scher}">${g}</g>`;
   S.teil({ oben: true, id: "kutsche", de: "die Kutsche", syl: "KUT-sche", it: "la carrozza", itSyl: "car-ROZ-za", en: "carriage", x: 0, y: 0, kunst: k + `<g transform="${scher}">${flaeche(-5.6 * s, -3 * s, 9.6 * s, 3.2 * s)}</g>`,
-    tipp: "Pferdekutschen bringen Gäste vom Dorf Hohenschwangau hinauf zum Schloss.",
+    tipp: "Die Kutsche fährt bis unter das Schloss. Das letzte Stück geht man zu Fuß.",
     zoom: { x: r(x - 19), y: r(y - 20), w: 36, h: 24 },
     unter: [
-      { id: "pferd", de: "das Pferd", syl: "PFERD", it: "il cavallo", itSyl: "ca-VAL-lo", en: "horse", x, y, kunst: `<g transform="skewY(${r(Math.max(-22, Math.min(22, winkel * 0.45)))}) scale(.78 1)">${flaeche(-4.3 * s, -2.7 * s, 3.2 * s, 2.7 * s)}</g>`,
-        tipp: "Zwei Pferde ziehen die Kutsche den steilen Weg hinauf." },
+      { id: "pferd", de: "das Pferd", syl: "PFERD", it: "il cavallo", itSyl: "ca-VAL-lo", en: "horse", x, y, kunst: `<g transform="rotate(${winkel})">${flaeche(-4.3 * s, -2.7 * s, 3.2 * s, 2.7 * s)}</g>`,
+        tipp: "Zwei Pferde ziehen die Kutsche bergauf." },
     ] });
 }
 
@@ -770,7 +778,7 @@ const sternFichte = (cx, cy, q) => { let g = ""; for (const [f, rr] of [["#1e342
 {
   let k = "";
   /* diesseits links (Westufer unter der Brücke, im Schatten) und rechts (Ostufer, Licht von links) */
-  const NAHL = [...KERBE, [-1, 262]], NAHR = [...NAH_OBEN, [401, 262]];
+  const NAHL = [...KEIL_L.slice().reverse(), ...LINKS_OBEN.slice(1), [-1, 262]], NAHR = [...NAH_OBEN, [401, 262]];
   k += waldflaeche("nahlclip", NAHL, 4.2, 10, "#2e2414", 0.9, HERBST, 24) + waldflaeche("nahrclip", NAHR, 4.8, 14, "#4a3018", 0.92, HERBST, -12);
   let kl = "", kr = "";
   for (const [x, y, q] of [[372, 236, 15], [318, 250, 14], [392, 200, 11], [262, 238, 11], [350, 188, 9]]) kr += laubBusch(x, y, q, q * 0.72);
@@ -778,17 +786,20 @@ const sternFichte = (cx, cy, q) => { let g = ""; for (const [f, rr] of [["#1e342
   k += `<g clip-path="url(#${S.id("nahlclip")})">${kl}<rect x="-1" y="215" width="200" height="48" fill="${S.lg("nahlschatten", [[0, "#0a0c14", 0.15], [1, "#0a0c14", 0.45]], 0, 0, 1, 0)}"/></g>`;
   k += `<g clip-path="url(#${S.id("nahrclip")})">${kr}<rect x="185" y="160" width="220" height="104" fill="${S.lg("nahrschatten", [[0, "#0a0c14", 0.55], [0.35, "#0a0c14", 0.1], [1, "#0a0c14", 0]], 0, 0, 1, 0)}"/></g>`;
   /* die Kerbe: tiefster und dunkelster Bereich, nach unten breiter */
-  const OB = KERBE.map(([x, y], i) => [x - 4 + i * 0.4, y - 16 + i * 1.3]), UN = KERBE.map(([x, y], i) => [x + 10 - i * 1.0, y + 9 - i * 0.9]);
-  k += `<path d="${poly([...OB, ...UN.slice().reverse()])}" fill="${S.lg("kerbe", [[0, "#07080c"], [0.6, "#0e1118"], [1, "#1c2030"]], 0, 0, 1, 0)}"/>`;
+  /* die Kerbe als Keil: unten (nah, tief unter uns) breit, nach links oben unter die Palaswand spitz zulaufend */
+  const KEIL = [...KEIL_L, ...KEIL_R.slice(1)], OB = KEIL_R, UN = KEIL_L;
+  k += `<path d="${poly(KEIL)}" fill="${S.lg("kerbe", [[0, "#05060a"], [0.5, "#0c0f16"], [1, "#1a1f2c"]], 0, 0, 0, 1)}"/>`;
+  /* Steilwände im Keil: links (Westufer) ein Hauch Licht, rechts Schatten; einzelne dunkle Kronen an den Kanten */
+  k += `<path d="${poly([...KEIL_L, [100, 240], [120, 262]])}" fill="#2a2a2c" opacity=".6"/>`;
   /* der Bach: nur ein heller Faden, mit kleinen weißen Schwällen */
   k += `<path d="M${KERBE.slice(0, 5).map(Pt).join(" L")}" stroke="${S.lg("bachfaden", [[0, "#5e7078", 0], [0.4, "#8fa4ac", 0.7], [1, "#a8bcc4", 0.9]], 1, 0, 0, 0)}" stroke-width=".9" fill="none"/>`;
   /* Hänge laufen weich in die Kerbe: dunkle Säume oberhalb und unterhalb */
-  k += `<path d="${poly([...OB.map(([x, y]) => [x, y - 10]), ...OB.slice().reverse()])}" fill="#0c0e14" opacity=".35"/>`;
+  k += `<path d="${poly([...OB.map(([x, y]) => [x, y - 9]), ...OB.slice().reverse()])}" fill="#0c0e14" opacity=".4"/>`;
   for (let i = 0; i < 6; i++) { const [x, y] = KERBE[Math.min(3, Math.floor(rnd() * 4))]; k += `<ellipse cx="${r(x + rnd() * 8 - 4)}" cy="${r(y + rnd() * 2 - 1)}" rx="1.4" ry=".5" fill="#e6f0f2"/>`; }
   /* Gischt steigt in Fahnen aus der Kerbe auf */
-  for (const [x, y, h] of [[176, 252, 26], [150, 240, 20], [122, 232, 14]]) k += `<path d="M${x - 5} ${y} Q${x - 9} ${y - h * 0.5} ${x - 3} ${y - h} Q${x + 2} ${y - h * 0.6} ${x + 6} ${y} Z" fill="#e8eff2" opacity=".22" filter="url(#${S.id("dunst")})"/>`;
+  for (const [x, y, h] of [[176, 254, 30], [148, 244, 22], [118, 236, 14]]) k += `<path d="M${x - 5} ${y} Q${x - 9} ${y - h * 0.5} ${x - 3} ${y - h} Q${x + 2} ${y - h * 0.6} ${x + 6} ${y} Z" fill="#e8eff2" opacity=".22" filter="url(#${S.id("dunst")})"/>`;
   const BACH = KERBE[2];
-  S.teil({ id: "schlucht", de: "die Schlucht", syl: "SCHLUCHT", it: "la gola", itSyl: "GO-la", en: "gorge", x: 0, y: 0, kunst: k + `<path class="bw-flaeche" d="${poly([...OB.map(([x, y]) => [x, y - 6]), ...UN.slice().reverse().map(([x, y]) => [x, y + 4])])}" fill="rgba(255,255,255,0.001)"/>`,
+  S.teil({ id: "schlucht", de: "die Schlucht", syl: "SCHLUCHT", it: "la gola", itSyl: "GO-la", en: "gorge", x: 0, y: 0, kunst: k + `<path class="bw-flaeche" d="${poly(KEIL)}" fill="rgba(255,255,255,0.001)"/>`,
     tipp: "Die Pöllatschlucht ist tief und eng. Unten rauscht die Pöllat, direkt unter der Brücke stürzt sie als Wasserfall hinab.",
     zoom: { x: 104, y: 202, w: 96, h: 64 },
     unter: [
