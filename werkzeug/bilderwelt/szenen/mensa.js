@@ -323,7 +323,7 @@ const START = { X: -3.15, z: 1.42 };
    7 — DIE KASSE mit Lupe (Chipkarte am Kartenleser, Kassenbon)
    ===================================================================== */
 {
-  const X0 = 1.35, X1 = 2.05, z0 = 0.95, z1 = 1.38, H = 0.9;
+  const X0 = 1.45, X1 = 2.28, z0 = 0.95, z1 = 1.38, H = 0.9;
   const [ax, ay] = P((X0 + X1) / 2, 0, z1);
   let k = schatten(ax, ay, 14, 1.4, 0.25);
   k += kiste(X0, X1, 0, H, z0, z1, { vorn: S.lg("kasse", [[0, "#e4e8eb"], [1, "#bfc6cc"]]), seite: "#a9b1b8", deckel: STAHL_H });
@@ -331,13 +331,13 @@ const START = { X: -3.15, z: 1.42 };
   const [kx, ky] = P((X0 + X1) / 2, 0.7, z1);
   k += T(kx, ky, 3.2, "KASSE", "#3a3f44", 'text-anchor="middle" font-weight="bold"');
   /* Bildschirm zur Kundin, Kartenleser, Bon */
-  const [mx, my] = P(X0 + 0.2, H, z0 + 0.2), s = sk(z0 + 0.2) / S0;
+  const [mx, my] = P(X1 - 0.2, H, z0 + 0.12), s = sk(z0 + 0.2) / S0;
   k += `<rect x="${r(mx - 0.4)}" y="${r(my - 6 * s)}" width=".8" height="${r(6 * s)}" fill="#3a3f45"/><path d="M${r(mx - 6 * s)} ${r(my - 16 * s)} L${r(mx + 6 * s)} ${r(my - 16.6 * s)} L${r(mx + 6.4 * s)} ${r(my - 6 * s)} L${r(mx - 6.2 * s)} ${r(my - 5.6 * s)} Z" fill="#1c1f23"/>`;
   k += `<path d="M${r(mx - 5.2 * s)} ${r(my - 15.2 * s)} L${r(mx + 5.2 * s)} ${r(my - 15.7 * s)} L${r(mx + 5.5 * s)} ${r(my - 6.8 * s)} L${r(mx - 5.4 * s)} ${r(my - 6.5 * s)} Z" fill="${S.lg("kbild", [[0, "#e9f5e1"], [1, "#cfe8bf"]])}"/>`;
   k += T(mx, my - 12.6 * s, 1.5 * s, "Studierende", "#2b4a1a", 'text-anchor="middle"') + T(mx, my - 8.6 * s, 2.6 * s, "2,35 €", "#2b4a1a", 'text-anchor="middle" font-weight="bold"');
   const U = [];
   {
-    const [cx, cy] = P(X1 - 0.18, H, z0 + 0.22);
+    const [cx, cy] = P(X0 + 0.36, H, z0 + 0.14);
     k += `<path d="M${r(cx - 3.2 * s)} ${cy} L${r(cx + 3.2 * s)} ${cy} L${r(cx + 3 * s)} ${r(cy - 5 * s)} L${r(cx - 3 * s)} ${r(cy - 5 * s)} Z" fill="#2a2e33"/>`;
     k += `<rect x="${r(cx - 2.4 * s)}" y="${r(cy - 4.6 * s)}" width="${r(4.8 * s)}" height="${r(1.8 * s)}" rx=".3" fill="#9cd3e8"/>`;
     /* die Mensakarte liegt auf dem Leser */
@@ -348,7 +348,7 @@ const START = { X: -3.15, z: 1.42 };
       tipp: "Mit der Chipkarte zahlt man in der Mensa – Bargeld geht oft nicht." });
   }
   {
-    const [bx, by] = P(X0 + 0.48, H, z1 - 0.06);
+    const [bx, by] = P(X1 - 0.16, H, z1 - 0.04);
     k += `<path d="M${r(bx - 2 * s)} ${by} L${r(bx + 2 * s)} ${by} L${r(bx + 2.2 * s)} ${r(by - 0.6 * s)} L${r(bx - 1.6 * s)} ${r(by - 0.8 * s)} Z" fill="#fbfbf8"/><path d="M${r(bx - 2.4 * s)} ${r(by - 0.8 * s)} Q${r(bx - 1.4 * s)} ${r(by - 3 * s)} ${r(bx)} ${r(by - 3.2 * s)} L${r(bx + 1.6 * s)} ${r(by - 0.7 * s)} Z" fill="#f4f4f0" stroke="#d6d6d0" stroke-width=".15"/>`;
     U.push({ id: "kassenbon", de: "der Kassenbon", syl: "KAS-sen-bon", it: "lo scontrino", itSyl: "scon-TRI-no", en: "receipt", x: bx, y: r(by + 0.4), kunst: flaeche(-3 * s, -3.8 * s, 6 * s, 4.2 * s) });
   }

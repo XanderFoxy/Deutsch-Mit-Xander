@@ -142,7 +142,7 @@ const GUMMI = `url(#${S.id("gummi")})`;
    3 — DER KABELZUG (Turm mit Gewichtsblock, hinten links)
    ===================================================================== */
 {
-  const d = 13.25, sc = s(d), c = -2.95, hT = 2.25;
+  const d = 13.25, sc = s(d), c = -3.05, hT = 2.25;
   const [xc, yb] = P(c, d), yT = Y(d, hT), w = 0.62 * sc;
   let k = schatten(xc, yb, w + 3, 1.2, 0.35);
   k += quader(c - 0.7, c + 0.7, d - 0.35, d + 0.3, 0, 0.06, { deckel: "#2b2d31", front: "#17191b", seite: "#202225" });
@@ -169,7 +169,7 @@ const GUMMI = `url(#${S.id("gummi")})`;
    4 — DER WASSERSPENDER und DAS DESINFEKTIONSMITTEL (Rückwand rechts)
    ===================================================================== */
 {
-  const d = 13.6, c = 2.25, [xc, yb] = P(c, d);
+  const d = 13.6, c = 2.5, [xc, yb] = P(c, d);
   let k = schatten(xc, yb, 4, 0.8, 0.3);
   k += quader(c - 0.17, c + 0.17, d - 0.3, d, 0, 1.0, { deckel: "#e9edf0", front: S.lg("wsp", [[0, "#f6f8f9"], [1, "#c9d1d6"]], 0, 0, 1, 0), seite: "#b7c0c6" });
   const yT = Y(d - 0.3, 1.0), sc = s(d - 0.3);
@@ -180,7 +180,7 @@ const GUMMI = `url(#${S.id("gummi")})`;
     tipp: "Am Wasserspender füllt man die Trinkflasche auf." });
 }
 {
-  const d = D_W - 0.02, c = 3.2, sc = s(d), [xc, y0] = P(c, d, 1.0);
+  const d = D_W - 0.02, c = 3.42, sc = s(d), [xc, y0] = P(c, d, 1.0);
   let k = `<rect x="${r(xc - 5)}" y="${r(Y(d, 1.62))}" width="10" height="${r(0.24 * sc)}" rx=".4" fill="#ffffff"/><text x="${r(xc)}" y="${r(Y(d, 1.62) + 1.9)}" font-size="1.25" text-anchor="middle" fill="#1d1f22" font-family="Arial" font-weight="bold">Bitte Geräte</text><text x="${r(xc)}" y="${r(Y(d, 1.62) + 3.5)}" font-size="1.25" text-anchor="middle" fill="#1d1f22" font-family="Arial" font-weight="bold">desinfizieren!</text>`;
   /* Wandhalter mit Papierrolle und Sprühflasche */
   k += `<rect x="${r(xc - 4.5)}" y="${r(Y(d, 1.3))}" width="9" height="${r(0.3 * sc)}" rx=".6" fill="#d9dee2"/>`;
@@ -193,7 +193,7 @@ const GUMMI = `url(#${S.id("gummi")})`;
 /* =====================================================================
    5 — DAS LAUFBAND (zwei Laufbänder) — Front zu uns, Fenster links
    ===================================================================== */
-const LB = [-1.35, 0.6];
+const LB = [-1.5, 0.35];
 function laufbandTeile(c, nurKonsole) {
   const dA = 11.5, dE = 13.35;
   let k = "";
@@ -275,7 +275,7 @@ function laufbandTeile(c, nurKonsole) {
        Springseil, Faszienrolle)
    ===================================================================== */
 {
-  const x0 = 3.0, x1 = 3.75, d0 = 10.2, d1 = 13.6;
+  const x0 = 3.0, x1 = 3.75, d0 = 9.9, d1 = 12.7;
   let k = "";
   /* Füße und Seitenwangen */
   for (const d of [d0, (d0 + d1) / 2, d1]) {
@@ -293,7 +293,7 @@ function laufbandTeile(c, nurKonsole) {
     g += `<text x="${r(xa)}" y="${r(ya + 0.4)}" font-size="${r(Math.max(0.9, rr * 0.8))}" text-anchor="middle" fill="#e6e8ea" font-family="Arial" font-weight="bold">${gew}</text>`;
     return g;
   };
-  const gewU = [12, 14, 16, 18, 20, 22, 24], gewO = [2, 4, 6, 8, 10];
+  const gewU = [12, 14, 16, 18, 20, 22], gewO = [2, 4, 6, 8, 10];
   /* hintere zuerst */
   for (let i = gewU.length - 1; i >= 0; i--) k += hantel(d0 + 0.3 + i * (d1 - d0 - 0.5) / (gewU.length - 1), 0.35, gewU[i], i / gewU.length + 0.5);
   /* oben: Kettlebells hinten, kleine Hanteln vorne */
@@ -301,9 +301,9 @@ function laufbandTeile(c, nurKonsole) {
     const sc = s(d), [x, y] = P((x0 + x1) / 2, d, 0.9), R = 0.1 * sc;
     return `<circle cx="${r(x)}" cy="${r(y - R)}" r="${r(R)}" fill="${farbe}"/><path d="M${r(x - R * 0.7)} ${r(y - R * 1.6)} Q${r(x - R * 0.7)} ${r(y - R * 2.8)} ${r(x)} ${r(y - R * 2.8)} Q${r(x + R * 0.7)} ${r(y - R * 2.8)} ${r(x + R * 0.7)} ${r(y - R * 1.6)}" stroke="#1d1f22" stroke-width="${r(R * 0.35)}" fill="none"/><ellipse cx="${r(x - R * 0.35)}" cy="${r(y - R * 1.3)}" rx="${r(R * 0.3)}" ry="${r(R * 0.2)}" fill="#fff" opacity=".25"/>`;
   };
-  const kbD = [13.3, 12.85, 12.4];
+  const kbD = [12.45, 12.05, 11.65];
   ["#d23a33", "#2f6fd0", "#f2c230"].forEach((f, i) => { k += kb(kbD[i], f); });
-  for (let i = gewO.length - 1; i >= 0; i--) k += hantel(d0 + 0.3 + i * 0.42, 0.82, gewO[i], i / gewO.length * 0.6);
+  for (let i = gewO.length - 1; i >= 0; i--) k += hantel(d0 + 0.3 + i * 0.32, 0.82, gewO[i], i / gewO.length * 0.6);
   /* Springseile am Haken und Faszienrollen am Ende des Ständers */
   const [hx, hy] = P(x0 + 0.35, d0 - 0.05, 1.25), shs = s(d0);
   k += `<rect x="${r(hx - 0.8)}" y="${r(hy - 0.4)}" width="1.6" height="1.2" fill="#2c2f33"/>`;
@@ -315,7 +315,7 @@ function laufbandTeile(c, nurKonsole) {
   const [zx0, zy0] = P(x0, d0 - 0.6, 1.4), [zx1, zy1] = P(x1, d1, 0);
   const zw = 70, zh = 46.7, zx = Math.min(zx0 - 4, 320 - zw), zy = zy0 - 3;
   const pos = (xm, d, h) => { const [x, y] = P(xm, d, h); return [x, y]; };
-  const [hux, huy] = pos(x0 + 0.37, 11.0, 0.35), [kbx, kby] = pos((x0 + x1) / 2, 12.85, 0.9), [ssx, ssy] = P(x0 + 0.35, d0 - 0.05, 1.25), [frx, fry] = P(3.43, d0 - 0.35, 0);
+  const [hux, huy] = pos(x0 + 0.37, 10.7, 0.35), [kbx, kby] = pos((x0 + x1) / 2, 12.05, 0.9), [ssx, ssy] = P(x0 + 0.35, d0 - 0.05, 1.25), [frx, fry] = P(3.43, d0 - 0.35, 0);
   const unter = [
     { id: "fi_hantel", de: "die Hantel", syl: "HAN-tel", it: "il manubrio", itSyl: "ma-NU-brio", en: "dumbbell", x: hux, y: huy, kunst: flaeche(-12, -9, 26, 10),
       tipp: "Die Kurzhanteln liegen nach Gewicht sortiert: vorne leicht, hinten schwer." },
@@ -331,7 +331,7 @@ function laufbandTeile(c, nurKonsole) {
    8 — DER TRAINER (steht zwischen Bank und Hantelständer)
    ===================================================================== */
 {
-  const d = 8.6, sc = s(d), [x, y] = P(1.72, d);
+  const d = 9.4, sc = s(d), [x, y] = P(1.15, d);
   const m = mensch({ id: "b14b_tr", geschlecht: "m", pose: "arme_verschraenkt", blick: -24, frisur: "kurz", haarfarbe: "schwarz", haut: "dunkel",
     kleidung: { oberteil: { stueck: "tshirt", farbe: "#1d1f22" }, unterteil: { stueck: "hose", farbe: "#2a2c30" }, schuhe: { stueck: "turnschuh" } } }, 1.84 * sc);
   /* Schriftzug auf dem Shirt */
@@ -353,8 +353,8 @@ function laufbandTeile(c, nurKonsole) {
   /* Schwungrad-Gehäuse vorne (links), Rahmen, Sattel, Lenker */
   const fx = k0 + 0.24 * sc, fy = yb - 0.32 * sc, fr = 0.27 * sc;
   k += `<circle cx="${r(fx)}" cy="${r(fy)}" r="${r(fr)}" fill="${S.rg("rad", [[0, "#5a6067"], [0.7, "#3a3e43"], [1, "#1f2124"]])}"/><circle cx="${r(fx)}" cy="${r(fy)}" r="${r(fr * 0.35)}" fill="${LIME}" opacity=".8"/>`;
-  k += `<path d="M${r(fx + fr * 0.3)} ${r(fy)} L${r(k0 + 0.66 * sc)} ${r(yb - 0.25 * sc)} L${r(k0 + 0.7 * sc)} ${r(yb - 0.82 * sc)}" stroke="#30343a" stroke-width="${r(0.07 * sc)}" fill="none" stroke-linejoin="round"/>`;
-  k += `<path d="M${r(k0 + 0.62 * sc)} ${r(yb - 0.86 * sc)} q${r(0.12 * sc)} -1.8 ${r(0.28 * sc)} 0 q-2 1.4 ${r(-0.28 * sc)} 0 Z" fill="#17191b"/>`;
+  k += `<path d="M${r(fx + fr * 0.3)} ${r(fy)} L${r(k0 + 0.66 * sc)} ${r(yb - 0.25 * sc)} L${r(k0 + 0.74 * sc)} ${r(yb - 0.82 * sc)}" stroke="#30343a" stroke-width="${r(0.07 * sc)}" fill="none" stroke-linejoin="round"/>`;
+  k += `<path d="M${r(k0 + 0.58 * sc)} ${r(yb - 0.84 * sc)} Q${r(k0 + 0.6 * sc)} ${r(yb - 0.92 * sc)} ${r(k0 + 0.72 * sc)} ${r(yb - 0.91 * sc)} L${r(k0 + 0.92 * sc)} ${r(yb - 0.89 * sc)} Q${r(k0 + 0.95 * sc)} ${r(yb - 0.84 * sc)} ${r(k0 + 0.9 * sc)} ${r(yb - 0.81 * sc)} Q${r(k0 + 0.74 * sc)} ${r(yb - 0.8 * sc)} ${r(k0 + 0.58 * sc)} ${r(yb - 0.84 * sc)} Z" fill="#17191b"/>`;
   k += `<path d="M${r(fx)} ${r(fy - fr * 0.6)} L${r(k0 + 0.16 * sc)} ${r(yb - 1.12 * sc)} L${r(k0 - 0.05 * sc)} ${r(yb - 1.16 * sc)}" stroke="#30343a" stroke-width="${r(0.05 * sc)}" fill="none" stroke-linecap="round"/>`;
   k += `<rect x="${r(k0 + 0.06 * sc)}" y="${r(yb - 1.3 * sc)}" width="${r(0.2 * sc)}" height="${r(0.12 * sc)}" rx=".5" fill="#1d1f22" transform="rotate(-18 ${r(k0 + 0.16 * sc)} ${r(yb - 1.24 * sc)})"/>`;
   k += `<rect x="${r(k0 + 0.09 * sc)}" y="${r(yb - 1.28 * sc)}" width="${r(0.12 * sc)}" height="${r(0.06 * sc)}" fill="#7ad0f0" transform="rotate(-18 ${r(k0 + 0.16 * sc)} ${r(yb - 1.24 * sc)})"/>`;

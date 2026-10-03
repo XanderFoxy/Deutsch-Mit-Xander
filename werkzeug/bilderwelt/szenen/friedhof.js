@@ -72,7 +72,7 @@ S.hinten(`<rect x="0" y="${VY + 8}" width="320" height="${200 - VY - 8}" fill="u
    1 — DIE TRAUERHALLE (Kapelle mit Dachreiter, hinten)
    ===================================================================== */
 {
-  const d = 30, s = sk(d), y0 = PY(0, d), X = PX(-0.6, d);
+  const d = 26, s = sk(d), y0 = PY(0, d), X = PX(-0.3, d);
   const W = 12 * s, Hw = 4.6 * s, Hd = 3.4 * s;
   let k = `<rect x="${r(-W / 2)}" y="${r(-Hw)}" width="${r(W)}" height="${r(Hw)}" fill="${S.lg("halle", [[0, "#efe5d2"], [1, "#d8cab0"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M${r(-W / 2 - 2)} ${r(-Hw)} L0 ${r(-Hw - Hd)} L${r(W / 2 + 2)} ${r(-Hw)} Z" fill="${S.lg("dach", [[0, "#8a4434"], [1, "#6a3024"]])}"/>`;
@@ -93,14 +93,14 @@ S.hinten(`<rect x="0" y="${VY + 8}" width="320" height="${200 - VY - 8}" fill="u
    2 — DER BAUM (alte Linde links, hinter der Hecke)
    ===================================================================== */
 {
-  const d = 10, s = sk(d), X = PX(-3.6, d), Y = PY(0, d);
+  const d = 8.6, s = sk(d), X = PX(-3.0, d), Y = PY(0, d);
   let k = `<path d="M-3.6 0 Q-3 -20 -2.2 -44 L2.4 -44 Q3 -20 4 0 Z" fill="${S.lg("stamm", [[0, "#5a4632"], [0.5, "#7a6248"], [1, "#4a3828"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M-1 -40 Q-10 -56 -18 -62 M1.4 -42 Q8 -60 14 -66" stroke="#5a4632" stroke-width="2.4" fill="none"/>`;
   for (let i = 0; i < 22; i++) {
     const a = rnd() * Math.PI * 2, rr = rnd() * 30, x = Math.cos(a) * rr * 1.25, y = -76 + Math.sin(a) * rr * 0.8;
     k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(13 + rnd() * 9)}" ry="${r(11 + rnd() * 7)}" fill="${LAUB}"/>`;
   }
-  for (let i = 0; i < 40; i++) { const x = -40 + rnd() * 80, y = -104 + rnd() * 54; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(1.6 + rnd() * 2)}" fill="${rnd() < 0.5 ? "#9cc06f" : "#2f5222"}" opacity=".55"/>`; }
+  for (let i = 0; i < 40; i++) { const x = -40 + rnd() * 80, y = -104 + rnd() * 54; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(1.6 + rnd() * 2)}" fill="${rnd() < 0.5 ? "#9cc06f" : "#2f5222"}" opacity=".22"/>`; }
   S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: X, y: Y, kunst: k,
     tipp: "Alte Linden spenden auf dem Friedhof Schatten und Ruhe." });
 }
@@ -109,7 +109,7 @@ S.hinten(`<rect x="0" y="${VY + 8}" width="320" height="${200 - VY - 8}" fill="u
    3 — DIE URNENWAND (rechts hinten, Kolumbarium aus Naturstein)
    ===================================================================== */
 {
-  const d = 14, s = sk(d), X = PX(3.6, d), Y = PY(0, d), W = 5.6 * s, H = 2.2 * s;
+  const d = 11, s = sk(d), X = PX(2.9, d), Y = PY(0, d), W = 4.6 * s, H = 2.2 * s;
   let k = schatten(0, 0.4, W / 2 + 2, 1.4, 0.25);
   k += `<rect x="${r(-W / 2)}" y="${r(-H)}" width="${r(W)}" height="${r(H)}" fill="${S.lg("urnenwand", [[0, "#d6cebf"], [1, "#b3aa98"]])}"/>`;
   k += `<rect x="${r(-W / 2 - 1)}" y="${r(-H - 2)}" width="${r(W + 2)}" height="2.4" fill="#a39a88"/>`;
@@ -129,10 +129,10 @@ S.hinten(`<rect x="0" y="${VY + 8}" width="320" height="${200 - VY - 8}" fill="u
    4 — DIE HECKE (Hainbuche, teilt das Grabfeld ab)
    ===================================================================== */
 {
-  const d = 8.2, s = sk(d), Y = PY(0, d), H = 1.05 * s;
-  let k = `<path d="M-162 0 L-162 ${r(-H + 3)}`;
-  for (let x = -162; x <= 162; x += 8) k += ` Q${x + 4} ${r(-H - 2 - (x % 16 ? 0 : 1.5))} ${x + 8} ${r(-H + 1)}`;
-  k += ` L162 0 Z" fill="${HECKE}"/>`;
+  const d = 7.0, s = sk(d), Y = PY(0, d), H = 1.05 * s;
+  let k = `<path d="M-160 0 L-160 ${r(-H + 3)}`;
+  for (let x = -160; x < 160; x += 8) k += ` Q${x + 4} ${r(-H - 2 - (x % 16 ? 0 : 1.5))} ${x + 8} ${r(-H + 1)}`;
+  k += ` L160 0 Z" fill="${HECKE}"/>`;
   k += `<rect x="-162" y="${r(-H)}" width="324" height="${r(H)}" fill="url(#${S.id("blatt")})" opacity=".55"/>`;
   k += `<rect x="-162" y="${r(-H - 2)}" width="324" height="8" fill="${S.lg("heckelicht", [[0, "#cfe0a0", 0.35], [1, "#cfe0a0", 0]])}"/>`;
   k += `<rect x="-162" y="-4" width="324" height="4" fill="#1f3518" opacity=".4"/>`;
@@ -143,12 +143,12 @@ S.hinten(`<rect x="0" y="${VY + 8}" width="320" height="${200 - VY - 8}" fill="u
 /* =====================================================================
    5 — DER KIESWEG (vorne quer durchs Bild)
    ===================================================================== */
-const WEG = { d0: 3.45, d1: 4.75 };
+const WEG = { d0: 3.0, d1: 4.15 };
 {
   const y0 = PY(0, WEG.d1), y1 = 200;
   let k = `<rect x="-160" y="0" width="320" height="${r(y1 - y0)}" fill="url(#${S.id("kies")})"/>`;
   S.def(`<pattern id="${S.id("kies2")}" href="#${S.id("kies")}" patternTransform="scale(1.7)"/>`);
-  k += `<rect x="-160" y="${r(PY(0, 4.0) - y0)}" width="320" height="${r(y1 - PY(0, 4.0))}" fill="url(#${S.id("kies2")})"/>`;
+  k += `<rect x="-160" y="${r(PY(0, 3.6) - y0)}" width="320" height="${r(y1 - PY(0, 3.6))}" fill="url(#${S.id("kies2")})"/>`;
   k += `<rect x="-160" y="0" width="320" height="${r(y1 - y0)}" fill="${S.lg("weglicht", [[0, "#5a4a30", 0.18], [0.3, "#5a4a30", 0], [1, "#fff", 0.1]])}"/>`;
   k += `<rect x="-160" y="0" width="320" height="1.4" fill="#8c8170"/>`;
   /* Rasenkante vorne */
@@ -160,7 +160,7 @@ const WEG = { d0: 3.45, d1: 4.75 };
 /* =====================================================================
    6 — DIE GRÄBER: Grabbeete (Grab, zweite Grabstelle, Urnengrab)
    ===================================================================== */
-const D_V = 5.0, D_H = 6.7;     /* Grabstellen: vorne / Kopfende */
+const D_V = 4.35, D_H = 5.95;     /* Grabstellen: vorne / Kopfende */
 const beet = (xa, xb, dv, dh, fuell) => {
   /* Steinkante (Einfassung) und Fläche */
   let g = `<path d="M${P(xa, 0.1, dh)} L${P(xb, 0.1, dh)} L${P(xb, 0.1, dv)} L${P(xa, 0.1, dv)} Z" fill="#c9c2b4"/>`;
@@ -179,7 +179,7 @@ const pflanzen = (xa, xb, dv, dh, farben, n) => {
   }
   return g;
 };
-const GR1 = { a: -2.15, b: -0.95 }, GR2 = { a: -0.6, b: 0.6 }, GR3 = { a: 1.0, b: 1.85 };
+const GR1 = { a: -2.05, b: -0.9 }, GR2 = { a: -0.1, b: 1.05 }, GR3 = { a: 1.35, b: 2.15 };
 {
   const X = PX((GR1.a + GR1.b) / 2, D_V), Y = PY(0, D_V);
   let g = beet(GR1.a, GR1.b, D_V, D_H, S.lg("beet1", [[0, "#4a6b34"], [1, "#3a5a2a"]]));
@@ -189,11 +189,11 @@ const GR1 = { a: -2.15, b: -0.95 }, GR2 = { a: -0.6, b: 0.6 }, GR3 = { a: 1.0, b
 }
 {
   /* frisches Grab: Erdhügel, mit Tannengrün abgedeckt */
-  const X = PX(0, D_V), Y = PY(0, D_V);
-  let g = `<path d="M${P(GR2.a, 0, D_V)} Q${P(GR2.a - 0.05, 0.32, (D_V + D_H) / 2)} ${P(0, 0.42, (D_V + D_H) / 2 - 0.2)} Q${P(GR2.b + 0.05, 0.32, (D_V + D_H) / 2)} ${P(GR2.b, 0, D_V)} Z" fill="${ERDE}"/>`;
+  const X = PX((GR2.a + GR2.b) / 2, D_V), Y = PY(0, D_V);
+  let g = `<path d="M${P(GR2.a, 0, D_V)} Q${P(GR2.a - 0.05, 0.32, (D_V + D_H) / 2)} ${P((GR2.a + GR2.b) / 2, 0.42, (D_V + D_H) / 2 - 0.2)} Q${P(GR2.b + 0.05, 0.32, (D_V + D_H) / 2)} ${P(GR2.b, 0, D_V)} Z" fill="${ERDE}"/>`;
   g += `<path d="M${P(GR2.a, 0, D_H)} L${P(GR2.b, 0, D_H)} L${P(GR2.b, 0.3, (D_V + D_H) / 2)} L${P(GR2.a, 0.3, (D_V + D_H) / 2)} Z" fill="#5a3e28"/>`;
   for (let i = 0; i < 26; i++) {
-    const xw = GR2.a + 0.1 + rnd() * 1.0, d = D_V + 0.15 + rnd() * 1.3, s = sk(d);
+    const xw = GR2.a + 0.1 + rnd() * (GR2.b - GR2.a - 0.2), d = D_V + 0.15 + rnd() * 1.3, s = sk(d);
     g += `<path d="M${r(PX(xw, d) - 0.12 * s)} ${r(PY(0.25, d))} q${r(0.12 * s)} ${r(-0.08 * s)} ${r(0.24 * s)} 0" stroke="${rnd() < 0.5 ? "#2f5a2a" : "#3e7034"}" stroke-width="${r(0.05 * s)}" fill="none"/>`;
   }
   S.teil({ id: "fh_grab2", de: "die zweite Grabstelle", syl: "ZWEI-te GRAB-stel-le", it: "la seconda tomba", itSyl: "se-CON-da TOM-ba", en: "second grave", x: X, y: Y, steht: true, kunst: G(X, Y, g),
@@ -264,7 +264,7 @@ const GR1 = { a: -2.15, b: -0.95 }, GR2 = { a: -0.6, b: 0.6 }, GR3 = { a: 1.0, b
     tipp: "Darauf stehen der Name und zwei Jahreszahlen." });
 }
 {
-  const d = D_H - 0.1, s = sk(d), X = PX(0, d), Y = PY(0.05, d), H = 1.15 * s;
+  const d = D_H - 0.1, s = sk(d), X = PX((GR2.a + GR2.b) / 2, d), Y = PY(0.05, d), H = 1.15 * s;
   let k = schatten(0, 0.2, 4, .8, 0.3);
   k += `<rect x="-1.2" y="${r(-H)}" width="2.4" height="${r(H)}" fill="${HOLZ}"/><rect x="${r(-0.3 * s)}" y="${r(-H * 0.78)}" width="${r(0.6 * s)}" height="2.4" fill="${HOLZ}"/>`;
   k += `<rect x="-3.2" y="${r(-H * 0.6)}" width="6.4" height="3.6" rx=".4" fill="#e9e3d4"/><text x="0" y="${r(-H * 0.6 + 1.7)}" font-size="1.3" text-anchor="middle" fill="#3a2a1a" font-family="Georgia">Karl Brandt</text><text x="0" y="${r(-H * 0.6 + 3)}" font-size="1.1" text-anchor="middle" fill="#5a4a3a" font-family="Georgia">1944 – 2026</text>`;
@@ -273,14 +273,13 @@ const GR1 = { a: -2.15, b: -0.95 }, GR2 = { a: -0.6, b: 0.6 }, GR3 = { a: 1.0, b
     tipp: "Ein Kreuz aus Stein oder Holz statt einer Platte." });
 }
 {
-  /* Kranz aus Tannengrün mit weißen Blüten und Schleife, gelehnt an den Hügel */
-  const d = D_V + 0.55, s = sk(d), X = PX(0.05, d), Y = PY(0.3, d), R = 0.33 * s;
-  let k = `<ellipse cx="0" cy="${r(-R * 0.75)}" rx="${r(R)}" ry="${r(R * 0.75)}" fill="none" stroke="#2f5a2a" stroke-width="${r(R * 0.42)}"/>`;
-  for (let i = 0; i < 22; i++) { const a = i / 22 * Math.PI * 2; k += `<path d="M${r(Math.cos(a) * R)} ${r(-R * 0.75 + Math.sin(a) * R * 0.75)} l${r(Math.cos(a + 1) * 2)} ${r(Math.sin(a + 1) * 1.6)}" stroke="#4f8a3e" stroke-width=".7"/>`; }
-  for (const a of [-2.4, -1.9, -1.2, -0.6, 0.1]) k += `<circle cx="${r(Math.cos(a) * R)}" cy="${r(-R * 0.75 + Math.sin(a) * R * 0.75)}" r="${r(R * 0.15)}" fill="#f4f1ea" stroke="#d8d2c4" stroke-width=".2"/>`;
-  k += `<path d="M${r(R * 0.5)} ${r(-R * 0.2)} L${r(R * 0.9)} ${r(R * 0.55)} L${r(R * 0.62)} ${r(R * 0.5)} Z M${r(R * 0.42)} ${r(-R * 0.16)} L${r(R * 0.35)} ${r(R * 0.6)} L${r(R * 0.12)} ${r(R * 0.42)} Z" fill="#f4f1ea" stroke="#cfc8b6" stroke-width=".2"/>`;
-  k += `<text x="${r(R * 0.62)}" y="${r(R * 0.3)}" font-size="1.1" fill="#7a6a3a" font-family="Georgia" transform="rotate(60 ${r(R * 0.62)} ${r(R * 0.3)})">In Liebe</text>`;
-  S.teil({ oben: true, id: "fh_kranz", de: "der Kranz", syl: "KRANZ", it: "la corona", itSyl: "co-RO-na", en: "wreath", x: X, y: Y, kunst: k,
+  /* Kranz aus Tannengrün mit weißen Blüten und Schleife, liegt flach auf dem Hügel */
+  const d = (D_V + D_H) / 2 - 0.15, s = sk(d), X = PX((GR2.a + GR2.b) / 2 - 0.05, d), Y = PY(0.4, d), R = 0.3 * s, q = 0.26;
+  let k = `<ellipse cx="0" cy="0" rx="${r(R)}" ry="${r(R * q)}" fill="none" stroke="#2f5a2a" stroke-width="${r(R * 0.3)}"/>`;
+  k += `<ellipse cx="0" cy="${r(-R * 0.03)}" rx="${r(R)}" ry="${r(R * q)}" fill="none" stroke="#4f8a3e" stroke-width="${r(R * 0.12)}" stroke-dasharray="1 1.2"/>`;
+  for (const a of [-2.6, -2.0, -1.3, -0.5, 0.3, 2.4]) k += `<ellipse cx="${r(Math.cos(a) * R)}" cy="${r(Math.sin(a) * R * q - 0.6)}" rx="${r(R * 0.11)}" ry="${r(R * 0.08)}" fill="#f4f1ea" stroke="#d8d2c4" stroke-width=".2"/>`;
+  k += `<path d="M${r(R * 0.55)} ${r(R * q * 0.6)} L${r(R * 0.95)} ${r(R * q + 3.4)} L${r(R * 0.7)} ${r(R * q + 3)} Z M${r(R * 0.45)} ${r(R * q * 0.7)} L${r(R * 0.42)} ${r(R * q + 3.8)} L${r(R * 0.2)} ${r(R * q + 3.2)} Z" fill="#f4f1ea" stroke="#cfc8b6" stroke-width=".2"/>`;
+  S.teil({ oben: true, id: "fh_kranz", de: "der Kranz", syl: "KRANZ", it: "la corona", itSyl: "co-RO-na", en: "wreath", x: X, y: Y, kunst: k + flaeche(-R - 1, -R * q - 2, 2 * R + 2, 2 * R * q + 6),
     tipp: "Ein Kranz aus Tannengrün mit Schleife." });
 }
 {
@@ -296,7 +295,7 @@ const GR1 = { a: -2.15, b: -0.95 }, GR2 = { a: -0.6, b: 0.6 }, GR3 = { a: 1.0, b
 /* =====================================================================
    8 — DIE BANK mit dem MANN (rechts, vor der Hecke)
    ===================================================================== */
-const BK = { d: 6.6, xw: 3.25 };
+const BK = { d: 6.3, xw: 3.35 };
 const bs = sk(BK.d);
 const mann = B.mensch({ id: "b13c_mann", geschlecht: "m", pose: "sitzen_zurueck", blick: -22, frisur: "kurz", haarfarbe: "weiss", haut: "hell", alter: "alt",
   kleidung: { oberteil: { stueck: "hemd", farbe: "hellblau" }, jacke: { stueck: "jacke", farbe: "beige" }, unterteil: { stueck: "anzughose", farbe: "grau" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, kopf: { stueck: "hut", farbe: "grau" } } }, 1.74 * bs);
@@ -326,7 +325,7 @@ const SITZ = -mann.z.sitz.y * mann.k;
 /* =====================================================================
    9 — DIE WASSERSTELLE: WASSERHAHN, GIESSKANNEN, HARKE (links am Weg)
    ===================================================================== */
-const WS = { d: 5.3, xw: -3.3 };
+const WS = { d: 4.8, xw: -3.05 };
 {
   const s = sk(WS.d), X = PX(WS.xw, WS.d), Y = PY(0, WS.d), H = 1.0 * s;
   let k = schatten(0, 0.5, 0.45 * s, 1.6, 0.3);
@@ -341,7 +340,7 @@ const WS = { d: 5.3, xw: -3.3 };
   S.teil({ id: "fh_wasserhahn", de: "der Wasserhahn", syl: "WAS-ser-hahn", it: "il rubinetto", itSyl: "ru-bi-NET-to", en: "water tap", x: X, y: Y, steht: true, kunst: k,
     tipp: "Hier holt man das Wasser für die Gießkanne." });
 }
-const RACK = { d: 5.5, xw: -2.55 };
+const RACK = { d: 5.0, xw: -2.4 };
 {
   /* Gießkannenständer: Metallrohr mit Haken, drei grüne Kannen */
   const s = sk(RACK.d), X = PX(RACK.xw, RACK.d), Y = PY(0, RACK.d), H = 1.15 * s, W = 0.75 * s;
@@ -362,8 +361,8 @@ const RACK = { d: 5.5, xw: -2.55 };
    10 — DIE FRAU AM GRAB (kniet links neben Grab 1, pflegt die Pflanzen)
    ===================================================================== */
 {
-  const d = D_V + 0.45, s = sk(d), X = PX(GR1.a - 0.42, d), Y = PY(0, d);
-  const m = B.mensch({ id: "b13c_frau", geschlecht: "w", pose: "knien", blick: 62, frisur: "dutt", haarfarbe: "braun", haut: "hell",
+  const d = D_V + 0.3, s = sk(d), X = PX(-0.5, d), Y = PY(0, d);
+  const m = B.mensch({ id: "b13c_frau", geschlecht: "w", pose: "knien", blick: -64, frisur: "dutt", haarfarbe: "braun", haut: "hell",
     kleidung: { oberteil: { stueck: "pullover", farbe: "gruen_d" }, unterteil: { stueck: "hose", farbe: "beige" }, jacke: { stueck: "weste", farbe: "grau" }, schuhe: { stueck: "stiefel", farbe: "braun" } } }, 1.66 * s);
   S.teil({ id: "fh_frau", de: "die Frau am Grab", syl: "FRAU am GRAB", it: "la donna alla tomba", itSyl: "DON-na AL-la TOM-ba", en: "woman at the grave", x: X, y: Y, kunst: m.svg,
     tipp: "Sie gießt die Blumen und nimmt das welke Laub weg." });
