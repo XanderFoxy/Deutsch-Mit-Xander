@@ -401,6 +401,11 @@ const kappO = (pts, ym) => schnitt(pts, (p) => p[1] >= ym, (a, b) => { const t =
 const KLIP = [-5, 405];
 const rahmen = (pts) => pts.length > 2 ? kappO(kappY(kappX(pts, KLIP[0], KLIP[1]), 265), -5) : [];
 const vr = (pts, fill, ex = "") => vl(rahmen(pts), fill, ex);
+/* Strecke am Rahmen beschneiden (Liang–Barsky); "" wenn ganz draußen */
+const seg = (a, b) => { let t0 = 0, t1 = 1; const dx = b[0] - a[0], dy = b[1] - a[1];
+  for (const [p, q] of [[-dx, a[0] - KLIP[0]], [dx, KLIP[1] - a[0]], [-dy, a[1] + 5], [dy, 265 - a[1]]]) { if (p === 0) { if (q < 0) return ""; continue; } const t = q / p; if (p < 0) { if (t > t1) return ""; if (t > t0) t0 = t; } else { if (t < t0) return ""; if (t < t1) t1 = t; } }
+  return `M${pr([a[0] + dx * t0, a[1] + dy * t0])} L${pr([a[0] + dx * t1, a[1] + dy * t1])}`; };
+const strich = (a, b, st, w) => { const d = seg(a, b); return d ? `<path d="${d}" stroke="${st}" stroke-width="${w}"/>` : ""; };
 const hex3 = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const misch = (h, ziel, t) => { const a = hex3(h), b = hex3(ziel); return "#" + a.map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, "0")).join(""); };
 const dunst = (h, d) => misch(h, "#c9d3da", Math.min(0.42, d / 2200));
@@ -488,7 +493,7 @@ const zeichneListe = (L) => {
     /* gleiche Farben einer Kiste in einem Pfad zusammenfassen */
     const nachF = new Map(); for (const v of e.V) { const key = v.f + (v.o ? "o" : ""); nachF.set(key, (nachF.get(key) || "") + pfad(v.p, g)); }
     for (const [key, d] of nachF) s += `<path d="${d}" fill="${key.replace(/o$/, "")}"${key.endsWith("o") ? ` opacity=".6"` : ""}/>`;
-    if (e.L) { const [a, b, st, w] = e.L; s += `<path d="M${zahl(a[0], g)} ${zahl(a[1], g)} ${zahl(b[0], g)} ${zahl(b[1], g)}" stroke="${st}" stroke-width="${zahl(w, 100)}"/>`; }
+    if (e.L) { const [a, b, st, w] = e.L; s += strich(a, b, st, zahl(w, 100)); }
   }
   return s;
 };
@@ -595,6 +600,7 @@ const HAUS = {};
   for (const [A, Bq] of [[150, 272], [287, 410], [425, 550], [565, 690]]) { const n = Math.ceil((Bq - A) / 15); for (let j = 0; j < n; j++) WL.push([A + (Bq - A) * j / n, A + (Bq - A) * (j + 1) / n]); }
   const ersteImBlock = new Set([15, 150, 287, 425, 565]);
   for (const [d0, d1] of WL.reverse()) {
+    if (PN(-17, d1, 0)[0] < -5) continue;
     const fern_ = d0 > 130, i = Math.round(d0 / 7.6), f = farben[i % 7];
     const zb0 = zH(d0), zb1 = zH(d1), zr = Math.max(zb0, zb1) + (fern_ ? 10 : 10.8), giebel = !fern_ && i % 7 === 6;
     const W = schatt(f.w, 0.74), WT = schatt(f.t, 0.8);
@@ -606,12 +612,12 @@ const HAUS = {};
     k += vr([PN(-17, d0, zr - 0.7), PN(-16.4, d0, zr - 0.7), PN(-16.4, d1, zr - 0.7), PN(-17, d1, zr - 0.7)], schatt(f.t, 0.55));
     k += vr([PN(-16.4, d0, zr - 0.7), PN(-16.4, d0, zr), PN(-16.4, d1, zr), PN(-16.4, d1, zr - 0.7)], WT);
     let kon = "";
-    for (let t = 0.05; t < 1; t += 0.09) { const d = d0 + t * 7.6; kon += `M${pr(PN(-16.6, d, zr - 0.7))} L${pr(PN(-16.6, d, zr - 1.3))} `; }
+    for (let t = 0.05; t < 1; t += 0.09) { const d = d0 + t * 7.6; kon += seg(PN(-16.6, d, zr - 0.7), PN(-16.6, d, zr - 1.3)) + " "; }
     k += `<path d="${kon}" stroke="${schatt(f.t, 0.6)}" stroke-width="${r(Math.max(0.15, 9 / d0))}"/>`;
-    if (giebel) { const gm = (d0 + d1) / 2; k += vr([PN(-16.4, d0, zr), PN(-16.4, gm, zr + 3.6), PN(-16.4, d1, zr)], W) + `<path d="M${pr(PN(-16.3, d0, zr))} L${pr(PN(-16.3, gm, zr + 3.6))} L${pr(PN(-16.3, d1, zr))}" stroke="${WT}" stroke-width="${r(10 / d0)}" fill="none"/>`; }
+    if (giebel) { const gm = (d0 + d1) / 2; k += vr([PN(-16.4, d0, zr), PN(-16.4, gm, zr + 3.6), PN(-16.4, d1, zr)], W) + strich(PN(-16.3, d0, zr), PN(-16.3, gm, zr + 3.6), WT, r(10 / d0)) + strich(PN(-16.3, gm, zr + 3.6), PN(-16.3, d1, zr), WT, r(10 / d0)); }
     /* Garage (talseitig) */
     k += vr([PN(-16.95, d0 + 4.4, zb1), PN(-16.95, d0 + 4.4, zb1 + 2.4), PN(-16.95, d1 - 0.4, zb1 + 2.4), PN(-16.95, d1 - 0.4, zb1)], schatt(f.t, 0.82));
-    for (let j = 1; j < 5; j++) k += `<path d="M${pr(PN(-16.94, d0 + 4.5, zb1 + j * 0.46))} L${pr(PN(-16.94, d1 - 0.5, zb1 + j * 0.46))}" stroke="#9a948a" stroke-width="${r(Math.max(0.08, 3 / d0))}"/>`;
+    for (let j = 1; j < 5; j++) k += strich(PN(-16.94, d0 + 4.5, zb1 + j * 0.46), PN(-16.94, d1 - 0.5, zb1 + j * 0.46), "#9a948a", r(Math.max(0.08, 3 / d0)));
     /* Treppe zur Haustür (bergseitig), Tür */
     for (let j = 0; j < 5; j++) { const zz = zb0 + 0.2 * (j + 1), xx = -16.2 + j * 0.2; k += vr([PN(xx, d0 + 0.4, zz), PN(xx, d0 + 1.8, zz), PN(xx, d0 + 1.8, zz - 0.2), PN(xx, d0 + 0.4, zz - 0.2)], j % 2 ? "#c9c3b8" : "#dcd6cb"); }
     k += vr([PN(-16.95, d0 + 0.6, zb0 + 1), PN(-16.95, d0 + 0.6, zb0 + 3.4), PN(-16.95, d0 + 1.6, zb0 + 3.4), PN(-16.95, d0 + 1.6, zb0 + 1)], f.a);
@@ -622,7 +628,7 @@ const HAUS = {};
     for (const zf of [ez0 + 0.6, ez0 + 3.3]) {
       k += vr([PN(-16.85, e0 + 0.12, zf), PN(-16.12, e0 + 0.7, zf), PN(-16.12, e0 + 0.7, zf + 1.9), PN(-16.85, e0 + 0.12, zf + 1.9)], "#5a6f82", ` stroke="${WT}" stroke-width="${r(Math.max(0.1, 6 / d0))}"`);
       k += vr([PN(-15.98, e0 + 1, zf), PN(-15.98, e1 - 1, zf), PN(-15.98, e1 - 1, zf + 1.9), PN(-15.98, e0 + 1, zf + 1.9)], "#3e4c5a", ` stroke="${WT}" stroke-width="${r(Math.max(0.1, 6 / d0))}"`);
-      k += `<path d="M${pr(PN(-16.5, e0 + 0.4, zf + 0.95))} L${pr(PN(-16.1, e0 + 0.7, zf + 0.95))}" stroke="${WT}" stroke-width="${r(Math.max(0.08, 4 / d0))}"/>`;
+      k += strich(PN(-16.5, e0 + 0.4, zf + 0.95), PN(-16.1, e0 + 0.7, zf + 0.95), WT, r(Math.max(0.08, 4 / d0)));
     }
     k += vr([PN(-16, e0 + 0.8, ez1), PN(-16, e1 - 0.8, ez1), PN(-16, e1 - 0.8, ez1 + 0.4), PN(-16, e0 + 0.8, ez1 + 0.4)], f.a);
     if (d0 < 45 && !HAUS.erker) HAUS.erker = { p: PN(-16.5, e0 + 0.4, ez0), q: PN(-16.5, e0 + 0.4, ez1), g: PN(-16.95, d0 + 5.5, zb1), g2: PN(-16.95, d0 + 5.5, zb1 + 2.4), d: d0 };

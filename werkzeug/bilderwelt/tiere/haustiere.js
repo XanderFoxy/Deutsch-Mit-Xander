@@ -742,16 +742,16 @@ module.exports = [
      ================================================================= */
   { id: "katze", de: "die Katze", syl: "KAT-ze", it: "il gatto", itSyl: "GAT-to", en: "cat",
     gruppe: "Haustiere", lebensraum: "Zuhause",
-    laenge: 0.712, hoehe: 0.374,
+    laenge: 0.712, hoehe: 0.362,
     zeichne(T) {
       T.dez = 1;
       const DK = "#2b2118", SCH = "#5e4426", TIEF = "#3a2a18", HELL = "#fff6e4";
       const V = (n, w, t, u) => T.volumen(n, { weich: w, tiefe: t, umgebung: u });
       const FK = fellSatz(T, "k", { L: 0.6, k: 7, w: 0.045, dunkel: "#241a10", od: [0.1, 0.2], mittel: "#8a6a44", om: [0.08, 0.14], hell: "#fff4dc", oh: [0.06, 0.22] });
-      const FKo = fellSatz(T, "o", { L: 0.36, k: 6, w: 0.032, dunkel: "#241a10", od: [0.1, 0.2], mittel: "#8a6a44", om: [0.08, 0.14], hell: "#fff4dc", oh: [0.06, 0.22] });
+      const FKo = fellSatz(T, "o", { L: 0.36, k: 6, w: 0.032, dunkel: "#241a10", od: [0.1, 0.2], hell: "#fff4dc", oh: [0.06, 0.22] });
       const FS = randSatz(T, "s", { L: 0.42, k: 5, w: 0.035, winkel: 20, dunkel: "#8a7050", od: [0.75, 0.95], hell: "#c9b08a", oh: [0.8, 1] });
-      const FSc = randSatz(T, "c", { L: 0.5, k: 5, w: 0.035, winkel: 35, dunkel: "#cbb894", od: [0.75, 0.95], hell: "#ece0c6", oh: [0.85, 1] });
-      const FSk = randSatz(T, "kr", { L: 0.62, k: 5, w: 0.04, winkel: 30, dunkel: "#9a8060", od: [0.75, 0.95], hell: "#c6ae86", oh: [0.8, 1] });
+      const FSc = randSatz(T, "c", { L: 0.5, k: 5, w: 0.035, winkel: 35, dunkel: "#cbb894", od: [0.9], hell: "#ece0c6", oh: [0.95] });
+      const FSk = randSatz(T, "kr", { L: 0.62, k: 5, w: 0.04, winkel: 30, dunkel: "#9a8060", od: [0.9], hell: "#c6ae86", oh: [0.95] });
       /* ---------- Silhouette mit nahen Beinen ---------- */
       const vorn = [[14.4, -11.5], [14.0, -8.5], [13.7, -5.6], [13.6, -4.0], [13.85, -3.1], [14.15, -2.3], [14.75, -1.95], [15.35, -1.95], [15.7, -1.6], [16.15, -1.6], [16.5, -1.25], [16.9, -1.05],
         [17.15, -0.55], [17.0, -0.12], [16.5, 0, 1], [12.0, 0, 1], [11.6, -0.3], [11.4, -0.95], [11.15, -1.75], [10.85, -2.5], [10.95, -3.2], [10.85, -4.6], [10.75, -7.5], [10.3, -10], [9.5, -11.9, 1], [8.6, -12]];
@@ -957,7 +957,7 @@ module.exports = [
       s += tasthaar(T, [23.0, -27.85, 1.6, 1.0, 4, 3], -30, 25, 6.4, ["#fbf8f0", "#f2ece0", "#d8cfc0"], 0.06, 0.8, "#5a4430");
       s += tasthaar(T, [21.6, -31.6, 0.3, 0.2, 1, 3], -100, -62, 2.6, ["#f6f2ea"], 0.035, 0.8);
       s += "</g>";
-      return { svg: s, box: [-41, -37.4, 30.4, 0], fuesse: [-13.6, -11.4, 12.0, 14.4], kopf: [13.6, -37.6, 23.4, -24.5] };
+      return { svg: s, box: [-41, -36.2, 30.4, 0], fuesse: [-13.6, -11.4, 12.0, 14.4], kopf: [12.8, -36.3, 22.6, -23.4] };
     } },
   /* =================================================================
      KANINCHEN — Hauskaninchen, wildfarben (agouti), sitzend

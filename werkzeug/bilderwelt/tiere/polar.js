@@ -1367,8 +1367,8 @@ function moschusochse(T) {
   /* ---- Körper: Buckel über den Schultern, Rücken zur runden Kruppe abfallend (≈ 11 % tiefer), Heck als herabhängende
           Haarkaskade, Rock bis knapp über den Boden; Kopf groß, tief getragen und leicht abwärts gedreht ---- */
   const rumpf = [
-    [36, -116], [30, -108], [25.4, -96], [22.6, -82], [21.4, -66], [22.4, -50], [25.6, -36], [30.6, -26], [38, -21.4], [52, -19.2], [68, -18.4],
-    [86, -16.6], [104, -15.4], [124, -15.6], [142, -16.6], [160, -18.2], [178, -19.6], [190, -22], [200, -28], [208, -36], [214, -45], [220, -54.4], [226, -60],
+    [36, -116], [30, -108], [25.4, -96], [22.6, -82], [21.4, -66], [22.4, -50], [25.6, -36], [30.6, -27], [38, -23.4], [46, -22], [52, -24], [60, -23.6], [70, -20], [80, -16.4],
+    [92, -13.4], [104, -12.2], [116, -13.4], [126, -12], [138, -13.6], [150, -15.6], [162, -19], [168, -22.6], [176, -21.4], [184, -23.4], [192, -22], [200, -28], [208, -36], [214, -45], [220, -54.4], [226, -60],
     [233, -62], [239.6, -62.4], [244.4, -64.8], [246.6, -68.4], [246.6, -73], [244.6, -79], [241.4, -86.4], [237.8, -95], [233.6, -104], [228.6, -112.4],
     [222.6, -119.4], [215.4, -124.2], [207, -126.4], [199, -127.2], [192, -131], [184, -138.6], [174, -144.4], [162, -146], [148, -143.6], [132, -137.4],
     [114, -131], [94, -127], [72, -125.4], [52, -122.6],
@@ -1394,7 +1394,7 @@ function moschusochse(T) {
   const wuchs = (x, y) => (x > 226 ? 70 : x > 196 ? (y < -100 ? 100 : 90) : x < 44 ? 104 + (44 - x) * 0.8 : y < -118 ? 100 + (x - 150) * 0.12 : 88 + (x - 120) * 0.04);
   const rumpfH = rumpf.filter((p) => p[0] < 226);
   n += locke(rumpfH, 150, wuchs, 14, 0.9);
-  n += strang(rumpfH, 420, wuchs, 10);
+  n += strang(rumpfH, 380, wuchs, 10);
   /* Sattel: kürzere, wolligere, hellere Haare */
   n += fein(T, haare(T, [[82, -126], [104, -129], [130, -137], [124, -126], [100, -120]], 160, 150, 1.6, [["#d8c6a8", 1, 0.09, 0.6], ["#7a6450", 0.7, 0.09, 0.5]], 50, 0.6));
   /* Gesicht: feine, kurze Strichel nach vorn unten */
@@ -1408,19 +1408,19 @@ function moschusochse(T) {
   /* Rocksaum: unregelmäßig, in der Bauchmitte und an der Brust am längsten, an den Beinen angehoben; einzelne,
      spitz auslaufende Strähnen-Enden (Länge schwankt stark) */
   {
-    let d1 = "", d2 = "";
-    const k = F ? 150 : 40;
+    /* Strähnen: an der Wurzel breit, lang, leicht gewellt und spitz auslaufend, in zwei Tönen */
+    let d1 = "", d2 = "", d3 = "";
+    const k = F ? 130 : 36, saum = rumpf.slice(rumpf.findIndex((p) => p[0] === 38), rumpf.findIndex((p) => p[0] === 192) + 1);
     for (let i = 0; i < k; i++) {
-      const x = 32 + T.rnd() * 172, saumY = x < 190 ? -18 + Math.sin(x * 0.09) * 1.4 : -18 - (x - 190) * 0.8;
-      const anBein = Math.min(Math.abs(x - 55), Math.abs(x - 69), Math.abs(x - 172), Math.abs(x - 187)) < 7;
-      const L = (anBein ? 3 : 6 + T.rnd() * 7) * (0.6 + T.rnd() * 0.6), a = (92 + (T.rnd() - 0.5) * 18) * Math.PI / 180;
-      const y0 = saumY - 3 - T.rnd() * 4, w = 0.35 + T.rnd() * 0.4, ex = Math.cos(a) * L, ey = Math.sin(a) * L;
-      const p = `M${J(x - w, y0)}q${J(ex * 0.5 + w * 0.4, ey * 0.5, ex + w, ey)}q${J(-ex * 0.4 + w * 0.6, -ey * 0.5, -ex + w, -ey)}z`;
-      if (T.rnd() < 0.6) d1 += p; else d2 += p;
+      const t = (i + T.rnd()) / k * (saum.length - 1), j = Math.min(saum.length - 2, Math.floor(t)), fr = t - j;
+      const x = saum[j][0] + (saum[j + 1][0] - saum[j][0]) * fr, y = saum[j][1] + (saum[j + 1][1] - saum[j][1]) * fr;
+      const L = (4 + T.rnd() * 8) * (y < -20 ? 0.6 : 1), w = 0.5 + T.rnd() * 0.5, a = (90 + (T.rnd() - 0.5) * 24) * Math.PI / 180, kk = (T.rnd() - 0.5) * 2.4;
+      const ex = Math.cos(a) * L, ey = Math.sin(a) * L, y0 = y - 5 - T.rnd() * 3;
+      const p = `M${J(x - w, y0)}c${J(0, L * 0.4, kk, L * 0.6, ex + kk * 0.3, ey + 5)}c${J(-kk * 0.2, -L * 0.3, w * 2 - kk, -L * 0.5, w * 2 - ex - kk * 0.3, -ey - 5)}z`;
+      const u = T.rnd(); if (u < 0.45) d1 += p; else if (u < 0.85) d2 += p; else d3 += p;
     }
-    s += `<path d="${d1}" fill="#1e1610"/><path d="${d2}" fill="#3a2c20"/>`;
+    s += `<path d="${d1}" fill="#1a120d"/><path d="${d2}" fill="#32241a"/><path d="${d3}" fill="#5a4434"/>`;
   }
-
   /* ---- nahe Beine: helle Strümpfe, kurz, raues Haar nach unten, Fesselgelenk; Rockschatten oben ---- */
   const sock = verlauf(T, "msock", 0, -30, 0, -5, [[[0, -30], "#5a4e40"], [[0, -22], "#b0a28a"], [[0, -12], "#c9bca4"], [[0, -5], "#a89a84"]]);
   s += `<g filter="${vol(T, "mbN", { weich: 1.8, tiefe: 3.5 })}">${silhouette(T, vereint(T, [bein(187), bein(55)]), sock,
@@ -1455,7 +1455,6 @@ function moschusochse(T) {
 
   /* ---- Auge: klein, dunkel, ins Fell gebettet (Ober- und Unterlid aus kurzen Haaren), dunkler feuchter Lidrand,
           kleines Glanzlicht; das Horn läuft knapp dahinter und darunter vorbei ---- */
-  s += weich([[228.4, -107.4], [234.6, -107], [234.8, -104.6], [228.6, -104.6]], "#0a0705", 0.45, 0.6);
   s += T.augeReal(231.6, -104.6, 1.15, { iris: "#3a2214", iris2: "#120904", offen: 0.66, winkel: 14, weiss: false, lid: "#0d0907" });
   s += fein(T, haare(T, [[229, -107.6], [234.6, -107.2], [234.4, -106], [229, -106.2]], 18, 60, 0.6, [["#3a2e24", 1, 0.06, 0.8]], 20, 0.3) + haare(T, [[229.4, -103.2], [234, -102.8], [233.8, -101.8], [229.4, -102]], 12, 100, 0.5, [["#3a2e24", 1, 0.06, 0.7]], 20, 0.3));
   /* Nasenspiegel klein, dunkel, feucht glänzend; Nasenloch; Lippe als weiche Schattenfalte */

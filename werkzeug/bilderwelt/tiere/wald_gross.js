@@ -911,8 +911,8 @@ function elch(T) {
       [-47.6, -71.2], [-49.2, -79.4], [-42, -77.4], [-40.6, -86], [-34.6, -81], [-30.8, -89], [-26.4, -82], [-21.4, -87.4], [-18.6, -79.6], [-12.6, -81.6], [-11.4, -73.4],
       [-9.6, -62], [-8.4, -48], [-7.0, -34], [-5.0, -22]]);
     const brow = P([[-2, -10], [6, -12.4], [13.6, -15.6], [19.6, -20.6], [23.6, -26.6], [18.8, -24.6], [17.2, -31], [13.0, -25.4], [8.8, -30.2], [6.8, -23.4], [1.4, -18]]);
-    const gS = fern ? "#4e3e2c" : T.rg("sch", [[0, "#e2d2b2"], [0.45, "#b8a07a"], [1, "#6e5638"]], 0.7, 0.15, 0.95);
-    const dicke = (Q) => F ? `<path d="${G2(Q)}" fill="${fern ? "#2e2418" : "#4a3a26"}" transform="translate(${f(0.8 * s0)} ${f(1.0 * s0)})"/>` : "";
+    const gS = fern ? "#7a6a52" : T.rg("sch", [[0, "#e2d2b2"], [0.45, "#b8a07a"], [1, "#6e5638"]], 0.7, 0.15, 0.95);
+    const dicke = (Q) => F ? `<path d="${G2(Q)}" fill="${fern ? "#5a4a38" : "#4a3a26"}" transform="translate(${f(0.8 * s0)} ${f(1.0 * s0)})"/>` : "";
     const SH = H.flaeche(haupt), SB = H.flaeche(brow);
     const adern = (zuege) => F && !fern ? H.L(zuege.map((q) => P(q)), "#5a4430", 0.3, 0.55) + H.L(zuege.map((q) => P(q).map((p) => [p[0] - 0.3, p[1] - 0.3])), "#fff4e0", 0.18, 0.4) : "";
     let g = dicke(brow) + H.teil(SB, gS, (fern ? "" : fl(...P([[9, -18]])[0].slice(0, 2), 7, 4, w0, "#4a3622", 0.45) + fl(...P([[20, -24]])[0].slice(0, 2), 4, 4, 0, "#f4ead8", 0.6)) +
@@ -957,7 +957,7 @@ function elch(T) {
   s += H.schale(fH[13][0] - 0.4, fH[10][0] + 2.4, 7.4, { farbe: "#2a2420", fern: "#14100e", haar: "#8a8278" }) + H.schale(fV[12][0] - 0.4, fV[9][0] + 2.4, 7.6, { farbe: "#2a2420", fern: "#14100e", haar: "#8a8278" });
   /* ferne Schaufel und kurzer Wedel (unter der Kruppenkante) */
   const schB = K(10.6, -8.4), ohrB = K(3.4, -6.6);
-  s += schaufel(schB[0] + 9, schB[1] - 4, 0.72, -6, true);
+  s += schaufel(schB[0] + 14, schB[1] - 6, 0.7, 8, true);
   s += T.form([[23, -156], [20.4, -153], [19.6, -146], [21.0, -142], [23.4, -146]], "#241a12");
   /* ---- Körper ---- */
   let inn = "", sch = "";
@@ -995,7 +995,7 @@ function elch(T) {
   s += after(43.8, 1) + after(170.8, 1);
   s += H.schale(47.4, 61.6, 7.4, { haar: "#a8a094" }) + H.schale(174.4, 188.6, 7.6, { haar: "#a8a094" });
   /* ---- Glocke (Wamme): flacher Hautlappen, oben breit an der Kehle, unten schmaler, lange Haarquaste; Lichtkante vorn ---- */
-  const wamme = [[188.6, -139], [190.6, -130], [190.2, -120], [188.6, -110], [186.4, -102], [184.2, -100], [182.8, -106], [182.6, -118], [182.8, -132]];
+  const wamme = [[183.4, -144.6], [188.8, -139.6], [190.8, -130], [190.4, -120], [188.6, -110], [186.4, -102], [184.2, -100], [182.6, -106], [181.6, -120], [180.6, -134]];
   const WA = H.flaeche(wamme);
   s += `<path d="${G2(wamme)}" fill="#000" opacity=".3" transform="translate(-3 2)"${F ? ` filter="${H.blur(1.3)}"` : ""}/>` +
     H.teil(WA, "#2a2018", H.haare(wamme, 40, 94, 3, [["#080604", 1, 0.12, 0.5]], { szene: 0, spitze: ["#7a6a58", 0.5, 0.1, 0.45] }) + wl([[[189.4, -128], [189.6, -118], [188.2, -108]]], "#c8b4a0", 1, 0.3, 0.5) + H.rim(WA, 2.4, 0.9), { rand: false }) +
