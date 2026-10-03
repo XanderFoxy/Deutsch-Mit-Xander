@@ -605,7 +605,7 @@ function walross(T) {
       const h = w * (0.08 + Math.sin(Math.PI * i / (n - 1))) / 2;
       L.push([pts[i][0] + dx - ty * h, pts[i][1] + dy + tx * h]); Rr.push([pts[i][0] + dx + ty * h, pts[i][1] + dy - tx * h]);
     }
-    const q = [...L, ...Rr.reverse()];
+    const q = [...L, ...Rr.reverse()].map(([x, y]) => [R(x), R(y)]);
     return `M${J(q[0][0], q[0][1])}l${J(...q.slice(1).flatMap((p, i) => [p[0] - q[i][0], p[1] - q[i][1]]))}z`;
   };
   /* Kurve aus Anfang/Mitte/Ende in n Punkten (für Falten) */
@@ -616,15 +616,15 @@ function walross(T) {
   const klassen = {};
   const falteD = (pts, w, kl) => {
     const q = klassen[kl] || (klassen[kl] = { s: "", k: "", c: "" });
-    q.s += spindel(pts, w * 3.2, -w * 1.1, -w * 0.8); q.k += spindel(pts, w * 0.6); q.c += spindel(pts, w * 2.4, w * 1.1, w * 0.9);
+    q.s += spindel(pts, w * 3.6, -w * 1.3, -w * 0.9); q.k += spindel(pts, w * 0.4); q.c += spindel(pts, w * 3, w * 1.4, w * 1);
   };
   const falten = (op, sd) => {
     let o = "";
     for (const kl in klassen) {
       const q = klassen[kl], f = +kl;
       if (!F) { o += `<path d="${q.k}" fill="#4a271c" fill-opacity="${Z2(f * 0.8)}"/>`; continue; }
-      o += `<path d="${q.s}" fill="#3e1c12" fill-opacity="${Z2(f * 0.7)}" filter="${blur(T, sd, 0.25)}"/><path d="${q.c}" fill="#eeac91" fill-opacity="${Z2(f * 0.75)}" filter="${blur(T, sd * 0.8, 0.25)}"/>` +
-        `<path d="${q.k}" fill="#5a2e22" fill-opacity="${Z2(Math.min(1, f * 1.3))}"/>`;
+      o += `<path d="${q.s}" fill="#3e1c12" fill-opacity="${Z2(Math.min(0.75, f * 1.1))}" filter="${blur(T, sd, 0.25)}"/><path d="${q.c}" fill="#f0b096" fill-opacity="${Z2(Math.min(0.8, f * 1.15))}" filter="${blur(T, sd * 0.8, 0.25)}"/>` +
+        `<path d="${q.k}" fill="#5a2e22" fill-opacity="${Z2(Math.min(0.85, f * 1.2))}" filter="${blur(T, sd * 0.12, 0.25)}"/>`;
       delete klassen[kl];
     }
     return o;
@@ -713,20 +713,25 @@ function walross(T) {
     const mx = verlaufMaske(T, "relx", 28, -142, 272, 143, 100, 0, 245, 0, [[[100, 0], "#000"], [[160, 0], "#333"], [[210, 0], "#8a8a8a"], [[245, 0], "#ddd"]]);
     const my = verlaufMaske(T, "rely", 28, -142, 272, 143, 0, -60, 0, -8, [[[0, -60], "#fff"], [[0, -8], "#000"]]);
     const rr = (art, op) => `<rect x="28" y="-140" width="272" height="140" fill="${reliefKachel(T, "haut" + art, { f: 0.42, tiefe: 0.45, seed: 11, art, k: 1.4, kachel: 30 })}" opacity="${op}"/>`;
-    n += `<g mask="${my}"><g mask="${mx}">${rr("schatten", 0.45)}${rr("licht", 0.3)}</g></g>`;
+    n += `<g mask="${my}"><g mask="${mx}">${rr("schatten", 0.32)}${rr("licht", 0.22)}</g></g>`;
   }
   /* Halsringe: breite, schwere Falten quer zum Hals (in der Seitenansicht steile Bögen), Länge 8–45 cm; Kerbe dunkel,
      Kamm hell, eigener Schatten; zur Flanke kürzer, flacher und blasser (weicher Auslauf über ≈ 35 cm) */
   {
-    const ringe = F ? 11 : 5;
+    const ringe = F ? 12 : 5;
     for (let i = 0; i < ringe; i++) {
-      const x = 222 + i * (46 / (ringe - 1)) + (T.rnd() - 0.5) * 2.4, kern = Math.max(0, 1 - Math.abs(x - 250) / 34);
-      const yt = -132 + Math.abs(x - 246) * 0.12 + T.rnd() * 8, L = 10 + T.rnd() * 14 + kern * 22, bow = 1.6 + T.rnd() * 1.6;
-      const p = bogen([x, yt], [x + bow + 1 + (T.rnd() - 0.5) * 2, yt + L * (0.35 + T.rnd() * 0.3)], [x - 0.6 + (T.rnd() - 0.5) * 3, yt + L], 7);
-      falteD(p, 1.1 + kern * 0.9 + T.rnd() * 0.5, kern > 0.55 ? 0.6 : kern > 0.25 ? 0.45 : 0.3);
-      if (F && T.rnd() < 0.6) {   // kurze Nebenfalte
-        const y2 = yt + L * (0.2 + T.rnd() * 0.5), L2 = 5 + T.rnd() * 8;
-        falteD(bogen([x + 1, y2], [x + 2.6 + L2 * 0.3, y2 + L2 * 0.4], [x + 3 + L2 * 0.5, y2 + L2 * 0.9], 5), 0.8, 0.3);
+      const x = 220 + i * (50 / (ringe - 1)) + (T.rnd() - 0.5) * 3, kern = Math.max(0, 1 - Math.abs(x - 248) / 34);
+      const yt = -133 + Math.abs(x - 246) * 0.15 + T.rnd() * 10, L = 10 + T.rnd() * 12 + kern * 20;
+      /* Ring in 1–2 Stücken, Bogen und Neigung wechselnd → lappig statt Streifen */
+      const teile = F && L > 22 && T.rnd() < 0.5 ? 2 : 1;
+      for (let t = 0; t < teile; t++) {
+        const y0 = yt + t * L * 0.55, l = teile > 1 ? L * 0.5 : L, x0 = x + t * (T.rnd() - 0.3) * 3, bow = (T.rnd() < 0.8 ? 1 : -1) * (1.4 + T.rnd() * 2.2);
+        const p = bogen([x0, y0], [x0 + bow + (T.rnd() - 0.5) * 1.6, y0 + l * (0.35 + T.rnd() * 0.3)], [x0 - 0.8 + (T.rnd() - 0.5) * 4, y0 + l], 7);
+        falteD(p, 1.1 + kern * 0.8 + T.rnd() * 0.5, kern > 0.55 ? 0.6 : kern > 0.25 ? 0.45 : 0.3);
+      }
+      if (F && T.rnd() < 0.5) {   // kurze schräge Nebenfalte
+        const y2 = yt + L * (0.2 + T.rnd() * 0.5), L2 = 5 + T.rnd() * 7;
+        falteD(bogen([x + 1, y2], [x + 2.6 + L2 * 0.3, y2 + L2 * 0.4], [x + 3 + L2 * 0.5, y2 + L2 * 0.9], 5), 0.9, 0.3);
       }
     }
     /* Auslauf zur Flanke: wenige flache, blasse Falten */

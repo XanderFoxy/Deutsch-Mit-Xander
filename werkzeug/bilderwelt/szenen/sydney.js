@@ -578,7 +578,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   const RINDE = S.lg("rinde", [[0, "#4a453e"], [0.4, "#78716a"], [0.75, "#a59d8e"], [1, "#8a8274"]], 0, 0, 1, 0);
   /* Luftwurzeln (hinter Stamm und Ast): vom Ast bis zum Boden, einige enden frei */
   let lw = "";
-  for (const [x0, y0, l, b] of [[34, -122, 122, 2], [46, -130, 130, -3], [58, -137, 137, 2.5], [70, -142, 142, -1.5], [104, -152, 34, 1], [124, -160, 22, -1], [86, -148, 60, 1.5]]) lw += `M${x0} ${y0}q${b} ${r(l * 0.5)} ${r(b * 0.4)} ${l}`;
+  for (const [x0, y0, l, b] of [[34, -122, 122, 3], [38, -124, 124, -2], [46, -130, 130, -3.5], [58, -137, 137, 3], [70, -142, 142, -2.5], [104, -152, 34, 2], [124, -160, 22, -1.5], [86, -148, 60, 2.5]]) lw += `M${x0} ${y0}c${b} ${r(l * 0.3)} ${-b} ${r(l * 0.6)} ${r(b * 0.5)} ${l}`;
   k += `<path d="${lw}" stroke="#8a8274" stroke-width="1.1" fill="none"/><path d="${lw}" stroke="#c4bba9" stroke-width=".35" fill="none" transform="translate(.4 0)"/>`;
   /* Brettwurzeln nach rechts auslaufend */
   for (const [x0, x1, y1] of [[22, 58, -1], [20, 44, -0.5], [14, 32, 0]]) k += `<path d="M${x0} ${-26 - (x0 - 14)} Q${r((x0 + x1) / 2)} ${r(-10 - (x0 - 6) * 0.5)} ${x1} ${y1} L${x1 - 10} ${y1 + 0.8} Q${r((x0 + x1) / 2 - 6)} ${r(-4)} ${x0 - 6} 0 Z" fill="${RINDE}"/>`;
@@ -594,7 +594,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
     return { d: `M${o(p0, n0, w0)} Q${o(c, nc, wc)} ${o(p1, n1, w1)} L${u(p1, n1, w1)} Q${u(c, nc, wc)} ${u(p0, n0, w0)} Z`,
       oben: `M${o(p0, n0, w0 * 0.8)} Q${o(c, nc, wc * 0.8)} ${o(p1, n1, w1 * 0.7)}`, unten: `M${u(p0, n0, w0 * 0.75)} Q${u(c, nc, wc * 0.75)} ${u(p1, n1, w1 * 0.6)}` };
   };
-  const aeste = [ast([18, -122], [54, -148], [96, -156], 30, 10), ast([94, -156], [116, -166], [146, -171], 8, 2.2), ast([92, -157], [106, -172], [116, -192], 7, 2), ast([96, -155], [126, -154], [158, -161], 6, 1.6)];
+  const aeste = [ast([4, -128], [50, -150], [96, -156], 26, 10), ast([94, -156], [116, -166], [146, -171], 8, 2.2), ast([92, -157], [106, -172], [116, -192], 7, 2), ast([96, -155], [126, -154], [158, -161], 6, 1.6)];
   k += aeste.map((a2) => `<path d="${a2.d}" fill="${RINDE}"/>`).join("");
   k += `<path d="${aeste.map((a2) => a2.unten).join("")}" stroke="#3e3933" stroke-width="1.6" fill="none" opacity=".45"/>`;
   k += `<path d="${aeste.map((a2) => a2.oben).join("")}" stroke="#ddd4bf" stroke-width="1.1" fill="none" opacity=".75"/>`;
@@ -602,7 +602,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   k += `<path d="M2 -2Q0 -60 -2 -120M8 -2Q6 -60 4 -150M14 -2Q12 -50 9 -110M20 -2Q19 -40 16 -80" stroke="#3a3530" stroke-width=".9" fill="none" opacity=".45"/>`;
   k += `<path d="M26 -105 Q20 -70 24 -40 Q26 -16 32 0" stroke="#d2cab8" stroke-width="1.1" fill="none" opacity=".55"/>`;
   /* Laubmassen: unregelmäßiger, gebuckelter Umriss (in den Bildrand geklemmt) */
-  S.def(`<pattern id="${S.id("blatt")}" width="8" height="6" patternUnits="userSpaceOnUse"><g fill="#86b062"><ellipse cx="1.5" cy="1.2" rx="1.4" ry=".6" transform="rotate(-25 1.5 1.2)"/><ellipse cx="5.6" cy="3.6" rx="1.3" ry=".6" transform="rotate(30 5.6 3.6)"/></g><g fill="#1b361d"><ellipse cx="3.8" cy="1.6" rx="1.3" ry=".55" transform="rotate(20 3.8 1.6)"/><ellipse cx="1.8" cy="4.6" rx="1.4" ry=".6" transform="rotate(-40 1.8 4.6)"/><ellipse cx="7" cy=".8" rx="1.1" ry=".5"/></g></pattern>`);
+  S.def(`<pattern id="${S.id("blatt")}" width="8" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-12) scale(.62)"><g fill="#86b062"><ellipse cx="1.5" cy="1.2" rx="1.4" ry=".6" transform="rotate(-25 1.5 1.2)"/><ellipse cx="5.6" cy="3.6" rx="1.3" ry=".6" transform="rotate(30 5.6 3.6)"/></g><g fill="#1b361d"><ellipse cx="3.8" cy="1.6" rx="1.3" ry=".55" transform="rotate(20 3.8 1.6)"/><ellipse cx="1.8" cy="4.6" rx="1.4" ry=".6" transform="rotate(-40 1.8 4.6)"/><ellipse cx="7" cy=".8" rx="1.1" ry=".5"/></g></pattern>`);
   const masse = (cx, cy, rx, ry, n) => {
     const pts = [];
     for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2, f = 0.82 + rnd() * 0.3; pts.push([Math.max(0.3, cx + Math.cos(a) * rx * f), Math.max(-202.7, cy + Math.sin(a) * ry * f)]); }
@@ -615,9 +615,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   const LAUB0 = S.rg("laub", [[0, "#6f9f50"], [0.45, "#30602d"], [1, "#152d17"]], 0.68, 0.25, 0.8);
   k += `<use href="#${S.id("laubdach")}" fill="${LAUB0}"/><use href="#${S.id("laubdach")}" fill="url(#${S.id("blatt")})" opacity=".55"/>`;
   /* Eigenschatten unten in jeder Masse (dunkle Unterkante) und Himmelslöcher verschiedener Größe */
-  let sch = "", lo = "";
-  for (const [mx, my, rx, ry] of massen) sch += `M${r(Math.max(0.3, mx - rx * 0.8))} ${r(my + ry * 0.45)}Q${mx} ${r(my + ry * 1.05)} ${r(mx + rx * 0.8)} ${r(my + ry * 0.45)}Q${mx} ${r(my + ry * 0.7)} ${r(Math.max(0.3, mx - rx * 0.8))} ${r(my + ry * 0.45)}Z`;
-  k += `<path d="${sch}" fill="#0f2211" opacity=".45"/>`;
+  let lo = "";
   for (const [hx, hy, w] of [[50, -177, 2.6], [87, -192, 1.6], [16, -167, 1.2], [116, -186, 3.2], [68, -186, 1], [140, -176, 1.4], [33, -196, 2], [100, -170, 1.1]]) lo += `M${r(hx - w)} ${hy}q${r(w * 0.3)} ${r(-w * 0.9)} ${r(w)} ${r(-w * 0.7)}q${r(w * 0.9)} ${r(w * 0.1)} ${r(w)} ${r(w * 0.8)}q${r(-w * 0.6)} ${r(w * 0.7)} ${r(-w * 1.2)} ${r(w * 0.5)}z`;
   k += `<path d="${lo}" fill="#5a8fcb"/><path d="${lo}" fill="none" stroke="#1b361d" stroke-width=".5" opacity=".6"/>`;
   S.teil({ id: "feigenbaum", de: "der Feigenbaum", syl: "FEI-gen-baum", it: "il fico", itSyl: "FI-co", en: "fig tree", x: X, y: Y, kunst: k,

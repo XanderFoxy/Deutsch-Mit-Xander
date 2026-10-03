@@ -904,8 +904,8 @@ function hammerhai(T) {
   const FINNE = T.lg("hhFinne", [[0, "#71726a"], [1, "#686e69"]], 330, -200, 280, -140, H.US);
   /* Kopf ohne Einschnürung: Rücken- und Bauchkontur laufen gerade/leicht konvex bis an den Hammer (x ≈ 446) */
   const R = H.rumpf(
-    [[447, -101], [446, -110], [440, -114.6], [424, -117.6], [404, -120.2], [390, -121.8], [370, -124.5], [346, -127.5], [318, -129.8], [288, -130.6], [256, -129], [222, -124], [188, -117], [154, -109], [124, -102], [104, -98.5], [92, -97], [80, -96.5]],
-    [[447, -101], [446, -92], [440, -87.6], [424, -84.6], [404, -82], [390, -80], [370, -77], [346, -74], [318, -72], [288, -71], [256, -72], [222, -75], [188, -79.5], [154, -84], [126, -87.5], [106, -90], [92, -91], [80, -91.5]]);
+    [[452, -101], [450, -110], [442, -114.6], [424, -117.6], [404, -120.2], [390, -121.8], [370, -124.5], [346, -127.5], [318, -129.8], [288, -130.6], [256, -129], [222, -124], [188, -117], [154, -109], [124, -102], [104, -98.5], [92, -97], [80, -96.5]],
+    [[452, -101], [450, -92], [442, -87.6], [424, -84.6], [404, -82], [390, -80], [370, -77], [346, -74], [318, -72], [288, -71], [256, -72], [222, -75], [188, -79.5], [154, -84], [126, -87.5], [106, -90], [92, -91], [80, -91.5]]);
   const P = R.P, yo = R.yo;
   let s = "";
   /* Schwanzflosse: kräftiger, sichelförmiger oberer Lappen (Vorderkante leicht konvex), Subterminalkerbe NUR an der
@@ -967,7 +967,7 @@ function hammerhai(T) {
   const pr = (u, v, z = 0) => [K0[0] + u * fu[0] + v * fv[0], K0[1] + u * fu[1] + v * fv[1] - z * dz];
   /* Draufsicht (u nach vorn, v zum Betrachter): fast gerader, leicht gewellter Vorderrand, flache Mittelkerbe,
      Flügel außen schmal (40 %), Hinterränder konkav in die Kopfseiten; Augen in den Seitenenden */
-  const plan = [[-7, -53], [-1.5, -51], [0.4, -42], [0.9, -26], [0.3, -12], [-1.6, -4], [-3.6, 0, 1], [-1.6, 4], [0.3, 12], [0.9, 26], [0.4, 42], [-1.5, 51], [-7, 53], [-12, 51.5], [-14.5, 45], [-17, 36], [-22, 27], [-30, 20], [-40, 16], [-52, 15], [-52, -15], [-40, -16], [-30, -20], [-22, -27], [-17, -36], [-14.5, -45], [-12, -51.5]];
+  const plan = [[-7, -53], [-1.5, -51], [0.4, -42], [0.9, -26], [0.3, -12], [-1.6, -4], [-3.6, 0, 1], [-1.6, 4], [0.3, 12], [0.9, 26], [0.4, 42], [-1.5, 51], [-7, 53], [-12, 51.5], [-14.5, 45], [-16.5, 36], [-19, 27], [-22, 19], [-24, 10], [-24, -10], [-22, -19], [-19, -27], [-16.5, -36], [-14.5, -45], [-12, -51.5]];
   const zt = (v) => 3 + 2.5 * Math.max(0, 1 - Math.abs(v) / 30);
   const oben = plan.map(([u, v, e]) => { const p = pr(u, v, zt(v)); if (e) p.push(1); return p; });
   const kv = plan.slice(0, 13);
@@ -983,13 +983,13 @@ function hammerhai(T) {
   }
   let hs = teil(G(kante), "#7a7f78", { innen: ka, randA: 0.22, rw: 0.35 });
   let ob = weichF([pr(-2, -46, 4), pr(-1, 0, 5), pr(-2, 46, 4), pr(-9, 44, 4), pr(-11, 0, 5), pr(-9, -44, 4)], "#9a998c", 0.35, 1.4);
-  ob += weichF([pr(-13, 47, 3.5), pr(-18, 32, 3.5), pr(-30, 21, 3.5), pr(-40, 17, 3.5), pr(-40, 8, 4), pr(-22, 12, 4), pr(-11, 40, 3.5)], "#000", 0.15, 2);
-  hs += teil(G(oben), GRAU, { innen: ob, randD: G(oben.slice(0, 20), false), randA: 0.2, rw: 0.35 });
+  ob += weichF([pr(-13, 47, 3.5), pr(-17, 32, 3.5), pr(-22, 19, 3.5), pr(-22, 10, 4), pr(-14, 14, 4), pr(-10, 40, 3.5)], "#000", 0.15, 1.5);
+  hs += teil(G(oben), GRAU, { innen: ob, randD: G(oben.slice(0, 19), false), randA: 0.2, rw: 0.35 });
   const hm = T.box(oben.concat(kante));
-  s += `<g ${H.maskeX(K0[0] - 52, K0[0] - 38, [hm[0] - 4, hm[1] - 4, hm[2] + 4, hm[3] + 4])}>${H.vol("hammer", 1.6, hs, { tiefe: 2 })}</g>`;
+  s += H.vol("hammer", 1.6, hs, { tiefe: 2 });
   /* nahes Auge im unteren Seitenende (leicht vorgewölbt, Lichtkante oben, goldbraune Iris); fernes als Buckel oben */
   const [ex, ey] = pr(-6.5, 53, 0);
-  s += `<ellipse cx="${f(ex)}" cy="${f(ey)}" rx="3.2" ry="2.8" fill="#5f655f"/>`;
+  s += `<ellipse cx="${f(ex)}" cy="${f(ey)}" rx="2.5" ry="2.2" fill="#5f655f"/>`;
   s += weichL([[[ex - 2.4, ey - 1.6], [ex, ey - 2.7], [ex + 2.4, ey - 1.7]]], "#f0f1ea", 0.7, 0.3, 0.25);
   s += weichL([[[ex - 2.2, ey + 1.8], [ex, ey + 2.6], [ex + 2.2, ey + 1.7]]], "#000", 0.8, 0.3, 0.3);
   s += `<ellipse cx="${f(ex)}" cy="${f(ey)}" rx="1.8" ry="1.6" fill="${T.rg("hhA", [[0, "#050608"], [0.62, "#0d1419"], [0.85, "#6b5a2a"], [1, "#2a2410"]], 0.5, 0.5, 0.5)}"/>`;

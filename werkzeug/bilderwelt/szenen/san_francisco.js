@@ -210,24 +210,25 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
   for (let i = 1; i < 36; i++) { const t = i / 36, x = XS + (XN - XS) * t, y = (1 - t) * (1 - t) * (TS + 0.4) + 2 * t * (1 - t) * ((DS + DN) / 2 + 6.6) + t * t * (TN + 0.4); if (y < dy(x) - 0.2) h += `M${r(x)} ${r(y)} L${r(x)} ${r(dy(x))} `; }
   k += `<path d="${h}" stroke="#b5452e" stroke-width=".07" fill="none" opacity=".8" pointer-events="none"/>`;
   /* Türme von der Seite: zwei Beine fast hintereinander, nach oben gestuft, Portal-Schlitze */
+  /* Türme: zwei Beine (von Osten schräg gesehen, ≈ 0,7 Einheiten auseinander), nach oben gestuft,
+     dazwischen die vier Portalriegel (oben kürzer), oben die Art-déco-Abschlüsse */
   const turm = (x, W0, T, D) => {
-    const hgt = W0 - T, st = [[W0, 1.15], [D + 0.4, 1.0], [T + hgt * 0.42, 0.88], [T + hgt * 0.2, 0.78], [T + hgt * 0.07, 0.7]];
-    let p = `M${r(x - 1.3)} ${r(W0)}`;
-    for (let i = 0; i < st.length; i++) { const [y, hw] = st[i], yn = i + 1 < st.length ? st[i + 1][0] : T; p += ` L${r(x - hw)} ${r(y)} L${r(x - hw)} ${r(yn)}`; }
-    for (let i = st.length - 1; i >= 0; i--) { const [y, hw] = st[i], yn = i + 1 < st.length ? st[i + 1][0] : T; p += ` L${r(x + hw)} ${r(yn)} L${r(x + hw)} ${r(y)}`; }
-    let s = `<path d="${p} Z" fill="${ORANGE}"/>`;
-    for (const t of [0.06, 0.18, 0.38]) s += `<rect x="${r(x - 0.7)}" y="${r(T + hgt * t)}" width="1.4" height=".22" fill="#f2c9b0" opacity=".7"/>`;
-    s += `<line x1="${r(x + 0.3)}" y1="${r(T)}" x2="${r(x + 0.3)}" y2="${r(W0)}" stroke="#6e2214" stroke-width=".12"/>`;
-    s += `<rect x="${r(x - 0.75)}" y="${r(T - 0.5)}" width="1.5" height=".5" fill="#953424"/><circle cx="${r(x)}" cy="${r(T - 0.9)}" r=".18" fill="#ff5040"/>`;
-    s += `<path d="M${r(x - 1.15)} ${r(W0)} L${r(x - 0.9)} ${r(T)}" stroke="#ffb27a" stroke-width=".22" opacity=".75"/>`;
-    return s;
+    const hgt = W0 - T, bein = (cx, f) => { const st = [[W0, 0.55], [D + 0.4, 0.48], [T + hgt * 0.42, 0.42], [T + hgt * 0.2, 0.37], [T + hgt * 0.07, 0.33]];
+      let p = `M${r(cx - 0.6)} ${r(W0)}`; for (let i = 0; i < st.length; i++) { const [y, hw] = st[i], yn = i + 1 < st.length ? st[i + 1][0] : T; p += ` L${r(cx - hw)} ${r(y)} L${r(cx - hw)} ${r(yn)}`; }
+      for (let i = st.length - 1; i >= 0; i--) { const [y, hw] = st[i], yn = i + 1 < st.length ? st[i + 1][0] : T; p += ` L${r(cx + hw)} ${r(yn)} L${r(cx + hw)} ${r(y)}`; }
+      return `<path d="${p} Z" fill="${f}"/>`; };
+    let s2 = bein(x + 0.45, "#8e2e1e") + bein(x - 0.35, ORANGE);
+    for (const [t, h2] of [[0.04, 0.5], [0.2, 0.45], [0.42, 0.42], [0.62, 0.4]]) { const y = T + hgt * t; s2 += `<rect x="${r(x - 0.15)}" y="${r(y)}" width="${r(0.9 - t * 0.3)}" height="${r(h2)}" fill="#a83a26"/><rect x="${r(x - 0.15)}" y="${r(y)}" width="${r(0.9 - t * 0.3)}" height=".12" fill="#f0b493" opacity=".7"/>`; }
+    s2 += `<rect x="${r(x - 0.75)}" y="${r(T - 0.45)}" width="1.6" height=".45" fill="#953424"/><rect x="${r(x - 0.55)}" y="${r(T - 0.8)}" width="1.1" height=".35" fill="#a43a28"/><circle cx="${r(x)}" cy="${r(T - 1.05)}" r=".16" fill="#ff5040"/>`;
+    s2 += `<path d="M${r(x - 0.95)} ${r(W0)} L${r(x - 0.68)} ${r(T)}" stroke="#ffb27a" stroke-width=".16" opacity=".7"/>`;
+    return s2;
   };
   k += turm(XS, WS, TS, DS) + turm(XN, WN, TN, DN);
   /* Fort Point unter dem Südende */
   k += `<rect x="${XA - 2}" y="${r(DA + 0.4)}" width="4" height="${r(WS - DA - 0.4)}" fill="#a76a4f"/>`;
   k += `</g>`;
   S.teil({ id: "golden_gate_bridge", de: "die Golden Gate Bridge", syl: "GOL-den GATE BRIDGE", it: "il ponte del Golden Gate", itSyl: "PON-te del GOL-den GATE", en: "Golden Gate Bridge",
-    x: 0, y: 0, kunst: k + `<rect class="bw-flaeche" x="${XA}" y="${r(TS - 2)}" width="${XB - XA}" height="${r(WS - TS + 2)}" fill="rgba(255,255,255,0.001)"/>`,
+    x: 0, y: 0, kunst: k + `<rect class="bw-flaeche" x="${XA}" y="${r(TS - 2)}" width="${XS + 26 - XA}" height="${r(WS - TS + 2)}" fill="rgba(255,255,255,0.001)"/>`,
     tipp: "Die Golden Gate Bridge (1937) ist 2,7 Kilometer lang. Ihre Farbe heißt „International Orange“.",
     zoom: { x: XS - 9, y: r(TS - 4), w: 30, h: 20 },
     unter: [
@@ -348,7 +349,7 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
     c += `<path d="${baeume.join("")}" fill="#55683f"/>`;
   }
   /* Fisherman's Wharf und der Hafen am Fuß (Uferlinie) */
-  c += `<path d="M196 132 L218 128 L240 124 L262 121 L282 118.6 L300 118.4 L300 124 L196 136 Z" fill="#b9ad98"/>`;
+  c += `<path d="M196 132 L218 128 L240 124 L262 121 L282 118.6 L300 118.4 L316 118.6 L316 126 L196 136 Z" fill="#b9ad98"/>`;
   S.hinten(c);
 }
 
@@ -806,23 +807,34 @@ const LOMB = {};
    11 — DAS AUTO (parkt bergab an der Ostseite, Vorderräder zum Bordstein)
    ===================================================================== */
 {
-  const C = { X: -2.55, d: 28 }, ca = Math.cos(Math.atan(0.13)), sa = Math.sin(Math.atan(0.13));
-  const W3 = (u, v, h) => { const d = C.d + u * ca - h * sa * 0, z = zH(C.d + u) + h; return PN(C.X + v, d, z); };
+  /* parkt mit der Nase bergab (nach Norden) am Ostbordstein; wir sehen Heck und rechte Seite.
+     Das rechte Vorderrad ist zum Bordstein eingeschlagen (Pflicht am Hang). */
+  const C = { X: -2.5, d: 24 };
+  const W3 = (u, v, h) => PN(C.X + v, C.d + u, zH(C.d + u) + h);
   const [ox, oy] = W3(0, 0, 0);
   const P = (u, v, h) => { const [x, y] = W3(u, v, h); return [x - ox, y - oy]; };
   const Q = (pts, f, ex = "") => `<path d="M${pts.map((q) => pr(P(...q))).join(" L")} Z" fill="${f}"${ex}/>`;
-  let k = Q([[-2.3, 0.95, 0], [2.3, 0.95, 0], [2.6, 0.95 + 1.5, 0], [-2, 0.95 + 1.5, 0]], "#1b120a", ` opacity=".3" filter="url(#bw_weich)"`);
-  /* Heck (zu uns), linke Seite, Dach, Heckscheibe — Wagen schaut bergab nach Norden */
-  k += Q([[-2.3, -0.9, 0.3], [-2.3, -0.9, 0.95], [2.3, -0.9, 0.95], [2.3, -0.9, 0.3]], S.lg("autoseite", [[0, "#6f8fae"], [1, "#4a6684"]]));
+  /* scharfer Schatten unter dem Wagen, nach rechts hinten verlängert */
+  { const L = 1.45 * SL, pts = []; for (const [u, v] of [[-2.3, -0.9], [2.3, -0.9], [2.3, 0.9], [-2.3, 0.9]]) { pts.push(P(u, v, 0)); pts.push(P(u + L * SN_, v + L * SE_, 0)); }
+    var k = `<path d="M${huelle(pts).map(pr).join(" L")} Z" fill="#1d2433" opacity=".34"/>`; }
+  /* Räder links (nur unten sichtbar) */
+  k += Q([[-1.75, -0.85, 0], [-1.15, -0.85, 0], [-1.15, -0.85, 0.3], [-1.75, -0.85, 0.3]], "#151515");
+  /* Karosserie: rechte Seite, Heck, Dach, Scheiben */
+  const BLAU = S.lg("autoseite", [[0, "#7895b3"], [1, "#4a6684"]]);
+  k += Q([[-2.3, 0.9, 0.3], [2.3, 0.9, 0.3], [2.25, 0.9, 0.95], [-2.3, 0.9, 0.95]], BLAU);
   k += Q([[-2.3, -0.9, 0.3], [-2.3, 0.9, 0.3], [-2.3, 0.9, 0.95], [-2.3, -0.9, 0.95]], "#55728f");
-  k += Q([[-2.3, -0.9, 0.95], [-2.3, 0.9, 0.95], [2.3, 0.9, 0.95], [2.3, -0.9, 0.95]], "#7d9bb8");
-  k += Q([[-1.5, -0.8, 0.95], [-1.5, 0.8, 0.95], [-1.1, 0.72, 1.42], [-1.1, -0.72, 1.42]], "#2f3c47");
-  k += Q([[-1.1, -0.72, 1.42], [-1.1, 0.72, 1.42], [0.6, 0.72, 1.42], [0.6, -0.72, 1.42]], "#8aa6c0");
-  k += Q([[-1.5, -0.8, 0.95], [1.2, -0.8, 0.95], [0.6, -0.72, 1.42], [-1.1, -0.72, 1.42]], "#3a4855");
+  k += Q([[-2.3, -0.9, 0.95], [-2.3, 0.9, 0.95], [2.25, 0.9, 0.95], [2.25, -0.9, 0.95]], "#86a3bf");
+  k += Q([[-1.55, -0.8, 0.95], [-1.55, 0.8, 0.95], [-1.1, 0.72, 1.42], [-1.1, -0.72, 1.42]], "#2f3c47");
+  k += Q([[-1.1, -0.72, 1.42], [-1.1, 0.72, 1.42], [0.6, 0.72, 1.42], [0.6, -0.72, 1.42]], "#8fabc5");
+  k += Q([[-1.55, 0.8, 0.95], [1.25, 0.8, 0.95], [0.6, 0.72, 1.42], [-1.1, 0.72, 1.42]], "#34424f");
+  k += Q([[-0.3, 0.81, 0.97], [-0.22, 0.79, 1.4], [-0.15, 0.79, 1.4], [-0.23, 0.81, 0.97]], "#55728f");
   for (const v of [-0.62, 0.62]) k += Q([[-2.31, v - 0.2, 0.7], [-2.31, v + 0.2, 0.7], [-2.31, v + 0.2, 0.82], [-2.31, v - 0.2, 0.82]], "#c8232c");
-  /* Räder links: hinten gerade, vorn zum Bordstein (nach rechts) eingeschlagen */
-  const rad = (uc, dreh) => { const pts = []; for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, du = Math.cos(a) * 0.32; pts.push([uc + du * Math.cos(dreh), -0.92 + du * Math.sin(dreh), 0.32 + Math.sin(a) * 0.32]); } return Q(pts, "#1a1b1c"); };
-  k += rad(-1.45, 0) + rad(1.45, 0.45);
+  k += Q([[-2.31, -0.25, 0.42], [-2.31, 0.25, 0.42], [-2.31, 0.25, 0.55], [-2.31, -0.25, 0.55]], "#f2f0e8");
+  /* Außenspiegel rechts */
+  k += Q([[1.05, 0.9, 0.98], [1.05, 1.08, 1.0], [1.15, 1.08, 1.12], [1.15, 0.9, 1.1]], "#4a6684");
+  /* Räder rechts: hinten gerade, vorn zum Bordstein (nach rechts) eingeschlagen — Reifen mit Felge */
+  const rad = (uc, dreh) => { const pts = [], fe = []; for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, du = Math.cos(a), dz = Math.sin(a); pts.push([uc + du * 0.33 * Math.cos(dreh), 0.92 + du * 0.33 * Math.sin(dreh), 0.33 + dz * 0.33]); fe.push([uc + du * 0.19 * Math.cos(dreh), 0.93 + du * 0.19 * Math.sin(dreh), 0.33 + dz * 0.19]); } return Q(pts, "#1a1b1c") + Q(fe, "#8d9196"); };
+  k += rad(-1.45, 0) + rad(1.45, 0.5);
   S.teil({ id: "auto", de: "das Auto", syl: "AU-to", it: "l'automobile", itSyl: "au-to-MO-bi-le", en: "car", x: ox, y: oy, kunst: k,
     tipp: "Wer in San Francisco am Hang parkt, muss die Räder zum Bordstein drehen — sonst gibt es einen Strafzettel." });
 }
@@ -833,7 +845,8 @@ const LOMB = {};
    ===================================================================== */
 {
   const d = 18, X = -1.1, [px, py] = PN(X, d, zH(d)), s = F / d, h = 3.2 * s;
-  let k = schatten(0.6, 0.2, 2.4, 0.6, 0.3) + `<rect x="-.45" y="${r(-h)}" width=".9" height="${r(h)}" fill="${S.lg("mast", [[0, "#9aa1a5"], [0.5, "#d9dee0"], [1, "#7d858a"]], 0, 0, 1, 0)}"/>`;
+  const T = PN(X + 3.2 * SL * SE_, d + 3.2 * SL * SN_, zH(d + 3.2 * SL * SN_));
+  let k = `<path d="M-.45 0 L${r(T[0] - px - 0.25)} ${r(T[1] - py)} L${r(T[0] - px + 0.25)} ${r(T[1] - py)} L.45 0 Z" fill="#1d2433" opacity=".3"/><rect x="-.45" y="${r(-h)}" width=".9" height="${r(h)}" fill="${S.lg("mast", [[0, "#9aa1a5"], [0.5, "#d9dee0"], [1, "#7d858a"]], 0, 0, 1, 0)}"/>`;
   const y0 = -h + 0.3 * s, w = 0.45 * s, hh = 0.6 * s;
   k += `<rect x="${r(-w / 2)}" y="${r(y0)}" width="${r(w)}" height="${r(hh)}" rx=".4" fill="#fbfaf6" stroke="#6b2a22" stroke-width=".4"/>`;
   const cy = y0 + hh * 0.36, u = w / 10;

@@ -1418,7 +1418,7 @@ function hoehlenbaer(T) {
   const hinterbein = [[84, -104], [87, -80], [88.4, -64], [86, -52], [82.4, -40], [80, -28], [79.6, -18], [81.4, -12.6], [84.6, -11.6], [86.2, -12], [88.2, -9.8],
     [89.8, -10], [91.4, -7.6], [92.8, -7.6], [94, -5], [95, -4.6], [95.6, -1.8], [94.6, 0, 1], [57, 0, 1], [54.2, -2.6], [54, -7.4], [55.6, -12.4], [56.2, -16.6], [53.6, -21],
     [49.4, -28], [44.6, -38], [38.6, -48], [31.6, -58], [25, -68], [19.4, -78], [16, -88], [22, -100], [40, -106]];
-  const beinG = (n, ferne) => T.lg(n, ferne ? [[0, "#2a1a0e"], [0.6, "#22150c"], [1, "#1a1009"]] : [[0, "#2e1d10"], [0.22, "#33200f"], [0.45, "#452c18"], [0.75, "#3a2515"], [1, "#2a1a0e"]], 0, -100, 0, 0, UB);
+  const beinG = (n, ferne) => T.lg(n, ferne ? [[0, "#2a1a0e"], [0.6, "#22150c"], [1, "#1a1009"]] : [[0, "#2e1d10"], [0.3, "#36220f"], [0.55, "#3e2816"], [0.8, "#352314"], [1, "#2a1a0e"]], 0, -100, 0, 0, UB);
   const beinLicht = (P, y0, k) => FO(streifen(P, y0, -14, 0.05, 0.3, 6), WARM, 0.32 * k) + FO(streifen(P, y0, -14, 0.68, 0.95, 6), S0, 0.3 * k);
   const maske = (n, y0, y1) => { T._mk = T._mk || {}; const id = T.id("mk" + n); if (!T._mk[id]) { T._mk[id] = 1;
     T.def(`<mask id="${id}"><rect x="-50" y="-160" width="400" height="170" fill="${T.lg("mg" + n, [[0, "#fff", 0], [1, "#fff"]], 0, y0, 0, y1, UB)}"/></mask>`); } return `url(#${id})`; };
@@ -1445,8 +1445,8 @@ function hoehlenbaer(T) {
     const zonen = [[[[x0 - 60, -110], [x0 + 30, -110], [x0 + 30, 2], [x0 - 60, 2]], 92, 0.95]];
     let b = `<use href="#${id}" fill="${beinG("bg" + (ferne ? "f" : "n"), ferne)}"/><g clip-path="url(#${id}c)">` +
       (ferne ? `<rect x="${x0 - 60}" y="-110" width="100" height="112" fill="#000" opacity=".2"/>` : "") +
-      WEICH(T, beinLicht(P, vorne ? -58 : -40, ferne ? 0.6 : vorne ? 1 : 0.6) + FO([[x0 - 60, -110], [x0 + 30, -110], [x0 + 30, -50], [x0 - 60, -58]], S0, 0.34), 1.5) +
-      HAARZONEN(T, null, zonen, MK(0.95)) + (ferne ? "" : HAARZONEN(T, null, zonen.map(([p, w]) => [p, w, 0.6]), MH)) + (extra || "") + "</g>";
+      WEICH(T, beinLicht(P, vorne ? -58 : -40, ferne ? 0.6 : vorne ? 1 : 0.45) + FO([[x0 - 60, -110], [x0 + 30, -110], [x0 + 30, -50], [x0 - 60, -58]], S0, 0.34), 1.5) +
+      HAARZONEN(T, null, zonen, MK(0.95)) + (ferne ? "" : HAARZONEN(T, null, [[[[x0 - 60, -58], [x0 + 30, -58], [x0 + 30, 2], [x0 - 60, 2]], 92, 0.5]], MH)) + (extra || "") + "</g>";
     /* zottige Hinterkante und Fell, das über die Pfote hängt */
     const i0 = P.findIndex((p) => p[2] === 1);
     b += LOCKENLINIE(T, P.slice(i0 + 4, P.length - 3), ferne ? 5 : 10, [-0.6, 0.6], vorne ? 100 : 110, 6, 1.4, () => (ferne ? 0.3 : 0.28), ferne ? FERN : TON, { streuung: 12, szene: 0.15, szeneB: 1.6, haare: ferne ? 0 : 1, hb: 0.22 });
@@ -1528,7 +1528,7 @@ function hoehlenbaer(T) {
   let ko = K(T, dKo, kopfG, { rand: false, vol: false, innen: kmass +
     HAARZONEN(T, null, [[[[230, -132], [262, -132], [262, -80], [230, -80]], 150, 0.8]], MK(0.6)) + HAARZONEN(T, null, [[[[230, -132], [258, -132], [258, -112], [230, -112]], 170, 0.6]], [[...MR[0].slice(0, 6), 0.6]]) });
   /* Haar: Schnauze kurz und dicht von der Nase nach hinten; Wirbel am Stirnabsatz; Stirn länger nach hinten; Wange nach hinten-unten */
-  ko += FELL(T, [[266, -110], [275, -106.6], [285.8, -103.4], [289.4, -100], [287.6, -89], [284, -86], [273.2, -87], [266, -92]], 56, (x, y) => 186 + (y + 104) * 0.8, 1.6,
+  ko += FELL(T, [[266, -110], [275, -106.6], [285.8, -103.4], [289.4, -100], [287.6, -89], [284, -86], [273.2, -87], [266, -92]], 50, (x, y) => 186 + (y + 104) * 0.8, 1.6,
     (x, y) => Math.max(0, Math.min(1, 0.85 - (y + 113) / 20)), [["#1e130a", 0.6, 0.2], ["#4a301a", 0.55, 0.2], ["#7a5230", 0.5, 0.18], ["#a87a4c", 0.5, 0.16]], { streuung: 10, szene: 0.1 });
   ko += FELL(T, [[258, -120], [264, -118], [267.8, -109], [262, -106], [256, -112]], 30, (x, y) => Math.atan2(y + 121, x - 263) * 180 / Math.PI + 90, 1.8, () => 0.5,
     [["#2a1a0e", 0.55, 0.2], ["#7a5230", 0.5, 0.18]], { streuung: 14, szene: 0 });

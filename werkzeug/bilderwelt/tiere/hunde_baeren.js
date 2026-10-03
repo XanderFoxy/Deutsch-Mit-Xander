@@ -121,15 +121,12 @@ function teil(T, name, pts, fill, innen = "", aussen = "", o = {}) {
     /* blende = [xa, ya, xb, yb]: bei A unsichtbar, ab B voll sichtbar (beliebige Richtung) */
     const mid = T.id("tm" + name), [xa, ya, xb, yb] = o.blende || (o.einblendenX ? [o.einblendenX[0], 0, o.einblendenX[1], 0] : [0, o.einblenden[0], 0, o.einblenden[1]]);
     const gr = T.lg("tmg" + name, [[0, "#fff", 0], [1, "#fff", 1]], xa, ya, xb, yb, ' gradientUnits="userSpaceOnUse"');
-    T.def(`<mask id="${mid}" maskUnits="userSpaceOnUse" x="${mb[0]}" y="${mb[1]}" width="${mb[2] - mb[0]}" height="${mb[3] - mb[1]}"><rect x="${mb[0]}" y="${mb[1]}" width="${mb[2] - mb[0]}" height="${mb[3] - mb[1]}" fill="${gr}"/></mask>`);
+    const re = `x="${mb[0]}" y="${mb[1]}" width="${mb[2] - mb[0]}" height="${mb[3] - mb[1]}"`;
+    /* Runde 3: Lauf über dem Rumpf – eingeblendet wird nur INNERHALB des Rumpfs; außerhalb ist der Lauf voll deckend
+       (sonst läge der halbdurchsichtige Laufansatz über dem Hintergrund → heller Schleier an Knie und Ellbogen) */
+    if (o.einblenden && T._rumpfId) T.def(`<mask id="${mid}" maskUnits="userSpaceOnUse" ${re}><rect ${re} fill="#fff"/><use href="#${T._rumpfId}" fill="${T.lg("tmb" + name, [[0, "#000"], [1, "#fff"]], xa, ya, xb, yb, ' gradientUnits="userSpaceOnUse"')}"/></mask>`);
+    else T.def(`<mask id="${mid}" maskUnits="userSpaceOnUse" ${re}><rect ${re} fill="${gr}"/></mask>`);
     k = `<g mask="url(#${mid})">${k}</g>`;
-  }
-  /* Runde 3: Lauf über dem Rumpf – in der Einblend-Zone nur INNERHALB des Rumpfs zeichnen (sonst läge der halbdurchsichtige
-     Laufansatz über dem Hintergrund → heller Schleier an Knie/Ellbogen). Klammer = Rumpf ∪ alles unterhalb der Zone. */
-  if (o.einblenden && T._rumpfId) {
-    const cid = T.id("tk" + name);
-    T.def(`<clipPath id="${cid}"><use href="#${T._rumpfId}"/><rect x="${mb[0]}" y="${o.einblenden[1]}" width="${mb[2] - mb[0]}" height="${mb[3] - o.einblenden[1]}"/></clipPath>`);
-    k = `<g clip-path="url(#${cid})">${k}</g>`;
   }
   if (/rumpf$/.test(name)) T._rumpfId = id;
   return k;
