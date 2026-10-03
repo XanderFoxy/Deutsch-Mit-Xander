@@ -45,6 +45,8 @@ const B = require("../bau");
 
 const S = neueSzene({ id: "freiburg", titel: "Freiburg im Breisgau", emoji: "🌲", thema: "Deutschland", kuerzel: "fbg", fassung: 854, breite: 320, hoehe: 240 });
 const rnd = zufall(1120);
+/* gleiche Verlaufsnamen nur einmal anlegen (doppelte ids schalten Verläufe stumm) */
+{ const L = S.lg, R = S.rg, C = {}; S.lg = (n, ...a) => C["l" + n] || (C["l" + n] = L(n, ...a)); S.rg = (n, ...a) => C["r" + n] || (C["r" + n] = R(n, ...a)); }
 const r = B.r;
 
 /* ---------- Kamera (Meter: x Ost, y Nord, z Höhe) ---------- */

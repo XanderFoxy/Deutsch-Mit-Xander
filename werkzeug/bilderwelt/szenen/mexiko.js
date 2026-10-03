@@ -140,6 +140,7 @@ const SCHATTEN = S.lg("kalkschatten", [[0, "#aea596"], [1, "#958c7e"]]);  /* Nor
    Rändern (Sonne rechts außerhalb), Wald, Rasen, lange Schatten, Weg
    ===================================================================== */
 const W0 = 27.65, WT = 9.75, HT = 24, NT = 9, TH = HT / NT;
+let STEIN = "";
 const KT = { x: 108, z: -46, h: 20, stufen: 4, sh: 3, tw: 10 };   /* Tempel der Krieger (an den Rand gerückt) */
 {
   let k = `<rect width="320" height="${HY + 1}" fill="${S.lg("himmel", [[0, "#3c70b4"], [0.45, "#7ea9d2"], [0.78, "#e2c9a6"], [1, "#f4c48a"]])}"/>`;
@@ -191,27 +192,34 @@ const KT = { x: 108, z: -46, h: 20, stufen: 4, sh: 3, tw: 10 };   /* Tempel der 
   const kh = [];
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) kh.push([KT.x + sx * 20, KT.z + sz * 20], schattenAuf(KT.x + sx * 12, 12, KT.z + sz * 12).filter((_, i) => i !== 1));
   k += `<path d="M${pts(huelle(kh).map(([X, Z]) => P(X, 0, Z)))} Z" fill="#203016" opacity=".25" filter="${DUNST}"/>`;
+  /* langer Schatten des Kapokbaums (liegt auf dem Rasen, unter allem anderen) */
+  k += `<g transform="translate(237 141)">${bildSchatten(237, 141, 18, 1.6, 0.18)}</g>`;
   /* ein herabgefallener Stein mit Relief (Federschlange) am Wegrand */
   {
     const sx0 = 96, sy0 = 186, s = sy(sy0), w = 0.9 * s, h = 0.42 * s, t = 0.18 * s;
     let g = bildSchatten(sx0, sy0, 0.42, 0.9, 0.3);
-    /* Block mit abgerundeten, abgeplatzten Kanten */
-    const W2 = w / 2;
-    g += `<path d="M${r(-W2 + 1)} 0 L${r(W2 - 1.4)} 0 Q${r(W2)} 0 ${r(W2)} -1.4 L${r(W2)} ${r(-h + 2.2)} L${r(W2 - 1.6)} ${r(-h + 0.4)} L${r(W2 - 3)} ${r(-h)} L${r(-W2 + 1.2)} ${r(-h)} Q${r(-W2)} ${r(-h)} ${r(-W2)} ${r(-h + 1.2)} L${r(-W2)} -1 Q${r(-W2)} 0 ${r(-W2 + 1)} 0 Z" fill="${S.lg("block", [[0, "#9d9481"], [0.7, "#d6c49c"], [1, "#ead6aa"]], 0, 0, 1, 0)}"/>`;
-    g += `<path d="M${r(-W2 + 1.2)} ${r(-h)} L${r(W2 - 3)} ${r(-h)} L${r(W2 - 4.6)} ${r(-h - t + 0.6)} Q${r(W2 - 5.4)} ${r(-h - t)} ${r(W2 - 6.6)} ${r(-h - t)} L${r(-W2 + 3.6)} ${r(-h - t)} Q${r(-W2 + 2.4)} ${r(-h - t)} ${r(-W2 + 1.2)} ${r(-h)} Z" fill="#ecdcb6"/>`;
-    g += `<path d="M${r(W2)} ${r(-h + 2.2)} L${r(W2 - 1.6)} ${r(-h + 0.4)} L${r(W2 - 3)} ${r(-h)} L${r(W2 - 2.2)} ${r(-h + 2.6)} Z" fill="#b8a982"/><path d="M${r(-W2)} -3 L${r(-W2 + 1.6)} -1.6 L${r(-W2 + 0.6)} 0 Z" fill="#8f8672"/>`;
-    /* Relief: Federschlange als erhabenes Band (Licht oben, Schatten unten), Schuppenfelder, Kopf mit Maul, Federbusch */
-    const yb = -h * 0.5, band = `M${r(-W2 + 2.4)} ${r(yb + 1)} C${r(-W2 + 7)} ${r(yb - 5)} ${r(-W2 + 10)} ${r(yb + 5)} ${r(-2)} ${r(yb)} S${r(5)} ${r(yb - 4)} ${r(W2 - 9)} ${r(yb - 0.5)}`;
-    g += `<path d="${band}" stroke="#6f6553" stroke-width="2.6" fill="none" transform="translate(.35 .55)"/><path d="${band}" stroke="#e9d8b0" stroke-width="2.4" fill="none"/>`;
-    let sc = "";
-    for (let i = 0; i < 9; i++) { const x = -W2 + 4 + i * (w - 15) / 8; sc += `M${r(x)} ${r(yb - 4)}v8`; }
-    g += `<path d="${band}" stroke="#a69a7e" stroke-width="2.4" fill="none" stroke-dasharray=".3 1.6"/>`;
-    const kx = W2 - 8, ky = yb - 0.5;
-    g += `<path d="M${r(kx - 1)} ${r(ky - 1.8)} Q${r(kx + 2.6)} ${r(ky - 2.6)} ${r(kx + 4)} ${r(ky - 0.8)} L${r(kx + 2)} ${r(ky)} L${r(kx + 4)} ${r(ky + 0.9)} Q${r(kx + 2.4)} ${r(ky + 2.4)} ${r(kx - 1)} ${r(ky + 1.6)} Z" fill="#e9d8b0" stroke="#6f6553" stroke-width=".35"/><circle cx="${r(kx + 1.2)}" cy="${r(ky - 1)}" r=".45" fill="#6f6553"/>`;
-    for (let i = 0; i < 4; i++) { const a = -2.3 + i * 0.35; g += `<path d="M${r(kx - 1)} ${r(ky)} q${r(Math.cos(a) * 2.4)} ${r(Math.sin(a) * 2.4)} ${r(Math.cos(a) * 4.2)} ${r(Math.sin(a) * 4.2)}" stroke="#d8c59a" stroke-width=".8" stroke-linecap="round" fill="none"/>`; }
-    /* Flechten */
+    /* Quader (deckend): Vorderseite, Oberseite teilt mit ihr die Kante und weicht zum Fluchtpunkt
+       nach rechts oben zurück, rechts die schmale Seitenfläche; Kanten gerundet und abgeplatzt */
+    const W2 = w / 2, dx = 2.2;
+    g += `<path d="M${r(-W2 + 0.8)} ${r(-h)} L${r(W2 - 0.8)} ${r(-h)} L${r(W2 - 0.8 + dx)} ${r(-h - t)} L${r(-W2 + 1.6 + dx)} ${r(-h - t)} Q${r(-W2 + 0.4 + dx)} ${r(-h - t + 0.2)} ${r(-W2 + 0.8)} ${r(-h)} Z" fill="#ecdcb6"/>`;
+    g += `<path d="M${r(W2 - 0.8)} ${r(-h)} L${r(W2 - 0.8 + dx)} ${r(-h - t)} L${r(W2 + dx)} ${r(-t * 0.8)} L${r(W2)} 0 Z" fill="#b5a682"/>`;
+    g += `<path d="M${r(-W2 + 1)} 0 L${r(W2 - 1)} 0 Q${r(W2)} 0 ${r(W2)} -1 L${r(W2)} ${r(-h + 2)} L${r(W2 - 1.4)} ${r(-h + 0.3)} L${r(W2 - 2.6)} ${r(-h)} L${r(-W2 + 1.2)} ${r(-h)} Q${r(-W2)} ${r(-h)} ${r(-W2)} ${r(-h + 1.2)} L${r(-W2)} -1 Q${r(-W2)} 0 ${r(-W2 + 1)} 0 Z" fill="${S.lg("block", [[0, "#a59b86"], [0.7, "#d2c19a"], [1, "#e2d0a8"]], 0, 0, 1, 0)}"/>`;
+    g += `<path d="M${r(-W2)} -3 L${r(-W2 + 1.6)} -1.6 L${r(-W2 + 0.6)} 0 Z" fill="#8f8672"/>`;
+    /* Relief: Kukulcán – breiter Leib mit Rautenschuppen, Federbüschel am Rücken, Kopf wie an der Treppe
+       (Nasenschnecke, offenes Maul, Zunge); Licht oben, Schattenkante unten */
+    const yb = -h * 0.48, leib = `M${r(-W2 + 2)} ${r(yb + 1.2)} C${r(-W2 + 6)} ${r(yb - 4)} ${r(-W2 + 10)} ${r(yb + 4.6)} ${r(-1.5)} ${r(yb)} S${r(4)} ${r(yb - 3.6)} ${r(W2 - 9.5)} ${r(yb - 0.3)}`;
+    g += `<path d="${leib}" stroke="#6f6553" stroke-width="3.6" fill="none" transform="translate(.3 .5)"/><path d="${leib}" stroke="#e7d6ad" stroke-width="3.4" fill="none"/>`;
+    g += `<path d="${leib}" stroke="#a69a7e" stroke-width="2.2" fill="none" stroke-dasharray=".9 .9"/>`;
+    g += `<path d="${leib}" stroke="#f5e8c6" stroke-width=".5" fill="none" transform="translate(0 -1.3)"/>`;
+    let fed = "";
+    for (let i = 0; i < 6; i++) { const x = -W2 + 4.5 + i * (w - 16) / 5, y = yb - 2.4 + Math.sin(i * 1.4) * 1.1; fed += `M${r(x)} ${r(y)} l-.5 -1.6 M${r(x + 0.6)} ${r(y)} l.1 -1.8 M${r(x + 1.2)} ${r(y)} l.6 -1.5`; }
+    g += `<path d="${fed}" stroke="#d6c398" stroke-width=".55" stroke-linecap="round"/>`;
+    const kx = W2 - 9, ky = yb - 0.3;
+    g += `<path d="M${r(kx - 0.6)} ${r(ky - 2.2)} Q${r(kx + 2.4)} ${r(ky - 3.2)} ${r(kx + 4.4)} ${r(ky - 1.6)} L${r(kx + 4.6)} ${r(ky - 0.4)} L${r(kx + 1.8)} ${r(ky + 0.1)} L${r(kx + 4.4)} ${r(ky + 1.3)} Q${r(kx + 2.6)} ${r(ky + 2.6)} ${r(kx - 0.6)} ${r(ky + 2)} Z" fill="#e7d6ad" stroke="#6f6553" stroke-width=".35"/>`;
+    g += `<path d="M${r(kx + 2.2)} ${r(ky - 2.6)} q.5 -1.2 1.3 -.6 q.4 .6 -.4 .7" stroke="#6f6553" stroke-width=".35" fill="none"/><circle cx="${r(kx + 1.2)}" cy="${r(ky - 1.2)}" r=".5" fill="none" stroke="#6f6553" stroke-width=".3"/>`;
+    g += `<path d="M${r(kx + 2)} ${r(ky + 0.4)} L${r(kx + 5.4)} ${r(ky + 0.6)} L${r(kx + 6)} ${r(ky + 0.2)} M${r(kx + 5.4)} ${r(ky + 0.6)} L${r(kx + 6)} ${r(ky + 1)}" stroke="#8f8370" stroke-width=".45" fill="none"/>`;
     for (let i = 0; i < 9; i++) g += `<circle cx="${r(-W2 + 1 + rnd() * (w - 2))}" cy="${r(-0.6 - rnd() * (h - 1))}" r="${r(0.3 + rnd() * 0.6)}" fill="${rnd() < 0.5 ? "#8e9a64" : "#c9c08e"}" opacity=".6"/>`;
-    k += `<g transform="translate(${sx0} ${sy0})">${g}</g>`;
+    STEIN = `<g transform="translate(${sx0} ${sy0})">${g}</g>`;
   }
   S.hinten(k);
 }
@@ -255,7 +263,7 @@ const KT = { x: 108, z: -46, h: 20, stufen: 4, sh: 3, tw: 10 };   /* Tempel der 
   /* Gesims, Verwitterung */
   k += flaech([[CXk - tx - 0.2, 17.5, CZk - tz - 0.2], [CXk - tx - 0.2, 17.5, CZk + tz + 0.2], [CXk - tx - 0.2, 18, CZk + tz + 0.2], [CXk - tx - 0.2, 18, CZk - tz - 0.2]], "#f3d8a6");
   S.teil({ id: "kriegertempel", de: "der Tempel der Krieger", syl: "TEM-pel der KRIE-ger", it: "il Tempio dei Guerrieri", itSyl: "TEM-pio dei guer-RIE-ri", en: "Temple of the Warriors", x: 23, y: 112, kunst: um(23, 112, k),
-    tipp: "Vor dem Tempel der Krieger stehen Reihen von Säulen. Früher trugen sie ein Dach." });
+    tipp: "Der Tempel der Krieger hat vier Stufen. Eine breite Treppe führt hinauf zum Eingang." });
 
   /* Säulenreihen vor der Westseite: viereckige Pfeiler, Westseite im Licht, Nordseite im Schatten */
   const saeulen = [];
@@ -389,7 +397,7 @@ const pyrUnter = [];
   {
     const [x0, y0, x1, y1] = box([P(-SB, 8, zS(8)), P(SB, 8, zS(8)), P(-SB, 17, zS(17)), P(SB, 17, zS(17))]);
     pyrUnter.push({ id: "treppe", de: "die Treppe", syl: "TREP-pe", it: "la scala", itSyl: "SCA-la", en: "staircase", x: (x0 + x1) / 2, y: y1, kunst: flaeche(-(x1 - x0) / 2, -(y1 - y0), x1 - x0, y1 - y0, 0.5),
-      tipp: "Im März und September wirft die Sonne Dreiecke aus Licht auf die Treppe – wie eine Schlange, die herabkriecht." });
+      tipp: "Im März und September wirft die Sonne Dreiecke aus Licht auf die Seitenwand der Treppe – wie eine Schlange, die zum Kopf hinunterkriecht." });
   }
   {
     const [x0, y0, x1, y1] = box([P(-SB, 2.4, zS(2.4)), P(SB, 2.4, zS(2.4)), P(-SB, 3.4, zS(3.4)), P(SB, 3.4, zS(3.4))]);
@@ -478,33 +486,45 @@ const pyrUnter = [];
    ===================================================================== */
 {
   const X = 237, Y = 141, s = sy(Y);            /* ≈ 5,6 Einheiten je Meter */
-  let k = bildSchatten(X, Y, 18, 1.6, 0.18);
+  let k = "";
   /* Brettwurzeln */
   k += `<path d="M-13 0 Q-7 -1 -4.4 -7 L-3 -12 L3 -12 L4.6 -7 Q8 -1 15 0 Q8 .6 5 -.6 Q2 1 0 -.4 Q-2 1 -5 -.6 Q-8 .6 -13 0 Z" fill="${S.lg("wurzel", [[0, "#5b6650"], [0.5, "#7f8a72"], [1, "#b9b498"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M-9 -.4 Q-5 -2 -3.6 -8 M9.6 -.3 Q5.6 -2 3.8 -8" stroke="#4d5743" stroke-width=".5" fill="none" opacity=".6"/>`;
   /* Stamm: glatt, graugrün, Licht von rechts; geht oben in die Hauptäste über */
   const TOP = -14 * s;
-  k += `<path d="M-3 -11 Q-2.6 -40 -2.2 ${r(TOP + 6)} Q-2.4 ${r(TOP + 2)} -5 ${r(TOP - 1)} L-1.2 ${r(TOP - 2)} L1.6 ${r(TOP - 4)} L2.6 ${r(TOP - 1.5)} L6 ${r(TOP)} Q2.6 ${r(TOP + 2)} 2.4 ${r(TOP + 6)} Q2.8 -40 3.2 -11 Z" fill="${S.lg("ceiba", [[0, "#55604a"], [0.45, "#7c866c"], [0.8, "#b8b294"], [1, "#9a9a82"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M-3 -11 Q-2.6 -40 -2.2 ${r(TOP + 6)} Q-2.1 ${r(TOP)} -1.1 ${r(TOP - 3)} L1.1 ${r(TOP - 3.4)} Q2.2 ${r(TOP)} 2.4 ${r(TOP + 6)} Q2.8 -40 3.2 -11 Z" fill="${S.lg("ceiba", [[0, "#55604a"], [0.45, "#7c866c"], [0.8, "#b8b294"], [1, "#9a9a82"]], 0, 0, 1, 0)}"/>`;
   for (let i = 0; i < 7; i++) { const y = -16 - rnd() * (-TOP - 22); k += `<path d="M${r(-1.6 + rnd() * 3.2)} ${r(y)} q.3 -3 0 -5" stroke="#5a6450" stroke-width=".4" fill="none" opacity=".55"/>`; }
-  /* Krone: breiter, flacher Schirm (Breite ≈ 4 × Höhe), oben fast eben. Zuerst die dicken, fast
-     waagrechten Hauptäste (am Ansatz ≈ 40 % der Stammdicke), weit zur Seite verzweigt */
-  const ASTF = S.lg("ast", [[0, "#5d6852"], [1, "#9b9c80"]]);
-  const ast = (x0, y0, x1, y1, d0, d1, bog) => { const mx = (x0 + x1) / 2, my = (y0 + y1) / 2 - bog, nx = -(y1 - y0), ny = x1 - x0, l = Math.hypot(nx, ny), ux = nx / l, uy = ny / l;
-    return `<path d="M${r(x0 + ux * d0)} ${r(y0 + uy * d0)} Q${r(mx + ux * (d0 + d1) / 2)} ${r(my + uy * (d0 + d1) / 2)} ${r(x1 + ux * d1)} ${r(y1 + uy * d1)} L${r(x1 - ux * d1)} ${r(y1 - uy * d1)} Q${r(mx - ux * (d0 + d1) / 2)} ${r(my - uy * (d0 + d1) / 2)} ${r(x0 - ux * d0)} ${r(y0 - uy * d0)} Z" fill="${ASTF}"/>`; };
-  const T = TOP;
-  for (const [x1, y1, d, b2] of [[-44, T - 9, 1.1, 3], [42, T - 8, 1.05, 3], [-24, T - 15, 0.9, 2], [22, T - 16, 0.9, 2]]) k += ast(x1 < 0 ? -1.4 : 1.4, T + 1, x1, y1, d, 0.3, b2);
-  /* Nebenäste zu den Laubbüscheln */
-  for (const [x0, y0, x1, y1] of [[-30, T - 7.5, -36, T - 16], [-40, T - 9, -52, T - 13], [-14, T - 9, -10, T - 19], [30, T - 7, 36, T - 16], [38, T - 8, 50, T - 12], [12, T - 10, 8, T - 20], [-2, T - 1, 1, T - 21]]) k += ast(x0, y0, x1, y1, 0.45, 0.15, 1);
-  /* luftiges Laub: unregelmäßige Büschel aus kleinen Blattklumpen, Himmel scheint durch; oben rechts goldenes Abendlicht */
+  /* Stamm: rechts goldene Lichtkante (Abendsonne), links kühler Schatten */
+  k += `<path d="M2.9 -12 Q2.5 -40 2.3 ${r(TOP + 6)}" stroke="#f0d38c" stroke-width=".8" fill="none" opacity=".8"/><path d="M-2.7 -12 Q-2.4 -40 -2.1 ${r(TOP + 6)}" stroke="#3f4a3c" stroke-width="1.1" fill="none" opacity=".5"/>`;
+  /* Äste: 4 dicke Hauptäste in verschiedenen Höhen, fast waagerecht, nach außen zwei- bis dreimal gegabelt,
+     dünner werdend, die Enden biegen leicht nach oben */
+  const ASTF = S.lg("ast", [[0, "#5d6852"], [0.6, "#8e917a"], [1, "#c9b98a"]]);
+  const T = TOP, enden = [];
+  let aeste = "";
+  const ast = (x0, y0, wnk, len, d, tiefe) => {
+    const x1 = x0 + Math.cos(wnk) * len, y1 = y0 + Math.sin(wnk) * len, nx = -Math.sin(wnk), ny = Math.cos(wnk), d1 = d * 0.62;
+    const mx = (x0 + x1) / 2, my = (y0 + y1) / 2 + len * 0.06;
+    aeste += `M${r(x0 + nx * d)} ${r(y0 + ny * d)} Q${r(mx + nx * (d + d1) / 2)} ${r(my + ny * (d + d1) / 2)} ${r(x1 + nx * d1)} ${r(y1 + ny * d1)} L${r(x1 - nx * d1)} ${r(y1 - ny * d1)} Q${r(mx - nx * (d + d1) / 2)} ${r(my - ny * (d + d1) / 2)} ${r(x0 - nx * d)} ${r(y0 - ny * d)} Z`;
+    if (tiefe === 0) { enden.push([x1, y1]); return; }
+    const auf = Math.cos(wnk) > 0 ? -1 : 1;
+    ast(x1, y1, wnk + auf * (0.18 + rnd() * 0.12), len * 0.62, d1, tiefe - 1);
+    ast(x1, y1, wnk - auf * (0.32 + rnd() * 0.2), len * 0.55, d1 * 0.9, tiefe - 1);
+  };
+  ast(-1.2, T + 9, Math.PI + 0.12, 15, 1.3, 2);
+  ast(1.2, T + 5, -0.1, 16, 1.25, 2);
+  ast(-1, T + 1, Math.PI + 0.32, 12, 1.05, 2);
+  ast(1, T - 2, -0.36, 11, 1, 2);
+  ast(0, T - 3, -Math.PI / 2 - 0.08, 9, 0.9, 1);
+  k += `<path d="${aeste}" fill="${ASTF}"/>`;
+  /* Laub in 2–3 flachen Etagen um die Astenden, mit Himmelslücken; Unterseite kühl, rechts goldener Saum */
   const lagen = [[], [], [], []];
-  for (const [cx, cy, rx] of [[-50, T - 14, 7], [-38, T - 17, 8], [-25, T - 20, 8], [-11, T - 21, 7], [2, T - 22, 8], [15, T - 21, 7], [28, T - 19, 8], [41, T - 16, 7], [52, T - 13, 5], [-31, T - 12, 5], [34, T - 11, 5]]) {
-    for (let i = 0; i < 13; i++) {
-      const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()), x = cx + Math.cos(a) * rx * d, y = cy + Math.sin(a) * rx * 0.4 * d, rr = 1.1 + rnd() * 1.3;
-      const oben = y < cy - 0.6 && x > cx - 2;
-      lagen[y > cy + 1 ? 0 : oben ? 3 : rnd() < 0.5 ? 1 : 2].push(`<circle cx="${r(x)}" cy="${r(y)}" r="${r(rr)}"/>`);
+  for (const [ex, ey] of enden) {
+    for (let i = 0; i < 9; i++) {
+      const x = ex + (rnd() - 0.5) * 9, y = ey - 1.2 + (rnd() - 0.5) * 2.2, rr = 0.9 + rnd() * 1.1;
+      lagen[y > ey ? 0 : x > ex + 1.5 ? 3 : rnd() < 0.5 ? 1 : 2].push(`<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(rr * 1.5)}" ry="${r(rr * 0.75)}"/>`);
     }
   }
-  ["#4f6b33", "#6c8a42", "#7f9c4c", "#b3bd62"].forEach((c, i) => { k += `<g fill="${c}">${lagen[i].join("")}</g>`; });
+  ["#4a5f45", "#6c8a42", "#7f9c4c", "#a9b45a"].forEach((c, i) => { k += `<g fill="${c}">${lagen[i].join("")}</g>`; });
   const ax0 = 0, ay0 = -60;   /* Bezugspunkt: Stamm über dem Dach */
   S.teil({ id: "kapokbaum", de: "der Kapokbaum", syl: "KA-pok-baum", it: "la ceiba", itSyl: "CEI-ba", en: "kapok tree", x: X + ax0, y: Y + ay0, kunst: `<g transform="translate(${-ax0} ${-ay0})">${k}</g>`,
     tipp: "Für die Maya war der Kapokbaum (Ceiba) heilig: Er verbindet Himmel, Erde und Unterwelt." });
@@ -557,14 +577,15 @@ const ABEND = `url(#${S.id("abend")})`;
 const langSchatten = (x, y, h, b) => {
   const [X, Z] = BODEN(x, y), d = b / 2;
   const q = kappe([[X, Z - d], [X, Z + d], [X + h * SD[0], Z + d * 0.6 + h * SD[1]], [X + h * SD[0], Z - d * 0.6 + h * SD[1]]].map(([u, v]) => P(u, 0, v)), 0, 0, 320, 200);
-  return q.length > 2 ? `<path d="M${pts(q)} Z" fill="${LANGSCHATTEN}"/>` : "";
+  return q.length > 2 ? `<path d="M${pts(q)} Z" fill="url(#${S.id("menschschatten")})"/>` : "";
 };
+S.def(`<linearGradient id="${S.id("menschschatten")}" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#1f2c14" stop-opacity=".46"/><stop offset=".6" stop-color="#1f2c14" stop-opacity=".26"/><stop offset="1" stop-color="#1f2c14" stop-opacity="0"/></linearGradient>`);
 {
   let k = "", sch = "";
   const figur = (x, y, spec, m0) => {
     const s = sy(y), h = (spec.alter === "kind" ? 1.3 : spec.alter === "alt" ? 1.66 : spec.geschlecht === "w" ? 1.65 : 1.76) * s;
     const m = m0 || B.mensch(Object.assign({ haut: "mittel", laecheln: true, ohneSchatten: true }, spec), h);
-    sch += langSchatten(x, y, h / s, 0.45);
+    sch += langSchatten(x, y, h / s, 1.1);
     return { m, svg: `<g transform="translate(${r(x)} ${r(y)})" filter="${ABEND}">${grob(m.svg, GQ, GM)}</g>`, x, y };
   };
   const kl = (o, u, hut, schuh = "turnschuh") => Object.assign({ oberteil: { stueck: "tshirt", farbe: o }, unterteil: { stueck: u[0], farbe: u[1] }, schuhe: { stueck: schuh, farbe: "braun" } }, hut ? { kopf: { stueck: "hut", farbe: hut } } : {});
@@ -595,7 +616,7 @@ const langSchatten = (x, y, h, b) => {
      Ärmeln, Arme mit Händen, Beine, Schuhe; manche mit Hut oder Kamera) */
   const klein = (x, y, hemd, hose, haut, haar, hut, kamera, schritt) => {
     const s = sy(y), H = 1.72 * s, X = (v) => r(x + v * s), Y = (v) => r(y - v * s);
-    sch += langSchatten(x, y, 1.72, 0.45);
+    sch += langSchatten(x, y, 1.72, 1.1);
     let g = `<path d="M${X(-0.09)} ${Y(0)} L${X(-0.08 - schritt)} ${Y(0)} L${X(-0.1)} ${Y(0.84)} L${X(0.1)} ${Y(0.84)} L${X(0.08 + schritt)} ${Y(0)} L${X(0.11)} ${Y(0)} L${X(0.13)} ${Y(0.86)} L${X(-0.13)} ${Y(0.86)} Z" fill="${hose}"/>`;
     g += `<path d="M${X(-0.14 - schritt)} ${Y(0)} h${r(0.13 * s)} v${r(-0.05 * s)} h${r(-0.1 * s)} Z M${X(0.04 + schritt)} ${Y(0)} h${r(0.13 * s)} v${r(-0.05 * s)} h${r(-0.1 * s)} Z" fill="#3a2f28"/>`;
     g += `<path d="M${X(-0.16)} ${Y(0.82)} L${X(0.16)} ${Y(0.82)} L${X(0.2)} ${Y(1.42)} L${X(0.26)} ${Y(1.3)} L${X(0.21)} ${Y(1.44)} Q${X(0)} ${Y(1.5)} ${X(-0.21)} ${Y(1.44)} L${X(-0.26)} ${Y(1.3)} L${X(-0.2)} ${Y(1.42)} Z" fill="${hemd}"/>`;
@@ -659,7 +680,7 @@ const langSchatten = (x, y, h, b) => {
     k += `<path d="M${r(tx)} ${r(ty)} l${r(tx / len * 1.2)} ${r((ty - H0) / len * 1.2)}" stroke="#1e160c" stroke-width=".55" stroke-linecap="round"/>`;
   }
   S.teil({ id: "agave", de: "die Agave", syl: "A-GA-ve", it: "l'agave", itSyl: "a-GA-ve", en: "agave", x: X, y: Y - 0.7 * s, kunst: `<g transform="translate(0 ${r(0.7 * s)})">${k}</g>`,
-    tipp: "Aus den Fasern der Agave Henequén macht man in Yucatán Seile und Hängematten." });
+    tipp: "Aus den Fasern der Agave Henequén macht man in Yucatán Seile, Säcke und Taschen." });
 }
 
 /* =====================================================================
@@ -678,10 +699,11 @@ const langSchatten = (x, y, h, b) => {
   g += `<path d="M${r(L * 0.16)} -1.6 Q${r(L * 0.34)} -1.5 ${r(L * 0.4)} -2.4 Q${r(L * 0.36)} -3.6 ${r(L * 0.2)} -3.5 Q${r(L * 0.12)} -2.8 ${r(L * 0.16)} -1.6 Z" fill="#6c6a58"/>`;
   g += `<circle cx="${r(L * 0.3)}" cy="-2.9" r=".38" fill="#1d1c18"/><circle cx="${r(L * 0.31)}" cy="-3" r=".12" fill="#e9e2c0"/>`;
   for (let i = 0; i < 7; i++) g += `<path d="M${r(-L * 0.18 + i * 1.6)} ${r(-3.3 - Math.sin(i / 6 * Math.PI) * 0.4)} l.4 -1.1 l.4 1.1" fill="#2c2b25"/>`;
-  g += `<path d="M${r(-L * 0.05)} -1.4 l-1 1.5 m1.8 -1.4 l.6 1.4 M${r(L * 0.12)} -1.4 l.9 1.4" stroke="#4a4840" stroke-width=".8" stroke-linecap="round"/>`;
+  /* kurze, seitlich abgewinkelte Beine: der Bauch liegt flach auf dem warmen Stein */
+  g += `<path d="M${r(-L * 0.12)} -1.5 l-1.3 .5 l-.4 .9 M${r(L * 0.02)} -1.4 l1 .6 l.2 .8 M${r(L * 0.12)} -1.5 l1.2 .4 l.5 .8" stroke="#4a4840" stroke-width=".7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
   g += `<path d="M${r(-L * 0.2)} -3.2 Q${r(L * 0.05)} -3.9 ${r(L * 0.32)} -3.3" stroke="#f0d8a0" stroke-width=".4" fill="none" opacity=".7"/>`;
   g += `<path d="M${r(-L * 0.22)} -.4 L${r(L * 0.3)} -.4 L${r(L * 0.3 - 20)} .2 L${r(-L * 0.22 - 18)} .2 Z" fill="#26341a" opacity=".22"/>`;
-  S.teil({ oben: true, id: "leguan", de: "der Leguan", syl: "LE-gu-an", it: "l'iguana", itSyl: "i-GUA-na", en: "iguana", x: sx0 + 2, y: sy0 - h - t * 0.55, kunst: g,
+  S.teil({ oben: true, id: "leguan", de: "der Leguan", syl: "LE-gu-an", it: "l'iguana", itSyl: "i-GUA-na", en: "iguana", x: sx0 + 2, y: sy0 - h - t * 0.55 + 0.9, kunst: g,
     tipp: "In Chichén Itzá sonnen sich viele Leguane auf den warmen Steinen." });
 }
 
@@ -752,7 +774,7 @@ const tischUnter = [];
   }
   /* DIE AVOCADO — eine halbe mit Kern und eine ganze, ganz auf der Platte */
   {
-    const x = -14.2, y = y0 + 1;
+    const x = -15.2, y = y0 + 1;
     let g = `<ellipse cx="${x - 2.4}" cy="${y - 1.4}" rx="1.6" ry="2" fill="#2f4a1c" transform="rotate(-30 ${x - 2.4} ${y - 1.4})"/>`;
     g += `<path d="M${x} ${y} Q${x - 2.2} ${y - 0.4} ${x - 2} ${y - 2.6} Q${x - 1.4} ${y - 4.4} ${x + 0.2} ${y - 4.2} Q${x + 2} ${y - 3.8} ${x + 2} ${y - 1.6} Q${x + 1.8} ${y + 0.2} ${x} ${y} Z" fill="#355e1e"/>`;
     g += `<path d="M${x} ${y - 0.5} Q${x - 1.6} ${y - 0.8} ${x - 1.4} ${y - 2.6} Q${x - 1} ${y - 3.8} ${x + 0.2} ${y - 3.6} Q${x + 1.5} ${y - 3.3} ${x + 1.4} ${y - 1.6} Q${x + 1.3} ${y - 0.4} ${x} ${y - 0.5} Z" fill="#d8e88a"/>`;
@@ -763,7 +785,7 @@ const tischUnter = [];
   }
   /* DIE LIMETTE — halbiert und ganz, auf der Platte neben dem Mörser */
   {
-    const x = 7.9, y = y0 + 1.5;
+    const x = -0.6, y = y0 + 1.3;
     let g = `<circle cx="${x + 1.8}" cy="${y - 1.1}" r="1.15" fill="${S.rg("limette", [[0, "#94d82d"], [1, "#4c8a1a"]], 0.35, 0.3)}"/>`;
     g += `<ellipse cx="${x - 0.6}" cy="${y - 0.75}" rx="1.35" ry=".75" fill="#5c940d"/><ellipse cx="${x - 0.6}" cy="${y - 0.95}" rx="1.1" ry=".55" fill="#d8f5a2"/>`;
     for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; g += `<line x1="${x - 0.6}" y1="${y - 0.95}" x2="${r(x - 0.6 + Math.cos(a) * 0.9)}" y2="${r(y - 0.95 + Math.sin(a) * 0.45)}" stroke="#a9e34b" stroke-width=".15"/>`; }
@@ -774,7 +796,7 @@ const tischUnter = [];
   S.teil({ id: "tisch", de: "der Tisch", syl: "TISCH", it: "il tavolo", itSyl: "TA-vo-lo", en: "table", x: TI.x, y: TI.y - HV * 0.5, steht: true, kunst: `<g transform="translate(0 ${r(HV * 0.5)})">${k}</g>`,
     zoom: { x: TI.x - 22, y: TI.y - HV - 15, w: 42, h: 28 },
     unter: tischUnter,
-    tipp: "Zu Mittag isst die Verkäuferin an ihrem Tisch: Tacos, Tortillas und Guacamole." });
+    tipp: "Zwischendurch isst die Verkäuferin an ihrem Tisch: Tacos, Tortillas und Guacamole." });
 }
 
 /* =====================================================================
@@ -809,7 +831,7 @@ const standUnter = [];
      Fangzähne) und eine Maske des Regengottes Chaac mit langer, hochgerollter Rüsselnase */
   {
     let g = "";
-    { const x = x0 + 9, yo = yT - 0.2;
+    { const x = x0 + 9.5, yo = yT - 0.2;
       g += `<path d="M${r(x - 3)} ${r(yo - 5.4)} Q${r(x - 3.4)} ${r(yo - 1.4)} ${r(x - 1.2)} ${r(yo)} L${r(x + 1.2)} ${r(yo)} Q${r(x + 3.4)} ${r(yo - 1.4)} ${r(x + 3)} ${r(yo - 5.4)} Q${x} ${r(yo - 6.6)} ${r(x - 3)} ${r(yo - 5.4)} Z" fill="#d89a3a"/>`;
       g += `<path d="M${r(x - 3)} ${r(yo - 5.3)} l-.5 -1.6 l1.8 .7 Z M${r(x + 3)} ${r(yo - 5.3)} l.5 -1.6 l-1.8 .7 Z" fill="#a8641e"/>`;
       for (const [dx, dy] of [[-2, -4.6], [2, -4.6], [-2.4, -2.4], [2.4, -2.4], [0, -5.6]]) g += `<circle cx="${r(x + dx)}" cy="${r(yo + dy)}" r=".45" fill="none" stroke="#3a2010" stroke-width=".25"/>`;
@@ -836,7 +858,7 @@ const standUnter = [];
     g += `<path d="M${x - 2.1} ${r(yT - 7)} q1 -1 2.1 0 q1.1 -1 2.1 0" stroke="#d6336c" stroke-width=".6" fill="none"/><circle cx="${x}" cy="${r(yT - 6.6)}" r=".55" fill="#f1c232"/>`;
     k += g;
     standUnter.push({ id: "totenkopf", de: "der Totenkopf", syl: "TO-ten-kopf", it: "il teschio", itSyl: "TE-schio", en: "skull", x, y: yT, kunst: flaeche(-3.8, -8.8, 7.6, 9, 0.5),
-      tipp: "Zum Tag der Toten schmückt man Altäre mit bunten Totenköpfen aus Zucker und orangen Studentenblumen." });
+      tipp: "Bunte Totenköpfe aus Ton erinnern an den Tag der Toten im November. Dann schmückt man Altäre mit Zuckerschädeln und orangefarbenen Studentenblumen." });
   }
   /* DER JAGUAR — sitzende Pfeife aus rotbraunem Ton, aufgemalte Rosetten, Maul mit Fangzähnen, Mundstück am Schwanz */
   {
@@ -856,7 +878,7 @@ const standUnter = [];
   }
   /* DIE RASSEL — zwei bemalte Maracas */
   {
-    const x = x0 + 42.2;
+    const x = x0 + 43.4;
     let g = "";
     for (const [dx, rot, c] of [[-1.4, -20, "#c8102e"], [1.6, 16, "#2f9e6e"]]) g += `<g transform="translate(${x + dx} ${r(yT)}) rotate(${rot})"><rect x="-.45" y="-3.6" width=".9" height="3.6" rx=".4" fill="#8a5a2a"/><ellipse cx="0" cy="-6" rx="2.3" ry="2.7" fill="${c}"/><path d="M-2.1 -6.2 q2.1 1.4 4.2 0" stroke="#f1c232" stroke-width=".5" fill="none"/><path d="M-1.8 -5.1 q1.8 .9 3.6 0" stroke="#fff" stroke-width=".3" fill="none"/><ellipse cx="-.8" cy="-6.9" rx=".6" ry=".9" fill="#fff" opacity=".35"/></g>`;
     k += g;
@@ -865,7 +887,7 @@ const standUnter = [];
   }
   /* DIE FLAGGE — Papierfähnchen Mexikos im Tonbecher (Adler auf dem Nopal mit Schlange) */
   {
-    const x = x0 + 4.4;
+    const x = x0 + 2.9;
     let g = `<path d="M${x - 1.6} ${r(yT)} L${x + 1.6} ${r(yT)} L${x + 1.9} ${r(yT - 3)} L${x - 1.9} ${r(yT - 3)} Z" fill="#a85a32"/><path d="M${x - 1.9} ${r(yT - 3)} L${x + 1.9} ${r(yT - 3)}" stroke="#f1c232" stroke-width=".35"/>`;
     for (const [dx, rot] of [[-0.4, -9], [0.6, 7]]) {
       g += `<g transform="translate(${r(x + dx)} ${r(yT - 2.6)}) rotate(${rot})"><line x1="0" y1="0" x2="0" y2="-11" stroke="#7a5532" stroke-width=".25"/>`;
@@ -1003,6 +1025,8 @@ const standUnter = [];
 /* Abendlicht: warmer Schein von rechts (fängt nichts ab) */
 S.davor(`<rect width="320" height="200" fill="${S.rg("abendlicht", [[0, "#ffcf86", 0.24], [0.5, "#ffcf86", 0.06], [1, "#ffcf86", 0]], 1, 0.45, 0.9)}"/>`);
 
+/* der Reliefstein liegt über den langen Bodenschatten (sie fallen nicht durch ihn hindurch) */
+S.hinten(STEIN);
 /* Silbenschreibung einheitlich: nur die betonten Silben groß, alles andere klein */
 const silben = (t) => { if (!t) return t; const st = t.split(/([- ])/); const gross = (x) => x.length && x === x.toUpperCase() && x !== x.toLowerCase(); const lang = st.some((x) => gross(x) && x.length > 1); return st.map((x) => (/^[- ]$/.test(x) ? x : (gross(x) && (x.length > 1 || !lang) ? x : x.toLowerCase()))).join(""); };
 for (const t of S.teile) for (const u of [t, ...(t.unter || [])]) { u.syl = silben(u.syl); u.itSyl = silben(u.itSyl); }

@@ -7,10 +7,14 @@
    Baubroschüre Neues Schloss (Finanzministerium BW); Structurae/LAP
    „Fernsehturm“; Wikipedia Königsbau (135 m, 34 Säulen); Stuttgart-
    Marketing „Stäffele“; Runde 2 ohne Websuche, aus Fachwissen):
-   - STANDORT: oben am Rand des Kleinen Schlossplatzes, ≈ 12 m hinter der
-     Kante der großen Freitreppe; die Terrasse liegt ≈ 4,4 m über der
-     Königstraße, Auge 1,6 m darüber (6 m über dem Platz). Blick nach
-     Ostnordost (Bildmitte ≈ 70°) über den Schlossplatz.
+   - STANDORT: oben auf dem Kleinen Schlossplatz, 7 m hinter der Kante der
+     breiten Freitreppe (Sitz- und Gehtreppe, hier ≈ 0,9 m tiefe Tritte,
+     29 Stufen, 4,3 m hinab zur Königstraße); Auge 1,7 m über der Terrasse
+     (6 m über dem Platz). Rechts neben der Treppe steht der Glaswürfel des
+     KUNSTMUSEUMS, von dem nur die linke Kante ins Bild ragt. Blick nach
+     Ostnordost (Bildmitte ≈ 70°) über den Schlossplatz. Wegen der tiefen
+     Tritte sieht man von jeder Stufe den hinteren Streifen; Handläufe
+     fallen nach hinten zur Mitte hin ab.
      Von links nach rechts: KÖNIGSBAU (die Kolonnade flieht entlang der
      Königstraße) — am Ende der Königstraße der BAHNHOFSTURM mit dem
      Mercedes-Stern — darüber am Nordhang die WEINBERGE mit Stäffele —
@@ -23,6 +27,7 @@
      (wie bei einem Panorama), Höhen und Abstände sind maßstäblich.
    - MASSSTAB: Platz y = 112 + 1800 / Abstand; 1 m = (y − 112) / 6
      Einheiten. Terrasse y = 112 + 480 / Abstand; 1 m = (y − 112) / 1,6.
+     Terrasse/Treppe: y = 112 + (1,7 − z) · 300 / Abstand.
      Mensch 1,70 m: bei y 131 ≈ 5,4 Einheiten, bei y 128 ≈ 4,5.
    - LICHT: 3. Oktober, später Nachmittag, Sonne Azimut ≈ 232°, Höhe ≈ 22°,
      also hinter uns rechts. Schatten fallen 2,5 × Höhe lang vom
@@ -60,8 +65,9 @@
    - TYPISCH: Maultaschen in der Brühe, Linsen mit Spätzle und
      Saitenwürstle, die schwäbische Brezel (dünne Ärmchen, dicker Bauch),
      ein Viertele Trollinger im Henkelglas.
-   UNSICHER außerdem: Breite der Freitreppe (hier ≈ 6 m zwischen den
-   Brüstungen), genaue Stellung von Pavillon und Brunnen auf dem Platz.
+   UNSICHER außerdem: Breite und Trittmaß der Freitreppe (hier ≈ 34 m, Tritt
+   0,9 m), Abstand des Kunstmuseums, genaue Stellung von Pavillon und
+   Brunnen auf dem Platz.
    ===================================================================== */
 "use strict";
 const path = require("path");
@@ -836,7 +842,7 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
   /* hintere Säulen und Bögen (durch die vorderen Bögen sichtbar) */
   const saeule = (w, dunkel) => { const a = P(w, R, 1.2), b = P(w, R, 4.6); return `<path d="M${r(a[0] - 0.25)} ${r(a[1])} L${r(b[0] - 0.2)} ${r(b[1])} L${r(b[0] + 0.2)} ${r(b[1])} L${r(a[0] + 0.25)} ${r(a[1])} Z" fill="${dunkel ? "#2c3833" : EIS}"/><path d="M${r(b[0] - 0.42)} ${r(b[1] + 0.1)} L${r(b[0] + 0.42)} ${r(b[1] + 0.1)} L${r(b[0] + 0.3)} ${r(b[1] + 0.5)} L${r(b[0] - 0.3)} ${r(b[1] + 0.5)} Z" fill="${dunkel ? "#2c3833" : "#56695f"}"/>`; };
   const bogen = (w0, w1, dunkel) => {
-    const a = P(w0, R, 3.6), b = P(w1, R, 3.6), m = P((w0 + w1) / 2, R, 4.55), mm = P((w0 + w1) / 2, R, 3.4);
+    const a = P(w0, R, 3.2), b = P(w1, R, 3.2), m = P((w0 + w1) / 2, R, 4.25), mm = P((w0 + w1) / 2, R, 3.9);
     const breit = (b[0] - a[0]) * 0.13;
     let g = `<path d="M${Pp(a)} C${r(a[0] - breit)} ${r(m[1] + 0.3)} ${r(m[0] - (b[0] - a[0]) * 0.32)} ${r(m[1])} ${Pp(m)} C${r(m[0] + (b[0] - a[0]) * 0.32)} ${r(m[1])} ${r(b[0] + breit)} ${r(m[1] + 0.3)} ${Pp(b)}" stroke="${dunkel ? "#2c3833" : "#5f7a6a"}" stroke-width="${dunkel ? 0.25 : 0.4}" fill="none"/>`;
     if (!dunkel) {
@@ -1092,7 +1098,7 @@ const P2 = (p) => `${r(p[0])} ${r(p[1])}`;
   const taube = (x, y, s, sp, pickt) => {
     const X = (v) => r(x + v * s * sp), Y = (v) => r(y + v * s);
     const [tx0, ty0] = spitze(128 + x, 194 + y, 0.25, true), tx = tx0 - 128, ty = ty0 - 194;
-    let g = `<path d="M${X(-3)} ${Y(0)} L${r(tx - 1)} ${r(ty)} L${r(tx + 1)} ${r(ty)} L${X(3)} ${Y(0)} Z" fill="#2a2216" opacity=".18"/>`;
+    let g = "";
     g += `<ellipse cx="${x}" cy="${Y(0.15)}" rx="${r(3 * s)}" ry="${r(0.45 * s)}" fill="#2a2216" opacity=".22"/>`;
     const kopf = pickt ? [2.9, -1.4] : [2.3, -3.6];
     g += `<path d="M${X(-1.6)} ${Y(-1.5)} L${X(-4.7)} ${Y(-0.9)} L${X(-4.6)} ${Y(-0.5)} L${X(-1.6)} ${Y(-0.8)} Z" fill="#4e545c"/><path d="M${X(-4.7)} ${Y(-0.9)} L${X(-4.6)} ${Y(-0.5)}" stroke="#1f2328" stroke-width="${r(0.3 * s)}"/>`;

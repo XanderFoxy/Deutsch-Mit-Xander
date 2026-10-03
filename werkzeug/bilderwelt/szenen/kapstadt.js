@@ -58,6 +58,10 @@
      „Madiba-Hemden“, Doek (Kopftuch). Drehbrücke rechts vom Turmkai
      (UNSICHER: genaue Lage und Form). Sonnenschirme bleiben bei Südostwind
      zu. Lion's Head: Felskopf nach Ansichten (UNSICHER: Schulterhöhe).
+   - RUNDE 4: Kind und Kellner am Kai, Möwen, Flugzeug im Landeanflug (von
+     Norden über die Tafelbucht, UNSICHER), Tafelberg Road als feine Linie
+     (UNSICHER: Höhe ≈ 360 m angenommen). Bildwinkel bleibt 66° (Vorschlag
+     für 52–55° liegt beim Auftraggeber).
    Maßstab: Bild 66° breit (≈ 6 Einheiten je Grad), Augenhöhe y = 142
    (3,6 m über dem Wasser). Ferne Dinge: y = 142 − 347·(Höhe − 3,6)/Abstand.
    Vorne auf dem Kai: Einheiten je Meter = (y − 142) / 1,6.
@@ -251,8 +255,8 @@ const bergUnter = [];
   /* abgerissene Fetzen, schräg nach rechts unten treibend (Wind aus Südost) */
   S.def(`<linearGradient id="${S.id("fetzen")}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#eef2f6"/><stop offset="1" stop-color="#bfcadb"/></linearGradient>`);
   let fe = "";
-  for (const [x, y, w] of [[146, TOP + 20, 7], [180, TOP + 25, 4.5], [214, TOP + 27, 8.5], [244, TOP + 22, 5.5], [268, TOP + 18, 3.5], [196, TOP + 31, 3]]) fe += `<path d="M${x - w} ${r(y)}q${r(w * 0.3)} ${r(-w * 0.34)} ${r(w * 0.9)} ${r(-w * 0.3)}q${r(w * 0.5)} ${r(-w * 0.25)} ${r(w * 0.9)} ${r(w * 0.05)}q${r(w * 0.3)} ${r(w * 0.3)} ${r(0.2 * w)} ${r(w * 0.42)}q${r(-w)} ${r(w * 0.12)} ${r(-2 * w)} ${r(-w * 0.17)}z" transform="rotate(14 ${x} ${r(y)})"/>`;
-  tuch += `<g fill="url(#${S.id("fetzen")})" opacity=".78" filter="url(#${S.id("fein")})">${fe}</g>`;
+  for (const [x, y, w] of [[146, TOP + 17, 6], [180, TOP + 21, 4], [214, TOP + 22, 7], [244, TOP + 19, 5], [268, TOP + 15, 3.5], [196, TOP + 26, 2.6]]) fe += `<path d="M${x - w} ${r(y)}q${r(w * 0.3)} ${r(-w * 0.34)} ${r(w * 0.9)} ${r(-w * 0.3)}q${r(w * 0.5)} ${r(-w * 0.25)} ${r(w * 0.9)} ${r(w * 0.05)}q${r(w * 0.3)} ${r(w * 0.3)} ${r(0.2 * w)} ${r(w * 0.42)}q${r(-w)} ${r(w * 0.12)} ${r(-2 * w)} ${r(-w * 0.17)}z" transform="rotate(14 ${x} ${r(y)})"/>`;
+  tuch += `<g fill="url(#${S.id("fetzen")})" opacity=".6" filter="url(#${S.id("wolke")})">${fe}</g>`;
   /* dünne Fahnen über dem Sattel und am Kloof Nek */
   tuch += `<g filter="url(#${S.id("wolke")})" opacity=".55" fill="#ffffff"><ellipse cx="98" cy="${r(SATTEL[1] - 2)}" rx="6" ry="1.8"/><ellipse cx="296" cy="${r(TOP + 7)}" rx="6" ry="2.2"/></g>`;
   k += tuch;
@@ -566,7 +570,7 @@ const KAI = 214;   // Vorderkante des Kais, auf dem der Betrachter steht
   k += `<g mask="url(#${S.id("spmaske")})" opacity=".62"><g filter="url(#${S.id("spiegel")})">${sp}</g></g>`;
   /* Böenfelder: der Südost kräuselt das Wasser streifenweise, dunklere Felder laufen schräg übers Becken */
   let boe = "";
-  for (const [x, y, w, h] of [[30, 160, 120, 7], [210, 168, 150, 9], [60, 186, 170, 12], [250, 196, 150, 12], [150, 152, 90, 4]]) boe += `M${x} ${y}l${w} ${r(-h * 0.5)}l${r(w * 0.12)} ${h}l${-w} ${r(h * 0.5)}z`;
+  for (const [x, y, w, h] of [[30, 160, 120, 7], [210, 168, 150, 9], [60, 186, 170, 12], [250, 196, 130, 12], [150, 152, 90, 4]]) boe += `M${x} ${y}l${w} ${r(-h * 0.5)}l${r(w * 0.12)} ${h}l${-w} ${r(h * 0.5)}z`;
   k += `<g clip-path="url(#${S.id("wasserclip")})"><path d="${boe}" fill="#0e3440" opacity=".2" filter="url(#bw_weich)"/></g>`;
   /* Wellen: einzelne Bögen, hinten klein, flach und dicht, vorn breiter und locker; Länge und Abstand
      streuen; wenige Schaumköpfchen */
@@ -795,7 +799,7 @@ const HAUT = "#6b4430", HAUTS = "#4a2c1e";
      Unterarme gehen nach vorn-unten zu den Stäben, die Schlägelköpfe berühren die Stäbe; der rechte
      Fuß ist im Takt angehoben. Buntes Hemd, Strickmütze. Licht von rechts hinten (Nordwest).
      Ursprung = zwischen den Füßen. */
-  let k = schlag(18, 1.76, vorn(MUS.y), 0.3) + `<ellipse cx="-5.6" cy="-.6" rx="5.4" ry="1" fill="#1d1810" opacity=".4"/><ellipse cx="7.4" cy="-.8" rx="4.4" ry=".9" fill="#1d1810" opacity=".3"/>`;
+  let k = schlag(18, 1.76, vorn(MUS.y) * 0.2, 0.3) + `<ellipse cx="-5.6" cy="-.6" rx="5.4" ry="1" fill="#1d1810" opacity=".4"/><ellipse cx="7.4" cy="-.8" rx="4.4" ry=".9" fill="#1d1810" opacity=".3"/>`;
   /* Beine (Hose), rechtes Knie leicht gebeugt */
   k += `<path d="M-8.6 -46L-.4 -46L-2.4 -3L-8.8 -3Q-9.4 -24 -8.6 -46ZM.4 -46L8.6 -46Q10.6 -26 9.8 -5.4L4 -5Q4.4 -24 .4 -40Z" fill="${S.lg("hose", [[0, "#24252a"], [0.6, "#3a3c42"], [1, "#2a2b30"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M-6 -44Q-6.4 -24 -5.6 -4M6.4 -30q1.6 3 1.4 7" stroke="#55585f" stroke-width=".5" fill="none"/>`;
@@ -855,6 +859,41 @@ const HAUT = "#6b4430", HAUTS = "#4a2c1e";
    10 — DER CAFÉTISCH am Kai (Lupe: Rooibostee, Protea, Koeksister,
         Pinguin), 11 — DER STUHL
    ===================================================================== */
+{
+  /* DAS KIND tanzt am linken Rand zur Marimba: Arme hoch, ein Bein angehoben, buntes T-Shirt; ≈ 1,1 m.
+     Gezeichnet in 50 Einheiten je Meter, dann verkleinert. */
+  const X = 17, Y = 246, k0 = vorn(Y) / 50;
+  const HK = "#7a4a30";
+  let c = schlag(14, 1.1, 50 * 0.2, 0.25);
+  c += `<path d="M-3 -24L-2.6 -2L-6.4 -1.6L-6 0h5.4L1 -24ZM2 -24L3.6 -14L9.4 -10.6L8.6 -8.6L1.6 -12.4L-1 -24Z" fill="${HK}"/>`;
+  c += `<path d="M-5 -30L5 -30L5.4 -21Q0 -19.6 -5.4 -21Z" fill="#2f5aa0"/>`;
+  c += `<path d="M-5.6 -43Q-7 -38 -6 -30L6 -30Q7 -38 5.6 -43Q0 -45 -5.6 -43Z" fill="#f2c62f"/><path d="M-5 -38h10M-5.6 -34h11.4" stroke="#e8608e" stroke-width="1.2"/>`;
+  c += `<path d="M-5 -42L-10 -48L-12 -55M5 -42L10 -49L9 -56" stroke="${HK}" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  c += `<circle cx=".4" cy="-49" r="5" fill="${HK}"/><path d="M-4.6 -50.6Q-4 -55.6 .6 -55.4Q5.4 -55 5.2 -50Q2 -53 -4.6 -50.6Z" fill="#1d120c"/><path d="M1 -48.6q.6.4 1.2 0M3.4 -48.8q.6.4 1.2 0M1.6 -46.2q1.2.8 2.4 0" stroke="#1d120c" stroke-width=".45" fill="none"/>`;
+  c += `<path d="M-1 -1.6h-5.6l-.4 1.6h6.4zM8.4 -11.4l2.6 1.6-1 1.6-2.6-1.4z" fill="#f4f4f2"/>`;
+  S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "il bambino", itSyl: "bam-BI-no", en: "child", x: X, y: Y, steht: true, kunst: `<g transform="scale(${r(k0 * 100) / 100})">${c}</g>`,
+    tipp: "Das Kind tanzt zur Marimba-Musik. Die Mehrzahl ist: die Kinder." });
+}
+{
+  /* DER KELLNER bringt auf einem Tablett zwei Gläser zum Tisch: weißes Hemd, schwarze Weste und lange
+     Schürze, geht nach links; ≈ 1,75 m */
+  const X = 368, Y = 233, k0 = vorn(Y) / 50;
+  const HKE = "#c99a74";
+  let c = schlag(16, 1.75, 50 * 0.2, 0.25);
+  c += `<path d="M2 -44L5 -24L8 -3L4.4 -3L1 -24L-1 -42ZM-3 -44L-6 -24L-9 -3L-5.4 -3L-2.4 -24L0 -42Z" fill="#1d1f24"/>`;
+  c += `<path d="M-10.4 -3.4h6.4l.4 3.4h-7.6zM3.8 -3.4h6l.8 3.4h-7.2z" fill="#121316"/>`;
+  c += `<path d="M-7 -60Q-8.4 -50 -7 -42L7 -42Q8.4 -50 7 -60Q0 -63 -7 -60Z" fill="#f6f6f2"/><path d="M-6 -58L-4 -42L4 -42L6 -58L2 -56L0 -50L-2 -56Z" fill="#1d1f24"/>`;
+  c += `<path d="M-7 -44L-8.6 -14L8.6 -14L7 -44Z" fill="#26282e"/><path d="M-7 -44h14" stroke="#f6f6f2" stroke-width=".6"/>`;
+  /* Arme: rechts hängend, links hoch mit Tablett */
+  c += `<path d="M6.4 -58L9 -48L8 -40" stroke="#f6f6f2" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="-39" r="1.5" fill="${HKE}"/>`;
+  c += `<path d="M-6.4 -58L-12 -56L-15 -64" stroke="#f6f6f2" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="-15" cy="-65.4" r="1.5" fill="${HKE}"/>`;
+  c += `<ellipse cx="-15" cy="-67" rx="7" ry="1.3" fill="#c9cdd2"/><ellipse cx="-15" cy="-67.4" rx="7" ry="1.1" fill="#e6e9ec"/>`;
+  c += `<path d="M-19.6 -67.6l.4 -5h2.8l.4 5z" fill="#c8552c" opacity=".9"/><path d="M-12 -67.6l.3 -4.4h2.4l.3 4.4z" fill="#e8f1f2" opacity=".7"/><path d="M-11.4 -70h1.8" stroke="#f2c62f" stroke-width=".9"/>`;
+  c += `<path d="M-1.8 -60L-1.6 -63.6L2 -63.6L2.2 -60Z" fill="${HKE}"/><ellipse cx="-.4" cy="-68.4" rx="4.4" ry="5.2" fill="${HKE}"/><path d="M-4.6 -70Q-4.2 -74.6 0 -74.4Q4.4 -74.2 4 -69.4Q1.4 -72.2 -4.6 -70Z" fill="#3a2418"/>`;
+  c += `<path d="M-3.6 -68.8q.6.4 1.2 0M-1 -69q.6.4 1.2 0M-2.6 -65.6q1 .6 2 0" stroke="#3a2418" stroke-width=".45" fill="none"/><path d="M2.6 -64.6h1" stroke="#1d1f24" stroke-width=".8"/>`;
+  S.teil({ id: "kellner", de: "der Kellner", syl: "KELL-ner", it: "il cameriere", itSyl: "ca-me-RIE-re", en: "waiter", x: X, y: Y, steht: true, kunst: `<g transform="scale(${r(k0 * 100) / 100})">${c}</g>`,
+    tipp: "Der Kellner bringt Rooibostee. Eine Frau, die bedient, ist die Kellnerin." });
+}
 const TISCH = { x: 312, y: 247 };
 {
   /* Nachbartisch am rechten Rand (angeschnitten) mit zusammengebundenem Sonnenschirm: Bei Südostwind

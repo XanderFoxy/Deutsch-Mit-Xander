@@ -63,6 +63,9 @@
    - RUNDE 3: Fußweg zwischen Fels und Rasen und Regenpfütze auf der
      Felsplatte (UNSICHER: genaue Führung des Wegs am Point). Touristin von
      Hand gezeichnet (fotografiert die Oper), Picknick als Lupe.
+   - RUNDE 4: Joggerin mit Hund auf dem Uferweg (Morgen), Picknick in echter
+     Zentralperspektive (Fluchtpunkt auf dem Horizont), Glaswände innerhalb der
+     Schalenöffnungen. UNSICHER: Lage der Glaswand des Konzertsaals im Blick.
    Maßstab: Bild 34° breit (≈ 11,9 Einheiten je Grad), Augenhöhe y = 146
    (6 m über dem Wasser). Ferne Dinge werden mit einer echten
    Zentralprojektion gesetzt (proj), ihre Spiegelbilder mit derselben
