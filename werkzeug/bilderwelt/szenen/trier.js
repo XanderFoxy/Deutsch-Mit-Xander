@@ -63,7 +63,7 @@ S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("licht")}" x="-10%"
 const licht = (svg) => `<g filter="url(#${S.id("licht")})">${svg}</g>`;
 
 /* Stoffe */
-const STEIN = S.lg("stein", [[0, "#5d5852"], [0.5, "#4a4641"], [1, "#3a3733"]], 0, 0, 1, 0);
+const STEIN = S.lg("stein", [[0, "#57524b"], [0.5, "#403c37"], [1, "#2f2c29"]], 0, 0, 1, 0);
 const STEIN_H = S.lg("steinh", [[0, "#6e675d"], [1, "#58534b"]]);
 const GOLD = S.lg("gold", [[0, "#fff1b0"], [0.45, "#f0c64a"], [1, "#a8781a"]], 0, 0, 1, 1);
 const DUNKEL = "#141210";
@@ -264,7 +264,7 @@ let PN_UNTER = [];
     /* leicht unregelmäßige Oberkante (ausgebrochene Quader) */
     let oben = `M${x} 0 V${top} `;
     const n = Math.round(w / 3);
-    for (let i = 1; i <= n; i++) { const xx = x + i * w / n; const dy = (i % 3 === 1 && t.turm) ? r(-0.8 + z() * 0.4) : 0; oben += `L${r(xx - 0.01)} ${r(top + (i % 4 === 2 ? 1.1 : 0))} L${r(xx)} ${r(top + dy)} `; }
+    for (let i = 1; i <= n; i++) { const xx = x + i * w / n; const v = z(), dy = v < 0.25 ? r(1 + z() * 1.6) : (v < 0.4 ? r(-0.6) : 0); oben += `L${r(xx - 0.8)} ${r(top + dy)} L${r(xx)} ${r(top + dy)} `; }
     oben += `V0 Z`;
     k += `<path d="${oben}" fill="${STEIN}"/>`;
     k += `<path d="${oben}" fill="url(#${S.id("quader")})"/>`;
@@ -315,6 +315,10 @@ let PN_UNTER = [];
     k += `<path d="M${X(cx - bw)} 0 V${Y(sp)} A${M(bw)} ${M(bw)} 0 0 1 ${X(cx + bw)} ${Y(sp)} V0 Z" fill="${S.rg("tunnel", [[0, "#000", 0], [0.6, "#000", 0.15], [1, "#000", 0.6]], 0.5, 0.65, 0.6)}"/>`;
     /* Keilsteine des Bogens */
     for (let a = 180; a <= 360; a += 15) { const ra = a * Math.PI / 180; k += `<path d="M${r(X(cx) + Math.cos(ra) * M(bw))} ${r(Y(sp) + Math.sin(ra) * M(bw))} L${r(X(cx) + Math.cos(ra) * M(bw + 0.5))} ${r(Y(sp) + Math.sin(ra) * M(bw + 0.5))}" stroke="#2a2622" stroke-width=".3"/>`; }
+  }
+  /* Besucher schauen aus zwei Fenstern im Obergeschoss (man kann die Porta Nigra besichtigen) */
+  for (const [fx, fh, c] of [[-14.2, G.og2 + 1.0, "#c8302a"], [4.9, G.og1 + 1.0, "#2f5f95"]]) {
+    k += `<path d="M${X(fx - 0.32)} ${Y(fh)} V${Y(fh + 0.5)} Q${X(fx)} ${Y(fh + 0.62)} ${X(fx + 0.32)} ${Y(fh + 0.5)} V${Y(fh)} Z" fill="${c}"/><circle cx="${X(fx)}" cy="${Y(fh + 0.82)}" r="${M(0.15)}" fill="#e3b796"/><path d="M${X(fx - 0.16)} ${Y(fh + 0.9)} Q${X(fx)} ${Y(fh + 1.05)} ${X(fx + 0.16)} ${Y(fh + 0.9)} Z" fill="#4a3426"/>`;
   }
   /* zwei Leute in den Durchfahrten (Maßstab) */
   k += passant(X(-3.2), 0, M(1.72), { hemd: "#c9b28a", rueck: true }) + passant(X(4.1), 0, M(1.66), { hemd: "#9a3a3a", hose: "#3d4a5a", rueck: true, schritt: 0.14 });
@@ -370,7 +374,7 @@ let PN_UNTER = [];
   let k = "";
   const [a0x, a0y] = P(d0, 0), [a1x, a1y] = P(d1, 0), [b1x, b1y] = P(d1, h), [b0x, b0y] = P(d0, h);
   /* Hausfront in der Flucht (Putz in Ocker), Gesimse und Fenster */
-  k += `<path d="M${a0x} ${a0y} L${a1x} ${a1y} L${b1x} ${b1y} L${b0x} ${b0y} Z" fill="${S.lg("haus", [[0, "#9c8466"], [1, "#b39a76"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M${a0x} ${a0y} L${a1x} ${a1y} L${b1x} ${b1y} L${b0x} ${b0y} Z" fill="${S.lg("haus", [[0, "#7f7266"], [1, "#a08c72"]], 0, 0, 1, 0)}"/>`;
   /* Stirnseite zur Porta hin (Schatten) */
   const quad = (da, db, ha, hb, fill, extra = "") => { const [p1x, p1y] = P(da, ha), [p2x, p2y] = P(db, ha), [p3x, p3y] = P(db, hb), [p4x, p4y] = P(da, hb); return `<path d="M${p1x} ${p1y} L${p2x} ${p2y} L${p3x} ${p3y} L${p4x} ${p4y} Z" fill="${fill}"${extra}/>`; };
   for (const hh of [4.4, 8.0, 11.6]) k += quad(d0, d1, hh, hh + 0.35, "#cbb48e") + quad(d0, d1, hh - 0.15, hh, "#6f5a3e");
