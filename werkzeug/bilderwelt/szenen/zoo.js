@@ -212,13 +212,14 @@ function tierBaukasten(S) {
     k += `<ellipse cx="14.6" cy="-9.4" rx="2.4" ry="1.6" fill="#c99a8e" opacity=".45"/>`;
     k += `<ellipse cx="19.2" cy="-12.6" rx=".45" ry=".22" fill="#3a2a2b"/><path d="M11 -15.8 q.2 -1.4 .9 -1 q-.1 .8 -.5 1.2 Z" fill="#6c5a5c"/>`;
     k += linie("M4.6 -12.6 Q3.8 -10 4.6 -7.4", "#000", 0.15) + linie("M-8.6 -12.6 Q-10 -10 -9.2 -6.4", "#000", 0.15) + auge(13, -15.3, 0.28);
-    let g = gr(m, dir, k);
     if (wasser) {
-      const y = -wasser * m / 10;
-      g = `<g>${g}<path d="M${f(-17 * m / 10)} ${f(y)} L${f(21 * m / 10)} ${f(y)} L${f(21 * m / 10)} ${f(y + 1.6 * m / 10)} Q0 ${f(y + 2.4 * m / 10)} ${f(-17 * m / 10)} ${f(y + 1.6 * m / 10)} Z" fill="${LG("tw_nilw", [[0, "#5d7f74", 0.92], [1, "#4b6a60", 0.98]])}"/>` +
-        `<path d="M${f(-16 * m / 10)} ${f(y + 0.2)} q${f(16 * m / 10)} ${f(-0.6 * m / 10)} ${f(36 * m / 10)} 0" stroke="#d6e6df" stroke-width=".35" opacity=".7" fill="none"/></g>`;
+      /* im Wasser: nur Rücken, Kopf, Augen, Ohren und Nüstern schauen heraus */
+      einmal("nilw" + wasser, () => S.def(`<clipPath id="${S.id("tw_nilw" + wasser)}"><rect x="-30" y="-30" width="60" height="${f(30 - wasser)}"/></clipPath>`));
+      k = `<g clip-path="url(#${S.id("tw_nilw" + wasser)})">${k}</g>`;
+      k += `<path d="M-17 ${-wasser} q9 -.5 18 0 t20 0" stroke="#e2eee8" stroke-width=".3" opacity=".8" fill="none"/><path d="M-19 ${-wasser + 0.6} q10 -.4 20 0 t21 0" stroke="#e2eee8" stroke-width=".2" opacity=".5" fill="none"/>`;
+      k += `<ellipse cx="2" cy="${-wasser + 0.3}" rx="19" ry=".7" fill="#2f4a40" opacity=".25"/>`;
     }
-    return g;
+    return gr(m, dir, k);
   };
 
   /* ---------------- GROSSKATZEN: Löwe, Löwin, Tiger, Leopard, Puma ---------------- */
@@ -324,7 +325,7 @@ function tierBaukasten(S) {
     k += auge(7.9, -11.9, 0.16, "#3b2414");
     k += `<path d="M8.4 -11.2 q.4 .2 .3 .5" stroke="#555" stroke-width=".12" fill="none"/>`;
     k += `<path d="M5.2 -14.6 Q6.6 -15.2 7.6 -13.6" stroke="#4a3a34" stroke-width=".25" fill="none" opacity=".7"/>`;
-    return gr(m, dir, k);
+    return gr(m * 0.82, dir, k);
   };
 
   /* ---------------- SCHIMPANSE (sitzend) ---------------- */
@@ -568,3 +569,348 @@ if (require.main !== module) return;
 /* =====================================================================
    DIE SZENE „DER ZOO“ folgt hier.
    ===================================================================== */
+/* =====================================================================
+   DER ZOO — Afrika-Panorama mit Raubkatzen und Menschenaffen
+   ---------------------------------------------------------------------
+   RECHERCHE (Zoo Leipzig Kiwara-Savanne, Tierpark Hagenbeck
+   „Afrika-Panorama“, Zoo Frankfurt Katzendschungel/Menschenaffenhaus):
+   - Moderne deutsche Zoos zeigen Huftiere als GEMISCHTE SAVANNE
+     (Giraffen, Zebras, Nashörner, Antilopen), die Besucher schauen über
+     einen versteckten WASSERGRABEN — kein Gitter im Blick. Davor oft ein
+     FLAMINGOTEICH (Hagenbeck: Panorama-Prinzip, Teich vorne, Steppe
+     dahinter). Flusspferde liegen tagsüber im Wasser, nur Rücken, Augen,
+     Ohren und Nüstern schauen heraus.
+   - RAUBKATZEN in Anlagen mit Kunstfelsen, Badebecken und hohem
+     Stahlnetz-ZAUN mit nach innen geneigtem Überhang; Löwe und Tiger
+     getrennt (Trennfelsen).
+   - MENSCHENAFFEN hinter großen GLASSCHEIBEN (Zoo Frankfurt), dahinter
+     Kletterstämme, Seile, Heu; das Affenhaus mit Glasdach.
+   - Am Weg: INFOTAFEL am Gehege, WEGWEISER mit Pfeilen, LAGEPLAN,
+     Bänke unter Bäumen, Mülleimer; eine TIERPFLEGERIN in grüner
+     Arbeitskleidung mit Futtereimer (kommentierte Fütterung).
+   Blick: leicht erhöht (Aussichtspunkt, Augenhöhe ≈ 6 m), Horizont
+   y = 50. Maßstab je nach Tiefe: m(y) = 0,1655·(y − 50) Einheiten je
+   Meter (vorne am Weg ≈ 24, an der Savanne ≈ 8–9).
+   ===================================================================== */
+const S = neueSzene({ id: "zoo", titel: "Der Zoo", emoji: "🐘", thema: "Natur", kuerzel: "b19a", fassung: 852 });
+const rnd = zufall(1907);
+const T = tierBaukasten(S);
+const HOR = 50, M = (y) => 0.1655 * (y - HOR);
+/* Menschen: Pfaddaten auf 0,5 cm gerundet — unsichtbar, spart ein Drittel der Ladezeit */
+const zahl = (x, st) => String(+(Math.round(+x / st) * st).toFixed(1)).replace(/^(-?)0\./, "$1.");
+const schlank = (svg) => svg.replace(/ d="([^"]*)"/g, (a, d) => ` d="${d.replace(/-?\d*\.?\d+/g, (x) => zahl(x, 1))}"`)
+  .replace(/ (c[xy]|x[12]?|y[12]?|width|height)="(-?[\d.]+)"/g, (a, n, v) => ` ${n}="${zahl(v, 0.5)}"`)
+  .replace(/ (r[xy]?)="(-?[\d.]+)"/g, (a, n, v) => ` ${n}="${zahl(v, 0.1)}"`);
+const mensch = (spec, groesse, y) => schlank(B.mensch(spec, groesse * M(y)).svg);
+S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+
+/* =====================================================================
+   KULISSE: Himmel, Baumkulisse, Affenhaus, Savanne, Gehegeböden
+   ===================================================================== */
+S.hinten(`<rect width="320" height="60" fill="${S.lg("himmel", [[0, "#8fbfe6"], [0.7, "#cfe3ef"], [1, "#e8eee6"]])}"/>`);
+for (const [x, y, w] of [[60, 14, 30], [190, 9, 40], [270, 20, 24]]) S.hinten(`<g fill="#fff" opacity=".75"><ellipse cx="${x}" cy="${y}" rx="${w}" ry="4"/><ellipse cx="${x - w * 0.3}" cy="${y - 3}" rx="${w * 0.4}" ry="4"/><ellipse cx="${x + w * 0.25}" cy="${y - 2.5}" rx="${w * 0.35}" ry="3.4"/></g>`);
+/* ferne Bäume des Zooparks */
+{
+  let g = "", p = "M0 58 L0 44";
+  for (let x = 0; x <= 320; x += 9) p += ` Q${x + 4.5} ${r(30 + rnd() * 10)} ${x + 9} ${r(40 + rnd() * 6)}`;
+  g += `<path d="${p} L320 58 Z" fill="${S.lg("fernbaum", [[0, "#6f9160"], [1, "#4f6e45"]])}"/>`;
+  for (let i = 0; i < 24; i++) g += `<circle cx="${r(rnd() * 320)}" cy="${r(38 + rnd() * 12)}" r="${r(2 + rnd() * 3)}" fill="#86a674" opacity=".35"/>`;
+  S.hinten(g);
+}
+/* Giraffenhaus mit Reetdach (Lodge-Stil) hinten links */
+S.hinten(`<rect x="8" y="49" width="30" height="10" fill="#b48d5c"/><rect x="18" y="51" width="8" height="8" fill="#5a3d22"/><path d="M4 50 L23 38 L42 50 Z" fill="${S.lg("reet", [[0, "#c8a565"], [1, "#94733c"]])}"/>` +
+  `<path d="M8 49 L23 39.5 M15 49.6 L23 40 M30 49.6 L23 40 M38 49 L23 39.5" stroke="#7d6032" stroke-width=".3" opacity=".6"/>`);
+/* Savanne: trockenes Gras, Erde, Kopje-Felsen, Schirmakazie */
+{
+  let g = `<rect x="0" y="54" width="320" height="64" fill="${S.lg("savanne", [[0, "#cdbb7f"], [0.5, "#bfae6c"], [1, "#a99a58"]])}"/>`;
+  g += `<path d="M0 54 Q80 52 160 55 T320 54 L320 58 L0 58 Z" fill="#b9a666" opacity=".6"/>`;
+  for (const [x, y, w] of [[40, 80, 26], [120, 96, 30], [200, 88, 22], [90, 66, 18]]) g += `<ellipse cx="${x}" cy="${y}" rx="${w}" ry="${w * 0.12}" fill="#9c7c4c" opacity=".35"/>`;
+  for (let i = 0; i < 130; i++) {
+    const y = 56 + rnd() * 58, x = rnd() * 320, h = 0.6 + (y - 50) * 0.03;
+    g += `<path d="M${r(x)} ${r(y)} l${r(-0.4 * h)} ${r(-h)} M${r(x)} ${r(y)} l${r(0.3 * h)} ${r(-h * 1.1)}" stroke="${rnd() < 0.5 ? "#8f8248" : "#d8c98f"}" stroke-width=".3"/>`;
+  }
+  /* Kopje: gerundete Granitblöcke */
+  g += `<path d="M138 79 Q140 68 150 66 Q158 63 164 68 Q172 66 176 72 Q180 76 178 80 Z" fill="${S.lg("granit", [[0, "#b9ab99"], [1, "#857867"]])}"/>`;
+  g += `<path d="M150 66 Q154 72 152 79 M164 68 Q166 74 165 80" stroke="#6f6354" stroke-width=".4" fill="none" opacity=".6"/><path d="M142 72 Q147 67 154 67" stroke="#e2d8ca" stroke-width=".6" fill="none" opacity=".6"/>`;
+  /* Schirmakazie */
+  g += `<path d="M206 76 Q207 66 204 58 M205 64 Q210 60 214 57 M205 62 Q200 59 197 57" stroke="#5b4630" stroke-width="1" fill="none"/>`;
+  g += `<path d="M188 57 Q190 51 205 50 Q222 50 226 56 Q214 59 205 58 Q194 59 188 57 Z" fill="${S.lg("akazie", [[0, "#7f9a4c"], [1, "#56702f"]])}"/>`;
+  g += `<ellipse cx="206" cy="77" rx="7" ry="1" fill="#6b5a35" opacity=".4"/>`;
+  S.hinten(g);
+}
+/* Affenhaus hinten rechts: Halle mit Glasdach, Bambus als Grenze */
+{
+  let g = `<rect x="242" y="66" width="78" height="48" fill="${S.lg("affhaus", [[0, "#c9b79a"], [1, "#a8937a"]])}"/>`;
+  g += `<path d="M238 66 L281 52 L324 66 Z" fill="${S.lg("glasdach", [[0, "#cfe3ec"], [1, "#8fb3c4"]])}"/>`;
+  for (let i = 0; i < 9; i++) g += `<path d="M${r(281 - 43 + i * 10.75)} 66 L281 52" stroke="#6e8794" stroke-width=".35"/>`;
+  g += `<rect x="242" y="66" width="78" height="2" fill="#6e5a44"/>`;
+  for (let i = 0; i < 6; i++) g += `<rect x="${248 + i * 12}" y="72" width="8" height="14" fill="#7d96a2"/><rect x="${248 + i * 12}" y="72" width="8" height="2" fill="#a9c2cc"/>`;
+  g += `<text x="281" y="94" font-size="4.2" text-anchor="middle" fill="#4b3a28" font-family="Arial,sans-serif" font-weight="bold" letter-spacing=".5">MENSCHENAFFEN</text>`;
+  /* Bambus */
+  for (let i = 0; i < 14; i++) { const x = 234 + i * 1.1 + rnd(); g += `<path d="M${r(x)} 116 Q${r(x + rnd() * 2 - 1)} 90 ${r(x + rnd() * 4 - 2)} ${r(66 + rnd() * 8)}" stroke="${rnd() < 0.5 ? "#6f8f3a" : "#86a54a"}" stroke-width=".7" fill="none"/>`; }
+  for (let i = 0; i < 40; i++) { const x = 230 + rnd() * 18, y = 66 + rnd() * 44; g += `<path d="M${r(x)} ${r(y)} l${r(3 + rnd() * 2)} ${r(1 + rnd())}" stroke="#5f8a34" stroke-width="1" stroke-linecap="round"/>`; }
+  S.hinten(g);
+}
+/* Raubkatzen-Anlage (links): Kunstfelsen hinten, Sandboden, Trennfelsen, Badebecken */
+{
+  let g = `<path d="M0 98 Q20 92 40 96 Q60 90 80 96 Q90 98 96 104 L96 154 L0 154 Z" fill="${S.lg("katzboden", [[0, "#c2a97c"], [1, "#a68c62"]])}"/>`;
+  g += `<path d="M0 100 Q10 88 26 92 Q40 86 52 94 Q66 86 82 94 Q94 96 98 108 L98 116 Q60 112 0 116 Z" fill="${S.lg("kunstfels", [[0, "#b49a7c"], [1, "#8c7458"]])}"/>`;
+  g += `<path d="M10 96 Q14 104 12 114 M40 92 Q44 102 42 113 M66 92 Q70 102 68 112" stroke="#6e5a44" stroke-width=".5" fill="none" opacity=".6"/>`;
+  /* Trennfelsen zwischen Löwe und Tiger */
+  g += `<path d="M44 152 L46 116 Q48 108 52 112 L54 152 Z" fill="${S.lg("trennfels", [[0, "#ad957a", 1], [1, "#7f6a53"]], 0, 0, 1, 0)}"/>`;
+  /* Badebecken der Tiger */
+  g += `<ellipse cx="76" cy="136" rx="16" ry="3.4" fill="${S.lg("katzwasser", [[0, "#5d8a8c"], [1, "#3f6b70"]])}"/><path d="M62 136 Q76 133 90 136" stroke="#cfe2e0" stroke-width=".4" fill="none" opacity=".7"/>`;
+  for (let i = 0; i < 60; i++) { const x = rnd() * 96, y = 118 + rnd() * 34; g += `<path d="M${r(x)} ${r(y)} l-.4 -1.4 M${r(x)} ${r(y)} l.4 -1.5" stroke="#8a7a46" stroke-width=".3" opacity=".7"/>`; }
+  S.hinten(g);
+}
+/* Menschenaffen-Freianlage (rechts hinter der Glasscheibe) */
+{
+  let g = `<rect x="240" y="112" width="80" height="40" fill="${S.lg("affboden", [[0, "#9aa264"], [1, "#7f8a4e"]])}"/>`;
+  for (let i = 0; i < 70; i++) { const x = 240 + rnd() * 80, y = 114 + rnd() * 36; g += `<path d="M${r(x)} ${r(y)} l${r(1 + rnd() * 2)} ${r(-0.4)}" stroke="#d4bf72" stroke-width=".35" opacity=".8"/>`; }
+  /* Kletterstämme und Seile */
+  g += `<path d="M252 150 L254 96 M290 150 L288 100 M314 150 L313 98" stroke="#6a4e34" stroke-width="2.4" stroke-linecap="round"/>`;
+  g += `<path d="M254 104 L288 108 M288 112 L313 106" stroke="#7a5a3c" stroke-width="1.4"/><path d="M262 105 Q268 116 276 107 M296 110 Q300 122 306 108" stroke="#c9b08a" stroke-width=".6" fill="none"/>`;
+  g += `<rect x="290" y="130" width="24" height="3" rx="1" fill="#7a5a3c"/><path d="M292 133 L292 150 M312 133 L312 150" stroke="#6a4e34" stroke-width="1.6"/>`;
+  S.hinten(g);
+}
+
+/* =====================================================================
+   SAVANNE: Giraffe, Elefant, Nashorn, Zebras
+   ===================================================================== */
+S.teil({ id: "giraffe", de: "die Giraffe", syl: "Gi-RAF-fe", it: "la giraffa", itSyl: "gi-RAF-fa", en: "giraffe", x: 52, y: 98,
+  kunst: schatten(1, 0, 10, 1.2, 0.25) + T.giraffe(M(98)),
+  tipp: "Fünf Meter hoch — das höchste Tier der Erde. Ihr Hals hat genauso viele Wirbel wie deiner: sieben." });
+S.teil({ id: "zebra", de: "das Zebra", syl: "ZE-bra", it: "la zebra", itSyl: "ZE-bra", en: "zebra", x: 104, y: 95,
+  kunst: `<g transform="translate(9 -3)">${schatten(0, 0, 8, 0.9, 0.2)}${T.zebra(M(92), -1)}</g>` + schatten(0, 0, 8, 1, 0.25) + T.zebra(M(95)),
+  tipp: "Ein Zebra ist weiß mit schwarzen Streifen — und jedes Muster gibt es nur einmal." });
+S.teil({ id: "elefant", de: "der Elefant", syl: "E-le-fant", it: "l'elefante", itSyl: "e-le-FAN-te", en: "elephant", x: 158, y: 101,
+  kunst: schatten(0, 0, 16, 1.6, 0.28) + T.elefant(M(101), -1),
+  tipp: "Der Rüssel ist Nase und Hand zugleich." });
+S.teil({ id: "nashorn", de: "das Nashorn", syl: "NAS-horn", it: "il rinoceronte", itSyl: "ri-no-ce-RON-te", en: "rhinoceros", x: 208, y: 107,
+  kunst: schatten(0, 0, 15, 1.4, 0.28) + T.nashorn(M(107), -1),
+  tipp: "Zwei Hörner — das vordere ist größer. Es steht dem Elefanten knapp bis an den Bauch." });
+
+/* =====================================================================
+   DER GRABEN (Wassergraben vor der Savanne) mit dem Flusspferd
+   ===================================================================== */
+{
+  const x0 = 96, x1 = 240, y0 = 110, y1 = 124;
+  let k = `<path d="M${x0} ${y0} Q168 ${y0 - 2} ${x1} ${y0} L${x1} ${y0 + 3} L${x0} ${y0 + 3} Z" fill="#8f8a52"/>`;
+  k += `<rect x="${x0}" y="${y0 + 2.5}" width="${x1 - x0}" height="${y1 - y0 - 6}" fill="${S.lg("graben", [[0, "#4f6f5e"], [1, "#6b8a74"]])}"/>`;
+  for (let i = 0; i < 14; i++) { const x = x0 + 6 + rnd() * (x1 - x0 - 12), y = y0 + 4 + rnd() * 6; k += `<path d="M${r(x)} ${r(y)} h${r(4 + rnd() * 8)}" stroke="#cfe0d4" stroke-width=".35" opacity=".55"/>`; }
+  /* Spiegelung des Nashorns/Elefanten angedeutet, Schilf am Rand */
+  for (let i = 0; i < 26; i++) { const x = x0 + rnd() * (x1 - x0); k += `<path d="M${r(x)} ${y0 + 3.4} q${r(rnd() - 0.5)} -2.6 ${r(rnd() * 1.4 - 0.7)} -4" stroke="#6f7f3c" stroke-width=".4" fill="none"/>`; }
+  /* Natursteinmauer auf der Besucherseite */
+  k += `<rect x="${x0}" y="${y1 - 3.6}" width="${x1 - x0}" height="4.6" fill="${S.lg("mauer", [[0, "#b1a593"], [1, "#8a7e6c"]])}"/>`;
+  for (let x = x0; x < x1; x += 6) k += `<path d="M${x + (Math.round(x / 6) % 2) * 3} ${y1 - 3.6} v2.3 M${x + 3 - (Math.round(x / 6) % 2) * 3} ${y1 - 1.3} v2.3" stroke="#6e6455" stroke-width=".3"/>`;
+  k += `<path d="M${x0} ${y1 - 1.3} H${x1}" stroke="#6e6455" stroke-width=".3"/><rect x="${x0}" y="${y1 - 3.8}" width="${x1 - x0}" height=".8" fill="#cfc4b2"/>`;
+  S.teil({ id: "graben", de: "der Graben", syl: "GRA-ben", it: "il fossato", itSyl: "fos-SA-to", en: "moat", x: 0, y: 0, kunst: k,
+    tipp: "Ein Graben statt eines Zauns: das Tier kommt nicht herüber, und man sieht es ohne Gitter davor." });
+}
+S.teil({ id: "nilpferd", de: "das Nilpferd", syl: "NIL-pferd", it: "l'ippopotamo", itSyl: "ip-po-PO-ta-mo", en: "hippopotamus", x: 124, y: 126,
+  kunst: T.nilpferd(M(126), -1, 8.2),
+  tipp: "Kein Horn, dafür ein riesiges Maul." });
+
+/* =====================================================================
+   DER TEICH mit den Flamingos (vor dem Graben)
+   ===================================================================== */
+{
+  let k = `<path d="M94 122 L240 122 L240 152 L94 152 Z" fill="${S.lg("ufer", [[0, "#8fa35c"], [1, "#748a45"]])}"/>`;
+  k += `<path d="M104 140 Q102 129 124 128 Q170 125 214 128 Q236 130 234 141 Q232 150 200 150.5 Q150 152 122 150 Q104 149 104 140 Z" fill="${S.lg("teich", [[0, "#6e9fae"], [0.6, "#4f8395"], [1, "#3f6f80"]])}"/>`;
+  k += `<path d="M104 140 Q102 129 124 128 Q170 125 214 128 Q236 130 234 141" stroke="#d9cfb8" stroke-width="1" fill="none" opacity=".7"/>`;
+  for (let i = 0; i < 10; i++) { const x = 112 + rnd() * 110, y = 131 + rnd() * 16; k += `<path d="M${r(x)} ${r(y)} h${r(5 + rnd() * 8)}" stroke="#e6f1f3" stroke-width=".35" opacity=".6"/>`; }
+  for (const [x, y] of [[106, 146], [230, 145], [120, 149], [216, 150]]) k += `<path d="M${x} ${y} q-1 -4 -.4 -7 M${x + 1} ${y} q.6 -4 1.6 -6 M${x - 1} ${y} q-1.4 -3 -2.4 -4" stroke="#5f7a32" stroke-width=".5" fill="none"/>`;
+  S.teil({ id: "teich", de: "der Teich", syl: "TEICH", it: "lo stagno", itSyl: "STA-gno", en: "pond", x: 0, y: 0, kunst: k });
+}
+{
+  let k = "";
+  for (const [dx, y, dir, unten] of [[-20, 137, 1, false], [-6, 140, -1, true], [8, 136, 1, false], [18, 144, -1, false]]) {
+    k += `<g transform="translate(${dx} ${y - 146})"><ellipse cx="0" cy=".2" rx="2.6" ry=".6" fill="#2d5566" opacity=".35"/>${T.flamingo(M(y), dir, unten)}</g>`;
+  }
+  S.teil({ id: "flamingo", de: "der Flamingo", syl: "Fla-MIN-go", it: "il fenicottero", itSyl: "fe-ni-COT-te-ro", en: "flamingo", x: 146, y: 146, kunst: k,
+    tipp: "Er steht auf EINEM Bein — und sein Knick in der Mitte des Beines ist nicht das Knie, sondern die Ferse." });
+}
+
+/* =====================================================================
+   RAUBKATZEN: Löwe auf dem Felsen, Tiger am Becken
+   ===================================================================== */
+{
+  let k = `<path d="M-22 18 Q-24 6 -16 2 Q-6 -2 6 1 Q16 3 18 12 L20 18 Z" fill="${S.lg("loefels", [[0, "#c2a98a"], [1, "#8d7559"]])}"/>`;
+  k += `<path d="M-14 3 Q-10 10 -12 18 M4 1.6 Q8 9 6 18" stroke="#6e5a44" stroke-width=".5" fill="none" opacity=".6"/><path d="M-18 4 Q-8 -.6 4 .8" stroke="#e3d6c4" stroke-width=".7" fill="none" opacity=".5"/>`;
+  k += `<g transform="translate(-2 1.6)">${T.katze("loewe", M(140), 1, "liegen")}</g>`;
+  S.teil({ id: "loewe", de: "der Löwe", syl: "LÖ-we", it: "il leone", itSyl: "le-O-ne", en: "lion", x: 24, y: 122, kunst: k,
+    tipp: "Nur das Männchen hat eine Mähne." });
+}
+S.teil({ id: "tiger", de: "der Tiger", syl: "TI-ger", it: "la tigre", itSyl: "TI-gre", en: "tiger", x: 74, y: 147,
+  kunst: schatten(0, 0, 14, 1.2, 0.25) + T.katze("tiger", M(147), -1),
+  tipp: "Die größte Katze der Welt — und jede hat ihr eigenes Streifenmuster." });
+/* Der Zaun: Stahlnetz mit Überhang; das Netz lässt Tipps zu den Katzen durch */
+{
+  const y = 154, h = 3.4 * M(y), top = y - h;
+  let k = `<rect x="0" y="${r(top)}" width="96" height="${r(h)}" fill="url(#${S.id("netz")})" pointer-events="none"/>`;
+  S.def(`<pattern id="${S.id("netz")}" patternUnits="userSpaceOnUse" width="2.4" height="2.4"><path d="M0 0 L2.4 2.4 M2.4 0 L0 2.4" stroke="#3d4448" stroke-width=".16" opacity=".55"/></pattern>`);
+  for (const x of [1.5, 48, 95]) {
+    k += `<rect x="${x - 0.9}" y="${r(top)}" width="1.8" height="${r(h)}" fill="${S.lg("pfosten", [[0, "#5d666c"], [0.5, "#8d969b"], [1, "#4a5156"]], 0, 0, 1, 0)}"/>`;
+    k += `<path d="M${x} ${r(top)} l5 -5" stroke="#5d666c" stroke-width=".9"/>`;
+    k += `<rect x="${x - 1.6}" y="${y - 1}" width="3.2" height="1.6" fill="#8a8a84"/>`;
+  }
+  k += `<path d="M0 ${r(top)} H96 M5 ${r(top - 5)} H101 M0 ${y - 1} H96" stroke="#5d666c" stroke-width=".9"/>`;
+  k += `<path d="M0 ${r(top)} L96 ${r(top)} L101 ${r(top - 5)} L5 ${r(top - 5)} Z" fill="url(#${S.id("netz")})" pointer-events="none"/>`;
+  S.teil({ id: "zaun", de: "der Zaun", syl: "ZAUN", it: "la recinzione", itSyl: "re-cin-ZIO-ne", en: "fence", x: 0, y: 0, kunst: k,
+    tipp: "Durch das Gitter sieht man die Tiere — hinüber kommt keines." });
+}
+
+/* =====================================================================
+   MENSCHENAFFEN hinter der Glasscheibe: Gorilla, Schimpanse
+   ===================================================================== */
+S.teil({ id: "gorilla", de: "der Gorilla", syl: "Go-RIL-la", it: "il gorilla", itSyl: "go-RIL-la", en: "gorilla", x: 268, y: 146,
+  kunst: schatten(0, 0, 11, 1, 0.3) + T.gorilla(M(146), -1),
+  tipp: "Der Silberrücken ist das alte Männchen: nur er hat den grauen Sattel auf dem Rücken." });
+S.teil({ id: "schimpanse", de: "der Schimpanse", syl: "Schim-PAN-se", it: "lo scimpanzé", itSyl: "scim-pan-ZÉ", en: "chimpanzee", x: 302, y: 130,
+  kunst: T.schimpanse(M(142), -1),
+  tipp: "Kleiner und schlanker als der Gorilla, mit großen abstehenden Ohren." });
+/* Rahmen der Glasscheiben (Kulisse) und Spiegelung (davor) */
+S.hinten(``);
+{
+  const y = 152, top = y - 3 * M(y);
+  S.davor(`<g pointer-events="none"><rect x="240" y="${r(top)}" width="80" height="${r(y - top)}" fill="${S.lg("affglas", [[0, "#e8f4f8", 0.22], [0.5, "#ffffff", 0.06], [1, "#d6eaf0", 0.18]], 0, 0, 1, 1)}"/>` +
+    `<path d="M246 ${r(y - 2)} L262 ${r(top + 2)} L270 ${r(top + 2)} L254 ${r(y - 2)} Z" fill="#fff" opacity=".14"/><path d="M290 ${r(y - 2)} L302 ${r(top + 2)} L306 ${r(top + 2)} L294 ${r(y - 2)} Z" fill="#fff" opacity=".12"/>` +
+    `<rect x="239" y="${r(top)}" width="1.6" height="${r(y - top)}" fill="#59636a"/><rect x="279.2" y="${r(top)}" width="1.4" height="${r(y - top)}" fill="#59636a"/><rect x="238" y="${r(top - 1.4)}" width="82" height="1.6" fill="#59636a"/><rect x="238" y="${y - 2}" width="82" height="2.4" fill="#6b655b"/></g>`);
+}
+
+/* =====================================================================
+   DER WEG (Pflaster in Fluchtperspektive)
+   ===================================================================== */
+{
+  let k = `<path d="M0 152 L320 152 L320 200 L0 200 Z" fill="${S.lg("weg", [[0, "#c9c1b3"], [1, "#b3aa9b"]])}"/>`;
+  for (let i = -16; i <= 16; i++) k += `<line x1="${r(160 + i * 12)}" y1="152" x2="${r(160 + i * 12 * 1.5)}" y2="200" stroke="#968c7d" stroke-width=".25" opacity=".6"/>`;
+  for (const y of [155, 158.6, 162.8, 167.6, 173, 179, 185.6, 192.8]) k += `<line x1="0" y1="${y}" x2="320" y2="${y}" stroke="#968c7d" stroke-width=".25" opacity=".6"/>`;
+  k += `<rect x="0" y="151.6" width="320" height="1.6" fill="#8d8579"/><rect x="0" y="151.6" width="320" height=".5" fill="#e4ddd0"/>`;
+  k += `<rect x="0" y="152" width="320" height="48" fill="${S.lg("weglicht", [[0, "#000", 0.12], [0.3, "#000", 0], [1, "#fff", 0.05]])}"/>`;
+  S.teil({ id: "weg", de: "der Weg", syl: "WEG", it: "il sentiero", itSyl: "sen-TIE-ro", en: "path", x: 0, y: 0, kunst: k });
+}
+
+/* =====================================================================
+   DER BAUM (Linde rechts am Weg)
+   ===================================================================== */
+{
+  let k = schatten(0, 0, 10, 1.6, 0.3);
+  k += `<path d="M-3 0 Q-2.4 -40 -2 -80 L2 -80 Q2.6 -40 4 0 Z" fill="${S.lg("stamm", [[0, "#5b4634"], [0.5, "#7a6048"], [1, "#4a382a"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M-1.6 -70 Q-10 -80 -16 -88 M1.6 -74 Q10 -84 14 -96 M0 -78 L0 -104" stroke="#5b4634" stroke-width="1.8" fill="none"/>`;
+  for (let i = 0; i < 12; i++) k += `<path d="M${r(-2 + rnd() * 4)} ${r(-4 - rnd() * 50)} q.4 -2 0 -4" stroke="#3a2c20" stroke-width=".3" fill="none"/>`;
+  const krone = [[-14, -104, 16], [6, -116, 18], [16, -96, 14], [-4, -92, 12], [-22, -94, 10], [22, -110, 11], [-10, -122, 13]];
+  for (const [x, y, rr] of krone) k += `<circle cx="${x}" cy="${y}" r="${rr}" fill="${S.rg("krone", [[0, "#7fa65a"], [0.7, "#5a8240"], [1, "#466a32"]], 0.4, 0.35, 0.7)}"/>`;
+  for (let i = 0; i < 45; i++) { const [x, y, rr] = krone[i % krone.length], a = rnd() * 6.28, d = rnd() * rr; k += `<circle cx="${r(x + Math.cos(a) * d)}" cy="${r(y + Math.sin(a) * d)}" r="${r(1 + rnd() * 1.6)}" fill="${rnd() < 0.5 ? "#9cc072" : "#3e5f2c"}" opacity=".5"/>`; }
+  S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 316, y: 168, kunst: k });
+}
+
+/* =====================================================================
+   AM WEG: Infotafel, Wegweiser, Lageplan, Bank, Mülleimer, Eimer
+   ===================================================================== */
+{
+  /* DAS SCHILD — Infotafel am Raubkatzengehege (schräges Pult) */
+  const s = M(158) / 10;
+  let k = schatten(0, 0, 9, 0.8, 0.3) + `<g transform="scale(${r(s * 10) / 10})">`;
+  k += `<rect x="-.4" y="-8" width=".8" height="8" fill="#3d4246"/>`;
+  k += `<path d="M-5 -8.6 L5 -8.6 L5.6 -12.6 L-5.6 -12.6 Z" fill="#2f5d3a"/><path d="M-4.6 -9 L4.6 -9 L5.1 -12.2 L-5.1 -12.2 Z" fill="#f4efe0"/>`;
+  k += `<text x="-4.6" y="-11" font-size="1" fill="#2f5d3a" font-family="Arial" font-weight="bold">LÖWE</text><text x="-4.6" y="-10.1" font-size=".5" fill="#333" font-family="Arial">Panthera leo · Afrika</text>`;
+  k += `<text x=".4" y="-11" font-size="1" fill="#2f5d3a" font-family="Arial" font-weight="bold">TIGER</text><text x=".4" y="-10.1" font-size=".5" fill="#333" font-family="Arial">Panthera tigris · Asien</text>`;
+  k += `<rect x="-4.4" y="-9.8" width="3.6" height=".5" fill="#c9a55a"/><rect x=".5" y="-9.8" width="3.6" height=".5" fill="#d4741f"/>`;
+  k += `</g>`;
+  S.teil({ id: "schild", de: "das Schild", syl: "SCHILD", it: "il cartello", itSyl: "car-TEL-lo", en: "sign", x: 34, y: 158, kunst: k,
+    tipp: "An jedem Gehege steht, welches Tier darin wohnt." });
+}
+{
+  /* DER WEGWEISER — Pfosten mit Pfeilschildern */
+  const s = M(160) / 10;
+  let k = schatten(0, 0, 3, 0.6, 0.3) + `<g transform="scale(${r(s * 100) / 100})">`;
+  k += `<rect x="-.35" y="-26" width=".7" height="26" fill="${S.lg("wwpf", [[0, "#5b4634"], [1, "#7a6048"]], 0, 0, 1, 0)}"/>`;
+  const pfeil = (y, rechts, txt, f) => rechts
+    ? `<path d="M-.2 ${y} L7.4 ${y} L8.6 ${y + 0.85} L7.4 ${y + 1.7} L-.2 ${y + 1.7} Z" fill="${f}"/><text x="3.6" y="${y + 1.25}" font-size="1" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">${txt}</text>`
+    : `<path d="M.2 ${y} L-7.4 ${y} L-8.6 ${y + 0.85} L-7.4 ${y + 1.7} L.2 ${y + 1.7} Z" fill="${f}"/><text x="-3.6" y="${y + 1.25}" font-size="1" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">${txt}</text>`;
+  k += pfeil(-26, true, "Afrika-Savanne", "#8a5a2a") + pfeil(-24, false, "Raubkatzen", "#b0542a") + pfeil(-22, true, "Menschenaffen", "#3f6b3a") + pfeil(-20, false, "Ausgang", "#3c5a7a");
+  k += `</g>`;
+  S.teil({ id: "wegweiser", de: "der Wegweiser", syl: "WEG-wei-ser", it: "il cartello indicatore", itSyl: "car-TEL-lo in-di-ca-TO-re", en: "signpost", x: 186, y: 160, kunst: k,
+    tipp: "Die Pfeile zeigen, wo es zu welchem Tier geht." });
+}
+{
+  /* DIE TIERPFLEGERIN mit Futtereimer — kommentierte Fütterung an der Affenanlage */
+  S.teil({ id: "tierpflegerin", de: "die Tierpflegerin", syl: "TIER-pfle-ge-rin", it: "la guardiana dello zoo", itSyl: "guar-DIA-na", en: "zookeeper", x: 230, y: 164,
+    kunst: schatten(0, 0, 5, 0.8, 0.3) + mensch({ id: "b19a_pfl", geschlecht: "w", pose: "zeigen", blick: -40, frisur: "zopf", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true,
+      kleidung: { oberteil: { stueck: "hemd", farbe: "#4f6b3a" }, unterteil: { stueck: "arbeitshose", farbe: "#3f5530" }, schuhe: { stueck: "gummistiefel", farbe: "schwarz" } } }, 1.68, 164),
+    tipp: "Sie füttert die Tiere und macht die Gehege sauber." });
+  let k = schatten(0, 0, 3, 0.5, 0.3);
+  k += `<path d="M-2.6 -5 L2.6 -5 L2.1 0 L-2.1 0 Z" fill="${S.lg("eimer", [[0, "#9aa3a8"], [0.5, "#dfe4e6"], [1, "#8a9399"]], 0, 0, 1, 0)}"/><ellipse cx="0" cy="-5" rx="2.6" ry=".6" fill="#6b7378"/>`;
+  k += `<ellipse cx="-.6" cy="-5.2" rx="1" ry=".5" fill="#d9a441"/><ellipse cx=".9" cy="-5.3" rx=".9" ry=".45" fill="#9c3b2a"/><ellipse cx=".1" cy="-5.6" rx=".8" ry=".4" fill="#6f9a3a"/>`;
+  k += `<path d="M-2.6 -5 Q0 -9 2.6 -5" stroke="#5d666c" stroke-width=".3" fill="none"/>`;
+  S.teil({ oben: true, id: "eimer", de: "der Eimer", syl: "EI-mer", it: "il secchio", itSyl: "SEC-chio", en: "bucket", x: 241, y: 166, kunst: k });
+}
+{
+  /* DER LAGEPLAN — Tafel mit dem Zooplan */
+  const s = M(197) / 10;
+  let k = schatten(0, 0, 16, 1, 0.3) + `<g transform="scale(${r(s * 100) / 100})">`;
+  k += `<rect x="-7" y="-20" width=".8" height="20" fill="#3d4246"/><rect x="6.2" y="-20" width=".8" height="20" fill="#3d4246"/>`;
+  k += `<rect x="-7.6" y="-20.6" width="15.2" height="11.6" rx=".4" fill="#2f5d3a"/><rect x="-7" y="-19.4" width="14" height="10" fill="#e8e2c8"/>`;
+  k += `<text x="0" y="-19.8" font-size=".75" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">LAGEPLAN</text>`;
+  k += `<path d="M-6 -18 Q-2 -17 0 -14.6 Q2 -12 6 -12.4 M-4 -10 Q-2 -13 0 -14.6 M0 -14.6 Q3 -16.6 5.6 -18" stroke="#c9b48c" stroke-width=".55" fill="none"/>`;
+  for (const [x, y, c] of [[-4, -17, "#b8a050"], [3, -17.4, "#6f9a3a"], [-4.6, -12, "#b0542a"], [4, -11, "#3c7aa0"], [0, -15.6, "#d07070"]]) k += `<rect x="${x - 1.2}" y="${y - 0.8}" width="2.4" height="1.6" rx=".3" fill="${c}" opacity=".8"/>`;
+  k += `<circle cx="-1.6" cy="-11" r=".45" fill="#d22"/><text x="-1" y="-10.7" font-size=".6" fill="#d22" font-family="Arial" font-weight="bold">Sie sind hier</text>`;
+  k += `</g>`;
+  S.teil({ id: "lageplan", de: "der Lageplan", syl: "LA-ge-plan", it: "la piantina", itSyl: "pian-TI-na", en: "zoo map", x: 300, y: 197, kunst: k,
+    tipp: "Hier steht, wo welches Tier wohnt." });
+}
+{
+  /* DIE BANK unter dem Baum */
+  const s = M(188) / 10;
+  let k = schatten(0, 0.2, 18, 1.2, 0.3) + `<g transform="scale(${r(s * 100) / 100})">`;
+  for (const x of [-7, 6]) k += `<path d="M${x} 0 L${x + 0.4} -4.4 L${x + 1} -4.4 L${x + 1} 0 Z" fill="#3d4246"/><path d="M${x + 0.6} -4.4 L${x + 0.2} -8.2" stroke="#3d4246" stroke-width=".5"/>`;
+  for (let i = 0; i < 3; i++) k += `<rect x="-8" y="${-4.6 - i * 0.55}" width="16" height=".45" rx=".2" fill="${i ? "#8a5f36" : "#9c6c3e"}"/>`;
+  for (let i = 0; i < 3; i++) k += `<rect x="-8.2" y="${-8.6 + i * 1}" width="16.2" height=".75" rx=".2" fill="${S.lg("banklatte", [[0, "#a77444"], [1, "#7c522c"]])}"/>`;
+  k += `</g>`;
+  S.teil({ id: "bank", de: "die Bank", syl: "BANK", it: "la panchina", itSyl: "pan-CHI-na", en: "bench", x: 264, y: 188, kunst: k });
+}
+{
+  /* DER MÜLLEIMER */
+  const s = M(193) / 10;
+  let k = schatten(0, 0.2, 5, 0.8, 0.3) + `<g transform="scale(${r(s * 100) / 100})">`;
+  k += `<rect x="-.25" y="-8.6" width=".5" height="8.6" fill="#3d4246"/>`;
+  k += `<path d="M-2.4 -8.4 L2.4 -8.4 L2.1 -2.6 L-2.1 -2.6 Z" fill="${S.lg("muell", [[0, "#2f6b45"], [0.5, "#4a8d60"], [1, "#2a5c3c"]], 0, 0, 1, 0)}"/>`;
+  k += `<rect x="-2.6" y="-8.8" width="5.2" height=".6" rx=".2" fill="#2a5c3c"/><rect x="-1.4" y="-7.6" width="2.8" height="1.4" rx=".2" fill="#e8efe8"/><path d="M-.6 -7.3 v.8 M.2 -7.3 v.8 M-1 -7.4 h1.6" stroke="#2a5c3c" stroke-width=".15"/>`;
+  k += `</g>`;
+  S.teil({ id: "muelleimer", de: "der Mülleimer", syl: "MÜLL-ei-mer", it: "il cestino", itSyl: "ce-STI-no", en: "waste bin", x: 236, y: 193, kunst: k });
+}
+
+/* =====================================================================
+   BESUCHER am Weg
+   ===================================================================== */
+S.teil({ id: "besucherin", de: "die Besucherin", syl: "Be-SU-che-rin", it: "la visitatrice", itSyl: "vi-si-ta-TRI-ce", en: "visitor", x: 14, y: 172,
+  kunst: schatten(0, 0, 5, 0.8, 0.3) + mensch({ id: "b19a_bes", geschlecht: "w", pose: "stehen", blick: 150, frisur: "lang", haarfarbe: "blond", haut: "hell",
+    kleidung: { oberteil: { stueck: "pullover", farbe: "#c0503a" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "#3c5a7a" } } }, 1.68, 172),
+  tipp: "Sie geht den Weg entlang und schaut in die Gehege." });
+S.teil({ id: "junge", de: "der Junge", syl: "JUN-ge", it: "il ragazzo", itSyl: "ra-GAZ-zo", en: "boy", x: 52, y: 176,
+  kunst: schatten(0, 0, 4, 0.7, 0.3) + mensch({ id: "b19a_jun", alter: "kind", geschlecht: "m", pose: "zeigen", blick: -120, frisur: "kurz", haarfarbe: "braun", haut: "hell",
+    kleidung: { oberteil: { stueck: "tshirt", farbe: "#e2b23a" }, unterteil: { stueck: "shorts", farbe: "#3c5a7a" }, schuhe: { stueck: "turnschuh" } } }, 1.32, 176) });
+S.teil({ id: "besucher", de: "der Besucher", syl: "Be-SU-cher", it: "il visitatore", itSyl: "vi-si-ta-TO-re", en: "visitor", x: 206, y: 178,
+  kunst: schatten(0, 0, 5, 0.8, 0.3) + mensch({ id: "b19a_bmann", geschlecht: "m", pose: "stehen", blick: 120, frisur: "kurz", haarfarbe: "schwarz", haut: "mittel",
+    kleidung: { oberteil: { stueck: "hemd", farbe: "#6a8fb0" }, unterteil: { stueck: "hose", farbe: "#c9b48c" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, kopf: { stueck: "kappe", farbe: "#2f3a4a" } } }, 1.8, 178) });
+S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "il bambino", itSyl: "bam-BI-no", en: "child", x: 98, y: 190,
+  kunst: schatten(0, 0, 4, 0.7, 0.3) + mensch({ id: "b19a_kind", alter: "kind", geschlecht: "w", pose: "winken", blick: 140, frisur: "zopf", haarfarbe: "rot", haut: "sehrhell", laecheln: true,
+    kleidung: { oberteil: { stueck: "tshirt", farbe: "#d9607a" }, unterteil: { stueck: "rock", farbe: "#3c5a7a" }, schuhe: { stueck: "sandale" } } }, 1.2, 190) });
+S.teil({ id: "mutter", de: "die Mutter", syl: "MUT-ter", it: "la madre", itSyl: "MA-dre", en: "mother", x: 122, y: 192,
+  kunst: schatten(0, 0, 5, 0.8, 0.3) + mensch({ id: "b19a_mut", geschlecht: "w", pose: "halten", blick: 70, frisur: "dutt", haarfarbe: "dunkelbraun", haut: "mittel",
+    kleidung: { oberteil: { stueck: "bluse", farbe: "#f0ead8" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "tasche", farbe: "braun" } } }, 1.66, 192) });
+{
+  /* DER KINDERWAGEN — vor der Mutter, sie schiebt ihn */
+  const s = M(194) / 10;
+  let k = schatten(0, 0.2, 12, 1, 0.3) + `<g transform="scale(${r(s * 100) / 100})">`;
+  k += `<path d="M-3.4 -1.2 L-1 -4 L2.6 -4 L3.6 -1.2" stroke="#3d4246" stroke-width=".25" fill="none"/>`;
+  for (const x of [-3.4, 3.6]) k += `<circle cx="${x}" cy="-1.2" r="1.2" fill="#1d2023"/><circle cx="${x}" cy="-1.2" r=".5" fill="#9aa3a8"/>`;
+  k += `<path d="M-4.4 -4.2 Q-4.6 -8 -1 -8 L3.6 -8 Q4.6 -8 4.4 -6.6 Q4 -4 2.6 -3.8 L-3.2 -3.8 Q-4.4 -3.9 -4.4 -4.2 Z" fill="${S.lg("kiwa", [[0, "#5b7f99"], [1, "#3c5a70"]])}"/>`;
+  k += `<path d="M-4.4 -6 Q-5 -11 0 -11.2 Q-.6 -9 -.4 -8 L-4.2 -8 Z" fill="#46667e"/><path d="M-4 -9.6 Q-2.6 -10.6 -.6 -10.6" stroke="#7d9cb2" stroke-width=".25" fill="none"/>`;
+  k += `<path d="M4 -7.8 L-6.6 -11.2" stroke="#3d4246" stroke-width=".35"/><rect x="-7.4" y="-11.8" width="1.6" height=".7" rx=".3" fill="#1d2023" transform="rotate(-18 -6.6 -11.4)"/>`;
+  k += `</g>`;
+  S.teil({ id: "kinderwagen", de: "der Kinderwagen", syl: "KIN-der-wa-gen", it: "la carrozzina", itSyl: "car-roz-ZI-na", en: "pram", x: 148, y: 194, kunst: k });
+}
+
+const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/zoo.js"));
+console.log(aus);

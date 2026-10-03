@@ -143,7 +143,7 @@ function hirschkuh(o) {
   let f = "";
   f += form(P2([[-54, -70], [-44, -66], [-42, -50], [-50, -44], [-56, -54]]), o.spiegel);
   f += form(P2([[30, -80], [42, -86], [36, -70], [30, -60]]), o.hals || "none", o.hals ? "" : ` opacity="0"`);
-  f += form(P2([[-40, -40], [30, -44], [30, -36], [-40, -36]]), "#f2ead8", ` opacity=".35"`);
+  f += form(P2([[-24, -45], [18, -44], [16, -41], [-22, -42]]), "#f2ead8", ` opacity=".3"`);
   f += form(P2([[46, -88], [58, -86], [54, -82], [44, -84]]), "#f4efe6", ` opacity=".8"`);
   f += striche(46, -48 * g, -70 * g, 30 * g, -42 * g, 2.4 * g, 0.6 * g, "#000", 0.4 * g, 0.18);
   f += `<path d="M${r(16 * g)} ${r(-66 * g)} q${r(-6 * g)} ${r(10 * g)} ${r(2 * g)} ${r(22 * g)} M${r(-32 * g)} ${r(-64 * g)} q${r(-8 * g)} ${r(10 * g)} ${r(-2 * g)} ${r(20 * g)}" stroke="#000" stroke-opacity=".14" stroke-width="${r(1.4 * g)}" fill="none"/>`;
@@ -429,22 +429,38 @@ function fuchs() {
    10 — DAS WILDSCHWEIN
    ===================================================================== */
 function wildschwein() {
+  /* Keiler beim Wühlen: Kopf tief, Schnauze am Boden, hoher Widerrist mit Borstenkamm */
   let s = "";
-  const FELL = S.lg("wildsau", [[0, "#5a4a3c"], [0.6, "#3e3228"], [1, "#2a2018"]]);
-  s += form([[28, -28], [27, -10], [28, -2], [30, 0, 1], [24, 0, 1], [22, -4], [21, -24]], "#241a12");
-  s += form([[-34, -32], [-38, -18], [-38, -4], [-36, 0, 1], [-42, 0, 1], [-44, -8], [-46, -22], [-50, -34]], "#241a12");
-  const K = [[-62, -58], [-44, -72], [-14, -82], [10, -88], [24, -86], [34, -78], [44, -68], [58, -56], [72, -44], [79, -39], [80, -33], [76, -30], [68, -31], [58, -33], [46, -38], [36, -38], [32, -32],
-    [31, -28], [30, -12], [31, -3], [33, 0, 1], [26, 0, 1], [24, -4], [24, -14], [22, -28], [0, -32], [-28, -32],
-    [-34, -34], [-38, -20], [-38, -6], [-37, 0, 1], [-44, 0, 1], [-46, -8], [-48, -20], [-54, -34], [-60, -46]];
-  let f = striche(120, -62, -88, 70, -30, 1.2, 2.6, "#1a120c", 0.6, 0.6) + striche(60, -62, -88, 70, -30, 1, 2.4, "#8a7a64", 0.4, 0.4);
-  f += `<path d="M-50 -66 Q-20 -84 14 -90 Q28 -90 36 -80" stroke="#1a120c" stroke-width="3" fill="none" stroke-dasharray="1 1.2"/>`;
-  f += `<path d="M30 -70 q-8 18 2 34" stroke="#000" stroke-opacity=".2" stroke-width="3" fill="none"/>`;
+  const FELL = S.lg("wildsau", [[0, "#5e4e40"], [0.55, "#40342a"], [1, "#2a2018"]]);
+  const dreh = (pts, cx, cy, wnk) => { const a = wnk * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a); return pts.map(([x, y, e]) => { if (x < cx) return e ? [x, y, e] : [x, y]; const dx = x - cx, dy = y - cy; const q = [cx + dx * c - dy * sn, cy + dx * sn + dy * c]; return e ? [...q, e] : q; }); };
+  s += form([[26, -30], [25, -12], [26, -2], [28, 0, 1], [22, 0, 1], [20, -4], [19, -26]], "#1e160e");
+  s += form([[-34, -32], [-38, -18], [-38, -4], [-36, 0, 1], [-42, 0, 1], [-44, -8], [-46, -20], [-50, -34]], "#1e160e");
+  const kopf = [[18, -88], [28, -84], [36, -78], [46, -70], [58, -60], [70, -50], [77, -45], [82, -43], [83, -36], [80, -32], [72, -31], [62, -32], [52, -34], [42, -38], [34, -38], [30, -34]];
+  const K = [[-58, -54], [-50, -64], [-34, -72], [-12, -80], [6, -88], ...dreh(kopf, 24, -72, 28),
+    [29, -30], [28, -12], [29, -3], [31, 0, 1], [24, 0, 1], [22, -4], [22, -14], [20, -28], [0, -30], [-28, -30],
+    [-34, -33], [-38, -20], [-38, -6], [-37, 0, 1], [-44, 0, 1], [-46, -8], [-48, -20], [-54, -32], [-58, -42]];
+  let f = striche(150, -58, -90, 70, -26, 1, 2.8, "#140e08", 0.6, 0.6) + striche(70, -58, -90, 70, -26, 0.8, 2.4, "#9a8a72", 0.45, 0.45);
+  /* Borstenkamm auf dem Rücken */
+  let bo = "";
+  for (let x = -46; x < 22; x += 2) { const y = x < 6 ? -66 - (x + 46) / 52 * 22 : -88; bo += `M${x} ${r(y + 3)}l${r(-1)} ${r(-4.5)}`; }
+  f += `<path d="${bo}" stroke="#140e08" stroke-width="1.2" stroke-linecap="round"/>`;
+  f += `<path d="M24 -76 q-8 20 2 40" stroke="#000" stroke-opacity=".22" stroke-width="3" fill="none"/>`;
+  f += `<path d="M-40 -60 q-10 14 -6 28" stroke="#000" stroke-opacity=".18" stroke-width="3" fill="none"/>`;
   s += koerper(K, FELL, f, { rw: 0.6 });
-  s += form([[34, -80], [32, -92], [34, -94, 1], [40, -86], [40, -79]], "#2a2018");
-  s += `<path d="M77 -38 q2.4 0 3 3 q-.6 2.6 -3 2.8 Z" fill="#3a2a22"/><ellipse cx="79.4" cy="-35.6" rx=".5" ry=".8" fill="#000"/>`;
-  s += `<path d="M64 -32 Q66 -38 70 -39" stroke="#f2ead8" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
-  s += auge(52, -56, 1.3, "#2a1a10");
-  s += `<path d="M-62 -58 q-2 6 -1 14" stroke="#1a120c" stroke-width="1.4" fill="none"/><path d="M-64 -46 l-1 4 l2 0 Z" fill="#1a120c"/>`;
+  /* Borsten stehen über die Rückenlinie hinaus */
+  let bk = "";
+  for (let x = -40; x < 20; x += 2.6) { const y = x < 6 ? -66 - (x + 46) / 52 * 22 : -88; bk += `M${x} ${r(y)}l${r(-0.8)} ${r(-3.4)}`; }
+  s += `<path d="${bk}" stroke="#1a120c" stroke-width=".9" stroke-linecap="round"/>`;
+  const Q = (x, y) => dreh([[x, y]], 24, -72, 28)[0].map(r);
+  const oh = [[30, -82], [27, -96], [30, -98, 1], [38, -86], [38, -80]];
+  s += form(dreh(oh, 24, -72, 28), "#2a2018");
+  const sn = Q(82.5, -39.5), au = Q(42, -64), za = Q(64, -33), zb = Q(70, -40);
+  s += `<ellipse cx="${sn[0]}" cy="${sn[1]}" rx="2.4" ry="3.6" fill="#3a2a22" transform="rotate(28 ${sn[0]} ${sn[1]})"/><ellipse cx="${sn[0]}" cy="${sn[1]}" rx=".6" ry=".9" fill="#000"/>`;
+  s += `<path d="M${za[0]} ${za[1]} Q${r(za[0] + 1)} ${r(za[1] - 6)} ${zb[0]} ${zb[1]}" stroke="#f2ead8" stroke-width="1.4" fill="none" stroke-linecap="round"/>`;
+  s += auge(au[0], au[1], 1.2, "#2a1a10");
+  s += `<path d="M-58 -54 q-2 6 -1 14" stroke="#1a120c" stroke-width="1.4" fill="none"/><path d="M-60 -42 l-1.4 5 l2.6 0 Z" fill="#1a120c"/>`;
+  /* aufgewühlte Erde vor der Schnauze */
+  s += `<ellipse cx="${r(sn[0] + 2)}" cy="-1" rx="10" ry="2.4" fill="#3e2c18"/><circle cx="${r(sn[0] + 6)}" cy="-3" r="1.4" fill="#4a3420"/><circle cx="${r(sn[0] - 4)}" cy="-2.6" r="1" fill="#4a3420"/>`;
   return s;
 }
 {
@@ -535,13 +551,16 @@ const BU = { x: 18, y: 192 };
   let k = schatten(12, 0, w * 0.8, 3, 0.35);
   /* Wurzelanlauf: der Stamm wird unten breit, dicke Wurzeln laufen über den Boden */
   const L = -w / 2, R = w / 2;
-  k += `<path d="M${r(L)} 2 L${r(L)} -16 Q${r(L + 2)} -20 ${r(L + 4)} -22 L${r(R - 3)} -22 Q${r(R)} -12 ${r(R + 8)} -5 Q${r(R + 18)} -1 ${r(R + 34)} 3 Q${r(R + 20)} 5 ${r(R + 10)} 2 Q${r(R + 8)} 5 ${r(R + 14)} 7 Q${r(R + 2)} 7 ${r(R - 4)} 3 Q${r(L + 10)} 6 ${r(L)} 2 Z" fill="${RINDE_B}"/>`;
+  const RB = S.lg("buchewurzel", [[0, "#7d817c"], [0.25, "#b9bdb6"], [0.55, "#a3a8a1"], [1, "#6a6e69"]], r(L), 0, r(R), 0, ' gradientUnits="userSpaceOnUse"');
+  k += `<path d="M${r(L)} 2 L${r(L)} -16 Q${r(L + 2)} -20 ${r(L + 4)} -22 L${r(R - 3)} -22 Q${r(R)} -12 ${r(R + 8)} -5 Q${r(R + 18)} -1 ${r(R + 34)} 3 Q${r(R + 20)} 5 ${r(R + 10)} 2 Q${r(R + 8)} 5 ${r(R + 14)} 7 Q${r(R + 2)} 7 ${r(R - 4)} 3 Q${r(L + 10)} 6 ${r(L)} 2 Z" fill="${RB}"/>`;
   k += `<path d="M${r(R - 2)} -14 Q${r(R + 6)} -6 ${r(R + 30)} 2.4" stroke="#5a5e58" stroke-width="1" fill="none" opacity=".55"/>`;
   k += `<path d="M${r(R - 6)} -6 Q${r(R + 4)} 1 ${r(R + 12)} 6" stroke="#5a5e58" stroke-width=".8" fill="none" opacity=".5"/>`;
   k += `<path d="M${r(L + 6)} -10 Q${r(L + 10)} -2 ${r(L + 16)} 3" stroke="#5a5e58" stroke-width=".8" fill="none" opacity=".45"/>`;
   k += `<path d="M${r(R + 2)} -7 Q${r(R + 14)} -3 ${r(R + 26)} 1.6 L${r(R + 16)} 1.6 Q${r(R + 8)} -1 ${r(R)} -2 Z" fill="${MOOS}" opacity=".9"/>`;
   k += `<path d="M${r(L)} -4 Q${r(L + 8)} -8 ${r(L + 14)} -3 Q${r(L + 8)} 1 ${r(L)} 1 Z" fill="${MOOS}" opacity=".85"/>`;
   k += striche(30, L, -10, R + 26, 2, 0.2, -1, "#b8d870", 0.3, 0.7);
+  k += `<path d="M${r(L)} 2 L${r(L)} -12 Q${r(R)} -12 ${r(R + 10)} -4 Q${r(R + 20)} 0 ${r(R + 34)} 3 Q${r(R + 14)} 6 ${r(R)} 4 Q0 7 ${r(L)} 2 Z" fill="${S.lg("wurzelschatten", [[0, "#000", 0], [1, "#2a1a0a", 0.4]])}"/>`;
+  for (let i = 0; i < 26; i++) { const x = L + rnd() * (R + 30 - L), y = 1 + rnd() * 6; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.8 + rnd())}" ry=".5" fill="${["#8a5a2a", "#a8783a", "#6a4a24"][Math.floor(rnd() * 3)]}"/>`; }
   S.teil({ id: "wurzel", de: "die Wurzel", syl: "WUR-zel", it: "la radice", itSyl: "ra-DI-ce", en: "root", x: BU.x, y: BU.y, steht: true, kunst: k,
     tipp: "Mit den Wurzeln hält sich der Baum fest und trinkt Wasser aus dem Boden." });
 }

@@ -275,7 +275,6 @@ const MIETERIN = { Z: 10.3 };
   const ay = zy + zh + 0.7;
   k += `<rect x="${r(-zw / 2)}" y="${r(ay)}" width="${r(zw)}" height="${r(zh * 0.55)}" fill="#fff" stroke="#222" stroke-width=".35"/>`;
   k += `<path d="M${r(-zw * 0.32)} ${r(ay + zh * 0.27)} l2.4 -1.6 v1 h${r(zw * 0.5)} v1.2 h${r(-zw * 0.5)} v1 Z" fill="#111"/>`;
-  k += `<text x="0" y="${r(ay + zh * 0.55 + 3.2)}" font-size="2.2" text-anchor="middle" fill="#c8302c" font-family="Arial" font-weight="bold">UMZUG</text>`.replace("UMZUG", "");
   S.teil({ id: "um_halteverbot", de: "das Halteverbotsschild", syl: "HAL-te-ver-bots-schild", it: "il cartello di divieto di sosta", itSyl: "car-TEL-lo di di-VIE-to di SO-sta", en: "no-stopping sign", x, y: boden(Z), steht: true, kunst: k,
     tipp: "Die Halteverbotszone für den Umzug muss man bei der Stadt beantragen. Die Schilder stehen schon Tage vorher." });
 }
