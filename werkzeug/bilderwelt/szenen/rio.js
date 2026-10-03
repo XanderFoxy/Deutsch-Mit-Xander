@@ -997,7 +997,7 @@ let BALL;
   /* Raglanärmel: flach von Hals zur Schulter geführt, eng am Oberarm, grüner Saum am Ärmelende */
   for (const sd of ["L", "R"]) {
     const [ax, ay] = q("schulter" + sd), [ex, ey] = q("ellbogen" + sd), dx = ex - ax, dy = ey - ay, l = Math.hypot(dx, dy), ux = dx / l, uy = dy / l, nx = -uy, ny = ux, w = 2.3, mx = ax + dx * 0.42, my = ay + dy * 0.42;
-    kragen += `<path d="M${r(hx + (ax - hx) * 0.35)} ${r(hy + 1.2)} L${r(ax - nx * w - ux * 1.2)} ${r(ay - ny * w - uy * 1.2)} L${r(mx - nx * w * 0.9)} ${r(my - ny * w * 0.9)} L${r(mx + nx * w * 0.9)} ${r(my + ny * w * 0.9)} L${r(ax + nx * w + ux * 1.6)} ${r(ay + ny * w + uy * 1.6)} Z" fill="#e9c41a"/>`;
+    kragen += `<path d="M${r(hx + (ax - hx) * 0.12)} ${r(hy + 0.9)} L${r(ax - nx * w - ux * 1.2)} ${r(ay - ny * w - uy * 1.2)} L${r(mx - nx * w * 0.9)} ${r(my - ny * w * 0.9)} L${r(mx + nx * w * 0.9)} ${r(my + ny * w * 0.9)} L${r(ax + nx * w + ux * 1.6)} ${r(ay + ny * w + uy * 1.6)} Z" fill="#e9c41a"/>`;
     kragen += `<path d="M${r(mx - nx * w * 0.95)} ${r(my - ny * w * 0.95)} L${r(mx + nx * w * 0.95)} ${r(my + ny * w * 0.95)}" stroke="#139a43" stroke-width=".8" stroke-linecap="round"/>`;
   }
   const [fx, fy] = q("fussL"), [zx, zy] = q("zehL");
