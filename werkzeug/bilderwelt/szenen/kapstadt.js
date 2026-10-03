@@ -168,44 +168,52 @@ const bergUnter = [];
   for (let x = 92; x <= 312; x += 4) str += `${x === 92 ? "M" : "L"}${x} ${r(STR(x))}`;
   k += `<path d="${str}" stroke="#e9e2cf" stroke-width=".55" fill="none" opacity=".75"/><path d="${str}" stroke="#5a5a48" stroke-width=".25" fill="none" opacity=".5" transform="translate(0 .5)"/>`;
   k += wald(84, 316, FUSS - 13, FUSS);
-  /* Nordwand: senkrechte Pfeiler bestimmen das Bild – breit, kantig, rechts (Nordwest) warm-golden im
-     Licht, links (Ost) im Schatten, dazu Mitteltöne und dunkle Klüfte (4 Tonwerte). Die Wandhöhe läuft
-     an beiden Enden aus: links knickt die Wand in die Schulter zum Devil's Peak ab. Die Schichtbänke sind
-     nur feine, unterbrochene Linien. Keine Weichzeichnung. */
+  /* Nordwand aus Tafelberg-Sandstein: 3–4 große Bastionen, dazwischen schmale Rippen (Breiten 2–24).
+     Mitteltöne graubeige, Gold nur auf den Lichtkanten (Nordwest, rechts), Ostseiten im Schatten.
+     Klüfte verschieden lang, leicht schräg, teils gegabelt. Zwei durchgehende, wellige Hauptbänke, die an
+     jeder Kluft etwas springen. Unterkanten unregelmäßig spitz oder schräg, Schuttzungen greifen hinauf. */
   const H = (x) => 23 * Math.pow(Math.sin(Math.max(0, Math.min(1, (x - 100) / 198)) * Math.PI), 0.55);
   const pfeiler = [];
-  for (let x = 100; x < 298;) { const w = 4 + Math.pow(rnd(), 1.4) * 14; pfeiler.push([x, Math.min(w, 298 - x)]); x += w; }
+  const bastion = [[132, 20], [176, 16], [222, 24], [262, 15]];
+  for (let x = 100; x < 298;) { const b = bastion.find(([bx]) => Math.abs(bx - x) < 6); const w = b ? b[1] : 2 + rnd() * 6.5; pfeiler.push([x, Math.min(w, 298 - x)]); x += Math.min(w, 298 - x) || 1; }
   let wand = `M100 ${r(TOP - 4)} L298 ${r(TOP - 4)}`;
   const unten = [];
   for (let i = pfeiler.length - 1; i >= 0; i--) {
-    const [x, w] = pfeiler[i], hm = H(x + w / 2), y0 = TOP + hm * (0.82 + rnd() * 0.3), st = hm * (rnd() - 0.5) * 0.25;
-    unten.push([x, w, y0, st]);
-    wand += ` L${r(x + w)} ${r(y0 + st)} L${r(x + w * 0.5)} ${r(y0 + st)} L${r(x + w * 0.42)} ${r(y0 - st * 0.5)} L${r(x)} ${r(y0)}`;
+    const [x, w] = pfeiler[i], hm = H(x + w / 2), a = TOP + hm * (0.8 + rnd() * 0.25), b2 = TOP + hm * (0.95 + rnd() * 0.25), c = TOP + hm * (0.78 + rnd() * 0.3);
+    unten.push([x, w, Math.max(a, b2, c)]);
+    wand += ` L${r(x + w)} ${r(c)} L${r(x + w * (0.3 + rnd() * 0.4))} ${r(b2)} L${r(x)} ${r(a)}`;
   }
   S.def(`<path id="${S.id("wandp")}" d="${wand} Z"/><clipPath id="${S.id("wandclip")}"><use href="#${S.id("wandp")}"/></clipPath>`);
-  k += `<use href="#${S.id("wandp")}" fill="${S.lg("wand", [[0, "#f0c98c"], [0.35, "#dcab6c"], [0.75, "#bf8c58"], [1, "#94704c"]], 0, TOP - 4, 0, TOP + 24, ' gradientUnits="userSpaceOnUse"')}"/>`;
+  k += `<use href="#${S.id("wandp")}" fill="${S.lg("wand", [[0, "#dcc29a"], [0.35, "#c9a77a"], [0.75, "#a68a66"], [1, "#86705a"]], 0, TOP - 4, 0, TOP + 24, ' gradientUnits="userSpaceOnUse"')}"/>`;
   k += `<g clip-path="url(#${S.id("wandclip")})">`;
-  let schatten2 = "", mitte = "", licht = "", kluft = "", rost = "";
-  for (const [x, w, y0, st] of unten) {
-    const yb = r(y0 + Math.abs(st) + 1);
-    schatten2 += `M${r(x)} ${r(TOP - 4)}h${r(w * 0.24)}V${yb}h${r(-w * 0.24)}z`;
-    mitte += `M${r(x + w * 0.24)} ${r(TOP - 4)}h${r(w * 0.36)}V${yb}h${r(-w * 0.36)}z`;
-    licht += `M${r(x + w * 0.6)} ${r(TOP - 4)}h${r(w * 0.4)}V${yb}h${r(-w * 0.4)}z`;
-    kluft += `M${r(x - 0.35)} ${r(TOP - 0.4)}h.8L${r(x + 0.25)} ${yb}h-.5z`;
-    if (rnd() < 0.35) rost += `M${r(x + w * 0.3)} ${r(TOP + 2)}h${r(w * 0.3)}l-.3 ${r(H(x) * 0.6)}h${r(-w * 0.22)}z`;
+  let schatten2 = "", licht = "", kluft = "", rost = "";
+  for (const [x, w, yb] of unten) {
+    const gross = w > 12;
+    schatten2 += `M${r(x)} ${r(TOP - 4)}h${r(w * (gross ? 0.18 : 0.3))}V${r(yb + 1)}h${r(-w * (gross ? 0.18 : 0.3))}z`;
+    licht += `M${r(x + w * (gross ? 0.8 : 0.7))} ${r(TOP - 4)}h${r(w * (gross ? 0.2 : 0.3))}V${r(yb + 1)}h${r(-w * (gross ? 0.2 : 0.3))}z`;
+    /* Kluft: verschieden lang, leicht schräg, manchmal gegabelt */
+    const L = H(x) * (0.35 + rnd() * 0.75), sx = (rnd() - 0.5) * 1.6, op = r(0.5 + rnd() * 0.35);
+    kluft += `<path d="M${r(x - 0.4)} ${r(TOP - 0.4)}h.8L${r(x + sx + 0.2)} ${r(TOP + L)}h-.4z${rnd() < 0.3 ? `M${r(x + sx * 0.5)} ${r(TOP + L * 0.5)}l${r(1.2 + rnd())} ${r(L * 0.4)}l-.3 0z` : ""}" fill="#2e2218" opacity="${op}"/>`;
+    if (gross || rnd() < 0.25) rost += `M${r(x + w * 0.35)} ${r(TOP + 2)}h${r(w * 0.25)}l-.3 ${r(H(x) * 0.55)}h${r(-w * 0.18)}z`;
   }
-  k += `<path d="${schatten2}" fill="#7e5a38" opacity=".55"/><path d="${mitte}" fill="#c99556" opacity=".25"/><path d="${licht}" fill="#ffd28c" opacity=".42"/><path d="${rost}" fill="#a8582e" opacity=".25"/><path d="${kluft}" fill="#32241a" opacity=".85"/>`;
-  /* feine, unterbrochene Schichtlinien */
-  let li = "", fu = "";
-  for (const c of [3.5, 7.6, 12, 16.6]) for (let x = 100 + rnd() * 8; x < 298;) { const l = 6 + rnd() * 18, y = TOP + c + (x - 200) * 0.01; fu += `M${r(x)} ${r(y)}h${r(l)}`; li += `M${r(x)} ${r(y - 0.45)}h${r(l)}`; x += l + 3 + rnd() * 10; }
-  k += `<path d="${li}" stroke="#ffe9bf" stroke-width=".35" opacity=".55"/><path d="${fu}" stroke="#4a3624" stroke-width=".4" opacity=".45"/>`;
-  /* Rinnen als V-Kerben: links Schattenseite, rechts im Licht; die Platteklip-Schlucht am tiefsten */
+  k += `<path d="${schatten2}" fill="#5f4a36" opacity=".5"/><path d="${licht}" fill="#f2c27e" opacity=".55"/><path d="${rost}" fill="#a8582e" opacity=".2"/>${kluft}`;
+  /* zwei durchgehende Hauptbänke, wellig, mit kleinen Sprüngen an den Klüften */
+  for (const [c, wl] of [[6.4, 0.9], [13.6, 1.1]]) {
+    let li = "", fu = "", sprung = 0;
+    for (const [x, w] of pfeiler) { sprung = (rnd() - 0.5) * 1.2; const y0 = TOP + c + Math.sin(x / 17) * 0.5 + sprung; li += `M${r(x + 0.3)} ${r(y0 - 0.5)}h${r(w - 0.6)}`; fu += `M${r(x + 0.3)} ${r(y0)}h${r(w - 0.6)}`; }
+    k += `<path d="${li}" stroke="#ffe6b8" stroke-width=".45" opacity=".6"/><path d="${fu}" stroke="#4a3624" stroke-width="${wl * 0.6}" opacity=".5"/>`;
+  }
+  /* Rinnen als V-Kerben; die Platteklip-Schlucht am tiefsten */
   const PX = 205;
-  for (const [x, w, t] of [[128, 2, 0.75], [152, 1.6, 0.6], [176, 2.2, 0.8], [PX, 4.2, 1], [236, 1.8, 0.65], [258, 2.4, 0.85], [276, 1.6, 0.55]]) {
+  for (const [x, w, t] of [[152, 1.6, 0.6], [PX, 4.2, 1], [244, 1.8, 0.65], [276, 1.6, 0.55]]) {
     const yb = TOP + H(x) + 3;
     k += `<path d="M${r(x - w)} ${r(TOP - 0.6)}L${x} ${r(TOP - 0.6)}L${r(x + 0.2)} ${r(yb)}Z" fill="#2a2018" opacity="${t}"/><path d="M${x} ${r(TOP - 0.6)}L${r(x + w)} ${r(TOP - 0.6)}L${r(x + 0.2)} ${r(yb)}Z" fill="#9a7a52" opacity="${r(t * 0.8)}"/>`;
   }
   k += `</g>`;
+  /* Schuttzungen greifen zwischen die Pfeiler hinauf */
+  let zunge = "";
+  for (const [x, w, yb] of unten) if (w < 8 && rnd() < 0.6) zunge += `M${r(x - 2)} ${r(yb + 3)}Q${r(x)} ${r(yb - 2.5)} ${r(x + 1.2)} ${r(yb - 4)}Q${r(x + 2)} ${r(yb - 1)} ${r(x + 4)} ${r(yb + 3)}Z`;
+  k += `<path d="${zunge}" fill="#9b968a" opacity=".85"/>`;
   /* Schutt und Felsbrocken unter der Wand, Schuttfächer unter den Rinnen (Grau und Fynbos-Grün) */
   for (const [x, f] of [[PX, 1], [176, 0.6], [258, 0.7], [128, 0.5]]) {
     const yb = TOP + H(x) + 2;

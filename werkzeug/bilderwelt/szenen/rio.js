@@ -138,16 +138,21 @@ const DUNST = `url(#${S.id("dunst")})`;
   /* Haufenwolken über den Bergen, weich */
   /* Haufenwolken: flache, graublaue Unterseite, oben unregelmäßige Buckel verschiedener Größe, Licht oben
      rechts (Sonne im Nordosten); kein Schatten auf dem Himmel. Dazu ein flacher, zerfaserter Streifen. */
-  const WOLKE = S.lg("wolke", [[0, "#ffffff"], [0.55, "#f3f7fa"], [1, "#c6d4e0"]]), WOLKELICHT = S.lg("wolkelicht", [[0, "#c8d6e2", 0.35], [0.5, "#ffffff", 0], [1, "#fff6dc", 0.4]], 0, 0, 1, 0);
-  const wolke = (x, y, w, n) => {
-    const bu = []; let u = -w;
-    while (u < w) { const rr = w * (0.26 + rnd() * 0.24) * (1 - Math.abs(u) / w * 0.5); bu.push([u, rr]); u += rr * (0.9 + rnd() * 0.4); }
-    let d = `M${r(x - w)} ${y}`;
-    bu.forEach(([u2, rr], i) => { const xe = i === bu.length - 1 ? x + w : x + (u2 + bu[i + 1][0]) / 2 + rr * 0.2; d += ` A${r(rr)} ${r(rr)} 0 0 1 ${r(xe)} ${r(y - (i === bu.length - 1 ? 0 : rr * (0.7 + 0.5 * (1 - Math.abs(u2) / w))))}`; });
-    d += " Z";
-    return `<path d="${d}" fill="${WOLKE}"/><path d="${d}" fill="${WOLKELICHT}"/>`;
+  /* jede Wolke anders gebaut: getürmt, breit-flach, in lose Teile zerrissen; unten flach (abgeschnitten
+     an der Unterkante), unten links graublau, oben rechts zur Sonne hell mit warmem Saum */
+  const wcl = S.id("wolkenboden");
+  S.def(`<clipPath id="${wcl}"><rect x="-60" y="-60" width="120" height="60"/></clipPath>`);
+  const wolke = (x, y, buckel) => {
+    let c1 = "", c2 = "", c3 = "";
+    for (const [u, v, rr] of buckel) { c1 += `<circle cx="${u}" cy="${v}" r="${rr}"/>`; c2 += `<circle cx="${r(u + rr * 0.16)}" cy="${r(v - rr * 0.18)}" r="${r(rr * 0.9)}"/>`; c3 += `<circle cx="${r(u + rr * 0.22)}" cy="${r(v - rr * 0.24)}" r="${r(rr * 0.76)}"/>`; }
+    return `<g transform="translate(${x} ${y})" clip-path="url(#${wcl})"><g fill="#c6d4e0">${c1}</g><g fill="#e9eff4">${c2}</g><g fill="#fdfdfa">${c3}</g></g>`;
   };
-  for (const [x, y, w] of [[152, 42, 20], [190, 46, 12], [130, 33, 9], [268, 25, 15]]) k += wolke(x, y, w);
+  /* getürmt mit kleiner Basis */
+  k += wolke(150, 44, [[-9, 0, 5], [-3, -2, 7], [3, -5, 7.5], [0, -11, 6], [6, -8, 5], [10, -1, 4.5], [-6, -7, 4.5]]);
+  /* breit und flach */
+  k += wolke(268, 26, [[-16, 0, 3], [-11, -1, 3.6], [-5, -1.6, 4.4], [1, -2, 4.6], [7, -1.4, 4], [12, -0.6, 3.4], [17, 0, 2.6]]);
+  /* in lose Teile zerrissen */
+  k += wolke(188, 46, [[-6, 0, 2.6], [-2.4, -1, 3.2], [1, 0, 2.2]]) + wolke(198, 44, [[-1.5, 0, 1.8], [1, -0.6, 2.2], [3.4, 0, 1.5]]) + wolke(129, 33, [[-3, 0, 2.2], [0, -1, 2.8], [3, 0, 2]]);
   /* flacher, zerfaserter Wolkenstreifen */
   k += `<g fill="#f4f8fb" opacity=".75"><ellipse cx="240" cy="54" rx="22" ry="1.1"/><ellipse cx="252" cy="52.6" rx="12" ry=".7"/><ellipse cx="228" cy="55.6" rx="9" ry=".6"/></g>`;
   /* Fregattvögel (lange, abgewinkelte Flügel, gegabelter Schwanz) */
@@ -169,7 +174,6 @@ const DUNST = `url(#${S.id("dunst")})`;
   /* Luftperspektive: deutlich bläulicher als der nähere Corcovado */
   k += `<path d="M${pts(umriss)} Z" fill="${S.lg("waldluft", [[0, "#a9c8d4", 0.62], [0.5, "#93b8c0", 0.42], [1, "#6f9a98", 0.25]])}"/>`;
   /* Tallinien (Schatten der Seitentäler) */
-  k += `<path d="M118 48 Q124 60 128 76 M142 52 Q146 62 148 74" stroke="#4f7a72" stroke-width=".8" fill="none" opacity=".35"/>`;
   S.teil({ id: "regenwald", de: "der Regenwald", syl: "RE-gen-wald", it: "la foresta pluviale", itSyl: "fo-RE-sta plu-VIA-le", en: "rainforest", x: 120, y: 50, kunst: um(120, 50, k),
     tipp: "Mitten in Rio wächst der Tijuca-Wald. Er ist einer der größten Stadtwälder der Welt." });
 }
@@ -195,7 +199,7 @@ const CX = 88, CY = 27;   /* Oberkante der Aussichtsplattform = Fuß des Sockels
   S.def(`<clipPath id="${S.id("felsclip")}"><path d="M${pts(fels)} Z"/></clipPath>`);
   k += `<path d="${str}" stroke="#5f5c56" stroke-width=".3" fill="none" opacity=".5" clip-path="url(#${S.id("felsclip")})"/>`;
   /* Waldkante am Umriss: deckende Kronen unregelmäßiger Größe */
-  for (let i = 0; i < 18; i++) { const t = rnd(), x = 50 + t * 31, y = 77.6 - t * 45.4 + rnd() * 1.6; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.6 + rnd() * 0.9)}" fill="${rnd() < 0.5 ? "#335f40" : "#2b5437"}"/>`; }
+  for (let i = 0; i < 18; i++) { const t = rnd() * 0.72, x = 50 + t * 31, y = 77.6 - t * 45.4 + rnd() * 1.6; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.6 + rnd() * 0.9)}" fill="${rnd() < 0.5 ? "#335f40" : "#2b5437"}"/>`; }
   S.teil({ id: "berg", de: "der Berg", syl: "BERG", it: "la montagna", itSyl: "mon-TA-gna", en: "mountain", x: 76, y: 44, kunst: um(76, 44, k),
     tipp: "Der Berg heißt Corcovado – „der Bucklige“. Er ist 710 Meter hoch." });
 }
@@ -313,7 +317,7 @@ const HUEGEL = [[140, 104], [146, 96], [152, 89], [160, 82], [170, 77], [181, 74
   const cid = S.id("zhclip");
   S.def(`<clipPath id="${cid}"><path d="M0 0 L320 0 L320 ${HUEGEL[17][1]} L${pts(HUEGEL.slice(0, 18).reverse())} L0 104 Z"/></clipPath>`);
   S.teil({ id: "zuckerhut", de: "der Zuckerhut", syl: "ZU-cker-hut", it: "il Pan di Zucchero", itSyl: "PAN di ZUC-che-ro", en: "Sugarloaf Mountain", x: X, y: 72, kunst: um(X, 72, `<g clip-path="url(#${cid})">${k}</g>`),
-    tipp: "Der Zuckerhut ist ein Felsen aus Granit, 396 Meter hoch. Auf der anderen Seite fährt eine Seilbahn hinauf." });
+    tipp: "Der Zuckerhut ist ein riesiger Felsen, 396 Meter hoch. Eine Seilbahn fährt bis auf den Gipfel." });
 }
 
 /* =====================================================================
@@ -326,15 +330,15 @@ const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Flu
   let k = `<path d="M196 100 L320 100 L320 ${WASSER_R} L${VX} 100.3 Z" fill="${S.lg("meer", [[0, "#1c5a8e"], [0.45, "#2878a6"], [0.8, "#3d9fb4"], [1, "#77c8c2"]])}"/>`;
   /* Glitzerpfad unter der Morgensonne (rechts oben): kurze helle Striche, zur Sonne dichter */
   let gl = "";
-  for (let i = 0; i < 70; i++) { const t = Math.pow(rnd(), 1.6), x = 321 - t * 80, y = 100.15 + rnd() * (wy(x, 103.2) - 100.3) * (0.4 + t); gl += `M${r(x)} ${r(y)}h${r(0.5 + (1 - t) * 2.6 * rnd())}`; }
+  for (let i = 0; i < 120; i++) { const t = Math.pow(rnd(), 1.8), x = 321 - t * 72, y = 100.12 + rnd() * (wy(x, 102.6) - 100.2) * (0.35 + t); gl += `M${r(x)} ${r(y)}h${r(0.4 + (1 - t) * 2.2 * rnd())}`; }
   k += `<path d="${gl}" stroke="#fffdf0" stroke-width=".26"/>`;
   /* Brandung: eine ferne kleine Welle und vorn EINE brechende Welle — rechts am höchsten, nach links flach
      auslaufend: durchscheinende, dunkel grünblaue Wand, oben der überkippende weiße Kamm mit Gischt */
-  const WAND = S.lg("wellenwand", [[0, "#6cc4b8", 0.85], [0.35, "#1f7d8a"], [1, "#134f63"]]);
+  const WAND = S.lg("wellenwand", [[0, "#8fd8cc", 0.9], [0.3, "#2a8f98"], [0.7, "#17607a"], [1, "#114a5e"]]);
   const welle = (yr, H, mitGischt) => {
     const ob = [], un = [], lip = [];
     for (let x = VX + 6; x < 322; x += 1.5) {
-      const t = (x - VX) / (320 - VX), y = wy(x, yr), h = H * Math.pow(t, 1.6) * (0.9 + 0.1 * Math.sin(x * 0.4));
+      const t = (x - VX) / (320 - VX), y = wy(x, yr), h = H * Math.pow(t, 1.4) * (0.9 + 0.1 * Math.sin(x * 0.4));
       un.push([x, y]); ob.push([x, y - h]); lip.push([x + 0.6 * t, y - h * 0.62 + (rnd() - 0.5) * 0.2 * t]);
     }
     let g = `<path d="M${pts(ob)} L${pts(un.slice().reverse())} Z" fill="${WAND}"/>`;
@@ -348,14 +352,15 @@ const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Flu
     if (mitGischt) { let sp = ""; for (let i = 0; i < 26; i++) { const t = 0.6 + rnd() * 0.4, x = VX + t * (320 - VX), y = wy(x, yr) - H * Math.pow(t, 1.6) - rnd() * 1.4 * t; sp += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.12 + rnd() * 0.25)}"/>`; } g += `<g fill="#ffffff" opacity=".8">${sp}</g>`; }
     return { g, un };
   };
-  k += welle(103.6, 0.9, false).g;
-  const w2 = welle(106.6, 2.4, true);
+  k += welle(103.4, 1.0, false).g;
+  const w2 = welle(106.4, 4.2, true);
   k += w2.g;
+  k += `<path d="M${pts(w2.un)} L${pts(w2.un.map(([x, y]) => [x, y + 0.25 + (y - 100) * 0.06]).reverse())} Z" fill="#165a6c" opacity=".85"/>`;
   /* Schaumteppich davor mit spitzenartigem Rand und Löchern */
   {
     const vorn = [];
     for (let x = VX + 4; x < 322; x += 1.2) vorn.push([x, wy(x, WASSER_R + 0.9) - (rnd() < 0.5 ? 0.15 + rnd() * 0.5 : 0)]);
-    k += `<path d="M${pts(w2.un)} L${pts(vorn.slice().reverse())} Z" fill="#eef8f6"/>`;
+    k += `<path d="M${pts(w2.un.map(([x, y]) => [x, y + 0.25 + (y - 100) * 0.06]))} L${pts(vorn.slice().reverse())} Z" fill="#eef8f6"/>`;
     let lo = "";
     for (let i = 0; i < 18; i++) { const x = VX + 30 + rnd() * (320 - VX - 33), y = wy(x, 107.5 + rnd() * 1.6); lo += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.4 + rnd() * 1.2)}" ry=".18"/>`; }
     k += `<g fill="#7fbcc4" opacity=".6">${lo}</g>`;
@@ -388,28 +393,32 @@ const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Flu
    dicht gestaffelt; je Farbe ein einziger Pfad (klein und schnell).
    ===================================================================== */
 {
-  const farben = ["#cd7350", "#ddae7c", "#ebe6d8", "#ba5d4e", "#a8c0ca", "#e3c56c", "#a87c62", "#da9682", "#f0eee6"];
+  /* Häuser in Terrassen, die der Hangneigung folgen: kleine Quader mit heller Front und dunklerer Seite,
+     Ziegelrot und Rohziegel-Orange überwiegen, dazwischen bunt gestrichene; oben und am Rand lichter */
+  const farben = ["#b5533c", "#c9733f", "#d98a52", "#a8472f", "#bf6a45", "#e9e2d2", "#7fb3d5", "#e4c35c", "#d98a9a"];
+  const gewicht = [5, 5, 4, 3, 4, 2, 0.6, 0.6, 0.5], summe = gewicht.reduce((a2, b2) => a2 + b2, 0);
+  const wahl = () => { let t = rnd() * summe; for (let i = 0; i < gewicht.length; i++) { t -= gewicht[i]; if (t < 0) return i; } return 0; };
   const hang = (x) => {
     for (let i = 0; i < HUEGEL.length - 2; i++) { const [x1, y1] = HUEGEL[i], [x2, y2] = HUEGEL[i + 1]; if (x >= x1 && x <= x2) return y1 + (y2 - y1) * (x - x1) / (x2 - x1); }
     return 100;
   };
-  const wege = farben.map(() => []), fenster = [], tanks = [], schatten2 = [];
-  for (let y = 80; y < 95; y += 0.95) {
-    for (let x = 150 + rnd(); x < 212; x += 0.85 + rnd() * 0.7) {
-      if (y < hang(x) + 1.6 || y > 90.5 + 2.2 * Math.sin(x * 0.37) + Math.sin(x * 1.3)) continue;
-      /* Babilônia (links) dichter, Chapéu Mangueira (rechts unten) lockerer, dazwischen Wald */
-      const dicht = x < 196 ? 0.78 : (x > 203 && y > 84 ? 0.6 : 0.25);
+  const wege = farben.map(() => []), seiten = [], fenster = [], tanks = [];
+  for (let j = 0; j < 7; j++) {
+    for (let x = 151 + rnd() * 1.2; x < 211; x += 0.95 + rnd() * 0.35) {
+      const y = hang(x) + 2 + j * 1.45 + (rnd() - 0.5) * 0.25;
+      if (y > 90.8 + 2 * Math.sin(x * 0.37) + Math.sin(x * 1.3)) continue;
+      const rand = Math.min(x - 151, 211 - x) / 8, dicht = Math.min(1, 0.35 + j * 0.13) * Math.min(1, 0.4 + rand) * (x > 196 && x < 203 ? 0.3 : 1);
       if (rnd() > dicht) continue;
-      const w = 0.6 + rnd() * 0.6, h = 0.5 + rnd() * 0.35, c = Math.floor(rnd() * farben.length);
+      const w = 0.65 + rnd() * 0.35, h = 0.55 + rnd() * 0.3, c = wahl();
       wege[c].push(`M${r(x)} ${r(y)}h${r(w)}v${r(h)}h${r(-w)}z`);
-      schatten2.push(`M${r(x + w - 0.18)} ${r(y)}h.18v${r(h)}h-.18z`);
-      if (rnd() < 0.5) fenster.push(`M${r(x + 0.15)} ${r(y + 0.2)}h.18v.18h-.18z`);
-      if (rnd() < 0.3) tanks.push(`M${r(x + w * 0.4)} ${r(y - 0.22)}h.3v.22h-.3z`);
+      seiten.push(`M${r(x + w)} ${r(y + 0.08)}h.22v${r(h - 0.08)}h-.22z`);
+      if (rnd() < 0.45) fenster.push(`M${r(x + 0.2)} ${r(y + 0.22)}h.16v.16h-.16z`);
+      if (rnd() < 0.25) tanks.push(`M${r(x + w * 0.4)} ${r(y - 0.22)}h.3v.22h-.3z`);
     }
   }
   let k = "";
   farben.forEach((c, i) => { if (wege[i].length) k += `<path d="${wege[i].join("")}" fill="${c}"/>`; });
-  k += `<path d="${schatten2.join("")}" fill="#000" opacity=".18"/><path d="${fenster.join("")}" fill="#3a2f2a"/><path d="${tanks.join("")}" fill="#2f6fb5"/>`;
+  k += `<path d="${seiten.join("")}" fill="#5a3226" opacity=".55"/><path d="${fenster.join("")}" fill="#3a2f2a"/><path d="${tanks.join("")}" fill="#2f6fb5"/>`;
   /* Bäume zwischen den Häusern und Luftdunst */
   for (let i = 0; i < 14; i++) { const x = 152 + rnd() * 58, y = Math.max(hang(x) + 2, 80) + rnd() * 10; if (y < 92) k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.6 + rnd() * 0.5)}" fill="#46754e"/>`; }
   const cid = S.id("favclip");
@@ -686,7 +695,7 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
     k += spieler(1, 33, "#8d5a3b", "#d23f33", [-0.25, 0.4, 0.25, 0.4]) + spieler(4.5, 33, "#c28e62", "#1d4fa0", [-0.2, -0.45, 0.25, 0.4]);
     /* Ball über dem Netz, darunter sein Schatten */
     const [bx, by] = boden(2.6, 26);
-    k += `<circle cx="${r(bx)}" cy="${r(HY + F * (1.6 - 2.9) / 26)}" r=".6" fill="#f6d21e" stroke="#1d4fa0" stroke-width=".15"/><ellipse cx="${r(bx - 1)}" cy="${r(by)}" rx=".7" ry=".2" fill="#7a5a2a" opacity=".3"/>`;
+    k += `<circle cx="${r(bx)}" cy="${r(HY + F * (1.6 - 2.45) / 26)}" r=".55" fill="#f6d21e" stroke="#1d4fa0" stroke-width=".15"/><ellipse cx="${r(bx - 1)}" cy="${r(by)}" rx=".7" ry=".2" fill="#7a5a2a" opacity=".3"/>`;
     k += spieler(0.4, 24, "#5e3a26", "#139a43", [-0.3, 0.35, 0.3, -0.5]) + spieler(4, 24, "#d7a179", "#f6d21e", [-0.3, 0.4, 0.28, 0.35]);
   }
   S.teil({ id: "strand", de: "der Strand", syl: "STRAND", it: "la spiaggia", itSyl: "SPIAG-gia", en: "beach", x: 118, y: 176, kunst: halb(um(118, 176, k)),
@@ -1059,6 +1068,7 @@ let BALL;
 {
   const s = sy(192);
   const L = 0.27 * s * 1.15;   /* Sohle 27 cm (perspektivisch etwas verkürzt) */
+  S.def(`<radialGradient id="${S.id("sohle")}" cx=".4" cy=".4" r=".7"><stop offset="0" stop-color="#2aa35f"/><stop offset="1" stop-color="#15693c"/></radialGradient>`);
   const sohle = (dx, dy, rot, gruen) => {
     /* gruen = rechter Fuß (gespiegelt); Paar gleichfarbig: grüne Sohle, gelber Rand und Riemen */
     const l = L, c1 = "#1e8a4c", c2 = "#f6d21e", sp = gruen ? -1 : 1;
@@ -1067,7 +1077,7 @@ let BALL;
     const SO = [[-0.5, 0], [-0.46, 0.11], [-0.3, 0.15], [-0.05, 0.16], [0.2, 0.17], [0.38, 0.16], [0.47, 0.1], [0.5, 0.02], [0.49, -0.08], [0.43, -0.17], [0.33, -0.21], [0.2, -0.18], [0.06, -0.1], [-0.12, -0.09], [-0.32, -0.12], [-0.46, -0.09]];
     const umriss = (k2) => "M" + SO.map(([u, v]) => `${r(u * l * k2)} ${r(v * l * k2)}`).join(" L") + " Z";
     let g = `<g transform="translate(${dx} ${dy}) rotate(${rot}) scale(1 ${sp})">`;
-    g += `<path d="${umriss(1)}" fill="${c2}"/><path d="${umriss(0.9)}" fill="${c1}"/>`;
+    g += `<path d="${umriss(1)}" fill="${c2}"/><path d="${umriss(0.9)}" fill="url(#${S.id("sohle")})"/><ellipse cx="${r(0.36 * l)}" cy="${r(-0.08 * l)}" rx="${r(0.07 * l)}" ry="${r(0.05 * l)}" fill="#14653a"/><ellipse cx="${r(-0.28 * l)}" cy="0" rx="${r(0.13 * l)}" ry="${r(0.08 * l)}" fill="#14653a" opacity=".6"/>`;
     /* Zehensteg und Riemen (Y-Form) mit kleiner Flagge */
     g += `<path d="M${r(0.3 * l)} 0 Q${r(0.12 * l)} ${r(-0.06 * l)} ${r(-0.06 * l)} ${r(-0.17 * l)} M${r(0.3 * l)} 0 Q${r(0.12 * l)} ${r(0.06 * l)} ${r(-0.06 * l)} ${r(0.17 * l)}" stroke="#000" stroke-width="${r(0.05 * l)}" fill="none" opacity=".2" transform="translate(-.6 .5)"/>`;
     g += `<path d="M${r(0.3 * l)} 0 Q${r(0.12 * l)} ${r(-0.06 * l)} ${r(-0.06 * l)} ${r(-0.17 * l)} M${r(0.3 * l)} 0 Q${r(0.12 * l)} ${r(0.06 * l)} ${r(-0.06 * l)} ${r(0.17 * l)}" stroke="${c2}" stroke-width="${r(0.05 * l)}" fill="none" stroke-linecap="round"/>`;
@@ -1087,7 +1097,7 @@ let BALL;
 S.davor(`<rect width="320" height="200" fill="${S.rg("morgenlicht", [[0, "#fff4cf", 0.22], [0.45, "#fff4cf", 0.05], [1, "#fff4cf", 0]], 1, 0, 0.9)}"/>`);
 
 /* Silbenschreibung einheitlich: nur die betonten Silben groß, alles andere klein */
-const silben = (t) => { if (!t) return t; const st = t.split(/([- ])/); const gross = (x) => x.length && x === x.toUpperCase() && x !== x.toLowerCase(); const lang = st.some((x) => gross(x) && x.length > 1); return st.map((x) => (/^[- ]$/.test(x) ? x : (gross(x) && (x.length > 1 || !lang) ? x : x.toLowerCase()))).join(""); };
+const silben = (t) => { if (!t) return t; const st = t.split(/([- ])/); const gross = (x) => x.length && x === x.toUpperCase() && x !== x.toLowerCase(); const lang = st.some((x) => gross(x) && x.length > 1); return st.map((x) => (/^[- ]$/.test(x) ? x : (gross(x) && (x.length > 1 || !lang || /[À-ÖÙ-Ý]/.test(x)) ? x : x.toLowerCase()))).join(""); };
 for (const t of S.teile) for (const u of [t, ...(t.unter || [])]) { u.syl = silben(u.syl); u.itSyl = silben(u.itSyl); }
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/rio.js"));
 console.log(aus);

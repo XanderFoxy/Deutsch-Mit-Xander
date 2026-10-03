@@ -465,13 +465,13 @@ const kleineFigur = (svg) => {
   kg += keks(6, -.6, -8) + keks(11, .4, 12);
   k += `<g transform="translate(${t2(K[0])} ${t2(K[1])}) scale(${(km * 1.6).toFixed(4)})">${kg}</g>`;
   /* DIE LÜTTJE LAGE: ein Glas dunkles Bier und ein Korn auf dem Holzbrettchen */
-  const L0 = auf(-1.05, -143.95), lm = mass(-143.75) / 100;
+  const L0 = auf(-1.62, -143.95), lm = mass(-143.75) / 100;
   let lg = `<path d="M-5 0 L5 0 L5.6 -.8 L-4.4 -.8 Z" fill="#a8743f"/>`;
   lg += `<path d="M-3.6 -.6 L-1 -.6 L-.8 -8 L-3.8 -8 Z" fill="#e8eef0" opacity=".5"/><path d="M-3.5 -.8 L-1.1 -.8 L-.9 -6.6 L-3.7 -6.6 Z" fill="#3a1e0e"/><path d="M-3.7 -6.6 L-.9 -6.6 L-.85 -7.4 L-3.75 -7.4 Z" fill="#e8d8b8"/>`;
   lg += `<path d="M1 -.6 L3.2 -.6 L3.4 -4.6 L.8 -4.6 Z" fill="#eef4f6" opacity=".6"/><path d="M1.1 -.8 L3.1 -.8 L3.25 -3.6 L.95 -3.6 Z" fill="#f4f8f8" opacity=".8"/><path d="M-3.4 -7.6 L-3 -1" stroke="#fff" stroke-width=".3" opacity=".6"/>`;
   k += `<g transform="translate(${t2(L0[0])} ${t2(L0[1])}) scale(${lm.toFixed(4)})">${lg}</g>`;
   /* DIE POSTKARTE mit den Nanas am Leineufer */
-  const PK = auf(-1.45, -144.55), pm = mass(-144.15) / 100;
+  const PK = auf(-2.0, -144.6), pm = mass(-144.15) / 100;
   let pg = `<g transform="rotate(-6) scale(1 .5)"><rect x="-7.4" y="-5" width="14.8" height="10" fill="#fff" stroke="#c9c6be" stroke-width=".2"/><rect x="-6.8" y="-4.4" width="13.6" height="8.8" fill="#9cc6e4"/><rect x="-6.8" y="1.6" width="13.6" height="2.8" fill="#7f9a50"/>`;
   for (const [x, f1, f2] of [[-4, "#e8443a", "#2f6fd0"], [0, "#f2c230", "#e8443a"], [4, "#2fa86a", "#f2c230"]]) pg += `<ellipse cx="${x}" cy="0" rx="1.6" ry="2.2" fill="${f1}"/><circle cx="${x}" cy="-2.8" r=".8" fill="#4a2a1a"/><path d="M${x - 1.4} -1.4 L${x - 2.4} -3 M${x + 1.4} -1.4 L${x + 2.6} -2.6" stroke="${f2}" stroke-width=".7"/><path d="M${x - .8} 1.8 L${x - 1.2} 3.4 M${x + .8} 1.8 L${x + 1.4} 3.4" stroke="${f2}" stroke-width=".7"/>`;
   pg += `<text x="0" y="-3.2" font-size="1.4" text-anchor="middle" fill="#fff" font-family="Georgia" font-weight="bold">Hannover</text></g>`;
@@ -479,7 +479,7 @@ const kleineFigur = (svg) => {
   const zw = r(b[0] - a[0] + 30), zh = r(zw * 2 / 3);
   S.teil({ oben: true, id: "decke", de: "die Decke", syl: "DE-cke", it: "la coperta", itSyl: "co-PER-ta", en: "picnic blanket", x: 0, y: 0, kunst: k,
     tipp: "Bei schönem Wetter machen viele ein Picknick im Maschpark.",
-    zoom: { x: r(Math.max(0, a[0] - 15)), y: r(HO - zh), w: zw, h: zh },
+    zoom: { x: r(Math.max(0, K[0] - 12)), y: HO - 38, w: 57, h: 38 },
     unter: [
       { id: "butterkeks", de: "der Butterkeks", syl: "BUT-ter-keks", it: "il biscotto al burro", itSyl: "bi-SCOT-to al BUR-ro", en: "butter biscuit", x: K[0] + 6 * km, y: K[1] - 1.5 * km, kunst: flaeche(-16 * km, -7 * km, 46 * km, 10 * km, .3),
         tipp: "Der Leibniz-Keks kommt aus Hannover und hat genau 52 Zähne." },

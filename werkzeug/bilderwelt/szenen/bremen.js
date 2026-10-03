@@ -65,7 +65,7 @@
    Licht: Anfang Oktober, früher Nachmittag, Sonne im Südsüdwesten (rechts
    hinter uns, ≈ 32° hoch): Südseiten hell, die Nordseite des Schüttings
    im Schatten; sein Schatten fällt nach Nordnordosten auf den Platz.
-   Maßstab: echte Kamera, Auge 1,6 m, Horizont y = 196, 173,6 Einheiten
+   Maßstab: echte Kamera, Auge 1,2 m (man sitzt am Cafétisch), Horizont y = 196, 173,6 Einheiten
    je Bogenmaß: am Rathaus ≈ 3–4, am Roland 3,5, am Dom 1,9 Einheiten je
    Meter. Bild 400 × 260, damit die 98 m hohen Domtürme ganz hineinpassen.
    ===================================================================== */

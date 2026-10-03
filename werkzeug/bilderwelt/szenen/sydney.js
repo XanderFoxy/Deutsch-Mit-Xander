@@ -241,12 +241,12 @@ const DECK_A = [randA(0, -900, 0), -60, 0, 120, 251.5, 380, 503, 560, randA(400,
     v += `<path d="M${P(bp(150, -18, 52.6))} L${P(bp(330, -18, 52.6))}" stroke="#f2c62f" stroke-width=".35"/><path d="M${P(bp(150, -18, 53.6))} L${P(bp(330, -18, 53.6))}" stroke="#2f3f4c" stroke-width=".3"/>`;
     /* Verkehr auf allen Spuren: drei Busse (weiß-blau), Lieferwagen, Autos */
     const BUS = "#f2f3f1";
-    const fz = [[30, 6, 3.2, 12, BUS], [52, 18, 1.5, 4.4, "#c0392b"], [74, 11, 1.5, 4.4, "#e8e8e6"], [96, 20, 1.5, 4.4, "#2a2a2a"], [118, 4, 4, 12, "#2f6fb6"], [150, 14, 3.2, 12, BUS],
-      [176, 8, 1.5, 4.4, "#9aa3ab"], [198, 20, 1.5, 4.4, "#e8e8e6"], [222, 12, 1.5, 4.4, "#1d1d1d"], [246, 4, 1.5, 4.4, "#d9b02f"], [268, 18, 2.6, 9, "#f4f4f2"], [300, 8, 4, 12, "#f4f4f2"],
-      [326, 14, 3.2, 12, BUS], [350, 20, 1.5, 4.4, "#c0392b"], [372, 4, 1.5, 4.4, "#7d8590"], [396, 12, 2.6, 9, "#e2722d"], [424, 18, 1.5, 4.4, "#e8e8e6"], [448, 8, 1.5, 4.4, "#2f6fb6"], [470, 14, 1.5, 4.4, "#1d1d1d"]];
+    const fz = [[30, 6, 3.2, 12, BUS], [52, 18, 2, 4.6, "#c0392b"], [74, 11, 2, 4.6, "#e8e8e6"], [96, 20, 2, 4.6, "#2a2a2a"], [118, 4, 4, 12, "#2f6fb6"], [150, 14, 3.2, 12, BUS],
+      [176, 8, 2, 4.6, "#9aa3ab"], [198, 20, 2, 4.6, "#e8e8e6"], [222, 12, 2, 4.6, "#1d1d1d"], [246, 4, 2, 4.6, "#d9b02f"], [268, 18, 2.6, 9, "#f4f4f2"], [300, 8, 4, 12, "#f4f4f2"],
+      [326, 14, 3.2, 12, BUS], [350, 20, 2, 4.6, "#c0392b"], [372, 4, 2, 4.6, "#7d8590"], [396, 12, 2.6, 9, "#e2722d"], [424, 18, 2, 4.6, "#e8e8e6"], [448, 8, 2, 4.6, "#2f6fb6"], [470, 14, 2, 4.6, "#1d1d1d"]];
     for (const [a, c, h, l, f] of fz) {
       const Q4 = (a0, a1, z0, z1) => `M${P(bp(a0, c, z0))} L${P(bp(a1, c, z0))} L${P(bp(a1, c, z1))} L${P(bp(a0, c, z1))} Z`;
-      if (h < 2) {
+      if (h < 2.5) {
         /* Auto: Karosserie und schmaleres Dach mit Fenstern */
         v += `<path d="${Q4(a, a + l, 49, 49 + h * 0.55)}" fill="${f}"/><path d="${Q4(a + l * 0.22, a + l * 0.78, 49 + h * 0.55, 49 + h)}" fill="${f}"/><path d="${Q4(a + l * 0.28, a + l * 0.72, 49 + h * 0.62, 49 + h * 0.92)}" fill="#3a4a58"/>`;
       } else {
@@ -500,18 +500,22 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
 {
   let b = "";
   /* Ufermauer von Farm Cove (Sandsteinquader, hell, mit dunklem Gezeitenstreifen) */
-  b += `<path d="M0 146.6 L78 147.2 L78 149.6 L0 149.6 Z" fill="#d9caa8"/><path d="M0 146.6 L78 147.2" stroke="#f2e6c8" stroke-width=".4"/><rect x="0" y="146.8" width="78" height="2.6" fill="url(#${S.id("quaderk")})"/><path d="M0 149.3 L78 149.3" stroke="#4a4a36" stroke-width=".6"/>`;
+  b += `<path d="M0 146.6 L78 147.2 L78 149.6 L0 149.6 Z" fill="#e8dab8"/><path d="M0 146.6 L78 147.2" stroke="#fff4dc" stroke-width=".6"/><rect x="0" y="146.8" width="78" height="2.6" fill="url(#${S.id("quaderk")})"/><path d="M0 149.3 L78 149.3" stroke="#4a4a36" stroke-width=".6"/>`;
   S.def(`<pattern id="${S.id("quaderk")}" width="3.4" height="1.3" patternUnits="userSpaceOnUse" patternTransform="translate(0 146.8)"><path d="M.1 0v1.3M1.8 1.3v1.3M0 1.3h3.4" stroke="#a89878" stroke-width=".15"/></pattern>`);
   /* Moreton-Bay-Feigen: kurze, dicke Stämme, sehr breite, flach gewölbte Kronen mit gebuckeltem Rand;
      Licht oben rechts, Blattmuster */
-  const KRONE = S.rg("krone", [[0, "#5f8f48"], [0.5, "#355f30"], [1, "#1f3d22"]], 0.62, 0.25, 0.8);
+  const KRONE = S.rg("krone", [[0, "#4f7f3e"], [0.5, "#2a4f28"], [1, "#16301a"]], 0.62, 0.25, 0.8);
   const feige = (x, y, w, h) => {
-    let g = `<path d="M${r(x - w * 0.06)} ${y} L${r(x - w * 0.035)} ${r(y - h * 0.4)} L${r(x + w * 0.035)} ${r(y - h * 0.4)} L${r(x + w * 0.07)} ${y} Z" fill="#6b5e4e"/>`;
-    g += `<path d="M${r(x - w * 0.14)} ${y} Q${r(x - w * 0.06)} ${r(y - h * 0.12)} ${r(x - w * 0.04)} ${r(y - h * 0.1)} M${r(x + w * 0.14)} ${y} Q${r(x + w * 0.06)} ${r(y - h * 0.12)} ${r(x + w * 0.05)} ${r(y - h * 0.1)}" stroke="#6b5e4e" stroke-width=".6" fill="none"/>`;
-    const n = 9; let d = `M${r(x - w / 2)} ${r(y - h * 0.34)}`;
-    for (let i = 1; i <= n; i++) { const t = i / n, px = x - w / 2 + w * t, py = y - h * (0.34 + 0.62 * Math.pow(Math.sin(t * Math.PI), 0.6)) - rnd() * h * 0.06; d += ` Q${r(px - w / n * 0.5)} ${r(py - h * 0.14)} ${r(px)} ${r(py)}`; }
-    d += ` Q${r(x + w * 0.3)} ${r(y - h * 0.26)} ${r(x)} ${r(y - h * 0.3)} Q${r(x - w * 0.3)} ${r(y - h * 0.26)} ${r(x - w / 2)} ${r(y - h * 0.34)} Z`;
-    g += `<path d="${d}" fill="${KRONE}"/><path d="${d}" fill="url(#${S.id("blatt")})" opacity=".3"/>`;
+    /* kurzer, dicker Stamm, drei weit ausladende Äste, darüber eine breite, flache Schirmkrone mit
+       gebuckelter Oberseite und fast gerader, dunkler Unterseite */
+    let g = `<path d="M${r(x - w * 0.05)} ${y}L${r(x - w * 0.035)} ${r(y - h * 0.32)}L${r(x + w * 0.035)} ${r(y - h * 0.32)}L${r(x + w * 0.06)} ${y}Z" fill="#5f5446"/>`;
+    g += `<path d="M${r(x)} ${r(y - h * 0.3)}Q${r(x - w * 0.18)} ${r(y - h * 0.4)} ${r(x - w * 0.34)} ${r(y - h * 0.5)}M${r(x)} ${r(y - h * 0.3)}Q${r(x + w * 0.16)} ${r(y - h * 0.42)} ${r(x + w * 0.32)} ${r(y - h * 0.5)}M${r(x)} ${r(y - h * 0.3)}L${r(x + w * 0.02)} ${r(y - h * 0.52)}" stroke="#5f5446" stroke-width="${r(w * 0.03)}" fill="none"/>`;
+    const n = 10; let d = `M${r(x - w / 2)} ${r(y - h * 0.46)}`;
+    for (let i = 1; i <= n; i++) { const t = i / n, px = x - w / 2 + w * t, py = y - h * (0.5 + 0.48 * Math.pow(Math.sin(t * Math.PI), 0.35)) - rnd() * h * 0.05; d += ` Q${r(px - w / n * 0.5)} ${r(py - h * 0.1)} ${r(px)} ${r(py)}`; }
+    d += ` Q${r(x + w * 0.3)} ${r(y - h * 0.42)} ${r(x)} ${r(y - h * 0.45)} Q${r(x - w * 0.3)} ${r(y - h * 0.42)} ${r(x - w / 2)} ${r(y - h * 0.46)} Z`;
+    g += `<path d="${d}" fill="${KRONE}"/><path d="${d}" fill="url(#${S.id("blatt")})" opacity=".25"/>`;
+    g += `<path d="M${r(x - w * 0.46)} ${r(y - h * 0.5)}Q${r(x)} ${r(y - h * 0.42)} ${r(x + w * 0.46)} ${r(y - h * 0.5)}" stroke="#13261a" stroke-width="${r(h * 0.06)}" fill="none" opacity=".6"/>`;
+    g += `<path d="M${r(x - w * 0.1)} ${r(y - h * 0.95)}q${r(w * 0.2)} ${r(-h * 0.04)} ${r(w * 0.36)} ${r(h * 0.08)}" stroke="#7fae5a" stroke-width="${r(h * 0.06)}" fill="none" opacity=".6" stroke-linecap="round"/>`;
     return g;
   };
   /* zwei breite Moreton-Bay-Feigen (≈ 25 m hoch, 40 m Krone) – links der Oper, damit das Restaurant frei bleibt */
@@ -751,10 +755,9 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   /* Brettwurzel-Rippen am sichtbaren Stamm (der Fuß liegt hinter dem Felsen der Bank) */
   /* zwei Brettwurzeln als flache, geschwungene Rippen, die in den Fels laufen (der Fuß liegt dahinter) */
   k += `<path d="M18 -62 Q22 -50 34 -44 Q40 -41.6 46 -42 L45 -38 Q36 -38.4 28 -42 Q20 -48 14 -60 Z" fill="${RINDE}"/><path d="M18 -62 Q22 -50 34 -44 Q40 -41.6 46 -42" stroke="#d8cfba" stroke-width=".8" fill="none"/>`;
-  k += `<path d="M4 -60 Q2 -50 -1 -42 L3 -40 Q6 -50 8 -58 Z" fill="${RINDE}"/><path d="M8 -58 Q6 -50 3 -40" stroke="#d8cfba" stroke-width=".6" fill="none"/>`;
   /* Rinde: senkrechte, gewellte Falten */
   let falt = "";
-  for (const x of [1, 4.5, 8, 11.5, 15, 19, 22.5]) { let f = `M${x} -200`; for (let y = -190; y <= -44; y += 10) f += `Q${r(x + (rnd() - 0.5) * 2.4)} ${y - 5} ${r(x + (rnd() - 0.5) * 1.6 + (y > -110 ? (x - 10) * (-110 - y) * -0.004 : 0))} ${y}`; falt += f; }
+  for (const x of [1, 4.5, 8, 11.5, 15, 19, 22.5]) { let f = `M${x} -132`; for (let y = -122; y <= -44; y += 10) f += `Q${r(x + (rnd() - 0.5) * 2.4)} ${y - 5} ${r(x + (rnd() - 0.5) * 1.6 + (y > -110 ? (x - 10) * (-110 - y) * -0.004 : 0))} ${y}`; falt += f; }
   k += `<path d="${falt}" stroke="#4a443c" stroke-width=".7" fill="none" opacity=".55"/><path d="${falt}" stroke="#b8b0a0" stroke-width=".35" fill="none" opacity=".5" transform="translate(.8 0)"/>`;
   S.teil({ id: "feigenbaum", de: "der Feigenbaum", syl: "FEI-gen-baum", it: "il fico", itSyl: "FI-co", en: "fig tree", x: X, y: Y, kunst: k,
     tipp: "Die Moreton-Bay-Feige hat riesige Brettwurzeln und Luftwurzeln. In Sydneys Parks stehen viele davon." });

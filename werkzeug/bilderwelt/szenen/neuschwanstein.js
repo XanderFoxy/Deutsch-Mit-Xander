@@ -409,20 +409,31 @@ const LINKS_OBEN = [[86, 224], [62, 222], [34, 220], [-1, 219]];
      Schattenseite rechts, schräge Schichtbänder, dunkle Risse, Grasbüschel in den Spalten */
   const pg = [...FUSS, ...FELS_U.slice().reverse()];
   S.def(`<clipPath id="${S.id("felsclip")}"><path d="${poly(pg)}"/></clipPath>`);
-  const zf = (j, t) => [FUSS[j][0] + (FELS_U[j][0] - FUSS[j][0]) * t, FUSS[j][1] + (FELS_U[j][1] - FUSS[j][1]) * t];
-  const NJ = FUSS.length, NT = 6, gitter = [];
-  for (let j = 0; j < NJ; j++) { gitter.push([]); for (let t = 0; t <= NT; t++) { const p2 = zf(j, t / NT); const inner = j > 0 && j < NJ - 1 && t > 0 && t < NT; gitter[j].push(inner ? [p2[0] + (rnd() - 0.5) * 4, p2[1] + (rnd() - 0.5) * 3 - (j * 0.6)] : p2); } }
-  let k = `<path d="${poly(pg)}" fill="#cbbfa8"/><g clip-path="url(#${S.id("felsclip")})">`;
-  const TON = ["#f3ecdd", "#e2d8c4", "#cbbfa6", "#a99c84", "#857a66", "#6e6453"];
-  for (let j = 0; j < NJ - 1; j++) for (let t = 0; t < NT; t++) {
-    const a2 = gitter[j][t], b2 = gitter[j + 1][t], c2 = gitter[j + 1][t + 1], d2 = gitter[j][t + 1];
-    const links = rnd() < 0.55, hell = j < 3 ? 0 : j < 5 ? 1 : 2;   /* Palas-Seite im Licht, nach rechts mehr Schatten */
-    k += `<path d="${poly([a2, b2, c2])}" fill="${TON[Math.min(5, hell + (links ? 0 : 2))]}"/><path d="${poly([a2, c2, d2])}" fill="${TON[Math.min(5, hell + (links ? 1 : 3))]}"/>`;
+  /* Wettersteinkalk ist senkrecht gegliedert: schmale, hohe Pfeiler (Facetten ≈ 3 : 1) mit harter Lichtkante links
+     und Schattenseite rechts, dazwischen dunkle Kamine; nur schmale Schichtbänder. Heller Ton grauer als das Schloss. */
+  const NJ = FUSS.length;
+  const lerp = (P, q) => { const x = q * (NJ - 1), i = Math.min(NJ - 2, Math.floor(x)), f = x - i; return [P[i][0] + (P[i + 1][0] - P[i][0]) * f, P[i][1] + (P[i + 1][1] - P[i][1]) * f]; };
+  const zf = (q, t) => { const o = lerp(FUSS, q), u = lerp(FELS_U, q); return [o[0] + (u[0] - o[0]) * t, o[1] + (u[1] - o[1]) * t]; };
+  const M = 22, NT = 3, qs = [0];
+  for (let c = 1; c < M; c++) qs.push((c + (rnd() - 0.5) * 0.5) / M);
+  qs.push(1);
+  const zeilen = [0, 0.3 + rnd() * 0.1, 0.62 + rnd() * 0.1, 1];
+  let k = `<path d="${poly(pg)}" fill="#b9ad96"/><g clip-path="url(#${S.id("felsclip")})">`;
+  const TON = ["#e2d9c6", "#d2c7b1", "#bdb19a", "#a09379", "#827763", "#665d4e"];
+  const kamine = new Set([5, 11, 16]);
+  for (let c = 0; c < M; c++) {
+    const q0 = qs[c], q1 = qs[c + 1], qm = q0 + (q1 - q0) * (0.4 + rnd() * 0.3), basis = q0 < 0.4 ? 0 : q0 < 0.7 ? 1 : 2;
+    for (let t = 0; t < NT; t++) {
+      const t0 = zeilen[t], t1 = zeilen[t + 1], v = rnd() < 0.3 ? 1 : 0;
+      const dx = (rnd() - 0.5) * 0.04;
+      k += `<path d="${poly([zf(q0, t0), zf(qm, t0), zf(qm + dx, t1), zf(q0, t1)])}" fill="${TON[Math.min(5, basis + v)]}"/><path d="${poly([zf(qm, t0), zf(q1, t0), zf(q1, t1), zf(qm + dx, t1)])}" fill="${TON[Math.min(5, basis + 2 + v)]}"/>`;
+    }
+    if (kamine.has(c)) { const a0 = zf(q1 - 0.008, 0.05), a1 = zf(q1 + 0.01, 0.05), b0 = zf(q1 - 0.014, 1), b1 = zf(q1 + 0.016, 1); k += `<path d="${poly([a0, a1, b1, b0])}" fill="#3e372c" opacity=".85"/>`; }
   }
-  /* schräge Schichtbänder (fallen nach rechts ein) */
-  for (const t of [0.2, 0.42, 0.63, 0.82]) { let d = ""; for (let j = 0; j < NJ - 1; j++) { if (rnd() < 0.4) continue; const p2 = zf(j, Math.min(0.98, t + j * 0.035)), p3 = zf(j + 1, Math.min(0.98, t + (j + 0.6) * 0.035)); d += `M${Pt(p2)} L${Pt([p2[0] + (p3[0] - p2[0]) * 0.6, p2[1] + (p3[1] - p2[1]) * 0.6])} `; } k += `<path d="${d}" stroke="#7d725f" stroke-width=".4" fill="none" opacity=".6"/>`; }
-  /* Risse entlang einzelner Facettenkanten, Grasbüschel und kleine Fichten in den Spalten */
-  for (let i = 0; i < 10; i++) { const j = 1 + Math.floor(rnd() * (NJ - 2)), t = 1 + Math.floor(rnd() * (NT - 2)), a2 = gitter[j][t], b2 = gitter[j][t + 1]; k += `<path d="M${Pt(a2)} L${Pt(b2)}" stroke="#3e372c" stroke-width=".6"/>`;
+  /* schmale Schichtbänder (fallen leicht nach rechts ein) */
+  for (const t of [0.24, 0.5, 0.78]) { let d = ""; for (let c = 0; c < M; c += 1 + Math.floor(rnd() * 2)) { if (rnd() < 0.35) continue; const p2 = zf(qs[c], t + c * 0.006), p3 = zf(qs[c + 1], t + (c + 1) * 0.006); d += `M${Pt(p2)} L${Pt(p3)} `; } k += `<path d="${d}" stroke="#6e6452" stroke-width=".25" fill="none" opacity=".5"/>`; }
+  /* Risse, Grasbüschel und kleine Fichten in den Spalten */
+  for (let i = 0; i < 9; i++) { const c = 1 + Math.floor(rnd() * (M - 2)), t = 0.15 + rnd() * 0.6, a2 = zf(qs[c], t), b2 = zf(qs[c], t + 0.18); k += `<path d="M${Pt(a2)} L${Pt(b2)}" stroke="#3e372c" stroke-width=".45"/>`;
     if (i % 2) k += `<path d="M${r(b2[0] - 1.2)} ${r(b2[1])} l.5 -1.6 l.4 1.4 l.5 -1.8 l.4 1.6 l.6 -1.2 l.2 1.6 Z" fill="${i % 4 === 1 ? "#5a7a3a" : "#b08a3a"}"/>`;
     else k += `<path d="M${r(b2[0] - 1)} ${r(b2[1])} L${r(b2[0])} ${r(b2[1] - 3.2)} L${r(b2[0] + 1)} ${r(b2[1])} Z" fill="#2f4b33"/>`; }
   k += `</g>`;
