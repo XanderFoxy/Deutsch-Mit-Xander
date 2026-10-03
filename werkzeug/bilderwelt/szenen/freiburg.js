@@ -94,9 +94,18 @@ const linie = (pts) => {
   return q.length > 1 ? "M" + q.map(P).join(" L") : "M0 0";
 };
 /* Menschen klein im Bild: Pfaddaten auf ganze Zentimeter runden (unsichtbar, halbiert die Datei) */
-const rundeFigur = (svg) => svg.replace(/ d="([^"]*)"/g, (m, d) => ` d="${d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n)))}"`);
+const rundeFigur = (svg) => {
+  const k = +((svg.match(/scale\(([\d.]+)\)/) || [0, 1])[1]), lim = .07 / k;
+  /* Haarsträhnen, Brauen und Nähte, die im Bild dünner als ein Viertelpixel wären, fallen weg */
+  return svg.replace(/<path(?=[^>]*fill="none")[^>]*stroke-width="([\d.]+)"[^>]*\/>/g, (m, w) => (+w < lim ? "" : m))
+    .replace(/ d="([^"]*)"/g, (m, d) => ` d="${d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n)))}"`)
+    .replace(/<(\w+)[^>]*>/g, (tag, n) => (/Gradient$/.test(n) && !/userSpaceOnUse/.test(tag) ? tag
+      : tag.replace(/ (x1|y1|x2|y2|cx|cy|r|rx|ry|fx|fy)="(-?[\d.]+)"/g, (m, a, v) => ` ${a}="${Math.round(+v * 2) / 2}"`)));
+};
 /* Maßstab (Einheiten je Meter) und Fußpunkt eines Dings am Boden */
 const fuss = (x, y) => { const p = pr(x, y, 0); return { x: p[0], y: p[1], s: FOC / tief(x, y) }; };
+const SCH = [-0.906 * 1.19, 0.423 * 1.19];
+const schlag = (x, y, w, h, op = .3) => `<path d="${poly([[x + w / 2, y, 0], [x - w / 2, y, 0], [x - w / 2 + SCH[0] * h, y + SCH[1] * h, 0], [x + w / 2 + SCH[0] * h, y + SCH[1] * h, 0]])}" fill="#2a1e14" opacity="${op}"/>`;
 
 S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
@@ -149,82 +158,178 @@ const fbogen = (Y, xm, w, z0, zk, spitz, n = 8) => {
 const toroeffnung = (Y, xm, w, zKampf, zScheitel, spitz) => [[xm - w / 2, Y, 0], ...fbogen(Y, xm, w, zKampf, zScheitel, spitz, 10), [xm + w / 2, Y, 0]];
 
 /* =====================================================================
-   1 — DER MÜNSTERPLATZ (Kieselpflaster, Schatten, Häuser am Rand)
+   1 — DER MÜNSTERPLATZ (Rheinkiesel in Reihen, Granitbänder, die Häuser ringsum)
    ===================================================================== */
 {
-  /* Kieselpflaster aus Rheinkieseln: drei Muster, vorn grob, hinten fein */
-  const kiesel = (n, w, h, rx, ry) => {
-    let m = "";
-    for (let i = 0; i < n; i++) {
-      const x = rnd() * w, y = rnd() * h, f = ["#b9ab97", "#a39582", "#cfc2ae", "#8f8270", "#c4b49c", "#9c8f80"][Math.floor(rnd() * 6)];
-      for (const dx of [0, w, -w]) { if (dx && (x + dx < -rx || x + dx > w + rx)) continue; m += `<ellipse cx="${r(x + dx)}" cy="${r(y)}" rx="${r(rx * (0.7 + rnd() * 0.6))}" ry="${r(ry * (0.7 + rnd() * 0.6))}" fill="${f}"/>`; }
+  /* Kieselpflaster: Kiesel liegen in Reihen. Ein Kiesel (≈ 7 cm) ist im Bild umso größer und umso weniger
+     verkürzt, je weiter unten er liegt (d = Abstand unter dem Horizont): rx ≈ .044·d, ry ≈ rx·d/FOC.
+     Fünf Muster in Stufen, weich ineinander geblendet — so werden die Kiesel nach hinten stufenlos kleiner. */
+  const FARB = ["#b9ab97", "#a39582", "#cfc2ae", "#8f8270", "#c4b49c", "#9c8f80", "#d8ccb8"];
+  const stufe = (i, d) => {
+    const rx = .044 * d, ry = Math.max(.05, rx * d / FOC), w = rx * 9, h = ry * 7.2;
+    let m = `<rect width="${r(w)}" height="${r(h)}" fill="#7d705f"/>`;
+    for (let z = 0; z < 3; z++) for (let j = 0; j < 4; j++) {
+      const x = (j + (z % 2) * .5 + (rnd() - .5) * .3) * w / 4, y = (z + .5) * h / 3 + (rnd() - .5) * ry * .5, ax = rx * (.75 + rnd() * .45), ay = ry * (.8 + rnd() * .4);
+      for (const dx of [0, w, -w]) {
+        if (dx && (x + dx < -ax || x + dx > w + ax)) continue;
+        m += `<ellipse cx="${r(x + dx)}" cy="${r(y + ay * .25)}" rx="${r(ax)}" ry="${r(ay)}" fill="#5e5346" opacity=".5"/><ellipse cx="${r(x + dx)}" cy="${r(y)}" rx="${r(ax)}" ry="${r(ay)}" fill="${FARB[Math.floor(rnd() * FARB.length)]}"/>`;
+      }
     }
-    return m;
+    S.def(`<pattern id="${S.id("kies" + i)}" width="${r(w)}" height="${r(h)}" patternUnits="userSpaceOnUse">${m}</pattern>`);
   };
-  S.def(`<pattern id="${S.id("kies1")}" width="3.4" height="1.1" patternUnits="userSpaceOnUse"><rect width="3.4" height="1.1" fill="#8a7d6c"/>${kiesel(9, 3.4, 1.1, .3, .12)}</pattern>`);
-  S.def(`<pattern id="${S.id("kies2")}" width="7.4" height="2.6" patternUnits="userSpaceOnUse"><rect width="7.4" height="2.6" fill="#857866"/>${kiesel(12, 7.4, 2.6, .62, .28)}</pattern>`);
-  S.def(`<pattern id="${S.id("kies3")}" width="14.6" height="5.6" patternUnits="userSpaceOnUse"><rect width="14.6" height="5.6" fill="#7f7261"/>${kiesel(14, 14.6, 5.6, 1.25, .55)}</pattern>`);
-  S.def(`<linearGradient id="${S.id("m2g")}" gradientUnits="userSpaceOnUse" x1="0" y1="194" x2="0" y2="204"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("m2")}"><rect width="320" height="240" fill="url(#${S.id("m2g")})"/></mask>`);
-  S.def(`<linearGradient id="${S.id("m3g")}" gradientUnits="userSpaceOnUse" x1="0" y1="206" x2="0" y2="220"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("m3")}"><rect width="320" height="240" fill="url(#${S.id("m3g")})"/></mask>`);
+  const D = [3.4, 7, 14, 26, 46];
+  D.forEach((d, i) => stufe(i, d));
   const boden = `M0 ${HOR - 4} H320 V240 H0 Z`;
-  let k = `<path d="${boden}" fill="url(#${S.id("kies1")})"/><path d="${boden}" fill="url(#${S.id("kies2")})" mask="url(#${S.id("m2")})"/><path d="${boden}" fill="url(#${S.id("kies3")})" mask="url(#${S.id("m3")})"/>`;
-  k += `<path d="${boden}" fill="${S.lg("bodenluft", [[0, "#e8e2d6", 0.55], [0.12, "#e8e2d6", 0.15], [0.5, "#fff3d8", 0], [1, "#3a2a1a", 0.12]])}"/>`;
-  /* Schatten der Südzeile (Mittagssonne aus Süden) */
-  k += `<path d="${poly([[-96, KYS, 0], [70, KYS, 0], [70, KYS + 11, 0], [-96, KYS + 11, 0]])}" fill="#2a2018" opacity=".2"/>`;
-  /* Westende des Platzes: Häuser quer zum Blick */
-  for (const [y0, y1, h, f, giebel] of [[-78, -66, 14, "#e8d7b0", 0], [-66, -56, 12, "#d9c4a8", 1], [-56, -44, 15, "#efe4cc", 0], [-44, -32, 13, "#e2c9a0", 0], [-32, -20, 15, "#d8cdbd", 1]]) {
-    k += `<path d="${poly([[-96, y0, 0], [-96, y1, 0], [-96, y1, h], [-96, y0, h]])}" fill="${f}"/>`;
-    if (giebel) k += `<path d="${poly([[-96, y0, h], [-96, y1, h], [-96, (y0 + y1) / 2, h + 7]])}" fill="${f}"/><path d="${poly([[-96, y0, h], [-96, (y0 + y1) / 2, h + 7], [-96, y1, h]])}" fill="none" stroke="#8a5c4c" stroke-width=".5"/><path d="${poly([[-96, (y0 + y1) / 2 - .6, h + 2], [-96, (y0 + y1) / 2 + .6, h + 2], [-96, (y0 + y1) / 2 + .6, h + 3.6], [-96, (y0 + y1) / 2 - .6, h + 3.6]])}" fill="#4a4a50"/>`;
-    else k += `<path d="${poly([[-96, y0, h], [-96, y1, h], [-101, y1, h + 6], [-101, y0, h + 6]])}" fill="#8a5c4c"/><path d="${poly([[-98, (y0 + y1) / 2 - .8, h + 2.6], [-98, (y0 + y1) / 2 + .8, h + 2.6], [-98, (y0 + y1) / 2 + .8, h + 4.2], [-98, (y0 + y1) / 2 - .8, h + 4.2]])}" fill="#ece4d4"/>`;
-    k += `<path d="${poly([[-96, y0, 3.6], [-96, y1, 3.6], [-96, y1, 4], [-96, y0, 4]])}" fill="#fff" opacity=".35"/>`;
-    for (let i = 0; i < 3; i++) for (let e = 0; e < 3; e++) { const y = y0 + (i + .5) * (y1 - y0) / 3 - .6, z = (e ? 4.6 + (e - 1) * 4 : .4), hh = e ? 2.2 : 3; k += `<path d="${poly([[-96, y, z], [-96, y + 1.2, z], [-96, y + 1.2, z + hh], [-96, y, z + hh]])}" fill="${e ? "#4a4a50" : "#6a5040"}"/>`; }
+  let k = `<path d="${boden}" fill="url(#${S.id("kies0")})"/>`;
+  for (let i = 1; i < D.length; i++) {
+    const a = HOR + D[i - 1] * 1.25, b = HOR + D[i] * .8;
+    S.def(`<linearGradient id="${S.id("mk" + i)}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(a)}" x2="0" y2="${r(b)}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("m" + i)}"><rect width="320" height="240" fill="url(#${S.id("mk" + i)})"/></mask>`);
+    k += `<path d="M0 ${r(a)} H320 V240 H0 Z" fill="url(#${S.id("kies" + i)})" mask="url(#${S.id("m" + i)})"/>`;
   }
-  /* Südzeile westlich des Kaufhauses (Alte Wache, Palais) und der Nachbar im Osten */
-  const haus = (x0, x1, h, dach, farbe, stock = 3) => {
-    let g = `<path d="${poly([[x0, KYS, 0], [x1, KYS, 0], [x1, KYS, h], [x0, KYS, h]])}" fill="${farbe}"/>`;
-    g += `<path d="${poly([[x0, KYS, 0], [x1, KYS, 0], [x1, KYS, h], [x0, KYS, h]])}" fill="${S.lg("hausschatten", [[0, "#2a2018", 0.16], [1, "#2a2018", 0.04]])}"/>`;
-    g += `<path d="${poly([[x0, KYS, h], [x1, KYS, h], [x1 - 1, KYS - 6, h + dach], [x0 + 1, KYS - 6, h + dach]])}" fill="${S.lg("dach_h", [[0, "#6b4a3e"], [1, "#8a6050"]])}"/>`;
-    const n = Math.max(2, Math.round((x1 - x0) / 3.6));
+  k += `<path d="${boden}" fill="${S.lg("bodenluft", [[0, "#e8e2d6", 0.55], [0.12, "#e8e2d6", 0.15], [0.5, "#fff3d8", 0], [1, "#3a2a1a", 0.12]])}"/>`;
+  /* Granitbänder im Pflaster (gliedern den Platz in Felder) */
+  let gb = "";
+  for (const yb of [-62.5, -41.5]) gb += `<path d="${poly([[70, yb - .2, 0], [-96, yb - .2, 0], [-96, yb + .2, 0], [70, yb + .2, 0]])}"/>`;
+  for (const xb of [57, 37, 17, -3, -23, -43, -63]) gb += `<path d="${poly([[xb - .2, -78, 0], [xb + .2, -78, 0], [xb + .2, -22, 0], [xb - .2, -22, 0]])}"/>`;
+  k += `<g fill="#c2bcb0" opacity=".85">${gb}</g>`;
+  /* Schatten der Südzeile: Sonne hoch im Südsüdosten — nur etwa 7 m breit, nach Westen verschoben */
+  k += `<path d="${poly([[70, KYS, 0], [-96, KYS, 0], [-96 + SCH[0] * 14, KYS + SCH[1] * 14, 0], [70 + SCH[0] * 14, KYS + SCH[1] * 14, 0]])}" fill="#2a2018" opacity=".2"/>`;
+
+  /* Westende des Platzes (Ebene x = −96, die Fassaden schauen zu uns): bis hinter den Turmfuß geschlossen.
+     Jedes Haus mit Ladenzone, Fensterläden, eigener Traufe oder Giebel */
+  const wq = (y0, z0, y1, z1, X = -96) => poly([[X, y0, z0], [X, y1, z0], [X, y1, z1], [X, y0, z1]]);
+  const WEST = [[-80, -69, 15, "#e8d7b0", "t", "#4f6a4a"], [-69, -60, 13, "#d9b8a8", "g", "#6a4a3a"], [-60, -48, 16, "#efe4cc", "t", "#5a6a7a"], [-48, -39, 14, "#e2c290", "g", null], [-39, -27, 17, "#d8cdbd", "t", "#4f6a4a"], [-27, -17, 14, "#f0dcc0", "g", "#7a3a2a"], [-17, 4, 16, "#e6d2b6", "t", null]];
+  for (const [y0, y1, h, f, art, laden] of WEST) {
+    k += `<path d="${wq(y0, 0, y1, h)}" fill="${f}"/><path d="${wq(y0, 0, y1, h)}" fill="#3a2a1a" opacity=".08"/>`;
+    const ym = (y0 + y1) / 2;
+    if (art === "g") {
+      k += `<path d="${poly([[-96, y0, h], [-96, y1, h], [-96, ym, h + 7.5]])}" fill="${f}"/><path d="${poly([[-96, y0 - .3, h - .2], [-96, ym, h + 7.8], [-96, y1 + .3, h - .2], [-96, y1 + .3, h + .3], [-96, ym, h + 8.3], [-96, y0 - .3, h + .3]])}" fill="#8a5446"/>`;
+      k += `<path d="${wq(ym - .5, h + 2.4, ym + .5, h + 4.2)}" fill="#3c3e46"/>`;
+    } else {
+      k += `<path d="${poly([[-96, y0, h], [-96, y1, h], [-102, y1, h + 6.5], [-102, y0, h + 6.5]])}" fill="#8a5c4c"/><path d="${wq(y0 - .2, h - .4, y1 + .2, h + .2)}" fill="#c9b494"/>`;
+      for (let y = y0 + 2.5; y < y1 - 1.5; y += 4.5) k += `<path d="${poly([[-98.6, y, h + 2.6], [-98.6, y + 1.6, h + 2.6], [-98.6, y + 1.6, h + 4.4], [-98.6, y + .8, h + 5.2], [-98.6, y, h + 4.4]])}" fill="#ece4d4"/>`;
+    }
+    /* Ladenzone: Gesims, Schaufenster, Tür, manchmal eine Markise */
+    k += `<path d="${wq(y0, 3.8, y1, 4.3)}" fill="#fff" opacity=".4"/>`;
+    const n = Math.max(2, Math.round((y1 - y0) / 3.4));
+    for (let i = 0; i < n; i++) {
+      const yy = y0 + (i + .5) * (y1 - y0) / n;
+      k += `<path d="${wq(yy - 1.1, .3, yy + 1.1, 3.2)}" fill="${i === 1 ? "#5a4434" : "#3a3c42"}"/>`;
+      for (let e = 0; e < (h > 15 ? 3 : 2); e++) {
+        const z = 5 + e * 3.6;
+        k += `<path d="${wq(yy - .55, z, yy + .55, z + 2.2)}" fill="#44464e"/>`;
+        if (laden) k += `<path d="${wq(yy - 1.15, z, yy - .6, z + 2.2)}" fill="${laden}"/><path d="${wq(yy + .6, z, yy + 1.15, z + 2.2)}" fill="${laden}"/>`;
+      }
+    }
+    if (laden) k += `<path d="${poly([[-96, y0 + .4, 3.6], [-96, y1 - .4, 3.6], [-94.2, y1 - .4, 2.7], [-94.2, y0 + .4, 2.7]])}" fill="${laden === "#7a3a2a" ? "#b84030" : "#d8cfb8"}"/>`;
+  }
+  /* Südzeile westlich des Kaufhauses (von Ost nach West): Erzbischöfliches Palais (Haus zum Ritter, 1756),
+     Bürgerhaus, Wentzingerhaus (1761, heute Museum für Stadtgeschichte), Alte Wache (1733, Mansarddach) */
+  const fe = (x0, x1, z0, z1, f = "#44464e") => `<path d="${poly([[x0, KYS, z0], [x1, KYS, z0], [x1, KYS, z1], [x0, KYS, z1]])}" fill="${f}"/>`;
+  const fassade = (x0, x1, h, farbe, gewaende) => {
+    let g = fe(x0, x1, 0, h, farbe) + `<path d="${poly([[x0, KYS, 0], [x1, KYS, 0], [x1, KYS, h], [x0, KYS, h]])}" fill="${S.lg("hausschatten", [[0, "#2a2018", 0.2], [1, "#2a2018", 0.08]])}"/>`;
+    g += fe(x0, x1, h - .5, h + .2, gewaende) + fe(x0, x1, 3.9, 4.3, gewaende);
+    return g;
+  };
+  const fenster = (x0, x1, h, stock, n, gew, laden) => {
+    let g = "";
     for (let e = 0; e < stock; e++) for (let i = 0; i < n; i++) {
-      const xm = x0 + (i + 0.5) * (x1 - x0) / n, z0 = 1.6 + e * (h - 1.6) / stock;
-      g += `<path d="${poly([[xm - .6, KYS, z0 + .5], [xm + .6, KYS, z0 + .5], [xm + .6, KYS, z0 + 2.5], [xm - .6, KYS, z0 + 2.5]])}" fill="#4a4a50"/>`;
+      const xm = x0 + (i + .5) * (x1 - x0) / n, z0 = 4.9 + e * (h - 5.2) / stock;
+      g += fe(xm - .78, xm + .78, z0 - .25, z0 + 2.65, gew) + fe(xm - .58, xm + .58, z0, z0 + 2.4);
+      if (laden) g += fe(xm - 1.2, xm - .8, z0, z0 + 2.4, laden) + fe(xm + .8, xm + 1.2, z0, z0 + 2.4, laden);
     }
     return g;
   };
-  k += haus(-96, -66, 13, 6, "#e3b65e") + haus(-66, -40, 14, 7, "#e9dfc8") + haus(-40, -14, 15, 7, "#efd27a") + haus(-14, 8, 14, 7, "#ead2b4");
+  /* Erzbischöfliches Palais: hell verputzter Barock, Sandsteingewände, Mittelportal, schmiedeeiserner Balkon, Walmdach */
+  {
+    const x0 = -18, x1 = 8, h = 15;
+    k += fassade(x0, x1, h, "#ece6da", "#c49a86") + fenster(x0, x1, h, 3, 7, "#c49a86");
+    k += `<path d="${poly([[x0, KYS, h], [x1, KYS, h], [x1 - 3, KYS - 6, h + 6], [x0 + 3, KYS - 6, h + 6]])}" fill="${S.lg("dach_h", [[0, "#6b4a3e"], [1, "#8a6050"]])}"/>`;
+    k += fe(-7.2, -2.8, 0, 3.6, "#c49a86") + fe(-6.6, -3.4, 0, 3.2, "#3a2a22");
+    const bz = 4.6;
+    k += fe(-8.2, -1.8, bz - .3, bz, "#b88a76");
+    let gi = `<path d="${linie([[-8.2, KYS + .9, bz], [-1.8, KYS + .9, bz]])} ${linie([[-8.2, KYS + .9, bz + 1.1], [-1.8, KYS + .9, bz + 1.1]])}" stroke="#1d1d1d" stroke-width=".22" fill="none"/>`;
+    for (let x = -8; x <= -1.9; x += .5) gi += `<path d="${linie([[x, KYS + .9, bz], [x, KYS + .9, bz + 1.1]])}" stroke="#1d1d1d" stroke-width=".1"/>`;
+    k += gi;
+  }
+  /* Bürgerhaus */
+  k += fassade(-36, -18, 14, "#e9d3a6", "#c8b08e") + fenster(-36, -18, 14, 3, 5, "#c8b08e", "#5a6a4a");
+  k += `<path d="${poly([[-36, KYS, 14], [-18, KYS, 14], [-19, KYS - 6, 21], [-35, KYS - 6, 21]])}" fill="#7a5244"/>`;
+  for (let i = 0; i < 3; i++) k += fe(-36 + 3.2 + i * 5.4, -36 + 5 + i * 5.4, 0, 3.2, "#3a3c42");
+  /* Wentzingerhaus: Rokoko, rötlicher Putz, helle Fenstergewände, Mittelrisalit mit Dreiecksgiebel */
+  {
+    const x0 = -58, x1 = -36, h = 16;
+    k += fassade(x0, x1, h, "#d79a86", "#efe3d0") + fenster(x0, x1, h, 3, 6, "#efe3d0");
+    k += `<path d="${poly([[x0, KYS, h], [x1, KYS, h], [x1 - 1, KYS - 7, h + 8], [x0 + 1, KYS - 7, h + 8]])}" fill="#7e5446"/>`;
+    k += `<path d="${poly([[-50.5, KYS, h], [-43.5, KYS, h], [-47, KYS, h + 3]])}" fill="#d79a86" stroke="#efe3d0" stroke-width=".25"/>`;
+    k += fe(-48.4, -45.6, 0, 3.4, "#efe3d0") + fe(-47.9, -46.1, 0, 3.1, "#3a2a22");
+  }
+  /* Alte Wache: kleiner Barockbau, rot-weiß gefasst, Mansarddach mit Gauben */
+  {
+    const x0 = -74, x1 = -58, h = 10;
+    k += fassade(x0, x1, h, "#e8dccb", "#a8463a") + fenster(x0, x1, h, 2, 5, "#a8463a");
+    for (const xe of [x0, x1 - .8]) k += fe(xe, xe + .8, 0, h, "#a8463a");
+    k += `<path d="${poly([[x0, KYS, h], [x1, KYS, h], [x1 - .6, KYS - 1.4, h + 4.2], [x0 + .6, KYS - 1.4, h + 4.2]])}" fill="#5e4a46"/><path d="${poly([[x0 + .6, KYS - 1.4, h + 4.2], [x1 - .6, KYS - 1.4, h + 4.2], [x1 - 2, KYS - 6, h + 6.4], [x0 + 2, KYS - 6, h + 6.4]])}" fill="#7a5a50"/>`;
+    for (let i = 0; i < 4; i++) { const xm = x0 + 2.6 + i * 3.6; k += `<path d="${poly([[xm - .7, KYS - .9, h + 1.2], [xm + .7, KYS - .9, h + 1.2], [xm + .7, KYS - .9, h + 3.2], [xm, KYS - .9, h + 3.9], [xm - .7, KYS - .9, h + 3.2]])}" fill="#ece4d4"/>` + `<path d="${poly([[xm - .4, KYS - .85, h + 1.4], [xm + .4, KYS - .85, h + 1.4], [xm + .4, KYS - .85, h + 2.9], [xm - .4, KYS - .85, h + 2.9]])}" fill="#44464e"/>`; }
+    k += fe(-67, -65, 0, 3.4, "#3a2a22");
+  }
+  /* Eckhaus im Südwesten */
+  k += fassade(-96, -74, 13, "#e3b65e", "#c8a46a") + fenster(-96, -74, 13, 2, 6, "#c8a46a", "#4f6a4a");
+  k += `<path d="${poly([[-96, KYS, 13], [-74, KYS, 13], [-75, KYS - 6, 19], [-95, KYS - 6, 19]])}" fill="#7a5244"/>`;
   S.teil({ id: "muensterplatz", de: "der Münsterplatz", syl: "MÜNS-ter-platz", it: "la piazza del Duomo", itSyl: "PIAZ-za del DUO-mo", en: "Cathedral Square", x: 0, y: 0, kunst: k,
-    tipp: "Der Platz ist mit runden Kieseln aus dem Rhein gepflastert. Montags bis samstags ist hier Markt." });
+    tipp: "Der Platz ist mit runden Kieseln aus dem Rhein gepflastert. Montags bis samstags ist hier Markt: auf der Nordseite die Bauern aus der Region, auf der Südseite die Händler." });
 }
 
 /* =====================================================================
-   2 — DIE BÄCHLE (Wasserrinne im Pflaster, läuft vorn links nach hinten)
+   2 — DAS BÄCHLE (Wasserrinne am Südrand des Platzes, vor der Häuserzeile)
    ===================================================================== */
 {
-  const YB = -50.5, xa = 62.5, xb = -6;
+  const YB = -75, xa = 70, xb = -96;
   const band = (y0, y1, z = 0) => poly([[xa, y0, z], [xb, y0, z], [xb, y1, z], [xa, y1, z]]);
-  let k = `<path d="${band(YB - .42, YB + .42)}" fill="#c9c5bc"/>`;
-  k += `<path d="${band(YB - .26, YB + .26, -.02)}" fill="${S.lg("baechle", [[0, "#5d7f8c"], [0.5, "#8fb3bf"], [1, "#4a6b78"]])}"/>`;
-  /* Lichtreflexe auf dem fließenden Wasser */
-  for (let i = 0; i < 26; i++) { const x = xb + 2 + (xa - xb - 2.5) * Math.pow(rnd(), 0.5), p = pr(x, YB + (rnd() - .5) * .3, 0), s = FOC / tief(x, YB); k += `<ellipse cx="${r(p[0])}" cy="${r(p[1])}" rx="${r(.12 * s)}" ry="${r(.025 * s + .05)}" fill="#f2fbff" opacity=".8"/>`; }
-  /* Fugen der Granitsteine am Rand */
-  for (let x = xa - .6; x > xb; x -= 1.2) { const a = pr(x, YB - .42, 0), b = pr(x, YB - .26, 0), c = pr(x, YB + .26, 0), d = pr(x, YB + .42, 0); k += `<path d="M${P(a)} L${P(b)} M${P(c)} L${P(d)}" stroke="#8f8a80" stroke-width="${r(Math.max(.15, .02 * FOC / tief(x, YB)))}"/>`; }
+  /* Granit-Einfassung, die hintere Innenwand (das Wasser liegt tiefer), die Wasserfläche */
+  let k = `<path d="${band(YB - .5, YB + .5)}" fill="#cfcac0"/>`;
+  k += `<path d="${poly([[xa, YB - .3, 0], [xb, YB - .3, 0], [xb, YB - .3, -.16], [xa, YB - .3, -.16]])}" fill="#6a6660"/>`;
+  k += `<path d="${band(YB - .3, YB + .3, -.16)}" fill="${S.lg("baechle", [[0, "#4a6b78"], [0.5, "#86aab8"], [1, "#5d7f8c"]])}"/>`;
+  /* Glitzern auf dem fließenden Wasser */
+  for (let i = 0; i < 30; i++) {
+    const x = xb + 2 + (xa - xb - 2.5) * Math.pow(rnd(), 1.8), p = pr(x, YB + (rnd() - .5) * .3, -.16), s = FOC / tief(x, YB);
+    if (p[0] < 0 || p[0] > 320) continue;
+    k += `<ellipse cx="${r(p[0])}" cy="${r(p[1])}" rx="${r(.14 * s)}" ry="${r(.02 * s + .04)}" fill="#f2fbff" opacity=".85"/>`;
+  }
+  /* Fugen der Granitsteine */
+  let fu = "";
+  for (let x = xa - .6; x > xb; x -= 1.2) { const s = FOC / tief(x, YB); if (s < 2) continue; fu += `${linie([[x, YB - .5, 0], [x, YB - .3, 0]])} ${linie([[x, YB + .3, 0], [x, YB + .5, 0]])} `; }
+  k += `<path d="${fu}" stroke="#8f8a80" stroke-width=".25"/>`;
   S.teil({ id: "baechle", de: "das Bächle", syl: "BÄCH-le", it: "il ruscelletto", itSyl: "ru-scel-LET-to", en: "little stream (Bächle)", x: 0, y: 0, kunst: k,
-    tipp: "Wer aus Versehen ins Bächle tritt, heiratet einmal jemanden aus Freiburg — so sagt man." });
+    tipp: "Die Bächle sind kleine Wasserrinnen in der Altstadt. Wer aus Versehen hineintritt, heiratet einmal jemanden aus Freiburg — so sagt man." });
 }
 
 /* =====================================================================
-   3 — DAS KIESELMOSAIK (Freiburger Wappen aus Rheinkieseln im Pflaster)
+   3 — DAS KIESELMOSAIK (Freiburger Wappen, aus weißen, roten und schwarzen Kieseln gesetzt)
    ===================================================================== */
 {
-  const M = [59.8, -47.4], c = pr(M[0], M[1], 0), s = FOC / tief(M[0], M[1]), rx = 0.8 * s, ry = rx * (CAM[2] / tief(M[0], M[1])) * 1.05;
-  let g = `<circle r="1" fill="#3e3a36"/><circle r=".9" fill="#ece6da"/>`;
-  for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2; g += `<circle cx="${r(Math.cos(a) * .95 * 100) / 100}" cy="${r(Math.sin(a) * .95 * 100) / 100}" r=".045" fill="${i % 2 ? "#6b6560" : "#c9c0b0"}"/>`; }
-  /* Wappenschild mit dem roten Georgskreuz */
-  g += `<path d="M-.5 -.62 H.5 V.05 Q.5 .5 0 .7 Q-.5 .5 -.5 .05 Z" fill="#f6f2ea" stroke="#3e3a36" stroke-width=".05"/><path d="M-.11 -.62 H.11 V.68 H-.11 Z M-.5 -.2 H.5 V.02 H-.5 Z" fill="#c0302a"/>`;
-  for (let i = 0; i < 40; i++) { const x = (rnd() - .5) * 1.6, y = (rnd() - .5) * 1.6; if (x * x + y * y < .7) g += `<circle cx="${r(x * 100) / 100}" cy="${r(y * 100) / 100}" r=".03" fill="#000" opacity=".12"/>`; }
-  const k = `<g transform="translate(${r(c[0])} ${r(c[1])}) scale(${r(rx * 10) / 10} ${r(ry * 100) / 100})">${g}</g>`;
+  const M = [59.8, -47.4];
+  /* Ortskoordinaten: u nach rechts, v in die Tiefe (Meter) */
+  const W = (u, v) => [M[0] + u * RV[0] + v * FV[0], M[1] + u * RV[1] + v * FV[1], 0];
+  const P2 = (u, v) => pr(...W(u, v));
+  const schild = (u, v) => Math.abs(u) <= .62 && v <= .7 && (v >= -.05 || (u / .62) ** 2 + ((v + .05) / .75) ** 2 <= 1);
+  /* Grundflächen (projiziert): schwarzer Rand, weißes Feld, rotes Kreuz */
+  const umriss = (sc) => { const pts = []; for (let i = 0; i <= 16; i++) { const a = Math.PI * i / 16; pts.push(W(sc * .62 * Math.cos(a), -.05 - sc * .75 * Math.sin(a))); } pts.push(W(-sc * .62, .7 * sc + (1 - sc) * .2), W(sc * .62, .7 * sc + (1 - sc) * .2)); return poly(pts); };
+  let k = `<path d="${umriss(1.08)}" fill="#2e2a28"/><path d="${umriss(1)}" fill="#e9e3d6"/>`;
+  k += `<path d="${poly([W(-.12, .7), W(.12, .7), W(.12, -.78), W(-.12, -.78)])}" fill="#b0302a"/><path d="${poly([W(-.62, .26), W(.62, .26), W(.62, .02), W(-.62, .02)])}" fill="#b0302a"/>`;
+  /* darauf die Kiesel: ein Muster aus Licht und Fugen über den Farbflächen (in Bildgröße der Kiesel hier vorn) */
+  {
+    const rx = .044 * 38, ry = rx * 38 / FOC, w = rx * 7, h = ry * 6;
+    let m = "";
+    for (let z = 0; z < 3; z++) for (let j = 0; j < 3; j++) {
+      const x = (j + (z % 2) * .5 + (rnd() - .5) * .2) * w / 3, y = (z + .5) * h / 3;
+      for (const dx of [0, w, -w]) { if (dx && (x + dx < -rx || x + dx > w + rx)) continue; m += `<ellipse cx="${r(x + dx)}" cy="${r(y + ry * .45)}" rx="${r(rx)}" ry="${r(ry * .7)}" fill="#000" opacity=".28"/><ellipse cx="${r(x + dx - rx * .2)}" cy="${r(y - ry * .25)}" rx="${r(rx * .55)}" ry="${r(ry * .4)}" fill="#fff" opacity=".35"/>`; }
+    }
+    S.def(`<pattern id="${S.id("kmos")}" width="${r(w)}" height="${r(h)}" patternUnits="userSpaceOnUse">${m}</pattern>`);
+    k += `<path d="${umriss(1.08)}" fill="url(#${S.id("kmos")})"/>`;
+  }
   S.teil({ id: "kieselmosaik", de: "das Kieselmosaik", syl: "KIE-sel-mo-sa-ik", it: "il mosaico di ciottoli", itSyl: "mo-SA-i-co di CIOT-to-li", en: "pebble mosaic", x: 0, y: 0, kunst: k,
-    tipp: "Die Mosaike sind aus Kieseln vom Rhein. Dieses zeigt das Freiburger Wappen: ein rotes Kreuz auf Weiß." });
+    tipp: "In Freiburg liegen überall Bilder aus Rheinkieseln im Pflaster — oft vor Läden und zeigen, was es dort gibt. Dieses zeigt das Stadtwappen: ein rotes Kreuz auf Weiß." });
 }
 
 /* =====================================================================
@@ -447,8 +552,6 @@ const TM = {};
 }
 
 /* Schlagschatten: Sonne aus Ostsüdost (115°), 40° hoch → Schatten fallen nach Westnordwest in die Tiefe */
-const SCH = [-0.906 * 1.19, 0.423 * 1.19];
-const schlag = (x, y, w, h, op = .3) => `<path d="${poly([[x + w / 2, y, 0], [x - w / 2, y, 0], [x - w / 2 + SCH[0] * h, y + SCH[1] * h, 0], [x + w / 2 + SCH[0] * h, y + SCH[1] * h, 0]])}" fill="#2a1e14" opacity="${op}"/>`;
 
 /* =====================================================================
    6 — DAS HISTORISCHE KAUFHAUS (Nordfassade im Schatten) mit Laubengang
@@ -855,7 +958,7 @@ const WS = fuss(50, -54);
   }
   /* Bude hinten, dann der Verkäufer, dann Grill und Theke davor */
   S.teil({ id: "wurststand", de: "der Wurststand", syl: "WURST-stand", it: "il chiosco delle salsicce", itSyl: "CHIO-sco del-le sal-SIC-ce", en: "sausage stand", x: 0, y: 0, kunst: WS.k + (() => {
-      let g = `<rect x="${r(x - 1.7 * s)}" y="${r(y - tz * s)}" width="${r(3.4 * s)}" height="${r(tz * s)}" fill="${S.lg("theke", [[0, "#e9e6de"], [1, "#c9c4b8"]])}"/>`;
+      let g = `<rect x="${r(x - 1.7 * s)}" y="${r(y - tz * s)}" width="${r(3.4 * s)}" height="${r(tz * s)}" fill="${S.lg("thekeblech", [[0, "#e9e6de"], [1, "#c9c4b8"]])}"/>`;
       g += `<rect x="${r(x - 1.75 * s)}" y="${r(y - tz * s - .08 * s)}" width="${r(3.5 * s)}" height="${r(.1 * s)}" fill="#9aa3aa"/>`;
       /* Grillrost mit Langen Roten, Zwiebeln in der Pfanne, Brötchenkorb, Senf */
       g += `<rect x="${r(x - 1.5 * s)}" y="${r(y - tz * s - .18 * s)}" width="${r(1.6 * s)}" height="${r(.12 * s)}" fill="#2a2a2a"/>`;

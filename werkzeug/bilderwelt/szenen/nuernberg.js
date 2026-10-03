@@ -118,86 +118,75 @@ S.hinten(`<circle cx="-50" cy="70" r="150" fill="${S.rg("sonne", [[0, "#ffd9a0",
 }
 
 /* =====================================================================
-   1 — DIE SEBALDUSKIRCHE (zwei Westtürme, Langhaus- und Chordach)
-   ===================================================================== */
-{
-  const D = 210, s = em(D), basis = bodenY(D);      /* ≈ 1,29 E/m */
-  const turm = (cx, sk, hinten) => {
-    const k1 = s * sk, Y = (v) => basis - (v - 0) * k1, X = (u) => cx + u * k1;
-    const ST = hinten ? S.lg("sebaldh", [[0, "#c88a6a"], [1, "#9a6450"]], 0, 0, 1, 0) : S.lg("sebald", [[0, "#e6a47c"], [0.55, "#c4805e"], [1, "#94604a"]], 0, 0, 1, 0);
-    let g = `<rect x="${r(X(-4.5))}" y="${r(Y(45))}" width="${r(9 * k1)}" height="${r(45 * k1)}" fill="${ST}"/>`;
-    for (const v of [18, 27, 36]) g += `<rect x="${r(X(-4.6))}" y="${r(Y(v))}" width="${r(9.2 * k1)}" height="${r(0.5 * k1)}" fill="#f2c8a4" opacity=".6"/>`;
-    for (const v of [30, 39]) for (const u of [-2, 1]) g += `<path d="M${r(X(u))} ${r(Y(v))} l0 ${r(-3 * k1)} q${r(0.5 * k1)} ${r(-0.8 * k1)} ${r(1 * k1)} 0 l0 ${r(3 * k1)} Z" fill="${DUNKEL}"/>`;
-    if (!hinten) g += `<circle cx="${r(X(0))}" cy="${r(Y(23))}" r="${r(1.5 * k1)}" fill="#2a3a6a" stroke="${GOLD}" stroke-width=".3"/><path d="M${r(X(0))} ${r(Y(23))} l0 ${r(-1.1 * k1)} M${r(X(0))} ${r(Y(23))} l${r(0.8 * k1)} ${r(0.5 * k1)}" stroke="#f1c74a" stroke-width=".25"/>`;
-    /* Achteckgeschoss mit Galerie und spitzen Fenstern */
-    g += `<rect x="${r(X(-4.8))}" y="${r(Y(46))}" width="${r(9.6 * k1)}" height="${r(1 * k1)}" fill="#f0c49c"/>`;
-    g += `<path d="M${r(X(-4))} ${r(Y(46))} L${r(X(-4))} ${r(Y(56))} L${r(X(4))} ${r(Y(56))} L${r(X(4))} ${r(Y(46))} Z" fill="${ST}"/>`;
-    g += `<rect x="${r(X(-1.6))}" y="${r(Y(56))}" width="${r(3.2 * k1)}" height="${r(10 * k1)}" fill="#000" opacity=".08"/>`;
-    for (const u of [-2.6, 0, 2.6]) g += `<path d="M${r(X(u - 0.6))} ${r(Y(48))} L${r(X(u - 0.6))} ${r(Y(53))} L${r(X(u))} ${r(Y(54.6))} L${r(X(u + 0.6))} ${r(Y(53))} L${r(X(u + 0.6))} ${r(Y(48))} Z" fill="${DUNKEL}"/>`;
-    /* spitzer Achteckhelm (zwei Flächen sichtbar), kleine Gauben, Kugel und Kreuz */
-    g += `<path d="M${r(X(-4.2))} ${r(Y(56))} L${r(X(0))} ${r(Y(78))} L${r(X(0.6))} ${r(Y(56))} Z" fill="${S.lg("helm", [[0, "#7a8c88"], [1, "#56645f"]])}"/>`;
-    g += `<path d="M${r(X(0.6))} ${r(Y(56))} L${r(X(0))} ${r(Y(78))} L${r(X(4.2))} ${r(Y(56))} Z" fill="#3e4a48"/>`;
-    g += `<path d="M${r(X(-4.2))} ${r(Y(56))} L${r(X(0))} ${r(Y(78))}" stroke="#ffcf9a" stroke-width=".35" opacity=".8"/>`;
-    for (const v of [60, 66]) g += `<path d="M${r(X(-1.6))} ${r(Y(v))} l${r(0.6 * k1)} ${r(-1.4 * k1)} l${r(0.6 * k1)} ${r(1.4 * k1)} Z" fill="#5a6662"/>`;
-    g += `<circle cx="${r(X(0))}" cy="${r(Y(78.6))}" r=".5" fill="${GOLD}"/><path d="M${r(X(0))} ${r(Y(79))} l0 -1.6 M${r(X(0) - 0.6)} ${r(Y(79) - 1.1)} l1.2 0" stroke="#e8b83a" stroke-width=".3"/>`;
-    /* Abendsonne von links auf der Kante */
-    g += `<rect x="${r(X(-4.5))}" y="${r(Y(56))}" width=".6" height="${r(56 * k1)}" fill="#ffd8a8" opacity=".55"/>`;
-    return g;
-  };
-  let k = "";
-  /* Langhaus- und Chordach (hinter der Nordseite des Platzes) */
-  k += `<path d="M44 ${r(basis - 36 * s)} L50 ${r(basis - 47 * s)} L76 ${r(basis - 47 * s)} L80 ${r(basis - 36 * s)} Z" fill="${ZIEGEL_F}"/>`;
-  k += `<path d="M78 ${r(basis - 36 * s)} L84 ${r(basis - 52 * s)} L98 ${r(basis - 52 * s)} L104 ${r(basis - 36 * s)} Z" fill="${ZIEGEL}"/>`;
-  for (let i = 0; i < 4; i++) k += `<path d="M${r(56 + i * 5.4)} ${r(basis - 40 * s)} l.9 -1.6 l.9 1.6 Z" fill="#7a3424"/>`;
-  k += turm(36, 0.95, true) + turm(27, 1, false);
-  const AX = 34, AY = 50;
-  S.teil({ id: "sebalduskirche", de: "die Sebalduskirche", syl: "se-BAL-dus-kir-che", it: "la chiesa di San Sebaldo", itSyl: "KIE-sa di san se-BAL-do", en: "St. Sebald's Church",
-    x: AX, y: AY, kunst: anker(AX, AY, k), tipp: "St. Sebald ist die älteste Pfarrkirche Nürnbergs. Hier liegt der heilige Sebald begraben, der Schutzpatron der Stadt." });
-}
-
-/* =====================================================================
    2 — DIE KAISERBURG auf dem Burgfelsen (Teleblick; Lupe: Sinwellturm,
        Felsen)
    ===================================================================== */
 const BURG = { x: 118, y: 76, s: 0.72 };
 {
   let k = "";
-  /* Burgberg: Hang mit Häusern des Burgviertels und kahlen Gartenbäumen */
-  const hangPfad = "M-90 14 L-86 -4 Q-80 -18 -74 -30 L-68 -40 L-60 -44 L-30 -44 L-6 -42 L14 -38 L60 -36 L76 -30 Q84 -16 90 14 Z";
-  S.def(`<clipPath id="${S.id("hangclip")}"><path d="${hangPfad}"/></clipPath>`);
-  k += `<path d="${hangPfad}" fill="${S.lg("hang", [[0, "#9a7a6a"], [1, "#6e5a52"]])}"/>`;
-  let bm = "";
-  for (let i = 0; i < 160; i++) {
-    const x = -28 + rnd() * 118, y = -36 + rnd() * 48, s2 = 0.6 + rnd() * 1;
-    bm += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(s2 * 1.4)}" ry="${r(s2)}" fill="${["#a68474", "#8a6c62", "#b8947e", "#7a6058"][i % 4]}" opacity=".75"/>`;
+  /* Die Burgmauer verläuft am Felsrand; darunter (von hier aus fast ganz hinter der Nordzeile)
+     nur die Dächer des Burgviertels und eine kurze, steile Felswand unter dem Palas */
+  const wo = (x) => -44 + (x + 73) * 0.0625, wu = (x) => wo(x) + 9;
+  /* dunkler Grund unter den Dächern, damit keine Lücke zum Himmel bleibt */
+  k += `<path d="M-26 ${r(wu(-26))} L92 ${r(wu(92))} L92 16 L-80 16 L-80 ${r(wu(-80) + 13)} L-26 ${r(wu(-26) + 12)} Z" fill="#6e5450"/>`;
+  /* Dächer des Burgviertels: drei, vier Reihen, nach oben kleiner und dichter, Giebel hell im Streiflicht */
+  const dachReihe = (x0, x1, unten, b, hw, hd) => {
+    let g = "", x = x0;
+    while (x < x1) {
+      const w = b * (0.8 + rnd() * 0.5), y = unten(x + w / 2), giebel = rnd() < 0.5;
+      g += `<rect x="${r(x)}" y="${r(y - hw)}" width="${r(w)}" height="${r(hw + 3)}" fill="${giebel ? "#f0d4b4" : "#d4b498"}"/>`;
+      for (let i = 0; i < Math.max(1, Math.round(w / 3.4)); i++) g += `<rect x="${r(x + 1 + i * 3.4)}" y="${r(y - hw * 0.62)}" width=".9" height="1.2" fill="#4a3a40"/>`;
+      if (giebel) {
+        g += `<path d="M${r(x)} ${r(y - hw)} L${r(x + w / 2)} ${r(y - hw - hd)} L${r(x + w)} ${r(y - hw)} Z" fill="#f6dcbc"/>`;
+        g += `<path d="M${r(x - 0.3)} ${r(y - hw + 0.2)} L${r(x + w / 2)} ${r(y - hw - hd)} L${r(x + w + 0.3)} ${r(y - hw + 0.2)}" stroke="#9a4632" stroke-width=".9" fill="none"/>`;
+        g += `<rect x="${r(x + w / 2 - 0.45)}" y="${r(y - hw - hd * 0.55)}" width=".9" height="1.1" fill="#4a3a40"/>`;
+      } else {
+        g += `<path d="M${r(x - 0.4)} ${r(y - hw)} L${r(x + w * 0.18)} ${r(y - hw - hd * 0.8)} L${r(x + w * 0.82)} ${r(y - hw - hd * 0.8)} L${r(x + w + 0.4)} ${r(y - hw)} Z" fill="${["#b8644a", "#a45a44", "#c27052"][Math.floor(rnd() * 3)]}"/>`;
+        g += `<path d="M${r(x + w / 2 - 0.9)} ${r(y - hw - 0.4)} l.9 -1.6 l.9 1.6 Z" fill="#f0d4b4"/><path d="M${r(x - 0.4)} ${r(y - hw)} L${r(x + w * 0.18)} ${r(y - hw - hd * 0.8)}" stroke="#ffcfa8" stroke-width=".4"/>`;
+      }
+      g += `<rect x="${r(x + w - 0.8)}" y="${r(y - hw)}" width=".8" height="${r(hw + 3)}" fill="#000" opacity=".15"/>`;
+      x += w + 0.2;
+    }
+    return g;
+  };
+  k += dachReihe(-26, 92, (x) => wu(x) + 7, 7, 3, 4);
+  k += dachReihe(-24, 92, (x) => wu(x) + 15, 8.5, 3.6, 4.6);
+  k += dachReihe(-80, 92, (x) => wu(x) + 25, 10, 4.2, 5.4);
+  k += dachReihe(-80, 92, (x) => wu(x) + 37, 12, 5, 6.4);
+  /* kahle Bäume im Burggarten-Hang: feine Zweigbüschel */
+  for (const [bx, by, bh] of [[-16, wu(-16) + 6, 9], [34, wu(34) + 6, 8], [78, wu(78) + 14, 10]]) {
+    let z = `M${bx} ${r(by)} l0 ${-bh * 0.4}`;
+    for (let i = 0; i < 9; i++) { const a = -1.3 + i * 0.32, l = bh * (0.45 + rnd() * 0.3); z += ` M${bx} ${r(by - bh * 0.35)} q${r(Math.sin(a) * l * 0.4)} ${r(-l * 0.5)} ${r(Math.sin(a) * l)} ${r(-Math.cos(a) * l * 0.9)}`; }
+    k += `<path d="${z}" stroke="#5a4440" stroke-width=".35" fill="none" opacity=".85"/>`;
   }
-  /* Dächer des Burgviertels, die den Hang hinaufsteigen */
-  for (let i = 0; i < 26; i++) {
-    const x = -24 + rnd() * 112, y = -26 + rnd() * 38, w = 5 + rnd() * 5, h = 3 + rnd() * 3;
-    bm += `<path d="M${r(x)} ${r(y)} L${r(x + w * 0.2)} ${r(y - h)} L${r(x + w * 0.8)} ${r(y - h)} L${r(x + w)} ${r(y)} Z" fill="${rnd() < 0.5 ? "#b8644a" : "#a45a44"}"/><rect x="${r(x)}" y="${r(y)}" width="${r(w)}" height="2.4" fill="${rnd() < 0.5 ? "#e8cfb0" : "#d8b496"}"/>`;
-  }
-  k += `<g clip-path="url(#${S.id("hangclip")})"><g filter="url(#${S.id("weich")})">${bm}</g></g>`;
-  /* der nackte Burgfelsen unter Palas und Burggarten: Bänke, Kanten, Klüfte, Schlagschatten */
-  const felsRand = [[-90, 14], [-86, -4], [-80, -18], [-74, -30], [-68, -40], [-60, -44], [-46, -44.4], [-32, -44], [-30, -38], [-33, -30], [-36, -20], [-40, -10], [-44, 2], [-46, 14]];
-  const felsPfad = `M${felsRand.map(([x, y]) => x + " " + y).join(" L")} Z`;
+  /* der Burgfelsen: eine steile, kurze Wand aus rotem Burgsandstein direkt unter dem Palas */
+  const fu = (x) => -21 + Math.sin(x * 0.7) * 0.8 + Math.sin(x * 0.23) * 1.2;
+  const fels = [[-73, wu(-73)]];
+  for (let x = -73; x <= -27; x += 2) fels.push([x, wu(x)]);
+  fels.push([-26, wu(-26)], [-27.4, fu(-27.4) + 1]);
+  for (let x = -29; x >= -73; x -= 2) fels.push([x, fu(x)]);
+  const felsPfad = "M" + fels.map(([x, y]) => `${r(x)} ${r(y)}`).join(" L") + " Z";
   S.def(`<clipPath id="${S.id("felsclip")}"><path d="${felsPfad}"/></clipPath>`);
-  k += `<path d="${felsPfad}" fill="${S.lg("felsv", [[0, "#eeb084"], [0.5, "#d08a60"], [1, "#9a5e44"]])}"/>`;
-  let fz = `<path d="${felsPfad}" fill="${S.lg("felsh", [[0, "#fff0d8", 0.25], [0.55, "#000", 0], [1, "#3a1a10", 0.35]], 0, 0, 1, 0)}"/>`;
-  for (let y = -40; y < 14; y += 4 + rnd() * 2) {
-    fz += `<path d="M-92 ${r(y)} l70 ${r(-0.6 + rnd() * 1.2)}" stroke="#6e3a26" stroke-width=".6" opacity=".55"/>`;
-    fz += `<path d="M-92 ${r(y - 0.7)} l70 ${r(-0.6 + rnd() * 1.2)}" stroke="#ffe0bc" stroke-width=".45" opacity=".5"/>`;
+  k += `<path d="${felsPfad}" fill="${S.lg("felsv", [[0, "#c8704e"], [0.5, "#b8644a"], [1, "#7a3a28"]])}"/>`;
+  let fz = `<rect x="-74" y="-40" width="48" height="22" fill="${S.lg("felsh", [[0, "#ffd8b0", 0.3], [0.5, "#000", 0], [1, "#2a0e08", 0.35]], 0, 0, 1, 0)}"/>`;
+  /* Bankfugen: kurze, versetzte Stücke statt durchgehender Linien */
+  for (let i = 0; i < 7; i++) { const x = -72 + i * 6.6 + rnd() * 2, y = -32 + rnd() * 2, w = 4 + rnd() * 3, h = 5 + rnd() * 4; fz += `<path d="M${r(x)} ${r(y)} l${r(w)} ${r(-0.6 + rnd())} l${r(-0.6 + rnd())} ${r(h)} l${r(-w * 0.8)} ${r(0.8)} Z" fill="${i % 2 ? "#d68660" : "#9a4a32"}" opacity=".55"/>`; }
+  for (let y = -30; y < -21; y += 3.2 + rnd()) for (let x = -74 + rnd() * 6; x < -27; x += 9 + rnd() * 8) {
+    const l = 3 + rnd() * 6;
+    fz += `<path d="M${r(x)} ${r(y)} l${r(l)} ${r(-0.4 + rnd() * 0.8)}" stroke="#5a2414" stroke-width=".35" opacity=".45"/><path d="M${r(x)} ${r(y - 0.4)} l${r(l * 0.8)} ${r(-0.3 + rnd() * 0.6)}" stroke="#f6c49c" stroke-width=".3" opacity=".45"/>`;
   }
-  for (let i = 0; i < 12; i++) { const x = -84 + rnd() * 52, y = -40 + rnd() * 40, h = 4 + rnd() * 7; fz += `<path d="M${r(x)} ${r(y)} l${r(-0.5 + rnd())} ${r(h * 0.5)} l${r(-0.5 + rnd())} ${r(h * 0.5)} l.9 0 l${r(-0.3 + rnd() * 0.6)} ${r(-h)} Z" fill="#5a2c1e" opacity=".5"/>`; }
-  fz += `<path d="M-92 -44 L-28 -44 L-28 -39 Q-60 -37 -92 -40 Z" fill="#3a1a10" opacity=".3"/>`;
+  /* senkrechte Klüfte */
+  for (let i = 0; i < 6; i++) { const x = -70 + i * 7.6 + rnd() * 2, y = -33 + rnd() * 3, h = 6 + rnd() * 6; fz += `<path d="M${r(x)} ${r(y)} l${r(-0.4 + rnd() * 0.8)} ${r(h * 0.5)} l${r(-0.4 + rnd() * 0.8)} ${r(h * 0.5)}" stroke="#4a1c10" stroke-width="${r(0.4 + rnd() * 0.4)}" fill="none" opacity=".7"/>`; }
+  /* Schlagschatten unter der Mauerkante */
+  fz += `<path d="M-74 ${r(wu(-74))} L-26 ${r(wu(-26))} L-26 ${r(wu(-26) + 2.4)} L-74 ${r(wu(-74) + 1.6)} Z" fill="#2a0e08" opacity=".45"/>`;
   k += `<g clip-path="url(#${S.id("felsclip")})">${fz}</g>`;
-  k += `<path d="M-86 -4 L-80 -18 L-74 -30 L-68 -40" stroke="#ffe0bc" stroke-width="1" fill="none" opacity=".8"/>`;
-  /* hohe Burgmauer mit Strebepfeilern auf der Felskante */
-  const wo = (x) => -44 + (x + 68) * 0.0645, wu = (x) => wo(x) + 9;
-  k += `<path d="M-68 ${r(wo(-68))} L72 ${r(wo(72))} L72 ${r(wu(72))} L-68 ${r(wu(-68))} Z" fill="${FERN}"/>`;
-  for (let x = -66; x < 72; x += 2.4) k += `<line x1="${r(x)}" y1="${r(wo(x) + 0.4)}" x2="${r(x)}" y2="${r(wu(x))}" stroke="#a87a62" stroke-width=".12" opacity=".6"/>`;
-  for (let y = 2; y < 9; y += 2.2) k += `<path d="M-68 ${r(wo(-68) + y)} L72 ${r(wo(72) + y)}" stroke="#a87a62" stroke-width=".15" opacity=".6"/>`;
+  k += `<path d="M-73 ${r(wu(-73))} L-73 ${r(fu(-73))}" stroke="#ffd0a8" stroke-width=".7" opacity=".8"/>`;
+  /* hohe Burgmauer mit Strebepfeilern, direkt auf der Felskante */
+  k += `<path d="M-73 ${r(wo(-73))} L72 ${r(wo(72))} L72 ${r(wu(72))} L-73 ${r(wu(-73))} Z" fill="${FERN}"/>`;
+  for (let x = -71; x < 72; x += 2.4) k += `<line x1="${r(x)}" y1="${r(wo(x) + 0.4)}" x2="${r(x)}" y2="${r(wu(x))}" stroke="#a87a62" stroke-width=".12" opacity=".6"/>`;
+  for (let y = 2; y < 9; y += 2.2) k += `<path d="M-73 ${r(wo(-73) + y)} L72 ${r(wo(72) + y)}" stroke="#a87a62" stroke-width=".15" opacity=".6"/>`;
   for (let x = -62; x < 70; x += 11) k += `<path d="M${x - 1.6} ${r(wu(x))} L${x - 1} ${r(wo(x) + 1.2)} L${x + 1} ${r(wo(x) + 1.2)} L${x + 1.6} ${r(wu(x))} Z" fill="${FERN}"/><path d="M${x} ${r(wo(x) + 1.2)} L${x + 1} ${r(wo(x) + 1.2)} L${x + 1.6} ${r(wu(x))} L${x} ${r(wu(x))} Z" fill="#8e6456" opacity=".7"/>`;
-  k += `<path d="M-68 ${r(wo(-68))} L72 ${r(wo(72))}" stroke="#ffe2c0" stroke-width=".6"/>`;
+  k += `<path d="M-73 ${r(wo(-73))} L72 ${r(wo(72))}" stroke="#ffe2c0" stroke-width=".6"/>`;
   /* die Gebäude der Burg (Palas … Luginsland), 6 Einheiten höher gesetzt */
   let g = "";
   /* PALAS mit hohem Dach und Gauben */
@@ -266,14 +255,76 @@ const BURG = { x: 118, y: 76, s: 0.72 };
   k += `<g transform="translate(0 -6)">${g}</g>`;
   const s = BURG.s;
   S.teil({ id: "kaiserburg", de: "die Kaiserburg", syl: "KAI-ser-burg", it: "il castello imperiale", itSyl: "ca-STEL-lo im-pe-RIA-le", en: "Imperial Castle",
-    x: BURG.x, y: BURG.y, kunst: `<g transform="scale(${s})">${k}</g>`, tipp: "Auf der Kaiserburg wohnten im Mittelalter die Kaiser, wenn sie nach Nürnberg kamen.",
+    x: 146, y: 38, kunst: `<g transform="translate(${BURG.x - 146} ${BURG.y - 38}) scale(${s})">${k}</g>`, tipp: "Auf der Kaiserburg wohnten im Mittelalter die Kaiser, wenn sie nach Nürnberg kamen.",
     zoom: { x: 50, y: 12, w: 108, h: 66 },
     unter: [
       { id: "sinwellturm", de: "der Sinwellturm", syl: "SIN-well-turm", it: "la torre Sinwell", itSyl: "TOR-re SIN-well", en: "Sinwell Tower",
         x: BURG.x + SW * s, y: BURG.y - 40 * s, kunst: flaeche(-7 * s, -43 * s, 14 * s, 43 * s), tipp: "„Sinwell“ heißt im alten Deutsch „rund“. Von oben sieht man über die ganze Stadt." },
       { id: "felsen", de: "der Felsen", syl: "FEL-sen", it: "la roccia", itSyl: "ROC-cia", en: "rock",
-        x: BURG.x - 60 * s, y: BURG.y - 6 * s, kunst: flaeche(-22 * s, -36 * s, 26 * s, 34 * s), tipp: "Die Burg steht auf einem Felsen aus rotem Sandstein." },
+        x: BURG.x - 50 * s, y: BURG.y - 27 * s, kunst: flaeche(-23 * s, -8 * s, 46 * s, 14 * s), tipp: "Die Burg steht auf einem Felsen aus rotem Sandstein." },
     ] });
+}
+
+/* =====================================================================
+   2b — DIE SEBALDUSKIRCHE (rund 200 m entfernt, also VOR der Burg in
+   rund 500 m gezeichnet): zwei Westtürme — unten viereckig, oben über
+   einem Rücksprung mit Eckfialen achteckig —, das Langhaus mit seiner
+   Hochwand und der hohe Ostchor
+   ===================================================================== */
+{
+  const D = 210, s = em(D), basis = bodenY(D);      /* ≈ 1,29 E/m */
+  const turm = (cx, sk, hinten) => {
+    const k1 = s * sk, Y = (v) => basis - v * k1, X = (u) => cx + u * k1;
+    const ST = hinten ? S.lg("sebaldh", [[0, "#c88a6a"], [1, "#9a6450"]], 0, 0, 1, 0) : S.lg("sebald", [[0, "#e6a47c"], [0.55, "#c4805e"], [1, "#94604a"]], 0, 0, 1, 0);
+    const vk = (pts, fill) => `<path d="M${pts.map(([u, v]) => `${r(X(u))} ${r(Y(v))}`).join(" L")} Z" fill="${fill}"/>`;
+    /* Viereckschaft mit Gesimsen, Schallfenstern und (vorn) der Uhr */
+    let g = vk([[-4.5, 18], [-4.5, 45], [4.5, 45], [4.5, 18]], ST);
+    g += vk([[2.6, 18], [2.6, 45], [4.5, 45], [4.5, 18]], "#000\" opacity=\".12");
+    for (const v of [27, 36]) g += `<rect x="${r(X(-4.6))}" y="${r(Y(v))}" width="${r(9.2 * k1)}" height="${r(0.5 * k1)}" fill="#f2c8a4" opacity=".6"/>`;
+    for (const v of [30, 39]) for (const u of [-2, 1]) g += `<path d="M${r(X(u))} ${r(Y(v))} l0 ${r(-3 * k1)} q${r(0.5 * k1)} ${r(-0.8 * k1)} ${r(1 * k1)} 0 l0 ${r(3 * k1)} Z" fill="${DUNKEL}"/>`;
+    if (!hinten) g += `<circle cx="${r(X(0))}" cy="${r(Y(23))}" r="${r(1.5 * k1)}" fill="#2a3a6a" stroke="${GOLD}" stroke-width=".3"/><path d="M${r(X(0))} ${r(Y(23))} l0 ${r(-1.1 * k1)} M${r(X(0))} ${r(Y(23))} l${r(0.8 * k1)} ${r(0.5 * k1)}" stroke="#f1c74a" stroke-width=".25"/>`;
+    /* Rücksprung: kräftiges Gesims mit Maßwerkgalerie und vier Eckfialen */
+    g += vk([[-4.9, 45], [-4.9, 46.6], [4.9, 46.6], [4.9, 45]], "#f0c49c");
+    g += vk([[-4.9, 45], [-4.9, 45.5], [4.9, 45.5], [4.9, 45]], "#7a4a38\" opacity=\".5");
+    for (const sx of [-1, 1]) g += vk([[sx * 4.8, 46.6], [sx * 4.25, 51.4], [sx * 3.7, 46.6]], sx < 0 ? "#f6c8a0" : "#a8705a");
+    /* Achteckgeschoss: links die schräge Fläche im letzten Sonnenlicht, vorn die Südseite, rechts die schräge Seite im Schatten */
+    const A = 3.6, Bv = 1.5;
+    g += vk([[-A, 46.6], [-A, 56], [-Bv, 56], [-Bv, 46.6]], hinten ? "#d89a78" : "#f6be92");
+    g += vk([[-Bv, 46.6], [-Bv, 56], [Bv, 56], [Bv, 46.6]], ST);
+    g += vk([[Bv, 46.6], [Bv, 56], [A, 56], [A, 46.6]], hinten ? "#8a5a48" : "#9e6650");
+    g += vk([[-0.55, 48], [-0.55, 53], [0, 54.6], [0.55, 53], [0.55, 48]], DUNKEL);
+    for (const u of [-2.55, 2.55]) g += vk([[u - 0.32, 48.4], [u - 0.32, 52.6], [u, 53.8], [u + 0.32, 52.6], [u + 0.32, 48.4]], DUNKEL);
+    g += vk([[-A - 0.2, 55.6], [-A - 0.2, 56.4], [A + 0.2, 56.4], [A + 0.2, 55.6]], "#f0c49c");
+    /* spitzer Achteckhelm: dieselben drei Flächen laufen in der Spitze zusammen */
+    g += vk([[-A, 56.4], [0, 78], [-Bv, 56.4]], "#8ea29c");
+    g += vk([[-Bv, 56.4], [0, 78], [Bv, 56.4]], S.lg("helm", [[0, "#6e807b"], [1, "#56645f"]]));
+    g += vk([[Bv, 56.4], [0, 78], [A, 56.4]], "#3e4a48");
+    g += `<path d="M${r(X(-A))} ${r(Y(56.4))} L${r(X(0))} ${r(Y(78))}" stroke="#ffcf9a" stroke-width=".35" opacity=".8"/>`;
+    for (const v of [60, 66]) g += `<path d="M${r(X(-0.6))} ${r(Y(v))} l${r(0.6 * k1)} ${r(-1.4 * k1)} l${r(0.6 * k1)} ${r(1.4 * k1)} Z" fill="#5a6662"/>`;
+    g += `<circle cx="${r(X(0))}" cy="${r(Y(78.6))}" r=".5" fill="${GOLD}"/><path d="M${r(X(0))} ${r(Y(79))} l0 -1.6 M${r(X(0) - 0.6)} ${r(Y(79) - 1.1)} l1.2 0" stroke="#e8b83a" stroke-width=".3"/>`;
+    g += `<rect x="${r(X(-4.5))}" y="${r(Y(45))}" width=".6" height="${r(27 * k1)}" fill="#ffd8a8" opacity=".5"/>`;
+    return g;
+  };
+  const Y = (v) => basis - v * s;
+  let k = "";
+  /* Langhaus: Hochwand im Schatten mit Spitzbogenfenstern, darüber das Dach */
+  k += `<path d="M42 ${r(Y(25))} L42 ${r(Y(36))} L63 ${r(Y(36))} L63 ${r(Y(25))} Z" fill="${S.lg("sebwand", [[0, "#b88c7a"], [1, "#94706a"]], 0, 0, 1, 0)}"/>`;
+  for (const x of [45, 50.5, 56]) k += `<path d="M${x} ${r(Y(26))} L${x} ${r(Y(32))} L${x + 1.3} ${r(Y(33.4))} L${x + 2.6} ${r(Y(32))} L${x + 2.6} ${r(Y(26))} Z" fill="#3a3448"/><path d="M${x + 1.3} ${r(Y(26))} L${x + 1.3} ${r(Y(33))}" stroke="#94706a" stroke-width=".3"/>`;
+  for (const x of [43.4, 48.8, 54.2, 59.6]) k += `<path d="M${x} ${r(Y(25))} L${x} ${r(Y(35))} L${x + 1.2} ${r(Y(36))} L${x + 1.2} ${r(Y(25))} Z" fill="#a47e70"/>`;
+  k += `<path d="M41 ${r(Y(36))} L47 ${r(Y(46))} L60 ${r(Y(46))} L64 ${r(Y(36))} Z" fill="${ZIEGEL_F}"/>`;
+  for (let i = 0; i < 3; i++) k += `<path d="M${r(48.6 + i * 4.4)} ${r(Y(39.4))} l.9 -1.6 l.9 1.6 Z" fill="#7a3424"/>`;
+  k += `<path d="M41 ${r(Y(36))} L47 ${r(Y(46))}" stroke="#ffb08a" stroke-width=".5"/>`;
+  /* hoher Ostchor (Hallenchor): Wand mit Strebepfeilern und hohen Fenstern, steiles Walmdach */
+  k += `<path d="M59 ${r(Y(24))} L59 ${r(Y(40))} L73 ${r(Y(40))} L73 ${r(Y(24))} Z" fill="${S.lg("sebchor", [[0, "#c8987e"], [1, "#9a7468"]], 0, 0, 1, 0)}"/>`;
+  for (const x of [61.2, 66.4]) k += `<path d="M${x} ${r(Y(26))} L${x} ${r(Y(36))} L${x + 1.6} ${r(Y(37.6))} L${x + 3.2} ${r(Y(36))} L${x + 3.2} ${r(Y(26))} Z" fill="#3a3448"/><path d="M${x + 1.6} ${r(Y(26))} L${x + 1.6} ${r(Y(37))} M${x} ${r(Y(31))} L${x + 3.2} ${r(Y(31))}" stroke="#a07c6c" stroke-width=".3"/>`;
+  for (const x of [59, 65, 71]) k += `<path d="M${x} ${r(Y(24))} L${x} ${r(Y(38.6))} L${x + 1} ${r(Y(39.6))} L${x + 2} ${r(Y(38.6))} L${x + 2} ${r(Y(24))} Z" fill="#b08672"/><path d="M${x} ${r(Y(24))} L${x} ${r(Y(38.6))}" stroke="#ffd0a8" stroke-width=".3" opacity=".6"/>`;
+  k += `<path d="M57.6 ${r(Y(40))} L61 ${r(Y(52))} L71 ${r(Y(52))} L74.6 ${r(Y(40))} Z" fill="${ZIEGEL}"/><path d="M71 ${r(Y(52))} L74.6 ${r(Y(40))} L71.6 ${r(Y(40))} Z" fill="#000" opacity=".16"/>`;
+  for (let i = 0; i < 3; i++) k += `<path d="M${r(61.6 + i * 3.6)} ${r(Y(44))} l.8 -1.5 l.8 1.5 Z" fill="#7a3424"/>`;
+  k += `<path d="M57.6 ${r(Y(40))} L61 ${r(Y(52))}" stroke="#ffb08a" stroke-width=".5"/><path d="M66 ${r(Y(52))} L66 ${r(Y(55))}" stroke="${DUNKEL}" stroke-width=".3"/>`;
+  k += turm(36, 0.95, true) + turm(27, 1, false);
+  const AX = 34, AY = 50;
+  S.teil({ id: "sebalduskirche", de: "die Sebalduskirche", syl: "se-BAL-dus-kir-che", it: "la chiesa di San Sebaldo", itSyl: "KIE-sa di san se-BAL-do", en: "St. Sebald's Church",
+    x: AX, y: AY, kunst: anker(AX, AY, k), tipp: "St. Sebald ist die älteste Pfarrkirche Nürnbergs. Hier liegt der heilige Sebald begraben, der Schutzpatron der Stadt." });
 }
 
 /* =====================================================================

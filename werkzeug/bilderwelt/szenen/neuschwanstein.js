@@ -48,10 +48,20 @@
      und Alpsee (≈ 270°) sowie der Säuling (≈ 235°) liegen links
      AUSSERHALB des Bildes und fehlen darum.
    - Vor Ort typisch: Pferdekutschen (bringen Gäste von Hohenschwangau
-     zum Schloss; hier auf der Zufahrt an der Ostseite unter dem Torbau —
-     Verlauf UNSICHER), Herbstwald aus Buchen, Lärchen und Fichten, die
+     herauf und wenden UNTERHALB des Schlosses; das letzte Stück zum Tor
+     geht man zu Fuß — Lage des Wendeplatzes im Bild UNSICHER), Herbstwald aus Buchen, Lärchen und Fichten, die
      Pöllat tief unten in der Schlucht. Wanderer und Infotafel stehen am
      Brückenkopf hinter uns bzw. außerhalb des Bildes und fehlen darum.
+   BILDAUFBAU (Runde 4): Unter dem Schloss fällt der Hang ohne Absatz in
+   die Schlucht; eine dunkle Kerbe (die Pöllat als heller Faden) läuft von
+   unten Mitte nach links unter die Palaswand. Diesseitige Hänge mit Kronen
+   von oben. Geländer mit echter Verkürzung (rechts ≈ 2× links). Flacher
+   Haufenwolken-Zug mit violetter Unterseite. St. Coloman und Schwangau fast
+   im echten Maßstab (klein, im Dunst), antippbar über unsichtbare Flächen.
+   Helme verschieden (Nordturm schlank und hoch, achteckige Pyramiden am
+   Palas, stumpfe Kegel an Kemenate und Viereckturm); Kemenaten-Geschosse
+   gegen den Palas versetzt; Schatten von Kaminen und Ecktürmchen auf den
+   Dächern; Höfe mit Pflaster, Mauerschatten und Besuchern.
    Kamera: Brennweite 580 Einheiten, Augenhöhe y 66 (Horizont).
    Schloss in ≈ 390 m ≈ 1,5 Einheiten je Meter.
    ===================================================================== */
@@ -105,7 +115,6 @@ const EBENE = -185;                             /* Alpenvorland (≈ 780 m) rela
 const yEbene = (f) => HOR + F * (EYE - EBENE) / f;
 
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="1.1"/></filter>`);
 S.def(`<filter id="${S.id("dunst")}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter>`);
 S.def(`<filter id="${S.id("weich")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".35"/></filter>`);
 S.def(`<filter id="${S.id("flecken")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
@@ -210,10 +219,11 @@ function fichteGross(x, yTop, h, w) {
   return g;
 }
 /* Laubbüschel als Illustration: drei gewellte Flächen (Schatten, Mitte, Licht von links oben) */
-const wellig = (cx, cy, rx, ry, n) => { const f = []; for (let i = 0; i < n; i++) f.push(0.78 + rnd() * 0.36); let d = ""; for (let i = 0; i <= n; i++) { const a = i / n * Math.PI * 2 + 0.3, q = f[i % n], x = cx + Math.cos(a) * rx * q, y = cy + Math.sin(a) * ry * q; const rr = (0.22 + rnd() * 0.22) * (rx + ry) / 2; d += i ? ` A${r(rr)} ${r(rr * 0.85)} 0 0 1 ${r(x)} ${r(y)}` : `M${r(x)} ${r(y)}`; } return d + " Z"; };
+const wellig = (cx, cy, rx, ry, n) => { const f = []; for (let i = 0; i < n; i++) f.push(0.78 + rnd() * 0.36); let d = ""; for (let i = 0; i <= n; i++) { const a = i / n * Math.PI * 2 + 0.3, q = f[i % n], x = cx + Math.cos(a) * rx * q, y = cy + Math.sin(a) * ry * q; const rr = (0.42 + rnd() * 0.3) * (rx + ry) / 2; d += i ? ` A${r(rr)} ${r(rr * 0.85)} 0 0 1 ${r(x)} ${r(y)}` : `M${r(x)} ${r(y)}`; } return d + " Z"; };
 function laubBusch(cx, cy, rx, ry) {
   let g = `<path d="${wellig(cx + rx * 0.06, cy + ry * 0.12, rx, ry, 11)}" fill="#6e3412"/><path d="${wellig(cx - rx * 0.14, cy - ry * 0.16, rx * 0.78, ry * 0.7, 10)}" fill="#b8682a"/>`;
-  for (let i = 0; i < 4; i++) { const x = cx - rx * (0.5 - rnd() * 0.6), y = cy - ry * (0.55 - rnd() * 0.5); g += `<path d="${wellig(x, y, rx * 0.26, ry * 0.24, 6)}" fill="${i % 2 ? "#e7a640" : "#f4c862"}"/>`; }
+  /* Licht von links oben: Teilballen entlang des oberen linken Randes, nicht in der Mitte (sonst liest es sich als Blüte) */
+  for (let i = 0; i < 3; i++) { const a = Math.PI * (1.08 + i * 0.22 + rnd() * 0.08), x = cx - rx * 0.1 + Math.cos(a) * rx * 0.5, y = cy - ry * 0.12 + Math.sin(a) * ry * 0.5; g += `<path d="${wellig(x, y, rx * 0.3, ry * 0.24, 6)}" fill="${i % 2 ? "#d99a40" : "#e9b85c"}"/>`; }
   for (let i = 0; i < 3; i++) { const x = cx + rx * (0.2 + rnd() * 0.5), y = cy + ry * (0.1 + rnd() * 0.5); g += `<path d="${wellig(x, y, rx * 0.22, ry * 0.2, 6)}" fill="#5a2a0e" opacity=".7"/>`; }
   return g;
 }
@@ -275,9 +285,15 @@ S.hinten(`<rect width="400" height="${HOR + 2}" fill="${S.lg("sonnenseite", [[0,
     const id = S.id("wz" + nr++);
     S.def(`<clipPath id="${id}"><rect x="${r(x - b)}" y="${r(y - h * 3)}" width="${r(2 * b)}" height="${r(h * 3)}"/></clipPath>`);
     let d = "";
-    const n = Math.max(3, Math.round(b / h * 0.9));
-    for (let i = 0; i < n; i++) { const t = (i + 0.5) / n, hoch = Math.sin(t * Math.PI), rr = h * (0.35 + hoch * 0.45) * (0.85 + rnd() * 0.3), cx = x - b / 2 + t * b, cy = y - h * 0.15 - hoch * h * 0.4; d += `M${r(cx - rr)} ${r(cy)} a${r(rr)} ${r(rr)} 0 1 0 ${r(2 * rr)} 0 a${r(rr)} ${r(rr)} 0 1 0 ${r(-2 * rr)} 0 Z `; }
-    return `<g clip-path="url(#${id})"><path d="${d}" fill="url(#${S.id("wolkenzug")})"/><path d="${d}" fill="url(#${S.id("wolkenlicht")})"/></g>`;
+    const n = Math.max(4, Math.round(b / h * 1.6));
+    let hl = "";
+    const kreis = (cx, cy, rr) => `M${r(cx - rr)} ${r(cy)} a${r(rr)} ${r(rr)} 0 1 0 ${r(2 * rr)} 0 a${r(rr)} ${r(rr)} 0 1 0 ${r(-2 * rr)} 0 Z `;
+    for (let i = 0; i < n; i++) {
+      const t = (i + 0.2 + rnd() * 0.6) / n, hoch = Math.pow(Math.sin(t * Math.PI), 0.8), rr = h * (0.42 + hoch * 0.5) * (0.7 + rnd() * 0.6), cx = x - b / 2 + t * b, cy = y - h * 0.05 - hoch * h * 0.5 + (rnd() - 0.5) * h * 0.25;
+      d += kreis(cx, cy, rr);
+      if (hoch > 0.45 && rnd() < 0.7) hl += kreis(cx - rr * 0.22, cy - rr * 0.25, rr * 0.62);
+    }
+    return `<g clip-path="url(#${id})"><path d="${d}" fill="url(#${S.id("wolkenzug")})"/><path d="${hl}" fill="#fffbf2" opacity=".55"/><path d="${d}" fill="url(#${S.id("wolkenlicht")})"/></g>`;
   };
   for (const [x, y, b, h] of [[46, 24, 60, 9], [126, 36, 42, 6], [318, 22, 74, 10], [384, 34, 40, 6], [196, 46, 34, 4], [262, 49, 28, 3.4], [96, 52, 30, 3], [356, 54, 24, 2.6], [20, 56, 22, 2.2], [228, 57, 18, 1.8]]) c += wolke(x, y, b, h);
   S.hinten(c);
@@ -445,7 +461,7 @@ const LINKS_OBEN = [[86, 224], [62, 222], [34, 220], [-1, 219]];
   let rinne = "";
   /* Rinnen (dunkel) und Rippen (Fels, hell) laufen steil hangab zur Kerbe */
   for (const [x0, y0, x1, y1, hell] of [[96, 184, 80, 224, 0], [118, 166, 104, 230, 1], [134, 152, 124, 236, 0], [152, 150, 146, 240, 1], [170, 150, 166, 246, 0], [190, 151, 186, 250, 1], [212, 153, 210, 254, 0], [236, 156, 234, 250, 1], [260, 156, 260, 232, 0], [24, 150, 16, 218, 0], [50, 146, 42, 220, 1], [70, 140, 64, 220, 0]]) {
-    if (hell) { let d = `M${x0} ${y0}`, d2 = ` L${x0 + 3.5} ${y0}`; for (let i = 1; i <= 6; i++) { const t = i / 6, x = x0 + (x1 - x0) * t + (rnd() - 0.5) * 3, y = y0 + (y1 - y0) * t; d += ` L${r(x)} ${r(y)}`; d2 = ` L${r(x + 3 + rnd() * 3)} ${r(y)}` + d2; } rinne += `<path d="${d}${d2} Z" fill="#a89c84" opacity=".5"/><path d="${d}" stroke="#e2d8c2" stroke-width=".45" fill="none" opacity=".55"/>`; }
+    if (hell) { let d = `M${x0} ${y0}`, d2 = ` L${x0 + 3.5} ${y0}`; for (let i = 1; i <= 6; i++) { const t = i / 6, x = x0 + (x1 - x0) * t + (rnd() - 0.5) * 3, y = y0 + (y1 - y0) * t; d += ` L${r(x)} ${r(y)}`; d2 = ` L${r(x + 3 + rnd() * 3)} ${r(y)}` + d2; } rinne += `<path d="${d}${d2} Z" fill="#6e6656" opacity=".4"/><path d="${d}" stroke="#c9bfa8" stroke-width=".35" fill="none" opacity=".3"/>`; }
     else rinne += `<path d="M${x0} ${y0} Q${(x0 + x1) / 2 + 3} ${(y0 + y1) / 2} ${x1} ${y1} L${x1 + 6} ${y1} Q${(x0 + x1) / 2 + 7} ${(y0 + y1) / 2} ${x0 + 3} ${y0} Z" fill="#141018" opacity=".42"/>`;
   }
   /* Fichten in schrägen Reihen am Hang (Licht links) */
@@ -456,7 +472,9 @@ const LINKS_OBEN = [[86, 224], [62, 222], [34, 220], [-1, 219]];
   }
   k += `<g clip-path="url(#${S.id("gegenclip")})">${rinne}</g>`;
   /* Luft und Licht: oben warm und dunstig, nach unten zur Kerbe kühl und dunkel */
-  k += `<path d="${poly(GEGEN)}" fill="${S.lg("bergtiefe", [[0, "#d6e0ea", 0.3], [0.22, "#c9d6e2", 0.1], [0.48, "#1a2236", 0.36], [0.8, "#06080e", 0.7], [1, "#06080e", 0.86]])}"/>`;
+  k += `<path d="${poly(GEGEN)}" fill="${S.lg("bergtiefe", [[0, "#d6e0ea", 0.28], [0.12, "#c9d6e2", 0.04], [0.28, "#18203a", 0.3], [0.5, "#121a30", 0.56], [0.75, "#06080e", 0.76], [1, "#06080e", 0.9]])}"/>`;
+  /* Hangkante: dicht unter Felsfuß, Futtermauer und Torhaus fällt der Hang weg – weiche Schattenlinie */
+  k += `<path d="${poly([...WALDKANTE.map(([x, y]) => [x, y - 1]), ...WALDKANTE.slice().reverse().map(([x, y]) => [x, y + 7])])}" fill="#0e1220" opacity=".42" filter="url(#${S.id("flecken")})"/>`;
   /* Schlagschatten des Torhauses nach rechts auf Straße und Wald */
   k += `<path d="M281 138 L312 146 L306 162 L276 152 Z" fill="#1a2030" opacity=".3"/>`;
   S.teil({ id: "wald", de: "der Wald", syl: "WALD", it: "il bosco", itSyl: "BO-sco", en: "forest", x: 0, y: 0, kunst: k,
@@ -824,13 +842,13 @@ const sternFichte = (cx, cy, q) => { let g = ""; for (const [f, rr] of [["#1e342
 {
   let k = "";
   /* diesseits links (Westufer unter der Brücke, im Schatten) und rechts (Ostufer, Licht von links) */
-  const NAHL = [...KEIL_L.slice().reverse(), ...LINKS_OBEN.slice(1), [-1, 262]], NAHR = [...NAH_OBEN, [401, 262]];
+  const NAHL = [...KEIL_L, ...LINKS_OBEN.slice(1), [-1, 262]], NAHR = [...NAH_OBEN, [401, 262]];
   k += waldflaeche("nahlclip", NAHL, 4.2, 10, "#2e2414", 0.9, HERBST, 24) + waldflaeche("nahrclip", NAHR, 4.8, 14, "#4a3018", 0.92, HERBST, -12);
   let kl = "", kr = "";
   for (const [x, y, q] of [[372, 236, 15], [318, 250, 14], [386, 202, 10], [262, 238, 11], [350, 188, 9]]) kr += laubBusch(x, y, q, q * 0.72);
   for (const [x, y, q] of [[296, 214, 8], [232, 244, 9]]) kr += sternFichte(x, y, q);
-  k += `<g clip-path="url(#${S.id("nahlclip")})">${kl}<rect x="0" y="215" width="200" height="46" fill="${S.lg("nahlschatten", [[0, "#0a0c14", 0.15], [1, "#0a0c14", 0.45]], 0, 0, 1, 0)}"/></g>`;
-  k += `<g clip-path="url(#${S.id("nahrclip")})">${kr}<rect x="185" y="160" width="215" height="102" fill="${S.lg("nahrschatten", [[0, "#0a0c14", 0.55], [0.35, "#0a0c14", 0.1], [1, "#0a0c14", 0]], 0, 0, 1, 0)}"/></g>`;
+  k += `<g clip-path="url(#${S.id("nahlclip")})">${kl}<rect x="0" y="215" width="200" height="46" fill="${S.lg("nahlschatten", [[0, "#0a0c14", 0.42], [1, "#0a0c14", 0.62]], 0, 0, 1, 0)}"/></g>`;
+  k += `<g clip-path="url(#${S.id("nahrclip")})">${kr}<rect x="185" y="160" width="215" height="102" fill="${S.lg("nahrschatten", [[0, "#0a0c14", 0.55], [0.35, "#0a0c14", 0.1], [1, "#0a0c14", 0]], 0, 0, 1, 0)}"/><rect x="185" y="160" width="215" height="102" fill="${S.lg("nahrtiefe", [[0, "#0a0c14", 0], [0.45, "#0a0c14", 0.12], [1, "#0a0c14", 0.5]])}"/></g>`;
   /* die Kerbe: tiefster und dunkelster Bereich, nach unten breiter */
   /* die Kerbe als Keil: unten (nah, tief unter uns) breit, nach links oben unter die Palaswand spitz zulaufend */
   const KEIL = [...KEIL_L, ...KEIL_R.slice(1)], OB = KEIL_R, UN = KEIL_L;
@@ -866,10 +884,10 @@ const sternFichte = (cx, cy, q) => { let g = ""; for (const [f, rr] of [["#1e342
 }
 {
   /* eine Buche als Figur: glatter silbergrauer Stamm mit Licht- und Schattenseite, jeder Ballen sitzt an einem Astende */
-  const STAMM = S.lg("buchenstamm", [[0, "#d6d8d4"], [0.5, "#a9aca8"], [1, "#6e716e"]], 0, 0, 1, 0);
-  let k = `<path d="M-1 262 L-1 236 Q14 224 30 212 L36 218 Q18 236 12 262 Z" fill="${STAMM}"/>`;
+  const STAMM = S.lg("buchenstamm", [[0, "#c2c5c1"], [0.45, "#8f928e"], [1, "#4e514e"]], 0, 0, 1, 0);
+  let k = `<path d="M0 261 L0 240 Q13 228 29 213 L34 218 Q18 236 10 261 Z" fill="${STAMM}"/><path d="M0 252 Q10 236 29 214" stroke="#d8dad6" stroke-width=".6" fill="none" opacity=".6"/>`;
   const aeste = [[30, 213, 18, 196, 2.2], [32, 214, 50, 198, 2.4], [34, 216, 66, 214, 1.8], [24, 222, 6, 206, 1.6], [44, 204, 56, 186, 1.2], [56, 199, 74, 194, 1.1]];
-  for (const [x0, y0, x1, y1, w] of aeste) k += `<path d="M${x0} ${y0} Q${(x0 + x1) / 2 + 2} ${(y0 + y1) / 2 + 2} ${x1} ${y1}" stroke="#9a9d99" stroke-width="${w}" fill="none" stroke-linecap="round"/><path d="M${x0} ${y0 - 0.6} Q${(x0 + x1) / 2 + 1.4} ${(y0 + y1) / 2 + 1.2} ${x1} ${y1 - 0.4}" stroke="#dcdeda" stroke-width="${r(w * 0.3)}" fill="none"/>`;
+  for (const [x0, y0, x1, y1, w] of aeste) k += `<path d="M${x0} ${y0} Q${(x0 + x1) / 2 + 2} ${(y0 + y1) / 2 + 2} ${x1} ${y1}" stroke="#7a7d79" stroke-width="${w}" fill="none" stroke-linecap="round"/><path d="M${x0} ${y0 - w * 0.3} Q${(x0 + x1) / 2 + 1.4} ${(y0 + y1) / 2 + 1.2} ${x1} ${y1 - w * 0.2}" stroke="#b9bcb8" stroke-width="${r(w * 0.25)}" fill="none"/>`;
   /* Laubballen an den Astenden, nach außen kleiner */
   for (const [cx, cy, rx] of [[50, 194, 13], [18, 192, 12], [66, 210, 11], [6, 204, 9], [58, 182, 9], [78, 190, 8], [36, 186, 10]]) k += laubBusch(cx, cy, rx, rx * 0.72);
   S.teil({ id: "buche", de: "die Buche", syl: "BU-che", it: "il faggio", itSyl: "FAG-gio", en: "beech", x: 0, y: 0, kunst: k,
@@ -888,6 +906,7 @@ const sternFichte = (cx, cy, q) => { let g = ""; for (const [f, rr] of [["#1e342
   let dunkel = "", hell = "";
   for (let E = -6; E <= 1.4; E += 0.25) {
     for (const [E1, sg] of [[E + 0.6, 1], [E - 0.6, -1]]) {
+      if (tief(Math.max(E, E1) + 0.05, NR) < 0.2) continue;   /* hinter der Kamera: nicht zeichnen */
       const q = band(E, zH, E1, zU, BR); if (q.length > 2) dunkel += `M${q.map(Pt).join(" L")} Z `;
       const h = band(E - sg * 0.012, zH, E1 - sg * 0.012, zU, 0.012); if (h.length > 2) hell += `M${h.map(Pt).join(" L")} Z `;
     }
