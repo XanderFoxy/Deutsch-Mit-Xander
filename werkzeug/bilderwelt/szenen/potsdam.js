@@ -628,7 +628,8 @@ for (const p of statuen) bodenSchatten(p.D, p.X, 1.2, 3.9, 0.2);
   const u = sk(WW.D);
   let g = `<rect x="-.05" y="-2.7" width=".1" height="2.7" fill="${S.lg("pfosten", [[0, "#5e6a63"], [1, "#2f3833"]], 0, 0, 1, 0)}"/>`;
   g += `<circle cx="0" cy="-2.74" r=".07" fill="#2f3833"/>`;
-  const schilder = [[-2.5, 1, "Schloss Sanssouci"], [-2.18, -1, "Neues Palais 1,7 km"], [-1.86, 1, "Brandenburger Tor 1,2 km"], [-1.54, -1, "Holländisches Viertel 1,9 km"]];
+  /* wir schauen nach Norden: Westen zeigt nach links, Osten (Stadt) nach rechts */
+  const schilder = [[-2.5, -1, "Neues Palais 1,7 km"], [-2.18, -1, "Orangerieschloss 0,7 km"], [-1.86, 1, "Brandenburger Tor 1,3 km"], [-1.54, 1, "Holländisches Viertel 2,3 km"]];
   for (const [y, s, t] of schilder) {
     const w = 1.62;
     const p = s > 0 ? `M.06 ${y} L${w} ${y} L${w + 0.14} ${r(y + 0.13)} L${w} ${r(y + 0.26)} L.06 ${r(y + 0.26)} Z` : `M-.06 ${y} L${-w} ${y} L${-w - 0.14} ${r(y + 0.13)} L${-w} ${r(y + 0.26)} L-.06 ${r(y + 0.26)} Z`;
