@@ -122,32 +122,39 @@ S.hinten(`<rect width="320" height="${HOR + 10}" fill="${S.lg("himmel", [[0, "#6
    ===================================================================== */
 {
   let k = "";
-  const fleck = (x0, y0, w, h, n) => { let g = ""; for (let i = 0; i < n; i++) g += `<rect x="${r(x0 + rnd() * w)}" y="${r(y0 + rnd() * h)}" width="${r(0.8 + rnd() * 1.6)}" height="${r(0.6 + rnd() * 0.8)}" fill="#4a4436" opacity="${r(0.45 + rnd() * 0.4)}"/>`; return g; };
+  const fleck = (x0, y0, w, h, n) => { let g = ""; for (let i = 0; i < n; i++) g += `<rect x="${r(x0 + rnd() * w)}" y="${r(y0 + rnd() * h)}" width="${r(0.8 + rnd() * 1.6)}" height="${r(0.6 + rnd() * 0.8)}" fill="#6b6354" opacity="${r(0.35 + rnd() * 0.3)}"/>`; return g; };
   /* Kirchenkörper (unten von der Akademie verdeckt) */
   k += `<rect x="-15" y="-26" width="30" height="32" fill="${SAND}"/>`;
-  k += fleck(-15, -26, 28, 25, 40);
+  k += fleck(-15, -26, 28, 25, 14);
   for (const x of [-9, 0, 9]) k += `<path d="M${x - 1.6} -6 L${x - 1.6} -17 Q${x} -20 ${x + 1.6} -17 L${x + 1.6} -6 Z" fill="#3d3a33"/>`;
   k += `<rect x="-16" y="-27.4" width="32" height="1.6" fill="#efe6d0"/>`;
   /* vier Ecktürme (Treppentürme) mit kleinen Hauben */
   for (const x of [-15, 15]) {
     k += `<rect x="${x - 2.8}" y="-44" width="5.6" height="18" fill="${SAND}"/>`;
-    k += fleck(x - 2.8, -44, 4.4, 17, 8);
+    k += fleck(x - 2.8, -44, 4.4, 17, 3);
     k += `<path d="M${x - 1} -30 L${x - 1} -38 Q${x} -39.4 ${x + 1} -38 L${x + 1} -30 Z" fill="#3d3a33"/>`;
     k += `<path d="M${x - 3.2} -44 Q${x} -50 ${x + 3.2} -44 Z" fill="${SAND}"/><path d="M${x - 1} -48.4 L${x} -53.4 L${x + 1} -48.4 Z" fill="${SAND_D}"/>`;
   }
   /* Tambour und die glockenförmige Kuppel */
   k += `<rect x="-12" y="-33" width="24" height="6" fill="${SAND}"/>`;
   for (let i = 0; i < 7; i++) k += `<rect x="${-10.6 + i * 3.4}" y="-32" width="1.2" height="3.6" rx=".5" fill="#3d3a33"/>`;
-  k += `<path d="M-14 -33 C-11 -36 -10.6 -40 -10.6 -44 C-10.6 -56 -5 -61 -3.2 -62 L3.2 -62 C5 -61 10.6 -56 10.6 -44 C10.6 -40 11 -36 14 -33 Z" fill="${S.lg("glocke", [[0, "#b5a787"], [0.35, "#e8dec6"], [0.65, "#d7caa9"], [1, "#a29473"]], 0, 0, 1, 0)}"/>`;
-  k += fleck(-10, -58, 20, 24, 30);
-  k += `<path d="M-10.6 -44 C-10.6 -54 -5 -60 -3.2 -61" stroke="#fff" stroke-width=".7" opacity=".35" fill="none"/>`;
+  k += `<path d="M-16.4 -33 C-12.6 -35 -11.6 -39 -11.6 -45 C-11.6 -56 -6.4 -62 -3.4 -63 L3.4 -63 C6.4 -62 11.6 -56 11.6 -45 C11.6 -39 12.6 -35 16.4 -33 Z" fill="${S.lg("glocke", [[0, "#b5a787"], [0.35, "#e8dec6"], [0.65, "#d7caa9"], [1, "#a29473"]], 0, 0, 1, 0)}"/>`;
+  k += fleck(-10, -58, 20, 24, 12);
+  k += `<path d="M-10.8 -45 C-10.8 -55 -5.6 -61 -3.4 -62" stroke="#fff" stroke-width=".8" opacity=".35" fill="none"/>`;
   /* Laterne mit Säulen, Haube, Kugel und goldenem Kreuz */
   k += `<rect x="-3.6" y="-71" width="7.2" height="9" fill="${SAND}"/>`;
   for (const x of [-2.4, 0, 2.4]) k += `<rect x="${x - 0.45}" y="-70" width=".9" height="7" fill="#3d3a33"/>`;
   k += `<path d="M-4 -71 Q0 -77 4 -71 Z" fill="${SAND}"/><rect x="-1" y="-79" width="2" height="3.4" fill="${SAND}"/>`;
   k += `<circle cx="0" cy="-80.2" r="1.1" fill="${GOLD}"/><path d="M0 -81.2 L0 -86 M-1.6 -84.4 L1.6 -84.4" stroke="#e8b83a" stroke-width=".7"/>`;
   S.teil({ id: "frauenkirche", de: "die Frauenkirche", syl: "FRAU-en-kir-che", it: "la Frauenkirche", itSyl: "FRAU-en-kir-che", en: "Church of Our Lady",
-    x: 86, y: TERR - 6, kunst: k, tipp: "Die Frauenkirche wurde 1945 zerstört und bis 2005 wieder aufgebaut. Die dunklen Steine sind alt." });
+    x: 86, y: TERR - 6, kunst: k, tipp: "Die Frauenkirche wurde 1945 zerstört und bis 2005 wieder aufgebaut. Die dunklen Steine sind alt.",
+    zoom: { x: 86 - 30, y: TERR - 96, w: 60, h: 66 },
+    unter: [
+      { id: "kuppel", de: "die Kuppel", syl: "KUP-pel", it: "la cupola", itSyl: "CU-po-la", en: "dome", x: 86, y: TERR - 39, kunst: flaeche(-12, -30, 24, 30),
+        tipp: "Die Kuppel ist ganz aus Stein. Man nennt sie „Steinerne Glocke“." },
+      { id: "kreuz", de: "das Kreuz", syl: "KREUZ", it: "la croce", itSyl: "CRO-ce", en: "cross", x: 86, y: TERR - 85, kunst: flaeche(-2.4, -7.4, 4.8, 7.4, 0.5),
+        tipp: "Das goldene Turmkreuz hat ein Schmied aus London gemacht — als Zeichen der Versöhnung." },
+    ] });
 }
 
 /* =====================================================================
@@ -266,7 +273,7 @@ S.hinten(`<rect width="320" height="${HOR + 10}" fill="${S.lg("himmel", [[0, "#6
    8 — DAS DAMPFSCHIFF (Raddampfer) — Lupe: Schaufelrad, Schornstein
    ===================================================================== */
 {
-  const SX = 58, SY = 122;
+  const SX = 150, SY = 124;
   let k = schatten(0, 0, 32, 1.2, 0.25);
   k += `<path d="M-36 .2 q-5 .6 -9 0 M32 .4 q5 .7 10 0" stroke="#eef3f5" stroke-width=".5" fill="none" opacity=".8"/>`;
   /* Rumpf, weiß mit schwarzem Wasserpass, spitzer Bug links */
@@ -304,7 +311,7 @@ S.hinten(`<rect width="320" height="${HOR + 10}" fill="${S.lg("himmel", [[0, "#6
    ===================================================================== */
 {
   const u = (s) => 2.4 * s / (1 + 1.4 * s);
-  const bx = (s) => 192 + 140 * u(s);
+  const bx = (s) => 192 + 128 * u(s);
   const deck = (s) => TERR - 1 - 9 * u(s);
   const wasser = (s) => TERR + 10 + 34 * u(s);
   const dick = (s) => 2 + 5 * u(s);
@@ -348,23 +355,19 @@ S.hinten(`<rect width="320" height="${HOR + 10}" fill="${S.lg("himmel", [[0, "#6
 }
 
 /* =====================================================================
-   11 — DER BAUM (alte Linde, kahl im Advent, links)
+   11 — DAS PAAR auf der Bank (von hinten, mit Blick auf die Altstadt)
    ===================================================================== */
 {
-  let k = schatten(0, 0.4, 7, 1.4, 0.35);
-  const ast = (x, y, l, w, a, t) => {
-    if (t === 0 || l < 2) return "";
-    const x2 = x + Math.cos(a) * l, y2 = y + Math.sin(a) * l;
-    let g = `<path d="M${r(x)} ${r(y)} L${r(x2)} ${r(y2)}" stroke="${S.lg("rinde", [[0, "#4a3d32"], [1, "#6b5a4a"]], 0, 0, 1, 0)}" stroke-width="${r(w)}" stroke-linecap="round"/>`;
-    g += ast(x2, y2, l * 0.72, w * 0.62, a - 0.42 - rnd() * 0.2, t - 1);
-    g += ast(x2, y2, l * 0.7, w * 0.6, a + 0.38 + rnd() * 0.2, t - 1);
-    if (t > 3) g += ast(x2, y2, l * 0.5, w * 0.5, a + (rnd() - 0.5) * 0.4, t - 2);
-    return g;
-  };
-  k += `<path d="M-3.4 0 Q-2.6 -20 -2 -34 L2 -34 Q2.6 -20 3.6 0 Z" fill="${S.lg("stamm", [[0, "#3e3229"], [0.5, "#6b5a4a"], [1, "#3a2e25"]], 0, 0, 1, 0)}"/>`;
-  k += ast(0, -33, 18, 3.4, -Math.PI / 2 - 0.5, 6) + ast(0, -33, 20, 3.4, -Math.PI / 2 + 0.35, 6) + ast(0, -26, 12, 2.2, -Math.PI / 2 - 1.1, 4);
-  S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 16, y: 160, steht: true, kunst: k,
-    tipp: "Im Winter hat die Linde keine Blätter." });
+  const Y = 179, s = km(Y);
+  const frau = B.mensch({ id: "b21e_frau", geschlecht: "w", pose: "sitzen", blick: 186, frisur: "lang", haarfarbe: "blond", haut: "hell",
+    kleidung: { oberteil: { stueck: "pullover", farbe: "creme" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "mantel", farbe: "rot" }, schuhe: { stueck: "stiefel", farbe: "braun" }, zubehoer: { stueck: "schal", farbe: "weiss" } } }, 1.66 * s);
+  const mann = B.mensch({ id: "b21e_mann", geschlecht: "m", pose: "sitzen", blick: 174, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell",
+    kleidung: { oberteil: { stueck: "pullover", farbe: "grau" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "blau" }, schuhe: { stueck: "stiefel", farbe: "braun" }, kopf: { stueck: "muetze", farbe: "grau" } } }, 1.8 * s);
+  const sitzY = Math.max(frau.z.sitz.y * frau.k, mann.z.sitz.y * mann.k);
+  S.def(`<clipPath id="${S.id("bank")}"><rect x="-40" y="-80" width="80" height="${r(80 + sitzY + 0.8)}"/></clipPath>`);
+  const k = `<g clip-path="url(#${S.id("bank")})"><g transform="translate(-8 0)">${frau.svg}</g><g transform="translate(8 0)">${mann.svg}</g></g>`;
+  S.teil({ id: "paar", de: "das Paar", syl: "PAAR", it: "la coppia", itSyl: "COP-pia", en: "couple", x: 238, y: Y, kunst: k,
+    tipp: "Das Paar sitzt auf der Bank und schaut auf den Canaletto-Blick." });
 }
 
 /* =====================================================================
@@ -384,7 +387,7 @@ S.hinten(`<rect width="320" height="${HOR + 10}" fill="${S.lg("himmel", [[0, "#6
    13 — DER MARKTSTAND (Weihnachtsbude) mit 14 — DER VERKÄUFERIN,
         15 — DEM STOLLEN und 16 — DEM GLÜHWEIN
    ===================================================================== */
-const BUDE = { x: 104, y: 194 };
+const BUDE = { x: 52, y: 194 };
 const BS = km(BUDE.y), THEKE = BUDE.y - 1.05 * BS;
 {
   const W = 2.8 * BS, H = 2.5 * BS, ty = THEKE - BUDE.y;
