@@ -1393,7 +1393,7 @@ const BANK_K = (() => {
   const sh = SCH(wx, wy, 1.78), a = pr(wx, wy, PROM), b = pr(sh[0], sh[1], PROM);
   const schattenK = `<path d="M${r(a[0] - 0.25 * s)} ${r(a[1])} L${r(b[0] - 0.12 * s)} ${r(b[1])} L${r(b[0] + 0.25 * s)} ${r(b[1] + 0.1 * s)} L${r(a[0] + 0.25 * s)} ${r(a[1])} Z" fill="#2e2418" opacity=".25"/>`;
   S.teil({ id: "kellner", de: "der Kellner", syl: "KELL-ner", it: "il cameriere", itSyl: "ca-me-RIE-re", en: "waiter", x: r(f[0]), y: r(f[1]),
-    kunst: rundeFigurFein(m.svg) + bem + (() => { const kp = m.z.kopf, q = m.k; return `<g transform="scale(${q.toFixed(4)}) translate(${r(kp.x + 1.5)} ${r(kp.y)})"><path d="M-6.5 21 L-7 12.5 Q0 15 7 12.5 L6.5 21 Q0 23 -6.5 21 Z" fill="#f4f1ea" stroke="#c9c2b4" stroke-width=".5"/><path d="M-3.4 19.4 L0 21 L-3.4 22.6 Z M3.4 19.4 L0 21 L3.4 22.6 Z" fill="#1d1d22"/></g>`; })(),
+    kunst: rundeFigurFein(m.svg) + bem + (() => { const kp = m.z.kopf, q = m.k; return `<g transform="scale(${q.toFixed(4)}) translate(${r(kp.x + 1.5)} ${r(kp.y)})"><path d="M-12 22.5 L-12.3 14.5 Q-3 17 6.3 16 L6 21.5 Q-3 24.5 -12 22.5 Z" fill="#f4f1ea" stroke="#c9c2b4" stroke-width=".5"/><path d="M-3.4 19.4 L0 21 L-3.4 22.6 Z M3.4 19.4 L0 21 L3.4 22.6 Z" fill="#1d1d22"/></g>`; })(),
     tipp: "Der Kellner bringt den Apfelwein im Bembel an den Tisch." });
 }
 

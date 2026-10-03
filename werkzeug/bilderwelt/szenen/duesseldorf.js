@@ -114,7 +114,7 @@ function figur(spec, hoehe, fein = 1) {
   z = z.replace(/<path [^>]*\/>/g, (t) => (/fill="none"/.test(t) && +((t.match(/stroke-width="([\d.]+)"/) || [])[1] || 9) < 0.4) ? "" : t);
   z = z.replace(/ d="([^"]*)"/g, (a, v) => {
     const zs = (v.match(/-?\d+\.?\d*/g) || []).map(Number), ys = zs.filter((_, i) => i % 2);
-    const q = Math.min(...ys) < kopfY ? fein : 1;
+    const q = Math.min(...ys) < kopfY ? fein : Math.max(...ys) > -14 ? 0.25 : 1;
     return ` d="${v.replace(/-?\d+\.\d+/g, (x) => String(Math.round(+x / q) * q))}"`;
   }).replace(/ (x1|y1|x2|y2)="(-?\d+\.\d+)"/g, (a, n, v) => ` ${n}="${Math.round(+v)}"`);
   return { svg: `<g transform="scale(${m.k.toFixed(4)})">${z}</g>`, k: m.k, z: m.z };

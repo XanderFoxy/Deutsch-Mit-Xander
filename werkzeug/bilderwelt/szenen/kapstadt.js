@@ -112,7 +112,7 @@ const lang = (X, Y, b, h, a = 0.26, kopf = 0) => {
   const P = (xw, d) => [r(200 + xw * F / d), r(HOR + 1.6 * F / d)];
   const xw = (X - 200) / s, bw = b / s, D2 = D + Lz;
   const p = [P(xw - bw / 2, D), P(xw + bw / 2, D), P(xw + bw * 0.35 - Lx, D2), P(xw - bw * 0.35 - Lx, D2)];
-  let z = `<path d="M${p.map((q) => q.join(" ")).join("L")}Z" fill="${S.lg("langsch", [[0, "#1d1810", 1], [1, "#1d1810", 0.45]], 1, 1, 0, 0)}" opacity="${r(a * 1.6)}" filter="url(#${S.id("fein")})"/>`;
+  let z = `<path d="M${p.map((q) => q.join(" ")).join("L")}Z" fill="${S.lg("langsch", [[0, "#1d1810", 1], [1, "#1d1810", 0.5]], 1, 1, 0, 0)}" opacity="${r(Math.min(0.62, a * 2.3))}" filter="url(#${S.id("fein")})"/>`;
   if (kopf) { const [cx, cy] = P(xw - Lx, D2), ss = F / D2; z += `<ellipse cx="${cx}" cy="${cy}" rx="${r(kopf * ss)}" ry="${r(kopf * ss * 0.3)}" fill="#1d1810" opacity="${r(a * 0.55)}" filter="url(#bw_weich)"/>`; }
   z += `<ellipse cx="${r(X - b * 0.08)}" cy="${r(Y)}" rx="${r(b * 0.6)}" ry="${r(Math.max(0.7, b * 0.09))}" fill="#1d1810" opacity="${r(Math.min(0.5, a * 1.4))}" filter="url(#${S.id("fein")})"/>`;
   LANG.push(z);

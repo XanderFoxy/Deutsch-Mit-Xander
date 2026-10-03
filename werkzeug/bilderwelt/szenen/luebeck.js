@@ -168,7 +168,7 @@ S.hinten(wolke(78, 26, 1.05, 3) + wolke(300, 18, 0.8, 17) + wolke(366, 58, 0.55,
    Gezeichnet zuerst (ganz hinten); die Schlagschatten kommen am Ende dazu.
    ===================================================================== */
 const WEG = (d) => [proj(-2.1, d), proj(2.1, d)];
-const WEGPFAD = (() => { const [a1, b1] = WEG(95), [a2, b2] = WEG(6.4); return `M${a1[0]} ${a1[1]} L${b1[0]} ${b1[1]} L${b2[0]} ${b2[1]} L${a2[0]} ${a2[1]} Z`; })();
+const WEGPFAD = (() => { const [a1, b1] = WEG(95), [a2, b2] = WEG(8.29); return `M${a1[0]} ${a1[1]} L${b1[0]} ${b1[1]} L${b2[0]} ${b2[1]} L${a2[0]} ${a2[1]} Z`; })();
 S.def(`<clipPath id="${S.id("wegclip")}"><path d="${WEGPFAD}"/></clipPath>`);
 S.def(`<clipPath id="${S.id("rasenclip")}"><path clip-rule="evenodd" d="M0 ${HOR} H${W} V${HH} H0 Z ${WEGPFAD}"/></clipPath>`);
 let WEG_TEIL, RASEN_TEIL;
@@ -176,7 +176,7 @@ let WEG_TEIL, RASEN_TEIL;
   let k = `<path d="${WEGPFAD}" fill="${S.lg("wegstein", [[0, "#a59a8b"], [1, "#bdb2a1"]])}"/>`;
   /* Reihen aus Granitpflaster in Fluchtperspektive */
   let i = 0;
-  for (let d = 95; d > 6.6; d /= 1.06, i++) {
+  for (let d = 95; d > 8.6; d /= 1.06, i++) {
     const [[x1, y1], [x2]] = WEG(d), [[x3, y3], [x4]] = WEG(d / 1.06), h = y3 - y1, s = km((y1 + y3) / 2);
     const st = Math.max(0.6, 0.14 * s), gap = Math.max(0.12, 0.025 * s);
     k += `<line x1="${x3}" y1="${r((y1 + y3) / 2)}" x2="${x4}" y2="${r((y1 + y3) / 2)}" stroke="${["#998d7d", "#aea291", "#a19584"][i % 3]}" stroke-width="${r(h * 0.82)}" stroke-dasharray="${r(st)} ${r(gap)}" stroke-dashoffset="${r((i * 7 % 10) / 10 * st)}" clip-path="url(#${S.id("wegclip")})"/>`;
@@ -196,7 +196,7 @@ let WEG_TEIL, RASEN_TEIL;
   k += `<path d="${halme}" stroke="#3d6324" stroke-width=".35" opacity=".55" fill="none"/>`;
   k += `<rect x="0" y="${HOR}" width="${W}" height="${HH - HOR}" fill="${S.lg("rasenlicht", [[0, "#2a3a1a", 0.25], [0.5, "#000", 0], [1, "#ffd9a0", 0.14]], 0, 0, 1, 0)}"/>`;
   /* Rasenkante aus Granit am Weg */
-  const [[a1x, a1y], [b1x, b1y]] = WEG(95), [[a2x, a2y], [b2x, b2y]] = WEG(6.4);
+  const [[a1x, a1y], [b1x, b1y]] = WEG(95), [[a2x, a2y], [b2x, b2y]] = WEG(8.29);
   k += `<path d="M${a1x} ${a1y} L${a2x} ${a2y}" stroke="#d6cdbb" stroke-width="1.2"/><path d="M${b1x} ${b1y} L${b2x} ${b2y}" stroke="#e2d9c6" stroke-width="1.2"/></g>`;
   RASEN_TEIL = S.teil({ id: "rasen", de: "der Rasen", syl: "RA-sen", it: "il prato", itSyl: "PRA-to", en: "lawn", x: 0, y: 0, kunst: k,
     tipp: "Rund um das Holstentor liegt eine Grünanlage. Hier machen viele Leute eine Pause." });
@@ -267,7 +267,6 @@ const SPEICHER = { x0: 296, d: 210 };
     { w: 12, h: 12, g: 10, art: "volute", f: "#a5553a" },
     { w: 11, h: 11, g: 9.5, art: "treppe", f: "#8e4229" },
     { w: 13, h: 12.5, g: 10, art: "barock", f: "#ab5a3c" },
-    { w: 12, h: 11, g: 9, art: "treppe", f: "#97492f" },
   ];
   let x = SPEICHER.x0;
   const giebel = [];
@@ -327,7 +326,7 @@ const SPEICHER = { x0: 296, d: 210 };
 {
   let k = "";
   /* hinten links (zwischen den Kirchen und dem Tor) und rechts vor den Speichern */
-  for (const [x, d, h, s] of [[16, 140, 17, 3], [44, 150, 16, 5], [84, 130, 18, 7], [118, 125, 15, 11], [272, 120, 15, 13], [300, 110, 14, 17], [392, 105, 16, 19]]) {
+  for (const [x, d, h, s] of [[24, 140, 15, 3], [52, 150, 15, 5], [88, 130, 17, 7], [120, 125, 14, 11], [276, 120, 15, 13], [300, 110, 13, 17], [380, 115, 13, 19]]) {
     const K = F / d, y = r(HOR + AUGE * K);
     k += baum(x, y, h * K, s);
   }
@@ -545,7 +544,7 @@ const [LX, LY] = proj(LAT.lat, LAT.d), LK = km(LY);
 }
 {
   /* DIE MÖWE (Silbermöwe) sitzt oben auf der Laterne; eine zweite fliegt am Himmel */
-  const s = LK * 0.22;
+  const s = LK * 0.16;
   let k = `<path d="M${r(-1.6 * s)} ${r(-0.9 * s)} Q${r(-0.4 * s)} ${r(-1.6 * s)} ${r(1.2 * s)} ${r(-1.1 * s)} L${r(1.9 * s)} ${r(-1.0 * s)} L${r(1.2 * s)} ${r(-0.75 * s)} Q${r(0.2 * s)} ${r(-0.1 * s)} ${r(-1.0 * s)} ${r(-0.5 * s)} Z" fill="#f5f4ef"/>`;
   k += `<path d="M${r(-1.9 * s)} ${r(-0.75 * s)} Q${r(-0.6 * s)} ${r(-1.15 * s)} ${r(0.7 * s)} ${r(-0.92 * s)} L${r(0.4 * s)} ${r(-0.68 * s)} Q${r(-0.6 * s)} ${r(-0.6 * s)} ${r(-1.9 * s)} ${r(-0.75 * s)} Z" fill="#9aa3ab"/>`;
   k += `<path d="M${r(-2.1 * s)} ${r(-0.72 * s)} L${r(-1.6 * s)} ${r(-0.82 * s)} L${r(-1.4 * s)} ${r(-0.6 * s)} Z" fill="#1d1d1f"/>`;
@@ -562,7 +561,7 @@ const [LX, LY] = proj(LAT.lat, LAT.d), LK = km(LY);
    11 — DAS BLUMENBEET in den Farben der Stadt (Weiß und Rot), rechts vorn
    ===================================================================== */
 {
-  const d0 = 9.6, d1 = 12.5, la = 4.2, lb = 9.5;
+  const d0 = 10, d1 = 12.5, la = 3.4, lb = 4.95;
   const [p1x, p1y] = proj(la, d1), [p2x, p2y] = proj(lb, d1), [p3x, p3y] = proj(lb, d0), [p4x, p4y] = proj(la, d0);
   let k = `<path d="M${p1x} ${p1y} L${p2x} ${p2y} L${p3x} ${p3y} L${p4x} ${p4y} Z" fill="#5a3f2c"/>`;
   k += `<path d="M${p4x} ${p4y} L${p3x} ${p3y} L${p3x} ${r(p3y + 2)} L${p4x} ${r(p4y + 2)} Z" fill="#d6cdbb"/>`;
