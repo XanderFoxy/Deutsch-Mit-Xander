@@ -201,24 +201,30 @@ const toroeffnung = (Y, xm, w, zKampf, zScheitel, spitz) => [[xm - w / 2, Y, 0],
      verkürzt, je weiter unten er liegt (d = Abstand unter dem Horizont): rx ≈ .044·d, ry ≈ rx·d/FOC.
      Fünf Muster in Stufen, weich ineinander geblendet — so werden die Kiesel nach hinten stufenlos kleiner. */
   const FARB = ["#b9ab97", "#a39582", "#cfc2ae", "#8f8270", "#c4b49c", "#9c8f80", "#d8ccb8"];
+  /* Kacheln ohne eigenen Grund (der liegt einmal darunter) und mit Kieseln, die über alle vier Ränder
+     weiterlaufen — so entstehen keine Nähte zwischen den Kacheln */
   const stufe = (i, d) => {
-    const rx = .044 * d, ry = Math.max(.05, rx * d / FOC), n = d < 8 ? 4 : 5, w = rx * 2.25 * n, Z = d < 8 ? 4 : 6, h = ry * 2.4 * Z;
-    let m = `<rect width="${r(w)}" height="${r(h)}" fill="#7d705f"/>`;
+    const rx = .044 * d, ry = Math.max(.14, rx * d / FOC), n = 5, w = rx * 2.25 * n, Z = 6, h = ry * 2.5 * Z;
+    let m = "";
     for (let z = 0; z < Z; z++) for (let j = 0; j < n; j++) {
-      const x = (j + (z * .618) % 1 + (rnd() - .5) * .35) * w / n, y = (z + .5) * h / Z + (rnd() - .5) * ry * .7, ax = rx * (.7 + rnd() * .45), ay = ry * (.75 + rnd() * .45);
-      for (const dx of [0, w, -w]) {
-        if (dx && (x + dx < -ax || x + dx > w + ax)) continue;
-        m += `${d < 8 ? "" : `<ellipse cx="${r(x + dx)}" cy="${r(y + ay * .25)}" rx="${r(ax)}" ry="${r(ay)}" fill="#5e5346" opacity=".5"/>`}<ellipse cx="${r(x + dx)}" cy="${r(y)}" rx="${r(ax)}" ry="${r(ay)}" fill="${FARB[Math.floor(rnd() * FARB.length)]}"/>`;
+      const x = (j + (z * .618) % 1 + (rnd() - .5) * .35) * w / n, y = (z + .5) * h / Z + (rnd() - .5) * ry * .7, ax = rx * (.7 + rnd() * .45), ay = ry * (.75 + rnd() * .45), f = FARB[Math.floor(rnd() * FARB.length)];
+      for (const dx of [0, w, -w]) for (const dy of [0, h, -h]) {
+        if ((dx && (x + dx < -ax || x + dx > w + ax)) || (dy && (y + dy < -ay * 1.3 || y + dy > h + ay * 1.3))) continue;
+        m += `${d < 20 ? "" : `<ellipse cx="${r(x + dx)}" cy="${r(y + dy + ay * .25)}" rx="${r(ax)}" ry="${r(ay)}" fill="#5e5346" opacity=".5"/>`}<ellipse cx="${r(x + dx)}" cy="${r(y + dy)}" rx="${r(ax)}" ry="${r(ay)}" fill="${f}"/>`;
       }
     }
     S.def(`<pattern id="${S.id("kies" + i)}" width="${r(w)}" height="${r(h)}" patternUnits="userSpaceOnUse">${m}</pattern>`);
   };
-  const D = [3.4, 7, 14, 26, 46];
+  /* in der Ferne (über ≈ 60 m) keine einzelnen Kiesel mehr, nur feines Farbrauschen in ganzen Zeilen */
+  const D = [12, 22, 40];
   D.forEach((d, i) => stufe(i, d));
   const boden = `M0 ${HOR - 4} H320 V240 H0 Z`;
-  let k = `<path d="${boden}" fill="url(#${S.id("kies0")})"/>`;
-  for (let i = 1; i < D.length; i++) {
-    const a = HOR + D[i - 1] * 1.25, b = HOR + D[i] * .8;
+  let k = `<path d="${boden}" fill="${S.lg("bodengrund", [[0, "#a49884"], [.1, "#8e8270"], [1, "#7d705f"]])}"/>`;
+  let rau = "";
+  for (let y = HOR - 3.6; y < HOR + 14; y += .45 + rnd() * .5) rau += `<path d="M0 ${r(y)}H320" stroke="${FARB[Math.floor(rnd() * FARB.length)]}" stroke-width="${r(.2 + (y - HOR) * .02)}" opacity="${r(.25 + rnd() * .3)}"/>`;
+  k += rau;
+  for (let i = 0; i < D.length; i++) {
+    const a = HOR + D[i] * .55, b = HOR + D[i] * .95;
     S.def(`<linearGradient id="${S.id("mk" + i)}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(a)}" x2="0" y2="${r(b)}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("m" + i)}"><rect width="320" height="240" fill="url(#${S.id("mk" + i)})"/></mask>`);
     k += `<path d="M0 ${r(a)} H320 V240 H0 Z" fill="url(#${S.id("kies" + i)})" mask="url(#${S.id("m" + i)})"/>`;
   }
@@ -380,11 +386,11 @@ const toroeffnung = (Y, xm, w, zKampf, zScheitel, spitz) => [[xm - w / 2, Y, 0],
    3 — DAS KIESELMOSAIK (Freiburger Wappen, aus weißen, roten und schwarzen Kieseln gesetzt)
    ===================================================================== */
 {
-  const M = [45.3, -78.1];
+  const M = [47.2, -77.2], GR = 1.3;
   /* Ortskoordinaten: u nach rechts, v in die Tiefe (Meter) */
   /* das Wappen schaut zur Kamera: v zeigt vom Betrachter weg, u quer dazu */
   const LM = Math.hypot(M[0] - CAM[0], M[1] - CAM[1]), VV = [(M[0] - CAM[0]) / LM, (M[1] - CAM[1]) / LM], UU = [VV[1], -VV[0]];
-  const W = (u, v) => [M[0] + u * UU[0] + v * VV[0], M[1] + u * UU[1] + v * VV[1], 0];
+  const W = (u, v) => [M[0] + GR * (u * UU[0] + v * VV[0]), M[1] + GR * (u * UU[1] + v * VV[1]), 0];
   const P2 = (u, v) => pr(...W(u, v));
   const schild = (u, v) => Math.abs(u) <= .62 && v <= .7 && (v >= -.05 || (u / .62) ** 2 + ((v + .05) / .75) ** 2 <= 1);
   /* Grundflächen (projiziert): schwarzer Rand, weißes Feld, rotes Kreuz */

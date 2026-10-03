@@ -450,7 +450,7 @@ const WK = { x: 151, y: W - 1 };
 const U = (s) => 1.8 * s / (1 + 0.8 * s);          /* U(1) = 1: rechter Bildrand */
 const BX = (s) => 194 + 127.5 * U(s);
 const BK = (s) => 1.94 + 2.8 * U(s);                 /* Einheiten je Meter an der Brücke */
-const HOEHE = (s) => 7.4 + 2.4 * Math.sin(Math.PI * s * 0.6);   /* Deck über dem Wasser: Buckel, Scheitel bei s ≈ 0,83 */
+const HOEHE = (s) => 5.8 + 2.0 * Math.sin(Math.PI * s * 0.6);   /* Deck über dem Wasser: Buckel, Scheitel bei s ≈ 0,83 */
 const DECK = (s) => HOR - (HOEHE(s) - 3.1) * BK(s);
 const WAS = (s) => HOR + 3.1 * BK(s);
 /* gedrungene Rundbögen (Pfeilhöhe ≤ halbe Spannweite) auf massigen Pfeilern (≈ 0,6 × Spannweite),
@@ -462,7 +462,7 @@ GEW.forEach((w, j) => GRENZE.push(GRENZE[j] + w / GEW.reduce((a, b) => a + b, 0)
 const bogen = GEW.map((w, j) => { const d = GRENZE[j + 1] - GRENZE[j]; return [GRENZE[j] + d * 0.19, Math.min(1.02, GRENZE[j + 1] - d * 0.19)]; });
 const bogenMass = ([a, b]) => {
   const m = (a + b) / 2, xa = BX(a), xb = BX(b), bkm = BK(m), W = xb - xa;
-  const ys = WAS(m) - 0.8 * bkm - 2.5, yk = Math.max(DECK(m) + 2.3 * bkm, ys - W * 0.5);
+  const ys = WAS(m) - 0.8 * bkm - 2.5, yk = Math.max(DECK(m) + 1.5 * bkm, ys - W * 0.55);
   return { m, xa, xb, bkm, ys, yk };
 };
 const SCHEITEL = 0.83;

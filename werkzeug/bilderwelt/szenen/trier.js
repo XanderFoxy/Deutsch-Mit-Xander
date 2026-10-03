@@ -156,7 +156,12 @@ let PFLASTER_TEIL;
   f += `<path d="${q}" stroke="#8e887e" stroke-width=".3" opacity=".7"/>`;
   /* Längsfugen zum Fluchtpunkt (Platten 0,8 m breit), Läufer versetzt nur angedeutet */
   let l = "";
-  for (let lat = -30; lat <= 30; lat += 0.8) { const [x1, y1] = proj(lat, 80), [x2, y2] = proj(lat, 13.6); if (x2 < -40 || x2 > 440) continue; l += `M${x1} ${y1} L${x2} ${y2} `; }
+  for (let lat = -30; lat <= 30; lat += 0.8) {
+    const [x1, y1] = proj(lat, 80); let [x2, y2] = proj(lat, 13.6);
+    if (x1 < 0 || x1 > W) continue;
+    if (x2 < 0 || x2 > W) { const xb = x2 < 0 ? 0 : W, t = (xb - x1) / (x2 - x1); x2 = xb; y2 = r(y1 + t * (y2 - y1)); }
+    l += `M${x1} ${y1} L${x2} ${y2} `;
+  }
   f += `<path d="${l}" stroke="#8e887e" stroke-width=".25" opacity=".45"/>`;
   /* Mittelstreifen aus dunklem Basalt (Rinne) und einzelne Flecken */
   const [m1x, m1y] = proj(-0.4, 78), [m2x] = proj(0.4, 78), [m3x, m3y] = proj(0.4, 13.6), [m4x] = proj(-0.4, 13.6);
@@ -179,7 +184,7 @@ let PFLASTER_TEIL;
    2 — DAS MUSEUM (Stadtmuseum Simeonstift, rechts neben dem Tor)
    ===================================================================== */
 {
-  const d = 76, K = F / d, [x0, y0] = proj(20.6, d), w = 22 * K, h = 13 * K;
+  const d = 76, K = F / d, [x0, y0] = proj(20.6, d), w = W - x0, h = 13 * K;
   let k = `<rect x="${x0}" y="${r(y0 - h)}" width="${r(w)}" height="${r(h)}" fill="${S.lg("mus", [[0, "#e8dcc3"], [1, "#cdbf9f"]], 0, 0, 1, 0)}"/>`;
   k += `<rect x="${x0}" y="${r(y0 - h)}" width="${r(w)}" height="2" fill="#a59878"/>`;
   /* zwei Fensterbänder, unten der Eingang mit Glas */
@@ -369,7 +374,7 @@ let PN_UNTER = [];
    6 — DAS CAFÉ (Eckhaus der Simeonstraße, links vorn in der Flucht)
    ===================================================================== */
 {
-  const lat = -12.5, d0 = 28, d1 = 46, h = 15.5;
+  const lat = -12.5, d0 = 30, d1 = 46, h = 14;
   const P = (d, hh) => proj(lat, d, hh);
   let k = "";
   const [a0x, a0y] = P(d0, 0), [a1x, a1y] = P(d1, 0), [b1x, b1y] = P(d1, h), [b0x, b0y] = P(d0, h);
@@ -377,9 +382,9 @@ let PN_UNTER = [];
   k += `<path d="M${a0x} ${a0y} L${a1x} ${a1y} L${b1x} ${b1y} L${b0x} ${b0y} Z" fill="${S.lg("haus", [[0, "#7f7266"], [1, "#a08c72"]], 0, 0, 1, 0)}"/>`;
   /* Stirnseite zur Porta hin (Schatten) */
   const quad = (da, db, ha, hb, fill, extra = "") => { const [p1x, p1y] = P(da, ha), [p2x, p2y] = P(db, ha), [p3x, p3y] = P(db, hb), [p4x, p4y] = P(da, hb); return `<path d="M${p1x} ${p1y} L${p2x} ${p2y} L${p3x} ${p3y} L${p4x} ${p4y} Z" fill="${fill}"${extra}/>`; };
-  for (const hh of [4.4, 8.0, 11.6]) k += quad(d0, d1, hh, hh + 0.35, "#cbb48e") + quad(d0, d1, hh - 0.15, hh, "#6f5a3e");
+  for (const hh of [4.4, 8.0, 11.2]) k += quad(d0, d1, hh, hh + 0.35, "#cbb48e") + quad(d0, d1, hh - 0.15, hh, "#6f5a3e");
   k += quad(d0, d1, h - 0.6, h, "#7a5a32");
-  for (const [ha, hb] of [[5.2, 7.4], [8.8, 11], [12.3, 14.4]]) for (let d = d0 + 1.2; d < d1 - 1; d += 3.2) { k += quad(d - 0.15, d + 1.55, ha - 0.15, hb + 0.15, "#e6dccb"); k += quad(d, d + 1.4, ha, hb, S.lg("fglas", [[0, "#8aa4b8"], [0.5, "#5b7084"], [1, "#3a4856"]])); k += quad(d + 0.66, d + 0.74, ha, hb, "#e6dccb"); k += quad(d - 0.25, d + 1.65, ha - 0.4, ha - 0.15, "#d8ccb6"); }
+  for (const [ha, hb] of [[5.2, 7.4], [8.6, 10.8], [11.6, 13.2]]) for (let d = d0 + 1.2; d < d1 - 1; d += 3.2) { k += quad(d - 0.15, d + 1.55, ha - 0.15, hb + 0.15, "#e6dccb"); k += quad(d, d + 1.4, ha, hb, S.lg("fglas", [[0, "#8aa4b8"], [0.5, "#5b7084"], [1, "#3a4856"]])); k += quad(d + 0.66, d + 0.74, ha, hb, "#e6dccb"); k += quad(d - 0.25, d + 1.65, ha - 0.4, ha - 0.15, "#d8ccb6"); }
   /* Erdgeschoss: Schaufenster und Café, Markise mit Schrift */
   for (let d = d0 + 0.8; d < d1 - 1; d += 4.2) k += quad(d, d + 3.2, 0.3, 3.4, S.lg("schau", [[0, "#5d6f7d"], [1, "#2c3740"]]));
   k += quad(d0, d1, 3.6, 4.2, "#7a2a2a");
@@ -507,14 +512,14 @@ const ROEM = { lat: 4.5, d: 21.5 };
 const TISCH = { lat: -6.4, d: 18.2 };
 const [TX, TY] = proj(TISCH.lat, TISCH.d), TK = km(TY);
 {
-  const lat = -8.2, d = 20.5, [x, y] = proj(lat, d), s = km(y), H = 2.45 * s, Wd = 1.45 * s;
+  const lat = -7.3, d = 21, [x, y] = proj(lat, d), s = km(y), H = 2.45 * s, Wd = 1.3 * s;
   let k = `<rect x="${r(-0.03 * s)}" y="${r(-H)}" width="${r(0.06 * s)}" height="${r(H)}" fill="#d9d2c4"/>`;
   k += `<path d="M${r(-0.25 * s)} 0 L${r(0.25 * s)} 0 L${r(0.2 * s)} ${r(-0.1 * s)} L${r(-0.2 * s)} ${r(-0.1 * s)} Z" fill="#4a4a4a"/>`;
   k += `<path d="M${r(-Wd)} ${r(-H + 0.42 * s)} Q${r(-Wd * 0.5)} ${r(-H - 0.05 * s)} 0 ${r(-H - 0.12 * s)} Q${r(Wd * 0.5)} ${r(-H - 0.05 * s)} ${r(Wd)} ${r(-H + 0.42 * s)} Z" fill="${S.lg("schirm", [[0, "#fbf6ea"], [0.6, "#efe4cc"], [1, "#d9cba8"]], 0, 0, 1, 0)}"/>`;
   for (const t of [-0.6, -0.2, 0.2, 0.6]) k += `<path d="M0 ${r(-H - 0.12 * s)} L${r(t * Wd)} ${r(-H + 0.32 * s)}" stroke="#cdbf9f" stroke-width=".4"/>`;
   k += `<path d="M${r(-Wd)} ${r(-H + 0.42 * s)} q${r(Wd * 0.125)} ${r(0.08 * s)} ${r(Wd * 0.25)} 0 q${r(Wd * 0.125)} ${r(0.08 * s)} ${r(Wd * 0.25)} 0 q${r(Wd * 0.125)} ${r(0.08 * s)} ${r(Wd * 0.25)} 0 q${r(Wd * 0.125)} ${r(0.08 * s)} ${r(Wd * 0.25)} 0 q${r(Wd * 0.125)} ${r(0.08 * s)} ${r(Wd * 0.25)} 0 q${r(Wd * 0.125)} ${r(0.08 * s)} ${r(Wd * 0.25)} 0 q${r(Wd * 0.125)} ${r(0.08 * s)} ${r(Wd * 0.25)} 0 q${r(Wd * 0.125)} ${r(0.08 * s)} ${r(Wd * 0.25)} 0" fill="#9b2b30"/>`;
   k += `<text x="${r(Wd * 0.2)}" y="${r(-H + 0.32 * s)}" font-size="${r(0.17 * s)}" text-anchor="middle" fill="#9b2b30" font-family="Georgia,serif" font-style="italic">Riesling</text>`;
-  schlag(lat, d, 2.4, 2.6, 0.25);
+  schlag(lat, d, 2.4, 2.4, 0.25);
   S.teil({ id: "sonnenschirm", de: "der Sonnenschirm", syl: "SON-nen-schirm", it: "l'ombrellone", itSyl: "om-brel-LO-ne", en: "parasol", x, y, kunst: licht(k) });
 }
 const stuhl = (s, dreh) => {
@@ -565,8 +570,8 @@ const stuhl = (s, dreh) => {
 
 /* Schatten des Eckhauses (links) fällt nach rechts hinten auf den Platz */
 {
-  const L = 1.3 * 15.5, dl = Math.sin(35 * Math.PI / 180) * L, dd = Math.cos(35 * Math.PI / 180) * L;
-  const pts = [[-12.5, 28], [-12.5 + dl, 28 + dd], [-12.5 + dl, 46 + dd], [-20.5 + dl, 46 + dd], [-20.5, 46], [-12.5, 46]].map(([la, d]) => proj(la, d));
+  const L = 1.3 * 14, dl = Math.sin(35 * Math.PI / 180) * L, dd = Math.cos(35 * Math.PI / 180) * L;
+  const pts = [[-12.5, 30], [-12.5 + dl, 30 + dd], [-12.5 + dl, 46 + dd], [-20.5 + dl, 46 + dd], [-20.5, 46], [-12.5, 46]].map(([la, d]) => proj(la, d));
   SCHATTEN.unshift(`<path d="M${pts.map((p) => p.join(" ")).join(" L")} Z" fill="#3a3a48" opacity=".28"/>`);
 }
 /* Schlagschatten auf das Pflaster (sie gehören zur Bodenfläche) */
