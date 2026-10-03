@@ -825,7 +825,7 @@ const KAUF = {};
       g += `<path d="${poly([m(.16, 9.2), m(.84, 9.2), m(.84, 12.4), m(.5, 12.9), m(.16, 12.4)])}" fill="${GL}"/><path d="${linie([m(.5, 9.2), m(.5, 12.8)])}" stroke="${ST}" stroke-width=".22"/>`;
     }
     g += `<path d="${linie([...skal(1.04).map(([x, y]) => [x, y, z0])])}" stroke="#e8c0a8" stroke-width=".3" fill="none"/>`;
-    const w0 = pr(xm, yv, 6.2), w1 = pr(xm, yv, 8), wh = w0[1] - w1[1], [c1, c2] = wappen[wi];
+    const w0 = pr(xm, yv + .03, 7.15), w1 = pr(xm, yv + .03, 8.65), wh = w0[1] - w1[1], [c1, c2] = wappen[wi];
     g += `<path d="M${r(w0[0] - wh * .38)} ${r(w1[1])} h${r(wh * .76)} v${r(wh * .55)} q0 ${r(wh * .38)} ${r(-wh * .38)} ${r(wh * .45)} q${r(-wh * .38)} ${r(-wh * .07)} ${r(-wh * .38)} ${r(-wh * .45)} Z" fill="${c1}" stroke="#d8b04a" stroke-width="${r(wh * .05)}"/>`;
     g += wi === 0 ? `<rect x="${r(w0[0] - wh * .38)}" y="${r(w1[1] + wh * .33)}" width="${r(wh * .76)}" height="${r(wh * .3)}" fill="${c2}"/>` : `<path d="M${r(w0[0] - wh * .07)} ${r(w1[1])} h${r(wh * .14)} v${r(wh * .95)} h${r(-wh * .14)} Z M${r(w0[0] - wh * .38)} ${r(w1[1] + wh * .3)} h${r(wh * .76)} v${r(wh * .14)} h${r(-wh * .76)} Z" fill="${c2}"/>`;
     const tip = [xm, yv - .4, ze + 6.6];
@@ -837,7 +837,7 @@ const KAUF = {};
   };
   k += erker(KX0, KX0 + 3.6, 1) + erker(KX1 - 3.6, KX1, 0);
   KAUF.erker = pr(KX1 - 1.8, KYS + 1.4, 10.4);
-  KAUF.wappen = pr(KX1 - 1.8, KYS + 1.4, 7.1);
+  KAUF.wappen = pr(KX1 - 1.8, KYS + 1.6, 7.6);
   KAUF.figur = figur[3];
   S.teil({ id: "kaufhaus", de: "das Historische Kaufhaus", syl: "his-TO-ri-sche KAUF-haus", it: "lo storico emporio", itSyl: "STO-ri-co em-PO-rio", en: "Historical Merchants' Hall",
     x: 0, y: 0, kunst: k, tipp: "Das rote Kaufhaus ist fast 500 Jahre alt. Früher wurden hier die Waren der Händler gewogen und verzollt. Unten ist ein Laubengang.",

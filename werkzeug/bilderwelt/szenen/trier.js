@@ -161,7 +161,7 @@ let PFLASTER_TEIL;
   /* Mittelstreifen aus dunklem Basalt (Rinne) und einzelne Flecken */
   const [m1x, m1y] = proj(-0.4, 78), [m2x] = proj(0.4, 78), [m3x, m3y] = proj(0.4, 13.6), [m4x] = proj(-0.4, 13.6);
   f += `<path d="M${m1x} ${m1y} L${m4x} ${m3y}" stroke="#6b665e" stroke-width=".6" opacity=".5"/>`;
-  for (let i = 0; i < 60; i++) { const y = HOR + 4 + Math.pow(rnd(), 0.7) * (HH - HOR - 4), x = rnd() * W, s = km(y) * 0.08; f += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(s * 2)}" ry="${r(s * 0.6)}" fill="#7a746b" opacity=".2"/>`; }
+  for (let i = 0; i < 40; i++) { const y = HOR + 4 + Math.pow(rnd(), 0.7) * (HH - HOR - 4), x = rnd() * W, s = km(y) * 0.05; f += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(s * 2)}" ry="${r(s * 0.5)}" fill="#7a746b" opacity=".1"/>`; }
   f += `<rect x="0" y="${HOR}" width="${W}" height="${HH - HOR}" fill="${S.lg("pfllicht", [[0, "#ffe2b0", 0.16], [0.5, "#000", 0], [1, "#000", 0.12]], 0, 0, 1, 0)}"/>`;
   PFLASTER_TEIL = S.teil({ id: "pflaster", de: "das Pflaster", syl: "PFLAS-ter", it: "il lastricato", itSyl: "la-stri-CA-to", en: "paving", x: 0, y: 0, kunst: f });
 }
@@ -408,7 +408,7 @@ let PN_UNTER = [];
   let k = "";
   const leute = [
     { lat: 0.9, d: 23.8, g: "w", blick: 125, frisur: "lang", haar: "blond", o: { stueck: "tshirt", farbe: "#e6889f" }, u: { stueck: "jeans" }, j: null, z: { stueck: "tasche", farbe: "braun" }, h: 1.64 },
-    { lat: 2.0, d: 25.6, g: "m", blick: 140, frisur: "kurz", haar: "grau", o: { stueck: "hemd", farbe: "#9fc0dc" }, u: { stueck: "hose", farbe: "beige" }, j: null, z: { stueck: "rucksack", farbe: "#2f4a6a" }, h: 1.78, kopf: { stueck: "hut", farbe: "#e3d3a8" } },
+    { lat: 2.0, d: 25.6, g: "m", blick: 140, frisur: "kurz", haar: "grau", o: { stueck: "hemd", farbe: "#9fc0dc" }, u: { stueck: "hose", farbe: "beige" }, j: null, z: null, h: 1.78, kopf: { stueck: "hut", farbe: "#e3d3a8" } },
     { lat: 2.5, d: 22.6, g: "w", blick: 110, frisur: "dutt", haar: "dunkelbraun", o: { stueck: "bluse", farbe: "#f3efe6" }, u: { stueck: "rock_knie", farbe: "#2f4a6a" }, j: { stueck: "jacke", farbe: "#4f8a46" }, z: null, h: 1.62 },
   ];
   const teile = [];
@@ -477,7 +477,7 @@ const ROEM = { lat: 4.5, d: 21.5 };
   let k = "";
   const taube = (lat, d, dir, pick) => {
     /* Stadttaube von der Seite: grauer Körper, dunkle Flügelbinden, grün-violett schillernder Hals, rote Füße */
-    const [x, y] = proj(lat, d), a = km(y) * 0.11, s = a * dir;
+    const [x, y] = proj(lat, d), a = km(y) * 0.085, s = a * dir;
     const P = (px, py) => `${r(px * s)} ${r(py * a)}`;
     let g = `<g transform="translate(${x} ${y})">`;
     const kopf = pick ? [1.55, -0.55] : [1.25, -2.15];

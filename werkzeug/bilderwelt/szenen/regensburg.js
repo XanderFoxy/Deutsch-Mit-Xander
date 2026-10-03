@@ -453,9 +453,18 @@ const BK = (s) => 1.94 + 2.8 * U(s);                 /* Einheiten je Meter an de
 const HOEHE = (s) => 7.4 + 2.4 * Math.sin(Math.PI * s * 0.6);   /* Deck über dem Wasser: Buckel, Scheitel bei s ≈ 0,83 */
 const DECK = (s) => HOR - (HOEHE(s) - 3.1) * BK(s);
 const WAS = (s) => HOR + 3.1 * BK(s);
-const N = 9;
-const bogen = [];
-for (let j = 0; j < N; j++) bogen.push([(j + 0.2) / N, Math.min(1.02, (j + 0.8) / N)]);
+/* gedrungene Rundbögen (Pfeilhöhe ≤ halbe Spannweite) auf massigen Pfeilern (≈ 0,6 × Spannweite),
+   die Spannweiten ungleich (± 20 %); der Kämpfer liegt knapp über den Beschlächten */
+const GEW = [1.12, 0.86, 1.2, 0.92, 1.16, 0.94, 1.04];
+const N = GEW.length;
+const GRENZE = [0];
+GEW.forEach((w, j) => GRENZE.push(GRENZE[j] + w / GEW.reduce((a, b) => a + b, 0)));
+const bogen = GEW.map((w, j) => { const d = GRENZE[j + 1] - GRENZE[j]; return [GRENZE[j] + d * 0.19, Math.min(1.02, GRENZE[j + 1] - d * 0.19)]; });
+const bogenMass = ([a, b]) => {
+  const m = (a + b) / 2, xa = BX(a), xb = BX(b), bkm = BK(m), W = xb - xa;
+  const ys = WAS(m) - 0.8 * bkm - 2.5, yk = Math.max(DECK(m) + 2.3 * bkm, ys - W * 0.5);
+  return { m, xa, xb, bkm, ys, yk };
+};
 const SCHEITEL = 0.83;
 const brueckenKoerper = (spiegeln) => {
   const Y = (s, y) => (spiegeln ? 2 * WAS(s) - y : y);
@@ -463,8 +472,7 @@ const brueckenKoerper = (spiegeln) => {
   for (let i = 0; i <= 40; i++) { const s = i / 40; ober.push(`${r(BX(s))} ${r(Y(s, DECK(s) - 1.05 * BK(s)))}`); unter.push(`${r(BX(s))} ${r(Y(s, WAS(s)))}`); }
   g += `<path d="M${ober.join(" L")} L${unter.slice().reverse().join(" L")} Z" fill="${spiegeln ? "#4a4c4e" : BRUECKE}"/>`;
   bogen.forEach(([a, b]) => {
-    const m = (a + b) / 2, xa = BX(a), xb = BX(b), xm = BX(m), bkm = BK(m);
-    const ys = WAS(m) - 2.4 * bkm, yk = DECK(m) + 2.3 * bkm;
+    const { m, xa, xb, bkm, ys, yk } = bogenMass([a, b]);
     const rund = `M${r(xa)} ${r(Y(a, WAS(a)))} L${r(xa)} ${r(Y(m, ys))} C${r(xa)} ${r(Y(m, ys - (ys - yk) * 1.1))} ${r(xb)} ${r(Y(m, ys - (ys - yk) * 1.1))} ${r(xb)} ${r(Y(m, ys))} L${r(xb)} ${r(Y(b, WAS(b)))} Z`;
     g += `<path d="${rund}" fill="${spiegeln ? "#2e3a40" : `url(#${S.id("bogenlicht")})`}"/>`;
     if (!spiegeln) {
@@ -490,9 +498,9 @@ const brueckenKoerper = (spiegeln) => {
     g += `<path d="M${k2.join(" L")}" stroke="#4e4e4a" stroke-width=".35" fill="none" opacity=".6"/>`;
   }
   /* Pfeilerinseln (Beschlächte) und die Strudel dahinter */
-  for (let j = 0; j < N; j++) {
-    const p = (j + 1) / N; if (p >= 0.99) continue;
-    const x = BX(p), y = WAS(p), bk = BK(p), b = 3 * bk, h = 0.8 * bk;
+  for (let j = 0; j < N - 1; j++) {
+    const p = GRENZE[j + 1], pw = BX(bogen[j + 1][0]) - BX(bogen[j][1]);
+    const x = BX(p), y = WAS(p), bk = BK(p), b = Math.max(3 * bk, pw * 0.72), h = 0.8 * bk;
     if (!spiegeln) {
       g += `<path d="M${r(x - b)} ${r(y + 0.3)} Q${r(x - b * 0.6)} ${r(y - h)} ${r(x)} ${r(y - h)} Q${r(Math.min(316, x + b * 0.7))} ${r(y - h)} ${r(Math.min(319, x + b * 1.15))} ${r(y + 0.3)} Z" fill="${S.lg("insel", [[0, "#8e8a78"], [1, "#6a6658"]])}"/>`;
       g += `<path d="M${r(x - b * 0.7)} ${r(y - h * 0.6)} Q${r(x)} ${r(y - h * 1.1)} ${r(Math.min(318, x + b * 0.8))} ${r(y - h * 0.5)}" stroke="#c8bc9c" stroke-width=".35" fill="none" opacity=".8"/>`;
@@ -544,8 +552,8 @@ const BRUECKE_LEUTE = [];
     k += `<path d="M${r(x + 0.1 * f)} ${r(fy - 0.68 * f)} a${r(0.13 * f)} ${r(0.13 * f)} 0 0 1 ${r(0.04 * f)} ${r(0.12 * f)}" stroke="${RAND}" stroke-width=".25" fill="none"/>`;
     BRUECKE_LEUTE.push([x, dy, bk]);
   }
-  const pj = 5, pp = (pj + 1) / N, bj = 6, bm = (bogen[bj][0] + bogen[bj][1]) / 2;
-  const bw = BX(bogen[bj][1]) - BX(bogen[bj][0]), bh = WAS(bm) - DECK(bm) - 2.3 * BK(bm);
+  const pj = 3, pp = GRENZE[pj + 1], bj = 5, BG = bogenMass(bogen[bj]), bm = BG.m;
+  const bw = BG.xb - BG.xa, bh = WAS(bm) - BG.yk;
   const [mx, my, mk] = BRUECKE_LEUTE[0];
   S.teil({ id: "bruecke", de: "die Steinerne Brücke", syl: "STEI-ner-ne BRÜ-cke", it: "il Ponte di Pietra", itSyl: "PON-te di PIE-tra", en: "Stone Bridge",
     x: 268, y: 108, kunst: anker(268, 108, k), tipp: "Die Steinerne Brücke ist fast 900 Jahre alt (1135–1146) und über 300 Meter lang. Heute gehen hier nur Fußgänger und Radfahrer.",
