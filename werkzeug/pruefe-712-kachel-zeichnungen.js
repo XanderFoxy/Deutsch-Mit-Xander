@@ -105,6 +105,8 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   await pg.evaluate(() => document.getElementById("lupe712").remove());
 
   console.log("\nALLE KACHELN MIT ECHTER ZEICHNUNG\n");
+  /* FASSUNG 852: die Kachelbilder liegen in data-minibilder.js und kommen erst bei Bedarf – vorher holen */
+  await pg.evaluate(() => window.DMA_PRUEF.miniBildHolen && window.DMA_PRUEF.miniBildHolen());
   const echt = await pg.evaluate(() => {
     const M = Object.assign({}, window.DMA_PRUEF.miniBilder());
     const A = window.DMA_PRUEF.auftrittBilder();

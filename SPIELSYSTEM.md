@@ -3429,3 +3429,18 @@ alle Hintergründe die logischen Stationen zeigen wo die Leute sind … ich will
   - Messung meldet zusätzlich `joinTO`, `wsTot`, `halloNochmal`. Sonde `pruefe-871-leitung-frisch.js`.
 - **Sonden**: neu 870, 871, 872 (alle neuen Szenen in der App, Lupen-Weg, alte Welt unberührt). Grün: 659, 827, 840, 842, 858,
   859, 861, 862, 866, 869, 870, 871, 872, runde21; `pruefe-szene` für alle 146 neu gebauten Szenen „gut erreichbar“.
+
+## Fassung 853 — Kachelbilder und Kreuzwort erst bei Bedarf (Funk 271, Puls)
+
+XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller".
+
+- **Kachelbilder** (`data-minibilder.js`, 124 KB) standen in app.js und wurden bei jedem Start samt der echten Zeichnungen
+  (Musik, Lok, Delfin, Flugzeug …) gerechnet. Jetzt holt `lcMiniBildHolen` die Datei, wenn die Seite ruhig ist (2,5 s nach
+  `load`, im Leerlauf), spätestens beim ersten Menü; `lcMiniBildBauen` rechnet die Zeichnungen einmal. Bis dahin steht – wie bei
+  jeder Kachel ohne Bild – das Emoji.
+- **Kreuzwort-Raster** (`data-kreuzwort.js`, 55 KB) kommen erst beim Öffnen des Kreuzworträtsels (`kreuzwortHolen`, mit Hinweis
+  „wird geladen …“ und Fehlermeldung, wenn es nicht klappt).
+- **Ergebnis**: min/app.js 2,76 → 2,62 MB (gepackt −24 KB), weniger Rechnen beim Start.
+- **Sonden**: neu `pruefe-873-ausgelagert.js` (beim Start nichts geholt, Kachelbilder kommen mit 22 echten Zeichnungen nach,
+  Kreuzwort öffnet sich mit Gitter, keine Fehler); `pruefe-712` holt die Bilder vorher. Grün: 660, 666, 712, 731, 736, 812,
+  858, 864, 873. Rot schon vor dieser Fassung (unverändert): 687, 716.
