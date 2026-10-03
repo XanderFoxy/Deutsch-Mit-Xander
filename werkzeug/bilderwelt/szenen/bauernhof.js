@@ -479,9 +479,9 @@ module.exports = { tierKasten };
    DIE SZENE
    ===================================================================== */
 function baue() {
-  const S = neueSzene({ id: "bauernhof", titel: "Der Bauernhof", emoji: "🐄", thema: "Natur", kuerzel: "bh", fassung: 852 });
+  const S = neueSzene({ id: "bauernhof", titel: "Der Bauernhof", emoji: "🐄", thema: "Natur", kuerzel: "b18a", fassung: 852 });
   S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-  S.def(`<filter id="bh_wolke" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
+  S.def(`<filter id="b18a_wolke" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
   const T = tierKasten(S);
   const rnd = zufall(1952);
   /* ---------- Raum: Kamera 4 m hoch, Horizont y = 70 ---------- */
@@ -512,7 +512,7 @@ function baue() {
      ===================================================================== */
   S.hinten(`<rect x="0" y="0" width="320" height="76" fill="${S.lg("himmel", [[0, "#7fb2e0"], [0.7, "#b9d8ef"], [1, "#e4f0f6"]])}"/>`);
   let w = "";
-  for (const [x, y, a, b] of [[200, 22, 26, 6], [226, 18, 18, 7], [290, 30, 30, 6], [312, 26, 16, 6], [150, 12, 20, 4]]) w += `<ellipse cx="${x}" cy="${y}" rx="${a}" ry="${b}" fill="#fff" opacity=".85" filter="url(#bh_wolke)"/>`;
+  for (const [x, y, a, b] of [[200, 22, 26, 6], [226, 18, 18, 7], [290, 30, 30, 6], [312, 26, 16, 6], [150, 12, 20, 4]]) w += `<ellipse cx="${x}" cy="${y}" rx="${a}" ry="${b}" fill="#fff" opacity=".85" filter="url(#b18a_wolke)"/>`;
   S.hinten(w);
   /* ferne Hügel, Waldrand, Kirchturm */
   S.hinten(`<path d="M0 66 Q60 56 130 62 T260 58 T320 60 L320 76 L0 76 Z" fill="#8fae7a"/>`);
@@ -640,18 +640,18 @@ function baue() {
      ===================================================================== */
   {
     const x0 = 98, x1 = 218, yb = 117, cx = (x0 + x1) / 2, W = x1 - x0;
-    S.def(`<pattern id="bh_ziegel" width="6" height="2" patternUnits="userSpaceOnUse"><rect width="6" height="2" fill="#9c4a32"/><path d="M0 1.9 H6 M0 .9 H6 M3 0 V.9 M0 .9 V1.9" stroke="#c9b9a4" stroke-width=".22"/><rect x=".2" y=".1" width="2.6" height=".7" fill="#b05a3c" opacity=".5"/><rect x="3.3" y="1.1" width="2.4" height=".7" fill="#87402a" opacity=".5"/></pattern>`);
-    S.def(`<pattern id="bh_dach" width="3.2" height="2.6" patternUnits="userSpaceOnUse"><rect width="3.2" height="2.6" fill="#a2442a"/><path d="M0 2.5 H3.2" stroke="#5e2414" stroke-width=".5"/><path d="M0 0 Q1.6 1.4 3.2 0" stroke="#7a3020" stroke-width=".3" fill="none"/><rect x=".4" y=".6" width="1.2" height="1.4" fill="#c2603e" opacity=".35"/></pattern>`);
+    S.def(`<pattern id="b18a_ziegel" width="6" height="2" patternUnits="userSpaceOnUse"><rect width="6" height="2" fill="#9c4a32"/><path d="M0 1.9 H6 M0 .9 H6 M3 0 V.9 M0 .9 V1.9" stroke="#c9b9a4" stroke-width=".22"/><rect x=".2" y=".1" width="2.6" height=".7" fill="#b05a3c" opacity=".5"/><rect x="3.3" y="1.1" width="2.4" height=".7" fill="#87402a" opacity=".5"/></pattern>`);
+    S.def(`<pattern id="b18a_dach" width="3.2" height="2.6" patternUnits="userSpaceOnUse"><rect width="3.2" height="2.6" fill="#a2442a"/><path d="M0 2.5 H3.2" stroke="#5e2414" stroke-width=".5"/><path d="M0 0 Q1.6 1.4 3.2 0" stroke="#7a3020" stroke-width=".3" fill="none"/><rect x=".4" y=".6" width="1.2" height="1.4" fill="#c2603e" opacity=".35"/></pattern>`);
     let k = "";
     /* Dachfläche (Biberschwanz), Firstlüfter, Dachrinne */
-    k += `<path d="M${-W / 2 - 3} -36 L${W / 2 + 3} -36 L${W / 2 - 2} -68 L${-W / 2 + 2} -68 Z" fill="url(#bh_dach)"/>`;
+    k += `<path d="M${-W / 2 - 3} -36 L${W / 2 + 3} -36 L${W / 2 - 2} -68 L${-W / 2 + 2} -68 Z" fill="url(#b18a_dach)"/>`;
     k += `<path d="M${-W / 2 - 3} -36 L${W / 2 + 3} -36 L${W / 2 - 2} -68 L${-W / 2 + 2} -68 Z" fill="${S.lg("dachlicht", [[0, "#000", 0.25], [1, "#fff", 0.08]])}"/>`;
     k += `<rect x="${-W / 2 + 1}" y="-70" width="${W - 2}" height="2.6" rx="1" fill="#6a2a18"/>`;
     for (const lx of [-30, 20]) k += `<rect x="${lx - 3}" y="-76" width="6" height="7" fill="#7d858a"/><path d="M${lx - 4} -76 L${lx + 4} -76 L${lx} -79 Z" fill="#5d656a"/>`;
     /* Dachfenster */
     k += `<path d="M-6 -60 L6 -60 L6 -50 L-6 -50 Z" fill="#33454f"/><path d="M-6 -60 L6 -60 L6 -50 L-6 -50 Z" fill="none" stroke="#d8d4cc" stroke-width=".6"/><path d="M-5 -59 L0 -59 L-5 -53 Z" fill="#fff" opacity=".25"/>`;
     /* Wand */
-    k += `<rect x="${-W / 2}" y="-36" width="${W}" height="36" fill="url(#bh_ziegel)"/>`;
+    k += `<rect x="${-W / 2}" y="-36" width="${W}" height="36" fill="url(#b18a_ziegel)"/>`;
     k += `<rect x="${-W / 2}" y="-36" width="${W}" height="36" fill="${S.lg("stallicht", [[0, "#000", 0.22], [0.25, "#000", 0], [1, "#000", 0.12]])}"/>`;
     k += `<rect x="${-W / 2}" y="-4" width="${W}" height="4" fill="#5d5a54"/>`;
     k += `<rect x="${-W / 2 - 2}" y="-37.4" width="${W + 4}" height="2" rx=".8" fill="${ALU}"/><rect x="${W / 2 - 1}" y="-36" width="1.6" height="36" fill="#8a939a"/>`;
@@ -759,7 +759,7 @@ function baue() {
     S.teil({ id: "traktor", de: "der Traktor", syl: "TRAK-tor", it: "il trattore", itSyl: "trat-TO-re", en: "tractor", x: TR.x, y: TR.y, steht: true, kunst: k,
       tipp: "Mit dem Traktor zieht der Bauer den Pflug und den Anhänger." });
     /* der Bauer auf dem Sitz */
-    const mb = B.mensch({ id: "bh_bauer", geschlecht: "m", pose: "sitzen", blick: 80, frisur: "kurz", haarfarbe: "braun", haut: "hell", bart: "voll",
+    const mb = B.mensch({ id: "b18a_bauer", geschlecht: "m", pose: "sitzen", blick: 80, frisur: "kurz", haarfarbe: "braun", haut: "hell", bart: "voll",
       kopfbedeckung: { stueck: "kappe", farbe: "#2f5a35" },
       kleidung: { oberteil: { stueck: "hemd", farbe: "#a8433a" }, unterteil: { stueck: "arbeitshose", farbe: "#2f4f7a" }, schuhe: { stueck: "gummistiefel" }, kopf: { stueck: "kappe", farbe: "#2f5a35" } } }, 1.78 * u);
     const sx = TR.x - 0.95 * u, sy = TR.y - 1.44 * u;
