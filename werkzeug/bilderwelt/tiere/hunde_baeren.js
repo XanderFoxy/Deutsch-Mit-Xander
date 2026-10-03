@@ -63,8 +63,9 @@ function silhouette(T, d, fill, innen, rand = "#2a2018", rw = 1.3, ra = 0.55, ue
   T._n = (T._n || 0) + 1;
   const id = T.id("s" + T._n);
   T.def(`<path id="${id}" d="${d}"/><clipPath id="${id}c"><use href="#${id}"/></clipPath>`);
-  /* Kritik Runde 1: keine „Aufkleber“-Umrisse – nur ein sehr zarter dunkler Saum außen */
-  return `<use href="#${id}" fill="none" stroke="${rand}" stroke-width="${R(rw * 0.7)}" stroke-opacity="${R(ra * 0.5 * 100) / 100}" stroke-linejoin="round"/><use href="#${id}" fill="${fill}"/>` +
+  /* Kritik Runde 1: KEINE Umrisslinie (wirkt wie Aufkleber) – die Kante entsteht aus Kernschatten und Randhaaren */
+  T._letzte = id;
+  return `<use href="#${id}" fill="${fill}"/>` +
     (innen ? `<g clip-path="url(#${id}c)">${innen}</g>` : "") + (ueber ? `<use href="#${id}" fill="${ueber}"/>` : "");
 }
 /* Ausblend-Maske (in lokalen Koordinaten): links (x0) unsichtbar → ab x1 voll sichtbar. Für Köpfe, die weich in den Hals übergehen. */
@@ -84,6 +85,16 @@ function inPoly(x, y, p) {
   }
   return ja;
 }
+/* Gleichmäßig gestreute Punkte in einem Vieleck (gezittertes Raster – keine Klumpen, keine Löcher) */
+function streuPunkte(T, pts, n) {
+  if (n <= 0) return [];
+  const [x0, y0, x1, y1] = T.box(pts), A = Math.abs(flaeche(pts)) / 2, c = Math.sqrt(A / n), out = [];
+  for (let y = y0; y < y1; y += c) for (let x = x0; x < x1; x += c) {
+    const px = x + T.rnd() * c, py = y + T.rnd() * c;
+    if (inPoly(px, py, pts)) out.push([px, py]);
+  }
+  return out;
+}
 /* Haare in einer Fläche: Wuchsrichtung winkel (Grad: 0 rechts, 90 unten, 180 links; Zahl oder f(x, y)),
    farben [[farbe, anteil, breite, deckkraft], …] → je Farbe EIN Pfad; leicht gebogen. In Szenen (T.fein = false) ein Drittel. */
 function haare(T, pts, n, winkel, len, farben, streu = 16, krumm = 0.22) {
@@ -91,15 +102,12 @@ function haare(T, pts, n, winkel, len, farben, streu = 16, krumm = 0.22) {
   const ziel = Math.round(n * (T.fein === false ? 0.08 : 1));
   if (T.fein === false && ziel < 16) return "";
   const eimer = farben.map(() => ""), sum = farben.reduce((q, f) => q + f[1], 0);
-  for (let got = 0, v = 0; got < ziel && v < ziel * 12; v++) {
-    const x = x0 + T.rnd() * (x1 - x0), y = y0 + T.rnd() * (y1 - y0);
-    if (!inPoly(x, y, pts)) continue;
+  for (const [x, y] of streuPunkte(T, pts, ziel)) {
     const a = (wf(x, y) + (T.rnd() - 0.5) * streu) * Math.PI / 180, L = len * (0.55 + T.rnd() * 0.9);
     const ex = Math.cos(a) * L, ey = Math.sin(a) * L, k = krumm * L * (T.rnd() - 0.5) * 2;
     let u = T.rnd() * sum, i = 0;
     while (i < farben.length - 1 && u > farben[i][1]) { u -= farben[i][1]; i++; }
     eimer[i] += L < 1.6 ? `M${G(x)} ${G(y)}l${G(ex)} ${G(ey)}` : `M${G(x)} ${G(y)}q${G(ex / 2 - Math.sin(a) * k)} ${G(ey / 2 + Math.cos(a) * k)} ${G(ex)} ${G(ey)}`;
-    got++;
   }
   return eimer.map((d, i) => (d ? fein10(d, `fill="none" stroke="${farben[i][0]}" stroke-width="${R(farben[i][2] * 10)}" stroke-opacity="${farben[i][3]}" stroke-linecap="round"`) : "")).join("");
 }
@@ -117,32 +125,38 @@ function straehnen(T, pts, n, winkel, len, br, schatten, licht, streu = 10) {
     const bx = nx * w * 0.25, by = ny * w * 0.25, cx = nx * w * 1.6, cy = ny * w * 1.6;
     return `M${G(x + bx)} ${G(y + by)}q${G(ex * 0.4 + cx - bx + nx * k)} ${G(ey * 0.4 + cy - by + ny * k)} ${G(ex - bx)} ${G(ey - by)}q${G(-ex * 0.6 - cx + nx * k)} ${G(-ey * 0.6 - cy + ny * k)} ${G(-ex - bx)} ${G(-ey - by)}z`;
   };
-  for (let got = 0, v = 0; got < ziel && v < ziel * 12; v++) {
-    const x = x0 + T.rnd() * (x1 - x0), y = y0 + T.rnd() * (y1 - y0);
-    if (!inPoly(x, y, pts)) continue;
+  for (const [x, y] of streuPunkte(T, pts, ziel)) {
     const a = (wf(x, y) + (T.rnd() - 0.5) * streu) * Math.PI / 180, L = len * (0.6 + T.rnd() * 0.8), w = br * (0.7 + T.rnd() * 0.6), k = (T.rnd() - 0.5) * L * 0.25;
-    dS += eine(x, y + w * 0.7, a, L, w, k);
-    if (T.rnd() < 0.55) dL += eine(x - Math.cos(a) * L * 0.08, y - w * 0.35, a, L * 0.7, w * 0.45, k);
-    got++;
+    /* Schatten unter der Strähne (nach unten versetzt), heller Kopf oben */
+    dS += eine(x, y + w * 0.8, a, L, w, k);
+    if (T.rnd() < 0.7) dL += eine(x - Math.cos(a) * L * 0.05, y - w * 0.3, a, L * 0.75, w * 0.5, k);
   }
   return fein10(dS, `fill="${schatten[0]}" fill-opacity="${schatten[1]}"`) + (dL ? fein10(dL, `fill="${licht[0]}" fill-opacity="${licht[1]}"`) : "");
 }
-/* Randhaare entlang einer Kurve (Ansatz innen, Spitze nach außen in Wuchsrichtung): bricht die glatte Vektorkante */
+/* Randhaare in BÜSCHELN entlang einer Kurve: je Büschel 3–4 Haare aus fast einer Wurzel, leicht gefächert, verschieden lang.
+   (dx, dy) = Wuchsrichtung und Länge; sie soll 20–30° zur Kontur nach hinten liegen, nicht senkrecht abstehen. */
 function fellKante(T, pts, n, dx, dy, farbe, w, op) {
   let d = "";
-  const z = Math.round(n * (T.fein === false ? 0.15 : 1));
-  if (T.fein === false && z < 8) return "";
+  const z = Math.round(n * (T.fein === false ? 0.15 : 1) / 3.2);
+  if (T.fein === false && z < 3) return "";
+  const L0 = Math.hypot(dx, dy), a0 = Math.atan2(dy, dx);
   for (let i = 0; i < z; i++) {
-    const t = (i + T.rnd() * 0.8) / z * (pts.length - 1), k = Math.min(pts.length - 2, Math.floor(t)), f = t - k;
-    const x = pts[k][0] + (pts[k + 1][0] - pts[k][0]) * f, y = pts[k][1] + (pts[k + 1][1] - pts[k][1]) * f, s = 0.6 + T.rnd() * 0.8, b = (T.rnd() - 0.5) * 0.6;
-    d += `M${G(x)} ${G(y)}q${G(dx * s * 0.5 + dy * b)} ${G(dy * s * 0.5 - dx * b)} ${G(dx * s)} ${G(dy * s)}`;
+    const t = (i + 0.2 + T.rnd() * 0.6) / z * (pts.length - 1), k = Math.min(pts.length - 2, Math.floor(t)), f = t - k;
+    const x = pts[k][0] + (pts[k + 1][0] - pts[k][0]) * f, y = pts[k][1] + (pts[k + 1][1] - pts[k][1]) * f;
+    const m = 3 + (T.rnd() < 0.3 ? 1 : 0), fach = (T.rnd() - 0.5) * 0.3;
+    for (let j = 0; j < m; j++) {
+      const a = a0 + fach + (j - (m - 1) / 2) * 0.14 + (T.rnd() - 0.5) * 0.08, L = L0 * (0.55 + T.rnd() * 0.75);
+      const ex = Math.cos(a) * L, ey = Math.sin(a) * L, kr = (T.rnd() - 0.3) * L * 0.18, wx = x + (T.rnd() - 0.5) * L0 * 0.12, wy = y + (T.rnd() - 0.5) * L0 * 0.12;
+      d += `M${G(wx)} ${G(wy)}q${G(ex * 0.5 - Math.sin(a) * kr)} ${G(ey * 0.5 + Math.cos(a) * kr)} ${G(ex)} ${G(ey)}`;
+    }
   }
   return fein10(d, `stroke="${farbe}" stroke-width="${R(w * 10)}" stroke-opacity="${op}" fill="none" stroke-linecap="round"`);
 }
 /* Fell-Grundstruktur (nur fein): zwei Rauschlagen (dunkle Furchen + helle Spitzen) gestreckt in Wuchsrichtung.
    richtung = Wuchsrichtung in Grad (0 rechts, 90 unten, 180 links) */
 function fellGrund(T, d, n, dunkel, hell, richtung, box, st = 1, ohne = "") {
-  if (T.fein === false || !T.rauschen) return "";
+  /* Kritik Runde 1: Rauschen wirkt wie Holzmaserung/Sandpapier → abgeschaltet; die Struktur tragen Strähnen und Haare */
+  if (!fellGrund.an || T.fein === false || !T.rauschen) return "";
   /* EINE Klammer für beide Lagen – spart die doppelte Pfadkopie. ohne = ausgesparter Bereich (Maske), z. B. der Rumpf über
      den Läufen: so liegt nie doppelte Struktur übereinander (kein dunkles Band am Bauch). */
   const f1 = T.rauschen(n, { fx: 1.4, fy: 0.1, farbe: dunkel, staerke: 2.6, schwelle: 0.55, okt: 2 });
@@ -158,16 +172,91 @@ function fellGrund(T, d, n, dunkel, hell, richtung, box, st = 1, ohne = "") {
    pts = Rumpf ohne Kopf, yo = Rückenlinie, yu = Bauchlinie (cm) */
 const licht = (T, n, yo, yu) => {
   const h = yu - yo;
-  /* unter dem Bauch: Läufe leicht verschattet (Okklusion), kein heller Streifen */
-  return hoehenVerlauf(T, "licht" + n, yo, yu + h * 0.5, [[yo, "#fff", 0.22], [yo + h * 0.16, "#fff", 0], [yo + h * 0.42, "#000", 0], [yo + h * 0.78, "#000", 0.3],
-    [yu - h * 0.07, "#000", 0.2], [yu, "#000", 0.14], [yu + h * 0.14, "#000", 0.1], [yu + h * 0.5, "#000", 0.04]]);
+  /* Kernschatten-Band im unteren Rumpfdrittel, an der Bauchkante etwas Reflexlicht (weniger Schatten),
+     darunter Schlagschatten des Rumpfs auf die Läufe, nach unten auslaufend. Über yo nichts (Kopf bleibt frei). */
+  return hoehenVerlauf(T, "licht" + n, yo, yu + h * 0.45, [[yo + h * 0.45, "#000", 0], [yo + h * 0.72, "#000", 0.26], [yo + h * 0.88, "#000", 0.3],
+    [yu - h * 0.02, "#000", 0.16], [yu + h * 0.03, "#000", 0.24], [yu + h * 0.2, "#000", 0.08], [yu + h * 0.45, "#000", 0]]);
 };
 /* (licht liefert den Verlauf; silhouette legt ihn als letzte Lage über Fell und Haare – kein zweiter Pfad nötig) */
 /* Augenhöhle: Brauenwulst wirft weichen Schatten auf das obere Drittel des Auges, darunter Wangenlicht */
 const augenhoehle = (T, x, y, r, dreh = -10) => fleck(T, "", x, y - r * 0.55, r * 2.2, r * 1.2, "#000", 0.4, dreh) + fleck(T, "", x - r * 0.4, y + r * 1.5, r * 2, r * 0.9, "#fff", 0.2, dreh);
 /* Fellstruktur (nur fein): Rauschen in Wuchsrichtung, von der Form geklippt */
 const struktur = (T, d, n, farbe, winkel, op, box, fx = 0.9, fy = 0.09) =>
-  (T.fein !== false && T.textur ? T.textur(d, T.rauschen(n, { fx, fy, farbe, staerke: 2.6, schwelle: 0.55, okt: 2 }), winkel, op, box) : "");
+  (false && T.fein !== false && T.textur ? T.textur(d, T.rauschen(n, { fx, fy, farbe, staerke: 2.6, schwelle: 0.55, okt: 2 }), winkel, op, box) : "");
+/* ---------- AUGE (eigenes, nach Kritik Runde 1) ----------
+   Seitenansicht, Blick nach rechts: Innenwinkel mit Karunkel VORN UNTEN, Außenwinkel HINTEN OBEN (winkel > 0 hebt ihn).
+   Iris füllt die Lidspalte fast ganz, dunkler Limbus, Pupille (rund | schlitz | oval; Schlitz bleibt senkrecht zum Boden),
+   Lidschatten im oberen Irisdrittel, Glanzlicht oben links (Licht von links oben) + schwacher Unterreflex,
+   schwarzer Lidrand mit Lidstrich am Außenwinkel, feuchter Unterlidsaum, Wimpern oben (außen länger), wenige unten.
+   o: { iris, iris2, offen, winkel, pupille, wimpern, wimpernFarbe, lidstrich (× rr), haut (dunkler Hof, Deckkraft), rand (Lidrandfarbe) } */
+function augeTier(T, x, y, rr, o = {}) {
+  const off = o.offen != null ? o.offen : 0.62, W = rr * 1.3, Ho = rr * off * 1.15, Hu = rr * off * 0.9;
+  const iris = o.iris || "#c88a24", iris2 = o.iris2 || "#6a3e0e", wk = o.winkel || 0, fein = T.fein !== false;
+  T._ag = (T._ag || 0) + 1;
+  const id = T.id("ag" + T._ag), Q = (v) => R(v * 100) / 100;
+  const spalt = `M${Q(-W)} 0C${Q(-W * 0.45)} ${Q(-Ho * 1.3)} ${Q(W * 0.45)} ${Q(-Ho * 1.25)} ${Q(W)} ${Q(Hu * 0.2)}C${Q(W * 0.5)} ${Q(Hu * 1.2)} ${Q(-W * 0.5)} ${Q(Hu * 1.05)} ${Q(-W)} 0Z`;
+  T.def(`<clipPath id="${id}"><path d="${spalt}"/></clipPath>`);
+  const g = T.rg("aiv" + iris.slice(1), [[0, iris], [0.5, iris], [0.82, iris2], [1, "#120a04"]], 0.5, 0.5, 0.5);
+  let s = `<g transform="translate(${Q(x)} ${Q(y)}) rotate(${Q(wk)})">`;
+  if (o.haut) s += `<ellipse cx="0" cy="${Q(rr * 0.05)}" rx="${Q(W * 1.5)}" ry="${Q(rr * 1.15)}" fill="${T.rg("ahaut", [[0, "#000", 0.9], [0.6, "#000", 0.5], [1, "#000", 0]])}" opacity="${o.haut}"/>`;
+  s += `<path d="${spalt}" fill="#1a0f06"/><g clip-path="url(#${id})">`;
+  s += `<circle cx="${Q(rr * 0.06)}" cy="${Q(rr * 0.04)}" r="${Q(rr * 0.98)}" fill="${g}"/>`;
+  if (fein) {
+    let fa = "";
+    for (let i = 0; i < 22; i++) { const a = i / 22 * Math.PI * 2; fa += `M${Q(rr * 0.06 + Math.cos(a) * rr * 0.42)} ${Q(rr * 0.04 + Math.sin(a) * rr * 0.42)}L${Q(rr * 0.06 + Math.cos(a + 0.12) * rr * 0.85)} ${Q(rr * 0.04 + Math.sin(a + 0.12) * rr * 0.85)}`; }
+    s += `<path d="${fa}" stroke="${iris2}" stroke-width="${Q(rr * 0.035)}" stroke-opacity=".5" fill="none"/>`;
+  }
+  s += `<circle cx="${Q(rr * 0.06)}" cy="${Q(rr * 0.04)}" r="${Q(rr * 0.93)}" fill="none" stroke="#0d0703" stroke-width="${Q(rr * 0.12)}" stroke-opacity=".75"/>`;
+  const p = o.pupille || "rund", pg = `transform="rotate(${Q(-wk)} ${Q(rr * 0.08)} ${Q(rr * 0.04)})"`;
+  if (p === "rund") s += `<circle cx="${Q(rr * 0.08)}" cy="${Q(rr * 0.04)}" r="${Q(rr * 0.4)}" fill="#040201"/>`;
+  if (p === "oval") s += `<ellipse cx="${Q(rr * 0.08)}" cy="${Q(rr * 0.04)}" rx="${Q(rr * 0.24)}" ry="${Q(rr * 0.5)}" fill="#040201" ${pg}/>`;
+  if (p === "schlitz") s += `<ellipse cx="${Q(rr * 0.08)}" cy="${Q(rr * 0.04)}" rx="${Q(rr * 0.11)}" ry="${Q(rr * 0.78)}" fill="#040201" ${pg}/>`;
+  s += `<rect x="${Q(-W)}" y="${Q(-rr * 1.3)}" width="${Q(2 * W)}" height="${Q(rr * 1.3)}" fill="${T.lg("alid", [[0, "#000", 0.8], [0.62, "#000", 0.35], [1, "#000", 0]])}"/>`;
+  s += `<ellipse cx="${Q(-rr * 0.22)}" cy="${Q(-rr * 0.3)}" rx="${Q(rr * 0.22)}" ry="${Q(rr * 0.16)}" fill="#fff" opacity=".9" transform="rotate(${Q(-wk - 20)} ${Q(-rr * 0.22)} ${Q(-rr * 0.3)})"/>`;
+  s += `<ellipse cx="${Q(rr * 0.42)}" cy="${Q(rr * 0.42)}" rx="${Q(rr * 0.2)}" ry="${Q(rr * 0.07)}" fill="#fff" opacity=".35"/></g>`;
+  /* Karunkel vorn unten */
+  s += `<path d="M${Q(W * 1.02)} ${Q(Hu * 0.2)}q${Q(-W * 0.18)} ${Q(-Hu * 0.32)} ${Q(-W * 0.3)} ${Q(Hu * 0.18)}q${Q(W * 0.16)} ${Q(Hu * 0.2)} ${Q(W * 0.3)} ${Q(-Hu * 0.18)}z" fill="#7a3a34" opacity=".85"/>`;
+  /* Lidrand oben kräftig, unten fein, Lidstrich hinten */
+  const rd = o.rand || "#0a0604", ls = (o.lidstrich != null ? o.lidstrich : 0.5) * rr;
+  s += `<path d="M${Q(-W)} 0C${Q(-W * 0.45)} ${Q(-Ho * 1.3)} ${Q(W * 0.45)} ${Q(-Ho * 1.25)} ${Q(W)} ${Q(Hu * 0.2)}" fill="none" stroke="${rd}" stroke-width="${Q(rr * 0.24)}" stroke-linecap="round"/>`;
+  s += `<path d="M${Q(W)} ${Q(Hu * 0.2)}C${Q(W * 0.5)} ${Q(Hu * 1.2)} ${Q(-W * 0.5)} ${Q(Hu * 1.05)} ${Q(-W)} 0" fill="none" stroke="${rd}" stroke-width="${Q(rr * 0.14)}"/>`;
+  if (ls > 0) s += `<path d="M${Q(-W + rr * 0.1)} ${Q(-rr * 0.1)}L${Q(-W - ls)} ${Q(-ls * 0.32)}L${Q(-W + rr * 0.15)} ${Q(rr * 0.12)}z" fill="${rd}"/>`;
+  s += `<path d="M${Q(W * 0.7)} ${Q(Hu * 0.72)}C${Q(W * 0.25)} ${Q(Hu * 1.02)} ${Q(-W * 0.35)} ${Q(Hu * 0.95)} ${Q(-W * 0.75)} ${Q(Hu * 0.35)}" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width="${Q(rr * 0.05)}"/>`;
+  const nw = o.wimpern || 0;
+  if (nw && fein) {
+    let d = "";
+    const L = rr * 0.42;
+    for (let i = 0; i < nw; i++) {
+      const t = 0.08 + 0.84 * i / Math.max(1, nw - 1), u = 1 - t;
+      const bx = u * u * u * -W + 3 * u * u * t * -W * 0.45 + 3 * u * t * t * W * 0.45 + t * t * t * W;
+      const by = 3 * u * u * t * -Ho * 1.3 + 3 * u * t * t * -Ho * 1.25 + t * t * t * Hu * 0.2;
+      const Ll = L * (1.25 - 0.7 * t), a = -Math.PI / 2 - 0.9 + 0.5 * t;
+      d += `M${Q(bx)} ${Q(by)}q${Q(Math.cos(a) * Ll * 0.4)} ${Q(Math.sin(a) * Ll * 0.6)} ${Q(Math.cos(a - 0.5) * Ll)} ${Q(Math.sin(a - 0.5) * Ll * 0.85)}`;
+    }
+    for (let i = 0; i < 3; i++) { const t = 0.25 + i * 0.22, bx = -W + 2 * W * t; d += `M${Q(bx)} ${Q(Hu * 0.95)}l${Q(-rr * 0.08)} ${Q(rr * 0.14)}`; }
+    s += `<path d="${d}" fill="none" stroke="${o.wimpernFarbe || "#120a05"}" stroke-width="${Q(rr * 0.045)}" stroke-linecap="round"/>`;
+  }
+  return s + `</g>`;
+}
+/* ---------- PFOTE (Zehengänger, nach Kritik Runde 1) ----------
+   Umriss mit drei sichtbaren Zehenwölbungen; Details: Zehenfugen, getrennte Ballen nur als feiner dunkler Streifen am Boden
+   (keine Sohlenbalken), kurze dicke stumpfe Krallen schräg zum Boden mit Glanzgrat, Fellbüschel über den Zehen. */
+const pfoteZ = (x, L = 10, H = 4.5) => [[x - L * 0.25, -H * 0.62], [x - L * 0.22, -H * 0.18], [x - L * 0.1, 0, 1], [x + L * 0.64, 0, 1],
+  [x + L * 0.75, -H * 0.24], [x + L * 0.71, -H * 0.62], [x + L * 0.6, -H * 0.72], [x + L * 0.5, -H * 0.64], [x + L * 0.4, -H * 0.9], [x + L * 0.28, -H * 0.86],
+  [x + L * 0.18, -H * 1.02], [x + L * 0.1, -H * 1.16]];
+function pfote2(T, x, L = 10, H = 4.5, o = {}) {
+  const op = o.op || 1, kr = o.kralle || "#1d1813", fein = T.fein !== false, Q = (v) => R(v * 100) / 100, P = (a, b) => `${Q(x + L * a)} ${Q(-H * b)}`;
+  /* Krallen: Wurzel dick, kurz, stumpf, schräg nach vorn unten zum Boden */
+  const kralle = (a, b, s) => `M${P(a, b)}q${Q(L * 0.06 * s)} ${Q(H * 0.02)} ${Q(L * 0.085 * s)} ${Q(H * 0.24 * s)}l${Q(-L * 0.035 * s)} ${Q(H * 0.03)}q${Q(-L * 0.02 * s)} ${Q(-H * 0.12 * s)} ${Q(-L * 0.06 * s)} ${Q(-H * 0.2 * s)}z`;
+  let s = `<path d="${kralle(0.69, 0.36, 1)}${kralle(0.47, 0.3, 0.85)}${o.dreiKrallen ? kralle(0.25, 0.28, 0.7) : ""}" fill="${kr}" fill-opacity="${op}"/>`;
+  if (!fein) return s;
+  s += `<path d="M${P(0.5, 0.64)}q${Q(-L * 0.04)} ${Q(H * 0.3)} ${Q(-L * 0.01)} ${Q(H * 0.58)}M${P(0.28, 0.86)}q${Q(-L * 0.04)} ${Q(H * 0.4)} ${Q(-L * 0.01)} ${Q(H * 0.78)}" stroke="#20160d" stroke-width="${Q(L * 0.022)}" fill="none" stroke-opacity="${Q(0.5 * op)}"/>`;
+  s += `<path d="M${P(0.53, 0.02)}L${P(0.66, 0.02)}M${P(0.31, 0.02)}L${P(0.46, 0.02)}M${P(-0.06, 0.02)}L${P(0.22, 0.02)}" stroke="#120c07" stroke-width="${Q(H * 0.06)}" stroke-opacity="${Q(0.55 * op)}" stroke-linecap="round"/>`;
+  s += `<path d="M${P(0.72, 0.33)}q${Q(L * 0.04)} ${Q(H * 0.02)} ${Q(L * 0.06)} ${Q(H * 0.16)}" stroke="#fff" stroke-width="${Q(L * 0.012)}" fill="none" stroke-opacity="${Q(0.5 * op)}"/>`;
+  if (o.fell) s += fellKante(T, [[x + L * 0.12, -H * 1.1], [x + L * 0.38, -H * 0.92], [x + L * 0.62, -H * 0.72]], 14, L * 0.09, H * 0.28, o.fell, L * 0.012, 0.6 * op);
+  if (o.afterkralle) s += `<path d="M${Q(o.afterkralle[0])} ${Q(o.afterkralle[1])}q${Q(-L * 0.06)} ${Q(H * 0.05)} ${Q(-L * 0.05)} ${Q(H * 0.25)}q${Q(L * 0.04)} ${Q(-H * 0.05)} ${Q(L * 0.06)} ${Q(-H * 0.1)}z" fill="${kr}" fill-opacity="${Q(0.8 * op)}"/>`;
+  return s;
+}
 /* Krallen: kleine dunkle Bögen an den Zehen */
 function krallen(x, y, n, abst, len, farbe = "#1d1712", w = 0.7) {
   let d = "";
