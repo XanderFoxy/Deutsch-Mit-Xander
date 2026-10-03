@@ -20,8 +20,16 @@ for (const id of ids) {
   if (!/gebaut von werkzeug\/bilderwelt/.test(text.slice(0, 300))) continue;
   const s = {}; new Function("window", text)(s);
   const sz = s.DMA_SZENE[id];
-  const e = liste.find((x) => x.id === id);
-  if (!e || !sz) { console.log("FEHLT im Verzeichnis: " + id); continue; }
+  let e = liste.find((x) => x.id === id);
+  if (!sz) { console.log("FEHLT in der Datei: " + id); continue; }
+  /* FASSUNG 854 — neue Szenen (Städte, Länder, Lebensräume) bekommen ihren Eintrag aus dem Kopf der Datei,
+     direkt hinter die letzte Szene desselben Themas */
+  if (!e) {
+    e = { id, titel: sz.titel, emoji: sz.emoji, thema: sz.thema };
+    let i = -1; liste.forEach((x, j) => { if (x.thema === sz.thema) i = j; });
+    liste.splice(i >= 0 ? i + 1 : liste.length, 0, e);
+    console.log("neu im Verzeichnis: " + id + " (" + sz.thema + ")"); geaendert++;
+  }
   const alle = sz.teile.flatMap((t) => [t, ...(t.unter || [])]);
   const neu = { breite: sz.breite, hoehe: sz.hoehe, zahl: alle.length, lupen: [...new Set(alle.filter((t) => t.lupe).map((t) => t.lupe))],
     stellen: sz.teile.filter((t) => t.zoom || t.lupe).length };
