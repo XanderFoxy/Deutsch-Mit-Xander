@@ -563,7 +563,8 @@ const NS = { x: 170, y: 117 };
     /* steigender Löwe im Profil: Mähnenzacken, Quastenschwanz; Relief mit Schattenkante unten rechts und Lichtkante */
     const LOEWE_STEIGEND = "M0 0 L.9 0 L1.3 -1.8 L1.9 -2.6 L2.6 -2.2 L3.1 -2.6 L2.4 -3.3 L2 -3.9 Q2.6 -5.2 3 -6.6 L4 -7.2 L4.7 -7 L4.8 -7.5 L4.2 -7.8 L3.6 -7.8 L4.3 -8.4 L4.9 -8.5 L4.9 -9 L4.1 -8.9 L3.7 -8.8 L4.1 -9.3 L4.4 -9.5 L4 -9.9 L3.6 -10.4 L3.3 -10.1 L3.1 -10.7 L2.7 -10.3 L2.3 -10.6 L2.2 -10 L1.7 -10.1 L1.8 -9.4 L1.3 -9.3 L1.6 -8.7 L1.2 -8.3 L1.6 -7.9 Q1.1 -6 .6 -4.2 Q.3 -3.4 .4 -2.6 L.4 -1.8 Z M.5 -3.4 Q-.9 -3.6 -1.2 -5.6 Q-1.3 -7.2 -.6 -7.8 L-.3 -8.5 L-.9 -8.3 L-1 -8.8 L-1.3 -8 Q-1.7 -7 -1.6 -5.6 Q-1.3 -3.4 .4 -2.9 Z";
     w += `<g transform="translate(-4.15 -22) scale(.32)"><path d="${LOEWE_STEIGEND}" fill="#8a7a58" transform="translate(.25 .25)"/><path d="${LOEWE_STEIGEND}" fill="${RELIEF}" stroke="#fffaf0" stroke-width=".22"/><circle cx="3.75" cy="-9.55" r=".12" fill="#5f5238"/></g>`;
-    w += `<g transform="translate(3.3 -22.15) rotate(16) scale(-.27 .27)"><path d="${HIRSCH}" fill="${RELIEF}" stroke="#8a7a58" stroke-width=".4"/><path d="${GEWEIH}" stroke="#8a7a58" stroke-width=".6" fill="none"/></g>`;
+    /* der Hirsch steigt rechts, zum Schild gewandt: gefülltes Relief mit Schattenkopie und Lichtkante wie der Löwe */
+    w += `<g transform="translate(4 -22.4) rotate(14) scale(.27)"><g transform="translate(.3 .3)" fill="#8a7a58" stroke="#8a7a58"><path d="${HIRSCH_HINTEN}"/><path d="${HIRSCH}"/><path d="${GEWEIH}" fill="none" stroke-width=".6"/></g><path d="${HIRSCH_HINTEN}" fill="#cdbd99"/><path d="${GEWEIH}" stroke="#e6d8b8" stroke-width=".5" fill="none" stroke-linecap="round"/><path d="${HIRSCH}" fill="${RELIEF}" stroke="#fffaf0" stroke-width=".22"/><circle cx="-4.15" cy="-8.1" r=".15" fill="#5f5238"/></g>`;
     w += `<path d="M-6.6 -22.3 Q-5 -22.8 -3.2 -22.4 M3.4 -22.4 Q5 -22.8 6.6 -22.3" stroke="#cdbf9f" stroke-width=".3" fill="none"/>`;
     k += w;
   }
@@ -736,6 +737,14 @@ const KUP = { x: kgP(40, 0)[0], m: 300 / 140 };
   }
   /* Stirnseite (Südecke) im Licht, mit Pilastern */
   k += `<path d="M-2 ${r(at(-2, 0))} L-2 ${r(at(-2, 1.07))} L-6 ${r(at(-2, 1.07) + 1)} L-6 ${r(at(-2, 0) + 0.6)} Z" fill="#efe2c4"/>`;
+  /* Außengastronomie vor der ersten Säulenreihe: Tisch, zwei Stühle, Sonnenschirm in Creme, Schatten auf dem Gehweg */
+  for (const u of [2, 10.2, 18.4]) {
+    const m = 300 / (81 + u) * 0.82, x = xU(u) - 0.4 * m, y = at(xU(u), 0) + 0.9 * m, P = (a, b) => `${r(x + a * m)} ${r(y - b * m)}`;
+    k += `<ellipse cx="${r(x - 0.5 * m)}" cy="${r(y)}" rx="${r(1.3 * m)}" ry="${r(0.22 * m)}" fill="#2a2216" opacity=".22"/>`;
+    k += `<path d="M${P(-0.75, 0)} L${P(-0.75, 0.45)} L${P(-0.55, 0.45)} L${P(-0.6, 0.9)} M${P(0.75, 0)} L${P(0.75, 0.45)} L${P(0.55, 0.45)} L${P(0.6, 0.9)} M${P(0, 0)} L${P(0, 0.75)} M${P(0, 0.75)} L${P(0, 2.3)}" stroke="#3a3f3c" stroke-width="${r(0.11 * m)}" fill="none"/>`;
+    k += `<ellipse cx="${r(x)}" cy="${r(y - 0.75 * m)}" rx="${r(0.5 * m)}" ry="${r(0.1 * m)}" fill="#f4f0e6"/>`;
+    k += `<path d="M${P(-1.3, 1.95)} Q${P(-0.7, 2.25)} ${P(0, 2.5)} Q${P(0.7, 2.25)} ${P(1.3, 1.95)} Q${P(0, 1.85)} ${P(-1.3, 1.95)} Z" fill="${S.lg("schirm", [[0, "#fbf3dc"], [1, "#d9ccab"]], 0, 0, 1, 0)}"/><path d="M${P(-1.3, 1.95)} Q${P(0, 1.85)} ${P(1.3, 1.95)}" stroke="#b9ab88" stroke-width="${r(0.06 * m)}" fill="none"/>`;
+  }
   const SU = 16.36, sx = xU(SU), sw = 300 / (81 + SU) * 0.82;
   S.teil({ id: "koenigsbau", de: "der Königsbau", syl: "KÖ-nigs-bau", it: "il Königsbau (il palazzo del re)", itSyl: "KÖ-nigs-bau", en: "Königsbau",
     x: 0, y: 0, kunst: k, tipp: "Der Königsbau hat eine 135 Meter lange Säulenhalle mit 34 Säulen, mit Läden und Cafés.",
