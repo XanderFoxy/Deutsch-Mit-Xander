@@ -565,22 +565,32 @@ const SB = (svg) => VED(`<g ${FERN2}><g transform="translate(0 -5)">${svg}</g></
 /* =====================================================================
    8 — DIE ALLEE der Ringstraße: Parkrand, Bäume, Kandelaber, Fahrleitung
    ===================================================================== */
-const OBER = { x: 116, d: 3.0 };
-/* Laubbüschel für alle Baumkronen (einmal definiert, oft gesetzt):
-   Licht von links oben, Schatten rechts unten */
-const LAUB = (a, b, c, d) => `<path d="M-1 .1Q-1.1-.5-.6-.7Q-.5-1.1 0-1Q.4-1.15.7-.8Q1.1-.7 1-.25Q1.15.2.85.55Q.7.95.2.9Q-.2 1.1-.6.8Q-1 .7-1 .1Z" fill="${a}"/><path d="M-.85-.1Q-.9-.55-.5-.7Q-.35-.95.05-.85Q.4-.9.5-.6Q.25-.4-.05-.45Q-.4-.3-.45 0Z" fill="${b}"/><path d="M-.7-.45Q-.55-.7-.25-.68Q-.3-.5-.5-.38Z" fill="${c}"/><path d="M.2.75Q.6.7.8.35Q.95.1.85-.1Q.6.3.1.45Z" fill="${d}"/>`;
-S.def(`<g id="${S.id("laub")}">${LAUB("#46693a", "#62904c", "#9cc27a", "#33512b")}</g><g id="${S.id("laub2")}">${LAUB("#557d44", "#76a05a", "#b0d08a", "#3c5d32")}</g>`);
-/* fertig skalierte Büschel: in der Krone steht dann nur noch x und y */
-const LGR = [2.6, 3.4, 6, 8, 10];
-S.def(LGR.map((g) => ["laub", "laub2"].map((n) => `<g id="${S.id(n + g)}"><use href="#${S.id(n)}" transform="scale(${g})"/></g>`).join("")).join(""));
-const krone = (cx, cy, rx, ry, n, gr) => {
-  let g = "";
-  for (let i = 0; i < n; i++) {
-    const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()), sc = gr[Math.floor(rnd() * gr.length)];
-    const x = Math.min(398 - sc, Math.max(2 + sc, cx + Math.cos(a) * rx * d)), yy = cy + Math.sin(a) * ry * d;
-    g += `<use href="#${S.id((rnd() < 0.5 ? "laub" : "laub2") + sc)}" x="${r(x)}" y="${r(yy)}"/>`;
+const OBER = { x: 48, d: 3.0 };
+/* Laubkronen wie gemalt: dunkle Grundmasse, mittlere Laubballen, Lichtseite
+   oben links; ein Wellenfilter franst die Ränder blattartig aus, eine Maske
+   schneidet Himmelslöcher; im Inneren sieht man Astwerk */
+S.def(`<filter id="${S.id("laubrand")}" x="-15%" y="-15%" width="130%" height="130%"><feTurbulence type="turbulence" baseFrequency=".45" numOctaves="2" seed="2"/><feDisplacementMap in="SourceGraphic" scale="3.4" xChannelSelector="R" yChannelSelector="G"/></filter>`);
+S.def(`<filter id="${S.id("laubrand2")}" x="-15%" y="-15%" width="130%" height="130%"><feTurbulence type="turbulence" baseFrequency=".9" numOctaves="2" seed="6"/><feDisplacementMap in="SourceGraphic" scale="1.8" xChannelSelector="R" yChannelSelector="G"/></filter>`);
+const blob = (z, cx, cy, rx, ry, n, j) => {
+  const p = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, f = 1 - j / 2 + z() * j; p.push([cx + Math.cos(a) * rx * f, cy + Math.sin(a) * ry * f]); }
+  return "M" + p.map((q, i) => { const nq = p[(i + 1) % n]; return `${r((q[0] + nq[0]) / 2)} ${r((q[1] + nq[1]) / 2)} Q${r(nq[0])} ${r(nq[1])}`; }).join(" ") + ` ${r((p[0][0] + p[1][0]) / 2)} ${r((p[0][1] + p[1][1]) / 2)}Z`;
+};
+let laubNr = 0;
+const laubkrone = (cx, cy, rx, ry, seed, fern) => {
+  const z = B.zufall(seed), id = S.id("lk" + laubNr++);
+  const [cd, cm, ch, ca] = fern ? ["#4b6650", "#67875f", "#93ae7f", "#7d7868"] : ["#2f4a2a", "#4d7240", "#7da35e", "#5a5446"];
+  let mittel = "", hell = "", loch = "";
+  for (let i = 0; i < 12; i++) {
+    const a = z() * Math.PI * 2, d = Math.sqrt(z()) * 0.62, x = cx + Math.cos(a) * rx * d, y = cy + Math.sin(a) * ry * d, A = rx * (0.24 + z() * 0.16), Bb = ry * (0.22 + z() * 0.16);
+    mittel += blob(z, x - A * 0.12, y - Bb * 0.14, A, Bb, 10, 0.3);
+    const lit = 1 - Math.max(0, Math.min(1, ((x - cx) / rx + (y - cy) / ry) * 0.6 + 0.5));
+    if (lit > 0.25) hell += blob(z, x - A * 0.3, y - Bb * 0.34, A * 0.5 * (0.5 + lit), Bb * 0.45 * (0.5 + lit), 8, 0.35);
   }
-  return g;
+  const hs = Math.min(rx, ry) / 20;
+  for (let i = 0; i < 8; i++) { const a = z() * Math.PI * 2, d = 0.35 + z() * 0.55; loch += `<ellipse cx="${r(cx + Math.cos(a) * rx * d)}" cy="${r(cy + Math.sin(a) * ry * d)}" rx="${r((0.8 + z() * 1.8) * hs)}" ry="${r((0.6 + z() * 1.2) * hs)}"/>`; }
+  S.def(`<mask id="${id}" maskUnits="userSpaceOnUse" x="${r(cx - rx * 1.4)}" y="${r(cy - ry * 1.4)}" width="${r(rx * 2.8)}" height="${r(ry * 2.8)}"><rect x="${r(cx - rx * 1.4)}" y="${r(cy - ry * 1.4)}" width="${r(rx * 2.8)}" height="${r(ry * 2.8)}" fill="#fff"/><g>${loch}</g></mask>`);
+  const ast = `M${cx} ${r(cy + ry)} l${r(-rx * 0.3)} ${r(-ry * 0.7)} M${cx} ${r(cy + ry)} l${r(rx * 0.35)} ${r(-ry * 0.8)} M${cx} ${r(cy + ry * 0.6)} l${r(-rx * 0.05)} ${r(-ry * 0.9)}`;
+  return `<g filter="url(#${S.id(fern ? "laubrand2" : "laubrand")})"><g mask="url(#${id})"><path d="${blob(z, cx, cy, rx, ry, 16, 0.3)}" fill="${cd}"/><path d="${ast}" stroke="${ca}" stroke-width="${r(rx * 0.035)}"/><path d="${mittel}" fill="${cm}"/><path d="${hell}" fill="${ch}"/></g></g>`;
 };
 {
   let k = "";
@@ -589,15 +599,15 @@ const krone = (cx, cy, rx, ry, n, gr) => {
   for (let i = 0; i < 34; i++) k += `<ellipse cx="${r(rnd() * 400)}" cy="${r(142.4 + rnd() * 1.6)}" rx="${r(1.4 + rnd() * 1.6)}" ry="1" fill="${rnd() < 0.5 ? "#6f9055" : "#5a7a46"}"/>`;
   k += `<rect x="0" y="143.9" width="400" height=".35" fill="#2f3532"/>`;
   k += `<path d="${Array.from({ length: 133 }, (_, i) => `M${2 + i * 3} 143v1.6`).join("")}" stroke="#2f3532" stroke-width=".3"/>`;
-  /* die Allee: Platanen in ≈ 70 m (2,3 E/m, 16 m hoch), Stämme alle ≈ 8 m;
-     hohe, lockere Kronen mit Lücken — vor dem Michaelertor, am Steffl, vor
-     dem Riesenrad und vor dem fernen Schönbrunn bleibt der Blick frei */
-  const FB = 143.5;
-  for (const [bx, sc] of [[6, 1], [23, 0.95], [40, 1.05], [56, 0.92], [134, 0.96], [152, 1.02], [208, 1], [227, 0.94], [246, 1.04], [301, 0.98], [320, 1.05], [339, 0.96]]) {
-    const kb = FB - 8 * sc;
-    k += `<path d="M${r(bx - 0.6)} ${FB} L${r(bx - 0.45)} ${r(kb)} L${r(bx + 0.45)} ${r(kb)} L${r(bx + 0.6)} ${FB} Z" fill="#8a8476"/><path d="M${r(bx - 0.2)} ${r(FB - 2)} l0 -4 M${r(bx + 0.2)} ${r(FB - 8)} l0 -3" stroke="#c9c2a8" stroke-width=".35"/>`;
-    k += `<path d="M${bx} ${r(kb + 1)} q-3 -4 -6 -7 M${bx} ${r(kb + 1)} q2 -5 5 -8 M${bx} ${r(kb - 2)} l.4 -6" stroke="#6e685c" stroke-width=".45" fill="none"/>`;
-    k += krone(bx, r(kb - 10 * sc), 10.5 * sc, 9.5 * sc, 17, [2.6, 3.4]);
+  /* die Allee: Platanen am fernen Gehsteig in ≈ 45 m (3,6 E/m), 19 m hoch,
+     die Krone beginnt in 7 m Höhe — sie sind 3–4-mal so hoch wie die Bim.
+     Lücken vor Schönbrunn, dem Michaelertor, dem Adlerdach und dem Riesenrad */
+  const FB = ys0(45), M = F / 45;
+  for (const [bx, sc, seed] of [[14, 0.85, 3], [42, 0.9, 11], [146, 1.02, 19], [214, 0.96, 27], [246, 1.04, 31], [338, 0.98, 41]]) {
+    const kb = r(FB - 7 * M * sc), top = FB - 19 * M * sc;
+    k += `<path d="M${r(bx + 2.6)} ${FB} l11 -3.4 l0 .9 l-10 3.1 Z" fill="#1b120a" opacity=".16"/>`;
+    k += `<path d="M${r(bx - 1.2)} ${FB} Q${r(bx - 0.9)} ${r(FB - 10)} ${r(bx - 0.7)} ${kb} L${r(bx + 0.7)} ${kb} Q${r(bx + 0.9)} ${r(FB - 10)} ${r(bx + 1.2)} ${FB} Z" fill="#9a937c"/><path d="M${r(bx - 0.3)} ${r(FB - 3)} l0 -3 M${r(bx + 0.4)} ${r(FB - 11)} l0 -3" stroke="#d6d0b4" stroke-width=".5"/>`;
+    k += laubkrone(bx, r((top + kb) / 2 - 1), r(17 * sc), r((kb - top) / 2 + 2), seed, true);
   }
   /* Kandelaber am fernen Gehsteig (in 36 m) */
   for (const lx of [118, 262]) k += `<rect x="${lx - 0.3}" y="122.4" width=".6" height="24" fill="#3a3d3e"/><path d="M${lx - 3} 123.4 Q${lx} 120.8 ${lx + 3} 123.4" stroke="#3a3d3e" stroke-width=".4" fill="none"/>` +
@@ -618,24 +628,42 @@ const krone = (cx, cy, rx, ry, n, gr) => {
     k += `<path d="M${rx} ${r(RY - 1.4)} L${rx + 1.8} ${r(RY - 1.4)} L${rx + 3.8} ${r(RY - 3.6)} L${rx + 1.2} ${r(RY - 3.6)} Z M${rx + 3.8} ${r(RY - 3.6)} L${rx + 4.6} ${r(RY - 1.4)} M${rx + 1.2} ${r(RY - 3.6)} l-.3 -.6 M${rx + 3.8} ${r(RY - 3.6)} l.2 -.9 l.6 0" stroke="#2f6aa8" stroke-width=".32" fill="none"/>`;
     k += `<path d="M${rx + 1} ${r(RY - 4.3)} L${rx + 1.8} ${r(RY - 1.6)} M${rx + 1} ${r(RY - 4.3)} L${rx + 2.3} ${r(RY - 2.6)}" stroke="#2d2f3a" stroke-width=".62"/><path d="M${rx + 0.6} ${r(RY - 4.2)} L${rx + 1.8} ${r(RY - 7)} L${rx + 2.6} ${r(RY - 6.6)} L${rx + 1.6} ${r(RY - 4)} Z" fill="#e2a33a"/><path d="M${rx + 2.3} ${r(RY - 6.6)} L${rx + 4.2} ${r(RY - 4.7)}" stroke="#e2a33a" stroke-width=".42"/><circle cx="${rx + 2.4}" cy="${r(RY - 7.6)}" r=".66" fill="#d6aa88"/><path d="M${rx + 1.7} ${r(RY - 7.8)} q.7 -1 1.5 -.2 Z" fill="#c8302a"/>`;
   }
-  /* Fahrleitung: Masten alle ≈ 32 m (in 28 m ≈ 182 E) mit Ausleger und Isolatoren;
-     darüber das Tragseil mit Durchhang, daran an Hängern der fast gerade
-     Fahrdraht — je einer über jedem Gleis (26 m und 30 m) */
-  const MA = [98, 280];
+  for (const lx of [118, 262]) k += `<path d="M${lx + 0.4} 146.4 l9 -2.8" stroke="#1b120a" stroke-width=".6" opacity=".18"/>`;
+  /* das Taxi auf der nahen Spur (10 m, 4,9 m lang) mit gelbem Dachschild;
+     sein Schatten fällt nach rechts hinten */
+  {
+    const s = r(F / 10), X = 22, Y = r(ys(10) - 18);
+    k += `<path d="M${X + 2} ${Y} L${r(X + 4.9 * s - 2)} ${Y} L${r(X + 4.9 * s + 12)} ${r(Y - 4.2)} L${X + 14} ${r(Y - 4.2)} Z" fill="#1b120a" opacity=".28" filter="url(#bw_weich)"/>`;
+    let t = `<path d="M.08 -.32 Q0 -.72 .26 -.8 L1.25 -.92 Q1.7 -1.42 2.2 -1.46 L3.45 -1.46 Q3.95 -1.42 4.3 -1 L4.84 -.92 Q4.96 -.6 4.88 -.32 Z" fill="${S.lg("taxi", [[0, "#5a5c62"], [0.18, "#1c1d21"], [1, "#0a0a0c"]])}"/>`;
+    t += `<path d="M1.38 -.95 Q1.76 -1.36 2.2 -1.38 L2.78 -1.38 L2.78 -.95 Z M2.9 -.95 L2.9 -1.38 L3.42 -1.38 Q3.86 -1.34 4.12 -.97 Z" fill="${S.lg("taxiglas", [[0, "#9fb4c4"], [1, "#2c3a44"]])}"/>`;
+    t += `<circle cx="2.42" cy="-1.16" r=".11" fill="#1d1d22"/><path d="M2.26 -.95 Q2.42 -1.08 2.58 -.95 Z" fill="#1d1d22"/>`;
+    t += `<path d="M.3 -.72 L4.7 -.7" stroke="#8d939a" stroke-width=".03"/><path d="M2.84 -.95 L2.84 -.36 M1.5 -.92 L1.42 -.4 M4.02 -.98 L4.1 -.4" stroke="#000" stroke-width=".025"/>`;
+    t += `<rect x="1.95" y="-.74" width=".16" height=".04" fill="#9aa0a6"/><rect x="3.3" y="-.74" width=".16" height=".04" fill="#9aa0a6"/>`;
+    t += `<path d="M.1 -.62 L.32 -.66 L.3 -.54 L.1 -.52 Z" fill="#f6f2dc"/><path d="M4.88 -.66 L4.72 -.68 L4.72 -.56 L4.9 -.55 Z" fill="#c8302a"/>`;
+    t += `<path d="M1.28 -1.0 L1.2 -1.08 L1.1 -1.06 L1.14 -.98 Z" fill="#111"/><path d="M.5 -.84 Q2.5 -1.0 4.4 -.86" stroke="#d8dde2" stroke-width=".05" opacity=".7" fill="none"/>`;
+    t += `<rect x="2.5" y="-1.64" width=".66" height=".18" rx=".03" fill="#f6d22e" stroke="#c9a51c" stroke-width=".02"/><text x="2.83" y="-1.506" font-size=".13" text-anchor="middle" fill="#1d1d1d" font-family="Arial,sans-serif" font-weight="bold">TAXI</text>`;
+    for (const wx of [0.86, 4.0]) t += `<circle cx="${wx}" cy="-.33" r=".33" fill="#141416"/><circle cx="${wx}" cy="-.33" r=".19" fill="#b9bfc5"/><circle cx="${wx}" cy="-.33" r=".07" fill="#55595e"/>`;
+    k += `<g transform="translate(${X} ${Y}) scale(${s})">${t}</g>`;
+  }
+  /* Fahrleitung: Masten alle ≈ 32 m (in 28 m ≈ 182 E), der dritte am rechten
+     Bildrand. Je Gleis EIN Fahrdraht und darüber das Tragseil als Kettenlinie
+     mit Hängern; zwischen den Masten hängt es sichtbar durch. Das ferne Gleis
+     ist dünner und heller (Luftperspektive). */
+  const MA = [30, 212, 394];
   const hY = (h, d) => r(HOR0 - h * F / d);
-  const leitung = (d) => {
-    const yt = hY(5.6, d), yf = hY(4.45, d), stuetz = [-84, ...MA, 462];
+  const leitung = (d, w, op) => {
+    const yt = hY(5.6, d), yf = hY(4.45, d), stuetz = [-152, ...MA, 576];
     const feld = (x) => { for (let i = 0; i < stuetz.length - 1; i++) if (x <= stuetz[i + 1]) return [stuetz[i], stuetz[i + 1]]; };
-    const bogen = (x, y0, sag) => { const [a, b] = feld(x), t = (x - a) / (b - a); return r(y0 + sag * (b - a) / 182 * 4 * t * (1 - t)); };
+    const bogen = (x, y0, sag) => { const [a, b] = feld(x), t = (x - a) / (b - a); return r(y0 + sag * 4 * t * (1 - t)); };
     let trag = "", fahr = "", haenger = "";
-    for (let x = 0; x <= 400; x += 8) { trag += `${x ? "L" : "M"}${x} ${bogen(x, yt, 1.7)}`; fahr += `${x ? "L" : "M"}${x} ${bogen(x, yf, 0.25)}`; }
-    for (let x = 4; x < 400; x += 12) if (MA.every((m) => Math.abs(x - m) > 4)) haenger += `M${x} ${bogen(x, yt, 1.7)}V${bogen(x, yf, 0.25)}`;
-    return `<path d="${trag}" stroke="#2b2b2b" stroke-width=".22" fill="none" opacity=".7"/><path d="${haenger}" stroke="#2b2b2b" stroke-width=".1" opacity=".55"/><path d="${fahr}" stroke="#2b2b2b" stroke-width=".3" fill="none" opacity=".8"/>`;
+    for (let x = 0; x <= 400; x += 6) { trag += `${x ? "L" : "M"}${x} ${bogen(x, yt, 1.5)}`; fahr += `${x ? "L" : "M"}${x} ${bogen(x, yf, 0.45)}`; }
+    for (let x = 6; x < 400; x += 12) if (MA.every((m) => Math.abs(x - m) > 5)) haenger += `M${x} ${bogen(x, yt, 1.5)}V${bogen(x, yf, 0.45)}`;
+    return `<g opacity="${op}"><path d="${trag}" stroke="#2b2b2b" stroke-width="${r(w * 0.75)}" fill="none"/><path d="${haenger}" stroke="#2b2b2b" stroke-width="${r(w * 0.35)}"/><path d="${fahr}" stroke="#2b2b2b" stroke-width="${w}" fill="none"/></g>`;
   };
-  k += leitung(30) + leitung(26);
+  k += leitung(30, 0.2, 0.5) + leitung(26, 0.28, 0.8);
   const mast = (mx) => {
-    let g = `<path d="M${mx - 0.7} ${ys0(28)} L${mx - 0.45} ${hY(6.6, 28)} L${mx + 0.45} ${hY(6.6, 28)} L${mx + 0.7} ${ys0(28)} Z" fill="${S.lg("mast", [[0, "#9aa0a3"], [1, "#6b7174"]], 0, 0, 1, 0)}"/><rect x="${mx - 0.6}" y="${hY(6.75, 28)}" width="1.2" height=".5" fill="#5b6164"/>`;
-    /* Ausleger (Rohrschwingen) zu beiden Fahrdrähten, mit Isolatoren und Seitenhalter */
+    let g = mx > 380 ? "" : `<path d="M${mx + 0.7} ${ys0(28)} l12 -3.6 l0 .7 l-11.4 3.4 Z" fill="#1b120a" opacity=".16"/>`;
+    g += `<path d="M${mx - 0.7} ${ys0(28)} L${mx - 0.45} ${hY(6.6, 28)} L${mx + 0.45} ${hY(6.6, 28)} L${mx + 0.7} ${ys0(28)} Z" fill="${S.lg("mast", [[0, "#9aa0a3"], [1, "#6b7174"]], 0, 0, 1, 0)}"/><rect x="${mx - 0.6}" y="${hY(6.75, 28)}" width="1.2" height=".5" fill="#5b6164"/>`;
     for (const [d, dx] of [[26, -2.2], [30, 2.2]]) {
       const yt = hY(5.6, d), yf = hY(4.45, d), ym = hY(5.9, 28);
       g += `<path d="M${mx} ${ym} L${r(mx + dx)} ${yt} M${mx} ${hY(5.0, 28)} L${r(mx + dx)} ${r(yf - 1.2)} L${r(mx + dx * 1.3)} ${yf}" stroke="#4b4f52" stroke-width=".3" fill="none"/>`;
@@ -997,46 +1025,27 @@ const PODEST = yp(3.6);
 }
 
 /* =====================================================================
-   VORN (nicht antippbar): zwei große Platanen der Mittelallee in 20 m
-   rahmen das Bild, ihre Kronen ragen oben hinaus; auf der nahen Spur
-   (10 m) fährt ein schwarzes Wiener Taxi nach links (der Ring ist eine
-   Einbahn im Uhrzeigersinn)
+   VORN (nicht antippbar): zwei große Platanen in der Baumscheibe an der
+   Bordsteinkante (6,6 m) rahmen das Bild; die Kronen ragen oben hinaus
    ===================================================================== */
 {
   let v = "";
-  const platane = (bx, sx, kh = 6.2) => {
-    const fy = ys(20), kb = r(fy - kh * F / 20);
-    /* Platanenrinde: grau-grün mit hellen, abblätternden Flecken */
-    let g = `<path d="M${r(bx - 2.6)} ${fy} Q${r(bx - 2.2)} ${r(fy - 20)} ${r(bx - 1.9)} ${kb} L${r(bx + 1.9)} ${kb} Q${r(bx + 2.2)} ${r(fy - 20)} ${r(bx + 2.6)} ${fy} Z" fill="${S.lg("rinde", [[0, "#b5ad94"], [0.5, "#8f8a74"], [1, "#5e5a4c"]], 0, 0, 1, 0)}"/>`;
-    for (let i = 0; i < 14; i++) g += `<ellipse cx="${r(bx - 1.6 + rnd() * 3.2)}" cy="${r(kb + 2 + rnd() * (fy - kb - 4))}" rx="${r(0.4 + rnd() * 0.7)}" ry="${r(0.8 + rnd() * 1.4)}" fill="${["#d8d2b6", "#9aa184", "#c9c3a4"][i % 3]}" opacity=".85"/>`;
-    g += `<path d="M${bx} ${r(kb + 2)} q${sx * 6} -14 ${sx * 16} -26 M${bx} ${r(kb + 4)} q${-sx * 4} -18 ${-sx * 2} -40 M${r(bx + sx * 6)} ${r(kb - 10)} q${sx * 8} -8 ${sx * 18} -8" stroke="#6e6a58" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
+  const platane = (bx, sx) => {
+    const fy = ys(6.6), s = F / 6.6, w = 0.4 * s, kb = r(fy - 5 * s);
+    /* Baumscheibe mit Gusseisengitter */
+    let g = `<ellipse cx="${bx}" cy="${r(fy + 0.6)}" rx="${r(w * 1.9)}" ry="2.8" fill="#4a3a2a"/>`;
+    g += `<path d="${[0.55, 0.85, 1.15, 1.45, 1.75].map((f) => `M${r(bx - w * f)} ${r(fy + 0.6)} A${r(w * f)} ${r(1.5 * f)} 0 0 0 ${r(bx + w * f)} ${r(fy + 0.6)}`).join(" ")}" stroke="#2c2b2a" stroke-width=".55" fill="none"/>`;
+    g += `<path d="${[-1.6, -1.1, -0.6, 0.6, 1.1, 1.6].map((f) => `M${r(bx + w * f * 0.4)} ${r(fy + 1.4)} L${r(bx + w * f)} ${r(fy + 3)}`).join(" ")}" stroke="#2c2b2a" stroke-width=".45"/>`;
+    /* Stamm (0,8 m) mit gefleckter Platanenrinde, Licht von links */
+    g += `<path d="M${r(bx - w)} ${fy} Q${r(bx - w * 0.85)} ${r(fy - 30)} ${r(bx - w * 0.7)} ${kb} L${r(bx + w * 0.7)} ${kb} Q${r(bx + w * 0.85)} ${r(fy - 30)} ${r(bx + w)} ${fy} Z" fill="${S.lg("rinde", [[0, "#c2baa0"], [0.5, "#9a947c"], [1, "#5e5a4c"]], 0, 0, 1, 0)}"/>`;
+    for (let i = 0; i < 26; i++) g += `<ellipse cx="${r(bx - w * 0.75 + rnd() * w * 1.5)}" cy="${r(kb + 3 + rnd() * (fy - kb - 6))}" rx="${r(0.8 + rnd() * 1.6)}" ry="${r(1.4 + rnd() * 2.6)}" fill="${["#ddd6b8", "#9aa184", "#cfc8a6", "#7d806a"][i % 4]}" opacity=".85"/>`;
+    /* Hauptäste in die Krone */
+    g += `<path d="M${r(bx - w * 0.4)} ${r(kb + 4)} Q${r(bx + sx * 4)} ${r(kb - 20)} ${r(bx + sx * 26)} ${r(kb - 44)} M${r(bx + w * 0.3)} ${r(kb + 4)} Q${r(bx - sx * 2)} ${r(kb - 26)} ${r(bx + sx * 6)} ${r(kb - 60)}" stroke="#8a846e" stroke-width="${r(w * 0.45)}" fill="none" stroke-linecap="round"/>`;
     return g;
   };
-  v += platane(5, 1) + platane(397, -1, 13);
-  /* Kronen: dunkle Grundmasse (Schatten im Inneren), darauf die Laubbüschel */
-  const masse = (cx, cy, rx, ry, n) => {
-    const p = [];
-    for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, f = 0.8 + rnd() * 0.32; p.push([cx + Math.cos(a) * rx * f, cy + Math.sin(a) * ry * f]); }
-    return `<path d="M${p.map((q, i) => { const nq = p[(i + 1) % n]; return `${r((q[0] + nq[0]) / 2)} ${r((q[1] + nq[1]) / 2)} Q${r(nq[0])} ${r(nq[1])}`; }).join(" ")} ${r((p[0][0] + p[1][0]) / 2)} ${r((p[0][1] + p[1][1]) / 2)} Z" fill="#2c4826"/>`;
-  };
-  v += masse(32, 30, 44, 40, 14) + masse(20, 84, 20, 26, 9) + krone(34, 26, 44, 36, 34, [8, 10]) + krone(20, 82, 17, 22, 10, [6, 8]);
-  v += masse(384, 24, 24, 32, 11) + krone(384, 22, 22, 28, 20, [8, 10]);
-  /* das Taxi (4,9 m lang, 1,48 m hoch) mit gelbem Dachschild */
-  {
-    const s = r(F / 10), X = 22, Y = ys(10);
-    let t = `<ellipse cx="2.45" cy=".02" rx="2.6" ry=".09" fill="#1b120a" opacity=".45"/>`;
-    t += `<path d="M.08 -.32 Q0 -.72 .26 -.8 L1.25 -.92 Q1.7 -1.42 2.2 -1.46 L3.45 -1.46 Q3.95 -1.42 4.3 -1 L4.84 -.92 Q4.96 -.6 4.88 -.32 Z" fill="${S.lg("taxi", [[0, "#5a5c62"], [0.18, "#1c1d21"], [1, "#0a0a0c"]])}"/>`;
-    t += `<path d="M1.38 -.95 Q1.76 -1.36 2.2 -1.38 L2.78 -1.38 L2.78 -.95 Z M2.9 -.95 L2.9 -1.38 L3.42 -1.38 Q3.86 -1.34 4.12 -.97 Z" fill="${S.lg("taxiglas", [[0, "#9fb4c4"], [1, "#2c3a44"]])}"/>`;
-    t += `<circle cx="2.42" cy="-1.16" r=".11" fill="#1d1d22"/><path d="M2.26 -.95 Q2.42 -1.08 2.58 -.95 Z" fill="#1d1d22"/>`;
-    t += `<path d="M.3 -.72 L4.7 -.7" stroke="#8d939a" stroke-width=".03"/><path d="M2.84 -.95 L2.84 -.36 M1.5 -.92 L1.42 -.4 M4.02 -.98 L4.1 -.4" stroke="#000" stroke-width=".025"/>`;
-    t += `<rect x="1.95" y="-.74" width=".16" height=".04" fill="#9aa0a6"/><rect x="3.3" y="-.74" width=".16" height=".04" fill="#9aa0a6"/>`;
-    t += `<path d="M.1 -.62 L.32 -.66 L.3 -.54 L.1 -.52 Z" fill="#f6f2dc"/><path d="M4.88 -.66 L4.72 -.68 L4.72 -.56 L4.9 -.55 Z" fill="#c8302a"/>`;
-    t += `<path d="M1.28 -1.0 L1.2 -1.08 L1.1 -1.06 L1.14 -.98 Z" fill="#111"/>`;
-    t += `<path d="M.5 -.84 Q2.5 -1.0 4.4 -.86" stroke="#d8dde2" stroke-width=".05" opacity=".7" fill="none"/>`;
-    t += `<rect x="2.5" y="-1.64" width=".66" height=".18" rx=".03" fill="#f6d22e" stroke="#c9a51c" stroke-width=".02"/><text x="2.83" y="-1.506" font-size=".13" text-anchor="middle" fill="#1d1d1d" font-family="Arial,sans-serif" font-weight="bold">TAXI</text>`;
-    for (const wx of [0.86, 4.0]) t += `<circle cx="${wx}" cy="-.33" r=".33" fill="#141416"/><circle cx="${wx}" cy="-.33" r=".19" fill="#b9bfc5"/><circle cx="${wx}" cy="-.33" r=".07" fill="#55595e"/>`;
-    v += `<g transform="translate(${X} ${Y}) scale(${s})">${t}</g>`;
-  }
+  v += platane(2, 1) + platane(398, -1);
+  v += laubkrone(36, 14, 52, 44, 101) + laubkrone(14, 66, 26, 32, 103) + laubkrone(78, -4, 30, 22, 107);
+  v += laubkrone(366, 12, 40, 34, 109) + laubkrone(392, 60, 18, 30, 113);
   S.davor(v);
 }
 

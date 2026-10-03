@@ -890,110 +890,104 @@ const LL = -8;
 }
 
 /* =====================================================================
-   16 — DIE TOURISTIN (fotografiert das Plönlein mit dem Handy)
+   16 — DIE TOURISTIN und 17 — DER NACHTWÄCHTER mit 18 — DER HELLEBARDE und
+   19 — DER LATERNE: flach gezeichnet wie die Häuser (zwei bis drei Töne,
+   deckende Flächen), Maße in Metern ab dem Fußpunkt
    ===================================================================== */
+const FIG = (s) => ({ p: (x, y) => `${r(x * s)} ${r(y * s)}`, pg: (pts) => "M" + pts.map(([x, y]) => `${r(x * s)} ${r(y * s)}`).join(" L") + " Z" });
 {
-  /* eigene Haltung „fotografieren“: beide Hände heben das Handy vor das Gesicht (nur in dieser Bau-Datei) */
-  const MZ = (() => { B.mensch({ id: "x", geschlecht: "w", pose: "stehen", blick: 0, kleidung: {} }, 10); return globalThis.DMA_MENSCH; })();
-  MZ.POSEN.rtb_foto = { lende: 1, brust: -1, nacken: 4, kopf: 2, schulterL: { vor: 62, seit: 14 }, ellbogenL: 118, unterarmL: 40, handL: 4, fingerL: 0.55, schulterR: { vor: 60, seit: 16 }, ellbogenR: 120, unterarmR: 40, handR: 4, fingerR: 0.55, huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 };
-  const d = 10.4, [x, y] = P(-1.4, d, 0), s = F / d;
-  const m = B.mensch({ id: "rtb_touristin", geschlecht: "w", pose: "rtb_foto", blick: 186, frisur: "zopf", haarfarbe: "hellbraun", haut: "hell",
-    kleidung: { oberteil: { stueck: "pullover", farbe: "#3d6a8a" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } }, 1.68 * s);
-  const H = (n) => { const q = m.z.punkte[n]; return [q[0] * m.k, q[1] * m.k]; };
-  const [, sy] = H("scheitel"), hl = H("handL"), hr = H("handR"), hx = (hl[0] + hr[0]) / 2 + 0.8;
-  let k = schatten(3, 0.4, 0.3 * s, 0.07 * s, 0.25) + m.svg;
-  /* Handy hoch vor dem Gesicht: von hinten sieht man über dem Kopf den Bildschirm mit dem gelben Haus */
-  const pw = 0.075 * s, ph = 0.15 * s, px = hx - pw / 2, py = sy - ph * 0.55;
-  k += `<rect x="${r(px - 0.25)}" y="${r(py - 0.25)}" width="${r(pw + 0.5)}" height="${r(ph + 0.5)}" rx=".5" fill="#1c1d20"/><rect x="${r(px)}" y="${r(py)}" width="${r(pw)}" height="${r(ph)}" fill="#5f7fb0"/>`;
-  k += `<path d="M${r(px + pw * 0.15)} ${r(py + ph)} L${r(px + pw * 0.15)} ${r(py + ph * 0.45)} L${r(px + pw * 0.5)} ${r(py + ph * 0.18)} L${r(px + pw * 0.85)} ${r(py + ph * 0.45)} L${r(px + pw * 0.85)} ${r(py + ph)} Z" fill="#f2c45c"/><path d="M${r(px + pw * 0.15)} ${r(py + ph * 0.45)} L${r(px + pw * 0.5)} ${r(py + ph * 0.18)} L${r(px + pw * 0.85)} ${r(py + ph * 0.45)}" stroke="#a24a2a" stroke-width=".3" fill="none"/>`;
+  /* Touristin von hinten: hebt mit beiden Händen das Handy neben den Kopf, Ellenbogen nach außen */
+  const d = 10.4, [x, y] = P(-1.4, d, 0), s = F / d, { p, pg } = FIG(s);
+  let k = schatten(0.06 * s, 0.4, 0.3 * s, 0.06 * s, 0.3);
+  k += `<path d="${pg([[-0.13, -0.88], [-0.02, -0.88], [-0.035, -0.07], [-0.115, -0.07]])}" fill="#3b5f8c"/><path d="${pg([[0.02, -0.88], [0.13, -0.88], [0.115, -0.07], [0.035, -0.07]])}" fill="#2f4d74"/>`;
+  k += `<path d="M${p(-0.13, -0.02)} h${r(0.11 * s)} M${p(0.03, -0.02)} h${r(0.11 * s)}" stroke="#f2f2f0" stroke-width="${r(0.07 * s)}" stroke-linecap="round"/>`;
+  k += `<path d="${pg([[-0.155, -1.0], [0.155, -1.0], [0.14, -0.84], [-0.14, -0.84]])}" fill="#355886"/>`;
+  k += `<path d="${pg([[-0.19, -1.43], [0.19, -1.43], [0.17, -0.95], [-0.17, -0.95]])}" fill="#3d6a8a"/><path d="${pg([[0.02, -1.43], [0.19, -1.43], [0.17, -0.95], [0.03, -0.95]])}" fill="#2f566f"/><path d="M${p(-0.17, -0.97)} L${p(0.17, -0.97)}" stroke="#2a4c62" stroke-width="${r(0.03 * s)}"/>`;
+  /* Arme: Schulter → Ellenbogen (außen) → Hand am Handy */
+  const arm = (pts, f) => `<path d="M${pts.map(([a2, b2]) => p(a2, b2)).join(" L")}" stroke="${f}" stroke-width="${r(0.085 * s)}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  k += arm([[-0.16, -1.39], [-0.31, -1.5], [-0.04, -1.62]], "#3d6a8a") + arm([[0.16, -1.39], [0.33, -1.49], [0.19, -1.62]], "#2f566f");
+  /* Handy (Bildschirm zu ihr, also zu uns): das gelbe Haus auf dem Bildschirm */
+  k += `<g transform="rotate(8 ${r(0.13 * s)} ${r(-1.66 * s)})"><rect x="${r(0.09 * s)}" y="${r(-1.745 * s)}" width="${r(0.085 * s)}" height="${r(0.16 * s)}" rx=".4" fill="#1c1d20"/><rect x="${r(0.097 * s)}" y="${r(-1.735 * s)}" width="${r(0.071 * s)}" height="${r(0.14 * s)}" fill="#6f8fbf"/><path d="${pg([[0.105, -1.6], [0.105, -1.66], [0.132, -1.69], [0.159, -1.66], [0.159, -1.6]])}" fill="#f2c45c"/></g>`;
+  k += `<circle cx="${r(0.19 * s)}" cy="${r(-1.63 * s)}" r="${r(0.035 * s)}" fill="#e8c4a2"/><circle cx="${r(0.085 * s)}" cy="${r(-1.64 * s)}" r="${r(0.033 * s)}" fill="#e2b896"/><circle cx="${r(-0.04 * s)}" cy="${r(-1.62 * s)}" r="${r(0.033 * s)}" fill="#e2b896"/>`;
+  /* Kopf von hinten: Haar mit Pferdeschwanz, Ohren */
+  k += `<rect x="${r(-0.035 * s)}" y="${r(-1.49 * s)}" width="${r(0.07 * s)}" height="${r(0.07 * s)}" fill="#e2b896"/><ellipse cx="${r(-0.105 * s)}" cy="${r(-1.57 * s)}" rx="${r(0.02 * s)}" ry="${r(0.03 * s)}" fill="#e2b896"/><ellipse cx="${r(0.105 * s)}" cy="${r(-1.57 * s)}" rx="${r(0.02 * s)}" ry="${r(0.03 * s)}" fill="#d4a885"/>`;
+  k += `<ellipse cx="0" cy="${r(-1.58 * s)}" rx="${r(0.1 * s)}" ry="${r(0.115 * s)}" fill="#8a6a48"/><path d="M${p(-0.06, -1.66)} Q${p(-0.02, -1.69)} ${p(0.05, -1.66)}" stroke="#a88660" stroke-width="${r(0.02 * s)}" fill="none"/>`;
+  k += `<path d="M${p(0, -1.5)} Q${p(0.05, -1.42)} ${p(0.01, -1.33)} Q${p(-0.03, -1.4)} ${p(-0.01, -1.5)} Z" fill="#7a5c3c"/><circle cx="0" cy="${r(-1.5 * s)}" r="${r(0.018 * s)}" fill="#c8202c"/>`;
   S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: k,
     tipp: "Die Touristin fotografiert das Plönlein mit dem Handy.",
-    zoom: { x: r(x - 26), y: r(y + sy - 6), w: 52, h: 34 },
+    zoom: { x: r(x - 22), y: r(y - 1.95 * s), w: 44, h: 30 },
     unter: [
-      { id: "handy", de: "das Handy", syl: "HAN-dy", it: "il cellulare", itSyl: "cel-lu-LA-re", en: "mobile phone", x: x + px + pw / 2, y: y + py + ph + 0.4, kunst: flaeche(-pw / 2 - 1.2, -ph - 1.4, pw + 2.4, ph + 2.2),
+      { id: "handy", de: "das Handy", syl: "HAN-dy", it: "il cellulare", itSyl: "cel-lu-LA-re", en: "mobile phone", x: x + 0.13 * s, y: y - 1.56 * s, kunst: flaeche(-0.09 * s, -0.22 * s, 0.18 * s, 0.24 * s),
         tipp: "Mit dem Handy macht sie ein Foto. Auf dem Bildschirm sieht man schon das gelbe Haus." },
     ] });
 }
-
-/* =====================================================================
-   17 — DER NACHTWÄCHTER mit 18 — DER HELLEBARDE (in der Hand) und
-   19 — DER LATERNE
-   ===================================================================== */
-const NW = (() => { const d = 7.4, [x, y] = P(1.0, d, 0); return { x, y, s: F / d }; })();
-/* gebaut wird in 7,4 m Abstand, gestellt wird er näher (5,9 m): alles um NF vergrößert, Fußpunkt neu */
-const NF = 7.4 / 5.9, NWp = (() => { const [x, y] = P(1.0, 5.9, 0); return { x, y }; })(), NS = (g) => `<g transform="scale(${r(NF * 1000) / 1000})">${g}</g>`;
-const nw = B.mensch({ id: "rtb_nachtwaechter", geschlecht: "m", pose: "stehen", blick: 330, frisur: "kurz", haarfarbe: "grau", haut: "hell",
-  kleidung: { oberteil: { stueck: "hemd", farbe: "#2a2830" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "stiefel", farbe: "#1a1a1a" }, kopf: { stueck: "hut", farbe: "#17161a" } } }, 1.78 * NW.s);
-const NP = (n) => { const q = nw.z.punkte[n]; return [q[0] * nw.k, q[1] * nw.k]; };
-const HAENDE = [NP("handL"), NP("handR")].sort((a, b) => a[0] - b[0]);
-/* Hellebarde: in der Hand, oben leicht nach außen geneigt; hinter dem Umhang verdeckt */
-const STANGE = (() => {
-  const [hx, hy] = HAENDE[0], sch = [NP("schulterL"), NP("schulterR")].sort((a, b) => a[0] - b[0])[0];
-  const kx = 0.085;   /* dx je dy: oben leicht nach außen geneigt, frei vom Gesicht */
-  void sch;
-  const X = (y) => hx + (y - hy) * kx;
-  const sy = Math.min(NP("schulterL")[1], NP("schulterR")[1]);
-  return { hx, hy, X, kx, fuss: [X(0), 0], top: [X(-2.5 * NW.s), -2.5 * NW.s], umhangU: sy + 13.5, schulter: sy - 0.5 };
-})();
+const NW = (() => { const d = 5.9, [x, y] = P(1.0, d, 0); return { x, y, s: F / d }; })();
+const NWF = FIG(NW.s);
+/* Hellebarde: ein durchgehender Schaft vom Boden bis über den Kopf, leicht nach außen geneigt */
+const SCHAFT = { x0: -0.36, x1: -0.44, top: -2.42 }, schaftX = (yy) => SCHAFT.x0 + (SCHAFT.x1 - SCHAFT.x0) * (yy / SCHAFT.top);
 {
-  let k = schatten(10, 0.5, 14, 2.4, 0.35) + nw.svg;
-  /* Pelerine (weiter Umhang) über den Schultern */
-  const [sl, slY] = NP("schulterL"), [sr, srY] = NP("schulterR"), [hx, hy] = NP("hals");
-  const lo = Math.min(sl, sr), hi = Math.max(sl, sr), oy = Math.min(slY, srY);
-  k += `<path d="M${r(hx - 3)} ${r(hy + 1)} Q${r(lo - 2)} ${r(oy + 1)} ${r(lo - 3.4)} ${r(oy + 13)} Q${r((lo + hi) / 2)} ${r(oy + 15)} ${r(hi + 3.4)} ${r(oy + 13)} Q${r(hi + 2)} ${r(oy + 1)} ${r(hx + 3)} ${r(hy + 1)} Z" fill="${S.lg("umhang", [[0, "#2a2830"], [0.5, "#16151a"], [1, "#0e0d10"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M${r(hx - 2.6)} ${r(hy + 1.4)} Q${r(hx)} ${r(hy + 3)} ${r(hx + 2.6)} ${r(hy + 1.4)}" stroke="#d8d4cc" stroke-width=".7" fill="none"/>`;
-  k += `<path d="M${r(hi + 2.6)} ${r(oy + 6)} Q${r(hi + 2)} ${r(oy + 3)} ${r(hi)} ${r(oy + 1.4)}" stroke="#ffcf8a" stroke-width=".5" fill="none" opacity=".35"/>`;
-  /* breite Krempe des Schlapphuts — hoch genug, dass die Augen darunter sichtbar bleiben */
-  const [kx, ky2] = NP("scheitel");
-  k += `<ellipse cx="${r(kx)}" cy="${r(ky2 + 1.5)}" rx="6.8" ry="1.05" fill="#141317"/><path d="M${r(kx - 6.4)} ${r(ky2 + 1.4)} Q${r(kx)} ${r(ky2 + 0.6)} ${r(kx + 6.4)} ${r(ky2 + 1.4)}" stroke="#3a3840" stroke-width=".3" fill="none"/>`;
-  /* Horn am Gürtel: Kuhhorn mit Messingbeschlag und Mundstück, am Lederriemen */
-  const [bx, by] = NP("huefteL"), [qx, qy] = NP("schulterR");
-  k += `<path d="M${r(qx)} ${r(qy + 1)} L${r(bx + 0.4)} ${r(by - 1.2)}" stroke="#5a3a1e" stroke-width=".7"/>`;
-  const HORN = `M${r(bx - 1)} ${r(by - 1.6)} Q${r(bx + 2.6)} ${r(by - 1.2)} ${r(bx + 3.6)} ${r(by + 2.4)} L${r(bx + 5.2)} ${r(by + 1.6)} L${r(bx + 5)} ${r(by + 4.6)} L${r(bx + 2.4)} ${r(by + 3.4)} Q${r(bx + 1.6)} ${r(by + 0.4)} ${r(bx - 1)} ${r(by - 0.6)} Z`;
-  k += `<path d="${HORN}" fill="${S.lg("horn", [[0, "#efe0bc"], [0.6, "#c9a46a"], [1, "#7a5a2a"]], 0, 0, 1, 1)}" stroke="#5a4020" stroke-width=".25"/>`;
-  k += `<path d="M${r(bx + 3.4)} ${r(by + 2.2)} L${r(bx + 2.6)} ${r(by + 3.3)}" stroke="#c9a640" stroke-width=".8"/><circle cx="${r(bx - 1)}" cy="${r(by - 1.1)}" r=".55" fill="#c9a640"/>`;
-  k += `<ellipse cx="${r(bx + 5.1)}" cy="${r(by + 3.1)}" rx=".55" ry="1.5" fill="#3a2a14"/>`;
-  S.teil({ id: "nachtwaechter", de: "der Nachtwächter", syl: "NACHT-wäch-ter", it: "la guardia notturna", itSyl: "GUAR-dia not-TUR-na", en: "night watchman", x: NWp.x, y: NWp.y, kunst: NS(k),
+  const s = NW.s, { p, pg } = NWF;
+  let k = schatten(0.05 * s, 0.5, 0.36 * s, 0.07 * s, 0.35);
+  /* Stiefel und Hose */
+  k += `<path d="${pg([[-0.14, -0.6], [-0.02, -0.6], [-0.03, -0.08], [-0.13, -0.08]])}" fill="#1f1d22"/><path d="${pg([[0.02, -0.6], [0.14, -0.6], [0.13, -0.08], [0.03, -0.08]])}" fill="#17161a"/>`;
+  k += `<path d="${pg([[-0.15, -0.12], [-0.02, -0.12], [-0.01, 0], [-0.19, 0], [-0.19, -0.04]])}" fill="#121114"/><path d="${pg([[0.02, -0.12], [0.15, -0.12], [0.19, -0.04], [0.19, 0], [0.01, 0]])}" fill="#0c0b0e"/>`;
+  /* langer Mantel (Licht von rechts hinten: rechte Kante hell) */
+  k += `<path d="${pg([[-0.22, -1.42], [0.22, -1.42], [0.31, -0.52], [-0.3, -0.52]])}" fill="#232128"/><path d="${pg([[0.17, -1.42], [0.22, -1.42], [0.31, -0.52], [0.25, -0.52]])}" fill="#3a3640"/><path d="M${p(0, -1.4)} L${p(0.005, -0.53)}" stroke="#151418" stroke-width="${r(0.012 * s)}"/>`;
+  /* Arme in den Ärmeln, Hände */
+  k += `<path d="${pg([[-0.27, -1.2], [-0.2, -1.2], [-0.3, -0.92], [-0.38, -0.93]])}" fill="#1c1b20"/><path d="${pg([[0.2, -1.2], [0.27, -1.2], [0.35, -0.86], [0.28, -0.85]])}" fill="#2c2a32"/>`;
+  /* Pelerine über den Schultern */
+  k += `<path d="M${p(-0.08, -1.49)} Q${p(-0.34, -1.47)} ${p(-0.35, -1.05)} Q${p(0, -0.99)} ${p(0.35, -1.05)} Q${p(0.34, -1.47)} ${p(0.08, -1.49)} Z" fill="#17161b"/><path d="M${p(0.1, -1.48)} Q${p(0.33, -1.45)} ${p(0.34, -1.06)}" stroke="#4a4652" stroke-width="${r(0.02 * s)}" fill="none"/>`;
+  k += `<path d="M${p(-0.08, -1.49)} Q${p(0, -1.45)} ${p(0.08, -1.49)} L${p(0.07, -1.51)} Q${p(0, -1.48)} ${p(-0.07, -1.51)} Z" fill="#ece8de"/>`;
+  /* Riemen und Horn an der Hüfte */
+  k += `<path d="M${p(-0.12, -1.45)} L${p(0.2, -0.98)}" stroke="#5a3a1e" stroke-width="${r(0.025 * s)}"/>`;
+  const HORN = pg([[0.15, -1.0], [0.24, -0.99], [0.3, -0.92], [0.33, -0.85], [0.37, -0.87], [0.37, -0.78], [0.31, -0.81], [0.27, -0.9], [0.2, -0.95], [0.15, -0.97]]);
+  k += `<path d="${HORN}" fill="#d8b37a"/><path d="M${p(0.27, -0.9)} L${p(0.31, -0.93)}" stroke="#a8842e" stroke-width="${r(0.02 * s)}"/><ellipse cx="${r(0.37 * s)}" cy="${r(-0.825 * s)}" rx="${r(0.012 * s)}" ry="${r(0.045 * s)}" fill="#4a3216"/>`;
+  /* Kopf: Hals, Gesicht mit Augen, Brauen, Nase, Mund, graue Haare an den Schläfen */
+  k += `<rect x="${r(-0.04 * s)}" y="${r(-1.53 * s)}" width="${r(0.08 * s)}" height="${r(0.06 * s)}" fill="#d9ac87"/>`;
+  k += `<ellipse cx="${r(-0.01 * s)}" cy="${r(-1.6 * s)}" rx="${r(0.085 * s)}" ry="${r(0.1 * s)}" fill="#e8c29e"/><path d="M${p(0.03, -1.69)} Q${p(0.09, -1.64)} ${p(0.07, -1.53)} Q${p(0.04, -1.51)} ${p(0.02, -1.51)} Z" fill="#d4a882"/>`;
+  k += `<path d="M${p(-0.09, -1.66)} L${p(-0.095, -1.57)} M${p(0.075, -1.66)} L${p(0.08, -1.57)}" stroke="#a9a6a0" stroke-width="${r(0.03 * s)}"/>`;
+  k += `<ellipse cx="${r(-0.042 * s)}" cy="${r(-1.615 * s)}" rx="${r(0.011 * s)}" ry="${r(0.008 * s)}" fill="#2a2420"/><ellipse cx="${r(0.022 * s)}" cy="${r(-1.615 * s)}" rx="${r(0.011 * s)}" ry="${r(0.008 * s)}" fill="#2a2420"/>`;
+  k += `<path d="M${p(-0.065, -1.64)} l${r(0.04 * s)} 0 M${p(0.005, -1.64)} l${r(0.04 * s)} 0" stroke="#8a8680" stroke-width="${r(0.01 * s)}"/><path d="M${p(-0.012, -1.6)} L${p(-0.02, -1.57)} L${p(-0.005, -1.565)}" stroke="#b88a66" stroke-width="${r(0.008 * s)}" fill="none"/><path d="M${p(-0.035, -1.535)} Q${p(-0.01, -1.525)} ${p(0.015, -1.535)}" stroke="#9a5a4a" stroke-width="${r(0.01 * s)}" fill="none"/>`;
+  /* Schlapphut: Kopf, Band, breite Krempe mit heller Oberkante */
+  const [kx, ky2] = [0, -1.665];
+  k += `<path d="M${p(-0.085, -1.665)} L${p(-0.075, -1.765)} Q${p(0, -1.79)} ${p(0.075, -1.765)} L${p(0.085, -1.665)} Z" fill="#161519"/><path d="M${p(-0.083, -1.69)} L${p(0.083, -1.69)}" stroke="#34313a" stroke-width="${r(0.018 * s)}"/>`;
+  k += `<ellipse cx="0" cy="${r(-1.665 * s)}" rx="${r(0.21 * s)}" ry="${r(0.035 * s)}" fill="#141317"/><path d="M${p(-0.19, -1.675)} Q${p(0, -1.71)} ${p(0.19, -1.675)}" stroke="#3e3b44" stroke-width="${r(0.008 * s)}" fill="none"/>`;
+  S.teil({ id: "nachtwaechter", de: "der Nachtwächter", syl: "NACHT-wäch-ter", it: "la guardia notturna", itSyl: "GUAR-dia not-TUR-na", en: "night watchman", x: NW.x, y: NW.y, kunst: k,
     tipp: "Am Abend führt der Nachtwächter mit Schlapphut und Horn die Gäste durch die Altstadt.",
-    zoom: { x: r(NWp.x + (kx - 30) * NF), y: r(NWp.y + (ky2 - 6) * NF), w: r(60 * NF), h: r(40 * NF) },
+    zoom: { x: r(NW.x - 0.62 * s), y: r(NW.y - 1.86 * s), w: r(1.24 * s), h: r(0.83 * s) },
     unter: [
-      { id: "hut", de: "der Hut", syl: "HUT", it: "il cappello", itSyl: "cap-PEL-lo", en: "hat", x: NWp.x + kx * NF, y: NWp.y + (ky2 + 3) * NF, kunst: NS(flaeche(-7.2, -8, 14.4, 7.6)),
+      { id: "hut", de: "der Hut", syl: "HUT", it: "il cappello", itSyl: "cap-PEL-lo", en: "hat", x: NW.x + kx * s, y: NW.y + (ky2 + 0.04) * s, kunst: flaeche(-0.22 * s, -0.17 * s, 0.44 * s, 0.17 * s),
         tipp: "Der Nachtwächter trägt einen breiten schwarzen Schlapphut." },
-      { id: "horn", de: "das Horn", syl: "HORN", it: "il corno", itSyl: "COR-no", en: "horn", x: NWp.x + (bx + 2) * NF, y: NWp.y + (by + 4.8) * NF, kunst: NS(flaeche(-3.6, -7, 8, 7.6)),
+      { id: "horn", de: "das Horn", syl: "HORN", it: "il corno", itSyl: "COR-no", en: "horn", x: NW.x + 0.27 * s, y: NW.y - 0.76 * s, kunst: flaeche(-0.14 * s, -0.26 * s, 0.28 * s, 0.26 * s),
         tipp: "Mit dem Horn bläst der Nachtwächter zur vollen Stunde." },
     ] });
 }
 {
-  /* Hellebarde: schräg an die Schulter gelehnt; zwischen Hand und Schulter verdeckt der Umhang die Stange */
-  const { hx, hy, X, kx, fuss, top, umhangU, schulter } = STANGE;
-  const ox = r(hx), oy = r(hy - 6);   /* Ankerpunkt des Teils: an der Hand */
+  /* Hellebarde: Schaft, Hand mit Daumen vorn, Blatt etwa kopfgroß, nach außen (links) */
+  const s = NW.s, { p, pg } = NWF, yH = -0.93, xH = schaftX(yH);
+  const tx = schaftX(SCHAFT.top), ty = SCHAFT.top, win = Math.atan2(SCHAFT.x1 - SCHAFT.x0, -SCHAFT.top) * 180 / Math.PI;
+  let k = `<path d="M${p(SCHAFT.x0, 0)} L${p(tx, ty)}" stroke="#5e3c22" stroke-width="${r(0.032 * s)}" stroke-linecap="round"/><path d="M${p(SCHAFT.x0 + 0.008, 0)} L${p(tx + 0.008, ty)}" stroke="#a87a4c" stroke-width="${r(0.009 * s)}"/>`;
   const STAHL = S.lg("stahl", [[0, "#e8ecef"], [0.5, "#aab3ba"], [1, "#7a838a"]], 0, 0, 1, 0);
-  const winkel = Math.atan(kx) * 180 / Math.PI;
-  const holz = S.lg("stange", [[0, "#5a3a22"], [0.5, "#9a7048"], [1, "#4a2e18"]], 0, 0, 1, 0);
-  let k = `<path d="M${r(fuss[0])} 0 L${r(X(umhangU))} ${r(umhangU)} M${r(X(schulter))} ${r(schulter)} L${r(top[0])} ${r(top[1])}" stroke="#4a2e18" stroke-width="1.5" stroke-linecap="round"/><path d="M${r(fuss[0] - 0.3)} 0 L${r(X(umhangU) - 0.3)} ${r(umhangU)} M${r(X(schulter) - 0.3)} ${r(schulter)} L${r(top[0] - 0.3)} ${r(top[1])}" stroke="#a87c50" stroke-width=".45"/>`;
-  void holz;
-  /* Klinge als Gruppe, entlang der Stange gedreht */
-  k += `<g transform="translate(${r(top[0])} ${r(top[1])}) rotate(${r(-winkel)})"><path d="M-.7 0 L0 -10 L.7 0 Z" fill="${STAHL}"/><path d="M.6 1 L6.4 -1.6 Q7.4 3 6.2 7.4 L.6 5 Z" fill="${STAHL}" stroke="#5a6268" stroke-width=".25"/><path d="M-.6 2 L-3.6 .4 L-3 2.2 L-.6 3.6 Z" fill="${STAHL}"/><rect x="-.9" y="5" width="1.8" height="1.2" fill="#c9a640"/><path d="M6.2 -1 L6.8 5" stroke="#fff" stroke-width=".4" opacity=".6"/></g>`;
-  /* Faust um die Stange */
-  k += `<ellipse cx="${r(hx)}" cy="${r(hy - 0.6)}" rx="1.3" ry="1.15" fill="#e8c4a2"/><path d="M${r(hx - 1.1)} ${r(hy - 1)} h2.2 M${r(hx - 1.1)} ${r(hy - 0.3)} h2.2" stroke="#c49a7a" stroke-width=".25"/>`;
-  /* Trefferfläche: schmale Polster um die sichtbaren Stücke und um die Klinge */
-  k += `<path class="bw-flaeche" d="M${r(fuss[0] - 1.6)} 0 L${r(fuss[0] + 1.6)} 0 L${r(X(umhangU) + 1.6)} ${r(umhangU)} L${r(X(umhangU) - 1.6)} ${r(umhangU)} Z M${r(top[0] - 4.5)} ${r(top[1] - 10)} L${r(top[0] + 7.6)} ${r(top[1] - 10)} L${r(X(schulter) + 1.8)} ${r(schulter)} L${r(X(schulter) - 1.8)} ${r(schulter)} Z" fill="rgba(255,255,255,0.001)"/>`;
-  S.teil({ oben: true, id: "hellebarde", de: "die Hellebarde", syl: "hel-le-BAR-de", it: "l'alabarda", itSyl: "a-la-BAR-da", en: "halberd", x: NWp.x + ox * NF, y: NWp.y + oy * NF, kunst: NS(`<g transform="translate(${-ox} ${-oy})">${k}</g>`),
+  k += `<g transform="translate(${r(tx * s)} ${r(ty * s)}) rotate(${r(win)})"><path d="${pg([[-0.014, 0], [0, -0.24], [0.014, 0]])}" fill="${STAHL}"/><path d="${pg([[-0.012, 0.03], [-0.17, -0.02], [-0.19, 0.08], [-0.16, 0.17], [-0.012, 0.12]])}" fill="${STAHL}" stroke="#5a6268" stroke-width=".25"/><path d="${pg([[0.012, 0.05], [0.08, 0.02], [0.07, 0.07], [0.012, 0.09]])}" fill="#9aa3aa"/><rect x="${r(-0.02 * s)}" y="${r(0.13 * s)}" width="${r(0.04 * s)}" height="${r(0.03 * s)}" fill="#c9a640"/></g>`;
+  /* Faust: Fingerknöchel als Bogen um den Schaft, Daumen vorn */
+  k += `<path d="M${p(xH - 0.035, yH - 0.03)} Q${p(xH, yH - 0.06)} ${p(xH + 0.035, yH - 0.03)} L${p(xH + 0.035, yH + 0.03)} Q${p(xH, yH + 0.05)} ${p(xH - 0.035, yH + 0.03)} Z" fill="#e2b896"/><path d="M${p(xH - 0.03, yH - 0.01)} Q${p(xH, yH - 0.035)} ${p(xH + 0.03, yH - 0.01)} M${p(xH - 0.03, yH + 0.015)} Q${p(xH, yH - 0.01)} ${p(xH + 0.03, yH + 0.015)}" stroke="#b88a66" stroke-width=".3" fill="none"/><path d="M${p(xH + 0.03, yH - 0.03)} Q${p(xH + 0.01, yH - 0.06)} ${p(xH - 0.012, yH - 0.045)}" stroke="#d4a882" stroke-width="${r(0.018 * s)}" fill="none"/>`;
+  const ox = r(xH * s), oy = r(-1.6 * s);
+  k += `<path class="bw-flaeche" d="M${p(SCHAFT.x0 - 0.05, 0)} L${p(SCHAFT.x0 + 0.05, 0)} L${p(tx + 0.1, ty - 0.26)} L${p(tx - 0.24, ty - 0.26)} L${p(tx - 0.24, ty + 0.2)} L${p(schaftX(-2.2) - 0.05, -2.2)} Z" fill="rgba(255,255,255,0.001)"/>`;
+  S.teil({ oben: true, id: "hellebarde", de: "die Hellebarde", syl: "hel-le-BAR-de", it: "l'alabarda", itSyl: "a-la-BAR-da", en: "halberd", x: NW.x + ox, y: NW.y + oy, kunst: `<g transform="translate(${-ox} ${-oy})">${k}</g>`,
     tipp: "Die Hellebarde ist halb Axt, halb Spieß. Damit schützte der Nachtwächter früher die Stadt." });
 }
 {
-  const [hx, hy] = HAENDE[1];
-  const lx = hx + 0.6, ly = hy + 7;
-  let k = `<circle cx="${r(lx)}" cy="${r(ly)}" r="12" fill="#ffcc66" opacity=".45" filter="url(#${S.id("glimm")})"/>`;
-  k += `<path d="M${r(hx)} ${r(hy - 0.4)} Q${r(lx + 1.6)} ${r(hy + 1.2)} ${r(lx)} ${r(ly - 5.2)}" stroke="#7a5a2a" stroke-width=".4" fill="none"/>`;
-  k += `<path d="M${r(lx - 2.4)} ${r(ly - 3.6)} L${r(lx)} ${r(ly - 5.6)} L${r(lx + 2.4)} ${r(ly - 3.6)} Z" fill="${GOLD}"/>`;
-  k += `<rect x="${r(lx - 2.2)}" y="${r(ly - 3.6)}" width="4.4" height="6.8" fill="#fff3c4"/><rect x="${r(lx - 0.5)}" y="${r(ly - 1)}" width="1" height="3" fill="#f6f1e4"/><path d="M${r(lx)} ${r(ly - 2.6)} q.6 .8 0 1.6 q-.6 -.8 0 -1.6 Z" fill="#ff9a2a"/>`;
-  k += `<path d="M${r(lx - 2.2)} ${r(ly - 3.6)} v6.8 M${r(lx + 2.2)} ${r(ly - 3.6)} v6.8 M${r(lx)} ${r(ly - 3.6)} v6.8" stroke="#8a6a2a" stroke-width=".35"/>`;
-  k += `<rect x="${r(lx - 2.6)}" y="${r(ly + 3.2)}" width="5.2" height="1" fill="${GOLD}"/>`;
-  const ox = r(lx), oy = r(ly + 4.4);
-  S.teil({ oben: true, id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "la lanterna", itSyl: "lan-TER-na", en: "lantern", x: NWp.x + ox * NF, y: NWp.y + oy * NF, kunst: NS(`<g transform="translate(${-ox} ${-oy})">${k + flaeche(lx - 3, ly - 6, 6, 11)}</g>`),
-    tipp: "Früher gab es keine Straßenlampen. Der Nachtwächter trug eine Laterne." });
+  /* Laterne in der rechten Hand: Bügel, Glas mit Kerze, kleiner Lichthof — kein Schleier über der Figur */
+  const s = NW.s, { p } = NWF, hx = 0.32, hy = -0.86, lx = hx + 0.01, ly = hy + 0.2;
+  let k = `<circle cx="${r(lx * s)}" cy="${r(ly * s)}" r="${r(0.13 * s)}" fill="#ffcf70" opacity=".3" filter="url(#${S.id("glimm")})"/>`;
+  k += `<circle cx="${r(hx * s)}" cy="${r(hy * s)}" r="${r(0.034 * s)}" fill="#d4a882"/><path d="M${p(hx, hy)} L${p(lx, ly - 0.1)}" stroke="#6a5226" stroke-width="${r(0.008 * s)}"/>`;
+  k += `<path d="M${p(lx - 0.06, ly - 0.07)} L${p(lx, ly - 0.11)} L${p(lx + 0.06, ly - 0.07)} Z" fill="${GOLD}"/><rect x="${r((lx - 0.055) * s)}" y="${r((ly - 0.07) * s)}" width="${r(0.11 * s)}" height="${r(0.16 * s)}" fill="#fff1c0" stroke="#8a6a2a" stroke-width=".35"/><path d="M${p(lx, ly - 0.07)} L${p(lx, ly + 0.09)}" stroke="#8a6a2a" stroke-width=".3"/><rect x="${r((lx - 0.012) * s)}" y="${r(ly * s)}" width="${r(0.024 * s)}" height="${r(0.06 * s)}" fill="#f6f1e4"/><path d="M${p(lx, ly - 0.03)} q${r(0.012 * s)} ${r(0.018 * s)} 0 ${r(0.03 * s)} q${r(-0.012 * s)} ${r(-0.012 * s)} 0 ${r(-0.03 * s)} Z" fill="#ff9a2a"/><rect x="${r((lx - 0.065) * s)}" y="${r((ly + 0.09) * s)}" width="${r(0.13 * s)}" height="${r(0.025 * s)}" fill="${GOLD}"/>`;
+  k += flaeche((lx - 0.08) * s, (ly - 0.13) * s, 0.16 * s, 0.26 * s);
+  const ox = r(lx * s), oy = r((ly + 0.12) * s);
+  S.teil({ oben: true, id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "la lanterna", itSyl: "lan-TER-na", en: "lantern", x: NW.x + ox, y: NW.y + oy, kunst: `<g transform="translate(${-ox} ${-oy})">${k}</g>`,
+    tipp: "Früher gab es keine Straßenlaternen. Der Nachtwächter trug eine Laterne." });
 }
+
 /* Vordergrund links: Holzkübel mit Geranien vor der Bäckerei (Dekor, fängt keinen Tipp) */
 {
   const d = 4.6, [x, y] = P(-4.9, d, 0, 0), s = F / d;

@@ -223,6 +223,9 @@ const DECK_A = [randA(0, -900, 0), -60, 0, 120, 251.5, 380, 503, 560, randA(400,
     const zugO = [bp(150, -18, 54.6), bp(330, -18, 54.6)];
     v += `<path d="M${P(zug[0])} L${P(zug[1])} L${P(zugO[1])} L${P(zugO[0])} Z" fill="${S.lg("zug", [[0, "#e6e9eb"], [1, "#a9b0b5"]])}"/>`;
     for (let a = 150; a < 330; a += 20) v += `<path d="M${P(bp(a, -18, 49.5))} L${P(bp(a, -18, 54.4))}" stroke="#6d757b" stroke-width=".18"/>`;
+    let zf = "";
+    for (let a = 152; a < 328; a += 3.2) zf += `M${P(bp(a, -18, 51.2))} L${P(bp(a + 2, -18, 51.2))}`;
+    v += `<path d="${zf}" stroke="#2f3f4c" stroke-width=".55"/>`;
     v += `<path d="M${P(bp(150, -18, 52.6))} L${P(bp(330, -18, 52.6))}" stroke="#f2c62f" stroke-width=".35"/><path d="M${P(bp(150, -18, 53.6))} L${P(bp(330, -18, 53.6))}" stroke="#2f3f4c" stroke-width=".3"/>`;
     /* Verkehr auf allen Spuren: drei Busse (weiß-blau), Lieferwagen, Autos */
     const BUS = "#f2f3f1";
@@ -230,10 +233,15 @@ const DECK_A = [randA(0, -900, 0), -60, 0, 120, 251.5, 380, 503, 560, randA(400,
       [176, 8, 1.5, 4.4, "#9aa3ab"], [198, 20, 1.5, 4.4, "#e8e8e6"], [222, 12, 1.5, 4.4, "#1d1d1d"], [246, 4, 1.5, 4.4, "#d9b02f"], [268, 18, 2.6, 9, "#f4f4f2"], [300, 8, 4, 12, "#f4f4f2"],
       [326, 14, 3.2, 12, BUS], [350, 20, 1.5, 4.4, "#c0392b"], [372, 4, 1.5, 4.4, "#7d8590"], [396, 12, 2.6, 9, "#e2722d"], [424, 18, 1.5, 4.4, "#e8e8e6"], [448, 8, 1.5, 4.4, "#2f6fb6"], [470, 14, 1.5, 4.4, "#1d1d1d"]];
     for (const [a, c, h, l, f] of fz) {
-      const p0 = bp(a, c, 49), p1 = bp(a + l, c, 49), q1 = bp(a + l, c, 49 + h), q0 = bp(a, c, 49 + h);
-      v += `<path d="M${P(p0)} L${P(p1)} L${P(q1)} L${P(q0)} Z" fill="${f}"/>`;
-      if (h > 3) v += `<path d="M${P(bp(a + 1, c, 49 + h * 0.7))} L${P(bp(a + l - 1, c, 49 + h * 0.7))}" stroke="#2f3f4c" stroke-width=".25"/>`;
-      if (f === BUS) v += `<path d="M${P(bp(a, c, 49 + h * 0.3))} L${P(bp(a + l, c, 49 + h * 0.3))}" stroke="#2a5db0" stroke-width=".22"/>`;
+      const Q4 = (a0, a1, z0, z1) => `M${P(bp(a0, c, z0))} L${P(bp(a1, c, z0))} L${P(bp(a1, c, z1))} L${P(bp(a0, c, z1))} Z`;
+      if (h < 2) {
+        /* Auto: Karosserie und schmaleres Dach mit Fenstern */
+        v += `<path d="${Q4(a, a + l, 49, 49 + h * 0.55)}" fill="${f}"/><path d="${Q4(a + l * 0.22, a + l * 0.78, 49 + h * 0.55, 49 + h)}" fill="${f}"/><path d="${Q4(a + l * 0.28, a + l * 0.72, 49 + h * 0.62, 49 + h * 0.92)}" fill="#3a4a58"/>`;
+      } else {
+        /* Bus / Lieferwagen: langer Quader mit Fensterband */
+        v += `<path d="${Q4(a, a + l, 49, 49 + h)}" fill="${f}"/><path d="${Q4(a + 0.8, a + l - 0.6, 49 + h * 0.5, 49 + h * 0.82)}" fill="#2f3f4c"/>`;
+        if (f === BUS) { let fe = ""; for (let t = a + 2.2; t < a + l - 1; t += 1.9) fe += `M${P(bp(t, c, 49 + h * 0.5))} L${P(bp(t, c, 49 + h * 0.82))}`; v += `<path d="${fe}" stroke="${BUS}" stroke-width=".18"/><path d="${Q4(a, a + l, 49 + h * 0.25, 49 + h * 0.35)}" fill="#2a5db0"/>`; }
+      }
     }
     k += v;
   }
@@ -248,7 +256,7 @@ const DECK_A = [randA(0, -900, 0), -60, 0, 120, 251.5, 380, 503, 560, randA(400,
     for (let i = 0; i <= 28; i++) { const a = i * 503 / 28; if (zU(a) < 42) st += `M${P(bp(a, 15, zU(a)))} L${P(bp(a, 15, 42.5))}`; }
     k += `<path d="${h}" stroke="#6f7a80" stroke-width=".55"/><path d="${st}" stroke="#66717a" stroke-width=".9"/>`;
     let lat = "";
-    for (let a = 10; a < 500; a += 36) { const p = bp(a, 24.4, 49), q = bp(a, 24.4, 55); lat += `M${P(p)} L${P(q)}`; }
+    for (let a = 12; a < 500; a += 24) { const p = bp(a, 24.4, 49), q = bp(a, 24.4, 52); lat += `M${P(p)} L${P(q)}`; }
     k += `<path d="${lat}" stroke="#5d676c" stroke-width=".3"/>`;
   }
   k += fach(15, "#737e85", "#ccd3d6", 1.45);
@@ -283,9 +291,9 @@ const DECK_A = [randA(0, -900, 0), -60, 0, 120, 251.5, 380, 503, 560, randA(400,
     { id: "bogen", de: "der Bogen", syl: "BO-gen", it: "l'arco", itSyl: "AR-co", en: "arch", x: bp(430, 15, 0)[0], y: bp(430, 15, zO(430))[1] + 6,
       kunst: flaeche(-11, -8, 22, 16), tipp: "Der Stahlbogen spannt sich 503 Meter weit über den Hafen." },
     { id: "pylon", de: "der Pylon", syl: "py-LON", it: "il pilone", itSyl: "pi-LO-ne", en: "pylon", x: pm[0] - 3, y: pm[1] + 2,
-      kunst: flaeche(-9, -22, 18, 30), tipp: "Die vier Pylone sind 89 Meter hoch und mit Granit verkleidet. Den Bogen tragen sie nicht." },
-    { id: "flagge", de: "die Flagge", syl: "FLAG-ge", it: "la bandiera", itSyl: "ban-DIE-ra", en: "flag", x: pz[0] - 1, y: pz[1] + 3,
-      kunst: flaeche(-11, -14, 21, 16, 0.6), tipp: "Oben wehen die Flagge Australiens und die Flagge der Aborigines." },
+      kunst: flaeche(-9, -22, 18, 30), tipp: "Die vier Pylonen sind 89 Meter hoch und mit Granit verkleidet. Den Bogen tragen sie nicht." },
+    { id: "flagge", de: "die Flagge", syl: "FLAG-ge", it: "la bandiera", itSyl: "ban-DIE-ra", en: "flag", x: bp(245.5, 15, 134)[0] + 1.5, y: pz[1] + 2,
+      kunst: flaeche(-6, -12, 11, 12, 0.6), tipp: "Oben wehen zwei Flaggen: die Flagge Australiens (hier) und daneben die Flagge der Aborigines." },
     { id: "brueckenkletterer", de: "der Brückenkletterer", syl: "BRÜ-cken-klet-te-rer", it: "lo scalatore del ponte", itSyl: "sca-la-TO-re del PON-te", en: "bridge climber", x: kc[0], y: kc[1] + 4,
       kunst: flaeche(-11, -14, 23, 16, 0.6), tipp: "Beim BridgeClimb steigen Brückenkletterer (Mehrzahl: die Brückenkletterer) angeseilt bis auf 134 Meter über das Wasser." });
   const zx = SCHEITEL[0];
@@ -682,17 +690,17 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   let ob = "";
   for (const [mx, my, rx, ry] of massen) ob += `<ellipse cx="${r(mx + rx * 0.12)}" cy="${r(my - ry * 0.42)}" rx="${r(rx * 0.72)}" ry="${r(ry * 0.4)}"/>`;
   S.def(`<clipPath id="${S.id("laubclip")}"><use href="#${S.id("laubdach")}"/></clipPath>`);
-  k += `<g clip-path="url(#${S.id("laubclip")})" fill="#9cc46a" opacity=".38" filter="url(#bw_weich)">${ob}</g>`;
+  k += `<g clip-path="url(#${S.id("laubclip")})" fill="#a6cc72" opacity=".5" filter="url(#bw_weich)">${ob}</g>`;
   /* Blattgruppen am Rand: zwei Symbole (hell oben, dunkel unten), entlang der Massenränder verteilt */
   S.def(`<g id="${S.id("bgh")}"><ellipse cx="0" cy="0" rx="1.7" ry=".7" transform="rotate(-30)"/><ellipse cx="1.4" cy=".6" rx="1.6" ry=".65" transform="rotate(20 1.4 .6)"/><ellipse cx="-1.2" cy=".9" rx="1.5" ry=".6" transform="rotate(50 -1.2 .9)"/><ellipse cx=".4" cy="-1" rx="1.4" ry=".6" transform="rotate(-70 .4 -1)"/></g>`);
   let bg = "";
   for (const [mx, my, rx, ry] of massen) {
-    const n = Math.round(rx * 0.7);
+    const n = Math.round(rx * 1.3);
     for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2 + rnd() * 0.3, x = mx + Math.cos(a) * rx * 0.98, y = my + Math.sin(a) * ry * 1.02;
+      const a = (i / n) * Math.PI * 2 + rnd() * 0.3, f = 0.86 + rnd() * 0.16, x = mx + Math.cos(a) * rx * f, y = my + Math.sin(a) * ry * f;
       if (y < -200 || x < 2) continue;
       const hell = Math.sin(a) < 0.1;
-      bg += `<use href="#${S.id("bgh")}" fill="${hell ? (i % 2 ? "#8ab95e" : "#6f9f4c") : (i % 2 ? "#1e3a20" : "#2c4f2a")}" transform="translate(${r(x)} ${r(y)}) rotate(${Math.round(rnd() * 180)}) scale(${r(0.8 + rnd() * 0.5)})"/>`;
+      bg += `<use href="#${S.id("bgh")}" fill="${hell ? ["#7eae58", "#6a9a4a", "#90bf66"][i % 3] : ["#1a331b", "#244626", "#2f5a2d"][i % 3]}" transform="translate(${r(x)} ${r(y)}) rotate(${Math.round(rnd() * 180)}) scale(${r(0.5 + rnd() * 0.35)})"/>`;
     }
   }
   k += bg;
@@ -849,7 +857,7 @@ const bP = (u, l, w) => { const p = bq(u, l, w); return `${p[0]} ${p[1]}`; };
   /* Wortmarke auf der rechten Wange bei den Stufen (nicht über der Touristin) */
   const AB = { x: 138, y: 206 };
   S.teil({ id: "steinbank", de: "die Steinbank", syl: "STEIN-bank", it: "la panchina di pietra", itSyl: "pan-CHI-na di PIE-tra", en: "stone bench", x: AB.x, y: AB.y, steht: true, kunst: `<g transform="translate(${BANK.x - AB.x} ${BANK.y - AB.y})">${k}</g>`,
-    tipp: "Mrs Macquarie's Chair: 1810 haben Sträflinge diese Bank in den Fels gehauen. Elizabeth Macquarie sah von hier nach den Schiffen aus England." });
+    tipp: "Mrs Macquarie's Chair: 1810 haben Sträflinge diese Bank in den Fels gehauen. Elizabeth Macquarie hielt von hier Ausschau nach Schiffen aus England." });
 }
 {
   /* Touristin (von Hand gezeichnet, Dreiviertel-Rückenansicht): sitzt seitlich auf der Bank (Beine nach

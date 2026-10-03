@@ -77,10 +77,10 @@ const kappen = (pts) => {
 const vieleck = (pts, attr) => { const q = kappen(pts); return q.length > 2 ? `<path d="M${q.map(([x, y]) => `${r(x)} ${r(y)}`).join(" L")} Z" ${attr}/>` : ""; };
 const mische = (a, b, t) => "#" + [0, 2, 4].map((i) => Math.round(parseInt(a.slice(1 + i, 3 + i), 16) * (1 - t) + parseInt(b.slice(1 + i, 3 + i), 16) * t).toString(16).padStart(2, "0")).join("");
 
-S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter id="${S.id("weich")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".35"/></filter>`);
-S.def(`<filter id="${S.id("glimm")}" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.2"/></filter>`);
-S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.2"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("weich")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".35"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("glimm")}" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.2"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.2"/></filter>`);
 /* Sandstein: im letzten Sonnenlicht (warm) und im Schatten (kühl) */
 const FERN = S.lg("fern", [[0, "#f0be92"], [0.5, "#d89a70"], [1, "#b07a5e"]], 0, 0, 1, 0);
 const FERN_D = S.lg("fernd", [[0, "#b07c66"], [1, "#8e6456"]], 0, 0, 1, 0);

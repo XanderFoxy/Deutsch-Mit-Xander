@@ -69,16 +69,16 @@ const gruppe = (id, x, y, svg, achse = W) => { spiegel.push({ id, x, y, achse })
 const anker = (ax, ay, svg) => `<g transform="translate(${-ax} ${-ay})">${svg}</g>`;
 const mische = (a, b, t) => "#" + [0, 2, 4].map((i) => Math.round(parseInt(a.slice(1 + i, 3 + i), 16) * (1 - t) + parseInt(b.slice(1 + i, 3 + i), 16) * t).toString(16).padStart(2, "0")).join("");
 /* Figuren aus mensch.js auf halbe Einheiten runden: gleiches Bild, deutlich kleinere Datei (Ladezeit) */
-const leicht = (svg) => svg
-  .replace(/ d="([^"]*)"/g, (m, d) => ` d="${d.replace(/-?\d*\.?\d+/g, (n) => String(Math.round(+n * 2) / 2))}"`)
-  .replace(/ (x|y|x1|y1|x2|y2|cx|cy)="(-?[\d.]+)"/g, (m, a, n) => ` ${a}="${Math.round(+n * 2) / 2}"`);
+const leicht = (svg, q = 2) => svg
+  .replace(/ d="([^"]*)"/g, (m, d) => ` d="${d.replace(/-?\d*\.?\d+/g, (n) => String(Math.round(+n * q) / q))}"`)
+  .replace(/ (x|y|x1|y1|x2|y2|cx|cy)="(-?[\d.]+)"/g, (m, a, n) => ` ${a}="${Math.round(+n * q) / q}"`);
 /* langer Abendschatten nach links vorn (Sonne rechts hinten, tief) */
 const langschatten = (x, y, breite, laenge, a = 0.3) => `<path d="M${r(x - breite / 2)} ${r(y)} L${r(x + breite / 2)} ${r(y)} L${r(x + breite / 2 - laenge)} ${r(y + laenge * 0.22)} L${r(x - breite / 2 - laenge * 1.02)} ${r(y + laenge * 0.22)} Z" fill="#20180e" opacity="${a}" filter="url(#bw_weich)"/>`;
 
-S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2"/></filter>`);
-S.def(`<filter id="${S.id("rauch")}" x="-100%" y="-50%" width="300%" height="200%"><feGaussianBlur stdDeviation=".9"/></filter>`);
-S.def(`<filter id="${S.id("spiegel")}" x="-2%" y="-5%" width="104%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".014 .38" numOctaves="1" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.4" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".6 .25"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("rauch")}" x="-100%" y="-50%" width="300%" height="200%"><feGaussianBlur stdDeviation=".9"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("spiegel")}" x="-2%" y="-5%" width="104%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".014 .38" numOctaves="1" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.4" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".6 .25"/></filter>`);
 /* Gegenlicht: Stein im kühlen Schatten, warme Kante rechts */
 const DOMSTEIN = S.lg("domstein", [[0, "#7e8290"], [0.7, "#9a9ca4"], [0.92, "#b8b2aa"], [1, "#f0d2a8"]], 0, 0, 1, 0);
 const DOMSTEIN_H = S.lg("domsteinh", [[0, "#6e7282"], [1, "#8e909a"]], 0, 0, 1, 0);
@@ -595,11 +595,12 @@ const BRUECKE_LEUTE = [];
   k += `<path d="M1 -82 Q22 -96 52 -114 L54 -110 Q26 -92 4 -76 Z" fill="${AST}"/>`;
   /* Krone: breite Kuppel aus dunklen Laubmassen (weich), am Rand handförmige Blätter, Gegenlicht oben rechts */
   const KY = -Y;
+  let krone = "";
   const rand = [[-20, 100], [-6, 92], [8, 86], [22, 80], [34, 72], [46, 66], [58, 61], [72, 56], [86, 49], [98, 42], [106, 34], [110, 24], [108, 12], [100, 2], [92, -6], [-20, -6]];
-  k += `<path d="M${rand.map(([x, y]) => `${x} ${r(KY + y)}`).join(" L")} Z" fill="#1c3418"/>`;
+  krone += `<path d="M${rand.map(([x, y]) => `${x} ${r(KY + y)}`).join(" L")} Z" fill="#1c3418"/>`;
   let lm = "";
   for (let i = 0; i < 26; i++) { const x = -14 + rnd() * 116, y = rnd() * 70; if (y > 100 - x * 0.62) continue; lm += `<ellipse cx="${r(x)}" cy="${r(KY + y)}" rx="${r(7 + rnd() * 9)}" ry="${r(4 + rnd() * 5)}" fill="${["#24441f", "#2e5426", "#1a3216"][i % 3]}"/>`; }
-  k += `<g filter="url(#${S.id("rauch")})">${lm}</g>`;
+  krone += `<g filter="url(#${S.id("rauch")})">${lm}</g>`;
   const blatt = (cx, cy, gr, dreh, ton) => {
     let g = "";
     const Fa = [["#1e3a1a", "#26461f", "#2e5426"], ["#2e5426", "#3a6a2e", "#467a34"], ["#6a9a3a", "#86b44a", "#a8cc62"]][ton];
@@ -613,10 +614,11 @@ const BRUECKE_LEUTE = [];
   /* Blätter entlang des unteren Kronenrands (hängend) und oben rechts im Gegenlicht */
   for (let i = 0; i < rand.length - 2; i++) {
     const [x0, y0] = rand[i], [x1, y1] = rand[i + 1];
-    for (let t = 0; t < 1; t += 0.5) { const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t; k += blatt(r(x), r(KY + y - 1), 6 + rnd() * 3, 150 + rnd() * 60, x > 80 ? 2 : rnd() < 0.5 ? 1 : 0); }
+    for (let t = 0; t < 1; t += 0.75) { const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t; krone += blatt(r(x), r(KY + y - 1), 6 + rnd() * 3, 150 + rnd() * 60, x > 80 ? 2 : rnd() < 0.5 ? 1 : 0); }
   }
-  for (let i = 0; i < 8; i++) { const x = 20 + rnd() * 80, y = 4 + rnd() * 40; if (y > 90 - x * 0.62) continue; k += blatt(r(x), r(KY + y), 6 + rnd() * 3, -40 + rnd() * 80, x > 60 ? 2 : 1); }
-  for (const [x, y] of [[24, 60], [44, 50], [10, 74], [70, 42]]) { const yy = KY + y; k += `<circle cx="${x}" cy="${r(yy)}" r="1.9" fill="#94bc56"/>`; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; k += `<line x1="${r(x + Math.cos(a) * 1.7)}" y1="${r(yy + Math.sin(a) * 1.7)}" x2="${r(x + Math.cos(a) * 2.6)}" y2="${r(yy + Math.sin(a) * 2.6)}" stroke="#6a8a34" stroke-width=".25"/>`; } }
+  for (let i = 0; i < 8; i++) { const x = 20 + rnd() * 80, y = 4 + rnd() * 40; if (y > 90 - x * 0.62) continue; krone += blatt(r(x), r(KY + y), 6 + rnd() * 3, -40 + rnd() * 80, x > 60 ? 2 : 1); }
+  for (const [x, y] of [[24, 60], [44, 50], [10, 74], [70, 42]]) { const yy = KY + y; krone += `<circle cx="${x}" cy="${r(yy)}" r="1.9" fill="#94bc56"/>`; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; krone += `<line x1="${r(x + Math.cos(a) * 1.7)}" y1="${r(yy + Math.sin(a) * 1.7)}" x2="${r(x + Math.cos(a) * 2.6)}" y2="${r(yy + Math.sin(a) * 2.6)}" stroke="#6a8a34" stroke-width=".25"/>`; } }
+  k += `<g transform="translate(-20 0)">${krone}</g>`;
   S.teil({ id: "kastanie", de: "die Kastanie", syl: "kas-TA-nie", it: "l'ippocastano", itSyl: "ip-po-CA-sta-no", en: "horse chestnut tree", x: X - 2, y: Y - 40, steht: true, kunst: anker(-2, -40, k),
     tipp: "Früher pflanzte man Kastanien über die Bierkeller – ihr Schatten hielt das Bier kühl." });
 }
@@ -637,7 +639,7 @@ const Q = 1.45;                            /* Maßstab der Dinge auf dem Tisch *
     kleidung: { oberteil: { stueck: "bluse", farbe: "gelb" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "sandale" } } }, 1.66 * s);
   let k = `<rect x="-34" y="${r(-0.47 * s - 2.6)}" width="68" height="2.8" rx=".5" fill="#8a5a30"/><rect x="-34" y="${r(-0.47 * s + 0.2)}" width="68" height="1" fill="#4a2e18"/>`;
   for (const sx of [-1, 1]) k += `<path d="M${sx * 26} 0 L${sx * 31} ${r(-0.45 * s)} M${sx * 31} 0 L${sx * 26} ${r(-0.45 * s)}" stroke="#3a3e44" stroke-width="1.3"/>`;
-  k += `<g transform="translate(-16 0)">${leicht(frau.svg)}</g><g transform="translate(16 0)">${leicht(mann.svg)}</g>`;
+  k += `<g transform="translate(-16 0)">${leicht(frau.svg, 1)}</g><g transform="translate(16 0)">${leicht(mann.svg, 1)}</g>`;
   S.teil({ id: "gaeste", de: "die Gäste", syl: "GÄS-te", it: "gli ospiti", itSyl: "O-spi-ti", en: "guests", x: TI.x + 12, y: Y - 40, kunst: anker(0, -40, k),
     tipp: "Die Gäste sitzen am Biertisch und schauen auf die Donau und den Dom." });
 }
