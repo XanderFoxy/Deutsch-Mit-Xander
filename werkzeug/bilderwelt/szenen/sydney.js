@@ -109,7 +109,7 @@ const taf = (x, y, sk) => `<use href="#${S.id("taf")}" transform="translate(${r(
 /* =====================================================================
    KULISSE — Himmel, Nordufer, The Rocks
    ===================================================================== */
-S.hinten(`<rect width="400" height="${HOR + 6}" fill="${S.lg("himmel", [[0, "#3573b8"], [0.5, "#78a9d6"], [0.86, "#c3d9e8"], [1, "#eae9df"]])}"/>`);
+S.hinten(`<rect width="400" height="${HOR + 6}" fill="${S.lg("himmel", [[0, "#3371b6"], [0.45, "#72a6d6"], [0.72, "#b6d2e8"], [0.88, "#ecdcc8"], [1, "#f6e4cc"]])}"/>`);
 {
   /* Schönwetter-Cumulus am Morgen: klein und flach, scharfe Kanten, gerade graue Unterseite,
      oben sonnenbeschienen; Kuppen durch feine Schattenlinien getrennt (kein Weichzeichner) */
@@ -151,7 +151,6 @@ S.hinten(`<rect width="400" height="${HOR + 6}" fill="${S.lg("himmel", [[0, "#35
   c += `<rect x="236" y="144.6" width="164" height="4" fill="#8a9a92"/>`;
   c += `</g>`;
   /* Morgendunst über North Sydney */
-  c += `<rect x="230" y="96" width="170" height="54" fill="${S.lg("dunstnord", [[0, "#e9eef0", 0], [0.6, "#e9eef0", 0.35], [1, "#f1efe6", 0.5]])}"/>`;
   S.hinten(c);
 }
 /* Südufer links: The Rocks im Dunst */
@@ -160,7 +159,9 @@ S.hinten(`<rect width="400" height="${HOR + 6}" fill="${S.lg("himmel", [[0, "#35
   c += `<path d="M0 149 L0 128 Q20 126 34 128.6 L40 124 L58 125 L66 129 L86 130 L86 149 Z" fill="#b5b3a8"/>`;
   for (const [x, w, h] of [[2, 9, 17], [12, 7, 13], [21, 10, 20], [33, 8, 15], [44, 11, 18], [57, 7, 14], [66, 9, 12]]) c += `<rect x="${x}" y="${r(140 - h)}" width="${w}" height="${h}" fill="${["#c8bfa9", "#bdb6a6", "#cfc6b3", "#b9b4a8"][x % 4]}"/>`;
   c += `</g>`;
-  c += `<rect x="0" y="118" width="90" height="32" fill="${S.lg("dunstsued", [[0, "#e9eef0", 0], [1, "#eef0ea", 0.35]])}"/>`;
+  /* Morgendunst über dem Hafen: ein Band über die ganze Bildbreite, oben unsichtbar, am Ufer ≈ 0,35
+     (kein Kasten, keine senkrechte Kante) */
+  c += `<rect x="0" y="116" width="400" height="34" fill="${S.lg("dunstband", [[0, "#f1ebe2", 0], [0.6, "#eef0ec", 0.22], [1, "#f3eee4", 0.38]])}"/>`;
   S.hinten(c);
 }
 
@@ -341,7 +342,9 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
   const lerp = (u, v, t) => [u[0] + (v[0] - u[0]) * t, u[1] + (v[1] - u[1]) * t];
   const qb = (a, c, b, t) => [(1 - t) * (1 - t) * a[0] + 2 * t * (1 - t) * c[0] + t * t * b[0], (1 - t) * (1 - t) * a[1] + 2 * t * (1 - t) * c[1] + t * t * b[1]];
   /* Fliesen-Muster: glänzend weiße Chevron-Bänder auf matt cremefarbenem Grund (eine Kachel, gedreht je Schale) */
-  S.def(`<pattern id="${S.id("chev")}" width="2.6" height="2" patternUnits="userSpaceOnUse"><path d="M0 0L1.3 .9L2.6 0V.6L1.3 1.5L0 .6Z" fill="#fffdf7" opacity=".85"/><path d="M0 .6L1.3 1.5L2.6 .6" stroke="#d6c8aa" stroke-width=".1" fill="none"/></pattern>`);
+  /* Fliesen-Muster: im Wechsel eine Reihe glänzend weißer Chevrons (mit Glanzpunkt) und eine Reihe matt
+     cremefarbener (eine Kachel, gedreht je Schale) */
+  S.def(`<pattern id="${S.id("chev")}" width="2.6" height="4" patternUnits="userSpaceOnUse"><path d="M0 0L1.3 .9L2.6 0V.6L1.3 1.5L0 .6Z" fill="#fffefa"/><circle cx="1.3" cy=".95" r=".2" fill="#fff"/><path d="M0 2L1.3 2.9L2.6 2V2.6L1.3 3.5L0 2.6Z" fill="#e9dfc9" opacity=".75"/><path d="M0 .6L1.3 1.5L2.6 .6M0 2.6L1.3 3.5L2.6 2.6" stroke="#d6c8aa" stroke-width=".1" fill="none"/></pattern>`);
   const schale = (e, b, t, p, rueck, hinten = 0) => {
     const B0 = op(b[0], e, b[1]), T = op(t[0], e, t[1]), Pp = op(p[0], e, SOCKEL_Z), B0f = op(b[0] + (rueck ? 5 : -5), e, SOCKEL_Z);
     const dir = rueck ? -1 : 1;
@@ -350,9 +353,12 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
     const lL = len(T, Pp);
     const cl = [(T[0] + Pp[0]) / 2 - dir * 0.12 * lL, (T[1] + Pp[1]) / 2];
     /* stumpfe, dicke Spitze: ≈ 1,6 Einheiten vor T abbiegen, über T gerundet (r ≈ 0,8) */
-    const uA = 1 - 1.6 / gL, uB = 1.6 / lL;
+    /* stumpfe, dicke Nase: Grat ≈ 2,4 vor T abbiegen, Lippe ≈ 3 unter T beginnen; der Bogen dazwischen
+       läuft über T hinaus (kleiner Überhang), so dass vorn eine runde, helle Nase entsteht */
+    const uA = 1 - 2.4 / gL, uB = 3 / lL;
     const Ta = qb(B0, cg, T, uA), Tb = qb(T, cl, Pp, uB), cg2 = lerp(B0, cg, uA);
-    const d = `M${P(Pp)} L${P(B0f)} L${P(B0)} Q${P(cg2)} ${P(Ta)} Q${P(T)} ${P(Tb)} Q${P(cl)} ${P(Pp)} Z`;
+    const mT = [(Ta[0] + Tb[0]) / 2, (Ta[1] + Tb[1]) / 2], Tn = [T[0] + (T[0] - mT[0]) * 0.55, T[1] + (T[1] - mT[1]) * 0.55];
+    const d = `M${P(Pp)} L${P(B0f)} L${P(B0)} Q${P(cg2)} ${P(Ta)} Q${P(Tn)} ${P(Tb)} Q${P(cl)} ${P(Pp)} Z`;
     SPIEGEL_OP.push({ B0, T, Pp, e, b, t, p });
     const id = S.id("s" + schalenNr++);
     S.def(`<path id="${id}p" d="${d}"/><clipPath id="${id}"><use href="#${id}p"/></clipPath>`);
@@ -367,7 +373,7 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
     g += `<path d="${rip}" stroke="#cfc3a8" stroke-width=".18" fill="none"/>`;
     /* Lippe als helles Band (Schalenstärke ≈ 0,6), Grat mit Lichtkante */
     g += `<path d="M${P(B0)} Q${P(cg2)} ${P(Ta)}" stroke="#fffdf6" stroke-width=".8" fill="none"/>`;
-    g += `<path d="M${P(Ta)} Q${P(T)} ${P(Tb)} Q${P(cl)} ${P(Pp)}" stroke="#fffaf0" stroke-width="1.3" fill="none"/></g>`;
+    g += `<path d="M${P(Ta)} Q${P(Tn)} ${P(Tb)} Q${P(cl)} ${P(Pp)}" stroke="#fffaf0" stroke-width="1.3" fill="none"/><path d="M${P(Ta)} Q${P(Tn)} ${P(Tb)}" stroke="#fff6dc" stroke-width="2" fill="none"/></g>`;
     return { svg: g, T, Pp, B0, cl, Tb, cg };
   };
   /* Innenseite einer Rückschale (Süden): deutlich dunkler, kühles Grau mit Rippen */
@@ -378,18 +384,35 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
     for (let i = 1; i < 5; i++) ri += `M${P(F0)} L${P(qb(sch.Tb, sch.cl, sch.Pp, i / 5))}`;
     return g + `<path d="${ri}" stroke="#8f887c" stroke-width=".18"/>`;
   };
-  /* Nord-Glaswand: halbtransparentes Topasglas, unter der Lippe dunkler, in drei Facetten nach außen geknickt,
-     diagonaler Spiegelglanz des Himmels */
-  const GLAS = S.lg("glas", [[0, "#5a3e24", 0.92], [0.45, "#a9773c", 0.7], [1, "#d9b077", 0.6]], 0, 0, 0, 1);
-  const glasvorhang = (sch, e, sFuss, auf) => {
-    const F0 = op(sFuss, e, SOCKEL_Z), F1 = op(sFuss - 4, e + auf, SOCKEL_Z), K = qb(sch.Tb, sch.cl, sch.Pp, 0.45);
-    let g = `<path d="M${P(sch.Tb)} L${P(F0)} L${P(F1)} L${P(K)} Q${P(lerp(sch.cl, sch.Tb, 0.3))} ${P(sch.Tb)} Z" fill="${GLAS}"/>`;
-    g += `<path d="M${P(K)} L${P(F1)} L${P(sch.Pp)} Q${P(lerp(sch.cl, sch.Pp, 0.4))} ${P(K)} Z" fill="${GLAS}" opacity=".85"/>`;
-    let sp = `M${P(sch.Tb)} L${P(F0)} M${P(K)} L${P(F1)}`;
-    for (const f of [0.25, 0.5, 0.75]) sp += `M${P(lerp(sch.Tb, K, f))} L${P(lerp(F0, F1, f))}`;
-    g += `<path d="${sp}" stroke="#f0d9a8" stroke-width=".22" opacity=".85"/>`;
-    const gl = [lerp(sch.Tb, F0, 0.25), lerp(sch.Tb, F0, 0.45), lerp(K, F1, 0.75), lerp(K, F1, 0.5)];
-    g += `<path d="M${gl.map(P).join(" L")} Z" fill="#e8f2f8" opacity=".35"/>`;
+  /* Nord-Glaswand: hängt INNERHALB der Schalenöffnung von der Lippe bis auf den Sockel (Unterkante genau
+     unter der Lippe). Drei große, leicht nach außen geknickte Facetten aus Topasglas, halbtransparent,
+     oben unter der Lippe dunkel (Schatten der Schale), unten heller; dünne, gleich weite senkrechte
+     Pfosten; ein schräger Himmelsreflex über eine Facette */
+  let glasNr = 0;
+  const glasvorhang = (sch, e) => {
+    const id = S.id("gl" + glasNr++);
+    /* Lippe abtasten (von der Nase bis zum Fußpunkt) */
+    const lippe = [...Array(13)].map((_, i) => qb(sch.Tb, sch.cl, sch.Pp, i / 12));
+    /* Sockelpunkt senkrecht unter der Nase suchen */
+    let sa = 100, sb = 220;
+    for (let i = 0; i < 30; i++) { const m = (sa + sb) / 2; if (op(m, e, SOCKEL_Z)[0] < sch.Tb[0]) sa = m; else sb = m; }
+    const F0 = op((sa + sb) / 2, e, SOCKEL_Z), Pf = sch.Pp;
+    const K1 = lippe[4], K2 = lippe[8], B1 = lerp(F0, Pf, 0.33), B2 = lerp(F0, Pf, 0.66);
+    B1[0] += 0.8; B2[0] += 0.5;
+    S.def(`<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(sch.Tb[1])}" x2="0" y2="${r(F0[1])}"><stop offset="0" stop-color="#3e2812" stop-opacity=".85"/><stop offset=".45" stop-color="#9a6a32" stop-opacity=".68"/><stop offset="1" stop-color="#e0b478" stop-opacity=".58"/></linearGradient>`);
+    const fac = [[sch.Tb, ...lippe.slice(1, 4), K1, B1, F0], [K1, ...lippe.slice(5, 8), K2, B2, B1], [K2, ...lippe.slice(9, 12), Pf, B2]];
+    let g = fac.map((f, i) => `<path d="M${f.map(P).join(" L")} Z" fill="url(#${id})" opacity="${[1, 0.9, 0.8][i]}"/>`).join("");
+    /* Facettenkanten und Pfosten */
+    let pf = `M${P(K1)} L${P(B1)} M${P(K2)} L${P(B2)}`;
+    const x0 = Pf[0], x1 = sch.Tb[0], n = Math.max(3, Math.round((x1 - x0) / 1.6));
+    const lipY = (x) => { for (let i = 0; i < 12; i++) { const a2 = lippe[i], b2 = lippe[i + 1]; if ((x - a2[0]) * (x - b2[0]) <= 0) return a2[1] + (b2[1] - a2[1]) * (x - a2[0]) / ((b2[0] - a2[0]) || 1); } return null; };
+    for (let j = 1; j < n; j++) { const x = x0 + (x1 - x0) * j / n, yo = lipY(x), yu = F0[1] + (Pf[1] - F0[1]) * (x - F0[0]) / ((Pf[0] - F0[0]) || 1); if (yo != null && yu > yo) pf += `M${r(x)} ${r(yo + 0.3)}V${r(yu)}`; }
+    g += `<path d="${pf}" stroke="#f3dcae" stroke-width=".2" opacity=".8"/>`;
+    /* Himmelsreflex schräg über die mittlere Facette */
+    const r1 = lerp(K1, B1, 0.35), r2 = lerp(K1, B1, 0.6), r3 = lerp(K2, B2, 0.75), r4 = lerp(K2, B2, 0.5);
+    g += `<path d="M${P(r1)} L${P(r2)} L${P(r3)} L${P(r4)} Z" fill="#dcecf6" opacity=".38"/>`;
+    /* Sockelkante unter dem Glas: Lichtlinie */
+    g += `<path d="M${P(F0)} L${P(Pf)}" stroke="#f6e4c8" stroke-width=".35"/>`;
     return g;
   };
   /* Restaurant (Südwest, klein, an der Freitreppe) */
@@ -401,14 +424,14 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
   const chA2 = schale(CH, [102, 42], [136, 56], [125], false, 1);
   const chB = schale(CH, [76, 30], [44, 47], [57], true, 1);
   const chA3 = schale(CH, [68, 29], [112, 67], [100], false, 1);
-  k += glasvorhang(chA1, CH, 172, 10) + chA1.svg + chA2.svg + unterseite(chB, CH, 42) + chB.svg + chA3.svg;
+  k += glasvorhang(chA1, CH) + chA1.svg + chA2.svg + unterseite(chB, CH, 42) + chB.svg + chA3.svg;
   /* Ostgruppe: Joan Sutherland Theatre (vorn) */
   const jA1 = schale(JS, [124, 31], [156, 39], [148]);
   const jA2 = schale(JS, [99, 38], [132, 50], [122]);
   const jB = schale(JS, [74, 27], [47, 41], [59], true);
   const jA3 = schale(JS, [68, 26], [110, 60], [99]);
   const gwFuss = op(170, JS, SOCKEL_Z);
-  k += glasvorhang(jA1, JS, 170, 14) + jA1.svg + jA2.svg + unterseite(jB, JS, 45) + jB.svg + jA3.svg;
+  k += glasvorhang(jA1, JS) + jA1.svg + jA2.svg + unterseite(jB, JS, 45) + jB.svg + jA3.svg;
   /* Menschen auf dem Sockel und auf der Freitreppe (winzig, 1,7 m) */
   let leute = "";
   const farben = ["#c0392b", "#2f6fb6", "#f2c62f", "#ffffff", "#2a2a2a", "#3c8f5a", "#e58fa1"];
