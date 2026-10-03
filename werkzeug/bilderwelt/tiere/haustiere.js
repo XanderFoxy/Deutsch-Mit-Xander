@@ -1218,7 +1218,7 @@ module.exports = [
           form(T, [[x + 0.05, -0.08], [x + len * 0.9, -0.08], [x + len * 0.9, -0.24], [x + 0.1, -0.26]], mix("#d6a39a", "#000000", tint)) +
           zehen(x + len - n * l * 0.85 + 0.1, n, l, mix("#d6a39a", "#000000", tint), kl) +
           /* weißes Fell über den Zehenwurzeln */
-          saum(T, [[x + 0.2, -0.9], [x + len * 0.5, -1.0], [x + len * 0.92, -0.62], [x + len * 0.6, -0.5], [x + 0.3, -0.6]], fern ? SB : SW, { abstand: 0.07, flow: () => 20, licht: () => (fern ? 0.2 : 0.8) }) + "</g>";
+          saum(T, [[x + 0.3, -0.92], [x + len * 0.5, -1.0], [x + len * 0.85, -0.66], [x + len * 0.6, -0.55], [x + 0.35, -0.65]], SW, { abstand: 0.12, flow: () => 15, licht: () => (fern ? 0.1 : 0.8) }) + "</g>";
       };
       /* ferne Füße: 20–25 % dunkler, halb verdeckt */
       s += fuss(-9.5, 4.8, 2, 0.42, 0.32, 1) + fuss(7.4, 2.2, 2, 0.4, 0.26, 1);

@@ -765,25 +765,28 @@ function velociraptor(T) {
 
   /* ---------- Schwanzfächer: ab der Wurzel befiedert, im hinteren Drittel 13 E breit, Spitze rund ---------- */
   const cy = yBei([[8, -48.4], [30, -48.7], [60, -48.6], [92, -47.2]]);
-  const hw = (x) => x > 64 ? 4 + (92 - x) / 28 * 0.8 : x > 30 ? 4.8 + (64 - x) / 34 * 2.2 : 7 * Math.sqrt(Math.max(0, (x - 6) / 24));
+  const hw = (x) => x > 64 ? 2.6 + (92 - x) / 28 * 1.6 : x > 28 ? 4.2 + (64 - x) / 36 * 2.8 : 7 * Math.sqrt(Math.max(0, (x - 6) / 22));
   const fo = [], fu = [], kiele = [];
   for (let x = 92, i = 0; x > 6.6; x -= F ? 2.5 : 6, i++) {
     const tipp = (T.rnd() - 0.3) * 0.5 * Math.min(1, (92 - x) / 30);
-    const z = 0.15 + 0.45 * Math.min(1, (92 - x) / 40);
+    const z = 0;
     fo.push([x, cy(x) - hw(x)], [x - 1.25, cy(x - 1.25) - hw(x - 1.25) - z - tipp]);
     fu.push([x, cy(x) + hw(x)], [x - 1.25, cy(x - 1.25) + hw(x - 1.25) + z + tipp]);
     if (x < 80) kiele.push([[x + 4, cy(x) - hw(x) * 0.3], [x + 1.4, cy(x) - hw(x) * 0.7], [x - 1, cy(x) - hw(x) * 0.95]], [[x + 4, cy(x) + hw(x) * 0.3], [x + 1.4, cy(x) + hw(x) * 0.7], [x - 1, cy(x) + hw(x) * 0.95]]);
   }
   const faecher = [[94, cy(94) - 4.4]].concat(fo, [[5.8, cy(6) + 0.1]], fu.slice().reverse(), [[94, cy(94) + 4.4]]);
   const iFa = pfad(T, faecher);
-  let fa = fuell(iFa, T.lg("faecher", [[0, "#5e4732"], [0.5, "#765c42"], [1, "#8a7052"]], 0, -56, 0, -40, US));
+  let fa = fuell(iFa, T.lg("faecher", [[0, "#6a5038"], [0.5, "#86694a"], [1, "#96795a"]], 0, -56, 0, -40, US));
   let fin = (F ? linien(T, kiele, "#2a1d12", 0.12, 0.18) : "");
   /* Bänder der Wölbung nach gebogen, Kontrast −40 %, zu den Federspitzen weich auslaufend */
   let bd = "";
   for (const x of [78, 64, 50, 37, 25, 13]) bd += `M${x} -58q-2.2 9.6 0 19.4h3.4q-2.2-9.8 0-19.4z`;
-  fin += weichG(T, 0.7, [0, -60, 96, -36], `<path d="${bd}" fill="${DK}" opacity="${OP(F ? 0.3 : 0.22)}"/>`);
+  fin += F ? weichG(T, 0.7, [0, -60, 96, -36], `<path d="${bd}" fill="${DK}" opacity=".26"/>`) : "";
   fin += weichG(T, 1.4, [0, -60, 96, -36], L([fo.filter((_, i) => i % 2)], "#e8d4ae", 1.6, 0.3) + L([fu.filter((_, i) => i % 2)], SC, 1.8, 0.3) + L([[[90, -48.4], [50, -49.8], [12, -49.2]]], LI, 1.4, 0.18));
   fa += geklippt(T, [iFa], fin);
+  /* Rand aus einzelnen, verschieden langen, überlappenden Steuerfedern (keine Wiederholung) */
+  const eO = [], eU = []; for (let x = 86; x > 8; x -= 4) { eO.push([x, cy(x) - hw(x) + 1.2]); eU.push([x, cy(x) + hw(x) - 1.2]); }
+  fa += lappen(eU, 18, 5.4, 2.6, 172, [0, -60, 96, -36], { fill: "#7c6246" }) + lappen(eO, 18, 5.4, 2.6, 190, [0, -60, 96, -36], { fill: "#6a5038" }) + lappen([[12, -48.8], [8, -48.6]], 3, 6, 3, 180, [0, -60, 96, -36], { fill: "#6e5440" });
 
   /* ---------- Zusammensetzen ---------- */
   let h = `<g transform="rotate(14 100 -44) translate(-1 -.6)" filter="${dunkler(T, 0.68)}"><use href="#${iUB}"/><use href="#${iSG}"/></g>` + `<use href="#${iW}" transform="translate(2.2 -1.4)" filter="${dunkler(T, 0.6)}"/>`;
@@ -818,7 +821,7 @@ function velociraptor(T) {
     buckel(T, flaechenPunkte(T, [[166, -58.8], [185.4, -58.6], [185.4, -57.9], [166, -57.4]], 0.7, 0.2, 0.26), null, { opF: 0.18, opL: 0.08 });
   k += geklippt(T, [iL, iK, iH], inn);
   /* Kontur unregelmäßig aufbrechen: Nacken, Rücken, Brust */
-  k += lappen([[158.4, -61.4], [154.6, -61.2], [150.6, -59.6], [146.6, -56.6], [142.4, -53.4], [134, -51.8], [120, -52.4]], 12, 6, 2.2, 192, [96, -66, 164, -46]) +
+  k += lappen([[157.6, -61], [154, -60.6], [150.6, -59], [146.6, -56], [142.4, -52.8], [134, -51.2], [120, -51.8]], 12, 5, 2.2, 182, [96, -66, 164, -46]) +
     lappen([[161.4, -52.2], [158.6, -48], [155.4, -44], [151.6, -40.2]], 6, 4.6, 2, 140, [140, -58, 166, -34]);
   k += ell(184.4, -59.8, 0.5, 0.26, -10, "#0d0905", 0.95);
 

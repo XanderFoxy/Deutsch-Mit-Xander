@@ -408,16 +408,19 @@ function gorilla(T) {
   const kante = (pts, n, w, L0, L1, o = {}) => W.kantenStraehnen(pts, n, w, L0, L1, 0.32, (x, y, z) => STR[z > 0.75 ? 3 : z > 0.4 ? 2 : z > 0.15 ? 1 : 0], Object.assign({ kante: 0, szene: 0.25 }, o));
   /* Wuchsrichtung Rumpf: Rücken nach hinten, Flanke nach unten, Schulter mit Wirbel zum Arm */
   const rumpfW = (x, y) => (x > 76 ? 120 + (y + 90) * 0.4 + Math.sin((x + y) * 0.3) * 10 : y < -100 ? 186 : 186 - clamp((y + 100) / 40) * 90);
+  /* Haarmuster (Kacheln): Sattel kurz und anliegend, Schwarz lang und strähnig */
+  const SM = W.haarMuster("sat", 5, 3.4, 110, 1.1, [["#e6e5e2", 0.11, 0.75], ["#b8b8b8", 0.11, 0.7], ["#8a8986", 0.11, 0.7], ["#3a3836", 0.11, 0.6]], 0.15);
+  const BM = W.haarMuster("schw", 12, 9, 80, 6, [["#000", 0.16, 0.7], ["#252428", 0.15, 0.6], ["#3e3e44", 0.14, 0.55], ["#5c5c62", 0.12, 0.5]], 0.5);
   let s = "";
 
   /* ---------- ferne Glieder: Körperton, ~30 % dunkler, teilweise verdeckt ---------- */
   s += gorillaFuss(W, T, -21, true);
   const beinF = [[14, -80], [26, -68], [30, -56], [28, -44], [22, -34], [17, -24], [15, -16], [10, -12], [2, -12], [-2, -20], [-3, -32], [-1, -44], [2, -56], [6, -68]];
-  s += W.vol("v", 3, W.teil(beinF, fellG("bf", "#1f1d1c", "#141312", "#0b0a0a"), fell(beinF, 90, (x, y) => (y < -50 ? 112 : 98), 4, { licht: (x, y) => licht(x, y) * 0.6 }), { rand: 0 }) +
+  s += W.vol("v", 3, W.teil(beinF, fellG("bf", "#1f1d1c", "#141312", "#0b0a0a"), W.musterFlaeche(beinF, BM(102), 0.7) + fell(beinF, 30, (x, y) => (y < -50 ? 112 : 98), 4, { licht: (x, y) => licht(x, y) * 0.6 }), { rand: 0 }) +
     kante([[-3, -34], [-2, -20], [2, -12], [10, -12]], 20, 96, 2, 4), { tiefe: 3, umgebung: 0.5 });
   s += knoechelhand(W, T, 118.6, true);
   const armF = [[94, -106], [108, -104], [115, -92], [117, -76], [120, -60], [123, -46], [125.4, -32], [126, -19.4], [111.4, -19.4], [108, -30], [104, -46], [100, -62], [96, -84]];
-  s += W.vol("v", 3.4, W.teil(armF, fellG("af", "#211f1e", "#151413", "#0b0a0a"), fell(armF, 120, 98, 6, { licht: (x, y) => licht(x, y) * 0.6 + (x > 114 ? 0.12 : 0) }), { rand: 0 }) +
+  s += W.vol("v", 3.4, W.teil(armF, fellG("af", "#211f1e", "#151413", "#0b0a0a"), W.musterFlaeche(armF, BM(98), 0.7) + fell(armF, 40, 98, 6, { licht: (x, y) => licht(x, y) * 0.6 + (x > 114 ? 0.12 : 0) }), { rand: 0 }) +
     kante([[96, -84], [100, -62], [104, -46], [108, -30], [111.4, -19.4]], 36, 104, 3, 7) + kante([[126.4, -20.6], [118.6, -20], [111, -19.6]], 24, 90, 2, 4.4), { tiefe: 3, umgebung: 0.5 });
 
   /* ---------- Rumpf mit Silbersattel (kurzes, anliegendes Haar; Grenze über 6–9 cm meliert) ---------- */
@@ -437,9 +440,12 @@ function gorilla(T) {
     /* Formlicht: Trapezbuckel oben im Licht, Brustkorb hinter dem Arm gewölbt, Bauchsaum warmes Bodenlicht */
     W.weich([[86, -128, 14, 3.6, -6, "#5a5c62", 0.45], [100, -78, 10, 14, 0, "#000", 0.45], [66, -50.6, 30, 1.6, 2, "#5a4e44", 0.5]], 3) +
     W.weich([`<use href="#${satId}" fill="${satG}"/>`], 3.4) +
-    fell(schwarzFeld, 300, rumpfW, 4.4) +
-    W.haare(sattel, 900, satW, 1.3, SILBER, { licht: satLicht, mix: 0.4, gerade: true, streu: 10, szene: 0.05 }) +
-    W.haare(band, 260, satW, 1.6, SILBER.slice(0, 3).concat([["#141312", 0.14, 0.65], ["#0a0909", 0.14, 0.65]]), { mix: 1, gerade: true, szene: 0.04 }),
+    W.musterFlaeche(schwarzFeld.slice(0, 13).concat([[52, -60], [80, -70], [96, -96], [80, -122]]), BM(118)) +
+    W.musterFlaeche([[6, -68], [26, -58], [52, -49], [84, -52], [98, -60], [80, -70], [52, -60], [20, -64]], BM(96)) +
+    `<use href="#${satId}" fill="${SM(172)}"/>` +
+    fell(schwarzFeld, 110, rumpfW, 4.4) +
+    W.haare(sattel, 220, satW, 1.3, SILBER, { licht: satLicht, mix: 0.4, gerade: true, streu: 10, szene: 0.05 }) +
+    W.haare(band, 200, satW, 1.6, SILBER.slice(0, 3).concat([["#141312", 0.14, 0.65], ["#0a0909", 0.14, 0.65]]), { mix: 1, gerade: true, szene: 0.04 }),
   { rand: 0 });
   rs += W.kantenStraehnen([[1, -80], [3, -90], [12, -99], [26, -106], [42, -114], [58, -122], [70, -128]], 70, (x) => (x < 6 ? 128 : 192), 0.8, 1.8, 0.22,
     (x, y, z) => SILBER[Math.round(clamp(0.95 - x / 140 + (z - 0.5) * 0.3) * 5)][0], { kante: 0, szene: 0.2 });
@@ -458,8 +464,9 @@ function gorilla(T) {
     W.weich([`<path d="${G(beinSat)}" fill="#8e8c88"/>`], 3.4) +
     /* Muskelzug Hüfte → Knie, Kniekante, Wade hinten */
     W.weich([[48, -40, 2, 6, -20, "#5a5c62", 0.5], [30, -14, 11, 3, 0, "#000", 0.5], [12, -32, 3, 9, -20, "#000", 0.4]], 2.4) +
-    fell(beinN, 200, (x, y) => (y < -58 ? 116 + Math.sin(x * 0.5) * 8 : 100), 4.6, { licht: (x, y) => clamp(licht(x, y) + 0.2 - (x < 20 ? 0.2 : 0)) }) +
-    W.haare(beinSat, 380, 122, 1.3, SILBER, { licht: (x, y) => clamp(0.3 + (-y - 60) / 35), mix: 0.4, gerade: true, streu: 10, szene: 0.05 }) +
+    W.musterFlaeche(beinN, BM(104)) + `<path d="${G(beinSat)}" fill="${SM(124)}" opacity=".9"/>` +
+    fell(beinN, 70, (x, y) => (y < -58 ? 116 + Math.sin(x * 0.5) * 8 : 100), 4.6, { licht: (x, y) => clamp(licht(x, y) + 0.2 - (x < 20 ? 0.2 : 0)) }) +
+    W.haare(beinSat, 90, 122, 1.3, SILBER, { licht: (x, y) => clamp(0.3 + (-y - 60) / 35), mix: 0.4, gerade: true, streu: 10, szene: 0.05 }) +
     W.haare(beinSatU.map(([x, y]) => [x, y + 4]).concat(beinSatU.slice().reverse().map(([x, y]) => [x, y - 4])), 120, 120, 1.5, SILBER.slice(0, 3).concat([["#141312", 0.14, 0.65], ["#0a0909", 0.14, 0.65]]), { mix: 1, gerade: true, szene: 0.04 }),
   { rand: 0, maske: W.maske("bn", [-10, -100, 60, -5], 0, -92, 0, -80) }) +
     kante([[1, -78], [2, -66], [6, -52], [10, -40], [15, -30], [18.4, -21], [20.4, -13]], 46, 104, 2.6, 6) +
@@ -477,7 +484,8 @@ function gorilla(T) {
       [92, -118, 11, 6, -18, "#5a5c62", 0.6], [74, -104, 5, 16, 5, "#000", 0.55], [104.4, -98, 2.4, 10, 0, "#5a5c62", 0.4], [102.6, -52, 2.6, 11, -4, "#5a5c62", 0.45],
       [76.6, -52, 3, 3, 0, "#000", 0.55], [90, -64, 10, 2.4, -20, "#000", 0.35],
     ], 2.4) +
-    fell(armN, 330, (x, y) => (y < -70 ? (x < 82 ? 116 : 104) : Math.abs(y + 52) < 5 && x < 86 ? 140 : 96), 7, { licht: (x, y) => clamp(licht(x, y) + (x > 92 ? 0.15 : -0.15)) }),
+    W.musterFlaeche(armN, BM(100)) +
+    fell(armN, 110, (x, y) => (y < -70 ? (x < 82 ? 116 : 104) : Math.abs(y + 52) < 5 && x < 86 ? 140 : 96), 7, { licht: (x, y) => clamp(licht(x, y) + (x > 92 ? 0.15 : -0.15)) }),
   { rand: 0, vol: false, maske: W.maske("an", [55, -140, 120, -15], 0, -127, 0, -112) }) +
     kante([[66, -96], [67, -82], [68.4, -72], [69.4, -65], [72.4, -58], [75.6, -52], [79.4, -47], [82, -40], [85, -30], [87, -21]], 110, (x, y) => 100 + (y < -66 ? 14 : 4), 4, 13) +
     kante([[103.4, -23], [96, -21.4], [88, -21]], 46, (x) => 86 + (x - 95), 2.4, 6) +

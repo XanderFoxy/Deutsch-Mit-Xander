@@ -131,6 +131,7 @@ const gitter = (T, Rr, ts, vs, o = {}) => {
    o: { grad: (j) → Verlauf-URL je Zeile, jit, fuge, sw (Rundung) } */
 const plattenG = (T, Rr, ts, vs, o = {}) => {
   const gruppen = {};
+  let linsen = null;
   let kL = "", kS = "";
   const rel = (A, B) => `l${R(B[0] - A[0])} ${R(B[1] - A[1])}`;
   const O = Rr.P(ts[0], vs[0]), ox = Math.round(O[0]), oy = Math.round(O[1]);   // Ursprung: kurze Zahlen
@@ -146,6 +147,11 @@ const plattenG = (T, Rr, ts, vs, o = {}) => {
       const g = o.grad(j, T.rnd());
       (gruppen[g] = gruppen[g] || []).push(`<path d="M${R(A[0] - ox)} ${R(A[1] - oy)}${rel(A, B)}${rel(B, C)}${rel(C, D)}z"/>`);
       /* Kiel: kurzer Grat in der oberen Plattenhälfte (Licht oben, Schatten darunter) */
+      if (o.linse && o.linse.includes(j) && T.fein) {
+        /* Längskiel als erhabene Linse: Lichtkante oben, Schattenseite unten (Verlauf je Linse) */
+        const vm = va + (vb - va) * 0.45, k0 = Rr.P(ta + dt * 0.1, vm), k1 = Rr.P(tb - dt * 0.06, vm), hk = Math.abs(Rr.P(ta, vb)[1] - Rr.P(ta, va)[1]) * (o.linseH || 0.32);
+        (linsen = linsen || []).push(`<path d="M${R(k0[0] - ox)} ${R(k0[1] - oy)}q${R((k1[0] - k0[0]) / 2)} ${R((k1[1] - k0[1]) / 2 - hk)} ${R(k1[0] - k0[0])} ${R(k1[1] - k0[1])}q${R(-(k1[0] - k0[0]) / 2)} ${R(-(k1[1] - k0[1]) / 2 + hk)} ${R(k0[0] - k1[0])} ${R(k0[1] - k1[1])}z"/>`);
+      }
       if (o.kiel && o.kiel.includes(j) && T.fein && o.kielStrich !== false) {
         const vm = va + (vb - va) * 0.42, k0 = Rr.P(ta + dt * (0.22 + T.rnd() * 0.08), vm), k1 = Rr.P(tb - dt * (0.12 + T.rnd() * 0.08), vm - dv * 0.04);
         kL += `M${R(k0[0] - ox)} ${R(k0[1] - oy)}${rel(k0, k1)}`;
@@ -153,7 +159,9 @@ const plattenG = (T, Rr, ts, vs, o = {}) => {
       }
     }
   }
+  const kG = linsen ? T.lg("kielL", [[0, "#fff6d8", 0.55], [0.42, "#fff6d8", 0.12], [0.55, "#000", 0.18], [1, "#000", 0.5]]) : "";
   return `<g transform="translate(${ox} ${oy})">` + Object.entries(gruppen).map(([g, l]) => `<g fill="${g}" stroke="${g}" stroke-width="${o.sw || 0.5}" stroke-linejoin="round">${l.join("")}</g>`).join("") +
+    (linsen ? `<g fill="${kG}">${linsen.join("")}</g>` : "") +
     (kS ? `<path d="${kS}" fill="none" stroke="#0c0b06" stroke-width="${R2((o.kw || 0.4) * 1.3)}" stroke-opacity="${o.opK || 0.3}" stroke-linecap="round"/><path d="${kL}" fill="none" stroke="${o.hell || "#ece2bc"}" stroke-width="${R2((o.kw || 0.4) * 0.6)}" stroke-opacity="${o.opKL || 0.34}" stroke-linecap="round"/>` : "") + "</g>";
 };
 /* Beulen: einzelne gewölbte Schuppen mit eigenem Radialverlauf (Licht oben links) in der Fläche pts.
@@ -256,6 +264,57 @@ const zaehne = (T, liste, dir = 1, o = {}) => {
   return `<path d="${d}" fill="${g}" stroke="#3a3020" stroke-width="${o.rw || 0.06}" stroke-opacity=".75"/>` +
     (sch ? `<path d="${sch}" fill="none" stroke="#6a5a3a" stroke-opacity=".45" stroke-width="${o.gw || 0.12}" stroke-linecap="round"/>` : "") +
     (gl ? `<path d="${gl}" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="${o.gw || 0.1}" stroke-linecap="round"/>` : "");
+};
+/* Bein aus EINER durchgehenden Silhouette (keine Glied-Nähte/„Manschetten“): kette = [[x, y, Breite], …] von der
+   Schulter/Hüfte bis zum Fußende; die Gelenke zeigen sich nur als Beugefalten. Füllung als userSpace-Verlauf (Licht oben
+   links, Kernschatten unten rechts), Schuppenmuster durchgehend. Zehen/Finger einzeln: ziffern = [[x, y, Länge, Winkel°,
+   Breite, Kralle?], …]; schwimm = Vieleck (Schwimmhaut, halbtransparent). o: { n, farben, muster, maske [y0, y1], falten,
+   ferse: [x, y, rx, ry], krallenFarbe } */
+const gliedBein = (T, o) => {
+  const F = T.fein, [hell, mittel, dunkel] = o.farben, K = o.kette;
+  const L = [], Rt = [];
+  for (let i = 0; i < K.length; i++) {
+    const p = K[i], a = K[Math.max(0, i - 1)], b = K[Math.min(K.length - 1, i + 1)];
+    let dx = b[0] - a[0], dy = b[1] - a[1]; const n = Math.hypot(dx, dy) || 1; dx /= n; dy /= n;
+    L.push([p[0] + dy * p[2] / 2, p[1] - dx * p[2] / 2]); Rt.push([p[0] - dy * p[2] / 2, p[1] + dx * p[2] / 2]);
+  }
+  const e = K[K.length - 1], umr = L.concat([[e[0] + e[2] * 0.35, e[1]]], Rt.reverse());
+  const xs = umr.map((p) => p[0]), ys = umr.map((p) => p[1]), bx0 = Math.min(...xs), by0 = Math.min(...ys), bx1 = Math.max(...xs), by1 = Math.max(...ys);
+  const gid = T.id("gb" + o.n);
+  if (!T["_" + gid]) { T["_" + gid] = 1; T.def(`<linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="${R(bx0)}" y1="${R(by0)}" x2="${R(bx0 + (by1 - by0) * 0.35)}" y2="${R(by1)}"><stop offset="0" stop-color="${hell}"/><stop offset=".5" stop-color="${mittel}"/><stop offset="1" stop-color="${dunkel}"/></linearGradient>`); }
+  /* Kernschatten an der Hinterkante, Licht an der Vorderkante (zylindrisch) */
+  let inn = "";
+  if (o.muster) inn += `<rect x="${R(bx0 - 1)}" y="${R(by0 - 1)}" width="${R(bx1 - bx0 + 2)}" height="${R(by1 - by0 + 2)}" fill="${o.muster}"/>`;
+  inn += `<path d="${T.glatt(Rt.slice().reverse(), false)}" fill="none" stroke="#000" stroke-width="${R(K[1][2] * 0.5)}" stroke-opacity=".22" filter="${weich(T, "gbs", 0.8)}"/>`;
+  inn += `<path d="${T.glatt(L, false)}" fill="none" stroke="#fff" stroke-width="${R(K[1][2] * 0.3)}" stroke-opacity=".12" filter="${weich(T, "gbs", 0.8)}"/>`;
+  if (o.innen) inn += o.innen;
+  let s = "";
+  if (o.schwimm) s += form(T, o.schwimm, dunkel, ' opacity=".55"');
+  let bein = teil(T, umr, `url(#${gid})`, { innen: inn, rand: false });
+  if (o.ferse) bein += `<ellipse cx="${o.ferse[0]}" cy="${o.ferse[1]}" rx="${o.ferse[2]}" ry="${o.ferse[3]}" fill="url(#${gid})"/>`;
+  if (o.maske) {
+    const id = T.id("gm" + o.n);
+    T.def(`<linearGradient id="${id}g" gradientUnits="userSpaceOnUse" x1="0" y1="${o.maske[0]}" x2="0" y2="${o.maske[1]}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient>` +
+      `<mask id="${id}" maskUnits="userSpaceOnUse" x="${R(bx0 - 4)}" y="${R(by0 - 4)}" width="${R(bx1 - bx0 + 8)}" height="${R(by1 - by0 + 8)}"><rect x="${R(bx0 - 4)}" y="${R(by0 - 4)}" width="${R(bx1 - bx0 + 8)}" height="${R(by1 - by0 + 8)}" fill="url(#${id}g)"/></mask>`);
+    bein = `<g mask="url(#${id})">${bein}</g>`;
+  }
+  s += bein;
+  if (o.falten) s += linien(T, o.falten, "#0d0c07", o.fw || 0.22, 0.32) + (F ? linien(T, o.falten.map((p) => p.map(([x, y]) => [x - 0.15, y - 0.2])), hell, (o.fw || 0.22) * 0.7, 0.28) : "");
+  /* Zehen/Finger einzeln: verjüngte Glieder mit Oberlicht, Gelenkfalten, Krallen */
+  if (o.ziffern) {
+    let d = "", dQ = "", dL = "";
+    const kr = [];
+    for (const [x, y, l, w, b, kl] of o.ziffern) {
+      const a = w * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a), P = (u, v) => [x + c * u - sn * v, y + sn * u + c * v];
+      const pts = [P(0, -b / 2), P(l * 0.5, -b * 0.42), P(l * 0.92, -b * 0.24), P(l, 0), P(l * 0.92, b * 0.26), P(l * 0.5, b * 0.46), P(0, b / 2)];
+      d += pfad(T, pts);
+      if (F) { for (const u of [0.38, 0.7]) { const q0 = P(l * u, -b * 0.4), q1 = P(l * u + b * 0.12, b * 0.1); dQ += `M${R(q0[0])} ${R(q0[1])}L${R(q1[0])} ${R(q1[1])}`; } const l0 = P(l * 0.1, -b * 0.22), l1 = P(l * 0.82, -b * 0.14); dL += `M${R(l0[0])} ${R(l0[1])}L${R(l1[0])} ${R(l1[1])}`; }
+      if (kl) { const t = P(l * 0.96, 0); kr.push([t[0], t[1], b * 1.25, b * 0.42, w + 12, 0.45]); }
+    }
+    s += `<path d="${d}" fill="url(#${gid})" stroke="${dunkel}" stroke-width=".18" stroke-opacity=".7"/>` + (dL ? `<path d="${dL}" stroke="${hell}" stroke-width=".22" stroke-opacity=".5" stroke-linecap="round"/><path d="${dQ}" stroke="#0d0c07" stroke-width=".12" stroke-opacity=".45"/>` : "");
+    if (kr.length) s += krallen(T, kr, o.krallenFarbe || "#2a2418");
+  }
+  return s;
 };
 /* Reptilienbein aus Gliedern (Oberarm/-schenkel, Unterarm/-schenkel, Fuß) mit eigenem Licht je Glied (oben links hell,
    unten rechts dunkel), Schuppenmuster, Gelenkfalten, Zehen als runde Glieder mit Glanzkante und Querschildern, Krallen.
@@ -426,7 +485,7 @@ const lippen = (T, pts, n, h, o = {}) => {
    Radialverlauf (Licht oben links). reihen: [[v, Breite (Einheiten), Höhe, Dichte], …], t0…t1 */
 const schuppenReihen = (T, Rr, t0, t1, reihen, grads, o = {}) => {
   if (!T.fein) return "";
-  const gr = {}, fl = o.flach || 0.66;
+  const gr = {}, fl = o.flach || 0.66, kl = [];
   const ox = Math.round(Rr.P(t0, 0)[0]), oy = Math.round(Rr.P(t0, 0)[1]);
   for (const [v, b, , dichte = 1] of reihen) {
     const dt = b / Rr.len;
@@ -435,10 +494,13 @@ const schuppenReihen = (T, Rr, t0, t1, reihen, grads, o = {}) => {
       const [x, y] = Rr.P(t, v + (T.rnd() - 0.5) * 0.04), g = grads[Math.floor(T.rnd() * grads.length)];
       if (o.ohne && o.ohne.some((p) => T.inPoly(x, y, p))) continue;
       /* Kreis im gestauchten Raum = quer gestreckte Ellipse */
-      (gr[g] = gr[g] || []).push(`<circle cx="${R(x - ox)}" cy="${R((y - oy) / fl)}" r="${R(b * (o.r || 0.47) * (0.92 + T.rnd() * 0.14))}"/>`);
+      const rr = b * (o.r || 0.47) * (0.92 + T.rnd() * 0.14);
+      (gr[g] = gr[g] || []).push(`<circle cx="${R(x - ox)}" cy="${R((y - oy) / fl)}" r="${R(rr)}"/>`);
+      if (o.kiel) kl.push(`<ellipse cx="${R(x - ox)}" cy="${R((y - oy) / fl - rr * 0.08)}" rx="${R(rr * 0.78)}" ry="${R(rr * 0.24)}"/>`);
     }
   }
-  return `<g transform="translate(${ox} ${oy}) scale(1 ${fl})">` + Object.entries(gr).map(([g, l]) => `<g fill="${g}">${l.join("")}</g>`).join("") + "</g>";
+  return `<g transform="translate(${ox} ${oy}) scale(1 ${fl})">` + Object.entries(gr).map(([g, l]) => `<g fill="${g}">${l.join("")}</g>`).join("") +
+    (kl.length ? `<g fill="${T.lg("kielL", [[0, "#fff6d8", 0.55], [0.42, "#fff6d8", 0.12], [0.55, "#000", 0.18], [1, "#000", 0.5]])}">${kl.join("")}</g>` : "") + "</g>";
 };
 /* fertige Art: Zeichenraum → Zentimeter; fuesse (x der Fußmitten) und kopf (Ausschnitt) ebenfalls in Einheiten */
 const fertig = (f, svg, box, fuesse, kopf) => {
