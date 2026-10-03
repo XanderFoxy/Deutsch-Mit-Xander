@@ -131,6 +131,7 @@ S.def(`<pattern id="${S.id("palapa")}" width="3" height="2.4" patternUnits="user
 S.def(`<pattern id="${S.id("sarape")}" width="12" height="2.6" patternUnits="userSpaceOnUse"><rect width="12" height="2.6" fill="#b52d3a"/><rect y=".2" width="12" height=".3" fill="#f1c232"/><rect y=".6" width="12" height=".5" fill="#1e7a6e"/><rect y="1.2" width="12" height=".2" fill="#f4efe2"/><rect y="1.5" width="12" height=".4" fill="#e07a2a"/><rect y="2" width="12" height=".25" fill="#2c3f8f"/></pattern>`);
 const WALD = `url(#${S.id("wald")})`;
 const DUNST = `url(#${S.id("dunst")})`;
+S.def(`<linearGradient id="${S.id("spurN")}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d3a33" stop-opacity=".22"/><stop offset="1" stop-color="#3d3a33" stop-opacity="0"/></linearGradient><linearGradient id="${S.id("spurW")}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a5a34" stop-opacity=".22"/><stop offset="1" stop-color="#7a5a34" stop-opacity="0"/></linearGradient>`);
 const LICHT = S.lg("kalklicht", [[0, "#f4cf8e"], [1, "#e4ae6a"]]);         /* Westseite im goldenen Abendlicht */
 const SCHATTEN = S.lg("kalkschatten", [[0, "#aea596"], [1, "#958c7e"]]);  /* Nordseite im Schatten */
 
@@ -294,9 +295,10 @@ const pyrUnter = [];
     /* weiche Laufspuren unter dem Gesims (Regen) */
     for (let j = 0; j < 4; j++) {
       const u = (rnd() * 2 - 1) * (w1 - 1), lang = 0.6 + rnd() * 1.4;
-      if (Math.abs(u) > SB + BAL + 0.4) k += flaech([[u - 0.3, y1 - 0.45, w1 + 0.02], [u + 0.3, y1 - 0.45, w1 + 0.02], [u + 0.25, y1 - 0.45 - lang, w1 + 0.02], [u - 0.25, y1 - 0.45 - lang, w1 + 0.02]], "#3d3a33", ` opacity=".15"`);
+      const spur = (fn, c) => { const b = 0.22 + rnd() * 0.16, L2 = [], R2 = []; for (let t = 0; t <= 1.001; t += 0.25) { const w2 = b * (1 - t * 0.55) + (rnd() - 0.5) * 0.08; L2.push(fn(-w2, -t * lang)); R2.unshift(fn(w2, -t * lang)); } const q = kappe([...L2, ...R2]); return q.length > 2 ? `<path d="M${pts(q)} Z" fill="url(#${S.id(c)})"/>` : ""; };
+      if (Math.abs(u) > SB + BAL + 0.4) k += spur((a, t) => P(u + a, y1 - 0.45 + t, w1 + 0.02), "spurN");
       const v = (rnd() * 2 - 1) * (w1 - 1);
-      if (Math.abs(v) > SB + BAL + 0.4) k += flaech([[-w1 - 0.02, y1 - 0.45, v - 0.3], [-w1 - 0.02, y1 - 0.45, v + 0.3], [-w1 - 0.02, y1 - 0.45 - lang, v + 0.25], [-w1 - 0.02, y1 - 0.45 - lang, v - 0.25]], "#7a5a34", ` opacity=".15"`);
+      if (Math.abs(v) > SB + BAL + 0.4) k += spur((a, t) => P(-w1 - 0.02, y1 - 0.45 + t, v + a), "spurW");
     }
     /* Lichtsaum an der Nordwestecke dieser Terrasse (gestuft, nicht durchgezogen) */
     const [a, b] = [P(-w0, y0, w0), P(-w1, y1 - 0.42, w1)];
@@ -338,26 +340,31 @@ const pyrUnter = [];
     g += `<path d="M${pts(prof.map(([z, y]) => P(xc - hw, y, z0 + z)))} Z" fill="${SE}"/>`;
     /* Oberseite und Stirnflächen */
     g += flaech([[xc - hw, 2.3, z0], [xc + hw, 2.3, z0], [xc + hw, 2.5, z0 + 0.5], [xc - hw, 2.5, z0 + 0.5]], DU);
-    g += flaech([[xc - hw, 1.78, z0 + 3.12], [xc + hw, 1.78, z0 + 3.12], [xc + hw, 2.1, z0 + 3.3], [xc - hw, 2.1, z0 + 3.3]], DU);
-    g += flaech([[xc - hw, 1.08, z0 + 2.95], [xc + hw, 1.08, z0 + 2.95], [xc + hw, 1.78, z0 + 3.12], [xc - hw, 1.78, z0 + 3.12]], LI);
-    g += flaech([[xc - hw, 0, z0 + 2.95], [xc + hw, 0, z0 + 2.95], [xc + hw, 0.48, z0 + 3.0], [xc - hw, 0.48, z0 + 3.0]], LI);
-    /* Maul: dunkel, oben zwei lange Fangzähne, unten kleinere */
-    g += flaech([[xc - hw + 0.08, 0.5, z0 + 2.98], [xc + hw - 0.08, 0.5, z0 + 2.98], [xc + hw - 0.08, 1.08, z0 + 2.95], [xc - hw + 0.08, 1.08, z0 + 2.95]], "#2a1d14");
-    for (const t of [-0.6, 0.6]) {
-      g += flaech([[xc + t - 0.14, 1.08, z0 + 2.96], [xc + t + 0.14, 1.08, z0 + 2.96], [xc + t, 0.5, z0 + 3.0]], "#f1e4c6");
-      g += flaech([[xc + t * 0.4 - 0.08, 0.5, z0 + 3.0], [xc + t * 0.4 + 0.08, 0.5, z0 + 3.0], [xc + t * 0.4, 0.74, z0 + 2.98]], "#f1e4c6");
+    /* Vorderansicht der Schnauze im Raum: gerundeter Oberkiefer mit Brauenwulst, weit offenes Maul,
+       zwei große gebogene Fangzähne, Unterkiefer, gespaltene Zunge aus Stein bis auf den Boden */
+    const V = (u, v, dz = 0) => P(xc + u, v, z0 + 3.02 + dz + (v > 1 ? (v - 1) * 0.1 : 0));
+    const bogen = (u0, u1, v0, v1, n = 8) => { const o = []; for (let i = 0; i <= n; i++) { const a = Math.PI * i / n; o.push(V(u0 + (u1 - u0) * (1 - Math.cos(a)) / 2, v0 + (v1 - v0) * Math.sin(a))); } return o; };
+    g += `<path d="M${pts([V(-hw, 0.95), ...bogen(-hw, hw, 1.9, 2.25), V(hw, 0.95)])} Z" fill="${LI}"/>`;
+    g += `<path d="M${pts([V(-hw, 0.5), V(-hw, 0.08), ...bogen(-hw, hw, 0.08, -0.06).reverse().map((p, i, a2) => a2[a2.length - 1 - i]), V(hw, 0.08), V(hw, 0.5)])} Z" fill="${LI}"/>`;
+    /* Maul */
+    g += `<path d="M${pts([V(-hw + 0.08, 0.98), V(hw - 0.08, 0.98), V(hw - 0.12, 0.52), V(0, 0.46), V(-hw + 0.12, 0.52)])} Z" fill="#2a1d14"/>`;
+    /* Fangzähne (gebogen) und kleine Zähne */
+    for (const t of [-1, 1]) {
+      const [a1, a2] = [V(t * 0.62, 0.98), V(t * 0.36, 0.98)], sp = V(t * 0.42, 0.5), kr = V(t * 0.62, 0.66);
+      g += `<path d="M${r(a1[0])} ${r(a1[1])} Q${r(kr[0])} ${r(kr[1])} ${r(sp[0])} ${r(sp[1])} L${r(a2[0])} ${r(a2[1])} Z" fill="#f1e4c6"/>`;
+      g += flaech([[xc + t * 0.18 - 0.07, 0.5, z0 + 3.03], [xc + t * 0.18 + 0.07, 0.5, z0 + 3.03], [xc + t * 0.18, 0.68, z0 + 3.03]], "#e9dcbd");
     }
-    /* Zunge hängt aus dem Maul über den Unterkiefer auf den Boden, gespalten */
-    g += flaech([[xc - 0.24, 0.62, z0 + 3.0], [xc + 0.24, 0.62, z0 + 3.0], [xc + 0.26, 0.03, z0 + 3.02], [xc - 0.26, 0.03, z0 + 3.02]], lit ? "#c98250" : "#87796a");
-    g += flaech([[xc - 0.26, 0.02, z0 + 3.02], [xc + 0.26, 0.02, z0 + 3.02], [xc + 0.3, 0.02, z0 + 3.7], [xc + 0.04, 0.02, z0 + 3.35], [xc - 0.04, 0.02, z0 + 3.35], [xc - 0.3, 0.02, z0 + 3.7]], lit ? "#c98250" : "#87796a");
+    /* Brauenwulst über den Augen (vorn sichtbar) und Nasenlöcher */
+    g += `<path d="M${pts(bogen(-hw + 0.05, -0.1, 1.72, 1.86, 4))}" stroke="${DU}" stroke-width=".35" fill="none"/><path d="M${pts(bogen(0.1, hw - 0.05, 1.72, 1.86, 4))}" stroke="${DU}" stroke-width=".35" fill="none"/>`;
+    for (const t of [-0.3, 0.3]) { const [u, v] = V(t, 1.35); g += `<ellipse cx="${r(u)}" cy="${r(v)}" rx=".3" ry=".22" fill="${DU}"/>`; }
     /* Nasenschnecke (hochgerollt) als Spirale auf der Seite */
     const [nx, ny] = P(xc - hw - 0.02, 2.12, z0 + 3.0);
     g += `<path d="M${r(nx - 0.9)} ${r(ny + 0.5)} q.2 -1.4 1.1 -1.3 q.9 .2 .6 1 q-.3 .6 -.8 .3" stroke="${DU}" stroke-width=".4" fill="none"/>`;
     /* Auge: eckige, tiefe Augenhöhle unter schwerem Brauenwulst */
-    g += `<path d="M${pts([P(xc - hw - 0.02, 1.7, z0 + 1.55), P(xc - hw - 0.02, 1.7, z0 + 2.25), P(xc - hw - 0.02, 1.32, z0 + 2.2), P(xc - hw - 0.02, 1.32, z0 + 1.6)])} Z" fill="${lit ? "#7a5530" : "#5f5b51"}"/>`;
+    { const [ex, ey] = P(xc - hw - 0.02, 1.5, z0 + 1.9), [ex2] = P(xc - hw - 0.02, 1.5, z0 + 2.3); const er = Math.max(0.6, Math.abs(ex2 - ex)); g += `<ellipse cx="${r(ex)}" cy="${r(ey)}" rx="${r(er)}" ry="${r(er * 1.1)}" fill="none" stroke="${lit ? "#7a5530" : "#5f5b51"}" stroke-width=".4"/><circle cx="${r(ex)}" cy="${r(ey)}" r="${r(er * 0.4)}" fill="${lit ? "#7a5530" : "#5f5b51"}"/>`; }
     g += `<path d="M${pts([P(xc - hw - 0.03, 1.98, z0 + 1.4), P(xc - hw - 0.03, 2.0, z0 + 2.4), P(xc - hw - 0.03, 1.78, z0 + 2.45), P(xc - hw - 0.03, 1.76, z0 + 1.45)])} Z" fill="${HE}"/>`;
     /* Federbusch hinter dem Kopf: senkrechte Federn mit runden Enden */
-    for (let i = 0; i < 5; i++) { const z = z0 + 0.15 + i * 0.32; const [a, b] = [P(xc - hw - 0.03, 2.2, z), P(xc - hw - 0.03, 1.0, z + 0.05)]; g += `<path d="M${r(a[0])} ${r(a[1])} L${r(b[0])} ${r(b[1])}" stroke="${DU}" stroke-width=".55" stroke-linecap="round"/>`; }
+    for (let i = 0; i < 5; i++) { const z = z0 + 0.1 + i * 0.3; const [a, b] = [P(xc - hw - 0.03, 2.25, z + 0.45), P(xc - hw - 0.03, 0.9, z)]; g += `<path d="M${r(a[0])} ${r(a[1])} L${r(b[0])} ${r(b[1])}" stroke="${DU}" stroke-width=".55" stroke-linecap="round"/>`; }
     /* Kerbe von Ober- und Unterlippe, Lichtkante oben */
     g += `<path d="M${pts([P(xc - hw - 0.02, 0.56, z0 + 2.35), P(xc - hw - 0.02, 0.98, z0 + 2.3)])}" stroke="#2a1d14" stroke-width=".35"/>`;
     g += `<path d="M${pts([P(xc - hw - 0.02, 2.48, z0 + 0.5), P(xc - hw - 0.02, 2.26, z0 + 1.2), P(xc - hw - 0.02, 2.32, z0 + 1.9)])}" stroke="${HE}" stroke-width=".35" fill="none"/>`;
@@ -890,20 +897,23 @@ const standUnter = [];
 {
   const X = STAND.x0 + 37.4, Y = STAND.hinten - 2.1 * SH + 6;
   const hut = (dx, dy, R, krone, stroh, band, fein) => {
-    /* am Nagel hängend, leicht nach vorn gekippt: Krempe als Ellipse, die Krone ragt zum Betrachter (man sieht ihre Seite) */
-    const ry = R * 0.86, hk = krone * (fein ? 0.7 : 1.05), kt = fein ? krone * 0.92 : krone * 0.72;
-    let g = `<line x1="${dx}" y1="${r(dy - ry - 1.6)}" x2="${dx}" y2="${r(dy - ry + 0.6)}" stroke="#d8c8a0" stroke-width=".3"/><circle cx="${dx}" cy="${r(dy - ry - 1.8)}" r=".45" fill="#666"/>`;
-    g += `<ellipse cx="${r(dx + 0.8)}" cy="${r(dy + 1.3)}" rx="${R}" ry="${r(ry)}" fill="#2a1410" opacity=".3"/>`;
+    /* Dreiviertelansicht, an einer Schnur vom Nagel: Krempe als flache Ellipse (vorn etwas aufgebogen),
+       Krone darüber mit Schattenseite links, umlaufendes Hutband mit Zickzack, gestickte Borte am Rand */
+    const ry = R * 0.3, kh = fein ? krone * 1.25 : krone * 2.1, kt = krone * (fein ? 0.85 : 0.62);
+    let g = `<line x1="${dx}" y1="${r(dy - kh - 3.2)}" x2="${dx}" y2="${r(dy - kh + 0.2)}" stroke="#d8c8a0" stroke-width=".3"/><circle cx="${dx}" cy="${r(dy - kh - 3.4)}" r=".45" fill="#666"/>`;
+    g += `<ellipse cx="${r(dx + 0.9)}" cy="${r(dy + 1.6)}" rx="${R}" ry="${r(ry * 1.1)}" fill="#2a1410" opacity=".28"/>`;
+    /* Krempe: hinterer Rand, dann Fläche, vorn hochgebogener Rand */
     g += `<ellipse cx="${dx}" cy="${dy}" rx="${R}" ry="${r(ry)}" fill="${stroh}"/>`;
-    g += `<ellipse cx="${dx}" cy="${dy}" rx="${r(R - 0.5)}" ry="${r(ry - 0.5)}" fill="none" stroke="${fein ? "#c9b483" : "#9a6c2e"}" stroke-width="${fein ? ".2" : ".45"}" opacity=".7"/>`;
-    for (let i = 1; i < (fein ? 5 : 3); i++) { const f = krone / R + (1 - krone / R) * i / (fein ? 5 : 3); g += `<ellipse cx="${dx}" cy="${r(dy + (1 - f) * 0.6)}" rx="${r(R * f)}" ry="${r(ry * f)}" fill="none" stroke="#a07a3c" stroke-width=".14" opacity=".45"/>`; }
-    if (!fein) for (let a = 0; a < 16; a++) { const w = a * Math.PI / 8; g += `<line x1="${r(dx + Math.cos(w) * krone)}" y1="${r(dy + Math.sin(w) * krone * 0.86)}" x2="${r(dx + Math.cos(w) * (R - 0.7))}" y2="${r(dy + Math.sin(w) * (ry - 0.7))}" stroke="#b08440" stroke-width=".18" opacity=".55"/>`; }
-    /* Krone: Seitenwand (im Schatten) vom Band bis zur Kuppe, die tiefer liegt */
-    g += `<path d="M${r(dx - krone)} ${dy} L${r(dx - kt)} ${r(dy + hk)} A${r(kt)} ${r(kt * 0.8)} 0 0 0 ${r(dx + kt)} ${r(dy + hk)} L${r(dx + krone)} ${dy} Z" fill="${fein ? "#d7c59a" : "#b98a44"}"/>`;
-    g += `<path d="M${r(dx - krone - 0.05)} ${r(dy + 0.1)} A${r(krone + 0.05)} ${r(krone * 0.8)} 0 0 0 ${r(dx + krone + 0.05)} ${r(dy + 0.1)} L${r(dx + krone - 0.1)} ${r(dy + 1)} A${krone} ${r(krone * 0.8)} 0 0 1 ${r(dx - krone + 0.1)} ${r(dy + 1)} Z" fill="${band}"/>`;
-    g += `<ellipse cx="${dx}" cy="${r(dy + hk)}" rx="${r(kt)}" ry="${r(kt * 0.8)}" fill="${S.rg(fein ? "jipi" : "krone2", fein ? [[0, "#fbf3dc"], [1, "#e2d1a6"]] : [[0, "#f6dc9c"], [1, "#c99a4e"]], 0.4, 0.35)}"/>`;
-    if (!fein) g += `<path d="M${r(dx - kt * 0.7)} ${r(dy + hk)} Q${dx} ${r(dy + hk - kt * 0.5)} ${r(dx + kt * 0.7)} ${r(dy + hk)}" stroke="#a87c3a" stroke-width=".3" fill="none"/>`;
-    g += `<ellipse cx="${r(dx + kt * 0.3)}" cy="${r(dy + hk - kt * 0.3)}" rx="${r(kt * 0.35)}" ry="${r(kt * 0.2)}" fill="#fff" opacity=".35"/>`;
+    g += `<path d="M${r(dx - R)} ${dy} A${R} ${r(ry)} 0 0 0 ${r(dx + R)} ${dy} L${r(dx + R - 0.3)} ${r(dy - 0.6)} A${r(R - 0.3)} ${r(ry - 0.4)} 0 0 1 ${r(dx - R + 0.3)} ${r(dy - 0.6)} Z" fill="${fein ? "#e2d3ad" : "#d9b06a"}"/>`;
+    if (!fein) { let bo = ""; for (let i = 0; i <= 16; i++) { const a = Math.PI * i / 16, x = dx - Math.cos(a) * (R - 0.5), y = dy + Math.sin(a) * (ry - 0.2) - 0.3; bo += `${i ? "L" : "M"}${r(x)} ${r(y + (i % 2 ? -0.35 : 0.2))}`; } g += `<path d="${bo}" stroke="#c8102e" stroke-width=".35" fill="none"/>`; }
+    else g += `<ellipse cx="${dx}" cy="${r(dy - 0.1)}" rx="${r(R - 0.8)}" ry="${r(ry - 0.3)}" fill="none" stroke="#c9b483" stroke-width=".15"/>`;
+    /* Krone */
+    g += `<path d="M${r(dx - krone)} ${r(dy - 0.4)} L${r(dx - kt)} ${r(dy - kh)} Q${dx} ${r(dy - kh - krone * 0.45)} ${r(dx + kt)} ${r(dy - kh)} L${r(dx + krone)} ${r(dy - 0.4)} Q${dx} ${r(dy + ry * 0.35)} ${r(dx - krone)} ${r(dy - 0.4)} Z" fill="${S.lg(fein ? "jipiK" : "kroneK", fein ? [[0, "#cdbb8f"], [0.5, "#f3e7c6"], [1, "#fbf3dc"]] : [[0, "#b08440"], [0.5, "#e2bd78"], [1, "#f6dc9c"]], 0, 0, 1, 0)}"/>`;
+    if (!fein) g += `<path d="M${dx} ${r(dy - kh - krone * 0.2)} L${dx} ${r(dy - kh * 0.55)}" stroke="#b08440" stroke-width=".3"/>`;
+    /* Hutband */
+    const hb = fein ? 0.9 : 1.3, yb = dy - 0.6 - hb;
+    g += `<path d="M${r(dx - krone + 0.05)} ${r(dy - 0.6)} Q${dx} ${r(dy + ry * 0.25 - 0.4)} ${r(dx + krone - 0.05)} ${r(dy - 0.6)} L${r(dx + krone - 0.25)} ${r(yb)} Q${dx} ${r(yb + ry * 0.25)} ${r(dx - krone + 0.25)} ${r(yb)} Z" fill="${band}"/>`;
+    if (!fein) { let zz = ""; for (let i = 0; i <= 10; i++) { const x = dx - krone + 0.4 + i * (2 * krone - 0.8) / 10; zz += `${i ? "L" : "M"}${r(x)} ${r(yb + hb * (i % 2 ? 0.25 : 0.75) + ry * 0.12)}`; } g += `<path d="${zz}" stroke="#f1c232" stroke-width=".3" fill="none"/>`; }
     return g;
   };
   const k = hut(-1.5, 2, 7.2, 3, S.lg("stroh", [[0, "#f2d79a"], [1, "#c99a4e"]]), "#c8102e", false) + hut(6.6, 12, 4.4, 2.2, "#efe2bf", "#1d1d1f", true);
