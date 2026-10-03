@@ -198,7 +198,7 @@ const toroeffnung = (Y, xm, w, zKampf, zScheitel, spitz) => [[xm - w / 2, Y, 0],
   for (const yb of [-62.5, -41.5]) gb += `<path d="${poly([[70, yb - .2, 0], [-96, yb - .2, 0], [-96, yb + .2, 0], [70, yb + .2, 0]])}"/>`;
   for (const xb of [57, 37, 17, -3, -23, -43, -63]) gb += `<path d="${poly([[xb - .2, -78, 0], [xb + .2, -78, 0], [xb + .2, -22, 0], [xb - .2, -22, 0]])}"/>`;
   k += `<g fill="#c2bcb0" opacity=".85">${gb}</g>`;
-  /* Schatten der Südzeile: Sonne hoch im Südsüdosten — nur etwa 7 m breit, nach Westen verschoben */
+  /* Schatten der Südzeile: Vormittagssonne aus Ostsüdost, 40° hoch — nur etwa 7 m breit, nach Westen verschoben */
   k += `<path d="${poly([[70, KYS, 0], [-96, KYS, 0], [-96 + SCH[0] * 14, KYS + SCH[1] * 14, 0], [70 + SCH[0] * 14, KYS + SCH[1] * 14, 0]])}" fill="#2a2018" opacity=".2"/>`;
 
   /* Westende des Platzes (Ebene x = −96, die Fassaden schauen zu uns): bis hinter den Turmfuß geschlossen.
@@ -802,7 +802,7 @@ let FERNSTAENDE = "";
   const DACH = [WEISS, WEISS, ROTW, GRUEN, WEISS, BLAU];
   const WAREN = [["#d8a832", "#8a5a3a", "#c8382c"], ["#7a9a3a", "#c8382c", "#e8d090"], ["#5a7fae", "#e8e2d0", "#9a6a3a"], ["#d86a2a", "#7a9a3a", "#f0e0b0"], ["#e0a030", "#5a8a3a", "#b84a6a"]];
   const staende = [];
-  for (const [yr, x0, x1, dx] of [[-67, -46, 28, 7.6], [-57, -44, 26, 8.2], [-43, -40, 24, 8.6], [-31, -38, 26, 8]]) {
+  for (const [yr, x0, x1, dx] of [[-67, -46, 28, 8.4], [-57, -44, 26, 9], [-43, -40, 24, 9.4], [-31, -38, 26, 8.8]]) {
     for (let x = x0 + rnd() * 2; x < x1; x += dx + rnd() * 2.4) {
       const y = yr + (rnd() - .5) * 2.6;
       const p = pr(x, y, 0);
@@ -934,12 +934,12 @@ const SV = {};
   k += `<rect x="${r(x - W / 2 - .25 * s)}" y="${r(y - H)}" width="${r(W + .5 * s)}" height="${r(.22 * s)}" fill="none" stroke="#2f6e44" stroke-width="${r(.03 * s)}"/>`;
   k += `<text x="${r(x)}" y="${r(y - H - .12 * s)}" font-size="${r(.24 * s)}" text-anchor="middle" fill="#f4efe2" font-family="Georgia,serif" font-weight="bold">Schwarzwald</text>`;
   /* je Uhr eine eigene Fläche; der Bollenhut sitzt frei darunter */
-  const uf = UH.map(([a, b, g]) => flaeche(a - x - .3 * g, b - (y - 1.4 * s) - .55 * g, .6 * g, .9 * g, 0.3)).join("");
+  const uf = UH.map(([a, b, g]) => flaeche(a - x - .3 * g, b - (y - 2 * s) - .55 * g, .6 * g, .9 * g, 0.3)).join("");
   S.teil({ id: "souvenirstand", de: "der Souvenirstand", syl: "su-ve-NIR-stand", it: "la bancarella di souvenir", itSyl: "ban-ca-REL-la di su-ve-NIR", en: "souvenir stall", x: 0, y: 0, kunst: k,
     tipp: "Hier gibt es Andenken aus dem Schwarzwald.",
     zoom: { x: r(x - 21), y: r(y - H - 7), w: 42, h: 28 },
     unter: [
-      { id: "kuckucksuhr", de: "die Kuckucksuhr", syl: "KU-ckucks-uhr", it: "l'orologio a cucù", itSyl: "o-ro-LO-gio a cu-CÙ", en: "cuckoo clock", x: x, y: y - 1.4 * s, kunst: uf,
+      { id: "kuckucksuhr", de: "die Kuckucksuhr", syl: "KU-ckucks-uhr", it: "l'orologio a cucù", itSyl: "o-ro-LO-gio a cu-CÙ", en: "cuckoo clock", x: x, y: y - 2 * s, kunst: uf,
         tipp: "Jede volle Stunde springt ein kleiner Vogel heraus und ruft „Kuckuck“. Die Uhr läuft mit Gewichten wie Tannenzapfen." },
       { id: "bollenhut", de: "der Bollenhut", syl: "BOL-len-hut", it: "il cappello a pompon", itSyl: "cap-PEL-lo a pom-PON", en: "pompom hat (Bollenhut)", x: SV.hut.x, y: SV.hut.y, kunst: flaeche(-.32 * SV.hut.g, -.12 * SV.hut.g, .64 * SV.hut.g, .2 * SV.hut.g, 0.3),
         tipp: "Der Bollenhut gehört zur Tracht im Schwarzwald. Rote Bollen tragen unverheiratete Frauen." },

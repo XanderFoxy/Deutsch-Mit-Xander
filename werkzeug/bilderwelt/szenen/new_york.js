@@ -154,7 +154,7 @@ S.hinten(`<rect width="400" height="${HOR + 3}" fill="${S.lg("himmel", [[0, "#3f
   /* Bäume (Nolan Park, Fort Jay) und gelbe Backsteinhäuser */
   { let t = ""; for (let b = 229.6; b < 242.6; b += 0.55) { const d = 2905 - (b - 229) / 14.4 * 880, [e, n] = polar(b, d), q = PJ(e, n, 9 + 6 + rnd() * 5), rr = K * (6 + rnd() * 4) / d; t += `<circle cx="${r(q[0])}" cy="${r(q[1] + rr * 0.6)}" r="${r(rr)}" fill="${rnd() < 0.5 ? "#5c7a48" : "#6d8a55"}"/>`; if (rnd() < 0.25) { const h = PJ(e, n, 9 + 12); t += `<rect x="${r(h[0] - 0.8)}" y="${r(h[1])}" width="1.6" height="${r(K * 12 / d)}" fill="#d9c08a"/>`; } } c += `<g ${fern(1)}>${t}</g>`; }
   /* Castle Williams: runde Sandsteinfestung (Durchmesser 64 m, 12 m hoch) an der Nordwestspitze */
-  const [ce, cn] = polar(244.2, 2174), cw = PJ(ce, cn, 12 + 3), cb = PJ(ce, cn, 3), hw = K * 32 / 2174;
+  const [ce, cn] = polar(244.2, 2174), cw0 = PJ(ce, cn, 15), cw = [cw0[0] - 3, cw0[1] - 0.4], cb = [cw0[0] - 3, PJ(ce, cn, 3)[1]], hw = K * 32 / 2174;
   c += `<g><path d="M${r(cw[0] - hw)} ${r(cb[1])} L${r(cw[0] - hw)} ${r(cw[1])} Q${r(cw[0])} ${r(cw[1] - 0.9)} ${r(cw[0] + hw)} ${r(cw[1])} L${r(cw[0] + hw)} ${r(cb[1])} Q${r(cw[0])} ${r(cb[1] + 0.8)} ${r(cw[0] - hw)} ${r(cb[1])} Z" fill="#d2a37c"/><path d="M${r(cw[0] + hw * 0.2)} ${r(cw[1] - 0.6)} Q${r(cw[0] + hw * 0.7)} ${r(cw[1] - 0.3)} ${r(cw[0] + hw)} ${r(cw[1])} L${r(cw[0] + hw)} ${r(cb[1])} Q${r(cw[0] + hw * 0.6)} ${r(cb[1] + 0.6)} ${r(cw[0] + hw * 0.2)} ${r(cb[1] + 0.7)} Z" fill="#9b7356"/><path d="M${r(cw[0] - hw)} ${r(cw[1])} Q${r(cw[0])} ${r(cw[1] - 0.9)} ${r(cw[0] + hw)} ${r(cw[1])}" stroke="#ead2b4" stroke-width=".3" fill="none"/>`;
   for (let i = -3; i <= 3; i++) c += `<rect x="${r(cw[0] + i * hw / 3.6 - 0.2)}" y="${r((cw[1] + cb[1]) / 2 - 0.3)}" width=".4" height=".6" fill="#5a3f30"/>`;
   c += `</g>`;
@@ -254,6 +254,17 @@ const BBB = enu(40.70420, -73.99460), BBM = enu(40.70663, -73.99935);
   const f = (x, y) => `${r(x)} ${r(F0 + y)}`;
   let g = "";
   const KUPFER = S.lg("kupferf", [[0, "#a9dccb"], [0.35, "#7cbba7"], [0.7, "#4f8f7c"], [1, "#336b5c"]], 0, 0, 1, 0);
+  /* Fackelarm zuerst: in der Ansicht von ihrer linken Seite liegt er hinter Kopf und Körper */
+  /* rechter Arm hoch, der Ärmel hängt in Falten herab; die Fackel */
+  g += `<path d="M${f(-2.4, -17.4)} Q${f(-3.5, -18.4)} ${f(-3.7, -21)} Q${f(-3.8, -23.4)} ${f(-3.5, -25)} L${f(-2.5, -25.1)} Q${f(-2.4, -22.4)} ${f(-1.9, -20.6)} Q${f(-1.5, -18.8)} ${f(-0.9, -18.2)} Z" fill="${S.lg("arm", [[0, "#a9dccb"], [1, "#4f8d7b"]], 0, 0, 1, 0)}"/>`;
+  g += `<path d="M${f(-3.6, -18.2)} Q${f(-4.1, -19.4)} ${f(-3.7, -21.2)} Q${f(-3.2, -19.6)} ${f(-2.4, -17.6)} Z" fill="#4f8d7b"/>`;
+  g += `<path d="M${f(-3.1, -19.6)} Q${f(-3.3, -22)} ${f(-3, -24.4)}" stroke="#d0f0e5" stroke-width=".2" fill="none" opacity=".7"/>`;
+  g += `<ellipse cx="${r(-3)}" cy="${r(F0 - 25.4)}" rx=".7" ry=".55" fill="#5f9f8b"/>`;
+  g += `<path d="M${f(-3.35, -25.6)} L${f(-3.2, -26.9)} L${f(-2.75, -26.9)} L${f(-2.6, -25.6)} Z" fill="#4f8d7b"/>`;
+  g += `<path d="M${f(-3.9, -26.9)} L${f(-2.05, -26.9)} L${f(-2.25, -27.35)} L${f(-3.7, -27.35)} Z" fill="#7cbba7"/>`;
+  for (let i = 0; i < 6; i++) g += `<line x1="${r(-3.75 + i * 0.3)}" y1="${r(F0 - 26.9)}" x2="${r(-3.75 + i * 0.3)}" y2="${r(F0 - 27.35)}" stroke="#2f5d51" stroke-width=".07"/>`;
+  g += `<path d="M${f(-2.95, -27.35)} C${f(-3.85, -28)} ${f(-3.3, -28.9)} ${f(-2.9, -29.8)} C${f(-2.55, -28.9)} ${f(-1.95, -28.1)} ${f(-2.95, -27.35)} Z" fill="${GOLD}"/>`;
+  g += `<path d="M${f(-2.95, -27.6)} C${f(-3.35, -28.1)} ${f(-3.15, -28.8)} ${f(-2.9, -29.3)}" stroke="#fffbe0" stroke-width=".18" fill="none"/>`;
   /* Gewand: weit, fällt in schweren Falten bis auf den Sockel */
   g += `<path d="M${f(-4, 0)} C${f(-3.9, -4)} ${f(-3.3, -9)} ${f(-2.9, -12.6)} C${f(-2.7, -15)} ${f(-2.7, -16.6)} ${f(-2.4, -17.6)} Q${f(0, -18.8)} ${f(2.6, -17.6)} C${f(3, -16)} ${f(3.2, -14)} ${f(3.3, -12.2)} C${f(3.6, -8)} ${f(4, -4)} ${f(4.2, 0)} Q${f(2.2, 0.5)} ${f(0, 0.2)} Q${f(-2, 0.5)} ${f(-4, 0)} Z" fill="${KUPFER}"/>`;
   /* Saum mit Zickzack */
@@ -293,20 +304,10 @@ const BBB = enu(40.70420, -73.99460), BBM = enu(40.70663, -73.99935);
     const tx = bx + Math.sin(a) * L, ty = by - Math.cos(a) * L * 0.95, nx = Math.cos(a) * 0.22, ny = Math.sin(a) * 0.22;
     g += `<path d="M${f(bx - nx, by - ny)} L${f(tx, ty)} L${f(bx + nx, by + ny)} Z" fill="${i < 4 ? "#a6d8c7" : "#5f9e8b"}" stroke="#3f7a6b" stroke-width=".06"/>`;
   }
-  /* rechter Arm hoch, der Ärmel hängt in Falten herab; die Fackel */
-  g += `<path d="M${f(-2.4, -17.4)} Q${f(-3.5, -18.4)} ${f(-3.7, -21)} Q${f(-3.8, -23.4)} ${f(-3.5, -25)} L${f(-2.5, -25.1)} Q${f(-2.4, -22.4)} ${f(-1.9, -20.6)} Q${f(-1.5, -18.8)} ${f(-0.9, -18.2)} Z" fill="${S.lg("arm", [[0, "#a9dccb"], [1, "#4f8d7b"]], 0, 0, 1, 0)}"/>`;
-  g += `<path d="M${f(-3.6, -18.2)} Q${f(-4.1, -19.4)} ${f(-3.7, -21.2)} Q${f(-3.2, -19.6)} ${f(-2.4, -17.6)} Z" fill="#4f8d7b"/>`;
-  g += `<path d="M${f(-3.1, -19.6)} Q${f(-3.3, -22)} ${f(-3, -24.4)}" stroke="#d0f0e5" stroke-width=".2" fill="none" opacity=".7"/>`;
-  g += `<ellipse cx="${r(-3)}" cy="${r(F0 - 25.4)}" rx=".7" ry=".55" fill="#5f9f8b"/>`;
-  g += `<path d="M${f(-3.35, -25.6)} L${f(-3.2, -26.9)} L${f(-2.75, -26.9)} L${f(-2.6, -25.6)} Z" fill="#4f8d7b"/>`;
-  g += `<path d="M${f(-3.9, -26.9)} L${f(-2.05, -26.9)} L${f(-2.25, -27.35)} L${f(-3.7, -27.35)} Z" fill="#7cbba7"/>`;
-  for (let i = 0; i < 6; i++) g += `<line x1="${r(-3.75 + i * 0.3)}" y1="${r(F0 - 26.9)}" x2="${r(-3.75 + i * 0.3)}" y2="${r(F0 - 27.35)}" stroke="#2f5d51" stroke-width=".07"/>`;
-  g += `<path d="M${f(-2.95, -27.35)} C${f(-3.85, -28)} ${f(-3.3, -28.9)} ${f(-2.9, -29.8)} C${f(-2.55, -28.9)} ${f(-1.95, -28.1)} ${f(-2.95, -27.35)} Z" fill="${GOLD}"/>`;
-  g += `<path d="M${f(-2.95, -27.6)} C${f(-3.35, -28.1)} ${f(-3.15, -28.8)} ${f(-2.9, -29.3)}" stroke="#fffbe0" stroke-width=".18" fill="none"/>`;
   /* Schatten auf der linken Flanke (im Bild rechts) */
   g += `<path d="M${f(1.4, 0.3)} C${f(1.2, -6)} ${f(1.6, -12)} ${f(2.2, -17.6)} L${f(2.6, -17.6)} C${f(3, -16)} ${f(3.2, -14)} ${f(3.3, -12.2)} C${f(3.6, -8)} ${f(4, -4)} ${f(4.2, 0)} Z" fill="#123a31" opacity=".2"/>`;
   /* Dreiviertelansicht von links: die Tafel vorn, der Fackelarm hinten (gespiegelt, Schrift wieder lesbar) */
-  k += `<g transform="scale(-.86 1)">${g.replace(/rotate\(-6\)/g, "rotate(-6) scale(-1 1)")}</g></g>`;
+  k += `<g transform="scale(-.66 1)">${g.replace(/rotate\(-6\)/g, "rotate(-6) scale(-1 1)")}</g></g>`;
   const sk = SK;
   S.teil({ id: "freiheitsstatue", de: "die Freiheitsstatue", syl: "FREI-heits-sta-tu-e", it: "la Statua della Libertà", itSyl: "STA-tua del-la li-ber-TÀ", en: "Statue of Liberty",
     x: SX, y: SY, kunst: `<g ${fern(0)} transform="scale(${r(SK * 1000) / 1000})">${k}</g>` + flaeche(-7, -20, 14, 22, 1),
@@ -426,12 +427,12 @@ const haus = (lat, lon, H, W, art, muster, extra, dx = 0) => {
   add(haus(40.7085, -74.0090, 248, 52, "dunkel", "steinv", dachtech));                      /* 28 Liberty */
   add(haus(40.7061, -74.0091, 226, 34, "stein2", "steinr", (x, yb, w, h) => `<rect x="${r(x - w * 0.36)}" y="${r(yb - h - 3)}" width="${r(w * 0.72)}" height="3" fill="${VERL.stein2}"/><rect x="${r(x - w * 0.2)}" y="${r(yb - h - 6)}" width="${r(w * 0.4)}" height="3" fill="${VERL.stein2}"/>`)); /* 20 Exchange Place */
   /* 60 Wall: flache, gestufte Krone; etwas nach links gerückt, damit die grüne Pyramide von 40 Wall frei steht */
-  add(haus(40.7059, -74.0079, 227, 40, "hell", "steinv", (x, yb, w, h, s) => `<rect x="${r(x - w * 0.36)}" y="${r(yb - h - 6 * s)}" width="${r(w * 0.72)}" height="${r(6 * s)}" fill="${VERL.hell}"/><rect x="${r(x - w * 0.2)}" y="${r(yb - h - 11 * s)}" width="${r(w * 0.4)}" height="${r(5 * s)}" fill="${VERL.hell}"/>`, -2.2)); /* 60 Wall */
+  add(haus(40.7059, -74.0079, 227, 40, "hell", "steinv", (x, yb, w, h, s) => `<rect x="${r(x - w * 0.36)}" y="${r(yb - h - 6 * s)}" width="${r(w * 0.72)}" height="${r(6 * s)}" fill="${VERL.hell}"/><rect x="${r(x - w * 0.2)}" y="${r(yb - h - 11 * s)}" width="${r(w * 0.4)}" height="${r(5 * s)}" fill="${VERL.hell}"/>`, -4)); /* 60 Wall */
   /* 40 Wall Street (1930): grüne Kupferpyramide mit Gauben, Laterne und Spitze */
   add(haus(40.7063, -74.00918, 238, 34, "stein", "steinr", (x, yb, w, h, s) => { const y0 = yb - h; let g = `<path d="M${r(x - w / 2 + 0.5)} ${r(y0)} L${r(x)} ${r(y0 - 30 * s)} L${r(x + w / 2 - 0.5)} ${r(y0)} Z" fill="${S.lg("kupfer", [[0, "#8fc4ae"], [1, "#4f8a74"]], 0, 0, 1, 0)}"/>`;
     for (const [t, n] of [[0.25, 4], [0.55, 2]]) for (let i = 0; i < n; i++) { const yy = y0 - 30 * s * t, hw = (w / 2 - 0.5) * (1 - t), xx = x - hw + (i + 0.5) * 2 * hw / n; g += `<rect x="${r(xx - 0.3)}" y="${r(yy - 0.7)}" width=".6" height=".7" fill="#e9e2c8"/>`; }
     g += `<rect x="${r(x - 0.6)}" y="${r(y0 - 34 * s)}" width="1.2" height="${r(4 * s)}" fill="#cfe2d6"/><line x1="${r(x)}" y1="${r(y0 - 34 * s)}" x2="${r(x)}" y2="${r(y0 - 45 * s)}" stroke="#7fa79a" stroke-width=".3"/>`;
-    return g; }));
+    return g; }, 1));
   add(haus(40.70637, -74.00754, 236, 38, "stein2", "steinv", (x, yb, w, h, s) => `<rect x="${r(x - w * 0.38)}" y="${r(yb - h - 14 * s)}" width="${r(w * 0.76)}" height="${r(14 * s)}" fill="${VERL.stein2}"/><rect x="${r(x - w * 0.24)}" y="${r(yb - h - 26 * s)}" width="${r(w * 0.48)}" height="${r(12 * s)}" fill="${VERL.stein2}"/><path d="M${r(x - w * 0.14)} ${r(yb - h - 26 * s)} L${r(x)} ${r(yb - h - 40 * s)} L${r(x + w * 0.14)} ${r(yb - h - 26 * s)} Z" fill="#d9e4ea"/>` + spitze(14)(x, yb - 40 * s, w, h, s))); /* 70 Pine */
   add(haus(40.70185, -74.01207, 195, 56, "braun", "steinv", (x, yb, w, h, s) => dachtech(x, yb, w, h) + `<rect x="${r(x + w * 0.2)}" y="${r(yb - h - 5 * s)}" width="${r(w * 0.18)}" height="${r(4 * s)}" fill="#6f747a"/>`));                     /* 1 New York Plaza */
   add(haus(40.7025, -74.0122, 165, 40, "glas2", "baender", (x, yb, w, h, s) => `<rect x="${r(x - w * 0.42)}" y="${r(yb - h - 3 * s)}" width="${r(w * 0.84)}" height="${r(3 * s)}" fill="#c6d3dc"/>` + dachtech(x, yb - 3 * s, w * 0.6, h)));                             /* 17 State St */
@@ -630,10 +631,10 @@ const haus = (lat, lon, H, W, art, muster, extra, dx = 0) => {
   /* Wassertank auf dem Dach */
   const TX = X - 2.6 * s, TY = YB - H - 1.4;
   let wt = "";
-  for (const dx of [-2, -0.7, 0.7, 2]) wt += `<rect x="${r(TX + dx * s - 0.15)}" y="${r(TY - 3 * s)}" width=".3" height="${r(3 * s)}" fill="#2e3230"/>`;
-  wt += `<path d="M${r(TX - 2.2 * s)} ${r(TY - 3 * s)} L${r(TX - 2.2 * s)} ${r(TY - 8 * s)} Q${r(TX)} ${r(TY - 8.3 * s)} ${r(TX + 2.2 * s)} ${r(TY - 8 * s)} L${r(TX + 2.2 * s)} ${r(TY - 3 * s)} Q${r(TX)} ${r(TY - 2.8 * s)} ${r(TX - 2.2 * s)} ${r(TY - 3 * s)} Z" fill="${S.lg("fass", [[0, "#b49470"], [0.35, "#8a6a45"], [1, "#4f3a25"]], 0, 0, 1, 0)}"/>`;
-  for (let i = 1; i < 5; i++) wt += `<path d="M${r(TX - 2.2 * s)} ${r(TY - 3 * s - i * s)} Q${r(TX)} ${r(TY - 2.8 * s - i * s)} ${r(TX + 2.2 * s)} ${r(TY - 3 * s - i * s)}" stroke="#2c2c2a" stroke-width=".14" fill="none"/>`;
-  wt += `<path d="M${r(TX - 2.5 * s)} ${r(TY - 8 * s)} L${r(TX)} ${r(TY - 9.6 * s)} L${r(TX + 2.5 * s)} ${r(TY - 8 * s)} Z" fill="#5a4836"/>`;
+  for (const dx of [-2, -0.7, 0.7, 2]) wt += `<rect x="${r(TX + dx * s - 0.15)}" y="${r(TY - 1.6 * s)}" width=".3" height="${r(1.6 * s)}" fill="#2e3230"/>`;
+  wt += `<path d="M${r(TX - 2.2 * s)} ${r(TY - 1.6 * s)} L${r(TX - 2.2 * s)} ${r(TY - 6.6 * s)} Q${r(TX)} ${r(TY - 6.9 * s)} ${r(TX + 2.2 * s)} ${r(TY - 6.6 * s)} L${r(TX + 2.2 * s)} ${r(TY - 1.6 * s)} Q${r(TX)} ${r(TY - 1.4 * s)} ${r(TX - 2.2 * s)} ${r(TY - 1.6 * s)} Z" fill="${S.lg("fass", [[0, "#b49470"], [0.35, "#8a6a45"], [1, "#4f3a25"]], 0, 0, 1, 0)}"/>`;
+  for (let i = 1; i < 5; i++) wt += `<path d="M${r(TX - 2.2 * s)} ${r(TY - 1.6 * s - i * s)} Q${r(TX)} ${r(TY - 1.4 * s - i * s)} ${r(TX + 2.2 * s)} ${r(TY - 1.6 * s - i * s)}" stroke="#2c2c2a" stroke-width=".14" fill="none"/>`;
+  wt += `<path d="M${r(TX - 2.5 * s)} ${r(TY - 6.6 * s)} L${r(TX)} ${r(TY - 8.2 * s)} L${r(TX + 2.5 * s)} ${r(TY - 6.6 * s)} Z" fill="#5a4836"/>`;
   k += wt;
   /* Kaimauer mit Geländer und der hölzerne Fulton-Ferry-Anleger */
   {
@@ -697,18 +698,19 @@ const haus = (lat, lon, H, W, art, muster, extra, dx = 0) => {
   const KAB = [[12, 0.3, "#7a7a73"], [4, 0.3, "#706f69"], [-4, 0.4, "#55544e"], [-12, 0.55, "#45443e"]];
   const kabel = (t0f, t1, n) => KAB.map(([q, w, c]) => `<path d="${linie(typeof t0f === "function" ? t0f(q) : t0f, t1, n, (t) => pt(t, q, kabZ(t)))}" stroke="${c}" stroke-width="${w}" fill="none"/>`).join("");
   /* Hänger: im Hauptfeld alle 7,6 m (in der Projektion zum fernen Pfeiler hin dichter), Schrägseile von den Pfeilerköpfen */
-  let hgM = "", hgB = "", hgS = "";
+  let hgM = "", hgB = "", hgS = "", hgH = "";
   for (let m = 7.6; m < La - 4; m += 7.6) { const t = m / La; if (kabZ(t) > deckZ(t) + 1.2) hgM += `M${pr(pt(t, -12, kabZ(t)))} L${pr(pt(t, -12, deckZ(t)))} `; }
   for (let m = 7.6; m < 280; m += 15.2) { const t = -m / La; if (t > tR && kabZ(t) > deckZ(t) + 1) hgB += `M${pr(pt(t, -12, kabZ(t)))} L${pr(pt(t, -12, deckZ(t)))} `; }
   for (let i = 1; i <= 9; i++) {
     const m = i * 14;
     hgM += `M${pr(pt(0, -12, 80))} L${pr(pt(m / La, -12, deckZ(m / La)))} M${pr(pt(1, -12, 80))} L${pr(pt(1 - m / La, -12, deckZ(1 - m / La)))} `;
     if (i % 2) hgM += `M${pr(pt(1, -4, 80))} L${pr(pt(1 - m / La, -4, deckZ(1 - m / La)))} M${pr(pt(0, -4, 80))} L${pr(pt(m / La, -4, deckZ(m / La)))} `;
+    if (i % 2 === 0) hgH += `M${pr(pt(1, 4, 80))} L${pr(pt(1 - m / La, 4, deckZ(1 - m / La)))} M${pr(pt(1, 12, 80))} L${pr(pt(1 - m / La, 12, deckZ(1 - m / La)))} `;
     if (-m / La > tR + 0.02) hgB += `M${pr(pt(0, -12, 80))} L${pr(pt(-m / La, -12, deckZ(-m / La)))} `;
     hgS += `M${pr(pt(1, -12, 80))} L${pr(pt(1 + m / La, -12, deckZ(1 + m / La)))} `;
   }
   const seile = (h) => `<path d="${h}" stroke="#5c5a54" stroke-width=".13" fill="none" opacity=".9" pointer-events="none"/>`;
-  const SM = deck(1, 1.45, 10) + fachwerk(1, 1.3, 12) + kante(1, 1.45, 10) + kabel(1, 1.6, 24) + seile(hgS);
+  const SM = `<path d="${hgH}" stroke="#7a776f" stroke-width=".1" fill="none" opacity=".55" pointer-events="none"/>` + deck(1, 1.45, 10) + fachwerk(1, 1.3, 12) + kante(1, 1.45, 10) + kabel(1, 1.6, 24) + seile(hgS);
   const SH = deck(0, 0.981, 40) + fachwerk(0, 0.98, 36) + kante(0, 0.981, 36) + kabel(0, 1, 50) + seile(hgM);
   const SB = deck(tR, 0, 12) + fachwerk(tR, 0, 14) + kante(tR, 0, 12) + kabel(tKq, 0, 24) + seile(hgB);
   /* die Pfeiler als Steinblöcke: 43 m quer (q), 18 m längs (t), 84 m hoch */
@@ -991,8 +993,8 @@ const WAGEN = { X: -3.9, Z: 18.75 };
   k += poly([[0.95, 0.85, 1.02], [-0.25, 0.83, 1.02], [-0.22, 0.735, 1.42], [0.28, 0.735, 1.42]], S.lg("tfenster", [[0, "#7b8f9e"], [0.5, "#2f3c47"], [1, "#1c252c"]]));
   k += poly([[-0.33, 0.83, 1.02], [-1.52, 0.85, 1.02], [-1.02, 0.735, 1.42], [-0.3, 0.735, 1.42]], S.lg("tfenster", [[0, "#7b8f9e"], [0.5, "#2f3c47"], [1, "#1c252c"]]));
   /* der Fahrer (Kopf und Schulter hinter der getönten Scheibe) */
-  const [dx, dy] = W(0.35, 0.5, 1.22);
-  { const q = K / C.Z, [sx2, sy2] = W(0.35, 0.5, 1.0), [wx2, wy2] = W(0.75, 0.55, 1.08);
+  const [dx, dy] = W(0.12, 0.5, 1.22);
+  { const q = K / C.Z, [sx2, sy2] = W(0.12, 0.5, 1.0), [wx2, wy2] = W(0.55, 0.55, 1.08);
     k += `<path d="M${r(sx2 - ox - 0.22 * q)} ${r(sy2 - oy + 0.05 * q)} Q${r(sx2 - ox - 0.2 * q)} ${r(sy2 - oy - 0.12 * q)} ${r(sx2 - ox)} ${r(sy2 - oy - 0.13 * q)} Q${r(sx2 - ox + 0.2 * q)} ${r(sy2 - oy - 0.12 * q)} ${r(sx2 - ox + 0.22 * q)} ${r(sy2 - oy + 0.05 * q)} Z" fill="#2c3e5a"/><ellipse cx="${r(wx2 - ox)}" cy="${r(wy2 - oy)}" rx="${r(0.13 * q)}" ry="${r(0.05 * q)}" fill="none" stroke="#111" stroke-width="${r(0.025 * q)}"/><circle cx="${r(wx2 - ox - 0.08 * q)}" cy="${r(wy2 - oy)}" r="${r(0.035 * q)}" fill="#c99a78"/>`; }
   k += `<ellipse cx="${r(dx - ox)}" cy="${r(dy - oy)}" rx="${r(0.1 * K / C.Z)}" ry="${r(0.12 * K / C.Z)}" fill="#d1a582"/><path d="M${r(dx - ox - 0.1 * K / C.Z)} ${r(dy - oy - 0.02 * K / C.Z)} Q${r(dx - ox)} ${r(dy - oy - 0.2 * K / C.Z)} ${r(dx - ox + 0.1 * K / C.Z)} ${r(dy - oy - 0.02 * K / C.Z)} Z" fill="#1d1a18"/><path d="M${P(0.6, 0.5, 1.05)} Q${P(0.35, 0.5, 1.16)} ${P(0.1, 0.5, 1.05)}" stroke="#15191d" stroke-width="${r(0.12 * K / C.Z)}" opacity=".7" fill="none"/>`;
   k += poly([[1.02, 0.86, 0.99], [1.02, -0.86, 0.99], [0.25, -0.72, 1.47], [0.25, 0.72, 1.47]], S.lg("tscheibe", [[0, "#9db4c4"], [0.6, "#3c4c58"], [1, "#25313a"]]));
@@ -1011,7 +1013,7 @@ const WAGEN = { X: -3.9, Z: 18.75 };
   /* Türfugen, Griffe, Spiegel, Glanzlinie */
   for (const u of [1.0, -0.3, -1.55]) k += `<path d="M${P(u, 0.93, 0.38)} L${P(u, 0.93, 0.98)}" stroke="#9b7506" stroke-width=".25"/>`;
   for (const u of [0.15, -1.1]) k += poly([[u, 0.935, 0.83], [u - 0.18, 0.935, 0.83], [u - 0.18, 0.935, 0.87], [u, 0.935, 0.87]], "#6b5206");
-  k += poly([[1.0, 0.86, 0.98], [0.82, 1.12, 0.98], [0.82, 1.12, 1.13], [1.0, 0.86, 1.12]], "#d8a20c") + poly([[0.98, 0.9, 1.0], [0.84, 1.1, 1.0], [0.84, 1.1, 1.11], [0.98, 0.9, 1.1]], "#2b3238") + poly([[1.0, -0.86, 0.98], [0.82, -1.12, 0.98], [0.82, -1.12, 1.13], [1.0, -0.86, 1.12]], "#c99608");
+  k += poly([[1.0, 0.86, 0.99], [0.88, 1.04, 0.99], [0.88, 1.04, 1.09], [1.0, 0.86, 1.08]], "#d8a20c") + poly([[0.98, 0.9, 1.0], [0.9, 1.02, 1.0], [0.9, 1.02, 1.07], [0.98, 0.9, 1.07]], "#2b3238") + poly([[1.0, -0.86, 0.98], [0.82, -1.12, 0.98], [0.82, -1.12, 1.13], [1.0, -0.86, 1.12]], "#c99608");
   k += `<path d="M${P(2.3, 0.935, 0.9)} L${P(-2.35, 0.935, 0.92)}" stroke="#fff6c8" stroke-width=".45" opacity=".7"/>`;
   S.teil({ id: "taxi", de: "das Taxi", syl: "TA-xi", it: "il taxi", itSyl: "TA-xi", en: "taxi", x: ox, y: oy, kunst: k,
     tipp: "Die gelben Taxis (Yellow Cabs) sind ein Wahrzeichen von New York. Man winkt sie am Straßenrand heran." });
@@ -1038,7 +1040,7 @@ const WAGEN = { X: -3.9, Z: 18.75 };
       v += `<path d="${fu}" stroke="#7a705f" stroke-width=".35" fill="none"/><path d="M${pr(f4)} L${pr(f3)}" stroke="#ece4d4" stroke-width=".45"/>`; }
   }
   /* zwei schwarze Laternen des Brooklyn Bridge Park (4 m) an der Kaikante */
-  for (const X of [-13, 12.5]) { const [x0, y0] = NP(X, 30, 0), [, y1] = NP(X, 30, 4), w = K * 0.12 / 30;
+  for (const X of [-12.6, 12.5]) { const [x0, y0] = NP(X, 30, 0), [, y1] = NP(X, 30, 4), w = K * 0.12 / 30;
     v += `<path d="M${r(x0 - w)} ${r(y0)} L${r(x0 - w * 0.6)} ${r(y1)} L${r(x0 + w * 0.6)} ${r(y1)} L${r(x0 + w)} ${r(y0)} Z" fill="#1f2220"/><rect x="${r(x0 - w * 1.6)}" y="${r(y0 - 0.8)}" width="${r(w * 3.2)}" height=".8" fill="#1f2220"/>`;
     v += `<path d="M${r(x0 - 1.2)} ${r(y1)} L${r(x0 - 0.8)} ${r(y1 - 2.4)} L${r(x0 + 0.8)} ${r(y1 - 2.4)} L${r(x0 + 1.2)} ${r(y1)} Z" fill="#eef0e6" stroke="#1f2220" stroke-width=".3"/><path d="M${r(x0 - 1.1)} ${r(y1 - 2.4)} L${r(x0)} ${r(y1 - 3.4)} L${r(x0 + 1.1)} ${r(y1 - 2.4)} Z" fill="#1f2220"/>`;
     const [sx, sy] = NP(X + SCH.dx * 4, 30 + SCH.dz * 4, 0); v += `<path d="M${r(x0 - w)} ${r(y0)} L${r(sx - 0.2)} ${r(sy)} L${r(sx + 0.2)} ${r(sy)} L${r(x0 + w)} ${r(y0)} Z" fill="#1d2230" opacity=".25"/>`; }
@@ -1050,21 +1052,30 @@ const WAGEN = { X: -3.9, Z: 18.75 };
     for (let i = 0; i < 6; i++) { const X = -11.8 + i * 0.75, rw = 0.33, Zr = Z + 1.1, q = s;
       const W2 = (dz, y) => NP(X, Z + dz, y), [fx, fy] = W2(0, 0), [hx2, hy2] = W2(1.1, 0);
       const rx = (dz) => Math.abs(W2(dz + rw, rw)[0] - W2(dz - rw, rw)[0]) / 2 + 0.25;
-      const [sx, sy] = NP(X + SCH.dx * 1.1, Zr + SCH.dz * 1.1, 0); v += `<path d="M${r(fx - 0.6)} ${r(fy)} L${r(hx2 - 0.6)} ${r(hy2)} L${r(sx)} ${r(sy)} L${r(hx2 + 0.6)} ${r(hy2)} Z" fill="#1d2230" opacity=".22"/>`;
+      const [sx, sy] = NP(X + SCH.dx * 1.1, Zr + SCH.dz * 1.1, 0); v += `<path d="M${r(fx - 0.6)} ${r(fy)} L${r(hx2 - 0.6)} ${r(hy2)} L${r(sx)} ${r(sy)} L${r(hx2 + 0.6)} ${r(hy2)} Z" fill="#1d2230" opacity=".32"/>`;
       const ach = (dz) => W2(dz, rw), A = ach(1.1), Fr = ach(0), sat = W2(0.85, 0.9), len = W2(0.15, 1.05), tief = W2(0.55, 0.3);
       v += `<ellipse cx="${r(A[0])}" cy="${r(A[1])}" rx="${r(rx(1.1))}" ry="${r(rw * K / Zr)}" fill="none" stroke="#1d1f20" stroke-width=".7"/>`;
       v += `<path d="M${pr(A)} L${pr(tief)} L${pr(Fr)} M${pr(tief)} L${pr(sat)} M${pr(Fr)} L${pr(len)}" stroke="#2f73c0" stroke-width="1.1" fill="none"/><path d="M${r(sat[0] - 0.9)} ${r(sat[1])} h1.8" stroke="#222" stroke-width=".7"/><path d="M${r(len[0] - 1.6)} ${r(len[1])} h3.2" stroke="#222" stroke-width=".55"/>`;
-      v += `<ellipse cx="${r(Fr[0])}" cy="${r(Fr[1])}" rx="${r(rx(0))}" ry="${r(rw * K / Z)}" fill="none" stroke="#1d1f20" stroke-width=".7"/><rect x="${r(len[0] - 1.5)}" y="${r(len[1] + 0.6)}" width="3" height="1.6" fill="#2f73c0"/>`; } }
+      v += `<ellipse cx="${r(Fr[0])}" cy="${r(Fr[1])}" rx="${r(rx(0))}" ry="${r(rw * K / Z)}" fill="none" stroke="#1d1f20" stroke-width=".7"/>`;
+      /* Schutzbleche, Sattel (Keil), großer Frontkorb mit blauem Blech, Dock-Poller am Vorderrad */
+      const sb1 = W2(1.1, rw * 2.05), sb2 = W2(0, rw * 2.05); v += `<path d="M${r(A[0] - rx(1.1))} ${r(A[1])} Q${pr(sb1)} ${r(A[0] + rx(1.1))} ${r(A[1] - 1)} M${r(Fr[0] - rx(0))} ${r(Fr[1] - 0.5)} Q${pr(sb2)} ${r(Fr[0] + rx(0))} ${r(Fr[1])}" stroke="#d9dcdf" stroke-width=".45" fill="none"/>`;
+      v += `<path d="M${r(sat[0] - 1.2)} ${r(sat[1] - 0.2)} L${r(sat[0] + 1)} ${r(sat[1] - 0.6)} L${r(sat[0] + 0.9)} ${r(sat[1] + 0.3)} Z" fill="#1d1f20"/><path d="M${r(len[0] - 1.8)} ${r(len[1] + 0.5)} h3.6 v2.4 h-3.6 Z" fill="#2a6fb8" stroke="#1d1f20" stroke-width=".25"/><rect x="${r(len[0] - 1.2)}" y="${r(len[1] + 1)}" width="2.4" height=".8" fill="#e8f0f6"/>`;
+      v += `<rect x="${r(Fr[0] - 0.6)}" y="${r(fy - 0.55 * q)}" width="1.2" height="${r(0.55 * q)}" fill="#6d7378"/><rect x="${r(Fr[0] - 0.6)}" y="${r(fy - 0.55 * q)}" width="1.2" height=".5" fill="#2f73c0"/>`; } }
   /* Tauben auf dem Pflaster (≈ 30 cm) */
   for (const [X, Z, d] of [[-1.3, 15.6, 1], [-0.6, 15.3, -1], [0.2, 15.8, 1], [0.9, 15.4, 1], [-0.1, 16.4, -1]]) { const [x, y] = NP(X, Z, 0), q = K * 0.1 / Z;
     v += `<ellipse cx="${r(x)}" cy="${r(y + 0.3)}" rx="${r(1.6 * q)}" ry="${r(0.35 * q)}" fill="#1d2230" opacity=".3"/>`;
     v += `<path d="M${r(x - 1.5 * q * d)} ${r(y - 0.9 * q)} Q${r(x - 0.2 * q * d)} ${r(y - 1.9 * q)} ${r(x + 1.1 * q * d)} ${r(y - 1.2 * q)} Q${r(x + 0.4 * q * d)} ${r(y - 0.2 * q)} ${r(x - 0.6 * q * d)} ${r(y - 0.3 * q)} L${r(x - 2.2 * q * d)} ${r(y - 0.6 * q)} Z" fill="#8a909a"/>`;
     v += `<circle cx="${r(x + 1.25 * q * d)}" cy="${r(y - 1.75 * q)}" r="${r(0.42 * q)}" fill="#5e6470"/><path d="M${r(x + 0.9 * q * d)} ${r(y - 1.4 * q)} q${r(0.3 * q * d)} ${r(0.2 * q)} ${r(0.5 * q * d)} 0" stroke="#5f8f7a" stroke-width="${r(0.3 * q)}" fill="none"/>`;
     v += `<path d="M${r(x + 1.6 * q * d)} ${r(y - 1.8 * q)} l${r(0.35 * q * d)} ${r(0.1 * q)}" stroke="#d9a05a" stroke-width="${r(0.15 * q)}"/><path d="M${r(x)} ${r(y - 0.2 * q)} v${r(0.25 * q)} M${r(x + 0.3 * q * d)} ${r(y - 0.2 * q)} v${r(0.25 * q)}" stroke="#c4605a" stroke-width="${r(0.12 * q)}"/>`; }
-  /* ein Hund an der Leine, am rechten Laternenmast angebunden */
-  { const [lx, ly] = NP(12.5, 30, 0.9), [hx3, hy3] = NP(11.6, 29.2, 0), q = K * 0.1 / 29.2;
-    v += `<path d="M${r(lx)} ${r(ly)} Q${r((lx + hx3) / 2)} ${r(ly + 2)} ${r(hx3 + 2.2 * q)} ${r(hy3 - 5.4 * q)}" stroke="#a03a2a" stroke-width=".25" fill="none"/>`;
-    v += `<path d="M${r(hx3 - 4 * q)} ${r(hy3 - 2.6 * q)} Q${r(hx3)} ${r(hy3 - 5.4 * q)} ${r(hx3 + 3 * q)} ${r(hy3 - 3.4 * q)} L${r(hx3 + 4.4 * q)} ${r(hy3 - 6.2 * q)} L${r(hx3 + 5.2 * q)} ${r(hy3 - 5.2 * q)} L${r(hx3 + 4 * q)} ${r(hy3 - 3)} L${r(hx3 + 3.4 * q)} ${r(hy3)} L${r(hx3 + 2.6 * q)} ${r(hy3)} L${r(hx3 + 2.4 * q)} ${r(hy3 - 2 * q)} L${r(hx3 - 2.6 * q)} ${r(hy3 - 2 * q)} L${r(hx3 - 2.8 * q)} ${r(hy3)} L${r(hx3 - 3.6 * q)} ${r(hy3)} L${r(hx3 - 3.8 * q)} ${r(hy3 - 2.4 * q)} L${r(hx3 - 5.4 * q)} ${r(hy3 - 4 * q)} Z" fill="#7a5532"/><ellipse cx="${r(hx3)}" cy="${r(hy3 + 0.2)}" rx="${r(5 * q)}" ry="${r(0.8 * q)}" fill="#1d2230" opacity=".25"/>`; }
+  /* ein Hund sitzt am rechten Laternenfuß: Kopf mit Schnauze und Schlappohr, Halsband mit Leine, Schwanz */
+  { const [lx, ly] = NP(12.5, 30, 0.9), [hx3, hy3] = NP(11.7, 29.4, 0), q = K * 0.1 / 29.4, P3 = (x, y) => `${r(hx3 + x * q)} ${r(hy3 + y * q)}`;
+    v += `<ellipse cx="${r(hx3 - 1.6 * q)}" cy="${r(hy3 - 0.5 * q)}" rx="${r(3.2 * q)}" ry="${r(0.7 * q)}" fill="#1d2230" opacity=".25"/>`;
+    v += `<path d="M${P3(-3.2, -0.5)} Q${P3(-4.4, -0.7)} ${P3(-4.5, -1.8)}" stroke="#6b4527" stroke-width="${r(0.5 * q)}" fill="none" stroke-linecap="round"/>`;
+    v += `<path d="M${P3(-3.4, 0)} Q${P3(-3.9, -2.8)} ${P3(-1.8, -3.5)} Q${P3(0.2, -4.2)} ${P3(1.3, -5.3)} L${P3(2.3, -4.3)} Q${P3(1.8, -2.6)} ${P3(1.8, 0)} L${P3(-0.4, 0)} Q${P3(-1.2, -1.2)} ${P3(-2.2, 0)} Z" fill="#8a5f36"/>`;
+    v += `<path d="M${P3(1.1, -2.4)} V${r(hy3)} M${P3(1.65, -2.4)} V${r(hy3)}" stroke="#6b4527" stroke-width="${r(0.42 * q)}"/><path d="M${P3(-2.7, -0.3)} h${r(1.2 * q)}" stroke="#5e3d22" stroke-width="${r(0.5 * q)}"/>`;
+    v += `<ellipse cx="${r(hx3 + 2 * q)}" cy="${r(hy3 - 5.9 * q)}" rx="${r(0.95 * q)}" ry="${r(0.85 * q)}" fill="#8a5f36"/><path d="M${P3(2.5, -6.2)} L${P3(3.8, -5.8)} L${P3(3.7, -5.2)} L${P3(2.5, -5.2)} Z" fill="#9b6d42"/><circle cx="${r(hx3 + 3.75 * q)}" cy="${r(hy3 - 5.7 * q)}" r="${r(0.22 * q)}" fill="#1b1b1b"/>`;
+    v += `<path d="M${P3(1.5, -6.6)} Q${P3(1.0, -5.5)} ${P3(1.4, -4.9)} Q${P3(1.9, -5.6)} ${P3(2.0, -6.5)} Z" fill="#5e3d22"/><circle cx="${r(hx3 + 2.4 * q)}" cy="${r(hy3 - 6.1 * q)}" r="${r(0.13 * q)}" fill="#111"/>`;
+    v += `<path d="M${P3(1.35, -5.1)} L${P3(2.35, -4.5)}" stroke="#c0392b" stroke-width="${r(0.3 * q)}"/><path d="M${r(lx)} ${r(ly)} Q${r((lx + hx3) / 2 + 1)} ${r(ly + 2)} ${P3(1.85, -4.8)}" stroke="#c0392b" stroke-width=".22" fill="none"/>`; }
   /* Schild „Brooklyn Bridge Park“ am Geländer (schwarz-weiß, Ahornblatt) */
   { const [gx, gy] = NP(4.5, 33, 1.1); v += `<rect x="${r(gx - 3.2)}" y="${r(gy - 2.6)}" width="6.4" height="2.6" fill="#141414"/><path d="M${r(gx - 2.5)} ${r(gy - 1.3)} l.35 -.55 l.1 .35 l.35 -.4 l.05 .5 l.35 .1 l-.4 .35 l.1 .4 l-.45 -.15 l-.05 .4 Z" fill="#fff"/><text x="${r(gx + 0.6)}" y="${r(gy - 1.55)}" font-size=".72" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-weight="bold">BROOKLYN BRIDGE</text><text x="${r(gx + 0.6)}" y="${r(gy - 0.65)}" font-size=".72" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-weight="bold">PARK</text>`; }
   /* eine Möwe auf einem Geländerpfosten */

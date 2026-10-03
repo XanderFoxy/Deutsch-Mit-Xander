@@ -94,7 +94,7 @@ function schlank(svg, Q = 1, flach = false) {
   const rd = (n) => { const v = Math.round(+n / Q) * Q; return String(v === 0 ? 0 : v); };
   let s = svg.replace(/ d="([^"]+)"/g, (a, p) => ` d="${p.replace(/-?\d*\.?\d+/g, rd)}"`)
     .replace(/ (x|y|x1|y1|x2|y2|cx|cy|fx|fy)="(-?\d*\.?\d+)"/g, (a, k, n) => ` ${k}="${rd(n)}"`)
-    .replace(/ (r|rx|ry|width|height)="(\d*\.?\d+)"/g, (a, k, n) => ` ${k}="${Math.max(Q, Math.round(+n / Q) * Q)}"`);
+    .replace(/ (r|rx|ry|width|height)="(\d*\.?\d+)"/g, (a, k, n) => +n < Q ? a : ` ${k}="${Math.round(+n / Q) * Q}"`);
   if (flach) {
     const farbe = {};
     s = s.replace(/<(linearGradient|radialGradient) id="([^"]+)"[^>]*>([\s\S]*?)<\/\1>/g, (a, t, id, inner) => {
@@ -213,8 +213,7 @@ S.hinten(`<rect width="400" height="${HOR + 12}" fill="${S.lg("himmel", [[0, "#5
   k += `<path d="M0 141 L0 130 Q50 124 100 128 Q150 122 200 126 Q240 128 262 141 Z" fill="#8aa496"/>`;
   k += `<line x1="204" y1="105.6" x2="204" y2="90" stroke="#7d8c8e" stroke-width=".55"/><path d="M202.6 105.6 L204 95 L205.4 105.6" stroke="#7d8c8e" stroke-width=".25" fill="none"/><rect x="203.6" y="90" width=".8" height=".6" fill="#c0504a"/>`;
   k += `<rect x="229.4" y="105.8" width="4" height="2.6" fill="#a8b4b0"/><path d="M230.6 105.8 L231.4 103 L232.2 105.8 Z" fill="#a8b4b0"/>`;
-  S.teil({ id: "wienerwald", de: "der Wienerwald", syl: "WIE-ner-wald", it: "il Bosco Viennese", itSyl: "BO-sco vien-NE-se", en: "Vienna Woods", x: 0, y: 0,
-    kunst: VED(`<g ${FERN3}>${k}</g>`, 200, 1), tipp: "Im Westen und Norden liegen die Hügel des Wienerwalds. Auf dem Kahlenberg steht ein hoher Sendemast." });
+  S.hinten(VED(`<g ${FERN3}>${k}</g>`, 200, 1));   /* Kulisse: die Hügel des Wienerwalds */
 }
 
 /* =====================================================================
@@ -234,10 +233,10 @@ const SB = (svg) => VED(`<g ${FERN2}><g transform="translate(0 -5)">${svg}</g></
   /* Wald an den Flanken als dichtes Kronenmuster */
   S.def(`<pattern id="${S.id("waldmuster")}" patternUnits="userSpaceOnUse" width="4.4" height="3.2"><rect width="4.4" height="3.2" fill="#3e5c34"/><circle cx="1" cy="1" r="1.25" fill="#4d6e40"/><circle cx="3.2" cy="2.4" r="1.3" fill="#47683b"/><circle cx=".6" cy=".6" r=".5" fill="#6a8a56"/><circle cx="2.8" cy="2" r=".5" fill="#65864f"/></pattern>`);
   k += `<path d="M15 141 L15 129.4 Q36 120.6 62 117 Q72 116 80 115.6 L76 139 Z M100 115.6 Q120 116 140 119 Q156 122 161 128.4 L163 141 L104 139 Z" fill="url(#${S.id("waldmuster")})"/>`;
-  k += `<path d="M86 115.4 L94 115.4 L101 139 L79 139 Z" fill="#8fae72"/>`;
-  k += `<path d="M90 116 L87.4 119.4 L92.6 122.6 L85.8 126.4 L94.4 130.2 L83.6 134.4 L96.6 138.6" stroke="#d9d3b8" stroke-width=".4" fill="none"/>`;
+  k += `<path d="M86 115.4 L94 115.4 L101 139 L79 139 Z" fill="#7d9a66"/>`;
+  k += `<path d="M86.4 116 L84.2 119.6 L86.8 123 L83.4 126.8 L86 130.6 L82 134.6 L84.6 138.6 M93.6 116 L95.8 119.6 L93.2 123 L96.6 126.8 L94 130.6 L98 134.6 L95.4 138.6" stroke="#d6d4bc" stroke-width=".28" fill="none"/>`;
   k += `<rect x="56" y="139" width="72" height="3" fill="#b9cc98"/><path d="M60 140.5 h64" stroke="#e2dcc0" stroke-width=".35" stroke-dasharray="3 1.4"/>`;
-  k += `<path d="M84 139.6 Q90 136.4 96 139.6 Z" fill="#e8e3d6"/><ellipse cx="90" cy="139.8" rx="8" ry=".8" fill="#9fc3cc"/>`;
+  k += `<ellipse cx="90" cy="139.8" rx="8" ry="1" fill="#bfe0ea"/><path d="M84 139.6 Q90 135.6 96 139.6 Z" fill="#fbf8f0"/>`;
   /* Gloriette: Mitte als verglaster Triumphbogen, Arkadenflügel mit Doppelsäulen,
      oben der Reichsadler auf der Weltkugel zwischen Trophäen */
   const GX = 90, GY = 114.2;
@@ -340,12 +339,7 @@ const SB = (svg) => VED(`<g ${FERN2}><g transform="translate(0 -5)">${svg}</g></
   k += `<rect x="${M - 1.6}" y="${y(51)}" width="3.2" height="${r(4 * s)}" fill="#7fbea0"/><path d="M${M - 2} ${y(51)} Q${M} ${y(52.6)} ${M + 2} ${y(51)} Z" fill="${KUPFER}"/>`;
   k += `<path d="M${M - 1.2} ${y(52.4)} L${M - 1.4} ${y(53.8)} L${M - 0.6} ${y(53.2)} L${M} ${y(54.2)} L${M + 0.6} ${y(53.2)} L${M + 1.4} ${y(53.8)} L${M + 1.2} ${y(52.4)} Z" fill="${GOLD}"/>`;
   S.teil({ id: "hofburg", de: "die Hofburg", syl: "HOF-burg", it: "il Palazzo imperiale", itSyl: "pa-LAZ-zo im-pe-RIA-le", en: "Hofburg Palace", x: 0, y: 0, kunst: VED(`<g ${MITTEL}>${k}</g>`, 180, 1.04),
-    tipp: "In der Hofburg wohnte die Kaiserfamilie im Winter. Heute arbeitet hier der Bundespräsident.",
-    zoom: VZ({ x: 146, y: 90, w: 68, h: 56 }, 180, 1.04),
-    unter: [
-      { id: "kuppel", de: "die Kuppel", syl: "KUP-pel", it: "la cupola", itSyl: "CU-po-la", en: "dome", x: M, y: y(32), kunst: flaeche(-9.4, -21, 18.8, 21),
-        tipp: "Unter der grünen Michaelerkuppel geht man durch das Tor in die Hofburg." },
-    ].map((u) => VU(u, 180, 1.04)) });
+    tipp: "In der Hofburg wohnte die Kaiserfamilie im Winter. Heute arbeitet hier der Bundespräsident. Oben glänzt die grüne Michaelerkuppel." });
 }
 /* =====================================================================
    5 — DER STEPHANSDOM von Süden — Lupe: Turm, Dach, Doppeladler
@@ -574,9 +568,18 @@ const SB = (svg) => VED(`<g ${FERN2}><g transform="translate(0 -5)">${svg}</g></
   k += `<rect x="150" y="141.2" width="60" height="2.6" fill="#d9d1c3"/>`;
   k += reihe(207, 217, 104, 106, 143.6, false) + feuermauer(217, 105, 143.6, true);
   /* vor dem Dom (Stephansplatz) bleiben sie bis zur halben Höhe der Langhausfenster */
-  k += reihe(217, 330, 129.6, 131.4, 143.6, false);
+  k += reihe(217, 228, 122, 125, 143.6, false) + reihe(228, 318, 128.6, 132, 143.6, false) + reihe(318, 330, 121, 124, 143.6, false);
   k += reihe(330, 343, 104, 107, 143.6, false) + feuermauer(330, 105, 143.6, false);
-  k += reihe(343, 400, 128, 131, 143.6, false);
+  /* ein Ringstraßen-Palais mit Attika-Balustrade und Figuren, daneben niedrigere Häuser */
+  {
+    const px0 = 343, px1 = 374, pt = 117;
+    k += `<rect x="${px0}" y="${pt}" width="${px1 - px0}" height="${r(143.6 - pt)}" fill="#e9dfcc"/><rect x="${px0 + 0.4}" y="${pt + 2}" width="${px1 - px0 - 0.8}" height="${r(141 - pt)}" fill="url(#${S.id("fenster")})"/>`;
+    k += `<rect x="${px0 - 0.4}" y="${pt - 0.6}" width="${px1 - px0 + 0.8}" height="1" fill="#f6efe2"/><rect x="${px0}" y="${pt - 2.6}" width="${px1 - px0}" height="2" fill="#efe6d4"/>`;
+    for (let x = px0 + 1; x < px1; x += 1.3) k += `<rect x="${r(x)}" y="${pt - 2.3}" width=".5" height="1.5" fill="#cfc2aa"/>`;
+    for (let x = px0 + 2; x < px1 - 1; x += 4.4) k += `<path d="M${r(x - 0.4)} ${pt - 2.6} l.1 -2.2 q.3 -.7 .6 0 l.1 2.2 Z" fill="#ddd2bd"/><circle cx="${r(x)}" cy="${pt - 5.2}" r=".38" fill="#ddd2bd"/>`;
+    k += `<path d="M${(px0 + px1) / 2 - 5} ${pt - 2.6} L${(px0 + px1) / 2} ${pt - 6} L${(px0 + px1) / 2 + 5} ${pt - 2.6} Z" fill="#efe6d4" stroke="#cfc2aa" stroke-width=".2"/>`;
+  }
+  k += reihe(374, 400, 125, 130, 143.6, false);
   /* zwei Ecktürme mit grünem Kupferhelm */
   for (const [tx, th] of [[212, 44], [336, 42]]) k += `<rect x="${tx - 1.8}" y="${143.6 - th}" width="3.6" height="${th}" fill="#e7dcc6"/><rect x="${tx - 1.2}" y="${145 - th}" width="2.4" height="${th - 3}" fill="url(#${S.id("fenster")})"/><path d="M${tx - 2.3} ${143.6 - th} Q${tx - 2.3} ${139.4 - th} ${tx} ${138.2 - th} Q${tx + 2.3} ${139.4 - th} ${tx + 2.3} ${143.6 - th} Z" fill="${KUPFER}"/><line x1="${tx}" y1="${138.2 - th}" x2="${tx}" y2="${136 - th}" stroke="#4a8670" stroke-width=".3"/>`;
   S.teil({ id: "altstadt", de: "die Altstadt", syl: "ALT-stadt", it: "il centro storico", itSyl: "CEN-tro STO-ri-co", en: "old town", x: 0, y: 0, kunst: VED(`<g ${MITTEL}>${k}</g>`, 200, 1),
@@ -589,25 +592,27 @@ const OBER = { x: 48, d: 3.0 };
 /* Laubkronen wie gemalt: dunkle Grundmasse, mittlere Laubballen, Lichtseite
    oben links; ein Wellenfilter franst die Ränder blattartig aus, eine Maske
    schneidet Himmelslöcher; im Inneren sieht man Astwerk */
-S.def(`<filter id="${S.id("laubrand")}" x="-15%" y="-15%" width="130%" height="130%"><feTurbulence type="turbulence" baseFrequency="1.5" numOctaves="2" seed="2"/><feDisplacementMap in="SourceGraphic" scale=".9" xChannelSelector="R" yChannelSelector="G"/></filter>`);
 const blob = (z, cx, cy, rx, ry, n, j) => {
   const p = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, f = 1 - j / 2 + z() * j; p.push([cx + Math.cos(a) * rx * f, cy + Math.sin(a) * ry * f]); }
   return "M" + p.map((q, i) => { const nq = p[(i + 1) % n]; return `${r((q[0] + nq[0]) / 2)} ${r((q[1] + nq[1]) / 2)} Q${r(nq[0])} ${r(nq[1])}`; }).join(" ") + ` ${r((p[0][0] + p[1][0]) / 2)} ${r((p[0][1] + p[1][1]) / 2)}Z`;
 };
 /* drei Kronen-Vorlagen (Radius 10), einmal definiert und vielfach gesetzt —
    weit weg gedunstet, vorn kräftig */
+const welle = (z, cx, cy, rx, ry, n, j) => {
+  /* gewellter Umriss: abwechselnd Ausbuchtung und kleine Kerbe (Blattzungen) */
+  const p = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, f = (i % 2 ? 0.86 : 1.04) * (1 - j / 2 + z() * j); p.push([cx + Math.cos(a) * rx * f, cy + Math.sin(a) * ry * f]); }
+  return "M" + p.map((q, i) => { const nq = p[(i + 1) % n]; return `${r((q[0] + nq[0]) / 2)} ${r((q[1] + nq[1]) / 2)} Q${r(nq[0])} ${r(nq[1])}`; }).join(" ") + ` ${r((p[0][0] + p[1][0]) / 2)} ${r((p[0][1] + p[1][1]) / 2)}Z`;
+};
 const VORLAGE = (seed) => {
   const z = B.zufall(seed), id = S.id("kv" + seed);
-  let mittel = "", hell = "", loch = "";
-  for (let i = 0; i < 9; i++) {
-    const a = z() * Math.PI * 2, d = Math.sqrt(z()) * 0.62, x = Math.cos(a) * 10 * d, y = Math.sin(a) * 10 * d, A = 10 * (0.26 + z() * 0.16), Bb = 10 * (0.24 + z() * 0.16);
-    mittel += blob(z, x - A * 0.12, y - Bb * 0.14, A, Bb, 8, 0.3);
-    const lit = 1 - Math.max(0, Math.min(1, (x + y) / 10 * 0.6 + 0.5));
-    if (lit > 0.3) hell += blob(z, x - A * 0.3, y - Bb * 0.34, A * 0.5 * (0.5 + lit), Bb * 0.45 * (0.5 + lit), 7, 0.35);
+  let mittel = "", hell = "";
+  for (let i = 0; i < 7; i++) {
+    const a = i / 7 * Math.PI * 2 + z() * 0.5, d = 0.42 + z() * 0.18, x = Math.cos(a) * 10 * d, y = Math.sin(a) * 9 * d, A = 10 * (0.34 + z() * 0.12), Bb = 10 * (0.3 + z() * 0.1);
+    mittel += welle(z, x - A * 0.1, y - Bb * 0.12, A, Bb, 14, 0.12);
+    const lit = 1 - Math.max(0, Math.min(1, (x + y) / 10 * 0.7 + 0.5));
+    if (lit > 0.35) hell += welle(z, x - A * 0.28, y - Bb * 0.32, A * 0.48 * (0.6 + lit), Bb * 0.42 * (0.6 + lit), 10, 0.15);
   }
-  for (let i = 0; i < 7; i++) { const a = z() * Math.PI * 2, d = 0.35 + z() * 0.55; loch += `<ellipse cx="${r(Math.cos(a) * 10 * d)}" cy="${r(Math.sin(a) * 10 * d)}" rx="${r(0.4 + z() * 0.9)}" ry="${r(0.3 + z() * 0.6)}"/>`; }
-  S.def(`<mask id="${id}m" maskUnits="userSpaceOnUse" x="-14" y="-14" width="28" height="28"><rect x="-14" y="-14" width="28" height="28" fill="#fff"/>${loch}</mask>`);
-  S.def(`<g id="${id}"><g filter="url(#${S.id("laubrand")})"><g mask="url(#${id}m)"><path d="${blob(z, 0, 0, 10, 10, 13, 0.3)}" fill="#2f4a2a"/><path d="M0 10 l-3 -7 M0 10 l3.5 -8 M0 6 l-.5 -9" stroke="#5a5446" stroke-width=".35"/><path d="${mittel}" fill="#4d7240"/><path d="${hell}" fill="#7da35e"/></g></g></g>`);
+  S.def(`<g id="${id}"><path d="${welle(z, 0, 0, 10, 9.4, 22, 0.1)}" fill="#2f4a2a"/><path d="M0 10 Q-1 4 -4 1 M0 10 Q1.4 3 4.2 0 M0 8 L-.4 1" stroke="#4a4436" stroke-width=".5" fill="none" stroke-linecap="round"/><path d="${mittel}" fill="#4a6f3e"/><path d="${hell}" fill="#77a05a"/></g>`);
   return id;
 };
 const KV = [VORLAGE(3), VORLAGE(7), VORLAGE(13)];
@@ -625,11 +630,11 @@ const FERNBAUM = dunst("fernbaum", 0.22, [0.78, 0.85, 0.93]);
      die Krone beginnt in 7 m Höhe — sie sind 3–4-mal so hoch wie die Bim.
      Lücken vor Schönbrunn, dem Michaelertor, dem Adlerdach und dem Riesenrad */
   const FB = ys0(45), M = F / 45;
-  for (const [bx, sc, seed] of [[16, 0.82, 3], [44, 0.86, 11], [146, 1.02, 19], [214, 0.96, 27], [246, 1.04, 31], [338, 0.98, 41]]) {
+  for (const [bx, sc, seed, sch] of [[16, 0.82, 3, -1], [44, 0.86, 11, 1.2], [146, 1.02, 19, -0.8], [216, 0.96, 27, 1], [338, 0.98, 41, -1.2]]) {
     const kb = r(FB - 7 * M * sc), top = FB - 19 * M * sc;
     k += `<path d="M${r(bx + 2.6)} ${FB} l11 -3.4 l0 .9 l-10 3.1 Z" fill="#1b120a" opacity=".16"/>`;
-    k += `<path d="M${r(bx - 1.2)} ${FB} Q${r(bx - 0.9)} ${r(FB - 10)} ${r(bx - 0.7)} ${kb} L${r(bx + 0.7)} ${kb} Q${r(bx + 0.9)} ${r(FB - 10)} ${r(bx + 1.2)} ${FB} Z" fill="#9a937c"/><path d="M${r(bx - 0.3)} ${r(FB - 3)} l0 -3 M${r(bx + 0.4)} ${r(FB - 11)} l0 -3" stroke="#d6d0b4" stroke-width=".5"/>`;
-    k += `<g ${FERNBAUM}>${laubkrone(bx, r((top + kb) / 2 - 1), r(19.5 * sc), r((kb - top) / 2))}</g>`;
+    k += `<path d="M${r(bx - 1.2)} ${FB} Q${r(bx - 0.9 + sch * 0.4)} ${r(FB - 10)} ${r(bx - 0.7 + sch)} ${kb} L${r(bx + 0.7 + sch)} ${kb} Q${r(bx + 0.9 + sch * 0.4)} ${r(FB - 10)} ${r(bx + 1.2)} ${FB} Z" fill="#9a937c"/><path d="M${r(bx + sch)} ${r(kb + 1)} l-5 -6 M${r(bx + sch)} ${r(kb + 1)} l4.4 -6.6" stroke="#857e68" stroke-width=".9" stroke-linecap="round"/><path d="M${r(bx - 0.3)} ${r(FB - 3)} l0 -3 M${r(bx + 0.4)} ${r(FB - 11)} l0 -3" stroke="#d6d0b4" stroke-width=".5"/>`;
+    k += `<g ${FERNBAUM}>${laubkrone(r(bx + sch), r((top + kb) / 2 - 2), r(22 * sc), r((kb - top) / 2 * 0.86))}</g>`;
   }
   /* Kandelaber am fernen Gehsteig (in 36 m) */
   for (const lx of [118, 262]) k += `<rect x="${lx - 0.3}" y="122.4" width=".6" height="24" fill="#3a3d3e"/><path d="M${lx - 3} 123.4 Q${lx} 120.8 ${lx + 3} 123.4" stroke="#3a3d3e" stroke-width=".4" fill="none"/>` +
@@ -651,22 +656,6 @@ const FERNBAUM = dunst("fernbaum", 0.22, [0.78, 0.85, 0.93]);
     k += `<path d="M${rx + 1} ${r(RY - 4.3)} L${rx + 1.8} ${r(RY - 1.6)} M${rx + 1} ${r(RY - 4.3)} L${rx + 2.3} ${r(RY - 2.6)}" stroke="#2d2f3a" stroke-width=".62"/><path d="M${rx + 0.6} ${r(RY - 4.2)} L${rx + 1.8} ${r(RY - 7)} L${rx + 2.6} ${r(RY - 6.6)} L${rx + 1.6} ${r(RY - 4)} Z" fill="#e2a33a"/><path d="M${rx + 2.3} ${r(RY - 6.6)} L${rx + 4.2} ${r(RY - 4.7)}" stroke="#e2a33a" stroke-width=".42"/><circle cx="${rx + 2.4}" cy="${r(RY - 7.6)}" r=".66" fill="#d6aa88"/><path d="M${rx + 1.7} ${r(RY - 7.8)} q.7 -1 1.5 -.2 Z" fill="#c8302a"/>`;
   }
   for (const lx of [118, 262]) k += `<path d="M${lx + 0.4} 146.4 l9 -2.8" stroke="#1b120a" stroke-width=".6" opacity=".18"/>`;
-  /* das Taxi auf der nahen Spur (10 m, 4,9 m lang) mit gelbem Dachschild;
-     sein Schatten fällt nach rechts hinten */
-  {
-    const s = r(F / 10), X = 22, Y = r(ys(10) - 18);
-    k += `<path d="M${X + 2} ${Y} L${r(X + 4.9 * s - 2)} ${Y} L${r(X + 4.9 * s + 12)} ${r(Y - 4.2)} L${X + 14} ${r(Y - 4.2)} Z" fill="#1b120a" opacity=".28" filter="url(#bw_weich)"/>`;
-    let t = `<path d="M.08 -.32 Q0 -.72 .26 -.8 L1.25 -.92 Q1.7 -1.42 2.2 -1.46 L3.45 -1.46 Q3.95 -1.42 4.3 -1 L4.84 -.92 Q4.96 -.6 4.88 -.32 Z" fill="${S.lg("taxi", [[0, "#5a5c62"], [0.18, "#1c1d21"], [1, "#0a0a0c"]])}"/>`;
-    t += `<path d="M1.38 -.95 Q1.76 -1.36 2.2 -1.38 L2.78 -1.38 L2.78 -.95 Z M2.9 -.95 L2.9 -1.38 L3.42 -1.38 Q3.86 -1.34 4.12 -.97 Z" fill="${S.lg("taxiglas", [[0, "#9fb4c4"], [1, "#2c3a44"]])}"/>`;
-    t += `<circle cx="2.42" cy="-1.16" r=".11" fill="#1d1d22"/><path d="M2.26 -.95 Q2.42 -1.08 2.58 -.95 Z" fill="#1d1d22"/>`;
-    t += `<path d="M.3 -.72 L4.7 -.7" stroke="#8d939a" stroke-width=".03"/><path d="M2.84 -.95 L2.84 -.36 M1.5 -.92 L1.42 -.4 M4.02 -.98 L4.1 -.4" stroke="#000" stroke-width=".025"/>`;
-    t += `<rect x="1.95" y="-.74" width=".16" height=".04" fill="#9aa0a6"/><rect x="3.3" y="-.74" width=".16" height=".04" fill="#9aa0a6"/>`;
-    t += `<path d="M.1 -.62 L.32 -.66 L.3 -.54 L.1 -.52 Z" fill="#f6f2dc"/><path d="M4.88 -.66 L4.72 -.68 L4.72 -.56 L4.9 -.55 Z" fill="#c8302a"/>`;
-    t += `<path d="M1.28 -1.0 L1.2 -1.08 L1.1 -1.06 L1.14 -.98 Z" fill="#111"/><path d="M.5 -.84 Q2.5 -1.0 4.4 -.86" stroke="#d8dde2" stroke-width=".05" opacity=".7" fill="none"/>`;
-    t += `<rect x="2.5" y="-1.64" width=".66" height=".18" rx=".03" fill="#f6d22e" stroke="#c9a51c" stroke-width=".02"/><text x="2.83" y="-1.506" font-size=".13" text-anchor="middle" fill="#1d1d1d" font-family="Arial,sans-serif" font-weight="bold">TAXI</text>`;
-    for (const wx of [0.86, 4.0]) t += `<circle cx="${wx}" cy="-.33" r=".33" fill="#141416"/><circle cx="${wx}" cy="-.33" r=".19" fill="#b9bfc5"/><circle cx="${wx}" cy="-.33" r=".07" fill="#55595e"/>`;
-    k += `<g transform="translate(${X} ${Y}) scale(${s})">${t}</g>`;
-  }
   /* Fahrleitung: Masten alle ≈ 32 m (in 28 m ≈ 182 E), der dritte am rechten
      Bildrand. Je Gleis EIN Fahrdraht und darüber das Tragseil als Kettenlinie
      mit Hängern; zwischen den Masten hängt es sichtbar durch. Das ferne Gleis
@@ -677,18 +666,17 @@ const FERNBAUM = dunst("fernbaum", 0.22, [0.78, 0.85, 0.93]);
     const yt = hY(5.6, d), yf = hY(4.45, d), stuetz = [-152, ...MA, 576];
     const feld = (x) => { for (let i = 0; i < stuetz.length - 1; i++) if (x <= stuetz[i + 1]) return [stuetz[i], stuetz[i + 1]]; };
     const bogen = (x, y0, sag) => { const [a, b] = feld(x), t = (x - a) / (b - a); return r(y0 + sag * 4 * t * (1 - t)); };
-    let trag = "", fahr = "", haenger = "";
-    for (let x = 0; x <= 400; x += 6) { trag += `${x ? "L" : "M"}${x} ${bogen(x, yt, 1.5)}`; fahr += `${x ? "L" : "M"}${x} ${bogen(x, yf, 0.45)}`; }
-    for (let x = 6; x < 400; x += 12) if (MA.every((m) => Math.abs(x - m) > 5)) haenger += `M${x} ${bogen(x, yt, 1.5)}V${bogen(x, yf, 0.45)}`;
-    return `<g opacity="${op}"><path d="${trag}" stroke="#2b2b2b" stroke-width="${r(w * 0.75)}" fill="none"/><path d="${haenger}" stroke="#2b2b2b" stroke-width="${r(w * 0.35)}"/><path d="${fahr}" stroke="#2b2b2b" stroke-width="${w}" fill="none"/></g>`;
+    let fahr = "";
+    for (let x = 0; x <= 400; x += 6) fahr += `${x ? "L" : "M"}${x} ${bogen(x, yf, 1)}`;
+    return `<path d="${fahr}" stroke="#2b2b2b" stroke-width="${w}" fill="none" opacity="${op}"/>`;
   };
-  k += leitung(30, 0.2, 0.5) + leitung(26, 0.28, 0.8);
+  k += leitung(30, 0.24, 0.55) + leitung(26, 0.3, 0.85);
   const mast = (mx) => {
     let g = mx > 380 ? "" : `<path d="M${mx + 0.7} ${ys0(28)} l12 -3.6 l0 .7 l-11.4 3.4 Z" fill="#1b120a" opacity=".16"/>`;
     g += `<path d="M${mx - 0.7} ${ys0(28)} L${mx - 0.45} ${hY(6.6, 28)} L${mx + 0.45} ${hY(6.6, 28)} L${mx + 0.7} ${ys0(28)} Z" fill="${S.lg("mast", [[0, "#9aa0a3"], [1, "#6b7174"]], 0, 0, 1, 0)}"/><rect x="${mx - 0.6}" y="${hY(6.75, 28)}" width="1.2" height=".5" fill="#5b6164"/>`;
     for (const [d, dx] of [[26, -2.2], [30, 2.2]]) {
       const yt = hY(5.6, d), yf = hY(4.45, d), ym = hY(5.9, 28);
-      g += `<path d="M${mx} ${ym} L${r(mx + dx)} ${yt} M${mx} ${hY(5.0, 28)} L${r(mx + dx)} ${r(yf - 1.2)} L${r(mx + dx * 1.3)} ${yf}" stroke="#4b4f52" stroke-width=".3" fill="none"/>`;
+      g += `<path d="M${mx} ${ym} L${r(mx + dx * 1.3)} ${r(yf - 0.5)} M${mx} ${hY(5.0, 28)} L${r(mx + dx)} ${r(yf - 1.2)} L${r(mx + dx * 1.3)} ${yf}" stroke="#4b4f52" stroke-width=".3" fill="none"/>`;
       g += `<rect x="${r(mx + dx * 0.25 - 0.3)}" y="${r(ym + (yt - ym) * 0.25 - 0.45)}" width=".6" height=".9" rx=".2" fill="#8a5a3a"/><rect x="${r(mx + dx * 0.25 - 0.3)}" y="${r(hY(5.0, 28) + (yf - 1.2 - hY(5.0, 28)) * 0.25 - 0.45)}" width=".6" height=".9" rx=".2" fill="#8a5a3a"/>`;
     }
     return g;
@@ -835,10 +823,30 @@ const FERNBAUM = dunst("fernbaum", 0.22, [0.78, 0.85, 0.93]);
     ] });
 }
 
+/* das Taxi auf der nahen Spur (10 m, 4,9 m lang) mit gelbem Dachschild;
+     sein Schatten fällt nach rechts hinten */
+{
+    const s = r(F / 10), X = 22, Y = ys(10);
+    let k = `<path d="M${X + 2} ${Y} L${r(X + 4.9 * s - 2)} ${Y} L${r(X + 4.9 * s + 12)} ${r(Y - 4.2)} L${X + 14} ${r(Y - 4.2)} Z" fill="#1b120a" opacity=".28" filter="url(#bw_weich)"/>`;
+    let t = `<path d="M.08 -.32 Q0 -.72 .26 -.8 L1.25 -.92 Q1.7 -1.42 2.2 -1.46 L3.45 -1.46 Q3.95 -1.42 4.3 -1 L4.84 -.92 Q4.96 -.6 4.88 -.32 Z" fill="${S.lg("taxi", [[0, "#5a5c62"], [0.18, "#1c1d21"], [1, "#0a0a0c"]])}"/>`;
+    t += `<path d="M1.38 -.95 Q1.76 -1.36 2.2 -1.38 L2.78 -1.38 L2.78 -.95 Z M2.9 -.95 L2.9 -1.38 L3.42 -1.38 Q3.86 -1.34 4.12 -.97 Z" fill="${S.lg("taxiglas", [[0, "#9fb4c4"], [1, "#2c3a44"]])}"/>`;
+    t += `<circle cx="2.42" cy="-1.16" r=".11" fill="#1d1d22"/><path d="M2.26 -.95 Q2.42 -1.08 2.58 -.95 Z" fill="#1d1d22"/>`;
+    t += `<path d="M.3 -.72 L4.7 -.7" stroke="#8d939a" stroke-width=".03"/><path d="M2.84 -.95 L2.84 -.36 M1.5 -.92 L1.42 -.4 M4.02 -.98 L4.1 -.4" stroke="#000" stroke-width=".025"/>`;
+    t += `<rect x="1.95" y="-.74" width=".16" height=".04" fill="#9aa0a6"/><rect x="3.3" y="-.74" width=".16" height=".04" fill="#9aa0a6"/>`;
+    t += `<path d="M.1 -.62 L.32 -.66 L.3 -.54 L.1 -.52 Z" fill="#f6f2dc"/><path d="M4.88 -.66 L4.72 -.68 L4.72 -.56 L4.9 -.55 Z" fill="#c8302a"/>`;
+    t += `<path d="M1.28 -1.0 L1.2 -1.08 L1.1 -1.06 L1.14 -.98 Z" fill="#111"/><path d="M.5 -.84 Q2.5 -1.0 4.4 -.86" stroke="#d8dde2" stroke-width=".05" opacity=".7" fill="none"/>`;
+    t += `<rect x="2.5" y="-1.64" width=".66" height=".18" rx=".03" fill="#f6d22e" stroke="#c9a51c" stroke-width=".02"/><text x="2.83" y="-1.506" font-size=".13" text-anchor="middle" fill="#1d1d1d" font-family="Arial,sans-serif" font-weight="bold">TAXI</text>`;
+    for (const wx of [0.86, 4.0]) t += `<circle cx="${wx}" cy="-.33" r=".33" fill="#141416"/><circle cx="${wx}" cy="-.33" r=".19" fill="#b9bfc5"/><circle cx="${wx}" cy="-.33" r=".07" fill="#55595e"/>`;
+    k += `<g transform="translate(${X} ${Y}) scale(${s})">${t}</g>`;
+    S.teil({ id: "taxi", de: "das Taxi", syl: "TA-xi", it: "il taxi", itSyl: "TA-xi", en: "taxi", x: 0, y: 0, kunst: k,
+      tipp: "Die Taxis in Wien sind meistens schwarz. Am gelben Schild auf dem Dach erkennt man sie." });
+  }
+
 /* =====================================================================
    11 — DER SCHANIGARTEN: Holzpodest mit Geranienkästen
    ===================================================================== */
 const PODEST = yp(3.6);
+let HUND = null;
 {
   let k = `<rect x="0" y="${PODEST}" width="400" height="${r(260 - PODEST)}" fill="${S.lg("podest", [[0, "#a77a4c"], [1, "#7d5634"]])}"/>`;
   /* Sommer: die Platanen werfen Licht- und Schattenflecken auf Gehsteig und Podest */
@@ -857,18 +865,20 @@ const PODEST = yp(3.6);
       const p = B.mensch(Object.assign({ pose: "gehen", haut: "hell", ohneSchatten: true }, spec), h);
       const grenze = ganz ? 1e9 : (oben - GY) / p.k + 6;
       const svg = p.svg.replace(/<path [^>]*d="([^"]+)"[^>]*\/>/g, (q, d) => { const n = d.match(/-?\d*\.?\d+/g).map(Number).filter((_, i) => i % 2 === 1); return Math.min(...n) > grenze ? "" : q; });
-      return { svg: `<g transform="translate(${x} ${GY})">${figur(svg, p.z.kopf.y + 16, 2, true)}</g>`, p };
+      return { svg: `<g transform="translate(${x} ${GY})">${figur(svg, p.z.kopf.y + 16, 2, false)}</g>`, p };
     };
     const frau = passant({ id: "wie_frau", geschlecht: "w", blick: -75, frisur: "lang", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "bluse", farbe: "#e9d27a" }, unterteil: { stueck: "rock", farbe: "#2f4f6a" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "tasche", farbe: "#b34a3a" } } }, r(1.66 * F / 5.2), 140);
-    const mann = passant({ id: "wie_mann", geschlecht: "m", blick: -75, frisur: "kurz", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "hemd", farbe: "#9fc3e3" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, r(1.78 * F / 5.2), 280, true);
-    k += schlag(284, GY, 10, 14, 0.22);
-    k += frau.svg + mann.svg;
+    const mann = passant({ id: "wie_mann", geschlecht: "m", blick: -75, frisur: "kurz", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "hemd", farbe: "#9fc3e3" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, r(1.78 * F / 5.2), 316, true);
+    k += schlag(320, GY, 10, 14, 0.22);
+    k += `<g pointer-events="none">${frau.svg}${mann.svg}</g>`;
     /* der Dackel läuft vorne in der Lücke zwischen den Kästen, an der Leine */
-    const hd = [mann.p.z.handL, mann.p.z.handR].map((h) => [280 + h.x * mann.p.k, GY + h.y * mann.p.k]).sort((a, b) => a[0] - b[0])[0];
-    const dx = 262, s5 = F / 5.2;
+    const hd = [mann.p.z.handL, mann.p.z.handR].map((h) => [316 + h.x * mann.p.k, GY + h.y * mann.p.k]).sort((a, b) => a[0] - b[0])[0];
+    const dx = 296, s5 = F / 5.2;
     let d = `<path d="M-.3 -.17 Q-.31 -.24 -.22 -.25 L.2 -.24 Q.27 -.24 .3 -.2 L.33 -.26 Q.36 -.31 .43 -.29 L.47 -.25 L.42 -.21 Q.36 -.19 .33 -.13 Q.3 -.08 .22 -.08 L.21 -.01 L.17 -.01 L.16 -.08 L-.15 -.08 L-.16 -.01 L-.2 -.01 L-.21 -.09 Q-.29 -.1 -.3 -.17 Z" fill="${S.lg("dackel", [[0, "#9a5a2c"], [1, "#6a3416"]])}"/>`;
     d += `<path d="M.35 -.28 Q.31 -.2 .35 -.16 Q.39 -.2 .38 -.27 Z" fill="#4e2610"/><circle cx=".41" cy="-.27" r=".01" fill="#111"/><path d="M-.29 -.2 Q-.37 -.22 -.4 -.29" stroke="#7a3e1a" stroke-width=".025" fill="none"/>`;
-    k += `<g transform="translate(${dx} ${GY}) scale(${r(-s5)} ${r(s5)})">${d}</g><path d="M${r(hd[0])} ${r(hd[1])} Q${r((hd[0] + dx) / 2)} ${r(GY - 4)} ${r(dx + 0.24 * s5)} ${r(GY - 0.17 * s5)}" stroke="#c8302a" stroke-width=".25" fill="none"/>`;
+    d += `<path d="M.12 -.09 L.13 -.005 M-.24 -.1 L-.25 -.005" stroke="#5a2a10" stroke-width=".035"/>`;
+    HUND = { x: dx, y: GY, kunst: schlag(4, 0, 18, 8, 0.2) + `<g transform="scale(${r(-s5)} ${r(s5)})">${d}</g>` };
+    k += `<path d="M${r(hd[0])} ${r(hd[1])} Q${r((hd[0] + dx) / 2)} ${r(GY - 4)} ${r(dx - 0.33 * s5)} ${r(GY - 0.23 * s5)}" stroke="#c8302a" stroke-width=".25" fill="none" pointer-events="none"/>`;
     /* der Radfahrer (nach links) */
     const RY = ys(7.2), s7 = F / 7.2, RX = 114;
     let rad = `<circle cx="-.6" cy="-.35" r=".34" fill="none" stroke="#222" stroke-width=".04"/><circle cx=".46" cy="-.35" r=".34" fill="none" stroke="#222" stroke-width=".04"/>`;
@@ -876,7 +886,7 @@ const PODEST = yp(3.6);
     rad += `<path d="M.05 -.93 L-.08 -.6 L-.1 -.38 M.05 -.93 L-.04 -.66 L.04 -.44" stroke="#2d2f3a" stroke-width=".11" stroke-linecap="round" fill="none"/>`;
     rad += `<path d="M.1 -.92 Q-.06 -1.2 -.24 -1.42 L-.32 -1.36 Q-.16 -1.12 -.02 -.88 Z" fill="#e2a33a"/><path d="M-.22 -1.36 L-.44 -1.08 L-.5 -1.04" stroke="#e2a33a" stroke-width=".07" fill="none" stroke-linecap="round"/>`;
     rad += `<circle cx="-.32" cy="-1.5" r=".085" fill="#dcac88"/><path d="M-.42 -1.53 Q-.34 -1.66 -.2 -1.56 Q-.26 -1.5 -.42 -1.53 Z" fill="#2a6a3a"/>`;
-    k += `<g transform="translate(${RX} ${RY}) scale(${r(s7)})">${rad}</g>`;
+    k += `<g transform="translate(${RX} ${RY}) scale(${r(s7)})" pointer-events="none">${rad}</g>`;
   }
   for (let i = -14; i <= 14; i++) {
     const xa = 200 + i * 14.4, xb = 200 + i * 28, xe = Math.max(0, Math.min(400, xb)), ye = i === 0 ? 260 : r(PODEST + (260 - PODEST) * (xe - xa) / (xb - xa));
@@ -923,17 +933,17 @@ const PODEST = yp(3.6);
       /* der Gast liest hinter der aufgeschlagenen Zeitung (nur Haarschopf,
          Hände, Rücken und übereinandergeschlagene Beine sind zu sehen); der
          Ober bringt ihm gleich seine Melange — in Metern gezeichnet */
-      let g = `<path d="M.0 .0 Q-.2 -.06 -.42 -.02 L-.44 .08 Q-.22 .06 .02 .1 Z" fill="#3a3c44"/><path d="M-.44 .0 L-.5 .44 L-.42 .46 L-.34 .04 Z" fill="#33353d"/><path d="M-.56 .44 L-.36 .44 L-.34 .5 L-.58 .5 Z" fill="#5a3a22"/>`;
-      g += `<path d="M-.02 -.05 Q-.24 -.16 -.42 -.1 L-.44 -.01 Q-.24 -.05 -.02 .03 Z" fill="#40424c"/><path d="M-.42 -.1 L-.62 .26 L-.55 .3 L-.36 -.02 Z" fill="#40424c"/><path d="M-.66 .25 Q-.7 .31 -.62 .33 L-.52 .3 L-.56 .25 Z" fill="#5a3a22"/>`;
+      let g = "";
+      for (const [kx, fx, f] of [[-0.4, -0.46, "#3a3c44"], [-0.34, -0.36, "#44464f"]]) g += `<path d="M.02 -.04 Q-.2 -.1 ${kx} -.06 L${r((kx + 0.02) * 100) / 100} .04 Q-.2 .02 .02 .08 Z" fill="${f}"/><path d="M${kx} -.04 L${r(fx - 0.04)} .43 L${r(fx + 0.04)} .43 L${r(kx + 0.06)} .0 Z" fill="${f}"/><path d="M${r(fx - 0.12)} .47 L${r(fx + 0.05)} .47 L${r(fx + 0.05)} .42 Q${r(fx - 0.04)} .4 ${r(fx - 0.12)} .44 Z" fill="#5a3a22"/><path d="M${r(fx - 0.12)} .47 H${r(fx + 0.05)}" stroke="#1d1410" stroke-width=".015"/>`;
       g += `<path d="M.14 .02 L-.06 .02 Q-.1 -.3 -.04 -.56 Q.06 -.62 .13 -.55 Q.17 -.3 .14 .02 Z" fill="#55606e"/><path d="M.06 -.56 Q.15 -.5 .15 -.3 L.14 .02 L.07 .02 Z" fill="#454f5c"/>`;
-      g += `<ellipse cx="-.03" cy="-.69" rx=".1" ry=".085" fill="#b9b6b0"/><path d="M-.12 -.7 Q-.03 -.79 .07 -.7" stroke="#d8d5ce" stroke-width=".02" fill="none"/><path d="M.06 -.66 q.03 .01 .02 .05" stroke="#d6a886" stroke-width=".03"/>`;
+      g += `<path d="M.0 -.6 L.08 -.6 L.07 -.54 L.01 -.54 Z" fill="#dcac88"/><path d="M-.13 -.66 Q-.13 -.79 -.02 -.8 Q.09 -.79 .1 -.68 Q.09 -.61 .07 -.59 L-.1 -.61 Z" fill="#a9a6a0"/><path d="M-.1 -.75 Q-.02 -.79 .06 -.74" stroke="#c9c6c0" stroke-width=".012" fill="none"/><ellipse cx=".06" cy="-.66" rx=".022" ry=".034" fill="#dcac88"/>`;
       /* die Zeitung: ein großer Bogen, in der Mitte gefaltet, wir sehen die Rückseite */
       g += `<path d="M-.66 -.64 L-.38 -.67 L-.38 -.06 L-.66 -.02 Z" fill="#efebe2" stroke="#bdb7aa" stroke-width=".006"/><path d="M-.38 -.67 L-.08 -.63 L-.08 -.04 L-.38 -.06 Z" fill="#e2ddd2" stroke="#bdb7aa" stroke-width=".006"/>`;
       let zl = "";
       for (let i = 1; i < 11; i++) { const t = i / 11; zl += `M-.63 ${r((-0.62 + t * 0.58) * 100) / 100}H-.41M-.35 ${r((-0.64 + t * 0.58) * 100) / 100}H-.11`; }
       g += `<path d="${zl}" stroke="#a39e94" stroke-width=".012"/><rect x="-.62" y="-.58" width=".2" height=".1" fill="#76726b"/><rect x="-.34" y="-.6" width=".14" height=".08" fill="#8a857d"/>`;
       g += `<ellipse cx="-.67" cy="-.36" rx=".028" ry=".04" fill="#e0b494"/><ellipse cx="-.08" cy="-.4" rx=".028" ry=".04" fill="#e0b494"/>`;
-      k += schlag(r(cx + c(0.1)), cy, c(0.36), 5, 0.16) + `<g transform="translate(${cx} ${r(cy - c(0.47))}) scale(${r(cs * 10) / 10})">${g}</g>`;
+      k += schlag(r(cx + c(0.1)), cy, c(0.36), 5, 0.16) + `<g transform="translate(${cx} ${r(cy - c(0.47))}) scale(${r(cs * 10) / 10})" pointer-events="none">${g}</g>`;
     }
     k += schlag(r(X + 3), fuss, m(0.36), 9, 0.16);
     k += `<path d="M${X - 2} ${r(ty + 2)} L${X - 1.6} ${fuss} L${X + 1.6} ${fuss} L${X + 2} ${r(ty + 2)} Z" fill="#4a4a4e"/><path d="M${r(X - m(0.12))} ${fuss} Q${X} ${r(fuss - 2.2)} ${r(X + m(0.12))} ${fuss} Z" fill="#5a5a5e"/><path d="M${r(X - m(0.08))} ${r(fuss - 0.6)} Q${X} ${r(fuss - 2)} ${r(X + 1)} ${r(fuss - 1.6)}" stroke="#8a8a8e" stroke-width=".4" fill="none"/>`;
@@ -948,13 +958,17 @@ const PODEST = yp(3.6);
     tipp: "In Wien heißen die Tische vor dem Kaffeehaus „Schanigarten“. Rote Geranien blühen in den Kästen." });
 }
 
+/* der Dackel des Passanten — ein eigenes Wort */
+S.teil(Object.assign({ id: "hund", de: "der Hund", syl: "HUND", it: "il cane", itSyl: "CA-ne", en: "dog",
+  tipp: "Der Dackel ist ein Hund mit kurzen Beinen. In Wien sieht man ihn oft." }, HUND));
+
 /* =====================================================================
    12 — DER OBER (Weste, Fliege, Silbertablett) bringt die Bestellung
    ===================================================================== */
 {
   const s = F / OBER.d, Y = yp(OBER.d);
   const o = B.mensch({ id: "wie_ober", ohneSchatten: true, geschlecht: "m", pose: "servieren", blick: 60, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true,
-    kleidung: { oberteil: { stueck: "kellnerhemd" }, jacke: { stueck: "weste", farbe: "schwarz" }, unterteil: { stueck: "anzughose" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, zubehoer: { stueck: "tablett" } } }, r(1.78 * s));
+    kleidung: { oberteil: { stueck: "kellnerhemd" }, jacke: { stueck: "weste", farbe: "schwarz" }, unterteil: { stueck: "anzughose" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, zubehoer: { stueck: "tablett" } } }, r(1.7 * s));
   /* im Glas auf seinem Tablett ist Wasser */
   const svg = kompakt(o.svg).replace(/fill="#e8b84a" opacity=".85"/g, `fill="#d6e9ef" opacity=".7"`);
   S.teil({ id: "ober", de: "der Ober", syl: "O-ber", it: "il cameriere", itSyl: "ca-me-RIE-re", en: "waiter", x: OBER.x, y: Y, kunst: schlag(4, 0.4, 16, 14, 0.28) + svg,
@@ -1050,7 +1064,7 @@ const PODEST = yp(3.6);
      über den Tellerrand), Gabel, Messer, Erdäpfelsalat; die Zitronenspalte
      liegt am Tellerrand */
   {
-    let g = `<path d="M-30 1 L-27 -2.6 M-29 1.2 L-26.2 -2.4 M-28 1.4 L-25.4 -2.2" stroke="#c3c9ce" stroke-width=".4"/><path d="M-30.4 1.6 L-25 -3.2" stroke="#b9c0c6" stroke-width=".9" stroke-linecap="round" transform="translate(1.6 3.4)"/>`;
+    let g = `<g transform="translate(5 -.6)"><path d="M-30 1 L-27 -2.6 M-29 1.2 L-26.2 -2.4 M-28 1.4 L-25.4 -2.2" stroke="#c3c9ce" stroke-width=".4"/><path d="M-30.4 1.6 L-25 -3.2" stroke="#b9c0c6" stroke-width=".9" stroke-linecap="round" transform="translate(1.6 3.4)"/></g>`;
     g += `<ellipse cx="1" cy="1" rx="23" ry="7.6" fill="#d9d4ca"/><ellipse cx="1" cy=".2" rx="23" ry="7.6" fill="#fbfaf6"/><ellipse cx="1" cy=".2" rx="17.6" ry="5.6" fill="none" stroke="#e6e1d6" stroke-width=".5"/>`;
     /* großer, flacher Lappen mit sanft gewelltem Rand, golden gebacken,
        die Panier wirft Blasen (souffliert) und hängt über den Tellerrand */

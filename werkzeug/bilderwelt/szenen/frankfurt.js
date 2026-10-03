@@ -1335,7 +1335,9 @@ const BANK_K = (() => {
   k += `<path d="M${r(kb2[0] - 0.2 * ks)} ${r(kb2[1])} L${r(kz[0] - 0.12 * ks)} ${r(kz[1] - 0.2 * ks)} M${r(kb2[0] + 0.05 * ks)} ${r(kb2[1])} L${r(kz[0] + 0.12 * ks)} ${r(kz[1] - 0.2 * ks)}" stroke="#6b5a40" stroke-width=".15"/>`;
   {
     const R = 0.23 * ks, zz = zufall(4242);
-    k += `<ellipse cx="${r(kz[0])}" cy="${r(kz[1])}" rx="${r(R)}" ry="${r(R * 0.95)}" fill="none" stroke="#1f3a1e" stroke-width="${r(0.15 * ks)}"/>`;
+    k += `<ellipse cx="${r(kz[0])}" cy="${r(kz[1])}" rx="${r(R)}" ry="${r(R * 0.95)}" fill="none" stroke="#1f3a1e" stroke-width="${r(0.13 * ks)}"/>`;
+    for (const [dr, f, sw, da] of [[0.05, "#2f5a2c", 0.05, "0.4 0.25"], [-0.04, "#3f6e36", 0.045, "0.3 0.3"], [0.0, "#5f8f4c", 0.03, "0.15 0.35"], [0.06, "#6fa05a", 0.02, "0.1 0.5"]])
+      k += `<ellipse cx="${r(kz[0])}" cy="${r(kz[1])}" rx="${r(R + dr * ks)}" ry="${r((R + dr * ks) * 0.95)}" fill="none" stroke="${f}" stroke-width="${r(sw * ks)}" stroke-dasharray="${da.split(" ").map((v) => r(+v * ks * 0.2)).join(" ")}" stroke-linecap="round"/>`;
     let z1 = "", z2 = "", z3 = "";
     for (let i = 0; i < 80; i++) {
       const a = i / 80 * Math.PI * 2 + zz() * 0.1, rr = R + (zz() - 0.5) * 0.12 * ks, x0 = kz[0] + Math.cos(a) * rr, y0 = kz[1] + Math.sin(a) * rr * 0.95;
@@ -1343,7 +1345,7 @@ const BANK_K = (() => {
       const seg = `M${r(x0)} ${r(y0)} l${r(Math.cos(wi) * aus)} ${r(Math.sin(wi) * aus)} `;
       if (i % 3 === 0) z1 += seg; else if (i % 3 === 1) z2 += seg; else z3 += seg;
     }
-    k += `<path d="${z1}" stroke="#24461f" stroke-width="${r(0.022 * ks)}" stroke-linecap="round"/><path d="${z2}" stroke="#35602e" stroke-width="${r(0.018 * ks)}" stroke-linecap="round"/><path d="${z3}" stroke="#5f8f4c" stroke-width="${r(0.014 * ks)}" stroke-linecap="round"/>`;
+    k += `<path d="${z1}" stroke="#24461f" stroke-width="${r(0.014 * ks)}" stroke-linecap="round"/><path d="${z2}" stroke="#35602e" stroke-width="${r(0.012 * ks)}" stroke-linecap="round"/><path d="${z3}" stroke="#7fae64" stroke-width="${r(0.009 * ks)}" stroke-linecap="round"/>`;
     const bx = kz[0], by = kz[1] + R * 0.95;
     k += `<path d="M${r(bx)} ${r(by)} l${r(-0.1 * ks)} ${r(-0.05 * ks)} l0 ${r(0.1 * ks)} Z M${r(bx)} ${r(by)} l${r(0.1 * ks)} ${r(-0.05 * ks)} l0 ${r(0.1 * ks)} Z" fill="#c62d2a"/><path d="M${r(bx - 0.02 * ks)} ${r(by)} q${r(-0.04 * ks)} ${r(0.08 * ks)} ${r(-0.02 * ks)} ${r(0.16 * ks)} M${r(bx + 0.02 * ks)} ${r(by)} q${r(0.04 * ks)} ${r(0.08 * ks)} ${r(0.02 * ks)} ${r(0.16 * ks)}" stroke="#f4f1ea" stroke-width="${r(0.03 * ks)}" fill="none"/>`;
   }

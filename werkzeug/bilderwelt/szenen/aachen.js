@@ -107,18 +107,6 @@ function figur(spec, hoehe, fein = 1) {
   }).replace(/ (x1|y1|x2|y2)="(-?\d+\.\d+)"/g, (a, n, v) => ` ${n}="${Math.round(+v)}"`);
   return { svg: `<g transform="scale(${m.k.toFixed(4)})">${z}</g>`, k: m.k, z: m.z };
 }
-/* sitzende Figur von vorn (Beckenrand): Sitzhöhe ySitz, h = Körpergröße stehend */
-function sitzerVorn(x, ySitz, h, hemd, haar, hose, haut = "#e3b796") {
-  const X = (f) => r(x + f * h), Y = (f) => r(ySitz - f * h);
-  let g = `<path d="M${X(-0.075)} ${Y(-0.02)} L${X(-0.07)} ${Y(-0.27)} L${X(-0.02)} ${Y(-0.27)} L${X(-0.02)} ${Y(-0.02)} Z M${X(0.02)} ${Y(-0.02)} L${X(0.02)} ${Y(-0.27)} L${X(0.075)} ${Y(-0.27)} L${X(0.075)} ${Y(-0.02)} Z" fill="${hose}"/>`;
-  g += `<path d="M${X(-0.085)} ${Y(-0.27)} h${r(0.075 * h)} v${r(0.03 * h)} h${r(-0.075 * h)} Z M${X(0.015)} ${Y(-0.27)} h${r(0.075 * h)} v${r(0.03 * h)} h${r(-0.075 * h)} Z" fill="#2a2420"/>`;
-  g += `<path d="M${X(-0.11)} ${Y(0.03)} L${X(0.11)} ${Y(0.03)} L${X(0.1)} ${Y(-0.04)} L${X(-0.1)} ${Y(-0.04)} Z" fill="${hose}"/>`;
-  g += `<path d="M${X(-0.1)} ${Y(0.03)} L${X(-0.11)} ${Y(0.3)} Q${X(0)} ${Y(0.34)} ${X(0.11)} ${Y(0.3)} L${X(0.1)} ${Y(0.03)} Z" fill="${hemd}"/><path d="M${X(0.05)} ${Y(0.03)} L${X(0.1)} ${Y(0.03)} L${X(0.11)} ${Y(0.3)} L${X(0.06)} ${Y(0.32)} Z" fill="#ffd9a0" opacity=".3"/>`;
-  g += `<path d="M${X(-0.11)} ${Y(0.28)} L${X(-0.15)} ${Y(0.03)} M${X(0.11)} ${Y(0.28)} L${X(0.15)} ${Y(0.03)}" stroke="${hemd}" stroke-width="${r(0.05 * h)}" stroke-linecap="round"/>`;
-  g += `<rect x="${X(-0.025)}" y="${Y(0.37)}" width="${r(0.05 * h)}" height="${r(0.05 * h)}" fill="${haut}"/><ellipse cx="${X(0)}" cy="${Y(0.42)}" rx="${r(0.058 * h)}" ry="${r(0.068 * h)}" fill="${haut}"/>`;
-  g += `<path d="M${X(-0.062)} ${Y(0.42)} Q${X(-0.06)} ${Y(0.5)} ${X(0)} ${Y(0.495)} Q${X(0.06)} ${Y(0.5)} ${X(0.062)} ${Y(0.42)} Q${X(0.03)} ${Y(0.465)} ${X(-0.062)} ${Y(0.42)} Z" fill="${haar}"/>`;
-  return g;
-}
 /* kleine Figur in der Ferne (unter ≈ 12 Einheiten) */
 function passant(x, y, h, o = {}) {
   const { hemd = "#3d5a80", hose = "#2f3640", haar = "#4a3426", haut = "#e3b796", schritt = 0.1, rueck = false, sitzt = false } = o;
@@ -542,12 +530,15 @@ const KB = { x: 206, y: 146.4 };
   for (const x of [-9, -3, 3, 9]) k += `<path d="M${x} -14.4 q.4 2.4 0 3.6" stroke="#2f4a3d" stroke-width=".35" fill="none"/>`;
   for (const x of [-12.4, 12.4]) k += `<path d="M${x} -14.4 Q${r(x * 1.25)} -12 ${r(x * 1.34)} -6.8" stroke="#dcecef" stroke-width=".55" fill="none" opacity=".85"/>`;
   /* Studenten sitzen vorn auf dem Beckenrand, Rücken zum Wasser, die Beine hängen über die Vorderwand */
-  for (const [x, f, haar, hose] of [[-23.4, "#2d6fb3", "#3a2a20", "#3d5f8c"], [-20.2, "#e0a82e", "#c9a466", "#2f3640"], [21.6, "#c9302c", "#2b2b2b", "#3d5f8c"]]) k += sitzerVorn(x, x < 0 ? -5.95 + (x + 23.4) * -0.05 : -5.9, 10.4, f, haar, hose);
+  for (const [x, f, haar, hose, sp] of [[-24.6, "#2d6fb3", "#3a2a20", "#3d5f8c", 1], [-20.6, "#e0a82e", "#c9a466", "#2f3640", 1], [22.4, "#c9302c", "#2b2b2b", "#3d5f8c", -1]]) {
+    const y = -5.85 + 0.46 * 10.4, g = passant(0, y, 10.4, { hemd: f, haar, hose, sitzt: true });
+    k += `<g transform="translate(${x} 0) scale(${sp} 1)">${g}</g>`;
+  }
   k += `<path d="M-1.6 -15.4 L-1.3 -23 L1.3 -23 L1.6 -15.4 Z" fill="${BRONZE}"/><rect x="-2.4" y="-24.4" width="4.8" height="1.6" rx=".4" fill="#4b6a5a"/>`;
   /* KARL DER GROSSE (blickt zu uns): Zepter in seiner Rechten (im Bild links), Reichsapfel in seiner Linken (im Bild rechts) */
   const KY = -24.4;
   const BR = S.lg("karl", [[0, "#22362d"], [0.45, "#4f7363"], [0.75, "#86a996"], [1, "#3a5a4b"]], 0, 0, 1, 0);
-  const REGAL = S.lg("regal", [[0, "#4f5a3c"], [0.45, "#8f8a52"], [0.7, "#e6cc78"], [1, "#6a6a42"]], 0, 0, 1, 1);   /* UNSICHER: Attribute bronzen, nur Glanz golden */
+  const REGAL = S.lg("regal", [[0, "#3f4a34"], [0.5, "#6f7048"], [0.78, "#c9b46a"], [1, "#55553a"]], 0, 0, 1, 1);   /* UNSICHER: Attribute bronzen, nur Glanz golden */
   k += `<path d="M-2.2 ${KY - 7.4} Q-3.3 ${KY - 4} -3 ${KY - 0.3} L3 ${KY - 0.3} Q3.3 ${KY - 4} 2.2 ${KY - 7.4} Z" fill="#2a4237"/>`;
   for (const x of [-2.4, 2.4]) k += `<path d="M${x * 0.85} ${KY - 6.8} Q${r(x * 1.25)} ${KY - 3.6} ${r(x * 1.2)} ${KY - 0.5}" stroke="#1f3329" stroke-width=".18" fill="none"/>`;
   k += `<path d="M-1.5 ${KY - 5.2} L-2.1 ${KY - 0.4} L2.1 ${KY - 0.4} L1.5 ${KY - 5.2} Z" fill="${BR}"/>`;
@@ -653,7 +644,7 @@ const stuhl = (X, y, mitLehne = true) => {
   const m = figur({ id: "aac_gast", geschlecht: "w", pose: "sitzen", blick: 70, frisur: "dutt", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "bluse", farbe: "#e9eef3" }, unterteil: { stueck: "rock_knie", farbe: "#2f5f95" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, 1.66 * s);
   const sitzY = m.z.sitz.y * m.k;
-  schlag(31, Y + 0.3, 7, 1.3 * s, 0.5);
+  schlag(31, Y + 0.3, 7, 1.3 * s, 0.5, -4, 0.6, 0.5);
   let k = licht(stuhl(30, Y, true));
   k += licht(`<g transform="translate(0 ${r(-0.46 * s - sitzY)})">${m.svg}</g>`);
   S.teil({ id: "gast", de: "der Gast", syl: "GAST", it: "l'ospite", itSyl: "O-spi-te", en: "guest", x: 30, y: Y, kunst: k,
@@ -730,7 +721,7 @@ const stuhl = (X, y, mitLehne = true) => {
   const hand = m.z.handR.y < m.z.handL.y ? m.z.handR : m.z.handL, hx = hand.x * m.k, hy = hand.y * m.k;
   const ph = `<g transform="translate(${r(hx)} ${r(hy - 1.6)})"><rect x="-1.1" y="-1.9" width="2.2" height="3.6" rx=".35" fill="#1d1f22"/><rect x="-.9" y="-1.65" width="1.8" height="3.1" fill="#8fb3d6"/><rect x="-.7" y="-.2" width="1.4" height="1" fill="#c9bfa5"/><path d="M-.7 -.2 L0 -.9 L.7 -.2" fill="#4a545e"/></g>`;
   S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x: 140, y: Y,
-    kunst: (schlag(140, Y + 0.3, 6, H, 0.52, 75, 0.6), licht(m.svg + rs) + ph), tipp: "Die Touristin fotografiert das Rathaus. Viele Touristen kommen nach Aachen, um den Dom und das Rathaus zu sehen." });
+    kunst: (schlag(140, Y + 0.3, 7, H, 0.55, 75, 0.6, 0.5), licht(m.svg + rs) + ph), tipp: "Die Touristin fotografiert das Rathaus. Viele Touristen kommen nach Aachen, um den Dom und das Rathaus zu sehen." });
 }
 
 /* =====================================================================

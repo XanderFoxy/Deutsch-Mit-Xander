@@ -531,7 +531,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   let opS = `<path d="M${P(op(0, 120, -0.5))} L${P(op(183, 120, -0.5))} L${P(op(183, 120, -SOCKEL_Z))} L${P(op(0, 120, -SOCKEL_Z))} Z" fill="#d2a690"/>`;
   for (const o of SPIEGEL_OP) {
     const B0 = op(o.b[0], o.e, -o.b[1]), T = op(o.t[0], o.e, -o.t[1]), Pp = op(o.p[0], o.e, -SOCKEL_Z);
-    opS += `<path d="M${P(Pp)} L${P(B0)} Q${P([B0[0] + (T[0] - B0[0]) * 0.3, T[1] - (T[1] - B0[1]) * 0.25])} ${P(T)} Q${P([(T[0] + Pp[0]) / 2 - 1, (T[1] + Pp[1]) / 2])} ${P(Pp)} Z" fill="${o.e === 88 ? "#fff6e2" : "#ece4d2"}"/>`;
+    opS += `<path d="M${P(Pp)} L${P(B0)} Q${P([B0[0] + (T[0] - B0[0]) * 0.3, T[1] - (T[1] - B0[1]) * 0.25])} ${P(T)} Q${P([(T[0] + Pp[0]) / 2 - 1, (T[1] + Pp[1]) / 2])} ${P(Pp)} Z" fill="${o.e === 88 ? "#fff3d4" : "#f3e6c8"}"/>`;
   }
   let pyS = "";
   for (const [a, c] of [[-15, 31], [518, 31], [518, -31]]) pyS += `<path d="M${P(bp(a - 10, c + 7, -0.5))} L${P(bp(a + 10, c + 7, -0.5))} L${P(bp(a + 10, c + 7, -89))} L${P(bp(a - 10, c + 7, -89))} Z" fill="#dcc7a2"/>`;
@@ -542,15 +542,22 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   sp += stauch(FAEHRE.Y, 0.5, `<rect x="${r(FAEHRE.X - 16 * FAEHRE.s)}" y="${r(FAEHRE.Y + 0.4)}" width="${r(32 * FAEHRE.s)}" height="${r(3.2 * FAEHRE.s)}" fill="#2f7a4a"/><rect x="${r(FAEHRE.X - 14 * FAEHRE.s)}" y="${r(FAEHRE.Y + 3.4)}" width="${r(28 * FAEHRE.s)}" height="${r(4.4 * FAEHRE.s)}" fill="#ecc860"/>`);
   for (const [x, y, s] of BOOTE) sp += stauch(y, 0.5, `<path d="M${r(x)} ${r(y + 1)} L${r(x + 6 * s)} ${r(y + 1)} L${r(x + 0.3)} ${r(y + 17 * s)} Z" fill="#ffffff"/>`);
   sp += `<rect x="0" y="148.6" width="76" height="5" fill="#24432a"/>`;
-  /* Streifenmaske: Zeilen aus Strichen zufälliger Länge, nach unten dicker, lückiger und blasser */
+  /* Wellenmaske aus Linsen mit spitzen Enden (oben und unten gewölbt, keine senkrechten Kanten); jede
+     Zeile in der Höhe versetzt, Lücken stark gestreut; hinten flach, lang und fast geschlossen, vorn kürzer
+     und lückiger. Dazu verzerrt ein Turbulenz-Filter die Ränder wie bewegtes Wasser. */
   let mk = "";
-  for (let y = 147.6; y < 192;) {
-    const h = 0.6 + (y - 148) * 0.03, gap = 0.12 + (y - 148) * 0.035;
-    for (let x = rnd() * 4; x < 396;) { const l = Math.min(4 + rnd() * (14 + (y - 148) * 0.3), 399 - x); mk += `M${r(x)} ${r(y)}h${r(l)}v${r(h)}h${r(-l)}z`; x += l + 0.3 + rnd() * (0.6 + (y - 148) * 0.14); }
-    y += h + gap;
+  for (let y = 147.4; y < 192;) {
+    const t = (y - 147.4) / 44, h = 0.55 + t * 1.1;
+    for (let x = -rnd() * 6; x < 400;) {
+      const l = (t < 0.18 ? 14 + rnd() * 26 : 4 + rnd() * (16 - t * 6)), yy = y + (rnd() - 0.5) * 0.6;
+      mk += `M${r(x)} ${r(yy)}q${r(l / 2)} ${r(-h)} ${r(l)} 0q${r(-l / 2)} ${r(h)} ${r(-l)} 0z`;
+      x += l + (t < 0.18 ? 0.2 + rnd() * 0.8 : 0.2 + rnd() * (0.6 + t * 2.4));
+    }
+    y += h * 0.95 + 0.1 + t * 0.6;
   }
   S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="0" y="146" width="400" height="50"><path d="${mk}" fill="${S.lg("spfade", [[0, "#fff"], [0.55, "#bbb"], [1, "#000"]], 0, 146, 0, 190, ' gradientUnits="userSpaceOnUse"')}"/></mask>`);
-  k += `<g mask="url(#${S.id("spmaske")})" opacity=".82"><g filter="url(#${S.id("spiegel")})">${sp}</g></g>`;
+  S.def(`<filter id="${S.id("welle")}" x="-5%" y="-10%" width="110%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".015 .35" numOctaves="1" seed="7" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="2.6" xChannelSelector="R" yChannelSelector="G" result="d"/><feGaussianBlur in="d" stdDeviation=".8 .15"/></filter>`);
+  k += `<g mask="url(#${S.id("spmaske")})" opacity=".85"><g filter="url(#${S.id("welle")})">${sp}</g></g>`;
   /* Wellen: einzelne Bögen, hinten klein, flach und dicht, vorn breiter und locker; Länge und Abstand
      streuen (± 40 %). Dunkle Wellentäler, wenige helle Kämme; weiße Glanzbögen nur im Glitzerfeld
      rechts der Fähre (Sonne rechts hinter uns) */
@@ -1148,34 +1155,64 @@ S.teil({ id: "picknickdecke", de: "die Picknickdecke", syl: "PICK-nick-de-cke", 
   S.teil({ oben: true, id: "kuehlbox", de: "die Kühlbox", syl: "KÜHL-box", it: "la borsa frigo", itSyl: "BOR-sa FRI-go", en: "cool box", x: r(X), y: r(Y), steht: true, kunst: k,
     tipp: "In Australien heißt die Kühlbox „Esky“. Ohne sie geht niemand zum Picknick." });
 }
+/* Joggerin und ihr Hund (an der Leine – im Royal Botanic Garden gilt Leinenpflicht) auf dem Uferweg */
+const HUND = { x: 350, y: 203.6 };
+const JOG = { x: 376, y: 201.6 };
 {
-  /* Joggerin am Morgen auf dem Uferweg (≈ 1,68 m), läuft nach links, mit ihrem Hund (Kelpie); gibt dem
-     Mittelgrund Maßstab. Gezeichnet in 50 Einheiten je Meter, dann verkleinert. Licht von rechts hinten. */
-  const X = 386, Y = 201.6, k0 = vorn(Y) / 50;
+  /* DER HUND: Kelpie (australischer Hütehund), läuft nach links. Gefüllte Flächen: tiefe Brust, hoch-
+     gezogener Bauch, Stirnabsatz, längere Schnauze mit kleiner schwarzer Nasenkuppe, Stehohren mit hellem
+     Inneren, Auge mit Lichtpunkt; Beine mit Knie- und Sprunggelenk (vorn greifend, hinten abdrückend);
+     buschige, tief getragene Rute. Rotbraun mit hellem Brand an Brust, Schnauze und Beinen.
+     Gezeichnet in 50 Einheiten je Meter. */
+  const k0 = vorn(HUND.y) / 50, FELL = "#8a4a22", FELLD = "#5f3014", BRAND = "#d8a068";
+  let d = `<path d="M-14 0l24 0 -22 -3.4z" fill="#2a2010" opacity=".22" filter="url(#bw_weich)"/>`;
+  const bein = (pts, w0, w1, f) => { /* sich verjüngendes Bein durch Gelenkpunkte */
+    let li = "", re = "";
+    pts.forEach(([x, y], i) => { const t = i / (pts.length - 1), w = w0 + (w1 - w0) * t, n = i < pts.length - 1 ? [pts[i + 1][1] - y, x - pts[i + 1][0]] : [y - pts[i - 1][1], pts[i - 1][0] - x], L = Math.hypot(n[0], n[1]) || 1; li += `${i ? "L" : "M"}${r(x + n[0] / L * w / 2)} ${r(y + n[1] / L * w / 2)}`; re = `L${r(x - n[0] / L * w / 2)} ${r(y - n[1] / L * w / 2)}` + re; });
+    return `<path d="${li}${re}Z" fill="${f}" stroke-linejoin="round"/>`;
+  };
+  /* ferne Beine (dunkler) */
+  d += bein([[-7, -17], [-12, -11], [-18, -5], [-21, -3.4]], 4, 1.8, FELLD) + bein([[16, -16], [21, -9], [26, -5], [30, -3]], 4.6, 1.8, FELLD);
+  /* Rute */
+  d += `<path d="M20.6 -21.4Q28 -19 30.6 -12.6Q29.6 -10.6 27.4 -12.6Q25.2 -16.6 19.8 -18.2Z" fill="${FELL}"/><path d="M29.4 -12.4q.4 1 1.2 .6" stroke="${BRAND}" stroke-width=".8" fill="none"/>`;
+  /* Körper */
+  d += `<path d="M-4 -28C0 -25 6 -24.2 14 -23.6Q19 -23.2 21.6 -21.4Q23 -17 19 -14L14 -15Q8 -14.6 2 -13.2Q-5 -10.6 -8.2 -14Q-10 -18 -9 -23Q-8 -26 -6 -28Z" fill="${S.lg("kelpie", [[0, "#9a5628"], [1, "#6e3818"]], 0, 0, 0, 1)}"/>`;
+  d += `<path d="M-8.6 -21Q-9.4 -16 -7.4 -13.6Q-5 -11.6 -2 -13.2Q-5 -15 -6 -20Z" fill="${BRAND}"/><path d="M-2 -26.6C4 -24.6 10 -24 19 -23" stroke="#c07a44" stroke-width=".7" fill="none" opacity=".8"/>`;
+  /* nahe Beine */
+  d += bein([[-4, -15], [-6, -8.6], [-9, -2], [-11.6, -.4]], 4.2, 2, FELL) + bein([[13, -17], [10, -10], [14, -5], [13, -.6]], 5, 2, FELL);
+  d += `<path d="M-9.4 -1.6l-3 1.4 3 .2zM12.2 -.8l-2.8 .8 3 .2z" fill="${BRAND}"/>`;
+  /* Kopf mit Stirnabsatz, Schnauze, Nasenkuppe, Stehohren, Auge */
+  d += `<path d="M-9 -24Q-14 -24 -17.6 -25.4L-24 -24.6Q-25.8 -25.4 -25 -26.6Q-21 -28 -17 -28.6Q-15.6 -30.8 -12 -31.4Q-6.6 -31.6 -4 -28Z" fill="${FELL}"/>`;
+  d += `<path d="M-24.4 -24.8Q-20.6 -24.6 -17.6 -25.4Q-16 -24.2 -18 -23.6Q-21 -23.4 -24 -24Z" fill="${BRAND}"/><ellipse cx="-25" cy="-26" rx=".95" ry=".75" fill="#151010"/>`;
+  d += `<path d="M-11.8 -31L-10.8 -38L-7.2 -31.4Z" fill="${FELL}"/><path d="M-11 -31.4L-10.5 -36.2L-8.4 -31.6Z" fill="#e8c3a0"/><path d="M-8 -31.4L-5.4 -36.6L-4.4 -30.4Z" fill="${FELLD}"/>`;
+  d += `<circle cx="-14.6" cy="-28.4" r=".75" fill="#1a1210"/><circle cx="-14.4" cy="-28.6" r=".25" fill="#fff"/><path d="M-9 -26.4q2 1.6 4.6 .6" stroke="#2f6fb6" stroke-width="1" fill="none"/>`;
+  S.teil({ id: "hund", de: "der Hund", syl: "HUND", it: "il cane", itSyl: "CA-ne", en: "dog", x: HUND.x, y: HUND.y, steht: true, kunst: `<g transform="scale(${r(k0 * 100) / 100})">${d}</g>`,
+    tipp: "Der Kelpie ist ein australischer Hütehund. Er ist schnell und sehr klug." });
+}
+{
+  /* DIE JOGGERIN (≈ 1,68 m) läuft nach links, Oberkörper nach vorn geneigt, Arme im Ellbogen ≈ 90° gebeugt;
+     hinten hält sie die Leine. Licht von rechts hinten: Rücken hell, Vorderseite im Schatten. */
+  const { x: X, y: Y } = JOG, k0 = vorn(Y) / 50;
   const HAUT2 = "#d9a47e";
-  let j = `<ellipse cx="-6" cy=".6" rx="22" ry="2.4" fill="#2a2010" opacity=".25" filter="url(#bw_weich)"/>`;
-  /* hinteres Bein (stößt ab, Fuß hinten oben) */
+  let j = `<path d="M-8 0l16 0 -16 -3z" fill="#2a2010" opacity=".24" filter="url(#bw_weich)"/>`;
+  /* hinteres Bein (stößt ab) */
   j += `<path d="M1 -45L7 -45Q11 -34 10 -25Q14 -20 18 -16L15.6 -12.6Q9.4 -17 6 -23Q3 -33 1 -45Z" fill="#26282e"/><path d="M15 -16.4l5.4 2.6-1.2 2.4-5.6-2.2Z" fill="#f4f4f2"/><path d="M14.4 -13.6l5.4 2.2" stroke="#ff6a3c" stroke-width=".8"/>`;
-  /* hinterer Arm */
-  j += `<path d="M3 -64Q9 -60 9.4 -54Q8 -49 4.4 -47.6L3 -50Q6 -52 5.6 -55Q4 -58 1 -60Z" fill="${HAUT2}"/>`;
-  /* vorderes Bein (landet), Leggings */
+  /* vorderes Bein (landet) */
   j += `<path d="M-5 -45L2 -45Q-2 -36 -7.6 -27Q-6.6 -14 -5.4 -3L-9.4 -3Q-11.4 -16 -11.6 -27Q-8 -37 -5 -45Z" fill="#1d1f24"/><path d="M-11 -3.6h7.4q2 .6 2 2.6h-10Z" fill="#f4f4f2"/><path d="M-11.4 -1.2h9.6" stroke="#ff6a3c" stroke-width=".8"/>`;
   j += `<path d="M-1 -43Q-4 -36 -8.4 -28" stroke="#4a4e58" stroke-width=".6" fill="none"/>`;
-  /* Oberkörper: Laufshirt (Trägertop), leicht nach vorn geneigt */
-  j += `<path d="M-5.6 -44Q-8 -54 -7.6 -63Q-5 -67.6 1 -67.4Q5.6 -66.4 6 -62Q6.6 -52 4.6 -44Q0 -42.6 -5.6 -44Z" fill="${S.lg("lauftop", [[0, "#c43f66"], [0.6, "#e2557a"], [1, "#f07a96"]], 0, 0, 1, 0)}"/>`;
-  j += `<path d="M-5.6 -46Q0 -44.6 4.8 -46" stroke="#1d1f24" stroke-width="2.4" fill="none"/>`;
-  /* Hals, Kopf mit Schirmmütze, Pferdeschwanz schwingt nach hinten */
-  j += `<path d="M-3 -67L-2.6 -70.4L1.4 -70.6L1.6 -67Z" fill="${HAUT2}"/><ellipse cx="-1.6" cy="-75.2" rx="4.4" ry="5" fill="${HAUT2}"/>`;
-  j += `<path d="M1.6 -77.4Q8 -78.6 10 -72.6Q7.4 -75.2 3 -74Z" fill="#6a4122"/><path d="M-6.2 -77.6Q-5.6 -81.6 -1 -81.4Q3.4 -81.2 3.4 -77.4Z" fill="#f4f4f2"/><path d="M-6 -77.6Q-9.6 -77.4 -10.6 -76.4Q-8 -76 -5.4 -76.4Z" fill="#e2557a"/>`;
-  j += `<path d="M-5.4 -74.6q.8.4 1.6 0M-5.8 -72.2q1 .6 2 .2" stroke="#3a2418" stroke-width=".45" fill="none"/>`;
-  /* vorderer Arm, angewinkelt nach vorn oben */
-  j += `<path d="M-4.4 -64Q-10 -61 -11.6 -57Q-12.8 -61 -12.2 -66L-10 -66.4Q-10.6 -62.4 -9.6 -60.6Q-7.6 -62.6 -3.4 -66.4Z" fill="${HAUT2}"/>`;
-  /* Hund (Kelpie) läuft vorne links neben ihr: gestreckter Galopp */
-  j += `<g transform="translate(-24 0)"><path d="M-12 -12Q-12 -18 -4 -18.4L8 -18.6Q13 -18 13.4 -13Q12 -9.6 6 -10.4L-6 -10.4Q-11 -9.4 -12 -12Z" fill="#7a4a24"/>`;
-  j += `<path d="M-6 -11L-12 -4.4L-14.6 -4.6M-3 -11L-6 -3L-8.6 -2.6M7 -11.4L12 -4L14.4 -4.4M10 -12L16 -7L18 -8" stroke="#6a3f1e" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
-  j += `<path d="M-11 -14Q-16 -17 -18 -20.6Q-19 -24 -16 -24.6L-13.6 -28.4L-12.6 -24Q-10 -22 -8.6 -17.6Z" fill="#7a4a24"/><path d="M-18 -21.6l-3.4 1.4 2.8 1.2Z" fill="#2a1a10"/><circle cx="-15.6" cy="-22.6" r=".5" fill="#111"/>`;
-  j += `<path d="M13 -16Q18 -19 21 -17" stroke="#7a4a24" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M-4 -18.2Q4 -19.6 10 -18.4" stroke="#b07a4a" stroke-width="1" fill="none"/></g>`;
-  S.teil({ id: "joggerin", de: "die Joggerin", syl: "JOG-ge-rin", it: "la podista", itSyl: "po-DI-sta", en: "jogger", x: X, y: Y, steht: true, kunst: `<g transform="scale(${r(k0 * 100) / 100})">${j}</g>`,
+  /* Oberkörper um ≈ 10° nach vorn geneigt (Scherung um die Hüfte) */
+  let o = `<path d="M3 -63L9 -56.4L5.4 -49.6" stroke="${HAUT2}" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  o += `<path d="M-5.6 -44Q-8 -54 -7.6 -63Q-5 -67.6 1 -67.4Q5.6 -66.4 6 -62Q6.6 -52 4.6 -44Q0 -42.6 -5.6 -44Z" fill="${S.lg("lauftop", [[0, "#b8355c"], [0.55, "#e2557a"], [1, "#f58aa4"]], 0, 0, 1, 0)}"/><path d="M5.6 -62Q6.2 -52 4.4 -45" stroke="#ffc2cf" stroke-width=".9" fill="none"/>`;
+  o += `<path d="M-5.6 -46Q0 -44.6 4.8 -46" stroke="#1d1f24" stroke-width="2.4" fill="none"/>`;
+  o += `<path d="M-3 -67L-2.6 -70.4L1.4 -70.6L1.6 -67Z" fill="${HAUT2}"/><ellipse cx="-1.6" cy="-75.2" rx="4.4" ry="5" fill="${HAUT2}"/>`;
+  o += `<path d="M1.6 -77.4Q8 -78.6 10 -72.6Q7.4 -75.2 3 -74Z" fill="#6a4122"/><path d="M-6.2 -77.6Q-5.6 -81.6 -1 -81.4Q3.4 -81.2 3.4 -77.4Z" fill="#f4f4f2"/><path d="M-6 -77.6Q-9.6 -77.4 -10.6 -76.4Q-8 -76 -5.4 -76.4Z" fill="#e2557a"/>`;
+  o += `<circle cx="-4.6" cy="-75" r=".5" fill="#2a1a12"/><path d="M-5.8 -72.2q1 .6 2 .2" stroke="#3a2418" stroke-width=".45" fill="none"/>`;
+  o += `<path d="M-4.4 -63.6L-9.6 -57.4L-14.8 -61" stroke="${HAUT2}" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  j += `<g transform="translate(0 -44) skewX(10) translate(0 44)">${o}</g>`;
+  /* Leine von der hinteren Hand zum Halsband des Hundes */
+  const hand = [5.4 + 0 - (49.6 - 44) * Math.tan(10 * Math.PI / 180), -49.6].map((v) => v * k0), hals = [(HUND.x - 6 * vorn(HUND.y) / 50) - X, (HUND.y - 26.4 * vorn(HUND.y) / 50) - Y];
+  const leine = `<path d="M${r(hand[0])} ${r(hand[1])}Q${r((hand[0] + hals[0]) / 2)} ${r(Math.max(hand[1], hals[1]) + 6)} ${r(hals[0])} ${r(hals[1])}" stroke="#2f6fb6" stroke-width=".55" fill="none"/>`;
+  S.teil({ id: "joggerin", de: "die Joggerin", syl: "JOG-ge-rin", it: "la podista", itSyl: "po-DI-sta", en: "jogger", x: X, y: Y, steht: true, kunst: `<g transform="scale(${r(k0 * 100) / 100})">${j}</g>` + leine,
     tipp: "Am Morgen joggen viele Leute am Hafen entlang – oft mit ihrem Hund." });
 }
 {

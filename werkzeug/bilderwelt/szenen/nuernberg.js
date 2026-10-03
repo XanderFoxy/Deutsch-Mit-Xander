@@ -34,11 +34,14 @@
      (Unsicher: genaue Helmfarbe — dunkel/schiefergrau gezeichnet.)
    - FRAUENKIRCHE (1352–62): Treppengiebel mit Fialen und Blendmaßwerk,
      Vorhalle mit Figurenportal, darüber der Michaelschor mit der Empore
-     (dort spricht das Christkind den Prolog), zwei Treppentürmchen, die
-     Kunstuhr (blau-goldenes Zifferblatt 2,5 m, darüber die Mondkugel,
-     halb blau, halb golden), darunter das MÄNNLEINLAUFEN von 1509 — nur um
-     12 Uhr ziehen die sieben Kurfürsten um Kaiser Karl IV.; jetzt (15:30)
-     sind die Türchen zu, nur der Kaiser thront in der Mitte; oben das
+     (von dort spricht das Christkind nur einmal, bei der Eröffnung am
+     Freitag vor dem 1. Advent, den Prolog — an diesem Nachmittag ist die
+     Empore leer; das Christkind besucht die Kinder unten auf dem Markt),
+     zwei Treppentürmchen, die Kunstuhr (blau-goldenes Zifferblatt 2,5 m),
+     DARÜBER das MÄNNLEINLAUFEN von 1509 (nach unserer Kenntnis: Uhr unten,
+     Figurenbühne oben — unsicher) — nur um 12 Uhr ziehen die sieben
+     Kurfürsten am Kaiser vorbei; jetzt (15:30) sind die Türchen zu, nur
+     der Kaiser thront in der Mitte; darüber die Mondkugel und das
      Maßwerktürmchen. Die Uhr zeigt halb vier.
    - SCHÖNER BRUNNEN (1385–96, Kopie): rund 19 m, gotische Turmspitze aus
      hellem Sandstein, 40 farbig gefasste Figuren, vergoldete
