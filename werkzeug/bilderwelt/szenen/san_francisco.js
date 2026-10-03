@@ -65,8 +65,11 @@ const HOR = 92, F = 300, E = 4.6, EW = 92.6, VN = 168, VO = 365;
 const PN = (X, d, z) => [VN + F * X / d, HOR + F * (E - z) / d];
 /* Ostblick: lat quer (+ Süden, rechts), d nach Osten */
 const PO = (lat, d, z) => [VO + F * lat / d, HOR + F * (E - z) / d];
-/* Gelände: Hyde Street nach Norden (Lombard 0–10 m, Chestnut 135–150 m flach) */
-const zH = (d) => d <= 10 ? 0 : d <= 135 ? -0.13 * (d - 10) : d <= 150 ? -16.25 : d <= 400 ? -16.25 - 0.18 * (d - 150) : d <= 560 ? -61.25 - 0.12 * (d - 400) : -80.5 - 0.08 * (d - 560);
+/* Gelände: Hyde Street nach Norden, steil mit flachen Kreuzungen (Chestnut, Francisco, Bay, North Point), Beach Street ≈ 4 m über dem Meer */
+const ZHP = [[0, 0], [10, 0], [135, -17], [150, -17], [272, -40], [287, -40], [410, -60], [425, -60], [550, -76], [565, -76], [690, -86], [2000, -86]];
+const zH = (d) => { for (let i = 1; i < ZHP.length; i++) if (d <= ZHP[i][0]) { const [d0, z0] = ZHP[i - 1], [d1, z1] = ZHP[i]; return z0 + (z1 - z0) * (d - d0) / (d1 - d0); } return -86; };
+/* Querstraßen der Hyde Street (flache Stufen): Chestnut, Francisco, Bay, North Point */
+const QUER = [[135, 150], [272, 287], [410, 425], [550, 565]];
 const zL = (d) => d <= 2 ? 0 : -0.27 * (d - 2);
 /* Ferne: Richtung gestaucht, Größe echt */
 const ANK = [[-100, 0], [-72.8, 127], [-8, 198], [47.8, 290], [88.7, 365], [100, 400]];
@@ -601,14 +604,14 @@ const HAUS = {};
   /* Drehgestelle mit Rädern */
   for (const u of [1.3, 6.9]) { k += Q([u - 0.8, -0.9, 0.05], [u + 0.8, -0.9, 0.05], [u + 0.8, -0.9, 0.42], [u - 0.8, -0.9, 0.42], "#2a2a2a"); for (const du of [-0.45, 0.45]) { const c = P(u + du, HB - 0.2, 0.3); k += `<ellipse cx="${r(c[0])}" cy="${r(c[1])}" rx="${r(0.08 * s)}" ry="${r(0.3 * s)}" fill="#151515"/>`; } }
   /* offener Teil: Boden, Bänke nach außen (beide Seiten), Pfosten */
-  k += Q([-HB, -0.05, 0.42], [-HB, LEN, 0.42], [-HB, LEN, 0.95], [-HB, -0.05, 0.95], "#5e1622");
-  k += Q([-HB + 0.1, 0.1, 0.95], [HB - 0.1, 0.1, 0.95], [HB - 0.1, OFF, 0.95], [-HB + 0.1, OFF, 0.95], "#8a6a48");
-  k += Q([-0.3, 0.2, 0.95], [0.3, 0.2, 0.95], [0.3, OFF - 0.1, 0.95], [-0.3, OFF - 0.1, 0.95], "#6a4428");
-  k += Q([-0.25, 0.2, 1.4], [0.25, 0.2, 1.4], [0.25, OFF - 0.1, 1.4], [-0.25, OFF - 0.1, 1.4], "#7a5032");
+  k += Q([-0.05, -HB, 0.42], [LEN, -HB, 0.42], [LEN, -HB, 0.95], [-0.05, -HB, 0.95], "#5e1622");
+  k += Q([0.1, -HB + 0.1, 0.95], [0.1, HB - 0.1, 0.95], [OFF, HB - 0.1, 0.95], [OFF, -HB + 0.1, 0.95], "#8a6a48");
+  k += Q([0.2, -0.3, 0.95], [0.2, 0.3, 0.95], [OFF - 0.1, 0.3, 0.95], [OFF - 0.1, -0.3, 0.95], "#6a4428");
+  k += Q([0.2, -0.25, 1.4], [0.2, 0.25, 1.4], [OFF - 0.1, 0.25, 1.4], [OFF - 0.1, -0.25, 1.4], "#7a5032");
   for (const v of [-HB, HB]) for (const u of [0.05, 1, 1.95, OFF - 0.05]) k += L2([u, v, 0.95], [u, v, RF], "#d8ccb0", 0.4);
   /* Stirnwand der Kabine im offenen Teil, mit Fenster */
-  k += Q([-0.95, OFF - 0.05, 0.95], [0.95, OFF - 0.05, 0.95], [0.95, OFF - 0.05, 2.6], [-0.95, OFF - 0.05, 2.6], "#7a3a34");
-  k += Q([-0.75, OFF - 0.06, 1.5], [0.75, OFF - 0.06, 1.5], [0.75, OFF - 0.06, 2.4], [-0.75, OFF - 0.06, 2.4], "#3a4652");
+  k += Q([OFF - 0.05, -0.95, 0.95], [OFF - 0.05, 0.95, 0.95], [OFF - 0.05, 0.95, 2.6], [OFF - 0.05, -0.95, 2.6], "#7a3a34");
+  k += Q([OFF - 0.06, -0.75, 1.5], [OFF - 0.06, 0.75, 1.5], [OFF - 0.06, 0.75, 2.4], [OFF - 0.06, -0.75, 2.4], "#3a4652");
   /* der Gripman (Fahrer) am Greifhebel, Mitte des offenen Teils */
   {
     const [gx, gy] = P(1.3, 0, 0.95);

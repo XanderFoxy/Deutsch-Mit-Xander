@@ -566,7 +566,7 @@ function mammut(T) {
   s += bein(HN, 76, false, false) + bein(VN, 356, false, true);
 
   /* ---------- Rüssel: ohne Knick aus der Stirn, verjüngt (46 → 34 → 18 cm), Körperbraun, oben behaart, Ringfalten als Bögen ---------- */
-  const vorn = [[457, -252], [461, -228], [463, -196], [463, -150], [462, -114], [459, -80], [458, -54], [459, -36]];
+  const vorn = [[459, -252], [462, -230], [463, -196], [463, -150], [462, -114], [459, -80], [458, -54], [459, -36]];
   const hint = [[406, -246], [410, -222], [416, -196], [424, -150], [428, -114], [434, -80], [438, -54], [441, -30]];
   const spitze = [[463, -27], [470, -24], [477, -24], [483, -27], [486, -31, 1], [484, -24], [481, -21], [487, -19], [490, -14], [488, -9], [480, -6], [468, -6], [454, -9], [446, -16]];
   const rueP = [...vorn, ...spitze, ...hint.slice().reverse()];
@@ -583,12 +583,12 @@ function mammut(T) {
     WEICH(T, FO([[426, -196], [446, -170], [470, -148], [470, -136], [446, -158], [428, -182]], S0, 0.38), 2) +
     /* Spitze: dunkle Nasenöffnung zwischen Finger und Lappen */
     `<path d="M480-21q5 1 7 2q-4 2-7-2z" fill="#0a0604"/>` + fleck(T, 476, -15, 8, 4, "#8a6a58", 0.5) });
-  rue += LOCKEN(T, [[406, -248], [458, -250], [463, -150], [428, -140], [414, -200]], 50, 92, (x, y) => 7 + (y + 250) * 0.03, 2, (x, y) => Math.max(0, zylX((x - 404) / 58) - 0.05), TON, { streuung: 10, szene: 0.08, szeneB: 2, haare: 1, hb: 0.4 });
+  rue += LOCKEN(T, [[406, -248], [458, -250], [463, -150], [428, -140], [414, -200]], 36, 92, (x, y) => 7 + (y + 250) * 0.03, 2, (x, y) => Math.max(0, zylX((x - 404) / 58) - 0.05), TON, { streuung: 10, szene: 0.08, szeneB: 2, haare: 1, hb: 0.4 });
   if (fein) rue += FELL(T, [[428, -140], [462, -140], [458, -60], [438, -60]], 34, 95, 3.5, (x, y) => zylX((x - 428) / 32), [["#2a1a0e", 0.5, 0.4], ["#4e321e", 0.5, 0.4], ["#7a5434", 0.4, 0.35]], { szene: 0 });
   s += `<g filter="${T.volumen("ruessel", { weich: 9, tiefe: 5, umgebung: 0.3 })}">${rue}</g>`;
 
   /* ---------- Rumpf mit Kopf: Grund = Unterwolle, darauf feines Haar und Strähnen; Volumen über den ganzen Körper ---------- */
-  const koerper = [...ruecken, [461, -238], [454, -222], [440, -210], [418, -200], [398, -190], [386, -172], [370, -156],
+  const koerper = [...ruecken, [460, -240], [455, -224], [440, -210], [418, -200], [398, -190], [386, -172], [370, -156],
     [330, -148], [270, -144], [200, -142], [140, -146], [100, -152], [64, -164], [42, -178], [30, -198], [28, -214]];
   const dK = glatt(koerper);
   let rumpf = K(T, dK, wolle, { rand: false, vol: false, innen:
@@ -606,19 +606,19 @@ function mammut(T) {
   /* Strähnen in zwei Lagen, je mit 2–3 Einzelhaaren und aufgespaltenen Spitzen; Lichthaare nur auf der Lichtseite */
   const rumpfZone = [[34, -222], [70, -254], [186, -284], [272, -318], [326, -340], [362, -326], [372, -322], [386, -300], [390, -250], [392, -200],
     [380, -172], [330, -156], [200, -150], [100, -158], [50, -176], [32, -200]];
-  rumpf += LOCKEN(T, rumpfZone, 100, fluss, lang, 5.4, (x, y) => licht(x, y) * 0.86, TON, { streuung: 7, kruemmung: 0.1, szene: 0.2, szeneB: 2, haare: 2, hb: 0.6 });
-  rumpf += LOCKEN(T, rumpfZone, 70, fluss, (x, y) => lang(x, y) * 0.7, 3.6, licht, TON, { streuung: 7, kruemmung: 0.12, szene: 0.12, szeneB: 2 });
+  rumpf += LOCKEN(T, rumpfZone, 84, fluss, lang, 5.4, (x, y) => licht(x, y) * 0.86, TON, { streuung: 7, kruemmung: 0.1, szene: 0.2, szeneB: 2, haare: 2, hb: 0.6 });
+  rumpf += LOCKEN(T, rumpfZone, 52, fluss, (x, y) => lang(x, y) * 0.7, 3.6, licht, TON, { streuung: 7, kruemmung: 0.12, szene: 0.12, szeneB: 2 });
   if (fein) rumpf += LOCKEN(T, [[40, -238], [70, -256], [186, -286], [272, -320], [326, -342], [360, -330], [330, -312], [240, -290], [140, -270], [60, -244]],
     30, fluss, (x, y) => lang(x, y) * 0.8, 1.2, () => 1, SPITZ, { streuung: 6, jitter: 0.4 });
   /* Kontur brechen: alle 6–12 cm eine Strähnenspitze 2–6 cm über die Rückenlinie, mit Randlicht */
-  rumpf += LOCKENLINIE(T, ruecken.slice(0, 11), 50, [-4, 8], (x, y) => fluss(x, y + 6) + 6, (x) => (x > 290 && x < 372 ? 20 : 15), 3, (x, y) => licht(x, y + 6) + 0.08, TON, { streuung: 8, szene: 0.15, szeneB: 1.6, haare: 1, hb: 0.5 });
-  rumpf += LOCKENLINIE(T, ruecken.slice(1, 11), 34, [0, 3], (x) => (x > 300 && x < 372 ? 160 : 172), (x) => (x > 290 && x < 372 ? 14 : 10), 1.6, () => 1, TON, { streuung: 8, szene: 0.1 });
+  rumpf += LOCKENLINIE(T, ruecken.slice(0, 11), 44, [-4, 8], (x, y) => fluss(x, y + 6) + 6, (x) => (x > 290 && x < 372 ? 20 : 15), 3, (x, y) => licht(x, y + 6) + 0.08, TON, { streuung: 8, szene: 0.15, szeneB: 1.6, haare: 1, hb: 0.5 });
+  rumpf += LOCKENLINIE(T, ruecken.slice(1, 11), 24, [0, 3], (x) => (x > 300 && x < 372 ? 160 : 172), (x) => (x > 290 && x < 372 ? 14 : 10), 1.6, () => 1, TON, { streuung: 8, szene: 0.1 });
   /* Rock: Bündel verschieden lang (±25 %), mit Lücken; 3 Töne statt fast schwarz; 30 % der Spitzen gebogen, aufgespalten */
   const rockZone = [[54, -172], [120, -160], [200, -156], [270, -158], [330, -160], [380, -176], [396, -196], [390, -206], [330, -184], [200, -176], [60, -186]];
   const rockLang = (x) => (x > 340 ? 74 : x < 110 ? 40 : 56) * (0.85 + 0.3 * ((x * 0.37) % 1));
   const rockLicht = (x, y) => 0.25 + 0.5 * Math.max(0, Math.min(1, (y + 150) / 60));       // Reflex vom Boden an den Spitzen
-  rumpf += LOCKEN(T, rockZone, 16, (x) => 93 + ((x * 1.7) % 1 - 0.5) * 16, rockLang, 14, rockLicht, ROCK, { streuung: 4, kruemmung: 0.18, szene: 0.5, szeneB: 1.2, jitter: 0.6, haare: 4, hb: 0.8 });
-  rumpf += LOCKEN(T, rockZone, 52, (x) => 93 + (x < 120 ? 5 : 0), (x) => rockLang(x) * 0.9, 4, rockLicht, ROCK, { streuung: 10, kruemmung: 0.22, szene: 0.1, szeneB: 2.4, jitter: 0.8, haare: 1, hb: 0.6 });
+  rumpf += LOCKEN(T, rockZone, 16, (x) => 93 + ((x * 1.7) % 1 - 0.5) * 16, rockLang, 14, rockLicht, ROCK, { streuung: 4, kruemmung: 0.18, szene: 0.5, szeneB: 1.2, jitter: 0.6, haare: 3, hb: 0.8 });
+  rumpf += LOCKEN(T, rockZone, 46, (x) => 93 + (x < 120 ? 5 : 0), (x) => rockLang(x) * 0.9, 4, rockLicht, ROCK, { streuung: 10, kruemmung: 0.22, szene: 0.1, szeneB: 2.4, jitter: 0.8, haare: 1, hb: 0.6 });
   s += `<g filter="${T.volumen("rumpf", { weich: 40, tiefe: 5, umgebung: 0.32 })}">${rumpf}</g>`;
 
   /* ---------- Kopf ---------- */
@@ -626,8 +626,8 @@ function mammut(T) {
   const kopfLicht = (x, y) => Math.max(0, Math.min(1, zyl((y + 356) / 170) - (x > 446 ? 0.08 : 0)));
   /* Ohr: klein (34 × 22 cm), hochoval, nach hinten geneigt; die unteren 60 % unter Halshaar, sichtbar nur der obere Hinterrand */
   let ohr = K(T, [[370, -286], [380, -288], [388, -280], [389, -266], [384, -254], [372, -252, 1], [366, -264], [366, -278]],
-    T.lg("ohr", [[0, "#6a4424"], [1, "#4a2e18"]]), { rand: false, vol: false });
-  ohr += FELL(T, [[368, -286], [388, -286], [388, -262], [368, -262]], 40, 104, 4, (x, y) => kopfLicht(x, y) - 0.12, [["#3a2414", 0.6, 0.4], ["#5c381e", 0.6, 0.4], ["#7a4c28", 0.5, 0.35]], { szene: 0 });
+    T.lg("ohr", [[0, "#5a3a20"], [1, "#3a2414"]]), { rand: false, vol: false });
+  ohr += FELL(T, [[368, -286], [388, -286], [388, -262], [368, -262]], 26, 104, 4, (x, y) => kopfLicht(x, y) - 0.12, [["#3a2414", 0.6, 0.4], ["#5c381e", 0.6, 0.4], ["#7a4c28", 0.5, 0.35]], { szene: 0 });
   s += fleck(T, 391, -270, 5, 14, S0, 0.35) + `<g filter="${T.volumen("ohr", { weich: 4, tiefe: 4 })}">${ohr}</g>`;
   /* Halshaar fällt von oben über den unteren Ohrrand */
   s += LOCKEN(T, [[362, -276], [392, -276], [392, -262], [362, -262]], 20, 96, 22, 4, (x, y) => kopfLicht(x, y) - 0.05, TON, { streuung: 8, szene: 0.2, haare: 1, hb: 0.5 });
@@ -640,7 +640,7 @@ function mammut(T) {
   s += LOCKEN(T, [[398, -250], [418, -250], [422, -206], [404, -200]], 22, 96, 18, 3, (x, y) => licht(x, y) + 0.1, TON, { streuung: 8, szene: 0.2, haare: 1, hb: 0.45 });
   if (fein) {
     const AZ = []; for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2; AZ.push([auge[0] + Math.cos(a) * 16, auge[1] + Math.sin(a) * 13]); }
-    s += FELL(T, AZ, 40, (x, y) => Math.atan2(y - auge[1], x - auge[0]) * 180 / Math.PI + 15, (x, y) => Math.min(4, Math.hypot(x - auge[0], y - auge[1]) * 0.3), kopfLicht,
+    s += FELL(T, AZ, 30, (x, y) => Math.atan2(y - auge[1], x - auge[0]) * 180 / Math.PI + 15, (x, y) => Math.min(4, Math.hypot(x - auge[0], y - auge[1]) * 0.3), kopfLicht,
       [["#2a190d", 0.6, 0.4], ["#4c2e18", 0.6, 0.4], ["#6e4424", 0.55, 0.35], ["#9a6436", 0.5, 0.35]], { szene: 0 });
   }
   /* Kuppelkontur: abgelegte Schopfsträhnen (10–16 cm, nach vorn-unten) brechen den Kreisbogen */
@@ -662,7 +662,7 @@ function mammut(T) {
   /* behaarte Lippe deckt den Zahnansatz */
   /* ---------- Zahnscheide: flache Schwellung diagonal vom Auge zum Zahnaustritt, kurzes Haar; endet am Zahnaustritt ---------- */
   s += WEICH(T, FO([[420, -256], [432, -258], [442, -238], [436, -236]], "#d8a46c", 0.16) + FO([[436, -230], [448, -222], [446, -208], [434, -214]], S0, 0.35), 3);
-  s += FELL(T, [[418, -256], [432, -258], [446, -232], [448, -212], [436, -210], [424, -232]], 60, 66, 7, (x, y) => Math.max(0, 0.85 - (y + 258) / 60), [["#2a190d", 0.7, 0.6], ["#4c2e18", 0.7, 0.6], ["#6e4424", 0.6, 0.55], ["#9a6436", 0.6, 0.5]], { szene: 0.2 });
+  s += FELL(T, [[418, -256], [432, -258], [446, -232], [448, -212], [436, -210], [424, -232]], 46, 66, 7, (x, y) => Math.max(0, 0.85 - (y + 258) / 60), [["#2a190d", 0.7, 0.6], ["#4c2e18", 0.7, 0.6], ["#6e4424", 0.6, 0.55], ["#9a6436", 0.6, 0.5]], { szene: 0.2 });
 
   /* ---------- Auge: unterbrochene Oberlidfalte, Krähenfüße, lange Wimpern nach vorn-unten ---------- */
   s += AUGE2(T, auge[0], auge[1], 7.4, 3.8, { iris: "#3a2410", iris2: "#6a4422", winkel: -6, falten: 3, kraehen: 2, wimpern: 10, wl: 1.9, wwinkel: 55, wkrumm: 0.35, haut: "#3a2a20", hautHell: "#b08866" });
