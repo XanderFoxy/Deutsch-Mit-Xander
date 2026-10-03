@@ -570,7 +570,7 @@ const KANTE0 = (y) => 180 - 0.3125 * (y - HOR);
     return g + `<path d="M${r(x - l / 2)} ${r(y - 0.6 * u)} H${r(x + l / 2)}" stroke="#fff" stroke-width="${r(0.06 * u)}" opacity=".35"/>`;
   };
   k += auto(18, 79, "#2a2c30", false) + auto(118, 72.5, "#c9ccd0", false) + auto(255, 66, "#7a1e1e", false) + auto(14, 44, "#e8e6e0", true) + auto(124, 49, "#f2c21a", true);
-  S.teil({ anker: [62, 175], id: "strasse", de: "die Straße", syl: "STRA-ße", it: "la strada", itSyl: "STRA-da", en: "street", x: 0, y: 0, kunst: `<g clip-path="url(#${S.id("ohneterrasse")})">${k}</g>`,
+  S.teil({ anker: [36, 166], id: "strasse", de: "die Straße", syl: "STRA-ße", it: "la strada", itSyl: "STRA-da", en: "street", x: 0, y: 0, kunst: `<g clip-path="url(#${S.id("ohneterrasse")})">${k}</g>`,
     tipp: "Die Chang'an-Straße heißt „Straße des ewigen Friedens“. Sie hat zehn Spuren." });
 }
 {
@@ -806,7 +806,7 @@ const RI = { d: 30, x: 84 };            /* auf dem abgetrennten Radweg */
   k += `<line x1="${m(1.02)}" y1="${m(-1.4)}" x2="${m(1.08)}" y2="${m(-2.2)}" stroke="#555" stroke-width=".25"/><rect x="${m(1.08)}" y="${m(-2.2)}" width="${m(0.22)}" height="${m(0.15)}" fill="#de2910"/><circle cx="${r(m(1.08) + 0.04 * u)}" cy="${r(m(-2.2) + 0.05 * u)}" r=".3" fill="#ffde00"/>`;
   S.teil({ anker: [r(RI.x + 0.75 * u), r(Y - 0.45 * u)], id: "rikscha", de: "die Rikscha", syl: "RIK-scha", it: "il risciò", itSyl: "ri-SCIÒ", en: "rickshaw", x: RI.x, y: Y, steht: true, kunst: k,
     tipp: "Mit der Fahrradrikscha fahren Besucher durch die alten Gassen von Peking, die Hutongs." });
-  S.teil({ anker: [r(RI.x + SA[0] + 0.05 * u), r(Y - 2.1 * u)], id: "fahrer", de: "der Rikschafahrer", syl: "RIK-scha-fah-rer", it: "il conducente del risciò", itSyl: "con-du-CEN-te del ri-SCIÒ", en: "rickshaw driver", x: RI.x, y: Y, kunst: `<g transform="translate(${r(ox)} ${r(oy)})">${vereinfache(f.svg, 1.5)}</g>`,
+  S.teil({ anker: [r(RI.x + SA[0] + 0.05 * u), r(Y - 1.35 * u)], id: "fahrer", de: "der Rikschafahrer", syl: "RIK-scha-fah-rer", it: "il conducente del risciò", itSyl: "con-du-CEN-te del ri-SCIÒ", en: "rickshaw driver", x: RI.x, y: Y, kunst: `<g transform="translate(${r(ox)} ${r(oy)})">${vereinfache(f.svg, 1.5)}</g>`,
     tipp: "Er tritt in die Pedale. Gleich holt er Gäste ab und fährt mit ihnen durch die Hutongs." });
 }
 

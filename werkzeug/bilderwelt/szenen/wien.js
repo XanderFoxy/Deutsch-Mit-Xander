@@ -105,6 +105,11 @@ function schlank(svg, Q = 1, flach = false) {
   }
   return s;
 }
+/* Figur verkleinern, aber den Kopf fein lassen (Gesichter brauchen Zehntel) */
+function figur(svg, kopfY, Q, flach) {
+  const s = svg.replace(/<path [^>]*d="([^"]+)"[^>]*\/>/g, (q, d) => { const n = d.match(/-?\d*\.?\d+/g).map(Number).filter((_, i) => i % 2 === 1); return Math.min(...n) < kopfY ? q.replace(/ d="([^"]+)"/, (m0, dd) => ` data-d="${dd.replace(/-?\d*\.?\d+/g, (v) => String(Math.round(+v)))}"`) : q; });
+  return schlank(s, Q, flach).replace(/ data-d="/g, ' d="');
+}
 /* für sehr kleine Figuren: winzige Pfade (unter min Figur-cm) und zarte Schattierungen weglassen */
 function fein(svg, min, transp) {
   return svg.replace(/<(path|circle|ellipse|rect|line)[^>]*\/>/g, (e) => {
@@ -162,10 +167,11 @@ S.hinten(`<rect width="400" height="${HOR + 12}" fill="${S.lg("himmel", [[0, "#3
     for (let i = 0; i < n; i++) { const t = i / (n - 1), top = Math.pow(Math.sin(t * Math.PI), 0.7); c.push([x - w / 2 + t * w + (z() - 0.5) * 3, y - top * h * 0.35 + (z() - 0.5) * 2, 2 + z() * 2.5 + top * h * 0.45]); }
     for (let i = 0; i < n * 0.6; i++) { const t = 0.2 + z() * 0.6; c.push([x - w / 2 + t * w, y - h * (0.3 + z() * 0.4), 2 + z() * h * 0.3]); }
     for (const [a, b, rr] of c.slice()) for (let k = 0; k < 2; k++) { const an = -Math.PI * (0.15 + z() * 0.7); c.push([a + Math.cos(an) * rr * 0.85, b + Math.sin(an) * rr * 0.85, rr * (0.25 + z() * 0.2)]); }
-    const kr = (dx, dy, f) => c.map(([a, b, rr]) => `<circle cx="${r(a + dx)}" cy="${r(b + dy)}" r="${r(rr * f)}"/>`).join("");
-    const id = S.id("wk" + wz++);
-    S.def(`<clipPath id="${id}"><rect x="${r(x - w)}" y="${r(y - h * 2)}" width="${r(w * 2)}" height="${r(h * 2 + 1.5)}"/></clipPath>`);
-    return `<g filter="url(#${S.id("wolke")})"><g clip-path="url(#${id})"><g fill="#a3b4c9">${kr(0.6, 0.6, 1)}</g><g fill="#d4dfea">${kr(-0.4, -0.8, 0.92)}</g><g fill="#fbfcfd">${kr(-0.9, -1.8, 0.84)}</g></g></g>`;
+    /* die Buckel einmal definieren, dreimal setzen: Schatten, Mitte, Licht */
+    const id = S.id("wk" + wz++), cy0 = y - h * 0.3;
+    S.def(`<clipPath id="${id}"><rect x="${r(x - w)}" y="${r(y - h * 2)}" width="${r(w * 2)}" height="${r(h * 2 + 1.5)}"/></clipPath><g id="${id}b">${c.map(([a, b, rr]) => `<circle cx="${r(a)}" cy="${r(b)}" r="${r(rr)}"/>`).join("")}</g>`);
+    const lage = (dx, dy, f, farbe) => `<use href="#${id}b" fill="${farbe}" transform="translate(${r(x + dx)} ${r(cy0 + dy)}) scale(${f}) translate(${r(-x)} ${r(-cy0)})"/>`;
+    return `<g filter="url(#${S.id("wolke")})"><g clip-path="url(#${id})">${lage(0.6, 0.6, 1, "#a3b4c9")}${lage(-0.5, -1.2, 0.94, "#d4dfea")}${lage(-1.2, -2.8, 0.86, "#fbfcfd")}</g></g>`;
   };
   S.hinten(wolke(150, 40, 50, 24, 5) + wolke(222, 20, 30, 14, 17) + wolke(322, 62, 40, 18, 29) + wolke(104, 86, 22, 10, 43) + wolke(244, 78, 16, 8, 59));
   let band = "";
@@ -841,20 +847,21 @@ const PODEST = yp(3.6);
      (7,2 m). Was die Kästen verdecken, wird gar nicht erst gezeichnet. */
   {
     const GY = ys(5.2), oben = PODEST - 0.42 * F / 3.6 - 1;
-    const passant = (spec, h, x) => {
-      const p = B.mensch(Object.assign({ pose: "gehen", haut: "hell" }, spec), h);
-      const grenze = (oben - GY) / p.k + 6;
+    const passant = (spec, h, x, ganz) => {
+      const p = B.mensch(Object.assign({ pose: "gehen", haut: "hell", ohneSchatten: true }, spec), h);
+      const grenze = ganz ? 1e9 : (oben - GY) / p.k + 6;
       const svg = p.svg.replace(/<path [^>]*d="([^"]+)"[^>]*\/>/g, (q, d) => { const n = d.match(/-?\d*\.?\d+/g).map(Number).filter((_, i) => i % 2 === 1); return Math.min(...n) > grenze ? "" : q; });
-      return { svg: `<g transform="translate(${x} ${GY})">${schlank(svg, 2, true)}</g>`, p };
+      return { svg: `<g transform="translate(${x} ${GY})">${figur(svg, p.z.kopf.y + 16, 2, true)}</g>`, p };
     };
     const frau = passant({ id: "wie_frau", geschlecht: "w", blick: -75, frisur: "lang", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "bluse", farbe: "#e9d27a" }, unterteil: { stueck: "rock", farbe: "#2f4f6a" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "tasche", farbe: "#b34a3a" } } }, r(1.66 * F / 5.2), 140);
-    const mann = passant({ id: "wie_mann", geschlecht: "m", blick: -75, frisur: "kurz", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "hemd", farbe: "#9fc3e3" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, r(1.78 * F / 5.2), 240);
+    const mann = passant({ id: "wie_mann", geschlecht: "m", blick: -75, frisur: "kurz", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "hemd", farbe: "#9fc3e3" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, r(1.78 * F / 5.2), 280, true);
+    k += schlag(284, GY, 10, 14, 0.22);
     k += frau.svg + mann.svg;
     /* der Dackel läuft vorne in der Lücke zwischen den Kästen, an der Leine */
-    const hd = [mann.p.z.handL, mann.p.z.handR].map((h) => [240 + h.x * mann.p.k, GY + h.y * mann.p.k]).sort((a, b) => a[0] - b[0])[0];
-    const dx = 201, s5 = F / 5.2;
-    let d = `<ellipse cx=".02" cy="-.13" rx=".27" ry=".085" fill="#8a4a22"/><path d="M-.2 -.08 L-.22 0 M-.14 -.08 L-.13 0 M.18 -.08 L.2 0 M.24 -.08 L.26 0" stroke="#6a361a" stroke-width=".04"/>`;
-    d += `<path d="M.26 -.16 Q.33 -.22 .4 -.2 L.44 -.17 L.36 -.13 Z" fill="#8a4a22"/><path d="M.31 -.2 Q.3 -.12 .34 -.1 Q.36 -.16 .34 -.2 Z" fill="#5e2f14"/><circle cx=".37" cy="-.19" r=".008" fill="#111"/><path d="M-.24 -.15 Q-.33 -.2 -.36 -.26" stroke="#8a4a22" stroke-width=".03" fill="none"/>`;
+    const hd = [mann.p.z.handL, mann.p.z.handR].map((h) => [280 + h.x * mann.p.k, GY + h.y * mann.p.k]).sort((a, b) => a[0] - b[0])[0];
+    const dx = 262, s5 = F / 5.2;
+    let d = `<path d="M-.3 -.17 Q-.31 -.24 -.22 -.25 L.2 -.24 Q.27 -.24 .3 -.2 L.33 -.26 Q.36 -.31 .43 -.29 L.47 -.25 L.42 -.21 Q.36 -.19 .33 -.13 Q.3 -.08 .22 -.08 L.21 -.01 L.17 -.01 L.16 -.08 L-.15 -.08 L-.16 -.01 L-.2 -.01 L-.21 -.09 Q-.29 -.1 -.3 -.17 Z" fill="${S.lg("dackel", [[0, "#9a5a2c"], [1, "#6a3416"]])}"/>`;
+    d += `<path d="M.35 -.28 Q.31 -.2 .35 -.16 Q.39 -.2 .38 -.27 Z" fill="#4e2610"/><circle cx=".41" cy="-.27" r=".01" fill="#111"/><path d="M-.29 -.2 Q-.37 -.22 -.4 -.29" stroke="#7a3e1a" stroke-width=".025" fill="none"/>`;
     k += `<g transform="translate(${dx} ${GY}) scale(${r(-s5)} ${r(s5)})">${d}</g><path d="M${r(hd[0])} ${r(hd[1])} Q${r((hd[0] + dx) / 2)} ${r(GY - 4)} ${r(dx + 0.24 * s5)} ${r(GY - 0.17 * s5)}" stroke="#c8302a" stroke-width=".25" fill="none"/>`;
     /* der Radfahrer (nach links) */
     const RY = ys(7.2), s7 = F / 7.2, RX = 114;
@@ -940,7 +947,7 @@ const PODEST = yp(3.6);
    ===================================================================== */
 {
   const s = F / OBER.d, Y = yp(OBER.d);
-  const o = B.mensch({ id: "wie_ober", geschlecht: "m", pose: "servieren", blick: 60, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true,
+  const o = B.mensch({ id: "wie_ober", ohneSchatten: true, geschlecht: "m", pose: "servieren", blick: 60, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "kellnerhemd" }, jacke: { stueck: "weste", farbe: "schwarz" }, unterteil: { stueck: "anzughose" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, zubehoer: { stueck: "tablett" } } }, r(1.78 * s));
   /* im Glas auf seinem Tablett ist Wasser */
   const svg = kompakt(o.svg).replace(/fill="#e8b84a" opacity=".85"/g, `fill="#d6e9ef" opacity=".7"`);

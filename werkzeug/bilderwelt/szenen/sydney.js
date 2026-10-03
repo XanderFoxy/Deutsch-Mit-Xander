@@ -372,7 +372,13 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
     const uA = 1 - 2.4 / gL, uB = 3 / lL;
     const Ta = qb(B0, cg, T, uA), Tb = qb(T, cl, Pp, uB), cg2 = lerp(B0, cg, uA);
     const mT = [(Ta[0] + Tb[0]) / 2, (Ta[1] + Tb[1]) / 2], Tn = [T[0] + (T[0] - mT[0]) * 0.55, T[1] + (T[1] - mT[1]) * 0.55];
-    const d = `M${P(Pp)} L${P(B0f)} L${P(B0)} Q${P(cg2)} ${P(Ta)} Q${P(Tn)} ${P(Tb)} Q${P(cl)} ${P(Pp)} Z`;
+    /* Nase als Kreisbogen (r ≥ 0,9) von Ta nach Tb, der große Bogen wölbt sich über T hinaus */
+    const dAB = len(Ta, Tb), rN = Math.max(0.95, dAB / 2 + 0.05), hN = Math.sqrt(Math.max(0, rN * rN - dAB * dAB / 4));
+    const nv = [T[0] - mT[0], T[1] - mT[1]], nl = Math.hypot(nv[0], nv[1]) || 1, Cn = [mT[0] - nv[0] / nl * hN, mT[1] - nv[1] / nl * hN];
+    const ang2 = (q) => Math.atan2(q[1] - Cn[1], q[0] - Cn[0]), a1 = ang2(Ta), a2 = ang2(Tb), am = Math.atan2(nv[1], nv[0]);
+    const pos = (x) => ((x % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), sweep = pos(am - a1) < pos(a2 - a1) ? 1 : 0;
+    const nase = `A${r(rN)} ${r(rN)} 0 1 ${sweep} ${P(Tb)}`;
+    const d = `M${P(Pp)} L${P(B0f)} L${P(B0)} Q${P(cg2)} ${P(Ta)} ${nase} Q${P(cl)} ${P(Pp)} Z`;
     SPIEGEL_OP.push({ B0, T, Pp, e, b, t, p });
     const id = S.id("s" + schalenNr++);
     S.def(`<path id="${id}p" d="${d}"/><clipPath id="${id}"><use href="#${id}p"/></clipPath>`);
@@ -387,10 +393,7 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
     g += `<path d="${rip}" stroke="#cfc3a8" stroke-width=".18" fill="none"/>`;
     /* Lippe als helles Band (Schalenstärke ≈ 0,6), Grat mit Lichtkante */
     g += `<path d="M${P(B0)} Q${P(cg2)} ${P(Ta)}" stroke="#fffdf6" stroke-width=".8" fill="none"/>`;
-    g += `<path d="M${P(Ta)} Q${P(Tn)} ${P(Tb)} Q${P(cl)} ${P(Pp)}" stroke="#fffaf0" stroke-width="1.3" fill="none"/></g>`;
-    /* stumpfe, dicke Nase (r ≈ 0,85), leicht überhängend */
-    const nase = lerp(T, mT, 0.15);
-    g += `<circle cx="${r(nase[0])}" cy="${r(nase[1])}" r=".85" fill="#fff7e2"/><path d="M${r(nase[0] - 0.7)} ${r(nase[1] + 0.5)}q.7 .5 1.5-.1" stroke="#d8cdb6" stroke-width=".25" fill="none"/>`;
+    g += `<path d="M${P(Ta)} ${nase} Q${P(cl)} ${P(Pp)}" stroke="#fffaf0" stroke-width="1.3" fill="none"/></g>`;
     return { svg: g, T, Pp, B0, cl, Tb, cg };
   };
   /* Innenseite einer Rückschale (Süden): deutlich dunkler, kühles Grau mit Rippen */

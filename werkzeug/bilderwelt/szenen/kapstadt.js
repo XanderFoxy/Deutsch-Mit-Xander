@@ -106,7 +106,7 @@ S.hinten(`<rect width="400" height="${HOR + 4}" fill="${S.lg("himmel", [[0, "#1d
 const KAMM = [
   [-4, 520, 5000], [6, 610, 5100], [14, 700, 5250], [20, 800, 5350], [25, 900, 5420], [28.5, 968, 5460], [31, 1000, 5470], [33, 988, 5490], [37, 945, 5530], [44, 905, 5600], [52, 880, 5700], [62, 850, 5820], [74, 812, 5980], [86, 786, 6100], [96, 778, 6150],
   [100, 830, 6180], [103, 905, 6200], [106, 990, 6230], [109, 1048, 6250], [114, 1058, 6250], [150, 1060, 6250], [175, 1064, 6250], [210, 1066, 6200], [250, 1064, 6150], [280, 1061, 6000], [285, 1040, 5960], [289, 980, 5900], [294, 880, 5800], [300, 700, 5560], [306, 520, 5250], [312, 330, 4950],
-  [318, 345, 4880], [326, 400, 4800], [334, 452, 4720], [342, 500, 4660], [347, 545, 4620], [350, 576, 4600], [353, 592, 4588], [355, 597, 4580], [357, 616, 4572], [359, 645, 4566], [361, 662, 4562], [363, 669, 4560], [366, 670, 4560], [368, 666, 4560], [370, 650, 4560], [372, 622, 4555], [374, 588, 4540], [377, 540, 4480], [381, 476, 4320], [386, 405, 3950], [391, 362, 3600], [396, 350, 3300], [404, 352, 3000],
+  [318, 345, 4880], [326, 400, 4800], [334, 452, 4720], [342, 500, 4660], [347, 545, 4620], [350, 576, 4600], [353, 592, 4588], [355, 597, 4580], [357, 616, 4572], [359, 648, 4566], [360.5, 664, 4562], [362.5, 671, 4560], [365.5, 673, 4560], [368.5, 671, 4560], [370.2, 664, 4560], [370.6, 650, 4560], [371.6, 628, 4555], [373.4, 596, 4540], [377, 540, 4480], [381, 476, 4320], [386, 405, 3950], [391, 362, 3600], [396, 350, 3300], [404, 352, 3000],
 ].map(([x, z, d]) => [x, r(hy(z, d))]);
 const kamm = (x0, x1) => KAMM.filter(([x]) => x >= x0 && x <= x1);
 const FUSS = 130, SATTEL = [96, hy(778, 6150)], NEK = [312, hy(330, 4950)];
@@ -114,11 +114,28 @@ const TOP = hy(1062, 6250);
 /* gemeinsamer Hangverlauf (Weltkoordinaten), damit an den Grenzen keine Kante entsteht */
 const HANG = S.lg("hang", [[0, "#9a9474"], [0.35, "#7f8460"], [1, "#56653f"]], 0, 80, 0, FUSS, ' gradientUnits="userSpaceOnUse"');
 /* Fynbos und Wald als Musterkacheln (statt vieler Einzelflecken) */
-S.def(`<pattern id="${S.id("fynbos")}" width="9" height="4" patternUnits="userSpaceOnUse"><ellipse cx="1" cy="1" rx="1.2" ry=".5" fill="#4f5a3a"/><ellipse cx="4.5" cy="2.6" rx="1.4" ry=".5" fill="#99956f"/><ellipse cx="7.5" cy="1" rx="1" ry=".4" fill="#6b7350"/><ellipse cx="2.6" cy="3.4" rx=".9" ry=".4" fill="#3f4a30"/><ellipse cx="6.8" cy="3.6" rx="1.1" ry=".45" fill="#8a7a52"/></pattern>`);
+{
+  /* Fynbos: unregelmäßige Flecken in drei Größen auf einer großen Kachel (37 × 17), Farben von Oliv bis
+     Graugrün und Ocker; die ferne Kachel ist kleiner und blasser (Luftperspektive) */
+  let fl = "";
+  const fb = ["#4f5a3a", "#99956f", "#6b7350", "#3f4a30", "#8a7a52", "#5d6a44", "#a8a27e"];
+  for (let i = 0; i < 46; i++) { const x = rnd() * 37, y = rnd() * 17, g = [0.5, 0.9, 1.7][i % 3] * (0.7 + rnd() * 0.6); fl += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(g * 1.4)}" ry="${r(g * 0.55)}" fill="${fb[i % 7]}"/>`; }
+  for (let i = 0; i < 8; i++) { const x = rnd() * 37, y = rnd() * 17; fl += `<path d="M${r(x)} ${r(y)}l.7-.6.9.3.2.7-1 .3z" fill="#9b968a"/>`; }
+  S.def(`<pattern id="${S.id("fynbos")}" width="37" height="17" patternUnits="userSpaceOnUse">${fl}</pattern>`);
+  S.def(`<pattern id="${S.id("fynbosfern")}" href="#${S.id("fynbos")}" patternTransform="translate(5 0) scale(.55)"/>`);
+}
 S.def(`<pattern id="${S.id("wald")}" width="7" height="3.6" patternUnits="userSpaceOnUse"><circle cx="1.2" cy="1.4" r="1.4" fill="#34502c"/><circle cx="3.8" cy="2.4" r="1.6" fill="#47643a"/><circle cx="6" cy="1" r="1.2" fill="#2b4426"/><circle cx="5.4" cy="3.4" r="1" fill="#34502c"/></pattern>`);
-const fynbos = (x0, x1, y0, y1, n, op = 0.5) => `<rect x="${x0}" y="${r(y0)}" width="${x1 - x0}" height="${r(y1 - y0)}" fill="url(#${S.id("fynbos")})" opacity="${op}"/>`;
+/* oben die ferne (kleine, blasse) Kachel, unten die nahe – weich überblendet (Masken mit Verlauf) */
+S.def(`<mask id="${S.id("mfern")}" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="${S.lg("mf", [[0, "#fff"], [0.45, "#fff"], [0.75, "#000"]])}"/></mask><mask id="${S.id("mnah")}" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="${S.lg("mn", [[0, "#000"], [0.4, "#000"], [0.8, "#fff"]])}"/></mask>`);
+const fynbos = (x0, x1, y0, y1, n, op = 0.5) => `<rect x="${x0}" y="${r(y0)}" width="${x1 - x0}" height="${r(y1 - y0)}" fill="url(#${S.id("fynbosfern")})" opacity="${r(op * 0.75)}" mask="url(#${S.id("mfern")})"/><rect x="${x0}" y="${r(y0)}" width="${x1 - x0}" height="${r(y1 - y0)}" fill="url(#${S.id("fynbos")})" opacity="${op}" mask="url(#${S.id("mnah")})"/>`;
 const wald = (x0, x1, y0, y1) => { let d = `M${x0} ${r(y1)}`; for (let x = x0; x <= x1; x += 8) d += `L${x} ${r(y0 + 2 + Math.sin(x * 0.37) * 1.6 + Math.sin(x * 0.13) * 1.2)}`; return `<path d="${d}L${x1} ${r(y1)}Z" fill="url(#${S.id("wald")})" opacity=".9"/>`; };
-const rinne = (x0, y0, x1, y1, w) => `<path d="M${x0 - w} ${y0} Q${r((x0 + x1) / 2 - 1)} ${r((y0 + y1) / 2)} ${x1} ${y1} Q${r((x0 + x1) / 2 + 1)} ${r((y0 + y1) / 2)} ${x0 + w} ${y0} Z" fill="#3f4733" opacity=".28"/><path d="M${x0 + w * 0.8} ${y0 + 0.5} Q${r((x0 + x1) / 2 + 1.4)} ${r((y0 + y1) / 2)} ${x1 + 0.6} ${y1}" stroke="#cdbf94" stroke-width=".5" fill="none" opacity=".35"/>`;
+const rinne = (x0, y0, x1, y1, w) => {
+  /* gewundene Kerbe: S-Kurve, oben schmal, unten breit; links Schattenseite, rechts Lichtkante */
+  const mx = (x0 + x1) / 2, my = (y0 + y1) / 2, sw = (x1 - x0) * 0.5 + w * 1.5;
+  const li = `M${r(x0 - w * 0.4)} ${r(y0)}C${r(mx - sw)} ${r(my - 4)} ${r(mx + sw * 0.6 - w * 2)} ${r(my + 4)} ${r(x1 - w * 2.4)} ${r(y1)}`;
+  const re = `L${r(x1 + w * 2.4)} ${r(y1)}C${r(mx + sw * 0.6 + w * 2)} ${r(my + 4)} ${r(mx - sw + w)} ${r(my - 4)} ${r(x0 + w * 0.4)} ${r(y0)}Z`;
+  return `<path d="${li}${re}" fill="#2f3826" opacity=".32"/><path d="M${r(x0 + w * 0.4)} ${r(y0)}C${r(mx - sw + w)} ${r(my - 4)} ${r(mx + sw * 0.6 + w * 2)} ${r(my + 4)} ${r(x1 + w * 2.4)} ${r(y1)}" stroke="#e2d2a2" stroke-width=".45" fill="none" opacity=".45"/>`;
+};
 const bergUnter = [];
 {
   /* DER TAFELBERG — Lupe: Tischtuch, Seilbahn, Schlucht */
@@ -127,56 +144,63 @@ const bergUnter = [];
   S.def(`<clipPath id="${S.id("tafel")}"><path d="${um}"/></clipPath>`);
   k += `<path d="${um}" fill="${HANG}"/>`;
   k += `<g clip-path="url(#${S.id("tafel")})">`;
-  /* Hang unter der Wand: Fynbos (Muster), Rinnen, Wald am Fuß */
-  k += fynbos(96, 318, TOP - 2, FUSS, 0, 0.6);
-  for (const [x0, x1] of [[128, 122], [152, 147], [176, 171], [236, 241], [258, 266]]) k += rinne(x0, TOP + 16, x1, FUSS - 4, 1.2);
-  k += wald(96, 316, FUSS - 13, FUSS);
-  /* Nordwand: Höhe in der Mitte am größten. Pfeiler stark verschieden breit, Unterkanten treppig und
-     kantig; Nachmittagslicht aus Nordwest färbt die Wand warm-golden */
-  const H = (x) => 9 + 12 * Math.sin(Math.max(0, Math.min(1, (x - 104) / 188)) * Math.PI);
+  /* Hang unter der Wand: Fynbos (fern/nah), warmer Glanz auf den Rücken, gewundene Rinnen, Wald am Fuß,
+     die Tafelberg-Straße als feine Linie */
+  k += fynbos(84, 318, TOP - 2, FUSS, 0, 0.62);
+  for (const [x0, x1] of [[98, 92], [128, 120], [152, 147], [176, 168], [222, 228], [236, 243], [258, 266], [290, 300]]) k += rinne(x0, TOP + 18, x1, FUSS - 3, 1.1);
+  let ruecken = "";
+  for (const x of [112, 140, 164, 190, 216, 248, 280]) ruecken += `M${x} ${r(TOP + 20)}q-2 10 -4 ${r(FUSS - TOP - 26)}`;
+  const STR = (x) => hy(363, 5700) + Math.sin(x / 13) * 1.4 + (x - 200) * 0.01;
+  let str = "";
+  for (let x = 92; x <= 312; x += 4) str += `${x === 92 ? "M" : "L"}${x} ${r(STR(x))}`;
+  k += `<path d="${str}" stroke="#e9e2cf" stroke-width=".55" fill="none" opacity=".75"/><path d="${str}" stroke="#5a5a48" stroke-width=".25" fill="none" opacity=".5" transform="translate(0 .5)"/>`;
+  k += wald(84, 316, FUSS - 13, FUSS);
+  /* Nordwand: senkrechte Pfeiler bestimmen das Bild – breit, kantig, rechts (Nordwest) warm-golden im
+     Licht, links (Ost) im Schatten, dazu Mitteltöne und dunkle Klüfte (4 Tonwerte). Die Wandhöhe läuft
+     an beiden Enden aus: links knickt die Wand in die Schulter zum Devil's Peak ab. Die Schichtbänke sind
+     nur feine, unterbrochene Linien. Keine Weichzeichnung. */
+  const H = (x) => 23 * Math.pow(Math.sin(Math.max(0, Math.min(1, (x - 100) / 198)) * Math.PI), 0.55);
   const pfeiler = [];
-  for (let x = 102; x < 296;) { const w = 2 + Math.pow(rnd(), 2.2) * 22; pfeiler.push([x, Math.min(w, 296 - x)]); x += w; }
-  let wand = `M102 ${r(TOP - 4)} L296 ${r(TOP - 4)}`;
+  for (let x = 100; x < 298;) { const w = 4 + Math.pow(rnd(), 1.4) * 14; pfeiler.push([x, Math.min(w, 298 - x)]); x += w; }
+  let wand = `M100 ${r(TOP - 4)} L298 ${r(TOP - 4)}`;
   const unten = [];
   for (let i = pfeiler.length - 1; i >= 0; i--) {
-    const [x, w] = pfeiler[i], y0 = TOP + H(x + w / 2) + (rnd() - 0.5) * 4, st = (rnd() - 0.5) * 4;
+    const [x, w] = pfeiler[i], hm = H(x + w / 2), y0 = TOP + hm * (0.82 + rnd() * 0.3), st = hm * (rnd() - 0.5) * 0.25;
     unten.push([x, w, y0, st]);
-    wand += ` L${r(x + w)} ${r(y0 + st)} L${r(x + w * 0.45)} ${r(y0 + st)} L${r(x + w * 0.45)} ${r(y0)} L${r(x)} ${r(y0)}`;
+    wand += ` L${r(x + w)} ${r(y0 + st)} L${r(x + w * 0.5)} ${r(y0 + st)} L${r(x + w * 0.42)} ${r(y0 - st * 0.5)} L${r(x)} ${r(y0)}`;
   }
   S.def(`<path id="${S.id("wandp")}" d="${wand} Z"/><clipPath id="${S.id("wandclip")}"><use href="#${S.id("wandp")}"/></clipPath>`);
-  k += `<use href="#${S.id("wandp")}" fill="${S.lg("wand", [[0, "#ecd09a"], [0.35, "#d7b47c"], [0.75, "#b8946a"], [1, "#8f7656"]], 0, TOP - 4, 0, TOP + 22, ' gradientUnits="userSpaceOnUse"')}"/>`;
+  k += `<use href="#${S.id("wandp")}" fill="${S.lg("wand", [[0, "#f0c98c"], [0.35, "#dcab6c"], [0.75, "#bf8c58"], [1, "#94704c"]], 0, TOP - 4, 0, TOP + 24, ' gradientUnits="userSpaceOnUse"')}"/>`;
   k += `<g clip-path="url(#${S.id("wandclip")})">`;
-  /* Schichtbänke: gerade, leicht nach rechts fallende Kanten; dazwischen Bänder in Ocker und Grau;
-     Licht auf der Oberkante, Schatten darunter */
-  const bank = (c, x) => TOP + c + (x - 200) * 0.014;
-  const kanten = [2.4, 5.6, 8.2, 11.6, 14.4, 18];
-  let ton = "", li = "", fu = "";
-  kanten.forEach((c, i) => {
-    if (i < kanten.length - 1 && i % 2 === 0) ton += `<path d="M100 ${r(bank(c, 100))}L300 ${r(bank(c, 300))}L300 ${r(bank(kanten[i + 1], 300))}L100 ${r(bank(kanten[i + 1], 100))}Z" fill="${i % 4 ? "#8f8b80" : "#a8743e"}" opacity=".2"/>`;
-    fu += `M100 ${r(bank(c, 100))}L300 ${r(bank(c, 300))}`;
-    li += `M100 ${r(bank(c, 100) - 0.6)}L300 ${r(bank(c, 300) - 0.6)}`;
-  });
-  k += ton + `<path d="${li}" stroke="#fbe8bf" stroke-width=".55" opacity=".8"/><path d="${fu}" stroke="#4f4434" stroke-width=".75" opacity=".7"/>`;
-  /* Pfeiler: linke Kluft dunkel, rechte Stirn im warmen Licht, manche mit Rostfahnen */
-  let licht = "", kluft = "", rost = "";
+  let schatten2 = "", mitte = "", licht = "", kluft = "", rost = "";
   for (const [x, w, y0, st] of unten) {
-    if (w > 3) licht += `M${r(x + w * 0.58)} ${r(TOP - 0.5)}H${r(x + w - 0.4)}V${r(y0 + st - 0.8)}H${r(x + w * 0.62)}Z`;
-    kluft += `M${r(x - 0.5)} ${r(TOP - 0.5)}h1.1L${r(x + 0.3)} ${r(y0)}h-.6z`;
-    if (rnd() < 0.3) rost += `M${r(x + w * 0.2)} ${r(TOP + 4)}h${r(w * 0.4)}l-.4 ${r(H(x) * 0.5)}h${r(-w * 0.3)}z`;
+    const yb = r(y0 + Math.abs(st) + 1);
+    schatten2 += `M${r(x)} ${r(TOP - 4)}h${r(w * 0.24)}V${yb}h${r(-w * 0.24)}z`;
+    mitte += `M${r(x + w * 0.24)} ${r(TOP - 4)}h${r(w * 0.36)}V${yb}h${r(-w * 0.36)}z`;
+    licht += `M${r(x + w * 0.6)} ${r(TOP - 4)}h${r(w * 0.4)}V${yb}h${r(-w * 0.4)}z`;
+    kluft += `M${r(x - 0.35)} ${r(TOP - 0.4)}h.8L${r(x + 0.25)} ${yb}h-.5z`;
+    if (rnd() < 0.35) rost += `M${r(x + w * 0.3)} ${r(TOP + 2)}h${r(w * 0.3)}l-.3 ${r(H(x) * 0.6)}h${r(-w * 0.22)}z`;
   }
-  k += `<path d="${licht}" fill="#ffe2a6" opacity=".38"/><path d="${rost}" fill="#a8582e" opacity=".22"/><path d="${kluft}" fill="#3e3427" opacity=".8"/>`;
-  /* Rinnen als V-Kerben: links Schattenseite, rechts im Licht */
+  k += `<path d="${schatten2}" fill="#7e5a38" opacity=".55"/><path d="${mitte}" fill="#c99556" opacity=".25"/><path d="${licht}" fill="#ffd28c" opacity=".42"/><path d="${rost}" fill="#a8582e" opacity=".25"/><path d="${kluft}" fill="#32241a" opacity=".85"/>`;
+  /* feine, unterbrochene Schichtlinien */
+  let li = "", fu = "";
+  for (const c of [3.5, 7.6, 12, 16.6]) for (let x = 100 + rnd() * 8; x < 298;) { const l = 6 + rnd() * 18, y = TOP + c + (x - 200) * 0.01; fu += `M${r(x)} ${r(y)}h${r(l)}`; li += `M${r(x)} ${r(y - 0.45)}h${r(l)}`; x += l + 3 + rnd() * 10; }
+  k += `<path d="${li}" stroke="#ffe9bf" stroke-width=".35" opacity=".55"/><path d="${fu}" stroke="#4a3624" stroke-width=".4" opacity=".45"/>`;
+  /* Rinnen als V-Kerben: links Schattenseite, rechts im Licht; die Platteklip-Schlucht am tiefsten */
   const PX = 205;
   for (const [x, w, t] of [[128, 2, 0.75], [152, 1.6, 0.6], [176, 2.2, 0.8], [PX, 4.2, 1], [236, 1.8, 0.65], [258, 2.4, 0.85], [276, 1.6, 0.55]]) {
-    const yb = TOP + H(x) + 2;
-    k += `<path d="M${r(x - w)} ${r(TOP - 0.6)}L${x} ${r(TOP - 0.6)}L${r(x + 0.2)} ${r(yb)}Z" fill="#2f281e" opacity="${t}"/><path d="M${x} ${r(TOP - 0.6)}L${r(x + w)} ${r(TOP - 0.6)}L${r(x + 0.2)} ${r(yb)}Z" fill="#8a7458" opacity="${r(t * 0.8)}"/>`;
+    const yb = TOP + H(x) + 3;
+    k += `<path d="M${r(x - w)} ${r(TOP - 0.6)}L${x} ${r(TOP - 0.6)}L${r(x + 0.2)} ${r(yb)}Z" fill="#2a2018" opacity="${t}"/><path d="M${x} ${r(TOP - 0.6)}L${r(x + w)} ${r(TOP - 0.6)}L${r(x + 0.2)} ${r(yb)}Z" fill="#9a7a52" opacity="${r(t * 0.8)}"/>`;
   }
   k += `</g>`;
-  /* Schuttfächer unter der Platteklip-Schlucht und den großen Rinnen: Fynbos-Grün und Grau */
+  /* Schutt und Felsbrocken unter der Wand, Schuttfächer unter den Rinnen (Grau und Fynbos-Grün) */
   for (const [x, f] of [[PX, 1], [176, 0.6], [258, 0.7], [128, 0.5]]) {
-    const yb = TOP + H(x) + 1.5;
+    const yb = TOP + H(x) + 2;
     k += `<path d="M${r(x - 1)} ${r(yb)}L${r(x - 7 * f)} ${r(yb + 11 * f)}Q${x} ${r(yb + 13 * f)} ${r(x + 7 * f)} ${r(yb + 11 * f)}L${r(x + 1.4)} ${r(yb)}Z" fill="${S.lg("schutt", [[0, "#8d8878", 0.85], [0.6, "#6b7350", 0.5], [1, "#6b7350", 0]])}"/>`;
   }
+  let bro = "";
+  for (let i = 0; i < 34; i++) { const x = 106 + rnd() * 186, y = TOP + H(x) + 1 + rnd() * 6, w = 0.5 + rnd() * 1.2; bro += `M${r(x - w)} ${r(y)}l${r(w * 0.3)} ${r(-w * 0.8)} ${r(w * 1.1)} ${r(-w * 0.2)} ${r(w * 0.6)} ${r(w * 0.7)}z`; }
+  k += `<path d="${bro}" fill="#a39c88"/><path d="${bro}" fill="none" stroke="#5f5848" stroke-width=".18"/>`;
   k += `</g>`;
   /* Lichtkante der Plateaukante */
   k += `<path d="${glatt(kamm(109, 284))}" stroke="#f6e7c4" stroke-width=".7" fill="none" opacity=".8"/>`;
@@ -188,38 +212,44 @@ const bergUnter = [];
   k += `<path d="M${r(S0[0])} ${r(S0[1])} Q${r(CS[0])} ${r(CS[1])} ${r(S1[0])} ${r(S1[1])}" stroke="#2c2c2c" stroke-width=".22" fill="none"/>`;
   const KAB = [0.25 * S0[0] + 0.5 * CS[0] + 0.25 * S1[0], 0.25 * S0[1] + 0.5 * CS[1] + 0.25 * S1[1]];
   k += `<line x1="${r(KAB[0])}" y1="${r(KAB[1])}" x2="${r(KAB[0])}" y2="${r(KAB[1] + 1.1)}" stroke="#2c2c2c" stroke-width=".25"/><ellipse cx="${r(KAB[0])}" cy="${r(KAB[1] + 1.9)}" rx="1.3" ry="1" fill="#eeece6"/><rect x="${r(KAB[0] - 1.25)}" y="${r(KAB[1] + 1.6)}" width="2.5" height=".55" fill="#c23a2b"/><rect x="${r(KAB[0] - 0.9)}" y="${r(KAB[1] + 1.2)}" width="1.8" height=".35" fill="#5a6a78"/>`;
-  /* DAS TISCHTUCH: flache Wolkendecke auf dem Plateau (nur so breit wie das Plateau), deren Vorderkante als
-     zusammenhängender, unten gewellter Vorhang über die Wand fällt (oben dicht, unten durchsichtig), in
-     den Rinnen tiefer; darunter abgerissene Fetzen, die sich auflösen */
-  const T0 = 106, T1 = 288;
+  /* DAS TISCHTUCH: Die Wolke liegt als weich gewelltes Polster auf dem Plateau (oben 2–3 sanfte Buckel,
+     an den Enden stumpf und ausfransend). Ihre Vorderkante fällt als zusammenhängender, dicker Wulst über
+     die Kante: oben deckend, 30–45 % der Wandhöhe tief, in den Rinnen tiefer (Platteklip ≈ 55 %), unten
+     wellig und weich auslaufend. Darunter treiben abgerissene Fetzen mit dem Wind schräg nach rechts
+     unten. Vorderseite warm-weiß (Sonne), Unterseiten hellgrau-blau. */
+  const T0 = 104, T1 = 290;
   const dick = (x) => Math.sin(Math.max(0, Math.min(1, (x - T0) / (T1 - T0))) * Math.PI);
-  const decke = [[T0, TOP + 0.5]];
-  for (let x = T0 + 4; x < T1; x += 9) decke.push([x, TOP - 1.4 - 4.6 * Math.pow(dick(x), 0.5) - Math.sin(x / 19) * 0.6]);
-  decke.push([T1, TOP + 0.5]);
-  let tuch = `<path d="${glatt(decke)}Z" fill="${S.lg("decke", [[0, "#ffffff"], [0.75, "#f1f4f7"], [1, "#d6dee7"]])}"/>`;
-  const rinnen = [128, 152, 176, 205, 236, 258, 276];
-  const tiefe = (x) => (3 + 9 * Math.pow(dick(x), 0.7)) + rinnen.reduce((a, g) => a + 5 * Math.exp(-Math.pow((x - g) / 3.2, 2)), 0) + Math.sin(x * 0.45) * 1.2;
+  const decke = [[T0 - 2, TOP + 1], [T0 + 1, TOP - 1.6], [T0 + 6, TOP - 3.2]];
+  for (let x = T0 + 14; x < T1 - 8; x += 10) decke.push([x, TOP - 3.6 - 2.2 * Math.pow(Math.sin((x - T0) / (T1 - T0) * Math.PI * 2.6), 2) - 1.2 * dick(x)]);
+  decke.push([T1 - 6, TOP - 3], [T1 - 1, TOP - 1.4], [T1 + 2, TOP + 1]);
+  let tuch = `<path d="${glatt(decke)}Z" fill="${S.lg("decke", [[0, "#ffffff"], [0.6, "#f4f6f8"], [1, "#d9e1ea"]])}" filter="url(#${S.id("fein")})"/>`;
+  /* ausfransende Enden */
+  tuch += `<g fill="#ffffff" opacity=".8" filter="url(#${S.id("fein")})"><ellipse cx="${T0 - 1}" cy="${r(TOP - 0.4)}" rx="2.6" ry="1.4"/><ellipse cx="${T0 - 4}" cy="${r(TOP + 1)}" rx="1.6" ry=".9"/><ellipse cx="${T1 + 1}" cy="${r(TOP - 0.2)}" rx="2.4" ry="1.3"/><ellipse cx="${T1 + 4}" cy="${r(TOP + 1.4)}" rx="1.4" ry=".8"/></g>`;
+  const HW = (x) => 23 * Math.pow(Math.sin(Math.max(0, Math.min(1, (x - 100) / 198)) * Math.PI), 0.55);
+  const rinnen = [[128, 0.1], [152, 0.08], [176, 0.1], [205, 0.18], [236, 0.08], [258, 0.1], [276, 0.07]];
+  const tiefe = (x) => HW(x) * (0.36 + rinnen.reduce((a, [g, f]) => a + f * Math.exp(-Math.pow((x - g) / 3.6, 2)), 0) + Math.sin(x * 0.37) * 0.04);
   const saum = [];
-  for (let x = T1 - 3; x >= T0 + 3; x -= 3) saum.push([x, TOP + tiefe(x) * Math.min(1, dick(x) * 3)]);
-  /* zwei Lagen: ein dichter Wulst (≈ 60 % der Tiefe) und ein dünner, weiter fallender Schleier */
+  for (let x = T1 - 2; x >= T0 + 2; x -= 2.5) saum.push([x, TOP + tiefe(x) * Math.min(1, dick(x) * 2.5)]);
   const vorhang = (f, id, stops, filt) => {
     const sm = saum.map(([x, y]) => [x, TOP + (y - TOP) * f]);
-    return `<path d="M${T0 + 2} ${r(TOP - 1.6)}L${T1 - 2} ${r(TOP - 1.6)}L${r(sm[0][0])} ${r(sm[0][1])}${glatt(sm).replace(/^M[-\d. ]+/, "")}Z" fill="${S.lg(id, stops, 0, TOP - 1, 0, TOP + 17 * f, ' gradientUnits="userSpaceOnUse"')}" filter="url(#${S.id(filt)})"/>`;
+    return `<path d="M${T0 + 1} ${r(TOP - 1.8)}L${T1 - 1} ${r(TOP - 1.8)}L${r(sm[0][0])} ${r(sm[0][1])}${glatt(sm).replace(/^M[-\d. ]+/, "")}Z" fill="${S.lg(id, stops, 0, TOP - 2, 0, TOP + 12 * f, ' gradientUnits="userSpaceOnUse"')}" filter="url(#${S.id(filt)})"/>`;
   };
-  tuch += vorhang(1.15, "schleier", [[0, "#ffffff", 0.85], [0.6, "#eef2f6", 0.6], [1, "#ffffff", 0.1]], "wolke");
-  tuch += vorhang(0.68, "wulst", [[0, "#ffffff", 1], [0.7, "#f3f6f9", 0.97], [1, "#dfe6ee", 0.8]], "fein");
-  /* Wulst der rollenden Vorderkante: heller Rand, darunter leichter Schatten */
-  tuch += `<path d="M${T0 + 6} ${r(TOP + 0.6)}Q197 ${r(TOP + 2.4)} ${T1 - 6} ${r(TOP + 0.6)}" stroke="#ffffff" stroke-width="1.6" fill="none" filter="url(#${S.id("fein")})"/><path d="M${T0 + 10} ${r(TOP + 2.6)}Q197 ${r(TOP + 5)} ${T1 - 10} ${r(TOP + 2.6)}" stroke="#b9c6d4" stroke-width=".8" fill="none" opacity=".4" filter="url(#${S.id("fein")})"/>`;
-  /* abgerissene Fetzen unterhalb */
+  /* äußere, weich auslaufende Lage, dann der dichte Wulst */
+  tuch += vorhang(1.18, "schleier", [[0, "#ffffff", 0.9], [0.7, "#eef2f6", 0.55], [1, "#e8eef4", 0]], "wolke");
+  tuch += vorhang(1, "wulst", [[0, "#fffaf0", 0.97], [0.65, "#fbf6ee", 0.95], [0.88, "#edf0f3", 0.88], [1, "#e2e8ee", 0.6]], "fein");
+  /* Rollkante: helle, sonnige Wölbung, darunter leichter Eigenschatten */
+  tuch += `<path d="M${T0 + 6} ${r(TOP + 0.4)}Q197 ${r(TOP + 2.2)} ${T1 - 6} ${r(TOP + 0.4)}" stroke="#fff8ea" stroke-width="1.8" fill="none" filter="url(#${S.id("fein")})"/><path d="M${T0 + 12} ${r(TOP + 3.4)}Q197 ${r(TOP + 6)} ${T1 - 12} ${r(TOP + 3.4)}" stroke="#c6d0dc" stroke-width="1.1" fill="none" opacity=".45" filter="url(#${S.id("fein")})"/>`;
+  /* abgerissene Fetzen, schräg nach rechts unten treibend (Wind aus Südost) */
+  S.def(`<linearGradient id="${S.id("fetzen")}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#eef2f6"/><stop offset="1" stop-color="#bfcadb"/></linearGradient>`);
   let fe = "";
-  for (const [x, y, w] of [[150, TOP + 17, 7], [184, TOP + 20, 5], [214, TOP + 23, 8], [246, TOP + 19, 6], [270, TOP + 15, 4]]) fe += `M${x - w} ${r(y)}q${r(w * 0.4)} ${r(-w * 0.32)} ${w} ${r(-w * 0.18)}q${r(w * 0.6)} ${r(-w * 0.1)} ${w} ${r(w * 0.2)}q${-w} ${r(w * 0.22)} ${-2 * w} 0z`;
-  tuch += `<path d="${fe}" fill="#f4f7fa" opacity=".55" filter="url(#${S.id("wolke")})"/>`;
+  for (const [x, y, w] of [[146, TOP + 20, 7], [180, TOP + 25, 4.5], [214, TOP + 27, 8.5], [244, TOP + 22, 5.5], [268, TOP + 18, 3.5], [196, TOP + 31, 3]]) fe += `<path d="M${x - w} ${r(y)}q${r(w * 0.3)} ${r(-w * 0.34)} ${r(w * 0.9)} ${r(-w * 0.3)}q${r(w * 0.5)} ${r(-w * 0.25)} ${r(w * 0.9)} ${r(w * 0.05)}q${r(w * 0.3)} ${r(w * 0.3)} ${r(0.2 * w)} ${r(w * 0.42)}q${r(-w)} ${r(w * 0.12)} ${r(-2 * w)} ${r(-w * 0.17)}z" transform="rotate(14 ${x} ${r(y)})"/>`;
+  tuch += `<g fill="url(#${S.id("fetzen")})" opacity=".78" filter="url(#${S.id("fein")})">${fe}</g>`;
   /* dünne Fahnen über dem Sattel und am Kloof Nek */
-  tuch += `<g filter="url(#${S.id("wolke")})" opacity=".55" fill="#ffffff"><ellipse cx="100" cy="${r(SATTEL[1] - 2)}" rx="7" ry="2"/><ellipse cx="294" cy="${r(TOP + 6)}" rx="6" ry="2.4"/></g>`;
+  tuch += `<g filter="url(#${S.id("wolke")})" opacity=".55" fill="#ffffff"><ellipse cx="98" cy="${r(SATTEL[1] - 2)}" rx="6" ry="1.8"/><ellipse cx="296" cy="${r(TOP + 7)}" rx="6" ry="2.2"/></g>`;
   k += tuch;
   bergUnter.push(
     { id: "tischtuch", de: "das Tischtuch", syl: "TISCH-tuch", it: "la tovaglia", itSyl: "to-VA-glia", en: "tablecloth", x: 197, y: TOP + 8,
-      kunst: flaeche(-88, -16, 176, 18), tipp: "Bläst der Südostwind, legt sich eine Wolke wie ein Tischtuch auf den Tafelberg und fällt über die Kante." },
+      kunst: flaeche(-88, -16, 176, 14), tipp: "Bläst der Südostwind, legt sich eine Wolke wie ein Tischtuch auf den Tafelberg und fällt über die Kante." },
     { id: "seilbahn", de: "die Seilbahn", syl: "SEIL-bahn", it: "la funivia", itSyl: "fu-ni-VI-a", en: "cable car", x: KAB[0], y: KAB[1] + 6,
       kunst: flaeche(-7, -11, 14, 14, 0.6), tipp: "Die Kabine der Seilbahn dreht sich während der Fahrt einmal ganz um sich selbst." },
     { id: "schlucht", de: "die Schlucht", syl: "SCHLUCHT", it: "la gola", itSyl: "GO-la", en: "gorge", x: PX, y: TOP + 30,
@@ -236,7 +266,7 @@ const bergUnter = [];
   k += `<path d="${um}" fill="${HANG}"/>`;
   k += `<g clip-path="url(#${S.id("devil")})">`;
   /* Ostflanke im Schatten, Nordwestflanke warm: weicher waagerechter Verlauf statt harter Flächen */
-  k += `<rect x="-4" y="70" width="104" height="${FUSS - 70}" fill="${S.lg("devillicht", [[0, "#2f3828", 0.3], [0.34, "#2f3828", 0], [0.55, "#ffd89a", 0.06], [1, "#ffd89a", 0.14]], -4, 0, 100, 0, ' gradientUnits="userSpaceOnUse"')}"/>`;
+  k += `<rect x="-4" y="70" width="104" height="${FUSS - 70}" fill="${S.lg("devillicht", [[0, "#2f3828", 0.3], [0.34, "#2f3828", 0], [0.52, "#ffd89a", 0.1], [0.8, "#ffd89a", 0]], -4, 0, 100, 0, ' gradientUnits="userSpaceOnUse"')}"/>`;
   /* Felsband am Gipfel (grauer Sandstein), Fläche oberhalb einer ausgefransten Grenze */
   let gz = `M20 90`;
   for (let x = 20; x <= 44; x += 2) gz += ` L${x} ${r(88.6 - Math.sin((x - 20) / 24 * Math.PI) * 3.4 + Math.sin(x * 1.9) * 0.8 + rnd() * 1)}`;
@@ -274,7 +304,9 @@ const bergUnter = [];
   k += `</g>`;
   /* Felsbrocken am Übergang */
   let bro = "";
-  for (const [x, y, w] of [[345.6, 104.4, 1.4], [350.4, 102.8, 1], [358.6, 104.6, 1.6], [361, 105.6, 0.9], [366, 103.6, 1], [372.6, 104.6, 1.3], [379, 105, 1.1], [354, 104.8, 0.8]]) bro += `M${r(x - w)} ${r(y)}l${r(w * 0.3)} ${r(-w * 0.9)} ${r(w * 0.9)} ${r(-w * 0.3)} ${r(w * 0.7)} ${r(w * 0.5)} ${r(w * 0.1)} ${r(w * 0.7)}z`;
+  /* Brocken in drei Größen, unregelmäßig verstreut; Felszungen reichen in den Fynbos hinab */
+  for (let i = 0; i < 16; i++) { const x = 344 + rnd() * 38, y = 102.5 + rnd() * 7, w = [0.4, 0.8, 1.5][i % 3] * (0.7 + rnd() * 0.6); bro += `M${r(x - w)} ${r(y)}l${r(w * 0.3)} ${r(-w * (0.6 + rnd() * 0.5))} ${r(w * 0.9)} ${r(-w * 0.2)} ${r(w * 0.7)} ${r(w * 0.5)} ${r(w * 0.1)} ${r(w * 0.7)}z`; }
+  for (const [x, l] of [[352, 4], [364, 6], [376, 3.5]]) bro += `M${x - 1.2} 103.4l.4 ${l}l1.6 -${r(l * 0.4)}l.4 -${r(l * 0.6)}z`;
   k += `<path d="${bro}" fill="#a29a84"/><path d="${bro}" fill="none" stroke="#5f584a" stroke-width=".2"/>`;
   k += fynbos(312, 404, 104, FUSS, 60, 0.5);
   k += `<path d="M326 120 Q344 112 360 110.6 Q374 110 386 106" stroke="#d1c39c" stroke-width=".35" fill="none" stroke-dasharray="1 .9" opacity=".45"/>`;
@@ -492,16 +524,44 @@ const KAI = 214;   // Vorderkante des Kais, auf dem der Betrachter steht
   const W0 = r(wy(D_HALLE) - 0.2), WT = r(wy(TURM.d));
   S.def(`<path id="${S.id("wasserp")}" d="M0 ${W0} L400 ${W0} L400 ${KAI} L0 ${KAI} Z M70 ${W0} L70 ${WT} L174 ${WT} L174 ${W0} Z" fill-rule="evenodd"/><clipPath id="${S.id("wasserclip")}"><use href="#${S.id("wasserp")}" clip-rule="evenodd"/></clipPath>`);
   let k = `<use href="#${S.id("wasserp")}" fill="${S.lg("wasser", [[0, "#7aa0ab"], [0.18, "#3f7480"], [1, "#1c4752"]])}"/>`;
-  k += `<g filter="url(#${S.id("spiegel")})" opacity=".5">`;
-  for (let i = 0; i < 12; i++) k += `<rect x="${r(TURM.x - 6 + (i % 2) * 1.2)}" y="${r(wy(TURM.d) + 0.6 + i * 2.4)}" width="${r(12 - i * 0.5)}" height="1.6" fill="#b23a2b" opacity="${r(0.6 - i * 0.04)}"/>`;
-  k += `<rect x="262" y="${r(wy(D_HALLE) + 0.4)}" width="34" height="5" fill="#b4583c" opacity=".4"/><rect x="184" y="${r(wy(D_HALLE) + 0.4)}" width="76" height="4" fill="#e6dfd0" opacity=".25"/>`;
-  k += `</g>`;
-  /* Kräusel und Schaumköpfchen vom Südostwind: Musterkacheln in Tiefenbändern (vorn größer), dazu wenige
-     Schaumköpfchen */
-  const welle = (n, sc) => { S.def(`<pattern id="${S.id("w" + n)}" width="23" height="4.6" patternUnits="userSpaceOnUse" patternTransform="translate(${n * 7} 0) scale(${sc})"><path d="M1 1.2q1.8-.7 3.6 0M11 3.4q2.2-.8 4.4 0M17.4 .8q1.4-.5 2.8 0M6 3.9q1.2-.4 2.4 0" stroke="#cfe6e8" stroke-width=".38" fill="none" opacity=".7"/><path d="M5.4 2.4q1.8-.6 3.6 0M19 3q1.8-.6 3.6 0M13.4 1.3q1.2-.4 2.4 0" stroke="#123a44" stroke-width=".42" fill="none" opacity=".55"/></pattern>`); return `url(#${S.id("w" + n)})`; };
-  const W1 = wy(D_HALLE) + 0.6;
-  let wl = `<rect x="0" y="${r(W1)}" width="400" height="${r(150 - W1)}" fill="${welle(1, 0.4)}"/><rect x="0" y="150" width="400" height="14" fill="${welle(2, 0.7)}"/><rect x="0" y="164" width="400" height="20" fill="${welle(3, 1.1)}"/><rect x="0" y="184" width="400" height="${KAI - 184}" fill="${welle(4, 1.7)}"/>`;
-  for (let i = 0; i < 12; i++) { const y = 160 + rnd() * 48, x = rnd() * 380, w = 1 + (y - HOR) * 0.08; wl += `<path d="M${r(x)} ${r(y)} q${r(w)} ${r(-w * 0.5)} ${r(w * 2)} 0" stroke="#ffffff" stroke-width="${r(0.3 + (y - HOR) * 0.008)}" fill="none" opacity=".8"/>`; }
+  /* Spiegelungen als gestauchte, zerrissene Farbflächen: Uhrturm (rot mit weißen Bändern), Lagerhaus,
+     Hafenhallen, Kutter, Segelboot; zerlegt durch eine Streifenmaske, nach vorn ausblendend */
+  const WT0 = wy(TURM.d), WH = wy(D_HALLE), WK = wy(120);
+  let sp = `<rect x="112" y="${r(WT0)}" width="12.4" height="15" fill="#b8402e"/><rect x="112" y="${r(WT0 + 3.6)}" width="12.4" height=".9" fill="#f1e6d8"/><rect x="112" y="${r(WT0 + 7.4)}" width="12.4" height=".9" fill="#f1e6d8"/><path d="M111.4 ${r(WT0 + 15)}h13.6l-6.8 6z" fill="#4a4e54"/>`;
+  sp += `<rect x="262" y="${r(WH)}" width="34" height="7" fill="#b4583c"/><rect x="184" y="${r(WH)}" width="76" height="4.4" fill="#e6dfd0"/><rect x="318" y="${r(WH)}" width="82" height="4.4" fill="#e9e0cc"/><rect x="0" y="${r(WH)}" width="62" height="4.4" fill="#e2d8c4"/>`;
+  sp += `<rect x="292" y="${r(WK)}" width="62" height="5.6" fill="#2a5a92"/><rect x="292" y="${r(WK + 5.6)}" width="60" height="2.2" fill="#8c2a22"/><rect x="328" y="${r(WK + 7.8)}" width="16" height="6" fill="#f3f1ea"/>`;
+  sp += `<rect x="186" y="${r(wy(190))}" width="22" height="3" fill="#fbfbfa"/><rect x="195.6" y="${r(wy(190) + 3)}" width=".7" height="16" fill="#e6e8ea"/>`;
+  let mk = "";
+  for (let y = WH - 0.2; y < 210;) {
+    const h = 0.55 + (y - 146) * 0.03, gap = 0.14 + (y - 146) * 0.04;
+    for (let x = rnd() * 4; x < 396;) { const l = Math.min(3 + rnd() * (12 + (y - 146) * 0.3), 399 - x); mk += `M${r(x)} ${r(y)}h${r(l)}v${r(h)}h${r(-l)}z`; x += l + 0.3 + rnd() * (0.6 + (y - 146) * 0.15); }
+    y += h + gap;
+  }
+  S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="0" y="140" width="400" height="76"><path d="${mk}" fill="${S.lg("spfade", [[0, "#fff"], [0.4, "#ccc"], [1, "#000"]], 0, 146, 0, 196, ' gradientUnits="userSpaceOnUse"')}"/></mask>`);
+  k += `<g mask="url(#${S.id("spmaske")})" opacity=".62"><g filter="url(#${S.id("spiegel")})">${sp}</g></g>`;
+  /* Böenfelder: der Südost kräuselt das Wasser streifenweise, dunklere Felder laufen schräg übers Becken */
+  let boe = "";
+  for (const [x, y, w, h] of [[30, 160, 120, 7], [210, 168, 150, 9], [60, 186, 170, 12], [250, 196, 150, 12], [150, 152, 90, 4]]) boe += `M${x} ${y}l${w} ${r(-h * 0.5)}l${r(w * 0.12)} ${h}l${-w} ${r(h * 0.5)}z`;
+  k += `<g clip-path="url(#${S.id("wasserclip")})"><path d="${boe}" fill="#0e3440" opacity=".2" filter="url(#bw_weich)"/></g>`;
+  /* Wellen: einzelne Bögen, hinten klein, flach und dicht, vorn breiter und locker; Länge und Abstand
+     streuen; wenige Schaumköpfchen */
+  let wl = "";
+  const W1 = WH + 0.6;
+  for (const [y0, y1, sw, op1] of [[W1, 154, 0.22, 0.3], [154, 168, 0.32, 0.38], [168, 186, 0.45, 0.45], [186, 214, 0.62, 0.5]]) {
+    let dk = "", hl = "";
+    for (let y = y0; y < y1;) {
+      const L = 0.9 + (y - 144) * 0.17;
+      for (let x = rnd() * L * 2; x < 398;) {
+        const l = Math.min(L * (0.6 + 0.8 * rnd()), 399.5 - x), hh = l * (0.1 + rnd() * 0.07);
+        if (l < 0.8) break;
+        if (rnd() < 0.68) dk += `M${r(x)} ${r(y)}q${r(l / 2)} ${r(hh)} ${r(l)} 0`; else hl += `M${r(x)} ${r(y)}q${r(l / 2)} ${r(-hh)} ${r(l)} 0`;
+        x += l * (1.1 + 1.7 * rnd());
+      }
+      y += 0.5 + (y - 144) * 0.06 + rnd() * 0.4;
+    }
+    wl += `<path d="${dk}" stroke="#123a44" stroke-width="${sw}" fill="none" opacity="${op1 + 0.12}"/><path d="${hl}" stroke="#cfe6e8" stroke-width="${sw}" fill="none" opacity="${op1}"/>`;
+  }
+  for (let i = 0; i < 14; i++) { const y = 160 + rnd() * 48, x = rnd() * 380, w = 1 + (y - HOR) * 0.08; wl += `<path d="M${r(x)} ${r(y)} q${r(w)} ${r(-w * 0.5)} ${r(w * 2)} 0" stroke="#ffffff" stroke-width="${r(0.3 + (y - HOR) * 0.008)}" fill="none" opacity=".8"/>`; }
   k += `<g clip-path="url(#${S.id("wasserclip")})">${wl}</g>`;
   S.teil({ id: "hafen", de: "der Hafen", syl: "HA-fen", it: "il porto", itSyl: "POR-to", en: "harbour", x: 0, y: 0, kunst: k,
     tipp: "Die Hafenbecken heißen Victoria und Alfred – nach Königin Victoria und ihrem Sohn Prinz Alfred." });

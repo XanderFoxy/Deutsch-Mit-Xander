@@ -277,71 +277,114 @@ const TM = {};
     t.push(RT(-7.2, 75.6, 7.2, 76.7, HELL));
     TM.masswerk = { x: TX(0), y: TY(69.5), h: TS * 6, w: TS * 3.6 };
   }
-  /* der durchbrochene Maßwerkhelm (76–113 m), Grate mit Krabben, Kreuzblume */
+  /* der durchbrochene Maßwerkhelm (76–113 m): achteckige Pyramide, drei Seiten sichtbar, Felder offen —
+     der Himmel scheint durch; in den Feldern Maßwerk (Kreise, Dreipässe); Grate mit Krabben; Kreuzblume */
   {
-    const z0 = 76.7, z1 = 112.6, hb = 6.8;
-    const at = (z) => hb * (1 - (z - z0) / (z1 - z0));
-    let d = PT([[-hb, z0], [hb, z0], [0, z1]]), masswerk = "";
-    const reihen = 12, H = z1 - z0 - 3.4;
-    for (let i = 0; i < reihen; i++) {
-      const za = z0 + .9 + i * H / reihen, zb = za + H / reihen - .75;
-      const wa = at(za) - .55, wb = at(zb) - .55;
-      if (wb < .5) break;
-      /* jede der zwei sichtbaren Helmseiten: eine Lanzette mit Mittelpfosten und Rosette */
-      for (const sd of [-1, 1]) {
-        const a0 = sd < 0 ? -wa : .28, a1 = sd < 0 ? -.28 : wa, b0 = sd < 0 ? -wb : .28, b1 = sd < 0 ? -.28 : wb;
-        if (a1 - a0 < .45) continue;
+    const z0 = 76.7, z1 = 112.4, hb = 6.8, c = hb * .414;
+    const tt = (z) => 1 - (z - z0) / (z1 - z0);
+    const kanten = (z) => [-hb * tt(z), -c * tt(z), c * tt(z), hb * tt(z)];
+    let d = PT([[-hb, z0], [hb, z0], [0, z1]]), mw = "";
+    const Z = []; for (let i = 0; i <= 8; i++) Z.push(z0 + .5 + (z1 - z0 - 4.2) * (1 - Math.pow(1 - i / 8, 1.3)));
+    for (let i = 0; i < 8; i++) {
+      const za = Z[i] + .28, zb = Z[i + 1] - .28;
+      if (zb - za < .5) continue;
+      const ka = kanten(za), kb = kanten(zb);
+      for (let f = 0; f < 3; f++) {
+        const rib = f === 1 ? .32 : .26;
+        const a0 = ka[f] + rib, a1 = ka[f + 1] - rib, b0 = kb[f] + rib, b1 = kb[f + 1] - rib;
+        if (b1 - b0 < .25 || a1 - a0 < .4) continue;
         d += ` M${r(TX(a0))} ${r(TY(za))} L${r(TX(a1))} ${r(TY(za))} L${r(TX(b1))} ${r(TY(zb))} L${r(TX(b0))} ${r(TY(zb))} Z`;
-        const mx = (a0 + a1 + b0 + b1) / 4, rr = Math.min((b1 - b0) / 2, (zb - za) / 2.6) * .78;
-        if (rr > .22) masswerk += `M${r(TX((a0 + a1) / 2))} ${r(TY(za))} L${r(TX(mx))} ${r(TY(zb - rr * 2))} M${r(TX(mx) + rr * TS)} ${r(TY(zb - rr))} A${r(rr * TS)} ${r(rr * TS)} 0 1 0 ${r(TX(mx) - rr * TS)} ${r(TY(zb - rr))} A${r(rr * TS)} ${r(rr * TS)} 0 1 0 ${r(TX(mx) + rr * TS)} ${r(TY(zb - rr))} `;
+        /* Maßwerk im Feld: Kreis mit Dreipass oben, Pfosten darunter */
+        const w = (b1 - b0), h = zb - za, mx = (a0 + a1 + b0 + b1) / 4;
+        const rho = Math.min(w * .42, h * .3);
+        if (rho > .2) {
+          const cz = zb - rho - .1, R = rho * TS, cx = TX(mx), cy = TY(cz);
+          mw += `M${r(cx + R)} ${r(cy)} A${r(R)} ${r(R)} 0 1 0 ${r(cx - R)} ${r(cy)} A${r(R)} ${r(R)} 0 1 0 ${r(cx + R)} ${r(cy)} `;
+          if (rho > .45) for (let j = 0; j < 3; j++) { const ang = -Math.PI / 2 + j * 2 * Math.PI / 3, px = cx + Math.cos(ang) * R * .42, py = cy + Math.sin(ang) * R * .42, rr = R * .4; mw += `M${r(px + rr)} ${r(py)} A${r(rr)} ${r(rr)} 0 1 0 ${r(px - rr)} ${r(py)} A${r(rr)} ${r(rr)} 0 1 0 ${r(px + rr)} ${r(py)} `; }
+          const pf = f === 1 && w > 2 ? [mx - w * .2, mx + w * .2] : [mx];
+          for (const u of pf) mw += `M${r(TX(u + (a0 + a1 - b0 - b1) / 4 * 0))} ${r(TY(za))} L${r(TX(u))} ${r(TY(cz - rho))} `;
+          mw += `M${r(TX(mx - rho))} ${r(TY(cz - rho * .2))} Q${r(TX(mx))} ${r(TY(za + h * .1))} ${r(TX(mx + rho))} ${r(TY(cz - rho * .2))} `;
+        }
       }
     }
-    t.push(`<path d="${d}" fill-rule="evenodd" fill="${S.lg("helm", [[0, "#dc9a80"], [0.45, "#b4644d"], [1, "#874434"]], 0, 0, 1, 0)}"/>`);
-    t.push(`<path d="${masswerk}" fill="none" stroke="#b4644d" stroke-width="${r(TS * .2)}"/>`);
-    /* Ringgalerie auf halber Höhe des Helms */
-    t.push(`<path d="${PT([[-at(94) - .3, 93.6], [at(94) + .3, 93.6], [at(94.8) + .2, 94.8], [-at(94.8) - .2, 94.8]])}" fill="#c98068"/>`);
-    for (const sd of [-1, 0, 1]) {
-      const col = sd < 0 ? "#e8b098" : sd > 0 ? "#7d3c30" : "#b4644d";
-      t.push(`<path d="M${r(TX(sd * hb))} ${r(TY(z0))} L${r(TX(0))} ${r(TY(z1))}" stroke="${col}" stroke-width="${r(TS * .5)}"/>`);
-      if (sd) for (let z = z0 + 2.2; z < z1 - 1; z += 2.7) { const u = sd * at(z); t.push(`<path d="M${r(TX(u))} ${r(TY(z))} q${r(TS * sd * .7)} ${r(-TS * .1)} ${r(TS * sd * .5)} ${r(-TS * .7)}" stroke="${col}" stroke-width="${r(TS * .3)}" fill="none" stroke-linecap="round"/>`); }
+    t.push(`<path d="${d}" fill-rule="evenodd" fill="${S.lg("helm", [[0, "#e6a688"], [0.42, "#c27258"], [0.62, "#a85a44"], [1, "#7d3c30"]], 0, 0, 1, 0)}"/>`);
+    t.push(`<path d="${mw}" fill="none" stroke="#c27258" stroke-width="${r(TS * .17)}"/>`);
+    /* Grate (vier sichtbar) mit Krabben */
+    for (const [u, col] of [[-hb, "#f0b89e"], [-c, "#d48a6e"], [c, "#9c5240"], [hb, "#7d3c30"]]) {
+      t.push(`<path d="M${r(TX(u))} ${r(TY(z0))} L${r(TX(0))} ${r(TY(z1))}" stroke="${col}" stroke-width="${r(TS * (Math.abs(u) > c ? .5 : .38))}"/>`);
+      for (let z = z0 + 2.2; z < z1 - 1.2; z += 2.6) { const uu = u * tt(z), sd = u < 0 ? -1 : 1; t.push(`<path d="M${r(TX(uu))} ${r(TY(z))} q${r(TS * sd * .7)} ${r(-TS * .1)} ${r(TS * sd * .5)} ${r(-TS * .7)}" stroke="${col}" stroke-width="${r(TS * .28)}" fill="none" stroke-linecap="round"/>`); }
     }
-    t.push(`<path d="${PT([[-.55, 112.2], [.55, 112.2], [.3, 113.6], [1.5, 113.2], [.5, 114.4], [.85, 115.4], [0, 116.8], [-.85, 115.4], [-.5, 114.4], [-1.5, 113.2], [-.3, 113.6]])}" fill="#c98068"/>`);
+    /* Kreuzblume: vier kräftige Steinblätter und Knospe */
+    const kb = (u, z) => [TX(u), TY(z)];
+    const [kx, ky] = kb(0, 113);
+    t.push(`<path d="M${r(kx - TS * .35)} ${r(TY(112.2))} L${r(kx - TS * .3)} ${r(TY(116))} L${r(kx + TS * .3)} ${r(TY(116))} L${r(kx + TS * .35)} ${r(TY(112.2))} Z" fill="#b4644d"/>`);
+    for (const [dz, sd, gr] of [[113.1, -1, 1], [113.1, 1, 1], [115, -1, .75], [115, 1, .75]]) {
+      const y = TY(dz), L = TS * 1.7 * gr;
+      t.push(`<path d="M${r(kx)} ${r(y)} C${r(kx + sd * L * .5)} ${r(y - L * .7)} ${r(kx + sd * L * 1.2)} ${r(y - L * .2)} ${r(kx + sd * L)} ${r(y + L * .35)} C${r(kx + sd * L * .7)} ${r(y + L * .05)} ${r(kx + sd * L * .4)} ${r(y + L * .2)} ${r(kx)} ${r(y + L * .25)} Z" fill="${sd < 0 ? "#eab096" : "#a85a44"}"/>`);
+    }
+    t.push(`<path d="M${r(kx)} ${r(TY(116))} C${r(kx - TS * .7)} ${r(TY(116.4))} ${r(kx - TS * .3)} ${r(TY(117.6))} ${r(kx)} ${r(TY(118))} C${r(kx + TS * .3)} ${r(TY(117.6))} ${r(kx + TS * .7)} ${r(TY(116.4))} ${r(kx)} ${r(TY(116))} Z" fill="#d48a6e"/>`);
     TM.helm = { x: TX(0), y: TY(96), h: TS * 30, w: TS * 9 };
-    TM.kb = { x: TX(0), y: TY(112.2), h: TS * 4.6 };
+    TM.kb = { x: TX(0), y: TY(112.2), h: TS * 5 };
   }
   TM.uhr = { x: uhr[0], y: uhr[1], r: ur };
   const zx = 188, zy = 10;
   S.teil({ id: "muensterturm", de: "der Münsterturm", syl: "MÜNS-ter-turm", it: "il campanile del duomo", itSyl: "cam-pa-NI-le del DUO-mo", en: "Minster tower", x: 0, y: 0, kunst: t.join(""),
-    tipp: "Der Turm ist 116 Meter hoch. Man nennt ihn „den schönsten Turm der Christenheit“.",
+    tipp: "Der Turm ist 116 Meter hoch und war schon um 1330 fertig — als einziger großer gotischer Kirchturm Deutschlands noch im Mittelalter. Jacob Burckhardt nannte ihn „den schönsten Turm auf Erden“.",
     zoom: { x: zx, y: zy, w: 320 - zx, h: r((320 - zx) / 1.5) },
     unter: [
       { id: "turmhelm", de: "der Turmhelm", syl: "TURM-helm", it: "la guglia", itSyl: "GU-glia", en: "spire", x: TM.helm.x, y: TM.helm.y, kunst: flaeche(-TM.helm.w / 2, -TM.helm.h / 2, TM.helm.w, TM.helm.h),
         tipp: "Der Helm ist ganz durchbrochen — man sieht den Himmel hindurch. So einen Helm gab es zuerst in Freiburg." },
       { id: "kreuzblume", de: "die Kreuzblume", syl: "KREUZ-blu-me", it: "il fiore crociato", itSyl: "FIO-re cro-CIA-to", en: "finial", x: TM.kb.x, y: TM.kb.y, kunst: flaeche(-2.4, -TM.kb.h - 1, 4.8, TM.kb.h + 1.4, 0.6),
         tipp: "Die Kreuzblume ist die steinerne Blume ganz oben auf der Spitze." },
-      { id: "masswerk", de: "das Maßwerk", syl: "MASS-werk", it: "il traforo gotico", itSyl: "tra-FO-ro GO-ti-co", en: "tracery", x: TM.masswerk.x, y: TM.masswerk.y, kunst: flaeche(-TM.masswerk.w / 2, -TM.masswerk.h / 2, TM.masswerk.w, TM.masswerk.h),
-        tipp: "Maßwerk nennt man die steinernen Muster in gotischen Fenstern — mit Zirkel und Lineal entworfen." },
     ] });
 }
 
 /* =====================================================================
-   5 — DAS MÜNSTER (Langhaus mit Strebewerk, Querhaus) — Lupe: Uhr,
-       Sterngalerie, Wasserspeier
+   5 — DAS MÜNSTER (Langhaus mit Strebewerk, Querhaus) — Lupe: Uhr, Wasserspeier
    ===================================================================== */
 {
   let k = "";
   const Y_SS = -15, Y_OG = -7, ZF = 35.5;
   const xs = (i) => -46 + i * 7.43;
-  /* Dach des Mittelschiffs und Obergaden mit Fenstern */
+  const PATINA = S.lg("patina", [[0, "#2a1814", 0.55], [0.6, "#2a1814", 0.18], [1, "#2a1814", 0]]);
+  /* Wetterspuren: dunkle Läufe von den Gesimsen herab */
+  const spuren = (Y, x0, x1, ztop, n) => { let g = ""; for (let i = 0; i < n; i++) { const x = x0 + rnd() * (x1 - x0), w = .4 + rnd() * 1.1, l = 2 + rnd() * (ztop * .6); g += `<path d="${poly([[x, Y - .05, ztop], [x + w, Y - .05, ztop], [x + w * .8, Y - .05, ztop - l], [x + w * .2, Y - .05, ztop - l]])}" fill="${PATINA}"/>`; } return g; };
+  /* gotisches Fenster mit Maßwerk: n Bahnen, Kleeblattbögen, Rose oben */
+  const fenster = (Y, xm, w, z0, z1, bahnen) => {
+    let g = `<path d="${poly([[xm - w / 2, Y, z0], ...fbogen(Y, xm, w, z1 - w * .9, z1, true, 8)])}" fill="${S.lg("kirchfenster", [[0, "#3e3a46"], [0.5, "#2a2430"], [1, "#1f1a20"]])}"/>`;
+    const zb = z1 - w * .9 - .2, ro = w * .28;
+    let st = "";
+    for (let i = 1; i < bahnen; i++) { const x = xm - w / 2 + i * w / bahnen; st += linie([[x, Y, z0], [x, Y, zb]]) + " "; }
+    for (let i = 0; i < bahnen; i++) { const x = xm - w / 2 + (i + .5) * w / bahnen; st += linie(fbogen(Y, x, w / bahnen, zb - .1, zb + w / bahnen * .7, true, 6)) + " "; }
+    k += "";
+    const c = pr(xm, Y, z1 - w * .55), rr = FOC / tief(xm, Y) * ro;
+    g += `<path d="${st}" stroke="#d9937a" stroke-width="${r(Math.max(.2, FOC / tief(xm, Y) * .12))}" fill="none"/>`;
+    if (rr > .35) g += `<circle cx="${r(c[0])}" cy="${r(c[1])}" r="${r(rr)}" fill="none" stroke="#d9937a" stroke-width="${r(Math.max(.18, rr * .16))}"/>`;
+    return g;
+  };
+  /* Wasserspeier als Fabeltier: Leib aus dem Pfeiler, Kopf mit offenem Maul */
+  const speier = (a, b, sz) => {
+    const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
+    const p = (t, o) => [a[0] + dx * t + nx * o * sz, a[1] + dy * t + ny * o * sz];
+    let g = `<path d="M${P(p(0, -.32))} Q${P(p(.5, -.42))} ${P(p(.78, -.3))} L${P(p(.78, .26))} Q${P(p(.4, .36))} ${P(p(0, .3))} Z" fill="#8a4434"/>`;
+    g += `<path d="M${P(p(.7, -.36))} L${P(p(1.02, -.3))} L${P(p(1.08, -.05))} L${P(p(.86, -.02))} Z" fill="#a85a44"/>`;
+    g += `<path d="M${P(p(.74, .06))} L${P(p(1, .28))} L${P(p(.92, .34))} L${P(p(.72, .24))} Z" fill="#6e3226"/>`;
+    g += `<path d="M${P(p(.72, -.36))} l${r(-nx * sz * .2 - ux * sz * .1)} ${r(-ny * sz * .2 - uy * sz * .1)}" stroke="#6e3226" stroke-width="${r(sz * .08)}"/><circle cx="${r(p(.84, -.2)[0])}" cy="${r(p(.84, -.2)[1])}" r="${r(sz * .05)}" fill="#1d120e"/>`;
+    g += `<path d="M${P(p(.25, .3))} l${r(ny * sz * .25)} ${r(-nx * sz * .25)} M${P(p(.5, .3))} l${r(ny * sz * .22)} ${r(-nx * sz * .22)}" stroke="#6e3226" stroke-width="${r(sz * .07)}"/>`;
+    return g;
+  };
+  /* Dach des Mittelschiffs und Obergaden mit Maßwerkfenstern */
   k += `<path d="${poly([[-46, Y_OG, 26.6], [6, Y_OG, 26.6], [6, 0, ZF], [-46, 0, ZF]])}" fill="${S.lg("dachm", [[0, "#5d5250"], [1, "#7c6e68"]])}"/>`;
   for (let x = -44; x < 6; x += 2.4) k += `<path d="${linie([[x, Y_OG, 26.6], [x, 0, ZF]])}" stroke="#4a4140" stroke-width=".2" opacity=".5"/>`;
   k += `<path d="${poly([[-46, Y_OG, 17.4], [6, Y_OG, 17.4], [6, Y_OG, 26.8], [-46, Y_OG, 26.8]])}" fill="${SAND_L}"/>`;
-  for (let i = 0; i < 7; i++) { const xm = xs(i) + 3.72; k += `<path d="${poly([[xm - 1.5, Y_OG, 18.8], [xm + 1.5, Y_OG, 18.8], [xm + 1.5, Y_OG, 23.8], [xm, Y_OG, 25.4], [xm - 1.5, Y_OG, 23.8]])}" fill="${LOCH}"/>`; }
+  for (let i = 0; i < 7; i++) k += fenster(Y_OG, xs(i) + 3.72, 3.2, 18.6, 25.6, 2);
+  k += spuren(Y_OG, -46, 6, 26.6, 9);
   /* Pultdach des Seitenschiffs, Seitenschiffwand mit Fenstern */
   k += `<path d="${poly([[-46, Y_SS, 12], [6, Y_SS, 12], [6, Y_OG, 17.4], [-46, Y_OG, 17.4]])}" fill="${S.lg("dachs", [[0, "#6a5d58"], [1, "#857570"]])}"/>`;
   k += `<path d="${poly([[-46, Y_SS, 0], [6, Y_SS, 0], [6, Y_SS, 12.2], [-46, Y_SS, 12.2]])}" fill="${SAND_L}"/>`;
   for (let z = 1.6; z < 12; z += 1.5) k += `<path d="${linie([[-46, Y_SS, z], [6, Y_SS, z]])}" stroke="#8a4636" stroke-width=".18" opacity=".3"/>`;
-  for (let i = 0; i < 7; i++) { const xm = xs(i) + 3.72; k += `<path d="${poly([[xm - 1.7, Y_SS, 2.6], [xm + 1.7, Y_SS, 2.6], [xm + 1.7, Y_SS, 8.6], [xm, Y_SS, 10.6], [xm - 1.7, Y_SS, 8.6]])}" fill="${LOCH}"/><path d="${linie([[xm, Y_SS, 2.6], [xm, Y_SS, 9.8]])}" stroke="#d9937a" stroke-width=".35"/>`; }
+  for (let i = 0; i < 7; i++) k += fenster(Y_SS, xs(i) + 3.72, 3.6, 2.6, 10.8, 3);
+  k += spuren(Y_SS, -46, 6, 12.2, 12);
   /* Maßwerkbrüstungen an den Traufen von Seitenschiff und Obergaden */
   for (const [yy, z0, x0] of [[Y_SS - .2, 12.2, -46], [Y_OG - .2, 26.6, -46]]) {
     k += `<path d="${poly([[x0, yy, z0], [6, yy, z0], [6, yy, z0 + 1.1], [x0, yy, z0 + 1.1]])}" fill="${SAND_L}"/>`;
@@ -349,51 +392,54 @@ const TM = {};
     for (let x = x0 + .6; x < 6; x += 1.2) st += linie([[x, yy, z0 + .15], [x, yy, z0 + .95]]) + " ";
     k += `<path d="${st}" stroke="#8a4636" stroke-width=".22"/>`;
   }
-  /* Strebepfeiler mit Fialen und Wasserspeiern; Strebebögen zum Obergaden */
+  /* Strebepfeiler (Wasserschläge, Wimperg, Fiale), schlanke Strebebögen, Wasserspeier */
   const SP = [];
   for (let i = 0; i <= 7; i++) {
     const xb = xs(i);
-    const bog = [];
-    for (let j = 0; j <= 6; j++) { const t = j / 6; bog.push([xb, -16.6 + t * 9.4, 13.6 + Math.sin(t * Math.PI / 2) * 8.6]); }
-    k += `<path d="${poly([[xb, -17.6, 15.6], [xb, Y_OG, 24.6], ...bog.reverse()])}" fill="${SAND}"/>`;
+    const unten = [], oben = [];
+    for (let j = 0; j <= 8; j++) { const t = j / 8, y = -17.4 + t * (Y_OG - -17.4); oben.push([xb, y, 16.4 + t * 9.4]); unten.push([xb, y, 15 + t * 9.6 - Math.sin(t * Math.PI) * 1.6]); }
+    k += `<path d="${poly([...oben, ...unten.reverse()])}" fill="${SAND}"/><path d="${linie(oben)}" stroke="#f0b89e" stroke-width=".3"/>`;
+    k += `<path d="${poly([[xb + .8, -17.8, 0], [xb + .8, Y_SS, 0], [xb + .8, Y_SS, 14.4], [xb + .8, -17.8, 14.4]])}" fill="${SAND_D}"/>`;
     k += `<path d="${poly([[xb - .8, -17.8, 0], [xb + .8, -17.8, 0], [xb + .8, -17.8, 14.4], [xb - .8, -17.8, 14.4]])}" fill="${SAND_L}"/>`;
+    for (const z of [5, 9.6]) k += `<path d="${poly([[xb - .85, -17.9, z], [xb + .85, -17.9, z], [xb + .85, -17.9, z + .4], [xb - .85, -17.9, z + .4]])}" fill="#f0b89e"/>`;
+    k += `<path d="${linie([[xb - .7, -17.9, 12.2], [xb, -17.9, 14.2], [xb + .7, -17.9, 12.2]])}" stroke="#f0b89e" stroke-width=".28" fill="none"/>`;
     k += `<path d="${poly([[xb - .55, -17.8, 14.4], [xb + .55, -17.8, 14.4], [xb + .35, -17.8, 17.4], [xb, -17.8, 20.6], [xb - .35, -17.8, 17.4]])}" fill="${SAND_L}"/>`;
     for (const z of [15.6, 17, 18.4, 19.6]) { const sk = 1 - (z - 14.4) / 6.4; k += `<path d="${linie([[xb - .5 * sk - .3, -17.8, z + .3], [xb - .5 * sk, -17.8, z]])} ${linie([[xb + .5 * sk + .3, -17.8, z + .3], [xb + .5 * sk, -17.8, z]])}" stroke="#d9937a" stroke-width=".3"/>`; }
-    k += `<path d="${linie([[xb - .8, -17.8, 6], [xb + .8, -17.8, 6]])} ${linie([[xb - .8, -17.8, 10.6], [xb + .8, -17.8, 10.6]])}" stroke="#8a4636" stroke-width=".3"/>`;
-    k += `<path d="${poly([[xb + .8, -17.8, 0], [xb + .8, Y_SS, 0], [xb + .8, Y_SS, 14.4], [xb + .8, -17.8, 14.4]])}" fill="${SAND_D}"/>`;
-    const w0 = pr(xb, -17.8, 12.7), w1 = pr(xb, -19.4, 12.9), ws = FOC / tief(xb, -18);
-    k += `<path d="M${P(w0)} L${P(w1)}" stroke="#8a4636" stroke-width="${r(Math.max(.4, ws * .32))}" stroke-linecap="round"/><circle cx="${r(w1[0])}" cy="${r(w1[1])}" r="${r(Math.max(.3, ws * .26))}" fill="#7d3c30"/>`;
+    const w0 = pr(xb, -17.8, 12.9), w1 = pr(xb, -19.8, 13.1), ws = FOC / tief(xb, -18);
+    k += speier(w0, w1, Math.max(.9, ws * 1.1));
     SP.push({ x: (w0[0] + w1[0]) / 2, y: (w0[1] + w1[1]) / 2 });
   }
-  /* Querhaus: Südgiebel mit Portal und großem Maßwerkfenster; Ostwand im Schatten */
+  /* Querhaus: Südgiebel mit Stufenportal (Gewände, Tympanon) und großem Maßwerkfenster; Ostwand im Schatten */
   const QY = -19;
   k += `<path d="${poly([[6, QY, 26.6], [18, QY, 26.6], [18, 0, ZF + 1], [6, 0, ZF + 1]])}" fill="${S.lg("dachq", [[0, "#5d5250"], [1, "#7c6e68"]])}"/>`;
   k += `<path d="${poly([[18, QY, 0], [18, -15, 0], [18, -15, 26.6], [18, QY, 26.6]])}" fill="${SAND_D}"/>`;
   k += `<path d="${poly([[6, QY, 0], [18, QY, 0], [18, QY, 26.6], [12, QY, 36.4], [6, QY, 26.6]])}" fill="${SAND_L}"/>`;
-  k += `<path d="${poly(toroeffnung(QY, 12, 4.6, 4.4, 8.6, true))}" fill="${LOCH}"/>`;
-  for (const [w, zk, c] of [[5.4, 9.4, "#e4a58a"], [6.2, 10.2, "#b4644d"], [7, 11, "#e4a58a"]]) k += `<path d="${linie(fbogen(QY, 12, w, 4.4, zk, true, 10))}" stroke="${c}" stroke-width=".55" fill="none"/>`;
-  k += `<path d="${linie([[9.7, QY, 4.4], [14.3, QY, 4.4]])}" stroke="#e4a58a" stroke-width=".5"/>`;
+  k += spuren(QY, 6.5, 17.5, 26.4, 6) + spuren(QY, 9, 15, 33, 2);
+  k += `<path d="${poly(toroeffnung(QY, 12, 6.6, 4.4, 9.6, true))}" fill="#7d3c30"/><path d="${poly(toroeffnung(QY, 12, 5.2, 4.4, 8.8, true))}" fill="#a85a44"/><path d="${poly(toroeffnung(QY, 12, 3.8, 4.4, 8, true))}" fill="${LOCH}"/>`;
+  for (const [w, zk, c] of [[6, 9.4, "#e4a58a"], [4.6, 8.6, "#e4a58a"]]) k += `<path d="${linie(fbogen(QY, 12, w, 4.4, zk, true, 10))}" stroke="${c}" stroke-width=".45" fill="none"/>`;
+  k += `<path d="${poly([[10.1, QY - .05, 4.4], [13.9, QY - .05, 4.4], [13.9, QY - .05, 5], [12, QY - .05, 7.4], [10.1, QY - .05, 5]])}" fill="#c27a62"/>`;
+  for (const x of [8.9, 9.6, 14.4, 15.1]) k += `<path d="${linie([[x, QY - .1, 0], [x, QY - .1, 4.4]])}" stroke="#e4a58a" stroke-width=".4"/>`;
+  k += `<path d="${linie([[11.6, QY - .1, 0], [11.6, QY - .1, 4.4]])}" stroke="#c27a62" stroke-width=".6"/>`;
   k += `<path d="${poly([[6.4, QY - .3, 27.2], [12, QY - .3, 36.4], [17.6, QY - .3, 27.2]])}" fill="none" stroke="#e4a58a" stroke-width=".6"/>`;
   for (let t = .08; t < 1; t += .12) for (const sd of [-1, 1]) { const x = 12 + sd * 5.6 * (1 - t), z = 27.2 + 9.2 * t; k += `<path d="${linie([[x, QY - .4, z], [x + sd * .5, QY - .4, z + .6]])}" stroke="#d9937a" stroke-width=".45" stroke-linecap="round"/>`; }
   { const a = pr(12, QY - .3, 36.4), b = pr(12, QY - .3, 38.2), qs = FOC / tief(12, QY); k += `<path d="M${P(a)} L${P(b)}" stroke="#c98068" stroke-width="${r(qs * .3)}"/><path d="M${r(b[0] - qs * .5)} ${r(b[1] + qs * .2)} q${r(qs * .5)} ${r(-qs * .9)} ${r(qs)} 0 M${r(b[0] - qs * .4)} ${r(b[1] - qs * .3)} h${r(qs * .8)}" stroke="#c98068" stroke-width="${r(qs * .22)}" fill="none"/>`; }
-  k += `<path d="${poly([[8.6, QY, 12.4], [15.4, QY, 12.4], ...fbogen(QY, 12, 6.8, 18.6, 25.6, true, 10).reverse()])}" fill="${S.lg("rose", [[0, "#3a2a26"], [1, "#2a1c18"]])}"/>`;
-  k += `<path d="${linie([[12, QY, 12.4], [12, QY, 24.8]])} ${linie([[10.3, QY, 12.4], [10.3, QY, 22.6]])} ${linie([[13.7, QY, 12.4], [13.7, QY, 22.6]])}" stroke="#d9937a" stroke-width=".55"/>`;
-  const rc = pr(12, QY, 22.4);
-  k += `<circle cx="${r(rc[0])}" cy="${r(rc[1])}" r="${r(FOC / tief(12, QY) * 1.4)}" fill="none" stroke="#d9937a" stroke-width=".5"/>`;
+  k += fenster(QY, 12, 7, 12.4, 25.8, 4);
   for (const xb of [6, 18]) {
     k += `<path d="${poly([[xb + .9, QY - 1.8, 0], [xb + .9, QY, 0], [xb + .9, QY, 24], [xb + .9, QY - 1.8, 24]])}" fill="${SAND_D}"/>`;
     k += `<path d="${poly([[xb - .9, QY - 1.8, 0], [xb + .9, QY - 1.8, 0], [xb + .9, QY - 1.8, 24], [xb - .9, QY - 1.8, 24]])}" fill="${SAND_L}"/>`;
+    for (const z of [7, 14, 20]) k += `<path d="${poly([[xb - .95, QY - 1.9, z], [xb + .95, QY - 1.9, z], [xb + .95, QY - 1.9, z + .45], [xb - .95, QY - 1.9, z + .45]])}" fill="#f0b89e"/>`;
     k += `<path d="${poly([[xb - .6, QY - 1.8, 24], [xb + .6, QY - 1.8, 24], [xb + .3, QY - 1.8, 28], [xb, QY - 1.8, 31.4], [xb - .3, QY - 1.8, 28]])}" fill="${SAND_L}"/>`;
+    const w0 = pr(xb, QY - 1.8, 21.8), w1 = pr(xb, QY - 4.4, 22.2), ws = FOC / tief(xb, QY - 2);
+    k += speier(w0, w1, ws * 1.1);
+    SP.push({ x: (w0[0] + w1[0]) / 2, y: (w0[1] + w1[1]) / 2 });
   }
-  const sp = SP[5];
+  const sp = SP[SP.length - 1];
   S.teil({ id: "muenster", de: "das Freiburger Münster", syl: "FREI-bur-ger MÜNS-ter", it: "la cattedrale di Friburgo", itSyl: "cat-te-DRA-le di fri-BUR-go", en: "Freiburg Minster",
-    x: 0, y: 0, kunst: k, tipp: "Das Münster wurde fast 300 Jahre lang aus rotem Sandstein gebaut. Es ist die einzige große gotische Kirche Deutschlands, die schon im Mittelalter fertig war.",
+    x: 0, y: 0, kunst: k, tipp: "Das Münster wurde ab etwa 1200 aus rotem Sandstein gebaut. Der Chor wurde erst 1513 geweiht.",
     zoom: { x: 206, y: 104, w: 114, h: 76 },
     unter: [
       { id: "uhr", de: "die Uhr", syl: "UHR", it: "l'orologio", itSyl: "o-ro-LO-gio", en: "clock", x: TM.uhr.x, y: TM.uhr.y, kunst: flaecheEllipse(0, 0, TM.uhr.r * 1.3, TM.uhr.r * 1.3) },
-      { id: "sterngalerie", de: "die Sterngalerie", syl: "STERN-ga-le-rie", it: "la galleria a stella", itSyl: "gal-le-RI-a a STEL-la", en: "star gallery", x: TM.stern.x, y: TM.stern.y, kunst: flaeche(-TM.stern.w / 2, -5, TM.stern.w, 6),
-        tipp: "Hier wird der viereckige Turm zum Achteck. Die Brüstung hat die Form eines Sterns." },
-      { id: "wasserspeier", de: "der Wasserspeier", syl: "WAS-ser-spei-er", it: "il doccione", itSyl: "doc-CIO-ne", en: "gargoyle", x: sp.x, y: sp.y, kunst: flaeche(-2.6, -2.2, 5.2, 4, 0.5),
+      { id: "wasserspeier", de: "der Wasserspeier", syl: "WAS-ser-spei-er", it: "il doccione", itSyl: "doc-CIO-ne", en: "gargoyle", x: sp.x, y: sp.y, kunst: flaeche(-3, -2.4, 6, 4.4, 0.5),
         tipp: "Durch die Wasserspeier fließt das Regenwasser vom Dach. Am Münster sehen viele wie Tiere und Fratzen aus." },
     ] });
 }

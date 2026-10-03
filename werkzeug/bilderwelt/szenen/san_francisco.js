@@ -475,7 +475,7 @@ const kiste = (P, gz, a0, a1, d0, d1, H, c) => {
   }
   return { V, L: c.kante ? [P(a0, d0, zt), P(a1, d0, zt), c.kante, Math.max(0.12, 5 / d0)] : null };
 };
-const FASS = ["#efe6d2", "#e8d6c0", "#dfe3df", "#f1ddd0", "#e6dcc0", "#d9e1e6", "#f2eadf", "#e9d8d8", "#d8d2c4", "#e4e9dc", "#f3e2bf"];
+const FASS = ["#efe6d2", "#e8d6c0", "#dfe3df", "#e6dcc0", "#d9e1e6", "#f2eadf", "#d8d2c4", "#e4e9dc", "#f3e2bf"];
 const DACH = ["#b8b0a2", "#a59d90", "#c2baac", "#9a9389", "#b3a99a", "#8f8a82"];
 /* Häuserblöcke als Kisten (Ränder bebaut, Höfe mit Bäumen); liefert Einträge {t: Tiefe, V, L, baum} */
 const bloecke = (P, gz, spalten, reihen, frei, fenster, haz, rnd2, maxH, kurz = (a0, a1) => a1) => {
@@ -572,8 +572,14 @@ const SL = 1 / Math.tan(SONNE.el * Math.PI / 180), SE_ = Math.sin(SONNE.az * Mat
   let gl = "", sl = "";
   for (const Xc of [-9.4, -5.6]) { for (const u of [-0.53, 0.53]) gl += `M${kante(Xc + u, 8.3, 140, 12).map(pr).join(" L")} `; sl += `M${kante(Xc, 8.3, 140, 12).map(pr).join(" L")} `; }
   s += `<path d="${gl}" stroke="#bcb9b2" stroke-width=".55" fill="none"/><path d="${sl}" stroke="#2b2926" stroke-width=".6" fill="none"/>`;
+  /* Gehweg um die Nordostecke (dort steht der Eckmast), Bordsteinabsenkung mit gelben Noppenplatten */
+  s += vl(kappX([PN(2.3, 10.6, 0.15), PN(2.3, 12.6, zH(12.6) + 0.15), PN(9, 12.6, zH(12.6)), PN(9, 10.6, 0.15)], -6, SEAM), "#cfc9be");
+  s += vl([PN(2.3, 10.62, 0.15), PN(SEAM > 0 ? 9 : 9, 10.62, 0.15), PN(9, 10.55, 0), PN(2.3, 10.55, 0)], "#e2ddd3");
+  { const q = [PN(-1.45, 10.75, 0.05), PN(-1.45, 11.6, zH(11.6) + 0.05), PN(-0.2, 11.6, zH(11.6) + 0.1), PN(-0.2, 10.75, 0.1)]; s += vl(q, "#e9c42f"); let np = ""; for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) { const p = PN(-1.3 + i * 0.32, 10.85 + j * 0.25, 0.1); np += `M${pr(p)}h.01`; } s += `<path d="${np}" stroke="#b8941a" stroke-width=".5" stroke-linecap="round"/>`; }
+  /* Messingplatten über dem Seilschlitz */
+  for (const [Xc, d] of [[-5.6, 13.5], [-9.4, 19], [-5.6, 24]]) s += vl([PN(Xc - 0.28, d, zH(d)), PN(Xc + 0.28, d, zH(d)), PN(Xc + 0.28, d + 0.7, zH(d + 0.7)), PN(Xc - 0.28, d + 0.7, zH(d + 0.7))], "#b08a3a");
   /* Kanaldeckel und Haltelinie in der Kreuzung */
-  for (const [X, d] of [[-7.5, 9.2], [-28, 9.6]]) { const [x, y] = PN(X, d, 0), q = F / d; s += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.4 * q)}" ry="${r(0.4 * q * 4.6 / d)}" fill="#55524e"/><ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.3 * q)}" ry="${r(0.3 * q * 4.6 / d)}" fill="none" stroke="#7a7671" stroke-width=".4"/>`; }
+  for (const [X, d] of [[-3.2, 9.0]]) { const [x, y] = PN(X, d, 0), q = F / d; s += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.4 * q)}" ry="${r(0.4 * q * 4.6 / d)}" fill="#55524e"/><ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.32 * q)}" ry="${r(0.32 * q * 4.6 / d)}" fill="none" stroke="#7a7671" stroke-width=".4"/><text transform="translate(${r(x)} ${r(y + 0.6)}) scale(1 ${r(4.6 / d * 10) / 10})" font-size="${r(0.11 * q)}" text-anchor="middle" fill="#8a8680" font-family="Arial,sans-serif" font-weight="bold">SF WATER</text>`; }
   for (let i = 0; i < 16; i++) { const d = 14 + rnd() * 40, X = -13 + rnd() * 11; s += `<circle cx="${r(PN(X, d, 0)[0])}" cy="${r(PN(X, d, zH(d))[1])}" r="${r(14 / d)}" fill="${rnd() < 0.5 ? "#6d6a66" : "#9a9692"}" opacity=".4"/>`; }
   S.hinten(s);
 }
@@ -640,7 +646,7 @@ const HAUS = {};
     ...bloecke(PO, gzE, [[-272, -150], [-135, -15]], reihenE, freiE, 62, { vorn: (f) => misch(f, "#fff4e0", 0.1), seite: (f) => misch(f, "#3e5070", 0.08) }, rnd2, () => 99),
     ...bloecke(PO, gzE, [[5, 125]], reihenE, freiE, 95, { vorn: (f) => misch(f, "#fff4e0", 0.1), seite: (f) => misch(f, "#3e5070", 0.36) }, rnd2, (a0, a1, d0) => d0 < 130 ? 10.5 : 99),
   ];
-  for (let d = 20; d < 714; d += d < 126 ? 12 : 22) { const d1 = Math.min(714, d + (d < 126 ? 12 : 22)), ls = [-330, -135, -15, 5, 60]; LE.push({ t: d1 - 0.01, V: [{ p: rahmen([...ls.map((l) => PO(l, d, gzE(l, d))), ...ls.slice().reverse().map((l) => PO(l, d1, gzE(l, d1)))]), f: dunst("#8b897f", d) }] }); }
+  for (let d = 26; d < 714; d += d < 126 ? 12 : 22) { const d1 = Math.min(714, d + (d < 126 ? 12 : 22)), ls = [-330, -135, -15, 5, 60]; LE.push({ t: d1 - 0.01, V: [{ p: rahmen([...ls.map((l) => PO(l, d, gzE(l, d))), ...ls.slice().reverse().map((l) => PO(l, d1, gzE(l, d1)))]), f: dunst("#8b897f", d) }] }); }
   KLIP[0] = -2.5;
   /* Westseite der Hyde Street: fern vereinfacht, nah mit Erker, Gesims, Garage, Treppe */
   const WL = [];
@@ -765,7 +771,7 @@ const LOMB = {};
   /* Eckgarten (Nordblick, links der Naht) mit Gartenmauer und Hecke */
   k += vl(GARTEN, S.lg("garten", [[0, "#5c7d43"], [1, "#46663a"]]));
   {
-    const he = []; for (let d = 10.9; d <= 60; d += 1.6) he.push(d);
+    const he = []; for (let d = 12.6; d <= 60; d += 1.6) he.push(d);
     const band = (z0, z1) => kappX([...he.map((d) => PN(2.25, d, zH(d) + z0)), ...he.slice().reverse().map((d) => PN(2.25, d, zH(d) + z1))], -6, SEAM);
     k += vl(band(0, 0.62), "#b9ae9c") + vl(kappX([...he.map((d) => PN(2.25, d, zH(d) + 0.62)), ...he.slice().reverse().map((d) => PN(2.75, d, zH(d) + 0.62))], -6, SEAM), "#d6cdbd");
     k += vl(kappX([...he.map((d) => PN(2.8, d, zH(d) + 0.62)), ...he.slice().reverse().map((d) => PN(2.8, d, zH(d) + 1.7))], -6, SEAM), "#3f5f30");

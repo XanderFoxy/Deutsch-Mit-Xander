@@ -76,7 +76,7 @@ const RAD = Math.PI / 180;
 
 /* ---------- Maßstab, Boden, Schatten ---------- */
 const yP = (d) => HOR + 1800 / d, dP = (y) => 1800 / (y - HOR), mY = (y) => (y - HOR) / 6;     /* Platz */
-const yT = (d) => HOR + 480 / d, dT = (y) => 480 / (y - HOR), mT = (y) => (y - HOR) / 1.6;     /* Terrasse */
+const yT = (d) => HOR + 510 / d, dT = (y) => 510 / (y - HOR), mT = (y) => (y - HOR) / 1.7;     /* Terrasse */
 const VS = 63, LS = 1 / Math.tan(22 * RAD), CS = Math.cos(18 * RAD);
 /* Schattenspitze eines Dings der Höhe h (m), das bei (x|y) auf dem Boden steht */
 const spitze = (x, y, h, terr) => {
@@ -622,9 +622,9 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
   let k = "";
   const RASEN = S.lg("rasen", [[0, "#93b25f"], [1, "#78994a"]]);
   const KANTE = `fill="none" stroke="#b9ad8f" stroke-width=".3"`;
-  for (const [u0, u1, v0, v1] of [[8, 80, 10, 17], [101, 172, 10, 17]]) k += bodenFlaeche(u0, u1, v0, v1, `fill="${RASEN}"`, 152);
-  k += vieleck([boden(8, 31), boden(80, 31), boden(80, vRand(80)), boden(8, vRand(8))], `fill="${RASEN}"`, 152);
-  k += vieleck([boden(101, 31), boden(172, 31), boden(172, vRand(172)), boden(101, vRand(101))], `fill="${RASEN}"`, 152);
+  for (const [u0, u1, v0, v1] of [[-8, 80, 10, 17], [101, 172, 10, 17]]) k += bodenFlaeche(u0, u1, v0, v1, `fill="${RASEN}"`, 167);
+  k += vieleck([boden(-6, 31), boden(80, 31), boden(80, vRand(80)), boden(-6, vRand(-6))], `fill="${RASEN}"`, 167);
+  k += vieleck([boden(101, 31), boden(172, 31), boden(172, vRand(172)), boden(101, vRand(101))], `fill="${RASEN}"`, 167);
   /* Rasenstreifen: Mähbahnen */
   { let f = ""; for (let v = 33; v < 60; v += 4) f += strecke(boden(Math.max(8, (v - 35) / 0.3265 - 4.5), v), boden(80, v)); k += `<path d="${f}" stroke="#a9c473" stroke-width=".7" opacity=".35"/>`; }
   /* der Kreis aus hellem Kies um die Säule */
@@ -663,17 +663,17 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
    ===================================================================== */
 {
   let k = "";
-  k += vieleck([boden(-30, -21.5), boden(700, -21.5), boden(700, 0), boden(-30, 0)], `fill="${S.lg("pflaster", [[0, "#cbc3b3"], [1, "#b9b0a0"]])}"`, 153);
+  k += vieleck([boden(-30, -21.5), boden(700, -21.5), boden(700, 0), boden(-30, 0)], `fill="${S.lg("pflaster", [[0, "#cbc3b3"], [1, "#b9b0a0"]])}"`, 167);
   /* Plattenfugen: Längsfugen zum Fluchtpunkt, Querfugen alle 3 m */
   let f = "";
-  for (let v = -19; v < 0; v += 2.5) f += strecke(boden(-10, v), boden(700, v), 0, 0, 320, 152.5);
-  for (let u = 0; u < 300; u += 3) { const a = boden(u, -21.5), b = boden(u, 0); if (Math.hypot(a[0] - b[0], a[1] - b[1]) < 6 || a[1] - boden(u + 3, -21.5)[1] < 0.35) break; f += strecke(a, b, 0, 0, 320, 152.5); }
+  for (let v = -19; v < 0; v += 2.5) f += strecke(boden(-10, v), boden(700, v), 0, 0, 320, 167);
+  for (let u = 0; u < 300; u += 3) { const a = boden(u, -21.5), b = boden(u, 0); if (Math.hypot(a[0] - b[0], a[1] - b[1]) < 6 || a[1] - boden(u + 3, -21.5)[1] < 0.35) break; f += strecke(a, b, 0, 0, 320, 167); }
   k += `<path d="${f}" stroke="#9e9584" stroke-width=".18" opacity=".75"/>`;
   /* Rinne am Platzrand */
-  k += `<path d="${strecke(boden(-10, -0.4), boden(700, -0.4), 0, 0, 320, 152.5)}" stroke="#8f8676" stroke-width=".5" opacity=".6"/>`;
+  k += `<path d="${strecke(boden(-10, -0.4), boden(700, -0.4), 0, 0, 320, 167)}" stroke="#8f8676" stroke-width=".5" opacity=".6"/>`;
   /* Straßenlaternen am Rand der Fußgängerzone */
   let lat = "", sch = "";
-  for (const u of [30, 62, 94, 126, 158]) {
+  for (const u of [62, 94, 126, 158]) {
     const [x, y] = boden(u, -1.6), m = mY(y), h = 4.6 * m;
     sch += wurf(x, y, 4.6, 0.16, false, 0.2);
     lat += `<path d="M${r(x - 0.11 * m)} ${r(y)} L${r(x - 0.06 * m)} ${r(y - h)} L${r(x + 0.06 * m)} ${r(y - h)} L${r(x + 0.11 * m)} ${r(y)} Z" fill="#33403a"/>`;
@@ -687,6 +687,21 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
   k += sch + ps2 + lat + pa;
   S.teil({ id: "koenigstrasse", de: "die Königstraße", syl: "KÖ-nig-stra-ße", it: "la Königstraße (via dello shopping)", itSyl: "KÖ-nig-stras-se", en: "Königstraße (shopping street)",
     x: 0, y: 0, kunst: k, tipp: "Die Königstraße ist die lange Einkaufsstraße vom Hauptbahnhof bis zum Rotebühlplatz." });
+}
+
+/* =====================================================================
+   8b — DIE LATERNE (die vorderste Straßenlaterne der Königstraße)
+   ===================================================================== */
+{
+  const [x, y] = boden(30, -1.6), m = mY(y), h = 4.6 * m;
+  const EIS = S.lg("eisenl", [[0, "#1f2925"], [0.45, "#55655d"], [0.7, "#6d7f75"], [1, "#26302c"]], 0, 0, 1, 0);
+  let k = `<path d="M${r(-0.13 * m)} 0 L${r(-0.06 * m)} ${r(-h)} L${r(0.06 * m)} ${r(-h)} L${r(0.13 * m)} 0 Z" fill="${EIS}"/>`;
+  k += `<path d="M${r(-0.2 * m)} 0 L${r(-0.16 * m)} ${r(-0.5 * m)} L${r(0.16 * m)} ${r(-0.5 * m)} L${r(0.2 * m)} 0 Z" fill="${EIS}"/>`;
+  k += `<path d="M${r(-0.18 * m)} ${r(-h)} L${r(-0.24 * m)} ${r(-h - 0.6 * m)} L${r(0.24 * m)} ${r(-h - 0.6 * m)} L${r(0.18 * m)} ${r(-h)} Z" fill="${S.lg("lglas", [[0, "#fff8e2"], [1, "#e9dcb0"]])}" stroke="#26302c" stroke-width=".18"/>`;
+  k += `<path d="M${r(-0.32 * m)} ${r(-h - 0.6 * m)} L${r(0.32 * m)} ${r(-h - 0.6 * m)} L0 ${r(-h - 0.85 * m)} Z" fill="${EIS}"/>`;
+  const [sx, sy] = spitze(x, y, 4.6, false);
+  k = `<path d="M${r(-0.1 * m)} 0 L${r(sx - x - 0.05 * m)} ${r(sy - y)} L${r(sx - x + 0.05 * m)} ${r(sy - y)} L${r(0.1 * m)} 0 Z" fill="#2a2216" opacity=".22"/>` + k;
+  S.teil({ id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "il lampione", itSyl: "lam-PIO-ne", en: "street lamp", x, y, steht: true, kunst: k });
 }
 
 /* =====================================================================
@@ -950,94 +965,86 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
 }
 
 /* =====================================================================
-   13 — DIE TERRASSE (Kleiner Schlossplatz), DIE FREITREPPE, DAS GELÄNDER
-   Kante 12 m vor uns (y 152), Brüstung 0,5 m Stein + 0,5 m Glas.
+   13 — DAS MUSEUM, DIE FREITREPPE, DAS GELÄNDER
+   Auge 1,7 m über der Terrasse; die Kante liegt 7 m vor uns (y ≈ 185). Die breite Sitz- und
+   Gehtreppe (Tritt 0,9 m, Steigung 0,148 m, 29 Stufen) führt 4,3 m hinab zur Königstraße
+   (≈ 33 m vor uns, y ≈ 166). Weil die Tritte tief sind, sieht man von jeder Stufe den hinteren
+   Streifen; die Handläufe fallen nach hinten zur Mitte hin ab. Rechts endet die Treppe an
+   einer Wange (X = +14 m) mit Glasbrüstung; dahinter steht auf dem Kleinen Schlossplatz der
+   Glaswürfel des Kunstmuseums (nur seine linke Kante ist im Bild).
    ===================================================================== */
-const KANTE = 152, TR0 = 85, TR1 = 235;                 /* Treppe ≈ 6 m breit zwischen den Brüstungen */
+const TE = 1.7, KD = 7, TT = 0.9, TS = 0.148, NST = 29, WANGE = 14;
+const KANTE = HOR + TE * 300 / KD;
+const kanteY = (i) => HOR + (TE + TS * i) * 300 / (KD + TT * i);
+const stufeZ = (d) => -TS * Math.max(0, Math.min(NST, Math.ceil((d - KD) / TT - 1e-6)));
+const T3 = (X, d, z) => [160 + X * 300 / d, HOR + (TE - z) * 300 / d];
+const P2 = (p) => `${r(p[0])} ${r(p[1])}`;
 {
-  let k = `<path d="M0 ${KANTE} L320 ${KANTE} L320 200 L0 200 Z" fill="${S.lg("terrasse", [[0, "#cfc8ba"], [0.4, "#dcd5c8"], [1, "#e4ddd0"]])}"/>`;
+  /* DAS MUSEUM: die Westseite des Würfels (X = 16 m), Glas mit Pfosten, dahinter der helle Steinkern */
+  const X = WANGE + 2, d0 = X * 300 / 152, d1 = X * 300 / 160;
+  const a = T3(X, d0, 0), b = T3(X, d1, 0);
+  let k = `<path d="M312 0 L320 0 L320 ${r(b[1])} L312 ${r(a[1])} Z" fill="${S.lg("museumglas", [[0, "#5f86b0"], [0.45, "#9cbbd6"], [0.75, "#d9e4ea"], [1, "#b9c7cc"]])}"/>`;
+  k += `<path d="M313.6 ${r(a[1] - 30)} L320 ${r(b[1] - 31)} L320 ${r(b[1])} L313.6 ${r(a[1] + 0.2)} Z" fill="#e9e2d2" opacity=".55"/>`;
   let f = "";
-  for (let X = -12; X <= 12; X += 1.2) f += strecke([160 + X * 25, KANTE], [160 + X * 300 / dT(200), 200], 0, KANTE, 320, 200);
-  for (const d of [6, 7.2, 8.4, 9.6, 10.8]) f += `M0 ${r(yT(d))} L320 ${r(yT(d))} `;
-  k += `<path d="${f}" stroke="#a69e8f" stroke-width=".3" opacity=".65"/>`;
-  /* ein paar hellere und dunklere Platten */
-  for (const [X, d, c] of [[-3.6, 7.8, "#efe9de"], [2.4, 9, "#d2cabb"], [4.8, 6.6, "#ebe4d8"], [-7.2, 9.6, "#d6cec0"]]) {
-    const p = [[X, d], [X + 1.2, d], [X + 1.2, d + 1.2], [X, d + 1.2]].map(([a, b]) => [160 + a * 300 / b, yT(b)]);
-    k += vieleck(p, `fill="${c}" opacity=".6"`);
-  }
-  S.teil({ id: "terrasse", de: "die Terrasse", syl: "ter-RAS-se", it: "la terrazza", itSyl: "ter-RAZ-za", en: "terrace", x: 0, y: 0, kunst: k,
-    tipp: "Vom Kleinen Schlossplatz schaut man von oben auf den Schlossplatz." });
+  for (let z = 3.6; z < 40; z += 3.6) { const p = T3(X, d0, z), q = T3(X, d1, z); if (p[1] < 0) break; f += `M312 ${r(p[1])} L320 ${r(q[1])} `; }
+  f += `M316 0 L316 ${r((a[1] + b[1]) / 2)} `;
+  k += `<path d="${f}" stroke="#4d5a63" stroke-width=".35"/><path d="M312 0 L312 ${r(a[1])}" stroke="#39444b" stroke-width=".9"/>`;
+  k += `<path d="M313 10 L319.5 4 M313 40 L319.5 30 M313.2 70 L319.5 62" stroke="#ffffff" stroke-width=".7" opacity=".35"/>`;
+  S.teil({ id: "museum", de: "das Museum", syl: "mu-SE-um", it: "il museo", itSyl: "mu-SE-o", en: "museum", x: 0, y: 0, kunst: k,
+    tipp: "Das Kunstmuseum ist ein Würfel aus Glas – innen ist ein Kern aus Stein." });
 }
 {
-  S.def(`<clipPath id="${S.id("ueberkante")}"><rect x="0" y="0" width="320" height="${KANTE}"/></clipPath>`);
+  S.def(`<clipPath id="${S.id("ueberkante")}"><rect x="0" y="0" width="320" height="${r(KANTE)}"/></clipPath>`);
   let k = "";
-  /* Menschen auf der Treppe: nur Kopf und Schultern ragen über die Kante — es geht hinunter */
-  const leute = [["runter", 15, -0.6, 1.72], ["rauf", 15.6, 1.1, 1.68]];
-  let p = "";
-  for (const [n, d, X, h] of leute) {
-    const drop = (d - 12) * 0.43, yF = HOR + (1.6 + drop) * 300 / d;
-    p += figur(n, 160 + X * 300 / d, yF, h * 300 / d);
+  /* Treppe: Grundfläche, dann jede sichtbare Kante (Licht oben, Fuge darunter) */
+  k += `<path d="M0 ${r(kanteY(NST))} L320 ${r(kanteY(NST))} L320 ${r(KANTE)} L0 ${r(KANTE)} Z" fill="${S.lg("stufen", [[0, "#cfc6b4"], [1, "#e2dacb"]])}"/>`;
+  let dk = "", hl = "";
+  for (let i = 1; i <= NST; i++) {
+    const y = kanteY(i), gap = kanteY(i - 1) - y;
+    dk += `M0 ${r(y)} L320 ${r(y)} `;
+    if (gap > 0.5) hl += `M0 ${r(y + Math.min(0.5, gap * 0.25))} L320 ${r(y + Math.min(0.5, gap * 0.25))} `;
   }
-  k += `<g clip-path="url(#${S.id("ueberkante")})">${p}</g>`;
-  /* Stufenkante oben (Podest) mit Metallschiene */
-  k += `<path d="M${TR0} ${KANTE - 0.5} L${TR1} ${KANTE - 0.5} L${TR1} ${KANTE + 0.6} L${TR0} ${KANTE + 0.6} Z" fill="#e9e3d6"/><path d="M${TR0} ${KANTE + 0.6} L${TR1} ${KANTE + 0.6}" stroke="#7d7a74" stroke-width=".5"/>`;
-  /* Treppenwangen: die Brüstung knickt an der Treppe nach unten ab; die Handläufe fallen mit */
-  const wange = (x0, s) => {
-    const xe = 160 + (x0 - 160) * 12 / 13.7, he = 160 + (x0 - 160) * 12 / 15;
-    let g = `<path d="M${x0} 139.5 L${r(xe)} ${KANTE} L${x0} ${KANTE} Z" fill="${s < 0 ? "#b9b0a0" : "#ddd5c6"}"/>`;
-    g += `<path d="M${x0} 139.5 L${r(xe)} ${KANTE}" stroke="#f1ece2" stroke-width=".6"/>`;
-    g += `<path d="M${r(x0 - s * 1.5)} 129.5 L${r(he)} ${KANTE - 0.2}" stroke="${S.lg("handlauf2", [[0, "#f6f8f9"], [1, "#8d969c"]])}" stroke-width="1.1" stroke-linecap="round"/>`;
-    for (const t of [0.35, 0.75]) { const x = x0 - s * 1.5 + (he - x0 + s * 1.5) * t, y = 129.5 + (KANTE - 0.2 - 129.5) * t; g += `<path d="M${r(x)} ${r(y)} L${r(x)} ${r(Math.min(KANTE, y + 9))}" stroke="#9aa3aa" stroke-width=".7"/>`; }
-    return g;
-  };
-  k += wange(TR0, -1) + wange(TR1, 1);
+  k += `<path d="${dk}" stroke="#8d8474" stroke-width=".22"/><path d="${hl}" stroke="#f6f1e6" stroke-width=".35"/>`;
+  /* Terrasse vor der Kante (Kleiner Schlossplatz), Platten in Flucht */
+  k += `<path d="M0 ${r(KANTE)} L320 ${r(KANTE)} L320 200 L0 200 Z" fill="${S.lg("terrasse", [[0, "#d6cfc2"], [1, "#e6dfd2"]])}"/>`;
+  let pf = "";
+  for (let X = -8.4; X <= 8.4; X += 1.2) pf += strecke(T3(X, KD, 0), T3(X, 4.2, 0), 0, KANTE, 320, 200);
+  for (const d of [5.4, 6.2]) pf += `M0 ${r(T3(0, d, 0)[1])} L320 ${r(T3(0, d, 0)[1])} `;
+  k += `<path d="${pf}" stroke="#aba393" stroke-width=".3" opacity=".7"/>`;
+  k += `<path d="M0 ${r(KANTE)} L320 ${r(KANTE)}" stroke="#f8f4ec" stroke-width=".7"/><path d="M0 ${r(KANTE + 0.6)} L320 ${r(KANTE + 0.6)}" stroke="#7d7a74" stroke-width=".35"/>`;
+  /* rechte Wange (Mauer zur Treppe hin) und die Fläche des Kleinen Schlossplatzes unter dem Museum */
+  const w0 = WANGE * 300 / 160, w1 = KD + TT * NST;
+  const wt0 = T3(WANGE, w0, 0), wt1 = T3(WANGE, w1, 0), wb0 = T3(WANGE, w0, stufeZ(w0)), wb1 = T3(WANGE, w1, -TS * NST);
+  k += `<path d="M${P2(wt0)} L${P2(wt1)} L${P2(wb1)} L${P2(wb0)} Z" fill="${S.lg("wange3", [[0, "#cbbf9f"], [1, "#e2d7bc"]], 0, 0, 1, 0)}"/>`;
+  let fu = ""; for (let z = -0.5; z > -4.3; z -= 0.55) { const p = T3(WANGE, w0, z), q = T3(WANGE, w1, z); fu += strecke(p, q, 0, 0, 320, 200); }
+  k += `<path d="${fu}" stroke="#ab9f84" stroke-width=".2"/>`;
+  k += `<path d="M${P2(wt0)} L${P2(wt1)} L${P2(T3(WANGE + 2, w1, 0))} L312 ${r(T3(WANGE + 2, (WANGE + 2) * 300 / 152, 0)[1])} L320 ${r(T3(WANGE + 2, (WANGE + 2) * 300 / 160, 0)[1])} Z" fill="#ddd5c5"/>`;
+  /* Menschen auf der Treppe (sie stehen tiefer als wir) */
+  for (const [n, d, X, h] of [["runter", 14, -1.5, 1.72], ["rauf", 18, 2, 1.68]]) { const z = stufeZ(d), p = T3(X, d, z); k += figur(n, p[0], p[1], h * 300 / d); }
   S.teil({ id: "treppe", de: "die Freitreppe", syl: "FREI-trep-pe", it: "la scalinata", itSyl: "sca-li-NA-ta", en: "outdoor staircase", x: 0, y: 0, kunst: k,
-    tipp: "Über die Freitreppe geht man vom Kleinen Schlossplatz hinunter zur Königstraße." });
+    tipp: "Über die breite Freitreppe geht man vom Kleinen Schlossplatz hinunter zur Königstraße." });
 }
 {
-  /* Brüstung aus Sandstein mit Glasgeländer und Handlauf aus Edelstahl, links und rechts der Treppe */
+  /* DAS GELÄNDER: zwei Handläufe auf der Treppe und die Glasbrüstung auf der Wange */
   let k = "";
-  const STEIN_B = S.lg("bruestung", [[0, "#e7decb"], [1, "#d3c8b1"]]);
-  const GLAS = S.lg("glas", [[0, "#e9f6f9", 0.22], [0.5, "#cfe6ee", 0.1], [1, "#bcd7e2", 0.2]]);
   const ROHR = S.lg("rohr", [[0, "#ffffff"], [0.45, "#d9dfe3"], [1, "#7f8a92"]]);
-  for (const [x0, x1] of [[0, TR0], [TR1, 320]]) {
-    k += `<path d="M${x0} 139.5 L${x1} 139.5 L${x1} ${KANTE} L${x0} ${KANTE} Z" fill="${STEIN_B}"/>`;
-    let fu = `M${x0} 145.8 L${x1} 145.8 `;
-    for (let x = x0 + 14; x < x1 - 2; x += 30) fu += `M${x} 140.6 L${x} 145.8 M${x + 15} 145.8 L${x + 15} ${KANTE} `;
-    k += `<path d="${fu}" stroke="#b3a78f" stroke-width=".3"/>`;
-    k += `<path d="M${x0} 138.8 L${x1} 138.8 L${x1} 139.6 L${x0} 139.6 Z" fill="#f6f1e6"/><path d="M${x0} 139.6 L${x1} 139.6 L${x1} 140.5 L${x0} 140.5 Z" fill="#cdbfa4"/>`;
-    k += `<path d="M${x0} ${KANTE - 0.4} L${x1} ${KANTE - 0.4}" stroke="#a0957e" stroke-width=".5"/>`;
-    /* Glas, Pfosten, Handlauf */
-    k += `<path d="M${x0} 126.9 L${x1} 126.9 L${x1} 139 L${x0} 139 Z" fill="${GLAS}"/>`;
-    k += `<path d="M${x0} 138.8 L${x1} 138.8" stroke="#6f777c" stroke-width=".6"/>`;
-    let gl = "";
-    for (let x = x0 + 6; x < x1 - 4; x += 19) gl += `M${x} 138 L${x + 7} 128 M${x + 3} 138.4 L${x + 6} 134 `;
-    k += `<path d="${gl}" stroke="#ffffff" stroke-width=".45" opacity=".35"/>`;
-    for (const X of [-7.5, -6, -4.5, -3, 3, 4.5, 6, 7.5]) { const x = 160 + X * 300 / 12.15; if (x < x0 - 0.5 || x > x1 + 0.5) continue; k += `<rect x="${r(x - 0.5)}" y="126.6" width="1" height="12.4" fill="${S.lg("pfosten", [[0, "#8a949b"], [0.5, "#f4f6f7"], [1, "#9aa3aa"]], 0, 0, 1, 0)}"/>`; }
-    k += `<rect x="${x0}" y="125.9" width="${x1 - x0}" height="1.3" rx=".6" fill="${ROHR}"/>`;
+  for (const X of [-5, 6.5]) {
+    const d1 = KD + TT * NST + 0.4, a = T3(X, KD, 0.9), b = T3(X, d1, -TS * NST + 0.9);
+    let po = "";
+    for (let d = KD; d < d1; d += 2.7) { const t = (d - KD) / (d1 - KD), z = 0.9 + (-TS * NST) * t; const p = T3(X, d, z), q = T3(X, d, z - 0.9); if (p[0] < 0 || p[0] > 320) continue; po += `M${P2(p)} L${P2(q)} `; }
+    k += `<path d="${po}" stroke="#8d969c" stroke-width=".55"/>`;
+    k += `<path d="${strecke(a, b)}" stroke="#5f686e" stroke-width="1.3" stroke-linecap="round" transform="translate(0 .35)" opacity=".5"/><path d="${strecke(a, b)}" stroke="${ROHR}" stroke-width="1.05" stroke-linecap="round"/>`;
+    const e = T3(X, d1 + 0.3, -TS * NST + 0.3);
+    k += `<path d="M${P2(b)} Q${r(e[0])} ${r(b[1])} ${P2(e)}" stroke="#c9d0d4" stroke-width=".6" fill="none"/>`;
   }
+  /* Glasbrüstung auf der Wange */
+  const w0 = WANGE * 300 / 160, w1 = KD + TT * NST;
+  const g0 = T3(WANGE, w0, 0), g1 = T3(WANGE, w1, 0), h0 = T3(WANGE, w0, 1), h1 = T3(WANGE, w1, 1);
+  k += `<path d="M${P2(g0)} L${P2(g1)} L${P2(h1)} L${P2(h0)} Z" fill="${S.lg("glas", [[0, "#e9f6f9", 0.3], [1, "#bcd7e2", 0.18]])}"/>`;
+  let ps = ""; for (let d = w0 + 0.3; d < w1; d += 1.5) { const p = T3(WANGE, d, 0), q = T3(WANGE, d, 1); ps += `M${P2(p)} L${P2(q)} `; }
+  k += `<path d="${ps}" stroke="#9aa3aa" stroke-width=".5"/><path d="M${P2(h0)} L${P2(h1)}" stroke="${ROHR}" stroke-width=".9" stroke-linecap="round"/>`;
   S.teil({ id: "gelaender", de: "das Geländer", syl: "ge-LÄN-der", it: "la ringhiera", itSyl: "rin-GHIE-ra", en: "railing", x: 0, y: 0, kunst: k,
-    tipp: "Das Geländer aus Glas und Stahl schützt vor dem Absturz." });
-}
-
-/* =====================================================================
-   14 — DIE LATERNE (Kandelaber auf der Terrasse, ganz links)
-   ===================================================================== */
-{
-  const d = 10.5, y = yT(d), m = 300 / d, x = 3;
-  const EIS = S.lg("eisenl", [[0, "#1f2925"], [0.45, "#55655d"], [0.7, "#6d7f75"], [1, "#26302c"]], 0, 0, 1, 0);
-  /* Schatten auf dem Boden bis zur Brüstung, dann an ihr hinauf */
-  const [sx, sy] = spitze(x, y, 4, true), t = (y - KANTE) / (y - sy), kx = x + (sx - x) * t;
-  let k = `<path d="M${r(-0.1 * m)} 0 L${r(kx - x - 0.05 * m)} ${r(KANTE - y)} L${r(kx - x + 0.05 * m)} ${r(KANTE - y)} L${r(0.1 * m)} 0 Z" fill="#2a2216" opacity=".22"/>`;
-  k += `<path d="M${r(kx - x - 1.1)} ${r(KANTE - y)} L${r(kx - x - 1.1)} ${r(139.5 - y)} L${r(kx - x + 0.9)} ${r(139.5 - y)} L${r(kx - x + 0.9)} ${r(KANTE - y)} Z" fill="#2a2216" opacity=".16"/>`;
-  k += `<path d="M${r(-0.15 * m)} 0 L${r(-0.13 * m)} ${r(-0.35 * m)} Q${r(-0.07 * m)} ${r(-0.5 * m)} ${r(-0.06 * m)} ${r(-0.8 * m)} L${r(0.06 * m)} ${r(-0.8 * m)} Q${r(0.07 * m)} ${r(-0.5 * m)} ${r(0.13 * m)} ${r(-0.35 * m)} L${r(0.15 * m)} 0 Z" fill="${EIS}"/>`;
-  k += `<path d="M${r(-0.05 * m)} ${r(-0.8 * m)} L${r(-0.035 * m)} ${r(-3.85 * m)} L${r(0.035 * m)} ${r(-3.85 * m)} L${r(0.05 * m)} ${r(-0.8 * m)} Z" fill="${EIS}"/>`;
-  for (const z of [1.6, 3.0]) k += `<rect x="${r(-0.06 * m)}" y="${r(-z * m)}" width="${r(0.12 * m)}" height="${r(0.05 * m)}" rx=".4" fill="#3a4741"/>`;
-  const y0 = -3.85 * m;
-  k += `<path d="M${r(-0.1 * m)} ${r(y0)} L${r(0.1 * m)} ${r(y0)} L${r(0.15 * m)} ${r(y0 - 0.5 * m)} L${r(-0.15 * m)} ${r(y0 - 0.5 * m)} Z" fill="${S.lg("lglas", [[0, "#fff8e2"], [1, "#e9dcb0"]])}" stroke="#26302c" stroke-width=".5"/>`;
-  k += `<path d="M0 ${r(y0)} L0 ${r(y0 - 0.5 * m)}" stroke="#26302c" stroke-width=".35"/>`;
-  k += `<path d="M${r(-0.19 * m)} ${r(y0 - 0.5 * m)} L${r(0.19 * m)} ${r(y0 - 0.5 * m)} L${r(0.05 * m)} ${r(y0 - 0.66 * m)} L${r(-0.05 * m)} ${r(y0 - 0.66 * m)} Z" fill="${EIS}"/><circle cx="0" cy="${r(y0 - 0.7 * m)}" r=".8" fill="#26302c"/>`;
-  S.teil({ id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "il lampione", itSyl: "lam-PIO-ne", en: "street lamp", x, y, steht: true, kunst: k });
+    tipp: "Am Geländer kann man sich auf der Treppe festhalten." });
 }
 
 /* =====================================================================
@@ -1046,7 +1053,7 @@ const KANTE = 152, TR0 = 85, TR1 = 235;                 /* Treppe ≈ 6 m breit 
 {
   const taube = (x, y, s, sp, pickt) => {
     const X = (v) => r(x + v * s * sp), Y = (v) => r(y + v * s);
-    const [tx0, ty0] = spitze(128 + x, 182 + y, 0.25, true), tx = tx0 - 128, ty = ty0 - 182;
+    const [tx0, ty0] = spitze(128 + x, 194 + y, 0.25, true), tx = tx0 - 128, ty = ty0 - 194;
     let g = `<path d="M${X(-3)} ${Y(0)} L${r(tx - 1)} ${r(ty)} L${r(tx + 1)} ${r(ty)} L${X(3)} ${Y(0)} Z" fill="#2a2216" opacity=".18"/>`;
     g += `<ellipse cx="${x}" cy="${Y(0.15)}" rx="${r(3 * s)}" ry="${r(0.45 * s)}" fill="#2a2216" opacity=".22"/>`;
     const kopf = pickt ? [2.9, -1.4] : [2.3, -3.6];
@@ -1060,7 +1067,7 @@ const KANTE = 152, TR0 = 85, TR1 = 235;                 /* Treppe ≈ 6 m breit 
     g += `<path d="M${X(0)} ${Y(-0.65)} l0 ${r(0.65 * s)} l${r(0.4 * s * sp)} 0 M${X(0.7)} ${Y(-0.6)} l0 ${r(0.6 * s)} l${r(0.4 * s * sp)} 0" stroke="#c9605a" stroke-width="${r(0.22 * s)}" fill="none" stroke-linecap="round"/>`;
     return g;
   };
-  S.teil({ id: "taube", de: "die Taube", syl: "TAU-be", it: "il piccione", itSyl: "pic-CIO-ne", en: "pigeon", x: 128, y: 182, kunst: taube(0, 0, 1.8, 1, false) + taube(22, -5, 1.65, -1, true) });
+  S.teil({ id: "taube", de: "die Taube", syl: "TAU-be", it: "il piccione", itSyl: "pic-CIO-ne", en: "pigeon", x: 128, y: 194, kunst: taube(0, 0, 2.1, 1, false) + taube(24, -4, 1.95, -1, true) });
 }
 
 /* =====================================================================
