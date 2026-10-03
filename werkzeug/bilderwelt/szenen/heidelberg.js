@@ -94,8 +94,8 @@ const QUADER = `url(#${S.id("quader")})`;
     }
     return m;
   };
-  S.def(`<pattern id="${S.id("waldf")}" width="6.4" height="4.3" patternUnits="userSpaceOnUse"><rect width="6.4" height="4.3" fill="#4a6a3c"/>${kronen(15, 6.4, 4.3, 0.55, 1.05, ["#3f5d34", "#557a42", "#4a6b3a", "#62844a", "#36502e", "#7d8c46"], "#a9c27a")}</pattern>`);
-  S.def(`<pattern id="${S.id("waldg")}" width="12.6" height="7.9" patternUnits="userSpaceOnUse">${kronen(12, 12.6, 7.9, 1.1, 1.9, ["#3a5630", "#4e7240", "#5c7f45", "#33492b", "#6f8a44", "#a8862e"], "#b5cc84")}</pattern>`);
+  S.def(`<pattern id="${S.id("waldf")}" width="6.4" height="4.3" patternUnits="userSpaceOnUse"><rect width="6.4" height="4.3" fill="#4a6a3c"/>${kronen(15, 6.4, 4.3, 0.55, 1.05, ["#3f5d34", "#557a42", "#4a6b3a", "#62844a", "#36502e", "#58763c"], "#9cc07a")}</pattern>`);
+  S.def(`<pattern id="${S.id("waldg")}" width="12.6" height="7.9" patternUnits="userSpaceOnUse">${kronen(12, 12.6, 7.9, 1.1, 1.9, ["#3a5630", "#4e7240", "#5c7f45", "#33492b", "#5f8040", "#a8862e"], "#a8cc88")}</pattern>`);
   let f = "";
   for (let i = 0; i < 9; i++) f += `<ellipse cx="${r(rnd() * 47)}" cy="${r(rnd() * 29)}" rx="${r(5 + rnd() * 8)}" ry="${r(2.4 + rnd() * 3.4)}" fill="${i % 2 ? "#13240f" : "#d9e4a0"}" opacity="${i % 2 ? 0.16 : 0.1}"/>`;
   S.def(`<pattern id="${S.id("fleck")}" width="47" height="29" patternUnits="userSpaceOnUse">${f}</pattern>`);
@@ -147,10 +147,10 @@ const kammY = (x) => { for (let i = 1; i < kamm.length; i++) if (x <= kamm[i][0]
   k += `<path d="${d}" fill="${FLECK}"/>`;
   /* Dunst nach oben (Ferne), Licht von rechts, Schatten in den Rinnen */
   k += `<path d="${d}" fill="${S.lg("waldluft", [[0, "#a7bccb", 0.7], [0.3, "#a7bccb", 0.32], [0.65, "#a7bccb", 0.06], [1, "#a7bccb", 0]], 0, 0, 0, 1, ' gradientUnits="userSpaceOnUse" x1="0" y1="18" x2="0" y2="120"')}"/>`;
-  k += `<path d="${d}" fill="${S.lg("waldlicht", [[0, "#10200c", 0.3], [0.45, "#10200c", 0.04], [1, "#ffe0a0", 0.14]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="${d}" fill="${S.lg("waldlicht", [[0, "#10200c", 0.3], [0.45, "#10200c", 0.04], [1, "#ffe6b0", 0.08]], 0, 0, 1, 0)}"/>`;
   for (const [x0, w] of [[66, 10], [118, 12], [236, 9], [300, 10]]) k += `<path d="M${x0} ${r(kammY(x0) + 4)} Q${x0 - w * 0.3} ${r(kammY(x0) + 40)} ${x0 - w} 120 L${x0 - w + 7} 120 Q${x0 + 2} ${r(kammY(x0) + 40)} ${x0 + 3} ${r(kammY(x0) + 4)} Z" fill="#14240f" opacity=".16"/>`;
   /* einzelne herbstliche Bäume (Anfang Oktober) */
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 44; i++) {
     const x = rnd() * 320, y = kammY(x) + 6 + rnd() * 74, s = 0.6 + (y - 20) / 110;
     if (x > 92 && x < 222 && y > 40 && y < 104) continue;
     const f = ["#b8862e", "#c7702c", "#d9a53a", "#9c8a34", "#c25a2a"][Math.floor(rnd() * 5)];
@@ -381,8 +381,22 @@ const sudufer = (x) => x <= 186 ? 130 + (x / 186) * 15 : 145 + (x - 186) * 0.21;
   const dachF = ["#9a4e36", "#8a442e", "#a65a3c", "#7c3c28", "#93533b", "#5b5f66"];
   const DL = S.lg("dachlicht", [[0, "#000", 0.28], [0.55, "#000", 0.02], [1, "#fff", 0.16]], 0, 0, 1, 0);
   const FL = S.lg("fassadenlicht", [[0, "#3a2418", 0.22], [0.3, "#3a2418", 0.04], [1, "#fff8e8", 0.1]], 0, 0, 1, 0);
+  /* Fenster als Muster je Maßstab (spart viele Einzelteile — die Seite lädt schnell) */
+  const FM = {};
+  const fensterMuster = (s) => {
+    const q = Math.min(1.3, Math.max(0.6, Math.round(s * 10) / 10));
+    if (!FM[q]) {
+      const id = S.id("fenster" + String(q).replace(".", ""));
+      let c = "";
+      for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) c += `<rect x="${r((0.8 + i * 2.4) * q)}" y="${r((0.4 + j * 2.9) * q)}" width="${r(0.8 * q)}" height="${r(1.25 * q)}" fill="${i === 1 && j === 0 ? "#c9d8e2" : "#3a3e45"}"/>`;
+      S.def(`<pattern id="${id}" width="${r(7.2 * q)}" height="${r(5.8 * q)}" patternUnits="userSpaceOnUse">${c}</pattern>`);
+      FM[q] = `url(#${id})`;
+    }
+    return FM[q];
+  };
   /* Haus: traufständig mit Gauben (meist) oder giebelständig; Licht von rechts */
   const haus = (x, yb, w, h, s, giebel) => {
+    if (x + w > 320) { w = 320 - x; if (w < 1.5) return ""; giebel = false; }
     const f = fass[Math.floor(rnd() * fass.length)], d = dachF[Math.floor(rnd() * dachF.length)];
     let g = `<rect x="${r(x)}" y="${r(yb - h)}" width="${r(w)}" height="${r(h)}" fill="${f}"/><rect x="${r(x)}" y="${r(yb - h)}" width="${r(w)}" height="${r(h)}" fill="${FL}"/>`;
     if (giebel) {
@@ -398,11 +412,7 @@ const sudufer = (x) => x <= 186 ? 130 + (x / 186) * 15 : 145 + (x - 186) * 0.21;
       for (let i = 0; i < nG; i++) { const gx = x + (i + 0.5) * w / nG, gy = yb - h - rh * 0.45; g += `<path d="M${r(gx - .7 * s)} ${r(gy + .9 * s)} V${r(gy)} L${r(gx)} ${r(gy - .6 * s)} L${r(gx + .7 * s)} ${r(gy)} V${r(gy + .9 * s)} Z" fill="#efe6d6"/><rect x="${r(gx - .35 * s)}" y="${r(gy + .05)}" width="${r(.7 * s)}" height="${r(.7 * s)}" fill="#3d4148"/>`; }
       if (rnd() < 0.5) g += `<rect x="${r(x + w * (0.2 + rnd() * 0.6))}" y="${r(yb - h - rh - .8 * s)}" width="${r(.8 * s)}" height="${r(1.6 * s)}" fill="#8a5a46"/>`;
     }
-    const reihen = Math.max(1, Math.floor((h - .6 * s) / (2.9 * s))), sp = Math.max(1, Math.floor(w / (2.4 * s)));
-    for (let i = 0; i < reihen; i++) for (let j = 0; j < sp; j++) {
-      const fx = x + (j + 0.5) * w / sp - 0.4 * s, fy = yb - h + 0.9 * s + i * (h - 1.2 * s) / reihen;
-      g += `<rect x="${r(fx)}" y="${r(fy)}" width="${r(0.8 * s)}" height="${r(1.25 * s)}" fill="${rnd() < 0.18 ? "#c9d8e2" : "#3a3e45"}"/>`;
-    }
+    g += `<rect x="${r(x + .35 * s)}" y="${r(yb - h + .5 * s)}" width="${r(w - .7 * s)}" height="${r(h - .8 * s)}" fill="${fensterMuster(s)}"/>`;
     return g;
   };
   /* Dächermeer als Grund: dicht an dicht, ohne Waldlücken bis zum Kai */
@@ -620,17 +630,18 @@ const weinOben = (x) => 181.6 - (x - 60) * 0.058;
   for (let i = 0; i < 40; i++) { const x = 60 + rnd() * 260, y = weinOben(x) + 1 + rnd() * (188 - weinOben(x)); k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(1 + rnd() * 2)}" ry=".4" fill="#7d8a4a" opacity=".5"/>`; }
   /* Rebzeilen laufen den Hang hinab: von vorn auseinander, nach hinten zusammen (Fluchtpunkt) */
   const VP = [205, 118];
-  for (let i = 0; i < 15; i++) {
-    const B0 = [52 + i * 19.6, 191];
+  for (let i = 0; i < 23; i++) {
+    const B0 = [40 + i * 13.4, 191];
     const mitte = [], links = [], rechts = [];
     for (let t = 0; t <= 1; t += 0.04) {
       const x = B0[0] + (VP[0] - B0[0]) * t, y = B0[1] + (VP[1] - B0[1]) * t;
       if (y < weinOben(x) + 0.6 || x < 60) break;
+      if (x > 318.5) continue;
       const sk = (y - VP[1]) / (B0[1] - VP[1]);
       mitte.push([x, y, sk]);
     }
     if (mitte.length < 2) continue;
-    for (const [x, y, sk] of mitte) { const w = 1.5 * sk + 0.4, wob = (rnd() - 0.5) * 0.5 * sk; links.push(`${r(x - w + wob)} ${r(y - 1.6 * sk)}`); rechts.push(`${r(x + w + wob)} ${r(y - 1.2 * sk)}`); }
+    for (const [x, y, sk] of mitte) { const w = 2.5 * sk + 0.45, wob = (rnd() - 0.5) * 0.5 * sk; links.push(`${r(x - w + wob)} ${r(y - 2.2 * sk)}`); rechts.push(`${r(x + w + wob)} ${r(y - 1.6 * sk)}`); }
     const band = `M${links.join(" L")} L${rechts.reverse().join(" L")} Z`;
     k += `<path d="${band}" fill="#3a2e1c" opacity=".35" transform="translate(-.9 .7)"/><path d="${band}" fill="${LAUB}"/><path d="${band}" fill="${S.lg("rebenlicht", [[0, "#000", 0.18], [0.6, "#000", 0], [1, "#fff2b0", 0.18]], 0, 0, 1, 0)}"/>`;
     mitte.forEach(([x, y, sk], j) => {
@@ -660,7 +671,7 @@ const weinOben = (x) => 181.6 - (x - 60) * 0.058;
   /* der Weg: heller Sandsteinkies mit Herbstlaub */
   k += `<path d="M0 194.6 Q160 192.2 320 194 L320 200 L0 200 Z" fill="${S.lg("weg", [[0, "#cdb99b"], [1, "#b39c7c"]])}"/>`;
   for (let i = 0; i < 60; i++) k += `<circle cx="${r(rnd() * 320)}" cy="${r(195 + rnd() * 5)}" r="${r(0.2 + rnd() * 0.35)}" fill="${rnd() < 0.5 ? "#8f7a5e" : "#e8dbc2"}" opacity=".7"/>`;
-  for (let i = 0; i < 26; i++) k += `<ellipse cx="${r(rnd() * 320)}" cy="${r(195.4 + rnd() * 4.4)}" rx="${r(.7 + rnd() * .5)}" ry=".35" fill="${["#c7702c", "#d9a53a", "#a8562a", "#b8862e"][Math.floor(rnd() * 4)]}" transform="rotate(${Math.round(rnd() * 60 - 30)} 160 197)"/>`;
+  for (let i = 0; i < 26; i++) { const x = r(rnd() * 320), y = r(195.4 + rnd() * 4.4); k += `<ellipse cx="${x}" cy="${y}" rx="${r(.7 + rnd() * .5)}" ry=".35" fill="${["#c7702c", "#d9a53a", "#a8562a", "#b8862e"][Math.floor(rnd() * 4)]}" transform="rotate(${Math.round(rnd() * 60 - 30)} ${x} ${y})"/>`; }
   S.teil({ id: "philosophenweg", de: "der Philosophenweg", syl: "phi-lo-SO-phen-weg", it: "il Sentiero dei Filosofi", itSyl: "sen-TIE-ro dei fi-LO-so-fi", en: "Philosophers' Walk", x: 0, y: 0, kunst: k,
     tipp: "Auf dem Philosophenweg gingen Professoren und Studenten spazieren und dachten nach." });
 }

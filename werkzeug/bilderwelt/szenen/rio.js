@@ -67,6 +67,24 @@ const um = (ox, oy, svg) => `<g transform="translate(${r(-ox)} ${r(-oy)})">${svg
 const knapp = (svg) => svg.replace(/ (d|x1|y1|x2|y2|cx|cy|rx|ry)="([^"]*)"/g, (m, a, v) => ` ${a}="${v.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n)))}"`);
 const pts = (a) => a.map(([x, y]) => `${r(x)} ${r(y)}`).join(" L");
 B.mensch({}, 10);
+/* Vieleck auf das Bild zuschneiden (Sutherland–Hodgman), damit nichts aus dem Rahmen ragt */
+function kappe(p, x0 = 0, y0 = 0, x1 = 320, y1 = 200) {
+  const kanten = [[(q) => q[0] >= x0, (a, b) => [x0, a[1] + (b[1] - a[1]) * (x0 - a[0]) / (b[0] - a[0])]],
+    [(q) => q[0] <= x1, (a, b) => [x1, a[1] + (b[1] - a[1]) * (x1 - a[0]) / (b[0] - a[0])]],
+    [(q) => q[1] >= y0, (a, b) => [a[0] + (b[0] - a[0]) * (y0 - a[1]) / (b[1] - a[1]), y0]],
+    [(q) => q[1] <= y1, (a, b) => [a[0] + (b[0] - a[0]) * (y1 - a[1]) / (b[1] - a[1]), y1]]];
+  for (const [innen, schnitt] of kanten) {
+    const aus = [];
+    for (let i = 0; i < p.length; i++) {
+      const a = p[i], b = p[(i + 1) % p.length];
+      if (innen(b)) { if (!innen(a)) aus.push(schnitt(a, b)); aus.push(b); } else if (innen(a)) aus.push(schnitt(a, b));
+    }
+    p = aus;
+    if (!p.length) return p;
+  }
+  return p;
+}
+const vieleck = (p, attr) => { const q = kappe(p); return q.length > 2 ? `<path d="M${pts(q)} Z" ${attr}/>` : ""; };
 
 /* Bodenpunkt (seitlich X Meter, Tiefe Z Meter) → Bild (f = 175) */
 const F = 175;
@@ -248,7 +266,7 @@ const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Flu
   k += `<path d="M${pts(HUEGEL)} Z" fill="${S.lg("huegelluft", [[0, "#9fc3c6", 0.4], [1, "#2f5a3c", 0.08]])}"/>`;
   /* kahle Felswand von Leme zum Meer (rechts, besonnt) und Felsplatten */
   k += `<path d="M242 81.4 L246 86 L249 92 L252.5 100.6 L246.6 100.6 L245 93 L242.6 86 Z" fill="${S.lg("lemefels", [[0, "#8f8a80"], [1, "#c9c0ae"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M186 76 q3 3 2 8 q-2 -3 -4 -4 Z M226 80 q3 2 4 7 q-3 -2 -5 -3 Z" fill="#8e918b" opacity=".7"/>`;
+  k += `<path d="M186 77 q2.4 2.4 1.6 6.4 q-1.6 -2 -3.2 -3 Z" fill="#8e918b" opacity=".5"/>`;
   /* das Fort Duque de Caxias oben auf Leme */
   k += `<path d="M226.5 77.9 L227 75.6 L233.6 75.4 L234 77.8 Z" fill="#c9c4b6"/><rect x="228.4" y="74.4" width="3.6" height="1.2" fill="#d9d4c6"/><line x1="232.8" y1="75.4" x2="232.8" y2="71.8" stroke="#555" stroke-width=".15"/><rect x="232.85" y="71.8" width="1.6" height="1" fill="#2f8a4a"/>`;
   k += `<path d="M${pts(HUEGEL.slice(0, 18))}" stroke="#5e8f66" stroke-width=".5" fill="none" opacity=".6"/>`;
@@ -306,7 +324,7 @@ const XF = -84.8;
     bauten.push({ z0: Z, z1: Z + w, H, c: farben[i % farben.length], tief: 16 + rnd() * 8, glas: i % 3 === 1 });
     Z += w + (rnd() < 0.25 ? 6 + rnd() * 6 : 0.5);
   }
-  const quad = (za, zb, h0, h1, d0 = 0, d1 = 0) => `M${r(fx(za, d0))} ${r(fy(za, h0))} L${r(fx(zb, d0))} ${r(fy(zb, h0))} L${r(fx(zb, d1))} ${r(fy(zb, h1))} L${r(fx(za, d1))} ${r(fy(za, h1))} Z`;
+  const quad = (za, zb, h0, h1, d0 = 0, d1 = 0) => [[fx(za, d0), fy(za, h0)], [fx(zb, d0), fy(zb, h0)], [fx(zb, d1), fy(zb, h1)], [fx(za, d1), fy(za, h1)]];
   let k = "";
   /* von hinten nach vorn zeichnen */
   for (const b of bauten.slice().reverse()) {
@@ -315,32 +333,32 @@ const XF = -84.8;
     const dunst = Math.min(0.55, Math.max(0, (b.z0 - 70) / 1600));
     /* Seitenwand (Südwest, im Schatten) */
     const xs = fx(b.z0, b.tief);
-    k += `<path d="M${r(xs)} ${r(ya)} L${r(xa)} ${r(ya)} L${r(xa)} ${r(ta)} L${r(xs)} ${r(ta)} Z" fill="${b.c[1]}"/>`;
-    k += `<path d="M${r(xs)} ${r(ya)} L${r(xa)} ${r(ya)} L${r(xa)} ${r(ta)} L${r(xs)} ${r(ta)} Z" fill="#3d4a5a" opacity=".2"/>`;
-    if (xa - xs > 6) for (let s = 1; s * 3 < b.H - 1; s++) { const y = fy(b.z0, s * 3 + 1.2); k += `<rect x="${r(xs + (xa - xs) * 0.3)}" y="${r(y)}" width="${r((xa - xs) * 0.12)}" height="${r(Math.max(0.4, 1.1 * F / b.z0))}" fill="#56606c" opacity=".55"/>`; }
+    const wand = [[xs, ya], [xa, ya], [xa, ta], [xs, ta]];
+    k += vieleck(wand, `fill="${b.c[1]}"`) + vieleck(wand, `fill="#3d4a5a" opacity=".2"`);
+    if (xa - xs > 6) for (let s = 1; s * 3 < b.H - 1; s++) { const y = fy(b.z0, s * 3 + 1.2), h = Math.max(0.4, 1.1 * F / b.z0), xw = xs + (xa - xs) * 0.3; k += vieleck([[xw, y], [xw + (xa - xs) * 0.12, y], [xw + (xa - xs) * 0.12, y + h], [xw, y + h]], `fill="#56606c" opacity=".55"`); }
     /* Front zum Meer (Morgensonne) */
-    k += `<path d="${quad(b.z0, b.z1, 0, b.H)}" fill="${b.c[0]}"/>`;
+    k += vieleck(quad(b.z0, b.z1, 0, b.H), `fill="${b.c[0]}"`);
     const breit = xb - xa;
     if (breit > 2.2) {
       const n = Math.round(b.H / 3);
       /* Stockwerke: tiefe Loggien (dunkel) und helle Balkonbrüstungen */
       for (let s = 1; s < n; s++) {
         const h0 = s * 3;
-        k += `<path d="${quad(b.z0 + 0.6, b.z1 - 0.6, h0 + 0.25, h0 + 2.75)}" fill="${b.glas ? "#6f8ea6" : "#55697b"}" opacity="${breit > 8 ? 0.82 : 0.55}"/>`;
-        if (breit > 5) k += `<path d="${quad(b.z0 + 0.6, b.z1 - 0.6, h0 + 0.25, h0 + 1.15, -0.25, -0.25)}" fill="${b.glas ? "#cfe3ea" : "#fbfaf6"}" opacity="${b.glas ? 0.75 : 0.92}"/>`;
+        k += vieleck(quad(b.z0 + 0.6, b.z1 - 0.6, h0 + 0.25, h0 + 2.75), `fill="${b.glas ? "#6f8ea6" : "#55697b"}" opacity="${breit > 8 ? 0.82 : 0.55}"`);
+        if (breit > 5) k += vieleck(quad(b.z0 + 0.6, b.z1 - 0.6, h0 + 0.25, h0 + 1.15, -0.25, -0.25), `fill="${b.glas ? "#cfe3ea" : "#fbfaf6"}" opacity="${b.glas ? 0.75 : 0.92}"`);
       }
       /* senkrechte Teilung (Wohnungen, Pfeiler) */
-      if (breit > 8) for (let zz = b.z0 + 3.4; zz < b.z1 - 1; zz += 3.4) k += `<line x1="${r(fx(zz))}" y1="${r(fy(zz, 3))}" x2="${r(fx(zz))}" y2="${r(fy(zz, b.H - 0.4))}" stroke="${b.c[0]}" stroke-width="${r(Math.max(0.2, 0.32 * F / zz))}"/>`;
+      if (breit > 8) for (let zz = b.z0 + 3.4; zz < b.z1 - 1; zz += 3.4) if (fx(zz) > 0) k += `<line x1="${r(fx(zz))}" y1="${r(fy(zz, 3))}" x2="${r(fx(zz))}" y2="${r(Math.max(0, fy(zz, b.H - 0.4)))}" stroke="${b.c[0]}" stroke-width="${r(Math.max(0.2, 0.32 * F / zz))}"/>`;
       /* Erdgeschoss: Läden mit Markisen */
-      k += `<path d="${quad(b.z0, b.z1, 0, 3)}" fill="#3b3a3a" opacity=".55"/>`;
-      if (breit > 8) for (let j = 0; j < 3; j++) { const za = b.z0 + (j + 0.15) * (b.z1 - b.z0) / 3, zb = za + (b.z1 - b.z0) / 4; k += `<path d="${quad(za, zb, 3.3, 2.6, 0, -1.5)}" fill="${["#c0392b", "#2e7d5b", "#e0a83a"][j]}"/>`; }
+      k += vieleck(quad(b.z0, b.z1, 0, 3), `fill="#3b3a3a" opacity=".55"`);
+      if (breit > 8) for (let j = 0; j < 3; j++) { const za = b.z0 + (j + 0.15) * (b.z1 - b.z0) / 3, zb = za + (b.z1 - b.z0) / 4; k += vieleck(quad(za, zb, 3.3, 2.6, 0, -1.5), `fill="${["#c0392b", "#2e7d5b", "#e0a83a"][j]}"`); }
       /* Dachaufbauten: Maschinenraum, Wassertank */
       const zm = b.z0 + (b.z1 - b.z0) * 0.35;
-      k += `<path d="${quad(zm, zm + 3, b.H, b.H + 2.6, 2, 2)}" fill="${b.c[1]}"/>`;
+      k += vieleck(quad(zm, zm + 3, b.H, b.H + 2.6, 2, 2), `fill="${b.c[1]}"`);
     }
     /* Lichtkante an der vorderen Ecke, Dachkante */
-    k += `<line x1="${r(xa)}" y1="${r(ta)}" x2="${r(xa)}" y2="${r(ya)}" stroke="#ffffff" stroke-width="${r(Math.min(0.6, breit * 0.05))}" opacity=".6"/>`;
-    if (dunst > 0.02) k += `<path d="M${r(xs)} ${r(ya)} L${r(xb)} ${r(fy(b.z1, 0))} L${r(xb)} ${r(fy(b.z1, b.H + 2.6))} L${r(xa)} ${r(fy(b.z0, b.H + 2.6))} L${r(xs)} ${r(ta)} Z" fill="#d6ebf2" opacity="${r(dunst)}"/>`;
+    if (xa > 0) k += `<line x1="${r(xa)}" y1="${r(Math.max(0, ta))}" x2="${r(xa)}" y2="${r(ya)}" stroke="#ffffff" stroke-width="${r(Math.min(0.6, breit * 0.05))}" opacity=".6"/>`;
+    if (dunst > 0.02) k += vieleck([[xs, ya], [xb, fy(b.z1, 0)], [xb, fy(b.z1, b.H + 2.6)], [xa, fy(b.z0, b.H + 2.6)], [xs, ta]], `fill="#d6ebf2" opacity="${r(dunst)}"`);
   }
   const cid = S.id("hausclip");
   S.def(`<clipPath id="${cid}"><path d="M0 0 L${VX} 0 L${VX} 100.2 L0 104.2 Z"/></clipPath>`);
@@ -444,7 +462,7 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
     zs.push(40, 70, 140, 400);
     const kante = (d) => zs.map((Z) => { const a = Z < 26 ? 0.4 * Math.sin(2 * Math.PI * Z / 3.4 + i * 0.2) : 0; return boden(Xk + d + a, Z); });
     const l = kante(-0.26), rr = kante(0.26).reverse();
-    w += `<path d="M${pts(l)} L${pts(rr)} Z" fill="#262626"/>`;
+    w += vieleck([...l, ...rr], `fill="#262626"`);
   }
   k += `<g clip-path="url(#${cid})">${w}</g>`;
   /* Fugen- und Steinstruktur: feiner Glanz, Verschmutzung zum Rand */
@@ -469,6 +487,7 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
     const y = 106 + Math.pow(rnd(), 1.5) * 92, xmin = Math.max(-1, VX - VX * (y - HY) / (177.9 - HY) + 3), x = xmin + rnd() * (320 - xmin);
     if (y < wy(x, WASSER_R) + 2.5) continue;
     const s = sy(y);
+    if (x + 0.5 * s > 319) continue;
     k += `<path d="M${r(x)} ${r(y)} q${r(0.25 * s)} ${r(-0.04 * s)} ${r(0.5 * s)} 0" stroke="#d2b783" stroke-width="${r(Math.max(0.15, 0.012 * s))}" fill="none" opacity=".7"/>`;
   }
   for (let i = 0; i < 9; i++) {
@@ -613,7 +632,7 @@ S.davor(`<g opacity=".85"><path d="M${r(KI.x - KR + 3)} ${r(THEKE - 1.2)} L${r(K
 /* =====================================================================
    15 — DER SONNENSCHIRM und 16 — DER LIEGESTUHL (mit 17 — TAMBURIN)
    ===================================================================== */
-const SCH = { x: 296, y: 166 };
+const SCH = { x: 284, y: 152 };
 {
   /* im Raum gebaut: Mast bei (X0 | Z0), Rand 2,0 m hoch (über der Augenhöhe
      1,6 m), Nabe 2,25 m, Durchmesser 2 m. Die vordere Hälfte zeigt die
@@ -642,29 +661,39 @@ const SCH = { x: 296, y: 166 };
   S.teil({ id: "sonnenschirm", de: "der Sonnenschirm", syl: "SON-nen-schirm", it: "l'ombrellone", itSyl: "om-brel-LO-ne", en: "beach umbrella", x: SCH.x, y: SCH.y, steht: true, kunst: k,
     tipp: "Sonnenschirme und Stühle leiht man an den Strandbuden aus." });
 }
-/* DAS STRANDTUCH (Canga) liegt rechts vorn im Sand */
+/* DAS STRANDTUCH (Canga) liegt rechts vorn im Sand — jeder Punkt des
+   Musters wird einzeln perspektivisch in die Bildebene gerechnet */
 {
   const P = (X, Z) => [VX + F * X / Z, HY + F * 1.6 / Z];
-  const Xc = 1.75, Zc = 3.55, th = 0.32;
-  const welt = (u, v) => P(Xc + (u - 0.8) * Math.cos(th) - (v - 0.5) * Math.sin(th), Zc + (u - 0.8) * Math.sin(th) + (v - 0.5) * Math.cos(th));
-  const ecken = [welt(0, 0), welt(1.6, 0), welt(1.6, 1), welt(0, 1)];
-  const [ox, oy] = [ecken[0][0], ecken[0][1]];
-  /* Muster: affin in die Fläche gelegt (Meter) */
-  const [a, b] = [(ecken[1][0] - ox) / 1.6, (ecken[1][1] - oy) / 1.6], [c, d] = [ecken[3][0] - ox, ecken[3][1] - oy];
-  const X0 = 286, Y0 = 186;
-  let k = `<path d="M${pts(ecken.map(([x, y]) => [x - X0, y - Y0]))} Z" fill="#e8613a"/>`;
-  let m = `<rect x=".05" y=".05" width="1.5" height=".9" fill="none" stroke="#f6d21e" stroke-width=".05"/><rect x=".1" y=".1" width="1.4" height=".8" fill="none" stroke="#fff3d6" stroke-width=".02"/>`;
-  const blatt = (x, y, rot, l, c2) => `<g transform="translate(${x} ${y}) rotate(${rot})"><path d="M0 0 Q${r(l * 0.5)} ${r(-l * 0.22)} ${l} 0 Q${r(l * 0.5)} ${r(l * 0.22)} 0 0 Z" fill="${c2}"/><path d="M0 0 L${l} 0" stroke="#0f4d2a" stroke-width=".012"/></g>`;
-  for (const [x, y, rot, l] of [[0.3, 0.3, 20, 0.42], [0.35, 0.7, -30, 0.38], [0.9, 0.25, 160, 0.36], [1.2, 0.62, -150, 0.4], [0.8, 0.55, 75, 0.3], [1.25, 0.2, 40, 0.28]]) m += blatt(x, y, rot, l, (x * 10) % 2 < 1 ? "#1e8a4c" : "#2fa35c");
-  for (const [x, y] of [[0.62, 0.38], [1.05, 0.78], [0.25, 0.52], [1.4, 0.4]]) m += `<circle cx="${x}" cy="${y}" r=".06" fill="#f6d21e"/><circle cx="${x}" cy="${y}" r=".025" fill="#c0392b"/>`;
-  k += `<g transform="matrix(${r(a * 100) / 100} ${r(b * 100) / 100} ${r(c * 100) / 100} ${r(d * 100) / 100} ${r(ox - X0)} ${r(oy - Y0)})">${m}</g>`;
-  /* Falten und Sand auf dem Tuch */
-  k += `<path d="M${pts([welt(0.2, 0.55), welt(0.9, 0.48), welt(1.5, 0.6)].map(([x, y]) => [x - X0, y - Y0]))}" stroke="#a8401f" stroke-width=".6" fill="none" opacity=".35"/>`;
-  k += `<path d="M${pts(ecken.map(([x, y]) => [x - X0, y - Y0]))} Z" fill="${S.lg("tuchlicht", [[0, "#fff", 0.1], [1, "#000", 0.08]], 0, 0, 1, 0)}"/>`;
+  const Xc = 1.2, Zc = 3.45, th = 0.3, TB = 1.5, TT = 0.9;
+  const X0 = 278, Y0 = 186;
+  const welt = (u, v) => { const [x, y] = P(Xc + (u - TB / 2) * Math.cos(th) - (v - TT / 2) * Math.sin(th), Zc + (u - TB / 2) * Math.sin(th) + (v - TT / 2) * Math.cos(th)); return [x - X0, y - Y0]; };
+  const rahmen = (d) => [welt(d, d), welt(TB - d, d), welt(TB - d, TT - d), welt(d, TT - d)];
+  let k = `<path d="M${pts(rahmen(0))} Z" fill="#e8613a"/>`;
+  k += `<path d="M${pts(rahmen(0.04))} L${pts(rahmen(0.04).slice(0, 1))} M${pts(rahmen(0.1).reverse())} Z" fill="#f6d21e" fill-rule="evenodd"/>`;
+  k += `<path d="M${pts(rahmen(0.12))} Z" fill="none" stroke="#fff3d6" stroke-width=".5"/>`;
+  /* Palmblätter und Hibiskusblüten */
+  const blatt = (u, v, rot, l, c2) => {
+    const pkt = [];
+    for (let i = 0; i <= 8; i++) { const t = i / 8; pkt.push([t * l, Math.sin(t * Math.PI) * l * 0.2]); }
+    for (let i = 7; i > 0; i--) { const t = i / 8; pkt.push([t * l, -Math.sin(t * Math.PI) * l * 0.2]); }
+    const cs = Math.cos(rot * Math.PI / 180), sn = Math.sin(rot * Math.PI / 180);
+    const q = pkt.map(([x, y]) => welt(u + x * cs - y * sn, v + x * sn + y * cs));
+    const [m1, m2] = [welt(u, v), welt(u + l * cs, v + l * sn)];
+    return `<path d="M${pts(q)} Z" fill="${c2}"/><path d="M${r(m1[0])} ${r(m1[1])} L${r(m2[0])} ${r(m2[1])}" stroke="#0f4d2a" stroke-width=".35"/>`;
+  };
+  for (const [u, v, rot, l, c2] of [[0.28, 0.28, 20, 0.4, "#1e8a4c"], [0.3, 0.66, -35, 0.36, "#2fa35c"], [0.84, 0.24, 160, 0.34, "#2fa35c"], [1.12, 0.6, -150, 0.38, "#1e8a4c"], [0.74, 0.52, 75, 0.28, "#1e8a4c"], [1.18, 0.2, 40, 0.24, "#2fa35c"]]) k += blatt(u, v, rot, l, c2);
+  for (const [u, v] of [[0.6, 0.36], [0.98, 0.74], [0.22, 0.5], [1.3, 0.42]]) {
+    const [x, y] = welt(u, v), sk = F / (Zc + (v - TT / 2)) / 1;
+    k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.065 * sk)}" ry="${r(0.026 * sk)}" fill="#f6d21e"/><ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.028 * sk)}" ry="${r(0.011 * sk)}" fill="#c0392b"/>`;
+  }
+  /* Falte und Licht */
+  k += `<path d="M${pts([welt(0.15, 0.5), welt(0.8, 0.44), welt(1.4, 0.56)])}" stroke="#a8401f" stroke-width=".6" fill="none" opacity=".35"/>`;
+  k += `<path d="M${pts(rahmen(0))} Z" fill="${S.lg("tuchlicht", [[0, "#fff", 0.1], [1, "#000", 0.08]], 0, 0, 1, 0)}"/>`;
   S.teil({ id: "strandtuch", de: "das Strandtuch", syl: "STRAND-tuch", it: "il telo da mare", itSyl: "TE-lo da MA-re", en: "beach towel", x: X0, y: Y0, kunst: k,
     tipp: "In Brasilien nimmt man ein buntes Tuch mit an den Strand: die „Canga“." });
 }
-const ST = { x: 250, y: 171 };
+const ST = { x: 246, y: 160 };
 {
   const s = sy(ST.y);                          /* ≈ 47,5 Einheiten je Meter */
   const AL = S.lg("alu", [[0, "#eef1f2"], [0.5, "#b9c0c4"], [1, "#dfe3e5"]], 0, 0, 1, 0);

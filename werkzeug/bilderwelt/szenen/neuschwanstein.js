@@ -278,7 +278,7 @@ const WIESE = [[116, 101], [132, 97.8], [154, 98.4], [160, 106], [158, 118], [14
   };
   k += kuh(136, 114, 1, true) + kuh(143, 112.4, 0.95, false) + kuh(128, 112.6, 0.9, true);
   S.teil({ id: "wiese", de: "die Wiese", syl: "WIE-se", it: "il prato", itSyl: "PRA-to", en: "meadow", x: 0, y: 0, kunst: k,
-    zoom: { x: 116, y: 98, w: 42, h: 28 },
+    zoom: { x: 116, y: 93.5, w: 42, h: 28 },
     unter: [
       { id: "kuh", de: "die Kuh", syl: "KUH", it: "la mucca", itSyl: "MUC-ca", en: "cow", x: 136, y: 114, kunst: flaeche(-11, -5, 21, 6.4),
         tipp: "Im Allgäu tragen die Kühe auf der Weide eine Glocke. So hört man, wo sie sind." },
@@ -350,7 +350,7 @@ const WALD_NAH = [[0, 186], [18, 183], [40, 187], [64, 182], [90, 186], [116, 18
   k += `<path d="${pfad(WALD)}" fill="${S.lg("waldlicht", [[0, "#fff1c4", 0.14], [0.45, "#000", 0], [1, "#120e06", 0.38]])}"/>`;
   k += `<path d="${pfad(WALD)}" fill="${S.lg("waldseite", [[0, "#ffe9b0", 0.08], [0.5, "#000", 0], [1, "#0c0a04", 0.18]], 0, 0, 1, 0)}"/>`;
   /* Kutschenweg vom Dorf herauf, in Kehren durch den Wald */
-  const weg = "M108 156 Q124 150 138 154 Q148 157 156 153 Q162 150 168 154";
+  const weg = "M96 159 Q116 151 130 155 Q140 158 150 153";
   k += `<path d="${weg}" stroke="#d6c9ad" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="${weg}" stroke="#a89878" stroke-width=".3" fill="none" transform="translate(0 .7)"/>`;
   S.teil({ id: "wald", de: "der Wald", syl: "WALD", it: "il bosco", itSyl: "BO-sco", en: "forest", x: 0, y: 0, kunst: k,
     tipp: "Im Herbst färben sich Buchen und Lärchen gold. Die Fichten bleiben dunkelgrün." });
@@ -360,18 +360,21 @@ const WALD_NAH = [[0, 186], [18, 183], [40, 187], [64, 182], [90, 186], [116, 18
    8 — DIE KUTSCHE auf dem Weg zum Schloss (Lupe: das Pferd)
    ===================================================================== */
 {
-  const X = 146, Y = 155.8;
+  const X = 127, Y = 154.9;
   let k = schatten(0, 0.2, 7, 0.6, 0.3);
   const pferd = (dx, f) => {
-    let g = `<ellipse cx="${dx}" cy="-2.6" rx="1.9" ry=".95" fill="${f}"/>`;
-    g += `<path d="M${dx - 1.6} -3 L${dx - 2.6} -4.4 L${dx - 3.3} -4.2 L${dx - 2.7} -3.3 L${dx - 2} -2.4 Z" fill="${f}"/>`;
-    g += `<path d="M${dx - 1.4} -3.4 L${dx - 2.4} -4.5" stroke="#f1e2bc" stroke-width=".35"/>`;
-    for (const lx of [-1.2, -0.8, 1, 1.4]) g += `<rect x="${r(dx + lx - 0.13)}" y="-2" width=".26" height="2" fill="${f}"/>`;
-    g += `<path d="M${dx + 1.8} -2.8 q.6 .6 .3 1.6" stroke="#f1e2bc" stroke-width=".3" fill="none"/>`;
-    g += `<path d="M${dx - 1.2} -3.2 L${dx + 1} -2.9" stroke="#2a1c10" stroke-width=".2"/>`;
+    let g = "";
+    /* Beine (leicht gewinkelt, dunkle Hufe), Rumpf, Hals, Kopf, Mähne, Schweif */
+    for (const [lx, w] of [[-1.3, -0.15], [-0.9, 0.12], [1.1, -0.1], [1.5, 0.15]]) g += `<path d="M${r(dx + lx)} -2.2 L${r(dx + lx + w)} -1.1 L${r(dx + lx)} -.15" stroke="${f}" stroke-width=".32" fill="none"/><rect x="${r(dx + lx - 0.2)}" y="-.25" width=".4" height=".25" fill="#2a1c10"/>`;
+    g += `<ellipse cx="${dx}" cy="-2.7" rx="1.9" ry=".85" fill="${f}"/><ellipse cx="${dx - 0.3}" cy="-3.1" rx="1.2" ry=".3" fill="#fff" opacity=".18"/>`;
+    g += `<path d="M${r(dx - 1.2)} -3.3 L${r(dx - 2.1)} -4.7 L${r(dx - 1.6)} -5 L${r(dx - 0.6)} -3.5 Z" fill="${f}"/>`;
+    g += `<path d="M${r(dx - 2.1)} -4.7 L${r(dx - 2.4)} -5.1 L${r(dx - 3.5)} -4.2 L${r(dx - 3.4)} -3.9 L${r(dx - 2.4)} -4.1 Z" fill="${f}"/><path d="M${r(dx - 2.1)} -5 l-.1 -.45 l.3 .3 Z" fill="${f}"/>`;
+    g += `<path d="M${r(dx - 1.65)} -5 L${r(dx - 0.6)} -3.45" stroke="#f3e6c4" stroke-width=".32"/>`;
+    g += `<path d="M${r(dx + 1.85)} -3 Q${r(dx + 2.4)} -2.4 ${r(dx + 2.2)} -1.3" stroke="#f3e6c4" stroke-width=".35" fill="none"/>`;
+    g += `<path d="M${r(dx - 1.3)} -3.5 L${r(dx - 0.9)} -2.4" stroke="#2a1c10" stroke-width=".3"/><path d="M${r(dx - 0.9)} -2.9 L${r(dx + 1.4)} -2.7" stroke="#2a1c10" stroke-width=".18"/>`;
     return g;
   };
-  k += pferd(-4.4, "#a8642e") + pferd(-3.6, "#b9743a");
+  k += `<g transform="translate(.9 -.7)" opacity=".95">${pferd(-4.4, "#8a4f22")}</g>` + pferd(-4.4, "#b9743a");
   k += `<path d="M-2 -2.8 L1 -2.6" stroke="#3a2a1c" stroke-width=".25"/>`;
   /* Landauer: schwarz, gelbe Räder, Verdeck */
   k += `<path d="M.6 -1.4 L5.6 -1.4 L5.8 -3.4 L4.6 -3.6 L4.6 -2.6 L2.2 -2.6 L1.8 -3.4 L.8 -3.2 Z" fill="#23262b"/>`;
@@ -723,6 +726,8 @@ const BR = { fern: { x: -4, o: 186, u: 202 }, nah: { x: 300, o: 214, u: 236 } };
   const px = -9.4;
   k += `<rect x="${px - 4.8}" y="-30.6" width="9.6" height="13" fill="#2b2f3a"/>`;
   k += `<path d="M${px - 4.8} -17.6 Q${px - 4.8} -22 ${px} -22.6 Q${px + 4.8} -22 ${px + 4.8} -17.6 Z" fill="#1d2a4a"/><path d="M${px - 2.6} -18.6 L${px} -21.4 L${px + 2.6} -18.6" stroke="#f2ede2" stroke-width=".8" fill="none"/><circle cx="${px + 1.6}" cy="-19.4" r=".45" fill="#d8b04a"/>`;
+  k += `<path d="M${px - 4.8} -17.6 Q${px - 4.6} -20.4 ${px - 2.8} -21.4 L${px - 2.2} -19 Q${px - 3.6} -18.4 ${px - 3.8} -17.6 Z M${px + 4.8} -17.6 Q${px + 4.6} -20.4 ${px + 2.8} -21.4 L${px + 2.2} -19 Q${px + 3.6} -18.4 ${px + 3.8} -17.6 Z" fill="#f6f3ec"/>`;
+  for (const [dx, dy] of [[-4, -18.6], [-3.4, -20], [3.6, -18.6], [3.2, -20.2]]) k += `<path d="M${r(px + dx)} ${dy} l.2 .6 l-.4 0 Z" fill="#1a1a1a"/>`;
   k += `<rect x="${px - 0.6}" y="-23.6" width="1.2" height="1.4" fill="#e8c4a2"/><ellipse cx="${px}" cy="-25.4" rx="2.1" ry="2.6" fill="#ecc8a6"/>`;
   k += `<path d="M${px - 2.3} -25.6 Q${px - 2.8} -29.2 ${px} -29.2 Q${px + 2.8} -29.2 ${px + 2.4} -25.6 Q${px + 2} -27.4 ${px} -27.6 Q${px - 1.8} -27.4 ${px - 2.3} -25.6 Z" fill="#2a1a12"/>`;
   k += `<circle cx="${px - 0.7}" cy="-25.6" r=".22" fill="#2a3a5a"/><circle cx="${px + 0.7}" cy="-25.6" r=".22" fill="#2a3a5a"/><path d="M${px - 0.6} -24.2 q.6 .3 1.2 0" stroke="#9a5a4a" stroke-width=".2" fill="none"/>`;

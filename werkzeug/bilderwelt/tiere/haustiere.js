@@ -305,8 +305,8 @@ module.exports = [
       s += naegel(-25.4, 8.8) + naegel(18.8, 9.8);
       /* Kopf: Gruppe über der Brust, Hals ca. 45° */
       s += `<g transform="translate(-6 -3)">`;
-      const kopf = [[40.6, -69], [41.6, -72.6], [44.5, -73], [49.4, -72.2], [52.4, -70.4], [54, -67.8], [57.5, -66.4], [61.4, -65.6], [63.6, -64.2], [64.6, -62], [64.1, -60], [62.8, -59.3],
-        [62.6, -57.3], [61.2, -55.7], [58, -55], [55.4, -55.3], [53.6, -55.8], [52.8, -54.4], [48, -53.6], [43, -54.2], [40.8, -58.5]];
+      const kopf = [[42.8, -68], [43.6, -71.4], [45.2, -72.9], [49.4, -72.2], [52.4, -70.4], [54, -67.8], [57.5, -66.4], [61.4, -65.6], [63.6, -64.2], [64.6, -62], [64.1, -60], [62.8, -59.3],
+        [62.6, -57.3], [61.2, -55.7], [58, -55], [55.4, -55.3], [54, -55.5], [53, -54.6], [48, -53.6], [44, -54.2], [42.8, -58.5]];
       const kflow = (x, y) => (x > 53 ? 186 : y > -60 ? 150 : 190);
       const klicht = (x, y) => 0.5 + 0.5 * Math.max(0, Math.min(1, (-y - 56) / 16)) + huegel(x, y, [[45, -70, 5, 3, 0.25], [58, -64, 4, 1.6, 0.2]]) - huegel(x, y, [[50, -64.5, 3, 1.6, 0.35], [47, -56.5, 6, 2.5, 0.3], [54, -59, 2.5, 2, 0.15]]);
       s += teil(T, kopf, T.lg("kopf", [[0, "#efcf97"], [0.6, "#d9ae68"], [1, "#b0844a"]]), {
@@ -317,16 +317,15 @@ module.exports = [
           fell(T, kopf, 260, kflow, 0.6, EIMER, (x, y, z) => stufe(klicht(x, y), z, 5), { dez: 1 }) +
           /* Lefze: Oberlippe hängt über den Unterkiefer, schwarzer Lefzenrand */
           T.form([[62.6, -59.1], [58.5, -58.1], [54.4, -57.8], [53.8, -56.4], [55.4, -55.4], [58.8, -55.1], [62.2, -57]], "#b98a51", ` opacity=".55"`) +
-          `<path d="M62.7 -59.2L57.6 -58.4Q55.4 -58.1 54.5 -58.7" fill="none" stroke="#24170d" stroke-width=".38" stroke-opacity=".85" stroke-linecap="round"/>` +
+          `<path d="M62.7 -59.2L57.6 -58.4Q55.4 -58.1 54.6 -58.6" fill="none" stroke="#24170d" stroke-width=".3" stroke-opacity=".8" stroke-linecap="round"/>` +
           /* Tasthaar-Poren in Reihen */
           `<path d="M56.8 -61.4h.01M58.3 -61.7h.01M59.8 -61.9h.01M61 -62h.01M57.4 -60.3h.01M58.9 -60.5h.01M60.4 -60.6h.01" stroke="#6a4a28" stroke-width=".26" stroke-opacity=".7" stroke-linecap="round"/>`,
         nach: randhaare(T, kopf, { n: 90, L: 0.45, flow: kflow, ab: 0.35, eimer: EIMER, wahl: (x, y, z) => stufe(klicht(x, y), z, 5), wo: (x, y) => x > 44 && x < 60 }),
       });
-      s += falte(T, [[44.5, -73], [49.4, -72.2], [52.4, -70.4], [54, -67.8], [57.5, -66.4], [61.4, -65.6]], DD, 0.3, 0.22) + falte(T, [[62.6, -57.3], [61.2, -55.7], [58, -55], [55.4, -55.3], [53.6, -55.8], [52.8, -54.4], [48, -53.6], [44, -54.2]], DD, 0.3, 0.25);
       /* Auge mit Brauenbogen und Überaugen-Tasthaaren */
-      s += fleck(T, 50.6, -69.8, 2.8, 1.2, "hell", 0.45) + fleck(T, 50.8, -67.2, 2.4, 1.6, "dunkel", 0.25);
+      s += fleck(T, 50.6, -70.2, 2.8, 1.1, "hell", 0.45) + fleck(T, 50.8, -67.6, 2.6, 1.5, "dunkel", 0.32);
       s += `<ellipse cx="50.8" cy="-67.4" rx="1.7" ry=".95" fill="#2a1a0e" opacity=".55" transform="rotate(6 50.8 -67.4)"/>` + T.augeReal(50.8, -67.4, 1.08, { iris: "#7a4718", iris2: "#2e1806", offen: 0.66, winkel: 6, lid: "#1a0f08" });
-      s += T.schnurrhaare(51.4, -69.8, 3, 2.4, -120, 30, "#4a3420", 0.06);
+      s += T.schnurrhaare(51.6, -69.6, 2, 2, -150, 20, "#4a3420", 0.05);
       /* Nase: feucht, Nasenlöcher, Pflastertextur */
       const nase = [[60.6, -65.1], [63.4, -64.6], [64.75, -62.6], [64.2, -60.2], [62.2, -59.9], [60.9, -61.4]];
       s += teil(T, nase, T.lg("nase", [[0, "#55443a"], [0.5, "#241a15"], [1, "#0b0807"]]), { vol: false, rand: false,
@@ -335,7 +334,7 @@ module.exports = [
           `<path d="M62.4 -60.1q.2 -.9 .9 -1.3" fill="none" stroke="#000" stroke-width=".25" opacity=".6"/>` +
           `<ellipse cx="62.3" cy="-64.2" rx="1.2" ry=".34" fill="#fff" opacity=".42" transform="rotate(8 62.3 -64.2)"/><ellipse cx="64.3" cy="-63.1" rx=".24" ry=".5" fill="#fff" opacity=".3"/>` });
       /* Tasthaare */
-      s += T.schnurrhaare(58.6, -61, 7, 6.5, 172, 34, "#5b4127", 0.07);
+      s += T.schnurrhaare(59, -60.8, 7, 4.2, 16, 40, "#4a3420", 0.06);
       /* Hängeohr: etwas unter der Schädellinie angesetzt, Vorderkante eingerollt, Hinterkante im Licht */
       const ohr = [[40.4, -70], [44.6, -70.8], [47.2, -68.8], [47.6, -64.4], [46.8, -60], [45.2, -56.8], [43.6, -57], [41.4, -61.4], [39.8, -66]];
       s += fleck(T, 48.2, -61.6, 1.8, 5.4, "dunkel", 0.28, -10) + fleck(T, 44.4, -56, 3, 1.4, "dunkel", 0.3);
@@ -343,7 +342,7 @@ module.exports = [
       s += teil(T, ohr, T.lg("ohr", [[0, "#dcae66"], [0.55, "#c8964f"], [1, "#a8773a"]]), {
         rand: false,
         innen: mal(T, "o", 0.6, T.form([[46.4, -69.6], [47.8, -64.4], [46.8, -59.6], [45.4, -57], [44.6, -59.6], [45.8, -64.4]], "#5e3a14", ` opacity=".45"`) +
-            T.form([[40.2, -69], [41, -64], [42.6, -59.8], [43.6, -60.4], [42.4, -64.4], [41.8, -69]], "#fff3d8", ` opacity=".4"`) +
+            T.form([[40.2, -69], [41, -64], [42.6, -59.8], [43.6, -60.4], [42.4, -64.4], [41.8, -69]], "#fff3d8", ` opacity=".18"`) + T.form([[40.4, -70.6], [44.6, -71.6], [47.2, -69.6], [44.6, -69.4]], "#5e3a14", ` opacity=".3"`) +
             fleck(T, 43.6, -69.8, 3.4, 1.2, "#fff3d8", 0.5)) +
           fell(T, ohr, 130, oflow, 0.6, EIMER, (x, y, z) => stufe(0.75 - (-y - 58) / -20 - (x - 41) / 14, z, 5)),
         nach: randhaare(T, ohr, { n: 50, L: 0.45, flow: oflow, ab: 0.5, eimer: EIMER, wahl: (x, y, z) => stufe(0.35, z, 5), wo: (x, y) => y > -68 }),
@@ -519,6 +518,16 @@ module.exports = [
       const flow = (x, y) => (y > -5 ? (x > 10 ? 95 : 175) : x < -8 ? 120 : 175 - 40 * Math.max(0, Math.min(1, (-y - 18) / -12)));
       const wahl = (x, y, z) => stufe(licht(x, y), z, 5);
       let s = "";
+      /* Ohren: fernes dunkler; nahes mit rosa Innenseite vorn, dunkler Saum an der Spitze */
+      const ohrN = [[8.4, -19.4], [7.8, -24.6], [7, -28.6], [6.8, -31.6], [7.6, -33.3], [9, -33], [10.2, -30.6], [11.6, -26], [13, -20.2]];
+      const ohrF = ohrN.map(([x, y]) => { const a = -0.2, dx = x - 11, dy = y + 21; return [11 + 1.2 + dx * Math.cos(a) - dy * Math.sin(a), -21 + 0.4 + dx * Math.sin(a) + dy * Math.cos(a)]; });
+      s += teil(T, ohrF, T.lg("ohrf", [[0, "#3c2e22"], [1, "#6a5642"]]), { rand: false, vol: true });
+      s += teil(T, ohrN, T.lg("ohrn", [[0, "#55432f"], [0.3, "#7e6a50"], [1, "#9a8466"]]), { rand: DK, randA: 0.25,
+        innen: mal(T, "oi", 0.25, T.form([[9.1, -32.4], [10, -30.4], [11.3, -26], [12.4, -21.8], [11.2, -22.8], [10.2, -26.2], [9.3, -29.8]], "#c49a90", ` opacity=".55"`)) +
+          falte(T, [[6.9, -30.4], [7.1, -32.4], [7.8, -33.2], [8.9, -33], [9.8, -31.6]], "#1e1610", 0.35, 0.75) +
+          mal(T, "on", 0.3, T.form([[7.8, -30], [8.6, -25], [9.6, -21.4], [9, -21.2], [8, -25], [7.4, -29]], "#f2e6d0", ` opacity=".35"`)) +
+          fell(T, ohrN, 90, () => 100, 0.4, EIMER, (x, y, z) => stufe(0.35 + (x < 9 ? 0.2 : 0), z, 5)) +
+          T.schnurrhaare(11.6, -23, 5, 1.2, -70, 40, "#f2ece2", 0.03) });
       /* fernes Vorderbein und ferner Hinterfuß (dunkler) */
       const fernV = [[10, -8], [12.6, -8.4], [12.6, -3.4], [13.6, -1.6], [15, -0.6], [14.8, 0, 1], [10.6, 0, 1], [10.4, -2], [10.4, -5]];
       s += teil(T, fernV, "#6e5c48", { rand: DK, randA: 0.2, volx: true, innen: fell(T, fernV, 30, () => 95, 0.5, EIMER, (x, y, z) => stufe(0.2, z, 5)) });
@@ -557,7 +566,7 @@ module.exports = [
         [12.4, -13.2], [10, -14.6], [8.2, -17]];
       const kflow = (x, y) => (x > 16 ? 192 : y > -15 ? 150 : 185);
       const klicht = (x, y) => 0.4 + 0.5 * Math.max(0, Math.min(1, (-y - 12.5) / 9)) - huegel(x, y, [[12, -14, 3, 1.4, 0.3]]) + huegel(x, y, [[19.6, -15.6, 1.4, 1.4, 0.2]]);
-      s += teil(T, kopf, T.lg("kopfkn", [[0, "#7e6a52"], [0.5, "#9c8768"], [1, "#cdbfa6"]]), { rand: false,
+      s += teil(T, kopf, T.lg("kopfkn", [[0, "#7c6750"], [0.5, "#94805f"], [1, "#c6b79c"]]), { rand: false,
         innen: tex(T, "knk", { fx: 4.6, fy: 0.8, farbe: DK, staerke: 2.2, schwelle: 0.58, okt: 2 }, 185, 0.22, [7, -23, 22, -12]) +
           mal(T, "knk", 0.45, fleck(T, 14.4, -18.4, 2.4, 1.9, "#efe2c8", 0.7) + T.form([[18, -14.8], [21, -14.6], [20.6, -13.4], [18.6, -12.6], [16.4, -12.6], [16.8, -13.8]], "#efe6d6", ` opacity=".7"`) +
             fleck(T, 12.4, -14, 3.6, 1.4, "#2a1e14", 0.3) + fleck(T, 11.6, -21.4, 3, 0.9, "#f6ecd6", 0.3)) +
@@ -565,24 +574,13 @@ module.exports = [
         nach: randhaare(T, kopf, { n: 120, L: 0.4, flow: kflow, ab: 0.5, eimer: EIMER, wahl: (x, y, z) => stufe(klicht(x, y), z, 5), wo: (x, y) => x < 20 }),
       });
       /* Nase: Nasenloch-Schlitz, gespaltene Oberlippe */
-      s += `<path d="M21.05 -15.35q-.45 .1 -.75 .55M20.9 -14.5q-.2 .35 -.55 .5" fill="none" stroke="#2a1812" stroke-width=".13" stroke-linecap="round"/>`;
-      s += `<path d="M20.4 -14.1q-.1 .4 -.4 .7q-.4 .2 -1 .1" fill="none" stroke="#2a1812" stroke-width=".11" stroke-linecap="round" opacity=".8"/>`;
+      s += `<path d="M21.05 -15.35q-.45 .1 -.75 .55M20.9 -14.5q-.2 .35 -.55 .5" fill="none" stroke="#2a1812" stroke-width=".09" stroke-linecap="round" opacity=".85"/>`;
+      s += `<path d="M20.4 -14.1q-.1 .4 -.4 .7q-.4 .2 -1 .1" fill="none" stroke="#2a1812" stroke-width=".07" stroke-linecap="round" opacity=".7"/>`;
       s += `<ellipse cx="20.6" cy="-15.9" rx=".5" ry=".22" fill="#fff" opacity=".25"/>`;
       /* Auge: groß, seitlich, fast schwarz, heller Augenring */
       s += T.augeReal(14.4, -18.4, 0.95, { iris: "#3a2210", iris2: "#140a04", offen: 0.9, winkel: -6, lid: "#140c08" });
       /* Tasthaare */
       s += T.schnurrhaare(19.6, -14.4, 7, 6, 10, 46, "#2a2018", 0.04) + T.schnurrhaare(19.2, -14.2, 4, 5, 172, 30, "#efe8dc", 0.04);
-      s += T.schnurrhaare(14.6, -19.8, 3, 1.8, -80, 30, "#2a2018", 0.035);
-      /* Ohren: fernes dunkler; nahes mit rosa Innenseite vorn, dunkler Saum an der Spitze */
-      const ohrN = [[8.6, -20.4], [7.8, -24.6], [7, -28.6], [6.8, -31.6], [7.6, -33.3], [9, -33], [10.2, -30.6], [11.6, -26], [12.8, -21.4]];
-      const ohrF = ohrN.map(([x, y]) => { const a = -0.2, dx = x - 11, dy = y + 21; return [11 + 1.2 + dx * Math.cos(a) - dy * Math.sin(a), -21 + 0.4 + dx * Math.sin(a) + dy * Math.cos(a)]; });
-      s += teil(T, ohrF, T.lg("ohrf", [[0, "#3c2e22"], [1, "#6a5642"]]), { rand: false, vol: true });
-      s += teil(T, ohrN, T.lg("ohrn", [[0, "#55432f"], [0.3, "#7e6a50"], [1, "#9a8466"]]), { rand: DK, randA: 0.25,
-        innen: mal(T, "oi", 0.25, T.form([[9.1, -32.4], [10, -30.4], [11.3, -26], [12.4, -21.8], [11.2, -22.8], [10.2, -26.2], [9.3, -29.8]], "#c49a90", ` opacity=".55"`)) +
-          falte(T, [[6.9, -30.4], [7.1, -32.4], [7.8, -33.2], [8.9, -33], [9.8, -31.6]], "#1e1610", 0.35, 0.75) +
-          mal(T, "on", 0.3, T.form([[7.8, -30], [8.6, -25], [9.6, -21.4], [9, -21.2], [8, -25], [7.4, -29]], "#f2e6d0", ` opacity=".35"`)) +
-          fell(T, ohrN, 90, () => 100, 0.4, EIMER, (x, y, z) => stufe(0.35 + (x < 9 ? 0.2 : 0), z, 5)) +
-          T.schnurrhaare(11.6, -23, 5, 1.2, -70, 40, "#f2ece2", 0.03) });
       return { svg: s, box: [-19.7, -33.5, 21.4, 0], fuesse: [-8, 1.5, 12.7, 15.2], kopf: [6.5, -33.6, 21.6, -12] };
     } },
   /* =================================================================

@@ -123,7 +123,9 @@
   function bodenFrei(x, y) {
     const G = B.GROESSE / 2 - 3;
     if (Math.abs(x) > G || Math.abs(y) > G) return false;
-    return !(B.wert(x, y, 0) > 0.06) && !(B.wert(x, y, 1) > 0.02) && !(B.wert(x, y, 2) > 0.1);
+    /* FASSUNG 874 — XANDER (Funk 255): „Ich möchte dass man das Feld verschieben kann". Ein versetzter Acker liegt nicht
+       mehr über seinen alten Ladeflecken: Weide und Hühnerhof meiden das ganze gemalte Feld (dorf.js D.feldIn, mit Rain) */
+    return !(B.wert(x, y, 0) > 0.06) && !(B.wert(x, y, 1) > 0.02) && !(B.wert(x, y, 2) > 0.1) && !(ST.dorf && ST.dorf.feldIn && ST.dorf.feldIn(x, y, 1.5));
   }
   function dingFrei(x, y, ausser) {
     for (const h of hind) {

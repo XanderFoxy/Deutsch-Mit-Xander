@@ -53,6 +53,38 @@
      bringen +50 % Mut-Bonus.
    Prüfen: ?quest=1 (sofort eine Quest), ?questtakt=Sekunden,
    werkzeug/pruefe-832-quests.js.
+
+   FASSUNG 875 — XANDER (Funk 257): „die Missionen müssen Variation haben
+   und dürfen nicht zu repetitiv sein … vielleicht sind sie auch gekoppelt
+   an den gewissen Stand des Dorfes wie das Dorf sich entwickelt so
+   erwachsen auch die Aufgaben und Fragen oder die Leute denen man
+   unterwegs begegnet z.B ein Wissenschaftler der etwas über den aktuellen
+   Entwicklungsstand wissen möchte vielleicht von A1 bis C2 dass man das in
+   den Einstellungen hat … dass man das auf seinem Niveau lernen kann zu
+   kommunizieren“ · „dieses fast kannst du nur schreiben wenn er die
+   Grammatik fast richtig hat aber dazu muss die Erkennung auch korrekt
+   sein weil er hat meine Worte oft nicht richtig erkannt“.
+   • NIVEAU A1–C2: ein kleiner Wähler im Kopf des Quest-Fensters (die Quests
+     haben kein eigenes Menü). Gespeichert im Browser (dma_quest_niveau),
+     Vorgabe = das Niveau des Spiels (dma_spiel_niveau), sonst A2. Jede
+     Mission hat ein Niveau; es kommen Missionen bis zum eigenen Niveau,
+     gut die Hälfte auf dem eigenen (Teil 5b).
+   • MISSIONEN NACH STAND DER STADT (Teil 4b): 33 neue, A1 bis C2 – die
+     Forscherin, die nach dem Entwicklungsstand fragt, Reisende am Bahnhof,
+     der Fischer am See, Brauerei, Krankenhaus, Rathaus, Sternwarte,
+     Bergwerk. Sie kommen nur, wenn das Gebäude steht (braucht/stand), und
+     ihre Fragen lesen die echte Stadt: was gebaut ist, was gerade gebaut
+     wird, was noch fehlt, wie die Stadt heißt. Wer etwas Falsches über die
+     eigene Stadt sagt, bekommt es gesagt.
+   • ABWECHSLUNG: nie dieselbe Mission zweimal hintereinander, die letzten
+     zwölf kommen seltener, dieselbe Art direkt danach nur halb so oft.
+   • ERKENNUNG (Teil 11): jede Mission hat eine Wortliste. Sie geht mit an
+     „erkennen“ (für eine Phrase List, sobald der Server sie weitergibt) und
+     wird schon jetzt im Browser genutzt: verhörte Schlüsselwörter werden
+     nach Klang (Kölner Phonetik) und Schreibung auf die Wortliste gezogen –
+     aber nie Endungen, Umlaute oder Verbformen, die über richtig und falsch
+     entscheiden.
+   Prüfen: werkzeug/pruefe-875-quest-niveau.js.
    ===================================================================== */
 (function () {
   "use strict";
@@ -181,6 +213,10 @@
     koelner_dom: ["der", "Kölner Dom"], holstentor: ["das", "Holstentor"], brandenburger: ["das", "Brandenburger Tor"], neuschwanstein: ["das", "Schloss Neuschwanstein"],
     fernsehturm: ["der", "Fernsehturm"], bahnhof: ["der", "Bahnhof"], bootsverleih: ["der", "Bootsverleih"], brunnen: ["der", "Brunnen"]
   };
+  /* FASSUNG 875 — die späten Häuser (dorf.js D.SPAET) kennt die Stadt für den Stand und die Texte; Ziele zum Hinlaufen
+     bleiben die aus NAMEN (die späten liegen weit draußen auf dem Bauland) */
+  const NAMEN_ALLE = Object.assign({ sternwarte: ["die", "Sternwarte"], marktstand: ["der", "Marktstand"], holzhuette: ["die", "Holzfällerhütte"],
+    jagdhuette: ["die", "Jagdhütte"], schweinestall: ["der", "Schweinestall"] }, NAMEN);
   const ART = { der: { nom: "der", akk: "den", dat: "dem", zu: "zum", falsch: "der" }, die: { nom: "die", akk: "die", dat: "der", zu: "zur", falsch: "dem" }, das: { nom: "das", akk: "das", dat: "dem", zu: "zum", falsch: "der" } };
   const nom = (z) => ART[z.g].nom + " " + z.name, Nom = (z) => { const t = nom(z); return t[0].toUpperCase() + t.slice(1); };
   const akk = (z) => ART[z.g].akk + " " + z.name, dat = (z) => ART[z.g].dat + " " + z.name, zum = (z) => ART[z.g].zu + " " + z.name;

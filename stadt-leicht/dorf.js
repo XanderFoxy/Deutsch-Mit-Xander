@@ -808,6 +808,8 @@
     D.felderNeu = function () { D.felderSetzen(); D.ladestellenWeg(); ladestellenMalen(); };
     /* beim Aufbau: hat sich ein gemerkter Platz geändert (der Stand vom Server kommt erst nach dem ersten Boden), dann neu */
     D.felderAuffrischen = function () { const alt = D.feldSig; D.felderSetzen(); if (D.feldSig !== alt) { D.ladestellenWeg(); ladestellenMalen(); return true; } return false; };
+    /* liegt (x, y) auf einem Acker (mit rand Einheiten in u/v)? – für die Weiden der Tiere (tiere.js) */
+    D.feldIn = function (x, y, rand) { const u = x - y, v = x + y, r = rand || 0; return (D.FELD_ORTE || []).some((f) => f.u0 != null && u > f.u0 - r && u < f.u1 + r && v > f.v0 - r && v < f.v1 + r); };
     /* beim Ziehen: nur der gemalte Acker (Korn, Tippfläche, Zeichen) folgt dem Finger; gemerkt wird erst beim Setzen */
     D.feldVerschieben = function (nr, um, vm) {
       const i = D.FELD_ORTE.findIndex((f) => f.nr === nr);

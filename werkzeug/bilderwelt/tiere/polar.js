@@ -156,6 +156,18 @@ function verlaufMaske(T, n, x, y, w, h, x0, y0, x1, y1, stops) {
   T.def(`<mask id="${id}" maskUnits="userSpaceOnUse" x="${x}" y="${y}" width="${w}" height="${h}"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${verlauf(T, "vg" + n, x0, y0, x1, y1, stops)}"/></mask>`);
   return `url(#${id})`;
 }
+/* Hautrelief als Lichtkarte (warm getönt) – wird per multiply über die Haut gelegt: Falten/Poren dunkeln nur ab,
+   die Hautfarbe bleibt warm (kein Grauschleier). typ "turbulence" = Knitterfalten, "fractalNoise" = Poren/Körnung. */
+function hautLicht(T, n, o) {
+  const id = T.id("hl" + n);
+  T._hl = T._hl || new Set();
+  if (!T._hl.has(id)) {
+    T._hl.add(id);
+    T.def(`<filter id="${id}" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feTurbulence type="${o.typ || "turbulence"}" baseFrequency="${o.f}" numOctaves="${o.okt || 2}" seed="${o.seed || 3}"/>` +
+      `<feDiffuseLighting surfaceScale="${o.tiefe}" diffuseConstant="1.26" lighting-color="${o.farbe || "#fff0e6"}"><feDistantLight azimuth="225" elevation="56"/></feDiffuseLighting></filter>`);
+  }
+  return `url(#${id})`;
+}
 /* weiches Verwischen (nur fein benutzen) */
 function blur(T, sd) {
   const id = T.id("bl" + String(sd).replace(".", ""));
@@ -366,8 +378,8 @@ function walross(T) {
   const falte = (pts, w, op = 0.5) => {
     const ob = pts.map(([x, y]) => [x - w * 0.7, y - w * 1.1]);
     if (!F) return op >= 0.45 ? zart(T, pts, "#4a271c", w * 0.8, op * 0.7) : "";
-    return linie(pts.map(([x, y]) => [x + w * 0.5, y + w * 0.8]), "#4a271c", w * 2.4, ` stroke-opacity="${Z2(op * 0.45)}" filter="${blur(T, w * 0.6)}"`) +
-      zart(T, pts, "#3a1d14", w * 0.55, op) + linie(ob, "#f6d2bf", w * 1.6, ` stroke-opacity="${Z2(op * 0.55)}" filter="${blur(T, w * 0.5)}"`);
+    return linie(pts.map(([x, y]) => [x + w * 1.4, y + w * 1.7]), "#3e1c12", w * 4.6, ` stroke-opacity="${Z2(Math.min(1, op * 1.1))}" filter="${blur(T, w * 1.1)}"`) +
+      zart(T, pts, "#2e150d", w * 0.6, op) + linie(ob, "#f6c9b2", w * 2.6, ` stroke-opacity="${Z2(Math.min(1, op * 0.9))}" filter="${blur(T, w * 0.8)}"`);
   };
   /* Umriss: Rücken fällt von den Schultern zur Hüfte, Hals gewaltig mit Faltenwülsten an Kehle und Brust, Kopf klein und rund,
      Schnauzenpolster wölbt sich nach vorn-unten; hinten breit gerundet (kein Kegel) */
@@ -378,7 +390,7 @@ function walross(T) {
     [247.4, -31], [240.6, -24], [231, -18], [218, -12.6], [202, -8.6], [184, -5.4], [160, -3], [132, -1.6], [106, -1.6], [84, -2.8], [66, -5.6], [54, -10], [47.4, -15],
   ];
   const kD = G(rumpf);
-  const haut = verlauf(T, "haut", 0, -134, 0, 0, [[[0, -134], "#bd8169"], [[0, -110], "#b47860"], [[0, -80], "#ad7158"], [[0, -50], "#9e6650"], [[0, -28], "#83533f"], [[0, -10], "#663e2f"], [[0, 0], "#6e4636"]]);
+  const haut = verlauf(T, "haut", 0, -134, 0, 0, [[[0, -134], "#b8765c"], [[0, -110], "#ad6c53"], [[0, -80], "#a5654d"], [[0, -50], "#965c46"], [[0, -28], "#7a4a37"], [[0, -10], "#5c3627"], [[0, 0], "#664032"]]);
   const fernTon = verlauf(T, "fern", 0, -32, 0, 0, [[[0, -32], "#946451"], [[0, -14], "#7e5241"], [[0, 0], "#5e3b2e"]]);
 
   /* ---- ferne Hinterflosse (etwas angehoben, Körperton 25 % dunkler, modelliert) ---- */
@@ -405,10 +417,13 @@ function walross(T) {
 
   /* ---- Körper mit Kopf ---- */
   let n = "";
+  /* Grundton auch innen (Hintergrund für das multiply-Relief) */
+  n += `<rect x="40" y="-140" width="260" height="141" fill="${haut}"/>`;
   /* Lichtrand am Rücken, Nacken, Scheitel (Licht von links oben) */
-  n += weich([[56, -30], [90, -56], [148, -82], [200, -105], [232, -122], [256, -131], [276, -130], [284, -125], [270, -126], [250, -124], [226, -114], [196, -98], [146, -76], [92, -50], [62, -24]], "#f3c9b2", 0.55, 2.4);
+  n += weich([[56, -30], [90, -56], [148, -82], [200, -105], [232, -122], [256, -131], [276, -130], [284, -125], [270, -127], [250, -127], [226, -117], [196, -101], [146, -79], [92, -53], [62, -27]], "#f0bfa6", 0.6, 1.6);
+  n += weich([[90, -46], [140, -68], [190, -86], [220, -96], [200, -76], [150, -56], [100, -38]], "#e2a588", 0.4, 7);
   /* rosiger Hals und Brust (gut durchblutet), zimtbraune Flanken, Flecken */
-  n += weich([[236, -118], [252, -124], [262, -110], [258, -88], [250, -66], [244, -46], [234, -54], [232, -80], [230, -100]], "#d68e76", 0.5, 5);
+  n += weich([[236, -118], [252, -124], [262, -110], [258, -88], [250, -66], [244, -46], [234, -54], [232, -80], [230, -100]], "#cf8068", 0.45, 5);
   n += weich([[120, -66], [170, -84], [196, -80], [170, -64], [130, -54]], "#8e5c46", 0.3, 6) + weich([[280, -120], [292, -112], [292, -100], [282, -100]], "#e9b19c", 0.5, 2);
   /* Kernschatten im unteren Rumpfdrittel, Bodenreflex, Okklusion an Kinn/Kehle und an den Flossenansätzen */
   n += weich([[58, -16], [90, -24], [140, -28], [190, -32], [226, -36], [246, -42], [250, -30], [236, -18], [196, -9], [140, -6], [90, -7], [64, -10]], "#40221a", 0.5, 4);
@@ -416,28 +431,27 @@ function walross(T) {
   n += weich([[258, -88], [270, -86.6], [284, -88.6], [262, -82], [256, -74]], "#2a140e", 0.65, 2.4) + weich([[214, -34], [236, -28], [244, -20], [224, -16], [210, -22]], "#2a140e", 0.55, 3);
   n += weich([[56, -16], [66, -24], [70, -10], [60, -8]], "#2a140e", 0.5, 2.4);
   /* Hautrelief (Poren, feine Runzeln): nur Kopf, Hals, Schultern, schwach und nach hinten ausblendend */
-  if (F) n += `<g style="mix-blend-mode:multiply" opacity=".5"><g mask="${verlaufMaske(T, "rel", 150, -140, 150, 140, 170, -60, 250, -60, [[[170, -60], "#000"], [[215, -60], "#999"], [[250, -60], "#fff"]])}"><rect x="150" y="-140" width="150" height="140" fill="#fff" filter="${T.relief("haut", { typ: "turbulence", f: 0.32, tiefe: 0.6, okt: 2, seed: 11 })}"/></g></g>`;
+  if (F) n += `<g style="mix-blend-mode:multiply" opacity=".5"><g mask="${verlaufMaske(T, "rel", 40, -140, 260, 140, 120, -60, 250, -60, [[[120, -60], "#444"], [[200, -60], "#999"], [[250, -60], "#eee"]])}"><rect x="40" y="-140" width="260" height="140" fill="#fff" filter="${hautLicht(T, "haut", { f: 0.42, tiefe: 0.42, seed: 11 })}"/></g></g>`;
   /* Falten: Halsringe (um den dicken Hals), Nackenfalte, Kehlfalten, Schulter-/Achselfalten, Flanke, Bauch */
-  n += falte([[246, -129], [240, -116], [238, -100], [241, -86], [248, -74], [252, -66]], 0.9, 0.6);
-  n += falte([[236, -125], [229, -110], [227, -94], [230, -78], [238, -64], [246, -54]], 1, 0.55);
-  n += falte([[224, -119], [217, -104], [215, -88], [219, -72], [227, -58], [238, -46]], 1, 0.5);
-  n += falte([[211, -112], [205, -97], [204, -82], [209, -66], [218, -52]], 0.9, 0.4);
-  n += falte([[256, -132], [252, -122], [251, -110], [254, -98], [261, -89]], 0.7, 0.5);
-  n += falte([[261, -84], [266, -81], [273, -81]], 0.6, 0.5) + falte([[256, -76], [262, -72], [270, -72]], 0.6, 0.45) + falte([[254, -66], [259, -63], [264, -62]], 0.5, 0.4);
+  n += falte([[247, -129], [242, -118], [240.6, -106], [242, -96]], 0.9, 0.6) + falte([[243, -92], [246, -82], [251, -73]], 0.8, 0.5);
+  n += falte([[236.4, -125], [230, -113], [228, -100], [229.4, -88], [234, -77]], 1.1, 0.6) + falte([[231, -80], [237, -68], [245, -58], [250, -54]], 0.9, 0.5);
+  n += falte([[224, -119], [219, -108], [217, -96], [218, -86]], 1, 0.5) + falte([[220, -84], [224, -72], [232, -60], [240, -50]], 0.9, 0.45);
+  n += falte([[210, -111], [205, -98], [205, -84], [210, -70], [218, -58]], 0.9, 0.4) + falte([[226, -96], [233, -94], [240, -96]], 0.6, 0.35);
+  n += falte([[256, -132], [252.4, -122], [251.6, -110], [254, -99], [260, -90]], 0.7, 0.5) + falte([[214, -90], [222, -86], [228, -88]], 0.6, 0.3);
+  n += falte([[260, -84], [265, -81.4], [272, -81.6]], 0.6, 0.5) + falte([[256, -76], [261, -72.6], [268, -72.8]], 0.6, 0.45) + falte([[254.6, -66], [259, -63.4], [263, -63]], 0.5, 0.4);
   n += falte([[196, -104], [190, -88], [192, -70], [200, -56]], 0.8, 0.3);
   n += falte([[232, -38], [218, -30], [198, -24], [174, -20]], 0.9, 0.45) + falte([[240, -48], [226, -42], [208, -36]], 0.7, 0.35);
-  n += falte([[170, -36], [140, -31], [110, -27], [86, -24]], 0.8, 0.25);
-  n += falte([[120, -12], [100, -11], [80, -11]], 0.6, 0.35) + falte([[194, -10], [170, -7.6], [150, -7]], 0.6, 0.35);
+  n += falte([[180, -40], [150, -34], [120, -30]], 0.8, 0.2);
   n += falte([[72, -50], [66, -38], [66, -24], [70, -12]], 0.7, 0.22);
   /* Bossen: Knoten und Beulen an Hals und Schultern (Licht oben links, Schatten unten rechts) */
   const bossen = [[212, -108, 4.4], [221, -97, 5], [229, -86, 4.4], [234, -106, 3.8], [242, -95, 3.6], [224, -73, 4.2], [236, -72, 3.6], [204, -92, 4.6], [213, -80, 3.8],
     [246, -110, 3], [248, -84, 3], [240, -60, 3.4], [200, -104, 3.4], [228, -116, 3.2], [206, -68, 3.6], [194, -82, 3.2], [228, -56, 3.2]];
-  for (const [x, y, rr] of bossen) n += fleck(T, x + rr * 0.45, y + rr * 0.55, rr * 1.2, rr * 0.8, "#4a2519", 0.3, -20) + fleck(T, x - rr * 0.2, y - rr * 0.25, rr * 1.05, rr * 0.85, "#f7cdb6", 0.55, -20);
+  for (const [x, y, rr] of bossen) n += fleck(T, x + rr * 0.5, y + rr * 0.6, rr * 1.25, rr * 0.85, "#3e1d13", 0.45, -20) + fleck(T, x - rr * 0.25, y - rr * 0.3, rr * 0.95, rr * 0.75, "#f2b9a0", 0.35, -20);
   /* Narben: helle, leicht erhabene Striche (Kämpfe mit Stoßzähnen) */
   n += zart(T, [[216, -102], [224, -95], [229, -92]], "#f0d0c0", 0.5, 0.5) + zart(T, [[202, -76], [207, -66]], "#f0d0c0", 0.45, 0.45) + zart(T, [[244, -90], [247, -81]], "#f0d0c0", 0.4, 0.45);
   /* Haare: spärlich, kurz, rötlich-braun, auf Rücken und Flanke (samtiger Schimmer am Licht) */
-  n += haare(T, [[60, -40], [110, -72], [170, -96], [218, -118], [250, -132], [240, -110], [200, -92], [140, -68], [80, -40]], 380, (x, y) => 165 + (x - 150) * 0.05, 0.8,
-    [["#5b3324", 1, 0.07, 0.4], ["#f0c4a8", 0.8, 0.06, 0.45]], 22, 0.3, 0.04);
+  n += haare(T, [[60, -40], [110, -72], [170, -96], [218, -118], [250, -132], [240, -110], [200, -92], [140, -68], [80, -40]], 300, (x, y) => 165 + (x - 150) * 0.05, 0.8,
+    [["#4e2a1d", 1, 0.07, 0.4], ["#eab79b", 0.5, 0.06, 0.4]], 22, 0.3, 0.04);
   /* Kopf: Stirnwulst, Augenhöhle mit Schatten darüber, Polster heller und geschwollen */
   n += weich([[258, -126], [268, -128], [276, -124], [270, -122], [260, -122]], "#f5d4c2", 0.5, 1.2) + weich([[260, -121.6], [272, -122], [272, -118], [262, -117]], "#4a271c", 0.45, 1);
   const polster = [[278, -128], [285, -126], [290.6, -120], [294.2, -112], [295.2, -103.6], [293.4, -96.6], [289, -92.2], [282, -91.2], [276, -94], [273.6, -104], [274.6, -118]];
@@ -460,7 +474,7 @@ function walross(T) {
           länger; sie stehen nach vorn-unten wie eine Bürste ---- */
   {
     let dS = "", dH = "";
-    const k = F ? 330 : 45;
+    const k = F ? 290 : 45;
     for (let i = 0; i < k; i++) {
       const t = T.rnd(), reihe = T.rnd();
       const bx = 294.2 + 2.8 * Math.sin(t * 2.4 - 0.4) - reihe * 15 - (t > 0.8 ? (t - 0.8) * 14 : 0), by = -123 + t * 29 + reihe * 2;
@@ -480,8 +494,7 @@ function walross(T) {
   /* ---- Auge: klein, hoch und seitlich, in fleischiger Höhle; gerötete Bindehaut, braune Iris ---- */
   s += fleck(T, 266.4, -118.6, 3.4, 2.4, "#3b1d14", 0.5);
   s += T.augeReal(266.4, -118.8, 1.15, { iris: "#5a2e16", iris2: "#24100a", offen: 0.62, winkel: -8, weiss: true, lid: "#3a1a12", haut: "#9b5444" });
-  s += fein(T, zart(T, [[262.2, -121.6], [266.4, -123.2], [270.8, -122.2]], "#3b1d14", 0.3, 0.55) + zart(T, [[262.6, -116], [266.6, -114.8], [270.6, -115.8]], "#3b1d14", 0.25, 0.45));
-  s += fein(T, zart(T, [[261, -124.4], [266.6, -126.4], [272.4, -124.8]], "#3b1d14", 0.3, 0.35));
+  s += fein(T, falte([[261.6, -122], [266.4, -123.6], [271.2, -122.4]], 0.35, 0.5) + falte([[262.4, -115.6], [266.6, -114.4], [270.8, -115.4]], 0.3, 0.4) + falte([[260.4, -125.4], [266.6, -127.4], [272.6, -125.6]], 0.4, 0.4));
   /* Gehöröffnung hinter dem Auge (keine Ohrmuschel): kleiner Schlitz in einer Hautfalte */
   s += zart(T, [[248.6, -116.4], [249.6, -114.2]], "#2a140e", 0.45, 0.8) + zart(T, [[247, -118], [250.4, -118.4], [251.6, -116.6]], "#4a271c", 0.35, 0.4);
 
@@ -501,7 +514,7 @@ function walross(T) {
   hi += weich([[60, -20], [68, -18], [68, -6], [60, -6]], "#2e170f", 0.45, 2);
   for (let i = 0; i < 5; i++) hi += falte([[56, -11 + i * 0.6], [40, -14 + i * 2.8], [24, -15.4 + i * 3], [10 + [-1.6, 0.6, 2.4, 0.6, -2.6][i], -16 + i * 3.6]], 0.3, 0.4);
   hi += `<path d="M22.6 -12.4q-1.6 -.6 -2.6 .2M22.4 -9.2q-1.6 -.5 -2.6 .3M21.6 -6.2q-1.5 -.4 -2.4 .3" stroke="#2a1a12" stroke-width=".7" stroke-linecap="round" fill="none"/>`;
-  s += silhouette(T, G(hf), verlauf(T, "hf", 0, -22, 0, 0, [[[0, -22], "#b07a63"], [[0, -8], "#94604c"], [[0, 0], "#5e3a2d"]]), hi, "#000", 0, 0);
+  s += `<g mask="${verlaufMaske(T, "hf", 0, -24, 72, 26, 64, 0, 54, 0, [[[64, 0], "#000"], [[54, 0], "#fff"]])}">` + silhouette(T, G(hf), verlauf(T, "hf", 0, -22, 0, 0, [[[0, -22], "#a86f57"], [[0, -8], "#8c5844"], [[0, 0], "#5c3829"]]), hi, "#000", 0, 0) + `</g>`;
   /* Bauch liegt auf: schmaler Kontaktschatten (Okklusion), kein eigener Bodenschatten */
   s += weich([[60, -0.6], [120, -1], [200, -2], [240, -1.4], [200, 0.4], [120, 0.6], [62, 0.4]], "#1a0d08", 0.6, 0.8);
   return { svg: s, box: [5, -133.6, 295.4, 0], kopf: [236, -140, 302, -30] };
