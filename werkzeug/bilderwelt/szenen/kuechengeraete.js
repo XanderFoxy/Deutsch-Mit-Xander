@@ -49,6 +49,10 @@ const SCHWARZ = S.lg("schwarz", [[0, "#3a3e42"], [1, "#16191c"]]);
 const FEN = { x0: 40, x1: 84, y0: 44, y1: 101 };
 {
   let k = `<rect x="0" y="0" width="320" height="${DECKE}" fill="${S.lg("decke", [[0, "#ecebe7"], [1, "#e0ded8"]])}"/>`;
+  /* Decke in Flucht: Fugen der Deckenplatten laufen zum Fluchtpunkt */
+  for (let i = -5; i <= 5; i++) { const xb = VP.x + i * 36, t = (0 - VP.y) / (DECKE - VP.y); k += `<line x1="${r(xb)}" y1="${DECKE}" x2="${r(VP.x + (xb - VP.x) * t)}" y2="0" stroke="#d6d4ce" stroke-width=".35"/>`; }
+  for (const y of [DECKE - 9, DECKE - 20]) k += `<line x1="0" y1="${y}" x2="320" y2="${y}" stroke="#d6d4ce" stroke-width=".3"/>`;
+  k += `<rect x="0" y="0" width="320" height="${DECKE}" fill="${S.lg("deckenschatten", [[0, "#000", 0.08], [1, "#000", 0]])}"/>`;
   for (const x of [60, 160, 260]) k += `<ellipse cx="${x}" cy="${DECKE - 9}" rx="4" ry="1.1" fill="#fffbe9"/><ellipse cx="${x}" cy="${DECKE - 9}" rx="9" ry="2.4" fill="#fffbe9" opacity=".3"/>`;
   k += `<rect x="0" y="${DECKE}" width="320" height="${WAND_UNTEN - DECKE}" fill="${S.lg("wand", [[0, "#e5e9e1"], [1, "#d9ded4"]])}"/>`;
   k += `<rect x="0" y="${DECKE - 0.6}" width="320" height="1.4" fill="#cfd2c9"/>`;
