@@ -821,6 +821,35 @@ const FERNBAUM = dunst("fernbaum", 0.22, [0.78, 0.85, 0.93]);
 const PODEST = yp(3.6);
 {
   let k = `<rect x="0" y="${PODEST}" width="400" height="${r(260 - PODEST)}" fill="${S.lg("podest", [[0, "#a77a4c"], [1, "#7d5634"]])}"/>`;
+  /* Leben auf dem nahen Gehsteig (5,2 m): eine Frau mit Einkaufstasche, ein
+     Mann mit Dackel; hinter den rechten Kästen ein Radfahrer auf dem Radstreifen
+     (7,2 m). Was die Kästen verdecken, wird gar nicht erst gezeichnet. */
+  {
+    const GY = ys(5.2), oben = PODEST - 0.42 * F / 3.6 - 1;
+    const passant = (spec, h, x) => {
+      const p = B.mensch(Object.assign({ pose: "gehen", haut: "hell" }, spec), h);
+      const grenze = (oben - GY) / p.k + 6;
+      const svg = p.svg.replace(/<path [^>]*d="([^"]+)"[^>]*\/>/g, (q, d) => { const n = d.match(/-?\d*\.?\d+/g).map(Number).filter((_, i) => i % 2 === 1); return Math.min(...n) > grenze ? "" : q; });
+      return { svg: `<g transform="translate(${x} ${GY})">${schlank(svg, 2, true)}</g>`, p };
+    };
+    const frau = passant({ id: "wie_frau", geschlecht: "w", blick: -75, frisur: "lang", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "bluse", farbe: "#e9d27a" }, unterteil: { stueck: "rock", farbe: "#2f4f6a" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "tasche", farbe: "#b34a3a" } } }, r(1.66 * F / 5.2), 142);
+    const mann = passant({ id: "wie_mann", geschlecht: "m", blick: 75, frisur: "kurz", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "hemd", farbe: "#9fc3e3" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, r(1.78 * F / 5.2), 182);
+    k += frau.svg + mann.svg;
+    /* der Dackel läuft vorne in der Lücke zwischen den Kästen, an der Leine */
+    const hd = [mann.p.z.handL, mann.p.z.handR].map((h) => [182 + h.x * mann.p.k, GY + h.y * mann.p.k]).sort((a, b) => b[0] - a[0])[0];
+    const dx = 201, s5 = F / 5.2;
+    let d = `<ellipse cx=".02" cy="-.13" rx=".27" ry=".085" fill="#8a4a22"/><path d="M-.2 -.08 L-.22 0 M-.14 -.08 L-.13 0 M.18 -.08 L.2 0 M.24 -.08 L.26 0" stroke="#6a361a" stroke-width=".04"/>`;
+    d += `<path d="M.26 -.16 Q.33 -.22 .4 -.2 L.44 -.17 L.36 -.13 Z" fill="#8a4a22"/><path d="M.31 -.2 Q.3 -.12 .34 -.1 Q.36 -.16 .34 -.2 Z" fill="#5e2f14"/><circle cx=".37" cy="-.19" r=".008" fill="#111"/><path d="M-.24 -.15 Q-.33 -.2 -.36 -.26" stroke="#8a4a22" stroke-width=".03" fill="none"/>`;
+    k += `<g transform="translate(${dx} ${GY}) scale(${r(s5)})">${d}</g><path d="M${r(hd[0])} ${r(hd[1])} Q${r((hd[0] + dx) / 2 + 2)} ${r(GY - 2)} ${r(dx + 0.3 * s5)} ${r(GY - 0.17 * s5)}" stroke="#c8302a" stroke-width=".25" fill="none"/>`;
+    /* der Radfahrer (nach links) */
+    const RY = ys(7.2), s7 = F / 7.2, RX = 232;
+    let rad = `<circle cx="-.6" cy="-.35" r=".34" fill="none" stroke="#222" stroke-width=".04"/><circle cx=".46" cy="-.35" r=".34" fill="none" stroke="#222" stroke-width=".04"/>`;
+    rad += `<path d="M.46 -.35 L.04 -.38 L-.24 -.82 L.08 -.84 Z M-.24 -.82 L-.6 -.35 M-.32 -.86 L-.38 -1.02 L-.5 -1.04 M.08 -.84 L.06 -.94" stroke="#2f6aa8" stroke-width=".045" fill="none"/><path d="M-.02 -.96 L.14 -.96" stroke="#222" stroke-width=".05"/>`;
+    rad += `<path d="M.05 -.93 L-.08 -.6 L-.1 -.38 M.05 -.93 L-.04 -.66 L.04 -.44" stroke="#2d2f3a" stroke-width=".11" stroke-linecap="round" fill="none"/>`;
+    rad += `<path d="M.1 -.92 Q-.06 -1.2 -.24 -1.42 L-.32 -1.36 Q-.16 -1.12 -.02 -.88 Z" fill="#e2a33a"/><path d="M-.22 -1.36 L-.44 -1.08 L-.5 -1.04" stroke="#e2a33a" stroke-width=".07" fill="none" stroke-linecap="round"/>`;
+    rad += `<circle cx="-.32" cy="-1.5" r=".085" fill="#dcac88"/><path d="M-.42 -1.53 Q-.34 -1.66 -.2 -1.56 Q-.26 -1.5 -.42 -1.53 Z" fill="#2a6a3a"/>`;
+    k += `<g transform="translate(${RX} ${RY}) scale(${r(s7)})">${rad}</g>`;
+  }
   for (let i = -14; i <= 14; i++) {
     const xa = 200 + i * 14.4, xb = 200 + i * 28, xe = Math.max(0, Math.min(400, xb)), ye = i === 0 ? 260 : r(PODEST + (260 - PODEST) * (xe - xa) / (xb - xa));
     if (xa > 0 && xa < 400) k += `<line x1="${r(xa)}" y1="${PODEST}" x2="${r(xe)}" y2="${ye}" stroke="#5f3f22" stroke-width=".4" opacity=".7"/>`;
@@ -863,21 +892,23 @@ const PODEST = yp(3.6);
     k += `<path d="M${r(cx - c(0.1))} ${r(cy - c(0.5))} Q${r(cx - c(0.13))} ${r(cy - c(0.76))} ${cx} ${r(cy - c(0.79))} Q${r(cx + c(0.13))} ${r(cy - c(0.76))} ${r(cx + c(0.1))} ${r(cy - c(0.5))}" stroke="${HOLZ}" stroke-width="${c(0.018)}" fill="none"/>`;
     k += `<ellipse cx="${cx}" cy="${r(cy - c(0.46))}" rx="${c(0.22)}" ry="${c(0.05)}" fill="${HOLZ}"/><ellipse cx="${cx}" cy="${r(cy - c(0.465))}" rx="${c(0.19)}" ry="${c(0.04)}" fill="#d9b97e"/>`;
     {
-      /* der Gast liest Zeitung; der Ober bringt ihm gleich seine Melange */
-      const gst = B.mensch({ id: "wie_gast", geschlecht: "m", pose: "lesen", blick: -58, frisur: "kurz", haarfarbe: "grau", haut: "hell",
-        kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "jacke", farbe: "#55606e" }, unterteil: { stueck: "anzughose", farbe: "#3a3c44" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, r(1.76 * cs));
-      const gx = r(cx - gst.z.sitz.x * gst.k), gy = r(cy - c(0.47) - gst.z.sitz.y * gst.k);
-      k += schlag(cx, cy, c(0.5), 8, 0.2) + `<g transform="translate(${gx} ${gy})">${schlank(gst.svg, 2, true)}</g>`;
-      const hl = [gst.z.handL, gst.z.handR].map((h) => [gx + h.x * gst.k, gy + h.y * gst.k]);
-      const xa = Math.min(hl[0][0], hl[1][0]) - c(0.1), xb = Math.max(hl[0][0], hl[1][0]) + c(0.06), yb = Math.max(hl[0][1], hl[1][1]) + c(0.03), ya = yb - c(0.42), xm = (xa + xb) / 2;
-      k += `<path d="M${r(xa)} ${r(ya + 1)} L${r(xm)} ${r(ya)} L${r(xm)} ${r(yb)} L${r(xa)} ${r(yb + 0.8)} Z" fill="#ece8de" stroke="#bdb7aa" stroke-width=".25"/><path d="M${r(xm)} ${r(ya)} L${r(xb)} ${r(ya + 1.4)} L${r(xb)} ${r(yb + 1)} L${r(xm)} ${r(yb)} Z" fill="#dcd7cb" stroke="#bdb7aa" stroke-width=".25"/>`;
-      let zeilen = "";
-      for (let i = 1; i < 9; i++) { const t = i / 9; zeilen += `M${r(xa + 1)} ${r(ya + 1 + t * (yb - ya))}L${r(xm - 0.8)} ${r(ya + 0.2 + t * (yb - ya))}M${r(xm + 0.8)} ${r(ya + 0.3 + t * (yb - ya))}L${r(xb - 1)} ${r(ya + 1.4 + t * (yb - ya))}`; }
-      k += `<path d="${zeilen}" stroke="#9a958c" stroke-width=".35"/><rect x="${r(xa + 1)}" y="${r(ya + 1.6)}" width="${r((xm - xa) * 0.7)}" height="1.6" fill="#6d6a66" transform="rotate(-6 ${r(xa + 1)} ${r(ya + 1.6)})"/>`;
-      for (const [hx, hy] of hl) k += `<circle cx="${r(hx)}" cy="${r(hy)}" r="${c(0.035)}" fill="#e0b494"/>`;
+      /* der Gast liest hinter der aufgeschlagenen Zeitung (nur Haarschopf,
+         Hände, Rücken und übereinandergeschlagene Beine sind zu sehen); der
+         Ober bringt ihm gleich seine Melange — in Metern gezeichnet */
+      let g = `<path d="M.0 .0 Q-.2 -.06 -.42 -.02 L-.44 .08 Q-.22 .06 .02 .1 Z" fill="#3a3c44"/><path d="M-.44 .0 L-.5 .44 L-.42 .46 L-.34 .04 Z" fill="#33353d"/><path d="M-.56 .44 L-.36 .44 L-.34 .5 L-.58 .5 Z" fill="#5a3a22"/>`;
+      g += `<path d="M-.02 -.05 Q-.24 -.16 -.42 -.1 L-.44 -.01 Q-.24 -.05 -.02 .03 Z" fill="#40424c"/><path d="M-.42 -.1 L-.62 .26 L-.55 .3 L-.36 -.02 Z" fill="#40424c"/><path d="M-.66 .25 Q-.7 .31 -.62 .33 L-.52 .3 L-.56 .25 Z" fill="#5a3a22"/>`;
+      g += `<path d="M.14 .02 L-.06 .02 Q-.1 -.3 -.04 -.56 Q.06 -.62 .13 -.55 Q.17 -.3 .14 .02 Z" fill="#55606e"/><path d="M.06 -.56 Q.15 -.5 .15 -.3 L.14 .02 L.07 .02 Z" fill="#454f5c"/>`;
+      g += `<ellipse cx="-.03" cy="-.69" rx=".1" ry=".085" fill="#b9b6b0"/><path d="M-.12 -.7 Q-.03 -.79 .07 -.7" stroke="#d8d5ce" stroke-width=".02" fill="none"/><path d="M.06 -.66 q.03 .01 .02 .05" stroke="#d6a886" stroke-width=".03"/>`;
+      /* die Zeitung: ein großer Bogen, in der Mitte gefaltet, wir sehen die Rückseite */
+      g += `<path d="M-.66 -.64 L-.38 -.67 L-.38 -.06 L-.66 -.02 Z" fill="#efebe2" stroke="#bdb7aa" stroke-width=".006"/><path d="M-.38 -.67 L-.08 -.63 L-.08 -.04 L-.38 -.06 Z" fill="#e2ddd2" stroke="#bdb7aa" stroke-width=".006"/>`;
+      let zl = "";
+      for (let i = 1; i < 11; i++) { const t = i / 11; zl += `M-.63 ${r((-0.62 + t * 0.58) * 100) / 100}H-.41M-.35 ${r((-0.64 + t * 0.58) * 100) / 100}H-.11`; }
+      g += `<path d="${zl}" stroke="#a39e94" stroke-width=".012"/><rect x="-.62" y="-.58" width=".2" height=".1" fill="#76726b"/><rect x="-.34" y="-.6" width=".14" height=".08" fill="#8a857d"/>`;
+      g += `<ellipse cx="-.67" cy="-.36" rx=".028" ry=".04" fill="#e0b494"/><ellipse cx="-.08" cy="-.4" rx=".028" ry=".04" fill="#e0b494"/>`;
+      k += schlag(r(cx + c(0.1)), cy, c(0.36), 5, 0.16) + `<g transform="translate(${cx} ${r(cy - c(0.47))}) scale(${r(cs * 10) / 10})">${g}</g>`;
     }
-    k += schlag(X, fuss, m(0.5), 10, 0.22);
-    k += `<path d="M${X - 2} ${r(ty + 2)} L${X - 1.6} ${fuss} L${X + 1.6} ${fuss} L${X + 2} ${r(ty + 2)} Z" fill="#3a3a3c"/><ellipse cx="${X}" cy="${fuss}" rx="${m(0.18)}" ry="1.4" fill="#2a2a2c"/>`;
+    k += schlag(r(X + 3), fuss, m(0.36), 9, 0.16);
+    k += `<path d="M${X - 2} ${r(ty + 2)} L${X - 1.6} ${fuss} L${X + 1.6} ${fuss} L${X + 2} ${r(ty + 2)} Z" fill="#4a4a4e"/><path d="M${r(X - m(0.12))} ${fuss} Q${X} ${r(fuss - 2.2)} ${r(X + m(0.12))} ${fuss} Z" fill="#5a5a5e"/><path d="M${r(X - m(0.08))} ${r(fuss - 0.6)} Q${X} ${r(fuss - 2)} ${r(X + 1)} ${r(fuss - 1.6)}" stroke="#8a8a8e" stroke-width=".4" fill="none"/>`;
     k += `<path d="M${r(X - m(0.3))} ${ty} A${m(0.3)} ${m(0.06)} 0 0 0 ${r(X + m(0.3))} ${ty} L${r(X + m(0.3))} ${r(ty + 1.4)} A${m(0.3)} ${m(0.06)} 0 0 1 ${r(X - m(0.3))} ${r(ty + 1.4)} Z" fill="#b5ada0"/>`;
     k += `<ellipse cx="${X}" cy="${ty}" rx="${m(0.3)}" ry="${m(0.06)}" fill="${S.rg("marmor2", [[0, "#ffffff"], [1, "#ddd8cf"]], 0.4, 0.35, 0.8)}" stroke="#a9a196" stroke-width=".4"/>`;
     /* Einspänner: Mokka im Glas mit Henkel, Schlagobers-Haube; Zuckerstreuer */

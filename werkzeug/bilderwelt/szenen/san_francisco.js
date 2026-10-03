@@ -329,7 +329,7 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
     return g;
   };
   /* Boot 12 m Mast: 1,2 km → 3 Einheiten; 1,3 km → 2,8 (beide im freien Wasser, nicht hinter Häusern) */
-  const B1 = [150, FY(1200, 0)], B2 = [263, FY(1300, 0)];
+  const B1 = [150, FY(1200, 0)], B2 = [131, FY(1500, 0)];
   k += boot(B1[0], B1[1], 0.34, false) + boot(B2[0], B2[1], 0.3, true);
   S.teil({ oben: true, id: "segelboot", de: "das Segelboot", syl: "SE-gel-boot", it: "la barca a vela", itSyl: "BAR-ca a VE-la", en: "sailboat", x: 0, y: 0, kunst: k + flaeche(r(B1[0] - 6), r(B1[1] - 6), 12, 7.5, 0.4) + flaeche(r(B2[0] - 6), r(B2[1] - 6), 12, 7.5, 0.4),
     tipp: "Am Wochenende segeln viele Boote in der Bucht — der Wind kommt vom Pazifik." });
@@ -342,27 +342,30 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
 {
   let c = "";
   /* Telegraph Hill: durchgehender Hang von North Beach bis zur Kuppe (y ≈ 93,5) */
-  c += `<path d="M310 122 Q322 112 334 104 Q348 96.4 358 94 Q366 93 376 93.6 Q390 95.2 400 98 L400 150 L310 150 Z" fill="${S.lg("telegraph", [[0, "#7a8a5e"], [1, "#5c6c43"]])}"/>`;
+  c += `<path d="M298 124 L298 118.2 L311 118.4 Q321 111.8 333 103.8 Q341 98.8 347 97 Q356 94.2 366 93 Q372 92.8 376 93.6 Q390 95.2 400 98 L400 150 L298 150 Z" fill="${S.lg("telegraph", [[0, "#7a8a5e"], [1, "#5c6c43"]])}"/>`;
   for (let i = 0; i < 26; i++) { const x = 348 + rnd() * 36, y = 92.6 + rnd() * 5; c += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(1 + rnd() * 1.2)}" fill="${rnd() < 0.5 ? "#5e7046" : "#4b5c38"}"/>`; }
-  /* Häuser am Hang des Telegraph Hill: kleine Kuben, dazwischen viel Grün (Gärten der Filbert Steps) */
-  { const proFarbe = new Map(), baeume = [], schatten_ = [];
-    const xb = (y) => y >= 104 ? 310 + (122 - y) * 24 / 18 : 334 + (104 - y) * 2.4;
-    for (let y = 98.6; y < 125; y += 2.5) {
-      let x = xb(y) + 0.6 + rnd() * 1.5;
-      while (x < 400) {
-        const w = 1.6 + rnd() * 1.8 + (y - 98) * 0.03, h = 1 + rnd() * 0.8 + (y - 98) * 0.025;
-        if (y < 101 && x > 349 && x < 382) { x += w + 0.6; continue; }
-        if (y < 99.5 && rnd() < 0.6) { baeume.push(`M${r(x)} ${r(y - h * 0.4)}a${r(h * 0.8)} ${r(h * 0.7)} 0 1 0 .1 0z`); x += w + 0.4; continue; }
-        if (rnd() < 0.28) baeume.push(`M${r(x)} ${r(y - h * 0.4)}a${r(h * 0.7)} ${r(h * 0.6)} 0 1 0 .1 0z`);
-        else { const f = ["#f1e9da", "#e7d9c1", "#dfe3e0", "#f0dfd3", "#e9e0c8", "#d8dfe6", "#f2e4cf"][Math.floor(rnd() * 7)]; proFarbe.set(f, (proFarbe.get(f) || "") + `M${r(x)} ${r(y - h)}h${r(w)}v${r(h)}h${r(-w)}z`); }
-        x += w + 0.25 + rnd() * 0.9;
-      }
-    }
+  /* Häuser am Hang des Telegraph Hill: versetzte Reihen, hangauf kleiner, jede mit Schattenkante rechts
+     und unten; dazwischen Gärten und die Treppenwege (Filbert/Greenwich Steps) */
+  { const proFarbe = new Map(); let sch = "", bm = "";
+    const xb = (y) => y >= 104 ? 311 + (122 - y) * 22 / 18 : 333 + (104 - y) * 2.2;
+    for (let y = 97.5, z = 0; y < 125; z++) { const h = 0.9 + (y - 96) * 0.045; let x = xb(y) + 0.5 + (z % 2) * 1.2 + rnd();
+      while (x < 400) { const w = 1.4 + (y - 96) * 0.06 + rnd() * 1.2;
+        if (y < 101.5 && x > 349 && x < 383) { x += w + 0.6; continue; }
+        if (rnd() < 0.24) bm += `M${r(x)} ${r(y - h * 0.4)}a${r(h * 0.75)} ${r(h * 0.6)} 0 1 0 .1 0z`;
+        else { const f = ["#f1e9da", "#e7d9c1", "#dfe3e0", "#f0dfd3", "#e9e0c8", "#d8dfe6", "#f2e4cf"][Math.floor(rnd() * 7)]; proFarbe.set(f, (proFarbe.get(f) || "") + `M${r(x)} ${r(y - h)}h${r(w)}v${r(h)}h${r(-w)}z`); sch += `M${r(x + w - 0.3)} ${r(y - h)}h.3v${r(h)}h${r(-w)}v-.22h${r(w - 0.3)}z`; }
+        x += w + 0.35 + rnd() * 0.8; }
+      y += h + 0.25; }
     for (const [f, d] of proFarbe) c += `<path d="${d}" fill="${f}"/>`;
-    c += `<path d="${baeume.join("")}" fill="#55683f"/>`;
+    c += `<path d="${sch}" fill="#5a5e52" opacity=".55"/><path d="${bm}" fill="#55683f"/>`;
+    c += `<path d="M322 121 L326 117 L325 114 L330 110 L329 107 L335 103 L337 100" stroke="#efe6d4" stroke-width=".45" fill="none"/><path d="M352 123 L355 118 L354 114 L359 109 L358 105 L363 101" stroke="#efe6d4" stroke-width=".45" fill="none"/>`;
   }
   /* Fisherman's Wharf und der Hafen am Fuß (Uferlinie) */
   c += `<path d="M196 132 L218 128 L240 124 L262 121 L282 118.6 L300 118.4 L316 118.6 L316 126 L196 136 Z" fill="#b9ad98"/>`;
+  /* Fisherman's Wharf: Dächer, Uferstraße (Jefferson/Embarcadero), Palmen, das Krebs-Rundschild */
+  for (let x = 236, i = 0; x < 312; x += 5 + (i++ % 3) * 2) { const y = 119.4 + (312 - x) * 0.04 * (x < 262 ? 1.6 : 1), w = 3.6 + (i % 2) * 1.6; c += `<rect x="${r(x)}" y="${r(y - 1.6)}" width="${r(w)}" height="1.6" fill="${["#9a8f80", "#c7bba6", "#8a7d6c"][i % 3]}"/><rect x="${r(x)}" y="${r(y - 1.9)}" width="${r(w)}" height=".35" fill="#6f665b"/>`; }
+  c += `<path d="M234 125 L312 120.6" stroke="#e8e2d4" stroke-width=".35"/>`;
+  for (const x of [244, 268, 291, 305]) { const y = 120.3 + (312 - x) * 0.045; c += `<path d="M${x} ${r(y)} L${x + 0.2} ${r(y - 3.2)}" stroke="#6b5a42" stroke-width=".3"/><path d="M${x + 0.2} ${r(y - 3.2)} l-1.3 .7 M${x + 0.2} ${r(y - 3.2)} l1.3 .7 M${x + 0.2} ${r(y - 3.2)} l-.9 -.6 M${x + 0.2} ${r(y - 3.2)} l.9 -.6 M${x + 0.2} ${r(y - 3.2)} l0 1" stroke="#4d6b3a" stroke-width=".35"/>`; }
+  c += `<path d="M258 121.6 V118.4" stroke="#3c3a36" stroke-width=".3"/><circle cx="258" cy="117.2" r="1.9" fill="#f4efe2" stroke="#1f4f7a" stroke-width=".35"/><path d="M256.9 117.4 q1.1 -1.2 2.2 0 q-1.1 .9 -2.2 0 Z M256.9 117 l-.5 -.6 M259.1 117 l.5 -.6 M257.1 117.8 l-.5 .4 M258.9 117.8 l.5 .4" fill="#c8301f" stroke="#c8301f" stroke-width=".2"/>`;
   S.hinten(c);
 }
 
@@ -386,7 +389,7 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
   k += `<rect x="40" y="-14" width="18" height="10" fill="#efe6d2"/><rect x="40" y="-9.5" width="18" height="1" fill="#c9a24a"/>`;
   k += `<path d="M38 -14 L49 -21 L60 -14 Z" fill="#c0392b"/><path d="M41.5 -14 L49 -21 L45 -14 Z M48 -14 L49 -21 L52 -14 Z M55 -14 L49 -21 L58.5 -14 Z" fill="#f6f1e6"/><circle cx="49" cy="-21.6" r="1" fill="#d9b44a"/>`;
   /* Eingangsschild PIER 39 am Landende */
-  k += `<rect x="-72" y="-27" width="1.6" height="23" fill="#3c3a36"/><rect x="-64" y="-27" width="1.6" height="23" fill="#3c3a36"/><rect x="-76" y="-33" width="18" height="7" fill="#1f4f7a"/><text x="-67" y="-27.8" font-size="5" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-weight="bold">PIER 39</text>`;
+  k += `<rect x="-66" y="-25" width="20" height="7" fill="#1f4f7a"/><rect x="-66" y="-25" width="20" height="1" fill="#f2c230"/><text x="-56" y="-19.6" font-size="5" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-weight="bold">PIER 39</text>`;
   /* viele Fahnen entlang der Dächer */
   { let st = "", fl = ["#c0392b", "#2a6fb3", "#f2c230", "#2e8b57", "#ffffff"]; for (let x = -56; x <= 56; x += 7) { const top = -4 - 15 - 9 - rp() * 3; st += `M${x} -12 V${r(top)} `; k += `<rect x="${x}" y="${r(top)}" width="3.4" height="2.2" fill="${fl[Math.floor(rp() * 5)]}"/>`; } k += `<path d="${st}" stroke="#ddd" stroke-width=".45"/>`; }
   /* K-Dock vor der Westseite: Schwimmstege, dicht an dicht Seelöwen (≈ 2 m) */
@@ -395,7 +398,7 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
   const loewe = (x, y, dir, hoch) => { const X2 = (v) => r(x + v * dir), Y2 = (v) => r(y - v); return `M${X2(-2)} ${Y2(0)} Q${X2(-2.3)} ${Y2(0.5)} ${X2(-1.5)} ${Y2(0.6)} Q${X2(0)} ${Y2(0.9)} ${X2(0.9)} ${Y2(hoch ? 1.4 : 0.8)} L${X2(1.3)} ${Y2(hoch ? 2 : 0.9)} Q${X2(1.8)} ${Y2(hoch ? 2.2 : 0.9)} ${X2(2)} ${Y2(hoch ? 1.9 : 0.6)} L${X2(1.5)} ${Y2(hoch ? 1.2 : 0.3)} L${X2(1.2)} ${Y2(0)} Z`; };
   { let lw = ""; for (const [x0, y0] of [[-112, 1.5], [-96, 5], [-120, 7.5], [-84, 2]]) for (let x = x0 + 2; x < x0 + 21; x += 2.6 + rp() * 1.2) lw += loewe(x, y0 + 0.2, rp() < 0.5 ? 1 : -1, rp() < 0.3); k += `<path d="${lw}" fill="${LF}"/>`; }
   S.teil({ id: "pier_39", de: "der Pier 39", syl: "PIER NEUN-und-DREI-ßig", it: "il Pier 39", itSyl: "PIER TREN-ta-NO-ve", en: "Pier 39", x: X, y: Y,
-    kunst: `<g ${fern(2)} transform="scale(${r(s * 1000) / 1000})">${k}</g>` + flaeche(-36 * s * 3.4, -36 * s, 190 * s, 44 * s, 0.4),
+    kunst: `<g ${fern(2)} transform="scale(${r(s * 1000) / 1000})">${k}</g>` + `<g ${fern(2)}><rect x="${r(301 - X)}" y="${r(114.6 - Y)}" width="9" height="2.2" fill="#d9d2c2"/><rect x="${r(301 - X)}" y="${r(113.8 - Y)}" width="9" height=".8" fill="#8f877a"/><rect x="${r(301.5 - X)}" y="${r(116.8 - Y)}" width="8" height=".5" fill="#6f6658"/></g>` + flaeche(-36 * s * 3.4, -36 * s, 190 * s, 44 * s, 0.4),
     tipp: "Am Pier 39 gibt es Läden und Restaurants — und Hunderte Seelöwen.",
     zoom: { x: r(X - 126 * s), y: r(Y - 21), w: 54, h: 36 },
     unter: [
@@ -419,7 +422,7 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
   k += `<path d="M-7.4 -61 L-6.6 -63.4 L6.6 -63.4 L7.4 -61 Z" fill="#e2d9c8"/><rect x="-6.4" y="-64.2" width="12.8" height="1" fill="#cbc1ae"/>`;
   k += `<path d="M-6.4 -8 L-6 -55 L-3 -55 L-3.2 -8 Z" fill="#fff6e0" opacity=".35"/><path d="M6.4 -8 L6 -55 L3 -55 L3.2 -8 Z" fill="#000" opacity=".1"/>`;
   S.teil({ id: "coit_tower", de: "der Coit Tower", syl: "COIT TOW-er", it: "la Coit Tower", itSyl: "COIT TOW-er", en: "Coit Tower", x: X, y: Y,
-    kunst: `<g ${fern(2)} transform="scale(${r(s * 1000) / 1000})">${k}</g>` + flaeche(-2.4, -17.6, 4.8, 18, 0.4),
+    kunst: `<g ${fern(2)} transform="scale(${r(s * 1000) / 1000})">${k}</g>` + flaeche(-4.6, -18, 9.2, 18.6, 0.4),
     tipp: "Der Coit Tower (1933) steht auf dem Telegraph Hill. Von oben sieht man die ganze Stadt." });
 }
 
@@ -714,14 +717,22 @@ const HAUS = {};
     k += vd([PO(-14.6, d0 + 0.35, zb0 + 3.1), PO(-14.6, d0 + 1.75, zb0 + 3.1), PO(-15, d0 + 1.75, zb0 + 3.22), PO(-15, d0 + 0.35, zb0 + 3.22)], schatt(f.t, 0.82));
     if (nah) for (let j = 0; j < 4; j++) { const zz = zb0 + 0.22 * (j + 1); k += vd([PO(-14.2 + j * 0.2, d0 + 0.4, zz), PO(-14.2 + j * 0.2, d0 + 1.7, zz), PO(-14.2 + j * 0.2, d0 + 1.7, zz - 0.22), PO(-14.2 + j * 0.2, d0 + 0.4, zz - 0.22)], j % 2 ? "#cfc9bd" : "#e0dace"); }
     const g0 = d0 + 5.6, g1 = d1 - 0.3, gz0 = zL(g1);
-    k += vd([PO(-14.95, g0, gz0), PO(-14.95, g0, gz0 + 2.3), PO(-14.95, g1, gz0 + 2.3), PO(-14.95, g1, gz0)], misch(f.t, "#c9c2b4", 0.4));
+    k += vd([PO(-14.95, g0 - 0.15, gz0), PO(-14.95, g0 - 0.15, gz0 + 2.5), PO(-14.95, g1 + 0.15, gz0 + 2.5), PO(-14.95, g1 + 0.15, gz0)], schatt(f.w, 0.7)) + vd([PO(-14.9, g0, gz0), PO(-14.9, g0, gz0 + 2.3), PO(-14.9, g1, gz0 + 2.3), PO(-14.9, g1, gz0)], "#d6cfc1");
     if (nah) { let gp = ""; for (let j = 1; j < 4; j++) gp += seg(PO(-14.94, g0 + 0.1, gz0 + j * 0.58), PO(-14.94, g1 - 0.1, gz0 + j * 0.58)) + " "; k += `<path d="${gp}" stroke="#9c958a" stroke-width=".18"/>`; }
   }
   KLIP[0] = -2.5;
   DECK.forEach((q) => q.length > 2 && decke(q));
   decke(GARTEN); decke(BEET);
   const sE = zeichneListe(LE), sN = zeichneListe(LN);
-  k = sN + sE + k;
+  /* die gerade Lombard Street hinter Leavenworth: Fahrbahn, Gehwege, Zebrastreifen an der Kreuzung, zwei Autos */
+  let sL = "";
+  { KLIP[0] = SEAM; const zz = (l, d) => gzE(l, d) + 0.02;
+    const band = (l0, l1, d0, d1, f) => vr([PO(l0, d0, zz(l0, d0)), PO(l0, d1, zz(l0, d1)), PO(l1, d1, zz(l1, d1)), PO(l1, d0, zz(l1, d0))], f);
+    sL += band(-13, 3, 126, 714, "#76736d") + band(-15, -13, 147, 714, "#bdb6a9") + band(3, 5, 147, 714, "#bdb6a9");
+    for (let l = -12.4; l < 2.4; l += 2.2) sL += band(l, l + 1.1, 128, 131.5, "#e9e5dc");
+    for (const [d, l, c] of [[215, -9.5, "#b8433a"], [330, -1.2, "#e6e3dc"]]) { const a = PO(l - 0.9, d, zz(l, d)), b = PO(l + 0.9, d, zz(l, d)), h = 300 * 1.45 / d, w = b[0] - a[0]; sL += `<rect x="${r(a[0])}" y="${r(a[1] - h)}" width="${r(w)}" height="${r(h * 0.65)}" fill="${c}"/><rect x="${r(a[0] + w * 0.12)}" y="${r(a[1] - h)}" width="${r(w * 0.76)}" height="${r(h * 0.35)}" fill="#33404c"/>`; }
+    KLIP[0] = -2.5; }
+  k = sN + sE + sL + k;
   const er = HAUS.erker;
   S.teil({ id: "holzhaus", de: "das Holzhaus", syl: "HOLZ-haus", it: "la casa di legno", itSyl: "CA-sa di LE-gno", en: "wooden house", x: 0, y: 0, kunst: k,
     tipp: "Die bunten Holzhäuser stammen aus der Zeit um 1900–1915. Die berühmtesten, die „Painted Ladies“, stehen am Alamo Square.",
@@ -762,7 +773,7 @@ const LOMB = {};
     b += `<path d="M${r(x - 0.18 * s2)} ${r(y)} L${r(x - 0.1 * s2)} ${r(top + R)} L${r(x + 0.1 * s2)} ${r(top + R)} L${r(x + 0.18 * s2)} ${r(y)} Z" fill="#4a3a2a"/>`;
     for (const [dx, dy, rr, c] of [[0, 0.9, 1, "#2f4a25"], [-0.55, 0.45, 0.72, "#3d5b2e"], [0.5, 0.35, 0.75, "#3a5a2c"], [-0.15, 0.1, 0.62, "#4f7340"], [-0.35, -0.1, 0.42, "#6b9150"]]) b += `<circle cx="${r(x + dx * R)}" cy="${r(top + R * (dy + 0.1))}" r="${r(rr * R)}" fill="${c}"/>`;
     return b; };
-  k += baum(4.5, 31, 5.4, 1.6) + baum(11.2, 52, 11, 2.5);
+  k += baum(4.5, 31, 5.4, 1.6) + baum(12.6, 52, 11, 2.5);
   /* Beete des Blocks */
   k += vl(BEET, S.lg("beet", [[0, "#3d5a2a"], [1, "#5a7a40"]]));
   /* Gehweg-Treppen an beiden Seiten: Stufen, Wange, Geländer */
@@ -777,12 +788,12 @@ const LOMB = {};
     k += `<path d="${gk}" stroke="#3c3a36" stroke-width=".22" fill="none"/>`;
   }
   /* Mittellinie: Haarnadeln um Mittelpunkte links (−8,2) und rechts (−2,4), Radius 2,6 m */
-  const RHO = 2.6, DT = (i) => 14 + 14.4 * i, LA = (i) => (i % 2 ? -2.4 : -8.2);
+  const RHO = 3.2, DT = (i) => 14 + 14.4 * i, LA = (i) => (i % 2 ? -2.2 : -8.0);
   const stuecke = [];
   let vor = [8.5, -5];
   for (let i = 0; i < 8; i++) {
     const dc = DT(i), lc = LA(i), links = i % 2 === 0, bog = [];
-    for (let j = 0; j <= 6; j++) { const t = Math.PI + (links ? 1 : -1) * Math.PI * j / 6; bog.push([dc + RHO * Math.cos(t), lc + RHO * Math.sin(t)]); }
+    for (let j = 0; j <= 12; j++) { const t = Math.PI + (links ? 1 : -1) * Math.PI * j / 12; bog.push([dc + RHO * Math.cos(t), lc + RHO * Math.sin(t)]); }
     stuecke.push({ p: [vor, bog[0]], t: (vor[0] + bog[0][0]) / 2 });
     stuecke.push({ p: bog, t: dc, mitte: [dc, lc], links });
     vor = bog[bog.length - 1];
@@ -792,35 +803,42 @@ const LOMB = {};
   const versatz = (p, o) => p.map((q, i) => { const a = p[Math.max(0, i - 1)], b = p[Math.min(p.length - 1, i + 1)], dd = b[0] - a[0], dl = b[1] - a[1], l = Math.hypot(dd, dl) || 1; return [q[0] - dl / l * o, q[1] + dd / l * o]; });
   const ZIEGEL = S.lg("brick", [[0, "#a64a35"], [1, "#c25c42"]]);
   const farbenH = ["#ec8fb8", "#c28be0", "#8fb0ea", "#f4f0f6", "#e46f9d", "#b58be6"];
-  const busch = (d, lat, gr = 1) => { const [x, y] = PO(lat, d, zL(d) + 0.2), s = F * 0.62 * gr / d; if (y > 257 || x - 1.9 * s < SEAM || x + 1.9 * s > 399.5) return "";
-    let g = `<path d="M${r(x - 1.9 * s)} ${r(y)} Q${r(x - 1.9 * s)} ${r(y - 1.3 * s)} ${r(x - 0.6 * s)} ${r(y - 1.5 * s)} Q${r(x)} ${r(y - 2 * s)} ${r(x + 0.7 * s)} ${r(y - 1.5 * s)} Q${r(x + 1.9 * s)} ${r(y - 1.3 * s)} ${r(x + 1.9 * s)} ${r(y)} Z" fill="#2f4d24"/>`;
-    const fb = farbenH[Math.floor(rnd() * 6)];
-    for (let i = 0; i < (d < 40 ? 9 : d < 70 ? 6 : 4); i++) { const a = rnd() * Math.PI, rr = 1.45 * s * Math.sqrt(rnd()), c = rnd() < 0.7 ? fb : farbenH[Math.floor(rnd() * 6)]; g += `<circle cx="${r(x + Math.cos(a) * rr)}" cy="${r(y - 0.45 * s - Math.sin(a) * rr * 0.75)}" r="${r(s * (0.2 + rnd() * 0.1))}" fill="${c}"/>`; }
-    return g; };
+  /* Hortensienbüsche als wiederverwendete Formen (<use>): unregelmäßiger Umriss, Blütenbälle in drei
+     Tönen mit Licht oben links und Schatten unten rechts, teils über die Buchskante hängend */
+  const HF = [["#e88ab4", "#f6c0d8", "#b9557f"], ["#86a8e6", "#c0d3f5", "#5574b8"], ["#b98be0", "#dcc2f2", "#8459ad"], ["#f1edf3", "#ffffff", "#c4bacd"]];
+  HF.forEach((c, v) => { const rb = zufall(77 + v); let g = `<path d="M-2 .1 Q-2.3 -.8 -1.6 -1.1 Q-1.5 -1.8 -.7 -1.75 Q-.3 -2.3 .4 -1.9 Q1.2 -2.1 1.5 -1.4 Q2.3 -1.2 2.05 -.3 Q2.2 .2 1.6 .25 Z" fill="#2f4d24"/><path d="M0 .1 Q1.2 -.6 2.05 -.3 Q2.2 .2 1.6 .25 Z" fill="#1f3518"/>`;
+    for (const [x, y, rr] of [[-1.25, -0.9, 0.55], [-0.35, -1.35, 0.6], [0.6, -1.25, 0.58], [1.35, -0.75, 0.5], [-0.8, -0.35, 0.5], [0.25, -0.55, 0.55], [1.7, -0.1, 0.42]]) { const t = rb(); g += `<circle cx="${x}" cy="${y}" r="${rr}" fill="${c[t < 0.5 ? 0 : 2]}"/><circle cx="${r(x - rr * 0.3)}" cy="${r(y - rr * 0.3)}" r="${r(rr * 0.5)}" fill="${c[1]}" opacity=".8"/>`; }
+    S.def(`<g id="${S.id("hb" + v)}">${g}</g>`); });
+  const busch = (d, lat, gr = 1, v = -1) => { const [x, y] = PO(lat, d, zL(d) + 0.2), s = F * 0.62 * gr / d; if (y > 257 || x - 2.1 * s < SEAM || x + 2.2 * s > 399.5) return "";
+    return `<use href="#${S.id("hb" + (v >= 0 ? v : Math.floor(rnd() * 4)))}" transform="translate(${r(x)} ${r(y)}) scale(${r(s * 10) / 10})"/>`; };
   /* Büsche außen an den Schenkeln (an den Treppen) — vor den Kehren gezeichnet, je nach Tiefe */
-  const aussen = [{ t: 15.5, s: busch(15.5, -0.6, 0.8) + busch(17, 1.6, 0.75) + busch(19, -0.2, 0.8) }]; for (let d = 20; d < 122; d += 7.2) { aussen.push({ t: d + 0.5, s: busch(d, -11.9, 0.9) }); aussen.push({ t: d + 0.5, s: busch(d + 3.6, 1.6, 0.9) }); }
+  /* vorn rechts: dicht bepflanztes Beet (Hortensien, Rosen) zwischen erster Kehre und Treppe */
+  const rosen = (d0, d1, l0, l1, n) => { let g = ""; for (let i = 0; i < n; i++) { const dd = d0 + rnd() * (d1 - d0), q = PO(l0 + rnd() * (l1 - l0), dd, zL(dd) + 0.5); if (q[1] < 257 && q[0] > SEAM + 2 && q[0] < 398) g += `M${r(q[0])} ${r(q[1])}h.01`; } return `<path d="${g}" stroke="#c8243c" stroke-width="1.3" stroke-linecap="round"/>`; };
+  const aussen = [{ t: 22, s: busch(23, 0.4, 0.7) + busch(21, -1.6, 0.7) }, { t: 18, s: rosen(15, 22, -2.8, 1.4, 50) + busch(19.5, 0.4, 0.7, 2) + busch(18.5, -2.4, 0.7, 1) }, { t: 15.6, s: busch(16.5, -0.6, 0.75, 0) + busch(15.2, -2.6, 0.65, 3) + busch(15.4, 0.9, 0.6, 1) }]; for (let d = 20; d < 122; d += 7.2) { aussen.push({ t: d + 0.5, s: busch(d, -11.9, 0.9) }); aussen.push({ t: d + 0.5, s: busch(d + 3.6, 1.6, 0.9) }); }
   const teile = [...stuecke.map((st) => ({ t: st.t, st })), ...aussen].sort((a, b) => b.t - a.t);
   for (const e of teile) {
     if (!e.st) { k += e.s; continue; }
-    const p = e.st.p, Lr = versatz(p, 2.1), Rr = versatz(p, -2.1), Lh = versatz(p, 2.45), Rh = versatz(p, -2.45);
+    const p = e.st.p, Lr = versatz(p, 1.75), Rr = versatz(p, -1.75), Lh = versatz(p, 2.1), Rh = versatz(p, -2.1), Ls = versatz(p, 2.45);
     /* Ziegel-Bordmauer (0,3 m), darauf die Buchskante (0,35 m, oben heller), dann die Fahrbahn */
     for (const [a, h] of [[Lr, Lh], [Rr, Rh]]) {
       k += vk([...a.map((q) => proj(q)), ...a.slice().reverse().map((q) => proj(q, 0.3))], "#8a3a2a");
       k += vk([...a.map((q) => proj(q, 0.3)), ...a.slice().reverse().map((q) => proj(q, 0.65))], "#2d4a22");
       k += vk([...a.map((q) => proj(q, 0.65)), ...h.slice().reverse().map((q) => proj(q, 0.65))], "#5d8449");
     }
+    /* Schatten der Buchskante auf dem Beet (Sonne von Westsüdwest) */
+    k += vk([...Lh.map((q) => proj(q)), ...Ls.slice().reverse().map((q) => proj(q))], "#1d2a14", ` opacity=".35"`);
     const weg = [...Lr.map((q) => proj(q)), ...Rr.slice().reverse().map((q) => proj(q))];
     k += vk(weg, ZIEGEL) + vk(weg, `url(#${S.id("ziegel")})`);
-    if (e.st.mitte) { const [dc, lc] = e.st.mitte; k += busch(dc, lc, 1.1); if (!LOMB.kurve && dc > 30) LOMB.kurve = proj([dc, lc + (e.st.links ? -RHO : RHO)]); if (!LOMB.hort && dc > 40) LOMB.hort = PO(lc, dc, zL(dc) + 0.2); }
+    if (e.st.mitte) { const [dc, lc] = e.st.mitte; /* runde Beetinsel innen in der Kehre */ const ins = []; for (let j = 0; j < 12; j++) { const a = j / 12 * Math.PI * 2; ins.push(proj([dc + 1.35 * Math.cos(a), lc + 1.35 * Math.sin(a)], 0.3)); } k += vk(ins, "#3f6230") + busch(dc, lc, 0.8); if (!LOMB.kurve && dc > 40) LOMB.kurve = proj([dc, lc]); }
   }
-  const kv = LOMB.kurve, hv = LOMB.hort;
+  const kv = LOMB.kurve, hv = PO(-0.6, 16.5, zL(16.5) + 0.2);
   S.teil({ id: "lombard_street", de: "die Lombard Street", syl: "LOM-bard STREET", it: "la Lombard Street", itSyl: "LOM-bard STREET", en: "Lombard Street", x: 0, y: 0, kunst: k,
     tipp: "Die Lombard Street hat hier acht enge Kurven. Man darf nur bergab fahren — ganz langsam.",
-    zoom: { x: 246, y: 152, w: 120, h: 80 },
+    zoom: { x: 250, y: 170, w: 120, h: 80 },
     unter: [
-      { id: "kurve", de: "die Kurve", syl: "KUR-ve", it: "la curva", itSyl: "CUR-va", en: "bend", x: kv[0], y: kv[1], kunst: flaeche(-6, -4, 12, 7, 0.6),
+      { id: "kurve", de: "die Kurve", syl: "KUR-ve", it: "la curva", itSyl: "CUR-va", en: "bend", x: kv[0], y: kv[1], kunst: flaeche(-9, -5, 18, 9, 0.6),
         tipp: "Die Kurven wurden 1922 gebaut, weil die Straße für Autos zu steil war." },
-      { id: "hortensie", de: "die Hortensie", syl: "hor-TEN-si-e", it: "l'ortensia", itSyl: "or-TEN-sia", en: "hydrangea", x: hv[0], y: hv[1], kunst: flaeche(-5, -5, 10, 7, 0.5),
+      { id: "hortensie", de: "die Hortensie", syl: "hor-TEN-si-e", it: "l'ortensia", itSyl: "or-TEN-sia", en: "hydrangea", x: hv[0], y: hv[1], kunst: flaeche(-6, -13, 12, 13, 0.5),
         tipp: "In den Beeten blühen im Sommer Hortensien in Rosa, Lila und Blau." },
     ] });
 }
@@ -831,7 +849,7 @@ const LOMB = {};
 {
   /* parkt mit der Nase bergab (nach Norden) am Ostbordstein; wir sehen Heck und rechte Seite.
      Das rechte Vorderrad ist zum Bordstein eingeschlagen (Pflicht am Hang). */
-  const C = { X: -2.55, d: 15.8 }, psi = 5 * Math.PI / 180;   /* ein wenig schräg geparkt: rechte Flanke gut sichtbar */
+  const C = { X: -2.55, d: 15.8 }, psi = -8 * Math.PI / 180;   /* ein wenig schräg geparkt: rechte Flanke gut sichtbar */
   const W3 = (u, v, h) => { const X = C.X - u * Math.sin(psi) + v * Math.cos(psi), d = C.d + u * Math.cos(psi) + v * Math.sin(psi); return PN(X, d, zH(d) + h); };
   const [ox, oy] = W3(0, 0, 0);
   const P = (u, v, h) => { const [x, y] = W3(u, v, h); return [x - ox, y - oy]; };

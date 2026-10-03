@@ -475,14 +475,14 @@ const brueckenKoerper = (spiegeln) => {
     const p = (j + 1) / N; if (p >= 0.99) continue;
     const x = BX(p), y = WAS(p), bk = BK(p), b = 3 * bk, h = 0.8 * bk;
     if (!spiegeln) {
-      g += `<path d="M${r(x - b)} ${r(y + 0.3)} Q${r(x - b * 0.6)} ${r(y - h)} ${r(x)} ${r(y - h)} Q${r(x + b * 0.7)} ${r(y - h)} ${r(x + b * 1.15)} ${r(y + 0.3)} Z" fill="${S.lg("insel", [[0, "#8e8a78"], [1, "#6a6658"]])}"/>`;
-      g += `<path d="M${r(x - b * 0.7)} ${r(y - h * 0.6)} Q${r(x)} ${r(y - h * 1.1)} ${r(x + b * 0.8)} ${r(y - h * 0.5)}" stroke="#c8bc9c" stroke-width=".35" fill="none" opacity=".8"/>`;
+      g += `<path d="M${r(x - b)} ${r(y + 0.3)} Q${r(x - b * 0.6)} ${r(y - h)} ${r(x)} ${r(y - h)} Q${r(Math.min(316, x + b * 0.7))} ${r(y - h)} ${r(Math.min(319, x + b * 1.15))} ${r(y + 0.3)} Z" fill="${S.lg("insel", [[0, "#8e8a78"], [1, "#6a6658"]])}"/>`;
+      g += `<path d="M${r(x - b * 0.7)} ${r(y - h * 0.6)} Q${r(x)} ${r(y - h * 1.1)} ${r(Math.min(318, x + b * 0.8))} ${r(y - h * 0.5)}" stroke="#c8bc9c" stroke-width=".35" fill="none" opacity=".8"/>`;
       /* Stromschnellen: weiße Kämme unterhalb der Bögen, das Wasser fällt sichtbar ab */
       for (let q = 0; q < 4; q++) {
         const yy = y + (0.9 + q * 0.75) * bk * 0.42, xx = x - b * (0.2 + q * 0.18);
         g += `<path d="M${r(xx - b * 0.9)} ${r(yy)} q${r(b * 0.25)} ${r(-0.6 * bk * 0.4)} ${r(b * 0.5)} 0 t${r(b * 0.5)} 0 t${r(b * 0.5)} 0" stroke="#f4fbff" stroke-width="${r(0.25 + 0.07 * bk)}" fill="none" opacity="${r(0.85 - q * 0.15)}"/>`;
       }
-      g += `<path d="M${r(x - b * 1.6)} ${r(y + 0.4 * bk)} l${r(b * 3)} 0" stroke="#2a3a44" stroke-width="${r(0.3 * bk)}" opacity=".25"/>`;
+      g += `<path d="M${r(x - b * 1.6)} ${r(y + 0.4 * bk)} L${r(Math.min(319, x + b * 1.4))} ${r(y + 0.4 * bk)}" stroke="#2a3a44" stroke-width="${r(0.3 * bk)}" opacity=".25"/>`;
     }
   }
   return g;
@@ -583,7 +583,7 @@ const BRUECKE_LEUTE = [];
    ===================================================================== */
 {
   const X = 18, Y = 190;
-  let k = langschatten(2, 0, 22, 30, 0.3);
+  let k = langschatten(4, 0, 22, 12, 0.3);
   k += `<path d="M-14 0 Q-9 -4 -8.4 -18 Q-7.4 -40 -8 -64 Q-8.6 -80 -9 -96 L3 -98 Q3 -84 4.6 -70 Q7 -46 7 -24 Q8 -6 15 0 Z" fill="${S.lg("stamm", [[0, "#24180e"], [0.55, "#3e2c1e"], [1, "#7a5a40"]], 0, 0, 1, 0)}"/>`;
   for (let i = 0; i < 12; i++) { const y = -4 - i * 7.6, x = -5 + rnd() * 9; k += `<path d="M${r(x)} ${r(y)} q${r(-0.6 + rnd() * 1.2)} -2 ${r(-0.3 + rnd() * 0.6)} -4" stroke="#140c06" stroke-width=".5" fill="none" opacity=".55"/>`; }
   k += `<ellipse cx="-2" cy="-36" rx="2.6" ry="3.4" fill="#2a1c10"/><path d="M-3.6 -38 q1.6 -1.6 3.2 0" stroke="#5a4232" stroke-width=".5" fill="none"/>`;
@@ -596,10 +596,10 @@ const BRUECKE_LEUTE = [];
   /* Krone: breite Kuppel aus dunklen Laubmassen (weich), am Rand handförmige Blätter, Gegenlicht oben rechts */
   const KY = -Y;
   let krone = "";
-  const rand = [[-20, 100], [-6, 92], [8, 86], [22, 80], [34, 72], [46, 66], [58, 61], [72, 56], [86, 49], [98, 42], [106, 34], [110, 24], [108, 12], [100, 2], [92, -6], [-20, -6]];
+  const rand = [[1, 89.3], [2, 88.9], [8, 86], [22, 80], [34, 72], [46, 66], [58, 61], [72, 56], [86, 49], [98, 42], [106, 34], [110, 24], [108, 12], [100, 2], [92, -1], [1, -1]];
   krone += `<path d="M${rand.map(([x, y]) => `${x} ${r(KY + y)}`).join(" L")} Z" fill="#1c3418"/>`;
   let lm = "";
-  for (let i = 0; i < 16; i++) { const x = -14 + rnd() * 116, y = rnd() * 70; if (y > 100 - x * 0.62) continue; lm += `<ellipse cx="${r(x)}" cy="${r(KY + y)}" rx="${r(7 + rnd() * 9)}" ry="${r(4 + rnd() * 5)}" fill="${["#24441f", "#2e5426", "#1a3216"][i % 3]}"/>`; }
+  for (let i = 0; i < 16; i++) { const x = 8 + rnd() * 94, y = 6 + rnd() * 64; if (y > 100 - x * 0.62) continue; lm += `<ellipse cx="${r(x)}" cy="${r(KY + y)}" rx="${r(7 + rnd() * 9)}" ry="${r(4 + rnd() * 5)}" fill="${["#24441f", "#2e5426", "#1a3216"][i % 3]}"/>`; }
   krone += `<g filter="url(#${S.id("rauch")})">${lm}</g>`;
   const blatt = (cx, cy, gr, dreh, ton) => {
     let g = "";
@@ -614,6 +614,7 @@ const BRUECKE_LEUTE = [];
   /* Blätter entlang des unteren Kronenrands (hängend) und oben rechts im Gegenlicht */
   for (let i = 0; i < rand.length - 2; i++) {
     const [x0, y0] = rand[i], [x1, y1] = rand[i + 1];
+    if (x0 < 6) continue;
     for (let t = 0; t < 1; t += 1) { const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t; krone += blatt(r(x), r(KY + y - 1), 6 + rnd() * 3, 150 + rnd() * 60, x > 80 ? 2 : rnd() < 0.5 ? 1 : 0); }
   }
   for (let i = 0; i < 8; i++) { const x = 20 + rnd() * 80, y = 4 + rnd() * 40; if (y > 90 - x * 0.62) continue; krone += blatt(r(x), r(KY + y), 6 + rnd() * 3, -40 + rnd() * 80, x > 60 ? 2 : 1); }
