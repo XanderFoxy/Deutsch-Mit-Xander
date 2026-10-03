@@ -35267,3 +35267,20 @@ body > .lc-tafel-mappe { position: fixed; inset: auto; left: 12px; right: 12px; 
 
 /* FASSUNG 823 — XANDER: „Mach das wieder zurück auf die Originaldimensionen". Die Verkleinerung des Chatverlaufs
    aus 845 ist wieder herausgenommen. */
+
+/* FASSUNG 844 — Oben im Verlauf: wie viele ältere Zeilen es noch gibt. Weiter nach oben rollen lädt sie dazu.
+   Schlicht und leise wie „↓ Neueste", damit sich am Chat sonst nichts ändert. */
+.lc-aeltere {
+  display: block;
+  margin: 4px auto 8px;
+  border: 1px solid rgba(224, 150, 74, 0.4);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.7rem;
+  opacity: 0.75;
+  padding: 3px 12px;
+  cursor: pointer;
+}
+.lc-aeltere:hover { opacity: 1; background: rgba(224, 150, 74, 0.15); }

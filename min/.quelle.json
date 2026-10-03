@@ -44,14 +44,14 @@
  "baukasten.js": "68a7fd488976c5e284185cbf3fa4d52e01379c6e",
  "data-plaetze.js": "61824c9636dd4d1ed55f9a8c2992cb2f7b419199",
  "data-szenen.js": "facd9322aa9a85e01fb979df8f95dc077e1222b1",
- "korrekturen.css": "aae032bf4ce9495b1a9077b9480f1da78655baf1",
  "app-styles.css": "252949e98e6fff038a4d4e1b43d030d927d942fe",
  "konjugation.js": "740bad9ac8234b00f3a6b64b3e0793ae54ecf619",
  "spiel.css": "c22d2e8c176207f443f05851ae383ea3c9c7266f",
  "data-vocab.js": "4d1c59095b00c2be502216599ba8328d5402a7fe",
  "spiel.js": "b72c43fc1d11a1b487042da21d14b0c711669247",
  "backend.js": "c6b366da16e1a5ec6e9a4f97c52686c9c151c7ed",
- "app.js": "c0ab386344b58013021ea97bc87db34e98202026",
  "livechat.js": "626bb999e20ecb840b1c309c9f4ac082ccaa2739",
- "data-werkstatt.js": "6f6183eeb5d32db513e95494d369fd03f62a64c7"
+ "korrekturen.css": "c1456e499871381e8578d99582982bfe530a02ee",
+ "app.js": "172f1cbc223e4cdb19634c424bf8f73bd6dd3bb9",
+ "data-werkstatt.js": "f6dd26b3055a87a6b6e9fa4c128261a8af2c45ba"
 }

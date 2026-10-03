@@ -3172,3 +3172,25 @@ Echte Zeitleisten vom 02.10., 23:17–23:57: Xanders Samsung (841/842) mit einem
   - Eine Antwort oder der Beginn der Wegesuche („checking") setzt die Uhr der Wache zurück.
 - **Zufallskennung bei der Rückkehr**: Das Samsung kam weiter als „pvvqnljpk196" statt „k2585…". `dma_lc_konto` aus 841 gab es auf dem Gerät noch nicht, und bei der Rückkehr nach dem Neuladen ist die Anmeldung noch nicht geladen. Jetzt liest livechat.js die von Supabase im Gerät abgelegte Sitzung (`sb-…-auth-token`, `user.id`), die sofort da ist. Danach folgen `dma_lc_konto` und erst dann der Zufall.
 - Sonden grün: 862 (+3 Quelltext-Prüfungen für 843), 861, 659, 856, 859, 811, 816, 827, einladungslink, runde18. `pruefe-842-sfu-spiel`: Im ersten Lauf stürzte die Browserseite beim Neuladen ab („Target crashed", keine rote Prüfung); der zweite Lauf war ganz grün.
+
+## Fassung 844 — Der Chat zeichnet nur noch die letzten Zeilen (Funk 271, Diagnose 323)
+
+XANDER (Funk 271, wörtlich): „alles insgesamt nur zehn Mal schneller".
+
+Die Ursache stand in Diagnose 323: Das Samsung antwortete erst 4,5 s nach dem Angebot. Beim Betreten zeichnete der Chat jede Zeile des Raums, im Hauptraum 7.408. Bei jedem Auffrischen baute er außerdem für jede Zeile die Marke neu, mit zwei Fragen an LiveChat je Zeile. Das passierte genau in den Sekunden, in denen das Gespräch aufgebaut wird.
+- **Fenster (`app.js`, `livechatChatAuffrischen`)**:
+  - Im Verlauf stehen nur die letzten 120 Zeilen.
+  - Was einmal gezeichnet ist, bleibt; neue Zeilen kommen ans Ende, oben fällt nichts heraus.
+  - Oben steht leise „↑ N ältere Nachrichten". Wer nach oben rollt (oder darauf tippt), bekommt die nächsten 200 dazu, an der richtigen Stelle. Die Stelle, an der man liest, bleibt dabei stehen. „Man soll durch den ganzen Chatverlauf scrollen können" gilt weiter.
+- **Auch außerhalb des Fensters**:
+  - „anziehen" ist ein Zustand und wird wie bisher still und der Reihe nach nachgeholt; wer später kommt, sieht dieselben Kronen.
+  - Die festgehaltene Lesetafel wird immer gezeichnet, damit das Fokusband nicht leer bleibt.
+- **Uhrzeit**: `toLocaleTimeString` mit Angaben baute je Zeile einen neuen Formatierer. Das war der größte Einzelposten (≈1,5 ms je Zeile, Rechner 4× gebremst). Jetzt gibt es einen Formatierer für alle. „Bin ich Lehrer?" wird einmal je Auffrischen gefragt statt je Zeile.
+- **Gemessen** (7.400 alte Zeilen, Rechner 4× gebremst, `pruefe-863-chatfenster.js`, Stand 843 im Vergleich):
+  - erstes Zeichnen: **18,2 s → 0,18 s**;
+  - weiterzeichnen bei einer neuen Zeile: 26–40 ms;
+  - Auffrischen ohne Änderung: 20 ms.
+- **Sonden**:
+  - neu `pruefe-863-chatfenster.js` (Fenster, Anziehen außerhalb, neue Zeile, Rollen/Antippen lädt nach, Lesestelle bleibt, keine Doppelten, Konsole). Mit `VERGLEICH=<Verzeichnis>` misst sie einen alten Stand.
+  - Grün: 863, anziehen, nachgehende-uhr-effekte, benoten, fluestern, antwort-gehoert-dazu, note-ankommen, stimmzeilen, raumverlauf, verlauf-doppelt, verlauf-kein-reset, verlauf-nachfassen, 642-verlauf-laden, 736, scrollen, runde88-panels, runde18, 856, 858, 861, 862, einladungslink, tutor, fokus-merker, schrei-wackeln, gluecksrad, runde98-fokus, 749.
+  - `pruefe-runde24`: drei rote Punkte (Lesetafel festhalten/Fokusband). Sie sind auf Stand 843 genauso rot, also nicht durch 844. Die neuere Messung dazu (runde98-fokus) ist grün.

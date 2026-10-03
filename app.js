@@ -15571,7 +15571,7 @@
     LiveChat.chatLeeren();
     livechatGezeigt = new Map();
     const v = document.getElementById("lcVerlauf");
-    if (v) v.querySelectorAll(".lc-zeile, .lc-chat-leer").forEach((x) => x.remove());
+    if (v) v.querySelectorAll(".lc-zeile, .lc-chat-leer, .lc-aeltere").forEach((x) => x.remove());
     renderLiveChat();
   }
 
@@ -66876,7 +66876,7 @@
     if (!l.nachrichten.length) {
       if (!v.querySelector(".lc-chat-leer")) {
         /* Die Hintergrundschicht bleibt stehen — sie ist keine Zeile. */
-        v.querySelectorAll(".lc-zeile, .lc-chat-leer").forEach((x) => x.remove());
+        v.querySelectorAll(".lc-zeile, .lc-chat-leer, .lc-aeltere").forEach((x) => x.remove());
         v.insertAdjacentHTML("beforeend", `<p class="lc-chat-leer">Noch nichts geschrieben.<br>
           Schreib einfach unten los — alle im Raum lesen mit.<br>
           <span style="opacity:.7">Tippe <code>/h</code> für die alten Chatbefehle.</span></p>`);
@@ -66897,7 +66897,50 @@
        sie trotzdem ab, aber eben nur für einen selbst. */
     if (!livechatEffekteAb) livechatEffekteAb = Date.now();
 
-    l.nachrichten.forEach((n) => {
+    /* FASSUNG 844 — NUR DAS FENSTER WIRD GEZEICHNET.
+       XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller".
+       GEMESSEN (Diagnose 323): Das Samsung antwortete erst 4,5 s nach dem Angebot. Beim Betreten zeichnete
+       es JEDE Zeile des Raums – im Hauptraum über 7.000 – und baute bei jedem Auffrischen für jede davon die
+       Marke neu (mit zwei Fragen an LiveChat je Zeile). Genau in diesen Sekunden soll das Gespräch stehen.
+       Jetzt stehen nur die letzten LC_FENSTER Zeilen im Verlauf. Was schon einmal gezeichnet ist, bleibt im
+       Fenster (es fällt nichts heraus, wenn Neues kommt). Wer nach oben rollt, bekommt die älteren
+       nachgeladen – „man soll durch den ganzen Chatverlauf scrollen können" gilt weiter.
+       Zwei Dinge gelten auch für Zeilen außerhalb des Fensters:
+         – „anziehen" ist ein Zustand, kein Ereignis: still nachgeholt, der Reihe nach (siehe unten);
+         – die festgehaltene Lesetafel wird immer gezeichnet, sonst wäre das Fokusband leer. */
+    const alle = l.nachrichten;
+    livechatLetzterStand = l;
+    const ersteDa = v.querySelector(".lc-zeile[data-lc-id]");
+    let ersteIdx = -1;
+    if (ersteDa) {
+      const eid = ersteDa.dataset.lcId;
+      for (let i = 0; i < alle.length; i++) if (String(alle[i].id) === eid) { ersteIdx = i; break; }
+    }
+    let ab = Math.max(0, alle.length - LC_FENSTER);
+    if (ersteIdx >= 0 && ersteIdx < ab) ab = ersteIdx;
+    if (livechatMehrId) {
+      for (let i = 0; i < ab; i++) if (String(alle[i].id) === livechatMehrId) { ab = i; break; }
+    }
+    let kleidNach = false;
+    const welche = [];
+    for (let i = 0; i < ab; i++) {
+      const n = alle[i];
+      if (lcLeseFest && String(n.id) === lcLeseFest) welche.push(i);
+      if (n.wirkung !== "anziehen" || livechatEffektGespielt.has(n.id)) continue;
+      livechatEffektGespielt.add(n.id);
+      lcKleidZeile(n);
+      kleidNach = true;
+    }
+    if (kleidNach) setTimeout(lcKleiderAuffrischen, 0);
+    for (let i = ab; i < alle.length; i++) welche.push(i);
+    /* Ob ich Lehrer bin, einmal je Auffrischen fragen – nicht einmal je Zeile. */
+    const ichLehrer = (() => { try { return LiveChat.binLehrer && LiveChat.binLehrer() ? "L" : ""; }
+                                catch (e) { return ""; } })();
+
+    let anker = ersteIdx >= 0 ? ersteDa : null;
+
+    welche.forEach((idx) => {
+      const n = alle[idx];
       /* GEMELDET: „Jetzt bin ich in den anderen Raum gegangen und bin
          zurück ins Klassenzimmer und sehe bei vielen Nachrichten, die
          ich geschrieben habe, nur noch meinen Namen, aber nicht mehr
@@ -66935,8 +66978,7 @@
                         Marke ändert. Genau das kann erklären, warum der
                         Knopf bei ihm ausblieb, obwohl im Prüfstand
                         alles stimmte. */
-                     (() => { try { return LiveChat.binLehrer && LiveChat.binLehrer() ? "L" : ""; }
-                              catch (e) { return ""; } })(),
+                     ichLehrer,
                      /* Auch der nachtraeglich erkannte Bezug gehoert in
                         die Marke — sonst behielte eine Zeile ihr altes
                         Aussehen, obwohl gerade eine Aufgabe laeuft. */
@@ -66967,8 +67009,14 @@
          der Text über textContent gesetzt. */
       const uhr = document.createElement("span");
       uhr.className = "lc-zeit";
-      uhr.textContent = new Date(n.zeit).toLocaleTimeString("de-DE",
-        { hour: "2-digit", minute: "2-digit" });
+      /* FASSUNG 844 — EIN Uhrformat für alle Zeilen. toLocaleTimeString mit Angaben baut bei jedem Aufruf
+         einen neuen Formatierer; gemessen war das der größte Einzelposten beim Zeichnen (ca. 1,5 ms je Zeile
+         auf einem gebremsten Rechner). */
+      if (!lcUhrFormat) {
+        try { lcUhrFormat = new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit" }); }
+        catch (e) { lcUhrFormat = { format: (d) => d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) }; }
+      }
+      uhr.textContent = lcUhrFormat.format(new Date(n.zeit));
       z.appendChild(uhr);
 
       const farbe = lcNickFarbe(n);
@@ -67836,7 +67884,9 @@
       /* Eine bekannte Zeile wird ERSETZT, keine zweite angehängt —
          sonst stünde dieselbe Nachricht doppelt da, sobald ihr Bild
          nachkommt. */
-      if (alteZeile) alteZeile.replaceWith(z);
+      /* FASSUNG 844 — nachgeladene ältere Zeilen kommen VOR die bisher erste, nicht ans Ende. */
+      if (alteZeile) { alteZeile.replaceWith(z); if (alteZeile === anker) anker = z; }
+      else if (anker && anker.parentNode === v && idx < ersteIdx) v.insertBefore(z, anker);
       else v.appendChild(z);
 
       /* Welcher Effekt gehört zu dieser Zeile? */
@@ -67983,7 +68033,54 @@
        entfernt, lässt der Griff los und kommt erst wieder, wenn er
        von selbst zurückkehrt. */
     lcZeilenBuendeln(v);
+    lcAeltereZeigen(v, ab);
     lcAmEndeHalten(v);
+  }
+  /* FASSUNG 844 — DAS FENSTER (siehe livechatChatAuffrischen). Oben im Verlauf steht, wie viele ältere
+     Zeilen es noch gibt; antippen oder einfach weiter nach oben rollen lädt die nächsten LC_FENSTER_MEHR
+     dazu. Die Stelle, an der man gerade liest, bleibt dabei stehen (gemessen an der bisher ersten Zeile,
+     nicht an der Höhe – so stört auch das Verankern des Browsers nicht). */
+  /* var, nicht let/const: livechatChatAuffrischen steht weiter oben und darf nie in die „tote Zone" laufen. */
+  var LC_FENSTER = 120, LC_FENSTER_MEHR = 200;
+  var livechatLetzterStand = null;
+  var livechatMehrId = "";
+  var lcAeltereLaeuft = false;
+  var lcUhrFormat = null;
+  function lcAeltereZeigen(v, ab) {
+    let k = v.querySelector(".lc-aeltere");
+    if (!(ab > 0)) { if (k) k.remove(); return; }
+    if (!k) {
+      k = document.createElement("button");
+      k.type = "button";
+      k.className = "lc-aeltere";
+      k.addEventListener("click", (e) => { e.stopPropagation(); lcAeltereLaden(v); });
+    }
+    const text = "↑ " + ab + " ältere Nachrichten";
+    if (k.textContent !== text) k.textContent = text;
+    const erste = v.querySelector(".lc-zeile[data-lc-id]");
+    if (k.parentNode !== v || k.nextElementSibling !== erste) v.insertBefore(k, erste);
+  }
+  function lcAeltereLaden(v) {
+    const l = livechatLetzterStand;
+    if (!l || !v || lcAeltereLaeuft) return;
+    const alle = l.nachrichten || [];
+    const erste = v.querySelector(".lc-zeile[data-lc-id]");
+    if (!erste) return;
+    const eid = erste.dataset.lcId;
+    let idx = -1;
+    for (let i = 0; i < alle.length; i++) if (String(alle[i].id) === eid) { idx = i; break; }
+    if (idx <= 0) return;
+    lcAeltereLaeuft = true;
+    livechatMehrId = String(alle[Math.max(0, idx - LC_FENSTER_MEHR)].id);
+    lcHaeltUnten = false;
+    const vorher = erste.getBoundingClientRect().top;
+    try { livechatChatAuffrischen(l); } finally { lcAeltereLaeuft = false; }
+    if (erste.isConnected) {
+      const roll = v.style.scrollBehavior;
+      v.style.scrollBehavior = "auto";
+      v.scrollTop += erste.getBoundingClientRect().top - vorher;
+      v.style.scrollBehavior = roll;
+    }
   }
   /* FASSUNG 736 — XANDER (Funk 176, Design-Prüfung Phase 2): wer mit einer gehaltenen Chat-Waffe achtmal auf
      dieselbe Person tippt, soll den Verlauf nicht mit acht gleichen Zeilen zumüllen. Gleiche Treffer (gleicher
@@ -68066,6 +68163,14 @@
          passiert ist — also da, wo der Finger wirklich hinwollte. */
       let ruhe = 0;
       v.addEventListener("scroll", () => {
+        /* FASSUNG 844 — oben angekommen (und selbst gerollt): die nächsten älteren Zeilen dazuholen. */
+        if (!lcHaeltUnten && !v.__lcAelterePlan && v.scrollTop < 300 && v.querySelector(".lc-aeltere")) {
+          v.__lcAelterePlan = true;
+          requestAnimationFrame(() => {
+            v.__lcAelterePlan = false;
+            if (!lcHaeltUnten && v.scrollTop < 300) lcAeltereLaden(v);
+          });
+        }
         clearTimeout(ruhe);
         ruhe = setTimeout(() => {
           /* 70 Pixel Spielraum: kleine Stoesse beim Tippen sollen den
@@ -68259,6 +68364,7 @@
     if (l.lage === "aus" || l.lage === "fehler") {
       livechatGeruest = false;
       livechatGezeigt = new Map();
+      livechatMehrId = "";
       livechatEffekteAb = 0;          // beim nächsten Betreten neu stellen
       livechatEffektGespielt.clear();
       livechatSchonUnten = false;
@@ -68315,6 +68421,7 @@
       area.innerHTML = livechatGeruestHtml();
       livechatGeruest = true;
       livechatGezeigt = new Map();
+      livechatMehrId = "";            // FASSUNG 844 — frisches Gerüst, frisches Fenster
       /* Ab JETZT ist etwas „gerade eben" — alles Ältere ist
          Vergangenheit und bleibt still. */
       livechatEffekteAb = Date.now();
@@ -100559,6 +100666,19 @@ An einem Morgen lief ein kleiner Fuchs los…
         livechatEffekteAb = effekteAb || Date.now();
         livechatChatAuffrischen({ nachrichten: zeilen || [], leute: {}, ichId: "ich", schrift: schrift || "1" });
         return true;
+      },
+      /* FASSUNG 844 — weiterzeichnen OHNE Neuanfang (wie im echten Raum, wenn Zeilen dazukommen)
+         und nachsehen, was das Fenster gerade zeigt. */
+      chatWeiter: (zeilen) => {
+        livechatChatAuffrischen({ nachrichten: zeilen || [], leute: {}, ichId: "ich", schrift: "1" });
+        return true;
+      },
+      chatFenster: () => {
+        const v = document.getElementById("lcVerlauf");
+        const z = v ? [...v.querySelectorAll(".lc-zeile[data-lc-id]")] : [];
+        const k = v && v.querySelector(".lc-aeltere");
+        return { zeilen: z.length, erste: z[0] ? z[0].dataset.lcId : "", letzte: z.length ? z[z.length - 1].dataset.lcId : "",
+                 ids: z.map((x) => x.dataset.lcId), aeltere: k ? k.textContent : "", fenster: LC_FENSTER, mehr: LC_FENSTER_MEHR };
       },
       chatStand: (zeilen, schrift) => {
         livechatGezeigt = new Map();

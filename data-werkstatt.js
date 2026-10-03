@@ -49,26 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 843: Wache mit Geduld, feste Kennung aus der gespeicherten Anmeldung (Test 23:53)",
+  stand: "Fassung 844: Chat zeichnet nur die letzten 120 Zeilen – Betreten im Hauptraum 18 s → 0,2 s (gebremst)",
 
   inArbeit: [
-    { seit: "2026-10-03T00:06",
-      text: "app.js teilen bzw. bei Updates nicht ganz neu laden (921 KB)" },
-    { seit: "2026-10-03T00:06",
-      text: "spiel.js nach dem Aufbau laden" },
-    { seit: "2026-10-03T00:06",
-      text: "Bilderwelt neu, Ort für Ort (Funk 263)" },
-    { seit: "2026-10-03T00:06",
-      text: "sfu/aussprache neu ausliefern (wartet auf OK)" },
+    { seit: "2026-10-03T00:28",
+      text: "app.js teilen" },
+    { seit: "2026-10-03T00:28",
+      text: "spiel.js nach dem Aufbau" },
+    { seit: "2026-10-03T00:28",
+      text: "Bilderwelt neu (Funk 263)" },
+    { seit: "2026-10-03T00:28",
+      text: "sfu/aussprache: OK abwarten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-03T00:06",
-      text: "Kein Neustart 2 s nach der Antwort mehr" },
-    { seit: "2026-10-03T00:06",
-      text: "Geduld wächst, solange die Gegenseite (Hintergrund) nicht antwortet" },
-    { seit: "2026-10-03T00:06",
-      text: "Samsung-Kennung aus der gespeicherten Anmeldung" },
+    { seit: "2026-10-03T00:28",
+      text: "Chat-Fenster: nur die letzten Zeilen, ältere beim Hochrollen" },
   ],
 };
