@@ -499,42 +499,55 @@ const BOOTE = [[262, 157.6, 1], [372, 151.6, 0.55]];
 const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
 {
   let k = `<path d="M0 147.5 L400 147.5 L400 ${r(KANTE(400))} ${[...Array(21)].map((_, i) => `L${400 - i * 20} ${r(KANTE(400 - i * 20))}`).join(" ")} Z" fill="${S.lg("wasser", [[0, "#6f9ab5"], [0.2, "#3a789c"], [1, "#1b4d69"]])}"/>`;
-  /* Spiegelbilder: gleiche Projektion mit negativer Höhe (gestaucht, nach unten), in unregelmäßige
-     Wellenstreifen zerlegt und nach vorn ausblendend */
-  let sp = "";
-  sp += `<path d="M${P(op(0, 120, -0.5))} L${P(op(183, 120, -0.5))} L${P(op(183, 120, -SOCKEL_Z))} L${P(op(0, 120, -SOCKEL_Z))} Z" fill="#c9a08c"/>`;
+  /* Spiegelbilder: gleiche Projektion mit negativer Höhe, dann zur Wasserlinie hin auf ≈ 45 % gestaucht
+     (bewegtes Wasser); in waagerechte, an den Rändern zerrissene Streifen zerlegt, nach vorn ausblendend */
+  const stauch = (yw, f, inhalt) => `<g transform="translate(0 ${r(yw)}) scale(1 ${f}) translate(0 ${r(-yw)})">${inhalt}</g>`;
+  let opS = `<path d="M${P(op(0, 120, -0.5))} L${P(op(183, 120, -0.5))} L${P(op(183, 120, -SOCKEL_Z))} L${P(op(0, 120, -SOCKEL_Z))} Z" fill="#d2a690"/>`;
   for (const o of SPIEGEL_OP) {
     const B0 = op(o.b[0], o.e, -o.b[1]), T = op(o.t[0], o.e, -o.t[1]), Pp = op(o.p[0], o.e, -SOCKEL_Z);
-    sp += `<path d="M${P(Pp)} L${P(B0)} Q${P([B0[0] + (T[0] - B0[0]) * 0.3, T[1] - (T[1] - B0[1]) * 0.25])} ${P(T)} Q${P([(T[0] + Pp[0]) / 2 - 1, (T[1] + Pp[1]) / 2])} ${P(Pp)} Z" fill="${o.e === 88 ? "#fdf7ea" : "#ebe5d8"}"/>`;
+    opS += `<path d="M${P(Pp)} L${P(B0)} Q${P([B0[0] + (T[0] - B0[0]) * 0.3, T[1] - (T[1] - B0[1]) * 0.25])} ${P(T)} Q${P([(T[0] + Pp[0]) / 2 - 1, (T[1] + Pp[1]) / 2])} ${P(Pp)} Z" fill="${o.e === 88 ? "#fff6e2" : "#ece4d2"}"/>`;
   }
-  for (const [a, c] of [[-15, 31], [518, 31], [518, -31]]) sp += `<path d="M${P(bp(a - 10, c + 7, -0.5))} L${P(bp(a + 10, c + 7, -0.5))} L${P(bp(a + 10, c + 7, -89))} L${P(bp(a - 10, c + 7, -89))} Z" fill="#d2cab6"/>`;
-  const bo = [280, 320, 360, 400, 440, 480, 503].map((a) => bp(a, 15, -zO(a))), bu = [503, 480, 440, 400, 360, 320, 280].map((a) => bp(a, 15, -zU(a)));
-  sp += `<path d="M${bo.map(P).join(" L")} L${bu.map(P).join(" L")} Z" fill="#8d979d" opacity=".6"/>`;
-  sp += `<path d="M${P(bp(250, 24, -49))} L${P(bp(560, 24, -49))}" stroke="#7d878d" stroke-width="1.4" opacity=".7"/>`;
-  sp += `<rect x="${r(FAEHRE.X - 16 * FAEHRE.s)}" y="${r(FAEHRE.Y + 0.4)}" width="${r(32 * FAEHRE.s)}" height="${r(3.2 * FAEHRE.s)}" fill="#2f7a4a"/><rect x="${r(FAEHRE.X - 14 * FAEHRE.s)}" y="${r(FAEHRE.Y + 3.4)}" width="${r(28 * FAEHRE.s)}" height="${r(4 * FAEHRE.s)}" fill="#e8c860"/>`;
-  for (const [x, y, s] of BOOTE) sp += `<path d="M${r(x)} ${r(y + 1)} L${r(x + 6 * s)} ${r(y + 1)} L${r(x + 0.3)} ${r(y + 16 * s)} Z" fill="#ffffff"/>`;
-  sp += `<rect x="0" y="148.6" width="76" height="8" fill="#24432a"/>`;
-  /* Streifenmaske: drei Musterkacheln mit zufälligen Strichlängen und Lücken, nach unten breiter und lückiger;
-     darüber ein schwarzer Verlauf, der das Spiegelbild nach vorn ausblendet */
+  let pyS = "";
+  for (const [a, c] of [[-15, 31], [518, 31], [518, -31]]) pyS += `<path d="M${P(bp(a - 10, c + 7, -0.5))} L${P(bp(a + 10, c + 7, -0.5))} L${P(bp(a + 10, c + 7, -89))} L${P(bp(a - 10, c + 7, -89))} Z" fill="#dcc7a2"/>`;
+  const bo = [200, 240, 280, 320, 360, 400, 440, 480, 503].map((a) => bp(a, 15, -zO(a))), bu = [503, 480, 440, 400, 360, 320, 280, 240, 200].map((a) => bp(a, 15, -zU(a)));
+  pyS += `<path d="M${bo.map(P).join(" L")} L${bu.map(P).join(" L")} Z" fill="#7f8a92" opacity=".75"/>`;
+  pyS += `<path d="M${P(bp(250, 24, -49))} L${P(bp(560, 24, -49))}" stroke="#76818a" stroke-width="1.4" opacity=".7"/>`;
+  let sp = stauch(op(90, 60, 0)[1], 0.45, opS) + stauch(bp(518, 31, 0)[1], 0.45, pyS);
+  sp += stauch(FAEHRE.Y, 0.5, `<rect x="${r(FAEHRE.X - 16 * FAEHRE.s)}" y="${r(FAEHRE.Y + 0.4)}" width="${r(32 * FAEHRE.s)}" height="${r(3.2 * FAEHRE.s)}" fill="#2f7a4a"/><rect x="${r(FAEHRE.X - 14 * FAEHRE.s)}" y="${r(FAEHRE.Y + 3.4)}" width="${r(28 * FAEHRE.s)}" height="${r(4.4 * FAEHRE.s)}" fill="#ecc860"/>`);
+  for (const [x, y, s] of BOOTE) sp += stauch(y, 0.5, `<path d="M${r(x)} ${r(y + 1)} L${r(x + 6 * s)} ${r(y + 1)} L${r(x + 0.3)} ${r(y + 17 * s)} Z" fill="#ffffff"/>`);
+  sp += `<rect x="0" y="148.6" width="76" height="5" fill="#24432a"/>`;
+  /* Streifenmaske: Zeilen aus Strichen zufälliger Länge, nach unten dicker, lückiger und blasser */
   let mk = "";
-  [[148, 6, 0.9, 0.3, 12], [154, 12, 1, 0.6, 16], [166, 26, 1.4, 1.2, 22]].forEach(([y0, hh, sh, gap, lmax], i) => {
-    const W = 97, H = r(r(sh + gap) * 2);
-    let t = "";
-    for (let row = 0; row < 2; row++) for (let x = -rnd() * 6; x < W - 3;) { const l = Math.min(3 + rnd() * lmax, W - x); t += `M${Math.round(Math.max(x, 0))} ${r(row * r(sh + gap))}h${Math.round(l - Math.max(-x, 0))}v${r(sh)}h${-Math.round(l - Math.max(-x, 0))}z`; x += l + 1 + rnd() * lmax * 0.5; }
-    S.def(`<pattern id="${S.id("sm" + i)}" width="${W}" height="${H}" patternUnits="userSpaceOnUse" patternTransform="translate(${r(rnd() * 40)} ${y0})"><path d="${t}" fill="#fff"/></pattern>`);
-    mk += `<rect x="0" y="${y0}" width="400" height="${hh}" fill="url(#${S.id("sm" + i)})"/>`;
-  });
-  S.def(`<filter id="${S.id("mweich")}" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="1.6 .25"/></filter>`);
-  mk = `<g filter="url(#${S.id("mweich")})">${mk}</g>`;
-  mk += `<rect x="0" y="146" width="400" height="50" fill="${S.lg("spfade", [[0, "#000", 0], [1, "#000", 1]], 0, 146, 0, 192, ' gradientUnits="userSpaceOnUse"')}"/>`;
-  S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="0" y="146" width="400" height="50">${mk}</mask>`);
-  k += `<g mask="url(#${S.id("spmaske")})" opacity=".85"><g filter="url(#${S.id("spiegel")})">${sp}</g></g>`;
-  /* Wellen: Musterkachel in drei Tiefenbändern (vorn größer), dazu wenige Glanzlichter */
-  const welle = (n, sc) => { S.def(`<pattern id="${S.id("w" + n)}" width="26" height="4" patternUnits="userSpaceOnUse" patternTransform="scale(${sc})"><path d="M1 1q2-.7 4 0M12 3q2.5-.8 5 0M19 .8q1.6-.5 3.2 0" stroke="#dcecf3" stroke-width=".35" fill="none" opacity=".75"/><path d="M6 2.6q2-.6 4 0M21 3.2q2-.6 4 0" stroke="#163e56" stroke-width=".4" fill="none" opacity=".6"/></pattern>`); return `url(#${S.id("w" + n)})`; };
-  k += `<rect x="0" y="149" width="400" height="9" fill="${welle(1, 0.45)}"/><rect x="0" y="158" width="400" height="14" fill="${welle(2, 0.8)}"/><rect x="0" y="172" width="400" height="22" fill="${welle(3, 1.35)}"/>`;
+  for (let y = 147.6; y < 192;) {
+    const h = 0.45 + (y - 148) * 0.03, gap = 0.25 + (y - 148) * 0.04;
+    for (let x = -rnd() * 8; x < 400;) { const l = 2 + rnd() * (6 + (y - 148) * 0.4); mk += `M${r(x)} ${r(y)}h${r(l)}v${r(h)}h${r(-l)}z`; x += l + 0.4 + rnd() * (1 + (y - 148) * 0.18); }
+    y += h + gap;
+  }
+  S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="0" y="146" width="400" height="50"><path d="${mk}" fill="${S.lg("spfade", [[0, "#fff"], [0.55, "#bbb"], [1, "#000"]], 0, 146, 0, 190, ' gradientUnits="userSpaceOnUse"')}"/></mask>`);
+  k += `<g mask="url(#${S.id("spmaske")})" opacity=".82"><g filter="url(#${S.id("spiegel")})">${sp}</g></g>`;
+  /* Wellen: einzelne Bögen, hinten klein, flach und dicht, vorn breiter und locker; Länge und Abstand
+     streuen (± 40 %). Dunkle Wellentäler, wenige helle Kämme; weiße Glanzbögen nur im Glitzerfeld
+     rechts der Fähre (Sonne rechts hinter uns) */
+  const baender = [[148.6, 156, 0.22, 0.32], [156, 168, 0.32, 0.4], [168, 180, 0.45, 0.5], [180, 192, 0.6, 0.55]];
+  for (const [y0, y1, sw, op1] of baender) {
+    let dk = "", hl = "";
+    for (let y = y0; y < y1;) {
+      const L = 0.9 + (y - 148) * 0.2;
+      for (let x = -rnd() * L * 2; x < 400;) {
+        const l = L * (0.6 + 0.8 * rnd()), hh = l * (0.1 + rnd() * 0.06);
+        if (rnd() < 0.72) dk += `M${r(x)} ${r(y)}q${r(l / 2)} ${r(hh)} ${r(l)} 0`; else hl += `M${r(x)} ${r(y)}q${r(l / 2)} ${r(-hh)} ${r(l)} 0`;
+        x += l * (1.2 + 1.8 * rnd());
+      }
+      y += 0.5 + (y - 148) * 0.075 + rnd() * 0.4;
+    }
+    k += `<path d="${dk}" stroke="#123a52" stroke-width="${sw}" fill="none" opacity="${op1 + 0.15}"/><path d="${hl}" stroke="#cfe3ee" stroke-width="${sw}" fill="none" opacity="${op1}"/>`;
+  }
   let gl = "";
-  for (let i = 0; i < 14; i++) { const y = 152 + rnd() * 36, w = 1.5 + (y - 148) * 0.15; gl += `M${r(rnd() * 390)} ${r(y)}q${r(w / 2)} -.5 ${r(w)} 0`; }
-  k += `<path d="${gl}" stroke="#ffffff" stroke-width=".5" fill="none" opacity=".75"/>`;
+  for (let i = 0; i < 46; i++) { const y = 154 + Math.pow(rnd(), 1.3) * 30, x = 304 + rnd() * 92 - (y - 154) * 0.6, w = 0.8 + (y - 148) * 0.09 * (0.6 + rnd()); gl += `M${r(x)} ${r(y)}q${r(w / 2)} ${r(-w * 0.18)} ${r(w)} 0`; }
+  k += `<path d="${gl}" stroke="#fffdf4" stroke-width=".42" fill="none" opacity=".9"/>`;
+  /* Wasser schlägt an die Ufermauer: dunkler Streifen mit Lichtkante */
+  const ufer = [...Array(41)].map((_, i) => `${i * 10} ${r(KANTE(i * 10) - 1.1)}`).join(" L");
+  k += `<path d="M${ufer}" stroke="#0f3346" stroke-width="2" fill="none" opacity=".55"/><path d="M${[...Array(41)].map((_, i) => `${i * 10} ${r(KANTE(i * 10) - 2.4)}`).join(" L")}" stroke="#e6f1f6" stroke-width=".4" stroke-dasharray="3 2 6 3" fill="none" opacity=".7"/>`;
   /* Dunst über dem Wasser am Horizont */
   k += `<rect x="0" y="147.5" width="400" height="6" fill="${S.lg("wdunst", [[0, "#e6eef2", 0.55], [1, "#e6eef2", 0]])}"/>`;
   S.teil({ id: "hafen", de: "der Hafen", syl: "HA-fen", it: "il porto", itSyl: "POR-to", en: "harbour", x: 0, y: 0, kunst: k,
@@ -586,7 +599,8 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
 {
   /* Wassertaxi: gelb mit schwarzem Band, schnell, mit weißer Bugwelle */
   const X = 214, Y = 168, s = 1.0;
-  let k = `<path d="M${-14} .6 q-6 .8 -14 0 M-14 .2 q-4 -1 -9 -.4" stroke="#f2f8fb" stroke-width=".7" fill="none" opacity=".8"/>`;
+  /* V-förmiges Kielwasser, setzt am Heck an; Schaum hinter dem Heck */
+  let k = `<path d="M-8.6 .2 L-34 -2.2 M-8.6 .5 L-34 3.4" stroke="#eef6fa" stroke-width=".55" opacity=".75"/><path d="M-8.6 -.2q-5-.6-12 .3q6 1 12 .4z" fill="#f6fbfd" opacity=".85"/>`;
   k += `<path d="M7 0 q3 -.4 4 -1.6 M7 .4 q4 .4 6 -.2" stroke="#ffffff" stroke-width=".6" fill="none"/>`;
   k += `<path d="M-9 -2.6 L6 -2.6 Q9 -2.4 9.6 -1.6 Q8 .4 4 .4 L-8.4 .4 Q-9.2 -.6 -9 -2.6 Z" fill="${S.lg("taxi", [[0, "#f6cf2e"], [1, "#d9a812"]])}"/>`;
   k += `<rect x="-9" y="-1.3" width="17" height=".7" fill="#1d1d1d"/>`;
