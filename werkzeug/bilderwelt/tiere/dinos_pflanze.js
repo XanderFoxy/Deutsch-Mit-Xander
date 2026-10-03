@@ -203,13 +203,15 @@ function teilInnen(T, pts, fill) {
      ausgeblendet; in Szenen (T.fein = false) keine Textur.
    ===================================================================== */
 /* kompakte Zahl: 0,1 genau, ohne führende Null */
-const n1 = (v) => { const a = Math.round(v * 10) / 10; return (a < 0 ? "-" : "") + String(Math.abs(a)).replace(/^0\./, "."); };
+let PR = 10;   // Genauigkeit: 1/PR Einheiten (fein 1 cm, in Szenen 5 cm – dort unsichtbar, spart Bytes)
+const genau = (T) => { PR = T.fein ? 10 : 2; };
+const n1 = (v) => { const a = Math.round(v * PR) / PR; return (a < 0 ? "-" : "") + String(Math.abs(a)).replace(/^0\./, "."); };
 const zug = (arr) => arr.map(n1).join(" ").replace(/ -/g, "-");
 /* glatte Kurve (Catmull-Rom wie T.glatt), aber mit RELATIVEN Zügen und kompakten Zahlen – etwa 40 % kürzer.
    [x, y, 1] = harte Ecke. Gerundet wird kumulativ, damit sich keine Fehler aufsummieren. */
 function gl(pts, zu = true) {
   const n = pts.length, P = (i) => (zu ? pts[(i + n) % n] : pts[Math.max(0, Math.min(n - 1, i))]);
-  const rd = (v) => Math.round(v * 10) / 10;
+  const rd = (v) => Math.round(v * PR) / PR;
   let cx = rd(pts[0][0]), cy = rd(pts[0][1]), d = "M" + zug([cx, cy]) + "c";
   const teile = [];
   for (let i = 0; i < (zu ? n : n - 1); i++) {
@@ -424,6 +426,7 @@ function hornForm(T, name, bx, by, winkel, L, B, kr = 0, sp = 0.04, farben) {
    in lockeren Reihen große (>10 cm) Merkmals-Schuppen mit Kegelmitte.
    ===================================================================== */
 function triceratops(T) {
+  genau(T);
   const F = T.fein;
   let s = "";
   /* ---------- Formen (1 Einheit = 10 cm) ---------- */
@@ -595,6 +598,7 @@ function triceratops(T) {
    rotbraunem Rand (Imponierfarbe).
    ===================================================================== */
 function stegosaurus(T) {
+  genau(T);
   const F = T.fein;
   let s = "";
   /* ---------- Formen (1 Einheit = 10 cm) ---------- */
