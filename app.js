@@ -8561,11 +8561,24 @@
         window.dispatchEvent(new CustomEvent("dma-wetter"));
       } catch (e) {}
       niederschlagZeichnen(lage || null, WETTER_STAERKE[code] || "regen");
+      wetterGutGeholt = Date.now(); wetterFehlversuche = 0;
     } catch (e) {
-      weatherOut.textContent = "—";
-      niederschlagZeichnen(null);
+      /* FASSUNG 852 — XANDER (Funk 280): „Das Wetter wird nicht mehr sauber angezeigt im Header der Hauptseite".
+         Ein einzelner missglückter Abruf (Telefon kommt aus dem Hintergrund, das Netz steht noch nicht; Funkloch)
+         löschte das gute Wetter: „—" statt Temperatur, Himmel weg. Jetzt bleibt die letzte gute Messung stehen
+         (höchstens eine Stunde), und der Abruf wird nach 15 s, 45 s und 2 min wiederholt. Nur wenn noch nie etwas
+         ankam oder die Messung zu alt ist, steht „—" da. */
+      if (!wetterGutGeholt || Date.now() - wetterGutGeholt > 60 * 60 * 1000) {
+        weatherOut.textContent = "—°";
+        niederschlagZeichnen(null);
+      }
+      if (wetterFehlversuche < 3) {
+        clearTimeout(wetterNochmalUhr);
+        wetterNochmalUhr = setTimeout(updateWeather, [15000, 45000, 120000][wetterFehlversuche++]);
+      }
     }
   }
+  var wetterGutGeholt = 0, wetterFehlversuche = 0, wetterNochmalUhr = 0;   // var: updateWeather läuft schon vor dieser Zeile
   /* FASSUNG 698: ein Tipp aufs Wetter öffnet die Ortswahl. */
   function wetterOrtSetzen(w) {
     try { localStorage.setItem("dma_wetter_ort", JSON.stringify(w)); } catch (e) {}
