@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =====================================================================
-   NÜRNBERG (FASSUNG 854, Runde 2) — Bilderwelt neu: eine echte Stadtansicht
+   NÜRNBERG (FASSUNG 854, Runde 3) — Bilderwelt neu: eine echte Stadtansicht
    ---------------------------------------------------------------------
    RECHERCHE (nuernberg.de „Frauenkirche“, „Schöner Brunnen“, Hochbauamt
    „Männleinlaufen/Uhrentechnik“, Bayerische Schlösserverwaltung

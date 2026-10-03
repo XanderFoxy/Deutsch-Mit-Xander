@@ -369,8 +369,12 @@ const pyrUnter = [];
     const V = (u, v, dz = 0) => P(xc + u, v, z0 + 3.02 + dz + (v > 1 ? (v - 1) * 0.1 : 0));
     const bogen = (u0, u1, v0, v1, n = 8) => { const o = []; for (let i = 0; i <= n; i++) { const a = Math.PI * i / n; o.push(V(u0 + (u1 - u0) * (1 - Math.cos(a)) / 2, v0 + (v1 - v0) * Math.sin(a))); } return o; };
     /* Oberkiefer: vorspringende Schnauze, oben die hochgerollte Nasenschnecke */
-    g += `<path d="M${pts([V(-hw, 1.4), ...bogen(-hw, hw, 1.95, 2.2), V(hw, 1.4)])} Z" fill="${LI}"/>`;
-    for (const t of [-1, 1]) { const c0 = V(t * 0.45, 2.02, 0.03); g += `<path d="M${r(c0[0] - t * 0.7)} ${r(c0[1] + 0.25)} q${r(t * 0.1)} -1 ${r(t * 0.8)} -.9 q${r(t * 0.6)} .2 ${r(t * 0.35)} .8 q${r(-t * 0.25)} .35 ${r(-t * 0.5)} .05" stroke="${DU}" stroke-width=".38" fill="none"/>`; }
+    /* die Schnauze springt oben ≈ 0,5 m über den Unterkiefer vor: Seitenfläche und Unterkante sichtbar */
+    const OV = 0.5, Vo = (u, v) => V(u, v, OV);
+    g += `<path d="M${pts([V(-hw, 1.4), V(-hw, 2.2), Vo(-hw, 2.2), Vo(-hw, 1.4)])} Z" fill="${SE}"/>`;
+    g += `<path d="M${pts([Vo(-hw, 1.4), Vo(hw, 1.4), V(hw, 1.4), V(-hw, 1.4)])} Z" fill="#3a2e22"/>`;
+    g += `<path d="M${pts([Vo(-hw, 1.4), ...bogen(-hw, hw, 1.95, 2.2).map((p2, i, a2) => P(xc + (-hw + 2 * hw * i / (a2.length - 1)), 0, 0) && p2).map(([x2, y2]) => [x2 + (Vo(0, 2)[0] - V(0, 2)[0]), y2 + (Vo(0, 2)[1] - V(0, 2)[1])]), Vo(hw, 1.4)])} Z" fill="${LI}"/>`;
+    for (const t of [-1, 1]) { const c0 = V(t * 0.45, 2.02, 0.53); g += `<path d="M${r(c0[0] - t * 0.7)} ${r(c0[1] + 0.25)} q${r(t * 0.1)} -1 ${r(t * 0.8)} -.9 q${r(t * 0.6)} .2 ${r(t * 0.35)} .8 q${r(-t * 0.25)} .35 ${r(-t * 0.5)} .05" stroke="${DU}" stroke-width=".38" fill="none"/>`; }
     /* Unterkiefer */
     g += `<path d="M${pts([V(-hw, 0.36), V(-hw, 0.06), V(hw, 0.06), V(hw, 0.36)])} Z" fill="${LI}"/>`;
     /* Maul: weit offen, ≈ 60 % der Vorderseite */
@@ -382,8 +386,10 @@ const pyrUnter = [];
       for (const u of [0.2, 0.62]) g += flaech([[xc + t * u - 0.07, 0.4, z0 + 3.03], [xc + t * u + 0.07, 0.4, z0 + 3.03], [xc + t * u, 0.6, z0 + 3.03]], "#e9dcbd");
     }
     /* Zunge aus Stein: breites, flaches Band aus dem Maul über den Unterkiefer bis auf den Boden, vorn gespalten */
-    g += flaech([[xc - 0.26, 0.9, z0 + 3.06], [xc + 0.26, 0.9, z0 + 3.06], [xc + 0.28, 0.04, z0 + 3.09], [xc - 0.28, 0.04, z0 + 3.09]], SE, ` stroke="#3a2e22" stroke-width=".16"`);
-    g += flaech([[xc - 0.28, 0.03, z0 + 3.09], [xc + 0.28, 0.03, z0 + 3.09], [xc + 0.34, 0.03, z0 + 4.1], [xc + 0.06, 0.03, z0 + 3.7], [xc - 0.06, 0.03, z0 + 3.7], [xc - 0.34, 0.03, z0 + 4.1]], SE, ` stroke="#3a2e22" stroke-width=".16"`);
+    /* Zunge: wölbt sich aus dem Maul über den Unterkiefer und wird zum Boden hin breiter, vorn tief gespalten */
+    g += flaech([[xc - 0.22, 0.9, z0 + 3.06], [xc + 0.22, 0.9, z0 + 3.06], [xc + 0.3, 0.42, z0 + 3.2], [xc + 0.36, 0.04, z0 + 3.3], [xc - 0.36, 0.04, z0 + 3.3], [xc - 0.3, 0.42, z0 + 3.2]], LI, ` stroke="#3a2e22" stroke-width=".12"`);
+    g += flaech([[xc - 0.36, 0.03, z0 + 3.3], [xc + 0.36, 0.03, z0 + 3.3], [xc + 0.46, 0.03, z0 + 4.3], [xc + 0.12, 0.03, z0 + 3.75], [xc - 0.12, 0.03, z0 + 3.75], [xc - 0.46, 0.03, z0 + 4.3]], SE, ` stroke="#3a2e22" stroke-width=".12"`);
+    g += `<path d="M${pts([P(xc - 0.2, 0.86, z0 + 3.08), P(xc - 0.26, 0.42, z0 + 3.22)])}" stroke="${HE}" stroke-width=".18"/><path d="M${pts([P(xc, 0.6, z0 + 3.15), P(xc, 0.04, z0 + 3.31)])}" stroke="#7a6a52" stroke-width=".1"/>`;
     /* Nasenschnecke (hochgerollt) als Spirale auf der Seite */
     const [nx, ny] = P(xc - hw - 0.02, 2.12, z0 + 3.0);
     g += `<path d="M${r(nx - 0.9)} ${r(ny + 0.5)} q.2 -1.4 1.1 -1.3 q.9 .2 .6 1 q-.3 .6 -.8 .3" stroke="${DU}" stroke-width=".4" fill="none"/>`;
@@ -554,9 +560,10 @@ const GQ = 4, GM = 7;
 const vereinfache = (d, q) => {
   const tok = d.match(/[A-Za-z]|-?\d*\.?\d+(?:e-?\d+)?/g) || [];
   if (tok.some((t) => /^[a-zHVATt]$/.test(t))) return null;
-  const R = (v) => Math.round(v / q) * q;
+  /* FASSUNG R5: Punkte erst in voller Genauigkeit sammeln, dann Douglas–Peucker mit Toleranz q/2,
+     zuletzt auf ganze Figur-Einheiten runden: Diagonalen bleiben Diagonalen (keine Treppenkanten) */
   const teile = []; let pkt = [], cmd = "", i = 0, cx = 0, cy = 0;
-  const neu = (x, y) => { cx = x; cy = y; const p = [R(x), R(y)], l = pkt[pkt.length - 1]; if (!l || l[0] !== p[0] || l[1] !== p[1]) pkt.push(p); };
+  const neu = (x, y) => { cx = x; cy = y; pkt.push([x, y]); };
   while (i < tok.length) {
     if (/[A-Z]/.test(tok[i])) { cmd = tok[i++]; if (cmd === "Z") { if (pkt.length) teile.push(pkt); pkt = []; continue; } if (cmd === "M") { if (pkt.length) teile.push(pkt); pkt = []; } }
     const n = (k) => +tok[i + k];
@@ -567,7 +574,10 @@ const vereinfache = (d, q) => {
     else return null;
   }
   if (pkt.length) teile.push(pkt);
-  return teile.map((p) => { const o = p.filter((a, j) => { const b = p[j - 1], c = p[j + 1]; return !b || !c || (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]) !== 0; }); return o.length > 1 ? "M" + o.map((a) => a.join(" ")).join("L") + "Z" : ""; }).join("");
+  const eps = q * 0.45;
+  const dp = (p) => { if (p.length < 3) return p; const [a, b] = [p[0], p[p.length - 1]], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1e-9; let mi = 0, md = 0; for (let j = 1; j < p.length - 1; j++) { const dd = Math.abs((p[j][0] - a[0]) * dy - (p[j][1] - a[1]) * dx) / l; if (dd > md) { md = dd; mi = j; } } return md > eps ? dp(p.slice(0, mi + 1)).slice(0, -1).concat(dp(p.slice(mi))) : [a, b]; };
+  const dpz = (p) => { if (p.length < 4) return p; let mi = 0, md = -1; for (let j = 1; j < p.length; j++) { const dd = Math.hypot(p[j][0] - p[0][0], p[j][1] - p[0][1]); if (dd > md) { md = dd; mi = j; } } return dp(p.slice(0, mi + 1)).slice(0, -1).concat(dp(p.slice(mi).concat([p[0]]))).slice(0, -1); };
+  return teile.map((p) => { const o = dpz(p).map(([x, y]) => [Math.round(x), Math.round(y)]).filter((a, j, arr) => !j || a[0] !== arr[j - 1][0] || a[1] !== arr[j - 1][1]); return o.length > 1 ? "M" + o.map((a) => a.join(" ")).join("L") + "Z" : ""; }).join("");
 };
 const grob = (svg, q, min, verlaeufe = false) => {
   const rund = (v) => v.replace(/-?\d*\.?\d+(e-?\d+)?/g, (n) => String(Math.round(+n / q) * q));
@@ -595,11 +605,18 @@ const langSchatten = (x, y, h, b) => {
 S.def(`<linearGradient id="${S.id("menschschatten")}" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#1f2c14" stop-opacity=".46"/><stop offset=".6" stop-color="#1f2c14" stop-opacity=".26"/><stop offset="1" stop-color="#1f2c14" stop-opacity="0"/></linearGradient>`);
 {
   let k = "", sch = "";
+  /* Augen und Brauen klein und getrennt (die Vereinfachung lässt die winzigen Augenformen weg) */
+  const augen = (m, brille) => {
+    const P2 = m.z.punkte, k2 = m.k, [ax2, ay2] = P2.auge, [nx2] = P2.nase, d = (nx2 - ax2) * 1.7, e2 = [ax2 + d, ay2];
+    const sc = (v) => r(v * k2 * 100) / 100;
+    if (brille) return `<g fill="#1b1b1f"><ellipse cx="${sc(ax2)}" cy="${sc(ay2)}" rx="${sc(1.3)}" ry="${sc(1)}"/><ellipse cx="${sc(e2[0])}" cy="${sc(ay2)}" rx="${sc(1.2)}" ry="${sc(1)}"/></g><path d="M${sc(ax2 + 1.2)} ${sc(ay2)}H${sc(e2[0] - 1.1)}" stroke="#1b1b1f" stroke-width="${sc(0.4)}"/><circle cx="${sc(ax2 + 0.5)}" cy="${sc(ay2 - 0.4)}" r="${sc(0.3)}" fill="#fff"/>`;
+    return `<g fill="#241812"><circle cx="${sc(ax2)}" cy="${sc(ay2)}" r="${sc(0.55)}"/><circle cx="${sc(e2[0])}" cy="${sc(ay2)}" r="${sc(0.5)}"/></g><path d="M${sc(ax2 - 1)} ${sc(ay2 - 1.6)}h${sc(1.9)}M${sc(e2[0] - 0.9)} ${sc(ay2 - 1.6)}h${sc(1.8)}" stroke="#3a2a1e" stroke-width="${sc(0.35)}"/>`;
+  };
   const figur = (x, y, spec, m0) => {
     const s = sy(y), h = (spec.alter === "kind" ? 1.3 : spec.alter === "alt" ? 1.66 : spec.geschlecht === "w" ? 1.65 : 1.76) * s;
-    const m = m0 || B.mensch(Object.assign({ haut: "mittel", laecheln: true, ohneSchatten: true }, spec), h);
+    const sp2 = Object.assign({}, spec); delete sp2.sonnenbrille; const m = m0 || B.mensch(Object.assign({ haut: "mittel", laecheln: true, ohneSchatten: true }, sp2), h);
     sch += langSchatten(x, y, h / s, 1.1);
-    return { m, svg: `<g transform="translate(${r(x)} ${r(y)})" filter="${ABEND}">${grob(m.svg, GQ, GM)}</g>`, x, y };
+    return { m, svg: `<g transform="translate(${r(x)} ${r(y)})" filter="${ABEND}">${grob(m.svg, GQ, GM)}${augen(m, spec.sonnenbrille)}</g>`, x, y };
   };
   const kl = (o, u, hut, schuh = "turnschuh") => Object.assign({ oberteil: { stueck: "tshirt", farbe: o }, unterteil: { stueck: u[0], farbe: u[1] }, schuhe: { stueck: schuh, farbe: "braun" } }, hut ? { kopf: { stueck: "hut", farbe: hut } } : {});
   /* Gruppe 1: Familie am Weg, das Kind sitzt dem Vater auf den Schultern */
@@ -613,7 +630,7 @@ S.def(`<linearGradient id="${S.id("menschschatten")}" x1="1" y1="0" x2="0" y2="0
     /* Kopf des Vaters noch einmal über dem Kind (er sitzt davor) */
     const kopfY = (ny * vm.k) / vm.k + 2;
     const kopf = vm.svg.replace(/<(path|ellipse|circle)\b[^>]*\/>/g, (el) => { const v = (el.match(/ (?:d|cy)="([^"]*)"/) || [, ""])[1].match(/-?\d*\.?\d+/g) || []; const ys = el.includes(' d="') ? v.filter((_, i) => i % 2).map(Number) : v.map(Number); return ys.length && Math.max(...ys) < kopfY ? el : ""; });
-    k += vater.svg + `<g transform="translate(${r(dx)} ${r(dy)})" filter="${ABEND}">${grob(kind.svg, GQ, GM)}</g>` + `<g transform="translate(80 146.4)" filter="${ABEND}">${grob(kopf, GQ, GM)}</g>`;
+    k += vater.svg + `<g transform="translate(${r(dx)} ${r(dy)})" filter="${ABEND}">${grob(kind.svg, GQ, GM)}</g>` + `<g transform="translate(80 146.4)" filter="${ABEND}">${grob(kopf, GQ, GM)}${augen(vm)}</g>`;
   }
   k += figur(87.5, 147, { id: "mx_mutter", geschlecht: "w", alter: "erwachsen", pose: "kontrapost", blick: -14, frisur: "zopf", haarfarbe: "dunkelbraun", kleidung: kl("#7fb3d5", ["hose", "#e9e2d0"], "#f1e9d2") }).svg;
   /* Gruppe 2: Führerin mit erhobenem Schirm (damit die Gruppe sie findet) und zwei Besucher */
@@ -621,9 +638,9 @@ S.def(`<linearGradient id="${S.id("menschschatten")}" x1="1" y1="0" x2="0" y2="0
   k += fuehrerin.svg;
   { const fm = fuehrerin.m, hx = 118 + fm.z.handR.x * fm.k, hy = 149 + fm.z.handR.y * fm.k, s = sy(149); k += `<line x1="${r(hx)}" y1="${r(hy + 0.3)}" x2="${r(hx)}" y2="${r(hy - 0.7 * s)}" stroke="#444" stroke-width=".22"/><path d="M${r(hx - 0.5 * s)} ${r(hy - 0.55 * s)} Q${r(hx)} ${r(hy - 0.9 * s)} ${r(hx + 0.5 * s)} ${r(hy - 0.55 * s)} Z" fill="#e8590c"/>`; }
   k += figur(126.5, 148.4, { id: "mx_t1", geschlecht: "m", alter: "alt", pose: "stehen", blick: 30, frisur: "kurz", haarfarbe: "grau", haut: "hell", kleidung: kl("#f4f1e8", ["hose", "#e9e2d0"], "#f1e9d2") }).svg;
-  k += figur(133, 148.8, { id: "mx_t2", geschlecht: "w", alter: "erwachsen", pose: "stehen", blick: 40, frisur: "lang", haarfarbe: "schwarz", kleidung: kl("#c2255c", ["hose", "#2a3a5a"], null, "sandale") }).svg;
+  k += figur(133, 148.8, { id: "mx_t2", sonnenbrille: true, geschlecht: "w", alter: "erwachsen", pose: "stehen", blick: 40, frisur: "lang", haarfarbe: "schwarz", kleidung: kl("#c2255c", ["hose", "#2a3a5a"], null, "sandale") }).svg;
   /* Gruppe 3 vor der Westseite */
-  k += figur(188, 144.6, { id: "mx_t3", geschlecht: "m", alter: "jugendlich", pose: "gehen", blick: -30, frisur: "kurz", haarfarbe: "schwarz", kleidung: Object.assign(kl("#f4f1e8", ["shorts", "#3f4a5a"]), { kopf: { stueck: "kappe", farbe: "#c8102e" } }) }).svg;
+  k += figur(188, 144.6, { id: "mx_t3", sonnenbrille: true, geschlecht: "m", alter: "jugendlich", pose: "gehen", blick: -30, frisur: "kurz", haarfarbe: "schwarz", kleidung: Object.assign(kl("#f4f1e8", ["shorts", "#3f4a5a"]), { kopf: { stueck: "kappe", farbe: "#c8102e" } }) }).svg;
   k += figur(194, 145, { id: "mx_t4", geschlecht: "w", alter: "erwachsen", pose: "stehen", blick: 30, frisur: "lang", haarfarbe: "blond", haut: "hell", kleidung: kl("#f4f1e8", ["rock", "#7fb3d5"], "#f1e9d2", "sandale") }).svg;
   /* zwei weitere kleine Gruppen weiter hinten auf dem Rasen (≈ 8 Einheiten hoch: Kopf mit Haar, Hemd mit
      Ärmeln, Arme mit Händen, Beine, Schuhe; manche mit Hut oder Kamera) */

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =====================================================================
-   REGENSBURG (FASSUNG 854, Runde 2) — Bilderwelt neu: eine echte Stadtansicht
+   REGENSBURG (FASSUNG 854, Runde 3) — Bilderwelt neu: eine echte Stadtansicht
    ---------------------------------------------------------------------
    RECHERCHE (tourismus.regensburg.de „16 Highlights“, Stadt Regensburg
    „Steinerne Brücke – Ausstellungstafeln“, Bistum Regensburg
@@ -79,7 +79,7 @@ S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("spiegel")}" x="-2%
 const DOMSTEIN = S.lg("domstein", [[0, "#7e8290"], [0.7, "#9a9ca4"], [0.92, "#b8b2aa"], [1, "#f0d2a8"]], 0, 0, 1, 0);
 const DOMSTEIN_H = S.lg("domsteinh", [[0, "#6e7282"], [1, "#8e909a"]], 0, 0, 1, 0);
 const PATINA = S.lg("patina", [[0, "#56685f"], [0.8, "#6e8478"], [1, "#c8c0a0"]], 0, 0, 1, 0);
-const BRUECKE = S.lg("brueckenstein", [[0, "#7a7a74"], [0.6, "#8e8c82"], [1, "#a8a28e"]], 0, 0, 1, 0);
+const BRUECKE = S.lg("brueckenstein", [[0, "#666a70"], [0.6, "#76787a"], [1, "#908a7e"]], 0, 0, 1, 0);
 const ZIEGEL = S.lg("ziegel", [[0, "#6e3a32"], [0.7, "#86463a"], [1, "#c87a52"]], 0, 0, 1, 0);
 const ZIEGEL_D = S.lg("ziegeld", [[0, "#5a2c24"], [1, "#7a3a2e"]], 0, 0, 1, 0);
 const GOLD = S.lg("gold", [[0, "#fff1a8"], [0.4, "#f1c74a"], [1, "#a8770f"]], 0, 0, 1, 1);
@@ -91,8 +91,8 @@ const SCHATTEN = "#3a4a72";
    KULISSE — Sommerabend: warmer Himmel rechts (Sonne), ferne Hügel
    ===================================================================== */
 S.hinten(`<rect width="320" height="${W + 4}" fill="${S.lg("himmel", [[0, "#3a6cb0"], [0.45, "#86aed6"], [0.8, "#f0d8b4"], [1, "#f8d09a"]])}"/>`);
-S.hinten(`<rect width="320" height="${W + 4}" fill="${S.lg("himmelwarm", [[0, "#fff0c8", 0], [0.6, "#ffe0a8", 0.1], [1, "#ffd28a", 0.55]], 0, 0, 1, 0)}"/>`);
-S.hinten(`<circle cx="372" cy="70" r="190" fill="${S.rg("sonne", [[0, "#fff4d0", 0.85], [0.35, "#ffe2a0", 0.35], [1, "#ffe2a0", 0]])}"/>`);
+S.hinten(`<rect width="320" height="${W + 4}" fill="${S.lg("himmelwarm", [[0, "#fff0c8", 0], [0.5, "#f2b26a", 0.12], [0.8, "#f2b26a", 0.42], [1, "#ffe0a0", 0.7]], 0, 0, 1, 0)}"/>`);
+S.hinten(`<circle cx="372" cy="70" r="190" fill="${S.rg("sonne", [[0, "#fff0c0", 0.7], [0.3, "#ffd890", 0.35], [0.7, "#f2b26a", 0.12], [1, "#f2b26a", 0]])}"/>`);
 {
   let w = "";
   for (const [x, y, s] of [[40, 30, 1.1], [180, 20, 0.9], [262, 46, 1], [92, 62, 0.6]]) {
@@ -108,8 +108,8 @@ S.hinten(`<path d="M0 108 Q40 101 90 104 T180 103 T260 100 T320 104 L320 ${W} L0
 /* hinter der Brücke rechts: Bäume auf dem Oberen Wöhrd, im Gegenlicht dunstig */
 {
   let t = "";
-  for (let i = 0; i < 30; i++) { const x = 236 + rnd() * 90, y = 100 + rnd() * 14, rr = 2.4 + rnd() * 3; t += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(rr * 1.2)}" ry="${r(rr)}" fill="${["#8a9a8c", "#7c8e84", "#98a698"][i % 3]}"/>`; }
-  t += `<rect x="232" y="112" width="88" height="${W - 112}" fill="#7c8e84"/>`;
+  for (let i = 0; i < 30; i++) { const x = 236 + rnd() * 90, y = 100 + rnd() * 14, rr = 2.4 + rnd() * 3; t += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(rr * 1.2)}" ry="${r(rr)}" fill="${["#6e8274", "#62786a", "#7a8c7e"][i % 3]}"/>`; }
+  t += `<rect x="232" y="112" width="88" height="${W - 112}" fill="#62786a"/>`;
   S.hinten(`<g opacity=".8">${t}</g>`);
 }
 
@@ -254,7 +254,7 @@ const DOMT = { nord: 124, sued: 136, breite: 15 };
   };
   let k = turm(143, 111, 1.4, 28, false) + turm(214, 112, 1.15, 46, true) + turm(240, 110, 1.0, 30, "zinnen");
   S.teil({ id: "geschlechterturm", de: "der Geschlechterturm", syl: "ge-SCHLECH-ter-turm", it: "la torre gentilizia", itSyl: "TOR-re gen-ti-LI-zia", en: "patrician tower",
-    x: 213, y: 62, kunst: anker(213, 62, k), tipp: "Reiche Kaufleute bauten im Mittelalter hohe Wohntürme wie in Italien. Der Goldene Turm ist 50 Meter hoch." });
+    x: 215, y: 51, kunst: anker(215, 51, k), tipp: "Reiche Kaufleute bauten im Mittelalter hohe Wohntürme wie in Italien. Der Goldene Turm ist 50 Meter hoch." });
 }
 
 /* =====================================================================
@@ -367,7 +367,7 @@ const BT = { x: 190, y: 113 };
   k += `<line x1="${r((L0 + R1) / 2 + 1)}" y1="-66" x2="${r((L0 + R1) / 2 + 1)}" y2="-69" stroke="${DUNKEL}" stroke-width=".35"/><circle cx="${r((L0 + R1) / 2 + 1)}" cy="-69.2" r=".55" fill="${GOLD}"/>`;
   k += `<rect x="${R1 - 0.7}" y="${obenR}" width=".7" height="${r(1.4 - obenR)}" fill="${RAND}" opacity=".8"/>`;
   S.teil({ id: "brueckturm", de: "der Brückturm", syl: "BRÜCK-turm", it: "la torre del ponte", itSyl: "TOR-re del PON-te", en: "bridge tower",
-    x: BT.x, y: 58, kunst: anker(0, 58 - BT.y, gruppe("brueckturm", BT.x, BT.y, k)), tipp: "Durch das Tor im Brückturm kommt man von der Brücke in die Altstadt. Früher musste man hier Zoll bezahlen.",
+    x: BT.x - 3, y: 60, kunst: anker(-3, 60 - BT.y, gruppe("brueckturm", BT.x, BT.y, k)), tipp: "Durch das Tor im Brückturm kommt man von der Brücke in die Altstadt. Früher musste man hier Zoll bezahlen.",
     zoom: { x: BT.x - 16, y: BT.y - 56, w: 30, h: 56 },
     unter: [
       { id: "uhr", de: "die Uhr", syl: "UHR", it: "l'orologio", itSyl: "o-ro-LO-gio", en: "clock", x: BT.x + UX, y: BT.y + UY + 4.4, kunst: flaeche(-4, -8.6, 8, 8.6), tipp: "Die Turmuhr stammt aus dem 17. Jahrhundert. Es ist kurz nach acht Uhr abends." },
@@ -404,7 +404,7 @@ const WK = { x: 151, y: W - 1 };
     x: WK.x - 3, y: WK.y - 9, kunst: anker(-3, -9, gruppe("wurstkuchl", WK.x, WK.y, k)), tipp: "Die Historische Wurstkuchl gilt als älteste Bratwurstküche der Welt. „Kuchl“ heißt auf Bairisch Küche.",
     zoom: { x: WK.x - 27, y: WK.y - 24, w: 38, h: 26 },
     unter: [
-      { id: "schornstein", de: "der Schornstein", syl: "SCHORN-stein", it: "il comignolo", itSyl: "co-MI-gno-lo", en: "chimney", x: WK.x + 3.7, y: WK.y - 12.8, kunst: flaeche(-2.6, -9, 5.2, 9),
+      { id: "schornstein", de: "der Schornstein", syl: "SCHORN-stein", it: "il comignolo", itSyl: "co-MI-gno-lo", en: "chimney", x: WK.x + 3.7, y: WK.y - 17.8, kunst: flaeche(-2.6, -4, 5.2, 9),
         tipp: "Die Würste werden über Holzkohle gegrillt – darum raucht der Schornstein (in Bayern sagt man auch „Kamin“)." },
       { id: "hochwassermarke", de: "die Hochwassermarke", syl: "HOCH-was-ser-mar-ke", it: "il segno della piena", itSyl: "SE-gno del-la PIE-na", en: "flood mark", x: WK.x + 9.2, y: WK.y - 2, kunst: flaeche(-3.7, -6.2, 4.4, 6.6),
         tipp: "Die Striche zeigen, wie hoch die Donau bei Hochwasser stand." },
@@ -468,20 +468,22 @@ const brueckenKoerper = (spiegeln) => {
     const rund = `M${r(xa)} ${r(Y(a, WAS(a)))} L${r(xa)} ${r(Y(m, ys))} C${r(xa)} ${r(Y(m, ys - (ys - yk) * 1.1))} ${r(xb)} ${r(Y(m, ys - (ys - yk) * 1.1))} ${r(xb)} ${r(Y(m, ys))} L${r(xb)} ${r(Y(b, WAS(b)))} Z`;
     g += `<path d="${rund}" fill="${spiegeln ? "#2e3a40" : `url(#${S.id("bogenlicht")})`}"/>`;
     if (!spiegeln) {
-      /* Keilsteine um den Bogen */
-      const n = 6;
-      for (let q = 0; q <= n; q++) {
-        const t = q / n, ang = Math.PI * (1 - t), cx = (xa + xb) / 2, rx = (xb - xa) / 2, ry = (ys - yk) * 0.83;
-        const x0 = cx + Math.cos(ang) * rx, y0 = ys - Math.sin(ang) * ry, x1 = cx + Math.cos(ang) * (rx + 0.9 * bkm * 0.5), y1 = ys - Math.sin(ang) * (ry + 0.9 * bkm * 0.5);
-        g += `<line x1="${r(x0)}" y1="${r(y0)}" x2="${r(x1)}" y2="${r(y1)}" stroke="#5e5e5c" stroke-width="${r(0.12 + 0.03 * bkm)}" opacity=".7"/>`;
+      /* Archivolte: ein geschlossener, hellerer Bogenring, die Fugen radial darin */
+      const wB = 0.5 * bkm, cx = (xa + xb) / 2, rx = (xb - xa) / 2, ry = (ys - yk) * 0.83;
+      g += `<path d="M${r(xa - wB / 2)} ${r(ys)} C${r(xa - wB / 2)} ${r(ys - (ys - yk) * 1.1 - wB * 0.7)} ${r(xb + wB / 2)} ${r(ys - (ys - yk) * 1.1 - wB * 0.7)} ${r(xb + wB / 2)} ${r(ys)}" stroke="#9a968a" stroke-width="${r(wB)}" fill="none"/>`;
+      const n = 9;
+      for (let q = 1; q < n; q++) {
+        const ang = Math.PI * (1 - q / n), x0 = cx + Math.cos(ang) * (rx + 0.05), y0 = ys - Math.sin(ang) * (ry + 0.05), x1 = cx + Math.cos(ang) * (rx + wB * 0.95), y1 = ys - Math.sin(ang) * (ry + wB * 0.95);
+        g += `<line x1="${r(x0)}" y1="${r(y0)}" x2="${r(x1)}" y2="${r(y1)}" stroke="#5e5c56" stroke-width="${r(0.08 + 0.03 * bkm)}" opacity=".75"/>`;
       }
       g += `<path d="M${r(xa)} ${r(ys)} C${r(xa)} ${r(ys - (ys - yk) * 1.1)} ${r(xb)} ${r(ys - (ys - yk) * 1.1)} ${r(xb)} ${r(ys)}" stroke="#a4a08e" stroke-width="${r(0.25 + 0.08 * bkm)}" fill="none"/>`;
     }
   });
   if (!spiegeln) {
     /* Quaderlagen, Abdeckplatten der Brüstung, warme Lichtkante oben */
-    for (const t of [0.6, 1.6, 2.6, 3.6]) { const l = []; for (let i = 0; i <= 20; i++) { const s = i / 20; l.push(`${r(BX(s))} ${r(DECK(s) + t * BK(s))}`); } g += `<path d="M${l.join(" L")}" stroke="#5e5e5a" stroke-width=".18" fill="none" opacity=".55"/>`; }
-    for (let i = 1; i < 20; i++) { const s = i / 20; g += `<line x1="${r(BX(s))}" y1="${r(DECK(s) - 1.05 * BK(s))}" x2="${r(BX(s))}" y2="${r(DECK(s) + 0.1 * BK(s))}" stroke="#5e5e5a" stroke-width=".12" opacity=".5"/>`; }
+    [0.6, 1.3, 2.0].forEach((t, j) => { const l = []; for (let i = 0; i <= 20; i++) { const s = i / 20; l.push(`${r(BX(s))} ${r(DECK(s) + t * BK(s))}`); } g += `<path d="M${l.join(" L")}" stroke="#4e4e4a" stroke-width=".18" fill="none" opacity=".6"${j === 1 ? ' stroke-dasharray="3 1.4"' : ""}/>`; });
+    [[0.05, 0.6], [0.6, 1.3], [1.3, 2.0]].forEach(([t0, t1], j) => { for (let i = 0; i < 30; i++) { const s = (i + (j % 2) * 0.5 + 0.25) / 30; if (s > 1) continue; g += `<line x1="${r(BX(s))}" y1="${r(DECK(s) + t0 * BK(s))}" x2="${r(BX(s))}" y2="${r(DECK(s) + t1 * BK(s))}" stroke="#4e4e4a" stroke-width=".14" opacity=".5"/>`; } });
+    for (let i = 1; i < 20; i++) { const s = i / 20; g += `<line x1="${r(BX(s))}" y1="${r(DECK(s) - 1.05 * BK(s))}" x2="${r(BX(s))}" y2="${r(DECK(s) - 0.1 * BK(s))}" stroke="#4e4e4a" stroke-width=".12" opacity=".5"/>`; }
     const k1 = []; for (let i = 0; i <= 40; i++) { const s = i / 40; k1.push(`${r(BX(s))} ${r(DECK(s) - 1.05 * BK(s))}`); }
     g += `<path d="M${k1.join(" L")}" stroke="${RAND}" stroke-width=".8" fill="none"/>`;
     const k2 = []; for (let i = 0; i <= 40; i++) { const s = i / 40; k2.push(`${r(BX(s))} ${r(DECK(s) + 0.05 * BK(s))}`); }
@@ -494,11 +496,9 @@ const brueckenKoerper = (spiegeln) => {
     if (!spiegeln) {
       g += `<path d="M${r(x - b)} ${r(y + 0.3)} Q${r(x - b * 0.6)} ${r(y - h)} ${r(x)} ${r(y - h)} Q${r(Math.min(316, x + b * 0.7))} ${r(y - h)} ${r(Math.min(319, x + b * 1.15))} ${r(y + 0.3)} Z" fill="${S.lg("insel", [[0, "#8e8a78"], [1, "#6a6658"]])}"/>`;
       g += `<path d="M${r(x - b * 0.7)} ${r(y - h * 0.6)} Q${r(x)} ${r(y - h * 1.1)} ${r(Math.min(318, x + b * 0.8))} ${r(y - h * 0.5)}" stroke="#c8bc9c" stroke-width=".35" fill="none" opacity=".8"/>`;
-      /* Stromschnellen: weiße Kämme unterhalb der Bögen, das Wasser fällt sichtbar ab */
-      for (let q = 0; q < 4; q++) {
-        const yy = y + (0.9 + q * 0.75) * bk * 0.42, xx = x - b * (0.2 + q * 0.18);
-        g += `<path d="M${r(xx - b * 0.9)} ${r(yy)} q${r(b * 0.25)} ${r(-0.6 * bk * 0.4)} ${r(b * 0.5)} 0 t${r(b * 0.5)} 0 t${r(b * 0.5)} 0" stroke="#f4fbff" stroke-width="${r(0.25 + 0.07 * bk)}" fill="none" opacity="${r(0.85 - q * 0.15)}"/>`;
-      }
+      /* Schaumzunge flussabwärts (links) hinter dem Pfeiler, ausfransend, dazu zwei, drei Wellenkämme */
+      g += `<path d="M${r(x - b * 0.8)} ${r(y + 0.2)} Q${r(x - b * 1.6)} ${r(y + 0.12 * bk)} ${r(x - b * 2.5)} ${r(y + 0.55 * bk)} l${r(b * 0.3)} ${r(-0.1 * bk)} l${r(b * 0.2)} ${r(0.24 * bk)} l${r(b * 0.32)} ${r(-0.14 * bk)} l${r(b * 0.28)} ${r(0.28 * bk)} Q${r(x - b * 0.9)} ${r(y + 0.72 * bk)} ${r(x - b * 0.3)} ${r(y + 0.5 * bk)} Z" fill="#eef6f8" opacity=".72"/>`;
+      for (let q = 0; q < 3; q++) g += `<path d="M${r(x - b * (1.3 + q * 0.75))} ${r(y + (0.95 + q * 0.28) * bk)} q${r(b * 0.25)} ${r(-0.22 * bk)} ${r(b * 0.55)} 0" stroke="#f4fbff" stroke-width="${r(0.18 + 0.05 * bk)}" fill="none" opacity="${r(0.75 - q * 0.18)}"/>`;
       g += `<path d="M${r(x - b * 1.6)} ${r(y + 0.4 * bk)} L${r(Math.min(319, x + b * 1.4))} ${r(y + 0.4 * bk)}" stroke="#2a3a44" stroke-width="${r(0.3 * bk)}" opacity=".25"/>`;
     }
   }
@@ -591,6 +591,21 @@ const BRUECKE_LEUTE = [];
   for (let i = 0; i < 18; i++) { const x = 6 + rnd() * 170, y = WU + 9 + rnd() * 32; fl += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(1.6 + rnd() * 3)}" ry="${r(0.5 + rnd() * 0.8)}" fill="#ffe2a0" opacity="${r(0.25 + rnd() * 0.25)}"/>`; }
   f += `<g filter="url(#${S.id("rauch")})">${fl}</g>`;
   f += `<rect x="0" y="${WU}" width="320" height="${200 - WU}" fill="${S.lg("kieslicht", [[0, "#2a2010", 0.14], [0.55, "#000", 0], [1, "#ffd090", 0.2]], 0, 0, 1, 0)}"/>`;
+  /* hinten rechts eine zweite Tischreihe im Gegenlicht: Silhouetten mit warmen Lichtkanten, zwei stoßen an, ein Radler mit Helm, das Rad lehnt am Tisch */
+  {
+    const SI = "#221c1c";
+    let g = `<path d="M-1 0 L-.86 -.74 M-.86 0 L-1 -.74 M.56 0 L.7 -.74 M.7 0 L.56 -.74" stroke="${SI}" stroke-width=".035"/>`;
+    for (const [x, hoch, helm] of [[-0.85, 0, 0], [-0.45, 1, 0], [-0.05, -1, 0], [0.35, 0, 1]]) {
+      g += `<path d="M${x - 0.2} -.74 L${x - 0.21} -.96 Q${x - 0.2} -1.04 ${x - 0.1} -1.05 L${x + 0.1} -1.05 Q${x + 0.2} -1.04 ${x + 0.21} -.96 L${x + 0.2} -.74 Z" fill="${SI}"/><path d="M${x - 0.035} -1.06 L${x + 0.035} -1.06 L${x + 0.035} -1.1 L${x - 0.035} -1.1 Z" fill="${SI}"/><ellipse cx="${x}" cy="-1.19" rx=".09" ry=".105" fill="${SI}"/>`;
+      g += `<path d="M${x + 0.09} -1.25 Q${x + 0.1} -1.15 ${x + 0.06} -1.1 M${x + 0.2} -1.0 L${x + 0.19} -.78" stroke="${RAND}" stroke-width=".014" fill="none" opacity=".9"/>`;
+      if (hoch) { const sx = hoch; g += `<path d="M${x + sx * 0.15} -1.0 L${x + sx * 0.21} -1.2 L${x + sx * 0.2} -1.42" stroke="${SI}" stroke-width=".05" fill="none" stroke-linecap="round"/><path d="M${x + sx * 0.2 - 0.04} -1.42 L${x + sx * 0.2 - 0.04} -1.56 L${x + sx * 0.2 + 0.04} -1.56 L${x + sx * 0.2 + 0.04} -1.42 Z" fill="#c89030"/><path d="M${x + sx * 0.2 - 0.045} -1.56 q.045 -.03 .09 0 Z" fill="#fff4d8"/><path d="M${x + sx * 0.2 + 0.04} -1.56 L${x + sx * 0.2 + 0.04} -1.42" stroke="${RAND}" stroke-width=".012"/>`; }
+      if (helm) g += `<path d="M${x - 0.11} -1.2 Q${x - 0.1} -1.33 ${x} -1.33 Q${x + 0.11} -1.33 ${x + 0.12} -1.2 Z" fill="#3a5a8a"/><path d="M${x - 0.05} -1.31 L${x - 0.04} -1.22 M${x + 0.03} -1.32 L${x + 0.03} -1.22" stroke="#e8e8e8" stroke-width=".012"/>`;
+    }
+    g += `<rect x="-1.05" y="-.78" width="1.8" height=".05" fill="${SI}"/><path d="M-1.05 -.78 L.75 -.78" stroke="${RAND}" stroke-width=".012"/>`;
+    g += `<g fill="none" stroke="${SI}" stroke-width=".03"><circle cx=".95" cy="-.3" r=".29"/><circle cx="1.31" cy="-.3" r=".29"/><path d="M.95 -.3 L1.08 -.62 L1.26 -.6 L1.31 -.3 M1.08 -.62 L1.12 -.3 L.95 -.3 M1.12 -.3 L1.26 -.6 M1.04 -.7 L1.12 -.7 M1.24 -.6 L1.2 -.72 L1.28 -.74"/></g>`;
+    g += `<path d="M1.6 -.3 A.29 .29 0 0 0 1.31 -.59 M1.24 -.3 A.29 .29 0 0 0 .95 -.59" stroke="${RAND}" stroke-width=".012" fill="none"/>`;
+    f += `<g transform="translate(268 166) scale(32.5)" opacity=".92">${g}</g>`;
+  }
   S.teil({ id: "biergarten", de: "der Biergarten", syl: "BIER-gar-ten", it: "la birreria all'aperto", itSyl: "bir-re-RI-a al-la-PER-to", en: "beer garden", x: 272, y: 186, kunst: anker(272, 186, f),
     tipp: "Im Biergarten sitzt man im Sommer draußen unter Bäumen und isst und trinkt." });
 }
@@ -610,32 +625,62 @@ const BRUECKE_LEUTE = [];
   k += `<path d="M-6 -88 Q-14 -104 -16 -122 L-11 -123 Q-8 -106 -1 -94 Z" fill="${AST}"/>`;
   k += `<path d="M-2 -92 Q6 -112 16 -138 L20 -136 Q12 -110 3 -88 Z" fill="${AST}"/>`;
   k += `<path d="M1 -82 Q18 -100 32 -136 L36 -133 Q22 -96 4 -76 Z" fill="${AST}"/>`;
-  /* Krone: breite Kuppel aus dunklen Laubmassen (weich), am Rand handförmige Blätter, Gegenlicht oben rechts */
+  /* Krone: breite Kuppel aus Laubballen in vier Helligkeitsstufen (Volumen), am Rand handförmige Blätter
+     in Fächern an sichtbaren Zweigspitzen, im Gegenlicht nur oben rechts durchleuchtet */
   const KY = -Y;
   let krone = "";
   const rand = [[1, 89.3], [2, 88.9], [8, 86], [22, 80], [34, 72], [46, 66], [58, 61], [72, 56], [86, 49], [98, 42], [106, 34], [110, 24], [108, 12], [100, 2], [92, -1], [1, -1]];
-  krone += `<path d="M${rand.map(([x, y]) => `${x} ${r(KY + y)}`).join(" L")} Z" fill="#1c3418"/>`;
+  krone += `<path d="M${rand.map(([x, y]) => `${x} ${r(KY + y)}`).join(" L")} Z" fill="#1a3016"/>`;
+  const TON = ["#1c3418", "#24421f", "#2e5226", "#3c6430"];
+  const ballen = [];
+  for (let i = 0; i < 26; i++) { const x = 6 + rnd() * 98, y = 4 + rnd() * 70; if (y > 96 - x * 0.62) continue; const t = Math.min(3, Math.floor(((x / 110) * 0.55 + (1 - y / 80) * 0.45) * 4)); ballen.push([t, x, y, 7 + rnd() * 8, 4.5 + rnd() * 4.5]); }
+  ballen.sort((p, q) => p[0] - q[0]);
   let lm = "";
-  for (let i = 0; i < 16; i++) { const x = 8 + rnd() * 94, y = 6 + rnd() * 64; if (y > 100 - x * 0.62) continue; lm += `<ellipse cx="${r(x)}" cy="${r(KY + y)}" rx="${r(7 + rnd() * 9)}" ry="${r(4 + rnd() * 5)}" fill="${["#24441f", "#2e5426", "#1a3216"][i % 3]}"/>`; }
+  for (const [t, x, y, rx, ry] of ballen) lm += `<ellipse cx="${r(x)}" cy="${r(KY + y)}" rx="${r(rx)}" ry="${r(ry)}" fill="${TON[t]}"/>`;
   krone += `<g filter="url(#${S.id("rauch")})">${lm}</g>`;
-  const blatt = (cx, cy, gr, dreh, ton) => {
-    let g = "";
-    const Fa = [["#1e3a1a", "#26461f", "#2e5426"], ["#2e5426", "#3a6a2e", "#467a34"], ["#6a9a3a", "#86b44a", "#a8cc62"]][ton];
-    for (let i = 0; i < 5; i++) {
-      const a = (dreh + (i - 2) * 30) * Math.PI / 180, l = gr * (1 - Math.abs(i - 2) * 0.16);
-      const ex = cx + Math.sin(a) * l, ey = cy - Math.cos(a) * l, nx = Math.cos(a) * l * 0.26, ny = Math.sin(a) * l * 0.26;
-      g += `<path d="M${r(cx)} ${r(cy)} Q${r((cx + ex) / 2 + nx)} ${r((cy + ey) / 2 + ny)} ${r(ex)} ${r(ey)} Q${r((cx + ex) / 2 - nx)} ${r((cy + ey) / 2 - ny)} ${r(cx)} ${r(cy)} Z" fill="${Fa[i % 3]}"/>`;
+  for (const [t, x, y, rx, ry] of ballen) if (t >= 2) krone += `<path d="M${r(x - rx * 0.2)} ${r(KY + y - ry)} Q${r(x + rx * 0.7)} ${r(KY + y - ry * 0.9)} ${r(x + rx * 0.9)} ${r(KY + y - ry * 0.1)}" stroke="#6a8a3c" stroke-width=".6" fill="none" opacity=".22"/>`;
+  /* das Blatt einmal als Vorlage (sieben Finger), dann nur noch wiederholt */
+  {
+    let fa = "";
+    for (let i = 0; i < 7; i++) {
+      const a = (i - 3) * 27 * Math.PI / 180, l = 1 - Math.abs(i - 3) * 0.13, ex = Math.sin(a) * l, ey = -Math.cos(a) * l, nx = Math.cos(a) * l * 0.2, ny = Math.sin(a) * l * 0.2;
+      const q2 = (v) => +v.toFixed(3);
+      /* verkehrt eiförmige Fingerblätter: an der Spitze am breitesten */
+      fa += `<path d="M0 0 C${q2(ex * 0.45 + nx * 0.6)} ${q2(ey * 0.45 + ny * 0.6)} ${q2(ex * 0.8 + nx * 1.1)} ${q2(ey * 0.8 + ny * 1.1)} ${q2(ex)} ${q2(ey)} C${q2(ex * 0.8 - nx * 1.1)} ${q2(ey * 0.8 - ny * 1.1)} ${q2(ex * 0.45 - nx * 0.6)} ${q2(ey * 0.45 - ny * 0.6)} 0 0 Z"/>`;
     }
-    return g;
-  };
-  /* Blätter entlang des unteren Kronenrands (hängend) und oben rechts im Gegenlicht */
+    S.def(`<g id="${S.id("blatt")}">${fa}</g>`);
+  }
+  const blatt = (x, y, gr, dreh, fill, extra = "") => `<use href="#${S.id("blatt")}" transform="translate(${r(x)} ${r(y)}) rotate(${Math.round(dreh)}) scale(${r(gr)})" fill="${fill}"${extra}/>`;
+  /* Fächer an den Zweigspitzen entlang des unteren Kronenrands: dunkel, überlappend, hängend */
   for (let i = 0; i < rand.length - 2; i++) {
     const [x0, y0] = rand[i], [x1, y1] = rand[i + 1];
     if (x0 < 6) continue;
-    for (let t = 0; t < 1; t += 1) { const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t; krone += blatt(r(x), r(KY + y - 1), 6 + rnd() * 3, 150 + rnd() * 60, x > 80 ? 2 : rnd() < 0.5 ? 1 : 0); }
+    for (const t of [0, 0.5]) {
+      const x = x0 + (x1 - x0) * t, y = KY + y0 + (y1 - y0) * t, licht = x > 84 && y0 < 40;
+      const tx = x + 0.8 + rnd() * 1.2, ty = y + 1.4 + rnd() * 1;
+      krone += `<path d="M${r(x - 0.6)} ${r(y - 1)} Q${r(tx - 0.8)} ${r(ty - 0.4)} ${r(tx)} ${r(ty)}" stroke="#2a2016" stroke-width=".35" fill="none"/>`;
+      krone += blatt(tx - 1.5, ty, 6 + rnd() * 2, 160 + rnd() * 50, licht ? "#4a7a30" : "#1e3a1a") + blatt(tx + 1.2, ty + 0.6, 5.5 + rnd() * 2, 175 + rnd() * 40, licht ? "#5a8a36" : "#26461f");
+      if (licht) krone += blatt(tx + 0.4, ty + 0.2, 4, 180 + rnd() * 30, "#b8d468", ' opacity=".28"');
+    }
   }
-  for (let i = 0; i < 8; i++) { const x = 20 + rnd() * 80, y = 4 + rnd() * 40; if (y > 90 - x * 0.62) continue; krone += blatt(r(x), r(KY + y), 6 + rnd() * 3, -40 + rnd() * 80, x > 60 ? 2 : 1); }
-  for (const [x, y] of [[24, 60], [44, 50], [10, 74], [70, 42]]) { const yy = KY + y; krone += `<circle cx="${x}" cy="${r(yy)}" r="1.9" fill="#94bc56"/>`; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; krone += `<line x1="${r(x + Math.cos(a) * 1.7)}" y1="${r(yy + Math.sin(a) * 1.7)}" x2="${r(x + Math.cos(a) * 2.6)}" y2="${r(yy + Math.sin(a) * 2.6)}" stroke="#6a8a34" stroke-width=".25"/>`; } }
+  /* oben rechts die Zweigspitzen im Gegenlicht: die Blätter leuchten durch */
+  for (const [x, y, d] of [[104, 30, 30], [108, 18, 50], [98, 6, 20], [90, 40, 10], [84, 2, 0]]) krone += blatt(x, KY + y, 6.5, d + rnd() * 20, "#4e7e32") + blatt(x + 1, KY + y + 0.5, 4.6, d + 20, "#b8d468", ' opacity=".3"');
+  /* ein paar Fächer im Inneren, in den Tönen der Laubballen */
+  for (let i = 0; i < 9; i++) { const x = 20 + rnd() * 76, y = 6 + rnd() * 50; if (y > 86 - x * 0.62) continue; krone += blatt(x, KY + y, 5 + rnd() * 2, -40 + rnd() * 80, TON[1 + Math.floor(x / 40)]); }
+  /* Früchte: hängende Büschel zu zwei, drei Kastanien mit kurzen, dichten Stacheln, nur am Rand */
+  for (const [x, y, n] of [[26, 79, 2], [52, 64, 3], [80, 53, 2]]) {
+    const yy = KY + y;
+    for (let i = 0; i < n; i++) {
+      const fx = x + (i - (n - 1) / 2) * 2.4, fy = yy + 4 + (i % 2) * 1.6;
+      krone += `<path d="M${x} ${r(yy)} Q${r(fx)} ${r(yy + 1)} ${r(fx)} ${r(fy - 1.3)}" stroke="#4a3a1a" stroke-width=".3" fill="none"/><circle cx="${r(fx)}" cy="${r(fy)}" r="1.2" fill="#7a9a44"/><circle cx="${r(fx)}" cy="${r(fy)}" r="1.45" fill="none" stroke="#5a7a2a" stroke-width=".55" stroke-dasharray=".22 .28"/><circle cx="${r(fx + 0.4)}" cy="${r(fy - 0.4)}" r=".35" fill="#b8d070" opacity=".6"/>`;
+    }
+  }
+  /* eine Lichterkette im Ast für den Abend */
+  {
+    const p = [[18, 82], [40, 74], [62, 66], [84, 56]];
+    krone += `<path d="M${p.map(([x, y], i) => (i ? `Q${r((x + p[i - 1][0]) / 2)} ${r(KY + (y + p[i - 1][1]) / 2 + 4)} ` : "") + `${x} ${r(KY + y)}`).join(" ")}" stroke="#2a2016" stroke-width=".3" fill="none"/>`;
+    for (let i = 0; i < p.length - 1; i++) { const x = (p[i][0] + p[i + 1][0]) / 2, y = KY + (p[i][1] + p[i + 1][1]) / 2 + 2; krone += `<circle cx="${r(x)}" cy="${r(y)}" r="4.5" fill="${S.rg("birne", [[0, "#ffe2a0", 0.6], [1, "#ffe2a0", 0]])}"/><circle cx="${r(x)}" cy="${r(y)}" r=".9" fill="#fff4cc"/>`; }
+  }
   k += `<g transform="translate(-20 0)">${krone}</g>`;
   S.teil({ id: "kastanie", de: "die Kastanie", syl: "kas-TA-nie", it: "l'ippocastano", itSyl: "ip-po-CA-sta-no", en: "horse chestnut tree", x: X - 2, y: Y - 40, steht: true, kunst: anker(-2, -40, k),
     tipp: "Früher pflanzte man Kastanien über die Bierkeller – ihr Schatten hielt das Bier kühl." });
@@ -721,7 +766,7 @@ const T_TELLER = -28, T_GLAS1 = -12, T_SENF = -3, T_BREZEL = 7, T_GLAS2 = 18;
         tipp: "In Regensburg isst man „sechs auf Kraut“: sechs kleine Bratwürste auf Sauerkraut." },
       { id: "sauerkraut", de: "das Sauerkraut", syl: "SAU-er-kraut", it: "i crauti", itSyl: "CRAU-ti", en: "sauerkraut", x: TI.x + tx, y: PL - 3 + 2 * Q, kunst: flaeche(-7.8 * Q, -3.2 * Q, 15.6 * Q, 3.2 * Q),
         tipp: "Sauerkraut ist Weißkohl, der lange in Salz gelegen hat und sauer geworden ist." },
-      { id: "senf", de: "der Senf", syl: "SENF", it: "la senape", itSyl: "SE-na-pe", en: "mustard", x: TI.x + sx0, y: PL - 2.4 - 3.6 * Q, kunst: flaeche(-2.4 * Q, -3 * Q, 4.8 * Q, 6.8 * Q),
+      { id: "senf", de: "der Senf", syl: "SENF", it: "la senape", itSyl: "SE-na-pe", en: "mustard", x: TI.x + sx0, y: PL - 2.4, kunst: flaeche(-2.4 * Q, -6.6 * Q, 4.8 * Q, 6.8 * Q),
         tipp: "Zur Regensburger Bratwurst gehört süßer Senf." },
       { id: "brezel", de: "die Brezel", syl: "BRE-zel", it: "il pretzel", itSyl: "PRET-zel", en: "pretzel", x: TI.x + bx, y: PL - 3 - 5.2 * Q, kunst: flaeche(-4.6 * Q, -0.4 * Q, 9.2 * Q, 6.4 * Q),
         tipp: "In Bayern sagt man „die Brezn“." },
@@ -803,7 +848,7 @@ const T_TELLER = -28, T_GLAS1 = -12, T_SENF = -3, T_BREZEL = 7, T_GLAS2 = 18;
 }
 
 /* Abendlicht von rechts, leichter Rand */
-S.davor(`<rect width="320" height="200" fill="${S.lg("abendlicht", [[0, "#1a2a50", 0.1], [0.55, "#ffd08a", 0.02], [1, "#ffc878", 0.2]], 0, 0, 1, 0)}"/><circle cx="335" cy="60" r="95" fill="${S.rg("blendung", [[0, "#fff4d8", 0.35], [1, "#fff4d8", 0]])}"/><rect width="320" height="200" fill="${S.rg("vignette", [[0, "#000", 0], [0.72, "#000", 0], [1, "#0a0c14", 0.24]], 0.5, 0.48, 0.78)}"/>`);
+S.davor(`<rect width="320" height="200" fill="${S.lg("abendlicht", [[0, "#1a2a50", 0.1], [0.55, "#ffd08a", 0.02], [1, "#ffc878", 0.2]], 0, 0, 1, 0)}"/><circle cx="335" cy="60" r="80" fill="${S.rg("blendung", [[0, "#fff4d8", 0.22], [1, "#fff4d8", 0]])}"/><rect width="320" height="200" fill="${S.rg("vignette", [[0, "#000", 0], [0.72, "#000", 0], [1, "#0a0c14", 0.24]], 0.5, 0.48, 0.78)}"/>`);
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/regensburg.js"));
 console.log(aus);
