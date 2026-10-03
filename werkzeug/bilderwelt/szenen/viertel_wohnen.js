@@ -61,7 +61,8 @@ const WORT = {
   vw_koerper: ["der Körper","KÖR-per","il corpo","COR-po","the body","koerper"],
   vw_arztpraxis: ["die Arztpraxis","ARZT-pra-xis","l'ambulatorio","am-bu-la-TO-rio","doctor's surgery","arztpraxis"],
   vw_zahnarzt: ["der Zahnarzt","ZAHN-arzt","il dentista","den-TI-sta","dentist","zahnarzt"],
-  vw_kinderarzt: ["der Kinderarzt","KIN-der-arzt","il pediatra","pe-dia-TRA","paediatrician","kinderarzt"],
+  /* itSyl korrigiert: „pediatra“ wird pe-DIA-tra betont (alt: pe-dia-TRA) */
+  vw_kinderarzt: ["der Kinderarzt","KIN-der-arzt","il pediatra","pe-DIA-tra","paediatrician","kinderarzt"],
   vw_physio: ["die Physiotherapie","Phy-sio-the-ra-PIE","la fisioterapia","fi-sio-te-ra-PI-a","physiotherapy","physiotherapie"],
   vw_waschsalon: ["der Waschsalon","WASCH-sa-lon","la lavanderia a gettoni","la-van-de-RI-a a get-TO-ni","launderette","waschsalon"],
   vw_besichtigung: ["die Wohnungsbesichtigung","WOH-nungs-be-sich-ti-gung","la visita dell'appartamento","VI-si-ta dell'ap-par-ta-MEN-to","flat viewing","wohnungsbesichtigung"],
