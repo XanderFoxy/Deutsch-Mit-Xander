@@ -134,7 +134,7 @@ const G = {
   /* —— Buffet: Warmhaltebehälter (Chafing Dish) —— */
   _chafing: (x, y, s, essen) => {
     let g = `<path d="M${r(x - 9 * s)} ${r(y)}l${r(1.2 * s)} ${r(-3 * s)}M${r(x + 9 * s)} ${r(y)}l${r(-1.2 * s)} ${r(-3 * s)}" stroke="#9aa3aa" stroke-width="${r(0.7 * s)}"/>`;
-    g += `<path d="M${r(x - 9.6 * s)} ${r(y - 7.8 * s)}Q${r(x)} ${r(y - 15 * s)} ${r(x + 9.6 * s)} ${r(y - 7.8 * s)}Z" fill="${STAHL}" stroke="#8b949b" stroke-width=".25"/>`;   // aufgeklappte Haube
+    g += `<path d="M${r(x - 9.6 * s)} ${r(y - 7.8 * s)}Q${r(x)} ${r(y - 13 * s)} ${r(x + 9.6 * s)} ${r(y - 7.8 * s)}Z" fill="${STAHL}" stroke="#8b949b" stroke-width=".25"/>`;   // aufgeklappte Haube
     g += `<path d="M${r(x - 10 * s)} ${r(y - 3 * s)}h${r(20 * s)}l${r(-0.6 * s)} ${r(-4.6 * s)}h${r(-18.8 * s)}z" fill="${STAHL}"/>`;
     g += `<path d="M${r(x - 9 * s)} ${r(y - 7.6 * s)}h${r(18 * s)}l${r(-1 * s)} ${r(-2.6 * s)}h${r(-16 * s)}z" fill="#8f979e"/>`;
     return g + essen(x, y - 8.9 * s, s);
@@ -290,7 +290,7 @@ S.hinten(`<path d="M0 0L9 15V${WAND_U}L0 ${WAND_U + 10}Z" fill="#e2d2b2"/><path 
   const t = (y, sz, txt, f = "#f4f0e6", w = "normal") => `<text x="0" y="${y}" font-size="${sz}" text-anchor="middle" fill="${f}" font-family="'Comic Sans MS','Segoe Print',cursive" font-weight="${w}">${txt}</text>`;
   g += t(-8.4, 4.4, "Heute: Buffet", "#f6e7a1", "bold") + `<path d="M-15 -6.4h30" stroke="#f6e7a1" stroke-width=".35" stroke-dasharray="1 .8"/>`;
   g += t(-1.6, 3, "Suppe · Braten · Beilagen") + t(3.6, 3, "Kaffee &amp; Kuchen") + t(9.6, 3, "Brotzeit ab 10 Uhr", "#ffc9b8");
-  S.teil({ id: "speisekarte", de: "die Speisekarte", syl: "SPEI-se-kar-te", it: "il menù", itSyl: "me-NÙ", en: "menu", x: 160, y: 40, kunst: g, tipp: "Auf der Tafel steht, was es heute gibt." });
+  S.teil({ id: "speisekarte", de: "die Speisekarte", syl: "SPEI-se-kar-te", it: "il menù", itSyl: "me-NÙ", en: "menu", x: 160, y: 34, kunst: g, tipp: "Auf der Tafel steht, was es heute gibt." });
 }
 {
   /* DIE KUCKUCKSUHR — Schwarzwälder Uhr mit Gewichten */
@@ -329,7 +329,7 @@ S.hinten(`<path d="M0 0L9 15V${WAND_U}L0 ${WAND_U + 10}Z" fill="#e2d2b2"/><path 
    2 — DAS BUFFET (Mitte): warme Hauptgerichte — Lupe
    ===================================================================== */
 {
-  const x0 = 92, x1 = 228, platte = 82, stufe = 69.5;
+  const x0 = 92, x1 = 228, platte = 82, stufe = 63;
   let k = `<path d="M${x0} ${platte}L${x0 + 2} ${platte - 4}H${x1 - 2}L${x1} ${platte}Z" fill="#fbfaf6"/>`;
   k += `<rect x="${x0}" y="${platte}" width="${x1 - x0}" height="${WAND_U - platte}" fill="${S.lg("tischtuch", [[0, "#fbfaf6"], [1, "#e4e0d6"]])}"/>`;
   for (let x = x0 + 8; x < x1; x += 10) k += `<path d="M${x} ${platte + 1}q1 14 -.4 ${WAND_U - platte - 1}" stroke="#d6d0c2" stroke-width=".5" fill="none"/>`;
@@ -346,7 +346,7 @@ S.hinten(`<path d="M0 0L9 15V${WAND_U}L0 ${WAND_U + 10}Z" fill="#e2d2b2"/><path 
   vorne.forEach((id, i) => { k += schild(117 + i * 21.4, platte + 2.9, NAME[id]); });
   const cx = (x0 + x1) / 2;
   S.teil({ id: "buffet", de: "das Buffet", syl: "Buf-FET", it: "il buffet", itSyl: "buf-FÈ", en: "buffet", x: cx, y: WAND_U,
-    kunst: `<g transform="translate(${-cx} ${-WAND_U})">${k}</g>`, zoom: { x: x0 - 2, y: 46, w: x1 - x0 + 4, h: 93.3 },
+    kunst: `<g transform="translate(${-cx} ${-WAND_U})">${k}</g>`, zoom: { x: x0 - 2, y: 40, w: x1 - x0 + 4, h: 93.3 },
     unter, tipp: "Am Buffet nimmt sich jeder selbst, was er essen möchte." });
 }
 
