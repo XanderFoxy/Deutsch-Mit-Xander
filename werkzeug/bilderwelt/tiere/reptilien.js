@@ -869,32 +869,30 @@ function kobra(T) {
   let h = "";
   const bauch = "#e2d3a4", haut = "#9a7444", hautD = "#86643a";
   const mS = F ? musterRauten(T, "k", 2.2, { hell: 0.12, dunkel: 0.1, rand: 0.1, rot: -10 }) : "";
-  const opt = (x) => Object.assign({ bauch, muster: mS, streif: false, glanz: 0.26, kern: 0.4, bindenOp: 0.34, bindenFarbe: "#3a2812", weich: 1.1, glanzband: 1.5, glanzOp: 0.2, glanzW: 0.32, offen: true }, x);
+  const opt = (x) => Object.assign({ bauch, muster: mS, streif: false, glanz: 0.26, kern: 0.4, bindenOp: 0.34, bindenFarbe: "#3a2812", weich: 1.1, glanzband: 1.5, glanzOp: 0.13, glanzW: 0.3, offen: true }, x);
   const kw = () => rund(T, "kw", { weich: 2.4, tiefe: 3.6, umgebung: 0.36 });
   /* Windungen als Ellipsenbögen am Boden (Aufsicht ≈ 20°): E1 innen, E2 außen; Spirale vom Hals nach außen */
   const E1 = [102, -33, 56, 14], E2 = [100, -30, 76, 24];
   const bog = (a0, a1, n, r0, r1, blend) => { const p = []; for (let i = 0; i <= n; i++) { const u = i / n, a = (a0 + (a1 - a0) * u) * Math.PI / 180, b = typeof blend === "function" ? blend(a0 + (a1 - a0) * u) : blend || 0, E = E1.map((v, k) => v + (E2[k] - v) * b); p.push([E[0] + E[2] * Math.cos(a), E[1] + E[3] * Math.sin(a), r0 + (r1 - r0) * u]); } return p; };
-  const P1 = bog(-40, -182, 12, 6.6, 6.8, 1), P2 = bog(-90, -182, 6, 6.1, 6.4), C = bog(190, -55, 19, 6.4, 6.6, (a) => (a < 0 ? Math.min(1, -a / 55) : 0));
-  const D = bog(190, 14, 17, 6.8, 6.8, 1).map((p, i, A) => { const u = i / (A.length - 1); p[2] = u < 0.8 ? 6.8 : 6.8 - (u - 0.8) / 0.2 * 6.2; return p; });
-  /* Teilstücke gehen weich ineinander über: Anfang (bzw. Ende) des vorderen Stücks über einem Verlauf ausgeblendet */
-  const blende = (n, x0, y0, x1, y1, g0, g1) => { const id = T.id("kbl" + n); T.def(`<linearGradient id="${id}g" gradientUnits="userSpaceOnUse" x1="0" y1="${g0}" x2="0" y2="${g1}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient>` +
-    `<mask id="${id}" maskUnits="userSpaceOnUse" x="0" y="-80" width="200" height="90"><rect x="0" y="-80" width="200" height="90" fill="#fff"/><rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" fill="url(#${id}g)"/></mask>`); return `mask="url(#${id})"`; };
+  const P1 = bog(-55, -180, 12, 6.6, 6.8, 1), P2 = bog(-94, -180, 6, 6.2, 6.4), C = bog(182, -57, 19, 6.4, 6.6, (a) => (a < 0 ? Math.min(1, -a / 55) : 0));
+  const D = bog(182, 14, 17, 6.8, 6.8, 1).map((p, i, A) => { const u = i / (A.length - 1); p[2] = u < 0.8 ? 6.8 : 6.8 - (u - 0.8) / 0.2 * 6.2; return p; });
   /* Windungen und Hals in EINEM Lichtfilter (keine Nähte an den Übergängen): äußere hintere (dunkler, am weitesten weg),
      innere hintere, Hals, innere vordere (Bogen rechts hinauf in die äußere), äußere vordere + Schwanz; tiefe Berührungsfugen */
   let w = "";
-  w += schlangenRohr(T, P1, opt({ farbe: "#7a5a32", bauch: null, bauchSeite: -1, licht: 1, lt: [0.1, 0.9], binden: [[0.25, 0.025], [0.62, 0.025]] })).svg + "";
-  w += schlangenRohr(T, P2, opt({ farbe: "#82603a", bauch: null, bauchSeite: -1, licht: 1, lt: [0.05, 0.85], binden: [[0.5, 0.05]] })).svg + "";
+  const tief = (op) => (Rr) => `<path d="${poly(Rr.band(-1.3, 1.3, 0.14, 0.86, 8))}" opacity="${op}" filter="${weich(T, "ti", 2)}"/>`;
+  w += schlangenRohr(T, P1, opt({ innen: tief(0.2), farbe: haut, bauch: null, bauchSeite: -1, licht: 1, lt: [0.1, 0.9], binden: [[0.25, 0.025], [0.62, 0.025]] })).svg + "";
+  w += schlangenRohr(T, P2, opt({ innen: tief(0.1), farbe: haut, bauch: null, bauchSeite: -1, licht: 1, lt: [0.05, 0.85], binden: [[0.5, 0.05]] })).svg + "";
   /* Hals: steigt aus der Mitte (vom inneren Rückenbogen) auf, unter dem Schild am dünnsten, nach unten ≈ 30 % dicker; Kehlseite (hell, mit
      zwei dunklen Kehlbändern) dreht sich rechts zum Betrachter; Fuß weich in die Windung ausgeblendet */
-  const hals = [[102, -45, 6.1], [101, -58, 5.9], [103.6, -72, 5.5], [109, -86, 5.1], [114, -99, 4.7], [116.6, -110, 4.5], [117.4, -122, 4.4]];
+  const hals = [[102, -48.5, 6.1], [101.2, -60, 5.9], [103.6, -72, 5.5], [109, -86, 5.1], [114, -99, 4.7], [116.6, -110, 4.5], [117.4, -122, 4.4]];
   { const mk = T.id("hfm");
-    T.def(`<linearGradient id="${mk}g" gradientUnits="userSpaceOnUse" x1="0" y1="-44" x2="0" y2="-52"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${mk}" maskUnits="userSpaceOnUse" x="80" y="-130" width="60" height="90"><rect x="80" y="-130" width="60" height="90" fill="url(#${mk}g)"/></mask>`);
+    T.def(`<linearGradient id="${mk}g" gradientUnits="userSpaceOnUse" x1="0" y1="-39" x2="0" y2="-43"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${mk}" maskUnits="userSpaceOnUse" x="80" y="-130" width="60" height="90"><rect x="80" y="-130" width="60" height="90" fill="url(#${mk}g)"/></mask>`);
     const kehle = (Rr) => `<path d="${poly(Rr.band(0.62, 1.2, 0.72, 0.77, 3))}${poly(Rr.band(0.62, 1.2, 0.84, 0.88, 3))}" fill="#2a1a0c" opacity=".55" filter="${weich(T, "kb", 0.5)}"/>`;
     w += `<g mask="url(#${mk})">` + schlangenRohr(T, hals, opt({ farbe: haut, bauchSeite: 1, licht: -1, offen: false, bt: [0.45, 1], innen: kehle, binden: [[0.3, 0.03]], schilde: 0.03 })).svg + "</g>"; }
   w += `<path d="${mehr(T, [bog(160, 20, 10, 0, 0).map(([x, y]) => [x, y - 6.4])])}" fill="none" stroke="#000" stroke-width="2.6" stroke-opacity=".42" filter="${weich(T, "fu", 1)}"/>`;
-  w += `<g ${blende("c", 30, -44, 64, -30, -40, -32)}><g ${blende("c2", 128, -60, 170, -42, -51, -44)}>` + schlangenRohr(T, C, opt({ farbe: haut, bauchSeite: 1, licht: -1, lt: [0.14, 0.62], binden: [[0.2, 0.022], [0.46, 0.022], [0.8, 0.022]], schilde: 0.012 })).svg + "</g></g>";
+  w += schlangenRohr(T, C, opt({ farbe: haut, bauchSeite: 1, licht: -1, lt: [0.14, 0.62], binden: [[0.2, 0.022], [0.46, 0.022], [0.8, 0.022]], schilde: 0.012 })).svg;
   w += `<path d="${mehr(T, [bog(165, 25, 10, 0, 0, 1).map(([x, y]) => [x, y - 6.6])])}" fill="none" stroke="#000" stroke-width="2.6" stroke-opacity=".42" filter="${weich(T, "fu", 1)}"/>`;
-  w += `<g ${blende("d", 8, -44, 44, -28, -38, -30)}>` + schlangenRohr(T, D, opt({ farbe: "#a07a48", bauchSeite: 1, licht: -1, lt: [0.12, 0.92], binden: [[0.24, 0.02], [0.5, 0.02], [0.74, 0.02]], schilde: 0.011 })).svg + "</g>";
+  w += schlangenRohr(T, D, opt({ farbe: "#a07a48", bauchSeite: 1, licht: -1, lt: [0.12, 0.92], binden: [[0.24, 0.02], [0.5, 0.02], [0.74, 0.02]], schilde: 0.011 })).svg;
   h += `<g filter="${kw()}">${w}</g>`;
   h = `<ellipse cx="100" cy="-1" rx="80" ry="3.4" fill="${T.rg("ksohle", [[0, "#000", 0.6], [1, "#000", 0]])}" opacity=".7"/>` + h;
 
@@ -931,11 +929,13 @@ function kobra(T) {
   for (const [cx, cy, r] of ringe) br += `<path d="${T.glatt(kreis(cx, cy, r, 12, 0.06))}" fill="${cre}"/><path d="${T.glatt(kreis(cx + 0.4, cy - 0.2, r * 0.52, 10, 0.1))}" fill="${sw}"/><path d="${T.glatt(kreis(cx + 0.4, cy - 0.2, r * 0.42, 10, 0.1))}" fill="#3a2614"/>`;
   hi += `<g opacity=".92" filter="${weich(T, "br", 0.18)}">${br}</g>`;
   /* Schatten von Kopf und Nacken auf der Schildoberkante */
-  hi += `<ellipse cx="6" cy="-28" rx="13" ry="4.6" fill="#000" opacity=".3" filter="${weich(T, "hk", 1.6)}"/>`;
+  hi += `<ellipse cx="7" cy="-24.4" rx="12" ry="4.6" fill="#000" opacity=".3" filter="${weich(T, "hk", 1.6)}"/>`;
   let hood = teil(T, hs, hg, { innen: hi, rand: "#1a1008", randA: 0.25, rw: 0.45 });
   /* Schild wirft weichen Schatten auf den Hals darunter */
-  h += `<ellipse cx="117.6" cy="-107" rx="5" ry="2.2" fill="#000" opacity=".35" filter="${weich(T, "hs", 1.2)}"/>`;
-  h += `<g filter="${rund(T, "kh", { weich: 6, tiefe: 4, umgebung: 0.38 })}"><g transform="translate(118 -152) rotate(3)">${hood}</g></g>`;
+  /* Schildunterkante läuft weich in den Hals aus (keine Muffe) */
+  const hm = T.id("hbm");
+  T.def(`<linearGradient id="${hm}g" gradientUnits="userSpaceOnUse" x1="0" y1="33" x2="0" y2="42"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient><mask id="${hm}" maskUnits="userSpaceOnUse" x="-40" y="-40" width="80" height="90"><rect x="-40" y="-40" width="80" height="90" fill="url(#${hm}g)"/></mask>`);
+  h += `<g filter="${rund(T, "kh", { weich: 6, tiefe: 4, umgebung: 0.38 })}"><g transform="translate(118 -152) rotate(3)"><g mask="url(#${hm})">${hood}</g></g></g>`;
   /* 7) Kopf im Profil nach rechts, wächst aus der Schildmitte (Nacken weich angesetzt), Länge ≈ 35 % der Schildbreite */
   const kp = [[-1.6, -1.4], [0.4, -3.1], [3, -3.8], [7, -3.9], [10, -3.5], [12.6, -2.7], [14.4, -1.5], [15.1, 0], [14.7, 1.2], [13, 1.9], [10, 2.3], [6, 2.7], [2.4, 3.1], [-0.8, 3.4], [-2.4, 2.2]];
   let ki = `<g filter="${weich(T, "kk", 0.4)}">` + form(T, poly([[0.6, -2.6], [4, -3.6], [10, -3.3], [14, -1.4], [10, -2], [4, -2.2], [1, -1.4]]), "#f2ddae", ' opacity=".3"') +
@@ -959,7 +959,7 @@ function kobra(T) {
     `<path d="M20.2 1.45Q21.4 1.2 22.6 .55M20.3 1.7Q21.5 2.15 22.6 2.8" fill="none" stroke="#2a1420" stroke-width=".26" stroke-linecap="round"/>` +
     (F ? `<path d="M15.1 .58C16.8 .55 18.5 .86 20 1.42" fill="none" stroke="#fff" stroke-width=".1" stroke-opacity=".55"/>` : "");
   /* Nacken: weicher Ansatz aus der Schildmitte (kein abgeschnittenes Hinterende) */
-  h += `<g filter="${rund(T, "kk", { weich: 1.4, tiefe: 3, umgebung: 0.4 })}"><path d="M113.4 -176Q113 -184 117.6 -185.6Q122 -184.6 122.4 -177Z" fill="#7e6038"/><g transform="translate(116.4 -182.4) scale(1.2) rotate(5)">${kopf}</g></g>`;
+  h += `<g filter="${rund(T, "kk", { weich: 1.4, tiefe: 3, umgebung: 0.4 })}"><g transform="translate(116.4 -179.6) scale(1.2) rotate(5)">${kopf}</g></g>`;
   return fertig(0.3, h, [16, -192, 186, 0], null, [108, -196, 148, -170]);
 }
 

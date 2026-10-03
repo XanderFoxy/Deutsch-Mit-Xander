@@ -660,7 +660,10 @@ function walross(T) {
   let hfi = weich([[42, -31], [24, -34], [12, -36.6], [22, -31], [40, -27]], "#b08070", 0.4, 1) + weich([[42, -20], [22, -17.6], [10, -17.2], [24, -20.4], [42, -23]], "#24170f", 0.5, 1);
   hfi += strahlen([0, 1, 2, 3, 4].map((i) => [[38, -31 + i * 3], [28, -32.6 + i * 3.8], [19, -34 + i * 4.3], [11 + [0, 2.4, 3.2, 2.4, 0][i], -37.6 + i * 5.1]]), 1.6, 0.45);
   if (F) hfi += `<rect x="6" y="-42" width="40" height="28" fill="${reliefKachel(T, "sohle", { f: 0.7, tiefe: 0.35, seed: 2, k: 1.4, kachel: 20 })}" opacity=".35"/>`;
+  /* fleischiger Ansatz: die Haut des Beckens läuft weich in die Flosse über */
+  hfi += `<rect x="18" y="-42" width="28" height="30" fill="#94604c" mask="${verlaufMaske(T, "hfa", 18, -42, 28, 30, 19, 0, 32, 0, [[[19, 0], "#000"], [[32, 0], "#fff"]])}"/>`;
   s += `<g filter="${vol(T, "hff", { weich: 2.2, tiefe: 4 })}">${silhouette(T, G(hfF), flosse("hfF", false), hfi)}</g>`;
+  /* fleischiger Ansatz: Haut des Beckens läuft als dicker Wulst in die Flosse über */
   s += naegel([[10.4, -38.6, 3.4], [12.6, -32.6, 3.2], [13.2, -27, 3.14], [12, -22, 3.0], [9.6, -17.8, 2.8]]);
   /* ---- ferne Vorderflosse (vor der nahen sichtbar) ---- */
   const vfF = [[244, -24], [256, -20], [268, -15], [279, -10], [287, -6.4], [293, -4.6], [295.6, -3], [295, -1.2], [291, -0.2], [270, -0.1], [252, -0.6], [242, -6]];
@@ -762,7 +765,7 @@ function walross(T) {
     n += `<path d="${gl}" stroke="#ffe8da" stroke-width=".7" stroke-linecap="round" stroke-opacity=".35"/>`;
   }
   /* spärliche kurze helle Haare (0,6–1,2 cm) in Wuchsrichtung, auf der Lichtseite */
-  n += haare(T, [[50, -54], [100, -98], [170, -126], [236, -138], [272, -132], [262, -116], [200, -112], [130, -94], [70, -62]], 100, (x, y) => 168 + (x - 150) * 0.04, 0.9,
+  n += haare(T, [[50, -54], [100, -98], [170, -126], [236, -138], [272, -132], [262, -116], [200, -112], [130, -94], [70, -62]], 60, (x, y) => 168 + (x - 150) * 0.04, 0.9,
     [["#ecbca3", 1, 0.08, 0.5], ["#f6d6c2", 0.4, 0.07, 0.45]], 22, 0.3, 0.03);
   /* Kopf: eigene Rundung mit Stirnglanz, Nackensenke im Halbschatten, Augenhöhle fleischig */
   n += weich([[262, -129], [272, -131], [280, -127], [272, -124], [262, -125]], "#eab49b", 0.55, 1.4);
@@ -845,7 +848,7 @@ function walross(T) {
   /* Beckenwulst: dicker Hautwulst legt sich über den Flossenansatz (Flosse teils verdeckt), mit Schlagschatten */
   const wulst = [[30, -26], [36, -24], [46, -21.4], [56, -19.6], [64, -17], [58, -14.2], [46, -13.4], [36, -12.6], [31.4, -18]];
   s += weich([[38, -13.4], [52, -14], [64, -15.4], [54, -11.6], [40, -10.6]], "#1a0d08", 0.5, 1);
-  s += `<g filter="${vol(T, "wulst", { weich: 2.2, tiefe: 4, schatten: "#2a1008" })}">${silhouette(T, G(wulst), verlauf(T, "wulst", 0, -26, 0, -12, [[[0, -26], "#a06650"], [[0, -12], "#7a4a3a"]]), weich([[34, -23], [48, -20.6], [60, -18], [48, -18], [36, -20]], "#d09079", 0.3, 1.2))}</g>`;
+  s += `<g mask="${verlaufMaske(T, "wulst", 26, -30, 42, 20, 0, -22, 0, -14.6, [[[0, -22], "#000"], [[0, -14.6], "#fff"]])}"><g filter="${vol(T, "wulst", { weich: 2.2, tiefe: 4, schatten: "#2a1008" })}">${silhouette(T, G(wulst), verlauf(T, "wulst", 0, -26, 0, -12, [[[0, -26], "#a06650"], [[0, -12], "#7a4a3a"]]), weich([[34, -23], [48, -20.6], [60, -18], [48, -18], [36, -20]], "#d09079", 0.3, 1.2))}</g></g>`;
 
   /* ---- nahe Vorderflosse: kommt unter der Brust hervor, kurz, breit, dick; Zehen als flache Wölbungen, 5 kurze Nägel
           vor den Zehenenden, raue Sohle mit dunklem Bodenkontakt; Fettfalte über dem Ansatz (siehe Achselfalte) ---- */

@@ -202,6 +202,18 @@ function fichteGross(x, yTop, h, w) {
   g += `<path d="M${r(x)} ${r(yTop - h * 0.06)} L${r(x)} ${r(yTop + h * 0.12)}" stroke="#26402c" stroke-width="${r(Math.max(0.6, w * 0.06))}"/>`;
   return g;
 }
+/* Laubbüschel: dunkler Grund, darauf einzelne Blätter; Licht von links oben, Schattenseite rechts unten */
+function laubBusch(cx, cy, rx, ry, n = 22) {
+  let g = `<ellipse cx="${r(cx + rx * 0.08)}" cy="${r(cy + ry * 0.12)}" rx="${r(rx)}" ry="${r(ry)}" fill="#5a2c10"/><ellipse cx="${r(cx - rx * 0.1)}" cy="${r(cy - ry * 0.1)}" rx="${r(rx * 0.85)}" ry="${r(ry * 0.8)}" fill="#9a4e1c"/>`;
+  for (let i = 0; i < n; i++) {
+    const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()), x = cx + Math.cos(a) * rx * d * 0.92, y = cy + Math.sin(a) * ry * d * 0.9;
+    const licht = ((x - cx) / rx + (y - cy) / ry) * 0.5;
+    const f = licht < -0.35 ? "#f6d06a" : licht < 0 ? "#e8a83c" : licht < 0.35 ? "#c97a2a" : "#8e4418";
+    const q = 0.9 + rnd() * 0.7;
+    g += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(q * 1.5)}" ry="${r(q * 0.8)}" fill="${f}" transform="rotate(${Math.round(rnd() * 180)} ${r(x)} ${r(y)})"/>`;
+  }
+  return g;
+}
 const BUCHE_PAL = ["#f0bf5a", "#d48d2e", "#a85a22", "#6e3a16"], LAERCHE_PAL = ["#f2d36a", "#d8b03e", "#a88a2a", "#6e5a1a"], AHORN_PAL = ["#f0a050", "#d4642a", "#a43c1e", "#6a2412"];
 const drin = (x, y, pg) => {
   let c = false;
@@ -230,6 +242,7 @@ function waldflaeche(name, pg, skala, n, grund, deckung, muster = HERBST, dreh =
 /* Saum aus Baumkronen entlang einer Oberkante */
 function saum(linie, s, schritt, anteilNadel = 0.45) {
   let g = "";
+  linie = linie.map(([x, y]) => [Math.max(s * 1.4, Math.min(400 - s * 1.4, x)), y]);
   for (let i = 0; i < linie.length - 1; i++) {
     const [ax, ay] = linie[i], [bx, by] = linie[i + 1];
     const len = Math.hypot(bx - ax, by - ay);
@@ -696,28 +709,29 @@ const STRASSE = [[112, -4, -10], [122, -10, -12], [132, -18, -15], [140, -30, -1
         Lupe: der Bach
    ===================================================================== */
 {
-  const L = SOHLE.map(([x, y], i) => [x - 12 + i * 1.6, y + 1]), R = SOHLE.map(([x, y], i) => [x + 14 - i * 2, y + 2]);
-  let k = `<path d="${poly([...L, ...R.slice().reverse()])}" fill="${S.lg("schluchtgrund", [[0, "#3a3a32"], [1, "#16171a"]])}"/>`;
-  /* der Bach: Wasser zwischen Blöcken, unten breiter; weiße Schwälle */
-  k += `<path d="M${SOHLE.map(Pt).join(" L")}" stroke="#4f6a6c" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-  k += `<path d="M${SOHLE.map(Pt).join(" L")}" stroke="#e2eef0" stroke-width="1.1" fill="none" stroke-dasharray="3 2 1.4 2.6" opacity=".9"/>`;
-  for (const [x, y, w] of [[140, 246, 4], [158, 234, 3.4], [174, 224, 2.6], [128, 257, 5]]) k += `<ellipse cx="${x - 3}" cy="${y}" rx="${w}" ry="${r(w * 0.4)}" fill="#5c5850"/><ellipse cx="${r(x - 3 - w * 0.3)}" cy="${r(y - w * 0.15)}" rx="${r(w * 0.45)}" ry="${r(w * 0.16)}" fill="#8f897a"/>`;
+  const L = SOHLE.map(([x, y], i) => [x - 12 + i * 1.6 + (i % 2 ? 2 : -1), y + 1]), R = SOHLE.map(([x, y], i) => [x + 14 - i * 2 + (i % 2 ? -2 : 1), y + 2]);
+  let k = `<path d="${poly([...L, ...R.slice().reverse()])}" fill="${S.lg("schluchtgrund", [[0, "#34352e"], [1, "#141518"]])}"/>`;
+  /* Ufersteine */
+  for (let i = 0; i < 18; i++) { const t = rnd(), j = Math.min(SOHLE.length - 2, Math.floor(t * (SOHLE.length - 1))), tt = t * (SOHLE.length - 1) - j; const side = rnd() < 0.5 ? L : R; const x = side[j][0] + (side[j + 1][0] - side[j][0]) * tt + (side === L ? 2 : -2), y = side[j][1] + (side[j + 1][1] - side[j][1]) * tt - 1; const q = 1 + (y - 200) / 30; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(q * 1.6)}" ry="${r(q * 0.8)}" fill="#6e6a5e"/><ellipse cx="${r(x - q * 0.4)}" cy="${r(y - q * 0.3)}" rx="${r(q * 0.7)}" ry="${r(q * 0.3)}" fill="#a39d8a"/>`; }
+  /* die Pöllat: graugrünes Wasser, unten breiter, mit weißen Schwällen zwischen den Blöcken */
+  const WL = SOHLE.map(([x, y], i) => [x - 3.4 + i * 0.5, y]), WR = SOHLE.map(([x, y], i) => [x + 3.6 - i * 0.55, y + 0.6]);
+  k += `<path d="${poly([...WL, ...WR.slice().reverse()])}" fill="${S.lg("pwasser", [[0, "#5f7c7c"], [1, "#3e5656"]])}"/>`;
+  for (let i = 0; i < 16; i++) { const t = rnd(), j = Math.min(SOHLE.length - 2, Math.floor(t * (SOHLE.length - 1))), tt = t * (SOHLE.length - 1) - j; const x = SOHLE[j][0] + (SOHLE[j + 1][0] - SOHLE[j][0]) * tt + (rnd() - 0.5) * 3, y = SOHLE[j][1] + (SOHLE[j + 1][1] - SOHLE[j][1]) * tt; const q = 0.8 + (y - 205) / 28; k += `<path d="M${r(x - q * 1.6)} ${r(y)} q${r(q * 0.8)} ${r(-q * 0.7)} ${r(q * 1.6)} ${r(-q * 0.2)} q${r(q * 0.8)} ${r(q * 0.5)} ${r(q * 1.5)} ${r(q * 0.3)} q${r(-q * 1.5)} ${r(q * 0.5)} ${r(-q * 3.1)} ${r(-q * 0.1)} Z" fill="#eef5f4" opacity=".9"/>`; }
+  for (const [x, y, w] of [[140, 246, 3.4], [158, 234, 2.8], [174, 224, 2.2], [128, 257, 4.2]]) k += `<ellipse cx="${x - 1}" cy="${y}" rx="${w}" ry="${r(w * 0.45)}" fill="#5c5850"/><ellipse cx="${r(x - 1 - w * 0.3)}" cy="${r(y - w * 0.15)}" rx="${r(w * 0.45)}" ry="${r(w * 0.16)}" fill="#8f897a"/>`;
   const BACH = [SOHLE[1][0], SOHLE[1][1]];
-  /* die nahe Ostwand: Kalk, nach Südwest gewandt — sie steht in der Nachmittagssonne */
+  /* die nahe Ostwand: steiler Waldhang mit Kalkfelsen, nach Südwest gewandt (Nachmittagssonne) */
   const WAND = [...RIM, [401, 262], ...R.slice().reverse()];
-  k += `<path d="${poly(WAND)}" fill="${S.lg("nahwand", [[0, "#e6d6b4"], [0.55, "#cbb894"], [1, "#9c8a6c"]])}"/>`;
-  /* Felsrippen (Licht links, Schatten rechts) und waagrechte Bänder */
-  for (let i = 0; i < 16; i++) {
-    const t = (i + rnd() * 0.5) / 16, j = Math.min(RIM.length - 2, Math.floor(t * (RIM.length - 1))), tt = t * (RIM.length - 1) - j;
-    const top = [RIM[j][0] + (RIM[j + 1][0] - RIM[j][0]) * tt, RIM[j][1] + (RIM[j + 1][1] - RIM[j][1]) * tt + 2];
-    const bot = [top[0] - 14 - rnd() * 18, 262], w = 3 + rnd() * 5;
-    k += `<path d="M${Pt(top)} L${Pt([top[0] + w, top[1] + 4])} L${Pt([bot[0] + w * 1.6, bot[1]])} L${Pt(bot)} Z" fill="#8a7a5e" opacity=".32"/><path d="M${Pt(top)} L${Pt(bot)}" stroke="#f6ead0" stroke-width=".6" opacity=".7"/>`;
+  k += waldflaeche("wandclip", WAND, 3.4, 16, "#4e3c1e", 0.88, HERBST, 22);
+  /* Felsköpfe: Kalk mit Lichtseite (links) und harter Schattenseite, Bänder und Risse */
+  for (const [x, y, w, h] of [[226, 196, 16, 22], [262, 186, 20, 30], [318, 170, 18, 26], [290, 222, 24, 34], [360, 196, 22, 40], [236, 236, 18, 26]]) {
+    const pts = [[x, y], [x + w * 0.55, y - 3], [x + w, y + h * 0.3], [x + w * 0.9, y + h], [x + w * 0.1, y + h * 0.95], [x - w * 0.1, y + h * 0.4]];
+    k += `<path d="${poly(pts)}" fill="${S.lg("kalkkopf", [[0, "#f2e6cc"], [1, "#c9b896"]])}"/>`;
+    k += `<path d="${poly([[x + w * 0.55, y - 3], [x + w, y + h * 0.3], [x + w * 0.9, y + h], [x + w * 0.5, y + h * 0.98], [x + w * 0.58, y + h * 0.4]])}" fill="#5e5444" opacity=".7"/>`;
+    k += `<path d="M${r(x)} ${r(y + h * 0.35)} L${r(x + w * 0.55)} ${r(y + h * 0.4)} M${r(x + w * 0.1)} ${r(y + h * 0.7)} L${r(x + w * 0.52)} ${r(y + h * 0.72)} M${r(x + w * 0.3)} ${r(y + h * 0.1)} L${r(x + w * 0.24)} ${r(y + h * 0.55)}" stroke="#8a7a5e" stroke-width=".45" fill="none"/>`;
+    k += `<ellipse cx="${r(x + w * 0.3)}" cy="${r(y + h * 0.55)}" rx="${r(w * 0.12)}" ry="${r(w * 0.07)}" fill="#4f6a32"/>`;
   }
-  for (const [y0, op] of [[182, 0.5], [200, 0.4], [222, 0.45], [244, 0.35]]) { const x0 = 196 + (y0 - 212) * -1.4; k += `<path d="M${r(Math.max(186, x0 + 40))} ${y0 + 2} Q${r(300)} ${y0 - 8} 401 ${y0 - 18}" stroke="#7d6e54" stroke-width=".7" fill="none" opacity="${op}"/>`; }
-  /* Bewuchs in Spalten und auf Bändern: kleine Kronen mit Licht und Schatten */
-  for (let i = 0; i < 26; i++) { const x = 205 + rnd() * 190, yr = 147 + (401 - x) * 0.3, y = yr + 6 + rnd() * (262 - yr - 10); if (!drin(x, y, WAND)) continue; const q = 1.6 + (y - 160) / 40; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(q * 1.3)}" ry="${r(q)}" fill="${["#3e5a32", "#5a6e34", "#a8742a", "#c89a3a"][i % 4]}"/><ellipse cx="${r(x - q * 0.4)}" cy="${r(y - q * 0.35)}" rx="${r(q * 0.55)}" ry="${r(q * 0.4)}" fill="#fbe7a6" opacity=".35"/>`; }
-  /* harte Schattenkante: der Schlossberg verschattet den unteren Teil der Wand */
-  k += `<path d="${poly([[200, 216], [290, 262], ...R])}" fill="#1c2232" opacity=".42"/>`;
+  /* harte Schattenkante: der Schlossberg verschattet den unteren Teil des Hangs */
+  k += `<path d="${poly([[200, 216], [290, 262], ...R])}" fill="#141a28" opacity=".45"/>`;
   /* Kronensaum an der Oberkante */
   k += saum(RIM.map(([x, y]) => [x, y + 1]), 2.6, 4.6, 0.5);
   /* Gischtdunst steigt aus der Tiefe (der Pöllatfall liegt direkt unter der Brücke) */
@@ -754,7 +768,7 @@ const STRASSE = [[112, -4, -10], [122, -10, -12], [132, -18, -15], [140, -30, -1
   /* Buche: Stamm und silbergraue Hauptäste, darüber Laub in Büscheln mit Licht- und Schattenseite */
   let k = "";
   k += `<path d="M58 262 Q60 246 54 232 M60 250 Q74 236 92 224 M57 240 Q40 226 22 216 M56 234 Q58 216 66 200" stroke="#8e918e" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M60 262 Q62 246 56 232 M62 250 Q76 236 93 225 M58 240 Q41 227 23 217" stroke="#d2d4d0" stroke-width=".8" fill="none" opacity=".8"/>`;
-  for (const [cx, cy, rx, ry] of [[24, 206, 22, 14], [62, 194, 26, 16], [96, 214, 24, 15], [40, 232, 22, 13], [86, 240, 20, 12]]) k += textkrone(cx, cy, rx, ry, 7);
+  for (const [cx, cy, rx, ry] of [[40, 236, 14, 9], [88, 244, 13, 8], [20, 210, 13, 9], [100, 216, 14, 9], [44, 204, 15, 10], [76, 196, 15, 10], [60, 218, 14, 9], [116, 236, 10, 7], [10, 232, 10, 7]]) k += laubBusch(cx, cy, rx, ry, Math.round(rx * 1.7));
   k += `<path d="M44 248 Q50 240 56 236" stroke="#8e918e" stroke-width="2" fill="none"/>`;
   S.teil({ id: "buche", de: "die Buche", syl: "BU-che", it: "il faggio", itSyl: "FAG-gio", en: "beech", x: 0, y: 0, kunst: k,
     tipp: "Die Buche hat eine glatte, silbergraue Rinde. Im Oktober leuchten ihre Blätter kupfer und gold." });
@@ -770,7 +784,7 @@ const STRASSE = [[112, -4, -10], [122, -10, -12], [132, -18, -15], [140, -30, -1
   const linie = (a, b) => { const sg = strecke(a, b); return sg ? `M${Pt(sg[0])} L${Pt(sg[1])} ` : ""; };
   let gD = "", gH = "";
   /* Rautengitter: Diagonalen in beide Richtungen, alle 0,3 m */
-  for (let E = -4.4; E <= 0.4; E += 0.3) {
+  for (let E = -4.4; E <= 0.4; E += 0.17) {
     gD += linie(P(E, zO), P(E + 0.6, zU)) + linie(P(E, zO), P(E - 0.6, zU));
     gH += linie(P(E + 0.02, zO), P(E + 0.62, zU));
   }
@@ -778,7 +792,7 @@ const STRASSE = [[112, -4, -10], [122, -10, -12], [132, -18, -15], [140, -30, -1
   for (let E = -4.2; E <= 0.6; E += 1.5) pf += linie(P(E, zO), P(E, zU));
   let o = "", o2 = "";
   o = linie(P(-5, zO), P(0.2, zO)); o2 = linie(P(-5, zO + 0.03), P(0.2, zO + 0.03));
-  let k = `<path d="${gD}" stroke="#2a2e33" stroke-width="2.2" fill="none"/><path d="${gH}" stroke="#7d868d" stroke-width=".7" fill="none" opacity=".7"/>`;
+  let k = `<path d="${gD}" stroke="#2a2e33" stroke-width="1.35" fill="none"/><path d="${gH}" stroke="#8a939a" stroke-width=".45" fill="none" opacity=".7"/>`;
   k += `<path d="${pf}" stroke="#22262a" stroke-width="5" fill="none"/>`;
   k += `<path d="${o}" stroke="#2c3238" stroke-width="7" fill="none" stroke-linecap="round"/><path d="${o2}" stroke="#c0c8ce" stroke-width="1.6" fill="none"/>`;
   S.teil({ id: "gelaender", de: "das Geländer", syl: "ge-LÄN-der", it: "la ringhiera", itSyl: "rin-GHIE-ra", en: "railing", x: 0, y: 0, kunst: k,

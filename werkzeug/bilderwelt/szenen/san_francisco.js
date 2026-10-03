@@ -122,6 +122,8 @@ const duenn = (d, eps, klein) => {
 /* kleine Figuren: Verläufe durch ihre Mittelfarbe ersetzen (bei 3–4 mm Bildhöhe nicht zu sehen) */
 const flach = (svg) => { const farbe = {}; svg = svg.replace(/<(linearGradient|radialGradient) id="([^"]+)"[^>]*>(.*?)<\/\1>/g, (m0, t, id, inner) => { const st = [...inner.matchAll(/stop-color="([^"]+)"/g)].map((m) => m[1]); farbe[id] = st[Math.floor(st.length / 2)] || "#888"; return ""; });
   return svg.replace(/url\(#([^)]+)\)/g, (m0, id) => farbe[id] || m0).replace(/<defs><\/defs>/g, ""); };
+/* kleine Figuren: feine Linien (Falten, Nähte) unter 1,6 Figureinheiten weglassen */
+const grob = (svg, grenze = 1.6) => svg.replace(/<path [^>]*fill="none"[^>]*>/g, (m0) => { const w = +((m0.match(/stroke-width="([\d.]+)"/) || [0, 9])[1]); return w < grenze ? "" : m0; });
 const figur = (svg, eps = 0.7, klein = 2.6) => knapp(svg).replace(/ d="([^"]*)"/g, (m0, d) => ` d="${duenn(d, eps, klein)}"`).replace(/<path d=""[^>]*\/>/g, "");
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("nebel")}" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="1.6"/></filter>`);
@@ -342,7 +344,7 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
   /* Häuser am Hang des Telegraph Hill: kleine Kuben, dazwischen viel Grün (Gärten der Filbert Steps) */
   { const proFarbe = new Map(), baeume = [], schatten_ = [];
     const xb = (y) => y >= 104 ? 310 + (122 - y) * 24 / 18 : 334 + (104 - y) * 2.4;
-    for (let y = 98.6; y < 125; y += 2.1) {
+    for (let y = 98.6; y < 125; y += 2.5) {
       let x = xb(y) + 0.6 + rnd() * 1.5;
       while (x < 400) {
         const w = 1.6 + rnd() * 1.8 + (y - 98) * 0.03, h = 1 + rnd() * 0.8 + (y - 98) * 0.025;
@@ -519,7 +521,7 @@ const zeichneListe = (L) => {
   }
   let s = "";
   for (const e of raus.reverse()) {
-    const g = e.t > 250 ? 1 : e.t > 90 ? 2 : 10;
+    const g = e.t > 250 ? 1 : 2;
     if (e.baum) { const [x, y, rr, f] = e.baum; s += `<circle cx="${zahl(x, g)}" cy="${zahl(y, g)}" r="${zahl(rr, 10)}" fill="${f}"/>`; continue; }
     /* gleiche Farben einer Kiste in einem Pfad zusammenfassen */
     const nachF = new Map(); for (const v of e.V) { const key = v.f + (v.o ? "o" : ""); nachF.set(key, (nachF.get(key) || "") + pfad(v.p, g)); }
@@ -621,7 +623,7 @@ const HAUS = {};
      Häuser im Blickfeld auf Alcatraz bleiben unter der Sichtlinie (sonst wäre die Insel verdeckt). */
   const freiN = (a0, a1, d0, d1) => (a0 < 30 && d0 < 60) || d0 < 40 || VN + F * a0 / d1 > 262;
   const maxN = (a0, a1, d0, d1) => { const x0 = VN + F * a0 / d1, x1 = VN + F * a1 / d0; if (x1 < 170 || x0 > 228) return 99; return E - 13 * d0 / F - Math.max(gzN(a0, d0), gzN(a1, d0), gzN(a0, d1), gzN(a1, d1)); };
-  const LN = bloecke(PN, gzN, [[2, 126], [147, 273]], [[15, 135], [150, 272], [287, 410], [425, 550], [565, 690]], freiN, 125,
+  const LN = bloecke(PN, gzN, [[2, 126], [147, 273]], [[15, 135], [150, 272], [287, 410], [425, 550], [565, 690]], freiN, 95,
     { vorn: (f) => misch(f, "#3e5070", 0.1), seite: (f) => misch(f, "#fff4e0", 0.1) }, rnd2, maxN, (a0, a1, d0) => a0 === 2 && d0 < 135 ? 18 : a1);
   for (let d = 45; d < 690; d += d < 150 ? 10 : 20) { const d1 = Math.min(690, d + (d < 150 ? 10 : 20)), xs = [2, 60, 126, 210, 330]; LN.push({ t: d1 - 0.01, V: [{ p: rahmen([...xs.map((X) => PN(X, d, gzN(X, d))), ...xs.slice().reverse().map((X) => PN(X, d1, gzN(X, d1)))]), f: dunst("#8b897f", d) }] }); }
   /* Ostblick: nördlich und südlich der Lombard Street, Blöcke bis zur Mason Street (≈ 0,7 km) */
@@ -629,8 +631,8 @@ const HAUS = {};
   const reihenE = [[2, 126], [147, 273], [294, 420], [441, 567], [588, 714]];
   KLIP[0] = SEAM;
   const LE = [
-    ...bloecke(PO, gzE, [[-272, -150], [-135, -15]], reihenE, freiE, 105, { vorn: (f) => misch(f, "#fff4e0", 0.1), seite: (f) => misch(f, "#3e5070", 0.08) }, rnd2, () => 99),
-    ...bloecke(PO, gzE, [[5, 125]], reihenE, freiE, 140, { vorn: (f) => misch(f, "#fff4e0", 0.1), seite: (f) => misch(f, "#3e5070", 0.36) }, rnd2, (a0, a1, d0) => d0 < 130 ? 10.5 : 99),
+    ...bloecke(PO, gzE, [[-272, -150], [-135, -15]], reihenE, freiE, 75, { vorn: (f) => misch(f, "#fff4e0", 0.1), seite: (f) => misch(f, "#3e5070", 0.08) }, rnd2, () => 99),
+    ...bloecke(PO, gzE, [[5, 125]], reihenE, freiE, 110, { vorn: (f) => misch(f, "#fff4e0", 0.1), seite: (f) => misch(f, "#3e5070", 0.36) }, rnd2, (a0, a1, d0) => d0 < 130 ? 10.5 : 99),
   ];
   for (let d = 20; d < 714; d += d < 126 ? 12 : 22) { const d1 = Math.min(714, d + (d < 126 ? 12 : 22)), ls = [-330, -135, -15, 5, 60]; LE.push({ t: d1 - 0.01, V: [{ p: rahmen([...ls.map((l) => PO(l, d, gzE(l, d))), ...ls.slice().reverse().map((l) => PO(l, d1, gzE(l, d1)))]), f: dunst("#8b897f", d) }] }); }
   KLIP[0] = -2.5;
@@ -923,7 +925,7 @@ const LOMB = {};
     const [gx, gy] = P(1.3, 0, 0.95);
     const m = B.mensch({ id: "sfo_grip", geschlecht: "m", pose: "halten", blick: 12, frisur: "kurz", haarfarbe: "grau", haut: "hell",
       kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "weste", farbe: "#2b3a55" }, unterteil: { stueck: "anzughose", farbe: "#2b3a55" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, kopf: { stueck: "kappe", farbe: "#2b3a55" } } }, 1.76 * s);
-    k += `<g transform="translate(${r(gx)} ${r(gy)})">${figur(flach(m.svg), 1.3, 5)}</g>`;
+    k += `<g transform="translate(${r(gx)} ${r(gy)})">${figur(grob(flach(m.svg)), 2, 8)}</g>`;
     k += L2([0.7, -0.1, 0.95], [0.85, -0.15, 1.95], "#2c2c2c", 0.45);
   }
   /* rechte (östliche, uns zugewandte) Seite: Schürze, Trittbrett, Kabine */
@@ -952,7 +954,7 @@ const LOMB = {};
     const [fx, fy] = P(1.0, HB + 0.25, 0.42);
     const m = B.mensch({ id: "sfo_fahrgast", geschlecht: "w", pose: "halten", blick: 70, frisur: "lang", haarfarbe: "dunkelbraun", haut: "mittel",
       kleidung: { oberteil: { stueck: "pullover", farbe: "#e2b13c" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh", farbe: "weiss" } } }, 1.66 * s);
-    k += `<g transform="translate(${r(fx)} ${r(fy)})">${figur(flach(m.svg), 1.3, 5)}</g>`;
+    k += `<g transform="translate(${r(fx)} ${r(fy)})">${figur(grob(flach(m.svg)), 2, 8)}</g>`;
     fg = [fx + ox, fy + oy, 1.66 * s];
   }
   /* Dach mit Laternendach (Oberlicht) — nicht breiter als der Wagenkasten */
@@ -1006,7 +1008,7 @@ const LOMB = {};
   /* scharfer Schatten nach rechts hinten (Länge 0,9 × Körpergröße) */
   const L = 1.66 * SL, T = PN(X + L * SE_, d + L * SN_, 0), A = PN(X - 0.2, d, 0), Bp = PN(X + 0.2, d, 0);
   const sch = `<path d="M${pr([A[0] - tx, A[1] - ty])} L${pr([T[0] - tx - 1.2, T[1] - ty])} L${pr([T[0] - tx + 1.2, T[1] - ty])} L${pr([Bp[0] - tx, Bp[1] - ty])} Z" fill="#1d2433" opacity=".3"/>`;
-  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x: tx, y: ty, kunst: sch + figur(m.svg) + handy,
+  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x: tx, y: ty, kunst: sch + figur(grob(m.svg, 0.8), 1.0, 3.5) + handy,
     tipp: "Die Touristin fotografiert den Blick die Hyde Street hinunter auf die Bucht und Alcatraz." });
   /* Brotschale mit Clam Chowder auf der Gartenmauer (Mauerkrone bei X 2,25–2,75, 0,62 m hoch) */
   const db = 13, [bx, by] = PN(2.5, db, zH(db) + 0.62), sb = F / db, bw = 0.24 * sb;

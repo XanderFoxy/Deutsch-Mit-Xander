@@ -547,8 +547,8 @@ function giraffe(T) {
   const SW = "#1a120b";
   /* Fell als Muster (dicht, Haar für Haar), je Körperzone eigene Wuchsrichtung */
   const haarF = [["#fff6e2", 2, 0.28, 0.32], ["#3a1d0a", 2, 0.3, 0.3]];
-  const fHals = F ? H.fellMuster("h", 62, [["#fff6e2", 2, 0.22, 0.16], ["#3a1d0a", 2, 0.22, 0.14]], { tile: 13, n: 90, len: 2.4, streu: 0.5 }) : "";
-  const fRumpf = F ? H.fellMuster("r", 168, [["#fff6e2", 2, 0.22, 0.16], ["#3a1d0a", 2, 0.22, 0.14]], { tile: 13, n: 90, len: 2.8, streu: 0.5 }) : "";
+  const fHals = F ? H.fellMuster("h", 62, [["#fff6e2", 2, 0.22, 0.16], ["#3a1d0a", 2, 0.22, 0.14]], { tile: 13, n: 48, len: 2.4, streu: 0.5 }) : "";
+  const fRumpf = F ? H.fellMuster("r", 168, [["#fff6e2", 2, 0.22, 0.16], ["#3a1d0a", 2, 0.22, 0.14]], { tile: 13, n: 48, len: 2.8, streu: 0.5 }) : "";
   const fBein = F ? H.fellMuster("b", 92, haarF, { tile: 7, n: 24, len: 2.2 }) : "";
   const fKopf = F ? H.fellMuster("k", 200, [["#fff6e2", 2, 0.15, 0.14], ["#3a1d0a", 2, 0.15, 0.12]], { tile: 6, n: 40, len: 1.3, streu: 0.5 }) : "";
   /* ---- Fleckenmosaik: echte Voronoi-Zellen, Fugen unterschiedlich breit, Ränder gelappt, Ecken rund,
@@ -665,7 +665,7 @@ function giraffe(T) {
   /* ---- Schwanz: Rübe dick (oben gefleckt), verjüngt, Quaste dicht und voluminös, endet auf Höhe des Sprunggelenks ---- */
   const sk = kette([[42, -290, 4.6, 4.6], [36, -258, 3.4, 3.4], [30, -220, 2.4, 2.4], [26, -186, 1.9, 1.9], [24, -168, 1.8, 1.8]]);
   s += teil(sk.pts, creme, { fell: [fRumpf], ov: [lichtX], vol: [1, 4, 0.4], innen: `<path d="M38 -286Q42 -278 39 -268Q34 -276 38 -286Z" fill="${fleckFarben[0]}"/><path d="M34 -258Q37 -250 34 -242Q31 -250 34 -258Z" fill="${fleckFarben[1]}"/>` });
-  s += H.straehnen([[24, -178], [24, -166]], 36, (t) => 34 + t * 6, (x, y, t) => 92 + (t - 0.5) * 24, [["#1a120b", 3, 0.9, 0.95], ["#3a2a1e", 2, 0.8, 0.9], ["#5a4535", 1, 0.7, 0.85]], { streu: 18, welle: 0.35, szene: 0.4 });
+  s += H.straehnen([[24, -178], [24, -166]], 26, (t) => 34 + t * 6, (x, y, t) => 92 + (t - 0.5) * 24, [["#1a120b", 3, 0.9, 0.95], ["#3a2a1e", 2, 0.8, 0.9], ["#5a4535", 1, 0.7, 0.85]], { streu: 18, welle: 0.35, szene: 0.4 });
   /* ---- Rumpf und Hals ---- */
   const halsZone = [[200, -340], [240, -380], [300, -470], [350, -530], [400, -470], [330, -300], [300, -230], [260, -330]];
   const fl = fleckSVG(flecken(rumpf, { umriss: rumpf, r0: 20 }));
@@ -690,7 +690,7 @@ function giraffe(T) {
   const maehne = aussen.concat(kamm.slice().reverse().map((p) => [p[0] + 0.5, p[1] + 1.5]));
   const mWurzel = kamm.map((p) => [p[0], p[1] + 1]);
   s += teil(maehne, T.lg("mae", [[0, "#6a3c1c"], [1, "#9a6438"]], 0, 0, 0.6, 0.6), {
-    oben: H.straehnen(kamm.map((p) => [p[0] + 1, p[1] + 1.5]), F ? 160 : 30, (t) => 3 + Math.sin(Math.min(1, t * 1.3) * Math.PI) * 10, (x, y) => -138 + (x - 280) * 0.02, [["#3a1c0a", 3, 0.6, 0.9], ["#9a6a3c", 2, 0.55, 0.85], ["#c89a68", 1, 0.5, 0.7]], { streu: 12, welle: 0.12, szene: 1, dick: 1 }) });
+    oben: H.straehnen(kamm.map((p) => [p[0] + 1, p[1] + 1.5]), F ? 80 : 16, (t) => 3 + Math.sin(Math.min(1, t * 1.3) * Math.PI) * 10, (x, y) => -138 + (x - 280) * 0.02, [["#3a1c0a", 3, 0.6, 0.9], ["#9a6a3c", 2, 0.55, 0.85], ["#c89a68", 1, 0.5, 0.7]], { streu: 12, welle: 0.12, szene: 1, duenn: 0.7 }) });
   /* ---- Kopf: Kopfachse 24° nach unten; Ramsnase, stumpfes Maul mit überhängender Oberlippe, Kinn, Kaumuskel, Kehlgang ---- */
   const wa = 24 * Math.PI / 180, P0 = [350, -520];
   const K = (u, v) => [P0[0] + u * Math.cos(wa) - v * Math.sin(wa), P0[1] + u * Math.sin(wa) + v * Math.cos(wa)];

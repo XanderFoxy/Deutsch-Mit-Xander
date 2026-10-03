@@ -173,14 +173,14 @@ const randA = (ziel, a0, a1) => { for (let i = 0; i < 40; i++) { const m = (a0 +
 const DECK_A = [randA(0, -900, 0), -60, 0, 120, 251.5, 380, 503, 560, randA(400, 503, 1400)];
 {
   let k = "";
-  const fach = (c, farbe, licht, dick) => {
+  const fach = (c, farbe, licht, dick, ohneDiag) => {
     let g = "";
     const N = 28, pts = [...Array(N + 1)].map((_, i) => i * 503 / N);
     const oben = pts.map((a) => bp(a, c, zO(a))), unten = pts.map((a) => bp(a, c, zU(a)));
     g += `<path d="M${oben.map(P).join(" L")} L${unten.slice().reverse().map(P).join(" L")} Z" fill="${farbe}" opacity=".08"/>`;
     let st = "";
     for (let i = 0; i <= N; i++) st += `M${P(oben[i])} L${P(unten[i])}`;
-    for (let i = 0; i < N; i++) st += i < N / 2 ? `M${P(oben[i])} L${P(unten[i + 1])}` : `M${P(unten[i])} L${P(oben[i + 1])}`;
+    if (!ohneDiag) for (let i = 0; i < N; i++) st += i < N / 2 ? `M${P(oben[i])} L${P(unten[i + 1])}` : `M${P(unten[i])} L${P(oben[i + 1])}`;
     g += `<path d="${st}" stroke="${farbe}" stroke-width="${dick * 0.42}" fill="none"/>`;
     g += `<path d="M${oben.map(P).join(" L")}" stroke="${farbe}" stroke-width="${dick}" fill="none" stroke-linejoin="round"/>`;
     g += `<path d="M${unten.map(P).join(" L")}" stroke="${farbe}" stroke-width="${dick * 1.25}" fill="none" stroke-linejoin="round"/>`;
@@ -209,7 +209,7 @@ const DECK_A = [randA(0, -900, 0), -60, 0, 120, 251.5, 380, 503, 560, randA(400,
   };
   /* Reihenfolge = Tiefe: westliche Pylone, hinterer Bogen, Querverbände, Fahrbahn, vorderer Bogen, östliche Pylone */
   k += pylon(-15, -31, 0) + pylon(518, -31, 1);
-  k += `<g opacity=".8">${fach(-15, "#86919a", null, 1.1)}</g>`;
+  k += `<g opacity=".8">${fach(-15, "#86919a", null, 1.1, true)}</g>`;
   for (let i = 0; i <= 28; i += 2) { const a = i * 503 / 28; k += `<path d="M${P(bp(a, -15, zO(a)))} L${P(bp(a, 15, zO(a)))}" stroke="#7f8a90" stroke-width=".45"/>`; }
   {
     /* Zug (Westseite) und Busse/Lastwagen ragen über die Brüstung; Autos sind fast verdeckt */
@@ -491,9 +491,9 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
      darüber ein schwarzer Verlauf, der das Spiegelbild nach vorn ausblendet */
   let mk = "";
   [[148, 6, 0.5, 0.45, 9], [154, 12, 0.8, 0.8, 14], [166, 26, 1.3, 1.4, 22]].forEach(([y0, hh, sh, gap, lmax], i) => {
-    const W = 97, H = r(sh + gap) * 3;
+    const W = 97, H = r(r(sh + gap) * 2);
     let t = "";
-    for (let row = 0; row < 3; row++) for (let x = -rnd() * 6; x < W - 3;) { const l = Math.min(3 + rnd() * lmax, W - x); t += `M${r(Math.max(x, 0))} ${r(row * (sh + gap))}h${r(l - Math.max(-x, 0))}v${r(sh)}h${r(-(l - Math.max(-x, 0)))}z`; x += l + 1 + rnd() * lmax * 0.5; }
+    for (let row = 0; row < 2; row++) for (let x = -rnd() * 6; x < W - 3;) { const l = Math.min(3 + rnd() * lmax, W - x); t += `M${Math.round(Math.max(x, 0))} ${r(row * r(sh + gap))}h${Math.round(l - Math.max(-x, 0))}v${r(sh)}h${-Math.round(l - Math.max(-x, 0))}z`; x += l + 1 + rnd() * lmax * 0.5; }
     S.def(`<pattern id="${S.id("sm" + i)}" width="${W}" height="${H}" patternUnits="userSpaceOnUse" patternTransform="translate(${r(rnd() * 40)} ${y0})"><path d="${t}" fill="#fff"/></pattern>`);
     mk += `<rect x="0" y="${y0}" width="400" height="${hh}" fill="url(#${S.id("sm" + i)})"/>`;
   });

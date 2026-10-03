@@ -1388,8 +1388,8 @@ function hoehlenbaer(T) {
   const S0 = "#000", HL = "#ffe8c8", WARM = "#c89464";
   /* Fell: Kachelmuster langer Haare (dunkel / mittel), Reif-Muster, Strähnen mit Einzelhaaren; Töne dunkel → hell */
   const MD = [["b_d", 12, 16, 30, 6.4, [["#1c1009", 1, 0.3, 0.42], ["#4a2e18", 1, 0.28, 0.36]]]];
-  const MH = [["b_h", 14, 14, 18, 5.6, [["#b07a4a", 1, 0.24, 0.32]]]];
-  const MR = [["b_r", 14, 14, 16, 4, [["#d8ccb4", 1, 0.2, 0.42]]]];
+  const MH = [["b_h", 14, 14, 15, 5.6, [["#b07a4a", 1, 0.24, 0.32]]]];
+  const MR = [["b_r", 14, 14, 13, 4, [["#d8ccb4", 1, 0.2, 0.42]]]];
   const MK = (o) => [[...MD[0].slice(0, 6), o]];
   const TON = ["#1a1009", "#26170c", "#342011", "#442b17", "#56361d", "#6a4424", "#80542d", "#966438"];
   const FERN = ["#140c07", "#1c120a", "#26180e", "#302013", "#3c2818"];
@@ -1442,7 +1442,7 @@ function hoehlenbaer(T) {
     T.def(`<clipPath id="${id}c"><use href="#${id}"/></clipPath>`); beinIds[key] = id; } return beinIds[key]; };
   const bein = (P, vorne, ferne, extra, dx = 0) => {
     const id = beinPfad(P, vorne ? "v" : "h"), x0 = P[0][0];
-    const zonen = [[[[x0 - 60, -110], [x0 + 30, -110], [x0 + 30, 2], [x0 - 60, 2]], 92, 0.95]];
+    const zonen = [[[[x0 - 60, vorne || ferne ? -110 : -90], [x0 + 30, -110], [x0 + 30, 2], [x0 - 60, 2]], 92, 0.95]];
     let b = `<use href="#${id}" fill="${beinG("bg" + (ferne ? "f" : vorne ? "v" : "h"), ferne, vorne)}"/><g clip-path="url(#${id}c)">` +
       (ferne ? `<rect x="${x0 - 60}" y="-110" width="100" height="112" fill="#000" opacity=".2"/>` : "") +
       WEICH(T, beinLicht(P, vorne ? -58 : -40, ferne ? 0.6 : vorne ? 1 : 0.45) + FO([[x0 - 60, -110], [x0 + 30, -110], [x0 + 30, -50], [x0 - 60, -58]], S0, 0.34), 1.5) +
@@ -1481,14 +1481,14 @@ function hoehlenbaer(T) {
   /* Strähnen aus Einzelhaaren (an der Wurzel gebündelt, Spitzen aufgefächert), Länge nach Zone */
   const lang = (x, y) => 8 + 6 * Math.min(1, Math.max(0, t_(x, y)) / 0.8);
   const zone = [[16, -100], [26, -112], [70, -119], [150, -132], [194, -140], [222, -130], [240, -118], [246, -96], [236, -74], [200, -66], [100, -66], [44, -74], [20, -84]];
-  k += LOCKEN(T, zone, 44, fluss, lang, 2, (x, y) => licht(x, y) * 0.9, TON, { streuung: 9, kruemmung: 0.12, szene: 0.12, szeneB: 2, haare: 2, hb: 0.24, jitter: 0.6 });
+  k += LOCKEN(T, zone, 40, fluss, lang, 2, (x, y) => licht(x, y) * 0.9, TON, { streuung: 9, kruemmung: 0.12, szene: 0.12, szeneB: 2, haare: 2, hb: 0.24, jitter: 0.6 });
   /* Bereifung: in den oberen 25 % die Spitzen kühl-beige; einzelne Frostspitzen über der Rückenlinie */
   if (fein) k += LOCKEN(T, [[18, -106], [34, -118], [110, -128], [182, -140], [222, -132], [220, -124], [182, -130], [110, -120], [40, -108]], 28,
     fluss, 5, 0.6, () => 1, REIF, { streuung: 10, jitter: 0.5, haare: 1, hb: 0.16 });
   k += LOCKENLINIE(T, ruecken.slice(1, 18), 22, [-1, 3], (x, y) => fluss(x, y + 4) + 6, 6, 1.4, (x, y) => licht(x, y + 4), TON, { streuung: 10, szene: 0.15, szeneB: 1.6, haare: 1, hb: 0.22 });
   k += LOCKENLINIE(T, ruecken.slice(2, 17), fein ? 16 : 10, [-1, 1], (x, y) => fluss(x, y + 4) + 4, 4.6, 0.6, () => 1, REIF, { streuung: 12, szene: 0.4, szeneB: 2.4 });
   /* Kehl- und Brusthaar, Backenbart geht in die Halsmähne über */
-  k += LOCKEN(T, [[238, -112], [250, -98], [248, -80], [240, -70], [232, -80], [234, -100]], 16, 100, 10, 1.8, (x, y) => 0.32 + (-y - 80) / 120, TON, { streuung: 8, kruemmung: 0.14, szene: 0.15, haare: 2, hb: 0.22 });
+  k += LOCKEN(T, [[238, -112], [250, -98], [248, -80], [240, -70], [232, -80], [234, -100]], 12, 100, 10, 1.8, (x, y) => 0.32 + (-y - 80) / 120, TON, { streuung: 8, kruemmung: 0.14, szene: 0.15, haare: 2, hb: 0.22 });
   /* Stummelschwanz (≤ 3 % der Körperlänge), halb im Kruppenfell, nach unten anliegend */
   k += LOCKEN(T, [[13, -100], [17, -104], [17, -96], [13, -94]], 7, 108, 6, 1.6, () => 0.35, TON, { streuung: 10, szene: 0.3, haare: 1, hb: 0.2 });
   s += `<g filter="${T.volumen("rumpf", { weich: 16, tiefe: 5, umgebung: 0.3 })}">${k}</g>`;
@@ -1514,7 +1514,7 @@ function hoehlenbaer(T) {
   /* ---------- Kopf: breiter gewölbter Hirnschädel, steiler gestufter Stirnabsatz, kurze Schnauze; Unterkiefer als schmaler Keil ---------- */
   const kopf = [[232, -122], [238, -125.2], [245, -127], [252, -126.6], [258, -124.6], [262.4, -120.6], [265, -115.4], [266.72, -110.6], [269.6, -107.6], [275, -106],
     [281.3, -104.6], [286.16, -102.8], [289.4, -100.6], [291.74, -97.6], [292.28, -94.4], [291.56, -91.6], [289.76, -90.2], [288.5, -89.6], [287.96, -88], [286.7, -86.8],
-    [285.98, -86.2, 1], [286.16, -85.2], [285.8, -83.6], [284.36, -82.2], [282.2, -81], [278.6, -80.6], [273.6, -81.6], [268.4, -83.6], [263, -85.4], [256.6, -85.8], [248, -85], [238, -90], [232, -106]];
+    [285.98, -86.2, 1], [286.16, -85.2], [285.8, -83.6], [284.36, -83.2], [282.2, -82], [279, -81.8], [275, -82.8], [270, -84.8], [265, -86.6], [259, -87.4], [252, -87], [238, -90], [232, -106]];
   const dKo = glatt(kopf);
   const auge = [261.4, -104.6];
   const kopfG = T.lg("kopf", [[0, "#94683e"], [0.3, "#7a5432"], [0.65, "#5a3c22"], [1, "#3a2616"]], 0, -135, 0, -88, UB);
@@ -1528,11 +1528,11 @@ function hoehlenbaer(T) {
   let ko = K(T, dKo, kopfG, { rand: false, vol: false, innen: kmass +
     HAARZONEN(T, null, [[[[230, -132], [262, -132], [262, -80], [230, -80]], 150, 0.8]], MK(0.6)) + HAARZONEN(T, null, [[[[230, -132], [258, -132], [258, -112], [230, -112]], 170, 0.6]], [[...MR[0].slice(0, 6), 0.6]]) });
   /* Haar: Schnauze kurz und dicht von der Nase nach hinten; Wirbel am Stirnabsatz; Stirn länger nach hinten; Wange nach hinten-unten */
-  ko += FELL(T, [[266, -110], [275, -106.6], [285.8, -103.4], [289.4, -100], [287.6, -89], [284, -86], [273.2, -87], [266, -92]], 50, (x, y) => 186 + (y + 104) * 0.8, 1.6,
+  ko += FELL(T, [[266, -110], [275, -106.6], [285.8, -103.4], [289.4, -100], [287.6, -89], [284, -86], [273.2, -87], [266, -92]], 46, (x, y) => 186 + (y + 104) * 0.8, 1.6,
     (x, y) => Math.max(0, Math.min(1, 0.85 - (y + 113) / 20)), [["#1e130a", 0.6, 0.2], ["#4a301a", 0.55, 0.2], ["#7a5230", 0.5, 0.18], ["#a87a4c", 0.5, 0.16]], { streuung: 10, szene: 0.1 });
   ko += FELL(T, [[258, -120], [264, -118], [267.8, -109], [262, -106], [256, -112]], 30, (x, y) => Math.atan2(y + 121, x - 263) * 180 / Math.PI + 90, 1.8, () => 0.5,
     [["#2a1a0e", 0.55, 0.2], ["#7a5230", 0.5, 0.18]], { streuung: 14, szene: 0 });
-  ko += LOCKEN(T, [[236, -120], [248, -125], [258, -122], [260, -116], [250, -114], [238, -112]], 16, (x, y) => 172 + (y + 128) * 2, 4.4, 0.9, (x, y) => 0.72 - (y + 134) / 30, TON,
+  ko += LOCKEN(T, [[236, -120], [248, -125], [258, -122], [260, -116], [250, -114], [238, -112]], 12, (x, y) => 172 + (y + 128) * 2, 4.4, 0.5, (x, y) => 0.85 - (y + 134) / 30, TON,
     { streuung: 10, szene: 0.15, haare: 2, hb: 0.18 });
   ko += LOCKEN(T, [[242, -110], [258, -104], [262, -92], [256, -84], [244, -86], [238, -98]], 18, 128, 6, 0.8, (x, y) => 0.5 - (y + 116) / 50, TON,
     { streuung: 10, kruemmung: 0.14, szene: 0.15, haare: 2, hb: 0.2 });
@@ -1540,7 +1540,7 @@ function hoehlenbaer(T) {
   s += `<g mask="${T._mkk || (T._mkk = (() => { const id = T.id("mkk"); T.def(`<mask id="${id}"><rect x="200" y="-160" width="120" height="110" fill="${T.lg("mgk", [[0, "#fff", 0], [1, "#fff"]], 233, 0, 243, 0, UB)}"/></mask>`); return `url(#${id})`; })())}">` +
     `<g filter="${T.volumen("kopf", { weich: 7, tiefe: 5, umgebung: 0.3 })}">${ko}</g></g>`;
   /* Backenbart → Halsmähne über dem Kopfansatz */
-  s += LOCKEN(T, [[234, -118], [244, -116], [250, -102], [252, -86], [244, -80], [236, -92]], 18, (x, y) => 108 + (y + 110) * 0.6, 9, 0.9, (x, y) => 0.5 - (y + 120) / 60, TON,
+  s += LOCKEN(T, [[234, -118], [244, -116], [250, -102], [252, -86], [244, -80], [236, -92]], 15, (x, y) => 108 + (y + 110) * 0.6, 9, 0.9, (x, y) => 0.5 - (y + 120) / 60, TON,
     { streuung: 9, kruemmung: 0.14, szene: 0.15, szeneB: 1.8, haare: 2, hb: 0.22 });
 
   /* ---------- Ohr: klein (≈ 13 % der Kopflänge), rund, wächst aus dem Kopffell, Randhaar in Kopfrichtung ---------- */

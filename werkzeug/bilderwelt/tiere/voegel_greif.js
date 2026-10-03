@@ -448,3 +448,298 @@ function fluegelRahmen(E, B) {
   return { W, linie, richtung };
 }
 
+/* Zeichnung im Gefieder: Querbinden (flache Winkel/Bögen quer zur Federrichtung), Tropfen- oder Schaftflecken.
+   poly ungeglättet, winkel = Federrichtung (Grad oder f), o = { abst (Reihen), dx (in der Reihe), lang, dick, farbe, op,
+   art: "binde" | "tropfen", bogen, sz (Anteil in der Szene), dichte(x, y) 0..1 } */
+function muster(T, poly, winkel, o) {
+  const [x0, y0, x1, y1] = box(poly), wf = typeof winkel === "function" ? winkel : () => winkel;
+  const f = T.fein ? 1 : (o.sz || 0);
+  if (!f) return "";
+  const ab = o.abst / Math.sqrt(f), dxx = (o.dx || o.lang * 1.3) / Math.sqrt(f);
+  let d = "", j = 0;
+  for (let y = y0; y <= y1; y += ab, j++)
+    for (let x = x0 + (j % 2) * dxx * 0.5; x <= x1; x += dxx) {
+      const px = x + (T.rnd() - 0.5) * dxx * 0.35, py = y + (T.rnd() - 0.5) * ab * 0.3;
+      if (!inPoly(px, py, poly)) continue;
+      if (o.dichte && T.rnd() > o.dichte(px, py)) continue;
+      const a = rad(wf(px, py)), u = [Math.cos(a), Math.sin(a)], q = [-u[1], u[0]], L = o.lang * (0.7 + T.rnd() * 0.6);
+      if (o.art === "tropfen") { d += "M" + J(px - u[0] * L / 2, py - u[1] * L / 2) + "l" + J(u[0] * L, u[1] * L); continue; }
+      const b = (o.bogen != null ? o.bogen : 0.35) * L;
+      d += "M" + J(px - q[0] * L / 2, py - q[1] * L / 2) + "q" + J(q[0] * L / 2 + u[0] * b, q[1] * L / 2 + u[1] * b, q[0] * L, q[1] * L);
+    }
+  return zug(d, o.farbe, o.dick, o.op, o.art === "tropfen" ? "" : ' stroke-linecap="butt"');
+}
+
+/* Baumstumpf / Pfahl / Treibholz: Oberseite als Ellipse (leicht von oben), Rinde oder blankes Holz mit Fasern, Jahresringe.
+   o = { x0, x1, oben (y der Oberkante), holz, rinde (null = blank), dunkel, ringe, moos } */
+function stumpf(T, n, o) {
+  const { x0, x1 } = o, yo = o.oben, mx = (x0 + x1) / 2, rx = (x1 - x0) / 2, ry = rx * 0.17;
+  const um = [[x0 - 1.2, 0, 1], [x0 - 0.4, -2], [x0, -6], [x0 + 0.1, yo + ry * 0.2], [mx - rx * 0.6, yo + ry * 0.85], [mx, yo + ry], [mx + rx * 0.6, yo + ry * 0.85], [x1 - 0.1, yo + ry * 0.2], [x1 + 0.2, -6], [x1 + 0.8, -2], [x1 + 1.8, 0, 1]];
+  const d = G(um);
+  const rinde = o.rinde || o.holz;
+  let inn = "";
+  if (T.fein) {
+    /* Fasern / Rindenfurchen senkrecht, leicht wellig */
+    let fu = "", li = "";
+    for (let i = 0; i < 16; i++) {
+      const x = x0 + (x1 - x0) * (i + 0.3 + T.rnd() * 0.4) / 16, w = (T.rnd() - 0.5) * 1.2;
+      const p = [[x, yo + ry * 0.8], [x + w, (yo) / 2], [x - w * 0.5, -1]];
+      fu += GO(p); if (i % 2) li += GO(p.map(([a, b]) => [a - 0.35, b]));
+    }
+    inn += zug(fu, o.dunkel, o.rinde ? 0.55 : 0.2, o.rinde ? 0.55 : 0.45) + zug(li, "#fff", o.rinde ? 0.25 : 0.12, 0.2);
+    inn += T.textur(d, T.rauschen(n + "f", { fx: 2.4, fy: 0.12, farbe: o.dunkel, staerke: 2.4, okt: 2 }), 90, 0.35, [x0 - 2, yo - 3, x1 + 2, 1]);
+  }
+  inn += fl(d, verlauf(T, n + "q", x0, 0, x1, 0, [[0, "#fff", 0.16], [0.35, "#fff", 0], [0.7, "#000", 0.22], [1, "#000", 0.5]]));
+  if (o.moos) inn += weich(T, G(o.moos), "#5a6a2a", 0.85, 0.3, true) + (T.fein ? striche(T, o.moos, 60, -90, 0.5, [["#8a9a40", 1, 0.08, 0.7], ["#3a4a18", 1, 0.08, 0.6]], { streu: 60 }) : "");
+  inn += weich(T, `M${J(x0 - 2, -1.4)}L${J(x1 + 3, -1.4)} ${J(x1 + 3, 1)} ${J(x0 - 2, 1)}Z`, "#000", 0.45, 0.8);
+  let s = teil(T, n, d, verlauf(T, n + "g", 0, yo, 0, 0, [[0, rinde], [1, mische(rinde, "#000", 0.25)]]), inn);
+  /* Schnittfläche mit Jahresringen und Trockenrissen */
+  const top = `M${J(x0, yo)}a${J(rx, ry)} 0 1 0 ${J(2 * rx, 0)}a${J(rx, ry)} 0 1 0 ${J(-2 * rx, 0)}Z`;
+  let ti = "";
+  if (T.fein && o.ringe !== false) {
+    let r = "";
+    for (let i = 1; i < 7; i++) { const k = i / 7 * (0.9 + T.rnd() * 0.08); r += `M${J(mx + 1 - rx * k, yo)}a${J(rx * k, ry * k)} 0 1 0 ${J(2 * rx * k, 0)}a${J(rx * k, ry * k)} 0 1 0 ${J(-2 * rx * k, 0)}Z`; }
+    ti += zug(r, o.dunkel, 0.12, 0.45);
+    ti += zug(`M${J(mx + 1, yo)}l${J(-rx * 0.7, ry * 0.3)}M${J(mx + 1, yo)}l${J(rx * 0.5, ry * 0.6)}M${J(mx + 1, yo)}l${J(rx * 0.3, -ry * 0.7)}`, "#1a120a", 0.2, 0.6);
+  }
+  s += teil(T, n + "o", top, verlauf(T, n + "og", x0, yo - ry, x1, yo + ry, [[0, mische(o.holz, "#fff", 0.25)], [1, mische(o.holz, "#000", 0.1)]]), ti);
+  return s;
+}
+
+/* =====================================================================
+   TAGGREIFE (Steinadler, Weißkopfseeadler, Wanderfalke, Mäusebussard, Gänsegeier) – EIN Bauplan, je Art eigene
+   Maße, Farben, Zeichnung, Kopf und Schnabel. Gezeichnet in „Adler-Einheiten“ (Steinadler = cm), am Ende auf die
+   echte Größe skaliert (P.k). Haltung sitzend, Körper ca. 60° aufgerichtet, Kopf im Profil.
+   ===================================================================== */
+function greif(T, P) {
+  Q = 10;
+  const F = T.fein;
+  let s = "";
+  const DREH = P.dreh != null ? P.dreh : 9, PIV = [3.5, -16.5], KDREH = P.kdreh != null ? P.kdreh : -8, KPIV = [0, -72];
+  const rot = (inh) => `<g transform="rotate(${DREH} ${PIV[0]} ${PIV[1]})">${inh}</g>`;
+  const kk = P.kopfK || 1;   // Kopfgröße relativ (um den Hals)
+  const krot = (inh) => `<g transform="rotate(${KDREH} ${KPIV[0]} ${KPIV[1]})${kk !== 1 ? ` translate(${N(KPIV[0] * (1 - kk))} ${N(KPIV[1] * (1 - kk) + (P.kopfY || 0))}) scale(${kk})` : (P.kopfY ? ` translate(0 ${P.kopfY})` : "")}">${inh}</g>`;
+  const mk = (n, liste, form, extra = {}) => liste.map(([c, sa, m], i) => vorlage(T, n + i, c, sa, form, Object.assign({}, extra, m ? { marke: m } : {})));
+  const brust = mk("b", P.brust, "lanz", { weich: 1 }), hose = mk("h", P.hose, "flaum", { weich: 1 });
+  const nacken = mk("g", P.nacken, P.nackenForm || "spitz", { weich: 1 });
+  const decke = mk("d", P.decke, "rund", { schaft: P.schaft || "#8a6a4a" }), mittel = mk("m", P.mittel, "rund", { schaft: P.schaft || "#9a7a52" });
+  const schulter = mk("s", P.schulter, "breit", { schaft: P.schaft || "#7a5e44" });
+
+  /* ---- Schwanz: drei sichtbare Steuerfedern mit Binden und Endsaum ---- */
+  const SW = P.schwanz;
+  let sw = "";
+  const sl = SW.lang || 1;
+  [[[-10.6, -38], [-20.2, -13.2]], [[-11.6, -37.6], [-21.6, -12.7]], [[-12.8, -37], [-22.8, -13.4]]].forEach(([b, e0], i) => {
+    const e = lerp(b, e0, sl);
+    sw += schwinge(T, [b, lerp(b, e, 0.5), [e[0] + 0.2, e[1]]], 4.6 - i * 0.1, 3.6 - i * 0.1, { quer: SW.quer, schaft: [SW.schaft || "#b0a088", 0.12, 0.45],
+      binden: SW.binden, saum: SW.saum, bindenBogen: 0.3 });
+  });
+  if (SW.endbinde && F) { const t = lerp([-12, -37], [-22, -13], sl); sw += fl(G([[t[0] + 3.4, t[1] - 4.2], [t[0] - 1.8, t[1] - 4], [t[0] - 2.4, t[1] - 1.2], [t[0] - 0.8, t[1] + 0.4], [t[0] + 1.6, t[1] + 0.8], [t[0] + 3.4, t[1] - 0.6]]), SW.endbinde, 0.55, ` filter="${blur(T, 0.4)}"`); }
+  s += vg(T, "schwanz", 1.4, rot(sw));
+
+  /* ---- Sitzplatz ---- */
+  s += P.sitz(T);
+
+  /* ---- Fänge ---- */
+  const ZF = P.zehen;
+  const fuss = (dx, dy, fern) => {
+    const o = Object.assign({}, ZF, fern ? { hell: mische(ZF.hell, "#000", 0.4), mittel: mische(ZF.mittel, "#000", 0.45), dunkel: mische(ZF.dunkel, "#000", 0.5), fern: true } : {});
+    const P2 = (x, y) => [x + dx, y + dy], m = (k) => Object.assign({}, o, k), kz = P.krallenK || 1;
+    let f = "";
+    if (P.lauf) f += zehe(T, [P2(1.6, -28), P2(2.6, -22.4), P2(3.4, -17.8)], 3, 2.6, m({ n: "l" + dx, schilde: 7 }));   // nackter Lauf mit Gürtelschildern vorn
+    if (!fern) f += zehe(T, [P2(3.8, -17.6), P2(6.4, -17.4), P2(8.4, -17)], 2, 1.6, m({ kralle: [3.6 * kz, 1.2, 130], n: "i" + dx, hell: mische(o.hell, "#000", 0.3), mittel: mische(o.mittel, "#000", 0.3), fern: true }));
+    f += zehe(T, [P2(2.6, -16.9), P2(0.4, -16.6), P2(-1.4, -16.1)], 2.3, 1.9, m({ kralle: [5.2 * kz, 1.5, -118], n: "h" + dx, krAnsatz: -6 }));
+    f += zehe(T, [P2(4.2, -17), P2(7, -16.8), P2(9.6, -16.3), P2(11.4, -15.5)], 2.4, 1.85, m({ kralle: [4.4 * kz, 1.35, 150], n: "m" + dx }));
+    if (!fern) f += zehe(T, [P2(3.6, -16.2), P2(5.6, -15.2), P2(7.2, -14.2)], 2.3, 1.8, m({ kralle: [3.8 * kz, 1.3, 145], n: "a" + dx }));
+    return f;
+  };
+  s += vg(T, "fussF", 0.5, fuss(-3.4, -0.5, true));
+
+  /* ---- ferne Hose, Unterschwanzdecken ---- */
+  const lauf = !!P.lauf, hy = lauf ? -25 : -17.4;
+  const hoseFU = lauf ? [[-7, -37], [-2.6, -40], [-1.6, -31], [-2.6, -26.4], [-5, -25.2], [-8, -27], [-8.8, -31]] : [[-7, -37], [-2.6, -40], [-1.6, -30], [-3.2, -22], [-4.8, -17.6], [-7.6, -17.4], [-8.6, -24], [-8.8, -31]];
+  s += vg(T, "hoseF", 2, rot(teil(T, "hoseF", G(hoseFU), mische(P.hoseFarbe, "#000", 0.35), federFeld(T, hoseFU, { typen: hose, abst: 5, L: 7, W: 2.4, winkel: () => 95, streu: 16 }) + fl(G(hoseFU), "#1a1008", 0.35))));
+  const usdU = [[-12.8, -38.4], [-6, -36], [-4.6, -31], [-7, -27.6], [-11, -27.4], [-14.4, -31.6]];
+  s += vg(T, "usd", 2, rot(teil(T, "usd", G(usdU), P.usd || P.hoseFarbe, federFeld(T, usdU, { typen: hose, abst: 4.2, L: 6, W: 2.4, winkel: () => 118, streu: 16 }) + (P.usdMuster ? P.usdMuster(T, usdU) : ""))));
+
+  /* ---- Rumpf ---- */
+  const rumpf = P.rumpf || [[-7.8, -78.6], [-10.6, -72.4], [-12.4, -65.6], [-13.4, -57.6], [-13.4, -49], [-12, -41], [-9.4, -35.4], [-5.6, -32.4], [-0.6, -31.6], [5, -33.6], [9.6, -38], [12.8, -44], [14.8, -50.4], [15.4, -56.6], [14.6, -62.4], [12.6, -67.2], [10.6, -70.6], [9.6, -73.6], [6, -77.6], [0, -80]];
+  const brustU = [[-6, -70.5], [10.4, -71.6], [14.8, -62], [15.4, -52], [13.2, -43], [9.4, -36.6], [4.2, -32.6], [-3.4, -32.2], [0.8, -37], [4.6, -43], [7.2, -49.4], [8.6, -55.5], [8.6, -61]];
+  const brW = (x, y) => 94 + (y + 50) * 0.5 - (x - 9) * 1.2;
+  let ri = P.rumpfUnter ? P.rumpfUnter(T, brustU) : "";
+  ri += federFeld(T, brustU, { typen: brust, abst: 4.8, L: 7, W: 3.7, zeile: 0.55, winkel: brW, gr: (x, y) => 0.72 + (y + 72) * 0.011, streu: 14 });
+  if (P.brustMuster) ri += P.brustMuster(T, brustU, brW);
+  if (F) ri += striche(T, brustU, 64, brW, 2.4, P.brustStriche || [["#1a0e06", 1, 0.05, 0.45], ["#8a6444", 0.7, 0.045, 0.35]], { streu: 12, krumm: 0.12 });
+  ri += weich(T, G([[-4, -72], [6, -73], [10.4, -70], [4, -66.4], [-4, -66]]), "#000", 0.35, 1.2);   // Schlagschatten des Kopfes
+  ri += weich(T, G([[-2, -35], [6, -34.6], [10.6, -38.6], [4, -31.6], [-3, -31.4]]), "#e8c898", 0.14, 0.9);   // Bodenreflex
+  s += vg(T, "rumpf", 6.5, rot(teil(T, "rumpf", G(rumpf), P.rumpfFarbe, ri)));
+
+  /* ---- nahe Hose ---- */
+  const hoseN = lauf ? [[9.8, -41], [11.2, -35], [10.6, -29.6], [8.6, -25.6], [6, -24.2], [3.4, -24.6], [0.6, -24.6], [-1.8, -26.2], [-3.8, -30.4], [-4, -35.8], [-1.4, -40], [4.2, -42]]
+    : [[9.8, -41], [11.2, -35], [10.8, -28.6], [9.4, -23.2], [7.6, -19.4], [6.4, -17.2], [5, -16.2], [3.4, -16.4], [1.6, -16.2], [0.2, -17], [-1.4, -19.8], [-3.2, -24.8], [-4.2, -30.4], [-4, -35.8], [-1.4, -40], [4.2, -42]];
+  const hoW = (x, y) => 90 - (x - 3.5) * 1.6 + (y + 30) * 0.4;
+  let hi = federFeld(T, hoseN, { typen: hose, abst: 4.8, L: 9, W: 3.3, zeile: 0.46, winkel: hoW, gr: (x, y) => 0.75 + (y + 42) * 0.012, streu: 20 });
+  if (P.hoseMuster) hi += P.hoseMuster(T, hoseN, hoW);
+  if (F) hi += striche(T, hoseN, 54, hoW, 2.8, P.hoseStriche || [["#2a1606", 1, 0.05, 0.4], ["#c49a68", 0.8, 0.045, 0.35]], { streu: 18, krumm: 0.25 });
+  hi += weich(T, G([[-4, -43], [11.4, -43], [11, -37], [3, -35.4], [-4, -37]]), "#140a04", 0.5, 1.1);
+  let hs = teil(T, "hose", G(hoseN), P.hoseFarbe, hi);
+  hs += federReihe(T, lauf ? [[-1.6, -25.8], [1.4, -24.6], [4.4, -24.4], [7.6, -25.2]] : [[0.4, -17.4], [2.4, -16.9], [4.4, -16.8], [6.4, -17.6]], 7, { typen: hose, L: 3.4, W: 1.6, winkel: (t) => 98 - t * 26, streu: 20, reihenfolge: (t) => t });
+  s += vg(T, "hose", 3, rot(hs));
+
+  /* ---- nahe Fänge ---- */
+  s += vg(T, "fuss", 0.5, fuss(0, 0, false));
+
+  /* ---- Flügel (gefaltet) ---- */
+  const E = [[8.6, -61], [8.6, -55.5], [7.2, -49.4], [4.6, -43], [0.8, -37], [-4, -31.4], [-9.6, -25.6], [-15.4, -20.4], [-21, -15.8]];
+  const B = [[-6, -70], [-10.6, -66], [-12.8, -60], [-13.8, -52], [-14.6, -44], [-15.8, -36], [-17.6, -28], [-19.4, -21], [-21, -15.8]];
+  const { W, linie, richtung } = fluegelRahmen(E, B);
+  let fw = "";
+  const nH = F ? 5 : 3, nA = F ? 5 : 3;
+  for (let k = 0; k < nH; k++) {   // Handschwingen: äußere (längste) zuerst, innere darüber; Stufen an der Spitze
+    const kx = k * 6.5 / nH;
+    fw += schwinge(T, linie(0.16 + kx * 0.02, 0.05 + kx * 0.05, 1 - kx * 0.042, 0.28 + kx * 0.05), 4.8, 3.4, { quer: P.quH, schaft: [P.remSchaft || "#9a8a78", 0.13, 0.45], binden: P.handBinden, saum: P.handSaum });
+  }
+  for (let j = 0; j < nA; j++) {   // Armschwingen
+    const jj = j * 7.5 / nA;
+    fw += schwinge(T, linie(0.18 + jj * 0.025, 0.28 + jj * 0.06, 0.66 - jj * 0.006, 0.36 + jj * 0.07), 5.6, 5, { quer: P.quA, schaft: [P.remSchaft || "#a8987e", 0.13, 0.4], binden: P.armBinden, saum: P.armSaum });
+  }
+  for (let i = 0; i < 2; i++)   // Schirmfedern
+    fw += schwinge(T, linie(0.3, 0.84 + i * 0.05, 0.75 - i * 0.07, 0.84 + i * 0.07), 6.2, 5.6, { quer: P.quA, schaft: [P.remSchaft || "#a8987e", 0.13, 0.4], saum: P.schirmSaum || ["#a8906c", 0.55, 0.22], binden: P.schirmBinden });
+  const deckU = [...E.slice(0, 5), ...linie(0.5, 0.05, 0.43, 1, 3), ...B.slice(0, 4).reverse()];
+  let dk = "";
+  dk += federReihe(T, linie(0.3, 0.04, 0.24, 0.3, 3), 4, { typen: schulter, L: 7.2, W: 3.4, winkel: (t) => richtung(0.28, t * 0.3) + 4, streu: 4 });
+  dk += federReihe(T, linie(0.42, 0.28, 0.38, 0.94, 4), 7, { typen: decke, L: 6.6, W: 3.8, winkel: (t) => richtung(0.38, 0.3 + t * 0.6) + 6, streu: 5 });
+  dk += federReihe(T, linie(0.31, 0.26, 0.28, 0.96, 4), 8, { typen: mittel, L: 4.8, W: 3.2, winkel: (t) => richtung(0.28, 0.3 + t * 0.6) + 8, streu: 6 });
+  dk += federFeld(T, [W(0.02, 0.12), W(0.25, 0.2), W(0.25, 0.99), W(0.02, 1)], { typen: [decke[0], mittel[mittel.length - 1], decke[decke.length - 1]], abst: 3.9, L: 4.6, W: 3.4, zeile: 0.6, winkel: (x, y) => 118 - (y + 60) * 0.7 });
+  dk += federReihe(T, linie(0.47, 0.93, 0.05, 1.02, 5), 6, { typen: schulter, L: 8.2, W: 4.8, winkel: (t) => richtung(0.47 - t * 0.42, 0.95) + 10, streu: 6, reihenfolge: (t) => t });
+  s += vg(T, "fluegel", 3.4, rot(fw + teil(T, "deck", G(deckU), P.deckFarbe, dk + (P.deckMuster ? P.deckMuster(T, deckU) : ""))));
+  /* Flanke: Brustseitenfedern decken die Flügelunterkante, Schatten des Flügels */
+  let fk = weich(T, G([[-12, -25], [-5, -31.6], [1.2, -38], [5, -44], [7.6, -50], [9.4, -55], [9.6, -50], [7, -42.4], [2.4, -35.6], [-5, -28.6], [-11.4, -23]]), "#0a0502", 0.3, 0.8);
+  const flU = [...E.slice(0, 6).map(([x, y]) => [x - 0.6, y + 0.2]), ...E.slice(0, 6).reverse().map(([x, y]) => [x + 2.2, y + 1.2])];
+  fk += federFeld(T, flU, { typen: P.flanke ? mk("fl", P.flanke, "lanz", { weich: 1 }) : brust, abst: 3.5, L: 5.8, W: 2.7, zeile: 0.6, winkel: (x, y) => 100 + (-38 - y) * -0.9, ueber: 0, streu: 18 });
+  s += vg(T, "flanke", 1.2, rot(fk));
+
+  /* ---- Kopf ---- */
+  let kp = "", sn = "";
+  if (P.kopf) [kp, sn] = P.kopf(T, { mk, nacken });
+  else {
+    const kopf = [[10, -80.4], [9.2, -81.6], [7, -82.9], [3.6, -84.3], [-0.4, -84.6], [-4, -83.6], [-6.8, -81.4], [-8.6, -78.2], [-10.2, -74], [-11.6, -69], [-12.8, -65], [-9.6, -65.8], [-4, -68.6], [2, -70.2], [6.8, -72], [9, -74], [9.8, -76.4], [10.2, -78.4]];
+    let ki = federFeld(T, [[3.4, -85.4], [-4.4, -85], [-9.4, -78.4], [-12, -70], [-13.8, -64], [-9, -65.4], [-3, -69.2], [1.2, -72.2], [2.6, -76], [3.6, -81]], {
+      typen: nacken, abst: 3.6, L: 6.8, W: 2.6, zeile: 0.46, winkel: (x, y) => 166 - (y + 85) * 3.4 + Math.max(0, x) * 2, gr: (x, y) => 0.5 + (y + 86) * 0.034, streu: 9 });
+    if (P.kopfMuster) ki += P.kopfMuster(T);
+    if (F) {
+      const kf = P.kopfStriche || [["#1a1008", 1, 0.05, 0.5], ["#a07c50", 0.6, 0.045, 0.4]];
+      ki += striche(T, [[3.2, -84], [9, -82], [9.8, -79], [4.4, -79.4], [3, -81.6]], 24, (x, y) => 186 - (x - 6) * 2, 1.2, kf, { streu: 10 });   // Stirn
+      ki += striche(T, [[2.4, -77.4], [9.6, -77.6], [9.6, -74], [5, -72.6], [2, -74.6]], 34, (x, y) => 168 + (y + 76) * 6, 1.1, P.wangeStriche || kf, { streu: 12 });   // Wange
+      ki += striche(T, [[-6, -82], [3, -84], [2, -76], [-4, -72], [-9, -74]], 40, (x, y) => 172 - (y + 78) * 3, 1.4, kf, { streu: 10 });   // Hinterkopf
+      ki += striche(T, [[8.8, -79.6], [10.6, -79.4], [10.4, -76.6], [8.6, -77]], 30, (x, y) => 192 + (y + 78) * 8, 0.8, [[P.borsten || "#0a0604", 1, 0.045, 0.7]], { streu: 16 });   // Zügelborsten
+    }
+    ki += weich(T, G([[4, -79.6], [9.6, -79.8], [9.2, -78.2], [5, -78.4]]), "#000", 0.5 * (P.wulst != null ? P.wulst : 1), 0.35);
+    ki += weich(T, G([[3, -84.2], [-2, -85], [-6, -83], [-2, -82.4]]), "#fff2d0", 0.25, 0.8);   // Licht auf dem Scheitel
+    ki += weich(T, G([[1.6, -72.4], [8.4, -74], [9.8, -72], [4, -70]]), "#000", 0.35, 0.8);   // Kinn im Schatten
+    kp = teil(T, "kopf", G(kopf), verlauf(T, "kG", -7, -82, 7.5, -76, P.kG), ki);
+    kp += federReihe(T, [[-12.4, -64.6], [-9.2, -65.6], [-5.6, -67.6], [-2, -69], [1.6, -70.2]], 9, { typen: nacken, L: 4.6, W: 1.5, winkel: (t) => 112 - t * 25, streu: 14, reihenfolge: (t) => -t, gr: (t) => 1 - t * 0.3 });
+    Q = 20;
+    kp += greifAuge(T, 7, -78.9, 1.26 * (P.augeK || 1), Object.assign({ pupille: 0.46, lid: "#1e1610", hoehle: 0.5, offen: 0.9 }, P.auge));
+    if (P.wulst !== 0) {
+      const wu = P.wulst != null ? P.wulst : 1, wy = (1 - wu) * 0.7;
+      const wulst = [[3.6, -79.6 - wy], [5, -81 - wy], [7.2, -81.7 - wy], [9.4, -81.4 - wy], [10.6, -80.5 - wy], [10.4, -79.8 - wy], [9, -79.8 - wy], [7.4, -79.95 - wy], [5.8, -79.7 - wy], [4.6, -79.2 - wy]];
+      kp += weich(T, G([[4.6, -79.6], [7.2, -80.1], [9.6, -79.9], [9.4, -79.1], [7, -79.3], [5, -78.9]]), "#000", 0.6 * wu, 0.2);
+      kp += fl(G(wulst), verlauf(T, "wulst", 7, -81.8, 7, -79.6, P.wulstFarbe || [[0, "#6a4a2c"], [0.45, "#3a2616"], [1, "#160e08"]]));
+      if (F) kp += striche(T, wulst, 24, (x, y) => 190 - (x - 7) * 3, 0.9, P.wulstStriche || [["#0e0804", 1, 0.05, 0.55], ["#b08a5c", 0.6, 0.045, 0.45]], { streu: 8 }) +
+        zug(GO([[4.2, -80.6 - wy], [6.6, -81.5 - wy], [9.4, -81.3 - wy]]), "#f0d0a0", 0.14, 0.3, ` filter="${blur(T, 0.1)}"`);
+    }
+    sn = schnabel(T, P.schnabel || {});
+    Q = 10;
+  }
+  s += vg(T, "kopf", 2.6, rot(krot(kp))) + vg(T, "schnabel", 0.8, rot(krot(sn)));
+  /* Box, Füße und Kopf-Ausschnitt nach Neigung und Maßstab */
+  const dr = (p, a, c) => { const ca = Math.cos(rad(a)), sa = Math.sin(rad(a)), x = p[0] - c[0], y = p[1] - c[1]; return [c[0] + x * ca - y * sa, c[1] + x * sa + y * ca]; };
+  const kpk = (p) => dr(dr([KPIV[0] + (p[0] - KPIV[0]) * kk, KPIV[1] + (p[1] - KPIV[1]) * kk + (P.kopfY || 0)], KDREH, KPIV), DREH, PIV);
+  const sk = (P.schnabel && P.schnabel.k) || 1, sb = (p) => [10 + (p[0] - 10) * sk, -78 + (p[1] + 78) * sk];
+  const ex = [...[[16.6, -74.2], [16, -72.8], [16.6, -76], [-0.4, -84.6], [3.6, -84.3], [-4, -83.6]].map((p) => (p[0] > 12 ? kpk(sb(p)) : kpk(p))), ...(P.boxExtra || []).map(kpk),
+    ...[[-22.8, -13.4], [-24.4, -14.6], [-21, -15.8], [15.4, -56.6]].map((p) => dr(p[1] > -20 ? lerp([-12, -37], p, sl) : p, DREH, PIV)), ...P.sitzBox];
+  const bx = box(ex), kb = box([[-6, -86], [17 * sk + 10 * (1 - sk) + 1, -86], [17, -70], [-6, -70]].map(kpk));
+  const k = P.k;
+  return { svg: k === 1 ? s : `<g transform="scale(${k})">${s}</g>`, box: [bx[0] - 0.3, bx[1] - 0.3, bx[2] + 0.2, 0].map((v) => v * k), fuesse: P.fuesse.map((v) => v * k), kopf: kb.map((v) => v * k) };
+}
+
+/* Greifvogelschnabel im Profil (Adler-Einheiten, Kopf-Koordinaten): Wachshaut mit Nasenloch, Oberschnabel mit Haken,
+   Unterschnabel, Mundwinkel, Schnabelspalte; o = { k (Größe), horn: stops Oberschnabel, hornU, wachs: stops, zahn (Falken-
+   „Zahn“), nasenHoecker (Falke), mund } */
+function schnabel(T, o) {
+  const F = T.fein, k = o.k || 1, S = (pts) => pts.map(([x, y, h]) => (h ? [10 + (x - 10) * k, -78 + (y + 78) * k, 1] : [10 + (x - 10) * k, -78 + (y + 78) * k]));
+  const schnO = S(o.zahn ? [[11.6, -80.1], [13.4, -79.9], [14.9, -79.1], [16, -77.7], [16.6, -75.9], [16.6, -74.2], [16, -72.8, 1], [15.5, -73.9], [14.8, -74.6], [14.5, -74.2, 1], [14.1, -75.1], [13.2, -75.7], [12.2, -76], [9.6, -76.6, 1], [10.4, -78.4]]
+    : [[11.6, -80.1], [13.4, -79.9], [14.9, -79.1], [16, -77.7], [16.6, -75.9], [16.6, -74.2], [16, -72.8, 1], [15.6, -73.8], [14.9, -74.8], [13.8, -75.5], [12.4, -76], [9.6, -76.6, 1], [10.4, -78.4]]);
+  const schnU = S([[9.6, -76.3, 1], [12.4, -75.8], [14.6, -75], [15.2, -74.5], [14.6, -74], [12.6, -74.4], [10.4, -75.1]]);
+  const B = (x0, y0, x1, y1) => { const a = S([[x0, y0], [x1, y1]]); return [a[0][0], a[0][1], a[1][0], a[1][1]]; };
+  let sn = teil(T, "schnU", G(schnU), verlauf(T, "hornU", ...B(10, -76, 15.4, -73.6), o.hornU || [[0, "#d0a848"], [0.25, "#8a8c90"], [0.7, "#3e4046"], [1, "#16161a"]]));
+  sn += teil(T, "schnO", G(schnO), verlauf(T, "horn", ...B(11.5, -80, 16.4, -73), o.horn || [[0, "#a4aab2"], [0.35, "#787e88"], [0.62, "#34363c"], [1, "#0c0c0e"]]),
+    (F ? zug(GO(S([[12.4, -79.6], [14.2, -79.3], [15.6, -78.2], [16.3, -76.4], [16.4, -74.4]])), "#fff", 0.13 * k, 0.55) +
+      zug(GO(S([[12.6, -78.8], [14.4, -78.3], [15.6, -76.8]])), "#fff", 0.3 * k, 0.12) : "") +
+    weich(T, G(S([[11.4, -76.2], [14.6, -75.2], [16, -73.6], [14.4, -74.4], [11.6, -75.4]])), "#000", 0.35, 0.25));
+  const wachs = S([[9.8, -80.5], [11.9, -80.3], [12.3, -79.2], [12.3, -77.6], [11.8, -76.4], [10.4, -76.2], [9.4, -76.5], [9.4, -78.6]]);
+  const wst = o.wachs || [[0, "#ecca5a"], [0.5, "#d6a42c"], [1, "#94640e"]];
+  sn += teil(T, "wachs", G(wachs), T.lg("wachs", wst, 0.2, 0, 0.7, 1), F ? T.textur(G(wachs), T.rauschen("wP", { fx: 5, fy: 5, farbe: "#000", staerke: 2.2, okt: 2 }), 0, 0.15, box(wachs)) +
+    weich(T, G(S([[11.6, -80.2], [12.5, -79], [12.4, -77], [11.8, -76.4], [11.7, -78]])), "#000", 0.25, 0.15) : "");
+  const nl = S([[10.5, -78.25]])[0];
+  if (o.nasenHoecker) {   // Falke: rundes Nasenloch mit Knochenzapfen in der Mitte
+    sn += `<circle cx="${N(nl[0] + 0.5 * k)}" cy="${N(nl[1] + 0.1 * k)}" r="${N(0.42 * k)}" fill="#1e1206"/><circle cx="${N(nl[0] + 0.55 * k)}" cy="${N(nl[1] + 0.12 * k)}" r="${N(0.17 * k)}" fill="${wst[1][1]}"/>`;
+  } else {
+    sn += fl(`M${J(nl[0], nl[1])}c${J(0.25 * k, -0.42 * k, 0.85 * k, -0.6 * k, 1.15 * k, -0.4 * k)}c${J(0.12 * k, 0.22 * k, -0.3 * k, 0.6 * k, -0.8 * k, 0.66 * k)}c${J(-0.3 * k, 0.02 * k, -0.45 * k, -0.1 * k, -0.35 * k, -0.26 * k)}Z`, "#1e1206");
+    if (F) sn += zug(`M${J(nl[0] + 0.05 * k, nl[1] + 0.4 * k)}c${J(0.3 * k, 0.12 * k, 0.72 * k, 0.04 * k, 0.95 * k, -0.22 * k)}`, "#fff0c0", 0.07 * k, 0.6);
+  }
+  sn += fl(G(S([[7.6, -76.4], [9.4, -77.1], [10.3, -76.6], [10, -75.9], [8.4, -75.9]])), T.lg("mund", o.mund || [[0, "#e0b03a"], [1, "#9a6a14"]]));
+  sn += zug(GO(S(o.zahn ? [[8, -76.2], [9.8, -76.4], [12.4, -75.9], [14.1, -75.1], [14.5, -74.3], [15.2, -74.5]] : [[8, -76.2], [9.8, -76.4], [12.4, -75.9], [14.6, -75], [15.2, -74.5]])), "#120c08", 0.12 * k, 0.85);
+  if (F) sn += striche(T, S([[9.2, -80.4], [10.6, -80.2], [10.4, -77.4], [9.2, -77.2]]), 26, 200, 0.8 * k, [[o.borsten || "#0e0804", 1, 0.045, 0.7]], { streu: 14 });
+  return sn;
+}
+
+/* Granitfels für die Adler-Einheiten (Oberkante bei y ≈ −15,5 unter den Fängen) */
+function felsGranit(T, o = {}) {
+  const felsU = [[-19.8, 0, 1], [-21.4, -3.4], [-20.6, -7.6, 1], [-17.4, -11.2], [-12.6, -13.8, 1], [-6, -15.1], [1, -15.6], [7.2, -15.4], [11.4, -14.2, 1], [14.6, -11.6], [16.2, -8.2, 1], [17.6, -3.6], [18, 0, 1]];
+  return vg(T, "fels", 0.8, fels(T, "fels", felsU, Object.assign({
+    hell: "#bab4aa", mittel: "#8e887e", dunkel: "#5a564f",
+    oben: [[-17.4, -11.2], [-12.6, -13.8, 1], [-6, -15.1], [1, -15.6], [7.2, -15.4], [11.4, -14.2, 1], [9.6, -12.8], [3, -13.4, 1], [-4.6, -13], [-11.4, -11.8, 1], [-15.6, -9.6]],
+    rechts: [[11.4, -14.2], [14.6, -11.6], [16.2, -8.2], [17.6, -3.6], [18, 0], [12.8, 0], [12.2, -4.4], [12.6, -8.6], [10.6, -12.2]],
+    links: [[-21.4, -3.4], [-20.6, -7.6], [-17.4, -11.2], [-15.6, -9.6], [-16, -5.6], [-18, -1.6]],
+    risse: [[[-4.6, -13], [-4, -9.6], [-5.2, -5.8], [-4.4, -1.4]], [[3, -13.4], [3.8, -10.4], [3.2, -7.6]], [[-11.4, -11.8], [-10.6, -8.4], [-11.6, -4.6]]],
+    flechten: [[-10, -12.6, 1.1, "#b8bc94"], [9.4, -13.8, 0.6, "#d49a40"], [-17, -7.4, 0.9, "#c2c098"], [15, -6.4, 0.6, "#cfa048"], [0.6, -6, 1.2, "#aeb48c"]],
+  }, o)));
+}
+const FELS_BOX = [[-21.4, 0], [18, 0]], FELS_FUESSE = [-17, -8, 2, 12];
+
+/* =====================================================================
+   STEINADLER
+   ===================================================================== */
+/* RECHERCHE Steinadler (Aquila chrysaetos) – Websuche-Kontingent erschöpft, aus Fachwissen (HBW, Svensson, Forsman):
+   Länge 75–93 cm (Weibchen größer), Spannweite 190–227 cm, Gewicht 3–6,5 kg. Schwanz 27–35 cm, Flügel (gefaltet)
+   57–72 cm: im Sitzen reichen die Handschwingen fast bis zur Schwanzspitze. Schnabel (First mit Wachshaut) ca.
+   5,5–6,5 cm, hoch, Haken kräftig; Basis blaugrau, Spitze schwarz, Wachshaut und Mundwinkel gelb, die Schnabelspalte
+   reicht bis unter die Augenmitte. Auge groß (Iris ca. 2 cm sichtbar), Iris goldbraun bis haselnussbraun, kräftiger
+   Überaugenwulst (flache, „finstere“ Stirnlinie), Augenumgebung dunkel befiedert, kein nackter Augenring.
+   Kennzeichen: goldgelbe, lanzettförmige Federn an Hinterkopf, Nacken und Halsseiten („Goldnacken“), sonst
+   dunkelbraun; mittlere Flügeldecken mit helleren lohfarbenen Spitzen, Hosen und Unterschwanzdecken lohbraun.
+   Läufe bis zu den Zehen befiedert („befiederte Läufe“, Echte Adler). Zehen gelb mit Querschildern; Mittelzehe
+   ca. 7 cm, Krallen schwarz, stark gebogen, Hinterkralle 4,5–6,5 cm. Schwanz adult graubraun mit unregelmäßigen
+   dunklen Binden und breiter dunkler Endbinde. Sitzend: Körper ca. 60° aufgerichtet, breite Brust, Kopf mit flachem
+   Scheitel, Schwanz hängt fast senkrecht. */
+const goldM = (k, o) => `<path d="M0 0Q.45-${k}.8 0Q.45 ${k} 0 0Z" fill="#3e2410" opacity="${o}"/>`;
+const STEINADLER = {
+  k: 1, sitz: (T) => felsGranit(T), sitzBox: FELS_BOX, fuesse: FELS_FUESSE,
+  brust: [["#4a3020", "#5c402c"], ["#3e281a", "#523826"]], hose: [["#7a5230", "#966c44"], ["#684428", "#86603a"]], hoseFarbe: "#7a5230", usd: "#8a643a",
+  nacken: [["#b88234", "#e6ba62", goldM(0.09, 0.4)], ["#c4903e", "#eec470", goldM(0.05, 0.3)], ["#a06e2c", "#d8aa56", goldM(0.12, 0.45)]],
+  decke: [["#4e3420", "#6a4c30"], ["#45301e", "#604430"]], mittel: [["#5e4026", "#906a44"], ["#543822", "#7e5c3a"]], schulter: [["#422c1c", "#5e442c"]],
+  rumpfFarbe: "#4a3020", deckFarbe: "#4e3420",
+  quH: [[0, "#564638"], [1, "#160f0a"]], quA: [[0, "#625242"], [1, "#1a120c"]], armBinden: [4, "#8a8274", 0.2, 0.75, 0.4, 0.9],
+  schwanz: { quer: [[0, "#7e705e"], [1, "#30261e"]], binden: [5, "#2a2018", 0.42, 0.95, 0.25, 0.86], saum: ["#c8b8a0", 0.6, 0.2], endbinde: "#1e1610" },
+  zehen: { hell: "#f8dc70", mittel: "#e0aa2a", dunkel: "#8e5c0c", schilde: 6 },
+  kG: [[0, "#c8943c"], [0.38, "#a87430"], [0.66, "#4a3220"], [1, "#2a1a10"]],
+  auge: { iris: "#c8902e", iris2: "#6e4010" },
+};
+const steinadler = (T) => greif(T, STEINADLER);
+
+module.exports = [
+  { id: "steinadler", de: "der Adler", syl: "AD-ler", it: "l'aquila", itSyl: "A-qui-la", en: "golden eagle",
+    gruppe: "Greifvögel und Eulen", lebensraum: "Gebirge", laenge: 0.5, hoehe: 0.85, zeichne: steinadler },
+];

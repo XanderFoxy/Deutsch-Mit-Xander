@@ -730,7 +730,7 @@ function braunbaer(T) {
      oben weich ausgeblendet; Buckel über dem Ellbogen, Nacken davor ≈ 6 % tiefer, Sattelsenke dahinter; hängender Bauch mit
      ungleichen Fransen; Schüsselprofil (Stirnwulst, Delle vor dem Auge, gerader schmaler werdender Fang), klarer Unterkiefer,
      kurzes Kinn; Nase breiter als hoch, bündig; Vorderfuß ≈ 60 % des Hinterfußes, Krallen an den Zehenspitzen. */
-  T.dichte = T.fein === false ? 0.6 : 0.56;
+  T.dichte = T.fein === false ? 0.6 : 0.52;
   const rumpf = [
     [16, -92], [24, -97.6], [36, -99.6], [48, -98.4], [60, -96.4], [74, -96.8], [88, -99.4], [100, -103.4], [112, -109], [124, -112.6], [132, -112],  // Kruppe, Sattel, Buckel
     [140, -109.6], [148, -105.6], [156, -101.2], [163, -98], [168, -92], [168, -82],                                                             // Nacken (≈ 6 % tiefer), unter den Kopf
@@ -778,7 +778,7 @@ function braunbaer(T) {
   n += fleck(T, "!", 128, -94, 12, 10, "#e4c89c", 0.2) + fleck(T, "!", 108, -76, 6, 18, "#140a04", 0.2, 10) + fleck(T, "!", 30, -80, 14, 12, "#e4c89c", 0.15) + fleck(T, "!", 58, -60, 6, 14, "#140a04", 0.2, -15);
   /* Runde 3: dichte, zottige Grundstruktur als nahtlose Büschel-Kachel, darüber Büschel in örtlicher Wuchsrichtung */
   n += fellMuster(T, "bR", 13.3, 44, 5.4, 0.34, ["#d8b688", 0.26], ["#140a04", 0.26], 140, [0, -120, 180, -30]);
-  n += bueschel(T, rumpf, 150, wuchs, 8.4, 0.36, ["#d8b688", 0.32], ["#140a04", 0.26], { streu: 18 });
+  n += bueschel(T, rumpf, 120, wuchs, 8.4, 0.36, ["#d8b688", 0.32], ["#140a04", 0.26], { streu: 18 });
   n += haare(T, [[60, -100], [100, -106], [126, -116], [150, -106], [130, -98], [100, -94], [60, -92]], 80, wuchs, 6, [["#f0dab4", 1, 0.18, 0.6]], 14, 0.25);
   n += haare(T, rumpf, 70, wuchs, 6, [["#1a0e06", 1, 0.2, 0.5]], 14, 0.25);
   s += teil(T, "brumpf", rumpf, fell, n,
@@ -807,7 +807,8 @@ function braunbaer(T) {
   /* Stirnwulst im Licht, Delle vor dem Auge im Schatten, Kaumuskel/Wange als Wölbung, Unterkiefer klar */
   k += fleck(T, "!", 182, -102, 7, 2.6, "#e4c89c", 0.4, -10) + fleck(T, "!", 192, -95.4, 2.4, 1.6, "#140a04", 0.35) + fleck(T, "!", 178, -86, 9, 7, "#e4c89c", 0.18) + fleck(T, "!", 186, -76, 12, 2, "#140a04", 0.35);
   k += bueschel(T, kopf.filter((p) => p[0] < 196), 70, (x, y) => 175 + (y + 88) * 1.2, 3.4, 0.22, ["#d8b688", 0.3], ["#140a04", 0.22]);
-  k += haare(T, kopf, 140, (x, y) => (x > 190 ? 194 : 168 + (y + 88) * 1.4), 2, [["#24160c", 1, 0.15, 0.5], ["#d6ae7c", 0.8, 0.14, 0.5]], 14, 0.2);
+  k += fellMuster(T, "bK", 7.3, 30, 2.4, 0.2, ["#d8b688", 0.26], ["#140a04", 0.24], 176, [150, -108, 200, -72]);
+  k += haare(T, kopf, 80, (x, y) => (x > 190 ? 194 : 168 + (y + 88) * 1.4), 2, [["#24160c", 1, 0.15, 0.5], ["#d6ae7c", 0.8, 0.14, 0.5]], 14, 0.2);
   /* Augenhöhle: Brauenwulst wirft Schatten, dunkle Lidhaut */
   k += fleck(T, "", 187.6, -97.8, 3.6, 1.6, "#000", 0.45, -8);
   /* Lefze: dunkel, fast waagerecht unter dem Nasenspiegel bis unter das Auge; Unterlippe vorn leicht hängend */
@@ -857,7 +858,7 @@ function eisbaer(T) {
   const fell = hoehenVerlauf(T, "fell", -114, 0, [[-114, "#fbf8f1"], [-100, "#f6f1e7"], [-84, "#f0eadc"], [-66, "#e9e2d1"], [-48, "#e4dcc8"], [-24, "#e6dfcd"], [0, "#dad1bb"]]);
   const fellF = hoehenVerlauf(T, "fellF", -114, 0, [[-60, "#cdd1d2"], [-30, "#c4c8c8"], [0, "#b4b6ae"]]);
   /* kühler Kernschatten im unteren Drittel, Reflexlicht an der Bauchkante, Schlagschatten auf die Laufansätze */
-  const kern = hoehenVerlauf(T, "eKern", -112, -18, [[-86, blau, 0], [-70, blau, 0.24], [-58, blau, 0.42], [-50, blau, 0.36], [-40, blau, 0.24], [-26, blau, 0.1], [-14, blau, 0]]);
+  const kern = hoehenVerlauf(T, "eKern", -112, 0, [[-88, blau, 0], [-72, blau, 0.2], [-58, blau, 0.34], [-46, blau, 0.38], [-30, blau, 0.3], [-14, blau, 0.18], [0, blau, 0.1]]);   // stetig, keine Bänder
   const weissS = (pts, n, len, w) => bueschel(T, pts, n, wuchs, len, w, ["#ffffff", 0.55], ["#8a98aa", 0.22], { streu: 14 });
   const wuchs = (x, y) => (x > 150 ? 172 - (y + 88) * 0.5 : x > 110 ? 120 : x < 44 ? 100 + (x - 10) * 1.6 : y > -54 ? 140 : 170 - (y + 105) * 0.4);
 
@@ -880,7 +881,8 @@ function eisbaer(T) {
   n += fleck(T, "!", 122, -88, 12, 9, "#ffffff", 0.55) + fleck(T, "!", 82, -92, 18, 7, "#ffffff", 0.45) + fleck(T, "!", 40, -96, 16, 11, "#ffffff", 0.55);
   /* Formschatten nur, wo die Form vom Licht wegdreht: Hinterkante des Schulterblatts (lang, weich), Rückseite der Keule */
   n += fleck(T, "!", 110, -74, 9, 22, blau, 0.12, 12) + fleck(T, "!", 18, -66, 9, 24, blau, 0.16, 8);
-  n += weissS(rumpf, 220, 7, 0.4);
+  n += fellMuster(T, "eR", 13.3, 44, 5.4, 0.36, ["#ffffff", 0.5], ["#8a98aa", 0.22], 150, [5, -115, 195, -35]);
+  n += weissS(rumpf, 150, 7, 0.4);
   n += haare(T, rumpf, 60, wuchs, 5, [["#ffffff", 1, 0.16, 0.6], ["#9aa6b4", 0.5, 0.15, 0.3]], 14, 0.25);
   /* gelblicher Ton nur in Schattenübergängen, an Hals und Läufen */
   n += fleck(T, "!", 160, -68, 14, 8, "#d8c8a0", 0.2, 30);
@@ -893,11 +895,11 @@ function eisbaer(T) {
   s += fellKante(T, [[15.6, -94], [13.2, -91.6]], 22, -2.6, -0.4, "#ece6d6", 0.24, 0.85) + fellKante(T, [[15, -92.6], [13.6, -90.6]], 10, -2.2, 0.6, "#a8b0bc", 0.2, 0.5);
 
   /* ---- nahe Läufe: über dem Rumpf, oben weich; Haarfahne hinten am Unterarm; Sohlenfell in Büscheln ---- */
-  let h = weissS(hbN, 70, 5, 0.38) + okk(-36, -22, "H", 0.3);
+  let h = fellMuster(T, "eB", 9.1, 30, 4, 0.32, ["#ffffff", 0.5], ["#8a98aa", 0.22], 96, [15, -50, 60, 0]) + weissS(hbN, 44, 5, 0.38) + okk(-36, -22, "H", 0.3);
   s += teil(T, "ehbN", hbN, fell, h, fellKante(T, [[21.4, -24], [21, -14], [19.4, -8]], 14, -1.6, 1.2, "#e2d8c4", 0.18, 0.6) +
     fellKante(T, [[20.4, -0.4], [55, -0.4]], 50, 0.5, 1.3, "#ece4d0", 0.2, 0.75) + kralleB(T, 56.4, -2.4, 4, 3, 2.2, "#14110f", "#14110f", 0.85, T.fein !== false),
     { weich: 4, tiefe: 4, ueber: kern, einblenden: [-40, -26] });
-  let v = weissS(vbN, 70, 5, 0.38) + okk(-40, -26, "V", 0.3);
+  let v = fellMuster(T, "eB", 9.1, 30, 4, 0.32, ["#ffffff", 0.5], ["#8a98aa", 0.22], 96, [118, -52, 160, 0]) + weissS(vbN, 44, 5, 0.38) + okk(-40, -26, "V", 0.3);
   s += teil(T, "evbN", vbN, fell, v, fellKante(T, [[122.4, -38], [124.6, -28], [126.6, -18]], 40, -3, 2, "#e8e0cc", 0.2, 0.75) +
     fellKante(T, [[128.6, -0.4], [154, -0.4]], 44, 0.5, 1.3, "#ece4d0", 0.2, 0.75) + kralleB(T, 155.4, -3, 4, 3.4, 2.4, "#14110f", "#14110f", 0.85, T.fein !== false) +
     (T.fein !== false ? `<path d="M152.6 -8.6q-1 3.6 -.4 8M147.6 -10q-1 4 -.4 9.6M142.6 -10q-1 4 -.4 9.6" stroke="#a8a89c" stroke-width=".5" stroke-opacity=".6" fill="none"/>` : ""),
@@ -908,7 +910,7 @@ function eisbaer(T) {
   k += fleck(T, "!", 199, -89.8, 5, 1.3, blau, 0.3, -8) + fleck(T, "!", 197, -92, 6, 1.6, "#ffffff", 0.6, -5);     // Brauenwulst: Licht oben, Schattenkante darunter
   k += fleck(T, "!", 198, -78, 8, 3.4, blau, 0.22, -10) + fleck(T, "!", 196, -82.4, 7, 2.2, "#ffffff", 0.45, -10);   // Jochbogen/Kaumuskel
   k += `<rect x="170" y="-100" width="62" height="40" fill="${hoehenVerlauf(T, "eKopfK", -80, -64, [[-80, blau, 0], [-70, blau, 0.2], [-64, blau, 0.3]])}"/>`;
-  k += haare(T, kopf, 170, (x, y) => (x > 200 ? 194 : 178 + (y + 80) * 1.2), 1.8, [["#fff", 1, 0.12, 0.65], ["#8a96a6", 0.7, 0.11, 0.45]], 12, 0.2);
+  k += fellMuster(T, "eK", 6.7, 30, 2, 0.18, ["#ffffff", 0.5], ["#8a98aa", 0.2], 182, [172, -96, 222, -64]) + haare(T, kopf, 100, (x, y) => (x > 200 ? 194 : 178 + (y + 80) * 1.2), 1.8, [["#fff", 1, 0.12, 0.65], ["#8a96a6", 0.7, 0.11, 0.45]], 12, 0.2);
   k += haare(T, [[220, -82], [228, -75], [228, -71], [221, -76]], 20, 200, 0.6, [["#fff", 1, 0.08, 0.7]], 20);
   k += zart(T, [[227.4, -69.8], [224, -69.2], [219.4, -68.8], [214, -68.6], [209.6, -68.7], [208.2, -69.2]], "#141110", 0.5, 0.9);   // schwarzes Lippenpigment
   let ka = fellKante(T, [[219, -65.6], [212, -65.2], [204, -65.8], [196, -67.4], [190, -70]], 34, -1.4, 2.2, "#ddd4c0", 0.16, 0.7);
