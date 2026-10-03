@@ -151,8 +151,6 @@ const WEG = { d0: 3.0, d1: 4.15 };
   k += `<rect x="-160" y="${r(PY(0, 3.6) - y0)}" width="320" height="${r(y1 - PY(0, 3.6))}" fill="url(#${S.id("kies2")})"/>`;
   k += `<rect x="-160" y="0" width="320" height="${r(y1 - y0)}" fill="${S.lg("weglicht", [[0, "#5a4a30", 0.18], [0.3, "#5a4a30", 0], [1, "#fff", 0.1]])}"/>`;
   k += `<rect x="-160" y="0" width="320" height="1.4" fill="#8c8170"/>`;
-  /* Rasenkante vorne */
-  k += `<rect x="-160" y="${r(PY(0, WEG.d0) - y0)}" width="320" height="${r(y1 - PY(0, WEG.d0) + 1)}" fill="url(#${S.id("gras")})"/><rect x="-160" y="${r(PY(0, WEG.d0) - y0)}" width="320" height="1.2" fill="#8a9a5a"/>`;
   S.teil({ id: "fh_weg", de: "der Kiesweg", syl: "KIES-weg", it: "il vialetto di ghiaia", itSyl: "via-LET-to", en: "gravel path", x: VX, y: y0, kunst: k,
     tipp: "Kies knirscht — deshalb hört man hier jeden Schritt." });
 }
@@ -190,12 +188,18 @@ const GR1 = { a: -2.05, b: -0.9 }, GR2 = { a: -0.1, b: 1.05 }, GR3 = { a: 1.35, 
 {
   /* frisches Grab: Erdhügel, mit Tannengrün abgedeckt */
   const X = PX((GR2.a + GR2.b) / 2, D_V), Y = PY(0, D_V);
-  let g = `<path d="M${P(GR2.a, 0, D_V)} Q${P(GR2.a - 0.05, 0.32, (D_V + D_H) / 2)} ${P((GR2.a + GR2.b) / 2, 0.42, (D_V + D_H) / 2 - 0.2)} Q${P(GR2.b + 0.05, 0.32, (D_V + D_H) / 2)} ${P(GR2.b, 0, D_V)} Z" fill="${ERDE}"/>`;
-  g += `<path d="M${P(GR2.a, 0, D_H)} L${P(GR2.b, 0, D_H)} L${P(GR2.b, 0.3, (D_V + D_H) / 2)} L${P(GR2.a, 0.3, (D_V + D_H) / 2)} Z" fill="#5a3e28"/>`;
-  for (let i = 0; i < 26; i++) {
-    const xw = GR2.a + 0.1 + rnd() * (GR2.b - GR2.a - 0.2), d = D_V + 0.15 + rnd() * 1.3, s = sk(d);
-    g += `<path d="M${r(PX(xw, d) - 0.12 * s)} ${r(PY(0.25, d))} q${r(0.12 * s)} ${r(-0.08 * s)} ${r(0.24 * s)} 0" stroke="${rnd() < 0.5 ? "#2f5a2a" : "#3e7034"}" stroke-width="${r(0.05 * s)}" fill="none"/>`;
+  const xa = GR2.a, xb = GR2.b, dm = (D_V + D_H) / 2;
+  let g = `<path d="M${P(xa, 0, D_V)} Q${P(xa - 0.04, 0.3, D_V + 0.25)} ${P(xa + 0.12, 0.36, D_V + 0.45)} L${P(xa + 0.1, 0.32, D_H - 0.2)} L${P(xb - 0.1, 0.32, D_H - 0.2)} L${P(xb - 0.12, 0.36, D_V + 0.45)} Q${P(xb + 0.04, 0.3, D_V + 0.25)} ${P(xb, 0, D_V)} Z" fill="${ERDE}"/>`;
+  g += `<path d="M${P(xa + 0.12, 0.36, D_V + 0.45)} L${P(xb - 0.12, 0.36, D_V + 0.45)} L${P(xb - 0.1, 0.32, D_H - 0.2)} L${P(xa + 0.1, 0.32, D_H - 0.2)} Z" fill="#6e5038"/>`;
+  /* Tannengrün deckt den Hügel ab */
+  for (let i = 0; i < 70; i++) {
+    const t = rnd(), xw = xa + 0.06 + rnd() * (xb - xa - 0.12), d = D_V + 0.05 + t * (D_H - D_V - 0.3), s = sk(d), h = t < 0.2 ? t / 0.2 * 0.34 : 0.34;
+    g += `<path d="M${r(PX(xw, d) - 0.11 * s)} ${r(PY(h, d))} q${r(0.11 * s)} ${r(-0.07 * s)} ${r(0.22 * s)} ${r(0.01 * s)}" stroke="${["#2f5a2a", "#3e7034", "#264a22"][i % 3]}" stroke-width="${r(0.045 * s)}" fill="none" stroke-linecap="round"/>`;
   }
+  /* Gesteck mit weißen Lilien vorne */
+  { const d = D_V + 0.35, s = sk(d), x = PX(xa + 0.3, d), y = PY(0.3, d);
+    g += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.18 * s)}" ry="${r(0.06 * s)}" fill="#3e7034"/>`;
+    for (let i = 0; i < 5; i++) g += `<path d="M${r(x - 5 + i * 2.5)} ${r(y - 0.5)} l-1 -3 l1 1 l1 -1 Z" fill="#fbf8f0" stroke="#d8d2c4" stroke-width=".15"/>`; }
   S.teil({ id: "fh_grab2", de: "die zweite Grabstelle", syl: "ZWEI-te GRAB-stel-le", it: "la seconda tomba", itSyl: "se-CON-da TOM-ba", en: "second grave", x: X, y: Y, steht: true, kunst: G(X, Y, g),
     tipp: "Ein frisches Grab: Der Stein kommt erst nach einem Jahr, bis dahin steht ein Holzkreuz." });
 }
@@ -361,8 +365,8 @@ const RACK = { d: 5.0, xw: -2.4 };
    10 — DIE FRAU AM GRAB (kniet links neben Grab 1, pflegt die Pflanzen)
    ===================================================================== */
 {
-  const d = D_V + 0.3, s = sk(d), X = PX(-0.5, d), Y = PY(0, d);
-  const m = B.mensch({ id: "b13c_frau", geschlecht: "w", pose: "knien", blick: -64, frisur: "dutt", haarfarbe: "braun", haut: "hell",
+  const d = D_V + 0.3, s = sk(d), X = PX(-0.36, d), Y = PY(0, d);
+  const m = B.mensch({ id: "b13c_frau", geschlecht: "w", pose: "hocken", blick: -58, frisur: "dutt", haarfarbe: "braun", haut: "hell",
     kleidung: { oberteil: { stueck: "pullover", farbe: "gruen_d" }, unterteil: { stueck: "hose", farbe: "beige" }, jacke: { stueck: "weste", farbe: "grau" }, schuhe: { stueck: "stiefel", farbe: "braun" } } }, 1.66 * s);
   S.teil({ id: "fh_frau", de: "die Frau am Grab", syl: "FRAU am GRAB", it: "la donna alla tomba", itSyl: "DON-na AL-la TOM-ba", en: "woman at the grave", x: X, y: Y, kunst: m.svg,
     tipp: "Sie gießt die Blumen und nimmt das welke Laub weg." });

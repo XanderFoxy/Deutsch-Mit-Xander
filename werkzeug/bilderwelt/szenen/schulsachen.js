@@ -205,11 +205,20 @@ const TI = { X0: -0.72, X1: 0.72, z0: 0, z1: 0.66 };
   const w = x1 - x0, h = 0.36 * s, cx = (x0 + x1) / 2;
   let k = schatten(cx, yb, w * 0.55, 1.6, 0.32);
   /* Deckel aufgeklappt nach hinten (gegen die Wand gelehnt) */
-  k += `<path d="M${r(x0 + 2)} ${r(yb - h + 4)} L${r(x0 + 4)} ${r(yb - h - 0.2 * s)} Q${cx} ${r(yb - h - 0.23 * s)} ${r(x1 - 4)} ${r(yb - h - 0.2 * s)} L${r(x1 - 2)} ${r(yb - h + 4)} Z" fill="${S.lg("deckel", [[0, "#2a8f9a"], [1, "#1f6f7a"]])}"/>`;
-  k += `<path d="M${r(x0 + 6)} ${r(yb - h - 0.15 * s)} Q${cx} ${r(yb - h - 0.17 * s)} ${r(x1 - 6)} ${r(yb - h - 0.15 * s)}" stroke="#e8f04a" stroke-width="1.2" fill="none"/>`;
-  /* Inhalt: Hefte und Schnellhefter stehen heraus */
+  const yh = P(0, HT + 0.36, z - 0.17)[1];
+  k += `<path d="M${r(x0 + 2)} ${r(yh + 2)} L${r(x0 + 4)} ${r(yh - 0.2 * s)} Q${cx} ${r(yh - 0.22 * s)} ${r(x1 - 4)} ${r(yh - 0.2 * s)} L${r(x1 - 2)} ${r(yh + 2)} Z" fill="${S.lg("deckel", [[0, "#2a8f9a"], [1, "#1f6f7a"]])}"/>`;
+  /* Innenseite des Deckels: graues Futter mit Namensschild */
+  k += `<path d="M${r(x0 + 4.4)} ${r(yh + 1)} L${r(x0 + 6)} ${r(yh - 0.18 * s)} Q${cx} ${r(yh - 0.2 * s)} ${r(x1 - 6)} ${r(yh - 0.18 * s)} L${r(x1 - 4.4)} ${r(yh + 1)} Z" fill="${S.lg("futter", [[0, "#c9d3d6"], [1, "#a9b6ba"]])}"/>`;
+  k += `<rect x="${r(cx - 6)}" y="${r(yh - 0.14 * s)}" width="12" height="5" rx=".6" fill="#fffef6" stroke="#8a9a9e" stroke-width=".3"/><text x="${cx}" y="${r(yh - 0.14 * s + 3.4)}" font-size="2.2" text-anchor="middle" fill="#1f5fa8" font-family="'Comic Sans MS',cursive">Lena</text>`;
+  /* Tragegriff */
+  k += `<path d="M${r(cx - 4)} ${r(yb - h + 0.5)} q4 -4.4 8 0" stroke="#1d3f45" stroke-width="1.3" fill="none"/>`;
+  /* Öffnung oben (Draufsicht, dunkel) mit Heften, die herausschauen */
+  const HO = HT + 0.36, zb = z - 0.17;
+  k += poly([P(X0, HO, z), P(X1, HO, z), P(X1, HO, zb), P(X0, HO, zb)], "#123f45");
   const hefte = ["#d6402f", "#2b5fa8", "#f2c230", "#2f8a3e", "#8e5aa8"];
-  hefte.forEach((f, i) => { k += `<rect x="${r(x0 + 3 + i * (w - 8) / 5)}" y="${r(yb - h - 3 - (i % 2) * 1.6)}" width="${r((w - 8) / 5 + 1)}" height="10" rx=".5" fill="${f}" stroke="#000" stroke-opacity=".15" stroke-width=".2"/>`; });
+  hefte.forEach((f, i) => { const zz = zb + 0.03 + i * 0.026, Xa = X0 + 0.03 + (i % 2) * 0.01; k += poly([P(Xa, HO - 0.02, zz), P(X1 - 0.03 - (i % 3) * 0.02, HO - 0.02, zz), P(X1 - 0.03 - (i % 3) * 0.02, HO + 0.05 + (i % 2) * 0.015, zz), P(Xa, HO + 0.05 + (i % 2) * 0.015, zz)], f, 'stroke="#000" stroke-opacity=".2" stroke-width=".2"'); });
+  /* Seitenwand rechts */
+  k += poly([P(X1, HT, z), P(X1, HT, zb), P(X1, HO, zb), P(X1, HO, z)], "#1a6670");
   /* Korpus */
   k += `<path d="M${x0} ${yb} L${x0} ${r(yb - h + 4)} Q${x0} ${r(yb - h)} ${r(x0 + 4)} ${r(yb - h)} L${r(x1 - 4)} ${r(yb - h)} Q${x1} ${r(yb - h)} ${x1} ${r(yb - h + 4)} L${x1} ${yb} Z" fill="${S.lg("ranzen", [[0, "#36b0bc"], [0.5, "#2a98a4"], [1, "#1f7a85"]], 0, 0, 1, 0)}"/>`;
   k += `<rect x="${x0}" y="${r(yb - h)}" width="${r(w)}" height="2.2" rx="1" fill="#1d6670"/>`;
@@ -268,7 +277,7 @@ const TI = { X0: -0.72, X1: 0.72, z0: 0, z1: 0.66 };
   /* rechts: Radiergummi und Anspitzer */
   {
     const r0 = map(9.5, -7), r1 = map(15.5, -3.6);
-    k += `<rect x="${r0[0]}" y="${r0[1]}" width="${r(r1[0] - r0[0])}" height="${r(r1[1] - r0[1])}" rx=".8" fill="#f6f3ea" stroke="#d8d2c2" stroke-width=".3"/><rect x="${r0[0]}" y="${r0[1]}" width="${r((r1[0] - r0[0]) * 0.55)}" height="${r(r1[1] - r0[1])}" rx=".8" fill="#3b82d0"/><text x="${r(r0[0] + (r1[0] - r0[0]) * 0.27)}" y="${r((r0[1] + r1[1]) / 2 + 0.6)}" font-size="1.4" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">RADIER</text>`;
+    k += `<rect x="${r0[0]}" y="${r0[1]}" width="${r(r1[0] - r0[0])}" height="${r(r1[1] - r0[1])}" rx=".8" fill="#f6f3ea" stroke="#d8d2c2" stroke-width=".3"/><rect x="${r0[0]}" y="${r0[1]}" width="${r((r1[0] - r0[0]) * 0.55)}" height="${r(r1[1] - r0[1])}" rx=".8" fill="#3b82d0"/><text x="${r(r0[0] + (r1[0] - r0[0]) * 0.27)}" y="${r((r0[1] + r1[1]) / 2 + 0.6)}" font-size=".9" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">RADIER</text>`;
     U({ id: "radiergummi", de: "der Radiergummi", syl: "Ra-DIER-gum-mi", it: "la gomma", itSyl: "GOM-ma", en: "eraser", tipp: "Mit dem Radiergummi kann man Bleistift wegradieren – Füller aber nicht." }, [r0, r1]);
     const a0 = map(10.5, 0.5), a1 = map(14.5, 4.5);
     k += `<rect x="${a0[0]}" y="${a0[1]}" width="${r(a1[0] - a0[0])}" height="${r(a1[1] - a0[1])}" rx="1" fill="${S.lg("spitzer", [[0, "#f05a5a"], [1, "#b8302f"]])}"/><circle cx="${r((a0[0] + a1[0]) / 2)}" cy="${r((a0[1] + a1[1]) / 2)}" r="1.1" fill="#4a1414"/><rect x="${r(a0[0] + 0.6)}" y="${r(a0[1] + 0.5)}" width="${r(a1[0] - a0[0] - 1.2)}" height=".8" fill="${STAHL}"/>`;
@@ -349,7 +358,7 @@ const TI = { X0: -0.72, X1: 0.72, z0: 0, z1: 0.66 };
    12 — DER WASSERBECHER
    ===================================================================== */
 {
-  const X = 0.24, z = 0.33;
+  const X = 0.34, z = 0.37;
   /* Kasten 26 × 9 cm, Deckel aufgeklappt dahinter (als Mischpalette) */
   let g = `<rect x="-13" y="-9.6" width="26" height="9.2" rx=".6" fill="#f4f4f2" stroke="#b8bcc0" stroke-width=".2"/>`;
   for (let i = 0; i < 3; i++) g += `<rect x="${-11.5 + i * 8.2}" y="-8.6" width="6.6" height="7.2" rx="1.2" fill="#ecebe6" stroke="#cfd2d4" stroke-width=".15"/>`;
@@ -365,7 +374,7 @@ const TI = { X0: -0.72, X1: 0.72, z0: 0, z1: 0.66 };
 }
 {
   /* Wasserbecher (Faltbecher aus Kunststoff), hinten rechts neben dem Kasten */
-  const [cx, cy] = P(0.46, HT, 0.25), s = sk(0.25);
+  const [cx, cy] = P(0.6, HT, 0.3), s = sk(0.3);
   const w = 0.07 * s, h = 0.09 * s;
   let k = schatten(cx, cy, w * 0.7, 1.2, 0.28);
   k += `<path d="M${r(cx - w / 2)} ${r(cy - h)} L${r(cx + w / 2)} ${r(cy - h)} L${r(cx + w * 0.4)} ${cy} L${r(cx - w * 0.4)} ${cy} Z" fill="#e9f6fb" opacity=".75" stroke="#9cc6d6" stroke-width=".3"/>`;
@@ -377,7 +386,7 @@ const TI = { X0: -0.72, X1: 0.72, z0: 0, z1: 0.66 };
     tipp: "Im Wasserbecher wäscht man den Pinsel aus." });
 }
 {
-  const X = 0.2, z = 0.47, dr = -12;
+  const X = 0.22, z = 0.5, dr = -12;
   let g = `<rect x="-9" y="-.45" width="12" height=".9" rx=".45" fill="${S.lg("stiel", [[0, "#e2563a"], [1, "#b33b22"]], 0, 0, 0, 1)}"/><rect x="3" y="-.55" width="2.2" height="1.1" fill="#c9cfd4"/><path d="M5.2 -.55 Q7.6 -.6 8.6 0 Q7.6 .6 5.2 .55 Z" fill="#3a2a1a"/><path d="M7 -.3 Q8 0 8.6 0" stroke="#2b5fa8" stroke-width=".3"/>`;
   const k = flach(X, z, g, dr, 0.006);
   const [ax, ay] = P(X, HT, z + 0.02);
@@ -389,7 +398,7 @@ const TI = { X0: -0.72, X1: 0.72, z0: 0, z1: 0.66 };
    13 — DER TASCHENRECHNER, 14 — DER ZIRKEL (vorn rechts)
    ===================================================================== */
 {
-  const X = 0.44, z = 0.52, dr = -10;
+  const X = 0.46, z = 0.56, dr = -10;
   let g = `<rect x="-4.2" y="-7.6" width="8.4" height="15.2" rx="1" fill="#000" opacity=".25" transform="translate(.5 .7)"/><rect x="-4.2" y="-7.6" width="8.4" height="15.2" rx="1" fill="${S.lg("rechner", [[0, "#3a3f45"], [1, "#24282c"]])}"/>`;
   g += `<rect x="-3.4" y="-6.8" width="6.8" height="3" rx=".4" fill="#b9c9b0"/><text x="3" y="-4.4" font-size="2" text-anchor="end" fill="#2a3326" font-family="monospace">42</text>`;
   g += `<rect x="-3.4" y="-3.3" width="6.8" height=".9" rx=".3" fill="#5a6168"/>`;
@@ -399,7 +408,7 @@ const TI = { X0: -0.72, X1: 0.72, z0: 0, z1: 0.66 };
   S.teil({ oben: true, id: "taschenrechner", de: "der Taschenrechner", syl: "TA-schen-rech-ner", it: "la calcolatrice", itSyl: "cal-co-la-TRI-ce", en: "calculator", x: ax, y: ay, kunst: um(ax, ay, k) });
 }
 {
-  const X = 0.6, z = 0.5, dr = 20;
+  const X = 0.62, z = 0.52, dr = 20;
   let g = `<circle cx="0" cy="-6.6" r="1" fill="#c9cfd4" stroke="#7d868c" stroke-width=".2"/><rect x="-.3" y="-8.4" width=".6" height="1.6" fill="#7d868c"/>`;
   g += `<path d="M-.4 -6 L-3.2 5.4 L-2.6 5.6 L.2 -5.8 Z" fill="${STAHL}" stroke="#7d868c" stroke-width=".1"/><path d="M.4 -6 L3.4 5 L2.8 5.2 L-.2 -5.8 Z" fill="${STAHL}" stroke="#7d868c" stroke-width=".1"/>`;
   g += `<path d="M-3.2 5.4 L-3.1 6.6" stroke="#555" stroke-width=".25"/><rect x="2.6" y="4.8" width=".9" height="2.2" rx=".2" fill="#e8c34a" transform="rotate(-20 3 5)"/><path d="M3.2 7 L3.3 7.6" stroke="#333" stroke-width=".3"/>`;
@@ -439,7 +448,7 @@ const TI = { X0: -0.72, X1: 0.72, z0: 0, z1: 0.66 };
 }
 {
   /* Klebestift, stehend */
-  const [cx, cy] = P(0.08, HT, 0.52), s = sk(0.52);
+  const [cx, cy] = P(0.07, HT, 0.53), s = sk(0.53);
   const w = 0.028 * s, h = 0.1 * s;
   let k = schatten(cx, cy, w * 0.8, 1, 0.3);
   k += `<rect x="${r(cx - w / 2)}" y="${r(cy - h * 0.72)}" width="${r(w)}" height="${r(h * 0.72)}" rx="1" fill="${S.lg("kleber", [[0, "#f2f2ee"], [0.4, "#ffffff"], [1, "#cfcfc8"]], 0, 0, 1, 0)}"/>`;

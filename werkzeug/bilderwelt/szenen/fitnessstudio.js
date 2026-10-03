@@ -312,8 +312,6 @@ function laufbandTeile(c, nurKonsole) {
   k += fr(d0 - 0.25, 3.45, "#2f6fd0") + fr(d0 - 0.45, 3.4, "#f07a1a");
   const [ax, ay] = P(x0, (d0 + d1) / 2);
   /* Lupe */
-  const [zx0, zy0] = P(x0, d0 - 0.6, 1.4), [zx1, zy1] = P(x1, d1, 0);
-  const zw = 70, zh = 46.7, zx = Math.min(zx0 - 4, 320 - zw), zy = zy0 - 3;
   const pos = (xm, d, h) => { const [x, y] = P(xm, d, h); return [x, y]; };
   const [hux, huy] = pos(x0 + 0.37, 10.7, 0.35), [kbx, kby] = pos((x0 + x1) / 2, 12.05, 0.9), [ssx, ssy] = P(x0 + 0.35, d0 - 0.05, 1.25), [frx, fry] = P(3.43, d0 - 0.35, 0);
   const unter = [
@@ -324,7 +322,7 @@ function laufbandTeile(c, nurKonsole) {
     { id: "faszienrolle", de: "die Faszienrolle", syl: "FAS-zi-en-rol-le", it: "il rullo per fasce", itSyl: "RUL-lo per FA-sce", en: "foam roller", x: frx, y: fry, kunst: flaeche(-7, -6, 14, 6.5) },
   ];
   S.teil({ id: "hantelstaender", de: "der Hantelständer", syl: "HAN-tel-stän-der", it: "la rastrelliera dei manubri", itSyl: "ra-strel-LIE-ra dei ma-NU-bri", en: "dumbbell rack", x: ax, y: ay, steht: true, kunst: abs(ax, ay, k),
-    zoom: { x: r(zx), y: r(zy), w: zw, h: r(zh) }, unter });
+    zoom: { x: r(X(x0, d1) - 10), y: r(Y(d0, 1.4) - 2), w: 63, h: 42 }, unter });
 }
 
 /* =====================================================================
