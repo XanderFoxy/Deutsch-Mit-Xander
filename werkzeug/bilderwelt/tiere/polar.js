@@ -25,7 +25,7 @@ function inPoly(x, y, p) {
 }
 /* weicher Fleck (Radialverlauf); ein Verlauf je Farbe + Stärke */
 function fleck(T, cx, cy, rx, ry, farbe, op, dreh = 0) {
-  const o = Math.max(0.05, Math.round(op * 20) / 20);
+  const o = Math.max(0.1, Math.round(op * 10) / 10);
   const g = T.rg("f" + farbe.slice(1) + String(o).replace(".", ""), [[0, farbe, o], [0.5, farbe, R(o * 0.6 * 100) / 100], [1, farbe, 0]]);
   return `<ellipse cx="${Z(cx)}" cy="${Z(cy)}" rx="${Z(rx)}" ry="${Z(ry)}"${dreh ? ` transform="rotate(${dreh} ${Z(cx)} ${Z(cy)})"` : ""} fill="${g}"/>`;
 }
@@ -99,36 +99,41 @@ const fein = (T, s) => (T.fein === false ? "" : s);
 /* Gruppe mit Relief-Filter (nur fein) */
 const relief = (T, n, o, s) => (T.fein === false ? s : `<g filter="${T.relief(n, o)}">${s}</g>`);
 
-/* Federmuster (Schuppenlage) als Kachel: Reihen versetzter Federspitzen; dunkler Bogen = Schatten unter der Spitze,
-   heller Bogen darüber = Licht auf der Federfläche. b Breite, h Reihenabstand (cm), dreh = Neigung der Reihen. Nur fein. */
-function federMuster(T, n, b, h, dunkel, hell, wD, wH, dreh = 0) {
+/* Federmuster (Schuppenlage) als Kachel: versetzte Reihen von Federspitzen. Je Feder ein dunkler Sichelschatten unter
+   der Spitze (auf der Feder darunter) und ein heller Sichelsaum auf der Spitze. b Breite, h Reihenabstand (cm),
+   dreh = Neigung der Reihen. Liefert eine Funktion (erst beim Zeichnen anlegen → in der Szene keine Defs). */
+function federMuster(T, n, b, h, dunkel, hell, opD, opH, dreh = 0) {
   const id = T.id("pm" + n);
   T._pm = T._pm || new Set();
   if (!T._pm.has(id)) {
     T._pm.add(id);
-    const q = `q${Z2(b / 2)} ${Z2(h * 0.9)} ${Z2(b)} 0`;
-    const reihe = (y) => `M0 ${Z2(y)}${q}M${Z2(-b / 2)} ${Z2(y + h)}${q}M${Z2(b / 2)} ${Z2(y + h)}${q}`;
+    const w = b * 0.44, d = h * 0.62;
+    const sichel = (cx, cy, t1, t2) => `M${Z2(cx - w)} ${Z2(cy)}Q${Z2(cx)} ${Z2(cy + 2 * d * t1)} ${Z2(cx + w)} ${Z2(cy)}Q${Z2(cx)} ${Z2(cy + 2 * d * t2)} ${Z2(cx - w)} ${Z2(cy)}Z`;
+    const alle = (t1, t2, dy) => [[b / 2, 0.05 * h], [0, 1.05 * h], [b, 1.05 * h]].map(([x, y]) => sichel(x, y + dy, t1, t2)).join("");
     T.def(`<pattern id="${id}" width="${Z2(b)}" height="${Z2(2 * h)}" patternUnits="userSpaceOnUse"${dreh ? ` patternTransform="rotate(${dreh})"` : ""}>` +
-      (hell ? `<path d="${reihe(0.08)}" fill="none" stroke="${hell}" stroke-width="${wH}"/>` : "") +
-      `<path d="${reihe(0.08 + wD * 1.6)}" fill="none" stroke="${dunkel}" stroke-width="${wD}"/></pattern>`);
+      `<path d="${alle(1.25, 0.95, 0)}" fill="${dunkel}" fill-opacity="${opD}"/>` +
+      (hell ? `<path d="${alle(0.92, 0.55, -0.02)}" fill="${hell}" fill-opacity="${opH}"/>` : "") + `</pattern>`);
   }
   return `url(#${id})`;
 }
+/* Fläche mit Federmuster füllen (nur fein; in der Szene nichts) */
+const federn = (T, x, y, w, h, n, b, hh, dunkel, hell, opD, opH, dreh, op, wk = true) =>
+  (T.fein === false ? "" : `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${federMuster(T, n, b, hh, dunkel, hell, opD, opH, dreh)}"${wk ? ` filter="${wackel(T)}"` : ""}${op < 1 ? ` opacity="${op}"` : ""}/>`);
 /* leichtes Verwackeln (Turbulenz-Verschiebung): Kachelmuster wirkt wie gewachsen, nicht gestempelt */
 function wackel(T) {
-  if (!T._wk) { T._wk = T.id("wk"); T.def(`<filter id="${T._wk}" x="-2%" y="-2%" width="104%" height="104%"><feTurbulence type="fractalNoise" baseFrequency=".42" numOctaves="2" seed="9"/><feDisplacementMap in="SourceGraphic" scale=".75" xChannelSelector="R" yChannelSelector="G"/></filter>`); }
+  if (!T._wk) { T._wk = T.id("wk"); T.def(`<filter id="${T._wk}" x="-2%" y="-2%" width="104%" height="104%"><feTurbulence type="fractalNoise" baseFrequency=".3" numOctaves="2" seed="9"/><feDisplacementMap in="SourceGraphic" scale=".5" xChannelSelector="R" yChannelSelector="G"/></filter>`); }
   return `url(#${T._wk})`;
 }
 /* Saum aus kleinen gefüllten Bögen entlang einer Linie (Federspitzen greifen über eine Farbgrenze), Richtung: rechts der Laufrichtung = innen */
 function saum(T, pts, schritt, tiefe, farbe, op, seite = 1) {
   let d = "";
+  if (T.fein === false) { schritt *= 2.5; tiefe *= 1.5; }
   for (let i = 0; i < pts.length - 1; i++) {
     const a = pts[i], b = pts[i + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]), k = Math.max(1, Math.round(L / schritt));
-    const nx = -(b[1] - a[1]) / L * seite, ny = (b[0] - a[0]) / L * seite;
+    const nx = -(b[1] - a[1]) / L * seite, ny = (b[0] - a[0]) / L * seite, sx = (b[0] - a[0]) / k, sy = (b[1] - a[1]) / k;
     for (let j = 0; j < k; j++) {
-      const t0 = j / k, t1 = (j + 1) / k, x0 = a[0] + (b[0] - a[0]) * t0, y0 = a[1] + (b[1] - a[1]) * t0, x1 = a[0] + (b[0] - a[0]) * t1, y1 = a[1] + (b[1] - a[1]) * t1;
-      const tt = tiefe * (0.7 + T.rnd() * 0.6);
-      d += `M${Z2(x0)} ${Z2(y0)}Q${Z2((x0 + x1) / 2 - nx * tt * 2)} ${Z2((y0 + y1) / 2 - ny * tt * 2)} ${Z2(x1)} ${Z2(y1)}Z`;
+      const tt = tiefe * (0.6 + T.rnd() * 0.8);
+      d += `M${Z2(a[0] + sx * j)} ${Z2(a[1] + sy * j)}q${Z2(sx / 2 - nx * tt * 2)} ${Z2(sy / 2 - ny * tt * 2)} ${Z2(sx)} ${Z2(sy)}z`;
     }
   }
   return `<path d="${d}" fill="${farbe}"${op < 1 ? ` fill-opacity="${op}"` : ""}/>`;
