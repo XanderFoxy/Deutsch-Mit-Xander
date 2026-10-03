@@ -1115,7 +1115,7 @@ const P2 = (p) => `${r(p[0])} ${r(p[1])}`;
   /* Menschen auf der Treppe (sie stehen tiefer als wir) */
   /* Leute sitzen auf der Sitztreppe (von hinten gesehen) */
   /* Gesäß auf dem Tritt, die Füße eine Stufe tiefer (von hinten vom Rumpf verdeckt); Schattenkeil nach vorn links */
-  for (const [d, X, sp] of [[20.4, -7, 1], [14.2, -3.4, 0], [15.2, 3.7, 1], [21.3, 8.4, 0]]) {
+  for (const [d, X, sp] of [[20.4, -7, 1], [13.4, -6.4, 0], [24, 1.2, 0], [21.3, 8.4, 1]]) {
     const z = stufeZ(d) + 0.02, p = T3(X, d, z), m = 300 / d;
     k += `<path d="M${r(p[0] - 0.3 * m)} ${r(p[1])} L${r(p[0] - 0.75 * m)} ${r(p[1] - 0.22 * m)} L${r(p[0] + 0.05 * m)} ${r(p[1] - 0.25 * m)} L${r(p[0] + 0.3 * m)} ${r(p[1])} Z" fill="#2a2216" opacity=".22"/>`;
     k += figur(sp ? "sitzend2" : "sitzend", p[0], p[1], 1.7 * m, sp);
