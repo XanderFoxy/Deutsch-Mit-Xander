@@ -127,7 +127,10 @@ const STAHL = S.lg("stahl", [[0, "#dfe4e8"], [0.5, "#aab3ba"], [1, "#d0d6da"]], 
   const probe = [[11, 1], [12.5, 5.5], [14, 10], [15.5, 14.6], [17, 19], [18.5, 19.3], [19.5, 14], [20.3, 8], [21.5, 2.2], [24, 1.5], [27, 3.5], [28.6, 9], [27, 14], [25.4, 9], [27, 2.6], [30, 2.5], [32, 7], [34, 6.6], [36, 3]];
   probe.forEach(([xm, h], i) => { k += birne(xs(xm), ys(h) - 0.8, 0.4, BUNT[i % 6], 2.2); });
   /* Zug auf dem Lifthügel */
-  for (let i = 0; i < 3; i++) { const t = 0.55 + i * 0.09, xm = 11 + 6 * t, h = 1 + 18 * t; k += `<rect x="${r(xs(xm) - 1.6)}" y="${r(ys(h) - 2.6)}" width="3.2" height="2" rx=".5" fill="#f2c230" transform="rotate(-38 ${r(xs(xm))} ${r(ys(h))})"/>`; }
+  {
+    const xa = xs(11), ya = ys(1), xb = xs(17), yb2 = ys(19), w = Math.atan2(yb2 - ya, xb - xa) * 180 / Math.PI, L = Math.hypot(xb - xa, yb2 - ya);
+    for (let i = 0; i < 3; i++) { const t = 0.5 + i * 0.075, x = xa + (xb - xa) * t, y = ya + (yb2 - ya) * t; k += `<rect x="${r(x - L * 0.035)}" y="${r(y - 2.2)}" width="${r(L * 0.068)}" height="2" rx=".5" fill="#f2c230" transform="rotate(${r(w)} ${r(x)} ${r(y)})"/>`; }
+  }
   /* Schild */
   k += `<rect x="${r(xs(23) - 14)}" y="${r(yb - 6)}" width="28" height="5.5" rx="1" fill="#1f2a6a"/><text x="${r(xs(23))}" y="${r(yb - 2)}" font-size="3.4" text-anchor="middle" fill="#ff8ad8" font-family="Arial Black,Arial" font-weight="900">LOOPING</text>`;
   const ax = xs(24);
@@ -229,9 +232,9 @@ const STAHL = S.lg("stahl", [[0, "#dfe4e8"], [0.5, "#aab3ba"], [1, "#d0d6da"]], 
       `<path d="M${r(x - g)} ${r(yy)} Q${r(x - g)} ${r(yy - g * 0.5)} ${r(x - g * 0.3)} ${r(yy - g * 0.5)} L${r(x + g * 0.4)} ${r(yy - g * 0.55)} L${r(x + g * 0.7)} ${r(yy - g * 1.15)} L${r(x + g * 1.05)} ${r(yy - g * 1.0)} L${r(x + g * 0.85)} ${r(yy - g * 0.35)} Q${r(x + g * 0.7)} ${r(yy)} ${r(x + g * 0.4)} ${r(yy + 0.2)} L${r(x + g * 0.45)} ${r(yy + g * 0.6)} M${r(x - g * 0.8)} ${r(yy + 0.2)} L${r(x - g * 0.95)} ${r(yy + g * 0.6)} Z" fill="${f}" stroke="#5a3a2a" stroke-width=".2"/>` +
       `<path d="M${r(x - g * 0.3)} ${r(yy - g * 0.5)} q${r(g * 0.3)} ${r(-g * 0.2)} ${r(g * 0.6)} 0" stroke="#d23a33" stroke-width=".6" fill="none"/>`;
   };
-  pferde.forEach((p, i) => { if (p.vorn < 0) k += pferd(p.x, p.y, 0.6 + 0.25 * Math.sin(i * 1.7), ["#ffffff", "#f4e2c4", "#dcb98a"][i % 3], 1.3); });
+  pferde.forEach((p, i) => { if (p.vorn < 0) k += pferd(p.x, p.y, 0.55 + 0.2 * Math.sin(i * 1.7), ["#ffffff", "#f4e2c4", "#dcb98a"][i % 3], 0.85); });
   /* vordere Pferde */
-  pferde.forEach((p, i) => { if (p.vorn >= 0) k += pferd(p.x, p.y, 0.6 + 0.25 * Math.sin(i * 1.7), ["#ffffff", "#f4e2c4", "#dcb98a"][i % 3], 1.3); });
+  pferde.forEach((p, i) => { if (p.vorn >= 0) k += pferd(p.x, p.y, 0.55 + 0.2 * Math.sin(i * 1.7), ["#ffffff", "#f4e2c4", "#dcb98a"][i % 3], 0.85); });
   /* Dach: Kegel und gezackte Blende mit Glühbirnen */
   const yd = ydach(hD), yS = ydach(hD + 1.6);
   k += `<path d="M${r(cx - rx - 2)} ${r(yd)} L${r(cx)} ${r(yS)} L${r(cx + rx + 2)} ${r(yd)} Z" fill="${S.lg("dach", [[0, "#ffd36b"], [0.5, "#e8453c"], [1, "#a8261e"]], 0, 0, 1, 0)}"/>`;

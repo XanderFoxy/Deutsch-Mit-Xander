@@ -296,14 +296,14 @@ const SAMT_H = S.lg("samth", [[0, "#c02a32"], [1, "#6a0c14"]]);
    9 — DER ORCHESTERGRABEN (Messinggeländer, Pultlampen, Kontrabass)
    ===================================================================== */
 {
-  const Zg = 7.6, a = P(-PORTAL.X, 0.95, Zg), b = P(PORTAL.X, 0.95, Zg), rv = P(-PORTAL.X, 0.55, BUEHNE.Zv), rb = P(PORTAL.X, 0.55, BUEHNE.Zv);
+  const Zg = 8.0, a = P(-PORTAL.X, 0.95, Zg), b = P(PORTAL.X, 0.95, Zg), rv = P(-PORTAL.X, 0.55, BUEHNE.Zv), rb = P(PORTAL.X, 0.55, BUEHNE.Zv);
   let k = poly([rv, rb, [b[0], b[1] + 2], [a[0], a[1] + 2]], "#050304");
   /* Pultlampen und Notenblätter (leuchten aus der Tiefe) */
-  for (let i = 0; i < 9; i++) { const X = -4 + i * 1, [x, y] = P(X, 0.62, 8.5); k += `<path d="M${r(x - 2.2)} ${r(y + 1.6)} L${r(x + 2.2)} ${r(y + 1.6)} L${r(x + 1.8)} ${r(y - 0.6)} L${r(x - 1.8)} ${r(y - 0.6)} Z" fill="#f4ecd6" opacity=".8"/><ellipse cx="${x}" cy="${r(y - 0.8)}" rx="2.4" ry=".7" fill="#ffe7a0" opacity=".7"/>`; }
+  for (let i = 0; i < 9; i++) { const X = -4 + i * 1, [x, y] = P(X, 0.88, 8.75); k += `<path d="M${r(x - 2.2)} ${r(y + 1.6)} L${r(x + 2.2)} ${r(y + 1.6)} L${r(x + 1.8)} ${r(y - 0.6)} L${r(x - 1.8)} ${r(y - 0.6)} Z" fill="#f4ecd6" opacity=".8"/><ellipse cx="${x}" cy="${r(y - 0.8)}" rx="2.4" ry=".7" fill="#ffe7a0" opacity=".7"/>`; }
   /* Hals und Schnecke des Kontrabasses ragen heraus */
-  { const [x, y] = P(3.4, 0.6, 8.2); k += `<path d="M${x} ${r(y + 2)} L${r(x + 1)} ${r(y - 7)}" stroke="#5a2a10" stroke-width="1.1"/><circle cx="${r(x + 1.2)}" cy="${r(y - 7.8)}" r="1.2" fill="#6a3214"/><path d="M${r(x - 3)} ${r(y + 2.5)} Q${r(x)} ${r(y - 1)} ${r(x + 3)} ${r(y + 2.5)}" fill="#7a3a14"/>`; }
+  { const [x, y] = P(3.4, 0.82, 8.6); k += `<path d="M${x} ${r(y + 2)} L${r(x + 1)} ${r(y - 7)}" stroke="#5a2a10" stroke-width="1.1"/><circle cx="${r(x + 1.2)}" cy="${r(y - 7.8)}" r="1.2" fill="#6a3214"/><path d="M${r(x - 3)} ${r(y + 2.5)} Q${r(x)} ${r(y - 1)} ${r(x + 3)} ${r(y + 2.5)}" fill="#7a3a14"/>`; }
   /* Dirigentenpult in der Mitte mit Licht */
-  { const [x, y] = P(0, 0.75, 7.9); k += `<rect x="${r(x - 3)}" y="${r(y - 0.6)}" width="6" height="1.4" fill="#1e1e22"/><ellipse cx="${x}" cy="${r(y - 1)}" rx="4" ry="1" fill="#ffe7a0" opacity=".6"/>`; }
+  { const [x, y] = P(0, 0.93, 8.3); k += `<rect x="${r(x - 3)}" y="${r(y - 0.6)}" width="6" height="1.4" fill="#1e1e22"/><ellipse cx="${x}" cy="${r(y - 1)}" rx="4" ry="1" fill="#ffe7a0" opacity=".6"/>`; }
   /* Geländer: Messingrohr auf Pfosten mit rotem Samt dahinter */
   k += poly([[a[0], a[1]], [b[0], b[1]], [b[0], r(b[1] + 6)], [a[0], r(a[1] + 6)]], SAMT_H);
   for (let i = 0; i <= 12; i++) { const X = -PORTAL.X + i * PORTAL.X * 2 / 12, p = P(X, 0.95, Zg), q = P(X, 0.6, Zg); k += `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="${GOLD}" stroke-width=".7"/>`; }
@@ -329,10 +329,10 @@ const bruestung = (s, Z0, Z1, H0, H1) => {
 {
   let k = "";
   /* Inneres des Rangs: dunkle Sitzreihen mit roten Lehnen */
-  const inn = [P(-5.3, 3.0, 6.0), P(-5.3, 3.0, PORTAL.Z), P(-5.3, 5.9, PORTAL.Z), P(-5.3, 5.9, 6.0)];
+  const inn = [P(-5.3, 3.0, 6.55), P(-5.3, 3.0, PORTAL.Z), P(-5.3, 5.9, PORTAL.Z), P(-5.3, 5.9, 6.55)];
   k += poly([inn[0], inn[1], inn[2], inn[3]], "#1e0a0c");
-  for (let i = 0; i < 3; i++) { const a = P(-5.6 - i * 0.6, 4.4 + i * 0.4, 6.0), b = P(-5.6 - i * 0.6, 4.4 + i * 0.4, PORTAL.Z); k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#7a1a22" stroke-width="${r(1.6 - i * 0.3)}"/>`; }
-  const br = bruestung(-1, 6.0, PORTAL.Z, 3.0, 4.0);
+  for (let i = 0; i < 3; i++) { const a = P(-5.6 - i * 0.6, 4.4 + i * 0.4, Math.max(6.6, 200 * (5.6 + i * 0.6) / 162)), b = P(-5.6 - i * 0.6, 4.4 + i * 0.4, PORTAL.Z); k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#7a1a22" stroke-width="${r(1.6 - i * 0.3)}"/>`; }
+  const br = bruestung(-1, 6.55, PORTAL.Z, 3.0, 4.0);
   k += br.g;
   /* Wandleuchte */
   { const l = P(-5.3, 4.8, 8.6); k += `<rect x="${r(l[0] - 0.4)}" y="${l[1]}" width=".8" height="4" fill="${GOLD}"/><ellipse cx="${l[0]}" cy="${l[1]}" rx="1.8" ry="2.2" fill="#ffe7b0"/><circle cx="${l[0]}" cy="${l[1]}" r="6" fill="#ffd27a" opacity=".18"/>`; }
@@ -364,7 +364,7 @@ const bruestung = (s, Z0, Z1, H0, H1) => {
 {
   let k = "", v = "";
   const ziel = [[P(-1.55, 2.0, 11.2), P(0.55, 2.2, 10.8)]];
-  const spots = [[-5.3, 6.6], [-5.3, 7.6], [5.3, 7.4], [5.3, 8.2]];
+  const spots = [[-5.3, 7.0], [-5.3, 7.9], [5.3, 7.4], [5.3, 8.2]];
   spots.forEach(([X, Z], i) => {
     const m = ms(Z), [x, y] = P(X, 4.12, Z), s = X < 0 ? 1 : -1;
     const tz = ziel[0][i % 2];
@@ -406,10 +406,11 @@ const sitzOben = (Z) => boden(Z) + 1.0;
     k += `<rect x="0" y="${r(yo)}" width="${r(s1[0])}" height="${r(Math.max(s0[1], yu + 4) - yo + 6)}" fill="#1a0a0c"/>`;
     for (let X = -6.4; X < 2.3 - 0.05; X += 0.55) {
       const x = P(X, 0, Z)[0];
-      if (x + sw < -2) continue;
-      k += `<path d="M${r(x + 0.5)} ${r(yu)} L${r(x + 0.5)} ${r(yo + 1.6)} Q${r(x + 0.5)} ${r(yo)} ${r(x + sw / 2)} ${r(yo - 0.4)} Q${r(x + sw - 0.5)} ${r(yo)} ${r(x + sw - 0.5)} ${r(yo + 1.6)} L${r(x + sw - 0.5)} ${r(yu)} Z" fill="${S.lg("lehne", [[0, "#b02a32"], [0.3, "#8a1820"], [1, "#4a080e"]])}"/>`;
+      if (x + sw < 2) continue;
+      const xl = Math.max(0, x + 0.5);
+      k += `<path d="M${r(xl)} ${r(yu)} L${r(xl)} ${r(yo + 1.6)} Q${r(xl)} ${r(yo)} ${r(Math.max(xl, x + sw / 2))} ${r(yo - 0.4)} Q${r(x + sw - 0.5)} ${r(yo)} ${r(x + sw - 0.5)} ${r(yo + 1.6)} L${r(x + sw - 0.5)} ${r(yu)} Z" fill="${S.lg("lehne", [[0, "#b02a32"], [0.3, "#8a1820"], [1, "#4a080e"]])}"/>`;
       k += `<path d="M${r(x + 1.5)} ${r(yo + 0.7)} Q${r(x + sw / 2)} ${r(yo - 0.1)} ${r(x + sw - 1.5)} ${r(yo + 0.7)}" stroke="#e8a0a0" stroke-width=".4" opacity=".25" fill="none"/>`;
-      k += `<rect x="${r(x - 0.5)}" y="${r(yo + (yu - yo) * 0.35)}" width="1" height="${r((yu - yo) * 0.65)}" fill="${GOLD}" opacity=".7"/>`;
+      if (x > 0.5) k += `<rect x="${r(x - 0.5)}" y="${r(yo + (yu - yo) * 0.35)}" width="1" height="${r((yu - yo) * 0.65)}" fill="${GOLD}" opacity=".7"/>`;
     }
     /* Reihennummer am Gang */
     const [gx, gy] = P(2.3, f + 0.75, Z);
