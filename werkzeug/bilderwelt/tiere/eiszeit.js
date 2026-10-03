@@ -150,6 +150,7 @@ function rohr(mitte, w0, w1, spitz = true, ex = 0.9) {
     li.push([mitte[i][0] - dy / l * w, mitte[i][1] + dx / l * w]);
     re.push([mitte[i][0] + dy / l * w, mitte[i][1] - dx / l * w]);
   }
+  li[0].push(1); re[0].push(1);   // Basis als harte Ecken (kein Überschwingen der Glättung)
   const e = mitte[n - 1], f = mitte[n - 2], le = Math.hypot(e[0] - f[0], e[1] - f[1]) || 1;
   const ux = (e[0] - f[0]) / le, uy = (e[1] - f[1]) / le;
   if (spitz === "rund") {   // stumpfe, gerundete Spitze (abgenutzt)
@@ -1027,7 +1028,7 @@ function wollnashorn(T) {
     return K(T, rohr(h, w0, w1, true, 0.8), hornG(name), { rand: false, vol: false, innen: f });
   };
   const h2 = [[311, -98], [313, -107], [315.4, -117], [315.4, -128]];
-  const h1 = [[345, -83], [357, -91], [370, -103], [383, -117], [395, -132], [405, -148], [413, -163]];
+  const h1 = [[345, -83], [352, -93], [362, -104], [374, -117], [387, -132], [399, -148], [409, -164]];
   s += horn(h2, 18, 3.5, 12, "horn2") + horn(h1, 26, 4, 30, "horn1");
   /* Haarkranz aus kurzen, verfilzten Haaren umschließt die Hornbasen */
   s += LOCKENLINIE(T, [[334, -90], [340, -92], [348, -84], [354, -76], [356, -72]], 40, [-1, 3], (x) => (x < 342 ? 120 : 70), (x) => 4 + ((x * 3.3) % 1) * 4, 1.2, () => 0.42, TON, { streuung: 30, kruemmung: 0.3, szene: 0.2, haare: 1, hb: 0.3 });

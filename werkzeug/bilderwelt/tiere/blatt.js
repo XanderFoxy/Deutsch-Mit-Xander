@@ -96,7 +96,7 @@ const html = `<!doctype html><html><head><style>body{margin:0;background:#fff}sv
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
   const pg = await br.newPage({ viewport: { width: breitePx, height: Math.round(breitePx * H / W) } });
   await pg.setContent(html);
-  await pg.screenshot({ path: aus, fullPage: true });
+  await pg.screenshot({ path: aus, fullPage: true, timeout: 240000 });
   if (gross) {
     /* Kopf: Blick nach rechts → rechtes Drittel, obere zwei Drittel, in doppelter Auflösung */
     const hPx = Math.round(breitePx * H / W);
@@ -111,7 +111,7 @@ const html = `<!doctype html><html><head><style>body{margin:0;background:#fff}sv
       const X0 = (gx + (a - rand - gmx) * gk) * px, X1 = (gx + (c + rand - gmx) * gk) * px, Y0 = (gy + (b - rand) * gk) * px, Y1 = (gy + (d + rand) * gk) * px;
       clip = { x: Math.max(0, Math.round(X0)), y: Math.max(0, Math.round(Y0)), width: Math.round(Math.min(breitePx, X1) - Math.max(0, X0)), height: Math.round(Math.min(hPx, Y1) - Math.max(0, Y0)) };
     }
-    await pg2.screenshot({ path: aus.replace(/\.png$/, "") + "-kopf.png", clip });
+    await pg2.screenshot({ path: aus.replace(/\.png$/, "") + "-kopf.png", clip, timeout: 240000 });
   }
   await br.close();
   const groesse = (a, fein) => { const S2 = neueSzene({ id: "x", kuerzel: "x" }); const T = require("./kern").werkzeug(S2, a.id); T.fein = fein; return a.zeichne(T).svg.length + S2.defs.join("").length; };
