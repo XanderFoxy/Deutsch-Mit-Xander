@@ -314,11 +314,17 @@ window.DMA_TUTOR_BEREICHE = {
        wie bei den grossen Bereichen auch. Was hier steht, ist
        nachgemessen, nicht angekuendigt.
        Der alte Ton (b-klassenzimmer) gehoert zum ersten Stueck; die
-       anderen drei laufen nach Lesezeit, bis sie aufgenommen sind. */
-    ton: "b-klassenzimmer",
+       anderen drei laufen nach Lesezeit, bis sie aufgenommen sind.
+       FASSUNG 846 — tutor/b-klassenzimmer.* gab es nie (auch nicht in der
+       Geschichte des Repos). Jeder Gang ins Klassenzimmer holte deshalb
+       eine Datei, die es nicht gibt (404) – genau auf dem Weg, der
+       schnell sein soll (Funk 271: „alles insgesamt nur zehn Mal
+       schneller"). Bis er aufgenommen ist, läuft auch das erste Stück
+       nach Lesezeit; zu hören war ohnehin nichts. */
+    ton: "",
     text: "Das Klassenzimmer ist echter Unterricht, nicht nur ein Livestream.",
     stuecke: [
-      { ton: "b-klassenzimmer",
+      { ton: "",
         text: "Das Klassenzimmer ist echter Unterricht, nicht nur ein Livestream. Wer etwas sagen möchte, hält das Mikrofon gedrückt und spricht — gehört wird er, sobald der vor ihm fertig ist. So redet niemand in jemanden hinein." },
       { ton: "",
         text: "Die Wortmeldungen stehen nicht im Chat herum. Tipp einmal in den leeren Teil des Chats, dann siehst du sie alle — zum Nachhören, zum Herunterladen und zum Zurückrufen, solange sie noch niemand gehört hat.",

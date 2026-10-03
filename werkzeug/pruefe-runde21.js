@@ -35,9 +35,12 @@ const pruefe = (was, gut, zusatz) => {
   const html = fs.readFileSync(path.join(WURZEL, "index.html"), "utf8");
 
   console.log("\nDAS LADEN WIRD NICHT SCHLECHTER\n");
+  /* FASSUNG 846 — die Lesetexte liegen jetzt in data-lesetexte.js und kommen erst, wenn sie gebraucht werden. Der
+     Name steht deshalb in der Stempeltabelle von index.html; geprüft wird die STARTLISTE (var dateien = [ … ]). */
+  const startliste = (html.match(/var dateien = \[[\s\S]*?\];/) || [""])[0];
   pruefe("keine neue Datei in der Startliste",
-    !/data-lesetexte|data-lesen/.test(html),
-    "die Texte liegen schon in app.js (SCHNEE_ENTRIES)");
+    startliste.length > 0 && !/data-lesetexte|data-lesen/.test(startliste),
+    "die Texte kommen erst, wenn jemand sie öffnet (data-lesetexte.js)");
   pruefe("und der Waehler laedt auch nichts nach",
     !/lcLesestoff[\s\S]{0,700}createElement\("script"\)/.test(js),
     "er nimmt nur, was schon da ist");

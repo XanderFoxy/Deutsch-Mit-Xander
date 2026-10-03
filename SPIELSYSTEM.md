@@ -3219,3 +3219,26 @@ Startprofil (Rechner 4× gebremst, Quellen):
   - Effektbildchen (123 KB).
   
   Das Zehnfache braucht eine Aufteilung von app.js nach Bereichen.
+
+## Fassung 846 — Die Lesetexte kommen erst beim Öffnen, kein toter Tutor-Ton mehr (Funk 271)
+
+XANDER (Funk 271, wörtlich): „alles insgesamt nur zehn Mal schneller".
+
+- **Lesetexte ausgelagert** (`data-lesetexte.js`, neu): „Dichter & Denker“ und „Schnee von gestern“ (je 7 Texte in sechs Niveaus, 220 KB) standen mitten in app.js und wurden bei jedem Start eingelesen.
+  - Jetzt baut `window.DMA_LESETEXTE_BAU(kachelBildSvg)` die beiden Listen; die Kachelbilder zeichnet weiter app.js.
+  - Der Inhalt ist Feld für Feld gleich (gegen app.js aus 845 verglichen).
+- **Wann geladen wird (`app.js`)**:
+  - `lesetexteLaden()` holt die Datei über `brDatei`; klappt die min-Kopie nicht, wird einmal die Quelle geholt.
+  - Im Kompass zeichnen die beiden Bereiche „Die Texte werden geladen …“. Geholt wird erst, wenn der Bereich wirklich sichtbar wird (IntersectionObserver), nicht schon beim Vorzeichnen und nicht auf dem Weg Wissen → Klassenzimmer.
+  - Der Lesetext-Wähler im Klassenzimmer (`lcLesestoff`) holt sie bei Bedarf; er gab ohnehin schon ein Versprechen zurück.
+- **Tutor-Ton „b-klassenzimmer“ (`data-tutor.js`)**: Die Datei gab es nie, auch nicht in der Geschichte des Repos. Jeder Gang ins Klassenzimmer holte deshalb eine Datei, die es nicht gibt (404). Das erste Stück läuft jetzt wie die anderen drei nach Lesezeit, bis es aufgenommen ist. Zu hören war ohnehin nichts.
+- **Gemessen** (4G, Rechner 4× gebremst, zwei Läufe):
+  - app.js überträgt 775 KB statt 922 KB (845: mit Änderungsliste);
+  - kalt bereit 2,82–2,88 s, Klassenzimmer bei 3,46–3,51 s;
+  - warm bereit 1,30–1,32 s (845: 1,38 s), Klassenzimmer bei 1,87–1,91 s.
+  
+  Ein erster Lauf war deutlich langsamer, schon das erste Bild kam erst nach 1,5 s (sonst 0,8 s). Das war die Messumgebung, er zählt nicht.
+- **Sonden**:
+  - neu `pruefe-865-lesetexte-nachladen.js`: nicht beim Start, nicht auf dem Weg ins Klassenzimmer; im Kompass sichtbar → geholt und gezeichnet; 2×7 Texte mit A1–C2 und Kachelbild; keine Konsolenfehler.
+  - `pruefe-runde21`: „keine neue Datei in der Startliste“ prüft jetzt die Startliste (`var dateien = [ … ]`). Der Name steht nur noch in der Stempeltabelle.
+  - Grün: 865, 864, 863, 858, tutor, tutor-stuecke, tutorreiter, runde21, runde54, runde18, einladungslink, runde88-panels, 749, runde98-fokus.

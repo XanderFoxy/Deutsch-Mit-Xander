@@ -49,24 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 845: Uhr ohne Zeitzonen-Tabellen, alte Änderungsliste ins Archiv – Start schneller",
+  stand: "Fassung 846: Lesetexte kommen erst beim Öffnen (app.js 147 KB kleiner übertragen), kein toter Tutor-Ton mehr",
 
   inArbeit: [
-    { seit: "2026-10-03T00:42",
-      text: "app.js nach Bereichen teilen (Lesetexte, Kreuzworträtsel, Effektbildchen zuerst)" },
-    { seit: "2026-10-03T00:42",
+    { seit: "2026-10-03T01:02",
+      text: "app.js weiter teilen (Kreuzworträtsel, Effektbildchen, Reise-Effekte)" },
+    { seit: "2026-10-03T01:02",
       text: "spiel.js nach dem Aufbau" },
-    { seit: "2026-10-03T00:42",
+    { seit: "2026-10-03T01:02",
       text: "Bilderwelt neu (Funk 263)" },
-    { seit: "2026-10-03T00:42",
+    { seit: "2026-10-03T01:02",
       text: "sfu/aussprache: OK abwarten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-03T00:42",
+    { seit: "2026-10-03T01:02",
       text: "Chat-Fenster (844)" },
-    { seit: "2026-10-03T00:42",
+    { seit: "2026-10-03T01:02",
       text: "Uhr ohne Intl, Änderungsliste-Archiv (845)" },
+    { seit: "2026-10-03T01:02",
+      text: "Lesetexte nachladen (846)" },
   ],
 };
