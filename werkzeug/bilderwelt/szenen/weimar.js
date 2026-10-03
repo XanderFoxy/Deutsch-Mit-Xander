@@ -92,8 +92,6 @@ S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-20%" y="-30%" width="140%" height="160%"><feGaussianBlur stdDeviation=".6"/></filter>`);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("schw")}" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation=".6"/></filter>`);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("rauch")}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6"/></filter>`);
-/* Bronze mit grüner Patina: aus der Helligkeit der Figur wird Bronze */
-S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("bronze")}" x="-10%" y="-10%" width="120%" height="120%"><feColorMatrix type="matrix" values=".2 .4 .08 0 .03  .21 .43 .08 0 .05  .16 .33 .06 0 .04  0 0 0 1 0"/><feComponentTransfer><feFuncR type="gamma" amplitude="1.5" exponent="1.25" offset="0"/><feFuncG type="gamma" amplitude="1.55" exponent="1.2" offset="0"/><feFuncB type="gamma" amplitude="1.4" exponent="1.2" offset="0"/></feComponentTransfer></filter>`);
 
 /* Stoffe */
 const TRAV = S.lg("trav", [[0, "#f1e8d4"], [0.5, "#e4d8bf"], [1, "#cbbd9f"]], 0, 0, 1, 0);
@@ -322,46 +320,101 @@ const denkmalUnter = [];
   /* Bronzeplatte, auf der die beiden stehen */
   p += `<path d="M-1.35 -3.3 L1.35 -3.3 L1.3 -3.45 L-1.3 -3.45 Z" fill="#3e4636"/>`;
   k += `<g transform="scale(${DU.toFixed(5)})">${p}</g>`;
-  /* die Figuren: Goethe links (Hofrock), Schiller rechts (offener Rock) */
-  const goethe = B.mensch({ id: "wmr_goethe", geschlecht: "m", blick: 14, frisur: "kurz", haarfarbe: "grau", haut: "hell",
-    pose: { lende: 1, brust: -1, nacken: 2, kopf: -4, kopfDreh: 8,
-      schulterL: { vor: 8, seit: 34, dreh: 10 }, ellbogenL: 40, unterarmL: 20, handL: 4, fingerL: 0.3,
-      schulterR: { vor: 22, seit: -6, dreh: 30 }, ellbogenR: 34, unterarmR: 40, handR: 6, fingerR: 0.6,
-      huefteL: { vor: 4, seit: 3, dreh: -4 }, knieL: 3, fussL: 0, huefteR: { vor: -6, seit: 5, dreh: -10 }, knieR: 10, fussR: 6 },
-    kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "kittel", farbe: "grau" }, unterteil: { stueck: "anzughose", farbe: "grau" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } } }, 100);
-  const schiller = B.mensch({ id: "wmr_schiller", geschlecht: "m", blick: -16, frisur: "lang", haarfarbe: "hellbraun", haut: "hell",
-    pose: { lende: 1, brust: -2, nacken: 0, kopf: -8, kopfDreh: -6,
-      schulterL: { vor: 26, seit: 10, dreh: 20 }, ellbogenL: 70, unterarmL: 30, handL: 4, fingerL: 0.6,
-      schulterR: { vor: 30, seit: -4, dreh: 10 }, ellbogenR: 18, unterarmR: 30, handR: 4, fingerR: 0.45,
-      huefteL: { vor: -4, seit: 4, dreh: -8 }, knieL: 8, fussL: 4, huefteR: { vor: 4, seit: 3, dreh: -4 }, knieR: 3, fussR: 0 },
-    kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "kittel", farbe: "braun" }, unterteil: { stueck: "anzughose", farbe: "grau" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } } }, 100);
-  const FS = 3.55 * DU / 100;            /* Figurenhöhe 3,55 m */
+  /* DIE FIGUREN (Bronze, von Hand gezeichnet): Goethe links im Hofrock mit Weste,
+     Ordensstern und Kniehose, seine linke Hand auf Schillers Schulter, die rechte
+     hält den Lorbeerkranz; Schiller rechts im langen offenen Rock, den Blick nach
+     oben, die rechte Hand am Kranz, in der linken die Schriftrolle.
+     Figurenmaß: 100 Einheiten = 3,55 m; Ursprung = Mitte der Bronzeplatte. */
+  const FS = 3.55 * DU / 100;
   const fussY = -3.45 * DU;
-  const GX = -0.62 * DU, SX = 0.66 * DU;
-  const bron = (m, x) => `<g transform="translate(${r(x)} ${r(fussY)}) scale(${FS.toFixed(5)})">${kompakt(m.svg, 2)}</g>`;
-  k += `<g filter="url(#${S.id("bronze")})">${bron(schiller, SX)}${bron(goethe, GX)}</g>`;
-  /* Lorbeerkranz zwischen Goethes rechter und Schillers rechter Hand; Schriftrolle in Schillers linker */
-  const hand = (m, x, h) => ({ x: x + h.x * m.k * FS, y: fussY + h.y * m.k * FS });
-  const gR = hand(goethe, GX, goethe.z.handR), sR = hand(schiller, SX, schiller.z.handR), sL = hand(schiller, SX, schiller.z.handL);
-  const kx = (gR.x + sR.x) / 2, ky = Math.max(gR.y, sR.y) + 0.6;
-  let kr = `<ellipse cx="${r(kx)}" cy="${r(ky)}" rx="${r(0.32 * DU)}" ry="${r(0.3 * DU)}" fill="none" stroke="#4f5a3c" stroke-width="${r(0.09 * DU)}"/>`;
-  for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; kr += `<ellipse cx="${r(kx + Math.cos(a) * 0.32 * DU)}" cy="${r(ky + Math.sin(a) * 0.3 * DU)}" rx="${r(0.07 * DU)}" ry="${r(0.035 * DU)}" fill="#6a7a4a" transform="rotate(${Math.round(a * 57.3 + 60)} ${r(kx + Math.cos(a) * 0.32 * DU)} ${r(ky + Math.sin(a) * 0.3 * DU)})"/>`; }
-  k += kr;
-  k += `<path d="M${r(sL.x - 0.05 * DU)} ${r(sL.y - 0.25 * DU)} L${r(sL.x + 0.05 * DU)} ${r(sL.y + 0.3 * DU)}" stroke="#4f5a3c" stroke-width="${r(0.1 * DU)}" stroke-linecap="round"/><path d="M${r(sL.x - 0.05 * DU)} ${r(sL.y - 0.25 * DU)} l${r(0.03 * DU)} ${r(-0.04 * DU)}" stroke="#8a9a6a" stroke-width="${r(0.05 * DU)}"/>`;
+  const BRZ = S.lg("brz", [[0, "#9a9466"], [0.3, "#66633f"], [0.7, "#3c3c27"], [1, "#25251a"]], 0, 0, 1, 0);
+  const BRZ_H = S.lg("brzh", [[0, "#b0aa78"], [0.5, "#7a7650"], [1, "#4a4a31"]], 0, 0, 1, 0);
+  const ARM_L = "#6f6b45", ARM_D = "#3f3f29", DUNKEL = "#1f1f16";
+  const bein = (x0, x1, kx, fx, w) => `<path d="M${x0} -50 L${x1} -50 L${x1 - 0.6 + kx} -29 Q${x1 - 0.2 + kx} -27 ${x1 - 0.8 + kx} -24 L${fx + w / 2} -4 L${fx - w / 2} -4 L${x0 + 0.8 + kx} -24 Q${x0 + kx} -27 ${x0 + 0.4 + kx} -29 Z" fill="${BRZ}"/>` +
+    `<rect x="${x0 + 0.2 + kx}" y="-30" width="${r(x1 - x0 - 0.6)}" height="1.6" fill="${ARM_D}"/>`;
+  const schuh = (fx, dir) => `<path d="M${fx - 2.4} -4 L${fx + 2.4} -4 Q${fx + 2.4 + dir * 2.4} -1.6 ${fx + dir * 3.6} 0 L${fx - 2.6 + Math.min(0, dir) * 1.4} 0 Q${fx - 3} -2 ${fx - 2.4} -4 Z" fill="${DUNKEL}"/><rect x="${fx - 1}" y="-3.6" width="2" height="1" fill="#8a8458"/>`;
+  const arm = (pts, w, farbe) => `<path d="M${pts.map((p2) => p2.join(" ")).join(" L")}" stroke="${farbe}" stroke-width="${w}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `<path d="M${pts.map((p2) => (p2[0] - w * 0.22) + " " + (p2[1] - w * 0.1)).join(" L")}" stroke="#a49e6c" stroke-width="${r(w * 0.22)}" fill="none" stroke-linecap="round" opacity=".55"/>`;
+  const hand = (x, y, rot) => `<ellipse cx="${x}" cy="${y}" rx="2" ry="2.6" fill="${BRZ_H}" transform="rotate(${rot} ${x} ${y})"/><path d="M${x - 1.2} ${y + 1.6} q1.2 1 2.4 0" stroke="${ARM_D}" stroke-width=".4" fill="none"/>`;
+  const GO = -13, SC = 13;
+  let fig = "";
+  /* --- Schiller (hinten im Bild nicht verdeckt, wird zuerst gezeichnet) --- */
+  {
+    let g = bein(-8, -2, -0.8, -5.6, 4.4) + bein(1.2, 7, 0.4, 4.6, 4.2) + schuh(-5.6, -1) + schuh(4.6, 1);
+    /* Weste und Hemd mit offenem Kragen */
+    g += `<path d="M-5 -82 L5 -82 L5.6 -54 Q0 -51 -5.6 -54 Z" fill="#4c4b31"/>`;
+    for (let y = -78; y > -56; y -= 4.4) g += `<circle cx="0" cy="${y}" r=".55" fill="#a49e6c"/>`;
+    g += `<path d="M-3.4 -86.5 L0 -80.5 L3.4 -86.5 L2 -87.5 L0 -84 L-2 -87.5 Z" fill="#8f8a5e"/>`;
+    /* langer, offener Rock mit breitem Kragen; die Schöße reichen bis unter das Knie */
+    g += `<path d="M-11.2 -82 Q-12.6 -70 -12.6 -58 Q-14 -40 -14.6 -25 L-9.2 -25 Q-7.6 -42 -6.2 -56 L-3.6 -86 L3.6 -86 L6.2 -56 Q7.6 -42 9.2 -25 L14.6 -25 Q14 -40 12.6 -58 Q12.6 -70 11.2 -82 Q6 -85.6 0 -86.4 Q-6 -85.6 -11.2 -82 Z" fill="${BRZ}"/>`;
+    g += `<path d="M-3.6 -86 L-7.4 -76 L-6 -70 L-6.2 -56 M3.6 -86 L7.4 -76 L6 -70 L6.2 -56" stroke="${ARM_D}" stroke-width=".7" fill="none"/>`;
+    g += `<path d="M-4 -86.5 Q-8.5 -87 -11 -83 L-7.6 -76 Z M4 -86.5 Q8.5 -87 11 -83 L7.6 -76 Z" fill="#7a7650"/>`;
+    g += `<path d="M-11 -66 Q-11.6 -50 -12.8 -32 M10.6 -66 Q11.2 -50 12.4 -32 M-9 -40 Q-8.6 -34 -9.2 -27" stroke="${ARM_D}" stroke-width=".5" fill="none" opacity=".7"/>`;
+    /* linker Arm (rechts im Bild) mit der Schriftrolle */
+    g += arm([[10.6, -80.5], [12.8, -63], [11.2, -51.5]], 5.6, ARM_D);
+    g += `<path d="M9.8 -57 L13.2 -39.5" stroke="#8a8458" stroke-width="2.6" stroke-linecap="round"/><ellipse cx="9.8" cy="-57" rx="1.4" ry=".9" fill="#b0aa78" transform="rotate(-12 9.8 -57)"/>`;
+    g += hand(11.4, -50.5, -10);
+    /* Kopf: Blick nach oben in die Ferne, langes welliges Haar, kräftige Nase */
+    g += `<rect x="-2" y="-90" width="4" height="4.6" fill="#5d5b3a"/>`;
+    g += `<ellipse cx="-.3" cy="-94.2" rx="4.7" ry="6.1" fill="${BRZ_H}" transform="rotate(-6 -.3 -94.2)"/>`;
+    g += `<path d="M-5.2 -95 Q-6.4 -101.6 -.6 -101.4 Q4.6 -101.2 5 -96 Q5.6 -92 4.4 -88.2 Q6.6 -88.6 6.2 -85.6 Q4.2 -86.6 3.6 -88.2 Q4.2 -92.4 3 -96.4 Q-1.4 -97.6 -4.2 -95.4 Q-4.6 -91 -3.8 -88 Q-6.4 -88.6 -6.6 -86 Q-7 -90.6 -5.2 -95 Z" fill="${BRZ}"/>`;
+    g += `<path d="M-2.6 -95.4 q.9 -.6 1.8 0 M.8 -95.6 q.9 -.6 1.8 0" stroke="${DUNKEL}" stroke-width=".5" fill="none"/><path d="M-.6 -95 Q-1.6 -92 -.4 -91.2" stroke="${ARM_D}" stroke-width=".7" fill="none"/><path d="M-1.8 -89.4 q1.2 .5 2.4 0" stroke="${ARM_D}" stroke-width=".45" fill="none"/>`;
+    fig += `<g transform="translate(${SC} 0)">${g}</g>`;
+  }
+  /* --- Goethe --- */
+  {
+    let g = bein(-7.6, -1.8, 0, -4.8, 4.2) + bein(1.4, 7.2, 0.6, 5.4, 4.2) + schuh(-4.8, -1) + schuh(5.4, 1);
+    /* Weste mit Knöpfen, Halsbinde */
+    g += `<path d="M-4.8 -82 L4.8 -82 L5.2 -55 Q0 -52 -5.2 -55 Z" fill="#4c4b31"/>`;
+    for (let y = -79; y > -57; y -= 3.6) g += `<circle cx=".2" cy="${y}" r=".5" fill="#a49e6c"/>`;
+    g += `<path d="M-2.2 -86.4 Q0 -84.6 2.2 -86.4 L1.6 -80.4 Q0 -78.8 -1.6 -80.4 Z" fill="#9a9466"/>`;
+    /* Hofrock: knielang, vorn offen, Stehkragen */
+    g += `<path d="M-11 -82 Q-12.4 -70 -12.4 -58 Q-13.4 -43 -13.8 -30 L-8.2 -30 Q-6.4 -44 -5 -57.6 L-2 -85.6 L2 -85.6 L5 -57.6 Q6.4 -44 8.2 -30 L13.8 -30 Q13.4 -43 12.4 -58 Q12.4 -70 11 -82 Q6 -85.4 0 -86 Q-6 -85.4 -11 -82 Z" fill="${BRZ}"/>`;
+    g += `<path d="M-4.4 -86.6 Q0 -89 4.4 -86.6 L3.4 -84.2 Q0 -85.8 -3.4 -84.2 Z" fill="#7a7650"/>`;
+    g += `<path d="M-2 -85.6 L-5 -57.6 L-8.2 -30 M2 -85.6 L5 -57.6 L8.2 -30" stroke="${ARM_D}" stroke-width=".6" fill="none"/>`;
+    g += `<path d="M-10.6 -66 Q-11.2 -50 -12.2 -34 M10.2 -66 Q10.8 -50 11.8 -34" stroke="${ARM_D}" stroke-width=".5" fill="none" opacity=".7"/>`;
+    /* Ordensstern auf der linken Brust */
+    g += `<path d="M7 -74.6 L7.5 -73.1 L9 -72.6 L7.5 -72.1 L7 -70.6 L6.5 -72.1 L5 -72.6 L6.5 -73.1 Z" fill="#c9c08a"/>`;
+    /* rechter Arm (links im Bild): hält den Kranz vor dem Körper */
+    g += arm([[-10.8, -80.5], [-12.4, -63.5], [-4.6, -51]], 5.8, ARM_L);
+    g += hand(-2.8, -49.6, 40);
+    /* Kopf: ruhig nach vorn, hohe Stirn, Haar nach hinten mit Locken über den Ohren */
+    g += `<rect x="-2" y="-90" width="4" height="4.4" fill="#5d5b3a"/>`;
+    g += `<ellipse cx=".2" cy="-93.6" rx="4.8" ry="6.2" fill="${BRZ_H}"/>`;
+    g += `<path d="M-4.9 -94.6 Q-5.4 -100.6 0 -100.6 Q5.4 -100.6 5 -94.6 Q4.2 -97.8 0 -98.2 Q-4 -97.8 -4.9 -94.6 Z" fill="${BRZ}"/>`;
+    g += `<ellipse cx="-4.9" cy="-93.2" rx="1.3" ry="1.8" fill="${BRZ}"/><ellipse cx="5.2" cy="-93.2" rx="1.3" ry="1.8" fill="${BRZ}"/>`;
+    g += `<path d="M-2.6 -94.4 q.9 -.5 1.8 0 M.9 -94.4 q.9 -.5 1.8 0" stroke="${DUNKEL}" stroke-width=".5" fill="none"/><path d="M.2 -94 Q-.6 -91.6 .4 -90.8" stroke="${ARM_D}" stroke-width=".6" fill="none"/><path d="M-1.2 -89.2 q1.3 .4 2.6 0" stroke="${ARM_D}" stroke-width=".45" fill="none"/>`;
+    fig += `<g transform="translate(${GO} 0)">${g}</g>`;
+  }
+  /* Schillers rechter Arm greift über Goethes Rock zum Kranz */
+  fig += `<g transform="translate(${SC} 0)">${arm([[-10.6, -80.5], [-15.2, -64.5], [-18.6, -51.6]], 5.6, ARM_L)}${hand(-19.6, -49.6, -30)}</g>`;
+  /* der Lorbeerkranz zwischen beiden Händen */
+  const KX = -11.2, KY = -46.4;
+  let kranz = `<ellipse cx="${KX}" cy="${KY}" rx="5.2" ry="5" fill="none" stroke="#3f3f29" stroke-width="1.6"/>`;
+  for (let i = 0; i < 18; i++) { const w = i / 18 * Math.PI * 2, x = KX + Math.cos(w) * 5.2, y = KY + Math.sin(w) * 5; kranz += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="1.5" ry=".7" fill="${i % 2 ? "#8a8458" : "#5d5b3a"}" transform="rotate(${Math.round(w * 57.3 + 50)} ${r(x)} ${r(y)})"/>`; }
+  kranz += `<path d="M${KX - 1.6} ${KY + 5} l-.8 2.6 M${KX + 1.6} ${KY + 5} l.8 2.6" stroke="#5d5b3a" stroke-width=".6"/>`;
+  fig += kranz;
+  /* Goethes linker Arm liegt auf Schillers Schulter (ganz vorn) */
+  fig += `<g transform="translate(${GO} 0)">${arm([[10.4, -80.6], [15.2, -70.4], [19.2, -79.2]], 5.4, ARM_D)}${hand(20.2, -80.6, 70)}</g>`;
+  /* Patina: grünliche Laufspuren */
+  fig += `<path d="M-20 -78 Q-20.4 -60 -21 -40 M-6 -70 Q-6.4 -55 -7 -42 M18 -76 Q18.6 -58 19.4 -36 M6 -60 Q6.2 -48 6.6 -38" stroke="#7d9a78" stroke-width=".7" fill="none" opacity=".45"/>`;
+  k += `<g transform="translate(0 ${r(fussY)}) scale(${FS.toFixed(5)})">${fig}</g>`;
+  const P = (x, y) => ({ x: x * FS, y: fussY + y * FS });
+  const GX = GO * FS;
+  const { x: kx, y: ky } = P(KX, KY);
+  const sL = P(SC + 11.4, -50.5);
   /* grüne Patina-Streifen und Glanz auf der Bronze */
   S.teil({ id: "denkmal", de: "das Denkmal", syl: "DENK-mal", it: "il monumento", itSyl: "mo-nu-MEN-to", en: "monument", x: CX, y: DY, kunst: k,
     tipp: "Das Goethe-Schiller-Denkmal steht seit 1857 vor dem Theater. Es ist das berühmteste Denkmal in Weimar.",
     zoom: { x: r(CX - 3.4 * DU), y: r(DY - 7.3 * DU), w: r(6.8 * DU), h: r(4.6 * DU) } });
-  const gKopf = hand(goethe, GX, goethe.z.kopf);
   denkmalUnter.push({ id: "dichter", de: "der Dichter", syl: "DICH-ter", it: "il poeta", itSyl: "po-E-ta", en: "poet", x: r(CX + GX), y: r(DY + fussY),
-    kunst: flaeche(-0.42 * DU, -3.2 * DU, 0.84 * DU, 3.2 * DU, 0.5), tipp: "Links steht Johann Wolfgang von Goethe, rechts Friedrich Schiller. Beide waren Dichter und Freunde." });
-  denkmalUnter.push({ id: "lorbeerkranz", de: "der Lorbeerkranz", syl: "LOR-beer-kranz", it: "la corona d'alloro", itSyl: "co-RO-na dal-LO-ro", en: "laurel wreath", x: r(CX + kx), y: r(DY + ky + 0.34 * DU),
-    kunst: flaeche(-0.42 * DU, -0.7 * DU, 0.84 * DU, 0.74 * DU, 0.4), tipp: "Der Lorbeerkranz ist ein Zeichen für Ruhm. Beide Dichter halten ihn zusammen." });
-  denkmalUnter.push({ id: "schriftrolle", de: "die Schriftrolle", syl: "SCHRIFT-rol-le", it: "il rotolo", itSyl: "RO-to-lo", en: "scroll", x: r(CX + sL.x), y: r(DY + sL.y + 0.35 * DU),
-    kunst: flaeche(-0.18 * DU, -0.72 * DU, 0.36 * DU, 0.76 * DU, 0.3) });
+    kunst: flaeche(-0.5 * DU, -3.6 * DU, 1.0 * DU, 3.6 * DU, 0.5), tipp: "Links steht Johann Wolfgang von Goethe, rechts Friedrich Schiller. Beide waren Dichter und Freunde." });
+  denkmalUnter.push({ id: "lorbeerkranz", de: "der Lorbeerkranz", syl: "LOR-beer-kranz", it: "la corona d'alloro", itSyl: "co-RO-na dal-LO-ro", en: "laurel wreath", x: r(CX + kx), y: r(DY + ky + 0.2 * DU),
+    kunst: flaeche(-0.22 * DU, -0.4 * DU, 0.44 * DU, 0.42 * DU, 0.3), tipp: "Der Lorbeerkranz ist ein Zeichen für Ruhm. Beide Dichter halten ihn zusammen." });
+  denkmalUnter.push({ id: "schriftrolle", de: "die Schriftrolle", syl: "SCHRIFT-rol-le", it: "il rotolo", itSyl: "RO-to-lo", en: "scroll", x: r(CX + sL.x), y: r(DY + sL.y + 0.4 * DU),
+    kunst: flaeche(-0.12 * DU, -0.7 * DU, 0.26 * DU, 0.72 * DU, 0.3) });
   denkmalUnter.push({ id: "sockel", de: "der Sockel", syl: "SO-ckel", it: "il piedistallo", itSyl: "pie-di-STAL-lo", en: "pedestal", x: CX, y: r(DY - 0.7 * DU),
     kunst: flaeche(-1.75 * DU, -2.6 * DU, 3.5 * DU, 2.6 * DU, 0.5), tipp: "Auf dem Sockel steht: „Dem Dichterpaar Goethe und Schiller das Vaterland“." });
-  void gKopf;
 }
 S.teile[S.teile.length - 1].unter = denkmalUnter;
 S.def(`<pattern id="${S.id("granitkorn")}" patternUnits="userSpaceOnUse" width=".6" height=".5"><circle cx=".1" cy=".1" r=".03" fill="#5d5550"/><circle cx=".4" cy=".3" r=".025" fill="#d9d0c6"/><circle cx=".25" cy=".42" r=".02" fill="#5d5550"/></pattern>`);

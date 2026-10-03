@@ -106,7 +106,9 @@ const rundeFigur = (svg, unten) => {
   return svg.replace(/<path(?=[^>]*fill="none")[^>]*stroke-width="([\d.]+)"[^>]*\/>/g, (m, w) => (+w < lim ? "" : m))
     .replace(/ d="([^"]*)"/g, (m, d) => ` d="${d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n)))}"`)
     .replace(/<(\w+)[^>]*>/g, (tag, n) => (/Gradient$/.test(n) && !/userSpaceOnUse/.test(tag) ? tag
-      : tag.replace(/ (x1|y1|x2|y2|cx|cy|r|rx|ry|fx|fy)="(-?[\d.]+)"/g, (m, a, v) => ` ${a}="${Math.round(+v * 2) / 2}"`)));
+      : tag.replace(/ (x1|y1|x2|y2|cx|cy|r|rx|ry|fx|fy)="(-?[\d.]+)"/g, (m, a, v) => ` ${a}="${Math.abs(+v) < 3 ? Math.round(+v * 10) / 10 : Math.round(+v * 2) / 2}"`)))
+    /* Fingernägel und Knöchel (winzige Ellipsen an den Händen) sieht man in dieser Größe nicht */
+    .replace(/<ellipse(?=[^>]*stroke-width="0\.07")(?=[^>]*opacity="\.85")[^>]*\/>/g, "");
 };
 /* Maßstab (Einheiten je Meter) und Fußpunkt eines Dings am Boden */
 const fuss = (x, y) => { const p = pr(x, y, 0); return { x: p[0], y: p[1], s: FOC / tief(x, y) }; };
@@ -753,6 +755,7 @@ const KAUF = {};
   k += `<path d="${poly(dachO)}" fill="#4a3020"/>`;
   S.def(`<clipPath id="${S.id("dachclip")}"><path d="${poly(dachN)}"/></clipPath>`);
   let fl = `<path d="${poly(dachN)}" fill="#7a3a22"/>`;
+  const RF = ["", "", "", ""];
   const dp = (x, v) => [x, KYS - 10 * v, KZE + 13.4 * v];
   const NR = 20, dv = 1 / NR, BW = 1.9, PAL = ["#d6a62e", "#2f6e44", "#1f1d1c", "#b8442a"];
   let fugen = "";
@@ -760,8 +763,9 @@ const KAUF = {};
     const vm = (j + .5) * dv, x = KX0 + (i + (j % 2 ? .5 : 0)) * BW;
     const c = j % 4 === 0 ? 2 : ((i + (j >> 1)) % 2 ? 0 : (j % 4 === 2 ? 3 : 1));
     const pts = [dp(x, vm - dv), dp(x + BW / 2, vm), dp(x, vm + dv), dp(x - BW / 2, vm)];
-    fl += `<path d="${poly(pts)}" fill="${PAL[c]}"/>`;
+    RF[c] += poly(pts);
   }
+  RF.forEach((d, c) => { fl += `<path d="${d}" fill="${PAL[c]}"/>`; });
   for (let j = 0; j <= NR; j++) { const v = j * dv; fugen += linie([dp(KX0, v), dp(KX1, v)]) + " "; }
   k += `<g clip-path="url(#${S.id("dachclip")})">${fl}<path d="${fugen}" stroke="#2a1a12" stroke-width=".18" opacity=".5" fill="none"/><path d="${poly(dachN)}" fill="${S.lg("dachglanz", [[0, "#fff", 0.12], [0.5, "#000", 0.08], [1, "#000", 0.28]], 0, 0, 1, 0)}"/></g>`;
   k += `<path d="${linie([[KX1, KYS, KZE], [KX1 - 5, KYS - 10, 27], [KX0 + 5, KYS - 10, 27]])}" stroke="#3a2a20" stroke-width=".5" fill="none"/>`;
@@ -1429,7 +1433,13 @@ const pfadKurz = (() => {
     return out;
   };
 })();
-const kuerzePfade = (svg) => svg.replace(/ d="([^"]*)"/g, (m, d) => ` d="${pfadKurz(d)}"`);
+/* direkt aufeinanderfolgende Pfade mit gleichen Eigenschaften (deckend, ohne evenodd) zu einem Pfad zusammenfassen */
+const fasseZusammen = (svg) => {
+  let alt;
+  do { alt = svg; svg = svg.replace(/<path d="([^"]*)"((?: [\w-]+="[^"]*")*)\/><path d="([^"]*)"\2\/>/g, (m, a, rest, b) => (/opacity|evenodd|class=/.test(rest) ? m : `<path d="${a} ${b}"${rest}/>`)); } while (svg !== alt);
+  return svg;
+};
+const kuerzePfade = (svg) => fasseZusammen(svg).replace(/ d="([^"]*)"/g, (m, d) => ` d="${pfadKurz(d)}"`);
 for (const t of S.teile) { t.kunst = kuerzePfade(t.kunst); for (const u of t.unter || []) u.kunst = kuerzePfade(u.kunst); }
 for (const L of [S.defs, S.kulisse, S.vorne]) L.forEach((v, i) => { L[i] = kuerzePfade(v); });
 

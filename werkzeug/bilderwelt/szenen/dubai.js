@@ -94,7 +94,7 @@ S.hinten(`<rect y="${HOR - 34}" width="400" height="36" fill="${S.lg("dunst", [[
     for (const [dx, dy, rr] of L) w += `<circle cx="${r(x + dx * s)}" cy="${r(y + dy * s)}" r="${r(rr * s)}" fill="#b9c7d6"/>`;
     for (const [dx, dy, rr] of L) w += `<circle cx="${r(x + (dx - 0.8) * s)}" cy="${r(y + (dy - 1.1) * s)}" r="${r(rr * 0.9 * s)}" fill="#e9eef4"/>`;
     for (const [dx, dy, rr] of L.slice(0, 4)) w += `<circle cx="${r(x + (dx - 1.8) * s)}" cy="${r(y + (dy - 2.3) * s)}" r="${r(rr * 0.58 * s)}" fill="#ffffff"/>`;
-    w += `<rect x="${r(x - 30 * s)}" y="${r(y - 3 * s)}" width="${r(60 * s)}" height="${r(4.6 * s)}" fill="${S.lg("wolkenboden", [[0, "#b9c7d6", 0], [1, "#a9b9cb", 0.9]])}"/></g>`;
+    w += `</g>`;
   };
   wolke(300, 44, 1, 1); wolke(368, 84, 0.55, 2); wolke(178, 64, 0.5, 3);
   S.hinten(w);
@@ -134,16 +134,17 @@ S.hinten(`<rect y="${HOR - 34}" width="400" height="36" fill="${S.lg("dunst", [[
    2 — DER BURJ KHALIFA (600 m, 0,175 Einheiten je Meter)
    ===================================================================== */
 const BU = F / 600, BX = 226;
-const bx = (s) => BX + s * BU;
+const BQ = BU * 1.3;   /* quer: Flügel von Spitze zu Spitze rund 120 m sichtbar */
+const bx = (s) => BX + s * BQ;
 const by = (h) => HOR + (E - h) * BU;
 /* Streifen [links, rechts (m), Oberkante (m), Farbe]: links im Licht, rechts im Schatten;
    die äußeren Flügel enden tiefer – so steigt die Spirale der Rücksprünge */
 const STREIFEN = [
-  [-48, -40, 104, "#e8ecee"], [-40, -33, 196, "#dfe6ea"], [-33, -26, 288, "#d5dee5"], [-26, -20, 372, "#cad6df"], [-20, -14, 452, "#bfcdd9"], [-14, -9, 532, "#b3c4d2"],
-  [-9, 0, 592, "#a7bacb"], [0, 9, 592, "#7b92a8"],
-  [9, 14, 548, "#71899f"], [14, 20, 420, "#69829a"], [20, 27, 326, "#627b94"], [27, 35, 232, "#5b748d"], [35, 44, 136, "#546d87"],
+  [-48, -40, 104, "#e3e9ed"], [-40, -33, 196, "#d4dee6"], [-33, -26, 288, "#c6d3de"], [-26, -20, 372, "#b8c8d6"], [-20, -14, 452, "#a9bccd"], [-14, -9, 532, "#9cb1c4"],
+  [-9, 0, 592, "#8fa6bb"], [0, 9, 592, "#5c7590"],
+  [9, 14, 548, "#536d89"], [14, 20, 420, "#4c6683"], [20, 27, 326, "#46607d"], [27, 35, 232, "#405a77"], [35, 44, 136, "#3a5471"],
 ];
-const NASE = [[-4, 0, 506, "#cfdbe4"], [0, 4, 506, "#8aa1b6"]];   /* der Flügel, der auf uns zeigt */
+const NASE = [[-4, 0, 506, "#cbd8e3"], [0, 4, 506, "#6d87a1"]];   /* der Flügel, der auf uns zeigt */
 const SPITZE = [[592, 640, 7.5], [640, 690, 5.6], [690, 738, 4], [738, 782, 2.6], [782, 812, 1.4], [812, 822, 0.7]];
 let burjKlick = "";
 {
@@ -153,28 +154,28 @@ let burjKlick = "";
   for (const [s0, s1, top, f] of NASE) k += rechteck(s0, s1, top, f);
   /* Spitze: der Kern läuft in Stufen aus, links Licht, rechts Schatten, Ringe an jedem Absatz */
   for (const [h0, h1, hw] of SPITZE) {
-    k += rechteck(-hw, 0, h1, "#dfe7ec", h0) + rechteck(0, hw, h1, "#8197ab", h0);
-    k += `<rect x="${r(bx(-hw) - 0.1)}" y="${r(by(h0) - 0.3)}" width="${r(2 * hw * BU + 0.2)}" height=".45" fill="#eef3f6"/>`;
+    k += rechteck(-hw, 0, h1, "#dce5ec", h0) + rechteck(0, hw, h1, "#6a829b", h0);
+    k += `<rect x="${r(bx(-hw) - 0.1)}" y="${r(by(h0) - 0.3)}" width="${r(2 * hw * BQ + 0.2)}" height=".45" fill="#eef3f6"/>`;
   }
   k += `<path d="M${r(BX - 0.13)} ${r(by(822))} L${r(BX)} ${r(by(829))} L${r(BX + 0.13)} ${r(by(822))} Z" fill="#9aacbc"/>`;
   S.def(`<clipPath id="${S.id("burjclip")}">${clip}</clipPath>`);
   const CL = `clip-path="url(#${S.id("burjclip")})"`;
   /* Edelstahlrippen (senkrecht), Technikgeschosse (dunkle Bänder), Himmel spiegelt oben, Dunst unten */
   S.def(`<pattern id="${S.id("rippen")}" width=".62" height="20" patternUnits="userSpaceOnUse"><rect width=".12" height="20" fill="#ffffff" opacity=".4"/></pattern>`);
-  k += `<g ${CL}><rect x="${r(bx(-50))}" y="10" width="${r(100 * BU)}" height="150" fill="url(#${S.id("rippen")})"/>`;
-  for (const h of [74, 158, 242, 326, 410, 456, 494, 555]) k += `<rect x="${r(bx(-50))}" y="${r(by(h))}" width="${r(100 * BU)}" height="${h === 555 || h === 456 ? 1.1 : 0.5}" fill="#34495d" opacity="${h === 555 || h === 456 ? 0.55 : 0.32}"/>`;
+  k += `<g ${CL}><rect x="${r(bx(-50))}" y="10" width="${r(100 * BQ)}" height="150" fill="url(#${S.id("rippen")})"/>`;
+  for (const h of [74, 158, 242, 326, 410, 456, 494, 555]) k += `<rect x="${r(bx(-50))}" y="${r(by(h))}" width="${r(100 * BQ)}" height="${h === 555 || h === 456 ? 1.1 : 0.5}" fill="#34495d" opacity="${h === 555 || h === 456 ? 0.55 : 0.32}"/>`;
   /* Glasflächen: diagonale Spiegelung des Himmels */
-  k += `<rect x="${r(bx(-50))}" y="10" width="${r(100 * BU)}" height="150" fill="${S.lg("burjglanz", [[0, "#ffffff", 0], [0.42, "#ffffff", 0.0], [0.5, "#ffffff", 0.28], [0.58, "#ffffff", 0], [1, "#ffffff", 0]], 0, 0, 1, 0.35)}"/>`;
-  k += `<rect x="${r(bx(-50))}" y="10" width="${r(100 * BU)}" height="150" fill="${S.lg("burjluft", [[0, "#d8e8f6", 0.25], [0.45, "#d8e8f6", 0], [0.78, "#efe4cf", 0.12], [1, "#efe4cf", 0.55]])}"/></g>`;
+  k += `<rect x="${r(bx(-50))}" y="10" width="${r(100 * BQ)}" height="150" fill="${S.lg("burjglanz", [[0, "#ffffff", 0], [0.42, "#ffffff", 0.0], [0.5, "#ffffff", 0.28], [0.58, "#ffffff", 0], [1, "#ffffff", 0]], 0, 0, 1, 0.35)}"/>`;
+  k += `<rect x="${r(bx(-50))}" y="10" width="${r(100 * BQ)}" height="150" fill="${S.lg("burjluft", [[0, "#d8e8f6", 0.25], [0.45, "#d8e8f6", 0], [0.8, "#efe4cf", 0.1], [1, "#efe4cf", 0.42]])}"/></g>`;
   /* Lichtkanten links an jedem Streifen, Absatzkanten oben (Terrassen mit kleinen Rippenkronen) */
   for (const [s0, s1, top] of [...STREIFEN, ...NASE]) {
     const licht = s1 <= 0;
     k += `<rect x="${r(bx(s0))}" y="${r(by(top))}" width=".22" height="${r(by(-1) - by(top))}" fill="${licht ? "#ffffff" : "#c9d6e2"}" opacity="${licht ? 0.65 : 0.35}"/>`;
-    k += `<rect x="${r(bx(s0))}" y="${r(by(top) - 0.25)}" width="${r((s1 - s0) * BU)}" height=".45" fill="${licht ? "#f7f9fa" : "#b8c7d4"}"/>`;
+    k += `<rect x="${r(bx(s0))}" y="${r(by(top) - 0.25)}" width="${r((s1 - s0) * BQ)}" height=".45" fill="${licht ? "#f7f9fa" : "#b8c7d4"}"/>`;
     for (let s = s0 + 1.6; s < s1 - 0.5; s += 2.2) k += `<rect x="${r(bx(s))}" y="${r(by(top) - 1.1)}" width=".14" height="1" fill="${licht ? "#e9eef1" : "#93a6b8"}"/>`;
   }
   /* Aussichtsplattformen: Glasbrüstung als heller Streif */
-  for (const h of [456, 555]) k += `<rect x="${r(bx(-9))}" y="${r(by(h) - 0.35)}" width="${r(18 * BU)}" height=".3" fill="#ffffff" opacity=".85"/>`;
+  for (const h of [456, 555]) k += `<rect x="${r(bx(-9))}" y="${r(by(h) - 0.35)}" width="${r(18 * BQ)}" height=".3" fill="#ffffff" opacity=".85"/>`;
   /* Fuß: der Sockelbau, der Park mit Palmen am anderen Ufer (500 m) */
   const yU = HOR + E * F / 520;
   k += `<path d="M${r(bx(-80))} ${r(yU)} L${r(bx(-80))} ${r(by(14))} L${r(bx(-30))} ${r(by(22))} L${r(bx(40))} ${r(by(20))} L${r(bx(90))} ${r(by(12))} L${r(bx(90))} ${r(yU)} Z" fill="#cfcabd"/>`;
@@ -210,7 +211,7 @@ const SEE_Y0 = HOR + 0.7, SEE_Y1 = 201;
   /* Spiegelbild des Turms: an der Wasserlinie (y ≈ 158,9) gespiegelt, gebrochen von Wellen */
   const ySp = by(0);
   let sp = "";
-  for (const [s0, s1, top, f] of [...STREIFEN, ...NASE]) sp += `<rect x="${r(bx(s0))}" y="${r(ySp)}" width="${r((s1 - s0) * BU)}" height="${r(by(0) - by(top))}" fill="${f}"/>`;
+  for (const [s0, s1, top, f] of [...STREIFEN, ...NASE]) sp += `<rect x="${r(bx(s0))}" y="${r(ySp)}" width="${r((s1 - s0) * BQ)}" height="${r(by(0) - by(top))}" fill="${f}"/>`;
   k += `<g clip-path="url(#${S.id("seeclip")})" opacity=".42">${sp}</g>`;
   /* Spiegelung der fernen Türme, sehr schwach */
   k += `<rect x="104" y="${SEE_Y0}" width="248" height="5" fill="${S.lg("fernspiegel", [[0, "#dfe2dc", 0.5], [1, "#dfe2dc", 0]])}"/>`;
@@ -230,44 +231,50 @@ const SEE_Y0 = HOR + 0.7, SEE_Y1 = 201;
 
 /* =====================================================================
    4 — DIE FONTÄNE (Dubai Fountain, 180–300 m, Strahlen bis 150 m)
+   Schwenkdüsen („Ruderer“) werfen gebogene Strahlen im Takt hin und her,
+   dazwischen steigen die hohen „Super Shooter“ und zerstäuben oben.
    ===================================================================== */
 {
   let k = "";
-  const JET = S.lg("jet", [[0, "#ffffff", 0.35], [0.22, "#ffffff", 0.88], [1, "#f4f8fb", 0.95]]);
   const xL = 118, xR = 334;
   const ybase = (x) => 160.9 - (x - xL) / (xR - xL) * 1.15;
+  /* Strahl entlang einer Mittellinie: Breite wächst nach oben, links Licht, rechts Eigenschatten */
+  const strom = (pts, w0, w1, op) => {
+    const n = pts.length, L = [], R = [], Rm = [];
+    for (let i = 0; i < n; i++) {
+      const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1;
+      const nx = -dy / l, ny = dx / l, w = (w0 + (w1 - w0) * Math.pow(i / (n - 1), 1.3)) / 2;
+      L.push([pts[i][0] - nx * w, pts[i][1] - ny * w]); R.push([pts[i][0] + nx * w, pts[i][1] + ny * w]); Rm.push([pts[i][0] + nx * w * 0.1, pts[i][1] + ny * w * 0.1]);
+    }
+    const Rr = R.slice().reverse(), voll = glatt([...L, ...Rr]);
+    return `<path d="${voll}" fill="#ffffff" opacity="${r(op * 0.45)}" ${W05}/><path d="${voll}" fill="${S.lg("strahl", [[0, "#ffffff", 0.45], [0.3, "#ffffff", 0.92], [1, "#f6fafc", 0.97]])}" opacity="${op}"/>` +
+      `<path d="${glatt([...Rm, ...Rr])}" fill="#8aa3b8" opacity="${r(op * 0.38)}"/>`;
+  };
   /* Gischt am Fuß */
-  k += `<ellipse cx="${(xL + xR) / 2}" cy="159.6" rx="${(xR - xL) / 2 + 4}" ry="3.2" fill="#ffffff" opacity=".7" ${W12}/>`;
-  const strahl = (x, H, w, op) => {
-    const yb = ybase(x), top = yb - H;
-    let s = `<path d="M${r(x - w * 0.24)} ${r(yb)} C${r(x - w * 0.3)} ${r(yb - H * 0.45)} ${r(x - w * 0.56)} ${r(yb - H * 0.8)} ${r(x - w * 0.48)} ${r(top + w * 0.5)} Q${r(x)} ${r(top - w * 0.35)} ${r(x + w * 0.48)} ${r(top + w * 0.5)} C${r(x + w * 0.56)} ${r(yb - H * 0.8)} ${r(x + w * 0.3)} ${r(yb - H * 0.45)} ${r(x + w * 0.24)} ${r(yb)} Z" fill="${JET}" opacity="${op}"/>`;
-    /* Eigenschatten rechts (Licht von links) */
-    s += `<path d="M${r(x + w * 0.06)} ${r(yb)} C${r(x + w * 0.14)} ${r(yb - H * 0.45)} ${r(x + w * 0.24)} ${r(yb - H * 0.8)} ${r(x + w * 0.2)} ${r(top + w * 0.6)} L${r(x + w * 0.46)} ${r(top + w * 0.55)} C${r(x + w * 0.54)} ${r(yb - H * 0.8)} ${r(x + w * 0.3)} ${r(yb - H * 0.45)} ${r(x + w * 0.24)} ${r(yb)} Z" fill="#8ea6ba" opacity="${r(op * 0.45)}"/>`;
-    s += `<ellipse cx="${r(x - w * 0.1)}" cy="${r(top + w * 0.3)}" rx="${r(w * 0.95)}" ry="${r(w * 0.7)}" fill="#ffffff" opacity="${r(op * 0.6)}" ${W05}/>`;
-    return s;
-  };
-  /* der Schleier fällt bei den hohen Strahlen zur Seite zurück */
-  const schleier = (x, H, w) => {
-    const yb = ybase(x), top = yb - H;
-    return `<path d="M${r(x - w)} ${r(top + 2)} Q${r(x - w * 3.6)} ${r(top + H * 0.15)} ${r(x - w * 3.2)} ${r(yb - H * 0.25)} L${r(x - w * 2.2)} ${r(yb - H * 0.25)} Q${r(x - w * 2.4)} ${r(top + H * 0.2)} ${r(x)} ${r(top + 3)} Q${r(x + w * 2.4)} ${r(top + H * 0.2)} ${r(x + w * 2.2)} ${r(yb - H * 0.25)} L${r(x + w * 3.2)} ${r(yb - H * 0.25)} Q${r(x + w * 3.6)} ${r(top + H * 0.15)} ${r(x + w)} ${r(top + 2)} Z" fill="#ffffff" opacity=".22" ${W05}/>`;
-  };
-  /* Bögen der „Ruderer“: schräge Strahlen, die sich zur Seite neigen */
-  for (let i = 0; i < 9; i++) {
-    const x = 128 + i * 24 + (i % 2) * 4, yb = ybase(x), dir = i % 2 ? 1 : -1, H = 14 + (i % 3) * 3;
-    k += `<path d="M${r(x)} ${r(yb)} Q${r(x + dir * 5)} ${r(yb - H * 1.5)} ${r(x + dir * 13)} ${r(yb - H * 0.2)}" stroke="#ffffff" stroke-width=".8" fill="none" opacity=".75"/>`;
-    k += `<path d="M${r(x)} ${r(yb)} Q${r(x + dir * 4)} ${r(yb - H * 1.2)} ${r(x + dir * 10)} ${r(yb - H * 0.1)}" stroke="#dfe8ef" stroke-width=".5" fill="none" opacity=".6"/>`;
+  k += `<ellipse cx="${(xL + xR) / 2}" cy="159.4" rx="${(xR - xL) / 2 + 5}" ry="3.6" fill="#ffffff" opacity=".75" ${W12}/>`;
+  /* Ruderer: gebogene Strahlen, Neigung als Welle über die ganze Länge */
+  for (let i = 0; i <= 24; i++) {
+    const x = xL + 4 + i * 8.8, yb = ybase(x), neig = 0.55 * Math.sin(i * 0.62 + 0.4), H = 19 + 6 * Math.cos(i * 0.62 + 0.4) + (i % 2) * 2.5;
+    const pts = [];
+    for (let t = 0; t <= 1.001; t += 0.125) pts.push([x + neig * H * 0.9 * t * t, yb - H * (2 * t - t * t) * 1.0]);
+    k += strom(pts, 0.8, 2.6, 0.95);
+    const e = pts[pts.length - 1];
+    k += `<ellipse cx="${r(e[0] + neig * 2)}" cy="${r(e[1] + 1)}" rx="3" ry="2" fill="#ffffff" opacity=".6" ${W05}/>`;
+    for (let j = 0; j < 5; j++) k += `<circle cx="${r(e[0] + neig * (2 + j * 1.3) + (rnd() - 0.5) * 2)}" cy="${r(e[1] + 1.5 + j * 1.8 + rnd())}" r="${r(0.25 + rnd() * 0.25)}" fill="#ffffff" opacity=".8"/>`;
   }
-  const HOCH = { 6: 60, 9: 66, 17: 63, 21: 56 };
-  for (let i = 0; i <= 26; i++) {
-    const x = xL + i * 8.3;
-    if (HOCH[i]) continue;
-    const H = 15 + 8 * Math.sin(i * 0.7) + (i % 2 ? 3.5 : 0);
-    k += strahl(x, H, 2.1, 0.92);
+  /* Super Shooter: schlanke Säule, oben eine weite Nebelkrone, Nebel sinkt seitlich ab */
+  for (const [x, H, lean] of [[166, 58, -0.04], [192, 66, -0.02], [262, 64, 0.02], [292, 55, 0.04]]) {
+    const yb = ybase(x), pts = [];
+    for (let t = 0; t <= 1.001; t += 0.1) pts.push([x + lean * H * t, yb - H * t]);
+    const tx = x + lean * H, ty = yb - H;
+    k += `<path d="M${r(tx - 3)} ${r(ty + 4)} Q${r(tx - 10)} ${r(ty + 10)} ${r(tx - 9)} ${r(ty + H * 0.55)} L${r(tx - 5)} ${r(ty + H * 0.5)} Q${r(tx - 5)} ${r(ty + 12)} ${r(tx)} ${r(ty + 6)} Q${r(tx + 5)} ${r(ty + 12)} ${r(tx + 5)} ${r(ty + H * 0.5)} L${r(tx + 9)} ${r(ty + H * 0.55)} Q${r(tx + 10)} ${r(ty + 10)} ${r(tx + 3)} ${r(ty + 4)} Z" fill="#ffffff" opacity=".28" ${W12}/>`;
+    k += strom(pts, 1.4, 4.2, 1);
+    for (const [ox, oy, rx, ry, o] of [[0, 1, 6.5, 4.2, 0.7], [-3.5, 3.5, 4.5, 3.5, 0.55], [3.8, 3, 4.5, 3.4, 0.5], [0, -1.6, 3.6, 2.6, 0.85]]) k += `<ellipse cx="${r(tx + ox)}" cy="${r(ty + oy)}" rx="${rx}" ry="${ry}" fill="#ffffff" opacity="${o}" ${W12}/>`;
+    k += `<ellipse cx="${r(tx - 0.6)}" cy="${r(ty + 0.4)}" rx="2.6" ry="1.8" fill="#ffffff" opacity=".9" ${W05}/>`;
   }
-  for (const i of Object.keys(HOCH)) { const x = xL + i * 8.3; k += schleier(x, HOCH[i], 3.4) + strahl(x, HOCH[i], 3.6, 1); k += `<ellipse cx="${r(x)}" cy="${r(ybase(x) - HOCH[i] + 2)}" rx="6" ry="4.5" fill="#ffffff" opacity=".55" ${W12}/>`; }
   /* aufgewühltes Wasser und Spiegelung der Strahlen */
   for (let i = 0; i < 60; i++) { const x = xL + rnd() * (xR - xL), y = ybase(x) + 0.2 + rnd() * 1.4; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(1 + rnd() * 2.4)}" ry=".45" fill="#ffffff" opacity=".85"/>`; }
-  for (let i = 0; i <= 26; i++) { const x = xL + i * 8.3, y0 = ybase(x) + 1.6; for (let j = 0; j < 4; j++) k += `<rect x="${r(x - 0.7)}" y="${r(y0 + j * 3.2)}" width="1.4" height="${r(1.8 - j * 0.3)}" fill="#ffffff" opacity="${r(0.38 - j * 0.08)}"/>`; }
+  for (let i = 0; i <= 24; i++) { const x = xL + 4 + i * 8.8, y0 = ybase(x) + 1.6; for (let j = 0; j < 4; j++) k += `<rect x="${r(x - 0.8)}" y="${r(y0 + j * 3.2)}" width="1.6" height="${r(1.8 - j * 0.3)}" fill="#ffffff" opacity="${r(0.36 - j * 0.08)}"/>`; }
   S.teil({ anker: [226, 150], id: "fontaene", de: "die Fontäne", syl: "fon-TÄ-ne", it: "la fontana", itSyl: "fon-TA-na", en: "fountain", x: 0, y: 0, kunst: k,
     tipp: "Die Fontänen der Dubai Fountain schießen bis zu 150 Meter hoch – im Takt der Musik." });
 }

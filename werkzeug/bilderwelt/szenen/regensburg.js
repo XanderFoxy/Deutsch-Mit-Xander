@@ -303,7 +303,7 @@ const DOMT = { nord: 124, sued: 136, breite: 15 };
   reihe += `<rect x="-1" y="${W - 1.4}" width="142" height="1.6" fill="#7a7468"/>`;
   k += gruppe("haeuser", 0, 0, reihe);
   S.teil({ id: "altstadt", de: "die Altstadt", syl: "ALT-stadt", it: "il centro storico", itSyl: "CEN-tro STO-ri-co", en: "old town",
-    x: 60, y: 104, kunst: anker(60, 104, k), tipp: "Die Altstadt von Regensburg ist UNESCO-Welterbe. Viele Häuser haben hohe, glatte Fassaden wie in Italien." });
+    x: 128, y: 106, kunst: anker(128, 106, k), tipp: "Die Altstadt von Regensburg ist UNESCO-Welterbe. Viele Häuser haben hohe, glatte Fassaden wie in Italien." });
 }
 
 /* =====================================================================
@@ -616,7 +616,7 @@ const BRUECKE_LEUTE = [];
       /* ein Arm liegt angewinkelt auf dem Tisch */
       if (!hoch) g += `<path d="M${f3(x + 0.17 * gr)} ${f3(sch + 0.06)} L${f3(x + 0.2 * gr)} -.8 L${f3(x + 0.06 * gr)} -.79" stroke="${farbe}" stroke-width="${S2(0.05)}" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`;
       g += `<path d="M${f3(x + 0.085 * gr)} ${f3(ky - 0.04 * gr)} Q${f3(x + 0.095 * gr)} ${f3(ky + 0.04 * gr)} ${f3(x + 0.06 * gr)} ${f3(ky + 0.08 * gr)} M${f3(x + 0.2 * gr)} ${f3(sch + 0.09 * gr)} L${f3(x + 0.19 * gr)} -.78" stroke="${RAND}" stroke-width=".013" fill="none" opacity=".9"/>`;
-      if (hoch) { const sx = hoch, hx = x + sx * 0.2; g += `<path d="M${f3(x + sx * 0.15)} ${f3(sch + 0.03)} L${f3(x + sx * 0.22)} ${f3(sch - 0.18)} L${f3(hx)} -1.42" stroke="${farbe}" stroke-width=".05" fill="none" stroke-linecap="round"/><path d="M${f3(hx - 0.04)} -1.42 L${f3(hx - 0.04)} -1.56 L${f3(hx + 0.04)} -1.56 L${f3(hx + 0.04)} -1.42 Z" fill="#c89030"/><path d="M${f3(hx - 0.045)} -1.56 q.045 -.03 .09 0 Z" fill="#fff4d8"/><path d="M${f3(hx + 0.04)} -1.56 L${f3(hx + 0.04)} -1.42" stroke="${RAND}" stroke-width=".012"/>`; }
+      if (hoch) { const sx = hoch, hx = x + sx * 0.15; g += `<path d="M${f3(x + sx * 0.15)} ${f3(sch + 0.03)} L${f3(x + sx * 0.22)} ${f3(sch - 0.18)} L${f3(hx)} -1.42" stroke="${farbe}" stroke-width=".05" fill="none" stroke-linecap="round"/><path d="M${f3(hx - 0.04)} -1.42 L${f3(hx - 0.04)} -1.56 L${f3(hx + 0.04)} -1.56 L${f3(hx + 0.04)} -1.42 Z" fill="#c89030"/><path d="M${f3(hx - 0.045)} -1.56 q.045 -.03 .09 0 Z" fill="#fff4d8"/><path d="M${f3(hx + 0.04)} -1.56 L${f3(hx + 0.04)} -1.42" stroke="${RAND}" stroke-width=".012"/>`; }
       if (helm) g += `<path d="M${f3(x - 0.1)} ${f3(ky - 0.01)} Q${f3(x - 0.09)} ${f3(ky - 0.13)} ${x} ${f3(ky - 0.13)} Q${f3(x + 0.1)} ${f3(ky - 0.13)} ${f3(x + 0.11)} ${f3(ky - 0.01)} Z" fill="#3a6aa8"/><path d="M${f3(x - 0.04)} ${f3(ky - 0.11)} L${f3(x - 0.035)} ${f3(ky - 0.03)} M${f3(x + 0.03)} ${f3(ky - 0.12)} L${f3(x + 0.03)} ${f3(ky - 0.03)}" stroke="#e8e8e8" stroke-width=".012"/>`;
     }
     g += `<rect x="-1.05" y="-.78" width="1.8" height=".05" fill="${SI}"/><path d="M-1.05 -.78 L.75 -.78" stroke="${RAND}" stroke-width=".012"/>`;

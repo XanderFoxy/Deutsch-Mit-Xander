@@ -1035,7 +1035,13 @@ const pfadKurz = (() => {
     return out;
   };
 })();
-const kuerzePfade = (svg) => svg.replace(/ d="([^"]*)"/g, (m, d) => ` d="${pfadKurz(d)}"`);
+/* direkt aufeinanderfolgende Pfade mit gleichen Eigenschaften (deckend, ohne evenodd) zu einem Pfad zusammenfassen */
+const fasseZusammen = (svg) => {
+  let alt;
+  do { alt = svg; svg = svg.replace(/<path d="([^"]*)"((?: [\w-]+="[^"]*")*)\/><path d="([^"]*)"\2\/>/g, (m, a, rest, b) => (/opacity|evenodd|class=/.test(rest) ? m : `<path d="${a} ${b}"${rest}/>`)); } while (svg !== alt);
+  return svg;
+};
+const kuerzePfade = (svg) => fasseZusammen(svg).replace(/ d="([^"]*)"/g, (m, d) => ` d="${pfadKurz(d)}"`);
 for (const t of S.teile) { t.kunst = kuerzePfade(t.kunst); for (const u of t.unter || []) u.kunst = kuerzePfade(u.kunst); }
 for (const L of [S.defs, S.kulisse, S.vorne]) L.forEach((v, i) => { L[i] = kuerzePfade(v); });
 

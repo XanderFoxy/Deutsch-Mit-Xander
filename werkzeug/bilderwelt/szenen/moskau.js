@@ -82,6 +82,7 @@ const kompakt = (svg, Q = 1) => {
 };
 
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+S.def(`<filter id="${S.id("weichs")}" x="-20%" y="-60%" width="140%" height="220%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".35"/></filter>`);
 S.def(`<filter id="${S.id("dunst")}" x="-5%" y="-30%" width="110%" height="160%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".5"/></filter>`);
 
 /* Stoffe */
@@ -104,24 +105,18 @@ S.hinten(`<rect width="400" height="182" fill="${S.lg("himmel", [[0, "#5f8fc4"],
 S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0.85], [0.35, "#ffe9c4", 0.35], [1, "#ffe9c4", 0]], 1.05, 0.62, 0.75)}"/>`);
 {
   /* Kumuluswolken: klare Formen, Licht von rechts, kühle Unterseite */
-  const WK = S.lg("wk", [[0, "#ffffff"], [0.55, "#f4f2f2"], [1, "#c6cddd"]]), WKS = S.lg("wks", [[0, "#8e9ab8", 0.5], [0.5, "#8e9ab8", 0.08], [1, "#fff", 0]], 0, 0, 1, 0);
+  /* Kumulus aus runden Ballen: kühle Schattenseite links unten, Sonne von rechts */
+  const WS = S.lg("wks", [[0, "#aeb8cf"], [1, "#c9d0e0"]]), WL = S.lg("wkl", [[0, "#eef1f7"], [0.6, "#ffffff"], [1, "#fff6e8"]], 0, 0, 1, 0);
   const wolke = (x, y, w, h, seed) => {
-    const z = zufall(seed); let top = `M${r(x - w / 2)} ${y}`;
-    const n = 4 + Math.floor(z() * 3); let px = x - w / 2;
-    for (let i = 0; i < n; i++) {
-      const nx = x - w / 2 + (i + 1) * w / n, t = (i + 0.5) / n;
-      const hh = h * (0.45 + 0.55 * Math.sin(Math.PI * t)) * (0.75 + z() * 0.35);
-      top += ` C${r(px - 1)} ${r(y - hh * 0.9)} ${r(nx + 1)} ${r(y - hh * 1.05)} ${r(nx)} ${r(y - (i === n - 1 ? 0 : hh * 0.25))}`;
-      px = nx;
-    }
-    top += " Z";
-    let g = `<path d="${top}" fill="${WK}"/>`;
-    /* Schattenseite links unten, Lichtkante rechts */
-    g += `<path d="${top}" fill="${WKS}"/>`;
-    g += `<path d="M${r(x - w * 0.42)} ${r(y - 0.2)} Q${x} ${r(y + 1.4)} ${r(x + w * 0.45)} ${r(y - 0.2)}" fill="#a9b3c9" opacity=".55"/>`;
+    const z = zufall(seed), n = 5 + Math.floor(z() * 3), ball = [];
+    for (let i = 0; i < n; i++) { const t = (i + 0.5) / n, rr = h * (0.35 + 0.45 * Math.sin(Math.PI * t)) * (0.8 + z() * 0.4); ball.push([x - w / 2 + t * w, y - rr * 0.75, rr]); }
+    const kreise = (dx, dy, f) => ball.map(([cx, cy, rr]) => `M${r(cx + dx - rr * f)} ${r(cy + dy)} a${r(rr * f)} ${r(rr * f)} 0 1 0 ${r(2 * rr * f)} 0 a${r(rr * f)} ${r(rr * f)} 0 1 0 ${r(-2 * rr * f)} 0`).join("");
+    let g = `<path d="${kreise(0, 0, 1)}M${r(x - w / 2)} ${r(y - h * 0.3)} h${w} v${r(h * 0.3)} h${-w}Z" fill="${WS}"/>`;
+    g += `<path d="${kreise(h * 0.12, -h * 0.12, 0.86)}" fill="${WL}"/>`;
+    g += `<path d="${kreise(h * 0.22, -h * 0.2, 0.55)}" fill="#fff" opacity=".7"/>`;
     return g;
   };
-  S.hinten(wolke(62, 34, 52, 13, 3) + wolke(156, 22, 30, 7, 9) + wolke(332, 62, 44, 10, 21) + wolke(390, 30, 26, 7, 33));
+  S.hinten(wolke(70, 40, 46, 10, 3) + wolke(158, 26, 26, 6, 9) + wolke(338, 66, 40, 8, 21) + wolke(392, 34, 22, 6, 33));
   /* zarte Schleierwolken am Horizont */
   S.hinten(`<path d="M0 128 Q60 124 120 127 T240 125 T400 128 L400 132 Q300 130 200 132 T0 133 Z" fill="#fff" opacity=".35" filter="url(#${S.id("dunst")})"/>`);
 }
@@ -190,6 +185,8 @@ S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0
   k += `<path d="${st}" stroke="#9a97a0" stroke-width=".35" opacity=".35"/>`;
   /* Glanz der nassen Steine zur Sonne hin (rechts) */
   k += `<path d="M200 ${HOR + 4} L400 ${HOR + 30} L400 260 L230 260 Z" fill="${S.lg("glanz", [[0, "#ffe9c8", 0], [1, "#ffe9c8", 0.16]], 0, 0, 1, 0)}"/>`;
+  /* Spiegelung der Kuppeln und Türme im feuchten Pflaster (weich, kurz) */
+  k += `<g filter="url(#${S.id("dunst")})" opacity=".2"><rect x="150" y="176" width="10" height="9" fill="#e7863a"/><rect x="161" y="176" width="9" height="11" fill="#2f61a8"/><rect x="170" y="176" width="10" height="13" fill="#b5523a"/><rect x="186" y="176" width="9" height="10" fill="#3f7f4f"/><rect x="196" y="176" width="10" height="11" fill="#f0c43c"/><rect x="267" y="176" width="22" height="16" fill="#9a4538"/><rect x="274" y="186" width="6" height="6" fill="#d03a34"/></g>`;
   /* Schatten der Kremlmauer (12 m, Sonne 20° hoch → 33 m nach links) */
   k += poly([P(20, 5), P(288.5, 5), P(288.5, 38), P(20, 38)], "#1b2247", ` opacity=".3"`);
   /* Zinnen-Zähne am Schattenrand (nur nah sichtbar) */
@@ -199,10 +196,11 @@ S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0
   /* Schnee: geräumte Haufen an der GUM-Seite, Reste im Pflaster */
   k += poly([P(100, -38), P(277, -38), P(277, -36), P(100, -36.2)], SCHNEE);
   k += poly([P(100, -36.2), P(277, -36), P(277, -35.5), P(100, -35.6)], SCHNEE_S, ` opacity=".7"`);
+  /* festgetretene Schneereste: unregelmäßig, weicher Rand, Kanten bläulich */
   const fleck = (d, l, w, t) => {
-    const pts = []; const z = zufall(Math.round(d * 7 + l * 13));
-    for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, rr = 0.75 + z() * 0.35; pts.push(P(d + Math.sin(a) * t * rr, l + Math.cos(a) * w * rr)); }
-    return poly(pts, SCHNEE, ` opacity=".85"`) + poly(pts.slice(0, 5), SCHNEE_S, ` opacity=".5"`);
+    const n = 12, s0 = Math.round(d * 7 + l * 13);
+    const pt = (f) => { const p = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, rr = (0.7 + (((i + s0) * 7919) % 13) / 30) * f; p.push(P(d + Math.sin(a) * t * rr, l + Math.cos(a) * w * rr)); } return p; };
+    return `<path d="M${pt(1).join(" L")}Z" fill="#c9d4e6" filter="url(#${S.id("weichs")})"/><path d="M${pt(0.82).join(" L")}Z" fill="${SCHNEE}" opacity=".9" filter="url(#${S.id("weichs")})"/>`;
   };
   k += fleck(13, -6, 3, 0.8) + fleck(15.5, 9.5, 2.4, 0.7) + fleck(24, -11, 4, 1.4) + fleck(30, 12, 3, 1.6) + fleck(46, -22, 5, 3) + fleck(70, 20, 4, 4) + fleck(12, 2.5, 1.2, 0.35);
   /* Schlagschatten der Dinge im Vordergrund (zur Bodenfläche) — Sonne rechts, knapp hinten */
@@ -309,7 +307,7 @@ function trommel(cx, w, y0, y1, n = 5) {
 /* Eine Kapelle mit Turm, Kokoschniks, Trommel und Kuppel */
 function kapelle(c) {
   const { u, w, top, art, f1, f2 } = c;
-  const body1 = top * 0.5, koko = body1 + top * 0.08, tr = koko + top * 0.11, kh = top * 0.24;
+  const body1 = top * 0.46, koko = body1 + top * 0.075, tr = koko + top * 0.15, kh = top * 0.23;
   let g = achteck(u, w, 10, body1);
   /* weiße Pilaster an den Kanten, ein Gesims, schmale Fenster */
   const a = w * 0.207;
@@ -319,7 +317,7 @@ function kapelle(c) {
   g += kokoschniks(u, w, body1, top * 0.085, 3);
   g += achteck(u, w * 0.78, body1 + top * 0.02, koko);
   g += kokoschniks(u, w * 0.78, koko, top * 0.07, 3);
-  g += trommel(u, w * 0.58, koko + top * 0.03, tr);
+  g += trommel(u, w * 0.56, koko + top * 0.03, tr, 6);
   g += zwiebel(u, tr, w * 0.92, kh, art, f1, f2);
   g += kreuz(u, tr + kh, top > 40 ? 1 : 0.8);
   /* Schnee auf den Gesimsen */
@@ -336,8 +334,8 @@ const unterKathedrale = [];
     k += achteck(u, 8, 15, 23, ZIEGEL_S, ZIEGEL_M, ZIEGEL_L);
     for (const dx of [-1.7, 0, 1.7]) k += `<path d="M${r(u + dx - 0.6)} -16 v-4.6 q.6 -1.2 1.2 0 v4.6 Z" fill="#2b1820"/><path d="M${r(u + dx - 0.35)} -19.6 q.35 -.5 .7 0 v.7 h-.7 Z" fill="#c69c46"/>`;
     k += `<rect x="${u - 4.3}" y="-23.6" width="8.6" height=".8" fill="${WEISS_L}"/><rect x="${u - 4.3}" y="-23.9" width="8.6" height=".35" fill="${SCHNEE}"/>`;
-    k += `<path d="M${u - 3.8} -23.6 L${u - 0.9} -33 L${u} -33 Z" fill="${GRUEN_S}"/><path d="M${u - 0.9} -33 L${u + 0.9} -33 L${u + 0.9} -23.6 L${u - 0.9} -23.6 Z" fill="${GRUEN_M}"/><path d="M${u + 3.8} -23.6 L${u + 0.9} -33 L${u} -33 Z" fill="${GRUEN_L}"/>`;
-    k += `<path d="M${u - 3.8} -23.6 L${u} -33 L${u + 3.8} -23.6 Z" fill="none"/>`;
+    k += `<path d="M${u - 3.8} -23.6 L${u - 0.2} -33 L${u - 1.6} -23.6 Z" fill="${GRUEN_S}"/><path d="M${u - 1.6} -23.6 L${u - 0.2} -33 L${u + 0.2} -33 L${u + 1.6} -23.6 Z" fill="${GRUEN_M}"/><path d="M${u + 1.6} -23.6 L${u + 0.2} -33 L${u + 3.8} -23.6 Z" fill="${GRUEN_L}"/>`;
+    k += `<path d="M${u - 1.6} -23.6 L${u - 0.2} -33 M${u + 1.6} -23.6 L${u + 0.2} -33" stroke="#9cc7ad" stroke-width=".18"/>`;
     k += `<path d="M${u - 1.6} -27 l.6 -1.6 l.6 1.6 Z M${u + 0.4} -29 l.5 -1.3 l.5 1.3 Z" fill="${WEISS_L}"/>`;
     k += zwiebel(u, 33, 1.8, 2.2, "glatt", GOLD, GOLD) + kreuz(u, 35.2, 0.6);
     unterKathedrale.push({ id: "glockenturm", de: "der Glockenturm", syl: "GLO-cken-turm", it: "il campanile", itSyl: "cam-pa-NI-le", en: "bell tower",
@@ -379,11 +377,13 @@ const unterKathedrale = [];
     const R = `M${bw * 0.42} ${-zb} L${tw * 0.4} ${-zt} L${tw} ${-zt} L${bw} ${-zb} Z`;
     z += `<path d="${L}" fill="#d8c5ad"/><path d="${M}" fill="#efe1cc"/><path d="${R}" fill="#fbf3e6"/>`;
     S.def(`<clipPath id="${S.id("zelt")}"><path d="M${-bw} ${-zb} L${-tw} ${-zt} L${tw} ${-zt} L${bw} ${-zb} Z"/></clipPath>`);
-    let rt = "";
-    for (let j = 0; j < 9; j++) { const y = -zb - j * 2.1; rt += `M-6 ${r(y)} L6 ${r(y - 1.6)} M-6 ${r(y - 1.6)} L6 ${r(y)}`; }
-    let st = "";
-    for (let j = 0; j < 8; j++) for (let i = -2; i <= 2; i++) { const y = -zb - 1.2 - j * 2.1, w = bw * (1 - (j * 2.1 + 1.2) / (zt - zb)) * 0.95; if (Math.abs(i) * 1.1 < w) st += `<circle cx="${r(i * 1.1 * (w / bw) * 1.6)}" cy="${r(y)}" r=".22"/>`; }
-    z += `<g clip-path="url(#${S.id("zelt")})"><path d="${rt}" stroke="#d26a3a" stroke-width=".22" opacity=".75"/><g fill="#3f7f4f">${st}</g></g>`;
+    /* Rautennetz (rot-braune Fugen) und in jeder Raute ein kleiner Stern (grün/gold) */
+    let rt = "", st = "";
+    for (let j = 0; j < 12; j++) {
+      const y = -zb - j * 1.55, w = bw * (1 - (j * 1.55) / (zt - zb)), n = Math.max(2, Math.round(w / 0.75));
+      for (let i = 0; i <= n; i++) { const x = -w + i * 2 * w / n, x2 = -w * 0.92 + (i + 0.5) * 2 * w * 0.92 / n; rt += `M${r(x)} ${r(y)} L${r(x2)} ${r(y - 1.55)}`; if (i < n) rt += `M${r(x + 2 * w / n)} ${r(y)} L${r(x2)} ${r(y - 1.55)}`; if (i < n) st += `<circle cx="${r(x2)}" cy="${r(y - 0.6)}" r=".2" fill="${(i + j) % 2 ? "#3f7f4f" : "#d9a93a"}"/>`; }
+    }
+    z += `<g clip-path="url(#${S.id("zelt")})"><path d="${rt}" stroke="#b9653a" stroke-width=".16" opacity=".8"/>${st}</g>`;
     z += `<path d="M${-bw * 0.42} ${-zb} L${-tw * 0.4} ${-zt} M${bw * 0.42} ${-zb} L${tw * 0.4} ${-zt}" stroke="#c9b18c" stroke-width=".3"/>`;
     /* kleine „Hörfenster“ im Zelt */
     z += `<path d="M-2.4 -45 l.7 -1.6 l.7 1.6 Z M1.2 -49 l.6 -1.4 l.6 1.4 Z" fill="#d29a3a" stroke="#fff" stroke-width=".15"/>`;
@@ -407,7 +407,7 @@ const unterKathedrale = [];
   k += zwiebel(-11, 15, 1.5, 1.7, "glatt", GOLD, GOLD);
   /* Luftperspektive: zarter blauer Dunst über allem */
   S.teil({ id: "basiliuskathedrale", de: "die Basiliuskathedrale", syl: "BA-si-li-us-ka-the-dra-le", it: "la Cattedrale di San Basilio", itSyl: "cat-te-DRA-le di san ba-SI-lio", en: "St Basil's Cathedral",
-    x: 0, y: 0, kunst: KG(k), zoom: { x: 110, y: 70, w: 150, h: 100 }, unter: unterKathedrale,
+    x: 0, y: 0, kunst: KG(k), zoom: { x: 108, y: 76, w: 153, h: 102 }, unter: unterKathedrale,
     tipp: "Die Basiliuskathedrale hat neun Kapellen. Sie wurde vor fast 500 Jahren gebaut." });
 }
 
@@ -554,9 +554,19 @@ const unterKathedrale = [];
     for (let i = 0; i < 4; i++) { const a = -4.25 + i * 2.2; zt += `M${r(a)} -19 V-21.4 L${r(a + 0.55)} -20.7 L${r(a + 1.1)} -21.4 V-19 Z`; }
     t += `<path d="${zt}" fill="#93473c"/><path d="M-6 -19 V-21.4 L-5.4 -20.7 L-4.8 -21.4 V-19 Z" fill="${ZIEGEL_S}"/>`;
     t += `<path d="${zt.replace(/V-19 Z/g, "")}" stroke="${SCHNEE}" stroke-width=".35" fill="none"/>`;
-    t += `<path d="M-4.25 -15 h8.5" stroke="#c7a99c" stroke-width=".5"/><path d="M-.7 -9 v-3 q.7 -1 1.4 0 v3 Z" fill="#3a1c1e" stroke="#c7a99c" stroke-width=".25"/>`;
-    t += `<path d="M-5.4 -21.6 L-.3 -33 L0 -33 L-1.8 -21.6 Z" fill="${GRUEN_S}"/><path d="M-1.8 -21.6 L0 -33 L4.6 -21.6 Z" fill="${GRUEN_M}"/>`;
-    t += `<path d="M-5.6 -21.6 h10.4" stroke="${SCHNEE}" stroke-width=".55"/><path d="M0 -33 V-35" stroke="#d6a93a" stroke-width=".35"/><path d="M0 -34.6 l1.1 .35 l-1.1 .35" fill="#e2b84a"/>`;
+    /* weißer Bogenfries, Blendfenster, Ecklisenen */
+    let bf = "";
+    for (let u = -4; u < 4.2; u += 1.05) bf += `M${r(u)} -16.6 v-.9 q.5 -.7 1 0 v.9`;
+    t += `<path d="${bf}" stroke="#d8c3b4" stroke-width=".25" fill="none"/><path d="M-4.25 -15.6 h8.5 M-4.25 -18.4 h8.5" stroke="#d8c3b4" stroke-width=".35"/>`;
+    t += `<path d="M-.75 -8 v-3.4 q.75 -1.1 1.5 0 v3.4 Z M-.5 -3 v-2.2 q.5 -.7 1 0 v2.2 Z" fill="#3a1c1e" stroke="#d8c3b4" stroke-width=".25"/>`;
+    t += `<path d="M-4.25 0 V-19 M4.25 0 V-19" stroke="#7a3a33" stroke-width=".5"/>`;
+    /* Zeltdach aus grünen Ziegeln: linke Fläche im Schatten, Gratlinien, Hörfenster */
+    t += `<path d="M-5.8 -21.6 L-.25 -33 L-1.9 -21.6 Z" fill="${GRUEN_S}"/><path d="M-1.9 -21.6 L-.25 -33 L.25 -33 L4.6 -21.6 Z" fill="${GRUEN_M}"/>`;
+    let zr = "";
+    for (let j = 1; j < 6; j++) { const y = -21.6 - j * 2, f = 1 - j * 2 / 11.4; zr += `M${r(-5.8 * f)} ${y} H${r(4.6 * f)}`; }
+    t += `<path d="${zr}" stroke="#1f4a37" stroke-width=".14" opacity=".7"/><path d="M-1.9 -21.6 L-.25 -33" stroke="#9cc7ad" stroke-width=".2"/>`;
+    t += `<path d="M.2 -25 l.8 -1.8 l.8 1.8 Z" fill="${WEISS_L}"/><path d="M-5.8 -21.6 L-.25 -33" stroke="${SCHNEE}" stroke-width=".3" opacity=".8"/>`;
+    t += `<path d="M-6 -21.6 h10.8" stroke="${SCHNEE}" stroke-width=".55"/><path d="M0 -33 V-35.4" stroke="#d6a93a" stroke-width=".3"/><circle cx="0" cy="-34" r=".38" fill="${GOLD}"/>`;
     k += `<g transform="translate(${ox} ${oy}) scale(${s.toFixed(4)})">${t}</g>`;
   }
   /* Zarenturm-Ansatz: die Mauer läuft am Spasski-Turm vorbei nach hinten (Kulisse) */
@@ -605,16 +615,26 @@ const unterKathedrale = [];
    ===================================================================== */
 {
   const D0 = 150, D1 = 174, L0 = 23, L1 = 36.5;
-  const stufen = [[0, 4, 0, "#7d2c27", "#5b1f20"], [4, 4.6, 0.25, "#141216", "#0f0d10"], [4.6, 6.4, 1.1, "#76302a", "#561f1e"], [6.4, 7, 1.4, "#141216", "#0f0d10"], [7, 8.6, 2.2, "#76302a", "#561f1e"], [8.6, 11, 3.3, "#191619", "#121012"], [11, 12, 3, "#6f2c27", "#4f1d1c"]];
+  const GR = S.lg("granit", [[0, "#7a3a33"], [1, "#8e4a3f"]], 0, 0, 1, 0), GRS = "#4e2a28", LAB = S.lg("labr", [[0, "#2a2a33"], [0.5, "#3b3e4c"], [1, "#24242b"]], 0, 0, 1, 0);
+  S.def(`<pattern id="${S.id("koern")}" patternUnits="userSpaceOnUse" width="3" height="2.2"><circle cx=".6" cy=".5" r=".22" fill="#c08070" opacity=".5"/><circle cx="2.1" cy="1.5" r=".18" fill="#2a1414" opacity=".5"/><circle cx="1.5" cy=".2" r=".12" fill="#e0b0a0" opacity=".5"/></pattern>`);
+  const stufen = [[0, 0.8, -0.3, "#5c5a60", "#47454b"], [0.8, 4, 0, GR, GRS], [4, 4.7, 0.3, LAB, "#1b1b21"], [4.7, 6.4, 1.1, GR, GRS], [6.4, 7, 1.4, LAB, "#1b1b21"], [7, 8.6, 2.1, GR, GRS], [8.6, 11, 3.2, "#2a2730", "#1b1a20"], [11, 12, 2.9, GR, GRS]];
   let k = "";
   for (const [h0, h1, i, fv, fs] of stufen) {
     /* Seite zum Platz (Schatten) und Stirnseite zum Betrachter (Streiflicht) */
     k += poly([P(D0 + i, L0 + i, h0), P(D1 - i, L0 + i, h0), P(D1 - i, L0 + i, h1), P(D0 + i, L0 + i, h1)], fs);
     k += poly([P(D0 + i, L0 + i, h0), P(D0 + i, L1 - i, h0), P(D0 + i, L1 - i, h1), P(D0 + i, L0 + i, h1)], fv);
+    if (fv === GR) k += poly([P(D0 + i, L0 + i, h0), P(D0 + i, L1 - i, h0), P(D0 + i, L1 - i, h1), P(D0 + i, L0 + i, h1)], `url(#${S.id("koern")})`);
   }
+  /* Fugen der Granitblöcke auf der Stirnseite */
+  let fg = "";
+  for (const h of [1.6, 2.4, 3.2]) fg += `M${P(D0, L0, h)} L${P(D0, L1, h)}`;
+  for (const l of [26, 29.5, 33]) fg += `M${P(D0, l, 0.8)} L${P(D0, l, 4)}`;
+  k += `<path d="${fg}" stroke="#5a2a26" stroke-width=".25" opacity=".7"/>`;
+  /* der dunkle Eingang auf der Platzseite (Streiflicht) */
+  k += poly([P(160, L0, 0.8), P(164, L0, 0.8), P(164, L0, 3.4), P(160, L0, 3.4)], "#111015");
   /* Pfeiler im Portikus oben und Schneekanten auf den Stufen */
   let pf = "";
-  for (let j = 0; j < 5; j++) { const l = 23 + 3.6 + j * 2.25; pf += poly([P(D0 + 3.3, l, 8.6), P(D0 + 3.3, l + 0.9, 8.6), P(D0 + 3.3, l + 0.9, 11), P(D0 + 3.3, l, 11)], "#5e2622"); }
+  for (let j = 0; j < 5; j++) { const l = 23 + 3.6 + j * 2.25; pf += poly([P(D0 + 3.3, l, 8.6), P(D0 + 3.3, l + 0.9, 8.6), P(D0 + 3.3, l + 0.9, 11), P(D0 + 3.3, l, 11)], "#7a3a33"); }
   k += pf;
   let sn = "";
   for (const [h, i] of [[4, 0], [6.4, 1.1], [8.6, 2.2], [12, 3]]) sn += `M${P(D1 - i, L0 + i, h)} L${P(D0 + i, L0 + i, h)} L${P(D0 + i, L1 - i, h)}`;
