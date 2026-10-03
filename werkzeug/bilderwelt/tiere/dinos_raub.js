@@ -1190,11 +1190,11 @@ function pteranodon(T) {
   /* Knochen der Vorderkante: Oberarm 3 mit Deltopektoral-Wulst, Unterarm 2,4, Mittelhand 1,8, Flugfinger 1,4 → 0,4;
      Gelenke als Verdickung der Kontur, Lichtkante oben links, Schattenseite */
   const knochen = (v, sgn) => {
-    const br = [3, 2.4, 1.8, 1.4, 0.9, 0.4], seg = [];
+    const br = [2.4, 1.8, 1.4, 1.1, 0.7, 0.35], seg = [];
     let s2 = "";
     for (let i = 0; i < v.length - 1; i++) {
-      const w0 = br[i] * (i ? 1.25 : 1), w1 = br[i + 1] != null ? br[i + 1] * 1.25 : 0.4;
-      seg.push(glied(v[i], v[i + 1], w0, i < 3 ? w1 : br[i + 1] || 0.3, i === 0 ? 0.8 : 0, 0, 0.35, 5, i < 3));
+      const w0 = br[i] * (i && i < 4 ? 1.15 : 1), w1 = br[i + 1] != null ? br[i + 1] * (i < 3 ? 1.15 : 1) : 0.3;
+      seg.push(glied(v[i], v[i + 1], w0, w1, i === 0 ? 0.5 : 0, 0, 0.35, 5, i < 3));
     }
     for (const g of seg) s2 += glatt(g);
     const iK = pfad(T, s2);
@@ -1222,7 +1222,7 @@ function pteranodon(T) {
 
   /* ---------- Rumpf (kompakt) und kurzer, kräftiger Hals mit Pyknofasern ---------- */
   const rumpf = [[10, -5.6], [4, -7.2], [-3, -7], [-8, -4.6], [-10.4, -1.6], [-10.6, 0.6], [-8.4, 3.6], [-3, 6.8], [4, 7.4], [10, 5.6]];
-  const hals = [[8, -3.6], [14, -3.4], [20, -2.8], [24, -2.4], [25, 1.8], [20, 2.4], [14, 3], [8, 3.8]];
+  const hals = [[8, -3.8], [15, -3.4], [22, -3], [28, -2.6], [32, -2.2], [32.6, 1.6], [26, 2], [18, 2.8], [8, 3.8]];
   const iR = pfad(T, rumpf), iHa = pfad(T, hals);
   let r = fuell(iHa, fell) + fuell(iR, fell);
   let fe = "";
@@ -1233,9 +1233,9 @@ function pteranodon(T) {
   /* Rücken dunkler, Brust heller; Halsunterseite im Kernschatten; die Licht/Schatten-Grenze wandert am Hals zur Seite (Drehung) */
   let rm = L([[[9, -4.6], [0, -6], [-8, -3.6]]], "#3a2a1e", 2.8, 0.42) + L([[[9, 4.6], [0, 6], [-8, 3]]], "#e8d2ae", 2.6, 0.3) + ell(5, -2.6, 3.6, 2.6, 0, LI, 0.24 * st);
   rm += L([[[9, -2.2], [15, -2.2], [20, -1.6], [24, -0.6]]], "#3a2a1e", 1.1, 0.35) + L([[[9, 2.6], [16, 2], [24, 1.2]]], SC, 1, 0.4);
-  r += geklippt(T, [iR, iHa], fe + weichG(T, 0.8, [-12, -9, 27, 9], rm));
+  r += geklippt(T, [iR, iHa], fe + weichG(T, 0.8, [-12, -9, 34, 9], rm));
   if (F) r += federn(T, rumpf.map(([x, y]) => [x * 1.05, y * 1.1]), 100, (x, y) => 180 + y * 2, 0.7, [["#7a6450", 1, 0.13, 0.45]], { kr: 0.3 }) + federn(T, hals.map(([x, y]) => [x, y * 1.18]), 50, 182, 0.6, [["#7a6450", 1, 0.11, 0.45]]);
-  s += volZonen(T, "rumpf", r, [-12, -9, 27, 9], [[0, 0, "a", { weich: 1.6, tiefe: 3, umgebung: 0.4 }]]);
+  s += volZonen(T, "rumpf", r, [-12, -9, 34, 9], [[0, 0, "a", { weich: 1.6, tiefe: 3, umgebung: 0.4 }]]);
 
   /* ---------- naher Flügel (unten) ---------- */
   const nV = [[5, 4], [11, 13.4], [16, 30], [15, 54], [9.6, 70], [3, 88], [-2, 108]];

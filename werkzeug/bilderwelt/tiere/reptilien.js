@@ -198,22 +198,6 @@ const beulenGrad = (T, n, hell = 0.34, dunkel = 0.42) => T.rg("beule" + n, [[0, 
 const plattenGrad = (T, n, kiel = true, k = 1, L = "#f3e9c4", D = "#120f06") => T.lg("platte" + n, kiel
   ? [[0, L, 0.24 * k], [0.12, L, 0.05 * k], [0.3, L, 0.16 * k], [0.38, L, 0.3 * k], [0.47, D, 0.24 * k], [0.62, D, 0.04 * k], [0.86, D, 0.12 * k], [1, D, 0.32 * k]]
   : [[0, L, 0.22 * k], [0.25, L, 0.04 * k], [0.7, D, 0.05 * k], [1, D, 0.3 * k]]);
-/* Schildernetz (nur fein): unregelmäßige kleine Vielecke (Schnauzenseite, Kopfschilde) – Fugen dunkel, Lichtkante daneben */
-const platten = (T, pts, g, o = {}) => {
-  if (!T.fein) return "";
-  const [x0, y0, x1, y1] = T.box(pts), nx = Math.ceil((x1 - x0) / g) + 2, ny = Math.ceil((y1 - y0) / (g * 0.8)) + 2, V = [];
-  for (let j = 0; j < ny; j++) { V.push([]); for (let i = 0; i < nx; i++) V[j].push([x0 - g + i * g + (j % 2) * g * 0.5 + (T.rnd() - 0.5) * g * 0.5, y0 - g * 0.8 + j * g * 0.8 + (T.rnd() - 0.5) * g * 0.4]); }
-  const drin = (p) => T.inPoly(p[0], p[1], pts);
-  let d = "", dl = "";
-  const kante = (a, b) => { if (drin(a) && drin(b)) { d += `M${R(a[0])} ${R(a[1])}l${R(b[0] - a[0])} ${R(b[1] - a[1])}`; if (o.licht !== false) dl += `M${R(a[0] + 0.12 * g)} ${R(a[1] + 0.14 * g)}l${R(b[0] - a[0])} ${R(b[1] - a[1])}`; } };
-  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
-    if (i + 1 < nx) kante(V[j][i], V[j][i + 1]);
-    if (j + 1 < ny) kante(V[j][i], V[j + 1][i]);
-    if (j + 1 < ny && T.rnd() < 0.5) { const k = i + (j % 2 ? 1 : -1); if (k >= 0 && k < nx) kante(V[j][i], V[j + 1][k]); }
-  }
-  const w = R2(g * (o.w || 0.08)) || 0.05;
-  return (dl ? `<path d="${dl}" stroke="${o.hell || "#f3e7c8"}" stroke-width="${w}" stroke-opacity="${o.opL || 0.16}"/>` : "") + `<path d="${d}" stroke="${o.dunkel || "#120d07"}" stroke-width="${w}" stroke-opacity="${o.opS || 0.3}" stroke-linejoin="round"/>`;
-};
 /* Vieleck-Schuppenmuster (feine Schnauzen-/Kopfschuppen, Bauchkörner): leicht verzogenes Sechseck-Netz als Kachel,
    dunkle Fuge mit heller Kante daneben – wenige Bytes. g = Schuppengröße, o: { rot, op, opL, w } */
 const musterNetz = (T, n, g, o = {}) => {
@@ -242,12 +226,6 @@ const punkte = (T, pts, n, r0, farbe, op) => {
     k++;
   }
   return `<path d="${d}" stroke="${farbe}" stroke-opacity="${op}" stroke-width="${R2(r0 * 2)}" stroke-linecap="round" fill="none"/>`;
-};
-/* Reihe entlang einer Linie: n Trennstriche quer */
-const reihe = (T, pts, n, tiefe, farbe, w, op, versatz = 0) => {
-  const P = polyl(pts); let d = "";
-  for (let i = 0; i <= n; i++) { const [x, y, nx, ny] = P.at(i / n); d += `M${R(x + nx * versatz)} ${R(y + ny * versatz)}l${R(nx * tiefe)} ${R(ny * tiefe)}`; }
-  return `<path d="${d}" stroke="${farbe}" stroke-width="${w}" stroke-opacity="${op}" stroke-linecap="round"/>`;
 };
 /* Kralle: Basis (x, y), Länge L, Breite b, Richtung w (Grad), Krümmung */
 const krallenPfad = (x, y, L, b, w, krumm = 0.5) => {
@@ -461,40 +439,6 @@ const schuppenReihen = (T, Rr, t0, t1, reihen, grads, o = {}) => {
     }
   }
   return `<g transform="translate(${ox} ${oy}) scale(1 ${fl})">` + Object.entries(gr).map(([g, l]) => `<g fill="${g}">${l.join("")}</g>`).join("") + "</g>";
-};
-/* Reptilienauge auf Basis von T.augeReal: Schlitz- oder Rundpupille, Iris mit Netzzeichnung, Nickhaut (halb vorgezogen,
-   von vorn = rechts), beschuppte Lider statt Wimpern. o: { iris, iris2, pupille, offen, winkel, nick (0–1), lid, netz } */
-const reptilAuge = (T, x, y, rr, o = {}) => {
-  let s = T.augeReal(x, y, rr, { iris: o.iris, iris2: o.iris2, pupille: o.pupille || "schlitz", offen: o.offen || 0.6, winkel: o.winkel || 0, lid: o.lid || "#1a160c" });
-  const W = rr * 1.35, off = o.offen || 0.6, Ho = rr * off, Hu = rr * off * 0.72;
-  const id = T.id("ra" + (T._n = (T._n || 0) + 1));
-  const spalt = `M${R2(-W)} 0C${R2(-W * 0.5)} ${R2(-Ho * 1.15)} ${R2(W * 0.45)} ${R2(-Ho * 1.2)} ${R2(W)} ${R2(-Ho * 0.1)}C${R2(W * 0.5)} ${R2(Hu * 1.1)} ${R2(-W * 0.4)} ${R2(Hu * 1.15)} ${R2(-W)} 0Z`;
-  T.def(`<clipPath id="${id}"><path d="${spalt}"/></clipPath>`);
-  let z = `<g transform="translate(${R2(x)} ${R2(y)}) rotate(${R2(o.winkel || 0)})"><g clip-path="url(#${id})">`;
-  /* Netzzeichnung der Iris (dunkle Äderchen), nur fein */
-  if (T.fein && o.netz !== false) {
-    let d = "";
-    for (let i = 0; i < 14; i++) {
-      const a = T.rnd() * Math.PI * 2, r0 = rr * (0.35 + T.rnd() * 0.2), r1 = rr * (0.7 + T.rnd() * 0.2), a2 = a + (T.rnd() - 0.5) * 0.6;
-      d += `M${R2(rr * 0.12 + Math.cos(a) * r0)} ${R2(Math.sin(a) * r0)}Q${R2(rr * 0.12 + Math.cos(a2) * (r0 + r1) / 2 + (T.rnd() - 0.5) * rr * 0.2)} ${R2(Math.sin(a2) * (r0 + r1) / 2)} ${R2(rr * 0.12 + Math.cos(a2) * r1)} ${R2(Math.sin(a2) * r1)}`;
-    }
-    z += `<path d="${d}" fill="none" stroke="${o.netzFarbe || "#3a2e0c"}" stroke-width="${R2(rr * 0.05)}" stroke-opacity=".55"/>`;
-  }
-  /* Nickhaut: durchscheinend, milchig-bläulich, von vorn (rechts) über das Auge gezogen */
-  if (o.nick) {
-    const nx = W - 2 * W * o.nick;
-    z += `<path d="M${R2(W * 1.1)} ${R2(-rr * 1.2)}L${R2(nx + rr * 0.15)} ${R2(-rr * 1.2)}Q${R2(nx - rr * 0.25)} 0 ${R2(nx + rr * 0.1)} ${R2(rr * 1.2)}L${R2(W * 1.1)} ${R2(rr * 1.2)}Z" fill="${T.lg("nick", [[0, "#dfe6e0", 0.35], [0.5, "#c9d2c8", 0.55], [1, "#aab4a8", 0.7]], 0, 0, 1, 0)}"/>`;
-    z += `<path d="M${R2(nx + rr * 0.15)} ${R2(-rr * 1.1)}Q${R2(nx - rr * 0.25)} 0 ${R2(nx + rr * 0.1)} ${R2(rr * 1.1)}" fill="none" stroke="#f4f7f2" stroke-opacity=".7" stroke-width="${R2(rr * 0.06)}"/>`;
-  }
-  /* Brauenwulst verschattet das obere Drittel */
-  z += `<rect x="${R2(-W)}" y="${R2(-rr * 1.3)}" width="${R2(2 * W)}" height="${R2(rr * 0.9)}" fill="${T.lg("brau", [[0, "#000", 0.55], [1, "#000", 0]])}"/>`;
-  z += `</g>`;
-  /* rosa Tränenkarunkel der Säugetier-Vorlage gibt es bei Reptilien nicht: mit Haut überdecken; dicker, schuppiger Lidrand */
-  z += `<ellipse cx="${R2(W * 0.98)}" cy="${R2(-Ho * 0.05)}" rx="${R2(rr * 0.24)}" ry="${R2(rr * 0.18)}" fill="${o.haut || "#4a4632"}"/>`;
-  z += `<path d="${spalt}" fill="none" stroke="${o.lidRand || "#2a2618"}" stroke-width="${R2(rr * 0.16)}" stroke-opacity=".9"/>`;
-  z += `<path d="M${R2(W * 0.75)} ${R2(Hu * 0.6)}C${R2(W * 0.3)} ${R2(Hu * 1.25)} ${R2(-W * 0.4)} ${R2(Hu * 1.25)} ${R2(-W * 0.85)} ${R2(Hu * 0.35)}" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="${R2(rr * 0.07)}"/>`;
-  z += `</g>`;
-  return s + z;
 };
 /* fertige Art: Zeichenraum → Zentimeter; fuesse (x der Fußmitten) und kopf (Ausschnitt) ebenfalls in Einheiten */
 const fertig = (f, svg, box, fuesse, kopf) => {
