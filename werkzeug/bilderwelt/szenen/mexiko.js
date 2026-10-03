@@ -536,15 +536,27 @@ const pyrUnter = [];
   ast(1, T - 2, -0.36, 11, 1, 2);
   ast(0, T - 3, -Math.PI / 2 - 0.08, 9, 0.9, 1);
   k += `<path d="${aeste}" fill="${ASTF}"/>`;
+  /* Astkragen: jeder Hauptast geht mit einer Verdickung in den Stamm über (keine Schnittkante) */
+  for (const [y0, sg] of [[T + 9, -1], [T + 5, 1], [T + 1, -1], [T - 2, 1]]) k += `<path d="M${r(sg * 1.2)} ${r(y0 - 2.2)} Q${r(sg * 2.4)} ${r(y0 - 0.6)} ${r(sg * 4.2)} ${r(y0 - 0.4)} L${r(sg * 4.2)} ${r(y0 + 1.6)} Q${r(sg * 2.2)} ${r(y0 + 1.6)} ${r(sg * 1.2)} ${r(y0 + 3.4)} Z" fill="#7c866c"/><path d="M${r(sg * 1.4)} ${r(y0 + 3.2)} Q${r(sg * 2.4)} ${r(y0 + 1.8)} ${r(sg * 4.2)} ${r(y0 + 1.6)}" stroke="#4f5a44" stroke-width=".5" fill="none" opacity=".6"/>`;
   /* Laub in 2–3 flachen Etagen um die Astenden, mit Himmelslücken; Unterseite kühl, rechts goldener Saum */
   const lagen = [[], [], [], []];
+  /* zwei flache Laubstockwerke auf den Hauptästen (Unterseite kühl, Oberkante golden) */
+  for (const [x0, x1, y] of [[-30, 30, T - 8], [-20, 22, T - 15]]) {
+    for (let x = x0; x < x1; x += 2.2 + rnd() * 1.6) {
+      if (rnd() < 0.22) continue;
+      const yy = y + (rnd() - 0.5) * 1.6, rr = 1 + rnd() * 1.1;
+      lagen[0].push(`<ellipse cx="${r(x)}" cy="${r(yy + rr * 0.35)}" rx="${r(rr * 1.6)}" ry="${r(rr * 0.6)}"/>`);
+      lagen[rnd() < 0.5 ? 1 : 2].push(`<ellipse cx="${r(x)}" cy="${r(yy)}" rx="${r(rr * 1.5)}" ry="${r(rr * 0.55)}"/>`);
+      if (x > 0 && rnd() < 0.6) lagen[3].push(`<ellipse cx="${r(x + rr * 0.4)}" cy="${r(yy - rr * 0.3)}" rx="${r(rr * 0.9)}" ry="${r(rr * 0.3)}"/>`);
+    }
+  }
   for (const [ex, ey] of enden) {
     for (let i = 0; i < 9; i++) {
       const x = ex + (rnd() - 0.5) * 9, y = ey - 1.2 + (rnd() - 0.5) * 2.2, rr = 0.9 + rnd() * 1.1;
       lagen[y > ey ? 0 : x > ex + 1.5 ? 3 : rnd() < 0.5 ? 1 : 2].push(`<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(rr * 1.5)}" ry="${r(rr * 0.75)}"/>`);
     }
   }
-  ["#4a5f45", "#6c8a42", "#7f9c4c", "#a9b45a"].forEach((c, i) => { k += `<g fill="${c}">${lagen[i].join("")}</g>`; });
+  ["#55606a", "#6c8a42", "#7f9c4c", "#c9b860"].forEach((c, i) => { k += `<g fill="${c}">${lagen[i].join("")}</g>`; });
   const ax0 = 0, ay0 = -60;   /* Bezugspunkt: Stamm über dem Dach */
   S.teil({ id: "kapokbaum", de: "der Kapokbaum", syl: "KA-pok-baum", it: "la ceiba", itSyl: "CEI-ba", en: "kapok tree", x: X + ax0, y: Y + ay0, kunst: `<g transform="translate(${-ax0} ${-ay0})">${k}</g>`,
     tipp: "Für die Maya war der Kapokbaum (Ceiba) heilig: Er verbindet Himmel, Erde und Unterwelt." });
