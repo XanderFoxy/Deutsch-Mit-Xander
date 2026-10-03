@@ -120,15 +120,26 @@ function verkleinern() {
   /* sw.js wird unter seinem eigenen Namen angemeldet — keine Kopie. */
   const quellen = fs.readdirSync(WURZEL).filter((n) => /^[a-z0-9-]+\.(js|css)$/i.test(n) && n !== "sw.js").sort();
   let eb = null, ebGesucht = false, neu = 0, weg = 0;
+  /* FASSUNG 876 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller". min/app.js wird geteilt:
+     was Start und Klassenzimmer nicht brauchen, steht in min/app-teil-*.js (werkzeug/teile-bauen.js erklärt es).
+     Die Prüfsumme für app.js umfasst deshalb auch die Liste und das Bauwerkzeug. Geht das Teilen nicht,
+     entsteht min/app.js wie bisher ganz. */
+  let teile = null;
+  try { teile = require("./teile-bauen.js"); } catch (e) { teile = null; }
   quellen.forEach((n) => {
     const roh = fs.readFileSync(path.join(WURZEL, n), "utf8");
-    const h = crypto.createHash("sha1").update(roh).digest("hex");
+    const h = n === "app.js" && teile ? teile.bauSumme(roh) : crypto.createHash("sha1").update(roh).digest("hex");
     const ziel = path.join(MIN_ORDNER, n);
     if (merk[n] === h && fs.existsSync(ziel)) return;
     if (!ebGesucht) { eb = esbuildHolen(); ebGesucht = true; }
     delete merk[n];
     try {
       if (!eb) throw new Error("esbuild fehlt");
+      if (n === "app.js" && teile) {
+        const t = teile.verkleinertTeilen(roh, eb, (m) => console.error("  " + m));
+        if (t) { teile.schreiben(MIN_ORDNER, t); merk[n] = h; neu++; return; }
+        teile.teileLoeschen(MIN_ORDNER);
+      }
       const r = eb.transformSync(roh, { loader: n.endsWith(".css") ? "css" : "js", minify: true,
         legalComments: "none", charset: "utf8" });
       if (!r.code || r.code.length >= roh.length) throw new Error("nicht kleiner");
@@ -137,11 +148,13 @@ function verkleinern() {
       neu++;
     } catch (e) {
       if (fs.existsSync(ziel)) { fs.unlinkSync(ziel); weg++; }
+      if (n === "app.js" && teile) teile.teileLoeschen(MIN_ORDNER);
       console.error("  min/" + n + " nicht verkleinert (" + (e.message || e).toString().split("\n")[0] + ") — die Seite lädt die Quelle");
     }
   });
-  /* Kopien, deren Quelle es nicht mehr gibt, fliegen raus. */
-  fs.readdirSync(MIN_ORDNER).filter((n) => /\.(js|css)$/.test(n) && quellen.indexOf(n) < 0).forEach((n) => {
+  /* Kopien, deren Quelle es nicht mehr gibt, fliegen raus (die Teile von app.js gehören zu app.js). */
+  fs.readdirSync(MIN_ORDNER).filter((n) => /\.(js|css)$/.test(n) && quellen.indexOf(n) < 0
+    && !(teile && teile.istTeil(n) && fs.existsSync(path.join(MIN_ORDNER, "app.js")))).forEach((n) => {
     fs.unlinkSync(path.join(MIN_ORDNER, n)); delete merk[n]; weg++;
   });
   fs.writeFileSync(merkPfad, JSON.stringify(merk, null, 1) + "\n");

@@ -1,0 +1,560 @@
+#!/usr/bin/env node
+/* =====================================================================
+   SAN FRANCISCO (FASSUNG 854) — Bilderwelt neu: eine echte Stadtansicht
+   ---------------------------------------------------------------------
+   RECHERCHE (SFMTA „Routes with a View“ Powell-Hyde, Market Street
+   Railway „Cable Cars“, Golden Gate Bridge District „Color & Art Deco
+   Styling“, NPS Alcatraz „Lighthouse“/„Water Tower“, SF Travel):
+   - STANDORT: Russian Hill, oben an der Ecke Hyde Street / Lombard Street
+     (Haltestelle der Powell-Hyde-Linie), auf den Stufen am Anfang der
+     kurvigen Lombard Street; Augenhöhe ≈ 4,6 m über der Kreuzung,
+     ≈ 90 m über der Bucht. Blick nach Norden die steile Hyde Street
+     hinunter zur Bucht. Echte Richtungen von hier: Alcatraz fast genau
+     im Norden (2,7 km), dahinter Angel Island; die Golden Gate Bridge im
+     Westen (links, 5,2 km) vor den Marin Headlands und dem Mount
+     Tamalpais; Pier 39 im Nordosten (1,1 km); die kurvige Lombard Street
+     und dahinter der Coit Tower auf dem Telegraph Hill im Osten (rechts).
+     Panorama ≈ 180° (West → Nord → Ost), gestaucht; die Brücke ist wie mit
+     dem Teleobjektiv herangeholt (×2,4), so zeigen es die Postkarten.
+   - GOLDEN GATE BRIDGE (1937): Farbe „International Orange“ (Irving
+     Morrow), Türme 227 m (152 m über der Fahrbahn), Hauptspannweite
+     1280 m, Fahrbahn 67 m über dem Wasser, Art-déco-Türme mit nach oben
+     gestuften Beinen und vier Portalriegeln über der Fahrbahn. Von Osten
+     sieht man die Brücke von der Seite: die zwei Beine eines Turms stehen
+     fast hintereinander, die Portale nur als schmale Schlitze.
+     Nachmittags drückt der Nebel („Karl the Fog“) vom Pazifik durch das
+     Golden Gate und über die Hügel von Marin.
+   - ALCATRAZ: Felseninsel, oben das lange Zellenhaus aus Beton, am
+     Südende der Leuchtturm (26 m, achteckig), im Norden der Wasserturm auf
+     Stahlbeinen, unten am Anleger das Gebäude 64.
+   - CABLE CAR (Powell-Hyde): seit 1984 weinrot mit cremefarbenen und
+     hellblauen Leisten, goldene Schrift; vorne der offene Teil mit
+     Bänken nach außen und dem Gripman am Greifhebel, hinten die
+     geschlossene Kabine; Glocke, Trittbretter, Laternen; unter der
+     Straße läuft das Seil im Schlitz zwischen den Schienen (15 km/h).
+   - LOMBARD STREET (zwischen Hyde und Leavenworth): acht Haarnadel-
+     kurven, rote Ziegelsteine, Beete mit Hortensien und Buchs, Treppen
+     an beiden Seiten; von oben sieht man die ersten Kurven, dann fällt
+     sie aus dem Blick.
+   - VIKTORIANISCHE HÄUSER („Painted Ladies“): Holzhäuser um 1890 in
+     drei und mehr Farben, schräge Erker (Bay Windows), Giebel mit
+     Schindeln, Zierleisten; auf dem Hang stufen sie sich hinunter, unten
+     die Garage, oben die Eingangstreppe.
+   - UNTEN AM WASSER: Aquatic Park mit dem Hyde Street Pier und dem
+     Segelschiff „Balclutha“ (1886, drei Masten); Pier 39 mit den
+     Seelöwen auf den Schwimmstegen (seit 1990); Segelboote in der Bucht.
+   Maßstab: Horizont y = 92, Brennweite 300; Straßengefälle 18 %
+   (Fluchtpunkt der Hyde Street bei 185/146). Ein Punkt im Abstand d und
+   der Höhe Z (über unseren Füßen) liegt bei x = 185 + 300·X/d,
+   y = 92 + 300·(4,6 − Z)/d. Licht: später Nachmittag, Sonne im
+   Westsüdwesten (links hinten).
+   ===================================================================== */
+"use strict";
+const path = require("path");
+const { neueSzene, flaeche, schatten, zufall } = require("../bau");
+const B = require("../bau");
+
+const S = neueSzene({ id: "san_francisco", titel: "San Francisco", emoji: "🌁", thema: "Länder", kuerzel: "sfo", fassung: 854, breite: 400, hoehe: 260 });
+const rnd = zufall(1937);
+const r = B.r;
+const HOR = 92, F = 300, VPX = 185, E = 4.6, G = 0.18;
+const P = (X, d, Z) => [VPX + F * X / d, HOR + F * (E - Z) / d];
+const pt = (X, d, Z) => { const [x, y] = P(X, d, Z); return `${r(x)} ${r(y)}`; };
+const boden = (d) => -G * d;
+const vier = (a, b, c, e, fill, extra = "") => `<path d="M${a} L${b} L${c} L${e} Z" fill="${fill}"${extra}/>`;
+
+S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+S.def(`<filter id="${S.id("nebel")}" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="2.2"/></filter>`);
+S.def(`<filter id="${S.id("dunst")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".3"/></filter>`);
+S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter>`);
+S.def(`<pattern id="${S.id("ziegel")}" width="2.4" height="1.2" patternUnits="userSpaceOnUse"><rect width="2.4" height="1.2" fill="none"/><path d="M0 1.15 H2.4 M1.2 0 V.58 M0 .58 H2.4 M0 .58 V1.2 M2.4 .58 V1.2" stroke="#6e2a20" stroke-width=".16" opacity=".55"/></pattern>`);
+S.def(`<pattern id="${S.id("schindel")}" width="1.2" height="1" patternUnits="userSpaceOnUse"><path d="M0 0 Q.6 1 1.2 0" stroke="#000" stroke-width=".12" fill="none" opacity=".25"/></pattern>`);
+const ORANGE = S.lg("io", [[0, "#d4553a"], [0.5, "#bf3f2a"], [1, "#952f20"]], 0, 0, 1, 0);
+const WEINROT = S.lg("weinrot", [[0, "#9a2c38"], [1, "#6b1724"]]);
+const CREME = "#f1e7d0", HBLAU = "#8bb8de", GOLDS = "#e3c06a";
+
+/* =====================================================================
+   KULISSE — Himmel, Pazifik im Golden Gate, Hügel von Marin, Angel
+   Island, East Bay; vorne die Häuser am Hang und die Hyde Street
+   ===================================================================== */
+S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b8fd0"], [0.55, "#9fc3e4"], [0.85, "#e3e2d6"], [1, "#f4e2c4"]])}"/>`);
+S.hinten(`<ellipse cx="-10" cy="40" rx="190" ry="110" fill="${S.rg("sonne", [[0, "#fff1c8", 0.75], [0.5, "#ffe9b8", 0.25], [1, "#ffe9b8", 0]])}"/>`);
+{
+  let w = "";
+  for (const [x, y, s] of [[230, 24, 1.1], [330, 40, 0.8], [140, 12, 0.7], [380, 14, 0.9]]) {
+    w += `<g filter="url(#${S.id("wolke")})" opacity=".8">`;
+    for (const [dx, dy, rx, ry] of [[0, 0, 18, 3.2], [-12, 1.2, 10, 2.4], [13, 0.8, 12, 2.8], [-3, -2.2, 9, 3]]) w += `<ellipse cx="${r(x + dx * s)}" cy="${r(y + dy * s)}" rx="${r(rx * s)}" ry="${r(ry * s)}" fill="#fff"/>`;
+    w += `</g>`;
+  }
+  S.hinten(w);
+}
+/* Mount Tamalpais (fern), Marin Headlands, Angel Island, Tiburon, East Bay */
+{
+  let h = "";
+  h += `<path d="M84 97 L96 90 Q120 80 140 82 L158 76 Q166 73 176 78 Q190 84 206 86 L226 92 L240 97 Z" fill="#a9b3b6" opacity=".8"/>`;
+  h += `<path d="M150 97 Q160 88 172 86 Q186 83 198 88 Q212 90 224 95 L230 97 Z" fill="${S.lg("marin", [[0, "#a59a69"], [1, "#7f7a52"]])}"/>`;
+  h += `<path d="M150 97 Q156 92 164 90 L170 92 Q178 89 186 91 L180 97 Z" fill="#6f7350" opacity=".7"/>`;
+  /* Angel Island und Tiburon */
+  h += `<path d="M214 97.4 Q226 91 240 89.4 Q252 88.4 262 91.6 Q276 93.6 290 96.4 L292 97.4 Z" fill="${S.lg("angel", [[0, "#7f8e66"], [1, "#5d6c4c"]])}"/>`;
+  h += `<path d="M284 97.4 Q296 93 312 93.4 Q326 94.4 336 97.4 Z" fill="#8b9478" opacity=".85"/>`;
+  /* East Bay (Berkeley Hills) blass */
+  h += `<path d="M320 97.4 Q350 93 380 92.6 L400 92 L400 97.4 Z" fill="#b4b8b6" opacity=".7"/>`;
+  /* Pazifik im Golden Gate bis zum Horizont, die Presidio-Hügel links */
+  h += `<rect x="20" y="${HOR}" width="140" height="6" fill="${S.lg("pazifik", [[0, "#b9c8cf"], [1, "#9fb6c2"]])}"/>`;
+  h += `<path d="M0 97 L0 86 Q20 84 40 88 Q56 90 70 95 L74 97 Z" fill="#6e7c56"/>`;
+  S.hinten(h);
+}
+/* Mittelgrund rechts: Dächer von North Beach am Hang, der Telegraph Hill */
+{
+  let c = "";
+  c += `<path d="M300 112 Q330 92 360 90 Q380 89 400 96 L400 130 L300 130 Z" fill="${S.lg("telegraph", [[0, "#6d7d55"], [1, "#56653f"]])}"/>`;
+  for (let i = 0; i < 22; i++) c += `<circle cx="${r(330 + rnd() * 70)}" cy="${r(94 + rnd() * 18)}" r="${r(2 + rnd() * 2.6)}" fill="${rnd() < 0.5 ? "#5e7046" : "#4b5c38"}"/>`;
+  const farben = ["#efe5d2", "#e8d7b9", "#d9c7aa", "#f3efe6", "#e6c9a8", "#cdd6d9", "#efdccb"];
+  for (let row = 0; row < 7; row++) {
+    const y0 = 116 + row * 9.5, hgt = 5 + row * 1.8;
+    let x = 214 + row * 2 + rnd() * 6;
+    while (x < 400) {
+      const w = 5 + row * 1.6 + rnd() * 6;
+      const f = farben[Math.floor(rnd() * farben.length)];
+      c += `<rect x="${r(x)}" y="${r(y0 - hgt)}" width="${r(w)}" height="${r(hgt)}" fill="${f}"/>`;
+      c += `<rect x="${r(x)}" y="${r(y0 - hgt)}" width="${r(w * 0.35)}" height="${r(hgt)}" fill="#fff" opacity=".12"/><rect x="${r(x + w * 0.65)}" y="${r(y0 - hgt)}" width="${r(w * 0.35)}" height="${r(hgt)}" fill="#000" opacity=".1"/>`;
+      for (let j = 0; j < Math.floor(w / 2.2); j++) c += `<rect x="${r(x + 0.8 + j * 2.2)}" y="${r(y0 - hgt + 1.2)}" width=".9" height="${r(Math.min(1.6, hgt * 0.25))}" fill="#4d5a66" opacity=".7"/>`;
+      c += `<rect x="${r(x - 0.2)}" y="${r(y0 - hgt - 0.6)}" width="${r(w + 0.4)}" height=".6" fill="#9a8f80"/>`;
+      if (rnd() < 0.25) c += `<circle cx="${r(x + w)}" cy="${r(y0 - hgt * 0.6)}" r="${r(1.8 + row * 0.5)}" fill="#5f7347"/>`;
+      x += w + 0.6;
+    }
+  }
+  S.hinten(c);
+}
+/* Die Hyde Street: Fahrbahn, Gehwege mit Querrillen, Bordsteine, Zebrastreifen */
+{
+  let s = "";
+  const D0 = 11.5, D1 = 900;
+  s += vier(pt(-13.5, D0, boden(D0)), pt(-13.5, D1, boden(D1)), pt(-1.5, D1, boden(D1)), pt(-1.5, D0, boden(D0)), S.lg("asphalt", [[0, "#8a8784"], [1, "#5f5c59"]]));
+  /* Gehweg Ost (unser Standort) und West */
+  s += vier(pt(-1.5, D0, boden(D0)), pt(-1.5, D1, boden(D1)), pt(2.2, D1, boden(D1)), pt(2.2, D0, boden(D0)), "#cfc9be");
+  s += vier(pt(-17, 20, boden(20)), pt(-17, D1, boden(D1)), pt(-13.5, D1, boden(D1)), pt(-13.5, 20, boden(20)), "#c9c2b6");
+  /* Querrillen im steilen Gehweg (gegen Ausrutschen) */
+  for (let d = 12; d < 120; d += d < 40 ? 0.9 : 2.4) s += `<path d="M${pt(-1.4, d, boden(d))} L${pt(2.2, d, boden(d))}" stroke="#a9a397" stroke-width="${r(Math.max(0.08, 6 / d))}"/>`;
+  for (let d = 26; d < 120; d += d < 50 ? 1.2 : 2.6) s += `<path d="M${pt(-17, d, boden(d))} L${pt(-13.6, d, boden(d))}" stroke="#a49d91" stroke-width="${r(Math.max(0.08, 6 / d))}"/>`;
+  /* Bordsteine */
+  for (const X of [-13.5, -1.5]) s += `<path d="M${pt(X, D0, boden(D0))} L${pt(X, D1, boden(D1))}" stroke="#e6e1d6" stroke-width=".9"/>`;
+  /* Zebrastreifen über die Lombard Street (vorne) und Haltelinie */
+  for (let i = 0; i < 6; i++) { const X0 = -13 + i * 2; s += vier(pt(X0, 12.6, boden(12.6)), pt(X0, 15.4, boden(15.4)), pt(X0 + 1.1, 15.4, boden(15.4)), pt(X0 + 1.1, 12.6, boden(12.6)), "#eeeae2", ` opacity=".85"`); }
+  s += vier(pt(-13.5, 17.6, boden(17.6)), pt(-13.5, 18.1, boden(18.1)), pt(-7.6, 18.1, boden(18.1)), pt(-7.6, 17.6, boden(17.6)), "#eeeae2", ` opacity=".8"`);
+  /* Flicken und Fugen im Asphalt */
+  for (let i = 0; i < 40; i++) { const d = 14 + rnd() * 80, X = -13 + rnd() * 11; s += `<circle cx="${r(P(X, d, 0)[0])}" cy="${r(P(X, d, boden(d))[1])}" r="${r(14 / d)}" fill="${rnd() < 0.5 ? "#6d6a66" : "#9a9692"}" opacity=".5"/>`; }
+  /* Hausfronten Ost weiter unten (ab 60 m), schmal in der Flucht */
+  for (let d = 62; d < 400; d += 9) {
+    const top = boden(d + 4.5) + 9 + rnd() * 3;
+    s += vier(pt(2.4, d, boden(d)), pt(2.4, d, top), pt(2.4, d + 9, top), pt(2.4, d + 9, boden(d + 9)), ["#e9dcc6", "#dfe6e6", "#efe0cf", "#e6d3c6"][Math.floor(rnd() * 4)]);
+    s += vier(pt(2.4, d, top), pt(14, d, top), pt(14, d + 9, top), pt(2.4, d + 9, top), "#8c8478");
+  }
+  /* unten am Ende der Straße: Aquatic Park, Ufer, das weiße Schifffahrtsmuseum */
+  const [ax, ay] = P(-7.5, 520, boden(480));
+  s += `<rect x="${r(ax - 26)}" y="${r(ay - 3)}" width="52" height="3.2" fill="#d8c9a4"/>`;
+  s += `<rect x="${r(ax - 22)}" y="${r(ay - 6.6)}" width="11" height="3.6" rx="1.4" fill="#f4f1ea"/><rect x="${r(ax - 21)}" y="${r(ay - 5.6)}" width="9" height=".7" fill="#2d6280" opacity=".7"/>`;
+  S.hinten(s);
+}
+
+/* =====================================================================
+   1 — DIE BUCHT (San Francisco Bay) mit dem Pazifik-Licht
+   ===================================================================== */
+{
+  const ufer = `M0 97.2 L400 97.2 L400 121 Q370 120 340 121.6 L300 122.6 Q270 124 250 128 Q226 134 212 140 L180 142.4 Q150 140 130 132 Q100 120 60 114 L0 110 Z`;
+  let k = `<path d="${ufer}" fill="${S.lg("bay", [[0, "#a9bfc6"], [0.3, "#6f93a6"], [1, "#4d7189"]])}"/>`;
+  /* Sonnenglitzern links (Sonne im Westen) */
+  k += `<path d="${ufer}" fill="${S.lg("glanz", [[0, "#fff3d0", 0.55], [0.35, "#fff3d0", 0.1], [0.6, "#fff3d0", 0]], 0, 0, 1, 0)}"/>`;
+  for (let i = 0; i < 150; i++) {
+    const t = Math.pow(rnd(), 1.3), y = 97.6 + t * 40, x = rnd() * 400;
+    if (y > 108 + (x > 250 ? 12 : x < 100 ? 4 : 30)) continue;
+    const w = 1 + t * 5 * (0.5 + rnd());
+    k += `<path d="M${r(x)} ${r(y)} q${r(w / 2)} -${r(0.2 + t * 0.4)} ${r(w)} 0" stroke="${x < 160 && rnd() < 0.6 ? "#fff6dc" : rnd() < 0.6 ? "#e2eef2" : "#355c72"}" stroke-width="${r(0.12 + t * 0.3)}" fill="none" opacity="${r(0.35 + rnd() * 0.4)}"/>`;
+  }
+  S.teil({ id: "bucht", de: "die Bucht", syl: "BUCHT", it: "la baia", itSyl: "BA-ia", en: "bay", x: 0, y: 0, kunst: k,
+    tipp: "Die Bucht von San Francisco ist eine der größten Naturhäfen der Welt." });
+}
+
+/* =====================================================================
+   2 — DER NEBEL (zieht vom Pazifik durch das Golden Gate und über Marin)
+   ===================================================================== */
+{
+  let k = `<g filter="url(#${S.id("nebel")})">`;
+  k += `<path d="M96 96 Q100 86 116 84 Q128 76 146 80 Q158 72 174 78 Q186 74 198 82 Q212 82 222 90 Q230 94 226 98 L96 98 Z" fill="#f7f6f2" opacity=".93"/>`;
+  k += `<path d="M120 92 Q140 86 160 89 Q176 84 192 90 L200 97 L118 97 Z" fill="#ffffff"/>`;
+  k += `<path d="M60 95 Q80 90 96 93 L110 97 L58 97 Z" fill="#eef0ef" opacity=".85"/>`;
+  k += `</g>`;
+  k += `<path d="M104 84 Q130 76 160 80 Q186 76 214 86" stroke="#fff" stroke-width="1.4" opacity=".5" fill="none" filter="url(#${S.id("nebel")})"/>`;
+  S.teil({ id: "nebel", de: "der Nebel", syl: "NE-bel", it: "la nebbia", itSyl: "NEB-bia", en: "fog", x: 0, y: 0, kunst: k,
+    tipp: "Im Sommer kommt nachmittags oft Nebel vom Meer. Die Leute in San Francisco nennen ihn „Karl“." });
+}
+
+/* =====================================================================
+   3 — DIE GOLDEN GATE BRIDGE (fern, von der Seite; herangeholt ×2,4)
+   ===================================================================== */
+const GG = { s: 98, n: 162, wasser: 97.2, top: 61, deck: 87.6 };
+{
+  const { s: XS, n: XN, wasser: W, top: T, deck: D } = GG;
+  let k = `<g filter="url(#${S.id("dunst")})">`;
+  /* Fahrbahn mit Fachwerk (Gegenlicht: dunkleres Orange) */
+  const deck = (x0, y0, x1, y1) => `<path d="M${x0} ${r(y0)} L${x1} ${r(y1)} L${x1} ${r(y1 + 1.4)} L${x0} ${r(y0 + 1.4)} Z" fill="#a8432e"/>`;
+  k += deck(66, D + 1.8, XS, D) + deck(XS, D, XN, D) + deck(XN, D, 186, D + 1.4);
+  let fw = "";
+  for (let x = 67; x < 186; x += 1.1) fw += `M${r(x)} ${r(D + 0.1)} L${r(x + 0.55)} ${r(D + 1.3)} `;
+  k += `<path d="${fw}" stroke="#6d2416" stroke-width=".12" fill="none"/>`;
+  k += `<path d="M66 ${r(D + 1.6)} L186 ${r(D + 1.2)}" stroke="#e98a63" stroke-width=".2" opacity=".6"/>`;
+  /* Tragseile: Hauptfeld und Seitenfelder, Hänger */
+  const kurve = (x0, y0, x1, y1, tief) => `M${x0} ${y0} Q${r((x0 + x1) / 2)} ${r(tief)} ${x1} ${y1}`;
+  k += `<path d="${kurve(XS, T + 2, XN, T + 2, D + 26)}" stroke="#b5452e" stroke-width=".5" fill="none"/>`;
+  k += `<path d="M${XS} ${T + 2} Q${XS - 18} ${D - 6} 66 ${D + 1}" stroke="#b5452e" stroke-width=".45" fill="none"/>`;
+  k += `<path d="M${XN} ${T + 2} Q${XN + 12} ${D - 8} 186 ${D}" stroke="#b5452e" stroke-width=".45" fill="none"/>`;
+  let h = "";
+  for (let i = 1; i < 32; i++) { const t = i / 32, x = XS + (XN - XS) * t, y = (1 - t) * (1 - t) * (T + 2) + 2 * t * (1 - t) * (D + 26) + t * t * (T + 2); if (y < D - 0.3) h += `M${r(x)} ${r(y)} L${r(x)} ${D} `; }
+  for (let i = 1; i < 8; i++) { const t = i / 8, x = XS + (66 - XS) * t, y = (1 - t) * (1 - t) * (T + 2) + 2 * t * (1 - t) * (D - 6) + t * t * (D + 1); if (y < D) h += `M${r(x)} ${r(y)} L${r(x)} ${r(D + 0.3 * t)} `; }
+  for (let i = 1; i < 6; i++) { const t = i / 6, x = XN + (186 - XN) * t, y = (1 - t) * (1 - t) * (T + 2) + 2 * t * (1 - t) * (D - 8) + t * t * D; if (y < D) h += `M${r(x)} ${r(y)} L${r(x)} ${D} `; }
+  k += `<path d="${h}" stroke="#b5452e" stroke-width=".1" fill="none" opacity=".8"/>`;
+  /* die Türme: von der Seite schlank, Beine nach oben gestuft, Portalschlitze */
+  const turm = (x) => {
+    let s = "";
+    const stufen = [[W, 2.3], [D - 6, 2.1], [T + 17, 1.9], [T + 9, 1.75], [T + 3, 1.6]];
+    let p = `M${r(x - 2.5)} ${W}`;
+    for (let i = 0; i < stufen.length; i++) { const [y, hw] = stufen[i], yn = i + 1 < stufen.length ? stufen[i + 1][0] : T; p += ` L${r(x - hw)} ${r(y)} L${r(x - hw)} ${r(yn)}`; }
+    for (let i = stufen.length - 1; i >= 0; i--) { const [y, hw] = stufen[i], yn = i + 1 < stufen.length ? stufen[i + 1][0] : T; p += ` L${r(x + hw)} ${r(yn)} L${r(x + hw)} ${r(y)}`; }
+    s += `<path d="${p} Z" fill="${ORANGE}"/>`;
+    /* senkrechte Rippen (Art déco), Portalriegel als helle Schlitze */
+    s += `<line x1="${r(x - 0.5)}" y1="${T + 1}" x2="${r(x - 0.5)}" y2="${W}" stroke="#7d2617" stroke-width=".18"/><line x1="${r(x + 0.7)}" y1="${T + 1}" x2="${r(x + 0.7)}" y2="${W}" stroke="#e57a58" stroke-width=".14" opacity=".7"/>`;
+    for (const y of [T + 3.4, T + 9.6, T + 17.6, D - 5.4]) s += `<rect x="${r(x - 1.5)}" y="${r(y)}" width="3" height=".5" fill="#f2c9b0" opacity=".75"/>`;
+    /* Kappe mit Sattel */
+    s += `<path d="M${r(x - 1.9)} ${T} L${r(x - 1.4)} ${T - 1.6} L${r(x + 1.4)} ${T - 1.6} L${r(x + 1.9)} ${T} Z" fill="#a53a26"/><rect x="${r(x - 0.9)}" y="${T - 2.4}" width="1.8" height=".9" fill="#953424"/>`;
+    s += `<rect x="${r(x - 2.6)}" y="${W - 1.4}" width="5.2" height="1.4" fill="#9a958c"/>`;
+    return s;
+  };
+  k += turm(XS) + turm(XN);
+  /* Licht von links (Gegenlicht am Abend): warmer Saum */
+  k += `<path d="M${XS - 2.3} ${W} L${XS - 1.6} ${T}" stroke="#ffb27a" stroke-width=".4" opacity=".7"/><path d="M${XN - 2.3} ${W} L${XN - 1.6} ${T}" stroke="#ffb27a" stroke-width=".4" opacity=".7"/>`;
+  /* Fort Point (Ziegelfestung unter dem Südende) */
+  k += `<rect x="66" y="${r(D + 3)}" width="9" height="5" fill="#a76a4f"/><rect x="66" y="${r(D + 3)}" width="9" height=".8" fill="#c58a6e"/>`;
+  k += `</g>`;
+  S.teil({ id: "golden_gate_bridge", de: "die Golden Gate Bridge", syl: "GOL-den GATE BRIDGE", it: "il Golden Gate Bridge", itSyl: "GOL-den GATE BRIDGE", en: "Golden Gate Bridge",
+    x: 0, y: 0, kunst: k, tipp: "Die Golden Gate Bridge (1937) ist 2,7 Kilometer lang. Ihre Farbe heißt „International Orange“.",
+    zoom: { x: XS - 24, y: T - 6, w: 54, h: 36 },
+    unter: [
+      { id: "turm", de: "der Turm", syl: "TURM", it: "la torre", itSyl: "TOR-re", en: "tower", x: XS, y: W, kunst: flaeche(-2.6, -(W - T) - 2.4, 5.2, W - T + 2.4, 0.5),
+        tipp: "Die Türme sind 227 Meter hoch — höher als der Kölner Dom (157 m)." },
+      { id: "tragseil", de: "das Tragseil", syl: "TRAG-seil", it: "il cavo portante", itSyl: "CA-vo por-TAN-te", en: "main cable", x: XS + 12, y: T + 14, kunst: flaeche(-6, -8, 12, 12, 0.5),
+        tipp: "Jedes der zwei Tragseile ist fast einen Meter dick und besteht aus 27 572 Drähten." },
+    ] });
+}
+/* der Nebel umspült den Fuß des Nordturms (liegt über allem, fängt nichts) */
+S.davor(`<g filter="url(#${S.id("nebel")})" opacity=".8" pointer-events="none"><path d="M140 97.6 Q150 92 162 93.6 Q176 90.6 190 95 Q196 97 192 98.4 L140 98.4 Z" fill="#fbfaf6"/></g>`);
+
+/* =====================================================================
+   4 — DIE INSEL ALCATRAZ (im Norden, mitten in der Bucht)
+   ===================================================================== */
+{
+  const X = 204, Y = 104.4;
+  let k = `<ellipse cx="0" cy=".2" rx="27" ry="1" fill="#3b5b6e" opacity=".35"/>`;
+  /* Felsen mit Klippen, Grün oben */
+  k += `<path d="M-26 0 L-24 -3 Q-20 -6.6 -14 -7.2 L-4 -7.8 L8 -8 Q16 -8 20 -6.2 L24 -3.6 L26.4 0 Z" fill="${S.lg("fels", [[0, "#a59a86"], [0.5, "#8a7f6c"], [1, "#6c6455"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M-23.6 -3.2 Q-20 -6.4 -14 -7 L-4 -7.6 L8 -7.8 Q16 -7.8 20 -6 L22 -4.6 Q10 -5.2 0 -5 Q-12 -4.8 -23.6 -3.2 Z" fill="#7c8a5c" opacity=".85"/>`;
+  for (let i = 0; i < 14; i++) k += `<path d="M${r(-24 + i * 3.6)} ${r(-1 - rnd())} l${r(0.6 + rnd())} ${r(-1.4 - rnd() * 1.6)}" stroke="#5c5548" stroke-width=".3" opacity=".6"/>`;
+  /* Gebäude 64 am Anleger (rechts unten), mit dem alten Schriftzug */
+  k += `<rect x="12" y="-5.6" width="10" height="4.8" fill="#d8cfbd"/><rect x="12" y="-5.6" width="10" height=".6" fill="#efe8da"/>`;
+  for (let i = 0; i < 5; i++) k += `<rect x="${12.8 + i * 1.9}" y="-4.4" width=".8" height="1" fill="#4a4a48"/><rect x="${12.8 + i * 1.9}" y="-2.6" width=".8" height="1" fill="#4a4a48"/>`;
+  k += `<rect x="9" y="-1" width="15" height="1" fill="#6d665a"/>`;
+  /* das Zellenhaus: langer Betonbau oben auf der Insel */
+  k += `<rect x="-10" y="-12.2" width="20" height="4.6" fill="${S.lg("zellen", [[0, "#f1ebde"], [1, "#cfc6b4"]], 0, 0, 1, 0)}"/>`;
+  k += `<rect x="-10.4" y="-12.8" width="20.8" height=".7" fill="#e2dccf"/>`;
+  for (let i = 0; i < 12; i++) k += `<rect x="${r(-9.2 + i * 1.6)}" y="-11.2" width=".55" height="2.4" fill="#4c4e50"/>`;
+  k += `<rect x="-2" y="-13.8" width="4" height="1.2" fill="#ddd5c6"/>`;
+  /* der Leuchtturm am Südende (links): achteckig, weiß, Laterne */
+  k += `<path d="M-13.4 -7.6 L-13 -17.4 L-11.2 -17.4 L-10.8 -7.6 Z" fill="${S.lg("lturm", [[0, "#ffffff"], [1, "#d4d2cc"]], 0, 0, 1, 0)}"/>`;
+  k += `<rect x="-13.6" y="-18.2" width="3" height=".8" fill="#3c3d3e"/><rect x="-12.8" y="-19.8" width="1.4" height="1.6" fill="#f8e7a2"/><path d="M-13 -19.8 L-12.1 -20.8 L-11.2 -19.8 Z" fill="#2e2f30"/>`;
+  /* der Wasserturm im Norden (rechts): Tank auf Stahlbeinen */
+  k += `<path d="M6 -8 L7 -15 M10 -8 L9 -15 M6 -8 L9 -15 M10 -8 L7 -15" stroke="#6b6a66" stroke-width=".35"/>`;
+  k += `<rect x="5.8" y="-18.6" width="4.4" height="3.8" rx=".4" fill="${S.lg("wturm", [[0, "#efeae0"], [1, "#bdb6a8"]], 0, 0, 1, 0)}"/><path d="M5.6 -18.6 L8 -19.8 L10.4 -18.6 Z" fill="#a8a296"/>`;
+  k += `<rect x="6.2" y="-17.4" width="3.6" height=".6" fill="#b5463a" opacity=".55"/>`;
+  /* Bäume (Eukalyptus) und Licht von links */
+  for (const [x, y] of [[-18, -6], [-16, -6.8], [16, -6.6], [3, -8.2]]) k += `<circle cx="${x}" cy="${y}" r="1.4" fill="#5d6f45"/>`;
+  k += `<rect x="-26" y="-20" width="52" height="20" fill="${S.lg("alicht", [[0, "#ffe9c4", 0.18], [0.5, "#fff", 0], [1, "#000", 0.12]], 0, 0, 1, 0)}"/>`;
+  S.teil({ id: "alcatraz", de: "die Insel Alcatraz", syl: "IN-sel AL-ca-traz", it: "l'isola di Alcatraz", itSyl: "I-so-la di AL-ca-traz", en: "Alcatraz Island", x: X, y: Y, kunst: k,
+    tipp: "Auf Alcatraz war bis 1963 ein berühmtes Gefängnis. Heute fahren Besucher mit dem Schiff hin.",
+    zoom: { x: X - 28, y: Y - 23, w: 54, h: 36 },
+    unter: [
+      { id: "leuchtturm", de: "der Leuchtturm", syl: "LEUCHT-turm", it: "il faro", itSyl: "FA-ro", en: "lighthouse", x: X - 12.1, y: Y - 7.6, kunst: flaeche(-2, -13.4, 4, 13.6, 0.4),
+        tipp: "Der Leuchtturm von Alcatraz war der erste an der Westküste der USA (1854)." },
+      { id: "gefaengnis", de: "das Gefängnis", syl: "ge-FÄNG-nis", it: "la prigione", itSyl: "pri-GIO-ne", en: "prison", x: X, y: Y - 7.6, kunst: flaeche(-9.6, -6.4, 19.2, 6.4, 0.4),
+        tipp: "Im Zellenhaus gab es 336 Zellen. Von hier konnte fast niemand fliehen." },
+      { id: "wasserturm", de: "der Wasserturm", syl: "WAS-ser-turm", it: "la torre dell'acqua", itSyl: "TOR-re del-L'AC-qua", en: "water tower", x: X + 8, y: Y - 8, kunst: flaeche(-2.8, -12, 5.6, 12, 0.4),
+        tipp: "Das Trinkwasser kam mit dem Schiff auf die Insel." },
+    ] });
+}
+
+/* =====================================================================
+   5 — DAS SEGELBOOT (zwei Segelboote in der Bucht)
+   ===================================================================== */
+{
+  let k = "";
+  const boot = (x, y, s, links) => {
+    const m = links ? -1 : 1;
+    let g = `<path d="M${r(x - 3 * s)} ${y} L${r(x + 3.4 * s)} ${y} L${r(x + 2.6 * s)} ${r(y + 0.9 * s)} L${r(x - 2.4 * s)} ${r(y + 0.9 * s)} Z" fill="#f4f4f2"/>`;
+    g += `<line x1="${x}" y1="${y}" x2="${x}" y2="${r(y - 9 * s)}" stroke="#666" stroke-width="${r(0.18 * s)}"/>`;
+    g += `<path d="M${r(x + 0.2 * m * s)} ${r(y - 8.6 * s)} Q${r(x + 3.6 * m * s)} ${r(y - 4 * s)} ${r(x + 3 * m * s)} ${r(y - 0.6 * s)} L${r(x + 0.2 * m * s)} ${r(y - 0.6 * s)} Z" fill="${S.lg("segel" + (links ? "l" : "r"), [[0, "#ffffff"], [1, "#dfe3e6"]], 0, 0, 1, 0)}"/>`;
+    g += `<path d="M${r(x - 0.2 * m * s)} ${r(y - 7.8 * s)} L${r(x - 2.6 * m * s)} ${r(y - 0.8 * s)} L${r(x - 0.2 * m * s)} ${r(y - 0.8 * s)} Z" fill="#eef0f1"/>`;
+    g += `<path d="M${r(x - 4 * s)} ${r(y + 1 * s)} q${r(4 * s)} ${r(0.6 * s)} ${r(8 * s)} 0" stroke="#e8f1f4" stroke-width=".2" fill="none" opacity=".8"/>`;
+    return g;
+  };
+  k += boot(152, 112.6, 0.9, false) + boot(246, 109.4, 0.65, true);
+  S.teil({ oben: true, id: "segelboot", de: "das Segelboot", syl: "SE-gel-boot", it: "la barca a vela", itSyl: "BAR-ca a VE-la", en: "sailboat", x: 0, y: 0, kunst: k });
+}
+
+/* =====================================================================
+   6 — DER PIER 39 mit den Seelöwen (Nordosten, am Ufer)
+   ===================================================================== */
+{
+  const X = 302, Y = 121.6;
+  let k = "";
+  /* Pier: Holzbohlen auf Pfählen, zweistöckige Holzhäuser, Fahnen */
+  k += `<rect x="-22" y="-1.6" width="44" height="1.6" fill="#6f5a43"/>`;
+  for (let x = -21; x < 22; x += 2) k += `<line x1="${x}" y1="0" x2="${x}" y2="1.2" stroke="#4e3d2c" stroke-width=".3"/>`;
+  for (const [x0, w, h, c] of [[-20, 10, 4.6, "#9c8468"], [-9, 12, 5.4, "#8f775c"], [4, 9, 4.2, "#a08a6c"], [14, 7, 3.6, "#93795d"]]) {
+    k += `<rect x="${x0}" y="${-1.6 - h}" width="${w}" height="${h}" fill="${c}"/>`;
+    k += `<path d="M${x0 - 0.4} ${-1.6 - h} L${x0 + w / 2} ${-1.6 - h - 1.6} L${x0 + w + 0.4} ${-1.6 - h} Z" fill="#5d6a6e"/>`;
+    for (let i = 0; i < Math.floor(w / 2); i++) k += `<rect x="${x0 + 0.6 + i * 2}" y="${-1.6 - h + 1.2}" width="1" height="1.1" fill="#f3e3b5" opacity=".85"/>`;
+  }
+  k += `<rect x="-3.6" y="-9.4" width="7.2" height="2" fill="#1f4f7a"/><text x="0" y="-7.9" font-size="1.5" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-weight="bold">PIER 39</text>`;
+  for (const x of [-18, -6, 8, 18]) k += `<line x1="${x}" y1="${-7 - (x % 3)}" x2="${x}" y2="${-11 - (x % 3)}" stroke="#ddd" stroke-width=".18"/><rect x="${x}" y="${-11 - (x % 3)}" width="1.6" height="1" fill="${x < 0 ? "#c0392b" : "#2a6fb3"}"/>`;
+  /* die Schwimmstege (K-Dock) links, mit Seelöwen */
+  for (const [x0, y0] of [[-34, 0.6], [-28, 2], [-38, 2.4]]) k += `<rect x="${x0}" y="${y0}" width="8.4" height="1" rx=".2" fill="#b8b1a2"/>`;
+  const loewe = (x, y, s, dir) => `<path d="M${r(x - 1.6 * s * dir)} ${y} Q${r(x - 0.4 * s * dir)} ${r(y - 1.3 * s)} ${r(x + 1 * s * dir)} ${r(y - 1.7 * s)} Q${r(x + 1.6 * s * dir)} ${r(y - 1.7 * s)} ${r(x + 1.5 * s * dir)} ${r(y - 1.1 * s)} L${r(x + 1.2 * s * dir)} ${r(y - 0.3 * s)} L${r(x + 1.6 * s * dir)} ${y} Z" fill="${S.lg("loewe", [[0, "#8a6a4a"], [1, "#4f3a26"]])}"/>`;
+  for (const [x, y, s, d] of [[-31, 0.6, 0.8, 1], [-28.4, 0.6, 0.7, -1], [-25.8, 2, 0.75, 1], [-23, 2, 0.8, -1], [-35.6, 2.4, 0.7, 1], [-33, 2.4, 0.72, 1]]) k += loewe(x, y, s, d);
+  k += `<rect x="-24" y="-8" width="48" height="8" fill="${S.lg("plicht", [[0, "#ffe2b8", 0.15], [1, "#000", 0.08]], 0, 0, 1, 0)}"/>`;
+  S.teil({ id: "pier_39", de: "der Pier 39", syl: "PIER NEUN-und-DREI-ßig", it: "il Pier 39", itSyl: "PIER TREN-ta-NO-ve", en: "Pier 39", x: X, y: Y, kunst: k,
+    tipp: "Am Pier 39 gibt es Läden und Restaurants — und Hunderte Seelöwen.",
+    zoom: { x: X - 42, y: Y - 14, w: 42, h: 28 },
+    unter: [
+      { id: "seeloewe", de: "der Seelöwe", syl: "SEE-lö-we", it: "il leone marino", itSyl: "le-O-ne ma-RI-no", en: "sea lion", x: X - 29, y: Y + 1.5, kunst: flaeche(-9, -2.6, 16, 4.4, 0.4),
+        tipp: "Seit 1990 liegen die Seelöwen auf den Schwimmstegen am Pier 39 in der Sonne." },
+    ] });
+}
+
+/* =====================================================================
+   7 — DER COIT TOWER auf dem Telegraph Hill (rechts)
+   ===================================================================== */
+{
+  const X = 370, Y = 92.4;
+  let k = "";
+  k += `<rect x="-6" y="-1.6" width="12" height="1.6" fill="#d8d0bf"/><rect x="-4.6" y="-3.4" width="9.2" height="1.8" fill="#e8e1d2"/>`;
+  k += `<path d="M-2.8 -3.4 L-2.6 -24 L2.6 -24 L2.8 -3.4 Z" fill="${S.lg("coit", [[0, "#fffaf0"], [0.45, "#ece4d4"], [1, "#b8ae9c"]], 0, 0, 1, 0)}"/>`;
+  for (const x of [-2, -1.2, -0.4, 0.4, 1.2, 2]) k += `<line x1="${x}" y1="-3.6" x2="${x * 0.97}" y2="-23.4" stroke="#b9ae9a" stroke-width=".16"/>`;
+  /* Aussichtsgeschoss mit Bogenfenstern, Krone */
+  k += `<rect x="-3" y="-26.6" width="6" height="2.8" fill="#f2ebdd"/>`;
+  for (let i = 0; i < 4; i++) k += `<path d="M${-2.4 + i * 1.4} -24.2 L${-2.4 + i * 1.4} -25.6 Q${-1.95 + i * 1.4} -26.3 ${-1.5 + i * 1.4} -25.6 L${-1.5 + i * 1.4} -24.2 Z" fill="#3e4a55"/>`;
+  k += `<path d="M-3.2 -26.6 L-2.8 -27.6 L2.8 -27.6 L3.2 -26.6 Z" fill="#e2d9c8"/>`;
+  k += `<rect x="-2.8" y="-28" width="5.6" height=".5" fill="#cbc1ae"/>`;
+  k += `<path d="M2.8 -3.4 L2.6 -24 L1.2 -24 L1.4 -3.4 Z" fill="#000" opacity=".1"/>`;
+  S.teil({ id: "coit_tower", de: "der Coit Tower", syl: "COIT TOW-er", it: "la Coit Tower", itSyl: "COIT TOW-er", en: "Coit Tower", x: X, y: Y, kunst: k,
+    tipp: "Der Coit Tower (1933) steht auf dem Telegraph Hill. Von oben sieht man die ganze Stadt." });
+}
+
+/* =====================================================================
+   8 — DAS SEGELSCHIFF Balclutha am Hyde Street Pier (unten am Ende der
+   Hyde Street)
+   ===================================================================== */
+{
+  const [bx, by] = P(-8, 560, boden(480));
+  let k = "";
+  k += `<path d="M-10 0 L9 0 L10.6 -2.4 L-11.4 -2.4 Z" fill="#232528"/><rect x="-11" y="-2.6" width="21.4" height=".5" fill="#e8e2d2"/>`;
+  for (const [x, h] of [[-6, 20], [0, 22], [5.6, 18]]) {
+    k += `<line x1="${x}" y1="-2.6" x2="${x}" y2="${-h}" stroke="#3a2e22" stroke-width=".35"/>`;
+    for (const t of [0.35, 0.55, 0.75, 0.9]) k += `<line x1="${r(x - 2.6 * (1.1 - t))}" y1="${r(-h * t)}" x2="${r(x + 2.6 * (1.1 - t))}" y2="${r(-h * t)}" stroke="#3a2e22" stroke-width=".2"/>`;
+  }
+  k += `<path d="M-11.4 -2.4 L-6 -20 L0 -22 L5.6 -18 L13 -2.4" stroke="#5a4c3c" stroke-width=".1" fill="none"/><line x1="-11" y1="-2.6" x2="-15" y2="-5" stroke="#3a2e22" stroke-width=".3"/>`;
+  S.teil({ id: "segelschiff", de: "das Segelschiff", syl: "SE-gel-schiff", it: "il veliero", itSyl: "ve-LIE-ro", en: "sailing ship", x: bx + 8, y: by, kunst: `<g transform="scale(.62)">${k}</g>`,
+    tipp: "Die „Balclutha“ ist ein Segelschiff von 1886. Heute ist sie ein Museum am Hyde Street Pier." });
+}
+
+/* =====================================================================
+   9 — DIE VIKTORIANISCHEN HÄUSER („Painted Ladies“), Westseite der
+   Hyde Street, am Hang gestuft. Fassaden zur Straße (X = −17).
+   ===================================================================== */
+const HAUS_UNTER = [];
+{
+  let k = "";
+  const farben = [
+    { wand: "#9cc3df", wandS: "#7fa6c4", trim: "#ffffff", akz: "#2f4f7a", dach: "#6f6a73" },
+    { wand: "#f2d77a", wandS: "#d6ba5e", trim: "#ffffff", akz: "#3f6a4a", dach: "#6c5f55" },
+    { wand: "#a9d6b5", wandS: "#8cbb99", trim: "#fff7ea", akz: "#a3345a", dach: "#5d5a60" },
+    { wand: "#f1b6c0", wandS: "#d899a4", trim: "#ffffff", akz: "#6a2a45", dach: "#635a5e" },
+    { wand: "#c9b6e4", wandS: "#ad9acb", trim: "#ffffff", akz: "#4e3b78", dach: "#5e5865" },
+    { wand: "#f5e3c3", wandS: "#dcc8a6", trim: "#ffffff", akz: "#8b3a2c", dach: "#635b52" },
+  ];
+  const X0 = -17, LOT = 7.6;
+  /* vom fernsten zum nächsten Haus zeichnen (das nahe verdeckt das ferne) */
+  for (let i = 7; i >= 0; i--) {
+    const d0 = 26 + i * LOT, d1 = d0 + LOT, f = farben[i % farben.length];
+    const zb = boden(d1) - 0.3, ze = boden(d0) + 9.6, zg = ze + 3.4;   /* Fuß (talseitig), Traufe, Giebelspitze */
+    const q = (Xa, da, za, Xb, db, zb2, Xc, dc, zc, Xd, dd, zd, fill, ex = "") => vier(pt(Xa, da, za), pt(Xb, db, zb2), pt(Xc, dc, zc), pt(Xd, dd, zd), fill, ex);
+    /* Dach (von oben sichtbar, weiter unten am Hang) und Brandwand */
+    k += q(X0, d0, ze, X0 - 12, d0, ze + 1.6, X0 - 12, d1, ze + 1.6, X0, d1, ze, f.dach);
+    /* Fassade */
+    k += `<path d="M${pt(X0, d0, boden(d0))} L${pt(X0, d0, ze)} L${pt(X0, d1, ze)} L${pt(X0, d1, zb)} Z" fill="${f.wandS}"/>`;
+    /* Giebel (Dreieck in der Fassadenebene) mit Schindeln */
+    const gm = (d0 + d1) / 2;
+    k += `<path d="M${pt(X0, d0 - 0.3, ze)} L${pt(X0, gm, zg)} L${pt(X0, d1 + 0.3, ze)} Z" fill="${f.wand}"/>`;
+    k += `<path d="M${pt(X0, d0 - 0.3, ze)} L${pt(X0, gm, zg)} L${pt(X0, d1 + 0.3, ze)} Z" fill="url(#${S.id("schindel")})"/>`;
+    k += `<path d="M${pt(X0 + 0.1, d0 - 0.5, ze - 0.1)} L${pt(X0 + 0.1, gm, zg + 0.25)} L${pt(X0 + 0.1, d1 + 0.5, ze - 0.1)}" stroke="${f.trim}" stroke-width="${r(Math.max(0.25, 12 / d0))}" fill="none"/>`;
+    /* Gesims mit Konsolen */
+    k += `<path d="M${pt(X0 + 0.25, d0, ze)} L${pt(X0 + 0.25, d1, ze)} L${pt(X0 + 0.25, d1, ze - 0.5)} L${pt(X0 + 0.25, d0, ze - 0.5)} Z" fill="${f.trim}"/>`;
+    for (let t = 0.1; t < 1; t += 0.12) { const d = d0 + t * LOT; k += `<path d="M${pt(X0 + 0.25, d, ze - 0.5)} L${pt(X0 + 0.25, d, ze - 0.9)}" stroke="${f.akz}" stroke-width="${r(Math.max(0.12, 5 / d))}"/>`; }
+    /* Garage unten (talseitig) und Eingangstreppe oben (bergseitig) */
+    const zEG = boden(d0) + 0.2;
+    k += `<path d="M${pt(X0 + 0.05, d0 + 3.6, zb)} L${pt(X0 + 0.05, d0 + 3.6, zb + 2.3)} L${pt(X0 + 0.05, d0 + 6.6, zb + 2.3)} L${pt(X0 + 0.05, d0 + 6.6, zb)} Z" fill="${f.trim}"/>`;
+    k += `<path d="M${pt(X0 + 0.06, d0 + 3.9, zb)} L${pt(X0 + 0.06, d0 + 3.9, zb + 2.05)} L${pt(X0 + 0.06, d0 + 6.3, zb + 2.05)} L${pt(X0 + 0.06, d0 + 6.3, zb)} Z" fill="#d9d4ca"/>`;
+    for (let j = 1; j < 5; j++) k += `<path d="M${pt(X0 + 0.07, d0 + 3.9, zb + j * 0.42)} L${pt(X0 + 0.07, d0 + 6.3, zb + j * 0.42)}" stroke="#b0a99c" stroke-width="${r(Math.max(0.08, 3 / d0))}"/>`;
+    /* Treppe hinauf zur Haustür (bergseitig), Tür mit Oberlicht */
+    for (let j = 0; j < 6; j++) { const zz = zEG - 2 + j * 0.36; k += `<path d="M${pt(X0 + 1.4 - j * 0.22, d0 + 0.3, zz)} L${pt(X0 + 1.4 - j * 0.22, d0 + 2.6, zz)}" stroke="#efe9df" stroke-width="${r(Math.max(0.15, 7 / d0))}"/>`; }
+    k += `<path d="M${pt(X0 + 0.05, d0 + 0.6, zEG)} L${pt(X0 + 0.05, d0 + 0.6, zEG + 2.6)} L${pt(X0 + 0.05, d0 + 2.2, zEG + 2.6)} L${pt(X0 + 0.05, d0 + 2.2, zEG)} Z" fill="${f.akz}"/>`;
+    k += `<path d="M${pt(X0 + 0.06, d0 + 0.6, zEG + 2.7)} L${pt(X0 + 0.06, d0 + 0.6, zEG + 3.2)} L${pt(X0 + 0.06, d0 + 2.2, zEG + 3.2)} L${pt(X0 + 0.06, d0 + 2.2, zEG + 2.7)} Z" fill="#f5e6a8"/>`;
+    /* Fenster neben der Tür (obere Geschosse) */
+    for (const zf of [zEG + 3.6, zEG + 6.6]) k += `<path d="M${pt(X0 + 0.05, d0 + 0.7, zf)} L${pt(X0 + 0.05, d0 + 0.7, zf + 2)} L${pt(X0 + 0.05, d0 + 2.1, zf + 2)} L${pt(X0 + 0.05, d0 + 2.1, zf)} Z" fill="#3f4c5a" stroke="${f.trim}" stroke-width="${r(Math.max(0.12, 6 / d0))}"/>`;
+    /* der schräge Erker (Bay Window) über zwei Geschosse: Vorderseite bei X = −15,9 */
+    const e0 = d0 + 3.2, e1 = d0 + 6.6, ez0 = zEG + 2.9, ez1 = ze - 0.4, EX = X0 + 1.1;
+    k += `<path d="M${pt(X0, e0, ez0)} L${pt(EX, e0 + 0.7, ez0)} L${pt(EX, e0 + 0.7, ez1)} L${pt(X0, e0, ez1)} Z" fill="${f.wand}"/>`;   /* zugewandte Schrägseite */
+    k += `<path d="M${pt(EX, e0 + 0.7, ez0)} L${pt(EX, e1 - 0.7, ez0)} L${pt(EX, e1 - 0.7, ez1)} L${pt(EX, e0 + 0.7, ez1)} Z" fill="${f.wandS}"/>`;
+    for (const zf of [ez0 + 0.7, ez0 + 3.7]) {
+      k += `<path d="M${pt(X0 + 0.2, e0 + 0.15, zf)} L${pt(EX - 0.1, e0 + 0.6, zf)} L${pt(EX - 0.1, e0 + 0.6, zf + 2)} L${pt(X0 + 0.2, e0 + 0.15, zf + 2)} Z" fill="#5a6f82" stroke="${f.trim}" stroke-width="${r(Math.max(0.12, 6 / d0))}"/>`;
+      k += `<path d="M${pt(EX, e0 + 1, zf)} L${pt(EX, e1 - 1, zf)} L${pt(EX, e1 - 1, zf + 2)} L${pt(EX, e0 + 1, zf + 2)} Z" fill="#3e4c5a" stroke="${f.trim}" stroke-width="${r(Math.max(0.12, 6 / d0))}"/>`;
+    }
+    k += `<path d="M${pt(EX + 0.1, e0 + 0.5, ez1 + 0.3)} L${pt(EX + 0.1, e1 - 0.5, ez1 + 0.3)} L${pt(EX + 0.1, e1 - 0.5, ez1 - 0.2)} L${pt(EX + 0.1, e0 + 0.5, ez1 - 0.2)} Z" fill="${f.trim}"/>`;
+    k += `<path d="M${pt(EX + 0.1, e0 + 0.5, ez0 - 0.1)} L${pt(EX + 0.1, e1 - 0.5, ez0 - 0.1)} L${pt(EX + 0.1, e1 - 0.5, ez0 - 0.6)} L${pt(EX + 0.1, e0 + 0.5, ez0 - 0.6)} Z" fill="${f.akz}"/>`;
+    /* Schatten: Fassaden liegen am Nachmittag im Schatten der Häuser gegenüber nicht — leicht dunkler unten */
+    if (i === 0) HAUS_UNTER.push({ e0, e1, ez0, ez1, EX, d0, gm, ze, zg });
+  }
+  /* die Lupe: Erker und Giebel des nächsten Hauses */
+  const h = HAUS_UNTER[0];
+  const [ex, ey] = P(h.EX, (h.e0 + h.e1) / 2, h.ez0);
+  const [ex2, ey2] = P(h.EX, (h.e0 + h.e1) / 2, h.ez1);
+  const [gx, gy] = P(-17, h.gm, h.ze);
+  const [gx2, gy2] = P(-17, h.gm, h.zg);
+  const [lx0] = P(-17, 26, 0), [lx1] = P(-17, 26 + 7.6 * 2, 0);
+  S.teil({ id: "viktorianisches_haus", de: "das viktorianische Haus", syl: "vik-to-ri-A-ni-sche HAUS", it: "la casa vittoriana", itSyl: "CA-sa vit-to-RIA-na", en: "Victorian house", x: 0, y: 0, kunst: k,
+    tipp: "Die bunten Holzhäuser aus der Zeit um 1890 nennt man in San Francisco „Painted Ladies“ — bemalte Damen.",
+    zoom: { x: 0, y: r(gy2 - 6), w: 72, h: 48 },
+    unter: [
+      { id: "erker", de: "der Erker", syl: "ER-ker", it: "il bovindo", itSyl: "bo-VIN-do", en: "bay window", x: ex, y: ey, kunst: flaeche(-6, -(ey - ey2), 10, ey - ey2, 0.5),
+        tipp: "Durch die schrägen Erker kommt mehr Licht ins Haus — typisch für San Francisco." },
+      { id: "giebel", de: "der Giebel", syl: "GIE-bel", it: "il frontone", itSyl: "fron-TO-ne", en: "gable", x: gx, y: gy, kunst: flaeche(-9, -(gy - gy2), 18, gy - gy2 + 1, 0.5),
+        tipp: "Im Giebel sind Holzschindeln wie Fischschuppen." },
+    ] });
+}
+
+/* =====================================================================
+   10 — DIE CABLE CAR (Powell-Hyde), kommt die Hyde Street herauf;
+   von schräg vorn oben gesehen, Wagen um das Gefälle geneigt.
+   ===================================================================== */
+const CC = { X: -7.5, d: 24.5 };
+{
+  const ca = Math.cos(Math.atan(G)), sa = Math.sin(Math.atan(G));
+  /* Wagenkoordinaten: u quer (+ = Osten), v längs (0 = vorn, bergauf), w hoch (senkrecht zum Boden) */
+  const W3 = (u, v, w) => { const d = CC.d + v * ca - w * sa, Z = boden(CC.d) - v * sa + w * ca; return pt(CC.X + u, d, Z); };
+  const Q = (a, b, c, e, fill, ex = "") => `<path d="M${W3(...a)} L${W3(...b)} L${W3(...c)} L${W3(...e)} Z" fill="${fill}"${ex}/>`;
+  const L2 = (a, b, st, w) => `<path d="M${W3(...a)} L${W3(...b)}" stroke="${st}" stroke-width="${w}" fill="none"/>`;
+  const HB = 1.22, LEN = 8.3, OFF = 2.9, RF = 3.05;
+  let k = "";
+  /* Schatten auf der Straße */
+  k += `<path d="M${W3(-HB - 0.2, -0.3, 0)} L${W3(HB + 0.8, -0.2, 0)} L${W3(HB + 1.2, LEN + 0.4, 0)} L${W3(-HB, LEN + 0.4, 0)} Z" fill="#1d1a17" opacity=".3"/>`;
+  /* Innenraum hinten (linke Innenwand, Bank) im offenen Teil */
+  k += Q([-HB, 0.1, 0.95], [-HB, OFF, 0.95], [-HB, OFF, RF], [-HB, 0.1, RF], "#5a2a2a");
+  k += Q([-HB + 0.1, 0.2, 0.95], [HB - 0.1, 0.2, 0.95], [HB - 0.1, OFF, 0.95], [-HB + 0.1, OFF, 0.95], "#8a6a48");
+  k += Q([-0.9, OFF - 0.05, 0.95], [0.9, OFF - 0.05, 0.95], [0.9, OFF - 0.05, 2.6], [-0.9, OFF - 0.05, 2.6], "#7a3a34");
+  k += Q([-0.75, OFF - 0.06, 1.5], [0.75, OFF - 0.06, 1.5], [0.75, OFF - 0.06, 2.4], [-0.75, OFF - 0.06, 2.4], "#3a4652");
+  /* der Gripman (Wagenführer) am Greifhebel */
+  {
+    const [gx, gy] = P(CC.X - 0.1, CC.d + 1.2 * ca - 0.95 * sa, boden(CC.d) - 1.2 * sa + 0.95 * ca);
+    const m = B.mensch({ id: "sfo_grip", geschlecht: "m", pose: "halten", blick: 12, frisur: "kurz", haarfarbe: "grau", haut: "hell",
+      kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "weste", farbe: "#2b3a55" }, unterteil: { stueck: "anzughose", farbe: "#2b3a55" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, kopf: { stueck: "kappe", farbe: "#2b3a55" } } }, 1.76 * F / (CC.d + 1.2));
+    k += `<g transform="translate(${r(gx)} ${r(gy)})">${m.svg}</g>`;
+    k += L2([-0.15, 0.7, 0.95], [-0.25, 0.9, 1.9], "#2c2c2c", 0.5);
+  }
+  /* rechte Seite (Ostseite, uns zugewandt, im Schatten) */
+  k += Q([HB, -0.05, 0.4], [HB, LEN, 0.4], [HB, LEN, 0.95], [HB, -0.05, 0.95], WEINROT);
+  k += L2([HB, -0.05, 0.62], [HB, LEN, 0.62], GOLDS, 0.25);
+  /* Trittbrett */
+  k += Q([HB, 0.1, 0.42], [HB + 0.35, 0.1, 0.42], [HB + 0.35, OFF, 0.42], [HB, OFF, 0.42], "#4a3a2a");
+  /* Bank nach außen im offenen Teil (Lehne) */
+  k += Q([HB, 0.2, 0.95], [HB, OFF - 0.1, 0.95], [HB, OFF - 0.1, 1.35], [HB, 0.2, 1.35], "#7a5032");
+  /* geschlossene Kabine: Wandfeld, Fenster, Schriftbrett */
+  k += Q([HB, OFF, 0.95], [HB, LEN - 0.6, 0.95], [HB, LEN - 0.6, 1.6], [HB, OFF, 1.6], WEINROT);
+  k += Q([HB, OFF, 1.6], [HB, LEN - 0.6, 1.6], [HB, LEN - 0.6, 2.55], [HB, OFF, 2.55], CREME);
+  for (let i = 0; i < 5; i++) { const v0 = OFF + 0.15 + i * 0.97; k += Q([HB + 0.01, v0, 1.7], [HB + 0.01, v0 + 0.78, 1.7], [HB + 0.01, v0 + 0.78, 2.45], [HB + 0.01, v0, 2.45], "#3e4d5c"); k += Q([HB + 0.02, v0, 1.7], [HB + 0.02, v0 + 0.3, 1.7], [HB + 0.02, v0 + 0.3, 2.45], [HB + 0.02, v0, 2.45], "#fff", ` opacity=".14"`); }
+  k += Q([HB, OFF - 0.2, 2.55], [HB, LEN, 2.55], [HB, LEN, RF], [HB, OFF - 0.2, RF], HBLAU);
+  /* Pfosten im offenen Teil */
+  for (const v of [0.05, 1, 1.95, OFF - 0.05]) k += L2([HB, v, 0.95], [HB, v, RF], CREME, 0.55);
+  /* Front (uns zugewandt, im Licht): Stirnwand, Laterne, Nummer */
+  k += Q([-HB, -0.05, 0.4], [HB, -0.05, 0.4], [HB, -0.05, 1.5], [-HB, -0.05, 1.5], S.lg("front", [[0, "#b23a46"], [1, "#7d1f2c"]]));
+  k += L2([-HB, -0.06, 1.42], [HB, -0.06, 1.42], GOLDS, 0.3);
+  k += L2([-HB, -0.06, 0.6], [HB, -0.06, 0.6], GOLDS, 0.22);
+  {
+    const [nx, ny] = P(CC.X + 0.55, CC.d - 0.06, boden(CC.d) + 1.0);
+    k += `<text x="${r(nx)}" y="${r(ny)}" font-size="${r(5.2 * 0.62 * F / CC.d / 10)}" text-anchor="middle" fill="${GOLDS}" font-family="Georgia,serif" font-weight="bold">12</text>`;
+    const [lx, ly] = P(CC.X - 0.45, CC.d - 0.08, boden(CC.d) + 1.05);
+    k += `<circle cx="${r(lx)}" cy="${r(ly)}" r="${r(0.22 * F / CC.d)}" fill="${S.rg("lampe", [[0, "#fffbe6"], [0.6, "#ffe9a6"], [1, "#c99a3a"]])}" stroke="#2c2c2c" stroke-width=".3"/>`;
+  }
+  /* Eckpfosten vorn */
+  for (const u of [-HB + 0.05, HB - 0.05]) k += L2([u, -0.05, 1.5], [u, -0.05, RF], CREME, 0.7);
+  /* Dach: hell, mit Laternendach (Oberlicht) in der Mitte; vorn das Linienschild */
+  k += Q([-HB - 0.12, -0.25, RF], [HB + 0.12, -0.25, RF], [HB + 0.12, LEN + 0.15, RF], [-HB - 0.12, LEN + 0.15, RF], S.lg("dach", [[0, "#efe9dc"], [1, "#cfc6b4"]], 0, 0, 1, 0));
+  k += Q([-0.6, 0.6, RF + 0.25], [0.6, 0.6, RF + 0.25], [0.6, LEN - 0.4, RF + 0.25], [-0.6, LEN - 0.4, RF + 0.25], "#d9d1c0");
+  k += L2([-HB - 0.12, -0.25, RF], [HB + 0.12, -0.25, RF], "#7d1f2c", 0.5);
+  k += Q([-0.95, -0.15, RF + 0.1], [0.95, -0.15, RF + 0.1], [0.95, -0.15, RF + 0.62], [-0.95, -0.15, RF + 0.62], "#22344f");
+  {
+    const [sx, sy] = P(CC.X, CC.d - 0.15 * ca - (RF + 0.2) * sa, boden(CC.d) + 0.15 * sa + (RF + 0.2) * ca);
+    k += `<text x="${r(sx)}" y="${r(sy)}" font-size="${r(0.42 * F / CC.d)}" text-anchor="middle" fill="#f6efd8" font-family="Arial,sans-serif" font-weight="bold">POWELL &amp; HYDE</text>`;
+  }
+  /* die Glocke auf dem Dach vorn (Messing) */
+  {
+    const [bx, by] = P(CC.X + 0.3, CC.d + 0.9 * ca - (RF + 0.3) * sa, boden(CC.d) - 0.9 * sa + (RF + 0.3) * ca);
+    const s = F / CC.d;
+    k += `<path d="M${r(bx - 0.22 * s)} ${r(by)} Q${r(bx - 0.2 * s)} ${r(by - 0.32 * s)} ${r(bx)} ${r(by - 0.34 * s)} Q${r(bx + 0.2 * s)} ${r(by - 0.32 * s)} ${r(bx + 0.22 * s)} ${r(by)} Z" fill="${S.lg("glocke", [[0, "#fff1a6"], [0.5, "#d9a93a"], [1, "#8a6214"]], 0, 0, 1, 0)}"/>`;
+  }
+  /* Seitenschild an der Dachkante: POWELL & HYDE STS. */
+  {
+    const [a1, b1] = P(CC.X + HB + 0.02, CC.d + 3.6 * ca - 2.82 * sa, boden(CC.d) - 3.6 * sa + 2.82 * ca);
+    const [a2, b2] = P(CC.X + HB + 0.02, CC.d + 7.4 * ca - 2.82 * sa, boden(CC.d) - 7.4 * sa + 2.82 * ca);
+    const winkel = Math.atan2(b2 - b1, a2 - a1) * 180 / Math.PI, len = Math.hypot(a2 - a1, b2 - b1);
+    k += `<text transform="translate(${r(a1)} ${r(b1 + 0.6)}) rotate(${r(winkel)})" font-size="1.5" textLength="${r(len)}" lengthAdjust="spacingAndGlyphs" fill="#7d1f2c" font-family="Georgia,serif" font-weight="bold">POWELL &amp; HYDE STS.</text>`;
+  }
+  /* Räder (klein, unter der Schürze) */
+  for (const v of [1.2, 6.8]) { const [wx, wy] = P(CC.X + HB - 0.15, CC.d + v * ca, boden(CC.d) - v * sa + 0.32); k += `<ellipse cx="${r(wx)}" cy="${r(wy)}" rx="${r(0.1 * F / (CC.d + v))}" ry="${r(0.32 * F / (CC.d + v))}" fill="#222"/>`; }
+  /* Glanzkante im Licht */
+  k += L2([-HB, -0.07, 1.48], [-HB, -0.07, 0.42], "#fff", 0.35);
+  const [cx0, cy0] = P(CC.X, CC.d, boden(CC.d));
+  /* die Schienen und der Seilschlitz (Lupe) liegen vor dem Wagen in der Straße */
+  const [rx0, ry0] = P(CC.X, CC.d - 4, boden(CC.d - 4));
+  S.teil({ id: "cable_car", de: "die Cable Car", syl: "CA-ble CAR", it: "il cable car", itSyl: "CA-ble CAR", en: "cable car", x: 0, y: 0, kunst: k,
+    tipp: "Die Cable Car fährt seit 1873. Ein Stahlseil unter der Straße zieht sie mit 15 km/h den Berg hinauf.",
+    zoom: { x: r(cx0 - 27), y: r(cy0 - 44), w: 60, h: 40 },
+    unter: [
+      { id: "glocke", de: "die Glocke", syl: "GLO-cke", it: "la campana", itSyl: "cam-PA-na", en: "bell", x: P(CC.X + 0.3, CC.d + 0.9, 0)[0], y: P(0, CC.d + 0.9 * ca - (RF + 0.3) * sa, boden(CC.d) - 0.9 * sa + (RF + 0.3) * ca)[1], kunst: flaeche(-3.2, -4.6, 6.4, 5, 0.5),
+        tipp: "Mit der Glocke warnt der Gripman. Jedes Jahr gibt es einen Wettbewerb im Glockenläuten." },
+      { id: "schiene", de: "die Schiene", syl: "SCHIE-ne", it: "il binario", itSyl: "bi-NA-rio", en: "rail", x: rx0, y: ry0, kunst: flaeche(-9, -2.4, 18, 4.8, 0.5),
+        tipp: "Zwischen den Schienen ist ein Schlitz. Darunter läuft das Seil, das die Cable Car zieht." },
+    ] });
+}
+/* Schienen und Seilschlitz auf der Straße (vor dem Wagen, zur Kulisse gehörig) */
+{
+  let s = "";
+  for (const u of [-0.53, 0.53, 0]) {
+    let p = "";
+    for (const d of [11.5, CC.d - 0.4]) p += (p ? " L" : "M") + pt(CC.X + u, d, boden(d));
+    s += `<path d="${p}" stroke="${u === 0 ? "#2b2926" : "#b9b6b0"}" stroke-width="${u === 0 ? 0.9 : 0.7}" fill="none"/>`;
+    let q = "";
+    for (const d of [CC.d + 8.6, 900]) q += (q ? " L" : "M") + pt(CC.X + u, d, boden(d));
+    s += `<path d="${q}" stroke="${u === 0 ? "#2b2926" : "#b9b6b0"}" stroke-width="${u === 0 ? 0.5 : 0.4}" fill="none"/>`;
+  }
+  S.hinten(s);
+}
+
+const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/san_francisco.js"));
+console.log(aus);

@@ -393,11 +393,12 @@ const CB = { x: 131.5, y: HOR };
 {
   let k = "";
   /* ovaler Bau: Wand mit Rundbogenfenstern, flache Kuppel */
-  k += `<path d="M-15 0 L-15 -11 Q0 -13.4 15 -11 L15 0 Z" fill="${SANDST}"/>`;
-  for (const x of [-12, -8.4, 8.4, 12]) k += `<path d="M${x - 1} -3 L${x - 1} -8 Q${x} -9.4 ${x + 1} -8 L${x + 1} -3 Z" fill="#3f2e2a"/>`;
-  k += `<path d="M-15.6 -11 Q0 -13.6 15.6 -11 L15.6 -12.2 Q0 -14.8 -15.6 -12.2 Z" fill="#d49a88"/>`;
-  k += `<path d="M-15 -12.2 Q-14 -18.6 0 -19.6 Q14 -18.6 15 -12.2 Q0 -14.6 -15 -12.2 Z" fill="${S.lg("pkdach", [[0, "#6d7c80"], [0.5, "#55636a"], [1, "#3f4a50"]], 0, 0, 1, 0)}"/>`;
-  k += `<rect x="-1.4" y="-21.6" width="2.8" height="2.2" fill="#c9cfd0"/><path d="M-1.6 -21.6 Q0 -23.2 1.6 -21.6 Z" fill="#55636a"/>`;
+  k += `<path d="M-15 0 L-15 -15 Q0 -17.4 15 -15 L15 0 Z" fill="${SANDST}"/>`;
+  for (const x of [-12.4, -8.6, 8.6, 12.4]) k += `<path d="M${x - 1} -3 L${x - 1} -11 Q${x} -12.6 ${x + 1} -11 L${x + 1} -3 Z" fill="#3f2e2a"/><rect x="${x - 1.5}" y="-14" width="3" height=".5" fill="#d49a88"/>`;
+  for (const x of [-14.6, -10.6, -6.6, 6.6, 10.6, 14.6]) k += `<rect x="${x - 0.4}" y="-14.6" width=".8" height="14.6" fill="#b86c5d" opacity=".7"/>`;
+  k += `<path d="M-15.6 -15 Q0 -17.6 15.6 -15 L15.6 -16.4 Q0 -19 -15.6 -16.4 Z" fill="#d49a88"/>`;
+  k += `<path d="M-15 -16.4 Q-14 -23 0 -24 Q14 -23 15 -16.4 Q0 -18.8 -15 -16.4 Z" fill="${S.lg("pkdach", [[0, "#7a888c"], [0.5, "#5b6970"], [1, "#424d53"]], 0, 0, 1, 0)}"/>`;
+  k += `<rect x="-1.4" y="-26" width="2.8" height="2.2" fill="#c9cfd0"/><path d="M-1.6 -26 Q0 -27.6 1.6 -26 Z" fill="#55636a"/>`;
   /* Turm vor dem Oval: Unterbau, Uhrgeschoss, offene Glockenstube, Haube */
   const T = SANDST_H;
   k += `<rect x="-3.4" y="-27" width="6.8" height="27" fill="${SANDST}"/>`;
@@ -443,7 +444,7 @@ const RO = { x: 205.5, y: HOR };
   const WAND_M = S.lg("rowandm", [[0, "#dc9c89"], [1, "#c27e6b"]]);
   const WAND_R = S.lg("rowandr", [[0, "#e2aa98"], [1, "#c98d7c"]]);
   /* Dächer dahinter (Schiefer), dann die drei Häuser */
-  k += `<path d="M-16.5 -18 L-16.5 -27 L27 -27 L27 -18 Z" fill="${SCHIEFER}"/>`;
+  k += `<path d="M-16.5 -18 L-14.6 -26.4 L25.2 -26.4 L27 -18 Z" fill="${S.lg("rodach", [[0, "#5a6470"], [1, "#6f7a85"]])}"/><path d="M-14.6 -26.4 L25.2 -26.4" stroke="#8a949d" stroke-width=".4"/>`;
   /* Frauenstein und Salzhaus rechts daneben (ohne Giebelschmuck) */
   k += `<rect x="16.5" y="-19" width="10.5" height="19" fill="${S.lg("salz", [[0, "#efe3cf"], [1, "#d6c6ad"]])}"/>`;
   k += `<path d="M16 -19 L21.8 -25.4 L27.4 -19 Z" fill="${SCHIEFER}"/>`;
@@ -506,9 +507,13 @@ const DOM = { x: 274, y: 108 };
   /* Westturm: quadratischer Unterbau mit Strebepfeilern und Fenstern */
   const w0 = 7.4;
   k += `<path d="M${-w0} 0 L${-w0} -36 L${w0} -36 L${w0} 0 Z" fill="${SANDST}"/>`;
-  for (const s of [-1, 1]) k += `<path d="M${s * w0 - 1.2} 0 L${s * w0 - 1.2} -34 L${s * w0} -37.4 L${s * w0 + s * 0.6} -34 L${s * w0 + s * 0.6} 0 Z" fill="${s < 0 ? "#c98272" : "#7e4034"}"/>`;
+  for (const s of [-1, 1]) {
+    const a = s * w0, f = s < 0 ? "#c98272" : "#7e4034";
+    k += `<path d="M${r(a - s * 0.9)} 0 L${r(a + s * 1.1)} 0 L${r(a + s * 1.1)} -12 L${r(a + s * 0.7)} -13.6 L${r(a + s * 0.7)} -26 L${r(a + s * 0.35)} -27.4 L${r(a + s * 0.35)} -34.4 L${r(a)} -37.4 L${r(a - s * 0.9)} -34.4 Z" fill="${f}"/>`;
+    k += `<path d="M${r(a + s * 1.1)} -12 L${r(a + s * 0.7)} -13.6 M${r(a + s * 0.7)} -26 L${r(a + s * 0.35)} -27.4" stroke="#e0a594" stroke-width=".3"/>`;
+  }
   for (const [y, h] of [[-4, 12], [-19, 13]]) for (const x of [-3.2, 1.4]) k += `<path d="M${x} ${y} L${x} ${y - h + 1.6} Q${x + 0.9} ${y - h} ${x + 1.8} ${y - h + 1.6} L${x + 1.8} ${y} Z" fill="#34404a"/>`;
-  k += `<rect x="${-w0 - 0.6}" y="-17.4" width="${2 * w0 + 1.2}" height=".8" fill="#d29483"/>`;
+  k += `<rect x="${-w0 + 0.2}" y="-17.4" width="${2 * w0 - 0.4}" height=".8" fill="#d29483"/>`;
   /* Galerie und Ecktürmchen, darüber das Oktogon */
   k += `<rect x="${-w0 - 0.8}" y="-37.6" width="${2 * w0 + 1.6}" height="1.6" fill="#d29483"/>`;
   for (let x = -w0; x <= w0; x += 1.2) k += `<rect x="${r(x)}" y="-39" width=".45" height="1.4" fill="#b8695a"/>`;
@@ -577,7 +582,9 @@ const DOM = { x: 274, y: 108 };
   for (let tx = 189; tx < 314; tx += 8 + rnd() * 6) {
     const R = Math.min(4.2 + rnd() * 2.6, (320 - tx) / 0.95);
     k += `<rect x="${r(tx - 0.4)}" y="${KAI - 5}" width=".8" height="5" fill="#a9a08a"/>`;
-    for (const [dx, dy, s] of [[0, 0, 1], [-R * 0.6, R * 0.3, 0.7], [R * 0.6, R * 0.26, 0.75], [R * 0.1, -R * 0.5, 0.7]]) k += `<circle cx="${r(tx + dx)}" cy="${r(KAI - R * 1.45 + dy)}" r="${r(R * 0.62 * s)}" fill="${[LAUB1, LAUB2, LAUB_F][Math.floor(rnd() * 3)]}"/>`;
+    const cy = KAI - R * 1.45;
+    for (const [dx, dy, s] of [[0, R * 0.25, 0.9], [-R * 0.62, R * 0.32, 0.62], [R * 0.6, R * 0.3, 0.66], [-R * 0.3, -R * 0.28, 0.66], [R * 0.32, -R * 0.36, 0.6], [R * 0.05, -R * 0.62, 0.48], [-R * 0.75, -R * 0.02, 0.42], [R * 0.78, -R * 0.04, 0.4]]) k += `<circle cx="${r(tx + dx)}" cy="${r(cy + dy)}" r="${r(R * 0.62 * s)}" fill="${[LAUB1, LAUB2, LAUB_F][Math.floor(rnd() * 3)]}"/>`;
+    k += `<ellipse cx="${r(tx + R * 0.15)}" cy="${r(cy + R * 0.55)}" rx="${r(R * 0.7)}" ry="${r(R * 0.22)}" fill="#2f4a26" opacity=".35"/><circle cx="${r(tx - R * 0.35)}" cy="${r(cy - R * 0.3)}" r="${r(R * 0.22)}" fill="#cfe09a" opacity=".35"/>`;
   }
   /* Kaimauer aus rotem Sandstein bis zur Wasserlinie */
   let kai = `M150 ${KAI}`;
@@ -714,7 +721,7 @@ const STEG = { x0: 78, x1: 152, deck: 106.8, wasser: 114.2 };
 }
 
 /* =====================================================================
-   13b — DAS RUDERBOOT (ein Vierer trainiert flussaufwärts)
+   13b — DAS RUDERBOOT (ein Vierer, fährt flussabwärts nach links)
    ===================================================================== */
 {
   let k = `<ellipse cx="0" cy=".5" rx="17" ry=".8" fill="#1f343a" opacity=".3"/>`;
@@ -774,7 +781,7 @@ const STEG = { x0: 78, x1: 152, deck: 106.8, wasser: 114.2 };
   /* kleiner Bembel in der Hand */
   const bem = `<g transform="translate(${r(hx)} ${r(hy - 3.2)})"><path d="M-1.6 3 Q-2.4 1 -1.4 -.6 L-.8 -2.2 L.8 -2.2 L1.4 -.6 Q2.4 1 1.6 3 Z" fill="#a9adb0"/><path d="M-1.5 .9 h3" stroke="#2f4f9a" stroke-width=".35"/><path d="M1.6 -.4 q1.2 .6 .4 2" stroke="#8d9194" stroke-width=".35" fill="none"/></g>`;
   S.teil({ id: "kellner", de: "der Kellner", syl: "KELL-ner", it: "il cameriere", itSyl: "ca-me-RIE-re", en: "waiter", x, y, kunst: schatten(1, 0.2, 6, 1.1, 0.3) + m.svg + bem,
-    tipp: "Der Kellner fragt: „Noch en Bembel?“ – das ist Hessisch." });
+    tipp: "Der Kellner bringt den Apfelwein im Bembel an den Tisch." });
 }
 
 /* =====================================================================
@@ -839,7 +846,7 @@ const TISCH = { y: 170 };
   k += `<path d="M-5 -2.4 Q0 -3.6 5 -2.4" stroke="#f3c9a8" stroke-width=".3" fill="none" opacity=".8"/>`;
   k += `<ellipse cx="6.4" cy="1.3" rx="1.8" ry=".7" fill="#e3b52e"/>`;
   k += `<path d="M-9.4 .4 Q-9 -2 -6.6 -2.2 L-5 1.6 Q-8 2 -9.4 .4 Z" fill="#c99a5c"/><path d="M-9 0 Q-8.4 -1.4 -6.8 -1.6" stroke="#f2deb8" stroke-width=".5" fill="none"/>`;
-  S.teil({ oben: true, id: "wuerstchen", de: "das Frankfurter Würstchen", syl: "FRANK-fur-ter WÜRST-chen", it: "il würstel di Francoforte", itSyl: "VÜR-stel di fran-co-FOR-te", en: "frankfurter sausage",
+  S.teil({ oben: true, id: "wuerstchen", de: "das Frankfurter Würstchen", syl: "FRANK-fur-ter WÜRST-chen", it: "il würstel di Francoforte", itSyl: "WÜR-stel di fran-co-FOR-te", en: "frankfurter sausage",
     x: 69, y: 177.6, steht: true, kunst: k, tipp: "Frankfurter Würstchen sind aus Schweinefleisch. Man erwärmt sie nur im heißen Wasser." });
 }
 

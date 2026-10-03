@@ -228,9 +228,9 @@ function katze(T, A) {
     T.def(`<clipPath id="${c}"><use ${h}/></clipPath>`);
     s += `<use ${h} fill="${bfell}"/><g clip-path="url(#${c})">${A.musterFern ? A.musterFern(T, b, n) : ""}` +
       (F ? haare(T, b.pts, A.haarBein * 0.45, 95, A.haarL * 0.8, A.haarFarben.slice(0, 2)) : "") +
-      `<use ${h} fill="#1a0e06" fill-opacity="${A.fernDunkel || 0.3}"/>` +
+      `<use ${h} fill="#1a0e06" fill-opacity="${A.fernDunkel || 0.28}"/><use ${h} fill="${T.lg("okkl", [[0, "#1a0e06", 0.45], [1, "#1a0e06", 0]], 0, -A.hs * 0.62, 0, -A.hs * 0.3, UB)}"/>` +
       weich(T, n, [], A.hs * 0.012, `<path d="${G(b.H, false)}" ${strich(0.32, A.hs * 0.05, "#120802")}/><path d="${G(b.V.slice(1), false)}" ${strich(0.16, A.hs * 0.03, "#fff4e0")}/>`) + `</g>` +
-      `<use ${h} ${strich(0.35, 0.6)}/><path d="${b.zehen}" ${strich(0.35, 0.5)}/>` + (b.krallen ? `<path d="${b.krallen}" ${strich(0.95, 0.7, "#2a2420")}/>` : "");
+      `<use ${h} ${strich(0.18, 0.45)}/><path d="${b.zehen}" ${strich(0.35, 0.5)}/>` + (b.krallen ? `<path d="${b.krallen}" ${strich(0.95, 0.7, "#2a2420")}/>` : "");
   }
   /* ---------- Schwanz ---------- */
   const sw = rohr(A.schwanz), swPts = box(sw.V.concat(sw.H.slice().reverse()));
@@ -239,7 +239,7 @@ function katze(T, A) {
   s += `<use ${sh} fill="${A.schwanzBein ? bfell : fell}"/><g clip-path="url(#${T.id("swc")})">` + (A.schwanzMuster ? A.schwanzMuster(T, A, sw) : "") +
     (F ? haare(T, swPts, A.haarSchwanz || 60, A.schwanzWinkel || 100, A.haarL, A.haarFarben) : "") +
     weich(T, "sw", [], 1.2, `<path d="${G(sw.H, false)}" ${strich(0.35, A.schwanz[0][2] * 0.9, "#1a0e06")}/><path d="${G(sw.V, false)}" ${strich(0.2, A.schwanz[0][2] * 0.6, "#fff")}/>`) +
-    `</g><use ${sh} ${strich(0.3, 0.5)}/>`;
+    `</g><use ${sh} ${strich(0.14, 0.45)}/>`;
   if (A.schwanzEnde) s += A.schwanzEnde(T, A, sw);
   /* ---------- Rumpf + nahe Beine (eine Fellfläche) ---------- */
   const kd = G(box(A.koerper)), kh = def("k", kd);
@@ -247,21 +247,24 @@ function katze(T, A) {
   const hh = def("hn", G(box(hn.pts))), vh = def("vn", G(box(vn.pts)));
   const clip = T.id("ku");
   T.def(`<clipPath id="${clip}"><use ${kh}/><use ${hh}/><use ${vh}/></clipPath>`);
-  s += `<use ${kh} fill="${fell}"/><use ${kh} ${strich(0.28, 0.5)}/><use ${hh} fill="${bfell}"/><use ${vh} fill="${bfell}"/>`;
+  s += `<use ${kh} fill="${fell}"/><use ${kh} ${strich(0.14, 0.45)}/><use ${hh} fill="${bfell}"/><use ${vh} fill="${bfell}"/>`;
   let i = "";
   if (A.muster) i += A.muster(T, A, { vn, hn });
   const bb = T.box(A.koerper.concat(hn.pts, vn.pts));
   i += textur(T, "k", "", A.texturWinkel != null ? A.texturWinkel : 90, A.texturDeck || 0, bb);
   /* Plastik: Muskeln, Kernschatten, Kantenlicht (weich geblendet) */
   if (A.formenFein && F) i += weich(T, "kf", A.formenFein, A.hs * 0.016);
-  i += weich(T, "k", A.formen || [], A.weichSd || A.hs * 0.045,
+  i += weich(T, "k", A.formen || [], A.weichSd || A.hs * 0.06,
     `<use ${kh} ${strich(0.28, A.hs * 0.09, "#2a1506")}/>` +
     `<path d="${G(A.ruecken, false)}" ${strich(0.28, A.hs * 0.06, "#fff6e0")}/>` +
-    (A.bauch ? `<path d="${G(A.bauch, false)}" ${strich(0.14, A.hs * 0.04, "#ffe6c0")}/>` : "") +
+    (A.bauch ? `<path d="${G(A.bauch, false)}" ${strich(0.24, A.hs * 0.035, "#ffe6c0")}/>` : "") +
     [hn, vn].map((b) => (A.beinHinten ? `<path d="${G(b.H.slice(2), false)}" ${strich(0.85, A.hs * 0.075, A.beinHinten)}/>` : "") +
       `<path d="${G(b.H.slice(1), false)}" ${strich(0.26, A.hs * 0.055, "#2a1506")}/><path d="${G(b.V.slice(2), false)}" ${strich(0.14, A.hs * 0.026, "#fff")}/>`).join(""));
-  i += `<rect x="${bb[0] - 20}" y="${-A.hs * 1.3}" width="${bb[2] - bb[0] + 40}" height="${A.hs * 1.3}" fill="${T.lg("vol", A.vol || [[0, "#fff8e8", 0.26], [0.22, "#fff8e8", 0.08], [0.42, "#000", 0], [0.56, "#2a1204", 0.16], [0.64, "#2a1204", 0.3], [0.8, "#2a1204", 0.14], [1, "#2a1204", 0.24]], 0, -A.hs * 1.08, 0, 0, UB)}"/>`;
+  i += `<rect x="${bb[0] - 20}" y="${-A.hs * 1.3}" width="${bb[2] - bb[0] + 40}" height="${A.hs * 1.3}" fill="${T.lg("vol", A.vol || [[0, "#fff8e8", 0.28], [0.22, "#fff8e8", 0.08], [0.4, "#000", 0], [0.5, "#2a1204", 0.2], [0.56, "#2a1204", 0.3], [0.63, "#2a1204", 0.18], [0.75, "#2a1204", 0.1], [1, "#2a1204", 0.2]], 0, -A.hs * 1.08, 0, 0, UB)}"/>`;
   if (F) i += weich(T, "se", (A.sehnen || []).map(([pts, w, o, c]) => `<path d="${G(pts, false)}" ${strich(o, w, c || "#2a1506")}/>`), 0.6);
+  /* Schlagschatten des Kopfes auf Hals und Brust */
+  { const H = A.kopf, g = { x: H.x, y: H.y, k: H.k / 100, w: (H.w || 0) * RAD };
+    i += weich(T, "ks", [[[[20, 0], [30, 30], [60, 40], [80, 34], [50, 24], [26, 12]].map((p) => tr(p, g)), "#1a0a02", 0.4]], A.hs * 0.035); }
   if (F) for (const Q of A.haarFelder(T, { vn, hn })) i += haare(T, Q[0], Q[1], Q[2], Q[3], Q[4], Q[5] || {});
   /* Pfotenfell: kurze Haare nach vorn-unten über den Zehen */
   if (F) for (const b of [hn, vn]) i += haare(T, b.pfote, 26, 35, A.ph * 0.25, A.haarFarben, { streu: 30 });
@@ -269,26 +272,27 @@ function katze(T, A) {
   /* Ränder: Rumpf ganz, nahe Beine nur unterhalb des Rumpfes */
   for (const [n, h, b, y, xh] of [["rh", hh, hn, A.randH, A.randHx], ["rv", vh, vn, A.randV]]) {
     T.def(`<clipPath id="${T.id(n)}"><rect x="-99" y="${y}" width="600" height="99"/>${xh != null ? `<rect x="-99" y="-86" width="${xh + 99}" height="99"/>` : ""}</clipPath>`);
-    s += `<use ${h} ${strich(0.32, 0.55)} clip-path="url(#${T.id(n)})"/><path d="${b.zehen}" ${strich(0.32, 0.5)}/>` +
+    s += `<use ${h} ${strich(0.16, 0.45)} clip-path="url(#${T.id(n)})"/><path d="${b.zehen}" ${strich(0.32, 0.5)}/>` +
       (b.krallen ? `<path d="${b.krallen}" ${strich(0.95, 0.7, "#2a2420")}/>` : "");
   }
   if (A.fransen) for (const Q of A.fransen) s += haare(T, Q[0], Q[1], Q[2], Q[3], Q[4], Q[5] || {});
   /* Kontaktschatten unter den Ballen */
-  s += `<path d="${[vn, hn, vf, hf].map((b) => `M${Math.round(b.sohle[0])} 0H${Math.round(b.sohle[1])}`).join("")}" stroke="#000" stroke-opacity=".35" stroke-width="1.1" stroke-linecap="round"/>`;
   if (A.hinterKopf) s += A.hinterKopf(T, box);
   s += kopf(T, A, box);
   if (A.vorKopf) s += A.vorKopf(T, box);
   if (A.ohrSpaeter) s += A.ohrSpaeter;
   const bx = T.box(B).map(Math.round);
   bx[3] = 0;
-  return { svg: s, box: bx };
+  const fuesse = [vn, hn, vf, hf].map((b) => Math.round((b.sohle[0] + b.sohle[1]) / 2));
+  return { svg: s, box: bx, fuesse, kopf: A.kopfBox };
 }
 
 /* ---------- Kopf (lokal: Kopflänge 100 Einheiten, Nase rechts, y nach unten) ---------- */
 function kopf(T, A, box) {
   const H = A.kopf, g = { x: H.x, y: H.y, k: H.k / 100, w: (H.w || 0) * RAD };
-  box(H.umriss.map((p) => tr(p, g)));
-  if (H.ohr) box(H.ohr.map((p) => tr(p, g)));
+  const kp = H.umriss.map((p) => tr(p, g)).concat(H.ohr ? H.ohr.map((p) => tr(p, g)) : []);
+  box(kp);
+  A.kopfBox = T.box(kp).map(Math.round);
   const id = T.id("kp"), kd = G(H.umriss);
   T.def(`<path id="${id}" d="${kd}"/><clipPath id="${T.id("kc")}"><use href="#${id}"/></clipPath>`);
   let s = H.hinten || "";
@@ -301,7 +305,7 @@ function kopf(T, A, box) {
     weich(T, "kopf", T.fein ? H.formen || [] : [], 2.4, `<path d="${G(H.profil, false)}" fill="none" stroke="#2a1506" stroke-opacity=".28" stroke-width="8"/>`) +
     `<use href="#${id}" fill="${T.lg("kvol", [[0, "#fff", 0.12], [0.35, "#fff", 0], [0.7, "#000", 0.05], [1, "#000", 0.26]], 0, -45, 0, 34, UB)}"/>` +
     (H.muster || "") + (H.haare && T.fein ? H.haare(T) : "") + `</g>`;
-  s += `<path d="${G(H.profil, false)}" fill="none" stroke="#1a1009" stroke-opacity=".38" stroke-width=".8" stroke-linecap="round"/>`;
+  s += `<path d="${G(H.profil, false)}" fill="none" stroke="#1a1009" stroke-opacity=".16" stroke-width=".6" stroke-linecap="round"/>`;
   s += (T.fein ? H.details : H.detailsSzene || H.details) || "";
   return `<g transform="${tf}">${s}</g>`;
 }
@@ -406,7 +410,7 @@ function loewe(T) {
     formen: [
       [70, -36, 10, 3.5, -8, "#fff4dc", 0.5], [90, -26, 12, 2.5, 20, "#fff4dc", 0.45], [62, -12, 11, 5, -10, "#fff4dc", 0.3],
       [77, -23, 5, 3.5, 0, "#2a1506", 0.3], [82, 18, 13, 3, 0, "#2a1506", 0.35], [62, 27, 22, 4, 0, "#2a1506", 0.32], [92, 3, 6, 6, 0, "#fff8ec", 0.45],
-      [46, -12, 8, 14, 0, "#7a4a1c", 0.3],
+      [46, -12, 8, 14, 0, "#7a4a1c", 0.3], [75, -28, 7, 4.6, -6, "#1e0e04", 0.45], [73, -35, 8, 2.4, -8, "#fff4dc", 0.5],
     ],
   };
   K.ohrInnen = `<path d="M50 -40q1 -9 4 -14q3 3 3 13z" fill="#a87a48"/>` + haare(T, [[50, -40], [54, -54], [57, -42]], 14, 285, 5, [["#f2e2c4", 1, 0.45, 0.8]], { streu: 30 }) +
@@ -434,7 +438,7 @@ function loewe(T) {
     `<path d="M74 17.6Q69 18 66 20" fill="none" stroke="#120b07" stroke-opacity=".45" stroke-width="1" stroke-linecap="round"/>` +
     `<path d="M89 21.5Q81 24.5 74 24" fill="none" stroke="#5b4630" stroke-opacity=".3" stroke-width=".8"/>` +
     punkte([[82, 0], [86, .5], [90, 1], [94, 1.4], [80, 4], [84, 4.5], [88, 5], [92, 5.4], [96, 5.6], [82, 8], [86, 8.6], [90, 9], [94, 9.4], [85, 11.6], [89, 12]]) +
-    T.augeReal(74, -27, 3.1, { iris: "#c99434", iris2: "#6a3e12", offen: 0.76, winkel: 4, lid: "#0e0805", haut: "#efe0c2" }) +
+    T.augeReal(74, -27, 3.5, { iris: "#c99434", iris2: "#6a3e12", offen: 0.76, winkel: 4, lid: "#0e0805", haut: "#efe0c2" }) +
     `<path d="M79 -24Q83 -17 86 -9" fill="none" stroke="#2a1a10" stroke-opacity=".4" stroke-width="1.1" stroke-linecap="round"/>` +
     `<path d="M67 -32Q74 -34.5 81 -31" fill="none" stroke="#2a1a10" stroke-opacity=".3" stroke-width=".8"/>` +
     T.schnurrhaare(88, 3, 7, 30, 6, 46, "#fbf6ec", 0.3) + T.schnurrhaare(84, 8, 5, 26, 34, 40, "#fbf6ec", 0.28) +
@@ -489,10 +493,10 @@ function loewe(T) {
 /* Grundriss einer Großkatze (Tiger-Maße, Schulterhöhe 100): Rumpf, Rückenlinie, Bauch, Läufe, Schwanz, Muskelformen.
    bau(G, s, sx, bf) skaliert ihn für andere Arten (s = Höhe, sx = Länge, bf = Beinlänge unterhalb y = −50). */
 const GROSS = {
-    koerper: [[6, -86], [14, -92], [26, -95], [44, -93], [64, -89], [86, -88], [104, -92], [116, -98], [126, -100], [134, -97], [142, -91], [149, -83],
-    [153, -70], [150, -58], [144, -50], [132, -44], [116, -43], [96, -46], [80, -49], [66, -52], [56, -54], [47, -59], [38, -65], [18, -67], [4, -69],
+    koerper: [[6, -86], [14, -92], [26, -95], [44, -93], [64, -90], [86, -90], [104, -93], [116, -97], [126, -99], [136, -97], [146, -93], [154, -89],
+    [161, -84], [163, -74], [157, -66], [149, -61], [143, -55], [135, -47], [124, -43], [116, -43], [96, -46], [80, -49], [66, -52], [56, -54], [47, -59], [38, -65], [18, -67], [4, -69],
     [-2, -76], [0, -84]],
-  ruecken: [[2, -82], [14, -91], [26, -94], [44, -92], [64, -88], [86, -87], [104, -91], [116, -97], [126, -99], [140, -98]],
+  ruecken: [[2, -82], [14, -91], [26, -94], [44, -92], [64, -89], [86, -89], [104, -92], [116, -96], [126, -98], [140, -96], [152, -90]],
   bauch: [[50, -57], [60, -54], [78, -50], [96, -47], [116, -44]],
   hn: { V: [[36, -84], [41, -74], [43, -63], [42, -55], [36, -51], [28, -47], [22, -42], [18, -37], [16, -31], [15.5, -22], [16, -12.5]],
     H: [[0, -82], [-3, -73], [-3, -64], [-1, -56], [1, -49], [2, -42], [1, -36], [0, -32], [3, -28], [5.5, -22], [7.5, -12.5]] },
@@ -505,14 +509,12 @@ const GROSS = {
   schwanz: [[8, -84, 4.4, 4.4], [-5, -81, 4.2, 4.2], [-15, -70, 4, 4], [-21, -54, 3.8, 3.8], [-23, -38, 3.6, 3.6], [-21, -24, 3.4, 3.4], [-15, -15, 3.2, 3.2], [-8, -12, 3, 3]],
   weichSd: 4,
   formen: [
-    /* Schulterblatt, Trizeps, Oberarm; Rippen; Oberschenkel; Lenden-Licht */
-    [[[118, -98], [132, -96], [138, -84], [126, -74], [116, -84]], "#fff0d8", 0.36], [108, -72, 4, 16, 12, "#2a1004", 0.32],
-    [[[128, -100], [142, -96], [146, -90], [134, -92]], "#fff0d8", 0.3], [[[146, -82], [150, -70], [149, -58], [144, -62], [143, -74]], "#2a1004", 0.3],
-    [148, -52, 6, 6, 0, "#2a1004", 0.3],
-    [[[24, -90], [40, -92], [44, -80], [32, -70], [14, -76]], "#fff0d8", 0.42], [[[30, -94], [70, -90], [104, -92], [104, -86], [70, -84], [30, -86]], "#fff0d8", 0.32],
-    [80, -76, 20, 7, 0, "#fff0d8", 0.2], [[[42, -84], [52, -78], [51, -64], [42, -64]], "#3a1404", 0.3],
-    [[[52, -58], [80, -54], [116, -50], [116, -44], [80, -48], [52, -52]], "#2a1004", 0.3], [109, -52, 3, 5, 0, "#2a1004", 0.3],
-    [0, -32, 2.5, 2.5, 0, "#fff0d8", 0.4],
+    /* weiche Muskelformen, Licht von links oben: Schulterblatt, Trizepsfurche, Nacken, Kehle, Brust, Rippen, Flanke,
+       Oberschenkel (Licht oben links, Terminator unten rechts), hinter dem Ellbogen, Fersenhöcker */
+    [128, -90, 14, 10, -55, "#fff0d8", 0.22], [110, -74, 4, 15, 15, "#2a1004", 0.25], [140, -94, 14, 5, -20, "#fff0d8", 0.2],
+    [152, -66, 10, 6, -30, "#2a1004", 0.25], [140, -52, 8, 6, 0, "#2a1004", 0.25], [84, -82, 26, 8, 0, "#fff0d8", 0.14],
+    [50, -74, 6, 12, 10, "#3a1404", 0.28], [22, -86, 14, 10, -20, "#fff0d8", 0.24], [36, -66, 10, 6, -30, "#2a1004", 0.22],
+    [109, -52, 3, 5, 0, "#2a1004", 0.3], [0, -32, 2.5, 2.5, 0, "#fff0d8", 0.4],
   ],
   formenFein: [
     [[[40, -82], [43, -70], [42, -58], [40.5, -58], [41, -70], [38, -80]], "#2a1004", 0.35],
@@ -571,7 +573,7 @@ function tiger(T) {
     x -= vorn ? 7 + T.rnd() * 2 : 5.8 + T.rnd() * 2.6;
   }
   /* Hals: senkrecht, kürzer */
-  for (const x of [134, 141, 148]) st.push(band(T, streifenLinie(T, x, -104, 18 + T.rnd() * 8, -10, 2), 1.8, true));
+  for (const x of [134, 142, 150]) st.push(band(T, streifenLinie(T, x, -104, 16 + T.rnd() * 6, -10, 2), 1.8, true));
   /* Oberschenkel: Bögen um das Knie */
   for (const [R, a0, a1, w] of [[14, 250, 205, 2], [20, 262, 196, 2.6], [26, 268, 192, 3], [32, 272, 190, 3.2], [38, 276, 196, 3], [44, 278, 214, 2.6]]) {
     const brich = T.rnd() < 0.4, m = (a0 + a1) / 2 + (T.rnd() - 0.5) * 10;
@@ -605,7 +607,7 @@ function tiger(T) {
   };
   /* ---------- Kopf: 100 Einheiten = 46 cm ---------- */
   const K = A.kopf = {
-    x: 141, y: -80, k: 50, w: 12,
+    x: 150, y: -81, k: 50, w: 12,
     fell: [[0, "#b8561a"], [0.35, "#d27430"], [0.6, "#e49a56"], [0.8, "#f2e6d4"], [1, "#f6f0e6"]],
     umriss: [[18, -30], [30, -38], [44, -41], [58, -40], [68, -37], [78, -32], [88, -26], [96, -21], [101, -16], [103.5, -9], [102, -3], [100.5, 4], [98, 11],
       [93, 15], [88, 17], [87.5, 21], [83, 26], [72, 29], [56, 30], [40, 28], [26, 22], [16, 10], [12, -8]],
@@ -614,6 +616,7 @@ function tiger(T) {
     formen: [
       [56, -38, 12, 4, -6, "#fff4dc", 0.45], [86, -24, 12, 2.5, 22, "#fff4dc", 0.45], [56, -10, 12, 6, -10, "#fff4dc", 0.3],
       [72, -21, 5, 3.5, 0, "#2a1004", 0.3], [80, 18, 12, 3, 0, "#2a1004", 0.3], [56, 27, 22, 4, 0, "#2a1004", 0.3], [92, 3, 6, 6, 0, "#fff", 0.4],
+      [74, -26.5, 7, 4.6, -6, "#1e0e04", 0.45], [72, -34, 8, 2.4, -8, "#fff4dc", 0.5],
     ],
   };
   K.ohrInnen = `<path d="M36 -46q3 4 2 11l-3 1q1 -6 -1 -11z" fill="#c8662a"/><ellipse cx="29.5" cy="-42" rx="2" ry="2.7" transform="rotate(-15 29.5 -42)" fill="#efe8dc" filter="url(#${T.id("blst")})"/>` +
@@ -644,7 +647,7 @@ function tiger(T) {
     `<path d="M74 16.5Q69 17 66 19" fill="none" stroke="#120b07" stroke-opacity=".45" stroke-width="1" stroke-linecap="round"/>` +
     `<path d="M87 21Q79 24 70 23.5" fill="none" stroke="#5b4630" stroke-opacity=".3" stroke-width=".8"/>` +
     punkte([[82, -1], [86, -.5], [90, 0], [94, .4], [80, 3], [84, 3.5], [88, 4], [92, 4.4], [96, 4.6], [82, 7], [86, 7.6], [90, 8], [94, 8.4], [85, 10.6], [89, 11]], 1.1) +
-    T.augeReal(73, -25.5, 3, { iris: "#d9a83c", iris2: "#7a4a12", offen: 0.78, winkel: 4, lid: "#0e0805", haut: "#f8f2e6" }) +
+    T.augeReal(73, -25.5, 3.4, { iris: "#d9a83c", iris2: "#7a4a12", offen: 0.78, winkel: 4, lid: "#0e0805", haut: "#f8f2e6" }) +
     `<path d="M77 -22.5Q81 -16 83 -9" fill="none" stroke="#2a1a10" stroke-opacity=".35" stroke-width="1" stroke-linecap="round"/>` +
     T.schnurrhaare(88, 2, 8, 32, 6, 50, "#fdfaf2", 0.3) + T.schnurrhaare(84, 7, 5, 26, 36, 40, "#fdfaf2", 0.28) +
     T.schnurrhaare(73, -32, 3, 12, -62, 30, "#f6efe2", 0.25);
@@ -686,7 +689,8 @@ function katzenKopf(T, o) {
     ohr: M(o.ohr || [[26, -36], [26, -47], [31, -54], [38, -54], [42, -47], [42, -37]]), ohrFarbe: o.ohrFarbe || "#2a190e", ohrVorn: true,
     formen: [[...P(70, -36), 10, 3.5, -8, "#fff4dc", 0.5], [...P(90, -26), 12, 2.5, 20, "#fff4dc", 0.45], [...P(60, -10), 11, 5, -10, "#fff4dc", 0.3],
       [...P(77, -23), 5, 3.5, 0, "#2a1506", 0.3], [...P(82, 18), 13, 3, 0, "#2a1506", 0.35], [...P(62, 27), 22, 4, 0, "#2a1506", 0.32],
-      [...P(92, 3), 6, 6, 0, "#fff8ec", 0.45], [...P(34, -8), 8, 14, 0, "#5a3414", 0.25]],
+      [...P(92, 3), 6, 6, 0, "#fff8ec", 0.45], [...P(34, -8), 8, 14, 0, "#5a3414", 0.25],
+      [...P(75, -28), 7, 4.6, -6, "#1e0e04", 0.45], [...P(73, -35), 8, 2.4, -8, "#fff4dc", 0.5]],
   };
   const [ex, ey] = P(74, -27);
   K.ohrInnen = (o.ohrInnen || "") + haare(T, M([[36, -40], [38, -52], [42, -40]]), 12, 285, 5, [[o.ohrHaar || "#f6ecdc", 1, 0.4, 0.8]], { streu: 30 });
@@ -716,7 +720,7 @@ function katzenKopf(T, o) {
     `<path d="M${p(89, 21.5)}Q${p(81, 24.5)} ${p(74, 24)}" fill="none" stroke="#5b4630" stroke-opacity=".3" stroke-width=".8"/>` +
     punkte([[82, 0], [86, .5], [90, 1], [94, 1.4], [80, 4], [84, 4.5], [88, 5], [92, 5.4], [96, 5.6], [82, 8], [86, 8.6], [90, 9], [94, 9.4], [85, 11.6], [89, 12]].map(([x, y]) => P(x, y).map((v) => Math.round(v * 10) / 10)), 1.1) +
     (o.vorAuge || "") +
-    T.augeReal(ex, ey, o.augeR || 3.1, { iris: o.iris || "#c99434", iris2: o.iris2 || "#6a3e12", offen: 0.76, winkel: 4, lid: "#0e0805", haut: o.augeHaut || "#efe0c2" }) +
+    T.augeReal(ex, ey, o.augeR || 3.5, { iris: o.iris || "#c99434", iris2: o.iris2 || "#6a3e12", offen: 0.76, winkel: 4, lid: "#0e0805", haut: o.augeHaut || "#efe0c2" }) +
     `<path d="M${p(79, -24)}Q${p(83, -17)} ${p(86, -9)}" fill="none" stroke="#2a1a10" stroke-opacity="${o.traene || 0.4}" stroke-width="${o.traeneB || 1.1}" stroke-linecap="round"/>` +
     `<path d="M${p(67, -32)}Q${p(74, -34.5)} ${p(81, -31)}" fill="none" stroke="#2a1a10" stroke-opacity=".3" stroke-width=".8"/>` +
     T.schnurrhaare(...P(88, 3), 7, 30, 6, 46, "#fbf6ec", 0.3) + T.schnurrhaare(...P(84, 8), 5, 26, 34, 40, "#fbf6ec", 0.28) +
@@ -742,17 +746,18 @@ function flecken(T, felder, abst, o = {}) {
       else if (art === "strich") out.schwarz += ell(x, y, s * 1.3, s * 0.45, (o.strichWinkel || 80) + (T.rnd() - 0.5) * 30);
       else {
         /* Rosette: unterbrochener Ring aus 3–5 Bögen, innen etwas dunkler; Jaguar: größer, dicker, mit Punkten innen */
-        const jag = art === "jaguar", R = s * (jag ? 1.25 : 1.05), nb = 3 + Math.floor(T.rnd() * (jag ? 3 : 2.5)), w0 = T.rnd() * 360;
-        const sw = Math.max(0.6, Math.round(R * (jag ? 0.42 : 0.36) * 2) / 2);
-        out.innen += ell(x, y, R * 0.9, R * 0.78, T.rnd() * 180);
+        const jag = art === "jaguar", R = s * (jag ? 1.3 : 0.95), nb = (jag ? 4 : 3) + Math.floor(T.rnd() * (jag ? 3 : 2.6)), w0 = T.rnd() * 360;
+        const sw = Math.max(0.6, Math.round(R * (jag ? 0.4 : 0.52) * 2) / 2), fl = 0.72 + T.rnd() * 0.2, dreh = T.rnd() * 40 - 20;
+        out.innen += ell(x, y, R * 0.92, R * 0.92 * fl, dreh);
         let d = "";
+        const pk = (a, rr) => { const c = Math.cos(a * RAD) * rr, sn = Math.sin(a * RAD) * rr * fl, w = dreh * RAD; return [x + c * Math.cos(w) - sn * Math.sin(w), y + c * Math.sin(w) + sn * Math.cos(w)]; };
         for (let i = 0; i < nb; i++) {
-          const a0 = w0 + i * 360 / nb + T.rnd() * 10, a1 = a0 + 360 / nb - 22 - T.rnd() * 30, rr = R * (0.9 + T.rnd() * 0.25);
-          const sx = x + Math.cos(a0 * RAD) * rr, sy = y + Math.sin(a0 * RAD) * rr, tx = x + Math.cos(a1 * RAD) * rr, ty = y + Math.sin(a1 * RAD) * rr;
-          d += `M${fz(sx)} ${fz(sy)}A${fz(rr)} ${fz(rr * (0.8 + T.rnd() * 0.3))} 0 0 1 ${fz(tx)} ${fz(ty)}`;
+          const a0 = w0 + i * 360 / nb + T.rnd() * 14, a1 = a0 + 360 / nb - (jag ? 16 + T.rnd() * 22 : 30 + T.rnd() * 40), rr = R * (0.88 + T.rnd() * 0.24);
+          const [sx, sy] = pk(a0, rr), [tx, ty] = pk(a1, rr), ar = rr * (jag ? 1.9 : 1.05);
+          d += `M${fz(sx)} ${fz(sy)}A${fz(ar)} ${fz(ar)} 0 0 1 ${fz(tx)} ${fz(ty)}`;
         }
         out.ring[sw] = (out.ring[sw] || "") + d;
-        if (jag) for (let i = 0, m = 1 + Math.floor(T.rnd() * 2.4); i < m; i++) out.schwarz += ell(x + (T.rnd() - 0.5) * R * 0.6, y + (T.rnd() - 0.5) * R * 0.5, R * 0.18, R * 0.15, 0);
+        if (jag) for (let i = 0, m = 1 + Math.floor(T.rnd() * 2.4); i < m; i++) out.schwarz += ell(x + (T.rnd() - 0.5) * R * 0.7, y + (T.rnd() - 0.5) * R * 0.5, R * (0.14 + T.rnd() * 0.1), R * 0.13, T.rnd() * 180);
       }
     }
   }
@@ -762,9 +767,197 @@ const fleckenSvg = (f, schwarz = "#16100a", innen = "#00000000") =>
   (f.innen ? `<path d="${kurz(f.innen)}" fill="${innen}"/>` : "") +
   Object.entries(f.ring).map(([w, d]) => `<path d="${kurz(d)}" fill="none" stroke="${schwarz}" stroke-width="${w}" stroke-linecap="round"/>`).join("") +
   (f.schwarz ? `<path d="${kurz(f.schwarz)}" fill="${schwarz}"/>` : "");
+/* Felder für Muster im Grundriss (Tiger-Maße), werden wie der Grundriss skaliert */
+const FELD = {
+  ruecken: [[0, -84], [26, -96], [64, -90], [104, -93], [126, -101], [140, -99], [140, -70], [120, -56], [90, -52], [60, -58], [40, -66], [10, -70]],
+  hals: [[134, -99], [152, -88], [155, -62], [142, -58], [134, -72]],
+  bauch: [[48, -62], [120, -57], [134, -44], [96, -45], [54, -53]],
+};
+const feldSkal = (pts, s, sx, bf = 1) => pts.map(([x, y]) => [x * sx, (y >= -50 ? y * bf : -50 * bf + (y + 50)) * s]);
+/* Ohr einer Großkatze im Profil: Verlauf von dunkler Rückseite (oben/hinten) zur Fellfarbe (unten), heller Innenrand */
+const ohrVerlauf = (T, n, dunkel, fell) => T.lg(n, [[0, dunkel], [0.45, dunkel], [0.8, fell], [1, fell]], 0.3, 0, 0.7, 1);
+/* Quaste/Schwanzspitze aus Strähnen */
+function quaste(T, feld, dunkel = true) {
+  const c = feld.reduce((s, p) => [s[0] + p[0] / feld.length, s[1] + p[1] / feld.length], [0, 0]);
+  return `<path d="${G(feld)}" fill="${dunkel ? "#24120a" : "#e8e0d0"}"/>` +
+    bueschel(T, feld, 10, (x) => norm((x - c[0]) / 10, 1), 6, 12, dunkel ? ["#0e0703", "#1e0f06", "#33190a", "#4e2a12"] : ["#c8bca8", "#e4dccc", "#f6f2ea"],
+      () => 0.45, { pro: 6, breite: 2.6, w: 0.38, op: 0.85, szene: 0.3 });
+}
+
+/* =====================================================================
+   LÖWIN
+   RECHERCHE (Britannica, San Diego Zoo): Kopf-Rumpf ~1,5–1,7 m, Schulterhöhe 0,9–1,1 m, Schwanz 0,7–1 m, 120–180 kg.
+   Keine Mähne, schlanker und leichter als das Männchen, kleinerer Kopf; Fell einheitlich lohfarben (sandig), Bauch und
+   Beininnenseiten heller, Kinn und Lippenrand weiß, Ohren rund mit schwarzer Rückseite, schwarze Schwanzquaste.
+   Kräftiger Nacken, sichtbare Schulterblätter beim Gehen, Bauchfalte (Primordialsack) vor den Hinterbeinen.
+   ===================================================================== */
+function loewin(T) {
+  const hs = 100;
+  const A = {
+    hs, pl: 11.5, ph: 7.6, randH: -54, randV: -48, randHx: 6,
+    fell: [[0, "#a87a42"], [0.2, "#bf9254"], [0.45, "#cca468"], [0.6, "#d8b886"], [0.8, "#d6bc92"], [1, "#b89c74"]],
+    haarL: 2, haarBreite: 0.22, haarBein: 80, haarSchwanz: 28,
+    haarFarben: [["#8a6232", 1, 0.2, 0.3], ["#f2dcac", 1, 0.2, 0.32]],
+    ...bau(GROSS, 1, 0.95),
+    haarFelder(T, { vn, hn }) {
+      const kw = (x, y) => { const t = Math.max(0, Math.min(1, (y + 95) / 48)); return x < 34 ? 128 + t * 6 : x > 102 ? 132 - t * 35 : 176 - t * 60; };
+      return [
+        [this.koerper, 300, kw, 2, [["#8e6534", 1, 0.2, 0.24], ["#b48650", 1, 0.2, 0.24], ["#f6dcaa", 1, 0.18, 0.28]]],
+        [vn.pts, 55, 94, 1.8, this.haarFarben], [hn.pts, 55, (x, y) => (y < -54 ? 125 : 96), 1.8, this.haarFarben],
+      ];
+    },
+    fransen: [[[[48, -58], [86, -47], [114, -44], [114, -41], [86, -44], [48, -55]], 30, 98, 3, [["#c8a878", 1, 0.24, 0.5], ["#efe0c4", 1, 0.22, 0.45]], { szene: 0.3 }]],
+  };
+  A.schwanz = [[8, -84, 3.6, 3.6], [-5, -81, 3.4, 3.4], [-15, -70, 3.2, 3.2], [-21, -55, 3, 3], [-22, -42, 2.8, 2.8], [-19, -33, 2.6, 2.6]];
+  A.schwanzEnde = (T) => quaste(T, [[-22, -37], [-16, -37], [-14, -28], [-16, -21], [-20, -19], [-24, -23], [-25, -30]]);
+  A.kopf = katzenKopf(T, {
+    x: 141, y: -81, k: 46, w: 12, schnauze: 0.96,
+    fell: [[0, "#b07f45"], [0.4, "#c99c62"], [0.75, "#dcc19a"], [1, "#ece0c8"]],
+    ohr: [[24, -36], [23, -48], [28, -56], [36, -57], [41, -50], [41, -37]], ohrFarbe: ohrVerlauf(T, "ohr", "#20140c", "#b88a50"),
+    ohrInnen: `<path d="M37 -40q2 -8 1 -14q4 3 3 14z" fill="#e8d4b0"/>`,
+    stirnFarbe: "#a87638", rueckenFarbe: "#9a6a38",
+  });
+  return katze(T, A);
+}
+
+/* =====================================================================
+   LEOPARD
+   RECHERCHE (SDZG, Britannica, Safari Ltd/Four Paws): Schulterhöhe 45–80 cm (♂ ~70), Kopf-Rumpf 1–1,9 m (♂ ~1,3–1,5),
+   Schwanz 60–110 cm, 30–90 kg. Lang gestreckt, niedrig, sehr muskulös, großer Kopf, kräftiger Nacken, Schwanz lang,
+   Spitze oft nach oben gebogen, Unterseite der Spitze weiß. Fell goldgelb bis ocker, Bauch cremeweiß. ROSETTEN klein und
+   dicht, „unterbrochene Ringe“ (3–5 Teile) OHNE Punkt in der Mitte, Innenfeld etwas dunkler als der Grund; Kopf, Hals,
+   Beine und Bauch mit vollen Punkten (Kopf klein, Bauch groß); Schwanz Flecken, zur Spitze Ringe. Ohren rund, Rückseite
+   schwarz mit weißem Fleck. Augen grün-gelb bis bernstein, runde Pupille.
+   ===================================================================== */
+function leopard(T) {
+  const s = 0.66, sx = 0.69, hs = 66;
+  const A = {
+    hs, pl: 8, ph: 5.4, randH: -36, randV: -32, randHx: 4,
+    fell: [[0, "#a87028"], [0.2, "#c48a38"], [0.4, "#d6a24e"], [0.5, "#e0b468"], [0.56, "#ecdcbc"], [0.62, "#f4ecdc"], [1, "#e8dcc6"]],
+    beinFell: [[0, "#a87028"], [0.2, "#c48a38"], [0.4, "#d6a24e"], [0.55, "#deb470"], [0.8, "#e6c690"], [1, "#ead2a8"]],
+    beinHinten: "#f2e8d4",
+    haarL: 1.5, haarBreite: 0.16, haarBein: 70, haarSchwanz: 30,
+    haarFarben: [["#8a5a20", 1, 0.15, 0.3], ["#fbe6bc", 1, 0.15, 0.32]],
+    ...bau(GROSS, s, sx),
+    haarFelder(T, { vn, hn }) {
+      const kw = (x, y) => { const t = Math.max(0, Math.min(1, (y + 63) / 32)); return x < 24 ? 128 + t * 6 : x > 70 ? 132 - t * 35 : 176 - t * 60; };
+      return [
+        [this.koerper, 280, kw, 1.5, [["#8a5a20", 1, 0.15, 0.26], ["#c8903c", 1, 0.15, 0.26], ["#fff0cc", 1, 0.14, 0.3]]],
+        [vn.pts, 50, 94, 1.3, this.haarFarben], [hn.pts, 50, (x, y) => (y < -36 ? 125 : 96), 1.3, this.haarFarben],
+      ];
+    },
+    fransen: [[[[33, -38], [60, -32], [80, -29], [80, -27], [60, -30], [33, -36]], 30, 98, 2.2, [["#f4ecdc", 1, 0.18, 0.55], ["#d8c8aa", 0.5, 0.16, 0.45]], { szene: 0.3 }]],
+  };
+  A.schwanz = [[6, -56, 3, 3], [-4, -54, 2.9, 2.9], [-14, -46, 2.8, 2.8], [-20, -34, 2.7, 2.7], [-22, -22, 2.6, 2.6], [-19, -11, 2.5, 2.5], [-11, -6, 2.4, 2.4], [-3, -7, 2.4, 2.4], [2, -12, 2.3, 2.3]];
+  A.schwanzBein = true;
+  const fl = (pts, g, art, d) => [feldSkal(pts, s, sx), g, art, d];
+  A.muster = (T, A, { vn, hn }) => {
+    const f = flecken(T, [fl(FELD.ruecken, 1, "rosette"), fl(FELD.hals, 0.55, "punkt"), fl(FELD.bauch, 0.9, "punkt", 0.7),
+      [vn.pts.filter((p) => p[1] > -34), 0.42, "punkt"], [hn.pts.filter((p) => p[1] > -38), 0.42, "punkt"]], 6);
+    return weich(T, "fl", [fleckenSvg(f, "#17110b", "#b8782c")], 0.18);
+  };
+  A.musterFern = (T, b) => fleckenSvg(flecken(T, [[b.pts.filter((p) => p[1] > -36), 0.42, "punkt"]], 6), "#17110b");
+  A.schwanzMuster = (T, A) => {
+    const P = schwanzPunkt(A.schwanz);
+    let d = "";
+    for (let k = 0; k < 4; k++) { const [x, y, tx, ty] = P(0.66 + k * 0.08); d += `M${f1(x - ty * 4)} ${f1(y + tx * 4)}l${f1(ty * 8)} ${f1(-tx * 8)}`; }
+    const [ex, ey] = P(1);
+    return fleckenSvg(flecken(T, [[A.schwanz.slice(0, 6).map(([x, y]) => [x - 4, y]).concat(A.schwanz.slice(0, 6).reverse().map(([x, y]) => [x + 4, y])), 0.45, "punkt"]], 7.5), "#17110b") +
+      `<path d="${kurz(d)}" stroke="#17110b" stroke-width="2.4" fill="none"/><circle cx="${f1(ex + 1)}" cy="${f1(ey - 1)}" r="3.2" fill="#17110b"/><circle cx="${f1(ex - 1)}" cy="${f1(ey + 2)}" r="2.6" fill="#f4ecdc"/>`;
+  };
+  A.kopf = katzenKopf(T, {
+    x: 103.5, y: -53.5, k: 33, w: 12, schnauze: 0.9, stirn: 2,
+    fell: [[0, "#b07a30"], [0.4, "#cf9a48"], [0.7, "#e2be82"], [1, "#f2e8d6"]],
+    ohr: [[22, -36], [21, -47], [26, -54], [34, -55], [39, -48], [39, -37]], ohrFarbe: ohrVerlauf(T, "ohr", "#17110b", "#c8903c"),
+    ohrInnen: `<ellipse cx="29" cy="-46" rx="2" ry="2.8" transform="rotate(-15 29 -46)" fill="#efe6d4"/>`,
+    iris: "#b7a43c", iris2: "#5e5418", augeR: 3.7, nase: "#b07068", polster: "#f4ecdc", kinn: "#faf6ee", unterAuge: "#f6eedc", ueberAuge: "#f2e4c8",
+    traene: 0.6, traeneB: 1.3,
+    muster: (M) => {
+      const f = flecken(T, [[M([[24, -36], [62, -40], [72, -36], [70, -30], [58, -30], [44, -26], [26, -24]]), 0.6, "punkt"],
+        [M([[22, -18], [52, -12], [64, -4], [70, 10], [54, 22], [30, 20], [20, 4]]), 0.7, "punkt"],
+        [M([[80, -28], [92, -24], [96, -18], [86, -16], [78, -20]]), 0.4, "punkt"]], 5);
+      return weich(T, "kf", [fleckenSvg(f, "#17110b")], 0.25);
+    },
+  });
+  return katze(T, A);
+}
+
+/* =====================================================================
+   JAGUAR
+   RECHERCHE (SDZG, SeaWorld, IFAS, Four Paws): Schulterhöhe 63–76 cm, Kopf-Rumpf 1,1–1,85 m, Schwanz 45–75 cm (kürzester
+   der Großkatzen), 56–96 kg (♂ bis 120). Gedrungen, „tonnenförmiger“ Rumpf, tiefe Brust, KURZE, dicke Beine, große
+   Pranken, MASSIGER, breiter Kopf (Umfang größer als Schulterhöhe), kräftigster Biss. Fell kräftig goldgelb bis
+   rötlich-gelb, Bauch weiß mit großen schwarzen Flecken. ROSETTEN groß, wenige, eckig, dicke Ränder, IN DER MITTE 1–2
+   PUNKTE; auf dem Rückgrat eine Reihe großer Vollflecken; Kopf, Hals und Beine mit Vollflecken; Schwanz gefleckt, am
+   Ende Ringe und schwarze Spitze.
+   ===================================================================== */
+function jaguar(T) {
+  const s = 0.74, sx = 0.74, bf = 0.86, hs = 69;
+  const A = {
+    hs, pl: 9.5, ph: 6.4, randH: -38, randV: -34, randHx: 4,
+    fell: [[0, "#a8661c"], [0.2, "#c27e2c"], [0.4, "#d49640"], [0.5, "#dea85a"], [0.56, "#ecdcbc"], [0.62, "#f4ecdc"], [1, "#e8dcc6"]],
+    beinFell: [[0, "#a8661c"], [0.2, "#c27e2c"], [0.4, "#d49640"], [0.55, "#dca862"], [0.8, "#e2bc84"], [1, "#e6c89c"]],
+    beinHinten: "#f2e8d4",
+    haarL: 1.6, haarBreite: 0.17, haarBein: 70, haarSchwanz: 26,
+    haarFarben: [["#8a5014", 1, 0.16, 0.3], ["#fbe2b4", 1, 0.16, 0.32]],
+    ...bau(GROSS, s, sx, bf),
+    haarFelder(T, { vn, hn }) {
+      const kw = (x, y) => { const t = Math.max(0, Math.min(1, (y + 66) / 34)); return x < 26 ? 128 + t * 6 : x > 76 ? 132 - t * 35 : 176 - t * 60; };
+      return [
+        [this.koerper, 280, kw, 1.6, [["#8a5014", 1, 0.16, 0.26], ["#c8802c", 1, 0.16, 0.26], ["#fff0cc", 1, 0.15, 0.3]]],
+        [vn.pts, 50, 94, 1.4, this.haarFarben], [hn.pts, 50, (x, y) => (y < -38 ? 125 : 96), 1.4, this.haarFarben],
+      ];
+    },
+    fransen: [[[[36, -42], [66, -36], [88, -33], [88, -31], [66, -34], [36, -40]], 30, 98, 2.4, [["#f4ecdc", 1, 0.18, 0.55], ["#d8c8aa", 0.5, 0.16, 0.45]], { szene: 0.3 }]],
+  };
+  A.schwanz = [[6, -60, 3.4, 3.4], [-5, -56, 3.2, 3.2], [-13, -46, 3.1, 3.1], [-17, -34, 3, 3], [-17, -22, 2.9, 2.9], [-14, -12, 2.8, 2.8]];
+  A.schwanzBein = true;
+  const fl = (pts, g, art, d) => [feldSkal(pts, s, sx, bf), g, art, d];
+  A.muster = (T, A, { vn, hn }) => {
+    /* Rückgratreihe großer Vollflecken */
+    let reihe = "";
+    for (let i = 0; i < 9; i++) {
+      const t = i / 8, x = 4 + t * 92, y = -66 + Math.sin(t * Math.PI) * -2 - (x > 80 ? (x - 80) * 0.2 : 0);
+      reihe += `M${f1(x - 2.6)} ${f1(y)}a2.6 1.5 0 1 0 5.2 0a2.6 1.5 0 1 0 -5.2 0z`;
+    }
+    const f = flecken(T, [fl(FELD.ruecken.map(([x, y]) => [x, y + 6]), 1, "jaguar"), fl(FELD.hals, 0.55, "punkt"), fl(FELD.bauch, 1.1, "punkt", 0.6),
+      [vn.pts.filter((p) => p[1] > -36), 0.55, "punkt"], [hn.pts.filter((p) => p[1] > -40), 0.55, "punkt"]], 9);
+    return weich(T, "fl", [fleckenSvg(f, "#140e09", "#b8702a") + `<path d="${kurz(reihe)}" fill="#140e09"/>`], 0.2);
+  };
+  A.musterFern = (T, b) => fleckenSvg(flecken(T, [[b.pts.filter((p) => p[1] > -38), 0.55, "punkt"]], 9), "#140e09");
+  A.schwanzMuster = (T, A) => {
+    const P = schwanzPunkt(A.schwanz);
+    let d = "";
+    for (let k = 0; k < 3; k++) { const [x, y, tx, ty] = P(0.6 + k * 0.12); d += `M${f1(x - ty * 4.5)} ${f1(y + tx * 4.5)}l${f1(ty * 9)} ${f1(-tx * 9)}`; }
+    const [ex, ey] = P(1);
+    return fleckenSvg(flecken(T, [[A.schwanz.slice(0, 4).map(([x, y]) => [x - 4, y]).concat(A.schwanz.slice(0, 4).reverse().map(([x, y]) => [x + 4, y])), 0.5, "punkt"]], 9), "#140e09") +
+      `<path d="${kurz(d)}" stroke="#140e09" stroke-width="3" fill="none"/><circle cx="${f1(ex)}" cy="${f1(ey)}" r="4" fill="#140e09"/>`;
+  };
+  A.kopf = katzenKopf(T, {
+    x: 111, y: -55, k: 41, w: 12, schnauze: 0.86, stirn: 3, tief: 1.06,
+    fell: [[0, "#ac6c22"], [0.4, "#cc8e3e"], [0.7, "#e0b47a"], [1, "#f2e8d6"]],
+    ohr: [[20, -34], [19, -44], [23, -50], [30, -51], [35, -45], [36, -35]], ohrFarbe: ohrVerlauf(T, "ohr", "#140e09", "#c8842e"),
+    ohrInnen: `<ellipse cx="26.5" cy="-43" rx="1.8" ry="2.5" transform="rotate(-15 26.5 -43)" fill="#efe6d4"/>`,
+    iris: "#c9a23a", iris2: "#6a4a12", augeR: 3.4, nase: "#a8665c", polster: "#f2e8d6", kinn: "#faf6ee", unterAuge: "#f6eedc", ueberAuge: "#f0dcbc",
+    traene: 0.55, traeneB: 1.3,
+    muster: (M) => {
+      const f = flecken(T, [[M([[22, -36], [62, -40], [72, -36], [70, -30], [58, -30], [44, -26], [24, -24]]), 0.5, "punkt"],
+        [M([[20, -18], [52, -12], [64, -4], [70, 10], [54, 22], [30, 20], [18, 4]]), 0.6, "punkt"],
+        [M([[80, -28], [92, -24], [96, -18], [86, -16], [78, -20]]), 0.4, "punkt"]], 7);
+      return weich(T, "kf", [fleckenSvg(f, "#140e09")], 0.25);
+    },
+  });
+  return katze(T, A);
+}
 module.exports = [
   { id: "loewe", de: "der Löwe", syl: "LÖ-we", it: "il leone", itSyl: "le-O-ne", en: "lion", gruppe: "Raubtiere", lebensraum: "Savanne",
     laenge: 2.5, hoehe: 1.4, zeichne: loewe },
+  { id: "loewin", de: "die Löwin", syl: "LÖ-win", it: "la leonessa", itSyl: "le-o-NES-sa", en: "lioness", gruppe: "Raubtiere", lebensraum: "Savanne",
+    laenge: 2.2, hoehe: 1.1, zeichne: loewin },
   { id: "tiger", de: "der Tiger", syl: "TI-ger", it: "la tigre", itSyl: "TI-gre", en: "tiger", gruppe: "Raubtiere", lebensraum: "Dschungel",
     laenge: 2.4, hoehe: 1.1, zeichne: tiger },
+  { id: "leopard", de: "der Leopard", syl: "le-o-PARD", it: "il leopardo", itSyl: "le-o-PAR-do", en: "leopard", gruppe: "Raubtiere", lebensraum: "Savanne",
+    laenge: 1.6, hoehe: 0.75, zeichne: leopard },
+  { id: "jaguar", de: "der Jaguar", syl: "JA-gu-ar", it: "il giaguaro", itSyl: "gia-GUA-ro", en: "jaguar", gruppe: "Raubtiere", lebensraum: "Regenwald",
+    laenge: 1.7, hoehe: 0.8, zeichne: jaguar },
 ];

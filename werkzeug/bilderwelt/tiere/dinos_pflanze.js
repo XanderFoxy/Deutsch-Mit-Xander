@@ -66,10 +66,32 @@ function weichFilter(T) {
   return `url(#${id})`;
 }
 const fl = (T, pts, farbe, op) => T.form(pts, farbe, ` opacity="${op}"` + (T.fein && op < 1 ? ` filter="${weichFilter(T)}"` : ""));
+/* EIN Licht oben links: helle Rückenkante, Kernschatten-Band im unteren Rumpfdrittel, Bodenreflex an der Bauchkante –
+   folgt den Leitlinien oben/unten (Polylinien, x aufsteigend); weich gezeichnet. */
+function lichtModell(T, oben, unten, x0, x1, o = {}) {
+  const xs = [];
+  for (let x = x0; x <= x1 + 0.01; x += (x1 - x0) / (T.fein ? 20 : 10)) xs.push(x);
+  const band = (t0, t1) => [...xs.map((x) => { const a = yBei(oben, x), b = yBei(unten, x); return [x, a + (b - a) * t0]; }),
+    ...xs.slice().reverse().map((x) => { const a = yBei(oben, x), b = yBei(unten, x); return [x, a + (b - a) * t1]; })];
+  return fl(T, band(-0.05, 0.14), "#fff6dc", o.rand != null ? o.rand : 0.16) +
+    fl(T, band(0.58, 0.93), "#0c0904", o.kern != null ? o.kern : 0.34) +
+    fl(T, band(0.94, 1.05), "#d8c49a", o.reflex != null ? o.reflex : 0.16);
+}
+/* Kopf um einen Drehpunkt skalieren (Kopfgröße nach echter Schädellänge) */
+const skal = (svg, cx, cy, f) => `<g transform="translate(${r(cx)} ${r(cy)}) scale(${f}) translate(${r(-cx)} ${r(-cy)})">${svg}</g>`;
+/* Auge in einer Augenhöhle: weiche Mulde, Knochenwulst mit Licht darüber, Schlagschatten der Braue auf dem oberen Drittel */
+function augeHoehle(T, x, y, rr, o = {}) {
+  const w = o.winkel || 0;
+  let s = schatten(T, x, y + rr * 0.1, rr * 2.2, rr * 1.7, w, 0.5) + licht(T, x - rr * 0.3, y - rr * 1.75, rr * 2.4, rr * 0.75, w - 6, 0.7);
+  s += T.augeReal ? T.augeReal(x, y, rr, Object.assign({ iris: "#a8742c", iris2: "#46280c", offen: 0.62, lid: "#1d160d" }, o)) : T.auge(x, y, rr, o.iris || "#6b4a1c");
+  s += `<ellipse cx="${r(x)}" cy="${r(y - rr * 0.78)}" rx="${r(rr * 1.6)}" ry="${r(rr * 0.5)}"${w ? ` transform="rotate(${w} ${r(x)} ${r(y)})"` : ""} fill="${T.rg("braue", [[0, "#000", 0.55], [0.7, "#000", 0.2], [1, "#000", 0]])}"/>`;
+  s += `<path d="M${r(x - rr * 1.45)} ${r(y - rr * 0.15)}Q${r(x)} ${r(y - rr * 1.25)} ${r(x + rr * 1.5)} ${r(y - rr * 0.05)}"${w ? ` transform="rotate(${w} ${r(x)} ${r(y)})"` : ""} fill="none" stroke="#120c06" stroke-width="${r(rr * 0.28) || 0.1}" stroke-opacity=".55" stroke-linecap="round"/>`;
+  return s;
+}
 /* weiches Licht / weicher Schatten als Ellipse mit Radialverlauf (Muskelpakete, Kernschatten) */
 function licht(T, cx, cy, rx, ry, rot, op, dunkel) {
   if (!T.fein && op < 0.4) return "";   // in Szenen nur die kräftigen Licht-/Schattenformen
-  const f = dunkel ? T.rg("dunkel", [[0, "#000", 0.6], [0.6, "#000", 0.25], [1, "#000", 0]]) : T.rg("licht", [[0, "#fff", 0.5], [0.6, "#fff", 0.2], [1, "#fff", 0]]);
+  const f = dunkel ? T.rg("dunkel", [[0, "#000", 0.6], [0.6, "#000", 0.25], [1, "#000", 0]]) : T.rg("licht", [[0, "#fff8e8", 0.32], [0.55, "#fff8e8", 0.14], [1, "#fff8e8", 0]]);
   return `<ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${r(rx)}" ry="${r(ry)}"${rot ? ` transform="rotate(${rot} ${r(cx)} ${r(cy)})"` : ""} fill="${f}" opacity="${op}"/>`;
 }
 const schatten = (T, cx, cy, rx, ry, rot, op) => licht(T, cx, cy, rx, ry, rot, op, true);
@@ -151,8 +173,9 @@ function teil(T, pts, fill, o = {}) {
   const innen = (o.muster ? re(o.muster) : "") + (o.innen || "") + (o.vol !== false ? re(T.VOL()) : "") + (o.volx ? re(T.VOLX()) : "");
   /* randAb: Rand erst ab diesem Anteil der Höhe (Beine: oben im Rumpf kein Rand) */
   const rs = o.randAb != null ? T.lg("ra" + Math.round(o.randAb * 100), [[0, "#000", 0], [o.randAb, "#000", 0], [Math.min(1, o.randAb + 0.12), "#000", 1], [1, "#000", 1]]) : (o.rand || "#000");
-  const mitRand = o.rand !== false && (T.fein || o.randSzene);
-  const strich = mitRand ? ` stroke="${rs}" stroke-opacity="${o.randA != null ? o.randA : 0.35}" stroke-width="${o.rw || 0.1}" stroke-linejoin="round"` : "";
+  /* Umrisslinien wirken wie Aufkleber: nur die Hauptsilhouette bekommt eine sehr feine Kante (randSzene), Teile keine */
+  const mitRand = o.rand !== false && o.randSzene === true;
+  const strich = mitRand ? ` stroke="${rs}" stroke-opacity="${Math.min(0.22, o.randA != null ? o.randA : 0.22)}" stroke-width="${o.rw || 0.1}" stroke-linejoin="round"` : "";
   /* ohne Innenzeichnung: ein einziger Pfad (Füllung + Rand) */
   if (!innen) return `<path d="${d}" fill="${fill}"${strich}/>`;
   T._n = (T._n || 0) + 1;
@@ -184,8 +207,9 @@ function teilInnen(T, pts, fill) {
 function triceratops(T) {
   const F = T.fein;
   const haut = T.lg("haut", [[0, "#4c3f27"], [0.35, "#6a5838"], [0.72, "#7f6d49"], [1, "#6c5d40"]]);
-  const fern = T.lg("fern", [[0, "#4a3f2c", 0], [0.3, "#4a3f2c", 0.9], [0.5, "#3e3424"], [1, "#2a2318"]]);
-  const nahB = T.lg("bein", [[0, "#6a5a3c", 0], [0.3, "#6a5a3c", 0.6], [0.5, "#615237"], [0.8, "#4f4430"], [1, "#382f21"]]);
+  /* ferne Beine im Körperton, nur ~28 % dunkler; nahe Beine im Körperton, Licht von oben links */
+  const fern = T.lg("fern", [[0, "#463a25", 0], [0.18, "#463a25", 1], [0.6, "#3e3322"], [1, "#2a2318"]]);
+  const nahB = T.lg("bein", [[0, "#73603e", 0], [0.22, "#73603e", 1], [0.55, "#68573c"], [0.85, "#544833"], [1, "#3e3426"]]);
   const schild = T.lg("schild", [[0, "#ad8b5a"], [0.4, "#8a6a42"], [0.8, "#5a4229"], [1, "#46351f"]], 0, 0, 1, 1);
   const horn = T.lg("horn", [[0, "#4f4436"], [0.22, "#93866a"], [0.6, "#d3c8aa"], [0.9, "#b2a687"], [1, "#6f644f"]], 1, 1, 0, 0);
   const schnabel = T.lg("schnabel", [[0, "#8a8070"], [0.35, "#5a5144"], [1, "#2e2820"]], 0, 0, 0.4, 1);
@@ -199,8 +223,8 @@ function triceratops(T) {
     [65.8, -1.3], [64.2, -2.8], [63.4, -4.6], [62.8, -8.4], [63.6, -12.6], [65.4, -20], [61, -24]];
   const hbF = kappen(boden(dreh(HB, 41, -22, -11, 3.5)), -19), vbF = kappen(boden(dreh(VB, 61, -19, 10, -2.6)), -18);
   const zehen = (x, b, n, farbe) => naegel(Array.from({ length: n }, (_, i) => [x + i * b * 1.02, 0, b, b * 0.48]), farbe);
-  h += fernBein(T, hbF, fern, { randAb: 0.5 });
-  h += fernBein(T, vbF, fern, { randAb: 0.5 });
+  h += fernBein(T, hbF, fern, { schuppen: [6, 0.5] });
+  h += fernBein(T, vbF, fern, { schuppen: [5, 0.5] });
   h += zehen(hbF[6][0] + 3.4, 1.9, 3, "#4d4434") + zehen(vbF[6][0] + 2.6, 1.5, 3, "#4d4434");
 
   /* Rumpf + Schwanz + Hals unter dem Schild: EIN Umriss; Hüfte höchster Punkt, Rücken fällt zur Schulter ab */
@@ -216,16 +240,12 @@ function triceratops(T) {
       fl(T, [[10, -15], [20, -21.6], [36, -29.6], [50, -29], [63, -24.8], [60.5, -21.2], [55, -22.6], [52, -20.2], [47.5, -22.4], [43, -20.6],
         [38, -22.8], [33.5, -19.8], [28, -19.4], [22, -17], [15, -15.4]], "#261d10", 0.45) +
       fl(T, [[34, -11.6], [44, -7.4], [58, -7.2], [68, -8.6], [60, -11.8], [46, -11.4]], "#c4ad82", 0.32) +
-      fl(T, [[30, -18], [38, -15.6], [46, -14.4], [56, -14.6], [66, -16], [72, -14], [72, -6], [30, -6]], "#120d06", 0.22) +
-      falten(T, [[[14, -17.4], [24, -23.2], [34, -27.6], [44, -28.6], [54, -26.4], [62, -23.4]]], "#f0e2c0", 0.7, 0.18) +
-      /* Kernschatten am Bauch und unter dem Schwanz, Reflexlicht an der Unterkante */
-      fl(T, [[37, -13], [46, -11.8], [58, -12], [67, -13], [67, -10.6], [58, -9.4], [46, -9.2], [37, -11]], "#140f08", 0.25) +
-      fl(T, [[10, -13.4], [16, -14.8], [23, -16.2], [30, -17], [35, -15.6], [33, -14.4], [28, -15.6], [22, -14.8], [15, -13.6], [10, -12.6]], "#140f08", 0.35) +
-      falten(T, [[[40, -10], [46, -8.2], [54, -7.9], [62, -8.3], [69, -8.8]]], "#dcc9a0", 0.4, 0.22) +
-      /* Muskeln: Schwanzbasis (Caudofemoralis), Rippenwölbung, Schulter */
-      licht(T, 29, -22.8, 10, 3, -26, 0.6) + licht(T, 50, -21.5, 10, 5, -8, 0.5) + licht(T, 62, -20.6, 4.6, 3, -20, 0.45) +
-      schatten(T, 34, -17.8, 6, 2, -24, 0.35) +
-      schuppenFeld(T, oben, unten, 16, 71, 12, (x, t) => (0.64 - 0.34 * t) * (x > 30 ? 1 : 0.72), { opD: 0.3, opH: 0.16 }) +
+      /* EIN Licht oben links: helle Rückenkante, Kernschatten im unteren Drittel, Bodenreflex am Bauch */
+      lichtModell(T, oben, unten, 10, 72) +
+      /* Muskelpakete: Schwanzwurzel (Caudofemoralis), Rippenwölbung, Schulter – Licht oben, Okklusion an den Beinansätzen */
+      licht(T, 29, -22.8, 10, 3, -26, 0.6) + licht(T, 50, -22, 10, 4.4, -8, 0.5) + licht(T, 61, -21, 4.6, 3, -20, 0.45) +
+      schatten(T, 34, -17.8, 6, 2, -24, 0.35) + schatten(T, 47.6, -12.4, 2.6, 4, -10, 0.4) + schatten(T, 55.4, -12, 2, 4, 10, 0.4) +
+      schuppenFeld(T, oben, unten, 16, 71, 10, (x, t) => (0.7 - 0.36 * t) * (x > 30 ? 1 : 0.72), { opD: 0.3, opH: 0.16 }) +
       hoecker(T, streu(T, flanke, 30, 0.32, 0.55), "#6e5d40", { op: 0.4 }) +
       falten(T, [[[38, -24.6], [41, -19], [44.8, -14.6], [47.4, -12.2]]], "#140f08", 0.9, 0.1) +
       /* Hautfalten nur an Gelenken: Leiste, Schwanzansatz, Achsel, Hals */
@@ -271,8 +291,10 @@ function triceratops(T) {
     z += `M${r(ax)} ${r(ay)}Q${r(mx + nx / l * 1.5)} ${r(my + ny / l * 1.5)} ${r(bx)} ${r(by)}`;
   }
   s += h; h = "";
+  /* Kopf: auf echte Schädellänge (~2,3 m mit Schild) skaliert, Drehpunkt am Hals */
+  let kp = "";
   /* fernes Stirnhorn (andere Kopfseite: etwas weiter vorn, im Schatten) */
-  s += T.form([[73.8, -21.9], [75.9, -24.6], [78.8, -27], [82, -28.5], [84.3, -28.9, 1], [81.6, -26.8], [79.2, -24], [76.8, -20.4]], T.lg("hornF", [[0, "#3a3327"], [0.5, "#7a6f59"], [1, "#5a5040"]], 1, 1, 0, 0));
+  kp += T.form([[73.8, -21.9], [75.9, -24.6], [78.8, -27], [82, -28.5], [84.3, -28.9, 1], [81.6, -26.8], [79.2, -24], [76.8, -20.4]], T.lg("hornF", [[0, "#3a3327"], [0.5, "#7a6f59"], [1, "#5a5040"]], 1, 1, 0, 0));
   h += `<path d="${z}" fill="#5e4a30" stroke="#21190f" stroke-width=".12" stroke-opacity=".55" stroke-linejoin="round"/>`;
   h += teil(T, K, T.lg("kopf", [[0, "#76664a"], [0.55, "#806f50"], [1, "#56482f"]]), {
     innen:
@@ -288,33 +310,33 @@ function triceratops(T) {
       schuppenFeld(T, [[70, -21], [88, -15]], [[70, -8], [88, -8]], 70, 86, 8, () => 0.34, { opD: 0.28, opH: 0.14 }) +
       falten(T, [[[85.6, -10.5], [82.4, -10.4], [79.2, -10.3]], [[80.5, -8.5], [76.5, -8.7], [73.6, -9.5]], [[81.4, -16.6], [78.4, -15.6]]], "#120e08", 0.13, 0.5) +
       licht(T, 76.4, -19.4, 2.4, 0.9, -15, 0.5) +
-      schatten(T, 75.6, -17.5, 1.8, 1.3, 0, 0.55) +
       /* Schnabel: Hornscheiden oben (Rostrale, Hakenspitze) und unten (Prädentale), glänzend */
       teilInnen(T, [[86.3, -15.2], [87.8, -13.4], [88.9, -11.4], [89.4, -9.5, 1], [88.4, -10.1], [87.3, -11], [86.1, -12.4], [85.5, -14]], schnabel) +
       teilInnen(T, [[85.8, -10.7], [88.5, -9.2, 1], [87.7, -8.6], [86.2, -7.9], [85.1, -8.3], [84.8, -9.6]], schnabel) +
       falten(T, [[[86.8, -14.6], [88.2, -12.6], [88.9, -10.6]], [[86.2, -10.1], [87.8, -9.4]]], "#f2ead8", 0.2, 0.6) +
       falten(T, [[[85.6, -14.2], [86.2, -12.6], [87.4, -11.2]]], "#1a1510", 0.14, 0.4),
-    randA: 0.45, randSzene: true,
+    rand: false,
   });
-  s += h;
+  kp += h; h = "";
   /* Nasenloch groß, unter dem Nasenhorn */
-  s += `<ellipse cx="84.4" cy="-14.3" rx=".7" ry=".42" fill="${T.rg("nase", [[0, "#0a0806"], [0.7, "#1e1810"], [1, "#3a2f20", 0]])}" transform="rotate(-30 84.4 -14.3)"/>` +
+  kp += `<ellipse cx="84.4" cy="-14.3" rx=".7" ry=".42" fill="${T.rg("nase", [[0, "#0a0806"], [0.7, "#1e1810"], [1, "#3a2f20", 0]])}" transform="rotate(-30 84.4 -14.3)"/>` +
     falten(T, [[[83.6, -15], [84.6, -15.2], [85.4, -14.8]]], "#d2c19a", 0.12, 0.4);
   /* Nasenhorn kurz nach vorn-oben; Wangenhorn (Epijugale) nach unten-hinten; nahes Stirnhorn ~1 m, kegelförmig */
   const hornIn = (l) => F ? falten(T, l, "#3a3226", 0.08, 0.35) : "";
-  s += teil(T, [[83, -16.7], [83.9, -18.4], [84.6, -19.9, 1], [85.6, -17.4], [86.5, -15.6]], horn, { vol: false, randA: 0.45, rw: 0.08 });
-  s += teil(T, [[71, -12.4], [70.3, -9.8], [70.3, -8.2, 1], [71.8, -9.6], [73, -11.6]], horn, { vol: false, randA: 0.45, rw: 0.08 });
-  s += teil(T, [[72.8, -21.8], [74.7, -24.4], [77.6, -26.8], [80.8, -28.4], [83, -29, 1], [80.3, -26.9], [77.8, -24.1], [75.6, -20.6]], horn, {
+  kp += teil(T, [[83, -16.7], [83.9, -18.4], [84.6, -19.9, 1], [85.6, -17.4], [86.5, -15.6]], horn, { vol: false, randA: 0.45, rw: 0.08 });
+  kp += teil(T, [[71, -12.4], [70.3, -9.8], [70.3, -8.2, 1], [71.8, -9.6], [73, -11.6]], horn, { vol: false, randA: 0.45, rw: 0.08 });
+  kp += teil(T, [[72.8, -21.8], [74.7, -24.4], [77.6, -26.8], [80.8, -28.4], [83, -29, 1], [80.3, -26.9], [77.8, -24.1], [75.6, -20.6]], horn, {
     innen: hornIn([[[73.8, -21.6], [76.3, -24.4], [79.6, -27]], [[74.8, -21.2], [77.3, -23.9], [80.6, -26.9]]]) +
       falten(T, [[[74, -22.6], [76.7, -25.3], [80.2, -27.7]]], "#fff", 0.16, 0.45) +
       schatten(T, 74.2, -21.2, 2.2, 0.8, -24, 0.55),
     vol: false, randA: 0.5, rw: 0.08,
   });
   /* Auge: seitlich unter dem Hornansatz; Reptilienauge ohne Wimpern, runde Pupille, Lidwulst darüber */
-  s += T.augeReal ? T.augeReal(75.6, -17.4, 0.58, { iris: "#b07a2e", iris2: "#4a2c0e", offen: 0.66, lid: "#1d160d", winkel: -6 })
-    : T.auge(75.6, -17.4, 0.5, "#6b4a1c", { flach: 0.8 });
+  kp += augeHoehle(T, 75.6, -17.3, 0.66, { iris: "#b07a2e", iris2: "#4a2c0e", offen: 0.64, winkel: -6 });
+  s += skal(kp, 69, -13, 0.72);
 
-  return { svg: DM(s, 10.8), box: [111, -313, 971, 0] };
+  const k = 10.8, fuss = (p) => { const u = p.filter((q) => q[1] > -0.6); return r(u.reduce((a, q) => a + q[0], 0) / u.length * k); };
+  return { svg: DM(s, k), box: [112, -313, 904, 0], fuesse: [fuss(HB), fuss(VB), fuss(hbF), fuss(vbF)], kopf: [650, -268, 906, -88] };
 }
 
 /* =====================================================================
@@ -337,8 +359,9 @@ function triceratops(T) {
 function stegosaurus(T) {
   const F = T.fein;
   const haut = T.lg("haut", [[0, "#3d3e28"], [0.35, "#5c5b39"], [0.72, "#7a7550"], [1, "#686143"]]);
-  const fern = T.lg("fern", [[0, "#444129", 0], [0.3, "#444129", 0.9], [0.5, "#38351f"], [1, "#23210f"]]);
-  const nahB = T.lg("bein", [[0, "#625f3c", 0], [0.3, "#625f3c", 0.6], [0.55, "#5a5638"], [0.8, "#4a4630"], [1, "#333020"]]);
+  /* ferne Beine im Körperton ~28 % dunkler, nahe im Körperton */
+  const fern = T.lg("fern", [[0, "#45432b", 0], [0.18, "#45432b", 1], [0.6, "#3e3c26"], [1, "#2a281a"]]);
+  const nahB = T.lg("bein", [[0, "#55533a", 0], [0.28, "#55533a", 0.55], [0.48, "#5c5a3c", 1], [0.85, "#4a4730"], [1, "#363424"]]);
   const platte = T.lg("platte", [[0, "#4a4a2c"], [0.3, "#76673b"], [0.65, "#a8703c"], [0.9, "#a24e2c"], [1, "#7e3a20"]], 0, 1, 0, 0);
   const platteF = T.lg("platteF", [[0, "#2c2a18"], [0.4, "#544628"], [1, "#62331d"]], 0, 1, 0, 0);
   const stachel = T.lg("stachel", [[0, "#4e4636"], [0.3, "#a69a7c"], [0.7, "#ddd4ba"], [1, "#655c48"]], 0, 1, 1, 0);
@@ -346,7 +369,7 @@ function stegosaurus(T) {
 
   /* Rückenlinie: stark gewölbt, höchster Punkt über Hüfte/Schwanzwurzel, steil abfallend zu Schulter und Hals */
   const RUECKEN = [[1.4, -18], [8, -20], [15, -22.6], [22, -25.4], [29, -27.4], [35, -28], [41, -27.4], [47, -25.2], [53, -22],
-    [58, -19.2], [62, -16.9], [66, -15], [70, -13.6], [73.6, -12.2]];
+    [58, -19.2], [62, -16.9], [66, -15], [70, -13.4], [73.6, -11.9]];
   /* Platte: Fuß auf der Rückenlinie, Höhe H, Breite W, Neigung (Grad; negativ = Spitze nach hinten), leicht unregelmäßig */
   const plattePts = (bx, H, W, neig) => {
     const by = yBei(RUECKEN, bx) + Math.min(1.4, H * 0.2);
@@ -389,11 +412,11 @@ function stegosaurus(T) {
   const stF = T.lg("stF", [[0, "#2e2a20"], [0.35, "#6a6250"], [0.75, "#8d846c"], [1, "#4a4436"]], 0, 1, 1, 0);
   s += teil(T, stachelPts(11.4, -20.2, 6.6, 1.7, -110), stF, { vol: false, randA: 0.4, randSzene: true });
   s += teil(T, stachelPts(7, -19, 6.4, 1.6, -144), stF, { vol: false, randA: 0.4, randSzene: true });
-  h += fernBein(T, hbF, fern, { randAb: 0.5 }) + fernBein(T, vbF, fern, { randAb: 0.5 });
+  h += fernBein(T, hbF, fern) + fernBein(T, vbF, fern);
   h += zehen(hbF[6][0] + 3.2, 1.9, 3, "#3d3826") + zehen(vbF[6][0] + 2.4, 1.4, 3, "#3d3826");
 
   /* Rumpf + Schwanz + Hals: EIN Umriss */
-  const R = [[0.6, -17], ...RUECKEN.slice(1), [76.2, -11.4], [76.6, -9.4], [74.4, -8.4], [70, -8.2], [64, -7.8], [58, -7.6], [52, -8], [45, -9.2],
+  const R = [[0.6, -17], ...RUECKEN.slice(1), [76, -11.2], [76.6, -9.6], [74.6, -8.8], [70.4, -8.4], [64, -7.8], [58, -7.6], [52, -8], [45, -9.2],
     [39.4, -12.2], [33.4, -15.6], [26, -17.4], [18, -17.4], [10, -16.4], [3.6, -15.8], [1.2, -16]];
   const unten = [[1, -16], [10, -16.4], [18, -17.4], [26, -17.4], [33.4, -15.6], [39.4, -12.2], [45, -9.2], [52, -8], [58, -7.6], [64, -7.8], [70, -8.4], [75, -9]];
   h += teil(T, R, haut, {
@@ -402,14 +425,13 @@ function stegosaurus(T) {
       fl(T, [[1, -17.6], [12, -21.6], [28, -28], [42, -28.4], [55, -21.6], [66, -15.6], [75, -12.6], [74, -11.2], [68, -12.6], [63, -13],
         [59, -15], [55, -14.2], [51, -17], [46.4, -16.4], [42, -19.6], [37, -18.8], [32, -21], [27, -19.8], [21, -20.6], [15, -19], [7, -18.2]], "#211e0c", 0.45) +
       fl(T, [[34, -13.4], [44, -8.2], [58, -7], [70, -7.8], [76, -9.4], [66, -10.6], [54, -10.8], [44, -11.6]], "#cbbd8c", 0.3) +
-      fl(T, [[30, -18], [40, -15.4], [52, -13.2], [64, -12.8], [76, -11], [76, -5], [30, -5]], "#120f06", 0.24) +
-      fl(T, [[2, -16.4], [10, -17.2], [20, -18.2], [30, -17.6], [35, -16], [26, -16.6], [16, -16.6], [6, -15.8]], "#120f06", 0.32) +
-      falten(T, [[[6, -19], [16, -22.6], [28, -26.6], [38, -27.4], [50, -23.6], [60, -18.2], [70, -14]]], "#f4ecc8", 0.7, 0.16) +
-      falten(T, [[[40, -10.6], [48, -8.6], [58, -8], [68, -8.4], [74, -9.4]]], "#e2d6a8", 0.4, 0.2) +
+      /* EIN Licht oben links: helle Rückenkante, Kernschatten im unteren Drittel, Bodenreflex am Bauch */
+      lichtModell(T, RUECKEN, unten, 1, 76) +
+      schatten(T, 42.6, -11.6, 2.4, 3.6, -10, 0.4) + schatten(T, 57.4, -11, 1.8, 3, 10, 0.4) +
       /* Muskeln: Schwanzwurzel, Rippen, Schulter, Hals */
       licht(T, 25, -22.6, 9, 2.6, -22, 0.55) + licht(T, 47, -18.6, 8.6, 4.6, -18, 0.45) + licht(T, 62, -13.6, 3.6, 2.4, -24, 0.4) +
       licht(T, 69, -11.6, 3.2, 1.2, -16, 0.35) + schatten(T, 33, -17.6, 5, 1.8, -24, 0.35) +
-      schuppenFeld(T, RUECKEN.map(([x, y]) => [x, y + 0.6]), unten, 5, 76, 9, (x, t) => (0.66 - 0.32 * t) * (x > 24 ? 1 : 0.72), { opD: 0.3, opH: 0.16, lichtBis: 0.5 }) +
+      schuppenFeld(T, RUECKEN.map(([x, y]) => [x, y + 0.6]), unten, 5, 76, 8, (x, t) => (0.7 - 0.34 * t) * (x > 24 ? 1 : 0.72), { opD: 0.3, opH: 0.16, lichtBis: 0.5 }) +
       /* Kehle: Gularossikel (Knochenplättchen) */
       hoecker(T, [[68, -8.6, 0.4], [69.6, -8.5, 0.45], [71.2, -8.6, 0.4], [72.8, -8.8, 0.36], [74.2, -9.1, 0.32], [70.4, -9.6, 0.3], [72.6, -9.8, 0.28]], "#8c835e", { op: 0.7 }) +
       falten(T, [[[31, -18.6], [33.6, -15.6], [36, -13]], [[55.8, -12.4], [56.8, -10], [58.6, -8.6]], [[63.6, -11], [66, -10.4], [68.4, -10.8]],
@@ -437,28 +459,31 @@ function stegosaurus(T) {
   });
   h += zehen(60.2, 1.5, 3, "#433d2b");
 
+  s += h; h = "";
   /* Kopf: klein, lang und schmal, tief gehalten, geht weich in den Hals über; Hornschnabel vorn */
   const K = [[74.4, -12], [76.4, -11.9], [78.6, -11.5], [80.6, -10.5], [82.2, -9.2], [82.9, -8.3, 1], [82.1, -7.7], [80, -7.4], [77.8, -7.5],
     [75.8, -8], [74.2, -9], [73.6, -10.6]];
-  h += teil(T, K, T.lg("kopf", [[0, "#6a6642"], [0.6, "#756f49"], [1, "#4d482e"]]), {
+  let kp = teil(T, K, T.lg("kopf", [[0, "#625f3d"], [0.5, "#5e5a3b"], [1, "#3e3a26"]]), {
     innen: licht(T, 78.4, -10.6, 3, 1, -14, 0.5) + schatten(T, 78.6, -7.6, 3.6, 0.7, -4, 0.5) + schatten(T, 74.4, -10, 1, 2, 0, 0.35) +
       schuppenFeld(T, [[74, -12], [83, -8.8]], [[74, -7.4], [83, -7.4]], 74, 82.6, 5, () => 0.2, { opD: 0.28, opH: 0.14 }) +
       teilInnen(T, [[81, -10], [82.2, -9.2], [82.9, -8.3, 1], [82.1, -7.7], [80.8, -7.6], [80.4, -8.7]], T.lg("schnabel", [[0, "#6a604c"], [0.5, "#3a3328"], [1, "#1e1a14"]])) +
       falten(T, [[[80.6, -8.4], [78.4, -8.5], [76.2, -8.9]], [[81.4, -9.7], [82.4, -8.7]]], "#120e08", 0.1, 0.55) +
-      falten(T, [[[81.4, -9.9], [82.5, -8.9]]], "#fff", 0.1, 0.4) + schatten(T, 78.4, -10.1, 0.8, 0.55, 0, 0.5),
-    randA: 0.45, randSzene: true,
+      falten(T, [[[81.4, -9.9], [82.5, -8.9]]], "#fff", 0.1, 0.4),
+    rand: false,
   });
-  s += h;
   /* nahe Platten über dem Rumpf, nahe Stacheln */
   s += platten(1);
   /* Stachelbasis in der Haut verankert: Hautwulst + Schatten */
   s += schatten(T, 9.6, -19.4, 2.2, 1.2, -20, 0.5) + schatten(T, 5, -18.2, 2, 1.1, -20, 0.5);
   s += teil(T, stachelPts(10, -19.8, 6.8, 1.9, -118), stachel, { innen: falten(T, [[[9.4, -20.6], [8.2, -23], [7.2, -25.4]]], "#fff", 0.14, 0.4) + schatten(T, 10, -19.8, 1.6, 1.2, 0, 0.5), vol: false, randA: 0.5 });
   s += teil(T, stachelPts(5.4, -18.6, 6.6, 1.8, -152), stachel, { innen: falten(T, [[[5, -19.4], [2.6, -20.6], [0.4, -21.6]]], "#fff", 0.14, 0.4) + schatten(T, 5.4, -18.6, 1.6, 1.2, 0, 0.5), vol: false, randA: 0.5 });
-  s += T.augeReal ? T.augeReal(78.4, -10.1, 0.3, { iris: "#9a6a26", iris2: "#3e240c", offen: 0.66, lid: "#1d160d", winkel: -10 }) : T.auge(78.4, -10.1, 0.28, "#6b4a1c");
-  s += `<ellipse cx="81.7" cy="-9.2" rx=".28" ry=".17" fill="#120e09" transform="rotate(-34 81.7 -9.2)"/>`;
-  const k = 10.6, box = [-1.2, -35.4, 83.8, 0];
-  return { svg: DM(s, k), box: box.map((v) => Math.round(v * k)) };
+  kp += augeHoehle(T, 78.4, -10.1, 0.42, { iris: "#9a6a26", iris2: "#3e240c", offen: 0.64, winkel: -10 });
+  kp += `<ellipse cx="81.7" cy="-9.2" rx=".28" ry=".17" fill="#120e09" transform="rotate(-34 81.7 -9.2)"/>`;
+  /* Kopf auf echte Schädellänge (~0,6 m bei 9 m Länge), Drehpunkt am Hals */
+  s += skal(kp, 75, -10, 0.8);
+  const k = 10.6, box = [-1.2, -35.4, 81.4, 0];
+  const fuss = (p) => { const u = p.filter((q) => q[1] > -0.6); return r(u.reduce((a, q) => a + q[0], 0) / u.length * k); };
+  return { svg: DM(s, k), box: box.map((v) => Math.round(v * k)), fuesse: [fuss(HB), fuss(VB), fuss(hbF), fuss(vbF)], kopf: [Math.round(72 * k), Math.round(-13.4 * k), Math.round(81.6 * k), Math.round(-6.6 * k)] };
 }
 
 /* =====================================================================
@@ -969,13 +994,13 @@ function diplodocus(T) {
 
 module.exports = [
   { id: "triceratops", de: "der Triceratops", syl: "Tri-ZE-ra-tops", it: "il triceratopo", itSyl: "tri-che-RA-to-po", en: "triceratops",
-    gruppe: "Dinosaurier", lebensraum: "Urzeit", laenge: 8.6, hoehe: 3.13, zeichne: triceratops },
+    gruppe: "Dinosaurier", lebensraum: "Urzeit", laenge: 7.92, hoehe: 3.13, zeichne: triceratops },
   { id: "brachiosaurus", de: "der Brachiosaurus", syl: "Bra-chi-o-SAU-rus", it: "il brachiosauro", itSyl: "bra-chio-SAU-ro", en: "brachiosaurus",
     gruppe: "Dinosaurier", lebensraum: "Urzeit", laenge: 20.26, hoehe: 13.44, zeichne: brachiosaurus },
   { id: "diplodocus", de: "der Diplodocus", syl: "Di-PLO-do-kus", it: "il diplodoco", itSyl: "di-PLO-do-co", en: "diplodocus",
     gruppe: "Dinosaurier", lebensraum: "Urzeit", laenge: 25.66, hoehe: 4.54, zeichne: diplodocus },
   { id: "stegosaurus", de: "der Stegosaurus", syl: "Ste-go-SAU-rus", it: "lo stegosauro", itSyl: "ste-go-SAU-ro", en: "stegosaurus",
-    gruppe: "Dinosaurier", lebensraum: "Urzeit", laenge: 8.99, hoehe: 3.75, zeichne: stegosaurus },
+    gruppe: "Dinosaurier", lebensraum: "Urzeit", laenge: 8.76, hoehe: 3.75, zeichne: stegosaurus },
   { id: "ankylosaurus", de: "der Ankylosaurus", syl: "An-ky-lo-SAU-rus", it: "l'anchilosauro", itSyl: "an-chi-lo-SAU-ro", en: "ankylosaurus",
     gruppe: "Dinosaurier", lebensraum: "Urzeit", laenge: 6.73, hoehe: 1.91, zeichne: ankylosaurus },
   { id: "parasaurolophus", de: "der Parasaurolophus", syl: "Pa-ra-sau-RO-lo-phus", it: "il parasaurolofo", itSyl: "pa-ra-sau-RO-lo-fo", en: "parasaurolophus",

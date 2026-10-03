@@ -38,7 +38,7 @@ function kit(T, box = [-60, -320, 620, 40]) {
   /* Weichzeichner (nur fein) */
   const bl = new Set();
   H.blur = (sd) => {
-    sd = Math.max(0.1, Math.round(sd * 10) / 10);
+    sd = [0.12, 0.25, 0.45, 0.8, 1.3, 2, 3].reduce((b, v) => (Math.abs(v - sd) < Math.abs(b - sd) ? v : b), 0.12);
     const id = T.id("b" + String(sd).replace(".", "_"));
     if (!bl.has(id)) { bl.add(id); T.def(`<filter id="${id}" filterUnits="userSpaceOnUse" x="${box[0]}" y="${box[1]}" width="${box[2] - box[0]}" height="${box[3] - box[1]}"><feGaussianBlur stdDeviation="${sd}"/></filter>`); }
     return `url(#${id})`;
@@ -59,17 +59,17 @@ function kit(T, box = [-60, -320, 620, 40]) {
     if (!F && Math.max(rx, ry) < H.minFl) return "";
     if (!F) { const c = parseInt(farbe.length === 4 ? farbe.replace(/([0-9a-f])/gi, "$1$1").slice(1) : farbe.slice(1), 16); farbe = ((c >> 16) + ((c >> 8) & 255) + (c & 255)) > 450 ? "#fff" : "#000"; }
     let g = flg.get(farbe);
-    if (!g) { g = T.rg("f" + farbe.slice(1), [[0, farbe, 1], [0.3, farbe, 0.78], [0.62, farbe, 0.3], [1, farbe, 0]]); flg.set(farbe, g); }
+    if (!g) { g = T.rg("f" + farbe.slice(1), [[0, farbe, 0.9], [0.5, farbe, 0.45], [1, farbe, 0]]); flg.set(farbe, g); }
     return `<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(rx)}" ry="${f(ry)}"${rot ? ` transform="rotate(${Math.round(rot)} ${f(x)} ${f(y)})"` : ""} fill="${g}"${op < 1 ? ` opacity="${op}"` : ""}/>`;
   };
   /* weiche Linie (Muskelfurche, Sehne, Lichtkante): mit Weichzeichner (fein) bzw. dünn (Szene) */
   H.wl = (zuege, farbe, w, op, sd) => {
-    const d = zuege.map((p) => G(p, false)).join("");
+    const d = zuege.map((p) => (sd >= 0.5 ? "M" + p.map((q) => f(q[0]) + " " + f(q[1])).join("L") : G(p, false))).join("");
     if (!F) return "";
     return `<path d="${d}" fill="none" stroke="${farbe}" stroke-width="${f(w)}" stroke-opacity="${op}" stroke-linecap="round"${sd ? ` filter="${H.blur(sd)}"` : ""}/>`;
   };
   /* weiche Fläche (Farbzone mit unscharfem Rand) */
-  H.wf = (pts, farbe, op, sd) => !F && op < 0.3 ? "" : `<path d="${typeof pts === "string" ? pts : G(pts)}" fill="${farbe}"${op < 1 ? ` opacity="${op}"` : ""}${F && sd ? ` filter="${H.blur(sd)}"` : ""}/>`;
+  H.wf = (pts, farbe, op, sd) => !F && op < 0.3 ? "" : `<path d="${typeof pts === "string" ? pts : F && sd >= 0.5 ? H.poly(pts) : G(pts)}" fill="${farbe}"${op < 1 ? ` opacity="${op}"` : ""}${F && sd ? ` filter="${H.blur(sd)}"` : ""}/>`;
   /* Randlicht/Randschatten: breiter Strich am Umriss, Licht links oben, Schatten rechts unten (in der Fläche geklippt) */
   H.rim = (A, w, op = 1, g) => !F && w < 2 ? "" : A.use(`fill="none" stroke="${g || T.lg("rim", [[0, "#fff", 0.45], [0.4, "#fff", 0], [0.6, "#000", 0], [1, "#000", 0.55]], 0, 0, 0.6, 1)}" stroke-width="${f(w)}"${op < 1 ? ` opacity="${op}"` : ""}${F ? ` filter="${H.blur(w * 0.3)}"` : ""}`);
   /* Haare Haar für Haar: n Haare in poly, Wuchsrichtung winkel(x, y) (Grad, 0 = rechts, 90 = unten), Länge laenge(x, y).
@@ -171,9 +171,9 @@ function kit(T, box = [-60, -320, 620, 40]) {
   H.schale = (xb, xs, h, o = {}) => {
     const fa = o.farbe || "#2a2220", L = xs - xb;
     const kl = (dx, dy, farbe, op) => {
-      const p = [[xb + dx + L * 0.06, -h * 0.62 + dy], [xb + dx + L * 0.02, -h * 0.2 + dy], [xb + dx + L * 0.12, -0.05 + dy, 1], [xs + dx, 0 + dy, 1],
-        [xs + dx - L * 0.12, -h * 0.28 + dy], [xs + dx - L * 0.42, -h * 0.86 + dy], [xb + dx + L * 0.5, -h * 1.02 + dy], [xb + dx + L * 0.22, -h * 0.9 + dy]];
-      const A = H.flaeche(p);
+      const X = (u) => f(xb + dx + L * u), Y = (v) => f(-h * v + dy);
+      const d = `M${X(0.08)} ${Y(0.62)}Q${X(-0.04)} ${Y(0.3)} ${X(0.12)} ${f(dy)}L${f(xs + dx)} ${f(dy)}Q${X(0.86)} ${Y(0.3)} ${X(0.58)} ${Y(0.86)}Q${X(0.5)} ${Y(1.04)} ${X(0.3)} ${Y(0.95)}Z`;
+      const A = H.flaeche(d);
       return H.teil(A, farbe, H.fl(xb + dx + L * 0.55, -h * 0.75 + dy, L * 0.3, h * 0.35, -35, "#fff", 0.3 * op) +
         (F ? H.L([[[xs + dx - L * 0.5, -h * 0.82 + dy], [xs + dx - L * 0.22, -h * 0.4 + dy], [xs + dx - L * 0.05, -h * 0.08 + dy]]], "#fff", L * 0.05, 0.35 * op) +
           H.L([[[xb + dx + L * 0.35, -h * 0.85 + dy], [xb + dx + L * 0.75, -h * 0.25 + dy]], [[xb + dx + L * 0.5, -h * 0.9 + dy], [xb + dx + L * 0.88, -h * 0.3 + dy]]], "#000", L * 0.02, 0.35) : "") +
@@ -222,7 +222,7 @@ function reh(T) {
   /* ---- Gesamtumriss: Rücken → Hals → Kopf → Kehle → Brust → Vorderlauf → Bauch → Hinterlauf → Keule ---- */
   const ruecken = [[16, -73.6], [22, -76.0], [28.5, -76.6], [33, -75.8], [40, -74.6], [48, -73.4], [58, -71.6], [66, -71.5], [71, -72.6], [75, -74.2], [79.5, -76.2], [85, -80.8], [90.6, -86.8], [95.8, -93.0], [99.6, -97.0]];
   const rumpf = ruecken.concat(kopf)
-    .concat([[100.0, -84.4], [98.4, -79.4], [96.7, -72.6], [95.3, -65.5], [94.3, -58.6], [93.5, -53], [92.2, -47.6]])
+    .concat([[100.0, -84.4], [98.2, -79], [96.4, -72.5], [95.0, -66.5], [94.8, -61.6], [95.4, -57], [94.8, -52.4], [93.0, -48.2]])
     .concat(vorne)
     .concat([[79.6, -40.6], [76, -39.8], [68, -38.9], [58, -39.4], [49, -41.0], [42, -43.4], [36.6, -46.4]])
     .concat(hinten)
@@ -238,8 +238,8 @@ function reh(T) {
     let inn = fl(...tr([[-0.8, -3]])[0].slice(0, 2), 2.2 * sx, 3.5, w, "#000", fern ? 0.2 : 0.3) + fl(...tr([[-1.2, -8]])[0].slice(0, 2), 1.6 * sx, 3, w, "#fff", fern ? 0 : 0.14);
     if (!fern) {
       inn += H.wf(I, "#2a1e18", 0.85, 0.25) + H.wf(tr([[1.1, -1.4], [2.0, -4.2], [2.15, -8.2], [1.5, -11.2], [1.25, -8.2], [1.15, -4.2]]), "#d8cfc2", 0.55, 0.3) +
-        H.haare(I, 64, w - 94, 1.9, [["#fbf6ee", 1, 0.032, 0.75], ["#cfc4b4", 0.5, 0.03, 0.55]], { streu: 10, krumm: 0.12, szene: 0.3 });
-      inn += H.haare(P, 44, w - 92, 0.55, [["#2a1c14", 1, 0.04, 0.4], ["#b8a290", 0.6, 0.035, 0.35]], { szene: 0, nur: (x, y) => !T.inPoly(x, y, I) });
+        H.haare(I, 52, w - 94, 1.9, [["#fbf6ee", 1, 0.032, 0.75], ["#cfc4b4", 0.5, 0.03, 0.55]], { streu: 10, krumm: 0.12, szene: 0 });
+      inn += H.haare(P, 30, w - 92, 0.55, [["#2a1c14", 1, 0.04, 0.4], ["#b8a290", 0.6, 0.035, 0.35]], { szene: 0, nur: (x, y) => !T.inPoly(x, y, I) });
     }
     inn += H.rim(B, 1.3, 0.9) + H.L([tr([[-3.15, -5.5], [-2.8, -9.6], [-1.3, -12.6], [0.3, -13.25], [1.7, -12.0], [2.5, -9.6]])], "#100806", 0.6, fern ? 0.6 : 0.8);
     return H.teil(B, gO, inn, { rand: false });
@@ -267,9 +267,9 @@ function reh(T) {
     const stange = H.kette(P([[0.1, -0.6, 1.32, 1.3], [0.0, -3.6, 1.2, 1.18], [-0.2, -7.4, 1.02, 1.0], [-0.45, -11.2, 0.84, 0.82], [-0.4, -14.8, 0.66, 0.64], [0.1, -18.0, 0.46, 0.44], [0.7, -20.4, 0.14, 0.14]]));
     const vorn = H.kette(P([[0.2, -8.2, 0.8, 0.7], [1.6, -9.0, 0.62, 0.56], [3.0, -10.4, 0.4, 0.38], [4.0, -12.4, 0.12, 0.12]]));
     const hint = H.kette(P([[-0.6, -13.0, 0.66, 0.62], [-1.8, -13.8, 0.48, 0.44], [-2.7, -15.1, 0.3, 0.3], [-3.2, -16.9, 0.1, 0.1]]));
-    const gS = T.lg(fern ? "gsf" : "gs", fern ? [[0, "#1a110a"], [0.78, "#33271c"], [1, "#9a8e7a"]] : [[0, "#3a2614"], [0.4, "#4e3420"], [0.72, "#6a4e36"], [0.87, "#c2b292"], [1, "#f4eedd"]], 0, 1, 0, 0);
-    const gV = T.lg(fern ? "gvf" : "gv", fern ? [[0, "#2a1d14"], [0.7, "#3a2d22"], [1, "#9a8e7a"]] : [[0, "#3a2818"], [0.5, "#5a412c"], [0.8, "#cbbd9d"], [1, "#f6f0e0"]], 0, 0, 1, 0);
-    const gH = T.lg(fern ? "ghf" : "gh", fern ? [[0, "#9a8e7a"], [0.3, "#3a2d22"], [1, "#2a1d14"]] : [[0, "#f6f0e0"], [0.2, "#cbbd9d"], [0.5, "#5a412c"], [1, "#3a2818"]], 0, 0, 1, 0);
+    const gS = fern ? "#2e2218" : T.lg("gs", [[0, "#3a2614"], [0.4, "#4e3420"], [0.72, "#6a4e36"], [0.87, "#c2b292"], [1, "#f4eedd"]], 0, 1, 0, 0);
+    const gV = fern ? "#33261b" : T.lg("gv", [[0, "#3a2818"], [0.5, "#5a412c"], [0.8, "#cbbd9d"], [1, "#f6f0e0"]], 0, 0, 1, 0);
+    const gH = fern ? "#33261b" : T.lg("gh", [[0, "#f6f0e0"], [0.2, "#cbbd9d"], [0.5, "#5a412c"], [1, "#3a2818"]], 0, 0, 1, 0);
     const riefen = (k, n) => F ? H.L([k.L.map((p, i) => [p[0] * 0.66 + k.R[i][0] * 0.34, p[1] * 0.66 + k.R[i][1] * 0.34]).slice(0, n), k.L.map((p, i) => [p[0] * 0.3 + k.R[i][0] * 0.7, p[1] * 0.3 + k.R[i][1] * 0.7]).slice(0, n)], "#120904", 0.08, 0.45) : "";
     /* Perlung: kleine Kuppen, nur durch Licht (links oben) und Schatten (rechts unten) sichtbar */
     const perlung = (k, bis, n) => {
@@ -286,7 +286,7 @@ function reh(T) {
     };
     const SV = H.flaeche(F ? knorrig(vorn, 1, 0.1) : vorn.pts), SH = H.flaeche(hint.pts), SS = H.flaeche(F ? knorrig(stange, 4, 0.22) : stange.pts);
     let g = H.teil(SV, gV, riefen(vorn, 3) + H.rim(SV, 0.5, 0.9), { rw: 0.06, randA: 0.6 }) + H.teil(SH, gH, riefen(hint, 3) + H.rim(SH, 0.45, 0.9), { rw: 0.06, randA: 0.6 });
-    g += H.teil(SS, gS, riefen(stange, 6) + perlung(stange, 3.8, 64) + H.rim(SS, 0.9, 0.9) +
+    g += H.teil(SS, gS, riefen(stange, 6) + perlung(stange, 3.8, 40) + H.rim(SS, 0.9, 0.9) +
       (F && !fern ? H.L([stange.L.slice(1, 6).map((p, i) => [p[0] * 0.74 + stange.R[i + 1][0] * 0.26, p[1] * 0.74 + stange.R[i + 1][1] * 0.26])], "#fff", 0.14, 0.24) : ""), { rw: 0.06, randA: 0.6 });
     /* Rose: unregelmäßiger, knorriger Kranz um den Stangenfuß */
     const [rx, ry] = P([[0.05, -0.55]])[0], rose = [];
@@ -313,11 +313,11 @@ function reh(T) {
   const fernFarbe = T.lg("fern", [[0, "#5a3018"], [0.3, "#74462a"], [0.65, "#5e4434"], [1, "#3a2c22"]], 0, -46, 0, 0, H.US);
   const fernBein = (P, top) => {
     const Q = top.concat(P), B = H.flaeche(Q);
-    return (det) => H.teil(B, fernFarbe, H.haare(Q, 70, 92, 0.7, [["#140a04", 1, 0.05, 0.4], ["#a07a5a", 0.5, 0.04, 0.25]], { streu: 10 }) + det +
+    return (det) => H.teil(B, fernFarbe, H.haare(Q, 50, 92, 0.7, [["#140a04", 1, 0.05, 0.4], ["#a07a5a", 0.5, 0.04, 0.25]], { streu: 10 }) + det +
       H.rim(B, 1.6, 0.8) + H.wf([[P[0][0] - 8, -56], [P[0][0] + 8, -56], [P[0][0] + 8, -36], [P[0][0] - 8, -38]], "#000", 0.3, 2), { rand: false });
   };
   s += fernBein(fernH, [[17, -52], [30, -52]])(laufH(6.2, 0.6)) + fernBein(fernV, [[77, -50], [88, -50]])(laufV(-6.5, 0.6));
-  s += H.schale(fernH[13][0] + 0.4, fernH[11][0] + 1.6, 2.9, { farbe: "#1a1412", fern: "#0c0908" }) + H.schale(fernV[13][0] + 0.6, fernV[11][0] + 1.8, 3.0, { farbe: "#1a1412", fern: "#0c0908" });
+  s += H.schale(27.5, 32.8, 2.9, { farbe: "#221a16", fern: "#110d0b" }) + H.schale(79.7, 85.3, 3.0, { farbe: "#221a16", fern: "#110d0b" });
   /* fernes Ohr, fernes Gehörn: hinter dem Kopf */
   s += ohrZ(ohrBasis[0] + 1.6, ohrBasis[1] - 0.6, -22, 0.55, true) + (F ? gehoern(gehBasis[0] + 2.3, gehBasis[1] + 0.1, 0.94, true) : "");
   /* ---- Körper ---- */
@@ -375,18 +375,18 @@ function reh(T) {
   inn += H.wf(KT([[16.6, 1.3], [18.0, 1.95], [19.3, 2.9], [20.2, 4.2], [20.2, 5.7], [19.5, 6.6], [18.4, 7.35], [17.4, 7.8], [16.8, 7.2], [17.2, 6.0], [17.1, 4.2]]), "#0f0a08", 1, 0.1);
   inn += H.wf(KT([[12.4, 8.5], [16.4, 8.15], [17.1, 8.6], [15.6, 9.3], [12.6, 9.8]]), "#f2eee6", 0.95, 0.15);
   inn += fl(...K(18.4, 2.9), 1.3, 0.65, KW + 15, "#fff", 0.5) + fl(...K(17.9, 2.2), 0.45, 0.22, KW + 15, "#fff", 0.85) + fl(...K(19.6, 5.6), 0.55, 0.55, KW, "#fff", 0.2);
-  if (F) inn += H.haare(KT([[16.9, 1.6], [19.9, 3.4], [20.1, 5.8], [19.0, 7.0], [17.4, 7.6]]), 40, 0, 0.1, [["#000", 1, 0.05, 0.5], ["#5a504a", 1, 0.045, 0.45]], { streu: 180, szene: 0 });
+  if (F) inn += H.haare(KT([[16.9, 1.6], [19.9, 3.4], [20.1, 5.8], [19.0, 7.0], [17.4, 7.6]]), 24, 0, 0.1, [["#000", 1, 0.05, 0.5], ["#5a504a", 1, 0.045, 0.45]], { streu: 180, szene: 0 });
   /* Nasenloch (Komma), Mundspalte, Voraugendrüse */
   inn += L([KT([[19.75, 4.1], [19.2, 4.7], [18.7, 5.5], [18.8, 6.3]])], "#000", 0.55, 0.95) + L([KT([[19.9, 4.35], [19.4, 5.0]])], "#7a7070", 0.12, 0.6) +
     L([KT([[17.3, 7.8], [16.3, 8.2], [15.0, 8.25]])], "#000", 0.2, 0.55) + wl([KT([[8.4, 2.0], [9.6, 2.6]])], "#120a06", 0.4, 0.4, 0.12);
   /* Fell: feine Rauschtextur je Körperzone in Wuchsrichtung (dunkle Unterwolle, helle Haarspitzen) */
-  const zone = (n, poly, w) => H.texR(n, { fx: 0.45, fy: 5.5, farbe: "#1e0c04", staerke: 2.6, schwelle: 0.55, okt: 2 }, w, poly, 0.26) +
+  const zone = (n, poly, w) => H.texR("fell", { fx: 0.45, fy: 5.5, farbe: "#1e0c04", staerke: 2.6, schwelle: 0.55, okt: 2 }, w, poly, 0.26) +
     H.texR(n + "l", { fx: 0.5, fy: 6.5, farbe: "#ffd2a0", staerke: 2.6, schwelle: 0.6, okt: 2, seed: 11 }, w, poly, 0.16);
   inn += zone("k", KT([[3.2, -4.5], [21, -4.5], [21, 11.5], [6.4, 11.5]]), KW + 180) +
     zone("h", [[77, -78], [101.2, -101], [102.4, -95], [101.4, -86], [99.5, -82], [95, -52], [80, -55]], 122) +
     zone("r", [[6, -80], [77, -78], [80, -55], [95, -52], [92, -45], [90, -41.5], [80, -39.6], [30, -44], [6, -46]], 176) +
-    zone("b", [[12, -46], [30, -44], [35, -44], [26, -30], [24, 0], [14, 0]], 92) + zone("v", [[80, -39.6], [90, -41.5], [92, 0], [80, 0]], 92);
-  inn += H.haare(rumpf, 540, wuchs, laenge, [["#3a1a08", 1, 0.04, 0.26], ["#f2b878", 0.75, 0.035, 0.22], ["#6e3414", 0.6, 0.045, 0.24]], { krumm: 0.06, streu: 10, nur: (x, y) => !(x > 101 && y < -86) });
+    zone("b", [[12, -46], [30, -44], [35, -44], [26, -30], [24, 0], [14, 0], [14, -0.1], [80, -0.1], [80, -39.6], [90, -41.5], [92, 0], [14, 0]], 92);
+  inn += H.haare(rumpf, 300, wuchs, laenge, [["#3a1a08", 1, 0.04, 0.26], ["#f2b878", 0.75, 0.035, 0.22], ["#6e3414", 0.6, 0.045, 0.24]], { krumm: 0.06, streu: 10, nur: (x, y) => !(x > 101 && y < -86) });
   /* Großform: Lichtband auf dem Rücken, Schattenband am Unterleib, Reflexlicht an der Bauchkante */
   inn += H.wf([[14, -76], [34, -78], [58, -73.5], [74, -75], [86, -84], [96, -95], [92, -88], [80, -76], [62, -66], [40, -68], [20, -68]], "#ffbe82", 0.3, 2.5) +
     H.wf([[30, -48], [50, -47.5], [70, -47], [84, -48], [84, -38], [60, -37], [36, -40]], DK, 0.45, 2.6) +
@@ -404,21 +404,19 @@ function reh(T) {
   inn += H.rim(A, 3.4, 0.9) + wl([[[18, -75.2], [34, -75.2], [50, -72.4], [66, -70.6], [76, -72.6], [84, -78.6], [94, -89.6]]], "#ffd2a0", 1.0, 0.35, 0.45);
   s += H.teil(A, fell, inn, { rand: false });
   /* Haarsaum: Fell steht an Rücken, Bauch und Keule leicht über die Kante */
-  s += H.saum(rumpf, 150, wuchs, (x, y) => laenge(x, y) * 0.75, [["#6e3a1a", 1, 0.05, 0.5], ["#d8a070", 0.5, 0.04, 0.4]], { nur: (x, y) => y < -39 && !(x > 100 && y < -84 && y > -100), szene: 0.15 });
+  s += H.saum(rumpf, 95, wuchs, (x, y) => laenge(x, y) * 0.75, [["#6e3a1a", 1, 0.05, 0.5], ["#d8a070", 0.5, 0.04, 0.4]], { nur: (x, y) => y < -39 && !(x > 100 && y < -84 && y > -100), szene: 0.15 });
   /* ---- Schalen (nah), Afterklauen, Haarsaum am Kronrand ---- */
   s += H.schale(86.2, 91.8, 3.1) + H.schale(21.3, 26.6, 3.0);
   const after = (x, y) => H.teil(H.flaeche([[x + 0.2, y - 0.9], [x + 0.5, y + 0.1], [x - 0.1, y + 0.9], [x - 0.5, y + 0.4], [x - 0.4, y - 0.4]]), "#2a2220", fl(x - 0.1, y - 0.3, 0.35, 0.3, 0, "#fff", 0.4), { rw: 0.06 });
   s += after(83.7, -5.8) + after(19.0, -6.0);
-  s += H.haare([[88.6, -5.0], [90.2, -3.2], [89.4, -2.4], [87.4, -3.2]], 26, 60, 0.6, [["#3a2a20", 1, 0.06, 0.55]], { szene: 0 }) +
-    H.haare([[23.9, -5.0], [25.7, -3.3], [24.6, -2.4], [22.2, -3.3]], 26, 60, 0.6, [["#3a2a20", 1, 0.06, 0.55]], { szene: 0 });
   /* ---- nahes Ohr, nahes Gehörn ---- */
   s += ohrZ(ohrBasis[0], ohrBasis[1], -38, 0.72, false) + gehoern(gehBasis[0], gehBasis[1], 1, false);
   /* Stirnfell wächst bis an die Rose */
-  s += H.haare([[gehBasis[0] - 2.2, gehBasis[1] + 1.4], [gehBasis[0] + 2.4, gehBasis[1] + 1.6], [gehBasis[0] + 1.6, gehBasis[1] - 0.2], [gehBasis[0] - 1.6, gehBasis[1] - 0.2]], 30, 250, 0.8, [["#3a2618", 1, 0.05, 0.75], ["#8a6a50", 0.5, 0.04, 0.6]], { szene: 0.2, streu: 40 });
+  s += H.haare([[gehBasis[0] - 2.2, gehBasis[1] + 1.4], [gehBasis[0] + 2.4, gehBasis[1] + 1.6], [gehBasis[0] + 1.6, gehBasis[1] - 0.2], [gehBasis[0] - 1.6, gehBasis[1] - 0.2]], 30, 250, 0.8, [["#3a2618", 1, 0.05, 0.75], ["#8a6a50", 0.5, 0.04, 0.6]], { szene: 0, streu: 40 });
   /* Auge mit langen Wimpern, Glanz, feuchtem Lidrand */
   const au = K(6.6, 1.0);
-  s += T.augeReal(au[0], au[1], 1.15, { iris: "#2a170b", iris2: "#0c0603", pupille: "quer", offen: 0.82, winkel: KW - 14, wimpern: 15, wimpernLaenge: 0.8, lid: "#0e0806", haut: "#24160c" });
-  s += fl(au[0] + 1.46, au[1] + 0.42, 0.42, 0.32, KW, "#1a0e08", 0.95);
+  s += fl(au[0] - 0.2, au[1] - 1.1, 2.6, 1.0, KW - 14, DK, 0.45) + T.augeReal(au[0], au[1], 1.3, { iris: "#24140a", iris2: "#0a0503", pupille: "quer", offen: 0.8, winkel: KW - 14, wimpern: 15, wimpernLaenge: 0.8, lid: "#0e0806", haut: "#24160c" });
+  s += fl(au[0] + 1.65, au[1] + 0.47, 0.48, 0.36, KW, "#1a0e08", 0.95);
   /* Tasthaare an Oberlippe und Kinn */
   if (F) s += T.schnurrhaare(...K(17.2, 6.9), 6, 2.0, KW + 25, 50, "#1a120c", 0.035) + T.schnurrhaare(...K(14.6, 8.9), 4, 1.5, KW + 80, 40, "#e8e0d0", 0.03);
   return { svg: s, box: [9.8, -121.5, 124.4, 0], fuesse: [24, 30, 83, 89], kopf: [95, -124, 127, -77] };

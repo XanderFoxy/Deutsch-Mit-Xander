@@ -10,6 +10,107 @@
   if (window.__dmaAppInitialized) return;
   window.__dmaAppInitialized = true;
 
+  /* =====================================================================
+     FASSUNG 876 — XANDER (Funk 271): „alles insgesamt nur zehn Mal
+     schneller" · „die schnelle Performance und die Verbindung zu den
+     anderen haben oberste Priorität".
+     AUSGELAGERTE TEILE. In dieser Quelle steht alles wie immer. Nur die
+     verkleinerte Kopie min/app.js ist schlank: der Bau
+     (werkzeug/teile-bauen.js, aus fassung-setzen.js) ersetzt die
+     Funktionen aus werkzeug/app-teile.json durch kurze Platzhalter mit
+     demselben Namen und legt ihre Körper in min/app-teil-<teil>.js.
+     Die Zeile DMA_TEILE_BAU füllt der Bau; hier in der Quelle bleibt sie
+     null, dann tut keine dieser Funktionen etwas.
+       dmaTeilHolen(teil)  holt einen Teil im Hintergrund und setzt ihn in
+                           einer Ruhepause ein (Start, Klassenzimmer).
+       dmaTeilRuf(…)       der Platzhalter: ist der Teil noch nicht da,
+                           wird er SOFORT geholt und eingesetzt – die
+                           Funktion läuft genau wie vorher, nur beim
+                           allerersten Mal etwas später. Kein Effekt aus
+                           dem Chat geht verloren.
+       dmaTeilAuswerten    setzt einen Teil HIER drinnen ein (eval), damit
+                           er alle Namen dieser Datei sieht – wie vorher.
+     ===================================================================== */
+  var DMA_TEILE_BAU = null;
+  var dmaTeilImpl = [];
+  var dmaTeilDa = {};
+  var dmaTeilText = {};
+  var dmaTeilWeg = {};
+  function dmaTeilAuswerten(dmaTeilQuelltext) { eval(dmaTeilQuelltext); }
+  function dmaTeilPasst(kennung) {
+    if (!DMA_TEILE_BAU || kennung !== DMA_TEILE_BAU.id) throw new Error("app-teil " + kennung + " passt nicht zu app.js");
+  }
+  function dmaTeilAdresse(teil) {
+    const d = "min/app-teil-" + teil + ".js";
+    return d + (window.DMA_V ? window.DMA_V(d) : "?v=" + (window.DMA_VERSION || "1"));
+  }
+  function dmaTeilEinsetzen(teil) {
+    if (dmaTeilDa[teil]) return true;
+    const t = dmaTeilText[teil];
+    if (typeof t !== "string") return false;
+    dmaTeilText[teil] = null;
+    dmaTeilAuswerten(t);
+    dmaTeilDa[teil] = true;
+    return true;
+  }
+  /* Passt ein Teil nicht (die Seite ist älter als der Server) oder fehlt er,
+     zeigt die Seite oben „Neue Fassung – jetzt laden" (wie der Fassungs-
+     Wächter in index.html); von selbst neu geladen wird nichts. */
+  function dmaTeilFehler(teil, e) {
+    try { (window.DMA_TEIL_FEHLER = window.DMA_TEIL_FEHLER || []).push(teil + ": " + String((e && e.message) || e)); } catch (x) {}
+    try {
+      fetch("fassung.json?t=" + Date.now(), { cache: "no-store" }).then((a) => (a.ok ? a.json() : null)).then((d) => {
+        if (d && d.fassung && window.dmaFassungKnopf) window.dmaFassungKnopf(String(d.fassung));
+      }).catch(() => {});
+    } catch (x) {}
+  }
+  function dmaTeilHolen(teil) {
+    if (!DMA_TEILE_BAU || dmaTeilDa[teil] || DMA_TEILE_BAU.teile.indexOf(teil) < 0) return Promise.resolve(true);
+    if (dmaTeilWeg[teil]) return dmaTeilWeg[teil];
+    dmaTeilWeg[teil] = fetch(dmaTeilAdresse(teil))
+      .then((a) => { if (!a.ok) throw new Error("HTTP " + a.status); return a.text(); })
+      .then((t) => new Promise((fertig) => {
+        if (!dmaTeilDa[teil]) dmaTeilText[teil] = t;
+        /* Erst zeichnen lassen, dann einsetzen: das Einsetzen rechnet, und das soll kein Bild aufhalten. */
+        const los = () => { try { dmaTeilEinsetzen(teil); fertig(true); } catch (e) { dmaTeilFehler(teil, e); fertig(false); } };
+        const spaeter = () => (window.requestIdleCallback ? requestIdleCallback(los, { timeout: 1200 }) : setTimeout(los, 50));
+        if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(spaeter, 0)); else spaeter();
+      }))
+      .catch((e) => { dmaTeilWeg[teil] = null; dmaTeilFehler(teil, e); return false; });
+    return dmaTeilWeg[teil];
+  }
+  function dmaTeilSofort(teil) {
+    if (dmaTeilEinsetzen(teil)) return;
+    try { (window.DMA_TEIL_SOFORT = window.DMA_TEIL_SOFORT || []).push(teil + " " + String(new Error().stack || "").split("\n").slice(3, 4).join("").trim()); } catch (x) {}
+    const x = new XMLHttpRequest();
+    x.open("GET", dmaTeilAdresse(teil), false);
+    x.send(null);
+    if (x.status !== 200 || !x.responseText) throw new Error("app-teil " + teil + " nicht geladen (" + x.status + ")");
+    if (!dmaTeilDa[teil]) dmaTeilText[teil] = x.responseText;
+    dmaTeilEinsetzen(teil);
+  }
+  function dmaTeilRuf(i, self, args, neu) {
+    let f = dmaTeilImpl[i];
+    if (!f) {
+      const teil = DMA_TEILE_BAU.teile[DMA_TEILE_BAU.fn[i]];
+      try { dmaTeilSofort(teil); } catch (e) { dmaTeilFehler(teil, e); throw e; }
+      f = dmaTeilImpl[i];
+    }
+    return neu ? Reflect.construct(f, args, neu) : f.apply(self, args);
+  }
+  function dmaTeilRufA(i, self, args) {
+    try { return dmaTeilRuf(i, self, args); } catch (e) { return Promise.reject(e); }
+  }
+  /* Nach dem Start in einer Ruhepause: erst der Teil fürs Klassenzimmer, dann der Rest. */
+  if (DMA_TEILE_BAU) {
+    try {
+      window.addEventListener("load", () => setTimeout(() => {
+        const los = () => { dmaTeilHolen("raum").then(() => DMA_TEILE_BAU.teile.forEach((t) => dmaTeilHolen(t))); };
+        if (window.requestIdleCallback) requestIdleCallback(los, { timeout: 3000 }); else los();
+      }, 1500));
+    } catch (e) {}
+  }
+
   // Früh deklariert (aber erst später zugewiesen), damit Funktionen wie updateNotifyBadge,
   // die schon vor der eigentlichen Zuweisung aufgerufen werden können, nicht abstürzen.
   let loginBtn;
@@ -69380,6 +69481,10 @@
      seinem unteren Ende soll in einem Bild auf dem Bildschirm zu sehen
      sein." */
   document.querySelector('#knowledgeSubnav [data-sub="sub-livechat"]')?.addEventListener("click", () => {
+    /* FASSUNG 876 — XANDER (Funk 271): „die Verbindung zu den anderen haben oberste Priorität". Der Teil mit
+       den Chat-Effekten kommt jetzt schon beim Öffnen des Klassenzimmers (nicht erst in der Ruhepause), damit
+       beim Betreten und bei jedem Effekt alles da ist. Eingesetzt wird er erst nach dem Zeichnen. */
+    dmaTeilHolen("raum");
     renderLiveChat();
     /* RUNDE 87 — HIER und nur hier darf das Vollbild anfangen: dieser
        Ruf steht in einer echten Fingerbewegung, und nur daraus laesst

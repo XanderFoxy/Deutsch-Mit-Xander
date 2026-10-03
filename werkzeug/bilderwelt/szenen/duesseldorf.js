@@ -126,10 +126,10 @@ S.hinten(`<circle cx="306" cy="30" r="78" fill="${S.rg("sonne", [[0, "#fff6d8", 
     x += w;
   }
   /* Stadttor (Glas, schräg) und Mannesmann-Hochhaus am Rheinknie */
-  c += `<path d="M131 116 L131 96 L139 94.6 L139 116 Z" fill="${S.lg("stadttor", [[0, "#9fb4c6"], [1, "#7f95a8"]], 0, 0, 1, 0)}"/>`;
+  c += `<path d="M131 116 L131 96 L139 94.6 L139 116 Z" fill="${S.lg("stadttor", [[0, "#b3c3d0"], [1, "#9cafbf"]], 0, 0, 1, 0)}"/>`;
   c += `<path d="M131 96 L139 94.6" stroke="#dfe9f2" stroke-width=".5"/>`;
   for (let y = 98; y < 115; y += 1.6) c += `<line x1="131.3" y1="${r(y)}" x2="138.7" y2="${r(y - 1.2)}" stroke="#6d8396" stroke-width=".18"/>`;
-  c += `<rect x="147" y="90" width="7.6" height="26" fill="${S.lg("mannesmann", [[0, "#8c9cab"], [0.6, "#b8c5d1"], [1, "#94a4b3"]], 0, 0, 1, 0)}"/>`;
+  c += `<rect x="147" y="90" width="7.6" height="26" fill="${S.lg("mannesmann", [[0, "#a3b2bf"], [0.6, "#c5d0da"], [1, "#a9b7c4"]], 0, 0, 1, 0)}"/>`;
   for (let y = 91.5; y < 115; y += 1.3) c += `<line x1="147" y1="${r(y)}" x2="154.6" y2="${r(y)}" stroke="#6f8091" stroke-width=".2"/>`;
   c += `<rect x="146.6" y="89.4" width="8.4" height=".8" fill="#d7dee5"/>`;
   /* Landtag (runde, helle Bauten) am Fuß des Rheinturms */
@@ -196,7 +196,7 @@ const RT = { x: 176, y: 114.6, u: 0.45 };
     if (art === "gelb") f = "#d9b84e";
     else if (art === "rot") f = (n === 28 || n === 45) ? "#e2312a" : "#d9b84e";
     else if (n - a < an) { f = "#fffdf2"; glow = `<circle cx="0" cy="${r(y)}" r=".75" fill="#fff8d0" opacity=".35"/>`; }
-    k += glow + `<circle cx="0" cy="${r(y)}" r=".27" fill="${f}"/>`;
+    k += glow + `<circle cx="0" cy="${r(y)}" r=".31" fill="${f}"/>`;
   }
   /* Turmkorb: Trichter, zwei Glasringe (Aussicht und Drehrestaurant), Dach */
   k += `<path d="M-1.55 ${H(157)} L-7.6 ${H(165)} L7.6 ${H(165)} L1.55 ${H(157)} Z" fill="${S.lg("trichter", [[0, "#8a8d8b"], [0.6, "#d6d8d4"], [1, "#a9aca9"]], 0, 0, 1, 0)}"/>`;
@@ -216,7 +216,7 @@ const RT = { x: 176, y: 114.6, u: 0.45 };
   k += `<path d="M-3.9 0 L-1.55 ${H(157)} L-.6 ${H(157)} L-2.2 0 Z" fill="#000" opacity=".1"/>`;
   S.teil({ id: "rheinturm", de: "der Rheinturm", syl: "RHEIN-turm", it: "la torre sul Reno", itSyl: "TOR-re sul RE-no", en: "Rhine Tower",
     x: RT.x, y: RT.y, kunst: k, tipp: "Der Rheinturm ist 240 Meter hoch. Oben dreht sich ein Restaurant.",
-    zoom: { x: RT.x - 34, y: RT.y - 112, w: 68, h: 46 },
+    zoom: { x: RT.x - 54, y: 3, w: 108, h: 72 },
     unter: [
       { id: "uhr", de: "die Uhr", syl: "UHR", it: "l'orologio", itSyl: "o-ro-LO-gio", en: "clock", x: RT.x, y: RT.y - 36 * RT.u, kunst: flaeche(-2.2, -(118 * RT.u), 4.4, 118 * RT.u, 0.6),
         tipp: "Die Lichter am Schaft sind eine Uhr: oben die Stunden, dann die Minuten, unten die Sekunden." },
@@ -275,8 +275,9 @@ const PY = { x: 252, top: 62 };
   k += `<path d="M156 ${r(deckY(156) - 0.7)} ${[...Array(21)].map((_, i) => `L${156 + i * 8} ${r(deckY(156 + i * 8) - 0.7)}`).join(" ")}" stroke="#8e989f" stroke-width=".18" fill="none"/>`;
   for (const [x, f] of [[172, "#d23b30"], [188, "#f2f2f2"], [203, "#2d6fb3"], [219, "#3a3a3a"], [236, "#e0a82e"], [268, "#f2f2f2"], [289, "#2d6fb3"], [304, "#d23b30"]])
     k += `<rect x="${x}" y="${r(deckY(x) - 1)}" width="2.2" height=".9" rx=".3" fill="${f}"/>`;
-  /* Rampe am rechten Ufer (links im Bild) und Widerlager */
-  k += `<path d="M156 ${r(deckY(156))} L148 116.6 L152 116.6 L158 ${r(deckY(158) + 1.9)} Z" fill="#c9c4b8"/>`;
+  /* Rampe am rechten Ufer (links im Bild): die Fahrbahn senkt sich zum Mannesmannufer, Stütze und Widerlager */
+  k += `<path d="M156 ${r(deckY(156))} L146 111.6 L146 113.2 L156 ${r(deckY(156) + 1.9)} Z" fill="${S.lg("rampe", [[0, "#dfe3e5"], [1, "#a9b1b6"]])}"/>`;
+  k += `<rect x="151" y="${r(deckY(151) + 1.2)}" width="1.6" height="${r(116.4 - deckY(151) - 1.2)}" fill="#bfc6ca"/><rect x="144.6" y="111.2" width="3" height="5.4" fill="#c9c4b8"/>`;
   /* vorderer Pylon: schlank, nach oben schmaler */
   k += `<path d="M${PY.x - 1.4} 117.2 L${PY.x - 0.9} ${PY.top} L${PY.x + 0.9} ${PY.top} L${PY.x + 1.2} 117.2 Z" fill="${S.lg("pylon", [[0, "#9aa4ab"], [0.5, "#e9edef"], [1, "#c3cad0"]], 0, 0, 1, 0)}"/>`;
   k += `<rect x="${PY.x - 1.2}" y="${PY.top - 1}" width="2.4" height="1.1" rx=".3" fill="#cfd6db"/><circle cx="${PY.x}" cy="${PY.top - 1.5}" r=".35" fill="#ff3b30"/>`;
@@ -396,7 +397,7 @@ const LB = { x: 76, y: 118, u: 1.24 };
   /* der VERDREHTE Turmhelm: achteckig, die Flächen winden sich als Bänder
      nach oben, die Spitze steht schief */
   const H0 = 36.4, H1 = 72, W0 = 5.3;
-  const helm = (t) => ({ y: -(H0 + (H1 - H0) * t) * u, w: W0 * Math.pow(1 - t, 1.05), dx: Math.sin(t * Math.PI * 0.85) * 1.5 + t * 1.2 });
+  const helm = (t) => ({ y: -(H0 + (H1 - H0) * t) * u, w: W0 * Math.pow(1 - t, 1.05), dx: Math.sin(t * Math.PI * 0.85) * 1.7 + t * 1.4 });
   const grat = (g, t) => { const h = helm(t), a = g * Math.PI / 4 + t * Math.PI * 0.9; return [h.dx + Math.sin(a) * h.w, h.y, Math.cos(a)]; };
   let lpfad = "", rpfad = "";
   for (let i = 0; i <= 24; i++) { const t = i / 24, h = helm(t); lpfad += `${i ? "L" : "M"}${r(h.dx - h.w)} ${r(h.y)} `; rpfad = `L${r(h.dx + h.w)} ${r(h.y)} ` + rpfad; }
@@ -443,7 +444,7 @@ const LB = { x: 76, y: 118, u: 1.24 };
   const haeuser = [];
   while (d < 700 && i < 44) {
     const breite = 9 + (i * 7 % 5) * 1.6, hoehe = 13 + (i * 5 % 4) * 1.7;
-    haeuser.push({ d0: d, d1: d + breite, h: hoehe, f: farben[i % farben.length], giebel: i % 3 === 1, i });
+    haeuser.push({ d0: d, d1: d + breite, h: hoehe, f: farben[i % farben.length], giebel: i % 3 === 1 && d < 190, i });
     d += breite; i++;
   }
   /* von hinten nach vorn zeichnen */
@@ -468,7 +469,7 @@ const LB = { x: 76, y: 118, u: 1.24 };
     k += vieleck([P(hs.d0 + 3.6, LAT, 0.8), P(hs.d1 - 1.2, LAT, 0.8), P(hs.d1 - 1.2, LAT, 2.3), P(hs.d0 + 3.6, LAT, 2.3)], "#6d5a3c", ` opacity=".8"`);
     /* Dach: Schiefer, mal Traufe mit Gaube, mal ein flacher Giebel */
     if (hs.giebel) {
-      const g = P((hs.d0 + hs.d1) / 2, LAT, hs.h + 3.2);
+      const g = P((hs.d0 + hs.d1) / 2, LAT, hs.h + 2.6);
       k += vieleck([b0, g, b1], hs.f) + vieleck([b0, g, P((hs.d0 + hs.d1) / 2, LAT, hs.h + 2.7), P(hs.d0 + 0.3, LAT, hs.h)], "#5a636c");
     } else {
       const c0 = P(hs.d0, LAT - 4, hs.h + 3.6), c1 = P(hs.d1, LAT - 4, hs.h + 3.6);
@@ -514,48 +515,42 @@ const UFER = strahl(9.5, -4);      /* Wasserlinie an der Böschung, unten im Bil
 }
 
 /* =====================================================================
-   10 — DAS AUSFLUGSSCHIFF (fährt rheinabwärts auf den Anleger am Burgplatz zu)
+   10 — DAS AUSFLUGSSCHIFF (legt am Burgplatz ab und fährt rheinaufwärts)
    ===================================================================== */
 {
-  const D0 = 100, D1 = 160, L0 = 30, L1 = 39, LM = (L0 + L1) / 2, W = -4, OB = -1.4, SD = 1.2;
+  const D0 = 104, D1 = 160, L0 = 31, L1 = 39, LM = (L0 + L1) / 2, W = -4, OB = -1.6, SD = 0.9;
   const q = (pts, f, extra = "") => `<path d="M${pts.map((p) => p.join(" ")).join(" L")} Z" fill="${f}"${extra}/>`;
-  const box = (d0, d1, l0, l1, h0, h1, vorn, seite, oben) => q([P(d0, l0, h1), P(d1, l0, h1), P(d1, l1, h1), P(d0, l1, h1)], oben) + q([P(d0, l0, h0), P(d1, l0, h0), P(d1, l0, h1), P(d0, l0, h1)], seite) + q([P(d0, l0, h0), P(d0, l1, h0), P(d0, l1, h1), P(d0, l0, h1)], vorn);
+  /* Kasten: sichtbar sind Heck (vorn, zu uns), linke Seite und Deck */
+  const box = (d0, d1, l0, l1, h0, h1, heck, seite, oben) => q([P(d0, l0, h1), P(d1, l0, h1), P(d1, l1, h1), P(d0, l1, h1)], oben) + q([P(d0, l0, h0), P(d1, l0, h0), P(d1, l0, h1), P(d0, l0, h1)], seite) + q([P(d0, l0, h0), P(d0, l1, h0), P(d0, l1, h1), P(d0, l0, h1)], heck);
   let k = "";
-  /* Schatten im Wasser und Kielwasser */
-  k += q([P(D0 - 5, LM, W), P(D0, L0 - 1.2, W), P(D1 + 6, L0 - 0.6, W), P(D1 + 6, L1, W), P(D0, L1 + 1, W)], "#2f4642", ` opacity=".35"`);
-  /* Rumpf: Seitenwand blau unten, weiß oben; spitzer Bug */
-  const tip = (h) => P(D0 - 5, LM, h);
-  k += q([P(D0, L1, W), tip(W), tip(OB + 0.4), P(D0, L1, OB)], "#cfd8de");
-  k += q([P(D0, L0, OB), P(D1, L0, OB), P(D1, L1, OB), P(D0, L1, OB), tip(OB + 0.4)], "#c9a46a");
-  k += q([P(D0, L0, W), P(D1, L0, W), P(D1, L0, OB), P(D0, L0, OB)], S.lg("rumpf", [[0, "#ffffff"], [0.42, "#eef2f4"], [0.46, "#1f3f78"], [1, "#16305e"]]));
-  k += q([tip(W), P(D0, L0, W), P(D0, L0, OB), tip(OB + 0.4)], S.lg("bug", [[0, "#ffffff"], [0.42, "#f4f6f7"], [0.46, "#2a4b86"], [1, "#1c3769"]]));
-  const st = [P(D0 + 2, L0, W + 0.9), P(D1 - 1, L0, W + 0.9)];
-  k += `<line x1="${st[0][0]}" y1="${st[0][1]}" x2="${st[1][0]}" y2="${st[1][1]}" stroke="#c9302c" stroke-width=".35"/>`;
-  /* Salondeck mit Panoramafenstern */
-  k += box(D0 + 3, D1 - 3, L0 + 0.5, L1 - 0.5, OB, SD, "#eef1f3", "#f7f8f9", "#dde3e7");
-  for (let dd = D0 + 5; dd < D1 - 5; dd += 3.4) k += q([P(dd, L0 + 0.5, OB + 0.5), P(dd + 2.6, L0 + 0.5, OB + 0.5), P(dd + 2.6, L0 + 0.5, SD - 0.4), P(dd, L0 + 0.5, SD - 0.4)], S.lg("salon", [[0, "#9db8cc"], [1, "#2f4b62"]]));
-  k += q([P(D0 + 3, L0 + 1.2, OB + 0.5), P(D0 + 3, L1 - 1.2, OB + 0.5), P(D0 + 3, L1 - 1.2, SD - 0.4), P(D0 + 3, L0 + 1.2, SD - 0.4)], "#3d5a73");
-  /* Sonnendeck: Reling, Gäste */
-  const re = (h) => [P(D0 + 3, L0 + 0.5, h), P(D1 - 3, L0 + 0.5, h)];
-  for (const h of [SD + 0.5, SD + 1]) { const [a, b] = re(h); k += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#8a949b" stroke-width=".2"/>`; }
-  for (const [dd, f, l] of [[D0 + 16, "#c9302c", 33], [D0 + 21, "#2d6fb3", 36], [D0 + 27, "#f2c62f", 34], [D0 + 33, "#3ca35a", 32.5], [D0 + 40, "#e6e6e6", 35.5], [D0 + 47, "#e46aa0", 33]]) {
+  /* Kielwasser hinter dem Heck (zu uns hin) und Schatten */
+  k += q([P(D0, L0 - 0.4, W), P(D1 + 4, L0 - 0.4, W), P(D1 + 4, L1, W), P(D0, L1 + 0.4, W)], "#2f4642", ` opacity=".35"`);
+  /* Schraubenwasser: heller Keil mit Schaumstreifen */
+  k += q([P(D0, L0 + 0.6, W), P(D0, L1 - 0.6, W), P(D0 - 20, L1 + 5, W), P(D0 - 20, L0 - 4, W)], S.lg("kiel", [[0, "#f4f8f8", 0.55], [1, "#f4f8f8", 0]], 0, 0, 0, 1));
+  for (let i = 0; i < 26; i++) { const dd = D0 - 1 - rnd() * 18, l = LM + (rnd() - 0.5) * (8 + (D0 - dd) * 0.5), p = P(dd, l, W), w = 0.6 + rnd() * 1.6; k += `<path d="M${p[0]} ${p[1]} q${r(w / 2)} -.3 ${r(w)} 0" stroke="#f7fbfb" stroke-width=".35" fill="none" opacity="${r(0.4 + rnd() * 0.5)}"/>`; }
+  /* Rumpf mit Heckspiegel, rote Zierlinie */
+  k += box(D0, D1, L0, L1, W, OB, S.lg("heck", [[0, "#ffffff"], [0.45, "#eef2f4"], [0.5, "#1f3f78"], [1, "#16305e"]]), S.lg("rumpf", [[0, "#ffffff"], [0.42, "#eef2f4"], [0.46, "#1f3f78"], [1, "#16305e"]]), "#c9a46a");
+  const st = [P(D0, L0, W + 1.1), P(D1, L0, W + 1.1), P(D0, L1, W + 1.1)];
+  k += `<path d="M${st[2].join(" ")} L${st[0].join(" ")} L${st[1].join(" ")}" stroke="#c9302c" stroke-width=".35" fill="none"/>`;
+  const tx = P(D0, LM, W + 1.7);
+  k += `<text x="${tx[0]}" y="${tx[1]}" font-size="1.7" text-anchor="middle" fill="#1f3f78" font-family="Arial,sans-serif" font-weight="bold" letter-spacing=".1">DÜSSELDORF</text>`;
+  /* Salondeck mit Panoramafenstern rundum */
+  k += box(D0 + 2, D1 - 4, L0 + 0.4, L1 - 0.4, OB, SD, "#f4f6f7", "#f7f8f9", "#dde3e7");
+  for (let dd = D0 + 4; dd < D1 - 6; dd += 3.3) k += q([P(dd, L0 + 0.4, OB + 0.5), P(dd + 2.5, L0 + 0.4, OB + 0.5), P(dd + 2.5, L0 + 0.4, SD - 0.4), P(dd, L0 + 0.4, SD - 0.4)], S.lg("salon", [[0, "#9db8cc"], [1, "#2f4b62"]]));
+  for (let l = L0 + 1; l < L1 - 1.2; l += 1.6) k += q([P(D0 + 2, l, OB + 0.5), P(D0 + 2, l + 1.3, OB + 0.5), P(D0 + 2, l + 1.3, SD - 0.4), P(D0 + 2, l, SD - 0.4)], "#3d5a73");
+  /* Sonnendeck: Reling, Gäste, Steuerhaus vorn (weit weg) */
+  for (const h of [SD + 0.55, SD + 1.05]) { const a = P(D0 + 2, L1 - 0.4, h), b = P(D0 + 2, L0 + 0.4, h), c = P(D1 - 4, L0 + 0.4, h); k += `<path d="M${a.join(" ")} L${b.join(" ")} L${c.join(" ")}" stroke="#8a949b" stroke-width=".2" fill="none"/>`; }
+  k += box(D1 - 12, D1 - 6, L0 + 2, L1 - 2, SD, SD + 2.3, "#fbfcfc", "#f1f4f6", "#cfd6db");
+  k += q([P(D1 - 11.4, L0 + 2, SD + 1.1), P(D1 - 6.6, L0 + 2, SD + 1.1), P(D1 - 6.6, L0 + 2, SD + 2), P(D1 - 11.4, L0 + 2, SD + 2)], "#2e4658");
+  for (const [dd, f, l] of [[D0 + 8, "#c9302c", 34], [D0 + 13, "#2d6fb3", 36.5], [D0 + 18, "#f2c62f", 33], [D0 + 24, "#3ca35a", 35.5], [D0 + 30, "#e6e6e6", 33.5], [D0 + 36, "#e46aa0", 36]]) {
     const p = P(dd, l, SD), s = F / dd;
     k += `<rect x="${r(p[0] - 0.24 * s)}" y="${r(p[1] - 1.25 * s)}" width="${r(0.48 * s)}" height="${r(0.9 * s)}" rx=".2" fill="${f}"/><circle cx="${p[0]}" cy="${r(p[1] - 1.42 * s)}" r="${r(0.16 * s)}" fill="#e3b796"/>`;
   }
-  /* Steuerhaus vorn */
-  k += box(D0 + 5, D0 + 10, L0 + 2, L1 - 2, SD, SD + 2.3, "#fbfcfc", "#f1f4f6", "#cfd6db");
-  k += q([P(D0 + 5, L0 + 2.4, SD + 1.1), P(D0 + 5, L1 - 2.4, SD + 1.1), P(D0 + 5, L1 - 2.4, SD + 2), P(D0 + 5, L0 + 2.4, SD + 2)], "#2e4658");
-  k += q([P(D0 + 5.6, L0 + 2, SD + 1.1), P(D0 + 9.4, L0 + 2, SD + 1.1), P(D0 + 9.4, L0 + 2, SD + 2), P(D0 + 5.6, L0 + 2, SD + 2)], "#3d5a73");
   /* Flagge am Heck */
-  const fl = P(D1 - 3, LM, SD), fl2 = P(D1 - 3, LM, SD + 3.8);
-  k += `<line x1="${fl[0]}" y1="${fl[1]}" x2="${fl2[0]}" y2="${fl2[1]}" stroke="#8a8f94" stroke-width=".22"/><rect x="${fl2[0]}" y="${fl2[1]}" width="2.4" height=".55" fill="#1d1d1d"/><rect x="${fl2[0]}" y="${r(fl2[1] + 0.55)}" width="2.4" height=".55" fill="#dd2a24"/><rect x="${fl2[0]}" y="${r(fl2[1] + 1.1)}" width="2.4" height=".55" fill="#f2c62f"/>`;
-  /* Bugwelle */
-  const bw = [tip(W), P(D0 + 6, L0 - 1.6, W), P(D0 + 6, L0 - 1.2, W)];
-  k += `<path d="M${bw[0].join(" ")} Q${r((bw[0][0] + bw[1][0]) / 2 - 1)} ${r(bw[0][1] + 0.4)} ${bw[1].join(" ")}" stroke="#f4f8f8" stroke-width=".8" fill="none" opacity=".9"/>`;
-  const bw2 = P(D0 + 3, L1 + 1.6, W);
-  k += `<path d="M${tip(W).join(" ")} Q${r(bw2[0] - 2)} ${r(bw2[1] + 0.6)} ${bw2.join(" ")}" stroke="#f4f8f8" stroke-width=".6" fill="none" opacity=".8"/>`;
+  const fl = P(D0 + 2.4, LM, SD), fl2 = P(D0 + 2.4, LM, SD + 3.6);
+  k += `<line x1="${fl[0]}" y1="${fl[1]}" x2="${fl2[0]}" y2="${fl2[1]}" stroke="#8a8f94" stroke-width=".25"/><path d="M${fl2[0]} ${fl2[1]} q1.4 -.4 2.8 .1 l0 1.8 q-1.4 -.4 -2.8 .1 Z" fill="#dd2a24"/><path d="M${fl2[0]} ${fl2[1]} q1.4 -.4 2.8 .1 l0 .6 q-1.4 -.4 -2.8 .1 Z" fill="#1d1d1d"/><path d="M${fl2[0]} ${r(fl2[1] + 1.2)} q1.4 -.4 2.8 .1 l0 .6 q-1.4 -.4 -2.8 .1 Z" fill="#f2c62f"/>`;
   S.teil({ id: "ausflugsschiff", de: "das Ausflugsschiff", syl: "AUS-flugs-schiff", it: "il battello turistico", itSyl: "bat-TEL-lo tu-RI-sti-co", en: "sightseeing boat",
-    x: 0, y: 0, kunst: k, tipp: "Am Burgplatz legen die Ausflugsschiffe für die Fahrt auf dem Rhein an." });
+    x: 0, y: 0, kunst: k, tipp: "Am Burgplatz legen die Ausflugsschiffe ab. Dann geht es auf dem Rhein zum Rheinturm und zum Medienhafen." });
 }
 
 /* =====================================================================
@@ -583,18 +578,19 @@ const UFER = strahl(9.5, -4);      /* Wasserlinie an der Böschung, unten im Bil
    12 — DER RADSCHLÄGER auf dem Kanaldeckel (Stadtsymbol)
    ===================================================================== */
 {
-  const rx = 8.6, ry = 1.9;
-  let k = `<ellipse cx="0" cy="0" rx="${rx + 0.6}" ry="${ry + 0.25}" fill="#7d776c"/>`;
-  k += `<ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="${S.rg("guss", [[0, "#6c6f72"], [0.7, "#4f5357"], [1, "#3c3f43"]])}"/>`;
-  k += `<ellipse cx="0" cy="0" rx="${rx - 1}" ry="${ry - 0.25}" fill="none" stroke="#8d9195" stroke-width=".25"/>`;
-  /* der Junge schlägt ein Rad: Kopf unten, Beine gespreizt oben (flach gedrückt) */
-  k += `<g transform="scale(1 .26)"><g transform="rotate(-20)" fill="#a7abaf" stroke="#2e3134" stroke-width=".35">`;
-  k += `<circle cx="0" cy="3.8" r="1.4"/><path d="M-.8 2.2 L-.6 -1.6 L.6 -1.6 L.8 2.2 Z"/><path d="M-.6 -1.4 L-3.4 -5.6 M.6 -1.4 L3.4 -5.6" stroke-width="1"/><path d="M-.7 1.8 L-3.8 3.6 M.7 1.8 L3.8 3.6" stroke-width=".8"/>`;
+  const rx = 9.4, ry = 2.9;
+  let k = `<ellipse cx="0" cy=".2" rx="${rx + 0.7}" ry="${ry + 0.35}" fill="#857e72"/>`;
+  k += `<ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="${S.rg("guss", [[0, "#74777a"], [0.7, "#55595d"], [1, "#3c3f43"]])}"/>`;
+  k += `<ellipse cx="0" cy="0" rx="${rx - 1.2}" ry="${ry - 0.4}" fill="none" stroke="#9a9ea2" stroke-width=".3"/>`;
+  /* Relief: der Junge schlägt ein Rad (Arme und Beine wie ein X, Kopf unten), flach auf dem Boden */
+  k += `<g transform="scale(1 .3)"><g transform="rotate(-24)" stroke="#c3c6c9" stroke-linecap="round" fill="#c3c6c9">`;
+  k += `<circle cx="0" cy="3.9" r="1.35" stroke="none"/><path d="M0 2.6 L0 -1.6" stroke-width="1.5"/><path d="M0 1.8 L-3.4 4.2 M0 1.8 L3.4 4.2" stroke-width=".8"/><path d="M0 -1.4 L-3.2 -5.4 M0 -1.4 L3.2 -5.4" stroke-width="1"/>`;
   k += `</g></g>`;
-  for (let i = 0; i < 18; i++) { const a = i * Math.PI / 9; k += `<rect x="${r(Math.cos(a) * (rx - 0.5) - 0.2)}" y="${r(Math.sin(a) * (ry - 0.12) - 0.08)}" width=".4" height=".16" fill="#8d9195"/>`; }
-  k += `<ellipse cx="-2" cy="-.6" rx="4" ry=".4" fill="#fff" opacity=".12"/>`;
+  k += `<text x="0" y="${r(ry - 0.75)}" font-size="1.05" text-anchor="middle" fill="#a9adb1" font-family="Arial,sans-serif" letter-spacing=".2" transform="scale(1 .8)" transform-origin="0 ${r(ry - 0.75)}">DÜSSELDORF</text>`;
+  for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12; k += `<rect x="${r(Math.cos(a) * (rx - 0.6) - 0.2)}" y="${r(Math.sin(a) * (ry - 0.2) - 0.08)}" width=".4" height=".16" fill="#9a9ea2"/>`; }
+  k += `<ellipse cx="-2" cy="-.9" rx="4.4" ry=".5" fill="#fff" opacity=".12"/>`;
   S.teil({ oben: true, id: "radschlaeger", de: "der Radschläger", syl: "RAD-schlä-ger", it: "il ragazzo che fa la ruota", itSyl: "ra-GAZ-zo che fa la RUO-ta", en: "cartwheeler",
-    x: 150, y: 194, kunst: k, tipp: "Der Radschläger ist das Symbol von Düsseldorf — man findet ihn sogar auf den Kanaldeckeln." });
+    x: 152, y: 193, kunst: k, tipp: "Der Radschläger ist das Symbol von Düsseldorf — man findet ihn sogar auf den Kanaldeckeln." });
 }
 
 /* =====================================================================
@@ -604,7 +600,7 @@ const UFER = strahl(9.5, -4);      /* Wasserlinie an der Böschung, unten im Bil
   const X = 11, Y = 186;
   let k = schatten(X + 2, Y + 0.6, 11, 2, 0.35);
   /* Stamm mit der typischen fleckigen Platanenrinde, oben zwei Äste */
-  const stamm = [[-6.8, 0], [-5.6, -40], [-5, -90], [-6.6, -122], [-13, -146], [-6, -150], [-0.6, -128], [3, -150], [10, -146], [4.6, -118], [4.8, -80], [5.6, -40], [7, 0]];
+  const stamm = [[-10, 0.4], [-7, -3], [-5.8, -14], [-5.6, -40], [-5, -90], [-6.6, -122], [-13, -146], [-6, -150], [-0.6, -128], [3, -150], [10, -146], [4.6, -118], [4.8, -80], [5.6, -40], [6, -12], [8, -3], [11, 0.4]];
   k += vieleck(stamm.map(([x, y]) => [X + x, Y + y]), S.lg("rinde", [[0, "#6f6a58"], [0.4, "#a59c80"], [0.8, "#c8c1a6"], [1, "#8a8470"]], 0, 0, 1, 0));
   for (let i = 0; i < 30; i++) {
     const y = Y - 4 - rnd() * 118, x = X - 4.6 + rnd() * 8.6, w = 1.2 + rnd() * 2.6, h = 1 + rnd() * 2.6;
@@ -667,9 +663,14 @@ const FASS = { x: 84, y: 191 };
   }
   t += `</g>`;
   /* Ledertasche (Portemonnaie) an der Schürze */
-  const tasche = `<rect x="${r(-2.6)}" y="${r(-0.98 * km(Y))}" width="2.6" height="2.2" rx=".4" fill="#5a3a1f" stroke="#3a2412" stroke-width=".2"/>`;
+  /* die lange blaue Köbes-Schürze reicht fast bis zu den Knöcheln */
+  const sy = -0.53 * 1.78 * km(Y), sb = -0.12 * 1.78 * km(Y);
+  let schuerze = `<path d="M-3.1 ${r(sy)} L3.6 ${r(sy)} Q4.4 ${r((sy + sb) / 2)} 4.6 ${r(sb)} L-3.8 ${r(sb)} Q-3.6 ${r((sy + sb) / 2)} -3.1 ${r(sy)} Z" fill="${S.lg("schuerze", [[0, "#1a3465"], [0.5, "#2a4c88"], [1, "#1c386b"]], 0, 0, 1, 0)}"/>`;
+  for (const x of [-1.6, 0.4, 2.4]) schuerze += `<path d="M${x} ${r(sy + 2)} Q${r(x + 0.3)} ${r((sy + sb) / 2)} ${r(x + 0.4)} ${r(sb)}" stroke="#132a52" stroke-width=".3" fill="none" opacity=".7"/>`;
+  schuerze += `<rect x="-3.3" y="${r(sy - 0.5)}" width="7.1" height=".7" rx=".3" fill="#132a52"/>`;
+  const tasche = `<rect x="-2.6" y="${r(sy - 0.3)}" width="2.8" height="2.4" rx=".4" fill="#5a3a1f" stroke="#3a2412" stroke-width=".2"/><line x1="-1.2" y1="${r(sy - 0.3)}" x2="-1.2" y2="${r(sy - 1.6)}" stroke="#3a2412" stroke-width=".25"/>`;
   S.teil({ id: "koebes", de: "der Köbes", syl: "KÖ-bes", it: "il cameriere della birreria", itSyl: "ca-me-RIE-re del-la bir-re-RI-a", en: "brewery waiter",
-    x: 56, y: Y, kunst: schatten(0, 0.3, 6.5, 1.2, 0.3) + m.svg + tasche + t,
+    x: 56, y: Y, kunst: schatten(0, 0.3, 6.5, 1.2, 0.3) + m.svg + schuerze + tasche + t,
     tipp: "Im Brauhaus heißt der Kellner „Köbes“. Er trägt Blau und bringt das Altbier, ohne dass man fragt." });
 }
 
@@ -700,7 +701,7 @@ const FASS = { x: 84, y: 191 };
   k += glas(1.4, top - 0.2, 0.55);
   /* Senfglas (Düsseldorfer Löwensenf) */
   const sx = 4.6, sy = top + 0.15;
-  k += `<path d="M${sx - 0.9} ${r(sy)} L${sx - 0.9} ${r(sy - 2)} L${sx + 0.9} ${r(sy - 2)} L${sx + 0.9} ${r(sy)} Z" fill="#e9b93a"/><rect x="${sx - 0.95}" y="${r(sy - 1.6)}" width="1.9" height="1.1" fill="#f5d33f"/><path d="M${sx - 0.5} ${r(sy - 0.7)} l.3 -.6 .3 .3 .3 -.4 .1 .7 Z" fill="#b5161c"/>`;
+  k += `<path d="M${sx - 0.9} ${r(sy)} L${sx - 0.9} ${r(sy - 2)} L${sx + 0.9} ${r(sy - 2)} L${sx + 0.9} ${r(sy)} Z" fill="#d9a62e"/><rect x="${sx - 0.95}" y="${r(sy - 1.75)}" width="1.9" height="1.35" fill="#f5d33f"/><text x="${sx}" y="${r(sy - 1.15)}" font-size=".42" text-anchor="middle" fill="#7a1a12" font-family="Arial,sans-serif" font-weight="bold">Düsseldorfer</text><text x="${sx}" y="${r(sy - 0.6)}" font-size=".5" text-anchor="middle" fill="#1d1d1d" font-family="Arial,sans-serif" font-weight="bold">SENF</text><rect x="${sx - 0.75}" y="${r(sy - 1.9)}" width=".25" height="1.7" fill="#fff" opacity=".35"/>`;
   k += `<rect x="${sx - 1}" y="${r(sy - 2.6)}" width="2" height=".7" rx=".2" fill="#2b2b2b"/>`;
   /* Halve Hahn: Röggelchen mit dicker Scheibe Gouda auf dem Brettchen */
   const hx2 = -0.6, hy2 = top + 0.9;
@@ -708,6 +709,8 @@ const FASS = { x: 84, y: 191 };
   k += `<path d="M${r(hx2 - 2)} ${r(hy2 - 0.2)} Q${r(hx2 - 1.9)} ${r(hy2 - 1.5)} ${r(hx2 - 0.4)} ${r(hy2 - 1.4)} L${r(hx2 - 0.4)} ${r(hy2 - 0.2)} Z" fill="#6e3f1c"/>`;
   k += `<rect x="${r(hx2 - 0.3)}" y="${r(hy2 - 1.3)}" width="1.9" height="1" fill="#f3cf5b"/><rect x="${r(hx2 - 0.3)}" y="${r(hy2 - 1.45)}" width="1.9" height=".25" fill="#c99a2e"/>`;
   k += `<path d="M${r(hx2 + 1.7)} ${r(hy2 - 0.2)} Q${r(hx2 + 2)} ${r(hy2 - 1.2)} ${r(hx2 + 1.4)} ${r(hy2 - 1.5)}" fill="#7a4520"/>`;
+  k += `<ellipse cx="${r(hx2 + 0.7)}" cy="${r(hy2 - 1.5)}" rx=".5" ry=".14" fill="#c9a227"/><circle cx="${r(hx2 + 0.2)}" cy="${r(hy2 - 1.55)}" r=".28" fill="none" stroke="#f3eee6" stroke-width=".1"/><circle cx="${r(hx2 + 1.1)}" cy="${r(hy2 - 1.58)}" r=".24" fill="none" stroke="#f3eee6" stroke-width=".1"/>`;
+  for (let i = 0; i < 6; i++) k += `<circle cx="${r(hx2 - 1.7 + rnd() * 1.2)}" cy="${r(hy2 - 0.6 - rnd() * 0.7)}" r=".07" fill="#e9dcc4"/>`;
   const zy = FASS.y + top;
   S.teil({ id: "fass", de: "das Fass", syl: "FASS", it: "la botte", itSyl: "BOT-te", en: "barrel", x: FASS.x, y: FASS.y, steht: true, kunst: k,
     tipp: "Vor den Brauhäusern stehen alte Bierfässer als Stehtische.",

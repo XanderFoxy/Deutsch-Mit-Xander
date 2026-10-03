@@ -75,7 +75,7 @@ const boden = (X, Z) => [VX + F * X / Z, HY + F * 1.6 / Z];
 /* ---------- Stoffe ---------------------------------------------------- */
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("dunst")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter>`);
-S.def(`<pattern id="${S.id("wald")}" width="4" height="3" patternUnits="userSpaceOnUse"><rect width="4" height="3" fill="#356b45"/><circle cx="1" cy="1" r="1.1" fill="#3f7a4e"/><circle cx="3" cy="2.2" r="1.2" fill="#2e5f3c"/><circle cx="3.2" cy=".4" r=".7" fill="#4a8758"/><circle cx=".6" cy="2.6" r=".6" fill="#2a5636"/></pattern>`);
+S.def(`<pattern id="${S.id("wald")}" width="2.6" height="2" patternUnits="userSpaceOnUse"><rect width="2.6" height="2" fill="#376b47"/><circle cx=".7" cy=".7" r=".7" fill="#3f774f"/><circle cx="2" cy="1.5" r=".75" fill="#30603d"/><circle cx="2.1" cy=".3" r=".45" fill="#468252"/><circle cx=".4" cy="1.7" r=".4" fill="#2c5938"/></pattern>`);
 S.def(`<pattern id="${S.id("mosaik")}" width=".5" height=".44" patternUnits="userSpaceOnUse"><rect width=".5" height=".44" fill="#ece8dc"/><path d="M0 .44 L.25 0 L.5 .44 Z" fill="#dcd6c6"/><path d="M0 .44 L.25 0" stroke="#bdb5a2" stroke-width=".03"/></pattern>`);
 const WALD = `url(#${S.id("wald")})`;
 const MOSAIK = `url(#${S.id("mosaik")})`;
@@ -116,7 +116,7 @@ const DUNST = `url(#${S.id("dunst")})`;
     for (let t = 0; t < 1; t += 0.34) k += `<circle cx="${r(x1 + (x2 - x1) * t)}" cy="${r(y1 + (y2 - y1) * t + 0.5)}" r="${r(0.9 + rnd() * 0.7)}" fill="${rnd() < 0.5 ? "#4d8059" : "#3d7049"}"/>`;
   }
   /* Granitplatten an steilen Stellen */
-  for (const [x, y, w, h] of [[120, 54, 5, 7], [138, 58, 4, 5], [40, 60, 3, 6]]) k += `<path d="M${x} ${y} q${w / 2} -1 ${w} 0 l-.6 ${h} q-${w / 2} 1 -${w - 1} 0 Z" fill="#8f938f" opacity=".7"/>`;
+  for (const [x, y, w, h] of [[121, 52, 3, 9], [139, 57, 2.4, 7], [146, 62, 2, 5]]) k += `<path d="M${x} ${y} q${r(w * 0.6)} ${r(h * 0.4)} ${w} ${h} q${r(-w * 0.5)} -.6 ${r(-w * 0.9)} -.2 q-.2 ${r(-h * 0.5)} ${r(-w * 0.1)} ${r(-h * 0.8)} Z" fill="#8f938f" opacity=".55"/>`;
   S.teil({ id: "regenwald", de: "der Regenwald", syl: "RE-gen-wald", it: "la foresta pluviale", itSyl: "fo-RE-sta plu-VIA-le", en: "rainforest", x: 98, y: 104, kunst: um(98, 104, k),
     tipp: "Mitten in Rio wächst der Tijuca-Wald. Er ist einer der größten Stadtwälder der Welt." });
 }
@@ -163,19 +163,23 @@ const CX = 88, CY = 26.5;   /* Gipfelplattform */
   for (const x of [-0.6, -0.15, 0.35, 0.8]) k += `<path d="M${x} -3.6 Q${r(x + 0.08)} -7 ${r(x * 0.9)} -10.6" stroke="#c4bdac" stroke-width=".09" fill="none"/>`;
   /* Kordel um die Taille, Enden hängen herab */
   k += `<path d="M-1.18 -7.9 Q0 -7.6 1.28 -7.9" stroke="#bdb6a4" stroke-width=".14" fill="none"/><path d="M.1 -7.75 L.05 -5.6 M.32 -7.75 L.36 -5.9" stroke="#bdb6a4" stroke-width=".1"/>`;
-  /* Arme waagrecht (der linke im Bild ist näher, darum etwas länger), weite Ärmel hängen darunter */
-  const armL = -4.5, armR = 3.8;
-  k += `<path d="M-1.1 -11.3 L${armL + 0.3} -11.55 Q${armL} -11.2 ${armL + 0.3} -10.85 L-1.1 -10.4 Z" fill="${S.lg("armL", [[0, "#e6e2d6"], [1, "#d3cdbf"]])}"/>`;
-  k += `<path d="M-1.1 -10.6 L${armL + 1.2} -10.9 L${armL + 1.6} -9.9 Q-2.4 -8.8 -1.15 -8.4 Z" fill="#d5cfc1"/>`;
-  k += `<path d="M1.25 -11.3 L${armR - 0.3} -11.5 Q${armR} -11.2 ${armR - 0.3} -10.85 L1.25 -10.4 Z" fill="#faf8f1"/>`;
-  k += `<path d="M1.25 -10.6 L${armR - 1.1} -10.9 L${armR - 1.4} -10 Q2.4 -9 1.3 -8.5 Z" fill="#efebe1"/>`;
-  /* Hände (offen, Handflächen zur Bucht) */
-  k += `<ellipse cx="${armL - 0.1}" cy="-11.15" rx=".32" ry=".42" fill="#e2ddd0"/><ellipse cx="${armR + 0.08}" cy="-11.15" rx=".28" ry=".4" fill="#fbf9f3"/>`;
-  /* Kopf (leicht geneigt), Haar bis auf die Schultern, Bart; Herz auf der Brust */
-  k += `<path d="M-.55 -11.25 Q-.75 -12.4 -.4 -13.15 Q.1 -13.6 .62 -13.1 Q.9 -12.4 .72 -11.25 Z" fill="#ddd7c9"/>`;
-  k += `<ellipse cx=".12" cy="-12.25" rx=".5" ry=".72" fill="${S.lg("gesicht", [[0, "#e4dfd2"], [1, "#fbf9f2"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M-.22 -11.8 Q.14 -11.45 .5 -11.8" stroke="#c3bcab" stroke-width=".08" fill="none"/>`;
-  k += `<path d="M-.15 -9.85 q-.18 -.3 0 -.42 q.12 -.06 .17 .07 q.05 -.13 .17 -.07 q.18 .12 0 .42 l-.17 .2 Z" fill="none" stroke="#b9b1a0" stroke-width=".07"/>`;
+  /* Arme waagrecht (der linke im Bild ist näher, darum etwas länger); die weiten
+     Ärmel hängen vom Unterarm schräg zur Brust herab */
+  const armL = -4.55, armR = 3.85;
+  k += `<path d="M-1.1 -11.35 L${armL + 0.5} -11.5 L${armL + 0.5} -10.95 L-1.1 -10.55 Z" fill="${S.lg("armL", [[0, "#ebe7dc"], [1, "#d3cdbf"]])}"/>`;
+  k += `<path d="M-1.1 -10.7 L${r(armL * 0.62)} -11.0 Q${r(armL * 0.5)} -10.2 -1.12 -9.35 Z" fill="#d2ccbd"/>`;
+  k += `<path d="M1.25 -11.35 L${armR - 0.45} -11.45 L${armR - 0.45} -10.95 L1.25 -10.55 Z" fill="#faf8f1"/>`;
+  k += `<path d="M1.25 -10.7 L${r(armR * 0.6)} -11.0 Q${r(armR * 0.5)} -10.2 1.28 -9.4 Z" fill="#ece8de"/>`;
+  k += `<path d="M-1.1 -10.62 L${r(armL * 0.62)} -10.98" stroke="#bcb5a4" stroke-width=".07"/>`;
+  /* Hände: flach, Finger geschlossen, Handflächen nach vorn */
+  k += `<path d="M${armL + 0.55} -11.48 L${armL - 0.05} -11.42 Q${armL - 0.32} -11.2 ${armL - 0.05} -10.98 L${armL + 0.55} -10.98 Z" fill="#e2ddd0"/>`;
+  k += `<path d="M${armR - 0.5} -11.44 L${armR + 0.02} -11.4 Q${armR + 0.26} -11.2 ${armR + 0.02} -11 L${armR - 0.5} -10.98 Z" fill="#fbf9f3"/>`;
+  /* Kopf (leicht nach vorn geneigt), Haar fällt bis auf die Schultern, Bart; Herz auf der Brust */
+  k += `<path d="M-.6 -11.15 Q-.72 -12.1 -.46 -12.9 Q.08 -13.42 .62 -12.9 Q.86 -12.1 .76 -11.15 Q.1 -11.45 -.6 -11.15 Z" fill="#d6d0c1"/>`;
+  k += `<path d="M-.3 -12.85 Q.12 -13.12 .48 -12.85 L.5 -12.1 Q.36 -11.55 .1 -11.5 Q-.16 -11.55 -.3 -12.1 Z" fill="${S.lg("gesicht", [[0, "#e4dfd2"], [1, "#fdfbf5"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M-.22 -12.35 h.18 M.16 -12.35 h.18" stroke="#b7b09f" stroke-width=".06"/><path d="M.06 -12.3 L.08 -11.95" stroke="#cfc8b8" stroke-width=".06"/>`;
+  k += `<path d="M-.26 -11.95 Q.1 -11.4 .46 -11.95" stroke="#c3bcab" stroke-width=".07" fill="none"/>`;
+  k += `<path d="M-.15 -9.95 q-.18 -.3 0 -.42 q.12 -.06 .17 .07 q.05 -.13 .17 -.07 q.18 .12 0 .42 l-.17 .2 Z" fill="none" stroke="#b9b1a0" stroke-width=".07"/>`;
   /* Lichtkante rechts (Morgensonne von Osten) */
   k += `<path d="M1.2 -11 Q1.32 -7.6 1.12 -3.6" stroke="#ffffff" stroke-width=".18" fill="none" opacity=".8"/>`;
   const unterC = [
@@ -299,41 +303,45 @@ const XF = -84.8;
   const hoehen = [41, 36, 30, 24, 27, 35, 22, 30, 38, 26, 33, 28, 36, 24, 31, 35, 27, 30, 33, 25, 30, 28, 32, 26, 30, 28, 30, 26];
   for (let i = 0; Z < 2600; i++) {
     const w = 18 + rnd() * 14, H = hoehen[i % hoehen.length];
-    bauten.push({ z0: Z, z1: Z + w, H, c: farben[i % farben.length], tief: 16 + rnd() * 8 });
+    bauten.push({ z0: Z, z1: Z + w, H, c: farben[i % farben.length], tief: 16 + rnd() * 8, glas: i % 3 === 1 });
     Z += w + (rnd() < 0.25 ? 6 + rnd() * 6 : 0.5);
   }
+  const quad = (za, zb, h0, h1, d0 = 0, d1 = 0) => `M${r(fx(za, d0))} ${r(fy(za, h0))} L${r(fx(zb, d0))} ${r(fy(zb, h0))} L${r(fx(zb, d1))} ${r(fy(zb, h1))} L${r(fx(za, d1))} ${r(fy(za, h1))} Z`;
   let k = "";
   /* von hinten nach vorn zeichnen */
   for (const b of bauten.slice().reverse()) {
-    const xa = fx(b.z0), xb = fx(b.z1), ya = fy(b.z0, 0), yb = fy(b.z1, 0), ta = fy(b.z0, b.H), tb = fy(b.z1, b.H);
+    const xa = fx(b.z0), xb = fx(b.z1), ya = fy(b.z0, 0), ta = fy(b.z0, b.H);
     if (xb < -2) continue;
+    const dunst = Math.min(0.55, Math.max(0, (b.z0 - 70) / 1600));
     /* Seitenwand (Südwest, im Schatten) */
     const xs = fx(b.z0, b.tief);
     k += `<path d="M${r(xs)} ${r(ya)} L${r(xa)} ${r(ya)} L${r(xa)} ${r(ta)} L${r(xs)} ${r(ta)} Z" fill="${b.c[1]}"/>`;
-    k += `<path d="M${r(xs)} ${r(ya)} L${r(xa)} ${r(ya)} L${r(xa)} ${r(ta)} L${r(xs)} ${r(ta)} Z" fill="#3d4a5a" opacity=".22"/>`;
+    k += `<path d="M${r(xs)} ${r(ya)} L${r(xa)} ${r(ya)} L${r(xa)} ${r(ta)} L${r(xs)} ${r(ta)} Z" fill="#3d4a5a" opacity=".2"/>`;
+    if (xa - xs > 6) for (let s = 1; s * 3 < b.H - 1; s++) { const y = fy(b.z0, s * 3 + 1.2); k += `<rect x="${r(xs + (xa - xs) * 0.3)}" y="${r(y)}" width="${r((xa - xs) * 0.12)}" height="${r(Math.max(0.4, 1.1 * F / b.z0))}" fill="#56606c" opacity=".55"/>`; }
     /* Front zum Meer (Morgensonne) */
-    k += `<path d="M${r(xa)} ${r(ya)} L${r(xb)} ${r(yb)} L${r(xb)} ${r(tb)} L${r(xa)} ${r(ta)} Z" fill="${b.c[0]}"/>`;
+    k += `<path d="${quad(b.z0, b.z1, 0, b.H)}" fill="${b.c[0]}"/>`;
     const breit = xb - xa;
     if (breit > 2.2) {
-      /* Stockwerke: dunkles Fensterband, helle Balkonbrüstung */
       const n = Math.round(b.H / 3);
+      /* Stockwerke: tiefe Loggien (dunkel) und helle Balkonbrüstungen */
       for (let s = 1; s < n; s++) {
-        const h0 = s * 3 + 0.9, h1 = s * 3 + 2.3;
-        const p = [[xa, fy(b.z0, h1)], [xb, fy(b.z1, h1)], [xb, fy(b.z1, h0)], [xa, fy(b.z0, h0)]];
-        k += `<path d="M${pts(p)} Z" fill="${s % 4 === 0 ? "#4e6478" : "#5f7487"}" opacity="${breit > 8 ? 0.7 : 0.5}"/>`;
+        const h0 = s * 3;
+        k += `<path d="${quad(b.z0 + 0.6, b.z1 - 0.6, h0 + 0.25, h0 + 2.75)}" fill="${b.glas ? "#6f8ea6" : "#55697b"}" opacity="${breit > 8 ? 0.82 : 0.55}"/>`;
+        if (breit > 5) k += `<path d="${quad(b.z0 + 0.6, b.z1 - 0.6, h0 + 0.25, h0 + 1.15, -0.25, -0.25)}" fill="${b.glas ? "#cfe3ea" : "#fbfaf6"}" opacity="${b.glas ? 0.75 : 0.92}"/>`;
       }
+      /* senkrechte Teilung (Wohnungen, Pfeiler) */
+      if (breit > 8) for (let zz = b.z0 + 3.4; zz < b.z1 - 1; zz += 3.4) k += `<line x1="${r(fx(zz))}" y1="${r(fy(zz, 3))}" x2="${r(fx(zz))}" y2="${r(fy(zz, b.H - 0.4))}" stroke="${b.c[0]}" stroke-width="${r(Math.max(0.2, 0.32 * F / zz))}"/>`;
       /* Erdgeschoss: Läden mit Markisen */
-      k += `<path d="M${r(xa)} ${r(fy(b.z0, 0))} L${r(xb)} ${r(fy(b.z1, 0))} L${r(xb)} ${r(fy(b.z1, 3))} L${r(xa)} ${r(fy(b.z0, 3))} Z" fill="#3b3a3a" opacity=".55"/>`;
-      if (breit > 8) for (let j = 0; j < 3; j++) { const za = b.z0 + (j + 0.2) * (b.z1 - b.z0) / 3, zb = za + (b.z1 - b.z0) / 4; k += `<path d="M${r(fx(za))} ${r(fy(za, 3.4))} L${r(fx(zb))} ${r(fy(zb, 3.4))} L${r(fx(zb, -1.4))} ${r(fy(zb, 2.6))} L${r(fx(za, -1.4))} ${r(fy(za, 2.6))} Z" fill="${["#c0392b", "#2e7d5b", "#e0a83a"][j]}"/>`; }
+      k += `<path d="${quad(b.z0, b.z1, 0, 3)}" fill="#3b3a3a" opacity=".55"/>`;
+      if (breit > 8) for (let j = 0; j < 3; j++) { const za = b.z0 + (j + 0.15) * (b.z1 - b.z0) / 3, zb = za + (b.z1 - b.z0) / 4; k += `<path d="${quad(za, zb, 3.3, 2.6, 0, -1.5)}" fill="${["#c0392b", "#2e7d5b", "#e0a83a"][j]}"/>`; }
       /* Dachaufbauten: Maschinenraum, Wassertank */
       const zm = b.z0 + (b.z1 - b.z0) * 0.35;
-      k += `<rect x="${r(fx(zm))}" y="${r(fy(zm, b.H + 2.4))}" width="${r(Math.max(0.6, breit * 0.18))}" height="${r(fy(zm, b.H) - fy(zm, b.H + 2.4))}" fill="${b.c[1]}"/>`;
+      k += `<path d="${quad(zm, zm + 3, b.H, b.H + 2.6, 2, 2)}" fill="${b.c[1]}"/>`;
     }
-    /* Lichtkante an der vorderen Ecke */
+    /* Lichtkante an der vorderen Ecke, Dachkante */
     k += `<line x1="${r(xa)}" y1="${r(ta)}" x2="${r(xa)}" y2="${r(ya)}" stroke="#ffffff" stroke-width="${r(Math.min(0.6, breit * 0.05))}" opacity=".6"/>`;
+    if (dunst > 0.02) k += `<path d="M${r(xs)} ${r(ya)} L${r(xb)} ${r(fy(b.z1, 0))} L${r(xb)} ${r(fy(b.z1, b.H + 2.6))} L${r(xa)} ${r(fy(b.z0, b.H + 2.6))} L${r(xs)} ${r(ta)} Z" fill="#d6ebf2" opacity="${r(dunst)}"/>`;
   }
-  /* Luftperspektive zum Fluchtpunkt hin */
-  k += `<rect x="0" y="0" width="${VX}" height="108" fill="${S.lg("hausdunst", [[0, "#d9eef3", 0], [0.55, "#d9eef3", 0.04], [1, "#d9eef3", 0.4]], 0, 0, 1, 0)}"/>`;
   const cid = S.id("hausclip");
   S.def(`<clipPath id="${cid}"><path d="M0 0 L${VX} 0 L${VX} 100.2 L0 104.2 Z"/></clipPath>`);
   S.teil({ id: "hochhaus", de: "das Hochhaus", syl: "HOCH-haus", it: "il palazzo", itSyl: "pa-LAZ-zo", en: "high-rise", x: 60, y: 104, kunst: um(60, 104, `<g clip-path="url(#${cid})">${k}</g>`),
@@ -361,42 +369,60 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
 
 /* =====================================================================
    9 — DAS TAXI (gelb mit blauem Streifen) auf der Avenida Atlântica
+   fährt Richtung Leme: man sieht Heck und rechte Seite. Gebaut als
+   Körper im Raum (X seitlich, Y Höhe, Z Tiefe) und in das Bild gerechnet.
    ===================================================================== */
 {
-  /* fährt vom Betrachter weg Richtung Leme: man sieht Heck und rechte Seite */
-  const X0 = 26, Y0 = 117.2;                 /* hinteres rechtes Rad auf dem Boden */
-  const s = sy(Y0);                            /* ≈ 10,75 Einheiten je Meter am Heck */
-  const lang = 4.5, br = 1.75, ho = 1.5;
-  const zum = (x, y, t) => [x + (VX - x) * t, y + (HY - y) * t];   /* Richtung Fluchtpunkt */
-  const t = 1 - 1 / (1 + lang * s / (VX - X0) * 1.2);
-  const heckL = X0 - br * s * 0.95, heckR = X0;
-  const [vx, vy] = zum(X0, Y0, t);
-  const kk = (VX - vx) / (VX - X0);           /* Maßstab vorn */
-  const GELB = S.lg("taxigelb", [[0, "#ffd54a"], [0.6, "#f2bd1d"], [1, "#d99d10"]]);
-  let k = schatten(-3, 0.6, 12, 1.4, 0.35);
-  /* rechte Seite (fluchtend) */
-  k += `<path d="M0 -1 L${r(vx - X0)} ${r(vy - Y0 - 0.6 * kk)} L${r(vx - X0)} ${r(vy - Y0 - ho * 0.62 * s * kk)} L0 ${r(-ho * 0.62 * s)} Z" fill="${GELB}"/>`;
-  k += `<path d="M0 ${r(-0.42 * s)} L${r(vx - X0)} ${r(vy - Y0 - 0.42 * s * kk)} L${r(vx - X0)} ${r(vy - Y0 - 0.55 * s * kk)} L0 ${r(-0.55 * s)} Z" fill="#1f5fae"/>`;
-  /* Fenster der Seite und Dach */
-  const dachH = -ho * s, schulter = -ho * 0.62 * s;
-  k += `<path d="M-1 ${r(schulter)} L${r((vx - X0) * 0.82)} ${r((vy - Y0) * 0.82 + schulter * (1 - 0.18 * (1 - kk)))} L${r((vx - X0) * 0.7)} ${r((vy - Y0) * 0.7 + dachH * (1 - 0.3 * (1 - kk)))} L1.4 ${r(dachH)} Z" fill="#2b3a48"/>`;
-  k += `<path d="M${r((vx - X0) * 0.38)} ${r((vy - Y0) * 0.38 + schulter * 0.98)} L${r((vx - X0) * 0.36)} ${r((vy - Y0) * 0.36 + dachH * 0.96)}" stroke="${GELB}" stroke-width=".8"/>`;
+  const P = (X, Y, Z) => [VX + F * X / Z, HY + F * (1.6 - Y) / Z];
+  const XR = -19.6, XL = XR - 1.76, Z0 = 20, LG = 4.45;
+  /* Seitenprofil [z vom Heck, y]: Kofferraum, Heckscheibe, Dach, Frontscheibe, Haube */
+  const prof = [[0, 0.32], [0, 0.98], [0.12, 1.02], [0.85, 1.04], [1.35, 1.44], [2.9, 1.46], [3.45, 1.02], [4.35, 0.94], [LG, 0.72], [LG, 0.32]];
+  const seite = (X) => prof.map(([z, y]) => P(X, y, Z0 + z));
+  const [x0, y0] = P(XR, 0, Z0);              /* Bezugspunkt: hinteres rechtes Eck am Boden */
+  const rel = (p) => [p[0] - x0, p[1] - y0];
+  const poly = (a) => `M${pts(a.map(rel))} Z`;
+  const GELB = S.lg("taxigelb", [[0, "#ffd84f"], [0.55, "#f4c021"], [1, "#d89c0e"]]);
+  let k = "";
+  /* Schatten auf dem Asphalt (nach links vorn) */
+  k += `<path d="${poly([P(XR + 0.2, 0, Z0 - 0.4), P(XR + 0.2, 0, Z0 + LG), P(XL - 0.8, 0, Z0 + LG), P(XL - 0.8, 0, Z0 - 0.4)])}" fill="#1b1d22" opacity=".35" filter="url(#bw_weich)"/>`;
+  /* Dach (zwischen den Seiten) */
+  k += `<path d="${poly([P(XR - 0.08, 1.46, Z0 + 1.38), P(XR - 0.08, 1.46, Z0 + 2.88), P(XL + 0.08, 1.46, Z0 + 2.88), P(XL + 0.08, 1.46, Z0 + 1.38)])}" fill="#f8d243"/>`;
+  /* Kofferraumdeckel */
+  k += `<path d="${poly([P(XR, 1.02, Z0 + 0.12), P(XR, 1.04, Z0 + 0.85), P(XL, 1.04, Z0 + 0.85), P(XL, 1.02, Z0 + 0.12)])}" fill="#f6cd38"/>`;
+  /* Heckscheibe */
+  k += `<path d="${poly([P(XR - 0.1, 1.06, Z0 + 0.88), P(XR - 0.1, 1.43, Z0 + 1.36), P(XL + 0.1, 1.43, Z0 + 1.36), P(XL + 0.1, 1.06, Z0 + 0.88)])}" fill="#2c3b49"/>`;
   /* Heck (frontal) */
-  const hw = heckR - heckL;
-  k += `<path d="M${r(-hw)} -1 L0 -1 L0 ${r(schulter)} L${r(-hw)} ${r(schulter)} Z" fill="#e8b318"/>`;
-  k += `<path d="M${r(-hw + 1.4)} ${r(schulter)} L-1 ${r(schulter)} L-.4 ${r(dachH)} L${r(-hw + 2)} ${r(dachH)} Z" fill="#2b3a48"/>`;
-  k += `<path d="M${r(-hw)} ${r(dachH)} L1.4 ${r(dachH)} L${r((vx - X0) * 0.7)} ${r((vy - Y0) * 0.7 + dachH * (1 - 0.3 * (1 - kk)))} L${r((vx - X0) * 0.7 - hw * 0.8)} ${r((vy - Y0) * 0.7 + dachH * (1 - 0.3 * (1 - kk)))} Z" fill="#f6c935"/>`;
+  k += `<path d="${poly([P(XR, 0.32, Z0), P(XR, 0.98, Z0), P(XR - 0.1, 1.02, Z0 + 0.12), P(XL + 0.1, 1.02, Z0 + 0.12), P(XL, 0.98, Z0), P(XL, 0.32, Z0)])}" fill="#e9b41a"/>`;
+  /* rechte Seite */
+  k += `<path d="M${pts(seite(XR).map(rel))} Z" fill="${GELB}"/>`;
+  /* Seitenfenster mit Mittelpfosten */
+  const fen = [[0.95, 1.08], [1.4, 1.4], [2.85, 1.41], [3.32, 1.08]].map(([z, y]) => P(XR, y, Z0 + z));
+  k += `<path d="${poly(fen)}" fill="#2c3b49"/>`;
+  const [ma, mb] = [P(XR, 1.08, Z0 + 2.1), P(XR, 1.42, Z0 + 2.1)];
+  k += `<line x1="${r(ma[0] - x0)}" y1="${r(ma[1] - y0)}" x2="${r(mb[0] - x0)}" y2="${r(mb[1] - y0)}" stroke="#f2c021" stroke-width=".7"/>`;
+  k += `<path d="${poly([P(XR, 1.36, Z0 + 1.5), P(XR, 1.38, Z0 + 2.0), P(XR, 1.12, Z0 + 2.0), P(XR, 1.1, Z0 + 1.1)])}" fill="#ffffff" opacity=".18"/>`;
+  /* blauer Streifen */
+  k += `<path d="${poly([P(XR, 0.66, Z0), P(XR, 0.66, Z0 + LG), P(XR, 0.56, Z0 + LG), P(XR, 0.56, Z0)])}" fill="#1f5fae"/>`;
+  /* Türfugen, Griff, Spiegel */
+  for (const z of [1.25, 2.35, 3.4]) { const [a, b] = [P(XR, 0.38, Z0 + z), P(XR, 1.02, Z0 + z)]; k += `<line x1="${r(a[0] - x0)}" y1="${r(a[1] - y0)}" x2="${r(b[0] - x0)}" y2="${r(b[1] - y0)}" stroke="#b9860c" stroke-width=".22"/>`; }
+  /* Räder (rechts sichtbar, Ellipsen in der Seitenebene) */
+  for (const z of [0.82, 3.6]) {
+    const [cx, cy] = rel(P(XR + 0.02, 0.32, Z0 + z)), rr = 0.32 * F / (Z0 + z);
+    k += `<ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${r(rr * 0.82)}" ry="${r(rr)}" fill="#1b1b1d"/><ellipse cx="${r(cx + 0.2)}" cy="${r(cy)}" rx="${r(rr * 0.42)}" ry="${r(rr * 0.52)}" fill="#a3a9ae"/>`;
+  }
   /* Rücklichter, Kennzeichen (Mercosul: weiß mit blauem Band), Stoßstange */
-  k += `<rect x="${r(-hw + 0.4)}" y="${r(schulter + 1.2)}" width="2.6" height="1.6" rx=".4" fill="#c4161c"/><rect x="-3" y="${r(schulter + 1.2)}" width="2.6" height="1.6" rx=".4" fill="#c4161c"/>`;
-  k += `<rect x="${r(-hw / 2 - 2.6)}" y="${r(schulter + 3.4)}" width="5.2" height="2" fill="#f4f4f0"/><rect x="${r(-hw / 2 - 2.6)}" y="${r(schulter + 3.4)}" width="5.2" height=".55" fill="#1f4f9e"/>`;
-  k += `<rect x="${r(-hw - 0.3)}" y="-2.4" width="${r(hw + 0.6)}" height="1.5" rx=".5" fill="#2f2f33"/>`;
+  const hp = (X, Y) => rel(P(X, Y, Z0));
+  const lr = (X1, Y1, X2, Y2, c) => { const [a, b] = [hp(X1, Y1), hp(X2, Y2)]; return `<rect x="${r(Math.min(a[0], b[0]))}" y="${r(Math.min(a[1], b[1]))}" width="${r(Math.abs(b[0] - a[0]))}" height="${r(Math.abs(b[1] - a[1]))}" rx=".3" fill="${c}"/>`; };
+  k += lr(XR - 0.05, 0.92, XR - 0.42, 0.74, "#c4161c") + lr(XL + 0.05, 0.92, XL + 0.42, 0.74, "#c4161c");
+  k += lr(XR - 0.62, 0.66, XL + 0.62, 0.5, "#f4f4f0") + lr(XR - 0.62, 0.66, XL + 0.62, 0.62, "#1f4f9e");
+  k += lr(XR + 0.04, 0.44, XL - 0.04, 0.24, "#2c2c30");
+  k += lr(XR - 0.05, 0.3, XR - 0.3, 0, "#1b1b1d") + lr(XL + 0.05, 0.3, XL + 0.3, 0, "#1b1b1d");
   /* Taxischild auf dem Dach */
-  k += `<rect x="${r(-hw / 2 - 2)}" y="${r(dachH - 1.6)}" width="4.4" height="1.6" rx=".4" fill="#f4f1e6"/><text x="${r(-hw / 2 + 0.2)}" y="${r(dachH - 0.4)}" font-size="1.3" text-anchor="middle" fill="#1f4f9e" font-family="Arial" font-weight="bold">TAXI</text>`;
-  /* Räder */
-  k += `<ellipse cx="${r(-hw + 1.6)}" cy="-.4" rx="1.5" ry="1.2" fill="#1b1b1d"/><ellipse cx="-1.3" cy="-.4" rx="1.4" ry="1.2" fill="#1b1b1d"/>`;
-  k += `<ellipse cx="${r((vx - X0) * 0.78)}" cy="${r((vy - Y0) * 0.78 - 0.8)}" rx="1.1" ry="1.6" fill="#1b1b1d"/><ellipse cx="${r((vx - X0) * 0.78 + 0.3)}" cy="${r((vy - Y0) * 0.78 - 0.8)}" rx=".5" ry=".9" fill="#9aa0a6"/>`;
-  k += `<path d="M1 ${r(schulter + 0.5)} L${r((vx - X0) * 0.9)} ${r((vy - Y0) * 0.9 + schulter * 0.95)}" stroke="#fff6cc" stroke-width=".35" opacity=".7"/>`;
-  S.teil({ id: "taxi", de: "das Taxi", syl: "TA-xi", it: "il taxi", itSyl: "TA-xi", en: "taxi", x: X0, y: Y0, kunst: k,
+  const [sa, sb] = [rel(P(XR - 0.55, 1.46, Z0 + 2)), rel(P(XL + 0.55, 1.68, Z0 + 2))];
+  k += `<rect x="${r(sb[0])}" y="${r(sb[1])}" width="${r(sa[0] - sb[0])}" height="${r(sa[1] - sb[1])}" rx=".3" fill="#f4f1e6"/><text x="${r((sa[0] + sb[0]) / 2)}" y="${r(sa[1] - 0.4)}" font-size="1.25" text-anchor="middle" fill="#1f4f9e" font-family="Arial" font-weight="bold">TAXI</text>`;
+  /* Lichtkante */
+  k += `<path d="M${pts([P(XR, 1.0, Z0 + 0.1), P(XR, 0.98, Z0 + 4.3)].map(rel))}" stroke="#fff6cc" stroke-width=".35" opacity=".8"/>`;
+  S.teil({ id: "taxi", de: "das Taxi", syl: "TA-xi", it: "il taxi", itSyl: "TA-xi", en: "taxi", x: x0, y: y0, kunst: k,
     tipp: "Die Taxis in Rio sind gelb und haben einen blauen Streifen." });
 }
 
@@ -438,12 +464,16 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
   k += `<path d="M${VX} 100.35 L320 ${WASSER_R} L320 ${WASSER_R + 1.8} L${VX} 100.5 Z" fill="#cdb58a" opacity=".7"/>`;
   /* Kante zum Calçadão: niedrige Stufe */
   k += `<path d="M-1 ${r(STRANDKANTE(-1))} L${VX} 100 L-1 ${r(STRANDKANTE(-1) + 2.2)} Z" fill="#cbb489" opacity=".7"/>`;
-  /* Fußspuren und Sandkörnung (perspektivisch kleiner) */
-  for (let i = 0; i < 70; i++) {
-    const y = 104 + Math.pow(rnd(), 1.6) * 94, xmin = Math.max(-1, (VX - (VX * (y - HY) / (177.9 - HY))) + 2), x = xmin + rnd() * (320 - xmin);
-    if (y < wy(x, WASSER_R) + 2) continue;
+  /* Windrippel und Fußspuren (perspektivisch kleiner) */
+  for (let i = 0; i < 46; i++) {
+    const y = 106 + Math.pow(rnd(), 1.5) * 92, xmin = Math.max(-1, VX - VX * (y - HY) / (177.9 - HY) + 3), x = xmin + rnd() * (320 - xmin);
+    if (y < wy(x, WASSER_R) + 2.5) continue;
     const s = sy(y);
-    k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.07 * s)}" ry="${r(0.03 * s)}" fill="#c9a970" opacity=".5"/>`;
+    k += `<path d="M${r(x)} ${r(y)} q${r(0.25 * s)} ${r(-0.04 * s)} ${r(0.5 * s)} 0" stroke="#d2b783" stroke-width="${r(Math.max(0.15, 0.012 * s))}" fill="none" opacity=".7"/>`;
+  }
+  for (let i = 0; i < 9; i++) {
+    const y = 140 + i * 6.4, x = 150 - i * 9 + (i % 2) * 2.4, s = sy(y);
+    k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.05 * s)}" ry="${r(0.022 * s)}" fill="#cfae74" opacity=".55" transform="rotate(-20 ${r(x)} ${r(y)})"/>`;
   }
   /* ferne Sonnenschirme und Badegäste am Strand Richtung Leme */
   const schirmF = ["#e84a3c", "#f2c230", "#2f8fd0", "#3aa35a", "#f08a2c", "#ffffff", "#c43a8a"];
@@ -454,7 +484,13 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
     const s = F / Z;
     k += `<line x1="${r(x)}" y1="${r(y)}" x2="${r(x)}" y2="${r(y - 2.1 * s)}" stroke="#777" stroke-width="${r(Math.max(0.08, 0.04 * s))}"/>`;
     k += `<path d="M${r(x - 1 * s)} ${r(y - 1.9 * s)} Q${r(x)} ${r(y - 2.5 * s)} ${r(x + 1 * s)} ${r(y - 1.9 * s)} Z" fill="${schirmF[i % schirmF.length]}"/>`;
-    if (rnd() < 0.5) k += `<rect x="${r(x + 0.4 * s)}" y="${r(y - 1.6 * s)}" width="${r(0.4 * s)}" height="${r(1.6 * s)}" rx="${r(0.15 * s)}" fill="${["#8d5a3b", "#d7a179", "#5e3a26"][i % 3]}"/>`;
+    if (rnd() < 0.5) {
+      /* kleine Badegäste: Beine, Badekleidung, Oberkörper, Kopf */
+      const hx = x + 0.6 * s, haut = ["#8d5a3b", "#d7a179", "#5e3a26", "#c28e62"][i % 4], bad = ["#d23f33", "#1d4fa0", "#139a43", "#f6d21e"][i % 4];
+      k += `<path d="M${r(hx - 0.12 * s)} ${r(y)} L${r(hx - 0.07 * s)} ${r(y - 0.8 * s)} M${r(hx + 0.12 * s)} ${r(y)} L${r(hx + 0.07 * s)} ${r(y - 0.8 * s)}" stroke="${haut}" stroke-width="${r(Math.max(0.1, 0.1 * s))}"/>`;
+      k += `<rect x="${r(hx - 0.16 * s)}" y="${r(y - 1.38 * s)}" width="${r(0.32 * s)}" height="${r(0.6 * s)}" rx="${r(0.08 * s)}" fill="${haut}"/><rect x="${r(hx - 0.16 * s)}" y="${r(y - 0.95 * s)}" width="${r(0.32 * s)}" height="${r(0.18 * s)}" fill="${bad}"/>`;
+      k += `<circle cx="${r(hx)}" cy="${r(y - 1.5 * s)}" r="${r(0.12 * s)}" fill="#2a1d16"/>`;
+    }
   }
   S.teil({ id: "strand", de: "der Strand", syl: "STRAND", it: "la spiaggia", itSyl: "SPIAG-gia", en: "beach", x: 250, y: 160, kunst: um(250, 160, k),
     tipp: "Die Copacabana ist vier Kilometer lang – einer der berühmtesten Strände der Welt." });
@@ -579,28 +615,56 @@ S.davor(`<g opacity=".85"><path d="M${r(KI.x - KR + 3)} ${r(THEKE - 1.2)} L${r(K
    ===================================================================== */
 const SCH = { x: 296, y: 166 };
 {
-  const s = sy(SCH.y);                         /* ≈ 41 Einheiten je Meter */
-  const top = -2.25 * s, rand = -1.95 * s, R = 0.92 * s;
+  /* im Raum gebaut: Mast bei (X0 | Z0), Rand 2,0 m hoch (über der Augenhöhe
+     1,6 m), Nabe 2,25 m, Durchmesser 2 m. Die vordere Hälfte zeigt die
+     Oberseite, darunter sieht man die Innenseite der hinteren Hälfte. */
+  const Z0 = F * 1.6 / (SCH.y - HY), X0 = (SCH.x - VX) * Z0 / F;
+  const P = (X, Y, Z) => [VX + F * X / Z - SCH.x, HY + F * (1.6 - Y) / Z - SCH.y];
+  const R = 1.0, n = 16;
+  const rand = (a) => P(X0 + R * Math.cos(a), 2.0, Z0 + R * Math.sin(a));
+  const nabe = P(X0 + 0.05, 2.27, Z0);
+  const s = sy(SCH.y);
   let k = `<ellipse cx="${r(-1.1 * s)}" cy="${r(0.25 * s)}" rx="${r(1.05 * s)}" ry="${r(0.22 * s)}" fill="#7a5a2a" opacity=".22" filter="url(#bw_weich)"/>`;
-  k += `<line x1="0" y1="0" x2="${r(-0.08 * s)}" y2="${r(top)}" stroke="${S.lg("mast", [[0, "#d8dcde"], [1, "#9aa1a6"]], 0, 0, 1, 0)}" stroke-width="1.2"/>`;
-  /* Dach von schräg unten: Kuppel (8 Bahnen) und sichtbare Unterseite */
-  const farben = ["#f3c623", "#1e8a4c", "#2f6fc0", "#ffffff"];
-  const ry = R * 0.26;
-  for (let i = 0; i < 8; i++) {
-    const a1 = Math.PI + i * Math.PI / 8, a2 = a1 + Math.PI / 8;
-    const p1 = [Math.cos(a1) * R, rand - Math.sin(a1) * -ry], p2 = [Math.cos(a2) * R, rand - Math.sin(a2) * -ry];
-    k += `<path d="M${r(-0.08 * s)} ${r(top)} L${r(p1[0])} ${r(p1[1])} Q${r((p1[0] + p2[0]) / 2)} ${r((p1[1] + p2[1]) / 2 + 1.6)} ${r(p2[0])} ${r(p2[1])} Z" fill="${farben[i % 4]}"/>`;
-  }
-  k += `<path d="M${r(-R)} ${r(rand)} Q${r(-R * 0.5)} ${r(top + 1)} ${r(-0.08 * s)} ${r(top)} Q${r(R * 0.5)} ${r(top + 1)} ${r(R)} ${r(rand)}" fill="none" stroke="#fff" stroke-width=".5" opacity=".5"/>`;
-  /* Unterseite (Rand vorn) mit Speichen */
-  k += `<path d="M${r(-R)} ${r(rand)} A${r(R)} ${r(ry)} 0 0 0 ${r(R)} ${r(rand)} A${r(R)} ${r(ry * 0.5)} 0 0 1 ${r(-R)} ${r(rand)} Z" fill="#2a2a24" opacity=".28"/>`;
-  for (let i = 1; i < 8; i++) { const a = Math.PI * i / 8; k += `<line x1="${r(-0.08 * s)}" y1="${r(rand + ry * 0.3)}" x2="${r(-Math.cos(a) * R * 0.98)}" y2="${r(rand + Math.sin(a) * ry * 0.95)}" stroke="#6d6d66" stroke-width=".25"/>`; }
-  /* Volant am Rand */
-  for (let i = 0; i < 16; i++) { const a = Math.PI * i / 16, a2 = Math.PI * (i + 1) / 16; k += `<path d="M${r(-Math.cos(a) * R)} ${r(rand + Math.sin(a) * ry)} Q${r(-Math.cos((a + a2) / 2) * R)} ${r(rand + Math.sin((a + a2) / 2) * ry + 1.6)} ${r(-Math.cos(a2) * R)} ${r(rand + Math.sin(a2) * ry)}" fill="${farben[Math.floor(i / 2) % 4]}"/>`; }
+  k += `<line x1="0" y1="0" x2="${r(nabe[0])}" y2="${r(nabe[1])}" stroke="${S.lg("mast", [[0, "#d8dcde"], [1, "#9aa1a6"]], 0, 0, 1, 0)}" stroke-width="1.2"/>`;
+  const farben = ["#f3c623", "#1e8a4c", "#2f6fc0", "#f4f1e6"];
+  const innen = ["#b88f14", "#14603a", "#244f8c", "#bdb7a6"];
+  const keil = (i, c) => { const [p1, p2] = [rand(i * 2 * Math.PI / n), rand((i + 1) * 2 * Math.PI / n)]; const m = rand((i + 0.5) * 2 * Math.PI / n); return `<path d="M${r(nabe[0])} ${r(nabe[1])} L${r(p1[0])} ${r(p1[1])} Q${r(m[0] * 2 - (p1[0] + p2[0]) / 2)} ${r(m[1] * 2 - (p1[1] + p2[1]) / 2 + 0.8)} ${r(p2[0])} ${r(p2[1])} Z" fill="${c}"/>`; };
+  /* Innenseite der hinteren Hälfte (sin > 0 = weiter weg) */
+  for (let i = 0; i < n / 2; i++) k += keil(i, innen[Math.floor(i / 2) % 4]);
+  for (let i = 0; i < n / 2; i++) { const p1 = rand((i + 0.5) * 2 * Math.PI / n); k += `<line x1="${r(nabe[0])}" y1="${r(nabe[1])}" x2="${r(p1[0])}" y2="${r(p1[1])}" stroke="#5f5f55" stroke-width=".22"/>`; }
+  /* Oberseite der vorderen Hälfte, von der Sonne (rechts) beschienen */
+  for (let i = n / 2; i < n; i++) k += keil(i, farben[Math.floor(i / 2) % 4]);
+  const ob = [rand(Math.PI), ...Array.from({ length: n / 2 + 1 }, (_, j) => rand(Math.PI + j * Math.PI / (n / 2)))];
+  k += `<path d="M${r(nabe[0])} ${r(nabe[1])} L${pts(ob)} Z" fill="${S.lg("schirmlicht", [[0, "#000", 0.16], [0.55, "#fff", 0], [1, "#fff6d0", 0.3]], 0, 0, 1, 0)}"/>`;
+  /* Volant am vorderen Rand */
+  for (let i = n / 2; i < n; i++) { const [p1, p2] = [rand(i * 2 * Math.PI / n), rand((i + 1) * 2 * Math.PI / n)]; k += `<path d="M${r(p1[0])} ${r(p1[1])} Q${r((p1[0] + p2[0]) / 2)} ${r((p1[1] + p2[1]) / 2 + 2.2)} ${r(p2[0])} ${r(p2[1])} Z" fill="${farben[Math.floor(i / 2) % 4]}"/>`; }
+  k += `<circle cx="${r(nabe[0])}" cy="${r(nabe[1] - 0.6)}" r=".9" fill="#d8dcde"/>`;
   S.teil({ id: "sonnenschirm", de: "der Sonnenschirm", syl: "SON-nen-schirm", it: "l'ombrellone", itSyl: "om-brel-LO-ne", en: "beach umbrella", x: SCH.x, y: SCH.y, steht: true, kunst: k,
     tipp: "Sonnenschirme und Stühle leiht man an den Strandbuden aus." });
 }
-const ST = { x: 258, y: 176 };
+/* DAS STRANDTUCH (Canga) liegt rechts vorn im Sand */
+{
+  const P = (X, Z) => [VX + F * X / Z, HY + F * 1.6 / Z];
+  const Xc = 1.75, Zc = 3.55, th = 0.32;
+  const welt = (u, v) => P(Xc + (u - 0.8) * Math.cos(th) - (v - 0.5) * Math.sin(th), Zc + (u - 0.8) * Math.sin(th) + (v - 0.5) * Math.cos(th));
+  const ecken = [welt(0, 0), welt(1.6, 0), welt(1.6, 1), welt(0, 1)];
+  const [ox, oy] = [ecken[0][0], ecken[0][1]];
+  /* Muster: affin in die Fläche gelegt (Meter) */
+  const [a, b] = [(ecken[1][0] - ox) / 1.6, (ecken[1][1] - oy) / 1.6], [c, d] = [ecken[3][0] - ox, ecken[3][1] - oy];
+  const X0 = 286, Y0 = 186;
+  let k = `<path d="M${pts(ecken.map(([x, y]) => [x - X0, y - Y0]))} Z" fill="#e8613a"/>`;
+  let m = `<rect x=".05" y=".05" width="1.5" height=".9" fill="none" stroke="#f6d21e" stroke-width=".05"/><rect x=".1" y=".1" width="1.4" height=".8" fill="none" stroke="#fff3d6" stroke-width=".02"/>`;
+  const blatt = (x, y, rot, l, c2) => `<g transform="translate(${x} ${y}) rotate(${rot})"><path d="M0 0 Q${r(l * 0.5)} ${r(-l * 0.22)} ${l} 0 Q${r(l * 0.5)} ${r(l * 0.22)} 0 0 Z" fill="${c2}"/><path d="M0 0 L${l} 0" stroke="#0f4d2a" stroke-width=".012"/></g>`;
+  for (const [x, y, rot, l] of [[0.3, 0.3, 20, 0.42], [0.35, 0.7, -30, 0.38], [0.9, 0.25, 160, 0.36], [1.2, 0.62, -150, 0.4], [0.8, 0.55, 75, 0.3], [1.25, 0.2, 40, 0.28]]) m += blatt(x, y, rot, l, (x * 10) % 2 < 1 ? "#1e8a4c" : "#2fa35c");
+  for (const [x, y] of [[0.62, 0.38], [1.05, 0.78], [0.25, 0.52], [1.4, 0.4]]) m += `<circle cx="${x}" cy="${y}" r=".06" fill="#f6d21e"/><circle cx="${x}" cy="${y}" r=".025" fill="#c0392b"/>`;
+  k += `<g transform="matrix(${r(a * 100) / 100} ${r(b * 100) / 100} ${r(c * 100) / 100} ${r(d * 100) / 100} ${r(ox - X0)} ${r(oy - Y0)})">${m}</g>`;
+  /* Falten und Sand auf dem Tuch */
+  k += `<path d="M${pts([welt(0.2, 0.55), welt(0.9, 0.48), welt(1.5, 0.6)].map(([x, y]) => [x - X0, y - Y0]))}" stroke="#a8401f" stroke-width=".6" fill="none" opacity=".35"/>`;
+  k += `<path d="M${pts(ecken.map(([x, y]) => [x - X0, y - Y0]))} Z" fill="${S.lg("tuchlicht", [[0, "#fff", 0.1], [1, "#000", 0.08]], 0, 0, 1, 0)}"/>`;
+  S.teil({ id: "strandtuch", de: "das Strandtuch", syl: "STRAND-tuch", it: "il telo da mare", itSyl: "TE-lo da MA-re", en: "beach towel", x: X0, y: Y0, kunst: k,
+    tipp: "In Brasilien nimmt man ein buntes Tuch mit an den Strand: die „Canga“." });
+}
+const ST = { x: 250, y: 171 };
 {
   const s = sy(ST.y);                          /* ≈ 47,5 Einheiten je Meter */
   const AL = S.lg("alu", [[0, "#eef1f2"], [0.5, "#b9c0c4"], [1, "#dfe3e5"]], 0, 0, 1, 0);
@@ -670,7 +734,7 @@ const JU = { x: 168, y: 186 };
    ===================================================================== */
 {
   const s = sy(192);
-  const L = 0.26 * s, B2 = 0.1 * s;
+  const L = 0.5 * s, B2 = 0.19 * s;   /* Sohle 26 cm (Profilmaß ±L/2) */
   const sohle = (dx, rot, gruen) => {
     let g = `<g transform="translate(${dx} 0) rotate(${rot})">`;
     g += `<path d="M0 ${r(-L * 0.28)} Q${r(B2 * 0.55)} ${r(-L * 0.28)} ${r(B2 * 0.5)} 0 Q${r(B2 * 0.42)} ${r(L * 0.22)} 0 ${r(L * 0.24)} Q${r(-B2 * 0.42)} ${r(L * 0.22)} ${r(-B2 * 0.5)} 0 Q${r(-B2 * 0.55)} ${r(-L * 0.28)} 0 ${r(-L * 0.28)} Z" fill="${gruen ? "#1e8a4c" : "#f6d21e"}"/>`;
@@ -683,7 +747,7 @@ const JU = { x: 168, y: 186 };
   };
   /* von oben gesehen in der Tiefe verkürzt */
   let k = schatten(-1.6, 0.6, L * 0.5, 1.2, 0.2);
-  k += `<g transform="scale(1 .62)">${sohle(-4.4, -12, false)}${sohle(4.4, 24, true)}</g>`;
+  k += `<g transform="scale(1 .5)">${sohle(-5.6, -14, false)}${sohle(5.6, 22, true)}</g>`;
   S.teil({ oben: true, id: "flipflops", de: "die Flipflops", syl: "FLIP-flops", it: "le infradito", itSyl: "in-fra-DI-to", en: "flip-flops", x: 62, y: 192, kunst: k,
     tipp: "Die bunten Flipflops aus Brasilien heißen Havaianas." });
 }

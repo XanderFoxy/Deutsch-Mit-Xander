@@ -151,7 +151,9 @@ const bruUnter = [];
   for (let i = 0; i <= 28; i += 2) { const a = i * 503 / 28; k += `<path d="M${P(bp(a, -15, zO(a)))} L${P(bp(a, 15, zO(a)))}" stroke="#7f8a90" stroke-width=".45"/>`; }
   /* Fahrbahn mit Hängern (zwischen Unterkante Bogen und Fahrbahn) */
   {
-    const L = [-430, -250, -60, 0, 120, 251.5, 380, 503, 560, 700, 880];
+    /* Fahrbahn bis genau an die Bildränder (Rampen der Zufahrten) */
+    const randA = (ziel, a0, a1) => { for (let i = 0; i < 40; i++) { const m = (a0 + a1) / 2; if ((bp(m, 24.4, 49)[0] - ziel) * (bp(a0, 24.4, 49)[0] - ziel) > 0) a0 = m; else a1 = m; } return (a0 + a1) / 2; };
+    const L = [randA(0, -900, 0), -60, 0, 120, 251.5, 380, 503, 560, randA(400, 503, 1400)];
     const dO = L.map((a) => bp(a, 24.4, 49)), dU = L.map((a) => bp(a, 24.4, 42.5));
     k += `<path d="M${dO.map(P).join(" L")} L${dU.slice().reverse().map(P).join(" L")} Z" fill="${S.lg("fahrbahn", [[0, "#9aa3a8"], [0.5, "#6e787e"], [1, "#4e575c"]])}"/>`;
     k += `<path d="M${dO.map(P).join(" L")}" stroke="#d6dbdc" stroke-width=".5" fill="none"/>`;
@@ -199,24 +201,24 @@ const bruUnter = [];
   /* BridgeClimb: Gruppe in grauen Anzügen steigt auf dem Obergurt zum Scheitel */
   let kl = "";
   for (let i = 0; i < 9; i++) {
-    const a = 160 + i * 9, p = bp(a, 15, zO(a) + 1.2);
+    const a = 270 + i * 8, p = bp(a, 15, zO(a) + 1.2);
     kl += `<g transform="translate(${r(p[0])} ${r(p[1])})"><rect x="-.28" y="-1.5" width=".56" height="1.1" rx=".25" fill="${i === 0 ? "#3b6fb0" : "#7b8794"}"/><circle cx="0" cy="-1.75" r=".26" fill="#e9c9a8"/><path d="M-.2 -.45 l-.2 .6 M.2 -.45 l.25 .6" stroke="#5a646e" stroke-width=".22"/></g>`;
   }
   k += kl;
   const pz = bp(251.5, 15, 134);
   bruUnter.push(
-    { id: "bogen", de: "der Bogen", syl: "BO-gen", it: "l'arco", itSyl: "AR-co", en: "arch", x: bp(400, 15, 0)[0], y: bp(400, 15, zO(400))[1] + 4,
-      kunst: flaeche(-14, -5, 26, 12), tipp: "Der Stahlbogen spannt sich 503 Meter weit über den Hafen." },
+    { id: "bogen", de: "der Bogen", syl: "BO-gen", it: "l'arco", itSyl: "AR-co", en: "arch", x: bp(420, 15, 0)[0], y: bp(420, 15, zO(420))[1] + 4,
+      kunst: flaeche(-10, -5, 20, 12), tipp: "Der Stahlbogen spannt sich 503 Meter weit über den Hafen." },
     { id: "pylon", de: "der Pylon", syl: "py-LON", it: "il pilone", itSyl: "pi-LO-ne", en: "pylon", x: bp(518, 31, 0)[0], y: bp(518, 31, 0)[1],
       kunst: flaeche(-8, -36, 14, 36), tipp: "Die vier Pylone sind 89 Meter hoch und mit Granit verkleidet. Den Bogen tragen sie nicht." },
     { id: "flagge", de: "die Flagge", syl: "FLAG-ge", it: "la bandiera", itSyl: "ban-DIE-ra", en: "flag", x: pz[0], y: pz[1],
       kunst: flaeche(-5.6, -7.2, 13, 7.6, 0.6), tipp: "Oben wehen die Flagge Australiens und die Flagge der Aborigines." },
-    { id: "kletterer", de: "die Kletterer", syl: "KLET-te-rer", it: "gli scalatori", itSyl: "sca-la-TO-ri", en: "climbers", x: bp(196, 15, 0)[0], y: bp(196, 15, zO(196))[1],
+    { id: "kletterer", de: "die Kletterer", syl: "KLET-te-rer", it: "gli scalatori", itSyl: "sca-la-TO-ri", en: "climbers", x: bp(302, 15, 0)[0], y: bp(302, 15, zO(302))[1],
       kunst: flaeche(-9, -4.6, 18, 6, 0.6), tipp: "Beim BridgeClimb steigen Besucher angeseilt bis auf 134 Meter über dem Wasser." });
   const zx = SCHEITEL[0];
   S.teil({ id: "harbour_bridge", de: "die Harbour Bridge", syl: "HAR-bour-bridge", it: "l'Harbour Bridge", itSyl: "AR-bur BRID-ge", en: "Sydney Harbour Bridge",
     x: 0, y: 0, kunst: k, tipp: "Die Sydney Harbour Bridge wurde 1932 eröffnet. Die Leute nennen sie „Kleiderbügel“.",
-    zoom: { x: r(zx - 58), y: 84, w: 120, h: 78 }, unter: bruUnter });
+    zoom: { x: r(zx - 22), y: 70, w: 154, h: 100 }, unter: bruUnter });
 }
 
 /* =====================================================================
@@ -254,7 +256,7 @@ const opUnter = [];
   const MUND = S.lg("mund", [[0, "#6b5a48"], [0.5, "#8f6c44"], [1, "#4a3f36"]]);
   let schalenNr = 0;
   const schale = (e, b, t, p, rueck) => {
-    const B0 = op(b[0], e, b[1]), T = op(t[0], e, t[1]), Pp = op(p[0], e, SOCKEL_Z), B0f = op(b[0], e, SOCKEL_Z);
+    const B0 = op(b[0], e, b[1]), T = op(t[0], e, t[1]), Pp = op(p[0], e, SOCKEL_Z), B0f = op(b[0] + (rueck ? 5 : -5), e, SOCKEL_Z);
     const dir = rueck ? -1 : 1;
     const len = (u, v) => Math.hypot(v[0] - u[0], v[1] - u[1]);
     /* Normale nach außen (oben, vom Mund weg) */
@@ -287,13 +289,14 @@ const opUnter = [];
     g += `<path d="M${P(B0)} Q${P(cg)} ${P(T)} Q${P(cl)} ${P(Pp)}" fill="none" stroke="#9d9686" stroke-width=".2"/>`;
     return { svg: g, T, Pp, B0, cl };
   };
-  const GLAS = S.lg("glas", [[0, "#c39a5e"], [0.5, "#86603a"], [1, "#4e3828"]], 0, 0, 1, 1);
+  const GLAS = S.lg("glas", [[0, "#a8916e"], [0.45, "#6a5643"], [1, "#3a3330"]], 0, 0, 1, 1);
   /* Glaswand unter der Rückschale (Südfoyer, bernsteinfarbenes Glas, schräg von der Seite gesehen) */
   const glaswand = (sch, e, sFuss) => {
     const F0 = op(sFuss, e, SOCKEL_Z);
     let g = `<path d="M${P(sch.T)} Q${P(sch.cl)} ${P(sch.Pp)} L${P(F0)} Z" fill="${GLAS}"/>`;
     for (let i = 1; i < 5; i++) { const u = i / 5; g += `<path d="M${P([sch.T[0] + (F0[0] - sch.T[0]) * u, sch.T[1] + (F0[1] - sch.T[1]) * u])} L${P([sch.T[0] + (F0[0] - sch.T[0]) * u, F0[1]])}" stroke="#e3c28a" stroke-width=".2" opacity=".75"/>`; }
     g += `<path d="M${P(sch.T)} L${P(F0)}" stroke="#f1dfb8" stroke-width=".35"/>`;
+    g += `<path d="M${P([sch.T[0] + (F0[0] - sch.T[0]) * 0.35, sch.T[1] + (F0[1] - sch.T[1]) * 0.35])} L${P([sch.Pp[0] - 1, sch.Pp[1] - 4])}" stroke="#d9c7a4" stroke-width="1.2" opacity=".3"/>`;
     return g;
   };
   /* Restaurant (Südwest, klein, ganz hinten links) */
@@ -305,15 +308,15 @@ const opUnter = [];
   const chA2 = schale(CH, [102, 42], [136, 56], [125]);
   const chB = schale(CH, [76, 30], [44, 47], [57], true);
   const chA3 = schale(CH, [68, 29], [112, 67], [100]);
-  k += chA1.svg + chA2.svg + glaswand(chB, CH, 37) + chB.svg + chA3.svg;
+  k += chA1.svg + chA2.svg + glaswand(chB, CH, 42) + chB.svg + chA3.svg;
   /* Ostgruppe: Joan Sutherland Theatre (vorn) */
   const jA1 = schale(JS, [124, 31], [156, 39], [148]);
   const jA2 = schale(JS, [99, 38], [132, 50], [122]);
   const jB = schale(JS, [74, 27], [47, 41], [59], true);
   const jA3 = schale(JS, [68, 26], [110, 60], [99]);
-  const gwJ = op(40, JS, SOCKEL_Z);
+  const gwJ = op(45, JS, SOCKEL_Z);
   const gw = [jB.T, gwJ, jB.Pp];
-  k += glaswand(jB, JS, 40);
+  k += glaswand(jB, JS, 45);
   k += jA1.svg + jA2.svg + jB.svg + jA3.svg;
   /* Spiegelung des Morgenlichts auf den Schalen (vorn rechts) */
   /* Unter-Teile (Lupe) */
@@ -325,8 +328,8 @@ const opUnter = [];
       kunst: flaeche(-7, -8, 14, 9), tipp: "Über eine Million Fliesen aus Schweden: glänzend weiß und matt cremefarben." },
     { id: "glaswand", de: "die Glaswand", syl: "GLAS-wand", it: "la vetrata", itSyl: "ve-TRA-ta", en: "glass wall", x: (gw[0][0] + gw[1][0]) / 2 + 1, y: gw[1][1],
       kunst: flaeche(-5, -16, 10, 16), tipp: "Die Öffnungen der Schalen sind mit bernsteinfarbenem Glas geschlossen." },
-    { id: "treppe", de: "die Treppe", syl: "TREP-pe", it: "la scalinata", itSyl: "sca-li-NA-ta", en: "steps", x: (SW[0] + SE[0]) / 2 + 3, y: SE[1],
-      kunst: flaeche(-14, -13, 26, 13), tipp: "Über die breite Freitreppe im Süden gehen die Besucher hinauf." },
+    { id: "treppe", de: "die Treppe", syl: "TREP-pe", it: "la scalinata", itSyl: "sca-li-NA-ta", en: "steps", x: SE[0] - 13, y: SE[1],
+      kunst: flaeche(-12, -14, 22, 14), tipp: "Über die breite Freitreppe im Süden gehen die Besucher hinauf." },
     { id: "sockel", de: "der Sockel", syl: "SO-ckel", it: "il basamento", itSyl: "ba-sa-MEN-to", en: "podium", x: op(120, 120, 0)[0], y: op(120, 120, 0)[1],
       kunst: flaeche(-26, -12, 52, 12), tipp: "Der Sockel ist mit Platten aus rosa Granit verkleidet." });
   const oz = op(90, 60, 30);
@@ -342,16 +345,16 @@ const opUnter = [];
 {
   /* Bäume des Botanischen Gartens: Feigen (breite Kronen) und Palmen */
   let b = "";
-  for (let i = 0; i < 24; i++) {
-    const x = -4 + i * 3.4 + rnd() * 2, y = 139.5 + rnd() * 5 - (i > 19 ? (i - 19) * 0.6 : 0), rr = 4.5 + rnd() * 3.2 - (i > 19 ? 1.2 : 0);
+  for (let i = 0; i < 21; i++) {
+    const x = 5 + i * 3 + rnd() * 1.5, y = 139.5 + rnd() * 5 - (i > 16 ? (i - 16) * 0.5 : 0), rr = 4.5 + rnd() * 3.2 - (i > 16 ? 1.4 : 0);
     b += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(rr * 1.3)}" ry="${r(rr)}" fill="${["#3f6b3a", "#4b7a41", "#355f33", "#5a8746"][i % 4]}"/>`;
     b += `<ellipse cx="${r(x + rr * 0.35)}" cy="${r(y - rr * 0.35)}" rx="${r(rr * 0.7)}" ry="${r(rr * 0.45)}" fill="#7da45c" opacity=".55"/>`;
   }
-  for (const x of [18, 47, 71]) {
+  for (const x of [16, 44]) {
     b += `<path d="M${x} 146 Q${x + 0.6} 136 ${x + 0.2} 127" stroke="#6b5a45" stroke-width=".9" fill="none"/>`;
     for (let k = 0; k < 7; k++) { const a = -150 + k * 50; b += `<path d="M${x + 0.2} 127 q${r(Math.cos(a * Math.PI / 180) * 4)} ${r(Math.sin(a * Math.PI / 180) * 3 - 1)} ${r(Math.cos(a * Math.PI / 180) * 7)} ${r(Math.sin(a * Math.PI / 180) * 3 + 2)}" stroke="#4d7a3c" stroke-width="1" fill="none" stroke-linecap="round"/>`; }
   }
-  b += `<rect x="0" y="146.5" width="82" height="3" fill="#8f8a7c"/>`;
+  b += `<rect x="0" y="146.5" width="72" height="3" fill="#8f8a7c"/>`;
   S.teil({ id: "botanischer_garten", de: "der Botanische Garten", syl: "bo-TA-ni-sche GAR-ten", it: "l'orto botanico", itSyl: "OR-to bo-TA-ni-co", en: "botanic garden", x: 0, y: 0, kunst: b,
     tipp: "Der Botanische Garten liegt direkt neben dem Opernhaus. Er ist über 200 Jahre alt." });
 }
@@ -366,7 +369,7 @@ const KANTE = (x) => 190 + Math.sin(x / 23) * 1.6 + (x < 120 ? -2 : 0);
   k += `<g filter="url(#${S.id("spiegel")})" opacity=".55">`;
   for (let i = 0; i < 30; i++) { const x = 100 + i * 4.6 + rnd() * 2, h = 6 + rnd() * 14 * (1 - Math.abs(i - 12) / 16); k += `<rect x="${r(x)}" y="151.4" width="${r(1.6 + rnd() * 1.6)}" height="${r(h * 0.8)}" fill="#f6f1e6" opacity="${r(0.12 + rnd() * 0.2)}"/>`; }
   for (const x of [100, 104, 300, 306]) k += `<rect x="${x}" y="149" width="3" height="10" fill="#d8d3c4" opacity=".35"/>`;
-  k += `<rect x="296" y="148.5" width="26" height="9" fill="#6f7a80" opacity=".45"/><rect x="0" y="148" width="90" height="10" fill="#2f5a34" opacity=".55"/>`;
+  k += `<rect x="296" y="148.5" width="26" height="9" fill="#6f7a80" opacity=".45"/><rect x="0" y="148.5" width="70" height="7" fill="#1f4a2a" opacity=".6"/>`;
   k += `</g>`;
   let wl = "";
   for (let i = 0; i < 190; i++) {
@@ -433,7 +436,7 @@ const KANTE = (x) => 190 + Math.sin(x / 23) * 1.6 + (x < 120 ? -2 : 0);
   /* Eisenflecken (rostbraun) und Wabenverwitterung */
   for (let i = 0; i < 9; i++) { const x = rnd() * 210, y = 198 + rnd() * 60, w = 6 + (y - 190) * 0.3; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(w)}" ry="${r(w * 0.28)}" fill="${S.rg("eisen", [[0, "#9a5a2a", 0.32], [1, "#9a5a2a", 0]])}"/>`; }
   /* eine niedrige Felsstufe vorn (mit Schattenseite) */
-  for (const [x, y, w] of [[60, 236, 70], [150, 250, 60], [20, 206, 40], [120, 214, 50]]) k += `<ellipse cx="${x}" cy="${y}" rx="${w}" ry="${r(w * 0.16)}" fill="${S.rg("felsfleck", [[0, "#f2d8a4", 0.5], [1, "#f2d8a4", 0]])}"/>`;
+  for (const [x, y, w] of [[70, 236, 60], [150, 250, 50], [44, 206, 40], [120, 214, 50]]) k += `<ellipse cx="${x}" cy="${y}" rx="${w}" ry="${r(w * 0.16)}" fill="${S.rg("felsfleck", [[0, "#f2d8a4", 0.5], [1, "#f2d8a4", 0]])}"/>`;
   for (const [x, y, l] of [[30, 226, 26], [112, 244, 34], [170, 222, 18]]) k += `<path d="M${x} ${y} q${r(l * 0.4)} -1.2 ${l} .4 q${r(l * 0.2)} .8 ${r(l * 0.5)} -.2" stroke="#6f4a28" stroke-width=".55" fill="none" opacity=".55"/>`;
   for (let i = 0; i < 50; i++) { const x = rnd() * 220, y = 196 + rnd() * 64; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.3 + (y - 190) * 0.012 + rnd() * 0.5)}" fill="${rnd() < 0.5 ? "#7e5631" : "#f2dcab"}" opacity=".5"/>`; }
   k += `</g>`;
@@ -456,7 +459,7 @@ const KANTE = (x) => 190 + Math.sin(x / 23) * 1.6 + (x < 120 ? -2 : 0);
    6 — MRS MACQUARIE'S CHAIR (die Steinbank im Fels) und 7 — DIE
        TOURISTIN darauf, 8 — DER KAKADU
    ===================================================================== */
-const BANK = { x: 40, y: 214 };
+const BANK = { x: 62, y: 214 };
 {
   const s = vorn(BANK.y);   // ≈ 42 Einheiten je Meter
   const FELS = S.lg("bankfels", [[0, "#e7c991"], [0.45, "#d3a868"], [1, "#a77643"]], 0, 0, 1, 0);

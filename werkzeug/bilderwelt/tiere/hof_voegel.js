@@ -26,13 +26,15 @@ const zug = (d, farbe, w, op = 1, extra = "") => d ? `<path d="${d}" fill="none"
 const fl = (d, farbe, op = 1, extra = "") => d ? `<path d="${d}" fill="${farbe}"${op < 1 ? ` opacity="${op}"` : ""}${extra}/>` : "";
 /* glatte Kurve (Catmull-Rom) mit knappen Zahlen; [x, y, 1] = harte Ecke */
 function G(pts, zu = true) {
-  const n = pts.length, A = (i) => (zu ? pts[(i + n) % n] : pts[Math.max(0, Math.min(n - 1, i))]);
-  let d = "M" + J(pts[0][0], pts[0][1]);
-  for (let i = 0; i < (zu ? n : n - 1); i++) {
+  const n = pts.length, A = (i) => (zu ? pts[(i + n) % n] : pts[Math.max(0, Math.min(n - 1, i))]), rd = (v) => Math.round(v * Q) / Q;
+  let cx = rd(pts[0][0]), cy = rd(pts[0][1]), d = "M" + J(cx, cy);
+  for (let i = 0; i < (zu ? n : n - 1); i++) {   // relativ geschrieben (kleine Zahlen), ohne Rundungsdrift
     const p0 = A(i - 1), p1 = A(i), p2 = A(i + 1), p3 = A(i + 2);
     const c1 = p1[2] ? p1 : [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
     const c2 = p2[2] ? p2 : [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
-    d += "C" + J(c1[0], c1[1], c2[0], c2[1], p2[0], p2[1]);
+    const ex = rd(p2[0]), ey = rd(p2[1]);
+    d += "c" + J(rd(c1[0]) - cx, rd(c1[1]) - cy, rd(c2[0]) - cx, rd(c2[1]) - cy, ex - cx, ey - cy);
+    cx = ex; cy = ey;
   }
   return d + (zu ? "Z" : "");
 }
@@ -107,10 +109,18 @@ function lanze(b, t, w, bg = 0, rund = false) {
   const m = [b[0] + dx * 0.5 + nx * bg, b[1] + dy * 0.5 + ny * bg], h = w * 0.5;
   const s1 = [m[0] + nx * h * 1.15, m[1] + ny * h * 1.15], s2 = [m[0] - nx * h * 1.15, m[1] - ny * h * 1.15];
   const sp = rund ? [t[0] - ux * w * 0.35, t[1] - uy * w * 0.35] : t;
-  let d = "M" + J(b[0] + nx * h * 0.6, b[1] + ny * h * 0.6) + "Q" + J(s1[0] - ux * l * 0.15, s1[1] - uy * l * 0.15, s1[0], s1[1]);
-  if (rund) d += "Q" + J(sp[0] + nx * h * 1.2, sp[1] + ny * h * 1.2, t[0], t[1]) + "Q" + J(sp[0] - nx * h * 1.2, sp[1] - ny * h * 1.2, s2[0], s2[1]);
-  else d += "Q" + J(s1[0] + ux * l * 0.3, s1[1] + uy * l * 0.3, t[0], t[1]) + "Q" + J(s2[0] + ux * l * 0.3, s2[1] + uy * l * 0.3, s2[0], s2[1]);
-  return d + "Q" + J(s2[0] - ux * l * 0.15, s2[1] - uy * l * 0.15, b[0] - nx * h * 0.6, b[1] - ny * h * 0.6) + "Z";
+  const pts = [[b[0] + nx * h * 0.6, b[1] + ny * h * 0.6], [s1[0] - ux * l * 0.15, s1[1] - uy * l * 0.15], s1];
+  if (rund) pts.push([sp[0] + nx * h * 1.2, sp[1] + ny * h * 1.2], t, [sp[0] - nx * h * 1.2, sp[1] - ny * h * 1.2], s2);
+  else pts.push([s1[0] + ux * l * 0.3, s1[1] + uy * l * 0.3], t, [s2[0] + ux * l * 0.3, s2[1] + uy * l * 0.3], s2);
+  pts.push([s2[0] - ux * l * 0.15, s2[1] - uy * l * 0.15], [b[0] - nx * h * 0.6, b[1] - ny * h * 0.6]);
+  /* relativ geschriebene quadratische Bögen (knapp, ohne Rundungsdrift) */
+  const rd = (v) => Math.round(v * Q) / Q;
+  let cx = rd(pts[0][0]), cy = rd(pts[0][1]), d = "M" + J(cx, cy);
+  for (let i = 1; i < pts.length; i += 2) {
+    const ex = rd(pts[i + 1][0]), ey = rd(pts[i + 1][1]);
+    d += "q" + J(rd(pts[i][0]) - cx, rd(pts[i][1]) - cy, ex - cx, ey - cy); cx = ex; cy = ey;
+  }
+  return d + "Z";
 }
 
 /* Federspitze: Mitte c, Richtung a (Grad), Länge L, Breite W */
@@ -144,7 +154,7 @@ function federfeld(T, poly0, o) {
   if (!T.fein && !o.szene) return "";
   /* Feld etwas über den Umriss hinaus säen (die Form klippt): so sind auch am Rand alle Federansätze bedeckt */
   const cx = poly0.reduce((a, p) => a + p[0], 0) / poly0.length, cy = poly0.reduce((a, p) => a + p[1], 0) / poly0.length;
-  const poly = poly0.map(([x, y]) => { const l = Math.hypot(x - cx, y - cy) || 1, d = o.ueber != null ? o.ueber : o.abst * 0.9; return [x + (x - cx) / l * d, y + (y - cy) / l * d]; });
+  const poly = poly0.map(([x, y]) => { const l = Math.hypot(x - cx, y - cy) || 1, d = o.ueber != null ? o.ueber : o.abst * 0.55; return [x + (x - cx) / l * d, y + (y - cy) / l * d]; });
   const a = o.abst * (T.fein ? 1 : 1.6), fs = [];
   const [x0, y0, x1, y1] = T.box(poly);
   let j = 0, ux = 0, uy = 0;
@@ -167,10 +177,14 @@ function federfeld(T, poly0, o) {
 }
 
 /* Körperteil: Füllung, geklippte Innenzeichnung, Volumen, feiner Rand (Pfad knapp geschrieben) */
+/* Licht von links oben: Rückenkante hell, Kernschatten-Band im unteren Drittel, Bodenreflex am Bauch */
+const LICHT = (T) => T.lg("licht", [[0, "#fff", 0.2], [0.28, "#fff", 0], [0.55, "#000", 0.04], [0.8, "#000", 0.3], [0.92, "#000", 0.22], [1, "#fff", 0.06]]);
+const LICHTX = (T) => T.lg("lichtx", [[0, "#fff", 0.08], [0.5, "#fff", 0], [1, "#000", 0.1]], 0, 0, 1, 0);
 const teil = (T, pts, fill, innen, o = {}) => {
   const d = typeof pts === "string" ? pts : G(pts);
-  if (!T.fein && !innen) return `<path d="${d}" fill="${fill}"/>` + (o.vol !== false ? `<path d="${d}" fill="${T.VOL()}"/>` : "");
-  return T.koerper(d, fill, Object.assign({ innen, rw: 0.12, randA: 0.25 }, o));
+  const li = o.vol === false ? "" : `<path d="${d}" fill="${LICHT(T)}"/>` + (o.volx && T.fein ? `<path d="${d}" fill="${LICHTX(T)}"/>` : "");
+  if (!T.fein && !innen) return `<path d="${d}" fill="${fill}"/>` + li;
+  return T.koerper(d, fill, Object.assign({ rw: 0.1, randA: 0.12 }, o, { rand: o.rand || false, vol: false, innen: (innen || "") + li }));
 };
 const relief = (T, n, inh, o) => (T.fein ? `<g filter="${T.relief(n, o)}">${inh}</g>` : inh);
 /* feine Gefiederstruktur (Rauschen, in Federrichtung gestreckt) – nur fein */
@@ -188,20 +202,22 @@ function kammPfad(vorn, spitzen, tal, hinten) {
 /* Vogelbein (Huhn, Pute): Lauf mit Gürtelschuppen vorn, Netzschuppen hinten, Fersengelenk, vier Zehen mit Gliedern,
    Ringschuppen und Krallen, Sporn. o: { H: [x, y] Ferse, A: [x, y] Fußwurzel, w0, w1, hell, mittel, dunkel, kralle,
    sporn (Länge), k (Fußgröße), fern, zehen: [hinten, innen, außen, mitte] Längen } */
-function lauf(T, o) {
+function lauf(T, o0) {
+  const o = o0.fern ? Object.assign({}, o0, { hell: mische(o0.hell, "#000", 0.28), mittel: mische(o0.mittel, "#000", 0.28), dunkel: mische(o0.dunkel, "#000", 0.28), kralle: mische(o0.kralle, "#000", 0.2) }) : o0;
   const { H, A, w0, w1, k = 1, fern } = o;
   const dx = A[0] - H[0], dy = A[1] - H[1], l = Math.hypot(dx, dy), nx = -dy / l, ny = dx / l; // n zeigt nach vorn
   const Z = o.zehen || [2.6, 4.4, 4.8, 6.4];
-  const g = !T.fein ? (fern ? o.dunkel : o.mittel) : T.lg(fern ? "laufF" : "lauf", fern ? [[0, o.mittel], [1, o.dunkel]] : [[0, o.mittel], [0.28, o.hell], [0.62, o.mittel], [1, o.dunkel]], 0, 0, 1, 0);
+  const g = !T.fein ? o.mittel : T.lg(fern ? "laufF" : "lauf", [[0, o.mittel], [0.28, o.hell], [0.62, o.mittel], [1, o.dunkel]], 0, 0, 1, 0);
   const B = [A[0] + 0.2 * k, A[1] + 0.3 * k];
   const zeh = (ende, w, glieder, farbe, hinten) => {
     if (!T.fein) { glieder = 1; if (farbe.startsWith("url")) farbe = o.mittel; }
     const ex = ende[0] - B[0], ey = ende[1] - B[1], el = Math.hypot(ex, ey), ux = ex / el, uy = ey / el, mx = -uy, my = ux;
     const oben = [], unten = [];
-    for (let i = 0; i <= glieder * 2; i++) {
-      const t = i / (glieder * 2), c = [B[0] + ex * t, B[1] + ey * t], ww = w * (1 - t * 0.38) * (i % 2 === 0 && i > 0 ? 0.56 : 0.5);
+    for (let i = 0; i <= glieder; i++) {   // Gelenke als leichte Wülste oben, Ballen unten
+      const t = i / glieder, c = [B[0] + ex * t, B[1] + ey * t], ww = w * (1 - t * 0.38) * (i > 0 ? 0.56 : 0.5);
       oben.push([c[0] + mx * ww, c[1] + my * ww]);
-      unten.push([c[0] - mx * w * (1 - t * 0.38) * (i % 2 ? 0.55 : 0.48), c[1] - my * w * (1 - t * 0.38) * (i % 2 ? 0.55 : 0.48)]);
+      if (i < glieder) { const t2 = (i + 0.5) / glieder, c2 = [B[0] + ex * t2, B[1] + ey * t2], w2 = w * (1 - t2 * 0.38); oben.push([c2[0] + mx * w2 * 0.47, c2[1] + my * w2 * 0.47]); unten.push([c2[0] - mx * w2 * 0.56, c2[1] - my * w2 * 0.56]); }
+      unten.push([c[0] - mx * w * (1 - t * 0.38) * 0.48, c[1] - my * w * (1 - t * 0.38) * 0.48]);
     }
     const tip = [ende[0] + ux * w * 0.3, ende[1] + uy * w * 0.3];
     let z = `<path d="${G([...oben, tip, ...unten.reverse()])}" fill="${farbe}"/>`;
@@ -224,22 +240,22 @@ function lauf(T, o) {
   const zy = -0.42 * k;
   let s = "";
   s += zeh([B[0] - Z[0] * k, zy + 0.08 * k], 0.78 * k, 2, o.dunkel, true);                  // Hinterzehe (Hallux)
-  s += zeh([B[0] + Z[1] * k, zy - 0.32 * k], 0.8 * k, 3, fern ? "#000" : o.dunkel);       // innere Zehe (dahinter)
+  s += zeh([B[0] + Z[1] * k, zy - 0.32 * k], 0.8 * k, 3, mische(o.dunkel, "#000", 0.15));  // innere Zehe (dahinter)
   /* Lauf und Fersengelenk */
   const lp = [[H[0] - nx * w0 * 0.5, H[1] - ny * w0 * 0.5], [H[0] + nx * w0 * 0.5, H[1] + ny * w0 * 0.5], [A[0] + nx * w1 * 0.5, A[1] + ny * w1 * 0.5],
     [A[0] + nx * w1 * 0.7 + 0.25 * k, A[1] + 0.55 * k], [A[0] - nx * w1 * 0.62, A[1] + 0.6 * k], [A[0] - nx * w1 * 0.5, A[1] + ny * w1 * 0.5]];
   s += `<path d="${G(lp)}" fill="${g}"/><ellipse cx="${N(H[0] - nx * w0 * 0.08)}" cy="${N(H[1] + 0.15 * k)}" rx="${N(w0 * 0.6)}" ry="${N(w0 * 0.58)}" fill="${g}"/>`;
-  if (!fern) {
+  {
     /* Gürtelschuppen (Scutellae) vorn: Platten mit dunkler Fuge und heller Kante */
     let fu = "", ka = "";
     const nP = Math.round(l / (0.82 * k));
     for (let i = 1; i < nP; i++) {
       const t = i / nP, x = H[0] + dx * t, y = H[1] + dy * t, w = (w0 + (w1 - w0) * t) / 2;
       fu += "M" + J(x + nx * w, y + ny * w) + "q" + J(-nx * w * 0.5, -ny * w * 0.5 + 0.3 * k, -nx * w * 1.25, -ny * w * 1.25 + 0.12 * k);
-      if (T.fein) ka += "M" + J(x + nx * w * 0.92, y + ny * w * 0.92 + 0.12 * k) + "q" + J(-nx * w * 0.45, -ny * w * 0.45 + 0.28 * k, -nx * w * 1.1, -ny * w * 1.1 + 0.12 * k);
+      if (T.fein && !fern) ka += "M" + J(x + nx * w * 0.92, y + ny * w * 0.92 + 0.12 * k) + "q" + J(-nx * w * 0.45, -ny * w * 0.45 + 0.28 * k, -nx * w * 1.1, -ny * w * 1.1 + 0.12 * k);
     }
     s += zug(fu, o.dunkel, 0.09 * k, 0.8) + zug(ka, "#fff", 0.06 * k, 0.45);
-    if (T.fein) {
+    if (T.fein && !fern) {
       /* Netzschuppen hinten: kleine Vielecke */
       let ne = "";
       for (let i = 0; i < nP * 2; i++) {
@@ -254,12 +270,12 @@ function lauf(T, o) {
     /* Sporn: an der Hinterkante des Laufs, kegelförmig, nach hinten und leicht nach oben gebogen */
     const t = 0.66, w = (w0 + (w1 - w0) * t) / 2, sx = H[0] + dx * t - nx * w * 0.85, sy = H[1] + dy * t - ny * w * 0.85, sl = o.sporn;
     const sp = [sx - sl, sy - sl * 0.42];
-    s += `<path d="M${J(sx + 0.2 * k, sy - 0.62 * k)}Q${J(sx - sl * 0.55, sy - 0.5 * k, sp[0], sp[1])}Q${J(sx - sl * 0.5, sy + 0.35 * k, sx + 0.2 * k, sy + 0.62 * k)}Z" fill="${fern || !T.fein ? o.dunkel : T.lg("sporn", [[0, "#f2e6c4"], [0.5, "#c8ac74"], [1, "#7a6040"]])}"/>`;
-    if (!fern && T.fein) s += zug("M" + J(sx - sl * 0.1, sy - 0.36 * k) + "Q" + J(sx - sl * 0.55, sy - 0.32 * k, sp[0] + 0.25 * k, sp[1] + 0.05 * k), "#fff", 0.09 * k, 0.65) +
+    s += `<path d="M${J(sx + 0.2 * k, sy - 0.62 * k)}Q${J(sx - sl * 0.55, sy - 0.5 * k, sp[0], sp[1])}Q${J(sx - sl * 0.5, sy + 0.35 * k, sx + 0.2 * k, sy + 0.62 * k)}Z" fill="${!T.fein ? o.dunkel : fern ? mische("#b49a68", "#000", 0.28) : T.lg("sporn", [[0, "#f2e6c4"], [0.5, "#c8ac74"], [1, "#7a6040"]])}"/>`;
+    if (T.fein) s += zug("M" + J(sx - sl * 0.1, sy - 0.36 * k) + "Q" + J(sx - sl * 0.55, sy - 0.32 * k, sp[0] + 0.25 * k, sp[1] + 0.05 * k), "#fff", 0.09 * k, 0.65) +
       zug("M" + J(sx - sl * 0.05, sy + 0.45 * k) + "Q" + J(sx - sl * 0.5, sy + 0.2 * k, sp[0] + 0.3 * k, sp[1] + 0.25 * k), "#3a2a14", 0.08 * k, 0.5);
   }
-  s += zeh([B[0] + Z[2] * k, zy + 0.12 * k], 0.88 * k, 3, fern ? o.dunkel : T.lg("zeh2", [[0, o.mittel], [1, o.dunkel]]));   // äußere Zehe
-  s += zeh([B[0] + Z[3] * k, zy - 0.02 * k], 0.95 * k, 4, fern ? o.mittel : T.lg("zeh", [[0, o.hell], [0.55, o.mittel], [1, o.dunkel]])); // Mittelzehe
+  s += zeh([B[0] + Z[2] * k, zy + 0.12 * k], 0.88 * k, 3, T.lg(fern ? "zeh2F" : "zeh2", [[0, o.mittel], [1, o.dunkel]]));   // äußere Zehe
+  s += zeh([B[0] + Z[3] * k, zy - 0.02 * k], 0.95 * k, 4, T.lg(fern ? "zehF" : "zeh", [[0, o.hell], [0.55, o.mittel], [1, o.dunkel]])); // Mittelzehe
   return s;
 }
 
@@ -318,10 +334,12 @@ function flaum(T, pts, n, laenge, farben, zu = true) {
 
 /* Schwimmfuß (Ente, Gans), leicht von oben gesehen: kurzer Lauf, drei Vorderzehen mit Schwimmhaut, kleine Hinterzehe.
    o: { H: Ferse, A: Fußwurzel, w0, w1, L (Zehenlänge), hell, mittel, dunkel, kralle, fern } */
-function schwimmfuss(T, o) {
-  const { H, A, w0, w1, L, fern } = o;
+function schwimmfuss(T, o0) {
+  const o = o0.fern ? Object.assign({}, o0, { hell: mische(o0.hell, "#000", 0.28), mittel: mische(o0.mittel, "#000", 0.28), dunkel: mische(o0.dunkel, "#000", 0.28) }) : o0;
+  const { H, A, w0, w1, L } = o, fern = false;
   const dx = A[0] - H[0], dy = A[1] - H[1], l = Math.hypot(dx, dy), nx = -dy / l, ny = dx / l;
-  const g = !T.fein || fern ? (fern ? o.dunkel : o.mittel) : T.lg("lauf", [[0, o.mittel], [0.3, o.hell], [0.7, o.mittel], [1, o.dunkel]], 0, 0, 1, 0);
+  const sf = o0.fern ? "F" : "";
+  const g = !T.fein ? o.mittel : T.lg("lauf" + sf, [[0, o.mittel], [0.3, o.hell], [0.7, o.mittel], [1, o.dunkel]], 0, 0, 1, 0);
   const B = [A[0] + 0.2, A[1] + 0.25];
   /* Zehenspitzen (leicht von oben): außen (zum Betrachter, tiefer), Mitte, innen (weiter weg, höher) */
   const za = [B[0] + L * 0.84, -0.04], zm = [B[0] + L, -L * 0.1], zi = [B[0] + L * 0.78, -L * 0.21];
@@ -339,7 +357,7 @@ function schwimmfuss(T, o) {
   /* Schwimmhaut: zwischen den Zehen eingebuchtet, durchscheinend heller */
   const ein = (p, q, t) => [p[0] + (q[0] - p[0]) * 0.5 - L * 0.13 * t, p[1] + (q[1] - p[1]) * 0.5 + L * 0.015 * t];
   const haut = [[B[0] - L * 0.03, B[1] - 0.25], zi, ein(zi, zm, 1), zm, ein(zm, za, 1), za, [B[0] + L * 0.25, -0.02], [B[0] - L * 0.02, B[1] + 0.15]];
-  s += `<path d="${G(haut)}" fill="${fern ? o.dunkel : (T.fein ? T.lg("haut", [[0, o.mittel], [0.5, o.hell], [1, o.mittel]], 0, 0, 1, 0.5) : o.hell)}"/>`;
+  s += `<path d="${G(haut)}" fill="${fern ? o.dunkel : (T.fein ? T.lg("haut" + sf, [[0, o.mittel], [0.5, o.hell], [1, o.mittel]], 0, 0, 1, 0.5) : o.hell)}"/>`;
   /* Zehen als Wülste mit Gliedern */
   let ze = "";
   for (const z of [zi, zm, za]) ze += "M" + J(B[0], B[1] - 0.15) + "Q" + J(B[0] + (z[0] - B[0]) * 0.5, B[1] + (z[1] - B[1]) * 0.5 - L * 0.03, z[0], z[1]);
@@ -395,7 +413,7 @@ module.exports = [
       const sicht = [[16.6, -36], [16.2, -27.5], [13.4, -22], [8.4, -18.4], [2.4, -16.6], [-5.6, -16.8], [-13, -19.6], [-17.6, -25.4], [-14, -26], [-5, -24], [4, -25.5], [9, -29.5], [12, -34]];
       const ton = ["#0c1412", "#101a17", "#15241f"];
       s += teil(T, rumpf, gruenSchwarz(T, "rumpf", 0.6, 1),
-        federfeld(T, sicht, { abst: 2, L: 3.8, W: 2.8, winkel: (x, y) => (x > 7 ? 96 + (y + 34) * 1.6 : 140 - (y + 30) * 2), streu: 14, gr: (x, y) => 0.8 - (y + 30) * 0.02,
+        federfeld(T, sicht, { abst: 2.6, L: 4.6, W: 3.4, winkel: (x, y) => (x > 7 ? 96 + (y + 34) * 1.6 : 140 - (y + 30) * 2), streu: 14, gr: (x, y) => 0.8 - (y + 30) * 0.02,
           toene: ton, rand: "#000", rw: 0.14, ra: 0.55, saum: "#5ac894", saumT: 0.45, name: "brF" }) +
         struktur(T, rumpf, "rumpf", 100, "#000", 0.35) +
         `<ellipse cx="10.5" cy="-30" rx="6.5" ry="6" fill="${T.rg("brustGlanz", [[0, "#62c092", 0.25], [1, "#62c092", 0]])}"/>` +
@@ -404,28 +422,28 @@ module.exports = [
       /* nahes Bein mit Sporn, darüber die Schenkelfedern („Hosen"), die die Ferse halb verdecken */
       s += lauf(T, Object.assign({}, BEIN, { H: [0.8, -13.6], A: [2.6, -1.3], w0: 2.25, w1: 1.85, sporn: 2.7 }));
       const hose = [[-6.4, -24], [5.4, -24], [5.8, -18], [4.4, -14.4], [2.8, -12.6], [0.8, -13.1], [-1.2, -12.4], [-3.4, -13.4], [-5.8, -15.8], [-6.9, -20]];
-      s += teil(T, hose, "#0a0e0d", federfeld(T, [[-6, -21], [5.2, -21], [4.4, -14.6], [0.8, -13.4], [-3, -14], [-5.6, -17.4]], { abst: 1.7, L: 3, W: 2.2, winkel: (x) => 96 + x * 1.5,
+      s += teil(T, hose, "#0a0e0d", federfeld(T, [[-6, -21], [5.2, -21], [4.4, -14.6], [0.8, -13.4], [-3, -14], [-5.6, -17.4]], { abst: 2, L: 3.4, W: 2.5, winkel: (x) => 96 + x * 1.5,
           toene: ton, rand: "#000", rw: 0.12, ra: 0.5, saum: "#4aa880", saumT: 0.35, name: "hoF" }) + struktur(T, hose, "hose", 95, "#3e6656", 0.35, 1.2, 0.3) +
         `<path d="${G(hose)}" fill="${T.lg("hoseV", [[0, "#000", 0], [0.55, "#000", 0.15], [1, "#000", 0.5]], 0, 0, 1, 0.3)}"/>`, { rand: false, vol: false });
       /* Flügel: Bug dunkelrot, Binde grün-schwarz, Dreieck bay, Handschwingen schwarz */
       const flug = [[10.4, -36.4], [9.4, -30], [5, -25.8], [-3, -23.8], [-11.5, -23.6], [-17, -25.2], [-13.5, -28.8], [-6, -32.8], [2, -36.6]];
       let fi = "";
-      const nH = F ? 6 : 2, nA = F ? 9 : 4, nD = F ? 9 : 4;
+      const nH = F ? 4 : 2, nA = F ? 7 : 4, nD = F ? 7 : 4;
       K = sammler();
       for (let i = 0; i < nH; i++) langfeder(T, [[-1 - i * 7 / nH, -27.6], [-8 - i * 7.8 / nH, -26.2], [-14.6 - i * 3 / nH, -25]], 2.2, 1.5, "#111413", { rund: true, schaft: "#4a4a44", kante: "#6a6a60", kanteOp: 0.6 }, K);
       fi += K.aus("#000", 0.1, 0.4);
       for (let i = 0; i < nA; i++) {
-        const x = 8.8 - i * 13.9 / nA, k = F ? 1 : 1.6;
+        const x = 8.8 - i * 13.9 / nA, k = F ? 9 / nA : 1.6;
         fi += langfeder(T, [[x + 1.2, -30.6], [x - 1.4, -27.6], [x - 4.4, -24.6], [x - 6.6, -23.4]], 2.4 * k, 2.1 * k, T.lg("bay", [[0, "#c87634"], [0.55, "#a8561f"], [1, "#6a2c10"]], 1, 0, 0, 1),
           { rund: true, schaft: "#4a1e08", kante: "#f0a868", kanteOp: 0.5, rand: "#2a0e04", ra: 0.4 });
       }
       for (let i = 0; i < nD; i++) {
         const x = 9.4 - i * 18.9 / nD;
-        fi += langfeder(T, [[x + 0.6, -33.4 + i * 0.9 / nD], [x - 0.8, -30.8 + i * 1.3 / nD], [x - 2, -29.2 + i * 1.8 / nD]], F ? 3.2 : 4.6, F ? 2.9 : 4.2, gruenSchwarz(T, "binde", 1, 0.4),
+        fi += langfeder(T, [[x + 0.6, -33.4 + i * 0.9 / nD], [x - 0.8, -30.8 + i * 1.3 / nD], [x - 2, -29.2 + i * 1.8 / nD]], F ? 3.9 : 4.6, F ? 3.6 : 4.2, gruenSchwarz(T, "binde", 1, 0.4),
           { rund: true, schaft: "#2a3a34", kante: "#98e4bc", kanteOp: 0.22, kw: 0.3, rand: "#000", ra: 0.4 });
       }
       const bug = [[10.8, -37.4], [10.2, -32.2], [4, -31.6], [-4, -32.6], [-8, -34.2], [-6, -37.6], [2, -38.6]], bugS = [[10.4, -35.4], [10.2, -32.2], [4, -31.6], [-4, -32.6], [-8, -34.2], [-6, -36.6], [2, -35.4]];
-      fi += T.form(G(bug), "#7a2210") + federfeld(T, bugS, { abst: 1.5, L: 2.7, W: 2, winkel: () => 158, toene: ["#8e2a14", "#a83418", "#74200e"], rand: "#2a0602", rw: 0.1, ra: 0.55, saum: "#f08850", saumT: 0.4, name: "bugF" });
+      fi += T.form(G(bug), "#7a2210") + federfeld(T, bugS, { abst: 1.8, L: 3.1, W: 2.3, winkel: () => 158, toene: ["#8e2a14", "#a83418", "#74200e"], rand: "#2a0602", rw: 0.1, ra: 0.55, saum: "#f08850", saumT: 0.4, name: "bugF" });
       s += teil(T, flug, "#6a2a12", fi, { randA: 0.35 });
       /* kleine Sicheln (viele, überlappend) und die große Sichel (vorn) mit grünem Metallglanz */
       const sichel = gruenSchwarz(T, "sichel");
@@ -439,19 +457,19 @@ module.exports = [
       s += K.aus("#000", 0.1, 0.45);
       /* Sattelbehang: entspringt am Rücken unter dem Halsbehang, fällt über Flügelende und Schwanzansatz */
       s += T.form(G([[2, -40.6], [-5, -41], [-11.6, -39.8], [-15.6, -35], [-16.4, -30.4], [-13, -27.6], [-8, -28], [-3, -33]]), "#9a3a14");
-      s += behang(T, [[1.6, -40.4], [-5, -40.8], [-11.6, -39.4]], [[1, -37.8], [-5, -38], [-11.4, -36.4]], [[-4.6, -29.6], [-8.4, -27.8], [-12.4, -27.4], [-15.4, -29.2], [-17, -32.4]], 9, 6,
+      s += behang(T, [[1.6, -40.4], [-5, -40.8], [-11.6, -39.4]], [[1, -37.8], [-5, -38], [-11.4, -36.4]], [[-4.6, -29.6], [-8.4, -27.8], [-12.4, -27.4], [-15.4, -29.2], [-17, -32.4]], 5, 6,
         { w: 1.05, bieg: -0.1, nachV: true, farben: [T.lg("sat1", [[0, "#b8481a"], [0.45, "#e07a30"], [1, "#f6b450"]]), T.lg("sat2", [[0, "#a43c16"], [0.6, "#d86e2c"], [1, "#eea444"]]), T.lg("sat3", [[0, "#c25220"], [1, "#f8c060"]])],
           schaft: "#ffe8b0", rand: "#4a1406", ra: 0.3, reich: (t) => 0.8 + t * 0.2 });
       /* Halsbehang: lange, schmale, spitze goldorange Federn bis über die Schultern */
       s += T.form(G([[11.8, -53.4], [17.5, -54.4], [19.6, -50], [19.4, -45.2], [18, -40], [16.2, -35], [8, -34.6], [-1.6, -38], [-3, -39.6], [4, -42.4], [8.6, -47]]), "#b05a1c");
-      s += behang(T, [[12.4, -53.2], [9.6, -48.4], [5.6, -43.4], [1.5, -40.6]], [[18.6, -51], [20, -46.8], [18.8, -41.8], [16.8, -36.6]], [[-2.8, -38.8], [1.6, -36.4], [6.6, -34.8], [11.6, -34], [16.6, -34]], 8, 7,
+      s += behang(T, [[12.4, -53.2], [9.6, -48.4], [5.6, -43.4], [1.5, -40.6]], [[18.6, -51], [20, -46.8], [18.8, -41.8], [16.8, -36.6]], [[-2.8, -38.8], [1.6, -36.4], [6.6, -34.8], [11.6, -34], [16.6, -34]], 6, 7,
         { w: 1.6, bieg: 0.05, farben: [T.lg("hals1", [[0, "#d07e28"], [0.55, "#f2b450"], [1, "#e68c2c"]]), T.lg("hals2", [[0, "#e09a3c"], [0.6, "#f8c868"], [1, "#d87424"]]), T.lg("hals3", [[0, "#c47426"], [0.5, "#f4bc5c"], [1, "#e48a2c"]])],
           schaft: "#fff0c0", rand: "#5a2208", ra: 0.35, reich: (t) => 0.4 + t * 0.6 });
       s += `<path d="${G([[12.4, -52], [15.6, -46], [14.4, -40], [10, -36.4], [12.2, -42], [12.4, -47]])}" fill="${T.rg("satin", [[0, "#fff6d0", 0.35], [1, "#fff6d0", 0]])}"/>`;
       /* Kopf: kleine Federn, rote nackte Gesichtshaut, Ohrscheibe, Auge, Schnabel, Kamm, Kehllappen */
       const kopf = [[12.4, -50.8], [14, -53.8], [18, -54.6], [21.4, -52.6], [22, -49.2], [20.4, -46.4], [16.4, -46.6], [13, -48]];
       s += teil(T, kopf, T.lg("kopfF", [[0, "#f6c460"], [1, "#d87a28"]]), F ? struktur(T, kopf, "kopf", 178, "#8a4410", 0.35, 1.6, 0.4) +
-        federfeld(T, kopf, { abst: 1.2, L: 2, W: 1.15, winkel: () => 178, spitz: true, toene: ["#f2b850", "#eaa844", "#f8c868"], rand: "#9a5014", rw: 0.06, ra: 0.4, saum: "#fff0b0", saumT: 0.4, name: "kF" }) : "", { rand: false, vol: F });
+        federfeld(T, kopf, { abst: 1.6, L: 2.5, W: 1.5, winkel: () => 178, spitz: true, toene: ["#f2b850", "#eaa844", "#f8c868"], rand: "#9a5014", rw: 0.06, ra: 0.4, saum: "#fff0b0", saumT: 0.4, name: "kF" }) : "", { rand: false, vol: F });
       const rot = T.lg("rot", [[0, "#f0434a"], [0.55, "#cc1c26"], [1, "#8a0c14"]]);
       let haut = teil(T, [[17.3, -52.4], [21.4, -52.6], [22.1, -49.2], [21, -46.6], [18.4, -46.8], [16.8, -49.4]], rot, "", { rand: false, vol: false });
       haut += `<ellipse cx="17.7" cy="-48" rx=".85" ry="1.05" fill="${T.rg("ohr", [[0, "#f07070"], [1, "#b8242c"]], 0.4, 0.35, 0.6)}"/>`;
@@ -472,7 +490,7 @@ module.exports = [
       /* Auge mit nacktem Augenring */
       s += `<ellipse cx="19.6" cy="-50.6" rx="1.12" ry="1" fill="#a8121a" opacity=".85"/>`;
       s += T.augeReal(19.7, -50.6, 0.64, { iris: "#f2901e", iris2: "#a8460c", pupille: "rund", offen: 1.1, lid: "#5a0a0c" });
-      return { svg: s, box: [-38.8, -60.2, 25.1, 0] };
+      return { svg: s, box: [-38.8, -60.2, 25.1, 0], fuesse: [-2.2, 4.6], kopf: [9, -61, 26, -40] };
     } },
 
   /* ------------------------------------------------------------------ HENNE */
@@ -504,7 +522,7 @@ module.exports = [
       const winkel = (x, y) => (x > 6 ? 98 + (y + 28) * 1.4 : 172 - (y + 31) * 3 + (x < -13 ? -14 : 0));
       s += teil(T, rumpf, T.lg("braun", [[0, "#b4602a"], [0.5, "#984a1c"], [1, "#5a2810"]]),
         struktur(T, rumpf, "rumpf", 170, "#3a1404", 0.4) +
-        federfeld(T, rumpf, { abst: 1.8, L: 3.4, W: 2.6, winkel, streu: 8, gr: (x, y) => 0.88 - (y + 31) * 0.008 + (x < -10 ? 0.1 : 0),
+        federfeld(T, rumpf, { abst: 2.5, L: 4.3, W: 3.4, winkel, streu: 8, gr: (x, y) => 0.88 - (y + 31) * 0.008 + (x < -10 ? 0.1 : 0),
           toene: ["#a4521f", "#b05c24", "#984a1a"], rand: "#3a1204", rw: 0.12, ra: 0.5, saum: "#f4c890", saumT: 0.5, name: "rF" }) +
         `<ellipse cx="-15.5" cy="-17" rx="5" ry="4" fill="${T.rg("flaum", [[0, "#e8b07a", 0.3], [1, "#e8b07a", 0]])}"/>` +
         zug("M12.4 -22Q11.6 -15 4 -12.6", "#eaa262", 0.45, 0.3) +
@@ -513,37 +531,37 @@ module.exports = [
       s += lauf(T, Object.assign({}, BEIN, { H: [0.6, -9.6], A: [2.1, -1], w0: 1.68, w1: 1.36 }));
       const hose = [[-5.2, -18], [4.4, -18], [4.8, -13.6], [3.4, -10.4], [2, -9.2], [0.5, -9.7], [-1, -8.9], [-2.6, -9.6], [-4.6, -11.8], [-5.6, -15]];
       s += teil(T, hose, "#7a3616", struktur(T, hose, "hose", 95, "#e0a060", 0.4, 1.2, 0.3) +
-        federfeld(T, [[-5, -17], [4.4, -17], [3.8, -10.4], [0.5, -9.8], [-2.6, -9.8], [-4.6, -12.4]], { abst: 1.55, L: 2.7, W: 2, winkel: (x) => 96 + x * 1.5, toene: ["#8a4018", "#7a3614", "#94481c"], rand: "#2a0c02", rw: 0.1, ra: 0.45, saum: "#e8a868", saumT: 0.4, name: "hoF" }) +
+        federfeld(T, [[-5, -17], [4.4, -17], [3.8, -10.4], [0.5, -9.8], [-2.6, -9.8], [-4.6, -12.4]], { abst: 1.8, L: 3, W: 2.3, winkel: (x) => 96 + x * 1.5, toene: ["#8a4018", "#7a3614", "#94481c"], rand: "#2a0c02", rw: 0.1, ra: 0.45, saum: "#e8a868", saumT: 0.4, name: "hoF" }) +
         `<path d="${G(hose)}" fill="${T.lg("hoseV", [[0, "#000", 0], [0.6, "#000", 0.12], [1, "#000", 0.42]], 0, 0, 1, 0.3)}"/>`, { rand: false, vol: false });
       /* Flügel: Handschwingen (dunkel, hinten unten), Armschwingen gesäumt, große/mittlere/kleine Decken */
       const flug = [[8.2, -28], [7.6, -23.4], [4.8, -19.6], [-1, -17.6], [-8, -17], [-14, -18], [-15.6, -19.6], [-12, -22.4], [-5, -25.8], [1.5, -28], [5.2, -28.8]];
       let fi = "";
-      const nA = F ? 9 : 4, nD = F ? 8 : 4;
-      for (let i = 0; i < (F ? 5 : 2); i++) g += langfeder(T, [[-2 - i, -20.6 + i * 0.2], [-9 - i * 0.9, -19.4 + i * 0.1], [-15 - i * 0.2, -19.2]], 2, 1.6, "#3e1c0a", { rund: true, schaft: "#a07040", kante: "#9a6a40" });
+      const nA = F ? 7 : 4, nD = F ? 6 : 4;
+      for (let i = 0; i < (F ? 3 : 2); i++) g += langfeder(T, [[-2 - i * 1.6, -20.6 + i * 0.3], [-9 - i * 0.9, -19.4 + i * 0.1], [-15 - i * 0.2, -19.2]], 2, 1.6, "#3e1c0a", { rund: true, schaft: "#a07040", kante: "#9a6a40" });
       for (let i = 0; i < nA; i++) {
-        const x = 6.4 - i * 13.5 / nA, k = F ? 1 : 1.5;
+        const x = 6.4 - i * 13.5 / nA, k = F ? 9 / nA : 1.5;
         g += langfeder(T, [[x + 0.8, -23.4], [x - 1.6, -21], [x - 4.6, -18.8], [x - 6.8, -17.8]], 2.2 * k, 1.9 * k, T.lg("arm", [[0, "#b06a32"], [0.6, "#8a4218"], [1, "#5a2408"]], 1, 0, 0, 1),
           { rund: true, schaft: "#f0c890", schaftOp: 0.45, kante: "#f2c088", kanteOp: 0.6 });
       }
       for (let i = 0; i < nD; i++) {
-        const x = 7.6 - i * 15.2 / nD, k = F ? 1 : 1.5;
+        const x = 7.6 - i * 15.2 / nD, k = F ? 8 / nD : 1.5;
         g += langfeder(T, [[x + 0.6, -26 + i * 2 / nD], [x - 0.8, -24.2 + i * 2 / nD], [x - 1.8, -23 + i * 2 / nD]], 2.3 * k, 2.1 * k, T.lg("decke", [[0, "#c0763a"], [1, "#8a4218"]]),
           { rund: true, schaft: "#f6d0a0", schaftOp: 0.4, kante: "#f6cc94", kanteOp: 0.65 });
       }
       fi += gruppe(g, "#2a0e02", 0.1, 0.4); g = "";
       const bug = [[8.4, -28.6], [8, -25.2], [3, -24.8], [-4, -25.6], [-6.5, -26.4], [-1, -28.6], [4.5, -29.4]];
-      fi += T.form(G(bug), "#a85c28") + federfeld(T, bug, { abst: 1.35, L: 2.4, W: 1.8, winkel: () => 160, toene: ["#b4662c", "#a85c26", "#c27434"], rand: "#3a1404", rw: 0.1, ra: 0.5, saum: "#f8d4a0", saumT: 0.55, name: "bugF" });
+      fi += T.form(G(bug), "#a85c28") + federfeld(T, bug, { abst: 1.5, L: 2.6, W: 2, winkel: () => 160, toene: ["#b4662c", "#a85c26", "#c27434"], rand: "#3a1404", rw: 0.1, ra: 0.5, saum: "#f8d4a0", saumT: 0.55, name: "bugF" });
       s += teil(T, flug, "#6a3014", fi, { randA: 0.35 });
       /* Halsbehang goldbraun: schmale, rundliche Federn, oben kurz, unten bis über die Schultern */
       s += T.form(G([[10.2, -39.4], [14.8, -40.4], [16.4, -36], [15.4, -30.6], [13.4, -26.4], [7, -25.4], [-0.4, -28.6], [3.6, -31.8], [7.6, -35]]), "#9a5220");
-      s += behang(T, [[10.6, -39.2], [8, -35.4], [4.6, -31.8], [1.6, -29.8]], [[15.6, -38.4], [16.2, -35], [15.4, -31], [13.6, -28]], [[-0.8, -28.4], [3, -26.2], [7.4, -25], [11, -25.2], [13.6, -26.4]], 8, 8,
+      s += behang(T, [[10.6, -39.2], [8, -35.4], [4.6, -31.8], [1.6, -29.8]], [[15.6, -38.4], [16.2, -35], [15.4, -31], [13.6, -28]], [[-0.8, -28.4], [3, -26.2], [7.4, -25], [11, -25.2], [13.6, -26.4]], 6, 7,
         { w: 1.35, rund: true, bieg: 0.05, farben: [T.lg("h1", [[0, "#9a5224"], [0.6, "#c47e3e"], [1, "#d4924c"]]), T.lg("h2", [[0, "#a85c28"], [1, "#d89c56"]]), T.lg("h3", [[0, "#8e4a20"], [0.7, "#bc7638"], [1, "#cc8a46"]])],
           schaft: "#f6d4a0", sfop: 0.25, rand: "#4a1e08", ra: 0.25, reich: (t) => 0.4 + t * 0.6 });
       s += `<path d="${G([[10.8, -38], [13.4, -33], [12, -28.6], [8, -27], [10, -32]])}" fill="${T.rg("satin", [[0, "#ffe2b8", 0.25], [1, "#ffe2b8", 0]])}"/>`;
       /* Kopf */
       const kopf = [[11, -37.4], [12.6, -40.4], [16, -41], [18.8, -39.2], [18.8, -36], [16.8, -34], [13.6, -34.4], [11.4, -35.4]];
       s += teil(T, kopf, T.lg("kopf", [[0, "#cc8c4a"], [1, "#9a5422"]]), struktur(T, kopf, "kopf", 175, "#5a2a0c", 0.35, 1.8, 0.45) +
-        federfeld(T, kopf, { abst: 1, L: 1.7, W: 1.1, winkel: () => 172, toene: ["#c4844a", "#b87840", "#cc9050"], rand: "#6a3410", rw: 0.05, ra: 0.4, saum: "#ffe0b0", saumT: 0.4, name: "kF" }), { rand: false });
+        federfeld(T, kopf, { abst: 1.15, L: 1.9, W: 1.25, winkel: () => 172, toene: ["#c4844a", "#b87840", "#cc9050"], rand: "#6a3410", rw: 0.05, ra: 0.4, saum: "#ffe0b0", saumT: 0.4, name: "kF" }), { rand: false });
       const rot = T.lg("rot", [[0, "#ea3c42"], [0.6, "#c41a22"], [1, "#8c1016"]]);
       let haut = teil(T, [[14.8, -39], [18.1, -39.2], [19.1, -36], [17.4, -34.2], [15.2, -34.6], [14.4, -36.8]], rot, "", { rand: false, vol: false });
       haut += `<ellipse cx="15" cy="-35.4" rx=".62" ry=".85" fill="${T.rg("ohr", [[0, "#ee6a6a"], [1, "#b8242c"]], 0.4, 0.35, 0.6)}"/>`;
@@ -558,7 +576,7 @@ module.exports = [
       s += `<ellipse cx="19.25" cy="-37.9" rx=".3" ry=".12" fill="#2a1a08" transform="rotate(14 19.25 -37.9)"/>`;
       s += `<ellipse cx="16.3" cy="-37.4" rx=".9" ry=".8" fill="#a8141c" opacity=".75"/>`;
       s += T.augeReal(16.4, -37.4, 0.52, { iris: "#f2a432", iris2: "#a8560c", pupille: "rund", offen: 1.1, lid: "#5a0a0c" });
-      return { svg: s, box: [-24.2, -42.6, 21, 0] };
+      return { svg: s, box: [-24.2, -42.6, 21, 0], fuesse: [-1.4, 3.7], kopf: [10, -43.2, 22, -32] };
     } },
 
   /* ------------------------------------------------------------------ KÜKEN */
@@ -577,10 +595,10 @@ module.exports = [
       s += lauf(T, Object.assign({}, BEIN, { H: [-1.2, -2.6], A: [-0.9, -0.3], w0: 0.4, w1: 0.32, fern: true, zehen: [2.4, 4.6, 5, 6.4] }));
       const umriss = [[-5.2, -4.8], [-4.8, -6.4], [-3.4, -7.4], [-1.2, -7.9], [0.6, -8.5], [1.6, -9.3], [3, -9.65], [4.4, -9.3], [5.25, -8.2], [5.25, -6.9], [4.6, -5.9], [3.8, -4.7], [2.6, -3.2], [0.8, -2.2], [-1.4, -1.95], [-3.4, -2.4], [-4.7, -3.4]];
       /* Flaumrand hinter dem Körper (weiche Silhouette) */
-      s += flaum(T, umriss, 330, 0.4, [["#e6b23c", 0.035, 0.75], ["#f6d258", 0.035, 0.8], ["#fdeaa0", 0.03, 0.8]]);
+      s += flaum(T, umriss, 260, 0.4, [["#e6b23c", 0.035, 0.75], ["#f6d258", 0.035, 0.8], ["#fdeaa0", 0.03, 0.8]]);
       const winkel = (x, y) => (x > 2.2 && y < -6 ? 200 - (y + 8) * 20 : x > 1 ? 120 : 170 - (y + 5) * 18);
       s += teil(T, umriss, T.rg("daune", [[0, "#fff4b0"], [0.45, "#ffd954"], [0.8, "#f2bc36"], [1, "#d89a26"]], 0.42, 0.32, 0.72),
-        (F ? T.haare(umriss, 950, winkel, 0.3, { farben: [["#fff6c4", 1, 0.03, 0.6], ["#e8ac30", 1, 0.03, 0.4], ["#c88a20", 0.5, 0.03, 0.35]], streuung: 40, kruemmung: 0.35 }) : "") +
+        (F ? T.haare(umriss, 680, winkel, 0.3, { farben: [["#fff6c4", 1, 0.03, 0.6], ["#e8ac30", 1, 0.03, 0.4], ["#c88a20", 0.5, 0.03, 0.35]], streuung: 40, kruemmung: 0.35 }) : "") +
         `<ellipse cx="3.1" cy="-7.4" rx="2.3" ry="2.1" fill="${T.rg("kopfL", [[0, "#fff8d0", 0.55], [1, "#fff8d0", 0]], 0.4, 0.35, 0.6)}"/>` +
         `<ellipse cx="2.9" cy="-5.3" rx="1.8" ry=".9" fill="${T.rg("kinn", [[0, "#a86a10", 0.25], [1, "#a86a10", 0]])}"/>` +
         `<ellipse cx="-0.6" cy="-2.9" rx="3.6" ry="1.4" fill="${T.rg("bauchL", [[0, "#fff4d0", 0.3], [1, "#fff4d0", 0]])}"/>`, { rand: false });
@@ -599,7 +617,7 @@ module.exports = [
       /* Auge: groß, dunkel, heller Lidrand */
       s += `<ellipse cx="3.68" cy="-7.78" rx=".42" ry=".39" fill="#e8c070" opacity=".9"/>`;
       s += T.augeReal(3.7, -7.78, 0.29, { iris: "#2e1c0e", iris2: "#140a04", pupille: "rund", offen: 1.12, lid: "#7a5a2a" });
-      return { svg: s, box: [-5.65, -10.05, 6.05, 0] };
+      return { svg: s, box: [-5.65, -10.05, 6.05, 0], fuesse: [-0.5, 1.6], kopf: [1, -10.1, 6.2, -5] };
     } },
 
   /* ------------------------------------------------------------------ ENTE */
@@ -635,7 +653,7 @@ module.exports = [
         ri += struktur(T, rumpf, "well2", 90, "#2a2c28", 0.35, 4.5, 0.3);
       }
       ri += T.form(G(brust), T.lg("brust", [[0, "#7c4434"], [0.45, "#6a3428"], [1, "#3e2020"]], 0, 0, 0.4, 1));
-      if (F) ri += federfeld(T, brust, { abst: 0.75, L: 1.45, W: 1.15, winkel: (x, y) => 100 + (y + 16) * 2, toene: ["#74402e", "#6c3a2a", "#7a4632"], rand: "#2a1410", rw: 0.05, ra: 0.35, saum: "#b48474", saumT: 0.35, name: "brF" }) +
+      if (F) ri += federfeld(T, brust, { abst: 0.85, L: 1.6, W: 1.3, winkel: (x, y) => 100 + (y + 16) * 2, toene: ["#74402e", "#6c3a2a", "#7a4632"], rand: "#2a1410", rw: 0.05, ra: 0.35, saum: "#b48474", saumT: 0.35, name: "brF" }) +
         struktur(T, brust, "brS", 100, "#2a1008", 0.3, 2, 0.4);
       ri += T.form(G([[-16, -24], [-30, -24], [-30, -6], [-17.4, -8], [-16.6, -13], [-17.2, -18.4]]), T.lg("heck", [[0, "#1e2a26"], [0.5, "#0c100f"], [1, "#050606"]]));
       if (F) ri += federfeld(T, [[-16.8, -23], [-26, -23], [-26, -10], [-17.8, -9]], { abst: 1.3, L: 2.3, W: 1.8, winkel: () => 170, toene: ["#0e1412", "#121c18", "#0a0e0d"], rand: "#000", rw: 0.07, ra: 0.5, saum: "#3a6656", saumT: 0.45, name: "heF" });
@@ -696,7 +714,7 @@ module.exports = [
       if (F) k += zug("M23.5 -27.45l.3.3M24.3 -27.4l.3.3M25.1 -27.35l.3.3M25.9 -27.3l.3.3M26.7 -27.3l.3.3", "#7a6a2a", 0.06, 0.6);
       k += T.augeReal(20.9, -30.2, 0.44, { iris: "#3a1e0a", iris2: "#1a0c04", pupille: "rund", offen: 1.05, lid: "#04120a" });
       s += `<g transform="translate(15 -21) scale(.86) translate(-15 21)">${k}</g>`;
-      return { svg: s, box: [-30.9, -31, 26.7, 0] };
+      return { svg: s, box: [-30.9, -31, 26.7, 0], fuesse: [-1.5, 2.6], kopf: [11.5, -31.5, 27, -19.5] };
     } },
 
   /* ------------------------------------------------------------------ GANS */
@@ -741,7 +759,7 @@ module.exports = [
       /* Rumpf: glatt anliegende weiße Konturfedern, kühle graublaue Schatten */
       const rumpf = [[18, -44], [19.6, -37], [18, -28.6], [12.6, -20.4], [4, -15.4], [-6, -13.8], [-17, -15.2], [-27, -19.4], [-34, -23.6], [-38.6, -27.4], [-37.6, -30.6], [-30, -33.4], [-18, -37.6], [-6, -43], [4, -47.4], [12, -48]];
       s += teil(T, rumpf, T.lg("rumpf", [[0, "#fdfcf8"], [0.5, "#eeece6"], [1, "#bcc0c8"]]),
-        federfeld(T, rumpf, { abst: 2.2, L: 4.2, W: 3.2, winkel: (x, y) => (x > 8 ? 100 + (y + 40) * 1.4 : 150 - (y + 30) * 1.6), streu: 10, gr: (x, y) => 0.8 + (x < -10 ? 0.15 : 0),
+        federfeld(T, rumpf, { abst: 2.6, L: 4.8, W: 3.6, winkel: (x, y) => (x > 8 ? 100 + (y + 40) * 1.4 : 150 - (y + 30) * 1.6), streu: 10, gr: (x, y) => 0.8 + (x < -10 ? 0.15 : 0),
           toene: weiss, rand: "#8a929c", rw: 0.08, ra: 0.2, saum: "#ffffff", saumT: 0.5, name: "rF" }) +
         struktur(T, rumpf, "rumpf", 140, "#7a828c", 0.12, 1.4, 0.3) +
         `<ellipse cx="-6" cy="-18" rx="20" ry="4" fill="${T.rg("bauchR", [[0, "#fff", 0.35], [1, "#fff", 0]])}"/>` +
@@ -767,12 +785,12 @@ module.exports = [
       const bug = [[13, -44], [11.6, -37.4], [4, -37.2], [-8, -39.4], [-16, -40], [-6, -45.2], [4, -47.6]];
       fi += T.form(G(bug), "#f6f4ee") + federfeld(T, bug, { abst: 1.7, L: 3, W: 2.4, winkel: () => 162, toene: weiss, rand: "#7a828c", rw: 0.07, ra: 0.25, saum: "#ffffff", saumT: 0.5, name: "bugF" });
       s += teil(T, flug, "#ecece8", fi, { rand: "#5a646e", randA: 0.3 });
-      return { svg: s, box: [-44, -83.6, 31.3, 0] };
+      return { svg: s, box: [-44, -83.6, 31.3, 0], fuesse: [1, 7.8], kopf: [13, -84.5, 31.5, -70] };
     } },
 
   /* ------------------------------------------------------------------ TRUTHAHN */
   { id: "truthahn", de: "der Truthahn", syl: "TRUT-hahn", it: "il tacchino", itSyl: "tac-CHI-no", en: "turkey",
-    gruppe: "Vögel", lebensraum: "Bauernhof", laenge: 0.76, hoehe: 0.96,
+    gruppe: "Vögel", lebensraum: "Bauernhof", laenge: 0.75, hoehe: 0.9,
     /* RECHERCHE: Hausputer, Farbschlag Bronze, balzend („Rad schlagen"): Schwanzfächer aus 18 Steuerfedern senkrecht
        aufgestellt, Steuerfedern kastanienbraun mit feiner schwarzer Bänderung, breitem schwarzem Endband und hellem
        (bräunlich-weißem) Saum; darüber die Oberschwanzdecken (bronze, schwarzes Band, heller Saum). Körpergefieder
@@ -788,9 +806,9 @@ module.exports = [
       let s = "";
       const F = T.fein;
       const BEIN = { hell: "#f2c4b4", mittel: "#d8988a", dunkel: "#8a5248", kralle: "#4a3a30", k: 1.7 };
-      s += lauf(T, Object.assign({}, BEIN, { H: [2.6, -23], A: [4, -2.2], w0: 3.2, w1: 2.6, fern: true, zehen: [2.4, 4.4, 4.8, 6.2] }));
+      s += lauf(T, Object.assign({}, BEIN, { H: [3, -18.6], A: [4.4, -2.2], w0: 3.3, w1: 2.7, fern: true, zehen: [2.4, 4.4, 4.8, 6.2] }));
       /* Schwanzfächer: 18 Steuerfedern um die Nabe, verkürzt (leicht von vorn gesehen) */
-      const N0 = [-12, -48], RX = 0.64, RF = 46;
+      const N0 = [-10, -45], RX = 0.64, RF = 45;
       const fed = [];
       for (let i = 0; i < 18; i++) {
         const a = rad(196 + i * (152 / 17)), ux = Math.cos(a) * RX, uy = Math.sin(a);
@@ -799,41 +817,41 @@ module.exports = [
       }
       const fd = fed.map((p) => G(p)).join("");
       const fid = T.id("faecher");
-      T.def(`<clipPath id="${fid}"><path d="${fd}"/></clipPath>`);
+      T.def(`<path id="${fid}p" d="${fd}"/><clipPath id="${fid}"><use href="#${fid}p"/></clipPath>`);
       const ring = (r, w, farbe, op = 1) => `<ellipse cx="${N0[0]}" cy="${N0[1]}" rx="${N(r * RX)}" ry="${N(r)}" fill="none" stroke="${farbe}" stroke-width="${N(w)}"${op < 1 ? ` stroke-opacity="${op}"` : ""}/>`;
-      let fz = `<path d="${fd}" fill="${T.rg("steuer", [[0, "#3a2414"], [0.5, "#7a4c26"], [1, "#9a6232"]], 0.5, 1, 1)}"/>`;
+      let fz = `<use href="#${fid}p" fill="${T.rg("steuer", [[0, "#3a2414"], [0.5, "#7a4c26"], [1, "#9a6232"]], 0.5, 1, 1)}"/>`;
       fz += `<g clip-path="url(#${fid})">`;
       /* feine schwarze Bänderung, dann breites schwarzes Endband und heller Saum */
-      for (let r = 14; r < 36; r += F ? 1.5 : 3) fz += ring(r, F ? 0.5 : 0.9, "#1a0e06", 0.55);
-      fz += ring(38.6, 5.4, T.rg("endband", [[0, "#000"], [1, "#000"]]) && "#120a06") + ring(41.4, 0.9, "#6a4a2a", 0.8) + ring(45, 6.4, "#e8dcc4");
-      if (F) fz += ring(43.2, 0.6, "#b8a080", 0.7);
+      for (let r = 13; r < 35.5; r += F ? 1.4 : 2.8) fz += ring(r + (T.rnd() - 0.5) * 0.3, F ? 0.45 : 0.9, "#1a0e06", 0.5);
+      fz += ring(38.4, 4.6, "#120a06") + ring(41.2, 1, "#7a5430", 0.9) + ring(45, 6, "#e6d8bc");
+      if (F) fz += ring(42.6, 0.5, "#a88a64", 0.7);
       fz += `<ellipse cx="${N0[0] - 4}" cy="${N0[1] - 18}" rx="18" ry="22" fill="${T.rg("fglanz", [[0, "#fff", 0.18], [1, "#fff", 0]])}"/>`;
       fz += `</g>`;
       /* Federgrenzen und Schäfte */
-      fz += `<g fill="none" stroke="#1a0e06" stroke-width=".22" stroke-opacity=".6">${fed.map((p) => `<path d="${G(p)}"/>`).join("")}</g>`;
+      fz += `<use href="#${fid}p" fill="none" stroke="#1a0e06" stroke-width=".22" stroke-opacity=".6"/>`;
       if (F) { let sf = ""; for (let i = 0; i < 18; i++) { const a = rad(196 + i * (152 / 17)); sf += "M" + J(N0[0] + Math.cos(a) * RX * 9, N0[1] + Math.sin(a) * 9) + "L" + J(N0[0] + Math.cos(a) * RX * 43, N0[1] + Math.sin(a) * 43); } fz += zug(sf, "#f0e0c0", 0.14, 0.45); }
       s += fz;
       /* Oberschwanzdecken: innerer Fächer, bronze mit schwarzem Band und hellem Saum */
       const dk = [];
       for (let i = 0; i < 14; i++) {
-        const a = rad(200 + i * (140 / 13)), ux = Math.cos(a) * RX, uy = Math.sin(a), L = 27 + Math.sin(i / 13 * Math.PI) * 3;
+        const a = rad(200 + i * (140 / 13)), ux = Math.cos(a) * RX, uy = Math.sin(a), L = 26 + Math.sin(i / 13 * Math.PI) * 2.4;
         dk.push(band([[N0[0] + ux * 6, N0[1] + uy * 6], [N0[0] + ux * L * 0.6, N0[1] + uy * L * 0.6], [N0[0] + ux * L, N0[1] + uy * L]], 3, 6.6, true));
       }
       const dd = dk.map((p) => G(p)).join(""), did = T.id("decken");
-      T.def(`<clipPath id="${did}"><path d="${dd}"/></clipPath>`);
-      s += `<path d="${dd}" fill="${T.rg("decke", [[0, "#3a2a14"], [0.6, "#8a5a2a"], [1, "#a8743a"]], 0.5, 1, 1)}"/><g clip-path="url(#${did})">` +
-        ring(22, 3, "#6a7a3a", 0.6) + ring(26.2, 3.6, "#120a06") + ring(29.4, 3, "#d8c8a8") + (F ? ring(18, 2, "#c08040", 0.4) : "") + `</g>` +
-        `<g fill="none" stroke="#1a0e06" stroke-width=".2" stroke-opacity=".6">${dk.map((p) => `<path d="${G(p)}"/>`).join("")}</g>`;
+      T.def(`<path id="${did}p" d="${dd}"/><clipPath id="${did}"><use href="#${did}p"/></clipPath>`);
+      s += `<use href="#${did}p" fill="${T.rg("decke", [[0, "#3a2a14"], [0.6, "#8a5a2a"], [1, "#a8743a"]], 0.5, 1, 1)}"/><g clip-path="url(#${did})">` +
+        ring(20, 3, "#b07a3a", 0.5) + ring(24.4, 3.4, "#120a06") + ring(28, 3.4, "#d8c6a2") + (F ? ring(26.4, 0.5, "#8a6a40", 0.8) : "") + `</g>` +
+        `<use href="#${did}p" fill="none" stroke="#1a0e06" stroke-width=".2" stroke-opacity=".6"/>`;
       /* Rumpf: aufgeplustert, bronze-kupfern schillernde Federn mit schwarzem Endsaum */
-      const rumpf = [[22, -64], [26.6, -56], [27.6, -46], [25, -36], [18, -28], [8, -24.4], [-4, -25], [-14, -30], [-20, -38], [-22, -48], [-19, -58], [-11, -66], [0, -71], [12, -70.4]];
+      const rumpf = [[22.6, -62], [27.2, -54], [28.2, -44], [25.8, -33], [19, -24], [8, -19.4], [-4, -19.8], [-13, -24.6], [-19, -33], [-21, -43], [-18, -54], [-10, -63], [1, -68.4], [13, -67.6]];
       s += teil(T, rumpf, T.lg("rumpf", [[0, "#4a3a22"], [0.5, "#2e2214"], [1, "#140e08"]]),
-        federfeld(T, rumpf, { abst: 2.5, L: 5, W: 3.8, winkel: (x, y) => (x > 14 ? 100 : 150 - (y + 48) * 1.6), streu: 12, gr: (x, y) => 0.85 + (y + 48) * 0.005,
-          toene: ["#7a5a2c", "#8a6230", "#6a5a2a", "#7e6a34"], rand: "#000", rw: 0.16, ra: 0.6, saum: "#0a0604", saumT: 0.85, name: "rF", lang: 1.8 }) +
-        (F ? federfeld(T, rumpf, { abst: 2.5, L: 5, W: 3.8, winkel: (x, y) => (x > 14 ? 100 : 150 - (y + 48) * 1.6), streu: 12, toene: ["none"], rand: "#c89a5a", rw: 0.12, ra: 0.25, name: "x" }) : "") +
-        `<ellipse cx="6" cy="-58" rx="16" ry="10" fill="${T.rg("glanz", [[0, "#c8b070", 0.35], [0.6, "#6a8a5a", 0.15], [1, "#6a8a5a", 0]])}"/>`, { rand: "#000", randA: 0.4 });
+        federfeld(T, rumpf, { abst: 4, L: 7.2, W: 5.6, winkel: (x, y) => (x > 16 ? 96 + (y + 44) * 0.8 : 140 - (y + 44) * 1.4), streu: 10, gr: (x, y) => 0.8 + (y + 44) * 0.006,
+          toene: ["#6a4a24", "#7a5428", "#5a4a24", "#6e5a2e"], rand: "#000", rw: 0.18, ra: 0.7, saum: "#060403", saumT: 0.9, name: "rF", lang: 1.8 }) +
+        struktur(T, rumpf, "rumpf", 120, "#000", 0.2, 1.2, 0.3) +
+        `<ellipse cx="8" cy="-55" rx="17" ry="11" fill="${T.rg("glanz", [[0, "#e0b070", 0.32], [0.6, "#6a8a5a", 0.14], [1, "#6a8a5a", 0]])}"/>` + `<ellipse cx="22" cy="-46" rx="5" ry="12" fill="${T.rg("glanz2", [[0, "#d8a060", 0.22], [1, "#d8a060", 0]])}"/>`, { rand: "#000", randA: 0.4 });
       /* nahes Bein */
-      s += lauf(T, Object.assign({}, BEIN, { H: [9.6, -24.4], A: [11.4, -2.2], w0: 3.4, w1: 2.8, sporn: 1.2, zehen: [2.4, 4.4, 4.8, 6.2] }));
-      s += T.form(G([[4.6, -30], [14.4, -30], [13.6, -24.4], [10, -22.4], [6.4, -24]]), "#1e160c");
+      s += lauf(T, Object.assign({}, BEIN, { H: [10, -19.4], A: [11.6, -2.2], w0: 3.5, w1: 2.9, sporn: 1.3, zehen: [2.4, 4.4, 4.8, 6.2] }));
+      s += federfeld(T, [[5.4, -22], [14.6, -22], [13.6, -18.4], [10, -17], [6.6, -18.6]], { abst: 1.8, L: 3.4, W: 2.8, winkel: () => 100, toene: ["#5a4422", "#6a4e26"], rand: "#000", rw: 0.14, ra: 0.6, saum: "#060403", saumT: 0.85, name: "hoF", ueber: 0, szene: 1 });
       /* gesenkter Flügel: Decken bronze, Arm- und Handschwingen schwarz-weiß gebändert, Spitzen am Boden */
       const flug = [[14, -60], [14.4, -48], [10.6, -34], [4, -20], [-4, -9], [-12, -4], [-17, -6.4], [-14, -18], [-7, -34], [2, -50], [8, -60]];
       let fi = "";
@@ -845,19 +863,23 @@ module.exports = [
           { rund: true, schaft: "#fff", schaftOp: 0.35, rand: "#0a0604", ra: 0.5 });
       }
       const decke = [[14.4, -61], [14.6, -48], [10.6, -38], [2, -36], [-6, -40], [0, -52], [7, -60]];
-      fi += T.form(G(decke), "#3a2a16") + federfeld(T, decke, { abst: 2.2, L: 4.2, W: 3.2, winkel: () => 115, toene: ["#7a5a2c", "#8a6634", "#6a5a2a"], rand: "#000", rw: 0.14, ra: 0.6, saum: "#0a0604", saumT: 0.85, name: "dF", lang: 1.8, szene: 1 });
+      fi += T.form(G(decke), "#3a2a16") + federfeld(T, decke, { abst: 2.6, L: 4.8, W: 3.6, winkel: () => 115, toene: ["#6a4a24", "#7a5428", "#5a4a24"], rand: "#000", rw: 0.14, ra: 0.6, saum: "#060403", saumT: 0.9, name: "dF", lang: 1.8 });
       s += teil(T, flug, "#2a1e12", fi, { rand: "#000", randA: 0.4 });
-      /* Bart: schwarzes Borstenbüschel an der Brust */
+      /* Bart: schwarzes Borstenbüschel, hängt von der Brustmitte */
       let bart = "";
-      for (let i = 0; i < (F ? 26 : 8); i++) { const x = 24.4 + (T.rnd() - 0.5) * 1.6, l = 12 + T.rnd() * 3; bart += "M" + J(x, -51) + "q" + J(0.4 + (T.rnd() - 0.5), l * 0.5, 0.8 + (T.rnd() - 0.5) * 1.6, l); }
-      s += zug(bart, "#0e0a08", 0.32, 0.9) + (F ? zug(bart, "#6a5a4a", 0.08, 0.5) : "");
-      /* Hals: nackt, rot mit warzigen Karunkeln, nach hinten gezogen (S-Form) */
-      const hals = [[16, -66], [19.4, -73], [24.4, -78.6], [27.4, -79.8], [30, -77.4], [28.6, -73.4], [26.8, -69], [26.6, -64], [26, -58], [21, -60]];
+      for (let i = 0; i < (F ? 34 : 10); i++) { const x = 26.6 + (T.rnd() - 0.5) * 1.4, l = 11 + T.rnd() * 3.5, w = (T.rnd() - 0.5) * 1.6; bart += "M" + J(x, -48.6) + "q" + J(1.4 + w * 0.3, l * 0.5, 0.8 + w, l); }
+      s += zug(bart, "#0e0a08", 0.34, 0.9) + (F ? zug(bart, "#7a6a5a", 0.07, 0.45) : "");
+      /* Hals: nackt, rot, nach hinten gezogen (S-Form), mit warzigen Karunkeln */
+      const hals = [[17, -64], [19.8, -70.6], [22.8, -75.2], [25.6, -78.2], [28.8, -78], [29.4, -75.2], [28, -71.6], [27, -67.6], [26.8, -62], [23.6, -58]];
       let hi = "";
-      if (F) { for (let i = 0; i < 22; i++) { const t = T.rnd(), x = 26.4 - t * 3 + (T.rnd() - 0.5) * 1.6, y = -60 - t * 12 + (T.rnd() - 0.5); hi += `<circle cx="${N(x)}" cy="${N(y)}" r="${N(0.5 + T.rnd() * 0.7)}" fill="url(#${T.id("rg_karu")})"/>`; } T.rg("karu", [[0, "#ff7a7a"], [0.6, "#d02a32"], [1, "#8a1018"]], 0.35, 0.35, 0.6); }
-      s += teil(T, hals, T.lg("hals", [[0, "#d8a8b8"], [0.4, "#c8505a"], [1, "#9a1c26"]], 0, 0, 0.3, 1), hi, { randA: 0.3, rw: 0.15 });
-      /* Kehllappen (rot) vom Kinn den Hals hinab */
-      s += relief(T, "haut", teil(T, [[29.2, -78.4], [31, -76.6], [30.6, -72.4], [29, -68.4], [27.6, -66.6], [26.8, -69.4], [27.6, -73.6]], T.lg("lappen", [[0, "#ee4a52"], [0.6, "#c41c26"], [1, "#8a0c14"]]), "", { randA: 0.35, rw: 0.12 }), { f: 2.2, tiefe: 0.05, okt: 2, k1: 1.1 });
+      if (F) {
+        const kg = T.rg("karu", [[0, "#ff8a8a"], [0.6, "#d42a34"], [1, "#8a1018"]], 0.35, 0.35, 0.6);
+        for (let i = 0; i < 20; i++) { const t = T.rnd(), x = 27.4 - t * 4 + (T.rnd() - 0.5) * 2, y = -61 - t * 14 + (T.rnd() - 0.5); hi += `<circle cx="${N(x)}" cy="${N(y)}" r="${N(0.6 + T.rnd() * 0.8)}" fill="${kg}"/>`; }
+      }
+      s += teil(T, hals, T.lg("hals", [[0, "#c88a9a"], [0.35, "#c8505a"], [1, "#9a1c26"]], 0, 0, 0.3, 1), hi, { randA: 0.3, rw: 0.15 });
+      /* Kehllappen: fleischige Falte vom Kinn den Vorderhals hinab */
+      s += relief(T, "haut", teil(T, [[29.2, -78.6], [31, -77], [31.2, -73.6], [30.2, -70], [28.8, -67.6], [27.8, -68.8], [28.4, -72.4], [28.4, -75.6]], T.lg("lappen", [[0, "#ee4a52"], [0.6, "#c41c26"], [1, "#8a0c14"]]),
+        F ? zug("M30.4 -76Q30.4 -72 29 -69", "#ffa0a8", 0.25, 0.45) : "", { randA: 0.35, rw: 0.12 }), { f: 2.2, tiefe: 0.05, okt: 2, k1: 1.1 });
       /* Kopf: nackt, Gesicht blassblau, Scheitel weißlich, kurzer Schnabel, Auge */
       const kopf = [[25, -80.6], [26.6, -83.4], [29.6, -84.6], [32, -83.6], [32.6, -81], [31.4, -78.4], [28.6, -77.8], [26, -78.4]];
       s += teil(T, kopf, T.lg("kopf", [[0, "#eef0f8"], [0.4, "#a8c0e0"], [1, "#6a8ab8"]], 0, 0, 0.3, 1),
@@ -869,6 +891,6 @@ module.exports = [
       /* Stirnzapfen (Snood): beim Balzen lang, hängt über den Schnabel */
       s += relief(T, "snood", teil(T, [[30.4, -84.8], [31.6, -84.2], [33.4, -82.2], [34.6, -78.4], [35.4, -74.2], [35.2, -71.8], [34.4, -71.6], [33.8, -74.4], [32.8, -78.6], [31, -82.6]], T.lg("snood", [[0, "#e86a78"], [0.5, "#c8303e"], [1, "#9a1822"]], 0, 0, 0.4, 1),
         F ? zug("M31.4 -83.6Q33.6 -80 34.6 -73", "#ffb0b8", 0.2, 0.5) + zug("M32.2 -81.6l.6-.2M33 -79.6l.7-.2M33.6 -77.6l.7-.1M34.1 -75.6l.7-.1", "#7a0a14", 0.12, 0.5) : "", { randA: 0.35, rw: 0.1 }), { f: 2.6, tiefe: 0.05, okt: 2, k1: 1.1 });
-      return { svg: s, box: [-41.4, -94.4, 35.4, 0] };
+      return { svg: s, box: [-39.4, -90.4, 35.4, 0], fuesse: [7.8, 15], kopf: [22, -86, 36, -60] };
     } },
 ];
