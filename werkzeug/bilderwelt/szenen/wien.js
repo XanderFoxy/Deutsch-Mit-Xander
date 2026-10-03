@@ -544,14 +544,17 @@ const SB = (svg) => VED(`<g ${FERN2}><g transform="translate(0 -5)">${svg}</g></
 const OBER = { x: 116, d: 3.0 };
 /* Laubbüschel für alle Baumkronen (einmal definiert, oft gesetzt):
    Licht von links oben, Schatten rechts unten */
-S.def(`<g id="${S.id("laub")}"><circle r="1" fill="#46693a"/><circle cx="-.32" cy="-.3" r=".66" fill="#5f8a4a"/><circle cx="-.5" cy="-.5" r=".3" fill="#86ad66"/><circle cx=".5" cy=".42" r=".48" fill="#36552e"/></g>`);
-S.def(`<g id="${S.id("laub2")}"><circle r="1" fill="#527a42"/><circle cx="-.36" cy="-.24" r=".6" fill="#6f9a56"/><circle cx="-.46" cy="-.52" r=".26" fill="#9cc17a"/><circle cx=".46" cy=".46" r=".46" fill="#3c5d32"/></g>`);
-const krone = (cx, cy, rx, ry, n, s0, s1) => {
+const LAUB = (a, b, c, d) => `<path d="M-1 .1Q-1.1-.5-.6-.7Q-.5-1.1 0-1Q.4-1.15.7-.8Q1.1-.7 1-.25Q1.15.2.85.55Q.7.95.2.9Q-.2 1.1-.6.8Q-1 .7-1 .1Z" fill="${a}"/><path d="M-.85-.1Q-.9-.55-.5-.7Q-.35-.95.05-.85Q.4-.9.5-.6Q.25-.4-.05-.45Q-.4-.3-.45 0Z" fill="${b}"/><path d="M-.7-.45Q-.55-.7-.25-.68Q-.3-.5-.5-.38Z" fill="${c}"/><path d="M.2.75Q.6.7.8.35Q.95.1.85-.1Q.6.3.1.45Z" fill="${d}"/>`;
+S.def(`<g id="${S.id("laub")}">${LAUB("#46693a", "#62904c", "#9cc27a", "#33512b")}</g><g id="${S.id("laub2")}">${LAUB("#557d44", "#76a05a", "#b0d08a", "#3c5d32")}</g>`);
+/* fertig skalierte Büschel: in der Krone steht dann nur noch x und y */
+const LGR = [2.6, 3.4, 6, 8, 10];
+S.def(LGR.map((g) => ["laub", "laub2"].map((n) => `<g id="${S.id(n + g)}"><use href="#${S.id(n)}" transform="scale(${g})"/></g>`).join("")).join(""));
+const krone = (cx, cy, rx, ry, n, gr) => {
   let g = "";
   for (let i = 0; i < n; i++) {
-    const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd());
-    const sc = s0 + rnd() * (s1 - s0), x = Math.min(398 - sc, Math.max(2 + sc, cx + Math.cos(a) * rx * d)), yy = cy + Math.sin(a) * ry * d;
-    g += `<use href="#${S.id(rnd() < 0.5 ? "laub" : "laub2")}" transform="translate(${r(x)} ${r(yy)}) scale(${r(sc)})"/>`;
+    const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()), sc = gr[Math.floor(rnd() * gr.length)];
+    const x = Math.min(398 - sc, Math.max(2 + sc, cx + Math.cos(a) * rx * d)), yy = cy + Math.sin(a) * ry * d;
+    g += `<use href="#${S.id((rnd() < 0.5 ? "laub" : "laub2") + sc)}" x="${r(x)}" y="${r(yy)}"/>`;
   }
   return g;
 };
@@ -567,10 +570,10 @@ const krone = (cx, cy, rx, ry, n, s0, s1) => {
      dem Riesenrad und vor dem fernen Schönbrunn bleibt der Blick frei */
   const FB = 143.5;
   for (const [bx, sc] of [[-3, 1], [15, 0.95], [34, 1.05], [52, 0.92], [134, 0.96], [152, 1.02], [208, 1], [227, 0.94], [246, 1.04], [301, 0.98], [320, 1.05], [339, 0.96]]) {
-    const h = 36 * sc, kb = FB - 13 * sc;
+    const kb = FB - 8 * sc;
     k += `<path d="M${r(bx - 0.6)} ${FB} L${r(bx - 0.45)} ${r(kb)} L${r(bx + 0.45)} ${r(kb)} L${r(bx + 0.6)} ${FB} Z" fill="#8a8476"/><path d="M${r(bx - 0.2)} ${r(FB - 2)} l0 -4 M${r(bx + 0.2)} ${r(FB - 8)} l0 -3" stroke="#c9c2a8" stroke-width=".35"/>`;
     k += `<path d="M${bx} ${r(kb + 1)} q-3 -4 -6 -7 M${bx} ${r(kb + 1)} q2 -5 5 -8 M${bx} ${r(kb - 2)} l.4 -6" stroke="#6e685c" stroke-width=".45" fill="none"/>`;
-    k += krone(bx, r(FB - h * 0.66), 9.4 * sc, 9 * sc, 16, 2.2 * sc, 3.6 * sc);
+    k += krone(bx, r(kb - 10 * sc), 10.5 * sc, 9.5 * sc, 17, [2.6, 3.4]);
   }
   /* Kandelaber am fernen Gehsteig (in 36 m) */
   for (const lx of [118, 262]) k += `<rect x="${lx - 0.3}" y="122.4" width=".6" height="24" fill="#3a3d3e"/><path d="M${lx - 3} 123.4 Q${lx} 120.8 ${lx + 3} 123.4" stroke="#3a3d3e" stroke-width=".4" fill="none"/>` +
@@ -975,8 +978,8 @@ const PODEST = yp(3.6);
     return g;
   };
   v += platane(5, 1) + platane(397, -1);
-  v += `<g>${krone(36, 26, 44, 34, 46, 7, 12)}${krone(14, 64, 20, 16, 14, 6, 9)}</g>`;
-  v += `<g>${krone(386, 18, 22, 26, 26, 6.5, 10.5)}</g>`;
+  v += krone(34, 26, 46, 38, 44, [8, 10]) + krone(14, 84, 16, 30, 16, [6, 8]);
+  v += krone(382, 22, 24, 28, 24, [8, 10]) + krone(394, 76, 8, 30, 9, [6]);
   /* das Taxi (4,9 m lang, 1,48 m hoch) mit gelbem Dachschild */
   {
     const s = r(F / 10), X = 22, Y = ys(10);

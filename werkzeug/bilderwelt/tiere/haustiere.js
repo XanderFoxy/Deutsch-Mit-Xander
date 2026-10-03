@@ -1570,7 +1570,7 @@ module.exports = [
       const tb = [0.55, 0.85, 1.15, 1.35, 1.42, 1.42, 1.38, 1.3, 1.22], tv = [0.4, 0.8, 1.3, 1.7, 1.86, 1.78, 1.45, 1.05, 0.9];
       const Hc = P(4.55, -0.78), R = 1.32;
       const H = (a, r = 1) => [Hc[0] + Math.cos(a * Math.PI / 180) * R * r, Hc[1] + Math.sin(a * Math.PI / 180) * R * r];
-      const leib = ss.map((s, i) => P(s, -tb[i])).concat([195, 222, 248, 272, 296, 318, 338].map((a) => H(a)), [H(0, 1.02), H(24, 1.0), H(48, 0.98), H(70, 0.95)],
+      const leib = ss.map((s, i) => P(s, -tb[i])).concat([P(4.1, -1.38)], [214, 240, 266, 292, 316, 338].map((a) => H(a)), [H(0, 1.02), H(24, 1.0), H(48, 0.98), H(70, 0.95)],
         ss.slice().reverse().map((s, i) => P(s, tv[ss.length - 1 - i])));
       const leibId = pfad(T, leib);
       /* Kopf und Nacken gelb (gewellt); Maske = ungezeichnetes Gesicht (Stirn, Wange, Kehle) */
