@@ -49,11 +49,11 @@ const tier = (x0, yb, sk) => ({ P: (a, h) => `${r(x0 + a * sk)} ${r(yb - h * sk)
 const mammut = (x0, yb, sk, kalb = false, f = MAMMUTFELL) => {
   const { P, X, Y } = tier(x0, yb, sk);
   let g = "";
-  const bein = (a, w, farbe) => `<path d="M${P(a - w / 2, 1.5)} L${P(a + w / 2, 1.5)} L${P(a + w / 2 + 0.03, 0.12)} Q${P(a + w / 2, 0)} ${P(a, 0)} Q${P(a - w / 2, 0)} ${P(a - w / 2 - 0.03, 0.12)} Z" fill="${farbe}"/>`;
+  const bein = (a, w, farbe) => `<path d="M${P(a - w / 2, 1.9)} L${P(a + w / 2, 1.9)} L${P(a + w * 0.42, 0.14)} Q${P(a + w * 0.45, 0)} ${P(a, 0)} Q${P(a - w * 0.45, 0)} ${P(a - w * 0.42, 0.14)} Z" fill="${farbe}"/>`;
   /* ferne Beine */
   g += bein(-0.75, 0.5, "#3a1e0e") + bein(1.55, 0.5, "#3a1e0e");
-  /* Rumpf: hoher Kopfbuckel, Schulterbuckel, abfallender Rücken */
-  g += `<path d="M${P(-1.5, 3.05)} Q${P(-0.9, 3.35)} ${P(-0.3, 3.15)} Q${P(0.8, 2.85)} ${P(1.7, 2.45)} Q${P(2.2, 2.1)} ${P(2.05, 1.45)} Q${P(1.9, 0.95)} ${P(1.3, 0.9)} L${P(0.2, 0.85)} Q${P(-0.8, 0.8)} ${P(-1.3, 1.0)} Q${P(-1.75, 1.5)} ${P(-1.8, 2.3)} Z" fill="${f}"/>`;
+  /* Rumpf: hoher Kopfbuckel, Schulterbuckel, abfallender Rücken; Bauch auf 1,3 m */
+  g += `<path d="M${P(-1.5, 3.05)} Q${P(-0.9, 3.35)} ${P(-0.3, 3.15)} Q${P(0.8, 2.85)} ${P(1.7, 2.45)} Q${P(2.2, 2.1)} ${P(2.05, 1.65)} Q${P(1.9, 1.3)} ${P(1.3, 1.3)} L${P(0.2, 1.28)} Q${P(-0.8, 1.25)} ${P(-1.3, 1.35)} Q${P(-1.75, 1.7)} ${P(-1.8, 2.3)} Z" fill="${f}"/>`;
   /* Kopf mit hoher Stirnkuppel */
   g += `<path d="M${P(-1.4, 3.0)} Q${P(-1.75, 3.55)} ${P(-2.15, 3.35)} Q${P(-2.5, 3.0)} ${P(-2.45, 2.3)} Q${P(-2.4, 1.9)} ${P(-2.2, 1.7)} L${P(-1.6, 1.8)} Q${P(-1.3, 2.4)} ${P(-1.4, 3.0)} Z" fill="${f}"/>`;
   /* Rüssel: hängt, Spitze leicht nach vorn */
@@ -64,14 +64,14 @@ const mammut = (x0, yb, sk, kalb = false, f = MAMMUTFELL) => {
   g += `<circle cx="${X(-2.13)}" cy="${Y(2.62)}" r="${r(Math.max(0.35, 0.06 * sk))}" fill="#120a04"/>`;
   /* Stoßzähne: weit nach vorn-unten, dann nach oben und innen gebogen */
   if (!kalb) {
-    g += `<path d="M${P(-2.3, 1.95)} Q${P(-3.0, 0.9)} ${P(-3.7, 1.25)} Q${P(-4.05, 1.65)} ${P(-3.75, 2.25)} L${P(-3.68, 2.2)} Q${P(-3.9, 1.7)} ${P(-3.62, 1.38)} Q${P(-3.0, 1.12)} ${P(-2.25, 2.12)} Z" fill="${S.lg("elfenbein", [[0, "#f4ead2"], [1, "#c9b48a"]])}"/>`;
-    g += `<path d="M${P(-2.15, 1.9)} Q${P(-2.7, 1.0)} ${P(-3.3, 1.3)} Q${P(-3.55, 1.55)} ${P(-3.4, 2.0)}" stroke="#d9c9a4" stroke-width="${r(0.12 * sk)}" fill="none" opacity=".75"/>`;
+    g += `<path d="M${P(-2.32, 1.98)} Q${P(-2.9, 1.0)} ${P(-3.6, 1.3)} Q${P(-4.0, 1.75)} ${P(-3.62, 2.45)} L${P(-3.56, 2.4)} Q${P(-3.86, 1.8)} ${P(-3.54, 1.42)} Q${P(-2.95, 1.16)} ${P(-2.24, 2.12)} Z" fill="${S.lg("elfenbein", [[0, "#f4ead2"], [1, "#c9b48a"]])}"/>`;
+    g += `<path d="M${P(-2.15, 1.92)} Q${P(-2.7, 1.08)} ${P(-3.25, 1.36)} Q${P(-3.5, 1.6)} ${P(-3.36, 2.05)}" stroke="#d9c9a4" stroke-width="${r(0.12 * sk)}" fill="none" opacity=".75"/>`;
   }
   /* nahe Beine */
   g += bein(-1.0, 0.56, f) + bein(1.25, 0.56, f);
   /* langes Fell: Strähnen hängen an Flanke und Bauch */
   for (let i = 0; i < 26; i++) {
-    const a = -1.6 + i * 0.14, h = 1.0 + Math.sin((i / 25) * Math.PI) * 0.15, l = 0.35 + rnd() * 0.3;
+    const a = -1.6 + i * 0.14, h = 1.38 + Math.sin((i / 25) * Math.PI) * 0.1, l = 0.4 + rnd() * 0.35;
     g += `<path d="M${P(a, h + 0.25)} q${r(0.04 * sk)} ${r(l * 0.5 * sk)} ${r(-0.02 * sk)} ${r(l * sk)}" stroke="${i % 2 ? "#4a2814" : "#6a3c1e"}" stroke-width="${r(Math.max(0.3, 0.06 * sk))}" fill="none" stroke-linecap="round"/>`;
   }
   for (let i = 0; i < 18; i++) { const a = -1.4 + rnd() * 3.2, h = 1.4 + rnd() * 1.6; g += `<path d="M${P(a, h)} q${r(0.03 * sk)} ${r(0.15 * sk)} 0 ${r(0.3 * sk)}" stroke="#8a5a34" stroke-width="${r(Math.max(0.2, 0.03 * sk))}" fill="none" opacity=".6"/>`; }
@@ -107,11 +107,15 @@ const mammut = (x0, yb, sk, kalb = false, f = MAMMUTFELL) => {
    ===================================================================== */
 {
   const x = 70, y = 96;
-  let k = `<path d="M44 50 Q58 56 64 64 Q70 74 66 84 Q60 94 40 98 L104 98 Q90 92 86 82 Q84 70 92 60 Q100 52 110 50 Q90 54 78 50 Q60 46 44 50 Z" fill="${S.lg("eis", [[0, "#f6fbff"], [0.5, "#d7ebf5"], [1, "#a6cde2"]])}"/>`;
-  for (let i = 0; i < 9; i++) { const yy = 60 + i * 4.2, w = 6 + i * 2.2; k += `<path d="M${r(76 - w / 2)} ${r(yy)} q${r(w / 2)} 1.6 ${w} 0" stroke="#7fb2cf" stroke-width=".35" fill="none" opacity=".8"/>`; }
-  k += `<path d="M66 64 Q68 80 58 96 M88 62 Q84 80 92 96" stroke="#8a8478" stroke-width="1" fill="none" opacity=".6"/>`;
-  k += `<path d="M40 98 Q54 94 72 97 Q90 94 104 98 L104 100 L40 100 Z" fill="#8f8a7c"/>`;
-  k += `<path d="M70 100 Q74 104 70 110" stroke="#9cc4d6" stroke-width=".8" fill="none" opacity=".8"/>`;
+  /* breites Nährgebiet zwischen den Gipfeln, Zunge fließt ins Vorland */
+  const EIS = S.lg("eis", [[0, "#f6fbff"], [0.5, "#dcecf5"], [1, "#b2d4e6"]]);
+  let k = `<path d="M30 64 L48 50 L62 58 L78 46 L96 58 L112 54 L124 66 Q112 70 104 78 Q98 86 102 94 L104 98 L36 98 L40 92 Q44 82 38 74 Q34 68 30 64 Z" fill="${EIS}"/>`;
+  /* Querspalten und Fließbögen */
+  for (let i = 0; i < 8; i++) { const yy = 64 + i * 4.2, w = 30 + i * 3; k += `<path d="M${r(72 - w / 2)} ${r(yy)} q${r(w / 2)} ${r(2 + i * 0.3)} ${w} 0" stroke="#86b6d2" stroke-width=".35" fill="none" opacity=".75"/>`; }
+  /* Mittel- und Seitenmoränen (dunkle Schuttbänder) */
+  k += `<path d="M78 48 Q74 70 70 97 M40 92 Q46 80 40 70 M102 94 Q98 82 108 72" stroke="#7a7466" stroke-width="1.1" fill="none" opacity=".7"/>`;
+  k += `<path d="M36 98 Q52 95 70 97 Q88 95 104 98 L104 100 L36 100 Z" fill="#8f8a7c"/>`;
+  k += `<path d="M64 100 Q68 104 64 110 M78 100 Q80 104 84 108" stroke="#9cc4d6" stroke-width=".7" fill="none" opacity=".8"/>`;
   S.teil({ id: "ez_gletscher", de: "der Gletscher", syl: "GLET-scher", it: "il ghiacciaio", itSyl: "ghiac-CIA-io", en: "glacier", x, y, kunst: um(x, y, k),
     tipp: "Eine Eiszunge, die sich Jahr für Jahr ein Stück vorschiebt. Sie kommt aus den Alpen." });
 }
