@@ -4,56 +4,61 @@
    ---------------------------------------------------------------------
    RECHERCHE (Archnet „Taj Mahal Complex“, Bluffton Univ. „Taj Mahal
    complex“, Univ. Notre Dame „Great Gate – raking view“, PBS „The Story
-   of India – Taj Mahal“, Strukturdaten bei structurae, Wikipedia-Spiegel
-   „Taj Mahal“):
+   of India – Taj Mahal“, structurae; Maße aus mehreren Quellen, kleine
+   Abweichungen sind dort üblich — UNSICHER markiert):
    - STANDORT: Agra, kurz nach Sonnenaufgang. Wir stehen auf der Terrasse
      des HAUPTTORS (Darwaza-i Rauza, roter Sandstein mit weißem Marmor,
      rund 30 m hoch, oben 2 × 11 Kuppelpavillons; um seine Bögen läuft die
      Inschrift „O Seele, die du in Frieden bist, kehre zurück zu deinem
-     Herrn …“). Das Tor liegt in unserem Rücken — von hier, aus seinem
-     Bogen, sieht jeder Besucher den Taj zum ersten Mal: der berühmteste
-     Blick, genau nach NORDEN über den Garten.
+     Herrn …“). Das Tor liegt in unserem Rücken — hier steht jeder
+     Besucher zuerst: der berühmteste Blick, genau nach NORDEN.
    - DER GARTEN (Charbagh, rund 300 × 300 m): vier Viertel, getrennt von
-     Wasserkanälen und erhöhten Wegen aus rotem Sandstein. Auf unserer
-     Achse der lange Kanal mit einer Reihe Springbrunnen, gesäumt von
-     Zypressen (Sinnbild der Ewigkeit) und Rasen; in der Mitte das
-     erhöhte Marmorbecken (al-Hawd al-Kawthar, „Lotusbecken“) mit den
-     Lotus-Düsen. Im stillen Wasser spiegelt sich der Taj.
-   - DAS MAUSOLEUM (1632–1653, Shah Jahan für Mumtaz Mahal): weißer
-     Makrana-Marmor auf einem 6 m hohen, 95,5 m breiten Sockel (davor die
-     rote Sandsteinterrasse). Der Bau ist 55 m breit, quadratisch mit
-     abgeschrägten Ecken; jede Seite hat ein 33 m hohes Portal (Pishtaq)
-     mit spitzem Bogen, rechts und links je zwei übereinanderliegende
-     Bogennischen. Die Zwiebelkuppel (23 m) sitzt auf einem 12 m hohen
-     Tambour, oben Lotusblätter und die 9,6 m hohe Bekrönung mit
-     Halbmond; insgesamt 73 m. Um die Kuppel vier kleine Kuppelpavillons
-     (Chattris). Um die Portale laufen Schriftbänder aus schwarzem Marmor
-     (Koranverse; die Buchstaben werden nach oben größer, damit sie von
-     unten gleich groß wirken), in den Zwickeln Pietra-dura-Blumen aus
-     Halbedelsteinen.
+     Wasserkanälen und erhöhten Wegen aus rotem Sandstein; an den Wegen
+     tiefer liegende Beete (Studentenblumen, Rosen) mit niedrigen Hecken,
+     dahinter Zypressen (Sinnbild der Ewigkeit), in den Vierteln Rasen und
+     große Schattenbäume. In der Mitte das erhöhte Marmorbecken
+     (al-Hawd al-Kawthar) mit Lotus-Düsen und der Marmorbank. Morgens
+     sind die Springbrunnen im Kanal aus — im stillen Wasser spiegelt sich
+     der Taj.
+   - DAS MAUSOLEUM (1632–1653, Shah Jahan als Grabmal für Mumtaz Mahal):
+     weißer Makrana-Marmor auf einem rund 6–7 m hohen, 95,5 m breiten
+     Sockel (davor die rote Sandsteinterrasse). Der Bau ist 55 m breit,
+     quadratisch mit abgeschrägten Ecken; jede Seite hat ein 33 m hohes
+     Portal (Pishtaq) mit spitzem Bogen, rechts und links je zwei
+     übereinanderliegende Bogennischen. Die ZWIEBELKUPPEL lädt weit über
+     den Tambour aus (größte Breite etwa ein Drittel über ihrem Fuß) und
+     zieht unten sichtbar wieder ein; oben eine Kappe aus umgekehrten
+     Lotusblättern, darauf die Bekrönung (Kalasch-Vase, Kugeln, Halbmond),
+     insgesamt rund 73 m. Um die Kuppel vier kleine Kuppelpavillons
+     (Chattris). Um die Portale laufen Schriftbänder: SCHWARZE Buchstaben
+     (schwarzer Marmor/Jaspis) eingelegt in WEISSEN Marmor, nach oben
+     größer, damit sie von unten gleich groß wirken. In den Zwickeln
+     Pietra-dura-Blumen aus Halbedelsteinen.
    - VIER MINARETTE an den Ecken des Sockels, je gut 40 m, durch zwei
-     Balkone in drei gleiche Teile geteilt, oben ein Pavillon; schwarze
-     Fugenlinien auf weißem Marmor. (Von vorn sieht man die hinteren zwei
-     zwischen Bau und vorderen Minaretten.)
+     Balkone in drei Teile geteilt, oben ein offener Pavillon; schwarze
+     Einlagelinien im weißen Marmor (vor allem senkrecht).
    - LINKS (Westen) die MOSCHEE, rechts (Osten) ihr Spiegelbild, das
-     Gästehaus (Jawab, „Antwort“) — beide roter Sandstein mit weißen
-     Marmorkuppeln und achteckigen Ecktürmen. Von Süden sieht man ihre
-     Schmalseite, die drei Kuppeln stehen hintereinander. (Leicht zur
-     Mitte gerückt, damit beide ganz ins Bild passen.)
+     Gästehaus (Jawab, „Antwort“) — roter Sandstein, weiße Marmorbänder,
+     weiße Kuppeln, achteckige Ecktürme mit offenen Pavillons. Von Süden
+     sieht man ihre Schmalseite; die Kuppeln stehen hintereinander, der
+     große Bogen liegt auf der Langseite zum Taj. (Leicht zur Mitte
+     gerückt, damit beide ganz ins Bild passen.)
    - TYPISCHES: Im Gelände sind Essen und Fahrzeuge verboten — Indien
-     sieht man an den Besuchern und Tieren: eine Frau im Sari (4–8 m
-     Stoff, über die Schulter gelegt), ein Fotograf (in Agra eigener
-     Beruf), der Pfau (Nationalvogel; er lebt in den Gärten), ein
-     Palmenhörnchen mit drei Streifen, Halsbandsittiche.
+     sieht man an den Menschen und Tieren: Eine Besucherin im Sari (4–8 m
+     Stoff, das Ende „Pallu“ über der linken Schulter) posiert mit dem
+     Rücken zum Taj, ein Fotograf (in Agra ein eigener Beruf) macht ihr
+     Bild. Der Pfau (Nationalvogel) lebt in den Gärten, dazu Palmenhörnchen
+     und Halsbandsittiche.
    Maßstab: Augenhöhe 3,1 m über dem Garten (Torterrasse 1,5 m hoch),
    Horizont y = 133, Brennweite 570: Punkt in d Metern, h Metern Höhe und
    s Metern seitlich: y = 133 + (3,1 − h)·570/d, x = 200 + s·570/d.
    Der Taj steht 300–395 m weit (1,9–1,45 Einheiten je Meter).
-   Licht: Morgensonne von rechts (Osten), lange Schatten nach links.
+   Licht: Morgensonne von rechts (Osten), Sonnenhöhe etwa 24°: Ostseiten
+   rosé-golden, Westseiten kühl lila, lange Schatten nach links (Westen).
    ===================================================================== */
 "use strict";
 const path = require("path");
-const { neueSzene, flaeche, flaecheEllipse, schatten, zufall } = require("../bau");
+const { neueSzene, flaeche, schatten, zufall } = require("../bau");
 const B = require("../bau");
 
 const S = neueSzene({ id: "indien", titel: "Indien – der Taj Mahal", emoji: "🕌", thema: "Länder", kuerzel: "ind", fassung: 854, breite: 400, hoehe: 260 });
@@ -74,30 +79,69 @@ const P = (pts) => {
   q = kappe(q, (a) => a[1] <= 260, (a, b) => [a[0] + (b[0] - a[0]) * (260 - a[1]) / (b[1] - a[1]), 260]);
   return q.length ? P0(q) : "";
 };
+/* glatte Kurve (Catmull-Rom) durch Punkte */
+const glatt = (pts, zu = true) => {
+  let d = `M${r(pts[0][0])} ${r(pts[0][1])}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    d += ` C${r(p1[0] + (p2[0] - p0[0]) / 6)} ${r(p1[1] + (p2[1] - p0[1]) / 6)} ${r(p2[0] - (p3[0] - p1[0]) / 6)} ${r(p2[1] - (p3[1] - p1[1]) / 6)} ${r(p2[0])} ${r(p2[1])}`;
+  }
+  return d + (zu ? " Z" : "");
+};
+/* Zwiebelprofil (Radius relativ zum Tambour, Höhe relativ zur Kuppelhöhe): größte Breite 1,3 × auf etwa 1/3 */
+const ZWIEBEL = [[1.0, 0], [1.17, 0.045], [1.27, 0.12], [1.31, 0.22], [1.3, 0.33], [1.22, 0.46], [1.06, 0.58], [0.84, 0.7], [0.58, 0.81], [0.33, 0.9], [0.13, 0.965], [0, 1]];
+/* Umriss einer Zwiebelkuppel: Mitte x, Fuß y, Tambour-Halbbreite rb, Höhe hh (alles in Einheiten) */
+const zwiebel = (x, y, rb, hh) => {
+  const links = ZWIEBEL.map(([q, t]) => [x - q * rb, y - t * hh]), rechts = ZWIEBEL.slice(0, -1).reverse().map(([q, t]) => [x + q * rb, y - t * hh]);
+  return glatt([...links, ...rechts]);
+};
 /* Spiegelachse: Wasser 0,3 m unter den Wegen; für den Taj (u ≈ 1,78): y' = 2·133 + (2·3,1 + 0,6)·1,78 − y */
 const SPIEGEL = r(2 * HOR + (2 * E + 0.6) * 1.78);
+/* Figuren aus B.mensch für die Ferne vereinfachen (Ladezeit!): feine Linien entfallen;
+   Stufe 2 (winzig) ersetzt Verläufe durch ihre mittlere Farbe und rundet auf ganze Zentimeter */
+const vereinfache = (svg, stufe) => {
+  const grenze = stufe >= 2 ? 1.2 : 0.25;
+  svg = svg.replace(/<(path|ellipse|line)\b[^>]*?\/>/g, (el) => { const sw = el.match(/stroke-width="([\d.]+)"/); return /fill="none"/.test(el) && sw && parseFloat(sw[1]) < grenze ? "" : el; });
+  if (stufe >= 2) {
+    const farbe = {};
+    svg.replace(/<(linearGradient|radialGradient) id="([^"]+)"[^>]*>(.*?)<\/\1>/g, (_, t, id, inn) => { const st = [...inn.matchAll(/stop-color="([^"]+)"/g)].map((m) => m[1]); farbe[id] = st[Math.floor(st.length / 2)] || "#888"; return ""; });
+    svg = svg.replace(/<defs>.*?<\/defs>/g, "").replace(/ clip-path="url\(#[^)]+\)"/g, "").replace(/url\(#([^)]+)\)/g, (_, id) => farbe[id] || "#888");
+    svg = svg.replace(/(-?\d+\.\d+)/g, (m) => String(Math.round(parseFloat(m))));
+    svg = svg.replace(/scale\((\d+)\)/, (m0) => m0);
+  }
+  return svg;
+};
 
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("weich2")}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2"/></filter>`);
-S.def(`<filter id="${S.id("spiegelweich")}" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation=".35 .6"/></filter>`);
-S.def(`<filter id="${S.id("dunst")}" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>`);
-const MARMOR = S.lg("marmor", [[0, "#f3ece6"], [0.55, "#fbf6ef"], [1, "#fff4e2"]], 0, 0, 1, 0);      /* Licht von rechts */
-const MARMOR_S = S.lg("marmors", [[0, "#cfc8cc"], [1, "#e2dcdc"]], 0, 0, 1, 0);                       /* Schattenseite */
-const NISCHE = S.lg("nische", [[0, "#b7aeb4"], [0.6, "#cfc6c8"], [1, "#e6ddd8"]]);
-const SANDSTEIN = S.lg("sandstein", [[0, "#b8563a"], [1, "#94402a"]]);
-const ZYPRESSE = S.lg("zypresse", [[0, "#1f3a26"], [0.55, "#2e5233"], [1, "#4a7444"]], 0, 0, 1, 0);
+/* Blüten als wiederverwendbare Rosetten: Studentenblume (gefüllt), Rose */
+{
+  let tg = "", ro = "";
+  for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5; tg += `<circle cx="${r(Math.cos(a) * 0.62)}" cy="${r(Math.sin(a) * 0.5)}" r=".45" fill="#e8820e"/>`; }
+  tg += `<circle cx="0" cy="-.05" r=".62" fill="#f8a822"/><circle cx="-.15" cy="-.2" r=".3" fill="#ffc94a"/>`;
+  ro = `<circle r="1" fill="#a81c2c"/><path d="M-.6 -.1 Q0 -.8 .6 -.1 Q0 .3 -.6 -.1 Z M-.8 .3 Q0 1 .8 .3" fill="#d23646" stroke="#7a1020" stroke-width=".12"/><circle cx="-.1" cy="-.3" r=".25" fill="#f0606a"/>`;
+  S.def(`<g id="${S.id("tagetes")}">${tg}</g><g id="${S.id("rose")}">${ro}</g>`);
+}
+S.def(`<filter id="${S.id("weich1")}" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation=".7"/></filter>`);
+/* Morgenlicht: Westseite kühl lila, Front warmweiß, Ostseite rosé-gold */
+const MARMOR = S.lg("marmor", [[0, "#e9e2ec"], [0.45, "#fbf5ef"], [1, "#ffeedd"]], 0, 0, 1, 0);
+const WEST = "#cbc2d8", OST = "#ffdcc0";
+const NISCHE = S.lg("nische", [[0, "#aba1b6"], [0.6, "#c7bdc6"], [1, "#e2d6d0"]]);
+const SANDSTEIN = S.lg("sandstein", [[0, "#b8563a"], [1, "#94402a"]], 0, 0, 1, 0);
+const KUPPEL = S.lg("kuppel", [[0, "#c9c0d8"], [0.35, "#ece5ea"], [0.62, "#fff7ee"], [0.85, "#ffe4cc"], [1, "#f7c9a8"]], 0, 0, 1, 0);
+const ZYPRESSE = S.lg("zypresse", [[0, "#1c3424"], [0.55, "#2b4c31"], [1, "#4f7a46"]], 0, 0, 1, 0);
 const GOLD = S.lg("gold", [[0, "#f4e2a0"], [0.5, "#c9a24a"], [1, "#8a6a22"]], 0, 0, 1, 0);
 
 /* =====================================================================
-   KULISSE — Morgenhimmel, Dunst über dem Fluss
+   KULISSE — Morgenhimmel
    ===================================================================== */
-S.hinten(`<rect width="400" height="${HOR + 12}" fill="${S.lg("himmel", [[0, "#7fa6cf"], [0.45, "#b5cbe0"], [0.8, "#ecdccc"], [1, "#f6d9bf"]])}"/>`);
-S.hinten(`<ellipse cx="420" cy="${HOR - 6}" rx="190" ry="70" fill="${S.rg("morgenrot", [[0, "#ffd6a6", 0.75], [1, "#ffd6a6", 0]])}"/>`);
+S.hinten(`<rect width="400" height="${HOR + 12}" fill="${S.lg("himmel", [[0, "#7fa3cc"], [0.45, "#b3c8de"], [0.8, "#ecd9cc"], [1, "#f6d6bc"]])}"/>`);
+S.hinten(`<ellipse cx="430" cy="${HOR - 4}" rx="210" ry="80" fill="${S.rg("morgenrot", [[0, "#ffcf9a", 0.8], [1, "#ffcf9a", 0]])}"/>`);
 {
   let w = "";
-  for (const [x, y, s] of [[90, 26, 1.2], [300, 18, 0.9], [360, 58, 0.7]]) {
-    w += `<g filter="url(#${S.id("weich2")})" opacity=".55">`;
-    for (const [dx, dy, rx, ry] of [[0, 0, 22, 3], [-14, 1.6, 12, 2.4], [15, 1, 14, 2.6]]) w += `<ellipse cx="${r(x + dx * s)}" cy="${r(y + dy * s)}" rx="${r(rx * s)}" ry="${r(ry * s)}" fill="#fff4ea"/>`;
+  for (const [x, y, s] of [[90, 26, 1.2], [300, 16, 0.9], [360, 60, 0.7]]) {
+    w += `<g filter="url(#${S.id("weich2")})" opacity=".6">`;
+    for (const [dx, dy, rx, ry] of [[0, 0, 22, 3], [-14, 1.6, 12, 2.4], [15, 1, 14, 2.6]]) w += `<ellipse cx="${r(x + dx * s)}" cy="${r(y + dy * s)}" rx="${r(rx * s)}" ry="${r(ry * s)}" fill="${x > 250 ? "#ffe9d8" : "#fff4ea"}"/>`;
     w += `</g>`;
   }
   S.hinten(w);
@@ -111,15 +155,13 @@ const uB = uAt(T.dB), uK = uAt(T.dK);
 const yB = (h) => yAt(T.dB, h), xB = (s) => xAt(s, T.dB);
 const yK = (h) => yAt(T.dK, h), xK = (s) => xAt(s, T.dK);
 
-/* ---------- Sockel (weißer Marmor) auf der roten Sandsteinterrasse ---------- */
+/* ---------- Sockel (weißer Marmor) auf der roten Sandsteinterrasse, davor ferne Besucher ---------- */
 let sockel = "";
 {
-  const d = T.dS, u = uAt(d), xl = xAt(-47.75, d), xr = xAt(47.75, d), yo = yAt(d, T.h0), yu = yAt(d, 1.2);
-  /* rote Terrasse (über die ganze Breite des Flussufers) */
+  const d = T.dS, xl = xAt(-47.75, d), xr = xAt(47.75, d), yo = yAt(d, T.h0), yu = yAt(d, 1.2);
   sockel += `<rect x="0" y="${r(yAt(292, 1.2))}" width="400" height="${r(yAt(292, 0) - yAt(292, 1.2))}" fill="${SANDSTEIN}"/>`;
-  for (let x = 2; x < 400; x += 6.4) sockel += `<rect x="${r(x)}" y="${r(yAt(292, 1.0))}" width="3.6" height="${r(yAt(292, 0.25) - yAt(292, 1.0))}" fill="#7a3220" opacity=".5"/>`;
+  for (let x = 2; x < 398; x += 6.4) sockel += `<rect x="${r(x)}" y="${r(yAt(292, 1.0))}" width="3.6" height="${r(yAt(292, 0.25) - yAt(292, 1.0))}" fill="#7a3220" opacity=".5"/>`;
   sockel += `<rect x="0" y="${r(yAt(292, 1.2) - 0.4)}" width="400" height=".6" fill="#f2e6dc"/>`;
-  /* der Sockel mit Blendarkaden */
   sockel += `<rect x="${r(xl)}" y="${r(yo)}" width="${r(xr - xl)}" height="${r(yu - yo)}" fill="${MARMOR}"/>`;
   const n = 22, w = (xr - xl) / n;
   for (let i = 0; i < n; i++) {
@@ -127,31 +169,43 @@ let sockel = "";
     sockel += `<path d="M${r(a)} ${r(yu - 0.8)} L${r(a)} ${r(top + 2.2)} Q${r((a + b) / 2)} ${r(top)} ${r(b)} ${r(top + 2.2)} L${r(b)} ${r(yu - 0.8)} Z" fill="${NISCHE}"/>`;
   }
   sockel += `<rect x="${r(xl)}" y="${r(yo)}" width="${r(xr - xl)}" height=".9" fill="#fffaf2"/><rect x="${r(xl)}" y="${r(yo + 1.5)}" width="${r(xr - xl)}" height=".25" fill="#8d8486"/>`;
-  /* Treppenhaus in der Mitte (die Treppe führt verdeckt nach oben) */
   sockel += `<rect x="${r(CX - 4.6)}" y="${r(yo + 1.8)}" width="9.2" height="${r(yu - yo - 2.6)}" fill="#e9e1dc"/><path d="M${r(CX - 2.6)} ${r(yu - 0.8)} L${r(CX - 2.6)} ${r(yo + 5)} Q${CX} ${r(yo + 3)} ${r(CX + 2.6)} ${r(yo + 5)} L${r(CX + 2.6)} ${r(yu - 0.8)} Z" fill="#8a7f86"/>`;
+  /* Ostkante des Sockels im Morgenlicht */
+  sockel += `<rect x="${r(xr - 1.6)}" y="${r(yo)}" width="1.6" height="${r(yu - yo)}" fill="${OST}" opacity=".7"/>`;
 }
 S.def(`<g id="${S.id("sockelbild")}">${sockel}</g>`);
+/* ferne Besucher auf der roten Terrasse vor dem Sockel (Maßstab: 1,6 m ≈ 3 Einheiten) */
+let besucher = "";
+{
+  const farben = [["gelb", "blau"], ["rot", "schwarz"], ["weiss", "grau"], ["rosa", "beige"], ["hellblau", "jeans"]];
+  for (const [s, i] of [[-30, 0], [-27.6, 1], [22, 3]]) {
+    const d = 294, u = uAt(d), [o, h] = farben[i];
+    const m = B.mensch({ id: "ind_b" + i, geschlecht: i % 2 ? "m" : "w", pose: "stehen", blick: 160 + i * 30, frisur: i % 2 ? "kurz" : "zopf", haarfarbe: "schwarz", haut: "mittel",
+      kleidung: { oberteil: { stueck: "tshirt", farbe: o }, unterteil: { stueck: i % 2 ? "hose" : "rock", farbe: h } } }, 1.65 * u);
+    const k = m.svg.match(/scale\(([\d.]+)\)/)[1];
+    besucher += `<g transform="translate(${r(xAt(s, d))} ${r(yAt(d, 1.2))}) scale(${k})">${vereinfache(m.svg.replace(/^<g transform="scale\([\d.]+\)">/, "<g>"), 2)}</g>`;
+  }
+}
 
 /* ---------- das Mausoleum: Fassade, Portal, Nischen, Pavillons, Kuppel ---------- */
 let bau = "", kuppel = "", pavH = "", pavV = "";
-const portal = { s: 10.5, bogen: 6.6, hTop: 40, hBogen: 30.5, hKampfer: 19 };
+const portal = { s: 10.5, bogen: 6.6, hBogen: 30.5, hKampfer: 19 };
+const KUP = { hT: 44, hh: 20.4, rT: 8.4 };       /* Tambour-Oberkante, Kuppelhöhe, Tambour-Radius (m) */
 {
-  const h0 = T.h0, hP = 37;                        /* Brüstung 30 m über dem Sockel */
+  const h0 = T.h0, hP = 37;
   const f = (s) => xB(s);
-  /* abgeschrägte Ecken: Fläche von ±19,5 m (d 320) bis ±27,5 m (d 328) */
+  /* abgeschrägte Ecken: links Schatten (Südwest), rechts Morgenlicht (Südost) */
   for (const sd of [-1, 1]) {
     const xa = f(sd * 19.5), xb = xAt(sd * 27.5, 328), ya = yB(hP), yb = yAt(328, hP), ya0 = yB(h0), yb0 = yAt(328, h0);
-    bau += `<path d="M${r(xa)} ${r(ya0)} L${r(xa)} ${r(ya)} L${r(xb)} ${r(yb)} L${r(xb)} ${r(yb0)} Z" fill="${sd > 0 ? "#fff1dc" : "#cbc3c8"}"/>`;
-    /* zwei Nischen übereinander (verkürzt) */
+    bau += `<path d="M${r(xa)} ${r(ya0)} L${r(xa)} ${r(ya)} L${r(xb)} ${r(yb)} L${r(xb)} ${r(yb0)} Z" fill="${sd > 0 ? OST : WEST}"/>`;
     for (const [hu, ho] of [[h0 + 1.2, h0 + 13.2], [h0 + 15, h0 + 26.6]]) {
       const m = (t, h) => [xa + (xb - xa) * t, yB(h) + (yAt(328, h) - yB(h)) * t];
       const [p1x, p1y] = m(0.18, hu), [p2x, p2y] = m(0.82, hu), [p3x, p3y] = m(0.82, ho - 3), [p4x, p4y] = m(0.18, ho - 3), [pkx, pky] = m(0.5, ho);
-      bau += `<path d="M${r(p1x)} ${r(p1y)} L${r(p4x)} ${r(p4y)} Q${r(pkx)} ${r(pky - 0.6)} ${r(p3x)} ${r(p3y)} L${r(p2x)} ${r(p2y)} Z" fill="${sd > 0 ? "#d9cdc6" : "#a99fa6"}"/>`;
+      bau += `<path d="M${r(p1x)} ${r(p1y)} L${r(p4x)} ${r(p4y)} Q${r(pkx)} ${r(pky - 0.6)} ${r(p3x)} ${r(p3y)} L${r(p2x)} ${r(p2y)} Z" fill="${sd > 0 ? "#e2c3b2" : "#a399b3"}"/>`;
     }
+    bau += `<line x1="${r(xb)}" y1="${r(yb)}" x2="${r(xb)}" y2="${r(yb0)}" stroke="${sd > 0 ? "#fff1e2" : "#b1a8c2"}" stroke-width=".5"/>`;
   }
-  /* Hauptseite zwischen den Schrägen */
   bau += `<rect x="${r(f(-19.5))}" y="${r(yB(hP))}" width="${r(f(19.5) - f(-19.5))}" height="${r(yB(h0) - yB(hP))}" fill="${MARMOR}"/>`;
-  /* Seitenfelder: je zwei Bogennischen übereinander, jede in einem Rahmen */
   for (const sd of [-1, 1]) {
     const a = f(sd * 11.4), b = f(sd * 18.6), xa = Math.min(a, b), xbb = Math.max(a, b);
     for (const [hu, ho] of [[h0 + 1.2, h0 + 13.6], [h0 + 15.2, h0 + 27]]) {
@@ -159,102 +213,99 @@ const portal = { s: 10.5, bogen: 6.6, hTop: 40, hBogen: 30.5, hKampfer: 19 };
       bau += `<rect x="${r(xa + 0.5)}" y="${r(yo)}" width="${r(xbb - xa - 1)}" height="${r(yu - yo)}" fill="none" stroke="#b5aaa8" stroke-width=".35"/>`;
       bau += `<path d="M${r(m - w)} ${r(yu)} L${r(m - w)} ${r(yo + w * 1.1 + 1)} Q${r(m - w)} ${r(yo + 1.2)} ${r(m)} ${r(yo + 1)} Q${r(m + w)} ${r(yo + 1.2)} ${r(m + w)} ${r(yo + w * 1.1 + 1)} L${r(m + w)} ${r(yu)} Z" fill="${NISCHE}"/>`;
       bau += `<path d="M${r(m - w * 0.45)} ${r(yu)} L${r(m - w * 0.45)} ${r(yu - (yu - yo) * 0.42)} Q${r(m)} ${r(yu - (yu - yo) * 0.55)} ${r(m + w * 0.45)} ${r(yu - (yu - yo) * 0.42)} L${r(m + w * 0.45)} ${r(yu)} Z" fill="#8e8389" opacity=".75"/>`;
-      /* Zwickel mit Blumen */
       for (const zx of [m - w + 0.6, m + w - 0.6]) bau += `<circle cx="${r(zx)}" cy="${r(yo + 1.2)}" r=".35" fill="#b04a4a"/><circle cx="${r(zx)}" cy="${r(yo + 1.9)}" r=".22" fill="#3f7a4a"/>`;
     }
   }
-  /* Brüstung mit Fries und kleinen Zinnen */
   bau += `<rect x="${r(f(-19.5))}" y="${r(yB(hP) - 0.2)}" width="${r(f(19.5) - f(-19.5))}" height="1.4" fill="#efe5dc"/>`;
   for (let s = -19; s <= 19; s += 1.25) bau += `<rect x="${r(f(s) - 0.3)}" y="${r(yB(hP) - 1.1)}" width=".6" height=".9" fill="#f6eee4"/>`;
   bau += `<line x1="${r(f(-19.5))}" y1="${r(yB(hP) + 0.6)}" x2="${r(f(19.5))}" y2="${r(yB(hP) + 0.6)}" stroke="#4a4244" stroke-width=".22" stroke-dasharray=".5 .35"/>`;
-  /* Sockelfries (Blumenrelief) unten */
   bau += `<rect x="${r(f(-19.5))}" y="${r(yB(h0 + 1.4))}" width="${r(f(19.5) - f(-19.5))}" height="${r(yB(h0) - yB(h0 + 1.4))}" fill="#e7ded8"/>`;
   for (let s = -19; s <= 19; s += 1.6) bau += `<path d="M${r(f(s))} ${r(yB(h0 + 0.3))} q.3 -1 .6 0" stroke="#b9aeac" stroke-width=".2" fill="none"/>`;
-  /* ---- das große Portal (Pishtaq) mit Schriftband und Pietra dura ---- */
+  /* ---- das große Portal (Pishtaq) ---- */
   const xl = f(-portal.s), xr = f(portal.s), yT = yB(h0 + 33), yU = yB(h0), bw = portal.bogen * uB;
   bau += `<rect x="${r(xl)}" y="${r(yT)}" width="${r(xr - xl)}" height="${r(yU - yT)}" fill="${MARMOR}"/>`;
   bau += `<rect x="${r(xl)}" y="${r(yT)}" width="${r(xr - xl)}" height="${r(yU - yT)}" fill="none" stroke="#c8bdb6" stroke-width=".4"/>`;
-  /* Schriftband: schwarzer Marmor in weißem Rahmen, oben breiter */
-  const sb = 1.2, ri = 1.4;
-  bau += `<path d="M${r(xl + ri)} ${r(yU)} L${r(xl + ri)} ${r(yT + ri)} L${r(xr - ri)} ${r(yT + ri)} L${r(xr - ri)} ${r(yU)}" stroke="#2e2a2c" stroke-width="${sb}" fill="none"/>`;
-  /* Schrift: senkrechte Alif-Striche, Bögen, Punkte — wie Thuluth, oben etwas größer */
-  const zr = zufall(89);
-  let schrift = "";
+  /* Schriftband: SCHWARZE Buchstaben auf WEISSEM Marmor, von feinen dunklen Linien gerahmt, oben größer */
+  const sb = 1.5, ri = 1.0, rz = zufall(89);
+  const bandL = xl + ri, bandR = xr - ri - sb, bandO = yT + ri;
+  bau += `<path d="M${r(bandL)} ${r(yU)} L${r(bandL)} ${r(bandO)} L${r(bandR + sb)} ${r(bandO)} L${r(bandR + sb)} ${r(yU)} L${r(bandR)} ${r(yU)} L${r(bandR)} ${r(bandO + sb)} L${r(bandL + sb)} ${r(bandO + sb)} L${r(bandL + sb)} ${r(yU)} Z" fill="#fbf7f0" stroke="#3a3436" stroke-width=".16"/>`;
   const zeichen = (x, y, g, quer) => {
-    const t = zr(), w = quer ? [g, 0] : [0, g];
-    if (t < 0.3) return quer ? `<path d="M${r(x)} ${r(y + 0.42 * g)} l0 ${r(-0.8 * g)}" stroke="#efe6dc" stroke-width=".16"/>` : `<path d="M${r(x - 0.4 * g)} ${r(y)} l${r(0.8 * g)} 0" stroke="#efe6dc" stroke-width=".16"/>`;
-    if (t < 0.6) return `<path d="M${r(x - 0.35 * g)} ${r(y - 0.1 * g)} q${r(0.35 * g)} ${r(0.5 * g)} ${r(0.7 * g)} 0" stroke="#efe6dc" stroke-width=".15" fill="none"/>`;
-    if (t < 0.8) return `<path d="M${r(x - 0.3 * g)} ${r(y + 0.25 * g)} q${r(0.2 * g)} ${r(-0.6 * g)} ${r(0.6 * g)} ${r(-0.3 * g)}" stroke="#efe6dc" stroke-width=".14" fill="none"/>`;
-    void w; return `<circle cx="${r(x)}" cy="${r(y - 0.25 * g)}" r="${r(0.09 * g)}" fill="#efe6dc"/>`;
+    const t = rz();
+    if (t < 0.32) return quer ? `<path d="M${r(x)} ${r(y + 0.5 * g)} l${r(0.1 * g)} ${r(-0.95 * g)}" stroke="#1d1a1c" stroke-width="${r(0.13 * g)}"/>` : `<path d="M${r(x - 0.5 * g)} ${r(y)} l${r(0.95 * g)} ${r(-0.1 * g)}" stroke="#1d1a1c" stroke-width="${r(0.13 * g)}"/>`;
+    if (t < 0.62) return `<path d="M${r(x - 0.4 * g)} ${r(y - 0.15 * g)} q${r(0.4 * g)} ${r(0.55 * g)} ${r(0.8 * g)} 0" stroke="#1d1a1c" stroke-width="${r(0.12 * g)}" fill="none"/>`;
+    if (t < 0.85) return `<path d="M${r(x - 0.35 * g)} ${r(y + 0.3 * g)} q${r(0.25 * g)} ${r(-0.7 * g)} ${r(0.7 * g)} ${r(-0.35 * g)}" stroke="#1d1a1c" stroke-width="${r(0.11 * g)}" fill="none"/>`;
+    return `<circle cx="${r(x)}" cy="${r(y - 0.3 * g)}" r="${r(0.1 * g)}" fill="#1d1a1c"/>`;
   };
-  for (let y = yT + ri + 1.6; y < yU - 0.8; y += 0.62) for (const x of [xl + ri, xr - ri]) schrift += zeichen(x, y, 0.75 + (yU - y) / (yU - yT) * 0.35, false);
-  for (let x = xl + ri + 1; x < xr - ri - 0.5; x += 0.62) schrift += zeichen(x, yT + ri, 1.05, true);
-  bau += schrift;
-  /* der Spitzbogen: Nische mit Halbkuppel, unten Tür, oben Fenstergitter */
+  for (let y = bandO + sb + 0.6; y < yU - 0.5; y += 0.72) { const g = 0.95 + (yU - y) / (yU - yT) * 0.45; bau += zeichen(bandL + sb / 2, y, g, false) + zeichen(bandR + sb / 2, y, g, false); }
+  for (let x = bandL + 1; x < bandR + sb - 0.6; x += 0.8) bau += zeichen(x, bandO + sb / 2, 1.4, true);
+  /* der Spitzbogen: Nische mit Halbkuppel und Rippen, Rückwand mit Fenstergitter (Jali) und Tür */
   const yK0 = yB(h0 + portal.hKampfer), yApex = yB(h0 + portal.hBogen), bx0 = CX - bw, bx1 = CX + bw;
   const bogen = `M${r(bx0)} ${r(yU)} L${r(bx0)} ${r(yK0)} C${r(bx0)} ${r(yK0 - (yK0 - yApex) * 0.62)} ${r(CX - bw * 0.38)} ${r(yApex + (yK0 - yApex) * 0.2)} ${CX} ${r(yApex)} C${r(CX + bw * 0.38)} ${r(yApex + (yK0 - yApex) * 0.2)} ${r(bx1)} ${r(yK0 - (yK0 - yApex) * 0.62)} ${r(bx1)} ${r(yK0)} L${r(bx1)} ${r(yU)} Z`;
-  bau += `<path d="${bogen}" fill="${S.lg("portalnische", [[0, "#a59aa2"], [0.5, "#c7bcbe"], [1, "#e0d6d0"]])}"/>`;
-  /* Halbkuppel der Nische mit Rippen, darunter die achteckige Rückwand: Seitenfacetten im Schatten */
+  bau += `<path d="${bogen}" fill="${S.lg("portalnische", [[0, "#a197ad"], [0.5, "#c5bac2"], [1, "#e6d4c8"]], 0, 0, 1, 0)}"/>`;
   for (const t of [0.35, 0.7]) bau += `<path d="M${r(CX - bw * t)} ${r(yK0)} Q${r(CX - bw * t * 0.6)} ${r(yApex + (yK0 - yApex) * 0.25)} ${CX} ${r(yApex + 1.2)} Q${r(CX + bw * t * 0.6)} ${r(yApex + (yK0 - yApex) * 0.25)} ${r(CX + bw * t)} ${r(yK0)}" stroke="#968b91" stroke-width=".25" fill="none"/>`;
-  bau += `<path d="M${r(bx0)} ${r(yU)} L${r(bx0)} ${r(yK0)} L${r(CX - bw * 0.55)} ${r(yK0 + 2)} L${r(CX - bw * 0.55)} ${r(yU)} Z" fill="#9a8f96"/><path d="M${r(bx1)} ${r(yU)} L${r(bx1)} ${r(yK0)} L${r(CX + bw * 0.55)} ${r(yK0 + 2)} L${r(CX + bw * 0.55)} ${r(yU)} Z" fill="#b6abb0"/>`;
+  bau += `<path d="M${r(bx0)} ${r(yU)} L${r(bx0)} ${r(yK0)} L${r(CX - bw * 0.55)} ${r(yK0 + 2)} L${r(CX - bw * 0.55)} ${r(yU)} Z" fill="#988fa6"/><path d="M${r(bx1)} ${r(yU)} L${r(bx1)} ${r(yK0)} L${r(CX + bw * 0.55)} ${r(yK0 + 2)} L${r(CX + bw * 0.55)} ${r(yU)} Z" fill="#d8bcae"/>`;
   bau += `<path d="M${r(CX - bw * 0.55)} ${r(yK0 + 2)} L${r(CX + bw * 0.55)} ${r(yK0 + 2)}" stroke="#8e8389" stroke-width=".3"/>`;
-  /* oben ein Fenster mit Marmorgitter (Jali), unten die Tür */
   const yF0 = yB(h0 + 17), yF1 = yB(h0 + 11.5), fw = bw * 0.36;
   bau += `<path d="M${r(CX - fw)} ${r(yF1)} L${r(CX - fw)} ${r(yF0 + fw * 0.8)} Q${CX} ${r(yF0 - fw * 0.4)} ${r(CX + fw)} ${r(yF0 + fw * 0.8)} L${r(CX + fw)} ${r(yF1)} Z" fill="#7a7076"/>`;
   for (let i = 1; i < 4; i++) bau += `<line x1="${r(CX - fw + i * fw / 2)}" y1="${r(yF0 + 1)}" x2="${r(CX - fw + i * fw / 2)}" y2="${r(yF1)}" stroke="#d6ccc6" stroke-width=".16"/>`;
   for (let y = yF0 + 2; y < yF1; y += 1.2) bau += `<line x1="${r(CX - fw)}" y1="${r(y)}" x2="${r(CX + fw)}" y2="${r(y)}" stroke="#d6ccc6" stroke-width=".14"/>`;
   bau += `<path d="M${r(CX - bw * 0.42)} ${r(yU)} L${r(CX - bw * 0.42)} ${r(yB(h0 + 6.5))} Q${CX} ${r(yB(h0 + 9.6))} ${r(CX + bw * 0.42)} ${r(yB(h0 + 6.5))} L${r(CX + bw * 0.42)} ${r(yU)} Z" fill="#4e4549"/>`;
-  bau += `<path d="${bogen}" fill="${S.lg("portalschatten", [[0, "#000", 0.14], [0.5, "#000", 0.02], [1, "#fff", 0.06]], 0, 0, 1, 0)}"/>`;
   bau += `<path d="${bogen}" fill="none" stroke="#f6efe6" stroke-width=".6"/>`;
-  /* Pietra dura in den Zwickeln über dem Bogen: Ranken mit roten und grünen Blüten */
+  /* Pietra dura in den Zwickeln */
   for (const sd of [-1, 1]) {
     const zx = CX + sd * bw * 0.72, zy = yApex + 2.6;
     bau += `<path d="M${r(zx - sd * 3)} ${r(zy + 2)} q${r(sd * 1.6)} -2.6 ${r(sd * 3.6)} -2.2 q${r(sd * 1.4)} .4 ${r(sd * 2.4)} -1.6" stroke="#5d7a4a" stroke-width=".25" fill="none"/>`;
     for (const [dx, dy, c] of [[-2, 1.4, "#b33a3a"], [0, -0.4, "#c9a227"], [2, -1.2, "#b33a3a"], [-0.8, 0.6, "#3a6ea0"], [1.2, 0.2, "#4a7a3a"]]) bau += `<circle cx="${r(zx + sd * dx)}" cy="${r(zy + dy)}" r=".42" fill="${c}"/>`;
   }
-  /* Schlanke Fialen (Guldastas) neben dem Portal und an den Ecken */
+  /* Fialen (Guldastas) neben dem Portal und an den Ecken */
   for (const s of [-portal.s, portal.s, -19.5, 19.5]) {
-    const x = f(s), yt = yB(s === portal.s || s === -portal.s ? h0 + 37 : hP + 3.4), yb = yB(Math.abs(s) === portal.s ? h0 + 33 : hP);
-    bau += `<rect x="${r(x - 0.5)}" y="${r(yt + 1.2)}" width="1" height="${r(yb - yt - 1.2)}" fill="#f4ece4"/><path d="M${r(x - 0.75)} ${r(yt + 1.4)} Q${r(x)} ${r(yt - 0.6)} ${r(x + 0.75)} ${r(yt + 1.4)} Z" fill="#efe6de"/><line x1="${r(x)}" y1="${r(yt - 0.6)}" x2="${r(x)}" y2="${r(yt - 1.8)}" stroke="${GOLD}" stroke-width=".25"/>`;
+    const x = f(s), amPortal = Math.abs(s) === portal.s, yt = yB(amPortal ? h0 + 37 : hP + 3.4), yb = yB(amPortal ? h0 + 33 : hP);
+    bau += `<rect x="${r(x - 0.5)}" y="${r(yt + 1.2)}" width="1" height="${r(yb - yt - 1.2)}" fill="${s > 0 ? "#ffeadb" : "#ece4ea"}"/><path d="M${r(x - 0.75)} ${r(yt + 1.4)} Q${r(x)} ${r(yt - 0.6)} ${r(x + 0.75)} ${r(yt + 1.4)} Z" fill="#efe6de"/><line x1="${r(x)}" y1="${r(yt - 0.6)}" x2="${r(x)}" y2="${r(yt - 1.8)}" stroke="${GOLD}" stroke-width=".25"/>`;
   }
-  /* Licht: rechte Hälfte wärmer, linke kühler */
-  bau += `<rect x="${r(f(-19.5))}" y="${r(yB(hP))}" width="${r(xl - f(-19.5))}" height="${r(yB(h0) - yB(hP))}" fill="#7a7090" opacity=".07"/>`;
 
-  /* ---- Tambour, Zwiebelkuppel mit Lotus und Bekrönung ---- */
-  const prof = [[9.7, 39], [10.3, 41.6], [11.6, 43.8], [12.4, 47.3], [12.25, 51.4], [11.3, 55.4], [9.5, 59.1], [7, 62.2], [4.3, 64.4], [2.1, 65.7], [0, 66.5]];
-  /* glatter Umriss: Catmull-Rom durch die Profilpunkte, links hinauf, rechts hinab */
-  const umr = [...prof.map(([s, h]) => [xK(-s), yK(h)]), ...prof.slice(0, -1).reverse().map(([s, h]) => [xK(s), yK(h)])];
-  let kp = `M${r(umr[0][0])} ${r(umr[0][1])}`;
-  for (let i = 0; i < umr.length - 1; i++) {
-    const p0 = umr[Math.max(0, i - 1)], p1 = umr[i], p2 = umr[i + 1], p3 = umr[Math.min(umr.length - 1, i + 2)];
-    kp += ` C${r(p1[0] + (p2[0] - p0[0]) / 6)} ${r(p1[1] + (p2[1] - p0[1]) / 6)} ${r(p2[0] - (p3[0] - p1[0]) / 6)} ${r(p2[1] - (p3[1] - p1[1]) / 6)} ${r(p2[0])} ${r(p2[1])}`;
+  /* ---- Tambour, Zwiebelkuppel mit Lotuskappe und Kalasch-Bekrönung ---- */
+  const yTam = yK(KUP.hT), rbU = KUP.rT * uK, hhU = KUP.hh * uK;
+  kuppel += `<rect x="${r(CX - rbU)}" y="${r(yTam)}" width="${r(2 * rbU)}" height="${r(yK(34) - yTam)}" fill="${MARMOR}"/>`;
+  kuppel += `<rect x="${r(CX - rbU - 0.6)}" y="${r(yTam - 0.4)}" width="${r(2 * rbU + 1.2)}" height="1.1" fill="#f3ebe4" stroke="#b9aeac" stroke-width=".2"/>`;
+  const kp = zwiebel(CX, yTam - 0.4, rbU, hhU);
+  kuppel += `<path d="${kp}" fill="${KUPPEL}"/>`;
+  kuppel += `<path d="${kp}" fill="${S.rg("kuppelglanz", [[0, "#fff", 0.5], [1, "#fff", 0]], 0.66, 0.36, 0.42)}"/>`;
+  kuppel += `<path d="${kp}" fill="none" stroke="#c9bfc6" stroke-width=".3"/>`;
+  /* zarte Fugen des Marmors */
+  kuppel += `<path d="M${r(CX - rbU * 1.28)} ${r(yTam - hhU * 0.3)} Q${CX} ${r(yTam - hhU * 0.26)} ${r(CX + rbU * 1.28)} ${r(yTam - hhU * 0.3)}" stroke="#d8cdd0" stroke-width=".22" fill="none"/>`;
+  /* Lotuskappe: Kranz aus umgekehrten Blättern, die sich an die Kuppel schmiegen (Spitzen nach unten) */
+  const qAt = (t) => { for (let i = 1; i < ZWIEBEL.length; i++) if (t <= ZWIEBEL[i][1]) { const [q0, t0] = ZWIEBEL[i - 1], [q1, t1] = ZWIEBEL[i]; return q0 + (q1 - q0) * (t - t0) / (t1 - t0); } return 0; };
+  const yRing = (t, th) => yTam - 0.4 - t * hhU + Math.cos(th) * qAt(t) * rbU * 0.12;
+  const tO = 0.95, tU = 0.77;
+  kuppel += `<path d="M${r(CX - qAt(tO) * rbU)} ${r(yRing(tO, 1.57))} Q${CX} ${r(yRing(tO, 0) + 0.8)} ${r(CX + qAt(tO) * rbU)} ${r(yRing(tO, 1.57))}" stroke="#d6cbd0" stroke-width=".5" fill="none"/>`;
+  for (let i = -3; i <= 3; i++) {
+    const th = i * 0.44, w = 0.24;
+    const p = (t, dth) => [CX + qAt(t) * rbU * Math.sin(th + dth), yRing(t, th + dth)];
+    const [ax, ay] = p(tO, -w), [bx, by] = p(tO, w), [mx, my] = p((tO + tU) / 2, 0), [tx, ty] = p(tU, 0), [lx, ly] = p((tO + tU) / 2 + 0.02, -w * 1.15), [rx2, ry2] = p((tO + tU) / 2 + 0.02, w * 1.15);
+    if (Math.abs(th) > 1.45) continue;
+    kuppel += `<path d="M${r(ax)} ${r(ay)} Q${r(lx)} ${r(ly)} ${r(tx)} ${r(ty)} Q${r(rx2)} ${r(ry2)} ${r(bx)} ${r(by)} Z" fill="${i > 0 ? "#ffeedd" : i < 0 ? "#e6dde8" : "#f6efea"}" stroke="#a89aa6" stroke-width=".3"/>`;
+    kuppel += `<path d="M${r((ax + bx) / 2)} ${r((ay + by) / 2)} L${r(mx)} ${r(my)}" stroke="#bfb0ba" stroke-width=".22"/>`;
   }
-  kp += " Z";
-  kuppel += `<rect x="${r(xK(-10.2))}" y="${r(yK(39.4))}" width="${r(xK(10.2) - xK(-10.2))}" height="${r(yK(36.6) - yK(39.4))}" fill="${MARMOR}"/>`;
-  kuppel += `<rect x="${r(xK(-10.2))}" y="${r(yK(38.2))}" width="${r(xK(10.2) - xK(-10.2))}" height=".5" fill="#b9aeac"/>`;
-  kuppel += `<path d="${kp}" fill="${S.lg("kuppel", [[0, "#c9c2c8"], [0.35, "#ece6e4"], [0.7, "#fff8ee"], [1, "#ffe9cc"]], 0, 0, 1, 0)}"/>`;
-  kuppel += `<path d="${kp}" fill="${S.rg("kuppelglanz", [[0, "#fff", 0.55], [1, "#fff", 0]], 0.68, 0.38, 0.4)}"/>`;
-  kuppel += `<path d="M${r(xK(-11.9))} ${r(yK(45))} Q${r(xK(0))} ${r(yK(43.6))} ${r(xK(11.9))} ${r(yK(45))}" stroke="#d6cdca" stroke-width=".3" fill="none"/>`;
-  /* Lotusblätter rund um die Spitze */
-  for (let i = -3; i <= 3; i++) { const x = xK(i * 1.15), y = yK(65.4 - Math.abs(i) * 0.55); kuppel += `<path d="M${r(x - 0.9)} ${r(y + 1.6)} Q${r(x)} ${r(y - 1.4)} ${r(x + 0.9)} ${r(y + 1.6)} Z" fill="#f3ebe4" stroke="#c9bfba" stroke-width=".15"/>`; }
-  /* Bekrönung: Kugeln, Kalasch, Stab mit Halbmond (Bronze, früher Gold) */
-  const fx = xK(0);
-  kuppel += `<rect x="${r(fx - 0.35)}" y="${r(yK(73.4))}" width=".7" height="${r(yK(66) - yK(73.4))}" fill="${GOLD}"/>`;
-  for (const [h, rr] of [[67.2, 1.1], [68.6, 0.85], [70, 1.15], [71.3, 0.65]]) kuppel += `<ellipse cx="${r(fx)}" cy="${r(yK(h))}" rx="${rr}" ry="${r(rr * 0.85)}" fill="${GOLD}"/>`;
+  /* Bekrönung: Fuß, Kalasch-Vase, zwei Kugeln, Stab mit Halbmond */
+  const fx = CX, yf = yTam - 0.4 - 0.985 * hhU;
+  kuppel += `<path d="M${r(fx - 1.6)} ${r(yf)} L${r(fx + 1.6)} ${r(yf)} L${r(fx + 0.9)} ${r(yf - 1.2)} L${r(fx - 0.9)} ${r(yf - 1.2)} Z" fill="${GOLD}"/>`;
+  kuppel += `<path d="M${r(fx - 0.6)} ${r(yf - 1.2)} Q${r(fx - 2.1)} ${r(yf - 2.6)} ${r(fx - 0.7)} ${r(yf - 4.2)} L${r(fx - 0.5)} ${r(yf - 4.8)} L${r(fx + 0.5)} ${r(yf - 4.8)} L${r(fx + 0.7)} ${r(yf - 4.2)} Q${r(fx + 2.1)} ${r(yf - 2.6)} ${r(fx + 0.6)} ${r(yf - 1.2)} Z" fill="${GOLD}"/>`;
+  kuppel += `<rect x="${r(fx - 0.3)}" y="${r(yK(73.4))}" width=".6" height="${r(yf - 4.8 - yK(73.4))}" fill="${GOLD}"/>`;
+  for (const [h, rr] of [[68.4, 0.95], [69.9, 1.05], [71.3, 0.6]]) kuppel += `<ellipse cx="${r(fx)}" cy="${r(yK(h))}" rx="${rr}" ry="${r(rr * 0.85)}" fill="${GOLD}"/>`;
   kuppel += `<path d="M${r(fx - 1.2)} ${r(yK(72.6))} a1.25 1.25 0 1 0 2.4 0" stroke="${GOLD}" stroke-width=".4" fill="none"/>`;
 
-  /* ---- vier Kuppelpavillons (Chattris) ---- */
+  /* ---- vier Kuppelpavillons (Chattris): offene Bögen auf acht Säulen, Zwiebelkuppel ---- */
   const chattri = (s, d, k = 1) => {
     const u = uAt(d), x = xAt(s, d), y = (h) => yAt(d, h), w = 3.4 * u * k;
     let g = `<rect x="${r(x - w - 0.4)}" y="${r(y(38.6))}" width="${r(2 * w + 0.8)}" height="${r(y(36.8) - y(38.6))}" fill="#efe7e0"/>`;
     for (let i = 0; i < 4; i++) {
       const a = x - w + i * (2 * w) / 3;
-      g += `<rect x="${r(a - 0.35)}" y="${r(y(44.4))}" width=".7" height="${r(y(38.6) - y(44.4))}" fill="#f6efe8"/>`;
-      if (i < 3) g += `<path d="M${r(a + 0.4)} ${r(y(38.6))} L${r(a + 0.4)} ${r(y(42.6))} Q${r(a + w / 3)} ${r(y(44))} ${r(a + 2 * w / 3 - 0.4)} ${r(y(42.6))} L${r(a + 2 * w / 3 - 0.4)} ${r(y(38.6))} Z" fill="#9c9096"/>`;
+      g += `<rect x="${r(a - 0.35)}" y="${r(y(44.4))}" width=".7" height="${r(y(38.6) - y(44.4))}" fill="${a > x ? "#ffeadb" : "#ece4ea"}"/>`;
+      if (i < 3) g += `<path d="M${r(a + 0.4)} ${r(y(38.6))} L${r(a + 0.4)} ${r(y(42.6))} Q${r(a + w / 3)} ${r(y(44))} ${r(a + 2 * w / 3 - 0.4)} ${r(y(42.6))} L${r(a + 2 * w / 3 - 0.4)} ${r(y(38.6))} Z" fill="#988da0"/>`;
     }
     g += `<rect x="${r(x - w - 0.8)}" y="${r(y(45.2))}" width="${r(2 * w + 1.6)}" height="${r(y(44.2) - y(45.2))}" fill="#f4ece4"/>`;
-    g += `<path d="M${r(x - w * 0.8)} ${r(y(45.2))} Q${r(x - w * 1.02)} ${r(y(48.6))} ${r(x)} ${r(y(50.6))} Q${r(x + w * 1.02)} ${r(y(48.6))} ${r(x + w * 0.8)} ${r(y(45.2))} Z" fill="${S.lg("kuppel", [])}"/>`;
-    g += `<line x1="${r(x)}" y1="${r(y(50.4))}" x2="${r(x)}" y2="${r(y(52.6))}" stroke="${GOLD}" stroke-width=".4"/><circle cx="${r(x)}" cy="${r(y(51.4))}" r=".45" fill="${GOLD}"/>`;
+    g += `<path d="${zwiebel(x, y(45.2), w * 0.66, y(45.2) - y(52))}" fill="${KUPPEL}"/>`;
+    g += `<line x1="${r(x)}" y1="${r(y(51.8))}" x2="${r(x)}" y2="${r(y(54))}" stroke="${GOLD}" stroke-width=".4"/><circle cx="${r(x)}" cy="${r(y(52.8))}" r=".45" fill="${GOLD}"/>`;
     return g;
   };
   pavH = chattri(-15.5, 364, 0.95) + chattri(15.5, 364, 0.95);
@@ -265,33 +316,34 @@ S.def(`<g id="${S.id("baubild")}">${pavH}${kuppel}${bau}${pavV}</g>`);
 /* ---------- die vier Minarette ---------- */
 let minarette = "";
 {
-  const minarett = (s, d, schnitt) => {
+  const minarett = (s, d, hinten) => {
     const u = uAt(d), x = xAt(s, d), y = (h) => yAt(d, h);
     const rB = 3.1 * u, rT = 2.3 * u, h0 = T.h0;
     const rad = (h) => rB + (rT - rB) * (h - h0) / 33;
     let g = "";
-    const yBasis = schnitt ? Math.min(y(h0), yAt(T.dS, h0)) : y(h0);
-    /* drei Schaftteile, nach oben schmaler, schwarze Fugenlinien */
+    const yBasis = hinten ? Math.min(y(h0), yAt(T.dS, h0)) : y(h0);
     for (const [ha, hb] of [[h0, 18], [18.9, 29], [29.9, 40]]) {
       const ya = ha === h0 ? yBasis : y(ha), yb = y(hb);
-      g += `<path d="M${r(x - rad(ha))} ${r(ya)} L${r(x - rad(hb))} ${r(yb)} L${r(x + rad(hb))} ${r(yb)} L${r(x + rad(ha))} ${r(ya)} Z" fill="${S.lg("minarett", [[0, "#c6bfc6"], [0.45, "#ece6e2"], [0.8, "#fff6ea"], [1, "#f0e2d0"]], 0, 0, 1, 0)}"/>`;
-      for (const t of [-0.55, -0.1, 0.35, 0.8]) g += `<line x1="${r(x + t * rad(ha))}" y1="${r(ya)}" x2="${r(x + t * rad(hb))}" y2="${r(yb)}" stroke="#4a4446" stroke-width="${r(0.07 * u)}" opacity=".55"/>`;
-      for (let h = ha + 2.2; h < hb; h += 2.2) g += `<line x1="${r(x - rad(h))}" y1="${r(y(h))}" x2="${r(x + rad(h))}" y2="${r(y(h))}" stroke="#4a4446" stroke-width="${r(0.06 * u)}" opacity=".45"/>`;
+      g += `<path d="M${r(x - rad(ha))} ${r(ya)} L${r(x - rad(hb))} ${r(yb)} L${r(x + rad(hb))} ${r(yb)} L${r(x + rad(ha))} ${r(ya)} Z" fill="${S.lg("minarett", [[0, "#bdb4cc"], [0.4, "#ebe4e8"], [0.75, "#fff3e6"], [1, "#ffd6b8"]], 0, 0, 1, 0)}"/>`;
+      /* schwarze Einlagelinien: senkrecht */
+      for (const t of [-0.62, -0.2, 0.22, 0.64]) g += `<line x1="${r(x + t * rad(ha))}" y1="${r(ya)}" x2="${r(x + t * rad(hb))}" y2="${r(yb)}" stroke="#2e2a2c" stroke-width="${r(0.09 * u)}" opacity=".75"/>`;
+      /* Ostkante im Licht */
+      g += `<line x1="${r(x + rad(ha) - 0.3)}" y1="${r(ya)}" x2="${r(x + rad(hb) - 0.3)}" y2="${r(yb)}" stroke="#ffe8d4" stroke-width=".5"/>`;
     }
-    /* Balkone mit Konsolen und Brüstung */
     for (const h of [18, 29, 40]) {
       const rr = rad(h) + 1.0 * u;
-      g += `<path d="M${r(x - rad(h))} ${r(y(h - 1.4))} L${r(x - rr)} ${r(y(h))} L${r(x + rr)} ${r(y(h))} L${r(x + rad(h))} ${r(y(h - 1.4))} Z" fill="#ddd4d0"/>`;
+      /* Band unter dem Balkon, Konsolen, Brüstung */
+      g += `<rect x="${r(x - rad(h - 2))}" y="${r(y(h - 2))}" width="${r(2 * rad(h - 2))}" height="${r(y(h - 2.7) - y(h - 2))}" fill="#3a3436" opacity=".7"/>`;
+      g += `<path d="M${r(x - rad(h))} ${r(y(h - 1.4))} L${r(x - rr)} ${r(y(h))} L${r(x + rr)} ${r(y(h))} L${r(x + rad(h))} ${r(y(h - 1.4))} Z" fill="#d8cfd4"/>`;
       g += `<rect x="${r(x - rr)}" y="${r(y(h + 1.1))}" width="${r(2 * rr)}" height="${r(y(h) - y(h + 1.1))}" fill="#f4ede6"/>`;
-      for (let i = 1; i < 6; i++) g += `<line x1="${r(x - rr + i * rr / 3)}" y1="${r(y(h + 1.1))}" x2="${r(x - rr + i * rr / 3)}" y2="${r(y(h))}" stroke="#b5aaa8" stroke-width=".18"/>`;
+      for (let i = 1; i < 6; i++) g += `<line x1="${r(x - rr + i * rr / 3)}" y1="${r(y(h + 1.1))}" x2="${r(x - rr + i * rr / 3)}" y2="${r(y(h))}" stroke="#a89ea8" stroke-width=".18"/>`;
     }
-    /* Pavillon oben: acht Säulen, Kuppel, Spitze */
     const pr = rT * 1.05;
-    g += `<rect x="${r(x - pr)}" y="${r(y(44.2))}" width="${r(2 * pr)}" height="${r(y(41.1) - y(44.2))}" fill="#a2979c"/>`;
+    g += `<rect x="${r(x - pr)}" y="${r(y(44.2))}" width="${r(2 * pr)}" height="${r(y(41.1) - y(44.2))}" fill="#9e94a8"/>`;
     for (let i = 0; i < 4; i++) g += `<rect x="${r(x - pr + i * (2 * pr - 0.6) / 3)}" y="${r(y(44.2))}" width=".6" height="${r(y(41.1) - y(44.2))}" fill="#f6efe8"/>`;
     g += `<rect x="${r(x - pr - 0.5)}" y="${r(y(44.8))}" width="${r(2 * pr + 1)}" height="${r(y(44.2) - y(44.8))}" fill="#f4ece4"/>`;
-    g += `<path d="M${r(x - pr * 0.9)} ${r(y(44.8))} Q${r(x - pr * 1.1)} ${r(y(46.8))} ${r(x)} ${r(y(48))} Q${r(x + pr * 1.1)} ${r(y(46.8))} ${r(x + pr * 0.9)} ${r(y(44.8))} Z" fill="${S.lg("kuppel", [])}"/>`;
-    g += `<line x1="${r(x)}" y1="${r(y(47.8))}" x2="${r(x)}" y2="${r(y(49.6))}" stroke="${GOLD}" stroke-width=".35"/>`;
+    g += `<path d="${zwiebel(x, y(44.8), pr * 0.72, y(44.8) - y(49.2))}" fill="${KUPPEL}"/>`;
+    g += `<line x1="${r(x)}" y1="${r(y(49))}" x2="${r(x)}" y2="${r(y(50.8))}" stroke="${GOLD}" stroke-width=".35"/>`;
     return g;
   };
   minarette += minarett(-44.5, 391, true) + minarett(44.5, 391, true) + minarett(-44.5, 302.5) + minarett(44.5, 302.5);
@@ -302,170 +354,237 @@ S.def(`<g id="${S.id("minarettbild")}">${minarette}</g>`);
    1 — DIE MOSCHEE (links, Westen) und 2 — DAS GÄSTEHAUS (rechts, Osten)
    ===================================================================== */
 const rotbau = (sx) => {
-  /* von Süden sieht man die Schmalseite: roter Block, zwei achteckige Ecktürme, Kuppeln hintereinander */
-  const d = 335, u = uAt(d), x = xAt(sx * 96, d), y = (h) => yAt(d, h);
+  /* Schmalseite nach Süden: Sandsteinfront mit Marmorbändern und Nischenfeldern, Zinnenbrüstung,
+     achteckige Ecktürme mit offenem Pavillon, dahinter die weißen Kuppeln hintereinander */
+  const d = 335, u = uAt(d), x = xAt(sx * 96, d), y = (h) => yAt(d, h), licht = sx > 0 ? 0.9 : 0.3;
   let g = "";
-  /* Kuppeln hintereinander (Nord–Süd): hinten die große Mittelkuppel, vorn die kleine Südkuppel — je auf weißem Tambour */
   for (const [dh, rr, hh, dd] of [[21, 7.2, 32, 22], [19.5, 4.8, 27.5, 4]]) {
-    const ud = uAt(d + dd), yy = yAt(d + dd, dh), w = rr * ud, top = yAt(d + dd, hh), yt = yAt(d + dd, dh - 2.6);
+    const ud = uAt(d + dd), yy = yAt(d + dd, dh), w = rr * ud, yt = yAt(d + dd, dh - 2.6);
     g += `<rect x="${r(x - w * 0.86)}" y="${r(yy)}" width="${r(w * 1.72)}" height="${r(yt - yy)}" fill="#efe6dd"/><rect x="${r(x - w * 0.86)}" y="${r(yy)}" width="${r(w * 1.72)}" height=".4" fill="#c9bdb4"/>`;
-    g += `<path d="M${r(x - w * 0.86)} ${r(yy)} C${r(x - w * 1.12)} ${r(yy - (yy - top) * 0.45)} ${r(x - w * 0.5)} ${r(yy - (yy - top) * 0.85)} ${r(x)} ${r(top)} C${r(x + w * 0.5)} ${r(yy - (yy - top) * 0.85)} ${r(x + w * 1.12)} ${r(yy - (yy - top) * 0.45)} ${r(x + w * 0.86)} ${r(yy)} Z" fill="${S.lg("kuppel", [])}"/>`;
-    g += `<line x1="${r(x)}" y1="${r(top)}" x2="${r(x)}" y2="${r(top - 2.4)}" stroke="${GOLD}" stroke-width=".4"/><circle cx="${r(x)}" cy="${r(top - 1.2)}" r=".4" fill="${GOLD}"/>`;
+    g += `<path d="${zwiebel(x, yy, w * 0.78, yy - yAt(d + dd, hh))}" fill="${KUPPEL}"/>`;
+    g += `<line x1="${r(x)}" y1="${r(yAt(d + dd, hh))}" x2="${r(x)}" y2="${r(yAt(d + dd, hh) - 2.4)}" stroke="${GOLD}" stroke-width=".4"/><circle cx="${r(x)}" cy="${r(yAt(d + dd, hh) - 1.2)}" r=".4" fill="${GOLD}"/>`;
   }
-  g += `<rect x="${r(x - 12 * u)}" y="${r(y(18))}" width="${r(24 * u)}" height="${r(y(1.2) - y(18))}" fill="${SANDSTEIN}"/>`;
-  g += `<rect x="${r(x - 12 * u)}" y="${r(y(18))}" width="${r(24 * u)}" height=".8" fill="#f2e6dc"/>`;
-  g += `<path d="M${r(x - 5 * u)} ${r(y(1.2))} L${r(x - 5 * u)} ${r(y(10))} Q${r(x)} ${r(y(14))} ${r(x + 5 * u)} ${r(y(10))} L${r(x + 5 * u)} ${r(y(1.2))} Z" fill="#6e2a1a" stroke="#f2e6dc" stroke-width=".5"/>`;
+  const w0 = 12 * u, yTop = y(17.6), yFuss = y(1.2);
+  g += `<rect x="${r(x - w0)}" y="${r(yTop)}" width="${r(2 * w0)}" height="${r(yFuss - yTop)}" fill="${SANDSTEIN}"/>`;
+  /* Zinnenbrüstung (Kanguras) */
+  for (let xx = x - w0 + 0.6; xx < x + w0 - 0.4; xx += 1.6) g += `<path d="M${r(xx)} ${r(yTop)} L${r(xx)} ${r(yTop - 0.9)} Q${r(xx + 0.5)} ${r(yTop - 1.6)} ${r(xx + 1)} ${r(yTop - 0.9)} L${r(xx + 1)} ${r(yTop)} Z" fill="#a84a30"/>`;
+  /* weiße Marmorbänder und zwei Reihen Nischenfelder */
+  g += `<rect x="${r(x - w0)}" y="${r(yTop)}" width="${r(2 * w0)}" height=".6" fill="#f2e6dc"/><rect x="${r(x - w0)}" y="${r(y(9.6))}" width="${r(2 * w0)}" height=".5" fill="#f2e6dc"/>`;
+  for (const [hu, ho] of [[2, 8.8], [10.4, 16.6]]) for (let i = 0; i < 3; i++) {
+    const a = x - w0 + 1.6 + i * (2 * w0 - 3.2) / 3, b = a + (2 * w0 - 3.2) / 3 - 1.2, m = (a + b) / 2, yo = y(ho), yu = y(hu);
+    g += `<rect x="${r(a)}" y="${r(yo)}" width="${r(b - a)}" height="${r(yu - yo)}" fill="none" stroke="#f2e6dc" stroke-width=".35"/>`;
+    g += `<path d="M${r(a + 1)} ${r(yu)} L${r(a + 1)} ${r(yo + 2.6)} Q${r(m)} ${r(yo + 0.6)} ${r(b - 1)} ${r(yo + 2.6)} L${r(b - 1)} ${r(yu)} Z" fill="#7a2e1c"/>`;
+  }
+  g += `<rect x="${r(x - w0)}" y="${r(yTop)}" width="${r(2 * w0)}" height="${r(yFuss - yTop)}" fill="${S.lg("rotlicht", [[0, "#2a1020", 0.12], [0.5, "#000", 0], [1, "#ffcf9a", 0.16]], 0, 0, 1, 0)}"/>`;
+  /* achteckige Ecktürme mit offenem Pavillon */
   for (const t of [-1, 1]) {
-    const tx = x + t * 12 * u;
-    g += `<rect x="${r(tx - 2.4 * u)}" y="${r(y(22))}" width="${r(4.8 * u)}" height="${r(y(1.2) - y(22))}" fill="#b04e32"/><rect x="${r(tx - 2.4 * u)}" y="${r(y(22))}" width="${r(4.8 * u)}" height="${r(y(1.2) - y(22))}" fill="${S.lg("turmlicht", [[0, "#000", 0.15], [0.5, "#000", 0], [1, "#fff", 0.12]], 0, 0, 1, 0)}"/>`;
-    for (const h of [8, 15]) g += `<line x1="${r(tx - 2.4 * u)}" y1="${r(y(h))}" x2="${r(tx + 2.4 * u)}" y2="${r(y(h))}" stroke="#f2e6dc" stroke-width=".4"/>`;
-    g += `<rect x="${r(tx - 2.2 * u)}" y="${r(y(25))}" width="${r(4.4 * u)}" height="${r(y(22) - y(25))}" fill="#e9e0d8"/>`;
-    g += `<path d="M${r(tx - 2.6 * u)} ${r(y(25))} Q${r(tx - 2.8 * u)} ${r(y(27.6))} ${r(tx)} ${r(y(29))} Q${r(tx + 2.8 * u)} ${r(y(27.6))} ${r(tx + 2.6 * u)} ${r(y(25))} Z" fill="${S.lg("kuppel", [])}"/>`;
+    const tx = x + t * w0, tw = 2.4 * u, yt = y(21.5);
+    g += `<rect x="${r(tx - tw)}" y="${r(yt)}" width="${r(tw * 0.55)}" height="${r(yFuss - yt)}" fill="#8a3a24"/><rect x="${r(tx - tw * 0.45)}" y="${r(yt)}" width="${r(tw * 0.9)}" height="${r(yFuss - yt)}" fill="#b04e32"/><rect x="${r(tx + tw * 0.45)}" y="${r(yt)}" width="${r(tw * 0.55)}" height="${r(yFuss - yt)}" fill="${licht > 0.5 ? "#d8805a" : "#c46644"}"/>`;
+    for (const h of [6, 12, 17.6]) g += `<line x1="${r(tx - tw)}" y1="${r(y(h))}" x2="${r(tx + tw)}" y2="${r(y(h))}" stroke="#f2e6dc" stroke-width=".45"/>`;
+    g += `<rect x="${r(tx - tw - 0.4)}" y="${r(yt - 0.8)}" width="${r(2 * tw + 0.8)}" height=".9" fill="#efe6dd"/>`;
+    /* offener Pavillon: Säulen mit dunklen Bögen */
+    const yp0 = y(21.5), yp1 = y(25);
+    g += `<rect x="${r(tx - tw * 0.9)}" y="${r(yp1)}" width="${r(tw * 1.8)}" height="${r(yp0 - yp1)}" fill="#5a2a1e"/>`;
+    for (let i = 0; i < 4; i++) g += `<rect x="${r(tx - tw * 0.9 + i * tw * 0.56)}" y="${r(yp1)}" width=".55" height="${r(yp0 - yp1)}" fill="#f4ece4"/>`;
+    for (let i = 0; i < 3; i++) g += `<path d="M${r(tx - tw * 0.9 + i * tw * 0.56 + 0.55)} ${r(yp1 + 1)} Q${r(tx - tw * 0.9 + i * tw * 0.56 + tw * 0.28 + 0.27)} ${r(yp1 - 0.2)} ${r(tx - tw * 0.9 + (i + 1) * tw * 0.56)} ${r(yp1 + 1)} L${r(tx - tw * 0.9 + (i + 1) * tw * 0.56)} ${r(yp1)} L${r(tx - tw * 0.9 + i * tw * 0.56 + 0.55)} ${r(yp1)} Z" fill="#f4ece4"/>`;
+    g += `<rect x="${r(tx - tw - 0.2)}" y="${r(y(25.6))}" width="${r(2 * tw + 0.4)}" height="${r(y(25) - y(25.6))}" fill="#f4ece4"/>`;
+    g += `<path d="${zwiebel(tx, y(25.6), tw * 0.72, y(25.6) - y(29.4))}" fill="${KUPPEL}"/><line x1="${r(tx)}" y1="${r(y(29.3))}" x2="${r(tx)}" y2="${r(y(30.6))}" stroke="${GOLD}" stroke-width=".35"/>`;
   }
   return g;
 };
-S.teil({ anker: [37, 112], id: "moschee", de: "die Moschee", syl: "Mo-SCHEE", it: "la moschea", itSyl: "mo-SCHE-a", en: "mosque", x: 0, y: 0, kunst: rotbau(-1),
-  tipp: "Links vom Taj steht eine Moschee aus rotem Sandstein. Sie zeigt nach Mekka." });
-S.teil({ anker: [363, 112], id: "gaestehaus", de: "das Gästehaus", syl: "GÄS-te-haus", it: "la foresteria", itSyl: "fo-re-ste-RI-a", en: "guest house", x: 0, y: 0, kunst: rotbau(1),
+S.teil({ anker: [48, 108], id: "moschee", de: "die Moschee", syl: "Mo-SCHEE", it: "la moschea", itSyl: "mo-SCHE-a", en: "mosque", x: 0, y: 0, kunst: rotbau(-1),
+  tipp: "Links vom Taj steht eine Moschee aus rotem Sandstein. Ihre Gebetswand zeigt nach Westen, nach Mekka." });
+S.teil({ anker: [352, 108], id: "gaestehaus", de: "das Gästehaus", syl: "GÄS-te-haus", it: "la foresteria", itSyl: "fo-re-ste-RI-a", en: "guest house", x: 0, y: 0, kunst: rotbau(1),
   tipp: "Das Gästehaus heißt „Jawab“, die Antwort: Es ist das Spiegelbild der Moschee." });
 
 /* =====================================================================
-   3 — DER BAUM (Laubbäume in den Gartenvierteln, Morgendunst)
+   3 — DER BAUM (Schattenbäume in den Gartenvierteln, echte Größe)
    ===================================================================== */
 {
   let k = "";
-  const krone = (x, y, w, h, c) => {
-    let g = `<ellipse cx="${r(x + w * 0.15)}" cy="${r(y - h * 0.42)}" rx="${r(w * 0.95)}" ry="${r(h * 0.5)}" fill="#1f3524" opacity=".3"/>`;
-    for (let i = 0; i < 9; i++) { const a = rnd() * Math.PI * 2, q = 0.45 + rnd() * 0.4; g += `<circle cx="${r(x + Math.cos(a) * w * q * 0.7)}" cy="${r(y - h * 0.48 + Math.sin(a) * h * q * 0.38)}" r="${r(w * (0.28 + rnd() * 0.18))}" fill="${c[i % c.length]}"/>`; }
-    g += `<ellipse cx="${r(x + w * 0.35)}" cy="${r(y - h * 0.62)}" rx="${r(w * 0.4)}" ry="${r(h * 0.2)}" fill="#b9c98a" opacity=".22"/>`;
-    return g + `<rect x="${r(x - w * 0.06)}" y="${r(y - h * 0.15)}" width="${r(w * 0.12)}" height="${r(h * 0.15)}" fill="#3a2e22"/>`;
+  const krone = (x, y, w, h) => {
+    /* deckende Krone in drei Tonstufen, Licht von rechts */
+    let g = `<rect x="${r(x - w * 0.05)}" y="${r(y - h * 0.32)}" width="${r(w * 0.1)}" height="${r(h * 0.32)}" fill="#3a2e22"/>`;
+    const blobs = [];
+    for (let i = 0; i < 11; i++) { const a = rnd() * Math.PI * 2, q = Math.sqrt(rnd()) * 0.62; blobs.push([x + Math.cos(a) * w * q, y - h * 0.6 + Math.sin(a) * h * q * 0.42, w * (0.3 + rnd() * 0.12)]); }
+    for (const [bx, by, br] of blobs) g += `<circle cx="${r(bx)}" cy="${r(by)}" r="${r(br)}" fill="#24402c"/>`;
+    for (const [bx, by, br] of blobs) g += `<circle cx="${r(bx + br * 0.18)}" cy="${r(by - br * 0.15)}" r="${r(br * 0.78)}" fill="#3a5f3c"/>`;
+    for (const [bx, by, br] of blobs.slice(0, 7)) g += `<circle cx="${r(bx + br * 0.35)}" cy="${r(by - br * 0.3)}" r="${r(br * 0.42)}" fill="#6f8f52"/>`;
+    return g;
   };
-  const gruen = ["#2f4f36", "#3c6040", "#4a6e44", "#284430", "#557a4a"];
-  for (const sd of [-1, 1]) {
-    for (const [s, d, hh] of [[38, 250, 12], [30, 205, 11], [44, 190, 13], [26, 160, 10], [36, 140, 12], [24, 120, 9], [32, 105, 11], [22, 90, 8.5], [40, 95, 12]]) {
-      const x = xAt(sd * s, d), y = yAt(d), u = uAt(d);
-      if (x < -10 || x > 410) continue;
-      k += krone(Math.max(6, Math.min(394, x)), y, Math.min(hh * u * 0.4, 16), Math.min(hh * u, 34), gruen);
-    }
+  /* Bäume liegen außerhalb des Taj-Bereichs (|x − 200| > 98) oder bleiben unter dem Sockel */
+  const liste = [];
+  for (const sd of [-1, 1]) for (const [s, d, hh] of [[60, 255, 14], [44, 230, 13], [70, 200, 15], [38, 180, 12], [56, 150, 14], [30, 128, 11], [44, 112, 13], [26, 92, 10], [34, 76, 12], [24, 62, 9], [40, 58, 13], [38.5, 200, 9.5], [47, 245, 11], [42, 222, 8]]) liste.push([sd * s, d, hh]);
+  liste.sort((a, b) => b[1] - a[1]);
+  for (const [s, d, hh] of liste) {
+    const u = uAt(d), x = xAt(s, d), w = hh * 0.36 * u;
+    if (x + w < 0 || x - w > 400) continue;
+    if (Math.abs(x - 200) - w < 98) continue;
+    const top = yAt(d) - hh * u;
+    if (top < 126 && ((x + w > 8 && x - w < 66) || (x + w > 334 && x - w < 392))) continue;   /* Moschee und Gästehaus frei lassen */
+    k += krone(Math.max(w * 1.08, Math.min(400 - w * 1.08, x)), yAt(d), w, hh * u);
   }
-  k += `<rect x="0" y="${HOR - 16}" width="400" height="26" fill="${S.lg("gartendunst", [[0, "#f4e4d4", 0], [0.6, "#f4e4d4", 0.45], [1, "#f4e4d4", 0.2]])}"/>`;
-  S.teil({ anker: [60, 118], id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: k,
-    tipp: "Im Garten wachsen Obst- und Schattenbäume. Der Garten soll das Paradies zeigen." });
+  S.baumBild = k;
 }
+S.teil({ anker: [16, 104], id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: S.baumBild + `<rect x="0" y="${HOR - 18}" width="400" height="26" fill="${S.lg("gartendunst", [[0, "#f4e4d4", 0], [0.6, "#f4e4d4", 0.4], [1, "#f4e4d4", 0.15]])}" pointer-events="none"/>`,
+  tipp: "In den vier Gartenvierteln wachsen große Schattenbäume. Der Garten soll das Paradies zeigen." });
 
 /* =====================================================================
    4 — DER SOCKEL, 5 — DER TAJ MAHAL (Lupe), 6 — DAS MINARETT
    ===================================================================== */
-S.teil({ anker: [200, 131], id: "sockel", de: "der Sockel", syl: "SO-ckel", it: "il basamento", itSyl: "ba-sa-MEN-to", en: "plinth", x: 0, y: 0, kunst: `<use href="#${S.id("sockelbild")}"/>`,
-  tipp: "Der Taj steht auf einem 6 Meter hohen Sockel aus weißem Marmor." });
+S.teil({ anker: [213, 135], id: "sockel", de: "der Sockel", syl: "SO-ckel", it: "il basamento", itSyl: "ba-sa-MEN-to", en: "plinth", x: 0, y: 0, kunst: `<use href="#${S.id("sockelbild")}"/>` + besucher,
+  tipp: "Der Taj steht auf einem fast 7 Meter hohen Sockel aus weißem Marmor. Die Menschen davor sind winzig." });
 const tajUnter = [];
 {
-  const h0 = T.h0;
-  tajUnter.push({ id: "kuppel", de: "die Kuppel", syl: "KUP-pel", it: "la cupola", itSyl: "CU-po-la", en: "dome", x: CX, y: r(yK(42)), kunst: flaeche(-11.5 * uK, -(yK(42) - yK(64.5)), 23 * uK, yK(42) - yK(64.5)),
-    tipp: "Die Zwiebelkuppel ist 23 Meter hoch – höher als ein siebenstöckiges Haus." });
-  tajUnter.push({ id: "spitze", de: "die Spitze", syl: "SPIT-ze", it: "il pinnacolo", itSyl: "pin-NA-co-lo", en: "finial", x: CX, y: r(yK(66)), kunst: flaeche(-2.4, -(yK(66) - yK(73.8)), 4.8, yK(66) - yK(73.8)),
-    tipp: "Ganz oben steht ein Halbmond. Früher war die Spitze aus Gold." });
-  tajUnter.push({ id: "pavillon", de: "der Pavillon", syl: "PA-vil-lon", it: "il padiglione", itSyl: "pa-di-GLIO-ne", en: "pavilion", x: r(xAt(15.5, 331)), y: r(yAt(331, 37)), kunst: flaeche(-7, -(yAt(331, 37) - yAt(331, 52.6)), 14, yAt(331, 37) - yAt(331, 52.6)),
+  const h0 = T.h0, yTam = yK(KUP.hT), rbU = KUP.rT * uK, hhU = KUP.hh * uK;
+  tajUnter.push({ id: "kuppel", de: "die Kuppel", syl: "KUP-pel", it: "la cupola", itSyl: "CU-po-la", en: "dome", x: CX, y: r(yTam), kunst: flaeche(-1.3 * rbU, -hhU * 0.8, 2.6 * rbU, hhU * 0.8),
+    tipp: "Die Zwiebelkuppel ist über 20 Meter hoch – höher als ein siebenstöckiges Haus." });
+  tajUnter.push({ id: "spitze", de: "die Spitze", syl: "SPIT-ze", it: "il pinnacolo", itSyl: "pin-NA-co-lo", en: "finial", x: CX, y: r(yTam - hhU * 0.8), kunst: flaeche(-3, -(yTam - hhU * 0.8 - yK(73.8)), 6, yTam - hhU * 0.8 - yK(73.8)),
+    tipp: "Oben sitzen Lotusblätter, darauf eine Vase und ein Halbmond. Früher war die Spitze aus Gold." });
+  tajUnter.push({ id: "pavillon", de: "der Pavillon", syl: "PA-vil-lon", it: "il padiglione", itSyl: "pa-di-GLIO-ne", en: "pavilion", x: r(xAt(-15.5, 331)), y: r(yAt(331, 37)), kunst: flaeche(-7, -(yAt(331, 37) - yAt(331, 54)), 14, yAt(331, 37) - yAt(331, 54)),
     tipp: "Vier kleine Kuppelpavillons stehen um die große Kuppel. Auf Hindi heißen sie „Chattri“ (Schirm)." });
-  tajUnter.push({ id: "portal", de: "das Portal", syl: "por-TAL", it: "il portale", itSyl: "por-TA-le", en: "portal", x: CX, y: r(yB(h0 + portal.hKampfer)), kunst: flaeche(-portal.bogen * uB, -(yB(h0 + portal.hKampfer) - yB(h0 + portal.hBogen)), 2 * portal.bogen * uB, yB(h0 + portal.hKampfer) - yB(h0 + portal.hBogen) + 3),
-    tipp: "Das große Portal heißt „Pishtaq“. Der spitze Bogen ist 33 Meter hoch eingefasst." });
-  tajUnter.push({ id: "inschrift", de: "die Inschrift", syl: "IN-schrift", it: "l'iscrizione", itSyl: "i-scri-ZIO-ne", en: "inscription", x: r(xB(-portal.s) + 1.4), y: r(yB(h0 + 26)), kunst: flaeche(-1.6, -(yB(h0 + 26) - yB(h0 + 33)) + 1, 3.2 + 2 * portal.s * uB - 2.8, 3) + flaeche(-1.6, -(yB(h0 + 26) - yB(h0 + 33)) + 1, 3.2, yB(h0 + 26) - yB(h0 + 33) + 2),
+  const yK0 = yB(h0 + portal.hKampfer), yApex = yB(h0 + portal.hBogen), bw = portal.bogen * uB;
+  tajUnter.push({ id: "portal", de: "das Portal", syl: "por-TAL", it: "il portale", itSyl: "por-TA-le", en: "portal", x: CX, y: r(yK0), kunst: flaeche(-bw, -(yK0 - yApex), 2 * bw, yK0 - yApex + 3),
+    tipp: "Das große Tor heißt „Pishtaq“. Es ist 33 Meter hoch – so hoch wie ein Haus mit 11 Stockwerken." });
+  /* Inschrift: Rahmen aus drei Streifen um das ganze Band */
+  const xl = xB(-portal.s), xr = xB(portal.s), yT = yB(h0 + 33), yU = yB(h0), ib = 3;
+  tajUnter.push({ id: "inschrift", de: "die Inschrift", syl: "IN-schrift", it: "l'iscrizione", itSyl: "i-scri-ZIO-ne", en: "inscription", x: r(xl), y: r(yT + 30), kunst: flaeche(0, -30, ib, yU - yT - 4) + flaeche(xr - xl - ib, -30, ib, yU - yT - 4) + flaeche(0, -30, xr - xl, ib),
     tipp: "Die Buchstaben sind aus schwarzem Marmor. Oben sind sie größer – von unten wirken alle gleich groß." });
-  tajUnter.push({ id: "einlegearbeit", de: "die Einlegearbeit", syl: "EIN-le-ge-ar-beit", it: "l'intarsio", itSyl: "in-TAR-sio", en: "inlay", x: r(CX + portal.bogen * uB * 0.72), y: r(yB(h0 + portal.hBogen) + 4.4), kunst: flaeche(-3.6, -4.2, 7.2, 5.4),
-    tipp: "Pietra dura: Blumen aus Halbedelsteinen wie Jaspis und Lapislazuli, eingelegt in den Marmor." });
-  S.teil({ anker: [200, 96], id: "taj_mahal", de: "der Taj Mahal", syl: "taj ma-HAL", it: "il Taj Mahal", itSyl: "taj ma-HAL", en: "Taj Mahal", x: 0, y: 0, kunst: `<use href="#${S.id("baubild")}"/>`,
+  tajUnter.push({ id: "einlegearbeit", de: "die Einlegearbeit", syl: "EIN-le-ge-ar-beit", it: "l'intarsio", itSyl: "in-TAR-sio", en: "inlay", x: r(CX + bw * 0.72), y: r(yApex + 4.4), kunst: flaeche(-3.6, -4.2, 7.2, 5.4),
+    tipp: "Die Blumen sind aus Halbedelsteinen wie Jaspis und Lapislazuli. Man hat sie in den Marmor eingelegt." });
+  S.teil({ anker: [163, 104], id: "taj_mahal", de: "der Taj Mahal", syl: "taj ma-HAL", it: "il Taj Mahal", itSyl: "taj ma-HAL", en: "Taj Mahal", x: 0, y: 0, kunst: `<use href="#${S.id("baubild")}"/>`,
     zoom: { x: 140, y: 14, w: 120, h: 80 }, unter: tajUnter,
-    tipp: "Der Großmogul Shah Jahan ließ den Taj Mahal (auf Deutsch auch „Tadsch Mahal“) für seine Frau Mumtaz Mahal bauen – über 20 Jahre lang." });
+    tipp: "Der Großmogul Shah Jahan ließ den Taj Mahal (deutsch auch „Tadsch Mahal“) als Grabmal für seine verstorbene Frau Mumtaz Mahal bauen – über 20 Jahre lang." });
 }
 S.teil({ anker: [xAt(-44.5, 302.5), yAt(302.5, 30)], id: "minarett", de: "das Minarett", syl: "mi-na-RETT", it: "il minareto", itSyl: "mi-na-RE-to", en: "minaret", x: 0, y: 0, kunst: `<use href="#${S.id("minarettbild")}"/>`,
   tipp: "Die vier Minarette neigen sich ein wenig nach außen. Bei einem Erdbeben würden sie nicht auf den Taj fallen." });
 
 /* =====================================================================
-   7 — DER RASEN, 8 — DER WEG, 9 — DAS WASSERBECKEN, 10 — DIE SPIEGELUNG,
-   11 — DER SPRINGBRUNNEN (Marmorbecken in der Mitte), 12 — DIE ZYPRESSE
+   7 — DER RASEN, 8 — DER WEG, 9 — DIE BLUME (Beete mit Hecke),
+   10 — DAS WASSERBECKEN, 11 — DIE SPIEGELUNG, 12 — DER SPRINGBRUNNEN,
+   13 — DIE ZYPRESSE
    ===================================================================== */
-const KANAL = 2.0, WEG = [2.35, 6.4], ZY = 7.3;
+const KANAL = 2.0, WEG = [2.35, 6.4], BEET = [6.4, 8.0], ZY = 8.6;
 const D_NAH = 14, D_FERN = 291, D_BECKEN = [139, 163], D_UNTEN = E * F / (260 - HOR);
 const band = (s0, s1, d0, d1) => P([[xAt(s0, d1), yAt(d1)], [xAt(s1, d1), yAt(d1)], [xAt(s1, d0), yAt(d0)], [xAt(s0, d0), yAt(d0)]]);
+/* Schatten der Sonne aus Osten: lange Bänder nach links (Westen), Länge 2,2 × Höhe */
+const schattenWest = (s, d, hoehe, breite) => { const u = uAt(d), y = yAt(d); return P([[xAt(s + breite / 2, d), y - 0.25 * u * breite], [xAt(s - 2.2 * hoehe, d), y - 0.1 * u], [xAt(s - 2.2 * hoehe, d), y + 0.25 * u], [xAt(s + breite / 2, d), y + 0.3 * u * breite]]); };
 {
-  /* Rasen: links und rechts der Wege, mit Mähstreifen und langen Morgenschatten */
   let k = "";
   for (const sd of [-1, 1]) {
-    const pts = [[xAt(sd * 7.2, D_FERN), yAt(D_FERN)], [sd < 0 ? 0 : 400, yAt(D_FERN)], [sd < 0 ? 0 : 400, 260], [xAt(sd * 7.2, D_UNTEN), 260]];
+    const pts = [[xAt(sd * 8.2, D_FERN), yAt(D_FERN)], [sd < 0 ? 0 : 400, yAt(D_FERN)], [sd < 0 ? 0 : 400, 260], [xAt(sd * 8.2, D_UNTEN), 260]];
     k += `<path d="${P(pts)}" fill="${S.lg("rasen", [[0, "#8aa06a"], [0.35, "#6a8d4c"], [1, "#4f7a3a"]])}"/>`;
-    for (const d of [270, 230, 195, 165, 140, 118, 100, 85, 72, 61, 52, 44, 37, 31, 26, 22, 19, 16]) k += `<path d="M${r(Math.max(0, Math.min(400, xAt(sd * 7.2, d))))} ${r(yAt(d))} L${sd < 0 ? 0 : 400} ${r(yAt(d))}" stroke="${d % 2 ? "#7aa05a" : "#5a8040"}" stroke-width="${r(Math.min(2.4, 26 / d))}" opacity=".35"/>`;
+    for (const d of [270, 230, 195, 165, 140, 118, 100, 85, 72, 61, 52, 44, 37, 31, 26, 22, 19, 16]) k += `<path d="M${r(Math.max(0, Math.min(400, xAt(sd * 8.2, d))))} ${r(yAt(d))} L${sd < 0 ? 0 : 400} ${r(yAt(d))}" stroke="${d % 2 ? "#7aa05a" : "#5a8040"}" stroke-width="${r(Math.min(2.4, 26 / d))}" opacity=".3"/>`;
   }
-  k += `<path d="${band(WEG[1], 7.25, D_UNTEN, D_FERN)}" fill="#5e8644"/><path d="${band(-7.25, -WEG[1], D_UNTEN, D_FERN)}" fill="#5e8644"/>`;
-  /* Querkanal an der Mitte (von hier nur ein Streifen) */
   k += `<rect x="0" y="${r(yAt(151))}" width="400" height="${r(yAt(149) - yAt(151))}" fill="#9fb6c6"/>`;
-  S.teil({ anker: [36, 200], id: "rasen", de: "der Rasen", syl: "RA-sen", it: "il prato", itSyl: "PRA-to", en: "lawn", x: 0, y: 0, kunst: k });
+  S.teil({ anker: [14, 152], id: "rasen", de: "der Rasen", syl: "RA-sen", it: "il prato", itSyl: "PRA-to", en: "lawn", x: 0, y: 0, kunst: k,
+    tipp: "Der Rasen wird jeden Tag gegossen – im heißen Agra bleibt er so grün." });
 }
 {
-  /* Wege aus rotem Sandstein mit hellen Fugen in Fluchtperspektive */
+  /* Wege aus rotem Sandstein mit hellen Fugen, weiße Marmorkante zum Kanal */
   let k = "";
   for (const sd of [-1, 1]) {
     const [a, b] = sd < 0 ? [-WEG[1], -WEG[0]] : [WEG[0], WEG[1]];
     k += `<path d="${band(a, b, D_UNTEN, D_FERN)}" fill="${S.lg("weg", [[0, "#c9866a"], [0.5, "#b36a4c"], [1, "#a0583c"]])}"/>`;
-    for (const s of [a + 1, a + 2, a + 3]) { let x2 = xAt(s, D_UNTEN), y2 = 260; const x1 = xAt(s, D_FERN), y1 = yAt(D_FERN); for (const g of [0, 400]) if ((x2 - g) * (x1 - g) < 0) { y2 = y1 + (y2 - y1) * (g - x1) / (x2 - x1); x2 = g; } k += `<line x1="${r(x1)}" y1="${r(y1)}" x2="${r(x2)}" y2="${r(y2)}" stroke="#d9ae96" stroke-width=".22" opacity=".55"/>`; }
+    for (const s of [a + 1, a + 2, a + 3]) { let x2 = xAt(s, D_UNTEN), y2 = 260; const x1 = xAt(s, D_FERN), y1 = yAt(D_FERN); for (const gr of [0, 400]) if ((x2 - gr) * (x1 - gr) < 0) { y2 = y1 + (y2 - y1) * (gr - x1) / (x2 - x1); x2 = gr; } k += `<line x1="${r(x1)}" y1="${r(y1)}" x2="${r(x2)}" y2="${r(y2)}" stroke="#d9ae96" stroke-width=".22" opacity=".55"/>`; }
     for (let d = D_UNTEN; d < 290; d *= 1.09) k += `<line x1="${r(Math.max(0, xAt(a, d)))}" y1="${r(yAt(d))}" x2="${r(Math.min(400, xAt(b, d)))}" y2="${r(yAt(d))}" stroke="#d9ae96" stroke-width="${r(Math.min(0.45, 6 / d))}" opacity=".5"/>`;
-    /* weiße Marmorkante zum Kanal */
     const kante = sd < 0 ? -KANAL - 0.35 : KANAL;
     k += `<path d="${band(kante, kante + 0.35, D_UNTEN, D_FERN)}" fill="#f0e8e0"/>`;
   }
-  S.teil({ anker: [126, 230], id: "weg", de: "der Weg", syl: "WEG", it: "il sentiero", itSyl: "sen-TIE-ro", en: "path", x: 0, y: 0, kunst: k,
+  /* Wege der Gartenviertel (Charbagh): Längswege und Querwege aus Sandstein, etwas erhöht */
+  for (const sd of [-1, 1]) {
+    const [a, b] = sd < 0 ? [-48, -44] : [44, 48];
+    k += `<path d="${band(a, b, D_UNTEN, D_FERN)}" fill="#a8664a"/>`;
+    for (const [d0, d1] of [[72, 77], [222, 228]]) k += `<path d="${P([[xAt(sd * 8.3, d1), yAt(d1, 0.2)], [sd < 0 ? 0 : 400, yAt(d1, 0.2)], [sd < 0 ? 0 : 400, yAt(d0, 0.2)], [xAt(sd * 8.3, d0), yAt(d0, 0.2)]])}" fill="#b0694a"/><path d="M${r(xAt(sd * 8.3, d0))} ${r(yAt(d0, 0.2))} L${sd < 0 ? 0 : 400} ${r(yAt(d0, 0.2))}" stroke="#e6c7b4" stroke-width=".35"/>`;
+  }
+  S.teil({ anker: [154, 226], id: "weg", de: "der Weg", syl: "WEG", it: "il sentiero", itSyl: "sen-TIE-ro", en: "path", x: 0, y: 0, kunst: k,
     tipp: "Die Wege liegen höher als die Beete – so sah man über die Blumen wie über einen Teppich." });
+}
+{
+  /* abgesenkte Beete an den Wegen: Sandsteinkante, Studentenblumen und Rosen, dahinter eine niedrige Hecke */
+  let k = "";
+  for (const sd of [-1, 1]) {
+    const [a, b] = sd < 0 ? [-BEET[1], -BEET[0]] : [BEET[0], BEET[1]];
+    k += `<path d="${band(a, b, D_UNTEN, D_FERN)}" fill="#5a4630"/>`;
+    const kante = sd < 0 ? -BEET[0] - 0.18 : BEET[0];
+    k += `<path d="${band(kante, kante + 0.18, D_UNTEN, D_FERN)}" fill="#c27a5a"/>`;
+    /* Blüten: nah groß, fern als Farbband */
+    k += `<path d="${band(a + 0.15, b - 0.45, 120, D_FERN)}" fill="#d98a2a" opacity=".85"/>`;
+    for (let d = D_UNTEN; d < 120; d *= 1.045) {
+      const u = uAt(d), n = 3;
+      for (let i = 0; i < n; i++) {
+        const s = a + 0.25 + (b - a - 0.7) * (i + 0.5) / n + (rnd() - 0.5) * 0.3, x = xAt(s, d), y = yAt(d, 0.25);
+        if (x < -2 || x > 402) continue;
+        const rr = Math.max(0.35, 0.13 * u), art = rnd();
+        if (x - rr * 1.6 < 0 || x + rr * 1.6 > 400) continue;
+        if (rr < 1) { const c = art < 0.5 ? "#f29a1c" : art < 0.72 ? "#ffd23a" : art < 0.9 ? "#c8283a" : "#f08ab0"; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(rr)}" fill="${c}"/>`; continue; }
+        if (rr > 1.4) k += `<path d="M${r(x)} ${r(y + rr * 0.5)} l${r(-rr * 0.9)} ${r(rr * 1.1)} M${r(x)} ${r(y + rr * 0.5)} l${r(rr * 0.9)} ${r(rr * 1.1)}" stroke="#3f6a2a" stroke-width="${r(rr * 0.3)}"/><ellipse cx="${r(x - rr * 0.9)}" cy="${r(y + rr * 1.2)}" rx="${r(rr * 0.5)}" ry="${r(rr * 0.22)}" fill="#4a7a32"/>`;
+        k += `<use href="#${S.id(art < 0.72 ? "tagetes" : "rose")}" transform="translate(${r(x)} ${r(y)}) scale(${r(rr * (art < 0.72 ? 1 : 0.9))})"${art >= 0.5 && art < 0.72 ? ` style="filter:hue-rotate(18deg) brightness(1.15)"` : ""}/>`;
+      }
+    }
+    /* niedrige Hecke (Buchs), 0,6 m */
+    const ha = sd < 0 ? -BEET[1] : BEET[1] - 0.35, hb = ha + 0.35;
+    k += `<path d="${P([[xAt(ha, D_FERN), yAt(D_FERN, 0.6)], [xAt(hb, D_FERN), yAt(D_FERN, 0.6)], [xAt(hb, D_UNTEN), yAt(D_UNTEN, 0.6)], [xAt(ha, D_UNTEN), yAt(D_UNTEN, 0.6)]])}" fill="#2f5a2e"/>`;
+    k += `<path d="${P([[xAt(ha, D_FERN), yAt(D_FERN, 0.6)], [xAt(ha, D_FERN), yAt(D_FERN)], [xAt(ha, D_UNTEN), yAt(D_UNTEN)], [xAt(ha, D_UNTEN), yAt(D_UNTEN, 0.6)]])}" fill="${sd < 0 ? "#3d6a36" : "#24462a"}"/>`;
+  }
+  /* abgesenkte Beete in den Vierteln (Parterres) mit Sandsteinrand und Blütenreihen */
+  for (const sd of [-1, 1]) for (const [s0, s1, d0, d1] of [[14, 38, 92, 118], [14, 38, 172, 212], [52, 76, 172, 212]]) {
+    const a = sd * s0, b = sd * s1;
+    k += `<path d="${P([[xAt(a, d1), yAt(d1)], [xAt(b, d1), yAt(d1)], [xAt(b, d0), yAt(d0)], [xAt(a, d0), yAt(d0)]])}" fill="#4f6a34" stroke="#b0694a" stroke-width=".5"/>`;
+    for (let d = d0 + 3; d < d1 - 1; d += (d1 - d0) / 5) k += `<path d="M${r(Math.max(0, Math.min(400, xAt(a + sd * 1.5, d))))} ${r(yAt(d, 0.3))} L${r(Math.max(0, Math.min(400, xAt(b - sd * 1.5, d))))} ${r(yAt(d, 0.3))}" stroke="${["#f29a1c", "#c8283a", "#ffd23a", "#e87aa0"][Math.floor(rnd() * 4)]}" stroke-width="${r(Math.max(0.5, 0.5 * uAt(d)))}" stroke-dasharray="${r(0.4 * uAt(d))} ${r(0.25 * uAt(d))}"/>`;
+  }
+  S.teil({ anker: [63, 191], id: "blume", de: "die Blume", syl: "BLU-me", it: "il fiore", itSyl: "FIO-re", en: "flower", x: 0, y: 0, kunst: k,
+    tipp: "In den Beeten blühen Studentenblumen und Rosen. Hinter ihnen wächst eine niedrige Hecke." });
 }
 /* Wasserfläche als Schnittmaske für das Spiegelbild */
 const WASSER = [band(-KANAL, KANAL, D_NAH, D_BECKEN[0]), band(-KANAL, KANAL, D_BECKEN[1], D_FERN)].join(" ");
 S.def(`<clipPath id="${S.id("wasser")}"><path d="${WASSER}"/></clipPath>`);
-/* das Spiegelbild füllt die Mitte; am Rand bleibt ein Streifen offenes Wasser (dort antippbar: das Wasserbecken) */
-const SPIEGELFLAECHE = [band(-KANAL * 0.84, KANAL * 0.84, D_NAH, D_BECKEN[0]), band(-KANAL * 0.84, KANAL * 0.84, D_BECKEN[1], D_FERN)].join(" ");
-S.def(`<clipPath id="${S.id("spiegelclip")}"><path d="${SPIEGELFLAECHE}"/></clipPath>`);
 {
-  let k = `<path d="${WASSER}" fill="${S.lg("wasserhimmel", [[0, "#f2dcc8"], [0.25, "#c9d2dc"], [1, "#7f9fc2"]])}"/>`;
-  /* Düsen der Springbrunnen in der Kanalmitte (heute aus) */
+  /* offenes Wasser: Himmel gespiegelt, etwas dunkler und grünlich */
+  let k = `<path d="${WASSER}" fill="${S.lg("wasserhimmel", [[0, "#d9cbbc"], [0.25, "#9fb0b4"], [1, "#5f8088"]])}"/>`;
   for (let d = 18; d < 138; d *= 1.18) k += `<ellipse cx="${CX}" cy="${r(yAt(d, -0.3))}" rx="${r(Math.max(0.3, 0.12 * uAt(d)))}" ry="${r(Math.max(0.15, 0.04 * uAt(d)))}" fill="#6a5a3a" opacity=".7"/>`;
-  S.teil({ anker: [200, 236], id: "wasserbecken", de: "das Wasserbecken", syl: "WAS-ser-be-cken", it: "la vasca", itSyl: "VA-sca", en: "pool", x: 0, y: 0, kunst: k,
-    tipp: "Das lange Wasserbecken teilt den Garten. Morgens ist das Wasser ganz still." });
+  S.teil({ anker: [176, 243], id: "wasserbecken", de: "das Wasserbecken", syl: "WAS-ser-be-cken", it: "la vasca", itSyl: "VA-sca", en: "pool", x: 0, y: 0, kunst: k,
+    tipp: "Das lange Wasserbecken teilt den Garten. Morgens sind die Springbrunnen aus – das Wasser ist ganz still." });
 }
 {
-  /* das Spiegelbild: Sockel, Bau und Minarette gespiegelt, nur im Wasser */
-  let k = `<g clip-path="url(#${S.id("spiegelclip")})"><g transform="translate(0 ${SPIEGEL}) scale(1 -1)" opacity=".78"><use href="#${S.id("sockelbild")}"/><use href="#${S.id("minarettbild")}"/><use href="#${S.id("baubild")}"/></g>`;
-  k += `<rect x="0" y="135" width="400" height="125" fill="${S.lg("spiegeltiefe", [[0, "#9fb0c4", 0.15], [1, "#3a5a7a", 0.3]])}"/>`;
-  /* feine Wellenlinien */
-  for (let d = 16; d < 130; d *= 1.12) { const y = yAt(d, -0.3), w = KANAL * uAt(d); k += `<line x1="${r(CX - w * 0.9)}" y1="${r(y)}" x2="${r(CX - w * 0.2)}" y2="${r(y)}" stroke="#fff" stroke-width="${r(Math.min(0.4, 6 / d))}" opacity=".25"/><line x1="${r(CX + w * 0.1)}" y1="${r(y + 0.6)}" x2="${r(CX + w * 0.7)}" y2="${r(y + 0.6)}" stroke="#fff" stroke-width="${r(Math.min(0.35, 5 / d))}" opacity=".18"/>`; }
-  k += `</g>`;
+  /* das Spiegelbild: nur die gespiegelten Bauten sind „die Spiegelung“, dunkler, grünlich, mit feinen Wellen */
+  let k = `<g clip-path="url(#${S.id("wasser")})"><g transform="translate(0 ${SPIEGEL}) scale(1 -1)" opacity=".62"><use href="#${S.id("sockelbild")}"/><use href="#${S.id("minarettbild")}"/><use href="#${S.id("baubild")}"/></g>`;
+  k += `<g pointer-events="none"><rect x="0" y="135" width="400" height="125" fill="${S.lg("spiegeltiefe", [[0, "#6f8f8a", 0.18], [1, "#2f4f52", 0.22]])}"/>`;
+  for (let d = 16; d < 130; d *= 1.1) { const y = yAt(d, -0.3), w = KANAL * uAt(d); k += `<line x1="${r(CX - w * 0.95)}" y1="${r(y)}" x2="${r(CX - w * 0.25)}" y2="${r(y)}" stroke="#eef4f4" stroke-width="${r(Math.min(0.45, 6 / d))}" opacity=".3"/><line x1="${r(CX + w * 0.05)}" y1="${r(y + 0.7)}" x2="${r(CX + w * 0.8)}" y2="${r(y + 0.7)}" stroke="#eef4f4" stroke-width="${r(Math.min(0.4, 5 / d))}" opacity=".22"/>`; }
+  k += `</g></g>`;
   S.teil({ anker: [200, 200], id: "spiegelung", de: "die Spiegelung", syl: "SPIE-ge-lung", it: "il riflesso", itSyl: "ri-FLES-so", en: "reflection", x: 0, y: 0, kunst: k,
     tipp: "Im stillen Wasser sieht man den Taj Mahal noch einmal – auf dem Kopf." });
 }
+/* das erhöhte Marmorbecken in der Mitte: Lotus-Düsen sprudeln nur niedrig */
+const BECKEN_OBEN = P([[xAt(-12, D_BECKEN[1]), yAt(D_BECKEN[1], 1.2)], [xAt(12, D_BECKEN[1]), yAt(D_BECKEN[1], 1.2)], [xAt(12, D_BECKEN[0]), yAt(D_BECKEN[0], 1.2)], [xAt(12, D_BECKEN[0]), yAt(D_BECKEN[0])], [xAt(-12, D_BECKEN[0]), yAt(D_BECKEN[0])], [xAt(-12, D_BECKEN[0]), yAt(D_BECKEN[0], 1.2)]]);
 {
-  /* das erhöhte Marmorbecken in der Mitte mit fünf Lotus-Fontänen */
   const [d0, d1] = D_BECKEN, sB = 12;
   let k = `<path d="${P([[xAt(-sB, d0), yAt(d0, 1.2)], [xAt(sB, d0), yAt(d0, 1.2)], [xAt(sB, d0), yAt(d0)], [xAt(-sB, d0), yAt(d0)]])}" fill="${MARMOR}"/>`;
   k += `<path d="${P([[xAt(-sB, d1), yAt(d1, 1.2)], [xAt(sB, d1), yAt(d1, 1.2)], [xAt(sB, d0), yAt(d0, 1.2)], [xAt(-sB, d0), yAt(d0, 1.2)]])}" fill="#e9e1da"/>`;
-  k += `<path d="${P([[xAt(-7, d0 + 5), yAt(d0 + 5, 1.1)], [xAt(7, d0 + 5), yAt(d0 + 5, 1.1)], [xAt(7, d1 - 5), yAt(d1 - 5, 1.1)], [xAt(-7, d1 - 5), yAt(d1 - 5, 1.1)]])}" fill="#9fb4c4"/>`;
+  k += `<path d="${P([[xAt(-7, d0 + 5), yAt(d0 + 5, 1.1)], [xAt(7, d0 + 5), yAt(d0 + 5, 1.1)], [xAt(7, d1 - 5), yAt(d1 - 5, 1.1)], [xAt(-7, d1 - 5), yAt(d1 - 5, 1.1)]])}" fill="#8faab0"/>`;
   for (const s of [-10, -6, -2, 2, 6, 10]) k += `<rect x="${r(xAt(s, d0) - 0.3)}" y="${r(yAt(d0, 1.2))}" width=".6" height="${r(yAt(d0) - yAt(d0, 1.2))}" fill="#d9cfc8"/>`;
   /* Marmorbank (die „Diana-Bank“) vorn */
   k += `<rect x="${r(xAt(-2.5, d0 - 1))}" y="${r(yAt(d0 - 1, 1.75))}" width="${r(5 * uAt(d0))}" height="${r(yAt(d0 - 1, 1.2) - yAt(d0 - 1, 1.75))}" fill="#fbf6ef"/>`;
-  for (const [s, dd, hh] of [[0, 151, 4.2], [-4.5, 148, 2.6], [4.5, 148, 2.6], [-4.5, 155, 2.4], [4.5, 155, 2.4]]) {
-    const x = xAt(s, dd), y0 = yAt(dd, 1.1), y1 = yAt(dd, 1.1 + hh);
-    k += `<path d="M${r(x)} ${r(y0)} Q${r(x - 0.4)} ${r((y0 + y1) / 2)} ${r(x)} ${r(y1)} Q${r(x + 0.4)} ${r((y0 + y1) / 2)} ${r(x)} ${r(y0)}" stroke="#f8fbff" stroke-width=".55" fill="none" opacity=".9"/>`;
-    k += `<path d="M${r(x - 1.4)} ${r(y1 + 1)} Q${r(x)} ${r(y1 - 0.6)} ${r(x + 1.4)} ${r(y1 + 1)}" stroke="#f8fbff" stroke-width=".3" fill="none" opacity=".75"/>`;
+  /* fünf Lotusdüsen: kleine Sprudel mit Sprühkrone, weit unter der Türhöhe */
+  for (const [s, dd] of [[0, 151], [-4.5, 147], [4.5, 147], [-4.5, 155], [4.5, 155]]) {
+    const x = xAt(s, dd), y0 = yAt(dd, 1.1), y1 = yAt(dd, 1.65);
+    k += `<path d="M${r(x - 0.5)} ${r(y0)} Q${r(x)} ${r(y1 - 0.4)} ${r(x + 0.5)} ${r(y0)}" fill="#f4f8fa" opacity=".85"/>`;
+    for (const dx of [-0.8, 0, 0.8]) k += `<circle cx="${r(x + dx)}" cy="${r(y1 + 0.2)}" r=".22" fill="#fff" opacity=".8"/>`;
   }
-  S.teil({ anker: [200, 141], id: "springbrunnen", de: "der Springbrunnen", syl: "SPRING-brun-nen", it: "la fontana", itSyl: "fon-TA-na", en: "fountain", x: 0, y: 0, kunst: k + flaeche(xAt(-sB, d0), yAt(d0, 4.6), 2 * sB * uAt(d0), yAt(d0) - yAt(d0, 4.6)),
+  k += `<path d="${P([[xAt(sB, d0), yAt(d0, 1.2)], [xAt(sB, d1), yAt(d1, 1.2)], [xAt(sB, d1), yAt(d1)], [xAt(sB, d0), yAt(d0)]])}" fill="${OST}" opacity=".6"/>`;
+  S.teil({ anker: [222, 143], id: "springbrunnen", de: "der Springbrunnen", syl: "SPRING-brun-nen", it: "la fontana", itSyl: "fon-TA-na", en: "fountain", x: 0, y: 0, kunst: k,
     tipp: "In der Mitte des Gartens liegt ein Marmorbecken. Seine Düsen haben die Form von Lotusblüten." });
 }
 {
-  /* Zypressen in zwei Reihen entlang der Wege; weiche Morgenschatten nach links (Westen) */
-  let k = "", sch = "";
+  /* Zypressen: zwei Reihen hinter den Hecken; Schatten lang nach links. Ferne Zypressen hinter dem Becken werden an seiner Kante abgeschnitten. */
+  let nah = "", fern = "", sch = "";
   const zyp = (x, y, w, h) => {
-    /* schlanke Säule mit leicht unruhigem Rand und Spitze */
     let l = `M${r(x - w * 0.55)} ${r(y)}`, rr = "";
     for (let i = 1; i <= 8; i++) { const t = i / 8, bx = Math.sin(Math.PI * Math.pow(1 - t, 0.85) * 0.5) * w * (0.9 + 0.12 * Math.sin(i * 2.3)); l += ` L${r(x - bx)} ${r(y - h * t)}`; }
     for (let i = 8; i >= 0; i--) { const t = i / 8, bx = Math.sin(Math.PI * Math.pow(1 - t, 0.85) * 0.5) * w * (0.92 + 0.1 * Math.cos(i * 1.7)); rr += ` L${r(x + bx)} ${r(y - h * t)}`; }
     let g = `<path d="${l}${rr} Z" fill="${ZYPRESSE}"/>`;
     if (h > 25) for (let i = 0; i < 6; i++) { const t = 0.12 + i * 0.13, bx = x + w * (0.3 - rnd() * 0.6); g += `<path d="M${r(bx)} ${r(y - h * t)} q${r(w * 0.12)} ${r(-h * 0.06)} ${r(w * 0.02)} ${r(-h * 0.12)}" stroke="#14281a" stroke-width="${r(w * 0.12)}" fill="none" opacity=".4" stroke-linecap="round"/>`; }
-    return g + `<path d="M${r(x + w * 0.35)} ${r(y - h * 0.1)} Q${r(x + w * 0.7)} ${r(y - h * 0.45)} ${r(x + w * 0.12)} ${r(y - h * 0.9)}" stroke="#9cc070" stroke-width="${r(Math.max(0.2, w * 0.22))}" fill="none" opacity=".3"/>`;
+    return g + `<path d="M${r(x + w * 0.35)} ${r(y - h * 0.1)} Q${r(x + w * 0.72)} ${r(y - h * 0.45)} ${r(x + w * 0.12)} ${r(y - h * 0.9)}" stroke="#c9d88a" stroke-width="${r(Math.max(0.2, w * 0.22))}" fill="none" opacity=".35"/>`;
   };
   const tiefen = [];
   for (let d = 38; d < 286; d *= 1.16) if (d < D_BECKEN[0] - 5 || d > D_BECKEN[1] + 5) tiefen.push(d);
@@ -473,69 +592,101 @@ S.def(`<clipPath id="${S.id("spiegelclip")}"><path d="${SPIEGELFLAECHE}"/></clip
     const u = uAt(d), y = yAt(d), w = 0.62 * u, h = (d < 90 ? 6.4 : 5.6) * u;
     for (const sd of [-1, 1]) {
       const x = xAt(sd * ZY, d);
-      sch += `<path d="${P([[x, y], [x - 6.5 * u, y + 0.25 * u], [x - 6.2 * u, y + 0.6 * u], [x + 0.5 * u, y + 0.35 * u]])}" fill="#1d3320"/>`;
-      k += zyp(x, y, w, h);
+      sch += `<path d="${schattenWest(sd * ZY, d, d < 90 ? 6.4 : 5.6, 1.2)}" fill="#1d3320"/>`;
+      if (d > D_BECKEN[1]) fern += zyp(x, y, w, h); else nah += zyp(x, y, w, h);
     }
   }
-  k = `<g opacity=".11" filter="url(#${S.id("weich2")})">${sch}</g>` + k;
-  S.teil({ anker: [xAt(-ZY, 38), yAt(38, 3)], id: "zypresse", de: "die Zypresse", syl: "zy-PRES-se", it: "il cipresso", itSyl: "ci-PRES-so", en: "cypress", x: 0, y: 0, kunst: k,
+  /* Maske: alles außer dem Marmorbecken (gerade Regel: evenodd) */
+  S.def(`<clipPath id="${S.id("ohnebecken")}"><path clip-rule="evenodd" d="M-10 -10 H410 V270 H-10 Z ${BECKEN_OBEN}"/></clipPath>`);
+  const k = `<g opacity=".3" filter="url(#${S.id("weich1")})" pointer-events="none">${sch}</g><g clip-path="url(#${S.id("ohnebecken")})">${fern}</g>${nah}`;
+  S.teil({ anker: [xAt(-ZY, 44), yAt(44, 3.6)], id: "zypresse", de: "die Zypresse", syl: "zy-PRES-se", it: "il cipresso", itSyl: "ci-PRES-so", en: "cypress", x: 0, y: 0, kunst: k,
     tipp: "Zypressen bleiben immer grün. In persischen Gärten stehen sie für das ewige Leben." });
 }
 
 /* =====================================================================
-   13 — DER PFAU, 14 — DER SARI (Besucherin), 15 — DER FOTOGRAF,
-   16 — DAS PALMENHÖRNCHEN, 17 — DER PAPAGEI, 18 — DIE TERRASSE (vorne)
+   14 — DER PFAU (links auf dem Rasen)
    ===================================================================== */
 {
-  /* Pfau auf dem rechten Weg, Schleppe nach hinten */
-  const d = 36, u = uAt(d), x = xAt(4.9, d), y = yAt(d);
-  let k = `<ellipse cx="${r(-0.9 * u)}" cy=".2" rx="${r(1.1 * u)}" ry="${r(0.1 * u)}" fill="#2a1a10" opacity=".22"/>`;
-  k += `<path d="M${r(0.1 * u)} ${r(-0.45 * u)} Q${r(-0.9 * u)} ${r(-0.5 * u)} ${r(-1.9 * u)} ${r(-0.12 * u)} Q${r(-1.2 * u)} ${r(-0.05 * u)} ${r(-0.1 * u)} ${r(-0.3 * u)} Z" fill="${S.lg("schleppe", [[0, "#2f6a4a"], [1, "#6a8a3a"]], 0, 0, 1, 0)}"/>`;
-  for (let i = 0; i < 7; i++) { const t = 0.25 + i * 0.1; k += `<circle cx="${r(-t * 1.9 * u)}" cy="${r(-0.38 * u + t * 0.24 * u)}" r="${r(0.07 * u)}" fill="#1f3a8a"/><circle cx="${r(-t * 1.9 * u)}" cy="${r(-0.38 * u + t * 0.24 * u)}" r="${r(0.035 * u)}" fill="#e2c03a"/>`; }
-  k += `<ellipse cx="${r(0.15 * u)}" cy="${r(-0.48 * u)}" rx="${r(0.26 * u)}" ry="${r(0.19 * u)}" fill="#1f4a9a"/>`;
-  k += `<path d="M${r(0.3 * u)} ${r(-0.6 * u)} Q${r(0.38 * u)} ${r(-0.85 * u)} ${r(0.42 * u)} ${r(-1.0 * u)}" stroke="#1f5ab0" stroke-width="${r(0.12 * u)}" stroke-linecap="round" fill="none"/>`;
-  k += `<circle cx="${r(0.44 * u)}" cy="${r(-1.03 * u)}" r="${r(0.07 * u)}" fill="#1f5ab0"/><path d="M${r(0.5 * u)} ${r(-1.04 * u)} l${r(0.08 * u)} ${r(0.02 * u)}" stroke="#c9b48a" stroke-width=".3"/>`;
-  for (let i = -1; i <= 1; i++) k += `<line x1="${r(0.43 * u)}" y1="${r(-1.08 * u)}" x2="${r((0.43 + i * 0.05) * u)}" y2="${r(-1.22 * u)}" stroke="#1f5ab0" stroke-width=".2"/><circle cx="${r((0.43 + i * 0.05) * u)}" cy="${r(-1.23 * u)}" r=".3" fill="#2f7ac0"/>`;
-  k += `<path d="M${r(0.1 * u)} ${r(-0.3 * u)} L${r(0.06 * u)} 0 M${r(0.22 * u)} ${r(-0.3 * u)} L${r(0.26 * u)} 0" stroke="#8a7a6a" stroke-width=".35"/>`;
-  S.teil({ id: "pfau", de: "der Pfau", syl: "PFAU", it: "il pavone", itSyl: "pa-VO-ne", en: "peacock", x, y, steht: true, kunst: k + flaeche(-2 * u, -1.3 * u, 2.6 * u, 1.35 * u),
+  const d = 30, u = uAt(d), x = xAt(-8.95, d), y = yAt(d);
+  const m = (v) => r(v * u);
+  let k = `<path d="${P([[x + 0.3 * u, y], [x - 2.6 * u, y - 0.05 * u], [x - 2.6 * u, y + 0.12 * u], [x + 0.3 * u, y + 0.1 * u]])}" fill="#1d3320" opacity=".25" transform="translate(${r(-x)} ${r(-y)})"/>`;
+  k += `<ellipse cx="${m(-0.55)}" cy="${m(0.02)}" rx="${m(0.9)}" ry="${m(0.06)}" fill="#2a1a10" opacity=".25"/>`;
+  /* Schleppe: viele Federn, Augenreihen versetzt, nach hinten schmaler */
+  const sl = `M${m(0.02)} ${m(-0.4)} Q${m(-0.6)} ${m(-0.56)} ${m(-1.45)} ${m(-0.22)} Q${m(-1.7)} ${m(-0.1)} ${m(-1.55)} ${m(-0.02)} Q${m(-0.8)} ${m(-0.02)} ${m(0.02)} ${m(-0.2)} Z`;
+  k += `<path d="${sl}" fill="${S.lg("schleppe", [[0, "#5a7a2a"], [0.5, "#2f6a4a"], [1, "#24503a"]], 0, 0, 1, 0)}"/>`;
+  for (let i = 0; i < 12; i++) { const t = i / 12; k += `<path d="M${m(-0.02 - t * 1.4)} ${m(-0.42 + t * 0.32)} Q${m(-0.3 - t * 1.25)} ${m(-0.3 + t * 0.26)} ${m(-0.1 - t * 1.4)} ${m(-0.08 + t * 0.04)}" stroke="#7a9a3a" stroke-width=".2" fill="none" opacity=".7"/>`; }
+  for (const [t, v] of [[0.18, 0.3], [0.32, 0.18], [0.36, 0.42], [0.5, 0.28], [0.56, 0.5], [0.68, 0.24], [0.74, 0.44], [0.86, 0.32], [0.95, 0.2]]) {
+    const ex = -0.1 - t * 1.4, ey = -0.4 + t * 0.3 + v * 0.22 * (1 - t * 0.4);
+    k += `<ellipse cx="${m(ex)}" cy="${m(ey)}" rx="${m(0.06 * (1.1 - t * 0.4))}" ry="${m(0.045 * (1.1 - t * 0.4))}" fill="#c8a22a"/><ellipse cx="${m(ex)}" cy="${m(ey)}" rx="${m(0.035 * (1.1 - t * 0.4))}" ry="${m(0.028 * (1.1 - t * 0.4))}" fill="#1f3a8a"/>`;
+  }
+  /* Körper (Tropfen), braune Schwungfedern, Beine mit Gelenk */
+  k += `<path d="M${m(0.08)} ${m(-0.06)} L${m(0.12)} ${m(-0.22)} L${m(0.1)} ${m(-0.34)} M${m(0.2)} ${m(-0.06)} L${m(0.22)} ${m(-0.2)} L${m(0.17)} ${m(-0.34)}" stroke="#8a7a68" stroke-width=".45" fill="none"/>`;
+  k += `<path d="M${m(-0.14)} ${m(-0.42)} Q${m(-0.08)} ${m(-0.62)} ${m(0.16)} ${m(-0.6)} Q${m(0.36)} ${m(-0.56)} ${m(0.32)} ${m(-0.4)} Q${m(0.22)} ${m(-0.3)} ${m(0.02)} ${m(-0.32)} Z" fill="${S.lg("pfau", [[0, "#1a3f9a"], [1, "#2a6ac0"]])}"/>`;
+  k += `<path d="M${m(-0.1)} ${m(-0.46)} Q${m(0.06)} ${m(-0.52)} ${m(0.12)} ${m(-0.4)} Q${m(0)} ${m(-0.36)} ${m(-0.12)} ${m(-0.4)} Z" fill="#9a6a3a"/><path d="M${m(-0.06)} ${m(-0.44)} l${m(0.12)} ${m(0.02)}" stroke="#6a4420" stroke-width=".25"/>`;
+  /* S-Hals, Kopf mit weißem Augenstreif, Federkrone als Fächer */
+  k += `<path d="M${m(0.24)} ${m(-0.52)} Q${m(0.34)} ${m(-0.66)} ${m(0.27)} ${m(-0.8)} Q${m(0.22)} ${m(-0.92)} ${m(0.3)} ${m(-1.0)}" stroke="#1f5ab8" stroke-width="${m(0.09)}" stroke-linecap="round" fill="none"/>`;
+  k += `<ellipse cx="${m(0.32)}" cy="${m(-1.02)}" rx="${m(0.06)}" ry="${m(0.05)}" fill="#1f5ab8"/><path d="M${m(0.31)} ${m(-1.03)} l${m(0.05)} 0" stroke="#fff" stroke-width=".3"/><path d="M${m(0.37)} ${m(-1.02)} l${m(0.06)} ${m(0.015)}" stroke="#bfae8a" stroke-width=".35"/>`;
+  for (let i = -2; i <= 2; i++) k += `<line x1="${m(0.31)}" y1="${m(-1.06)}" x2="${m(0.31 + i * 0.03)}" y2="${m(-1.2)}" stroke="#1f5ab8" stroke-width=".15"/><circle cx="${m(0.31 + i * 0.03)}" cy="${m(-1.21)}" r=".28" fill="#2f7ac0"/>`;
+  S.teil({ id: "pfau", de: "der Pfau", syl: "PFAU", it: "il pavone", itSyl: "pa-VO-ne", en: "peacock", x, y, steht: true, kunst: `<g transform="translate(${r(x)} ${r(y)})">${k}</g>`.replace(`<g transform="translate(${r(x)} ${r(y)})">`, "<g>") + flaeche(-1.7 * u, -1.25 * u, 2.2 * u, 1.3 * u),
     tipp: "Der Pfau ist der Nationalvogel Indiens. Das Männchen hat die lange, bunte Schleppe." });
 }
+
+/* =====================================================================
+   15 — DER SARI (Besucherin posiert), 16 — DER FOTOGRAF, 17 — DIE KAMERA
+   ===================================================================== */
 {
-  /* Besucherin im Sari, auf dem linken Weg zum Taj unterwegs (von hinten) */
-  const d = 23, u = uAt(d), x = xAt(-4.3, d), y = yAt(d);
-  const m = B.mensch({ id: "ind_sari", geschlecht: "w", pose: "gehen", blick: 196, frisur: "zopf", haarfarbe: "schwarz", haut: "mittel",
-    kleidung: { oberteil: { stueck: "bluse", farbe: "gelb" }, unterteil: { stueck: "rock", farbe: "orange" }, schuhe: { stueck: "sandale", farbe: "braun" } } }, 1.6 * u);
+  /* Besucherin im Sari: steht mit dem Rücken zum Taj und schaut zum Fotografen (rechts vorn) */
+  const d = 27, u = uAt(d), x = xAt(3.6, d), y = yAt(d);
+  const m = B.mensch({ id: "ind_sari", geschlecht: "w", pose: "kontrapost", blick: 42, frisur: "zopf", haarfarbe: "schwarz", haut: "mittel", laecheln: true,
+    kleidung: { oberteil: { stueck: "tshirt", farbe: "gelb" }, unterteil: { stueck: "rock", farbe: "orange" }, schuhe: { stueck: "sandale", farbe: "braun" } } }, 1.6 * u);
   const p = (n) => { const q = m.z.punkte[n]; return [q[0] * m.k, q[1] * m.k]; };
-  const [sLx, sLy] = p("schulterL"), [sRx, sRy] = p("schulterR"), [hLx, hLy] = p("huefteL"), [hRx, hRy] = p("huefteR"), [kLx] = p("knoechelL"), [kRx] = p("knoechelR");
-  /* bodenlanger Rock mit Falten, dann das über die linke Schulter gelegte Ende (Pallu) mit Goldkante */
-  const rx0 = Math.min(hLx, hRx) - 1.2, rx1 = Math.max(hLx, hRx) + 1.2, ry0 = Math.min(hLy, hRy) - 1, fl = Math.min(kLx, kRx) - 2.6, fr = Math.max(kLx, kRx) + 2.6;
-  let sari = `<path d="M${r(rx0)} ${r(ry0)} L${r(rx1)} ${r(ry0)} L${r(fr)} -1 Q${r((fl + fr) / 2)} .4 ${r(fl)} -1 Z" fill="${S.lg("sari", [[0, "#e0571e"], [0.6, "#c8401a"], [1, "#9a2a10"]], 0, 0, 1, 0)}"/>`;
-  for (let i = 1; i < 5; i++) sari += `<line x1="${r(rx0 + (rx1 - rx0) * i / 5)}" y1="${r(ry0 + 2)}" x2="${r(fl + (fr - fl) * i / 5)}" y2="-1.2" stroke="#9a2a10" stroke-width=".35" opacity=".7"/>`;
-  sari += `<path d="M${r(fl)} -1 Q${r((fl + fr) / 2)} .4 ${r(fr)} -1" stroke="#e8c04a" stroke-width=".9" fill="none"/>`;
-  sari += `<path d="M${r(sLx - 0.6)} ${r(sLy - 0.8)} Q${r(sLx + 1.6)} ${r(sLy - 1.4)} ${r(sRx + 1)} ${r(sRy + 3)} Q${r(sRx + 1.4)} ${r((sRy + hRy) / 2 + 4)} ${r(rx1 + 0.6)} ${r(hRy + 7)} L${r(rx0 + 2)} ${r(hRy + 8)} Q${r(sLx - 1)} ${r(sLy + 10)} ${r(sLx - 1.4)} ${r(sLy + 1)} Z" fill="${S.lg("pallu", [[0, "#d23a22"], [1, "#a8261a"]])}"/>`;
-  sari += `<path d="M${r(rx0 + 2)} ${r(hRy + 8)} L${r(rx1 + 0.6)} ${r(hRy + 7)}" stroke="#e8c04a" stroke-width="1" fill="none"/><path d="M${r(rx0 + 2.4)} ${r(hRy + 6.4)} L${r(rx1 + 0.2)} ${r(hRy + 5.4)}" stroke="#e8c04a" stroke-width=".35" fill="none"/>`;
-  for (let i = 0; i < 6; i++) sari += `<circle cx="${r(sLx + 0.6 + i * (sRx - sLx) / 6)}" cy="${r(sLy + 3 + i * 1.4)}" r=".3" fill="#f2d36a"/>`;
-  S.teil({ id: "sari", de: "der Sari", syl: "SA-ri", it: "il sari", itSyl: "SA-ri", en: "sari", x, y, kunst: m.svg + sari,
-    tipp: "Der Sari ist ein 4 bis 8 Meter langes Tuch. Er wird um den Körper gewickelt, das Ende liegt über der Schulter." });
+  const [sLx, sLy] = p("schulterL"), [hLx, hLy] = p("huefteL"), [hRx, hRy] = p("huefteR"), [kLx] = p("knoechelL"), [kRx] = p("knoechelR"), [tLx, tLy] = p("tailleL"), [tRx, tRy] = p("tailleR"), [bx, by] = p("brust");
+  const rx0 = Math.min(hLx, hRx) - 0.7, rx1 = Math.max(hLx, hRx) + 0.7, ry0 = Math.min(tLy, tRy) - 0.2, fl = Math.min(kLx, kRx) - 1.6, fr = Math.max(kLx, kRx) + 1.6;
+  let sari = `<path d="${P([[x + 0.2 * u, y], [x - 3.4 * u, y - 0.03 * u], [x - 3.4 * u, y + 0.1 * u], [x + 0.3 * u, y + 0.12 * u]])}" fill="#2a1a10" opacity=".22" transform="translate(${r(-x)} ${r(-y)})" filter="url(#${S.id("weich1")})"/>`;
+  sari += `<ellipse cx="0" cy=".2" rx="${r(0.35 * u)}" ry="${r(0.06 * u)}" fill="#2a1a10" opacity=".35"/>`;
+  /* eng gewickelter Rock bis zu den Knöcheln, vorn Falten, unten Goldborte */
+  sari += `<path d="M${r(rx0)} ${r(ry0)} L${r(rx1)} ${r(ry0)} Q${r(rx1 + 0.4)} ${r((ry0 - 1) / 2)} ${r(fr)} -1.1 Q${r((fl + fr) / 2)} -.4 ${r(fl)} -1.1 Q${r(rx0 - 0.4)} ${r((ry0 - 1) / 2)} ${r(rx0)} ${r(ry0)} Z" fill="${S.lg("sari", [[0, "#b8341a"], [0.55, "#de5420"], [1, "#a82a14"]], 0, 0, 1, 0)}"/>`;
+  for (let i = 0; i < 4; i++) { const t = 0.38 + i * 0.06; sari += `<line x1="${r(rx0 + (rx1 - rx0) * t)}" y1="${r(ry0 + (0 - ry0) * 0.45)}" x2="${r(fl + (fr - fl) * (t - 0.03))}" y2="-1.2" stroke="#8a2210" stroke-width=".3" opacity=".7"/>`; }
+  sari += `<path d="M${r(fl)} -1.1 Q${r((fl + fr) / 2)} -.4 ${r(fr)} -1.1" stroke="#f0c64a" stroke-width=".8" fill="none"/>`;
+  /* Pallu: von der rechten Taille quer über die Brust zur linken Schulter, dahinter hängend */
+  sari += `<path d="M${r(tRx - 0.4)} ${r(tRy + 0.6)} Q${r(bx)} ${r(by + 0.4)} ${r(sLx - 1.2)} ${r(sLy - 0.4)} L${r(sLx + 0.9)} ${r(sLy + 0.3)} L${r(sLx + 1.6)} ${r(sLy + 5.5)} L${r(sLx + 0.5)} ${r(sLy + 5.2)} Q${r(bx + 1.6)} ${r(by + 3.2)} ${r(tRx + 1.4)} ${r(tRy + 2.2)} Z" fill="${S.lg("pallu", [[0, "#c8301e"], [1, "#e85a26"]], 0, 0, 1, 0)}"/>`;
+  sari += `<path d="M${r(tRx + 1.4)} ${r(tRy + 2.2)} Q${r(bx + 1.6)} ${r(by + 3.2)} ${r(sLx + 0.5)} ${r(sLy + 5.2)}" stroke="#f0c64a" stroke-width=".55" fill="none"/>`;
+  for (let i = 0; i < 4; i++) { const t = 0.2 + i * 0.2; sari += `<circle cx="${r(tRx + (sLx - tRx) * t)}" cy="${r(tRy + (sLy - tRy) * t + 0.9)}" r=".22" fill="#f6d36a"/>`; }
+  S.teil({ id: "sari", de: "der Sari", syl: "SA-ri", it: "il sari", itSyl: "SA-ri", en: "sari", x, y, kunst: vereinfache(m.svg, 1) + sari,
+    tipp: "Der Sari ist ein 4 bis 8 Meter langes Tuch. Das schön verzierte Ende, der „Pallu“, liegt über der Schulter." });
 }
+const FOTO = { d: 18.5, s: 5.2 };
+let KAMERA = null;
 {
-  /* Fotograf auf dem rechten Weg, mit Kamera */
-  const d = 19.5, u = uAt(d), x = xAt(4.5, d), y = yAt(d);
-  const m = B.mensch({ id: "ind_foto", geschlecht: "m", pose: "halten", blick: -68, frisur: "kurz", haarfarbe: "schwarz", haut: "dunkel",
+  /* Fotograf: hält die Kamera vor das Auge und zielt auf die Besucherin mit dem Taj im Hintergrund */
+  const d = FOTO.d, u = uAt(d), x = xAt(FOTO.s, d), y = yAt(d);
+  const pose = { lende: 1, brust: -2, nacken: 4, kopf: 0, schulterL: { vor: 58, seit: 22 }, ellbogenL: 118, unterarmL: 60, handL: 10, fingerL: 0.6, schulterR: { vor: 56, seit: 24 }, ellbogenR: 120, unterarmR: 60, handR: 10, fingerR: 0.6,
+    huefteL: { vor: 10, seit: 4, dreh: -6 }, knieL: 8, fussL: 0, huefteR: { vor: -6, seit: 4, dreh: -6 }, knieR: 2, fussR: 0 };
+  const m = B.mensch({ id: "ind_foto", geschlecht: "m", pose, blick: -125, frisur: "kurz", haarfarbe: "schwarz", haut: "dunkel",
     kleidung: { oberteil: { stueck: "hemd", farbe: "hellblau" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, 1.7 * u);
-  const hand = [m.z.handL, m.z.handR].sort((a, b) => a.x - b.x)[0];
-  const hx = hand.x * m.k, hy = hand.y * m.k;
-  let kam = `<g transform="translate(${r(hx - 1)} ${r(hy - 2.6)})"><rect x="-3.4" y="-2.2" width="6.8" height="4.4" rx=".8" fill="#1e1e20"/><circle cx="-2.6" cy="0" r="2" fill="#2b2b2e" stroke="#555" stroke-width=".3"/><circle cx="-2.6" cy="0" r="1" fill="#3a5a7a"/><rect x="1.4" y="-3" width="2" height=".9" fill="#1e1e20"/></g>`;
-  kam += `<path d="M${r(hx + 2)} ${r(hy - 3)} Q${r(hx + 5)} ${r(hy - 10)} ${r(hx + 8)} ${r(hy - 15)}" stroke="#2a2a2a" stroke-width=".35" fill="none"/>`;
-  S.teil({ id: "fotograf", de: "der Fotograf", syl: "fo-to-GRAF", it: "il fotografo", itSyl: "fo-TO-gra-fo", en: "photographer", x, y, kunst: m.svg + kam,
+  const hx = (m.z.handL.x + m.z.handR.x) / 2 * m.k, hy = (m.z.handL.y + m.z.handR.y) / 2 * m.k;
+  const [nx, ny] = [m.z.punkte.nacken[0] * m.k, m.z.punkte.nacken[1] * m.k];
+  let k = `<path d="${P([[x + 0.25 * u, y], [x - 3.7 * u, y - 0.04 * u], [x - 3.7 * u, y + 0.12 * u], [x + 0.35 * u, y + 0.14 * u]])}" fill="#2a1a10" opacity=".22" transform="translate(${r(-x)} ${r(-y)})" filter="url(#${S.id("weich1")})"/>`;
+  k += `<ellipse cx="0" cy=".3" rx="${r(0.4 * u)}" ry="${r(0.07 * u)}" fill="#2a1a10" opacity=".35"/>`;
+  /* Kameragurt als Schlaufe um den Nacken */
+  k += vereinfache(m.svg, 1) + `<path d="M${r(hx + 1.6)} ${r(hy + 0.6)} Q${r(nx + 2.4)} ${r(ny + 5)} ${r(nx + 0.6)} ${r(ny + 0.2)} M${r(hx - 1.4)} ${r(hy + 0.8)} Q${r(nx - 1.6)} ${r(ny + 4.6)} ${r(nx - 0.6)} ${r(ny + 0.4)}" stroke="#1d1d1f" stroke-width=".45" fill="none"/>`;
+  KAMERA = { x: x + hx - 1.8, y: y + hy - 0.6 };
+  S.teil({ id: "fotograf", de: "der Fotograf", syl: "fo-to-GRAF", it: "il fotografo", itSyl: "fo-TO-gra-fo", en: "photographer", x, y, kunst: k,
     tipp: "Am Taj arbeiten viele Fotografen. Sie machen von den Besuchern ein Bild mit dem Taj im Hintergrund." });
 }
 {
-  /* Terrasse des Haupttors: roter Sandstein mit weißer Marmor-Einlage, vorne die Kante */
-  const yK = yAt(8, 1.5);     /* 247 */
+  /* die Kamera (Spiegelreflex) vor seinem Gesicht, Objektiv zur Besucherin */
+  let k = `<rect x="-3" y="-2" width="6" height="4" rx=".7" fill="#1e1e20"/><rect x="-2.4" y="-2.9" width="2.2" height="1" rx=".3" fill="#2a2a2c"/><circle cx="-3.2" cy=".1" r="1.9" fill="#2b2b2e" stroke="#5a5a5e" stroke-width=".3"/><circle cx="-3.6" cy=".1" r="1" fill="#3a5a7a"/><circle cx="-3.9" cy="-.2" r=".35" fill="#cfe4f4" opacity=".8"/><rect x="1.2" y="-1.4" width="1.4" height="1" fill="#c0392b"/>`;
+  S.teil({ oben: true, id: "kamera", de: "die Kamera", syl: "KA-me-ra", it: "la macchina fotografica", itSyl: "MAC-chi-na fo-to-GRA-fi-ca", en: "camera", x: r(KAMERA.x), y: r(KAMERA.y), kunst: k + flaeche(-5.4, -3.2, 8.6, 5.6) });
+}
+
+/* =====================================================================
+   18 — DIE TERRASSE (vorne), 19 — DAS PALMENHÖRNCHEN, 20 — DER PAPAGEI
+   ===================================================================== */
+{
+  const yK = yAt(8, 1.5);
   let k = `<rect x="0" y="${r(yK)}" width="400" height="${r(260 - yK)}" fill="${S.lg("torterrasse", [[0, "#b25a3a"], [1, "#8a3e26"]])}"/>`;
   k += `<rect x="0" y="${r(yK)}" width="400" height="1.6" fill="#f3ebe2"/><rect x="0" y="${r(yK + 1.6)}" width="400" height=".6" fill="#5a2a18" opacity=".6"/>`;
-  /* Sternmuster aus weißem Marmor (verkürzt gesehen) */
   for (let i = -12; i <= 12; i++) {
     const x = CX + i * 15, y = yK + 7;
     k += `<path d="M${r(x - 6)} ${r(y)} L${r(x)} ${r(y - 2)} L${r(x + 6)} ${r(y)} L${r(x)} ${r(y + 2)} Z" fill="none" stroke="#ead8c8" stroke-width=".45" opacity=".8"/><path d="M${r(x - 2.6)} ${r(y)} L${r(x)} ${r(y - 0.9)} L${r(x + 2.6)} ${r(y)} L${r(x)} ${r(y + 0.9)} Z" fill="#ead8c8" opacity=".7"/>`;
@@ -546,31 +697,27 @@ S.def(`<clipPath id="${S.id("spiegelclip")}"><path d="${SPIEGELFLAECHE}"/></clip
     tipp: "Hinter uns steht das große Tor aus rotem Sandstein. Aus seinem Bogen sieht man den Taj zum ersten Mal." });
 }
 {
-  /* Palmenhörnchen: drei helle Streifen auf dem Rücken, buschiger Schwanz */
-  const u = uAt(7.8);
-  let k = `<ellipse cx="0" cy=".2" rx="9" ry="1" fill="#2a1408" opacity=".3"/>`;
+  let k = `<path d="M5 .2 L-16 -.4 L-16 .8 L5 .9 Z" fill="#2a1408" opacity=".25"/><ellipse cx="0" cy=".2" rx="6" ry=".9" fill="#2a1408" opacity=".3"/>`;
   k += `<path d="M-6 -2 Q-12 -6 -11 -12 Q-10 -15 -7 -14 Q-9 -10 -6 -6 Z" fill="#7a6a5a"/><path d="M-7.6 -13.4 Q-10 -10 -7 -6" stroke="#b9a890" stroke-width=".5" fill="none"/>`;
   k += `<path d="M-6 0 Q-7 -5 -2 -6.4 Q3 -7 5 -4 Q6 -1 4 0 Z" fill="${S.lg("hoernchen", [[0, "#9a8670"], [1, "#6a5848"]])}"/>`;
   k += `<path d="M-5 -3.8 Q0 -6.6 4 -4.4 M-5.2 -2.6 Q0 -5.4 4.4 -3.2 M-5 -1.4 Q0 -4.2 4.6 -2" stroke="#efe4cf" stroke-width=".45" fill="none"/>`;
   k += `<ellipse cx="5.6" cy="-4.4" rx="2.2" ry="1.7" fill="#8a7660"/><circle cx="6.4" cy="-4.8" r=".45" fill="#1a1008"/><path d="M5 -6 l.4 -1.2 l.6 1" fill="#8a7660"/><circle cx="7.7" cy="-4.2" r=".35" fill="#3a2a20"/>`;
   k += `<path d="M3 0 l.6 -1.8 M4.6 0 l.2 -1.6" stroke="#5a4838" stroke-width=".6"/>`;
-  void u;
   S.teil({ oben: true, id: "palmenhoernchen", de: "das Palmenhörnchen", syl: "PAL-men-hörn-chen", it: "lo scoiattolo delle palme", itSyl: "sco-IAT-to-lo DEL-le PAL-me", en: "palm squirrel", x: 62, y: 251, steht: true, kunst: k,
-    tipp: "Das Palmenhörnchen hat drei Streifen. Eine Legende sagt: Der Gott Rama hat es gestreichelt." });
+    tipp: "Das Palmenhörnchen hat drei helle Streifen. Eine Legende sagt: Der Gott Rama hat es gestreichelt – davon hat es die Streifen." });
 }
 {
-  /* zwei Halsbandsittiche im Flug */
   let k = "";
   for (const [x, y, s] of [[0, 0, 1], [16, 7, 0.8]]) {
     k += `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-6 0 Q-1 -2 4 -1 Q7 -.6 8 .4 Q5 1.6 -1 1.4 Q-6 1.4 -12 3 Z" fill="#4cae3a"/><path d="M-2 -.4 Q1 -6 6 -7 Q3 -3 2 0 Z" fill="#3a9a2e"/><path d="M-2 .8 Q0 5 4 6.4 Q2 3 2 .8 Z" fill="#2f8a26"/>`;
     k += `<circle cx="6.6" cy="-.4" r="1.4" fill="#5cbe46"/><path d="M7.6 0 q1.4 .2 1.2 1.4 q-.8 -.2 -1.4 -.6 Z" fill="#c8321e"/><path d="M5.6 .6 q.8 .8 2 .4" stroke="#1a1a1a" stroke-width=".3" fill="none"/><circle cx="7" cy="-.8" r=".25" fill="#111"/></g>`;
   }
   S.teil({ oben: true, id: "papagei", de: "der Papagei", syl: "pa-pa-GEI", it: "il pappagallo", itSyl: "pap-pa-GAL-lo", en: "parrot", x: 64, y: 44, kunst: `<g transform="scale(.7)">${k}</g>` + flaeche(-10, -6.4, 27, 14),
-    tipp: "Grüne Halsbandsittiche fliegen laut kreischend in Scharen über den Garten." });
+    tipp: "Grüne Halsbandsittiche – eine Papageienart – fliegen laut kreischend in Scharen über den Garten." });
 }
 
-/* VORNE: Morgenlicht und ein Hauch Dunst über dem Wasser (fängt keinen Tipp ab) */
-S.davor(`<rect x="0" y="0" width="400" height="260" fill="${S.lg("morgenlicht", [[0, "#000", 0.04], [0.55, "#fff", 0], [1, "#ffd9a8", 0.12]], 0, 0, 1, 0)}"/>`);
+/* VORNE: Morgenlicht (fängt keinen Tipp ab) */
+S.davor(`<rect x="0" y="0" width="400" height="260" fill="${S.lg("morgenlicht", [[0, "#3a2a60", 0.05], [0.55, "#fff", 0], [1, "#ffcf9a", 0.12]], 0, 0, 1, 0)}"/>`);
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/indien.js"));
 console.log(aus);

@@ -12,15 +12,18 @@
    Geprüft:
      1  Bau: min/app.js passt zur Quelle, jeder Teil passt zu min/app.js,
         die Startblätter und ihre Stempel sind da.
-     2  Start: bis die Reiter antworten, wird kein app-teil-*.js, kein
-        ganzes korrekturen/app-styles/spiel.css und kein spiel.js geholt;
-        kein Platzhalter musste sofort nachladen.
-     3  Gleich danach kommen die ganzen Blätter – direkt hinter ihr
-        Startblatt; Kopfzeile und Reiter sehen davor und danach gleich aus.
+     2  Start: vor DOMContentLoaded wird kein app-teil-*.js, kein
+        data-exercises-teil.js, kein ganzes korrekturen/app-styles/spiel.css,
+        kein spiel.js und kein data-wegweiser.js geholt; kein Platzhalter
+        musste sofort nachladen.
+     3  Nach DOMContentLoaded kommen die ganzen Blätter – direkt hinter
+        ihr Startblatt; die Startansicht nur mit den Startblättern ist
+        Bildpunkt für Bildpunkt dieselbe wie mit allen.
      4  Wissen → Klassenzimmer holt den Teil „raum", spiel.css und dann
         spiel.js; in der Ruhepause kommt alles und wird eingesetzt.
      5  Die Bereiche funktionieren: Spiele, Einstellungen, Postfach,
-        Klassenzimmer mit Raum; ein Auftritt, der im Chat ankommt, läuft.
+        Wegweiser, Deutschland-Quiz (ausgelagerte Daten), Klassenzimmer mit
+        Raum; ein Auftritt, der im Chat ankommt, läuft.
      6  Ganz früh (vor jedem Vorladen) kommt ein Auftritt im Chat an: er
         läuft trotzdem (der Platzhalter holt seinen Teil sofort).
      7  ?quelle lädt die Quelle ganz, ohne Teile – auch da läuft alles.
@@ -113,6 +116,11 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
     aus.einstellungen = (document.getElementById("settingsArea") || {}).innerText.length;
     document.querySelector('[data-sub="sub-inbox"]').click(); await warte(500);
     aus.postfach = (document.getElementById("inboxArea") || {}).innerText.length;
+    /* data-wegweiser.js kommt nicht mehr beim Start: der Wegweiser zeigt trotzdem seine Länder */
+    document.querySelector('.tape-tab[data-target="view-knowledge"]').click(); await warte(300);
+    document.querySelector('#knowledgeSubnav [data-sub="sub-wegweiser"]').click();
+    for (let i = 0; i < 40 && !/IN WELCHES LAND/i.test((document.getElementById("wegweiserArea") || {}).innerText || ""); i++) await warte(100);
+    aus.wegweiser = /IN WELCHES LAND/i.test((document.getElementById("wegweiserArea") || {}).innerText || "");
     /* aus dem ausgelagerten Datenblock von data-exercises.js (Deutschland-Quiz) */
     aus.quizThemen = ExerciseData.getQuizTopics().join(",");
     aus.quizFragen = ExerciseData.activeCategories().filter((c) => /quiz/i.test(c.id)).map((c) => (c.getBank ? c.getBank().length : 0)).join(",");
@@ -140,23 +148,39 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
     });
     sage(["korrekturen", "app-styles", "spiel"].every((n) => start.indexOf("/min/" + n + "-start.css") >= 0) && zeiten.voll.every((v) => v[1] >= zeiten.dcl - 1),
       "beim Start nur die Startblätter; die ganzen erst nach DOMContentLoaded", "DCL " + Math.round(zeiten.dcl) + " ms, ganze: " + JSON.stringify(zeiten.voll));
-    sage(!start.some((p) => /spiel\.js$/.test(p)), "spiel.js noch nicht geholt");
+    const spaeteSkripte = await pg.evaluate(() => {
+      const dcl = performance.getEntriesByType("navigation")[0].domContentLoadedEventStart || Infinity;
+      return performance.getEntriesByType("resource").filter((r) => /\/(spiel|data-wegweiser)\.js|app-teil-|data-exercises-teil/.test(r.name) && r.startTime < dcl - 1).map((r) => r.name.replace(/^.*\//, ""));
+    });
+    sage(!spaeteSkripte.length, "spiel.js, data-wegweiser.js und die Teile werden erst nach DOMContentLoaded geholt", spaeteSkripte.join(", "));
     sage(st0.sofort.length === 0, "kein Platzhalter musste beim Start nachladen", st0.sofort.join(" | "));
 
-    console.log("\n3) GLEICH DANACH DIE GANZEN BLÄTTER\n");
-    const vorher = await pg.evaluate(() => [".site-header", ".tape-tab", ".brand-name", "body", ".view[data-active=true]"].map((s) => { const e = document.querySelector(s); if (!e) return s + ":-"; const c = getComputedStyle(e); return s + ":" + [c.color, c.backgroundColor, c.fontSize, c.fontFamily, c.padding, c.display, Math.round(e.getBoundingClientRect().height)].join("/"); }));
-    /* Erst nur geholt (Zwischenspeicher), nicht eingehängt – eingehängt wird mit dmaStileAn */
-    const geholt = pfade(ab).filter((p) => /\/min\/(korrekturen|app-styles)\.css$/.test(p));
-    const vorAn = await pg.evaluate(() => [...document.querySelectorAll('link[rel="stylesheet"]')].filter((l) => /\/min\/(korrekturen|app-styles)\.css/.test(l.href)).length);
-    sage(geholt.length >= 2 && vorAn === 0, "die ganzen Blätter werden nach DOMContentLoaded geholt, aber noch nicht eingehängt", geholt.join(" ") + ", eingehängt: " + vorAn);
-    await pg.evaluate(() => window.dmaStileAn());
-    await pg.waitForFunction(() => [...document.styleSheets].filter((s) => /\/min\/(korrekturen|app-styles)\.css/.test(s.href || "")).length === 2, null, { timeout: 20000 }).catch(() => {});
+    console.log("\n3) GLEICH DANACH DIE GANZEN BLÄTTER – DAS BILD BLEIBT GLEICH\n");
+    await pg.waitForFunction(() => [...document.styleSheets].filter((s) => /\/min\/(korrekturen|app-styles|spiel)\.css/.test(s.href || "")).length === 3, null, { timeout: 20000 }).catch(() => {});
     const reihe = await pg.evaluate(() => [...document.querySelectorAll('link[rel="stylesheet"]')].map((l) => (l.getAttribute("href") || "").replace(/\?.*$/, "")).filter((h) => /^min\//.test(h)));
-    const iK = reihe.indexOf("min/korrekturen-start.css"), iA = reihe.indexOf("min/app-styles-start.css");
-    sage(iK >= 0 && reihe[iK + 1] === "min/korrekturen.css" && iA >= 0 && reihe[iA + 1] === "min/app-styles.css", "eingehängt stehen korrekturen.css und app-styles.css direkt hinter ihrem Startblatt", reihe.join(" "));
-    await schlaf(300);
-    const nachher = await pg.evaluate(() => [".site-header", ".tape-tab", ".brand-name", "body", ".view[data-active=true]"].map((s) => { const e = document.querySelector(s); if (!e) return s + ":-"; const c = getComputedStyle(e); return s + ":" + [c.color, c.backgroundColor, c.fontSize, c.fontFamily, c.padding, c.display, Math.round(e.getBoundingClientRect().height)].join("/"); }));
-    sage(JSON.stringify(vorher) === JSON.stringify(nachher), "Kopfzeile, Reiter und Ansicht sehen davor und danach gleich aus", vorher.filter((x, i) => x !== nachher[i]).join(" ≠ "));
+    const direkt = ["korrekturen", "app-styles", "spiel"].every((n) => { const i = reihe.indexOf("min/" + n + "-start.css"); return i >= 0 && reihe[i + 1] === "min/" + n + ".css"; });
+    sage(direkt, "korrekturen.css, app-styles.css und spiel.css stehen direkt hinter ihrem Startblatt", reihe.join(" "));
+    /* Startblätter allein gegen alle Blätter: dasselbe Bild (Uhr und Zufall festgehalten, Bewegung aus) */
+    const { PNG } = require("/tmp/claude-0/node_modules/pngjs");
+    async function startBild(nurStart) {
+      const c2 = await br.newContext({ viewport: { width: 393, height: 800 }, isMobile: true, hasTouch: true });
+      await c2.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); localStorage.setItem("dma_tutor", "aus"); sessionStorage.setItem("dma-neu-geladen", "x"); } catch (e) {}
+        let x = 42; Math.random = () => { x = (x * 16807) % 2147483647; return (x - 1) / 2147483646; }; });
+      await c2.clock.install({ time: new Date("2026-10-03T10:00:00") }); await c2.clock.resume();
+      const p2 = await c2.newPage();
+      await p2.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
+      if (nurStart) await p2.route(/\/min\/(korrekturen|app-styles|spiel)\.css/, (r) => r.abort());
+      await p2.goto(HIER + "/index.html", { waitUntil: "load" });
+      await bereit(p2);
+      await schlaf(2000);
+      const b = await p2.screenshot({ animations: "disabled", caret: "hide" });
+      await c2.close();
+      return PNG.sync.read(b);
+    }
+    const bild1 = await startBild(true), bild2 = await startBild(false);
+    let anders = 0;
+    for (let i = 0; i < bild1.data.length; i += 4) if (Math.abs(bild1.data[i] - bild2.data[i]) + Math.abs(bild1.data[i + 1] - bild2.data[i + 1]) + Math.abs(bild1.data[i + 2] - bild2.data[i + 2]) > 30) anders++;
+    sage(bild1.width === bild2.width && bild1.height === bild2.height && anders === 0, "die Startansicht nur mit den Startblättern sieht genau so aus wie mit allen", anders + " abweichende Bildpunkte");
 
     console.log("\n4) WISSEN → KLASSENZIMMER\n");
     const ab2 = anfragen.length;
@@ -176,8 +200,8 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
 
     console.log("\n5) DIE BEREICHE FUNKTIONIEREN\n");
     bereicheNeu = await bereicheMessen(pg);
-    sage(bereicheNeu.spiele > 50 && bereicheNeu.einstellungen > 10 && bereicheNeu.postfach > 10 && bereicheNeu.quizThemen.split(",").length >= 3,
-      "Spiele, Einstellungen, Postfach zeichnen sich; das Deutschland-Quiz hat seine Themen", JSON.stringify(bereicheNeu));
+    sage(bereicheNeu.spiele > 50 && bereicheNeu.einstellungen > 10 && bereicheNeu.postfach > 10 && bereicheNeu.quizThemen.split(",").length >= 3 && bereicheNeu.wegweiser,
+      "Spiele, Einstellungen, Postfach, Wegweiser zeichnen sich; das Deutschland-Quiz hat seine Themen", JSON.stringify(bereicheNeu));
     const ueb = await pg.evaluate(() => window.DMA_TEIL_SOFORT || []);
     sage(!ueb.length, "auch dafür musste nichts sofort nachgeladen werden (alles in der Ruhepause)", ueb.join(" | "));
     /* Im Raum: ein Auftritt, der im Chat ankommt */

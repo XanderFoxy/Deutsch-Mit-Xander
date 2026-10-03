@@ -18,10 +18,17 @@
    verkleinerte Kopie min/app.js wird geteilt:
      - Jede Funktion aus werkzeug/app-teile.json wird in min/app.js durch
        einen kurzen Platzhalter mit demselben Namen ersetzt. Ihr Körper
-       steht in min/app-teil-<teil>.js.
-     - Die Seite holt die Teile nach dem Start in einer Ruhepause, den
-       Teil „raum" schon beim Öffnen des Klassenzimmers (app.js,
-       dmaTeilHolen).
+       steht in einem Stück min/app-teil-raum<N>.js bzw. -rest<N>.js (je
+       etwa 250 000 Zeichen Quelltext, in der Reihenfolge der Datei).
+     - Reine Datenblöcke („const"), die nur ausgelagerte Funktionen
+       desselben Stücks lesen, wandern mit (im Kern bleibt „var NAME;").
+     - Die Seite holt die Stücke nach dem Start über die Leitung und setzt
+       sie ab 3 s nach dem Laden in Ruhepausen ein; die Raum-Stücke schon
+       beim Öffnen des Klassenzimmers (app.js, dmaTeilGruppe).
+     - data-exercises.js: große Datenblöcke, die nur Funktionen lesen, die
+       beim Start nicht laufen, stehen in min/data-exercises-teil.js; jede
+       lesende Stelle fragt vorher dmaUebTeil() (datenTeilen, Liste
+       „daten" in app-teile.json).
      - Ruft jemand eine ausgelagerte Funktion, bevor ihr Teil da ist, holt
        der Platzhalter ihn sofort (dmaTeilRuf) – die Funktion läuft genau
        wie vorher, nur beim allerersten Mal etwas später. Nichts geht
@@ -38,8 +45,9 @@
        bisher ganz – die Seite funktioniert dann wie vor 876.
 
    AUFRUF
-     node werkzeug/teile-bauen.js          baut min/app.js und
-                                           min/app-teil-*.js (sonst
+     node werkzeug/teile-bauen.js          baut min/app.js, min/app-teil-*.js,
+                                           min/data-exercises.js und
+                                           min/data-exercises-teil.js (sonst
                                            macht das fassung-setzen.js)
      node werkzeug/teile-bauen.js --zeigen nur zählen, nichts schreiben
    ===================================================================== */

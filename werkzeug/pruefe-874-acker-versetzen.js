@@ -211,6 +211,19 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
       sage(!!setzKarte && /Getreidefeld versetzen/.test(setzKarte.titel) && !!rot && rot.geist && rot.frei === false, "„Versetzen“: der Acker hängt am Finger; über der Bäckerei ist der Rahmen rot", JSON.stringify({ titel: setzKarte && setzKarte.titel, rot }));
       sage(/Hier geht kein Acker hin/.test(ans3) && gleichStd(m91b, 91) && !gem3, "„Setzen“ an der roten Stelle: abgelehnt mit Grund, der Acker rastet zurück, nichts gemerkt", JSON.stringify({ ans3, m91b, gem3 }));
 
+      /* A3b „Freier Platz“ schiebt ihn von der roten Stelle auf die nächste freie Wiese; „Abbrechen“ stellt ihn zurück */
+      await blick(pg, [[m91[0], m91[1]]], 7); await tick(pg, 900); await ruhig(pg, pg);
+      { let p = null; for (let i = 0; i < 6 && !p; i++) { p = await ackerPunkt(pg, 91, 30); if (!p) await tick(pg, 400); }
+        if (p) { await pg.mouse.click(p.x, p.y); await tick(pg, 500); }
+        await klick(pg, '.lk-karte .lk-knopf[title="Versetzen"]'); await tick(pg, 300);
+        await pg.evaluate((z) => { const o = STADT.oberflaeche.feldDing(91); if (o && o.geist) { o.x = (z[0] + z[1]) / 2; o.y = (z[1] - z[0]) / 2; } }, ziel1);
+        await klick(pg, ".lk-karte .lk-freiplatz"); await tick(pg, 500);
+        const fp = await pg.evaluate(() => { const o = STADT.oberflaeche.feldDing(91), a = document.querySelector(".lk-ansage"); return o ? { geist: !!o.geist, frei: o._frei, u: +(o.x - o.y).toFixed(1), v: +(o.x + o.y).toFixed(1), ans: a ? a.textContent : "" } : null; });
+        await klick(pg, '.lk-karte .lk-knopf[title="Abbrechen"]'); await tick(pg, 500);
+        const zur = await mitte(pg, 91), gemFp = await pg.evaluate(() => { const v = JSON.parse(localStorage.getItem("leicht_verwalten_v1") || "null"); return v && v.felder ? v.felder : null; });
+        sage(!!fp && fp.geist && fp.frei === true && /Freien Platz gefunden/.test(fp.ans) && Math.hypot(fp.u - ziel1[0], fp.v - ziel1[1]) > 2, "„Freier Platz“ schiebt den Acker von der Bäckerei auf die nächste freie Wiese (grün)", JSON.stringify(fp));
+        sage(gleichStd(zur, 91) && !gemFp, "„Abbrechen“: der Acker liegt wieder auf seinem Ackerplatz, nichts gemerkt", JSON.stringify({ zur, gemFp })); }
+
       /* A4 auf freie Wiese → grün, gesetzt; alles geht mit */
       const ziel = await freieStelle(pg, 91, m91[0], m91[1] + 6, 22, 70);
       sage(!!ziel, "es gibt freie Wiese für den Acker in der Nähe (D.feldPruefen)", JSON.stringify(ziel));

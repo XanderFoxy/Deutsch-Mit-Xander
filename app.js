@@ -71094,9 +71094,26 @@
       }).join("")}`;
   }
 
+  /* FASSUNG 876 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller". data-wegweiser.js (21 KB gepackt)
+     stand in der Startliste, gebraucht wird es nur hier („Neu in DE, AT oder CH"). Jetzt kommt es in der Ruhepause
+     nach dem Start (wegweiserLaden) und spätestens beim Öffnen; brDatei nimmt die verkleinerte Kopie mit Stempel. */
+  function wegweiserLaden() {
+    if (window.DMA_WEGWEISER) return Promise.resolve(true);
+    return brDatei("data-wegweiser.js");
+  }
+  try {
+    window.addEventListener("load", () => setTimeout(() => {
+      const los = () => { try { wegweiserLaden(); } catch (e) {} };
+      if (window.requestIdleCallback) requestIdleCallback(los, { timeout: 4000 }); else los();
+    }, 3000));
+  } catch (e) {}
   async function renderWegweiser() {
     const area = document.getElementById("wegweiserArea");
     if (!area) return;
+    if (wegTeil === "laender" && !window.DMA_WEGWEISER) {
+      area.innerHTML = '<p class="empty-note">Der Wegweiser wird geladen …</p>';
+      await wegweiserLaden();
+    }
     if (wegTeil === "deutschland" && !window.DMA_FESTE) {
       area.innerHTML = '<p class="empty-note">Der Wegweiser wird geladen …</p>';
       const ok = await festeLaden();
