@@ -436,7 +436,7 @@ S.def(`<pattern id="${S.id("granitkorn")}" patternUnits="userSpaceOnUse" width="
     g += `<path d="M-3 -4.4 Q${kx + 0.6} ${ky + 1.6} ${kx} ${ky}" stroke="#6f8f7e" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="${kx}" cy="${ky}" r="1.15" fill="#7d838e"/><circle cx="${kx - 0.3}" cy="${ky - 0.25}" r=".25" fill="#e98a2a"/><path d="M${kx - 1} ${ky + 0.1} l-1 .4 l1 .2 Z" fill="#3a3a3e"/>`;
     return `<g transform="translate(${r(x)} ${r(y)}) scale(${u.toFixed(4)})">${g}</g>`;
   };
-  const k = taube(13.2, -0.9, true) + taube(12.6, 0.2, false) + taube(14, 1.3, true, 1) + taube(12.2, 3.6, false);
+  const k = taube(13.2, -0.9, true) + taube(12.6, 0.2, false) + taube(14, 1.3, true, 1) + taube(7.2, 0.4, false) + taube(6.8, -0.3, true);
   S.teil({ oben: true, id: "taube", de: "die Taube", syl: "TAU-be", it: "il piccione", itSyl: "pic-CIO-ne", en: "pigeon", x: 0, y: 0, kunst: k,
     tipp: "Die Tauben suchen auf dem Platz nach Krümeln." });
 }
@@ -586,9 +586,9 @@ const ST = mensch("ST", { id: "wmr_stud", geschlecht: "w", blick: 40, frisur: "l
   pose: { lende: 1, brust: -1, nacken: 22, kopf: 14, schulterL: { vor: 22, seit: 12 }, ellbogenL: 92, unterarmL: 50, handL: 4, fingerL: 0.5,
     schulterR: { vor: 20, seit: 13 }, ellbogenR: 95, unterarmR: 50, handR: 4, fingerR: 0.5,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -5, seit: 4, dreh: -10 }, knieR: 9, fussR: 5 },
-  kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "schal", farbe: "gelb" } } }, 1.68, 10.5, -1.75);
+  kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "schal", farbe: "gelb" } } }, 1.68, 8.4, -1.5);
 {
-  bodenSchatten(10.5, -1.75, 0.45, 1.68, 0.26);
+  bodenSchatten(8.4, -1.5, 0.45, 1.68, 0.26);
   S.teil({ id: "studentin", de: "die Studentin", syl: "stu-DEN-tin", it: "la studentessa", itSyl: "stu-den-TES-sa", en: "student", x: ST.x, y: ST.y, kunst: ST.svg,
     tipp: "Die Studentin liest „Faust“ von Goethe." });
 }
@@ -600,9 +600,9 @@ const TO = mensch("TO", { id: "wmr_tour", geschlecht: "m", blick: -32, frisur: "
   pose: { lende: 1, brust: -2, nacken: 6, kopf: 4, schulterL: { vor: 3, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.38,
     schulterR: { vor: 40, seit: 18, dreh: 20 }, ellbogenR: 110, unterarmR: 40, handR: 10, fingerR: 0.7,
     huefteL: { vor: 6, seit: 3, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
-  kleidung: { oberteil: { stueck: "tshirt", farbe: "grau" }, jacke: { stueck: "jacke", farbe: "rot" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "blau" } } }, 1.8, 10, 2.2);
+  kleidung: { oberteil: { stueck: "tshirt", farbe: "grau" }, jacke: { stueck: "jacke", farbe: "rot" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "blau" } } }, 1.8, 8, 1.75);
 {
-  bodenSchatten(10, 2.2, 0.5, 1.8, 0.26);
+  bodenSchatten(8, 1.75, 0.5, 1.8, 0.26);
   S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: TO.x, y: TO.y, kunst: TO.svg,
     tipp: "Der Tourist isst eine Rostbratwurst. Lecker!" });
   const h = TO.p(TO.m.z.handR);
