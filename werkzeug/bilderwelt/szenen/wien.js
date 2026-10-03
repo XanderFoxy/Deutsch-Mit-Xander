@@ -204,15 +204,9 @@ const SB = (svg) => VED(`<g ${FERN2}><g transform="translate(0 -5)">${svg}</g></
      in der Mitte die helle Rasenbahn mit Zickzackwegen hinauf zur Gloriette,
      unten das Parterre mit dem Neptunbrunnen */
   let k = `<path d="M14 142 L14 129 Q36 120 62 116.4 Q90 113.2 118 115.6 Q144 118.4 162 128 L164 142 Z" fill="${S.lg("huegel", [[0, "#6a8858"], [1, "#4b6a3f"]])}"/>`;
-  let wald = "";
-  for (let i = 0; i < 70; i++) {
-    const x = 16 + rnd() * 146;
-    if (x > 77 && x < 103) continue;
-    const top = x < 62 ? 129 - (x - 14) * 0.26 : (x < 118 ? 115.6 : 115.6 + (x - 118) * 0.28);
-    const y = top + 1.2 + rnd() * (139 - top);
-    wald += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(1.3 + rnd() * 1.3)}" fill="${["#3b5a32", "#4a6b3d", "#33502c"][Math.floor(rnd() * 3)]}"/>`;
-  }
-  k += wald;
+  /* Wald an den Flanken als dichtes Kronenmuster */
+  S.def(`<pattern id="${S.id("wald")}" patternUnits="userSpaceOnUse" width="4.4" height="3.2"><rect width="4.4" height="3.2" fill="#3e5c34"/><circle cx="1" cy="1" r="1.25" fill="#4d6e40"/><circle cx="3.2" cy="2.4" r="1.3" fill="#47683b"/><circle cx=".6" cy=".6" r=".5" fill="#6a8a56"/><circle cx="2.8" cy="2" r=".5" fill="#65864f"/></pattern>`);
+  k += `<path d="M15 141 L15 129.4 Q36 120.6 62 117 Q72 116 80 115.6 L76 139 Z M100 115.6 Q120 116 140 119 Q156 122 161 128.4 L163 141 L104 139 Z" fill="url(#${S.id("wald")})"/>`;
   k += `<path d="M84 115 L96 115 L106 139 L74 139 Z" fill="#a9c28e"/>`;
   k += `<path d="M90 116 L86.6 119.4 L93.4 122.6 L84.6 126.4 L95.6 130.2 L82.6 134.4 L97.6 138.6" stroke="#e9e2c8" stroke-width=".45" fill="none"/>`;
   k += `<rect x="56" y="139" width="72" height="3" fill="#b9cc98"/><path d="M60 140.5 h64" stroke="#e2dcc0" stroke-width=".35" stroke-dasharray="3 1.4"/>`;
@@ -999,8 +993,14 @@ const PODEST = yp(3.6);
     return g;
   };
   v += platane(5, 1) + platane(397, -1);
-  v += krone(34, 26, 46, 38, 44, [8, 10]) + krone(14, 84, 16, 30, 16, [6, 8]);
-  v += krone(382, 22, 24, 28, 24, [8, 10]) + krone(394, 76, 8, 30, 9, [6]);
+  /* Kronen: dunkle Grundmasse (Schatten im Inneren), darauf die Laubbüschel */
+  const masse = (cx, cy, rx, ry, n) => {
+    const p = [];
+    for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, f = 0.8 + rnd() * 0.32; p.push([cx + Math.cos(a) * rx * f, cy + Math.sin(a) * ry * f]); }
+    return `<path d="M${p.map((q, i) => { const nq = p[(i + 1) % n]; return `${r((q[0] + nq[0]) / 2)} ${r((q[1] + nq[1]) / 2)} Q${r(nq[0])} ${r(nq[1])}`; }).join(" ")} ${r((p[0][0] + p[1][0]) / 2)} ${r((p[0][1] + p[1][1]) / 2)} Z" fill="#2c4826"/>`;
+  };
+  v += masse(32, 30, 44, 40, 14) + masse(20, 84, 20, 26, 9) + krone(34, 26, 44, 36, 34, [8, 10]) + krone(20, 82, 17, 22, 10, [6, 8]);
+  v += masse(384, 24, 24, 32, 11) + krone(384, 22, 22, 28, 20, [8, 10]);
   /* das Taxi (4,9 m lang, 1,48 m hoch) mit gelbem Dachschild */
   {
     const s = r(F / 10), X = 22, Y = ys(10);

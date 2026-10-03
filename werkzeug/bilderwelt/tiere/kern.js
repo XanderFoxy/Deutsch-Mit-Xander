@@ -194,7 +194,9 @@ function werkzeug(S, praefix, seed = 4711) {
     const id = T.id("vol" + n + "_" + String(w).replace(".", "_"));
     if (!filterSchon.has(id)) {
       filterSchon.add(id);
-      T.def(`<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">` +
+      /* Bereich weit genug für den verschobenen Weichzeichner (Zeichner Haustiere: „die Filterregion (−5 %/110 %)
+         schneidet die geblurte Silhouette ab … harte gerade Schattenkante rechts/unten bei flachen Teilen") */
+      T.def(`<filter id="${id}" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">` +
         `<feGaussianBlur in="SourceAlpha" stdDeviation="${w}" result="b"/>` +
         `<feOffset in="b" dx="${r4(-d)}" dy="${r4(-d)}" result="bu"/>` +
         `<feOffset in="b" dx="${r4(d * 0.8)}" dy="${r4(d * 0.8)}" result="bo"/>` +

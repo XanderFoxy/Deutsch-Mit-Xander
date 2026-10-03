@@ -186,7 +186,7 @@ const DECK_A = [randA(0, -900, 0), -60, 0, 120, 251.5, 380, 503, 560, randA(400,
     const sued = [bp(A, C0, 0), bp(A, C1, 0), bp(A, C1, 82), bp(A, C0, 82)];
     const kopf = [bp(A + 1.5, C1, 82), bp(Bb - 1.5, C1, 82), bp(Bb - 3, C1, 89), bp(A + 3, C1, 89)];
     g += `<path d="M${sued.map(P).join(" L")} Z" fill="#8f8a7f"/>`;
-    g += `<path d="M${ost.map(P).join(" L")} Z" fill="${S.lg("granit", [[0, "#e3dbc9"], [0.6, "#cfc6b2"], [1, "#b5ab96"]])}"/>`;
+    g += `<path d="M${ost.map(P).join(" L")} Z" fill="${S.lg("granit", [[0, "#efdfc2"], [0.6, "#d9c8a8"], [1, "#bcaa8b"]])}"/>`;
     g += `<path d="M${kopf.map(P).join(" L")} Z" fill="#ddd5c4"/>`;
     for (const z of [10, 40, 52, 74]) g += `<path d="M${P(bp(A, C1, z))} L${P(bp(Bb, C1, z))}" stroke="#9c937f" stroke-width=".35"/>`;
     for (const f of [0.3, 0.7]) { const a = A + (Bb - A) * f; g += `<path d="M${P(bp(a, C1, 54))} L${P(bp(a, C1, 72))}" stroke="#8a826f" stroke-width="${fern ? 0.6 : 0.75}"/>`; }
@@ -207,11 +207,16 @@ const DECK_A = [randA(0, -900, 0), -60, 0, 120, 251.5, 380, 503, 560, randA(400,
     v += `<path d="M${P(zug[0])} L${P(zug[1])} L${P(zugO[1])} L${P(zugO[0])} Z" fill="${S.lg("zug", [[0, "#e6e9eb"], [1, "#a9b0b5"]])}"/>`;
     for (let a = 150; a < 330; a += 20) v += `<path d="M${P(bp(a, -18, 49.5))} L${P(bp(a, -18, 54.4))}" stroke="#6d757b" stroke-width=".18"/>`;
     v += `<path d="M${P(bp(150, -18, 52.6))} L${P(bp(330, -18, 52.6))}" stroke="#f2c62f" stroke-width=".35"/><path d="M${P(bp(150, -18, 53.6))} L${P(bp(330, -18, 53.6))}" stroke="#2f3f4c" stroke-width=".3"/>`;
-    const fz = [[60, 8, 4, 12, "#f4f4f2"], [96, 14, 1.6, 4.6, "#c0392b"], [140, 4, 4, 12, "#2f6fb6"], [205, 12, 1.6, 4.6, "#e8e8e6"], [262, 16, 1.6, 4.6, "#1d1d1d"], [300, 6, 4, 12, "#f4f4f2"], [352, 10, 1.6, 4.6, "#d9b02f"], [410, 14, 2.6, 9, "#e2722d"], [455, 8, 1.6, 4.6, "#7d8590"]];
+    /* Verkehr auf allen Spuren: drei Busse (weiß-blau), Lieferwagen, Autos */
+    const BUS = "#f2f3f1";
+    const fz = [[30, 6, 3.2, 12, BUS], [52, 18, 1.5, 4.4, "#c0392b"], [74, 11, 1.5, 4.4, "#e8e8e6"], [96, 20, 1.5, 4.4, "#2a2a2a"], [118, 4, 4, 12, "#2f6fb6"], [150, 14, 3.2, 12, BUS],
+      [176, 8, 1.5, 4.4, "#9aa3ab"], [198, 20, 1.5, 4.4, "#e8e8e6"], [222, 12, 1.5, 4.4, "#1d1d1d"], [246, 4, 1.5, 4.4, "#d9b02f"], [268, 18, 2.6, 9, "#f4f4f2"], [300, 8, 4, 12, "#f4f4f2"],
+      [326, 14, 3.2, 12, BUS], [350, 20, 1.5, 4.4, "#c0392b"], [372, 4, 1.5, 4.4, "#7d8590"], [396, 12, 2.6, 9, "#e2722d"], [424, 18, 1.5, 4.4, "#e8e8e6"], [448, 8, 1.5, 4.4, "#2f6fb6"], [470, 14, 1.5, 4.4, "#1d1d1d"]];
     for (const [a, c, h, l, f] of fz) {
       const p0 = bp(a, c, 49), p1 = bp(a + l, c, 49), q1 = bp(a + l, c, 49 + h), q0 = bp(a, c, 49 + h);
       v += `<path d="M${P(p0)} L${P(p1)} L${P(q1)} L${P(q0)} Z" fill="${f}"/>`;
       if (h > 3) v += `<path d="M${P(bp(a + 1, c, 49 + h * 0.7))} L${P(bp(a + l - 1, c, 49 + h * 0.7))}" stroke="#2f3f4c" stroke-width=".25"/>`;
+      if (f === BUS) v += `<path d="M${P(bp(a, c, 49 + h * 0.3))} L${P(bp(a + l, c, 49 + h * 0.3))}" stroke="#2a5db0" stroke-width=".22"/>`;
     }
     k += v;
   }
@@ -470,14 +475,18 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   sp += `<rect x="${r(FAEHRE.X - 16 * FAEHRE.s)}" y="${r(FAEHRE.Y + 0.4)}" width="${r(32 * FAEHRE.s)}" height="${r(3.2 * FAEHRE.s)}" fill="#2f7a4a"/><rect x="${r(FAEHRE.X - 14 * FAEHRE.s)}" y="${r(FAEHRE.Y + 3.4)}" width="${r(28 * FAEHRE.s)}" height="${r(4 * FAEHRE.s)}" fill="#e8c860"/>`;
   for (const [x, y, s] of BOOTE) sp += `<path d="M${r(x)} ${r(y + 1)} L${r(x + 6 * s)} ${r(y + 1)} L${r(x + 0.3)} ${r(y + 16 * s)} Z" fill="#ffffff"/>`;
   sp += `<rect x="0" y="148.6" width="76" height="8" fill="#24432a"/>`;
-  /* Streifenmaske: zufällige Längen, nach unten breiter und lückiger */
-  let st = "";
-  for (let y = 148; y < 192;) {
-    const h = 0.5 + (y - 148) * 0.03, gap = 0.4 + (y - 148) * 0.035;
-    for (let x = -rnd() * 10; x < 400;) { const l = 3 + rnd() * (8 + (y - 148) * 0.3); st += `M${r(x)} ${r(y)}h${r(l)}v${r(h)}h${r(-l)}z`; x += l + 1 + rnd() * (2 + (y - 148) * 0.25); }
-    y += h + gap;
-  }
-  S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="0" y="146" width="400" height="50"><path d="${st}" fill="${S.lg("spfade", [[0, "#fff"], [1, "#000"]], 0, 146, 0, 192, ' gradientUnits="userSpaceOnUse"')}"/></mask>`);
+  /* Streifenmaske: drei Musterkacheln mit zufälligen Strichlängen und Lücken, nach unten breiter und lückiger;
+     darüber ein schwarzer Verlauf, der das Spiegelbild nach vorn ausblendet */
+  let mk = "";
+  [[148, 6, 0.5, 0.45, 9], [154, 12, 0.8, 0.8, 14], [166, 26, 1.3, 1.4, 22]].forEach(([y0, hh, sh, gap, lmax], i) => {
+    const W = 97, H = r(sh + gap) * 3;
+    let t = "";
+    for (let row = 0; row < 3; row++) for (let x = -rnd() * 6; x < W - 3;) { const l = Math.min(3 + rnd() * lmax, W - x); t += `M${r(Math.max(x, 0))} ${r(row * (sh + gap))}h${r(l - Math.max(-x, 0))}v${r(sh)}h${r(-(l - Math.max(-x, 0)))}z`; x += l + 1 + rnd() * lmax * 0.5; }
+    S.def(`<pattern id="${S.id("sm" + i)}" width="${W}" height="${H}" patternUnits="userSpaceOnUse" patternTransform="translate(${r(rnd() * 40)} ${y0})"><path d="${t}" fill="#fff"/></pattern>`);
+    mk += `<rect x="0" y="${y0}" width="400" height="${hh}" fill="url(#${S.id("sm" + i)})"/>`;
+  });
+  mk += `<rect x="0" y="146" width="400" height="50" fill="${S.lg("spfade", [[0, "#000", 0], [1, "#000", 1]], 0, 146, 0, 192, ' gradientUnits="userSpaceOnUse"')}"/>`;
+  S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="0" y="146" width="400" height="50">${mk}</mask>`);
   k += `<g mask="url(#${S.id("spmaske")})" opacity=".5"><g filter="url(#${S.id("spiegel")})">${sp}</g></g>`;
   /* Wellen: Musterkachel in drei Tiefenbändern (vorn größer), dazu wenige Glanzlichter */
   const welle = (n, sc) => { S.def(`<pattern id="${S.id("w" + n)}" width="26" height="4" patternUnits="userSpaceOnUse" patternTransform="scale(${sc})"><path d="M1 1q2-.7 4 0M12 3q2.5-.8 5 0M19 .8q1.6-.5 3.2 0" stroke="#dcecf3" stroke-width=".35" fill="none" opacity=".75"/><path d="M6 2.6q2-.6 4 0M21 3.2q2-.6 4 0" stroke="#163e56" stroke-width=".4" fill="none" opacity=".6"/></pattern>`); return `url(#${S.id("w" + n)})`; };

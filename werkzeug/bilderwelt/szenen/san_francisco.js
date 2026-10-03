@@ -128,7 +128,7 @@ S.def(`<filter id="${S.id("nebel")}" x="-20%" y="-40%" width="140%" height="180%
 S.def(`<filter id="${S.id("nebelw")}" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation=".9"/></filter>`);
 S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter>`);
 S.def(`<radialGradient id="${S.id("wulst")}" cx=".38" cy=".3" r=".75"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#f6f5f1"/><stop offset="1" stop-color="#d4d9dd"/></radialGradient>`);
-S.def(`<pattern id="${S.id("ziegel")}" width="1.6" height=".8" patternUnits="userSpaceOnUse"><path d="M0 .78 H1.6 M.8 0 V.4 M0 .4 H1.6 M0 .4 V.8 M1.6 .4 V.8" stroke="#6e2a20" stroke-width=".1" opacity=".5"/></pattern>`);
+S.def(`<pattern id="${S.id("ziegel")}" width="1.2" height=".6" patternUnits="userSpaceOnUse"><path d="M0 .58 H1.2 M.6 0 V.3 M0 .3 H1.2 M0 .3 V.6 M1.2 .3 V.6" stroke="#5e2018" stroke-width=".1" opacity=".75"/></pattern>`);
 S.def(`<pattern id="${S.id("fen")}" width="1.6" height="2" patternUnits="userSpaceOnUse"><rect x=".4" y=".35" width=".7" height=".9" fill="#4d5a66" opacity=".6"/></pattern>`);
 const f3 = (v) => v.toFixed(3);
 [0.5, 0.32, 0.18].forEach((a, i) => S.def(`<filter id="${S.id("fern" + i)}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="${f3(1 - a)} 0 0 0 ${f3(a * 0.8)} 0 ${f3(1 - a)} 0 0 ${f3(a * 0.82)} 0 0 ${f3(1 - a)} 0 ${f3(a * 0.85)} 0 0 0 1 0"/></filter>`));
@@ -503,7 +503,7 @@ const zeichneListe = (L) => {
   }
   return s;
 };
-const SONNE = { az: 215, el: 52 };
+const SONNE = { az: 245, el: 48 };
 const SL = 1 / Math.tan(SONNE.el * Math.PI / 180), SE_ = Math.sin(SONNE.az * Math.PI / 180 + Math.PI), SN_ = Math.cos(SONNE.az * Math.PI / 180 + Math.PI);
 
 /* =====================================================================
@@ -515,7 +515,10 @@ const SL = 1 / Math.tan(SONNE.el * Math.PI / 180), SE_ = Math.sin(SONNE.az * Mat
   const kante = (X, d0, d1, n) => { const p = []; for (let i = 0; i <= n; i++) { const d = d0 + (d1 - d0) * i / n; p.push(PN(X, d, zH(d))); } return p; };
   const band = (Xa, Xb, d0, d1, n) => kappY([...kante(Xa, d0, d1, n), ...kante(Xb, d0, d1, n).reverse()], 262);
   /* Kreuzung (Lombard Street), Asphalt bis zum unteren Rand */
-  s += vl(kappY([PN(-60, 8.1, 0), PN(-60, 10.7, 0), PN(2.2, 10.7, 0), PN(2.2, 8.1, 0)], 262), "#7c7975");
+  s += vl(kappY([PN(-60, 8.1, 0), PN(-60, 10.7, 0), PN(90, 10.7, 0), PN(90, 8.1, 0)], 262), "#7c7975");
+  /* Nordbordstein der Lombard Street östlich der Hyde Street: die Einfahrt in die Kehren */
+  s += vl([PN(2.2, 10.7, 0.15), PN(90, 10.7, 0.15), PN(90, 10.55, 0), PN(2.2, 10.55, 0)], "#d9d3c8");
+  s += vl([PN(2.2, 10.75, 0.15), PN(90, 10.75, 0.15), PN(90, 10.9, 0.15), PN(2.2, 10.9, 0.15)], "#cfc8bb");
   s += vl(band(-13.5, -1.5, 10, 150, 40), S.lg("asphalt", [[0, "#5f5c59"], [1, "#8a8784"]]));
   s += vl(band(-17, -13.5, 10.6, 150, 30), "#c9c2b6") + vl(band(-1.5, 2, 10.6, 150, 30), "#cfc9be");
   /* Schatten der Westhäuser auf Gehweg und Rand der Fahrbahn (Sonne SSW) */
@@ -568,8 +571,8 @@ const SL = 1 / Math.tan(SONNE.el * Math.PI / 180), SE_ = Math.sin(SONNE.az * Mat
    Schatten), Ostseite (nur Dächer und schmale Fassaden), Nordseite der
    Lombard Street (Fassaden nach Süden, in der Sonne)
    ===================================================================== */
-const GARTEN = kappY(kappX([PN(2.2, 10.6, 0), PN(2.2, 60, zH(60)), PN(26, 60, zH(60) - 5), PN(26, 10.6, -1)], -6, 236), 260.5);
-const BEET = kappX(kappY([PO(-14, 9, zL(9)), PO(-14, 132, zL(132)), PO(3, 132, zL(132)), PO(3, 9, zL(9))], 260.5), 205, 400.5);
+const GARTEN = kappY(kappX([PN(2.2, 10.6, 0), PN(2.2, 60, zH(60)), PN(26, 60, zH(60) - 5), PN(26, 10.6, -1)], -6, SEAM), 221.5);
+const BEET = kappX(kappY([PO(-14.8, 9, zL(9)), PO(-14.8, 132, zL(132)), PO(4.5, 132, zL(132)), PO(4.5, 9, zL(9))], 221.5), SEAM, 400.5);
 const HAUS = {};
 {
   let k = "";
@@ -683,52 +686,91 @@ const HAUS = {};
 }
 
 /* =====================================================================
-   10 — DIE LOMBARD STREET (Ostblick): Kehren aus roten Ziegeln, Buchs-
-   kanten, Hortensien, Treppen an beiden Seiten; vorn der Eckgarten
+   10 — DIE LOMBARD STREET (Ostblick): acht Haarnadelkehren aus roten
+   Ziegeln mit Ziegel-Bordmauern und Buchskanten, Hortensienbüsche in den
+   Beeten, Treppen mit Geländer an beiden Seiten; Einfahrt an der
+   Kreuzung (das Pflaster unten läuft über die Naht). Links vorn der
+   Eckgarten an der Nordostecke (?) mit Gartenmauer.
    ===================================================================== */
+const LOMB = {};
 {
   let k = "";
-  /* Eckgarten an der Nordostecke (?), im Nordblick */
+  const KL = (pts) => kappX(kappY(pts, 221.5), SEAM, 400.5);
+  const vk = (pts, f, ex = "") => vl(KL(pts), f, ex);
+  /* Eckgarten (Nordblick, links der Naht) mit Gartenmauer und Hecke */
   k += vl(GARTEN, S.lg("garten", [[0, "#5c7d43"], [1, "#46663a"]]));
-  /* Hecke entlang der Hyde Street (1,3 m), Sträucher, Bäume (bleiben unter der Sichtlinie auf Alcatraz) */
-  { const he = []; for (let d = 10.8; d <= 60; d += 2) he.push(d); k += vl(kappX([...he.map((d) => PN(2.3, d, zH(d))), ...he.slice().reverse().map((d) => PN(2.3, d, zH(d) + 1.3))], -6, 236), "#3f5f30"); }
-  for (let i = 0; i < 16; i++) { const d = 14 + rnd() * 40, X = 4 + rnd() * 20, p = PN(X, d, zH(d) - 0.03 * X + 0.6); if (p[0] < 234 && p[1] < 258) k += `<circle cx="${r(p[0])}" cy="${r(p[1])}" r="${r(F * (0.6 + rnd() * 0.5) / d)}" fill="${rnd() < 0.5 ? "#3e5a2e" : "#56794a"}"/>`; }
-  const baum = (X, d, h, rk) => { const g = zH(d) - 0.05 * X, [x, y] = PN(X, d, g), s2 = F / d, top = PN(X, d, g + h)[1], R = rk * s2; let b = `<path d="M${r(x - 0.18 * s2)} ${r(y)} L${r(x - 0.1 * s2)} ${r(top + R)} L${r(x + 0.1 * s2)} ${r(top + R)} L${r(x + 0.18 * s2)} ${r(y)} Z" fill="#4a3a2a"/>`;
-    for (const [dx, dy, rr, c] of [[0, 0.9, 1, "#2f4a25"], [-0.55, 0.45, 0.72, "#3d5b2e"], [0.5, 0.35, 0.75, "#3a5a2c"], [-0.15, 0.1, 0.62, "#4f7340"], [0.3, -0.15, 0.45, "#628a4c"]]) b += `<circle cx="${r(x + dx * R)}" cy="${r(top + R * (dy + 0.1))}" r="${r(rr * R)}" fill="${c}"/>`;
-    return b; };
-  k += baum(4.5, 31, 5.4, 1.6) + baum(11.9, 52, 11, 2.5);
-  /* der Block der Lombard Street (Beete) */
-  k += vl(BEET, S.lg("beet", [[0, "#3d5a2a"], [1, "#5a7a40"]]));
-  /* Treppen-Gehwege an beiden Seiten */
-  for (const [l0, l1] of [[-15, -14], [3, 4.4]]) {
-    k += vl(kappX(kappY([PO(l0, 12, zL(12)), PO(l0, 132, zL(132)), PO(l1, 132, zL(132)), PO(l1, 12, zL(12))], 260.5), 205, 400.5), "#cfc8bb");
-    let st = ""; for (let d = 14; d < 130; d += d < 40 ? 0.9 : 1.8) { const a = PO(l0, d, zL(d)), b = PO(l1, d, zL(d)); if (a[1] < 262 && b[0] < 402) st += `M${pr(a)} L${pr(b)} `; }
-    k += `<path d="${st}" stroke="#a49d90" stroke-width=".2" fill="none"/>`;
+  {
+    const he = []; for (let d = 10.9; d <= 60; d += 1.6) he.push(d);
+    const band = (z0, z1) => kappX([...he.map((d) => PN(2.25, d, zH(d) + z0)), ...he.slice().reverse().map((d) => PN(2.25, d, zH(d) + z1))], -6, SEAM);
+    k += vl(band(0, 0.62), "#b9ae9c") + vl(kappX([...he.map((d) => PN(2.25, d, zH(d) + 0.62)), ...he.slice().reverse().map((d) => PN(2.75, d, zH(d) + 0.62))], -6, SEAM), "#d6cdbd");
+    k += vl(kappX([...he.map((d) => PN(2.8, d, zH(d) + 0.62)), ...he.slice().reverse().map((d) => PN(2.8, d, zH(d) + 1.7))], -6, SEAM), "#3f5f30");
+    k += vl(kappX([...he.map((d) => PN(2.8, d, zH(d) + 1.7)), ...he.slice().reverse().map((d) => PN(3.6, d, zH(d) + 1.7))], -6, SEAM), "#567a44");
   }
-  /* Mittellinie der Straße: Kehren, mit Chaikin geglättet */
-  let pl = [[5, -5], [16, 0.6], [31, -11.6], [46, 0.6], [61, -11.6], [76, 0.6], [91, -11.6], [105, 0.6], [117, -11.6], [128, -5], [140, -5]];
-  for (let it = 0; it < 4; it++) { const n = [pl[0]]; for (let i = 0; i < pl.length - 1; i++) { const [a, b] = [pl[i], pl[i + 1]]; n.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]); } n.push(pl[pl.length - 1]); pl = n; }
-  const L = [], R = [];
-  pl.forEach((p, i) => { const a = pl[Math.max(0, i - 1)], b = pl[Math.min(pl.length - 1, i + 1)], dd = b[0] - a[0], dl = b[1] - a[1], l = Math.hypot(dd, dl) || 1, nd = -dl / l * 2.3, nl = dd / l * 2.3; L.push([p[0] + nd, p[1] + nl]); R.push([p[0] - nd, p[1] - nl]); });
-  const proj = (q) => PO(q[1], q[0], zL(q[0]));
-  const weg = kappX(kappY([...L.map(proj), ...R.reverse().map(proj)], 260.5), 205, 400.5);
-  /* Hecken als Saum (Buchs), dann Ziegel */
-  const saum = (pts) => kappY(pts.map(proj), 260.5).filter((p) => p[0] > 206 && p[0] < 400 && p[1] < 260);
-  for (const sd of [L, R.slice().reverse()]) { const p = saum(sd); if (p.length > 1) k += `<path d="M${p.map(pr).join(" L")}" stroke="#24391d" stroke-width="2.2" fill="none" stroke-linejoin="round"/><path d="M${p.map(pr).join(" L")}" stroke="#55784a" stroke-width="1" fill="none" stroke-linejoin="round" transform="translate(0 -.5)"/>`; }
-  k += vl(weg, S.lg("brick", [[0, "#a64a35"], [1, "#c25c42"]]));
-  k += vl(weg, `url(#${S.id("ziegel")})`);
-  /* Hortensien in den Beeten zwischen den Kehren */
+  for (let i = 0; i < 10; i++) { const d = 16 + rnd() * 38, X = 5 + rnd() * 18, p = PN(X, d, zH(d) - 0.03 * X + 0.6); if (p[0] < SEAM - 2 && p[1] < 215) k += `<circle cx="${r(p[0])}" cy="${r(p[1])}" r="${r(F * (0.6 + rnd() * 0.5) / d)}" fill="${rnd() < 0.5 ? "#3e5a2e" : "#56794a"}"/>`; }
+  /* Bäume mit scharfem Schatten nach rechts hinten (Sonne 245°, 48°) */
+  const baum = (X, d, h, rk) => { const g = zH(d) - 0.05 * X, [x, y] = PN(X, d, g), s2 = F / d, top = PN(X, d, g + h)[1], R = rk * s2;
+    const L = h * SL, T = PN(X + L * SE_, d + L * SN_, g); let b = `<path d="M${pr([x - 0.25 * s2, y])} L${pr([T[0] - 0.1 * s2, T[1]])} L${pr([T[0] + 0.1 * s2, T[1]])} L${pr([x + 0.25 * s2, y])} Z" fill="#1d2a14" opacity=".35"/>`;
+    b += `<path d="M${r(x - 0.18 * s2)} ${r(y)} L${r(x - 0.1 * s2)} ${r(top + R)} L${r(x + 0.1 * s2)} ${r(top + R)} L${r(x + 0.18 * s2)} ${r(y)} Z" fill="#4a3a2a"/>`;
+    for (const [dx, dy, rr, c] of [[0, 0.9, 1, "#2f4a25"], [-0.55, 0.45, 0.72, "#3d5b2e"], [0.5, 0.35, 0.75, "#3a5a2c"], [-0.15, 0.1, 0.62, "#4f7340"], [-0.35, -0.1, 0.42, "#6b9150"]]) b += `<circle cx="${r(x + dx * R)}" cy="${r(top + R * (dy + 0.1))}" r="${r(rr * R)}" fill="${c}"/>`;
+    return b; };
+  k += baum(4.5, 31, 5.4, 1.6) + baum(11.2, 52, 11, 2.5);
+  /* Beete des Blocks */
+  k += vl(BEET, S.lg("beet", [[0, "#3d5a2a"], [1, "#5a7a40"]]));
+  /* Gehweg-Treppen an beiden Seiten: Stufen, Wange, Geländer */
+  for (const [l0, l1, gl] of [[-14.8, -12.9, -12.9], [2.7, 4.5, 2.7]]) {
+    k += vk([PO(l0, 12, zL(12)), PO(l0, 132, zL(132)), PO(l1, 132, zL(132)), PO(l1, 12, zL(12))], "#d3ccbf");
+    let st = ""; for (let d = 14; d < 130; d += d < 50 ? 0.6 : 1.2) { const q = KL([PO(l0, d, zL(d)), PO(l1, d, zL(d)), PO(l1, d + 0.12, zL(d + 0.12)), PO(l0, d + 0.12, zL(d + 0.12))]); if (q.length > 2) st += `M${q.map(pr).join(" L")}Z`; }
+    k += `<path d="${st}" fill="#a49d90"/>`;
+    const gel = []; for (let d = 14; d <= 130; d += 4) gel.push(PO(gl, d, zL(d) + 0.95));
+    let g = ""; for (let i = 0; i + 1 < gel.length; i++) g += seg(gel[i], gel[i + 1]) + " ";
+    for (let d = 16; d < 128; d += 6) g += seg(PO(gl, d, zL(d)), PO(gl, d, zL(d) + 0.95)) + " ";
+    const gk = g.replace(/M(-?[\d.]+) (-?[\d.]+) L(-?[\d.]+) (-?[\d.]+)/g, (m0, a, b2, c, e) => { const q = KL([[+a, +b2], [+c, +e], [+c, +e]]); return q.length > 1 ? `M${pr(q[0])} L${pr(q[1])}` : ""; });
+    k += `<path d="${gk}" stroke="#3c3a36" stroke-width=".22" fill="none"/>`;
+  }
+  /* Mittellinie: Haarnadeln um Mittelpunkte links (−8,2) und rechts (−2,4), Radius 2,6 m */
+  const RHO = 2.6, DT = (i) => 12 + 14.5 * i, LA = (i) => (i % 2 ? -2.4 : -8.2);
+  const stuecke = [];
+  let vor = [0, -5];
+  for (let i = 0; i < 8; i++) {
+    const dc = DT(i), lc = LA(i), links = i % 2 === 0, bog = [];
+    for (let j = 0; j <= 10; j++) { const t = Math.PI + (links ? 1 : -1) * Math.PI * j / 10; bog.push([dc + RHO * Math.cos(t), lc + RHO * Math.sin(t)]); }
+    stuecke.push({ p: [vor, bog[0]], t: (vor[0] + bog[0][0]) / 2 });
+    stuecke.push({ p: bog, t: dc, mitte: [dc, lc], links });
+    vor = bog[bog.length - 1];
+  }
+  stuecke.push({ p: [vor, [126, -5]], t: (vor[0] + 126) / 2 });
+  const proj = (q, z = 0) => PO(q[1], q[0], zL(q[0]) + z);
+  const versatz = (p, o) => p.map((q, i) => { const a = p[Math.max(0, i - 1)], b = p[Math.min(p.length - 1, i + 1)], dd = b[0] - a[0], dl = b[1] - a[1], l = Math.hypot(dd, dl) || 1; return [q[0] - dl / l * o, q[1] + dd / l * o]; });
+  const ZIEGEL = S.lg("brick", [[0, "#a64a35"], [1, "#c25c42"]]);
   const farbenH = ["#ec8fb8", "#c28be0", "#8fb0ea", "#f4f0f6", "#e46f9d", "#b58be6"];
-  const busch = (d, lat) => { const [x, y] = PO(lat, d, zL(d) + 0.5), s = F * 0.55 / d; if (y > 258 || x < 207 || x > 398) return ""; let g = `<ellipse cx="${r(x)}" cy="${r(y + s * 0.5)}" rx="${r(s * 1.9)}" ry="${r(s)}" fill="#355626"/>`; for (let i = 0; i < (d < 40 ? 6 : 4); i++) g += `<circle cx="${r(x - s * 1.4 + rnd() * s * 2.8)}" cy="${r(y - rnd() * s)}" r="${r(s * (0.45 + rnd() * 0.3))}" fill="${farbenH[Math.floor(rnd() * 6)]}"/>`; return g; };
-  for (let d = 14; d < 125; d += d < 50 ? 4.2 : 5.5) for (const lat of [-12.6, -6, 1.8]) { const n = pl.reduce((m, p) => Math.abs(p[0] - d) < Math.abs(m[0] - d) ? p : m, pl[0]); if (Math.abs(n[1] - lat) > 3.6) k += busch(d + rnd() * 2, lat + (rnd() - 0.5) * 1.6); }
-  const kv = proj([31, -11.6]), hv = PO(-6, 24, zL(24));
+  const busch = (d, lat, gr = 1) => { const [x, y] = PO(lat, d, zL(d) + 0.2), s = F * 0.62 * gr / d; if (y > 219 || x < SEAM + 3 || x > 397) return "";
+    let g = `<path d="M${r(x - 1.9 * s)} ${r(y)} Q${r(x - 1.9 * s)} ${r(y - 1.3 * s)} ${r(x - 0.6 * s)} ${r(y - 1.5 * s)} Q${r(x)} ${r(y - 2 * s)} ${r(x + 0.7 * s)} ${r(y - 1.5 * s)} Q${r(x + 1.9 * s)} ${r(y - 1.3 * s)} ${r(x + 1.9 * s)} ${r(y)} Z" fill="#2f4d24"/>`;
+    for (let i = 0; i < (d < 50 ? 7 : 4); i++) { const a = rnd() * Math.PI, rr = 1.4 * s * Math.sqrt(rnd()); g += `<circle cx="${r(x + Math.cos(a) * rr)}" cy="${r(y - 0.5 * s - Math.sin(a) * rr * 0.7)}" r="${r(s * (0.32 + rnd() * 0.16))}" fill="${farbenH[Math.floor(rnd() * 6)]}"/>`; }
+    return g; };
+  /* Büsche außen an den Schenkeln (an den Treppen) — vor den Kehren gezeichnet, je nach Tiefe */
+  const aussen = []; for (let d = 18; d < 122; d += 7.2) { aussen.push({ t: d + 0.5, s: busch(d, -11.9, 0.9) }); aussen.push({ t: d + 0.5, s: busch(d + 3.6, 1.6, 0.9) }); }
+  const teile = [...stuecke.map((st) => ({ t: st.t, st })), ...aussen].sort((a, b) => b.t - a.t);
+  for (const e of teile) {
+    if (!e.st) { k += e.s; continue; }
+    const p = e.st.p, Lr = versatz(p, 2.1), Rr = versatz(p, -2.1), Lh = versatz(p, 2.5), Rh = versatz(p, -2.5);
+    /* Ziegel-Bordmauer (0,45 m) und Buchskante darauf, dann die Fahrbahn */
+    for (const [a, h] of [[Lr, Lh], [Rr, Rh]]) {
+      k += vk([...a.map((q) => proj(q)), ...a.slice().reverse().map((q) => proj(q, 0.45))], "#8a3a2a");
+      k += vk([...a.map((q) => proj(q, 0.45)), ...h.slice().reverse().map((q) => proj(q, 0.95))], "#2d4a22");
+      k += vk([...h.map((q) => proj(q, 0.95)), ...h.slice().reverse().map((q) => proj(q, 1.05))], "#5d8449");
+    }
+    const weg = [...Lr.map((q) => proj(q)), ...Rr.slice().reverse().map((q) => proj(q))];
+    k += vk(weg, ZIEGEL) + vk(weg, `url(#${S.id("ziegel")})`);
+    if (e.st.mitte) { const [dc, lc] = e.st.mitte; k += busch(dc, lc, 1.1); if (!LOMB.kurve && dc > 30) LOMB.kurve = proj([dc, lc + (e.st.links ? -RHO : RHO)]); if (!LOMB.hort && dc > 40) LOMB.hort = PO(lc, dc, zL(dc) + 0.2); }
+  }
+  const kv = LOMB.kurve, hv = LOMB.hort;
   S.teil({ id: "lombard_street", de: "die Lombard Street", syl: "LOM-bard STREET", it: "la Lombard Street", itSyl: "LOM-bard STREET", en: "Lombard Street", x: 0, y: 0, kunst: k,
     tipp: "Die Lombard Street hat hier acht enge Kurven. Man darf nur bergab fahren — ganz langsam.",
-    zoom: { x: 228, y: 172, w: 132, h: 88 },
+    zoom: { x: 246, y: 152, w: 120, h: 80 },
     unter: [
-      { id: "kurve", de: "die Kurve", syl: "KUR-ve", it: "la curva", itSyl: "CUR-va", en: "bend", x: kv[0], y: kv[1], kunst: flaeche(-8, -5, 16, 9, 0.6),
+      { id: "kurve", de: "die Kurve", syl: "KUR-ve", it: "la curva", itSyl: "CUR-va", en: "bend", x: kv[0], y: kv[1], kunst: flaeche(-6, -4, 12, 7, 0.6),
         tipp: "Die Kurven wurden 1922 gebaut, weil die Straße für Autos zu steil war." },
-      { id: "hortensie", de: "die Hortensie", syl: "hor-TEN-si-e", it: "l'ortensia", itSyl: "or-TEN-sia", en: "hydrangea", x: hv[0], y: hv[1], kunst: flaeche(-6, -6, 12, 9, 0.5),
+      { id: "hortensie", de: "die Hortensie", syl: "hor-TEN-si-e", it: "l'ortensia", itSyl: "or-TEN-sia", en: "hydrangea", x: hv[0], y: hv[1], kunst: flaeche(-5, -5, 10, 7, 0.5),
         tipp: "In den Beeten blühen im Sommer Hortensien in Rosa, Lila und Blau." },
     ] });
 }
@@ -776,15 +818,18 @@ const HAUS = {};
     tipp: "An der Haltestelle winkt man, dann hält die Cable Car. Man darf sogar außen auf dem Trittbrett stehen." });
 }
 {
-  const d = 11, X = 2.3, [px, py] = PN(X, d, 0), s = F / d, h = 3.4 * s;
-  let k = schatten(0.6, 0.2, 2.6, 0.6, 0.3) + `<rect x="-.6" y="${r(-h)}" width="1.2" height="${r(h)}" fill="${S.lg("mast2", [[0, "#8a9095"], [0.5, "#cfd4d6"], [1, "#6d757a"]], 0, 0, 1, 0)}"/>`;
+  const d = 10.9, X = 2.3, [px, py] = PN(X, d, 0), s = F / d, h = 3.4 * s;
+  const T = PN(X + 3.4 * SL * SE_, d + 3.4 * SL * SN_, 0);
+  let k = `<path d="M-.6 0 L${r(T[0] - px - 0.3)} ${r(T[1] - py)} L${r(T[0] - px + 0.3)} ${r(T[1] - py)} L.6 0 Z" fill="#1b1712" opacity=".3"/><rect x="-.6" y="${r(-h)}" width="1.2" height="${r(h)}" fill="${S.lg("mast2", [[0, "#8a9095"], [0.5, "#cfd4d6"], [1, "#6d757a"]], 0, 0, 1, 0)}"/>`;
   const bl = 0.8 * s;
   k += `<rect x="${r(-bl)}" y="${r(-h + 0.3)}" width="${r(bl * 2)}" height="${r(0.2 * s)}" rx=".4" fill="#f5f5f2" stroke="#2a2a2a" stroke-width=".25"/>`;
   k += `<text x="0" y="${r(-h + 0.3 + 0.15 * s)}" font-size="${r(0.13 * s)}" text-anchor="middle" fill="#111" font-family="Arial,sans-serif" font-weight="bold">1000 LOMBARD ST</text>`;
   k += `<path d="M${r(-0.5 * s)} ${r(-h + 0.3 + 0.25 * s)} L${r(0.45 * s)} ${r(-h + 0.3 + 0.29 * s)} L${r(0.45 * s)} ${r(-h + 0.3 + 0.44 * s)} L${r(-0.5 * s)} ${r(-h + 0.3 + 0.4 * s)} Z" fill="#e8e8e4" stroke="#2a2a2a" stroke-width=".22"/>`;
   k += `<text transform="translate(${r(-0.02 * s)} ${r(-h + 0.3 + 0.385 * s)}) rotate(2.5)" font-size="${r(0.1 * s)}" text-anchor="middle" fill="#111" font-family="Arial,sans-serif" font-weight="bold">HYDE ST</text>`;
+  /* darunter das Einbahn-Schild in die Kehren: ONE WAY → */
+  { const y0 = -h + 0.3 + 0.62 * s, w = 0.75 * s, hh = 0.25 * s; k += `<rect x="${r(-0.05 * s)}" y="${r(y0)}" width="${r(w)}" height="${r(hh)}" fill="#111"/><path d="M${r(0.02 * s)} ${r(y0 + hh * 0.5)} L${r(0.55 * s)} ${r(y0 + hh * 0.5)} M${r(0.5 * s)} ${r(y0 + hh * 0.3)} L${r(0.64 * s)} ${r(y0 + hh * 0.5)} L${r(0.5 * s)} ${r(y0 + hh * 0.7)} Z" stroke="#fff" stroke-width="${r(0.03 * s)}" fill="#fff"/><text x="${r(0.27 * s)}" y="${r(y0 + hh * 0.42)}" font-size="${r(0.075 * s)}" text-anchor="middle" fill="#111" stroke="#fff" stroke-width=".25" paint-order="stroke" font-family="Arial,sans-serif" font-weight="bold">ONE WAY</text>`; }
   S.teil({ id: "strassenschild", de: "das Straßenschild", syl: "STRA-ßen-schild", it: "il cartello stradale", itSyl: "car-TEL-lo stra-DA-le", en: "street sign", x: px, y: py, kunst: k,
-    tipp: "Das Straßenschild zeigt die Kreuzung: Lombard Street und Hyde Street." });
+    tipp: "Das Straßenschild zeigt die Kreuzung: Lombard Street und Hyde Street. Darunter: Einbahnstraße — nur bergab." });
 }
 
 /* =====================================================================

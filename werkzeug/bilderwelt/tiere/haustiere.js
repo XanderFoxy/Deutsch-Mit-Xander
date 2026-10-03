@@ -671,7 +671,7 @@ module.exports = [
         innen:
           /* Schulterblatt als eigene Lichtfläche (45°), Schattenkante hinten; Keule als Kugel (Glanz oben vorn, Sichel hinten unten);
              Ellbogen als Volumen; Kernschatten-Band bei 65 % Rumpftiefe kommt aus dem Verlauf */
-          weichform(T, [[12.4, -56.4], [16.4, -57.2], [21.2, -51], [24.4, -44.4], [22.6, -42.4], [18.6, -46], [13.8, -51.6]], HELL, 0.32, 1.1) +
+          weichform(T, [[12.4, -56.4], [16.4, -57.2], [21.2, -51], [24.4, -44.4], [22.6, -42.4], [18.6, -46], [13.8, -51.6]], HELL, 0.16, 1.8) +
           weichform(T, [[11.4, -55.6], [12.6, -55.8], [16.4, -49.6], [15.6, -47.6]], SCH, 0.18, 0.7) +
           weichform(T, [[-29.6, -50.4], [-22.4, -52.6], [-17.4, -48.6], [-19.6, -43], [-25.6, -42.6], [-29.4, -45.6]], HELL, 0.38, 1.6) +
           weichform(T, [[-33.6, -42.4], [-27.6, -35.6], [-19.4, -32.8], [-15.6, -34.6], [-18.6, -30.4], [-27.4, -30.2], [-32.8, -35.6]], SCH, 0.42, 1.2) +

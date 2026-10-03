@@ -889,7 +889,7 @@ function orangUtan(T) {
   const armF = [[92, -100], [102, -100], [106, -86], [108, -72], [110, -60], [112, -46], [113.4, -34], [113.6, -19.6], [106.6, -19.6], [105.6, -34], [103.6, -46], [100.6, -58], [97, -72], [93, -86]];
   s += W.vol("v", 2.8, W.teil(armF, grund("af"), W.musterFlaeche(armF, OM(96), 0.75) + vorhang(armF, 50, 96, 6, { hell: -0.25 }), { rand: 0 }) +
     behang([[93, -86], [97, -72], [100.6, -58], [103.6, -46], [105.6, -34], [106.6, -22]], 50, 97, 12, 0.3, { laenge: (x, y) => 0.5 + clamp((-y - 26) / 40) * 0.8 }) +
-    behang([[113.6, -22], [110, -21], [106.6, -21.4]], 18, 94, 5, 0.35), { tiefe: 3, umgebung: 0.5 });
+    behang([[113.6, -22], [110, -21], [106.6, -21.4]], 20, 94, 7, 0.35), { tiefe: 3, umgebung: 0.5 });
 
   /* ---------- Rumpf: Schulterhöcker mit Schulterblatt, Rücken hängt leicht durch, Becken hinten rund; Grund dunkelgraue
      Haut, Haar als schütterer Vorhang; an Brust, Bauch und Flanke scheint die Haut breit durch ---------- */
@@ -929,8 +929,9 @@ function orangUtan(T) {
   const brust = [[90, -102], [100, -100], [110, -92], [118, -78], [121, -62], [118, -48], [108, -43], [97, -44], [90, -52], [88, -70]];
   s += W.vol("v", 4, W.teil(brust, grund("br"),
     W.weich([[108, -66, 10, 12, 0, "#3b3534", 0.7], [108, -46, 10, 2.6, 0, "#0a0807", 0.55], [94, -80, 4, 14, 0, "#0e0a09", 0.4]], 2.4) +
-    W.musterFlaeche(brust, OM(94), 0.55) + vorhang(brust, 40, 93, 6, { hell: -0.1 }), { rand: 0 }) +
-    behang([[121, -60], [118, -48], [108, -43], [97, -44], [90, -52]], 44, 92, 9, 0.4), { tiefe: 3, umgebung: 0.5 });
+    W.musterFlaeche(brust, OM(94), 0.55) + vorhang(brust, 40, 93, 6, { hell: -0.1 }),
+  { rand: 0, maske: T.fein ? W.maskeForm("obr", [[84, -106], [124, -106], [123, -58], [116, -50], [106, -48], [96, -50], [86, -58]], 2.4) : null }) +
+    behang([[121, -62], [117, -52], [108, -49], [97, -50], [90, -56]], 60, 92, 11, 0.4), { tiefe: 3, umgebung: 0.5 });
 
   /* ---------- naher Arm: sehr lang (Schulter hoch), Ellbogen leicht nach außen gedreht, Unterarm dünn unter dem
      Haarvorhang; Faust am Boden ---------- */
@@ -946,7 +947,7 @@ function orangUtan(T) {
     behang([[67, -90], [70, -82], [73.6, -72], [76.4, -62], [77, -56], [79.4, -50], [81, -40], [82.4, -30], [83.6, -22]], 150, (x, y) => 95 + (y < -60 ? 5 : 0), 15, 0.5,
       { licht: (x, y) => clamp(0.6 + (-y - 50) / 110), laenge: (x, y) => 0.45 + clamp((-y - 24) / 46) * 0.8 }) +
     /* langes Unterarmhaar fällt über das Handgelenk */
-    behang([[91.4, -30], [90.6, -22], [86.6, -21], [83, -21.4]], 40, 96, 5, 0.55, { ein: 0.35 }), { tiefe: 3, umgebung: 0.5 });
+    behang([[91.4, -30], [90.6, -22], [86.6, -21], [83, -21.4]], 44, 96, 7.5, 0.55, { ein: 0.3 }), { tiefe: 3, umgebung: 0.5 });
 
   /* ---------- Kopf (¾ zum Betrachter, ≈ 40°) ---------- */
   s += orangKopf(T, W, OR, OM);
@@ -961,7 +962,7 @@ function orangUtan(T) {
 function orangHand(W, T, wx, fern, pal) {
   const C = fern ? pal.cf : pal.c, LI = fern ? pal.lf : pal.l;
   const P = (x, y) => [wx + x, y];
-  const faust = [P(-3.8, -10), P(4.6, -10), P(6.4, -7.6), P(6.8, -4), P(5.8, -1), P(3.6, 0, 1), P(-5.4, 0, 1), P(-7.6, -1.6), P(-8.4, -4.6), P(-7.6, -8), P(-5.6, -9.6)];
+  const faust = [P(-3.8, -10), P(4.6, -10), P(6.4, -7.6), P(6.8, -4), P(5.8, -1), P(3.6, 0, 1), P(-5.4, 0, 1), P(-7.6, -1.6), P(-8.4, -4.2), P(-7.8, -5.6), P(-8.2, -7.2), P(-7.2, -8.8), P(-6.6, -9.2), P(-5.6, -10.2)];
   if (!T.fein) return `<path d="${G([P(-3, -21), P(3, -21), P(5, -9)].concat(faust.slice(2), [P(-3.6, -9)]))}" fill="${C[1]}"/>`;
   let s = "";
   /* Mittelhand (Handrücken vorn), zum Grundgelenk hin breiter; Sehnen, Querfalten am Handgelenk */
@@ -973,11 +974,11 @@ function orangHand(W, T, wx, fern, pal) {
   /* Faust: Grundgelenke vorn (rund), Grundglieder flach am Boden nach hinten, Mittelglieder steigen hinten auf, Nägel
      an der Handfläche eingeschlagen; Höhlung der Faust dunkel */
   s += W.teil(faust, T.lg("ofa" + (fern ? "f" : ""), fern ? pal.gf : pal.g, 0, 0, 0.5, 1),
-    W.weich([[wx - 1.4, -5.4, 2.6, 1.6, 0, "#000", 0.7], [wx + 4.6, -6.4, 1.6, 2.6, 0, LI, fern ? 0.12 : 0.45], [wx, -0.5, 6.6, 0.8, 0, "#000", 0.7]], 0.5) +
+    W.weich([[wx - 1.4, -5.4, 2.6, 1.6, 0, "#000", 0.7], [wx + 4.6, -6.4, 1.6, 2.6, 0, LI, fern ? 0.1 : 0.28], [wx, -0.5, 6.6, 0.8, 0, "#000", 0.7]], 0.5) +
     /* hinterer Finger lugt über dem nächsten hervor (dunkler) */
     W.glied([P(4, -3.2), P(-4.6, -3.4), P(-7, -4.6), P(-6.8, -8), P(-4.8, -9)], 2.4, C[0], "") +
     /* nächster Finger: Grundglied am Boden, Mittelglied hinten aufsteigend, Endglied nach vorn eingeschlagen */
-    W.glied([P(4.4, -1.8), P(-4.8, -1.8), P(-6.6, -3.4), P(-6.4, -6.6), P(-4.4, -7.6)], 2.9, C[2], fern ? "" : LI, { la: 0.4 }) +
+    W.glied([P(4.4, -1.8), P(-4.8, -1.8), P(-6.6, -3.4), P(-6.4, -6.6), P(-4.4, -7.6)], 2.9, C[2], fern ? "" : LI, { la: 0.22 }) +
     `<ellipse cx="${f1(wx - 3.6)}" cy="-7.4" rx=".8" ry=".55" transform="rotate(-20 ${f1(wx - 3.6)} -7.4)" fill="${fern ? pal.nf : pal.na}"/>` +
     (fern ? "" : W.falten([`M${f1(wx - 5.2)} -2.8q-.8 .2 -1 1.4`, `M${f1(wx - 5.8)} -3.6q-.9 .2 -1.3 1.2`, `M${f1(wx + 4.8)} -3.6q.6 .8 .4 2.2`, `M${f1(wx + 3.8)} -3.4q.4 .7 .3 1.8`,
       `M${f1(wx + 0.4)} -1.2v-1.2`, `M${f1(wx - 6.8)} -5.6q.8 .2 1.2.8`], 0.1, "#000", LI, 0.65, 0.35)),
@@ -1022,7 +1023,7 @@ function orangKopf(T, W, OR, OM) {
   let s = "";
   W.box([[100, -114], [126, -60]]);
   /* Kehlsack: weicher, behaarter Beutel; unten weich in die Brust ausgeblendet; Kontaktschatten liegt auf der Brust */
-  const sack = [[95, -70], [99, -63], [106, -60.4], [114, -60], [121, -61], [124.6, -64], [124.4, -56], [121, -49.6], [112, -46.4], [102, -47], [96, -51], [93.6, -58]];
+  const sack = [[95, -70], [99, -63], [106, -60.4], [114, -60], [121, -61], [123, -63], [123.2, -56], [120.6, -50], [112, -46.4], [102, -47], [96, -51], [93.6, -58]];
   s += W.vol("v", 4, W.teil(sack, T.rg("osack", [[0, "#5a4e48"], [0.6, "#3e3634"], [1, "#2a2422"]], 0.45, 0.3, 0.7),
     W.weich([[110, -61, 13, 2.6, 0, "#0e0a09", 0.7], [96, -61, 5, 3, 20, "#0e0a09", 0.5], [106, -54, 6, 4, -20, "#8a7a70", 0.35]], 1.4) +
     W.musterFlaeche(sack, OM(92), 0.6) +
@@ -1055,6 +1056,9 @@ function orangKopf(T, W, OR, OM) {
   const aug = { iris: "#3a1e0c", iris2: "#160a04", sklera: "#2e221c", offen: 0.78, lidDeck: 0.32, lid: "#6a5a52", lidHell: "#b4a296", glanz: 0.5, karunkel: "#6a5458", hoehle: "#140e0c", wimpern: 3, wimpernLaenge: 0.25 };
   g += W.auge2(108, -89.4, 1.45, Object.assign({ winkel: 3 }, aug));
   g += `<g transform="translate(116 -89.4) scale(.8 1) translate(-116 89.4)">` + W.auge2(116, -89.4, 1.35, Object.assign({ winkel: -4 }, aug)) + `</g>`;
+  /* Scheitel: kurzes, aufgestelltes, rotes Haar auf der Kopfoberseite, unten weich in die Stirnhaut auslaufend */
+  const scheitel = [[102.6, -104], [104.6, -109.4], [109, -112], [114, -111.4], [118, -108.4], [120.4, -102], [121, -99], [116, -100.4], [110, -101], [104, -100.4], [102, -99]];
+  if (T.fein) g += `<g mask="url(#${W.maskeForm("osch", [[100, -118], [124, -118], [123, -102], [116, -103], [110, -103.6], [104, -103], [100, -102]], 1)})"><path d="${G(scheitel)}" fill="#4a2010"/>${W.musterFlaeche(scheitel, OM(262))}${W.musterFlaeche(scheitel, OM(240), 0.7)}</g>`;
   let nm = "";
   /* Nase: flacher, breiter Steg mit Lichtkante; zwei schräge, ovale Nasenlöcher mit hellem Rand */
   nm += W.weich([[112.6, -85.4, 1.3, 3.4, 0, "#7a6a60", 0.5], [113, -82.4, 2.6, 1, 0, "#8a7a70", 0.45]], 0.35) +
@@ -1074,14 +1078,14 @@ function orangKopf(T, W, OR, OM) {
       (x) => 262 + (x - 111) * 4, 1.6, OR.slice(1), { licht: (x) => clamp(0.85 - (x - 104) / 30), krumm: 0.35, ein: 0.25, streu: 26, laenge: () => 0.45 + T.rnd() * 1.1, szene: 0.15 });
   /* naher Backenwulst: Halbmond von der Schläfe bis zum Mundwinkel, in der Mitte am dicksten, Außenrand leicht wellig;
      Licht oben außen, Kernschatten zur Gesichtsmitte, unten Schlagschatten auf den Kehlsack; Poren, wenige Borsten */
-  const wulstN = [[104, -106], [98, -105], [92.4, -100], [88.6, -93], [86.8, -86], [87, -79], [88.8, -73], [91.6, -68.6], [96, -65.6], [101, -64.8], [104, -66.6], [102.8, -72], [102.6, -80], [102.8, -90], [103.2, -99]];
+  const wulstN = [[104, -103], [99, -102.6], [93.4, -99], [88.6, -93], [86.8, -86], [87, -79], [88.8, -73], [91.6, -68.6], [96, -65.6], [101, -64.8], [104, -66.6], [102.8, -72], [102.6, -80], [102.8, -90], [103.2, -99]];
   s += W.vol("v", 2.4, W.teil(wulstN, T.lg("own", [[0, "#6a5048"], [0.45, "#4a3a34"], [1, "#2a1e1a"]], 0, 0, 0.6, 1),
     W.weich([[92.4, -94, 3, 6.4, 15, "#b0907e", 0.5], [90, -84, 1.6, 6, 0, "#9a7a6a", 0.3], [101.8, -84, 2, 14, 0, "#0e0a09", 0.6], [97, -67.6, 5, 1.6, 10, "#0e0a09", 0.5]], 1.2) +
     W.fell("own", 100, T.box(wulstN), { hell: "#a8562a", dunkel: "#1a0c06", ho: 0.4, do: 0.45, fx: 4, fy: 1.2, hk: "ow", licht: false }) +
     W.haare(wulstN, 60, (x, y) => (y < -88 ? 240 : 140), 1, [["#3a1608", 0.07, 0.6], ["#6a2c12", 0.07, 0.6], ["#9a4a20", 0.07, 0.55], ["#c06a34", 0.06, 0.55]], { licht: (x) => clamp(0.85 - (x - 88) / 16), mix: 0.6, gerade: true, szene: 0.05 }),
-  { rand: 0, maske: W.maskeForm("own", [[106, -108], [97, -107], [90.6, -101], [86.4, -93], [84.6, -85], [85, -78], [87, -71.6], [90.6, -66.6], [96, -63.6], [101.6, -62.8], [105, -64.6], [104.6, -90]], 0.35) }),
+  { rand: 0, maske: W.maskeForm("own", [[106, -103], [98, -103.6], [91.4, -100], [86.4, -93], [84.6, -85], [85, -78], [87, -71.6], [90.6, -66.6], [96, -63.6], [101.6, -62.8], [105, -64.6], [104.6, -90]], 0.35) }),
   { tiefe: 2, umgebung: 0.55 });
-  s += W.saum([[98, -105], [92.4, -100], [88.6, -93], [86.8, -86], [87, -79], [88.8, -73]], 50, (x, y) => (y < -90 ? 215 : 175), 1.4, [["#3a1608", 0.08, 0.6], ["#6a2c12", 0.08, 0.6], ["#9a4a20", 0.07, 0.55]], { mix: 1, gerade: true, ein: 0.5, szene: 0.05 });
+  s += W.saum([[99, -102.6], [93.4, -99], [88.6, -93], [86.8, -86], [87, -79], [88.8, -73]], 50, (x, y) => (y < -90 ? 215 : 175), 1.4, [["#3a1608", 0.08, 0.6], ["#6a2c12", 0.08, 0.6], ["#9a4a20", 0.07, 0.55]], { mix: 1, gerade: true, ein: 0.5, szene: 0.05 });
   /* Bart: kurze rotbraune Haare vom Kinn über den Kehlsack */
   s += W.saum([[103, -65], [108, -63.4], [113, -62.6], [118, -62.8], [122.4, -64.2]], 90, (x) => 92 - (x - 113) * 1.6, 2.6, OR.slice(1), { licht: () => 0.6, krumm: 0.55, ein: 0.2, szene: 0.1 });
   return s;

@@ -1250,7 +1250,7 @@ function hyaene(T) {
   const sichel = [[146.4, -89.4], [148.2, -86.4], [148.4, -81.8], [147.4, -79.4], [146.8, -83.6], [145.6, -88]];
   o += teil(T, "hohr", ohr, T.lg("hohr", [[0, "#2a1e12"], [0.3, "#4e3c26"], [0.7, "#7a6646"], [1, "#94805c"]]),
     T.form(sichel, T.lg("hohrI", [[0, "#e8dcbe"], [1, "#a8946e"]])) + haare(T, sichel, 18, -60, 1.3, [["#f6ecd4", 1, 0.08, 0.85]], 24, 0.3) +
-    haare(T, ohr, 24, -95, 1, [["#2a1e12", 1, 0.09, 0.55], ["#b49e78", 0.6, 0.08, 0.5]], 24),
+    haare(T, ohr, 14, -95, 1, [["#2a1e12", 1, 0.09, 0.55], ["#b49e78", 0.6, 0.08, 0.5]], 24),
     fellKante(T, [[139.6, -81], [140.6, -87.4], [143.4, -90.2], [146.4, -89.8]], 22, -0.4, -0.7, "#1a120a", 0.09, 0.7) +
     fellKante(T, [[146.6, -89.4], [148.4, -86.2], [148.8, -81.4]], 16, 0.9, -0.3, "#efe2c4", 0.07, 0.85), { weich: 1.4 });
 
@@ -1258,7 +1258,7 @@ function hyaene(T) {
   s += `<g transform="translate(2.4 1.2)">${o}</g>`;
 
   /* ---- ferne Läufe: 15 % dunkler und kühler, oben Schlagschatten des Rumpfs, Füße dunkel ohne Flecken ---- */
-  const fuss = (x0, x1) => `<rect x="${x0}" y="-12" width="${x1 - x0}" height="12" fill="${hoehenVerlauf(T, "hFuss", -11, -3, [[-11, "#2a1e10", 0], [-3, "#2a1e10", 0.35]])}"/>`;
+  const fuss = (x0, x1) => T.fein === false ? "" : `<rect x="${x0}" y="-12" width="${x1 - x0}" height="12" fill="${hoehenVerlauf(T, "hFuss", -11, -3, [[-11, "#2a1e10", 0], [-3, "#2a1e10", 0.35]])}"/>`;
   const schlag = `<rect x="30" y="-48" width="110" height="48" fill="${hoehenVerlauf(T, "hSchlag", -40, -20, [[-40, "#000", 0.34], [-20, "#000", 0]])}"/>`;
   s += teil(T, "hvbF", vbF, fellF, flecken(vbF.filter((q) => q[1] > -36 && q[1] < -10), 8, 0.5, 1, "#2e2010", 0.5, (x, y) => (y < -12 ? 1 : 0)) +
     beinM([98, -48, 116, 0]) + fuss(100, 115) + schlag, pfote2(T, 108.2, 10.4, 4.5, { op: 0.8, kralle: "#16120e", fell: "#4e4232", licht: "#c8b490" }), { weich: 2 });
@@ -1271,12 +1271,12 @@ function hyaene(T) {
     [1.6, 1.7, 1.7, 1.6, 1.8, 2.3, 3, 3.4, 3], 0);
   const schF = hoehenVerlauf(T, "hschw", -66, -36, [[-66, "#a08a64"], [-56, "#94805c"], [-50, "#5a4830"], [-45, "#241a10"], [-36, "#0e0a07"]]);
   let q = haare(T, sch.pts.filter((p) => p[1] < -50), 26, 100, 1.1, sand, 14) + flecken([[34, -64], [32, -58], [30.6, -52], [33.2, -52], [34.4, -58], [37, -64]], 4, 0.45, 0.7, "#3a2a18", 0.6);
-  q += haare(T, sch.pts.filter((p) => p[1] > -54), 40, (x, y) => 92 + (x - 31.6) * 4, 3.4, [["#000", 1, 0.12, 0.6], ["#4a3a28", 0.5, 0.11, 0.5]], 10, 0.3);
+  q += haare(T, sch.pts.filter((p) => p[1] > -54), 32, (x, y) => 92 + (x - 31.6) * 4, 3.4, [["#000", 1, 0.12, 0.6], ["#4a3a28", 0.5, 0.11, 0.5]], 10, 0.3);
   s += teil(T, "hschw", sch.pts, schF, q,
     fellKante(T, sch.ob.slice(4), 30, -1.4, 2.6, "#120d08", 0.1, 0.75) + fellKante(T, sch.un.slice(4).reverse(), 24, 1.2, 2.6, "#120d08", 0.1, 0.7) +
     fellKante(T, sch.ob.slice(1, 5), 16, -0.8, 0.8, "#6a5838", 0.08, 0.6) +
     fellKante(T, [[29, -37.6], [29.8, -35.4], [31.4, -34.2], [33.4, -34.6], [35, -36.6]], 56, 0.1, 5.6, "#0c0906", 0.12, 0.85) +
-    fellKante(T, [[29.6, -36.4], [32, -34.4], [34.4, -36]], 24, 0.4, 7.6, "#1e160e", 0.1, 0.6), { weich: 1.4 });
+    fellKante(T, [[29.6, -36.4], [32, -34.4], [34.4, -36]], 16, 0.4, 7.6, "#1e160e", 0.1, 0.6), { weich: 1.4 });
 
   /* ---- Rumpf mit Hals, Oberarm und Keule ---- */
   let n = "";
@@ -1290,13 +1290,13 @@ function hyaene(T) {
   /* Tüpfel: groß und dicht an Flanke, Hüfte, Keule; klein, spärlich, blass an Schulter und Hals; keine an Kehle/Brust-Unterseite */
   const zone = [[40, -64], [46, -69], [60, -72], [76, -76.4], [92, -81], [106, -84], [116, -83], [118, -70], [114, -52], [106, -45.4], [94, -46], [80, -48.6], [68, -52], [62, -44], [57, -35],
     [50, -31.4], [44, -35], [41, -43], [39.6, -52]];
-  n += flecken(zone, 72, 0.9, 2.1, "#3a2814", 0.74, (x) => Math.max(0.2, Math.min(1, (116 - x) / 40)), flachR);
+  n += flecken(zone, 66, 0.9, 2.1, "#3a2814", 0.74, (x) => Math.max(0.2, Math.min(1, (116 - x) / 40)), flachR);
   n += flecken([[116, -84], [128, -81], [138, -76], [140, -66], [134, -56], [122, -50], [116, -60]], 12, 0.6, 1.1, "#4a3820", 0.45, () => 0.8, flachR);
   /* Fell: raue Büschel (heller Kopf, dunkle Kerbe), darüber kurze Haare – überkämmen die Fleckränder */
   n += fellMuster(T, "hR", 9.3, 44, 3, 0.24, ["#f2e6c8", 0.24], ["#2e2214", 0.22], 170, [30, -95, 150, -25]);
-  n += bueschel(T, rumpf, 44, wuchs, 3.6, 0.28, hellB, dunkB);
+  n += bueschel(T, rumpf, 34, wuchs, 3.6, 0.28, hellB, dunkB);
   /* Mähne vom Hinterkopf bis über den Widerrist: Büschel nach hinten gelegt, dunkle Spitzen */
-  n += bueschel(T, [[104, -87], [116, -87], [128, -83], [140, -79], [140, -74], [128, -78], [114, -82], [104, -83]], 44, 200, 3.4, 0.32, ["#d8c49c", 0.4], ["#1e140a", 0.4]);
+  n += bueschel(T, [[104, -87], [116, -87], [128, -83], [140, -79], [140, -74], [128, -78], [114, -82], [104, -83]], 36, 200, 3.4, 0.32, ["#d8c49c", 0.4], ["#1e140a", 0.4]);
   s += teil(T, "hrumpf", rumpf, fell, n,
     fellKante(T, [[102, -86.2], [110, -87], [116, -86.2], [123, -84.2], [130, -81.2], [135.6, -78.6], [140, -78]], 70, -2.4, -1.4, "#4a3820", 0.11, 0.75) +
     fellKante(T, [[104, -86.4], [112, -87.2], [120, -85.6], [128, -82.4], [136, -78.6]], 50, -2.8, -1.8, "#1e140a", 0.1, 0.7) +
@@ -1306,7 +1306,7 @@ function hyaene(T) {
     fellKante(T, [[44, -33.8], [41.2, -41], [39, -49.6], [38.4, -57]], 30, -1.6, 1.2, "#9a845e", 0.09, 0.6), { weich: 10, ueber: lichtH });
 
   /* ---- nahe Läufe: ÜBER dem Rumpf, oben weich eingeblendet (keine Naht); kleine dichte Flecken, Füße dunkel ohne Flecken ---- */
-  const okk = (x, y0, y1) => `<rect x="${x}" y="${y0}" width="22" height="${y1 - y0}" fill="${hoehenVerlauf(T, "hOkk" + x, y0, y1, [[y0, "#2a1c0e", 0.3], [y1, "#2a1c0e", 0]])}"/>`;
+  const okk = (x, y0, y1) => T.fein === false ? "" : `<rect x="${x}" y="${y0}" width="22" height="${y1 - y0}" fill="${hoehenVerlauf(T, "hOkk" + x, y0, y1, [[y0, "#2a1c0e", 0.3], [y1, "#2a1c0e", 0]])}"/>`;
   let h = okk(38, -42, -28) + beinM([36, -50, 64, 0]) + flecken(hbN.filter((p) => p[1] < -9), 14, 0.5, 1, "#3a2814", 0.7, (x, y) => (y < -10 ? 1 : 0)) + fuss(38, 60) +
     fleck(T, "", 41.6, -24, 0.7, 4, "#fff", 0.3, 18) + fleck(T, "", 44.6, -21, 0.8, 4, "#000", 0.3, 18);
   s += teil(T, "hhbN", hbN, fell, h, fellKante(T, [[45, -33], [42.8, -27.6], [41.8, -21.8]], 14, -1.2, 0.9, "#a8916a", 0.08, 0.6) +

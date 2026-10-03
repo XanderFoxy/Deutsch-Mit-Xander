@@ -607,10 +607,10 @@ function panzer(T, A) {
   return h + A.kopf;
 }
 /* Nackenschild: 2 kleine Hinterhauptschilde, Hautlücke, 4 große + 2 kleine gekielte Platten (kompakte Gruppe) */
-const nackenSchild = (T, x0, y0, f, op = 1) => {
+const nackenSchild = (T, x0, y0, f, op = 1, dyH = 0) => {
   if (!T.fein) return "";
   const g = plattenGrad(T, "nk", false, 0.85), kG = T.lg("kielL", [[0, "#fff6d8", 0.42], [0.45, "#fff6d8", 0.08], [0.55, "#000", 0.12], [1, "#000", 0.4]]);
-  const pl = [[12.4, -0.6, 1.6, 1.1], [14.4, -0.8, 1.4, 1], [0, 0, 3.2, 2.5], [3.6, -0.3, 3.2, 2.5], [0.4, 2.8, 2.8, 2.1], [3.8, 2.4, 2.8, 2.1], [6.6, 0.4, 1.8, 1.6], [6.6, 2.6, 1.6, 1.4]];
+  const pl = [[12.4, -0.6 + dyH, 1.6, 1.1], [14.4, -0.8 + dyH, 1.4, 1], [0, 0, 3.2, 2.5], [3.6, -0.3, 3.2, 2.5], [0.4, 2.8, 2.8, 2.1], [3.8, 2.4, 2.8, 2.1], [6.6, 0.4, 1.8, 1.6], [6.6, 2.6, 1.6, 1.4]];
   let p = "", k = "";
   for (const [dx, dy, w, hh] of pl) {
     const x = x0 + dx * f, y = y0 + dy * f, W = w * f, H = hh * f;
@@ -806,7 +806,7 @@ function kopfAlligator(T) {
   k += `<path d="M258.6 -33.4Q261 -33.1 263.2 -33.6L263 -33.1Q261 -32.6 258.6 -33Z" fill="#050504" opacity=".9"/>` +
     linien(T, [[[258.2, -33.7], [260.8, -34.3], [263.6, -33.9]]], "#c8c4ae", 0.18, 0.3) + linien(T, [[[258.6, -33.35], [261, -33.65], [263.2, -33.5]]], "#000", 0.35, 0.45);
   /* Nasenbuckel mit Nasenloch vorn oben */
-  k += `<ellipse cx="294.6" cy="-31" rx="2.4" ry="1" fill="#3e3f35"/>` + fleck(T, "l", 294.4, -31.4, 2, 0.7, 0, 0.35) + `<path d="M293.6 -31q.6 -.8 1.1 0q-.5 -.3 -1.1 0ZM295 -31.1q.6 -.8 1.1 0q-.5 -.3 -1.1 0Z" fill="#050504"/>` + (F ? linien(T, [[[293, -31.5], [294.6, -32.2], [296.2, -31.5]]], "#e8e4d0", 0.14, 0.45) : "");
+  k += `<ellipse cx="294.6" cy="-31" rx="2.4" ry="1" fill="#4a4b40"/>` + fleck(T, "l", 294.4, -31.4, 2, 0.7, 0, 0.35) + `<path d="M293.6 -31q.6 -.8 1.1 0q-.5 -.3 -1.1 0ZM295 -31.1q.6 -.8 1.1 0q-.5 -.3 -1.1 0Z" fill="#050504"/>` + (F ? linien(T, [[[293, -31.5], [294.6, -32.2], [296.2, -31.5]]], "#e8e4d0", 0.14, 0.45) : "");
   /* Kopf flach gehalten (tiefe Haltung) */
   /* Kopf flach gehalten (tiefe Haltung) */
   return `<g transform="translate(0 4.6) rotate(-1 252 -26)">${k}</g>`;
@@ -841,7 +841,7 @@ function alligator(T) {
   const ks = T.rg("ksohle", [[0, "#000", 0.6], [1, "#000", 0]]);
   h = `<ellipse cx="190" cy="0" rx="34" ry="1.2" fill="${ks}" opacity=".7"/>` + [[142, 0, 5], [241, 0, 3.6], [165, 0, 9], [227, 0, 5]].map(([x, y, w]) => `<ellipse cx="${x}" cy="${y}" rx="${w}" ry=".5" fill="${ks}"/>`).join("") + h;
   /* Nackenschild im Körperraum (Hinterhauptschilde liegen über dem Kopfansatz) */
-  h += nackenSchild(T, 231.6, -33.6, 0.95, 0.8);
+  h += nackenSchild(T, 231.6, -33.6, 0.95, 0.8, 2);
   h += kopfAlligator(T);
   return fertig(3.8 / 3, h, [0, -41, 297.4, 0], [142, 168, 226, 241], [242, -38, 299, -12]);
 }

@@ -778,7 +778,9 @@ const LL = -8;
   /* Tannengirlande mit Lichtern oben */
   for (let i = 0; i < 14; i++) { const d = d0 + (d1 - d0) * i / 13, [x, y] = P(Li, d, h1 - 0.1); k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(1.3 * 10 / d)}" fill="#2f5a32"/><circle cx="${r(x)}" cy="${r(y + 0.7)}" r=".35" fill="#ffe27a"/>`; }
   /* Weihnachtsbaum (hinten) */
-  { const d = 13.2, [x, y] = P(Li + 0.3, d, h0 + 0.12), s = F / d; k += `<path d="M${r(x - 0.38 * s)} ${r(y)} L${r(x)} ${r(y - 1.5 * s)} L${r(x + 0.38 * s)} ${r(y)} Z" fill="#2c5a30"/>`; for (let i = 0; i < 7; i++) k += `<circle cx="${r(x + (rnd() - 0.5) * 0.45 * s)}" cy="${r(y - (0.2 + rnd() * 1) * s)}" r=".6" fill="${["#c8202c", "#e8b830", "#e8e8ee"][i % 3]}"/>`; k += `<path d="M${r(x)} ${r(y - 1.62 * s)} l.5 1 l-1 0 Z" fill="#f2c83a"/>`; }
+  { const d = 13.2, [x, y] = P(Li + 0.3, d, h0 + 0.12), s = F / d;
+    k += `<rect x="${r(x - 0.04 * s)}" y="${r(y - 0.16 * s)}" width="${r(0.08 * s)}" height="${r(0.16 * s)}" fill="#5a3a22"/>`;
+    for (const [y0, y1, w] of [[0.12, 0.75, 0.4], [0.55, 1.15, 0.3], [0.95, 1.55, 0.2]]) k += `<path d="M${r(x - w * s)} ${r(y - y0 * s)} Q${r(x - w * 0.4 * s)} ${r(y - (y0 + 0.1) * s)} ${r(x)} ${r(y - y1 * s)} Q${r(x + w * 0.4 * s)} ${r(y - (y0 + 0.1) * s)} ${r(x + w * s)} ${r(y - y0 * s)} Q${r(x)} ${r(y - (y0 - 0.06) * s)} ${r(x - w * s)} ${r(y - y0 * s)} Z" fill="#2c5a30"/><path d="M${r(x - w * 0.9 * s)} ${r(y - y0 * s)} Q${r(x - w * 0.4 * s)} ${r(y - (y0 + 0.12) * s)} ${r(x - 0.3)} ${r(y - y1 * s + 0.6)}" stroke="#5f8a4a" stroke-width=".35" fill="none"/>`; for (let i = 0; i < 7; i++) k += `<circle cx="${r(x + (rnd() - 0.5) * 0.45 * s)}" cy="${r(y - (0.2 + rnd() * 1) * s)}" r=".6" fill="${["#c8202c", "#e8b830", "#e8e8ee"][i % 3]}"/>`; k += `<path d="M${r(x)} ${r(y - 1.62 * s)} l.5 1 l-1 0 Z" fill="#f2c83a"/>`; }
   /* Nussknacker: in der Fensterebene, mit Tiefe projiziert */
   const KN = P(Li, 11.5, h0 + 0.12);
   {
@@ -789,6 +791,11 @@ const LL = -8;
     k += `<path d="${poly(Q(-0.11, 0.98), Q(0.11, 0.98), Q(0.11, 0.75), Q(-0.11, 0.75))}" fill="#f2d2b0"/><path d="${poly(Q(-0.11, 0.86), Q(0.11, 0.86), Q(0.11, 0.77), Q(-0.11, 0.77))}" fill="#f6f4ee"/>`;
     k += `<path d="${poly(Q(-0.12, 1.24), Q(0.12, 1.24), Q(0.12, 0.98), Q(-0.12, 0.98))}" fill="#1a1a1a"/><circle cx="${r(Q(0, 1.24)[0])}" cy="${r(Q(0, 1.24)[1])}" r="${r(0.03 * s)}" fill="#f2c83a"/>`;
     k += `<circle cx="${r(Q(-0.04, 0.92)[0])}" cy="${r(Q(0, 0.92)[1])}" r=".25" fill="#1a1a1a"/><circle cx="${r(Q(0.04, 0.92)[0])}" cy="${r(Q(0, 0.92)[1])}" r=".25" fill="#1a1a1a"/>`;
+    /* Gesicht: rote Wangen, weißer Schnurrbart, großer Mund mit Zähnen; Arme mit Händen an den Seiten; Goldband an der Mütze */
+    k += `<circle cx="${r(Q(-0.07, 0.88)[0])}" cy="${r(Q(0, 0.88)[1])}" r=".35" fill="#e8848a" opacity=".8"/><circle cx="${r(Q(0.07, 0.88)[0])}" cy="${r(Q(0, 0.88)[1])}" r=".35" fill="#e8848a" opacity=".8"/>`;
+    k += `<path d="M${pt(Q(-0.08, 0.86))} Q${pt(Q(0, 0.83))} ${pt(Q(0.08, 0.86))}" stroke="#fff" stroke-width=".6" fill="none"/><path d="M${pt(Q(-0.05, 0.81))} L${pt(Q(0.05, 0.81))}" stroke="#7a1a1a" stroke-width=".45"/>`;
+    for (const sg of [-1, 1]) k += `<path d="${poly(Q(sg * 0.14, 0.74), Q(sg * 0.2, 0.74), Q(sg * 0.2, 0.42), Q(sg * 0.14, 0.42))}" fill="#a81a24"/><circle cx="${r(Q(sg * 0.17, 0.4)[0])}" cy="${r(Q(0, 0.4)[1])}" r=".45" fill="#f2d2b0"/>`;
+    k += `<path d="M${pt(Q(-0.12, 1.02))} L${pt(Q(0.12, 1.02))}" stroke="#f2c83a" stroke-width=".55"/>`;
     void x; void y;
   }
   /* Christbaumkugeln an Fäden, Stern am Faden */
@@ -807,15 +814,13 @@ const LL = -8;
   k += `<path d="${poly(P(L, d0, 3.4), P(L, d1, 3.4), P(L, d1, 3.0), P(L, d0, 3.0))}" fill="#6e1e22"/>`;
   { const txt = "Weihnachten", n = txt.length, lage = zeichenLage(txt); for (let i = 0; i < n; i++) { const d = d1 - 0.2 - (d1 - d0 - 0.4) * lage[i], [x, y] = P(L, d, 3.08), fs = 0.27 * F / d; const nx = P(L, d - 0.1, 3.08), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="${r(x)}" y="${r(y)}" font-size="${r(fs)}" text-anchor="middle" fill="#f2d27a" font-family="Georgia,serif" font-weight="bold" transform="rotate(${r(sk)} ${r(x)} ${r(y)})">${txt[i]}</text>`; } }
   const [ax, ay] = P(L, d0 - 0.2, h1 + 0.5), [bx, by] = P(L, d1 + 0.2, h0 - 0.1);
-  const zh = Math.max(by - ay + 8, (Math.abs(bx - ax) + 18) / 1.5), zw = zh * 1.5;
+  void ax; void ay; void bx; void by;
   S.teil({ id: "schaufenster", de: "das Schaufenster", syl: "SCHAU-fens-ter", it: "la vetrina", itSyl: "ve-TRI-na", en: "shop window", x: 0, y: 0, kunst: k,
     tipp: "In Rothenburg kann man das ganze Jahr Weihnachtsschmuck kaufen.",
-    zoom: { x: r(Math.min(ax, bx) - (zw - Math.abs(bx - ax)) / 2), y: r(ay - 4), w: r(zw), h: r(zh) },
+    zoom: { x: r(KN[0] - 18), y: r(KN[1] - 26), w: 39, h: 26 },
     unter: [
       { id: "nussknacker", de: "der Nussknacker", syl: "NUSS-kna-cker", it: "lo schiaccianoci", itSyl: "schiac-cia-NO-ci", en: "nutcracker", x: KN[0], y: KN[1], kunst: flaeche(-3, -1.3 * F / 11.5, 6, 1.3 * F / 11.5),
         tipp: "Der Nussknacker knackt Nüsse mit seinem großen Mund. Er kommt aus dem Erzgebirge." },
-      { id: "christbaumkugel", de: "die Christbaumkugel", syl: "CHRIST-baum-ku-gel", it: "la pallina di Natale", itSyl: "pal-LI-na di na-TA-le", en: "Christmas bauble", x: KU[0][0], y: KU[0][1], kunst: flaeche(-3, -3, 6, 6) },
-      { id: "stern", de: "der Stern", syl: "STERN", it: "la stella", itSyl: "STEL-la", en: "star", x: STERN[0], y: STERN[1], kunst: flaeche(-3.4, -3.4, 6.8, 6.8) },
     ] });
   /* Spiegelung auf der Scheibe (fängt keinen Tipp) */
   S.davor(`<path d="${poly(P(L, d0 + 0.3, h1), P(L, d0 + 0.7, h1), P(L, d0 + 1.3, h0), P(L, d0 + 0.9, h0))}" fill="#fff" opacity=".22"/><path d="${poly(P(L, d0 + 2.1, h1), P(L, d0 + 2.3, h1), P(L, d0 + 2.7, h0), P(L, d0 + 2.5, h0))}" fill="#fff" opacity=".14"/>`);
@@ -832,6 +837,9 @@ const LL = -8;
   for (const [h0, h1] of [[0.4, 1.1], [1.25, 1.9]]) k += `<path d="${poly(P(L, ta + 0.1, h1), P(L, tb - 0.1, h1), P(L, tb - 0.1, h0), P(L, ta + 0.1, h0))}" fill="none" stroke="#2a1408" stroke-width=".5"/>`;
   { const [x, y] = P(L, tb - 0.15, 1.15); k += `<circle cx="${r(x)}" cy="${r(y)}" r=".8" fill="${GOLD}"/>`; }
   k += `<path d="${poly(P(L, ta - 0.3, 0.2), P(L, tb + 0.3, 0.2), P(L - 0.45, tb + 0.3, 0.2), P(L - 0.45, ta - 0.3, 0.2))}" fill="#a8916c"/><path d="M${pt(P(L - 0.45, ta - 0.3, 0.2))} L${pt(P(L - 0.45, tb + 0.3, 0.2))}" stroke="#7a6a50" stroke-width=".6"/>`;
+  /* Schriftzug über der Tür, Buchstabe für Buchstabe auf der Wand (Leserichtung von hinten nach vorn) */
+  { const txt = "Gasthof zum Hirschen", n = txt.length, lage = zeichenLage(txt), da = 9.15, db = 5.75;
+    for (let i = 0; i < n; i++) { if (txt[i] === " ") continue; const d = da + (db - da) * lage[i], [x, y] = P(L, d, 2.95), fs = 0.26 * F / d, nx = P(L, d - 0.1, 2.95), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="${r(x)}" y="${r(y)}" font-size="${r(fs)}" text-anchor="middle" fill="#3a2a14" font-family="Georgia,serif" font-weight="bold" transform="rotate(${r(sk)} ${r(x)} ${r(y)})">${txt[i]}</text>`; } }
   /* Speisekarte an der Wand */
   k += `<path d="${poly(P(L, 8.3, 2.1), P(L, 8.9, 2.1), P(L, 8.9, 1.2), P(L, 8.3, 1.2))}" fill="#2e3a2a" stroke="#7a5a38" stroke-width=".5"/>`;
   for (let i = 0; i < 4; i++) k += `<path d="M${pt(P(L, 8.36, 1.95 - i * 0.18))} L${pt(P(L, 8.84, 1.95 - i * 0.18))}" stroke="#f4efe4" stroke-width=".35"/>`;
@@ -980,6 +988,17 @@ const STANGE = (() => {
   const ox = r(lx), oy = r(ly + 4.4);
   S.teil({ oben: true, id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "la lanterna", itSyl: "lan-TER-na", en: "lantern", x: NW.x + ox, y: NW.y + oy, kunst: `<g transform="translate(${-ox} ${-oy})">${k + flaeche(lx - 3, ly - 6, 6, 11)}</g>`,
     tipp: "Früher gab es keine Straßenlampen. Der Nachtwächter trug eine Laterne." });
+}
+/* Vordergrund links: Holzkübel mit Geranien vor der Bäckerei (Dekor, fängt keinen Tipp) */
+{
+  const d = 4.6, [x, y] = P(-6.3, d, 0, 0), s = F / d;
+  let c = schatten(0, 0.6, 0.42 * s, 0.07 * s, 0.4);
+  c += `<path d="M${r(-0.32 * s)} ${r(-0.5 * s)} L${r(0.32 * s)} ${r(-0.5 * s)} L${r(0.27 * s)} 0 L${r(-0.27 * s)} 0 Z" fill="${S.lg("kuebel", [[0, "#7a4e2c"], [0.5, "#a06a3c"], [1, "#5a361c"]], 0, 0, 1, 0)}"/>`;
+  for (const h of [-0.12, -0.38]) c += `<path d="M${r(-0.3 * s)} ${r(h * s)} L${r(0.3 * s)} ${r(h * s)}" stroke="#3a3a3a" stroke-width="${r(0.025 * s)}"/>`;
+  for (let i = 0; i < 26; i++) { const a2 = rnd() * Math.PI, rr = 0.1 + rnd() * 0.24; c += `<circle cx="${r(Math.cos(a2) * rr * s * 1.3)}" cy="${r((-0.55 - Math.sin(a2) * rr * 0.8) * s)}" r="${r((0.045 + rnd() * 0.03) * s)}" fill="${i % 3 ? "#3f6e2e" : "#5a8a3a"}"/>`; }
+  for (let i = 0; i < 16; i++) { const a2 = rnd() * Math.PI, rr = 0.08 + rnd() * 0.22; c += `<circle cx="${r(Math.cos(a2) * rr * s * 1.3)}" cy="${r((-0.62 - Math.sin(a2) * rr * 0.8) * s)}" r="${r(0.04 * s)}" fill="${rnd() < 0.7 ? "#d6283a" : "#f2557a"}"/>`; }
+  c += `<rect x="${r(-0.34 * s)}" y="${r(-0.95 * s)}" width="${r(0.68 * s)}" height="${r(0.95 * s)}" fill="${SCHATTEN}" opacity=".2"/>`;
+  S.davor(`<g transform="translate(${r(x)} ${r(y)})">${c}</g>`);
 }
 /* Abendstimmung über allem: oben warmer Schein, unten kühler */
 S.davor(`<rect width="400" height="260" fill="${S.lg("abendschein", [[0, "#ffb070", 0.08], [0.5, "#ffb070", 0], [1, "#203050", 0.08]])}"/>`);
