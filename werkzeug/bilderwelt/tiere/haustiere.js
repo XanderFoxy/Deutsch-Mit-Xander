@@ -571,98 +571,6 @@ function kralle(T, x, y, l, a, farbe = "#2a2018", dicke = 0.32) {
 
 return [
   /* =================================================================
-     WELLENSITTICH — Wildfarbe grün (Hahn)
-     RECHERCHE: Gesamtlänge ca. 18 cm (davon Schwanz 8–9 cm), 30–40 g; Bauch, Brust und Bürzel
-     hellgrün; Stirn, Gesicht und Kehle gelb („Maske“); Hinterkopf, Nacken und Rücken gelb mit feiner
-     schwarzer Wellenzeichnung; Flügeldecken schwarz mit gelben Säumen (Schuppenmuster); Schwungfedern
-     schwärzlich mit grünlichen Säumen; violettblauer Wangenfleck, an der Kehle je Seite drei schwarze
-     Kehlpunkte (der äußere am Wangenfleck); Wachshaut über dem Schnabel beim Hahn blau, bei der Henne
-     braun; kleiner, stark gebogener, oliv-gelblicher Schnabel, größtenteils von Federn umgeben; Auge
-     dunkel mit hellem Irisring (erwachsen); Schwanz lang, gestuft, dunkel kobaltblau, äußere Federn mit
-     gelbem Fleck; Füße blaugrau, Zehen paarig (2 vorn, 2 hinten).
-     ================================================================= */
-  { id: "wellensittich", de: "der Wellensittich", syl: "WEL-len-sit-tich", it: "il pappagallino", itSyl: "pap-pa-gal-LI-no", en: "budgie",
-    gruppe: "Haustiere", lebensraum: "Zuhause",
-    laenge: 0.12, hoehe: 0.143,
-    zeichne(T) {
-      T.RW = 0.03;
-      const DK = "#141410";
-      let s = "";
-      /* Schwanz: lang, gestuft, kobaltblau */
-      const sc = [[-2.2, -3.8], [-3.8, -2.6], [-5.6, -1.45], [-7.2, -0.6]];
-      for (const [d, f, w] of [[0.5, "#1c2f6a", 1.1], [0, "#24408c", 0.9], [-0.35, "#2e56a8", 0.7]]) {
-        const c = sc.map((p, i) => [p[0] + d * 0.4 * i / 3, p[1] - d * 0.35 * i / 3 + (d > 0 ? 0.25 * i / 3 : 0)]);
-        const k = schlauch(c, [w, w * 0.95, w * 0.85, w * 0.5]);
-        s += teil(T, k, f, { rand: DK, randA: 0.35, rw: 0.02, innen: falte(T, c, "#0e1a40", 0.04, 0.6) + T.form(abschnitt(c, w * 0.25, 0, 1, 4).map((p) => [p[0] - 0.12, p[1] - 0.1]), "#7ab0e8", ` opacity=".3"`) });
-      }
-      /* Füße: blaugrau, 2 Zehen vorn, 2 hinten, dunkle Krallen */
-      const fuss = (x, f) => T.linie([[x - 0.1, -1.7], [x, -1.1], [x + 0.1, -0.5]], f, 0.42) +
-        T.linie([[x, -0.45], [x + 0.9, -0.25], [x + 1.7, -0.18]], f, 0.26) + T.linie([[x, -0.45], [x + 0.6, -0.15], [x + 1.25, -0.12]], f, 0.24) +
-        T.linie([[x, -0.45], [x - 0.6, -0.2], [x - 1.05, -0.14]], f, 0.24) +
-        kralle(T, x + 1.65, -0.2, 0.32, 70, "#2a2a30", 0.28) + kralle(T, x + 1.2, -0.14, 0.28, 75, "#2a2a30", 0.28) + kralle(T, x - 1.0, -0.17, 0.26, 115, "#2a2a30", 0.28);
-      s += fuss(0.9, "#7d8496") + fuss(0.2, "#9aa2b6");
-      if (T.fein) s += `<path d="M.05 -1.5l.32 .08M.1 -1.1l.3 .06M.15 -.75l.3 .04" stroke="#6a7084" stroke-width=".04" opacity=".7"/>`;
-      /* Leib + Kopf */
-      const leib = [[-1.8, -2.2], [0.4, -1.5], [2.2, -3], [3.4, -5.8], [3.75, -8.2], [3.65, -9.4], [3.9, -10.3], [4.25, -11], [4.45, -11.8], [4.05, -12.9], [3, -13.9], [1.6, -14.15],
-        [0.2, -13.45], [-0.6, -12], [-1.4, -10], [-2.6, -6.4], [-3.1, -3.8]];
-      const maske = [[3.7, -9.2], [3.4, -9.6], [2.4, -9.4], [1.4, -10.2], [0.8, -11.6], [1.2, -12.9], [2.2, -13.7], [3.2, -13.6], [4.3, -12.6], [4.5, -11.4], [4.1, -10.2]];
-      /* Schuppenreihen der Brust (Federspitzen) */
-      let schuppen = "";
-      if (T.fein) for (let i = 0; i < 260; i++) {
-        const x = -2.6 + T.rnd() * 6.4, y = -9.4 + T.rnd() * 7.2;
-        if (!T.inPoly(x, y, leib) || T.inPoly(x, y, maske)) continue;
-        schuppen += `M${folge([x - 0.22, y], 2)}q${folge([0.22, 0.2, 0.44, 0], 2)}`;
-      }
-      /* Wellenzeichnung Hinterkopf/Nacken: feine schwarze Bögen */
-      let wellen = "";
-      for (let i = 0; i < 18; i++) {
-        const y = -13.95 + i * 0.25, x0 = 0.4 - i * 0.07, x1 = Math.min(2.2, 1.3 + i * 0.09) - (i > 10 ? (i - 10) * 0.2 : 0);
-        wellen += `M${folge([x0 - 0.8, y + 0.12], 2)}Q${folge([(x0 + x1) / 2 - 0.3, y - 0.12], 2)} ${folge([(x0 + x1) / 2 + 0.2, y + 0.04], 2)}T${folge([x1, y + 0.02], 2)}`;
-      }
-      s += teil(T, leib, T.lg("welli", [[0, "#f2e04a"], [0.3, "#e8dc3c"], [0.42, "#7ccc3a"], [0.75, "#58b432"], [1, "#4a9c2c"]]), {
-        rand: DK, randA: 0.12,
-        innen: mal(T, "w", 0.25, T.form(maske, "#f4e24c") + T.form([[-1.4, -10], [-0.6, -12], [0.4, -12.4], [0.6, -10.4], [-0.6, -8]], "#d8d040", ` opacity=".6"`) +
-            fleck(T, 2.8, -6, 1.6, 2.6, "#c8f0a0", 0.35) + fleck(T, 0.4, -3.6, 2.4, 1.2, "#1a4a10", 0.3)) +
-          `<path d="${wellen}" fill="none" stroke="#1a1a12" stroke-width=".075" stroke-linecap="round"/>` +
-          (schuppen ? `<path d="${schuppen}" fill="none" stroke="#2e7a1e" stroke-width=".04" stroke-opacity=".28"/>` : "") +
-          fell(T, leib, 260, (x, y) => (y < -9 ? 110 : 100), 0.35, [["#3a8a24", 0.03, 0.35], ["#8ad84a", 0.03, 0.35], ["#e8d438", 0.03, 0.3]], (x, y, z) => (T.inPoly(x, y, maske) ? 2 : z < 0.5 ? 0 : 1), { kr: 0.2 }),
-        nach: randhaare(T, leib, { n: 90, L: 0.22, flow: () => 100, ab: 0.6, eimer: [["#4a9c2c", 0.03, 0.5], ["#efdc48", 0.03, 0.5]], wahl: (x, y) => (y < -9.4 ? 1 : 0), szene: 0.2 }),
-      });
-      /* Wangenfleck violettblau, Kehlpunkte */
-      s += `<ellipse cx="3.05" cy="-10.45" rx=".55" ry=".42" fill="#5a46b4" transform="rotate(-20 3.05 -10.45)"/><ellipse cx="2.95" cy="-10.55" rx=".28" ry=".18" fill="#9a8ae6" opacity=".6"/>`;
-      s += [[2.85, -9.75, 0.2], [3.45, -9.45, 0.17], [2.25, -9.95, 0.15]].map(([x, y, rr]) => `<circle cx="${x}" cy="${y}" r="${rr}" fill="#111"/>`).join("");
-      /* Flügel: Deckfedern schwarz mit gelben Säumen (Schuppenmuster), Schwingen dunkel mit grünen Säumen */
-      const fluegel = [[-0.3, -11], [0.9, -10.4], [1.7, -8.6], [1.6, -6.4], [0.8, -4.4], [-0.6, -3], [-2.4, -2.2], [-3.7, -1.9, 1], [-3.3, -3.2], [-2.6, -5.6], [-1.9, -8.2], [-1.2, -10.2]];
-      let fl = "";
-      /* Schwungfedern (unten, lang) */
-      for (let i = 0; i < 6; i++) {
-        const t = i / 5, x0 = -1.6 + t * 2.6, y0 = -6.2 + t * 0.4;
-        const k = schlauch([[x0, y0], [x0 - 1.2 - t * 0.4, y0 + 2.2], [x0 - 2.3 - t * 0.5, y0 + 4 - t * 0.5]], [0.9, 0.85, 0.3]);
-        fl += T.form(k, i % 2 ? "#1e2420" : "#262c26") + falte(T, k.slice(0, 3), "#6aa848", 0.06, 0.6);
-      }
-      /* Deckfedern in Reihen, von unten nach oben (obere überdecken die unteren) */
-      const reihen = T.fein ? 10 : 6;
-      for (let reihe = reihen - 1; reihe >= 0; reihe--) {
-        const n = (T.fein ? 7 : 4) - Math.floor(reihe / 4);
-        const q = 7 / reihen;
-        for (let j = 0; j < n; j++) {
-          const cx = -1.5 + j * (2.9 / n) + (reihe % 2) * 0.2 + reihe * 0.04 * q, cy = -10.1 + reihe * 0.6 * q + j * 0.16;
-          if (!T.inPoly(cx, cy, fluegel)) continue;
-          const w = 0.42 * q, h = 0.48 * q;
-          const f = [[cx - w, cy - h], [cx + w, cy - h], [cx + w * 0.9, cy + h * 0.2], [cx, cy + h * 0.75], [cx - w * 0.9, cy + h * 0.2]];
-          fl += T.form(f, "#e8d24a") + T.form(f.map(([x, y]) => [cx + (x - cx) * 0.8, cy - h * 0.12 + (y - cy) * 0.8]), "#161812");
-        }
-      }
-      s += teil(T, fluegel, "#1e221c", { rand: DK, randA: 0.3, vol: true, innen: fl + mal(T, "fl", 0.3, fleck(T, -0.6, -9.6, 1.4, 1, "#fff", 0.15)) });
-      /* Schnabel: klein, stark gebogen, oliv-gelblich; Wachshaut blau */
-      s += T.form([[4.05, -11.3], [4.55, -11.35], [4.78, -10.95], [4.68, -10.45], [4.45, -10.15, 1], [4.38, -10.55], [4.1, -10.75]], "#c8b88e") +
-        T.form([[4.42, -10.2], [4.3, -10.55], [4.05, -10.65], [4.15, -10.35]], "#8a7a5a") + `<path d="M4.2 -11.15q.38 .15 .45 .6" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width=".05"/>`;
-      s += T.form([[4.0, -11.85], [4.42, -11.95], [4.62, -11.6], [4.52, -11.3], [4.05, -11.3]], "#4a6ad0") + `<circle cx="4.42" cy="-11.65" r=".06" fill="#1a2a60"/><ellipse cx="4.25" cy="-11.8" rx=".15" ry=".05" fill="#fff" opacity=".45"/>`;
-      /* Auge mit hellem Irisring */
-      s += `<circle cx="2.65" cy="-12.25" r=".42" fill="#f2efe2"/>` + T.augeReal(2.68, -12.25, 0.3, { iris: "#d8d2c0", iris2: "#8a8270", offen: 1, lid: "#3a3a2a" });
-      return { svg: s, box: [-7.4, -14.3, 4.87, 0], fuesse: [0.5, 1.2], kopf: [0, -14.4, 4.9, -9] };
-    } },
-  /* =================================================================
      GOLDFISCH — gewöhnlicher Goldfisch (Carassius auratus), Kometen-/Normalform
      RECHERCHE: im Aquarium/Teich meist 10–20 cm; Körper wie die Giebel (Karausche): seitlich
      abgeflacht, gestreckt-hochrückig, Rücken- und Bauchlinie gleichmäßig gebogen, kleiner Kopf ohne
@@ -1496,12 +1404,142 @@ module.exports = [
       /* Nasenspiegel (bildet die Spitze), feuchter Glanz, Komma-Nasenloch, Philtrum, kurzer Mund, Schneidezähne */
       s += form(T, [[4.55, -1.88], [4.74, -1.82], [4.84, -1.64], [4.76, -1.47], [4.58, -1.47], [4.5, -1.66]], "#c09088") + `<ellipse cx="4.68" cy="-1.78" rx=".05" ry=".025" fill="#e6c0b8"/>`;
       s += `<path d="M4.82 -1.6q-.06 -.01 -.09 .05" fill="none" stroke="#5a3430" stroke-width=".018"/><path d="M4.68 -1.47Q4.66 -1.36 4.6 -1.3Q4.5 -1.24 4.38 -1.26" fill="none" stroke="#6a4a44" stroke-width=".012"/>`;
-      s += form(T, [[4.5, -1.28], [4.56, -1.28], [4.55, -1.17], [4.5, -1.17]], "#e0a858");
+      s += form(T, [[4.47, -1.3], [4.52, -1.3], [4.515, -1.22], [4.47, -1.22]], "#d8a456", ` opacity=".85"`);
       /* Auge: rund, vorstehend, schwarz, Lidrand, weiches Fensterlicht */
       s += auge(T, 3.5, -2.25, 0.25, { ratio: 1.12, iris: "#140c08", iris2: "#040202", mitte: "#1e140c", pr: 0.6, lid: "#0a0604", lidw: 0.12, fasern: false, hoehle: 0.25 });
       /* Tasthaare aus 4–5 Reihen auf dem Polster, spitz, dunkel → durchscheinend; über dem Auge, an der Wange */
       s += tasthaar(T, [4.42, -1.72, 0.32, 0.3, 4, 4], -22, 30, 2.9, ["#2a221c", "#3e342c", "#8a7e70"], 0.016, 0.8, "#2a221c");
       s += tasthaar(T, [3.55, -2.6, 0.1, 0.05, 1, 2], -115, -90, 0.8, ["#2a221c"], 0.01, 0.7) + tasthaar(T, [3.2, -1.6, 0.1, 0.05, 1, 2], 160, 175, 0.6, ["#2a221c"], 0.008, 0.6);
       return { svg: s, box: [-13.4, -4.7, 7.6, 0], fuesse: [-2.1, -1.7, 2.4, 2.6], kopf: [0.8, -4.8, 7.6, -0.6] };
+    } },
+  /* =================================================================
+     WELLENSITTICH — Wildfarbe grün (Hahn), am Boden stehend
+     RECHERCHE: Wikipedia, birdsinbackyards, Omlet, birds-online: Gesamtlänge ≈ 18 cm, Schwanz 8–9 cm (≈ 45–50 %);
+     Stirn, Gesicht und Kehle gelb („Maske“), kleine blauviolette Wangenflecken, je Kehlseite drei schwarze Punkte
+     (der äußere am unteren Ende des Wangenflecks); Hinterkopf, Nacken und Mantel gelb mit schwarzer Wellenzeichnung,
+     die in Schuppen übergeht; Flügeldecken schwarz mit gelben Säumen (Dachziegel), Schirmfedern breit gesäumt, Schwingen
+     grünlich-schwarz mit grünem Außensaum; Brust, Bauch und Bürzel grün; Wachshaut beim Hahn königsblau, sattelförmig;
+     Schnabel olivgrau/hornfarben, stark gebogen, zum großen Teil von Bartfedern verdeckt; Auge des Altvogels: schmaler
+     weiß-grauer Irisring um große schwarze Pupille, kein nackter Augenring; Schwanz kobaltblau, mittleres Paar am
+     längsten und spitz, seitliche Federn gestuft mit gelbem Mittelfleck; Beine blaugrau, Zehen zygodaktyl (2 nach vorn,
+     2 nach hinten), genetzte Laufschuppen, Querschilder an den Zehen.
+     ================================================================= */
+  { id: "wellensittich", de: "der Wellensittich", syl: "WEL-len-sit-tich", it: "il pappagallino", itSyl: "pap-pa-gal-LI-no", en: "budgie",
+    gruppe: "Haustiere", lebensraum: "Zuhause",
+    laenge: 0.145, hoehe: 0.118,
+    zeichne(T) {
+      T.dez = 2;
+      const SW = "#1c1f1c";
+      let s = "";
+      /* --- Schwanz: mittleres Paar am längsten und spitz (kobalt-türkis), seitliche gestuft, äußerste mit gelbem Streif --- */
+      const V = [-1.1, -3.5], a = Math.PI * 24 / 180, ux = -Math.cos(a), uy = Math.sin(a);
+      const feder = (L, w, dv, f, gelb) => {
+        const nx = -uy, ny = ux, b = [V[0] + nx * dv, V[1] + ny * dv];
+        const m = [b, [b[0] + ux * L * 0.35, b[1] + uy * L * 0.35], [b[0] + ux * L * 0.75 + nx * dv * 0.15, b[1] + uy * L * 0.75 + ny * dv * 0.15], [b[0] + ux * L + nx * dv * 0.2, b[1] + uy * L + ny * dv * 0.2]];
+        const k = schlauch(m, [w, w, w * 0.8, 0.04]);
+        return form(T, k, f) + (gelb ? form(T, abschnitt(m, [w * 0.25, w * 0.3, w * 0.25, 0.02], 0.3, 0.8, 3), "#e8d050", ` opacity=".6"`) : "") +
+          `<path d="M${folge(m[0])}L${folge(m[3])}" stroke="#9ab8e8" stroke-width=".025" opacity=".25"/>` + form(T, abschnitt(m.map(([x, y]) => [x - nx * w * 0.2, y - ny * w * 0.2]), [w * 0.2, w * 0.2, w * 0.15, 0.01], 0, 0.95, 3), "#7ab0e8", ` opacity=".22"`);
+      };
+      s += feder(6.6, 0.75, -0.42, "#1a3070", true) + feder(7.2, 0.75, -0.28, "#1d3a80") + feder(7.8, 0.8, -0.12, "#203e88");
+      s += feder(8.4, 0.85, 0.12, "#2a5aa8") + feder(8.9, 0.9, 0.02, "#1f4a98");
+      /* --- Beine und Füße: kurzer Lauf mit Netzschuppen, Zehen 2 nach vorn / 2 nach hinten mit Ballen, Krallen stark gebogen --- */
+      const fuss = (x, f, d) => {
+        let t = T.linie([[x - 0.05, -1.55], [x, -1], [x + 0.06, -0.45]], f, 0.36);
+        for (const [dx, l, ri] of [[1, 1.25, 1], [1, 0.95, 1], [-1, 0.75, -1], [-1, 0.55, -1]]) {
+          const ex = x + dx * l, ey = -0.12;
+          t += T.linie([[x + 0.05, -0.42], [x + dx * l * 0.5, -0.24], [ex, ey]], f, 0.2) + `<circle cx="${zahl(x + dx * l * 0.5)}" cy="-.22" r=".1" fill="${f}"/>`;
+          if (T.fein) t += kralle(T, ex, ey + 0.02, 0.28, ri > 0 ? 75 : 105, "#2a2a30", 0.42);
+        }
+        if (T.fein) t += `<path d="M${zahl(x - 0.12)} -1.3h.25M${zahl(x - 0.1)} -1.05h.24M${zahl(x - 0.08)} -.8h.24M${zahl(x - 0.06)} -.58h.22" stroke="${d}" stroke-width=".025" opacity=".5"/>`;
+        return t;
+      };
+      s += fuss(1.55, "#7e8698", "#5a6070") + fuss(0.9, "#9aa2b6", "#6a7084");
+      /* --- Körper und Kopf als ein Umriss: Nackeneinbuchtung, Brust vorgewölbt (Birne), Bauch rund, Steiß zum Schwanz --- */
+      const leib = [[-1, -3.3], [-1.7, -4.4], [-0.9, -6.6], [0.4, -8.6], [1.45, -9.85], [1.65, -10.85], [2.55, -11.6], [3.55, -11.6], [4.25, -11.05], [4.6, -10.35],
+        [4.62, -9.9], [4.45, -9.3], [4.3, -8.75], [4.05, -8.1], [4.15, -7.05], [3.95, -5.7], [3.35, -4.3], [2.55, -3.05], [1.65, -2.35], [0.6, -2.2], [-0.3, -2.55]];
+      const leibId = pfad(T, leib);
+      const fl = [[0.9, -9.25], [1.9, -8.2], [2.3, -6.6], [2, -5.1], [1.1, -3.8], [-0.3, -2.9], [-2.7, -2.3, 1], [-1.9, -3.6], [-1.25, -5.4], [-0.5, -7.4], [0.2, -8.7]];
+      const flId = pfad(T, fl);
+      const maske = [[1.4, -10.4], [1.7, -11.2], [2.6, -11.75], [3.7, -11.7], [4.4, -11], [4.7, -10.1], [4.5, -9.2], [4.15, -8.5], [3.6, -8.3], [3, -8.6], [2.4, -9.3], [1.8, -9.8]];
+      /* Wellenzeichnung: Bögen um die Kopfwölbung (nach vorn konkav), vorn dünn, hinten kräftig, über den Scheitel bis über das Auge */
+      const W = [];
+      for (let i = 0; i < 9; i++) {
+        const rr = 0.95 + i * 0.16, cx = 3.45, cy = -10.25, a0 = -112 + i * 4, a1 = -205 - i * 3, pts = [];
+        for (let j = 0; j <= 6; j++) { const t = a0 + (a1 - a0) * j / 6 + (T.rnd() - 0.5) * 6; pts.push([cx + Math.cos(t * Math.PI / 180) * rr * 1.05, cy + Math.sin(t * Math.PI / 180) * rr]); }
+        const w0 = 0.05 + i * 0.012;
+        W.push([pts, pts.map((p, j) => (j === 0 ? 0.01 : j === 6 ? 0.015 : w0 * (0.8 + T.rnd() * 0.4))), 0.08, 0.96]);
+      }
+      /* Mantel: schwarze Federn mit gelben Spitzen (Schuppen) bis an den Flügel */
+      let mantel = "";
+      for (let r = 0; r < 5; r++) for (let j = 0; j < 4; j++) {
+        const x = 0.95 - r * 0.38 + j * 0.42 + (r % 2) * 0.2, y = -9.55 + r * 0.42 + j * 0.25;
+        if (!T.inPoly(x, y, leib) || T.inPoly(x, y, maske)) continue;
+        const w = 0.26 + r * 0.03;
+        mantel += form(T, [[x - w, y - w], [x + w, y - w], [x + w * 0.9, y + w * 0.1], [x, y + w * 0.7], [x - w * 0.9, y + w * 0.1]], "#ead458") + form(T, [[x - w * 0.85, y - w * 1.1], [x + w * 0.85, y - w * 1.1], [x + w * 0.75, y - w * 0.05], [x, y + w * 0.38], [x - w * 0.75, y - w * 0.05]], SW);
+      }
+      /* Brustgefieder: Federspitzen in Reihen (Dachziegel), an der Kehle klein, zur Flanke größer, 3–5 % Kontrast */
+      let brust = "";
+      if (T.fein) for (let r = 0; r < 12; r++) for (let j = 0; j < 8; j++) {
+        const t = r / 11, x = 3.9 - j * 0.42 * (0.6 + t) - r * 0.08, y = -7.9 + r * 0.48, w = 0.1 + t * 0.12;
+        if (!T.inPoly(x, y, leib) || T.inPoly(x, y, fl)) continue;
+        brust += `M${folge([x - w, y - w * 0.3])}q${folge([w, w * 0.9, w * 2, 0])}`;
+      }
+      s += teil(T, "#" + leibId, T.rg("wkoerper", [[0, "#a8e070"], [0.45, "#6cc23a"], [0.8, "#4a9c2c"], [1, "#2f6a1c"]], 0.75, 0.25, 0.75), {
+        form: { a: 0.75, w: 0.95, b: 0.25, s: ["#1e4a12", 0.5], l: ["#d8f0a0", 0.3], al: 0.2, wl: 0.6, r: ["#5a9c3a", 0.45], ar: 0.06, wr: 0.2 },
+        innen:
+          form(T, maske, T.rg("wkopf", [[0, "#fbf08a"], [0.55, "#f2db4a"], [1, "#cfae2e"]], 0.6, 0.25, 0.75)) +
+          mal(T, 0.15, form(T, [[2.4, -9.2], [3.2, -8.5], [4.1, -8.45], [3.6, -8.1], [2.6, -8.6]], "#8a7a10", ` opacity=".35"`)) +
+          `<g${zottel(T, "8 4", 0.04)}>` + zeichnung(T, W, "#141410", 0.9) + mantel + "</g>" +
+          (brust ? `<path d="${brust}" fill="none" stroke="#2e6a1e" stroke-width=".035" stroke-opacity=".3"/><path d="${brust}" fill="none" stroke="#c8f090" stroke-width=".02" stroke-opacity=".25" transform="translate(0 -.04)"/>` : "") +
+          schlag(T, flId, 0.25, 0.3, 0.2, "#0e2a08", 0.5),
+        ueber: (T.fein ? (() => { let d = ""; for (let i = 0; i < 30; i++) { const t = i / 29, x = 4.15 - t * 3.2 + (t > 0.7 ? (t - 0.7) * 1.4 : 0), y = -7.3 + t * 5.0; d += `M${folge([x, y])}q${folge([-0.05, 0.12, -0.16, 0.18])}`; } return `<path d="${d}" fill="none" stroke="#3a7a22" stroke-width=".04" stroke-opacity=".5"/>`; })() : ""),
+      });
+      /* --- Flügel: Deckfedern (schwarz, gelbe Sichel am Ende, Dachziegel; Schulter klein, große Decken gestreckt), Schirmfedern, Schwingen gestuft --- */
+      let fw = "";
+      /* Schwingen: 7 einzelne Federn mit gestuften runden Spitzen und grünem Außensaum */
+      for (let i = 0; i < 7; i++) {
+        const t = i / 6, x0 = 1.6 - t * 1.2, y0 = -5.4 + t * 0.6, L = 3.1 + t * 0.9 - (i > 4 ? (i - 4) * 0.5 : 0);
+        const m = [[x0, y0], [x0 - L * 0.45, y0 + L * 0.42], [x0 - L * 0.8, y0 + L * 0.68]];
+        const k = schlauch(m, [0.55, 0.52, 0.32], true);
+        fw += form(T, k, i % 2 ? "#232823" : "#262a26") + T.linie(k.slice(0, 4), "#5a9a3a", 0.05, ` stroke-opacity=".8"`) + T.linie(m, "#4a5248", 0.02, ` stroke-opacity=".6"`);
+      }
+      /* Schirmfedern (3) mit breitem gelbgrünem Saum */
+      for (let i = 0; i < 3; i++) {
+        const x0 = -0.1 - i * 0.35, y0 = -6.4 + i * 0.7, m = [[x0, y0], [x0 - 0.7, y0 + 1.1], [x0 - 1.05, y0 + 1.8]];
+        fw += form(T, schlauch(m, [0.75, 0.7, 0.4], true), "#c8d048") + form(T, schlauch(m.map(([x, y]) => [x + 0.06, y - 0.12]), [0.55, 0.5, 0.25], true), SW);
+      }
+      /* Deckfedern: Reihen parallel zur Flügelvorderkante, von unten nach oben gelegt (obere überdecken untere) */
+      const reihen = T.fein ? 7 : 4;
+      for (let r = reihen - 1; r >= 0; r--) {
+        const t = r / (reihen - 1), gr = 0.55 + 0.45 * t, n = T.fein ? 6 - Math.floor(r / 3) : 3;
+        for (let j = 0; j < n; j++) {
+          const u = (j + (r % 2) * 0.5) / n;
+          const x = 1.55 - u * 1.75 - t * 0.55, y = -8.6 + u * 1.2 + t * 3.0;
+          if (!T.inPoly(x, y, fl)) continue;
+          const w = 0.27 * gr * (T.fein ? 1 : 1.5), h = w * (1 + 0.4 * t);
+          const F = [[x - w, y - h], [x + w, y - h], [x + w * 0.95, y + h * 0.15], [x + w * 0.2, y + h * 0.8], [x - w * 0.6, y + h * 0.6]];
+          fw += form(T, F, "#f0dc5a") + form(T, F.map(([px, py]) => [x + (px - x) * 0.86, y - h * 0.18 + (py - y) * 0.86]), SW);
+        }
+      }
+      s += teil(T, "#" + flId, SW, {
+        innen: fw + mal(T, 0.2, `<ellipse cx="0.6" cy="-7.6" rx=".9" ry=".5" fill="#4a5258" opacity=".3" transform="rotate(-50 .6 -7.6)"/>`) +
+          formlicht(T, flId, { a: 0.4, w: 0.5, b: 0.15, s: ["#000", 0.45], l: ["#6a7a70", 0.25], al: 0.1, wl: 0.3 }),
+      });
+      /* --- Gesicht: Wangenfleck (gestreckt, blauviolett, Federstruktur), Kehlpunkte (Tropfen, nach vorn kleiner) --- */
+      s += `<g transform="rotate(58 3.72 -9.5)"><ellipse cx="3.72" cy="-9.5" rx=".46" ry=".27" fill="${T.lg("wange", [[0, "#6a5ad8"], [1, "#4c48c4"]])}"/>` +
+        (T.fein ? `<path d="M3.4 -9.55q.3 -.12 .6 0M3.45 -9.42q.28 -.1 .55 0" fill="none" stroke="#8a9ae8" stroke-width=".03" opacity=".35"/>` : "") + `</g>`;
+      const tropfen = (x, y, r) => `<path d="M${folge([x, y - r])}C${folge([x + r * 1.1, y - r, x + r * 0.7, y + r * 0.6, x, y + r * 1.3])}C${folge([x - r * 0.7, y + r * 0.6, x - r * 1.1, y - r, x, y - r])}Z" fill="#151515"/>`;
+      s += tropfen(3.5, -9.05, 0.12) + tropfen(3.88, -8.82, 0.1) + tropfen(4.2, -8.68, 0.075);
+      /* --- Auge: runder Lidrand, schmaler hellgrauer Irisring, große Pupille, kein nackter Ring --- */
+      s += auge(T, 3.3, -10.42, 0.27, { ratio: 1.02, iris: "#d8d6ce", iris2: "#b8b6ae", mitte: "#e6e4dc", sklera: "#c8c6be", ir: 1.02, pr: 0.6, lid: "#3a3428", lidw: 0.16, fasern: false });
+      /* --- Wachshaut (Sattel, matt königsblau, rundes Nasenloch) und Schnabel (stark gebogener Haken, zur Hälfte von Bartfedern verdeckt) --- */
+      s += form(T, [[4.2, -10.85], [4.55, -10.9], [4.82, -10.62], [4.84, -10.28], [4.55, -10.12], [4.2, -10.2]], T.lg("wachs", [[0, "#4a6ad0"], [1, "#2e47a0"]]));
+      s += `<circle cx="4.6" cy="-10.6" r=".055" fill="#1a2a60"/><path d="M4.3 -10.8q.25 -.1 .45 0" stroke="#fff" stroke-width=".08" opacity=".15" fill="none"/>`;
+      s += form(T, [[4.48, -10.2], [4.86, -10.25], [4.98, -9.85], [4.82, -9.35], [4.55, -9.0, 1], [4.6, -9.45], [4.45, -9.8]], T.lg("schnabel", [[0, "#c2b284"], [0.7, "#a89a6c"], [1, "#8a8060"]]));
+      s += `<path d="M4.6 -10.15Q4.92 -9.95 4.85 -9.45" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width=".04"/><path d="M4.62 -9.1l-.07 .1" stroke="#5a5444" stroke-width=".05"/>`;
+      /* Bartfedern über der Schnabelbasis, Stirnfedern über der Wachshaut */
+      s += randhaar(T, [[4.1, -9.9], [4.5, -9.75], [4.45, -9.2], [4.1, -9.3]], { n: 26, spitz: 0.06, L: 0.22, flow: () => 20, ab: 0.2, eimer: [["#f0d848", 0, 0.9, 0, "s"]], wahl: () => 0, szene: 0.4 });
+      s += randhaar(T, [[4, -11.2], [4.4, -11], [4.35, -10.8], [4, -10.95]], { n: 14, spitz: 0.05, L: 0.18, flow: () => 30, ab: 0.2, eimer: [["#f6e45a", 0, 0.9, 0, "s"]], wahl: () => 0, szene: 0.4 });
+      return { svg: s, box: [-9.45, -11.75, 5, 0], fuesse: [1, 1.6], kopf: [1.4, -12, 5.2, -8] };
     } },
 ].concat(ALT);

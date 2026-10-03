@@ -38,14 +38,16 @@ function mach(T, dez, RW) {
     return `url(#${id})`;
   };
   /* weiche Form (Muskel, Kernschatten, Glanz): unscharf, nur bei voller Feinheit. zu = false → weicher Strich */
-  let wfNr = 0;
+  /* EIN Filter je Unschärfe, Bereich = ganzes Tier (Benutzerraum) – spart je weicher Form ~200 Bytes */
+  H.bereich = [-60, -620, 620, 60];
   H.wf = (pts, farbe, op, sd, zu = true, breite) => {
     if (!F) return "";
     const d = typeof pts === "string" ? pts : G(pts, zu);
-    const z = d.match(/-?[0-9.]+/g).map(Number), xs = z.filter((_, i) => i % 2 === 0), ys = z.filter((_, i) => i % 2 === 1);
-    const sw = breite || sd * 2.5, rd = sd * 3 + (zu ? 0 : sw / 2) + 1, id = T.id("wf" + wfNr++);
-    T.def(`<filter id="${id}" filterUnits="userSpaceOnUse" x="${f(Math.min(...xs) - rd)}" y="${f(Math.min(...ys) - rd)}" width="${f(Math.max(...xs) - Math.min(...xs) + 2 * rd)}" height="${f(Math.max(...ys) - Math.min(...ys) + 2 * rd)}" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${sd}"/></filter>`);
-    return `<path d="${d}" ${zu ? `fill="${farbe}"` : `fill="none" stroke="${farbe}" stroke-width="${f(sw)}" stroke-linecap="round" stroke-linejoin="round"`} opacity="${op}" filter="url(#${id})"/>`;
+    sd = Math.max(0.3, Math.round(sd * 4) / 4);
+    const id = T.id("wb" + String(sd).replace(".", "_")), [bx0, by0, bx1, by1] = H.bereich;
+    if (!weichSchon.has(id)) { weichSchon.add(id); T.def(`<filter id="${id}" filterUnits="userSpaceOnUse" x="${bx0}" y="${by0}" width="${bx1 - bx0}" height="${by1 - by0}" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${sd}"/></filter>`); }
+    const sw = breite || sd * 2.5;
+    return `<path d="${d}" ${zu ? `fill="${farbe}"` : `fill="none" stroke="${farbe}" stroke-width="${f(sw)}" stroke-linecap="round" stroke-linejoin="round"`} opacity="${Math.round(op * 100) / 100}" filter="url(#${id})"/>`;
   };
   /* Körperteil: Pfad EINMAL in defs, dann Füllung / Innenzeichnung / Licht / Fell / Randlicht per <use>.
      Keine Umrisslinie (Kanten entstehen über Licht und Schatten); nur in der Szene ein Hauch Rand. */
@@ -135,8 +137,8 @@ function mach(T, dez, RW) {
   };
   /* Hautfalte dreiteilig: weicher Schlagschatten darunter, dunkle Rille, heller Grat darüber */
   H.falte = (zuege, w, op, farbe = "#1d150f") => !zuege.length ? "" :
-    (F ? zuege.map((z) => H.wf(z.map((p) => [p[0] + w * 0.9, p[1] + w * 1.3]), "#000", op * 0.45, w * 1.1, false, w * 2.4)).join("") +
-      zuege.map((z) => H.wf(z.map((p) => [p[0] - w * 0.7, p[1] - w * 0.9]), "#fff", op * 0.35, w * 0.5, false, w * 1.2)).join("") : "") +
+    (F ? H.wf(zuege.map((z) => G(z.map((p) => [p[0] + w * 0.9, p[1] + w * 1.3]), false)).join(""), "#000", op * 0.45, w * 1.1, false, w * 2.4) +
+      H.wf(zuege.map((z) => G(z.map((p) => [p[0] - w * 0.7, p[1] - w * 0.9]), false)).join(""), "#fff", op * 0.35, w * 0.5, false, w * 1.2) : "") +
     H.kerben(zuege, w, op, farbe);
   /* Haare wie T.haare, Koordinaten auf 1 Nachkommastelle */
   H.haare = (...a) => T.haare(...a).replace(/(-?\d+\.\d)\d/g, "$1").replace(/\.0(?=\D)/g, "");
@@ -173,12 +175,12 @@ function mach(T, dez, RW) {
     const id = T.id("rm" + name);
     if (weichSchon.has(id)) return `url(#${id})`;
     weichSchon.add(id);
-    const N = o.n || 6, W = N * z, s = o.seed || 1;
+    const N = o.n || 5, W = N * z, s = o.seed || 1, f1 = (v) => String(Math.round(v * 10) / 10);
     const P = (i, j) => { const a = ((i % N) + N) % N, b = ((j % N) + N) % N; return [i * z + (hz(a, b, s) - 0.5) * z * 0.7, j * z * (o.dehn || 1) + (hz(a, b, s + 7) - 0.5) * z * 0.7]; };
     let d = "";
     const kante = (p, q, k) => {
       const mx = (p[0] + q[0]) / 2 + (hz(k, 3, s) - 0.5) * z * 0.3, my = (p[1] + q[1]) / 2 + (hz(k, 5, s) - 0.5) * z * 0.3;
-      d += `M${f(p[0])} ${f(p[1])}Q${f(mx)} ${f(my)} ${f(q[0])} ${f(q[1])}`;
+      d += `M${f1(p[0])} ${f1(p[1])}Q${f1(mx)} ${f1(my)} ${f1(q[0])} ${f1(q[1])}`;
     };
     for (let i = -1; i <= N; i++) for (let j = -1; j <= N; j++) {
       const a = ((i % N) + N) % N, b = ((j % N) + N) % N, k = a * 131 + b * 7;
@@ -188,9 +190,9 @@ function mach(T, dez, RW) {
       if (dg < 0.22) kante(P(i, j), P(i + 1, j + 1), k + 3); else if (dg > 0.8) kante(P(i + 1, j), P(i, j + 1), k + 4);
     }
     const H2 = W * (o.dehn || 1);
-    T.def(`<pattern id="${id}" width="${f(W)}" height="${f(H2)}" patternUnits="userSpaceOnUse"${o.dreh ? ` patternTransform="rotate(${o.dreh})"` : ""}><g fill="none" stroke-linecap="round" stroke-linejoin="round">` +
-      `<path d="${d}" stroke="#fff" stroke-opacity="${f(op * 0.45 * 100) / 100}" stroke-width="${f(w * 0.7)}" transform="translate(${f(w * 0.5)} ${f(w * 0.6)})"/>` +
-      `<path d="${d}" stroke="${o.farbe || "#1a120c"}" stroke-opacity="${op}" stroke-width="${f(w)}"/></g></pattern>`);
+    T.def(`<pattern id="${id}" width="${f1(W)}" height="${f1(H2)}" patternUnits="userSpaceOnUse"${o.dreh ? ` patternTransform="rotate(${o.dreh})"` : ""}><g fill="none" stroke-linecap="round" stroke-linejoin="round">` +
+      `<use href="#${id}p" stroke="#fff" stroke-opacity="${Math.round(op * 45) / 100}" stroke-width="${f1(w * 0.7)}" transform="translate(${f1(w * 0.5)} ${f1(w * 0.6)})"/>` +
+      `<g stroke="${o.farbe || "#1a120c"}" stroke-opacity="${op}" stroke-width="${f1(w)}"><path id="${id}p" d="${d}"/></g></g></pattern>`);
     return `url(#${id})`;
   };
   /* Haarsaum entlang einer Kontur P (offene Punktliste): n Haare, Wuchsrichtung winkel (Grad oder f(x, y)) */
@@ -366,10 +368,10 @@ function elefant(T) {
   const staub = T.lg("staub", [[0, "#3a2c1c", 0], [0.55, "#3a2c1c", 0.1], [1, "#2e2216", 0.3]], 0, -95, 0, 0, US);
   const R = "#1f160e";
   /* Rissnetz statt Rauschen: Rumpf grob und schwach, Beine/Rüssel/Gesicht fein und kräftiger, Ohr fast glatt */
-  const rissR = F ? H.rissMuster("r", 4.2, 0.36, 0.3, { n: 7, seed: 3 }) : "";
-  const rissB = F ? H.rissMuster("b", 2.2, 0.3, 0.42, { n: 7, seed: 5, dehn: 0.8 }) : "";
-  const rissK = F ? H.rissMuster("k", 1.8, 0.26, 0.4, { n: 7, seed: 9 }) : "";
-  const rissO = F ? H.rissMuster("o", 3.6, 0.26, 0.16, { n: 7, seed: 13, dehn: 1.4 }) : "";
+  const rissR = F ? H.rissMuster("r", 4.2, 0.36, 0.3, { n: 5, seed: 3 }) : "";
+  const rissB = F ? H.rissMuster("b", 2.2, 0.3, 0.42, { n: 5, seed: 5, dehn: 0.8 }) : "";
+  const rissK = F ? H.rissMuster("k", 1.8, 0.26, 0.4, { n: 5, seed: 9 }) : "";
+  const rissO = F ? H.rissMuster("o", 3.6, 0.26, 0.16, { n: 5, seed: 13, dehn: 1.4 }) : "";
   /* Fußnägel: flach (Breite : Höhe 1,6 : 1), glatt, grau-elfenbein mit Schmutz und Glanz */
   const naegel = (xv, xh, n) => {
     let d = "", gl = "";
@@ -458,7 +460,7 @@ function elefant(T) {
       wf([[356, -268], [372, -262], [374, -236], [360, -226], [350, -242]], "#000", 0.2, 5) + `<ellipse cx="362" cy="-242" rx="2.2" ry="1.6" fill="#1a120b" opacity=".7"/>` +
       wf([[362, -240], [360, -226], [357, -206]], "#140d08", 0.55, 1.4, false) +
       /* Rüsselfalten: unregelmäßig, nicht über die ganze Breite, innen an der Biegung dichter */
-      falte(querfalten(rk, 0.25, 6.6, 0.11, 0.06, 0.82, 2.4).concat(querfalten(rk, 0.4, 6.4, 0.22, 0.45, 0.98, 2)), 2.2, 0.4) +
+      kerben(querfalten(rk, 0.25, 6.6, 0.11, 0.06, 0.82, 2.4).concat(querfalten(rk, 0.4, 6.4, 0.22, 0.45, 0.98, 2)), 2.2, 0.42) +
       /* Krähenfüße um das Auge, Falten der Stirn und Wange */
       falte([[[372, -252], [366, -248]], [[372, -260], [365, -262]], [[402, -262], [410, -266]], [[400, -252], [408, -250]], [[384, -244], [393, -238], [402, -240]],
         [[398, -306], [410, -286], [420, -264]], [[378, -228], [392, -216], [402, -202]], [[348, -296], [356, -276]]], 2.4, 0.3) +

@@ -81,24 +81,30 @@
     };
     if (window.requestIdleCallback) requestIdleCallback(los, { timeout: 2500 }); else setTimeout(los, 40);
   }
+  var dmaTeilAnkunft = {};
   function dmaTeilHolen(teil) {
     if (!DMA_TEILE_BAU || dmaTeilDa[teil] || DMA_TEILE_BAU.teile.indexOf(teil) < 0) return Promise.resolve(true);
     if (dmaTeilWeg[teil]) return dmaTeilWeg[teil];
+    let angekommen = null;
+    dmaTeilAnkunft[teil] = new Promise((r) => { angekommen = r; });
     dmaTeilWeg[teil] = fetch(dmaTeilAdresse(teil))
       .then((a) => { if (!a.ok) throw new Error("HTTP " + a.status); return a.text(); })
       .then((t) => new Promise((fertig) => {
+        if (!dmaTeilDa[teil]) dmaTeilText[teil] = t;
+        angekommen(true);
         if (dmaTeilDa[teil]) { fertig(true); return; }
-        dmaTeilText[teil] = t;
         dmaTeilSchlange.push({ teil, fertig });
         dmaTeilSchlangeWeiter();
       }))
-      .catch((e) => { dmaTeilWeg[teil] = null; dmaTeilFehler(teil, e); return false; });
+      .catch((e) => { dmaTeilWeg[teil] = null; angekommen(false); dmaTeilFehler(teil, e); return false; });
     return dmaTeilWeg[teil];
   }
-  /* Alle Stücke einer Gruppe („raum" oder „rest") */
-  function dmaTeilGruppe(gruppe) {
+  /* Alle Stücke einer Gruppe („raum" oder „rest"); mit geholt=true schon dann erfüllt, wenn alle über die
+     Leitung da sind (eingesetzt werden sie dann gleich oder in der Ruhepause). */
+  function dmaTeilGruppe(gruppe, geholt) {
     if (!DMA_TEILE_BAU) return Promise.resolve(true);
-    return Promise.all(DMA_TEILE_BAU.teile.filter((t) => t.replace(/\d+$/, "") === gruppe).map((t) => dmaTeilHolen(t)));
+    return Promise.all(DMA_TEILE_BAU.teile.filter((t) => t.replace(/\d+$/, "") === gruppe)
+      .map((t) => { const p = dmaTeilHolen(t); return geholt && dmaTeilAnkunft[t] ? dmaTeilAnkunft[t] : p; }));
   }
   function dmaTeilSofort(teil) {
     if (dmaTeilEinsetzen(teil)) return;
@@ -69509,14 +69515,29 @@
        gewünscht war: „bleibt man dann auch im Klassenzimmer?" */
     const zurueck = LiveChat.rueckkehrOffen && LiveChat.rueckkehrOffen();
     if (zurueck) {
-      raumVorbereiten();   /* FASSUNG 876 — gleich wieder im Raum: Effekte, Spiel und Blätter sofort holen */
-      LiveChat.betreten(zurueck.raum, { name: zurueck.name || livechatName(),
+      /* FASSUNG 876 — gleich wieder im Raum: Effekte, Spiel und Blätter sofort holen. Hinein geht es, sobald die
+         Stücke fürs Klassenzimmer da sind (über 4G gut 0,3 s; höchstens 2,5 s gewartet) – sonst müsste jedes
+         Stück einzeln sofort nachgeladen werden, während der Raum sich aufbaut. Zusammen ist das immer noch
+         früher als vor 876, als erst die ganze app.js über die Leitung musste. */
+      raumVorbereiten();
+      const rein = () => LiveChat.betreten(zurueck.raum, { name: zurueck.name || livechatName(),
         /* FASSUNG 841 — auch bei der Rückkehr nach dem Neuladen das Konto mitgeben (sonst Zufallskennung, siehe livechat.js) */
         konto: (Backend.currentUser() || {}).id || "",
         betreiber: Boolean(Backend.canModerate && Backend.canModerate()),
         geschlecht: livechatGeschlecht(),
         mitBild: zurueck.mitBild !== false })
         .then(() => { klassenzimmerStreifen(); renderLiveChat(); });
+      if (!DMA_TEILE_BAU) rein();
+      else {
+        let los = false;
+        const einmal = () => { if (!los) { los = true; rein(); } };
+        dmaTeilGruppe("raum", true).then(() => {
+          /* geholt – jetzt die noch wartenden Stücke gleich einsetzen (nicht erst in der Ruhepause) */
+          DMA_TEILE_BAU.teile.forEach((t) => { if (/^raum/.test(t)) { try { dmaTeilEinsetzen(t); } catch (e) {} } });
+          einmal();
+        }, einmal);
+        setTimeout(einmal, 2500);
+      }
     }
   }
   /* GEWÜNSCHT: „wenn man oben auf Klassenzimmer klickt … der Chat mit

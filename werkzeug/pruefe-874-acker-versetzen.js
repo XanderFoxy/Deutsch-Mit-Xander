@@ -345,6 +345,11 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
         await fr.evaluate(() => { try { localStorage.removeItem("leicht_verwalten_v1"); } catch (e) {} });
         fr = await oeffnen();
         const off = await pg.evaluate(() => { const r = document.getElementById("f").getBoundingClientRect(); return { l: r.left, t: r.top }; });
+        /* die Zeichen, die das Spiel schickt (wie bei Xander: See, Wald, Jagd, Mühle, Äcker, Krankenhaus …) */
+        const ZEICHEN = { muehle: ["fertig", "4 Mehl", "mehl"], baeckerei: ["laeuft", "Brot 2:10", "brot"], see: ["laeuft", "Fisch 2:10", "fisch"], wald: ["laeuft", "Holz 1:10", "holz"], jagd: ["fertig", "2 Fleisch", "fleisch"],
+          feld91: ["fertig", "2 Getreide", "getreide"], feld92: ["fertig", "2 Getreide", "getreide"], krankenhaus: ["fertig", "1 Heiltrank", ""], kuhstall: ["fertig", "3 Milch", "milch"], huehnerstall: ["fertig", "5 Eier", "ei"], labor: ["laeuft", "Forschung 3:00", ""] };
+        const zeichenSchicken = (z) => pg.evaluate((z) => { document.getElementById("f").contentWindow.postMessage({ typ: "leicht-zeichen", z: z }, location.origin); }, z);
+        await zeichenSchicken(ZEICHEN); await tick(pg, 1200);
         /* bequem: der Acker ganz im Bild, die größte freie Tippfläche – ein Quadrat, in dem jeder Tipp den Acker trifft: auf dem
            Acker oder bis 10 px daneben (FASSUNG 874), dort kein Knopf, kein Zeichen, kein Haus, kein Baum */
         const bequem = (nr) => fr.evaluate((nr) => {
@@ -354,7 +359,10 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
           const ganz = ecken.every((e) => e[0] >= 2 && e[1] >= 2 && e[0] <= W - 2 && e[1] <= H - 2);
           const abst = (x, y) => { let innen = true, d = 1e9; for (let i = 0; i < 4; i++) { const A = ecken[i], B = ecken[(i + 1) % 4], ex = B[0] - A[0], ey = B[1] - A[1], l2 = ex * ex + ey * ey || 1;
             if (ex * (y - A[1]) - ey * (x - A[0]) < 0) innen = false; const t = Math.max(0, Math.min(1, ((x - A[0]) * ex + (y - A[1]) * ey) / l2)); d = Math.min(d, Math.hypot(x - A[0] - ex * t, y - A[1] - ey * t)); } return innen ? 0 : d; };
-          const frei = (x, y) => { if (x < 0 || y < 0 || x > W || y > H || abst(x, y) > 9) return false; const e = document.elementFromPoint(x, y); if (!e || e.id !== "lDinge") return false; return !SZ.treffer(x * K.dpr, y * K.dpr); };
+          /* (das eigene Zeichen des Ackers zählt mit: ein Tipp darauf erntet ihn) */
+          const frei = (x, y) => { if (x < 0 || y < 0 || x > W || y > H) return false; const e = document.elementFromPoint(x, y); if (!e) return false;
+            if (e.closest && e.closest('.lk-zeichen[data-g="feld' + nr + '"]')) return true;
+            return e.id === "lDinge" && abst(x, y) <= 9 && !SZ.treffer(x * K.dpr, y * K.dpr); };
           let best = null;
           const xs = ecken.map((e) => e[0]), ys = ecken.map((e) => e[1]);
           for (let y = Math.min(...ys) - 8; y <= Math.max(...ys) + 8; y += 1) for (let x = Math.min(...xs) - 8; x <= Math.max(...xs) + 8; x += 1) {
@@ -366,11 +374,12 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
         }, nr);
         for (const nr of [92, 91]) {
           const bq = await bequem(nr);
-          sage(bq.ganz && bq.seite >= 24, "Überblick: Acker " + nr + " liegt ganz im Bild, mit freier Tippfläche (Quadrat " + bq.seite + " px ≥ 24 px, frei von Knöpfen, Zeichen, Häusern und Bäumen)", JSON.stringify(bq));
+          sage(bq.ganz && bq.seite >= 16, "Überblick mit den Zeichen des Spiels: Acker " + nr + " liegt ganz im Bild, mit freier Tippfläche (Quadrat " + bq.seite + " px ≥ 16 px; kein fremdes Zeichen, Knopf, Haus oder Baum darin)", JSON.stringify(bq));
           await pg.evaluate(() => { window.__msgs.length = 0; });
           if (bq.punkt) { await pg.touchscreen.tap(off.l + bq.punkt.x, off.t + bq.punkt.y); await tick(pg, 900); }
           const ms = await pg.evaluate(() => window.__msgs.filter((m) => m && /^leicht-(feld|haus|baum)$/.test(m.typ)).map((m) => m.typ + ":" + (m.nr || m.g || "")));
           sage(ms.length === 1 && ms[0] === "leicht-feld:" + nr, "… ein Tipp darauf erntet im Spiel (leicht-feld " + nr + ")", JSON.stringify(ms));
+          await zeichenSchicken(ZEICHEN); await tick(pg, 3000);   // (das geerntete Zeichen kommt zurück, wie wenn das Spiel den alten Stand schickt)
         }
         if (BILD) await pg.screenshot({ path: path.join(BILD, "b-ueberblick-" + W + ".png"), clip: { x: 0, y: off.t - 10, width: W, height: H + 20 } });
         /* langes Drücken auf den rechten Acker im Überblick → Menü mit „Versetzen" im Rahmen */
