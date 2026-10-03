@@ -44,12 +44,28 @@
    - Typisch: das VAPORETTO (Wasserbus, Linie 2 hält an San Giorgio),
      BRICCOLE (drei Eichenpfähle mit Eisenbändern), Möwen und Tauben,
      die Karnevalsmaske (Colombina mit Federn, am Stab).
-   - LICHT: später Nachmittag, die Sonne steht im Westsüdwesten (links):
-     die Südfassaden glühen warm, Ostseiten liegen im Schatten.
-   Maßstab: Horizont y = 126, Augenhöhe ≈ 5 m über dem Wasser (Kirch-
-   treppe). Am Molo (450 m) ≈ 1,3 Einheiten je Meter; Campanile und
-   Dom stehen weiter hinten (≈ 1,07 bzw. ≈ 1 je Meter). Gondel in 70 m
-   (8,4 je Meter), Pfähle in 30 m, die Touristin am Ufer in 18 m.
+   - LEBEN (Runde 3): der Molo ist die belebteste Uferpromenade der Welt:
+     Spaziergänger in Gruppen (dicht vor dem Palast und an den Säulen),
+     Laternen, weiße Souvenirstände (Bancarelle) an der Riva; im Bacino
+     ein Wassertaxi (lackiertes Mahagoni, weißes Kabinendach) und eine
+     zweite Gondel; Fahrgäste im Vaporetto.
+   - DETAILS: auf der Ostseite des Würfels am Campanile die thronende
+     Venezia (Löwe und Venezia wechseln sich an den vier Seiten ab); der
+     Engel als Wetterfahne mit Flügelpaar und ausgestrecktem Arm; die
+     Markusfahne mit Löwe, Nimbus und Buch; der Balkon von 1404 als hoher
+     Tabernakel mit Fialen und Justitia obenauf, an der SO-Ecke die
+     Trunkenheit Noahs mit Weinstock; die Kuppeln von San Marco überhöht
+     mit großen Zwiebel-Laternen. Unsicher (ohne Quelle geprüft): die
+     genaue Zahl der Nischenfiguren am Balkon und die Pose der Venezia.
+   - LICHT: später Nachmittag, die Sonne steht im Westsüdwesten (links,
+     außerhalb des Bildes): die Südfassaden glühen orange, die Arkaden
+     bleiben kühl violett; Schatten fallen nach rechts hinten (Säulen auf
+     dem Pflaster, Kind und Touristin am Ufer); ein breiter Glitzerpfad
+     läuft von links über das Wasser. Spiegelungen: die gespiegelten
+     Umrisse, gestaucht, dunkler und kühler, von Wellen zerrissen.
+   Maßstab: Horizont y = 150 (Bild), Auge ≈ 5 m über dem Wasser. Am Molo
+   (450 m) 1,7 Einheiten je Meter; Wassertaxi in 250 m, zweite Gondel in
+   137 m, Gondel in 60 m, Haltestelle in 46 m, die Touristin in 29 m.
    ===================================================================== */
 "use strict";
 const path = require("path");

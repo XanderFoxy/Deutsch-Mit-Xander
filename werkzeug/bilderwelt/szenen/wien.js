@@ -45,11 +45,24 @@
      OBER mit Weste und Fliege bringt ein Tablett.
    - LICHT: Sommernachmittag, die Sonne steht hinter uns links (SW): alles
      ist von vorn-links beleuchtet, Schlagschatten fallen nach hinten-rechts.
-   Maßstab: Horizont y = 140; Auge 1,55 m über der Straße, 1,25 m über dem
-   Podest (man sitzt); Brennweite 160 Einheiten. Straße: Fiaker in 12 m,
-   Gleise in 26/30 m, Allee in 80 m. Die Wahrzeichen stehen wie auf einer
-   Vedute in ≈ 170 m (Fußlinie y ≈ 141,5): Dom 0,97 E/m, Hofburg 0,9,
-   Riesenrad 0,85, das ferne Schönbrunn 0,43.
+   - RUNDE 3: die RINGSTRASSE ist eine ALLEE (Platanen in ≈ 70 m, Stämme
+     alle ≈ 8 m, lockere Kronen mit Lücken vor Michaelertor, Steffl und
+     Riesenrad; vorn zwei große Platanen der Mittelallee, die das Bild
+     rahmen). Die ALTSTADT in zwei Reihen aus 5–6-geschossigen Gründerzeit-
+     und Barockhäusern (Mansarden, Kamine, Feuermauern, Kupferhelme); vor
+     dem Michaelertrakt der offene Michaelerplatz. SCHÖNBRUNN als eigener,
+     ferner Plan (Dunst, Fuß hinter der fernen Baum- und Dachkante; der
+     Schönbrunner Berg mit Wald, Rasenbahn und Zickzackwegen zur
+     Gloriette). Die FAHRLEITUNG mit Tragseil, Hängern, Auslegern und
+     Isolatoren. Der Ring ist eine Einbahn im Uhrzeigersinn: am südlichen
+     Ring fahren Taxi, Fiaker und Bim nach links (Westen). Unsicher: die
+     genaue Zahl der Geschosskränze am Steffl (hier vier) und die Form des
+     Adlerfeldes.
+   Maßstab: Horizont y = 158 (Bild); Auge 1,55 m über der Straße, 1,25 m
+   über dem Podest (man sitzt); Brennweite 160 Einheiten. Straße: Taxi in
+   10 m, Fiaker in 14 m, Platanen in 20 m, Gleise in 26/30 m, Passanten in
+   38 m, Allee in 70 m. Die Wahrzeichen stehen wie auf einer Vedute in
+   ≈ 170 m: Dom 0,97 E/m, Hofburg 0,9, Riesenrad 0,85, Schönbrunn 0,43.
    ===================================================================== */
 "use strict";
 const path = require("path");
