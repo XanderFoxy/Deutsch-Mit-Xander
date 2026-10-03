@@ -139,13 +139,17 @@ S.hinten(`<rect width="400" height="130" fill="${S.lg("himmel", [[0, "#6d9fd2"],
   const huegel = `M0 ${r(kuppe + 2)} C8 ${r(kuppe - 1)} 22 ${r(kuppe - 0.5)} 40 ${r(kuppe + 4)} C70 ${r(kuppe + 12)} 110 88 150 98 L170 104 L170 130 L0 130 Z`;
   let g = `<path d="${huegel}" fill="${S.lg("petrin", [[0, "#7f9a78"], [1, "#5d7a5a"]])}"/>`;
   /* Baumkronen als Rand (gelappt), Dunst darüber */
-  let kr = "";
+  /* Wald auf dem Petřín: viele Kronen, oben links von der Sonne gestreift */
+  const rand = (x) => x < 40 ? kuppe + 2 + (x - 13) * (x - 13) * 0.004 : x < 150 ? kuppe + 4 + (x - 40) * (x - 40) * 0.0021 + (x - 40) * 0.05 : 98 + (x - 150) * 0.3;
+  let kd = "", kh = "";
   const z = zufall(8);
-  for (let x = 0; x < 168; x += 2.2 + z() * 2) {
-    const t = x < 40 ? kuppe + 2 + (x - 13) * (x - 13) * 0.004 : kuppe + 4 + (x - 40) * 0.24;
-    kr += `M${r(x)} ${r(t + 1)} a${r(1.6 + z())} ${r(1.4 + z())} 0 0 1 ${r(3 + z())} 0Z`;
+  for (let i = 0; i < 260; i++) {
+    const x = z() * 168, y = rand(x) + 0.8 + z() * 26, rr = 1.1 + z() * 1.3;
+    if (y > 121) continue;
+    kd += `M${r(x - rr)} ${r(y)} a${r(rr)} ${r(rr * 0.9)} 0 1 1 ${r(2 * rr)} 0Z`;
+    kh += `M${r(x - rr * 0.6)} ${r(y - rr * 0.35)} a${r(rr * 0.5)} ${r(rr * 0.4)} 0 0 1 ${r(rr)} 0Z`;
   }
-  g += `<path d="${kr}" fill="#7a9673"/>`;
+  g += `<path d="${kd}" fill="#5f7d58"/><path d="${kh}" fill="#93ad84" opacity=".7"/>`;
   g += `<path d="${huegel}" fill="${S.lg("petdunst", [[0, "#dfe8ef", 0.3], [1, "#dfe8ef", 0.12]])}"/>`;
   /* Kloster Strahov und Häuser am Hang (helle Fassaden, rote Dächer) */
   for (const [x, y, w] of [[96, 93, 6], [104, 95, 5], [118, 97, 7], [130, 99, 6], [141, 100, 6], [152, 102, 7]]) g += `<rect x="${x}" y="${y}" width="${w}" height="3" fill="#e7dcc6"/><path d="M${x - 0.3} ${y} L${x + w / 2} ${y - 1.6} L${x + w + 0.3} ${y}Z" fill="#b65a3c"/>`;
@@ -308,6 +312,11 @@ S.hinten(`<rect width="400" height="130" fill="${S.lg("himmel", [[0, "#6d9fd2"],
   let k = `<path d="M0 124 L110 121.5 L150 120 L400 118.5 L400 260 L0 260 Z" fill="${S.lg("wasser", [[0, "#9bb3bf"], [0.25, "#7d9aa5"], [0.7, "#5c7a84"], [1, "#4a6670"]])}"/>`;
   /* Spiegelung der hellen Ufer und des Himmels (weich) */
   k += `<g filter="url(#${S.id("spiegel")})" opacity=".45"><path d="M150 120 L400 118.5 L400 126 L150 127 Z" fill="#e8dcc4"/><path d="M0 124 L110 121.5 L110 128 L0 131 Z" fill="#9fb48e"/></g>`;
+  /* Spiegelbild der Kleinseitner Häuser: senkrechte, weiche Farbstreifen unter dem Ufer */
+  let sp = "";
+  const zs = zufall(23);
+  for (let x = 140; x < 400; x += 4 + zs() * 6) sp += `<rect x="${r(x)}" y="121" width="${r(3 + zs() * 4)}" height="${r(5 + zs() * 6)}" fill="${["#e8d6b8", "#ecd3c3", "#b8573a", "#f1e9da", "#e2d8b0"][Math.floor(zs() * 5)]}"/>`;
+  k += `<g filter="url(#${S.id("spiegel")})" opacity=".3">${sp}</g>`;
   /* Wellen: kurze helle und dunkle Striche, nach vorn größer */
   let hell = "", dunkel = "";
   for (let i = 0; i < 520; i++) {
@@ -447,6 +456,9 @@ for (let i = 0; i < 15; i++) { STATUEN.push([34 + i * 31, 1]); STATUEN.push([30 
     const q0 = sei * (BR - BRD), dq = 0.48, ds = 0.93;   /* Richtung: 27° nach rechts */
     if (sei < 0) sch += poly([P(s - 1, q0, 0), P(s + 1, q0, 0), P(s + 1 + ds * 7, q0 + dq * 7, 0), P(s - 1 + ds * 7, q0 + dq * 7, 0)], "#2b2a3a", ` opacity=".22"`);
   }
+  /* Schlagschatten der Menschen und des Standes (Sonne links hinten, 35° hoch) */
+  const schatten = (s, q, h, b) => { const L = h * 1.43, ds = 0.89 * L, dq = 0.45 * L; return poly([P(s - 0.1, q - b), P(s + 0.1, q + b), P(s + ds, q + dq + b * 0.6), P(s + ds - 0.15, q + dq - b * 0.6)], "#2b2a3a", ` opacity=".26" filter="url(#bw_weich)"`); };
+  sch = schatten(26, -3.4, 1.76, 0.24) + schatten(31, 2.4, 1.78, 0.24) + schatten(21.6, 1.3, 1.66, 0.22) + schatten(40, -3.2, 1.9, 0.8) + schatten(30.4, 1.6, 0.55, 0.08);
   k += sch;
   S.teil({ id: "karlsbruecke", de: "die Karlsbrücke", syl: "KARLS-brü-cke", it: "il Ponte Carlo", itSyl: "PON-te CAR-lo", en: "Charles Bridge", x: 0, y: 0, kunst: k,
     tipp: "Die Karlsbrücke ist über 650 Jahre alt und 516 Meter lang. Autos dürfen nicht darüber fahren." });
@@ -615,7 +627,6 @@ let MUS = null;
   const m = B.mensch({ id: "prg_mus", geschlecht: "m", blick: 30, neigung: 16, frisur: "kurz", haarfarbe: "grau", haut: "hell", laecheln: true, pose,
     kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "weste", farbe: "#2c2a30" }, unterteil: { stueck: "anzughose" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, kopf: { stueck: "hut", farbe: "#2a2a2e" } } }, r(1.76 * sc));
   MUS = { x, y, m, sc };
-  S.hinten(`<ellipse cx="${r(x + 0.9 * sc)}" cy="${r(y + 0.1)}" rx="${r(0.55 * sc)}" ry="${r(0.12 * sc)}" fill="#2b2a3a" opacity=".22" filter="url(#bw_weich)"/>`);
   S.teil({ id: "musiker", de: "der Musiker", syl: "MU-si-ker", it: "il musicista", itSyl: "mu-si-CI-sta", en: "musician", x, y, kunst: kompakt(m.svg, 2),
     tipp: "Auf der Karlsbrücke spielen jeden Tag Straßenmusiker." });
 }
@@ -688,7 +699,6 @@ let PUP = null;
     schulterR: { vor: 20, seit: 10, dreh: 20 }, ellbogenR: 120, unterarmR: 40, handR: 0, fingerR: 0.7, schulterL: { vor: 3, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.4 };
   const m = B.mensch({ id: "prg_tour", geschlecht: "w", blick: 34, neigung: 18, frisur: "zopf", haarfarbe: "blond", haut: "hell", laecheln: true, pose,
     kleidung: { kleid: { stueck: "sommerkleid", farbe: "#e9a03a" }, schuhe: { stueck: "sandale" }, zubehoer: { stueck: "tasche", farbe: "#7d5838" } } }, r(1.66 * sc));
-  S.hinten(`<ellipse cx="${r(x + 0.8 * sc)}" cy="${r(y + 0.2)}" rx="${r(0.5 * sc)}" ry="${r(0.12 * sc)}" fill="#2b2a3a" opacity=".22" filter="url(#bw_weich)"/>`);
   S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: kompakt(m.svg, 2),
     tipp: "Nicht weit von der Brücke steht am Altstädter Ring die berühmte Astronomische Uhr." });
   /* Trdelník: Hohlgebäck (Rolle), goldbraun mit Zimtzucker, oben Eis */

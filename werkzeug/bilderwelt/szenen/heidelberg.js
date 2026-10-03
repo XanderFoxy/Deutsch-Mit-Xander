@@ -528,7 +528,9 @@ const fm = (a, g, laeden) => {
     const Q = (u, v, hh) => [cx + g * (u + .28 * v), by + g * (.04 * u - .62 * hh - .66 * v)];
     const pp = (...pts) => pfad(pts.map((p) => Q(...p)));
     const a = w / 2, e = Math.min(d / 2, a - .5);
-    let v = `<path d="${pp([-a, 0, 0], [a, 0, 0], [a, d, 0], [a + 3, d + 2, 0], [-a + 2, d + 2, 0])}" fill="#2a3a20" opacity=".25"/>`;
+    /* Schlagschatten nach links hinten (tiefe Sonne aus Westsüdwest) */
+    const L = (h + rh * .5) * 1.5, sx = -.92 * L, sy = .39 * L;
+    let v = `<path d="${pp([a, 0, 0], [a, d, 0], [a + sx, d + sy, 0], [-a + sx, d + sy, 0], [-a + sx, sy, 0], [-a, 0, 0])}" fill="#1e2a14" opacity=".3"/>`;
     v += `<path d="${pp([-a, d, h], [a, d, h], [a - e, d / 2, h + rh], [-a + e, d / 2, h + rh])}" fill="${dach[1]}"/>`;
     v += `<path d="${pp([-a, 0, 0], [a, 0, 0], [a, 0, h], [-a, 0, h])}" fill="${wand[0]}"/>`;
     v += `<path d="${pp([a, 0, 0], [a, d, 0], [a, d, h], [a, 0, h])}" fill="${wand[1]}"/>`;

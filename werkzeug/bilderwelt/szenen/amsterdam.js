@@ -464,19 +464,19 @@ function bruecke(D, tiefe, nr) {
   g += `<path d="M${gel.map(pt).join(" L")}" stroke="#1f2a26" stroke-width="${r(Math.max(0.25, 0.06 * s))}" fill="none"/><path d="${staebe}" stroke="#1f2a26" stroke-width="${r(Math.max(0.1, 0.022 * s))}" opacity=".9"/>`;
   /* Sonne aus den Querkanälen: warme Kante oben */
   if (licht) g += `<path d="M${L.map(pt).join(" L")}" stroke="#ffd9a0" stroke-width="${r(0.08 * s)}" fill="none"/>`;
-  /* Lichterkette: Birnen im Bogen und am Gesims */
-  let birnen = "", glow = "";
-  const birne = (q) => { birnen += `<circle cx="${r(q[0])}" cy="${r(q[1])}" r="${r(Math.max(0.28, 0.07 * s))}"/>`; glow += `<circle cx="${r(q[0])}" cy="${r(q[1])}" r="${r(Math.max(0.7, 0.2 * s))}"/>`; };
-  bogenPkt(D - 0.05, 22, BOGEN.b + 0.3, BOGEN.s, BOGEN.k + 0.28).forEach(birne);
-  for (let X = -10; X <= 10; X += 1) birne(P(X, D - 0.05, deckH(X) - 0.05));
-  g += `<g fill="#ffd78a" opacity=".55" filter="url(#${S.id("glimm")})">${glow}</g><g fill="#fff6d8">${birnen}</g>`;
+  /* Lichterkette: Birnen im Bogen und am Gesims — als gepunktete Linie (eine Birne alle 0,45 m) */
+  const pd = (pts) => "M" + pts.map(pt).join(" L");
+  const kette = bogenPkt(D - 0.05, 22, BOGEN.b + 0.3, BOGEN.s, BOGEN.k + 0.28), deckK = [];
+  for (let X = -10; X <= 10; X += 1) deckK.push(P(X, D - 0.05, deckH(X) - 0.05));
+  const lp = `${pd(kette)} ${pd(deckK)}`, gap = r(0.45 * s), bw = r(Math.max(0.35, 0.08 * s));
+  g += `<path d="${lp}" fill="none" stroke="#ffcf7a" stroke-width="${r(Math.max(1.2, 0.3 * s))}" opacity=".45" filter="url(#${S.id("glimm")})"/><path d="${lp}" fill="none" stroke="#fff6d8" stroke-width="${bw}" stroke-linecap="round" stroke-dasharray="0 ${gap}"/>`;
   /* Spiegelung der Brücke: Bogen + Spiegelbild ergeben das Oval */
   const sp = [];
   for (let X = -11; X <= 11.01; X += 1) sp.push(P(X, D, -deckH(X)));
   const vornS = bogenPkt(D, 16, BOGEN.b, -BOGEN.s, -BOGEN.k);
   SPIEGEL += `<path d="M${pt(P(-11, D, 0))} L${sp.map(pt).join(" L")} L${pt(P(11, D, 0))} Z M${pt(P(-BOGEN.b, D, 0))} L${vornS.map(pt).join(" L")} L${pt(P(BOGEN.b, D, 0))} Z" fill="${mix(farbe, "#1c2a30", 0.35)}" fill-rule="evenodd"/>`;
-  SPIEGEL += `<g fill="#ffe2a0" opacity=".7">${bogenPkt(D - 0.05, 22, BOGEN.b + 0.3, -BOGEN.s, -BOGEN.k - 0.28).map((q) => `<circle cx="${r(q[0])}" cy="${r(q[1])}" r="${r(Math.max(0.3, 0.08 * s))}"/>`).join("")}</g>`;
-  if (nr === 0) LICHTER_UNTER = { pts: bogenPkt(D - 0.05, 22, BOGEN.b + 0.3, BOGEN.s, BOGEN.k + 0.28), s, D };
+  SPIEGEL += `<path d="${pd(bogenPkt(D - 0.05, 22, BOGEN.b + 0.3, -BOGEN.s, -BOGEN.k - 0.28))}" fill="none" stroke="#ffe2a0" stroke-width="${bw}" stroke-linecap="round" stroke-dasharray="0 ${gap}" opacity=".75"/>`;
+  if (nr === 0) LICHTER_UNTER = { pts: kette, s, D };
   return g;
 }
 const FERN = [];

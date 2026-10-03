@@ -257,13 +257,32 @@ const LAUB = `url(#${S.id("laub")})`, LAUB_F = `url(#${S.id("laubf")})`;
 
 /* unregelmäßiger Lappen (nur M/L/Z, damit ihn der Bildrand sauber beschneiden kann) */
 const lappen = (lx, ly, lr, f, n = 8) => { const p = []; for (let i = 0; i < n; i++) { const w = i / n * Math.PI * 2 + rnd() * 0.35, q = lr * (0.7 + 0.45 * rnd()); p.push(`${r(lx + Math.cos(w) * q)} ${r(ly + Math.sin(w) * q * 0.8)}`); } return `<path d="M${p.join(" L")} Z" fill="${f}"/>`; };
+/* Runde Laubkronen (Runde 5): Umriss aus Q-Bögen über die Kantenmitten (14 Ecken, abwechselnd ausgebuchtet),
+   Licht- und Schattenpartie als weicher Verlauf auf den Umriss zugeschnitten, Herbstgelb als Verlauf in der Lichtpartie.
+   Einmal in den defs, je Baum ein <use> (Radius 10, verkürzt 0,8). */
+const brenn = (n) => { for (let i = 0; i < n; i++) rnd(); };
+{
+  const zk = zufall(77);
+  const LICHT = S.rg("kronlicht", [[0, "#dcecaa", 0.5], [0.6, "#cfe08e", 0.22], [1, "#cfe08e", 0]], 0.5, 0.5, 0.5);
+  const HERBST = S.rg("kronherbst", [[0, "#e6c556", 0.7], [0.45, "#d6cc72", 0.4], [0.75, "#cfe08e", 0.2], [1, "#cfe08e", 0]], 0.5, 0.5, 0.5);
+  const DUNKEL = S.rg("kronschatten", [[0, "#17240f", 0.5], [0.6, "#1f2e1a", 0.28], [1, "#1f2e1a", 0]], 0.5, 0.5, 0.5);
+  for (const [id, herbst] of [["k1", 0], ["k2", 1], ["k3", 0]]) {
+    const n = 14, q = [];
+    for (let i = 0; i < n; i++) { const w = i / n * Math.PI * 2 + zk() * 0.25, rr = 10 * (0.86 + 0.14 * zk()) * (i % 2 ? 1.05 : 0.92); q.push([Math.cos(w) * rr, Math.sin(w) * rr * 0.8]); }
+    const mi = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    const d = `M${P(mi(q[n - 1], q[0]))}` + q.map((v, i) => `Q${P(v)} ${P(mi(v, q[(i + 1) % n]))}`).join("") + "Z";
+    S.def(`<path id="${S.id(id + "u")}" d="${d}"/><clipPath id="${S.id(id + "c")}"><use href="#${S.id(id + "u")}"/></clipPath>`);
+    S.def(`<g id="${S.id(id)}"><use href="#${S.id(id + "u")}" fill="${LAUB}"/><g clip-path="url(#${S.id(id + "c")})"><ellipse cx="4.2" cy="3.6" rx="8" ry="6" fill="${DUNKEL}"/><ellipse cx="-3.8" cy="-2.8" rx="8" ry="6.4" fill="${herbst ? HERBST : LICHT}"/>${id === "k3" ? `<ellipse cx="-1" cy="-5" rx="3.6" ry="2.6" fill="${HERBST}"/>` : ""}</g></g>`);
+  }
+}
+const krone = (id, x, y, R, sp) => `<use href="#${S.id(id)}" transform="translate(${r(x)} ${r(y)}) scale(${((sp ? -R : R) / 10).toFixed(3)} ${(R / 10).toFixed(3)})"/>`;
 /* Krone einer Platane: gelappter Umriss aus Wolkenballen, Schattenhöhle unten,
    Lichtballen links (Sonne), Himmelslöcher; Stamm mit Plattenborke */
 const platane = (x, fuss, s, hoch, breit, himmel = "#a9c6e0", nb = 15) => {
   let g = "";
-  const st = 0.28 * s;
+  const st = 0.45 * s;
   /* Stamm und zwei Hauptäste */
-  g += `<path d="M${r(x - st)} ${r(fuss)} C${r(x - st * 0.9)} ${r(fuss - hoch * 0.25)} ${r(x - st * 0.6)} ${r(fuss - hoch * 0.4)} ${r(x - st * 1.8)} ${r(fuss - hoch * 0.62)} L${r(x - st * 1.1)} ${r(fuss - hoch * 0.64)} C${r(x - st * 0.2)} ${r(fuss - hoch * 0.48)} ${r(x + st * 0.2)} ${r(fuss - hoch * 0.48)} ${r(x + st * 1.4)} ${r(fuss - hoch * 0.66)} L${r(x + st * 2)} ${r(fuss - hoch * 0.63)} C${r(x + st * 0.8)} ${r(fuss - hoch * 0.4)} ${r(x + st * 0.9)} ${r(fuss - hoch * 0.25)} ${r(x + st)} ${r(fuss)} Z" fill="${S.lg("rinde", [[0, "#8f8a74"], [0.45, "#6f6a58"], [1, "#4a4639"]], 0, 0, 1, 0)}"/>`;
+  g += `<path d="M${r(x - st)} ${r(fuss)} C${r(x - st * 0.9)} ${r(fuss - hoch * 0.25)} ${r(x - st * 0.6)} ${r(fuss - hoch * 0.4)} ${r(x - st * 1.8)} ${r(fuss - hoch * 0.62)} L${r(x - st * 1.1)} ${r(fuss - hoch * 0.64)} C${r(x - st * 0.2)} ${r(fuss - hoch * 0.48)} ${r(x + st * 0.2)} ${r(fuss - hoch * 0.48)} ${r(x + st * 1.4)} ${r(fuss - hoch * 0.66)} L${r(x + st * 2)} ${r(fuss - hoch * 0.63)} C${r(x + st * 0.8)} ${r(fuss - hoch * 0.4)} ${r(x + st * 0.9)} ${r(fuss - hoch * 0.25)} ${r(x + st)} ${r(fuss)} Z" fill="${S.lg("rinde", [[0, "#6f6a58"], [0.45, "#4f4b3f"], [1, "#34312a"]], 0, 0, 1, 0)}"/>`;
   /* Plattenborke: unregelmäßige Flecken in Oliv, Creme und Grau */
   for (let i = 0; i < (nb > 10 ? 5 : 0); i++) {
     const yy = fuss - rnd() * hoch * 0.55, xx = x - st * 0.7 + rnd() * st * 1.2, w = st * (0.35 + rnd() * 0.4), h = st * (0.5 + rnd() * 0.9);
@@ -272,13 +291,8 @@ const platane = (x, fuss, s, hoch, breit, himmel = "#a9c6e0", nb = 15) => {
   /* Krone: gelappte Laubpartien (unregelmäßige Vielecke), Schattenhöhle unten rechts, Licht von links,
      erstes Herbstgelb (3. Oktober), Himmelslöcher */
   const cx = x, cy = fuss - hoch * 0.78, R = breit / 2;
-  g += lappen(cx + R * 0.05, cy + R * 0.06, R, LAUB, 12);
-  for (let i = 0; i < Math.min(nb, 6); i++) {
-    const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * 0.62, lx = cx + Math.cos(a) * d * R, ly = cy + Math.sin(a) * d * R * 0.62, lr = R * (0.24 + rnd() * 0.16);
-    const links = lx < cx + R * 0.1, herbst = rnd() < 0.2;
-    g += lappen(lx, ly, lr, herbst ? "#d2b54a" : links ? "#cfe08e" : "#1f2e1a", 9).replace("/>", ` opacity="${herbst ? 0.5 : links ? 0.3 : 0.28}"/>`);
-  }
-  for (let i = 0; i < (nb > 10 ? 5 : 1); i++) { const a = rnd() * Math.PI * 2, d = 0.3 + rnd() * 0.4; g += lappen(cx + Math.cos(a) * d * R, cy + Math.sin(a) * d * R * 0.6, R * 0.06 + 0.15, himmel, 5); }
+  g += krone(rnd() < 0.5 ? "k1" : "k3", cx + R * 0.05, cy + R * 0.06, R * 1.05);
+  brenn(145);
   return g;
 };
 
@@ -1008,14 +1022,15 @@ const DOMM = {};
     if (x > -240 && x < -178) continue;
     const y = anX(NORD, x) + 10, f = pr(x, y, KAI), s = mass(x, y);
     if (f[0] > roemerBild[0] - 6 && f[0] < roemerBild[1] + 4) continue;
-    const gr = 0.7 + rnd() * 0.6, R = 7 * s * gr, ct = pr(x, y, KAI + 13 * gr), sl = (rnd() - 0.5) * 0.8 * s;
-    k += `<path d="M${r(f[0] - 0.3 * s)} ${r(f[1])} L${r(ct[0] + sl - 0.22 * s)} ${r(ct[1] + R * 0.4)} L${r(ct[0] + sl + 0.22 * s)} ${r(ct[1] + R * 0.4)} L${r(f[0] + 0.3 * s)} ${r(f[1])} Z" fill="#cfc6a6"/>`;
-    if (s > 0.8) k += `<path d="M${r(f[0] - 0.2 * s)} ${r(f[1] - 1.4 * s)} h${r(0.25 * s)} M${r(f[0])} ${r(f[1] - 2.6 * s)} h${r(0.2 * s)}" stroke="#8f8c6c" stroke-width="${r(0.25 * s)}"/>`;
+    const gr = 0.7 + rnd() * 0.6, R = 7 * s * gr, ct = pr(x, y, KAI + 11 * gr), sl = (rnd() - 0.5) * 0.8 * s;
+    /* Stamm: hell gefleckte Platanenrinde, unten doppelt so dick wie früher, Schattenseite rechts */
+    k += `<path d="M${r(f[0] - 0.6 * s)} ${r(f[1])} L${r(ct[0] + sl - 0.4 * s)} ${r(ct[1] + R * 0.3)} L${r(ct[0] + sl + 0.4 * s)} ${r(ct[1] + R * 0.3)} L${r(f[0] + 0.6 * s)} ${r(f[1])} Z" fill="#c9bf9c"/><path d="M${r(f[0])} ${r(f[1])} L${r(ct[0] + sl)} ${r(ct[1] + R * 0.3)} L${r(ct[0] + sl + 0.4 * s)} ${r(ct[1] + R * 0.3)} L${r(f[0] + 0.6 * s)} ${r(f[1])} Z" fill="#8f876c"/>`;
+    if (s > 0.8) k += `<path d="M${r(f[0] - 0.4 * s)} ${r(f[1] - 1.4 * s)} h${r(0.35 * s)} M${r(f[0] - 0.1 * s)} ${r(f[1] - 2.6 * s)} h${r(0.3 * s)}" stroke="#7d7a5c" stroke-width="${r(0.3 * s)}"/>`;
     if (f[0] + R < 0 || f[0] - R > 320) continue;
-    k += lappen(ct[0] + sl, ct[1], R, LAUB, 9);
-    k += lappen(ct[0] + sl - R * 0.35, ct[1] - R * 0.2, R * 0.48, "#cfe08e", 6).replace("/>", ` opacity=".28"/>`);
-    if (R > 3.5) k += lappen(ct[0] + sl + R * 0.3, ct[1] + R * 0.2, R * 0.45, "#1f2e1a", 6).replace("/>", ` opacity=".3"/>`);
-    if (rnd() < 0.4) k += lappen(ct[0] + sl + (rnd() - 0.5) * R, ct[1] - R * 0.25, R * 0.32, "#d2b54a", 6).replace("/>", ` opacity=".5"/>`);
+    brenn(R > 3.5 ? 42 : 30);
+    const herbst = rnd() < 0.4;
+    if (herbst) brenn(13);
+    k += krone(herbst ? "k2" : x % 2 > 1 ? "k1" : "k3", ct[0] + sl, ct[1], R);
   }
   /* Kaimauer aus rotem Sandstein bis zur Wasserlinie, Mainkai-Straße mit Geländer */
   const nk = NORD.filter(([x]) => x >= -470 && x <= 200);

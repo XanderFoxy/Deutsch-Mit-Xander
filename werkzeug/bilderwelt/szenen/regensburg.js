@@ -643,52 +643,59 @@ const BRUECKE_LEUTE = [];
   k += `<path d="M-6 -88 Q-14 -104 -16 -122 L-11 -123 Q-8 -106 -1 -94 Z" fill="${AST}"/>`;
   k += `<path d="M-2 -92 Q6 -112 16 -138 L20 -136 Q12 -110 3 -88 Z" fill="${AST}"/>`;
   k += `<path d="M1 -82 Q18 -100 32 -136 L36 -133 Q22 -96 4 -76 Z" fill="${AST}"/>`;
-  /* Krone: oben eine geschlossene Laubmasse, unten in vier hängende Laubballen aufgelöst — zwischen
-     ihnen Lücken, durch die Himmel und Dom scheinen (durch eine läuft der Ast mit der Lichterkette).
-     Jeder Ballen in drei Tonstufen, unten rund und dunkel, die Kante aus Blattspitzen; Licht nur oben rechts. */
+  /* Krone: aus überlappenden Laubkugeln gebaut (keine geraden Kanten). Unten hängen vier Ballen aus je vier
+     Kugeln, zwischen ihnen tiefe Lücken, durch die Himmel und Dom scheinen (durch eine läuft der Ast mit der
+     Lichterkette). Der ganze äußere Umriss ist ein Kranz aus Blättern; Licht nur oben rechts. */
   const KY = -Y;
   let krone = "";
-  /* das Rosskastanienblatt als Vorlage: sieben verkehrt-eiförmige Teilblätter, das mittlere am größten,
-     die äußeren halb so groß, kurz zugespitzt, zum Stiel keilförmig, mit hellem Mittelnerv */
+  /* das Rosskastanienblatt als Vorlage: sieben Teilblätter, an der Spitze am breitesten (bei 0,75 der Länge),
+     zum Stiel keilförmig, kurz zugespitzt, 30° auseinander, außen nur halb so lang; heller Mittelnerv */
   {
     let fa = "", nerv = "";
     const q2 = (v) => +v.toFixed(3);
     for (let i = 0; i < 7; i++) {
-      const a = (i - 3) * 26 * Math.PI / 180, l = [0.5, 0.7, 0.88, 1, 0.88, 0.7, 0.5][i];
+      const a = (i - 3) * 30 * Math.PI / 180, l = [0.45, 0.7, 0.9, 1, 0.9, 0.7, 0.45][i];
       const P = (u, v) => [q2(Math.cos(a) * u - Math.sin(a) * v), q2(Math.sin(a) * u + Math.cos(a) * v)];
       const pt = (u, v) => P(u * l, -v * l).join(" ");
-      fa += `<path d="M0 0 C${pt(0.05, 0.25)} ${pt(0.2, 0.55)} ${pt(0.17, 0.85)} Q${pt(0.1, 0.97)} ${pt(0, 1.05)} Q${pt(-0.1, 0.97)} ${pt(-0.17, 0.85)} C${pt(-0.2, 0.55)} ${pt(-0.05, 0.25)} 0 0 Z"/>`;
-      nerv += `M${pt(0, 0.1)} L${pt(0, 0.9)} `;
+      fa += `<path d="M0 0 C${pt(0.03, 0.2)} ${pt(0.28, 0.55)} ${pt(0.28, 0.75)} Q${pt(0.26, 0.95)} ${pt(0, 1.02)} Q${pt(-0.26, 0.95)} ${pt(-0.28, 0.75)} C${pt(-0.28, 0.55)} ${pt(-0.03, 0.2)} 0 0 Z"/>`;
+      nerv += `M${pt(0, 0.12)} L${pt(0, 0.9)} `;
     }
-    S.def(`<g id="${S.id("blatt")}">${fa}<path d="${nerv}" stroke="#ffffff" stroke-opacity=".18" stroke-width=".025" fill="none"/></g>`);
+    S.def(`<g id="${S.id("blatt")}">${fa}<path d="${nerv}" stroke="#ffffff" stroke-opacity=".16" stroke-width=".022" fill="none"/></g>`);
   }
   const blatt = (x, y, gr, dreh, fill, extra = "") => `<use href="#${S.id("blatt")}" transform="translate(${r(x)} ${r(y)}) rotate(${Math.round(dreh)}) scale(${r(gr)})" fill="${fill}"${extra}/>`;
-  /* die obere Laubmasse */
-  const masse = [[1, -1], [92, -1], [100, 2], [108, 12], [110, 24], [106, 34], [100, 40], [91, 46], [79, 45], [66, 58], [53, 53], [39, 68], [27, 62], [15, 76], [3, 72]];
-  krone += `<path d="M${masse.map(([x, y]) => `${x} ${r(KY + y)}`).join(" L")} Z" fill="#1a3016"/>`;
+  /* die Laubkugeln (Kronen-Koordinaten): oben die Masse, darunter die vier hängenden Ballen */
+  const MASSE = [[10, 30, 14], [30, 30, 15], [55, 26, 15], [78, 22, 14], [98, 20, 12], [104, 31, 8], [14, 50, 12], [40, 46, 12], [66, 40, 11], [90, 36, 9]];
+  const BALLEN = [[[8, 68, 7], [16, 73, 8], [23, 66, 6], [12, 60, 7]], [[34, 62, 6], [41, 67, 7.5], [47, 60, 5], [38, 56, 6]], [[60, 54, 6], [67, 57, 7], [73, 51, 5], [64, 47, 6]], [[85, 44, 5.5], [92, 46, 6.5], [97, 40, 5], [88, 38, 5]]];
+  const KUGELN = [...MASSE, ...BALLEN.flat()];
+  /* Grund: oben ein Rechteck bis über den Bildrand, dazu alle Kugeln */
+  let grund = `<path d="M1 -1 L94 -1 L94 18 L1 18 Z"/>`;
+  for (const [x, y, rr] of KUGELN) grund += `<circle cx="${x}" cy="${r(KY + y)}" r="${rr}"/>`;
+  krone += `<g fill="#18321a">${grund}</g>`;
+  /* Tonstufen im Inneren: weich, nach oben rechts heller */
   const TON = ["#1c3418", "#24421f", "#2e5226", "#3c6430"];
   const ballen = [];
-  for (let i = 0; i < 22; i++) { const x = 6 + rnd() * 98, y = 4 + rnd() * 50; if (y > 66 - x * 0.45) continue; const t = Math.min(3, Math.floor(((x / 110) * 0.55 + (1 - y / 60) * 0.45) * 4)); ballen.push([t, x, y, 7 + rnd() * 8, 4.5 + rnd() * 4.5]); }
+  for (let i = 0; i < 22; i++) { const x = 6 + rnd() * 98, y = 4 + rnd() * 46; if (y > 56 - x * 0.3) continue; const t = Math.min(3, Math.floor(((x / 110) * 0.55 + (1 - y / 56) * 0.45) * 4)); ballen.push([t, x, y, 7 + rnd() * 7, 4.5 + rnd() * 4]); }
   ballen.sort((p, q) => p[0] - q[0]);
   let lm = "";
   for (const [t, x, y, rx, ry] of ballen) lm += `<ellipse cx="${r(x)}" cy="${r(KY + y)}" rx="${r(rx)}" ry="${r(ry)}" fill="${TON[t]}"/>`;
+  for (const b of BALLEN) for (const [x, y, rr] of b.slice(0, 2)) lm += `<ellipse cx="${r(x + rr * 0.15)}" cy="${r(KY + y - rr * 0.35)}" rx="${r(rr * 0.6)}" ry="${r(rr * 0.4)}" fill="#24421f"/>`;
   krone += `<g filter="url(#${S.id("rauch")})">${lm}</g>`;
-  /* vier hängende Ballen mit Lücken dazwischen */
-  const HB = [[15, 77, 12, 10.5], [39, 69, 11.5, 10], [66, 59, 11, 9.5], [91, 46, 10.5, 9]];
-  for (const [cx, cy, rx, ry] of HB) {
-    const y = KY + cy;
-    krone += `<ellipse cx="${cx}" cy="${r(y)}" rx="${rx}" ry="${ry}" fill="#16301a"/>`;
-    krone += `<g filter="url(#${S.id("rauch")})"><ellipse cx="${r(cx + rx * 0.15)}" cy="${r(y - ry * 0.25)}" rx="${r(rx * 0.72)}" ry="${r(ry * 0.6)}" fill="#24421f"/><ellipse cx="${r(cx + rx * 0.3)}" cy="${r(y - ry * 0.45)}" rx="${r(rx * 0.4)}" ry="${r(ry * 0.32)}" fill="${cx > 80 ? "#4a7434" : "#2e5226"}"/></g>`;
-    /* die gezackte Kante: Blätter rund um die untere Hälfte, in den Tönen des Ballens, nach außen hängend */
-    for (let i = 0; i < 5; i++) {
-      const a = Math.PI * (0.18 + i * 0.16), bx = cx + Math.cos(a) * rx * 0.8, by = y + Math.sin(a) * ry * 0.78;
-      krone += blatt(bx, by, 5 + rnd() * 1.5, 180 + (Math.cos(a) * -28) + (rnd() - 0.5) * 20, i % 2 ? "#16301a" : "#1c3618");
+  /* der Blattkranz um den ganzen äußeren Umriss: an jeder Kugel dort, wo ihr Rand frei liegt */
+  const innen = (px, py, ich) => py < 18.5 && px < 94 || KUGELN.some((k) => k !== ich && Math.hypot(px - k[0], py - k[1]) < k[2] - 0.8);
+  for (const kg of KUGELN) {
+    const [cx, cy, rr] = kg, n = Math.max(5, Math.round(2 * Math.PI * rr / 4.2));
+    for (let i = 0; i < n; i++) {
+      const a = (i + 0.5) / n * 2 * Math.PI, px = cx + Math.cos(a) * rr, py = cy + Math.sin(a) * rr;
+      if (py < 3 || px < 4 || innen(px, py, kg)) continue;
+      const licht = px > 84 && py < 36 && Math.cos(a) > -0.2 && Math.sin(a) < 0.3;
+      krone += blatt(cx + Math.cos(a) * (rr - 1.2), KY + cy + Math.sin(a) * (rr - 1.2), 4.4 + rnd() * 1.4, a * 180 / Math.PI + 90 + (rnd() - 0.5) * 24, licht ? "#3e6a2c" : i % 2 ? "#18321a" : "#1e3a1a");
+      if (licht) krone += blatt(cx + Math.cos(a) * rr, KY + cy + Math.sin(a) * rr, 3.4, a * 180 / Math.PI + 100, "#b8d468", ' opacity=".2"');
     }
   }
-  /* oben rechts die Zweigspitzen im Gegenlicht: die Blätter leuchten durch */
-  for (const [x, y, d] of [[104, 30, 30], [108, 18, 50], [98, 6, 20], [90, 40, 10], [84, 2, 0], [104, 40, 60]]) krone += blatt(x, KY + y, 6, d + rnd() * 20, "#3e6a2c") + blatt(x + 1, KY + y + 0.5, 4.4, d + 20, "#b8d468", ' opacity=".18"');
+  /* an jedem Ballen oben rechts drei, vier hellere Blätter */
+  for (const b of BALLEN) { const [x, y, rr] = b[2]; for (let i = 0; i < 3; i++) { const a = -0.9 + i * 0.45; krone += blatt(x + Math.cos(a) * rr * 0.7, KY + y + Math.sin(a) * rr * 0.7, 3.8, a * 180 / Math.PI + 90, x > 80 ? "#3e6a2c" : "#2e5226"); } }
   /* Früchte: hängende Büschel zu zwei, drei Kastanien unten an den Ballen */
-  for (const [x, y, n] of [[16, 87, 2], [43, 78, 3], [69, 68, 2]]) {
+  for (const [x, y, n] of [[16, 80, 2], [41, 74, 3], [67, 63, 2]]) {
     const yy = KY + y;
     for (let i = 0; i < n; i++) {
       const fx = x + (i - (n - 1) / 2) * 2.4, fy = yy + 3 + (i % 2) * 1.6;
@@ -697,9 +704,9 @@ const BRUECKE_LEUTE = [];
   }
   /* die Lichterkette hängt durch die Lücken zwischen den Ballen */
   {
-    const p = [[26, 72], [52, 63], [78, 52]];
+    const p = [[28, 63], [53, 55], [79, 46]];
     krone += `<path d="M${p.map(([x, y], i) => (i ? `Q${r((x + p[i - 1][0]) / 2)} ${r(KY + (y + p[i - 1][1]) / 2 + 5)} ` : "") + `${x} ${r(KY + y)}`).join(" ")}" stroke="#2a2016" stroke-width=".3" fill="none"/>`;
-    for (const [x, y] of [[26, 72], [39, 70.2], [52, 63], [65, 60.2], [78, 52]]) krone += `<circle cx="${x}" cy="${r(KY + y)}" r="4.2" fill="${S.rg("birne", [[0, "#ffe2a0", 0.6], [1, "#ffe2a0", 0]])}"/><circle cx="${x}" cy="${r(KY + y)}" r=".9" fill="#fff4cc"/>`;
+    for (const [x, y] of [[28, 63], [40.5, 61.5], [53, 55], [66, 53], [79, 46]]) krone += `<circle cx="${x}" cy="${r(KY + y)}" r="4.2" fill="${S.rg("birne", [[0, "#ffe2a0", 0.6], [1, "#ffe2a0", 0]])}"/><circle cx="${x}" cy="${r(KY + y)}" r=".9" fill="#fff4cc"/>`;
   }
   k += `<g transform="translate(-20 0)">${krone}</g>`;
   S.teil({ id: "kastanie", de: "die Kastanie", syl: "kas-TA-nie", it: "l'ippocastano", itSyl: "ip-po-CA-sta-no", en: "horse chestnut tree", x: X - 2, y: Y - 40, steht: true, kunst: anker(-2, -40, k),
