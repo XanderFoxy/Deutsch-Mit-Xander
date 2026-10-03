@@ -350,8 +350,8 @@ const toroeffnung = (Y, xm, w, zKampf, zScheitel, spitz) => [[xm - w / 2, Y, 0],
    2 — DAS BÄCHLE (Wasserrinne: kommt am Südrand vor der Häuserzeile entlang,
        biegt beim Café ab und läuft vorn aus dem Bild)
    ===================================================================== */
+const WEG = [[-96, -75], [51, -75], [52.6, -71], [57.6, -48], [61.4, -30]];
 {
-  const WEG = [[-96, -75], [51, -75], [52.6, -71], [57.6, -48], [61.4, -30]];
   const quer = (a, b, d) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy); return [-dy / l * d, dx / l * d]; };
   const streifen = (d0, d1, z) => {
     let g = "";
@@ -366,6 +366,16 @@ const toroeffnung = (Y, xm, w, zKampf, zScheitel, spitz) => [[xm - w / 2, Y, 0],
   let k = `<path d="${streifen(-.55, .55, 0)}" fill="#cfcac0"/>`;
   k += `<path d="${streifen(-.32, -.2, -.02)}" fill="#6e6a62"/>`;
   k += `<path d="${streifen(-.3, .32, -.14)}" fill="${S.lg("baechle", [[0, "#6f98a8"], [0.5, "#9cc4d2"], [1, "#5d8696"]])}"/>`;
+  /* Schatten der sonnenseitigen Kante auf dem Wasser, Lichtkante an der gegenüberliegenden Innenwand, Strömungslinien */
+  let sw = "", lk = "", st = "";
+  for (let i = 0; i < WEG.length - 1; i++) {
+    const a = WEG[i], b = WEG[i + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]), q = quer(a, b, 1), sd = q[0] * SONNE[0] + q[1] * SONNE[1] > 0 ? 1 : -1;
+    const P3 = (t, o, z) => [a[0] + (b[0] - a[0]) * t + q[0] * o * sd, a[1] + (b[1] - a[1]) * t + q[1] * o * sd, z];
+    sw += poly([P3(0, .3, -.14), P3(1, .3, -.14), P3(1, .17, -.14), P3(0, .17, -.14)]) + " ";
+    lk += linie([P3(0, -.31, -.03), P3(1, -.31, -.03)]) + " ";
+    for (let n = 0; n < L / 2.2; n++) { const t = rnd(), o = (rnd() - .5) * .4, l = (.5 + rnd()) / L; if (FOC / tief(...P3(t, o, 0).slice(0, 2)) > 2.5) st += linie([P3(t, o, -.14), P3(Math.min(1, t + l), o + (rnd() - .5) * .05, -.14)]) + " "; }
+  }
+  k += `<path d="${sw}" fill="#2a4a58" opacity=".35"/><path d="${lk}" stroke="#f4f0e4" stroke-width=".35" fill="none"/><path d="${st}" stroke="#e8f6fc" stroke-width=".18" opacity=".55" fill="none"/>`;
   /* Glitzern und kleine Wellen auf dem fließenden Wasser, Fugen der Granitsteine */
   let fu = "";
   for (let i = 0; i < WEG.length - 1; i++) {
@@ -390,7 +400,7 @@ const toroeffnung = (Y, xm, w, zKampf, zScheitel, spitz) => [[xm - w / 2, Y, 0],
   /* Ortskoordinaten: u nach rechts, v in die Tiefe (Meter) */
   /* das Wappen schaut zur Kamera: v zeigt vom Betrachter weg, u quer dazu */
   const LM = Math.hypot(M[0] - CAM[0], M[1] - CAM[1]), VV = [(M[0] - CAM[0]) / LM, (M[1] - CAM[1]) / LM], UU = [VV[1], -VV[0]];
-  const W = (u, v) => [M[0] + GR * (u * UU[0] + v * VV[0]), M[1] + GR * (u * UU[1] + v * VV[1]), 0];
+  const W = (u, v) => [M[0] + GR * (u * UU[0] + 1.5 * v * VV[0]), M[1] + GR * (u * UU[1] + 1.5 * v * VV[1]), 0];
   const P2 = (u, v) => pr(...W(u, v));
   const schild = (u, v) => Math.abs(u) <= .62 && v <= .7 && (v >= -.05 || (u / .62) ** 2 + ((v + .05) / .75) ** 2 <= 1);
   /* Grundflächen (projiziert): schwarzer Rand, weißes Feld, rotes Kreuz */
@@ -1336,6 +1346,28 @@ const MANN = { w: [53.5, -49.6] };
     tipp: "Im Korb trägt sie ihren Einkauf nach Hause." });
 }
 function sw2(s) { return r(.02 * s); }
+
+/* Vorn rechts am Bächle: ein Kind hockt am Rand und lässt ein Bächleboot an der Schnur schwimmen
+   (nur Zeichnung über allem — es fängt keinen Tipp ab; der Bächle-Tipp erzählt davon) */
+{
+  const A = WEG[3], Bp = WEG[4], at = (t) => [A[0] + (Bp[0] - A[0]) * t, A[1] + (Bp[1] - A[1]) * t];
+  const L = Math.hypot(Bp[0] - A[0], Bp[1] - A[1]), qx = -(Bp[1] - A[1]) / L, qy = (Bp[0] - A[0]) / L;
+  const bw = at(.135), boot = pr(bw[0], bw[1], -.12), sb = FOC / tief(...bw);
+  const kw = [at(.23)[0] - qx * 1.0, at(.23)[1] - qy * 1.0], kf = fuss(...kw), ks = kf.s;
+  const m = B.mensch({ id: "fbg_kind", geschlecht: "m", alter: "kind", pose: "hocken", blick: 300, frisur: "kurz", haarfarbe: "blond", haut: "hell", laecheln: true,
+    kleidung: { oberteil: { stueck: "tshirt", farbe: "gelb" }, unterteil: { stueck: "shorts", farbe: "blau" }, schuhe: { stueck: "turnschuh" } } }, 1.25 * ks);
+  let g = wurf([[kw[0] - .3, kw[1], .8], [kw[0] + .3, kw[1], .8], [kw[0], kw[1] - .3, 0], [kw[0], kw[1] + .3, 0]], .25);
+  /* das Boot: Holzrumpf, kleines weißes Segel, Bugwelle */
+  const u = sb;
+  g += `<ellipse cx="${r(boot[0])}" cy="${r(boot[1] + .02 * u)}" rx="${r(.3 * u)}" ry="${r(.05 * u)}" fill="#e8f6fc" opacity=".6"/>`;
+  g += `<path d="M${r(boot[0] - .2 * u)} ${r(boot[1] - .07 * u)} h${r(.4 * u)} l${r(-.06 * u)} ${r(.08 * u)} h${r(-.3 * u)} Z" fill="#a8743e"/><path d="M${r(boot[0] - .2 * u)} ${r(boot[1] - .07 * u)} h${r(.4 * u)}" stroke="#d8a868" stroke-width="${r(.015 * u)}"/>`;
+  g += `<path d="M${r(boot[0])} ${r(boot[1] - .07 * u)} V${r(boot[1] - .36 * u)}" stroke="#6a4a2a" stroke-width="${r(.012 * u)}"/><path d="M${r(boot[0] + .01 * u)} ${r(boot[1] - .35 * u)} L${r(boot[0] + .16 * u)} ${r(boot[1] - .1 * u)} H${r(boot[0] + .01 * u)} Z" fill="#fffaf0"/><path d="M${r(boot[0] - .01 * u)} ${r(boot[1] - .3 * u)} L${r(boot[0] - .12 * u)} ${r(boot[1] - .11 * u)} H${r(boot[0] - .01 * u)} Z" fill="#d84030"/>`;
+  /* die Schnur von der Hand zum Bug, leicht durchhängend */
+  const h = m.z.handL.x < m.z.handR.x ? m.z.handL : m.z.handR, hx = kf.x + h.x * m.k, hy = kf.y + h.y * m.k;
+  g += `<path d="M${r(hx)} ${r(hy)} Q${r((hx + boot[0]) / 2)} ${r(Math.max(hy, boot[1]) + .1 * u)} ${r(boot[0] + .18 * u)} ${r(boot[1] - .06 * u)}" stroke="#f4f0e4" stroke-width="${r(.01 * u)}" fill="none"/>`;
+  g += `<g transform="translate(${r(kf.x)},${r(kf.y)})">${rundeFigur(m.svg)}</g>`;
+  S.davor(g);
+}
 
 /* Licht über allem: Vormittagssonne von links (Ostsüdost), leichte Vignette (fängt keinen Tipp ab) */
 S.davor(`<rect width="320" height="240" fill="${S.rg("sonne", [[0, "#fff4d6", 0.2], [0.55, "#fff4d6", 0.05], [1, "#fff4d6", 0]], 0, 0.1, 0.9)}"/><rect width="320" height="240" fill="${S.rg("vignette", [[0, "#000", 0], [0.72, "#000", 0], [1, "#1a1008", 0.2]], 0.5, 0.5, 0.75)}"/>`);

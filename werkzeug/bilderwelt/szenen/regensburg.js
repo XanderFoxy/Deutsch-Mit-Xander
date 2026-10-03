@@ -59,6 +59,7 @@ const B = require("../bau");
 const S = neueSzene({ id: "regensburg", titel: "Regensburg", emoji: "🌉", thema: "Deutschland", kuerzel: "rgb", fassung: 854 });
 const rnd = zufall(1135);
 const r = B.r;
+const f3 = (v) => +v.toFixed(3);
 const HOR = 114;
 const km = (y) => (y - HOR) / 1.6;     /* im Biergarten: Auge 1,6 m über dem Kies */
 const kw = (y) => (y - HOR) / 3.1;     /* auf der Donau: Auge 3,1 m über dem Wasser */
@@ -601,18 +602,27 @@ const BRUECKE_LEUTE = [];
   f += `<rect x="0" y="${WU}" width="320" height="${200 - WU}" fill="${S.lg("kieslicht", [[0, "#2a2010", 0.14], [0.55, "#000", 0], [1, "#ffd090", 0.2]], 0, 0, 1, 0)}"/>`;
   /* hinten rechts eine zweite Tischreihe im Gegenlicht: Silhouetten mit warmen Lichtkanten, zwei stoßen an, ein Radler mit Helm, das Rad lehnt am Tisch */
   {
-    const SI = "#221c1c";
+    const SI = "#2a2422";
     let g = `<path d="M-1 0 L-.86 -.74 M-.86 0 L-1 -.74 M.56 0 L.7 -.74 M.7 0 L.56 -.74" stroke="${SI}" stroke-width=".035"/>`;
-    for (const [x, hoch, helm] of [[-0.85, 0, 0], [-0.45, 1, 0], [-0.05, -1, 0], [0.35, 0, 1]]) {
-      g += `<path d="M${x - 0.2} -.74 L${x - 0.21} -.96 Q${x - 0.2} -1.04 ${x - 0.1} -1.05 L${x + 0.1} -1.05 Q${x + 0.2} -1.04 ${x + 0.21} -.96 L${x + 0.2} -.74 Z" fill="${SI}"/><path d="M${x - 0.035} -1.06 L${x + 0.035} -1.06 L${x + 0.035} -1.1 L${x - 0.035} -1.1 Z" fill="${SI}"/><ellipse cx="${x}" cy="-1.19" rx=".09" ry=".105" fill="${SI}"/>`;
-      g += `<path d="M${x + 0.09} -1.25 Q${x + 0.1} -1.15 ${x + 0.06} -1.1 M${x + 0.2} -1.0 L${x + 0.19} -.78" stroke="${RAND}" stroke-width=".014" fill="none" opacity=".9"/>`;
-      if (hoch) { const sx = hoch; g += `<path d="M${x + sx * 0.15} -1.0 L${x + sx * 0.21} -1.2 L${x + sx * 0.2} -1.42" stroke="${SI}" stroke-width=".05" fill="none" stroke-linecap="round"/><path d="M${x + sx * 0.2 - 0.04} -1.42 L${x + sx * 0.2 - 0.04} -1.56 L${x + sx * 0.2 + 0.04} -1.56 L${x + sx * 0.2 + 0.04} -1.42 Z" fill="#c89030"/><path d="M${x + sx * 0.2 - 0.045} -1.56 q.045 -.03 .09 0 Z" fill="#fff4d8"/><path d="M${x + sx * 0.2 + 0.04} -1.56 L${x + sx * 0.2 + 0.04} -1.42" stroke="${RAND}" stroke-width=".012"/>`; }
-      if (helm) g += `<path d="M${x - 0.11} -1.2 Q${x - 0.1} -1.33 ${x} -1.33 Q${x + 0.11} -1.33 ${x + 0.12} -1.2 Z" fill="#3a5a8a"/><path d="M${x - 0.05} -1.31 L${x - 0.04} -1.22 M${x + 0.03} -1.32 L${x + 0.03} -1.22" stroke="#e8e8e8" stroke-width=".012"/>`;
+    /* Nachbartisch im selben Abendlicht: gedämpfte Farben (≈ 35 % Helligkeit), warme Lichtkante rechts;
+       Kopf, schmaler Hals, fallende Schultern, ein Arm zum Tisch; zwei stoßen mit ihren Krügen an */
+    for (const [x, farbe, gr, hoch, helm, profil, haar] of [[-0.86, "#2e3e62", 1.05, 0, 0, 0, "#2a1c16"], [-0.46, "#6a2a34", 0.94, 1, 0, 1, "#4a2a1a"], [-0.07, "#4e5630", 1.0, -1, 0, 0, "#3a2a1c"], [0.34, "#4a4a52", 0.88, 0, 1, 0, "#2a2018"]]) {
+      const S2 = (v) => f3(v * gr), sch = -0.74 - 0.27 * gr;
+      g += `<path d="M${f3(x - 0.2 * gr)} -.74 L${f3(x - 0.21 * gr)} ${f3(sch + 0.09 * gr)} Q${f3(x - 0.18 * gr)} ${f3(sch + 0.02 * gr)} ${f3(x - 0.06 * gr)} ${f3(sch)} L${f3(x + 0.06 * gr)} ${f3(sch)} Q${f3(x + 0.18 * gr)} ${f3(sch + 0.02 * gr)} ${f3(x + 0.21 * gr)} ${f3(sch + 0.09 * gr)} L${f3(x + 0.2 * gr)} -.74 Z" fill="${farbe}"/>`;
+      g += `<path d="M${f3(x - 0.03 * gr)} ${f3(sch + 0.01)} L${f3(x - 0.028 * gr)} ${f3(sch - 0.06 * gr)} L${f3(x + 0.028 * gr)} ${f3(sch - 0.06 * gr)} L${f3(x + 0.03 * gr)} ${f3(sch + 0.01)} Z" fill="#7a5a48"/>`;
+      const ky = sch - 0.06 * gr - 0.09 * gr;
+      g += `<ellipse cx="${x}" cy="${f3(ky)}" rx="${S2(0.085)}" ry="${S2(0.1)}" fill="#8a6650"/><path d="M${f3(x - 0.085 * gr)} ${f3(ky)} Q${f3(x - 0.08 * gr)} ${f3(ky - 0.11 * gr)} ${x} ${f3(ky - 0.105 * gr)} Q${f3(x + 0.08 * gr)} ${f3(ky - 0.1 * gr)} ${f3(x + 0.085 * gr)} ${f3(ky - 0.02 * gr)} Q${x} ${f3(ky - 0.06 * gr)} ${f3(x - 0.085 * gr)} ${f3(ky)} Z" fill="${haar}"/>`;
+      if (profil) g += `<path d="M${f3(x + 0.08 * gr)} ${f3(ky)} l${S2(0.025)} ${S2(0.018)} l${S2(-0.022)} ${S2(0.01)} Z" fill="#8a6650"/>`;
+      /* ein Arm liegt angewinkelt auf dem Tisch */
+      if (!hoch) g += `<path d="M${f3(x + 0.17 * gr)} ${f3(sch + 0.06)} L${f3(x + 0.2 * gr)} -.8 L${f3(x + 0.06 * gr)} -.79" stroke="${farbe}" stroke-width="${S2(0.05)}" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`;
+      g += `<path d="M${f3(x + 0.085 * gr)} ${f3(ky - 0.04 * gr)} Q${f3(x + 0.095 * gr)} ${f3(ky + 0.04 * gr)} ${f3(x + 0.06 * gr)} ${f3(ky + 0.08 * gr)} M${f3(x + 0.2 * gr)} ${f3(sch + 0.09 * gr)} L${f3(x + 0.19 * gr)} -.78" stroke="${RAND}" stroke-width=".013" fill="none" opacity=".9"/>`;
+      if (hoch) { const sx = hoch, hx = x + sx * 0.2; g += `<path d="M${f3(x + sx * 0.15)} ${f3(sch + 0.03)} L${f3(x + sx * 0.22)} ${f3(sch - 0.18)} L${f3(hx)} -1.42" stroke="${farbe}" stroke-width=".05" fill="none" stroke-linecap="round"/><path d="M${f3(hx - 0.04)} -1.42 L${f3(hx - 0.04)} -1.56 L${f3(hx + 0.04)} -1.56 L${f3(hx + 0.04)} -1.42 Z" fill="#c89030"/><path d="M${f3(hx - 0.045)} -1.56 q.045 -.03 .09 0 Z" fill="#fff4d8"/><path d="M${f3(hx + 0.04)} -1.56 L${f3(hx + 0.04)} -1.42" stroke="${RAND}" stroke-width=".012"/>`; }
+      if (helm) g += `<path d="M${f3(x - 0.1)} ${f3(ky - 0.01)} Q${f3(x - 0.09)} ${f3(ky - 0.13)} ${x} ${f3(ky - 0.13)} Q${f3(x + 0.1)} ${f3(ky - 0.13)} ${f3(x + 0.11)} ${f3(ky - 0.01)} Z" fill="#3a6aa8"/><path d="M${f3(x - 0.04)} ${f3(ky - 0.11)} L${f3(x - 0.035)} ${f3(ky - 0.03)} M${f3(x + 0.03)} ${f3(ky - 0.12)} L${f3(x + 0.03)} ${f3(ky - 0.03)}" stroke="#e8e8e8" stroke-width=".012"/>`;
     }
     g += `<rect x="-1.05" y="-.78" width="1.8" height=".05" fill="${SI}"/><path d="M-1.05 -.78 L.75 -.78" stroke="${RAND}" stroke-width=".012"/>`;
     g += `<g fill="none" stroke="${SI}" stroke-width=".03"><circle cx=".95" cy="-.3" r=".29"/><circle cx="1.31" cy="-.3" r=".29"/><path d="M.95 -.3 L1.08 -.62 L1.26 -.6 L1.31 -.3 M1.08 -.62 L1.12 -.3 L.95 -.3 M1.12 -.3 L1.26 -.6 M1.04 -.7 L1.12 -.7 M1.24 -.6 L1.2 -.72 L1.28 -.74"/></g>`;
     g += `<path d="M1.6 -.3 A.29 .29 0 0 0 1.31 -.59 M1.24 -.3 A.29 .29 0 0 0 .95 -.59" stroke="${RAND}" stroke-width=".012" fill="none"/>`;
-    f += `<g transform="translate(268 166) scale(32.5)" opacity=".92">${g}</g>`;
+    f += `<g transform="translate(268 166) scale(32.5)">${g}</g>`;
   }
   S.teil({ id: "biergarten", de: "der Biergarten", syl: "BIER-gar-ten", it: "la birreria all'aperto", itSyl: "bir-re-RI-a al-la-PER-to", en: "beer garden", x: 272, y: 186, kunst: anker(272, 186, f),
     tipp: "Im Biergarten sitzt man im Sommer draußen unter Bäumen und isst und trinkt." });
@@ -786,7 +796,6 @@ const T_TELLER = -28, T_GLAS1 = -12, T_SENF = -3, T_BREZEL = 7, T_GLAS2 = 18;
 }
 /* Glieder im Flachstil: zum Ende hin schmaler (Oberarm breiter als Unterarm), mit sichtbarem Knick am Gelenk;
    Hände als Fäustlinge mit abgesetztem Daumen; Lichtkanten als gefüllte Sicheln am Umriss */
-const f3 = (v) => +v.toFixed(3);
 const glied = (pts, ws, fill) => {
   const L = [], R = [];
   for (let i = 0; i < pts.length; i++) {
