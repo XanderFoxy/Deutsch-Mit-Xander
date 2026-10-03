@@ -64,7 +64,7 @@ S.hinten(`<rect x="0" y="96" width="206" height="${WU - 96}" fill="${S.lg("buffe
 /* Terrazzoboden */
 {
   let f = `<rect x="0" y="${WU}" width="320" height="${200 - WU}" fill="${S.lg("boden", [[0, "#cdbfae"], [1, "#e6dccd"]])}"/>`;
-  for (let i = 0; i < 90; i++) f += `<circle cx="${r(rnd() * 320)}" cy="${r(WU + 2 + rnd() * 72)}" r="${r(0.3 + rnd() * 0.5)}" fill="${["#9a8a76", "#b55a3a", "#5a7a6a", "#fff"][i % 4]}" opacity=".5"/>`;
+  for (let i = 0; i < 50; i++) f += `<circle cx="${r(rnd() * 320)}" cy="${r(WU + 2 + rnd() * 72)}" r="${r(0.3 + rnd() * 0.5)}" fill="${["#9a8a76", "#b55a3a", "#5a7a6a", "#fff"][i % 4]}" opacity=".5"/>`;
   for (let i = -10; i <= 10; i++) { const xw = VP.x + i * 26; f += `<line x1="${xw}" y1="${WU}" x2="${r(VP.x + (xw - VP.x) * (200 - VP.y) / (WU - VP.y))}" y2="200" stroke="#b3a48f" stroke-width=".35"/>`; }
   for (const y of [131, 138, 148, 162, 180, 200]) f += `<line x1="0" y1="${y}" x2="320" y2="${y}" stroke="#b3a48f" stroke-width=".35"/>`;
   f += `<rect x="0" y="${WU}" width="320" height="${200 - WU}" fill="${S.lg("bodenlicht", [[0, "#000", 0.15], [0.4, "#000", 0], [1, "#fff", 0.1]])}"/>`;
@@ -89,9 +89,9 @@ S.hinten(`<rect x="0" y="96" width="206" height="${WU - 96}" fill="${S.lg("buffe
   const t = (y, s, txt, f = "#f4f0e6", a = "middle", x = 0) => T(x, y, s, txt, f, a, "normal", "'Comic Sans MS','Segoe Print',cursive");
   k += t(-37.4, 5, "Gelato", "#f6e7a1") + `<line x1="-16" y1="-35.4" x2="16" y2="-35.4" stroke="#f6e7a1" stroke-width=".35" stroke-dasharray="1 .8"/>`;
   [["1 Kugel", "1,80 €"], ["2 Kugeln", "3,40 €"], ["3 Kugeln", "4,90 €"], ["Sahne", "0,80 €"], ["Spaghettieis", "6,50 €"]].forEach(([a, b], i) => {
-    k += t(-29.6 + i * 5.8, 3.4, a, "#f4f0e6", "start", -23) + t(-29.6 + i * 5.8, 3.4, b, "#ffd1c2", "end", 23);
+    k += t(-30 + i * 5, 3.3, a, "#f4f0e6", "start", -23) + t(-30 + i * 5, 3.3, b, "#ffd1c2", "end", 23);
   });
-  k += `<circle cx="-18" cy="-9" r="1.6" fill="#f6c6d4"/><circle cx="-15.6" cy="-9.6" r="1.6" fill="#f3e7b4"/><path d="M-19 -8 L-16.6 -3.4 L-14.4 -8.4 Z" fill="#d9a35b"/>` + t(4, -6, 2.6, "Becher auch zum Mitnehmen!", "#c9e6a0");
+  k += t(-4.6, 2.5, "Becher auch zum Mitnehmen!", "#c9e6a0");
   S.teil({ id: "ed_sortentafel", de: "die Sortentafel", syl: "SOR-ten-ta-fel", it: "il listino dei gusti", itSyl: "li-STI-no dei GU-sti", en: "flavour board", x: 244, y: 78, kunst: k,
     tipp: "Auf der Sortentafel steht, was eine Kugel Eis kostet." });
 }
@@ -136,8 +136,8 @@ S.hinten(`<rect x="0" y="96" width="206" height="${WU - 96}" fill="${S.lg("buffe
    ===================================================================== */
 {
   const m = B.mensch({ id: "ed_verk", geschlecht: "m", pose: "halten", blick: 16, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "oliv", laecheln: true, bart: true,
-    kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, schuerze: { stueck: "schuerze", farbe: "#e9f2ee" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, kopf: { stueck: "kappe", farbe: "weiss" } } }, 90);
-  S.teil({ id: "ed_eisverkaeufer", de: "der Eisverkäufer", syl: "EIS-ver-käu-fer", it: "il gelataio", itSyl: "ge-la-TA-io", en: "ice-cream seller", x: 104, y: 170, kunst: m.svg,
+    kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, schuerze: { stueck: "schuerze", farbe: "#e9f2ee" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, kopf: { stueck: "kappe", farbe: "weiss" } } }, 96);
+  S.teil({ id: "ed_eisverkaeufer", de: "der Eisverkäufer", syl: "EIS-ver-käu-fer", it: "il gelataio", itSyl: "ge-la-TA-io", en: "ice-cream seller", x: 104, y: 166, kunst: m.svg,
     tipp: "Der Eisverkäufer fragt: „Becher oder Waffel?“" });
 }
 
