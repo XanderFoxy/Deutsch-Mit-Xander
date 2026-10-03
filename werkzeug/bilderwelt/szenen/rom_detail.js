@@ -86,7 +86,7 @@ function rahmen(x0, y0, w, h, schild) {
   g += `<rect x="${x0 - 1.4}" y="${y0 - 1.4}" width="${w + 2.8}" height="${h + 2.8}" fill="none" stroke="#7e5a1c" stroke-width=".5"/>`;
   g += `<rect x="${x0 - 2.6}" y="${y0 - 2.6}" width="${w + 5.2}" height="${h + 5.2}" fill="none" stroke="#fff1b8" stroke-width=".3" opacity=".8"/>`;
   for (const [x, y] of [[x0 - 3, y0 - 3], [x0 + w + 3, y0 - 3], [x0 - 3, y0 + h + 3], [x0 + w + 3, y0 + h + 3]]) g += `<circle cx="${x}" cy="${y}" r="2" fill="${GOLD}"/>`;
-  g += `<rect x="${x0 + w / 2 - 12}" y="${y0 + h + 6}" width="24" height="4" rx=".4" fill="${S.lg("messing", [[0, "#f0d890"], [1, "#a8843a"]])}"/>`;
+  g += `<rect x="${x0 + w / 2 - 22}" y="${y0 + h + 6}" width="44" height="4" rx=".4" fill="${S.lg("messing", [[0, "#f0d890"], [1, "#a8843a"]])}"/>`;
   g += `<text x="${x0 + w / 2}" y="${y0 + h + 8.8}" font-size="1.9" text-anchor="middle" fill="#3a2a10" font-family="Georgia,serif">${schild}</text>`;
   return g;
 }
@@ -226,13 +226,14 @@ function rahmen(x0, y0, w, h, schild) {
 }
 
 /* Sockel mit Absperrkordel und Messingschild */
-function sockel(x0, x1, yTop, yFuss, schild) {
+function sockel(x0, x1, yTop, yFuss, schild, tiefe = 0) {
   const cx = (x0 + x1) / 2;
   let g = schatten(cx, yFuss + 0.4, (x1 - x0) / 2 + 4, 2.4, 0.35);
+  if (tiefe) g += `<path d="M${x0 - 1.4} ${yTop - 1.4} L${x0 + 6} ${yTop - tiefe} L${x1 - 6} ${yTop - tiefe} L${x1 + 1.4} ${yTop - 1.4} Z" fill="${S.lg("sockeloben" + x0, [[0, "#4e3c2e"], [1, "#6a5240"]])}"/>`;
   g += `<rect x="${x0}" y="${yTop}" width="${x1 - x0}" height="${yFuss - yTop}" fill="${S.lg("sockelholz" + x0, [[0, "#3a2c24"], [0.5, "#54402f"], [1, "#2c201a"]], 0, 0, 1, 0)}"/>`;
   g += `<rect x="${x0 - 1.4}" y="${yTop - 2}" width="${x1 - x0 + 2.8}" height="2.6" fill="#6a5240"/><rect x="${x0 - 1}" y="${yFuss - 3}" width="${x1 - x0 + 2}" height="3" fill="#2a1e18"/>`;
-  g += `<rect x="${cx - 16}" y="${yTop + 8}" width="32" height="6" rx=".5" fill="${S.lg("schild" + x0, [[0, "#f0d890"], [1, "#a8843a"]])}"/>`;
-  g += `<text x="${cx}" y="${yTop + 11.6}" font-size="2.3" text-anchor="middle" fill="#3a2a10" font-family="Georgia,serif">${schild}</text>`;
+  g += `<rect x="${cx - 26}" y="${yTop + 6}" width="52" height="5.4" rx=".5" fill="${S.lg("schild" + x0, [[0, "#f0d890"], [1, "#a8843a"]])}"/>`;
+  g += `<text x="${cx}" y="${yTop + 9.4}" font-size="2.3" text-anchor="middle" fill="#3a2a10" font-family="Georgia,serif">${schild}</text>`;
   /* Kordel an Messingständern */
   for (const x of [x0 - 6, x1 + 6]) g += `<rect x="${x - 0.8}" y="${yFuss - 16}" width="1.6" height="16" fill="#c9a33a"/><circle cx="${x}" cy="${yFuss - 16.6}" r="1.4" fill="#e8c95a"/><ellipse cx="${x}" cy="${yFuss}" rx="3" ry=".8" fill="#a8843a"/>`;
   g += `<path d="M${x0 - 6} ${yFuss - 15} Q${cx} ${yFuss - 4} ${x1 + 6} ${yFuss - 15}" stroke="#8a1a22" stroke-width="1.2" fill="none"/>`;
@@ -243,11 +244,11 @@ function sockel(x0, x1, yTop, yFuss, schild) {
    3 — DAS KOLOSSEUM (Korkmodell, links vorn) — Lupe
    ===================================================================== */
 {
-  const cx = 74, rx = 52, ry = 12, yT = 104, Hh = 30, yB = yT + Hh;
+  const cx = 74, rx = 52, ry = 12, yT = 110, Hh = 30, yB = yT + Hh;
   const TB = 0.78;  /* ab hier (rechts) ist der Außenring eingestürzt */
   const pt = (t, h, a = rx, b = ry) => [r(cx + a * Math.cos(t)), r(yB + b * Math.sin(t) - h)];
   const kante = (t0, t1, h, a, b, n = 24) => { const o = []; for (let i = 0; i <= n; i++) { const t = t0 + (t1 - t0) * i / n; o.push(pt(t, h, a, b).join(" ")); } return o; };
-  let k = sockel(cx - 58, cx + 58, yB + 6, 184, "KOLOSSEUM · Korkmodell von Carl May");
+  let k = sockel(cx - 58, cx + 58, 158, 186, "KOLOSSEUM · Korkmodell von Carl May", 30);
   /* Grundplatte */
   k += `<ellipse cx="${cx}" cy="${yB + 2}" rx="${rx + 6}" ry="${ry + 3.4}" fill="#8a7a62"/><ellipse cx="${cx}" cy="${yB + 1.4}" rx="${rx + 5}" ry="${ry + 2.6}" fill="${S.lg("platte", [[0, "#b9a888"], [1, "#9a8a6c"]])}"/>`;
   /* Innen: Ränge (Cavea) und Arena mit den Gängen des Hypogäums */
@@ -307,7 +308,7 @@ function sockel(x0, x1, yTop, yFuss, schild) {
     U(["bruchkante", "die Bruchkante", "BRUCH-kan-te", "il fronte di rottura", "FRON-te di rot-TU-ra", "broken edge"], bx - 1, by - Hh, bx + 8.4, by - 9, "Erdbeben und Steinraub haben den Außenring auf der Südseite zerstört."),
     U(["innenrang", "der Innenrang", "IN-nen-rang", "la gradinata interna", "gra-di-NA-ta in-TER-na", "inner tier"], cx - 20, yT - 10, cx + 20, yT - 4, "Auf den Rängen saßen bis zu 50 000 Zuschauer."),
   ];
-  S.teil({ id: "d_kolosseum", de: "das Kolosseum", syl: "Ko-los-SE-um", it: "il Colosseo", itSyl: "co-los-SE-o", en: "Colosseum", x: cx, y: 184, steht: true, kunst: abs(cx, 184, k),
+  S.teil({ id: "d_kolosseum", de: "das Kolosseum", syl: "Ko-los-SE-um", it: "il Colosseo", itSyl: "co-los-SE-o", en: "Colosseum", x: cx, y: 186, steht: true, kunst: abs(cx, 186, k),
     zoom: { x: cx - 58, y: yT - 18, w: 116, h: 74 }, unter,
     tipp: "Das Modell zeigt das Kolosseum, wie es um 1800 aussah – mit der eingestürzten Südseite." });
 }
@@ -316,7 +317,7 @@ function sockel(x0, x1, yTop, yFuss, schild) {
    4 — DAS PANTHEON (Korkmodell, rechts vorn) — Lupe
    ===================================================================== */
 {
-  const cx = 250, yF = 186, yS = 140;
+  const cx = 262, yF = 186, yS = 150;
   let k = sockel(cx - 46, cx + 46, yS + 6, yF, "PANTHEON · Korkmodell von Carl May");
   k += `<rect x="${cx - 44}" y="${yS + 1}" width="88" height="5" fill="${S.lg("platte2", [[0, "#b9a888"], [1, "#8a7a62"]])}"/><path d="M${cx - 44} ${yS + 1} L${cx - 40} ${yS - 6} L${cx + 40} ${yS - 6} L${cx + 44} ${yS + 1} Z" fill="#c4b494"/>`;
   /* Rotunde (Zylinder) mit Gurtgesimsen, dahinter */
