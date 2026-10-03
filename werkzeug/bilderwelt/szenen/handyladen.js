@@ -192,7 +192,7 @@ const phone = (x, y, w, h, schirm, rahmen = "#1d1f23") =>
     k += `<rect x="${r(x - 3)}" y="${y3 - 10.6}" width="6" height="7" rx="1.8" fill="#16181b"/><rect x="${r(x - 2.4)}" y="${y3 - 10}" width="4.8" height="5.8" rx="1.4" fill="${SCHIRME[(i + 3) % 6]}"/><text x="${r(x)}" y="${y3 - 6.4}" font-size="1.7" text-anchor="middle" fill="#fff" font-family="Arial">10:42</text>`;
   }
   const unter = [
-    { id: "ha_seniorenhandy", de: "das Seniorenhandy", syl: "se-NI-o-ren-han-dy", it: "il cellulare per anziani", itSyl: "cel-lu-LA-re per an-ZIA-ni", en: "senior phone", x: X0 + 22, y: Y1 - H + 72 + 2, kunst: flaeche(-18, -18, 36, 20),
+    { id: "ha_seniorenhandy", de: "das Seniorenhandy", syl: "se-ni-O-ren-han-dy", it: "il cellulare per anziani", itSyl: "cel-lu-LA-re per an-ZIA-ni", en: "senior phone", x: X0 + 22, y: Y1 - H + 72 + 2, kunst: flaeche(-18, -18, 36, 20),
       tipp: "Große Tasten, laut und einfach – mit einer Notruftaste." },
     { id: "ha_smartwatch", de: "die Smartwatch", syl: "SMART-watch", it: "lo smartwatch", itSyl: "SMART-watch", en: "smartwatch", x: X0 + 58, y: Y1 - H + 72 + 2, kunst: flaeche(-16, -20, 32, 22) },
   ];

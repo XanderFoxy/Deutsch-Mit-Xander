@@ -98,6 +98,19 @@ const XL = -3.95, XR = 3.95, HD = 3.0;
   /* Fossil-Sprenkel des Jurakalks */
   for (let i = 0; i < 160; i++) { const X = -4 + rnd() * 8, z = rnd() * 3.2, [x, y] = P(X, 0, z); fu += `<ellipse cx="${x}" cy="${y}" rx="${r(0.4 + rnd() * 0.7)}" ry="${r(0.2 + rnd() * 0.3)}" fill="${rnd() < 0.5 ? "#a79f90" : "#e0dbd0"}" opacity=".55"/>`; }
   k += fu;
+  /* Bodenleitsystem für Blinde: geriffelte weiße Platten vom Eingang zur Infotheke */
+  {
+    const bahn = (Xa, Xb, za, zb) => {
+      let g = poly([P(Xa, 0, za), P(Xb, 0, za), P(Xb, 0, zb), P(Xa, 0, zb)], "#eceae4");
+      if (Xb - Xa >= 0.4) for (let z = za; z < zb; z += 0.05) { const a = P(Xa + 0.03, 0, z), b = P(Xb - 0.03, 0, z); g += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#c9c5bb" stroke-width=".35"/>`; }
+      else for (let X = Xa + 0.05; X < Xb; X += 0.06) { const a = P(X, 0, za + 0.03), b = P(X, 0, zb - 0.03); g += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#c9c5bb" stroke-width=".35"/>`; }
+      return g;
+    };
+    k += bahn(-0.15, 0.15, 1.75, 3.4);
+    k += bahn(-0.15, 0.15, 1.45, 1.75).replace(/<line[^>]*>/g, "");
+    for (let X = -0.12; X < 0.13; X += 0.08) for (let z = 1.48; z < 1.74; z += 0.08) { const [x, y] = P(X, 0, z); k += `<ellipse cx="${x}" cy="${y}" rx=".9" ry=".35" fill="#c9c5bb"/>`; }
+    k += bahn(0.15, 0.7, 1.52, 1.68);
+  }
   /* Sockelleiste und Spiegelung des Lichts im polierten Stein */
   k += `<rect x="${WX(XL)}" y="${r(WU - 2.6)}" width="${r(WX(XR) - WX(XL))}" height="2.6" fill="#8d8a84"/>`;
   k += `<rect x="0" y="${WU}" width="320" height="${r(200 - WU)}" fill="${S.lg("bodenlicht", [[0, "#000", 0.12], [0.45, "#000", 0], [1, "#fff", 0.08]])}"/>`;
@@ -206,7 +219,7 @@ const SK = { x0: WX(0.95), x1: WX(2.08), y0: WY(2.44), y1: WY(1.76) };
     const bx = x0 + 3, by = y0 + 6, bw = 11, bh = 15.5;
     k += `<rect x="${bx + 0.4}" y="${by + 0.4}" width="${bw}" height="${bh}" fill="#000" opacity=".25"/><rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="#fbfbf8"/>`;
     k += `<rect x="${bx + 1}" y="${by + 1}" width="2.2" height="2.6" fill="#555" opacity=".7"/>` + T(bx + 4, by + 2.6, 1.15, "Stadt Konstanz", "#333");
-    k += T(bx + bw / 2, by + 5.4, 1.45, "Meldebescheinigung", "#111", 'text-anchor="middle" font-weight="bold"');
+    k += T(bx + bw / 2, by + 5.4, 1.08, "Meldebescheinigung", "#111", 'text-anchor="middle" font-weight="bold"');
     for (let i = 0; i < 6; i++) k += `<rect x="${bx + 1.2}" y="${r(by + 7 + i * 1.2)}" width="${r(bw - 2.4 - (i % 3) * 1.5)}" height=".35" fill="#9aa0a6"/>`;
     k += `<circle cx="${bx + bw - 3}" cy="${by + bh - 2.4}" r="1.6" fill="none" stroke="#3a5aa8" stroke-width=".35" opacity=".8"/>`;
     k += `<circle cx="${bx + bw / 2}" cy="${by - 0.2}" r=".6" fill="#c8102e"/>`;
@@ -219,7 +232,7 @@ const SK = { x0: WX(0.95), x1: WX(2.08), y0: WY(2.44), y1: WY(1.76) };
     k += `<rect x="${bx + 0.4}" y="${by + 0.4}" width="${bw}" height="${bh}" fill="#000" opacity=".25"/><rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="${S.lg("urkunde", [[0, "#f6ecd2"], [1, "#eadbb6"]])}"/>`;
     k += `<rect x="${bx + 0.6}" y="${by + 0.6}" width="${bw - 1.2}" height="${bh - 1.2}" fill="none" stroke="#b08a4a" stroke-width=".3"/>`;
     k += `<rect x="${bx + bw / 2 - 1.8}" y="${by + 1.6}" width="3.6" height="3.6" fill="#d52b1e"/><rect x="${bx + bw / 2 - 0.35}" y="${by + 2.3}" width=".7" height="2.2" fill="#fff"/><rect x="${bx + bw / 2 - 1.1}" y="${by + 3.05}" width="2.2" height=".7" fill="#fff"/>`;
-    k += T(bx + bw / 2, by + 7.4, 1.4, "HEIMATSCHEIN", "#5a3d16", 'text-anchor="middle" font-weight="bold" font-family="Georgia,serif"');
+    k += T(bx + bw / 2, by + 7.4, 1.12, "HEIMATSCHEIN", "#5a3d16", 'text-anchor="middle" font-weight="bold" font-family="Georgia,serif"');
     for (let i = 0; i < 4; i++) k += `<rect x="${bx + 1.4}" y="${r(by + 8.8 + i * 1.3)}" width="${r(bw - 2.8 - (i % 2) * 2)}" height=".3" fill="#9c8558"/>`;
     k += `<circle cx="${bx + 3}" cy="${by + bh - 2.2}" r="1.5" fill="#c43a2c" opacity=".75"/>`;
     k += `<circle cx="${bx + bw / 2}" cy="${by - 0.2}" r=".6" fill="#c8102e"/>`;
