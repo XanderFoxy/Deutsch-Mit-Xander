@@ -3261,3 +3261,27 @@ XANDER (Funk 271, wörtlich): „alles insgesamt nur zehn Mal schneller".
   - Das Dokument ist klein (1.610 Elemente, 9.090 CSS-Regeln). Stile und Layout sind kein großer Hebel.
   - data-exercises.js (776 KB, 235 KB übertragen) trägt den italienischen Wortschatz (IT_WOERTER 103 KB, IT_GESCHICHTE 30 KB) und das Deutschland-Quiz (120 KB). Die Italienisch-Teile werden an vielen Stellen ohne Warten gelesen, auch in spiel.js. Auslagern heißt, den Weg in den Italienischraum umzubauen; das ist der nächste größere Schritt.
 - **Sonden**: tutor, tutor-stuecke, tutorreiter, tutorbild62 grün.
+
+## Fassung 848 — Die Wache ruft keinen Geist mehr an, Rückkehr in den Vordergrund meldet sich (Test 03.10., 01:10–01:19)
+
+Neue Zeitleisten 327–345, alle vom Oppo:
+- Das Oppo lief weiter auf **Fassung 842** (nicht neu geladen).
+- Neun Minuten lang schickte es alle 6–8 s ein Angebot an **„pvvqnljpk1“**, die alte Zufallskennung des Samsung, und bekam nie eine Antwort. Jedes Angebot war eine neue Wegesuche mit 34 Relais-Kandidaten.
+- Der Geist pulste weiter („gesehen“ wird nur durch Nachrichten aufgefrischt), schickte aber nie ein „hallo“. Wohl ein alter Tab im Hintergrund.
+- Das Samsung selbst war unter seiner Konto-Kennung **k258507e0a** da (843 wirkt). Die Leitung Oppo ↔ Samsung stand einmal nach 23 s (Zeitleiste 330): die erste Wegesuche blieb hängen, die Relais-Kandidaten des Samsung kamen erst nach 18,9 s.
+- Vom Samsung kam in dieser Runde keine einzige Zeitleiste. Woran das liegt, ist ohne seine Daten nicht zu klären.
+
+Was 848 ändert (livechat.js):
+- **Wache (`GEIST_MS`)**: Bleiben vier Versuche ohne Antwort, ruft die Wache diese Kennung nur noch etwa alle 90 s an statt alle 6–30 s. Meldet sich die Gegenseite mit „hallo“ oder antwortet sie, gilt sofort wieder das normale Tempo (Zählung zurück auf 0).
+- **Zurück im Vordergrund (`zurueckImVordergrund`)**: Hat man dann zu jemandem keine stehende Leitung, geht EIN „hallo“ mit `wieder: true` hinaus, höchstens alle 3 s.
+  - Drüben bleiben stehende Leitungen stehen, nur hängende werden neu aufgebaut (Regel aus 842).
+  - Es gibt keinen „ist hereingekommen“-Hinweis und keinen Auftritt, weil die Person schon da war.
+- Prüfhaken `pruefWache`, `pruefVordergrund`, `pruefVersuch`.
+- **Sonden**: neu `pruefe-866-geist-wache.js` (Wache verkürzt: Geduld 300 ms, Geist 3 s):
+  - die ersten Angebote kommen im kurzen Takt;
+  - danach kommt eins je Pause; die Abstände wechseln zwischen 3,4 s und 2,6 s (Neuaufbau +0,4 s / Neustart der Wegesuche), im Mittel eins je Pause;
+  - „hallo“ setzt zurück und es wird sofort angerufen;
+  - die Rückkehr schickt genau ein „hallo“ mit „wieder“; allein im Raum schickt sie keins;
+  - keine Seitenfehler.
+  
+  Grün: 866, 862, 861, 659, 856, 859, 811-leitung, 816, 827, runde18, einladungslink, 863.

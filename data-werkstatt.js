@@ -49,28 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 847: Tutorfigur als verlustfreies WebP (−85 KB beim ersten Öffnen), Messung mit drittem Öffnen",
+  stand: "Fassung 848: Wache ruft stumme Gegenseite nur noch alle 90 s an, Rückkehr in den Vordergrund meldet sich",
 
   inArbeit: [
-    { seit: "2026-10-03T01:09",
-      text: "Italienisch-Daten aus data-exercises.js auslagern (Weg in den Italienischraum)" },
-    { seit: "2026-10-03T01:09",
-      text: "app.js weiter teilen (Kreuzworträtsel, Reise-Effekte)" },
-    { seit: "2026-10-03T01:09",
+    { seit: "2026-10-03T01:28",
+      text: "Beide Handys neu laden (Oppo noch auf 842)" },
+    { seit: "2026-10-03T01:28",
+      text: "Italienisch-Daten aus data-exercises.js auslagern" },
+    { seit: "2026-10-03T01:28",
       text: "Bilderwelt neu (Funk 263)" },
-    { seit: "2026-10-03T01:09",
+    { seit: "2026-10-03T01:28",
       text: "sfu/aussprache: OK abwarten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-03T01:09",
+    { seit: "2026-10-03T01:28",
       text: "Chat-Fenster (844)" },
-    { seit: "2026-10-03T01:09",
+    { seit: "2026-10-03T01:28",
       text: "Uhr ohne Intl (845)" },
-    { seit: "2026-10-03T01:09",
+    { seit: "2026-10-03T01:28",
       text: "Lesetexte nachladen (846)" },
-    { seit: "2026-10-03T01:09",
+    { seit: "2026-10-03T01:28",
       text: "Tutorfigur WebP (847)" },
+    { seit: "2026-10-03T01:28",
+      text: "Geist-Wache (848)" },
   ],
 };

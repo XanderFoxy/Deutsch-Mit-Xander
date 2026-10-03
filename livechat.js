@@ -5368,6 +5368,7 @@ window.LiveChat = (function () {
         && Date.now() - (halloPc.__seit || 0) < 8000);
       if (n.sitzung) sitzungVon[n.von] = n.sitzung;
       if (halloErinnerung) { leitungMerk(n.von, "halloErinnerung"); return; }
+      if (versuchJe[n.von]) versuchJe[n.von].ohneAntwort = 0;   // FASSUNG 848 — sie meldet sich: wieder normales Tempo
       if (brueckeJe[n.von] && !(n.wieder === true && steht(brueckeJe[n.von]))) brueckeAbbauen(n.von);
       if (!(n.wieder === true && brueckeJe[n.von])) { delete leitungMess[n.von]; leitungMerk(n.von, "hallo"); }   // FASSUNG 840
       sfuNeustartVon(n.von, n);  /* FASSUNG 827/842 */
@@ -6385,6 +6386,7 @@ window.LiveChat = (function () {
      Leitung wird so bis zu zwei Sekunden früher neu angestoßen. */
   var WACHE_MS = 2000;
   var GEDULD_MS = 6000;        // so lange darf eine Leitung brauchen
+  var GEIST_MS = 90000;        // FASSUNG 848 — Abstand bei einer Gegenseite, die nie antwortet
   var wacheUhr = null;
   var versuchJe = {};          // Kennung -> { seit, stufe, anlaeufe }
   var letzterLeitungsstand = "";
@@ -6446,6 +6448,12 @@ window.LiveChat = (function () {
            oder beginnt die Wegesuche, fängt die Uhr neu an (siehe „antwort" und oniceconnectionstatechange). */
         var geduld = GEDULD_MS;
         if (pc.signalingState === "have-local-offer") geduld = Math.min(30000, GEDULD_MS * (1 + (v.ohneAntwort || 0)));
+        /* FASSUNG 848 — Test vom 03.10., 01:10–01:19: das Oppo rief neun Minuten lang alle 6–8 s „pvvqnljpk1" an – die
+           alte Kennung des Samsung, wohl ein alter Tab im Hintergrund, der noch pulste, aber nie antwortete. Jedes Angebot
+           ist eine neue Wegesuche (34 Relais-Kandidaten) und belastet genau die Leitung, über die das echte Gespräch
+           aufgebaut wird. Nach vier Angeboten ohne jede Antwort wird nur noch alle 90 s angerufen; meldet sich die
+           Gegenseite („hallo", Antwort), gilt wieder das normale Tempo. */
+        if (pc.signalingState === "have-local-offer" && (v.ohneAntwort || 0) >= 4) geduld = GEIST_MS;
         if (jetzt - v.seit < geduld) return;
         if (pc.signalingState === "have-local-offer") v.ohneAntwort = (v.ohneAntwort || 0) + 1;
         v.seit = jetzt;
@@ -6957,7 +6965,25 @@ window.LiveChat = (function () {
   document.addEventListener("visibilitychange", function () {
     var v = document.visibilityState;
     Object.keys(leitungMess).forEach(function (id) { if (!leitungMess[id].gesendet) leitungMerk(id, "seite", v); });
+    if (v === "visible") zurueckImVordergrund();
   });
+  /* FASSUNG 848 — wer aus dem Hintergrund zurückkommt und zu jemandem keine stehende Leitung hat, sagt „hallo" – mit
+     „wieder", damit drüben stehende Leitungen bleiben und nur die hängenden neu aufgebaut werden (siehe „hallo"). Die
+     Wache drüben ruft eine stumme Gegenseite nach vier vergeblichen Angeboten nur noch alle 90 s an; so wartet niemand
+     so lange, der wieder da ist. */
+  var vordergrundHalloUm = 0;
+  function zurueckImVordergrund() {
+    if (zustand.lage !== "drin") return;
+    if (Date.now() - vordergrundHalloUm < 3000) return;
+    var haengt = Object.keys(zustand.leute).some(function (id) {
+      return id !== zustand.ichId && !istPuppe(id) && !steht(brueckeJe[id]);
+    });
+    if (!haengt) return;
+    vordergrundHalloUm = Date.now();
+    senden({ art: "hallo", wieder: true, auftritt: eigenerAuftritt(), name: zustand.ichName, tonAn: zustand.tonAn,
+             bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
+             seit: zustand.seit, buehne: zustand.buehne, geschlecht: zustand.geschlecht || "", konto: kontoId || "" });
+  }
 
   function aufbauSenden(a) {
     if (!a || a.gesendet) return;
@@ -17471,6 +17497,17 @@ window.LiveChat = (function () {
        Gegenseite wie eine alte Fassung behandeln. */
     /* FASSUNG 841 — nur zum Nachprüfen: die Zeitleisten je Gegenüber (siehe leitungMerk) */
     pruefLeitungMess: function () { return JSON.parse(JSON.stringify(leitungMess)); },
+    /* FASSUNG 848 — Wache mit verkürzten Zeiten (Sonde 866) und die Rückkehr in den Vordergrund */
+    pruefWache: function (o) {
+      o = o || {};
+      if (o.geduld) GEDULD_MS = o.geduld;
+      if (o.geist) GEIST_MS = o.geist;
+      if (o.takt) WACHE_MS = o.takt;
+      wacheStarten();
+      return true;
+    },
+    pruefVordergrund: function () { vordergrundHalloUm = 0; zurueckImVordergrund(); },
+    pruefVersuch: function (id) { return JSON.parse(JSON.stringify(versuchJe[id] || null)); },
     pruefKanal: function () { return { bereit: Object.keys(kanalBereit), offen: Object.keys(kanalJe).filter(function (id) { return kanalJe[id].readyState === "open"; }) }; },
     pruefBuendelVergessen: function (id) { delete buendelFaehig[id]; },
     pruefWarteschlange: function () { return liveWarteschlange.map(function (w) { return w.id; }); },
