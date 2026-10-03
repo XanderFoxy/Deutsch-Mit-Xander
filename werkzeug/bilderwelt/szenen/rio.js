@@ -967,7 +967,8 @@ const ST = { x: 246, y: 160 };
   const AL = S.lg("alu", [[0, "#eef1f2"], [0.5, "#b9c0c4"], [1, "#dfe3e5"]], 0, 0, 1, 0);
   /* Schatten als Form: Lehne und Sitz fallen als schräges Parallelogramm nach links vorn, Beine als Striche */
   const w0 = 0.56 * s;
-  let k = `<path d="M${r(-w0 / 2)} .3 L${r(w0 / 2)} .3 L${r(w0 / 2 - 0.62 * s)} ${r(0.17 * s)} L${r(-w0 / 2 - 0.62 * s)} ${r(0.17 * s)} Z M${r(-w0 / 2 - 0.62 * s)} ${r(0.17 * s)} L${r(w0 / 2 - 0.62 * s)} ${r(0.17 * s)} L${r(w0 / 2 - 0.9 * s)} ${r(0.25 * s)} L${r(-w0 / 2 - 0.9 * s)} ${r(0.25 * s)} Z" fill="#6b4a1e" opacity=".28"/>`;
+  const ox = -8.6, oy = 2.7, sx2 = -2.4, sy2 = 0.8;   /* Richtung wie beim Jungen: Länge ≈ 0,27 × Höhe */
+  let k = `<g fill="#6b4a1e" opacity=".28"><path d="M${r(-w0 / 2 + 1.4 + sx2)} ${r(-0.02 * s + sy2)} L${r(w0 / 2 - 1.4 + sx2)} ${r(-0.02 * s + sy2)} L${r(w0 / 2 - 2.6 + sx2 * 1.2)} ${r(-0.11 * s + sy2 * 1.2)} L${r(-w0 / 2 + 2.6 + sx2 * 1.2)} ${r(-0.11 * s + sy2 * 1.2)} Z M${r(-w0 / 2 + 2.6 + sx2 * 1.2)} ${r(-0.11 * s + sy2 * 1.2)} L${r(w0 / 2 - 2.6 + sx2 * 1.2)} ${r(-0.11 * s + sy2 * 1.2)} L${r(w0 / 2 - 4.2 + ox)} ${r(-0.11 * s + oy)} L${r(-w0 / 2 + 4.2 + ox)} ${r(-0.11 * s + oy)} Z"/></g><path d="M${r(-w0 / 2)} 0 l${sx2} ${sy2} M${r(w0 / 2)} 0 l${sx2} ${sy2} M${r(-w0 / 2 + 2)} ${r(-0.09 * s)} l${sx2} ${sy2} M${r(w0 / 2 - 2)} ${r(-0.09 * s)} l${sx2} ${sy2}" stroke="#6b4a1e" stroke-width=".6" opacity=".28"/>`;
   /* Klappstuhl aus Aluminium, Sitz 0,25 m, Lehne schräg nach hinten (vom Betrachter weg = nach oben) */
   const w = 0.56 * s, sitz = -0.26 * s, tief = 0.09 * s, lehne = -0.88 * s;
   k += `<line x1="${r(-w / 2)}" y1="0" x2="${r(-w / 2 + 2)}" y2="${r(sitz - tief)}" stroke="${AL}" stroke-width="1"/><line x1="${r(w / 2)}" y1="0" x2="${r(w / 2 - 2)}" y2="${r(sitz - tief)}" stroke="${AL}" stroke-width="1"/>`;
@@ -1015,7 +1016,7 @@ let BALL;
   const altinha = { lende: 2, brust: 4, brustDreh: 6, nacken: 16, kopf: 16, kopfDreh: 10,
     schulterL: { vor: 12, seit: 58 }, ellbogenL: 28, unterarmL: 0, handL: 0, fingerL: 0.25,
     schulterR: { vor: -6, seit: 62 }, ellbogenR: 22, unterarmR: 0, handR: 0, fingerR: 0.25,
-    huefteL: { vor: 60, seit: 10, dreh: 8 }, knieL: 66, fussL: -28,
+    huefteL: { vor: 58, seit: 22, dreh: 10 }, knieL: 62, fussL: -26,
     huefteR: { vor: -3, seit: 5, dreh: -4 }, knieR: 8, fussR: 0 };
   const m = B.mensch({ id: "rio_junge", geschlecht: "m", alter: "kind", pose: altinha, blick: 34, frisur: "locken", haarfarbe: "schwarz", haut: "dunkel", laecheln: true,
     kleidung: { oberteil: { stueck: "unterhemd", farbe: "#f6d21e" }, unterteil: { stueck: "badehose", farbe: "#1d4fa0" } } }, 1.34 * s);
@@ -1029,7 +1030,7 @@ let BALL;
   let kragen = `<path d="M${r(hx - 2.6)} ${r(hy + 1.6)} Q${r(hx)} ${r(hy + 3.6)} ${r(hx + 2.6)} ${r(hy + 1.6)}" stroke="#139a43" stroke-width=".9" fill="none"/>`;
   kragen = trikot(m, "#f2cc1c", "#fbe36a", "#139a43", "#139a43");
   const [fx, fy] = q("fussL"), [zx, zy] = q("zehL");
-  BALL = { x: JU.x + (fx + zx) / 2 + 2.6, y: JU.y + Math.min(fy, zy) - 14.5, boden: JU.y + 1.2 };
+  BALL = { x: JU.x + zx + 2.4, y: JU.y + Math.min(fy, zy) - 13, boden: JU.y + 1.2 };
   const AY = JU.y - 0.62 * 1.34 * s;   /* Bezugspunkt auf der Brust */
   S.teil({ id: "junge", de: "der Junge", syl: "JUN-ge", it: "il ragazzo", itSyl: "ra-GAZ-zo", en: "boy", x: JU.x, y: AY, kunst: `<g transform="translate(0 ${r(JU.y - AY)})">${sch}<g filter="${GEGENLICHT}">${svg}${kragen}</g></g>`,
     tipp: "Der Junge trägt das gelbe Trikot der brasilianischen Fußball-Nationalmannschaft." });
@@ -1037,7 +1038,7 @@ let BALL;
 {
   /* der Ball springt über dem Spann des Jungen (Altinha); sein Schatten liegt genau darunter im Sand */
   const s = sy(BALL.boden), d = 0.22 * s;
-  let g = `<ellipse cx="-1.2" cy="${r(BALL.boden - BALL.y)}" rx="${r(d * 0.55)}" ry="${r(d * 0.14)}" fill="#6b4a1e" opacity=".45"/>`;
+  let g = `<ellipse cx="-11" cy="${r(BALL.boden - BALL.y + 2.6)}" rx="${r(d * 0.6)}" ry="${r(d * 0.17)}" fill="#6b4a1e" opacity=".28"/>`;
   g += `<circle cx="0" cy="0" r="${r(d / 2)}" fill="${S.rg("ball", [[0, "#ffffff"], [0.7, "#e4e4e0"], [1, "#a9aaa6"]], 0.7, 0.25, 0.85)}"/>`;
   /* klassisches Muster: Mittelfünfeck, rundherum Sechsecknähte, am Rand angeschnittene Fünfecke */
   const ecke = (cx, cy, rr, n, rot = -Math.PI / 2) => [...Array(n).keys()].map((i) => { const a = rot + i * 2 * Math.PI / n; return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]; });

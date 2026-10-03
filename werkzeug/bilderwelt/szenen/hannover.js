@@ -113,13 +113,12 @@ const krone = (cx, cy, R, fam, n = 16) => {
 {
   let k = "";
   /* ferne Stadt hinter dem Park (dunstig) */
-  for (const [x0, x1, h] of [[-160, -120, 22], [-120, -86, 18], [86, 120, 20], [120, 170, 24]]) k += `<g opacity=".55" filter="url(#${S.id("dunst")})">${pfad(fr(40, x0, 0, x1, h), "#c9c7c0")}${pfad(fe(40, [[x0, h], [x1, h], [x1 - 3, h + 3], [x0 + 3, h + 3]]), "#9aa3a0")}</g>`;
+  for (const [x0, x1, h] of [[-104, -86, 18], [86, 104, 20]]) k += `<g opacity=".55" filter="url(#${S.id("dunst")})">${pfad(fr(40, x0, 0, x1, h), "#c9c7c0")}${pfad(fe(40, [[x0, h], [x1, h], [x1 - 3, h + 3], [x0 + 3, h + 3]]), "#9aa3a0")}</g>`;
   /* Rasen und Weg am Nordufer vor dem Rathaus */
-  k += pfad(poly([[-260, -24, 0], [260, -24, 0], [260, -2, 0], [-260, -2, 0]]), S.lg("rasenfern", [[0, "#7f9a50"], [1, "#94a85e"]]));
+  k += `<rect x="0" y="${r(pr(0, -2, 0)[1])}" width="${BR}" height="${r(pr(0, -24, 0)[1] - pr(0, -2, 0)[1])}" fill="${S.lg("rasenfern", [[0, "#7f9a50"], [1, "#94a85e"]])}"/>`;
   /* Baumgruppen links (Westen) und rechts (Osten) des Rathauses, Stämme am Boden */
   const gruppe = (x, y, h, fam, n) => { const p = pr(x, y, 0), m = mass(y); let g = `<rect x="${r(p[0] - .35 * m)}" y="${r(p[1] - h * .45 * m)}" width="${r(.7 * m)}" height="${r(h * .45 * m)}" fill="#4a3a2c"/>`; g += krone(p[0], p[1] - h * .66 * m, h * .38 * m, fam, n); return g; };
-  for (const [x, y, h, f] of [[-118, -8, 24, 1], [-100, -14, 22, 0], [-82, -10, 26, 3], [-140, -16, 25, 2], [-66, -16, 20, 0], [-160, -6, 24, 3]]) k += gruppe(x, y, h, f, 18);
-  for (const [x, y, h, f] of [[104, -10, 25, 0], [86, -15, 22, 2], [122, -6, 26, 3], [70, -17, 19, 1], [146, -12, 24, 0], [168, -4, 23, 2]]) k += gruppe(x, y, h, f, 18);
+  for (const [x, y, h, f] of [[-86, -8, 23, 1], [-74, -14, 21, 0], [-64, -18, 17, 3], [86, -10, 23, 0], [74, -15, 21, 2], [64, -19, 17, 1]]) k += gruppe(x, y, h, f, 18);
   S.teil({ id: "maschpark", de: "der Maschpark", syl: "MASCH-park", it: "il parco Masch", itSyl: "PAR-co MASCH", en: "Maschpark", x: 0, y: 0, kunst: k,
     tipp: "Der Maschpark ist der älteste Bürgerpark Hannovers. Hannover ist eine der grünsten Großstädte Deutschlands." });
 }
@@ -181,8 +180,8 @@ const kuTeile = {};
   k += `<path d="M${r(hb[0] - 2.8 * hm)} ${r(hb[1])} Q${r(hb[0] - 2.4 * hm)} ${r(hb[1] - 2.6 * hm)} ${r(hb[0])} ${r(hb[1] - 3.4 * hm)} Q${r(hb[0] + 2.4 * hm)} ${r(hb[1] - 2.6 * hm)} ${r(hb[0] + 2.8 * hm)} ${r(hb[1])} Z" fill="${KUPFER}"/>`;
   const sp = pr(0, Y + 2, KU.top);
   k += `<path d="M${r(hb[0] - .5 * hm)} ${r(hb[1] - 3.2 * hm)} L${r(sp[0])} ${r(sp[1])} L${r(hb[0] + .5 * hm)} ${r(hb[1] - 3.2 * hm)} Z" fill="#3f6e5e"/><circle cx="${r(hb[0])}" cy="${r(hb[1] - 4.4 * hm)}" r="${r(.7 * hm)}" fill="${GOLD}"/>`;
-  kuTeile.platt = pr(0, Y + 2, L0 + 1.5); kuTeile.spitze = pr(0, Y + 2, 93); kuTeile.turm = pr(-17, Y - 4, 44);
-  const zx = sp[0], zw = 66, zh = 44;
+  kuTeile.platt = pr(0, Y + 2, L0 + 1.5); kuTeile.spitze = pr(0, Y + 2, 93); kuTeile.turm = pr(-17, Y - 4, 48);
+  const zh = r(kuTeile.turm[1] - sp[1] + 14), zw = r(zh * 1.5), zx = sp[0];
   S.teil({ id: "kuppel", de: "die Kuppel", syl: "KUP-pel", it: "la cupola", itSyl: "CU-po-la", en: "dome", x: 0, y: 0, kunst: k,
     tipp: "Die Kuppel ist fast 100 Meter hoch. Innen fährt ein schräger Aufzug im Bogen nach oben — so einen gibt es nur hier.",
     zoom: { x: r(zx - zw / 2), y: r(sp[1] - 2), w: zw, h: zh },
@@ -190,7 +189,7 @@ const kuTeile = {};
       { id: "aussichtsplattform", de: "die Aussichtsplattform", syl: "AUS-sichts-platt-form", it: "la terrazza panoramica", itSyl: "ter-RAZ-za pa-no-RA-mi-ca", en: "viewing platform", x: kuTeile.platt[0], y: kuTeile.platt[1], kunst: flaeche(-7, -6, 14, 8),
         tipp: "Von der Plattform oben auf der Kuppel sieht man bei klarem Wetter bis zum Harz." },
       { id: "turmspitze", de: "die Turmspitze", syl: "TURM-spit-ze", it: "la guglia", itSyl: "GU-glia", en: "spire", x: kuTeile.spitze[0], y: kuTeile.spitze[1], kunst: flaeche(-3, -8, 6, 9) },
-      { id: "eckturm", de: "der Eckturm", syl: "ECK-turm", it: "la torretta", itSyl: "tor-RET-ta", en: "corner turret", x: kuTeile.turm[0], y: kuTeile.turm[1], kunst: flaeche(-4.4, -12, 8.8, 16),
+      { id: "eckturm", de: "der Eckturm", syl: "ECK-turm", it: "la torretta", itSyl: "tor-RET-ta", en: "corner turret", x: kuTeile.turm[0], y: kuTeile.turm[1], kunst: flaeche(-4.4, -9, 8.8, 14),
         tipp: "Vier kleine Türme stehen an den Ecken um die große Kuppel." },
     ] });
 }
@@ -383,23 +382,23 @@ const WEGRAND = -140.6;      // Grenze Weg / Rasen (9,4 m vor uns)
    ===================================================================== */
 {
   const Y = -141, p = pr(4.6, Y, 0), m = mass(Y);
-  let k = `<path d="M${r(p[0] - .45 * m)} ${r(p[1])} C${r(p[0] - .3 * m)} ${r(p[1] - 3 * m)} ${r(p[0] - .35 * m)} ${r(p[1] - 5 * m)} ${r(p[0] - .1 * m)} -2 L${r(p[0] + .5 * m)} -2 C${r(p[0] + .45 * m)} ${r(p[1] - 5 * m)} ${r(p[0] + .4 * m)} ${r(p[1] - 3 * m)} ${r(p[0] + .55 * m)} ${r(p[1])} Z" fill="${S.lg("stamm", [[0, "#6a5444"], [0.5, "#4a3a2e"], [1, "#2e241c"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M${r(p[0] - .1 * m)} ${r(p[1] - 1 * m)} V-2 M${r(p[0] + .2 * m)} ${r(p[1] - 2 * m)} V40" stroke="#2a1f17" stroke-width=".5" opacity=".6"/>`;
+  let k = `<path d="M${r(p[0] - .45 * m)} ${r(p[1])} C${r(p[0] - .3 * m)} ${r(p[1] - 3 * m)} ${r(p[0] - .35 * m)} ${r(p[1] - 5 * m)} ${r(p[0] - .1 * m)} 4 L${r(p[0] + .5 * m)} 4 C${r(p[0] + .45 * m)} ${r(p[1] - 5 * m)} ${r(p[0] + .4 * m)} ${r(p[1] - 3 * m)} ${r(p[0] + .55 * m)} ${r(p[1])} Z" fill="${S.lg("stamm", [[0, "#6a5444"], [0.5, "#4a3a2e"], [1, "#2e241c"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M${r(p[0] - .1 * m)} ${r(p[1] - 1 * m)} V4 M${r(p[0] + .2 * m)} ${r(p[1] - 2 * m)} V40" stroke="#2a1f17" stroke-width=".5" opacity=".6"/>`;
   /* Äste und Krone oben rechts aus dem Bild: handförmige Kastanienblätter in Herbstfarben */
-  k += `<path d="M${r(p[0])} 60 Q${r(p[0] - 30)} 40 ${r(p[0] - 52)} 30 M${r(p[0] + 4)} 40 Q${r(p[0] - 10)} 18 ${r(p[0] - 30)} 6" stroke="#3a2c22" stroke-width="2.4" fill="none"/>`;
+  k += `<path d="M${r(p[0])} 60 Q${r(p[0] - 30)} 40 ${r(p[0] - 52)} 30 M${r(p[0] + 4)} 40 Q${r(p[0] - 10)} 22 ${r(p[0] - 30)} 12" stroke="#3a2c22" stroke-width="2.4" fill="none"/>`;
   const blatt = (x, y, s, rot, f) => { let g = `<g transform="translate(${t2(x)} ${t2(y)}) rotate(${rot}) scale(${s.toFixed(3)})">`; for (const [a, l] of [[-70, 6], [-36, 8.5], [0, 10], [36, 8.5], [70, 6]]) g += `<path d="M0 0 C${r(-1.2)} ${r(-l * .3)} ${r(-2.4)} ${r(-l * .75)} 0 ${-l} C${r(2.4)} ${r(-l * .75)} ${r(1.2)} ${r(-l * .3)} 0 0 Z" fill="${f}" transform="rotate(${a})"/><path d="M0 0 L0 ${r(-l * .85)}" stroke="#7a5a2a" stroke-width=".2" transform="rotate(${a})"/>`; return g + `</g>`; };
   let kr = "";
-  for (const [cx, cy, rx, ry, f] of [[p[0] - 14, 8, 50, 30, "#a8762e"], [p[0] - 44, 36, 26, 18, "#b8862e"], [p[0] + 8, 44, 30, 22, "#8e6a2a"], [p[0] - 20, 30, 30, 18, "#c08a32"]]) { kr += `<ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${rx}" ry="${ry}" fill="${f}"/>`; for (let i = 0; i < 9; i++) kr += `<circle cx="${r(cx - rx * .8 + rnd() * rx * 1.6)}" cy="${r(cy - ry * .6 + rnd() * ry * 1.2)}" r="${r(ry * (.25 + rnd() * .2))}" fill="${["#c99a3a", "#9a7a2c", "#d8a840", "#7f6a2a"][Math.floor(rnd() * 4)]}"/>`; }
-  for (let i = 0; i < 80; i++) { const x = p[0] - 70 + rnd() * 100, y = -6 + rnd() * 80; if ((x - p[0] + 20) ** 2 / 4000 + (y - 20) ** 2 / 2600 > 1) continue; kr += blatt(x, y, .55 + rnd() * .45, Math.round(rnd() * 360), ["#d9a53a", "#c98a2e", "#b8762e", "#9aa03a", "#e0b84a", "#c7702c"][Math.floor(rnd() * 6)]); }
+  for (const [cx, cy, rx, ry, f] of [[p[0] - 22, 22, 42, 22, "#a8762e"], [p[0] - 50, 42, 22, 15, "#b8862e"], [p[0] - 2, 48, 16, 20, "#8e6a2a"], [p[0] - 26, 34, 26, 15, "#c08a32"]]) { kr += `<ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${rx}" ry="${ry}" fill="${f}"/>`; for (let i = 0; i < 9; i++) kr += `<circle cx="${r(cx - rx * .8 + rnd() * rx * 1.6)}" cy="${r(cy - ry * .6 + rnd() * ry * 1.2)}" r="${r(ry * (.25 + rnd() * .2))}" fill="${["#c99a3a", "#9a7a2c", "#d8a840", "#7f6a2a"][Math.floor(rnd() * 4)]}"/>`; }
+  for (let i = 0; i < 80; i++) { const x = p[0] - 70 + rnd() * 78, y = 6 + rnd() * 70; if ((x - p[0] + 20) ** 2 / 4000 + (y - 20) ** 2 / 2600 > 1) continue; kr += blatt(x, y, .55 + rnd() * .45, Math.round(rnd() * 360), ["#d9a53a", "#c98a2e", "#b8762e", "#9aa03a", "#e0b84a", "#c7702c"][Math.floor(rnd() * 6)]); }
   k += kr;
   S.teil({ id: "kastanienbaum", de: "der Kastanienbaum", syl: "kas-TA-ni-en-baum", it: "l'ippocastano", itSyl: "ip-po-ca-STA-no", en: "horse chestnut tree", x: 0, y: 0, kunst: k,
     tipp: "Kastanienbäume haben Blätter wie eine Hand mit fünf Fingern." });
   /* Kastanien am Boden: braun glänzend, eine noch in der stacheligen Schale */
   const kast = (x, Y2, s) => { const q = pr(x, Y2, 0), mm = mass(Y2) * s / 100; return `<g transform="translate(${t2(q[0])} ${t2(q[1])}) scale(${mm.toFixed(4)})"><ellipse cx="0" cy="-1" rx="2.6" ry="2.2" fill="${S.rg("kastanie", [[0, "#a65a2a"], [0.6, "#6e3414"], [1, "#4a220c"]], 0.35, 0.3, 0.8)}"/><ellipse cx="0" cy=".2" rx="1.8" ry=".7" fill="#d8c09a"/><ellipse cx="-.8" cy="-2" rx=".7" ry=".35" fill="#fff" opacity=".45"/></g>`; };
-  const q0 = pr(3.4, -144.4, 0);
-  let kk = kast(3.4, -144.4, 1) + kast(3.9, -144, 1) + kast(2.9, -143.6, 1);
-  { const q = pr(4.2, -144.8, 0), mm = mass(-144.8) / 100; kk += `<g transform="translate(${t2(q[0])} ${t2(q[1])}) scale(${mm.toFixed(4)})"><circle cx="0" cy="-2.4" r="3" fill="#8a9a3a"/>`; for (let a = 0; a < 12; a++) { const w = a * Math.PI / 6; kk += `<path d="M${r(Math.cos(w) * 2.8)} ${r(-2.4 + Math.sin(w) * 2.8)} l${r(Math.cos(w) * 1.2)} ${r(Math.sin(w) * 1.2)}" stroke="#6f7f30" stroke-width=".3"/>`; } kk += `<ellipse cx=".8" cy="-2.6" rx="1.6" ry="1.4" fill="#7a3a16"/></g>`; }
-  S.teil({ oben: true, id: "kastanie", de: "die Kastanie", syl: "kas-TA-ni-e", it: "la castagna d'India", itSyl: "ca-STA-gna DIN-dia", en: "conkers", x: 0, y: 0, kunst: kk + flaeche(q0[0] - 4, q0[1] - 4, 16, 6),
+  const q0 = pr(1.8, -144.2, 0);
+  let kk = kast(1.8, -144.2, 1) + kast(2.2, -143.8, 1) + kast(1.4, -143.5, 1);
+  { const q = pr(2.5, -144.4, 0), mm = mass(-144.4) / 100; kk += `<g transform="translate(${t2(q[0])} ${t2(q[1])}) scale(${mm.toFixed(4)})"><circle cx="0" cy="-2.4" r="3" fill="#8a9a3a"/>`; for (let a = 0; a < 12; a++) { const w = a * Math.PI / 6; kk += `<path d="M${r(Math.cos(w) * 2.8)} ${r(-2.4 + Math.sin(w) * 2.8)} l${r(Math.cos(w) * 1.2)} ${r(Math.sin(w) * 1.2)}" stroke="#6f7f30" stroke-width=".3"/>`; } kk += `<ellipse cx=".8" cy="-2.6" rx="1.6" ry="1.4" fill="#7a3a16"/></g>`; }
+  S.teil({ oben: true, id: "kastanie", de: "die Kastanie", syl: "kas-TA-ni-e", it: "la castagna d'India", itSyl: "ca-STA-gna DIN-dia", en: "conkers", x: 0, y: 0, kunst: kk + flaeche(q0[0] - 6, q0[1] - 5, 22, 7),
     tipp: "Im Herbst sammeln Kinder Kastanien und basteln daraus Tiere." });
 }
 

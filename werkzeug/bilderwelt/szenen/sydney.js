@@ -375,11 +375,14 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
     /* stumpfe, dicke Spitze: ≈ 1,6 Einheiten vor T abbiegen, über T gerundet (r ≈ 0,8) */
     /* stumpfe, dicke Nase: Grat ≈ 2,4 vor T abbiegen, Lippe ≈ 3 unter T beginnen; der Bogen dazwischen
        läuft über T hinaus (kleiner Überhang), so dass vorn eine runde, helle Nase entsteht */
-    const uA = 1 - 2.4 / gL, uB = 3 / lL;
+    /* Nase so breit wie das Lippenband: Grat und Lippe so weit zurückgehen, bis sie ≈ 1,3 auseinander liegen */
+    let dN = 0.5;
+    while (dN < 9 && len(qb(B0, cg, T, 1 - dN / gL), qb(T, cl, Pp, dN * 1.2 / lL)) < 1.3) dN += 0.1;
+    const uA = 1 - dN / gL, uB = dN * 1.2 / lL;
     const Ta = qb(B0, cg, T, uA), Tb = qb(T, cl, Pp, uB), cg2 = lerp(B0, cg, uA);
     const mT = [(Ta[0] + Tb[0]) / 2, (Ta[1] + Tb[1]) / 2], Tn = [T[0] + (T[0] - mT[0]) * 0.55, T[1] + (T[1] - mT[1]) * 0.55];
     /* Nase als Kreisbogen (r ≥ 0,9) von Ta nach Tb, der große Bogen wölbt sich über T hinaus */
-    const dAB = len(Ta, Tb), rN = Math.max(0.95, dAB / 2 + 0.05), hN = Math.sqrt(Math.max(0, rN * rN - dAB * dAB / 4));
+    const dAB = len(Ta, Tb), rN = dAB / 2 + 0.03, hN = Math.sqrt(Math.max(0, rN * rN - dAB * dAB / 4));
     const nv = [T[0] - mT[0], T[1] - mT[1]], nl = Math.hypot(nv[0], nv[1]) || 1, Cn = [mT[0] - nv[0] / nl * hN, mT[1] - nv[1] / nl * hN];
     const ang2 = (q) => Math.atan2(q[1] - Cn[1], q[0] - Cn[0]), a1 = ang2(Ta), a2 = ang2(Tb), am = Math.atan2(nv[1], nv[0]);
     const pos = (x) => ((x % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), sweep = pos(am - a1) < pos(a2 - a1) ? 1 : 0;
@@ -424,6 +427,7 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
     for (let i = 0; i < 30; i++) { const m = (sa + sb) / 2; if (op(m, e, SOCKEL_Z)[0] < sch.Tb[0]) sa = m; else sb = m; }
     /* Unterkante unter der ganzen Öffnung; die zwei Facetten knicken nach außen (Fußpunkt etwas vor der Nase) */
     const breit = Math.max(3.4, (sch.Tb[0] - sch.Pp[0]) * 0.7);
+    sa = 100; sb = 260;
     for (let i = 0; i < 30; i++) { const m = (sa + sb) / 2; if (op(m, e, SOCKEL_Z)[0] < sch.Tb[0] + breit) sa = m; else sb = m; }
     const F0 = op((sa + sb) / 2, e, SOCKEL_Z), Pf = sch.Pp;
     const K1 = lippe[4], K2 = lippe[8], B1 = lerp(F0, Pf, 0.4), B2 = lerp(F0, Pf, 0.72);
