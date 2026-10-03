@@ -124,12 +124,16 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
 
   const kalt = await lauf("kalt");
   const warm = await lauf("warm");
+  /* FASSUNG 847 — ein DRITTES Öffnen: Chrome legt den übersetzten Code (V8-Code-Cache) erst an, wenn ein Skript
+     zum zweiten Mal läuft, und benutzt ihn ab dem dritten Mal. „warm" allein unterschätzt also, wie schnell die Seite
+     für jemanden ist, der regelmäßig kommt. */
+  const wieder = await lauf("wieder");
   await br.close(); srv.close();
   console.log("\nNetz " + NETZ + ", Rechner " + CPU + "× gebremst, " + WURZEL + "\n");
-  for (const r of [kalt, warm]) {
+  for (const r of [kalt, warm, wieder]) {
     console.log(r.name.padEnd(5) + "  erstes Bild " + r.fcp + " ms   bereit " + r.bereit + " ms   Klassenzimmer +" + r.kz + " ms (ab Start " + r.kzAbStart + " ms)   " + r.kbBisBereit + " KB bis bereit, " + r.kbGesamt + " KB gesamt");
     console.log("       Rechenzeit: " + r.js.map(([k, v]) => k + " " + v).join(", "));
     console.log("       Dateien KB: " + r.dateien.map(([k, v]) => k + " " + v).join(", "));
   }
-  if (process.env.LADEZEIT_JSON) fs.writeFileSync(process.env.LADEZEIT_JSON, JSON.stringify({ netz: NETZ, cpu: CPU, kalt, warm }, null, 1));
+  if (process.env.LADEZEIT_JSON) fs.writeFileSync(process.env.LADEZEIT_JSON, JSON.stringify({ netz: NETZ, cpu: CPU, kalt, warm, wieder }, null, 1));
 })().catch((e) => { console.error(e); process.exit(2); });

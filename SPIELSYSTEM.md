@@ -3242,3 +3242,22 @@ XANDER (Funk 271, wörtlich): „alles insgesamt nur zehn Mal schneller".
   - neu `pruefe-865-lesetexte-nachladen.js`: nicht beim Start, nicht auf dem Weg ins Klassenzimmer; im Kompass sichtbar → geholt und gezeichnet; 2×7 Texte mit A1–C2 und Kachelbild; keine Konsolenfehler.
   - `pruefe-runde21`: „keine neue Datei in der Startliste“ prüft jetzt die Startliste (`var dateien = [ … ]`). Der Name steht nur noch in der Stempeltabelle.
   - Grün: 865, 864, 863, 858, tutor, tutor-stuecke, tutorreiter, runde21, runde54, runde18, einladungslink, runde88-panels, 749, runde98-fokus.
+
+## Fassung 847 — Tutorfigur als verlustfreies WebP, Messung mit drittem Öffnen (Funk 271)
+
+XANDER (Funk 271, wörtlich): „alles insgesamt nur zehn Mal schneller".
+
+- **Tutorfigur (`tutor/alex-comic.webp`, `tutor/alex-foto.webp`, neu)**: Die Figur war das größte Bild beim Start (alex-comic.png 176 KB, alex-foto.png 186 KB). Jetzt ist sie ein verlustfreies WebP mit 91 bzw. 98 KB.
+  - Auf hellem, dunklem und grünem Hintergrund ist das Ergebnis Pixel für Pixel gleich (größte Abweichung 0). Die verlustbehafteten Stufen (q90/q95) wären noch kleiner, weichen an Kanten aber sichtbar ab und wurden verworfen.
+  - `tutorFigurSetzen()` in app.js setzt das WebP. Kann ein sehr altes Gerät kein WebP, kommt einmal das PNG; die PNG-Dateien bleiben deshalb liegen.
+- **Messwerkzeug (`werkzeug/ladezeit-messen.js`)**: Neu ist ein dritter Lauf „wieder“. Chrome legt übersetzten Code erst beim zweiten Laufen eines Skripts an und benutzt ihn ab dem dritten. Gemessen bringt das hier nichts Sichtbares: Der dritte Lauf ist nicht schneller als der zweite. Das Übersetzen von app.js bleibt der Hauptposten.
+- **Gemessen** (4G, Rechner 4× gebremst):
+  - kalt 1.962 KB gesamt statt 2.047 KB, bereit 2,79 s, Klassenzimmer bei 3,33 s;
+  - warm bereit 1,25 s, Klassenzimmer bei 1,76 s;
+  - wieder 1,35 s / 1,88 s.
+  
+  Das Bild kommt nach „bereit“, entlastet also die Leitung während des Aufbaus.
+- **Bestandsaufnahme für die nächsten Schritte**:
+  - Das Dokument ist klein (1.610 Elemente, 9.090 CSS-Regeln). Stile und Layout sind kein großer Hebel.
+  - data-exercises.js (776 KB, 235 KB übertragen) trägt den italienischen Wortschatz (IT_WOERTER 103 KB, IT_GESCHICHTE 30 KB) und das Deutschland-Quiz (120 KB). Die Italienisch-Teile werden an vielen Stellen ohne Warten gelesen, auch in spiel.js. Auslagern heißt, den Weg in den Italienischraum umzubauen; das ist der nächste größere Schritt.
+- **Sonden**: tutor, tutor-stuecke, tutorreiter, tutorbild62 grün.

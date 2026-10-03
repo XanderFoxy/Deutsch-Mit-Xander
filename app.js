@@ -100337,6 +100337,19 @@ An einem Morgen lief ein kleiner Fuchs los…
   function tutorArt() {
     try { return localStorage.getItem(TUTOR_ART) === "foto" ? "foto" : "comic"; } catch (e) { return "comic"; }
   }
+  /* FASSUNG 847 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller". Die Tutorfigur war das größte Bild
+     beim Start (alex-comic.png 176 KB, alex-foto.png 186 KB). Jetzt als verlustfreies WebP (93 / 100 KB): auf jedem
+     Hintergrund Pixel für Pixel dasselbe Bild – nachgeprüft auf hell, dunkel und grün. Kann ein sehr altes Gerät kein
+     WebP, kommt einmal das PNG. */
+  function tutorFigurSetzen(bild) {
+    if (!bild) return;
+    const v = window.DMA_V ? DMA_V("tutor/") : "?v=" + (window.DMA_VERSION || "1");
+    const basis = "tutor/alex-" + tutorArt();
+    const neu = basis + ".webp" + v;
+    if (bild.getAttribute("src") === neu || bild.getAttribute("src") === basis + ".png" + v) return;
+    bild.onerror = () => { bild.onerror = null; bild.setAttribute("src", basis + ".png" + v); };
+    bild.setAttribute("src", neu);
+  }
   function tutorArtSetzen(art) {
     try { localStorage.setItem(TUTOR_ART, art === "comic" ? "comic" : "foto"); } catch (e) {}
   }
@@ -100949,8 +100962,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       tutorBereichGezeigt.add(sub);
       const b = tutorBuehne();
       const bild = b.querySelector("#tutorFigur");
-      const neuBild = "tutor/alex-" + tutorArt() + ".png" + (window.DMA_V ? DMA_V("tutor/") : "?v=" + (window.DMA_VERSION || "1"));
-      if (bild.getAttribute("src") !== neuBild) bild.setAttribute("src", neuBild);
+      tutorFigurSetzen(bild);
       b.classList.toggle("tutor-comic", tutorArt() === "comic");
       requestAnimationFrame(() => requestAnimationFrame(() => b.classList.add("tutor-da")));
       /* Ein einzelnes Stueck ist nichts anderes als eine Runde mit
@@ -100990,8 +101002,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       tutorGezeigt.add(bereich);
       const b = tutorBuehne();
       const bild = b.querySelector("#tutorFigur");
-      const neu = "tutor/alex-" + tutorArt() + ".png" + (window.DMA_V ? DMA_V("tutor/") : "?v=" + (window.DMA_VERSION || "1"));
-      if (bild.getAttribute("src") !== neu) bild.setAttribute("src", neu);
+      tutorFigurSetzen(bild);
       b.classList.toggle("tutor-comic", tutorArt() === "comic");
       /* Erst im nächsten Bild anschalten, sonst gibt es keine
          Bewegung — das Element wäre im selben Moment entstanden und
