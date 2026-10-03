@@ -157,6 +157,9 @@ const KT = { x: 108, z: -46, h: 20, stufen: 4, sh: 3, tw: 10 };   /* Tempel der 
   k += `<rect x="0" y="${HY}" width="320" height="${200 - HY}" fill="url(#${S.id("gras")})"/>`;
   k += `<rect x="0" y="${HY}" width="320" height="${200 - HY}" fill="${S.lg("rasen", [[0, "#e6d29a", 0.5], [0.3, "#a8b35e", 0.15], [1, "#3f6a24", 0.25]])}"/>`;
   for (let i = 0; i < 12; i++) { const y = HY + 3 + Math.pow(rnd(), 1.3) * 62, x = rnd() * 320, s = sy(y); k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.7 * s)}" ry="${r(0.1 * s)}" fill="#b8a76a" opacity=".22"/>`; }
+  /* festgetretener Kalkboden (Sascab) unter den Händlerständen am Wegrand – dort steht auch der Esstisch */
+  k += `<path d="M178 200 Q182 182 206 176 Q236 171 270 172 Q306 173 322 178 L322 200 Z" fill="${S.lg("sascab", [[0, "#d2bf94", 0.55], [1, "#c4ad7c", 0.85]])}" filter="${DUNST}"/>`;
+  for (let i = 0; i < 26; i++) { const x = 186 + rnd() * 134, y = 176 + rnd() * 24; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.25 + rnd() * 0.4)}" ry=".18" fill="#9c8a62" opacity=".5"/>`; }
   /* Schatten der Pyramide: Hülle aus Fuß und den Schattenpunkten von Plattform und Tempel */
   const sp = [];
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) { sp.push([sx * W0, 0, sz * W0], schattenAuf(sx * WT, HT, sz * WT), schattenAuf(sx * 6, 30, sz * 6)); }
@@ -510,28 +513,29 @@ const pyrUnter = [];
   let k = bildSchatten(X, Y, 1.4, 2.2, 0.26);
   /* kurzer Stamm mit dürren, herabhängenden Blättern */
   k += `<path d="M-4 0 L-3.4 ${r(-0.35 * s)} L3.4 ${r(-0.35 * s)} L4 0 Z" fill="#7a6a4e"/>`;
-  for (let i = 0; i < 7; i++) { const a = -0.9 + i * 0.3; k += `<path d="M${r(Math.sin(a) * 3)} ${r(-0.3 * s)} q${r(Math.sin(a) * 8)} 2 ${r(Math.sin(a) * 12)} ${r(0.25 * s)}" stroke="#a48a5c" stroke-width="1.4" fill="none" stroke-linecap="round"/>`; }
+  /* dürre Blätter: hängen eng am Stamm herab, braun-grau */
+  for (let i = 0; i < 8; i++) { const sg = i % 2 ? 1 : -1, o = 1.6 + (i >> 1) * 1.1, top = -0.33 * s + (i >> 1) * 0.6; k += `<path d="M${r(sg * (o - 1.4))} ${r(top)} Q${r(sg * (o + 1.2))} ${r(top + 3)} ${r(sg * (o + 2.4))} ${r(-0.4 - (i >> 1) * 0.5)} L${r(sg * (o + 0.6))} ${r(-0.2 - (i >> 1) * 0.5)} Q${r(sg * o)} ${r(top + 4)} ${r(sg * (o - 1.4))} ${r(top + 1.6)} Z" fill="${i % 3 ? "#9b8558" : "#7d6a45"}"/>`; }
   const H0 = -0.35 * s;
   const blaetter = [];
-  for (let i = 0; i < 22; i++) {
-    const az = i * 2 * Math.PI / 22 + rnd() * 0.15, el = (i % 3 === 0 ? 62 : i % 3 === 1 ? 38 : 18) * Math.PI / 180 + (rnd() - 0.5) * 0.15, L = (1.05 + rnd() * 0.35) * s;
+  for (let i = 0; i < 17; i++) {
+    const az = i * 2 * Math.PI / 17 + rnd() * 0.15, el = (i % 3 === 0 ? 62 : i % 3 === 1 ? 38 : 18) * Math.PI / 180 + (rnd() - 0.5) * 0.15, L = (1.05 + rnd() * 0.35) * s;
     blaetter.push({ az, el, L, z: Math.cos(az) * Math.cos(el) });
   }
   blaetter.sort((a, b) => a.z - b.z);
   for (const b of blaetter) {
     /* Spitze im Bild: x = sin(az)·cos(el), y = −sin(el); z (zum Betrachter) verkürzt die Länge */
     const tx = Math.sin(b.az) * Math.cos(b.el) * b.L, ty = H0 - Math.sin(b.el) * b.L * 0.95 + Math.cos(b.az) * Math.cos(b.el) * b.L * 0.18;
-    const len = Math.hypot(tx, ty - H0), nx = -(ty - H0) / len, ny = tx / len, w = 0.11 * s * (0.6 + 0.4 * Math.abs(Math.sin(b.az)) + 0.3 * Math.max(0, b.z));
-    const vorne = b.z > 0.2, c = vorne ? "#9db4a6" : (b.z < -0.3 ? "#5f7f70" : "#7e9a8b");
+    const len = Math.hypot(tx, ty - H0), nx = -(ty - H0) / len, ny = tx / len, w = 0.155 * s * (0.6 + 0.4 * Math.abs(Math.sin(b.az)) + 0.3 * Math.max(0, b.z));
+    const vorne = b.z > 0.2, c = vorne ? "#a2b394" : (b.z < -0.3 ? "#5e7556" : "#82987a");
     /* Blatt: breiter Grund, verjüngt zur Spitze, leicht gekehlt */
     const p = [[nx * w, H0 + ny * w], [tx * 0.55 + nx * w * 0.75, H0 + (ty - H0) * 0.55 + ny * w * 0.75], [tx, ty], [tx * 0.55 - nx * w * 0.75, H0 + (ty - H0) * 0.55 - ny * w * 0.75], [-nx * w, H0 - ny * w]];
     k += `<path d="M${pts(p)} Z" fill="${c}"/>`;
-    k += `<path d="M0 ${r(H0)} L${r(tx * 0.92)} ${r(H0 + (ty - H0) * 0.92)}" stroke="${vorne ? "#c2d3c6" : "#6b8a7b"}" stroke-width="${r(w * 0.25)}" opacity=".6"/>`;
+    k += `<path d="M0 ${r(H0)} L${r(tx * 0.92)} ${r(H0 + (ty - H0) * 0.92)}" stroke="${vorne ? "#c4cfb2" : "#6a8262"}" stroke-width="${r(w * 0.25)}" opacity=".6"/>`;
     /* Randzähne und Enddorn */
     let z = "";
-    for (let t = 0.2; t < 0.9; t += 0.12) for (const sg of [-1, 1]) { const wx = (1 - t * 0.45) * w * 0.98; z += `M${r(tx * t + sg * nx * wx)} ${r(H0 + (ty - H0) * t + sg * ny * wx)} l${r(sg * nx * 0.7)} ${r(sg * ny * 0.7 - 0.2)}`; }
+    for (let t = 0.2; t < 0.9; t += 0.12) for (const sg of [-1, 1]) { const wx = (t < 0.55 ? 1 - t / 0.55 * 0.25 : 0.75 * (1 - (t - 0.55) / 0.45)) * w * 0.97; z += `M${r(tx * t + sg * nx * wx)} ${r(H0 + (ty - H0) * t + sg * ny * wx)} l${r(sg * nx * 0.7)} ${r(sg * ny * 0.7 - 0.2)}`; }
     k += `<path d="${z}" stroke="#4a3a24" stroke-width=".3"/>`;
-    k += `<path d="M${r(tx)} ${r(ty)} l${r(tx / len * 2.4)} ${r((ty - H0) / len * 2.4)}" stroke="#2e2416" stroke-width=".6" stroke-linecap="round"/>`;
+    k += `<path d="M${r(tx)} ${r(ty)} l${r(tx / len * 1.8)} ${r((ty - H0) / len * 1.8)}" stroke="#2e2416" stroke-width=".5" stroke-linecap="round"/>`;
   }
   S.teil({ id: "agave", de: "die Agave", syl: "A-GA-ve", it: "l'agave", itSyl: "a-GA-ve", en: "agave", x: X, y: Y - 0.7 * s, kunst: `<g transform="translate(0 ${r(0.7 * s)})">${k}</g>`,
     tipp: "Aus den Fasern der Agave Henequén macht man in Yucatán Seile und Hängematten." });
@@ -676,19 +680,28 @@ const standUnter = [];
   for (let x = x0 + 4; x < xt1; x += 1.6) spitze += `<path d="M${r(x)} ${r(tv - 3)} q.8 1.3 1.6 0" stroke="#f4eee0" stroke-width=".35" fill="none"/>`;
   k += spitze;
   const yT = th - 1.4;
-  /* DIE MASKE — Lucha-Libre-Masken */
+  /* DIE MASKE — zwei geschnitzte Maya-Holzmasken (eine naturbelassen, eine jadegrün bemalt):
+     Kopfschmuck mit Federn, Mandelaugen, kräftige Nase, Ohrpflöcke */
   {
     let g = "";
-    for (const [x, c1, c2] of [[x0 + 9, "#1d4fa0", "#f1c232"], [x0 + 16.4, "#c8102e", "#ffffff"]]) {
-      g += `<path d="M${x - 3.3} ${r(yT - 0.2)} Q${x - 3.8} ${r(yT - 5.2)} ${x - 2.4} ${r(yT - 6.8)} Q${x} ${r(yT - 8.2)} ${x + 2.4} ${r(yT - 6.8)} Q${x + 3.8} ${r(yT - 5.2)} ${x + 3.3} ${r(yT - 0.2)} Q${x} ${r(yT + 0.5)} ${x - 3.3} ${r(yT - 0.2)} Z" fill="${c1}"/>`;
-      g += `<path d="M${x - 2.9} ${r(yT - 3.6)} Q${x - 2.6} ${r(yT - 6)} ${x - 0.5} ${r(yT - 4.6)} Q${x - 1} ${r(yT - 3.2)} ${x - 2.9} ${r(yT - 3.6)} Z M${x + 2.9} ${r(yT - 3.6)} Q${x + 2.6} ${r(yT - 6)} ${x + 0.5} ${r(yT - 4.6)} Q${x + 1} ${r(yT - 3.2)} ${x + 2.9} ${r(yT - 3.6)} Z" fill="${c2}"/>`;
-      g += `<path d="M${x - 2.4} ${r(yT - 3.8)} Q${x - 2.1} ${r(yT - 5.2)} ${x - 0.9} ${r(yT - 4.5)} Q${x - 1.2} ${r(yT - 3.6)} ${x - 2.4} ${r(yT - 3.8)} Z M${x + 2.4} ${r(yT - 3.8)} Q${x + 2.1} ${r(yT - 5.2)} ${x + 0.9} ${r(yT - 4.5)} Q${x + 1.2} ${r(yT - 3.6)} ${x + 2.4} ${r(yT - 3.8)} Z" fill="#1a1a1a"/>`;
-      g += `<ellipse cx="${x}" cy="${r(yT - 1.5)}" rx="1.3" ry=".75" fill="${c2}"/><ellipse cx="${x}" cy="${r(yT - 1.5)}" rx=".95" ry=".48" fill="#1a1a1a"/>`;
-      g += `<path d="M${x} ${r(yT - 7.6)} L${x} ${r(yT - 5)} M${x - 1.6} ${r(yT - 6.8)} l.7 1.2 l.5 -.9 M${x + 1.6} ${r(yT - 6.8)} l-.7 1.2 l-.5 -.9" stroke="${c2}" stroke-width=".5" fill="none"/>`;
+    for (const [x, holz, dunkel, schmuck] of [[x0 + 9, "#b07a45", "#6e4422", "#2f8f6a"], [x0 + 16.4, "#3f8f72", "#1f5a46", "#c8402e"]]) {
+      const yo = yT - 0.2;
+      g += `<path d="M${r(x - 3)} ${r(yo - 5.6)} Q${r(x - 3.3)} ${r(yo - 1.6)} ${r(x - 1.4)} ${r(yo)} L${r(x + 1.4)} ${r(yo)} Q${r(x + 3.3)} ${r(yo - 1.6)} ${r(x + 3)} ${r(yo - 5.6)} Z" fill="${holz}"/>`;
+      g += `<path d="M${r(x - 3)} ${r(yo - 5.6)} Q${r(x - 3.3)} ${r(yo - 1.6)} ${r(x - 1.4)} ${r(yo)} L${r(x - 0.6)} ${r(yo)} Q${r(x - 2.4)} ${r(yo - 2)} ${r(x - 2.2)} ${r(yo - 5.6)} Z" fill="${dunkel}" opacity=".45"/>`;
+      /* Kopfschmuck: Stirnband und drei Federn */
+      g += `<path d="M${r(x - 3.4)} ${r(yo - 5.4)} L${r(x + 3.4)} ${r(yo - 5.4)} L${r(x + 3)} ${r(yo - 6.6)} L${r(x - 3)} ${r(yo - 6.6)} Z" fill="${schmuck}"/>`;
+      g += `<path d="M${r(x - 2.2)} ${r(yo - 6.6)} q-.8 -1.6 -.2 -2.6 q.9 1 .9 2.6 Z M${r(x - 0.5)} ${r(yo - 6.6)} q-.3 -2 .5 -3.1 q.8 1.1 .5 3.1 Z M${r(x + 1.4)} ${r(yo - 6.6)} q.1 -1.6 .9 -2.6 q.5 1 -.2 2.6 Z" fill="#f1c232"/>`;
+      g += `<circle cx="${r(x)}" cy="${r(yo - 6)}" r=".45" fill="#f4ead2"/>`;
+      /* Mandelaugen, Brauen, Nase, Mund, Ohrpflöcke */
+      g += `<path d="M${r(x - 2.3)} ${r(yo - 3.9)} q.8 -.8 1.6 0 q-.8 .45 -1.6 0 Z M${r(x + 0.7)} ${r(yo - 3.9)} q.8 -.8 1.6 0 q-.8 .45 -1.6 0 Z" fill="#1a120a"/>`;
+      g += `<path d="M${r(x - 2.5)} ${r(yo - 4.7)} q1 -.6 2 0 M${r(x + 0.5)} ${r(yo - 4.7)} q1 -.6 2 0" stroke="${dunkel}" stroke-width=".35" fill="none"/>`;
+      g += `<path d="M${r(x - 0.3)} ${r(yo - 4.2)} L${r(x - 0.7)} ${r(yo - 2.3)} Q${r(x)} ${r(yo - 1.9)} ${r(x + 0.7)} ${r(yo - 2.3)} L${r(x + 0.3)} ${r(yo - 4.2)} Z" fill="${dunkel}" opacity=".55"/>`;
+      g += `<path d="M${r(x - 1.1)} ${r(yo - 1.2)} h2.2" stroke="#1a120a" stroke-width=".45"/>`;
+      g += `<circle cx="${r(x - 3.3)}" cy="${r(yo - 3)}" r=".75" fill="${schmuck}"/><circle cx="${r(x + 3.3)}" cy="${r(yo - 3)}" r=".75" fill="${schmuck}"/><circle cx="${r(x - 3.3)}" cy="${r(yo - 3)}" r=".28" fill="#f4ead2"/><circle cx="${r(x + 3.3)}" cy="${r(yo - 3)}" r=".28" fill="#f4ead2"/>`;
     }
     k += g;
-    standUnter.push({ id: "maske", de: "die Maske", syl: "MAS-ke", it: "la maschera", itSyl: "MA-sche-ra", en: "mask", x: x0 + 12.7, y: yT, kunst: flaeche(-7.4, -8.2, 14.8, 8.6, 0.5),
-      tipp: "Solche Masken tragen die Ringer beim Lucha Libre, dem mexikanischen Ringkampf." });
+    standUnter.push({ id: "maske", de: "die Maske", syl: "MAS-ke", it: "la maschera", itSyl: "MA-sche-ra", en: "mask", x: x0 + 12.7, y: yT, kunst: flaeche(-7.4, -9.6, 14.8, 10, 0.5),
+      tipp: "In den Maya-Dörfern rund um Chichén Itzá schnitzen Handwerker Masken aus Holz und bemalen sie." });
   }
   /* DER TOTENKOPF — bunt bemalte Calavera (Ton) */
   {
@@ -772,11 +785,20 @@ const standUnter = [];
 {
   const X = STAND.x0 + 37.4, Y = STAND.hinten - 2.1 * SH + 6;
   const hut = (dx, dy, R, krone, stroh, band, fein) => {
-    let g = `<line x1="${dx}" y1="${r(dy - R - 1.6)}" x2="${dx}" y2="${r(dy - krone - 0.4)}" stroke="#d8c8a0" stroke-width=".3"/><circle cx="${dx}" cy="${r(dy - R - 1.8)}" r=".45" fill="#666"/>`;
-    g += `<circle cx="${dx}" cy="${dy}" r="${R}" fill="${stroh}"/><circle cx="${dx}" cy="${dy}" r="${r(R - 0.6)}" fill="none" stroke="#000" stroke-width=".25" opacity=".18"/>`;
-    if (!fein) for (let a = 0; a < 12; a++) { const w = a * Math.PI / 6; g += `<line x1="${r(dx + Math.cos(w) * krone)}" y1="${r(dy + Math.sin(w) * krone)}" x2="${r(dx + Math.cos(w) * (R - 0.4))}" y2="${r(dy + Math.sin(w) * (R - 0.4))}" stroke="#b08440" stroke-width=".18" opacity=".6"/>`; }
-    g += `<circle cx="${dx}" cy="${dy}" r="${r(krone + 0.6)}" fill="${band}"/><circle cx="${dx}" cy="${dy}" r="${krone}" fill="${S.rg(fein ? "jipi" : "krone2", fein ? [[0, "#fbf3dc"], [1, "#e2d1a6"]] : [[0, "#f6dc9c"], [1, "#c99a4e"]], 0.4, 0.35)}"/>`;
-    g += `<ellipse cx="${r(dx - krone * 0.35)}" cy="${r(dy - krone * 0.35)}" rx="${r(krone * 0.35)}" ry="${r(krone * 0.22)}" fill="#fff" opacity=".35"/>`;
+    /* am Nagel hängend, leicht nach vorn gekippt: Krempe als Ellipse, die Krone ragt zum Betrachter (man sieht ihre Seite) */
+    const ry = R * 0.86, hk = krone * (fein ? 0.7 : 1.05), kt = fein ? krone * 0.92 : krone * 0.72;
+    let g = `<line x1="${dx}" y1="${r(dy - ry - 1.6)}" x2="${dx}" y2="${r(dy - ry + 0.6)}" stroke="#d8c8a0" stroke-width=".3"/><circle cx="${dx}" cy="${r(dy - ry - 1.8)}" r=".45" fill="#666"/>`;
+    g += `<ellipse cx="${r(dx + 0.8)}" cy="${r(dy + 1.3)}" rx="${R}" ry="${r(ry)}" fill="#2a1410" opacity=".3"/>`;
+    g += `<ellipse cx="${dx}" cy="${dy}" rx="${R}" ry="${r(ry)}" fill="${stroh}"/>`;
+    g += `<ellipse cx="${dx}" cy="${dy}" rx="${r(R - 0.5)}" ry="${r(ry - 0.5)}" fill="none" stroke="${fein ? "#c9b483" : "#9a6c2e"}" stroke-width="${fein ? ".2" : ".45"}" opacity=".7"/>`;
+    for (let i = 1; i < (fein ? 5 : 3); i++) { const f = krone / R + (1 - krone / R) * i / (fein ? 5 : 3); g += `<ellipse cx="${dx}" cy="${r(dy + (1 - f) * 0.6)}" rx="${r(R * f)}" ry="${r(ry * f)}" fill="none" stroke="#a07a3c" stroke-width=".14" opacity=".45"/>`; }
+    if (!fein) for (let a = 0; a < 16; a++) { const w = a * Math.PI / 8; g += `<line x1="${r(dx + Math.cos(w) * krone)}" y1="${r(dy + Math.sin(w) * krone * 0.86)}" x2="${r(dx + Math.cos(w) * (R - 0.7))}" y2="${r(dy + Math.sin(w) * (ry - 0.7))}" stroke="#b08440" stroke-width=".18" opacity=".55"/>`; }
+    /* Krone: Seitenwand (im Schatten) vom Band bis zur Kuppe, die tiefer liegt */
+    g += `<path d="M${r(dx - krone)} ${dy} L${r(dx - kt)} ${r(dy + hk)} A${r(kt)} ${r(kt * 0.8)} 0 0 0 ${r(dx + kt)} ${r(dy + hk)} L${r(dx + krone)} ${dy} Z" fill="${fein ? "#d7c59a" : "#b98a44"}"/>`;
+    g += `<path d="M${r(dx - krone - 0.05)} ${r(dy + 0.1)} A${r(krone + 0.05)} ${r(krone * 0.8)} 0 0 0 ${r(dx + krone + 0.05)} ${r(dy + 0.1)} L${r(dx + krone - 0.1)} ${r(dy + 1)} A${krone} ${r(krone * 0.8)} 0 0 1 ${r(dx - krone + 0.1)} ${r(dy + 1)} Z" fill="${band}"/>`;
+    g += `<ellipse cx="${dx}" cy="${r(dy + hk)}" rx="${r(kt)}" ry="${r(kt * 0.8)}" fill="${S.rg(fein ? "jipi" : "krone2", fein ? [[0, "#fbf3dc"], [1, "#e2d1a6"]] : [[0, "#f6dc9c"], [1, "#c99a4e"]], 0.4, 0.35)}"/>`;
+    if (!fein) g += `<path d="M${r(dx - kt * 0.7)} ${r(dy + hk)} Q${dx} ${r(dy + hk - kt * 0.5)} ${r(dx + kt * 0.7)} ${r(dy + hk)}" stroke="#a87c3a" stroke-width=".3" fill="none"/>`;
+    g += `<ellipse cx="${r(dx + kt * 0.3)}" cy="${r(dy + hk - kt * 0.3)}" rx="${r(kt * 0.35)}" ry="${r(kt * 0.2)}" fill="#fff" opacity=".35"/>`;
     return g;
   };
   const k = hut(-1.5, 2, 7.2, 3, S.lg("stroh", [[0, "#f2d79a"], [1, "#c99a4e"]]), "#c8102e", false) + hut(6.6, 12, 4.4, 2.2, "#efe2bf", "#1d1d1f", true);

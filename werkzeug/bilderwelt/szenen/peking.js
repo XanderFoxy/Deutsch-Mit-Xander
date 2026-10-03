@@ -91,19 +91,25 @@ const linieK = (x1, y1, x2, y2) => { for (const g of [0, 400]) { if ((x1 - g) * 
 const vereinfache = (svg, stufe) => {
   const grenze = stufe >= 2 ? 1.2 : stufe > 1 ? 0.6 : 0.25;
   svg = svg.replace(/<(path|ellipse|line)\b[^>]*?\/>/g, (el) => { const sw = el.match(/stroke-width="([\d.]+)"/); return /fill="none"/.test(el) && sw && parseFloat(sw[1]) < grenze ? "" : el; });
-  if (stufe > 1 && stufe < 2) svg = svg.replace(/(-?\d+\.\d{2,})/g, (m) => String(Math.round(parseFloat(m) * 10) / 10));
+  if (stufe > 1 && stufe < 2) svg = svg.split(/(transform="[^"]*")/).map((t, i) => i % 2 ? t : t.replace(/(-?\d+\.\d{2,})/g, (m) => String(Math.round(parseFloat(m) * 10) / 10))).join("");
   if (stufe >= 2) {
     const farbe = {};
     svg.replace(/<(linearGradient|radialGradient) id="([^"]+)"[^>]*>(.*?)<\/\1>/g, (_, t, id, inn) => { const st = [...inn.matchAll(/stop-color="([^"]+)"/g)].map((m) => m[1]); farbe[id] = st[Math.floor(st.length / 2)] || "#888"; return ""; });
     svg = svg.replace(/<defs>.*?<\/defs>/g, "").replace(/ clip-path="url\(#[^)]+\)"/g, "").replace(/url\(#([^)]+)\)/g, (_, id) => farbe[id] || "#888");
-    svg = svg.replace(/(-?\d+\.\d+)/g, (m) => String(Math.round(parseFloat(m))));
+    /* Zahlen runden, aber nicht in transform="…" (sonst wird scale(0,05) zu scale(0)) */
+    svg = svg.split(/(transform="[^"]*")/).map((t, i) => i % 2 ? t : t.replace(/(-?\d+\.\d+)/g, (m) => String(Math.round(parseFloat(m))))).join("");
     /* winzig: Augen, Finger und andere kleine Teile entfallen */
     svg = svg.replace(/<ellipse[^>]*\/>/g, "").replace(/<path d="([^"]*)"[^>]*\/>/g, (el, d) => d.length < 40 ? "" : el);
   }
   return svg;
 };
 /* winzige Figur einmal als Vorlage anlegen und mehrfach (auch gespiegelt) verwenden */
-const winzigDef = (name, spec, hoehe) => { const m = B.mensch(spec, hoehe); S.def(`<g id="${S.id(name)}">${vereinfache(m.svg, 2)}</g>`); return S.id(name); };
+const winzigDef = (name, spec, hoehe) => {
+  const m = B.mensch(spec, hoehe);
+  /* die rote Kappe der Reisegruppe geht beim Vereinfachen verloren: kräftig nachzeichnen */
+  const kappe = spec.kleidung && spec.kleidung.kopf ? `<path d="M${r(-0.075 * hoehe)} ${r(-0.925 * hoehe)} Q0 ${r(-1.02 * hoehe)} ${r(0.075 * hoehe)} ${r(-0.925 * hoehe)} Z" fill="#d62a1e"/>` : "";
+  S.def(`<g id="${S.id(name)}">${vereinfache(m.svg, 2)}${kappe}</g>`); return S.id(name);
+};
 
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
@@ -172,12 +178,12 @@ const linie = (pts, dy = 0) => pts.map(([x, y], i) => (i ? "L" : "M") + r(x) + "
     k += `<path d="${umriss}" fill="${S.lg("berg", [[0, "#6a7672"], [0.45, "#76827a"], [1, "#a0a9a4"]])}"/>`;
     k += `<path d="${umriss}" fill="url(#${S.id("busch")})" opacity=".6"/><path d="${umriss}" fill="url(#${S.id("busch2")})" opacity=".45"/>`;
     for (let i = 0; i < 9; i++) {
-      const x = x0 + 6 + rnd() * (x1 - x0 - 12), top = kammY(pts, x), y = top + 8 + rnd() * (104 - top - 8);
-      k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(4 + rnd() * 6)}" ry="${r(2 + rnd() * 2.5)}" fill="${["#a8604a", "#b89050", "#9a5a44", "#c0a050"][i % 4]}" opacity=".3" filter="url(#${S.id("weich2")})"/>`;
+      const x = x0 + 13 + rnd() * (x1 - x0 - 26), top = kammY(pts, x), y = top + 8 + rnd() * (104 - top - 8);
+      k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(4 + rnd() * 5)}" ry="${r(2 + rnd() * 2.5)}" fill="${["#a8604a", "#b89050", "#9a5a44", "#c0a050"][i % 4]}" opacity=".3" filter="url(#${S.id("weich2")})"/>`;
     }
     /* Grate (hell, Licht von links) und Rinnen (dunkel) */
     for (let i = 4; i < pts.length - 4; i += 5) {
-      const [x, y] = pts[i];
+      const [x, y] = pts[i]; if (x < 18) continue;
       k += `<path d="M${r(x)} ${r(y + 1.2)} Q${r(x - 5)} ${r(y + 14)} ${r(x - 14)} ${r(y + 38)}" stroke="#2f3d38" stroke-width="2.6" opacity=".26" fill="none" filter="url(#${S.id("weich1")})"/>`;
       k += `<path d="M${r(x - 1.4)} ${r(y + 1.2)} Q${r(x - 7)} ${r(y + 13)} ${r(x - 16)} ${r(y + 34)}" stroke="#f3ead2" stroke-width="1.2" opacity=".28" fill="none" filter="url(#${S.id("weich1")})"/>`;
     }
@@ -568,9 +574,9 @@ const KANTE0 = (y) => 180 - 0.3125 * (y - HOR);
   let g = "";
   const fw = winzigDef("tourw", { id: "pek_tw", geschlecht: "w", pose: "stehen", blick: 175, frisur: "zopf", haarfarbe: "schwarz", haut: "hell", kleidung: { oberteil: { stueck: "tshirt", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "jeans" }, kopf: { stueck: "kappe", farbe: "rot" } } }, 1.62 * u);
   const fm = winzigDef("tourm", { id: "pek_tm", geschlecht: "m", pose: "stehen", blick: 195, frisur: "kurz", haarfarbe: "schwarz", haut: "hell", kleidung: { oberteil: { stueck: "tshirt", farbe: "blau" }, unterteil: { stueck: "hose", farbe: "schwarz" }, kopf: { stueck: "kappe", farbe: "rot" } } }, 1.72 * u);
-  for (const [s, id, sp] of [[-31, fw, 1], [-29.6, fm, 1], [-28.2, fw, -1], [-26.8, fm, -1], [26, fm, 1], [27.4, fw, -1]]) g += `<use href="#${id}" transform="translate(${r(xAt(s, d))} ${r(yAt(d))}) scale(${sp} 1)"/>`;
-  g += `<line x1="${r(xAt(-31.6, d))}" y1="${r(yAt(d, 1.4))}" x2="${r(xAt(-31.6, d))}" y2="${r(yAt(d, 2.6))}" stroke="#555" stroke-width=".2"/><path d="M${r(xAt(-31.6, d))} ${r(yAt(d, 2.6))} l2 .4 l-2 .4 Z" fill="#e8b81a"/>`;
-  S.teil({ anker: [xAt(-29, 100), yAt(100, 2.2)], id: "reisegruppe", de: "die Reisegruppe", syl: "REI-se-grup-pe", it: "il gruppo turistico", itSyl: "GRUP-po tu-RI-sti-co", en: "tour group", x: 0, y: 0, kunst: g,
+  for (const [s, id, sp] of [[-27.6, fw, 1], [-26.2, fm, 1], [-24.8, fw, -1], [-23.4, fm, -1], [26, fm, 1], [27.4, fw, -1]]) g += `<use href="#${id}" transform="translate(${r(xAt(s, d))} ${r(yAt(d))}) scale(${sp} 1)"/>`;
+  g += `<line x1="${r((xAt(-27.6, d) - 0.9))}" y1="${r(yAt(d, 0.85))}" x2="${r((xAt(-27.6, d) - 0.9))}" y2="${r(yAt(d, 2.6))}" stroke="#555" stroke-width=".2"/><path d="M${r((xAt(-27.6, d) - 0.9))} ${r(yAt(d, 2.6))} l2 .4 l-2 .4 Z" fill="#e8b81a"/>`;
+  S.teil({ anker: [xAt(-25.5, 100), yAt(100, 2.2)], id: "reisegruppe", de: "die Reisegruppe", syl: "REI-se-grup-pe", it: "il gruppo turistico", itSyl: "GRUP-po tu-RI-sti-co", en: "tour group", x: 0, y: 0, kunst: g,
     tipp: "Die Reisegruppe trägt rote Kappen. So verliert die Reiseleiterin mit dem Fähnchen niemanden." });
 }
 

@@ -7,9 +7,9 @@
    maintower.de, Kaiserdom-Führer, Wikipedia Römer/Paulskirche):
    - STANDORT: echte Kamera am Sachsenhäuser Ufer gleich westlich der
      Alten Brücke (dort beginnt Alt-Sachsenhausen, das Apfelweinviertel),
-     im Apfelweingarten auf der unteren Uferpromenade, Auge 3,8 m über dem
-     Wasser, Blick nach Westnordwest (Peilung 298°), Brennweite 192
-     Einheiten (Bildwinkel 80°). Weltkoordinaten in Metern ab Mainkai/
+     im Apfelweingarten auf der unteren Uferpromenade (2,2 m über dem
+     Wasser); man sitzt am Tisch, Auge 3,4 m über dem Wasser, Blick nach
+     Westnordwest (Peilung 294°), Brennweite 260 Einheiten (Bildwinkel 63°). Weltkoordinaten in Metern ab Mainkai/
      Saalgasse; Lagen nach Stadtplan (±30 m). Echte Peilungen von hier:
      Silberturm 270°, ONE 272°, Tower 185 274°, Messeturm 283°, Westend
      Tower 284°, Trianon 285°, Eiserner Steg 269°–293° (über den Fluss,
@@ -125,7 +125,9 @@ const linie = (pts) => { const q = nahClip(pts, true).map((p) => pr(p[0], p[1], 
 const mass = (x, y) => FOC / tief(x, y);
 /* Alles, was über den Bildrand hinausgeht, geometrisch abschneiden: sonst würde die
    Trefferfläche (Umriss des Teils) weit aus dem Bild ragen. */
-const imRahmen = (svg) => {
+const imRahmen = (svg0) => {
+  const schutz = [];
+  let svg = svg0.replace(/<g[^>]*transform="[^"]*"[^>]*>[\s\S]*?<\/g>/g, (m) => { schutz.push(m); return `@@${schutz.length - 1}@@`; });
   const X0 = -0.5, Y0 = -0.5, X1 = 320.5, Y1 = 200.5;
   const innen = ([x, y]) => x >= X0 && x <= X1 && y >= Y0 && y <= Y1;
   const strecke = (a, b) => {   /* Liang-Barsky */
@@ -173,7 +175,7 @@ const imRahmen = (svg) => {
     const d = pfad(kreisPoly(cx, cy, rx, ry));
     return d ? `<path d="${d}"${rest.startsWith(" ") ? rest : " " + rest}/>` : "";
   });
-  return svg;
+  return svg.replace(/@@(\d+)@@/g, (m, i) => schutz[+i]);
 };
 
 /* Figuren: Pfaddaten auf ganze Zahlen runden (unsichtbar klein, halbiert die Datei) */
@@ -853,7 +855,7 @@ const DOMM = {};
     const w = 9 + rnd() * 9, xm = x + w / 2, y0 = anX(NORD, xm) + 24;
     let h = 14 + rnd() * 7;
     const pm = pr(xm, y0, KAI + h);
-    if (pm[0] > roemerBild[0] - 3 && pm[0] < roemerBild[1] + 1 && x > -180) h = 4.2;   /* Saalgasse: niedrig, damit der Römer zu sehen ist */
+    if (pm[0] > roemerBild[0] - 7 && pm[0] < roemerBild[1] - 4 && x > -180) { x += w; continue; }   /* Blick über den Römerberg frei */   /* Saalgasse: niedrig, damit der Römer zu sehen ist */
     haeuser.push([x, y0, w, h, ["#efe6d6", "#e8d2bf", "#f2ead9", "#d9c7b3", "#e6dccb", "#dcc0aa", "#f0e2cc", "#e2d6c6", "#cfd6d8"][Math.floor(rnd() * 9)], rnd() < 0.3]);
     x += w;
   }
@@ -1231,20 +1233,6 @@ const PROM = 2.2;
   k += `<path d="M${r(kz[0] - 0.1 * ks)} ${r(kz[1] + 0.3 * ks)} l-.3 1.2 M${r(kz[0] + 0.1 * ks)} ${r(kz[1] + 0.3 * ks)} l.3 1.2" stroke="#b8473a" stroke-width=".3"/>`;
   S.teil({ id: "wirtschaft", de: "die Apfelweinwirtschaft", syl: "AP-fel-wein-wirt-schaft", it: "l'osteria del sidro", itSyl: "o-ste-RI-a del SI-dro", en: "cider tavern", x: 0, y: 0, kunst: k,
     tipp: "Hängt ein grüner Kranz aus Fichtenzweigen draußen, gibt es hier selbst gekelterten Apfelwein." });
-}
-
-/* =====================================================================
-   17 — DIE PLATANE (großer Baum im Apfelweingarten, links)
-   ===================================================================== */
-{
-  const c = [263.4, -69.3], f = pr(c[0], c[1], PROM), s = mass(...c);
-  /* Schattenband des Stamms und der Krone quer über das Pflaster */
-  const sh = SCH(c[0], c[1], 9);
-  let k = `<path d="${poly([[c[0] - 0.4, c[1], PROM], [c[0] + 0.4, c[1], PROM], [c[0] + 9, c[1] + 4, PROM], [c[0] + 8, c[1] + 5.4, PROM]])}" fill="#2e2418" opacity=".22"/>`;
-  k += `<path d="${poly([[sh[0] - 4, sh[1] - 3, PROM], [sh[0] + 6, sh[1] - 6, PROM], [sh[0] + 9, sh[1] + 3, PROM], [sh[0] - 1, sh[1] + 6, PROM]])}" fill="#2e2418" opacity=".16"/>`;
-  k += platane(f[0], f[1], s, 9.5 * s, 11 * s, "#a9c6e0", 12);
-  S.teil({ id: "platane", de: "die Platane", syl: "pla-TA-ne", it: "il platano", itSyl: "PLA-ta-no", en: "plane tree", x: 0, y: 0, kunst: k,
-    tipp: "Platanen erkennt man an ihrer hellen, fleckigen Rinde." });
 }
 
 /* =====================================================================

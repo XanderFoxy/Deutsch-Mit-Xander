@@ -1492,99 +1492,133 @@ function vliesMuster(T, name, zl, zb, spalte = "#8a7c60", hell = "#fffcf2") {
     `<path d="${kr}" stroke="${spalte}" stroke-width="${k(zb * 0.05)}" stroke-opacity=".22"/></g></pattern>`);
   return `url(#${id})`;
 }
+/* Vlies, Runde 3 (Kritik: „Prägetapete“): große Kachel mit unregelmäßig großen, abgeflachten Stapelspitzen; jede Spitze
+   hängt in Fallrichtung (Kachel +x), getrennt durch eine dunkle Wollspalte auf der Fallseite, Lichtkante auf der
+   Gegenseite, feine Kräuselung; dazu lose Spaltenstücke, damit kein Raster entsteht. */
+function vliesMuster2(T, name, d, S, spalte = "#7a6c50", hell = "#fffcf2") {
+  const id = T.id("vn" + name);
+  if (!T.fein) return `url(#${id})`;
+  const n = Math.round(S / d), k = (v) => kurz(Math.round(v * 10) / 10);
+  let sp = "", li = "", kr = "";
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const cx = (i + 0.5) * d + (T.rnd() - 0.5) * d * 0.8, cy = (j + 0.5 + (i % 2) * 0.5) * d + (T.rnd() - 0.5) * d * 0.8;
+    const r = d * (0.36 + T.rnd() * 0.3), w = r * (0.75 + T.rnd() * 0.4);
+    for (const [dx, dy] of [[0, 0], [-S, 0], [0, -S], [S, 0], [0, S]]) {
+      const x = cx + dx, y = cy + dy;
+      if (x < -d || x > S + d || y < -d || y > S + d) continue;
+      sp += `M${k(x + 0.1 * r)} ${k(y - w)}Q${k(x + 1.25 * r)} ${k(y + (T.rnd() - 0.5) * w * 0.4)} ${k(x + 0.1 * r)} ${k(y + w * 0.95)}`;
+      li += `M${k(x - 0.2 * r)} ${k(y - 0.85 * w)}Q${k(x - 0.95 * r)} ${k(y)} ${k(x - 0.4 * r)} ${k(y + 0.7 * w)}`;
+      kr += `M${k(x - 0.3 * r)} ${k(y - 0.3 * w)}l${k(0.3 * r)} ${k(0.15 * w)} ${k(-0.2 * r)} ${k(0.2 * w)} ${k(0.3 * r)} ${k(0.15 * w)}`;
+      if (T.rnd() < 0.35) sp += `M${k(x + 0.9 * r)} ${k(y + 0.6 * w)}q${k(0.5 * r)} ${k(0.5 * w)} ${k(0.2 * r)} ${k(1.1 * w)}`;
+    }
+  }
+  T.def(`<pattern id="${id}" width="${k(S)}" height="${k(S)}" patternUnits="userSpaceOnUse"><g fill="none" stroke-linecap="round">` +
+    `<path d="${sp}" stroke="${spalte}" stroke-width="${k(d * 0.09)}" stroke-opacity=".3"/><path d="${li}" stroke="${hell}" stroke-width="${k(d * 0.1)}" stroke-opacity=".5"/>` +
+    `<path d="${kr}" stroke="${spalte}" stroke-width="${k(d * 0.035)}" stroke-opacity=".2"/></g></pattern>`);
+  return `url(#${id})`;
+}
+/* Schafbeine (WH 75): Fesselgelenk 12 % WH, Fersenbeinhöcker 32 % WH, Vorderfußwurzel 28 % WH; Röhre ≈ 3,3 cm */
+const SF_HCX = 20, SF_VCX = 92;
+const SF_H = bildeBein(HB_TPL, SF_HCX, [[-23, 0.34], [-62, 0.38], [-105, 0.5], [-140, 0.6]], [[0, 0], [-8.4, -4], [-23, -9], [-62, -24], [-105, -40], [-127, -52], [-140, -58]]);
+const SF_V = bildeBein(VB_TPL, SF_VCX, [[-23, 0.34], [-50, 0.38], [-97, 0.5], [-110, 0.55]], [[0, 0], [-8.4, -4], [-23, -9], [-50, -21], [-97, -38], [-110, -46]]);
 function schaf(T) {
   FEIN = T.fein;
   const F = flecken(T, "#fffaee", "#2a2418");
   const U = ' gradientUnits="userSpaceOnUse"';
-  const wolF = T.lg("wolle", [[0, "#f6f0e2"], [0.3, "#eee6d4"], [0.62, "#d6cab2"], [0.8, "#b6aa92"], [1, "#c8bca2"]], 0, -80, 0, -36, U);
-  const bein = T.lg("bein", [[0, "#3c342e"], [0.5, "#26201c"], [1, "#1a1614"]], 0, 0, 1, 0), beinF = "#2a2420", horn = "#2a2420";
-  const vm = vliesMuster(T, "a", 1.9, 1.5), vmFein = vliesMuster(T, "b", 1.5, 1.2);
+  /* Vlies-Licht: oben warmes Licht, Kernschatten bei 65–80 % der Rumpftiefe, unten schmales Reflexlicht */
+  const wolF = T.lg("wolle", [[0, "#f6f0e2"], [0.3, "#efe8d8"], [0.58, "#dcd1ba"], [0.74, "#c2b69c"], [0.9, "#cec2a6"], [1, "#c4b89c"]], 0, -80, 0, -34, U);
+  const bein = T.lg("bein", [[0, "#3c342e"], [0.5, "#26201c"], [1, "#1a1614"]], 0, 0, 1, 0), beinF = "#2a2420";
+  const vm = vliesMuster2(T, "a", 2.8, 25), vmFein = vliesMuster2(T, "b", 1.9, 19);
   const haarS = fellMuster(T, "s", 0.7, 50, [["#6a6058", 1, 0.04, 0.3]], 10, 3);
   let s = "";
-  /* Beine (unbewollt ab Knie/Sprunggelenk); fern: versetzt, 10–15 % dunkler */
-  const HB = [[13.4, -26], [12.6, -23.4], [13.2, -21.2], [15, -18.8], [15.6, -12], [15.2, -7.8], [14.6, -6.6], [15.2, -4.6], [16.4, -3.2], [17.2, -2.2, 1]];
-  const HV = [[21.6, -3.6, 1], [20.4, -4.8], [19.6, -6.2], [19.8, -7.8], [18.8, -9.2], [18.6, -14], [18.8, -19], [19.6, -22.6], [21, -26]];
-  const VB = [[88.2, -25], [88.8, -22], [89.4, -20], [90.2, -16.6], [90.4, -9], [90, -7.6], [89.4, -6.6], [90, -4.6], [91, -3.2], [91.8, -2.2, 1]];
-  const VV = [[96.2, -3.6, 1], [95, -4.8], [94.2, -6.2], [94.4, -7.8], [93.4, -9.2], [93.2, -16.6], [94, -19.8], [94.8, -22.6], [95, -25]];
-  const lauf = (pts, f, fern) => vol(T, "bein", 0.9, stueck(T, pts, f, fellZone(T, haarS, pts, 92, 1) + (fern ? "" : F.glanz(T.box(pts)[0] + 1.8, -14, 1.2, 9, 0.18)) +
-    F.schatten((T.box(pts)[0] + T.box(pts)[2]) / 2, -26, 4, 3, 0.6), { licht: 0.7, dunkel: 0.7, hell: fern ? 0.2 : 0.4, hellFarbe: "#a89888" }), { tiefe: 3, umgebung: 0.45 });
-  s += lauf(verschiebe(HB.concat(HV), 8).concat([[30, -30], [20, -30]]), beinF, 1) + klaue2(T, F, 25, 6.4, 3.7, "#3a3430", "#5a4a44") + afterklaue2(T, 22.2, -6.6, 0.8, "#2a2420", "#3a322c");
-  s += lauf(verschiebe(VB.concat(VV), -6).concat([[88, -28], [83, -28]]), beinF, 1) + klaue2(T, F, 85.6, 6.4, 3.7, "#3a3430", "#5a4a44") + afterklaue2(T, 82.8, -6.6, 0.8, "#2a2420", "#3a322c");
-  /* Wollärmel der fernen Beine (bis Knie/Sprunggelenk), dunkler */
-  const aermel = (pts) => stueck(T, lockig(pts, 0.6, T.rnd), "#a2967e", fellZone(T, vm, pts, 92, 0.7), { licht: 0.8, dunkel: 0.5, hell: 0.1 });
-  s += aermel([[21, -40], [31, -40], [30, -27], [27.6, -24.6], [22, -25.2], [20, -30]]) + aermel([[78, -44], [90, -44], [89.6, -26], [86.6, -24], [82.4, -25], [80.6, -32]]);
-  s += lauf(HB.concat(HV, [[23, -30], [12, -30]]), bein, 0) + klaue2(T, F, 17, 6.4, 3.7, "#4a4440", "#6a5a54") + afterklaue2(T, 14.2, -6.6, 0.9, "#2a2420", "#3a322c");
-  s += lauf(VB.concat(VV, [[96, -30], [87, -30]]), bein, 0) + klaue2(T, F, 91.6, 6.4, 3.7, "#4a4440", "#6a5a54") + afterklaue2(T, 88.8, -6.6, 0.9, "#2a2420", "#3a322c");
-  /* Kopf: schwarz, Ramsnase, breites Maul; Genick 5–8 % WH über dem Widerrist; 50° geneigt, 26 cm */
-  const G = [117.6, -90], W = 50, K = (pts) => dreh(pts, G[0], G[1], W), P = (x, y) => K([[x, y]])[0];
-  const ohrL = [[0, -2], [4.6, -3.4], [9.4, -3.2], [12.8, -1.4], [13.6, 0.8], [11.6, 2.6], [7.6, 3.2], [3.4, 2.6], [0, 1.6]];
-  /* fernes Ohr: hinter Kopf und Hals, nur die Spitze schaut über das Genick */
-  const OF = P(1.4, -1.6);
-  s += stueck(T, dreh(ohrL, OF[0], OF[1], 172), "#1c1814", "", { licht: 0.4, dunkel: 0.5, hell: 0.3, hellFarbe: "#6a6058", q: 0.05 });
-  /* Vlies aus dem Skelett: gerade Rückenlinie, Keule kräftig gewölbt bis zum Sprunggelenk, Bugspitze rund,
-     tiefster Punkt der Unterlinie hinter den Vorderbeinen, Bauch zur Flanke ansteigend */
-  const basis = [[110, -86], [104, -82.4], [96, -78], [88, -76.6], [76, -76.8], [60, -77], [44, -77.4], [30, -77], [20, -75.4], [13, -71.6],
-    [7.6, -66], [4.4, -58], [4, -49], [6, -40.6], [9.4, -33.4], [12.6, -28], [16, -25.4], [21, -25.6], [24.6, -29], [29, -35.6], [34, -41.6],
-    [42, -43], [54, -41.4], [66, -39.8], [78, -38.6], [84, -38.6], [86.6, -32], [87.4, -26.4], [91, -24.2], [95.6, -25], [97.4, -30.4], [99.6, -36.6],
-    [103.6, -42.4], [106.6, -48.6], [108.4, -55], [110.2, -61], [112.6, -67.4], [115.4, -73.6], [118.6, -79.4], [117.6, -86.6]];
-  const vlies = lockig(basis, 1.1, T.rnd);
+  const klSF = (cx, f) => klaue3(T, F, cx + 0.3, 5.4, 3.4, f, "#3a322c", "#4a403a") + afterklaue2(T, cx - 1.6, -4.6, 0.8, "#2a2420", "#3a322c");
+  /* schwarze Läufe ab Sprunggelenk/Vorderfußwurzel (Oberteil verschwindet im Vlies) */
+  const laufPts = (vorn) => vorn ? SF_V.h.slice(2).concat(SF_V.v.slice(0, 15), [[SF_VCX + 6, -40], [SF_VCX - 5, -40]]) :
+    SF_H.h.slice(4).concat(SF_H.v.slice(0, 13), [[SF_HCX + 12, -38], [SF_HCX - 4, -38]]);
+  const lauf = (pts, f, fern, cx) => vol(T, "bein", 0.9, stueck(T, pts, f, fellZone(T, haarS, pts, 92, 1) + (fern ? "" : F.glanz(cx - 1.2, -14, 0.8, 6, 0.25)) +
+    F.licht(cx - 2.4, -23.4, 0.6, 0.8, fern ? 0.2 : 0.4), { licht: 0.6, dunkel: 0.6, hell: fern ? 0.2 : 0.4, hellFarbe: "#a89888" }), { dunkel: 0.5, hell: 0.25 });
+  s += lauf(verschiebe(laufPts(false), 7), beinF, 1, SF_HCX + 7) + klSF(SF_HCX + 7, "#2e2824");
+  s += lauf(verschiebe(laufPts(true), -6), beinF, 1, SF_VCX - 6) + klSF(SF_VCX - 6, "#2e2824");
+  /* Wollärmel der fernen Beine (bis Sprunggelenk/Knie), im Schatten −20 %, Rand ausgefranst */
+  const aermel = (pts, w) => stueck(T, lockig(pts, 0.5, T.rnd), "#aa9e84", fellZone(T, vmFein, pts, w, 0.8), { licht: 0.8, dunkel: 0.5, hell: 0.1 }) +
+    saum2(T, pts.slice(2, 5), 14, 95, 1.2, "#b8ac92", 0.06, 0.7, { ab: 0.3, streuung: 40 });
+  s += aermel([[22, -40], [34, -40], [31, -29], [29.6, -25.6], [24.2, -24], [22.4, -26.6], [21, -32]], 100) + aermel([[80, -40], [92, -40], [91, -27], [90.4, -22.4], [85, -21.4], [84, -26]], 92);
+  s += lauf(laufPts(false), bein, 0, SF_HCX) + klSF(SF_HCX, "#3e3632");
+  s += lauf(laufPts(true), bein, 0, SF_VCX) + klSF(SF_VCX, "#3e3632");
+  /* Kopf-Lage: Genick 6 cm über dem Widerrist; 50° geneigt, 27 cm */
+  const G = [117, -91], W = 50, K = (pts) => dreh(pts, G[0], G[1], W), P = (x, y) => K([[x, y]])[0];
+  /* fernes Ohr: nur die Spitze schaut über das Genick */
+  const ohrL = [[0, -1.4], [3.4, -2.2], [7, -3], [10.4, -3.2], [12.8, -2.2], [13.6, 0], [12.6, 2.2], [9.6, 3], [6, 2.4], [3, 1.6], [0, 1.2]];
+  const OF = P(1, -2.6);
+  s += stueck(T, dreh(ohrL, OF[0], OF[1], 196), "#1c1814", F.licht(...dreh([[9, -1.6]], OF[0], OF[1], 196)[0], 3, 0.6, 0.3, 16), { licht: 0, q: 0.05 });
+  /* Vlies: gerade Rückenlinie; Keule kräftig konvex bis zum Sprunggelenk; Schwanzstummel wächst aus dem Vlies;
+     Bugspitze rund vor; tiefster Punkt hinter den Vorderbeinen; Bauch steigt zur Flanke; Hals 40–45° nach vorn-oben, schmaler */
+  const basis = [[113, -88.6], [108, -85], [102, -81.6], [96, -80], [86, -79.2], [72, -79], [58, -79.2], [44, -79.6], [32, -79.6], [22, -78.6], [16, -77.6],
+    [11.6, -76.4], [8.4, -74], [7.4, -70.8], [8.2, -68.6], [5.8, -64.6], [4, -58], [3.8, -50], [5.4, -42], [8.4, -35], [12, -29.6], [15, -26.2], [16.4, -24.6],
+    [19.4, -24], [23.6, -25.2], [26.6, -29.6], [30, -34.6], [34, -39], [38.4, -40.6], [46, -39.4], [56, -38], [66, -36.8], [76, -35.8], [83.6, -35.6], [86.4, -32],
+    [87.4, -26], [88.4, -22], [91, -21], [94.6, -21.6], [95.6, -24.6], [96.8, -29.4], [98.6, -34], [101.8, -38.4], [105.4, -43], [108.4, -48.6], [110.8, -55],
+    [112, -60.6], [112.8, -66], [114, -70.6], [116, -75.4], [118.6, -80], [117.2, -86]];
+  const vlies = lockig(basis, 0.9, T.rnd);
   const dV = gl(vlies, true, T.fein ? 0.1 : 0.5);
-  const zRuecken = [[0, -84], [120, -96], [120, -74], [0, -70]];
-  const zSeite = [[24, -76], [60, -76], [60, -20], [24, -20]];
-  const zSeite2 = [[60, -76], [96, -76], [96, -20], [60, -20]];
-  const zKeule = [[0, -76], [26, -76], [32, -40], [24, -20], [0, -20]];
-  const zBug = [[94, -80], [122, -90], [118, -50], [100, -20], [86, -20], [90, -60]];
+  /* Stapelrichtung: Scheitel auf dem Rücken, Bögen über Schulter und Keule, an den Seiten senkrecht fallend; Hals/Schulter fein, Keule grob */
+  const zRuecken = [[0, -86], [120, -96], [120, -75], [0, -73]];
+  const zSeite = [[28, -76], [62, -76], [62, -20], [28, -20]];
+  const zSeite2 = [[62, -76], [92, -76], [92, -20], [62, -20]];
+  const zKeule = [[0, -76], [28, -76], [34, -40], [26, -20], [0, -20]];
+  const zBug = [[92, -80], [122, -92], [118, -50], [100, -18], [86, -18], [90, -60]];
   const vInnen =
-    fellZone(T, vm, zSeite, 84) + fellZone(T, vmFein, zSeite2, 96) + fellZone(T, vm, zKeule, 112) + fellZone(T, vm, zBug, 70) + fellZone(T, vmFein, zRuecken, 0) +
-    fellZone(T, vmFein, [[100, -96], [124, -96], [120, -60], [104, -60]], 64) +
-    /* Walze: obere 30 % warmes Licht, Kernschatten bei 65–80 %, Reflexlicht unten; Schulter und Keule als eigene Rundungen */
-    rumpfLicht(F, 6, 112, -78, -38, 0.8) + F.licht(26, -62, 13, 12, 0.5) + F.schatten(16, -36, 10, 8, 0.4) + F.licht(98, -64, 8, 10, 0.4) + F.schatten(102, -44, 6, 6, 0.35) +
-    F.rinne(30, -70, 34, -46, 3, 0.18) + F.rinne(86, -72, 84, -48, 3, 0.14) +
-    /* Wollfett/Staub unten und an der Keule, Okklusion an den Beinansätzen, Kopfschatten auf dem Hals */
-    `<rect x="0" y="-48" width="122" height="24" fill="${T.lg("gelb", [[0, "#d9cba8", 0], [1, "#c8b890", 0.55]])}"/>` +
-    F.schatten(17, -26, 6, 2.6, 0.7) + F.schatten(91, -25.6, 6, 2.4, 0.7) + F.schatten(113, -70, 6, 8, 0.45, 20) + F.schatten(108, -84, 5, 3, 0.4) +
-    haare2(T, vlies, 80, (x, y) => (y > -60 ? 95 : 70 + T.rnd() * 40), 0.9, { farben: [["#fffdf6", 1, 0.06, 0.6], ["#a89a7c", 0.6, 0.05, 0.4]], streuung: 90, kruemmung: 0.5, szene: 0 });
-  s += vol(T, "rumpf", 9, stueck(T, dV, wolF, vInnen, { licht: 1.5, dunkel: 0.55, hell: 0.6, hellFarbe: "#fffaf0" }), { tiefe: 4, umgebung: 0.4 });
+    fellZone(T, vm, zSeite, 86) + fellZone(T, vmFein, zSeite2, 94) + fellZone(T, vm, zKeule, 118) + fellZone(T, vmFein, zBug, 66) + fellZone(T, vmFein, zRuecken, 10) +
+    fellZone(T, vmFein, [[100, -96], [124, -96], [120, -60], [104, -60]], 60) +
+    /* Walze, Schulter und Keule mit eigenem Licht; Okklusion an den Beinansätzen und unter dem Kopf */
+    rumpfLicht(F, 6, 112, -80, -36, 0.8) + F.licht(22, -64, 13, 12, 0.5) + F.schatten(12, -34, 9, 8, 0.4) + F.licht(100, -66, 8, 10, 0.4) + F.schatten(104, -44, 6, 6, 0.35) +
+    F.rinne(32, -72, 36, -46, 3, 0.18) + F.rinne(88, -74, 86, -48, 3, 0.14) + F.schatten(11, -68, 3, 2.4, 0.45) + F.rinne(34, -38, 40, -50, 1.4, 0.3) +
+    `<rect x="0" y="-50" width="122" height="30" fill="${T.lg("gelb", [[0, "#d9cba8", 0], [1, "#c8b890", 0.5]])}"/>` +
+    F.schatten(SF_HCX + 1, -25.4, 5, 2, 0.7) + F.schatten(SF_VCX, -22, 5, 2, 0.7) + F.schatten(112, -72, 6, 8, 0.5, 20) + F.schatten(108, -84, 5, 3, 0.4) +
+    haare2(T, vlies, 70, (x, y) => (y > -60 ? 95 : 70 + T.rnd() * 40), 0.9, { farben: [["#fffdf6", 1, 0.06, 0.6], ["#a89a7c", 0.6, 0.05, 0.4]], streuung: 90, kruemmung: 0.5, szene: 0 });
+  /* Stapel-Relief: Rauschen als Höhenkarte von links oben beleuchtet – unregelmäßige, abgeflachte Stapelspitzen mit Spalten */
+  const wr = T.fein ? T.relief("wolle", { typ: "turbulence", f: 0.5, f2: 0.42, okt: 2, tiefe: 0.7, k1: 1.24, hoehe: 55, seed: 5 }) : "";
+  const vl = stueck(T, dV, wolF, vInnen, { licht: 1.2, dunkel: 0.45, hell: 0.5, hellFarbe: "#fffaf0" });
   const rk = T._clip;
-  /* Faserspitzen am Vliesrand (halbtransparent), Lichtseite heller */
-  s += saum2(T, vlies.filter((p, i) => i % 2 === 0), 160, (x, y) => (y < -70 ? -100 + (x - 60) * 0.1 : x < 30 ? 180 : 100), 0.8, "#f6f0e2", 0.07, 0.6, { ab: 0.5, streuung: 70 });
-  /* kupierter, bewollter Schwanzstummel */
-  const schw = lockig([[15, -74.6], [10.4, -73.6], [6.4, -69.6], [4.4, -63.6], [4.8, -58.6], [7.6, -58.4], [10.4, -63], [13, -68.6]], 0.5, T.rnd);
-  s += vol(T, "schwanz", 1.2, stueck(T, schw, T.lg("sw", [[0, "#f0eadc"], [1, "#c4b8a0"]]), fellZone(T, vmFein, schw, 100), { licht: 0.8, dunkel: 0.5, hell: 0.5 }));
-  s += imRumpf(rk, F.schatten(9, -60, 4, 3, 0.4));
-  const kopf = K([[-1, -2.4], [5, -4], [10, -4.8], [16, -4.4], [21, -3], [24.4, -1], [26.2, 1.8], [26.8, 4.8], [26.2, 7.2], [25.2, 8.2], [24.6, 8.6], [24.4, 9.4],
-    [23.2, 10.4], [21, 10.8], [17, 10.6], [12, 12.2], [7, 15], [3, 15.4], [0, 12.4], [-1.6, 5]]);
+  s += vol(T, "rumpf", 5, wr ? `<g filter="${wr}">${vl}</g>` : vl, { dunkel: 0.4, hell: 0.25 });
+  /* Faserspitzen am Vliesrand; Übergang Wolle → schwarzes Kurzhaar als ausgefranster Saum */
+  s += saum2(T, vlies.filter((p, i) => i % 2 === 0), 150, (x, y) => (y < -70 ? -100 + (x - 60) * 0.1 : x < 30 ? 180 : 100), 0.8, "#f6f0e2", 0.07, 0.6, { ab: 0.5, streuung: 70 });
+  s += saum2(T, [[15, -26.2], [16.4, -24.6], [19.4, -24], [23.6, -25.2]], 16, 95, 1.4, "#e2d8c2", 0.07, 0.75, { ab: 0.3, streuung: 30 }) +
+    saum2(T, [[87.4, -26], [88.4, -22], [91, -21], [94.6, -21.6], [95.6, -24.6]], 16, 95, 1.4, "#e2d8c2", 0.07, 0.75, { ab: 0.3, streuung: 30 });
+  const kopf = K([[-1, -2.4], [5, -4], [10, -4.8], [16, -4.6], [21, -3.4], [24.6, -1.2], [26.4, 1.8], [27, 5], [26.4, 7.6], [25.4, 9], [24.8, 9.6], [24.4, 10.6],
+    [22.8, 11.6], [19.6, 11.6], [16, 11.2], [12, 12.6], [8, 14.6], [4.6, 15.8], [1.6, 14], [-0.6, 9], [-1.6, 4]]);
   const kInnen = fellZone(T, haarS, kopf, W, 0.8) +
-    F.licht(...P(14, -2.4), 9, 1.6, 0.35, W) + F.licht(...P(10, 6), 4, 3, 0.2, W) + F.schatten(...P(7, 12), 6, 3, 0.55, W) + F.schatten(...P(1, 9), 2.4, 5, 0.45, W) +
-    F.kante(...P(10, 4.6), ...P(18, 4.4), 0.8, 0.3) + F.schatten(...P(18, 9.6), 6, 1.4, 0.45, W) +
-    /* Satinglanz auf Nasenrücken und Jochbogen */
-    F.licht(...P(20, -1.6), 5, 0.9, 0.35, W - 8) + F.licht(...P(9, 3.6), 3, 0.8, 0.25, W);
-  s += vol(T, "kopf", 2.4, stueck(T, kopf, T.lg("kopf", [[0, "#302822"], [1, "#16120f"]]), kInnen, { licht: 0.9, dunkel: 0.6, hell: 0.6, hellFarbe: "#8a7e74", q: 0.05 }), { tiefe: 4, umgebung: 0.4 });
-  /* Wollkragen hinter den Ohren und an der Kehle (saubere Kragenlinie) */
+    /* Satinglanz auf Nasenrücken und Jochbogen; Ganasche mit Kieferwinkel und Kernschatten; Kaumuskel; Tränengrube */
+    F.licht(...P(14, -2.6), 9, 1.4, 0.35, W) + F.licht(...P(20.4, -1.8), 5, 0.9, 0.35, W - 8) + F.licht(...P(9, 3.4), 3, 0.8, 0.25, W) +
+    F.licht(...P(8, 8), 4, 3, 0.22, W) + F.schatten(...P(7, 13.4), 6, 2, 0.55, W) + F.licht(...P(4.4, 14.4), 2, 0.8, 0.25, W + 40) + F.schatten(...P(1, 9), 2.4, 5, 0.45, W) +
+    F.kante(...P(10, 4.6), ...P(18, 4.4), 0.7, 0.3) + F.rinne(...P(10.6, 6), ...P(18, 5.8), 0.7, 0.35) + F.schatten(...P(19, 10.2), 6, 1.2, 0.45, W) +
+    F.schatten(...P(11.6, 3.6), 1.6, 0.9, 0.65, W - 20);
+  s += vol(T, "kopf", 2.2, stueck(T, kopf, T.lg("kopf", [[0, "#302822"], [1, "#16120f"]]), kInnen, { licht: 0.8, dunkel: 0.5, hell: 0.5, hellFarbe: "#8a7e74", q: 0.05 }), { dunkel: 0.45, hell: 0.25 });
+  /* Wollkragen hinter dem Kiefer (saubere Kragenlinie) */
   s += saum2(T, K([[-0.6, 4], [0, 10], [2, 14]]), 30, W + 180, 1.2, "#f2ecde", 0.07, 0.75, { ab: 0.7, streuung: 30 });
-  /* Nasenloch: schräges Komma, heller Nasenflügel; gespaltene Oberlippe; dünne Maulspalte; Kinn */
-  s += form(K([[23.6, 1.6], [25.4, 2], [26, 3.6], [25.4, 5.4], [24.6, 4], [23.8, 3]]), "#050302", "", 0.05);
-  s += strich(K([[23.2, 1], [25.4, 1.2], [26.6, 3.4]]), "#7a6a62", 0.2, 0.6, 0.05) + strich(K([[26.4, 6.4], [25.4, 7.2], [25, 8.4]]), "#000", 0.2, 0.7, 0.05);
-  s += strich(K([[24.8, 8.6], [22, 9], [19.6, 8.6]]), "#000", 0.16, 0.7, 0.05) + F.licht(...P(22, 10.4), 1.4, 0.5, 0.25, W);
-  s += tasthaare(T, K([[21, 9.4], [24, 8.8], [25.8, 7]]), 5, 1.2, W + 50, "#6a6058", 0.03);
-  /* Auge: Bernstein, rechteckige Pupille, kurze dichte Wimpern; Voraugendrüse vorn-unten */
-  const A = P(8.4, 1.4);
-  s += F.schatten(...P(11.6, 3.6), 1.6, 0.8, 0.6, W - 20);
-  s += auge2(T, F, A[0], A[1], 1.3, { winkel: 26, iris: "#c4943e", iris2: "#5a3a10", hoehe: 0.64, pupBreite: 0.72, wimpern: 12, wl: 0.32, wr: -60, wf: "#1a1612", haut: "#6a6058", mulde: 0.4, licht: 0.6, unten: 0 });
-  /* Ohren: glockenförmig, seitlich-hängend (Spitze ~20° unter der Waagerechten); fernes Ohr: Spitze hinter dem Genick */
-  const ON = P(3.6, 0.4);
-  /* kleiner Wollschopf im Genick */
-  const schopf = lockig(K([[-2, -2.8], [0.6, -5], [3.6, -5.6], [5.6, -4.6], [3.6, -3.6], [0.8, -2.4]]), 0.4, T.rnd);
-  s += stueck(T, schopf, T.lg("schopf", [[0, "#efe8d6"], [0.7, "#d8ceb8"], [1, "#8a8070"]], 0, 0, 0.3, 1), fellZone(T, vmFein, schopf, 30), { licht: 0.4, dunkel: 0.5, hell: 0.5, q: 0.05 });
-  s += saum2(T, K([[-1.6, -2.8], [1.4, -5], [4.4, -5.4], [5.6, -4.4]]), 16, W - 120, 0.6, "#f6f0e2", 0.05, 0.6, { ab: 0.3, streuung: 60 }) +
-    saum2(T, K([[0.8, -2.4], [3.6, -3.6], [5.6, -4.4]]), 14, W + 10, 0.8, "#efe8d6", 0.05, 0.5, { ab: 0.1, streuung: 30 });
-  s += imRumpf(rk, F.schatten(ON[0] - 4, ON[1] + 2, 6, 2, 0.45, 20));
-  s += stueck(T, dreh(ohrL, ON[0], ON[1], 158), T.lg("ohr", [[0, "#2c2620"], [1, "#14110e"]]),
-    form(dreh([[2.6, 0.6], [7, 1.2], [11, 0.8], [12.4, 0.6], [11, 2], [7, 2.4], [3, 1.8]], ON[0], ON[1], 158), "#7a6862", "", 0.05) +
-    F.licht(...dreh([[6.4, -2]], ON[0], ON[1], 158)[0], 4.4, 0.8, 0.35, 158 - 180) + strich(dreh([[1.4, -0.4], [2.8, 1]], ON[0], ON[1], 158), "#000", 0.25, 0.5, 0.05),
-    { licht: 0.5, dunkel: 0.6, hell: 0.5, hellFarbe: "#6a6058", q: 0.05 });
+  /* Nase und Maul: schräges Komma-Nasenloch mit hellem Nasenflügel, Philtrum, gespaltene Oberlippe, Maulspalte mit
+     leicht ansteigendem Mundwinkel, Kinnwölbung, Tasthaare */
+  s += form(K([[23.8, 1.6], [25.6, 2], [26.2, 3.6], [25.6, 5.4], [24.8, 4], [24, 3]]), "#050302", "", 0.05);
+  s += F.kante(...P(23.4, 1), ...P(26.6, 3.2), 0.4, 0.5) + F.rinne(...P(26.6, 5.6), ...P(25.6, 8.4), 0.3, 0.6);
+  s += strich(K([[24.8, 9.4], [22, 9.8], [19.6, 9.2]]), "#000", 0.16, 0.7, 0.05) + F.licht(...P(22.4, 11), 1.6, 0.6, 0.3, W);
+  s += tasthaare(T, K([[21, 10], [24, 9.4], [26, 7.4]]), 5, 1.2, W + 50, "#6a6058", 0.03);
+  /* Auge: +15 %, Bernstein, rechteckige Pupille, Augenbogen-Glanz, feuchtes Unterlid, Karunkel */
+  const A = P(8.4, 1.2);
+  s += auge2(T, F, A[0], A[1], 1.5, { winkel: 26, iris: "#c4943e", iris2: "#5a3a10", hoehe: 0.64, pupBreite: 0.72, wimpern: 12, wl: 0.35, wr: -60, wf: "#1a1612", haut: "#8a7e74", mulde: 0.4, licht: 0.8 });
+  /* Wollkappe: Polster aus Vliesstapeln zwischen den Ohren, Rand läuft in schwarzes Kurzhaar aus, Unterkante im Schatten */
+  const schopf = lockig(K([[-2.4, -2.6], [0.4, -5.2], [3.6, -5.8], [6, -4.6], [3.6, -3.4], [0.6, -2.2]]), 0.35, T.rnd);
+  s += stueck(T, schopf, T.lg("schopf", [[0, "#efe8d6"], [0.7, "#d8ceb8"], [1, "#9a9080"]], 0, 0, 0.3, 1), fellZone(T, vmFein, schopf, 30), { licht: 0, q: 0.05 });
+  s += saum2(T, K([[-1.6, -3], [1.4, -5.2], [4.4, -5.6], [6, -4.6]]), 16, W - 120, 0.6, "#f6f0e2", 0.05, 0.6, { ab: 0.3, streuung: 60 }) +
+    saum2(T, K([[0.6, -2.2], [3.6, -3.4], [6, -4.6]]), 16, W + 20, 0.7, "#2a2420", 0.05, 0.7, { ab: 0.5, streuung: 30 });
+  /* nahes Ohr: glockenförmig, lang (≈ 50 % Kopflänge), seitlich abstehend, Spitze ≈ 20° unter der Waagerechten;
+     samtschwarz mit breitem mattem Glanz; Innenseite nur als schmale Sichel an der Unterkante; Knorpelfalte am Grund */
+  const ON = P(3.4, 0.2), OW = 162;
+  s += imRumpf(rk, F.schatten(ON[0] - 5, ON[1] + 2.6, 6, 2, 0.45, 20));
+  s += stueck(T, dreh(ohrL, ON[0], ON[1], OW), T.lg("ohr", [[0, "#2c2620"], [1, "#14110e"]]),
+    form(dreh([[3, 1.4], [6, 2.2], [9.6, 2.6], [12.4, 2], [11, 2.9], [7, 3.1], [3.4, 2.2]], ON[0], ON[1], OW), T.lg("ohri", [[0, "#3a302c"], [0.6, "#7a6862"], [1, "#5a4c46"]], 0, 0, 1, 0), "", 0.05) +
+    F.licht(...dreh([[7, -1]], ON[0], ON[1], OW)[0], 5, 1, 0.3, OW - 180) + F.rinne(...dreh([[1, -0.6], [3.4, 0.6]], ON[0], ON[1], OW).flat(), 0.3, 0.5),
+    { licht: 0, q: 0.05 });
   const kb = T.box(kopf);
-  return { svg: s, box: [3, -93, 134, 0], fuesse: [20, 28, 88, 94], kopf: [kb[0] - 14, kb[1] - 6, kb[2] + 2, kb[3] + 2] };
+  return { svg: s, box: [2, -99, 135, 0], fuesse: [SF_HCX + 2, SF_HCX + 9, SF_VCX - 4, SF_VCX + 3], kopf: [kb[0] - 14, kb[1] - 6, kb[2] + 2, kb[3] + 2] };
 }
 
 /* =====================================================================
@@ -1737,7 +1771,7 @@ module.exports = [
   { id: "ziege", de: "die Ziege", syl: "ZIE-ge", it: "la capra", itSyl: "CA-pra", en: "goat",
     gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 0.97, hoehe: 1.19, zeichne: ziege },
   { id: "schaf", de: "das Schaf", syl: "SCHAF", it: "la pecora", itSyl: "PE-co-ra", en: "sheep",
-    gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 1.31, hoehe: 0.93, zeichne: schaf },
+    gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 1.31, hoehe: 0.98, zeichne: schaf },
   { id: "schwein", de: "das Schwein", syl: "SCHWEIN", it: "il maiale", itSyl: "ma-IA-le", en: "pig",
     gruppe: "Bauernhof", lebensraum: "Bauernhof", laenge: 1.83, hoehe: 0.9, zeichne: schwein },
   { id: "esel", de: "der Esel", syl: "E-sel", it: "l'asino", itSyl: "A-si-no", en: "donkey",

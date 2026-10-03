@@ -549,7 +549,7 @@ function giraffe(T) {
   const fHals = F ? H.fellMuster("h", 62, haarF, { tile: 9, n: 30, len: 2.6 }) : "";
   const fRumpf = F ? H.fellMuster("r", 168, haarF, { tile: 10, n: 30, len: 3 }) : "";
   const fBein = F ? H.fellMuster("b", 92, haarF, { tile: 7, n: 24, len: 2.2 }) : "";
-  const fKopf = F ? H.fellMuster("k", 200, [["#fff6e2", 2, 0.2, 0.3], ["#3a1d0a", 2, 0.2, 0.28]], { tile: 6, n: 26, len: 1.5 }) : "";
+  const fKopf = F ? H.fellMuster("k", 200, [["#fff6e2", 2, 0.15, 0.14], ["#3a1d0a", 2, 0.15, 0.12]], { tile: 6, n: 40, len: 1.3, streu: 0.5 }) : "";
   /* ---- Fleckenmosaik: echte Voronoi-Zellen, Fugen unterschiedlich breit, Ränder gelappt, Ecken rund,
      zum Umriss hin verkürzt (Rundung), zum Bauch kleiner und heller ---- */
   const zentren = [];
@@ -585,7 +585,7 @@ function giraffe(T) {
       if (o.nur && !o.nur(c)) continue;
       const imm = drin(poly, c.x, c.y);
       if (!imm && !(o.rand && poly.some((p) => Math.abs(p[0] - c.x) < c.g && Math.abs(p[1] - c.y) < c.g))) continue;
-      let zelle = [[c.x - c.g * 1.5, c.y - c.g * 1.5], [c.x + c.g * 1.5, c.y - c.g * 1.5], [c.x + c.g * 1.5, c.y + c.g * 1.5], [c.x - c.g * 1.5, c.y + c.g * 1.5]];
+      const ra = c.g * 0.62; let zelle = [[c.x - ra, c.y - ra * 1.2], [c.x + ra, c.y - ra * 1.2], [c.x + ra * 1.2, c.y + ra], [c.x - ra * 1.2, c.y + ra]];
       let k = 0;
       for (const n of zentren) {
         if (n === c || Math.abs(n.x - c.x) > c.g * 2.2 || Math.abs(n.y - c.y) > c.g * 2.2) continue;
@@ -697,12 +697,12 @@ function giraffe(T) {
   const kopf = kopfL.map((p) => K(p[0], p[1]));
   let k = "";
   zentren.length = 0;
-  feld(340, -545, 420, -470, 8.5, 1.8, (x, y) => true);
+  feld(340, -545, 420, -470, 8.5, 1.8, (x, y) => { const u = (x - P0[0]) * Math.cos(wa) + (y - P0[1]) * Math.sin(wa); return u < 22 + (T.rnd() - 0.5) * 8; });
   const kf = flecken(kopf, { umriss: kopf, r0: 6 });
   const kopfMaske = [K(0, -12), K(30, -14), K(32, 20), K(0, 20)];
   k += teil(kopf, creme, {
     fell: [fKopf], ov: [lichtX], vol: [5, 4, 0.4], rim: 4, rimD: G(kopf.slice(0, 21), false),
-    innen: `<g clip-path="url(#${T.id("km")})">${fleckSVG(kf)}</g>` +
+    innen: fleckSVG(kf) +
       /* warmer Hauch auf Stirn und Nasenrücken, warmes Maul */
       wf([K(22, -10), K(46, -8), K(64, -5)].concat([K(64, 2), K(30, 0)]), "#b5814e", 0.35, 2.5) +
       wf([K(62, -5), K(76, 0), K(74, 9), K(64, 11), K(58, 4)], "#b49a78", 0.75, 1.6) +
@@ -714,7 +714,6 @@ function giraffe(T) {
       kerben([[K(76, 5.6), K(73.5, 6.5), K(68, 6.8), K(62, 7.4)]], 0.9, 0.75, "#140d08") + wf([K(70, 9.5), K(73, 10.5)], "#000", 0.25, 0.7, false) +
       (F ? T.schnurrhaare(...K(73, 7), 8, 4, 110, 60, "#2a1d12", 0.12) : ""),
   });
-  T.def(`<clipPath id="${T.id("km")}"><path d="${G(kopfMaske)}"/></clipPath>`);
   /* Auge: groß, vorstehend, fast schwarz, waagrechte Pupille, lange Wimpern oben, kurze unten */
   const [ax, ay] = K(29, -3.2);
   k += H.auge(ax, ay, 3.2, { iris: "#3a2010", iris2: "#120804", offen: 0.8, pupille: "quer", wimpern: 16, wl: 1.7, lid: "#160d07", lidHaut: "#3c2614", winkel: 14, hoehleA: 0.22, feucht: "#a07a68", wimpernFarbe: "#1a120b" });
@@ -1317,8 +1316,8 @@ function gnu(T) {
   const licht = T.lg("licht", [[0, "#fff", 0.16], [0.3, "#fff", 0.02], [0.55, "#000", 0], [0.8, "#1a1410", 0.22], [1, "#a89a8a", 0.12]], 0, -156, 0, -66, US);
   const SW = "#110e0c";
   const hf = [["#2a2522", 2, 0.12, 0.22], ["#9a9ea2", 2, 0.11, 0.22]];
-  const fR = F ? H.fellMuster("r", 168, hf, { tile: 7, n: 55, len: 1.6, streu: 0.3 }) : "";
-  const fH = F ? H.fellMuster("h", 70, hf, { tile: 7, n: 55, len: 1.5, streu: 0.3 }) : "";
+  const fR = F ? H.fellMuster("r", 168, hf, { tile: 7, n: 45, len: 1.6, streu: 0.3 }) : "";
+  const fH = F ? H.fellMuster("h", 70, hf, { tile: 7, n: 45, len: 1.5, streu: 0.3 }) : "";
   const fB = F ? H.fellMuster("b", 92, [["#2a2420", 1, 0.1, 0.2], ["#8a8078", 1, 0.1, 0.18]], { tile: 4, n: 28, len: 1, streu: 0.25 }) : "";
   const fK = F ? H.fellMuster("k", 240, [["#000", 1, 0.1, 0.25], ["#6a605a", 1, 0.1, 0.22]], { tile: 4, n: 28, len: 0.8, streu: 0.35 }) : "";
   /* ---- Beine: schlank; vorn Vorderfußwurzel als kantige Verdickung, Röhrbein mit Sehnenrinne, Fesselgelenk, Afterklauen, gespaltener Huf.
@@ -1343,7 +1342,7 @@ function gnu(T) {
   s += wf([[30, -122], [24, -100], [24, -70]], "#000", 0.3, 2, false, 6);
   s += teil(sk.pts, fell, { fell: [fR], vol: [1.4, 4, 0.4], innen: wf([[29, -127], [23, -112]], SW, 0.6, 0.6, false, 1.6) });
   s += teil([[24, -114], [20, -106], [17, -88], [15, -70], [17, -58], [22, -56], [26, -66], [27, -86], [26, -106]], SW, { fell: F ? [H.fellMuster("t", 96, [["#3a302a", 1, 0.3, 0.6]], { tile: 4, n: 12, len: 5, streu: 0.15 })] : [] });
-  s += H.straehnen([[23.5, -114], [21.5, -110], [21, -106]], F ? 70 : 24, (t) => 48 + t * 14, (x, y, t) => 96 - (t - 0.5) * 16, [[SW, 3, 0.7, 0.95], ["#2a221c", 2, 0.6, 0.9], ["#4a3e34", 1, 0.5, 0.7]], { streu: 9, welle: 0.25, szene: 1 });
+  s += H.straehnen([[23.5, -114], [21.5, -110], [21, -106]], F ? 52 : 24, (t) => 48 + t * 14, (x, y, t) => 96 - (t - 0.5) * 16, [[SW, 3, 0.7, 0.95], ["#2a221c", 2, 0.6, 0.9], ["#4a3e34", 1, 0.5, 0.7]], { streu: 9, welle: 0.25, szene: 1 });
   /* ---- Rumpf mit Hals: Widerristbuckel, Rücken fällt gerade zur Kruppe, Hüfthöcker; tiefe Brust, Bugspitze vor dem Vorderbein,
      Bauch hinter dem Ellbogen am tiefsten und zur Flanke stark aufgezogen; kurzer, dicker Hals ---- */
   const rumpf = [[30, -128], [44, -130], [66, -133], [80, -136], [100, -142], [124, -150], [140, -156], [152, -157], [166, -154], [182, -150], [192, -146],
@@ -1380,7 +1379,7 @@ function gnu(T) {
   const mh = [3, 7, 9, 10, 9, 7];
   const mBasis = kammP.map((p, i) => [p[0] - 1, p[1] - mh[i] * 0.75]).concat(kammP.slice().reverse().map((p) => [p[0], p[1] + 2]));
   s += teil(mBasis, SW, { fell: F ? [H.fellMuster("m", -95, [["#3a322b", 1, 0.3, 0.6]], { tile: 4, n: 12, len: 4, streu: 0.3 })] : [] });
-  s += H.straehnen(kammP, F ? 150 : 50, (t) => 2.5 + Math.sin(Math.min(1, t * 1.25) * Math.PI) * 5, (x, y, t) => -100 + (t - 0.5) * 40, [[SW, 3, 0.55, 0.95], ["#2a221c", 2, 0.5, 0.9], ["#4a3f36", 1, 0.45, 0.8]], { streu: 18, welle: 0.3, szene: 1 });
+  s += H.straehnen(kammP, F ? 115 : 50, (t) => 2.5 + Math.sin(Math.min(1, t * 1.25) * Math.PI) * 5, (x, y, t) => -100 + (t - 0.5) * 40, [[SW, 3, 0.55, 0.95], ["#2a221c", 2, 0.5, 0.9], ["#4a3f36", 1, 0.45, 0.8]], { streu: 18, welle: 0.3, szene: 1 });
   /* ---- Kopf: Achse 63° nach unten, ~50 cm; Ramsnase, eckiges breites Maul, Nüster, Lippen, Kinn; Gesicht schwarzbraun, Wangen heller ---- */
   const wa = 63 * Math.PI / 180, P0 = [188, -150];
   const K = (u, v) => [P0[0] + u * Math.cos(wa) - v * Math.sin(wa), P0[1] + u * Math.sin(wa) + v * Math.cos(wa)];
@@ -1390,7 +1389,7 @@ function gnu(T) {
   let k = "";
   /* Bart: beginnt an der Kehle unter dem Unterkiefer, zieht als Saum die Halsunterseite entlang, Haare fallen senkrecht */
   const bartW = [K(20, 17), K(14, 19.5), [194, -110], [188, -100], [180, -92]];
-  k += H.straehnen(bartW, F ? 80 : 30, (t) => 10 + Math.sin(t * Math.PI) * 6, (x, y) => 92 + (x - 190) * 0.2, [[SW, 3, 0.55, 0.9], ["#3e342c", 1, 0.45, 0.8], ["#1e1916", 2, 0.4, 0.5]], { streu: 10, welle: 0.3, szene: 1 });
+  k += H.straehnen(bartW, F ? 60 : 30, (t) => 10 + Math.sin(t * Math.PI) * 6, (x, y) => 92 + (x - 190) * 0.2, [[SW, 3, 0.55, 0.9], ["#3e342c", 1, 0.45, 0.8], ["#1e1916", 2, 0.4, 0.5]], { streu: 10, welle: 0.3, szene: 1 });
   k += teil([K(20, 15.5), K(12, 17.5), [190, -116], [183, -104], [174, -94], [172, -86], [180, -82], [189, -88], [196, -100], [202, -112], K(22, 19)], "#1a1513", { fell: F ? [H.fellMuster("ba", 92, [["#3e342c", 1, 0.3, 0.6]], { tile: 4, n: 12, len: 4, streu: 0.15 })] : [] });
   k += wf([[196, -116], [190, -104], [182, -94]], "#000", 0.3, 3, false, 6);
   k += teil(kopf, T.lg("kopf", [[0, "#3d3733"], [0.5, "#2c2623"], [1, "#1c1816"]], 0, 0, 0.3, 1), {
@@ -1446,9 +1445,9 @@ module.exports = [
   { id: "nashorn", de: "das Nashorn", syl: "NAS-horn", it: "il rinoceronte", itSyl: "ri-no-ce-RON-te", en: "rhinoceros",
     gruppe: "Huftiere", lebensraum: "Savanne", laenge: 3.97, hoehe: 2.17, zeichne: nashorn },
   { id: "nilpferd", de: "das Nilpferd", syl: "NIL-pferd", it: "l'ippopotamo", itSyl: "ip-po-PO-ta-mo", en: "hippopotamus",
-    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 4.42, hoehe: 1.81, zeichne: nilpferd },
+    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 4.41, hoehe: 1.84, zeichne: nilpferd },
   { id: "gazelle", de: "die Gazelle", syl: "ga-ZEL-le", it: "la gazzella", itSyl: "gaz-ZEL-la", en: "gazelle",
-    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 1.25, hoehe: 1.49, zeichne: gazelle },
+    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 1.08, hoehe: 1.41, zeichne: gazelle },
   { id: "gnu", de: "das Gnu", syl: "GNU", it: "lo gnu", itSyl: "GNU", en: "wildebeest",
-    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 1.99, hoehe: 1.63, zeichne: gnu },
+    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 2.02, hoehe: 1.75, zeichne: gnu },
 ];
