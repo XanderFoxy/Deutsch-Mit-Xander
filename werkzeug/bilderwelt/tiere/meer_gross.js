@@ -778,7 +778,7 @@ function buckelwal(T) {
   }
   /* Kehlfurchen: zum Kinn zusammenlaufend, nach hinten weiter, Enden gestaffelt, einige gegabelt;
      dunkle Rinne mit breitem hellem Grat; laufen hinter der Brustflossenwurzel weiter */
-  const furchen = [], nF = F ? 13 : 7;
+  const furchen = [], nF = F ? 13 : 5;
   for (let i = 0; i < nF; i++) {
     const tr = 0.6 + i * (0.38 / (nF - 1)), tc = 0.86 + i * (0.13 / (nF - 1)), xe = 760 + (T.rnd() - 0.5) * 80 + i * 8;
     const z = [];
@@ -815,7 +815,7 @@ function buckelwal(T) {
   /* Seepocken: Kinnhöcker (dicht), Kehle vorn, Genitalregion */
   const sp = [];
   const haufen = (n, x, y, rx, ry, r0) => { for (let i = 0; i < n; i++) sp.push([x + (T.rnd() - 0.5) * 2 * rx, y + (T.rnd() - 0.5) * 2 * ry, r0 * (0.6 + T.rnd() * 0.6)]); };
-  haufen(F ? 13 : 5, 1392, -204, 8, 10, 4.6); haufen(F ? 6 : 3, 1356, -178, 14, 8, 4); haufen(F ? 5 : 2, 560, -140, 16, 6, 3.6);
+  haufen(F ? 13 : 3, 1392, -204, 8, 10, 4.6); haufen(F ? 6 : 1, 1356, -178, 14, 8, 4); haufen(F ? 5 : 1, 560, -140, 16, 6, 3.6);
   k += H.seepocken(sp);
   s += H.vol("rumpf", 40, teil(R.d, DUNKEL, { innen: k, randA: 0.25, rw: 1.3 }), { tiefe: 4 });
   /* Rückenfinne: klein, oben auf dem Buckel (Vorderkante bei ~65 % der Länge ab Schnauze) */
@@ -842,7 +842,7 @@ function buckelwal(T) {
   fo += weichF([[1010, -168], [960, -158], [930, -118], [970, -98], [1000, -116]], DUNKEL, 0.45, 18);
   if (F) fo += [[0.24, 0.2, 24, 7, -24], [0.3, -0.12, 12, 4, -22], [0.36, 0.26, 9, 3, -20]].map(([u, v, rx, ry, w]) => { const cx = B[0] + (E[0] - B[0]) * u + BF.n[0] * v * 80, cy = B[1] + (E[1] - B[1]) * u + BF.n[1] * v * 80; return `<ellipse cx="${f(cx)}" cy="${f(cy)}" rx="${rx}" ry="${ry}" transform="rotate(${w} ${f(cx)} ${f(cy)})" fill="#3c454c" opacity=".35" filter="${H.weich(1.5, [cx - rx - 2, cy - rx - 2, cx + rx + 2, cy + rx + 2])}"/>`; }).join("");
   const sp2 = [];
-  for (let i = 0; i < (F ? 7 : 3); i++) { const u = 0.5 + i * 0.055, p = BF.vorn[Math.round(u * NF)]; sp2.push([p[0] + BF.n[0] * 4, p[1] + BF.n[1] * 4, 3.2 + T.rnd() * 1.6]); }
+  for (let i = 0; i < (F ? 7 : 2); i++) { const u = 0.5 + i * 0.055, p = BF.vorn[Math.round(u * NF)]; sp2.push([p[0] + BF.n[0] * 4, p[1] + BF.n[1] * 4, 3.2 + T.rnd() * 1.6]); }
   const flG = T.lg("bwFlosse", [[0, "#e4e7e5"], [1, "#c3c8c9"]], B[0] + 30, B[1] + 60, B[0] + 50, B[1] - 20, H.US);
   const bfB = T.box(BF.pts);
   s += weichF([[1000, -150], [960, -150], [930, -110], [980, -100]], "#000", 0.35, 10);
