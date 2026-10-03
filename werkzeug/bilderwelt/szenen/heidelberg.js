@@ -567,7 +567,7 @@ const VORNE = [];                          // Umrisse der Häuser vor der Kirche
   const mitte = reihe(-55, 140, 940, { h0: 13, dh: 6, giebel: .25, lucke: [[275, 362]] });
   mitte.sort((a, b) => b.f - a.f).forEach((h) => { k += h.svg; VORNE.push(h.umriss); });
   /* vordere Reihe am Kai: Neckarstaden (West) und Am Hackteufel (Ost); Lücke am Brückentor */
-  const front = reihe(-9, 140, 1010, { h0: 14, dh: 6, laden: true, giebel: .2, lucke: [[322, 340]] });
+  const front = reihe(-9, 140, 1010, { h0: 14, dh: 6, laden: true, giebel: .2, lucke: [[316, 345]] });
   front.sort((a, b) => b.f - a.f).forEach((h) => { k += h.svg; VORNE.push(h.umriss); });
   /* Platanen am Kai (Neckarstaden, westlich des Tors) und Spaziergänger */
   for (let e = 314; e > 120; e -= 13 + rnd() * 4) {
@@ -743,54 +743,90 @@ const ZB = 12.2, ZP = 13.6;
 
 /* =====================================================================
    10 — DAS BRÜCKENTOR mit dem BRÜCKENAFFEN — Lupe: Turmhaube, Brückenaffe
+   Zwei gleich hohe Rundtürme auf dem Brückenkopf, dazwischen der schmale Mittelbau mit der spitzbogigen
+   Durchfahrt (Fallgatternische); die Fahrbahn der Brücke führt genau hinein. Weißer Putz, Sockel,
+   Gesimse und Torrahmen aus rotem Sandstein; barocke „welsche“ Hauben aus Schiefer (unten eingezogen,
+   geschweift, oben Laterne, Spitze und Knauf). Abendsonne von rechts (Westen).
    ===================================================================== */
 {
   const G = proj(330, -372, ZB), GE = 1.25;
   const gp = (e, n, z) => { const p = proj(e, n, z); return [G[0] + GE * (p[0] - G[0]), G[1] + GE * (p[1] - G[1])]; };
+  const NA = [.279, .96], WA = [-.96, .279];                   // Brückenachse nach Norden, Torfront nach Westen
+  const at = (u, v) => [330 + WA[0] * u + NA[0] * v, -372 + WA[1] * u + NA[1] * v];   // u: nach Westen, v: nach Norden
+  const Z0 = ZB - 2.4, ZT = ZB + 16.6, ZM = ZB + 11.4;
   let k = "";
-  const turm = (e, n, dunkel) => {
-    const f = gp(e, n, ZB - 1), t = gp(e, n, 36), sk = FOC / tief(e, n) * GE, w = 7 * sk * .9, cx = f[0], h = f[1] - t[1];
-    let g = `<rect x="${r(cx - w / 2)}" y="${r(t[1])}" width="${r(w)}" height="${r(h)}" fill="${PUTZ}"/>`;
-    g += `<rect x="${r(cx - w / 2)}" y="${r(t[1])}" width="${r(w * .36)}" height="${r(h)}" fill="#7d7668" opacity="${dunkel ? .42 : .28}"/><rect x="${r(cx + w * .3)}" y="${r(t[1])}" width="${r(w * .2)}" height="${r(h)}" fill="#fff2d8" opacity=".5"/>`;
-    g += `<rect x="${r(cx - w / 2 - .3)}" y="${r(t[1] - .9)}" width="${r(w + .6)}" height="1.2" fill="#b4553f"/><rect x="${r(cx - w / 2)}" y="${r(t[1] + h * .48)}" width="${r(w)}" height=".55" fill="#c86e54"/>`;
-    g += `<rect x="${r(cx - .5)}" y="${r(t[1] + h * .16)}" width="1" height="1.6" fill="#3d3a38"/><rect x="${r(cx - .4)}" y="${r(t[1] + h * .62)}" width=".8" height="1.4" fill="#3d3a38"/><rect x="${r(cx + w * .16)}" y="${r(t[1] + h * .34)}" width=".7" height="1.2" fill="#3d3a38"/>`;
-    const hb = t[1] - .9;
-    g += `<path d="M${r(cx - w / 2 - .2)} ${r(hb)} Q${r(cx - w / 2 - .6)} ${r(hb - 3.6)} ${r(cx - 1.2)} ${r(hb - 5.2)} Q${r(cx - .6)} ${r(hb - 6)} ${r(cx - .6)} ${r(hb - 7)} L${r(cx + .6)} ${r(hb - 7)} Q${r(cx + .6)} ${r(hb - 6)} ${r(cx + 1.2)} ${r(hb - 5.2)} Q${r(cx + w / 2 + .6)} ${r(hb - 3.6)} ${r(cx + w / 2 + .2)} ${r(hb)} Z" fill="${SCHIEFER}"/>`;
-    g += `<path d="M${r(cx + 1.6)} ${r(hb - 4.4)} Q${r(cx + w / 2 - .2)} ${r(hb - 3)} ${r(cx + w / 2 - .4)} ${r(hb - .6)}" stroke="#c4cdd6" stroke-width=".35" fill="none"/>`;
-    g += `<path d="M${r(cx - 1)} ${r(hb - 7)} Q${r(cx - 1.2)} ${r(hb - 8.4)} ${r(cx)} ${r(hb - 9.2)} Q${r(cx + 1.2)} ${r(hb - 8.4)} ${r(cx + 1)} ${r(hb - 7)} Z" fill="${SCHIEFER}"/>`;
-    g += `<path d="M${r(cx)} ${r(hb - 9.2)} V${r(hb - 11.6)}" stroke="#3a4049" stroke-width=".35"/><circle cx="${r(cx)}" cy="${r(hb - 10.2)}" r=".4" fill="#e8c35a"/>`;
-    return { g, haube: [cx, hb - 5], w };
-  };
-  /* Ostturm (weiter weg, links) — Torbau — Westturm (näher, rechts) */
-  const ost = turm(337.7, -374.2, true);
-  k += ost.g;
+  const TP = S.lg("torputz", [[0, "#8a8478"], [.35, "#cfc8ba"], [.72, "#f6f0e2"], [.86, "#fff2d6"], [1, "#d8c4a4"]], 0, 0, 1, 0);
+  const SST = "#b4553f", SST_L = "#e08a68";
+  /* Brückenkopf: Sockelmauer aus Sandstein unter dem ganzen Tor */
   {
-    const a = gp(330, -366, ZB - 1), b = gp(330, -366, 28), sk = FOC / tief(330, -366) * GE, w = 6 * sk;
-    k += `<rect x="${r(a[0] - w / 2)}" y="${r(b[1])}" width="${r(w)}" height="${r(a[1] - b[1])}" fill="${PUTZ}"/><rect x="${r(a[0] - w / 2)}" y="${r(b[1])}" width="${r(w)}" height="${r(a[1] - b[1])}" fill="#b9b2a4" opacity=".3"/>`;
-    k += `<path d="M${r(a[0] - w / 2 - .4)} ${r(b[1] + .2)} L${r(a[0])} ${r(b[1] - 2.4)} L${r(a[0] + w / 2 + .4)} ${r(b[1] + .2)} Z" fill="${SCHIEFER}"/>`;
-    k += `<path d="M${r(a[0] - 1.9)} ${r(a[1])} V${r(a[1] - 5.6)} Q${r(a[0])} ${r(a[1] - 8.4)} ${r(a[0] + 1.9)} ${r(a[1] - 5.6)} V${r(a[1])} Z" fill="#2a2420"/><path d="M${r(a[0] - 2.4)} ${r(a[1])} V${r(a[1] - 5.8)} Q${r(a[0])} ${r(a[1] - 9.2)} ${r(a[0] + 2.4)} ${r(a[1] - 5.8)} V${r(a[1])}" stroke="#b4553f" stroke-width=".6" fill="none"/>`;
-    k += `<rect x="${r(a[0] - .7)}" y="${r(b[1] + 3)}" width="1.4" height="1.8" fill="#3d3a38"/>`;
+    const a = gp(...at(-9.5, 2.4), 6), b = gp(...at(10, 2.4), 6), c = gp(...at(10, 2.4), Z0 + .6), d = gp(...at(-9.5, 2.4), Z0 + .6);
+    k += `<path d="${pfad([a, b, c, d])}" fill="${S.lg("torsockel", [[0, "#7c3628"], [1, "#c06a4e"]], 0, 0, 1, 0)}"/><path d="${pfad(Array.from({ length: 8 }, (_, i) => gp(...at(-9.5 + i * 2.8, 2.45), 6 + (Z0 - 5.4) * .5)), false)}" stroke="#5a2418" stroke-width=".18" opacity=".5" fill="none"/>`;
   }
-  const west = turm(322.3, -369.8, false);
+  const turm = (u, dunkel) => {
+    const [e, n] = at(u, 0), f = gp(e, n, Z0), t = gp(e, n, ZT), sk = FOC / tief(e, n) * GE, R = 3.7 * sk, cx = f[0];
+    const y = (z) => gp(e, n, z)[1];
+    let g = `<path d="M${r(cx - R)} ${r(f[1])} V${r(t[1])} H${r(cx + R)} V${r(f[1])} Z" fill="${TP}"/>`;
+    if (dunkel) g += `<path d="M${r(cx - R)} ${r(f[1])} V${r(t[1])} H${r(cx + R)} V${r(f[1])} Z" fill="#3a3028" opacity=".16"/>`;
+    /* Sandsteinsockel, Gurtgesims, Traufgesims mit Lichtkante rechts */
+    for (const [z0, z1] of [[Z0, Z0 + 1.6], [ZB + 7.6, ZB + 8.3], [ZT - .4, ZT + .7]]) g += `<path d="M${r(cx - R - .15)} ${r(y(z0))} V${r(y(z1))} H${r(cx + R + .15)} V${r(y(z0))} Z" fill="${SST}"/><path d="M${r(cx + R * .45)} ${r(y(z0))} V${r(y(z1))} H${r(cx + R + .15)} V${r(y(z0))} Z" fill="${SST_L}" opacity=".7"/>`;
+    /* kleine Fenster mit Sandsteingewänden auf der sichtbaren Rundung */
+    for (const [dx, z] of [[-.15, ZB + 3.6], [.35, ZB + 5.4], [-.1, ZB + 10.4], [.4, ZB + 12.8], [0, ZB + 14.8]]) {
+      const x = cx + dx * R, w = Math.max(.6, .55 * sk * (1 - Math.abs(dx))), h = 1.3 * sk;
+      g += `<rect x="${r(x - w / 2 - .18)}" y="${r(y(z) - h - .18)}" width="${r(w + .36)}" height="${r(h + .36)}" fill="${SST}"/><rect x="${r(x - w / 2)}" y="${r(y(z) - h)}" width="${r(w)}" height="${r(h)}" fill="#2e2a2a"/>`;
+    }
+    /* welsche Haube: unten eingezogen, geschweift gebaucht, Laterne, Spitze, Knauf */
+    const prof = [[0, 1.08], [.5, .86], [1.2, .8], [2.4, .93], [3.4, .86], [4.4, .58], [5.1, .28], [5.5, .24], [5.9, .34], [6.5, .3], [7, .14], [8.4, .05]];
+    const hz = (h) => y(ZT + .7 + h * 1.08);
+    const L = prof.map(([h, q]) => [cx - q * R, hz(h)]), Rr = prof.map(([h, q]) => [cx + q * R, hz(h)]).reverse();
+    g += `<path d="M${L.map(P).join(" L")} L${Rr.map(P).join(" L")} Z" fill="${S.lg("haube", [[0, "#272c34"], [.55, "#4a5462"], [.8, "#8c97a4"], [1, "#56606c"]], 0, 0, 1, 0)}"/>`;
+    g += `<path d="M${P([cx + .5 * R, hz(.6)])} Q${P([cx + .78 * R, hz(1.8)])} ${P([cx + .62 * R, hz(3.6)])}" stroke="#c8d2dc" stroke-width=".35" fill="none" opacity=".8"/>`;
+    g += `<path d="M${r(cx - .24 * R)} ${r(hz(5.25))} H${r(cx + .24 * R)}" stroke="#e8c35a" stroke-width=".25"/>`;
+    const kn = hz(8.4);
+    g += `<circle cx="${r(cx)}" cy="${r(kn - .45)}" r=".5" fill="#e8c35a"/><path d="M${r(cx)} ${r(kn - .9)} V${r(kn - 2.6)}" stroke="#3a4049" stroke-width=".3"/>`;
+    return { g, haube: [cx, hz(2.4)], w: 2 * R, cx, R, f };
+  };
+  /* Ostturm (links, weiter weg) */
+  const ost = turm(-8, true);
+  k += ost.g;
+  /* Mittelbau: Front zwischen den Türmen, Schieferdach, Durchfahrt mit Spitzbogen und Fallgatternische */
+  {
+    const fr = (u, z) => gp(...at(u, 1.2), z);
+    k += `<path d="${pfad([fr(-8, ZM), fr(8, ZM), gp(...at(8, -3.5), ZM + 3.6), gp(...at(-8, -3.5), ZM + 3.6)])}" fill="${SCHIEFER}"/>`;
+    k += `<path d="${pfad([fr(-8, Z0), fr(8, Z0), fr(8, ZM), fr(-8, ZM)])}" fill="${S.lg("torfront", [[0, "#b8b0a2"], [1, "#e2dacb"]], 0, 0, 1, 0)}"/>`;
+    k += `<path d="${pfad([fr(-8, ZM - .5), fr(8, ZM - .5), fr(8, ZM + .2), fr(-8, ZM + .2)])}" fill="${SST}"/>`;
+    const bogen = (w, zk, zs) => { const pts = [fr(-w / 2, ZB)]; for (let i = 0; i <= 10; i++) { const t = i / 10, a = (Math.PI / 3) * (t < .5 ? 2 * t : 2 * (1 - t)); pts.push(fr(t < .5 ? -w / 2 + w - w * Math.cos(a) : w / 2 - w + w * Math.cos(a), zk + w * Math.sin(a) * (zs - zk) / (.866 * w))); } pts.push(fr(w / 2, ZB)); return pts; };
+    k += `<path d="${pfad(bogen(5.6, ZB + 4.4, ZB + 8.2))}" fill="${SST}"/>`;
+    k += `<path d="${pfad(bogen(4.2, ZB + 4.2, ZB + 7.4))}" fill="${S.lg("durchfahrt", [[0, "#1c1412"], [1, "#4a3830"]])}"/>`;
+    /* Fallgatternische: dunkler Schlitz über dem Bogen, unten die Spitzen des hochgezogenen Gatters */
+    k += `<path d="${pfad([fr(-1.9, ZB + 6.6), fr(1.9, ZB + 6.6), fr(1.9, ZB + 6.95), fr(-1.9, ZB + 6.95)])}" fill="#120c0a"/>`;
+    let gz = ""; for (let u = -1.6; u <= 1.65; u += .55) gz += `M${P(fr(u, ZB + 6.6))} L${P(fr(u, ZB + 5.9))} `;
+    k += `<path d="${gz}" stroke="#2a2420" stroke-width=".3"/>`;
+    const w1 = fr(0, ZB + 9.4);
+    k += `<rect x="${r(w1[0] - .5)}" y="${r(w1[1] - 1.1)}" width="1" height="1.2" fill="#2e2a2a" stroke="${SST}" stroke-width=".25"/>`;
+  }
+  /* Westturm (rechts, näher) */
+  const west = turm(8, false);
   k += west.g;
-  /* Abendschatten der Türme auf die Häuser links dahinter */
-  k += `<path d="M${r(ost.haube[0] - ost.w / 2)} ${r(G[1] - 2)} l-6 -3 l0 -14 l6 3 Z" fill="#1d140c" opacity=".14"/>`;
-  /* der Brückenaffe (Bronze, ca. mannshoch) auf Straßenhöhe westlich vom Tor, daneben zwei Mäuse */
-  const A = gp(320.6, -363.6, ZB), sa = FOC / tief(320.6, -363.6) * GE;
+  /* Abendschatten der Türme nach links auf die Häuser dahinter */
+  k += `<path d="M${r(ost.cx - ost.R)} ${r(ost.f[1] - 3)} l-7 -2.6 l0 -15 l7 2.6 Z" fill="#1d140c" opacity=".14"/>`;
+  /* der Brückenaffe (Bronze) auf Fahrbahnhöhe rechts neben der Durchfahrt, mit Spiegel; daneben zwei Mäuse */
+  const A = gp(...at(3.4, 3.4), ZB), sa = FOC / tief(...at(3.4, 3.4)) * GE * 1.5;
   const BR = S.lg("bronze", [[0, "#3e2c18"], [0.5, "#7d5e32"], [1, "#d4ac62"]], 0, 0, 1, 0);
-  k += `<rect x="${r(A[0] - .7 * sa)}" y="${r(A[1] - .5 * sa)}" width="${r(1.4 * sa)}" height="${r(.5 * sa)}" fill="#9e9384"/>`;
-  k += `<ellipse cx="${r(A[0])}" cy="${r(A[1] - 1 * sa)}" rx="${r(.42 * sa)}" ry="${r(.55 * sa)}" fill="${BR}"/><circle cx="${r(A[0])}" cy="${r(A[1] - 1.75 * sa)}" r="${r(.32 * sa)}" fill="${BR}"/>`;
-  k += `<path d="M${r(A[0] + .3 * sa)} ${r(A[1] - 1.2 * sa)} L${r(A[0] + .7 * sa)} ${r(A[1] - 1.9 * sa)}" stroke="#7d5e32" stroke-width="${r(.14 * sa)}"/><circle cx="${r(A[0] + .78 * sa)}" cy="${r(A[1] - 2.15 * sa)}" r="${r(.24 * sa)}" fill="#e6f0f6" stroke="#7d5e32" stroke-width=".08"/>`;
-  for (const dx of [-.55, .6]) k += `<ellipse cx="${r(A[0] + dx * sa)}" cy="${r(A[1] - .58 * sa)}" rx="${r(.16 * sa)}" ry="${r(.09 * sa)}" fill="#8a6a3a"/>`;
-  const GZ = gp(330, -372, 22);
+  k += `<rect x="${r(A[0] - .75 * sa)}" y="${r(A[1] - .45 * sa)}" width="${r(1.5 * sa)}" height="${r(.45 * sa)}" fill="#a89a88"/>`;
+  k += `<ellipse cx="${r(A[0])}" cy="${r(A[1] - .95 * sa)}" rx="${r(.42 * sa)}" ry="${r(.52 * sa)}" fill="${BR}"/><circle cx="${r(A[0])}" cy="${r(A[1] - 1.66 * sa)}" r="${r(.3 * sa)}" fill="${BR}"/><ellipse cx="${r(A[0] + .05 * sa)}" cy="${r(A[1] - 1.58 * sa)}" rx="${r(.17 * sa)}" ry="${r(.13 * sa)}" fill="#a88450"/>`;
+  k += `<circle cx="${r(A[0] - .27 * sa)}" cy="${r(A[1] - 1.85 * sa)}" r="${r(.1 * sa)}" fill="#5a4024"/><circle cx="${r(A[0] + .27 * sa)}" cy="${r(A[1] - 1.85 * sa)}" r="${r(.1 * sa)}" fill="#7d5e32"/>`;
+  k += `<path d="M${r(A[0] + .3 * sa)} ${r(A[1] - 1.15 * sa)} L${r(A[0] + .66 * sa)} ${r(A[1] - 1.8 * sa)}" stroke="#7d5e32" stroke-width="${r(.13 * sa)}" stroke-linecap="round"/><circle cx="${r(A[0] + .74 * sa)}" cy="${r(A[1] - 2.06 * sa)}" r="${r(.24 * sa)}" fill="#e6f0f6" stroke="#9a7a42" stroke-width="${r(.06 * sa)}"/>`;
+  k += `<path d="M${r(A[0] - .3 * sa)} ${r(A[1] - .5 * sa)} q${r(-.5 * sa)} ${r(.1 * sa)} ${r(-.6 * sa)} ${r(-.4 * sa)}" stroke="#6a4e28" stroke-width="${r(.1 * sa)}" fill="none"/>`;
+  for (const dx of [-1.15, 1.1]) { const mx = A[0] + dx * sa, my = A[1] - .5 * sa; k += `<ellipse cx="${r(mx)}" cy="${r(my - .1 * sa)}" rx="${r(.17 * sa)}" ry="${r(.1 * sa)}" fill="#8a6a3a"/><circle cx="${r(mx + Math.sign(dx) * .17 * sa)}" cy="${r(my - .16 * sa)}" r="${r(.07 * sa)}" fill="#a88450"/><circle cx="${r(mx + Math.sign(dx) * .12 * sa)}" cy="${r(my - .24 * sa)}" r="${r(.05 * sa)}" fill="#c8a060"/>`; }
+  const GZ = gp(330, -372, ZB + 10);
   S.teil({ id: "brueckentor", de: "das Brückentor", syl: "BRÜ-cken-tor", it: "la porta del ponte", itSyl: "POR-ta del PON-te", en: "bridge gate", x: GZ[0], y: GZ[1], kunst: `<g transform="translate(${r(-GZ[0])} ${r(-GZ[1])})">${k}</g>`,
-    tipp: "Das Brückentor war früher Teil der Stadtmauer. Es hat zwei runde Türme und ist 28 Meter hoch.",
-    zoom: { x: r(GZ[0] - 27), y: r(GZ[1] - 20), w: 54, h: 36 },
+    tipp: "Das Brückentor war früher Teil der Stadtmauer. Zwischen den zwei runden Türmen führt die Straße durch einen Torbogen in die Altstadt. Es ist 28 Meter hoch.",
+    zoom: { x: r(GZ[0] - 27), y: r(GZ[1] - 18), w: 54, h: 36 },
     unter: [
-      { id: "turmhaube", de: "die Turmhaube", syl: "TURM-hau-be", it: "la cupola della torre", itSyl: "CU-po-la del-la TOR-re", en: "tower cap", x: west.haube[0], y: west.haube[1], kunst: flaeche(-west.w / 2 - .4, -7, west.w + .8, 9) + flaeche(ost.haube[0] - west.haube[0] - ost.w / 2 - .4, ost.haube[1] - west.haube[1] - 7, ost.w + .8, 9),
+      { id: "turmhaube", de: "die Turmhaube", syl: "TURM-hau-be", it: "la cupola della torre", itSyl: "CU-po-la del-la TOR-re", en: "tower cap", x: west.haube[0], y: west.haube[1], kunst: flaeche(-west.w / 2 - .4, -6, west.w + .8, 8) + flaeche(ost.haube[0] - west.haube[0] - ost.w / 2 - .4, ost.haube[1] - west.haube[1] - 6, Math.min(ost.w + .8, west.haube[0] - west.w / 2 - .4 - (ost.haube[0] - ost.w / 2 - .4)), 8),
         tipp: "Seit 1788 tragen beide Türme barocke Hauben aus Schiefer." },
-      { id: "brueckenaffe", de: "der Brückenaffe", syl: "BRÜ-cken-af-fe", it: "la scimmia del ponte", itSyl: "SCIM-mia del PON-te", en: "bridge monkey", x: A[0], y: A[1], kunst: flaeche(-1.4, -3.4, 2.8, 3.6, 0.4),
-        tipp: "Der Affe aus Bronze hält einen Spiegel, daneben sitzen zwei Mäuse. Wer seine Finger berührt, kommt wieder nach Heidelberg — sagt man." },
+      { id: "brueckenaffe", de: "der Brückenaffe", syl: "BRÜ-cken-af-fe", it: "la scimmia del ponte", itSyl: "SCIM-mia del PON-te", en: "bridge monkey", x: A[0], y: A[1], kunst: flaeche(-1.5 * sa, -2.4 * sa, 3 * sa, 2.5 * sa, 0.4),
+        tipp: "Der Affe aus Bronze hält einen Spiegel, daneben sitzen zwei Mäuse. Wer den Spiegel berührt, wird reich. Wer seine Finger berührt, kommt wieder nach Heidelberg — sagt man." },
     ] });
 }
 
