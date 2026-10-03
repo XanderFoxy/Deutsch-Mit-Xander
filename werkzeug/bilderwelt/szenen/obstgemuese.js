@@ -26,7 +26,7 @@ const path = require("path");
 const { neueSzene, flaeche, schatten, zufall } = require("../bau");
 const B = require("../bau");
 
-const S = neueSzene({ id: "obstgemuese", titel: "Obst & Gemüse", emoji: "🥕", thema: "Essen & Trinken", kuerzel: "og", fassung: 852 });
+const S = neueSzene({ id: "obstgemuese", titel: "Obst & Gemüse", emoji: "🥕", thema: "Essen & Trinken", kuerzel: "b05d", fassung: 852 });
 const rnd = zufall(2024);
 const r = B.r;
 { const lg = S.lg, rg = S.rg, c = {}; S.lg = (n, ...a) => c[n] || (c[n] = lg(n, ...a)); S.rg = (n, ...a) => c["r" + n] || (c["r" + n] = rg(n, ...a)); }

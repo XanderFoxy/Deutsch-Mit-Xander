@@ -123,7 +123,7 @@ const TUER = { x0: 222, x1: 312, y0: 30 };
   for (const x of [-30, 26]) k += `<rect x="${x}" y="-20" width="4" height="7" rx=".8" fill="#c0392b"/><rect x="${x}" y="-13" width="4" height="2.4" rx=".6" fill="#f2b233"/>`;
   k += `<rect x="-35" y="-9" width="70" height="4" rx="1" fill="#3a3f44"/><rect x="-8" y="-9" width="16" height="2" fill="#5a6066"/>`;
   for (const x of [-26, 26]) k += `<rect x="${x - 5}" y="-6" width="10" height="6" rx="2.4" fill="#1f2326"/>`;
-  S.teil({ id: "na_rettungswagen", de: "der Rettungswagen", syl: "RET-tungs-wa-gen", it: "l'ambulanza", itSyl: "am-bu-LAN-za", en: "ambulance", x: 266, y: 118, kunst: k,
+  S.teil({ id: "na_rettungswagen", de: "der Rettungswagen", syl: "RET-tungs-wa-gen", it: "l'ambulanza", itSyl: "am-bu-LAN-za", en: "ambulance", x: 258, y: 118, kunst: k,
     tipp: "Der Rettungswagen (RTW) bringt Notfälle direkt an die Notaufnahme." });
 }
 {
@@ -134,7 +134,7 @@ const TUER = { x0: 222, x1: 312, y0: 30 };
     k += `<path d="M${x - 3.4} -1.6 L${x - 3} -5.4 Q${x} -6.6 ${x + 3} -5.4 L${x + 3.4} -1.6 Z" fill="${S.lg("blau", [[0, "#7fb6ff"], [1, "#1e5fd6"]], 0, 0, 1, 0)}"/>`;
     k += `<ellipse cx="${x}" cy="-3.6" rx="7" ry="3" fill="#5aa0ff" opacity=".28" pointer-events="none"><animate attributeName="opacity" values=".05;.45;.05" dur="1s" begin="${x < 0 ? 0 : 0.5}s" repeatCount="indefinite"/></ellipse>`;
   }
-  S.teil({ oben: true, id: "blaulicht", de: "das Blaulicht", syl: "BLAU-licht", it: "il lampeggiante blu", itSyl: "lam-peg-GIAN-te BLU", en: "blue light", x: 266, y: 38.4, kunst: k + flaeche(-33, -7, 66, 7.4),
+  S.teil({ oben: true, id: "blaulicht", de: "das Blaulicht", syl: "BLAU-licht", it: "il lampeggiante blu", itSyl: "lam-peg-GIAN-te BLU", en: "blue light", x: 258, y: 38.4, kunst: k + flaeche(-33, -7, 66, 7.4),
     tipp: "Mit Blaulicht und Martinshorn haben Rettungswagen Vorfahrt." });
 }
 
@@ -202,7 +202,7 @@ const AN = { x0: 4, x1: 86, top: 92, fuss: 140 };
     kleidung: { oberteil: { stueck: "tshirt", farbe: "#2f5f95" }, unterteil: { stueck: "hose", farbe: "#2f5f95" }, schuhe: { stueck: "turnschuh" } } }, 78);
   const P = m.z.punkte, k2 = m.k, br = [P.brust[0] * k2, P.brust[1] * k2];
   let ex = `<rect x="${r(br[0] + 1)}" y="${r(br[1] - 1.4)}" width="3.4" height="1.4" rx=".2" fill="#fff"/><rect x="${r(br[0] + 1.2)}" y="${r(br[1] - 1.2)}" width="1" height="1" fill="#c8352b"/>`;
-  S.teil({ id: "na_pflegerin", de: "die Krankenpflegerin", syl: "KRAN-ken-pfle-ge-rin", it: "l'infermiera", itSyl: "in-fer-MIE-ra", en: "nurse", x: 46, y: 128, kunst: m.svg + ex,
+  S.teil({ id: "na_pflegerin", de: "die Krankenpflegerin", syl: "KRAN-ken-pfle-ge-rin", it: "l'infermiera", itSyl: "in-fer-MIE-ra", en: "nurse", x: 26, y: 128, kunst: m.svg + ex,
     tipp: "Die Pflegerin fragt: „Was ist passiert? Wo tut es weh?“" });
 }
 {
@@ -216,11 +216,12 @@ const AN = { x0: 4, x1: 86, top: 92, fuss: 140 };
   k += `<rect x="${-W / 2}" y="-3" width="${W}" height="3" fill="#a9b0b4"/>`;
   k += `<rect x="${-W / 2 - 1}" y="${-H}" width="${W + 2}" height="4" rx="1" fill="${S.lg("ablage", [[0, "#e6e9ea"], [1, "#b9c1c5"]])}"/>`;
   /* Rahmen der Glasscheibe (Glas selbst liegt vorn) */
-  k += `<rect x="${-W / 2}" y="${-H - 40}" width="2" height="40" fill="#b5bcc2"/><rect x="${W / 2 - 2}" y="${-H - 40}" width="2" height="40" fill="#b5bcc2"/><rect x="${-W / 2}" y="${-H - 42}" width="${W}" height="2.4" fill="#b5bcc2"/>`;
-  k += `<rect x="-1" y="${-H - 40}" width="2" height="34" fill="#b5bcc2"/>`;
+  k += `<rect x="${-W / 2}" y="${-H - 50}" width="2" height="50" fill="#b5bcc2"/><rect x="${W / 2 - 2}" y="${-H - 50}" width="2" height="50" fill="#b5bcc2"/><rect x="${-W / 2}" y="${-H - 52}" width="${W}" height="2.4" fill="#b5bcc2"/>`;
+  k += `<rect x="9" y="${-H - 50}" width="2" height="44" fill="#b5bcc2"/>`;
+  k += `<path d="M-14 -${H} L-14 -${H - 0.01}" stroke="none"/><rect x="-16" y="${-H - 4}" width="16" height="4" rx="1" fill="#d7dcdd"/><path d="M-15 ${-H - 4} Q-8 ${-H - 9} -1 ${-H - 4} Z" fill="#c9cfd2"/>`;
   S.teil({ id: "na_anmeldung", de: "die Anmeldung", syl: "AN-mel-dung", it: "l'accettazione", itSyl: "ac-cet-ta-ZIO-ne", en: "reception desk", x: cx, y: AN.fuss, steht: true, kunst: k,
     tipp: "An der Anmeldung zeigt man die Versichertenkarte." });
-  S.davor(`<rect x="${AN.x0 + 2}" y="${AN.top - 40}" width="${W - 4}" height="34" fill="${GLAS}" pointer-events="none"/><path d="M${AN.x0 + 6} ${AN.top - 38} L${AN.x0 + 16} ${AN.top - 38} L${AN.x0 + 6} ${AN.top - 20} Z" fill="#fff" opacity=".2" pointer-events="none"/>`);
+  S.davor(`<rect x="${AN.x0 + 2}" y="${AN.top - 50}" width="${W - 4}" height="44" fill="${GLAS}" pointer-events="none"/><path d="M${AN.x0 + 50} ${AN.top - 48} L${AN.x0 + 62} ${AN.top - 48} L${AN.x0 + 50} ${AN.top - 26} Z" fill="#fff" opacity=".2" pointer-events="none"/>`);
 }
 {
   /* DIE EINWEISUNG — rosa Formular (Muster 2) auf der Ablage */
@@ -357,8 +358,8 @@ const wagenUnter = [];
   /* liegengebliebene Zeitschrift */
   k += `<path d="M14 -27.2 L24 -27.6 L23 -28.8 L13.6 -28.4 Z" fill="#f2c94c"/>`;
   /* Schild „Wartebereich“ an der Lehne */
-  k += `<rect x="-36" y="-56" width="20" height="7" rx=".8" fill="#2f6db5"/><text x="-26" y="-51.4" font-size="2.4" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">Wartebereich</text><rect x="-27" y="-49" width="2" height="25" fill="#9aa3aa"/>`;
-  S.teil({ id: "na_wartezone", de: "die Wartezone", syl: "WAR-te-zo-ne", it: "la sala d'attesa", itSyl: "SA-la d'at-TE-sa", en: "waiting area", x: 44, y: 196, kunst: k,
+  k += `<rect x="-42" y="-58" width="20" height="7" rx=".8" fill="#2f6db5"/><text x="-32" y="-53.4" font-size="2.4" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">Wartebereich</text><rect x="-33" y="-51" width="2" height="51" fill="#9aa3aa"/><ellipse cx="-32" cy="0" rx="4" ry="1" fill="#5a636b"/>`;
+  S.teil({ id: "na_wartezone", de: "die Wartezone", syl: "WAR-te-zo-ne", it: "la sala d'attesa", itSyl: "SA-la d'at-TE-sa", en: "waiting area", x: 50, y: 196, kunst: k,
     tipp: "In der Wartezone wartet man, bis man aufgerufen wird." });
 }
 

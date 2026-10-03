@@ -30,7 +30,7 @@ const path = require("path");
 const { neueSzene, flaeche, schatten, zufall } = require("../bau");
 const B = require("../bau");
 
-const S = neueSzene({ id: "getraenkemarkt", titel: "Der Getränkemarkt", emoji: "🧃", thema: "Einkaufen", kuerzel: "gm", fassung: 852 });
+const S = neueSzene({ id: "getraenkemarkt", titel: "Der Getränkemarkt", emoji: "🧃", thema: "Einkaufen", kuerzel: "b05a", fassung: 852 });
 const rnd = zufall(4711);
 const r = B.r;
 /* jeder Verlauf nur einmal in <defs> (auch wenn er in Schleifen gebraucht wird) */
@@ -377,7 +377,7 @@ const W1 = { x: 136, w: 1.2 * M1 };
    9 — DER MITARBEITER hinter der Kasse, 10 — DIE KASSE (vorne rechts)
    ===================================================================== */
 {
-  const m = B.mensch({ id: "gm_mitarb", geschlecht: "m", pose: "stehen", blick: -20, frisur: "kurz", haarfarbe: "schwarz", haut: "hell", bart: true,
+  const m = B.mensch({ id: "b05a_mitarb", geschlecht: "m", pose: "stehen", blick: -20, frisur: "kurz", haarfarbe: "schwarz", haut: "hell", bart: true,
     kleidung: { oberteil: { stueck: "tshirt", farbe: "gruen_d" }, unterteil: { stueck: "arbeitshose" }, jacke: { stueck: "weste", farbe: "gruen" }, schuhe: { stueck: "halbschuh" } } }, 1.8 * mass(172));
   S.teil({ id: "gm_mitarbeiter_gm", de: "der Mitarbeiter", syl: "MIT-ar-bei-ter", it: "il dipendente", itSyl: "di-pen-DEN-te", en: "member of staff", x: 300, y: 172, kunst: m.svg,
     tipp: "Der Mitarbeiter sitzt an der Kasse und füllt die Paletten auf." });
@@ -466,7 +466,7 @@ const EW = { x: 82, y: 194 };
    6 — DIE KUNDIN schiebt den Kistenwagen (vorne links)
    ===================================================================== */
 {
-  const m = B.mensch({ id: "gm_kundin", geschlecht: "w", pose: "halten", blick: 62, frisur: "zopf", haarfarbe: "dunkelbraun", haut: "mittel",
+  const m = B.mensch({ id: "b05a_kundin", geschlecht: "w", pose: "halten", blick: 62, frisur: "zopf", haarfarbe: "dunkelbraun", haut: "mittel",
     kleidung: { oberteil: { stueck: "pullover", farbe: "hellblau" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "rot" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "tasche", farbe: "braun" } } }, 1.66 * mass(197));
   S.teil({ id: "gm_kundin_gm", de: "die Kundin", syl: "KUN-din", it: "la cliente", itSyl: "cli-EN-te", en: "customer", x: 17, y: 197, kunst: m.svg,
     tipp: "Die Kundin hat ihren Pfandbon schon — jetzt holt sie einen neuen Kasten Wasser." });

@@ -25,7 +25,7 @@ const path = require("path");
 const { neueSzene, flaeche, schatten, zufall } = require("../bau");
 const B = require("../bau");
 
-const S = neueSzene({ id: "suessigkeiten", titel: "Süßigkeiten & Snacks", emoji: "🍬", thema: "Einkaufen", kuerzel: "sw", fassung: 852 });
+const S = neueSzene({ id: "suessigkeiten", titel: "Süßigkeiten & Snacks", emoji: "🍬", thema: "Einkaufen", kuerzel: "b05c", fassung: 852 });
 const rnd = zufall(1922);
 const r = B.r;
 { const lg = S.lg, rg = S.rg, c = {}; S.lg = (n, ...a) => c[n] || (c[n] = lg(n, ...a)); S.rg = (n, ...a) => c["r" + n] || (c["r" + n] = rg(n, ...a)); }
@@ -360,8 +360,8 @@ const AU = { x: 179, y: 152 };
 /* =====================================================================
    5 — DIE TIEFKÜHLTRUHE (vorne Mitte) mit EIS AM STIEL und EISWAFFEL
    ===================================================================== */
-const TR = { x: 128, y: 193 };
-const TM = mass(TR.y), TW = 2.0 * TM, TH = 0.85 * TM, TT = 9;   // Breite, Höhe, sichtbare Tiefe der Öffnung
+const TR = { x: 108, y: 193 };
+const TM = mass(TR.y), TW = 1.7 * TM, TH = 0.85 * TM, TT = 9;   // Breite, Höhe, sichtbare Tiefe der Öffnung
 const tSh = (x, t) => x + (160 - (TR.x + x)) * (t * TT / (TR.y - TH + 60)) * 1.4;   // Rückkante rückt zum Fluchtpunkt
 {
   let k = schatten(0, 0, TW / 2 + 3, 2, 0.35);
@@ -415,7 +415,7 @@ const tSh = (x, t) => x + (160 - (TR.x + x)) * (t * TT / (TR.y - TH + 60)) * 1.4
    6 — DAS KIND (vorne rechts), es zeigt auf die Gläser
    ===================================================================== */
 {
-  const m = B.mensch({ id: "sw_kind", alter: "kind", geschlecht: "m", pose: "zeigen", blick: -35, frisur: "kurz", haarfarbe: "blond", haut: "hell", laecheln: true,
+  const m = B.mensch({ id: "b05c_kind", alter: "kind", geschlecht: "m", pose: "zeigen", blick: -35, frisur: "kurz", haarfarbe: "blond", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } }, 1.32 * mass(196));
   S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "il bambino", itSyl: "bam-BI-no", en: "child", x: 278, y: 196, kunst: m.svg,
     tipp: "Das Kind fragt: „Darf ich mir eine Tüte Gummibärchen abfüllen?“" });

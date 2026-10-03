@@ -27,7 +27,7 @@ const path = require("path");
 const { neueSzene, flaeche, schatten, zufall } = require("../bau");
 const B = require("../bau");
 
-const S = neueSzene({ id: "getraenke", titel: "Getränke", emoji: "🥤", thema: "Einkaufen", kuerzel: "gt", fassung: 852 });
+const S = neueSzene({ id: "getraenke", titel: "Getränke", emoji: "🥤", thema: "Einkaufen", kuerzel: "b05b", fassung: 852 });
 const rnd = zufall(1516);
 const r = B.r;
 { const lg = S.lg, rg = S.rg, c = {}; S.lg = (n, ...a) => c[n] || (c[n] = lg(n, ...a)); S.rg = (n, ...a) => c["r" + n] || (c["r" + n] = rg(n, ...a)); }
@@ -245,7 +245,7 @@ const WB = [48, 74];   // Glasböden (Oberkante)
    5 — DIE WIRTIN hinter der Theke (zwischen Kaffeemaschine und Wein)
    ===================================================================== */
 {
-  const m = B.mensch({ id: "gt_wirtin", geschlecht: "w", pose: "stehen", blick: 14, frisur: "locken", haarfarbe: "rot", haut: "hell", laecheln: true,
+  const m = B.mensch({ id: "b05b_wirtin", geschlecht: "w", pose: "stehen", blick: 14, frisur: "locken", haarfarbe: "rot", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "bluse", farbe: "schwarz" }, schuerze: { stueck: "schuerze", farbe: "#6e2a2a" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } } }, 1.68 * 56);
   S.teil({ id: "wirtin", de: "die Wirtin", syl: "WIR-tin", it: "l'ostessa", itSyl: "o-STES-sa", en: "landlady", x: 146, y: 166, kunst: m.svg,
     tipp: "Die Wirtin fragt: „Was darf ich Ihnen bringen?“" });
