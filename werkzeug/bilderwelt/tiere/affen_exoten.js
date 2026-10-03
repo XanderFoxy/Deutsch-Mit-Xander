@@ -1049,7 +1049,7 @@ function pavian(T) {
     W.weich([[60, -36, 22, 3, 0, "#1a1712", 0.45], [56, -34.4, 16, 1, 0, "#a8a088", 0.4], [40, -42, 6, 7, 0, "#2a261e", 0.35]], 2) +
     W.haare(rumpf, 220, (x, y) => (y > -40 ? 100 : 185), 1.4, OLIV, { licht, gerade: true, buendel: 2, szene: 0.06 }), { rand: 0 });
   /* Gesäß: leuchtend rote nackte Haut, weich ins Fell auslaufend; darin die matte, grau-rosa, hornige Schwiele mit Rillen */
-  rs += W.weich([`<path d="${G([[27, -50], [30.4, -52], [33.6, -48], [34, -40], [31.4, -36.4], [28, -38], [26.6, -44]])}" fill="#c2403c"/>`], 0.8) +
+  rs += W.weich([`<path d="${G([[27.4, -49.6], [30.2, -51], [32.6, -47.6], [32.8, -40.4], [30.8, -37.2], [28, -38.4], [27, -44]])}" fill="#b4443e" opacity=".85"/>`], 0.5) +
     `<path d="${G([[27.6, -48.4], [29.6, -49.6], [31.4, -46.6], [31.4, -41.4], [29.6, -39.2], [27.8, -40.6], [27.2, -44.6]])}" fill="${T.lg("psch", [[0, "#c8a8a2"], [1, "#8e6a68"]], 0, 0, 1, 0)}"/>` +
     W.L(["M28.4 -47.6q.8 3 0 6.4", "M29.4 -48q1 3.4 .2 7.4", "M30.4 -46.4q.6 2.6 0 5"], "#6a4a48", 0.1, 0.6) + W.L(["M28 -48.2q-.4 3 .2 6"], "#f0dcd6", 0.1, 0.5) +
     W.saum([[27, -51], [26.6, -44], [28, -37.6], [31.4, -36]], 30, (x, y) => (y < -44 ? 200 : 150), 1.2, OLIV.slice(1, 4), { licht: () => 0.5, gerade: true, ein: 0.6, szene: 0.05 });
@@ -1066,7 +1066,9 @@ function pavian(T) {
     W.fell("pmt", 140, [50, -80, 112, -34], { hell: "#f6f4ee", dunkel: "#2a2826", ho: 0.35, do: 0.3, fx: 2.4, fy: 0.2, hk: "pm" }) +
     W.weich([[80, -72, 16, 4, -10, "#f6f4ee", 0.4], [92, -40, 14, 4, 0, "#1a1816", 0.45]], 2.4) +
     W.haare(mantel, 420, mW, 9, SILBER, { licht, buendel: 3, krumm: 0.5, streu: 10, szene: 0.06 }), { rand: 0 }) +
-    W.saum([[54, -62], [60, -68], [70, -74], [82, -78], [94, -78]], 70, (x) => 175 - (x - 54) * 0.2, 6, SILBER.slice(2), { licht: () => 0.85, krumm: 0.5, szene: 0.06 }) +
+    W.kantenStraehnen([[52, -54], [54, -62], [60, -68], [70, -74], [82, -78], [94, -78], [104, -74]], 70, (x, y) => (x < 60 ? 150 : 172 - (x - 60) * 0.3), 3, 9, 1, (x, y, z) => SILBER[Math.round(clamp(licht(x, y) * 0.9 + (z - 0.5) * 0.5) * 5)][0], { kc: "#2a2826", kante: 0.15, szene: 0.25 }) +
+    W.kantenStraehnen([[52, -54], [64, -46], [74, -44], [84, -40], [92, -36], [100, -38], [107, -46]], 80, (x) => (x < 70 ? 130 : 98), 4, 12, 1, (x, y, z) => SILBER[Math.round(clamp(licht(x, y) * 0.9 + (z - 0.5) * 0.5) * 5)][0], { kc: "#2a2826", kante: 0.15, ein: 0.3, szene: 0.25 }) +
+    W.saum([[54, -62], [60, -68], [70, -74], [82, -78], [94, -78]], 40, (x) => 175 - (x - 54) * 0.2, 6, SILBER.slice(2), { licht: () => 0.85, krumm: 0.5, szene: 0.06 }) +
     W.saum([[52, -54], [64, -46], [74, -44], [84, -40], [92, -36], [100, -38], [107, -46]], 110, (x) => (x < 70 ? 140 : 100), 10, SILBER, { licht: (x) => clamp(0.3 + (x - 52) / 120), krumm: 0.5, ein: 0.3, szene: 0.06 }));
 
   /* ---------- Kopf ---------- */
@@ -1083,7 +1085,10 @@ function pavianKopf(T, W, SILBER, licht) {
   s += W.vol("v", 4, W.teil(haar, T.lg("phr", [[0, "#dedad2"], [0.6, "#b4b0a8"], [1, "#7a766e"]]),
     W.fell("phr", 175, [96, -82, 120, -40], { hell: "#faf8f2", dunkel: "#3a3836", ho: 0.35, do: 0.25, fx: 2.6, fy: 0.24, hk: "pm" }) +
     W.haare(haar, 260, (x, y) => (y < -70 ? 186 + (x - 110) * 0.6 : 176 + (y + 60) * 0.6), 6, SILBER, { licht: (x, y) => clamp(0.55 + (-y - 60) / 40), buendel: 3, krumm: 0.45, streu: 10, szene: 0.06 }),
-  { rand: 0 }) + W.saum([[100, -74], [106, -80], [114, -80.4], [118.6, -76]], 40, (x) => (x < 110 ? 190 : 205), 4, SILBER.slice(3), { licht: () => 0.9, krumm: 0.45, szene: 0.06 }));
+  { rand: 0 }) + W.kantenStraehnen([[99, -50], [98, -64], [100, -74], [106, -80], [114, -80.4], [118.6, -76]], 50, (x, y) => (y > -60 ? 150 : x < 110 ? 185 : 200), 3, 7, 0.9,
+    (x, y, z) => SILBER[Math.round(clamp(0.6 + (-y - 60) / 40 + (z - 0.5) * 0.4) * 5)][0], { kc: "#2a2826", kante: 0.15, szene: 0.25 }) +
+    W.kantenStraehnen([[104, -42], [112, -44], [116, -50]], 24, 120, 3, 7, 0.9, (x, y, z) => SILBER[z > 0.5 ? 3 : 2][0], { kc: "#2a2826", kante: 0.15, szene: 0.25 }) +
+    W.saum([[100, -74], [106, -80], [114, -80.4], [118.6, -76]], 30, (x) => (x < 110 ? 190 : 205), 4, SILBER.slice(3), { licht: () => 0.9, krumm: 0.45, szene: 0.06 }));
   /* Scheitel (Mittelscheitel) als feine dunklere Linie */
   s += W.L(["M118 -75q-6 -3.4 -14 -3"], "#8a8680", 0.25, 0.5);
   /* nackte Gesichtshaut: Stirn unter dem Wulst, kastenförmige Schnauze (Ober- und Unterkante fast parallel),
@@ -1093,15 +1098,15 @@ function pavianKopf(T, W, SILBER, licht) {
   s += W.vol("v", 2, W.teil(ges, T.lg("pge", [[0, "#e0907e"], [0.35, "#cc7464"], [0.7, "#a85448"], [1, "#6a3230"]], 0, 0, 0, 1),
     /* Längswülste der Schnauze: Licht-/Schattenbänder vom Auge zur Nase */
     W.weich([[127, -59.6, 9, 1.2, 18, "#f8c8b8", 0.7], [127.6, -57, 9, 0.9, 14, "#7a3432", 0.55], [128, -54.6, 8.6, 1, 10, "#f0b4a4", 0.5], [128.4, -52.4, 8, 0.8, 6, "#7a3432", 0.5],
-      [124, -48.4, 9, 1.6, 2, "#4a2220", 0.6], [116, -60, 3, 3, 0, "#5a2826", 0.5], [116.4, -68.4, 3.6, 1, 15, "#f6c8b8", 0.6]], 0.7) +
+      [124, -48.4, 9, 1.6, 2, "#4a2220", 0.6], [116.4, -68.4, 3.6, 1, 15, "#f6c8b8", 0.6]], 0.7) +
     (T.fein ? W.falten(["M119.6 -60.4q6.4 3 14.6 4.4", "M119.2 -57.6q6.4 2.2 14 3", "M118.6 -55q6 1.6 13 2", "M112.4 -67q2.6 -.6 5 .2", "M113.6 -52q2 2 4.6 2.4"], 0.12, "#6a2c28", "#ffd8cc", 0.6, 0.4) : ""),
   { rand: 0 }));
   /* Nase: Spitze leicht überstehend, zwei kommaförmige Nasenlöcher nach vorn/seitlich */
-  s += `<path d="${G([[135.4, -57.8], [137.8, -57], [138.8, -55.4], [138.2, -53.8], [136.6, -54], [135.6, -55.6]])}" fill="#8a3e38"/>` +
+  s += `<path d="${G([[134.6, -58], [137.6, -57.2], [138.6, -55.6], [138, -54.2], [136.4, -54.4]])}" fill="#b05a50" opacity=".8"/>` +
     `<path d="M137 -56.2q1.2 0 1.4 1.1q-.7 .3 -1.3 -.2zM135.9 -55.4q.9 .2 .9 1.1q-.6 .1 -1 -.4z" fill="#1a0806"/>` + W.L(["M136 -57.6q1.4 .1 2 1"], "#ffd8cc", 0.12, 0.5);
   /* Maul: lange Spalte bis unter das Auge, dünne Lippen, Oberlippe über dem Eckzahn leicht gewölbt */
   s += W.L(["M136 -51.6q-3 .6 -6.4 .8q-4 .5 -7.6 1.6q-2.6 .8 -4.6 2.2"], "#3a1614", 0.24, 0.85) + W.L(["M135.6 -52.4q-3 .5 -6.4 .7q-4 .4 -7.4 1.4"], "#f0b8a8", 0.12, 0.45) +
-    W.weich([[124, -51.6, 2.6, 1, 10, "#f0b0a0", 0.5]], 0.4);
+    "";
   /* Auge: unter dem Wulst, teilweise verdeckt; weißes Oberlid IST das Lid (Halbmond direkt über der Iris) */
   s += W.auge2(115, -64.2, 0.95, { iris: "#9a6a2a", iris2: "#4a2a0c", sklera: "#3a2420", offen: 0.75, winkel: 16, lidDeck: 0.3, lid: "#e8e0d4", lidHell: "#ffffff",
     glanz: 0.7, karunkel: "#8a5a5a", hoehle: "#5a2826" });
