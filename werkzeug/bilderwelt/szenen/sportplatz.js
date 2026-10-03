@@ -64,7 +64,7 @@ S.hinten(`<rect x="0" y="96" width="320" height="104" fill="#4f9a3e"/>`);
   let m = "";
   for (let z = 0; z < CZ - 1.2; z += 5) {
     const y0 = PY(0, z), y1 = PY(0, Math.min(z + 2.5, CZ - 0.6));
-    m += `<rect x="0" y="${r(y0)}" width="320" height="${r(Math.min(200, y1) - y0)}" fill="#5aab48" opacity=".75"/>`;
+    m += `<rect x="0" y="${r(y0)}" width="320" height="${r(Math.min(200, y1) - y0)}" fill="#62b04f" opacity=".45"/>`;
   }
   m += `<rect x="0" y="${r(PY(0, 0))}" width="320" height="${r(200 - PY(0, 0))}" fill="${S.lg("rasenlicht", [[0, "#1f3a18", 0.18], [0.4, "#1f3a18", 0], [1, "#fff", 0.06]])}"/>`;
   /* Linien: Torlinie, Torraum, Strafraum-Seite, Seitenlinie an der Ecke, Eckviertelkreis */
@@ -87,7 +87,7 @@ S.hinten(`<rect x="0" y="96" width="320" height="104" fill="#4f9a3e"/>`);
    1 — DIE FLUTLICHTMASTEN (rechte Ecke) und DER BALLFANGZAUN
    ===================================================================== */
 {
-  const X = 27.5, Z = -2.5, s = sk(Z), x = PX(X, Z), y = PY(0, Z), H = 18 * s;
+  const X = 27, Z = -13, s = sk(Z), x = PX(X, Z), y = PY(0, Z), H = 17 * s;
   let k = schatten(0, 0.3, 4, 1, 0.3);
   k += `<path d="M-1.6 0 L-.8 ${r(-H)} L.8 ${r(-H)} L1.6 0 Z" fill="${S.lg("mast", [[0, "#9aa3aa"], [0.5, "#e1e5e8"], [1, "#7c858c"]], 0, 0, 1, 0)}"/>`;
   k += `<rect x="-9" y="${r(-H - 10)}" width="18" height="10" rx=".8" fill="#3a3f45"/>`;
@@ -98,10 +98,10 @@ S.hinten(`<rect x="0" y="96" width="320" height="104" fill="#4f9a3e"/>`);
 }
 {
   /* Ballfangzaun hinter der Laufbahn: Pfosten und feines Netz */
-  const Z = -12, y0 = PY(0, Z), y1 = PY(6, Z);
-  let k = `<rect x="-160" y="${r(y1 - y0)}" width="${r(PX(26, Z) - 0)}" height="${r(y0 - y1)}" fill="url(#${S.id("masche")})" opacity=".85"/>`;
+  const Z = -12, y0 = PY(0, Z), y1 = PY(4, Z);
+  let k = `<rect x="-160" y="${r(y1 - y0)}" width="${r(PX(26, Z))}" height="${r(y0 - y1)}" fill="url(#${S.id("masche")})" opacity=".6"/>`;
   S.def(`<pattern id="${S.id("masche")}" width="2" height="2" patternUnits="userSpaceOnUse"><path d="M0 0 L2 2 M2 0 L0 2" stroke="#38464f" stroke-width=".18" opacity=".55"/></pattern>`);
-  for (let X = -28; X <= 26; X += 6) k += `<rect x="${r(PX(X, Z) - 160 - 0.4)}" y="${r(y1 - y0)}" width=".8" height="${r(y0 - y1)}" fill="#59636b"/>`;
+  for (let X = -22; X <= 26; X += 6) k += `<rect x="${r(PX(X, Z) - 160 - 0.4)}" y="${r(y1 - y0)}" width=".8" height="${r(y0 - y1)}" fill="#59636b"/>`;
   k += `<rect x="-160" y="${r(y1 - y0)}" width="${r(PX(26, Z))}" height=".6" fill="#59636b"/>`;
   S.teil({ id: "ballfangzaun", de: "der Ballfangzaun", syl: "BALL-fang-zaun", it: "la rete di recinzione", itSyl: "RE-te di re-cin-ZIO-ne", en: "ball stop fence", x: 160, y: y0, kunst: k,
     tipp: "Der hohe Zaun fängt die Bälle, die übers Tor fliegen." });
@@ -145,13 +145,13 @@ S.hinten(`<rect x="0" y="96" width="320" height="104" fill="#4f9a3e"/>`);
 }
 {
   /* kleine überdachte Tribüne rechts hinten (vier Stufen Sitzplätze) */
-  const Z = -9, s = sk(Z), xa = PX(29, Z), xb = PX(46, Z), y = PY(0, Z), W = xb - xa, H = 3.6 * s;
+  const Z = -9, s = sk(Z), xa = PX(29, Z), xb = PX(38, Z), y = PY(0, Z), W = xb - xa, H = 3.6 * s;
   let k = schatten(0, 0.4, W / 2, 1.2, 0.25);
   k += `<path d="M${r(-W / 2)} 0 L${r(-W / 2)} ${r(-0.6 * s)} L${r(W / 2)} ${r(-0.6 * s)} L${r(W / 2)} 0 Z" fill="#b5b0a6"/>`;
   for (let i = 0; i < 4; i++) {
     const y0 = -0.6 * s - i * 0.5 * s;
     k += `<rect x="${r(-W / 2)}" y="${r(y0 - 0.5 * s)}" width="${r(W)}" height="${r(0.5 * s)}" fill="${i % 2 ? "#c9c3b7" : "#bdb7aa"}"/>`;
-    for (let j = 0; j < 16; j++) k += `<rect x="${r(-W / 2 + 1 + j * (W - 2) / 16)}" y="${r(y0 - 0.5 * s - 0.4)}" width="${r((W - 2) / 16 - 0.8)}" height="${r(0.25 * s)}" rx=".3" fill="${(i + j) % 7 === 0 ? "#f4f1ea" : "#b3261e"}"/>`;
+    for (let j = 0; j < 10; j++) k += `<rect x="${r(-W / 2 + 1 + j * (W - 2) / 10)}" y="${r(y0 - 0.5 * s - 0.4)}" width="${r((W - 2) / 10 - 0.8)}" height="${r(0.25 * s)}" rx=".3" fill="${(i + j) % 7 === 0 ? "#f4f1ea" : "#b3261e"}"/>`;
   }
   k += `<path d="M${r(-W / 2 - 2)} ${r(-H)} L${r(W / 2 + 2)} ${r(-H)} L${r(W / 2 + 2)} ${r(-H + 1.6)} L${r(-W / 2 - 2)} ${r(-H + 1.6)} Z" fill="#59636b"/>`;
   for (const t of [-0.45, 0, 0.45]) k += `<rect x="${r(t * W - 0.5)}" y="${r(-H + 1.6)}" width="1" height="${r(H - 0.6 * s - 2 * s - 1.6)}" fill="#7c858c"/>`;
@@ -165,7 +165,9 @@ S.hinten(`<rect x="0" y="96" width="320" height="104" fill="#4f9a3e"/>`);
    ===================================================================== */
 {
   const x = PX(10, -7.5), y = PY(0, -4);
-  let g = `<path d="M0 ${r(PY(0, -4))} L${P(25.5, 0, -4)} Q${P(26.5, 0, -4)} ${P(26.6, 0, -2.5)} L${P(26.6, 0, 0.8)} L${P(33.6, 0, 0.8)} L${P(33.6, 0, -6)} Q${P(33.4, 0, -11)} ${P(27, 0, -11)} L0 ${r(PY(0, -11))} Z" fill="${ROT}" opacity=".001"/>`;
+  S.def(`<clipPath id="${S.id("bild")}"><rect x="0" y="0" width="320" height="200"/></clipPath>`);
+  let g = `<path d="M0 ${r(PY(0, -4))} L${P(25.5, 0, -4)} Q${P(26.5, 0, -4)} ${P(26.6, 0, -2.5)} L320 ${r(PY(0, -1.5))} L320 ${r(PY(0, -7))} Q${P(31, 0, -11)} ${P(27, 0, -11)} L0 ${r(PY(0, -11))} Z" fill="${ROT}" opacity=".001"/>`;
+  g = `<g clip-path="url(#${S.id("bild")})">${g}</g>`;
   S.teil({ id: "laufbahn", de: "die Laufbahn", syl: "LAUF-bahn", it: "la pista", itSyl: "PI-sta", en: "running track", x, y, kunst: G(x, y, g),
     tipp: "Die rote Laufbahn aus Kunststoff federt — hier trainieren die Leichtathleten." });
 }
@@ -211,8 +213,10 @@ const TOR = { b: 3.66, h: 2.44, tief: 2.0, hNetz: 1.6 };
 {
   /* Torraum: die Linie 5,5 m vor dem Tor (als Teil: der Bereich der Linie) */
   const x = PX(0, 5.5), y = PY(0, 5.5);
-  const L = `<path d="M${P(-9.16, 0, 0)} L${P(-9.16, 0, 5.5)} L${P(9.16, 0, 5.5)} L${P(9.16, 0, 0)}" stroke="#f4f6f2" stroke-width="1.2" fill="none"/>`;
-  const hit = `<path d="M${P(-9.16, 0, 0.2)} L${P(9.16, 0, 0.2)} L${P(9.16, 0, 5.5)} L${P(-9.16, 0, 5.5)} Z" fill="#fff" opacity=".001"/>`;
+  const xa = CX - 160 * dd(5.5) / F;   /* dort tritt die Torraumlinie links aus dem Bild */
+  const L = `<path d="M${P(xa, 0, 5.5)} L${P(9.16, 0, 5.5)} L${P(9.16, 0, 0)}" stroke="#f4f6f2" stroke-width="1.2" fill="none"/>`;
+  const xl = (Z) => Math.max(0, PX(-9.16, Z));
+  const hit = `<path d="M${r(xl(0.2))} ${r(PY(0, 0.2))} L${P(9.16, 0, 0.2)} L${P(9.16, 0, 5.5)} L${r(xl(5.5))} ${r(PY(0, 5.5))} Z" fill="#fff" opacity=".001"/>`;
   S.teil({ id: "torraum", de: "der Torraum", syl: "TOR-raum", it: "l'area di porta", itSyl: "A-re-a di POR-ta", en: "goal area", x, y, kunst: G(x, y, hit + L),
     tipp: "Im Torraum, 5,5 Meter vor dem Tor, ist der Torwart besonders geschützt." });
 }
@@ -228,7 +232,7 @@ const TOR = { b: 3.66, h: 2.44, tief: 2.0, hNetz: 1.6 };
     tipp: "Heute steht sie im Tor — als Torwart trägt sie ein anderes Trikot und Handschuhe." });
 }
 {
-  const X = 13.6, Z = 5.4, s = sk(Z);
+  const X = 8.4, Z = 5.6, s = sk(Z);
   const m = B.mensch({ id: "b13e_spieler", geschlecht: "m", pose: "laufen", blick: -48, frisur: "kurz", haarfarbe: "schwarz", haut: "dunkel",
     kleidung: { oberteil: { stueck: "tshirt", farbe: "rot" }, unterteil: { stueck: "shorts", farbe: "weiss" }, schuhe: { stueck: "turnschuh", farbe: "schwarz" } } }, 1.8 * s);
   /* Rückennummer-Andeutung */
@@ -237,7 +241,7 @@ const TOR = { b: 3.66, h: 2.44, tief: 2.0, hNetz: 1.6 };
 }
 {
   /* Der Ball rollt vor dem Spieler */
-  const X = 12.2, Z = 6.3, s = sk(Z), R = 0.11 * s, x = PX(X, Z), y = PY(0, Z);
+  const X = 7.7, Z = 6.3, s = sk(Z), R = 0.11 * s, x = PX(X, Z), y = PY(0, Z);
   let k = schatten(0, 0, R * 1.2, R * 0.3, 0.35);
   k += `<circle cx="0" cy="${r(-R)}" r="${r(R)}" fill="${S.rg("ball", [[0, "#ffffff"], [0.7, "#e8eaec"], [1, "#9aa3aa"]], 0.35, 0.3, 0.8)}"/>`;
   const fuenf = (cx, cy, rr) => { let p = ""; for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; p += (i ? " L" : "M") + `${r(cx + Math.cos(a) * rr)} ${r(cy + Math.sin(a) * rr)}`; } return `<path d="${p} Z" fill="#1d1d1d"/>`; };
@@ -250,8 +254,8 @@ const TOR = { b: 3.66, h: 2.44, tief: 2.0, hNetz: 1.6 };
    6 — DIE HÜTCHEN (Slalom) — vor dem Spieler
    ===================================================================== */
 {
-  const pos = [[11.2, 7.2], [12.4, 8.2], [11.0, 9.1], [12.2, 9.9]];
-  const x = PX(11.7, 8.5), y = PY(0, 8.5);
+  const pos = [[7.2, 7.3], [8.3, 8.1], [7.0, 8.9], [8.1, 9.6]];
+  const x = PX(7.6, 8.5), y = PY(0, 8.5);
   let g = "";
   for (const [X, Z] of pos) {
     const s = sk(Z), cx = PX(X, Z), cy = PY(0, Z), w = 0.1 * s, h = 0.23 * s;
@@ -264,7 +268,7 @@ const TOR = { b: 3.66, h: 2.44, tief: 2.0, hNetz: 1.6 };
 /* =====================================================================
    7 — DER TRAINER mit TRILLERPFEIFE (rechts vorne)
    ===================================================================== */
-const TR = { X: 15.6, Z: 6.9 };
+const TR = { X: 11.7, Z: 8.7 };
 const trainer = B.mensch({ id: "b13e_trainer", geschlecht: "m", pose: "zeigen", blick: -40, frisur: "kurz", haarfarbe: "grau", haut: "hell", bart: "stoppel",
   kleidung: { oberteil: { stueck: "tshirt", farbe: "weiss" }, jacke: { stueck: "jacke", farbe: "rot" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "turnschuh", farbe: "weiss" }, kopf: { stueck: "kappe", farbe: "rot" } } }, 1.82 * sk(TR.Z));
 {
@@ -285,7 +289,7 @@ const trainer = B.mensch({ id: "b13e_trainer", geschlecht: "m", pose: "zeigen", 
    8 — DIE WASSERFLASCHE (Flaschenträger) und DIE SPORTTASCHE (Lupe)
    ===================================================================== */
 {
-  const X = 7.0, Z = 9.4, s = sk(Z), x = PX(X, Z), y = PY(0, Z), W = 0.42 * s, H = 0.12 * s;
+  const X = 9.0, Z = 9.3, s = sk(Z), x = PX(X, Z), y = PY(0, Z), W = 0.42 * s, H = 0.12 * s;
   let k = schatten(0, 0.3, W / 2 + 2, 1.2, 0.3);
   /* Flaschenträger (Kunststoffkorb) mit sechs Trinkflaschen */
   for (let i = 0; i < 6; i++) {
@@ -299,7 +303,7 @@ const trainer = B.mensch({ id: "b13e_trainer", geschlecht: "m", pose: "zeigen", 
     tipp: "Beim Training viel trinken — jeder hat seine eigene Flasche." });
 }
 {
-  const X = 12.0, Z = 10.0, s = sk(Z), x = PX(X, Z), y = PY(0, Z), W = 0.62 * s, H = 0.3 * s;
+  const X = 10.0, Z = 9.75, s = sk(Z), x = PX(X, Z), y = PY(0, Z), W = 0.62 * s, H = 0.3 * s;
   let k = schatten(0, 0.4, W / 2 + 3, 1.6, 0.32);
   k += `<path d="M${r(-W / 2)} 0 Q${r(-W / 2 - 2)} ${r(-H / 2)} ${r(-W / 2 + 2)} ${r(-H)} L${r(W / 2 - 2)} ${r(-H)} Q${r(W / 2 + 2)} ${r(-H / 2)} ${r(W / 2)} 0 Z" fill="${S.lg("tasche", [[0, "#2b2f33"], [1, "#16191c"]])}"/>`;
   k += `<path d="M${r(-W / 2 + 3)} ${r(-H)} L${r(W / 2 - 3)} ${r(-H)}" stroke="#b3261e" stroke-width="1.2"/><path d="M${r(-W * 0.25)} ${r(-H)} Q0 ${r(-H - 10)} ${r(W * 0.25)} ${r(-H)}" stroke="#2b2f33" stroke-width="1.4" fill="none"/>`;
