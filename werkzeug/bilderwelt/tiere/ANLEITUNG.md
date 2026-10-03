@@ -145,3 +145,5 @@ Die fünf Raubsaurier bekamen in Runde 1 nur 2–7 von 10. Fast alle Mängel wie
 10. **Kopf-Ausschnitt**: gib `kopf: [x0, y0, x1, y1]` (cm) zurück, dann zeigt `<id>-kopf.png` genau den Kopf.
 11. **Klein in der Szene**: gleiche Farbwerte wie groß (kein Plastikglanz), Kopf/Auge/Krallen hell absetzen, die dunkelste
     Masse nicht im Schwanz.
+12. **Weichzeichner-Farbstich**: jeder eigene `<filter>` (feGaussianBlur usw.) braucht `color-interpolation-filters="sRGB"`,
+    sonst verschiebt Chrome halbtransparente Farben (gemessen: Braun wird Oliv). Die Filter in kern.js haben es schon.

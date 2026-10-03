@@ -42,12 +42,12 @@
  "baukasten.js": "68a7fd488976c5e284185cbf3fa4d52e01379c6e",
  "data-plaetze.js": "61824c9636dd4d1ed55f9a8c2992cb2f7b419199",
  "data-szenen.js": "facd9322aa9a85e01fb979df8f95dc077e1222b1",
- "app-styles.css": "252949e98e6fff038a4d4e1b43d030d927d942fe",
+ "app-styles.css": "b127bd5fd82731b39d2c8de5f93825facf22455a",
  "konjugation.js": "740bad9ac8234b00f3a6b64b3e0793ae54ecf619",
- "spiel.css": "c22d2e8c176207f443f05851ae383ea3c9c7266f",
+ "spiel.css": "876f39c361fcfffc0d910defadb50f7395192c7c",
  "data-vocab.js": "4d1c59095b00c2be502216599ba8328d5402a7fe",
  "backend.js": "c6b366da16e1a5ec6e9a4f97c52686c9c151c7ed",
- "korrekturen.css": "c1456e499871381e8578d99582982bfe530a02ee",
+ "korrekturen.css": "d2f50add525f5092713a76742205dffdb15a961d",
  "data-lesetexte.js": "3896db02514c24a24d57d055e51b388a8730fd3b",
  "spiel.js": "3ed8ffe780b33b144ad8b6c790955341fc899769",
  "data-exercises.js": "e21006849b6c9ad63a952d939d5c85bff9d0d9d5",
@@ -57,5 +57,5 @@
  "data-kreuzwort.js": "43c15d7eba41a436b8545908b0567ffb5d0161f8",
  "data-minibilder.js": "11474463be41cbe95be5093573363f4920ea0c80",
  "data-werkstatt.js": "d48218e9cb7b4f4d8b0174b437c91bb8a712842c",
- "app.js": "8179e459874ef66dd9791ff4789c6bc90433e6b3"
+ "app.js": "974319664aa7e0f52ba2be51f5c65b24c3322361"
 }
