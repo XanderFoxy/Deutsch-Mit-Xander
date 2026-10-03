@@ -29,7 +29,7 @@ const path = require("path");
 const { neueSzene, flaeche, schatten, zufall } = require("../bau");
 const B = require("../bau");
 
-const S = neueSzene({ id: "auslaenderbehoerde", titel: "Die Ausländerbehörde", emoji: "🛂", thema: "Behörden", kuerzel: "abh", fassung: 852 });
+const S = neueSzene({ id: "auslaenderbehoerde", titel: "Die Ausländerbehörde", emoji: "🛂", thema: "Behörden", kuerzel: "b08a", fassung: 852 });
 const rnd = zufall(4711);
 const r = B.r;
 
@@ -41,7 +41,7 @@ function figur(spec, hoehe) {
   m.svg = m.svg.replace(/ data-teil="[^"]*"/g, "").replace(/ d="([^"]*)"/g, (q, d) => ` d="${d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n * schritt) / schritt))}"`);
   return m;
 }
-const B_POSE = (n) => { B.mensch({ id: "abh_x" }, 1); return globalThis.DMA_MENSCH.POSEN[n]; };
+const B_POSE = (n) => { B.mensch({ id: "b08a_x" }, 1); return globalThis.DMA_MENSCH.POSEN[n]; };
 const T = (x, y, s, txt, f = "#222", extra = "") => `<text x="${r(x)}" y="${r(y)}" font-size="${s}" fill="${f}" font-family="Arial,Helvetica,sans-serif" text-anchor="middle"${extra}>${txt}</text>`;
 
 /* ---------- Farben und Stoffe ---------------------------------------- */
@@ -267,7 +267,7 @@ const REIHE = { x0: 222, x1: 300, y: 125, s: 41 };
   S.teil({ id: "ab_stuhlreihe_ab", de: "die Stuhlreihe", syl: "STUHL-rei-he", it: "la fila di sedie", itSyl: "FI-la di SE-die", en: "row of chairs", x: cx, y: REIHE.y, steht: true, kunst: k });
 }
 {
-  const m = figur({ id: "abh_wart", geschlecht: "w", pose: "lesen", blick: 14, frisur: "dutt", haarfarbe: "schwarz", haut: "mittel",
+  const m = figur({ id: "b08a_wart", geschlecht: "w", pose: "lesen", blick: 14, frisur: "dutt", haarfarbe: "schwarz", haut: "mittel",
     kleidung: { oberteil: { stueck: "pullover", farbe: "#7a5a8c" }, unterteil: { stueck: "hose", farbe: "#3a3f55" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, zubehoer: { stueck: "buch", farbe: "#c9a227" } } }, 64);
   /* Sitzhöhe 0,45 m auf dem zweiten Schalensitz */
   const sitz = 0.45 * REIHE.s, oy = REIHE.y - sitz + m.z.sitz.y * -m.k;
@@ -289,7 +289,7 @@ const TR = { x0: 30, x1: 150, yb: 113, yf: 124, yu: 170 };   // Rückkante, Vord
   S.teil({ id: "ab_buerostuhl", de: "der Bürostuhl", syl: "BÜ-ro-stuhl", it: "la sedia da ufficio", itSyl: "SE-dia da uf-FI-cio", en: "office chair", x: 64, y: 150, kunst: k });
 }
 {
-  const m = figur({ id: "abh_sb", geschlecht: "w", pose: "sitzen", blick: 24, frisur: "zopf", haarfarbe: "braun", haut: "hell", laecheln: true,
+  const m = figur({ id: "b08a_sb", geschlecht: "w", pose: "sitzen", blick: 24, frisur: "zopf", haarfarbe: "braun", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "bluse", farbe: "#dfe9f2" }, jacke: { stueck: "jacke", farbe: "#3a4e6a" }, unterteil: { stueck: "hose", farbe: "grau" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, zubehoer: { stueck: "brille" } } }, 92);
   S.teil({ id: "ab_sachbearbeiterin", de: "die Sachbearbeiterin", syl: "SACH-be-ar-bei-te-rin", it: "l'impiegata", itSyl: "im-pie-GA-ta", en: "case worker", x: 82, y: 150, kunst: m.svg,
     tipp: "Die Sachbearbeiterin prüft den Antrag und erfasst die Fingerabdrücke." });
@@ -327,15 +327,14 @@ const tresenUnter = [];
   k += `<rect x="${W / 2 - 22}" y="${ft + 18}" width="16" height="14" rx="1" fill="#ffffff" stroke="#2f6f78" stroke-width=".6"/>` + T(W / 2 - 14, ft + 25, 3, "Platz", "#2f6f78", ' font-weight="bold"') + T(W / 2 - 14, ft + 30.6, 5.6, "3", "#2f6f78", ' font-weight="bold"');
   k += `<rect x="${-W / 2}" y="${ft}" width="${W}" height="1.6" fill="#fff" opacity=".2"/>`;
   /* Tastatur und Maus (gehören zum Tresen, nicht eigens antippbar) */
-  k += `<path d="M${-W / 2 + 20} ${-H + 5.6} L${-W / 2 + 40} ${-H + 5.6} L${-W / 2 + 41.4} ${-H + 8.4} L${-W / 2 + 19} ${-H + 8.4} Z" fill="#2a2e33"/>`;
-  for (let i = 0; i < 9; i++) k += `<rect x="${r(-W / 2 + 21 + i * 2.2)}" y="${-H + 6.3}" width="1.6" height=".7" fill="#596068"/>`;
-  k += `<ellipse cx="${-W / 2 + 46}" cy="${-H + 7.2}" rx="1.4" ry=".9" fill="#2a2e33"/>`;
+  k += `<path d="M${-W / 2 + 9} ${-H + 5.6} L${-W / 2 + 29} ${-H + 5.6} L${-W / 2 + 30.4} ${-H + 8.4} L${-W / 2 + 8} ${-H + 8.4} Z" fill="#2a2e33"/>`;
+  for (let i = 0; i < 9; i++) k += `<rect x="${r(-W / 2 + 10 + i * 2.2)}" y="${-H + 6.3}" width="1.6" height=".7" fill="#596068"/>`;
   /* Dokumente auf dem Tresen — einzeln in der Lupe */
   const yT = -(TR.yu - TR.yf);   // Vorderkante der Platte
   const dok = [];
   /* Reisepass (burgunderrot, aufgeklappt mit Datenseite) */
   {
-    const x = -14, y = yT - 3.6;
+    const x = -11, y = yT - 3.6;
     let g = `<path d="M${x - 6} ${y + 2.6} L${x + 6} ${y + 2.6} L${x + 5.2} ${y - 2.4} L${x - 5.2} ${y - 2.4} Z" fill="#6e1a26"/>`;
     g += `<path d="M${x - 5.4} ${y + 2.2} L${x - 0.2} ${y + 2.2} L${x - 0.4} ${y - 2} L${x - 4.8} ${y - 2} Z" fill="#f4efe2"/><rect x="${x - 4.6}" y="${y - 1.4}" width="1.8" height="2.2" fill="#a9958a"/>`;
     for (let i = 0; i < 3; i++) g += `<rect x="${x - 2.4}" y="${r(y - 1.2 + i * 1)}" width="2" height=".4" fill="#8a8f95"/>`;
@@ -374,7 +373,7 @@ const tresenUnter = [];
   }
   /* Terminbestätigung mit QR-Code */
   {
-    const x = 30, y = yT - 3.4;
+    const x = 27, y = yT - 3.4;
     let g = `<path d="M${x - 4} ${y + 2.8} L${x + 4} ${y + 2.8} L${x + 3.6} ${y - 2.8} L${x - 3.6} ${y - 2.8} Z" fill="#fbfbf8" stroke="#c9ccc9" stroke-width=".15"/>`;
     g += `<rect x="${x - 3}" y="${y - 2.2}" width="6" height=".6" fill="#3c6ea8"/>`;
     for (let i = 0; i < 9; i++) if ((i * 7) % 3) g += `<rect x="${r(x - 2.8 + (i % 3) * 0.8)}" y="${r(y - 1.2 + Math.floor(i / 3) * 0.8)}" width=".7" height=".7" fill="#222"/>`;
@@ -386,7 +385,7 @@ const tresenUnter = [];
   }
   /* Stempel mit Stempelkissen (auf der Seite der Sachbearbeiterin) */
   {
-    const x = -32, y = yT - 6.4;
+    const x = -27, y = yT - 6.4;
     let g = `<path d="M${x + 1} ${y + 2.4} L${x + 7} ${y + 2.4} L${x + 6.6} ${y + 0.6} L${x + 1.4} ${y + 0.6} Z" fill="#2d3238"/><path d="M${x + 1.8} ${y + 1.9} L${x + 6.2} ${y + 1.9} L${x + 6} ${y + 1} L${x + 2} ${y + 1} Z" fill="#2c4f9e"/>`;
     g += `<rect x="${x - 2.2}" y="${y + 0.4}" width="4.4" height="2" rx=".4" fill="#3a3a3a"/><rect x="${x - 0.8}" y="${y - 3}" width="1.6" height="3.6" fill="#7a4e2a"/><ellipse cx="${x}" cy="${y - 3.4}" rx="1.6" ry="1.4" fill="${S.rg("knauf", [[0, "#b07a48"], [1, "#6b4322"]])}"/>`;
     k += g;
@@ -394,7 +393,7 @@ const tresenUnter = [];
   }
   /* Kugelschreiber an der Kette (Kundenseite) */
   {
-    const x = 41, y = yT - 1.6;
+    const x = -50, y = yT - 1.2;
     let g = `<path d="M${x - 3.4} ${y + 0.8} L${x + 3} ${y - 0.6}" stroke="#2c4f9e" stroke-width=".8" stroke-linecap="round"/><path d="M${x + 3} ${y - 0.6} l.8 -.2" stroke="#c9cfd4" stroke-width=".5"/>`;
     g += `<path d="M${x - 3.4} ${y + 0.8} q-1 .8 -1.6 2.2" stroke="#9aa2a8" stroke-width=".2" fill="none" stroke-dasharray=".3 .2"/>`;
     k += g;
@@ -418,8 +417,8 @@ const tresenUnter = [];
   k += `<rect x="${x0 - cx - 1}" y="${yo - yu}" width="2" height="${yu - yo}" rx=".6" fill="${STAHL}"/><rect x="${x1 - cx - 1}" y="${yo - yu}" width="2" height="${yu - yo}" rx=".6" fill="${STAHL}"/>`;
   k += `<rect x="${x0 - cx - 1}" y="${yo - yu - 1}" width="${x1 - x0 + 2}" height="2" rx=".6" fill="${STAHL}"/>`;
   k += `<rect x="${x0 - cx - 3}" y="-2" width="6" height="2" rx=".5" fill="#9aa2a8"/><rect x="${x1 - cx - 3}" y="-2" width="6" height="2" rx=".5" fill="#9aa2a8"/>`;
-  /* Durchreiche unten in der Mitte */
-  k += `<path d="M-14 0 L14 0 L12 -4 L-12 -4 Z" fill="${STAHL}" opacity=".9"/><path d="M-12 -4 L12 -4" stroke="#7d868d" stroke-width=".5"/>`;
+  /* Durchreiche unten rechts (neben dem Scanner) */
+  k += `<path d="M14 0 L30 0 L28.6 -3.4 L15.4 -3.4 Z" fill="${STAHL}" opacity=".9"/><path d="M15.4 -3.4 L28.6 -3.4" stroke="#7d868d" stroke-width=".5"/>`;
   /* Spiegelstreifen (Teil der Zeichnung: so trifft man die Scheibe) */
   k += `<path d="M${x0 - cx + 6} ${yo - yu + 2} L${x0 - cx + 12} ${yo - yu + 2} L${x0 - cx + 4} -6 L${x0 - cx + 2} -6 Z" fill="#ffffff" opacity=".35"/>`;
   k += `<path d="M${x1 - cx - 14} ${yo - yu + 2} L${x1 - cx - 9} ${yo - yu + 2} L${x1 - cx - 17} -6 L${x1 - cx - 20} -6 Z" fill="#ffffff" opacity=".3"/>`;
@@ -479,16 +478,15 @@ const tresenUnter = [];
         und DIE DOLMETSCHERIN (neben ihm, mit Mappe)
    ===================================================================== */
 {
-  const m = figur({ id: "abh_at", geschlecht: "m", pose: Object.assign({}, B_POSE("zeigen"), { lende: 5, brust: 2, kopf: 6, schulterR: { vor: 57, seit: 6, dreh: 0 }, ellbogenR: 12, handR: -6 }), blick: -66, frisur: "kurz", haarfarbe: "schwarz", haut: "dunkel", bart: true,
+  const m = figur({ id: "b08a_at", geschlecht: "m", pose: Object.assign({}, B_POSE("zeigen"), { lende: 5, brust: 2, kopf: 6, schulterR: { vor: 57, seit: 6, dreh: 0 }, ellbogenR: 12, handR: -6 }), blick: -66, frisur: "kurz", haarfarbe: "schwarz", haut: "dunkel", bart: true,
     kleidung: { oberteil: { stueck: "hemd", farbe: "hellblau" }, jacke: { stueck: "jacke", farbe: "#5b4a3a" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, 100);
   /* Fingerspitze genau auf die Glasfläche des Scanners setzen */
   const fs = m.z.punkte.fingerR, ax = 140 - fs[0] * m.k;
-  console.log("Antragsteller: Fingerspitze y =", r(178 + fs[1] * m.k), "x =", r(ax));
   S.teil({ id: "ab_antragsteller", de: "der Antragsteller", syl: "AN-trag-stel-ler", it: "il richiedente", itSyl: "ri-chie-DEN-te", en: "applicant", x: r(ax), y: 178, kunst: m.svg,
     tipp: "Er beantragt einen Aufenthaltstitel und legt den Finger auf den Scanner." });
 }
 {
-  const m = figur({ id: "abh_dol", geschlecht: "w", pose: "halten", blick: -42, frisur: "lang", haarfarbe: "dunkelbraun", haut: "oliv",
+  const m = figur({ id: "b08a_dol", geschlecht: "w", pose: "halten", blick: -42, frisur: "lang", haarfarbe: "dunkelbraun", haut: "oliv",
     kleidung: { oberteil: { stueck: "bluse", farbe: "creme" }, jacke: { stueck: "jacke", farbe: "#7a3b3b" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, zubehoer: { stueck: "buch", farbe: "#2f5f95" } } }, 94);
   S.teil({ id: "ab_dolmetscherin", de: "die Dolmetscherin", syl: "DOL-met-sche-rin", it: "l'interprete", itSyl: "in-TER-pre-te", en: "interpreter", x: 218, y: 170, kunst: m.svg,
     tipp: "Die Dolmetscherin übersetzt, was die Sachbearbeiterin fragt." });

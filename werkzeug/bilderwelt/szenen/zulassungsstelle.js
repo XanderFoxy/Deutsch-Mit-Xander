@@ -29,7 +29,7 @@ const path = require("path");
 const { neueSzene, flaeche, schatten, zufall } = require("../bau");
 const B = require("../bau");
 
-const S = neueSzene({ id: "zulassungsstelle", titel: "Die Zulassungsstelle", emoji: "🚗", thema: "Behörden", kuerzel: "zst", fassung: 852 });
+const S = neueSzene({ id: "zulassungsstelle", titel: "Die Zulassungsstelle", emoji: "🚗", thema: "Behörden", kuerzel: "b08b", fassung: 852 });
 const rnd = zufall(5208);
 const r = B.r;
 
@@ -171,7 +171,7 @@ const D = { x0: 62, x1: 168, yb: 113, yf: 122, yu: 162 };   // Schreibtisch-Scha
   /* Rückenlehne des Bürostuhls schaut neben ihm hervor */
   let k = `<path d="M-10 -46 Q-10 -51 -4 -51 L6 -51 Q10 -51 10 -46 L9 -24 L-9 -24 Z" fill="${SCHWARZ}"/>`;
   S.hinten(`<g transform="translate(122,146)">${k}</g>`);
-  const m = figur({ id: "zst_bea", geschlecht: "m", pose: "sitzen", blick: 12, frisur: "glatze", haarfarbe: "grau", haut: "hell", bart: true,
+  const m = figur({ id: "b08b_bea", geschlecht: "m", pose: "sitzen", blick: 12, frisur: "glatze", haarfarbe: "grau", haut: "hell", bart: true,
     kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "weste", farbe: "#55606b" }, unterteil: { stueck: "anzughose", farbe: "grau" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, zubehoer: { stueck: "brille" } } }, 94);
   S.teil({ id: "zu_beamter", de: "der Beamte", syl: "Be-AM-te", it: "il funzionario", itSyl: "fun-zio-NA-rio", en: "official", x: 116, y: 146, kunst: m.svg,
     tipp: "Der Beamte teilt das Kennzeichen zu und klebt die Stempelplakette auf." });
@@ -387,7 +387,7 @@ const WB = { x0: 216, x1: 320, yt: 124, yu: 160 };   // Werkbank des Schilderdie
    6 — DIE HALTERIN (bringt die neuen Schilder zum Abstempeln)
    ===================================================================== */
 {
-  const m = figur({ id: "zst_hal", geschlecht: "w", pose: "stehen", blick: -64, frisur: "pony", haarfarbe: "blond", haut: "hell",
+  const m = figur({ id: "b08b_hal", geschlecht: "w", pose: "stehen", blick: -64, frisur: "pony", haarfarbe: "blond", haut: "hell",
     kleidung: { oberteil: { stueck: "rollkragen", farbe: "#d8c7a6" }, jacke: { stueck: "mantel", farbe: "#2f5a35" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel", farbe: "braun" }, zubehoer: { stueck: "tasche", farbe: "#6b3a2a" } } }, 98);
   S.teil({ id: "zu_kundin_zu", de: "die Halterin", syl: "HAL-te-rin", it: "l'intestataria", itSyl: "in-te-sta-TA-ria", en: "registered keeper", x: 190, y: 176, kunst: m.svg,
     tipp: "Die Halterin ist die Person, auf die das Auto angemeldet ist." });

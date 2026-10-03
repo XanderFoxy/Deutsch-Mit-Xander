@@ -27,7 +27,7 @@ const path = require("path");
 const { neueSzene, flaeche, schatten, zufall } = require("../bau");
 const B = require("../bau");
 
-const S = neueSzene({ id: "standesamt", titel: "Das Standesamt", emoji: "💍", thema: "Behörden", kuerzel: "stam", fassung: 852 });
+const S = neueSzene({ id: "standesamt", titel: "Das Standesamt", emoji: "💍", thema: "Behörden", kuerzel: "b08c", fassung: 852 });
 const rnd = zufall(2512);
 const r = B.r;
 const VP = { x: 160, y: 52 };
@@ -65,8 +65,8 @@ const auf = (x0, y0, y) => VP.x + (x0 - VP.x) * (y - VP.y) / (y0 - VP.y);   // F
   k += `<ellipse cx="160" cy="7" rx="14" ry="3.2" fill="#f7f0e0" stroke="#d9cba9" stroke-width=".4"/><ellipse cx="160" cy="7" rx="8" ry="1.8" fill="none" stroke="#d9cba9" stroke-width=".4"/>`;
   /* Stirnwand: Creme mit feinem Damastmuster, unten Eichenvertäfelung */
   k += `<rect x="${XL}" y="${WO}" width="${XR - XL}" height="${WU - WO}" fill="${CREME}"/>`;
-  S.def(`<pattern id="stam_damast" width="10" height="12" patternUnits="userSpaceOnUse"><path d="M5 1 Q8 4 5 6 Q2 4 5 1 Z M5 6 Q8 8 5 11 Q2 8 5 6 Z" fill="#e3d3b2" opacity=".55"/><circle cx="0" cy="6" r=".7" fill="#e3d3b2" opacity=".5"/><circle cx="10" cy="6" r=".7" fill="#e3d3b2" opacity=".5"/></pattern>`);
-  k += `<rect x="${XL}" y="${WO}" width="${XR - XL}" height="${WU - WO - 32}" fill="url(#stam_damast)"/>`;
+  S.def(`<pattern id="b08c_damast" width="10" height="12" patternUnits="userSpaceOnUse"><path d="M5 1 Q8 4 5 6 Q2 4 5 1 Z M5 6 Q8 8 5 11 Q2 8 5 6 Z" fill="#e3d3b2" opacity=".55"/><circle cx="0" cy="6" r=".7" fill="#e3d3b2" opacity=".5"/><circle cx="10" cy="6" r=".7" fill="#e3d3b2" opacity=".5"/></pattern>`);
+  k += `<rect x="${XL}" y="${WO}" width="${XR - XL}" height="${WU - WO - 32}" fill="url(#b08c_damast)"/>`;
   k += `<rect x="${XL}" y="${WO}" width="${XR - XL}" height="${WU - WO}" fill="${S.rg("licht", [[0, "#fff8e8", 0.5], [1, "#fff8e8", 0]], 0.5, 0.3, 0.6)}"/>`;
   const V0 = WU - 32;
   k += `<rect x="${XL}" y="${V0}" width="${XR - XL}" height="32" fill="${EICHE}"/><rect x="${XL}" y="${V0}" width="${XR - XL}" height="2" fill="#b98a55"/>`;
@@ -195,7 +195,7 @@ const seitenPunkt = (xw, x, h) => {
    ===================================================================== */
 const TI = { y: 128, x0: 92, x1: 228, hB: 0.76 };   // Trautisch: Fußlinie vorn
 {
-  const m = figur({ id: "stam_sb", geschlecht: "w", pose: "halten", blick: 6, frisur: "kurz", haarfarbe: "grau", haut: "hell", laecheln: true,
+  const m = figur({ id: "b08c_sb", geschlecht: "w", pose: "halten", blick: 6, frisur: "kurz", haarfarbe: "grau", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "bluse", farbe: "weiss" }, jacke: { stueck: "jacke", farbe: "#23324f" }, unterteil: { stueck: "rock", farbe: "#23324f" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, zubehoer: { stueck: "buch", farbe: "#6d1424" } } }, SK(122) * 1.68);
   S.teil({ id: "sa_standesbeamtin", de: "die Standesbeamtin", syl: "STAN-des-be-am-tin", it: "l'ufficiale di stato civile", itSyl: "uf-fi-CIA-le di STA-to ci-VI-le", en: "registrar", x: 160, y: 122, kunst: m.svg,
     tipp: "Sie fragt: „Wollen Sie die Ehe miteinander eingehen?“ — beide antworten: „Ja.“" });
@@ -301,7 +301,7 @@ const TOP = { yv: TI.y - TI.hB * SK(TI.y), yh: 122 - TI.hB * SK(122) };   // Vor
   st += `<path d="M-9 ${r(-sh - 1)} L8 ${r(-sh - 1)} L8.6 ${r(-sh + 1.6)} L-9.6 ${r(-sh + 1.6)} Z" fill="${SAMT}"/><rect x="-9.6" y="${r(-sh + 1.4)}" width="18.2" height="1.6" fill="${EICHE}"/>`;
   st += `<path d="M5 ${r(-sh - 1)} L6.6 ${r(-0.98 * s)} L9.6 ${r(-0.98 * s)} L8.4 ${r(-sh - 1)} Z" fill="${EICHE_V}"/>`;
   S.teil({ id: "sa_stuhl_zeuge", de: "der Polsterstuhl", syl: "POL-ster-stuhl", it: "la sedia imbottita", itSyl: "SE-dia im-bot-TI-ta", en: "upholstered chair", x: 254, y: fy, steht: true, kunst: st });
-  const m = figur({ id: "stam_tz", geschlecht: "m", pose: "sitzen", blick: -62, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel",
+  const m = figur({ id: "b08c_tz", geschlecht: "m", pose: "sitzen", blick: -62, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel",
     kleidung: { oberteil: { stueck: "hemd", farbe: "#dbe6f1" }, jacke: { stueck: "jacke", farbe: "#4a4f58" }, unterteil: { stueck: "anzughose", farbe: "#4a4f58" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, s * 1.78);
   /* Gesäß auf das Polster: der Sitz der Figur liegt bei sitz.y·k über dem Boden */
   const oy = fy - sh - 0.4 + -m.z.sitz.y * m.k;
@@ -326,7 +326,7 @@ const TOP = { yv: TI.y - TI.hB * SK(TI.y), yh: 122 - TI.hB * SK(122) };   // Vor
    ===================================================================== */
 {
   const fy = 140, s = SK(fy);
-  const m = figur({ id: "stam_br", geschlecht: "w", pose: "stehen", blick: 196, frisur: "dutt", haarfarbe: "braun", haut: "hell",
+  const m = figur({ id: "b08c_br", geschlecht: "w", pose: "stehen", blick: 196, frisur: "dutt", haarfarbe: "braun", haut: "hell",
     kleidung: { kleid: { stueck: "abendkleid", farbe: "#fbf9f4" }, schuhe: { stueck: "halbschuh", farbe: "weiss" } } }, s * 1.68);
   /* Schleier: vom Dutt über den Rücken, zart durchscheinend */
   const sc = m.z.punkte.hinterkopf || m.z.punkte.scheitel, k = m.k;
@@ -339,7 +339,7 @@ const TOP = { yv: TI.y - TI.hB * SK(TI.y), yh: 122 - TI.hB * SK(122) };   // Vor
 }
 {
   const fy = 141, s = SK(fy);
-  const m = figur({ id: "stam_bg", geschlecht: "m", pose: "stehen", blick: 166, frisur: "kurz", haarfarbe: "schwarz", haut: "hell",
+  const m = figur({ id: "b08c_bg", geschlecht: "m", pose: "stehen", blick: 166, frisur: "kurz", haarfarbe: "schwarz", haut: "hell",
     kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "jacke", farbe: "#1f2229" }, unterteil: { stueck: "anzughose", farbe: "#1f2229" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } } }, s * 1.82);
   S.teil({ id: "sa_braeutigam", de: "der Bräutigam", syl: "BRÄU-ti-gam", it: "lo sposo", itSyl: "SPO-so", en: "groom", x: 182, y: fy, kunst: m.svg,
     tipp: "Der Bräutigam trägt einen dunklen Anzug." });

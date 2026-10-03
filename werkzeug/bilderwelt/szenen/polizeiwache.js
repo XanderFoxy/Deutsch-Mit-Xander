@@ -29,7 +29,7 @@ const path = require("path");
 const { neueSzene, flaeche, schatten, zufall } = require("../bau");
 const B = require("../bau");
 
-const S = neueSzene({ id: "polizeiwache", titel: "Die Polizeiwache", emoji: "🚓", thema: "Behörden", kuerzel: "pwa", fassung: 852 });
+const S = neueSzene({ id: "polizeiwache", titel: "Die Polizeiwache", emoji: "🚓", thema: "Behörden", kuerzel: "b08d", fassung: 852 });
 const rnd = zufall(110);
 const r = B.r;
 const VP = { x: 230, y: 60 };
@@ -198,7 +198,7 @@ const pinnUnter = [];
    ===================================================================== */
 {
   const fy = 128, s = SK(fy);
-  const m = figur({ id: "pwa_pol", geschlecht: "w", pose: "halten", blick: -14, frisur: "zopf", haarfarbe: "blond", haut: "hell",
+  const m = figur({ id: "b08d_pol", geschlecht: "w", pose: "halten", blick: -14, frisur: "zopf", haarfarbe: "blond", haut: "hell",
     kleidung: { oberteil: { stueck: "polizeihemd" }, jacke: { stueck: "weste", farbe: "#1b2c4f" }, unterteil: { stueck: "anzughose", farbe: "#1b2c4f" }, schuhe: { stueck: "stiefel", farbe: "schwarz" }, zubehoer: { stueck: "buch", farbe: "#f4f4f0" } } }, s * 1.7);
   const b = m.z.punkte.brust;
   let auf_ = `<rect x="${r(b[0] * m.k - 4.2)}" y="${r(b[1] * m.k - 3.4)}" width="8.4" height="2.2" rx=".3" fill="#ffffff" opacity=".95"/>` + `<text x="${r(b[0] * m.k)}" y="${r(b[1] * m.k - 1.7)}" font-size="1.9" fill="${PBLAU}" font-family="Arial" font-weight="bold" text-anchor="middle">POLIZEI</text>`;
@@ -381,7 +381,7 @@ const SCH = { yb: 0 };
    ===================================================================== */
 {
   const fy = 180, s = SK(fy);
-  const m = figur({ id: "pwa_bue", geschlecht: "w", pose: "stehen", blick: 148, frisur: "lang", haarfarbe: "rot", haut: "hell",
+  const m = figur({ id: "b08d_bue", geschlecht: "w", pose: "stehen", blick: 148, frisur: "lang", haarfarbe: "rot", haut: "hell",
     kleidung: { oberteil: { stueck: "pullover", farbe: "#d8ad3a" }, jacke: { stueck: "jacke", farbe: "#2f3035" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "#7a3b3b" } } }, s * 1.66);
   S.teil({ id: "pw_buergerin", de: "die Bürgerin", syl: "BÜR-ge-rin", it: "la cittadina", itSyl: "cit-ta-DI-na", en: "member of the public", x: 146, y: fy, kunst: m.svg,
     tipp: "Ihr Fahrrad wurde gestohlen. Sie erstattet eine Anzeige." });
