@@ -124,7 +124,13 @@ const poly = (pts) => {
 const linie = (pts) => { const q = nahClip(pts, true).map((p) => pr(p[0], p[1], p[2])); return q.length > 1 ? "M" + q.map(P).join(" L") : "M0 0"; };
 const mass = (x, y) => FOC / tief(x, y);
 /* Figuren: Pfaddaten auf ganze Zahlen runden (unsichtbar klein, halbiert die Datei) */
-const rundeFigur = (svg) => svg.replace(/ d="([^"]*)"/g, (m, d) => ` d="${d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n)))}"`);
+const rundeFigur = (svg) => svg.replace(/ d="([^"]*)"/g, (m, d) => {
+  let q = d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n)));
+  q = q.replace(/(L-?\d+ -?\d+)(?:\1)+/g, "$1");                                   /* doppelte Punkte */
+  q = q.replace(/M(-?\d+) (-?\d+)Q\1 \2 \1 \2(?=M|$)/g, "");                      /* Nullstriche */
+  q = q.replace(/(M-?\d+ -?\d+Q-?\d+ -?\d+ -?\d+ -?\d+)(?:\1)+/g, "$1");          /* gleiche Haarstriche */
+  return ` d="${q || "M0 0"}"`;
+});
 /* Sonne: Azimut 232°, Höhe 22° — Richtung zur Sonne (waagrecht) und Schattenlänge */
 const SONNE = [Math.sin(232 * Math.PI / 180), Math.cos(232 * Math.PI / 180)], SCHATTEN_K = 1 / Math.tan(22 * Math.PI / 180);
 const SCH = (x, y, h) => [x - SONNE[0] * h * SCHATTEN_K, y - SONNE[1] * h * SCHATTEN_K];
@@ -285,7 +291,7 @@ S.hinten(`<rect width="320" height="${HOR + 8}" fill="${S.lg("sonnenseite", [[0,
   k += spiegel(152, 320, 104.8, 4, "#e2d6c2", 1.4) + spiegel(56, 145, 103.2, 2.4, "#2f3a44", 1.2);
   k += `</g>`;
   /* Wellen: kurze helle und dunkle Bögen, nach vorn größer */
-  for (let i = 0; i < 150; i++) {
+  for (let i = 0; i < 110; i++) {
     const t = Math.pow(rnd(), 1.3), y = 103.5 + t * 34, x = 40 + rnd() * 280;
     const w = 0.6 + t * 4 * (0.5 + rnd());
     k += `<path d="M${r(x)} ${r(y)} q${r(w / 2)} ${r(-0.15 - t * 0.4)} ${r(w)} 0" stroke="${rnd() < 0.5 ? "#e8f0f2" : "#2e4a52"}" stroke-width="${r(0.1 + t * 0.35)}" fill="none" opacity="${r(0.25 + rnd() * 0.3)}"/>`;
@@ -354,7 +360,7 @@ const glas = (name, hell) => S.lg(name, hell ? [[0, "#d4e3ec"], [0.5, "#a6c0d2"]
   let k = "";
   const dunst = (tiefe) => Math.min(0.32, tiefe / 7000);
   const turm = (cx, cy, w, d, z0, h, hell, dunkel, fenster, dreh = 0, extra) => {
-    let g = turmSeiten(rechteck(cx, cy, w, d, dreh), z0, z0 + h, hell, dunkel, (s) => (fenster ? geschossLinien(s, z0 + 4, z0 + h - 2, fenster * 1.6, "#34424f", 0.12, 0.45) : "") + (extra ? extra(s) : ""));
+    let g = turmSeiten(rechteck(cx, cy, w, d, dreh), z0, z0 + h, hell, dunkel, (s) => (fenster ? geschossLinien(s, z0 + 4, z0 + h - 2, fenster * 2.2, "#34424f", 0.12, 0.45) : "") + (extra ? extra(s) : ""));
     return g;
   };
   /* ONE (190 m, Messe): Glas, senkrechte Fuge */
@@ -1114,7 +1120,7 @@ const PROM = 2.2;
     if (s > 6) k += `<circle cx="${r(b[0])}" cy="${r(b[1])}" r="${r(0.06 * s)}" fill="${EISEN}"/>`;
   }
   /* senkrechte Stäbe nur vorn (hinten verschwimmen sie) */
-  for (let x = 300; x > 230; x -= 0.5) { const a = pr(...R(x, PROM + 0.12)), b = pr(...R(x, PROM + 0.55)); if (a[0] < 322) k += `<path d="M${P(a)} L${P(b)}" stroke="${EISEN}" stroke-width=".18" opacity=".8"/>`; }
+  for (let x = 300; x > 230; x -= 0.9) { const a = pr(...R(x, PROM + 0.12)), b = pr(...R(x, PROM + 0.55)); if (a[0] < 322) k += `<path d="M${P(a)} L${P(b)}" stroke="${EISEN}" stroke-width=".18" opacity=".8"/>`; }
   S.teil({ id: "gelaender", de: "das Geländer", syl: "ge-LÄN-der", it: "la ringhiera", itSyl: "rin-GHIE-ra", en: "railing", x: 0, y: 0, kunst: k,
     tipp: "Das Geländer schützt: Die Kaimauer ist hoch, und das Wasser ist tief." });
 }

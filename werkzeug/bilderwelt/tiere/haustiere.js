@@ -539,6 +539,29 @@ function saum(T, pts, satz, o) {
     return `<path d="${d}" fill="none" style="marker:url(#${id})"/>`;
   }).join("");
 }
+/* ---------- Volumen je Körperteil (wie T.volumen in kern.js, ANLEITUNG Punkt 13) ----------
+   Gleiche Technik (Innen-Schatten unten rechts, Innen-Glanz oben links aus der weich verschobenen eigenen Silhouette),
+   aber mit größerem Filterbereich: bei T.volumen (Bereich −5 %…110 %) wird die geblurrte Silhouette am Bereichsrand
+   abgeschnitten; um den Versatz (0,9 × weich) verschoben, ergibt das bei flachen Teilen (Rumpf eines Meerschweinchens,
+   Kopf, Fuß) eine harte senkrechte bzw. waagerechte Schattenkante 0,9 × weich vor dem rechten/unteren Rand. */
+function vol(T, n, o = {}) {
+  if (!T.fein) return "none";
+  const w = o.weich || 6, st = Math.min(1, 0.09 * (o.tiefe || 5)), amb = o.umgebung != null ? o.umgebung : 0.3;
+  const d = w * 0.9, sch = zahl(st * (1 - amb) * 0.95, 3), gl = zahl(st * (1 - amb) * 0.38, 3);
+  const id = T.id("vo" + n + "_" + String(w).replace(".", "_"));
+  T._f = T._f || {};
+  if (!T._f[id]) {
+    T._f[id] = 1;
+    T.def(`<filter id="${id}" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">` +
+      `<feGaussianBlur in="SourceAlpha" stdDeviation="${w}" result="b"/>` +
+      `<feOffset in="b" dx="${zahl(-d, 3)}" dy="${zahl(-d, 3)}" result="bu"/><feOffset in="b" dx="${zahl(d * 0.8, 3)}" dy="${zahl(d * 0.8, 3)}" result="bo"/>` +
+      `<feComposite in="SourceAlpha" in2="bu" operator="out" result="ms"/><feComposite in="SourceAlpha" in2="bo" operator="out" result="mg"/>` +
+      `<feFlood flood-color="#1a1008" flood-opacity="${sch}"/><feComposite in2="ms" operator="in" result="s"/>` +
+      `<feFlood flood-color="#fff6e6" flood-opacity="${gl}"/><feComposite in2="mg" operator="in" result="g"/>` +
+      `<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="s"/><feMergeNode in="g"/></feMerge><feComposite in2="SourceGraphic" operator="in"/></filter>`);
+  }
+  return `url(#${id})`;
+}
 
 module.exports = [
   /* =================================================================
@@ -606,7 +629,7 @@ module.exports = [
         return 180 - 38 * klemm((y + 54) / 24);                                                 // Rumpf: nach hinten, unten schräg
       };
       const wahl = (x, y, z) => stufe(lic(x, y), z, 5);
-      const V = (n, w, t, u) => T.volumen(n, { weich: w, tiefe: t, umgebung: u });
+      const V = (n, w, t, u) => vol(T, n, { weich: w, tiefe: t, umgebung: u });
       let s = "";
       /* Pfote: 3 Knöchelbögen mit Furchen, Knöchellicht, Haarbüschel zwischen den Zehen, Krallen 100/85/60 %, Sohlenlinie */
       const pfote = (x, w, fern) => {
@@ -749,7 +772,7 @@ module.exports = [
     zeichne(T) {
       T.dez = 1;
       const DK = "#2b2118", SCH = "#5e4426", TIEF = "#3a2a18", HELL = "#fff6e4";
-      const V = (n, w, t, u) => T.volumen(n, { weich: w, tiefe: t, umgebung: u });
+      const V = (n, w, t, u) => vol(T, n, { weich: w, tiefe: t, umgebung: u });
       const FK = fellSatz(T, "k", { L: 0.6, k: 7, w: 0.045, dunkel: "#241a10", od: [0.1, 0.2], mittel: "#8a6a44", om: [0.08, 0.14], hell: "#fff4dc", oh: [0.06, 0.22] });
       const FKo = fellSatz(T, "o", { L: 0.36, k: 6, w: 0.03, dunkel: "#241a10", od: [0.07, 0.14], hell: "#fff4dc", oh: [0.05, 0.16] });
       const FS = randSatz(T, "s", { L: 0.42, k: 5, w: 0.035, winkel: 20, dunkel: "#8a7050", od: [0.75, 0.95], hell: "#c9b08a", oh: [0.8, 1] });
@@ -985,7 +1008,7 @@ module.exports = [
     zeichne(T) {
       T.dez = 1;
       const SCH = "#4a3a2a", TIEF = "#2a1e14", HELL = "#fff4e0", CREME = "#e8dcc4";
-      const V = (n, w, t, u) => T.volumen(n, { weich: w, tiefe: t, umgebung: u });
+      const V = (n, w, t, u) => vol(T, n, { weich: w, tiefe: t, umgebung: u });
       /* Agouti-Fell: schwarze Spitzen, ockergelbes Band, helle Lichthaare; creme für Bauch und Kehle */
       const FK = fellSatz(T, "k", { L: 0.85, k: 7, w: 0.06, dunkel: "#1e1812", od: [0.16, 0.3], mittel: "#c4a26a", om: [0.16, 0.26], hell: "#efe2c6", oh: [0.06, 0.18] });
       const FKo = fellSatz(T, "o", { L: 0.42, k: 5, w: 0.035, breit: 0.7, facher: 0.45, krumm: 0.25, dunkel: "#1e1812", od: [0.12, 0.22], mittel: "#c4a26a", om: [0.12, 0.2], hell: "#efe2c6", oh: [0.05, 0.14] });
@@ -1146,7 +1169,7 @@ module.exports = [
     zeichne(T) {
       T.dez = 2;
       const TIEF = "#2a2420", W1 = "#f6f2ea", W2 = "#d9d3c8", W3 = "#a8a7aa";
-      const V = (n, w, t, u) => "none";
+      const V = (n, w, t, u) => vol(T, n, { weich: w, tiefe: t, umgebung: u });
       /* Fell je Platte: flache, lange Strähnen (2–3 cm), Kontrast höchstens ±12 % */
       const satz = (k, d, od, h, oh, L = 1.4) => fellSatz(T, k, { L, k: 5, w: 0.055, breit: 0.28, facher: 0.12, krumm: 0.08, dunkel: d, od, hell: h, oh });
       const FW = satz("w", "#8a8478", [0.05, 0.1], "#ffffff", [0.12, 0.26]);

@@ -1241,7 +1241,7 @@ function dachs(T) {
   const au = K(12.6, 1.4);
   s += H.auge(au[0], au[1], 0.5, { iris: "#1a0c06", iris2: "#3a2010", pupille: "rund", offen: 0.8, winkel: KW, hoehle: false, lid: "#050404" });
   if (F) s += T.schnurrhaare(...K(20.6, 4.6), 5, 2.2, KW + 10, 40, "#e8e4dc", 0.03);
-  return { svg: s, box: [2.2, -30.4, 79, 0], fuesse: [27, 34, 59, 64], kopf: [54, -34, 80, -6] };
+  return { svg: s, box: [2.5, -30.4, 76.2, 0], fuesse: [27, 34, 59, 64], kopf: [54, -32, 78, -6] };
 }
 
 /* =====================================================================
@@ -1410,7 +1410,7 @@ module.exports = [
   { id: "wisent", de: "der Wisent", syl: "WI-sent", it: "il bisonte europeo", itSyl: "bi-SON-te eu-ro-PE-o", en: "European bison", gruppe: "Wald", lebensraum: "Wald",
     laenge: 2.56, hoehe: 1.99, zeichne: wisent },
   { id: "dachs", de: "der Dachs", syl: "DACHS", it: "il tasso", itSyl: "TAS-so", en: "badger", gruppe: "Wald", lebensraum: "Wald",
-    laenge: 0.82, hoehe: 0.3, zeichne: dachs },
+    laenge: 0.74, hoehe: 0.3, zeichne: dachs },
   { id: "biber", de: "der Biber", syl: "BI-ber", it: "il castoro", itSyl: "CA-sto-ro", en: "beaver", gruppe: "Wald", lebensraum: "Wald und Fluss",
     laenge: 1.03, hoehe: 0.35, zeichne: biber },
   { id: "fischotter", de: "der Fischotter", syl: "FISCH-ot-ter", it: "la lontra", itSyl: "LON-tra", en: "otter", gruppe: "Wald", lebensraum: "Fluss und Bach",
