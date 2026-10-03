@@ -1560,10 +1560,10 @@ function narwal(T) {
     return `<g mask="url(#${mid})" opacity="${op}"><g${bl}><rect x="${bx0[0]}" y="${bx0[1]}" width="${bx0[2] - bx0[0]}" height="${bx0[3] - bx0[1]}" filter="${fu}"/></g></g>`;
   };
   k += weichF(R.band(-60, 470, -0.3, 0.09), FLECK, 0.9, 2.5);
-  k += (F ? zone(-0.3, 0.78, 0.62, "a", 0.13, 0.5) : "") + zone(-0.3, 0.5, 0.52, "b", 0.13, 0.7) + zone(-0.3, 0.22, 0.3, "c", 0.13, 0.92);
+  k += (F ? zone(-0.3, 0.78, 0.62, "a", 0.13, 0.5) : "") + zone(-0.3, 0.5, 0.52, "b", 0.13, 0.7) + zone(-0.3, 0.3, 0.36, "c", 0.13, 0.95);
   if (F) k += zone(0.05, 0.75, 0.55, "k", 0.42, 0.75, 384, 470);
   /* Lichtzone oben: Zwischenräume heller; im Kernschatten unten Flecken mit dem Schatten verrechnet */
-  k += weichF(R.band(10, 460, 0.12, 0.45), "#d6dcdf", 0.12, 8);
+  k += weichF(R.band(10, 460, 0.2, 0.45), "#d6dcdf", 0.1, 8);
   /* Kopf dunkler, um Maul und Kinn heller; Bauch weiß */
   k += weichF([[470, -140], [400, -135], [384, -90], [400, -64], [440, -70], [470, -90]], "#000", 0.15, 8);
   k += weichF([[462, -76], [450, -62], [436, -52], [420, -48], [440, -60], [452, -70]], "#e8ecea", 0.5, 2);

@@ -1802,7 +1802,7 @@ function kaenguru(T) {
   const fussN = kFuss(W, T, 0, false);
   const bein = [[94, -84], [106, -87], [116, -85], [123.6, -78.4], [128.4, -68], [130, -57], [128.4, -48.4], [124.4, -42.6], [119.4, -36.4], [114, -28], [109.6, -20.4], [105.6, -13.6],
     [100, -11.4], [96.6, -11.8], [93.6, -14.6], [96.4, -19], [100.6, -27], [104.2, -35.6], [106.4, -41.4], [99.6, -46], [91.4, -50.4], [85, -56], [82.6, -64], [85, -75]];
-  masse += `<g mask="url(#${W.maske("kbn", [78, -96, 134, -6], 0, -90, 0, -76)})">` + W.teil(bein, KF,
+  masse += `<g mask="url(#${W.maske("kbn", [78, -96, 134, -6], 0, -84, 0, -66)})">` + W.teil(bein, KF,
     W.musterFlaeche(bein, RM(112)) +
     /* Birnenform des Oberschenkels nur als weiche Formschatten: Muskelzug Hüfte → Knie, Kniekante, Kniekehle */
     W.weich([[114, -66, 3, 16, 50, "#3a1a0a", 0.25], [100, -70, 8, 12, -30, "#3a1a0a", 0.15], [126.6, -56, 2.4, 9, 4, "#fff0dc", 0.4], [106, -45, 5, 2, -30, "#3a1a0a", 0.5], [112.6, -30, 2, 10, 36, "#f6cc98", 0.45],
@@ -1867,8 +1867,8 @@ function kArm(W, T, dx, fern, ROT) {
   const H = fern ? "#1e1612" : "#2c211b";
   s += W.teil([P(138.4, -93.6), P(141.4, -89), P(144.6, -88), P(141, -87.4), P(138, -90)], H, "", { rand: 0, vol: false });
   /* Mittelhand: schmal, vom Handgelenk nach vorn unten abgeknickt, Handrücken behaart */
-  s += W.teil([P(140, -97), P(143.6, -97.6), P(146.2, -95.2), P(147.4, -92.2), P(147, -90.2), P(144.2, -90.4), P(141.6, -92.4), P(139.8, -94.6)], fern ? "#6a3a20" : T.lg("kp", [[0, "#d08a56"], [1, "#8a4e2a"]]),
-    W.haare([P(140, -97), P(143.6, -97.6), P(146.2, -95.2), P(146.8, -91.4), P(143, -92)], fern ? 0 : 30, 55, 0.7, ROT, { licht: () => 0.55, gerade: true, szene: 0 }) +
+  s += W.teil([P(140.6, -97.6), P(144.6, -97.8), P(146.2, -94.8), P(147, -91.4, 1), P(141.4, -90.8, 1), P(140.2, -93.6)], fern ? "#6a3a20" : T.lg("kp", [[0, "#d08a56"], [1, "#8a4e2a"]]),
+    W.haare([P(140.6, -97.6), P(144.6, -97.8), P(146.2, -94.8), P(146.6, -92), P(142, -92)], fern ? 0 : 30, 80, 0.7, ROT, { licht: () => 0.55, gerade: true, szene: 0 }) +
     (fern ? "" : W.L([`M${f1(142 + dx)} -92.6q1.6 .9 4.6 .8`], "#3a1a0a", 0.18, 0.5)), { rand: 0, vol: false });
   /* Finger: schlank, gegliedert, hakenförmig eingekrümmt; Krallen deutlich, dunkel hornfarben mit heller Spitze */
   const F = [[141.4, -91.2, 2.4, 0.85, 1.1], [142.8, -90.6, 3.4, 0.95, 1.6], [144.2, -90.4, 3.7, 0.95, 1.8], [145.6, -90.4, 3.4, 0.9, 1.5], [146.8, -90.8, 2.4, 0.8, 1.1]];
