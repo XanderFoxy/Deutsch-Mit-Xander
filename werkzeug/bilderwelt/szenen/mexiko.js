@@ -634,11 +634,24 @@ S.def(`<linearGradient id="${S.id("menschschatten")}" x1="1" y1="0" x2="0" y2="0
   /* in der Ferne: dichte Menschenlinie am Fuß der Pyramide (viele in Weiß), vor der Treppe frei */
   let menge = "";
   const kleid = ["#f4f1e8", "#f4f1e8", "#f4f1e8", "#7fb3d5", "#e8590c", "#f4f1e8", "#c2255c", "#f6d21e", "#f4f1e8", "#2f9e6e"];
-  for (let x = 42; x < 206; x += 1.15 + rnd() * 0.9) {
-    if (x > 54 && x < 104) continue;
-    const y = 137.2 + rnd() * 1.6, s = sy(y), h = (1.55 + rnd() * 0.25) * s, c = kleid[Math.floor(rnd() * kleid.length)], w = 0.42 * s;
-    menge += `<path d="M${r(x - w / 2)} ${r(y - h * 0.5)} L${r(x + w / 2)} ${r(y - h * 0.5)} L${r(x + w * 0.4)} ${r(y - h * 0.84)} L${r(x - w * 0.4)} ${r(y - h * 0.84)} Z" fill="${c}"/><path d="M${r(x - w * 0.3)} ${r(y)} L${r(x - w * 0.3)} ${r(y - h * 0.5)} M${r(x + w * 0.3)} ${r(y)} L${r(x + w * 0.3)} ${r(y - h * 0.5)}" stroke="${rnd() < 0.5 ? "#3f4a5a" : "#e9e2d0"}" stroke-width="${r(w * 0.4)}"/><circle cx="${r(x)}" cy="${r(y - h * 0.91)}" r="${r(h * 0.075)}" fill="${rnd() < 0.3 ? "#f1e9d2" : "#5a3a26"}"/>`;
+  /* lockere Fläche in 4 versetzten Reihen mit Lücken, die meisten mit dem Rücken zu uns (sie schauen zur
+     Nordtreppe), Höhen gestreut, einige sitzen, einige halten das Handy hoch, dazwischen Sonnenschirme */
+  const haare = ["#2a1d16", "#1a1210", "#5a3a26", "#8a6a3a", "#bfa070", "#3a2a1e"], hautF = ["#c99062", "#8a5a3b", "#e8bf9a", "#a87050"];
+  for (const [yr, x0, x1] of [[136.5, 44, 206], [137.4, 43, 206], [138.3, 42, 204], [139.3, 40, 200]]) {
+    for (let x = x0 + rnd() * 2; x < x1; x += 1.3 + rnd() * 1.4) {
+      if ((x > 54 && x < 104) || rnd() < 0.18) continue;
+      const y = yr + (rnd() - 0.5) * 0.5, s = sy(y), sitzt = rnd() < 0.1, h = (sitzt ? 0.95 : 1.5 + rnd() * 0.45) * s, c = kleid[Math.floor(rnd() * kleid.length)], w = 0.42 * s, haut = hautF[Math.floor(rnd() * 4)];
+      if (!sitzt) menge += `<path d="M${r(x - w * 0.3)} ${r(y)} L${r(x - w * 0.3)} ${r(y - h * 0.5)} M${r(x + w * 0.3)} ${r(y)} L${r(x + w * 0.3)} ${r(y - h * 0.5)}" stroke="${rnd() < 0.5 ? "#3f4a5a" : "#e9e2d0"}" stroke-width="${r(w * 0.4)}"/>`;
+      else menge += `<path d="M${r(x - w * 0.7)} ${r(y)} L${r(x + w * 0.7)} ${r(y)} L${r(x + w * 0.5)} ${r(y - h * 0.25)} L${r(x - w * 0.5)} ${r(y - h * 0.25)} Z" fill="#e9e2d0"/>`;
+      menge += `<path d="M${r(x - w / 2)} ${r(y - h * (sitzt ? 0.22 : 0.5))} L${r(x + w / 2)} ${r(y - h * (sitzt ? 0.22 : 0.5))} L${r(x + w * 0.42)} ${r(y - h * 0.84)} L${r(x - w * 0.42)} ${r(y - h * 0.84)} Z" fill="${c}"/>`;
+      if (rnd() < 0.08) menge += `<path d="M${r(x + w * 0.42)} ${r(y - h * 0.8)} L${r(x + w * 0.5)} ${r(y - h * 1.08)}" stroke="${haut}" stroke-width="${r(w * 0.22)}"/><rect x="${r(x + w * 0.4)}" y="${r(y - h * 1.18)}" width="${r(w * 0.22)}" height="${r(w * 0.3)}" fill="#222"/>`;
+      /* Hinterkopf mit Haar (keine Gesichter), manche mit Hut */
+      menge += rnd() < 0.25 ? `<ellipse cx="${r(x)}" cy="${r(y - h * 0.94)}" rx="${r(w * 0.42)}" ry="${r(w * 0.1)}" fill="#efe6cc"/><circle cx="${r(x)}" cy="${r(y - h * 0.93)}" r="${r(h * 0.07)}" fill="#efe6cc"/>` : `<circle cx="${r(x)}" cy="${r(y - h * 0.91)}" r="${r(h * 0.075)}" fill="${haare[Math.floor(rnd() * haare.length)]}"/>`;
+    }
   }
+  for (const [x, y, c] of [[70 - 26, 137.2, "#e8590c"], [132, 137.6, "#2f6fb0"], [176, 136.8, "#c2255c"]]) { const s = sy(y); menge += `<line x1="${r(x)}" y1="${r(y - 1.2 * s)}" x2="${r(x)}" y2="${r(y - 2.1 * s)}" stroke="#444" stroke-width=".15"/><path d="M${r(x - 0.5 * s)} ${r(y - 1.95 * s)} Q${r(x)} ${r(y - 2.35 * s)} ${r(x + 0.5 * s)} ${r(y - 1.95 * s)} Z" fill="${c}"/>`; }
+  /* gemeinsames Schattenband der Menge, nach links */
+  for (const [xa, xb] of [[40, 55], [103, 206]]) sch += `<path d="M${xb} 139.9 L${xa} 139.5 L${xa - 15} 138.7 L${xb - 15} 139.1 Z" fill="url(#${S.id("menschschatten")})"/>`;
   S.hinten(sch);
   const [ax, ay] = [126, 140];
   S.teil({ id: "touristen", de: "die Touristen", syl: "Tou-RIS-ten", it: "i turisti", itSyl: "tu-RI-sti", en: "tourists", x: ax, y: ay, kunst: um(ax, ay, `<g filter="${ABEND}">${menge}</g>` + k),
