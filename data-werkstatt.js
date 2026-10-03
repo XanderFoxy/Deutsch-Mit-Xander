@@ -49,30 +49,32 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 848: Wache ruft stumme Gegenseite nur noch alle 90 s an, Rückkehr in den Vordergrund meldet sich",
+  stand: "Fassung 849: spiel.js kommt nach dem Start – erstes Laden 2,79 → 2,56 s bis bereit, 273 KB weniger vorher",
 
   inArbeit: [
-    { seit: "2026-10-03T01:28",
+    { seit: "2026-10-03T01:48",
       text: "Beide Handys neu laden (Oppo noch auf 842)" },
-    { seit: "2026-10-03T01:28",
+    { seit: "2026-10-03T01:48",
       text: "Italienisch-Daten aus data-exercises.js auslagern" },
-    { seit: "2026-10-03T01:28",
+    { seit: "2026-10-03T01:48",
       text: "Bilderwelt neu (Funk 263)" },
-    { seit: "2026-10-03T01:28",
+    { seit: "2026-10-03T01:48",
       text: "sfu/aussprache: OK abwarten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-03T01:28",
+    { seit: "2026-10-03T01:48",
       text: "Chat-Fenster (844)" },
-    { seit: "2026-10-03T01:28",
+    { seit: "2026-10-03T01:48",
       text: "Uhr ohne Intl (845)" },
-    { seit: "2026-10-03T01:28",
+    { seit: "2026-10-03T01:48",
       text: "Lesetexte nachladen (846)" },
-    { seit: "2026-10-03T01:28",
+    { seit: "2026-10-03T01:48",
       text: "Tutorfigur WebP (847)" },
-    { seit: "2026-10-03T01:28",
+    { seit: "2026-10-03T01:48",
       text: "Geist-Wache (848)" },
+    { seit: "2026-10-03T01:48",
+      text: "Spiel nach dem Start (849)" },
   ],
 };
