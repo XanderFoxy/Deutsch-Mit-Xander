@@ -147,7 +147,7 @@ S.def(`<filter id="${S.id("dunst")}" color-interpolation-filters="sRGB" x="-10%"
 /* ---------- Stoffe (Sonne von rechts hinten, Südsüdwest) ---------- */
 const SAND = S.lg("sand", [[0, "#efe3c6"], [1, "#e2d2b0"]]);                 // Sandstein in der Sonne
 const SAND_D = S.lg("sandd", [[0, "#c9b896"], [1, "#b3a17f"]]);              // Sandstein seitlich
-const BACK = S.lg("back", [[0, "#7a3f31"], [0.5, "#6d372b"], [1, "#5e3026"]]);  // dunkler Backstein
+const BACK = S.lg("back", [[0, "#5f3330"], [0.5, "#55302c"], [1, "#4a2a27"]]);  // dunkler Backstein
 const KUPFER = S.lg("kupfer", [[0, "#5d9a85"], [0.5, "#72ad96"], [1, "#86bba3"]]);
 const KUPFER_D = S.lg("kupferd", [[0, "#4a7d6c"], [1, "#5d907d"]]);
 const GLAS = S.lg("glas", [[0, "#8fa9bd"], [0.4, "#40505e"], [1, "#2b3540"]]);
@@ -327,53 +327,44 @@ const domTeile = {};
 }
 
 /* =====================================================================
-   3 — DAS HAUS DER BÜRGERSCHAFT (Ostseite, Glas und Faltdach)
+   3 — DAS HAUS DER BÜRGERSCHAFT (Ostseite): das Parlament — Glas, helle
+       Betonrippen, oben das Faltwerk
    ===================================================================== */
 {
   const W = ebene(57, -6, 0, -1);        // s = 0 (Nordende) … 38 (Südende), im Bild nach rechts
   const L = 38;
-  let k = pfad(fr(W, 0, 0, L, 13.4, 2), "#e6e3db");
-  /* Erdgeschoss zurückgesetzt, dunkel verglast, mit Stützen */
-  k += pfad(fr(W, 0.4, 0, L - .4, 3.8, 2), S.lg("bgeg", [[0, "#2f3a42"], [1, "#4d5a63"]]));
-  for (let s = 1.6; s < L; s += 3.2) k += pfad(fr(W, s - .25, 0, s + .25, 3.8), "#d9d5cb");
-  /* Obergeschosse: Glas mit Himmel, davor schlanke Betonrippen */
-  k += pfad(fr(W, 0.4, 4.2, L - .4, 13, 2), S.lg("bgglas", [[0, "#a9c3d6"], [0.5, "#6c8597"], [1, "#4b5d6b"]]));
-  for (const z of [7.2, 10.2]) k += pfad(fr(W, 0.4, z, L - .4, z + .45, 2), "#d8d4ca");
-  for (let s = 0.8; s < L; s += 1.6) k += pfad(fr(W, s - .14, 4.2, s + .14, 13), "#f1eee7");
-  /* das Faltwerk: Dachprismen im Zickzack */
+  let k = pfad(fr(W, 0, 0, L, 13.4, 2), "#e2dfd7");
+  /* Erdgeschoss zurückgesetzt, dunkel verglast, mit Stützen und Schatten unter der Kante */
+  k += pfad(fr(W, 0.4, 0, L - .4, 3.8, 2), S.lg("bgeg", [[0, "#26313a"], [1, "#46535d"]]));
+  for (let s = 1.6; s < L; s += 3.2) k += pfad(fr(W, s - .28, 0, s + .28, 3.8), "#d3cec3") + pfad(fr(W, s + .12, 0, s + .28, 3.8), "#9d988e");
+  k += pfad(fr(W, 0.4, 3.4, L - .4, 3.8, 2), "#1c2228", ` opacity=".5"`);
+  /* Obergeschosse: Glas, das Himmel, Platz und Rathaus spiegelt */
+  k += pfad(fr(W, 0.4, 4.2, L - .4, 13, 2), S.lg("bgglas", [[0, "#b8cfe0"], [0.45, "#7f98aa"], [0.7, "#8f8576"], [1, "#5d6a72"]]));
+  for (let s = 2; s < L - 2; s += 7.4) k += pfad(fp(W, [[s, 4.2], [s + 2.6, 4.2], [s + 4.4, 13], [s + 1.8, 13]]), "#ffffff", ` opacity=".14"`);
+  k += pfad(fr(W, 0.4, 4.2, 12, 7.2), "#9a6a52", ` opacity=".25"`);
+  for (const z of [7.2, 10.2]) k += pfad(fr(W, 0.4, z, L - .4, z + .5, 2), "#d8d4ca") + pfad(fr(W, .4, z - .2, L - .4, z, 2), "#2a333a", ` opacity=".35"`);
+  /* kräftige Betonrippen mit Licht- und Schattenseite */
+  for (let s = 0.8; s < L; s += 1.6) k += pfad(fr(W, s - .2, 4.2, s, 13), "#fbf9f4") + pfad(fr(W, s, 4.2, s + .2, 13), "#b9b4aa");
+  /* das Faltwerk: geneigte Dachprismen, je eine Licht- und eine Schattenseite */
   const n = 9, w = L / n;
   for (let i = 0; i < n; i++) {
     const a = i * w, b = a + w, m = a + w / 2;
-    k += pfad(fp(W, [[a, 13.4], [m, 16.8], [b, 13.4]]), i % 2 ? "#f3f1ec" : "#e9e6df");
-    k += pfad(fp(W, [[m, 16.8], [b, 13.4], [b - .4, 13.4]]), "#c9c4b9");
+    k += pfad(fp(W, [[a, 13.4], [m, 16.8], [m, 13.4]]), "#f7f5ef");
+    k += pfad(fp(W, [[m, 16.8], [b, 13.4], [m, 13.4]]), "#c2bdb2");
+    k += pfad(poly([[57, -6 - m, 16.8], [57 + 4, -6 - m, 16.4], [57 + 4, -6 - b, 13.2], [57, -6 - b, 13.4]]), "#a7a297");
   }
-  k += pfad(fr(W, 0, 13, L, 13.6, 2), "#cfcbc1");
-  /* drei Fahnenmasten (unsicher): Bremer Speckflagge, Deutschland, Europa */
-  const fahne = (s, art) => {
-    const fu = pr(...W(s, 0)), ko = pr(...W(s - 2.2, 12)), mm = mass(57, -6 - s);
-    let g = `<path d="M${P(pr(...W(s - 2.2, 0)))} V${r(ko[1])}" stroke="#d6d8da" stroke-width=".45"/>`;
-    const x = ko[0], y = ko[1] + .4, fw = 2.6 * mm, fh = 1.7 * mm;
-    if (art === "hb") {
-      for (let i = 0; i < 8; i++) g += `<rect x="${r(x + .3)}" y="${r(y + i * fh / 8)}" width="${r(fw)}" height="${r(fh / 8 + .05)}" fill="${i % 2 ? "#fff" : "#d0202c"}"/>`;
-      for (let i = 0; i < 8; i++) for (let j = 0; j < 2; j++) g += `<rect x="${r(x + .3 + j * fh / 8)}" y="${r(y + i * fh / 8)}" width="${r(fh / 8)}" height="${r(fh / 8 + .05)}" fill="${(i + j) % 2 ? "#fff" : "#d0202c"}"/>`;
-    } else if (art === "de") {
-      ["#1d1d1d", "#d0202c", "#f1c232"].forEach((f, i) => { g += `<rect x="${r(x + .3)}" y="${r(y + i * fh / 3)}" width="${r(fw)}" height="${r(fh / 3 + .05)}" fill="${f}"/>`; });
-    } else {
-      g += `<rect x="${r(x + .3)}" y="${r(y)}" width="${r(fw)}" height="${r(fh)}" fill="#1f3f95"/>`;
-      for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; g += `<circle cx="${r(x + .3 + fw / 2 + Math.cos(a) * fh * .3)}" cy="${r(y + fh / 2 + Math.sin(a) * fh * .3)}" r=".18" fill="#f1c232"/>`; }
-    }
-    return g;
-  };
-  k += fahne(9, "hb") + fahne(12.6, "de") + fahne(16.2, "eu");
-  k += pfad(fr(W, 0, 0, L, 13.4, 4), S.lg("bgluft", [[0, "#c7d6e2", 0.16], [1, "#c7d6e2", 0.04]]));
-  S.teil({ id: "buergerschaft", de: "die Bürgerschaft", syl: "BÜR-ger-schaft", it: "il parlamento di Brema", itSyl: "par-la-MEN-to di BRE-ma", en: "state parliament", x: 0, y: 0, kunst: k,
-    tipp: "Im Haus der Bürgerschaft tagt das Parlament des Landes Bremen — das kleinste Bundesland Deutschlands." });
+  k += pfad(fr(W, 0, 13, L, 13.6, 2), "#d4cfc4") + pfad(fr(W, 0, 12.8, L, 13, 2), "#5a5f63", ` opacity=".5"`);
+  k = k + `<g opacity=".1">${k.replace(/fill="[^"]*"/g, 'fill="#bcd0e4"')}</g>`;
+  S.teil({ id: "parlament", de: "das Parlament", syl: "par-la-MENT", it: "il parlamento", itSyl: "par-la-MEN-to", en: "parliament", x: 0, y: 0, kunst: k,
+    tipp: "Hier tagt die Bremische Bürgerschaft, das Parlament des kleinsten Bundeslands. Das Haus heißt Haus der Bürgerschaft." });
 }
 
 /* =====================================================================
    4 — DAS RATHAUS (Weserrenaissance) — Lupe: Arkade, Erker, Giebel,
        Statue, Dach
    ===================================================================== */
+S.def(`<pattern id="${S.id("blei")}" width="1.1" height="1.1" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0 H1.1 M0 0 V1.1" stroke="#d8dee2" stroke-width=".12" opacity=".55"/></pattern>`);
+const BLEI = `url(#${S.id("blei")})`;
 const RH = { L: 41.5, T: 16, WAND: 2.6, ERK: -0.9 };
 const BAY = RH.L / 11;
 const EK = { s0: 4 * BAY + .3, s1: 7 * BAY - .3 };
@@ -413,14 +404,18 @@ const rhTeile = {};
   k += pfad(fr(Wd, 0, 6, RH.L, ZE, 1.5), BACK);
   {
     let fug = "";
-    for (let z = 6.6; z < ZE; z += 0.75) fug += fl(Wd, [[0, z], [RH.L, z]], 2);
-    k += `<path d="${fug.replace(/M/g, " M")}" stroke="#4a241c" stroke-width=".18" fill="none" opacity=".5"/>`;
+    let gl = "";
+    for (let z = 6.6, i = 0; z < ZE; z += 0.5, i++) { if (i % 3 === 2) gl += fl(Wd, [[0, z], [RH.L, z]], 2) + " "; else fug += fl(Wd, [[0, z], [RH.L, z]], 2) + " "; }
+    k += `<path d="${fug}" stroke="#2e1c19" stroke-width=".14" fill="none" opacity=".5"/><path d="${gl}" stroke="#1f2a2a" stroke-width=".42" fill="none" opacity=".45"/>`;
   }
   k += pfad(fr(Wd, -.2, ZE - .7, RH.L + .2, ZE, 1.5), SAND);
   k += pfad(fr(Wd, -.2, ZE - .9, RH.L + .2, ZE - .7, 1.5), "#9b8a6c");
   const fenster = (E, sm, w, z0, z1) => {
-    let g = pfad(fr(E, sm - w / 2 - .25, z0 - .25, sm + w / 2 + .25, z1 + .25), SAND);
-    g += pfad(fr(E, sm - w / 2, z0, sm + w / 2, z1), GLAS);
+    let g = pfad(fr(E, sm - w / 2 - .32, z0 - .4, sm + w / 2 + .32, z1 + .32), SAND);
+    g += pfad(fr(E, sm - w / 2 - .32, z1 + .32, sm + w / 2 + .32, z1 + .5), "#a8977a");
+    g += pfad(fr(E, sm - w / 2 - .12, z0 - .12, sm + w / 2 + .12, z1 + .12), "#a8977a");
+    g += pfad(fr(E, sm - w / 2, z0, sm + w / 2, z1), GLAS) + pfad(fr(E, sm - w / 2, z0, sm + w / 2, z1), BLEI);
+    g += pfad(fr(E, sm - w / 2, z1 - .25, sm + w / 2, z1), "#1d2228", ` opacity=".45"`);
     g += `<path d="${fl(E, [[sm, z0], [sm, z1]])} ${fl(E, [[sm - w / 2, z1 - (z1 - z0) * .33], [sm + w / 2, z1 - (z1 - z0) * .33]])}" stroke="#e8dcc0" stroke-width=".35" fill="none"/>`;
     g += pfad(fp(E, [[sm - w / 2, z1 - .3], [sm - w / 2 + w * .35, z1 - .3], [sm - w / 2, z1 - (z1 - z0) * .6]]), "#ffffff", ` opacity=".16"`);
     return g;
@@ -460,6 +455,9 @@ const rhTeile = {};
   }
   k += pfad(fr(A, -.1, 5.3, RH.L + .1, 6.2, 1.5), "#e7d9b8");
   k += pfad(fr(A, -.1, 5.3, RH.L + .1, 5.45, 1.5), "#a8977a");
+  k += pfad(fr(A, -.1, 5.95, RH.L + .1, 6.2, 1.5), "#6f6048", ` opacity=".7"`);
+  for (let i = 1; i < 11; i++) k += pfad(fr(A, i * BAY - .38, 3.2, i * BAY + .38, 3.55), "#f3e8cf") + pfad(fr(A, i * BAY - .32, 3.05, i * BAY + .32, 3.2), "#b3a17f");
+  for (let i = 0; i < 11; i++) { const sm = (i + .5) * BAY; k += pfad(fp(A, [[sm - 1.375, 0], [sm - .2, 0], [sm - .9, 3.4], [sm - 1.375, 3.6]]), "#0f0b08", ` opacity=".35"`); }
   /* Balustrade mit Docken und Obelisken */
   k += pfad(fr(A, -.1, 6.2, RH.L + .1, 6.45, 1.5), "#d7c6a2");
   {
@@ -485,11 +483,11 @@ const rhTeile = {};
       k += `<path d="${fl(Ek, bogen(c, 2.9, 3.4, 3.4, 8).slice(1, -1))}" stroke="#cdbb97" stroke-width=".5" fill="none"/>`;
     }
     k += pfad(fr(Ek, s0 - .15, 5.3, s1 + .15, 6.4), "#e7d9b8");
-    /* zwei Fenstergeschosse mit Pilastern: unten die Güldenkammer */
+    /* zwei Fenstergeschosse mit Pilastern */
     for (const [z0, z1] of [[6.9, 10.1], [10.7, 13.8]]) {
       for (let i = 0; i < 3; i++) {
         const c = s0 + (i + .5) * (s1 - s0) / 3;
-        k += pfad(fr(Ek, c - 1.2, z0, c + 1.2, z1), GLAS);
+        k += pfad(fr(Ek, c - 1.2, z0, c + 1.2, z1), GLAS) + pfad(fr(Ek, c - 1.2, z0, c + 1.2, z1), BLEI) + pfad(fr(Ek, c - 1.2, z1 - .25, c + 1.2, z1), "#1d2228", ` opacity=".45"`);
         k += `<path d="${fl(Ek, [[c, z0], [c, z1]])} ${fl(Ek, [[c - 1.2, z0 + (z1 - z0) * .62], [c + 1.2, z0 + (z1 - z0) * .62]])}" stroke="#e8dcc0" stroke-width=".3" fill="none"/>`;
       }
       for (let i = 0; i <= 3; i++) { const c = s0 + i * (s1 - s0) / 3; k += pfad(fr(Ek, c - .3, z0 - .2, c + .3, z1 + .2), S.lg("pilaster", [[0, "#cdbb97"], [0.5, "#f3e7cb"], [1, "#d8c7a3"]], 0, 0, 1, 0)); }
@@ -544,7 +542,7 @@ const rhTeile = {};
   k += pfad(fp(Wd, [[EK.s1, 7.35], [EK.s1 + .95, 7.35], [EK.s1 + .95, ZE - .9], [EK.s1, ZE - .9]]), "#1d0f0a", ` opacity=".3"`);
   /* Licht: Sonne von Süden — die Front hell, unten in den Arkaden Schatten */
   k += pfad(fr(A, 0, 0, RH.L, 7.4, 1.5), S.lg("rhlicht", [[0, "#000", 0], [0.6, "#000", 0], [1, "#fff6dc", 0.12]], 0, 0, 1, 0));
-  const zA = pr(...A(2.5 * BAY, 1)), zE = pr(...Ek(EK.s0 + 1.8, 9)), zG = rhTeile.giebel, zS = pr(...Wd(9 * BAY, 9.4)), zD = pr(...Wd(5.5 * BAY, 20));
+  const zA = pr(...A(2.5 * BAY, 1)), zE = pr(...Ek(EK.s0 + 1.8, 9)), zG = rhTeile.giebel, zS = pr(...Wd(2 * BAY, 9.4)), zD = pr(3, 4.4, 17.6);
   let zx0 = pr(0, RH.T, 0)[0] - 3, zx1 = pr(RH.L, 0, 0)[0] + 3, zy0 = pr(...Ek((EK.s0 + EK.s1) / 2, 29.8))[1] - 3, zy1 = pr(0, 0, 0)[1] + 4;
   let zw = zx1 - zx0, zh = zy1 - zy0;
   if (zw < zh * 1.5) { const d = zh * 1.5 - zw; zx0 -= d / 2; zw = zh * 1.5; } else { const d = zw / 1.5 - zh; zy0 -= d * .7; zh = zw / 1.5; }
@@ -553,148 +551,155 @@ const rhTeile = {};
     zoom: { x: r(zx0), y: r(zy0), w: r(zw), h: r(zh) },
     unter: [
       { id: "arkade", de: "die Arkade", syl: "ar-KA-de", it: "il portico", itSyl: "POR-ti-co", en: "arcade", x: zA[0], y: zA[1], kunst: flaeche(-5, -9, 10, 10),
-        tipp: "Unter den elf Bögen der Arkaden kann man trocken über den Markt gehen." },
+        tipp: "Unter den elf Bögen der Arkaden bleibt man bei Regen trocken." },
       { id: "erker", de: "der Erker", syl: "ER-ker", it: "il bovindo", itSyl: "bo-VIN-do", en: "oriel", x: zE[0], y: zE[1], kunst: flaeche(-5, -10, 10, 14),
-        tipp: "Hinter den großen Fenstern des Erkers liegt die prächtige Güldenkammer." },
+        tipp: "Der Erker ragt aus der Front heraus. Dahinter liegt die Obere Rathaushalle, der Festsaal der Stadt." },
       { id: "giebel", de: "der Giebel", syl: "GIE-bel", it: "il frontone", itSyl: "fron-TO-ne", en: "gable", x: zG[0], y: zG[1], kunst: flaeche(-6, -14, 12, 20),
         tipp: "Der Giebel mit Schnecken und Spitzsäulen ist typisch für die Weserrenaissance." },
       { id: "statue", de: "die Statue", syl: "STA-tu-e", it: "la statua", itSyl: "STA-tu-a", en: "statue", x: zS[0], y: zS[1], kunst: flaeche(-2.4, -7, 4.8, 9, 0.6),
         tipp: "Acht Figuren schmücken die Front: der Kaiser und die sieben Kurfürsten." },
-      { id: "dach", de: "das Dach", syl: "DACH", it: "il tetto", itSyl: "TET-to", en: "roof", x: zD[0], y: zD[1], kunst: flaeche(-14, -8, 28, 12),
+      { id: "dach", de: "das Dach", syl: "DACH", it: "il tetto", itSyl: "TET-to", en: "roof", x: zD[0], y: zD[1], kunst: flaeche(-7, -7, 11.5, 11),
         tipp: "Das Dach ist aus Kupfer — darum ist es grün." },
     ] });
 }
 
 /* =====================================================================
    5 — DIE BREMER STADTMUSIKANTEN (Bronze, Westseite des Rathauses)
-       Lupe: Esel, Hund, Katze, Hahn
+       Lupe: Esel, Hund, Katze, Hahn — streng übereinander, alle Köpfe
+       nach links (Westen)
    ===================================================================== */
 const SM = { x: -1.5, y: 6 };
 {
-  const fu = pr(SM.x, SM.y, 0), mk = mass(SM.x, SM.y), sk = mk / 100;   // Zeichnung in Zentimetern, Blick nach links (Westen)
-  const BZ = S.lg("bz", [[0, "#2e2a1f"], [0.55, "#4a4330"], [1, "#6a5f42"]], 0, 0, 1, 0);     // Bronze, Licht von rechts
-  const BZ_D = "#2a2619", BZ_L = "#8a7b55";
-  const GOLDB = S.lg("goldbein", [[0, "#8a6a26"], [0.45, "#f3d27a"], [0.7, "#fff1b8"], [1, "#c8973a"]], 0, 0, 1, 0);
-  let g = `<ellipse cx="4" cy="2" rx="84" ry="9" fill="#1b140c" opacity=".35" filter="url(#bw_weich)"/>`;
-  /* niedriger Steinsockel, darauf die Bronzeplatte */
-  g += `<path d="M-64 0 L64 0 L64 -22 L-64 -22 Z" fill="${S.lg("smsockel", [[0, "#a9a396"], [1, "#d5cfc2"]], 0, 0, 1, 0)}"/><path d="M-66 -22 L66 -22 L64 -25 L-64 -25 Z" fill="#e8e2d5"/>`;
-  g += `<path d="M-58 -25 L58 -25 L56 -28 L-56 -28 Z" fill="${BZ_D}"/>`;
-  const Z = -28, k9 = 0.92;
+  const fu = pr(SM.x, SM.y, 0), mk = mass(SM.x, SM.y), sk = mk / 100;   // Zeichnung in Zentimetern
+  const BZ = S.lg("bz", [[0, "#6d6146"], [0.4, "#4a4230"], [1, "#2e2a1e"]], 0, 0, 1, 0);     // Bronze, Licht von links vorn
+  const BZ_D = "#2a2619", BZ_L = "#9c8c62";
+  const GB = S.lg("goldbein", [[0, "#fff1b8"], [0.35, "#f1cf7a"], [1, "#b8892e"]], 0, 0, 1, 0);
+  let g = `<path d="M-60 0 L60 0 L60 -24 L-60 -24 Z" fill="${S.lg("smsockel", [[0, "#dcd6c9"], [1, "#a9a396"]], 0, 0, 1, 0)}"/><path d="M-62 -24 L62 -24 L60 -27 L-60 -27 Z" fill="#ece6d9"/>`;
+  g += `<path d="M-54 -27 L54 -27 L52 -30 L-52 -30 Z" fill="${BZ_D}"/>`;
   let t = "";
-  /* DER ESEL: schlank, langer Hals, lange Ohren; die Vorderbeine golden blank */
-  const bein = (x, oben, f, w = 6) => `<path d="M${x - w / 2} ${oben} C${x - w / 2} ${oben + 20} ${x - w * .3} ${-34} ${x - w * .32} -12 L${x - w * .42} -4 Q${x - w * .5} 0 ${x - w * .1} 0 L${x + w * .55} 0 L${x + w * .32} -6 C${x + w * .3} -30 ${x + w * .5} ${oben + 20} ${x + w / 2} ${oben} Z" fill="${f}"/>`;
-  t += bein(-27, -60, "#b8892e", 5.6) + bein(25, -60, BZ_D, 6);                         // ferne Beine
-  t += `<path d="M-60 -116 Q-57 -134 -48 -147 Q-46 -134 -54 -114 Z" fill="${BZ_D}"/><path d="M-66 -116 Q-66 -136 -58 -150 Q-54 -136 -60 -114 Z" fill="${BZ}"/>`;
-  t += `<path d="M-40 -60 C-47 -64 -50 -72 -52 -78 L-66 -96 C-72 -100 -82 -96 -94 -94 Q-102 -93 -101 -100 C-100 -108 -88 -114 -76 -118 L-64 -120 C-56 -118 -48 -108 -40 -100 C-34 -94 -28 -92 -20 -92 C0 -94 20 -90 36 -94 C46 -96 52 -86 47 -74 C44 -64 38 -60 30 -60 C10 -56 -20 -56 -40 -60 Z" fill="${BZ}"/>`;
-  t += bein(-37, -62, GOLDB, 6.4) + bein(35, -64, BZ, 6.8);                              // nahe Beine
-  t += `<path d="M-38.4 -54 C-38 -40 -38.6 -26 -38.4 -10" stroke="#fffbe6" stroke-width="1.1" opacity=".75" fill="none"/>`;
-  t += `<path d="M-64 -120 C-56 -117 -48 -108 -40 -100" stroke="${BZ_L}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
-  t += `<ellipse cx="-78" cy="-109" rx="2.2" ry="1.6" fill="#15120b"/><ellipse cx="-97" cy="-97" rx="1.6" ry="1" fill="#15120b"/>`;
-  t += `<path d="M-100 -95 Q-92 -92 -86 -95" stroke="#15120b" stroke-width=".8" fill="none"/><path d="M-90 -112 Q-82 -116 -72 -116" stroke="${BZ_L}" stroke-width="1.2" fill="none" opacity=".7"/>`;
-  t += `<path d="M45 -86 Q55 -72 51 -46 L47 -46 Q50 -70 42 -82 Z" fill="${BZ_D}"/><ellipse cx="49" cy="-42" rx="3.4" ry="5" fill="${BZ_D}"/>`;
-  t += `<path d="M-18 -91 C2 -93 22 -89 38 -93 C46 -94 50 -86 47 -76" stroke="${BZ_L}" stroke-width="1.6" fill="none" opacity=".8"/>`;
-  /* DER HUND: steht auf dem Rücken des Esels, Kopf hoch, bellt */
-  t += `<path d="M-19 -108 L-17 -92 L-13 -92 L-14 -108 Z M13 -110 L15 -92 L19 -92 L18 -110 Z" fill="${BZ_D}"/>`;
-  t += `<path d="M-24 -108 C-28 -112 -30 -118 -32 -122 L-40 -134 L-50 -135 L-55 -136 L-47 -139 L-57 -144 C-50 -148 -44 -150 -40 -150 L-36 -151 L-31 -160 L-31 -148 C-29 -142 -25 -128 -17 -124 L14 -124 C20 -124 23 -120 22 -114 L20 -108 C0 -106 -14 -106 -24 -108 Z" fill="${BZ}"/>`;
-  t += `<path d="M-23 -110 L-21 -92 L-17 -92 L-18 -110 Z M8 -110 L10 -92 L14 -92 L13 -110 Z" fill="${BZ}"/>`;
-  t += `<path d="M21 -120 Q30 -128 28 -141" stroke="${BZ}" stroke-width="3.2" fill="none" stroke-linecap="round"/>`;
-  t += `<circle cx="-44" cy="-145" r="1.5" fill="#15120b"/><path d="M-16 -123 L13 -123" stroke="${BZ_L}" stroke-width="1.2" opacity=".8"/>`;
-  /* DIE KATZE: auf dem Hund, Buckel, Schwanz hoch */
-  t += `<path d="M-16 -136 L-15 -124 L-12 -124 L-12 -136 Z M6 -136 L8 -124 L11 -124 L10 -136 Z" fill="${BZ}"/>`;
-  t += `<path d="M-16 -134 C-20 -138 -22 -142 -22 -146 L-26 -150 C-30 -150 -34 -152 -34 -156 L-33 -160 L-32 -165 L-29 -160 L-25 -163 L-24 -158 C-18 -158 -8 -161 0 -159 C8 -157 12 -151 12 -142 L11 -134 C0 -132 -8 -132 -16 -134 Z" fill="${BZ}"/>`;
-  t += `<path d="M11 -144 Q22 -150 18 -166 Q17 -172 21 -176" stroke="${BZ}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
-  t += `<circle cx="-29" cy="-156" r="1.1" fill="#15120b"/><path d="M-22 -158 C-12 -160 0 -160 9 -154" stroke="${BZ_L}" stroke-width="1.1" fill="none" opacity=".8"/>`;
-  /* DER HAHN: ganz oben, kräht, Flügel leicht offen, Sichelfedern */
-  t += `<path d="M-6 -168 L-7 -158 M-1 -168 L0 -158" stroke="${BZ_D}" stroke-width="1.6"/>`;
-  t += `<path d="M4 -182 C10 -196 18 -205 23 -198 C16 -198 12 -190 8 -180 Z M6 -178 C14 -188 22 -193 25 -186 C18 -186 14 -182 9 -175 Z" fill="${BZ_D}"/>`;
-  t += `<path d="M-12 -168 C-18 -172 -18 -182 -14 -188 L-15 -196 L-20 -197 L-26 -199 L-20 -200 L-26 -202.4 L-19 -203 C-14 -206 -10 -202 -10 -196 C-8 -190 -4 -186 4 -184 C10 -184 12 -180 10 -172 C4 -166 -6 -166 -12 -168 Z" fill="${BZ}"/>`;
-  t += `<path d="M-8 -182 C-2 -188 6 -186 9 -179 C2 -176 -4 -176 -8 -182 Z" fill="${BZ_L}" opacity=".7"/>`;
-  t += `<path d="M-20 -203 Q-21 -209 -18 -207.4 Q-17 -211 -14.4 -207 Q-12 -209 -12 -204 Z" fill="${BZ}"/><ellipse cx="-19.6" cy="-195" rx="1.6" ry="2.4" fill="${BZ_D}"/><circle cx="-16.6" cy="-200.6" r=".9" fill="#15120b"/>`;
-  g += `<g transform="translate(0 ${Z}) scale(${k9})">${t}</g>`;
-  const k = `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(4)})">${g}</g>` + flaeche(fu[0] - 4, fu[1] - 8.6, 8, 9.4, 0.6);
-  const U = (cx, cy) => [fu[0] + cx * sk, fu[1] + (Z + cy * k9) * sk];
-  const ue = U(-24, -70), uh = U(-18, -128), uk = U(-10, -150), ug = U(-6, -186);
+  /* DER ESEL: Rumpf waagerecht, langer Hals nach vorn oben, großer Kopf, lange Ohren; Vorderbeine und Maul blank */
+  const bein = (x, oben, f, w) => `<path d="M${x - w / 2} ${oben} L${x - w * .35} -14 L${x - w * .45} -3 L${x - w * .5} 0 L${x + w * .5} 0 L${x + w * .4} -3 L${x + w * .35} -14 L${x + w / 2} ${oben} Z" fill="${f}"/>`;
+  t += bein(-26, -64, S.lg("goldfern", [[0, "#e9c870"], [1, "#a8792a"]], 0, 0, 1, 0), 5.4) + bein(28, -64, BZ_D, 5.8);
+  t += `<path d="M-38 -62 C-44 -66 -46 -76 -47 -84 L-60 -100 C-64 -104 -70 -104 -80 -101 L-92 -97 Q-100 -95 -100 -101 Q-99 -108 -90 -112 L-74 -118 L-64 -120 C-56 -116 -48 -104 -40 -96 C-34 -91 -26 -90 -16 -90 C4 -92 22 -88 36 -92 C46 -94 50 -84 47 -72 C44 -64 38 -62 30 -62 C10 -59 -20 -59 -38 -62 Z" fill="${BZ}"/>`;
+  t += `<path d="M-100 -101 Q-99 -108 -90 -112 L-84 -114 Q-90 -104 -88 -98 L-92 -97 Q-100 -95 -100 -101 Z" fill="${GB}"/>`;
+  t += bein(-36, -64, GB, 6.2) + bein(36, -66, BZ, 6.6);
+  t += `<path d="M-37.6 -58 L-37 -10" stroke="#fffbe6" stroke-width="1.2" opacity=".8"/><path d="M-27.4 -58 L-26.8 -10" stroke="#fff3c8" stroke-width=".8" opacity=".6"/>`;
+  t += `<path d="M-66 -118 Q-66 -138 -60 -152 Q-56 -138 -61 -117 Z" fill="${BZ}"/><path d="M-71 -117 Q-74 -136 -70 -149 Q-65 -136 -66 -116 Z" fill="${BZ_D}"/>`;
+  t += `<path d="M-64 -120 C-56 -116 -48 -104 -40 -96" stroke="${BZ_L}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  t += `<ellipse cx="-78" cy="-109" rx="2" ry="1.5" fill="#15120b"/><ellipse cx="-96" cy="-100" rx="1.4" ry=".9" fill="#7a5a1a"/>`;
+  t += `<path d="M45 -86 Q54 -72 50 -46 L46 -46 Q49 -70 42 -82 Z" fill="${BZ_D}"/><ellipse cx="48" cy="-42" rx="3.2" ry="5" fill="${BZ_D}"/>`;
+  t += `<path d="M-16 -89 C4 -91 22 -87 36 -91" stroke="${BZ_L}" stroke-width="1.6" fill="none" opacity=".8"/>`;
+  /* DER HUND: steht auf dem Rücken des Esels, Kopf hoch, Schnauze offen, Ohr */
+  t += `<path d="M-18 -110 L-16 -90 L-12 -90 L-13 -110 Z M14 -110 L16 -90 L20 -90 L19 -110 Z" fill="${BZ_D}"/>`;
+  t += `<path d="M-24 -110 C-27 -114 -28 -120 -30 -124 L-34 -132 L-37 -140 L-48 -142 L-50 -138 L-42 -137 L-50 -134 L-38 -131 L-33 -126 C-30 -122 -26 -126 -20 -126 L16 -126 C22 -126 25 -121 24 -116 L22 -110 C2 -108 -14 -108 -24 -110 Z" fill="${BZ}"/>`;
+  t += `<path d="M-37 -140 C-38 -146 -34 -149 -30 -148 L-27 -150 L-26 -144 C-28 -138 -32 -133 -34 -132 Z" fill="${BZ}"/><path d="M-29 -148 L-24 -156 L-23 -146 Z" fill="${BZ_D}"/>`;
+  t += `<path d="M-22 -112 L-20 -90 L-16 -90 L-17 -112 Z M8 -112 L10 -90 L14 -90 L13 -112 Z" fill="${BZ}"/>`;
+  t += `<path d="M23 -122 Q32 -128 30 -140" stroke="${BZ}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  t += `<circle cx="-34" cy="-143" r="1.3" fill="#15120b"/><path d="M-20 -125 L16 -125" stroke="${BZ_L}" stroke-width="1.2" opacity=".8"/>`;
+  /* DIE KATZE: auf dem Rücken des Hundes, Buckel, spitze Ohren, Schwanz senkrecht */
+  t += `<path d="M-12 -138 L-11 -126 L-8 -126 L-8 -138 Z M8 -138 L10 -126 L13 -126 L12 -138 Z" fill="${BZ_D}"/>`;
+  t += `<path d="M-14 -138 C-16 -142 -17 -146 -18 -150 L-22 -154 C-27 -153 -30 -156 -30 -160 L-29 -164 L-29 -170 L-25 -165 L-21 -169 L-20 -163 C-14 -165 -6 -168 2 -167 C9 -165 14 -158 13 -146 L12 -138 C2 -136 -6 -136 -14 -138 Z" fill="${BZ}"/>`;
+  t += `<path d="M-10 -138 L-9 -126 L-6 -126 L-6 -138 Z" fill="${BZ}"/>`;
+  t += `<path d="M12 -150 Q19 -158 17 -172 Q16 -180 19 -186" stroke="${BZ}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
+  t += `<circle cx="-26" cy="-159" r="1" fill="#15120b"/><path d="M-18 -163 C-10 -166 0 -167 9 -162" stroke="${BZ_L}" stroke-width="1.1" fill="none" opacity=".85"/>`;
+  /* DER HAHN: ganz oben auf der Katze, kräht, Kamm, Sichelfedern, Flügel leicht offen */
+  t += `<path d="M-5 -175 L-6 -165 M0 -175 L1 -165" stroke="${BZ_D}" stroke-width="1.6"/>`;
+  t += `<path d="M4 -188 C10 -202 18 -210 23 -203 C16 -203 12 -195 8 -186 Z M6 -184 C14 -194 22 -198 25 -191 C18 -191 14 -187 9 -181 Z" fill="${BZ_D}"/>`;
+  t += `<path d="M-12 -175 C-18 -179 -18 -189 -14 -195 L-15 -203 L-20 -204 L-26 -206 L-20 -207 L-26 -209.4 L-19 -210 C-14 -213 -10 -209 -10 -203 C-8 -197 -4 -193 4 -191 C10 -191 12 -187 10 -179 C4 -173 -6 -173 -12 -175 Z" fill="${BZ}"/>`;
+  t += `<path d="M-8 -189 C-2 -195 6 -193 9 -186 C2 -183 -4 -183 -8 -189 Z" fill="${BZ_L}" opacity=".7"/>`;
+  t += `<path d="M-20 -210 Q-21 -216 -18 -214.4 Q-17 -218 -14.4 -214 Q-12 -216 -12 -211 Z" fill="${BZ}"/><ellipse cx="-19.6" cy="-202" rx="1.5" ry="2.3" fill="${BZ_D}"/><circle cx="-16.6" cy="-207.6" r=".9" fill="#15120b"/>`;
+  g += `<g transform="translate(0 -30) scale(.92)">${t}</g>`;
+  /* Schlagschatten auf dem Pflaster nach Nordnordosten (links oben im Bild, hinter der Bronze) */
+  const sch = pfad(poly([[SM.x - .6, SM.y - .3, 0], [SM.x + .6, SM.y - .3, 0], [SM.x + .6 + .9, SM.y + 3.2, 0], [SM.x - .6 + .9, SM.y + 3.2, 0]]), "#1f2430", ` opacity=".28"`);
+  const k = sch + `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(5)})">${g}</g>` + flaeche(fu[0] - 4.6, fu[1] - 11.6, 9.2, 12.2, 0.6);
+  const U = (cx, cy) => [fu[0] + cx * sk, fu[1] + (-30 + cy * .92) * sk];
+  const ue = U(-20, -70), uh = U(-14, -122), uk = U(-8, -152), ug = U(-6, -192);
   S.teil({ id: "stadtmusikanten", de: "die Stadtmusikanten", syl: "STADT-mu-si-kan-ten", it: "i musicanti di Brema", itSyl: "mu-si-CAN-ti di BRE-ma", en: "Town Musicians of Bremen", x: 0, y: 0, kunst: k, oben: true,
-    tipp: "Esel, Hund, Katze und Hahn aus dem Märchen der Brüder Grimm. Die Bronze steht seit 1953 hier.",
-    zoom: { x: r(fu[0] - 7.5), y: r(fu[1] - 9.4), w: 15, h: 10 },
+    tipp: "Esel, Hund, Katze und Hahn aus dem Märchen der Brüder Grimm. Die Bronze von Gerhard Marcks steht seit 1953 hier.",
+    zoom: { x: r(fu[0] - 9), y: r(fu[1] - 12.5), w: 19.5, h: 13 },
     unter: [
-      { id: "esel", de: "der Esel", syl: "E-sel", it: "l'asino", itSyl: "A-si-no", en: "donkey", x: ue[0], y: ue[1], kunst: flaeche(-3.4, -2.2, 6.6, 4.8, .3),
+      { id: "esel", de: "der Esel", syl: "E-sel", it: "l'asino", itSyl: "A-si-no", en: "donkey", x: ue[0], y: ue[1], kunst: flaeche(-4.4, -2.6, 8.4, 6, .3),
         tipp: "Wer die Vorderbeine des Esels mit beiden Händen hält, darf sich etwas wünschen. Darum glänzen sie golden." },
-      { id: "hund", de: "der Hund", syl: "HUND", it: "il cane", itSyl: "CA-ne", en: "dog", x: uh[0], y: uh[1], kunst: flaeche(-1.8, -.9, 4, 1.7, .3) },
-      { id: "katze", de: "die Katze", syl: "KAT-ze", it: "il gatto", itSyl: "GAT-to", en: "cat", x: uk[0], y: uk[1], kunst: flaeche(-1.4, -.6, 3.2, 1.1, .3) },
-      { id: "hahn", de: "der Hahn", syl: "HAHN", it: "il gallo", itSyl: "GAL-lo", en: "rooster", x: ug[0], y: ug[1], kunst: flaeche(-1.1, -1, 2.4, 1.9, .3),
-        tipp: "Im Märchen kräht der Hahn so laut, dass die Räuber aus dem Haus fliehen." },
+      { id: "hund", de: "der Hund", syl: "HUND", it: "il cane", itSyl: "CA-ne", en: "dog", x: uh[0], y: uh[1], kunst: flaeche(-2.6, -1.4, 5.4, 2.2, .3),
+        tipp: "Der Hund steht auf dem Rücken des Esels." },
+      { id: "katze", de: "die Katze", syl: "KAT-ze", it: "il gatto", itSyl: "GAT-to", en: "cat", x: uk[0], y: uk[1], kunst: flaeche(-1.8, -1, 3.8, 1.8, .3),
+        tipp: "Die Katze sitzt auf dem Hund — ganz oben steht der Hahn." },
+      { id: "hahn", de: "der Hahn", syl: "HAHN", it: "il gallo", itSyl: "GAL-lo", en: "rooster", x: ug[0], y: ug[1], kunst: flaeche(-1.4, -1.2, 3, 2.2, .3),
+        tipp: "Im Märchen machen alle vier zusammen Musik: Der Esel schreit, der Hund bellt, die Katze miaut, der Hahn kräht — so laut, dass die Räuber fliehen." },
     ] });
 }
 
 /* =====================================================================
-   6 — DER ROLAND (vor dem Rathaus, Blick zum Dom) — Lupe: Schwert,
-       Baldachin
+   6 — DER ROLAND (vor dem Rathaus, Blick nach Osten zum Dom). Von hier
+       sieht man ihn schräg von rechts hinten: Rücken mit Mantel und
+       Locken, rechts das aufrechte Schwert; der Schild ist abgewandt.
+       Lupe: Schwert, Baldachin
    ===================================================================== */
 const RO = { x: 30, y: -14 };
 {
   const fu = pr(RO.x, RO.y, 0), mk = mass(RO.x, RO.y), sk = mk / 10;   // Zeichnung in Dezimetern
-  let g = `<ellipse cx="6" cy="1" rx="26" ry="3" fill="#1b140c" opacity=".3" filter="url(#bw_weich)"/>`;
-  /* Schatten nach Nordnordosten (hinter ihm) */
-  g += `<path d="M-8 0 L22 -4 L30 -6 L14 1 Z" fill="#1f2430" opacity=".2"/>`;
-  /* Stufen (Sonnenseite links/Süden hell) */
-  for (const [w, z, h] of [[21, 0, 4], [17, 4, 4], [13, 8, 4]]) g += `<rect x="${-w}" y="${-(z + h)}" width="${2 * w}" height="${h}" fill="${ROLSTEIN}"/><rect x="${-w}" y="${-(z + h)}" width="${2 * w}" height=".9" fill="#f6f1e6"/><rect x="${w * .55}" y="${-(z + h)}" width="${w * .45}" height="${h}" fill="#8f8879" opacity=".35"/>`;
-  /* Podest */
-  g += `<rect x="-7.6" y="-19" width="15.2" height="7" fill="${ROLSTEIN}"/><rect x="-8.2" y="-19.8" width="16.4" height="1.2" fill="#f2ede2"/><rect x="2.6" y="-19" width="5" height="7" fill="#8f8879" opacity=".35"/>`;
-  /* Rückenpfeiler (links, hinter seinem Rücken) bis zum Baldachin */
-  g += `<rect x="-7.6" y="-76" width="4.6" height="57" fill="${S.lg("rolpfeiler", [[0, "#bfb6a2"], [1, "#d9d1bf"]], 0, 0, 1, 0)}"/>`;
-  /* DER ROLAND im Profil nach rechts (zum Dom), leicht von hinten: Kettenpanzer an den Beinen, Waffenrock mit
-     tief sitzendem Gürtel, der Mantel fällt über den Rücken, lange Locken, das Schwert aufrecht in der Rechten */
-  S.def(`<pattern id="${S.id("kette")}" width=".7" height=".6" patternUnits="userSpaceOnUse"><rect width=".7" height=".6" fill="#d9d1bf"/><circle cx=".35" cy=".3" r=".2" fill="none" stroke="#9d9482" stroke-width=".08"/></pattern>`);
-  const KETTE = `url(#${S.id("kette")})`;
-  const RS = S.lg("rolfig", [[0, "#bdb39d"], [0.5, "#ece6d8"], [1, "#d6cdb9"]], 0, 0, 1, 0);
-  const bein = (dx, f) => `<path d="M${dx} -45 L${4.6 + dx} -45 L${4.4 + dx} -36 Q${4.9 + dx} -33.4 ${4.2 + dx} -31.6 L${3.4 + dx} -22.4 L${3.2 + dx} -21 L${1 + dx} -21 L${.8 + dx} -24 Q${.2 + dx} -28 ${.6 + dx} -31 Q${.2 + dx} -34 ${dx} -36 Z" fill="${f}"/>`;
-  g += bein(-1.6, "#a69c88") + `<path d="M-1 -21 L2 -21 L4.8 -20.2 L4.8 -19.6 L-1.2 -19.6 Z" fill="#9d9482"/>`;
-  g += bein(0, KETTE) + bein(0, S.lg("beinlicht", [[0, "#000", 0.18], [0.6, "#000", 0], [1, "#fff", 0.2]], 0, 0, 1, 0));
-  g += `<path d="M.6 -21 L3.6 -21 L6.4 -20.2 L6.4 -19.6 L.4 -19.6 Z" fill="#c9c0ab"/><ellipse cx="4.1" cy="-32.6" rx=".95" ry="1.2" fill="#f1ece0"/>`;
-  /* Mantel hinten (links), mit Falten */
-  g += `<path d="M-2.2 -64 C-5 -60 -6.6 -50 -6.8 -40 L-6.2 -36.6 L-3.4 -37.6 L-3.2 -46 C-3.2 -54 -2.4 -60 -1.2 -63 Z" fill="#c3baa5"/>`;
-  g += `<path d="M-4.4 -58 C-5.2 -52 -5.4 -46 -5.2 -38 M-3.2 -60 C-3.8 -54 -4.2 -46 -4 -38" stroke="#9d9482" stroke-width=".3" fill="none"/>`;
-  /* Waffenrock bis zu den Knien, tiefer Prunkgürtel */
-  g += `<path d="M-2.6 -62 C-3.4 -55 -3.6 -48 -3.6 -44 L-4 -37 Q.6 -35.4 5.8 -37 L5.2 -44 C5.6 -50 5.6 -57 4.4 -62 Q1 -64 -2.6 -62 Z" fill="${RS}"/>`;
-  g += `<path d="M-1 -60 C-1.4 -52 -1.6 -44 -1.4 -37 M1.6 -61 C1.4 -52 1.6 -44 2 -36.4 M3.6 -60 C3.8 -52 4 -44 4.4 -36.6" stroke="#b5ab95" stroke-width=".28" fill="none"/>`;
-  g += `<path d="M-3.7 -46.4 L5.4 -45.2 L5.4 -43.8 L-3.8 -45 Z" fill="#a39983"/>`;
-  for (const x of [-2.6, -.6, 1.4, 3.4]) g += `<circle cx="${x}" cy="${r(-45.6 + (x + 3.7) * .13)}" r=".45" fill="#ddd5c2"/>`;
-  /* Schildrand vor der Brust (der Schild selbst ist abgewandt) */
-  g += `<path d="M4.4 -63.4 Q6.4 -58 6 -48 L5.2 -46.6 Q5.6 -57 3.8 -62.6 Z" fill="#b8ae98"/>`;
-  /* rechter Arm: Schulter, Oberarm, Unterarm nach vorn; die Hand hält das Schwert */
-  g += `<path d="M.2 -63.8 C2.6 -63.6 3.8 -61 3.6 -58 L3.2 -54.6 L1 -54.8 L.8 -59 Z" fill="#e3dccb"/>`;
-  g += `<path d="M1.2 -56.6 L6.2 -55 L6.6 -52.4 L1.2 -53.4 Z" fill="#ddd5c3"/>`;
-  /* DAS SCHWERT: Knauf, Griff, Parierstange, lange blanke Klinge */
-  g += `<circle cx="7" cy="-50.6" r=".6" fill="#a39983"/><rect x="6.65" y="-55.4" width=".7" height="4.4" fill="#8a8171"/>`;
-  g += `<rect x="4.9" y="-56.2" width="4.2" height=".8" rx=".35" fill="#a39983"/>`;
-  g += `<path d="M6.5 -56.2 L6.6 -80.6 L7 -82.6 L7.4 -80.6 L7.5 -56.2 Z" fill="${S.lg("klinge", [[0, "#aeb3b7"], [0.5, "#f6f8f9"], [1, "#9fa5aa"]], 0, 0, 1, 0)}"/><path d="M7 -56 V-80" stroke="#8c9297" stroke-width=".12"/>`;
-  g += `<ellipse cx="6.9" cy="-53.4" rx="1.2" ry="1" fill="#ece6d8"/>`;
-  /* Kopf im Profil, lange Locken bis auf die Schultern */
-  g += `<path d="M.4 -66.8 L2.6 -66.6 L2.8 -63.4 L.4 -63.6 Z" fill="#e3dccb"/>`;
-  g += `<path d="M-1.6 -70 Q-2 -74 .6 -75.6 Q3.6 -76.4 4.6 -73.4 L4.6 -72 L5.3 -70.6 L4.6 -70.2 L4.6 -69.2 Q4.4 -67.6 3 -67.2 L1.2 -67.4 Q-1 -66.6 -1.6 -70 Z" fill="#efe9dc"/>`;
-  g += `<path d="M-2 -69 Q-2.8 -74 .4 -76.2 Q3.8 -77.2 4.9 -74 Q2.8 -75 1.6 -73.6 Q1 -71 1.4 -67.6 Q0 -64.6 -1.8 -64 Q-3.2 -66 -2 -69 Z" fill="#cbc2ad"/>`;
-  for (const [x, y] of [[-2.4, -65.2], [-2.8, -67.4], [-2.6, -69.8], [-2, -72.4], [-.8, -74.8], [1, -76], [3, -76.2]]) g += `<circle cx="${x}" cy="${y}" r=".75" fill="#bcb29c"/><circle cx="${x + .2}" cy="${y - .2}" r=".3" fill="#ddd5c2"/>`;
-  g += `<circle cx="3.7" cy="-72.3" r=".28" fill="#5a5246"/><path d="M3.2 -73.2 L4.3 -73.4" stroke="#a39983" stroke-width=".2"/>`;
-  /* DER BALDACHIN: gotisches Gehäuse mit Spitzbögen, Fialen und Kreuzblume */
-  g += `<path d="M-9 -76 L9 -76 L9 -84 L-9 -84 Z" fill="${ROLSTEIN}"/>`;
-  for (const x of [-6, 0, 6]) g += `<path d="M${x - 2.2} -76 L${x - 2.2} -79.6 Q${x} -82.6 ${x + 2.2} -79.6 L${x + 2.2} -76 Z" fill="#8e8676" opacity=".55"/>`;
-  g += `<rect x="-9.6" y="-85" width="19.2" height="1.4" fill="#f2ede2"/>`;
-  g += `<path d="M-8 -85 L0 -100 L8 -85 Z" fill="${S.lg("rolhelm", [[0, "#cfc6b2"], [1, "#e6dfd0"]], 0, 0, 1, 0)}"/>`;
-  for (const x of [-9, 9]) g += `<path d="M${x - 1} -85 L${x - .6} -92 L${x} -95 L${x + .6} -92 L${x + 1} -85 Z" fill="#d8d0bd"/>`;
-  g += `<path d="M-1 -100 L1 -100 L0 -103.6 Z" fill="#d8d0bd"/><circle cx="0" cy="-101.4" r="1" fill="#e6dfd0"/>`;
-  for (let i = 1; i < 5; i++) g += `<path d="M${r(-8 + i * 1.6)} ${r(-85 - i * 3)} l-1 -.8" stroke="#a59c86" stroke-width=".5"/>`;
-  const k = `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(4)})">${g}</g>`;
+  /* Schlagschatten nach Nordnordosten auf dem Pflaster (Höhe 10,2 m → 16 m lang) */
+  const SV = (z) => [RO.x + z * .414, RO.y + z * 1.546, 0];
+  let sch = pfad(poly([[RO.x - 2, RO.y - .6, 0], [RO.x + 2, RO.y - .6, 0], [SV(1.2)[0] + 1.6, SV(1.2)[1], 0], [SV(7.4)[0] + .4, SV(7.4)[1], 0], [SV(10)[0], SV(10)[1], 0], [SV(7.4)[0] - .4, SV(7.4)[1], 0], [SV(1.2)[0] - 1.6, SV(1.2)[1], 0]], 1), "#1f2430", ` opacity=".28"`);
+  const LS = S.lg("rolstein2", [[0, "#f4efe4"], [0.5, "#ddd5c4"], [1, "#a39a88"]], 0, 0, 1, 0);   // Licht links vorn, Schatten rechts hinten
+  const DK = "#8e8676", HL = "#fbf8f0";
+  let g = "";
+  /* Stufen und Podest */
+  for (const [w, z, h] of [[21, 0, 4], [17, 4, 4], [13, 8, 4]]) g += `<rect x="${-w}" y="${-(z + h)}" width="${2 * w}" height="${h}" fill="${LS}"/><rect x="${-w}" y="${-(z + h)}" width="${2 * w}" height=".9" fill="${HL}"/><rect x="${w * .5}" y="${-(z + h)}" width="${w * .5}" height="${h}" fill="#6f6758" opacity=".35"/>`;
+  g += `<rect x="-7.6" y="-19" width="15.2" height="7" fill="${LS}"/><rect x="-8.2" y="-19.8" width="16.4" height="1.2" fill="${HL}"/><path d="M-5 -17 h10 M-5 -14 h10" stroke="${DK}" stroke-width=".3"/>`;
+  /* Rückenpfeiler bis zum Baldachin (links hinter ihm) */
+  g += `<rect x="-6.4" y="-77" width="4" height="58" fill="${S.lg("rolpfeiler", [[0, "#e8e1d2"], [1, "#b0a796"]], 0, 0, 1, 0)}"/><rect x="-6.4" y="-77" width="1" height="58" fill="${HL}" opacity=".6"/>`;
+  /* Beine in Plattenrüstung: Beinschienen, Kniebuckel, spitze Eisenschuhe */
+  const bein = (dx, f) => `<path d="M${dx - .4} -45 L${dx + 3.8} -45 L${dx + 3.6} -36 Q${dx + 4.1} -33.6 ${dx + 3.5} -31.8 L${dx + 3} -22.6 L${dx + 3} -20.6 L${dx + .4} -20.6 L${dx + .2} -24 Q${dx - .4} -28 ${dx} -31 Q${dx - .5} -34 ${dx - .4} -36 Z" fill="${f}"/>`;
+  g += bein(-2.6, "#b7ae9c") + bein(.6, LS);
+  g += `<ellipse cx="3.7" cy="-32.8" rx="1" ry="1.3" fill="${HL}"/><ellipse cx=".5" cy="-32.6" rx=".8" ry="1.1" fill="#d6cebe"/>`;
+  g += `<path d="M1 -21 L3.8 -21 L7.4 -20 L7.4 -19.4 L.8 -19.4 Z M-2.2 -21 L.4 -21 L3.4 -20.2 L3.4 -19.6 L-2.4 -19.6 Z" fill="#cfc7b6"/>`;
+  for (const y of [-42, -39, -27, -24]) g += `<path d="M1 ${y} h3.2" stroke="${DK}" stroke-width=".25"/>`;
+  /* kurzer Waffenrock über dem Kettenhemd, tiefer Gürtel */
+  g += `<path d="M-3.6 -60 C-4.4 -54 -4.6 -48 -4.4 -43 L-4.6 -40.6 Q.4 -39.2 5.2 -40.6 L4.8 -45 C5.2 -51 5.2 -56 4.4 -60 Z" fill="${LS}"/>`;
+  g += `<path d="M-2 -59 L-2.4 -41 M.8 -59.6 L.8 -40.2 M3.2 -59 L3.6 -40.6" stroke="${DK}" stroke-width=".28" opacity=".7"/>`;
+  g += `<path d="M-4.4 -46.6 L5 -45.6 L5 -44.4 L-4.5 -45.4 Z" fill="#8e8676"/>`;
+  for (const x of [-3, -1, 1, 3]) g += `<circle cx="${x}" cy="${r(-45.9 + (x + 4.4) * .1)}" r=".42" fill="#e8e1d2"/>`;
+  /* Mantel über den Rücken (wir sehen ihn von hinten) */
+  g += `<path d="M-4 -65 C-6.4 -60 -7 -52 -6.6 -42 L-5.6 -38.4 L-2.4 -38.8 L-.4 -40 C-.8 -48 .2 -56 1.6 -63.6 Q-1 -66 -4 -65 Z" fill="${S.lg("mantel", [[0, "#ede7da"], [1, "#b8af9d"]], 0, 0, 1, 0)}"/>`;
+  g += `<path d="M-5 -60 C-5.6 -54 -5.6 -46 -5 -39.4 M-3 -62 C-3.4 -54 -3.4 -46 -2.8 -39 M-.8 -62 C-1.2 -55 -1.4 -48 -1 -40.2" stroke="${DK}" stroke-width=".32" fill="none" opacity=".75"/>`;
+  /* rechter Arm im Kettenhemd, die Hand am Schwertgriff */
+  S.def(`<pattern id="${S.id("kette")}" width=".7" height=".6" patternUnits="userSpaceOnUse"><rect width=".7" height=".6" fill="#cfc7b6"/><circle cx=".35" cy=".3" r=".2" fill="none" stroke="#8e8676" stroke-width=".09"/></pattern>`);
+  g += `<path d="M1.6 -64 C4 -63.6 5 -61 4.6 -57.6 L5.6 -54.4 L4 -53.2 L2.6 -56.4 L1.2 -60 Z" fill="url(#${S.id("kette")})"/><path d="M3.6 -56 L6.8 -53.6 L6.4 -51.4 L3 -53.4 Z" fill="url(#${S.id("kette")})"/>`;
+  g += `<path d="M1.4 -64.6 C3.6 -65 5 -63.6 5 -61.4 L3 -60.6 Z" fill="${LS}"/>`;
+  /* DAS SCHWERT: Knauf, Griff, Parierstange, lange blanke Klinge vor ihm */
+  g += `<circle cx="7.2" cy="-49.6" r=".6" fill="#a39983"/><rect x="6.85" y="-54.4" width=".7" height="4.4" fill="#8a8171"/><rect x="5.2" y="-55.2" width="4" height=".8" rx=".35" fill="#a39983"/>`;
+  g += `<path d="M6.75 -55.2 L6.85 -80.6 L7.2 -82.6 L7.55 -80.6 L7.65 -55.2 Z" fill="${S.lg("klinge", [[0, "#f6f8f9"], [0.5, "#c9ced2"], [1, "#8f969b"]], 0, 0, 1, 0)}"/>`;
+  g += `<ellipse cx="7" cy="-52.4" rx="1.1" ry=".9" fill="#e8e1d2"/>`;
+  /* Kopf von hinten rechts: Nacken, lange Locken bis auf die Schultern, Wange und Ohr rechts */
+  g += `<path d="M.4 -67 L2.6 -66.8 L2.8 -63.8 L.4 -64 Z" fill="#d6cebe"/>`;
+  g += `<path d="M1.8 -74.4 Q4.4 -74.8 4.6 -71.4 Q4.4 -68.4 2.8 -67.4 L1.6 -68 Z" fill="#e8e1d2"/><ellipse cx="2.6" cy="-71" rx=".5" ry=".8" fill="#c9c1ae"/>`;
+  g += `<path d="M-2.8 -68 Q-3.8 -74.6 .2 -76.6 Q3.6 -77.4 4.4 -74.6 Q2 -74.8 1.6 -72.4 Q1.4 -69.6 2 -66 Q0 -63.6 -2.4 -64 Q-3.6 -65.6 -2.8 -68 Z" fill="#d4ccb9"/>`;
+  for (const [x, y] of [[-2.8, -65.4], [-3.2, -67.8], [-3, -70.4], [-2.4, -72.8], [-1.2, -75], [.6, -76.2], [2.4, -76.2], [.6, -64.6]]) g += `<circle cx="${x}" cy="${y}" r=".8" fill="#bfb6a2"/><circle cx="${x - .25}" cy="${y - .25}" r=".32" fill="${HL}"/>`;
+  /* DER BALDACHIN: achteckiges gotisches Gehäuse — drei Seiten sichtbar, je Spitzbogen mit Wimperg, Fialen an den Ecken, Helm mit Krabben und Kreuzblume */
+  const BAL = S.lg("bal", [[0, "#f2ede2"], [0.55, "#d9d1c0"], [1, "#a8a08e"]], 0, 0, 1, 0);
+  g += `<path d="M-10 -77 L10 -77 L10 -86 L-10 -86 Z" fill="${BAL}"/>`;
+  for (const [x0, w, f] of [[-10, 5.2, "#e9e3d6"], [-4.8, 9.6, "#ddd5c4"], [4.8, 5.2, "#b5ad9b"]]) {
+    const m = x0 + w / 2;
+    g += `<path d="M${x0 + .7} -77 L${x0 + .7} -81.4 Q${m} -85.4 ${x0 + w - .7} -81.4 L${x0 + w - .7} -77 Z" fill="#6f675a" opacity=".55"/>`;
+    g += `<path d="M${x0 + .4} -86 L${m} -91 L${x0 + w - .4} -86 Z" fill="${f}"/><path d="M${x0 + .4} -86 L${m} -91 L${x0 + w - .4} -86" stroke="${DK}" stroke-width=".3" fill="none"/>`;
+    g += `<path d="M${m - .2} -91 L${m} -92.6 L${m + .2} -91 Z" fill="${f}"/>`;
+  }
+  for (const x of [-10, -4.8, 4.8, 10]) g += `<path d="M${x - .7} -77 L${x + .7} -77 L${x + .7} -88 L${x} -92.4 L${x - .7} -88 Z" fill="${x > 4 ? "#b5ad9b" : "#ece6da"}"/>`;
+  g += `<path d="M-7.6 -86.4 L0 -103 L7.6 -86.4 Z" fill="${S.lg("rolhelm", [[0, "#efe9dd"], [0.6, "#d3cbb9"], [1, "#a8a08e"]], 0, 0, 1, 0)}"/><path d="M0 -103 L.6 -86.4" stroke="${DK}" stroke-width=".3"/>`;
+  for (let i = 1; i < 6; i++) g += `<path d="M${r(-7.6 + i * 1.3)} ${r(-86.4 - i * 2.8)} l-1 -.6 M${r(7.6 - i * 1.3)} ${r(-86.4 - i * 2.8)} l1 -.6" stroke="#a8a08e" stroke-width=".55"/>`;
+  g += `<path d="M-1.2 -103 L1.2 -103 L0 -106.4 Z" fill="#d8d0bd"/><circle cx="0" cy="-104.4" r="1" fill="#ece6da"/>`;
+  const k = sch + `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(5)})">${g}</g>`;
   const U = (cx, cy) => [fu[0] + cx * sk, fu[1] + cy * sk];
-  const us = U(7, -66), ub = U(0, -88);
-  S.teil({ id: "roland", de: "der Roland", syl: "RO-land", it: "il Roland (statua)", itSyl: "RO-land", en: "Roland statue", x: 0, y: 0, kunst: k,
-    tipp: "Der Roland steht seit 1404 hier. Er blickt zum Dom und zeigt: Bremen ist eine freie Stadt.",
-    zoom: { x: r(fu[0] - 20), y: r(fu[1] - 38), w: 42, h: 40 },
+  const us = U(7.2, -66), ub = U(0, -92);
+  S.teil({ id: "roland", de: "der Roland", syl: "RO-land", it: "il Rolando di Brema", itSyl: "ro-LAN-do di BRE-ma", en: "Roland statue", x: 0, y: 0, kunst: k,
+    tipp: "Der Roland steht seit 1404 hier. Er blickt zum Dom und zeigt: Bremen ist eine freie Stadt. Der Abstand zwischen seinen Knien ist eine Bremer Elle.",
+    zoom: { x: r(fu[0] - 27), y: r(fu[1] - 40), w: 60, h: 40 },
     unter: [
-      { id: "schwert", de: "das Schwert", syl: "SCHWERT", it: "la spada", itSyl: "SPA-da", en: "sword", x: us[0], y: us[1], kunst: flaeche(-1.4, -6.2, 2.8, 12, .4),
+      { id: "schwert", de: "das Schwert", syl: "SCHWERT", it: "la spada", itSyl: "SPA-da", en: "sword", x: us[0], y: us[1], kunst: flaeche(-1.6, -6.4, 3.2, 12.6, .4),
         tipp: "Das Schwert steht für das Recht der Stadt, selbst Gericht zu halten." },
-      { id: "baldachin", de: "der Baldachin", syl: "BAL-da-chin", it: "il baldacchino", itSyl: "bal-dac-CHI-no", en: "canopy", x: ub[0], y: ub[1], kunst: flaeche(-3.4, -5, 6.8, 6.4, .4),
-        tipp: "Unter dem steinernen Dach steht der Roland geschützt vor Regen." },
+      { id: "baldachin", de: "der Baldachin", syl: "BAL-da-chin", it: "il baldacchino", itSyl: "bal-dac-CHI-no", en: "canopy", x: ub[0], y: ub[1], kunst: flaeche(-4.2, -6, 8.4, 7.4, .4),
+        tipp: "Über dem Roland steht ein kleines gotisches Türmchen aus Stein, der Baldachin." },
     ] });
 }
 

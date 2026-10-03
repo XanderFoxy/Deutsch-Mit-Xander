@@ -92,7 +92,7 @@ const schlag = (X, Y, w, h, a = 0.5, bis = -4, spitz = 0.55, t = 0.45) => {
   return "";
 };
 /* Streiflicht von rechts: warme Lichtkante rechts, links ein weicher Eigenschatten */
-S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("licht")}" x="-10%" y="-5%" width="120%" height="110%"><feOffset in="SourceAlpha" dx="-.22" result="o"/><feComposite in="SourceAlpha" in2="o" operator="out" result="rk"/><feFlood flood-color="#ffd9a0" flood-opacity=".9"/><feComposite in2="rk" operator="in" result="kante"/><feOffset in="SourceAlpha" dx=".7" result="o2"/><feComposite in="SourceAlpha" in2="o2" operator="out" result="lk"/><feGaussianBlur in="lk" stdDeviation=".25" result="lk2"/><feFlood flood-color="#1f1a24" flood-opacity=".3"/><feComposite in2="lk2" operator="in" result="eigen"/><feComposite in="eigen" in2="SourceAlpha" operator="in" result="eigen2"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="eigen2"/><feMergeNode in="kante"/></feMerge></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("licht")}" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur in="SourceAlpha" stdDeviation=".12" result="b"/><feSpecularLighting in="b" surfaceScale="1.4" specularConstant="1" specularExponent="24" lighting-color="#ffe2b0" result="sp"><feDistantLight azimuth="-10" elevation="16"/></feSpecularLighting><feComposite in="sp" in2="SourceAlpha" operator="in" result="sp2"/><feOffset in="SourceAlpha" dx=".7" result="o2"/><feComposite in="SourceAlpha" in2="o2" operator="out" result="lk"/><feGaussianBlur in="lk" stdDeviation=".25" result="lk2"/><feFlood flood-color="#1f1a24" flood-opacity=".28"/><feComposite in2="lk2" operator="in" result="eigen"/><feComposite in="eigen" in2="SourceAlpha" operator="in" result="eigen2"/><feMerge result="m"><feMergeNode in="SourceGraphic"/><feMergeNode in="eigen2"/></feMerge><feComposite in="m" in2="sp2" operator="arithmetic" k1="0" k2="1" k3=".8" k4="0"/></filter>`);
 const licht = (svg) => `<g filter="url(#${S.id("licht")})">${svg}</g>`;
 /* Mensch aus dem Baukasten, ohne runden Bodenschatten, feine Linien weg, Pfade gerundet (Ladezeit) */
 function figur(spec, hoehe, fein = 1) {
@@ -146,18 +146,37 @@ S.hinten(wolke(160, 18, 0.9, 7) + wolke(262, 30, 1.05, 19) + wolke(40, 12, 0.7, 
    ===================================================================== */
 {
   let f = `<rect x="0" y="${HOR}" width="320" height="${200 - HOR}" fill="${S.lg("pflaster", [[0, "#a49a88"], [0.4, "#958a78"], [1, "#857a69"]])}"/>`;
-  /* Steinreihen von hinten bis vorn: Steingröße wächst mit der Nähe, keine Naht */
-  let i = 0;
+  /* Steinreihen von hinten bis vorn: Steingröße wächst mit der Nähe. Fugen dunkel; Steinbreiten streuen (drei Muster);
+     vorn (y > 157) laufen die Stoßfugen zum Fluchtpunkt (160 | 136), statt senkrecht zu stehen. */
+  let i = 0, fugen = "";
+  const FARBEN = ["#a39886", "#978c7a", "#ab9f8b"];
   for (let d = 90; d > 4.2; d /= 1.028, i++) {
     const y0 = bodenY(d), y1 = bodenY(d * 1.028), h = y0 - y1, ym = (y0 + y1) / 2, k1 = km(ym);
     if (y1 > 200) break;
     const st = 0.17 * k1, gap = 0.035 * k1, off = r((i * 37 % 10) / 10 * (st + gap));
     const a = Math.min(1, 0.35 + k1 / 20);
-    if (st > 0.9) {
-      f += `<line x1="0" y1="${r(ym)}" x2="320" y2="${r(ym)}" stroke="${["#a39886", "#978c7a", "#ab9f8b"][i % 3]}" stroke-width="${r(h * 0.84)}" stroke-dasharray="${r(st)} ${r(gap)}" stroke-dashoffset="${off}" opacity="${r(a)}"/>`;
-      f += `<line x1="0" y1="${r(ym - h * 0.22)}" x2="320" y2="${r(ym - h * 0.22)}" stroke="#d2c8b4" stroke-width="${r(h * 0.16)}" stroke-dasharray="${r(st * 0.6)} ${r(st * 0.4 + gap)}" stroke-dashoffset="${r(off - st * 0.2)}" opacity="${r(a * 0.55)}"/>`;
+    if (ym > 157) {
+      f += `<line x1="0" y1="${r(ym)}" x2="320" y2="${r(ym)}" stroke="${FARBEN[i % 3]}" stroke-width="${r(h * 0.86)}"/>`;
+      /* je Reihe ein Pfad mit relativen Befehlen (klein für die Ladezeit) */
+      let x = -((i * 37 % 10) / 10) * st, px = 0, py = 0, erst = true;
+      const t1 = (y0 - ym - h * 0.5) / (y0 - HOR), t2 = (y0 - ym + h * 0.5) / (y0 - HOR), q = (v) => Math.round(v * 10) / 10;
+      while (x < 320) {
+        const xa = q(x + (160 - x) * t1), xb = q(x + (160 - x) * t2), ya = q(ym + h * 0.5), yb = q(ym - h * 0.5);
+        fugen += erst ? `M${xb} ${yb}` : `m${q(xb - px)} ${q(yb - py)}`;
+        fugen += `l${q(xa - xb)} ${q(ya - yb)}`;
+        px = xa; py = ya; erst = false;
+        x += st * (0.75 + rnd() * 0.5) + gap;
+      }
+      /* Glanz: kleiner runder Fleck oben rechts auf manchen Steinen */
+      for (let n = 0; n < 3; n++) f += `<ellipse cx="${r(rnd() * 320)}" cy="${r(ym - h * 0.22)}" rx="${r(st * 0.12)}" ry="${r(h * 0.1)}" fill="#e2d7c2" opacity=".35"/>`;
+    } else if (st > 0.9) {
+      f += `<line x1="0" y1="${r(ym)}" x2="320" y2="${r(ym)}" stroke="#6f6556" stroke-width="${r(h)}" opacity=".6"/>`;
+      const muster = [[1, 0.8, 1.2], [0.85, 1.25, 1], [1.2, 0.9, 0.8]][i % 3].map((m) => `${r(st * m)} ${r(gap)}`).join(" ");
+      f += `<line x1="0" y1="${r(ym)}" x2="320" y2="${r(ym)}" stroke="${FARBEN[i % 3]}" stroke-width="${r(h * 0.82)}" stroke-dasharray="${muster}" stroke-dashoffset="${off}" opacity="${r(a)}"/>`;
     } else f += `<line x1="0" y1="${r(y0)}" x2="320" y2="${r(y0)}" stroke="#6f6556" stroke-width="${r(Math.max(0.08, h * 0.25))}" opacity=".45"/>`;
+    if (ym > 157) f += `<line x1="0" y1="${r(y0)}" x2="320" y2="${r(y0)}" stroke="#6f6556" stroke-width="${r(h * 0.14)}" opacity=".65"/>`;
   }
+  f += `<path d="${fugen}" stroke="#6f6556" stroke-width=".35" opacity=".65"/>`;
   f += `<rect x="0" y="${HOR}" width="320" height="${200 - HOR}" fill="${S.lg("pflasterlicht", [[0, "#000", 0.14], [0.55, "#000", 0], [1, "#ffcf8a", 0.16]], 0, 0, 1, 0)}"/>`;
   var MARKT = S.teil({ id: "marktplatz", de: "der Marktplatz", syl: "MARKT-platz", it: "la piazza del mercato", itSyl: "PIAZ-za del mer-CA-to", en: "market square", x: 0, y: 0, kunst: f,
     tipp: "Auf dem Marktplatz vor dem Rathaus ist im Advent der Weihnachtsmarkt." });
@@ -204,14 +223,26 @@ const DOM_SICHT = 104;                 /* bis hierhin (y) ist der Dom über den 
   for (const x of [OX - OW * 0.71, OX, OX + OW * 0.71]) k += `<path d="M${r(x - 1.5)} ${H(23)} L${r(x - 1.5)} ${H(28.6)} A1.5 1.5 0 0 1 ${r(x + 1.5)} ${H(28.6)} L${r(x + 1.5)} ${H(23)} Z" fill="#33414c"/>`;
   /* acht Giebel: drei ganz zu sehen, zwei halb (an den Rändern); dazwischen das gefaltete Schieferdach */
   const GI = 7.6;
-  k += `<path d="M${T[0] + 0.4} ${H(33.4)} Q${r(OX - OW * 0.55)} ${H(44)} ${OX} ${H(46)} Q${r(OX + OW * 0.55)} ${H(44)} ${T[3] - 0.4} ${H(33.4)} Z" fill="${S.lg("faltdach", [[0, "#2f3840"], [0.5, "#4e5965"], [1, "#7c8894"]], 0, 0, 1, 0)}"/>`;
-  for (let i = 0; i < 3; i++) {
-    const a = T[i], b = T[i + 1], m = (a + b) / 2;
-    k += `<path d="M${r(a)} ${H(33.6)} L${r(m)} ${H(33.6 + GI)} L${r(b)} ${H(33.6)} Z" fill="${i === 2 ? "#e6dbc3" : i === 1 ? "#d3c8b1" : "#b9ae98"}" stroke="#a39985" stroke-width=".3"/>`;
-    k += `<circle cx="${r(m)}" cy="${H(36.4)}" r="1.1" fill="#3b4752"/>`;
-    k += `<path d="M${r(m)} ${H(33.6 + GI)} Q${r(m + (OX - m) * 0.5)} ${H(43.5)} ${OX} ${H(46)}" stroke="#262d33" stroke-width=".45" fill="none"/>`;
+  {
+    const LF = [OX, H(47.4)];
+    /* stark verkürzte äußere Giebel in Schrägansicht */
+    for (const sd of [-1, 1]) {
+      const xa = OX + sd * OW, xb = OX + sd * (OW + 1.3), xs = OX + sd * (OW + 0.75);
+      k += `<path d="M${r(xa)} ${H(33.6)} L${r(xs)} ${H(33.6 + GI * 0.9)} L${r(xb)} ${H(33.2)} Z" fill="${sd < 0 ? "#a39985" : "#e9dcc0"}" stroke="#a39985" stroke-width=".2"/>`;
+      k += `<path d="M${r(xs)} ${H(33.6 + GI * 0.9)} L${LF[0]} ${LF[1]} L${r(xa + sd * 0.1)} ${H(34.2)} Z" fill="${sd < 0 ? "#2f3840" : "#7c8894"}"/>`;
+    }
+    for (let i = 0; i < 3; i++) {
+      const a = T[i], b = T[i + 1], m = (a + b) / 2, apex = [r(m), H(33.6 + GI)];
+      k += `<path d="M${r(a)} ${H(33.6)} L${apex[0]} ${apex[1]} L${LF[0]} ${LF[1]} Z" fill="${["#2f3840", "#3f4953", "#56616c"][i]}"/>`;
+      k += `<path d="M${apex[0]} ${apex[1]} L${r(b)} ${H(33.6)} L${LF[0]} ${LF[1]} Z" fill="${["#4a545e", "#66727d", "#8a96a1"][i]}"/>`;
+    }
+    for (let i = 0; i < 3; i++) {
+      const a = T[i], b = T[i + 1], m = (a + b) / 2;
+      k += `<path d="M${r(a)} ${H(33.6)} L${r(m)} ${H(33.6 + GI)} L${r(b)} ${H(33.6)} Z" fill="${i === 2 ? "#e6dbc3" : i === 1 ? "#d3c8b1" : "#b9ae98"}" stroke="#a39985" stroke-width=".3"/>`;
+      k += `<circle cx="${r(m)}" cy="${H(36.4)}" r="1.1" fill="#3b4752"/>`;
+      k += `<path d="M${r(m)} ${H(33.6 + GI)} L${LF[0]} ${LF[1]}" stroke="#262d33" stroke-width=".3"/>`;
+    }
   }
-  for (const s of [-1, 1]) k += `<path d="M${r(OX + s * OW)} ${H(33.4)} L${r(OX + s * (OW + 0.6))} ${H(37)} L${r(OX + s * OW * 0.82)} ${H(34)} Z" fill="#a39985"/>`;
   /* Laterne mit Kugel und Kreuz */
   k += `<rect x="${OX - 1.5}" y="${H(50.6)}" width="3" height="${r(4.6 * u)}" fill="#46505a"/><rect x="${OX - 0.75}" y="${H(49.8)}" width="1.5" height="${r(2.6 * u)}" fill="#e9d7a6" opacity=".7"/>`;
   k += `<path d="M${OX - 1.9} ${H(50.6)} Q${OX} ${H(54)} ${OX + 1.9} ${H(50.6)} Z" fill="#46505a"/><circle cx="${OX}" cy="${H(54.5)}" r=".65" fill="${GOLD}"/><path d="M${OX} ${H(55)} L${OX} ${H(58)} M${OX - 0.9} ${H(56.9)} L${OX + 0.9} ${H(56.9)}" stroke="#d9b24a" stroke-width=".38"/>`;
@@ -273,10 +304,13 @@ const figur1 = (m, h, z, var1) => {
   g += `<path d="M${X(-0.36)} ${Y(1.5)} Q${X(-0.5)} ${Y(0.8)} ${X(-0.3)} ${Y(0.04)} L${X(-0.12)} ${Y(0.04)} Q${X(-0.22)} ${Y(0.8)} ${X(-0.1)} ${Y(1.5)} Z" fill="#8f856f"/>`;
   for (const f of [-0.06, 0.1, 0.24]) g += `<path d="M${X(f)} ${Y(1.2)} Q${X(f + 0.03)} ${Y(0.6)} ${X(f + 0.05)} ${Y(0.05)}" stroke="#857a64" stroke-width="${r(0.03 * s)}" fill="none"/>`;
   g += `<ellipse cx="${x}" cy="${Y(1.82)}" rx="${r(0.15 * s)}" ry="${r(0.19 * s)}" fill="#c4b79b"/>`;
-  g += `<path d="M${X(-0.13)} ${Y(1.78)} Q${x} ${Y(1.58)} ${X(0.13)} ${Y(1.78)} Q${x} ${Y(1.68)} ${X(-0.13)} ${Y(1.78)} Z" fill="#9d9179"/>`;
-  g += `<path d="M${X(-0.15)} ${Y(1.98)} L${X(-0.15)} ${Y(2.14)} L${X(-0.07)} ${Y(2.06)} L${x} ${Y(2.16)} L${X(0.07)} ${Y(2.06)} L${X(0.15)} ${Y(2.14)} L${X(0.15)} ${Y(1.98)} Z" fill="#c9ad66"/>`;
-  if (var1 % 2) g += `<line x1="${X(0.3)}" y1="${Y(0.5)}" x2="${X(0.36)}" y2="${Y(1.9)}" stroke="#a3987f" stroke-width="${r(0.05 * s)}"/>`;
-  else g += `<circle cx="${X(-0.26)}" cy="${Y(1.05)}" r="${r(0.09 * s)}" fill="#c4b79b"/>`;
+  g += `<path d="M${X(-0.15)} ${Y(1.96)} Q${x} ${Y(1.9)} ${X(0.15)} ${Y(1.96)} L${X(0.13)} ${Y(1.86)} Q${x} ${Y(1.84)} ${X(-0.13)} ${Y(1.86)} Z M${X(-0.1)} ${Y(1.67)} Q${x} ${Y(1.6)} ${X(0.1)} ${Y(1.67)} L${X(0.06)} ${Y(1.63)} Q${x} ${Y(1.6)} ${X(-0.06)} ${Y(1.63)} Z" fill="#8f846c" opacity=".7"/><path d="M${X(0.06)} ${Y(1.9)} Q${X(0.15)} ${Y(1.82)} ${X(0.09)} ${Y(1.68)}" stroke="#e6dcc2" stroke-width="${r(0.03 * s)}" fill="none"/>`;
+  g += `<path d="M${X(-0.15)} ${Y(1.98)} L${X(-0.15)} ${Y(2.14)} L${X(-0.07)} ${Y(2.06)} L${x} ${Y(2.16)} L${X(0.07)} ${Y(2.06)} L${X(0.15)} ${Y(2.14)} L${X(0.15)} ${Y(1.98)} Z" fill="#d8c9a4"/>`;
+  const v = var1 % 4;
+  if (v === 0) g += `<line x1="${X(0.3)}" y1="${Y(0.5)}" x2="${X(0.36)}" y2="${Y(1.9)}" stroke="#a3987f" stroke-width="${r(0.05 * s)}"/>`;
+  else if (v === 1) g += `<circle cx="${X(-0.26)}" cy="${Y(1.05)}" r="${r(0.09 * s)}" fill="#c4b79b"/>`;
+  else if (v === 2) g += `<path d="M${X(-0.05)} ${Y(0.12)} L${X(0.02)} ${Y(1.25)} M${X(-0.1)} ${Y(1.06)} L${X(0.12)} ${Y(1.1)}" stroke="#a3987f" stroke-width="${r(0.045 * s)}"/>`;
+  else g += `<path d="M${X(-0.14)} ${Y(1.0)} L${X(0.14)} ${Y(1.04)} L${X(0.14)} ${Y(0.78)} L${X(-0.14)} ${Y(0.74)} Z" fill="#b8ab90" stroke="#8f846c" stroke-width="${r(0.02 * s)}"/>`;
   return g;
 };
 const FENSTER = []; for (let i = 0; i < 9; i++) FENSTER.push(12 + i * 5.45);
@@ -322,7 +356,7 @@ const TREPPE = { m0: 22.6, m1: 47.4, pa: 31.6, pb: 38.4, h: 6.6 };
     for (const h of FIGUR_H) {
       k += `<path d="M${FP(m - 0.6, h - 0.3)} L${FP(m + 0.6, h - 0.3)} L${FP(m + 0.6, h + 2.6)} L${FP(m - 0.6, h + 2.6)} Z" fill="#6e6553" opacity=".55"/>`;
       k += `<path d="M${FP(m - 0.55, h + 2.6)} L${FP(m - 0.95, h + 2.2)} L${FP(m - 0.95, h + 4.2)} L${FP(m - 0.3, h + 4.6)} Z" fill="#4a4136" opacity=".3"/>`;
-      k += figur1(m, h, 0.95, i + h) + baldachin(m, h + 2.65, 0.95);
+      k += figur1(m, h, 0.95, (i * 2 + (h > 10 ? 1 : 0)) % 4) + baldachin(m, h + 2.65, 0.95);
       k += `<path d="M${FP(m + 0.48, h + 2.7)} L${FP(m + 0.6, h + 2.7)} L${FP(m + 0.6, h + 3.2)} L${FP(m, h + 4.4)} L${FP(m, h + 4.1)} Z" fill="#ffe2ad" opacity=".55"/>`;
     }
   });
@@ -401,8 +435,6 @@ const TREPPE = { m0: 22.6, m1: 47.4, pa: 31.6, pb: 38.4, h: 6.6 };
   for (let i = 0; i < 80; i++) { const m = m0 + 0.3 + rnd() * (m1 - m0 - 1), h = 0.6 + rnd() * 17.5, w = 0.5 + rnd() * 0.8; k += `<path d="M${FP(m, h)} L${FP(m + w, h)} L${FP(m + w, h + 0.45)} L${FP(m, h + 0.45)} Z" fill="${rnd() < 0.5 ? "#6f6656" : "#c9bea4"}" opacity=".55"/>`; }
   k += `<path d="M${FP(m0, 18.6)} L${FP(m1, 18.6)}" stroke="#ddd3bc" stroke-width=".55"/><path d="M${FP(m0, 26.6)} L${FP(m1, 26.6)}" stroke="#ddd3bc" stroke-width=".5"/>`;
   for (const [h, n] of [[8, 1], [20.4, 2], [28.2, 3]]) for (let i = 0; i < n; i++) { const m = mm - (n - 1) * 1.3 + i * 2.6 - 0.55; k += `<path d="M${FP(m, h)} L${FP(m + 1.1, h)} L${FP(m + 1.1, h + 3)} L${FP(m + 0.55, h + 3.6)} L${FP(m, h + 3)} Z" fill="#2f363d"/>`; }
-  /* Turmuhr */
-  k += `<circle cx="${fx(mm)}" cy="${fy(mm, 24.4)}" r="${r(1.2 * fs(mm))}" fill="#f2ead6" stroke="#c9a24a" stroke-width=".45"/><path d="M${fx(mm)} ${fy(mm, 24.4)} L${fx(mm)} ${fy(mm, 25.3)} M${fx(mm)} ${fy(mm, 24.4)} L${r(fx(mm) + 1.6)} ${fy(mm, 24.2)}" stroke="#222" stroke-width=".3"/>`;
   /* Helm (UNSICHER, nach Hugot 1977): geschweifte Glocke, offene Laterne, schlanke hohe Nadelspitze, Knauf und Wetterfahne */
   k += `<path d="M${FP(m0 - 0.5, 33)} L${FP(m1 + 0.5, 33)} L${FP(m1 + 0.5, 33.8)} L${FP(m0 - 0.5, 33.8)} Z" fill="#ddd3bc"/>`;
   k += `<path d="M${FP(m0 - 0.2, 33.8)} C${FP(m0, 36)} ${FP(mm - 1.2, 35.6)} ${FP(mm - 1.3, 38.6)} L${FP(mm + 1.3, 38.6)} C${FP(mm + 1.2, 35.6)} ${FP(m1, 36)} ${FP(m1 + 0.2, 33.8)} Z" fill="${SCHIEFER}"/>`;
@@ -427,8 +459,8 @@ const TREPPE = { m0: 22.6, m1: 47.4, pa: 31.6, pb: 38.4, h: 6.6 };
   k += `<path d="M${FP(m0, 0)} L${FP(m1, 0)} L${FP(m1, 1)} Q${FP(mm, 0.6)} ${FP(m0, 1)} Z" fill="${BLAUSTEIN}"/>`;
   /* Gesimse mit Rundbogenfries, schmale Lanzettfenster versetzt in vier Geschossen */
   for (const h of [7.2, 14.4, 21.6]) {
-    k += `<path d="M${FP(m0, h)} Q${FP(mm, h - 0.6)} ${FP(m1, h)} L${FP(m1, h + 0.5)} Q${FP(mm, h - 0.1)} ${FP(m0, h + 0.5)} Z" fill="#e2d8c0"/>`;
-    for (let m = m0 + 0.5; m < m1 - 0.4; m += 0.9) k += `<path d="M${FP(m, h - 0.05)} Q${FP(m + 0.45, h - 0.6)} ${FP(m + 0.9, h - 0.05)}" stroke="#8f8571" stroke-width=".18" fill="none"/>`;
+    k += `<path d="M${FP(m0, h - 0.08)} Q${FP(mm, h - 0.68)} ${FP(m1, h - 0.08)}" stroke="#6e6553" stroke-width=".35" fill="none" opacity=".55"/>`;
+    k += `<path d="M${FP(m0, h)} Q${FP(mm, h - 0.6)} ${FP(m1, h)} L${FP(m1, h + 0.32)} Q${FP(mm, h - 0.28)} ${FP(m0, h + 0.32)} Z" fill="${S.lg("gesims", [[0, "#b9ad94"], [0.6, "#e2d8c0"], [1, "#f3e3c0"]], 0, 0, 1, 0)}"/>`;
   }
   for (const [h, ms] of [[2.4, [mm - 0.6]], [9.2, [mm - 2.6, mm + 1.4]], [16.4, [mm - 0.6]], [23.4, [mm - 2.8, mm - 0.6, mm + 1.6]]]) for (const m of ms) k += `<path d="M${FP(m, h)} L${FP(m + 1.2, h)} L${FP(m + 1.2, h + 3.2)} L${FP(m + 0.6, h + 3.9)} L${FP(m, h + 3.2)} Z" fill="#2f363d"/><path d="M${FP(m - 0.2, h - 0.2)} L${FP(m + 1.4, h - 0.2)}" stroke="#e2d8c0" stroke-width=".3"/>`;
   /* Kranzgesims mit Konsolen */
@@ -530,58 +562,70 @@ const KB = { x: 206, y: 146.4 };
   for (const x of [-9, -3, 3, 9]) k += `<path d="M${x} -14.4 q.4 2.4 0 3.6" stroke="#2f4a3d" stroke-width=".35" fill="none"/>`;
   for (const x of [-12.4, 12.4]) k += `<path d="M${x} -14.4 Q${r(x * 1.25)} -12 ${r(x * 1.34)} -6.8" stroke="#dcecef" stroke-width=".55" fill="none" opacity=".85"/>`;
   /* Studenten sitzen vorn auf dem Beckenrand, Rücken zum Wasser, die Beine hängen über die Vorderwand */
-  for (const [x, f, haar, hose, sp] of [[-24.6, "#2d6fb3", "#3a2a20", "#3d5f8c", 1], [-20.6, "#e0a82e", "#c9a466", "#2f3640", 1], [22.4, "#c9302c", "#2b2b2b", "#3d5f8c", -1]]) {
-    const y = -5.85 + 0.46 * 10.4, g = passant(0, y, 10.4, { hemd: f, haar, hose, sitzt: true });
-    k += `<g transform="translate(${x} 0) scale(${sp} 1)">${g}</g>`;
-  }
+  const sitzt = (x, h, hemd, haar, hose, sp) => {
+    const y = -5.95, X = (f) => r(f * h * sp), Yv = (f) => r(y - f * h);
+    let g = `<path d="M0 ${Yv(0.03)} L${X(0.24)} ${Yv(0.03)} L${X(0.27)} ${Yv(-0.29)}" stroke="${hose}" stroke-width="${r(0.085 * h)}" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`;
+    g += `<path d="M${X(0.22)} ${Yv(-0.31)} L${X(0.34)} ${Yv(-0.31)} L${X(0.33)} ${Yv(-0.27)} L${X(0.23)} ${Yv(-0.26)} Z" fill="#2a2420"/>`;
+    g += `<path d="M${X(-0.06)} ${Yv(0.02)} L${X(-0.09)} ${Yv(0.3)} Q${X(0)} ${Yv(0.35)} ${X(0.07)} ${Yv(0.3)} L${X(0.08)} ${Yv(0.02)} Z" fill="${hemd}"/>`;
+    g += `<path d="M${X(0.0)} ${Yv(0.29)} L${X(0.1)} ${Yv(0.13)} L${X(0.2)} ${Yv(0.07)}" stroke="${hemd}" stroke-width="${r(0.05 * h)}" fill="none" stroke-linecap="round"/><circle cx="${X(0.21)}" cy="${Yv(0.07)}" r="${r(0.026 * h)}" fill="#e3b796"/>`;
+    g += `<rect x="${r(Math.min(X(-0.02), X(0.03)))}" y="${Yv(0.37)}" width="${r(0.05 * h)}" height="${r(0.05 * h)}" fill="#e3b796"/><ellipse cx="${X(0.01)}" cy="${Yv(0.42)}" rx="${r(0.06 * h)}" ry="${r(0.07 * h)}" fill="#e3b796"/>`;
+    g += `<path d="M${X(-0.06)} ${Yv(0.43)} Q${X(-0.05)} ${Yv(0.5)} ${X(0.01)} ${Yv(0.495)} Q${X(0.06)} ${Yv(0.49)} ${X(0.05)} ${Yv(0.45)} Q${X(0)} ${Yv(0.46)} ${X(-0.03)} ${Yv(0.4)} Z" fill="${haar}"/>`;
+    return `<g transform="translate(${x} 0)">${g}</g>`;
+  };
+  k += sitzt(-25.2, 10.4, "#2d6fb3", "#3a2a20", "#3d5f8c", 1) + sitzt(-21.4, 10.4, "#e0a82e", "#c9a466", "#2f3640", 1) + sitzt(23, 10.4, "#c9302c", "#2b2b2b", "#3d5f8c", -1);
   k += `<path d="M-1.6 -15.4 L-1.3 -23 L1.3 -23 L1.6 -15.4 Z" fill="${BRONZE}"/><rect x="-2.4" y="-24.4" width="4.8" height="1.6" rx=".4" fill="#4b6a5a"/>`;
   /* KARL DER GROSSE (blickt zu uns): Zepter in seiner Rechten (im Bild links), Reichsapfel in seiner Linken (im Bild rechts) */
   const KY = -24.4;
+  /* KARL DER GROSSE (blickt zu uns), ganz aus patinierter Bronze. Zepter in seiner Rechten (im Bild links), Reichsapfel in
+     seiner Linken (im Bild rechts). UNSICHER, ob die Attribute vergoldet sind: darum Patina, warm nur die Lichtkante. */
   const BR = S.lg("karl", [[0, "#22362d"], [0.45, "#4f7363"], [0.75, "#86a996"], [1, "#3a5a4b"]], 0, 0, 1, 0);
-  const REGAL = S.lg("regal", [[0, "#3f4a34"], [0.5, "#6f7048"], [0.78, "#c9b46a"], [1, "#55553a"]], 0, 0, 1, 1);   /* UNSICHER: Attribute bronzen, nur Glanz golden */
-  k += `<path d="M-2.2 ${KY - 7.4} Q-3.3 ${KY - 4} -3 ${KY - 0.3} L3 ${KY - 0.3} Q3.3 ${KY - 4} 2.2 ${KY - 7.4} Z" fill="#2a4237"/>`;
-  for (const x of [-2.4, 2.4]) k += `<path d="M${x * 0.85} ${KY - 6.8} Q${r(x * 1.25)} ${KY - 3.6} ${r(x * 1.2)} ${KY - 0.5}" stroke="#1f3329" stroke-width=".18" fill="none"/>`;
-  k += `<path d="M-1.5 ${KY - 5.2} L-2.1 ${KY - 0.4} L2.1 ${KY - 0.4} L1.5 ${KY - 5.2} Z" fill="${BR}"/>`;
-  for (const x of [-1, 0, 1]) k += `<path d="M${x * 0.8} ${KY - 4.8} Q${r(x * 1.05)} ${KY - 2.4} ${r(x * 1.3)} ${KY - 0.5}" stroke="#1f3329" stroke-width=".16" fill="none"/>`;
-  k += `<ellipse cx="-.8" cy="${KY - 0.3}" rx=".6" ry=".25" fill="#2a4237"/><ellipse cx=".8" cy="${KY - 0.3}" rx=".6" ry=".25" fill="#2a4237"/>`;
-  k += `<path d="M-1.6 ${KY - 5.2} L-1.7 ${KY - 7.6} Q0 ${KY - 8.2} 1.7 ${KY - 7.6} L1.6 ${KY - 5.2} Z" fill="${BR}"/>`;
-  k += `<rect x="-1.6" y="${KY - 5.5}" width="3.2" height=".4" fill="#1f3329"/><circle cx="0" cy="${KY - 5.3}" r=".25" fill="${REGAL}"/>`;
-  k += `<path d="M-2.2 ${KY - 7.5} Q-1 ${KY - 8.3} 0 ${KY - 8.1} Q1 ${KY - 8.3} 2.2 ${KY - 7.5} L2 ${KY - 7} Q0 ${KY - 7.6} -2 ${KY - 7} Z" fill="#355445"/><circle cx="-1.5" cy="${KY - 7.5}" r=".3" fill="${REGAL}"/>`;
-  /* rechter Arm (im Bild links) hält das Zepter hoch */
-  k += `<path d="M-1.8 ${KY - 7.3} Q-2.7 ${KY - 6.4} -2.6 ${KY - 5.6}" stroke="#3e5e4e" stroke-width=".75" fill="none" stroke-linecap="round"/><circle cx="-2.6" cy="${KY - 5.6}" r=".35" fill="#4f7363"/>`;
-  k += `<path d="M-2.7 ${KY - 4.4} L-2.5 ${KY - 11.6}" stroke="${REGAL}" stroke-width=".32"/><path d="M-2.5 ${KY - 11.6} l-.45 -.5 .45 -.85 .45 .85 Z" fill="${REGAL}"/><circle cx="-2.5" cy="${KY - 12.6}" r=".18" fill="${REGAL}"/>`;
+  const REGAL = S.lg("regal", [[0, "#33473a"], [0.55, "#5f7a62"], [0.82, "#b8ac78"], [1, "#4a5e4c"]], 0, 0, 1, 1);
+  const Y = (v) => r(KY + v);
+  /* Schuhspitzen unter dem Saum */
+  k += `<path d="M-1.15 ${Y(-0.05)} q.45 -.42 .95 0 Z M.2 ${Y(-0.05)} q.45 -.42 .95 0 Z" fill="#23382d"/>`;
+  /* Mantel (hinten, außen), Tunika vorn mit Falten, Gürtel */
+  k += `<path d="M-1.8 ${Y(-9.7)} Q-2.6 ${Y(-5)} -2.7 ${Y(-0.3)} L2.7 ${Y(-0.3)} Q2.6 ${Y(-5)} 1.8 ${Y(-9.7)} Z" fill="${S.lg("mantel", [[0, "#1f3329"], [0.6, "#2c4739"], [1, "#4d7262"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M-1.25 ${Y(-9.4)} L-1.9 ${Y(-0.4)} L1.9 ${Y(-0.4)} L1.25 ${Y(-9.4)} Z" fill="${BR}"/>`;
+  for (const x of [-1, -0.35, 0.3, 0.95]) k += `<path d="M${r(x * 0.75)} ${Y(-5.3)} Q${r(x * 1.0)} ${Y(-2.8)} ${r(x * 1.45)} ${Y(-0.5)}" stroke="#1f3329" stroke-width=".14" fill="none"/>`;
+  k += `<path d="M1.95 ${Y(-8.8)} Q2.55 ${Y(-4.6)} 2.55 ${Y(-0.6)} L2.25 ${Y(-0.6)} Q2.2 ${Y(-4.6)} 1.7 ${Y(-8.6)} Z" fill="#a6c8b0" opacity=".3"/>`;
+  k += `<rect x="-1.45" y="${Y(-5.75)}" width="2.9" height=".38" fill="#1f3329"/><circle cx="0" cy="${Y(-5.56)}" r=".24" fill="#4f6a58" stroke="#22362d" stroke-width=".06"/>`;
+  /* Schulterkragen mit Schließe */
+  k += `<path d="M-1.85 ${Y(-9.55)} Q0 ${Y(-10.25)} 1.85 ${Y(-9.55)} L1.6 ${Y(-8.95)} Q0 ${Y(-9.45)} -1.6 ${Y(-8.95)} Z" fill="#355445"/><circle cx="-1.2" cy="${Y(-9.4)}" r=".22" fill="#4f6a58"/>`;
+  /* rechter Arm (im Bild links) mit dem Zepter */
+  k += `<path d="M-1.5 ${Y(-9.3)} Q-2.25 ${Y(-8.6)} -2.25 ${Y(-7.7)}" stroke="#3e5e4e" stroke-width=".62" fill="none" stroke-linecap="round"/><circle cx="-2.25" cy="${Y(-7.6)}" r=".3" fill="#4f7363"/>`;
+  k += `<path d="M-2.32 ${Y(-5.3)} L-2.2 ${Y(-12.6)}" stroke="${REGAL}" stroke-width=".28"/><path d="M-2.2 ${Y(-12.6)} l-.4 -.45 .4 -.8 .4 .8 Z" fill="${REGAL}"/><circle cx="-2.2" cy="${Y(-13.6)}" r=".16" fill="${REGAL}"/>`;
   /* linker Arm (im Bild rechts) hält den Reichsapfel vor die Brust */
-  k += `<path d="M1.8 ${KY - 7.3} Q2.6 ${KY - 6} 2 ${KY - 5.3} L1.3 ${KY - 5.6}" stroke="#3e5e4e" stroke-width=".75" fill="none" stroke-linecap="round"/>`;
-  k += `<circle cx="1.6" cy="${KY - 6.1}" r=".72" fill="${REGAL}"/><path d="M1.6 ${KY - 6.8} L1.6 ${KY - 7.7} M1.2 ${KY - 7.35} L2 ${KY - 7.35}" stroke="#a8914f" stroke-width=".2"/><path d="M.9 ${KY - 6.1} L2.3 ${KY - 6.1}" stroke="#7a6a3a" stroke-width=".12"/>`;
-  /* Kopf: Gesicht mit Nase und Augen, Vollbart, Bügelkrone mit Stirnkreuz */
-  k += `<rect x="-.35" y="${KY - 8.6}" width=".7" height=".6" fill="#3e5e4e"/>`;
-  /* Gesicht: Bronze, Licht von rechts — Augenhöhlen im Schatten unter der Krone, Nasenrücken mit Lichtkante */
-  k += `<ellipse cx="0" cy="${KY - 9.6}" rx=".8" ry=".98" fill="${S.lg("gesicht", [[0, "#2f4b3e"], [0.55, "#557a68"], [1, "#9cc0aa"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M-.72 ${KY - 10.05} Q0 ${KY - 10.45} .72 ${KY - 10.05} L.66 ${KY - 9.75} Q0 ${KY - 10.05} -.66 ${KY - 9.75} Z" fill="#1f3329" opacity=".55"/>`;
-  k += `<ellipse cx="-.32" cy="${KY - 9.85}" rx=".2" ry=".11" fill="#1a2b22"/><ellipse cx=".32" cy="${KY - 9.85}" rx=".2" ry=".11" fill="#22382d"/><circle cx=".36" cy="${KY - 9.86}" r=".04" fill="#c9e0d2"/>`;
-  k += `<path d="M.02 ${KY - 9.95} L.14 ${KY - 9.3} L-.08 ${KY - 9.22}" fill="#3a594a"/><path d="M.04 ${KY - 9.95} L.16 ${KY - 9.32}" stroke="#c4dfcf" stroke-width=".07"/>`;
-  k += `<path d="M.42 ${KY - 9.65} q.2 .2 .12 .45" stroke="#a8c9b4" stroke-width=".09" fill="none" opacity=".8"/>`;
-  /* Vollbart als eigene, gewellte Form mit Locken; dunkle Fuge zum Mantel */
-  k += `<path d="M-.8 ${KY - 9.45} Q-.92 ${KY - 8.7} -.66 ${KY - 8.2} q.1 .3 .26 .22 q.1 .32 .3 .24 q.12 .3 .3 0 q.18 .26 .3 -.06 q.2 .06 .22 -.26 Q.92 ${KY - 8.7} .8 ${KY - 9.45} Q.55 ${KY - 9.05} .3 ${KY - 9.12} Q0 ${KY - 8.92} -.3 ${KY - 9.12} Q-.55 ${KY - 9.05} -.8 ${KY - 9.45} Z" fill="#2c4739" stroke="#16241c" stroke-width=".06"/>`;
-  for (const [x, y] of [[-0.5, -8.75], [-0.18, -8.5], [0.16, -8.55], [0.48, -8.8], [-0.3, -8.2], [0.3, -8.25]]) k += `<path d="M${r(x - 0.14)} ${r(KY + y)} q.14 -.16 .28 0" stroke="${x > 0 ? "#a6c8b0" : "#6f9480"}" stroke-width=".07" fill="none"/>`;
-  k += `<path d="M-.36 ${KY - 9.12} Q0 ${KY - 9.32} .36 ${KY - 9.12} Q.2 ${KY - 8.98} 0 ${KY - 9.04} Q-.2 ${KY - 8.98} -.36 ${KY - 9.12} Z" fill="#203528"/><path d="M.05 ${KY - 9.2} q.18 -.06 .28 .06" stroke="#b4d3c0" stroke-width=".05" fill="none"/>`;
-  k += `<path d="M-.95 ${KY - 10.25} L-.95 ${KY - 11.1} L-.48 ${KY - 11.25} L-.48 ${KY - 10.3} Z M-.42 ${KY - 10.3} L-.42 ${KY - 11.35} L.42 ${KY - 11.35} L.42 ${KY - 10.3} Z M.48 ${KY - 10.3} L.48 ${KY - 11.25} L.95 ${KY - 11.1} L.95 ${KY - 10.25} Z" fill="${REGAL}"/>`;
-  k += `<path d="M-.95 ${KY - 10.25} L.95 ${KY - 10.25}" stroke="#7a6a3a" stroke-width=".12"/><path d="M-.85 ${KY - 11.1} Q0 ${KY - 12.3} .85 ${KY - 11.1}" stroke="${REGAL}" stroke-width=".2" fill="none"/>`;
-  k += `<path d="M0 ${KY - 11.35} L0 ${KY - 12.25} M-.28 ${KY - 11.95} L.28 ${KY - 11.95}" stroke="${REGAL}" stroke-width=".16"/>`;
-  k += `<circle cx="0" cy="${KY - 10.8}" r=".14" fill="#b5162b"/><circle cx="-.7" cy="${KY - 10.7}" r=".09" fill="#2f6fb3"/><circle cx=".7" cy="${KY - 10.7}" r=".09" fill="#2f6fb3"/>`;
-  k += `<path d="M1.4 ${KY - 7.2} Q2 ${KY - 4} 1.9 ${KY - 0.8}" stroke="#b4d3c0" stroke-width=".25" fill="none" opacity=".7"/>`;
+  k += `<path d="M1.5 ${Y(-9.3)} Q2.15 ${Y(-8.2)} 1.75 ${Y(-7.6)} L1.2 ${Y(-7.8)}" stroke="#3e5e4e" stroke-width=".62" fill="none" stroke-linecap="round"/>`;
+  k += `<circle cx="1.45" cy="${Y(-8.35)}" r=".6" fill="${REGAL}"/><path d="M1.45 ${Y(-8.95)} L1.45 ${Y(-9.7)} M1.13 ${Y(-9.38)} L1.77 ${Y(-9.38)}" stroke="#5f7a62" stroke-width=".17"/><path d="M.86 ${Y(-8.35)} L2.04 ${Y(-8.35)}" stroke="#2c4739" stroke-width=".1"/><path d="M1.75 ${Y(-8.8)} q.3 .2 .28 .55" stroke="#d9cf9a" stroke-width=".09" fill="none" opacity=".8"/>`;
+  /* Kopf: Hals, Gesicht mit Augenhöhlen unter dem Kronrand, Nase mit Lichtkante, Licht auf Braue und Wange rechts */
+  k += `<rect x="-.28" y="${Y(-10.25)}" width=".56" height=".5" fill="#3e5e4e"/>`;
+  k += `<ellipse cx="0" cy="${Y(-10.95)}" rx=".62" ry=".78" fill="${S.lg("gesicht", [[0, "#2f4b3e"], [0.55, "#557a68"], [1, "#9cc0aa"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M-.56 ${Y(-11.4)} Q0 ${Y(-11.7)} .56 ${Y(-11.4)} L.52 ${Y(-11.16)} Q0 ${Y(-11.4)} -.52 ${Y(-11.16)} Z" fill="#1f3329" opacity=".5"/>`;
+  k += `<ellipse cx="-.24" cy="${Y(-11.2)}" rx=".16" ry=".085" fill="#1a2b22"/><ellipse cx=".24" cy="${Y(-11.2)}" rx=".16" ry=".085" fill="#1a2b22"/>`;
+  k += `<path d="M.1 ${Y(-11.36)} q.2 -.1 .4 .02" stroke="#a8c9b4" stroke-width=".07" fill="none"/><path d="M.36 ${Y(-11.0)} q.16 .14 .1 .36" stroke="#a8c9b4" stroke-width=".08" fill="none" opacity=".8"/>`;
+  k += `<path d="M.02 ${Y(-11.3)} L.12 ${Y(-10.78)} L-.07 ${Y(-10.72)}" fill="#3a594a"/><path d="M.04 ${Y(-11.3)} L.14 ${Y(-10.8)}" stroke="#c4dfcf" stroke-width=".06"/>`;
+  /* Vollbart: eigene Form, Unterkante gezackt; Locken als senkrechte S-Strähnen, hell auf der Lichtseite rechts */
+  k += `<path d="M-.62 ${Y(-10.85)} Q-.72 ${Y(-10.25)} -.52 ${Y(-9.85)} q.08 .24 .2 .17 q.08 .25 .23 .19 q.1 .24 .24 0 q.14 .2 .24 -.05 q.16 .05 .17 -.2 Q.72 ${Y(-10.25)} .62 ${Y(-10.85)} Q.42 ${Y(-10.52)} .22 ${Y(-10.58)} Q0 ${Y(-10.42)} -.22 ${Y(-10.58)} Q-.42 ${Y(-10.52)} -.62 ${Y(-10.85)} Z" fill="#2c4739" stroke="#16241c" stroke-width=".05"/>`;
+  for (const [x, c] of [[-0.42, "#203528"], [-0.2, "#6f9480"], [0.02, "#203528"], [0.24, "#a6c8b0"], [0.44, "#a6c8b0"]]) k += `<path d="M${x} ${Y(-10.5)} q.07 .18 0 .32 q-.07 .16 .02 .34" stroke="${c}" stroke-width=".065" fill="none"/>`;
+  k += `<path d="M-.3 ${Y(-10.58)} Q0 ${Y(-10.74)} .3 ${Y(-10.58)} Q.16 ${Y(-10.46)} 0 ${Y(-10.52)} Q-.16 ${Y(-10.46)} -.3 ${Y(-10.58)} Z" fill="#203528"/>`;
+  /* Bügelkrone mit Stirnkreuz, kleine Buckel statt Steinen */
+  k += `<path d="M-.74 ${Y(-11.55)} L-.74 ${Y(-12.25)} L-.38 ${Y(-12.38)} L-.38 ${Y(-11.6)} Z M-.33 ${Y(-11.6)} L-.33 ${Y(-12.45)} L.33 ${Y(-12.45)} L.33 ${Y(-11.6)} Z M.38 ${Y(-11.6)} L.38 ${Y(-12.38)} L.74 ${Y(-12.25)} L.74 ${Y(-11.55)} Z" fill="${REGAL}"/>`;
+  k += `<path d="M-.74 ${Y(-11.55)} L.74 ${Y(-11.55)}" stroke="#2c4739" stroke-width=".1"/><path d="M-.66 ${Y(-12.25)} Q0 ${Y(-13.2)} .66 ${Y(-12.25)}" stroke="${REGAL}" stroke-width=".16" fill="none"/>`;
+  k += `<path d="M0 ${Y(-12.45)} L0 ${Y(-13.2)} M-.22 ${Y(-12.95)} L.22 ${Y(-12.95)}" stroke="${REGAL}" stroke-width=".13"/>`;
+  for (const x of [-0.56, 0, 0.56]) k += `<circle cx="${x}" cy="${Y(-11.95)}" r=".08" fill="#4a5e4c" stroke="#22362d" stroke-width=".03"/>`;
+  k += `<path d="M.66 ${Y(-12.2)} L.66 ${Y(-11.62)}" stroke="#d9cf9a" stroke-width=".06" opacity=".8"/>`;
   S.teil({ id: "karlsbrunnen", de: "der Karlsbrunnen", syl: "KARLS-brun-nen", it: "la fontana di Carlo Magno", itSyl: "fon-TA-na di CAR-lo MA-gno", en: "Charlemagne Fountain",
     x: KB.x, y: KB.y, kunst: k, tipp: "Die Aachener nennen den Brunnen „Karl in de Eäzekomp“ — Karl in der Erbsenschüssel.",
-    zoom: { x: KB.x - 10.5, y: KB.y - 38.6, w: 21, h: 14 },
+    zoom: { x: KB.x - 11.25, y: KB.y - 39.4, w: 22.5, h: 15 },
     unter: [
-      { id: "kaiser", de: "der Kaiser", syl: "KAI-ser", it: "l'imperatore", itSyl: "im-pe-ra-TO-re", en: "emperor", x: KB.x, y: KB.y + KY, kunst: flaeche(-1.9, -8.6, 3.4, 8.6, 0.4),
+      { id: "kaiser", de: "der Kaiser", syl: "KAI-ser", it: "l'imperatore", itSyl: "im-pe-ra-TO-re", en: "emperor", x: KB.x, y: KB.y + KY, kunst: flaeche(-2.2, -9.8, 4.4, 9.8, 0.4),
         tipp: "Karl der Große war Kaiser. Er lebte sehr gern in Aachen — wegen der warmen Quellen." },
-      { id: "krone", de: "die Krone", syl: "KRO-ne", it: "la corona", itSyl: "co-RO-na", en: "crown", x: KB.x, y: KB.y + KY - 10.2, kunst: flaeche(-1.1, -2.2, 2.2, 2.2, 0.3),
+      { id: "krone", de: "die Krone", syl: "KRO-ne", it: "la corona", itSyl: "co-RO-na", en: "crown", x: KB.x, y: KB.y + KY - 11.5, kunst: flaeche(-1, -2, 2, 2, 0.3),
         tipp: "Die Krone hat oben einen Bügel und vorn ein Kreuz." },
-      { id: "reichsapfel", de: "der Reichsapfel", syl: "REICHS-ap-fel", it: "il globo imperiale", itSyl: "GLO-bo im-pe-RIA-le", en: "imperial orb", x: KB.x + 1.6, y: KB.y + KY - 6.1, kunst: flaeche(-0.9, -1.8, 1.8, 2.6, 0.3),
+      { id: "reichsapfel", de: "der Reichsapfel", syl: "REICHS-ap-fel", it: "il globo imperiale", itSyl: "GLO-bo im-pe-RIA-le", en: "imperial orb", x: KB.x + 1.45, y: KB.y + KY - 8.35, kunst: flaeche(-0.9, -1.5, 1.8, 2.3, 0.3),
         tipp: "Den Reichsapfel trägt der Kaiser in der Hand: Er zeigt die Herrschaft über die Welt." },
-      { id: "zepter", de: "das Zepter", syl: "ZEP-ter", it: "lo scettro", itSyl: "SCET-tro", en: "sceptre", x: KB.x - 2.6, y: KB.y + KY - 8, kunst: flaeche(-0.8, -4.8, 1.5, 7.4, 0.3),
-        tipp: "Das Zepter ist ein Stab. Er zeigt: Hier regiert ein König." },
+      { id: "zepter", de: "das Zepter", syl: "ZEP-ter", it: "lo scettro", itSyl: "SCET-tro", en: "sceptre", x: KB.x - 2.25, y: KB.y + KY - 9.3, kunst: flaeche(-0.75, -4.5, 1.5, 8.3, 0.3),
+        tipp: "Das Zepter ist ein Stab. Er zeigt: Hier regiert ein Herrscher." },
     ] });
 }
 
@@ -741,7 +785,7 @@ const LAT = { x: 248, y: 170 };
 }
 {
   /* DAS FAHRRAD — lehnt mit dem Lenker an der Laterne */
-  const Y = 171, s = 0.8 * km(Y), R = 0.34 * s;
+  const Y = 171, s = 0.92 * km(Y), R = 0.34 * s;
   let k = "";
   const ra = (cx) => `<circle cx="${r(cx)}" cy="${r(-R)}" r="${r(R)}" fill="none" stroke="#22262a" stroke-width="1.1"/><circle cx="${r(cx)}" cy="${r(-R)}" r="${r(R - 0.9)}" fill="none" stroke="#a9b0b5" stroke-width=".25"/>` + [...Array(12)].map((_, i) => { const a = i * Math.PI / 6; return `<line x1="${r(cx)}" y1="${r(-R)}" x2="${r(cx + Math.cos(a) * (R - 1))}" y2="${r(-R + Math.sin(a) * (R - 1))}" stroke="#b7bec3" stroke-width=".12"/>`; }).join("") + `<circle cx="${r(cx)}" cy="${r(-R)}" r=".7" fill="#7f878d"/>`;
   const hx = -0.55 * s, vx = 0.5 * s;

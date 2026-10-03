@@ -159,14 +159,12 @@ const figurDef = (name, spec, art) => {
 /* Figur mit Fußpunkt (x|y) und Höhe h (Einheiten) */
 const figur = (name, x, y, h, spiegel) => `<use href="#${S.id("f_" + name)}" transform="translate(${r(x)} ${r(y)}) scale(${((spiegel ? -1 : 1) * h / 166).toFixed(4)} ${(h / 166).toFixed(4)})"/>`;
 const SCHUH = { stueck: "halbschuh", farbe: "#3a2c22" };
-figurDef("geht", { geschlecht: "w", pose: "gehen", blick: 70, frisur: "zopf", haarfarbe: "dunkelbraun", haut: "hell",
-  kleidung: { oberteil: { stueck: "pullover", farbe: "#b8473a" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "#e2d6bf" }, schuhe: SCHUH } });
-figurDef("mann", { geschlecht: "m", pose: "gehen", blick: 290, frisur: "kurz", haarfarbe: "blond", haut: "hell",
-  kleidung: { oberteil: { stueck: "hemd", farbe: "#dfe6ef" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "#2f4f7a" }, schuhe: SCHUH } });
 figurDef("runter", { geschlecht: "m", pose: "gehen", blick: 182, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell",
   kleidung: { oberteil: { stueck: "pullover", farbe: "#3d6b4a" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } }, "mittel");
 figurDef("rauf", { geschlecht: "w", pose: "gehen", blick: 12, frisur: "zopf", haarfarbe: "blond", haut: "hell",
   kleidung: { oberteil: { stueck: "pullover", farbe: "#8a3c4a" }, unterteil: { stueck: "jeans" }, schuhe: SCHUH } }, "mittel");
+figurDef("sitzend", { geschlecht: "w", pose: "sitzen", blick: 200, frisur: "zopf", haarfarbe: "hellbraun", haut: "hell",
+  kleidung: { oberteil: { stueck: "pullover", farbe: "#c0623a" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } });
 /* Bronzefiguren der Säule: Concordia (Kontrapost, die Rechte hebt den Kranz) und die sitzenden Frauen am Sockel */
 const KONTRA = { roll: 3, lende: 1, brust: -2, brustRoll: -5, nacken: 5, kopf: -6, kopfRoll: 3,
   schulterL: { vor: 4, seit: 10 }, ellbogenL: 20, unterarmL: 10, handL: 6, fingerL: 0.36,
@@ -251,7 +249,7 @@ S.hinten(`<rect width="320" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#3f
 {
   const HANG = "M96 104 Q122 95 150 92.6 Q182 91 212 92.4 Q236 93.4 250 90 Q264 86.4 280 85 Q298 84 306 84.4 Q314 84.8 320 86 L320 120 L96 120 Z";
   let h = `<path d="${HANG}" fill="${S.lg("hang", [[0, "#7f9469"], [0.5, "#8e9d76"], [1, "#a9ab8c"]])}"/>`;
-  for (let i = 0; i < 80; i++) {
+  for (let i = 0; i < 45; i++) {
     const x = 128 + rnd() * 192, top = x < 248 ? 92.5 + (x - 160) * (x - 160) / 9000 : 85.4 + Math.max(0, 300 - x) * 0.08;
     if (x > 246 || rnd() < 0.5) h += `<path d="M${r(x - 1.4)} ${r(top + 2.4)} Q${r(x - 1)} ${r(top - 0.4)} ${r(x)} ${r(top - 0.2)} Q${r(x + 1.2)} ${r(top)} ${r(x + 1.5)} ${r(top + 2.4)} Z" fill="${x > 246 ? (rnd() < 0.5 ? "#3f5a3a" : "#4d6843") : (rnd() < 0.5 ? "#5f7a4c" : "#6f8857")}"/>`;
     else h += `<rect x="${r(x)}" y="${r(top + 4 + rnd() * 9)}" width="${r(1.4 + rnd() * 1.6)}" height="${r(1 + rnd() * 1.2)}" fill="${rnd() < 0.5 ? "#e6dccb" : "#d9c4ae"}"/>`;
@@ -283,7 +281,7 @@ const HAEUSER = [];
     HAEUSER.push([x, Math.min(top, top2) - 1.2], [x + w, Math.min(top, top2) - 1.2]);
     k += `<path d="M${r(x)} 117.6 L${r(x)} ${r(top)} L${r(x + w)} ${r(top2)} L${r(x + w)} 117.6 Z" fill="${f}"/>`;
     k += `<path d="M${r(x)} ${r(top)} L${r(x + w)} ${r(top2)} L${r(x + w)} ${r(top2 - 1.2)} L${r(x)} ${r(top - 1.2)} Z" fill="#8c7a6e"/>`;
-    for (let j = 0; j < 4; j++) for (let i = 0; i < Math.floor(w / 1.6); i++) k += `<rect x="${r(x + 0.4 + i * 1.6)}" y="${r(top + 1.2 + j * 2.4)}" width=".7" height="1.1" fill="#5d6670" opacity=".75"/>`;
+    let fe = ""; for (let j = 0; j < 4; j++) for (let i = 0; i < Math.floor(w / 1.6); i++) fe += `M${r(x + 0.4 + i * 1.6)} ${r(top + 1.2 + j * 2.4)} h.7 v1.1 h-.7 Z`; k += `<path d="${fe}" fill="#5d6670" opacity=".75"/>`;
     x += w;
   }
   /* rechts vom Fluchtpunkt: die Häuser am Bahnhof */
@@ -342,7 +340,7 @@ const FT = { x: 306, y: 85, s: 31 / 86.4 };
      (Pfähle, Drahtrahmen, Laub im ersten Herbstgelb und -rot); nach oben kleiner und blasser */
   const wz = zufall(808);
   const LAUBF = [["#b8a43c", "#8f9a3e"], ["#c99a3e", "#9a8a3a"], ["#a9b04a", "#b4683a"], ["#c4aa48", "#8d963c"]];
-  let ma = "", sch = "", pf = "", dr = "";
+  let ma = "", sch = "", pf = "", parz = "";
   const reihen = [];
   for (let i = 0; i < 9; i++) {
     const o = 1.6 + i * 3.1, f = 0.45 + i * 0.07;
@@ -350,24 +348,37 @@ const FT = { x: 306, y: 85, s: 31 / 86.4 };
     const zack = xs.map((x) => `${x} ${r(b(x) - (wz() < 0.5 ? 0.12 : 0))}`);
     ma += `M${zack.join(" L")} L${xs.slice().reverse().map((x) => `${x} ${r(c(x))}`).join(" L")} Z`;
     sch += `M${kurve((x) => c(x) - 0.12).join(" L")} `;
-    for (const t of [0.75, 1.75]) {
+    /* Parzellen: Herbstfarben als Flächen (gelblich, rötlich wie Trollinger und Lemberger, noch grün) */
+    const a = (x) => Math.min(unten(x), rand(x) + o);
+    let xa = 0;
+    while (xa < 106) {
+      const xb = Math.min(108, xa + 12 + wz() * 16), seg = xs.filter((x) => x > xa && x < xb), pts = [xa, ...seg, xb];
+      const c = ["#b7a442", "#a8623c", "#8f9a52", "#c2ad4c", "#93783c"][Math.floor(wz() * 5)];
+      parz += `<path d="M${pts.map((x) => `${r(x)} ${r(a(x))}`).join(" L")} L${pts.slice().reverse().map((x) => `${r(x)} ${r(b(x))}`).join(" L")} Z" fill="${c}" opacity="${r(0.35 + i * 0.04)}"/>`;
+      xa = xb;
+    }
+    /* drei Rebzeilen je Terrasse: feine, fast durchgehende Linien mit Pfählen, oben dünner und blasser */
+    for (const t of [0.5, 1.15, 1.8]) {
       const rz = (x) => Math.min(unten(x) - 0.3, rand(x) + o + t);
-      pf += `M${kurve((x) => rz(x) - 0.35 * f).join(" L")} `;
-      dr += `M${kurve((x) => rz(x) - 0.55 * f).join(" L")} `;
-      reihen.push([rz, f, LAUBF[(i + Math.round(t)) % 4]]);
+      pf += `M${kurve((x) => rz(x) - 0.3 * f).join(" L")} `;
+      reihen.push([rz, f, i]);
     }
   }
-  k += `<path d="${ma}" fill="${MAUER}"/><path d="${sch}" stroke="#6d6450" stroke-width=".22" fill="none" opacity=".75"/>`;
-  k += `<path d="${dr}" stroke="#d8d0b4" stroke-width=".05" fill="none" opacity=".8"/><path d="${pf}" stroke="#4d4030" stroke-width=".1" stroke-dasharray=".08 1.1" fill="none"/>`;
-  for (const [rz, f, [c1, c2]] of reihen) {
-    k += `<path d="M${kurve(rz).join(" L")}" stroke="${c2}" stroke-width="${r(0.85 * f)}" stroke-dasharray="${r(0.25 * f)} ${r(0.85 * f)}" stroke-linecap="round" fill="none"/>`;
-    k += `<path d="M${kurve((x) => rz(x) - 0.12 * f).join(" L")}" stroke="${c1}" stroke-width="${r(0.45 * f)}" stroke-dasharray="${r(0.45 * f)} ${r(0.65 * f)}" fill="none"/>`;
-  }
-  /* Wald auf der Kuppe: unregelmäßiger Saum, zwei Töne */
+  k += `<path d="${ma}" fill="${MAUER}"/><path d="${sch}" stroke="#6d6450" stroke-width=".22" fill="none" opacity=".75"/>` + parz;
+  k += `<path d="${pf}" stroke="#4d4030" stroke-width=".08" stroke-dasharray=".06 1.3" fill="none"/>`;
+  for (const [rz, f, i] of reihen) k += `<path d="M${kurve(rz).join(" L")}" stroke="${i % 3 === 1 ? "#5e6a2e" : "#4c6430"}" stroke-width="${r(0.35 * f)}" stroke-dasharray="${r(4 * f)} ${r(0.35 * f)}" opacity="${r(0.55 + i * 0.05)}" fill="none"/>`;
+  /* Wald auf der Kuppe: Kronen ungleicher Größe, Licht von rechts hinten */
   {
-    let w1 = "M0 " + r(rand(0) + 2), w2 = "M0 " + r(rand(0) + 2.4);
-    for (let x = 0; x <= 76; x += 2.2) { const h = 1 + wz() * 1.6; w1 += ` Q${r(x + 1.1)} ${r(rand(x) - h - 0.6)} ${r(x + 2.2)} ${r(rand(x + 2.2) - 0.2)}`; w2 += ` Q${r(x + 0.6)} ${r(rand(x) - h * 0.5)} ${r(x + 2.2)} ${r(rand(x + 2.2) + 0.4)}`; }
-    k += `<path d="${w1} L76 ${r(rand(76) + 1.8)} L0 ${r(rand(0) + 1.8)} Z" fill="#43603a"/><path d="${w2} L76 ${r(rand(76) + 1.8)} L0 ${r(rand(0) + 1.8)} Z" fill="#5d7a47"/>`;
+    const xw = xs.filter((x) => x <= 78);
+    k += `<path d="M${xw.map((x) => `${x} ${r(rand(x) - 0.4)}`).join(" L")} L${xw.slice().reverse().map((x) => `${x} ${r(rand(x) + 1.4)}`).join(" L")} Z" fill="#43603a"/>`;
+    let w1 = "", w2 = "";
+    for (let x = 0.5; x < 77;) {
+      const rx = 0.8 + wz() * 1.6, ry = rx * (0.7 + wz() * 0.5), cy = rand(x) - ry * 0.55;
+      w1 += `<ellipse cx="${r(x)}" cy="${r(cy)}" rx="${r(rx)}" ry="${r(ry)}" fill="${wz() < 0.5 ? "#3d5834" : "#4a663c"}"/>`;
+      w2 += `<ellipse cx="${r(x + rx * 0.3)}" cy="${r(cy - ry * 0.25)}" rx="${r(rx * 0.55)}" ry="${r(ry * 0.5)}" fill="${wz() < 0.25 ? "#a49a48" : "#6f8a50"}"/>`;
+      x += rx * (0.9 + wz() * 0.9);
+    }
+    k += w1 + w2;
   }
   /* Stäffele: ein gerader, steiler Lauf den Hang hinauf, mit zwei Absätzen und Geländer */
   {
@@ -764,8 +775,9 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
   const BAEUME = [[95, vRand(95) + 5, 8, 6, 31], [58, vRand(58) + 5, 8.5, 6.4, 32], [24, vRand(24) + 5.5, 7, 5.4, 33]];
   for (const [u, v, h, b] of BAEUME) { const [x, y] = boden(u, v); k += wurf(x, y, h, b * 0.7, false, 0.2, b * 0.6); }
   /* Leute auf dem Platz */
-  const leute = [mensch("geht", 22, 4.5), mensch("mann", 36, 7.5, true), mensch("mann", 41, 18.5, true), mensch("geht", 62, 27, true),
-    mensch("mann", 98, 13), mensch("geht", 118, 22), mensch("geht", 30, vRand(30) + 3), mensch("runter", 72, vRand(72) + 2.5)];
+  const leute = [mensch("rauf", 22, 4.5), mensch("runter", 36, 7.5, true), mensch("runter", 41, 18.5, true), mensch("rauf", 62, 27, true),
+    mensch("runter", 98, 13), mensch("rauf", 118, 22), mensch("rauf", 30, vRand(30) + 3), mensch("runter", 72, vRand(72) + 2.5)];
+  for (const [u, v, sp] of [[20, 36, 0], [24, 37, 1], [50, 45, 1], [66, 40, 0], [14, 12.5, 1], [42, 14, 0], [74, 54, 1], [112, 40, 0]]) leute.push(Object.assign(mensch("sitzend", u, v, sp), { schatten: "" }));
   for (const p of leute) k += p.schatten;
   for (const [u, v, h, b, s] of BAEUME) { const [x, y] = boden(u, v); k += baum(x, y, h, b, HERBST, s); }
   for (const p of leute) k += p.bild;
@@ -798,7 +810,7 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
     lat += `<path d="M${r(x - 0.32 * m)} ${r(y - h - 0.55 * m)} L${r(x + 0.32 * m)} ${r(y - h - 0.55 * m)} L${r(x)} ${r(y - h - 0.8 * m)} Z" fill="#33403a"/>`;
   }
   /* Passanten: ein Strom in beide Richtungen */
-  const ps = [["runter", 26, -9], ["rauf", 18, -15.5], ["geht", 44, -5, true], ["mann", 52, -17], ["runter", 76, -12], ["rauf", 90, -4.5], ["geht", 112, -16], ["mann", 140, -8, true]];
+  const ps = [["runter", 26, -9], ["rauf", 18, -15.5], ["rauf", 44, -5, true], ["runter", 52, -17], ["runter", 76, -12], ["rauf", 90, -4.5], ["rauf", 112, -16], ["runter", 140, -8, true]];
   let pa = "", ps2 = "";
   for (const [n, u, v, sp] of ps) { const [x, y] = boden(u, v); ps2 += wurf(x, y, 1.7, 0.45, false, 0.2, 0.3); pa += figur(n, x, y, 1.72 * mY(y), sp); }
   k += sch + ps2 + lat + pa;
@@ -1066,10 +1078,12 @@ const P2 = (p) => `${r(p[0])} ${r(p[1])}`;
   k += `<path d="M0 ${r(KANTE)} L320 ${r(KANTE)} L320 200 L0 200 Z" fill="${S.lg("terrasse", [[0, "#d6cfc2"], [1, "#e6dfd2"]])}"/>`;
   let pf = "";
   for (let X = -8.4; X <= 8.4; X += 1.2) pf += strecke(T3(X, KD, 0), T3(X, 4.2, 0), 0, KANTE, 320, 200);
-  for (const d of [5.4, 6.2]) pf += `M0 ${r(T3(0, d, 0)[1])} L320 ${r(T3(0, d, 0)[1])} `;
+  for (const d of [5.6, 6.2]) if (T3(0, d, 0)[1] < 200) pf += `M0 ${r(T3(0, d, 0)[1])} L320 ${r(T3(0, d, 0)[1])} `;
   k += `<path d="${pf}" stroke="#aba393" stroke-width=".3" opacity=".7"/>`;
   k += `<path d="M0 ${r(KANTE)} L320 ${r(KANTE)}" stroke="#f8f4ec" stroke-width=".7"/><path d="M0 ${r(KANTE + 0.6)} L320 ${r(KANTE + 0.6)}" stroke="#7d7a74" stroke-width=".35"/>`;
   /* Menschen auf der Treppe (sie stehen tiefer als wir) */
+  /* Leute sitzen auf der Sitztreppe (von hinten gesehen) */
+  for (const [d, X, sp] of [[15.8, -4.6, 0], [12.4, -3.6, 1], [16.5, 5.6, 1], [12.8, 4.3, 0]]) { const z = stufeZ(d), p = T3(X, d, z); k += figur("sitzend", p[0], p[1], 1.7 * 300 / d, sp); }
   for (const [n, d, X, h] of [["runter", 14, -1.5, 1.72], ["rauf", 18, 2, 1.68]]) { const z = stufeZ(d), p = T3(X, d, z); k += figur(n, p[0], p[1], h * 300 / d); }
   S.teil({ id: "treppe", de: "die Freitreppe", syl: "FREI-trep-pe", it: "la scalinata", itSyl: "sca-li-NA-ta", en: "outdoor staircase", x: 0, y: 0, kunst: k,
     tipp: "Über die breite Freitreppe geht man vom Kleinen Schlossplatz hinunter zur Königstraße." });

@@ -127,27 +127,41 @@ S.hinten(`<circle cx="-50" cy="70" r="150" fill="${S.rg("sonne", [[0, "#ffd9a0",
 const BURG = { x: 118, y: 76, s: 0.72 };
 {
   let k = "";
-  /* Die Burgmauer verläuft am Felsrand; darunter (von hier aus fast ganz hinter der Nordzeile)
-     nur die Dächer des Burgviertels und eine kurze, steile Felswand unter dem Palas */
-  const wo = (x) => -44 + (x + 73) * 0.0625, wu = (x) => wo(x) + 9;
+  /* Die Burgmauer folgt dem Felsrücken: unter dem Palas hoch, sie knickt zweimal ab, springt unter dem
+     Sinwellturm als Zwinger vor und ist unter der Kaiserstallung niedriger. Darunter (von hier aus fast ganz
+     hinter der Nordzeile) die Dächer des Burgviertels und unter dem Palas der nackte Burgfelsen. */
+  const zug = (pts) => (x) => { for (let i = 1; i < pts.length; i++) if (x <= pts[i][0]) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; return x1 === x0 ? y1 : y0 + (y1 - y0) * (x - x0) / (x1 - x0); } return pts[pts.length - 1][1]; };
+  const OBEN = [[-76, -44.6], [-30, -42.8], [-26, -40.6], [-12, -40], [-12, -38.6], [6, -38], [8, -37.4], [16, -37], [74, -35]];
+  const UNTEN = [[-76, -33.4], [-28, -32.6], [-26, -31.6], [-12, -31], [-12, -28.6], [6, -28], [8, -29.6], [74, -28]];
+  const wo = zug(OBEN), wu = zug(UNTEN);
   /* dunkler Grund unter den Dächern, damit keine Lücke zum Himmel bleibt */
-  k += `<path d="M-80 ${r(wu(-80) + 4)} L-26 ${r(wu(-26))} L92 ${r(wu(92))} L92 16 L-80 16 Z" fill="#6e5450"/>`;
-  /* Dächer des Burgviertels: drei, vier Reihen, nach oben kleiner und dichter, Giebel hell im Streiflicht */
+  k += `<path d="M-80 ${r(wu(-80) + 4)} L-26 ${r(wu(-26))} L92 ${r(wu(92))} L92 16 L-80 16 Z" fill="#5e4644"/>`;
+  /* Dächer des Burgviertels: vor allem traufständige Ziegeldächer mit Gauben und Kaminen,
+     nur jedes vierte, fünfte Haus zeigt eine helle Giebelwand; Größen gestreut, Reihen versetzt */
+  const ROT = ["#9a4a36", "#a85440", "#8a3e2e", "#b05a42"];
+  let hausNr = 0;
   const dachReihe = (x0, x1, unten, b, hw, hd) => {
-    let g = "", x = x0;
+    let g = "", x = x0 + rnd() * b * 0.5;
     while (x < x1) {
-      const w = b * (0.8 + rnd() * 0.5), y = unten(x + w / 2), giebel = rnd() < 0.5;
-      g += `<rect x="${r(x)}" y="${r(y - hw)}" width="${r(w)}" height="${r(hw + 3)}" fill="${giebel ? "#f0d4b4" : "#d4b498"}"/>`;
-      for (let i = 0; i < Math.max(1, Math.round(w / 3.4)); i++) g += `<rect x="${r(x + 1 + i * 3.4)}" y="${r(y - hw * 0.62)}" width=".9" height="1.2" fill="#4a3a40"/>`;
+      const w = b * (0.6 + rnd()), y = unten(x + w / 2) + (rnd() - 0.5) * 2, giebel = hausNr++ % 5 === 2;
+      g += `<rect x="${r(x)}" y="${r(y - hw)}" width="${r(w)}" height="${r(hw + 3)}" fill="${giebel ? "#d8b898" : rnd() < 0.5 ? "#b49478" : "#a88a70"}"/>`;
+      for (let i = 0; i < Math.max(1, Math.round(w / 3.6)); i++) g += `<rect x="${r(x + 1 + i * 3.6)}" y="${r(y - hw * 0.62)}" width=".9" height="1.2" fill="${rnd() < 0.15 ? "#ffd890" : "#3e3038"}"/>`;
       if (giebel) {
-        g += `<path d="M${r(x)} ${r(y - hw)} L${r(x + w / 2)} ${r(y - hw - hd)} L${r(x + w)} ${r(y - hw)} Z" fill="#f6dcbc"/>`;
-        g += `<path d="M${r(x - 0.3)} ${r(y - hw + 0.2)} L${r(x + w / 2)} ${r(y - hw - hd)} L${r(x + w + 0.3)} ${r(y - hw + 0.2)}" stroke="#9a4632" stroke-width=".9" fill="none"/>`;
-        g += `<rect x="${r(x + w / 2 - 0.45)}" y="${r(y - hw - hd * 0.55)}" width=".9" height="1.1" fill="#4a3a40"/>`;
+        g += `<path d="M${r(x)} ${r(y - hw)} L${r(x + w / 2)} ${r(y - hw - hd)} L${r(x + w)} ${r(y - hw)} Z" fill="#dcbc9c"/>`;
+        g += `<path d="M${r(x - 0.3)} ${r(y - hw + 0.2)} L${r(x + w / 2)} ${r(y - hw - hd)} L${r(x + w + 0.3)} ${r(y - hw + 0.2)}" stroke="#7e3a2a" stroke-width=".9" fill="none"/><path d="M${r(x - 0.3)} ${r(y - hw + 0.2)} L${r(x + w / 2)} ${r(y - hw - hd)}" stroke="#ffcfa8" stroke-width=".3" fill="none"/>`;
+        g += `<rect x="${r(x + w / 2 - 0.45)}" y="${r(y - hw - hd * 0.55)}" width=".9" height="1.1" fill="#3e3038"/>`;
       } else {
-        g += `<path d="M${r(x - 0.4)} ${r(y - hw)} L${r(x + w * 0.18)} ${r(y - hw - hd * 0.8)} L${r(x + w * 0.82)} ${r(y - hw - hd * 0.8)} L${r(x + w + 0.4)} ${r(y - hw)} Z" fill="${["#b8644a", "#a45a44", "#c27052"][Math.floor(rnd() * 3)]}"/>`;
-        g += `<path d="M${r(x + w / 2 - 0.9)} ${r(y - hw - 0.4)} l.9 -1.6 l.9 1.6 Z" fill="#f0d4b4"/><path d="M${r(x - 0.4)} ${r(y - hw)} L${r(x + w * 0.18)} ${r(y - hw - hd * 0.8)}" stroke="#ffcfa8" stroke-width=".4"/>`;
+        const rot = ROT[Math.floor(rnd() * ROT.length)];
+        g += `<path d="M${r(x - 0.4)} ${r(y - hw)} L${r(x + w * 0.14)} ${r(y - hw - hd * 0.85)} L${r(x + w * 0.86)} ${r(y - hw - hd * 0.85)} L${r(x + w + 0.4)} ${r(y - hw)} Z" fill="${rot}"/>`;
+        g += `<path d="M${r(x + w * 0.14)} ${r(y - hw - hd * 0.85)} L${r(x + w * 0.86)} ${r(y - hw - hd * 0.85)}" stroke="#ffcfa8" stroke-width=".3" opacity=".8"/>`;
+        /* Schleppgaube oder Aufzugsgaube, dazu ab und zu ein Kamin */
+        const gx = x + w * (0.3 + rnd() * 0.3);
+        if (rnd() < 0.6) g += `<path d="M${r(gx)} ${r(y - hw - hd * 0.25)} l0 ${r(-hd * 0.3)} l${r(Math.min(3, w * 0.3))} ${r(-hd * 0.1)} l0 ${r(hd * 0.4)} Z" fill="${mische(rot, "#000000", 0.25)}"/><rect x="${r(gx + 0.4)}" y="${r(y - hw - hd * 0.48)}" width="1" height=".8" fill="#2e2428"/>`;
+        else g += `<path d="M${r(gx)} ${r(y - hw - hd * 0.3)} l0 ${r(-hd * 0.35)} l1 -1 l1 1 l0 ${r(hd * 0.35)} Z" fill="#c8a888"/><rect x="${r(gx + 0.6)}" y="${r(y - hw - hd * 0.58)}" width=".8" height=".9" fill="#2e2428"/>`;
+        if (rnd() < 0.35) g += `<rect x="${r(x + w * 0.75)}" y="${r(y - hw - hd * 1.05)}" width=".9" height="${r(hd * 0.4)}" fill="#7a5a4e"/>`;
+        if (rnd() < 0.3) g += `<rect x="${r(x + w - 1)}" y="${r(y - hw - hd * 0.9)}" width=".8" height="${r(hd * 0.9 + hw)}" fill="#c8a888" opacity=".8"/>`;
       }
-      g += `<rect x="${r(x + w - 0.8)}" y="${r(y - hw)}" width=".8" height="${r(hw + 3)}" fill="#000" opacity=".15"/>`;
+      g += `<rect x="${r(x + w - 0.8)}" y="${r(y - hw)}" width=".8" height="${r(hw + 3)}" fill="#000" opacity=".18"/>`;
       x += w + 0.2;
     }
     return g;
@@ -156,40 +170,47 @@ const BURG = { x: 118, y: 76, s: 0.72 };
   k += dachReihe(-24, 92, (x) => wu(x) + 15, 8.5, 3.6, 4.6);
   k += dachReihe(-80, 92, (x) => wu(x) + 25, 10, 4.2, 5.4);
   k += dachReihe(-80, 92, (x) => wu(x) + 37, 12, 5, 6.4);
-  /* kahle Bäume im Burggarten-Hang: feine Zweigbüschel */
-  for (const [bx, by, bh] of [[-16, wu(-16) + 6, 9], [34, wu(34) + 6, 8], [78, wu(78) + 14, 10]]) {
-    let z = `M${bx} ${r(by)} l0 ${-bh * 0.4}`;
-    for (let i = 0; i < 9; i++) { const a = -1.3 + i * 0.32, l = bh * (0.45 + rnd() * 0.3); z += ` M${bx} ${r(by - bh * 0.35)} q${r(Math.sin(a) * l * 0.4)} ${r(-l * 0.5)} ${r(Math.sin(a) * l)} ${r(-Math.cos(a) * l * 0.9)}`; }
-    k += `<path d="${z}" stroke="#5a4440" stroke-width=".35" fill="none" opacity=".85"/>`;
+  /* kahle Bäume im Burggarten: kurzer Stamm, zweimal gegabelt, weicher halbdurchsichtiger Kronenumriss */
+  for (const [bx, by, bh] of [[-6, wu(-6) + 7, 8], [40, wu(40) + 7, 7], [80, wu(80) + 14, 9]]) {
+    k += `<ellipse cx="${bx}" cy="${r(by - bh * 0.7)}" rx="${r(bh * 0.55)}" ry="${r(bh * 0.4)}" fill="#6a5450" opacity=".5"/>`;
+    k += `<path d="M${bx} ${r(by)} L${bx} ${r(by - bh * 0.35)} M${bx} ${r(by - bh * 0.35)} Q${r(bx - bh * 0.15)} ${r(by - bh * 0.55)} ${r(bx - bh * 0.3)} ${r(by - bh * 0.85)} M${bx} ${r(by - bh * 0.35)} Q${r(bx + bh * 0.12)} ${r(by - bh * 0.6)} ${r(bx + bh * 0.28)} ${r(by - bh * 0.9)} M${r(bx - bh * 0.15)} ${r(by - bh * 0.58)} l${r(-bh * 0.25)} ${r(-bh * 0.15)} M${r(bx + bh * 0.13)} ${r(by - bh * 0.62)} l${r(bh * 0.25)} ${r(-bh * 0.12)}" stroke="#4a3836" stroke-width=".4" fill="none"/>`;
   }
-  /* der Burgfelsen: eine steile, kurze Wand aus rotem Burgsandstein direkt unter dem Palas */
-  const fu = (x) => -21 + Math.sin(x * 0.7) * 0.8 + Math.sin(x * 0.23) * 1.2;
-  const fels = [[-73, wu(-73)]];
-  for (let x = -73; x <= -27; x += 2) fels.push([x, wu(x)]);
-  fels.push([-26, wu(-26)], [-27.4, fu(-27.4) + 1]);
-  for (let x = -29; x >= -73; x -= 2) fels.push([x, fu(x)]);
+  /* der Burgfelsen: unter dem Palas eine hohe, steile Wand aus rotem Burgsandstein,
+     seitlich in Bänken abgestuft, mit vorspringenden Rippen (links im Abendlicht, rechts im Schatten) */
+  const FU = [[-76, 3], [-72, 3], [-72, 6], [-66, 6.5], [-66, 10], [-62, 11.5], [-58, 14], [-50, 14.6], [-42, 14], [-34, 13.4], [-30, 11], [-30, 8], [-26, 7.4], [-26, 4], [-22, 3]];
+  const fels = [];
+  for (let x = -76; x <= -22; x += 2) fels.push([x, wu(x)]);
+  for (let i = FU.length - 1; i >= 0; i--) fels.push([FU[i][0], wu(FU[i][0]) + FU[i][1]]);
   const felsPfad = "M" + fels.map(([x, y]) => `${r(x)} ${r(y)}`).join(" L") + " Z";
   S.def(`<clipPath id="${S.id("felsclip")}"><path d="${felsPfad}"/></clipPath>`);
-  k += `<path d="${felsPfad}" fill="${S.lg("felsv", [[0, "#c8704e"], [0.5, "#b8644a"], [1, "#7a3a28"]])}"/>`;
-  let fz = `<rect x="-74" y="-40" width="48" height="22" fill="${S.lg("felsh", [[0, "#ffd8b0", 0.3], [0.5, "#000", 0], [1, "#2a0e08", 0.35]], 0, 0, 1, 0)}"/>`;
-  /* Bankfugen: kurze, versetzte Stücke statt durchgehender Linien */
-  for (let i = 0; i < 7; i++) { const x = -72 + i * 6.6 + rnd() * 2, y = -32 + rnd() * 2, w = 4 + rnd() * 3, h = 5 + rnd() * 4; fz += `<path d="M${r(x)} ${r(y)} l${r(w)} ${r(-0.6 + rnd())} l${r(-0.6 + rnd())} ${r(h)} l${r(-w * 0.8)} ${r(0.8)} Z" fill="${i % 2 ? "#d68660" : "#9a4a32"}" opacity=".55"/>`; }
-  for (let y = -30; y < -21; y += 3.2 + rnd()) for (let x = -74 + rnd() * 6; x < -27; x += 9 + rnd() * 8) {
-    const l = 3 + rnd() * 6;
-    fz += `<path d="M${r(x)} ${r(y)} l${r(l)} ${r(-0.4 + rnd() * 0.8)}" stroke="#5a2414" stroke-width=".35" opacity=".45"/><path d="M${r(x)} ${r(y - 0.4)} l${r(l * 0.8)} ${r(-0.3 + rnd() * 0.6)}" stroke="#f6c49c" stroke-width=".3" opacity=".45"/>`;
+  k += `<path d="${felsPfad}" fill="${S.lg("felsv", [[0, "#c06a48"], [0.6, "#a85638"], [1, "#7a3a28"]])}"/>`;
+  let fz = "";
+  /* Schichtung: leicht schräg, mit Unterbrechungen */
+  for (let y = -32; y < -16; y += 2.6) for (let x = -76 + rnd() * 5; x < -22; x += 7 + rnd() * 6) fz += `<path d="M${r(x)} ${r(y)} l${r(4 + rnd() * 4)} ${r(-0.9 - rnd() * 0.5)}" stroke="#5a2414" stroke-width=".35" opacity=".5"/>`;
+  /* drei vorspringende Felsrippen */
+  for (const [x, bw] of [[-50, 5], [-41, 6], [-33, 4.5]]) {
+    const yo = zug(UNTEN)(x) - 0.4, yu = zug(UNTEN)(x) + zug(FU)(x) + 0.6;
+    fz += `<path d="M${r(x - bw / 2)} ${r(yo)} L${r(x - bw / 2 - 0.6)} ${r(yo + (yu - yo) * 0.5)} L${r(x - bw / 2 + 0.3)} ${r(yu)} L${r(x)} ${r(yu + 0.4)} L${r(x + 0.3)} ${r(yo)} Z" fill="#d8835c"/>`;
+    fz += `<path d="M${r(x + 0.3)} ${r(yo)} L${r(x)} ${r(yu + 0.4)} L${r(x + bw / 2 + 0.2)} ${r(yu)} L${r(x + bw / 2 + 0.6)} ${r(yo + (yu - yo) * 0.45)} L${r(x + bw / 2)} ${r(yo)} Z" fill="#7a3a28"/>`;
+    fz += `<path d="M${r(x - bw / 2)} ${r(yo + 1)} l${r(bw * 0.4)} -.5 M${r(x - bw / 2 - 0.3)} ${r(yo + (yu - yo) * 0.55)} l${r(bw * 0.5)} -.6" stroke="#f0a47a" stroke-width=".3" opacity=".7"/>`;
   }
-  /* senkrechte Klüfte */
-  for (let i = 0; i < 6; i++) { const x = -70 + i * 7.6 + rnd() * 2, y = -33 + rnd() * 3, h = 6 + rnd() * 6; fz += `<path d="M${r(x)} ${r(y)} l${r(-0.4 + rnd() * 0.8)} ${r(h * 0.5)} l${r(-0.4 + rnd() * 0.8)} ${r(h * 0.5)}" stroke="#4a1c10" stroke-width="${r(0.4 + rnd() * 0.4)}" fill="none" opacity=".7"/>`; }
   /* Schlagschatten unter der Mauerkante */
-  fz += `<path d="M-74 ${r(wu(-74))} L-26 ${r(wu(-26))} L-26 ${r(wu(-26) + 2.4)} L-74 ${r(wu(-74) + 1.6)} Z" fill="#2a0e08" opacity=".45"/>`;
+  fz += `<path d="M-76 ${r(wu(-76))} L-22 ${r(wu(-22))} L-22 ${r(wu(-22) + 2.2)} L-76 ${r(wu(-76) + 1.6)} Z" fill="#2a0e08" opacity=".45"/>`;
   k += `<g clip-path="url(#${S.id("felsclip")})">${fz}</g>`;
-  k += `<path d="M-73 ${r(wu(-73))} L-73 ${r(fu(-73))}" stroke="#ffd0a8" stroke-width=".7" opacity=".8"/>`;
-  /* hohe Burgmauer mit Strebepfeilern, direkt auf der Felskante */
-  k += `<path d="M-73 ${r(wo(-73))} L72 ${r(wo(72))} L72 ${r(wu(72))} L-73 ${r(wu(-73))} Z" fill="${FERN}"/>`;
-  for (let x = -71; x < 72; x += 2.4) k += `<line x1="${r(x)}" y1="${r(wo(x) + 0.4)}" x2="${r(x)}" y2="${r(wu(x))}" stroke="#a87a62" stroke-width=".12" opacity=".6"/>`;
-  for (let y = 2; y < 9; y += 2.2) k += `<path d="M-73 ${r(wo(-73) + y)} L72 ${r(wo(72) + y)}" stroke="#a87a62" stroke-width=".15" opacity=".6"/>`;
-  for (let x = -62; x < 70; x += 11) k += `<path d="M${x - 1.6} ${r(wu(x))} L${x - 1} ${r(wo(x) + 1.2)} L${x + 1} ${r(wo(x) + 1.2)} L${x + 1.6} ${r(wu(x))} Z" fill="${FERN}"/><path d="M${x} ${r(wo(x) + 1.2)} L${x + 1} ${r(wo(x) + 1.2)} L${x + 1.6} ${r(wu(x))} L${x} ${r(wu(x))} Z" fill="#8e6456" opacity=".7"/>`;
-  k += `<path d="M-73 ${r(wo(-73))} L72 ${r(wo(72))}" stroke="#ffe2c0" stroke-width=".6"/>`;
+  /* am Fuß Strauchballen des Burggartens als Übergang zu den Dächern */
+  for (const [x, dy, rx] of [[-56, 14.5, 4], [-46, 15, 3.4], [-36, 13.4, 3.8], [-27, 8, 3]]) k += `<ellipse cx="${x}" cy="${r(wu(x) + dy)}" rx="${rx}" ry="${r(rx * 0.6)}" fill="${S.lg("strauch", [[0, "#4a5a3a"], [1, "#2a3424"]])}"/>`;
+  /* die Burgmauer: folgt dem Fels, ohne Raster, nur ein paar unregelmäßige Lagerfugen und Flickstellen */
+  const mauer = "M" + OBEN.map(([x, y]) => `${x} ${y}`).join(" L") + " L" + UNTEN.slice().reverse().map(([x, y]) => `${x} ${y}`).join(" L") + " Z";
+  k += `<path d="${mauer}" fill="${FERN}"/>`;
+  /* der vorspringende Zwinger unter dem Sinwellturm: Seitenwand im Schatten */
+  k += `<path d="M-12 -40 L-12 -31 L-13.4 -30 L-13.4 -38.8 Z" fill="#8e6456"/>`;
+  for (const t of [0.3, 0.55, 0.8]) { let d = ""; for (let x = -76; x < 74; x += 10 + rnd() * 12) { const l = 5 + rnd() * 8, y0 = wo(x) + (wu(x) - wo(x)) * t, y1 = wo(x + l) + (wu(x + l) - wo(x + l)) * t; d += `M${r(x)} ${r(y0)} L${r(x + l)} ${r(y1)} `; } k += `<path d="${d}" stroke="#a87a62" stroke-width=".2" opacity=".6"/>`; }
+  for (const [x, t] of [[-58, 0.4], [-20, 0.6], [30, 0.5], [52, 0.3]]) k += `<rect x="${x}" y="${r(wo(x) + (wu(x) - wo(x)) * t)}" width="3" height="1.6" fill="#e6b090" opacity=".55"/>`;
+  /* Strebepfeiler nur unter dem hohen Abschnitt, in ungleichen Abständen */
+  for (const x of [-69, -57, -43, -32]) k += `<path d="M${x - 1.8} ${r(wu(x))} L${x - 1.1} ${r(wo(x) + 1.4)} L${x + 1.1} ${r(wo(x) + 1.4)} L${x + 1.8} ${r(wu(x))} Z" fill="${FERN}"/><path d="M${x} ${r(wo(x) + 1.4)} L${x + 1.1} ${r(wo(x) + 1.4)} L${x + 1.8} ${r(wu(x))} L${x} ${r(wu(x))} Z" fill="#8e6456" opacity=".7"/>`;
+  /* Zinnen auf dem Wehrgang zwischen Sinwellturm und Kaiserstallung */
+  for (let x = -11.4; x < 16; x += 2.2) k += `<rect x="${r(x)}" y="${r(wo(x) - 1.3)}" width="1.2" height="1.4" fill="${FERN}"/>`;
+  k += `<path d="M${OBEN.map(([x, y]) => `${x} ${y}`).join(" L")}" stroke="#ffe2c0" stroke-width=".6" fill="none"/>`;
   /* die Gebäude der Burg (Palas … Luginsland), 6 Einheiten höher gesetzt */
   let g = "";
   /* PALAS mit hohem Dach und Gauben */
@@ -264,7 +285,7 @@ const BURG = { x: 118, y: 76, s: 0.72 };
       { id: "sinwellturm", de: "der Sinwellturm", syl: "SIN-well-turm", it: "la torre Sinwell", itSyl: "TOR-re SIN-well", en: "Sinwell Tower",
         x: BURG.x + SW * s, y: BURG.y - 40 * s, kunst: flaeche(-7 * s, -43 * s, 14 * s, 43 * s), tipp: "„Sinwell“ heißt im alten Deutsch „rund“. Von oben sieht man über die ganze Stadt." },
       { id: "felsen", de: "der Felsen", syl: "FEL-sen", it: "la roccia", itSyl: "ROC-cia", en: "rock",
-        x: BURG.x - 50 * s, y: BURG.y - 27 * s, kunst: flaeche(-23 * s, -8 * s, 46 * s, 14 * s), tipp: "Die Burg steht auf einem Felsen aus rotem Sandstein." },
+        x: BURG.x - 38 * s, y: BURG.y - 25 * s, kunst: flaeche(-14 * s, -8 * s, 28 * s, 17 * s), tipp: "Die Burg steht auf einem Felsen aus rotem Sandstein." },
     ] });
 }
 

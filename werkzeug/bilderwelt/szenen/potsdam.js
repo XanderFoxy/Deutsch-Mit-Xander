@@ -184,14 +184,28 @@ S.hinten(`<rect x="0" y="${HOR - 2}" width="400" height="${260 - HOR + 2}" fill=
    ===================================================================== */
 const PD = 230, PH = 19.2, PU = sk(PD), PY = yG(PD, PH);
 /* Herme (Bacchant/Bacchantin), 0,9 m breit, Fuß bei y = -0.5, Kopf trägt das Gebälk bei -8.6 */
+const HERME_S = S.lg("hermes", [[0, "#fbf3df"], [0.45, "#e9dcbd"], [1, "#b9a682"]], 0, 0, 1, 0);
 S.def(`<g id="${S.id("herme")}">` +
-  `<path d="M-.22 -.5 L-.36 -4.4 L.36 -4.4 L.22 -.5 Z" fill="${SAND}"/>` +
-  `<path d="M-.3 -4.3 Q-.46 -5.2 -.38 -6.2 Q-.42 -6.9 -.2 -7.2 L.22 -7.2 Q.44 -6.9 .4 -6.2 Q.48 -5.2 .3 -4.3 Z" fill="${SAND}"/>` +
-  `<path d="M-.36 -6.9 Q-.62 -7.6 -.44 -8.5 L-.28 -8.5 Q-.36 -7.7 -.18 -7.1 Z" fill="#e6dac0"/>` +
-  `<circle cx=".02" cy="-7.62" r=".3" fill="#efe5cf"/>` +
-  `<path d="M-.36 -8.0 Q0 -8.5 .4 -8.0 L.44 -8.62 L-.4 -8.62 Z" fill="#d9caa8"/>` +
-  `<path d="M.22 -.5 L.36 -4.4 L.4 -6.2 Q.44 -6.9 .22 -7.2" stroke="#9b8a69" stroke-width=".07" fill="none"/>` +
-  `<path d="M-.3 -4.35 L.3 -4.35 M-.32 -5.5 Q0 -5.3 .34 -5.5" stroke="#a8977a" stroke-width=".06" fill="none"/>` +
+  /* Schaft (Terme) mit Plinthe und Kannelur */
+  `<path d="M-.32 -.5 L-.32 -.8 L-.24 -.86 L-.37 -4.5 L.37 -4.5 L.24 -.86 L.32 -.8 L.32 -.5 Z" fill="${HERME_S}"/>` +
+  `<path d="M0 -.95 L0 -4.35 M-.14 -.95 L-.18 -4.35 M.14 -.95 L.18 -4.35" stroke="#b9a682" stroke-width=".035"/>` +
+  /* Tuch mit Weinlaub um die Hüften */
+  `<path d="M-.4 -4.45 Q0 -4.3 .4 -4.45 L.36 -4.95 Q0 -4.75 -.36 -4.95 Z" fill="#e6d7b4"/>` +
+  `<path d="M-.36 -4.6 q.12 -.14 .24 0 q.12 -.14 .24 0 q.12 -.14 .24 0" stroke="#a8946c" stroke-width=".035" fill="none"/>` +
+  /* Oberkörper */
+  `<path d="M-.34 -4.9 Q-.3 -5.5 -.27 -5.8 Q-.38 -6.4 -.38 -6.75 L-.14 -6.92 L.14 -6.92 L.38 -6.75 Q.38 -6.4 .27 -5.8 Q.3 -5.5 .34 -4.9 Z" fill="${HERME_S}"/>` +
+  `<path d="M-.2 -6.3 Q0 -6.18 .2 -6.3 M0 -5.9 L0 -5.3" stroke="#bfae8a" stroke-width=".035" fill="none"/>` +
+  /* erhobener äußerer Arm trägt das Gebälk, innerer Arm hält Trauben vor der Brust */
+  `<path d="M-.34 -6.72 Q-.6 -7.1 -.56 -7.45 Q-.52 -7.9 -.36 -8.4" stroke="#efe3c6" stroke-width=".15" fill="none" stroke-linecap="round"/>` +
+  `<path d="M.33 -6.7 Q.48 -6.3 .36 -6.05 Q.2 -6.0 .02 -6.2" stroke="#d8c8a4" stroke-width=".14" fill="none" stroke-linecap="round"/>` +
+  `<g fill="#cbb994"><circle cx="-.02" cy="-6.12" r=".07"/><circle cx=".08" cy="-6.06" r=".07"/><circle cx=".02" cy="-5.98" r=".065"/></g>` +
+  /* Kopf mit Locken und Weinlaubkranz, darauf das Kapitell */
+  `<rect x="-.07" y="-7.06" width=".14" height=".16" fill="#e2d4b2"/>` +
+  `<ellipse cx=".02" cy="-7.28" rx=".2" ry=".25" fill="#f3e9d1"/>` +
+  `<g fill="#e3d4b0"><circle cx="-.14" cy="-7.44" r=".09"/><circle cx=".02" cy="-7.5" r=".1"/><circle cx=".17" cy="-7.43" r=".09"/></g>` +
+  `<path d="M-.2 -7.36 q.22 .1 .44 0" stroke="#a8946c" stroke-width=".04" fill="none"/>` +
+  `<path d="M-.07 -7.22 q.09 .06 .18 0" stroke="#b9a682" stroke-width=".03" fill="none"/>` +
+  `<path d="M-.3 -7.6 L.34 -7.6 L.42 -8.6 L-.42 -8.6 Z" fill="#e1d2ae"/><path d="M-.42 -8.32 H.42 M-.36 -7.95 H.38" stroke="#b9a682" stroke-width=".04"/>` +
   `</g>`);
 /* Fenstertür: rundbogig, 2,3 m breit, bis 6,1 m hoch */
 S.def(`<g id="${S.id("fenster")}">` +
@@ -228,7 +242,7 @@ const schlossUnter = [];
   for (const p of pfeiler) for (const s of [-1, 1]) {
     const x = r(p + s * 0.5);
     schatten += `<path d="M${r(x + 0.2)} -.5 L${r(x + 0.55)} -.5 L${r(x + 0.7)} -7.4 L${r(x + 0.35)} -7.4 Z"/>`;
-    hermen += `<use href="#${S.id("herme")}" transform="translate(${x} 0) scale(${s} 1)"/>`;
+    hermen += `<use href="#${S.id("herme")}" transform="translate(${x} 0) scale(${-s} 1)"/>`;
   }
   k += `<g fill="#8a6524" opacity=".28" filter="url(#${S.id("schw")})">${schatten}</g>` + hermen;
   /* Gebälk mit Fries, Kranzgesims, darüber die Balustrade mit Vasen */
@@ -296,11 +310,10 @@ const terrUnter = [];
 {
   const z = zufall(77);
   let t = "";
-  t += `<rect width="4" height="3.4" fill="#6a8f3e" opacity=".55"/>`;
-  for (let i = 0; i < 14; i++) t += `<ellipse cx="${r(z() * 4)}" cy="${r(z() * 3.4)}" rx="${r(0.55 + z() * 0.3)}" ry="${r(0.42 + z() * 0.2)}" fill="${["#4f7430", "#6f9440", "#b9a640", "#5f8a3a", "#8cae4e", "#3f6328", "#c9b555"][i % 7]}"/>`;
-  t += `<path d="M.4 .2 L3.6 .2 M.4 1.9 L3.6 1.9" stroke="#8a7a5a" stroke-width=".12" opacity=".5"/>`;
-  t += `<ellipse cx="2.2" cy="2.6" rx=".32" ry=".5" fill="#4a3566"/><ellipse cx="2.45" cy="2.45" rx=".22" ry=".3" fill="#5d4580"/>`;
-  S.def(`<pattern id="${S.id("spalier")}" patternUnits="userSpaceOnUse" width="4" height="3.4">${t}</pattern>`);
+  t += `<rect width="9" height="6.8" fill="#6a8f3e" opacity=".55"/>`;
+  for (let i = 0; i < 52; i++) t += `<ellipse cx="${r(z() * 9)}" cy="${r(z() * 6.8)}" rx="${r(0.55 + z() * 0.3)}" ry="${r(0.42 + z() * 0.2)}" fill="${["#4f7430", "#6f9440", "#b9a640", "#5f8a3a", "#8cae4e", "#3f6328", "#c9b555"][i % 7]}"/>`;
+  for (const [x, y] of [[2.2, 2.6], [6.6, 1.2], [4.4, 5.4], [8.1, 4.6]]) t += `<ellipse cx="${x}" cy="${y}" rx=".3" ry=".48" fill="#4a3566"/><ellipse cx="${x + 0.22}" cy="${y - 0.15}" rx=".2" ry=".28" fill="#5d4580"/>`;
+  S.def(`<pattern id="${S.id("spalier")}" patternUnits="userSpaceOnUse" width="9" height="6.8">${t}</pattern>`);
   /* Sprossen der verglasten Nischen */
   S.def(`<pattern id="${S.id("sprossen")}" patternUnits="userSpaceOnUse" width="1.5" height="1.6"><path d="M0 0 H1.5 M0 0 V1.6" stroke="#eef0e8" stroke-width=".22"/></pattern>`);
 }
@@ -355,7 +368,7 @@ S.teile[S.teile.length - 1].unter = terrUnter;
 /* Jede Figur wird einmal in <defs> gelegt (100 Einheiten hoch) und mit <use> gezeichnet:
    vorn groß, auf der Treppe noch einmal ganz klein. */
 const FIG = {};
-const mensch = (name, spec, groesse, D, X, Q = 2) => {
+const mensch = (name, spec, groesse, D, X, Q = 1) => {
   const m = B.mensch(spec, 100);
   S.def(`<g id="${S.id("fig" + name)}">${kompakt(m.svg, Q)}</g>`);
   const f = { m, x: r(xG(D, X)), y: r(yG(D)), u: sk(D), hoehe: 100 / groesse, s: groesse * sk(D) / 100 };
@@ -446,30 +459,50 @@ for (let a = 15; a < 360; a += 30) {
 }
 statuen.sort((p, q) => q.D - p.D);
 const SOCKEL = S.lg("sockel", [[0, "#f4f1ea"], [0.5, "#dcd7cc"], [1, "#a9a39a"]], 0, 0, 1, 0);
+/* Marmorfiguren (2,3 m) in Metern: Göttin im langen Gewand, Gott mit Mantel und Stab.
+   Licht von links vorn: rechte Kanten im Schatten, feine Faltenlinien. */
+const MARMOR_S = S.lg("marmors", [[0, "#ffffff"], [0.55, "#ece9e2"], [1, "#b9b4aa"]], 0, 0, 1, 0);
+S.def(`<g id="${S.id("goettin")}">` +
+  `<path d="M-.33 0 Q-.36 -.42 -.3 -.86 Q-.28 -1.05 -.27 -1.2 Q-.21 -1.36 -.2 -1.44 Q-.25 -1.62 -.25 -1.84 Q-.12 -1.92 -.05 -1.95 L.07 -1.95 Q.16 -1.92 .25 -1.86 Q.24 -1.62 .2 -1.44 Q.25 -1.3 .29 -1.17 Q.29 -.9 .26 -.62 Q.28 -.3 .38 -.05 L.36 0 Z" fill="${MARMOR_S}"/>` +
+  `<path d="M-.2 -.08 Q-.17 -.6 -.12 -1.12 M-.05 -.06 Q-.03 -.6 .02 -1.15 M.12 -.07 Q.1 -.5 .12 -.95 M.27 -.08 Q.2 -.4 .2 -.7 M-.24 -1.24 Q0 -1.1 .28 -1.18 M-.2 -1.46 Q-.05 -1.6 .18 -1.82" stroke="#c9c4ba" stroke-width=".022" fill="none"/>` +
+  `<path d="M.26 -.62 Q.28 -.3 .38 -.05 L.36 0 L.24 0 Q.2 -.4 .2 -.7 Z" fill="#b5afa4" opacity=".55"/>` +
+  `<path d="M-.25 -1.83 Q-.36 -1.62 -.33 -1.46 Q-.2 -1.5 -.05 -1.6" stroke="#f6f4ef" stroke-width=".1" fill="none" stroke-linecap="round"/>` +
+  `<path d="M.24 -1.84 Q.34 -1.62 .33 -1.42 Q.36 -1.25 .36 -1.12" stroke="#d6d1c7" stroke-width=".095" fill="none" stroke-linecap="round"/>` +
+  `<path d="M.33 -1.13 Q.4 -.9 .37 -.62 L.43 -.6 Q.46 -.95 .38 -1.15 Z" fill="#cfc9be"/>` +
+  `<rect x="-.045" y="-2.04" width=".09" height=".11" fill="#e6e2da"/>` +
+  `<ellipse cx=".015" cy="-2.14" rx=".1" ry=".125" fill="#f8f6f1"/>` +
+  `<path d="M-.09 -2.16 Q-.06 -2.3 .03 -2.29 Q.12 -2.28 .11 -2.16 Q.05 -2.23 -.09 -2.16 Z" fill="#dedad1"/><circle cx="-.06" cy="-2.27" r=".055" fill="#dedad1"/>` +
+  `</g>`);
+S.def(`<g id="${S.id("gott")}">` +
+  /* Beine: links Standbein, rechts Spielbein */
+  `<path d="M-.16 -1.12 L-.13 -.62 L-.12 -.05 L-.02 -.05 L-.02 -.62 L.0 -1.1 Z" fill="${MARMOR_S}"/>` +
+  `<path d="M.04 -1.1 L.14 -.64 L.17 -.1 L.24 -.03 L.3 -.05 L.24 -.14 L.24 -.62 L.17 -1.1 Z" fill="#e2ded6"/>` +
+  /* Rumpf, darüber der Mantel von der linken Schulter zur rechten Hüfte und bis zum Knie */
+  `<path d="M-.19 -1.12 Q-.2 -1.4 -.22 -1.55 Q-.29 -1.75 -.3 -1.86 L-.08 -1.95 L.08 -1.95 L.3 -1.86 Q.29 -1.72 .22 -1.55 Q.2 -1.38 .2 -1.12 Z" fill="${MARMOR_S}"/>` +
+  `<path d="M-.32 -1.88 Q-.36 -1.4 -.28 -.7 L-.08 -.72 Q.05 -.95 .22 -1.08 Q.12 -1.4 -.02 -1.6 Q-.12 -1.78 -.18 -1.94 Z" fill="#f1eee8"/>` +
+  `<path d="M-.26 -1.7 Q-.22 -1.2 -.2 -.78 M-.14 -1.6 Q-.1 -1.2 -.12 -.76 M.12 -1.1 Q0 -.95 -.1 -.8" stroke="#c9c4ba" stroke-width=".022" fill="none"/>` +
+  `<path d="M-.12 -1.5 Q0 -1.44 .12 -1.5 M0 -1.4 L0 -1.2" stroke="#d6d1c7" stroke-width=".02" fill="none"/>` +
+  /* rechter Arm erhoben mit Stab, linker Arm unter dem Mantel */
+  `<path d="M.27 -1.86 Q.38 -2.05 .4 -2.3" stroke="#e8e4dc" stroke-width=".1" fill="none" stroke-linecap="round"/>` +
+  `<path d="M.42 -2.56 L.38 -1.3" stroke="#d8d3c9" stroke-width=".04"/><circle cx=".42" cy="-2.6" r=".05" fill="#e8e4dc"/>` +
+  `<path d="M-.3 -1.84 Q-.38 -1.6 -.34 -1.36 L-.24 -1.35" stroke="#f6f4ef" stroke-width=".1" fill="none" stroke-linecap="round"/>` +
+  `<rect x="-.045" y="-2.04" width=".09" height=".11" fill="#e6e2da"/>` +
+  `<ellipse cx=".0" cy="-2.14" rx=".1" ry=".125" fill="#f8f6f1"/>` +
+  `<path d="M-.1 -2.18 Q-.04 -2.32 .1 -2.2 Q0 -2.26 -.1 -2.18 Z" fill="#dedad1"/>` +
+  `</g>`);
 const figur = (u, art) => {
-  /* Sockel 1,6 m, Figur 2,3 m, gezeichnet in Metern */
+  /* Sockel 1,6 m, darauf die Figur 2,3 m */
   let g = `<path d="M-.75 0 L-.75 -.25 L-.6 -.3 L-.6 -1.35 L-.72 -1.42 L-.72 -1.6 L.72 -1.6 L.72 -1.42 L.6 -1.35 L.6 -.3 L.75 -.25 L.75 0 Z" fill="${SOCKEL}"/>`;
-  g += `<rect x="-.45" y="-1.2" width=".9" height=".55" fill="#cfc9be" opacity=".7"/>`;
-  if (art % 2) {
-    /* Göttin: Gewand bis zum Boden, ein Arm angewinkelt */
-    g += `<path d="M-.42 -1.62 Q-.5 -2.6 -.32 -3.1 Q-.38 -3.5 -.2 -3.7 L.22 -3.7 Q.4 -3.4 .34 -3.0 Q.52 -2.5 .44 -1.62 Z" fill="${MARMOR}"/>`;
-    g += `<path d="M.3 -3.4 Q.62 -3.1 .48 -2.7" stroke="#ece9e2" stroke-width=".12" fill="none"/><path d="M-.3 -3.45 Q-.66 -3.0 -.5 -2.55" stroke="#dcd8cf" stroke-width=".12" fill="none"/>`;
-    g += `<path d="M-.2 -1.7 Q-.1 -2.6 -.05 -3.2 M.15 -1.7 Q.2 -2.4 .1 -3.1" stroke="#b9b4aa" stroke-width=".05" fill="none"/>`;
-  } else {
-    /* Gott: Standbein, Mantel über der Schulter, Arm erhoben */
-    g += `<path d="M-.3 -1.62 L-.22 -2.55 L-.3 -3.05 Q-.36 -3.5 -.18 -3.7 L.2 -3.7 Q.36 -3.5 .3 -3.05 L.22 -2.55 L.3 -1.62 L.1 -1.62 L.02 -2.45 L-.08 -1.62 Z" fill="${MARMOR}"/>`;
-    g += `<path d="M.22 -3.55 Q.6 -3.9 .62 -4.25" stroke="#efece5" stroke-width=".13" fill="none" stroke-linecap="round"/>`;
-    g += `<path d="M-.32 -3.5 Q-.55 -2.9 -.42 -2.2 L-.28 -2.3 Q-.34 -2.9 -.18 -3.3 Z" fill="#dcd8cf"/>`;
-  }
-  g += `<circle cx="0" cy="-3.88" r=".2" fill="#f5f3ee"/><path d="M-.18 -3.95 Q0 -4.12 .18 -3.95" stroke="#cfcac0" stroke-width=".06" fill="none"/>`;
-  return `<g transform="scale(${u})">${g}</g>`;
+  g += `<rect x="-.45" y="-1.2" width=".9" height=".55" fill="#cfc9be" opacity=".7"/><path d="M-.72 -1.42 H.72 M-.6 -.3 H.6" stroke="#9f998f" stroke-width=".03"/>`;
+  g += `<use href="#${S.id(art % 2 ? "goettin" : "gott")}" transform="translate(0 -1.6)${art % 4 > 1 ? " scale(-1 1)" : ""}"/>`;
+  return `<g transform="scale(${u.toFixed(4)})">${g}</g>`;
 };
 {
   let k = "";
   statuen.forEach((p, n) => {
     k += `<g transform="translate(${r(p.x)} ${r(p.y)})">${figur(p.u, Math.round(p.a / 30))}</g>`;
   });
-  const vorne = statuen.filter((p) => p.a === 345)[0];
+  const vorne = statuen.filter((p) => p.a === 15)[0];   /* die Göttin rechts vorn */
   S.teil({ id: "statue", de: "die Statue", syl: "STA-tu-e", it: "la statua", itSyl: "STA-tua", en: "statue", x: 0, y: 0, kunst: k,
     tipp: "Zwölf Statuen aus Marmor stehen um die Fontäne: acht römische Götter und die vier Elemente.",
     zoom: { x: r(vorne.x - 40), y: r(vorne.y - 50), w: 80, h: 54 },
@@ -549,11 +582,11 @@ const ORKRONE = S.rg("orkrone", [[0, "#7fb055"], [0.6, "#4a7a33"], [1, "#2c5222"
     for (let i = 0; i < 9; i++) { const a = z() * 6.28, d = Math.sqrt(z()) * 0.62; g += `<circle cx="${r(Math.cos(a) * d)}" cy="${r(-2.55 + Math.sin(a) * d)}" r=".075" fill="#f29a1e"/>`; }
     k += `<g transform="translate(${r(x)} ${r(y)}) scale(${u.toFixed(4)})">${g}</g>`;
   }
-  const o = ORANGEN.filter((q) => q.D === 37 && q.X < 0)[0], u = sk(o.D);
+  const o = ORANGEN.filter((q) => q.D === 46 && q.X > 0)[0], u = sk(o.D);
   kuebelUnter = { x: r(xG(o.D, o.X)), y: r(yG(o.D)), u };
   S.teil({ id: "orangenbaum", de: "der Orangenbaum", syl: "o-RAN-gen-baum", it: "l'arancio", itSyl: "a-RAN-cio", en: "orange tree", x: 0, y: 0, kunst: k,
     tipp: "Im Sommer stehen die Orangenbäume draußen im Park. Im Winter kommen sie in die Orangerie.",
-    zoom: { x: r(kuebelUnter.x - 36), y: r(kuebelUnter.y - 50), w: 72, h: 54 },
+    zoom: { x: r(Math.min(326, kuebelUnter.x - 36)), y: r(kuebelUnter.y - 52), w: 72, h: 54 },
     unter: [{ id: "kuebel", de: "der Kübel", syl: "KÜ-bel", it: "il vaso", itSyl: "VA-so", en: "planter", x: kuebelUnter.x, y: kuebelUnter.y,
       kunst: flaeche(-0.62 * u, -1 * u, 1.24 * u, 1 * u, 0.5), tipp: "Die Kübel sind aus Holz. So kann man die Bäume tragen." }] });
 }
