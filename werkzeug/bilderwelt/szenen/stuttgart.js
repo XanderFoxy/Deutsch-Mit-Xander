@@ -290,14 +290,15 @@ const FT = { x: 306, y: 85, s: 31 / 86.4 };
   /* Turmkorb: Trichter, vier Geschosse mit Fensterbändern, Plattform */
   k += `<path d="M${Y(-1.2)} ${Y(-53)} L${Y(-4.2)} ${Y(-55.2)} L${Y(4.2)} ${Y(-55.2)} L${Y(1.2)} ${Y(-53)} Z" fill="#cfd2d2"/>`;
   k += `<rect x="${Y(-4.2)}" y="${Y(-61.6)}" width="${Y(8.4)}" height="${Y(6.4)}" fill="${S.lg("korb", [[0, "#c2c6c7"], [0.6, "#f2f2ee"], [1, "#cdd0d0"]], 0, 0, 1, 0)}"/>`;
-  for (const y of [-56.6, -58.4]) k += `<rect x="${Y(-4.2)}" y="${Y(y)}" width="${Y(8.4)}" height="${Y(1)}" fill="#6f8194"/>`;
-  k += `<rect x="${Y(-4.6)}" y="${Y(-62.4)}" width="${Y(9.2)}" height="${Y(0.9)}" fill="#eceeec"/>`;
+  for (const y of [-56.4, -57.9, -59.4, -60.9]) k += `<rect x="${Y(-4.2)}" y="${Y(y)}" width="${Y(8.4)}" height="${Y(0.8)}" fill="${S.lg("korbfen", [[0, "#55687a"], [0.6, "#93abc0"], [1, "#5f7387"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M${Y(-4.2)} ${Y(-55.2)} L${Y(4.2)} ${Y(-55.2)} M${Y(-4.2)} ${Y(-61.6)} L${Y(4.2)} ${Y(-61.6)}" stroke="#a7acad" stroke-width=".1"/>`;
+  k += `<rect x="${Y(-5)}" y="${Y(-62.4)}" width="${Y(10)}" height="${Y(0.8)}" fill="#eceeec"/><path d="M${Y(-5)} ${Y(-62.4)} L${Y(-5)} ${Y(-63.4)} L${Y(5)} ${Y(-63.4)} L${Y(5)} ${Y(-62.4)} ${Array.from({ length: 9 }, (_, i) => `M${Y(-4 + i)} ${Y(-62.4)} L${Y(-4 + i)} ${Y(-63.4)}`).join(" ")}" stroke="#8b8f90" stroke-width=".07" fill="none"/>`;
   k += `<rect x="${Y(-0.9)}" y="${Y(-66)}" width="${Y(1.8)}" height="${Y(3.6)}" fill="#dcdedd"/>`;
   for (let i = 0; i < 8; i++) k += `<rect x="${Y(-0.5 + i * 0.03)}" y="${Y(-67.8 - i * 2.1)}" width="${Y(1 - i * 0.06)}" height="${Y(2.1)}" fill="${i % 2 ? "#f0f0ec" : "#d0544e"}"/>`;
-  k += `<path d="M0 ${Y(-84.6)} L0 ${Y(-86.4)}" stroke="#d0544e" stroke-width=".12"/>`;
+  k += `<path d="M0 ${Y(-82.4)} L0 ${Y(-86.4)}" stroke="#d0544e" stroke-width=".14"/>`;
   S.teil({ id: "fernsehturm", de: "der Fernsehturm", syl: "FERN-seh-turm", it: "la torre della televisione", itSyl: "TOR-re del-la te-le-vi-SIO-ne", en: "TV tower",
     x: FT.x, y: FT.y, kunst: `<g opacity=".88">${k}</g>`, tipp: "Der Stuttgarter Fernsehturm von 1956 war der erste Fernsehturm aus Beton auf der Welt.",
-    zoom: { x: FT.x - 9.6, y: FT.y - 33, w: 19.2, h: 12 },
+    zoom: { x: FT.x - 10, y: 55, w: 19.5, h: 13 },
     unter: [
       { id: "aussichtsplattform", de: "die Aussichtsplattform", syl: "AUS-sichts-platt-form", it: "la piattaforma panoramica", itSyl: "piat-ta-FOR-ma pa-no-RA-mi-ca", en: "observation deck",
         x: FT.x, y: FT.y - 55.2 * s, kunst: flaeche(-2, -2.8, 4, 3.4, 0.3), tipp: "Vom Turmkorb in 150 Metern Höhe sieht man über den ganzen Stuttgarter Kessel." },
@@ -662,7 +663,7 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
     k += vieleck([proj(a), proj(b), proj([b[0] + sx, b[1] + sd]), proj([a[0] + sx, a[1] + sd])], `fill="#2a2216" opacity=".2"`);
   }
   /* lange Schatten: Säule, Pavillon, Brunnen */
-  k += wurf(SAEULE[0], SAEULE[1], 6.6, 6, false, 0.3) + wurf(SAEULE[0], SAEULE[1], 35, 2.3, false, 0.3, 1.5);
+  k += wurf(SAEULE[0], SAEULE[1], 6.6, 6, false, 0.36) + wurf(SAEULE[0], SAEULE[1], 35, 2.6, false, 0.38, 1.8);
   k += wurf(PAV[0], PAV[1], 8.6, 7, false, 0.22, 2.2);
   for (const B0 of [BRUNNEN_N, BRUNNEN_S]) k += wurf(B0[0], B0[1], 4.6, 4, false, 0.2, 1.2);
   /* Bäume vor dem Kunstgebäude (erstes Herbstlaub) */
@@ -947,6 +948,7 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
   /* Boden der Kolonnade */
   k += `<path d="M-2 ${r(at(-2, 0))} L${r(xe)} ${r(at(xe, 0))} L${r(xe)} ${r(at(xe, 0) + 0.5)} L-2 ${r(at(-2, 0) + 1.6)} Z" fill="#b8ab93"/>`;
   /* 34 ionische Säulen: vorn mit attischer Basis, Kannelur und Volutenkapitell */
+  S.def(`<g id="${S.id("kap")}"><rect x="-.62" y=".02" width="1.24" height=".22" fill="#efe4cc"/><circle cx="-.6" cy=".26" r=".2" fill="#f4ead6" stroke="#a8956f" stroke-width=".07"/><circle cx="-.6" cy=".26" r=".07" fill="#a8956f"/><circle cx=".6" cy=".26" r=".2" fill="#f4ead6" stroke="#a8956f" stroke-width=".07"/><circle cx=".6" cy=".26" r=".07" fill="#a8956f"/><rect x="-.82" y="-.18" width="1.64" height=".2" fill="#f7f0e0"/></g><g id="${S.id("basis")}"><rect x="-.72" y="-.2" width="1.44" height=".2" fill="#ddd0b4"/><rect x="-.62" y="-.36" width="1.24" height=".17" rx=".08" fill="#efe5d0"/></g>`);
   const SAEULE_K = S.lg("koensaeule", [[0, "#b9a988"], [0.3, "#dccfb2"], [0.62, "#f6eedd"], [0.85, "#e6dabf"], [1, "#c4b493"]], 0, 0, 1, 0);
   for (let i = 0; i < 34; i++) {
     const u = i * 4.09, x = xU(u), w = Math.max(0.3, 300 * 1.0 / (81 + u) * 0.82);
@@ -967,8 +969,8 @@ const mensch = (name, u, v, spiegel, gross = 1.7) => {
         k += `<path d="M${r(vx - s * q * 1.3)} ${r(vy - q * 1.1)} Q${r(vx + s * q * 0.4)} ${r(vy - q * 1.3)} ${r(vx + s * q)} ${r(vy - q * 0.1)} A${r(q)} ${r(q)} 0 1 ${s > 0 ? 1 : 0} ${r(vx - s * q * 0.6)} ${r(vy + q * 0.6)} A${r(q * 0.6)} ${r(q * 0.6)} 0 1 ${s > 0 ? 1 : 0} ${r(vx + s * q * 0.3)} ${r(vy - q * 0.15)} A${r(q * 0.3)} ${r(q * 0.3)} 0 1 ${s > 0 ? 1 : 0} ${r(vx)} ${r(vy + q * 0.2)}" stroke="#a8956f" stroke-width="${r(w * 0.065)}" fill="#f4ead6"/>`;
       }
       k += `<rect x="${r(x - w * 0.82)}" y="${r(yt - w * 0.18)}" width="${r(w * 1.64)}" height="${r(w * 0.2)}" fill="#f7f0e0"/>`;
-    } else if (w > 0.7) {
-      k += `<rect x="${r(x - w * 0.75)}" y="${r(yt - w * 0.2)}" width="${r(w * 1.5)}" height="${r(w * 0.32)}" fill="#f2e9d6"/><rect x="${r(x - w * 0.65)}" y="${r(yb - w * 0.3)}" width="${r(w * 1.3)}" height="${r(w * 0.3)}" fill="#e2d6bc"/>`;
+    } else if (w > 0.6) {
+      k += `<use href="#${S.id("kap")}" transform="translate(${r(x)} ${r(yt)}) scale(${w.toFixed(2)})"/><use href="#${S.id("basis")}" transform="translate(${r(x)} ${r(yb)}) scale(${w.toFixed(2)})"/>`;
     }
   }
   /* Stirnseite (Südecke) im Licht, mit Pilastern */
@@ -1178,7 +1180,7 @@ const teller = (rx, ry, id) => `<ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fil
   const SAITE = S.lg("saite", [[0, "#d48b62"], [0.5, "#b0663f"], [1, "#7e4426"]]);
   for (const [d, dy] of [["M-2 1.9 Q3 .7 9 1.1", 0], ["M-1.4 2.9 Q3.6 1.7 9.4 2.2", 0]]) k += `<path d="${d}" stroke="#5e331c" stroke-width="1.55" stroke-linecap="round" fill="none" transform="translate(0 ${dy + 0.25})"/><path d="${d}" stroke="${SAITE}" stroke-width="1.3" stroke-linecap="round" fill="none"/><path d="${d}" stroke="#f0b48e" stroke-width=".3" stroke-linecap="round" fill="none" transform="translate(0 -.35)" opacity=".8"/>`;
   S.teil({ oben: true, id: "spaetzle", de: "die Spätzle", syl: "SPÄTZ-le", it: "gli spätzle", itSyl: "SPÄTZ-le", en: "spaetzle",
-    x: 248, y: 190.5, steht: true, kunst: k, tipp: "„Spätzle“ gibt es nur im Plural: die Spätzle. Es sind schwäbische Eiernudeln – hier mit Linsen und Saitenwürstle." });
+    x: 248, y: 190.5, steht: true, kunst: k, tipp: "Man sagt fast immer die Spätzle – das Wort steht im Plural. Es sind schwäbische Eiernudeln, hier mit Linsen und Saitenwürstle." });
 }
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/stuttgart.js"));

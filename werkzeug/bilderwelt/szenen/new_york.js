@@ -1053,8 +1053,8 @@ const WAGEN = { X: -3.9, Z: 18.75 };
     v += `<path d="M${r(x - 1.5 * q * d)} ${r(y - 0.9 * q)} Q${r(x - 0.2 * q * d)} ${r(y - 1.9 * q)} ${r(x + 1.1 * q * d)} ${r(y - 1.2 * q)} Q${r(x + 0.4 * q * d)} ${r(y - 0.2 * q)} ${r(x - 0.6 * q * d)} ${r(y - 0.3 * q)} L${r(x - 2.2 * q * d)} ${r(y - 0.6 * q)} Z" fill="#8a909a"/>`;
     v += `<circle cx="${r(x + 1.25 * q * d)}" cy="${r(y - 1.75 * q)}" r="${r(0.42 * q)}" fill="#5e6470"/><path d="M${r(x + 0.9 * q * d)} ${r(y - 1.4 * q)} q${r(0.3 * q * d)} ${r(0.2 * q)} ${r(0.5 * q * d)} 0" stroke="#5f8f7a" stroke-width="${r(0.3 * q)}" fill="none"/>`;
     v += `<path d="M${r(x + 1.6 * q * d)} ${r(y - 1.8 * q)} l${r(0.35 * q * d)} ${r(0.1 * q)}" stroke="#d9a05a" stroke-width="${r(0.15 * q)}"/><path d="M${r(x)} ${r(y - 0.2 * q)} v${r(0.25 * q)} M${r(x + 0.3 * q * d)} ${r(y - 0.2 * q)} v${r(0.25 * q)}" stroke="#c4605a" stroke-width="${r(0.12 * q)}"/>`; }
-  /* ein Hund an der Leine, am linken Laternenmast angebunden */
-  { const [lx, ly] = NP(-13, 30, 0.9), [hx3, hy3] = NP(-12.3, 29.2, 0), q = K * 0.1 / 29.2;
+  /* ein Hund an der Leine, am rechten Laternenmast angebunden */
+  { const [lx, ly] = NP(12.5, 30, 0.9), [hx3, hy3] = NP(11.6, 29.2, 0), q = K * 0.1 / 29.2;
     v += `<path d="M${r(lx)} ${r(ly)} Q${r((lx + hx3) / 2)} ${r(ly + 2)} ${r(hx3 + 2.2 * q)} ${r(hy3 - 5.4 * q)}" stroke="#a03a2a" stroke-width=".25" fill="none"/>`;
     v += `<path d="M${r(hx3 - 4 * q)} ${r(hy3 - 2.6 * q)} Q${r(hx3)} ${r(hy3 - 5.4 * q)} ${r(hx3 + 3 * q)} ${r(hy3 - 3.4 * q)} L${r(hx3 + 4.4 * q)} ${r(hy3 - 6.2 * q)} L${r(hx3 + 5.2 * q)} ${r(hy3 - 5.2 * q)} L${r(hx3 + 4 * q)} ${r(hy3 - 3)} L${r(hx3 + 3.4 * q)} ${r(hy3)} L${r(hx3 + 2.6 * q)} ${r(hy3)} L${r(hx3 + 2.4 * q)} ${r(hy3 - 2 * q)} L${r(hx3 - 2.6 * q)} ${r(hy3 - 2 * q)} L${r(hx3 - 2.8 * q)} ${r(hy3)} L${r(hx3 - 3.6 * q)} ${r(hy3)} L${r(hx3 - 3.8 * q)} ${r(hy3 - 2.4 * q)} L${r(hx3 - 5.4 * q)} ${r(hy3 - 4 * q)} Z" fill="#7a5532"/><ellipse cx="${r(hx3)}" cy="${r(hy3 + 0.2)}" rx="${r(5 * q)}" ry="${r(0.8 * q)}" fill="#1d2230" opacity=".25"/>`; }
   /* Schild „Brooklyn Bridge Park“ am Geländer (schwarz-weiß, Ahornblatt) */
