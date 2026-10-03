@@ -116,8 +116,7 @@ S.hinten(`<rect x="0" y="0" width="22" height="187" fill="${S.lg("saeule", [[0, 
 S.hinten(`<rect x="30" y="110" width="104" height="22" fill="${SCHWARZ}"/><rect x="30" y="109" width="104" height="2" rx=".6" fill="#4b5057"/>
 <rect x="30" y="129" width="104" height="3" fill="#0c0d0f"/>
 <rect x="56" y="105.8" width="42" height="3.4" rx="1.6" fill="${S.lg("soundbar", [[0, "#4a4e55"], [1, "#1c1e21"]])}"/>
-<rect x="57" y="106.6" width="40" height="1.6" rx=".8" fill="#2a2d31"/><circle cx="77" cy="107.4" r=".4" fill="#ffffff" opacity=".6"/>
-<text x="82" y="122" font-size="3" text-anchor="middle" fill="#9aa1a8" font-family="Arial" letter-spacing=".8">TV · SOUND · HEIMKINO</text>`);
+<rect x="57" y="106.6" width="40" height="1.6" rx=".8" fill="#2a2d31"/><circle cx="77" cy="107.4" r=".4" fill="#ffffff" opacity=".6"/>`);
 
 /* =====================================================================
    1 — DER FERNSEHER (die TV-Wand, alle Geräte zeigen das gleiche Video)
@@ -227,7 +226,7 @@ const ZW = { x0: 142, x1: 230, y0: 30, y1: 132 };
     { id: "taschenlampe", x: -24, y: top + 52, w: 16, h: 16, karte: "#33373d", preis: "14,99",
       innen: (x, y) => `<g transform="rotate(-30 ${x} ${y - 8})"><rect x="${x - 1.6}" y="${y - 14}" width="3.2" height="11" rx=".8" fill="${ALU}"/><path d="M${x - 2.6} ${y - 3} L${x + 2.6} ${y - 3} L${x + 2} ${y - 5.4} L${x - 2} ${y - 5.4} Z" fill="#9aa2a9"/><ellipse cx="${x}" cy="${y - 2.8}" rx="2.6" ry=".9" fill="#fffbe0"/><rect x="${x - .5}" y="${y - 11}" width="1" height="2" rx=".3" fill="${ROT}"/></g><path d="M${x + 3} ${y - 4} L${x + 7.6} ${y - 1.6} L${x + 7.6} ${y - 6.4} Z" fill="#fff6c0" opacity=".5"/>`,
       de: "die Taschenlampe", syl: "TA-schen-lam-pe", it: "la torcia", itSyl: "TOR-cia", en: "torch" },
-    { id: "gluehbirne", x: 0, y: top + 52, w: 14, h: 16, karte: "#f4f4f2", preis: "3,99",
+    { id: "gluehbirne", x: 0, y: top + 52, w: 14, h: 16, karte: "#fde9a8", preis: "3,99",
       innen: (x, y) => `<circle cx="${x}" cy="${y - 10}" r="3.8" fill="${S.rg("birne", [[0, "#fffbe0"], [0.7, "#fff1a8"], [1, "#e8d58a"]], 0.4, 0.35, 0.7)}" stroke="#d8c78a" stroke-width=".2"/><path d="M${x - 1.4} ${y - 6.6} L${x + 1.4} ${y - 6.6} L${x + 1.2} ${y - 4.8} L${x - 1.2} ${y - 4.8} Z" fill="#fff1a8"/><rect x="${x - 1.4}" y="${y - 4.8}" width="2.8" height="2.4" fill="${ALU}"/><path d="M${x - 1.4} ${y - 4.2} h2.8 M${x - 1.4} ${y - 3.3} h2.8" stroke="#8d959c" stroke-width=".3"/><path d="M${x - 1} ${y - 9} q1 -2 2 0" stroke="#e0a42a" stroke-width=".35" fill="none"/><text x="${x}" y="${y - 0.6}" font-size="1.8" text-anchor="middle" fill="#444" font-family="Arial">E27 · LED</text>`,
       de: "die Glühbirne", syl: "GLÜH-bir-ne", it: "la lampadina", itSyl: "lam-pa-DI-na", en: "light bulb", tipp: "Heute kauft man fast nur noch LED-Lampen – sie brauchen viel weniger Strom." },
   ];
@@ -424,6 +423,26 @@ const spirale = (x0, y0, x1, y1) => {
   k += `<rect x="-6" y="-1.6" width="12" height="1.6" fill="#0b0c0e"/>`;
   k += `<rect x="16" y="-12" width="12" height="7" rx=".5" fill="#fff" stroke="#ccc" stroke-width=".2"/><text x="22" y="-7.6" font-size="2.8" text-anchor="middle" fill="${ROT}" font-family="Arial" font-weight="bold">349 €</text><line x1="22" y1="-5" x2="22" y2="0" stroke="#999" stroke-width=".4"/>`;
   S.teil({ id: "lautsprecher", de: "der Lautsprecher", syl: "LAUT-spre-cher", it: "l'altoparlante", itSyl: "al-to-par-LAN-te", en: "loudspeaker", x: 46, y: 190, steht: true, kunst: k });
+}
+
+/* =====================================================================
+   9 — DER KARTON (Ware zum Mitnehmen, vorne rechts auf dem Boden)
+   ===================================================================== */
+{
+  let k = schatten(0, 0, 24, 2, .32);
+  const kiste = (y, w, h, dx, t1, t2) => {
+    let g = `<rect x="${-w / 2 + dx}" y="${y - h}" width="${w}" height="${h}" fill="${S.lg("karton", [[0, "#d9b17a"], [1, "#b98d55"]], 0, 0, 1, 0)}"/>`;
+    g += `<path d="M${-w / 2 + dx} ${y - h} l-3 -3 h${w} l3 3 Z" fill="#e6c38f"/><path d="M${-w / 2 + dx} ${y - h} l-3 -3 v${h} l3 3 Z" fill="#a47843"/>`;
+    g += `<rect x="${dx - 3}" y="${y - h}" width="6" height="${h}" fill="#c9a06a" opacity=".6"/>`;
+    g += `<rect x="${-w / 2 + dx + 3}" y="${y - h + 4}" width="${w * 0.42}" height="${h * 0.42}" fill="#fff" opacity=".9"/><text x="${-w / 2 + dx + 3 + w * 0.21}" y="${y - h + 4 + h * 0.27}" font-size="3.2" text-anchor="middle" fill="#333" font-family="Arial" font-weight="bold">${t1}</text>`;
+    g += `<text x="${w / 2 + dx - 4}" y="${y - 4}" font-size="2.6" text-anchor="end" fill="#6b4a22" font-family="Arial">${t2}</text>`;
+    return g;
+  };
+  k += kiste(0, 40, 24, 0, "Drucker", "↑ OBEN ↑");
+  k += kiste(-24, 34, 20, -2, "Router", "↑ OBEN ↑");
+  k += `<rect x="1" y="-42" width="13" height="6" rx=".5" fill="#ffe14d"/><text x="7.5" y="-38" font-size="2.8" text-anchor="middle" fill="${ROT}" font-family="Arial" font-weight="bold">Mitnahme</text>`;
+  S.teil({ id: "karton", de: "der Karton", syl: "kar-TON", it: "lo scatolone", itSyl: "sca-to-LO-ne", en: "cardboard box", x: 290, y: 194, steht: true, kunst: k,
+    tipp: "Die Ware im Karton kann man gleich mitnehmen und an der Kasse bezahlen." });
 }
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/technik.js"));
