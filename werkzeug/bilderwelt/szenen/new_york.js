@@ -524,10 +524,10 @@ const haus = (lat, lon, H, W, art, muster, extra) => {
   for (let i = 0; i <= 40; i++) { const t = i / 40, a = pt(t, -18, 43), b = pt(t + (i % 2 ? 0.025 : -0.025), -18, 33); fw += `M${pr(a)} L${pr(b)} `; }
   k += `<path d="${fw}" stroke="#3e4a55" stroke-width=".18" fill="none"/>`;
   /* Seitenfeld nach Manhattan (links) und die Tragkabel */
-  const kab = (q, w, c) => { let s = ""; for (let i = 0; i <= 30; i++) { const t = i / 30, z = 52 + 46 * Math.pow(2 * t - 1, 2); s += `${s ? "L" : "M"}${pr(pt(t, q, z))} `; } for (let i = 1; i <= 12; i++) { const t = 1 + i / 12 * 0.5, z = 98 - (98 - 30) * (i / 12) - 4 * Math.sin(Math.PI * i / 12); s += `L${pr(pt(t, q, z))} `; } return `<path d="${s}" stroke="${c}" stroke-width="${w}" fill="none"/>`; };
+  const kab = (q, w, c) => { let s = ""; for (let i = 0; i <= 30; i++) { const t = i / 30, z = 52 + 46 * Math.pow(2 * t - 1, 2); s += `${s ? "L" : "M"}${pr(pt(t, q, z))} `; } for (let i = 1; i <= 12; i++) { const t = 1 + i / 12 * 0.55, z = 98 - (98 - 24) * (i / 12) - 4 * Math.sin(Math.PI * i / 12); s += `L${pr(pt(t, q, z))} `; } return `<path d="${s}" stroke="${c}" stroke-width="${w}" fill="none"/>`; };
   k += kab(16, 0.35, "#6c7c88") + kab(-16, 0.45, "#56636d");
   let sd = "", su = "";
-  for (let i = 0; i <= 12; i++) { const t = 1 + i / 12 * 0.5; sd += `${sd ? "L" : "M"}${pr(pt(t, -18, 43 - 14 * i / 12))} `; su = `L${pr(pt(t, -18, 35 - 14 * i / 12))} ` + su; }
+  for (let i = 0; i <= 16; i++) { const t = 1 + i / 16 * 0.95; sd += `${sd ? "L" : "M"}${pr(pt(t, -18, 43 - 33 * i / 16))} `; su = `L${pr(pt(t, -18, 35 - 33 * i / 16))} ` + su; }
   k += `<path d="${sd}${su}Z" fill="#5f7080"/>`;
   let h = "";
   for (let i = 1; i < 30; i++) { const t = i / 30, z = 52 + 46 * Math.pow(2 * t - 1, 2); if (z > 46) h += `M${pr(pt(t, -16, z))} L${pr(pt(t, -16, 43))} `; }
@@ -545,8 +545,85 @@ const haus = (lat, lon, H, W, art, muster, extra) => {
     return s;
   };
   k += pfeiler(MM);   /* der Brooklyn-Pfeiler der Manhattan Bridge steht rechts außerhalb des Bildes */
+  /* die Verankerung in Manhattan (Steinblock) — dorthin laufen die zwei Kabelpaare */
+  { const a = pt(1.55, -20, 0), b = pt(1.62, 20, 30), c = pt(1.55, -20, 30); k += `<path d="M${pr(a)} L${pr([b[0], a[1]])} L${pr(b)} L${pr(c)} Z" fill="#a49a88"/>`; }
+  /* davor Wohnblocks der Lower East Side (Two Bridges): dahinter verschwindet die Rampe */
+  for (const [t, w, h] of [[1.62, 34, 52], [1.78, 30, 44], [1.92, 36, 58]]) { const f = pt(t, 30, 0), d0 = Math.hypot(MB[0] + u[0] * La * t, MB[1] + u[1] * La * t), sc = K / d0, yb = HOR + K * (EYE - 3) / d0;
+    k += `<rect x="${r(f[0] - w * sc / 2)}" y="${r(yb - h * sc)}" width="${r(w * sc)}" height="${r(h * sc)}" fill="${VERL.ziegel}"/><rect x="${r(f[0] - w * sc / 2)}" y="${r(yb - h * sc)}" width="${r(w * sc)}" height="${r(h * sc)}" fill="url(#${S.id("steinr")})"/>`; }
   S.teil({ id: "manhattan_bridge", de: "die Manhattan Bridge", syl: "man-HAT-tan BRIDGE", it: "il ponte di Manhattan", itSyl: "PON-te di man-HAT-tan", en: "Manhattan Bridge", x: 0, y: 0, kunst: `<g ${fern(1)}>${k}</g>`,
     tipp: "Über die Manhattan Bridge fahren Autos und auch U-Bahnen über den East River." });
+}
+
+/* =====================================================================
+   10 — DAS BACKSTEINHAUS an der Fulton Ferry (310 m) mit Feuertreppe und
+   hölzernem Wassertank; links dahinter die Empire Stores (1870er, 430 m,
+   fünf Geschosse à 4,5 m, Rundbogenfenster mit Eisenläden). Beide stehen
+   an Land HINTER dem Brooklyn-Pfeiler (der sie verdeckt) über einer
+   Kaimauer mit Geländer und dem hölzernen Fulton-Ferry-Anleger.
+   ===================================================================== */
+{
+  const ZIEGEL = S.lg("ziegelf", [[0, "#c0603f"], [0.5, "#a94f33"], [1, "#8a3f27"]], 0, 0, 1, 0);
+  let k = "";
+  /* Empire Stores */
+  {
+    const d = 430, s = K / d, x0 = XM(397), x1 = XM(407.5), yb = HOR + K * (EYE - 3) / d, h = 22.5 * s;
+    k += `<rect x="${r(x0)}" y="${r(yb - h)}" width="${r(x1 - x0)}" height="${r(h)}" fill="${S.lg("lager", [[0, "#b1694b"], [1, "#8c4a33"]], 0, 0, 1, 0)}"/><rect x="${r(x0)}" y="${r(yb - h)}" width="${r(x1 - x0)}" height="${r(h)}" fill="url(#${S.id("ziegel")})"/>`;
+    k += `<rect x="${r(x0)}" y="${r(yb - h + 0.6)}" width="${r(x1 - x0)}" height="${r(2.2 * s)}" fill="#e9dcc0" opacity=".85"/><text x="${r((x0 + x1) / 2)}" y="${r(yb - h + 0.6 + 1.75 * s)}" font-size="${r(1.9 * s)}" text-anchor="middle" fill="#3b2a20" font-family="Georgia,serif" font-weight="bold" textLength="${r((x1 - x0) * 0.8)}" lengthAdjust="spacingAndGlyphs">EMPIRE STORES</text>`;
+    let fe = "", la = "";
+    for (let i = 0; i < 4; i++) for (let x = x0 + 1.6 * s; x < x1 - 2 * s; x += 4.6 * s) { const fy = yb - h + 4.6 * s + i * 4.5 * s, fw = 1.6 * s, fh = 2.6 * s;
+      fe += `M${r(x)} ${r(fy + fh)} V${r(fy + fw / 2)} Q${r(x + fw / 2)} ${r(fy - fw * 0.15)} ${r(x + fw)} ${r(fy + fw / 2)} V${r(fy + fh)} Z`;
+      la += `M${r(x - 0.75 * s)} ${r(fy + 0.4 * s)} h${r(0.65 * s)} v${r(fh - 0.4 * s)} h${r(-0.65 * s)} Z M${r(x + fw + 0.1 * s)} ${r(fy + 0.4 * s)} h${r(0.65 * s)} v${r(fh - 0.4 * s)} h${r(-0.65 * s)} Z`; }
+    k += `<path d="${fe}" fill="#2f2c2a"/><path d="${la}" fill="#2f4a3c"/>`;
+    k += `<rect x="${r(x0)}" y="${r(yb - h)}" width="${r(x1 - x0)}" height="${r(h)}" fill="${S.lg("lagerlicht", [[0, "#fff4dc", 0.14], [1, "#000", 0.1]], 0, 0, 1, 0)}"/>`;
+  }
+  /* das Backsteinhaus (fünf Geschosse, 20 m breit) */
+  const d = 310, s = K / d, X = XM(412), YB = HOR + K * (EYE - 3) / d, W = 20 * s, H = 18.5 * s;
+  k += `<rect x="${r(X - W / 2)}" y="${r(YB - H)}" width="${r(W)}" height="${r(H)}" fill="${ZIEGEL}"/>`;
+  k += `<rect x="${r(X - W / 2)}" y="${r(YB - H)}" width="${r(W)}" height="${r(H)}" fill="url(#${S.id("ziegel")})"/>`;
+  k += `<rect x="${r(X - W / 2 - 0.5)}" y="${r(YB - H - 1.4)}" width="${r(W + 1)}" height="1.8" fill="${S.lg("gesims", [[0, "#5a6b62"], [1, "#2e3a34"]])}"/>`;
+  for (let i = 0; i < 5; i++) for (let j = 0; j < 4; j++) {
+    const fx = X - W / 2 + 1.6 * s + j * 4.8 * s, fy = YB - H + 1.4 * s + i * 3.4 * s;
+    k += `<rect x="${r(fx)}" y="${r(fy)}" width="${r(1.6 * s)}" height="${r(2.2 * s)}" fill="#34414b"/><rect x="${r(fx - 0.2)}" y="${r(fy - 0.5)}" width="${r(1.6 * s + 0.4)}" height=".5" fill="#e3d6bd"/>`;
+  }
+  k += `<rect x="${r(X - W / 2)}" y="${r(YB - 4 * s)}" width="${r(W)}" height="${r(4 * s)}" fill="#3a2a22"/><rect x="${r(X - W / 2 + 1)}" y="${r(YB - 3.4 * s)}" width="${r(9 * s)}" height="${r(2.8 * s)}" fill="#e3cf96" opacity=".8"/>`;
+  k += `<rect x="${r(X - W / 2)}" y="${r(YB - H)}" width="${r(W)}" height="${r(H)}" fill="${S.lg("hauslicht", [[0, "#fff4dc", 0.16], [1, "#000", 0.12]], 0, 0, 1, 0)}"/>`;
+  /* Feuertreppe: Balkone mit Gitter, schräge Leitern dazwischen */
+  let ft = "";
+  const fx0 = X + 0.6 * s, fx1 = fx0 + 8.6 * s;
+  for (let i = 1; i < 5; i++) {
+    const y = YB - H + 1.4 * s + i * 3.4 * s + 2.4 * s;
+    ft += `<rect x="${r(fx0)}" y="${r(y)}" width="${r(fx1 - fx0)}" height=".35" fill="#1d1f1e"/><path d="M${r(fx0)} ${r(y)} V${r(y - 1.6)} H${r(fx1)} V${r(y)}" stroke="#1d1f1e" stroke-width=".18" fill="none"/>`;
+    for (let xx = fx0 + 0.5; xx < fx1; xx += 0.55) ft += `<line x1="${r(xx)}" y1="${r(y - 1.6)}" x2="${r(xx)}" y2="${r(y)}" stroke="#1d1f1e" stroke-width=".07"/>`;
+    if (i < 4) ft += `<path d="M${r(fx1 - 1)} ${r(y + 0.3)} L${r(fx0 + 3)} ${r(y + 3.4 * s)}" stroke="#1d1f1e" stroke-width=".22"/>`;
+  }
+  k += ft;
+  /* Wassertank auf dem Dach */
+  const TX = X - 2.6 * s, TY = YB - H - 1.4;
+  let wt = "";
+  for (const dx of [-2, -0.7, 0.7, 2]) wt += `<rect x="${r(TX + dx * s - 0.15)}" y="${r(TY - 3 * s)}" width=".3" height="${r(3 * s)}" fill="#2e3230"/>`;
+  wt += `<path d="M${r(TX - 2.2 * s)} ${r(TY - 3 * s)} L${r(TX - 2.2 * s)} ${r(TY - 8 * s)} Q${r(TX)} ${r(TY - 8.3 * s)} ${r(TX + 2.2 * s)} ${r(TY - 8 * s)} L${r(TX + 2.2 * s)} ${r(TY - 3 * s)} Q${r(TX)} ${r(TY - 2.8 * s)} ${r(TX - 2.2 * s)} ${r(TY - 3 * s)} Z" fill="${S.lg("fass", [[0, "#b49470"], [0.35, "#8a6a45"], [1, "#4f3a25"]], 0, 0, 1, 0)}"/>`;
+  for (let i = 1; i < 5; i++) wt += `<path d="M${r(TX - 2.2 * s)} ${r(TY - 3 * s - i * s)} Q${r(TX)} ${r(TY - 2.8 * s - i * s)} ${r(TX + 2.2 * s)} ${r(TY - 3 * s - i * s)}" stroke="#2c2c2a" stroke-width=".14" fill="none"/>`;
+  wt += `<path d="M${r(TX - 2.5 * s)} ${r(TY - 8 * s)} L${r(TX)} ${r(TY - 9.6 * s)} L${r(TX + 2.5 * s)} ${r(TY - 8 * s)} Z" fill="#5a4836"/>`;
+  k += wt;
+  /* Kaimauer mit Geländer und der hölzerne Fulton-Ferry-Anleger */
+  {
+    const yo = HOR + K * (EYE - 1.6) / 300, yw = HOR + K * EYE / 300, yg = HOR + K * (EYE - 2.7) / 300;
+    k += `<rect x="336" y="${r(yo)}" width="64" height="${r(yw - yo)}" fill="${S.lg("kai", [[0, "#b9b2a5"], [1, "#8e877b"]])}"/><rect x="336" y="${r(yo - 1.6)}" width="64" height="1.6" fill="#7d8a6a"/>`;
+    k += `<path d="M336 ${r(yg)} H400" stroke="#2a2e2c" stroke-width=".25"/>`;
+    let gp = ""; for (let x = 337; x < 400; x += 1.5) gp += `M${x} ${r(yg)} V${r(yo - 1.6)} `; k += `<path d="${gp}" stroke="#2a2e2c" stroke-width=".12"/>`;
+    const ya = HOR + K * (EYE - 1.4) / 262, ywa = HOR + K * EYE / 262;
+    k += `<path d="M379 ${r(yo)} L400 ${r(yo)} L400 ${r(ya)} L376 ${r(ya)} Z" fill="#8a6a48"/><path d="M376 ${r(ya)} H400" stroke="#5a4430" stroke-width=".4"/>`;
+    let pf = ""; for (let x = 378; x < 400; x += 2.2) pf += `M${x} ${r(ya)} V${r(ywa)} `; k += `<path d="${pf}" stroke="#4a3828" stroke-width=".35"/>`;
+  }
+  S.teil({ id: "backsteinhaus", de: "das Backsteinhaus", syl: "BACK-stein-haus", it: "la casa di mattoni", itSyl: "CA-sa di mat-TO-ni", en: "brick building", x: 0, y: 0, kunst: k,
+    tipp: "In Brooklyn stehen viele alte Lagerhäuser aus rotem Backstein, wie die Empire Stores. Heute gibt es dort Läden und Büros.",
+    zoom: { x: 344, y: r(TY - 14), w: 54, h: 36 },
+    unter: [
+      { id: "wassertank", de: "der Wassertank", syl: "WAS-ser-tank", it: "il serbatoio d'acqua", itSyl: "ser-ba-TO-io d'AC-qua", en: "water tower", x: TX, y: TY, kunst: flaeche(-2.6 * s, -9.8 * s, 5.2 * s, 9.8 * s, 0.4),
+        tipp: "Auf vielen Dächern in New York steht ein Wassertank aus Holz. Er gibt den oberen Stockwerken Wasserdruck." },
+      { id: "feuertreppe", de: "die Feuertreppe", syl: "FEU-er-trep-pe", it: "la scala antincendio", itSyl: "SCA-la an-tin-CEN-dio", en: "fire escape", x: (fx0 + fx1) / 2, y: YB - 4 * s, kunst: flaeche(-(fx1 - fx0) / 2, -12.6 * s, fx1 - fx0, 11.8 * s, 0.4),
+        tipp: "Bei Feuer klettert man über die Feuertreppe außen am Haus hinunter." },
+    ] });
 }
 
 /* =====================================================================
@@ -574,24 +651,28 @@ const haus = (lat, lon, H, W, art, muster, extra) => {
   const deck = (t0, t1, n) => { const o = linie(t0, t1, n, (t) => pt(t, -13, deckZ(t))); let un = ""; for (let i = n; i >= 0; i--) { const t = t0 + (t1 - t0) * i / n; un += `L${pr(pt(t, -13, deckZ(t) - 5.5))} `; } return `<path d="${o}${un}Z" fill="${S.lg("deck", [[0, "#6a6156"], [1, "#3d362e"]])}"/>`; };
   let tR = 0; while (tR > -0.6 && pt(tR - 0.01, -13, deckZ(tR - 0.01))[0] < 401) tR -= 0.01;
   let tK = 0; while (tK > -0.6 && pt(tK - 0.01, -12, kabZ(tK - 0.01))[0] < 401) tK -= 0.01;
-  k += deck(1, 1.45, 10) + deck(0, 1, 40) + deck(tR, 0, 12);
-  let fw = "";
-  for (let i = 0; i <= 64; i++) { const t = Math.max(tR, -0.3 + i / 64 * 1.6); fw += `M${pr(pt(t, -13, deckZ(t) - 0.3))} L${pr(pt(t + 0.01, -13, deckZ(t) - 5.3))} `; }
-  k += `<path d="${fw}" stroke="#2c2620" stroke-width=".14" fill="none"/>`;
-  k += `<path d="${linie(tR, 1.45, 60, (t) => pt(t, -13, deckZ(t) + 0.2))}" stroke="#9a8f80" stroke-width=".3" fill="none"/>`;
-  /* Tragkabel: hinteres Paar heller, vorderes Paar dunkler; Seitenfelder zu den Verankerungen */
-  for (const [q, w, c] of [[12, 0.3, "#7a7a73"], [4, 0.3, "#706f69"], [-4, 0.4, "#55544e"], [-12, 0.55, "#45443e"]]) k += `<path d="${linie(tK, 1.6, 90, (t) => pt(t, q, kabZ(t)))}" stroke="${c}" stroke-width="${w}" fill="none"/>`;
-  /* Hänger (alle 7,6 m) und Schrägseile im vorderen Kabelfeld — sie fangen keinen Tipp ab */
-  let hg = "";
-  for (let m = 7.6; m < La - 4; m += 7.6) { const t = m / La; if (kabZ(t) > deckZ(t) + 1.2) hg += `M${pr(pt(t, -12, kabZ(t)))} L${pr(pt(t, -12, deckZ(t)))} `; }
-  for (let m = 7.6; m < 280; m += 15.2) { const t = -m / La; if (t > tK && kabZ(t) > deckZ(t) + 1) hg += `M${pr(pt(t, -12, kabZ(t)))} L${pr(pt(t, -12, deckZ(t)))} `; }
+  /* Zeichenfolge nach Tiefe: Seitenfeld Manhattan (hinter dem fernen Pfeiler) → ferner Pfeiler →
+     Hauptfeld (kommt auf uns zu, liegt VOR der Brooklyn-Seite des fernen Pfeilers; die Fahrbahn
+     läuft in die Spitzbögen, die Kabel über die Sättel oben) → Seitenfeld Brooklyn → naher Pfeiler */
+  const tKq = (q) => { let t = 0; while (t > -0.6 && pt(t - 0.01, q, kabZ(t - 0.01))[0] < 401) t -= 0.01; return t; };
+  const fachwerk = (t0, t1, n) => { let f = ""; for (let i = 0; i <= n; i++) { const t = t0 + (t1 - t0) * i / n; f += `M${pr(pt(t, -13, deckZ(t) - 0.3))} L${pr(pt(Math.min(t1, t + 0.01), -13, deckZ(t) - 5.3))} `; } return `<path d="${f}" stroke="#2c2620" stroke-width=".14" fill="none"/>`; };
+  const kante = (t0, t1, n) => `<path d="${linie(t0, t1, n, (t) => pt(t, -13, deckZ(t) + 0.2))}" stroke="#9a8f80" stroke-width=".3" fill="none"/>`;
+  const KAB = [[12, 0.3, "#7a7a73"], [4, 0.3, "#706f69"], [-4, 0.4, "#55544e"], [-12, 0.55, "#45443e"]];
+  const kabel = (t0f, t1, n) => KAB.map(([q, w, c]) => `<path d="${linie(typeof t0f === "function" ? t0f(q) : t0f, t1, n, (t) => pt(t, q, kabZ(t)))}" stroke="${c}" stroke-width="${w}" fill="none"/>`).join("");
+  /* Hänger: im Hauptfeld alle 7,6 m (in der Projektion zum fernen Pfeiler hin dichter), Schrägseile von den Pfeilerköpfen */
+  let hgM = "", hgB = "", hgS = "";
+  for (let m = 7.6; m < La - 4; m += 7.6) { const t = m / La; if (kabZ(t) > deckZ(t) + 1.2) hgM += `M${pr(pt(t, -12, kabZ(t)))} L${pr(pt(t, -12, deckZ(t)))} `; }
+  for (let m = 7.6; m < 280; m += 15.2) { const t = -m / La; if (t > tR && kabZ(t) > deckZ(t) + 1) hgB += `M${pr(pt(t, -12, kabZ(t)))} L${pr(pt(t, -12, deckZ(t)))} `; }
   for (let i = 1; i <= 9; i++) {
     const m = i * 14;
-    hg += `M${pr(pt(0, -12, 80))} L${pr(pt(m / La, -12, deckZ(m / La)))} M${pr(pt(1, -12, 80))} L${pr(pt(1 - m / La, -12, deckZ(1 - m / La)))} `;
-    if (-m / La > tR) hg += `M${pr(pt(0, -12, 80))} L${pr(pt(-m / La, -12, deckZ(-m / La)))} `;
-    hg += `M${pr(pt(1, -12, 80))} L${pr(pt(1 + m / La, -12, deckZ(1 + m / La)))} `;
+    hgM += `M${pr(pt(0, -12, 80))} L${pr(pt(m / La, -12, deckZ(m / La)))} M${pr(pt(1, -12, 80))} L${pr(pt(1 - m / La, -12, deckZ(1 - m / La)))} `;
+    if (-m / La > tR + 0.02) hgB += `M${pr(pt(0, -12, 80))} L${pr(pt(-m / La, -12, deckZ(-m / La)))} `;
+    hgS += `M${pr(pt(1, -12, 80))} L${pr(pt(1 + m / La, -12, deckZ(1 + m / La)))} `;
   }
-  k += `<path d="${hg}" stroke="#5c5a54" stroke-width=".13" fill="none" opacity=".9" pointer-events="none"/>`;
+  const seile = (h) => `<path d="${h}" stroke="#5c5a54" stroke-width=".13" fill="none" opacity=".9" pointer-events="none"/>`;
+  const SM = deck(1, 1.45, 10) + fachwerk(1, 1.3, 12) + kante(1, 1.45, 10) + kabel(1, 1.6, 24) + seile(hgS);
+  const SH = deck(0, 0.981, 40) + fachwerk(0, 0.98, 36) + kante(0, 0.981, 36) + kabel(0, 1, 50) + seile(hgM);
+  const SB = deck(tR, 0, 12) + fachwerk(tR, 0, 14) + kante(tR, 0, 12) + kabel(tKq, 0, 24) + seile(hgB);
   /* die Pfeiler als Steinblöcke: 43 m quer (q), 18 m längs (t), 84 m hoch */
   const STEIN = S.lg("bstein", [[0, "#f1e6d2"], [0.5, "#dccbb0"], [1, "#bba788"]], 0, 0, 1, 0);
   const STEIN_S = S.lg("bsteins", [[0, "#c7b496"], [1, "#a4917a"]], 0, 0, 1, 0);
@@ -627,8 +708,7 @@ const haus = (lat, lon, H, W, art, muster, extra) => {
     s += `<path d="${poly([A(-9.6, -22, 78), A(-9.6, 22, 78), A(-9.6, 22, 81), A(-9.6, -22, 81)])}" fill="#f6ecdb"/><path d="${poly([A(-9.6, -22, 78), A(9.6, -22, 78), A(9.6, -22, 81), A(-9.6, -22, 81)])}" fill="#e2d4bd"/>`;
     s += `<path d="${poly([A(-9, -21.5, 81), A(9, -21.5, 81), A(9, -21.5, 84), A(-9, -21.5, 84)])}" fill="#cdb999"/><path d="${poly([A(-9, -21.5, 81), A(-9, 21.5, 81), A(-9, 21.5, 84), A(-9, -21.5, 84)])}" fill="#dccbab"/>`;
     s += `<path d="${poly([A(-11, -24, 0), A(11, -24, 0), A(11, -24, 5), A(-11, -24, 5)])}" fill="#b9a888"/><path d="${poly([A(-11, -24, 0), A(-11, 24, 0), A(-11, 24, 5), A(-11, -24, 5)])}" fill="#cbbb9c"/>`;
-    /* Kabelsättel und Fahnenmast mit US-Flagge */
-    for (const q of istM ? [-12, -4, 4, 12] : [-12]) { const c = A(0, q, 84.2); s += `<path d="M${r(c[0] - K * 2 / L.d)} ${r(c[1])} Q${r(c[0])} ${r(c[1] - K * 1.4 / L.d)} ${r(c[0] + K * 2 / L.d)} ${r(c[1])} Z" fill="#55534c"/>`; }
+    /* Fahnenmast mit US-Flagge (die Kabelsättel liegen im Mauerwerk, man sieht sie nicht) */
     const f0 = A(0, 0, 84), f1 = A(0, 0, 96), fh = K * 3.6 / L.d, fw2 = K * 6 / L.d;
     let fl = `<rect x="${r(f1[0])}" y="${r(f1[1])}" width="${r(fw2)}" height="${r(fh)}" fill="#b22234"/>`;
     for (let i = 1; i < 7; i += 2) fl += `<rect x="${r(f1[0])}" y="${r(f1[1] + i * fh / 7)}" width="${r(fw2)}" height="${r(fh / 7)}" fill="#fff"/>`;
@@ -639,9 +719,7 @@ const haus = (lat, lon, H, W, art, muster, extra) => {
     return { s, A };
   };
   const PM = pfeiler(LM, BBM, true), PB = pfeiler(LB, BBB, false);
-  k += PM.s + PB.s;
-  /* vorderes Kabel läuft über den nahen Pfeiler (Sattel) — darüber gezeichnet */
-  k += `<path d="${linie(-0.06, 0.06, 6, (t) => pt(t, -12, kabZ(t) + 0.6))}" stroke="#45443e" stroke-width=".7" fill="none"/>`;
+  k += SM + PM.s + SH + SB + PB.s;
   const bogen = LM.p(-9 * u[0] - 10.5 * p[0], -9 * u[1] - 10.5 * p[1], 50), fahne = LM.p(0, 0, 94), seil = pt(0.86, -12, kabZ(0.86));
   const [mx0, my0] = LM.p(0, 0, 60);
   S.teil({ id: "brooklyn_bridge", de: "die Brooklyn Bridge", syl: "BROOK-lyn BRIDGE", it: "il ponte di Brooklyn", itSyl: "PON-te di BROOK-lyn", en: "Brooklyn Bridge",
@@ -654,60 +732,6 @@ const haus = (lat, lon, H, W, art, muster, extra) => {
         tipp: "Jedes der vier Stahlseile besteht aus 5434 Drähten." },
       { id: "flagge", de: "die Flagge", syl: "FLAG-ge", it: "la bandiera", itSyl: "ban-DIE-ra", en: "flag", x: fahne[0], y: fahne[1], kunst: flaeche(-1, -2.6, 5, 4, 0.3),
         tipp: "Die Flagge der USA hat 50 Sterne und 13 Streifen." },
-    ] });
-}
-
-/* =====================================================================
-   10 — DAS BACKSTEINHAUS (Fulton Ferry / DUMBO, 200 m) mit Feuertreppe
-   und hölzernem Wassertank (Lupe); daneben ein höheres Lagerhaus
-   ===================================================================== */
-{
-  const ZIEGEL = S.lg("ziegelf", [[0, "#c0603f"], [0.5, "#a94f33"], [1, "#8a3f27"]], 0, 0, 1, 0);
-  let k = "";
-  /* hinten links: achtgeschossiges Lagerhaus (240 m), Rundbogenfenster */
-  {
-    const s = K / 240, x = 356, yb = HOR + K * (EYE - 3) / 240, w = 28 * s, h = 30 * s;
-    k += `<rect x="${r(x - w / 2)}" y="${r(yb - h)}" width="${r(w)}" height="${r(h)}" fill="${S.lg("lager", [[0, "#b1694b"], [1, "#8c4a33"]], 0, 0, 1, 0)}"/>`;
-    for (let i = 0; i < 8; i++) for (let j = 0; j < 6; j++) { const fx = x - w / 2 + 2 * s + j * 4.4 * s, fy = yb - h + 2 * s + i * 3.6 * s; k += `<path d="M${r(fx)} ${r(fy + 2.2 * s)} L${r(fx)} ${r(fy + 0.8 * s)} Q${r(fx + 0.8 * s)} ${r(fy)} ${r(fx + 1.6 * s)} ${r(fy + 0.8 * s)} L${r(fx + 1.6 * s)} ${r(fy + 2.2 * s)} Z" fill="#3d3a38"/>`; }
-    k += `<rect x="${r(x - w / 2 - 0.4)}" y="${r(yb - h - 1.2)}" width="${r(w + 0.8)}" height="1.4" fill="#d9c9a8"/>`;
-  }
-  /* vorn: fünfgeschossiges Backsteinhaus (200 m), 20 m breit, Gesims aus Blech */
-  const s = K / 200, X = 382, YB = HOR + K * (EYE - 3) / 200, W = 20 * s, H = 18.5 * s;
-  k += `<rect x="${r(X - W / 2)}" y="${r(YB - H)}" width="${r(W)}" height="${r(H)}" fill="${ZIEGEL}"/>`;
-  k += `<rect x="${r(X - W / 2)}" y="${r(YB - H)}" width="${r(W)}" height="${r(H)}" fill="url(#${S.id("ziegel")})"/>`;
-  k += `<rect x="${r(X - W / 2 - 0.5)}" y="${r(YB - H - 1.4)}" width="${r(W + 1)}" height="1.8" fill="${S.lg("gesims", [[0, "#5a6b62"], [1, "#2e3a34"]])}"/>`;
-  for (let i = 0; i < 5; i++) for (let j = 0; j < 4; j++) {
-    const fx = X - W / 2 + 1.6 * s + j * 4.8 * s, fy = YB - H + 1.4 * s + i * 3.4 * s;
-    k += `<rect x="${r(fx)}" y="${r(fy)}" width="${r(1.6 * s)}" height="${r(2.2 * s)}" fill="#34414b"/><rect x="${r(fx - 0.2)}" y="${r(fy - 0.5)}" width="${r(1.6 * s + 0.4)}" height=".5" fill="#e3d6bd"/>`;
-  }
-  k += `<rect x="${r(X - W / 2)}" y="${r(YB - 4 * s)}" width="${r(W)}" height="${r(4 * s)}" fill="#3a2a22"/><rect x="${r(X - W / 2 + 1)}" y="${r(YB - 3.4 * s)}" width="${r(9 * s)}" height="${r(2.8 * s)}" fill="#e3cf96" opacity=".8"/>`;
-  k += `<rect x="${r(X - W / 2)}" y="${r(YB - H)}" width="${r(W)}" height="${r(H)}" fill="${S.lg("hauslicht", [[0, "#fff4dc", 0.16], [1, "#000", 0.12]], 0, 0, 1, 0)}"/>`;
-  /* Feuertreppe: Balkone mit Gitter, schräge Leitern dazwischen */
-  let ft = "";
-  const fx0 = X + 0.6 * s, fx1 = fx0 + 8.6 * s;
-  for (let i = 1; i < 5; i++) {
-    const y = YB - H + 1.4 * s + i * 3.4 * s + 2.4 * s;
-    ft += `<rect x="${r(fx0)}" y="${r(y)}" width="${r(fx1 - fx0)}" height=".35" fill="#1d1f1e"/><path d="M${r(fx0)} ${r(y)} V${r(y - 1.6)} H${r(fx1)} V${r(y)}" stroke="#1d1f1e" stroke-width=".18" fill="none"/>`;
-    for (let xx = fx0 + 0.5; xx < fx1; xx += 0.55) ft += `<line x1="${r(xx)}" y1="${r(y - 1.6)}" x2="${r(xx)}" y2="${r(y)}" stroke="#1d1f1e" stroke-width=".07"/>`;
-    if (i < 4) ft += `<path d="M${r(fx1 - 1)} ${r(y + 0.3)} L${r(fx0 + 3)} ${r(y + 3.4 * s)}" stroke="#1d1f1e" stroke-width=".22"/>`;
-  }
-  k += ft;
-  /* Wassertank auf dem Dach: Holzfass mit Eisenreifen, Kegeldach, Stahlbeine */
-  const TX = X - 2.6 * s, TY = YB - H - 1.4;
-  let wt = "";
-  for (const dx of [-2, -0.7, 0.7, 2]) wt += `<rect x="${r(TX + dx * s - 0.15)}" y="${r(TY - 3 * s)}" width=".3" height="${r(3 * s)}" fill="#2e3230"/>`;
-  wt += `<path d="M${r(TX - 2.2 * s)} ${r(TY - 3 * s)} L${r(TX - 2.2 * s)} ${r(TY - 8 * s)} Q${r(TX)} ${r(TY - 8.3 * s)} ${r(TX + 2.2 * s)} ${r(TY - 8 * s)} L${r(TX + 2.2 * s)} ${r(TY - 3 * s)} Q${r(TX)} ${r(TY - 2.8 * s)} ${r(TX - 2.2 * s)} ${r(TY - 3 * s)} Z" fill="${S.lg("fass", [[0, "#b49470"], [0.35, "#8a6a45"], [1, "#4f3a25"]], 0, 0, 1, 0)}"/>`;
-  for (let i = 1; i < 5; i++) wt += `<path d="M${r(TX - 2.2 * s)} ${r(TY - 3 * s - i * s)} Q${r(TX)} ${r(TY - 2.8 * s - i * s)} ${r(TX + 2.2 * s)} ${r(TY - 3 * s - i * s)}" stroke="#2c2c2a" stroke-width=".14" fill="none"/>`;
-  wt += `<path d="M${r(TX - 2.5 * s)} ${r(TY - 8 * s)} L${r(TX)} ${r(TY - 9.6 * s)} L${r(TX + 2.5 * s)} ${r(TY - 8 * s)} Z" fill="#5a4836"/>`;
-  k += wt;
-  S.teil({ id: "backsteinhaus", de: "das Backsteinhaus", syl: "BACK-stein-haus", it: "la casa di mattoni", itSyl: "CA-sa di mat-TO-ni", en: "brick building", x: 0, y: 0, kunst: k,
-    tipp: "In Brooklyn stehen viele alte Lagerhäuser aus rotem Backstein. Heute wohnt man dort in Lofts.",
-    zoom: { x: 340, y: r(TY - 20), w: 60, h: 40 },
-    unter: [
-      { id: "wassertank", de: "der Wassertank", syl: "WAS-ser-tank", it: "il serbatoio d'acqua", itSyl: "ser-ba-TO-io d'AC-qua", en: "water tower", x: TX, y: TY, kunst: flaeche(-2.6 * s, -9.8 * s, 5.2 * s, 9.8 * s, 0.4),
-        tipp: "Auf vielen Dächern in New York steht ein Wassertank aus Holz. Er gibt den oberen Stockwerken Wasserdruck." },
-      { id: "feuertreppe", de: "die Feuertreppe", syl: "FEU-er-trep-pe", it: "la scala antincendio", itSyl: "SCA-la an-tin-CEN-dio", en: "fire escape", x: (fx0 + fx1) / 2, y: YB - 4 * s, kunst: flaeche(-(fx1 - fx0) / 2, -12.6 * s, fx1 - fx0, 11.8 * s, 0.4),
-        tipp: "Bei Feuer klettert man über die Feuertreppe außen am Haus hinunter." },
     ] });
 }
 

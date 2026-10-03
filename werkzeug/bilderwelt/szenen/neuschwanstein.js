@@ -232,7 +232,7 @@ function waldflaeche(name, pg, skala, n, grund, deckung, muster = HERBST, dreh =
   let f = "";
   for (let i = 0; i < n; i++) {
     const x = x0 + rnd() * (x1 - x0), y = y0 + rnd() * (y1 - y0);
-    const w = Math.min((8 + rnd() * 16) * skala * 1.4, x - x0 + 4, x1 - x + 4), h = Math.min(w * 0.55, y - y0 + 2, y1 - y + 2);
+    const w = Math.min((8 + rnd() * 16) * skala * 1.4, x - Math.max(0, x0) + 2, Math.min(400, x1) - x + 2), h = Math.min(w * 0.55, y - y0 + 2, Math.min(260, y1) - y + 2);
     if (w < 2 || h < 1) continue;
     const pal = farben || ["#c58a2c", "#d9a640", "#2f4a32", "#9a5a24", "#3b5a3a", "#b98a34", "#e2b85a"];
     f += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(w)}" ry="${r(h)}" fill="${pal[Math.floor(rnd() * pal.length)]}"/>`;
@@ -242,7 +242,7 @@ function waldflaeche(name, pg, skala, n, grund, deckung, muster = HERBST, dreh =
 /* Saum aus Baumkronen entlang einer Oberkante */
 function saum(linie, s, schritt, anteilNadel = 0.45) {
   let g = "";
-  linie = linie.map(([x, y]) => [Math.max(s * 1.4, Math.min(400 - s * 1.4, x)), y]);
+  linie = linie.map(([x, y]) => [Math.max(s * 2.3, Math.min(400 - s * 2.3, x)), Math.min(258 - s * 1.6, y)]);
   for (let i = 0; i < linie.length - 1; i++) {
     const [ax, ay] = linie[i], [bx, by] = linie[i + 1];
     const len = Math.hypot(bx - ax, by - ay);
@@ -283,14 +283,18 @@ S.hinten(`<path d="M0 ${HOR + 1} Q80 62.4 160 63.6 Q240 62 320 63.2 Q370 62.4 40
 {
   let c = `<rect x="0" y="${HOR}" width="400" height="${190 - HOR}" fill="${S.lg("ebene", [[0, "#b6c3a6"], [0.2, "#a2b783"], [1, "#86a560"]])}"/>`;
   const FARBEN = ["#9fb873", "#b3c27e", "#8fae64", "#c2c486", "#a7a85c", "#93ad6a", "#b8b06a", "#7f9d58"];
-  for (let N = 1200; N < 16000; N *= 1.17) {
-    const dn = N * 0.17;
-    for (let E = -9000; E < 6000; E += 380 + rnd() * 420) {
-      const w = 300 + rnd() * 500, h = dn * (0.6 + rnd() * 0.7);
-      const pts = [proj(E, N, EBENE), proj(E + w, N, EBENE), proj(E + w, N + h, EBENE), proj(E, N + h, EBENE)];
-      if ([[E, N], [E + w, N], [E + w, N + h], [E, N + h]].some(([a, b]) => tief(a, b) < 300)) continue;
-      if (pts.every((p) => p[0] < -10) || pts.every((p) => p[0] > 410)) continue;
-      c += `<path d="${poly(pts)}" fill="${FARBEN[Math.floor(rnd() * FARBEN.length)]}" opacity=".75"/>`;
+  /* Felder als lange Streifen (Flurform des Allgäuer Vorlands), in Blöcken mit wechselnder Richtung */
+  for (let N = 1200; N < 15000; N *= 1.22) {
+    const dn = N * 0.2;
+    for (let E = -9000; E < 6000; E += 700 + rnd() * 500) {
+      const quer = rnd() < 0.5, bw = 500 + rnd() * 400, n = 3 + Math.floor(rnd() * 3);
+      for (let i = 0; i < n; i++) {
+        const q = quer ? [[E, N + dn * i / n], [E + bw, N + dn * i / n], [E + bw, N + dn * (i + 1) / n], [E, N + dn * (i + 1) / n]] : [[E + bw * i / n, N], [E + bw * (i + 1) / n, N], [E + bw * (i + 1) / n, N + dn], [E + bw * i / n, N + dn]];
+        if (q.some(([a2, b2]) => tief(a2, b2) < 300)) continue;
+        const pts = q.map(([a2, b2]) => proj(a2, b2, EBENE));
+        if (pts.every((p2) => p2[0] < -10) || pts.every((p2) => p2[0] > 410)) continue;
+        c += `<path d="${poly(pts)}" fill="${FARBEN[Math.floor(rnd() * FARBEN.length)]}" opacity=".7"/>`;
+      }
     }
   }
   /* Waldstücke und Hecken */
@@ -322,8 +326,8 @@ S.hinten(`<path d="M0 ${HOR + 1} Q80 62.4 160 63.6 Q240 62 320 63.2 Q370 62.4 40
   /* Himmelsspiegelung und Windstreifen */
   for (const [N0s, w] of [[4600, 0.5], [5600, 0.4], [7000, 0.35], [8800, 0.3]]) { const sg = strecke(proj(-3400, N0s, EBENE), proj(-900, N0s + 600, EBENE)); if (sg) k += `<path d="M${Pt(sg[0])} L${Pt(sg[1])}" stroke="#ffffff" stroke-width="${w}" opacity=".6"/>`; }
   k += `<path d="${d}" fill="${S.lg("forggenlicht", [[0, "#fff4dc", 0.3], [1, "#fff4dc", 0]], 0, 0, 1, 0)}"/>`;
-  S.teil({ id: "stausee", de: "der Stausee", syl: "STAU-see", it: "il lago artificiale", itSyl: "LA-go ar-ti-fi-CIA-le", en: "reservoir", x: 0, y: 0, kunst: k,
-    tipp: "Der Forggensee ist ein Stausee am Lech. Im Winter wird das Wasser abgelassen." });
+  S.teil({ id: "stausee", de: "der See", syl: "SEE", it: "il lago", itSyl: "LA-go", en: "lake", x: 0, y: 0, kunst: k,
+    tipp: "Der Forggensee ist ein Stausee: Der Fluss Lech wird hier aufgestaut. Im Winter lässt man das Wasser ab." });
 }
 
 /* =====================================================================
@@ -337,7 +341,7 @@ S.hinten(`<path d="M0 ${HOR + 1} Q80 62.4 160 63.6 Q240 62 320 63.2 Q370 62.4 40
   k += `<rect x="${r(-10 * m)}" y="${r(-9 * m)}" width="${r(22 * m)}" height="${r(9 * m)}" fill="#fbf7ee"/><path d="M${r(-11 * m)} ${r(-9 * m)} L${r(-6 * m)} ${r(-15 * m)} L${r(10 * m)} ${r(-15 * m)} L${r(13 * m)} ${r(-9 * m)} Z" fill="#a8604a"/>`;
   k += `<rect x="${r(10 * m)}" y="${r(-9 * m)}" width="${r(2 * m)}" height="${r(9 * m)}" fill="#ddd6c8"/>`;
   k += `<rect x="${r(-16 * m)}" y="${r(-24 * m)}" width="${r(6 * m)}" height="${r(24 * m)}" fill="#fbf7ee"/><path d="M${r(-16.6 * m)} ${r(-24 * m)} Q${r(-17 * m)} ${r(-28 * m)} ${r(-13 * m)} ${r(-30 * m)} Q${r(-9 * m)} ${r(-28 * m)} ${r(-9.4 * m)} ${r(-24 * m)} Z" fill="#5c6b5c"/><rect x="${r(-13.3 * m)}" y="${r(-33 * m)}" width="${r(0.8 * m)}" height="${r(3 * m)}" fill="#5c6b5c"/>`;
-  S.teil({ oben: true, id: "kirche", de: "die Kirche", syl: "KIR-che", it: "la chiesa", itSyl: "CHIE-sa", en: "church", x, y, kunst: k + flaeche(-4, -6, 8, 6.4),
+  S.teil({ oben: true, id: "kirche", de: "die Kirche", syl: "KIR-che", it: "la chiesa", itSyl: "CHIE-sa", en: "church", x, y, kunst: k + flaeche(-6.5, -11, 13, 12),
     tipp: "Die Wallfahrtskirche St. Coloman steht ganz allein in den Wiesen bei Schwangau." });
 }
 {
@@ -693,34 +697,42 @@ const vierFl = (pts, ref) => `<path class="bw-flaeche" d="M${pts.map((p) => `${r
    ===================================================================== */
 const STRASSE = [[112, -4, -10], [122, -10, -12], [132, -18, -15], [140, -30, -19], [146, -44, -24]].map(([u, v, z]) => C(u, v, z));
 {
-  /* Zufahrt als Schneise im Wald (Straße mit Randbäumen) */
-  let k = `<path d="M${STRASSE.map(Pt).join(" L")}" stroke="#d6c9ad" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
-  k += `<path d="M${STRASSE.map(Pt).join(" L")}" stroke="#a89878" stroke-width=".4" fill="none" transform="translate(0 1)"/>`;
-  const [x, y] = C(130, -16, -14.6), s = k1(130, -16);   /* ≈ 1,9 je Meter */
-  let g = schatten(0, 0.2, 5.4 * s, 0.5 * s, 0.3);
-  const pferd = (dx, f) => {
+  /* Zufahrt als Schneise: Böschung bergseits (dunkel), Fahrbahn, Kronen talseits überhängend */
+  let k = `<path d="M${STRASSE.map(Pt).join(" L")}" stroke="#5e4c2c" stroke-width="3.6" fill="none" stroke-linecap="round" transform="translate(-1 -.8)"/>`;
+  k += `<path d="M${STRASSE.map(Pt).join(" L")}" stroke="#d6c9ad" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  k += `<path d="M${STRASSE.map(Pt).join(" L")}" stroke="#a89878" stroke-width=".4" fill="none" transform="translate(.6 .6)"/>`;
+  k += saum(STRASSE.slice(1).map(([x, y]) => [x + 2.2, y + 1]), 1.3, 2.6, 0.4);
+  /* Kutsche in Fahrtrichtung (bergauf zum Torbau): Seitenansicht, entlang der Straße geschert */
+  const [x, y] = C(117.5, -7.4, -11.1), s = k1(117.5, -7.4) * 1.05;
+  const sa = STRASSE[0], sb = STRASSE[1], winkel = Math.atan2(sb[1] - sa[1], sb[0] - sa[0]) * 180 / Math.PI;
+  let g = schatten(0, 0.2, 4.6 * s, 0.5 * s, 0.3);
+  const pferd = (dx, f, dunkel) => {
     let p = "";
-    for (const [lx, w] of [[-0.6, -0.08], [-0.35, 0.06], [0.55, -0.05], [0.8, 0.08]]) p += `<path d="M${r((dx + lx) * s)} ${r(-1.1 * s)} L${r((dx + lx + w) * s)} ${r(-0.55 * s)} L${r((dx + lx) * s)} 0" stroke="${f}" stroke-width="${r(0.16 * s)}" fill="none"/>`;
-    p += `<ellipse cx="${r(dx * s)}" cy="${r(-1.35 * s)}" rx="${r(0.95 * s)}" ry="${r(0.42 * s)}" fill="${f}"/>`;
-    p += `<path d="M${r((dx - 0.6) * s)} ${r(-1.6 * s)} L${r((dx - 1.05) * s)} ${r(-2.35 * s)} L${r((dx - 0.8) * s)} ${r(-2.5 * s)} L${r((dx - 0.3) * s)} ${r(-1.75 * s)} Z" fill="${f}"/>`;
-    p += `<path d="M${r((dx - 1.05) * s)} ${r(-2.35 * s)} L${r((dx - 1.7) * s)} ${r(-2.1 * s)} L${r((dx - 1.65) * s)} ${r(-1.95 * s)} L${r((dx - 1.15) * s)} ${r(-2.05 * s)} Z" fill="${f}"/>`;
-    p += `<path d="M${r((dx - 0.82) * s)} ${r(-2.5 * s)} L${r((dx - 0.3) * s)} ${r(-1.72 * s)}" stroke="#f3e6c4" stroke-width="${r(0.15 * s)}"/>`;
-    p += `<path d="M${r((dx + 0.92) * s)} ${r(-1.5 * s)} Q${r((dx + 1.2) * s)} ${r(-1.2 * s)} ${r((dx + 1.1) * s)} ${r(-0.65 * s)}" stroke="#f3e6c4" stroke-width="${r(0.17 * s)}" fill="none"/>`;
+    /* Beine mit Hufen */
+    for (const [lx, w] of [[-0.62, -0.1], [-0.38, 0.08], [0.52, -0.06], [0.78, 0.1]]) p += `<path d="M${r((dx + lx) * s)} ${r(-1.05 * s)} L${r((dx + lx + w) * s)} ${r(-0.5 * s)} L${r((dx + lx) * s)} ${r(-0.08 * s)}" stroke="${f}" stroke-width="${r(0.15 * s)}" fill="none"/><path d="M${r((dx + lx - 0.05) * s)} 0 h${r(0.13 * s)}" stroke="#2a201a" stroke-width="${r(0.12 * s)}"/>`;
+    /* Rumpf, Hals (geschwungen), Kopf mit Maul und Ohren */
+    p += `<ellipse cx="${r(dx * s)}" cy="${r(-1.32 * s)}" rx="${r(0.95 * s)}" ry="${r(0.44 * s)}" fill="${f}"/>`;
+    p += `<path d="M${r((dx - 0.55) * s)} ${r(-1.55 * s)} Q${r((dx - 0.95) * s)} ${r(-2.0 * s)} ${r((dx - 1.05) * s)} ${r(-2.45 * s)} L${r((dx - 0.75) * s)} ${r(-2.55 * s)} Q${r((dx - 0.55) * s)} ${r(-2.05 * s)} ${r((dx - 0.2) * s)} ${r(-1.7 * s)} Z" fill="${f}"/>`;
+    p += `<path d="M${r((dx - 1.05) * s)} ${r(-2.45 * s)} L${r((dx - 1.62) * s)} ${r(-2.12 * s)} Q${r((dx - 1.7) * s)} ${r(-1.98 * s)} ${r((dx - 1.55) * s)} ${r(-1.95 * s)} L${r((dx - 0.95) * s)} ${r(-2.2 * s)} Z" fill="${f}"/><path d="M${r((dx - 0.85) * s)} ${r(-2.55 * s)} l${r(-0.05 * s)} ${r(-0.22 * s)} l${r(0.12 * s)} ${r(0.16 * s)}" fill="${f}"/>`;
+    /* Mähne, Schweif, Geschirr (Kummet und Strang) */
+    p += `<path d="M${r((dx - 0.78) * s)} ${r(-2.5 * s)} Q${r((dx - 0.6) * s)} ${r(-2.05 * s)} ${r((dx - 0.25) * s)} ${r(-1.75 * s)}" stroke="${dunkel}" stroke-width="${r(0.14 * s)}" fill="none"/>`;
+    p += `<path d="M${r((dx + 0.9) * s)} ${r(-1.5 * s)} Q${r((dx + 1.22) * s)} ${r(-1.15 * s)} ${r((dx + 1.1) * s)} ${r(-0.7 * s)}" stroke="${dunkel}" stroke-width="${r(0.16 * s)}" fill="none"/>`;
+    p += `<path d="M${r((dx - 0.62) * s)} ${r(-1.75 * s)} Q${r((dx - 0.48) * s)} ${r(-1.3 * s)} ${r((dx - 0.5) * s)} ${r(-1.05 * s)}" stroke="#2a1a10" stroke-width="${r(0.12 * s)}" fill="none"/><path d="M${r((dx - 0.5) * s)} ${r(-1.3 * s)} L${r((dx + 1.5) * s)} ${r(-1.25 * s)}" stroke="#2a1a10" stroke-width="${r(0.06 * s)}"/>`;
     return p;
   };
-  g += `<g transform="translate(${r(0.45 * s)} ${r(-0.35 * s)})" opacity=".95">${pferd(-2.4, "#8a4f22")}</g>` + pferd(-2.4, "#b9743a");
-  g += `<path d="M${r(-1.4 * s)} ${r(-1.4 * s)} L${r(0.3 * s)} ${r(-1.3 * s)}" stroke="#3a2a1c" stroke-width="${r(0.12 * s)}"/>`;
+  g += `<g transform="translate(${r(0.42 * s)} ${r(-0.3 * s)})">${pferd(-2.4, "#6e3e1c", "#2a160a")}</g>` + pferd(-2.4, "#b9743a", "#4a2a12");
   g += `<path d="M${r(0.3 * s)} ${r(-0.7 * s)} L${r(2.8 * s)} ${r(-0.7 * s)} L${r(2.9 * s)} ${r(-1.7 * s)} L${r(2.3 * s)} ${r(-1.8 * s)} L${r(2.3 * s)} ${r(-1.3 * s)} L${r(1.1 * s)} ${r(-1.3 * s)} L${r(0.9 * s)} ${r(-1.7 * s)} L${r(0.4 * s)} ${r(-1.6 * s)} Z" fill="#23262b"/>`;
   g += `<path d="M${r(2.2 * s)} ${r(-1.8 * s)} Q${r(2.7 * s)} ${r(-3 * s)} ${r(3.3 * s)} ${r(-2.1 * s)} L${r(2.9 * s)} ${r(-1.7 * s)} Z" fill="#3a3f46"/>`;
   g += `<circle cx="${r(0.9 * s)}" cy="${r(-0.4 * s)}" r="${r(0.4 * s)}" fill="none" stroke="#d8a830" stroke-width="${r(0.12 * s)}"/><circle cx="${r(2.4 * s)}" cy="${r(-0.5 * s)}" r="${r(0.5 * s)}" fill="none" stroke="#d8a830" stroke-width="${r(0.12 * s)}"/>`;
   g += `<rect x="${r(0.6 * s)}" y="${r(-2.2 * s)}" width="${r(0.45 * s)}" height="${r(0.7 * s)}" fill="#2f4a2f"/><circle cx="${r(0.82 * s)}" cy="${r(-2.4 * s)}" r="${r(0.21 * s)}" fill="#e0b896"/><rect x="${r(0.57 * s)}" y="${r(-2.7 * s)}" width="${r(0.5 * s)}" height="${r(0.17 * s)}" fill="#1c1c1c"/>`;
   g += `<rect x="${r(1.5 * s)}" y="${r(-2 * s)}" width="${r(0.4 * s)}" height="${r(0.6 * s)}" fill="#b8473a"/><circle cx="${r(1.7 * s)}" cy="${r(-2.15 * s)}" r="${r(0.19 * s)}" fill="#e8c39e"/><rect x="${r(1.95 * s)}" y="${r(-1.95 * s)}" width="${r(0.35 * s)}" height="${r(0.55 * s)}" fill="#2f5f95"/><circle cx="${r(2.12 * s)}" cy="${r(-2.1 * s)}" r="${r(0.18 * s)}" fill="#d9a882"/>`;
-  k += `<g transform="translate(${r(x)} ${r(y)})">${g}</g>`;
-  S.teil({ oben: true, id: "kutsche", de: "die Kutsche", syl: "KUT-sche", it: "la carrozza", itSyl: "car-ROZ-za", en: "carriage", x: 0, y: 0, kunst: k + `<g transform="translate(${r(x)} ${r(y)})">${flaeche(-5.6 * s, -3 * s, 9.6 * s, 3.2 * s)}</g>`,
+  const scher = `translate(${r(x)} ${r(y)}) skewY(${r(Math.max(-40, Math.min(40, winkel)) * 0.85)}) scale(.82 1)`;
+  k += `<g transform="${scher}">${g}</g>`;
+  S.teil({ oben: true, id: "kutsche", de: "die Kutsche", syl: "KUT-sche", it: "la carrozza", itSyl: "car-ROZ-za", en: "carriage", x: 0, y: 0, kunst: k + `<g transform="${scher}">${flaeche(-5.6 * s, -3 * s, 9.6 * s, 3.2 * s)}</g>`,
     tipp: "Pferdekutschen bringen Gäste vom Dorf Hohenschwangau hinauf zum Schloss.",
-    zoom: { x: r(x - 21), y: r(y - 19), w: 42, h: 28 },
+    zoom: { x: r(x - 19), y: r(y - 20), w: 36, h: 24 },
     unter: [
-      { id: "pferd", de: "das Pferd", syl: "PFERD", it: "il cavallo", itSyl: "ca-VAL-lo", en: "horse", x: x - 2.4 * s, y, kunst: flaeche(-1.8 * s, -2.6 * s, 3 * s, 2.6 * s),
+      { id: "pferd", de: "das Pferd", syl: "PFERD", it: "il cavallo", itSyl: "ca-VAL-lo", en: "horse", x, y, kunst: `<g transform="translate(0 0) skewY(${r(Math.max(-40, Math.min(40, winkel)) * 0.85)}) scale(.82 1)">${flaeche(-4.3 * s, -2.7 * s, 3.2 * s, 2.7 * s)}</g>`,
         tipp: "Zwei Pferde ziehen die Kutsche den steilen Weg hinauf." },
     ] });
 }
@@ -752,7 +764,7 @@ const STRASSE = [[112, -4, -10], [122, -10, -12], [132, -18, -15], [140, -30, -1
   /* Kronensaum an der Oberkante */
   k += saum(RIM.map(([x, y]) => [x, y + 1]), 2.6, 4.6, 0.5);
   /* Gischtdunst steigt aus der Tiefe (der Pöllatfall liegt direkt unter der Brücke) */
-  k += `<ellipse cx="140" cy="258" rx="44" ry="13" fill="#eef4f6" opacity=".55" filter="url(#${S.id("dunst")})"/><ellipse cx="170" cy="232" rx="30" ry="7" fill="#eef4f6" opacity=".38" filter="url(#${S.id("dunst")})"/><ellipse cx="192" cy="214" rx="18" ry="4" fill="#eef4f6" opacity=".3" filter="url(#${S.id("dunst")})"/>`;
+  k += `<ellipse cx="140" cy="251" rx="44" ry="9" fill="#eef4f6" opacity=".55" filter="url(#${S.id("dunst")})"/><ellipse cx="170" cy="232" rx="30" ry="7" fill="#eef4f6" opacity=".38" filter="url(#${S.id("dunst")})"/><ellipse cx="192" cy="214" rx="18" ry="4" fill="#eef4f6" opacity=".3" filter="url(#${S.id("dunst")})"/>`;
   S.teil({ id: "schlucht", de: "die Schlucht", syl: "SCHLUCHT", it: "la gola", itSyl: "GO-la", en: "gorge", x: 0, y: 0, kunst: k,
     tipp: "Die Pöllatschlucht ist tief und eng. Unten rauscht die Pöllat, direkt unter der Brücke stürzt sie als Wasserfall hinab.",
     zoom: { x: 104, y: 196, w: 96, h: 64 },

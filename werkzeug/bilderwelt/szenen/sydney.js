@@ -484,23 +484,25 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   for (const [a, c] of [[-15, 31], [518, 31], [518, -31]]) sp += `<path d="M${P(bp(a - 10, c + 7, -0.5))} L${P(bp(a + 10, c + 7, -0.5))} L${P(bp(a + 10, c + 7, -89))} L${P(bp(a - 10, c + 7, -89))} Z" fill="#d2cab6"/>`;
   const bo = [280, 320, 360, 400, 440, 480, 503].map((a) => bp(a, 15, -zO(a))), bu = [503, 480, 440, 400, 360, 320, 280].map((a) => bp(a, 15, -zU(a)));
   sp += `<path d="M${bo.map(P).join(" L")} L${bu.map(P).join(" L")} Z" fill="#8d979d" opacity=".6"/>`;
-  sp += `<path d="M${P(bp(250, 24, -49))} L${P(bp(560, 24, -49))}" stroke="#7d878d" stroke-width="2"/>`;
+  sp += `<path d="M${P(bp(250, 24, -49))} L${P(bp(560, 24, -49))}" stroke="#7d878d" stroke-width="1.4" opacity=".7"/>`;
   sp += `<rect x="${r(FAEHRE.X - 16 * FAEHRE.s)}" y="${r(FAEHRE.Y + 0.4)}" width="${r(32 * FAEHRE.s)}" height="${r(3.2 * FAEHRE.s)}" fill="#2f7a4a"/><rect x="${r(FAEHRE.X - 14 * FAEHRE.s)}" y="${r(FAEHRE.Y + 3.4)}" width="${r(28 * FAEHRE.s)}" height="${r(4 * FAEHRE.s)}" fill="#e8c860"/>`;
   for (const [x, y, s] of BOOTE) sp += `<path d="M${r(x)} ${r(y + 1)} L${r(x + 6 * s)} ${r(y + 1)} L${r(x + 0.3)} ${r(y + 16 * s)} Z" fill="#ffffff"/>`;
   sp += `<rect x="0" y="148.6" width="76" height="8" fill="#24432a"/>`;
   /* Streifenmaske: drei Musterkacheln mit zufälligen Strichlängen und Lücken, nach unten breiter und lückiger;
      darüber ein schwarzer Verlauf, der das Spiegelbild nach vorn ausblendet */
   let mk = "";
-  [[148, 6, 0.5, 0.45, 9], [154, 12, 0.8, 0.8, 14], [166, 26, 1.3, 1.4, 22]].forEach(([y0, hh, sh, gap, lmax], i) => {
+  [[148, 6, 0.9, 0.3, 12], [154, 12, 1, 0.6, 16], [166, 26, 1.4, 1.2, 22]].forEach(([y0, hh, sh, gap, lmax], i) => {
     const W = 97, H = r(r(sh + gap) * 2);
     let t = "";
     for (let row = 0; row < 2; row++) for (let x = -rnd() * 6; x < W - 3;) { const l = Math.min(3 + rnd() * lmax, W - x); t += `M${Math.round(Math.max(x, 0))} ${r(row * r(sh + gap))}h${Math.round(l - Math.max(-x, 0))}v${r(sh)}h${-Math.round(l - Math.max(-x, 0))}z`; x += l + 1 + rnd() * lmax * 0.5; }
     S.def(`<pattern id="${S.id("sm" + i)}" width="${W}" height="${H}" patternUnits="userSpaceOnUse" patternTransform="translate(${r(rnd() * 40)} ${y0})"><path d="${t}" fill="#fff"/></pattern>`);
     mk += `<rect x="0" y="${y0}" width="400" height="${hh}" fill="url(#${S.id("sm" + i)})"/>`;
   });
+  S.def(`<filter id="${S.id("mweich")}" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="1.6 .25"/></filter>`);
+  mk = `<g filter="url(#${S.id("mweich")})">${mk}</g>`;
   mk += `<rect x="0" y="146" width="400" height="50" fill="${S.lg("spfade", [[0, "#000", 0], [1, "#000", 1]], 0, 146, 0, 192, ' gradientUnits="userSpaceOnUse"')}"/>`;
   S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="0" y="146" width="400" height="50">${mk}</mask>`);
-  k += `<g mask="url(#${S.id("spmaske")})" opacity=".72"><g filter="url(#${S.id("spiegel")})">${sp}</g></g>`;
+  k += `<g mask="url(#${S.id("spmaske")})" opacity=".85"><g filter="url(#${S.id("spiegel")})">${sp}</g></g>`;
   /* Wellen: Musterkachel in drei Tiefenbändern (vorn größer), dazu wenige Glanzlichter */
   const welle = (n, sc) => { S.def(`<pattern id="${S.id("w" + n)}" width="26" height="4" patternUnits="userSpaceOnUse" patternTransform="scale(${sc})"><path d="M1 1q2-.7 4 0M12 3q2.5-.8 5 0M19 .8q1.6-.5 3.2 0" stroke="#dcecf3" stroke-width=".35" fill="none" opacity=".75"/><path d="M6 2.6q2-.6 4 0M21 3.2q2-.6 4 0" stroke="#163e56" stroke-width=".4" fill="none" opacity=".6"/></pattern>`); return `url(#${S.id("w" + n)})`; };
   k += `<rect x="0" y="149" width="400" height="9" fill="${welle(1, 0.45)}"/><rect x="0" y="158" width="400" height="14" fill="${welle(2, 0.8)}"/><rect x="0" y="172" width="400" height="22" fill="${welle(3, 1.35)}"/>`;
@@ -644,7 +646,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   baenke.forEach(([y0, h], i) => {
     const wav = (x) => y0 + Math.sin(x / 27 + i * 2) * 1.6 + Math.sin(x / 9 + i) * 0.5;
     let top = "", bot = "";
-    const xs = [...Array(14)].map((_, j) => j * 18);
+    const xs = [...Array(17)].map((_, j) => j * 18);
     top = xs.map((x) => `${r(x)} ${r(wav(x))}`).join(" L");
     bot = xs.slice().reverse().map((x) => `${r(x)} ${r(wav(x) + h + Math.sin(x / 13) * 0.6)}`).join(" L");
     k += `<path d="M${top} L${bot} Z" fill="${S.lg("stirn", [[0, "#d9b47a"], [0.6, "#c59a5f"], [1, "#a77a45"]])}"/>`;

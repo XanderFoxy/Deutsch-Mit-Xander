@@ -1164,24 +1164,27 @@ function meeresschildkroete(T) {
       const b = [fl.hinten[i][0] + (fl.hinten[i + 1][0] - fl.hinten[i][0]) * u, fl.hinten[i][1] + (fl.hinten[i + 1][1] - fl.hinten[i][1]) * u];
       return [a[0] + (b[0] - a[0]) * q, a[1] + (b[1] - a[1]) * q];
     };
-    const baender = [[0.04, 0.4, nGross], [0.4, 0.66, nGross * 2], [0.66, 0.88, nGross * 2]];
+    /* Verband wie Mauerwerk: jede Reihe um eine halbe Zelle versetzt; vorn eine Reihe großer, länglicher Schuppen */
+    const baender = [[0.03, 0.34, nGross, 0], [0.34, 0.56, Math.round(nGross * 1.5), 0.5], [0.56, 0.74, nGross * 2, 0], [0.74, 0.9, Math.round(nGross * 2.4), 0.5]];
     let fugen = "", mitten = "";
-    for (const [q0, q1, n] of baender) {
-      const tz = [], gq = [];
-      for (let i = 0; i <= n; i++) tz.push(0.03 + Math.pow(i / n, 0.8) * 0.9);
-      const gitter = tz.map((t, i) => [q0, q1].map((q, j) => P2(t + (i > 0 && i < n ? (T.rnd() - 0.5) * 0.05 : 0), q + (T.rnd() - 0.5) * 0.06)));
-      for (let i = 0; i < n; i++) {
+    for (const [q0, q1, n, ver] of baender) {
+      const tz = [];
+      for (let i = 0; i <= n; i++) tz.push(0.03 + Math.pow(Math.max(0, Math.min(1, (i - ver) / n)), 0.8) * 0.9);
+      if (ver) tz.push(0.93);
+      const gitter = tz.map((t, i) => [q0, q1].map((q) => P2(t + (i > 0 && i < tz.length - 1 ? (T.rnd() - 0.5) * 0.04 : 0), q + (T.rnd() - 0.5) * 0.05)));
+      for (let i = 0; i < tz.length - 1; i++) {
+        if (tz[i + 1] - tz[i] < 0.01) continue;
         const z = [gitter[i][0], gitter[i + 1][0], gitter[i + 1][1], gitter[i][1]];
         fugen += H.vieleck(z);
-        const c = z.reduce((a, p) => [a[0] + p[0] / 4, a[1] + p[1] / 4], [0, 0]);
-        mitten += H.vieleck(z.map((p) => [c[0] + (p[0] - c[0]) * 0.62, c[1] + (p[1] - c[1]) * 0.62]));
+        const c = z.reduce((a2, p) => [a2[0] + p[0] / 4, a2[1] + p[1] / 4], [0, 0]);
+        mitten += H.vieleck(z.map((p) => [c[0] + (p[0] - c[0]) * 0.55 - 0.3, c[1] + (p[1] - c[1]) * 0.55 - 0.3]));
       }
     }
-    return `<path d="${mitten}" fill="${dunkel}" opacity=".45" filter="${H.weich(0.4, T.box(fl.pts))}"/><path d="${fugen}" fill="none" stroke="${hell}" stroke-width=".45" stroke-opacity=".38" stroke-linejoin="round"/>`;
+    return `<path d="${mitten}" fill="${hell}" opacity=".18" filter="${H.weich(0.4, T.box(fl.pts))}"/><path d="${fugen}" fill="none" stroke="${dunkel}" stroke-width=".32" stroke-opacity=".55" stroke-linejoin="round"/>`;
   };
   /* ferne Vorderflosse: angehoben, kürzer (~60 % der Panzerlänge); heller Hinterrand zum Panzer; im Schatten */
   const ff = flosse(pm([[30, -22], [24, -32], [16, -42], [6, -51], [-3, -58], [-12, -64]]), [7, 9.6, 10, 8, 4.6, 1.5], [6, 7.6, 8, 6.4, 3.6, 1.5], -1);
-  let fi = weichF(ff.hinten.slice(1).concat(ff.hinten.slice(1).reverse().map((p) => [p[0] + 1.4, p[1] + 1.8])), "#bfae84", 0.45, 0.6);
+  let fi = L([ff.hinten.slice(1).map((p) => [p[0] + 0.4, p[1] + 0.6])], "#bfae84", 1.1, 0.45);
   fi += schuppen(ff, 5, "#a8966c", "#2c2318");
   s += H.vol("flosseF", 2, teil(G(ff.pts), "#3e3224", { innen: fi, randA: 0.3, rw: 0.4 }), { tiefe: 2.5 });
   /* ferne Hinterflosse: kurz, rund, gleiche Schuppung im Schatten */
@@ -1191,9 +1194,10 @@ function meeresschildkroete(T) {
   const hals = pm([[34, -14], [44, -13.4], [52, -10.6], [55, -4], [54, 3], [46, 6.4], [36, 6.6]]);
   let hi = weichF(pm([[38, 1], [54, 0], [54, 5], [38, 7]]), "#d8c9a4", 0.7, 1.2) + weichF(pm([[38, -12], [52, -10], [50, -7], [38, -8]]), "#fff", 0.15, 1.2);
   if (F) {
-    hi += weichL([[36, 37.5, 39, 41, 43, 45.5, 48, 50.5][0]].length ? [0, 1, 2, 3, 4, 5, 6].map((i) => pm([[38 + i * 2.4, -12 + i * 0.3], [39.4 + i * 2.4, -4], [38.6 + i * 2.4, 5]])) : [], "#3e3324", 0.5, 0.2, 0.3);
+    hi += weichL([[36, 37.5, 39, 41, 43, 45.5, 48, 50.5][0]].length ? [0, 1, 2, 3, 4, 5, 6].map((i) => pm([[38 + i * 2.4, -12 + i * 0.3], [39.4 + i * 2.4, -4], [38.6 + i * 2.4, 5]])) : [], "#3e3324", 0.5, 0.35, 0.3);
     let sd = ""; for (let i = 0; i < 40; i++) { const x = 37 + T.rnd() * 16, y = -11 + T.rnd() * 16, [px, py] = M(x, y); sd += `M${f(px)} ${f(py)}h.01`; }
     hi += `<path d="${sd}" stroke="#efe4c4" stroke-width="1.1" stroke-linecap="round" stroke-opacity=".3" fill="none"/>`;
+    let ns = ""; for (let i = 0; i < 10; i++) { const [px, py] = M(38 + i * 1.6, -12.4 + (i % 2) * 1.4); ns += H.vieleck([[px - 0.8, py], [px, py - 0.6], [px + 0.8, py], [px, py + 0.6]]); } hi += `<path d="${ns}" fill="#8a7a5a" opacity=".5"/>`;
   }
   s += H.vol("hals", 1.5, teil(G(hals), "#b8a684", { innen: hi, randD: G(hals.slice(1, 6), false), randA: 0.25, rw: 0.35 }), { tiefe: 2.5 });
   /* Kopf (klein, ~19 % der Panzerlänge), Schnauze kurz und stumpf */
@@ -1217,25 +1221,25 @@ function meeresschildkroete(T) {
   const schD = sch.map((q) => H.vieleck(kk(q))).join("");
   ki += `<path d="${schD}" fill="#4d3c25"/>`;
   if (F) ki += `<path d="${sch.map((q) => { const c = q.reduce((a, p) => [a[0] + p[0] / q.length, a[1] + p[1] / q.length], [0, 0]); return H.vieleck(kk(q.map(([x, y]) => [c[0] + (x - c[0]) * 0.55, c[1] + (y - c[1]) * 0.55]))); }).join("")}" fill="#665232" opacity=".45"/>`;
-  ki += `<path d="${schD}" fill="none" stroke="#d2be8a" stroke-width=".3" stroke-linejoin="round"/>`;
+  ki += `<path d="${schD}" fill="none" stroke="#c9b27a" stroke-width=".14" stroke-linejoin="round"/>`;
   /* Kehle: kleine helle Schuppen */
   if (F) { let ks = ""; for (let i = 0; i < 14; i++) { const [px, py] = K(1 + T.rnd() * 18, 4.6 + T.rnd() * 2.2); ks += `M${f(px)} ${f(py)}h.01`; } ki += `<path d="${ks}" stroke="#a8956a" stroke-width=".7" stroke-linecap="round" stroke-opacity=".45" fill="none"/>`; }
   ki += weichF(kk([[2, -9], [12, -11], [20, -9], [14, -7.6], [4, -7]]), "#ffffff", 0.2, 0.8);
   ki += weichF(kk([[-2, 2], [8, 3], [12, 3.6], [6, 5.4], [-2, 5]]), "#000", 0.18, 1);
   /* Hornschneiden, Maulspalt, gesägter Unterkiefer, Nasenloch */
-  ki += `<path d="${G([[...K(25.2, -2.6), 1], K(25, 0.6), K(23, 2.8), K(18.4, 3.9), [...K(12.4, 4.2), 1], K(13.2, 2.4), K(18.6, 0.8), K(22.6, -1.4)])}" fill="#cbb685"/>`;
+  ki += `<path d="${G([[...K(25.2, -2.6), 1], K(25.6, 0.4), [...K(25, 1.6), 1], K(23, 2.8), K(18.4, 3.9), [...K(12.4, 4.2), 1], K(13.2, 2.4), K(18.6, 0.8), K(22.6, -1.4)])}" fill="${T.lg("skHorn", [[0, "#b8a684"], [1, "#8a7550"]], f(K(20, -2)[0]), f(K(20, -2)[1]), f(K(20, 4)[0]), f(K(20, 4)[1]), H.US)}"/>`;
   ki += L([kk([[25, 0.7], [22.6, 3], [17.6, 4], [12.2, 4.3]])], "#2a2118", 0.55, 0.9);
-  if (F) { let z = ""; for (let i = 0; i < 8; i++) { const [x, y] = K(22.8 - i * 1.3, 4.1 + i * 0.03); z += `M${f(x)} ${f(y)}l-.2 .32`; } ki += `<path d="${z}" fill="none" stroke="#7b6643" stroke-width=".18" stroke-opacity=".7"/>`; }
+  if (F) { let z = ""; for (let i = 0; i < 8; i++) { const [x, y] = K(22.8 - i * 1.3, 4.1 + i * 0.03); z += `M${f(x)} ${f(y)}l-.12 .2`; } ki += `<path d="${z}" fill="none" stroke="#7b6643" stroke-width=".18" stroke-opacity=".7"/>`; }
   ki += weichF(kk([[24.4, -4.6], [23.4, -3], [22.8, -4.2]]), "#1d1712", 0.8, 0.2);
   s += H.vol("kopf", 1.2, teil(G(kopf), "#a38e66", { innen: ki, randD: G(kopf.slice(0, 12), false), randA: 0.25, rw: 0.3 }), { tiefe: 2.5 });
   /* Auge: dunkel braun-oliv mit Pupille, geschuppter Lidrand (fein), weiches kleines Glanzfenster, feuchtes Unterlid */
   const [ax, ay] = K(14.2, -4.4), ar = 1.8;
   s += `<ellipse cx="${f(ax)}" cy="${f(ay)}" rx="${f(ar * 1.45)}" ry="${f(ar * 1.15)}" fill="${T.rg("skH", [[0, "#1a120a", 0.9], [0.7, "#2a1f12", 0.6], [1, "#2a1f12", 0]])}"/>`;
-  s += `<ellipse cx="${f(ax)}" cy="${f(ay + 0.1)}" rx="${f(ar)}" ry="${f(ar * 0.78)}" fill="${T.rg("skA", [[0, "#050403"], [0.38, "#0b0805"], [0.45, "#3a2c18"], [0.85, "#4a3a20"], [1, "#120d07"]], 0.52, 0.5, 0.5)}"/>`;
+  s += `<ellipse cx="${f(ax)}" cy="${f(ay + 0.1)}" rx="${f(ar * 0.85)}" ry="${f(ar * 0.68)}" fill="${T.rg("skA", [[0, "#050403"], [0.38, "#0b0805"], [0.45, "#3a2c18"], [0.85, "#4a3a20"], [1, "#120d07"]], 0.52, 0.5, 0.5)}"/>`;
   s += `<path d="M${f(ax - ar * 1.2)} ${f(ay - 0.2)}Q${f(ax)} ${f(ay - ar * 1.35)} ${f(ax + ar * 1.25)} ${f(ay - 0.3)}" fill="none" stroke="#231a11" stroke-width=".6" stroke-opacity=".85"/>`;
-  if (F) { let lr = ""; for (let i = 0; i < 6; i++) { const t = (i + 0.5) / 6, x = ax - ar * 1.15 + t * ar * 2.4, y = ay - ar * 1.05 * Math.sin(Math.PI * t) - 0.2; lr += `M${f(x)} ${f(y)}l.15 -.5`; } s += `<path d="${lr}" stroke="#d2be8a" stroke-width=".25" stroke-opacity=".6" fill="none"/>`; }
-  s += `<path d="M${f(ax - ar * 1.05)} ${f(ay + ar * 0.62)}Q${f(ax)} ${f(ay + ar * 1.2)} ${f(ax + ar * 1.05)} ${f(ay + ar * 0.52)}" fill="none" stroke="#e6d8b0" stroke-width=".35" stroke-opacity=".7"/>`;
-  s += `<ellipse cx="${f(ax + ar * 0.35)}" cy="${f(ay - ar * 0.35)}" rx="${f(ar * 0.35)}" ry="${f(ar * 0.24)}" fill="#fff" opacity=".65" filter="${H.weich(0.08, [ax - 1, ay - 2, ax + 2, ay])}"/>`;
+  if (F) { let lr = ""; for (let i = 0; i < 7; i++) { const t = (i + 0.5) / 7, x = ax - ar * 1.2 + t * ar * 2.45, y = ay - ar * 1.0 * Math.sin(Math.PI * t) - 0.3; lr += `M${f(x - 0.4)} ${f(y)}a.4 .3 0 1 0 .8 0a.4 .3 0 1 0 -.8 0`; } s += `<path d="${lr}" fill="#5a4730" opacity=".85"/>`; }
+  s += `<path d="M${f(ax - ar * 1.05)} ${f(ay + ar * 0.62)}Q${f(ax)} ${f(ay + ar * 1.2)} ${f(ax + ar * 1.05)} ${f(ay + ar * 0.52)}" fill="none" stroke="#d8c9a4" stroke-width=".35" stroke-opacity=".4"/>`;
+  s += `<ellipse cx="${f(ax + ar * 0.35)}" cy="${f(ay - ar * 0.35)}" rx="${f(ar * 0.3)}" ry="${f(ar * 0.2)}" fill="#fff" opacity=".6" filter="${H.weich(0.08, [ax - 1, ay - 2, ax + 2, ay])}"/>`;
   /* ---- Panzer ---- */
   const cx = -1, cy = -2;
   const rand = (th, s0 = 1, s1 = 1) => [cx + (Math.cos(th) > 0 ? 50 : 52.5) * Math.cos(th) * s0, cy + (Math.sin(th) < 0 ? 30 : 28.5) * Math.sin(th) * s1];
@@ -1246,24 +1250,28 @@ function meeresschildkroete(T) {
   const bauch = [];
   for (let i = 4; i <= 32; i++) { const th = i / 72 * Math.PI * 2, [x, y] = rand(th); bauch.push([x, y]); }
   const bauchU = bauch.map(([x, y], i) => [x - 0.4, y + 1 + 3 * Math.sin(Math.PI * i / (bauch.length - 1))]);
-  s += teil(G(pm(bauch.concat(bauchU.reverse())), true), "#d8c698", { innen: weichF(pm(bauch.concat(bauch.slice().reverse().map(([x, y]) => [x, y + 2.2]))), "#3a2e1c", 0.35, 0.8), randA: 0.3, rw: 0.35 });
+  s += teil(G(pm(bauch.concat(bauchU.reverse())), true), "#d8c698", { innen: weichF(pm(bauch.concat(bauch.slice().reverse().map(([x, y]) => [x, y + 2.2]))), "#3a2e1c", 0.35, 0.8), rand: false });
   /* Schildgeometrie: Wirbel-Sechsecke, Rippenschilde (nah/fern) bis zum Randring, Randschilde */
   const wx = [44, 28, 10, -8, -26, -42], wy = [-12, -14, -16, -16, -14, -10];
   const mid = (i) => [(wx[i] + wx[i + 1]) / 2, (wy[i] + wy[i + 1]) / 2];
   const wirbel = [];
-  for (let i = 0; i < 5; i++) { const [mx, my] = mid(i); wirbel.push([[wx[i], wy[i] - 6], [mx, my - 9.5], [wx[i + 1], wy[i + 1] - 6], [wx[i + 1], wy[i + 1] + 6], [mx, my + 9.5], [wx[i], wy[i] + 6]]); }
+  /* unregelmäßig (±8 %), das 1. Schild vorn zum Nackenschild verjüngt (fünfeckig), das 5. hinten breit (trapezförmig) */
+  const jt = () => (T.rnd() - 0.5) * 1.6;
+  const ob = wx.map((x, i) => [x + jt(), wy[i] - (i === 0 ? 2.5 : i === 5 ? 8 : 6) + jt()]), un = wx.map((x, i) => [x + jt(), wy[i] + (i === 0 ? 2.5 : i === 5 ? 8 : 6) + jt()]);
+  const om = [0, 1, 2, 3, 4].map((i) => { const [mx, my] = mid(i); return [mx + jt(), my - 9.5 - (i === 4 ? 1 : 0) + jt()]; }), umm = [0, 1, 2, 3, 4].map((i) => { const [mx, my] = mid(i); return [mx + jt(), my + 9.5 + (i === 4 ? 1 : 0) + jt()]; });
+  for (let i = 0; i < 5; i++) wirbel.push(i === 0 ? [[wx[0] + 3, wy[0]], ob[0], om[0], ob[1], un[1], umm[0], un[0]] : [ob[i], om[i], ob[i + 1], un[i + 1], umm[i], un[i]]);
   const unterK = [], oberK = [];
-  for (let i = 0; i < 5; i++) { const [mx, my] = mid(i); unterK.push([wx[i], wy[i] + 6], [mx, my + 9.5]); oberK.push([wx[i], wy[i] - 6], [mx, my - 9.5]); }
-  unterK.push([wx[5], wy[5] + 6]); oberK.push([wx[5], wy[5] - 6]);
+  for (let i = 0; i < 5; i++) { unterK.push(un[i], umm[i]); oberK.push(ob[i], om[i]); }
+  unterK.push(un[5]); oberK.push(ob[5]);
   /* Ringpunkte nah (y > cy) von vorn nach hinten, fern ebenso */
   const ringNah = RING.filter((p, i) => i <= 36).slice(), ringFern = RING.filter((p, i) => i >= 36).concat([RING[0]]).reverse();
   const ringBei = (ring, x) => ring.reduce((a, p) => (Math.abs(p[0] - x) < Math.abs(a[0] - x) ? p : a));
   const ringIdx = (ring, x) => ring.indexOf(ringBei(ring, x));
-  const fugeN = [1, 2, 3].map((i) => { const [mx, my] = mid(i); return [[mx, my + 9.5], ringBei(ringNah, mx - 4)]; });
-  const fugeF = [1, 2, 3].map((i) => { const [mx, my] = mid(i); return [[mx, my - 9.5], ringBei(ringFern, mx + 1)]; });
+  const fugeN = [1, 2, 3].map((i) => [umm[i], ringBei(ringNah, umm[i][0] + 3)]);
+  const fugeF = [1, 2, 3].map((i) => [om[i], ringBei(ringFern, om[i][0] + 2)]);
   const kette = (A, x0, x1) => A.filter((p) => p[0] <= x0 + 0.01 && p[0] >= x1 - 0.01);
   const rippen = (K2, fugen, ring) => {
-    const xs = [wx[0], ...fugen.map((q) => q[0][0]), wx[5]], polys = [];
+    const xs = [K2[0][0], ...fugen.map((q) => q[0][0]), K2[K2.length - 1][0]], polys = [];
     for (let j = 0; j < 4; j++) {
       const oben = kette(K2, xs[j], xs[j + 1]);
       const ra = j === 0 ? ringIdx(ring, wx[0] + 2) : ring.indexOf(fugen[j - 1][1]), rb = j === 3 ? ringIdx(ring, wx[5] - 4) : ring.indexOf(fugen[j][1]);
@@ -1278,26 +1286,26 @@ function meeresschildkroete(T) {
      Fuge, je Schild beschnitten; Ocker, Mahagoni, Oliv im Wechsel */
   const strahlen = (poly, zx, zy, w0, n) => {
     const cp = H.clip(H.vieleck(pm(poly)));
-    let a = "", b = "", c = "";
+    const fa = ["#9a7a3a", "#4a2e14", "#6b5a2e"], op = [0.4, 0.45, 0.32];
+    const d = ["", "", ""];
     for (let j = 0; j < n; j++) {
-      const w = (w0 - 75 + j * (150 / (n - 1)) + (T.rnd() - 0.5) * 12) * Math.PI / 180, L2 = 26;
-      const [x0, y0] = M(zx, zy), d = `M${f(x0)} ${f(y0)}L${f(x0 + Math.cos(w) * L2)} ${f(y0 + Math.sin(w) * L2 * 0.7)}`;
-      if (j % 3 === 0) a += d; else if (j % 3 === 1) b += d; else c += d;
+      const w = (w0 - 75 + j * (150 / (n - 1)) + (T.rnd() - 0.5) * 12) * Math.PI / 180, L2 = 18 + T.rnd() * 8, b0 = 0.3, b1 = (F ? 1.2 : 1.6) + T.rnd() * 0.8;
+      const [x0, y0] = M(zx, zy), cx2 = Math.cos(w), cy2 = Math.sin(w) * 0.7, nx = -cy2, ny = cx2;
+      const ex = x0 + cx2 * L2, ey = y0 + cy2 * L2, sp = 0.85 + T.rnd() * 0.15;
+      d[j % 3] += H.vieleck([[x0 + nx * b0, y0 + ny * b0], [ex + nx * b1, ey + ny * b1], [x0 + cx2 * L2 * (sp + 0.08), y0 + cy2 * L2 * (sp + 0.08)], [ex - nx * b1, ey - ny * b1], [x0 - nx * b0, y0 - ny * b0]]);
     }
-    const sw = (x) => f(F ? x : x * 1.4);
-    const bl = F ? ` filter="${H.weich(0.35, T.box(pm(poly)))}"` : "";
-    return `<g ${cp}><g${bl}><path d="${a}" stroke="#b8913f" stroke-width="${sw(1 + T.rnd() * 1.2)}" stroke-opacity=".42" fill="none"/><path d="${b}" stroke="#4a2e14" stroke-width="${sw(1.2 + T.rnd() * 1.4)}" stroke-opacity=".4" fill="none"/><path d="${c}" stroke="#6b5a2e" stroke-width="${sw(1.4 + T.rnd() * 1.4)}" stroke-opacity=".35" fill="none"/></g></g>`;
+    return `<g ${cp}>${d.map((q, i) => (q ? `<path d="${q}" fill="${fa[i]}" opacity="${op[i]}"/>` : "")).join("")}</g>`;
   };
-  wirbel.forEach((q, i) => { const [mx] = mid(i); k += strahlen(q, mx - 6, wy[i] - 3, 0, F ? 12 : 3); });
-  rippenN.forEach((q) => { const xs = q.map((p) => p[0]), zx = Math.min(...xs) + 3, zy = Math.min(...q.map((p) => p[1])) + 2; k += strahlen(q, zx, zy, 40, F ? 12 : 3); });
-  rippenF.forEach((q) => { const xs = q.map((p) => p[0]), zx = Math.min(...xs) + 2, zy = Math.max(...q.map((p) => p[1])) - 1; k += strahlen(q, zx, zy, -30, F ? 8 : 3); });
+  wirbel.forEach((q, i) => { const [mx] = mid(i); k += strahlen(q, mx - 6, wy[i] - 3, 0, F ? 9 : 3); });
+  rippenN.forEach((q) => { const xs = q.map((p) => p[0]), zx = Math.min(...xs) + 3, zy = Math.min(...q.map((p) => p[1])) + 2; k += strahlen(q, zx, zy, 40, F ? 9 : 3); });
+  rippenF.forEach((q) => { const xs = q.map((p) => p[0]), zx = Math.min(...xs) + 2, zy = Math.max(...q.map((p) => p[1])) - 1; k += strahlen(q, zx, zy, -30, F ? 7 : 3); });
   /* Wölbung: Panzer oben hell, zum nahen Rand Schatten; jedes Schild leicht gewölbt (Licht oben vorn, Schatten an
      der unteren hinteren Fuge) */
   k += weichF(pm([[36, -18], [10, -22], [-20, -20], [-38, -12], [-20, -8], [10, -8], [32, -10]]), "#f5e9c8", 0.18, 5);
   k += weichF(pm([[44, 6], [30, 18], [4, 24], [-24, 21], [-42, 10], [-20, 14], [4, 16], [30, 12]]), "#000", 0.25, 5);
   if (F) wirbel.concat(rippenN, rippenF).forEach((q) => {
     const c = q.reduce((a, p) => [a[0] + p[0] / q.length, a[1] + p[1] / q.length], [0, 0]);
-    k += weichF(pm(q.map(([x, y]) => [c[0] + (x - c[0]) * 0.5 + 2, c[1] + (y - c[1]) * 0.5 - 1.5])), "#fff2cc", 0.12, 1.5);
+    k += `<path d="${H.vieleck(pm(q))}" fill="${T.rg("schildW", [[0, "#fff2cc", 0.16], [0.5, "#fff2cc", 0.04], [0.8, "#000", 0], [1, "#000", 0.16]], 0.6, 0.35, 0.7)}"/>`;
   });
   /* Fugen als Rinne: dunkel, dahinter versetzte Lichtkante; Randschilde: 24 Fugen rundum, senkrecht zum Rand */
   const linien = [];
@@ -1308,8 +1316,8 @@ function meeresschildkroete(T) {
   linien.push(pm([[wx[0], wy[0] - 6], ringBei(ringFern, wx[0] + 2)]), pm([[wx[0], wy[0] + 6], ringBei(ringNah, wx[0] + 2)]));
   k += `<path d="${H.vieleck(F ? ringZ : ringZ.filter((p, i) => i % 2 === 0)).replace("Z", "")}" fill="none" stroke="#1e160c" stroke-width=".9" stroke-opacity=".5"/>`;
   const PL = (z) => z.map((q) => "M" + q.map((p) => f(p[0]) + " " + f(p[1])).join(" ")).join("");
-  k += (F ? L(linien, "#1e160c", 0.9, 0.55) : `<path d="${PL(linien)}" fill="none" stroke="#1e160c" stroke-width="1.1" stroke-opacity=".55"/>`) + (F ? L(linien.map((z) => z.map((p) => [p[0] + 0.45, p[1] + 0.55, p[2]])), "#ead8a4", 0.45, 0.32) : "");
-  k += weichF(pm([[22, -20], [10, -21], [-2, -21], [10, -18]]), "#ffffff", 0.3, 1.2);
+  k += (F ? `<path d="${PL(linien)}" fill="none" stroke="#1e160c" stroke-width=".5" stroke-opacity=".55"/><path d="${PL(linien)}" transform="translate(.4 .5)" fill="none" stroke="#ead8a4" stroke-width=".4" stroke-opacity=".25"/><path d="${PL(linien)}" transform="translate(-.5 -.6)" fill="none" stroke="#000" stroke-width="1.2" stroke-opacity=".12"/>` : `<path d="${PL(linien)}" fill="none" stroke="#1e160c" stroke-width="1.1" stroke-opacity=".55"/>`);
+  k += weichF(pm([[16, -20], [10, -20.6], [4, -20.4], [10, -19.2]]), "#ffffff", 0.15, 1);
   s += H.vol("panzer", 5, teil(G(um), PANZER, { innen: k, randA: 0.35, rw: 0.5 }), { tiefe: 3 });
   /* nahe Hinterflosse: kurz, rund-paddelförmig, heller Hinterrand */
   const hn = flosse(pm([[-37, 16], [-44, 21], [-51, 25], [-56, 27]]), [4.6, 5.6, 5, 2], [4.6, 5.6, 5, 2], 1);
@@ -1317,14 +1325,14 @@ function meeresschildkroete(T) {
   /* nahe Vorderflosse: ~62 % der Panzerlänge, im Abschlag nach hinten; Vorderkante (dunkel, gerade, mit Kralle) außen,
      heller Hinterrand zum Panzer; größte Breite (20) bei ⅓, Spitze rundlich-spitz */
   const vn = flosse(pm([[30, 16], [24, 26], [15, 35], [4, 42], [-8, 47], [-18, 50.5], [-25, 52]]), [7.6, 9.4, 9.6, 8, 5.6, 3, 0.8], [8, 10.4, 10.6, 9, 6.4, 3.4, 0.8], -1);
-  let vi = weichF(vn.vorn.slice(1).concat(vn.vorn.slice(1).reverse().map((p) => [p[0] + 1.4, p[1] + 2.2])), "#efe2bf", 0.8, 0.6);
+  let vi = L([vn.vorn.slice(1).map((p) => [p[0] + 0.5, p[1] + 0.8])], "#d8c9a4", 1.2, 0.6);
   vi += weichF(vn.hinten.slice(0, 6).concat(vn.hinten.slice(0, 6).reverse().map((p) => [p[0] - 1, p[1] - 2.4])), "#1f170e", 0.25, 1);
   vi += weichF(pm([[34, 12], [28, 24], [20, 22], [26, 12]]), "#000", 0.4, 2.4);
   vi += schuppen({ vorn: vn.hinten, hinten: vn.vorn, pts: vn.pts }, 6, "#d9c79a", "#3f3222");
   s += H.vol("flosseN", 2.2, teil(G(vn.pts), "#4b3c27", { innen: vi, randA: 0.32, rw: 0.45 }), { tiefe: 2.5 });
   /* Kralle an der Außenkante (Vorderkante) bei ~25 % der Flossenlänge: kurz, gebogen, hornfarben, halb im Hautsaum */
-  const [kx, ky] = vn.hinten[2];
-  s += `<path d="M${f(kx - 0.6)} ${f(ky - 0.6)}c1.2 .2 2.2 1 2.6 2.4c-.9 -.5 -1.8 -.6 -2.8 -.3z" fill="#8a7550" stroke="#3a2e1c" stroke-width=".25"/><path d="M${f(kx + 1.4)} ${f(ky + 1)}l.6 .8" stroke="#d8c8a0" stroke-width=".35"/>`;
+  const [kx, ky] = [(vn.hinten[1][0] + vn.hinten[2][0]) / 2, (vn.hinten[1][1] + vn.hinten[2][1]) / 2];
+  s += `<path d="M${f(kx - 0.9)} ${f(ky - 0.9)}c1.8 .3 3.3 1.5 3.9 3.6c-1.35 -.75 -2.7 -.9 -4.2 -.45z" fill="#8a7550" stroke="#3a2e1c" stroke-width=".25"/><path d="M${f(kx + 2.2)} ${f(ky + 1.6)}l.8 1.1" stroke="#d8c8a0" stroke-width=".45"/>`;
   const alle = um.concat(ff.pts, vn.pts, hn.pts, fh.pts, kopf);
   const bx = T.box(alle);
   return H.ende(s, [Math.floor(bx[0]), Math.floor(bx[1]), Math.ceil(bx[2]), Math.ceil(bx[3])], [M(48, 0)[0], M(0, -14)[1], M(72, 0)[0], M(0, 6)[1]]);
@@ -1347,14 +1355,14 @@ function meeresschildkroete(T) {
 function pottwal(T) {
   const H = mach(T, 0), { G, L, teil, weichF, weichL, F, f } = H;
   const HAUT = "#3c3d3f";
-  const oben = [[1496, -190], [1500, -215], [1502, -250], [1501, -285], [1497, -311], [1487, -331]].concat(H.buckel([[1476, -342], [1462, -349.5], [1448, -353], [1418, -357], [1300, -360], [1200, -360], [1110, -356], [1040, -351], [970, -348], [890, -351], [800, -355], [720, -357], [650, -357], [600, -360], [560, -368], [525, -375], [492, -373], [462, -362], [420, -346], [370, -326], [310, -303], [250, -281], [190, -262], [140, -249], [100, -241], [70, -236], [40, -232], [12, -229]],
+  const oben = [[1496, -190], [1500, -215], [1502, -250], [1501, -285], [1497, -311], [1487, -331]].concat(H.buckel([[1476, -342], [1462, -349.5], [1448, -353], [1418, -357], [1300, -360], [1200, -360], [1110, -356], [1040, -351], [970, -348], [890, -351], [800, -355], [720, -357], [650, -357], [600, -360], [570, -366], [545, -374], [522, -378], [503, -374], [488, -362], [460, -352], [420, -342], [370, -326], [310, -306], [250, -290], [190, -278], [150, -270], [110, -262], [80, -256], [50, -248], [30, -241], [12, -234]],
     [[1466, -2.2, 10], [1442, 3, 10], [436, 6, 14], [394, 5.4, 13], [352, 4.8, 12], [310, 4.2, 12], [268, 3.6, 11], [226, 3, 10], [184, 2.6, 9]]));
   const R = H.rumpf(oben,
-    [[1496, -190], [1488, -173], [1473, -160], [1452, -151], [1424, -144], [1396, -139], [1360, -129], [1300, -118], [1220, -108], [1140, -101], [1060, -96], [980, -92], [900, -91], [820, -94], [740, -102], [660, -116], [580, -136], [500, -158], [420, -180], [340, -197], [260, -208], [186, -214], [130, -217], [90, -220], [60, -223], [30, -226], [12, -228]]);
+    [[1496, -190], [1488, -173], [1473, -160], [1452, -151], [1424, -144], [1396, -139], [1360, -129], [1300, -118], [1220, -108], [1140, -101], [1060, -96], [980, -92], [900, -91], [820, -94], [740, -102], [660, -116], [580, -136], [500, -158], [420, -180], [340, -197], [260, -200], [186, -192], [150, -190], [110, -194], [80, -200], [50, -208], [30, -214], [12, -222]]);
   const P = R.P;
   /* Fluke: waagrecht, breit dreieckig, gerade Hinterkante, tiefe Kerbe */
-  const FL = H.fluke({ x0: 36, y0: -228, L: 150, S: 205, k: 0.18, fern: 0.55, hell: "#4a4d52", farbe: "#36383b", dunkel: "#2b2c2f", weich: 2.5,
-    plan: [[-0.12, 0.06], [0, 0.2], [0.3, 0.5], [0.6, 0.78], [0.85, 0.95], [1, 1, 1], [0.93, 0.82], [0.85, 0.62], [0.77, 0.42], [0.69, 0.22], [0.62, 0.08], [0.5, 0, 1], [-0.12, 0, 1]] });
+  const FL = H.fluke({ x0: 20, y0: -228, L: 150, S: 210, k: 0.33, fern: 0.55, hell: "#4a4d52", farbe: "#36383b", dunkel: "#2b2c2f", weich: 2.5,
+    plan: [[-0.12, 0.08], [0, 0.22], [0.3, 0.52], [0.6, 0.8], [0.84, 0.97], [0.95, 1.01], [1, 0.94], [0.92, 0.76], [0.84, 0.57], [0.76, 0.38], [0.68, 0.19], [0.6, 0.06], [0.5, 0, 1], [-0.12, 0, 1]] });
   let s = FL.fern;
   let k = "";
   /* grau-weiße, zerfranste Bauchflecken mit Spritzern */
@@ -1375,24 +1383,28 @@ function pottwal(T) {
   k += weichF(R.band(500, 1440, 0.94, 1.06), "#b8c2c8", 0.28, 6);
   k += weichF([[1494, -186], [1470, -160], [1430, -146], [1396, -140], [1420, -152], [1470, -170]], "#b8c2c8", 0.2, 4);
   /* Stirn: flach, obere Kante gerundet mit schmalem, unterbrochenem Glanz */
-  k += H.glanz(R, 1150, 1470, 0.035, 3, 0.012, 0.28, 2.5);
-  k += weichF([[1497, -300], [1501, -250], [1497, -200], [1486, -176], [1470, -210], [1480, -270]], "#000", 0.22, 9);
+  k += H.glanz(R, 1150, 1440, 0.04, 2, 0.01, 0.5, 1.2);
+  k += weichF([[1499, -320], [1502, -250], [1497, -190], [1484, -170], [1466, -200], [1470, -300]], "#000", 0.18, 6);
+  k += weichL([[[1460, -350], [1484, -340], [1496, -322], [1500, -300]]], "#c8d2da", 4, 0.3, 2);
+  k += weichF(R.band(1100, 1480, 0.55, 0.85), "#0e1216", 0.25, 14);
   /* Runzelhaut (Backpflaume): unregelmäßiges Faltennetz, direkt hinter dem Kopf am stärksten, zu Bauch und Stiel
      auslaufend, auf dem Kopf fast unsichtbar; Rinne dunkel, Grat hell versetzt */
   if (F) {
     let st = "", sw = "";
     for (let t = 0.08 + T.rnd() * 0.02; t < 0.86; t += 0.02 + T.rnd() * 0.03) {
-      let x = 1090 - T.rnd() * 40;
-      while (x > 300) {
+      let x = 1180 - T.rnd() * 30;
+      while (x > 160) {
         const l = 15 + T.rnd() * 55, ang = (T.rnd() - 0.5) * 0.3, amp = 0.012 + T.rnd() * 0.008, n = 3;
-        const staerke = Math.min(1, (x - 300) / 400) * Math.min(1, (1080 - x) / 60 + 0.3) * (1 - Math.max(0, t - 0.55) / 0.35);
+        /* weiches Dichtefeld: Maximum direkt hinter dem Kopf auf der oberen Flanke, zum Kopf, Bauch und Stiel ausdünnend */
+        const sm = (a, b, v) => { const q = Math.max(0, Math.min(1, (v - a) / (b - a))); return q * q * (3 - 2 * q); };
+        const staerke = sm(1180, 1000, x) * sm(160, 620, x) * (1 - sm(0.45, 0.85, t)) * (0.85 + 0.3 * Math.sin(x / 37 + t * 9));
         if (T.rnd() < staerke) {
           let seg = "";
           const pz = [];
           for (let j = 0; j <= n; j++) { const xx = x - l * j / n, [px, py] = P(xx, t + Math.sin(j * 1.3 + x) * amp * 0.5); pz.push([px, py + Math.tan(ang) * l * j / n]); }
           seg += G(pz, false);
           if (T.rnd() < 0.15) { const [qx, qy] = P(x - l * 0.5, t); seg += `M${f(qx)} ${f(qy + Math.tan(ang) * l * 0.5)}l${f(-8 - T.rnd() * 10)} ${f(6 + T.rnd() * 6)}`; }
-          if (staerke > 0.55) st += seg; else sw += seg;
+          if (staerke > 0.6) st += seg; else sw += seg;
         }
         x -= l + 4 + T.rnd() * 22;
       }
@@ -1408,11 +1420,13 @@ function pottwal(T) {
     let ri = "";
     for (const [x0, y0, n, a0, kr] of [[1290, -238, 12, -0.25, 0.004], [1200, -205, 9, 0.15, -0.006], [1400, -286, 7, -0.6, 0.008]]) {
       for (let i = 0; i < n; i++) {
-        const a = a0 + kr * i * 10, r = 1.5 + T.rnd() * 2 * (1 - i / n) + 0.4, cx = x0 + Math.cos(a) * i * 8, cy = y0 + Math.sin(a) * i * 8 + Math.sin(i * 0.5) * 3;
-        ri += `M${f(cx - r)} ${f(cy)}a${f(r)} ${f(r)} 0 1 0 ${f(2 * r)} 0a${f(r)} ${f(r)} 0 1 0 ${f(-2 * r)} 0`;
+        const a = a0 + kr * i * 10, r = 1.5 + T.rnd() * 2, cx = x0 + Math.cos(a) * i * (5 + T.rnd() * 4), cy = y0 + Math.sin(a) * i * 8 + Math.sin(i * 0.5) * 3;
+        if (T.rnd() < 0.25) { const w0 = T.rnd() * 6; ri += `M${f(cx + Math.cos(w0) * r)} ${f(cy + Math.sin(w0) * r)}A${f(r)} ${f(r)} 0 1 1 ${f(cx + Math.cos(w0 + 4.2) * r)} ${f(cy + Math.sin(w0 + 4.2) * r)}`; }
+        else ri += `M${f(cx - r)} ${f(cy)}a${f(r)} ${f(r)} 0 1 0 ${f(2 * r)} 0a${f(r)} ${f(r)} 0 1 0 ${f(-2 * r)} 0`;
       }
     }
-    k += `<path d="${ri}" fill="none" stroke="#d6dbde" stroke-width="1" stroke-opacity=".4"/>`;
+    k += `<path d="${ri}" fill="none" stroke="#d6dbde" stroke-width=".9" stroke-opacity=".34"/>`;
+    k += H.narbenG([[1300, -232, 70, 30, 2, 3, 0.2], [1210, -200, -60, 24, 1, 2, 0.2]], "#d6dbde", 1.2, 0.35);
   }
   /* Fluke-Ansatz */
   k += weichF([[86, -238], [56, -235], [36, -230], [36, -225], [56, -219], [86, -217], [70, -227]], "#000", 0.35, 8);
@@ -1428,31 +1442,35 @@ function pottwal(T) {
   const jBot = rot([[1394, -141], [1399, -134], [1395, -127], [1340, -120], [1270, -113], [1200, -108], [1140, -107], [1100, -111], [1088, -122]]);
   /* Maulinneres zwischen Kopfunterseite und Kiefer */
   const oberkiefer = [[1398, -138], [1340, -127], [1270, -117], [1200, -110], [1140, -106], [1095, -110]];
-  s += `<path d="${G(oberkiefer.concat(jTop.slice().reverse()))}" fill="#2a1618"/>`;
-  s += weichF(oberkiefer.concat(oberkiefer.slice().reverse().map(([x, y]) => [x, y + 6])), "#000", 0.5, 2);
+  s += `<path d="${G(oberkiefer.concat(jTop.slice().reverse()))}" fill="${T.lg("pwMaul", [[0, "#e6dfdc"], [1, "#b8aaa6"]], 1390, 0, 1100, 0, H.US)}"/>`;
+  s += weichF(oberkiefer.concat(oberkiefer.slice().reverse().map(([x, y]) => [x, y + 7])), "#7a6e6c", 0.5, 2);
+  if (F) { let zg = ""; for (let i = 0; i < 12; i++) { const x = 1366 - i * 17, y = oberkiefer.reduce((a, q) => (Math.abs(q[0] - x) < Math.abs(a[0] - x) ? q : a))[1] + 3; zg += `M${f(x - 3)} ${f(y)}a3 1.5 0 1 0 6 0a3 1.5 0 1 0 -6 0`; } s += `<path d="${zg}" fill="#5a4e4c" opacity=".6"/>`; }
   let zaehne = "", zl = "";
   const jd = H.dicht(jTop, false, 8);
   for (let i = 0; i < 12; i++) {
-    const x = 1372 - i * 17, p = jd.reduce((a, q) => (Math.abs(q[0] - x) < Math.abs(a[0] - x) ? q : a)), h = 5 + Math.min(1, i / 4) * 3 * (0.85 + T.rnd() * 0.3), b = 3 + Math.min(1, i / 4) * 1.4;
+    const x = 1372 - i * 17 + (T.rnd() - 0.5) * 5, p = jd.reduce((a, q) => (Math.abs(q[0] - x) < Math.abs(a[0] - x) ? q : a)), h = (6 + Math.min(1, i / 4) * 2.5) * (T.rnd() < 0.15 ? 0.6 : 0.85 + T.rnd() * 0.3), b = 3.4 + Math.min(1, i / 4) * 1.6;
     const bx = p[0], by = p[1] + 0.5;
     zaehne += `M${f(bx + b / 2)} ${f(by)}C${f(bx + b * 0.4)} ${f(by - h * 0.6)} ${f(bx + b * 0.05)} ${f(by - h * 0.95)} ${f(bx - b * 0.35)} ${f(by - h)}C${f(bx - b * 0.3)} ${f(by - h * 0.6)} ${f(bx - b * 0.45)} ${f(by - h * 0.3)} ${f(bx - b / 2)} ${f(by)}Z`;
     zl += `M${f(bx + b * 0.3)} ${f(by - h * 0.2)}Q${f(bx + b * 0.2)} ${f(by - h * 0.7)} ${f(bx - b * 0.2)} ${f(by - h * 0.92)}`;
   }
-  s += `<path d="${zaehne}" fill="#e9e2cc" stroke="#6e6250" stroke-width=".4" stroke-opacity=".6"/>` + (F ? `<path d="${zl}" fill="none" stroke="#fffaf0" stroke-width=".7" stroke-opacity=".6"/>` : "");
+  s += `<path d="${zaehne}" fill="#e9e2cc" stroke="#6e6250" stroke-width=".4" stroke-opacity=".6"/>` + (F ? `<path d="${zl}" fill="none" stroke="#fffaf0" stroke-width=".8" stroke-opacity=".7"/><path d="${zl}" transform="translate(-1.4 0)" fill="none" stroke="#8a7d62" stroke-width=".8" stroke-opacity=".45"/>` : "");
   const kiefer = jTop.concat(jBot.slice(1, -1).reverse());
-  const kG = T.lg("pwKiefer", [[0, "#e4e3dd"], [0.4, "#c9c9c4"], [0.7, "#5c5e61"], [1, "#46484b"]], 0, -132, 0, -104, H.US);
-  s += H.vol("kiefer", 4, teil(G(kiefer), kG, { innen: weichF([[1404, -136], [1394, -144], [1384, -130], [1392, -120]].map(([x, y]) => rot([[x, y]])[0]), "#e4e3dd", 0.9, 2) + L([jTop.slice(0, 5)], "#ffffff", 1.2, 0.5), randA: 0.3, rw: 0.9 }), { tiefe: 2.5 });
+  const kInnen = weichF(jTop.concat(jTop.slice().reverse().map(([x, y]) => [x, y + 2.2])), "#e4e3dd", 0.95, 0.6) + weichF([[1404, -136], [1394, -144], [1384, -130], [1392, -120]].map(([x, y]) => rot([[x, y]])[0]), "#e4e3dd", 0.9, 2) + L([jTop.slice(0, 5)], "#ffffff", 1.2, 0.5);
+  s += H.vol("kiefer", 4, teil(G(kiefer), "#36383b", { innen: kInnen, randA: 0.3, rw: 0.9 }), { tiefe: 2.5 });
   s += weichF(jBot.slice(2).concat(jBot.slice(2).reverse().map(([x, y]) => [x - 6, y + 10])), "#000", 0.3, 5);
   /* weißer Mundwinkel (klein, Abstand zum Auge) */
-  s += weichF([[1100, -126], [1090, -128], [1084, -122], [1090, -116], [1102, -118]], "#e2e1db", 0.8, 1.2);
+  s += weichF([[1100, -126], [1093, -127], [1089, -123], [1094, -119], [1102, -120]], "#e2e1db", 0.7, 0.8);
   /* Brustflosse: klein, paddelförmig */
-  s += H.vol("flosse", 4, teil(G([[1010, -112], [990, -86], [962, -64], [930, -54], [912, -60], [920, -78], [944, -98], [972, -116]]), "#36373a", { innen: weichF([[1004, -106], [982, -82], [956, -64], [936, -58], [956, -72], [980, -94]], "#c8d2da", 0.3, 3) + weichF([[1020, -120], [980, -122], [970, -104], [1004, -100]], "#000", 0.45, 6), randA: 0.25, rw: 1.2 }), { tiefe: 3 });
+  const bfp = [[1016, -120], [1008, -104], [990, -86], [962, -64], [930, -54], [912, -60], [920, -78], [944, -98], [966, -116], [990, -126]];
+  s += weichF([[1000, -96], [960, -70], [930, -60], [940, -50], [976, -64], [1004, -86]], "#000", 0.3, 8);
+  const bfB = T.box(bfp);
+  s += `<g ${H.maskeR(1004, -122, 6, 24, [bfB[0] - 10, bfB[1] - 10, bfB[2] + 10, bfB[3] + 10])}>${H.vol("flosse", 4, teil(G(bfp), "#36373a", { innen: weichL([[[1004, -100], [988, -84], [962, -66], [936, -57]]], "#c8d2da", 3, 0.4, 1.4), randD: G(bfp.slice(2, 8), false), randA: 0.25, rw: 1.2 }), { tiefe: 3 })}</g>`;
   s += FL.nah;
   /* Auge in einem flachen Wulst mit Lichtkante oben, dunkle Umgebung */
-  s += weichF([[1066, -162], [1050, -174], [1032, -166], [1036, -152], [1056, -150]], "#000", 0.3, 4);
-  s += weichL([[[1036, -170], [1050, -176], [1066, -168]]], "#b4c0c8", 2, 0.3, 1.2);
-  s += H.walAuge(1050, -161, 6.4, { winkel: -4, hell: "#b4c0c8" });
-  const bx = T.box(R.um.concat([[36 - 150, -228], [1502, -60], [1399, -100]]));
+  s += weichF([[1064, -158], [1050, -150], [1034, -154], [1040, -146], [1060, -146]], "#000", 0.3, 4);
+  s += weichL([[[1036, -170], [1050, -176], [1066, -168]]], "#b4c0c8", 3, 0.25, 1.6);
+  s += H.walAuge(1050, -161, 6.4, { winkel: -4, hell: "#b4c0c8", iris: "#2a1a10" });
+  const bx = T.box(R.um.concat([[20 - 150, -228], [1502, -60], [1399, -100]]));
   return H.ende(s, [Math.floor(bx[0]), Math.floor(bx[1]), 1502, -54], [1000, -380, 1504, -80]);
 }
 
@@ -1594,7 +1612,7 @@ module.exports = [
   { id: "meeresschildkroete", de: "die Meeresschildkröte", syl: "MEE-res-schild-krö-te", it: "la tartaruga marina", itSyl: "tar-ta-RU-ga ma-RI-na", en: "sea turtle",
     gruppe: "Meer", lebensraum: "Meer", laenge: 1.27, hoehe: 1.2, schwimmt: true, zeichne: meeresschildkroete },
   { id: "pottwal", de: "der Pottwal", syl: "POTT-wal", it: "il capodoglio", itSyl: "ca-po-DO-glio", en: "sperm whale",
-    gruppe: "Meer", lebensraum: "Meer", laenge: 16.16, hoehe: 3.21, schwimmt: true, zeichne: pottwal },
+    gruppe: "Meer", lebensraum: "Meer", laenge: 16.32, hoehe: 3.24, schwimmt: true, zeichne: pottwal },
   { id: "narwal", de: "der Narwal", syl: "NAR-wal", it: "il narvalo", itSyl: "NAR-va-lo", en: "narwhal",
     gruppe: "Meer", lebensraum: "Meer", laenge: 7.24, hoehe: 1.09, schwimmt: true, zeichne: narwal },
 ];

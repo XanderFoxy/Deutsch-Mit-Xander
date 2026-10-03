@@ -377,7 +377,7 @@ const musterRauten = (T, n, g, o = {}) => {
 /* Schlangenkörper als Rohr: sp = [[x, y, r], …] (Radius r); o: { farbe, bauch (Farbe), bauchSeite (+1 | −1: Seite des Bauches
    in v), licht (+1 | −1: beleuchtete Seite in v), muster (URL), innen, binden: [[t, breite], …], schuppen: Bauchschilde } */
 const schlangenRohr = (T, sp, o = {}) => {
-  const Rr = rohr(sp.map(([x, y, r]) => [x, y, r, r]), 6);
+  const Rr = rohr(sp.map(([x, y, r, r2]) => [x, y, r, r2 || r]), 6);
   const L = o.licht || -1, B = o.bauchSeite || 1, [lt0, lt1] = o.lt || [0, 1], [bt0, bt1] = o.bt || [lt0, lt1];
   const umr = Rr.zug(-1, 0, 1, o.n || 16).concat(Rr.zug(1, 0, 1, o.n || 16).reverse());
   /* offene Teilstücke: Schnittkanten gerade (harte Ecken), damit Stücke ohne Kerbe aneinanderstoßen */
@@ -391,7 +391,7 @@ const schlangenRohr = (T, sp, o = {}) => {
   if (o.innen) inn += o.innen(Rr);
   /* Licht: Glanzband auf der Lichtseite, Kernschatten, Reflex auf der Schattenseite */
   const kS = o.kern != null ? o.kern : 0.46;
-  inn += `<g filter="${weich(T, "sl", o.weich || 0.9)}">` + form(T, poly(Rr.band(L * 1.2, L * 0.5, lt0, lt1, 12)), "#fff", ` opacity="${o.glanz || 0.24}"`) +
+  inn += `<g filter="${weich(T, "sl", o.weich || 0.9)}">` + form(T, poly(Rr.band(L * 1.2, L * 0.5, lt0, lt1, 12)), o.glanzF || "#fff", ` opacity="${o.glanz || 0.24}"`) +
     form(T, poly(Rr.band(L * 0.1, -L * 0.3, lt0, lt1, 12)), "#000", ` opacity="${R2(kS * 0.26)}"`) +
     form(T, poly(Rr.band(-L * 0.25, -L * 0.88, lt0, lt1, 12)), "#000", ` opacity="${kS}"`) + form(T, poly(Rr.band(-L * 0.9, -L * 1.1, lt0, lt1, 12)), "#fff", ' opacity=".12"') + "</g>";
   /* seidiges Glanzband, das in einzelne Schuppenlichter zerfällt (fein) */
@@ -450,13 +450,14 @@ const echsAuge = (T, x, y, r, o = {}) => {
   /* Nickhaut von vorn (rechts) */
   if (o.nick) { const nx = W - 2 * W * o.nick; s += `<path d="M${R2(W * 1.1)} ${R2(-r * 1.2)}L${R2(nx + r * 0.15)} ${R2(-r * 1.2)}Q${R2(nx - r * 0.3)} 0 ${R2(nx + r * 0.1)} ${R2(r * 1.2)}L${R2(W * 1.1)} ${R2(r * 1.2)}Z" fill="${T.lg("nick2", [[0, "#e4ebe4", 0.25], [0.5, "#c9d2c8", 0.5], [1, "#a8b2a6", 0.65]], 0, 0, 1, 0)}"/>`; }
   /* nasser Glanz: Hauptlicht oben links, schwacher Gegenglanz unten rechts; Schlange: große weiche Brillenreflexion */
+  if (o.untenDunkel) s += `<rect x="${R2(-r)}" y="${R2(r * 0.05)}" width="${R2(2 * r)}" height="${R2(r)}" fill="#000" opacity="${o.untenDunkel}"/>`;
   if (o.schlange) s += `<ellipse cx="${R2(-r * 0.32)}" cy="${R2(-r * 0.38)}" rx="${R2(r * 0.42)}" ry="${R2(r * 0.3)}" fill="#fff" opacity=".35" transform="rotate(-30 ${R2(-r * 0.32)} ${R2(-r * 0.38)})"/>`;
   s += `<ellipse cx="${R2(-r * 0.22)}" cy="${R2(-r * 0.32)}" rx="${R2(r * 0.17)}" ry="${R2(r * 0.12)}" fill="#fff" opacity=".92"/><ellipse cx="${R2(r * 0.42)}" cy="${R2(r * 0.42)}" rx="${R2(r * 0.12)}" ry="${R2(r * 0.07)}" fill="#fff" opacity=".35"/>`;
   s += `</g>`;
   if (o.schlange) {
     /* Augenschilde-Ring (Supra-, Prä-, Postocularia): feine Fuge mit Lichtkante */
     s += `<circle cx="0" cy="0" r="${R2(r * 1.06)}" fill="none" stroke="#120a05" stroke-width="${R2(r * 0.1)}" stroke-opacity=".7"/>`;
-    s += `<path d="M${R2(-r * 1.2)} ${R2(-r * 0.6)}A${R2(r * 1.25)} ${R2(r * 1.25)} 0 0 1 ${R2(r * 1.15)} ${R2(-r * 0.7)}" fill="none" stroke="${o.haut || "#a07a46"}" stroke-width="${R2(r * 0.3)}"/>` +
+    if (o.braue !== false) s += `<path d="M${R2(-r * 1.2)} ${R2(-r * 0.6)}A${R2(r * 1.25)} ${R2(r * 1.25)} 0 0 1 ${R2(r * 1.15)} ${R2(-r * 0.7)}" fill="none" stroke="${o.haut || "#a07a46"}" stroke-width="${R2(r * 0.3)}"/>` +
       `<path d="M${R2(-r * 1.25)} ${R2(-r * 0.75)}A${R2(r * 1.35)} ${R2(r * 1.35)} 0 0 1 ${R2(r * 1.2)} ${R2(-r * 0.85)}" fill="none" stroke="#fff" stroke-width="${R2(r * 0.08)}" stroke-opacity=".35"/>`;
   } else {
     /* Lidränder aus Körnerschuppen: dunkler Rand, darauf helle Körner; Oberlid dicker */
@@ -979,94 +980,102 @@ function kobra(T) {
    schräge Schlitze im Rostrale und in den ersten Oberlippenschilden sowie in den hinteren Unterlippenschilden.
    Schlangen haben KEINE Lider: rundes Auge unter der Brillenschuppe, Iris goldbraun (obere Hälfte heller, untere im
    Augenstreif dunkel), senkrechte Schlitzpupille. Glatte, schillernde Schuppen. Schwanz kurz (~12 %), kegelig.
-   Ansicht: in leichter Aufsicht (~28°) in Schlaufen ruhend, Kopf liegt oben vorn rechts auf den Windungen.
+   Ansicht: in leichter Aufsicht (~22°) kompakt in drei Schlaufen ruhend, die sich berühren (kleiner Innenraum); der
+   Hals kommt in einem S-Bogen hinten links aus dem Haufen, liegt über den vorderen Windungen, der Keilkopf ruht vorn
+   auf der äußeren Windung und zeigt nach rechts. Schwanz kegelig, vorn links an die äußere Windung angelegt.
    Zeichenraum: 1 Einheit = 1,4 cm.
    ===================================================================== */
 function python(T) {
   const F = T.fein;
   let h = "";
   const mS = F ? musterRauten(T, "p", 1.3, { hell: 0.08, dunkel: 0.1, rand: 0.1, rot: -6 }) : "";
-  /* Körper als Spirale (Ellipse in Aufsicht): außen beginnt der Schwanz vorn links, innen endet die Windung hinten */
-  const cx = 80, cy = -27.6, n = 150, th0 = Math.PI / 2 + 0.55, dth = 2 * Math.PI * 1.38;
-  const P = [];
-  for (let i = 0; i <= n; i++) {
-    const u = i / n, th = th0 + dth * u, rx = 58 - 18 * u, ry = 21.5 - 6.7 * u;
-    const r = 6.2 * Math.min(1, 0.12 + u / 0.13) * (1 - 0.08 * u);
-    P.push([cx + rx * Math.cos(th), cy + ry * Math.sin(th) + (1 - Math.sin(th)) * 0, Math.max(0.6, r), Math.sin(th)]);
-  }
-  /* Teilstücke: hinten (sin < 0) zuerst, von außen nach innen; dann vorn von innen nach außen */
-  const stuecke = [];
-  let cur = [P[0]];
-  for (let i = 1; i < P.length; i++) { if ((P[i][3] < 0) !== (P[i - 1][3] < 0)) { cur.push(P[i]); stuecke.push(cur); cur = [P[i - 1], P[i]]; } else cur.push(P[i]); }
-  stuecke.push(cur);
-  /* hintere Stücke über die Umkehrpunkte hinaus verlängern (die vorderen blenden dort weich darüber) */
-  const idx = new Map(P.map((p, i) => [p, i]));
-  const hinten = stuecke.filter((p) => p[Math.floor(p.length / 2)][3] < 0).map((p) => { const a = idx.get(p[0]), b = idx.get(p[p.length - 1]); return P.slice(Math.max(0, a - 5), Math.min(P.length, b + 6)); }), vorn = stuecke.filter((p) => p[Math.floor(p.length / 2)][3] >= 0).reverse();
-  /* Fleckenzeichnung, auf die Rundung projiziert (zum Rand gestaucht); u = Vorzeichen der Oberseite in v */
+  /* konzentrische Schlaufen am Boden (Kreise in Aufsicht → Ellipsen mit gleichem Mittelpunkt), Radius 6 */
+  const k = 0.38, cx = 80, cy = -25, Rk = [26, 38, 50];
+  const bog = (a0, a1, n, r0, r1, R0, R1 = R0) => { const p = []; for (let i = 0; i <= n; i++) { const u = i / n, a = (a0 + (a1 - a0) * u) * Math.PI / 180, rr = typeof R0 === "function" ? R0(a0 + (a1 - a0) * u) : R0 + (R1 - R0) * u; p.push([cx + rr * Math.cos(a), cy + k * rr * Math.sin(a), r0 + (r1 - r0) * u]); } return p; };
+  const ueber = (Ra, Rb, w0, w1) => (a) => { const u = Math.max(0, Math.min(1, (w0 - a) / (w0 - w1))); return Ra + (Rb - Ra) * (u * u * (3 - 2 * u)); };
+  /* Weg vom Schwanz zum Hals: außen vorn → außen hinten → mittlere vorn (Übergang links) → mittlere hinten → innen vorn → innen hinten */
+  const S2f = bog(150, -3, 40, 6, 6.2, 50), S2b = bog(3, -183, 48, 6.2, 6.2, 50);
+  const S1f = bog(183, -3, 50, 6.2, 6.2, ueber(50, 38, 183, 140)), S1b = bog(3, -183, 40, 6.2, 6.1, 38);
+  const S0f = bog(183, -3, 40, 6.1, 6, ueber(38, 26, 183, 140)), S0b = bog(3, -122, 22, 6, 5.6, 26);
+  /* Schwanz: letzte 12 % kegelig, stumpfe Spitze, liegt außen vorn links an */
+  const schw = bog(196, 150, 10, 1.2, 6, 51.5).map((p, i, A) => { const u = i / (A.length - 1); p[2] = 1.2 + 4.8 * Math.pow(u, 0.7); return p; });
+  /* Hals: S-Bogen aus dem Haufen hinten links, über die vorderen Windungen, Kopf ruht vorn auf der äußeren Windung */
+  const hals = S0b.slice(-1).concat([[60, -32.4, 5.4], [53.6, -27, 5.2], [54.4, -19.6, 5], [61, -15.2, 4.8], [70, -14, 4.5], [79, -14.6, 4.2], [86.6, -15.6, 3.9]]);
+  /* Stöße: Enden minimal dünner (Schnittecken verschwinden im Nachbarstück) */
+  for (const A of [S2f, S2b, S1f, S1b, S0f]) { A[0][2] *= 0.88; A[A.length - 1][2] *= 0.88; }
+  S0b[0][2] *= 0.88;
+  /* Fleckenzeichnung, auf die Rundung projiziert (zum Rand um ≈ 40 % gestaucht, vom Umriss angeschnitten): unregelmäßige,
+     teils zusammenfließende Sattelflecken mit welligem schwarzem Rand, versetzte Flankenflecken mit unregelmäßigem
+     hellem Kern; u = Vorzeichen der Oberseite in v */
   const flecken = (u) => (Rr) => {
     let dS = "", dL = "", dK = "";
-    const proj = (a) => Math.sin(a * Math.PI / 2) * 1.08;
-    const fl = (t, a0, a1, w, j, nn = F ? 11 : 7) => { const Q = []; for (let i = 0; i < nn; i++) { const b = i / nn * Math.PI * 2, c = Math.cos(b), sn = Math.sin(b), rr = 1 + (T.rnd() - 0.5) * j + (i % 3 === 0 ? -0.16 : 0.05); Q.push(Rr.P(t + Math.sign(c) * Math.pow(Math.abs(c), 0.55) * w * rr, u * proj((a0 + a1) / 2 + Math.sign(sn) * Math.pow(Math.abs(sn), 0.7) * (a1 - a0) / 2 * rr))); } return Q; };
-    const dt = (F ? 13 : 16) / Rr.len;
-    for (let t = T.rnd() * dt * 0.5; t < 1; t += dt * (0.82 + T.rnd() * 0.36)) {
-      const g = 0.8 + T.rnd() * 0.4;
-      dS += pfad(T, fl(t, 0.05, 1.12, dt * 0.42 * g, 0.34));
-      const tl = t + dt * (0.45 + T.rnd() * 0.1), Ql = fl(tl, -0.62, -0.08, dt * 0.24 * g, 0.36, F ? 9 : 6);
+    const proj = (a) => Math.sin(a * Math.PI / 2) * 1.12;
+    const fl = (t, a0, a1, w, j, nn = F ? 12 : 7) => { const Q = []; for (let i = 0; i < nn; i++) { const b = i / nn * Math.PI * 2, c = Math.cos(b), sn = Math.sin(b), rr = 1 + (T.rnd() - 0.5) * j + (i % 3 === 0 ? -0.2 : 0.06); Q.push(Rr.P(t + Math.sign(c) * Math.pow(Math.abs(c), 0.6) * w * rr, u * proj((a0 + a1) / 2 + Math.sign(sn) * Math.pow(Math.abs(sn), 0.75) * (a1 - a0) / 2 * rr))); } return Q; };
+    const dt = (F ? 11 : 14) / Rr.len;
+    for (let t = T.rnd() * dt * 0.5; t < 1; t += dt * (0.75 + T.rnd() * 0.5)) {
+      const g = 0.6 + T.rnd() * 0.8;
+      dS += pfad(T, fl(t, 0.02 + T.rnd() * 0.12, 1.02 + T.rnd() * 0.14, dt * 0.36 * g, 0.42));
+      if (T.rnd() < 0.3) dS += pfad(T, fl(t + dt * 0.3 * g, 0.5, 0.95, dt * 0.18, 0.5, F ? 8 : 5));
+      const tl = t + dt * (0.38 + T.rnd() * 0.24), gl = 0.7 + T.rnd() * 0.6, Ql = fl(tl, -0.66 + T.rnd() * 0.1, -0.1, dt * 0.2 * gl, 0.45, F ? 9 : 6);
       dL += pfad(T, Ql);
-      if (T.rnd() < 0.6) { const [x, y] = Rr.P(tl, u * proj(-0.34)); dK += `M${R(x - 0.5)} ${R(y)}a.6 .4 0 1 0 1.2 0a.6 .4 0 1 0 -1.2 0`; }
+      if (F && T.rnd() < 0.7) { const [x, y] = Rr.P(tl + (T.rnd() - 0.5) * dt * 0.08, u * proj(-0.3 - T.rnd() * 0.12)), a = T.rnd() * 3, r1 = 0.5 + T.rnd() * 0.4, r2 = 0.3 + T.rnd() * 0.25; dK += `M${R(x - r1)} ${R(y)}q${R(r1 * 0.3)} ${R(-r2 - a * 0.1)} ${R(r1 * 1.2)} ${R(-r2 * 0.6)}q${R(r1 * 0.8)} ${R(r2 * 0.5)} ${R(r1 * 0.8)} ${R(r2 * 1.1)}q${R(-r1)} ${R(r2 * 0.8)} ${R(-r1 * 2)} ${R(-r2 * 0.5)}z`; }
     }
-    return `<g filter="${weich(T, "pf", 0.18)}"><path d="${dS}" fill="#4f3c26" stroke="#20160c" stroke-width="${F ? 0.8 : 0.5}" stroke-linejoin="round"/><path d="${dL}" fill="#4a3822" stroke="#20160c" stroke-width="${F ? 0.6 : 0.4}" stroke-linejoin="round"/></g>` +
-      (dK ? `<path d="${dK}" fill="#c9ae7e" opacity=".75"/>` : "");
+    return `<g filter="${weich(T, "pf", 0.16)}"><path d="${dS}" fill="#4f3c26" stroke="#1a1209" stroke-width="${F ? 0.9 : 0.5}" stroke-linejoin="round"/><path d="${dL}" fill="#4a3822" stroke="#1a1209" stroke-width="${F ? 0.6 : 0.4}" stroke-linejoin="round"/></g>` +
+      (dK ? `<path d="${dK}" fill="#c9ae7e" opacity=".7"/>` : "");
   };
-  const opt = (u, x = {}) => Object.assign({ farbe: "#b39a68", bauch: "#e6dcc2", bauchSeite: -u, licht: u, muster: mS, innen: flecken(u), n: F ? 14 : 8, streif: false, kern: 0.5, glanz: 0.26, weich: 1.2, randA: 0.22, offen: true }, x);
-  const rohrteil = (p, u, x) => schlangenRohr(T, p.map(([a, b, r]) => [a, b, r]), opt(u, x)).svg;
-  /* weicher Bodenschatten / Kontaktschatten entlang der vorderen Auflage */
-  h += `<path d="${poly(P.filter((_, i) => i % 6 === 0).map(([x, y, r]) => [x, y + r * 0.7]))}" fill="none" stroke="#000" stroke-width="9" stroke-opacity=".16" stroke-linejoin="round" filter="${weich(T, "bs", 2.4)}"/>`;
-  let kb = "";
-  for (const p of hinten) kb += rohrteil(p, -1, { farbe: "#a68d5e" });
-  /* Hals: steigt aus der inneren Windung hinten auf, liegt über den Windungen, Kopf vorn rechts */
-  const e = P[P.length - 1];
-  const e0 = P[P.length - 9];
-  const hals = [[e0[0], e0[1], e0[2]], [e[0], e[1], e[2]], [e[0] + 8, e[1] - 4.6, 5], [e[0] + 26, e[1] - 6.4, 4.2], [e[0] + 48, e[1] - 3, 3.4], [e[0] + 66, e[1] + 4.6, 2.7], [e[0] + 76, e[1] + 8.6, 2.5]];
-  /* vordere Teilstücke laufen an den Umkehrpunkten (y ≈ cy) weich in die hinteren über (Maske statt Schnittkante) */
-  const mv = T.id("pmv");
-  T.def(`<linearGradient id="${mv}g" gradientUnits="userSpaceOnUse" x1="0" y1="${cy - 2}" x2="0" y2="${cy + 4}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${mv}" maskUnits="userSpaceOnUse" x="0" y="-80" width="260" height="90"><rect x="0" y="-80" width="260" height="90" fill="url(#${mv}g)"/></mask>`);
-  let kv = "";
-  for (const p of vorn) {
-    /* Berührungsfuge: dunkle, weiche Fuge über jeder vorderen Windung (auf der dahinterliegenden) */
-    kb += `<path d="${poly(p.filter((_, i) => i % 3 === 0).map(([x, y, r]) => [x, y - r * 0.9]))}" fill="none" stroke="#000" stroke-width="3.2" stroke-opacity=".32" stroke-linejoin="round" filter="${weich(T, "fu", 1)}"/>`.replace(/Z"/, '"');
-    kv += rohrteil(p, 1);
-  }
-  kb += `<g mask="url(#${mv})">${kv}</g>`;
-  h += `<g filter="${rund(T, "pw", { weich: 2, tiefe: 2.6 })}">${kb}</g>`;
-  h += `<path d="M${R(hals[2][0])} ${R(hals[2][1] + 5)}Q${R(hals[4][0])} ${R(hals[4][1] + 6)} ${R(hals[6][0])} ${R(hals[6][1] + 4.4)}" fill="none" stroke="#000" stroke-width="3.4" stroke-opacity=".3" filter="${weich(T, "hs", 1)}"/>`;
-  const mh = T.id("pmh");
-  T.def(`<linearGradient id="${mh}g" gradientUnits="userSpaceOnUse" x1="${R(e0[0])}" y1="0" x2="${R(e[0] + 2)}" y2="0"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${mh}" maskUnits="userSpaceOnUse" x="0" y="-80" width="260" height="90"><rect x="0" y="-80" width="260" height="90" fill="url(#${mh}g)"/></mask>`);
-  h += `<g mask="url(#${mh})"><g filter="${rund(T, "pw", { weich: 2, tiefe: 2.6 })}">` + rohrteil(hals, -1, { schilde: 0.03 }) + "</g></g>";
-  /* Kopf (lokal: x 0 = Hinterkopf, Schnauze bei x 10,6), keilförmig, Profil nach rechts, leicht von oben gesehen */
-  const kp = [[0, -1.4], [0.8, -2.6], [2.6, -3.1], [5.4, -3.1], [8, -2.7], [10, -2], [11, -1.1], [11.2, -0.3], [10.8, 0.4], [9.6, 0.8], [7, 1.1], [4, 1.6], [1.6, 2.2], [0.2, 1.8], [-0.4, 0.4]];
+  /* Licht: Glanzband oben mit Hauch Blau-Violett, Kernschatten unten (−30 %), Reflex vom Boden */
+  const opt = (u, x = {}) => Object.assign({ farbe: "#b39a68", bauch: u < 0 ? "#e6dcc2" : null, bauchSeite: -u, licht: u, muster: mS, innen: flecken(u), n: F ? 26 : 12, streif: false, kern: 0.5, glanz: 0.3, glanzF: "#eef0ff", weich: 1.2, randA: 0.22, offen: true, glanzband: 1.6, glanzOp: 0.18, glanzW: 0.35 }, x);
+  const rohrteil = (p, u, x) => schlangenRohr(T, p, opt(u, x)).svg;
+  const fuge = (p, dy, w = 3.4, op = 0.45) => `<path d="${mehr(T, [p.filter((_, i) => i % 3 === 0).map(([x, y, r]) => [x, y + dy * r])])}" fill="none" stroke="#000" stroke-width="${w}" stroke-opacity="${op}" stroke-linecap="round" filter="${weich(T, "fu", 1)}"/>`;
+  let w = "";
+  /* hinten: von außen nach innen (die inneren liegen davor und drücken die äußeren ein) */
+  w += rohrteil(S2b, 1, { farbe: "#a38a5c", lt: [0.08, 0.92] });
+  w += fuge(S1b.slice(4, -4), -0.9) + rohrteil(S1b, 1, { farbe: "#a8905f", lt: [0.08, 0.92] });
+  w += fuge(S0b.slice(3), -0.9) + rohrteil(S0b, 1, { farbe: "#ad9463", lt: [0.1, 0.95] });
+  /* vorn: von innen nach außen, jede mit tiefer Berührungsfuge auf der dahinterliegenden */
+  w += fuge(S0f.slice(8, -4), -0.92) + rohrteil(S0f, -1, { lt: [0.14, 0.9] });
+  w += fuge(S1f.slice(8, -4), -0.92) + rohrteil(S1f, -1, { lt: [0.14, 0.9] });
+  w += fuge(S2f.slice(4, -4), -0.92) + rohrteil(S2f, -1, { lt: [0.06, 0.92] });
+  w += fuge(schw, -0.8, 1.6, 0.4) + rohrteil(schw, -1, { n: 10, lt: [0.1, 0.9], offen: false });
+  /* Hals liegt über den Windungen und wirft Schatten auf sie */
+  w += `<path d="${mehr(T, [hals.slice(2).map(([x, y, r]) => [x + 1, y + r * 0.9])])}" fill="none" stroke="#000" stroke-width="4" stroke-opacity=".35" stroke-linecap="round" filter="${weich(T, "hs", 1.2)}"/>`;
+  w += rohrteil(hals, -1, { lt: [0.15, 0.95], n: F ? 16 : 8 });
+  /* Kontaktschatten am Boden entlang der äußeren Windung, Bauch liegt breit auf */
+  h += `<path d="${mehr(T, [bog(175, 5, 16, 0, 0, 50).map(([x, y]) => [x, y + 5.6])])}" fill="none" stroke="#000" stroke-width="2.4" stroke-opacity=".55" filter="${weich(T, "ko", 0.8)}"/>`;
+  h += `<g filter="${rund(T, "pw", { weich: 2.2, tiefe: 2.8, umgebung: 0.36 })}">${w}</g>`;
+  /* Kopf (lokal: x 0 = Kiefergelenk, Schnauze bei x 12): Keil, hinten deutlich breiter als der Hals (Kiefergelenke), flache
+     Oberseite mit Schnauzenkante, leicht von oben gesehen; Zeichnung: Speerspitze mit hellem Saum, Augenstreif, Keil unter
+     dem Auge, cremeweiße Lippen; hohe gewölbte Lippenschilde mit Lichtkante, Wärmegruben IN den Schilden */
+  const kp = [[-0.6, -0.6], [0.2, -3.2], [2, -4.3], [4.6, -4.4], [7.4, -3.9], [9.8, -3], [11.4, -2], [12.1, -0.9], [11.9, 0.1], [11, 0.7], [8.6, 1.1], [5.6, 1.7], [2.6, 2.6], [0.6, 3], [-0.6, 1.8]];
   let ki = "";
-  ki += `<g filter="${weich(T, "pk", 0.3)}">` + form(T, poly([[0.4, 1.8], [4, 1.4], [8, 0.9], [10.8, 0.3], [8, 0.4], [4, 0.9], [0.6, 1.1]]), "#000", ' opacity=".2"') + "</g>";
-  /* heller Saum unter der Speerspitze, Speerspitze (Oberkopf, Spitze nach vorn zwischen die Augen) */
-  ki += form(T, [[0, -1.2], [2.6, -2], [5.2, -2.4], [7.6, -2.85], [9.6, -2.3], [6, -1.9], [3, -1.4], [0.4, -0.5]], "#e4d2a4");
-  ki += form(T, [[0, -1.8], [1, -2.9], [3, -3.15], [5.6, -3.1], [7.6, -2.95], [5.2, -2.45], [2.6, -2.05], [0.6, -1.2]], "#4c3620");
-  /* Augenstreif Nasenloch → Auge → Mundwinkel, cremefarbene Lippen, dunkler Keil unter dem Auge */
-  ki += form(T, [[10.7, -1.55], [8, -1.5], [6, -1.4], [3, -0.95], [0.4, -0.1], [0.2, 0.8], [3, 0.2], [6, -0.45], [8.2, -0.85], [10.8, -0.95]], "#45301a");
-  ki += form(T, [[0.6, 1.15], [4, 0.45], [8, -0.25], [10.9, -0.45], [11, 0.3], [8, 0.75], [4, 1.35], [1, 1.85]], "#ece0c0");
-  ki += form(T, [[6.1, -0.55], [7, -0.6], [6.8, 0.7], [6.2, 0.8]], "#45301a");
-  if (F) ki += lippen(T, [[1.4, 1.35], [4, 0.85], [7, 0.45], [9.6, 0.2], [11, 0.05]], 11, -0.8, { w: 0.05, op: 0.45, opL: 0.3, fuge: "#2a1a0a" }) + lippen(T, [[0.8, 1.7], [4, 1.2], [7, 0.85], [9.6, 0.6]], 9, 0.6, { w: 0.05, op: 0.35, opL: 0.2, fuge: "#2a1a0a" });
-  /* Wärmegruben: schräge Schlitze in Rostrale und vorderen Oberlippenschilden, Reihe in den hinteren Unterlippenschilden */
-  ki += `<path d="M10.75 -.1l.14 .26M10.05 .08l.14 .26M9.3 .2l.14 .26M2.7 1.48l.1 .22M2 1.6l.1 .22M1.3 1.75l.1 .22" stroke="#1a0e06" stroke-width=".22" stroke-linecap="round"/>`;
+  /* Oberseite (flach, im Licht) bis zur Schnauzenkante, darunter die Kopfseite etwas dunkler */
+  ki += form(T, [[0.2, -3.2], [2, -4.3], [4.6, -4.4], [7.4, -3.9], [9.8, -3], [11.4, -2], [11.6, -1.5], [9.6, -1.75], [7, -2.1], [4, -2.3], [1.2, -2]], "#cbb382");
+  ki += `<g filter="${weich(T, "pk", 0.3)}">` + form(T, poly([[0.4, 2.4], [4, 1.6], [8, 1], [11, 0.6], [8, 0.4], [4, 0.9], [0.6, 1.4]]), "#000", ' opacity=".22"') + "</g>";
+  /* Speerspitze auf dem Oberkopf (Spitze nach vorn zwischen die Augen), heller Saum */
+  ki += form(T, [[-0.2, -3.2], [2, -4.12], [5, -4.2], [7.6, -3.7], [9.4, -3.05], [7, -2.4], [4.6, -2.2], [2, -2.15], [0.2, -1.9]], "#ecdcb0");
+  ki += form(T, [[0, -3.3], [2, -4.2], [5, -4.25], [7.2, -3.75], [8.6, -3.2], [6.4, -2.75], [4.4, -2.55], [2, -2.5], [0.4, -2.3]], "#4c3620");
+  /* Augenstreif Nasenloch → Auge → Mundwinkel (nach hinten breiter), Keil unter dem Auge bis zur Lippe */
+  ki += form(T, [[11.5, -1.55], [9, -1.55], [6.8, -1.55], [4, -1.4], [1.2, -0.9], [-0.4, -0.4], [-0.3, 1.2], [1.6, 0.6], [4, -0.1], [6.8, -0.5], [9.2, -0.9], [11.6, -1]], "#45301a");
+  ki += form(T, [[6.4, -0.6], [7.4, -0.65], [7.1, 1], [6.4, 1.15]], "#45301a");
+  /* cremeweiße Lippen: hohe, gewölbte Oberlippenschilde mit Lichtkante oben, Unterlippenschilde */
+  ki += form(T, [[0.4, 1.5], [4, 0.75], [8, 0.1], [11.6, -0.4], [11.9, 0.15], [8.6, 0.85], [5.6, 1.45], [2.6, 2.3], [0.6, 2.8]], "#ece0c0");
+  const lG = T.lg("plip", [[0, "#fffaf0", 0.55], [0.35, "#fffaf0", 0.05], [0.8, "#000", 0.06], [1, "#000", 0.3]]);
+  if (F) { let lp = ""; for (let i = 0; i < 11; i++) { const x0 = 11.6 - i * 1.02, x1 = x0 - 0.98, yt = (x) => -0.62 + (11.6 - x) * 0.16, yb = (x) => 0.08 + (11.6 - x) * 0.085; if (i === 4 || i === 5) continue; lp += `<path d="M${R(x0)} ${R(yt(x0))}Q${R((x0 + x1) / 2)} ${R(yt((x0 + x1) / 2) - 0.22)} ${R(x1)} ${R(yt(x1))}L${R(x1)} ${R(yb(x1))}L${R(x0)} ${R(yb(x0))}Z"/>`; }
+    ki += `<g fill="${lG}" stroke="#3a2a14" stroke-width=".06" stroke-opacity=".5">${lp}</g>`; }
+  /* Wärmegruben: schräge, tiefe Schlitze in Rostrale + ersten 2 Oberlippenschilden und in den hinteren Unterlippenschilden */
+  ki += `<path d="M11.7 -.42l.18 .34M10.8 -.3l.2 .4M9.8 -.12l.2 .4M3.6 1.82l.18 .36M2.6 2.12l.18 .36M1.6 2.42l.18 .36" stroke="#120a04" stroke-width=".26" stroke-linecap="round"/>` +
+    (F ? `<path d="M11.76 -.5l.18 .34M10.88 -.4l.2 .4M9.88 -.22l.2 .4" stroke="#fff6e0" stroke-width=".08" stroke-opacity=".6"/>` : "");
   let kopf = teil(T, kp, "#bba270", { innen: ki, rand: "#1a1008", randA: 0.25, rw: 0.1 });
-  kopf += linien(T, [[[11, 0.25], [8.6, 0.55], [5, 0.95], [2, 1.45], [0.6, 1.65]]], "#140a04", 0.09, 0.75);
-  kopf += echsAuge(T, 6.6, -1.15, 0.6, { schlange: true, iris: "#c29646", iris2: "#3a2410", netz: "#2a1808", pupille: "schlitz", haut: "#45301a" });
-  kopf += `<path d="M6 -1.1a.6 .6 0 0 0 1.2 0Z" fill="#000" opacity=".3"/>`;
-  kopf += `<ellipse cx="10.5" cy="-1.85" rx=".26" ry=".18" fill="#140a04"/>`;
-  const hE = hals[hals.length - 1], kx = hE[0] - 1.2, ky = hE[1] + 0.9;
-  h += `<path d="M${R(kx + 0.5)} ${R(ky + 2.4)}l10 -.6" stroke="#000" stroke-width="2" stroke-opacity=".3" filter="${weich(T, "ks", 0.7)}"/>`;
-  h += `<g filter="${rund(T, "pkk", { weich: 0.9, tiefe: 3, umgebung: 0.4 })}"><g transform="translate(${R(kx)} ${R(ky)}) rotate(6) scale(1.32)">${kopf}</g></g>`;
-  const xs = P.map((p) => p[0]), ys = P.map((p) => p[1] - p[2]);
-  return fertig(1.4, h, [Math.min(...xs) - 7, Math.min(...ys, ky - 4.5), Math.max(...xs, kx + 14.6) + 1, 0], null, [kx - 4, ky - 7, kx + 16, ky + 5]);
+  kopf += linien(T, [[[12, 0.2], [9.4, 0.62], [6, 1.15], [3, 1.85], [0.4, 2.35]]], "#140a04", 0.1, 0.8);
+  /* Auge: rund, kein Lid, keine Braue; Supraoculare als flache Platte darüber, untere Iris im Augenstreif dunkler,
+     glasige Brillenschuppe mit großem weichem Spitzlicht */
+  kopf += `<path d="M5.8 -2.25Q6.9 -2.75 8.1 -2.3L8 -1.75Q6.9 -2 5.9 -1.7Z" fill="${T.lg("psup", [[0, "#f4e6c0", 0.5], [1, "#000", 0.2]])}"/>`;
+  kopf += echsAuge(T, 6.9, -1.05, 0.68, { schlange: true, braue: false, untenDunkel: 0.35, iris: "#c29646", iris2: "#3a2410", netz: "#2a1808", pupille: "schlitz", haut: "#45301a" });
+  kopf += `<ellipse cx="11.2" cy="-1.6" rx=".3" ry=".2" fill="#140a04"/>`;
+  const kx = 85.2, ky = -15.2;
+  h += `<path d="M${kx + 1} ${ky + 3}l13 -.4" stroke="#000" stroke-width="2.6" stroke-opacity=".35" filter="${weich(T, "ks", 0.8)}"/>`;
+  h += `<g filter="${rund(T, "pkk", { weich: 1, tiefe: 3, umgebung: 0.4 })}"><g transform="translate(${kx} ${ky}) rotate(5) scale(1.2)">${kopf}</g></g>`;
+  return fertig(1.4, h, [23, -52, 136, 0], null, [kx - 6, ky - 9, kx + 18, ky + 6]);
 }
 
 /* =====================================================================

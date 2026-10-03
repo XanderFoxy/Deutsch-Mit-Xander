@@ -761,11 +761,11 @@ function zebra(T) {
   /* Fell: kurze Haare in Wuchsrichtung, als Muster; die Streifenkanten fransen über einen Haarstrich-Rand aus */
   const hf = [["#000", 2, 0.14, 0.09], ["#fff", 1, 0.14, 0.25]];
   const fHals = F ? H.fellMuster("h", 58, hf, { tile: 6, n: 20, len: 1.4, streu: 0.6 }) : "";
-  const fRumpf = F ? H.fellMuster("r", 172, hf, { tile: 6, n: 20, len: 1.6, streu: 0.6 }) : "";
+  const fRumpf = F ? H.fellMuster("r", 172, hf, { tile: 6, n: 16, len: 1.6, streu: 0.6 }) : "";
   const fBein = F ? H.fellMuster("b", 92, hf, { tile: 4, n: 18, len: 1, streu: 0.6 }) : "";
   const fKopf = F ? H.fellMuster("k", 52, hf, { tile: 3, n: 12, len: 0.8, streu: 0.6 }) : "";
-  const kanteR = F ? H.fellMuster("kr", 172, [[SW, 1, 0.25, 0.9]], { tile: 3, n: 14, len: 1.2, streu: 0.5 }) : "";
-  const kanteH = F ? H.fellMuster("kh", 58, [[SW, 1, 0.25, 0.9]], { tile: 3, n: 14, len: 1.1, streu: 0.5 }) : "";
+  const kanteR = F ? H.fellMuster("kr", 172, [[SW, 1, 0.25, 0.9]], { tile: 3, n: 10, len: 1.2, streu: 0.5 }) : "";
+  const kanteH = F ? H.fellMuster("kh", 58, [[SW, 1, 0.25, 0.9]], { tile: 3, n: 10, len: 1.1, streu: 0.5 }) : "";
   const kanteB = F ? H.fellMuster("kb", 92, [[SW, 1, 0.2, 0.9]], { tile: 3, n: 14, len: 0.8, streu: 0.5 }) : "";
   /* Streifen: Mittellinie + halbe Breiten → Band; alle Bänder gleich orientiert (keine Löcher, keine Schachbrett-Kreuzungen) */
   const flaeche = (p) => p.reduce((a, q, i) => { const n = p[(i + 1) % p.length]; return a + q[0] * n[1] - n[0] * q[1]; }, 0);
@@ -884,11 +884,11 @@ function zebra(T) {
     return "M" + [P(-3, -w), P(16, -w * 0.85), P(16, w * 0.85), P(-3, w)].map((p) => H.f(p[0]) + " " + H.f(p[1])).join("L") + "Z";
   }).join("");
   s += teil(mBasis, "#ece6da", {
-    fell: F ? [H.fellMuster("m", -128, [["#8a8478", 2, 0.25, 0.35], ["#fff", 1, 0.25, 0.5]], { tile: 4, n: 26, len: 3.2, streu: 0.12 })] : [],
+    fell: F ? [H.fellMuster("m", -128, [["#8a8478", 2, 0.25, 0.35], ["#fff", 1, 0.25, 0.5]], { tile: 4, n: 20, len: 3.2, streu: 0.12 })] : [],
     innen: `<path d="${mStr}" fill="${SW}"/>` + (F ? `<path d="${mStr}" fill="${H.fellMuster("ms", -128, [["#5a5450", 1, 0.25, 0.6]], { tile: 4, n: 18, len: 3, streu: 0.12 })}"/>` : "") +
       wf(kammP.map((p) => [p[0] + 0.5, p[1] + 1]), "#000", 0.3, 1, false, 2.5),
   });
-  s += H.straehnen(innenM.map((p, i) => [p[0] - mn(i)[0] * 1.2, p[1] - mn(i)[1] * 1.2]), F ? 110 : 24, (t2) => mLen(t2) + 1.2, mWink, [["#1e1b18", 3, 0.45, 0.9], ["#4a4540", 1, 0.4, 0.85], ["#ddd6c8", 1, 0.4, 0.8]], { streu: 16, welle: 0.15, szene: 1, dick: 1 });
+  s += H.straehnen(innenM.map((p, i) => [p[0] - mn(i)[0] * 1.2, p[1] - mn(i)[1] * 1.2]), F ? 62 : 24, (t2) => mLen(t2) + 1.2, mWink, [["#1e1b18", 3, 0.45, 0.9], ["#4a4540", 1, 0.4, 0.85], ["#ddd6c8", 1, 0.4, 0.8]], { streu: 16, welle: 0.15, szene: 1, dick: 1 });
   /* ---- Kopf: Achse 50° nach unten, ~52 cm; große runde Ganasche, Kehlgang, Gesichtsleiste, stumpfes Maul mit Nüster und Lippen ---- */
   const wa = 50 * Math.PI / 180, P0 = [205, -183];
   const K = (u, v) => [P0[0] + u * Math.cos(wa) - v * Math.sin(wa), P0[1] + u * Math.sin(wa) + v * Math.cos(wa)];

@@ -1054,9 +1054,9 @@ function riesenhirsch(T) {
   SZ = !fein; SZMIN = 0.36; FLMIN = 0.3;
   const S0 = "#000", HL = "#fff4e0", DUNKEL = "#4a3524", ELF = "#ddcfa8";
   /* Fell: Kachelmuster (dunkle + helle Haare) je Wuchsrichtung, Strähnen mit Einzelhaaren, Töne dunkel → hell */
-  const MD = [["r_d", 9, 12, 30, 3.2, [["#3a2816", 1, 0.2, 0.34], ["#5a4228", 1, 0.18, 0.3]]]];
-  const MH = [["r_h", 11, 11, 16, 3, [["#f2e0bc", 1, 0.17, 0.34]]]];
-  const MDk = [[...MD[0].slice(0, 6), 0.45]], MHk = [[...MH[0].slice(0, 6), 0.45]];
+  const MD = [["r_d", 9, 12, 30, 3.2, [["#3a2c24", 1, 0.2, 0.3], ["#5c4838", 1, 0.18, 0.26]]]];
+  const MH = [["r_h", 11, 11, 16, 3, [["#f0e4d2", 1, 0.17, 0.3]]]];
+  const MDk = [[...MD[0].slice(0, 6), 0.75]], MHk = [[...MH[0].slice(0, 6), 0.75]];
   const TON = ["#2a1c10", "#3e2c1c", "#56402a", "#6e5638", "#8a6e4a", "#a8885e", "#c4a67a", "#dcc49c"];
   const TONB = ["#1c120a", "#281a10", "#342416", "#42301e", "#523c26"];
   let s = "";
@@ -1305,8 +1305,8 @@ function riesenhirsch(T) {
     FO([[24, 18], [44, 19.6], [52, 21.6], [44, 23.2], [24, 23.4]], S0, 0.3) + FO([[2, 14], [10, 18], [16, 22], [8, 20]], S0, 0.24) +
     FO([[15, 1], [27, 2], [28, 8], [20, 10.4], [14, 7]], S0, 0.2) + FO([[34, 3], [52, 6.6], [54, 10], [38, 9]], "#6a5a4a", 0.3), 0.8);
   let kk = K(T, dK, kopfG, { rand: false, vol: false, innen: kl +
-    HAARZONEN(T, null, [[[[-10, -10], [62, -10], [62, 30], [-10, 30]], 182, 0.75]], [[...MD[0].slice(0, 6), 0.4]]) +
-    HAARZONEN(T, null, [[[[-10, -10], [62, -10], [62, 12], [-10, 12]], 182, 0.6]], [[...MH[0].slice(0, 6), 0.4]]) });
+    HAARZONEN(T, null, [[[[-10, -10], [62, -10], [62, 30], [-10, 30]], 182, 0.75]], [[...MD[0].slice(0, 6), 0.7]]) +
+    HAARZONEN(T, null, [[[[-10, -10], [62, -10], [62, 12], [-10, 12]], 182, 0.6]], [[...MH[0].slice(0, 6), 0.7]]) });
   /* Haarstrom im Gesicht: kurz, von der Nase nach hinten; um das Auge herum strahlenförmig */
   const ax = 21.4, ay = 4.2;
   kk += FELL(T, kopfL.slice(1, 26), 48, (x, y) => (Math.hypot(x - ax, y - ay) < 8 ? Math.atan2(y - ay, x - ax) * 180 / Math.PI : y > 18 ? 186 : 178), 1.6,

@@ -469,7 +469,7 @@ function klaue3(T, F, xh, L, h, farbe, haar = "#e8e4dc", ballen = "#a89894") {
   const kl = (dx, hh, f, id) => {
     const X = (u) => xh + dx + u * L;
     const pts = [[X(0.1), 0, 1], [X(0.02), -hh * 0.14], [X(0.01), -hh * 0.34], [X(0.08), -hh * 0.5], [X(0.24), -hh * 0.64], [X(0.42), -hh * 0.82],
-      [xo + dx - L * 0.03, -hh], [xo + dx + L * 0.05, -hh * 0.93], [xt + dx - L * 0.05, -hh * 0.16], [xt + dx - L * 0.01, -hh * 0.05], [xt + dx - L * 0.07, 0, 1]];
+      [xo + dx - L * 0.03, -hh], [xo + dx + L * 0.05, -hh * 0.93], [xt + dx - L * 0.05, -hh * 0.24], [xt + dx - L * 0.04, -hh * 0.08], [xt + dx - L * 0.11, 0, 1]];
     const dk = abdunkeln(f, 0.42);
     const g = T.lg("k3" + id + farbe.slice(1) + ballen.slice(1), [[0, ballen], [0.26, ballen], [0.4, f], [1, dk]], 0, 0, 1, 0.4);
     let innen = F.kante(xo + dx, -hh * 0.8, xt + dx - L * 0.14, -hh * 0.22, hh * 0.12, 0.55) + F.rinne(X(0.3), -hh * 0.66, X(0.36), -hh * 0.04, L * 0.035, 0.6) +
@@ -485,7 +485,7 @@ function klaue3(T, F, xh, L, h, farbe, haar = "#e8e4dc", ballen = "#a89894") {
   /* Runde 4: Spalt deutlich (Kritik: „einteilig“) – innere Klaue 18 % vor, dunkler Keil vom Kronsaum bis zwischen die
      beiden Zehenspitzen, unten ≈ 8 % der Klauenlänge breit; zwei getrennte, gerundete Zehenspitzen */
   let s = kl(L * 0.18, h * 0.93, abdunkeln(farbe, 0.72), "i");
-  s += form([[xo + L * 0.02, -h * 0.99], [xo + L * 0.12, -h * 0.97], [xt + L * 0.11, -h * 0.08], [xt + L * 0.08, 0, 1], [xt - L * 0.03, 0, 1], [xt - L * 0.04, -h * 0.1]],
+  s += form([[xo + L * 0.02, -h * 0.99], [xo + L * 0.12, -h * 0.97], [xt + L * 0.12, -h * 0.2], [xt + L * 0.06, -h * 0.1], [xt - L * 0.02, -h * 0.12], [xt - L * 0.04, -h * 0.22]],
     "#050403", ` opacity=".92"`, 0.05);
   s += kl(0, h, farbe, "a");
   /* Kronsaum: Haare fallen über den Rand */
@@ -864,7 +864,13 @@ const K_HCX = 36, K_VCX = 167;
 const K_H = bildeBein(HB_TPL, K_HCX, 0.95, [[0, 0], [-23, -18], [-62, -44], [-105, -82], [-127, -126], [-140, -140]]);
 const K_V = bildeBein(VB_TPL, K_VCX, 0.95, [[0, 0], [-23, -18], [-50, -38], [-97, -80], [-110, -92]]);
 /* Hinterkontur vom Sitzbeinhöcker: fast senkrecht, mager eingezogen (milchtypisch) bis zum Sprunggelenk */
-const K_HB = [[21, -136], [22.6, -129], [24.2, -118]].concat(K_H.h.slice(1)), K_HV = K_H.v, K_VB = K_V.h, K_VV = K_V.v;
+/* PROPORTIONEN Kuh (Holstein) in Kopflängen (KL = 52 cm): Widerrist 2,8 KL (146), Hüfthöcker 2,95 KL (154, ragt 4–5 cm
+   über die Rückenlinie), Sitzbeinhöcker 2,7 KL (141), Rumpflänge Bug–Sitzbein 3,3 KL (171), Brusttiefe 1,45 KL (Brustboden 70),
+   Ellbogen 1,5 KL (78), Vorderfußwurzel 0,73 KL (38), Fesselgelenk 0,35 KL (18), Kniegelenk 1,6 KL (83), Fersenhöcker 0,85 KL
+   (44 = 30 % WH), Euterboden 1,0 KL (52, über dem Sprunggelenk), Hals 1,2 KL lang, vom Widerrist leicht zum Genick fallend,
+   Genick 2,5 KL (131), Kopfwinkel 56°. Hinterkontur: unter dem Sitzbeinhöcker konkav nach vorn bis zur Achillessehne,
+   Fersenhöcker 5 cm dahinter vorspringend. */
+const K_HB = [[21, -138], [20.6, -134], [21.4, -127], [23.6, -117], [26.4, -105], [29, -93], [31, -82], [32.4, -72], [33, -63.4]].concat(K_H.h.slice(5)), K_HV = K_H.v, K_VB = K_V.h, K_VV = K_V.v;
 function kuh(T) {
   FEIN = T.fein;
   const F = flecken(T, "#fff8ea", "#1a1820");
@@ -893,20 +899,20 @@ function kuh(T) {
   const rumpf = K_HB.concat(K_HV.slice(0, 13), euterUnten,
     [[104, -71.2], [116, -69.6], [128, -69], [140, -70], [150, -72.6], [156, -76.4]], K_VB, K_VV,
     /* Triel 6–8 cm vor den Vorderbeinen, Buggelenk, Halsunterlinie zur Ganasche */
-    [[181, -79.6], [184.4, -82.4], [187.8, -86.2], [190.6, -90.8], [192.8, -96], [195.4, -100.6], [198.8, -104.2], [204, -107], [207.6, -109.4],
-      [212, -112.4], [218, -118], [224, -125], [227, -130.6],
+    [[181, -79.6], [184.4, -82.4], [187.8, -86.2], [190.6, -90.8], [192.8, -96], [195.4, -100.6], [198.8, -104.2], [203, -107.6], [207, -112], [210.6, -116.4],
+      [214.6, -121], [219.6, -126], [224, -129.6], [227, -131.6],
       /* Hals fällt vom Widerrist leicht zum Genick; Widerrist leicht erhaben; gerader Rücken; Hüfthöcker als Buckel; Kruppe fällt zum Sitzbeinhöcker */
-      [224, -133], [218, -134.4], [208, -137.6], [194, -142.4], [180, -146.6], [170, -149.2], [164, -149.4], [156, -148.2], [144, -147.4], [128, -147.2],
-      [112, -147.4], [96, -147.8], [84, -148.6], [75, -150], [68, -151.8], [63, -152.6], [58, -152], [51, -149.6], [43, -147.6], [35, -145.8], [28.6, -144.2],
-      [25, -143], [22.4, -140.6]]);
+      [224, -133], [218, -134.4], [208, -137.6], [194, -142.6], [182, -147.4], [172, -150.6], [166, -151.6], [160, -150.6], [152, -148.6], [140, -147.6],
+      [126, -147.2], [112, -147.4], [98, -147.6], [86, -147.6], [77, -148.6], [70, -151.4], [64, -154.2], [59.6, -154.4], [55, -152], [48, -149.4], [40, -147],
+      [32, -145], [26.6, -143.4], [23.4, -141.2]]);
   const wuchs = richtung([[15, 95], [45, 100], [70, 160], [140, 165], [158, 100], [180, 100], [205, 125]]);
   /* Platten: Ränder wie Küstenlinien; der Haarsaum verzahnt Schwarz und Weiß in Wuchsrichtung */
   const p1 = zackig(T, [[146, -162], [240, -162], [240, -128], [226, -126], [214, -120], [206, -114], [199, -110], [192, -106], [186, -103], [181, -107], [175, -112],
     [166, -111], [157, -106], [149, -114], [143, -131], [144, -150]], 1.1, 3);
   const p2 = zackig(T, [[92, -160], [132, -160], [134, -138], [129, -122], [134, -106], [126, -93], [112, -89], [100, -95], [92, -108], [86, -128]], 1.1, 3);
   const p3 = zackig(T, [[0, -160], [68, -160], [72, -140], [64, -125], [69, -112], [58, -103], [50, -100], [44, -92], [33, -87], [22, -91], [10, -104], [0, -114]], 1.1, 3);
-  const p4 = zackig(T, [[150, -98], [159, -100], [161, -91], [154, -86], [148, -91]], 0.8, 2);
-  const p5 = zackig(T, [[77, -104], [85, -106], [87, -97], [81, -93], [75, -97]], 0.8, 2);
+  const p4 = zackig(T, [[148.6, -97.4], [152.4, -100.6], [157, -99.2], [160.8, -101], [162, -96.4], [159.4, -92.6], [161, -88.4], [156, -87], [152.6, -89.6], [148.4, -88.4], [147.6, -92.6]], 0.9, 2);
+  const p5 = zackig(T, [[75.6, -103.2], [79.4, -106.6], [83.2, -104], [87.2, -105.4], [86.4, -100.4], [88.4, -96.6], [84, -94.8], [80.6, -92.2], [77.8, -95.4], [74.2, -96.4], [76, -99.6]], 0.9, 2);
   const platten = [p1, p2, p3, p4, p5];
   const zHinten = [[0, -165], [74, -165], [86, -130], [70, -96], [56, -60], [20, -60]];
   const zRumpf = [[74, -165], [150, -165], [150, -110], [156, -66], [90, -66], [86, -130]];
@@ -921,7 +927,7 @@ function kuh(T) {
     F.licht(82, -66, 8, 3.4, 0.45, -30) + F.schatten(68, -53.6, 16, 2.6, 0.55) + F.rinne(66, -76, 64, -55, 1.6, 0.25) + F.schatten(52, -62, 6, 9, 0.45) +
         F.schatten(64, -84, 26, 7, 0.4) +
     /* nahes Hinterbein vor dem Euter; Kontaktlinie und Schlagschatten auf das Euter */
-    form(hinterbein, weiss, "", 0.2) + strich(K_HV.slice(11), "#5a5048", 1.2, 0.3) + F.rinne(K_HCX + 9, -52, K_HCX + 22, -76, 1.8, 0.4) +
+    form(hinterbein, weiss, "", 0.2) + fellZone(T, wH, hinterbein, 95) + strich(K_HV.slice(11), "#5a5048", 1.2, 0.3) + F.rinne(K_HCX + 9, -52, K_HCX + 22, -76, 1.8, 0.4) +
     /* Platten mit Haarsaum und Fell */
     platten.map((p) => form(T.fein ? p : vieleck(p), schwarz, "", 0.3)).join("") +
     fein(T, platten.map((p) => fellZone(T, sH, p, p === p1 ? 112 : p === p2 ? 160 : 100, 1)).join("")) +
@@ -955,8 +961,8 @@ function kuh(T) {
     F.kante(x - 0.7, y, x - 0.6, y + l * 0.8, 0.35, 0.5 * k) + F.schatten(x, y + l * 0.92, 1.2, 0.8, 0.4), { licht: 0.4, dunkel: 0.6, hell: 0, q: 0.05 });
   s += zitze(59.4, -53.4, "#a8847c", 0.5, 4.8) + zitze(79.6, -54.6, "#a8847c", 0.5, 4.6) + zitze(55.8, -53.4, "#caa69c", 1, 5.6) + zitze(76, -53, "#caa69c", 1, 6);
   /* ---------- Schwanz: Ansatz zwischen den Sitzbeinhöckern, verjüngt, liegt an der Hinterbacke; Quaste bis zum Sprunggelenk ---------- */
-  const schwanz = [[27.6, -142.8], [24, -142.4], [21.4, -139.6], [20, -133], [19.4, -122], [19.4, -106], [19.8, -90], [20.2, -77], [22.8, -77], [22.8, -90],
-    [22.6, -106], [22.8, -122], [23.6, -131], [25.6, -136.4], [28.2, -138.8]];
+  const schwanz = [[26.6, -141.4], [23.6, -140.8], [21.4, -138.4], [20, -133], [19.4, -122], [19.4, -106], [19.8, -90], [20.2, -77], [22.8, -77], [22.8, -90],
+    [22.6, -106], [22.8, -122], [23.6, -131], [25, -135.4], [27, -137.6]];
   s += stueck(T, schwanz, T.lg("schw", [[0, schwarz], [0.48, "#26252a"], [0.56, "#e8e4dc"], [1, "#d4cfc6"]], 0, -144, 0, -77, U),
     F.kante(20.4, -130, 20.2, -82, 0.6, 0.35) +
     F.schatten(22.6, -110, 0.8, 26, 0.3), { licht: 0.7, dunkel: 0.5, hell: 0.3 });

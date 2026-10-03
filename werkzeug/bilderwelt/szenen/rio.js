@@ -154,11 +154,6 @@ const DUNST = `url(#${S.id("dunst")})`;
   let k = `<path d="M${pts(umriss)} Z" fill="${WALD}"/>`;
   /* Luftperspektive: deutlich bläulicher als der nähere Corcovado */
   k += `<path d="M${pts(umriss)} Z" fill="${S.lg("waldluft", [[0, "#a9c8d4", 0.62], [0.5, "#93b8c0", 0.42], [1, "#6f9a98", 0.25]])}"/>`;
-  /* Baumkronen am Grat (nur oben, wo der Grat frei steht) */
-  for (let i = 0; i < umriss.length - 1; i++) {
-    const [x1, y1] = umriss[i], [x2, y2] = umriss[i + 1];
-    for (let t = 0; t < 1; t += 0.34) { const y = y1 + (y2 - y1) * t; if (y > 80) continue; k += `<circle cx="${r(x1 + (x2 - x1) * t)}" cy="${r(y + 0.5)}" r="${r(0.8 + rnd() * 0.6)}" fill="${rnd() < 0.5 ? "#6f9a8c" : "#628e80"}"/>`; }
-  }
   /* Tallinien (Schatten der Seitentäler) */
   k += `<path d="M118 48 Q124 60 128 76 M142 52 Q146 62 148 74" stroke="#4f7a72" stroke-width=".8" fill="none" opacity=".35"/>`;
   S.teil({ id: "regenwald", de: "der Regenwald", syl: "RE-gen-wald", it: "la foresta pluviale", itSyl: "fo-RE-sta plu-VIA-le", en: "rainforest", x: 120, y: 50, kunst: um(120, 50, k),
@@ -171,24 +166,30 @@ const DUNST = `url(#${S.id("dunst")})`;
    ===================================================================== */
 const CX = 88, CY = 27;   /* Oberkante der Aussichtsplattform = Fuß des Sockels */
 {
-  const um1 = [[48, 78], [56, 66], [64, 54], [72, 43], [78, 35], [82, 30], [84.2, 28.2], [91.8, 28.2], [94, 30.6], [97, 37], [99.6, 48], [101.6, 58], [104, 66], [110, 74], [116, 78]];
+  /* Umriss: links lange bewaldete Flanke, oben ein schmaler Buckel (Corcovado = „der Bucklige“),
+     rechts unter dem Gipfel die fast senkrechte Granitwand */
+  const um1 = [[48, 78], [56, 66], [64, 55], [71, 45.5], [76, 38.5], [79.6, 33.6], [82, 30.4], [83.6, 28.6], [85, 27.9], [91.4, 27.9], [93, 28.8], [94.6, 31.4], [95.8, 37], [96.6, 45], [97.4, 53], [99.4, 59], [104, 66], [110, 74], [116, 78]];
   /* Tal zwischen Corcovado und Massiv: dunkler Schattensaum */
   let k = `<path d="M${pts(um1.map(([x, y]) => [x + (x < CX ? -1.6 : 1.6), y + 1.2]))} Z" fill="#2c4f3f" opacity=".45"/>`;
   k += `<path d="M${pts(um1)} Z" fill="${WALD}"/>`;
   k += `<path d="M${pts(um1)} Z" fill="${S.lg("corcluft", [[0, "#8fb2ba", 0.28], [1, "#1f3f2a", 0.12]])}"/>`;
-  /* die Felswand nach Osten (rechts), von der Morgensonne beschienen */
-  const wand = [[86.5, 28.6], [91.8, 28.4], [94, 30.6], [97, 37], [99.6, 48], [101.6, 58], [103.2, 64], [100.4, 66], [97.6, 57], [94.6, 45], [91, 35]];
-  k += `<path d="M${pts(wand)} Z" fill="${S.lg("granit", [[0, "#7f7c76"], [0.55, "#aaa498"], [1, "#d0c8b6"]], 0, 0, 1, 0)}"/>`;
-  for (let i = 0; i < 9; i++) { const x = 90 + i * 1.2, y = 31 + i * 1.6; k += `<path d="M${r(x)} ${r(y)} q.6 ${r(6 + rnd() * 6)} ${r(0.4 + rnd())} ${r(12 + rnd() * 8)}" stroke="#5f5c56" stroke-width="${r(0.25 + rnd() * 0.3)}" fill="none" opacity=".55"/>`; }
-  /* Felsplatten an der linken Flanke und unter dem Gipfel */
-  k += `<path d="M79.5 33 L84 29.4 L86 31 L83.6 38 L80.6 39 Z" fill="${S.lg("granit2", [[0, "#6d6c68"], [1, "#9a958a"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M70 47 L73.6 44 L75 47.6 L72 52 Z M64.6 56 L67 54 L68 57.4 L65.6 60 Z" fill="#7a7871" opacity=".85"/>`;
-  /* Gipfelfels, auf dem die Terrassenmauer sitzt; Bäume an der Kante */
-  k += `<path d="M82.2 31.6 Q83.2 28.7 84.5 27.5 L91.5 27.5 Q92.8 28.7 93.9 31.6 Z" fill="${S.lg("gipfel", [[0, "#77736b"], [1, "#a9a296"]], 0, 0, 1, 0)}"/>`;
-  for (const [x, y, rr] of [[83.6, 28.4, 0.7], [82.6, 29.6, 0.9], [92.5, 28.4, 0.6], [93.5, 29.6, 0.8]]) k += `<circle cx="${x}" cy="${y}" r="${rr}" fill="#2f5a3a"/>`;
-  /* Wald an der linken Flanke im Schatten */
-  k += `<path d="M48 78 L56 66 L64 54 L72 43 L78 35 L82 30 L84.2 28.2 L86.5 28.6 L90 36 L88 52 L84 78 Z" fill="#14301f" opacity=".3"/>`;
-  for (let i = 0; i < 16; i++) { const t = rnd(), x = 52 + t * 34, y = 77 - t * 46 + rnd() * 5; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.8 + rnd() * 0.6)}" fill="#3a6a46" opacity=".8"/>`; }
+  /* Wald an der linken Flanke im Schatten (endet unter dem Gipfelfels) */
+  k += `<path d="M48 78 L56 66 L64 55 L71 45.5 L76 38.5 L79.6 33.6 L82 31.4 L85 36 L84 78 Z" fill="#14301f" opacity=".3"/>`;
+  /* die Granitwand: oben schmal direkt unter dem Gipfel, steil, nach unten auslaufend */
+  const wand = [[88.6, 28.4], [91.4, 27.9], [93, 28.8], [94.6, 31.4], [95.8, 37], [96.6, 45], [97.2, 52], [95.6, 56], [93.4, 54.6], [91.6, 51], [89.2, 47.6], [88.4, 41], [87.6, 35], [88, 31]];
+  k += `<path d="M${pts(wand)} Z" fill="${S.lg("granit", [[0, "#8a867e"], [0.6, "#b2ab9e"], [1, "#d6cdb9"]], 0, 0, 1, 0)}"/>`;
+  let str = "";
+  for (let i = 0; i < 10; i++) { const x = 88.6 + i * 0.8, y = 30 + Math.abs(i - 4) * 0.6 + rnd(); str += `M${r(x)} ${r(y)} q${r(0.2 + rnd() * 0.3)} ${r(5 + rnd() * 6)} ${r(0.4 + rnd() * 0.6)} ${r(9 + rnd() * 10)}`; }
+  k += `<path d="${str}" stroke="#5f5c56" stroke-width=".35" fill="none" opacity=".5"/>`;
+  /* Gipfelfels mit dem Buckel, auf dem die Terrassenmauer sitzt; Bäume an der Kante (deckend) */
+  k += `<path d="M81.6 31.4 Q82.8 28.4 84.6 27.4 L91.6 27.4 Q93 28.2 93.6 29.6 L90.4 31.8 Z" fill="${S.lg("gipfel", [[0, "#77736b"], [1, "#a9a296"]], 0, 0, 1, 0)}"/>`;
+  for (const [x, y, rr] of [[83.4, 28.7, 0.55], [82.5, 29.9, 0.7], [81.2, 31.5, 0.8]]) k += `<circle cx="${x}" cy="${y}" r="${rr}" fill="#2f5a3a"/>`;
+  /* Waldkante am Umriss: deckende Kronen */
+  for (let i = 0; i < 18; i++) { const t = rnd(), x = 50 + t * 31, y = 77.6 - t * 45.4 + rnd() * 1.6; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.8 + rnd() * 0.6)}" fill="${rnd() < 0.5 ? "#335f40" : "#2b5437"}"/>`; }
+  /* Wald greift von unten und links in die Wand */
+  let kr = "";
+  for (let t = 0; t <= 1; t += 0.045) { const x = 88.2 + t * 8.6 + (rnd() - 0.5) * 0.8, y = 40.6 + t * 16 - Math.sin(t * Math.PI) * 2.2 + rnd() * 1.6; kr += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.45 + rnd() * 0.4)}"/>`; }
+  k += `<g fill="#407b58">${kr}</g>`;
   S.teil({ id: "berg", de: "der Berg", syl: "BERG", it: "la montagna", itSyl: "mon-TA-gna", en: "mountain", x: 76, y: 44, kunst: um(76, 44, k),
     tipp: "Der Berg heißt Corcovado – „der Bucklige“. Er ist 710 Meter hoch." });
 }
@@ -232,7 +233,7 @@ const CX = 88, CY = 27;   /* Oberkante der Aussichtsplattform = Fuß des Sockels
   /* Hände: offen, Handfläche nach vorn, Daumen oben, Finger geschlossen (Fingerfugen) */
   for (const [x0, sg, c] of [[aL + 1.2, -1, "#ddd8ca"], [aR - 1.1, 1, "#f6f3ea"]]) {
     const xe = x0 + sg * 2.1, xm = x0 + sg * 0.75;
-    k += `<path d="M${M(x0)} ${M(ya - 0.2)} L${M(xm)} ${M(ya - 0.25)} Q${M(xm + sg * 0.2)} ${M(ya - 1.1)} ${M(xm + sg * 0.55)} ${M(ya - 0.95)} Q${M(xm + sg * 0.7)} ${M(ya - 0.6)} ${M(xm + sg * 0.45)} ${M(ya - 0.1)} L${M(xe - sg * 0.3)} ${M(ya - 0.05)} Q${M(xe + sg * 0.1)} ${M(ya + 0.6)} ${M(xe - sg * 0.3)} ${M(yd - 0.55)} L${M(x0)} ${M(yd - 0.5)} Z" fill="${c}"/>`;
+    k += `<path d="M${M(x0)} ${M(ya - 0.2)} L${M(xm)} ${M(ya - 0.25)} Q${M(xm + sg * 0.15)} ${M(ya - 0.62)} ${M(xm + sg * 0.6)} ${M(ya - 0.55)} Q${M(xm + sg * 0.85)} ${M(ya - 0.4)} ${M(xm + sg * 0.6)} ${M(ya - 0.12)} L${M(xe - sg * 0.3)} ${M(ya - 0.05)} Q${M(xe + sg * 0.1)} ${M(ya + 0.6)} ${M(xe - sg * 0.3)} ${M(yd - 0.55)} L${M(x0)} ${M(yd - 0.5)} Z" fill="${c}"/>`;
     k += `<path d="M${M(xm + sg * 0.35)} ${M(ya + 0.5)} L${M(xe - sg * 0.2)} ${M(ya + 0.5)} M${M(xm + sg * 0.35)} ${M(ya + 1.05)} L${M(xe - sg * 0.2)} ${M(ya + 1.05)} M${M(xm + sg * 0.35)} ${M(ya + 1.6)} L${M(xe - sg * 0.25)} ${M(ya + 1.6)}" stroke="#b9b29f" stroke-width=".02"/>`;
   }
   /* Kopf (3,75 m = 1/8 der Statue), 10° nach vorn geneigt: Haar mit Mittelscheitel in Strähnen
@@ -254,11 +255,11 @@ const CX = 88, CY = 27;   /* Oberkante der Aussichtsplattform = Fuß des Sockels
   /* Herz auf der Brust */
   k += `<path d="M${M(-0.35)} ${M(ys + 3.2)} q${M(-0.5)} ${M(-0.7)} 0 ${M(-1)} q${M(0.3)} ${M(-0.15)} ${M(0.42)} ${M(0.18)} q${M(0.12)} ${M(-0.33)} ${M(0.42)} ${M(-0.18)} q${M(0.5)} ${M(0.3)} 0 ${M(1)} l${M(-0.42)} ${M(0.5)} Z" fill="none" stroke="#b3ab98" stroke-width=".03"/>`;
   /* Lichtkante rechts (Morgensonne von Osten) */
-  k += `<path d="M${M(2.95)} ${M(ys + 0.5)} Q${M(3.05)} ${M(yb - 11)} ${M(2.65)} ${M(yb - 0.5)}" stroke="#ffffff" stroke-width=".07" fill="none" opacity=".85"/>`;
+  k += `<path d="M${M(2.7)} ${M(ys + 0.5)} Q${M(2.8)} ${M(yb - 11)} ${M(2.32)} ${M(yp - 0.45)}" stroke="#ffffff" stroke-width=".07" fill="none" opacity=".85"/>`;
   /* Besucher auf der Plattform (0,55 Einheiten) — nur in der Lupe */
   /* Besucher (1,7 m): von unten sieht man nur Kopf und Schultern über der Brüstung, locker verteilt */
   let besucher = "";
-  for (const [x, c, h] of [[-13.4, "#d24a3c", 1.7], [-12.5, "#2f6fb0", 1.6], [-10.2, "#f0c040", 1.75], [-9.5, "#ffffff", 1.35], [7.6, "#3a8a4a", 1.7], [10.3, "#ffffff", 1.65], [11.1, "#c43a8a", 1.55], [13.8, "#2f6fb0", 1.75]]) besucher += `<path d="M${M(x - 0.25)} ${M(-1.1)} L${M(x - 0.22)} ${M(-h + 0.42)} Q${M(x)} ${M(-h + 0.32)} ${M(x + 0.22)} ${M(-h + 0.42)} L${M(x + 0.25)} ${M(-1.1)} Z" fill="${c}"/><circle cx="${M(x)}" cy="${M(-h + 0.17)}" r="${M(0.15)}" fill="${x > 0 ? "#6b4a32" : "#3a2a1e"}"/>`;
+  for (const [x, c, h] of [[-13.4, "#d24a3c", 1.7], [-12.5, "#2f6fb0", 1.6], [-10.2, "#f0c040", 1.75], [-9.5, "#ffffff", 1.35], [7.6, "#3a8a4a", 1.7], [10.3, "#ffffff", 1.65], [11.1, "#c43a8a", 1.55], [13.8, "#2f6fb0", 1.75]]) besucher += `<path d="M${M(x - 0.25)} ${M(-0.75)} L${M(x - 0.22)} ${M(-h + 0.42)} Q${M(x)} ${M(-h + 0.32)} ${M(x + 0.22)} ${M(-h + 0.42)} L${M(x + 0.25)} ${M(-0.75)} Z" fill="${c}"/><circle cx="${M(x)}" cy="${M(-h + 0.17)}" r="${M(0.15)}" fill="${x > 0 ? "#6b4a32" : "#3a2a1e"}"/>`;
   const unterC = [
     { id: "arm", de: "der Arm", syl: "ARM", it: "il braccio", itSyl: "BRAC-cio", en: "arm", x: CX + M(aL * 0.55), y: CY + M(yd + 1.6), kunst: flaeche(M(aL * 0.5 - 0.7), M(-4.6), M(-aL * 0.9), M(5), 0.15),
       tipp: "Von einer Hand bis zur anderen sind es 28 Meter." },

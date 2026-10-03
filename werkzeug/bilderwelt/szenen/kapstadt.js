@@ -65,6 +65,9 @@ const B = require("../bau");
 
 const S = neueSzene({ id: "kapstadt", titel: "Kapstadt", emoji: "🐧", thema: "Länder", kuerzel: "kap", fassung: 854, breite: 400, hoehe: 260 });
 const rnd = zufall(1652);
+{ const lg = S.lg, rg = S.rg, da = new Set();
+  S.lg = (n, ...a) => { if (da.has(n)) return `url(#${S.id(n)})`; da.add(n); return lg(n, ...a); };
+  S.rg = (n, ...a) => { if (da.has(n)) return `url(#${S.id(n)})`; da.add(n); return rg(n, ...a); }; }
 const r = B.r;
 const HOR = 142, F = 347, EYE = 3.6;
 const hy = (Z, d) => HOR - F * (Z - EYE) / d;             // Höhe (m) in Abstand (m) → y
@@ -722,5 +725,60 @@ const tischUnter = [];
     zoom: { x: TISCH.x - 38, y: TISCH.y - 80, w: 76, h: 50 }, unter: tischUnter });
 }
 
+/* Kleinere Ausgabe (gleiches Bild): Pfaddaten werden je Segment absolut oder relativ geschrieben – was
+   kürzer ist –, ohne überflüssige Trennzeichen; SVG-Attribute mit einfachen Anführungszeichen (spart im
+   JSON die Rückstriche). */
+const kurzPfad = (d) => {
+  const tok = d.match(/[MmLlHhVvCcSsQqTtAaZz]|[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?/g) || [];
+  const N = { M: 2, L: 2, H: 1, V: 1, C: 6, S: 4, Q: 4, T: 2, A: 7, Z: 0 };
+  const zahl = (v) => { let t = String(Math.round(v * 1000) / 1000); if (t === "-0") t = "0"; return t.replace(/^(-?)0\./, "$1."); };
+  let out = "", letzter = "", cx = 0, cy = 0, sx = 0, sy = 0, i = 0, cmd = "";
+  const schreibe = (c, zahlen) => {
+    let t = c === letzter && c !== "M" && c !== "m" ? "" : c;
+    for (const z of zahlen) { const v = zahl(z); if (t && !/[A-Za-z]$/.test(t) && !(v[0] === "-" || (v[0] === "." && /\.\d*$/.test(t.split(/[^\d.]/).pop())))) t += " "; t += v; }
+    if (t && t[0] !== c && out && /[\d.]$/.test(out) && !(t[0] === "-" || (t[0] === "." && /\.\d*$/.test(out.split(/[^\d.]/).pop())))) t = " " + t;
+    out += t; letzter = c === "M" ? "L" : c === "m" ? "l" : c;
+  };
+  while (i < tok.length) {
+    if (/[A-Za-z]/.test(tok[i])) cmd = tok[i++];
+    const C = cmd.toUpperCase(), rel = cmd !== C, n = N[C];
+    if (C === "Z") { out += "z"; letzter = "z"; cx = sx; cy = sy; continue; }
+    const a = tok.slice(i, i + n).map(Number); i += n;
+    if (a.length < n || a.some(isNaN)) break;
+    /* absolute Zielwerte */
+    const abs = a.slice();
+    if (C === "H") { if (rel) abs[0] += cx; } else if (C === "V") { if (rel) abs[0] += cy; }
+    else if (C === "A") { if (rel) { abs[5] += cx; abs[6] += cy; } }
+    else if (rel) for (let j = 0; j < n; j += 2) { abs[j] += cx; abs[j + 1] += cy; }
+    let ex, ey;
+    if (C === "H") { ex = abs[0]; ey = cy; } else if (C === "V") { ex = cx; ey = abs[0]; } else { ex = abs[n - 2]; ey = abs[n - 1]; }
+    const R = (v, b) => Math.round((v - b) * 1000) / 1000;
+    let A1, A2;
+    if (C === "M") { A1 = ["M", [ex, ey]]; A2 = ["m", [R(ex, cx), R(ey, cy)]]; if (!out) A2 = A1; }
+    else if (C === "A") { A1 = ["A", abs]; A2 = ["a", [...abs.slice(0, 5), R(ex, cx), R(ey, cy)]]; }
+    else if (C === "H" || C === "V" || C === "L") {
+      if (Math.abs(ey - cy) < 1e-9) { A1 = ["H", [ex]]; A2 = ["h", [R(ex, cx)]]; }
+      else if (Math.abs(ex - cx) < 1e-9) { A1 = ["V", [ey]]; A2 = ["v", [R(ey, cy)]]; }
+      else { A1 = ["L", [ex, ey]]; A2 = ["l", [R(ex, cx), R(ey, cy)]]; }
+    } else { A1 = [C, abs]; A2 = [C.toLowerCase(), abs.map((v, j) => R(v, j % 2 ? cy : cx))]; }
+    const len = (x) => x[1].map(zahl).join(" ").length + (x[0] === letzter ? 0 : 1);
+    const w = len(A2) < len(A1) ? A2 : A1;
+    schreibe(w[0], w[1]);
+    /* gerenderte Position nachführen (keine Rundungsdrift) */
+    if (w[0] === w[0].toLowerCase()) { if (w[0] === "h") cx += w[1][0]; else if (w[0] === "v") cy += w[1][0]; else { cx += w[1][w[1].length - 2]; cy += w[1][w[1].length - 1]; } }
+    else { if (w[0] === "H") cx = w[1][0]; else if (w[0] === "V") cy = w[1][0]; else { cx = w[1][w[1].length - 2]; cy = w[1][w[1].length - 1]; } }
+    if (C === "M") { sx = cx; sy = cy; }
+    if (C === "M") cmd = rel ? "l" : "L";
+  }
+  return out;
+};
+{
+  const q = (t) => {
+    if (t.includes("'")) throw new Error("Apostroph im SVG: " + t.slice(t.indexOf("'") - 40, t.indexOf("'") + 10));
+    return (process.env.ROH ? t : t.replace(/ d="([^"]*)"/g, (m, d) => ` d="${kurzPfad(d)}"`)).replace(/"/g, "'");
+  };
+  S.defs = S.defs.map(q); S.kulisse = S.kulisse.map(q);
+  for (const t of S.teile) { t.kunst = q(t.kunst); for (const u of t.unter || []) u.kunst = q(u.kunst); }
+}
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/kapstadt.js"));
 console.log(aus);

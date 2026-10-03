@@ -661,7 +661,7 @@ function greif(T, P) {
   const sk = (P.schnabel && P.schnabel.k) || 1, sb = (p) => [10 + (p[0] - 10) * sk, -78 + (p[1] + 78) * sk];
   const ex = [...[[16.6, -74.2], [16, -72.8], [16.6, -76], [-0.4, -84.6], [3.6, -84.3], [-4, -83.6]].map((p) => (p[0] > 12 ? kpk(sb(p)) : kpk(p))), ...(P.boxExtra || []).map(kpk),
     ...[[-22.8, -13.4], [-24.4, -14.6], [-21, -15.8], [15.4, -56.6]].map((p) => dr(p[1] > -20 ? lerp([-12, -37], p, sl) : p, DREH, PIV)), ...P.sitzBox];
-  const bx = box(ex), kb = box([[-6, -86], [17 * sk + 10 * (1 - sk) + 1, -86], [17, -70], [-6, -70]].map(kpk));
+  const bx = box(ex), kb = box((P.kopfBox || [[-6, -86], [17 * sk + 10 * (1 - sk) + 1, -86], [17, -70], [-6, -70]]).map(kpk));
   const k = P.k;
   return { svg: k === 1 ? s : `<g transform="scale(${k})">${s}</g>`, box: [bx[0] - 0.3, bx[1] - 0.3, bx[2] + 0.2, 0].map((v) => v * k), fuesse: P.fuesse.map((v) => v * k), kopf: kb.map((v) => v * k) };
 }
@@ -808,7 +808,7 @@ const FALKE = {
     (T.fein ? striche(T, [[0.4, -74.2], [4, -74.6], [4.6, -70.4], [0, -70.4]], 22, 120, 0.8, [["#ffffff", 1, 0.05, 0.6], ["#9a948a", 0.6, 0.045, 0.35]], { streu: 16 }) : ""),
   wangeStriche: [["#0e1014", 1, 0.045, 0.4], ["#6a727c", 0.5, 0.04, 0.3]],
   wulst: 0.35, wulstFarbe: [[0, "#4a5058"], [0.45, "#2a2e34"], [1, "#101216"]], wulstStriche: [["#0a0a0c", 1, 0.05, 0.5], ["#8a929c", 0.6, 0.045, 0.4]],
-  augeK: 1.15, auge: { iris: "#3a2414", iris2: "#100804", pupille: 0.52, ring: ["#f2c840", 0.36], lid: "#c89a20", hoehle: 0.3 },
+  augeK: 1.15, auge: { iris: "#3a2414", iris2: "#100804", pupille: 0.52, ring: ["#f2c840", 0.27], lid: "#c89a20", hoehle: 0.3 },
   schnabel: { k: 0.82, zahn: true, nasenHoecker: true, horn: [[0, "#a4b0c0"], [0.4, "#6e7e94"], [0.75, "#2a3240"], [1, "#0c0e12"]], hornU: [[0, "#e8c858"], [0.3, "#8e9aaa"], [1, "#2a3038"]], wachs: [[0, "#ffe46a"], [0.5, "#f2c434"], [1, "#b8880e"]] },
 };
 const falke = (T) => greif(T, FALKE);
@@ -862,9 +862,10 @@ function geierKopf(T, c) {
   Q = 20;
   let kp = "";
   /* Halskrause: lange, schmale rahmweiße Federn rund um den Halsansatz */
+  let hk = "";
   const krause = c.mk("kr", [["#e8dcc4", "#fbf6ea"], ["#dccfb4", "#f4ecdc"], ["#d0c2a6", "#eee4d0"]], "spitz", { weich: 1 });
   const krU = [[-13.6, -62], [-9.6, -70], [-3, -74.4], [4, -74.2], [9.4, -70.6], [11.6, -65.4], [6, -63], [-2, -62.4], [-9, -60.6]];
-  kp += teil(T, "krause", G(krU), "#dccfb6", federFeld(T, krU, { typen: krause, abst: 2.4, L: 6.4, W: 1.8, zeile: 0.45, winkel: (x, y) => 105 - x * 2.6, streu: 18, sz: 1 }) +
+  hk += teil(T, "krause", G(krU), "#dccfb6", federFeld(T, krU, { typen: krause, abst: 2.4, L: 6.4, W: 1.8, zeile: 0.45, winkel: (x, y) => 105 - x * 2.6, streu: 18, sz: 1 }) +
     (F ? striche(T, krU, 70, (x, y) => 100 - x * 2.4, 2.2, [["#ffffff", 1, 0.06, 0.6], ["#8a7a60", 0.6, 0.05, 0.4]], { streu: 20, krumm: 0.3 }) : "") +
     weich(T, G([[-6, -66], [8, -67], [10, -64], [0, -62.6], [-8, -63]]), "#3a2a14", 0.35, 1));
   /* Hals (eingezogen) und kleiner Kopf: Dunen weißlich, Haut bläulich-grau */
@@ -876,7 +877,7 @@ function geierKopf(T, c) {
   }
   hi += weich(T, G([[6, -84.2], [11, -85], [13, -83], [9, -82.4]]), "#ffffff", 0.5, 0.5);
   hi += weich(T, G([[2, -74], [6, -73], [7, -76.6], [4, -77]]), "#3a3a44", 0.35, 0.6);
-  kp += teil(T, "hals", G(hals), verlauf(T, "halsG", 0, -84, 6, -72, [[0, "#e8e8ee"], [0.6, "#c4c4cc"], [1, "#9a9aa6"]]), hi);
+  kp += teil(T, "hals", G(hals), verlauf(T, "halsG", 0, -84, 6, -72, [[0, "#e8e8ee"], [0.6, "#c4c4cc"], [1, "#9a9aa6"]]), hi) + hk;
   /* Auge: bernstein, dunkle Borstenbraue */
   kp += greifAuge(T, 10.6, -81.8, 0.62, { iris: "#c89a48", iris2: "#6a4618", pupille: 0.45, lid: "#3a3238", hoehle: 0.35, offen: 0.88 });
   if (F) kp += striche(T, [[9.4, -82.6], [11.8, -83], [12, -82.4], [9.6, -82.2]], 18, 195, 0.7, [["#2a2228", 1, 0.04, 0.8]], { streu: 10 });
@@ -894,7 +895,9 @@ function geierKopf(T, c) {
   return [kp, sn];
 }
 const GEIER = {
-  k: 1.12, dreh: 16, kdreh: -14, kopfY: 4,
+  k: 1.12, dreh: 13, kdreh: -12, kopfY: 4,
+  rumpf: [[-9, -69], [-11.8, -65], [-13.4, -57.6], [-13.4, -49], [-12, -41], [-9.4, -35.4], [-5.6, -32.4], [-0.6, -31.6], [5, -33.6], [9.6, -38], [12.8, -44], [14.8, -50.4], [15.4, -56.6], [14.6, -62.4], [12, -67], [6, -70.4], [-2, -71]],
+  kopfBox: [[-4, -86], [19, -86], [19, -72], [-4, -72]],
   kopf: geierKopf, boxExtra: [[18.8, -79.6], [10.6, -84.6], [-13.6, -62]],
   sitz: (T) => felsGranit(T, { hell: "#dcc6a2", mittel: "#b4966e", dunkel: "#6e5840", flechten: [[-10, -12.6, 1.1, "#e0dcc0"], [-17, -7.4, 0.9, "#c8c09a"], [0.6, -6, 1.4, "#e8e4d0"], [12, -5, 0.8, "#c49040"]] }), sitzBox: FELS_BOX, fuesse: FELS_FUESSE,
   brust: [["#9a7650", "#b8946a"], ["#8a6844", "#a8865c"]], hose: [["#b49470", "#d4bc98"], ["#a48660", "#c4aa84"]], hoseFarbe: "#b09070", usd: "#a8865e",
@@ -919,5 +922,5 @@ module.exports = [
   { id: "bussard", de: "der Bussard", syl: "BUS-sard", it: "la poiana", itSyl: "po-IA-na", en: "common buzzard",
     gruppe: "Greifvögel und Eulen", lebensraum: "Feld und Waldrand", laenge: 0.3, hoehe: 0.52, zeichne: bussard },
   { id: "geier", de: "der Geier", syl: "GEI-er", it: "il grifone", itSyl: "gri-FO-ne", en: "griffon vulture",
-    gruppe: "Greifvögel und Eulen", lebensraum: "Gebirge", laenge: 0.6, hoehe: 0.9, zeichne: geier },
+    gruppe: "Greifvögel und Eulen", lebensraum: "Gebirge", laenge: 0.63, hoehe: 0.89, zeichne: geier },
 ];
