@@ -800,24 +800,37 @@ const KAUF = {};
   /* Erker auf Konsolen: polygonal, Maßwerkbrüstung, Wappen, Türmchen mit bunten Ziegeln */
   const wappen = [["#c8202a", "#ffffff"], ["#f2ead8", "#c8202a"]];
   const erker = (xa, xb, wi) => {
-    const yv = KYS + 1.4, xm = (xa + xb) / 2, ze = KZE + 1.2;
+    const xm = (xa + xb) / 2, yv = KYS + 1.6, ze = KZE + 1.2, z0 = 6.4;
+    /* Grundriss: halbes Achteck vor der Wand (gegen den Uhrzeigersinn) */
+    const plan = [[xb, KYS], [xb - .5, KYS + 1.1], [xm + .7, yv], [xm - .7, yv], [xa + .5, KYS + 1.1], [xa, KYS]];
+    const skal = (q) => plan.map(([x, y]) => [xm + (x - xm) * q, KYS + (y - KYS) * q]);
     let g = "";
-    /* gestufte Konsole */
-    for (const [z0, z1, e] of [[3.4, 4.2, .35], [4.2, 5, .7], [5, 5.8, 1]]) g += `<path d="${poly([[xa + .9 * (1 - e), KYS, z0], [xb - .9 * (1 - e), KYS, z0], [xb - .9, KYS + 1.4 * e, z1], [xm, KYS + 1.6 * e, z1], [xa + .9, KYS + 1.4 * e, z1]])}" fill="${["#a88472", "#b8927e", ST][Math.round(e * 2) - 1] || ST}"/>`;
-    g += `<path d="${poly([[xa, KYS, 5.8], [xa + .9, yv, 5.8], [xa + .9, yv, ze], [xa, KYS, ze]])}" fill="#6a1a10"/>`;
-    g += `<path d="${poly([[xa + .9, yv, 5.8], [xb - .9, yv, 5.8], [xb - .9, yv, ze], [xa + .9, yv, ze]])}" fill="${KRF}"/>`;
-    g += `<path d="${poly([[xb - .9, yv, 5.8], [xb, KYS, 5.8], [xb, KYS, ze], [xb - .9, yv, ze]])}" fill="#c24a32"/>`;
-    /* Maßwerkbrüstung */
-    g += `<path d="${poly([[xa + .9, yv + .05, 8.2], [xb - .9, yv + .05, 8.2], [xb - .9, yv + .05, 8.9], [xa + .9, yv + .05, 8.9]])}" fill="${ST}"/>`;
-    for (let x = xa + 1.2; x < xb - 1; x += .45) g += `<path d="${linie([[x, yv + .06, 8.3], [x, yv + .06, 8.8]])}" stroke="#7a3226" stroke-width=".22"/>`;
-    g += `<path d="${poly([[xa + 1.2, yv, 9.2], [xb - 1.2, yv, 9.2], [xb - 1.2, yv, 12.3], [xa + 1.2, yv, 12.3]])}" fill="${GL}"/>`;
+    /* Konsole: nach unten schmaler werdende, profilierte Steinringe (von unten zu sehen) */
+    const LV = [[z0, 1.04], [z0 - .35, .9], [z0 - .9, .74], [z0 - 1.6, .52], [z0 - 2.3, .3], [z0 - 2.9, .08]];
+    for (let j = LV.length - 2; j >= 0; j--) {
+      const [zo, qo] = LV[j], [zu, qu] = LV[j + 1], po = skal(qo), pu = skal(qu);
+      for (let i = 0; i < po.length - 1; i++) {
+        const nx = po[i + 1][1] - po[i][1], ny = po[i][0] - po[i + 1][0], L = Math.hypot(nx, ny) || 1;
+        g += `<path d="${poly([[...pu[i], zu], [...pu[i + 1], zu], [...po[i + 1], zo], [...po[i], zo]])}" fill="${licht(j % 2 ? "#b88a78" : "#cfa08a", nx / L, ny / L)}"/>`;
+      }
+    }
+    /* Erkerkörper: fünf Seiten, rot verputzt; Brüstung mit Blendmaßwerk, Fenster mit Pfosten */
+    g += prisma(plan, z0, ze, "#9a2c1c");
+    for (let i = 0; i < plan.length - 1; i++) {
+      const [ax, ay] = plan[i], [bx, by] = plan[i + 1], nx = by - ay, ny = ax - bx;
+      if ((CAM[0] - (ax + bx) / 2) * nx + (CAM[1] - (ay + by) / 2) * ny <= 0) continue;
+      const m = (t, z) => [ax + (bx - ax) * t, ay + (by - ay) * t, z];
+      g += `<path d="${poly([m(.08, 7.1), m(.92, 7.1), m(.92, 8.7), m(.08, 8.7)])}" fill="${licht(ST, nx, ny)}"/>`;
+      g += `<path d="${linie([m(.15, 7.25), m(.32, 8.4), m(.5, 7.25), m(.68, 8.4), m(.85, 7.25)])}" stroke="#7a3226" stroke-width=".2" fill="none"/>`;
+      g += `<path d="${poly([m(.16, 9.2), m(.84, 9.2), m(.84, 12.4), m(.5, 12.9), m(.16, 12.4)])}" fill="${GL}"/><path d="${linie([m(.5, 9.2), m(.5, 12.8)])}" stroke="${ST}" stroke-width=".22"/>`;
+    }
+    g += `<path d="${linie([...skal(1.04).map(([x, y]) => [x, y, z0])])}" stroke="#e8c0a8" stroke-width=".3" fill="none"/>`;
     const w0 = pr(xm, yv, 6.2), w1 = pr(xm, yv, 8), wh = w0[1] - w1[1], [c1, c2] = wappen[wi];
     g += `<path d="M${r(w0[0] - wh * .38)} ${r(w1[1])} h${r(wh * .76)} v${r(wh * .55)} q0 ${r(wh * .38)} ${r(-wh * .38)} ${r(wh * .45)} q${r(-wh * .38)} ${r(-wh * .07)} ${r(-wh * .38)} ${r(-wh * .45)} Z" fill="${c1}" stroke="#d8b04a" stroke-width="${r(wh * .05)}"/>`;
     g += wi === 0 ? `<rect x="${r(w0[0] - wh * .38)}" y="${r(w1[1] + wh * .33)}" width="${r(wh * .76)}" height="${r(wh * .3)}" fill="${c2}"/>` : `<path d="M${r(w0[0] - wh * .07)} ${r(w1[1])} h${r(wh * .14)} v${r(wh * .95)} h${r(-wh * .14)} Z M${r(w0[0] - wh * .38)} ${r(w1[1] + wh * .3)} h${r(wh * .76)} v${r(wh * .14)} h${r(-wh * .76)} Z" fill="${c2}"/>`;
     const tip = [xm, yv - .4, ze + 6.6];
     const helm = poly([[xa - .2, KYS, ze], [xa + .9, yv + .1, ze], [xm, yv + .2, ze], [xb - .9, yv + .1, ze], [xb + .2, KYS, ze], [...tip]]);
     g += `<path d="${helm}" fill="${RAUTEN}"/><path d="${helm}" fill="${HELMLICHT}"/>`;
-    g += `<path d="${linie([[xa + .9, yv + .1, ze], [...tip]])}" stroke="#1f1d1c" stroke-width=".3" opacity=".6"/>`;
     const tp = pr(...tip), tp2 = pr(tip[0], tip[1], tip[2] + 1.8);
     g += `<path d="M${P(tp)} L${P(tp2)}" stroke="#d8b04a" stroke-width=".6"/><circle cx="${r(tp2[0])}" cy="${r(tp2[1])}" r=".55" fill="#e8c35a"/>`;
     return g;
@@ -1111,7 +1124,7 @@ const SV = {};
 const WS = fuss(48.5, -46.5);
 {
   const { x, y, s } = WS, W = 3.2 * s, H = 2.7 * s;
-  let k = schlag(50, -54, 3.2, 2.8, .28);
+  let k = wurf([[46.9, -46.5, 2.8], [50.1, -46.5, 2.8], [50.1, -44.9, 2.8], [46.9, -44.9, 2.8]], .26);
   /* Bude: Rückwand, Seitenteile, Dach mit rot-weißer Markise */
   k += `<rect x="${r(x - W / 2)}" y="${r(y - H)}" width="${r(W)}" height="${r(H)}" fill="#f2efe8"/><rect x="${r(x - W / 2 + .1 * s)}" y="${r(y - H + .5 * s)}" width="${r(W - .2 * s)}" height="${r(1.2 * s)}" fill="#3a3430"/>`;
   k += `<rect x="${r(x - W / 2 - .2 * s)}" y="${r(y - H - .15 * s)}" width="${r(W + .4 * s)}" height="${r(.5 * s)}" fill="#c8202a"/>`;

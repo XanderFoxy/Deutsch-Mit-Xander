@@ -199,7 +199,7 @@ const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
   /* Domshof: Bürgerhäuser hinter der Lücke zwischen Rathaus und Bürgerschaft (Südseiten in der Sonne) */
   let k = "";
   const D = ebene(76, 30, 1, 0);
-  [[0, 9, 19, 5, "#e2d6bf"], [9, 17, 21, 0, "#d3c4a6"], [17, 27, 20, 6, "#e7dcc6"], [27, 38, 22, 0, "#cbb99b"], [38, 46, 18, 5, "#ddd0b8"]].forEach(([s0, s1, h, gh, f]) => { k += gh ? giebelhaus(D, s0, s1, h, gh, f) : pfad(fr(D, s0, 0, s1, h), f) + pfad(poly([[76 + s0, 30, h], [76 + s1, 30, h], [76 + s1, 35, h + 5], [76 + s0, 35, h + 5]]), "#6e5a50"); });
+  [[0, 9, 19, 5, "#a89c88"], [9, 17, 21, 0, "#9a8a76"], [17, 27, 20, 6, "#b0a28c"], [27, 38, 22, 0, "#8f8270"], [38, 46, 18, 5, "#a39784"]].forEach(([s0, s1, h, gh, f]) => { k += gh ? giebelhaus(D, s0, s1, h, gh, f) : pfad(fr(D, s0, 0, s1, h), f) + pfad(poly([[76 + s0, 30, h], [76 + s1, 30, h], [76 + s1, 35, h + 5], [76 + s0, 35, h + 5]]), "#6e5a50"); });
   /* Südostecke: Giebelhäuser an der Südseite östlich des Schüttings (Nordseiten im Schatten) */
   const SO = ebene(57, -57, -1, 0);
   k += giebelhaus(SO, 0, 5.6, 12.4, 7, "#b9a891", "#5a4a44", "#3f4448") + giebelhaus(SO, 5.6, 11.2, 13.4, 7.6, "#a88f7a", "#5a4a44", "#3f4448") + giebelhaus(SO, 11.2, 17, 12, 6.6, "#bcae98", "#5a4a44", "#3f4448");
@@ -694,12 +694,14 @@ const RO = { x: 30, y: -14 };
   g += `<path d="M-7.6 -86.4 L0 -103 L7.6 -86.4 Z" fill="${S.lg("rolhelm", [[0, "#efe9dd"], [0.6, "#d3cbb9"], [1, "#a8a08e"]], 0, 0, 1, 0)}"/><path d="M0 -103 L.6 -86.4" stroke="${DK}" stroke-width=".3"/>`;
   for (let i = 1; i < 6; i++) g += `<path d="M${r(-7.6 + i * 1.3)} ${r(-86.4 - i * 2.8)} l-1 -.6 M${r(7.6 - i * 1.3)} ${r(-86.4 - i * 2.8)} l1 -.6" stroke="#a8a08e" stroke-width=".55"/>`;
   g += `<path d="M-1.2 -103 L1.2 -103 L0 -106.4 Z" fill="#d8d0bd"/><circle cx="0" cy="-104.4" r="1" fill="#ece6da"/>`;
-  const k = sch + `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(5)})">${g}</g>`;
+  /* feine dunkle Kontur, damit sich der helle Stein vom hellen Hintergrund löst */
+  const kontur = `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(5)})" fill="none" stroke="#5f584c" stroke-width=".9" opacity=".55">${g.replace(/fill="[^"]*"/g, "").replace(/<rect /g, '<rect fill="none" ').replace(/<path /g, '<path fill="none" ').replace(/<ellipse /g, '<ellipse fill="none" ').replace(/<circle /g, '<circle fill="none" ')}</g>`;
+  const k = sch + kontur + `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(5)})">${g}</g>`;
   const U = (cx, cy) => [fu[0] + cx * sk, fu[1] + cy * sk];
   const us = U(7.2, -66), ub = U(0, -92);
   S.teil({ id: "roland", de: "der Roland", syl: "RO-land", it: "il Rolando di Brema", itSyl: "ro-LAN-do di BRE-ma", en: "Roland statue", x: 0, y: 0, kunst: k,
     tipp: "Der Roland steht seit 1404 hier. Er blickt zum Dom und zeigt: Bremen ist eine freie Stadt. Der Abstand zwischen seinen Knien ist eine Bremer Elle.",
-    zoom: { x: r(fu[0] - 27), y: r(fu[1] - 40), w: 60, h: 40 },
+    zoom: { x: r(fu[0] - 39), y: r(fu[1] - 51), w: 78, h: 52 },
     unter: [
       { id: "schwert", de: "das Schwert", syl: "SCHWERT", it: "la spada", itSyl: "SPA-da", en: "sword", x: us[0], y: us[1], kunst: flaeche(-1.6, -6.4, 3.2, 12.6, .4),
         tipp: "Das Schwert steht für das Recht der Stadt, selbst Gericht zu halten." },

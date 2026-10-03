@@ -186,9 +186,9 @@ let PFLASTER_TEIL;
   for (let j = 0; j < 2; j++) for (let i = 0; i < 6; i++) k += `<rect x="${r(x0 + 4 + i * 3.4 * K * 0.5)}" y="${r(y0 - h + 6 + j * 3.6 * K)}" width="${r(1.2 * K)}" height="${r(2.0 * K)}" fill="${S.lg("musglas", [[0, "#7f97a8"], [1, "#4a5e6c"]])}"/>`;
   k += `<rect x="${r(x0 + 2)}" y="${r(y0 - 3.4 * K)}" width="${r(5 * K)}" height="${r(3.4 * K)}" fill="#3e4c56"/><rect x="${r(x0 + 2)}" y="${r(y0 - 3.4 * K)}" width="${r(5 * K)}" height="${r(0.4 * K)}" fill="#8a7d62"/>`;
   /* Fahnen-Banner des Museums */
-  k += `<rect x="${r(x0 + w * 0.62)}" y="${r(y0 - h + 4)}" width="${r(2.2 * K)}" height="${r(8 * K)}" fill="#8a1f2b"/>`;
-  k += `<text transform="translate(${r(x0 + w * 0.62 + 1.1 * K + 1)} ${r(y0 - h + 6)}) rotate(90)" font-size="3.4" fill="#f4ecd8" font-family="Arial,sans-serif" font-weight="bold">STADTMUSEUM</text>`;
-  k += `<text transform="translate(${r(x0 + w * 0.62 + 1.1 * K - 3)} ${r(y0 - h + 6)}) rotate(90)" font-size="3" fill="#f4ecd8" font-family="Arial,sans-serif">Simeonstift Trier</text>`;
+  k += `<rect x="${r(x0 + w * 0.3)}" y="${r(y0 - h + 4)}" width="${r(2.2 * K)}" height="${r(8 * K)}" fill="#8a1f2b"/>`;
+  k += `<text transform="translate(${r(x0 + w * 0.3 + 1.1 * K + 1)} ${r(y0 - h + 6)}) rotate(90)" font-size="3.4" fill="#f4ecd8" font-family="Arial,sans-serif" font-weight="bold">STADTMUSEUM</text>`;
+  k += `<text transform="translate(${r(x0 + w * 0.3 + 1.1 * K - 3)} ${r(y0 - h + 6)}) rotate(90)" font-size="3" fill="#f4ecd8" font-family="Arial,sans-serif">Simeonstift Trier</text>`;
   k += `<rect x="${x0}" y="${r(y0 - h)}" width="${r(w)}" height="${r(h)}" fill="${S.lg("muslicht", [[0, "#000", 0.12], [1, "#000", 0]], 0, 0, 1, 0)}"/>`;
   S.teil({ id: "museum", de: "das Museum", syl: "mu-SE-um", it: "il museo", itSyl: "mu-SE-o", en: "museum", x: 0, y: 0, kunst: licht(k),
     tipp: "Im Stadtmuseum Simeonstift lernt man die Geschichte von Trier kennen." });
@@ -250,7 +250,7 @@ let PN_UNTER = [];
   for (let row = 0; row < 8; row++) for (let col = 0; col < 7; col++) {
     const v = z(); if (v > 0.55) continue;
     const off = row % 2 ? qw / 2 : 0;
-    fl += `<rect x="${r(col * qw + off)}" y="${r(row * qh)}" width="${qw}" height="${qh}" fill="${v < 0.22 ? "#9a8f7c" : (v < 0.4 ? "#0e0c0a" : "#6f675b")}" opacity="${r(0.18 + z() * 0.25)}"/>`;
+    fl += `<rect x="${r(col * qw + off)}" y="${r(row * qh)}" width="${qw}" height="${qh}" fill="${v < 0.22 ? "#9a8f7c" : (v < 0.4 ? "#0e0c0a" : "#6f675b")}" opacity="${r(0.1 + z() * 0.16)}"/>`;
   }
   S.def(`<pattern id="${S.id("patina")}" patternUnits="userSpaceOnUse" width="${r(qw * 7)}" height="${r(qh * 8)}">${fl}</pattern>`);
   let st = "";
@@ -372,8 +372,6 @@ let PN_UNTER = [];
   /* Hausfront in der Flucht (Putz in Ocker), Gesimse und Fenster */
   k += `<path d="M${a0x} ${a0y} L${a1x} ${a1y} L${b1x} ${b1y} L${b0x} ${b0y} Z" fill="${S.lg("haus", [[0, "#9c8466"], [1, "#b39a76"]], 0, 0, 1, 0)}"/>`;
   /* Stirnseite zur Porta hin (Schatten) */
-  const [c1x, c1y] = proj(lat - 8, d1, 0), [c2x, c2y] = proj(lat - 8, d1, h);
-  k += `<path d="M${a1x} ${a1y} L${c1x} ${c1y} L${c2x} ${c2y} L${b1x} ${b1y} Z" fill="${S.lg("hausstirn", [[0, "#e3c48e"], [1, "#caa66c"]], 0, 0, 1, 0)}"/>`;
   const quad = (da, db, ha, hb, fill, extra = "") => { const [p1x, p1y] = P(da, ha), [p2x, p2y] = P(db, ha), [p3x, p3y] = P(db, hb), [p4x, p4y] = P(da, hb); return `<path d="M${p1x} ${p1y} L${p2x} ${p2y} L${p3x} ${p3y} L${p4x} ${p4y} Z" fill="${fill}"${extra}/>`; };
   for (const hh of [4.4, 8.0, 11.6]) k += quad(d0, d1, hh, hh + 0.35, "#cbb48e") + quad(d0, d1, hh - 0.15, hh, "#6f5a3e");
   k += quad(d0, d1, h - 0.6, h, "#7a5a32");
