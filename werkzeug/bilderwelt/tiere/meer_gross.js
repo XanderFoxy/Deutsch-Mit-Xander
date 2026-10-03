@@ -449,7 +449,7 @@ function orca(T) {
   k += weichF([[318, -309], [300, -305], [286, -300], [300, -302]], "#000", 0.12, 3);
   /* Augenfleck: über und hinter dem Auge, vorn stumpf, hinten schmal und ansteigend */
   const af = [[606, -225], [602, -236], [591, -245], [573, -252], [551, -257], [530, -261], [513, -263], [503, -261], [508, -255], [524, -246], [548, -237], [572, -229], [591, -223]];
-  k += `<path d="${G(af)}" fill="${T.lg("orcaAF", [[0, "#f6f8f6"], [0.6, "#e6eae8"], [1, "#c9d0d4"]], 0, -263, 0, -223, H.US)}" filter="${H.weich(0.55, T.box(af))}"/>`;
+  k += `<path d="${G(af)}" fill="${T.lg("orcaAF", [[0, "#fafbfa"], [0.7, "#eef1ee"], [1, "#d8dee1"]], 0, -263, 0, -223, H.US)}" filter="${H.weich(0.55, T.box(af))}"/>`;
   /* Licht von oben (Wasser): schwaches Himmelslicht, EIN weicher Kernschatten, bläulicher Schatten im Weiß, Reflex am Bauch */
   /* auf Schwarz entsteht Rundung über HELLE Töne: schmales Himmelslicht am Rücken, breiter Mittelton als Schulter */
   k += weichF(R.band(20, 698, -0.04, 0.12), "#9fb3c3", 0.14, 8);

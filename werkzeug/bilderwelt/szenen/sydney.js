@@ -73,6 +73,9 @@ const B = require("../bau");
 
 const S = neueSzene({ id: "sydney", titel: "Sydney", emoji: "🦘", thema: "Länder", kuerzel: "syd", fassung: 854, breite: 400, hoehe: 260 });
 const rnd = zufall(1973);
+{ const lg = S.lg, rg = S.rg, da = new Set();
+  S.lg = (n, ...a) => { if (da.has(n)) return `url(#${S.id(n)})`; da.add(n); return lg(n, ...a); };
+  S.rg = (n, ...a) => { if (da.has(n)) return `url(#${S.id(n)})`; da.add(n); return rg(n, ...a); }; }
 const r = B.r;
 const HOR = 146, F = 680, EYE = 6;
 /* Zentralprojektion: E = Osten, N = Norden (m vom Betrachter), Z = Höhe über dem Meer */
@@ -93,24 +96,32 @@ S.def(`<filter id="${S.id("spiegel")}" x="-10%" y="-20%" width="120%" height="14
    ===================================================================== */
 S.hinten(`<rect width="400" height="${HOR + 6}" fill="${S.lg("himmel", [[0, "#3573b8"], [0.5, "#78a9d6"], [0.86, "#c3d9e8"], [1, "#eae9df"]])}"/>`);
 {
-  /* Schönwetter-Cumulus am Morgen: flache, leicht graue Basis, oben sonnenbeschienen */
-  let w = "";
-  const wolke = (x, y, s) => {
-    let g = "";
-    const kuppen = [[-14, -1.5, 6.5], [-6, -5.5, 8], [4, -7.5, 9.5], [13, -4.5, 7], [20, -1.4, 5], [-20, 0, 4]];
-    const umriss = kuppen.map(([dx, dy, rr]) => `<circle cx="${r(x + dx * s)}" cy="${r(y + dy * s)}" r="${r(rr * s)}"/>`).join("");
-    const id = S.id("wk" + Math.round(x));
-    S.def(`<clipPath id="${id}">${umriss}<rect x="${r(x - 24 * s)}" y="${r(y - 3 * s)}" width="${r(48 * s)}" height="${r(4 * s)}"/></clipPath>`);
-    g += `<g clip-path="url(#${id})"><rect x="${r(x - 26 * s)}" y="${r(y - 18 * s)}" width="${r(52 * s)}" height="${r(19.2 * s)}" fill="${S.lg("wolkenlicht", [[0, "#ffffff"], [0.55, "#f7f4ee"], [1, "#c9d3de"]])}"/>`;
-    for (const [dx, dy, rr] of kuppen) g += `<circle cx="${r(x + dx * s + rr * s * 0.25)}" cy="${r(y + dy * s - rr * s * 0.3)}" r="${r(rr * s * 0.6)}" fill="#fff" opacity=".7"/>`;
-    g += `</g>`;
-    return g;
+  /* Schönwetter-Cumulus am Morgen: klein und flach, scharfe Kanten, gerade graue Unterseite,
+     oben sonnenbeschienen; Kuppen durch feine Schattenlinien getrennt (kein Weichzeichner) */
+  const WL = S.lg("wolkenlicht", [[0, "#ffffff"], [0.5, "#f8f5ee"], [0.8, "#dfe3e6"], [1, "#aebdcc"]]);
+  let w = "", li = "";
+  const wolke = (x, y, b, kuppen) => {
+    /* kuppen: Höhen der Zwischenpunkte (Anteil der Breite) */
+    const n = kuppen.length + 1, pts = [[x - b / 2, y]];
+    kuppen.forEach((h, i) => pts.push([x - b / 2 + b * (i + 1) / n, y - h * b]));
+    pts.push([x + b / 2, y]);
+    let d = `M${r(pts[0][0])} ${y}`;
+    for (let i = 1; i < pts.length; i++) { const q = pts[i], p0 = pts[i - 1], rr = Math.hypot(q[0] - p0[0], q[1] - p0[1]) * 0.56; d += ` A${r(rr)} ${r(rr)} 0 0 1 ${r(q[0])} ${r(q[1])}`; }
+    w += `<path d="${d} Z" fill="${WL}"/>`;
+    for (let i = 1; i < pts.length - 1; i++) li += `M${r(pts[i][0])} ${r(pts[i][1])}q${r(b * 0.02)} ${r(b * 0.06)} ${r(b * 0.07)} ${r(b * 0.09)}`;
+    li += `M${r(x - b * 0.42)} ${r(y - 0.6)}h${r(b * 0.84)}`;
   };
-  w += `<g filter="url(#${S.id("wolke")})">` + wolke(70, 34, 1.15) + wolke(268, 24, 1.3) + wolke(372, 56, 0.75) + wolke(176, 60, 0.6) + `</g>`;
+  wolke(62, 38, 40, [0.12, 0.22, 0.27, 0.16, 0.07]);
+  wolke(262, 27, 50, [0.1, 0.2, 0.24, 0.2, 0.13, 0.06]);
+  wolke(368, 60, 22, [0.14, 0.24, 0.12]);
+  wolke(170, 66, 16, [0.16, 0.22, 0.1]);
+  wolke(120, 96, 12, [0.12, 0.16]);
+  w += `<path d="${li}" stroke="#c9d1da" stroke-width=".35" fill="none"/>`;
   S.hinten(w);
 }
 /* Nordufer hinter der Brücke: Milsons Point und North Sydney im Morgendunst */
 {
+  S.def(`<pattern id="${S.id("etage")}" width="4" height="2.2" patternUnits="userSpaceOnUse"><rect width="4" height=".45" fill="#6f8191" opacity=".3"/></pattern>`);
   let c = `<g filter="url(#${S.id("dunst")})">`;
   c += `<path d="M236 148.6 L236 141 Q260 137.6 290 139 Q330 135 360 136.4 Q384 133.4 400 134 L400 148.6 Z" fill="${S.lg("nordufer", [[0, "#93a69d"], [1, "#a9b6ad"]])}"/>`;
   const tuerme = [[328, 9, 18, "#b9c4cc"], [338, 7, 24, "#a8b6c2"], [346, 10, 20, "#c4ccd2"], [357, 6, 30, "#9fb0bf"], [364, 9, 26, "#b6c2cb"], [374, 8, 35, "#a4b4c1"], [383, 7, 29, "#c0cad1"], [391, 9, 23, "#aebcc7"], [244, 7, 10, "#c9cfcf"], [256, 9, 8, "#bfc8c6"], [268, 6, 12, "#c6cccc"], [282, 8, 9, "#bcc6c4"], [296, 7, 11, "#c8cecc"]];
@@ -118,7 +129,7 @@ S.hinten(`<rect width="400" height="${HOR + 6}" fill="${S.lg("himmel", [[0, "#35
     const y0 = 140 - (x > 320 ? 3 : 0);
     c += `<rect x="${x}" y="${r(y0 - h)}" width="${w}" height="${r(h + 6)}" fill="${f}"/>`;
     c += `<rect x="${x}" y="${r(y0 - h)}" width="${r(w * 0.35)}" height="${r(h + 6)}" fill="#7d8d99" opacity=".22"/>`;
-    for (let y = y0 - h + 2; y < y0; y += 2.2) c += `<rect x="${x + 0.6}" y="${r(y)}" width="${r(w - 1.2)}" height=".45" fill="#6f8191" opacity=".3"/>`;
+    c += `<rect x="${x + 0.6}" y="${r(y0 - h + 1.6)}" width="${r(w - 1.2)}" height="${r(h - 1.6)}" fill="url(#${S.id("etage")})"/>`;
   }
   c += `<rect x="236" y="144.6" width="164" height="4" fill="#8a9a92"/>`;
   c += `</g>`;

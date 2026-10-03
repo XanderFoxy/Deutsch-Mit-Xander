@@ -1216,7 +1216,7 @@ function hyaene(T) {
       const gg = g(x, y);
       if (T.rnd() > gg) continue;
       const r = (rMin + Math.pow(T.rnd(), 1.4) * (rMax - rMin)) * (0.7 + gg * 0.3), e = (0.72 + T.rnd() * 0.3) * flach(x, y), dreh = flach(x, y) < 0.8 ? (T.rnd() - 0.5) * 0.5 : T.rnd() * 3;
-      const k = T.fein === false ? 6 : 8, P = [];
+      const k = T.fein === false || r < 1.3 ? 6 : 8, P = [];
       for (let i = 0; i < k; i++) {
         const a = i / k * Math.PI * 2, q = 0.82 + T.rnd() * 0.34, px = Math.cos(a) * r * q, py = Math.sin(a) * r * q * e;
         P.push([G(x + px * Math.cos(dreh) - py * Math.sin(dreh)), G(y + px * Math.sin(dreh) + py * Math.cos(dreh))]);
@@ -1307,11 +1307,11 @@ function hyaene(T) {
 
   /* ---- nahe Läufe: ÜBER dem Rumpf, oben weich eingeblendet (keine Naht); kleine dichte Flecken, Füße dunkel ohne Flecken ---- */
   const okk = (x, y0, y1) => `<rect x="${x}" y="${y0}" width="22" height="${y1 - y0}" fill="${hoehenVerlauf(T, "hOkk" + x, y0, y1, [[y0, "#2a1c0e", 0.3], [y1, "#2a1c0e", 0]])}"/>`;
-  let h = okk(38, -42, -28) + beinM([36, -50, 64, 0]) + flecken(hbN.filter((p) => p[1] < -9), 18, 0.5, 1, "#3a2814", 0.7, (x, y) => (y < -10 ? 1 : 0)) + fuss(38, 60) +
+  let h = okk(38, -42, -28) + beinM([36, -50, 64, 0]) + flecken(hbN.filter((p) => p[1] < -9), 14, 0.5, 1, "#3a2814", 0.7, (x, y) => (y < -10 ? 1 : 0)) + fuss(38, 60) +
     fleck(T, "", 41.6, -24, 0.7, 4, "#fff", 0.3, 18) + fleck(T, "", 44.6, -21, 0.8, 4, "#000", 0.3, 18);
   s += teil(T, "hhbN", hbN, fell, h, fellKante(T, [[45, -33], [42.8, -27.6], [41.8, -21.8]], 14, -1.2, 0.9, "#a8916a", 0.08, 0.6) +
     pfote2(T, 46, 9.6, 4.3, { kralle: "#16120e", fell: "#5a4a34", licht: "#e8d6b0" }), { weich: 2.2, ueber: lichtH, einblenden: [-42, -36.6] });
-  let v = okk(110, -48, -33) + beinM([110, -54, 128, 0]) + flecken(vbN.filter((p) => p[1] < -9), 18, 0.5, 1, "#3a2814", 0.7, (x, y) => (y < -10 ? 1 : 0)) + fuss(110, 126) +
+  let v = okk(110, -48, -33) + beinM([110, -54, 128, 0]) + flecken(vbN.filter((p) => p[1] < -9), 14, 0.5, 1, "#3a2814", 0.7, (x, y) => (y < -10 ? 1 : 0)) + fuss(110, 126) +
     fleck(T, "", 114.4, -13, 0.9, 1.4, "#000", 0.3) + fleck(T, "", 120.4, -12.6, 0.7, 1.2, "#fff", 0.3);
   s += teil(T, "hvbN", vbN, fell, v, fellKante(T, [[114.6, -36], [113.8, -31], [114, -24]], 14, -1.4, 1, "#a8916a", 0.08, 0.6) +
     pfote2(T, 119.2, 10.4, 4.5, { kralle: "#16120e", fell: "#5a4a34", licht: "#e8d6b0" }), { weich: 2, ueber: lichtH, einblenden: [-48, -42.6] });

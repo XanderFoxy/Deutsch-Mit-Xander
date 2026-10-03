@@ -882,16 +882,26 @@ const LL = -8;
    16 — DIE TOURISTIN (fotografiert das Plönlein mit dem Handy)
    ===================================================================== */
 {
-  const d = 10.4, [x, y] = P(-2.6, d, 0), s = F / d;
-  const m = B.mensch({ id: "rtb_touristin", geschlecht: "w", pose: "halten", blick: 186, frisur: "zopf", haarfarbe: "hellbraun", haut: "hell",
+  /* eigene Haltung „fotografieren“: beide Hände heben das Handy vor das Gesicht (nur in dieser Bau-Datei) */
+  const MZ = (() => { B.mensch({ id: "x", geschlecht: "w", pose: "stehen", blick: 0, kleidung: {} }, 10); return globalThis.DMA_MENSCH; })();
+  MZ.POSEN.rtb_foto = { lende: 1, brust: -1, nacken: 4, kopf: 2, schulterL: { vor: 62, seit: 14 }, ellbogenL: 118, unterarmL: 40, handL: 4, fingerL: 0.55, schulterR: { vor: 60, seit: 16 }, ellbogenR: 120, unterarmR: 40, handR: 4, fingerR: 0.55, huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 };
+  const d = 10.4, [x, y] = P(-1.4, d, 0), s = F / d;
+  const m = B.mensch({ id: "rtb_touristin", geschlecht: "w", pose: "rtb_foto", blick: 186, frisur: "zopf", haarfarbe: "hellbraun", haut: "hell",
     kleidung: { oberteil: { stueck: "pullover", farbe: "#3d6a8a" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } }, 1.68 * s);
   const H = (n) => { const q = m.z.punkte[n]; return [q[0] * m.k, q[1] * m.k]; };
-  const hl = H("handL"), hr = H("handR"), hx = (hl[0] + hr[0]) / 2, hy = Math.min(hl[1], hr[1]);
+  const [, sy] = H("scheitel"), hl = H("handL"), hr = H("handR"), hx = (hl[0] + hr[0]) / 2 + 0.8;
   let k = schatten(3, 0.4, 0.3 * s, 0.07 * s, 0.25) + m.svg;
-  /* Handy über den Händen, Bildschirm zeigt das gelbe Haus */
-  k += `<rect x="${r(hx - 0.05 * s)}" y="${r(hy - 0.17 * s)}" width="${r(0.1 * s)}" height="${r(0.15 * s)}" rx=".3" fill="#1c1d20"/><rect x="${r(hx - 0.04 * s)}" y="${r(hy - 0.16 * s)}" width="${r(0.08 * s)}" height="${r(0.13 * s)}" fill="#f2c45c"/><path d="M${r(hx - 0.03 * s)} ${r(hy - 0.08 * s)} L${r(hx)} ${r(hy - 0.14 * s)} L${r(hx + 0.03 * s)} ${r(hy - 0.08 * s)}" stroke="#7a3220" stroke-width=".25" fill="none"/>`;
+  /* Handy hoch vor dem Gesicht: von hinten sieht man über dem Kopf den Bildschirm mit dem gelben Haus */
+  const pw = 0.075 * s, ph = 0.15 * s, px = hx - pw / 2, py = sy - ph * 0.55;
+  k += `<rect x="${r(px - 0.25)}" y="${r(py - 0.25)}" width="${r(pw + 0.5)}" height="${r(ph + 0.5)}" rx=".5" fill="#1c1d20"/><rect x="${r(px)}" y="${r(py)}" width="${r(pw)}" height="${r(ph)}" fill="#5f7fb0"/>`;
+  k += `<path d="M${r(px + pw * 0.15)} ${r(py + ph)} L${r(px + pw * 0.15)} ${r(py + ph * 0.45)} L${r(px + pw * 0.5)} ${r(py + ph * 0.18)} L${r(px + pw * 0.85)} ${r(py + ph * 0.45)} L${r(px + pw * 0.85)} ${r(py + ph)} Z" fill="#f2c45c"/><path d="M${r(px + pw * 0.15)} ${r(py + ph * 0.45)} L${r(px + pw * 0.5)} ${r(py + ph * 0.18)} L${r(px + pw * 0.85)} ${r(py + ph * 0.45)}" stroke="#a24a2a" stroke-width=".3" fill="none"/>`;
   S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: k,
-    tipp: "Die Touristin fotografiert das Plönlein mit dem Handy." });
+    tipp: "Die Touristin fotografiert das Plönlein mit dem Handy.",
+    zoom: { x: r(x - 26), y: r(y + sy - 6), w: 52, h: 34 },
+    unter: [
+      { id: "handy", de: "das Handy", syl: "HAN-dy", it: "il cellulare", itSyl: "cel-lu-LA-re", en: "mobile phone", x: x + px + pw / 2, y: y + py + ph + 0.4, kunst: flaeche(-pw / 2 - 1.2, -ph - 1.4, pw + 2.4, ph + 2.2),
+        tipp: "Mit dem Handy macht sie ein Foto. Auf dem Bildschirm sieht man schon das gelbe Haus." },
+    ] });
 }
 
 /* =====================================================================
