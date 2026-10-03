@@ -148,27 +148,29 @@ const schlag = (x, y, w, lang, a = 0.3) => `<path d="M${r(x - w / 2)} ${r(y)} L$
 /* =====================================================================
    KULISSE — Sommerhimmel mit Haufenwolken, die Ringstraße
    ===================================================================== */
-S.hinten(`<rect width="400" height="${HOR + 12}" fill="${S.lg("himmel", [[0, "#4a86c5"], [0.55, "#8fbde2"], [0.88, "#d3e4ee"], [1, "#e6ece6"]])}"/>`);
+S.hinten(`<rect width="400" height="${HOR + 12}" fill="${S.lg("himmel", [[0, "#3c78bd"], [0.45, "#79a9d8"], [0.8, "#c5dbec"], [1, "#e4ecf0"]])}"/>`);
 {
-  /* Sommer-Cumuli, jede mit eigener Form: Licht von links oben, die
-     Schattenseite rechts unten bläulich, die unteren Buckel liegen flach
-     (Wolkenboden). Zum Horizont hin flache, dunstige Wolkenbänke. */
-  S.def(`<filter id="${S.id("wolke")}" x="-20%" y="-30%" width="140%" height="160%"><feGaussianBlur stdDeviation=".45"/></filter>`);
-  const wolke = (x, y, s, buckel) => {
-    let g = `<g filter="url(#${S.id("wolke")})">`;
-    for (const [dx, dy, rr] of buckel) g += `<circle cx="${r(x + (dx + 1.4) * s)}" cy="${r(y + (dy + 1.7) * s)}" r="${r(rr * s)}" fill="#a7b7cc"/>`;
-    for (const [dx, dy, rr] of buckel) g += `<circle cx="${r(x + dx * s)}" cy="${r(y + dy * s)}" r="${r(rr * s)}" fill="${S.rg("wolkelicht", [[0, "#ffffff"], [0.5, "#f7f9fc"], [0.82, "#dce5ef"], [1, "#bccadb"]], 0.3, 0.25, 0.85)}"/>`;
-    return g + `</g>`;
+  /* Sommer-Cumuli mit ausgefransten Rändern (Wellenverschiebung), flacher
+     Basis und Schattenseite rechts unten; zum Horizont hin kleiner und
+     flacher, als weiche, ausgefranste Bänder */
+  S.def(`<filter id="${S.id("wolke")}" x="-20%" y="-40%" width="140%" height="180%"><feTurbulence type="fractalNoise" baseFrequency=".3" numOctaves="3" seed="7"/><feDisplacementMap in="SourceGraphic" scale="3.6" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".35"/></filter>`);
+  S.def(`<filter id="${S.id("band")}" x="-10%" y="-300%" width="120%" height="700%"><feTurbulence type="fractalNoise" baseFrequency=".05 .6" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="5" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".6"/></filter>`);
+  let wz = 0;
+  const wolke = (x, y, w, h, seed) => {
+    const z = B.zufall(seed), c = [];
+    const n = Math.round(w / 5);
+    for (let i = 0; i < n; i++) { const t = i / (n - 1), top = Math.pow(Math.sin(t * Math.PI), 0.7); c.push([x - w / 2 + t * w + (z() - 0.5) * 3, y - top * h * 0.35 + (z() - 0.5) * 2, 2 + z() * 2.5 + top * h * 0.45]); }
+    for (let i = 0; i < n * 0.6; i++) { const t = 0.2 + z() * 0.6; c.push([x - w / 2 + t * w, y - h * (0.3 + z() * 0.4), 2 + z() * h * 0.3]); }
+    for (const [a, b, rr] of c.slice()) for (let k = 0; k < 2; k++) { const an = -Math.PI * (0.15 + z() * 0.7); c.push([a + Math.cos(an) * rr * 0.85, b + Math.sin(an) * rr * 0.85, rr * (0.25 + z() * 0.2)]); }
+    const kr = (dx, dy, f) => c.map(([a, b, rr]) => `<circle cx="${r(a + dx)}" cy="${r(b + dy)}" r="${r(rr * f)}"/>`).join("");
+    const id = S.id("wk" + wz++);
+    S.def(`<clipPath id="${id}"><rect x="${r(x - w)}" y="${r(y - h * 2)}" width="${r(w * 2)}" height="${r(h * 2 + 1.5)}"/></clipPath>`);
+    return `<g filter="url(#${S.id("wolke")})"><g clip-path="url(#${id})"><g fill="#a3b4c9">${kr(0.6, 0.6, 1)}</g><g fill="#d4dfea">${kr(-0.4, -0.8, 0.92)}</g><g fill="#fbfcfd">${kr(-0.9, -1.8, 0.84)}</g></g></g>`;
   };
-  let w = "";
-  w += wolke(150, 40, 1, [[-22, 4, 4.4], [-15, 1, 6.4], [-7, -4, 8.6], [3, -7.5, 8], [11, -3, 7.6], [18, 1.5, 5.6], [24, 4.2, 3.6], [-9, 4.6, 5.4], [3, 4.8, 6], [13, 4.8, 5]]);
-  w += wolke(214, 18, 0.62, [[-12, 2.6, 4], [-6, -1.6, 6], [1, -4.4, 6.8], [8, -1, 5.6], [14, 2.6, 3.8], [-2, 3.2, 5], [7, 3.6, 4.4]]);
-  w += wolke(322, 60, 0.78, [[-16, 3, 3.8], [-10, 0, 5.8], [-2, -3.4, 6.4], [6, -1.6, 7.2], [13, 1.8, 5], [19, 3.8, 3.2], [2, 3.8, 5.4], [-7, 4, 4.4]]);
-  w += wolke(104, 84, 0.5, [[-7, 1.6, 3.4], [-2, -1.8, 4.8], [4, 0, 4], [9, 2, 2.6], [1, 2.2, 3.6]]);
-  w += wolke(242, 74, 0.42, [[-6, 1, 3], [0, -2.4, 4.6], [6, 0.6, 3.6], [2, 2.2, 3.4], [-3, 2.4, 2.8]]);
-  /* flache, dunstige Bänke über dem Horizont */
-  for (const [x, y, rx, ry] of [[60, 116, 46, 1.7], [170, 122, 30, 1.2], [292, 112, 56, 1.9], [358, 124, 26, 1.1], [228, 128, 22, 0.9]]) w += `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#f3f6f9" opacity=".75" filter="url(#${S.id("wolke")})"/><ellipse cx="${x + 3}" cy="${r(y + ry * 0.7)}" rx="${r(rx * 0.8)}" ry="${r(ry * 0.5)}" fill="#c6d2e0" opacity=".5" filter="url(#${S.id("wolke")})"/>`;
-  S.hinten(w);
+  S.hinten(wolke(150, 40, 50, 24, 5) + wolke(222, 20, 30, 14, 17) + wolke(322, 62, 40, 18, 29) + wolke(104, 86, 22, 10, 43) + wolke(244, 78, 16, 8, 59));
+  let band = "";
+  for (const [x, y, w, h] of [[66, 114, 80, 1.6], [172, 121, 50, 1.1], [290, 110, 96, 1.7], [356, 123, 46, 1], [232, 127, 36, 0.8]]) band += `<path d="M${x - w / 2} ${y} Q${x - w / 4} ${r(y - h)} ${x} ${r(y - h * 0.6)} Q${x + w / 4} ${r(y - h)} ${x + w / 2} ${y} Q${x} ${r(y + h * 0.9)} ${x - w / 2} ${y} Z" fill="#f4f7f9" opacity=".8"/>`;
+  S.hinten(`<g filter="url(#${S.id("band")})">${band}</g>`);
 }
 /* Ringstraße (nicht antippbar): ferner Gehsteig mit Radweg, Gleiskörper,
    Fahrbahn, Bordstein, naher Gehsteig */
@@ -513,7 +515,8 @@ const SB = (svg) => VED(`<g ${FERN2}><g transform="translate(0 -5)">${svg}</g></
      Mansarddächer aus Blech oder Ziegel, Gauben, Kamingruppen, Feuermauern,
      grüne Kupferhelme. Vor Hofburg und Dom bleiben die Häuser niedrig
      (Michaelerplatz, Stephansplatz), dazwischen ragen sie höher. */
-  S.def(`<pattern id="${S.id("fenster")}" patternUnits="userSpaceOnUse" width="1.9" height="2.3"><rect width="1.9" height=".14" fill="#fbf7ef" opacity=".55"/><rect x=".55" y=".55" width=".8" height="1.15" fill="#6d6a68"/><rect x=".45" y=".42" width="1" height=".2" fill="#f6f1e6"/></pattern>`);
+  /* Fassadenraster: Geschoss ≈ 3,4 m (in ≈ 100 m: 6 Einheiten), Fenster mit Verdachung */
+  S.def(`<pattern id="${S.id("fenster")}" patternUnits="userSpaceOnUse" width="4.2" height="6"><rect width="4.2" height=".3" fill="#fbf7ef" opacity=".6"/><rect x="1.3" y="1.6" width="1.6" height="2.9" fill="#6d6a68"/><rect x="1.1" y="1.15" width="2" height=".4" fill="#f6f1e6"/><rect x="1.2" y="4.5" width="1.8" height=".3" fill="#f6f1e6"/><rect x="2.05" y="1.6" width=".1" height="2.9" fill="#e9e3d6"/></pattern>`);
   const FAS = ["#eadfc8", "#e3d3b2", "#efe7d6", "#dccba8", "#e9dac2", "#e6d6cf", "#d9c9a6", "#ece2d0"];
   const haus = (x, w, top, base, hell) => {
     const fas = FAS[Math.floor(rnd() * FAS.length)];
@@ -521,11 +524,11 @@ const SB = (svg) => VED(`<g ${FERN2}><g transform="translate(0 -5)">${svg}</g></
     g += `<rect x="${r(x + 0.3)}" y="${r(top + 1.2)}" width="${r(w - 0.6)}" height="${r(base - top - 1.2)}" fill="url(#${S.id("fenster")})"/>`;
     g += `<rect x="${r(x - 0.2)}" y="${r(top - 0.3)}" width="${r(w + 0.55)}" height=".6" fill="#f4eee2"/>`;
     /* Dach: Mansarde (Blech/Ziegel) mit Gauben, oder Satteldach mit Feuermauer */
-    const art = rnd(), dh = 2.2 + rnd() * 1.6;
+    const art = rnd(), dh = 3.4 + rnd() * 2;
     const farbe = art < 0.12 ? KUPFER : (art < 0.55 ? (rnd() < 0.5 ? "#6f7880" : "#7d868c") : (rnd() < 0.5 ? "#a8553e" : "#94503f"));
     g += `<path d="M${r(x - 0.2)} ${r(top - 0.3)} L${r(x + 0.9)} ${r(top - dh)} L${r(x + w - 0.9)} ${r(top - dh)} L${r(x + w + 0.35)} ${r(top - 0.3)} Z" fill="${farbe}"/>`;
-    for (let gx = x + 1.6; gx < x + w - 1.6; gx += 4.2) g += `<rect x="${r(gx)}" y="${r(top - dh * 0.75)}" width=".9" height="${r(dh * 0.45)}" fill="#efe8da"/><rect x="${r(gx + 0.2)}" y="${r(top - dh * 0.62)}" width=".5" height="${r(dh * 0.3)}" fill="#5d5a58"/>`;
-    if (rnd() < 0.7) { const kx = x + w * (0.2 + rnd() * 0.6); g += `<rect x="${r(kx)}" y="${r(top - dh - 1.8)}" width="1.6" height="2" fill="#a5654f"/><rect x="${r(kx - 0.15)}" y="${r(top - dh - 1.9)}" width="1.9" height=".35" fill="#7d4a3a"/>`; }
+    for (let gx = x + 1.8; gx < x + w - 2; gx += 4.2) g += `<rect x="${r(gx)}" y="${r(top - dh * 0.75)}" width="1.5" height="${r(dh * 0.45)}" fill="#efe8da"/><rect x="${r(gx + 0.2)}" y="${r(top - dh * 0.62)}" width=".5" height="${r(dh * 0.3)}" fill="#5d5a58"/>`;
+    if (rnd() < 0.7) { const kx = x + w * (0.2 + rnd() * 0.6); g += `<rect x="${r(kx)}" y="${r(top - dh - 2.6)}" width="2" height="2.8" fill="#a5654f"/><rect x="${r(kx - 0.15)}" y="${r(top - dh - 1.9)}" width="1.9" height=".35" fill="#7d4a3a"/>`; }
     if (rnd() < 0.35) g += `<path d="M${r(x + w - 0.6)} ${r(top - dh - 0.2)} l0 ${r(-1.4)} l.9 0 l0 ${r(1.4)} Z" fill="${fas}" stroke="#bfb19b" stroke-width=".15"/>`;
     if (hell) g += `<rect x="${r(x - 0.2)}" y="${r(top - dh - 2)}" width="${r(w + 0.6)}" height="${r(base - top + dh + 2)}" fill="#dfe8f2" opacity=".38"/>`;
     return g;
@@ -542,17 +545,20 @@ const SB = (svg) => VED(`<g ${FERN2}><g transform="translate(0 -5)">${svg}</g></
      hohe Häuser zwischen Hofburg und Dom und rechts vom Chor */
   for (let i = 0; i < 46; i++) { const x = 4 + rnd() * 156, yy = 135.8 + rnd() * 2; k += `<circle cx="${r(x)}" cy="${r(yy)}" r="${r(1.2 + rnd() * 1.2)}" fill="${["#9db09a", "#a9baa5", "#93a790"][i % 3]}"/>`; }
   for (let x = 2; x < 158; x += 8 + rnd() * 9) k += `<path d="M${r(x)} 139.4 L${r(x + 1.2)} 136.8 L${r(x + 5.6)} 136.8 L${r(x + 6.8)} 139.4 Z" fill="${rnd() < 0.5 ? "#b9a59a" : "#a9aeb4"}" opacity=".85"/>`;
-  k += reihe(206, 218, 121.5, 123.5, 143.6, true) + reihe(326, 346, 122.5, 125, 143.6, true);
+  /* die Häuser sind ≈ 100 m entfernt (1,6 E/m): Traufe 20–24 m ≈ 32–38 E über
+     dem Boden, also deutlich über dem Dach der Bim */
+  k += reihe(0, 30, 98, 101, 143.6, true) + reihe(206, 220, 100, 103, 143.6, true) + reihe(326, 348, 101, 105, 143.6, true);
   /* vordere Reihe */
-  k += reihe(0, 48, 127, 131, 143.6, false) + reihe(132, 152, 129, 132, 143.6, false);
+  k += reihe(0, 50, 104, 108, 143.6, false) + reihe(132, 152, 106, 110, 143.6, false);
   /* vor dem Michaelertrakt der offene Michaelerplatz */
   k += `<rect x="150" y="141.2" width="60" height="2.6" fill="#d9d1c3"/>`;
-  k += reihe(207, 217, 126, 128, 143.6, false) + feuermauer(217, 127, 143.6, true);
-  k += reihe(217, 330, 130.6, 132.4, 143.6, false);
-  k += reihe(330, 343, 127.2, 129.6, 143.6, false) + feuermauer(330, 128, 143.6, false);
-  k += reihe(343, 400, 131, 134, 143.6, false);
+  k += reihe(207, 217, 104, 106, 143.6, false) + feuermauer(217, 105, 143.6, true);
+  /* vor dem Dom (Stephansplatz) bleiben sie bis zur halben Höhe der Langhausfenster */
+  k += reihe(217, 330, 129.6, 131.4, 143.6, false);
+  k += reihe(330, 343, 104, 107, 143.6, false) + feuermauer(330, 105, 143.6, false);
+  k += reihe(343, 400, 128, 131, 143.6, false);
   /* zwei Ecktürme mit grünem Kupferhelm */
-  for (const [tx, th] of [[212, 22], [336, 21]]) k += `<rect x="${tx - 1.8}" y="${143.6 - th}" width="3.6" height="${th}" fill="#e7dcc6"/><rect x="${tx - 1.2}" y="${145 - th}" width="2.4" height="${th - 3}" fill="url(#${S.id("fenster")})"/><path d="M${tx - 2.3} ${143.6 - th} Q${tx - 2.3} ${139.4 - th} ${tx} ${138.2 - th} Q${tx + 2.3} ${139.4 - th} ${tx + 2.3} ${143.6 - th} Z" fill="${KUPFER}"/><line x1="${tx}" y1="${138.2 - th}" x2="${tx}" y2="${136 - th}" stroke="#4a8670" stroke-width=".3"/>`;
+  for (const [tx, th] of [[212, 44], [336, 42]]) k += `<rect x="${tx - 1.8}" y="${143.6 - th}" width="3.6" height="${th}" fill="#e7dcc6"/><rect x="${tx - 1.2}" y="${145 - th}" width="2.4" height="${th - 3}" fill="url(#${S.id("fenster")})"/><path d="M${tx - 2.3} ${143.6 - th} Q${tx - 2.3} ${139.4 - th} ${tx} ${138.2 - th} Q${tx + 2.3} ${139.4 - th} ${tx + 2.3} ${143.6 - th} Z" fill="${KUPFER}"/><line x1="${tx}" y1="${138.2 - th}" x2="${tx}" y2="${136 - th}" stroke="#4a8670" stroke-width=".3"/>`;
   S.teil({ id: "altstadt", de: "die Altstadt", syl: "ALT-stadt", it: "il centro storico", itSyl: "CEN-tro STO-ri-co", en: "old town", x: 0, y: 0, kunst: VED(`<g ${MITTEL}>${k}</g>`, 200, 1),
     tipp: "Wiens Altstadt ist Welterbe. Dieses Bild ist eine Vedute – ein gemaltes Stadtbild: In Wirklichkeit liegen die Wahrzeichen weiter auseinander." });
 }

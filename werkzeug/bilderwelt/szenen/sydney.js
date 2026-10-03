@@ -622,10 +622,25 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   const X = 0, Y = 203, s = vorn(Y);   // ≈ 36 Einheiten je Meter
   let k = `<g transform="translate(40 0)">${schlag(50, 0.3, s, 0.2)}</g>`;
   const RINDE = S.lg("rinde", [[0, "#4a453e"], [0.4, "#78716a"], [0.75, "#a59d8e"], [1, "#8a8274"]], 0, 0, 1, 0);
-  /* Luftwurzeln (hinter Stamm und Ast): vom Ast bis zum Boden, einige enden frei */
-  let lw = "";
-  for (const [x0, y0, l, b] of [[34, -122, 122, 3], [38, -124, 124, -2], [46, -130, 130, -3.5], [58, -137, 137, 3], [70, -142, 142, -2.5], [104, -152, 34, 2], [124, -160, 22, -1.5], [86, -148, 60, 2.5]]) lw += `M${x0} ${y0}c${b} ${r(l * 0.3)} ${-b} ${r(l * 0.6)} ${r(b * 0.5)} ${l}`;
-  k += `<path d="${lw}" stroke="#8a8274" stroke-width="1.1" fill="none"/><path d="${lw}" stroke="#c4bba9" stroke-width=".35" fill="none" transform="translate(.4 0)"/>`;
+  /* Luftwurzeln (hinter Stamm und Ast): vier Bündel aus je 3–6 dünnen, welligen Strängen, die sich nach
+     unten aufspalten und in Fransen enden; zwei Stränge sind zu Stelzwurzeln geworden (oben dünn, unten
+     3–4× breiter) und reichen bis zum Boden. Alle links der Oper (x < 72). */
+  let lw = "", fr = "";
+  for (const [x0, y0, n, lmax] of [[30, -118, 5, 70], [42, -126, 4, 55], [55, -134, 6, 46], [66, -140, 3, 30]]) {
+    for (let i = 0; i < n; i++) {
+      const x = x0 + (i - n / 2) * 1.1 + rnd(), l = lmax * (0.45 + rnd() * 0.55), b = (rnd() - 0.5) * 4;
+      lw += `M${r(x)} ${y0}c${r(b)} ${r(l * 0.35)} ${r(-b * 0.8)} ${r(l * 0.65)} ${r(b * 0.4)} ${r(l)}`;
+      const ex = x + b * 0.4, ey = y0 + l;
+      fr += `M${r(ex)} ${r(ey)}l-.8 ${r(2 + rnd() * 2)}M${r(ex)} ${r(ey)}l.2 ${r(3 + rnd() * 2)}M${r(ex)} ${r(ey)}l1 ${r(2 + rnd() * 1.5)}`;
+    }
+  }
+  k += `<path d="${lw}" stroke="#8a8274" stroke-width=".55" fill="none"/><path d="${fr}" stroke="#9a9282" stroke-width=".3" fill="none"/>`;
+  /* Stelzwurzeln bis zum Boden (unten hinter dem Felsen der Bank) */
+  for (const [x0, y0, b] of [[36, -122, 2], [50, -130, -2.5]]) {
+    let li = "", re = "";
+    for (let i = 0; i <= 10; i++) { const t = i / 10, y = y0 + (-y0) * t, x = x0 + Math.sin(t * 3.2) * b, w = 0.6 + t * t * 3.4; li += `${i ? "L" : "M"}${r(x - w / 2)} ${r(y)}`; re = `L${r(x + w / 2)} ${r(y)}` + re; }
+    k += `<path d="${li}${re}Z" fill="${S.lg("stelz", [[0, "#7c7466"], [0.5, "#9d9585"], [1, "#6c6558"]], 0, 0, 1, 0)}"/>`;
+  }
   /* Brettwurzeln nach rechts auslaufend */
   for (const [x0, x1, y1] of [[22, 58, -1], [20, 44, -0.5], [14, 32, 0]]) k += `<path d="M${x0} ${-26 - (x0 - 14)} Q${r((x0 + x1) / 2)} ${r(-10 - (x0 - 6) * 0.5)} ${x1} ${y1} L${x1 - 10} ${y1 + 0.8} Q${r((x0 + x1) / 2 - 6)} ${r(-4)} ${x0 - 6} 0 Z" fill="${RINDE}"/>`;
   k += `<path d="M58 -1Q40 -12 22 -34M44 -.5Q32 -8 20 -30" stroke="#d2cab8" stroke-width=".7" fill="none" opacity=".6"/>`;
@@ -657,14 +672,35 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
     for (let i = 1; i <= n; i++) { const p0 = pts[i - 1], p1 = pts[i % n], m = [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2], o = [m[0] - cx, m[1] - cy], L = Math.hypot(o[0] / rx, o[1] / ry) || 1, bu = 0.22 + rnd() * 0.12; d += `Q${ri(Math.max(1, m[0] + o[0] / L * bu))} ${ri(Math.max(-202, m[1] + o[1] / L * bu * 1.4))} ${ri(p1[0])} ${ri(p1[1])}`; }
     return `<path d="${d}Z"/>`;
   };
-  const massen = [[16, -182, 24, 21, 9], [46, -193, 28, 12, 8], [58, -172, 22, 13, 8], [90, -189, 25, 13, 8], [120, -180, 20, 12, 8], [148, -171, 14, 9, 7], [22, -148, 18, 13, 8], [84, -163, 16, 9, 7], [128, -158, 12, 7, 6], [104, -199, 30, 7, 7], [159, -178, 7, 6, 5]];
+  /* fünf große, unregelmäßige Laubmassen (+ eine kleine): dunkle Unterseite, hellere, sonnige Oberkante;
+     am Rand einzelne Blattgruppen; Himmelslücken in verschiedenen Größen */
+  const massen = [[22, -178, 30, 24, 14], [64, -188, 30, 15, 13], [104, -191, 28, 12, 12], [136, -175, 24, 11, 11], [30, -146, 22, 13, 10], [160, -173, 8, 6, 6]];
   S.def(`<g id="${S.id("laubdach")}">${massen.map((m) => masse(...m)).join("")}</g>`);
-  const LAUB0 = S.rg("laub", [[0, "#6f9f50"], [0.45, "#30602d"], [1, "#152d17"]], 0.68, 0.25, 0.8);
-  k += `<use href="#${S.id("laubdach")}" fill="${LAUB0}"/><use href="#${S.id("laubdach")}" fill="url(#${S.id("blatt")})" opacity=".38"/>`;
-  /* Eigenschatten unten in jeder Masse (dunkle Unterkante) und Himmelslöcher verschiedener Größe */
+  const LAUB0 = S.rg("laub", [[0, "#7aa957"], [0.4, "#3a6a33"], [0.8, "#1d3a1f"], [1, "#132914"]], 0.7, 0.18, 0.85);
+  k += `<use href="#${S.id("laubdach")}" fill="${LAUB0}"/>`;
+  /* sonnige Oberkante: kleinere, nach oben rechts versetzte Kopie jeder Masse in warmem Hellgrün */
+  let ob = "";
+  for (const [mx, my, rx, ry] of massen) ob += `<ellipse cx="${r(mx + rx * 0.12)}" cy="${r(my - ry * 0.42)}" rx="${r(rx * 0.72)}" ry="${r(ry * 0.4)}"/>`;
+  S.def(`<clipPath id="${S.id("laubclip")}"><use href="#${S.id("laubdach")}"/></clipPath>`);
+  k += `<g clip-path="url(#${S.id("laubclip")})" fill="#9cc46a" opacity=".38" filter="url(#bw_weich)">${ob}</g>`;
+  /* Blattgruppen am Rand: zwei Symbole (hell oben, dunkel unten), entlang der Massenränder verteilt */
+  S.def(`<g id="${S.id("bgh")}"><ellipse cx="0" cy="0" rx="1.7" ry=".7" transform="rotate(-30)"/><ellipse cx="1.4" cy=".6" rx="1.6" ry=".65" transform="rotate(20 1.4 .6)"/><ellipse cx="-1.2" cy=".9" rx="1.5" ry=".6" transform="rotate(50 -1.2 .9)"/><ellipse cx=".4" cy="-1" rx="1.4" ry=".6" transform="rotate(-70 .4 -1)"/></g>`);
+  let bg = "";
+  for (const [mx, my, rx, ry] of massen) {
+    const n = Math.round(rx * 0.7);
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + rnd() * 0.3, x = mx + Math.cos(a) * rx * 0.98, y = my + Math.sin(a) * ry * 1.02;
+      if (y < -200 || x < 2) continue;
+      const hell = Math.sin(a) < 0.1;
+      bg += `<use href="#${S.id("bgh")}" fill="${hell ? (i % 2 ? "#8ab95e" : "#6f9f4c") : (i % 2 ? "#1e3a20" : "#2c4f2a")}" transform="translate(${r(x)} ${r(y)}) rotate(${Math.round(rnd() * 180)}) scale(${r(0.8 + rnd() * 0.5)})"/>`;
+    }
+  }
+  k += bg;
   let lo = "";
-  for (const [hx, hy, w] of [[50, -177, 2.6], [87, -192, 1.6], [16, -167, 1.2], [116, -186, 3.2], [68, -186, 1], [140, -176, 1.4], [33, -196, 2], [100, -170, 1.1]]) lo += `M${r(hx - w)} ${hy}q${r(w * 0.3)} ${r(-w * 0.9)} ${r(w)} ${r(-w * 0.7)}q${r(w * 0.9)} ${r(w * 0.1)} ${r(w)} ${r(w * 0.8)}q${r(-w * 0.6)} ${r(w * 0.7)} ${r(-w * 1.2)} ${r(w * 0.5)}z`;
-  k += `<path d="${lo}" fill="#5a8fcb"/><path d="${lo}" fill="none" stroke="#1b361d" stroke-width=".5" opacity=".6"/>`;
+  for (const [hx, hy, w] of [[52, -170, 4.2], [88, -186, 1.4], [14, -165, 1.8], [118, -184, 3.4], [72, -194, 1], [142, -172, 1.2], [36, -192, 2.6], [100, -194, 0.8], [26, -140, 1.6], [62, -180, 0.9]]) lo += `M${r(hx - w)} ${hy}q${r(w * 0.3)} ${r(-w * 0.9)} ${r(w)} ${r(-w * 0.7)}q${r(w * 0.9)} ${r(w * 0.1)} ${r(w)} ${r(w * 0.8)}q${r(-w * 0.6)} ${r(w * 0.7)} ${r(-w * 1.2)} ${r(w * 0.5)}z`;
+  k += `<path d="${lo}" fill="${S.lg("loch", [[0, "#4f86c4"], [1, "#6b9ed2"]])}"/><path d="${lo}" fill="none" stroke="#1b361d" stroke-width=".6" opacity=".7"/>`;
+  /* Brettwurzel-Rippen am sichtbaren Stamm (der Fuß liegt hinter dem Felsen der Bank) */
+  k += `<path d="M24 -40 Q30 -56 38 -60 L36 -54 Q30 -48 27 -38 Z M-2 -40 Q-1 -52 4 -60 L5 -54 Q2 -48 2 -40 Z" fill="${RINDE}"/><path d="M38 -60 Q30 -56 24 -40 M4 -60 Q-1 -52 -2 -40" stroke="#d2cab8" stroke-width=".6" fill="none" opacity=".6"/>`;
   S.teil({ id: "feigenbaum", de: "der Feigenbaum", syl: "FEI-gen-baum", it: "il fico", itSyl: "FI-co", en: "fig tree", x: X, y: Y, kunst: k,
     tipp: "Die Moreton-Bay-Feige hat riesige Brettwurzeln und Luftwurzeln. In Sydneys Parks stehen viele davon." });
 }
@@ -918,45 +954,57 @@ const bP = (u, l, w) => { const p = bq(u, l, w); return `${p[0]} ${p[1]}`; };
         Flip-Flops, Bumerang, Sonnencreme; 11 — DER IBIS
    ===================================================================== */
 const DECKE = { x: 322, y: 244 };
-const ANKER_DECKE = { x: 272, y: 250 };   // Wortmarke an der linken vorderen Ecke
-const DINGE = { fish: [336, 242], creme: [326, 233.4], bumerang: [362, 248], flip: [322, 255.2] };
+/* Picknick in echter Zentralperspektive: alle Dinge sind gleich gedreht, ihre Kanten laufen auf den
+   Fluchtpunkt (322 | 146) auf dem Horizont. PK(seitlich m, Abstand m, Höhe m) → Bildpunkt */
+const PK = (X, D, h = 0) => [322 + 680 * X / D, 146 + 680 * (1.6 - h) / D];
+const ANKER_DECKE = { x: 314, y: 251.4 };   // Wortmarke an der Vorderkante der Decke
+const DINGE = { fish: [340, 245], creme: [326, 239.4], bumerang: [362, 248.6], flip: [287, 247.4] };
 const anDecke = (p, svg) => `<g transform="translate(${r(p[0] - ANKER_DECKE.x)} ${r(p[1] - ANKER_DECKE.y)})">${svg}</g>`;
 const deckeUnter = [];
 let deckeKunst = "";
 {
-  const s = vorn(DECKE.y);
-  const yH = DECKE.y - 0.55 * s * 0.42, yV = DECKE.y + 0.5 * s * 0.22;
-  const pts = [[-0.72 * s, yH - DECKE.y], [0.72 * s, yH - DECKE.y], [0.86 * s, yV - DECKE.y], [-0.86 * s, yV - DECKE.y]];
-  let k = `<path d="M${r(pts[3][0] - 4)} ${r(pts[3][1] + 0.6)} L${r(pts[0][0] - 6)} ${r(pts[0][1])} L${r(pts[0][0])} ${r(pts[0][1])} L${r(pts[3][0])} ${r(pts[3][1])} Z" fill="#2a3a14" opacity=".18" filter="url(#bw_weich)"/>`;
-  const d = `M${pts.map((p) => `${r(p[0])} ${r(p[1])}`).join(" L")} Z`;
+  /* Decke 1,6 × 1,8 m, Mitte 11,2 m entfernt */
+  const D0 = 10.3, D1 = 12.1, Wd = 0.8;
+  const ecke = [PK(-Wd, D1), PK(Wd, D1), PK(Wd, D0), PK(-Wd, D0)].map(([x, y]) => [x - DECKE.x, y - DECKE.y]);
+  const Q = (u, v) => { const [x, y] = PK(-Wd + 2 * Wd * u, D1 + (D0 - D1) * v); return [x - DECKE.x, y - DECKE.y]; };
+  let k = `<path d="M${P([ecke[3][0] - 5, ecke[3][1] - 0.6])} L${P([ecke[0][0] - 6, ecke[0][1] - 1])} L${P(ecke[0])} L${P(ecke[3])} Z" fill="#2a3a14" opacity=".2" filter="url(#bw_weich)"/>`;
+  const d = `M${ecke.map(P).join(" L")} Z`;
   S.def(`<path id="${S.id("deckep")}" d="${d}"/><clipPath id="${S.id("decke")}"><use href="#${S.id("deckep")}"/></clipPath>`);
   k += `<use href="#${S.id("deckep")}" fill="#b8302c"/>`;
   k += `<g clip-path="url(#${S.id("decke")})">`;
-  /* Schottenmuster: dunkelblaue breite und cremefarbene schmale Streifen, perspektivisch zum Fluchtpunkt */
+  /* Schottenmuster: Längsstreifen laufen zum Fluchtpunkt, Querstreifen werden nach hinten enger */
   let nv = "", cv = "", nh = "", ch = "";
-  for (let i = -6; i <= 6; i++) { const t = `M${r(i * 0.12 * s)} ${r(pts[0][1])}L${r(i * 0.143 * s)} ${r(pts[2][1])}`; if (i % 3) nv += t; else cv += t; }
-  for (let j = 0; j < 6; j++) { const y = pts[0][1] + (pts[2][1] - pts[0][1]) * (j / 5.5), t = `M${r(-0.9 * s)} ${r(y)}H${r(0.9 * s)}`; if (j % 2) nh += t; else ch += t; }
-  k += `<path d="${nv}" stroke="#1f2f5a" stroke-width="2.4" opacity=".55"/><path d="${nh}" stroke="#1f2f5a" stroke-width="2" opacity=".5"/><path d="${cv}${ch}" stroke="#e9d9a8" stroke-width=".55" opacity=".78"/>`;
-  /* Falten und Sonnenlicht von rechts */
-  k += `<path d="M${r(-0.5 * s)} ${r(pts[0][1] + 2)} q6 3 14 1 M${r(0.2 * s)} ${r(pts[2][1] - 3)} q8 -2 16 0" stroke="#7a1d1b" stroke-width=".6" fill="none" opacity=".4"/>`;
-  k += `<rect x="0" y="${r(pts[0][1])}" width="${r(0.9 * s)}" height="${r(pts[2][1] - pts[0][1])}" fill="#ffd9a0" opacity=".12"/>`;
+  for (let i = 1; i < 12; i++) { const t = `M${P(Q(i / 12, 0))}L${P(Q(i / 12, 1))}`; if (i % 3) nv += t; else cv += t; }
+  for (let j = 1; j < 9; j++) { const t = `M${P(Q(0, j / 9))}L${P(Q(1, j / 9))}`; if (j % 2) nh += t; else ch += t; }
+  k += `<path d="${nv}" stroke="#1f2f5a" stroke-width="2.2" opacity=".55"/><path d="${nh}" stroke="#1f2f5a" stroke-width="1.6" opacity=".5"/><path d="${cv}${ch}" stroke="#e9d9a8" stroke-width=".55" opacity=".78"/>`;
+  /* Falten; Morgenlicht von rechts hinten: warmer Schimmer auf der rechten Hälfte */
+  k += `<path d="M${P(Q(0.2, 0.25))} q6 2 14 .6 M${P(Q(0.55, 0.8))} q8 -1.6 16 0" stroke="#7a1d1b" stroke-width=".6" fill="none" opacity=".4"/>`;
+  k += `<path d="M${P(Q(0.5, 0))} L${P(Q(1, 0))} L${P(Q(1, 1))} L${P(Q(0.5, 1))} Z" fill="#ffd9a0" opacity=".14"/>`;
   k += `</g><use href="#${S.id("deckep")}" fill="none" stroke="#7a1d1b" stroke-width=".4"/>`;
   let fr = "";
-  for (let x = -0.84 * s; x < 0.84 * s; x += 2) fr += `M${r(x)} ${r(pts[2][1])}l.2 1.6`;
+  for (let i = 0; i <= 40; i++) { const q = Q(i / 40, 1); fr += `M${P(q)}l.2 1.6`; }
   k += `<path d="${fr}" stroke="#9a2a26" stroke-width=".4"/>`;
   deckeKunst += anDecke([DECKE.x, DECKE.y], k);
 }
 {
-  /* Fish and Chips im offenen weißen Papier mit Zitrone */
+  /* Fish and Chips im offenen, zerknitterten weißen Papier (zwei Knicklinien): ein langes, flaches
+     Fischfilet im Backteig (≈ 2,5 × so lang wie breit, ein Ende schmaler), goldgelb mit knusprigem,
+     unregelmäßigem Rand und dunkleren Blasen; dicke hellgelbe Pommes als Haufen; Zitronenspalte */
   const [X, Y] = DINGE.fish, s = vorn(Y) / 60;
   const g = (n) => r(n * s);
   let k = `<path d="M${g(-15)} 0 L${g(-11)} ${g(-6.4)} L${g(-17)} ${g(-7.4)} L${g(-21)} ${g(-1)} Z" fill="#1a1a1a" opacity=".16" filter="url(#bw_weich)"/>`;
-  k += `<path d="M${g(-15)} 0 L${g(-11)} ${g(-6.4)} L${g(12)} ${g(-7)} L${g(16)} ${g(-0.6)} L${g(3)} ${g(1.6)} Z" fill="#fbfbf6" stroke="#d9d9d0" stroke-width=".3"/>`;
-  k += `<path d="M${g(-15)} 0 L${g(-9)} ${g(-1.6)} L${g(3)} ${g(1.6)} Z" fill="#ecece4"/>`;
-  for (let i = 0; i < 9; i++) { const x = -8 + rnd() * 10, y = -4.6 + rnd() * 3.4, a = -40 + rnd() * 80; k += `<rect x="${g(x)}" y="${g(y)}" width="${g(4.4)}" height="${g(0.9)}" rx="${g(0.3)}" fill="${rnd() < 0.5 ? "#f2c45a" : "#e6ad3c"}" transform="rotate(${r(a)} ${g(x + 2.2)} ${g(y + 0.45)})"/>`; }
-  k += `<path d="M${g(1)} ${g(-2.4)} Q${g(4)} ${g(-6.6)} ${g(10)} ${g(-5)} Q${g(13)} ${g(-3.8)} ${g(11)} ${g(-1.6)} Q${g(6)} ${g(-0.4)} ${g(1)} ${g(-2.4)} Z" fill="${S.rg("teig", [[0, "#f4c56c"], [0.7, "#d99436"], [1, "#b8712a"]], 0.45, 0.35, 0.7)}"/>`;
-  k += `<path d="M${g(4)} ${g(-4.4)}h.1M${g(6.4)} ${g(-3.2)}h.1M${g(8.6)} ${g(-4.6)}h.1M${g(10)} ${g(-2.8)}h.1" stroke="#fbe2a4" stroke-width=".7" stroke-linecap="round"/>`;
-  k += `<path d="M${g(-11)} ${g(-2.2)} Q${g(-9)} ${g(-5)} ${g(-6.6)} ${g(-2.6)} Z" fill="#f6e04a" stroke="#e2c330" stroke-width=".3"/>`;
+  k += `<path d="M${g(-15)} 0 L${g(-12)} ${g(-4)} L${g(-11)} ${g(-6.4)} L${g(1)} ${g(-6.9)} L${g(12)} ${g(-7)} L${g(14)} ${g(-3.6)} L${g(16)} ${g(-0.6)} L${g(3)} ${g(1.6)} Z" fill="#fbfbf6" stroke="#d9d9d0" stroke-width=".3"/>`;
+  k += `<path d="M${g(-15)} 0 L${g(-9)} ${g(-1.6)} L${g(3)} ${g(1.6)} Z" fill="#ecece4"/><path d="M${g(1)} ${g(-6.9)} L${g(-1)} ${g(1)} M${g(14)} ${g(-3.6)} L${g(-12)} ${g(-4)}" stroke="#dcdcd2" stroke-width=".35" fill="none"/>`;
+  /* Pommes: dicke Stäbe, gestapelt (hinten tiefer, vorn obenauf) */
+  let pom = "";
+  for (const [x, y, a] of [[-8.4, -4.2, -20], [-7.2, -3.6, 15], [-9.6, -3, 5], [-6.4, -2.6, -35], [-8.8, -2.2, 28], [-7.4, -1.6, -8], [-5.6, -3.4, 50], [-9.2, -4.8, 60], [-6.6, -4.6, -60], [-7.8, -2.8, 80]]) pom += `<rect x="${g(x - 2)}" y="${g(y - 0.55)}" width="${g(4)}" height="${g(1.1)}" rx="${g(0.25)}" transform="rotate(${a} ${g(x)} ${g(y)})"/>`;
+  k += `<g fill="#f6dc7a" stroke="#d9ae3e" stroke-width=".22">${pom}</g>`;
+  /* Fischfilet: 10 lang, 4 breit, rechts schmaler, knuspriger Zackenrand */
+  let fil = "", n = 18;
+  for (let i = 0; i <= n; i++) { const a = i / n * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a), bw = 2 * (c > 0 ? 1 - c * 0.35 : 1), rr = 1 + (i % 2 ? 0.08 : -0.05); const x = 5 + c * 6.6 * rr, y = -3.6 + sn * bw * rr * 0.85 - c * 0.6; fil += `${i ? "L" : "M"}${g(x)} ${g(y)}`; }
+  k += `<path d="${fil}Z" fill="${S.lg("teig", [[0, "#f6cf6e"], [0.55, "#e2a440"], [1, "#b8742a"]])}" stroke="#a8641e" stroke-width=".3"/>`;
+  k += `<path d="M${g(2.4)} ${g(-4.6)}h.1M${g(4.4)} ${g(-3.4)}h.1M${g(6.6)} ${g(-4.2)}h.1M${g(8.4)} ${g(-3.2)}h.1M${g(3.6)} ${g(-2.6)}h.1" stroke="#b06a24" stroke-width=".8" stroke-linecap="round" opacity=".6"/><path d="M${g(2)} ${g(-4.9)}q${g(3.5)} ${g(-0.9)} ${g(7.5)} ${g(-0.2)}" stroke="#fff0b8" stroke-width=".45" fill="none" opacity=".85"/>`;
+  k += `<path d="M${g(-12.4)} ${g(-1.8)} Q${g(-10.6)} ${g(-4.6)} ${g(-8.2)} ${g(-2.2)} Z" fill="#f6e04a" stroke="#e2c330" stroke-width=".3"/>`;
   deckeKunst += anDecke([X, Y], k);
   deckeUnter.push({ id: "fish_and_chips", de: "die Fish and Chips", syl: "fish-and-CHIPS", it: "il fish and chips", itSyl: "fish and CIPS", en: "fish and chips", x: X, y: Y, kunst: flaeche(g(-16), g(-7.5), g(32), g(9.5)),
     tipp: "„Fish and Chips“ ist Mehrzahl: Fisch im Backteig mit Pommes – am Hafen isst man sie direkt aus dem Papier." });
@@ -980,7 +1028,7 @@ let deckeKunst = "";
 }
 {
   /* Sonnencreme (Tube, LSF 50+) auf der Decke rechts neben der Kühlbox */
-  const [X, Y] = DINGE.creme, s = vorn(Y) / 60;
+  const [X, Y] = DINGE.creme, s = vorn(Y) / 60 * 1.4;
   const g = (n) => r(n * s);
   let k = `<path d="M${g(-6)} ${g(1)} L${g(4.6)} ${g(-0.6)} L${g(2)} ${g(-1.6)} L${g(-8)} ${g(-0.2)} Z" fill="#1a1a1a" opacity=".2" filter="url(#bw_weich)"/>`;
   k += `<path d="M${g(-6)} ${g(-1)} L${g(4)} ${g(-2.6)} L${g(4.6)} ${g(-0.2)} L${g(-5.6)} ${g(1.2)} Z" fill="#fbf6e6"/>`;
@@ -988,7 +1036,7 @@ let deckeKunst = "";
   k += `<path d="M${g(-4)} ${g(-1)} L${g(2)} ${g(-1.9)} L${g(2.3)} ${g(-0.5)} L${g(-3.7)} ${g(0.4)} Z" fill="#f6c51a"/>`;
   k += `<text x="${g(-1)}" y="${g(-0.1)}" font-size="${g(1.3)}" fill="#c0391b" font-family="Arial,sans-serif" font-weight="bold" transform="rotate(-9 ${g(-1)} ${g(-0.6)})">SPF 50+</text>`;
   deckeKunst += anDecke([X, Y], k);
-  deckeUnter.push({ id: "sonnencreme", de: "die Sonnencreme", syl: "SON-nen-creme", it: "la crema solare", itSyl: "CRE-ma so-LA-re", en: "sunscreen", x: X, y: Y, kunst: flaeche(g(-7), g(-4), g(14.4), g(6)),
+  deckeUnter.push({ id: "sonnencreme", de: "die Sonnencreme", syl: "SON-nen-creme", it: "la crema solare", itSyl: "CRE-ma so-LA-re", en: "sunscreen", x: X, y: Y, kunst: flaeche(g(-7.4), g(-5.6), g(15.2), g(8.4)),
     tipp: "Auf der Tube steht SPF – auf Deutsch LSF (Lichtschutzfaktor). In Australien nimmt man LSF 50+." });
 }
 {
@@ -996,13 +1044,13 @@ let deckeKunst = "";
      liegend (Tiefe gestaucht), Sohlenkante; der linke richtig herum mit Y-Riemen und Zehensteg,
      der rechte umgekippt (Profil der Unterseite, Riemenknöpfe) */
   const [X, Y] = DINGE.flip;
-  const sohle = (ox, oy, rot, oben) => {
+  const sohle = (ox, oy, rot, oben, nr = 1) => {
     const c = Math.cos(rot * Math.PI / 180), sn = Math.sin(rot * Math.PI / 180);
     const T = (u, v) => [r(ox + u * c - v * sn), r(oy + (u * sn + v * c) * 0.42)];
     const halb = (t) => t < 0.1 ? 2.3 * Math.sqrt(t / 0.1) : t < 0.45 ? 2.3 - (t - 0.1) * 0.6 : t < 0.75 ? 2.1 + (t - 0.45) * 3.3 : 3.1 * Math.sqrt(Math.max(0, 1 - Math.pow((t - 0.75) / 0.25, 2)));
     const N = 12, li = [], re = [];
     for (let i = 0; i <= N; i++) { const t = i / N, u = -8.5 + 17 * t; li.push(T(u, -halb(t))); re.push(T(u, halb(t))); }
-    const id = S.id("sohle" + (oben ? 1 : 2)), um = `href="#${id}"`;
+    const id = S.id("sohle" + nr), um = `href="#${id}"`;
     S.def(`<path id="${id}" d="M${li.map((q) => q.join(" ")).join(" L")} L${re.reverse().map((q) => q.join(" ")).join(" L")} Z"/>`);
     let g = `<use ${um} fill="#1a1d10" opacity=".25" transform="translate(-1.2 .9)" filter="url(#bw_weich)"/>`;
     g += `<use ${um} fill="${oben ? "#d9a514" : "#1f3f78"}" transform="translate(0 .8)"/>`;
@@ -1010,8 +1058,8 @@ let deckeKunst = "";
     if (oben) {
       g += `<use ${um} fill="#2f6fb6" transform="translate(${r(ox * 0.12)} ${r(oy * 0.12)}) scale(.88)"/>`;
       const steg = T(5.2, 0), l = T(-0.6, -2.3), rr = T(-0.6, 2.3);
-      g += `<path d="M${l.join(" ")} Q${r((l[0] + steg[0]) / 2)} ${r(steg[1] - 3)} ${steg.join(" ")} Q${r((rr[0] + steg[0]) / 2)} ${r(steg[1] - 2.4)} ${rr.join(" ")}" stroke="#1d2f55" stroke-width=".9" fill="none" stroke-linecap="round"/>`;
-      g += `<circle cx="${steg[0]}" cy="${steg[1]}" r=".45" fill="#1d2f55"/>`;
+      g += `<path d="M${l.join(" ")} Q${r((l[0] + steg[0]) / 2)} ${r(steg[1] - 3.4)} ${steg.join(" ")} Q${r((rr[0] + steg[0]) / 2)} ${r(steg[1] - 2.8)} ${rr.join(" ")}" stroke="#1d3f86" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M${l.join(" ")} Q${r((l[0] + steg[0]) / 2)} ${r(steg[1] - 3.6)} ${steg.join(" ")}" stroke="#6f9ee0" stroke-width=".35" fill="none"/>`;
+      g += `<circle cx="${steg[0]}" cy="${steg[1]}" r=".55" fill="#1d3f86"/>`;
     } else {
       let pr = "";
       for (let u = -7; u < 7.5; u += 1.6) { const a = T(u, -1.8), b2 = T(u + 0.6, 1.8); pr += `M${a.join(" ")} L${b2.join(" ")}`; }
@@ -1020,8 +1068,8 @@ let deckeKunst = "";
     }
     return g;
   };
-  /* Kontaktschatten liegt im Muster; der umgekippte liegt teils auf dem linken */
-  const k = sohle(-5, 0.3, -24, true) + sohle(6.4, -0.6, 16, false);
+  /* ein Paar, leicht versetzt hingeworfen, auf der linken vorderen Deckenecke */
+  const k = sohle(-5.4, 0.4, -18, true) + sohle(5.6, -0.8, 10, true, 2);
   deckeKunst += anDecke([X, Y], k);
   deckeUnter.push({ id: "flipflops", de: "die Flip-Flops", syl: "FLIP-flops", it: "le infradito", itSyl: "in-fra-DI-to", en: "flip-flops", x: X, y: Y, kunst: flaeche(-14, -4.5, 28, 9),
     tipp: "In Australien heißen Flip-Flops „Thongs“." });
@@ -1030,41 +1078,49 @@ S.teil({ id: "picknickdecke", de: "die Picknickdecke", syl: "PICK-nick-de-cke", 
   tipp: "Ein Picknick am Hafen: Auf der Decke liegen Fish and Chips, Sonnencreme und ein Bumerang.",
   zoom: { x: 252, y: 165, w: 128, h: 80 }, unter: deckeUnter });
 {
-  /* Kühlbox („Esky“): blau, weißer Deckel mit Griff, seitlicher Tragebügel; Vorderseite und Deckel im
-     Licht, linke Seite im Schatten; Schlagschatten nach links hinten */
-  const X = DECKE.x - 26, Y = DECKE.y - 8, s = vorn(Y);
-  const w = 0.56 * s, h = 0.36 * s, t = 0.3 * s, dx = -0.16 * s, dy = -0.07 * s;   // Tiefe nach links hinten (Objekt rechts der Bildmitte)
-  let k = `<path d="M${r(-w / 2)} 0 L${r(w / 2)} 0 L${r(w / 2 - 1.2 * 0.36 * s + dx)} ${r(dy - 2)} L${r(-w / 2 - 1.2 * 0.36 * s + dx)} ${r(dy - 2)} Z" fill="#1d2a10" opacity=".3" filter="url(#bw_weich)"/>`;
-  k += `<ellipse cx="0" cy=".2" rx="${r(w * 0.52)}" ry="1" fill="#1a1a1a" opacity=".35"/>`;
-  /* linke Seite (Schatten) */
-  k += `<path d="M${r(-w / 2)} 0 L${r(-w / 2 + dx)} ${r(dy)} L${r(-w / 2 + dx)} ${r(dy - h)} L${r(-w / 2)} ${r(-h)} Z" fill="#1f4a86"/>`;
-  /* Vorderseite (Licht) mit Prägung */
-  k += `<path d="M${r(-w / 2)} 0 L${r(w / 2)} 0 L${r(w / 2)} ${r(-h)} L${r(-w / 2)} ${r(-h)} Z" fill="${S.lg("esky", [[0, "#4a8fd6"], [1, "#2f6fb6"]])}"/>`;
-  k += `<rect x="${r(-w / 2 + 2)}" y="${r(-h + 4)}" width="${r(w - 4)}" height="${r(h - 7)}" rx="1.2" fill="none" stroke="#5a9ee0" stroke-width=".7"/>`;
-  /* Deckel (weiß) mit Griffmulde */
-  k += `<path d="M${r(-w / 2 - 0.6)} ${r(-h)} L${r(w / 2 + 0.6)} ${r(-h)} L${r(w / 2 + 0.6 + dx)} ${r(-h + dy)} L${r(-w / 2 - 0.6 + dx)} ${r(-h + dy)} Z" fill="#f6f7f8"/>`;
-  k += `<rect x="${r(-w / 2 - 0.6)}" y="${r(-h)}" width="${r(w + 1.2)}" height="2.4" fill="#e3e6e9"/>`;
-  k += `<path d="M${r(-w * 0.18 + dx / 2)} ${r(-h + dy / 2)} L${r(w * 0.18 + dx / 2)} ${r(-h + dy / 2)}" stroke="#c9cfd4" stroke-width="2.2" stroke-linecap="round"/>`;
-  /* Tragebügel an der linken Seite */
-  k += `<path d="M${r(-w / 2 + dx * 0.2)} ${r(-h * 0.75)} Q${r(-w / 2 + dx * 0.5)} ${r(-h * 1.15)} ${r(-w / 2 + dx * 0.8)} ${r(-h * 0.78 + dy)}" stroke="#e8ebee" stroke-width="1.2" fill="none"/>`;
-  k += `<rect x="${r(w / 2 - 3)}" y="${r(-h)}" width="2.4" height="${r(h)}" fill="#fff" opacity=".14"/>`;
-  S.teil({ oben: true, id: "kuehlbox", de: "die Kühlbox", syl: "KÜHL-box", it: "la borsa frigo", itSyl: "BOR-sa FRI-go", en: "cool box", x: X, y: Y, steht: true, kunst: k,
+  /* Kühlbox („Esky“) in derselben Perspektive wie die Decke: Sie steht links vom Fluchtpunkt, darum
+     sieht man ihre RECHTE Seite (schmal, etwas dunkler) und den Deckel, der nach hinten zum Fluchtpunkt
+     ausweicht. Griff an der rechten Seite. Schlagschatten nach links hinten (Sonne rechts hinter uns). */
+  const XL = -0.5, D = 11.75, W2 = 0.28, T = 0.32, H = 0.38;
+  const [X, Y] = PK(XL, D);
+  const Q = (dx, dd, h) => { const [x, y] = PK(XL + dx, D + dd, h); return [x - X, y - Y]; };
+  const fl = Q(-W2, 0, 0), fr = Q(W2, 0, 0), flo = Q(-W2, 0, H), fro = Q(W2, 0, H), br = Q(W2, T, 0), bro = Q(W2, T, H), blo = Q(-W2, T, H);
+  let k = `<path d="M${P(fl)} L${P(fr)} L${P([fr[0] - 22, fr[1] - 4])} L${P([fl[0] - 24, fl[1] - 4])} Z" fill="#1d2a10" opacity=".3" filter="url(#bw_weich)"/>`;
+  k += `<path d="M${P(fl)} L${P(fr)}" stroke="#1a1a1a" stroke-width="1.4" opacity=".35"/>`;
+  /* rechte Seite */
+  k += `<path d="M${P(fr)} L${P(br)} L${P(bro)} L${P(fro)} Z" fill="${S.lg("eskyseite", [[0, "#2c64ad"], [1, "#22508f"]], 0, 0, 1, 0)}"/>`;
+  /* Vorderseite mit Prägung, warmes Morgenlicht */
+  k += `<path d="M${P(fl)} L${P(fr)} L${P(fro)} L${P(flo)} Z" fill="${S.lg("esky", [[0, "#5698dc"], [1, "#3474ba"]])}"/>`;
+  const pr = [Q(-W2 + 0.03, 0, H - 0.07), Q(W2 - 0.03, 0, H - 0.07), Q(W2 - 0.03, 0, 0.05), Q(-W2 + 0.03, 0, 0.05)];
+  k += `<path d="M${pr.map(P).join(" L")} Z" fill="none" stroke="#6aa8e6" stroke-width=".7" stroke-linejoin="round"/>`;
+  /* Deckel: weiß, warm beschienen, mit Griffmulde; Deckelkante */
+  k += `<path d="M${P(flo)} L${P(fro)} L${P(bro)} L${P(blo)} Z" fill="#fbf7ee"/><path d="M${P(flo)} L${P(fro)} L${P(bro)}" stroke="#e1dcd2" stroke-width="2" fill="none"/>`;
+  const m1 = Q(-0.1, T * 0.5, H), m2 = Q(0.1, T * 0.5, H);
+  k += `<path d="M${P(m1)} L${P(m2)}" stroke="#cdd2d6" stroke-width="1.8" stroke-linecap="round"/>`;
+  /* Tragegriff an der rechten Seite */
+  const g1 = Q(W2, T * 0.25, H * 0.72), g2 = Q(W2, T * 0.75, H * 0.72), gm = Q(W2 + 0.02, T * 0.5, H * 1.02);
+  k += `<path d="M${P(g1)} Q${P(gm)} ${P(g2)}" stroke="#e8ebee" stroke-width="1.1" fill="none"/>`;
+  S.teil({ oben: true, id: "kuehlbox", de: "die Kühlbox", syl: "KÜHL-box", it: "la borsa frigo", itSyl: "BOR-sa FRI-go", en: "cool box", x: r(X), y: r(Y), steht: true, kunst: k,
     tipp: "In Australien heißt die Kühlbox „Esky“. Ohne sie geht niemand zum Picknick." });
 }
 {
   /* Molukkenibis (Australischer Weißer Ibis): weißer Körper, nackter schwarzer Kopf und Hals, langer gebogener Schnabel */
-  const X = 376, Y = 232, s = vorn(Y) / 60 * 1.05;
+  const X = 378, Y = 234, s = vorn(Y) / 60 * 1.2;
   const g = (n) => r(n * s);
-  let k = schlag(g(10), 0.45, vorn(Y), 0.28);
+  let k = schlag(g(10), 0.55, vorn(Y), 0.28);
+  /* gespiegelt: der Ibis schaut nach links zum Picknick */
+  k += `<g transform="scale(-1 1)">`;
   k += `<path d="M${g(-1)} 0 L${g(-1.6)} ${g(-11)} M${g(2)} 0 L${g(1.2)} ${g(-11)}" stroke="#2a2a2c" stroke-width="${g(0.9)}" stroke-linecap="round"/>`;
   k += `<path d="M${g(-3.4)} 0 h${g(2.6)} M${g(0.6)} 0 h${g(2.8)}" stroke="#2a2a2c" stroke-width="${g(0.5)}"/>`;
   k += `<path d="M${g(6)} ${g(-19)} Q${g(9)} ${g(-17)} ${g(7)} ${g(-12.6)} Q${g(2)} ${g(-8.6)} ${g(-5)} ${g(-10.4)} Q${g(-10)} ${g(-11.4)} ${g(-11.6)} ${g(-13.6)} Q${g(-8)} ${g(-15.6)} ${g(-3)} ${g(-17.6)} Q${g(2)} ${g(-19.6)} ${g(6)} ${g(-19)} Z" fill="${S.rg("ibis", [[0, "#ffffff"], [0.7, "#eeeeea"], [1, "#cfcdc6"]], 0.6, 0.3, 0.8)}"/>`;
   k += `<path d="M${g(-6)} ${g(-11.2)} Q${g(-10)} ${g(-11)} ${g(-12.6)} ${g(-12.4)} Q${g(-9.6)} ${g(-12.8)} ${g(-6.6)} ${g(-12.6)} Z" fill="#1d1f24"/>`;
   k += `<path d="M${g(-2)} ${g(-15)} Q${g(-6)} ${g(-14.6)} ${g(-8)} ${g(-12.6)}" stroke="#d5d2c8" stroke-width="${g(0.4)}" fill="none"/>`;
+  /* schwarze, herabhängende Schmuckfedern über dem Schwanz */
+  k += `<path d="M${g(-4.6)} ${g(-11.6)} Q${g(-9)} ${g(-10.4)} ${g(-13.4)} ${g(-9.6)} Q${g(-10)} ${g(-11.2)} ${g(-12.4)} ${g(-11.6)} Q${g(-8.6)} ${g(-12.4)} ${g(-5.4)} ${g(-12.8)} Z" fill="#141518"/><path d="M${g(-6)} ${g(-11.8)} q${g(-3)} ${g(1)} ${g(-6.4)} ${g(1.8)}" stroke="#3a3c42" stroke-width="${g(0.25)}" fill="none"/>`;
   k += `<path d="M${g(5)} ${g(-18.4)} Q${g(9)} ${g(-22)} ${g(10)} ${g(-26)} Q${g(10.6)} ${g(-28.4)} ${g(12.4)} ${g(-28)}" stroke="#1d1f24" stroke-width="${g(1.6)}" fill="none" stroke-linecap="round"/>`;
   k += `<circle cx="${g(12.6)}" cy="${g(-27.8)}" r="${g(1.4)}" fill="#1d1f24"/><circle cx="${g(12.9)}" cy="${g(-28.2)}" r="${g(0.25)}" fill="#8a2a1e"/>`;
   k += `<path d="M${g(13.6)} ${g(-27.6)} Q${g(17.4)} ${g(-26)} ${g(18.2)} ${g(-19.6)}" stroke="#1d1f24" stroke-width="${g(0.8)}" fill="none" stroke-linecap="round"/>`;
-  k += `<path d="M${g(9.6)} ${g(-23.4)} q${g(1)} ${g(-1)} ${g(1.4)} ${g(-2.6)}" stroke="#c94a3a" stroke-width="${g(0.4)}" fill="none" opacity=".7"/>`;
+  k += `<path d="M${g(9.6)} ${g(-23.4)} q${g(1)} ${g(-1)} ${g(1.4)} ${g(-2.6)}" stroke="#c94a3a" stroke-width="${g(0.4)}" fill="none" opacity=".7"/></g>`;
   S.teil({ id: "ibis", de: "der Ibis", syl: "I-bis", it: "l'ibis", itSyl: "I-bis", en: "ibis", x: X, y: Y, steht: true, kunst: k,
     tipp: "Der Molukkenibis (Australischer Weißer Ibis) holt sich gern Reste aus dem Picknick – darum heißt er in Sydney „Bin Chicken“." });
 }
