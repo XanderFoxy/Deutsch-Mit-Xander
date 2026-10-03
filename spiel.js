@@ -13817,7 +13817,8 @@
      holen kann … die meisten die wissen nicht was ich mit Adresszeile meine … deswegen gibt es vielleicht in deine
      Möglichkeit als App runterladen". Ein Knopf „Als App": Android/Chrome/Edge fragen direkt (beforeinstallprompt), auf
      dem iPhone steht, wie es geht (Teilen → Zum Home-Bildschirm). Läuft die Seite schon als App, fehlt der Knopf. */
-  var APP = { angebot: null };
+  /* FASSUNG 849 — spiel.js lädt nach dem Seitenstart; das Angebot kann schon vorher gekommen sein (index.html fängt es auf). */
+  var APP = { angebot: window.DMA_APP_ANGEBOT || null };
   try { window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); APP.angebot = e; }); } catch (e) {}
   function appLaeuft() { try { return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true; } catch (e) { return false; } }
   function appIos() { return /iPhone|iPad|iPod/.test(navigator.userAgent || "") || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); }
@@ -17773,4 +17774,27 @@
       }
     }
   };
+
+  /* FASSUNG 849 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller".
+     spiel.js (280 KB) steht nicht mehr in der Startliste, sondern kommt, wenn die Seite steht
+     (index.html, nach DOMContentLoaded) – so nimmt es app.js beim ersten Laden keine Leitung weg.
+     Was livechat.js bis dahin an Spiel-Nachrichten bekam, liegt in DMA_SPIEL_WARTET:
+     Stände werden immer übernommen; Bilder und Töne nur, wenn die Nachricht frisch ist (≤ 3 s) –
+     ein alter Schuss soll nicht nachträglich durchs Bild fliegen. */
+  (function spielWartendeAbholen() {
+    var liste = window.DMA_SPIEL_WARTET || [];
+    window.DMA_SPIEL_WARTET = null;
+    var jetzt = Date.now();
+    liste.forEach(function (w) {
+      var n = w && w.n;
+      if (!n || !n.ereignis) return;
+      try {
+        if (jetzt - w.um <= 3000) { empfangen(n); return; }
+        if (n.stand && n.stand.id) S.stand[n.stand.id] = n.stand;
+        if (n.ziel_stand && n.ziel_stand.id) S.stand[n.ziel_stand.id] = n.ziel_stand;
+        if (n.ich_stand && n.ich_stand.id) S.stand[n.ich_stand.id] = n.ich_stand;
+      } catch (e) {}
+    });
+    if (liste.length) { try { zeichnen(); } catch (e) {} }
+  })();
 })();

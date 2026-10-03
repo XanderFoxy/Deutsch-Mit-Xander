@@ -3285,3 +3285,36 @@ Was 848 ändert (livechat.js):
   - keine Seitenfehler.
   
   Grün: 866, 862, 861, 659, 856, 859, 811-leitung, 816, 827, runde18, einladungslink, 863.
+
+## Fassung 849 — spiel.js kommt nach dem Start (Funk 271: „alles insgesamt nur zehn Mal schneller“)
+
+- **Vorher**: spiel.js (850 KB Code, 273 KB übertragen) stand in der Startliste von index.html (`defer`). Beim ersten Laden teilte es sich die Leitung mit app.js, und der Browser übersetzte es, bevor die Seite fertig war. Das betraf jeden Besucher, auch wer nie mitspielt.
+- **Jetzt** (index.html):
+  - spiel.js ist aus `var dateien = [...]` heraus.
+  - Es wird bei `DOMContentLoaded` eingehängt, also nachdem alle Startskripte gelaufen sind (min/-Kopie mit Stempel, bei Fehler `dmaMinFehlt`).
+  - Eine Zeile fängt `beforeinstallprompt` früh auf (`DMA_APP_ANGEBOT`). spiel.js übernimmt es beim Laden, damit der Knopf „Als App“ bleibt.
+- **Nichts geht verloren**:
+  - Alle Aufrufe in app.js/livechat.js fragen vorher `window.DMA_SPIEL &&`.
+  - Spiel-Nachrichten, die vor spiel.js ankommen, hebt livechat.js in `DMA_SPIEL_WARTET` auf (höchstens 300).
+  - spiel.js holt sie beim Laden ab (`spielWartendeAbholen`):
+    - Stände werden immer übernommen.
+    - Bilder und Töne gibt es nur bei Nachrichten, die höchstens 3 s alt sind. Ein alter Schuss fliegt nicht nachträglich.
+  - Danach ist der Puffer zu, und alles geht direkt ans Spiel.
+  - `anmeldungDa` ist nicht nötig: spiel.js findet die Anmeldung beim ersten Beitreten selbst (`klientHolen`).
+- **Gemessen** (4G, Rechner 4× gebremst, werkzeug/ladezeit-messen.js):
+
+  | | bereit | Klassenzimmer | KB bis bereit |
+  |---|---|---|---|
+  | kalt vorher (847) | 2,79 s | 3,33 s | 1.840 |
+  | kalt jetzt | 2,56 s | 3,15 s | 1.567 |
+  | warm | 1,25 s → 1,24 s | | |
+
+- **Sonden**: neu `pruefe-867-spiel-nach-start.js`. Der Server hält spiel.js zurück, bis die Prüfung es freigibt. Geprüft wird:
+  - nicht in der Startliste, angefragt nach DOMContentLoaded, nachträglich eingehängt;
+  - vorher kein DMA_SPIEL;
+  - drei Nachrichten werden aufgehoben;
+  - Stände sind übernommen, der alte Schuss wird nicht nachgespielt;
+  - der Puffer ist geschlossen;
+  - „Als App“ ist aufgefangen;
+  - spätere Nachrichten gehen direkt ans Spiel;
+  - keine Konsolenfehler.

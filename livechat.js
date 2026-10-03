@@ -5286,6 +5286,12 @@ window.LiveChat = (function () {
       /* Fassung 659: kam es schon über den Datenkanal? Dann nicht noch einmal. */
       if (!gidNeu(n.gid)) return;
       try { if (window.DMA_SPIEL && window.DMA_SPIEL.empfangen) window.DMA_SPIEL.empfangen(n); } catch (e) {}
+      /* FASSUNG 849 — spiel.js kommt erst nach dem Seitenstart (index.html). Was bis dahin
+         eintrifft, wartet hier; spiel.js holt es beim Laden ab (spielWartendeAbholen). */
+      if (!window.DMA_SPIEL) {
+        var wartet = window.DMA_SPIEL_WARTET || (window.DMA_SPIEL_WARTET = []);
+        if (wartet.length < 300) wartet.push({ n: n, um: Date.now() });
+      }
       return;
     }
     uhrVergleichen(n);
