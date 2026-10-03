@@ -936,9 +936,10 @@ function spinosaurus(T) {
   const finger = [[[135.2, -20.6], [137.2, -20.4], [138.8, -19.4], [138.4, -18.6], [136.4, -19]], [[135.6, -18.8], [137.8, -17.8], [139.4, -16.4], [138.8, -15.8], [137, -16.8], [135.2, -17.6]],
     [[134.6, -17.8], [136.2, -16.4], [136.8, -15], [136, -14.8], [134.8, -16], [134, -17.2]]];
   finger.forEach((p) => { armIn += teil(T, p, "#6a604a", { klein: 1, weich: 0.15, mal: L([p.slice(0, 3)], LI, 0.3, 0.5) }); });
+  armIn += krallen(T, [[138.6, -19.8, 4.5, 1.4, 45, 1], [139.2, -16.4, 2.5, 0.85, 62, 0.85], [136.6, -15, 2.5, 0.85, 80, 0.85]]);
   const iA = T.id("arm");
   T.def(`<g id="${iA}">${volZonen(T, "armv", armIn, [121, -40, 141, -13], [[0, 0, "a", { weich: 1.4, tiefe: 3, umgebung: 0.35 }]])}</g>`);
-  h += `<g transform="rotate(9 95 -29) translate(-1.4 -.8)" filter="${dunkler(T, 0.66)}"><use href="#${iUB}"/><use href="#${iSG}"/></g>` + `<use href="#${iA}" transform="translate(1.6 1.4)" filter="${dunkler(T, 0.66)}"/>`;
+  h += `<g transform="rotate(9 95 -29) translate(-1.4 -.8)" filter="${dunkler(T, 0.66)}"><use href="#${iUB}"/><use href="#${iSG}"/></g>` + `<use href="#${iA}" transform="translate(1.6 1.4) rotate(-34 127.6 -34)" filter="${dunkler(T, 0.66)}"/>`;
 
   /* ---------- Rumpf, Hals, Schwanz und Kopf ---------- */
   const iL = pfad(T, leib), iK = pfad(T, kiefer), iS = pfad(T, schaedel);
@@ -964,7 +965,7 @@ function spinosaurus(T) {
   }
   let bd = "";
   for (const x of [10, 21, 32, 43, 54, 65, 76]) { const y0 = cT(x) - dT(x), y1 = cT(x) + dT(x); bd += `M${R(x)} ${R(y0)}l${R(-0.6)} ${R(y1 - y0)}h2.4l${R(0.6)} ${R(y0 - y1)}z`; }
-  inn += weichG(T, 0.8, [0, -50, 86, -20], `<path d="${bd}" fill="#1c1a10" opacity=".24"/>`);
+  inn += weichG(T, 0.8, [0, -50, 86, -20], `<path d="${bd}" fill="#1c1a10" opacity=".14"/>`);
   const yO = yBei(sOben.concat(ruecken)), yU = yBei(sUnten.concat(unten.slice().reverse())), band = (v, x0, x1) => { const p = []; for (let x = x0; x <= x1; x += 5) p.push([x, yO(x) + (yU(x) - yO(x)) * v]); return p; };
   /* Licht: obere Flanke hell, Terminator auf 55–60 %, unteres Drittel dunkel, Bodenreflex; Muskelkern des Schwanzes */
   let mal = L([band(0.12, 84, 152)], LI, 3.4, 0.36) + L([band(0.8, 84, 152)], SC, 7, 0.5) + L([band(0.97, 88, 150)], RF, 1.2, 0.4);
@@ -1000,11 +1001,11 @@ function spinosaurus(T) {
 
   let s = h + volZonen(T, "leib", k, [-2, -60, 181, 0], [[0, 0, "r", { weich: 5, tiefe: 5, umgebung: 0.3 }], [-10, 78, "s", { weich: 2.6, tiefe: 4, umgebung: 0.3 }],
     [134, 155, "h", { weich: 3, tiefe: 4.5, umgebung: 0.3 }], [155, 190, "k", { weich: 1.8, tiefe: 3.5, umgebung: 0.35 }]], 8);
-  s += `<use href="#${iUB}" filter="${dunkler(T, 0.92)}"/>` + `<use href="#${iSG}"/>` + `<use href="#${iA}" filter="${dunkler(T, 0.9)}"/>`;
+  s += `<use href="#${iUB}" filter="${dunkler(T, 0.92)}"/>` + `<use href="#${iSG}"/>` + `<use href="#${iA}" transform="rotate(-38 127.6 -34)" filter="${dunkler(T, 0.9)}"/>`;
   s += kontakt(T, [[96, 100], [100.4, 104], [106, 109.4], [110, 113], [98, 104]]);
   if (F) s = `<g filter="${T.relief("haut", { f: 4, tiefe: 0.04, okt: 2 })}">${s}</g>`;
   s += reptilAuge(T, 157.8, -51.5, 1.1, { n: "s", hell: "#e2b44a", iris: "#b8862c" });
-  s += krallen(T, [[138.6, -19.8, 4.5, 1.4, 45, 1], [139.2, -16.4, 2.5, 0.85, 62, 0.85], [136.6, -15, 2.5, 0.85, 80, 0.85], [113, -0.8, 2.2, 0.9, 10, 0.2], [109.4, -0.6, 2, 0.85, 10, 0.2], [109.4, -3.7, 1.8, 0.7, 5, 0.2], [96.2, -0.8, 1.6, 0.8, 165, -0.2]]);
+  s += krallen(T, [[113, -0.8, 2.2, 0.9, 10, 0.2], [109.4, -0.6, 2, 0.85, 10, 0.2], [109.4, -3.7, 1.8, 0.7, 5, 0.2], [96.2, -0.8, 1.6, 0.8, 165, -0.2]]);
   GEN = 10;
   return Object.assign(fertig(7.8, s, [-0.6, -64.6, 179.1, 0]), { fuesse: [97 * 7.8, 106 * 7.8], kopf: [150 * 7.8, -58 * 7.8, 181 * 7.8, -38 * 7.8] });
 }

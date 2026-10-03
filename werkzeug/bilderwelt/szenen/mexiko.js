@@ -91,14 +91,22 @@ const KAM = (() => {
 const P = (X, Y, Z) => { const dx = X - KAM.vx, dz = Z - KAM.vz; const d = dx * KAM.fx + dz * KAM.fz, l = dx * KAM.rx + dz * KAM.rz; return [KAM.CX + KAM.F * l / d, HY - KAM.F * (Y - 1.6) / d]; };
 /* Bildpunkt am Boden → Raum */
 const BODEN = (x, y) => { const d = KAM.F * 1.6 / (y - HY), l = (x - KAM.CX) * d / KAM.F; return [KAM.vx + d * KAM.fx + l * KAM.rx, KAM.vz + d * KAM.fz + l * KAM.rz]; };
-const flaech = (a, fill, extra = "") => `<path d="M${pts(a.map((p) => P(...p)))} Z" fill="${fill}"${extra}/>`;
+/* Vieleck auf den Bildrahmen kappen (Sutherland–Hodgman), damit nichts aus dem Bild ragt */
+function kappe(p, x0 = -3, y0 = -3, x1 = 323, y1 = 203) {
+  const schnitt = (p, innen, quer) => { const o = []; for (let i = 0; i < p.length; i++) { const a = p[i], b = p[(i + 1) % p.length], ia = innen(a), ib = innen(b); if (ia) o.push(a); if (ia !== ib) o.push(quer(a, b)); } return o; };
+  const qx = (x) => (a, b) => [x, a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0])], qy = (y) => (a, b) => [a[0] + (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]), y];
+  p = schnitt(p, (q) => q[0] >= x0, qx(x0)); if (p.length) p = schnitt(p, (q) => q[0] <= x1, qx(x1));
+  if (p.length) p = schnitt(p, (q) => q[1] >= y0, qy(y0)); if (p.length) p = schnitt(p, (q) => q[1] <= y1, qy(y1));
+  return p;
+}
+const flaech = (a, fill, extra = "") => { const q = kappe(a.map((p) => P(...p))); return q.length > 2 ? `<path d="M${pts(q)} Z" fill="${fill}"${extra}/>` : ""; };
 /* Sonne: 20° hoch im Westen (Azimut 260°) — Schatten fallen nach Ostnordost, 2,75 × Höhe */
 const SD = [0.985 * 2.75, 0.174 * 2.75];
 const schattenAuf = (X, Y, Z) => [X + Y * SD[0], 0, Z + Y * SD[1]];
 /* Schatten eines Dings im Bild: Fuß bei (x|y) im Bild, Höhe h (m), Breite b (m) */
 const bildSchatten = (x, y, h, b, a = 0.24) => {
   const [X, Z] = BODEN(x, y), d = b / 2;
-  const q = [[X, Z - d], [X, Z + d], [X + h * SD[0], Z + d + h * SD[1]], [X + h * SD[0], Z - d + h * SD[1]]].map(([u, v]) => P(u, 0, v)).map(([u, v]) => [u - x, v - y]);
+  const q = kappe([[X, Z - d], [X, Z + d], [X + h * SD[0], Z + d + h * SD[1]], [X + h * SD[0], Z - d + h * SD[1]]].map(([u, v]) => P(u, 0, v)), 1, -3, 319, 203).map(([u, v]) => [u - x, v - y]);
   return `<path d="M${pts(q)} Z" fill="#26341a" opacity="${a}" filter="url(#bw_weich)"/>`;
 };
 const huelle = (punkte) => {
@@ -653,7 +661,8 @@ const standUnter = [];
 {
   const { x0, x1, vorn, hinten } = STAND;
   const HOLZ = S.lg("pfosten", [[0, "#6b4a2c"], [0.5, "#8a6440"], [1, "#5a3c22"]], 0, 0, 1, 0);
-  let k = bildSchatten((x0 + x1) / 2, vorn, 2.4, 3.2, 0.22);
+  S.hinten(`<g transform="translate(${(x0 + x1) / 2} ${vorn})">${bildSchatten((x0 + x1) / 2, vorn, 2.4, 3.2, 0.22)}</g>`);
+  let k = "";
   k += `<rect x="${x0 + 8}" y="${r(hinten - 2.5 * SH)}" width="1.6" height="${r(2.5 * SH)}" fill="#5a3c22"/><rect x="${x1 - 6}" y="${r(hinten - 2.5 * SH)}" width="1.6" height="${r(2.5 * SH)}" fill="#5a3c22"/>`;
   k += `<rect x="${x0 + 9}" y="${r(hinten - 2.4 * SH)}" width="${x1 - x0 - 15}" height="${r(1.75 * SH)}" fill="${S.lg("rueckstoff", [[0, "#6a3a3a"], [1, "#4a2a2a"]])}"/>`;
   k += `<path d="M${x0 + 9} ${r(hinten - 2.2 * SH)} Q${(x0 + x1) / 2} ${r(hinten - 2.1 * SH)} ${x1 - 5} ${r(hinten - 2.2 * SH)}" stroke="#d8c8a0" stroke-width=".4" fill="none"/>`;
@@ -822,8 +831,9 @@ const standUnter = [];
   for (let x = hm - hb + 0.6; x < hm + hb - 0.4; x += 1.2) sp += `M${r(x)} ${r(kny2 - 2.2)} q.6 1 1.2 0`;
   st += `<path d="${sp}" stroke="#cfc8b6" stroke-width=".35" fill="none"/><path d="M${r(hm - hb + 0.6)} ${r(kny2 - 2.6)} H${r(hm + hb - 0.4)}" stroke="#e2dccd" stroke-width=".3" stroke-dasharray=".5 .4"/>`;
   const AY = Y - 30;
+  S.hinten(`<g transform="translate(${r(X)} ${r(Y)})">${bildSchatten(X, Y, 1.56, 0.45, 0.2)}</g>`);
   S.teil({ id: "verkaeuferin", de: "die Verkäuferin", syl: "ver-KÄU-fe-rin", it: "la venditrice", itSyl: "ven-di-TRI-ce", en: "saleswoman", x: X, y: AY,
-    kunst: `<g transform="translate(0 ${r(Y - AY)})">${bildSchatten(X, Y, 1.56, 0.45, 0.2).replace("<path", `<path transform="translate(${-X} ${-Y})"`)}${hinten}${halb(m.svg)}${st}</g>`,
+    kunst: `<g transform="translate(0 ${r(Y - AY)})">${hinten}${halb(m.svg)}${st}</g>`,
     tipp: "Sie trägt einen Huipil: ein weißes Kleid mit bunt gestickten Blumen – typisch für die Maya in Yucatán." });
 }
 /* DIE PIÑATA — Stern mit sieben Zacken, hängt an einer Schnur vom Dachbalken */

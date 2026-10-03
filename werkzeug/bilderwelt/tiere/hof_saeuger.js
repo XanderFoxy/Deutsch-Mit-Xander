@@ -1341,7 +1341,7 @@ function schwein(T) {
   const borsten = fellMuster(T, "b", 1.6, 26, [["#fff8f0", 1, 0.05, 0.6], ["#c8907e", 0.5, 0.05, 0.4]], 18, 6);
   const poren = fellMuster(T, "p", 0.06, 110, [["#a86a5a", 1, 0.1, 0.1]], 180, 7);
   let s = "";
-  const klS = (cx, f, b) => klaue3(T, F, cx + 0.6, 7.4, 4.6, f, "#f4e0d4", b) + afterklaue2(T, cx - 3.4, -5.2, 1.1, "#a49488", "#f4e0d4");
+  const klS = (cx, f, b) => klaue3(T, F, cx + 0.6, 7.4, 4.6, f, "#f4e0d4", b) + afterklaue2(T, cx - 1.9, -5.8, 1.1, "#a49488", "#f4e0d4");
   const fernBein = (vorn, dx) => {
     const cx = (vorn ? S_VCX : S_HCX) + dx;
     const pts = verschiebe(vorn ? S_V.h.concat(S_V.v) : S_H.h.slice(2).concat(S_H.v), dx).concat(vorn ? [[cx + 10, -48], [cx - 8, -48]] : [[cx + 22, -46], [cx - 6, -46]]);
@@ -1357,7 +1357,7 @@ function schwein(T) {
   /* Umriss: Schinken als eigene Masse hinten (über die Beinlinie, zur Kniekehle eingezogen), Kruppe fällt 15–20°,
      breite Schulter, schwere Backe ohne Hals; Kopf mit Kinnstufe (Unterkiefer kürzer als die Oberlippe) */
   const rumpf = [[9, -80.6], [6, -76], [3.8, -69], [3, -61], [3.8, -53], [6, -46.4], [9.6, -41], [13.6, -37.4]].concat(S_H.h.slice(3), S_H.v, bauch, S_V.h, S_V.v,
-    [[139.4, -42.2], [143.6, -45.6], [148, -48.6], [152.4, -50.8], [158, -52.6], [164, -54], [169, -55], [173.6, -56.2], [177.2, -57.2], [179.4, -58], [181.4, -58.6],
+    [[139.4, -42.2], [143.6, -45.6], [148, -48.4], [152.4, -50], [158, -51.4], [164, -52.8], [169, -54], [172.6, -54.8], [175, -55.6], [176.4, -57], [178.2, -57.8], [179.8, -58.2], [181.4, -58.6],
       [182.4, -63], [182, -68.4], [176, -70.8], [168, -74.2], [160, -78], [152, -81.8], [146, -84.4], [138, -86.6], [126, -88], [110, -89], [90, -89.6], [70, -89.6],
       [50, -89], [38, -87.8], [28, -85.6], [19, -83], [12.6, -81.6]]);
   const wuchs = richtung([[5, 100], [30, 140], [60, 165], [130, 150], [150, 120]]);
@@ -1416,7 +1416,7 @@ function schwein(T) {
   s += F.rinne(159.4, -66, 166, -65.4, 0.3, 0.35) + F.rinne(160, -64.6, 165, -64, 0.25, 0.25);
   /* Schlappohr (Landrasse): kräftiger, eingerollter Ohrgrund über/hinter dem Auge; breit-dreieckig nach vorn-unten,
      Spitze vor dem Auge auf Höhe des Nasenrückens; durchscheinend warm zum Rand, feine verzweigte Adern */
-  const ohr = [[145.4, -84.8], [151.6, -86.2], [158, -85], [164.6, -81.6], [170.4, -76.4], [174.6, -70.6], [176.6, -65.6], [176.2, -62.6], [174, -62],
+  const ohr = [[145.4, -84.8], [151.6, -86.2], [158, -85], [164.6, -81.6], [170.4, -76.4], [174.6, -70.6], [176.4, -66], [177.2, -62.2, 1], [173.6, -62.6],
     [170.2, -64], [166.4, -66.6], [162.6, -69.2], [158, -72.6], [152.4, -76.6], [147.4, -80]];
   s += imRumpf(rk, F.schatten(164, -64.6, 12, 2.8, 0.5, 28) + F.schatten(152, -73, 6, 4, 0.4));
   s += vol(T, "ohr", 1.2, stueck(T, ohr, T.lg("ohr", [[0, "#f0d2c4"], [0.55, "#efc2b2"], [1, "#e8a290"]], 0, 0, 1, 1),

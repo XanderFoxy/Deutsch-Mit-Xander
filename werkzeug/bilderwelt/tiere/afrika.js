@@ -435,7 +435,7 @@ function elefant(T) {
     return teil(kk.pts, haut, {
       fell: rissB,
       ov: [licht], innen: mod + zyl(kk, i0, 64) + `<rect x="${H.f(kk.R[m][0] - 5)}" y="-95" width="90" height="95" fill="${staub}"/>` +
-        falte(querfalten(kk, 3.2, 4.3, 0.2, 0.12, 0.88, 3.4), 2.8, 0.34) + (F ? falte(querfalten(kk, m - 1.6, m - 0.8, 0.3, 0.2, 0.8, 2.5), 2.4, 0.24) : "") +
+        kerben(querfalten(kk, 3.2, 4.3, 0.2, 0.12, 0.88, 3.4), 2.8, 0.38) + (F ? falte(querfalten(kk, m - 1.6, m - 0.8, 0.3, 0.2, 0.8, 2.5), 2.4, 0.24) : "") +
         `<path d="M${H.f(kk.L[m][0] + 1)} -3L${H.f(kk.R[m][0] - 1)} -3" stroke="#241b13" stroke-width="5" stroke-opacity=".45"/>`,
       vol: [15, 4, 0.4], randD: H.seiten(kk, i0),
     }) + naegel(kk.L[m][0], kk.R[m][0], n);
@@ -1319,8 +1319,8 @@ function gnu(T) {
   const hf = [["#2a2522", 2, 0.12, 0.22], ["#9a9ea2", 2, 0.11, 0.22]];
   const fR = F ? H.fellMuster("r", 168, hf, { tile: 7, n: 55, len: 1.6, streu: 0.3 }) : "";
   const fH = F ? H.fellMuster("h", 70, hf, { tile: 7, n: 55, len: 1.5, streu: 0.3 }) : "";
-  const fB = F ? H.fellMuster("b", 92, [["#2a2420", 1, 0.1, 0.2], ["#8a8078", 1, 0.1, 0.18]], { tile: 4, n: 40, len: 1, streu: 0.25 }) : "";
-  const fK = F ? H.fellMuster("k", 240, [["#000", 1, 0.1, 0.25], ["#6a605a", 1, 0.1, 0.22]], { tile: 4, n: 40, len: 0.8, streu: 0.35 }) : "";
+  const fB = F ? H.fellMuster("b", 92, [["#2a2420", 1, 0.1, 0.2], ["#8a8078", 1, 0.1, 0.18]], { tile: 4, n: 28, len: 1, streu: 0.25 }) : "";
+  const fK = F ? H.fellMuster("k", 240, [["#000", 1, 0.1, 0.25], ["#6a605a", 1, 0.1, 0.22]], { tile: 4, n: 28, len: 0.8, streu: 0.35 }) : "";
   /* ---- Beine: schlank; vorn Vorderfußwurzel als kantige Verdickung, Röhrbein mit Sehnenrinne, Fesselgelenk, Afterklauen, gespaltener Huf.
      hinten Sprunggelenk mit Fersenhöcker, Achillessehne als Kante ---- */
   const vorder = (x) => [[x + 3, -96, 9.5, 9.5], [x + 1, -70, 6.6, 6], [x, -52, 4.3, 4.2], [x, -46, 4.6, 4.4], [x, -41, 3.6, 3.6], [x + 0.3, -14, 3.1, 3.4], [x + 0.6, -9.5, 4, 4], [x + 2.6, -5.6, 3.3, 3], [x + 4, -4.5, 3.2, 3]];
@@ -1342,7 +1342,7 @@ function gnu(T) {
   const sk = kette([[32, -127, 3, 3], [27, -119, 2.8, 2.8], [24, -110, 2.4, 2.4]]);
   s += wf([[30, -122], [24, -100], [24, -70]], "#000", 0.3, 2, false, 6);
   s += teil(sk.pts, fell, { fell: [fR], vol: [1.4, 4, 0.4], innen: wf([[29, -127], [23, -112]], SW, 0.6, 0.6, false, 1.6) });
-  s += teil([[24, -114], [20, -106], [17, -88], [15, -70], [17, -58], [22, -56], [26, -66], [27, -86], [26, -106]], SW, { fell: F ? [H.fellMuster("t", 96, [["#3a302a", 1, 0.3, 0.6]], { tile: 4, n: 20, len: 5, streu: 0.15 })] : [] });
+  s += teil([[24, -114], [20, -106], [17, -88], [15, -70], [17, -58], [22, -56], [26, -66], [27, -86], [26, -106]], SW, { fell: F ? [H.fellMuster("t", 96, [["#3a302a", 1, 0.3, 0.6]], { tile: 4, n: 12, len: 5, streu: 0.15 })] : [] });
   s += H.straehnen([[23.5, -114], [21.5, -110], [21, -106]], F ? 70 : 24, (t) => 48 + t * 14, (x, y, t) => 96 - (t - 0.5) * 16, [[SW, 3, 0.7, 0.95], ["#2a221c", 2, 0.6, 0.9], ["#4a3e34", 1, 0.5, 0.7]], { streu: 9, welle: 0.25, szene: 1 });
   /* ---- Rumpf mit Hals: Widerristbuckel, Rücken fällt gerade zur Kruppe, Hüfthöcker; tiefe Brust, Bugspitze vor dem Vorderbein,
      Bauch hinter dem Ellbogen am tiefsten und zur Flanke stark aufgezogen; kurzer, dicker Hals ---- */
@@ -1361,7 +1361,7 @@ function gnu(T) {
   let rk = teil(rumpf, fell, {
     ov: [licht], rim: 5, rimD: G(rumpf.slice(25).concat(rumpf.slice(0, 11)), false),
     innen: (F ? `<path d="M140 -170H210V-90H140Z" fill="${fH}"/><path d="M10 -150H140V-60H10Z" fill="${fR}"/>` : "") +
-      `<path d="${bandD((b) => b[2] > 0.55)}" fill="#2b2420" opacity=".55"${F ? ` stroke="${H.fellMuster("bs", 90, [["#2b2420", 1, 0.25, 0.8]], { tile: 3, n: 16, len: 1.4, streu: 0.4 })}" stroke-width="1.4"` : ""}/>` +
+      `<path d="${bandD((b) => b[2] > 0.55)}" fill="#2b2420" opacity=".55"${F ? ` stroke="${H.fellMuster("bs", 90, [["#2b2420", 1, 0.25, 0.8]], { tile: 3, n: 10, len: 1.4, streu: 0.4 })}" stroke-width="1.4"` : ""}/>` +
       `<path d="${bandD((b) => b[2] <= 0.55)}" fill="#2b2420" opacity=".28"/>` +
       /* Licht: Widerrist, Schulterblatt, Hüfthöcker, Kruppe; Kernschatten hinter dem Ellbogen, Flanke, unter dem Hals */
       wf([[40, -129], [80, -134], [124, -148], [146, -154], [170, -151]], "#fff", 0.3, 1, false, 2.5) + wf([[150, -140], [160, -120], [170, -100]], "#fff", 0.12, 4, false) +
@@ -1379,7 +1379,7 @@ function gnu(T) {
   const kammP = [[118, -147], [134, -154], [150, -157], [166, -154], [180, -150], [190, -147]];
   const mh = [3, 7, 9, 10, 9, 7];
   const mBasis = kammP.map((p, i) => [p[0] - 1, p[1] - mh[i] * 0.75]).concat(kammP.slice().reverse().map((p) => [p[0], p[1] + 2]));
-  s += teil(mBasis, SW, { fell: F ? [H.fellMuster("m", -95, [["#3a322b", 1, 0.3, 0.6]], { tile: 4, n: 20, len: 4, streu: 0.3 })] : [] });
+  s += teil(mBasis, SW, { fell: F ? [H.fellMuster("m", -95, [["#3a322b", 1, 0.3, 0.6]], { tile: 4, n: 12, len: 4, streu: 0.3 })] : [] });
   s += H.straehnen(kammP, F ? 150 : 50, (t) => 2.5 + Math.sin(Math.min(1, t * 1.25) * Math.PI) * 5, (x, y, t) => -100 + (t - 0.5) * 40, [[SW, 3, 0.55, 0.95], ["#2a221c", 2, 0.5, 0.9], ["#4a3f36", 1, 0.45, 0.8]], { streu: 18, welle: 0.3, szene: 1 });
   /* ---- Kopf: Achse 63° nach unten, ~50 cm; Ramsnase, eckiges breites Maul, Nüster, Lippen, Kinn; Gesicht schwarzbraun, Wangen heller ---- */
   const wa = 63 * Math.PI / 180, P0 = [188, -150];
@@ -1391,7 +1391,7 @@ function gnu(T) {
   /* Bart: beginnt an der Kehle unter dem Unterkiefer, zieht als Saum die Halsunterseite entlang, Haare fallen senkrecht */
   const bartW = [K(20, 17), K(14, 19.5), [194, -110], [188, -100], [180, -92]];
   k += H.straehnen(bartW, F ? 80 : 30, (t) => 10 + Math.sin(t * Math.PI) * 6, (x, y) => 92 + (x - 190) * 0.2, [[SW, 3, 0.55, 0.9], ["#3e342c", 1, 0.45, 0.8], ["#1e1916", 2, 0.4, 0.5]], { streu: 10, welle: 0.3, szene: 1 });
-  k += teil([K(20, 15.5), K(12, 17.5), [190, -116], [183, -104], [174, -94], [172, -86], [180, -82], [189, -88], [196, -100], [202, -112], K(22, 19)], "#1a1513", { fell: F ? [H.fellMuster("ba", 92, [["#3e342c", 1, 0.3, 0.6]], { tile: 4, n: 20, len: 4, streu: 0.15 })] : [] });
+  k += teil([K(20, 15.5), K(12, 17.5), [190, -116], [183, -104], [174, -94], [172, -86], [180, -82], [189, -88], [196, -100], [202, -112], K(22, 19)], "#1a1513", { fell: F ? [H.fellMuster("ba", 92, [["#3e342c", 1, 0.3, 0.6]], { tile: 4, n: 12, len: 4, streu: 0.15 })] : [] });
   k += wf([[196, -116], [190, -104], [182, -94]], "#000", 0.3, 3, false, 6);
   k += teil(kopf, T.lg("kopf", [[0, "#3d3733"], [0.5, "#2c2623"], [1, "#1c1816"]], 0, 0, 0.3, 1), {
     fell: [fK], vol: [5, 4, 0.4], rim: 2.5, rimD: G(kopf.slice(0, 19), false),

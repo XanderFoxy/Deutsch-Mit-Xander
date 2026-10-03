@@ -1219,7 +1219,7 @@ const PROM = 2.2;
   const sm = pr(c[0] + w / 2 + 0.06, c[1], PROM + 2.85);
   {
     const xF = c[0] + w / 2 + 0.06, p0 = pr(xF, c[1] - 1, PROM + 2.85), p1 = pr(xF, c[1] + 1, PROM + 2.85), sv = mass(xF, c[1] + 0.55), sm = pr(xF, c[1] + 0.55, PROM + 2.85);
-    k += `<text x="0" y=".1" font-size=".3" text-anchor="middle" fill="#f3e2a8" font-family="Georgia,serif" font-weight="bold" transform="matrix(${r((p1[0] - p0[0]) / 2 * 100) / 100} ${r((p1[1] - p0[1]) / 2 * 100) / 100} 0 ${r(sv * 100) / 100} ${r(sm[0])} ${r(sm[1])})">Ebbelwoi</text>`;
+    if (sm[0] > 20) k += `<text x="0" y=".1" font-size=".3" text-anchor="middle" fill="#f3e2a8" font-family="Georgia,serif" font-weight="bold" transform="matrix(${r((p1[0] - p0[0]) / 2 * 100) / 100} ${r((p1[1] - p0[1]) / 2 * 100) / 100} 0 ${r(sv * 100) / 100} ${r(sm[0])} ${r(sm[1])})">Ebbelwoi</text>`;
   }
   /* der grüne Kranz (Fichtenzweige) am Eckpfosten */
   const kz = pr(c[0] + w / 2 + 0.62, c[1] + d / 2 + 0.28, PROM + 2.05), ks = mass(c[0] + w / 2, c[1] + d / 2);

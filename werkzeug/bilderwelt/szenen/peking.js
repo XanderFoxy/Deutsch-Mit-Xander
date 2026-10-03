@@ -182,7 +182,7 @@ const linie = (pts, dy = 0) => pts.map(([x, y], i) => (i ? "L" : "M") + r(x) + "
       k += `<path d="M${r(x - 1.4)} ${r(y + 1.2)} Q${r(x - 7)} ${r(y + 13)} ${r(x - 16)} ${r(y + 34)}" stroke="#f3ead2" stroke-width="1.2" opacity=".28" fill="none" filter="url(#${S.id("weich1")})"/>`;
     }
     /* Dunst: 60–70 km Luft dazwischen */
-    k += `<path d="${umriss}" fill="${S.lg("bergdunst", [[0, "#c9d6e2", 0.32], [0.6, "#d6e0e8", 0.48], [1, "#e6e4dc", 0.8]])}"/>`;
+    k += `<path d="${umriss}" fill="${S.lg("bergdunst", [[0, "#c9d6e2", 0.2], [0.6, "#d6e0e8", 0.36], [1, "#e6e4dc", 0.7]])}"/>`;
   }
   S.teil({ anker: [16, 84], id: "berg", de: "der Berg", syl: "BERG", it: "la montagna", itSyl: "mon-TA-gna", en: "mountain", x: 0, y: 0, kunst: k,
     tipp: "Im Norden von Peking liegen die Yanshan-Berge. Auf ihren Kämmen läuft die Große Mauer." });
