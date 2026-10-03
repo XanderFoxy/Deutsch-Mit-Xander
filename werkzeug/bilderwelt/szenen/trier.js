@@ -263,6 +263,18 @@ let PN_UNTER = [];
   S.def(`<pattern id="${S.id("fahnen")}" patternUnits="userSpaceOnUse" width="120" height="60">${st}</pattern>`);
   let k = "";
   const X = (m) => M(m), Y = (m) => -M(m);
+  /* Ostseite des Westturms über dem Mittelbau: sie läuft 21 m nach hinten (Norden) und liegt im Schatten */
+  {
+    const Q = (la, d, h) => [r(200 + (la + GLAT) * F / d - GX), r(HOR + (AUGE - h) * F / d - GY)];
+    const pts = [Q(-6.5, GD, 14), Q(-6.5, GD, G.west), Q(-6.5, GD + 21, G.west - 0.4), Q(-6.5, GD + 21, 14)];
+    k += `<path d="M${pts.map((p) => p.join(" ")).join(" L")} Z" fill="${S.lg("ostseite", [[0, "#2e2b28"], [1, "#23211f"]], 0, 0, 1, 0)}"/>`;
+    k += `<path d="M${pts.map((p) => p.join(" ")).join(" L")} Z" fill="url(#${S.id("quader")})" opacity=".6"/>`;
+    for (const [d0, d1] of [[GD + 4, GD + 7.5], [GD + 12, GD + 15.5]]) {
+      const w = [Q(-6.5, d0, G.og2 + 1), Q(-6.5, d0, G.og2 + 4.4), Q(-6.5, d1, G.og2 + 4.4), Q(-6.5, d1, G.og2 + 1)];
+      k += `<path d="M${w.map((p) => p.join(" ")).join(" L")} Z" fill="#0d0c0b"/>`;
+    }
+    k += `<path d="M${Q(-6.5, GD, G.og3).join(" ")} L${Q(-6.5, GD + 21, G.og3).join(" ")}" stroke="#4a463f" stroke-width=".8"/>`;
+  }
   /* Körper der drei Teile; die Türme stehen als flache Risalite 0,6 m vor */
   for (const t of TEILE) {
     const x = X(t.x0), w = M(t.x1 - t.x0), top = Y(t.h);
@@ -365,7 +377,7 @@ let PN_UNTER = [];
   schlag(lat, d, 1.6, 1.2, 0.3);
   /* Spaziergänger am Tor (gehören zum Platz, nicht antippbar einzeln) */
   let p = "";
-  for (const [la, dd, hemd] of [[-12, 66, "#7a2a40"], [-9.5, 70, "#e8e4dc"], [9, 64, "#3f7d5a"], [11, 69, "#d8ad3a"], [-6, 58, "#2f5f95"]]) { const [px, py] = proj(la, dd); p += passant(px, py, r(1.7 * F / dd), { hemd, rueck: rnd() < 0.5 }); schlag(la, dd, 1.7, 0.5, 0.25); }
+  for (const [la, dd, hemd] of [[-12, 66, "#7a2a40"], [-9.5, 70, "#e8e4dc"], [9, 64, "#3f7d5a"], [11, 69, "#d8ad3a"], [-6, 58, "#2f5f95"], [8.2, 44, "#b8473a"], [9.0, 45.5, "#e8e4dc"], [-3.4, 40, "#5a4a7a"], [13.5, 52, "#2f3640"]]) { const [px, py] = proj(la, dd); p += passant(px, py, r(1.7 * F / dd), { hemd, rueck: rnd() < 0.5 }); schlag(la, dd, 1.7, 0.5, 0.25); }
   PFLASTER_TEIL.kunst += p;
   S.teil({ id: "radfahrer", de: "der Radfahrer", syl: "RAD-fah-rer", it: "il ciclista", itSyl: "ci-CLI-sta", en: "cyclist", x, y, kunst: licht(k) });
 }
@@ -470,7 +482,7 @@ const ROEM = { lat: 4.5, d: 21.5 };
   const schw = { x: r(x + (hL[0] + 6) * k), y: r(y + (hL[1] + 26) * k) };
   S.teil({ id: "roemer", de: "der Römer", syl: "RÖ-mer", it: "il romano", itSyl: "ro-MA-no", en: "Roman", x, y, kunst: licht(svg),
     tipp: "Ein Darsteller spielt einen Zenturio, einen Offizier der römischen Armee. Er führt Touristen durch Trier.",
-    zoom: { x: r(x - 30), y: r(y - 2.05 * s * 1.0), w: 60, h: 40 },
+    zoom: { x: r(x - 36), y: r(y - 46), w: 72, h: 48 },
     unter: [
       { id: "helm", de: "der Helm", syl: "HELM", it: "l'elmo", itSyl: "EL-mo", en: "helmet", x: helm.x, y: helm.y, kunst: flaeche(-16 * k, -18 * k, 32 * k, 20 * k, 0.4),
         tipp: "Der Kamm quer auf dem Helm zeigt: Dieser Römer ist ein Zenturio." },
@@ -571,7 +583,7 @@ const stuhl = (s, dreh) => {
 /* Schatten des Eckhauses (links) fällt nach rechts hinten auf den Platz */
 {
   const L = 1.3 * 14, dl = Math.sin(35 * Math.PI / 180) * L, dd = Math.cos(35 * Math.PI / 180) * L;
-  const pts = [[-12.5, 30], [-12.5 + dl, 30 + dd], [-12.5 + dl, 46 + dd], [-20.5 + dl, 46 + dd], [-20.5, 46], [-12.5, 46]].map(([la, d]) => proj(la, d));
+  const pts = [[-12.5, 30], [-12.5 + dl, 30 + dd], [-12.5 + dl, 46 + dd], [-20.5 + dl, 46 + dd], [-12.5, 46]].map(([la, d]) => proj(la, d));
   SCHATTEN.unshift(`<path d="M${pts.map((p) => p.join(" ")).join(" L")} Z" fill="#3a3a48" opacity=".28"/>`);
 }
 /* Schlagschatten auf das Pflaster (sie gehören zur Bodenfläche) */

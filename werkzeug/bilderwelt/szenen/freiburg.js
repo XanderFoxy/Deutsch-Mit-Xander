@@ -379,14 +379,14 @@ const toroeffnung = (Y, xm, w, zKampf, zScheitel, spitz) => [[xm - w / 2, Y, 0],
   }
   k += `<path d="${fu}" stroke="#8f8a80" stroke-width=".3"/>`;
   S.teil({ id: "baechle", de: "das Bächle", syl: "BÄCH-le", it: "il ruscelletto", itSyl: "ru-scel-LET-to", en: "little stream (Bächle)", x: 0, y: 0, kunst: k,
-    tipp: "Die Bächle sind kleine Wasserrinnen in der Altstadt. Wer aus Versehen hineintritt, heiratet einmal jemanden aus Freiburg — so sagt man." });
+    tipp: "Die Bächle sind kleine Wasserrinnen in der Altstadt. Kinder lassen darin kleine Boote an einer Schnur schwimmen. Wer aus Versehen hineintritt, heiratet einmal jemanden aus Freiburg — so sagt man." });
 }
 
 /* =====================================================================
    3 — DAS KIESELMOSAIK (Freiburger Wappen, aus weißen, roten und schwarzen Kieseln gesetzt)
    ===================================================================== */
 {
-  const M = [47.2, -77.2], GR = 1.3;
+  const M = [58.6, -53.4], GR = 1.5;
   /* Ortskoordinaten: u nach rechts, v in die Tiefe (Meter) */
   /* das Wappen schaut zur Kamera: v zeigt vom Betrachter weg, u quer dazu */
   const LM = Math.hypot(M[0] - CAM[0], M[1] - CAM[1]), VV = [(M[0] - CAM[0]) / LM, (M[1] - CAM[1]) / LM], UU = [VV[1], -VV[0]];
@@ -409,7 +409,7 @@ const toroeffnung = (Y, xm, w, zKampf, zScheitel, spitz) => [[xm - w / 2, Y, 0],
     k += `<path d="${umriss(1)}" fill="url(#${S.id("kmos")})"/>`;
   }
   S.teil({ id: "kieselmosaik", de: "das Kieselmosaik", syl: "KIE-sel-mo-sa-ik", it: "il mosaico di ciottoli", itSyl: "mo-SA-i-co di CIOT-to-li", en: "pebble mosaic", x: 0, y: 0, kunst: k,
-    tipp: "In Freiburg liegen überall Bilder aus Rheinkieseln im Pflaster — oft vor Läden und zeigen, was es dort gibt. Dieses zeigt das Stadtwappen: ein rotes Kreuz auf Weiß." });
+    tipp: "In Freiburg liegen überall Bilder aus Rheinkieseln im Pflaster. Oft liegen sie vor Läden und zeigen, was es dort gibt. Dieses zeigt das Stadtwappen: ein rotes Kreuz auf Weiß." });
 }
 
 /* =====================================================================
@@ -555,11 +555,11 @@ const TM = {};
   TM.uhr = { x: uhr[0], y: uhr[1], r: ur };
   const zx = 220, zy = 16;
   S.teil({ id: "muensterturm", de: "der Münsterturm", syl: "MÜNS-ter-turm", it: "il campanile del duomo", itSyl: "cam-pa-NI-le del DUO-mo", en: "Minster tower", x: 0, y: 0, kunst: t.join(""),
-    tipp: "Der Turm ist 116 Meter hoch und war schon um 1330 fertig — als einziger großer gotischer Kirchturm Deutschlands noch im Mittelalter. Jacob Burckhardt nannte ihn „den schönsten Turm auf Erden“.",
+    tipp: "Der Turm ist 116 Meter hoch und war schon um 1330 fertig. Er ist der einzige große gotische Kirchturm in Deutschland, der schon im Mittelalter fertig wurde. Jacob Burckhardt nannte ihn „den schönsten Turm der Christenheit“.",
     zoom: { x: zx, y: zy, w: 320 - zx, h: r((320 - zx) / 1.5) },
     unter: [
       { id: "turmhelm", de: "der Turmhelm", syl: "TURM-helm", it: "la guglia", itSyl: "GU-glia", en: "spire", x: TM.helm.x, y: TM.helm.y, kunst: flaeche(-TM.helm.w / 2, -TM.helm.h / 2, TM.helm.w, TM.helm.h),
-        tipp: "Der Helm ist ganz durchbrochen — man sieht den Himmel hindurch. So einen Helm gab es zuerst in Freiburg." },
+        tipp: "Der Helm ist aus Stein, aber durchbrochen wie Spitze — durch das Maßwerk sieht man den Himmel. So einen Helm gab es zuerst in Freiburg." },
       { id: "kreuzblume", de: "die Kreuzblume", syl: "KREUZ-blu-me", it: "il fiore crociato", itSyl: "FIO-re cro-CIA-to", en: "finial", x: TM.kb.x, y: TM.kb.y, kunst: flaeche(-2.4, -TM.kb.h - 1, 4.8, TM.kb.h + 1.4, 0.6),
         tipp: "Die Kreuzblume ist die steinerne Blume ganz oben auf der Spitze." },
     ] });
@@ -1010,22 +1010,30 @@ const MS = {};
   k += `<rect x="${r(x - 1.55 * s)}" y="${r(y - .9 * s)}" width="${r(3.1 * s)}" height="${r(.55 * s)}" fill="#f2efe6"/><rect x="${r(x - 1.55 * s)}" y="${r(y - .4 * s)}" width="${r(3.1 * s)}" height="${r(.08 * s)}" fill="#c8382c"/>`;
   /* Gemüsekisten unter dem Tisch */
   k += `<rect x="${r(x - 1.3 * s)}" y="${r(y - .3 * s)}" width="${r(.7 * s)}" height="${r(.3 * s)}" fill="#a8824e"/><rect x="${r(x + .5 * s)}" y="${r(y - .28 * s)}" width="${r(.7 * s)}" height="${r(.28 * s)}" fill="#9a7444"/>`;
-  /* Spargel: flache Holzkiste, darin quer liegende Bündel aus einzelnen weißen Stangen mit Köpfen und grüner Banderole */
-  const kx = x - 1.42 * s, ky = y - .9 * s, kw = .78 * s;
-  k += `<path d="M${r(kx)} ${r(ky)} h${r(kw)} l${r(-.05 * s)} ${r(-.12 * s)} h${r(-kw + .1 * s)} Z" fill="#b48a52"/>`;
-  for (let b = 0; b < 3; b++) {
-    const by = ky - .09 * s - b * .055 * s, bx = kx + .04 * s + (b % 2) * .02 * s, L = .66 * s;
-    let st = "";
-    for (let i = 0; i < 6; i++) {
-      const yy = by - i * .011 * s;
-      st += `<path d="M${r(bx)} ${r(yy)} H${r(bx + L)}" stroke="${i % 2 ? "#f6f2e4" : "#ebe5d0"}" stroke-width="${r(.016 * s)}" stroke-linecap="round"/>`;
-      st += `<ellipse cx="${r(bx + L + .012 * s)}" cy="${r(yy)}" rx="${r(.022 * s)}" ry="${r(.009 * s)}" fill="${i % 3 ? "#e8dcc0" : "#d9b8b4"}"/>`;
+  /* Spargel: flache Holzkiste mit liegenden Bündeln (einzelne weiße Stangen, die Köpfe alle nach rechts,
+     gelblich-violett, links die runden Schnittflächen, grüne Banderole) und ein aufrecht stehendes Bündel */
+  const kx = x - 1.5 * s, ky = y - .9 * s, kw = .62 * s, SL = .24 * s, SD = .017 * s;
+  k += `<path d="M${r(kx)} ${r(ky)} h${r(kw)} l${r(-.04 * s)} ${r(-.1 * s)} h${r(-kw + .08 * s)} Z" fill="#b48a52"/>`;
+  const buendel = (bx, by) => {
+    let st = "", ko = "", sn = "";
+    for (let i = 0; i < 7; i++) {
+      const yy = by - (i % 4) * SD * .95 - (i > 3 ? SD * .5 : 0), dx = (i > 3 ? SD * .5 : 0);
+      st += `M${r(bx + dx)} ${r(yy)}H${r(bx + dx + SL)} `;
+      ko += `<ellipse cx="${r(bx + dx + SL + SD * .5)}" cy="${r(yy)}" rx="${r(SD * 1.1)}" ry="${r(SD * .58)}" fill="${i % 2 ? "#d8c08a" : "#c8a6b4"}"/>`;
+      sn += `<circle cx="${r(bx + dx)}" cy="${r(yy)}" r="${r(SD * .48)}" fill="#e4dcc4"/>`;
     }
-    st += `<path d="M${r(bx + L * .45)} ${r(by + .008 * s)} v${r(-.075 * s)}" stroke="#3f7a4a" stroke-width="${r(.05 * s)}"/>`;
-    k += st;
+    return `<path d="${st}" stroke="#f6f2e2" stroke-width="${r(SD)}"/><path d="${st}" stroke="#d8d0b8" stroke-width="${r(SD * .25)}" transform="translate(0 ${r(SD * .3)})"/>` + ko + sn + `<path d="M${r(bx + SL * .45)} ${r(by + SD * .6)}V${r(by - SD * 4)}" stroke="#3f7a4a" stroke-width="${r(SD * 2.2)}"/>`;
+  };
+  k += buendel(kx + .04 * s, ky - .11 * s) + buendel(kx + .3 * s, ky - .12 * s) + buendel(kx + .1 * s, ky - .19 * s);
+  {
+    /* das stehende Bündel: Köpfe oben */
+    const ux = kx + kw + .1 * s, uy = ky;
+    let st = "", ko = "";
+    for (let i = 0; i < 7; i++) { const xx = ux - SD * 3 + i * SD; st += `M${r(xx)} ${r(uy)}V${r(uy - SL)} `; ko += `<ellipse cx="${r(xx)}" cy="${r(uy - SL - SD * .4)}" rx="${r(SD * .58)}" ry="${r(SD * 1.1)}" fill="${i % 2 ? "#d8c08a" : "#c8a6b4"}"/>`; }
+    k += `<ellipse cx="${r(ux)}" cy="${r(uy)}" rx="${r(SD * 3.6)}" ry="${r(SD * 1.2)}" fill="#e4dcc4"/><path d="${st}" stroke="#f6f2e2" stroke-width="${r(SD)}"/>${ko}<path d="M${r(ux - SD * 3.6)} ${r(uy - SL * .4)}H${r(ux + SD * 3.6)}" stroke="#3f7a4a" stroke-width="${r(SD * 2.2)}"/>`;
   }
   k += `<path d="M${r(kx)} ${r(ky)} h${r(kw)}" stroke="#8a643a" stroke-width="${r(.03 * s)}"/>`;
-  MS.spargel = { x: kx + kw / 2, y: ky - .12 * s };
+  MS.spargel = { x: x - 1.08 * s, y: y - .62 * s };
   /* Kirschen: Spankörbe (helle Holzspan-Geflechte mit Henkel), kleine dunkelrote Kirschen mit Stielen */
   for (let i = 0; i < 3; i++) {
     const cx = x - .38 * s + i * .42 * s, cy = y - .9 * s, bw = .34 * s, bh = .13 * s;
@@ -1051,7 +1059,9 @@ const MS = {};
   for (let i = 0; i < 2; i++) k += `<circle cx="${r(x + 1.36 * s)}" cy="${r(y - 1 * s - i * .06 * s)}" r="${r(.11 * s - i * .03 * s)}" fill="${i ? "#9ac85a" : "#6a9a3a"}"/>`;
   /* Preistafeln */
   k += `<rect x="${r(x - .48 * s)}" y="${r(y - .72 * s)}" width="${r(1 * s)}" height="${r(.28 * s)}" fill="#2a2e2a"/><text x="${r(x + .02 * s)}" y="${r(y - .52 * s)}" font-size="${r(.16 * s)}" text-anchor="middle" fill="#f4f0e2" font-family="Comic Sans MS,cursive">Kirschen 6 €</text>`;
-  k += `<rect x="${r(x - 1.4 * s)}" y="${r(y - .72 * s)}" width="${r(.66 * s)}" height="${r(.28 * s)}" fill="#2a2e2a"/><text x="${r(x - 1.07 * s)}" y="${r(y - .52 * s)}" font-size="${r(.15 * s)}" text-anchor="middle" fill="#f4f0e2" font-family="Comic Sans MS,cursive">Spargel</text>`;
+  k += `<rect x="${r(x - 1.52 * s)}" y="${r(y - .72 * s)}" width="${r(.96 * s)}" height="${r(.28 * s)}" fill="#2a2e2a"/><text x="${r(x - 1.04 * s)}" y="${r(y - .53 * s)}" font-size="${r(.125 * s)}" text-anchor="middle" fill="#f4f0e2" font-family="Comic Sans MS,cursive">Spargel 1 kg 12 €</text>`;
+  /* Schatten des Marktschirms (Dach in 2,6 m Höhe) */
+  { const c = neben(52, -41, .25, 0), pts = []; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; pts.push([c[0] + Math.cos(a) * 1.6 + SCH[0] * 2.6, c[1] + Math.sin(a) * 1.6 + SCH[1] * 2.6, 0]); } k = k.replace(FERNSTAENDE, FERNSTAENDE + wurf(pts, .2)); }
   /* großer Marktschirm (orange-weiß) */
   let sch = "";
   const ux = x + .25 * s;
@@ -1061,9 +1071,9 @@ const MS = {};
     tipp: "Auf der Südseite des Münsterplatzes verkaufen Händler Obst, Gemüse und Blumen. Auf der Nordseite stehen die Bauern aus der Region.",
     zoom: { x: r(x - 26), y: r(y - 22), w: 48, h: 32 },
     unter: [
-      { id: "spargel", de: "der Spargel", syl: "SPAR-gel", it: "l'asparago", itSyl: "a-SPA-ra-go", en: "asparagus", x: MS.spargel.x, y: MS.spargel.y, kunst: flaeche(-5, -1.8, 10, 3.4, 0.4),
+      { id: "spargel", de: "der Spargel", syl: "SPAR-gel", it: "l'asparago", itSyl: "a-SPA-ra-go", en: "asparagus", x: MS.spargel.x, y: MS.spargel.y, kunst: flaeche(-.46 * fuss(52, -41).s, -.42 * fuss(52, -41).s, .92 * fuss(52, -41).s, .52 * fuss(52, -41).s, 0.4),
         tipp: "Im Frühling gibt es in Baden weißen Spargel. Er wächst unter der Erde und bleibt deshalb weiß." },
-      { id: "kirschen", de: "die Kirschen", syl: "KIR-schen", it: "le ciliegie", itSyl: "ci-LIE-gie", en: "cherries", x: MS.kirschen.x, y: MS.kirschen.y, kunst: flaeche(-7.2, -1.8, 14.4, 3.2, 0.4),
+      { id: "kirschen", de: "die Kirschen", syl: "KIR-schen", it: "le ciliegie", itSyl: "ci-LIE-gie", en: "cherries", x: MS.kirschen.x, y: MS.kirschen.y, kunst: flaeche(-6, -1.6, 12, 3, 0.4),
         tipp: "Im Juni gibt es Kirschen vom Kaiserstuhl und aus dem Markgräflerland – im Spankorb." },
     ] });
 }
@@ -1112,15 +1122,15 @@ const SV = {};
   k += `<rect x="${r(x - W / 2 - .25 * s)}" y="${r(y - H)}" width="${r(W + .5 * s)}" height="${r(.22 * s)}" fill="none" stroke="#2f6e44" stroke-width="${r(.03 * s)}"/>`;
   k += `<text x="${r(x)}" y="${r(y - H - .12 * s)}" font-size="${r(.24 * s)}" text-anchor="middle" fill="#f4efe2" font-family="Georgia,serif" font-weight="bold">Schwarzwald</text>`;
   /* je Uhr eine eigene Fläche; der Bollenhut sitzt frei darunter */
-  const uf = UH.map(([a, b, g]) => flaeche(a - x - .3 * g, b - (y - 2 * s) - .55 * g, .6 * g, .9 * g, 0.3)).join("");
+  const uf = UH.map(([a, b, g]) => flaeche(a - x - .24 * g, b - (y - 2 * s) - .55 * g, .48 * g, .9 * g, 0.3)).join("");
   S.teil({ id: "souvenirstand", de: "der Souvenirstand", syl: "su-ve-NIR-stand", it: "la bancarella di souvenir", itSyl: "ban-ca-REL-la di su-ve-NIR", en: "souvenir stall", x: 0, y: 0, kunst: k,
     tipp: "Hier gibt es Andenken aus dem Schwarzwald.",
     zoom: { x: r(x - 21), y: r(y - H - 7), w: 42, h: 28 },
     unter: [
       { id: "kuckucksuhr", de: "die Kuckucksuhr", syl: "KU-ckucks-uhr", it: "l'orologio a cucù", itSyl: "o-ro-LO-gio a cu-CÙ", en: "cuckoo clock", x: x, y: y - 2 * s, kunst: uf,
         tipp: "Jede volle Stunde springt ein kleiner Vogel heraus und ruft „Kuckuck“. Die Uhr läuft mit Gewichten wie Tannenzapfen." },
-      { id: "bollenhut", de: "der Bollenhut", syl: "BOL-len-hut", it: "il cappello a pompon", itSyl: "cap-PEL-lo a pom-PON", en: "pompom hat (Bollenhut)", x: SV.hut.x, y: SV.hut.y, kunst: flaeche(-.32 * SV.hut.g, -.12 * SV.hut.g, .64 * SV.hut.g, .2 * SV.hut.g, 0.3),
-        tipp: "Der Bollenhut gehört zur Tracht im Schwarzwald. Rote Bollen tragen unverheiratete Frauen." },
+      { id: "bollenhut", de: "der Bollenhut", syl: "BOL-len-hut", it: "il cappello a pompon", itSyl: "cap-PEL-lo a pom-PON", en: "pompom hat (Bollenhut)", x: SV.hut.x, y: SV.hut.y, kunst: flaeche(-.27 * SV.hut.g, -.12 * SV.hut.g, .54 * SV.hut.g, .2 * SV.hut.g, 0.3),
+        tipp: "Der Bollenhut gehört zur Tracht von drei Dörfern im Schwarzwald. Rote Bollen tragen unverheiratete Frauen." },
     ] });
 }
 
@@ -1238,7 +1248,16 @@ const MANN = { w: [53.5, -49.6] };
   const Rad = S.lg("rahmen", [[0, "#2f6e5a"], [1, "#1f4f40"]]);
   const hx = -.56 * s, vx = .56 * s, ay = -R;
   const sw = (w) => r(w * s);
-  let k = schlagLokal(f, ...W, .5, 1.1, .26);
+  /* Schlagschatten: die zwei Räder als Ringe und der Rahmen, nach rechts hinten in die Tiefe */
+  let sh = "";
+  for (const o of [-.56, .56]) {
+    const c = neben(...W, o, 0), pts = [];
+    for (let j = 0; j <= 16; j++) { const a = j / 16 * Math.PI * 2, z = .35 + .35 * Math.sin(a); pts.push([c[0] + RV[0] * .35 * Math.cos(a) + SCH[0] * z, c[1] + RV[1] * .35 * Math.cos(a) + SCH[1] * z, 0]); }
+    sh += linie(pts) + " ";
+  }
+  const gw = (o, z) => { const c = neben(...W, o, 0); return [c[0] + SCH[0] * z, c[1] + SCH[1] * z, 0]; };
+  sh += linie([gw(-.56, .35), gw(0, .29), gw(-.24, .95), gw(-.56, .35)]) + " " + linie([gw(0, .29), gw(.47, .8), gw(.44, .98)]);
+  let k = `<g transform="translate(${-f.x},${-f.y})"><path d="${sh}" stroke="#2a1e14" stroke-width="${r(.05 * s)}" opacity=".26" fill="none"/></g>`;
   /* Laufräder: Reifen, Felge, 36 Speichen, Nabe */
   for (const cx of [hx, vx]) {
     k += `<circle cx="${r(cx)}" cy="${r(ay)}" r="${r(R)}" fill="none" stroke="#1d1d1d" stroke-width="${sw(.045)}"/><circle cx="${r(cx)}" cy="${r(ay)}" r="${r(R * .9)}" fill="none" stroke="#b9bec2" stroke-width="${sw(.014)}"/>`;
@@ -1276,8 +1295,20 @@ const MANN = { w: [53.5, -49.6] };
   /* Korb vorn auf dem Gepäckträger mit Blumen vom Markt, darunter der Scheinwerfer */
   k += `<path d="M${r(lk[0] + .04 * s)} ${r(lk[1] + .02 * s)} h${r(.34 * s)} l${r(-.04 * s)} ${r(.25 * s)} h${r(-.26 * s)} Z" fill="#b8874a"/>`;
   for (let i = 0; i < 4; i++) k += `<path d="M${r(lk[0] + .1 * s + i * .07 * s)} ${r(lk[1] + .02 * s)} v${r(.25 * s)}" stroke="#8a5a2a" stroke-width="${sw(.008)}"/>`;
-  for (const [dx, c] of [[.12, "#e8c23a"], [.2, "#d84a6a"], [.28, "#f4efe2"]]) k += `<circle cx="${r(lk[0] + dx * s)}" cy="${r(lk[1] - .02 * s)}" r="${sw(.045)}" fill="${c}"/>`;
-  k += `<path d="M${r(lk[0] + .12 * s)} ${r(lk[1])} l${r(-.04 * s)} ${r(-.1 * s)}" stroke="#3f7a3a" stroke-width="${sw(.015)}"/>`;
+  /* im Korb: ein Bund weißer Spargel (schräg herausragend) und ein Strauß Sonnenblumen in Papier vom Markt */
+  {
+    const bx = lk[0] + .2 * s, by = lk[1] + .02 * s;
+    let sg = "", kp = "";
+    for (let i = 0; i < 6; i++) { const ox = (i - 2.5) * .016 * s; sg += `M${r(bx + ox)} ${r(by + .05 * s)}l${r(-.12 * s)} ${r(-.26 * s)} `; kp += `<ellipse cx="${r(bx + ox - .125 * s)}" cy="${r(by - .225 * s)}" rx="${r(.012 * s)}" ry="${r(.02 * s)}" fill="${i % 2 ? "#d8c08a" : "#c8a6b4"}"/>`; }
+    k += `<path d="${sg}" stroke="#f6f2e2" stroke-width="${sw(.016)}"/>${kp}<path d="M${r(bx - .06 * s)} ${r(by - .08 * s)}l${r(.07 * s)} ${r(.03 * s)}" stroke="#3f7a4a" stroke-width="${sw(.03)}"/>`;
+    k += `<path d="M${r(bx + .02 * s)} ${r(by + .08 * s)} L${r(bx + .2 * s)} ${r(by - .22 * s)} L${r(bx + .03 * s)} ${r(by - .26 * s)} Z" fill="#efe6d0"/>`;
+    for (const [dx, dy] of [[.06, -.32], [.15, -.3], [.1, -.4]]) {
+      const cx = bx + dx * s, cy = by + dy * s;
+      k += `<path d="M${r(bx + .1 * s)} ${r(by - .1 * s)}L${r(cx)} ${r(cy)}" stroke="#4f7a3a" stroke-width="${sw(.01)}"/>`;
+      let bl = ""; for (let j = 0; j < 10; j++) { const a = j / 10 * Math.PI * 2; bl += `M${r(cx)} ${r(cy)}l${r(Math.cos(a) * .045 * s)} ${r(Math.sin(a) * .045 * s)} `; }
+      k += `<path d="${bl}" stroke="#f0c020" stroke-width="${sw(.022)}" stroke-linecap="round"/><circle cx="${r(cx)}" cy="${r(cy)}" r="${sw(.02)}" fill="#5a3a1a"/>`;
+    }
+  }
   k += `<path d="M${r(lu[0] + .03 * s)} ${r(lu[1] + .02 * s)} h${r(.07 * s)} l${r(.03 * s)} ${r(.03 * s)} l${r(-.03 * s)} ${r(.03 * s)} h${r(-.07 * s)} Z" fill="#d8dcdf" stroke="#555" stroke-width="${sw(.008)}"/><circle cx="${r(lu[0] + .12 * s)}" cy="${r(lu[1] + .05 * s)}" r="${sw(.018)}" fill="#fff8d0"/>`;
   S.teil({ id: "fahrrad", de: "das Fahrrad", syl: "FAHR-rad", it: "la bicicletta", itSyl: "bi-ci-CLET-ta", en: "bicycle", x: f.x, y: f.y, steht: true, kunst: k,
     tipp: "Freiburg ist Fahrradstadt und Solarstadt: Viele fahren Rad, und auf vielen Dächern liegen Solarzellen." });
