@@ -1146,7 +1146,7 @@ module.exports = [
     zeichne(T) {
       T.dez = 2;
       const TIEF = "#2a2420", W1 = "#f6f2ea", W2 = "#d9d3c8", W3 = "#a8a7aa";
-      const V = (n, w, t, u) => T.volumen(n, { weich: w, tiefe: t, umgebung: u });
+      const V = (n, w, t, u) => "none";
       /* Fell je Platte: flache, lange Strähnen (2–3 cm), Kontrast höchstens ±12 % */
       const satz = (k, d, od, h, oh, L = 1.4) => fellSatz(T, k, { L, k: 5, w: 0.055, breit: 0.28, facher: 0.12, krumm: 0.08, dunkel: d, od, hell: h, oh });
       const FW = satz("w", "#8a8478", [0.05, 0.1], "#ffffff", [0.12, 0.26]);
