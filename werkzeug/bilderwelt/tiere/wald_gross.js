@@ -11,9 +11,10 @@
 "use strict";
 
 /* ---------- gemeinsame Helfer (nur für diese Datei) ---------- */
-function kit(T, box = [-60, -320, 620, 40]) {
+function kit(T, box = [-60, -320, 620, 40], grob = 0.5) {
   const F = T.fein;
-  const f = (n) => String(Math.round(n * 10) / 10);
+  /* Zahlen: fein auf 1 mm, in der Szene gröber (unsichtbar klein, spart Bytes) */
+  const q = F ? 10 : 1 / grob, f = (n) => String(Math.round(n * q) / q);
   const G = (pts, zu = true, sp = 1) => {
     const n = pts.length, P = (i) => (zu ? pts[(i + n) % n] : pts[Math.max(0, Math.min(n - 1, i))]);
     let d = `M${f(pts[0][0])} ${f(pts[0][1])}`;
@@ -386,7 +387,7 @@ function reh(T) {
     zone("h", [[77, -78], [101.2, -101], [102.4, -95], [101.4, -86], [99.5, -82], [95, -52], [80, -55]], 122) +
     zone("r", [[6, -80], [77, -78], [80, -55], [95, -52], [92, -45], [90, -41.5], [80, -39.6], [30, -44], [6, -46]], 176) +
     zone("b", [[12, -46], [30, -44], [35, -44], [26, -30], [24, 0], [14, 0], [14, -0.1], [80, -0.1], [80, -39.6], [90, -41.5], [92, 0], [14, 0]], 92);
-  inn += H.haare(rumpf, 300, wuchs, laenge, [["#3a1a08", 1, 0.04, 0.26], ["#f2b878", 0.75, 0.035, 0.22], ["#6e3414", 0.6, 0.045, 0.24]], { krumm: 0.06, streu: 10, nur: (x, y) => !(x > 101 && y < -86) });
+  inn += H.haare(rumpf, 280, wuchs, laenge, [["#3a1a08", 1, 0.04, 0.26], ["#f2b878", 0.75, 0.035, 0.22], ["#6e3414", 0.6, 0.045, 0.24]], { krumm: 0.06, streu: 10, nur: (x, y) => !(x > 101 && y < -86) });
   /* Großform: Lichtband auf dem Rücken, Schattenband am Unterleib, Reflexlicht an der Bauchkante */
   inn += H.wf([[14, -76], [34, -78], [58, -73.5], [74, -75], [86, -84], [96, -95], [92, -88], [80, -76], [62, -66], [40, -68], [20, -68]], "#ffbe82", 0.3, 2.5) +
     H.wf([[30, -48], [50, -47.5], [70, -47], [84, -48], [84, -38], [60, -37], [36, -40]], DK, 0.45, 2.6) +
@@ -419,7 +420,7 @@ function reh(T) {
   s += fl(au[0] + 1.65, au[1] + 0.47, 0.48, 0.36, KW, "#1a0e08", 0.95);
   /* Tasthaare an Oberlippe und Kinn */
   if (F) s += T.schnurrhaare(...K(17.2, 6.9), 6, 2.0, KW + 25, 50, "#1a120c", 0.035) + T.schnurrhaare(...K(14.6, 8.9), 4, 1.5, KW + 80, 40, "#e8e0d0", 0.03);
-  return { svg: s, box: [9.8, -121.5, 124.4, 0], fuesse: [24, 30, 83, 89], kopf: [95, -124, 127, -77] };
+  return { svg: s, box: [9.8, -119.3, 117.7, 0], fuesse: [24, 30, 83, 89], kopf: [95, -124, 127, -77] };
 }
 
 /* =====================================================================
@@ -436,7 +437,7 @@ function reh(T) {
    Stange schwingt nach hinten oben, die Krone wieder nach vorn; unten geperlt, dunkelbraun, Enden elfenbeinweiß gefegt.
    Paarhufer: Schalen ~8 cm, Afterklauen hinten am Fesselgelenk. */
 function hirsch(T) {
-  const H = kit(T, [-10, -280, 250, 6]), { fl, wl, L, F, f } = H;
+  const H = kit(T, [-10, -280, 250, 6], 1), { fl, wl, L, F, f } = H;
   H.minFl = 8;
   const DK = "#1e0e06";
   /* ---- Kopf: lokales System (Genick = 0, Nase bei x ≈ 48), um 36° geneigt ---- */
@@ -473,8 +474,8 @@ function hirsch(T) {
     let inn = fl(...tr([[-1.2, -5]])[0].slice(0, 2), 3.4 * sx, 6, w, "#000", fern ? 0.2 : 0.3);
     if (!fern) {
       inn += H.wf(I, "#2a1e18", 0.85, 0.4) + H.wf(tr([[1.8, -2.2], [3.1, -6.6], [3.3, -12.4], [2.2, -17], [1.9, -12.4], [1.8, -6.6]]), "#d6ccbe", 0.55, 0.45) +
-        H.haare(I, 60, w - 94, 3.0, [["#f8f2ea", 1, 0.05, 0.75], ["#cfc4b4", 0.5, 0.045, 0.55]], { streu: 10, krumm: 0.12, szene: 0 });
-      inn += H.haare(P, 34, w - 92, 0.9, [["#2a1c14", 1, 0.06, 0.4], ["#b8a290", 0.6, 0.05, 0.35]], { szene: 0, nur: (x, y) => !T.inPoly(x, y, I) });
+        H.haare(I, 40, w - 94, 3.0, [["#f8f2ea", 1, 0.05, 0.75], ["#cfc4b4", 0.5, 0.045, 0.55]], { streu: 10, krumm: 0.12, szene: 0 });
+      inn += H.haare(P, 20, w - 92, 0.9, [["#2a1c14", 1, 0.06, 0.4], ["#b8a290", 0.6, 0.05, 0.35]], { szene: 0, nur: (x, y) => !T.inPoly(x, y, I) });
     }
     inn += H.rim(B, 2.2, 0.9) + H.L([tr([[-5.0, -9], [-4.3, -14.6], [-2.4, -18.8], [0.4, -21.8], [2.3, -19.4], [3.6, -15]])], "#140c08", 0.8, fern ? 0.5 : 0.7);
     return H.teil(B, gO, inn, { rand: false });
@@ -484,9 +485,9 @@ function hirsch(T) {
     const P = (pts) => H.tr(pts, bx, by, w0, s0);
     const braun = fern ? "#2e2016" : T.lg("gw", [[0, "#3a2614"], [0.55, "#5a3e26"], [1, "#7a5e40"]], 0, 1, 0, 0);
     const ast = (J, spitze) => {
-      const k = H.kette(P(J)), B = H.flaeche(k.pts), t = P([spitze])[0];
+      const k = H.kette(P(J.map((q) => [q[0], q[1], q[2] * 1.3, q[3] * 1.3]))), B = H.flaeche(k.pts), t = P([spitze])[0];
       return H.teil(B, braun, (fern ? "" : fl(t[0], t[1], 5.5 * s0, 5.5 * s0, 0, "#f2ead8", 0.95) + fl(t[0], t[1], 2.6 * s0, 2.6 * s0, 0, "#fff", 0.6)) +
-        H.rim(B, 1.4, 0.9) + (F && !fern ? H.L([k.L.slice(0, -1).map((p, i) => [p[0] * 0.7 + k.R[i][0] * 0.3, p[1] * 0.7 + k.R[i][1] * 0.3])], "#fff", 0.3, 0.22) : ""), { rw: 0.12, randA: 0.55 });
+        H.rim(B, 1.4, 0.9), { rw: 0.12, randA: 0.55 });
     };
     let g = "";
     /* Sprossen zuerst, die Stange deckt ihre Ansätze */
@@ -502,7 +503,7 @@ function hirsch(T) {
     let perl = "";
     if (F && !fern) {
       const dd = [], dh = [];
-      for (let i = 0; i < 70; i++) {
+      for (let i = 0; i < 42; i++) {
         const t = Math.pow(T.rnd(), 1.4) * 4.5, j = Math.floor(t), u = t - j, q = 0.05 + T.rnd() * 0.9;
         const a = [st.L[j][0] + (st.L[j + 1][0] - st.L[j][0]) * u, st.L[j][1] + (st.L[j + 1][1] - st.L[j][1]) * u];
         const b = [st.R[j][0] + (st.R[j + 1][0] - st.R[j][0]) * u, st.R[j][1] + (st.R[j + 1][1] - st.R[j][1]) * u];
@@ -515,8 +516,9 @@ function hirsch(T) {
       (F && !fern ? H.L([st.L.slice(1, 8).map((p, i) => [p[0] * 0.72 + st.R[i + 1][0] * 0.28, p[1] * 0.72 + st.R[i + 1][1] * 0.28])], "#fff", 0.4, 0.22) +
         H.L([st.L.slice(0, 8).map((p, i) => [p[0] * 0.4 + st.R[i][0] * 0.6, p[1] * 0.4 + st.R[i][1] * 0.6])], "#0e0602", 0.2, 0.5) : ""), { rw: 0.12, randA: 0.55 });
     /* Rose */
+    if (!F) return g;
     const [rx, ry] = P([[0, -0.6]])[0], rose = [];
-    for (let i = 0; i < 22; i++) { const a = Math.PI * 2 * i / 22, q = 1 + (i % 2 ? 0.12 : -0.06); rose.push([rx + Math.cos(a) * 3.8 * s0 * q, ry + Math.sin(a) * 1.4 * s0 * q]); }
+    for (let i = 0; i < 14; i++) { const a = Math.PI * 2 * i / 14, q = 1 + (i % 2 ? 0.12 : -0.06); rose.push([rx + Math.cos(a) * 3.8 * s0 * q, ry + Math.sin(a) * 1.4 * s0 * q]); }
     g += H.teil(H.flaeche(rose), fern ? "#22170e" : "#33210f", fern ? "" : fl(rx - 1, ry - 0.6, 2.6, 0.7, 0, "#d8c2a0", 0.5), { rw: 0.1, randA: 0.7 });
     return g;
   };
@@ -533,14 +535,14 @@ function hirsch(T) {
   const fernFarbe = T.lg("fern", [[0, "#3e2416"], [0.35, "#4e3220"], [0.7, "#463224"], [1, "#2e221a"]], 0, -80, 0, 0, H.US);
   const fernBein = (P, top) => {
     const Q = top.concat(P), B = H.flaeche(Q);
-    return (det) => H.teil(B, fernFarbe, H.haare(Q, 60, 92, 1.1, [["#140a04", 1, 0.08, 0.4], ["#9a7a5a", 0.5, 0.06, 0.25]], { streu: 10 }) + det +
+    return (det) => H.teil(B, fernFarbe, H.haare(Q, 30, 92, 1.1, [["#140a04", 1, 0.08, 0.4], ["#9a7a5a", 0.5, 0.06, 0.25]], { streu: 10 }) + det +
       H.rim(B, 2.6, 0.8) + H.wf([[P[0][0] - 14, -96], [P[0][0] + 14, -96], [P[0][0] + 14, -62], [P[0][0] - 14, -66]], "#000", 0.3, 3), { rand: false });
   };
   s += fernBein(fernH, [[30, -92], [60, -92]])(laufH(10, 0.6)) + fernBein(fernV, [[132, -86], [152, -86]])(laufV(-10, 0.6));
   s += H.schale(52.4, 61.0, 4.8, { farbe: "#221a16", fern: "#110d0b" }) + H.schale(143.4, 152.0, 5.0, { farbe: "#221a16", fern: "#110d0b" });
   /* fernes Ohr und fernes Geweih (hinter dem Kopf) */
   const ohrBasis = K(3.5, -5.4), gehBasis = K(10.5, -6.8);
-  s += ohrZ(ohrBasis[0] + 2, ohrBasis[1] - 1, -36, 0.6, true) + geweih(gehBasis[0] + 5, gehBasis[1] + 0.5, 0.96, -6, true);
+  s += (F ? ohrZ(ohrBasis[0] + 2, ohrBasis[1] - 1, -36, 0.6, true) : "") + geweih(gehBasis[0] + 5, gehBasis[1] + 0.5, 0.96, -16, true);
   /* ---- Körper ---- */
   const fell = T.lg("fell", [[0, "#5a4030"], [0.25, "#6a4228"], [0.42, "#7e4a2a"], [0.52, "#8a522e"], [0.62, "#7a4c30"], [0.72, "#5e4232"], [0.86, "#4a3628"], [1, "#2e2219"]], 0, -200, 0, 0, H.US);
   let inn = "";
@@ -549,9 +551,8 @@ function hirsch(T) {
   inn += H.wf(KT([[2, -7], [16, -8], [26, -4.4], [25, 1.4], [12, 0.8], [2, 2.4]]), "#3e2a1c", 0.55, 1.6);
   inn += H.wf(KT([[38, 2], [48, 5], [48, 12], [44, 13], [38, 13]]), "#8a7c6c", 0.55, 1.2);
   inn += H.wf([[126, -134], [138, -143], [156, -161], [172, -177], [178, -166], [176, -150], [174, -134], [172, -114], [172, -100], [160, -96], [146, -104], [132, -118]], "#3a2618", 0.85, 3.2);
-  inn += H.wf([[20, -118], [26, -124], [36, -126], [40, -118], [38, -104], [34, -92], [26, -88], [21, -96]], "#e2cfa6", 0.85, 2.4) + fl(27, -108, 6, 10, 0, "#f4e8cc", 0.5);
-  inn += H.wf([[40, -125], [42, -112], [40, -98], [36, -90]], "#3a2416", 0.3, 1.6);
-  inn += H.wf([[32, -78], [62, -82], [60, -64], [48, -46], [44, 0], [34, 0], [34, -54]], "#4a3426", 0.5, 4) + H.wf([[144, -74], [160, -74], [160, 0], [146, 0]], "#4a3426", 0.5, 4);
+  inn += H.wf([[20, -116], [25, -124], [33, -128.6], [40, -126], [41, -116], [38, -104], [33, -94], [26, -90], [21, -98]], "#e2cfa6", 0.85, 3.2) + fl(28, -110, 6, 11, 0, "#f4e8cc", 0.5);
+    inn += H.wf([[32, -78], [62, -82], [60, -64], [48, -46], [44, 0], [34, 0], [34, -54]], "#4a3426", 0.5, 4) + H.wf([[144, -74], [160, -74], [160, 0], [146, 0]], "#4a3426", 0.5, 4);
   /* Großform: Lichtband Rücken, Kernschatten unten, Reflexlicht am Bauch, Muskeln */
   inn += H.wf([[24, -122], [46, -131], [90, -128], [122, -132], [140, -142], [166, -168], [158, -152], [134, -134], [108, -120], [70, -118], [36, -116]], "#ffc890", 0.26, 4) +
     H.wf([[64, -90], [100, -86], [140, -88], [150, -84], [150, -70], [100, -68], [66, -76]], DK, 0.45, 4.5) +
@@ -566,7 +567,7 @@ function hirsch(T) {
   /* Kopf: Augenhöhle, Jochbogen, Kaumuskel, Nasenrücken, Tränengrube */
   inn += fl(...K(19.5, 2), 5.5, 3.8, KW, DK, 0.42) + fl(...K(20, -2.6), 5, 1.6, KW, "#ffd2a0", 0.3) + fl(...K(13, 9), 7, 4.4, KW, "#ffd2a0", 0.22) + fl(...K(12, 14.5), 6, 3.4, KW, DK, 0.26) +
     fl(...K(32, 0.6), 10, 2.2, KW, "#fff", 0.2) + fl(...K(31, 9.5), 7, 3.6, KW, DK, 0.22) + fl(...K(26, 15.5), 10, 2, KW, DK, 0.3);
-  inn += H.wf(KT([[22.6, 3.0], [24.6, 3.4], [27.6, 6.0], [27.4, 7.2], [24.4, 5.6], [22.2, 4.2]]), "#140a06", 0.85, 0.3) + fl(...K(25, 5), 3, 1.6, KW + 30, DK, 0.35);
+  inn += H.wf(KT([[23.2, 3.4], [25, 3.9], [28.4, 6.6], [28.2, 7.3], [24.8, 5.4], [23.0, 4.3]]), "#1a0e08", 0.75, 0.25) + wl([KT([[23.4, 4.6], [26, 6.0], [28.2, 7.6]])], "#ffe0c0", 0.35, 0.35, 0.12) + fl(...K(25.4, 5.2), 3, 1.4, KW + 30, DK, 0.25);
   inn += wl([KT([[7, 8], [11, 12], [12, 17]])], DK, 1.4, 0.3, 0.8);
   /* Windfang (Nase) dunkel, Äser mit hellem Kinn */
   inn += H.wf(KT([[43.4, 2.4], [45.4, 3.2], [47.4, 4.6], [48.6, 7.0], [48.2, 9.4], [46.8, 10.9], [45.2, 11.2], [44.2, 9.6], [44.4, 6.4], [43.6, 4.2]]), "#1c1614", 1, 0.2);
@@ -577,39 +578,39 @@ function hirsch(T) {
   const zone = (poly, w) => H.texR("fell", { fx: 0.3, fy: 3.6, farbe: "#1e0c04", staerke: 2.6, schwelle: 0.55, okt: 2 }, w, poly, 0.2);
   inn += zone(KT([[8, -9], [50, -9], [50, 20], [14, 20]]), KW + 180) + zone([[20, -134], [128, -134], [146, -100], [150, -74], [64, -78], [20, -90]], 176) +
     zone([[30, -90], [64, -84], [60, -70], [48, -56], [46, 0], [34, 0], [34, -0.2], [142, -0.2], [142, -72], [160, -76], [162, 0], [34, 0]], 92);
-  inn += H.haare(rumpf, 320, wuchs, laenge, [["#2a1408", 1, 0.07, 0.28], ["#e8a870", 0.7, 0.06, 0.22], ["#5a2c12", 0.6, 0.08, 0.26]], { krumm: 0.06, streu: 10, nur: (x, y) => x < 126 || y > -96 });
+  inn += H.haare(rumpf, 130, wuchs, laenge, [["#2a1408", 1, 0.07, 0.28], ["#e8a870", 0.7, 0.06, 0.22], ["#5a2c12", 0.6, 0.08, 0.26]], { krumm: 0.06, streu: 10, nur: (x, y) => x < 126 || y > -96 });
   const maehne = [[126, -134], [138, -143], [156, -161], [172, -177], [177, -164], [175.6, -150], [174.4, -136], [172.6, -118], [171.4, -102], [158, -100], [142, -110], [130, -124]];
-  inn += H.haare(maehne, 260, (x, y) => (x > 160 ? 100 : 118), 5.2, [["#1a0e06", 1, 0.14, 0.5], ["#6a4a30", 0.6, 0.1, 0.35], ["#9a7656", 0.25, 0.08, 0.3]], { krumm: 0.25, streu: 16 });
+  inn += H.haare(maehne, 125, (x, y) => (x > 160 ? 100 : 118), 5.2, [["#1a0e06", 1, 0.14, 0.5], ["#6a4a30", 0.6, 0.1, 0.35], ["#9a7656", 0.25, 0.08, 0.3]], { krumm: 0.25, streu: 16 });
   /* Schlagschatten des Kopfes auf den Hals, Okklusion am Ohr */
   inn += H.wf([K(13.5, 18.2), K(6, 17), [168, -154], [170, -146], [174, -148]], DK, 0.4, 1.6) + fl(...K(3, -4), 4.4, 2.6, KW, DK, 0.35);
   inn += H.rim(A, 6, 0.9) + wl([[[30, -126], [60, -128.4], [90, -125.8], [120, -130.4], [134, -136.4]]], "#ffe2c0", 1.6, 0.3, 0.8);
   s += H.teil(A, fell, inn, { rand: false });
   /* Mähne hängt an Kehle und Hals über den Umriss (Brunftmähne) */
   const maehneRand = [[175.6, -150], [175.0, -142], [174.0, -132], [172.8, -122], [171.6, -112], [170.6, -104]];
-  s += H.saum(maehneRand, F ? 120 : 30, (x, y) => 96 + (T.rnd() - 0.5) * 20, 6, [["#1e1208", 1, 0.16, 0.6], ["#5a4028", 0.6, 0.12, 0.45]], { offen: true, krumm: 0.3, szene: 0.4 });
-  s += H.saum([[129, -136.4], [137, -142.6], [146, -151.4], [155, -160.6], [164, -169.4]], 70, 128, 3.4, [["#2a1a0e", 1, 0.12, 0.55], ["#6a4a30", 0.5, 0.1, 0.4]], { offen: true, krumm: 0.2, szene: 0.2 });
-  s += H.saum(rumpf, 110, wuchs, (x, y) => laenge(x, y) * 0.6, [["#5a3018", 1, 0.06, 0.45], ["#c08a5a", 0.5, 0.05, 0.35]], { nur: (x, y) => y < -70 && x < 130, szene: 0 });
+  s += H.saum(maehneRand, F ? 60 : 24, (x, y) => 96 + (T.rnd() - 0.5) * 20, 6, [["#1e1208", 1, 0.16, 0.6], ["#5a4028", 0.6, 0.12, 0.45]], { offen: true, krumm: 0.3, szene: 0.3 });
+  s += H.saum([[129, -136.4], [137, -142.6], [146, -151.4], [155, -160.6], [164, -169.4]], 50, 128, 3.4, [["#2a1a0e", 1, 0.12, 0.55], ["#6a4a30", 0.5, 0.1, 0.4]], { offen: true, krumm: 0.2, szene: 0.1 });
+  s += H.saum(rumpf, 70, wuchs, (x, y) => laenge(x, y) * 0.6, [["#5a3018", 1, 0.06, 0.45], ["#c08a5a", 0.5, 0.05, 0.35]], { nur: (x, y) => y < -70 && x < 130, szene: 0 });
   /* Wedel (Schwanz): kurz, oben dunkler */
   const wedel = H.flaeche([[25.6, -121.5], [23, -119.5], [21.6, -114], [21.4, -107.5], [22.8, -105], [24.4, -108.5], [25.6, -114], [27.4, -119.6]]);
-  s += H.teil(wedel, T.lg("wd", [[0, "#5a4030"], [1, "#c8b08a"]], 0, 0, 1, 0), H.haare(wedel.pts, 30, 100, 2, [["#3a2a1c", 1, 0.08, 0.5], ["#efe0c0", 0.6, 0.07, 0.5]], { szene: 0 }) + H.rim(wedel, 1.4, 0.8), { rand: false });
+  s += H.teil(wedel, T.lg("wd", [[0, "#5a4030"], [1, "#c8b08a"]], 0, 0, 1, 0), H.haare(wedel.pts, 16, 100, 2, [["#3a2a1c", 1, 0.08, 0.5], ["#efe0c0", 0.6, 0.07, 0.5]], { szene: 0 }) + H.rim(wedel, 1.4, 0.8), { rand: false });
   /* ---- Schalen, Afterklauen ---- */
   s += H.schale(153.2, 162.0, 5.0) + H.schale(42.4, 51.0, 4.8);
   const after = (x, y) => H.teil(H.flaeche([[x + 0.3, y - 1.6], [x + 0.9, y + 0.2], [x - 0.2, y + 1.6], [x - 0.9, y + 0.7], [x - 0.7, y - 0.7]]), "#2a2220", fl(x - 0.2, y - 0.5, 0.6, 0.5, 0, "#fff", 0.4), { rw: 0.08 });
   s += after(149.8, -10) + after(39.0, -10);
   /* ---- nahes Ohr, nahes Geweih, Auge ---- */
-  s += ohrZ(ohrBasis[0], ohrBasis[1], -58, 0.72, false) + geweih(gehBasis[0], gehBasis[1], 1, 2, false);
-  s += H.haare([[gehBasis[0] - 4, gehBasis[1] + 2.4], [gehBasis[0] + 4, gehBasis[1] + 2.8], [gehBasis[0] + 3, gehBasis[1] - 0.4], [gehBasis[0] - 3, gehBasis[1] - 0.4]], 40, 250, 1.4, [["#3a2618", 1, 0.08, 0.7], ["#8a6a50", 0.5, 0.06, 0.55]], { szene: 0, streu: 40 });
+  s += ohrZ(ohrBasis[0], ohrBasis[1], -58, 0.72, false) + geweih(gehBasis[0], gehBasis[1], 1, -8, false);
+  s += H.haare([[gehBasis[0] - 4, gehBasis[1] + 2.4], [gehBasis[0] + 4, gehBasis[1] + 2.8], [gehBasis[0] + 3, gehBasis[1] - 0.4], [gehBasis[0] - 3, gehBasis[1] - 0.4]], 24, 250, 1.4, [["#3a2618", 1, 0.08, 0.7], ["#8a6a50", 0.5, 0.06, 0.55]], { szene: 0, streu: 40 });
   const au = K(19.5, 2.0);
-  s += fl(au[0] - 0.4, au[1] - 2.2, 4.6, 1.8, KW - 12, DK, 0.45) +
-    T.augeReal(au[0], au[1], 2.0, { iris: "#2a170b", iris2: "#0a0503", pupille: "quer", offen: 0.74, winkel: KW - 12, wimpern: 15, wimpernLaenge: 0.7, lid: "#0e0806", haut: "#24160c" });
-  s += fl(au[0] + 2.6, au[1] + 0.85, 0.8, 0.6, KW, "#1a0e08", 0.95);
+  s += fl(au[0] - 0.4, au[1] - 2.8, 5.6, 2.2, KW - 12, DK, 0.5) +
+    T.augeReal(au[0], au[1], 2.5, { iris: "#2a170b", iris2: "#0a0503", pupille: "quer", offen: 0.74, winkel: KW - 12, wimpern: 15, wimpernLaenge: 0.7, lid: "#0e0806", haut: "#24160c" });
+  s += fl(au[0] + 3.2, au[1] + 1.05, 1.0, 0.75, KW, "#1a0e08", 0.95);
   if (F) s += T.schnurrhaare(...K(44.6, 11.2), 6, 3.6, KW + 30, 50, "#1a120c", 0.06) + T.schnurrhaare(...K(39.6, 14.2), 4, 2.6, KW + 80, 40, "#e8e0d0", 0.05);
-  return { svg: s, box: [18.4, -276, 230, 0], fuesse: [47, 57, 147, 157], kopf: [150, -275, 232, -145] };
+  return { svg: s, box: [21.2, -268.5, 221.7, 0], fuesse: [47, 57, 147, 157], kopf: [150, -275, 232, -145] };
 }
 
 module.exports = [
   { id: "reh", de: "das Reh", syl: "REH", it: "il capriolo", itSyl: "ca-pri-O-lo", en: "roe deer", gruppe: "Wald", lebensraum: "Wald",
-    laenge: 1.15, hoehe: 1.22, zeichne: reh },
+    laenge: 1.08, hoehe: 1.19, zeichne: reh },
   { id: "hirsch", de: "der Hirsch", syl: "HIRSCH", it: "il cervo", itSyl: "CER-vo", en: "red deer", gruppe: "Wald", lebensraum: "Wald",
-    laenge: 1.96, hoehe: 2.76, zeichne: hirsch },
+    laenge: 2.0, hoehe: 2.69, zeichne: hirsch },
 ];

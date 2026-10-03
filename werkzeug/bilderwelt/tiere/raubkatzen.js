@@ -382,7 +382,7 @@ function loewe(T) {
       const kw = (x, y) => { const t = Math.max(0, Math.min(1, (y + 110) / 55)); return x < 40 ? 128 + t * 6 : x > 112 ? 135 - t * 35 : 178 - t * 58; };
       const L = this.haarL;
       return [
-        [this.koerper, 300, kw, L * 0.9, [["#8e6534", 1, 0.2, 0.22], ["#b48650", 1, 0.2, 0.22], ["#f6dcaa", 1, 0.2, 0.26]]],
+        [this.koerper, 270, kw, L * 0.9, [["#8e6534", 1, 0.2, 0.22], ["#b48650", 1, 0.2, 0.22], ["#f6dcaa", 1, 0.2, 0.26]]],
         [vn.pts, 55, 94, L * 0.9, this.haarFarben],
         [hn.pts, 55, (x, y) => (y < -60 ? 125 : 96), L * 0.9, this.haarFarben],
       ];
@@ -464,8 +464,8 @@ function loewe(T) {
     const unter = [tr([38, -50], g), tr([32, -20], g), tr([34, 14], g), tr([48, 40], g)].map(([x, y]) => [x, y, 13, 11, 0, "#b27a3c", 0.9])
       .concat([[150, -118, 22, 9, -10, "#8a5a2a", 0.8], [140, -66, 20, 14, 0, "#120802", 0.9], [112, -92, 8, 18, 0, "#1e0e06", 0.7], [168, -56, 10, 8, 0, "#1a0c04", 0.8]]);
     return `<use href="#${pid}" fill="#4a2a12"/><g clip-path="url(#${id})">${weich(T, "mu", unter, 6)}</g>` +
-      weich(T, "ml", [lockenFeld(T, feld, 108, fl, 13, 24, 7.4, rf, (x, y) => Math.hypot(x - C[0], y - C[1]), { szene: 0.22, kante: 0 })], 0.45) +
-      bueschel(T, feld, 72, fl, 12, 22, rampe, ton, { pro: 6, breite: 4.5, w: 0.5, op: 0.8, szene: 0.1 });
+      weich(T, "ml", [lockenFeld(T, feld, 108, fl, 13, 24, 7.4, rf, (x, y) => Math.hypot(x - C[0], y - C[1]), { szene: 0.15, kante: 0 })], 0.45) +
+      bueschel(T, feld, 72, fl, 12, 22, rampe, ton, { pro: 6, breite: 4.5, w: 0.5, op: 0.8, szene: 0.06 });
   };
   A.vorKopf = (T) => {
     /* Backenbart: helle, kürzere Büschel über dem hinteren Kopfrand; Bart unter dem Kinn */
@@ -474,7 +474,7 @@ function loewe(T) {
     const hr = ["#5a3416", "#7e4e22", "#a06a32", "#c08848", "#d8a660", "#ecc382", "#f8deaa"];
     const ht = (x, y) => Math.max(0, Math.min(1, 0.55 + (-y - 100) / 40));
     return weich(T, "rb", [`<path d="${G(band)}" fill="#b47c3e"/>`, lockenFeld(T, band, 40, fk, 7, 13, 4.8, (x, y, z) => hr[Math.min(6, Math.floor((ht(x, y) + (z - 0.5) * 0.3) * 7))],
-      (x, y) => Math.hypot(x - C[0], y - C[1]), { szene: 0.22, kante: 0 })], 0.5) +
+      (x, y) => Math.hypot(x - C[0], y - C[1]), { szene: 0.05, kante: 0 })], 0.5) +
       (T.fein ? bueschel(T, band, 36, fk, 7, 13, hr, ht, { pro: 6, breite: 3, w: 0.42, op: 0.85 }) : "");
   };
   return katze(T, A);
@@ -732,17 +732,18 @@ function katzenKopf(T, o) {
 /* Flecken/Rosetten verteilen: felder = [[polygon, größe, art]] (art: "punkt" | "rosette" | "jaguar" | "strich"),
    abst = Grundabstand (cm). Liefert { schwarz, ring: [d nach Breite], innen } als Pfad-Daten. */
 function flecken(T, felder, abst, o = {}) {
-  const q = (v) => Math.round(v * 2) / 2, fz = (v) => String(q(v)).replace(/^(-?)0\./, "$1.");
+  const q = (v) => (T.fein ? Math.round(v * 2) / 2 : Math.round(v)), fz = (v) => String(q(v)).replace(/^(-?)0\./, "$1.");
   const out = { schwarz: "", innen: "", ring: {} }, alle = [];
   for (const [pts, g, art, dichte] of felder) {
-    const [x0, y0, x1, y1] = T.box(pts), a = abst * g, n = Math.round((x1 - x0) * (y1 - y0) / (a * a) * 1.6 * (dichte || 1) * (T.fein ? 1 : 0.8));
+    const [x0, y0, x1, y1] = T.box(pts), a = abst * g * (T.fein ? 1 : 1.35), n = Math.round((x1 - x0) * (y1 - y0) / (a * a) * 1.6 * (dichte || 1));
     for (let v = 0, k = 0; k < n && v < n * 12; v++) {
       const x = x0 + T.rnd() * (x1 - x0), y = y0 + T.rnd() * (y1 - y0);
       if (!T.inPoly(x, y, pts) || alle.some(([ax, ay, aa]) => Math.hypot(ax - x, ay - y) < (aa + a) * 0.5)) continue;
       alle.push([x, y, a]); k++;
       const s = a * (0.32 + T.rnd() * 0.14);
       const ell = (cx, cy, rx, ry, w) => { const c = Math.cos(w * RAD), sn = Math.sin(w * RAD); return `M${fz(cx - rx * c)} ${fz(cy - rx * sn)}a${fz(rx)} ${fz(ry)} ${Math.round(w)} 1 0 ${fz(2 * rx * c)} ${fz(2 * rx * sn)}a${fz(rx)} ${fz(ry)} ${Math.round(w)} 1 0 ${fz(-2 * rx * c)} ${fz(-2 * rx * sn)}z`; };
-      if (art === "punkt") out.schwarz += ell(x, y, s * (0.85 + T.rnd() * 0.4), s * (0.7 + T.rnd() * 0.3), T.rnd() * 180);
+      if (!T.fein) { const w = Math.max(1, Math.round(s * 1.7)); out.ring["p" + w] = (out.ring["p" + w] || "") + `M${Math.round(x)} ${Math.round(y)}h0`; }
+      else if (art === "punkt") out.schwarz += ell(x, y, s * (0.85 + T.rnd() * 0.4), s * (0.7 + T.rnd() * 0.3), T.rnd() * 180);
       else if (art === "strich") out.schwarz += ell(x, y, s * 1.3, s * 0.45, (o.strichWinkel || 80) + (T.rnd() - 0.5) * 30);
       else {
         /* Rosette: unterbrochener Ring aus 3–5 Bögen, innen etwas dunkler; Jaguar: größer, dicker, mit Punkten innen */
@@ -765,7 +766,7 @@ function flecken(T, felder, abst, o = {}) {
 }
 const fleckenSvg = (f, schwarz = "#16100a", innen = "#00000000") =>
   (f.innen ? `<path d="${kurz(f.innen)}" fill="${innen}"/>` : "") +
-  Object.entries(f.ring).map(([w, d]) => `<path d="${kurz(d)}" fill="none" stroke="${schwarz}" stroke-width="${w}" stroke-linecap="round"/>`).join("") +
+  Object.entries(f.ring).map(([w, d]) => `<path d="${kurz(d)}" fill="none" stroke="${schwarz}" stroke-width="${String(w).replace("p", "")}" stroke-linecap="round"/>`).join("") +
   (f.schwarz ? `<path d="${kurz(f.schwarz)}" fill="${schwarz}"/>` : "");
 /* Felder für Muster im Grundriss (Tiger-Maße), werden wie der Grundriss skaliert */
 const FELD = {
@@ -969,10 +970,10 @@ function gepard(T) {
     haarFarben: [["#8a6024", 1, 0.13, 0.3], ["#fbecc4", 1, 0.13, 0.32]],
     vol: [[0, "#fff8e8", 0.28], [0.2, "#fff8e8", 0.08], [0.36, "#000", 0], [0.44, "#2a1204", 0.2], [0.5, "#2a1204", 0.28], [0.56, "#2a1204", 0.16], [0.75, "#2a1204", 0.1], [1, "#2a1204", 0.2]],
     koerper: [[6, -70], [14, -76], [24, -79], [38, -80], [54, -78], [70, -76], [84, -77], [94, -80], [102, -80], [110, -76], [118, -71], [124, -67],
-      [128, -61], [126, -54], [120, -50], [114, -46], [110, -40], [102, -36], [92, -36], [80, -40], [68, -48], [58, -54], [48, -56], [40, -58],
+      [128, -61], [126, -54], [120, -50], [114, -46], [110, -40], [102, -38], [92, -39], [80, -44], [68, -52], [58, -57], [48, -58], [40, -59],
       [24, -59], [8, -59], [0, -62], [-1, -68]],
     ruecken: [[3, -67], [14, -75], [24, -78], [38, -79], [54, -77], [70, -75], [84, -76], [94, -79], [102, -79], [110, -75]],
-    bauch: [[50, -55], [60, -52], [70, -46], [80, -40], [92, -36], [102, -35]],
+    bauch: [[50, -58], [60, -56], [70, -50], [80, -44], [92, -39], [102, -37]],
     hn: { V: [[30, -74], [40, -64], [44, -54], [42, -46], [34, -40], [26, -34], [20, -28], [17, -22], [16, -15], [16.5, -8.5]],
       H: [[0, -66], [-1, -58], [1, -50], [4, -44], [5, -36], [4, -30], [3, -26], [6, -22], [9, -15], [10.5, -8.5]] },
     hf: { V: [[50, -60], [56, -52], [54, -45], [47, -39], [40, -33], [36, -27], [34, -20], [34, -14], [35, -8.5]],
@@ -999,26 +1000,27 @@ function gepard(T) {
       ];
     },
     fransen: [
-      [[[60, -54], [80, -40], [100, -36], [100, -34], [80, -38], [60, -51]], 24, 98, 2, [["#f6eee0", 1, 0.15, 0.55], ["#d8c8aa", 0.5, 0.14, 0.45]], { szene: 0.3 }],
+      [[[60, -57], [80, -44], [100, -38], [100, -36], [80, -42], [60, -54]], 24, 98, 2, [["#f6eee0", 1, 0.15, 0.55], ["#d8c8aa", 0.5, 0.14, 0.45]], { szene: 0.3 }],
       /* kurze Nackenmähne */
       [[[96, -80], [110, -76], [122, -68], [120, -65], [108, -73], [96, -77]], 34, (x) => 200 - (x - 96) * 0.6, 3, [["#a87a3a", 1, 0.18, 0.55], ["#e8cc96", 1, 0.16, 0.5]], { szene: 0.3, krumm: 0.3 }],
     ],
   };
   A.muster = (T, A, { vn, hn }) => {
-    const f = flecken(T, [[A.koerper, 1, "punkt"], [vn.pts.filter((p) => p[1] > -40), 0.62, "punkt"], [hn.pts.filter((p) => p[1] > -50), 0.62, "punkt"]], 5.2);
+    const f = flecken(T, [[A.koerper, 1, "punkt"], [vn.pts.filter((p) => p[1] > -40), 0.66, "punkt"], [hn.pts.filter((p) => p[1] > -50), 0.66, "punkt"]], 3.9);
     return weich(T, "fl", [fleckenSvg(f, "#16100a")], 0.15);
   };
-  A.musterFern = (T, b) => fleckenSvg(flecken(T, [[b.pts.filter((p) => p[1] > -48), 0.62, "punkt"]], 5.2), "#16100a");
+  A.musterFern = (T, b) => fleckenSvg(flecken(T, [[b.pts.filter((p) => p[1] > -48), 0.66, "punkt"]], 3.9), "#16100a");
   A.schwanzMuster = (T, A) => {
     const P = schwanzPunkt(A.schwanz);
     let d = "";
     for (let k = 0; k < 5; k++) { const [x, y, tx, ty] = P(0.56 + k * 0.08); d += `M${f1(x - ty * 3.5)} ${f1(y + tx * 3.5)}l${f1(ty * 7)} ${f1(-tx * 7)}`; }
-    return fleckenSvg(flecken(T, [[A.schwanz.slice(0, 5).map(([x, y]) => [x - 3, y]).concat(A.schwanz.slice(0, 5).reverse().map(([x, y]) => [x + 3, y])), 0.55, "punkt"]], 5.2), "#16100a") +
+    return fleckenSvg(flecken(T, [[A.schwanz.slice(0, 5).map(([x, y]) => [x - 3, y]).concat(A.schwanz.slice(0, 5).reverse().map(([x, y]) => [x + 3, y])), 0.6, "punkt"]], 3.9), "#16100a") +
       `<path d="${kurz(d)}" stroke="#16100a" stroke-width="2.2" fill="none"/>`;
   };
-  A.schwanzEnde = (T, A) => { const [x, y] = schwanzPunkt(A.schwanz)(1); return quaste(T, [[x - 3, y - 3], [x + 2, y - 4], [x + 6, y - 1], [x + 5, y + 3], [x, y + 3.5], [x - 3, y + 1]], false); };
+  A.schwanzEnde = (T, A) => { const [x, y] = schwanzPunkt(A.schwanz)(1); return `<path d="${G([[x - 4, y - 2.6], [x + 1, y - 3], [x + 5, y - 1], [x + 5.4, y + 1.6], [x + 1, y + 2.8], [x - 4, y + 2.2]])}" fill="#f4eee4"/>` +
+    haare(T, [[x - 3, y - 2], [x + 4, y - 1.5], [x + 4, y + 1.5], [x - 3, y + 1.6]], 18, 10, 2.4, [["#fbf8f2", 1, 0.16, 0.8], ["#c8bca8", 0.5, 0.14, 0.6]], { szene: 0.3 }); };
   A.kopf = katzenKopf(T, {
-    x: 119, y: -62, k: 24, w: 10, schnauze: 0.72, stirn: 4,
+    x: 116, y: -61, k: 29, w: 12, schnauze: 0.72, stirn: 4,
     fell: [[0, "#c08a40"], [0.4, "#d6a660"], [0.7, "#e8cc98"], [1, "#f6eedf"]],
     ohr: [[26, -34], [26, -43], [30, -49], [37, -49], [40, -43], [40, -34]], ohrFarbe: ohrVerlauf(T, "ohr", "#1c140c", "#c8964c"),
     ohrInnen: `<path d="M37 -38q2 -6 1 -10q3 3 2 10z" fill="#efe2c8"/>`,
@@ -1028,7 +1030,7 @@ function gepard(T) {
       const f = flecken(T, [[M([[24, -36], [60, -40], [70, -36], [66, -31], [50, -30], [30, -26]]), 0.42, "punkt"],
         [M([[22, -18], [48, -14], [56, -4], [52, 12], [30, 16], [20, 2]]), 0.5, "punkt"]], 6);
       /* Tränenstreifen: vom inneren Augenwinkel zum Mundwinkel */
-      const tr2 = band(T, M([[80, -25], [80.5, -14], [78, -2], [74, 8], [70, 16]]), 3.4, true);
+      const tr2 = band(T, M([[79.5, -24], [81, -15], [79.5, -5], [75, 6], [69, 15]]), 3.2, true);
       return weich(T, "kf", [fleckenSvg(f, "#16100a"), `<path d="${tr2}" fill="#120c08"/>`], 0.25);
     },
   });
@@ -1044,6 +1046,29 @@ function gepard(T) {
    schwarzem Rand und langen schwarzen PINSELN (~4 cm), Rückseite mit hellem Fleck. Sommerfell rötlich-braun bis
    graubraun mit dunklen Flecken (an Beinen und Flanken deutlicher), Bauch, Kinn und Lippenrand weiß. Augen gelb-bernstein.
    ===================================================================== */
+const LUCHS = {
+  koerper: [[4, -66], [10, -71], [20, -74], [34, -72], [48, -68], [62, -66], [74, -66], [84, -68], [92, -67], [100, -63], [106, -58], [110, -52],
+    [108, -44], [102, -41], [96, -40], [92, -37], [84, -35], [72, -35], [60, -37], [50, -40], [40, -43], [30, -47], [14, -49], [2, -51], [-2, -57], [0, -63]],
+  ruecken: [[2, -64], [10, -70], [20, -73], [34, -71], [48, -67], [62, -65], [74, -65], [84, -67], [92, -66], [100, -62]],
+  bauch: [[34, -46], [44, -42], [56, -38], [70, -36], [84, -35]],
+  hn: { V: [[26, -62], [34, -52], [36, -44], [33, -38], [27, -33], [21, -28], [17, -23], [15, -17], [15, -10], [15.5, -7.5]],
+    H: [[0, -58], [-2, -50], [0, -42], [2, -35], [3, -28], [2, -24], [4, -20], [7, -14], [8.5, -10], [9.5, -7.5]] },
+  hf: { V: [[44, -52], [50, -44], [48, -38], [42, -33], [36, -28], [33, -23], [32, -17], [32.5, -10], [33, -7.5]],
+    H: [[18, -50], [19, -43], [21, -36], [22, -30], [21, -25], [23, -21], [25, -15], [26.5, -10], [27.5, -7.5]] },
+  vn: { V: [[92, -50], [97, -40], [94, -32], [89, -25], [87, -18], [86, -12], [86, -7.5]],
+    H: [[74, -48], [73, -38], [73, -31], [75, -24], [77, -17], [77.5, -13], [77, -10], [79, -7.5]] },
+  vf: { V: [[100, -44], [104, -36], [102, -29], [101, -22], [101.5, -15], [102.5, -7.5]],
+    H: [[84, -42], [85, -34], [89, -27], [92, -20], [94, -15], [94, -12], [96, -7.5]] },
+  schwanz: [[4, -63, 3.2, 3.2], [-2, -59, 3.1, 3.1], [-6, -51, 3, 3], [-7, -43, 2.9, 2.9]],
+  formen: [
+    [84, -60, 9, 6, -55, "#fff0d8", 0.22], [72, -48, 3, 10, 15, "#2a1004", 0.25], [96, -60, 8, 3, -20, "#fff0d8", 0.2],
+    [104, -46, 5, 4, -30, "#2a1004", 0.25], [94, -34, 5, 3, 0, "#2a1004", 0.25], [56, -55, 14, 4, 0, "#fff0d8", 0.14],
+    [40, -52, 4, 7, 10, "#3a1404", 0.25], [16, -64, 11, 7, -20, "#fff0d8", 0.24], [30, -48, 7, 4, -30, "#2a1004", 0.22],
+    [72, -32, 2.5, 3.5, 0, "#2a1004", 0.3], [2, -24, 2, 2, 0, "#fff0d8", 0.4],
+  ],
+  formenFein: [[[[30, -58], [35, -50], [35, -44], [33.5, -44], [33.5, -50], [28, -57]], "#2a1004", 0.3]],
+  sehnen: [[[[2, -34], [1.5, -29], [2, -24]], 0.8, 0.25, "#fff4dc"], [[[7, -33], [5, -28], [4.5, -24]], 1, 0.28]],
+};
 function luchs(T) {
   const hs = 66;
   const A = {
@@ -1054,27 +1079,7 @@ function luchs(T) {
     haarL: 2, haarBreite: 0.16, haarBein: 70, haarSchwanz: 30,
     haarFarben: [["#5a3e24", 1, 0.15, 0.32], ["#f2e2c8", 1, 0.15, 0.36]],
     vol: [[0, "#fff8e8", 0.24], [0.2, "#fff8e8", 0.06], [0.36, "#000", 0], [0.44, "#2a1204", 0.18], [0.5, "#2a1204", 0.26], [0.56, "#2a1204", 0.14], [0.75, "#2a1204", 0.1], [1, "#2a1204", 0.2]],
-    koerper: [[4, -66], [10, -71], [20, -74], [34, -72], [48, -68], [62, -66], [74, -66], [84, -68], [92, -67], [100, -63], [106, -58], [110, -52],
-      [108, -44], [102, -40], [96, -38], [92, -33], [84, -30], [72, -30], [60, -33], [50, -37], [40, -41], [30, -46], [14, -48], [2, -50], [-2, -57], [0, -63]],
-    ruecken: [[2, -64], [10, -70], [20, -73], [34, -71], [48, -67], [62, -65], [74, -65], [84, -67], [92, -66], [100, -62]],
-    bauch: [[34, -45], [44, -40], [56, -35], [70, -31], [84, -30]],
-    hn: { V: [[26, -62], [34, -52], [36, -44], [33, -38], [27, -33], [21, -28], [17, -23], [15, -17], [15, -10], [15.5, -7.5]],
-      H: [[0, -58], [-2, -50], [0, -42], [2, -35], [3, -28], [2, -24], [4, -20], [7, -14], [8.5, -10], [9.5, -7.5]] },
-    hf: { V: [[44, -52], [50, -44], [48, -38], [42, -33], [36, -28], [33, -23], [32, -17], [32.5, -10], [33, -7.5]],
-      H: [[18, -50], [19, -43], [21, -36], [22, -30], [21, -25], [23, -21], [25, -15], [26.5, -10], [27.5, -7.5]] },
-    vn: { V: [[92, -50], [97, -40], [94, -32], [89, -25], [87, -18], [86, -12], [86, -7.5]],
-      H: [[74, -48], [73, -38], [73, -31], [75, -24], [77, -17], [77.5, -13], [77, -10], [79, -7.5]] },
-    vf: { V: [[100, -44], [104, -36], [102, -29], [101, -22], [101.5, -15], [102.5, -7.5]],
-      H: [[84, -42], [85, -34], [89, -27], [92, -20], [94, -15], [94, -12], [96, -7.5]] },
-    schwanz: [[4, -63, 3.3, 3.3], [-3, -60, 3.2, 3.2], [-9, -53, 3.1, 3.1], [-12, -46, 3, 3]],
-    formen: [
-      [84, -60, 9, 6, -55, "#fff0d8", 0.22], [72, -48, 3, 10, 15, "#2a1004", 0.25], [96, -60, 8, 3, -20, "#fff0d8", 0.2],
-      [104, -46, 5, 4, -30, "#2a1004", 0.25], [94, -34, 5, 3, 0, "#2a1004", 0.25], [56, -55, 14, 4, 0, "#fff0d8", 0.14],
-      [40, -52, 4, 7, 10, "#3a1404", 0.25], [16, -64, 11, 7, -20, "#fff0d8", 0.24], [30, -48, 7, 4, -30, "#2a1004", 0.22],
-      [72, -32, 2.5, 3.5, 0, "#2a1004", 0.3], [2, -24, 2, 2, 0, "#fff0d8", 0.4],
-    ],
-    formenFein: [[[[30, -58], [35, -50], [35, -44], [33.5, -44], [33.5, -50], [28, -57]], "#2a1004", 0.3]],
-    sehnen: [[[[2, -34], [1.5, -29], [2, -24]], 0.8, 0.25, "#fff4dc"], [[[7, -33], [5, -28], [4.5, -24]], 1, 0.28]],
+    ...bau(LUCHS, 1, 0.74),
     haarFelder(T, { vn, hn }) {
       const kw = (x, y) => { const t = Math.max(0, Math.min(1, (y + 70) / 38)); return x < 24 ? 128 + t * 6 : x > 80 ? 132 - t * 35 : 176 - t * 60; };
       return [
@@ -1082,24 +1087,25 @@ function luchs(T) {
         [vn.pts, 50, 94, 1.6, this.haarFarben], [hn.pts, 50, (x, y) => (y < -44 ? 125 : 96), 1.6, this.haarFarben],
       ];
     },
-    fransen: [[[[30, -46], [56, -35], [84, -31], [84, -28], [56, -32], [30, -43]], 40, 96, 3.4, [["#f2ece2", 1, 0.18, 0.6], ["#cbbba0", 0.6, 0.16, 0.5]], { szene: 0.3 }]],
+    fransen: [[[[22, -46], [41, -35], [62, -31], [62, -28], [41, -32], [22, -43]], 40, 96, 3.4, [["#f2ece2", 1, 0.18, 0.6], ["#cbbba0", 0.6, 0.16, 0.5]], { szene: 0.3 }]],
   };
   A.schwanzEnde = (T, A) => {
     const P = schwanzPunkt(A.schwanz), [x, y] = P(1);
-    return `<path d="${G([[x - 3.6, y - 7], [x + 3.2, y - 7], [x + 3.8, y - 1], [x + 1, y + 3.4], [x - 3, y + 2.4], [x - 4, y - 2]])}" fill="#16100a"/>` +
-      haare(T, [[x - 3.6, y - 6], [x + 3.2, y - 6], [x + 3, y + 2], [x - 3, y + 2]], 24, 96, 3, [["#000", 1, 0.25, 0.6]], { szene: 0.3 });
+    return `<path d="${G([[x - 2.9, y - 5], [x + 2.7, y - 5], [x + 2.6, y], [x + .8, y + 2.4], [x - 1.4, y + 2.4], [x - 3, y]])}" fill="#16100a"/>` +
+      haare(T, [[x - 3, y - 4], [x + 2.8, y - 4], [x + 2.6, y + 2], [x - 2.6, y + 2]], 20, 96, 2.4, [["#000", 1, 0.22, 0.6]], { szene: 0.3 });
   };
   A.muster = (T, A, { vn, hn }) => {
-    const f = flecken(T, [[[[2, -56], [30, -64], [80, -58], [96, -48], [80, -38], [40, -44], [6, -48]], 0.8, "punkt", 0.8],
-      [vn.pts.filter((p) => p[1] > -30), 0.5, "punkt", 1.1], [hn.pts.filter((p) => p[1] > -44), 0.55, "punkt", 1.1]], 5);
-    return weich(T, "fl", [`<g opacity=".75">${fleckenSvg(f, "#3a2414")}</g>`], 0.35);
+    const f = flecken(T, [[[[2, -56], [22, -64], [59, -58], [71, -48], [59, -38], [30, -44], [5, -48]], 0.8, "punkt", 0.8],
+      [vn.pts.filter((p) => p[1] > -30), 0.5, "punkt", 1.1], [hn.pts.filter((p) => p[1] > -44), 0.5, "punkt", 1.1]], 3.2);
+    return weich(T, "fl", [`<g opacity=".72">${fleckenSvg(f, "#3a2414")}</g>`], 0.15);
   };
-  A.musterFern = (T, b) => `<g opacity=".7">${fleckenSvg(flecken(T, [[b.pts.filter((p) => p[1] > -40), 0.55, "punkt"]], 5), "#3a2414")}</g>`;
+  A.musterFern = (T, b) => `<g opacity=".65">${fleckenSvg(flecken(T, [[b.pts.filter((p) => p[1] > -40), 0.6, "punkt"]], 3.6), "#3a2414")}</g>`;
   const K = A.kopf = katzenKopf(T, {
-    x: 100, y: -51, k: 26, w: 8, schnauze: 0.7, stirn: 3,
+    x: 72, y: -51, k: 31, w: 10, schnauze: 0.7, stirn: 3,
     fell: [[0, "#946a42"], [0.4, "#b48a60"], [0.7, "#d6c0a0"], [1, "#f2ece2"]],
-    ohr: [[30, -36], [31, -50], [35, -62], [40, -50], [44, -36]], ohrFarbe: ohrVerlauf(T, "ohr", "#1a120c", "#9a7048"),
-    ohrInnen: `<ellipse cx="36" cy="-45" rx="1.8" ry="3.6" fill="#d8ccb8"/><path d="M35 -62q-1 -10 1 -16q2 7 1 16z" fill="#120c08"/>`,
+    ohr: [[30, -36], [31, -49], [35, -59], [40, -49], [44, -36]], ohrFarbe: "#8a6a4c",
+    ohrInnen: `<path d="M30.5 -40q0 -10 4.5 -19l1.5 3q-3 7 -3.5 16z" fill="#1a120c"/><ellipse cx="38" cy="-45" rx="1.6" ry="3.4" fill="#d8ccb8" opacity=".8"/>` +
+      `<path d="M35 -59q-.6 -6 .4 -14M35.3 -59q.4 -7 2 -13M34.8 -59q-1.4 -5 -1.6 -12" fill="none" stroke="#0e0906" stroke-width=".9" stroke-linecap="round"/>`,
     iris: "#c8a03a", iris2: "#6a4a12", augeR: 4.2, nase: "#b07a6a", polster: "#f4eee4", kinn: "#faf6ee", unterAuge: "#f8f2e6", ueberAuge: "#f4ece0",
     traene: 0.5, traeneB: 1.4, stirnFarbe: "#8a6440",
     muster: (M) => {
@@ -1116,24 +1122,26 @@ function luchs(T) {
     const fk = (x, y) => norm((x - C[0]) / 10 - 0.25, (y - C[1]) / 10 + 1.3);
     const hr = ["#5a3e24", "#9a7a58", "#cfc0a6", "#e8e0d2", "#f6f2ea"];
     const streif = [[[30, -2], [22, 6], [14, 10]], [[34, 18], [26, 26], [18, 30]]].map((m) => band(T, m.map((p) => tr(p, g)), 1.8)).join("");
-    return weich(T, "rb", [`<path d="${G(band2)}" fill="#e6dccb"/>`], 0.6) + `<path d="${streif}" fill="#16100a" opacity=".85"/>` +
-      bueschel(T, band2, 40, fk, 3, 7, hr, (x, y) => 0.7 + (y < K.y - 4 ? -0.3 : 0), { pro: 6, breite: 1.8, w: 0.2, op: 0.85, szene: 0.15, biegung: 0.7 });
+    const ht = (x, y) => Math.max(0, Math.min(0.99, 0.72 + (y < K.y - 4 ? -0.3 : 0)));
+    return weich(T, "rb", [`<path d="${G(band2)}" fill="#e6dccb"/>`, lockenFeld(T, band2, 40, fk, 3, 7, 2.4, (x, y, z) => hr[Math.min(4, Math.floor((ht(x, y) + (z - 0.5) * 0.4) * 5))],
+      (x, y) => Math.hypot(x - C[0], y - C[1]), { szene: 0.3, kante: 0 })], 0.35) + `<path d="${streif}" fill="#16100a" opacity=".8"/>` +
+      (T.fein ? bueschel(T, band2, 34, fk, 3, 6, hr, ht, { pro: 6, breite: 1.6, w: 0.16, op: 0.8, biegung: 0.7 }) : "");
   };
   return katze(T, A);
 }
 module.exports = [
   { id: "loewe", de: "der Löwe", syl: "LÖ-we", it: "il leone", itSyl: "le-O-ne", en: "lion", gruppe: "Raubtiere", lebensraum: "Savanne",
-    laenge: 2.5, hoehe: 1.4, zeichne: loewe },
+    laenge: 2.41, hoehe: 1.33, zeichne: loewe },
   { id: "loewin", de: "die Löwin", syl: "LÖ-win", it: "la leonessa", itSyl: "le-o-NES-sa", en: "lioness", gruppe: "Raubtiere", lebensraum: "Savanne",
-    laenge: 2.2, hoehe: 1.1, zeichne: loewin },
+    laenge: 2.1, hoehe: 1.01, zeichne: loewin },
   { id: "tiger", de: "der Tiger", syl: "TI-ger", it: "la tigre", itSyl: "TI-gre", en: "tiger", gruppe: "Raubtiere", lebensraum: "Dschungel",
-    laenge: 2.4, hoehe: 1.1, zeichne: tiger },
+    laenge: 2.23, hoehe: 1.01, zeichne: tiger },
   { id: "leopard", de: "der Leopard", syl: "le-o-PARD", it: "il leopardo", itSyl: "le-o-PAR-do", en: "leopard", gruppe: "Raubtiere", lebensraum: "Savanne",
-    laenge: 1.6, hoehe: 0.75, zeichne: leopard },
+    laenge: 1.58, hoehe: 0.67, zeichne: leopard },
   { id: "jaguar", de: "der Jaguar", syl: "JA-gu-ar", it: "il giaguaro", itSyl: "gia-GUA-ro", en: "jaguar", gruppe: "Raubtiere", lebensraum: "Regenwald",
-    laenge: 1.7, hoehe: 0.8, zeichne: jaguar },
+    laenge: 1.67, hoehe: 0.7, zeichne: jaguar },
   { id: "gepard", de: "der Gepard", syl: "ge-PARD", it: "il ghepardo", itSyl: "ghe-PAR-do", en: "cheetah", gruppe: "Raubtiere", lebensraum: "Savanne",
-    laenge: 1.8, hoehe: 0.82, zeichne: gepard },
+    laenge: 1.62, hoehe: 0.8, zeichne: gepard },
   { id: "luchs", de: "der Luchs", syl: "LUCHS", it: "la lince", itSyl: "LIN-ce", en: "lynx", gruppe: "Raubtiere", lebensraum: "Wald",
-    laenge: 1.3, hoehe: 0.75, zeichne: luchs },
+    laenge: 1.09, hoehe: 0.74, zeichne: luchs },
 ];

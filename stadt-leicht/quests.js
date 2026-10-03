@@ -671,6 +671,682 @@
         { html: "„Guten Geburtstag!“", hinweis: "So sagt man das nicht. Richtig ist: „Alles Gute zum Geburtstag!“" }
       ], danke: "„Danke! Willst du ein Stück Kuchen?“" }
   );
+  /* =====================================================================
+     4b. FASSUNG 875 — NIVEAU A1–C2 UND MISSIONEN NACH STAND DER STADT
+     XANDER (Funk 257): „wie das Dorf sich entwickelt so erwachsen auch die Aufgaben und Fragen oder die Leute denen man
+     unterwegs begegnet z.B ein Wissenschaftler der etwas über den aktuellen Entwicklungsstand wissen möchte vielleicht
+     von A1 bis C2“.
+     Die bisherigen Missionen sind A1 und A2 (Kannbeschreibungen Goethe/telc: Alltag, Zahlen, Wege, einfache Sätze).
+     Die neuen steigen: A1/A2 kurze Hauptsätze, B1 Perfekt, Nebensätze (weil, wenn, damit), Ratschläge, Höflichkeit;
+     B2 Meinung begründen, Konjunktiv II, Passiv mit Modalverb, obwohl/denn; C1 Fachgespräch (Entwicklungsstand,
+     Handlungsbedarf, Antrag im Nominalstil, zu-Infinitiv, Rektion); C2 Hypothesen, Ironie, indirekte Rede im
+     Konjunktiv I, feine Rektion („dazu raten“), „es sei denn“.
+     Jede neue Mission: braucht (eines dieser Gebäude muss stehen), stand (Bedingung an die Stadt), vars (liest die
+     Stadt), pruefe (FREI-Prüfung: Aufgabe erfüllt? Stimmt es für deine Stadt? Grammatik?), woerter (Wortliste für
+     die Erkennung) und frei (Tipp, wenn ein Satz nicht zur Aufgabe passt).
+     ===================================================================== */
+  const NIVEAUS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+  const NIVEAU_ALT = { weg_rathaus: "A2", weg_bahnhof: "A2", weg_krankenhaus: "A2", weg_gasthaus: "A2", weg_wahrzeichen: "A2", hund: "A2", eis: "A1", schirm: "A1",
+    baeckerei: "A1", fahrkarte: "A1", betonung_haus: "A1", betonung_wort: "A2", artikel_ort: "A1", sie_du: "A2", tretboot: "A1", postkarten: "A1", such_ort: "A1",
+    such_beruf: "A1", such_beruf_sie: "A1", such_erledigen: "A2", uhr_jetzt: "A1", uhr_termin: "A2", perfekt_kino: "A2", modal_brunnen: "A1", plural_aepfel: "A1",
+    steigerung: "A2", arzt: "A2", vorstellen: "A1", zurueckgeben: "A2", schnitzel: "A1", zug_an: "A2", mehl: "A1", schluessel: "A2", preis: "A1", datum: "A2", geburtstag: "A1" };
+  for (const v of VORLAGEN) v.niveau = NIVEAU_ALT[v.id] || "A2";
+  /* Gebäude als { key, g, name } – auch die späten und solche, die (noch) nicht stehen */
+  const GEB = (k) => (NAMEN_ALLE[k] ? { key: k, g: NAMEN_ALLE[k][0], name: NAMEN_ALLE[k][1] } : null);
+  /* unbestimmter Artikel: Nominativ, Akkusativ, Dativ, „kein“ im Akkusativ; der falsche Akkusativ der ein-Familie */
+  const EINF = { der: ["ein", "einen", "einem", "keinen"], die: ["eine", "eine", "einer", "keine"], das: ["ein", "ein", "einem", "kein"] };
+  const FALSCH_A = { der: "ein", die: "einen", das: "einen" }, FALSCH_K = { der: "kein", die: "keinen", das: "keinen" };
+  const einN = (z) => EINF[z.g][0] + " " + z.name, einA = (z) => EINF[z.g][1] + " " + z.name, einD = (z) => EINF[z.g][2] + " " + z.name, keinA = (z) => EINF[z.g][3] + " " + z.name;
+  const PRON = { der: "er", die: "sie", das: "es" };
+  /* wie ein Gebäude im gesprochenen Satz vorkommt (klein, ohne Satzzeichen) */
+  const ALIAS = { koelner_dom: ["kölner dom", "dom"], neuschwanstein: ["schloss neuschwanstein", "neuschwanstein"], brandenburger: ["brandenburger tor", "brandenburger"],
+    holzhuette: ["holzfällerhütte", "holzhütte"], krankenhaus: ["krankenhaus", "klinik"], bibliothek: ["bibliothek", "bücherei"], gasthaus: ["gasthaus", "gasthof", "wirtshaus"],
+    sternwarte: ["sternwarte", "observatorium"], labor: ["labor", "forschungslabor"], bahnhof: ["bahnhof"], bergwerk: ["bergwerk", "mine"] };
+  const namenVon = (k) => ALIAS[k] || (NAMEN_ALLE[k] ? [fw(NAMEN_ALLE[k][1]).trim()] : [k]);
+  const nennt = (T, k) => namenVon(k).some((a) => T.indexOf(" " + a + " ") >= 0 || T.indexOf(" " + a + "s ") >= 0);
+  const genannt = (T) => Object.keys(NAMEN_ALLE).filter((k) => nennt(T, k));
+  /* Zahlen im Satz: Ziffern und Zahlwörter (nicht „ein/eine“) */
+  function zahlenIn(T) {
+    const aus = [];
+    for (const w of T.trim().split(" ")) {
+      if (/^\d+$/.test(w)) aus.push(parseInt(w, 10));
+      else if (w === "eins") aus.push(1);
+      else { const i = ZAHL.indexOf(w); if (i >= 2) aus.push(i); else for (let n = 13; n <= 31; n++) if (kardinal(n) === w) aus.push(n); }
+    }
+    return aus;
+  }
+  const woerterZahl = (T) => T.trim().split(" ").length;
+  /* „es gibt / haben / bauen“ + unbestimmter Artikel vor dem Gebäude: stimmt der Akkusativ? */
+  function artikelAkk(T, H, wozu) {
+    const m = new RegExp(" (ein|eine|einen|einem|einer|kein|keine|keinen|keinem|keiner) (?:[a-zäöüß]+ )?" + namenVon(H.key)[0] + " ").exec(T);
+    if (!m) return null;
+    const soll = m[1][0] === "k" ? EINF[H.g][3] : EINF[H.g][1];
+    return m[1] === soll ? null : "Fast! " + wozu + " braucht den Akkusativ: " + nom(H) + " → " + soll + " " + H.name + ".";
+  }
+  /* was der Stadt noch fehlt (nicht gebaut, nicht im Bau) – in dieser Reihenfolge */
+  const PRIO = ["labor", "sternwarte", "krankenhaus", "bibliothek", "schule", "gasthaus", "brauerei", "marktstand", "muehle", "baeckerei"];
+  const fehltDer = (S) => GEB(PRIO.find((k) => !S.da.has(k) && !S.bau.some((b) => b.key === k)) || "");
+  const FORSCH = ["labor", "bibliothek", "schule", "sternwarte"];
+  const ausLabor = (z) => (z.key === "labor" ? "aus dem Labor" : "von der Universität");
+  /* warum man ein Gebäude bauen sollte: als Nebensatz (Verb am Ende) und als Hauptsatz (der typische Fehler nach „weil“) */
+  const GRUND = { labor: ["die Forschung für die Zukunft wichtig ist", "die Forschung ist für die Zukunft wichtig"],
+    sternwarte: ["die Kinder dort viel über die Sterne lernen könnten", "die Kinder könnten dort viel über die Sterne lernen"],
+    krankenhaus: ["die Menschen eine gute Versorgung brauchen", "die Menschen brauchen eine gute Versorgung"],
+    bibliothek: ["Bücher für alle zugänglich sein sollten", "Bücher sollten für alle zugänglich sein"], schule: ["Bildung das Wichtigste ist", "Bildung ist das Wichtigste"],
+    gasthaus: ["Besucher einen Ort zum Übernachten brauchen", "Besucher brauchen einen Ort zum Übernachten"], brauerei: ["ein eigenes Bier Arbeitsplätze schafft", "ein eigenes Bier schafft Arbeitsplätze"],
+    marktstand: ["frisches Obst und Gemüse in jede Stadt gehören", "frisches Obst und Gemüse gehören in jede Stadt"], muehle: ["die Bäckerei Mehl braucht", "die Bäckerei braucht Mehl"],
+    baeckerei: ["frisches Brot jeden Morgen dazugehört", "frisches Brot gehört jeden Morgen dazu"], park: ["Grünflächen gut für die Gesundheit sind", "Grünflächen sind gut für die Gesundheit"] };
+  const BEREICH = { labor: "bei der Forschung", sternwarte: "bei der Wissenschaft", krankenhaus: "bei der Gesundheitsversorgung", bibliothek: "bei der Bildung",
+    schule: "bei der Bildung", gasthaus: "beim Tourismus", brauerei: "bei der Wirtschaft", marktstand: "bei der Nahversorgung", muehle: "bei der Versorgung", baeckerei: "bei der Versorgung" };
+  const MIT_GRUND = / (weil|da|denn|deshalb|deswegen|darum|daher|schließlich|nämlich|damit|sodass|obwohl|zwar|aber) /;
+
+  const NEU = [
+    /* ---------- A1 ---------- */
+    { id: "forscher_gibt", niveau: "A1", kat: "artikel", titel: "Eine Forscherin zählt Gebäude", person: { art: 1 }, braucht: FORSCH, ziel: ["labor", "bibliothek", "schule"],
+      vars: (S, z) => {
+        const kand = ["krankenhaus", "bibliothek", "schule", "gasthaus", "baeckerei", "brauerei", "muehle", "schmiede", "labor", "sternwarte", "kaserne", "bergwerk", "marktstand", "gefaengnis", "kuhstall", "huehnerstall", "flickstube"]
+          .filter((k) => k !== z.key && !S.bau.some((b) => b.key === k));
+        const ja = kand.filter((k) => S.da.has(k)), nein = kand.filter((k) => !S.da.has(k));
+        const l = (zufall() < 0.5 && ja.length) || !nein.length ? ja : nein; if (!l.length) return null;
+        const k = wahl(l); return { haus: GEB(k), da: S.da.has(k) };
+      },
+      text: (z, v) => "Eine Forscherin " + ausLabor(z) + " macht eine Studie über deine Stadt. Sie fragt: „Gibt es hier " + einA(v.haus) + "?“",
+      frage: "Schau in deine Stadt. Was antwortest du?",
+      antworten: (z, v) => { const H = v.haus, akk = "Fast! „es gibt“ braucht den Akkusativ: " + nom(H) + " → " + einA(H) + "."; return v.da ? [
+        { html: "„Ja, es gibt " + einA(H) + ".“", richtig: true },
+        { html: "„Ja, es gibt " + FALSCH_A[H.g] + " " + H.name + ".“", hinweis: akk },
+        { html: "„Nein, es gibt " + keinA(H) + ".“", hinweis: "Schau noch einmal in deine Stadt: " + Nom(H) + " steht schon da." }] : [
+        { html: "„Nein, es gibt " + keinA(H) + ".“", richtig: true },
+        { html: "„Nein, es gibt " + FALSCH_K[H.g] + " " + H.name + ".“", hinweis: "Fast! „es gibt“ braucht den Akkusativ: " + nom(H) + " → " + keinA(H) + "." },
+        { html: "„Ja, es gibt " + einA(H) + ".“", hinweis: "Schau noch einmal: " + Nom(H) + " gibt es in deiner Stadt noch nicht." }]; },
+      danke: "„Danke! Das schreibe ich in meine Studie.“",
+      pruefe: (T, qu) => {
+        const H = qu.vars.haus, da = qu.vars.da;
+        const nein = / (nein|kein|keine|keinen|keiner|nicht|leider) /.test(T), ja = !nein && / (ja|klar|natürlich|genau|gibt|haben|steht|hat) /.test(T);
+        if (!ja && !nein) return null;
+        if (!nennt(T, H.key) && !/ (gibt|haben|hat|steht) /.test(T)) return { fehlt: "Antworte mit einem ganzen Satz: „" + (da ? "Ja, es gibt " + einA(H) : "Nein, es gibt " + keinA(H)) + ".“" };
+        if (nein && da) return { falsch: "Schau noch einmal in deine Stadt: " + Nom(H) + " steht schon da." };
+        if (ja && !da) return { falsch: "Schau noch einmal: " + Nom(H) + " gibt es in deiner Stadt noch nicht." };
+        const f = artikelAkk(T, H, "„es gibt“"); if (f) return { fehler: f };
+        return { ok: true, antwort: da ? "„Prima – " + nom(H) + " kommt auf meine Liste.“" : "„Danke! Vielleicht baut die Stadt ja bald " + einA(H) + ".“" };
+      },
+      woerter: (z, v) => [v.haus.name, "Forscherin", "Studie"], frei: "Sag, ob es das Gebäude in deiner Stadt gibt: „Ja, es gibt …“ oder „Nein, es gibt kein …“." },
+    { id: "bahnhof_gleis", niveau: "A1", kat: "zahlen", titel: "Welches Gleis?", person: { art: 2, er: true }, ziel: ["bahnhof"],
+      vars: () => ({ gleis: 1 + Math.floor(zufall() * 9) }),
+      text: (z, v) => "Ein Reisender mit Koffer fragt: „Entschuldigung, von welchem Gleis fährt der Zug nach " + v.stadt + "?“ Auf der Anzeigetafel steht: " + v.stadt + " · 14:10 Uhr · Gleis " + v.gleis + ".",
+      frage: "Lies die Tafel. Was sagst du?",
+      antworten: (z, v) => [
+        { html: "„Der Zug fährt von Gleis " + ZAHL[v.gleis] + ".“", richtig: true },
+        { html: "„Der Zug fahrt von Gleis " + ZAHL[v.gleis] + ".“", hinweis: "Fast! „fahren“ hat bei er, sie, es einen Umlaut: Der Zug fährt …" },
+        { html: "„Der Zug fährt nach Gleis " + ZAHL[v.gleis] + ".“", hinweis: "Fast! Der Zug fährt „von“ Gleis " + ZAHL[v.gleis] + " ab – nicht „nach“." }],
+      danke: "„Danke! Dann muss ich mich beeilen.“",
+      pruefe: (T, qu) => {
+        const g = qu.vars.gleis, z = zahlenIn(T), ORD = ["", "erste", "zweite", "dritte", "vierte", "fünfte", "sechste", "siebte", "achte", "neunte"];
+        const ord = ORD.findIndex((o, i) => i && new RegExp(" " + o + "n? ").test(T));
+        if (!/ (gleis|gleise|bahnsteig|fährt|fahrt|zug) /.test(T) && !z.length) return null;
+        if (z.indexOf(g) < 0) { if (ord === g) return { fehler: "Fast! Bei Gleisen sagt man die Grundzahl: Gleis " + ZAHL[g] + "." }; return z.length || ord > 0 ? { falsch: "Schau noch einmal auf die Tafel: Gleis " + g + "." } : { fehlt: "Sag auch, von welchem Gleis: „Der Zug fährt von Gleis " + ZAHL[g] + ".“" }; }
+        if (/ fahrt /.test(T)) return { fehler: "Fast! „fahren“ hat bei er, sie, es einen Umlaut: Der Zug fährt …" };
+        if (/ nach gleis /.test(T)) return { fehler: "Fast! Der Zug fährt „von“ (oder „auf“) Gleis " + ZAHL[g] + " ab – nicht „nach“." };
+        return { ok: true, antwort: "„Gleis " + ZAHL[g] + " – danke! Dann muss ich mich beeilen.“" };
+      },
+      woerter: (z, v) => ["Gleis", v.stadt, "Anzeigetafel"], frei: "Sag, von welchem Gleis der Zug fährt – die Tafel hilft dir." },
+    { id: "fischer_fang", niveau: "A1", kat: "wortbildung", titel: "Ein guter Fang", person: { art: 5, er: true }, ziel: ["bootsverleih"],
+      vars: () => ({ n: 2 + Math.floor(zufall() * 5) }),
+      text: (z, v) => "Ein Fischer kommt vom See und zeigt dir seinen Eimer. Er lacht: „Rate mal! Wie viele Fische habe ich heute gefangen?“ Im Eimer: " + "🐟".repeat(v.n),
+      frage: "Zähl nach. Was antwortest du?",
+      antworten: (z, v) => [
+        { html: "„Du hast " + ZAHL[v.n] + " Fische gefangen.“", richtig: true },
+        { html: "„Du hast " + ZAHL[v.n] + " Fisch gefangen.“", hinweis: "Fast! Mehr als einer – also Plural: der Fisch, die Fische." },
+        { html: "„Du hast " + ZAHL[v.n] + " Fischen gefangen.“", hinweis: "Fast! Das -n gehört nur in den Dativ (mit den Fischen). Hier: " + ZAHL[v.n] + " Fische." }],
+      danke: "„Richtig! Heute Abend gibt es Fisch.“",
+      pruefe: (T, qu) => {
+        const n = qu.vars.n, z = zahlenIn(T);
+        if (!/ (fisch|fische|fischen|fischs|gefangen) /.test(T) && !z.length) return null;
+        if (!z.length) return { fehlt: "Sag auch, wie viele: Zähl die Fische im Eimer." };
+        if (z.indexOf(n) < 0) return { falsch: "Zähl noch einmal: Im Eimer sind " + ZAHL[n] + " Fische." };
+        if (/ fischen /.test(T) && !/ (den|mit|von|zu|bei|aus) fischen /.test(T)) return { fehler: "Fast! Das -n gehört nur in den Dativ (mit den Fischen). Hier: " + ZAHL[n] + " Fische." };
+        if (new RegExp(" (" + ZAHL[n] + "|" + n + ") fischs? ").test(T)) return { fehler: "Fast! Mehr als einer – also Plural: der Fisch, die Fische." };
+        return { ok: true, antwort: n >= 5 ? "„Genau! Heute Abend gibt es Fisch für alle.“" : "„Richtig! Nicht viel – aber lecker.“" };
+      },
+      woerter: ["Eimer", "gefangen", "See"], frei: "Sag, wie viele Fische der Fischer gefangen hat." },
+    { id: "krankenhaus_befinden", niveau: "A1", kat: "faelle", titel: "Wie geht es Ihnen?", person: { art: 1 }, ziel: ["krankenhaus"],
+      text: () => "Du warst krank und gehst zur Kontrolle ins Krankenhaus. Die Ärztin fragt: „Guten Tag! Wie geht es Ihnen heute?“",
+      frage: "Was antwortest du?",
+      antworten: () => [
+        { html: "„Mir geht es gut, danke.“", richtig: true },
+        { html: "„Ich geht es gut, danke.“", hinweis: "Fast! Bei „Wie geht es …?“ steht die Person im Dativ: Mir geht es gut." },
+        { html: "„Mich geht es gut, danke.“", hinweis: "Fast! Nicht „mich“ (Akkusativ), sondern „mir“ (Dativ): Mir geht es gut." }],
+      danke: "„Das freut mich! Dann machen wir nur eine kurze Kontrolle.“",
+      pruefe: (T) => {
+        if (/ (ich|mich) geht /.test(T)) return { fehler: "Fast! Bei „Wie geht es …?“ steht die Person im Dativ: Mir geht es gut." };
+        if (/ ich bin (gut|super|okay|ok|prima|toll) /.test(T) && !/ geht /.test(T)) return { fehler: "Fast! „Ich bin gut“ heißt: Ich kann etwas gut. Beim Befinden sagt man: Mir geht es gut." };
+        if (!/ (geht|gut|schlecht|besser|super|prima|toll|okay|ok|müde|krank|lala|bestens|wunderbar|ausgezeichnet|schlimm) /.test(T)) return null;
+        return { ok: true, antwort: / (schlecht|nicht so gut|nicht gut|müde|krank|schlimm|weh) /.test(T) ? "„Oh, das tut mir leid. Ich schaue mir das gleich genau an.“" : "„Das freut mich! Dann machen wir nur eine kurze Kontrolle.“" };
+      },
+      woerter: ["Ärztin", "Kontrolle", "danke"], frei: "Sag der Ärztin, wie es dir geht: „Mir geht es …“." },
+    { id: "rathaus_stadtname", niveau: "A1", kat: "artikel", titel: "Ein Formular im Rathaus", person: { art: 1 }, ziel: ["rathaus"],
+      stand: (S) => !!S.name, vars: (S) => (S.name ? { name: S.name } : null),
+      text: () => "Eine Beamtin im Rathaus füllt ein Formular für dich aus. Sie fragt: „Wie heißt Ihre Stadt?“",
+      frage: "Was antwortest du?",
+      antworten: (z, v) => [
+        { html: "„Meine Stadt heißt " + esc(v.name) + ".“", richtig: true },
+        { html: "„Mein Stadt heißt " + esc(v.name) + ".“", hinweis: "Fast! Es heißt „die Stadt“ – also „meine Stadt“." },
+        { html: "„Meine Stadt heiße " + esc(v.name) + ".“", hinweis: "Fast! „meine Stadt“ ist „sie“ – also „heißt“: Meine Stadt heißt …" }],
+      danke: "„Danke, das trage ich gleich ein.“",
+      pruefe: (T, qu) => {
+        const name = qu.vars.name, nm = fw(name).trim();
+        if (/ mein stadt /.test(T)) return { fehler: "Fast! Es heißt „die Stadt“ – also „meine Stadt“." };
+        if (/ stadt heiße /.test(T)) return { fehler: "Fast! „meine Stadt“ ist „sie“ – also „heißt“: Meine Stadt heißt " + name + "." };
+        if (T.indexOf(" " + nm + " ") < 0) return / (heißt|heiße|heißen|name|stadt|wohne) /.test(T) ? { fehlt: "Sag den Namen deiner Stadt: " + name + "." } : null;
+        if (woerterZahl(T) < 3) return { fehlt: "Sag es als ganzen Satz: „Meine Stadt heißt " + name + ".“" };
+        return { ok: true, antwort: "„" + name + " – ein schöner Name! Das trage ich gleich ein.“" };
+      },
+      woerter: (z, v) => [v.name, "Formular", "Rathaus"], frei: "Sag, wie deine Stadt heißt: „Meine Stadt heißt …“." },
+    /* ---------- A2 ---------- */
+    { id: "bau_kran", niveau: "A2", kat: "artikel", titel: "Was baut ihr da?", person: { art: 3, klein: true }, ziel: ["rathaus", "schule", "brunnen", "baeckerei"],
+      stand: (S) => S.bau.some((b) => GEB(b.key)),
+      vars: (S) => { const b = S.bau.find((x) => x.neu && GEB(x.key)) || S.bau.find((x) => GEB(x.key)); return b ? { bau: GEB(b.key), neu: b.neu } : null; },
+      text: () => "Ein Kind zeigt auf den Baukran: „Was baut ihr da?“",
+      frage: "Schau, was in deiner Stadt gerade gebaut wird. Was sagst du?",
+      antworten: (z, v) => { const B = v.bau; return v.neu ? [
+        { html: "„Wir bauen gerade " + einA(B) + ".“", richtig: true },
+        { html: "„Wir bauen gerade " + FALSCH_A[B.g] + " " + B.name + ".“", hinweis: "Fast! „bauen“ braucht den Akkusativ: " + nom(B) + " → " + einA(B) + "." },
+        { html: "„Wir baut gerade " + einA(B) + ".“", hinweis: "Fast! Mit „wir“ heißt es „wir bauen“." }] : [
+        { html: "„Wir bauen " + akk(B) + " aus.“", richtig: true },
+        { html: "„Wir ausbauen " + akk(B) + ".“", hinweis: "Fast! „ausbauen“ ist trennbar: Wir bauen " + akk(B) + " aus." },
+        { html: "„Wir baut " + akk(B) + " aus.“", hinweis: "Fast! Mit „wir“ heißt es „wir bauen“." }]; },
+      danke: "„Cool! Darf ich zuschauen, wenn die Bauleute arbeiten?“",
+      pruefe: (T) => {
+        const S = stadtStand(), im = S.bau.map((b) => GEB(b.key)).filter(Boolean), B = im.find((h) => nennt(T, h.key));
+        if (!B) {
+          const fertig = genannt(T).find((k) => S.da.has(k) && !S.bau.some((b) => b.key === k));
+          if (fertig) return { falsch: Nom(GEB(fertig)) + " steht schon fertig da. Gebaut wird gerade: " + im.map(nom).join(", ") + "." };
+          return / (bauen|baut|bau|kran|baustelle) /.test(T) ? { fehlt: "Sag auch, was gebaut wird – schau auf die Baustelle." } : null;
+        }
+        if (/ wir baut /.test(T)) return { fehler: "Fast! Mit „wir“ heißt es „wir bauen“." };
+        if (/ wir ausbauen /.test(T)) return { fehler: "Fast! „ausbauen“ ist trennbar: Wir bauen " + akk(B) + " aus." };
+        const f = artikelAkk(T, B, "„bauen“"); if (f) return { fehler: f };
+        return { ok: true, antwort: "„Cool! Darf ich zuschauen, wenn die Bauleute arbeiten?“" };
+      },
+      woerter: (z, v) => [v.bau.name, "Baukran", "gerade"], frei: "Sag, was in deiner Stadt gerade gebaut wird: „Wir bauen gerade …“." },
+    { id: "reisende_uebernachten", niveau: "A2", kat: "praepositionen", titel: "Der letzte Zug ist weg", person: { art: 4 }, ziel: ["gasthaus"],
+      text: () => "Eine Reisende kommt vom Bahnhof: „Mein Zug ist ausgefallen. Wo kann ich hier übernachten?“",
+      frage: "Was empfiehlst du ihr?",
+      antworten: () => [
+        { html: "„Im Gasthaus können Sie übernachten.“", richtig: true },
+        { html: "„Im Gasthaus Sie können übernachten.“", hinweis: "Fast! Das Verb steht an zweiter Stelle: Im Gasthaus können Sie übernachten." },
+        { html: "„In Gasthaus können Sie übernachten.“", hinweis: "Fast! in + dem = im: im Gasthaus." }],
+      danke: "„Super, danke! Dann schlafe ich heute im Gasthaus.“",
+      pruefe: (T) => {
+        if (/ (hotel|pension|hostel|jugendherberge) /.test(T) && !/ (gasthaus|gasthof) /.test(T)) return { fehlt: "Ein Hotel gibt es in deiner Stadt nicht – wo kann man hier übernachten?" };
+        if (!/ (gasthaus|gasthof|wirtshaus|zimmer) /.test(T)) return null;
+        if (/ (im|in dem) (gasthaus|gasthof) (sie|du|man) (können|kannst|kann|könnten|könnte|dürfen) /.test(T)) return { fehler: "Fast! Das Verb steht an zweiter Stelle: Im Gasthaus können Sie übernachten." };
+        if (/ in (gasthaus|gasthof) /.test(T)) return { fehler: "Fast! in + dem = im: im Gasthaus." };
+        if (/ in das (gasthaus|gasthof) /.test(T) && / übernacht/.test(T)) return { fehler: "Fast! Wo? → Dativ: im Gasthaus übernachten." };
+        return { ok: true, antwort: "„Super, danke! Dann schlafe ich heute im Gasthaus.“" };
+      },
+      woerter: ["Gasthaus", "übernachten", "Zimmer"], frei: "Sag ihr, wo man in deiner Stadt übernachten kann." },
+    { id: "krankenhaus_besuch", niveau: "A2", kat: "uhrzeit", titel: "Blumen für Oma", person: { art: 3, klein: true }, ziel: ["krankenhaus"],
+      vars: () => ({ zeit: wahl([[14, 18], [15, 19], [10, 12], [16, 20]]) }),
+      text: (z, v) => "Ein Junge mit Blumen fragt: „Meine Oma liegt im Krankenhaus. Wann kann ich sie besuchen?“ Am Eingang steht: Besuchszeit " + v.zeit[0] + " bis " + v.zeit[1] + " Uhr.",
+      frage: "Was antwortest du?",
+      antworten: (z, v) => [
+        { html: "„Du kannst sie von " + v.zeit[0] + " bis " + v.zeit[1] + " Uhr besuchen.“", richtig: true },
+        { html: "„Du kannst sie von " + v.zeit[0] + " bis " + v.zeit[1] + " Uhr besuchst.“", hinweis: "Fast! Nach „kannst“ steht der Infinitiv am Ende: … besuchen." },
+        { html: "„Du kannst sie seit " + v.zeit[0] + " bis " + v.zeit[1] + " Uhr besuchen.“", hinweis: "Fast! Für eine Zeitspanne sagt man „von … bis …“." }],
+      danke: "„Danke! Oma freut sich bestimmt.“",
+      pruefe: (T, qu) => {
+        const [a, b] = qu.vars.zeit, z = zahlenIn(T), passt = (h) => z.indexOf(h) >= 0 || z.indexOf(h - 12) >= 0;
+        if (!z.length) return / (besuchen|besuch|kannst|darfst|uhr|nachmittag|heute|abends) /.test(T) ? { fehlt: "Sag auch, wann: von " + a + " bis " + b + " Uhr." } : null;
+        if (!passt(a) || !passt(b)) return { falsch: "Schau noch einmal aufs Schild: Besuchszeit von " + a + " bis " + b + " Uhr." };
+        if (/ besuchst /.test(T) && / (kannst|darfst|kann|darf) /.test(T)) return { fehler: "Fast! Nach „kannst“ steht der Infinitiv am Ende: … besuchen." };
+        if (/ seit [^ ]+ (uhr )?bis /.test(T)) return { fehler: "Fast! Für eine Zeitspanne sagt man „von … bis …“." };
+        return { ok: true, antwort: "„Danke! Dann bringe ich Oma die Blumen um " + a + " Uhr.“" };
+      },
+      woerter: ["Besuchszeit", "Oma", "Krankenhaus", "Uhr"], frei: "Sag ihm, wann er seine Oma besuchen kann – das Schild hilft dir." },
+    { id: "bibliothek_ausleihe", niveau: "A2", kat: "verben", titel: "Wie lange darf ich es behalten?", person: { art: 2, er: true }, ziel: ["bibliothek"],
+      vars: () => ({ wochen: wahl([2, 3, 4]) }),
+      text: (z, v) => "Ein Student leiht ein dickes Buch aus und fragt: „Wie lange darf ich das Buch behalten?“ Auf dem Zettel steht: Leihfrist " + v.wochen + " Wochen.",
+      frage: "Was antwortest du?",
+      antworten: (z, v) => [
+        { html: "„Sie dürfen das Buch " + ZAHL[v.wochen] + " Wochen behalten.“", richtig: true },
+        { html: "„Sie dürft das Buch " + ZAHL[v.wochen] + " Wochen behalten.“", hinweis: "Fast! Mit „Sie“ heißt es „Sie dürfen“." },
+        { html: "„Sie dürfen das Buch " + ZAHL[v.wochen] + " Woche behalten.“", hinweis: "Fast! Mehrere – also Plural: die Woche, die Wochen." }],
+      danke: "„Danke! Das reicht mir.“",
+      pruefe: (T, qu) => {
+        const w = qu.vars.wochen, z = zahlenIn(T);
+        if (!/ (woche|wochen|behalten|dürfen|darfst|dürft|lange|leihfrist) /.test(T)) return null;
+        if (!z.length) return { fehlt: "Sag auch, wie lange: " + ZAHL[w] + " Wochen." };
+        if (z.indexOf(w) < 0) return { falsch: "Schau noch einmal auf den Zettel: " + ZAHL[w] + " Wochen." };
+        if (/ sie dürft /.test(T)) return { fehler: "Fast! Mit „Sie“ heißt es „Sie dürfen“." };
+        if (new RegExp(" (" + ZAHL[w] + "|" + w + ") woche ").test(T)) return { fehler: "Fast! Mehrere – also Plural: die Woche, die Wochen." };
+        return { ok: true, antwort: "„" + GROSS(ZAHL[w]) + " Wochen – das reicht mir. Danke!“" };
+      },
+      woerter: ["Leihfrist", "Buch", "behalten"], frei: "Sag ihm, wie lange er das Buch behalten darf – der Zettel hilft dir." },
+    { id: "brauerei_fuehrung", niveau: "A2", kat: "uhrzeit", titel: "Eine Führung durch die Brauerei", person: { art: 5, er: true }, ziel: ["brauerei"],
+      vars: () => ({ h: wahl([11, 14, 15, 16]) }),
+      text: (z, v) => "Ein Tourist steht vor der Brauerei: „Ich möchte die Brauerei besichtigen. Wann beginnt die nächste Führung?“ Am Tor hängt ein Schild: Führung heute um " + v.h + " Uhr.",
+      frage: "Was sagst du?",
+      antworten: (z, v) => [
+        { html: "„Die Führung beginnt um " + kardinal(v.h) + " Uhr.“", richtig: true },
+        { html: "„Die Führung beginnt am " + kardinal(v.h) + " Uhr.“", hinweis: "Fast! Bei der Uhrzeit sagt man „um“: um " + kardinal(v.h) + " Uhr." },
+        { html: "„Die Führung beginnen um " + kardinal(v.h) + " Uhr.“", hinweis: "Fast! „die Führung“ ist eins – also „beginnt“." }],
+      danke: "„Danke! Dann trinke ich vorher noch einen Kaffee.“",
+      pruefe: (T, qu) => {
+        const h = qu.vars.h, z = zahlenIn(T);
+        if (!/ (uhr|führung|beginnt|beginnen|fängt|anfängt|los) /.test(T) && !z.length) return null;
+        if (!z.length) return { fehlt: "Sag auch die Uhrzeit: um " + kardinal(h) + " Uhr." };
+        if (z.indexOf(h) < 0 && z.indexOf(h - 12) < 0) return { falsch: "Schau noch einmal aufs Schild: um " + h + " Uhr." };
+        if (/ führung beginnen /.test(T)) return { fehler: "Fast! „die Führung“ ist eins – also „beginnt“." };
+        return { ok: true, antwort: "„Um " + kardinal(h) + " – perfekt! Dann trinke ich vorher noch einen Kaffee.“" };
+      },
+      woerter: ["Führung", "Brauerei", "Uhr"], frei: "Sag ihm, wann die Führung beginnt – das Schild hilft dir." },
+    /* ---------- B1 ---------- */
+    { id: "forscher_veraendert", niveau: "B1", kat: "zeiten", titel: "Eine Chronik der Stadt", person: { art: 2, er: true }, braucht: FORSCH, ziel: ["labor", "bibliothek", "schule"],
+      vars: (S) => { const l = Array.from(S.haeuser).filter((k) => GEB(k) && k !== "brunnen"); return l.length ? { haus: GEB(wahl(l)) } : null; },
+      text: () => "Ein Wissenschaftler schreibt eine Chronik über deine Stadt. Er fragt: „Was hat sich in Ihrer Stadt in letzter Zeit verändert?“",
+      frage: "Erzähl im Perfekt, was neu ist (schau in deine Stadt).",
+      antworten: (z, v) => [
+        { html: "„Wir haben " + einA(v.haus) + " gebaut, und die Stadt ist gewachsen.“", richtig: true },
+        { html: "„Wir sind " + einA(v.haus) + " gebaut, und die Stadt ist gewachsen.“", hinweis: "Fast! „bauen“ bildet das Perfekt mit „haben“: Wir haben … gebaut." },
+        { html: "„Wir haben " + einA(v.haus) + " gebaut, und die Stadt hat gewachsen.“", hinweis: "Fast! „wachsen“ ist eine Veränderung – das Perfekt mit „sein“: Die Stadt ist gewachsen." }],
+      danke: "„Interessant! Das kommt in die Chronik.“",
+      pruefe: (T, qu) => {
+        const S = stadtStand(), namen = genannt(T);
+        const aenderung = / (gebaut|eröffnet|erweitert|vergrößert|verändert|gewachsen|größer|schöner|neu|neue|neues|neuen|mehr|renoviert|ausgebaut|angelegt|bekommen|entstanden|aufgestellt) /.test(T);
+        if (!aenderung && !namen.length) return null;
+        if (/ gebaut /.test(T)) for (const k of namen) {
+          if (S.da.has(k)) continue; const H = GEB(k); if (!H) continue;
+          return S.bau.some((b) => b.key === k) ? { falsch: Nom(H) + " ist noch nicht fertig – " + PRON[H.g] + " wird gerade gebaut." } : { falsch: Nom(H) + " gibt es in deiner Stadt noch nicht." };
+        }
+        if (/ (wir|ich|man) (sind|bin|ist) ([^ ]+ ){0,4}gebaut /.test(T)) return { fehler: "Fast! „bauen“ bildet das Perfekt mit „haben“: Wir haben … gebaut." };
+        if (/ (stadt|sie|es|dorf|bevölkerung) (hat|haben) ([^ ]+ ){0,3}gewachsen /.test(T)) return { fehler: "Fast! „wachsen“ ist eine Veränderung – das Perfekt mit „sein“: Die Stadt ist gewachsen." };
+        const perfekt = / (habe|haben|hat|hast|habt|sind|ist|bin|bist) /.test(T) && (/ ge[a-zäöüß]+(t|en) /.test(T) || / [a-zäöüß]+iert /.test(T) || / (eröffnet|erweitert|vergrößert|verändert|bekommen|entstanden|renoviert|ausgebaut|angelegt|aufgestellt) /.test(T));
+        if (!perfekt) return { fehlt: "Erzähl es im Perfekt – was ist schon passiert? Zum Beispiel: „Wir haben " + einA(qu.vars.haus) + " gebaut.“" };
+        const H = namen.length ? GEB(namen[0]) : null;
+        return { ok: true, antwort: H ? "„" + Nom(H) + " – das kommt in die Chronik. Vielen Dank!“" : "„Interessant! Das schreibe ich in die Chronik.“" };
+      },
+      woerter: (z, v) => [v.haus.name, "Chronik", "gebaut", "gewachsen"], frei: "Erzähl im Perfekt, was in deiner Stadt neu ist: „Wir haben … gebaut.“" },
+    { id: "reisende_empfehlung", niveau: "B1", kat: "faelle", titel: "Nur ein Tag in der Stadt", person: { art: 4 }, ziel: ["koelner_dom", "fernsehturm", "holstentor", "brandenburger", "neuschwanstein"],
+      text: () => "Eine Reisende kommt mit dem Zug an: „Ich habe nur einen Tag hier. Was sollte ich mir unbedingt ansehen?“",
+      frage: "Empfiehl ihr etwas aus deiner Stadt – mit Begründung (weil …).",
+      antworten: (z) => { const p = PRON[z.g]; return [
+        { html: "„Sie sollten sich " + akk(z) + " ansehen, weil " + p + " wirklich beeindruckend ist.“", richtig: true },
+        { html: "„Sie sollten sich " + akk(z) + " ansehen, weil " + p + " ist wirklich beeindruckend.“", hinweis: "Fast! Nach „weil“ steht das Verb am Ende: … weil " + p + " wirklich beeindruckend ist." },
+        { html: "„Sie sollten sich " + (z.g === "der" ? "der" : "dem") + " " + z.name + " ansehen, weil " + p + " wirklich beeindruckend ist.“", hinweis: "Fast! „sich etwas ansehen“ braucht den Akkusativ: sich " + akk(z) + " ansehen." }]; },
+      danke: "„Danke für den Tipp – da gehe ich zuerst hin!“",
+      pruefe: (T, qu) => {
+        const S = stadtStand(), namen = genannt(T);
+        const rat = / (sollten|solltest|sollte|müssen|musst|können|kannst|empfehle|empfehlen|lohnt|unbedingt|besten|schauen|besuchen|ansehen|anschauen|gehen) /.test(T);
+        if (!namen.length) return rat ? { fehlt: "Nenn ihr einen Ort aus deiner Stadt, den sie sich ansehen sollte." } : null;
+        const da = namen.filter((k) => S.da.has(k));
+        if (!da.length) return { falsch: Nom(GEB(namen[0])) + " gibt es in deiner Stadt nicht – empfiehl etwas, das es wirklich gibt." };
+        if (!MIT_GRUND.test(T)) return { fehlt: "Gut! Und warum? Begründe es kurz – mit „weil …“." };
+        const H = GEB(da[0]);
+        if (new RegExp(" sich (der|dem) (?:[a-zäöüß]+ )?" + namenVon(H.key)[0] + " ").test(T)) return { fehler: "Fast! „sich etwas ansehen“ braucht den Akkusativ: sich " + akk(H) + " ansehen." };
+        return { ok: true, antwort: H.key === qu.ziel.key ? "„" + Nom(H) + " – genau da wollte ich hin. Danke für den Tipp!“" : "„" + Nom(H) + "? Das merke ich mir! Zuerst schaue ich mir aber " + akk(qu.ziel) + " an.“" };
+      },
+      woerter: (z) => [z.name, "ansehen", "beeindruckend", "unbedingt"], frei: "Empfiehl ihr ein Wahrzeichen oder Gebäude deiner Stadt und sag, warum (weil …)." },
+    { id: "fischer_wetter", niveau: "B1", kat: "wortstellung", titel: "Der Fischer und das Wetter", person: { art: 5, er: true }, ziel: ["bootsverleih"],
+      text: () => "Ein Fischer am See: „Morgen früh will ich hinaus auf den See. Was soll ich tun, wenn es regnet?“",
+      frage: "Gib ihm einen Rat – zum Beispiel mit „Wenn es regnet, …“.",
+      antworten: () => [
+        { html: "„Wenn es regnet, sollten Sie lieber an Land bleiben.“", richtig: true },
+        { html: "„Wenn es regnet, Sie sollten lieber an Land bleiben.“", hinweis: "Fast! Nach dem wenn-Satz kommt zuerst das Verb: Wenn es regnet, sollten Sie …" },
+        { html: "„Wenn regnet es, sollten Sie lieber an Land bleiben.“", hinweis: "Fast! Im wenn-Satz steht das Verb am Ende: wenn es regnet." }],
+      danke: "„Gute Idee. Dann flicke ich eben meine Netze.“",
+      pruefe: (T) => {
+        if (/ (wenn|falls) (regnet|stürmt|schneit|gewittert|ist|gibt|kommt) (es|das|der|ein) /.test(T)) return { fehler: "Fast! Im wenn-Satz steht das Verb am Ende: wenn es regnet." };
+        if (!/ (sollten|solltest|sollte|sollen|soll|können|kannst|könnten|müssen|musst|würde|würden|bleiben|bleib|bleibe|nehmen|nimm|nehme|warten|warte|anziehen|zieh|regenjacke|regenmantel|schirm|regenschirm|hause|daheim|land|lieber|besser|verschieben) /.test(T)) return null;
+        return { ok: true, antwort: / (jacke|regenjacke|mantel|regenmantel|schirm|regenschirm|anziehen|zieh) /.test(T) ? "„Stimmt – mit Regenjacke geht es auch. Danke!“" : "„Gute Idee. Dann flicke ich eben meine Netze.“" };
+      },
+      woerter: ["Fischer", "regnet", "an Land", "Regenjacke"], frei: "Gib dem Fischer einen Rat für Regenwetter: „Wenn es regnet, sollten Sie …“." },
+    { id: "gasthaus_beschwerde", niveau: "B1", kat: "stil", titel: "Die Suppe ist kalt", person: { art: 5, er: true }, ziel: ["gasthaus"],
+      text: () => "Im Gasthaus bringt dir der Kellner eine Suppe – sie ist kalt. Er fragt freundlich: „Schmeckt es Ihnen?“",
+      frage: "Beschwer dich höflich.",
+      antworten: () => [
+        { html: "„Entschuldigung, die Suppe ist leider kalt. Könnten Sie sie bitte noch einmal warm machen?“", richtig: true },
+        { html: "„Die Suppe ist kalt! Bringen Sie sofort eine neue!“", hinweis: "Inhaltlich richtig – aber unhöflich. Besser: „Könnten Sie bitte …?“" },
+        { html: "„Entschuldigung, die Suppe ist leider kalt. Könnten Sie sie bitte noch einmal warm machen können?“", hinweis: "Fast! Ein Modalverb reicht: Könnten Sie sie bitte warm machen?" }],
+      danke: "„Oh, das tut mir leid! Ich bringe Ihnen sofort eine heiße Suppe.“",
+      pruefe: (T) => {
+        if (!/ (suppe|essen|kalt|lauwarm|warm|heiß|aufwärmen|wärmen|schmeckt) /.test(T)) return null;
+        if (!/ (kalt|lauwarm|warm|heiß|aufwärmen|wärmen|neue|zurück|nicht) /.test(T)) return { fehlt: "Die Suppe ist aber kalt – sag es dem Kellner, freundlich und höflich." };
+        if (/ (könnten|können|kann|könnte|würden|würde) ([^ ]+ ){1,6}(machen|wärmen|aufwärmen|bringen|holen) (können|könnten) /.test(T)) return { fehler: "Fast! Ein Modalverb reicht: Könnten Sie sie bitte warm machen?" };
+        if (/ (sofort|schnell|gefälligst) /.test(T) || !/ (bitte|könnten|könnte|würden|würde|entschuldigung|entschuldigen|leider|wäre|dürfte|möglich|vielleicht) /.test(T)) return { fehler: "Inhaltlich richtig – aber so klingt es unhöflich. Höflicher: „Entschuldigung, die Suppe ist leider kalt. Könnten Sie sie bitte warm machen?“" };
+        return { ok: true, antwort: "„Oh, das tut mir leid! Ich bringe Ihnen sofort eine heiße Suppe.“" };
+      },
+      woerter: ["Suppe", "kalt", "warm machen", "Entschuldigung"], frei: "Sag dem Kellner höflich, dass die Suppe kalt ist." },
+    { id: "rathaus_anmelden", niveau: "B1", kat: "verben", titel: "Neu in der Stadt", person: { art: 2, er: true }, ziel: ["rathaus"],
+      text: () => "Ein Mann ist gerade mit seiner Familie hergezogen. Er fragt: „Was muss ich als Erstes im Rathaus erledigen?“",
+      frage: "Was rätst du ihm?",
+      antworten: () => [
+        { html: "„Sie müssen sich im Rathaus anmelden.“", richtig: true },
+        { html: "„Sie müssen im Rathaus anmelden.“", hinweis: "Fast! „sich anmelden“ ist reflexiv: Sie müssen sich im Rathaus anmelden." },
+        { html: "„Sie müssen sich im Rathaus melden an.“", hinweis: "Fast! Nach „müssen“ steht das ganze Verb am Ende: … anmelden." }],
+      danke: "„Danke! Dann gehe ich gleich mit meinem Ausweis hin.“",
+      pruefe: (T) => {
+        if (!/ (anmelden|anmeldung|melden|melde|meldet|ummelden|wohnsitz|meldebescheinigung|meldeamt|bürgeramt|formular|ausweis|registrieren) /.test(T)) return null;
+        if (/ (müssen|muss|musst|sollten|sollte|solltest|können|kann|kannst) ([^ ]+ ){0,4}melden ([^ ]+ ){0,3}an $/.test(T)) return { fehler: "Fast! Nach „müssen“ steht das ganze Verb am Ende: … sich im Rathaus anmelden." };
+        if (/ anmelden /.test(T) && !/ (sich|mich|dich|uns|euch) /.test(T) && !/ (ihr|ihre|ihren|das|den|die|ein|eine|einen|mein|meine|meinen) [^ ]+ anmelden /.test(T)) return { fehler: "Fast! „sich anmelden“ ist reflexiv: Sie müssen sich im Rathaus anmelden." };
+        return { ok: true, antwort: "„Danke! Dann gehe ich gleich mit meinem Ausweis hin.“" };
+      },
+      woerter: ["Rathaus", "Ausweis", "Meldebescheinigung", "Wohnsitz"], frei: "Sag ihm, was er im Rathaus tun muss (sich anmelden …)." },
+    { id: "schule_wozu", niveau: "B1", kat: "wortstellung", titel: "Wozu eine Schule?", person: { art: 4 }, ziel: ["schule"],
+      text: () => "Eine Besucherin aus dem Ausland staunt: „Bei uns lernen die Kinder zu Hause. Wozu braucht Ihre Stadt eine Schule?“",
+      frage: "Erkläre es ihr (damit …, weil …).",
+      antworten: () => [
+        { html: "„Wir brauchen eine Schule, damit die Kinder zusammen lernen können.“", richtig: true },
+        { html: "„Wir brauchen eine Schule, um die Kinder zusammen lernen können.“", hinweis: "Fast! „um … zu“ geht nur ohne eigenes Subjekt. Hier passt „damit“: damit die Kinder zusammen lernen können." },
+        { html: "„Wir brauchen eine Schule, damit die Kinder können zusammen lernen.“", hinweis: "Fast! Im damit-Satz steht das Verb am Ende: … lernen können." }],
+      danke: "„Zusammen lernen – das gefällt mir!“",
+      pruefe: (T) => {
+        if (!/ (lernen|lesen|schreiben|rechnen|bildung|wissen|lehrer|lehrerin|freunde|zusammen|beruf|zukunft|kinder|klasse|schule|unterricht) /.test(T)) return null;
+        if (!/ (damit|um|weil|denn|da|sodass|deshalb|deswegen|dort) /.test(T)) return { fehlt: "Begründe es: „…, damit die Kinder …“ oder „…, weil …“." };
+        return { ok: true, antwort: "„Zusammen lernen – das gefällt mir. Vielleicht machen wir das bei uns auch so!“" };
+      },
+      woerter: ["Schule", "Kinder", "zusammen", "Bildung"], frei: "Erkläre, wozu die Stadt eine Schule braucht: „…, damit die Kinder …“." },
+    /* ---------- B2 ---------- */
+    { id: "forscher_bauen", niveau: "B2", kat: "stil", titel: "Was fehlt der Stadt?", person: { art: 1 }, braucht: FORSCH, ziel: ["labor", "bibliothek", "schule"],
+      vars: (S) => { const F = fehltDer(S); return F ? { fehlt: F, verb: "bauen", grund: GRUND[F.key] } : { fehlt: { key: "park", g: "der", name: "Park" }, verb: "anlegen", grund: GRUND.park }; },
+      text: () => "Eine Stadtforscherin untersucht, wie sich Städte entwickeln: „Was sollte Ihre Stadt als Nächstes bauen – und warum?“",
+      frage: "Sag deine Meinung und begründe sie (Meiner Meinung nach …, weil …).",
+      antworten: (z, v) => { const o = einA(v.fehlt) + " " + v.verb; return [
+        { html: "„Meiner Meinung nach sollte die Stadt " + o + ", weil " + v.grund[0] + ".“", richtig: true },
+        { html: "„Meiner Meinung nach die Stadt sollte " + o + ", weil " + v.grund[0] + ".“", hinweis: "Fast! „Meiner Meinung nach“ steht auf Position 1 – danach kommt das Verb: Meiner Meinung nach sollte die Stadt …" },
+        { html: "„Meiner Meinung nach sollte die Stadt " + o + ", weil " + v.grund[1] + ".“", hinweis: "Fast! Nach „weil“ steht das Verb am Ende: … weil " + v.grund[0] + "." }]; },
+      danke: "„Ein überzeugendes Argument – das nehme ich in meine Studie auf.“",
+      pruefe: (T, qu) => {
+        const S = stadtStand();
+        const meinung = / (meiner meinung nach|ich finde|ich denke|ich glaube|ich meine|meines erachtens|aus meiner sicht|ich bin der meinung|ich bin überzeugt|meiner ansicht nach|ich würde|ich schlage|am wichtigsten|sollte|sollten|wäre|bräuchte) /.test(T);
+        if (!meinung && !/ (bauen|errichten|eröffnen|anlegen|brauchen|braucht|fehlt|bekommen) /.test(T)) return null;
+        if (/ (meiner meinung nach|meiner ansicht nach|aus meiner sicht|meines erachtens) (ich|die stadt|wir|man|sie|es|er|unsere stadt) /.test(T)) return { fehler: "Fast! „Meiner Meinung nach“ steht auf Position 1 – danach kommt das Verb: Meiner Meinung nach sollte die Stadt …" };
+        const schon = genannt(T).find((k) => S.da.has(k) && new RegExp(" (ein|eine|einen) " + namenVon(k)[0] + " ").test(T) && / (bauen|errichten|eröffnen|bekommen) /.test(T));
+        if (schon) return { falsch: Nom(GEB(schon)) + " hat deine Stadt doch schon – was fehlt noch?" };
+        if (!MIT_GRUND.test(T)) return { fehlt: "Begründe deine Meinung: „…, weil …“." };
+        if (T.indexOf(" weil " + fw(qu.vars.grund[1]).trim() + " ") >= 0) return { fehler: "Fast! Nach „weil“ steht das Verb am Ende: … weil " + qu.vars.grund[0] + "." };
+        return { ok: true, antwort: "„Ein überzeugendes Argument – das nehme ich in meine Studie auf.“" };
+      },
+      woerter: (z, v) => [v.fehlt.name, "Meinung", "Stadtforscherin", "Zukunft"], frei: "Sag, was deine Stadt als Nächstes bauen sollte, und begründe es: „Meiner Meinung nach …, weil …“." },
+    { id: "reisende_zug_auto", niveau: "B2", kat: "verben", titel: "Zug oder Auto?", person: { art: 4 }, ziel: ["bahnhof"],
+      text: (z, v) => "Eine Reisende überlegt laut: „Soll ich morgen mit dem Zug oder mit dem Auto nach " + v.stadt + " fahren? Was würden Sie an meiner Stelle machen?“",
+      frage: "Gib ihr einen Rat und begründe ihn.",
+      antworten: () => [
+        { html: "„Ich würde den Zug nehmen, weil man entspannter reist und keinen Parkplatz suchen muss.“", richtig: true },
+        { html: "„Ich würde den Zug genommen, weil man entspannter reist und keinen Parkplatz suchen muss.“", hinweis: "Fast! Nach „würde“ steht der Infinitiv: Ich würde den Zug nehmen." },
+        { html: "„Ich würde den Zug nehmen, weil man entspannter reist und muss keinen Parkplatz suchen.“", hinweis: "Fast! Auch im zweiten Teil des weil-Satzes steht das Verb am Ende: … und keinen Parkplatz suchen muss." }],
+      danke: "„Stimmt, im Zug kann ich sogar noch lesen. Danke für den Rat!“",
+      pruefe: (T) => {
+        if (!/ (zug|bahn|auto|wagen|bus|fernbus|fahrrad|rad) /.test(T)) return null;
+        if (!/ (würde|würden|nehmen|nimm|nehme|fahren|fahre|empfehle|empfehlen|rate|raten|besser|lieber|sollten|solltest|stelle) /.test(T)) return null;
+        if (!MIT_GRUND.test(T) && !/ (außerdem|dann) /.test(T)) return { fehlt: "Und warum? Begründe deinen Rat (weil, denn, da …)." };
+        return { ok: true, antwort: / auto /.test(T) && !/ (zug|bahn) /.test(T) ? "„Mit dem Auto bin ich flexibler – guter Punkt!“" : "„Stimmt, im Zug kann ich sogar noch lesen. Danke für den Rat!“" };
+      },
+      woerter: (z, v) => ["Zug", "Auto", "Parkplatz", "entspannter", v.stadt], frei: "Rate ihr zum Zug oder zum Auto – und sag, warum." },
+    { id: "brauerei_laerm", niveau: "B2", kat: "wortstellung", titel: "Streit um die Brauerei", person: { art: 0, er: true }, ziel: ["brauerei"],
+      text: () => "Ein Nachbar der Brauerei ist verärgert: „Die Brauerei ist laut und riecht. Man sollte sie schließen! Was meinen Sie?“",
+      frage: "Sag deine Meinung – und wäge ab (obwohl …, denn …).",
+      antworten: () => [
+        { html: "„Obwohl die Brauerei manchmal laut ist, sollte man sie nicht schließen, denn sie schafft Arbeitsplätze.“", richtig: true },
+        { html: "„Obwohl die Brauerei manchmal laut ist, man sollte sie nicht schließen, denn sie schafft Arbeitsplätze.“", hinweis: "Fast! Nach dem obwohl-Satz kommt zuerst das Verb: …, sollte man sie nicht schließen." },
+        { html: "„Trotzdem die Brauerei manchmal laut ist, sollte man sie nicht schließen, denn sie schafft Arbeitsplätze.“", hinweis: "Fast! „trotzdem“ leitet keinen Nebensatz ein – hier passt „obwohl“." }],
+      danke: "„Hm, die Arbeitsplätze … Vielleicht rede ich erst einmal mit dem Braumeister.“",
+      pruefe: (T) => {
+        if (/^ trotzdem (die|der|das|es|sie|er|wir|man|ich|unsere) /.test(T)) return { fehler: "Fast! „trotzdem“ leitet keinen Nebensatz ein – hier passt „obwohl“: Obwohl die Brauerei manchmal laut ist, …" };
+        if (!/ (brauerei|lärm|laut|lauter|leiser|geruch|riecht|gestank|arbeitsplätze|arbeitsplatz|schließen|zumachen|bier|nachbarn) /.test(T)) return null;
+        if (!/ (obwohl|trotzdem|aber|denn|weil|da|zwar|jedoch|allerdings|dennoch|deshalb|deswegen|einerseits|andererseits|wenn|sondern) /.test(T)) return { fehlt: "Begründe deine Meinung – zum Beispiel mit „obwohl …“ oder „denn …“." };
+        return { ok: true, antwort: "„Hm, die Arbeitsplätze … Vielleicht rede ich erst einmal mit dem Braumeister.“" };
+      },
+      woerter: ["Brauerei", "Arbeitsplätze", "Lärm", "schließen"], frei: "Sag, ob man die Brauerei schließen sollte, und begründe es (obwohl …, denn …)." },
+    { id: "krankenhaus_rat", niveau: "B2", kat: "verben", titel: "Ein erschöpfter Arzt", person: { art: 2, er: true }, ziel: ["krankenhaus"],
+      text: () => "Ein Arzt kommt müde aus dem Krankenhaus: „Ich arbeite jeden Tag zwölf Stunden und schlafe kaum noch. Was würden Sie an meiner Stelle tun?“",
+      frage: "Gib ihm einen Rat (An Ihrer Stelle würde ich …).",
+      antworten: () => [
+        { html: "„An Ihrer Stelle würde ich mit der Klinikleitung sprechen und öfter Pausen machen.“", richtig: true },
+        { html: "„An Ihrer Stelle ich würde mit der Klinikleitung sprechen und öfter Pausen machen.“", hinweis: "Fast! „An Ihrer Stelle“ steht auf Position 1 – dann kommt das Verb: An Ihrer Stelle würde ich …" },
+        { html: "„An Ihrer Stelle werde ich mit der Klinikleitung sprechen und öfter Pausen machen.“", hinweis: "Fast! Für einen Rat braucht man den Konjunktiv II: An Ihrer Stelle würde ich …" }],
+      danke: "„Sie haben recht. Morgen spreche ich mit der Leitung.“",
+      pruefe: (T) => {
+        if (/ an (ihrer|deiner|seiner) stelle (ich|wir|man|du) /.test(T)) return { fehler: "Fast! „An Ihrer Stelle“ steht auf Position 1 – dann kommt das Verb: An Ihrer Stelle würde ich …" };
+        if (/ an (ihrer|deiner) stelle (werde|will|möchte) /.test(T)) return { fehler: "Fast! Für einen Rat braucht man den Konjunktiv II: An Ihrer Stelle würde ich …" };
+        if (!/ (würde|würden|sollten|solltest|könnten|wäre|empfehle|rate|raten|vorschlagen|pause|pausen|urlaub|schlaf|schlafen|weniger|hilfe|kollegen|leitung|klinikleitung|chef|chefin|sprechen|reden|erholen|sport|krank|arzt|stunden) /.test(T)) return null;
+        return { ok: true, antwort: "„Sie haben recht. Morgen spreche ich mit der Leitung – und gönne mir eine Pause.“" };
+      },
+      woerter: ["Klinikleitung", "Pausen", "Urlaub", "Stelle"], frei: "Gib dem Arzt einen Rat: „An Ihrer Stelle würde ich …“." },
+    { id: "rathaus_verkehr", niveau: "B2", kat: "verben", titel: "Bürgerversammlung", person: { art: 0 }, ziel: ["rathaus"], stand: (S) => S.haeuser.size >= 10,
+      text: () => "Die Bürgermeisterin fragt bei der Bürgerversammlung: „Unsere Stadt wächst, und die Straßen werden voll. Was könnte man gegen den Verkehr tun?“",
+      frage: "Mach einen Vorschlag und begründe ihn.",
+      antworten: () => [
+        { html: "„Es sollten mehr Radwege gebaut werden, damit weniger Leute mit dem Auto fahren.“", richtig: true },
+        { html: "„Es sollten mehr Radwege gebaut worden, damit weniger Leute mit dem Auto fahren.“", hinweis: "Fast! Passiv mit Modalverb: … gebaut werden (nicht „worden“)." },
+        { html: "„Es sollten mehr Radwege gebaut werden, damit weniger Leute fahren mit dem Auto.“", hinweis: "Fast! Im damit-Satz steht das Verb am Ende: … mit dem Auto fahren." }],
+      danke: "„Ein guter Vorschlag – das kommt ins Protokoll.“",
+      pruefe: (T) => {
+        if (!/ (rad|radweg|radwege|radwegen|fahrrad|fahrräder|bus|busse|bahn|straßenbahn|zug|züge|parkplatz|parkplätze|parkhaus|ampel|ampeln|tempo|fußgänger|fußgängerzone|autofrei|carsharing|autos|auto|öffentlich|öffentliche|nahverkehr|umgehungsstraße|brücke|wege|straße|straßen|kreisel|verkehr|tempolimit|zebrastreifen) /.test(T)) return null;
+        if (!/ (sollte|sollten|könnte|könnten|müsste|müssten|man|vorschlagen|schlage|würde|würden|bauen|gebaut|einführen|eingeführt|mehr|weniger) /.test(T)) return null;
+        return { ok: true, antwort: "„Ein guter Vorschlag – das nehmen wir ins Protokoll auf.“" };
+      },
+      woerter: ["Radwege", "Verkehr", "Bürgerversammlung", "Busse"], frei: "Mach einen Vorschlag gegen den Verkehr – zum Beispiel: „Es sollten mehr … gebaut werden, damit …“." },
+    { id: "bibliothek_internet", niveau: "B2", kat: "stil", titel: "Braucht man noch Bücher?", person: { art: 2, er: true }, ziel: ["bibliothek"],
+      text: () => "Ein junger Mann vor der Bibliothek: „Im Internet steht doch alles. Brauchen wir überhaupt noch eine Bibliothek?“",
+      frage: "Sag deine Meinung und begründe sie.",
+      antworten: () => [
+        { html: "„Ja, denn in der Bibliothek kann man in Ruhe lernen, und nicht jeder hat zu Hause einen Computer.“", richtig: true },
+        { html: "„Ja, denn in der Bibliothek man kann in Ruhe lernen, und nicht jeder hat zu Hause einen Computer.“", hinweis: "Fast! Nach „denn“ beginnt ein Hauptsatz – das Verb steht an Position 2: in der Bibliothek kann man …" },
+        { html: "„Ja, weil in der Bibliothek kann man in Ruhe lernen, und nicht jeder hat zu Hause einen Computer.“", hinweis: "Fast! Nach „weil“ steht das Verb am Ende: … weil man in der Bibliothek in Ruhe lernen kann." }],
+      danke: "„Hm, in Ruhe lernen … Da haben Sie eigentlich recht.“",
+      pruefe: (T) => {
+        if (/ denn (in|im|an|am|auf|bei|beim|zu|mit|dort|da|hier|heute)( [^ ]+){0,2} (man|ich|wir|sie|du|er|es) (kann|können|könnte|kannst|ist|sind|hat|haben|gibt|findet|findest|muss|lernt|lernen|bekommt) /.test(T)) return { fehler: "Fast! Nach „denn“ beginnt ein Hauptsatz – das Verb steht an Position 2: denn in der Bibliothek kann man …" };
+        if (!/ (bibliothek|bücher|buch|lernen|ruhe|internet|computer|beratung|treffpunkt|kinder|kostenlos|lesen|wissen|zeitungen|bücherei|arbeitsplatz|wlan) /.test(T)) return null;
+        if (!/ (denn|weil|da|deshalb|außerdem|nämlich|schließlich|beispiel|darum|deswegen|aber|trotzdem) /.test(T)) return { fehlt: "Begründe deine Meinung – mit „denn …“ oder „weil …“." };
+        return { ok: true, antwort: "„Hm, in Ruhe lernen … Da haben Sie eigentlich recht.“" };
+      },
+      woerter: ["Bibliothek", "Internet", "Computer", "Ruhe"], frei: "Sag, ob die Stadt noch eine Bibliothek braucht, und begründe es (denn …, weil …)." },
+    /* ---------- C1 ---------- */
+    { id: "forscher_stand", niveau: "C1", kat: "stil", titel: "Der Entwicklungsstand der Stadt", person: { art: 1 }, braucht: FORSCH, ziel: ["labor", "bibliothek", "schule", "rathaus"],
+      stand: (S) => S.haeuser.size >= 6,
+      vars: (S) => {
+        const F = fehltDer(S), P = GEB(["schule", "krankenhaus", "bibliothek", "baeckerei", "rathaus"].find((k) => S.da.has(k) && (!F || k !== F.key)) || "");
+        if (!P) return null;
+        return { fehlt: F, da: P, haeuser: S.haeuser.size, wunder: S.wunder, imBau: S.bau.map((b) => GEB(b.key)).filter(Boolean).map((h) => h.name) };
+      },
+      text: (z, v) => "Eine Stadtforscherin der Universität: „Wie würden Sie den aktuellen Entwicklungsstand Ihrer Stadt einschätzen, und wo sehen Sie den größten Handlungsbedarf?“ (Deine Stadt: " +
+        v.haeuser + " Gebäude, " + v.wunder + " Wahrzeichen" + (v.imBau.length ? ", im Bau: " + v.imBau.join(", ") : "") + ".)",
+      frage: "Antworte im Fachgespräch: Einschätzung und Handlungsbedarf.",
+      antworten: (z, v) => { const anf = "„Ich würde sagen, die Stadt ist schon recht weit entwickelt; Handlungsbedarf sehe ich vor allem ", F = v.fehlt, P = v.da; return F ? [
+        { html: anf + BEREICH[F.key] + ", da es noch an " + einD(F) + " mangelt.“", richtig: true },
+        { html: anf + BEREICH[F.key] + ", da es noch an " + einA(F) + " mangelt.“", hinweis: "Fast! „mangeln an“ verlangt den Dativ: an " + einD(F) + "." },
+        { html: anf + BEREICH[P.key] + ", da es noch an " + einD(P) + " mangelt.“", hinweis: "Schau in deine Stadt: " + Nom(P) + " gibt es schon – es fehlt aber noch " + einN(F) + "." }] : [
+        { html: anf + "beim Verkehr, da es noch an Radwegen mangelt.“", richtig: true },
+        { html: anf + "beim Verkehr, da es noch an Radwege mangelt.“", hinweis: "Fast! „mangeln an“ verlangt den Dativ – im Plural mit -n: an Radwegen." },
+        { html: anf + BEREICH[P.key] + ", da es noch an " + einD(P) + " mangelt.“", hinweis: "Schau in deine Stadt: " + Nom(P) + " gibt es schon." }]; },
+      danke: "„Eine differenzierte Einschätzung – genau solche Stimmen brauche ich für meine Studie.“",
+      pruefe: (T) => {
+        const S = stadtStand();
+        const urteil = / (entwickelt|entwicklung|entwicklungsstand|stand|fortgeschritten|anfang|aufbau|solide|ausbaufähig|aufgestellt|weit|wächst|gewachsen|modern|zufrieden|beachtlich|bemerkenswert|gut|stark|schwach|lebendig|attraktiv) /.test(T);
+        const bedarf = / (handlungsbedarf|bedarf|fehlt|fehlen|mangelt|mangel|ausbauen|ausbau|investieren|investitionen|verbessern|verbesserung|brauchen|braucht|benötigt|benötigen|priorität|prioritäten|defizit|defizite|nachholbedarf|lücke|lücken|schwachstelle|schwachstellen|verbesserungsbedarf|handeln|optimieren) /.test(T);
+        if (!urteil && !bedarf) return null;
+        if (!urteil || !bedarf) return { fehlt: "Beantworte beide Teile: Wie weit ist die Stadt – und wo sehen Sie Handlungsbedarf?" };
+        for (const k of genannt(T)) {
+          if (!S.da.has(k)) continue; const H = GEB(k), nm = namenVon(k)[0];
+          if (new RegExp(" an (einem|einer|ein|eine|einen) " + nm + " ").test(T) || new RegExp(" (kein|keine|keinen|keinem|keiner) " + nm + " ").test(T) || new RegExp(" (fehlt|fehlen|fehle) (noch )?(ein|eine|einen) " + nm + " ").test(T)) return { falsch: "Schau in deine Stadt: " + Nom(H) + " gibt es schon." };
+        }
+        if (/ (mangelt|mangeln|fehlt|fehlen|bedarf|mangel) (es )?(noch )?an (ein|eine|einen|kein|keine|keinen) /.test(T) || / an (ein|eine|einen) ([^ ]+ ){1,2}(mangelt|mangeln|fehlt|fehlen) /.test(T)) return { fehler: "Fast! „mangeln an“ und „Bedarf an“ verlangen den Dativ: an einem …, an einer …" };
+        if (/ an (radwege|parkplätze|ärzte|bäume|wege|plätze|grünflächen) (mangelt|fehlt|mangeln|fehlen) /.test(T)) return { fehler: "Fast! „mangeln an“ verlangt den Dativ – im Plural mit -n: an Radwegen, an Parkplätzen …" };
+        return { ok: true, antwort: "„Eine differenzierte Einschätzung – genau solche Stimmen brauche ich für meine Studie.“" };
+      },
+      woerter: (z, v) => ["Entwicklungsstand", "Handlungsbedarf", "Stadtforscherin", v.fehlt ? v.fehlt.name : "Radwegen"], frei: "Schätz den Stand deiner Stadt ein und nenn den größten Handlungsbedarf." },
+    { id: "bahnhof_ausbau", niveau: "C1", kat: "verben", titel: "Die Bahn plant", person: { art: 2, er: true }, ziel: ["bahnhof"],
+      text: () => "Ein Verkehrsplaner der Bahn: „Wir überlegen, die Strecke zu Ihrer Stadt auszubauen. Inwiefern würde Ihre Stadt davon profitieren?“",
+      frage: "Erkläre es ihm genau.",
+      antworten: () => [
+        { html: "„Die Stadt würde insofern profitieren, als mehr Besucher kämen und die Betriebe schneller beliefert werden könnten.“", richtig: true },
+        { html: "„Die Stadt würde insofern profitieren, als mehr Besucher kämen und die Betriebe schneller beliefert worden könnten.“", hinweis: "Fast! Passiv mit Modalverb: beliefert werden könnten (nicht „worden“)." },
+        { html: "„Die Stadt würde insofern profitieren, als mehr Besucher kämen und die Betriebe könnten schneller beliefert werden.“", hinweis: "Fast! „insofern …, als“ leitet einen Nebensatz ein – auch nach „und“ steht das Verb am Ende: … beliefert werden könnten." }],
+      danke: "„Mehr Besucher, kürzere Lieferwege – das überzeugt mich.“",
+      pruefe: (T) => {
+        if (/ insofern .* als .* und (die|der|das|den|mehr|viele|neue) [^ ]+ (könnten|können|würden|werden|wären|hätten|sind|haben|müssten) [^ ]+/.test(T)) return { fehler: "Fast! „insofern …, als“ leitet einen Nebensatz ein – auch nach „und“ steht das Verb am Ende: … beliefert werden könnten." };
+        if (!/ (profitieren|profitiert|vorteil|vorteile|nutzen|besucher|touristen|tourismus|wirtschaft|betriebe|unternehmen|firmen|arbeitsplätze|pendler|pendeln|anbindung|erreichbar|erreichbarkeit|handel|güter|waren|beliefert|lieferung|lieferungen|schneller|attraktiver|wachstum|einwohner|gäste|umsatz|kunden|verbindung|verbindungen) /.test(T)) return null;
+        if (woerterZahl(T) < 6) return { fehlt: "Antworte ausführlicher: Inwiefern genau – und wer würde profitieren?" };
+        return { ok: true, antwort: "„Mehr Besucher, kürzere Lieferwege – das überzeugt mich. Ich nehme es in den Bericht auf.“" };
+      },
+      woerter: ["Strecke", "profitieren", "Besucher", "Betriebe", "beliefert", "Pendler"], frei: "Erkläre, inwiefern deine Stadt von einer besseren Bahnstrecke profitieren würde." },
+    { id: "forschung_geld", niveau: "C1", kat: "wortstellung", titel: "Mehr Geld für die Forschung?", person: { art: 2, er: true }, braucht: ["labor", "sternwarte", "bibliothek"], ziel: ["labor", "bibliothek", "schule"],
+      text: (z) => "Ein Forscher " + ausLabor(z) + " wirbt: „Die Stadt sollte viel mehr Geld in die Forschung stecken. Wie sehen Sie das?“",
+      frage: "Wäge ab: Zwar …, aber …",
+      antworten: () => [
+        { html: "„Zwar ist Forschung wichtig, aber zuerst sollten wir in die Schulen investieren, damit überhaupt Nachwuchs da ist.“", richtig: true },
+        { html: "„Zwar Forschung ist wichtig, aber zuerst sollten wir in die Schulen investieren, damit überhaupt Nachwuchs da ist.“", hinweis: "Fast! Steht „zwar“ am Satzanfang, folgt direkt das Verb: Zwar ist Forschung wichtig, aber …" },
+        { html: "„Zwar ist Forschung wichtig, aber zuerst sollten wir in den Schulen investieren, damit überhaupt Nachwuchs da ist.“", hinweis: "Fast! „investieren in“ verlangt den Akkusativ: in die Schulen investieren." }],
+      danke: "„Ein berechtigter Einwand – darüber sollten wir weiter sprechen.“",
+      pruefe: (T) => {
+        const w = T.trim().split(" ");
+        if (w[0] === "zwar" && w[1] && !FINIT.has(w[1]) && w.slice(2, 5).some((x) => FINIT.has(x))) return { fehler: "Fast! Steht „zwar“ am Satzanfang, folgt direkt das Verb: Zwar ist Forschung wichtig, aber …" };
+        if (/ investier/.test(T) && / in (der|dem|den) (schulen|schule|forschung|bildung|wissenschaft|infrastruktur|labor|kindergärten|kindergarten|zukunft|ausbildung) /.test(T)) return { fehler: "Fast! „investieren in“ verlangt den Akkusativ: in die Schulen, in die Forschung investieren." };
+        if (!/ (forschung|wissenschaft|geld|investieren|investition|investitionen|labor|zukunft|bildung|schule|schulen|haushalt|budget|wichtig|sinnvoll|stimme|zustimmen|einverstanden|teuer|kosten|mittel) /.test(T)) return null;
+        if (!/ (zwar|aber|jedoch|allerdings|weil|da|denn|deshalb|einerseits|andererseits|trotzdem|obwohl|zunächst|zuerst|sondern) /.test(T)) return { fehlt: "Wäge ab: „Zwar …, aber …“ – oder begründe mit „weil …“." };
+        return { ok: true, antwort: "„Ein berechtigter Einwand – ohne Nachwuchs keine Forschung. Darüber sollten wir weiter sprechen.“" };
+      },
+      woerter: ["Forschung", "investieren", "Nachwuchs", "Schulen"], frei: "Sag, ob die Stadt mehr Geld in die Forschung stecken sollte – und wäge ab (zwar …, aber …)." },
+    { id: "rathaus_antrag", niveau: "C1", kat: "stil", titel: "Ein Antrag für das Straßenfest", person: { art: 1 }, ziel: ["rathaus"],
+      text: () => "Du möchtest am Brunnen ein Straßenfest feiern. Die Sachbearbeiterin im Rathaus sagt: „Formulieren Sie Ihr Anliegen bitte kurz und förmlich – ich nehme es zu Protokoll.“",
+      frage: "Formuliere deinen Antrag förmlich.",
+      antworten: () => [
+        { html: "„Hiermit beantrage ich die Genehmigung eines Straßenfestes am kommenden Samstag auf dem Marktplatz.“", richtig: true },
+        { html: "„Hiermit ich beantrage die Genehmigung eines Straßenfestes am kommenden Samstag auf dem Marktplatz.“", hinweis: "Fast! Nach „Hiermit“ auf Position 1 kommt das Verb: Hiermit beantrage ich …" },
+        { html: "„Hiermit beantrage ich die Genehmigung eines Straßenfest am kommenden Samstag auf dem Marktplatz.“", hinweis: "Fast! Genitiv: eines Straßenfestes – mit -es." }],
+      danke: "„Sehr gut formuliert. Ich prüfe den Antrag und melde mich bei Ihnen.“",
+      pruefe: (T) => {
+        if (/ hiermit (ich|wir) /.test(T)) return { fehler: "Fast! Nach „Hiermit“ auf Position 1 kommt das Verb: Hiermit beantrage ich …" };
+        if (!/ (beantrage|beantragen|antrag|genehmigung|erlaubnis|genehmigen|bitte|möchte|würde|anmelden|anmeldung) /.test(T) || !/ [a-zäöüß]*(fest|festes|fests|feier|veranstaltung|party|markt) /.test(T)) return null;
+        if (/ (eines|des) [a-zäöüß]*fest /.test(T)) return { fehler: "Fast! Genitiv: eines Straßenfestes – mit -es." };
+        if (/ (hey|hi|na|krieg|kriege|kriegen|will|wollen|gib) /.test(T)) return { fehler: "Inhaltlich passt es – aber für einen Antrag zu locker. Förmlich: „Hiermit beantrage ich die Genehmigung …“" };
+        return { ok: true, antwort: "„Sehr gut formuliert. Ich prüfe den Antrag und melde mich bis Mittwoch bei Ihnen.“" };
+      },
+      woerter: ["Genehmigung", "beantrage", "hiermit", "Marktplatz", "Samstag"], frei: "Beantrage das Straßenfest förmlich – zum Beispiel: „Hiermit beantrage ich …“." },
+    { id: "krankenhaus_personal", niveau: "C1", kat: "verben", titel: "Zu wenig Pflegekräfte", person: { art: 1 }, ziel: ["krankenhaus"],
+      text: () => "Die Pflegedirektorin des Krankenhauses seufzt: „Uns fehlen Pflegekräfte. Welche Maßnahmen würden Sie vorschlagen, um dem Personalmangel entgegenzuwirken?“",
+      frage: "Schlag Maßnahmen vor.",
+      antworten: () => [
+        { html: "„Ich würde vorschlagen, die Arbeitsbedingungen zu verbessern, etwa durch flexiblere Arbeitszeiten und eine bessere Bezahlung.“", richtig: true },
+        { html: "„Ich würde vorschlagen, die Arbeitsbedingungen verbessern, etwa durch flexiblere Arbeitszeiten und eine bessere Bezahlung.“", hinweis: "Fast! Nach „vorschlagen, …“ steht der Infinitiv mit „zu“: … die Arbeitsbedingungen zu verbessern." },
+        { html: "„Ich würde vorschlagen, dass man verbessert die Arbeitsbedingungen, etwa durch flexiblere Arbeitszeiten und eine bessere Bezahlung.“", hinweis: "Fast! Im dass-Satz steht das Verb am Ende: … dass man die Arbeitsbedingungen verbessert." }],
+      danke: "„Flexiblere Arbeitszeiten – das wünschen sich viele im Team. Danke!“",
+      pruefe: (T) => {
+        const w = T.trim().split(" ");
+        let iV = w.findIndex((x) => /^(vorschlagen|empfehlen|empfehle|raten|anregen)$/.test(x));
+        if (iV < 0) { const s = w.indexOf("schlage"); if (s >= 0) iV = w.indexOf("vor", s); }
+        if (iV >= 0) for (let i = iV + 1; i < w.length; i++) {
+          if (/^(dass|um|damit|weil|wenn)$/.test(w[i])) break;
+          if (INF_ZU.test(w[i]) && w[i - 1] !== "zu") return { fehler: "Fast! Nach „vorschlagen, …“ steht der Infinitiv mit „zu“: … die Arbeitsbedingungen zu verbessern." };
+        }
+        if (!/ (bezahlung|gehalt|gehälter|lohn|löhne|arbeitszeit|arbeitszeiten|arbeitsbedingungen|ausbildung|personal|pflegekräfte|anwerben|ausland|entlasten|entlastung|schicht|schichten|kita|kinderbetreuung|wertschätzung|attraktiver|einstellen|azubis|prämie|prämien|wohnung|wohnungen|teilzeit|digitalisierung|bürokratie|stellen|mitarbeiter|bezahlen|verdienen|urlaub|weiterbildung) /.test(T)) return null;
+        return { ok: true, antwort: "„Flexiblere Arbeitszeiten – das wünschen sich viele im Team. Danke für den Vorschlag!“" };
+      },
+      woerter: ["Pflegekräfte", "Arbeitsbedingungen", "Bezahlung", "Arbeitszeiten", "Personalmangel"], frei: "Schlag Maßnahmen gegen den Personalmangel vor: „Ich würde vorschlagen, … zu …“." },
+    { id: "sternwarte_licht", niveau: "C1", kat: "verben", titel: "Wo sind die Sterne?", person: { art: 4 }, braucht: ["sternwarte"], ziel: ["rathaus", "schule", "bibliothek"],
+      text: (z) => "Die Astronomin der Sternwarte ist auf dem Weg " + zum(z) + ": „Seit die Stadt wächst, sehen wir kaum noch Sterne. Wie ließe sich die Lichtverschmutzung verringern?“",
+      frage: "Mach einen Vorschlag.",
+      antworten: () => [
+        { html: "„Man könnte die Straßenlaternen nachts dimmen, damit der Himmel wieder dunkler wird.“", richtig: true },
+        { html: "„Man könnte die Straßenlaternen nachts gedimmt werden, damit der Himmel wieder dunkler wird.“", hinweis: "Fast! Entweder aktiv – „Man könnte die Laternen dimmen“ – oder Passiv – „Die Laternen könnten gedimmt werden“." },
+        { html: "„Man könnte die Straßenlaternen nachts dimmen, um der Himmel wieder dunkler wird.“", hinweis: "Fast! „um … zu“ braucht einen Infinitiv; mit eigenem Subjekt heißt es „damit“: damit der Himmel wieder dunkler wird." }],
+      danke: "„Gedimmte Laternen – das schlage ich im Stadtrat vor.“",
+      pruefe: (T) => {
+        if (/ man (könnte|kann|sollte|soll|müsste|muss) ([^ ]+ ){0,5}ge[^ ]+ werden /.test(T)) return { fehler: "Fast! Entweder aktiv – „Man könnte die Laternen dimmen“ – oder Passiv – „Die Laternen könnten gedimmt werden“." };
+        if (!/ (licht|lichter|laterne|laternen|straßenlaternen|lampe|lampen|beleuchtung|dimmen|gedimmt|ausschalten|abschalten|ausmachen|nachts|led|bewegungsmelder|abschirmen|unten|weniger|dunkel|dunkler|zeitschaltuhr|reklame|leuchtreklame|schaufenster|lichtverschmutzung) /.test(T)) return null;
+        return { ok: true, antwort: "„Gedimmte Laternen – das schlage ich im Stadtrat vor. Vielen Dank!“" };
+      },
+      woerter: ["Lichtverschmutzung", "Straßenlaternen", "dimmen", "Sternwarte", "Himmel"], frei: "Schlag vor, wie die Stadt nachts dunkler werden könnte." },
+    /* ---------- C2 ---------- */
+    { id: "forscher_hypothese", niveau: "C2", kat: "zeiten", titel: "Was wäre, wenn …?", person: { art: 2, er: true }, braucht: FORSCH, ziel: ["labor", "bibliothek", "schule"],
+      text: () => "Ein Stadtsoziologe fragt: „Angenommen, Ihre Stadt hätte von Anfang an konsequent auf Wissenschaft gesetzt – wo stünde sie heute?“",
+      frage: "Antworte hypothetisch und wäge ab.",
+      antworten: () => [
+        { html: "„Hätte man früher in die Wissenschaft investiert, wäre die Stadt heute womöglich innovativer, hätte aber vielleicht weniger Wohnraum.“", richtig: true },
+        { html: "„Hätte man früher in die Wissenschaft investiert, die Stadt wäre heute womöglich innovativer, hätte aber vielleicht weniger Wohnraum.“", hinweis: "Fast! Nach dem vorangestellten Bedingungssatz kommt zuerst das Verb: …, wäre die Stadt heute …" },
+        { html: "„Hätte man früher in die Wissenschaft investiert, wäre die Stadt heute womöglich innovativer geworden sein, hätte aber vielleicht weniger Wohnraum.“", hinweis: "Fast! Eine Zeitform zu viel: wäre … heute innovativer – oder: wäre … innovativer geworden." }],
+      danke: "„Eine kluge Abwägung – Fortschritt hat eben immer seinen Preis.“",
+      pruefe: (T) => {
+        if (/ (investiert|gesetzt|gebaut|gefördert|konzentriert|entschieden|geforscht)( hätte| hätten| wäre)? (die stadt|sie|es|man|wir|unsere stadt) (wäre|hätte|würde|könnte|stünde|wären|hätten|würden|könnten) /.test(T)) return { fehler: "Fast! Nach dem vorangestellten Bedingungssatz kommt zuerst das Verb: …, wäre die Stadt heute …" };
+        if (/ (wäre|wären) ([^ ]+ ){0,5}geworden sein /.test(T)) return { fehler: "Fast! Eine Zeitform zu viel: wäre … heute innovativer – oder: wäre … innovativer geworden." };
+        if (!/ (stadt|sie|heute|forschung|wissenschaft|innovativ|innovativer|weiter|entwickelt|moderner|wohnraum|wohlstand|vielleicht|womöglich|vermutlich|wahrscheinlich|schwer|darauf|lässt|reicher|ärmer|anders|besser|schlechter) /.test(T)) return null;
+        if (!/ (hätte|hätten|wäre|wären|würde|würden|könnte|könnten|müsste|müssten|stünde|stände|gäbe|ginge|läge|dürfte) /.test(T)) return { fehlt: "Antworte hypothetisch – mit „hätte“, „wäre“ oder „würde“: Hätte man früher …, wäre die Stadt heute …" };
+        return { ok: true, antwort: "„Eine kluge Abwägung – Fortschritt hat eben immer seinen Preis.“" };
+      },
+      woerter: ["Wissenschaft", "innovativer", "Wohnraum", "womöglich", "investiert"], frei: "Antworte hypothetisch: Wo stünde die Stadt heute, wenn sie früher auf Wissenschaft gesetzt hätte?" },
+    { id: "bahnhof_ironie", niveau: "C2", kat: "stil", titel: "Pünktlich wie immer", person: { art: 4 }, ziel: ["bahnhof"],
+      vars: () => ({ min: wahl([35, 40, 50, 55]) }),
+      text: (z, v) => "Eine Pendlerin am Bahnhof verdreht die Augen: „Na großartig, schon wieder " + v.min + " Minuten Verspätung. Auf die Bahn ist eben Verlass!“",
+      frage: "Sie meint das nicht wörtlich. Wie reagierst du passend?",
+      antworten: () => [
+        { html: "„Tja, da ist wohl Geduld gefragt. Wollen wir uns die Wartezeit mit einem Kaffee vertreiben?“", richtig: true },
+        { html: "„Stimmt, die Bahn ist wirklich sehr zuverlässig.“", hinweis: "Achtung, Ironie: Sie meint genau das Gegenteil – die Bahn ist gerade alles andere als zuverlässig." },
+        { html: "„Tja, da ist wohl Geduld gefragt. Wollen wir die Wartezeit mit einem Kaffee vertreiben?“", hinweis: "Fast! „sich die Zeit vertreiben“ ist reflexiv: Wollen wir uns die Wartezeit … vertreiben?" }],
+      danke: "„Gute Idee – am Bahnhof gibt es einen Kiosk.“",
+      pruefe: (T) => {
+        const verstanden = / (nicht|kaum|leider|ironisch|ironie|witzig|scherz|tja|ärgerlich|nervig|typisch|wieder|wohl|gegenteil|naja|haha|ach|oje|verlass|geduld|kaffee|café|warten|wartezeit|unpünktlich|verspätet|verspätung|ärgern|mist|schade|genervt|glück|immerhin) /.test(T);
+        if (/ (stimmt|genau|richtig|ja|recht|zuverlässig|pünktlich|super|toll) /.test(T) && !verstanden) return { falsch: "Achtung, Ironie: Sie meint genau das Gegenteil – die Bahn ist gerade alles andere als zuverlässig." };
+        if (/ vertreib/.test(T) && !/ (uns|sich|mir|dir|euch) /.test(T)) return { fehler: "Fast! „sich die Zeit vertreiben“ ist reflexiv: Wollen wir uns die Wartezeit … vertreiben?" };
+        if (!verstanden) return null;
+        return { ok: true, antwort: "„Ha, genau! Ein Kaffee rettet den Tag – kommen Sie mit?“" };
+      },
+      woerter: ["Geduld", "Wartezeit", "Verspätung", "Kaffee", "Verlass"], frei: "Sie meint es ironisch – reagier mit Verständnis oder Humor." },
+    { id: "brauerei_konzern", niveau: "C2", kat: "praepositionen", titel: "Ein Angebot für die Brauerei", person: { art: 0, er: true }, ziel: ["brauerei"],
+      text: () => "Der alte Braumeister: „Ein Konzern will unsere Brauerei kaufen. Die Arbeitsplätze wären sicher, aber unser Rezept ginge verloren. Wozu würden Sie mir raten?“",
+      frage: "Rate ihm – gern mit einer Bedingung.",
+      antworten: () => [
+        { html: "„Ich würde Ihnen dazu raten, das Angebot abzulehnen – es sei denn, der Konzern garantiert vertraglich, das Rezept beizubehalten.“", richtig: true },
+        { html: "„Ich würde Ihnen dafür raten, das Angebot abzulehnen – es sei denn, der Konzern garantiert vertraglich, das Rezept beizubehalten.“", hinweis: "Fast! Man rät jemandem „zu“ etwas: dazu raten (oder: davon abraten)." },
+        { html: "„Ich würde Ihnen dazu raten, das Angebot abzulehnen – es sei denn, der Konzern vertraglich garantiert, das Rezept beizubehalten.“", hinweis: "Fast! Nach „es sei denn“ folgt ein Hauptsatz – das Verb steht an zweiter Stelle: es sei denn, der Konzern garantiert vertraglich …" }],
+      danke: "„Ein Vertrag mit Bedingungen … so könnte unser Rezept überleben. Ich danke Ihnen!“",
+      pruefe: (T) => {
+        if (/ (dafür|für) raten /.test(T) || / rate ([^ ]+ ){0,2}dafür /.test(T)) return { fehler: "Fast! Man rät jemandem „zu“ etwas: dazu raten (oder: davon abraten)." };
+        const w = T.trim().split(" "), i = w.findIndex((x, k) => x === "es" && w[k + 1] === "sei" && w[k + 2] === "denn");
+        if (i >= 0) {
+          let j = i + 3; j = SUBJ_PRON.has(w[j]) ? j + 1 : DET.test(w[j] || "") ? j + 2 : -1;
+          if (j > 0 && w[j] && !FINIT.has(w[j]) && w.slice(j + 1, j + 4).some((x) => FINIT.has(x))) return { fehler: "Fast! Nach „es sei denn“ folgt ein Hauptsatz – das Verb steht an zweiter Stelle: es sei denn, der Konzern garantiert vertraglich …" };
+        }
+        if (!/ (angebot|ablehnen|abzulehnen|annehmen|anzunehmen|verkaufen|behalten|abraten|raten|rate|konzern|rezept|tradition|arbeitsplätze|vertrag|vertraglich|garantie|garantiert|bedingung|bedingungen|kompromiss|verhandeln|nachverhandeln|anwalt) /.test(T)) return null;
+        if (!/ (rate|raten|empfehle|empfehlen|würde|sollten|stelle|ablehnen|abzulehnen|annehmen|anzunehmen|verkaufen|behalten|nicht) /.test(T)) return { fehlt: "Gib ihm einen klaren Rat: annehmen, ablehnen – oder nur unter Bedingungen?" };
+        return { ok: true, antwort: "„Ein Vertrag mit Bedingungen … ja, so könnte unser Rezept überleben. Ich danke Ihnen!“" };
+      },
+      woerter: ["Konzern", "Rezept", "Angebot", "vertraglich", "Braumeister"], frei: "Rate dem Braumeister: Angebot annehmen oder ablehnen – und unter welcher Bedingung?" },
+    { id: "rathaus_zeitung", niveau: "C2", kat: "verben", titel: "Für die Stadtzeitung", person: { art: 4 }, ziel: ["rathaus"],
+      vars: (S) => ({ fehlt: fehltDer(S) || { key: "umgehung", g: "die", name: "Umgehungsstraße" } }),
+      text: (z, v) => "Eine Journalistin der Stadtzeitung: „Der Stadtforscher hat gestern gesagt: ‚Die Stadt wächst schnell, aber es fehlt " + einN(v.fehlt) + ".‘ Wie gebe ich das im Artikel korrekt wieder?“",
+      frage: "Gib es in indirekter Rede wieder.",
+      antworten: (z, v) => [
+        { html: "„Der Stadtforscher sagte, die Stadt wachse schnell, es fehle aber " + einN(v.fehlt) + ".“", richtig: true },
+        { html: "„Der Stadtforscher sagte, die Stadt wächst schnell, es fehlt aber " + einN(v.fehlt) + ".“", hinweis: "Fast! In der Zeitung steht die indirekte Rede im Konjunktiv I: die Stadt wachse, es fehle …" },
+        { html: "„Der Stadtforscher sagte, die Stadt würde schnell wachsen, es würde aber " + einN(v.fehlt) + " fehlen.“", hinweis: "Fast! „würde“ ist hier nur ein Ersatz. Wo der Konjunktiv I eindeutig ist, nimmt die Zeitung ihn: die Stadt wachse, es fehle …" }],
+      danke: "„Perfekt – genau so schreibe ich es.“",
+      pruefe: (T) => {
+        if (!/ (sagte|meinte|erklärte|betonte|sagt|gesagt|zufolge|laut|äußerte|behauptete|gab|teilte|ansicht|angaben|berichtete|stellte|so der) /.test(T)) return null;
+        if (!/ (wachse|wächst|wachsen|fehle|fehlt|fehlen|würde|wüchse|fehlte|sei|ist) /.test(T)) return null;
+        if (/ würde ([^ ]+ ){0,4}(wachsen|fehlen) /.test(T)) return { fehler: "Fast! „würde“ ist hier nur ein Ersatz. Wo der Konjunktiv I eindeutig ist, nimmt die Zeitung ihn: die Stadt wachse, es fehle …" };
+        if (!/ (laut|zufolge|angaben|ansicht) /.test(T) && / (wächst|fehlt) /.test(T)) return { fehler: "Fast! In der Zeitung steht die indirekte Rede im Konjunktiv I: die Stadt wachse, es fehle …" };
+        if (/ (wüchse|fehlte) /.test(T)) return { fehler: "Fast! Der Konjunktiv I ist hier eindeutig – ihn nimmt die Zeitung: die Stadt wachse, es fehle …" };
+        return { ok: true, antwort: "„Perfekt – genau so schreibe ich es. Sie haben ein Händchen für Zeitungsdeutsch!“" };
+      },
+      woerter: (z, v) => ["Stadtforscher", "Stadtzeitung", "Artikel", v.fehlt.name], frei: "Gib den Satz des Forschers in indirekter Rede wieder: „Der Stadtforscher sagte, die Stadt …“." },
+    { id: "bergwerk_wandel", niveau: "C2", kat: "wortstellung", titel: "Die Zukunft des Bergwerks", person: { art: 5, er: true }, ziel: ["bergwerk"],
+      text: () => "Ein Bergmann sitzt vor dem Stollen: „Die Mine lohnt sich bald nicht mehr. Was soll dann bloß aus uns werden?“",
+      frage: "Zeig Verständnis und eine Perspektive.",
+      antworten: () => [
+        { html: "„Ich kann Ihre Sorge gut nachvollziehen. Vielleicht ließe sich das Bergwerk in ein Museum umwandeln, sodass neue Arbeitsplätze im Tourismus entstünden.“", richtig: true },
+        { html: "„Ich kann Ihre Sorge gut nachvollziehen. Vielleicht ließe sich das Bergwerk in ein Museum umwandeln, sodass entstünden neue Arbeitsplätze im Tourismus.“", hinweis: "Fast! „sodass“ leitet einen Nebensatz ein – das Verb ans Ende: … sodass neue Arbeitsplätze im Tourismus entstünden." },
+        { html: "„Ich kann Ihre Sorge gut nachvollziehen. Vielleicht ließe sich das Bergwerk in ein Museum umwandeln lassen, sodass neue Arbeitsplätze im Tourismus entstünden.“", hinweis: "Fast! Ein „lassen“ zu viel: Vielleicht ließe sich das Bergwerk in ein Museum umwandeln." }],
+      danke: "„Ein Besucherbergwerk … Danke für die Hoffnung!“",
+      pruefe: (T) => {
+        if (/ (ließe|lässt) sich ([^ ]+ ){1,8}lassen /.test(T)) return { fehler: "Fast! Ein „lassen“ zu viel: Vielleicht ließe sich das Bergwerk in ein Museum umwandeln." };
+        if (!/ (sorge|sorgen|verstehe|nachvollziehen|verständlich|schwer|leid|museum|umschulung|umschulen|weiterbildung|tourismus|touristen|arbeit|arbeitsplätze|strukturwandel|chance|chancen|zukunft|perspektive|perspektiven|solar|windkraft|windpark|besucherbergwerk|führungen|förderung|unterstützung|hilfe|umwandeln|umnutzen|nutzen|energie) /.test(T)) return null;
+        if (!/ (museum|umschulung|umschulen|weiterbildung|tourismus|touristen|neue|neuen|neues|arbeitsplätze|chance|chancen|zukunft|perspektive|perspektiven|solar|windkraft|windpark|besucherbergwerk|führungen|förderung|fördern|unterstützung|unterstützen|hilfe|umwandeln|umnutzen|umbauen|nutzen|energie|ausbildung|anders) /.test(T)) return { fehlt: "Zeig ihm auch eine Perspektive: Was könnte aus dem Bergwerk – oder aus den Bergleuten – werden?" };
+        return { ok: true, antwort: "„Ein Besucherbergwerk … dann könnte ich selbst die Führungen machen. Danke für die Hoffnung!“" };
+      },
+      woerter: ["Bergwerk", "Museum", "Tourismus", "Arbeitsplätze", "nachvollziehen", "Strukturwandel"], frei: "Zeig dem Bergmann Verständnis und eine Perspektive für das Bergwerk." }
+  ];
+  for (const v of NEU) VORLAGEN.push(v);
   Q.VORLAGEN = VORLAGEN;
   const KAT_NAME = { betonung: "Betonung", artikel: "Artikel", praepositionen: "Präpositionen", faelle: "Fälle", stil: "Stil", wortstellung: "Wortstellung", wortbildung: "Wortbildung",
     wortschatz: "Wortschatz", uhrzeit: "Uhrzeit", zeiten: "Zeitformen", verben: "Verben", zahlen: "Zahlen" };
@@ -679,9 +1355,50 @@
      5. STAND, PUNKTE, GESCHENKE
      ===================================================================== */
   const SPEICHER = () => "leicht_quest_v1" + (ST.spiel && ST.spiel.uid ? "_" + ST.spiel.uid : "");
-  function standLesen() { try { const s = JSON.parse(localStorage.getItem(SPEICHER()) || "{}"); return { punkte: +s.punkte || 0, geschafft: +s.geschafft || 0, geschenke: Array.isArray(s.geschenke) ? s.geschenke.slice(-50) : [], letzte: Array.isArray(s.letzte) ? s.letzte.slice(-6) : [] }; } catch (e) { return { punkte: 0, geschafft: 0, geschenke: [], letzte: [] }; } }
+  function standLesen() { try { const s = JSON.parse(localStorage.getItem(SPEICHER()) || "{}"); return { punkte: +s.punkte || 0, geschafft: +s.geschafft || 0, geschenke: Array.isArray(s.geschenke) ? s.geschenke.slice(-50) : [], letzte: Array.isArray(s.letzte) ? s.letzte.slice(-12) : [] }; } catch (e) { return { punkte: 0, geschafft: 0, geschenke: [], letzte: [] }; } }
   function standSchreiben(s) { try { localStorage.setItem(SPEICHER(), JSON.stringify(s)); } catch (e) {} }
   Q.stand = standLesen;
+
+  /* ---------- 5b. FASSUNG 875 — STAND DER STADT UND NIVEAU ----------
+     Stand: was steht (da), wohin man laufen kann (ziel: wie ziele(), ohne Eingänge zu rechnen), was gerade gebaut wird
+     (bau: neu oder Ausbau), welche Häuser fertig sind, wie viele Wahrzeichen, der Name der Stadt. Einmal je 0,8 s gezählt –
+     die Auswahl fragt oft (Sonde: 3000-mal hintereinander). */
+  let standCache = null, standZeit = -1e9;
+  function stadtStand(frisch) {
+    const jetzt = performance.now();
+    if (standCache && !frisch && jetzt - standZeit < 800) return standCache;
+    const S = { da: new Set(), ziel: new Set(), bau: [], haeuser: new Set(), wunder: 0, name: "" };
+    for (const o of SZ.objekte) {
+      if (o.versteckt || o.geist) continue;
+      if (o.art === "haus" && o.spiel) {
+        if (o.bau) S.bau.push({ key: o.spiel, neu: !o.stufenZahl });
+        if (o.bau && !o.stufenZahl) continue;
+        S.da.add(o.spiel); S.haeuser.add(o.spiel);
+        if (!o.bau && NAMEN[o.spiel]) S.ziel.add(o.spiel);
+      } else if (o.art === "wunder" && o.spiel) { S.da.add(o.spiel); S.wunder++; if (NAMEN[o.spiel]) S.ziel.add(o.spiel); }
+      else if (o.art === "kulisse" && (o.name === "Bahnhof" || o.name === "Bootsverleih")) { const k = o.name === "Bahnhof" ? "bahnhof" : "bootsverleih"; S.da.add(k); S.ziel.add(k); }
+    }
+    if (D.BRUNNEN) { S.da.add("brunnen"); S.ziel.add("brunnen"); }
+    try { const ich = L().ich || {}; S.name = String(ich.dorf_name || "").trim().slice(0, 40); } catch (e) {}
+    standCache = S; standZeit = jetzt;
+    return S;
+  }
+  /* kann die Mission in dieser Stadt kommen? (ein Gebäude aus braucht, ein erreichbares Ziel, die Bedingung) */
+  const standPasst = (v, S) => (!v.braucht || v.braucht.some((k) => S.da.has(k))) && (!v.stand || v.stand(S));
+  const verfuegbar = (v, S) => standPasst(v, S) && v.ziel.some((k) => S.ziel.has(k));
+  /* Niveau: eigene Wahl (dma_quest_niveau) – sonst das Niveau des Spiels – sonst A2; ?questniveau=B2 zum Ausprobieren */
+  const NIV_SPEICHER = "dma_quest_niveau";
+  function niveau() {
+    const u = (q.get("questniveau") || "").toUpperCase(); if (NIVEAUS.indexOf(u) >= 0) return u;
+    try { const n = localStorage.getItem(NIV_SPEICHER); if (NIVEAUS.indexOf(n) >= 0) return n; const s = localStorage.getItem("dma_spiel_niveau"); if (NIVEAUS.indexOf(s) >= 0) return s; } catch (e) {}
+    return "A2";
+  }
+  function niveauSetzen(n) { if (NIVEAUS.indexOf(n) < 0) return; try { localStorage.setItem(NIV_SPEICHER, n); } catch (e) {} }
+  const nivIdx = (n) => Math.max(0, NIVEAUS.indexOf(n));
+  /* Anteil je Stufe: das eigene Niveau voll, eins darunter knapp die Hälfte, zwei darunter ein Fünftel, weiter unten ein Zehntel
+     (je Stufe, egal wie viele Missionen sie hat) – auf C2 kommt so gut die Hälfte aus C2, auf A2 gut zwei Drittel aus A2 */
+  const STUFE_ANTEIL = [1, 0.45, 0.2, 0.1];
+  Q.niveau = niveau;
   /* Geschenke (Schmuck aus oberflaeche.js SCHMUCK): Name, Bild, Grundfläche, Höhe, Artikel */
   const GESCHENKE = [["eine Bank", "d_bank", [1.9, 0.75], 0.9], ["eine Laterne", "d_laterne", [0.8, 0.8], 4.4], ["einen Apfelbaum", "n_obstbaum0", [3, 3], 6],
     ["eine Bank", "d_bank", [1.9, 0.75], 0.9], ["einen Laubbaum", "n_laubbaum0", [4.5, 4.5], 13], ["einen Brunnen", "d_brunnen", [4.6, 4.6], 5.4], ["einen Apfelbaum", "n_obstbaum1", [3, 3], 6]];
@@ -905,6 +1622,12 @@
     ".lq-titel { flex: 1; min-width: 0; font-weight: 800; font-size: 13px; color: #ffd75e; }",
     ".lk-mini-modus .lq-titel { font-size: 12px; }",
     ".lq-klein { flex: none; min-width: 32px; min-height: 32px; padding: 0 8px; border: 0; border-radius: 10px; background: rgba(255,255,255,.12); color: #f3ead8; font: 700 13px/1 system-ui, sans-serif; cursor: pointer; }",
+    /* FASSUNG 875 — der Niveau-Wähler: ein kleiner Knopf im Kopf („A2“), darunter auf Tipp eine Zeile A1 … C2 */
+    ".lq-klein.lq-niv { min-width: 34px; padding: 0 6px; background: rgba(255,215,94,.14); border: 1px solid rgba(255,215,94,.5); color: #ffd75e; font-size: 12px; }",
+    ".lq-niveaus { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 4px 0 2px; }",
+    ".lq-niveaus .lq-niv-text { flex: 1 1 100%; font-size: 11.5px; color: #cfe3ff; }",
+    ".lq-niveaus button { min-width: 38px; min-height: 30px; padding: 0 6px; border: 1px solid rgba(255,255,255,.22); border-radius: 9px; background: rgba(255,255,255,.08); color: #fff; font: 700 12px/1 system-ui, sans-serif; cursor: pointer; }",
+    ".lq-niveaus button.lq-an { background: #ffd75e; border-color: #ffd75e; color: #1d2340; }",
     ".lq-text { margin: 3px 0 5px; }",
     ".lq-frage { margin: 0 0 6px; font-weight: 700; color: #fff; }",
     ".lq-antworten { display: flex; flex-direction: column; gap: 6px; }",
@@ -1105,6 +1828,12 @@
     const kopf = document.createElement("div"); kopf.className = "lq-kopf";
     const titel = document.createElement("span"); titel.className = "lq-titel"; titel.textContent = qu.v.titel;
     kopf.appendChild(titel);
+    /* FASSUNG 875 — XANDER (Funk 257): „vielleicht von A1 bis C2 dass man das in den Einstellungen hat“. Die Quests haben
+       kein eigenes Menü – der Wähler sitzt deshalb klein im Kopf jedes Quest-Fensters. */
+    const niv = document.createElement("button"); niv.type = "button"; niv.className = "lq-klein lq-niv"; niv.textContent = niveau();
+    const nivTitel = () => "Dein Niveau für die Missionen: " + niveau() + (qu.v.niveau ? " (diese Mission: " + qu.v.niveau + ")" : "") + " – tippen zum Ändern";
+    niv.title = nivTitel(); niv.setAttribute("aria-label", nivTitel());
+    kopf.appendChild(niv);
     if (mini() && imRahmen) {
       const voll = document.createElement("button"); voll.type = "button"; voll.className = "lq-klein lq-voll"; voll.textContent = "Groß"; voll.title = "Im Vollbild weiter"; voll.setAttribute("aria-label", "Im Vollbild weiter");
       voll.addEventListener("click", (e) => { e.stopPropagation(); try { window.parent.postMessage({ typ: "leicht-voll" }, location.origin); } catch (x) {} });
@@ -1119,6 +1848,25 @@
     const geisterKlick = () => !gedrueckt && performance.now() - aufZeit < 500;
     zu.addEventListener("click", (e) => { e.stopPropagation(); if (geisterKlick()) return; dialogZu(); });
     kopf.appendChild(zu);
+    /* FASSUNG 875 — Tipp auf das Niveau: eine Zeile A1 … C2 unter dem Kopf; die Wahl gilt ab der nächsten Mission */
+    niv.addEventListener("click", (e) => {
+      e.stopPropagation(); if (geisterKlick()) return;
+      const alt = d.querySelector(".lq-niveaus"); if (alt) { alt.remove(); return; }
+      const reihe = document.createElement("div"); reihe.className = "lq-niveaus"; reihe.setAttribute("role", "group"); reihe.setAttribute("aria-label", "Niveau für die Missionen");
+      const t = document.createElement("span"); t.className = "lq-niv-text"; t.textContent = "Dein Deutsch-Niveau für die Missionen:";
+      reihe.appendChild(t);
+      for (const n of NIVEAUS) {
+        const b = document.createElement("button"); b.type = "button"; b.textContent = n; b.dataset.niv = n; if (n === niveau()) b.classList.add("lq-an");
+        b.addEventListener("click", (ev) => {
+          ev.stopPropagation(); niveauSetzen(n); niv.textContent = n; niv.title = nivTitel(); niv.setAttribute("aria-label", nivTitel());
+          for (const x of reihe.querySelectorAll("button")) x.classList.toggle("lq-an", x.dataset.niv === n);
+          t.textContent = "Gespeichert: ab der nächsten Mission bis " + n + " – vor allem auf " + n + ".";
+          setTimeout(() => reihe.remove(), 2200);
+        });
+        reihe.appendChild(b);
+      }
+      kopf.after(reihe);
+    });
     const text = document.createElement("p"); text.className = "lq-text"; text.textContent = qu.text;
     const frage = document.createElement("p"); frage.className = "lq-frage"; frage.textContent = qu.frage;
     const liste = document.createElement("div"); liste.className = "lq-antworten";
@@ -1187,7 +1935,7 @@
     const zurueck = () => { mk.classList.remove("lq-hoert"); mk.textContent = "🎤 Noch einmal sprechen"; mk.disabled = false; };
     mk.classList.add("lq-hoert"); mk.textContent = "● Mikro geht an …"; ms.textContent = "";
     SPR.aufnehmen((p) => mk.style.setProperty("--pegel", p.toFixed(2)), () => { if (mk.classList.contains("lq-hoert")) mk.textContent = "● Ich höre zu … (tippen = fertig)"; })
-      .then((wav) => { mk.classList.remove("lq-hoert"); mk.textContent = "… ich verstehe"; mk.disabled = true; return SPR.erkennen(wav); })
+      .then((wav) => { mk.classList.remove("lq-hoert"); mk.textContent = "… ich verstehe"; mk.disabled = true; return SPR.erkennen(wav, wortliste(qu)); })
       .then((les) => {
         if (!dialog || dialog.qu !== qu || qu.f.zustand !== "offen") return;
         const e = SPR.pruefen(qu, les);
@@ -1296,13 +2044,23 @@
      8. EINE QUEST ERZEUGEN
      ===================================================================== */
   const schwach = () => { const s = new Set(info.schwach || []); return s; };
+  /* FASSUNG 875 — XANDER (Funk 257): „die Missionen müssen Variation haben und dürfen nicht zu repetitiv sein“.
+     Gewählt wird bis zum eigenen Niveau (Anteil je Stufe, STUFE_ANTEIL), nur was in dieser Stadt gehen kann (verfuegbar),
+     nie die zuletzt gestellte, die letzten zwölf nur ein Fünftel so oft, dieselbe Art (kat) wie eben nur halb so oft und
+     zwei Wegbeschreibungen nacheinander ebenfalls nur halb so oft. Schwächen bleiben dreifach (Mut-Bonus, 832). */
   function vorlageWaehlen(nurId) {
     if (nurId) return VORLAGEN.find((v) => v.id === nurId) || null;
-    const st = standLesen(), sw = schwach(), aktiv = new Set(Q.liste.map((x) => x.v.id));
-    const gew = VORLAGEN.map((v) => (aktiv.has(v.id) ? 0 : (st.letzte.indexOf(v.id) >= 0 ? 0.25 : 1) * (sw.has(v.kat) ? 3 : 1) * (v.richtung ? 1.3 : 1)));
+    const st = standLesen(), sw = schwach(), aktiv = new Set(Q.liste.map((x) => x.v.id)), S = stadtStand(), eigen = nivIdx(niveau());
+    const vorher = st.letzte[st.letzte.length - 1], vv = VORLAGEN.find((v) => v.id === vorher) || null;
+    const geht = VORLAGEN.map((v) => nivIdx(v.niveau) <= eigen && !aktiv.has(v.id) && v.id !== vorher && verfuegbar(v, S));
+    const anzahl = [0, 0, 0, 0, 0, 0]; VORLAGEN.forEach((v, i) => { if (geht[i]) anzahl[nivIdx(v.niveau)]++; });
+    let gew = VORLAGEN.map((v, i) => !geht[i] ? 0 : STUFE_ANTEIL[Math.min(3, eigen - nivIdx(v.niveau))] / anzahl[nivIdx(v.niveau)] * (st.letzte.indexOf(v.id) >= 0 ? 0.2 : 1) *
+      (sw.has(v.kat) ? 3 : 1) * (v.richtung ? 1.3 : 1) * (vv && vv.kat === v.kat ? 0.5 : 1) * (vv && vv.richtung && v.richtung ? 0.5 : 1));
+    /* (geht in dieser Stadt gar nichts auf dem Niveau: dann irgendeine, die hier geht – nur nicht dieselbe wie eben) */
+    if (!gew.some((x) => x > 0)) gew = VORLAGEN.map((v) => (!aktiv.has(v.id) && v.id !== vorher && verfuegbar(v, S) ? 1 : 0));
     let s = gew.reduce((a, b) => a + b, 0) * zufall();
     for (let i = 0; i < VORLAGEN.length; i++) { s -= gew[i]; if (s <= 0 && gew[i] > 0) return VORLAGEN[i]; }
-    return VORLAGEN[0];
+    return VORLAGEN.find((v, i) => gew[i] > 0) || VORLAGEN[0];
   }
   /* Kern der Stadt (im Überblick sichtbar): 80 m um den Markt, im Bauraum, nicht im Wasser */
   function guterStart(n, i, belegt, rMax) {
@@ -1370,6 +2128,10 @@
     const Z = ziele(), n = netz();
     const moegl = (opt.ziel ? [opt.ziel] : v.ziel).filter((k) => Z[k]);
     if (!moegl.length) return null;
+    /* FASSUNG 875 — Missionen nach Stand: ohne das Gebäude (braucht) oder die Lage (stand) gibt es sie nicht, auch nicht
+       auf Wunsch (Sonde) */
+    const S = stadtStand(true);
+    if (!standPasst(v, S)) return null;
     const belegt = Q.liste.map((x) => [x.f.x, x.f.y]);
     for (const zk of mischen(moegl)) {
       const z = Z[zk], an = anschluss(z); if (!an) continue;
@@ -1384,6 +2146,7 @@
         s = wahl(kand); r = route(an, s); if (!r) continue;
       }
       const vars = { stadt: wahl(STAEDTE), wort: wahl(WOERTER), termin: wahl([[14, 30], [9, 15], [16, 45], [11, 30], [8, 45], [10, 0], [15, 30], [13, 15], [17, 50], [12, 25]]) };
+      if (v.vars) { const x = v.vars(S, z); if (!x) continue; Object.assign(vars, x); }   // FASSUNG 875 — die Mission liest die Stadt
       let antworten;
       if (v.richtung) {
         antworten = [{ html: esc(wegText(r.schritte, r.ende, z, r.brueckeZuletzt)), richtig: true }].concat(falsch.map((fa) => {
@@ -1420,7 +2183,7 @@
       const v = vorlageWaehlen(nurId); if (!v) return null;
       const qu = questBauen(v, opt); if (!qu) { if (nurId) return null; continue; }
       Q.liste.push(qu);
-      const st = standLesen(); st.letzte = st.letzte.concat([v.id]).slice(-6); standSchreiben(st);
+      const st = standLesen(); st.letzte = st.letzte.concat([v.id]).slice(-12); standSchreiben(st);   // FASSUNG 875 — zwölf statt sechs
       L().unruhe = 2;
       return qu;
     }
@@ -1696,8 +2459,16 @@
   /* FASSUNG 836 — Azure schreibt im Display-Feld Zahlen als Ziffern: „Heute ist der 2. Oktober" passt dann gleich gut
      zu „zweite" wie zu „zwei", und „7,50 €" verdeckt „Komma" oder „Euros". Darum zählt jetzt auch die Lexical-Lesart
      (so, wie es gesprochen wurde: „heute ist der zweite oktober"). Angezeigt wird weiter die Display-Fassung. */
-  SPR.erkennen = function (wav) {
-    return sprRufen({ aktion: "erkennen", wav: wav, sprache: "de-DE" }).then((j) => {
+  /* FASSUNG 875 — XANDER (Funk 257/263): „dazu muss die Erkennung auch korrekt sein weil er hat meine Worte oft nicht
+     richtig erkannt“ · „die Spracherkennung von Azure … hört so oft falsche Sachen“. Die Wortliste der Mission (phrasen)
+     geht mit. Die Edge Function „aussprache“ ruft heute den REST-Weg für kurze Aufnahmen auf
+     (…/speech/recognition/conversation/cognitiveservices/v1); der kennt keine Phrase List und das Feld wird dort nicht
+     gelesen. Gibt der Server sie später weiter (Speech SDK mit PhraseListGrammar oder Fast Transcription mit phraseList),
+     wirkt sie sofort, ohne dass die Stadt sich ändert. Bis dahin nutzt die Stadt die Liste selbst (anpassen, unten). */
+  SPR.erkennen = function (wav, phrasen) {
+    const koerper = { aktion: "erkennen", wav: wav, sprache: "de-DE" };
+    if (Array.isArray(phrasen) && phrasen.length) koerper.phrasen = phrasen.slice(0, 100).map((x) => String(x).slice(0, 60));
+    return sprRufen(koerper).then((j) => {
       const nb = Array.isArray(j && j.NBest) ? j.NBest : [];
       const lesarten = [], anzeige = {};
       const dazu = (t, zeig) => { t = String(t || "").trim(); if (!t || lesarten.indexOf(t) >= 0) return; lesarten.push(t); anzeige[t] = String(zeig || t); };
@@ -1728,7 +2499,11 @@
     "schnitzel": ["n", "schnitzel"], "suppe": ["f", "suppen"], "salat": ["m", "salate"], "bratwurst": ["f", "bratwürste"], "wurst": ["f", "würste"], "kaffee": ["m", "kaffees"],
     "tee": ["m", "tees"], "bier": ["n", "biere"], "saft": ["m", "säfte"], "kugel": ["f", "kugeln"], "waffel": ["f", "waffeln"], "fahrkarte": ["f", "fahrkarten"],
     "ticket": ["n", "tickets"], "fahrschein": ["m", "fahrscheine"], "buch": ["n", "bücher"], "tretboot": ["n", "tretboote"], "boot": ["n", "boote"], "postkarte": ["f", "postkarten"],
-    "karte": ["f", "karten"], "apfel": ["m", "äpfel"], "regenschirm": ["m", "regenschirme"], "schirm": ["m", "schirme"], "pizza": ["f", "pizzen"], "knödel": ["m", "knödel"] };
+    "karte": ["f", "karten"], "apfel": ["m", "äpfel"], "regenschirm": ["m", "regenschirme"], "schirm": ["m", "schirme"], "pizza": ["f", "pizzen"], "knödel": ["m", "knödel"],
+    /* FASSUNG 875 — Nomen der neuen Missionen */
+    "fisch": ["m", "fische"], "woche": ["f", "wochen"], "stunde": ["f", "stunden"], "minute": ["f", "minuten"], "gleis": ["n", "gleise"], "radweg": ["m", "radwege"],
+    "laterne": ["f", "laternen"], "museum": ["n", "museen"], "labor": ["n", "labore"], "bibliothek": ["f", "bibliotheken"], "schule": ["f", "schulen"],
+    "krankenhaus": ["n", "krankenhäuser"], "bahnhof": ["m", "bahnhöfe"], "gasthaus": ["n", "gasthäuser"], "brauerei": ["f", "brauereien"], "sternwarte": ["f", "sternwarten"] };
   const PLURAL = {}; for (const k in NOMEN) PLURAL[NOMEN[k][1]] = k;
   const GROSS = (w) => w[0].toUpperCase() + w.slice(1);
   /* eine Zahl über eins (Ziffern, Zahlwörter, „ein paar", „viele" …) */
@@ -1744,9 +2519,110 @@
     [/ du (muss|müssen) /, "Mit „du“: du musst."], [/ du (will|wollen) /, "Mit „du“: du willst."], [/ du (möchte|möchten) /, "Mit „du“: du möchtest."], [/ du (habe|haben|hat) /, "Mit „du“: du hast."],
     [/ (er|es) (bin|bist|sind) /, "Mit „er/es“ heißt es „ist“."], [/ wir (bin|bist|ist) /, "Mit „wir“ heißt es „wir sind“."]
   ];
-  const PARTIZIP_FALSCH = { gegeht: "gegangen", gefahrt: "gefahren", gelauft: "gelaufen", gekommt: "gekommen", gesehet: "gesehen", geesst: "gegessen", getrinkt: "getrunken", geschwimmt: "geschwommen", gefliegt: "geflogen", geschreibt: "geschrieben" };
-  const INF_LISTE = /^(kaufen|haben|mieten|zurückgeben|abgeben|fahren|bestellen|gehen|essen|trinken|bezahlen|leihen|ausleihen|klettern|sehen|bekommen|nehmen)$/;
-  function grammatikPruefen(T) {
+  const PARTIZIP_FALSCH = { gegeht: "gegangen", gefahrt: "gefahren", gelauft: "gelaufen", gekommt: "gekommen", gesehet: "gesehen", geesst: "gegessen", getrinkt: "getrunken", geschwimmt: "geschwommen", gefliegt: "geflogen", geschreibt: "geschrieben",
+    /* FASSUNG 875 */ gebauen: "gebaut", gewachst: "gewachsen", gefangt: "gefangen", gebringt: "gebracht", gedenkt: "gedacht", gewisst: "gewusst", geschlaft: "geschlafen", genehmt: "genommen", gegebt: "gegeben", gesprecht: "gesprochen", gefindet: "gefunden", geinvestiert: "investiert", gebesucht: "besucht", geerklärt: "erklärt", geverändert: "verändert" };
+  const INF_LISTE = /^(kaufen|haben|mieten|zurückgeben|abgeben|fahren|bestellen|gehen|essen|trinken|bezahlen|leihen|ausleihen|klettern|sehen|bekommen|nehmen|bauen|besuchen|behalten|übernachten|anmelden|investieren|verbessern|bringen|holen|dimmen|ablehnen|verkaufen)$/;
+  /* ---------- FASSUNG 875 — Satzbau für B1 bis C2 ----------
+     Nebensätze (weil, dass, wenn, obwohl, damit, sodass …): das Verb steht am Ende; nach einem vorangestellten Nebensatz
+     kommt im Hauptsatz zuerst das Verb; nach „denn“ steht es an zweiter Stelle; „um … zu“ braucht „zu“ und kein eigenes
+     Subjekt; nach „würde“ der Infinitiv; Passiv mit Modalverb „werden“, nicht „worden“; Uhrzeit mit „um“; Dativ Plural
+     nach seit/vor/in …; Komparativ mit -er und „als“. Die Wortlisten sind klein und sicher gehalten: lieber ein Fehler
+     unbemerkt als ein richtiger Satz als „Fast“ (Funk 257: „dieses fast kannst du nur schreiben wenn er die Grammatik
+     fast richtig hat“). */
+  const SUBORD = new Set(["weil", "dass", "obwohl", "wenn", "ob", "damit", "bevor", "nachdem", "sodass", "falls", "sobald", "solange"]);
+  const SUBJ_PRON = new Set(["ich", "du", "er", "sie", "es", "wir", "ihr", "man"]);
+  const DET = /^(der|die|das|den|dem|des|ein|eine|einen|einem|einer|kein|keine|keinen|mein|meine|meinen|dein|deine|unser|unsere|unseren|ihr|ihre|ihren|sein|seine|seinen|diese|dieser|dieses|diesen|jede|jeder|jedes|viele|mehr|weniger|alle|einige|manche|beide)$/;
+  const PRAEP_ADV = new Set(["mit", "von", "vom", "zu", "zum", "zur", "aus", "bei", "beim", "nach", "in", "im", "an", "am", "auf", "vor", "für", "ohne", "neben", "hinter", "über", "unter",
+    "dort", "da", "hier", "heute", "morgen", "gestern", "jetzt", "dann", "deshalb", "zuerst", "oft", "immer", "nie", "auch", "nur", "schon", "noch", "gerade", "zu hause"]);
+  const FINIT = new Set(("bin bist ist sind seid war warst waren wäre wären sei habe hast hat haben habt hatte hatten hätte hätten kann kannst können könnt konnte konnten könnte könnten " +
+    "muss musst müssen müsst musste mussten müsste müssten soll sollst sollen sollt sollte sollten will willst wollen wollt wollte wollten möchte möchtest möchten mag darf darfst dürfen dürft " +
+    "durfte dürfte wird wirst werden werdet wurde wurden würde würdest würden gibt gab gäbe fehlt fehlen fehle fehlte braucht brauchst brauche brauchen finde findet findest finden glaube " +
+    "glaubt glauben denke denkt denken meint weiß liegt liegen steht stehen kommt kommen komme kommst kämen käme geht gehen gehe gehst fährt fahren fahre fährst wächst wachsen wachse " +
+    "macht machen mache sieht sehen sehe kostet bringt bringen hilft helfen arbeitet lernt lernen lerne regnet schneit stürmt wohnt wohnen spielt bekommt bekommen nimmt nehmen nehme " +
+    "läuft bleibt bleiben bleibe passt passen lohnt profitiert profitieren schafft schaffen zeigt zeigen gehört gehören verbessert verbessern investiert investieren baut bauen baue fördert " +
+    "fördern bietet bieten garantiert verspricht sichert übernimmt zahlt behält entstehen entsteht entstünden entstünde reist sucht heißt heißen kauft kaufen kaufe trinkt schmeckt mangelt tut tun").split(" "));
+  /* (sicher finit auch direkt nach der Konjunktion – keine Formen, die auch Nomen oder Infinitive sein können) */
+  const FINIT_V1 = new Set("bin bist ist sind war waren wäre wären hat hätte hätten kann kannst könnte könnten muss müsste müssten soll sollte sollten will darf dürfte wird würde würden gibt gäbe fehlt fehle braucht kommt geht fährt wächst sieht kostet liegt steht regnet schneit stürmt entstünden entsteht entstünde".split(" "));
+  const GRENZE = new Set(["und", "aber", "oder", "denn", "sondern", "doch", "jedoch", "wie", "was", "wo", "wer", "wann", "warum", "als", "etwa", "also"].concat(Array.from(SUBORD)));
+  const MODAL = new Set("kann können könnte könnten muss müssen müsste müssten soll sollen sollte sollten darf dürfen dürfte will wollen".split(" "));
+  const MODAL_AUX = new Set("muss kann soll ist sind hat haben wird werden darf will möchte".split(" "));
+  const PART_INF = { genommen: "nehmen", gemacht: "machen", gebaut: "bauen", gefahren: "fahren", gegangen: "gehen", gekauft: "kaufen", gesprochen: "sprechen", geblieben: "bleiben",
+    gebracht: "bringen", gesagt: "sagen", gesehen: "sehen", gegeben: "geben", geholfen: "helfen", gearbeitet: "arbeiten", gespielt: "spielen", gelernt: "lernen", gewartet: "warten",
+    gefragt: "fragen", geschlafen: "schlafen", gelesen: "lesen", geschrieben: "schreiben", gefunden: "finden", gekommen: "kommen", gelaufen: "laufen", gegessen: "essen", getrunken: "trinken", gewählt: "wählen" };
+  const INF_ZU = /^(verbessern|erhöhen|einstellen|anwerben|bezahlen|ausbauen|schaffen|senken|einführen|fördern|entlasten|anbieten|gewinnen|investieren|ausbilden|reduzieren|verkürzen|steigern|zahlen)$/;
+  const UMZU_VERB = new Set("kann können könnte könnten wird werden ist sind bleibt bleiben hat haben lernen lernt muss müssen darf dürfen soll sollen".split(" "));
+  const KOMP = { hoch: "höher", groß: "größer", gut: "besser", nah: "näher", alt: "älter", jung: "jünger", kurz: "kürzer", lang: "länger", warm: "wärmer", kalt: "kälter", teuer: "teurer" };
+  /* Wörter mit Kommas aus dem rohen Satz (Azure setzt sie in der Display-Fassung) – klein und wie gesprochen */
+  function satzWoerter(t) {
+    const roh = String(t || "").replace(/[„“"'.!?;:–—()]/g, " ").replace(/,/g, " , ").split(/\s+/).filter(Boolean);
+    return { roh: roh, w: roh.map((x) => x.toLowerCase()) };
+  }
+  function satzbau(t) {
+    const { roh, w } = satzWoerter(t), n = w.length, nx = (k) => { while (k < n && w[k] === ",") k++; return k; };
+    const ende = (k) => { while (k < n && w[k] !== "," && !GRENZE.has(w[k])) k++; return k; };
+    const zeig = (a, b) => roh.slice(a, b).join(" ");
+    for (let i = 0; i < n; i++) {
+      const c = w[i];
+      if (SUBORD.has(c)) {
+        const a = nx(i + 1); if (a >= n) continue;
+        /* Verb direkt nach der Konjunktion: „wenn regnet es“, „sodass entstünden …“ */
+        if (FINIT_V1.has(w[a]) && !(c === "damit" && i === 0)) { const e = ende(a + 1);   // („Damit ist …“ am Satzanfang: Adverb) return "Fast! Im Nebensatz mit „" + c + "“ steht das Verb am Ende: … " + c + " " + (e - a <= 7 ? zeig(a + 1, e) + " " + roh[a] : "… " + roh[a]) + "."; }
+        let j = -1;
+        if (SUBJ_PRON.has(w[a])) j = a;
+        else if (DET.test(w[a])) { j = a + 1; if (j + 1 < n && /(e|en|es|er|em)$/.test(w[j]) && !FINIT.has(w[j + 1]) && !GRENZE.has(w[j + 1]) && w[j + 1] !== ",") j++; }
+        else if (!PRAEP_ADV.has(w[a]) && FINIT.has(w[a + 1])) j = a;
+        else if (!PRAEP_ADV.has(w[a]) && /(e|en|es|er)$/.test(w[a]) && FINIT.has(w[a + 2])) j = a + 1;
+        if (j >= 0 && j + 1 < n && FINIT.has(w[j + 1])) {
+          const v = j + 1, m = nx(v + 1);
+          if (m < n && !FINIT.has(w[m]) && !GRENZE.has(w[m])) {
+            if (SUBJ_PRON.has(w[m]) && FINIT.has(w[nx(m + 1)])) return "Fast! Nach dem vorangestellten „" + c + "“-Satz kommt zuerst das Verb: …, " + roh[nx(m + 1)] + " " + roh[m] + " …";
+            const e = ende(v + 1);
+            return "Fast! Nach „" + c + "“ steht das Verb am Ende: … " + c + " " + (e - a <= 8 ? zeig(a, v) + " " + zeig(v + 1, e) + " " + roh[v] : zeig(a, v) + " … " + roh[v]) + ".";
+          }
+        }
+        /* das Verb am Ende des Nebensatzes (das erste finite) – und was danach kommt */
+        let k = j >= 0 ? j + 1 : a; while (k < n && !FINIT.has(w[k]) && w[k] !== ",") k++;
+        if (k < n && FINIT.has(w[k])) {
+          const m = nx(k + 1);
+          if (i === 0 && m < n && ((SUBJ_PRON.has(w[m]) && FINIT.has(w[nx(m + 1)])) || (DET.test(w[m]) && FINIT.has(w[nx(m + 2)]))))
+            return "Fast! Nach dem vorangestellten „" + c + "“-Satz kommt zuerst das Verb: …, " + roh[SUBJ_PRON.has(w[m]) ? nx(m + 1) : nx(m + 2)] + " " + zeig(m, SUBJ_PRON.has(w[m]) ? m + 1 : m + 2) + " …";
+          if (PRAEP_ADV.has(w[a]) && k - a <= 4 && SUBJ_PRON.has(w[m]) && nx(m + 1) < n && !FINIT.has(w[nx(m + 1)]) && !GRENZE.has(w[nx(m + 1)])) {
+            const e = ende(m + 1);
+            return "Fast! Auch hier steht das Verb im Nebensatz am Ende: … " + c + " " + (e - a <= 9 ? roh[m] + " " + zeig(a, k) + " " + zeig(m + 1, e) + " " + roh[k] : roh[m] + " … " + roh[k]) + ".";
+          }
+          if ((w[k + 1] === "und" || w[k + 1] === "oder") && MODAL_AUX.has(w[k + 2]) && k + 3 < n && w[k + 3] !== ",")
+            return "Fast! Auch nach „" + w[k + 1] + "“ geht der " + c + "-Satz weiter – das Verb kommt ans Ende: … " + w[k + 1] + " " + zeig(k + 3, ende(k + 3)) + " " + roh[k + 2] + ".";
+        }
+      }
+      if (c === "denn") {
+        const a = nx(i + 1); let j = -1;
+        if (SUBJ_PRON.has(w[a])) j = a; else if (DET.test(w[a] || "")) j = a + 1;
+        if (j >= 0 && j + 1 < n && !FINIT.has(w[j + 1]) && w[j + 1] !== ",") {
+          let k = j + 1; while (k < n && !FINIT.has(w[k]) && w[k] !== "," && !GRENZE.has(w[k])) k++;
+          const nach = k + 1;
+          if (k < n && FINIT.has(w[k]) && (nach >= n || w[nach] === "," || GRENZE.has(w[nach]))) return "Fast! Nach „denn“ steht das Verb an zweiter Stelle: … denn " + zeig(a, j + 1) + " " + roh[k] + " " + zeig(j + 1, k) + ".";
+        }
+      }
+      /* „um … zu“ mit eigenem Subjekt und ohne „zu“ */
+      if (c === "um" && w[i + 1] && (DET.test(w[i + 1]) || SUBJ_PRON.has(w[i + 1]))) {
+        const e = ende(i + 1), teil = w.slice(i + 1, e);
+        if (teil.indexOf("zu") < 0 && teil.indexOf("uhr") < 0 && teil.some((x) => UMZU_VERB.has(x)))
+          return "Fast! „um … zu“ braucht „zu“ und einen Infinitiv ohne eigenes Subjekt. Mit eigenem Subjekt nimmt man „damit“: … damit " + zeig(i + 1, e) + ".";
+      }
+      /* nach „würde“ der Infinitiv, nicht das Partizip („Ich würde den Zug genommen“) */
+      if (/^würde(n|st|t)?$/.test(c)) {
+        const e = ende(i + 1), l = w[e - 1];
+        if (e - 1 > i + 1 && PART_INF[l] && !w.slice(i + 1, e - 1).some((x) => FINIT.has(x))) return "Fast! Nach „" + c + "“ steht der Infinitiv: … " + PART_INF[l] + " (nicht „" + l + "“).";
+      }
+      /* Passiv mit Modalverb: „gebaut werden“, nicht „gebaut worden“ */
+      if (c === "worden") {
+        let b = i - 1, modal = false; while (b >= 0 && w[b] !== "," && !GRENZE.has(w[b])) { if (MODAL.has(w[b])) modal = true; b--; }
+        if (MODAL.has(w[i + 1]) || (modal && w[i + 1] !== "sein")) return "Fast! Passiv mit Modalverb: … werden (nicht „worden“) – zum Beispiel „gebaut werden“, „beliefert werden könnten“.";
+      }
+    }
+    return null;
+  }
+  function grammatikPruefen(T, t) {
     for (const k of KONJ) if (k[0].test(T)) return k[1];
     const w = T.trim().split(" ");
     for (let i = 0; i < w.length; i++) {
@@ -1772,15 +2648,24 @@
         }
       }
     }
-    /* Nach „möchte, kann, will …“ steht das zweite Verb am Ende */
-    const m = / (möchte|möchtest|möchten|will|willst|wollen|kann|kannst|können|muss|musst|müssen|darf|darfst|dürfen|soll|sollst) (.*)$/.exec(T);
+    /* Nach „möchte, kann, will …“ (FASSUNG 875: auch „würde, könnte, sollte …“) steht das zweite Verb am Ende – bis zum
+       nächsten Nebensatz oder „und“ (sonst hielt „… nehmen, weil die Bahn …“ das „die“ für ein Objekt nach dem Verb) */
+    const m = / (möchte|möchtest|möchten|will|willst|wollen|kann|kannst|können|muss|musst|müssen|darf|darfst|dürfen|soll|sollst|würde|würden|könnte|könnten|sollte|sollten|müsste|müssten) (.*)$/.exec(T);
     if (m) {
-      const rest = m[2].trim().split(" ");
+      let rest = m[2].trim().split(" "); const g = rest.findIndex((x) => GRENZE.has(x)); if (g >= 0) rest = rest.slice(0, g);
       for (let i = 0; i < rest.length - 1; i++) if (INF_LISTE.test(rest[i]) && rest.slice(i + 1).some((x) => NOMEN[x] || PLURAL[x] || /^(ein|eine|einen|das|die|der|den|\d+)$/.test(x)))
         return "Nach „" + m[1] + "“ steht das zweite Verb ganz am Ende: … " + rest.filter((x, j) => j !== i).join(" ") + " " + rest[i] + ".";
     }
     if (/ geben zurück /.test(T) || / zurück (das|die|den) /.test(T)) return "„zurückgeben“ bleibt nach „möchte“ zusammen am Ende: … das Buch zurückgeben.";
     if (/ (habe|hab|hast|hat|haben|habt) /.test(T) && / (gegangen|gefahren|gelaufen|gekommen|geflogen|geschwommen|gerannt|gewandert) /.test(T)) return "Bei Bewegung bildet man das Perfekt mit „sein“: ich bin gegangen, ich bin gefahren.";
+    /* ---------- FASSUNG 875 ---------- */
+    const sb = satzbau(t != null ? t : T); if (sb) return sb;
+    let x;
+    if ((x = / am (\d{1,2}|ein|eins|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|einundzwanzig|zweiundzwanzig|dreiundzwanzig) uhr /.exec(T))) return "Fast! Bei der Uhrzeit sagt man „um“: um " + x[1] + " Uhr.";
+    if ((x = / (seit|vor|nach|in|mit) (zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|zwanzig|dreißig|\d+|vielen|einigen|wenigen|mehreren|paar) (jahre|monate|tage) /.exec(T))) return "Fast! Nach „" + x[1] + "“ steht der Dativ – im Plural mit -n: " + x[1] + " " + x[2] + " " + GROSS(x[3]) + "n.";
+    if ((x = / mehr (schnell|bequem|billig|günstig|entspannt|teuer|einfach|schön|groß|klein|hoch|wichtig|praktisch|sicher|gesund|leise|laut|ruhig|modern|sauber|gut|alt|jung|kurz|lang|warm|kalt) (als|wie) /.exec(T))) return "Fast! Den Komparativ bildet man mit -er: " + (KOMP[x[1]] || x[1] + "er") + " als (nicht „mehr " + x[1] + "“).";
+    if ((x = / (schneller|bequemer|billiger|günstiger|teurer|besser|lieber|einfacher|größer|kleiner|höher|schöner|wichtiger|sicherer|leiser|lauter|ruhiger|moderner|praktischer|älter|jünger|länger|kürzer|näher|entspannter) wie /.exec(T))) return "Fast! Nach dem Komparativ steht „als“: " + x[1] + " als …";
+    if ((x = / wir (baut|macht|kauft|geht|kommt|hat|ist|braucht|sucht|fährt|nimmt|arbeitet|lernt|spielt|wohnt|bleibt|sieht|liest) /.exec(T))) return "Fast! Mit „wir“ heißt es „wir " + ({ hat: "haben", ist: "sind", fährt: "fahren", nimmt: "nehmen", sieht: "sehen", liest: "lesen", arbeitet: "arbeiten" }[x[1]] || x[1].replace(/t$/, "en")) + "“.";
     return null;
   }
   /* Höflich? (beim Bestellen und Kaufen) */
@@ -1864,15 +2749,18 @@
       return / (sieben|7) /.test(T) && / (fünfzig|50) /.test(T) ? { ok: true } : null;
     }
   };
+  /* FASSUNG 875 — die neuen Missionen bringen ihre Prüfung selbst mit (v.pruefe); „falsch“ = stimmt nicht für deine Stadt
+     (oder die Ironie nicht verstanden): 0 Punkte und ein Versuch, wie eine falsche Antwort */
   function freiPruefen(qu, t) {
-    const f = FREI[qu.v.id]; if (!f) return null;
+    const f = FREI[qu.v.id] || qu.v.pruefe; if (!f) return null;
     const T = fw(t), r = f(T, qu, String(t || "").trim()); if (!r) return null;
     if (r.fehlt) return { stufe: 0, text: t, grund: r.fehlt, frei: true, ohneVersuch: true };
-    const fehler = r.fehler || grammatikPruefen(T);
+    if (r.falsch) return { stufe: 0, text: t, grund: r.falsch, frei: true };
+    const fehler = r.fehler || grammatikPruefen(T, t);
     if (fehler) return { stufe: 0.5, text: t, grund: fehler, frei: true };
     return { stufe: 1, text: t, grund: "So kann man das sagen – gut gemacht!", frei: true, antwort: r.antwort };
   }
-  Q.freiPruefen = freiPruefen; Q.grammatikPruefen = (t) => grammatikPruefen(fw(t));
+  Q.freiPruefen = freiPruefen; Q.grammatikPruefen = (t) => grammatikPruefen(fw(t), t);
 
   /* ---------- Prüfen ---------- */
   const klein = (s) => String(s || "").toLowerCase().replace(/ß/g, "ss").replace(/[„“"'.,!?;:–—-]/g, " ").replace(/\s+/g, " ").trim();
@@ -1935,7 +2823,7 @@
     lesarten = (lesarten || []).filter(Boolean);
     if (!lesarten.length) return { stufe: -1, text: "", grund: "Ich habe dich nicht verstanden. Sprich noch einmal – etwas lauter." };
     let bestes = null;
-    for (const t of lesarten) {
+    const bewerte = (t) => {
       let e;
       if (qu.v.richtung) {
         const w = wegPruefen(qu, t), l = lagePruefen(qu, t);
@@ -1955,7 +2843,11 @@
         /* (830: die freie Prüfung entscheidet, wo es sie gibt – „Eine Fahrkarte, bitte.“ ähnelt dem Vorschlag, sagt aber nicht wohin;
            nur der Vorschlag selbst, Wort für Wort, zählt ohne sie) */
         const genau = a && a.richtig && klein(t) === klein(ohneHtml(a.html)), fr = !genau && freiPruefen(qu, t);
+        /* FASSUNG 875 — Sicherung: klingt der Satz wie ein falscher Vorschlag (fast Wort für Wort) und hält ihn die freie
+           Prüfung trotzdem für richtig, gilt der Hinweis des Vorschlags */
+        const wieFalsch = a && !a.richtig && bs >= 0.92 && bs - bR >= 0.08;
         if (genau) e = { stufe: 1, text: t, i: bi, grund: "Genau richtig!" };
+        else if (fr && fr.stufe === 1 && wieFalsch) e = { stufe: 0, text: t, i: bi, weg: a.weg, grund: a.hinweis || "Hm, das stimmt noch nicht." };
         else if (fr) e = fr;
         else if (knapp) e = { stufe: 0, text: t, ohneVersuch: true, unsicher: true, grund: "Das habe ich nicht sicher verstanden – sag es bitte noch einmal, etwas deutlicher." };
         else if (a && a.richtig && bs >= 0.75) e = { stufe: 1, text: t, i: bi, grund: "Genau richtig!" };
@@ -1963,12 +2855,120 @@
         else if (a && !a.richtig && bs >= 0.45) e = { stufe: 0, text: t, i: bi, weg: a.weg, grund: a.hinweis || "Hm, das stimmt noch nicht." };
         else e = { stufe: 0, text: t, ohneVersuch: true, grund: "Das passt noch nicht zur Aufgabe. " + (qu.v.frei || "Sag es in einem ganzen Satz – mit deinen eigenen Worten.") };
       }
+      return e;
+    };
+    for (const t of lesarten) {
+      const e = bewerte(t);
       /* (836: eine eindeutige Lesart schlägt eine unsichere gleicher Stufe – sagt die Lexical-Fassung klar „zwei", zählt das) */
       if (!bestes || e.stufe > bestes.stufe || (e.stufe === bestes.stufe && bestes.unsicher && !e.ohneVersuch)) bestes = e;
       if (bestes.stufe === 1) break;
     }
+    /* FASSUNG 875 — reicht keine Lesart, werden verhörte Schlüsselwörter auf die Wortliste der Mission gezogen (anpassen).
+       Eine angepasste Lesart zählt nur, wenn sie wirklich besser ist; Endungen, Umlaute und Verbformen fasst sie nie an –
+       ein „Fast“ für einen echten Grammatikfehler bleibt also ein „Fast“. */
+    if (bestes.stufe < 1) {
+      const liste = wortliste(qu), gesehen = new Set(lesarten);
+      for (const t of lesarten) {
+        const neu = anpassen(t, liste); if (!neu || gesehen.has(neu)) continue; gesehen.add(neu);
+        const e = bewerte(neu); e.angepasst = t;
+        if (e.stufe > bestes.stufe) bestes = e;
+        if (bestes.stufe === 1) break;
+      }
+    }
     return bestes;
   };
+
+  /* ---------- FASSUNG 875 — Wortliste und Lautähnlichkeit ----------
+     Wortliste je Mission: was die Mission selbst nennt (v.woerter), das Ziel, die Stadt im Text, der Name der eigenen
+     Stadt, bei Wegbeschreibungen die Häuser der Stadt und die Richtungswörter – dazu die Nomen der richtigen Antwort,
+     aber nur die, die NICHT über richtig und falsch entscheiden: steht in einer falschen Antwort eine Abwandlung
+     („Fische“ – „Fisch“, „Fischen“; „fährt“ – „fahrt“; „anmelden“ – „melden … an“), bleibt das Wort draußen. Eine Phrase
+     List mit „Fische“ würde Azure sonst dazu bringen, aus einem gesprochenen „Fisch“ ein „Fische“ zu machen – und der
+     Fehler, um den es geht, wäre unsichtbar. */
+  const STOPP = new Set(("aber alle allem allen aller alles als also am an auch auf aus bei beim bin bis bist bitte da dabei damit dann darum das dass dein deine dem den denn der des dich die dies " +
+    "diese diesem diesen dieser dieses dir doch dort du durch ein eine einem einen einer eines er es etwa euch euer für gern gerne gibt habe haben hast hat hatte hier ich ihm ihn ihnen ihr " +
+    "ihre ihrem ihren ihrer im immer in ins ist ja jetzt kann kein keine keinen man mehr mein meine meinem meinen mich mir mit muss nach nein nicht noch nun nur ob oder ohne schon sehr sein " +
+    "seine sich sie sind so soll über um und uns unser unsere vom von vor war was weil wenn wer wie wieder wir wird wo zu zum zur zwar heute gestern morgen danke hallo genau gut ganz viel " +
+    "viele wirklich vielleicht leider natürlich klar okay gleich lieber besser einmal noch").split(" "));
+  const umlautfrei = (x) => x.toLowerCase().replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ß/g, "ss");
+  /* ist b eine Abwandlung von a (gleicher Anfang, Endung, Umlaut)? */
+  const abwandlung = (a, b) => { const A = umlautfrei(a), B = umlautfrei(b); if (A === B) return true; if (A.length < 4 || B.length < 4) return false; return A.slice(0, 4) === B.slice(0, 4) || A.endsWith(B) || B.endsWith(A); };
+  function wortliste(qu) {
+    const aus = [], v = qu.v, dazu = (w) => { w = String(w || "").trim(); if (w.length >= 3 && aus.indexOf(w) < 0) aus.push(w); };
+    const r = (qu.antworten || []).find((a) => a.richtig), falsch = (qu.antworten || []).filter((a) => !a.richtig).map((a) => klein(ohneHtml(a.html)).split(" "));
+    const rw = r ? klein(ohneHtml(r.html)).split(" ") : [];
+    /* entscheidet dieses Wort zwischen richtig und falsch? (es steht in der richtigen Antwort; eine falsche hat statt seiner eine Abwandlung) */
+    const strittig = (w) => { const k = klein(w); if (rw.indexOf(k) < 0 && !k.split(" ").some((x) => rw.indexOf(x) >= 0)) return false;
+      return falsch.some((f) => f.indexOf(k) < 0 && f.some((x) => x !== k && abwandlung(x, k))); };
+    try { if (v.woerter) (typeof v.woerter === "function" ? v.woerter(qu.ziel, qu.vars || {}) : v.woerter).forEach((w) => { if (!strittig(w)) dazu(w); }); } catch (e) {}
+    if (qu.ziel && qu.ziel.name) dazu(qu.ziel.name);
+    if (qu.vars && qu.vars.stadt && String(qu.text || "").indexOf(qu.vars.stadt) >= 0) dazu(qu.vars.stadt);
+    const S = stadtStand(); if (S.name && String(qu.text || "").indexOf(S.name) >= 0) dazu(S.name);
+    if (v.richtung) { for (const k of S.ziel) if (NAMEN[k]) dazu(NAMEN[k][1]); ["links", "rechts", "geradeaus", "Kreuzung", "Brücke"].forEach(dazu); }
+    else if (r) for (const w of ohneHtml(r.html).replace(/[„“‚‘"'.,!?;:–—()]/g, " ").split(/\s+/)) if (/^[A-ZÄÖÜ]/.test(w) && w.length >= 4 && !STOPP.has(w.toLowerCase()) && !strittig(w)) dazu(w);
+    return aus.slice(0, 60);
+  }
+  /* Kölner Phonetik (Postel 1969): gleich klingende deutsche Wörter bekommen denselben Code (Meier/Mayer → 67) */
+  function koelner(w) {
+    w = umlautfrei(String(w || "")).replace(/ph/g, "f").replace(/[^a-z]/g, "");
+    let c = "";
+    for (let i = 0; i < w.length; i++) {
+      const x = w[i], v = w[i - 1] || "", n = w[i + 1] || "";
+      if ("aeijouy".indexOf(x) >= 0) c += "0";
+      else if (x === "b") c += "1";
+      else if (x === "p") c += n === "h" ? "3" : "1";
+      else if (x === "d" || x === "t") c += "csz".indexOf(n) >= 0 && n ? "8" : "2";
+      else if ("fvw".indexOf(x) >= 0) c += "3";
+      else if ("gkq".indexOf(x) >= 0) c += "4";
+      else if (x === "c") c += i === 0 ? ("ahkloqrux".indexOf(n) >= 0 && n ? "4" : "8") : ("sz".indexOf(v) >= 0 && v ? "8" : "ahkoqux".indexOf(n) >= 0 && n ? "4" : "8");
+      else if (x === "x") c += "ckq".indexOf(v) >= 0 && v ? "8" : "48";
+      else if (x === "l") c += "5";
+      else if (x === "m" || x === "n") c += "6";
+      else if (x === "r") c += "7";
+      else if (x === "s" || x === "z") c += "8";
+    }
+    let o = ""; for (const ch of c) if (ch !== o[o.length - 1]) o += ch;
+    return o ? o[0] + o.slice(1).replace(/0/g, "") : "";
+  }
+  function lev(a, b) {
+    if (a === b) return 0; const m = a.length, n = b.length; if (!m || !n) return m || n;
+    let p = Array.from({ length: n + 1 }, (x, j) => j);
+    for (let i = 1; i <= m; i++) { const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; }
+    return p[n];
+  }
+  /* Endung oder Umlaut – das ist Grammatik, keine Verhörung („Kilo“/„Kilos“, „Apfel“/„Äpfel“, „möchte“/„möchten“) */
+  const nurEndung = (a, b) => { const A = umlautfrei(a), B = umlautfrei(b); if (A === B) return true;
+    return ["e", "n", "en", "s", "es", "er", "em", "ern", "st", "t", "te", "ten"].some((x) => A === B + x || B === A + x); };
+  /* verhörte Wörter auf die Wortliste ziehen: zusammengezogen („Neu Schwan Stein“ → Neuschwanstein, „Rad aus“ → Rathaus)
+     oder einzeln, wenn Klang (Kölner Phonetik) und Schreibung nah sind („Labo“ → Labor). Nie Funktionswörter, nie Verbformen. */
+  function anpassen(text, liste) {
+    const kw = [];
+    for (const p of liste || []) for (const w of String(p).split(/\s+/)) { const l = w.toLowerCase().replace(/[^a-zäöüß]/g, ""); if (l.length >= 4 && !STOPP.has(l) && !kw.some((x) => x.l === l)) kw.push({ w: w.replace(/[^A-Za-zÄÖÜäöüß]/g, ""), l: l, k: koelner(l) }); }
+    if (!kw.length) return null;
+    const roh = String(text || "").split(/\s+/).filter(Boolean), kern = (x) => x.toLowerCase().replace(/[^a-zäöüß]/g, ""), zeichen = (x) => (/[.,!?;:]+$/.exec(x) || [""])[0];
+    const aus = []; let anders = false;
+    for (let i = 0; i < roh.length; i++) {
+      let fertig = false;
+      for (const n of [3, 2]) {
+        if (i + n > roh.length) continue;
+        const teile = roh.slice(i, i + n).map(kern); if (teile.some((x) => !x)) continue;
+        const j = teile.join(""); if (j.length < 6) continue;
+        const t = kw.find((x) => x.l.length >= 6 && (x.l === j || (koelner(j) === x.k && lev(j, x.l) <= Math.max(2, Math.floor(x.l.length / 4)))));
+        if (t && teile.indexOf(t.l) < 0) { aus.push(t.w + zeichen(roh[i + n - 1])); i += n - 1; fertig = true; anders = true; break; }
+      }
+      if (fertig) continue;
+      const w = roh[i], l = kern(w);
+      if (l.length >= 4 && !STOPP.has(l) && !FINIT.has(l) && !kw.some((x) => x.l === l)) {
+        const k = koelner(l);
+        const t = kw.find((x) => !nurEndung(l, x.l) && Math.abs(x.l.length - l.length) <= 2 &&
+          ((x.l.length >= 5 && lev(l, x.l) <= Math.max(1, Math.floor(x.l.length / 5))) || (x.k === k && lev(l, x.l) <= Math.max(2, Math.floor(x.l.length / 3)))));
+        if (t) { aus.push(t.w + zeichen(w)); anders = true; continue; }
+      }
+      aus.push(w);
+    }
+    return anders ? aus.join(" ") : null;
+  }
+  SPR.anpassen = anpassen; SPR.koelner = koelner;
 
   /* =====================================================================
      12. FÜR DIE SONDE (werkzeug/pruefe-832-quests.js)

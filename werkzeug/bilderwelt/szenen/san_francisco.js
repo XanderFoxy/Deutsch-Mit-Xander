@@ -65,6 +65,8 @@ const vier = (a, b, c, e, fill, extra = "") => `<path d="M${a} L${b} L${c} L${e}
 
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("nebel")}" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="2.2"/></filter>`);
+S.def(`<filter id="${S.id("nebelw")}" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="1.1"/></filter>`);
+S.def(`<radialGradient id="${S.id("wulst")}" cx=".38" cy=".3" r=".75"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#f6f5f1"/><stop offset="1" stop-color="#d4d9dd"/></radialGradient>`);
 S.def(`<filter id="${S.id("dunst")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".3"/></filter>`);
 S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter>`);
 S.def(`<pattern id="${S.id("ziegel")}" width="2.4" height="1.2" patternUnits="userSpaceOnUse"><rect width="2.4" height="1.2" fill="none"/><path d="M0 1.15 H2.4 M1.2 0 V.58 M0 .58 H2.4 M0 .58 V1.2 M2.4 .58 V1.2" stroke="#6e2a20" stroke-width=".16" opacity=".55"/></pattern>`);
@@ -78,6 +80,7 @@ const CREME = "#f1e7d0", HBLAU = "#8bb8de", GOLDS = "#e3c06a";
    Island, East Bay; vorne die Häuser am Hang und die Hyde Street
    ===================================================================== */
 S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b8fd0"], [0.55, "#9fc3e4"], [0.85, "#e3e2d6"], [1, "#f4e2c4"]])}"/>`);
+S.hinten(`<rect y="96" width="400" height="164" fill="${S.lg("grund", [[0, "#b9b1a3"], [1, "#8d877d"]])}"/>`);
 S.hinten(`<ellipse cx="-10" cy="40" rx="190" ry="110" fill="${S.rg("sonne", [[0, "#fff1c8", 0.75], [0.5, "#ffe9b8", 0.25], [1, "#ffe9b8", 0]])}"/>`);
 {
   let w = "";
@@ -108,9 +111,19 @@ S.hinten(`<ellipse cx="-10" cy="40" rx="190" ry="110" fill="${S.rg("sonne", [[0,
 {
   let c = "";
   c += `<path d="M304 122 Q318 104 334 96 Q352 88 368 89 Q386 90 400 96 L400 140 L304 140 Z" fill="${S.lg("telegraph", [[0, "#73845a"], [1, "#56653f"]])}"/>`;
-  for (let i = 0; i < 30; i++) { const x = 318 + rnd() * 82, y = 94 + rnd() * 22; if (y > 92 + (x - 300) * 0.02 + Math.abs(x - 368) * 0.25) c += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(1.8 + rnd() * 2.2)}" fill="${rnd() < 0.5 ? "#5e7046" : "#4b5c38"}"/>`; }
-  /* Häuser am Telegraph Hill */
-  for (let i = 0; i < 16; i++) { const x = 316 + rnd() * 84, y = 104 + rnd() * 16, w = 3 + rnd() * 4; c += `<rect x="${r(x)}" y="${r(y)}" width="${r(w)}" height="${r(2.4 + rnd() * 2)}" fill="${["#efe6d6", "#e6d6bd", "#dfe3e0"][i % 3]}"/>`; }
+  /* Pioneer Park: Bäume oben um den Coit Tower */
+  for (let i = 0; i < 26; i++) { const x = 346 + rnd() * 46, y = 92 + rnd() * 9; c += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(1.6 + rnd() * 1.8)}" fill="${rnd() < 0.5 ? "#5e7046" : "#4b5c38"}"/>`; }
+  /* Häuser in Reihen am Hang (Treppen und Gärten dazwischen) */
+  for (let y = 101; y < 126; y += 3.4) {
+    let x = 304 + (122 - y) * 1.9 + rnd() * 3;
+    while (x < 398) {
+      const w = 2.6 + rnd() * 3, h = 1.8 + (y - 100) * 0.04 + rnd() * 0.8;
+      if (y < 101 + 3.4 * 2 && x > 344) { x += w + 2; continue; }
+      if (rnd() < 0.18) c += `<circle cx="${r(x + w / 2)}" cy="${r(y - h / 2)}" r="${r(h * 0.75)}" fill="#55683f"/>`;
+      else { c += `<rect x="${r(x)}" y="${r(y - h)}" width="${r(w)}" height="${r(h)}" fill="${["#f1e9da", "#e7d9c1", "#dfe3e0", "#f0dfd3"][Math.floor(rnd() * 4)]}"/><rect x="${r(x + w * 0.65)}" y="${r(y - h)}" width="${r(w * 0.35)}" height="${r(h)}" fill="#000" opacity=".1"/>`; if (w > 3.4) c += `<rect x="${r(x + 0.6)}" y="${r(y - h + 0.5)}" width="${r(w - 1.2)}" height=".5" fill="#56616b" opacity=".6"/>`; }
+      x += w + 0.4 + rnd() * 1.2;
+    }
+  }
   const farben = ["#efe5d2", "#e8d7b9", "#d9c7aa", "#f3efe6", "#e6c9a8", "#cdd6d9", "#efdccb", "#f2d9d0"];
   for (let row = 0; row < 7; row++) {
     const y0 = 125 + row * 8.6, hgt = 4.4 + row * 1.6;
@@ -158,6 +171,8 @@ S.hinten(`<ellipse cx="-10" cy="40" rx="190" ry="110" fill="${S.rg("sonne", [[0,
   for (let d = 30.6; d < 140; d += d < 60 ? 1 : 2.6) rillen += `M${pt(-1.4, d, boden(d))} L${pt(2.6, d, boden(d))} `;
   for (let d = 26.6; d < 140; d += d < 60 ? 1.2 : 2.8) rillen += `M${pt(-17, d, boden(d))} L${pt(-13.6, d, boden(d))} `;
   s += `<path d="${rillen}" stroke="#9f998d" stroke-width=".2" opacity=".55" fill="none"/>`;
+  /* Schatten der Häuser auf der Westhälfte der Straße (Sonne im Südwesten) */
+  s += vier(pt(-17, 27.4, boden(27.4)), pt(-17, 600, boden(600)), pt(-10.4, 600, boden(600)), pt(-10.8, 30, boden(30)), "#1a1612", ` opacity=".2"`);
   /* Bordsteine */
   for (const X of [-13.5, -1.5]) s += `<path d="M${pt(X, 30, boden(30))} L${pt(X, D1, boden(D1))}" stroke="#e6e1d6" stroke-width=".8"/>`;
   s += `<path d="M${pt(-60, 26, boden(26))} L${pt(-13.5, 26, boden(26))}" stroke="#e6e1d6" stroke-width=".9"/>`;
@@ -221,7 +236,7 @@ S.hinten(`<ellipse cx="-10" cy="40" rx="190" ry="110" fill="${S.rg("sonne", [[0,
     k += `<path d="M${r(x)} ${r(y)} q${r(w / 2)} -${r(0.2 + t * 0.4)} ${r(w)} 0" stroke="${x < 160 && rnd() < 0.6 ? "#fff6dc" : rnd() < 0.6 ? "#e2eef2" : "#355c72"}" stroke-width="${r(0.12 + t * 0.3)}" fill="none" opacity="${r(0.35 + rnd() * 0.4)}"/>`;
   }
   /* der geschwungene Municipal Pier im Aquatic Park */
-  k += `<path d="M136 134.6 Q150 128 168 128.6 Q182 129.4 190 132" stroke="#e9e4d8" stroke-width=".8" fill="none"/>`;
+  k += `<path d="M132 133 Q146 128.4 162 128.6 Q176 129 184 131" stroke="#dcd6c8" stroke-width=".5" fill="none"/>`;
   S.teil({ id: "bucht", de: "die Bucht", syl: "BUCHT", it: "la baia", itSyl: "BA-ia", en: "bay", x: 0, y: 0, kunst: k,
     tipp: "Die Bucht von San Francisco ist eine der größten Naturhäfen der Welt." });
 }
@@ -230,12 +245,15 @@ S.hinten(`<ellipse cx="-10" cy="40" rx="190" ry="110" fill="${S.rg("sonne", [[0,
    2 — DER NEBEL (zieht vom Pazifik durch das Golden Gate und über Marin)
    ===================================================================== */
 {
-  let k = `<g filter="url(#${S.id("nebel")})">`;
-  k += `<path d="M96 96 Q100 86 116 84 Q128 76 146 80 Q158 72 174 78 Q186 74 198 82 Q212 82 222 90 Q230 94 226 98 L96 98 Z" fill="#f7f6f2" opacity=".93"/>`;
-  k += `<path d="M120 92 Q140 86 160 89 Q176 84 192 90 L200 97 L118 97 Z" fill="#ffffff"/>`;
-  k += `<path d="M60 95 Q80 90 96 93 L110 97 L58 97 Z" fill="#eef0ef" opacity=".85"/>`;
+  /* Nebelbank: Quellwolken über den Hügeln von Marin, flache Schicht auf dem Meer */
+  let k = `<g filter="url(#${S.id("nebelw")})">`;
+  k += `<path d="M58 97.4 Q70 90.6 90 91.4 Q110 88.6 130 90.4 Q150 86.4 168 89 L170 97.4 Z" fill="#eef0f0" opacity=".9"/>`;
+  let wulst = "";
+  for (const [x, y, rr] of [[150, 89, 5], [160, 85.4, 6.4], [172, 83, 7.4], [185, 81.6, 7.8], [198, 82.6, 7.2], [210, 85, 6.4], [221, 88.4, 5.4], [230, 91.6, 4.4], [178, 88, 6], [204, 89, 6]]) wulst += `<circle cx="${x}" cy="${y}" r="${rr}" fill="url(#${S.id("wulst")})"/>`;
+  k += wulst;
+  k += `<path d="M146 97.4 L146 90 Q190 84 236 93 L238 97.4 Z" fill="#e4e8ea"/>`;
   k += `</g>`;
-  k += `<path d="M104 84 Q130 76 160 80 Q186 76 214 86" stroke="#fff" stroke-width="1.4" opacity=".5" fill="none" filter="url(#${S.id("nebel")})"/>`;
+  k += `<path d="M156 84 Q170 78 184 76.6 Q198 76 210 80.4" stroke="#fff6e2" stroke-width="1.1" fill="none" opacity=".7" filter="url(#${S.id("nebelw")})"/>`;
   S.teil({ id: "nebel", de: "der Nebel", syl: "NE-bel", it: "la nebbia", itSyl: "NEB-bia", en: "fog", x: 0, y: 0, kunst: k,
     tipp: "Im Sommer kommt nachmittags oft Nebel vom Meer. Die Leute in San Francisco nennen ihn „Karl“." });
 }
@@ -419,7 +437,7 @@ S.davor(`<g filter="url(#${S.id("nebel")})" opacity=".75" pointer-events="none">
     for (const t of [0.35, 0.55, 0.75, 0.9]) k += `<line x1="${r(x - 2.6 * (1.1 - t))}" y1="${r(-h * t)}" x2="${r(x + 2.6 * (1.1 - t))}" y2="${r(-h * t)}" stroke="#3a2e22" stroke-width=".2"/>`;
   }
   k += `<path d="M-11.4 -2.4 L-6 -20 L0 -22 L5.6 -18 L13 -2.4" stroke="#5a4c3c" stroke-width=".1" fill="none"/><line x1="-11" y1="-2.6" x2="-15" y2="-5" stroke="#3a2e22" stroke-width=".3"/>`;
-  S.teil({ id: "segelschiff", de: "das Segelschiff", syl: "SE-gel-schiff", it: "il veliero", itSyl: "ve-LIE-ro", en: "sailing ship", x: bx + 8, y: by, kunst: `<g transform="scale(.62)">${k}</g>`,
+  S.teil({ id: "segelschiff", de: "das Segelschiff", syl: "SE-gel-schiff", it: "il veliero", itSyl: "ve-LIE-ro", en: "sailing ship", x: bx + 8, y: by, kunst: `<g transform="scale(.8)">${k}</g>` + flaeche(-9, -18, 18, 18, 0.5),
     tipp: "Die „Balclutha“ ist ein Segelschiff von 1886. Heute ist sie ein Museum am Hyde Street Pier." });
 }
 
@@ -441,11 +459,11 @@ const HAUS_UNTER = [];
   const X0 = -17, LOT = 7.6;
   /* vom fernsten zum nächsten Haus zeichnen (das nahe verdeckt das ferne) */
   for (let i = 7; i >= 0; i--) {
-    const d0 = 26 + i * LOT, d1 = d0 + LOT, f = farben[i % farben.length];
+    const d0 = 27.4 + i * LOT, d1 = d0 + LOT, f = farben[i % farben.length];
     const zb = boden(d1) - 0.3, ze = boden(d0) + 9.6, zg = ze + 3.4;   /* Fuß (talseitig), Traufe, Giebelspitze */
     const q = (Xa, da, za, Xb, db, zb2, Xc, dc, zc, Xd, dd, zd, fill, ex = "") => vier(pt(Xa, da, za), pt(Xb, db, zb2), pt(Xc, dc, zc), pt(Xd, dd, zd), fill, ex);
     /* Dach (von oben sichtbar, weiter unten am Hang) und Brandwand */
-    k += q(X0, d0, ze, X0 - 12, d0, ze + 1.6, X0 - 12, d1, ze + 1.6, X0, d1, ze, f.dach);
+    if (ze < E - 0.4) k += q(X0, d0, ze, X0 - 6, d0, ze + 0.8, X0 - 6, d1, ze + 0.8, X0, d1, ze, f.dach);
     /* Fassade */
     k += `<path d="M${pt(X0, d0, boden(d0))} L${pt(X0, d0, ze)} L${pt(X0, d1, ze)} L${pt(X0, d1, zb)} Z" fill="${f.wandS}"/>`;
     /* Giebel (Dreieck in der Fassadenebene) mit Schindeln */
@@ -486,8 +504,7 @@ const HAUS_UNTER = [];
   const [ex2, ey2] = P(h.EX, (h.e0 + h.e1) / 2, h.ez1);
   const [gx, gy] = P(-17, h.gm, h.ze);
   const [gx2, gy2] = P(-17, h.gm, h.zg);
-  const [lx0] = P(-17, 26, 0), [lx1] = P(-17, 26 + 7.6 * 2, 0);
-  S.teil({ id: "viktorianisches_haus", de: "das viktorianische Haus", syl: "vik-to-ri-A-ni-sche HAUS", it: "la casa vittoriana", itSyl: "CA-sa vit-to-RIA-na", en: "Victorian house", x: 0, y: 0, kunst: k,
+    S.teil({ id: "viktorianisches_haus", de: "das viktorianische Haus", syl: "vik-to-ri-A-ni-sche HAUS", it: "la casa vittoriana", itSyl: "CA-sa vit-to-RIA-na", en: "Victorian house", x: 0, y: 0, kunst: k,
     tipp: "Die bunten Holzhäuser aus der Zeit um 1890 nennt man in San Francisco „Painted Ladies“ — bemalte Damen.",
     zoom: { x: 0, y: r(gy2 - 6), w: 72, h: 48 },
     unter: [
@@ -502,7 +519,7 @@ const HAUS_UNTER = [];
    10 — DIE CABLE CAR (Powell-Hyde), kommt die Hyde Street herauf;
    von schräg vorn oben gesehen, Wagen um das Gefälle geneigt.
    ===================================================================== */
-const CC = { X: -7.5, d: 24.5 };
+const CC = { X: -7.5, d: 21.6 };
 {
   const ca = Math.cos(Math.atan(G)), sa = Math.sin(Math.atan(G));
   /* Wagenkoordinaten: u quer (+ = Osten), v längs (0 = vorn, bergauf), w hoch (senkrecht zum Boden) */
@@ -581,14 +598,14 @@ const CC = { X: -7.5, d: 24.5 };
   k += L2([-HB, -0.07, 1.48], [-HB, -0.07, 0.42], "#fff", 0.35);
   const [cx0, cy0] = P(CC.X, CC.d, boden(CC.d));
   /* die Schienen und der Seilschlitz (Lupe) liegen vor dem Wagen in der Straße */
-  const [rx0, ry0] = P(CC.X, CC.d - 4, boden(CC.d - 4));
+  const [rx0, ry0] = P(CC.X, CC.d - 1.6, boden(CC.d - 1.6));
   S.teil({ id: "cable_car", de: "die Cable Car", syl: "CA-ble CAR", it: "il cable car", itSyl: "CA-ble CAR", en: "cable car", x: 0, y: 0, kunst: k,
     tipp: "Die Cable Car fährt seit 1873. Ein Stahlseil unter der Straße zieht sie mit 15 km/h den Berg hinauf.",
-    zoom: { x: r(cx0 - 27), y: r(cy0 - 44), w: 60, h: 40 },
+    zoom: { x: r(cx0 - 37), y: r(cy0 - 52), w: 81, h: 54 },
     unter: [
       { id: "glocke", de: "die Glocke", syl: "GLO-cke", it: "la campana", itSyl: "cam-PA-na", en: "bell", x: P(CC.X + 0.3, CC.d + 0.9, 0)[0], y: P(0, CC.d + 0.9 * ca - (RF + 0.3) * sa, boden(CC.d) - 0.9 * sa + (RF + 0.3) * ca)[1], kunst: flaeche(-3.2, -4.6, 6.4, 5, 0.5),
         tipp: "Mit der Glocke warnt der Gripman. Jedes Jahr gibt es einen Wettbewerb im Glockenläuten." },
-      { id: "schiene", de: "die Schiene", syl: "SCHIE-ne", it: "il binario", itSyl: "bi-NA-rio", en: "rail", x: rx0, y: ry0, kunst: flaeche(-9, -2.4, 18, 4.8, 0.5),
+      { id: "schiene", de: "die Schiene", syl: "SCHIE-ne", it: "il binario", itSyl: "bi-NA-rio", en: "rail", x: rx0, y: ry0, kunst: flaeche(-8, -2, 16, 4, 0.5),
         tipp: "Zwischen den Schienen ist ein Schlitz. Darunter läuft das Seil, das die Cable Car zieht." },
     ] });
 }
@@ -604,6 +621,130 @@ const CC = { X: -7.5, d: 24.5 };
     s += `<path d="${q}" stroke="${u === 0 ? "#2b2926" : "#b9b6b0"}" stroke-width="${u === 0 ? 0.5 : 0.4}" fill="none"/>`;
   }
   S.hinten(s);
+}
+
+/* =====================================================================
+   11 — DIE LOMBARD STREET: oben die ersten Haarnadelkurven aus roten
+   Ziegeln, dazwischen terrassierte Beete mit Buchshecken und Hortensien;
+   weiter unten fällt die Straße aus dem Blick (27 % Gefälle).
+   ===================================================================== */
+{
+  let k = "";
+  /* Grund: Beete (Erde, Rasen), leicht terrassiert */
+  k += `<path d="M258 260 L213 198.6 L400 177.6 L400 260 Z" fill="${S.lg("beet", [[0, "#56763d"], [1, "#3d5a2a"]])}"/>`;
+  const abschnitt = (x0, y0, x1, y1, b0, b1) => {
+    const dx = x1 - x0, dy = y1 - y0, l = Math.hypot(dx, dy), nx = -dy / l, ny = dx / l;
+    return { d: `M${r(x0 + nx * b0 / 2)} ${r(y0 + ny * b0 / 2)} L${r(x1 + nx * b1 / 2)} ${r(y1 + ny * b1 / 2)} L${r(x1 - nx * b1 / 2)} ${r(y1 - ny * b1 / 2)} L${r(x0 - nx * b0 / 2)} ${r(y0 - ny * b0 / 2)} Z `,
+      oben: [[r(x0 - nx * b0 / 2), r(y0 - ny * b0 / 2)], [r(x1 - nx * b1 / 2), r(y1 - ny * b1 / 2)]], unten: [[r(x0 + nx * b0 / 2), r(y0 + ny * b0 / 2)], [r(x1 + nx * b1 / 2), r(y1 + ny * b1 / 2)]] };
+  };
+  const kehre = (cx, cy, rx, ry, b, rechts) => {
+    const s = rechts ? 1 : 0, rxi = Math.max(0.6, rx - b), ryi = Math.max(0.4, ry - b * ry / rx);
+    return `M${r(cx)} ${r(cy - ry)} A${r(rx)} ${r(ry)} 0 0 ${s} ${r(cx)} ${r(cy + ry)} L${r(cx)} ${r(cy + ryi)} A${r(rxi)} ${r(ryi)} 0 0 ${1 - s} ${r(cx)} ${r(cy - ryi)} Z `;
+  };
+  const A1 = abschnitt(246, 251, 368, 236.2, 18, 15), K1 = kehre(368, 225.6, 15.5, 10.6, 14.6, true);
+  const A2 = abschnitt(368, 215, 282, 205.6, 10.6, 9.4), K2 = kehre(282, 199.8, 9.6, 5.8, 9.2, false);
+  const A3 = abschnitt(282, 194, 352, 187.4, 6.6, 5.8), K3 = kehre(352, 183.6, 6.2, 3.8, 5.8, true);
+  const A4 = abschnitt(352, 179.8, 320, 177.8, 4.2, 3.6);
+  const weg = A1.d + K1 + A2.d + K2 + A3.d + K3 + A4.d;
+  /* Bordstein (hell), dann Ziegel, Licht, Spurrillen */
+  k += `<path d="${weg}" fill="none" stroke="#e2dbcd" stroke-width="1.8" stroke-linejoin="round"/>`;
+  k += `<path d="${weg}" fill="${S.lg("brick", [[0, "#c25c42"], [1, "#9a4331"]])}"/>`;
+  k += `<path d="${weg}" fill="url(#${S.id("ziegel")})"/>`;
+  k += `<path d="${weg}" fill="${S.lg("bricklicht", [[0, "#fff1d6", 0.16], [0.6, "#fff", 0], [1, "#000", 0.14]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M252 249.6 L366 235.4 M366 216 L284 206.4 M284 193.6 L350 187.6" stroke="#7d3326" stroke-width=".5" opacity=".35" fill="none"/>`;
+  /* Buchshecken an beiden Rändern jedes Abschnitts (Schatten auf die Straße) */
+  const hecke = (a, b, dick, dy) => {
+    const [x0, y0] = a, [x1, y1] = b;
+    return `<path d="M${x0} ${r(y0 + dy)} L${x1} ${r(y1 + dy)}" stroke="#1f2f1a" stroke-width="${r(dick * 0.8)}" opacity=".35" stroke-linecap="round"/>` +
+      `<path d="M${x0} ${y0} L${x1} ${y1}" stroke="#2e4a26" stroke-width="${dick}" stroke-linecap="round"/>` +
+      `<path d="M${x0} ${r(y0 - dick * 0.3)} L${x1} ${r(y1 - dick * 0.3)}" stroke="#5f8250" stroke-width="${r(dick * 0.35)}" stroke-linecap="round" opacity=".75"/>`;
+  };
+  const ab = (P2, dy) => [P2[0], [P2[1][0], P2[1][1]]];
+  k += hecke([262, A1.oben[0][1] - 3.6], [354, A1.oben[1][1] - 2.4], 3.2, 2.2);
+  k += hecke([300, A2.unten[1][1] + 2.6], [356, A2.unten[0][1] + 1.6], 2.6, 1.6);
+  k += hecke([300, A2.oben[1][1] - 1.8], [350, A2.oben[0][1] - 1.4], 2, 1.3);
+  k += hecke([300, A3.unten[0][1] + 1.6], [340, A3.unten[1][1] + 1.2], 1.6, 1);
+  k += hecke([300, A3.oben[0][1] - 1.3], [338, A3.oben[1][1] - 1], 1.3, 0.8);
+  k += hecke([386, 249], [400, 247.4], 3.2, 2);
+  /* Hortensien: dichte Büschel in Rosa, Lila, Blau, Weiß */
+  const farben = ["#ec8fb8", "#c28be0", "#8fb0ea", "#f4f0f6", "#e46f9d", "#b58be6"];
+  const busch = (x, y, s) => {
+    let g = `<ellipse cx="${r(x)}" cy="${r(y + s * 0.5)}" rx="${r(s * 2.1)}" ry="${r(s * 1.1)}" fill="#355626"/>`;
+    for (let i = 0; i < 7; i++) { const f = farben[Math.floor(rnd() * farben.length)]; g += `<circle cx="${r(x - s * 1.6 + rnd() * s * 3.2)}" cy="${r(y - rnd() * s * 1.2)}" r="${r(s * (0.5 + rnd() * 0.32))}" fill="${f}"/>`; }
+    return g + `<circle cx="${r(x - s * 0.4)}" cy="${r(y - s * 0.95)}" r="${r(s * 0.28)}" fill="#fff" opacity=".45"/>`;
+  };
+  const pflanzen = [];
+  for (let x = 266; x < 356; x += 6.2) pflanzen.push([x, 236.6 - (x - 266) * 0.12 - 3.2, 2.3]);
+  for (let x = 304; x < 354; x += 4.6) pflanzen.push([x, 206.6 - (x - 304) * 0.11 + 4, 1.6]);
+  for (let x = 304; x < 340; x += 3.6) pflanzen.push([x, 192.2 - (x - 304) * 0.09 + 2.6, 1.05]);
+  for (const [x, y, s2] of [[224, 210, 2.6], [236, 218, 2.8], [222, 225, 2.4], [248, 229, 2.6], [234, 232, 2.2], [254, 214, 2.2], [262, 204, 1.9], [270, 198.6, 1.6], [246, 203, 2], [386, 212, 2.3], [395, 221, 2.5], [390, 200.4, 1.8], [372, 196.6, 1.5], [360, 194, 1.2], [378, 254, 3], [394, 252.6, 2.8], [263, 222, 2.4]]) pflanzen.push([x, y, s2]);
+  for (const [x, y, s2] of pflanzen) k += busch(x, y, s2);
+  /* Treppe des Gehwegs rechts unten (Südseite) */
+  for (let i = 0; i < 6; i++) k += `<rect x="${r(385 + i * 0.6)}" y="${r(234 + i * 4)}" width="${r(16 - i * 0.6)}" height="2.4" fill="${i % 2 ? "#cfc8bb" : "#ddd6ca"}"/><rect x="${r(385 + i * 0.6)}" y="${r(236.4 + i * 4)}" width="${r(16 - i * 0.6)}" height="1.6" fill="#a7a092"/>`;
+  S.teil({ id: "lombard_street", de: "die Lombard Street", syl: "LOM-bard STREET", it: "Lombard Street", itSyl: "LOM-bard STREET", en: "Lombard Street", x: 0, y: 0, kunst: k,
+    tipp: "Die Lombard Street hat hier acht enge Kurven. Man darf nur bergab fahren — ganz langsam.",
+    zoom: { x: 300, y: 198, w: 96, h: 64 },
+    unter: [
+      { id: "kurve", de: "die Kurve", syl: "KUR-ve", it: "la curva", itSyl: "CUR-va", en: "bend", x: 377, y: 236, kunst: flaeche(-8, -21, 15.6, 21, 0.6),
+        tipp: "Die Kurven wurden 1922 gebaut, weil die Straße für Autos zu steil war." },
+      { id: "hortensie", de: "die Hortensie", syl: "hor-TEN-si-e", it: "l'ortensia", itSyl: "or-TEN-sia", en: "hydrangea", x: 315, y: 229.6, kunst: flaeche(-5.2, -4.8, 10.4, 6, 0.5),
+        tipp: "In den Beeten blühen im Sommer Hortensien in Rosa, Lila und Blau." },
+    ] });
+}
+
+/* =====================================================================
+   12 — DAS STRASSENSCHILD und 13 — DIE HALTESTELLE (Cable-Car-Stop)
+   an unserer Ecke (Südostecke Hyde / Lombard), d ≈ 14,5 m
+   ===================================================================== */
+const POL = (() => { const d = 14.5, X = 3.6; const [x, y] = P(X, d, boden(d)); return { x, y, s: F / d }; })();
+{
+  const { s } = POL, h = 3.3 * s;
+  let k = schatten(1, 0.2, 3, 0.7, 0.3);
+  k += `<rect x="-.55" y="${r(-h)}" width="1.1" height="${r(h)}" fill="${S.lg("mast", [[0, "#9aa1a5"], [0.5, "#d9dee0"], [1, "#7d858a"]], 0, 0, 1, 0)}"/>`;
+  k += `<rect x="-.8" y="${r(-h - 0.6)}" width="1.6" height=".8" rx=".3" fill="#7d858a"/>`;
+  /* zwei Straßennamen, über Kreuz (weiß mit schwarzer Schrift) */
+  const bl = 0.95 * s;
+  k += `<rect x="${r(-bl * 0.9)}" y="${r(-h + 0.6)}" width="${r(bl * 0.9 * 2)}" height="${r(0.2 * s)}" rx=".4" fill="#f5f5f2" stroke="#2a2a2a" stroke-width=".25"/>`;
+  k += `<text x="0" y="${r(-h + 0.6 + 0.15 * s)}" font-size="${r(0.13 * s)}" text-anchor="middle" fill="#111" font-family="Arial,sans-serif" font-weight="bold">1000 LOMBARD ST</text>`;
+  k += `<path d="M${r(-0.4 * s)} ${r(-h + 0.6 + 0.25 * s)} L${r(0.5 * s)} ${r(-h + 0.6 + 0.29 * s)} L${r(0.5 * s)} ${r(-h + 0.6 + 0.43 * s)} L${r(-0.4 * s)} ${r(-h + 0.6 + 0.39 * s)} Z" fill="#e8e8e4" stroke="#2a2a2a" stroke-width=".22"/>`;
+  k += `<text transform="translate(${r(0.05 * s)} ${r(-h + 0.6 + 0.375 * s)}) rotate(2.5)" font-size="${r(0.1 * s)}" text-anchor="middle" fill="#111" font-family="Arial,sans-serif" font-weight="bold">HYDE ST</text>`;
+  S.teil({ id: "strassenschild", de: "das Straßenschild", syl: "STRA-ßen-schild", it: "il cartello stradale", itSyl: "car-TEL-lo stra-DA-le", en: "street sign", x: POL.x, y: POL.y, kunst: k });
+}
+{
+  const { s } = POL, h = 3.3 * s;
+  let k = "";
+  const y0 = -h + 0.95 * s, w = 0.48 * s, hh = 0.62 * s;
+  k += `<rect x="-.75" y="${r(y0 - 0.4)}" width="1.5" height=".8" fill="#5c6366"/><rect x="-.75" y="${r(y0 + hh - 0.4)}" width="1.5" height=".8" fill="#5c6366"/>`;
+  k += `<rect x="${r(-w / 2)}" y="${r(y0)}" width="${r(w)}" height="${r(hh)}" rx=".5" fill="#fbfaf6" stroke="#6b2a22" stroke-width=".5"/>`;
+  /* kleines Cable-Car-Bild und Schrift */
+  const cx = 0, cy = y0 + hh * 0.36, u = w / 10;
+  k += `<path d="M${r(cx - 3.4 * u)} ${r(cy + 1.4 * u)} L${r(cx + 3.4 * u)} ${r(cy + 1.4 * u)} L${r(cx + 3.4 * u)} ${r(cy - 1.2 * u)} L${r(cx - 3.4 * u)} ${r(cy - 1.2 * u)} Z" fill="#7d1f2c"/><path d="M${r(cx - 3.8 * u)} ${r(cy - 1.2 * u)} L${r(cx + 3.8 * u)} ${r(cy - 1.2 * u)} L${r(cx + 3.2 * u)} ${r(cy - 2 * u)} L${r(cx - 3.2 * u)} ${r(cy - 2 * u)} Z" fill="#6b2a22"/>`;
+  for (let i = 0; i < 4; i++) k += `<rect x="${r(cx - 2.8 * u + i * 1.5 * u)}" y="${r(cy - 0.8 * u)}" width="${r(u)}" height="${r(1.1 * u)}" fill="#f1e7d0"/>`;
+  k += `<circle cx="${r(cx - 2 * u)}" cy="${r(cy + 1.7 * u)}" r="${r(0.5 * u)}" fill="#222"/><circle cx="${r(cx + 2 * u)}" cy="${r(cy + 1.7 * u)}" r="${r(0.5 * u)}" fill="#222"/>`;
+  k += `<text x="${r(-w * 0.42)}" y="${r(y0 + hh * 0.72)}" font-size="${r(0.085 * s)}" textLength="${r(w * 0.84)}" lengthAdjust="spacingAndGlyphs" fill="#6b2a22" font-family="Arial,sans-serif" font-weight="bold">CABLE CAR</text>`;
+  k += `<text x="0" y="${r(y0 + hh * 0.9)}" font-size="${r(0.09 * s)}" text-anchor="middle" fill="#6b2a22" font-family="Arial,sans-serif" font-weight="bold">STOP</text>`;
+  S.teil({ oben: true, id: "haltestelle", de: "die Haltestelle", syl: "HAL-te-stel-le", it: "la fermata", itSyl: "fer-MA-ta", en: "stop", x: POL.x, y: POL.y, kunst: k,
+    tipp: "An der Haltestelle winkt man, dann hält die Cable Car. Man darf sogar außen auf dem Trittbrett stehen." });
+}
+
+/* =====================================================================
+   14 — DIE TOURISTIN fotografiert die Cable Car (auf der Kreuzung,
+   am Zebrastreifen; d ≈ 13 m)
+   ===================================================================== */
+{
+  const d = 13.2, X = -0.4;
+  const [fx, fy] = P(X, d, boden(d));
+  const foto = {
+    lende: 1, brust: -3, nacken: 2, kopf: -2,
+    schulterL: { vor: 62, seit: 18 }, ellbogenL: 112, unterarmL: 40, handL: 10, fingerL: 0.5,
+    schulterR: { vor: 60, seit: 20 }, ellbogenR: 114, unterarmR: 40, handR: 10, fingerR: 0.5,
+    huefteL: { vor: 4, seit: 3, dreh: -6 }, knieL: 4, fussL: 0,
+    huefteR: { vor: -4, seit: 3, dreh: -6 }, knieR: 2, fussR: 0,
+  };
+  const m = B.mensch({ id: "sfo_tour", geschlecht: "w", pose: foto, blick: 215, frisur: "zopf", haarfarbe: "braun", haut: "mittel",
+    kleidung: { oberteil: { stueck: "pullover", farbe: "creme" }, jacke: { stueck: "jacke", farbe: "#c0392b" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh", farbe: "weiss" }, zubehoer: { stueck: "rucksack", farbe: "#2f4f6f" } } }, 1.66 * F / d);
+  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x: fx, y: fy, kunst: schatten(4, 0.3, 9, 1.4, 0.3) + m.svg,
+    tipp: "Die Touristin macht ein Foto. Eine Fahrt mit der Cable Car gehört zu jedem Besuch in San Francisco." });
 }
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/san_francisco.js"));

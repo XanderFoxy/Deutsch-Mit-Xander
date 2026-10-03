@@ -352,22 +352,22 @@ const sudufer = (x) => x <= 186 ? 130 + (x / 186) * 15 : 145 + (x - 186) * 0.21;
     const x = x0 + i * dx, y = yy - (x - 232) * 0.075;
     k += `<path d="M${r(x)} ${r(y + 2)} L${r(x)} ${r(y + .6)} L${r(x + .9)} ${r(y - .4)} L${r(x + 1.8)} ${r(y + .6)} L${r(x + 1.8)} ${r(y + 2)} Z" fill="#7c8691"/><rect x="${r(x + .45)}" y="${r(y + .7)}" width=".9" height="1.1" fill="#2a2f35"/>`;
   }
-  /* Westturm: Vierkant, Achteck mit Galerie, barocke Haube, Laterne */
-  k += `<rect x="${T - 4.4}" y="86" width="8.8" height="38" fill="${ROT}"/>`;
-  k += `<rect x="${T - 4.4}" y="86" width="8.8" height="38" fill="${QUADER}"/>`;
-  k += `<rect x="${T - 4.4}" y="86" width="2.4" height="38" fill="#5d281f" opacity=".35"/>`;
-  k += bogenFenster(T - 1.2, 100, 2.4, 6) + bogenFenster(T - 1, 112, 2, 4.4);
-  k += `<rect x="${T - 5}" y="85" width="10" height="1.4" fill="#d98a6c"/>`;
-  for (let x = T - 4.6; x < T + 4.8; x += 1.1) k += `<rect x="${r(x)}" y="83" width=".45" height="2" fill="#c86e54"/>`;
-  k += `<rect x="${T - 5}" y="82.4" width="10" height=".7" fill="#e8a283"/>`;
-  k += `<path d="M${T - 3.4} 83 L${T - 3.4} 75 L${T + 3.4} 75 L${T + 3.4} 83 Z" fill="${ROT}"/>`;
-  for (const xx of [T - 2.8, T - .8, T + 1.2]) k += bogenFenster(xx, 76.2, 1.5, 5.6, "#3a2522");
-  k += `<rect x="${T - 3.8}" y="74.2" width="7.6" height="1" fill="#d98a6c"/>`;
-  /* die geschweifte Haube */
-  k += `<path d="M${T - 4} 74.4 Q${T - 4.6} 70.6 ${T - 2.2} 69 Q${T - .8} 68 ${T - 1} 66.4 L${T + 1} 66.4 Q${T + .8} 68 ${T + 2.2} 69 Q${T + 4.6} 70.6 ${T + 4} 74.4 Z" fill="${SCHIEFER}"/>`;
-  k += `<path d="M${T + 2.4} 69.4 Q${T + 3.8} 70.6 ${T + 3.6} 73.6" stroke="#9aa6b2" stroke-width=".4" fill="none"/>`;
-  k += `<rect x="${T - 1.1}" y="63.4" width="2.2" height="3.2" fill="${SCHIEFER}"/><rect x="${T - .4}" y="64" width=".8" height="1.8" fill="#e6d9b2"/>`;
-  k += `<path d="M${T - 1.4} 63.6 Q${T} 60.8 ${T + 1.4} 63.6 Z" fill="${SCHIEFER}"/><path d="M${T} 61 V57.4" stroke="#3a4049" stroke-width=".35"/><circle cx="${T}" cy="58.6" r=".45" fill="#d8b04a"/>`;
+  /* Westturm: kräftiger Vierkant, Achteck mit Galerie, barocke Haube, Laterne */
+  k += `<rect x="${T - 5.6}" y="86" width="11.2" height="38" fill="${ROT}"/><rect x="${T - 5.6}" y="86" width="11.2" height="38" fill="${QUADER}"/>`;
+  k += `<rect x="${T - 5.6}" y="86" width="3" height="38" fill="#4a1d16" opacity=".3"/><rect x="${T + 4.8}" y="86" width=".8" height="38" fill="#f0a888" opacity=".55"/>`;
+  for (const yy of [97, 108.6]) k += `<rect x="${T - 5.8}" y="${yy}" width="11.6" height=".7" fill="#d98a6c"/>`;
+  k += bogenFenster(T - 3, 88.4, 2, 6.6, "#2c1d1a") + bogenFenster(T + 1, 88.4, 2, 6.6, "#2c1d1a") + bogenFenster(T - 1, 100.4, 2, 5.4) + bogenFenster(T - .8, 112, 1.6, 4);
+  k += `<rect x="${T - 6.2}" y="85" width="12.4" height="1.4" fill="#d98a6c"/>`;
+  for (let x = T - 5.8; x < T + 6; x += 1.15) k += `<path d="M${r(x)} 85 v-1.8 q.3 -.4 .5 0 v1.8 Z" fill="#c86e54"/>`;
+  k += `<rect x="${T - 6.2}" y="82.6" width="12.4" height=".7" fill="#e8a283"/>`;
+  k += `<path d="M${T - 4.4} 83 L${T - 4.4} 74.6 L${T + 4.4} 74.6 L${T + 4.4} 83 Z" fill="${ROT}"/><path d="M${T - 4.4} 83 L${T - 4.4} 74.6 L${T - 2.4} 74.6 L${T - 2.4} 83 Z" fill="#4a1d16" opacity=".3"/>`;
+  for (const xx of [T - 3.6, T - 1, T + 1.6]) k += bogenFenster(xx, 76, 1.8, 6, "#2c1d1a");
+  k += `<rect x="${T - 4.9}" y="73.8" width="9.8" height="1.1" fill="#d98a6c"/>`;
+  /* die geschweifte Haube mit Laterne */
+  k += `<path d="M${T - 5} 74 Q${T - 5.6} 69.4 ${T - 2.6} 67.6 Q${T - 1} 66.6 ${T - 1.1} 65 L${T + 1.1} 65 Q${T + 1} 66.6 ${T + 2.6} 67.6 Q${T + 5.6} 69.4 ${T + 5} 74 Z" fill="${SCHIEFER}"/>`;
+  k += `<path d="M${T + 2.8} 68.2 Q${T + 4.6} 69.6 ${T + 4.4} 73.4" stroke="#a7b2bd" stroke-width=".45" fill="none"/>`;
+  k += `<rect x="${T - 1.4}" y="61.8" width="2.8" height="3.4" fill="${SCHIEFER}"/><rect x="${T - .9}" y="62.4" width=".7" height="2" fill="#e6d9b2"/><rect x="${T + .25}" y="62.4" width=".7" height="2" fill="#e6d9b2"/>`;
+  k += `<path d="M${T - 1.8} 62 Q${T - 1.6} 60.2 ${T} 59.4 Q${T + 1.6} 60.2 ${T + 1.8} 62 Z" fill="${SCHIEFER}"/><path d="M${T} 59.6 V55.4" stroke="#3a4049" stroke-width=".35"/><circle cx="${T}" cy="57" r=".5" fill="#d8b04a"/><path d="M${T - .8} 56 h1.6" stroke="#d8b04a" stroke-width=".3"/>`;
   S.teil({ id: "heiliggeistkirche", de: "die Heiliggeistkirche", syl: "HEI-lig-geist-kir-che", it: "la chiesa dello Spirito Santo", itSyl: "CHIE-sa del-lo SPI-ri-to SAN-to", en: "Church of the Holy Spirit",
     x: 0, y: 0, kunst: k, tipp: "Ihr Turm ist 82 Meter hoch. Zwischen den Strebepfeilern stehen seit dem Mittelalter kleine Läden." });
 }
@@ -418,8 +418,16 @@ const sudufer = (x) => x <= 186 ? 130 + (x / 186) * 15 : 145 + (x - 186) * 0.21;
   /* Dächermeer als Grund: dicht an dicht, ohne Waldlücken bis zum Kai */
   {
     let m = "";
-    for (let i = 0; i < 9; i++) { const x = rnd() * 9, y = rnd() * 5.6, w = 2.4 + rnd() * 2.4, c = ["#9a4e36", "#8a442e", "#a65a3c", "#7c3c28", "#5b5f66", "#93533b"][Math.floor(rnd() * 6)]; m += `<rect x="${r(x)}" y="${r(y + 1.1)}" width="${r(w)}" height="1.3" fill="${["#e6d6b8", "#d8d0c4", "#e2c7b0"][i % 3]}"/><path d="M${r(x - .2)} ${r(y + 1.2)} L${r(x + .5)} ${r(y)} L${r(x + w - .5)} ${r(y)} L${r(x + w + .2)} ${r(y + 1.2)} Z" fill="${c}"/>`; }
-    S.def(`<pattern id="${S.id("daecher")}" width="9" height="5.6" patternUnits="userSpaceOnUse"><rect width="9" height="5.6" fill="#8d5a44"/>${m}</pattern>`);
+    const TW = 17.4, TH = 10.6;
+    for (let i = 0; i < 22; i++) {
+      const x = rnd() * TW, y = rnd() * TH, w = 2 + rnd() * 3.2, fh = 1 + rnd() * 1.2, c = ["#9a4e36", "#8a442e", "#a65a3c", "#7c3c28", "#5b5f66", "#93533b", "#b06a48"][Math.floor(rnd() * 7)];
+      for (const dx of [0, -TW]) {
+        if (dx && x + w < TW) continue;
+        m += `<rect x="${r(x + dx)}" y="${r(y + 1.1)}" width="${r(w)}" height="${r(fh)}" fill="${["#e6d6b8", "#d8d0c4", "#e2c7b0", "#efe6d6", "#d9b98c"][i % 5]}"/><rect x="${r(x + dx + .5)}" y="${r(y + 1.5)}" width=".5" height=".6" fill="#3a3e45"/>`;
+        m += `<path d="M${r(x + dx - .2)} ${r(y + 1.2)} L${r(x + dx + .5)} ${r(y - .2 - rnd() * .5)} L${r(x + dx + w - .5)} ${r(y - .2)} L${r(x + dx + w + .2)} ${r(y + 1.2)} Z" fill="${c}"/>`;
+      }
+    }
+    S.def(`<pattern id="${S.id("daecher")}" width="${TW}" height="${TH}" patternUnits="userSpaceOnUse"><rect width="${TW}" height="${TH}" fill="#7e5240"/>${m}</pattern>`);
     const oben = [[20, 118], [60, 113], [100, 112], [226, 113], [228, 122], [281, 122], [283, 117], [320, 118]];
     const kai = []; for (let x = 320; x >= 20; x -= 10) kai.push(`${x} ${r(sudufer(x) - 1)}`);
     k += `<path d="M${oben.map((p) => p.join(" ")).join(" L")} L${kai.join(" L")} Z" fill="url(#${S.id("daecher")})"/>`;
@@ -513,23 +521,29 @@ const PFEILER = 4.5 / 200 / 2;
     k += `<path d="M${t.join(" L")}" stroke="#f0b090" stroke-width=".5" fill="none"/>`;
   }
   /* Statuen auf der Brüstung: Minerva (Neuenheimer Seite) und Karl Theodor (Altstadtseite) */
-  const statue = (s) => {
-    const fuss = bp(s, ZP), kopf = bp(s, ZP + 7.4), h = fuss[1] - kopf[1], x = fuss[0];
-    let g = `<rect x="${r(x - h * 0.2)}" y="${r(fuss[1] - h * 0.5)}" width="${r(h * 0.4)}" height="${r(h * 0.5)}" fill="#c77356"/><rect x="${r(x - h * 0.24)}" y="${r(fuss[1] - h * 0.52)}" width="${r(h * 0.48)}" height="${r(h * 0.06)}" fill="#e39a78"/>`;
-    g += `<path d="M${r(x - h * 0.12)} ${r(fuss[1] - h * 0.52)} L${r(x - h * 0.09)} ${r(kopf[1] + h * 0.16)} L${r(x + h * 0.09)} ${r(kopf[1] + h * 0.16)} L${r(x + h * 0.12)} ${r(fuss[1] - h * 0.52)} Z" fill="#d6d2c4"/><circle cx="${r(x)}" cy="${r(kopf[1] + h * 0.1)}" r="${r(h * 0.08)}" fill="#d6d2c4"/>`;
+  /* Denkmäler auf den Pfeilern: hoher Sockel, darauf die Figur (Minerva mit Speer, Karl Theodor im Mantel) */
+  const STEIN = S.lg("denkmal", [[0, "#6f6a62"], [0.5, "#b7b1a4"], [1, "#e2dccd"]], 0, 0, 1, 0);
+  const statue = (s, minerva) => {
+    const fuss = bp(s, ZP - 1), kopf = bp(s, ZP + 9.6), h = fuss[1] - kopf[1], x = fuss[0], y = fuss[1];
+    let g = `<rect x="${r(x - h * 0.17)}" y="${r(y - h * 0.48)}" width="${r(h * 0.34)}" height="${r(h * 0.48)}" fill="${STEIN}"/><rect x="${r(x - h * 0.21)}" y="${r(y - h * 0.5)}" width="${r(h * 0.42)}" height="${r(h * 0.06)}" fill="#ece6d8"/><rect x="${r(x - h * 0.21)}" y="${r(y - h * 0.1)}" width="${r(h * 0.42)}" height="${r(h * 0.08)}" fill="#8f897d"/>`;
+    const fy = y - h * 0.5;
+    g += `<path d="M${r(x - h * 0.11)} ${r(fy)} L${r(x - h * 0.07)} ${r(fy - h * 0.34)} Q${r(x)} ${r(fy - h * 0.4)} ${r(x + h * 0.07)} ${r(fy - h * 0.34)} L${r(x + h * 0.12)} ${r(fy)} Z" fill="${STEIN}" stroke="#5e5950" stroke-width=".12"/>`;
+    g += `<circle cx="${r(x)}" cy="${r(fy - h * 0.43)}" r="${r(h * 0.065)}" fill="#cfc9bb" stroke="#5e5950" stroke-width=".1"/>`;
+    if (minerva) g += `<path d="M${r(x - h * 0.08)} ${r(fy - h * 0.47)} q${r(h * 0.08)} ${r(-h * 0.08)} ${r(h * 0.16)} 0" stroke="#8f897d" stroke-width="${r(h * 0.03)}" fill="none"/><path d="M${r(x + h * 0.15)} ${r(fy + h * 0.02)} L${r(x + h * 0.15)} ${r(fy - h * 0.56)}" stroke="#5e5950" stroke-width="${r(h * 0.025)}"/><ellipse cx="${r(x - h * 0.12)}" cy="${r(fy - h * 0.12)}" rx="${r(h * 0.06)}" ry="${r(h * 0.09)}" fill="#a39d90"/>`;
+    else g += `<path d="M${r(x - h * 0.12)} ${r(fy - h * 0.3)} Q${r(x - h * 0.2)} ${r(fy - h * 0.1)} ${r(x - h * 0.14)} ${r(fy)}" stroke="#ece6d8" stroke-width="${r(h * 0.04)}" fill="none"/><path d="M${r(x + h * 0.06)} ${r(fy - h * 0.3)} L${r(x + h * 0.16)} ${r(fy - h * 0.42)}" stroke="#5e5950" stroke-width="${r(h * 0.025)}"/>`;
     return g;
   };
-  k += statue(2 / 9) + statue(7 / 9);
+  k += statue(2 / 9, true) + statue(7 / 9, false);
   /* Laternen auf der Brüstung */
   for (const s of [0.1, 0.33, 0.44, 0.56, 0.67, 0.9]) { const a = bp(s, ZP), b = bp(s, ZP + 4.2); k += `<path d="M${P(a)} L${P(b)}" stroke="#2f2a28" stroke-width=".3"/><circle cx="${r(b[0])}" cy="${r(b[1])}" r=".45" fill="#f2e6c2"/>`; }
-  const sK = bp(7 / 9, ZP), bM = bp(0.5 / 9 + 6 / 9, 6);
+  const sK = bp(7 / 9, ZP - 1), bM = bp(0.5 / 9 + 6 / 9, 6);
   S.teil({ id: "alte_bruecke", de: "die Alte Brücke", syl: "AL-te BRÜ-cke", it: "il Ponte Vecchio", itSyl: "PON-te VEC-chio", en: "Old Bridge", x: 0, y: 0, kunst: k,
     tipp: "Die Alte Brücke ist rund 200 Meter lang. Sie wurde 1788 aus rotem Sandstein gebaut.",
     zoom: { x: 96, y: 112, w: 90, h: 60 },
     unter: [
       { id: "bogen", de: "der Bogen", syl: "BO-gen", it: "l'arco", itSyl: "AR-co", en: "arch", x: bM[0], y: bM[1], kunst: flaeche(-7, -4, 14, 8),
         tipp: "Die Brücke hat neun Bögen. Bei Hochwasser fließt das Wasser durch alle." },
-      { id: "statue", de: "die Statue", syl: "STA-tu-e", it: "la statua", itSyl: "STA-tu-a", en: "statue", x: sK[0], y: sK[1], kunst: flaeche(-2.2, -6.6, 4.4, 6.8, 0.6),
+      { id: "statue", de: "die Statue", syl: "STA-tu-e", it: "la statua", itSyl: "STA-tu-a", en: "statue", x: sK[0], y: sK[1], kunst: flaeche(-2.2, -8.4, 4.4, 8.6, 0.6),
         tipp: "Auf der Brücke stehen Kurfürst Karl Theodor und die Göttin Minerva." },
     ] });
 }
@@ -563,18 +577,27 @@ const TOR = (() => { const p = bp(1, 12.2, [0, 0]); return { x: p[0] + 3, y: p[1
   /* rechter Turm (Westseite, näher) */
   k += turm(5.6, 6.8, 21, false);
   /* Brückenaffe (Bronze) am Westende der Brücke, mit Spiegel */
-  const AX = 11.4, AY = -.4;
-  k += `<rect x="${AX - 1.4}" y="${AY - .6}" width="2.8" height=".8" fill="#9a8f80"/>`;
-  k += `<ellipse cx="${AX}" cy="${AY - 1.7}" rx="1.05" ry="1.25" fill="${S.lg("bronze", [[0, "#4d3a22"], [0.5, "#8a6a3a"], [1, "#c9a25a"]], 0, 0, 1, 0)}"/>`;
-  k += `<circle cx="${AX + .1}" cy="${AY - 3.3}" r=".72" fill="#7a5c32"/><circle cx="${AX + .32}" cy="${AY - 3.35}" r=".28" fill="#c9a25a"/>`;
-  k += `<path d="M${AX + .8} ${AY - 2.2} L${AX + 1.7} ${AY - 3.2}" stroke="#7a5c32" stroke-width=".4"/><circle cx="${AX + 1.9}" cy="${AY - 3.5}" r=".5" fill="#d9c58a" stroke="#6a4e2a" stroke-width=".15"/>`;
+  const AX = 11.6, AY = -1.4;
+  /* Brüstung am Brückenkopf und Sockel des Affen */
+  k += `<rect x="8.4" y="-1.6" width="7.4" height="2.6" fill="#b4553f"/><rect x="8.4" y="-1.9" width="7.4" height=".6" fill="#e39a78"/>`;
+  k += `<rect x="${AX - 1.5}" y="${AY - 1.4}" width="3" height="1.6" fill="#9e9384"/><rect x="${AX - 1.7}" y="${AY - 1.7}" width="3.4" height=".5" fill="#c9bfae"/>`;
+  /* der Brückenaffe: sitzend, Bronze, hebt einen Spiegel; zwei Mäuse am Sockel */
+  const BR = S.lg("bronze", [[0, "#3e2c18"], [0.5, "#7d5e32"], [1, "#c9a25a"]], 0, 0, 1, 0);
+  const y0 = AY - 1.7;
+  k += `<path d="M${AX - 1.3} ${y0} Q${AX - 1.6} ${y0 - 1.8} ${AX - .7} ${y0 - 2.6} Q${AX} ${y0 - 3} ${AX + .7} ${y0 - 2.6} Q${AX + 1.5} ${y0 - 1.8} ${AX + 1.2} ${y0} Z" fill="${BR}"/>`;
+  k += `<path d="M${AX - 1.2} ${y0} q-.9 -.2 -1 -.9 q-.1 -.6 .4 -.6" stroke="#5e4424" stroke-width=".3" fill="none"/>`;
+  k += `<circle cx="${AX}" cy="${y0 - 3.5}" r=".95" fill="${BR}"/><circle cx="${AX - .95}" cy="${y0 - 3.6}" r=".35" fill="#6a4e2a"/><circle cx="${AX + .95}" cy="${y0 - 3.6}" r=".35" fill="#a8844a"/>`;
+  k += `<ellipse cx="${AX + .2}" cy="${y0 - 3.1}" rx=".55" ry=".38" fill="#c9a25a"/><circle cx="${AX - .25}" cy="${y0 - 3.75}" r=".14" fill="#1d140c"/><circle cx="${AX + .35}" cy="${y0 - 3.75}" r=".14" fill="#1d140c"/>`;
+  k += `<path d="M${AX + .9} ${y0 - 1.9} Q${AX + 1.9} ${y0 - 2.6} ${AX + 2.1} ${y0 - 3.8}" stroke="#7d5e32" stroke-width=".42" fill="none" stroke-linecap="round"/>`;
+  k += `<circle cx="${AX + 2.2}" cy="${y0 - 4.5}" r=".75" fill="${S.lg("spiegelglas", [[0, "#ffffff"], [1, "#a9c8e4"]], 0, 0, 1, 1)}" stroke="#7d5e32" stroke-width=".25"/>`;
+  k += `<ellipse cx="${AX - 1.2}" cy="${AY - 1.9}" rx=".4" ry=".22" fill="#7d5e32"/><ellipse cx="${AX + 1.3}" cy="${AY - 1.9}" rx=".4" ry=".22" fill="#9a7a42"/>`;
   S.teil({ id: "brueckentor", de: "das Brückentor", syl: "BRÜ-cken-tor", it: "la porta del ponte", itSyl: "POR-ta del PON-te", en: "bridge gate", x: TOR.x, y: TOR.y, kunst: k,
     tipp: "Das Brückentor war früher Teil der Stadtmauer. Es hat zwei Türme und ist 28 Meter hoch.",
     zoom: { x: TOR.x - 26, y: TOR.y - 38, w: 52, h: 42 },
     unter: [
       { id: "turmhaube", de: "die Turmhaube", syl: "TURM-hau-be", it: "la cupola della torre", itSyl: "CU-po-la del-la TOR-re", en: "tower cap", x: TOR.x + 5.6, y: TOR.y - 22, kunst: flaeche(-4, -11.6, 8, 12),
         tipp: "Seit 1788 tragen die Türme barocke Hauben aus Schiefer." },
-      { id: "brueckenaffe", de: "der Brückenaffe", syl: "BRÜ-cken-af-fe", it: "la scimmia del ponte", itSyl: "SCIM-mia del PON-te", en: "bridge monkey", x: TOR.x + 11.4, y: TOR.y, kunst: flaeche(-1.8, -4.4, 4, 4.8, 0.5),
+      { id: "brueckenaffe", de: "der Brückenaffe", syl: "BRÜ-cken-af-fe", it: "la scimmia del ponte", itSyl: "SCIM-mia del PON-te", en: "bridge monkey", x: TOR.x + 11.6, y: TOR.y - 1.4, kunst: flaeche(-2, -7, 5, 7.4, 0.5),
         tipp: "Der Affe aus Bronze hält einen Spiegel. Wer seine Finger berührt, kommt wieder nach Heidelberg — sagt man." },
     ] });
 }
@@ -705,22 +728,29 @@ const BANK = { x: 52, y: 199 };
 {
   const y = 185.6;
   let k = schatten(0, .2, 5, .8, .3);
-  /* Schachtel, Deckel offen; darin die Pralinen in Papier */
-  k += `<path d="M-4.6 0 L4.6 0 L4.6 -3.6 L-4.6 -3.6 Z" fill="${S.lg("kussbox", [[0, "#f6efe0"], [1, "#e6dcc6"]], 0, 0, 1, 0)}"/>`;
-  k += `<rect x="-4.6" y="-3.6" width="9.2" height=".7" fill="#a8232a"/><rect x="-4.6" y="-.6" width="9.2" height=".6" fill="#a8232a"/>`;
-  /* Scherenschnitt: Student mit Mütze und junge Frau, Gesicht an Gesicht */
-  k += `<path d="M-1.6 -1 L-1.6 -1.8 Q-2 -2.2 -1.3 -2.5 Q-.9 -2.9 -.5 -2.5 L-.2 -2.3 L-.4 -2 L-.25 -1.8 L-.55 -1.7 L-.6 -1 Z M-1.75 -2.5 L-.7 -2.9 L-.5 -2.55 Z" fill="#1d1a1a"/>`;
-  k += `<path d="M1.6 -1 L1.7 -1.8 Q2.2 -2.2 1.6 -2.6 Q1.1 -2.9 .6 -2.5 L.25 -2.3 L.45 -2 L.3 -1.8 L.6 -1.7 L.65 -1 Z" fill="#1d1a1a"/>`;
-  k += `<path d="M-4.6 -3.6 L-3.8 -6 L5.2 -6 L4.6 -3.6 Z" fill="#efe6d2"/><path d="M-3.4 -5.4 h7.6" stroke="#a8232a" stroke-width=".35"/>`;
-  for (const x of [-2.6, 0, 2.6]) k += `<ellipse cx="${x}" cy="-3.9" rx="1.1" ry=".55" fill="#3a2418"/><ellipse cx="${x - .3}" cy="-4.1" rx=".4" ry=".15" fill="#8a6a52"/>`;
-  S.teil({ oben: true, id: "studentenkuss", de: "der Studentenkuss", syl: "stu-DEN-ten-kuss", it: "il bacio dello studente (cioccolatino)", itSyl: "BA-cio del-lo stu-DEN-te", en: "Student Kiss (chocolate)", x: 108, y, steht: true, kunst: k,
+  /* Schachtel (Front mit dem Scherenschnitt: Student mit Mütze küsst eine junge Dame), Deckel offen, Pralinen */
+  k += `<path d="M-5.2 0 L5.2 0 L5.2 -4.4 L-5.2 -4.4 Z" fill="${S.lg("kussbox", [[0, "#efe4cc"], [0.5, "#fbf6ea"], [1, "#f4ead6"]], 0, 0, 1, 0)}"/>`;
+  k += `<rect x="-5.2" y="-4.4" width="10.4" height=".6" fill="#9e1f2a"/><rect x="-5.2" y="-.55" width="10.4" height=".55" fill="#9e1f2a"/><rect x="-5.2" y="-4.4" width="10.4" height="4.4" fill="none" stroke="#9e1f2a" stroke-width=".15"/>`;
+  /* Scherenschnitt: links der Student mit Couleurmütze, rechts die junge Dame mit Haarknoten — Nase an Nase */
+  const kopf = `M-3.4 3.6 L-2.6 2.2 Q-3.6 .4 -3.2 -1.4 Q-2.8 -3.4 -.8 -3.6 Q.8 -3.6 1.3 -2.4 L1.45 -1.6 L2.15 -.85 L1.5 -.55 L1.75 -.15 L1.45 .15 L1.65 .5 L1.25 1.2 Q.7 1.6 .4 1.7 L.6 3.6 Z`;
+  k += `<g transform="translate(0 -2.15) scale(.44)" fill="#161212">`
+    + `<path d="${kopf}" transform="translate(-2.15 0)"/>`
+    + `<path d="M-5.6 -3 L-1.4 -4.4 L-.8 -3.4 L-4.8 -2.2 Z M-1.2 -3.6 L.6 -3.3 L-.7 -3 Z" transform="translate(-.3 0)"/>`
+    + `<path d="${kopf}" transform="translate(2.15 0) scale(-1 1)"/>`
+    + `<circle cx="4.9" cy="-2.6" r="1.1"/></g>`;
+  k += `<path d="M-5.2 -4.4 L-4.4 -7 L5.8 -7 L5.2 -4.4 Z" fill="#e9dcc2"/><path d="M-4.2 -6.4 h9.2" stroke="#9e1f2a" stroke-width=".35"/>`;
+  for (const x of [-2.9, 0, 2.9]) k += `<ellipse cx="${x}" cy="-4.7" rx="1.25" ry=".6" fill="#3a2418"/><ellipse cx="${x - .35}" cy="-4.9" rx=".45" ry=".17" fill="#8a6a52"/>`;
+  S.teil({ oben: true, id: "studentenkuss", de: "der Studentenkuss", syl: "stu-DEN-ten-kuss", it: "il bacio dello studente (cioccolatino)", itSyl: "BA-cio del-lo stu-DEN-te", en: "Student Kiss (chocolate)", x: 110, y, steht: true, kunst: k,
     tipp: "Der Studentenkuss ist eine Praline aus Schokolade — seit 1863 aus Heidelberg." });
 }
 {
   const y = 185.4;
-  let k = `<path d="M-3.6 0 L3.6 0 L3.8 -1.4 L-3.4 -1.4 Z" fill="#2f5f95"/><path d="M-3.4 -1.4 L3.8 -1.4 L3.6 -1.9 L-3.6 -1.9 Z" fill="#f4efe2"/><rect x="-3.6" y="-.5" width="7.2" height=".5" fill="#1d3f68"/>`;
-  k += `<path d="M-3.6 -1.9 L3.6 -1.9 L3.4 -2.4 L-3.4 -2.4 Z" fill="#b8473a"/>`;
-  S.teil({ oben: true, id: "buch", de: "das Buch", syl: "BUCH", it: "il libro", itSyl: "LI-bro", en: "book", x: 122, y, steht: true, kunst: k + flaeche(-4, -3, 8, 3.4, 0.5) });
+  /* ein dickes Lehrbuch, flach liegend: Deckel von oben, Seitenschnitt vorn */
+  let k = schatten(0, .2, 4.4, .6, .3);
+  k += `<path d="M-4.2 0 L3.6 0 L4.4 -1.2 L-3.4 -1.2 Z" fill="#f2ead8"/><path d="M-4.2 0 L3.6 0 L4.4 -1.2 L-3.4 -1.2 Z" fill="none" stroke="#c9bfa8" stroke-width=".12"/>`;
+  k += `<path d="M-4.2 0 L-4.5 -.2 L-3.7 -1.6 L-3.4 -1.2 Z" fill="#1f4f8a"/>`;
+  k += `<path d="M-4.5 -1.4 L3.4 -1.4 L4.6 -3.2 L-3.3 -3.2 Z" fill="${S.lg("buchdeckel", [[0, "#1f4f8a"], [1, "#3a6fb0"]], 0, 0, 1, 0)}"/><path d="M-1.6 -2 h3.6 M-1.2 -2.6 h2.6" stroke="#e8c35a" stroke-width=".25"/>`;
+  S.teil({ oben: true, id: "buch", de: "das Buch", syl: "BUCH", it: "il libro", itSyl: "LI-bro", en: "book", x: 124, y, steht: true, kunst: k + flaeche(-4.6, -3.4, 9.4, 3.8, 0.5) });
 }
 
 /* =====================================================================
@@ -736,6 +766,9 @@ const BANK = { x: 52, y: 199 };
   S.teil({ oben: true, id: "weintraube", de: "die Weintraube", syl: "WEIN-trau-be", it: "il grappolo d'uva", itSyl: "GRAP-po-lo DU-va", en: "bunch of grapes", x: 288, y: 181, kunst: k,
     tipp: "Aus den Trauben vom Neckarhang wird Wein gemacht." });
 }
+
+/* Licht über allem: warmes Nachmittagslicht von rechts oben, leichte Vignette (fängt keinen Tipp ab) */
+S.davor(`<rect width="320" height="200" fill="${S.rg("sonne", [[0, "#fff1c8", 0.22], [0.5, "#fff1c8", 0.06], [1, "#fff1c8", 0]], 1, 0, 0.9)}"/><rect width="320" height="200" fill="${S.rg("vignette", [[0, "#000", 0], [0.72, "#000", 0], [1, "#1a1008", 0.22]], 0.5, 0.5, 0.75)}"/>`);
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/heidelberg.js"));
 console.log(aus);

@@ -101,13 +101,14 @@
   function dmaTeilRufA(i, self, args) {
     try { return dmaTeilRuf(i, self, args); } catch (e) { return Promise.reject(e); }
   }
-  /* Nach dem Start in einer Ruhepause: erst der Teil fürs Klassenzimmer, dann der Rest. */
+  /* Nach dem Start in der ersten Ruhepause: erst der Teil fürs Klassenzimmer, dann der Rest. Früh, damit
+     beim zweiten Öffnen alles aus dem Zwischenspeicher (sw.js) kommt und ein Tipp fast nie warten muss. */
   if (DMA_TEILE_BAU) {
     try {
-      window.addEventListener("load", () => setTimeout(() => {
+      window.addEventListener("load", () => {
         const los = () => { dmaTeilHolen("raum").then(() => DMA_TEILE_BAU.teile.forEach((t) => dmaTeilHolen(t))); };
-        if (window.requestIdleCallback) requestIdleCallback(los, { timeout: 3000 }); else los();
-      }, 1500));
+        if (window.requestIdleCallback) requestIdleCallback(los, { timeout: 2000 }); else setTimeout(los, 200);
+      });
     } catch (e) {}
   }
 

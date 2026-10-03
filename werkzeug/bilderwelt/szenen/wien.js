@@ -110,7 +110,6 @@ S.hinten(`<rect width="400" height="${HOR + 14}" fill="${S.rg("sonne", [[0, "#ff
   k += `<path d="M0 141 L0 130 Q40 124 80 127 Q120 122 160 126 Q200 122 240 130 L270 141 Z" fill="#9db3ae" opacity=".8"/>`;
   /* Sendemast auf dem Kahlenberg, Kirche auf dem Leopoldsberg */
   k += `<line x1="152" y1="108" x2="152" y2="93" stroke="#7c8f92" stroke-width=".5"/><path d="M150.8 108 L152 97 L153.2 108" stroke="#7c8f92" stroke-width=".25" fill="none"/><rect x="151.6" y="93" width=".8" height=".6" fill="#c0504a"/>`;
-  k += `<rect x="96" y="112.6" width="4.4" height="2.4" fill="#98a8a8"/><path d="M97.4 112.6 L98.2 109.4 L99 112.6 Z" fill="#98a8a8"/>`;
   S.teil({ id: "wienerwald", de: "der Wienerwald", syl: "WIE-ner-wald", it: "il Bosco Viennese", itSyl: "BO-sco vien-NE-se", en: "Vienna Woods", x: 0, y: 0,
     kunst: `<g filter="url(#${S.id("dunst")})">${k}</g>`, tipp: "Im Norden liegen die Hügel des Wienerwalds mit dem Kahlenberg." });
 }
@@ -226,13 +225,28 @@ const DOM = { w: 168, o: 284, fuss: 151, s: 0.97 };
   k += `<path d="M${W0 + 14} ${TRAUFE} L${W0 + 14} ${FIRST} L${O0 - 14} ${FIRST} L${O0} ${TRAUFE} Z" fill="url(#${S.id("zickzack")})"/>`;
   k += `<path d="M${W0 + 14} ${TRAUFE} L${W0 + 14} ${FIRST} L${O0 - 14} ${FIRST} L${O0} ${TRAUFE} Z" fill="${S.lg("dachlicht", [[0, "#fff6d6", 0.25], [0.5, "#fff6d6", 0], [1, "#1a1408", 0.25]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M${W0 + 14} ${FIRST} L${O0 - 14} ${FIRST}" stroke="#4a4036" stroke-width=".6"/>`;
-  /* der Doppeladler über dem Chor: schwarz auf Gold, mit Kronen und Brustschild */
-  const AX = 255, AY = r((TRAUFE + FIRST) / 2 + 1);
-  let adler = `<rect x="${AX - 13}" y="${r(FIRST + 1.6)}" width="26" height="${r(TRAUFE - FIRST - 3.2)}" fill="#e8c35a"/>`;
-  adler += `<path d="M${AX} ${AY + 9} L${AX - 2.4} ${AY + 4} L${AX - 6} ${AY + 7} L${AX - 4.6} ${AY + 3} L${AX - 11} ${AY + 1} L${AX - 10} ${AY - 2} L${AX - 12} ${AY - 5} L${AX - 8} ${AY - 5} L${AX - 9} ${AY - 9} L${AX - 5} ${AY - 6} L${AX - 3.6} ${AY - 9} L${AX - 2.4} ${AY - 6} L${AX - 3.2} ${AY - 11.4} L${AX - 1.2} ${AY - 9.6} L${AX} ${AY - 6.4} L${AX + 1.2} ${AY - 9.6} L${AX + 3.2} ${AY - 11.4} L${AX + 2.4} ${AY - 6} L${AX + 3.6} ${AY - 9} L${AX + 5} ${AY - 6} L${AX + 9} ${AY - 9} L${AX + 8} ${AY - 5} L${AX + 12} ${AY - 5} L${AX + 10} ${AY - 2} L${AX + 11} ${AY + 1} L${AX + 4.6} ${AY + 3} L${AX + 6} ${AY + 7} L${AX + 2.4} ${AY + 4} Z" fill="#1d1a18"/>`;
-  adler += `<path d="M${AX - 3.6} ${AY - 11.6} l-.4 -1.6 .9 .8 .4 -1.2 .4 1.2 .9 -.8 -.4 1.6 Z M${AX + 3.6} ${AY - 11.6} l-.4 -1.6 .9 .8 .4 -1.2 .4 1.2 .9 -.8 -.4 1.6 Z" fill="${GOLD}"/>`;
-  adler += `<path d="M${AX - 2} ${AY - 3} L${AX + 2} ${AY - 3} L${AX + 2} ${AY + 0.6} Q${AX} ${AY + 2.6} ${AX - 2} ${AY + 0.6} Z" fill="#c8302a" stroke="#e8c35a" stroke-width=".3"/><rect x="${AX - 2}" y="${AY - 1.6}" width="4" height="1" fill="#f6f2ea"/>`;
-  adler += `<circle cx="${AX - 3.4}" cy="${AY - 9.6}" r=".3" fill="#e8c35a"/><circle cx="${AX + 3.4}" cy="${AY - 9.6}" r=".3" fill="#e8c35a"/>`;
+  /* über dem Chor (rechts vom Südturm) das Ziegelbild des Doppeladlers: schwarz,
+     mit Kronen, Schwert und Zepter, auf goldgelbem Grund */
+  const AX = 257, AY = r((TRAUFE + FIRST) / 2 + 0.6), AS = 1.1;
+  const FX0 = AX - 16, FX1 = AX + 16, FY0 = r(FIRST + 2.2), FY1 = r(TRAUFE - 2.2);
+  /* goldgelbes Feld im Ziegelmuster, oben und unten mit Zickzack-Rand */
+  let zz = `M${FX0} ${FY0}`;
+  for (let x = FX0, j = 0; x < FX1; x += 1.5, j++) zz += ` L${r(x + 1.5)} ${r(FY0 + (j % 2 ? 0 : 1.3))}`;
+  zz += ` L${FX1} ${FY1}`;
+  for (let x = FX1, j = 0; x > FX0; x -= 1.5, j++) zz += ` L${r(x - 1.5)} ${r(FY1 - (j % 2 ? 0 : 1.3))}`;
+  let adler = `<path d="${zz} Z" fill="${S.lg("chorgrund", [[0, "#f1d46e"], [1, "#d9ae42"]])}"/>`;
+  for (let yy = FY0 + 2.4; yy < FY1 - 1; yy += 1.6) adler += `<line x1="${FX0}" y1="${r(yy)}" x2="${FX1}" y2="${r(yy)}" stroke="#bf9534" stroke-width=".15" opacity=".6"/>`;
+  const halb = [[0, -4], [-1.1, -5.8], [-1.5, -8.2], [-2, -9.1], [-2.9, -9.3], [-3.9, -8.9], [-3.1, -8.5], [-2.4, -8.3], [-2.1, -7.1], [-2.4, -5.6], [-3, -4.8], [-4.8, -7.4], [-6.2, -10.4], [-6.7, -8], [-8.3, -9.9], [-8.6, -7.2], [-10.3, -8.5], [-10.2, -5.8], [-11.8, -6.3], [-11.2, -3.8], [-12.2, -3.4], [-10.6, -1.8], [-7, -1.3], [-4.6, -.5], [-3.2, .4], [-3, 2.6], [-4.3, 3.7], [-2.6, 3.4], [-2.2, 4.2], [-3.1, 7.6], [-1.4, 6.2], [-.8, 8.4], [0, 6.8]];
+  const pt = ([x, y]) => `${r(AX + x * AS)} ${r(AY + y * AS)}`;
+  adler += `<path d="M${halb.map(pt).join(" L")} L${halb.slice().reverse().map(([x, y]) => pt([-x, y])).join(" L")} Z" fill="#1b1816"/>`;
+  for (const sx of [-1, 1]) {
+    adler += `<path d="M${pt([sx * 3.6, -8.9])} L${pt([sx * 4.4, -8.4])}" stroke="#c8302a" stroke-width=".35"/>`;
+    adler += `<path d="M${pt([sx * 1.8, -9.6])} L${pt([sx * 1.9, -10.9])} L${pt([sx * 2.3, -10.2])} L${pt([sx * 2.6, -11.1])} L${pt([sx * 2.9, -10.2])} L${pt([sx * 3.3, -10.9])} L${pt([sx * 3.4, -9.6])} Z" fill="${GOLD}"/>`;
+    for (let f = 0; f < 4; f++) adler += `<path d="M${pt([sx * (4 + f * 1.7), -2.6 - f * 0.3])} L${pt([sx * (5.4 + f * 1.7), -6.4 - f * 0.6])}" stroke="#4a4038" stroke-width=".22"/>`;
+  }
+  adler += `<path d="M${pt([-1.6, -11.4])} L${pt([-1.7, -13.2])} L${pt([-.8, -12.4])} L${pt([0, -13.8])} L${pt([.8, -12.4])} L${pt([1.7, -13.2])} L${pt([1.6, -11.4])} Z" fill="${GOLD}"/>`;
+  adler += `<path d="M${pt([-1.7, -3.2])} L${pt([1.7, -3.2])} L${pt([1.7, .2])} Q${pt([0, 1.8])} ${pt([-1.7, .2])} Z" fill="#c8302a" stroke="#e8c35a" stroke-width=".25"/><rect x="${r(AX - 1.7 * AS)}" y="${r(AY - 1.9 * AS)}" width="${r(3.4 * AS)}" height="${r(0.9 * AS)}" fill="#f6f2ea"/>`;
+  adler += `<path d="M${pt([4.2, 3.4])} L${pt([7.6, -1])}" stroke="#d9dde0" stroke-width=".45"/><path d="M${pt([-4.2, 3.4])} L${pt([-7, 0])}" stroke="${GOLD}" stroke-width=".45"/><circle cx="${r(AX - 7.2 * AS)}" cy="${r(AY - 0.3 * AS)}" r=".5" fill="${GOLD}"/>`;
   k += adler;
   /* Westende: zwei Heidentürme (achteckig, Steinhelme) */
   for (const [hx, f] of [[W0 + 2, SAND_S], [W0 + 9, SAND]]) {
@@ -285,7 +299,7 @@ const DOM = { w: 168, o: 284, fuss: 151, s: 0.97 };
         tipp: "Der Südturm ist 136 Meter hoch. Wer 343 Stufen steigt, schaut über ganz Wien." },
       { id: "dach", de: "das Dach", syl: "DACH", it: "il tetto", itSyl: "TET-to", en: "roof", x: 196, y: TRAUFE, kunst: flaeche(-14, -(TRAUFE - FIRST), 28, TRAUFE - FIRST, 0.6),
         tipp: "Das Dach hat 230.000 bunte, glasierte Ziegel im Zickzack-Muster." },
-      { id: "doppeladler", de: "der Doppeladler", syl: "DOP-pel-ad-ler", it: "l'aquila bicipite", itSyl: "A-qui-la bi-CI-pi-te", en: "double-headed eagle", x: AX, y: AY + 9, kunst: flaeche(-12, -22, 24, 22, 0.6),
+      { id: "doppeladler", de: "der Doppeladler", syl: "DOP-pel-ad-ler", it: "l'aquila bicipite", itSyl: "A-qui-la bi-CI-pi-te", en: "double-headed eagle", x: AX, y: r(AY + 9.4), kunst: flaeche(-13.6, -24.8, 27.2, 24.8, 0.6),
         tipp: "Der Doppeladler war das Wappen der Habsburger, der Kaiserfamilie." },
     ] });
 }
@@ -354,6 +368,11 @@ const DOM = { w: 168, o: 284, fuss: 151, s: 0.97 };
   k += `<rect x="0" y="148.4" width="400" height=".5" fill="#2f3532"/>`;
   k += `<rect x="0" y="151.2" width="400" height="1.8" fill="#bdb6aa"/>`;
   k += `<rect x="0" y="153" width="400" height="${r(198 - 153)}" fill="${S.lg("asphalt", [[0, "#8e8c88"], [1, "#6f6d69"]])}"/>`;
+  /* Gleiskörper der Straßenbahn: Granitpflaster zwischen den Schienen */
+  const ga = strasse(24), gb = strasse(15.6);
+  k += `<rect x="0" y="${ga}" width="400" height="${r(gb - ga)}" fill="${S.lg("pflaster", [[0, "#9a958d"], [1, "#86817a"]])}"/>`;
+  for (let yy = ga + 0.8, j = 0; yy < gb; yy += 0.6 + (yy - ga) * 0.09, j++) for (let x = (j % 2) * 1.4; x < 400; x += 2.8 + (yy - ga) * 0.25) k += `<rect x="${r(x)}" y="${r(yy)}" width="${r(2.2 + (yy - ga) * 0.2)}" height="${r(0.35 + (yy - ga) * 0.06)}" rx=".2" fill="#a8a39a" opacity=".55"/>`;
+  k += `<rect x="0" y="${r(gb)}" width="400" height=".5" fill="#c9c4bb"/>`;
   /* Schienen: ferne Spur (22 m) und nahe Spur (17 m) */
   for (const d of [22.6, 21.4, 17.8, 16.6]) k += `<rect x="0" y="${r(strasse(d) - 0.2)}" width="400" height="${r(0.25 + 4 / d)}" fill="#c9c6bf"/><rect x="0" y="${r(strasse(d) + 0.1)}" width="400" height=".3" fill="#4b4945"/>`;
   /* Mittellinie und Asphaltflecken */
@@ -380,12 +399,14 @@ const DOM = { w: 168, o: 284, fuss: 151, s: 0.97 };
   for (let x = m(2.4); x < L; x += m(1.6)) k += `<rect x="${r(x)}" y="${m(-2.95)}" width="${m(0.12)}" height="${m(1.35)}" fill="#a51f1c"/>`;
   for (const x of [m(3.4), m(11.2)]) if (x < L - 4) k += `<rect x="${r(x)}" y="${m(-2.9)}" width="${m(1.3)}" height="${m(2.6)}" fill="#3a464c" stroke="#e9e6df" stroke-width=".35"/><line x1="${r(x + m(0.65))}" y1="${m(-2.9)}" x2="${r(x + m(0.65))}" y2="${m(-0.3)}" stroke="#e9e6df" stroke-width=".3"/>`;
   /* Front: Scheibe, Zielanzeige „D Nußdorf“, Scheinwerfer */
-  k += `<rect x="${m(0.35)}" y="${m(-3.02)}" width="${m(1.8)}" height="${m(0.3)}" fill="#151515"/>`;
-  k += `<text x="${m(0.42)}" y="${m(-2.78)}" font-size="${m(0.24)}" fill="#ffb428" font-family="Arial,sans-serif" font-weight="bold">D  Nußdorf</text>`;
-  k += `<circle cx="${m(0.42)}" cy="${m(-0.75)}" r="${m(0.09)}" fill="#fffbe8"/>`;
+  k += `<rect x="${m(0.35)}" y="${m(-3.08)}" width="${m(2.3)}" height="${m(0.36)}" fill="#151515"/>`;
+  k += `<text x="${m(0.45)}" y="${m(-2.79)}" font-size="${m(0.28)}" fill="#ffb428" font-family="Arial,sans-serif" font-weight="bold">D  Nußdorf</text>`;
+  k += `<path d="M${m(0.5)} ${m(-0.25)} L${m(0.3)} ${m(-0.7)} L${m(1.6)} ${m(-0.7)} L${m(1.6)} ${m(-0.25)} Z" fill="#7a1512"/>`;
+  k += `<circle cx="${m(0.4)}" cy="${m(-0.95)}" r="${m(0.1)}" fill="#fffbe8"/><rect x="${m(0.28)}" y="${m(-1.25)}" width="${m(0.16)}" height="${m(0.08)}" fill="#ffd27a"/>`;
+  k += `<path d="M${m(0.42)} ${m(-1.95)} L${m(0.62)} ${m(-2.7)} L${m(0.9)} ${m(-2.7)} L${m(0.7)} ${m(-1.95)} Z" fill="#fff" opacity=".18"/>`;
   k += `<path d="M${m(0.5)} ${m(-2.7)} Q${m(0.45)} ${m(-2.2)} ${m(0.6)} ${m(-1.95)}" stroke="#fff" stroke-width=".5" opacity=".35" fill="none"/>`;
   /* Stromabnehmer und Fahrleitung */
-  k += `<path d="M${m(4.2)} ${m(-3.4)} L${m(5)} ${m(-4.3)} L${m(4.4)} ${m(-5.1)} M${m(3.9)} ${m(-5.1)} L${m(5)} ${m(-5.1)}" stroke="#3a3a3a" stroke-width=".45" fill="none"/>`;
+  k += `<rect x="${m(3.6)}" y="${m(-3.6)}" width="${m(1.2)}" height="${m(0.2)}" fill="#8d9296"/><path d="M${m(3.8)} ${m(-3.6)} L${m(5.0)} ${m(-4.35)} L${m(4.3)} ${m(-5.06)}" stroke="#3a3a3a" stroke-width=".5" fill="none" stroke-linejoin="round"/><rect x="${m(3.8)}" y="${m(-5.16)}" width="${m(1)}" height="${m(0.08)}" fill="#3a3a3a"/>`;
   k += `<line x1="${m(-0.6)}" y1="${m(-5.12)}" x2="${L}" y2="${m(-5.12)}" stroke="#2b2b2b" stroke-width=".25" opacity=".7"/>`;
   S.teil({ id: "strassenbahn", de: "die Straßenbahn", syl: "STRA-ßen-bahn", it: "il tram", itSyl: "TRAM", en: "tram", x: X0, y: Y, kunst: k,
     tipp: "Die Wiener sagen zur Straßenbahn „Bim“ – wegen der Klingel." });
@@ -483,9 +504,13 @@ const DOM = { w: 168, o: 284, fuss: 151, s: 0.97 };
 const PODEST = 195.6;
 {
   let k = `<rect x="0" y="${PODEST}" width="400" height="${r(260 - PODEST)}" fill="${S.lg("podest", [[0, "#a77a4c"], [1, "#7d5634"]])}"/>`;
-  for (let i = -14; i <= 14; i++) k += `<line x1="${r(200 + i * 14.4)}" y1="${PODEST}" x2="${r(200 + i * 28)}" y2="260" stroke="#5f3f22" stroke-width=".4" opacity=".7"/>`;
+  for (let i = -14; i <= 14; i++) {
+    const xa = 200 + i * 14.4, xb = 200 + i * 28, xe = Math.max(0, Math.min(400, xb)), ye = i === 0 ? 260 : r(PODEST + (260 - PODEST) * (xe - xa) / (xb - xa));
+    if (xa > 0 && xa < 400) k += `<line x1="${r(xa)}" y1="${PODEST}" x2="${r(xe)}" y2="${ye}" stroke="#5f3f22" stroke-width=".4" opacity=".7"/>`;
+  }
   for (const y of [199.4, 205, 213.6, 227, 248]) k += `<line x1="0" y1="${y}" x2="400" y2="${y}" stroke="#6a4728" stroke-width=".25" opacity=".5"/>`;
   k += `<rect x="0" y="${PODEST - 0.6}" width="400" height="1.6" fill="#c49a68"/>`;
+  k += `<path d="M0 238 Q100 233 200 236 Q300 239 400 234 L400 260 L0 260 Z" fill="#2a1a0c" opacity=".22"/>`;
   k += `<rect x="0" y="${PODEST}" width="400" height="${r(260 - PODEST)}" fill="${S.lg("podestlicht", [[0, "#000", 0.12], [0.3, "#000", 0], [1, "#fff2d0", 0.08]])}"/>`;
   S.teil({ id: "schanigarten", de: "der Schanigarten", syl: "SCHA-ni-gar-ten", it: "il dehors", itSyl: "de-HORS", en: "pavement café", x: 0, y: 0, kunst: k,
     tipp: "In Wien heißen die Tische vor dem Kaffeehaus „Schanigarten“." });
@@ -497,13 +522,16 @@ const PODEST = 195.6;
   k += `<path d="M${x0} ${PODEST} L${x0 + 1} ${top} L${x1 - 1} ${top} L${x1} ${PODEST} Z" fill="${S.lg("kasten", [[0, "#3f5a3a"], [1, "#2c4128"]])}"/>`;
   for (let x = x0 + 4; x < x1 - 2; x += 6) k += `<line x1="${x}" y1="${top + 1}" x2="${x}" y2="${PODEST - 0.6}" stroke="#233620" stroke-width=".4"/>`;
   k += `<rect x="${x0 + 0.6}" y="${top - 0.6}" width="${x1 - x0 - 1.2}" height="1.4" fill="#4d6b47"/>`;
-  for (let i = 0; i < 46; i++) {
-    const x = x0 + 3 + rnd() * (x1 - x0 - 6), y = top - 1 - rnd() * 8;
-    k += `<ellipse cx="${r(x)}" cy="${r(y + 2)}" rx="${r(2.2 + rnd())}" ry="1.6" fill="${rnd() < 0.5 ? "#3f7a34" : "#5a9444"}"/>`;
+  let laub = "";
+  for (let i = 0; i < 120; i++) {
+    const x = x0 + 2 + rnd() * (x1 - x0 - 4), y = top - rnd() * 7;
+    laub += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(1.1 + rnd() * 1.1)}" fill="${["#2f6a2c", "#3f7a34", "#4f8a3e", "#5a9444"][Math.floor(rnd() * 4)]}"/>`;
   }
-  for (let i = 0; i < 26; i++) {
-    const x = x0 + 4 + rnd() * (x1 - x0 - 8), y = top - 4 - rnd() * 7;
-    for (let j = 0; j < 5; j++) k += `<circle cx="${r(x + Math.cos(j * 1.26) * 1)}" cy="${r(y + Math.sin(j * 1.26) * 0.8)}" r=".8" fill="${rnd() < 0.7 ? "#d8323a" : "#ef5560"}"/>`;
+  k += laub;
+  for (let i = 0; i < 30; i++) {
+    const x = x0 + 4 + rnd() * (x1 - x0 - 8), y = top - 5 - rnd() * 6;
+    k += `<line x1="${r(x)}" y1="${r(y + 1)}" x2="${r(x + rnd() - 0.5)}" y2="${r(y + 4)}" stroke="#3f6a2c" stroke-width=".3"/>`;
+    for (let j = 0; j < 7; j++) k += `<circle cx="${r(x + Math.cos(j * 0.9) * (0.4 + (j % 3) * 0.35))}" cy="${r(y + Math.sin(j * 0.9) * (0.3 + (j % 3) * 0.25))}" r=".55" fill="${j % 3 ? "#d8323a" : "#f0646c"}"/>`;
   }
   S.teil({ id: "blumenkasten", de: "der Blumenkasten", syl: "BLU-men-kas-ten", it: "la fioriera", itSyl: "fio-RIE-ra", en: "flower box", x: 0, y: 0, kunst: k });
 }
@@ -527,13 +555,43 @@ const PODEST = 195.6;
         14 Tablett, 15 Melange, 16 Glas Wasser, 17 Sachertorte,
         18 Schlagobers, 19 Wiener Schnitzel, 20 Zitrone, 21 Zeitung
    ===================================================================== */
+/* =====================================================================
+   12b — DER STUHL: Wiener Kaffeehausstuhl aus Bugholz (Thonet Nr. 14)
+   ===================================================================== */
+{
+  const sc = F / 1.75, X = 262, Y = r(HOR + 1.25 * sc);
+  const m = (v) => r(v * sc);
+  const HOLZ = S.lg("bugholz", [[0, "#6b4228"], [0.5, "#4a2c18"], [1, "#2f1b0e"]], 0, 0, 1, 0);
+  let k = schatten(0, 0, m(0.26), m(0.05), 0.3);
+  /* Hinterbeine, die oben zur Lehne werden; äußerer Bogen und innere Schlaufe */
+  k += `<path d="M${m(-0.15)} ${m(-0.05)} L${m(-0.17)} ${m(-0.48)} Q${m(-0.2)} ${m(-0.86)} 0 ${m(-0.9)} Q${m(0.2)} ${m(-0.86)} ${m(0.17)} ${m(-0.48)} L${m(0.15)} ${m(-0.05)}" stroke="${HOLZ}" stroke-width="${m(0.026)}" fill="none" stroke-linecap="round"/>`;
+  k += `<path d="M${m(-0.1)} ${m(-0.5)} Q${m(-0.13)} ${m(-0.76)} 0 ${m(-0.79)} Q${m(0.13)} ${m(-0.76)} ${m(0.1)} ${m(-0.5)}" stroke="${HOLZ}" stroke-width="${m(0.018)}" fill="none"/>`;
+  k += `<path d="M${m(-0.18)} ${m(-0.62)} L${m(0.18)} ${m(-0.62)}" stroke="${HOLZ}" stroke-width="${m(0.014)}"/>`;
+  /* Fußring und Vorderbeine */
+  k += `<ellipse cx="0" cy="${m(-0.18)}" rx="${m(0.17)}" ry="${m(0.05)}" fill="none" stroke="${HOLZ}" stroke-width="${m(0.014)}"/>`;
+  for (const sx of [-1, 1]) k += `<path d="M${m(sx * 0.17)} ${m(-0.43)} L${m(sx * 0.2)} ${m(0.03)}" stroke="${HOLZ}" stroke-width="${m(0.024)}" stroke-linecap="round"/>`;
+  /* Sitz: Holzreif mit Wiener Geflecht */
+  k += `<ellipse cx="0" cy="${m(-0.46)}" rx="${m(0.22)}" ry="${m(0.085)}" fill="${HOLZ}"/>`;
+  k += `<ellipse cx="0" cy="${m(-0.465)}" rx="${m(0.19)}" ry="${m(0.068)}" fill="#d9b97e"/>`;
+  let g = "";
+  for (let i = -6; i <= 6; i++) g += `M${m(i * 0.03 - 0.06)} ${m(-0.525)} L${m(i * 0.03 + 0.06)} ${m(-0.405)} M${m(i * 0.03 + 0.06)} ${m(-0.525)} L${m(i * 0.03 - 0.06)} ${m(-0.405)} `;
+  S.def(`<clipPath id="${S.id("geflecht")}"><ellipse cx="0" cy="${m(-0.465)}" rx="${m(0.19)}" ry="${m(0.068)}"/></clipPath>`);
+  k += `<path d="${g}" stroke="#a8803f" stroke-width=".35" clip-path="url(#${S.id("geflecht")})"/>`;
+  k += `<path d="M${m(-0.14)} ${m(-0.5)} Q0 ${m(-0.53)} ${m(0.12)} ${m(-0.5)}" stroke="#fff3d8" stroke-width=".6" opacity=".5" fill="none"/>`;
+  S.teil({ id: "stuhl", de: "der Stuhl", syl: "STUHL", it: "la sedia", itSyl: "SE-dia", en: "chair", x: X, y: Y, steht: true, kunst: k,
+    tipp: "Der Wiener Kaffeehausstuhl aus gebogenem Holz ist auf der ganzen Welt bekannt." });
+}
+
 const TISCH = { x: 336, y: 214, rx: 52, ry: 17 };
 {
   const { x, y, rx, ry } = TISCH;
   let k = `<path d="M-4 ${ry} L-3 46 L3 46 L4 ${ry} Z" fill="${S.lg("fuss", [[0, "#3a3a3c"], [0.5, "#5a5a5c"], [1, "#222224"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M${-rx} 0 A${rx} ${ry} 0 0 0 ${rx} 0 L${rx} 2.2 A${rx} ${ry} 0 0 1 ${-rx} 2.2 Z" fill="${S.lg("kante", [[0, "#cfc8bc"], [1, "#8f877b"]])}"/>`;
   k += `<ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="${S.rg("marmor", [[0, "#ffffff"], [0.6, "#f1eee8"], [1, "#d9d4cb"]], 0.4, 0.35, 0.8)}"/>`;
-  for (let i = 0; i < 9; i++) { const a = rnd() * 6.28; k += `<path d="M${r(Math.cos(a) * rx * 0.8)} ${r(Math.sin(a) * ry * 0.8)} q${r(8 + rnd() * 10)} ${r(-2 + rnd() * 4)} ${r(16 + rnd() * 10)} ${r(-1 + rnd() * 3)}" stroke="#b9b2a8" stroke-width=".3" fill="none" opacity=".6"/>`; }
+  S.def(`<clipPath id="${S.id("platte")}"><ellipse cx="0" cy="0" rx="${rx - 0.6}" ry="${ry - 0.4}"/></clipPath>`);
+  let adern = "";
+  for (let i = 0; i < 9; i++) { const a = rnd() * 6.28; adern += `<path d="M${r(Math.cos(a) * rx * 0.8)} ${r(Math.sin(a) * ry * 0.8)} q${r(8 + rnd() * 10)} ${r(-2 + rnd() * 4)} ${r(16 + rnd() * 10)} ${r(-1 + rnd() * 3)}" stroke="#b9b2a8" stroke-width=".3" fill="none" opacity=".6"/>`; }
+  k += `<g clip-path="url(#${S.id("platte")})">${adern}</g>`;
   k += `<ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="none" stroke="#a9a196" stroke-width=".6"/>`;
   S.teil({ id: "tisch", de: "der Tisch", syl: "TISCH", it: "il tavolino", itSyl: "ta-vo-LI-no", en: "table", x, y, kunst: k,
     tipp: "Kaffeehaustische haben eine runde Platte aus Marmor." });
@@ -543,8 +601,8 @@ const TISCH = { x: 336, y: 214, rx: 52, ry: 17 };
   let k = `<path d="M-18 1 L14 -2 L16 4 L-16 7 Z" fill="#f2efe6" stroke="#c9c3b6" stroke-width=".3"/>`;
   for (let i = 0; i < 6; i++) k += `<path d="M${-14 + i * 0.4} ${r(2.4 + i * 0.7)} L${r(-2 + i * 0.4)} ${r(1.3 + i * 0.7)}" stroke="#9a958c" stroke-width=".35"/>`;
   k += `<path d="M1 0 L12 -1 L13 2.4 L2 3.4 Z" fill="#b9b3a6"/>`;
-  k += `<text x="-15" y="2.2" font-size="2.4" fill="#2a2a2a" font-family="Georgia,serif" font-weight="bold" transform="rotate(-5 -15 2)">Wiener Zeitung</text>`;
-  k += `<path d="M-19 1.8 L17 -1.6" stroke="#6b4626" stroke-width="1.3" stroke-linecap="round"/><circle cx="-19.4" cy="1.9" r="1" fill="#5a3a20"/>`;
+  k += `<path d="M-19 1.2 L17 -2.2" stroke="#6b4626" stroke-width="1.3" stroke-linecap="round"/><circle cx="-19.4" cy="1.3" r="1" fill="#5a3a20"/>`;
+  k += `<text x="-14.6" y="3.4" font-size="2.2" fill="#2a2a2a" font-family="Georgia,serif" font-weight="bold" transform="rotate(-5.4 -14.6 3.4)">Wiener Zeitung</text>`;
   S.teil({ oben: true, id: "zeitung", de: "die Zeitung", syl: "ZEI-tung", it: "il giornale", itSyl: "gior-NA-le", en: "newspaper", x: 312, y: 202, kunst: k,
     tipp: "Im Kaffeehaus liest man lange Zeitung – sie steckt in einem Halter aus Holz." });
 }
@@ -593,12 +651,15 @@ const TISCH = { x: 336, y: 214, rx: 52, ry: 17 };
 {
   /* die Sachertorte: Stück auf dem Teller, Schnittfläche mit Marillenschicht */
   let k = `<ellipse cx="0" cy=".5" rx="14" ry="4.6" fill="#d9d4ca"/><ellipse cx="0" cy="0" rx="14" ry="4.6" fill="#fbfaf6"/>`;
-  k += `<path d="M-9 1 L-9 -6.4 L4 -9.4 L9 -6 L9 1.6 Z" fill="#2c1610"/>`;
-  k += `<path d="M-9 1 L-9 -6.4 L4 -9.4 L4 -2 Z" fill="${S.lg("biskuit", [[0, "#5a321d"], [1, "#43230f"]])}"/>`;
-  k += `<path d="M-9 -2.9 L4 -5.8" stroke="#e08a2a" stroke-width=".7"/><path d="M-9 -6.1 L4 -9.1" stroke="#e08a2a" stroke-width=".45"/>`;
-  k += `<path d="M4 -9.4 L9 -6 L9 1.6 L4 -2 Z" fill="${S.lg("glasur", [[0, "#3a1d12"], [0.5, "#5c3020"], [1, "#2a140c"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M-9 -6.4 L4 -9.4 L9 -6" stroke="#6a3a26" stroke-width=".5" fill="none"/><path d="M5 -8.4 L8.4 -6" stroke="#fff" stroke-width=".5" opacity=".45"/>`;
-  k += `<ellipse cx="6.2" cy="-7.4" rx="1.6" ry=".7" fill="#4a2617" stroke="#7a4a30" stroke-width=".2"/>`;
+  /* Keil: die Spitze zeigt nach links vorn; vorn die Schnittfläche (Biskuit, zwei Lagen
+     Marillenmarmelade), oben die glänzende Schokoladeglasur, hinten der runde Rand */
+  k += `<path d="M-9 -1 L8 .6 L8 -4.8 L-9 -6.4 Z" fill="${S.lg("biskuit", [[0, "#6a3d22"], [1, "#4a2712"]])}"/>`;
+  k += `<path d="M-9 -2.8 L8 -1.2 M-9 -4.6 L8 -3" stroke="#e08a2a" stroke-width=".55"/>`;
+  k += `<path d="M-9 -6.4 L8 -4.8 L8 -5.6 L-9 -7.1 Z" fill="#2a140c"/>`;
+  k += `<path d="M-9 -7.1 L8 -5.6 Q10.4 -7.4 9.4 -9.4 L3 -11 Z" fill="${S.lg("glasur", [[0, "#2c150b"], [0.5, "#5a2f1e"], [1, "#2a140c"]], 0, 0, 1, 1)}"/>`;
+  k += `<path d="M8 .6 L8 -5.6 Q10.4 -7.4 9.4 -9.4 L9.6 -3 Q9.4 -.6 8 .6 Z" fill="#24110a"/>`;
+  k += `<path d="M-5 -7.4 L5.6 -8.6" stroke="#fff" stroke-width=".6" opacity=".35" stroke-linecap="round"/>`;
+  k += `<ellipse cx="5.4" cy="-8.4" rx="1.9" ry=".8" fill="#3d1f12" stroke="#7a4a30" stroke-width=".25"/><ellipse cx="5.2" cy="-8.6" rx=".9" ry=".3" fill="#7a4a30" opacity=".6"/>`;
   k += `<path d="M-6 3.4 L4 1.6" stroke="#c3c9ce" stroke-width=".7" stroke-linecap="round"/>`;
   S.teil({ oben: true, id: "sachertorte", de: "die Sachertorte", syl: "SA-cher-tor-te", it: "la torta Sacher", itSyl: "TOR-ta SA-cher", en: "Sachertorte", x: 344, y: 226, kunst: k,
     tipp: "Schokoladentorte mit Marillenmarmelade – „Marille“ sagt man in Österreich zur Aprikose." });
@@ -606,7 +667,7 @@ const TISCH = { x: 336, y: 214, rx: 52, ry: 17 };
 {
   /* das Schlagobers neben der Torte */
   let k = `<path d="M-4.6 0 Q-5.2 -2.6 -3 -3.2 Q-2.6 -5.6 0 -5.4 Q2.6 -5.8 3 -3.2 Q5.2 -2.6 4.6 0 Q0 1.4 -4.6 0 Z" fill="${S.rg("obers", [[0, "#ffffff"], [1, "#ebe6dc"]], 0.4, 0.3, 0.7)}"/>`;
-  k += `<path d="M-2.6 -2.4 Q0 -4.2 2.2 -2.6 M-1.4 -4 Q0 -5 1 -4" stroke="#ddd6c9" stroke-width=".35" fill="none"/><path d="M0 -5.4 q.6 -.8 0 -1.4" stroke="#fff" stroke-width=".6" fill="none"/>`;
+  k += `<path d="M-3.4 -1 Q0 -3 3.2 -1.2 M-2.4 -2.8 Q0 -4.4 2.2 -3 M-1.2 -4.4 Q0 -5.4 1 -4.6" stroke="#ddd6c9" stroke-width=".35" fill="none"/><path d="M-.8 -5.2 Q0 -7.4 .9 -5.2 Z" fill="#fbfaf6"/>`;
   S.teil({ oben: true, id: "schlagobers", de: "das Schlagobers", syl: "SCHLAG-o-bers", it: "la panna montata", itSyl: "PAN-na mon-TA-ta", en: "whipped cream", x: 358, y: 226.4, kunst: k,
     tipp: "„Schlagobers“ ist österreichisch und heißt in Deutschland „Schlagsahne“." });
 }

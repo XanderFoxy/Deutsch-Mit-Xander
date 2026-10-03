@@ -168,6 +168,17 @@ function hautLicht(T, n, o) {
   }
   return `url(#${id})`;
 }
+/* weiche Licht-/Schattenform: fein = Vieleck verwischt; Szene = gleich große weiche Ellipse (Radialverlauf, kein Filter) */
+function weichForm(T, pts, farbe, op, sd) {
+  if (T.fein !== false) return form(T, pts, farbe, ` opacity="${Z2(op)}" filter="${blur(T, sd)}"`);
+  const n = pts.length, mx = pts.reduce((a, p) => a + p[0], 0) / n, my = pts.reduce((a, p) => a + p[1], 0) / n;
+  let sxx = 0, syy = 0, sxy = 0;
+  for (const [x, y] of pts) { sxx += (x - mx) ** 2; syy += (y - my) ** 2; sxy += (x - mx) * (y - my); }
+  const w = 0.5 * Math.atan2(2 * sxy, sxx - syy), c = Math.cos(w), si = Math.sin(w);
+  let a = 0, b = 0;
+  for (const [x, y] of pts) { a = Math.max(a, Math.abs((x - mx) * c + (y - my) * si)); b = Math.max(b, Math.abs(-(x - mx) * si + (y - my) * c)); }
+  return fleck(T, mx, my, a + sd, b + sd, farbe, op * 0.85, Math.round(w * 180 / Math.PI));
+}
 /* weiches Verwischen (nur fein benutzen) */
 function blur(T, sd) {
   const id = T.id("bl" + String(sd).replace(".", ""));
@@ -373,30 +384,33 @@ function walross(T) {
   let s = "";
   const F = T.fein !== false;
   /* weiche Licht-/Schattenform: in voller Feinheit verwischt, in der Szene einfach schwächer */
-  const weich = (pts, farbe, op, sd) => form(T, pts, farbe, F ? ` opacity="${op}" filter="${blur(T, sd)}"` : ` opacity="${Z2(op * 0.6)}"`);
+  const weich = (pts, farbe, op, sd) => weichForm(T, pts, farbe, op, sd);
   /* Hautfalte: Schattenrinne, Knick (dunkel) und belichteter Wulst darüber (Licht von links oben) */
   const falte = (pts, w, op = 0.5) => {
     const ob = pts.map(([x, y]) => [x - w * 0.7, y - w * 1.1]);
-    if (!F) return op >= 0.45 ? zart(T, pts, "#4a271c", w * 0.8, op * 0.7) : "";
+    if (!F) return op >= 0.55 ? zart(T, pts, "#4a271c", w * 0.8, op * 0.7) : "";
     return linie(pts.map(([x, y]) => [x + w * 1.4, y + w * 1.7]), "#3e1c12", w * 4.6, ` stroke-opacity="${Z2(Math.min(1, op * 1.1))}" filter="${blur(T, w * 1.1)}"`) +
       zart(T, pts, "#2e150d", w * 0.6, op) + linie(ob, "#f6c9b2", w * 2.6, ` stroke-opacity="${Z2(Math.min(1, op * 0.9))}" filter="${blur(T, w * 0.8)}"`);
   };
   /* Umriss: Rücken fällt von den Schultern zur Hüfte, Hals gewaltig mit Faltenwülsten an Kehle und Brust, Kopf klein und rund,
      Schnauzenpolster wölbt sich nach vorn-unten; hinten breit gerundet (kein Kegel) */
   const rumpf = [
-    [46, -20], [50, -30], [60, -40], [76, -52], [96, -63], [122, -75], [150, -86], [176, -97], [198, -107], [214, -115], [226, -121.6], [236, -126.8], [246, -130.6],
+    [40, -24], [50, -32], [62, -41.4], [78, -52.8], [96, -63.4], [122, -75], [150, -86.4], [166, -92], [178, -97.8], [198, -107.4], [214, -115.4], [226, -122], [236, -126.8], [246, -130.6],
     [256, -132.6], [266, -133.6], [275, -132.2], [283, -128], [289, -121.6], [293.4, -113.6], [295.4, -105], [294.6, -97.6], [291, -92.6], [285, -90], [278, -89.6],
     [271, -88.8], [265.6, -86.6], [262, -83], [260.8, -78.6], [258.6, -74.4], [257, -70], [256.6, -65], [255, -60.4], [253.6, -53], [254, -46], [251.6, -38.6],
-    [247.4, -31], [240.6, -24], [231, -18], [218, -12.6], [202, -8.6], [184, -5.4], [160, -3], [132, -1.6], [106, -1.6], [84, -2.8], [66, -5.6], [54, -10], [47.4, -15],
+    [247.4, -31], [240.6, -24], [231, -18], [218, -12.6], [202, -8], [184, -4.4], [160, -2.4], [132, -1.2], [106, -1.4], [84, -2.6], [68, -3.6], [52, -6], [40, -12],
   ];
-  const kD = G(rumpf);
+  /* nahe Hinterflosse gehört zur Silhouette (keine Naht am Fußgelenk) */
+  const hf = [[44, -23.4], [30, -19.8], [18, -17.6], [9.4, -16.4], [8.4, -15], [10.6, -13.4], [10, -11.6], [12.4, -10], [12, -8.2], [13.4, -6.4], [11.4, -4.4], [11, -2.8],
+    [7.2, -1.2], [6.6, -0.2], [16, -0.1], [36, -0.3], [54, -0.8], [72, -2.4], [60, -6], [48, -12]];
+  const kD = vereint(T, [rumpf, hf]);
   const haut = verlauf(T, "haut", 0, -134, 0, 0, [[[0, -134], "#b8765c"], [[0, -110], "#ad6c53"], [[0, -80], "#a5654d"], [[0, -50], "#965c46"], [[0, -28], "#7a4a37"], [[0, -10], "#5c3627"], [[0, 0], "#664032"]]);
   const fernTon = verlauf(T, "fern", 0, -32, 0, 0, [[[0, -32], "#946451"], [[0, -14], "#7e5241"], [[0, 0], "#5e3b2e"]]);
 
   /* ---- ferne Hinterflosse (etwas angehoben, Körperton 25 % dunkler, modelliert) ---- */
-  const hfF = [[62, -34], [48, -35.6], [34, -36.6], [22, -37.4], [14, -38.6], [17, -35.4], [15.4, -32.8], [19.4, -30.6], [17.6, -28], [22.4, -26.4], [34, -24.4], [48, -22], [60, -20]];
-  s += silhouette(T, G(hfF), fernTon, weich([[56, -31], [32, -32.4], [16, -33.6], [32, -30], [54, -28]], "#e0ae98", 0.5, 0.8) + weich([[56, -21], [32, -24], [18, -26], [34, -22], [56, -19]], "#3a2018", 0.5, 0.8) +
-    fein(T, zart(T, [[54, -26], [38, -28.6], [24, -30.6], [15, -32.8]], "#4a271c", 0.22, 0.5) + zart(T, [[54, -24], [38, -26], [24, -27.6], [16, -28.6]], "#4a271c", 0.2, 0.45)), "#000", 0, 0);
+  const hfF = [[58, -28], [44, -28.6], [30, -28.4], [19, -28], [12.4, -28.2], [14.6, -26], [12.8, -23.8], [16, -21.8], [14.4, -19.6], [18, -17.6], [30, -16.4], [44, -15.6], [56, -15]];
+  s += silhouette(T, G(hfF), fernTon, weich([[54, -27], [30, -27.2], [15, -26.8], [30, -24.6], [52, -24]], "#e0ae98", 0.45, 0.8) + weich([[54, -17], [30, -18], [16, -19], [30, -16.4], [54, -15.4]], "#3a2018", 0.45, 0.8) +
+    fein(T, zart(T, [[52, -23], [36, -24.2], [22, -25], [14, -25.6]], "#4a271c", 0.2, 0.4) + zart(T, [[52, -20], [36, -20.6], [22, -21.2], [15, -21.6]], "#4a271c", 0.2, 0.35)), "#000", 0, 0);
   /* ---- ferne Vorderflosse ---- */
   const vfF = [[212, -28], [224, -22], [236, -15], [248, -9.6], [258, -6.4], [264.6, -5], [266.6, -3.4], [266, -1.6], [262, -0.2], [244, -0.1], [226, -0.6], [214, -5], [208, -16]];
   s += silhouette(T, G(vfF), fernTon, weich([[218, -24], [240, -13], [262, -6], [240, -10], [220, -18]], "#e0ae98", 0.45, 0.8) + weich([[214, -3], [240, -1], [264, -1], [240, 0], [214, 0]], "#3a2018", 0.5, 0.8) +
@@ -429,7 +443,6 @@ function walross(T) {
   n += weich([[58, -16], [90, -24], [140, -28], [190, -32], [226, -36], [246, -42], [250, -30], [236, -18], [196, -9], [140, -6], [90, -7], [64, -10]], "#40221a", 0.5, 4);
   n += weich([[80, -2.4], [140, -1.6], [200, -3.4], [236, -10], [200, -5.4], [140, -3.2], [86, -3.6]], "#c7aaa4", 0.6, 1);
   n += weich([[258, -88], [270, -86.6], [284, -88.6], [262, -82], [256, -74]], "#2a140e", 0.65, 2.4) + weich([[214, -34], [236, -28], [244, -20], [224, -16], [210, -22]], "#2a140e", 0.55, 3);
-  n += weich([[56, -16], [66, -24], [70, -10], [60, -8]], "#2a140e", 0.5, 2.4);
   /* Hautrelief (Poren, feine Runzeln): nur Kopf, Hals, Schultern, schwach und nach hinten ausblendend */
   if (F) n += `<g style="mix-blend-mode:multiply" opacity=".5"><g mask="${verlaufMaske(T, "rel", 40, -140, 260, 140, 120, -60, 250, -60, [[[120, -60], "#444"], [[200, -60], "#999"], [[250, -60], "#eee"]])}"><rect x="40" y="-140" width="260" height="140" fill="#fff" filter="${hautLicht(T, "haut", { f: 0.42, tiefe: 0.42, seed: 11 })}"/></g></g>`;
   /* Falten: Halsringe (um den dicken Hals), Nackenfalte, Kehlfalten, Schulter-/Achselfalten, Flanke, Bauch */
@@ -440,13 +453,19 @@ function walross(T) {
   n += falte([[256, -132], [252.4, -122], [251.6, -110], [254, -99], [260, -90]], 0.7, 0.5) + falte([[214, -90], [222, -86], [228, -88]], 0.6, 0.3);
   n += falte([[260, -84], [265, -81.4], [272, -81.6]], 0.6, 0.5) + falte([[256, -76], [261, -72.6], [268, -72.8]], 0.6, 0.45) + falte([[254.6, -66], [259, -63.4], [263, -63]], 0.5, 0.4);
   n += falte([[196, -104], [190, -88], [192, -70], [200, -56]], 0.8, 0.3);
-  n += falte([[232, -38], [218, -30], [198, -24], [174, -20]], 0.9, 0.45) + falte([[240, -48], [226, -42], [208, -36]], 0.7, 0.35);
-  n += falte([[180, -40], [150, -34], [120, -30]], 0.8, 0.2);
-  n += falte([[72, -50], [66, -38], [66, -24], [70, -12]], 0.7, 0.22);
+  n += falte([[234, -40], [222, -31], [206, -25], [188, -22]], 0.9, 0.35) + falte([[242, -50], [230, -44], [216, -40]], 0.7, 0.25);
+  n += falte([[186, -44], [160, -38], [134, -35]], 0.8, 0.14);
+  /* Hinterflosse: Fächer mit Schwimmhaut, fünf Zehenstrahlen, Krallen an den drei mittleren; Fußgelenk mit Querfalten */
+  n += weich([[44, -21], [30, -18], [12, -15], [30, -15.4], [44, -18]], "#f0c2aa", 0.5, 1) + weich([[60, -1.6], [30, -1], [8, -1.4], [30, 0], [60, 0]], "#2e170f", 0.5, 0.8);
+  for (let i = 0; i < 5; i++) n += falte([[46, -15 + i * 1.6], [34, -15.4 + i * 2.6], [22, -15.6 + i * 3], [10 + [-1.6, 0.6, 2.4, 0.6, -2.6][i], -16 + i * 3.6]], 0.3, 0.4);
+  n += `<path d="M22.4 -12.6q-1.2 -.5 -2 .2M22.2 -9.4q-1.2 -.4 -2 .2M21.4 -6.4q-1.1 -.3 -1.8 .2" stroke="#2a1a12" stroke-width=".5" stroke-linecap="round" fill="none"/>`;
+  n += falte([[50, -22], [47.6, -14], [49, -5]], 0.45, 0.25);
+  /* große, weiche Hautfalten an Hüfte und Flanke; leichte Fleckung der Haut */
+  n += fleck(T, 120, -50, 22, 12, "#c98a70", 0.35, -15) + fleck(T, 170, -40, 18, 10, "#7e4a38", 0.25, -10) + fleck(T, 205, -80, 16, 10, "#c98a70", 0.3) + fleck(T, 150, -72, 14, 6, "#7e4a38", 0.2, -20);
   /* Bossen: Knoten und Beulen an Hals und Schultern (Licht oben links, Schatten unten rechts) */
   const bossen = [[212, -108, 4.4], [221, -97, 5], [229, -86, 4.4], [234, -106, 3.8], [242, -95, 3.6], [224, -73, 4.2], [236, -72, 3.6], [204, -92, 4.6], [213, -80, 3.8],
     [246, -110, 3], [248, -84, 3], [240, -60, 3.4], [200, -104, 3.4], [228, -116, 3.2], [206, -68, 3.6], [194, -82, 3.2], [228, -56, 3.2]];
-  for (const [x, y, rr] of bossen) n += fleck(T, x + rr * 0.5, y + rr * 0.6, rr * 1.25, rr * 0.85, "#3e1d13", 0.45, -20) + fleck(T, x - rr * 0.25, y - rr * 0.3, rr * 0.95, rr * 0.75, "#f2b9a0", 0.35, -20);
+  if (F) for (const [x, y, rr] of bossen) n += fleck(T, x + rr * 0.5, y + rr * 0.6, rr * 1.25, rr * 0.85, "#3e1d13", 0.45, -20) + fleck(T, x - rr * 0.25, y - rr * 0.3, rr * 0.95, rr * 0.75, "#f2b9a0", 0.35, -20);
   /* Narben: helle, leicht erhabene Striche (Kämpfe mit Stoßzähnen) */
   n += zart(T, [[216, -102], [224, -95], [229, -92]], "#f0d0c0", 0.5, 0.5) + zart(T, [[202, -76], [207, -66]], "#f0d0c0", 0.45, 0.45) + zart(T, [[244, -90], [247, -81]], "#f0d0c0", 0.4, 0.45);
   /* Haare: spärlich, kurz, rötlich-braun, auf Rücken und Flanke (samtiger Schimmer am Licht) */
@@ -508,16 +527,104 @@ function walross(T) {
   s += `<g mask="${verlaufMaske(T, "vf", 205, -40, 80, 42, 226, -33, 232, -24, [[[226, -33], "#000"], [[232, -24], "#fff"]])}">` + silhouette(T, G(vf), verlauf(T, "vf", 0, -32, 0, 0, [[[0, -32], "#ad7158"], [[0, -14], "#97614b"], [[0, 0], "#6a4132"]]), vi, "#000", 0, 0) + `</g>`;
   s += `<path d="M275.4 -7q1.1 -.3 1.7 .3M277.4 -5.6q1.1 -.2 1.6 .4M278.4 -4q1 -.1 1.4 .5M278.6 -2.2q.9 0 1.3 .5" stroke="#2a1a12" stroke-width=".5" stroke-linecap="round" fill="none"/>`;
 
-  /* ---- nahe Hinterflosse: breiter Fächer mit Schwimmhaut, fünf Zehen, Krallen an den drei mittleren ---- */
-  const hf = [[58, -20], [42, -19.2], [26, -17.8], [14, -17.2], [7.6, -16.6], [10.6, -14.4], [9.4, -12], [12.6, -10], [11.2, -7.8], [13, -5.8], [9.6, -4], [10.2, -2.2], [5, -0.8], [14, -0.1], [34, -0.2], [52, -0.6], [62, -3]];
-  let hi = weich([[58, -20], [30, -17], [12, -14.6], [30, -14], [56, -16]], "#f0c2aa", 0.55, 1) + weich([[60, -2], [30, -1], [8, -1.4], [30, 0], [60, 0]], "#2e170f", 0.5, 0.8);
-  hi += weich([[60, -20], [68, -18], [68, -6], [60, -6]], "#2e170f", 0.45, 2);
-  for (let i = 0; i < 5; i++) hi += falte([[56, -11 + i * 0.6], [40, -14 + i * 2.8], [24, -15.4 + i * 3], [10 + [-1.6, 0.6, 2.4, 0.6, -2.6][i], -16 + i * 3.6]], 0.3, 0.4);
-  hi += `<path d="M22.6 -12.4q-1.6 -.6 -2.6 .2M22.4 -9.2q-1.6 -.5 -2.6 .3M21.6 -6.2q-1.5 -.4 -2.4 .3" stroke="#2a1a12" stroke-width=".7" stroke-linecap="round" fill="none"/>`;
-  s += `<g mask="${verlaufMaske(T, "hf", 0, -24, 72, 26, 64, 0, 54, 0, [[[64, 0], "#000"], [[54, 0], "#fff"]])}">` + silhouette(T, G(hf), verlauf(T, "hf", 0, -22, 0, 0, [[[0, -22], "#a86f57"], [[0, -8], "#8c5844"], [[0, 0], "#5c3829"]]), hi, "#000", 0, 0) + `</g>`;
   /* Bauch liegt auf: schmaler Kontaktschatten (Okklusion), kein eigener Bodenschatten */
   s += weich([[60, -0.6], [120, -1], [200, -2], [240, -1.4], [200, 0.4], [120, 0.6], [62, 0.4]], "#1a0d08", 0.6, 0.8);
   return { svg: s, box: [5, -133.6, 295.4, 0], kopf: [236, -140, 302, -30] };
+}
+
+/* =====================================================================
+   SEEHUND
+   ===================================================================== */
+/* RECHERCHE Seehund (Phoca vitulina) – Websuche-Kontingent der Sitzung war erschöpft, daher aus Fachwissen
+   (Säugetier-Bestimmungsbücher): 1,4–1,9 m, 50–150 kg. An Land liegt er auf dem Bauch in der typischen
+   „Bananenhaltung“: Kopf und Hinterflossen angehoben. Rundlicher Kopf, kurze, breite Schnauze mit deutlichem
+   Stirnabsatz („Hundegesicht“), Nasenlöcher V-förmig an der Schnauzenspitze, keine Ohrmuschel (kleine Öffnung
+   hinter dem Auge), große, runde, fast schwarze Augen, kräftige helle, gewellte („perlschnurartige“) Tasthaare.
+   Fell kurz, glatt anliegend; Färbung silbergrau bis graubraun mit vielen kleinen dunklen Flecken und Ringen,
+   Rücken dunkler, Bauch heller. Vorderflossen kurz mit fünf kräftigen dunklen Krallen; Hinterflossen fächerförmig,
+   werden nicht unter den Körper gedreht (Hundsrobbe) und an Land nachgeschleppt oder angehoben. */
+function seehund(T) {
+  let s = "";
+  const F = T.fein !== false;
+  const weich = (pts, farbe, op, sd) => weichForm(T, pts, farbe, op, sd);
+  const rumpf = [
+    [30, -16], [40, -23], [54, -28.6], [72, -32.6], [92, -35.4], [110, -37.6], [124, -41], [134, -46], [141.4, -50.6], [149, -53.4], [156.4, -53.4], [162, -50.8],
+    [166.4, -47.6], [170.6, -45.6], [173.6, -43.6], [174.8, -41], [174.2, -38.6], [172.2, -37.2], [169, -36.4], [165, -35.2], [160, -34.2], [154, -32.4], [147, -28.6],
+    [140, -22.6], [133, -15.2], [124, -9], [110, -4], [90, -1.6], [64, -1.4], [46, -3], [36, -7], [30.6, -11.4],
+  ];
+  /* Hinterflossen angehoben (Bananenhaltung), beide Sohlen aneinander: Fächer mit fünf Zehenstrahlen und Krallen */
+  const hf = [[34, -17], [24, -21], [14, -26], [6, -31], [1.6, -34.6], [3.2, -32.4], [0.6, -30], [3.6, -28.2], [1.4, -25.4], [5.4, -23.4], [4.4, -20.4], [10, -17.6], [18, -14], [28, -9]];
+  const kD = vereint(T, [rumpf, hf]);
+  const fell = verlauf(T, "fell", 0, -54, 0, 0, [[[0, -54], "#5e6166"], [[0, -40], "#7b7e83"], [[0, -26], "#a19e98"], [[0, -14], "#bdb7ac"], [[0, -5], "#a59f94"], [[0, 0], "#8d887e"]]);
+  let n = `<rect x="0" y="-56" width="178" height="57" fill="${fell}"/>`;
+  /* Rücken dunkler (Längsband), Licht von links oben auf Rücken und Scheitel, Kernschatten unten, Bodenreflex */
+  n += weich([[30, -18], [54, -30], [92, -36.4], [124, -42], [142, -51], [156, -54], [150, -48], [124, -36], [92, -30], [56, -25], [34, -14]], "#3d4046", 0.5, 2);
+  n += weich([[40, -22], [70, -31], [100, -34.4], [124, -38.6], [140, -47], [150, -51], [138, -45], [118, -35], [90, -31.6], [60, -28], [42, -19]], "#e9e6df", 0.35, 1.4);
+  n += weich([[40, -6], [70, -9], [110, -10], [130, -14], [140, -22], [126, -6], [100, -2.6], [60, -2.4]], "#3a3530", 0.45, 3);
+  n += weich([[60, -1.6], [100, -2], [124, -6], [100, -0.6], [60, -0.6]], "#d9dde2", 0.5, 0.8);
+  n += weich([[146, -30], [160, -34.4], [168, -36], [158, -32], [150, -28]], "#3a3530", 0.4, 1.2);
+  /* Fleckenmuster: viele kleine dunkle Flecken und Ringe, auf dem Rücken dichter, am Bauch spärlich und heller */
+  {
+    let dF = "", dR = "";
+    const k = F ? 150 : 40;
+    for (let i = 0; i < k; i++) {
+      const x = 36 + T.rnd() * 128, y = -4 - T.rnd() * 50;
+      if (!inPoly(x, y, rumpf) || x > 164) continue;
+      const top = (y + 4) / -50, r = 0.5 + T.rnd() * 1.3 * (0.6 + top * 0.6), dreh = Math.round(T.rnd() * 180);
+      if (T.rnd() > 0.35 + top * 0.5) continue;
+      if (T.rnd() < 0.3) dR += `M${J(x - r, y)}a${J(r, r * 0.7, dreh)} 1 0 ${J(2 * r, 0)}a${J(r, r * 0.7, dreh)} 1 0 ${J(-2 * r, 0)}`;
+      else dF += `M${J(x - r, y)}a${J(r, r * 0.65, dreh)} 0 1 0 ${J(2 * r, 0)}a${J(r, r * 0.65, dreh)} 0 1 0 ${J(-2 * r, 0)}`;
+    }
+    n += `<path d="${dF}" fill="#2c2b2c" fill-opacity=".55"${F ? ` filter="${blur(T, 0.12)}"` : ""}/>` + (dR ? `<path d="${dR}" fill="none" stroke="#2c2b2c" stroke-opacity=".5" stroke-width=".35"${F ? ` filter="${blur(T, 0.1)}"` : ""}/>` : "");
+  }
+  /* Kopf: Stirn und Scheitel dunkler, Schnauzenpolster hell, Okklusion an der Kehle */
+  n += weich([[146, -52], [158, -54], [164, -49], [156, -48], [148, -48]], "#3d4046", 0.45, 1);
+  n += weich([[164, -44], [172, -43.6], [174, -40], [170, -37], [163, -38]], "#c8c3ba", 0.6, 0.8);
+  /* Fell: kurz, glatt, nach hinten anliegend; feiner Glanz entlang der Rundung */
+  n += haare(T, rumpf.filter((p) => p[0] < 165), 900, (x, y) => 180 + (y + 30) * 0.25 + (x > 130 ? -(x - 130) * 0.5 : 0), 1.1,
+    [["#2e2d2c", 1, 0.06, 0.35], ["#f2efe8", 0.8, 0.05, 0.4]], 10, 0.12, 0.05);
+  /* Hinterflosse: Zehenstrahlen, Schwimmhaut dunkler, Krallen */
+  n += weich([[30, -16], [16, -24], [4, -32], [8, -26], [22, -16]], "#e9e6df", 0.3, 0.8);
+  for (let i = 0; i < 5; i++) n += zart(T, [[30, -14 + i * 0.4], [18, -20 + i * 1.2], [8, -27 + i * 2.6], [2.6 + (i % 2) * 1.6, -33.4 + i * 3]], "#3a3632", 0.3, 0.45);
+  n += `<path d="M9.4 -28.6l-1.6 -.5M9.6 -25.6l-1.6 -.3M10.2 -22.6l-1.5 -.2" stroke="#1e1b18" stroke-width=".5" stroke-linecap="round"/>`;
+  s += silhouette(T, kD, fell, n, "#2a2a2a", 0.25, 0.5);
+
+  /* ---- Vorderflosse: kurz, liegt an der Brust; fünf dunkle Krallen ---- */
+  const vf = [[124, -18], [132, -14], [139, -9], [143.6, -5.2], [145.4, -3], [144, -1.2], [138, -0.6], [130, -2.2], [123, -6], [119, -12]];
+  let vi = weich([[124, -15], [134, -11], [142, -5], [134, -8], [124, -12]], "#e9e6df", 0.4, 0.8) + weich([[120, -4], [134, -1.4], [144, -1.6], [130, 0], [120, -2]], "#2e2b28", 0.5, 0.8);
+  vi += haare(T, vf, 120, 40, 0.8, [["#2e2d2c", 1, 0.05, 0.35], ["#f2efe8", 0.7, 0.05, 0.35]], 12, 0.1, 0.05);
+  s += `<g mask="${verlaufMaske(T, "svf", 112, -22, 36, 24, 121, -16, 126, -11, [[[121, -16], "#000"], [[126, -11], "#fff"]])}">` + silhouette(T, G(vf), verlauf(T, "svf", 0, -18, 0, 0, [[[0, -18], "#9e9a92"], [[0, 0], "#6e6a63"]]), vi, "#000", 0, 0) + `</g>`;
+  s += `<path d="M141.6 -5.4q1.6 -.2 2.4 .8M143 -4q1.5 0 2.2 .9M143.8 -2.6q1.4 .1 1.9 1M143.6 -1.4q1.2 .2 1.6 1" stroke="#1d1a17" stroke-width=".45" stroke-linecap="round" fill="none"/>`;
+
+  /* ---- Gesicht: Nasenloch (Komma an der Spitze), Mundspalte, Schnurrhaarpolster mit Haarbälgen ---- */
+  s += `<path d="M172.6 -41.6q1.6 -.6 2 .8q-.8 -.2 -1.4 .4q-.4 -.6 -.6 -1.2z" fill="#151413"/>` + zart(T, [[171.2, -43.6], [173.8, -43]], "#e8e4dc", 0.2, 0.5);
+  s += zart(T, [[172, -37.4], [168, -36.6], [164, -35.6]], "#2a2622", 0.35, 0.8);
+  if (F) {
+    let d = "";
+    for (let r = 0; r < 4; r++) for (let i = 0; i < 6; i++) d += `M${J(164.4 + i * 1.3 - r * 0.6, -41.4 + r * 1.2 + i * 0.15)}h.01`;
+    s += `<path d="${d}" stroke="#3a3632" stroke-width=".4" stroke-linecap="round" stroke-opacity=".7"/>`;
+  }
+  /* Tasthaare: hell, kräftig, leicht gewellt (perlschnurartig), fächern nach vorn-unten */
+  {
+    let d = "";
+    const k = F ? 22 : 10;
+    for (let i = 0; i < k; i++) {
+      const t = i / (k - 1), bx = 164.6 + t * 6, by = -40.6 + t * 2.6, L = 9 + T.rnd() * 6 - t * 3, a = (-8 + t * 40 + (T.rnd() - 0.5) * 10) * Math.PI / 180;
+      const ex = bx + Math.cos(a) * L, ey = by + Math.sin(a) * L + L * 0.15;
+      if (F) { let p = `M${J(bx, by)}`; for (let j = 1; j <= 6; j++) { const f = j / 6, w = (j % 2 ? 0.25 : -0.25) * (1 - f); p += `L${J(bx + (ex - bx) * f - Math.sin(a) * w, by + (ey - by) * f + Math.cos(a) * w + Math.sin(f * Math.PI) * L * 0.06)}`; } d += p; }
+      else d += `M${J(bx, by)}Q${J((bx + ex) / 2, (by + ey) / 2 + L * 0.08, ex, ey)}`;
+    }
+    s += `<path d="${d}" fill="none" stroke="#efe9dc" stroke-width=".16" stroke-opacity=".9" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+  /* Brauenhaare über dem Auge */
+  s += fein(T, `<path d="M156 -49.6q1.4 -2.6 3.4 -3.6M157.2 -49.4q1.8 -2.2 4 -2.8" stroke="#e6e0d4" stroke-width=".12" fill="none" stroke-opacity=".8"/>`);
+  /* ---- Auge: groß, rund, fast schwarz, feucht glänzend; dunkler Lidrand ---- */
+  s += fleck(T, 155.6, -46.2, 3, 2.4, "#1f1e1d", 0.55);
+  s += T.augeReal(155.8, -46.4, 1.35, { iris: "#2a1a10", iris2: "#0c0705", offen: 0.86, winkel: -4, lid: "#141210" });
+  s += `<ellipse cx="155.3" cy="-46.9" rx=".32" ry=".22" fill="#fff" opacity=".9"/>`;
+  /* Ohröffnung hinter dem Auge */
+  s += zart(T, [[145.6, -46.2], [146.4, -44.8]], "#1d1c1b", 0.5, 0.8);
+  return { svg: s, box: [0.6, -54.2, 175, 0], kopf: [136, -60, 186, -26] };
 }
 
 module.exports = [
@@ -525,4 +632,6 @@ module.exports = [
     gruppe: "Polar", lebensraum: "Antarktis", laenge: 0.49, hoehe: 1.17, zeichne: pinguin },
   { id: "walross", de: "das Walross", syl: "WAL-ross", it: "il tricheco", itSyl: "tri-CHE-co", en: "walrus",
     gruppe: "Polar", lebensraum: "Arktis", laenge: 2.91, hoehe: 1.33, zeichne: walross },
+  { id: "seehund", de: "der Seehund", syl: "SEE-hund", it: "la foca", itSyl: "FO-ca", en: "harbour seal",
+    gruppe: "Polar", lebensraum: "Küste", laenge: 1.74, hoehe: 0.54, zeichne: seehund },
 ];

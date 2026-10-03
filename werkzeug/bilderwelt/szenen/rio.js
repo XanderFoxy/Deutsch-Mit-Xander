@@ -242,7 +242,7 @@ const HUEGEL = [[140, 104], [146, 96], [152, 89], [160, 82], [170, 77], [181, 74
 /* =====================================================================
    5 — DAS MEER (Atlantik) — vom Horizont bis zur Brandung
    ===================================================================== */
-const WASSER_R = 107.4;   /* Wasserlinie am rechten Bildrand */
+const WASSER_R = 110;   /* Wasserlinie am rechten Bildrand */
 const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Fluchtpunkt */
 {
   let k = `<path d="M196 100 L320 100 L320 ${WASSER_R} L${VX} 100.3 Z" fill="${S.lg("meer", [[0, "#1c5a8e"], [0.45, "#2878a6"], [0.8, "#3d9fb4"], [1, "#77c8c2"]])}"/>`;
@@ -492,7 +492,7 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
   }
   for (let i = 0; i < 9; i++) {
     const y = 140 + i * 6.4, x = 150 - i * 9 + (i % 2) * 2.4, s = sy(y);
-    k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.05 * s)}" ry="${r(0.022 * s)}" fill="#cfae74" opacity=".55" transform="rotate(-20 ${r(x)} ${r(y)})"/>`;
+    k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.045 * s)}" ry="${r(0.018 * s)}" fill="#c9a66a" opacity=".38" transform="rotate(-20 ${r(x)} ${r(y)})"/>`;
   }
   /* ferne Sonnenschirme und Badegäste am Strand Richtung Leme */
   const schirmF = ["#e84a3c", "#f2c230", "#2f8fd0", "#3aa35a", "#f08a2c", "#ffffff", "#c43a8a"];
@@ -521,35 +521,49 @@ const BORD = linie(120), STRANDKANTE = linie(177.9), HAUSFUSS = linie(104.2);
    ===================================================================== */
 const KI = { x: 104, y: 134 };
 const KS = sy(KI.y);                           /* 21,25 Einheiten je Meter */
-const KR = 1.3 * KS, KH = 2.5 * KS, THEKE = KI.y - 1.05 * KS;
+/* im Raum: Mitte des Kiosks bei Tiefe ZK, seitlich XK; Glaskörper r = 1,3 m,
+   Theke 1,05 m hoch (ragt 0,3 m vor), Dach 2,5–2,68 m, r = 1,8 m */
+const ZK = F * 1.6 / (KI.y - HY), XK = (KI.x - VX) * ZK / F;
+const PK = (X, Y, Z) => [VX + F * (XK + X) / (ZK + Z) - KI.x, HY + F * (1.6 - Y) / (ZK + Z) - KI.y];
+const bogen = (R, Y, a0, a1, n = 18) => Array.from({ length: n + 1 }, (_, i) => { const a = a0 + (a1 - a0) * i / n; return PK(R * Math.cos(a), Y, R * Math.sin(a)); });
+const KR = 1.3 * KS, KH = 2.5 * KS;
+/* Höhe der Theke (Oberkante des Glaskörpers vorn) an der Bildstelle dx */
+const thekeY = (dx, R = 1.3, Y = 1.05) => { const c = Math.max(-1, Math.min(1, dx / (R * F / ZK))); return PK(R * c, Y, -R * Math.sqrt(1 - c * c))[1]; };
+const THEKE = KI.y + thekeY(14);
 const kioskUnter = [];
 {
-  const ry = KR * 0.16;                        /* Ellipse der Grundfläche (Blick fast waagrecht) */
-  let k = schatten(-6, 1, KR * 1.25, ry * 1.6, 0.35);
-  /* Sockel und Thekenwand (weiß, rund) */
-  k += `<path d="M${r(-KR)} ${r(-1.05 * KS)} L${r(-KR)} 0 A${r(KR)} ${r(ry)} 0 0 0 ${r(KR)} 0 L${r(KR)} ${r(-1.05 * KS)} Z" fill="${S.lg("kwand", [[0, "#b9bdbf"], [0.3, "#eef0ee"], [0.7, "#ffffff"], [1, "#d7dbdc"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M${r(-KR)} -1.2 A${r(KR)} ${r(ry)} 0 0 0 ${r(KR)} -1.2" stroke="#2e7d5b" stroke-width="1.6" fill="none"/>`;
-  k += `<text x="0" y="${r(-0.5 * KS)}" font-size="4.2" text-anchor="middle" fill="#2e7d5b" font-family="Arial" font-weight="bold" letter-spacing=".4">COCO GELADO</text>`;
-  k += `<text x="0" y="${r(-0.3 * KS)}" font-size="2.1" text-anchor="middle" fill="#6b7377" font-family="Arial" letter-spacing=".3">AÇAÍ · MATE · SUCOS</text>`;
-  /* Glasaufsatz: Innenraum dunkel, Rückwand mit Regal, Pfosten */
-  const yT = -1.05 * KS, yD = -KH;
-  k += `<path d="M${r(-KR)} ${r(yT)} L${r(-KR)} ${r(yD)} L${r(KR)} ${r(yD)} L${r(KR)} ${r(yT)} Z" fill="${S.lg("kinnen", [[0, "#3b4a52"], [1, "#56656b"]])}"/>`;
-  k += `<rect x="${r(-KR * 0.8)}" y="${r(yD + 6)}" width="${r(KR * 1.6)}" height="1" fill="#8a7a62"/>`;
-  for (let i = 0; i < 9; i++) k += `<rect x="${r(-KR * 0.78 + i * KR * 0.18)}" y="${r(yD + 3.2)}" width="1.6" height="2.8" rx=".3" fill="${["#e8c23a", "#2f8a4a", "#c0392b", "#f2f2ea", "#7a3fa0"][i % 5]}"/>`;
-  k += `<rect x="${r(-KR * 0.8)}" y="${r(yD + 12)}" width="${r(KR * 0.7)}" height="7" rx=".8" fill="#d5dadc"/><rect x="${r(-KR * 0.78)}" y="${r(yD + 13)}" width="${r(KR * 0.66)}" height="5" fill="#9cc6d4"/>`;
-  /* Thekenplatte (Edelstahl) */
-  k += `<path d="M${r(-KR - 1)} ${r(yT)} A${r(KR + 1)} ${r(ry + 0.8)} 0 0 0 ${r(KR + 1)} ${r(yT)} L${r(KR + 1)} ${r(yT - 1.2)} A${r(KR + 1)} ${r(ry + 0.8)} 0 0 1 ${r(-KR - 1)} ${r(yT - 1.2)} Z" fill="${S.lg("kplatte", [[0, "#c8cdd0"], [0.5, "#f4f6f6"], [1, "#aeb5b9"]], 0, 0, 1, 0)}"/>`;
+  /* sichtbare Hälfte: zum Betrachter gewandt (der Kiosk steht links vom Blick, darum gedreht) */
+  const DREH = Math.atan2(-ZK, -XK), VORN = [DREH + Math.PI / 2, DREH - Math.PI / 2].sort((a, b) => b - a);
+  let k = `<ellipse cx="-9" cy="2" rx="${r(KR * 1.3)}" ry="6" fill="#1b120a" opacity=".3" filter="url(#bw_weich)"/>`;
+  /* Unterseite des Daches (über der Augenhöhe: man sieht von unten hinein) */
+  k += `<path d="M${pts(bogen(1.8, 2.5, 0, 2 * Math.PI, 36))} Z" fill="#c3c9cc"/>`;
+  /* Sockelwand (weiß, rund) unter der Theke */
+  const wand = [...bogen(1.3, 0, ...VORN), ...bogen(1.3, 1.0, VORN[1], VORN[0])];
+  k += `<path d="M${pts(wand)} Z" fill="${S.lg("kwand", [[0, "#b9bdbf"], [0.3, "#eef0ee"], [0.7, "#ffffff"], [1, "#d7dbdc"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M${pts([...bogen(1.3, 0, ...VORN), ...bogen(1.3, 0.1, VORN[1], VORN[0])])} Z" fill="#2e7d5b"/>`;
+  k += `<path d="M${pts([...bogen(1.3, 0.86, ...VORN), ...bogen(1.3, 1.0, VORN[1], VORN[0])])} Z" fill="#000" opacity=".12"/>`;
+  const [tx, ty] = PK(1.3 * Math.cos(DREH), 0.5, 1.3 * Math.sin(DREH)), [ux, uy] = PK(1.3 * Math.cos(DREH), 0.3, 1.3 * Math.sin(DREH));
+  k += `<text x="${r(tx)}" y="${r(ty)}" font-size="4.2" text-anchor="middle" fill="#2e7d5b" font-family="Arial" font-weight="bold" letter-spacing=".4">COCO GELADO</text>`;
+  k += `<text x="${r(ux)}" y="${r(uy)}" font-size="2.1" text-anchor="middle" fill="#6b7377" font-family="Arial" letter-spacing=".3">AÇAÍ · MATE · SUCOS</text>`;
+  /* Glasaufsatz: Innenraum, Rückwand mit Regal und Kühlschrank */
+  k += `<path d="M${pts([...bogen(1.3, 1.05, ...VORN), ...bogen(1.3, 2.5, VORN[1], VORN[0])])} Z" fill="${S.lg("kinnen", [[0, "#3b4a52"], [1, "#56656b"]])}"/>`;
+  k += `<path d="M${pts([...bogen(1.22, 2.02, 0.15, Math.PI - 0.15, 10), ...bogen(1.22, 2.07, Math.PI - 0.15, 0.15, 10)])} Z" fill="#8a7a62"/>`;
+  for (let i = 0; i < 9; i++) { const [bx, by] = PK(1.1 * Math.cos(0.4 + i * 0.29), 2.07, 1.1 * Math.sin(0.4 + i * 0.29)); k += `<rect x="${r(bx - 0.6)}" y="${r(by - 2.6)}" width="1.3" height="2.6" rx=".3" fill="${["#e8c23a", "#2f8a4a", "#c0392b", "#f2f2ea", "#7a3fa0"][i % 5]}"/>`; }
+  { const [fx1, fy1] = PK(-0.95, 1.7, 0.75), [fx2, fy2] = PK(-0.25, 1.05, 1.15); k += `<rect x="${r(fx1)}" y="${r(fy1)}" width="${r(fx2 - fx1)}" height="${r(fy2 - fy1)}" rx=".6" fill="#d5dadc"/><rect x="${r(fx1 + 0.8)}" y="${r(fy1 + 0.8)}" width="${r(fx2 - fx1 - 1.6)}" height="${r(fy2 - fy1 - 1.6)}" fill="#9cc6d4"/>`; }
+  /* Thekenplatte (Edelstahl), ragt 0,3 m vor: Oberseite und Vorderkante */
+  k += `<path d="M${pts([...bogen(1.6, 1.05, ...VORN), ...bogen(1.3, 1.05, VORN[1], VORN[0])])} Z" fill="${S.lg("kplatte", [[0, "#c8cdd0"], [0.5, "#f4f6f6"], [1, "#aeb5b9"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M${pts([...bogen(1.6, 1.0, ...VORN), ...bogen(1.6, 1.05, VORN[1], VORN[0])])} Z" fill="#8f979c"/>`;
   /* Glasfront-Pfosten (die rechte Scheibe ist zum Verkaufen hochgeschoben) */
-  for (const t of [-0.92, -0.62, -0.25, 0.12, 0.5, 0.86]) k += `<rect x="${r(t * KR - 0.4)}" y="${r(yD)}" width=".8" height="${r(yT - yD - 1.2)}" fill="#cfd5d8"/>`;
-  /* Dach: weiße Scheibe mit Überstand */
-  const DR = KR * 1.38, dry = DR * 0.16;
-  k += `<path d="M${r(-DR)} ${r(yD)} A${r(DR)} ${r(dry)} 0 0 0 ${r(DR)} ${r(yD)} L${r(DR)} ${r(yD - 3.4)} A${r(DR)} ${r(dry)} 0 0 1 ${r(-DR)} ${r(yD - 3.4)} Z" fill="${S.lg("kdach", [[0, "#cdd2d4"], [0.35, "#ffffff"], [1, "#e0e4e5"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M${r(-DR)} ${r(yD)} A${r(DR)} ${r(dry)} 0 0 0 ${r(DR)} ${r(yD)}" stroke="#9aa3a8" stroke-width=".5" fill="none"/>`;
-  k += `<path d="M${r(-DR + 2)} ${r(yD + 0.6)} A${r(DR - 2)} ${r(dry * 0.7)} 0 0 0 ${r(DR - 2)} ${r(yD + 0.6)}" stroke="#000" stroke-width="1.6" opacity=".12" fill="none"/>`;
-  k += `<text x="0" y="${r(yD - 0.9)}" font-size="2.3" text-anchor="middle" fill="#2e7d5b" font-family="Arial" font-weight="bold" letter-spacing=".5">QUIOSQUE POSTO 5</text>`;
+  for (const a of [-1.25, -0.8, -0.38, 0.05, 0.5, 0.95, 1.3]) { const w = DREH + a, [x1, y1] = PK(1.3 * Math.cos(w), 1.08, 1.3 * Math.sin(w)), [, y2] = PK(1.3 * Math.cos(w), 2.5, 1.3 * Math.sin(w)); k += `<rect x="${r(x1 - 0.4)}" y="${r(y2)}" width=".8" height="${r(y1 - y2)}" fill="#cfd5d8"/>`; }
+  /* Dach: weiße Scheibe mit Überstand; Vorderkante wölbt sich nach oben */
+  k += `<path d="M${pts([...bogen(1.8, 2.5, ...VORN, 24), ...bogen(1.8, 2.68, VORN[1], VORN[0], 24)])} Z" fill="${S.lg("kdach", [[0, "#cdd2d4"], [0.35, "#ffffff"], [1, "#e0e4e5"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M${pts(bogen(1.8, 2.5, ...VORN, 24))}" stroke="#9aa3a8" stroke-width=".5" fill="none"/>`;
+  const [dx0, dy0] = PK(1.8 * Math.cos(DREH), 2.55, 1.8 * Math.sin(DREH));
+  k += `<text x="${r(dx0)}" y="${r(dy0 - 0.6)}" font-size="2.6" text-anchor="middle" fill="#2e7d5b" font-family="Arial" font-weight="bold" letter-spacing=".5">QUIOSQUE POSTO 5</text>`;
+  const yT = thekeY(0), yD = -KH;
 
   /* --- auf der Theke (Lupe) --- */
-  const kx = (x) => x, T = yT - 1.2;
+  const TT = (dx) => thekeY(dx, 1.45);
   /* DIE KOKOSNUSS — drei grüne Nüsse, eine aufgeschlagen mit Strohhalm */
   {
     let g = "";
@@ -560,14 +574,14 @@ const kioskUnter = [];
       h += `<ellipse cx="${r(x - 0.9 * s)}" cy="${r(y - 3.6 * s)}" rx="${r(0.6 * s)}" ry="${r(1 * s)}" fill="#fff" opacity=".25"/>`;
       return h;
     };
-    g += nuss(-20.6, T, 0.9, false) + nuss(-15.6, T, 0.95, false) + nuss(-10.4, T + 0.2, 1, true);
+    g += nuss(-21, TT(-21), 0.9, false) + nuss(-15.8, TT(-15.8), 0.95, false) + nuss(-10.4, TT(-10.4), 1, true);
     k += g;
-    kioskUnter.push({ id: "kokosnuss", de: "die Kokosnuss", syl: "KO-kos-nuss", it: "la noce di cocco", itSyl: "NO-ce di COC-co", en: "coconut", x: KI.x - 15.4, y: KI.y + T, kunst: flaeche(-7.8, -10.2, 15.6, 10.4, 0.6),
+    kioskUnter.push({ id: "kokosnuss", de: "die Kokosnuss", syl: "KO-kos-nuss", it: "la noce di cocco", itSyl: "NO-ce di COC-co", en: "coconut", x: KI.x - 15.6, y: KI.y + TT(-15.6), kunst: flaeche(-8, -10.2, 16, 10.6, 0.6),
       tipp: "Das Kokoswasser trinkt man mit einem Strohhalm direkt aus der grünen Nuss." });
   }
   /* DIE AÇAÍ-SCHALE — lila Açaí mit Müsli und Bananenscheiben */
   {
-    const x = -2.4, y = T;
+    const x = -2.4, y = TT(-2.4);
     let g = `<path d="M${x - 3.2} ${y - 2.6} Q${x} ${y + 0.6} ${x + 3.2} ${y - 2.6} Z" fill="${S.lg("schale", [[0, "#f2efe6"], [1, "#c9c4b6"]])}"/>`;
     g += `<ellipse cx="${x}" cy="${y - 2.7}" rx="3.2" ry=".9" fill="#4b1d4f"/><path d="M${x - 2.8} ${y - 2.9} Q${x} ${y - 4.4} ${x + 2.8} ${y - 2.9} Q${x} ${y - 2} ${x - 2.8} ${y - 2.9} Z" fill="${S.rg("acai", [[0, "#7a3a86"], [1, "#3e1442"]])}"/>`;
     for (let i = 0; i < 9; i++) g += `<circle cx="${r(x - 2 + rnd() * 2.4)}" cy="${r(y - 3.4 + rnd() * 0.8)}" r=".22" fill="#c9954c"/>`;
@@ -578,7 +592,7 @@ const kioskUnter = [];
   }
   /* DER MATE — kalter Mate-Tee mit Zitrone im Becher */
   {
-    const x = 5.4, y = T;
+    const x = 5.4, y = TT(5.4);
     let g = `<path d="M${x - 1.5} ${y - 5.6} L${x + 1.5} ${y - 5.6} L${x + 1.2} ${y} L${x - 1.2} ${y} Z" fill="#e8f2f2" opacity=".55" stroke="#b9cdd1" stroke-width=".15"/>`;
     g += `<path d="M${x - 1.42} ${y - 4.6} L${x + 1.42} ${y - 4.6} L${x + 1.22} ${y - 0.2} L${x - 1.22} ${y - 0.2} Z" fill="${S.lg("mate", [[0, "#d99a3a"], [1, "#a8621c"]])}" opacity=".9"/>`;
     g += `<rect x="${x - 1.1}" y="${y - 4.4}" width=".9" height=".9" rx=".15" fill="#eaf6f8" opacity=".8"/><rect x="${x + 0.1}" y="${y - 3.8}" width=".9" height=".9" rx=".15" fill="#eaf6f8" opacity=".7"/>`;
@@ -598,7 +612,7 @@ const kioskUnter = [];
 }
 {
   /* DIE FLAGGE Brasiliens am Mast auf dem Kioskdach */
-  const X = KI.x + KR * 1.05, Y = KI.y - KH - 3.4;
+  const X = KI.x + KR * 1.05, Y = KI.y + PK(1.2, 2.68, 0.6)[1];
   let k = `<rect x="-.35" y="-27" width=".7" height="27" fill="#c9ced2"/><circle cx="0" cy="-27.4" r=".7" fill="#d9b23a"/>`;
   const fw = 16, fh = 11.2, y0 = -26.4;
   const wel = (dy) => `M.4 ${r(y0 + dy)} Q${r(fw * 0.3)} ${r(y0 + dy - 1.2)} ${r(fw * 0.55)} ${r(y0 + dy)} T${fw} ${r(y0 + dy - 0.4)}`;
@@ -618,11 +632,11 @@ const kioskUnter = [];
    ===================================================================== */
 {
   const m = B.mensch({ id: "rio_verk", geschlecht: "m", alter: "erwachsen", pose: "servieren", blick: -18, frisur: "kurz", haarfarbe: "schwarz", haut: "dunkel", laecheln: true,
-    kleidung: { oberteil: { stueck: "tshirt", farbe: "#2e7d5b" }, unterteil: { stueck: "shorts", farbe: "beige" }, kopf: { stueck: "kappe", farbe: "#f2f2ea" } } }, 1.76 * sy(KI.y - 3));
+    kleidung: { oberteil: { stueck: "tshirt", farbe: "#2e7d5b" }, unterteil: { stueck: "shorts", farbe: "beige" }, kopf: { stueck: "kappe", farbe: "#2e7d5b" } } }, 1.76 * sy(KI.y - 3));
   const X = KI.x + 14, Y = KI.y - 3;
   const cid = S.id("verkclip");
   /* nur der Teil über der Theke ist zu sehen */
-  S.def(`<clipPath id="${cid}" clipPathUnits="userSpaceOnUse"><rect x="-30" y="-80" width="60" height="${r(80 - (Y - (THEKE - 1.2)))}"/></clipPath>`);
+  S.def(`<clipPath id="${cid}" clipPathUnits="userSpaceOnUse"><rect x="-30" y="-80" width="60" height="${r(80 - (Y - THEKE))}"/></clipPath>`);
   S.teil({ id: "verkaeufer", de: "der Verkäufer", syl: "ver-KÄU-fer", it: "il venditore", itSyl: "ven-di-TO-re", en: "vendor", x: X, y: Y, kunst: `<g clip-path="url(#${cid})">${knapp(m.svg)}</g>`,
     tipp: "Der Verkäufer sagt: „Bom dia!“ – das heißt „Guten Morgen!“" });
 }
@@ -763,20 +777,23 @@ const JU = { x: 168, y: 186 };
    ===================================================================== */
 {
   const s = sy(192);
-  const L = 0.5 * s, B2 = 0.19 * s;   /* Sohle 26 cm (Profilmaß ±L/2) */
-  const sohle = (dx, rot, gruen) => {
-    let g = `<g transform="translate(${dx} 0) rotate(${rot})">`;
-    g += `<path d="M0 ${r(-L * 0.28)} Q${r(B2 * 0.55)} ${r(-L * 0.28)} ${r(B2 * 0.5)} 0 Q${r(B2 * 0.42)} ${r(L * 0.22)} 0 ${r(L * 0.24)} Q${r(-B2 * 0.42)} ${r(L * 0.22)} ${r(-B2 * 0.5)} 0 Q${r(-B2 * 0.55)} ${r(-L * 0.28)} 0 ${r(-L * 0.28)} Z" fill="${gruen ? "#1e8a4c" : "#f6d21e"}"/>`;
-    g += `<path d="M0 ${r(-L * 0.25)} Q${r(B2 * 0.45)} ${r(-L * 0.24)} ${r(B2 * 0.42)} 0 Q${r(B2 * 0.36)} ${r(L * 0.19)} 0 ${r(L * 0.2)} Q${r(-B2 * 0.36)} ${r(L * 0.19)} ${r(-B2 * 0.42)} 0 Q${r(-B2 * 0.45)} ${r(-L * 0.24)} 0 ${r(-L * 0.25)} Z" fill="${gruen ? "#f6d21e" : "#1e8a4c"}"/>`;
-    /* Riemen (Y-Form), kleine Flagge am Riemen */
-    g += `<path d="M0 ${r(-L * 0.17)} Q${r(-B2 * 0.3)} ${r(-L * 0.04)} ${r(-B2 * 0.44)} ${r(L * 0.04)} M0 ${r(-L * 0.17)} Q${r(B2 * 0.3)} ${r(-L * 0.04)} ${r(B2 * 0.44)} ${r(L * 0.04)}" stroke="${gruen ? "#f6d21e" : "#1e8a4c"}" stroke-width="${r(B2 * 0.16)}" fill="none" stroke-linecap="round"/>`;
-    g += `<rect x="${r(B2 * 0.12)}" y="${r(-L * 0.06)}" width="${r(B2 * 0.22)}" height="${r(B2 * 0.15)}" fill="#009b3a"/><path d="M${r(B2 * 0.14)} ${r(-L * 0.06 + B2 * 0.075)} L${r(B2 * 0.23)} ${r(-L * 0.06 + 0.1)} L${r(B2 * 0.32)} ${r(-L * 0.06 + B2 * 0.075)} L${r(B2 * 0.23)} ${r(-L * 0.06 + B2 * 0.15 - 0.1)} Z" fill="#fedf00"/>`;
+  const L = 0.26 * s;   /* Sohle 26 cm */
+  const sohle = (dx, dy, rot, gruen) => {
+    const l = L, c1 = gruen ? "#1e8a4c" : "#f6d21e", c2 = gruen ? "#f6d21e" : "#1e8a4c";
+    const umriss = (k2) => `M${r(-l / 2 * k2)} 0 C${r(-l / 2 * k2)} ${r(-0.17 * l * k2)} ${r(-0.3 * l * k2)} ${r(-0.19 * l * k2)} ${r(-0.15 * l * k2)} ${r(-0.15 * l * k2)} C${r(0.05 * l * k2)} ${r(-0.12 * l * k2)} ${r(0.25 * l * k2)} ${r(-0.22 * l * k2)} ${r(0.42 * l * k2)} ${r(-0.17 * l * k2)} C${r(0.55 * l * k2)} ${r(-0.12 * l * k2)} ${r(0.55 * l * k2)} ${r(0.12 * l * k2)} ${r(0.42 * l * k2)} ${r(0.17 * l * k2)} C${r(0.25 * l * k2)} ${r(0.22 * l * k2)} ${r(0.05 * l * k2)} ${r(0.12 * l * k2)} ${r(-0.15 * l * k2)} ${r(0.15 * l * k2)} C${r(-0.3 * l * k2)} ${r(0.19 * l * k2)} ${r(-l / 2 * k2)} ${r(0.17 * l * k2)} ${r(-l / 2 * k2)} 0 Z`;
+    let g = `<g transform="translate(${dx} ${dy}) rotate(${rot})">`;
+    g += `<path d="${umriss(1)}" fill="${c2}"/><path d="${umriss(0.9)}" fill="${c1}"/>`;
+    /* Zehensteg und Riemen (Y-Form) mit kleiner Flagge */
+    g += `<path d="M${r(0.3 * l)} 0 Q${r(0.12 * l)} ${r(-0.06 * l)} ${r(-0.06 * l)} ${r(-0.17 * l)} M${r(0.3 * l)} 0 Q${r(0.12 * l)} ${r(0.06 * l)} ${r(-0.06 * l)} ${r(0.17 * l)}" stroke="#000" stroke-width="${r(0.05 * l)}" fill="none" opacity=".2" transform="translate(-.6 .5)"/>`;
+    g += `<path d="M${r(0.3 * l)} 0 Q${r(0.12 * l)} ${r(-0.06 * l)} ${r(-0.06 * l)} ${r(-0.17 * l)} M${r(0.3 * l)} 0 Q${r(0.12 * l)} ${r(0.06 * l)} ${r(-0.06 * l)} ${r(0.17 * l)}" stroke="${c2}" stroke-width="${r(0.05 * l)}" fill="none" stroke-linecap="round"/>`;
+    g += `<circle cx="${r(0.3 * l)}" cy="0" r="${r(0.03 * l)}" fill="${c2}"/>`;
+    g += `<rect x="${r(0.08 * l)}" y="${r(-0.1 * l)}" width="${r(0.07 * l)}" height="${r(0.05 * l)}" fill="#009b3a"/><path d="M${r(0.085 * l)} ${r(-0.075 * l)} L${r(0.115 * l)} ${r(-0.095 * l)} L${r(0.145 * l)} ${r(-0.075 * l)} L${r(0.115 * l)} ${r(-0.055 * l)} Z" fill="#fedf00"/>`;
     g += `</g>`;
     return g;
   };
-  /* von oben gesehen in der Tiefe verkürzt */
-  let k = schatten(-1.6, 0.6, L * 0.5, 1.2, 0.2);
-  k += `<g transform="scale(1 .5)">${sohle(-5.6, -14, false)}${sohle(5.6, 22, true)}</g>`;
+  /* von schräg oben gesehen: in der Tiefe auf etwa die Hälfte verkürzt */
+  let k = schatten(-1.6, 0.6, L * 0.62, 1.4, 0.2);
+  k += `<g transform="scale(1 .5)">${sohle(-6, -3, -10, false)}${sohle(6.4, 4, 14, true)}</g>`;
   S.teil({ oben: true, id: "flipflops", de: "die Flipflops", syl: "FLIP-flops", it: "le infradito", itSyl: "in-fra-DI-to", en: "flip-flops", x: 62, y: 192, kunst: k,
     tipp: "Die bunten Flipflops aus Brasilien heißen Havaianas." });
 }

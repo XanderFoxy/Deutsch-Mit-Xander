@@ -213,7 +213,7 @@ function teileLoeschen(minOrdner) {
   try { fs.readdirSync(minOrdner).filter((n) => /^app-teil-[a-z0-9]+\.js$/.test(n)).forEach((n) => fs.unlinkSync(path.join(minOrdner, n))); } catch (e) {}
 }
 
-module.exports = { appTeilen, verkleinertTeilen, bauSumme, schreiben, teileLoeschen, LISTE, MARKE, istTeil: (n) => /^app-teil-[a-z0-9]+\.js$/.test(n) };
+module.exports = { acornHolen, esbuildHolen, appTeilen, verkleinertTeilen, bauSumme, schreiben, teileLoeschen, LISTE, MARKE, istTeil: (n) => /^app-teil-[a-z0-9]+\.js$/.test(n) };
 
 if (require.main === module) {
   const zlib = require("zlib");

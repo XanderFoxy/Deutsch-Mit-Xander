@@ -42,7 +42,9 @@ function mach(T, dez, RW) {
     let s = u(`fill="${fill}"`);
     const ov = o.ov === undefined ? [T.lg("vol", [[0, "#fff", 0.2], [0.4, "#fff", 0], [0.7, "#000", 0.06], [1, "#000", 0.3]])] : o.ov;
     /* Randschatten/Randlicht: breiter Strich mit Schräg-Verlauf (links oben hell, rechts unten dunkel), nach innen geklippt */
-    const rim = o.rim && T.fein ? u(`fill="none" stroke="${o.rimG || H.RIM()}" stroke-width="${f(o.rim)}" filter="${H.weich(o.rim * 0.22)}"`) : "";
+    /* Randlicht nur an der Außenkontur (rimD), wenn das Teil über einem anderen liegt (Kopf auf Hals) */
+    const rimStil = () => `fill="none" stroke="${o.rimG || H.RIM()}" stroke-width="${f(o.rim)}" filter="${H.weich(o.rim * 0.22)}"`;
+    const rim = o.rim && T.fein ? (o.rimD ? `<path d="${o.rimD}" ${rimStil()}/>` : u(rimStil())) : "";
     /* Rand nur nach innen (geklippt): keine helle Säumung außen */
     const randStil = `fill="none" stroke="${o.rand || "#1a140e"}" stroke-opacity="${o.randA != null ? o.randA : 0.24}" stroke-width="${f(2 * (o.rw || RW))}" stroke-linejoin="round" stroke-linecap="round"`;
     const rand = o.randD ? `<path d="${o.randD}" ${randStil}/>` : o.rand !== false ? u(randStil) : "";
@@ -235,7 +237,7 @@ function elefant(T) {
     [276, -178], [288, -162], [297, -150], [305, -146], [313, -153], [326, -172], [342, -192], [357, -216], [366, -252], [367, -292], [361, -320]].map((p, i) =>
     (i > 3 && i < 15 ? [p[0] + (T.rnd() - 0.5) * 3, p[1] + (T.rnd() - 0.5) * 3] : p));
   const ohrD = G(ohr);
-  const ohrSchatten = `<path d="${ohrD}" transform="translate(9 10)" fill="#000" opacity="${F ? 0.32 : 0.2}"${F ? ` filter="${H.weich(5)}"` : ""}/>`;
+  const ohrSchatten = F ? `<path d="${ohrD}" transform="translate(9 10)" fill="#000" opacity=".32" filter="${H.weich(5)}"/>` : "";
   k += teil(rumpf, haut, {
     ov: [licht], rim: 34,
     innen: fl(165, -262, 80, 38, 0, true) + fl(205, -200, 40, 60, 0, false, 0.5) + fl(180, -156, 90, 24, 0, false, 0.8) + fl(120, -200, 26, 50, 10, false, 0.6) +
@@ -276,7 +278,7 @@ function elefant(T) {
       wf([[374, -258], [389, -269], [404, -258], [389, -249]], "#000", 0.24, 4) + wf([[372, -292], [360, -262], [364, -228]], "#000", 0.2, 5, false) +
       wf([[400, -300], [418, -268], [428, -230]], "#fff", 0.14, 6, false) +
       ohrSchatten +
-      kerben(querfalten(rk, 0.3, 5.8, F ? 0.1 : 0.3, 0.02, 0.98, 2.4), 3.6, 0.46) +
+      kerben(querfalten(rk, 0.3, 5.8, F ? 0.1 : 0.42, 0.02, 0.98, 2.4), 3.6, 0.46) +
       kerben([[[377, -272], [390, -277], [403, -271]], [[373, -265], [370, -252], [378, -242]], [[377, -240], [392, -236], [405, -243]], [[398, -306], [414, -280], [421, -262]],
         [[405, -312], [421, -290]], [[380, -230], [394, -221], [404, -206]], [[371, -238], [383, -226]], [[359, -270], [365, -238]], [[382, -284], [396, -290], [410, -286]],
         [[379, -248], [389, -246], [399, -249]]], 4.2, 0.4) +
@@ -370,8 +372,8 @@ function giraffe(T) {
   /* Zellen: Rumpf groß, Hals mittel, Beine klein, Kopf winzig */
   feld(12, -350, 300, -190, 33, 2.4, 0);
   feld(190, -525, 366, -350, 23.5, 1.9, 0);
-  feld(180, -300, 300, -100, F ? 13 : 17, 1.1, 1, (x, y) => y > -205);
-  feld(38, -300, 168, -100, F ? 13 : 17, 1.1, 1, (x, y) => y > -200);
+  feld(180, -300, 300, -100, F ? 13 : 19, 1.1, 1, (x, y) => y > -205);
+  feld(38, -300, 168, -100, F ? 13 : 19, 1.1, 1, (x, y) => y > -200);
   const fRumpf = flecken(rumpf);
   let s = "";
   /* Schwanz mit Quaste (bis zum Sprunggelenk) */
@@ -416,7 +418,7 @@ function giraffe(T) {
   const auss = kamm.map((p, i) => { const h = [4, 9, 12.5, 13, 12, 9][i]; return [p[0] - h * 0.76, p[1] - h * 0.65]; });
   const maehne = auss.concat(kamm.slice().reverse().map((p) => [p[0] + 1.5, p[1] + 1.5]));
   s += teil(maehne, T.lg("maehne", [[0, "#3a1f0c"], [0.45, "#6e3f1d"], [1, "#8a5630"]], 0, 0, 0.7, 0.6), { ov: [], rw: 0.3,
-    oben: F ? H.haare(maehne, 240, -146, 8, { farben: [["#24120a", 2, 0.6, 0.85], ["#a0683a", 1, 0.5, 0.75]], streuung: 10, kruemmung: 0.12 }) : "" });
+    oben: F ? H.haare(maehne, 215, -146, 8, { farben: [["#24120a", 2, 0.6, 0.85], ["#a0683a", 1, 0.5, 0.75]], streuung: 10, kruemmung: 0.12 }) : "" });
   if (F) s += H.haare(auss.map((p) => [p[0] + 2, p[1] + 2]).concat(auss.slice().reverse().map((p) => [p[0] - 1.5, p[1] - 1.5])), 60, -146, 2.6, { farben: [["#24120a", 1, 0.5, 0.8]], streuung: 22, kruemmung: 0.2 });
   /* Kopf (als Gruppe leicht zurückgesetzt: Hals steiler): lang, Ramsnase angedeutet, tiefe Wange, Lippen */
   let k = "";
@@ -424,7 +426,7 @@ function giraffe(T) {
     [418, -475], [404, -477], [392, -480], [380, -486], [370, -494]];
   feld(356, -532, 450, -455, 9, 1, 1, (x, y) => (x < 388 && y > -518) || (x < 414 && y > -494));
   k += teil(kopf, creme, {
-    ov: [licht], rim: 8,
+    ov: [licht], rim: 8, randD: G(kopf.slice(0, 16), false), rimD: G(kopf.slice(0, 16), false),
     innen: `<path d="${flecken(kopf)}" fill="${fleckF}" opacity=".9"/>` +
       wf([[386, -524], [410, -518], [432, -508], [446, -496]], "#8a5a34", 0.45, 3, false) +
       wf([[430, -500], [446, -492], [452, -482], [444, -476], [432, -478], [428, -490]], "#6d4a2e", 0.5, 2.2) +
@@ -571,7 +573,7 @@ function zebra(T) {
   });
   kz.push([bog(221, -179, 6, 5.2, 60, 140, 3), [0.3, 0.8, 0.3]]);
   k += teil(kopf, weiss, {
-    ov: [licht], rim: 6,
+    ov: [licht], rim: 6, randD: G(kopf.slice(0, 16), false), rimD: G(kopf.slice(0, 16), false),
     innen: `<path d="${bandG(kz)}" fill="${SW}"/>` +
       wf([[238, -154], [244, -146], [246, -138], [241, -133], [233, -135], [232, -145]], "#2a221d", 0.95, 1.4) +
       wf([[212, -149], [205, -160], [206, -172]], "#000", 0.2, 2.5, false) + wf([[220, -190], [230, -178], [238, -162]], "#fff", 0.3, 1.6, false) +
@@ -588,7 +590,7 @@ function zebra(T) {
       (nah && F ? H.haare([[208 + dx, -204 + dy], [211 + dx, -210 + dy], [214 + dx, -203 + dy], [214 + dx, -191 + dy], [209 + dx, -191 + dy]], 26, -80, 2.6, { farben: [["#fff", 1, 0.22, 0.8]], streuung: 20 }) : "") });
   k += `<g transform="rotate(-14 212 -190)">${ohr(-4, 1, "#d9d2c5")}</g>` + `<g transform="rotate(6 212 -190)">${ohr(0, 0, "#f3efe6", 1)}</g>`;
   s += k;
-  return { svg: s, box: [28, -214, 246, 0], fuesse: [184.5, 168.5, 67.5, 83.5], kopf: [194, -220, 248, -128] };
+  return { svg: s, box: [29, -220, 246, 0], fuesse: [184.5, 168.5, 67.5, 83.5], kopf: [194, -220, 248, -128] };
 }
 
 /* =====================================================================
@@ -652,7 +654,7 @@ function nashorn(T) {
   const kopf = [[312, -186], [334, -176], [350, -160], [362, -142], [372, -132], [392, -110], [408, -92], [417, -82], [422, -72], [424.5, -60], [424.5, -47, 1], [419, -42], [408, -40.5], [390, -44],
     [368, -54], [348, -66], [330, -82], [318, -110], [308, -150]];
   k += teil(kopf, haut, {
-    ov: [licht], rim: 14, randD: G(kopf.slice(0, 18), false),
+    ov: [licht], rim: 14, randD: G(kopf.slice(0, 18), false), rimD: G(kopf.slice(0, 18), false),
     innen: wf([[338, -170], [356, -150], [372, -130], [392, -106]], "#fff", 0.22, 4, false) + wf([[346, -80], [370, -60], [396, -48]], "#000", 0.26, 5, false) +
       wf([[356, -118], [368, -112]], "#000", 0.22, 4, false) + wf([[404, -86], [418, -66], [419, -48]], "#000", 0.16, 3, false) +
       kerben([[[338, -164], [334, -130], [338, -100]], [[350, -150], [348, -120], [352, -90]], [[363, -124], [354, -116], [349, -104]], [[372, -118], [362, -110]],
@@ -678,7 +680,7 @@ function nashorn(T) {
       wf([[x - 3, y - 4], [x - 5, y - 16]], "#000", 0.3, 1.4, false) + wf([[x + 3, y - 6], [x + 4, y - 14]], "#fff", 0.2, 1.2, false) +
       (nah && F ? H.haare([[x - 8, y - 25], [x - 4, y - 31], [x + 2, y - 27], [x - 2, y - 24]], 24, -110, 2.4, { farben: [["#2a221a", 1, 0.25, 0.8]], streuung: 40 }) : "") }) + "</g>";
   s += relief(ohr(324, -172, "#7c766d") + ohr(336, -170, "#8f897f", 1));
-  return { svg: s, box: [31, -201, 427, 0], fuesse: [268, 238, 95, 125], kopf: [298, -205, 428, -30] };
+  return { svg: s, box: [35, -203, 427, 0], fuesse: [268, 238, 95, 125], kopf: [298, -205, 428, -30] };
 }
 
 /* =====================================================================
@@ -737,26 +739,26 @@ function nilpferd(T) {
       kerben([[[300, -148], [306, -112], [300, -74]], [[314, -144], [320, -110], [316, -78]], [[288, -142], [290, -116]], [[240, -60], [262, -52], [280, -54]], [[110, -58], [104, -86], [100, -110]]], 4, 0.28),
   });
   /* Kopf: riesig, Kastenschnauze; Augen, Ohren und Nasenlöcher oben auf einer Linie */
-  const kopf = [[300, -153], [320, -160], [338, -165], [352, -172], [364, -174], [375, -168], [382, -155], [398, -147], [420, -143], [436, -144], [448, -140], [456, -130], [461, -114],
+  const kopf = [[300, -153], [320, -160], [338, -165], [352, -172], [364, -174], [375, -168], [382, -155], [398, -147], [418, -143], [430, -147], [442, -147], [451, -140], [457, -130], [461, -114],
     [462, -96], [459, -80], [452, -68], [442, -60], [428, -54], [408, -50], [386, -50], [362, -54], [340, -60], [322, -68], [310, -88], [302, -120]];
   k += teil(kopf, haut, {
-    ov: [licht], rim: 14, randD: G(kopf.slice(0, 23), false),
+    ov: [licht], rim: 14, randD: G(kopf.slice(0, 24), false), rimD: G(kopf.slice(0, 24), false),
     innen: wf([[350, -94], [390, -84], [430, -76], [455, -72], [446, -58], [410, -52], [370, -54], [346, -70]], ROSA, 0.35, 3) +
       wf([[330, -150], [346, -128], [352, -104]], ROSA, 0.4, 5, false) + wf([[358, -168], [372, -158]], ROSA, 0.45, 4, false) +
       wf([[386, -151], [420, -141], [446, -139]], "#fff", 0.4, 1.6, false) + wf([[454, -128], [460, -106]], "#fff", 0.25, 2, false) + wf([[340, -162], [356, -170], [370, -170]], "#fff", 0.4, 1.4, false) +
       wf([[350, -60], [400, -50], [440, -56]], "#000", 0.22, 4, false) + wf([[366, -122], [400, -110], [430, -104]], "#000", 0.1, 6, false) + wf([[400, -126], [430, -118]], "#fff", 0.16, 6, false) + wf([[318, -130], [330, -100]], "#fff", 0.1, 6, false) +
-      kerben([[[356, -92], [366, -86], [394, -81], [430, -76], [454, -71]], [[322, -146], [330, -118], [326, -86]], [[312, -136], [316, -104]], [[436, -144], [443, -142], [449, -139]]], 2.6, 0.42) +
+      kerben([[[358, -90], [376, -84], [400, -80], [430, -76], [455, -72]], [[322, -146], [330, -118], [326, -86]], [[312, -136], [316, -104]], [[356, -90], [352, -82], [356, -70], [366, -62]]], 2.8, 0.45) + wf([[372, -80], [410, -74], [446, -68]], "#000", 0.22, 2, false) + wf([[380, -60], [420, -56]], "#fff", 0.12, 3, false) + `<path d="M432 -143.5C436 -146.5 444 -146.5 448 -143.5 444 -141.5 436 -141.5 432 -143.5Z" fill="#2a1a18" opacity=".75"/>` + wf([[430, -148], [444, -148.5]], "#fff", 0.3, 0.8, false) + wf([[428, -138], [448, -137]], "#000", 0.15, 1.5, false) + wf([[356, -158], [366, -155], [378, -159]], "#000", 0.25, 1.4, false) + wf([[358, -172], [368, -175]], "#fff", 0.3, 1, false) + kerben([[[356, -160], [364, -156], [374, -157]], [[354, -155], [362, -151], [372, -152]], [[380, -164], [383, -158]]], 1.4, 0.3) +
       kerben([[[350, -86], [346, -78], [350, -68]]], 2, 0.3) +
       (F ? H.haare([[440, -100], [458, -100], [458, -70], [440, -70]], 22, 30, 2.2, { farben: [["#1c1412", 1, 0.25, 0.7]], streuung: 40 }) +
         H.haare([[400, -64], [450, -64], [440, -52], [400, -50]], 14, 80, 2, { farben: [["#1c1412", 1, 0.25, 0.6]], streuung: 40 }) : ""),
   });
   s += relief(k);
   /* Augen auf Höckern, rosa umrandet */
-  s += wf([[359, -166], [366, -169.5], [373, -166]], "#2a1a18", 0.3, 1, false);
-  s += T.augeReal(366, -162, 2.6, { iris: "#5a3418", iris2: "#21110a", offen: 0.62, pupille: "quer", wimpern: 6, wimpernLaenge: 0.8, lid: "#3a2420", haut: ROSA, winkel: 6 });
+  s += wf([[359, -169], [366, -172.5], [373, -169]], "#2a1a18", 0.35, 0.9, false);
+  s += T.augeReal(366.5, -165, 3, { iris: "#5a3418", iris2: "#21110a", offen: 0.62, pupille: "quer", wimpern: 6, wimpernLaenge: 0.8, lid: "#3a2420", haut: ROSA, winkel: 6 });
   /* kleine Ohren, innen rosa */
   s += relief(teil([[334, -162], [330, -172], [332, -180], [338, -178], [341, -169], [340, -161]], "#7a6264", { rw: 0.4, rim: 2, innen: `<ellipse cx="335.5" cy="-172" rx="2.2" ry="5" fill="${ROSA}" opacity=".85"/>` }));
-  return { svg: s, box: [17, -181, 462, 0], fuesse: [276.5, 248.5, 80.5, 106.5], kopf: [296, -183, 463, -44] };
+  return { svg: s, box: [20, -181, 462, 0], fuesse: [276.5, 248.5, 80.5, 106.5], kopf: [296, -183, 463, -44] };
 }
 
 /* =====================================================================
@@ -818,7 +820,7 @@ function gazelle(T) {
   let k = "";
   const kopf = [[114, -111], [119, -114.5], [125, -114.5], [131, -110.5], [136, -105], [139.5, -100.5], [140.6, -97.4], [139.4, -95.2], [136, -94.4], [131, -95], [125, -96.4], [120, -99], [115.5, -104]];
   k += teil(kopf, fell, {
-    ov: [licht], rim: 2, randD: G(kopf.slice(0, 12), false),
+    ov: [licht], rim: 2, randD: G(kopf.slice(0, 12), false), rimD: G(kopf.slice(0, 12), false),
     innen:
       /* weißer Streif vom Auge zur Nase, darunter der schwarze, rotbrauner Nasenrücken, dunkler Nasenfleck, weißes Kinn */
       (F ? wf([[123, -109.5], [129, -106.8], [135.5, -102.6], [139, -99.6], [137.5, -98.8], [134, -101], [128, -104.4], [122.5, -106.8]], WS, 1, 0.25) : `<path d="${G([[123, -109.5], [129, -106.8], [135.5, -102.6], [139, -99.6], [137.5, -98.8], [134, -101], [128, -104.4], [122.5, -106.8]])}" fill="${WS}"/>`) +
@@ -897,11 +899,11 @@ function gnu(T) {
       wf([[40, -128], [90, -138], [124, -147], [150, -147]], "#fff", 0.2, 3, false) + wf([[110, -132], [134, -140]], "#fff", 0.14, 6, false) +
       wf([[80, -66], [110, -65], [140, -66]], "#000", 0.26, 4, false) + wf([[124, -136], [118, -100], [126, -72]], "#000", 0.14, 5, false) +
       wf([[64, -120], [56, -96], [58, -76]], "#000", 0.14, 4, false) + wf([[44, -118], [54, -126]], "#fff", 0.14, 5, false) +
-      haar(rumpf, 330, (x, y) => (x > 150 ? 100 : 172), 2.2, [["#2e2825", 3, 0.16, 0.32], ["#a69d95", 2, 0.13, 0.2], ["#5a4e45", 1, 0.15, 0.3]]),
+      haar(rumpf, 270, (x, y) => (x > 150 ? 100 : 172), 2.2, [["#2e2825", 3, 0.16, 0.32], ["#a69d95", 2, 0.13, 0.2], ["#5a4e45", 1, 0.15, 0.3]]),
   });
   /* Stehmähne schwarz, Bart hängend (Streifengnu: dunkel) */
   const maehne = [[100, -143], [116, -152], [134, -158], [152, -156], [166, -149], [182, -139], [182, -131], [166, -142], [150, -148], [126, -151], [104, -142]];
-  s += teil(maehne, SW, { ov: [], rand: false, oben: haar(maehne, 260, -95, 5, [["#000", 2, 0.35, 0.85], ["#5a4e46", 1, 0.3, 0.7]], { streuung: 10 }) });
+  s += teil(maehne, SW, { ov: [], rand: false, oben: haar(maehne, 230, -95, 5, [["#000", 2, 0.35, 0.85], ["#5a4e46", 1, 0.3, 0.7]], { streuung: 10 }) });
   const bart = [[190, -103], [183, -106], [175, -95], [166, -87], [160, -79], [157, -71], [161, -68], [168, -76], [177, -86], [185, -95], [193, -99]];
   s += teil(bart, SW, { ov: [], rand: false, oben: haar(bart, 100, 100, 8, [["#000", 2, 0.35, 0.85], ["#4f4540", 1, 0.3, 0.75]], { streuung: 12 }) });
   if (F) s += H.haare([[182, -100], [170, -88], [160, -75], [157, -66], [163, -66], [176, -82]], 30, 100, 6, { farben: [["#000", 1, 0.3, 0.8]], streuung: 16, kruemmung: 0.25 });
@@ -910,7 +912,7 @@ function gnu(T) {
   const kopf = [[170, -142], [178, -148], [186, -148], [192, -140], [198, -127], [204, -113], [209, -101], [213, -94], [217, -89], [219, -83], [219, -77], [216, -73.5], [209, -72.5], [201, -76],
     [194, -83], [188, -92], [183, -102], [178, -112], [172, -122], [168, -132]];
   k += teil(kopf, T.lg("kopf", [[0, "#3c3532"], [0.5, "#2a2422"], [1, "#1a1615"]], 0, 0, 1, 1), {
-    ov: [licht], rim: 3, randD: G(kopf.slice(0, 19), false),
+    ov: [licht], rim: 3, randD: G(kopf.slice(0, 19), false), rimD: G(kopf.slice(0, 19), false),
     innen: wf([[184, -147], [194, -134], [202, -118], [209, -104]], "#8a7f78", 0.45, 1.2, false) + wf([[176, -126], [186, -112], [192, -100]], "#000", 0.25, 2.4, false) +
       wf([[208, -96], [217, -86], [218, -77], [209, -74], [204, -84]], "#000", 0.35, 1.2) +
       kerben([[[213, -91], [216.5, -88.5], [219, -88]], [[218.5, -77.5], [212, -76.6], [205, -77.5]]], 1, 0.85) + wf([[200, -80], [206, -78]], "#000", 0.3, 0.8, false) + wf([[188, -112], [196, -98], [202, -88]], "#fff", 0.08, 2, false) +
@@ -930,7 +932,7 @@ function gnu(T) {
   };
   k += horn(-3, -3, "#1f1a17") + horn(0, 0, T.lg("horn", [[0, "#2c2622"], [1, "#4f4740"]], 0, 0, 1, 0));
   s += `<g transform="translate(182 -131) scale(.82) translate(-176 142)">${k}</g>`;
-  return { svg: s, box: [17, -163, 218, 0], fuesse: [143, 131, 46, 60], kopf: [164, -160, 218, -58] };
+  return { svg: s, box: [19, -163, 218, 0], fuesse: [143, 131, 46, 60], kopf: [164, -160, 218, -58] };
 }
 
 module.exports = [
@@ -939,13 +941,13 @@ module.exports = [
   { id: "giraffe", de: "die Giraffe", syl: "gi-RAF-fe", it: "la giraffa", itSyl: "gi-RAF-fa", en: "giraffe",
     gruppe: "Huftiere", lebensraum: "Savanne", laenge: 4.25, hoehe: 5.55, zeichne: giraffe },
   { id: "zebra", de: "das Zebra", syl: "ZE-bra", it: "la zebra", itSyl: "ZE-bra", en: "zebra",
-    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 2.71, hoehe: 2.08, zeichne: zebra },
+    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 2.17, hoehe: 2.2, zeichne: zebra },
   { id: "nashorn", de: "das Nashorn", syl: "NAS-horn", it: "il rinoceronte", itSyl: "ri-no-ce-RON-te", en: "rhinoceros",
-    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 4.35, hoehe: 2.05, zeichne: nashorn },
+    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 3.92, hoehe: 2.03, zeichne: nashorn },
   { id: "nilpferd", de: "das Nilpferd", syl: "NIL-pferd", it: "l'ippopotamo", itSyl: "ip-po-PO-ta-mo", en: "hippopotamus",
-    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 4.62, hoehe: 1.78, zeichne: nilpferd },
+    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 4.42, hoehe: 1.81, zeichne: nilpferd },
   { id: "gazelle", de: "die Gazelle", syl: "ga-ZEL-le", it: "la gazzella", itSyl: "gaz-ZEL-la", en: "gazelle",
-    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 1.42, hoehe: 1.42, zeichne: gazelle },
+    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 1.25, hoehe: 1.49, zeichne: gazelle },
   { id: "gnu", de: "das Gnu", syl: "GNU", it: "lo gnu", itSyl: "GNU", en: "wildebeest",
-    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 2.24, hoehe: 1.7, zeichne: gnu },
+    gruppe: "Huftiere", lebensraum: "Savanne", laenge: 1.99, hoehe: 1.63, zeichne: gnu },
 ];

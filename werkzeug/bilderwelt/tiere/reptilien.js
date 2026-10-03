@@ -19,6 +19,15 @@ const LICHT = (T) => T.rg("licht", [[0, "#fff", 0.55], [1, "#fff", 0]]);
 const DUNKEL = (T) => T.rg("dunkel", [[0, "#000", 0.6], [1, "#000", 0]]);
 const fleck = (T, art, cx, cy, rx, ry, rot, op) =>
   `<ellipse${rot ? ` transform="rotate(${rot} ${R(cx)} ${R(cy)})"` : ""} cx="${R(cx)}" cy="${R(cy)}" rx="${R(rx)}" ry="${R(ry)}" fill="${art === "l" ? LICHT(T) : art === "d" ? DUNKEL(T) : art}" opacity="${String(op).replace(/^0\./, ".")}"/>`;
+/* Farbe mischen: t > 0 Richtung Weiß, t < 0 Richtung Schwarz */
+const mische = (c, t) => {
+  const n = parseInt(c.slice(1), 16), z = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(t > 0 ? v + (255 - v) * t : v * (1 + t)));
+  return "#" + z.map((v) => v.toString(16).padStart(2, "0")).join("");
+};
+/* Pfad aus Punkten: fein glatt (Catmull-Rom), in der Szene als Vieleck (kaum sichtbar, viel kleiner) */
+const poly = (pts) => "M" + pts.map((p) => R(p[0]) + " " + R(p[1])).join("L") + "Z";
+const pfad = (T, pts) => (typeof pts === "string" ? pts : T.fein ? T.glatt(pts) : poly(pts));
+const form = (T, pts, fill, extra = "") => `<path d="${pfad(T, pts)}" fill="${fill}"${extra}/>`;
 /* weicher Schleier (Farbzonen, Licht) – Gaußfilter, Stärke in Einheiten */
 const weich = (T, n, s) => {
   const id = T.id("bl" + n);
@@ -27,10 +36,10 @@ const weich = (T, n, s) => {
 };
 /* Körperteil: Pfad EINMAL in defs, Füllung + geklippte Innenzeichnung + Rand per <use> */
 const teil = (T, pts, fill, o = {}) => {
-  const d = typeof pts === "string" ? pts : T.glatt(pts);
+  const d = pfad(T, pts);
   const id = T.id("q" + (T._n = (T._n || 0) + 1));
-  T.def(`<path id="${id}" d="${d}"/><clipPath id="${id}c"><use href="#${id}"/></clipPath>`);
   const innen = (o.innen || "") + (o.vol ? `<use href="#${id}" fill="${T.VOL()}"/>` : "");
+  T.def(`<path id="${id}" d="${d}"/>` + (innen ? `<clipPath id="${id}c"><use href="#${id}"/></clipPath>` : ""));
   return `<use href="#${id}" fill="${fill}"/>` + (innen ? `<g clip-path="url(#${id}c)">${innen}</g>` : "") +
     (o.kante ? linien(T, o.kante, o.rand || "#000", o.rw || 0.3, o.randA != null ? o.randA : 0.4) : o.rand !== false ? `<use href="#${id}" fill="none" stroke="${o.rand || "#000"}" stroke-opacity="${o.randA != null ? o.randA : 0.4}" stroke-width="${o.rw || 0.3}" stroke-linejoin="round"/>` : "");
 };
@@ -297,21 +306,22 @@ const krallenPfad = (x, y, L, b, w, krumm = 0.5) => {
   return `M${P(0, -b / 2)}Q${P(L * 0.62, -b * 0.55)} ${P(L, b * krumm * 2)}Q${P(L * 0.5, b * 0.1)} ${P(0, b / 2)}Z`;
 };
 const krallen = (T, liste, farbe = "#2a2117") => {
-  const g = T.lg("kralle", [[0, "#fff", 0.28], [0.5, "#000", 0], [1, "#000", 0.3]]);
+  const g = T.lg("kralle" + farbe.slice(1), [[0, mische(farbe, 0.3)], [0.5, farbe], [1, mische(farbe, -0.35)]]);
   const d = liste.map((k) => krallenPfad(...k)).join("");
   let gl = "";
   if (T.fein) for (const [x, y, L, b, w] of liste) { const a = w * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a), P = (u, v) => `${R2(x + u * c - v * sn)} ${R2(y + u * sn + v * c)}`; gl += `M${P(L * 0.12, -b * 0.22)}Q${P(L * 0.5, -b * 0.32)} ${P(L * 0.78, b * 0.15)}`; }
-  return `<path d="${d}" fill="${farbe}"/><path d="${d}" fill="${g}"/>` + (gl ? `<path d="${gl}" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="${R2(liste[0][3] * 0.14) || 0.05}" stroke-linecap="round"/>` : "");
+  return `<path d="${d}" fill="${g}"/>` + (gl ? `<path d="${gl}" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="${R2(liste[0][3] * 0.14) || 0.05}" stroke-linecap="round"/>` : "");
 };
 /* kegelförmige Zähne: [x, y, L, b, neigung] Basis (x, y), Spitze nach unten (dir 1) oder oben (dir −1) */
 const zaehne = (T, liste, dir = 1, o = {}) => {
   let d = "", gl = "", sch = "";
+  const q = (P0, C, P1) => `q${R2(C[0] - P0[0])} ${R2(C[1] - P0[1])} ${R2(P1[0] - P0[0])} ${R2(P1[1] - P0[1])}`;
   for (const [x, y, L, b, k = 0] of liste) {
-    const tx = x + k * L, ty = y + dir * L;
-    d += `M${R2(x - b / 2)} ${R2(y)}Q${R2(x - b * 0.45 + k * L * 0.4)} ${R2(y + dir * L * 0.62)} ${R2(tx)} ${R2(ty)}Q${R2(x + b * 0.5 + k * L * 0.5)} ${R2(y + dir * L * 0.45)} ${R2(x + b / 2)} ${R2(y)}Z`;
+    const tx = x + k * L, ty = y + dir * L, A = [x - b / 2, y], S = [tx, ty], E = [x + b / 2, y];
+    d += `M${R2(A[0])} ${R2(A[1])}${q(A, [x - b * 0.45 + k * L * 0.4, y + dir * L * 0.62], S)}${q(S, [x + b * 0.5 + k * L * 0.5, y + dir * L * 0.45], E)}z`;
     if (T.fein) {
-      gl += `M${R2(x - b * 0.18)} ${R2(y + dir * L * 0.15)}Q${R2(x - b * 0.2 + k * L * 0.4)} ${R2(y + dir * L * 0.55)} ${R2(tx - b * 0.08)} ${R2(ty - dir * L * 0.12)}`;
-      sch += `M${R2(x + b * 0.28)} ${R2(y + dir * L * 0.1)}Q${R2(x + b * 0.3 + k * L * 0.45)} ${R2(y + dir * L * 0.45)} ${R2(tx + b * 0.05)} ${R2(ty - dir * L * 0.2)}`;
+      const g0 = [x - b * 0.18, y + dir * L * 0.15];
+      gl += `M${R2(g0[0])} ${R2(g0[1])}${q(g0, [x - b * 0.2 + k * L * 0.4, y + dir * L * 0.55], [tx - b * 0.08, ty - dir * L * 0.12])}`;
     }
   }
   const g = T.lg("zahn" + dir + (o.n || ""), [[0, dir > 0 ? (o.basis || "#b7a072") : (o.spitze || "#f1e9d2")], [0.45, o.mitte || "#e2d6b4"], [1, dir > 0 ? (o.spitze || "#f1e9d2") : (o.basis || "#b7a072")]]);
@@ -328,7 +338,12 @@ const reptilBein = (T, o) => {
   const [hell, mittel, dunkel] = o.farben;
   const gr = T.lg("bein" + (o.ton || ""), [[0, hell], [0.5, mittel], [1, dunkel]], 0.15, 0, 0.85, 1);
   let s = "";
-  if (o.schwimm) s += T.form(o.schwimm, dunkel, ' opacity=".75"');
+  if (o.schwimm) s += form(T, o.schwimm, dunkel, ' opacity=".75"');
+  if (!T.fein) {   // Szene: nur Formen mit Licht, Zehen, Krallen
+    s += `<path d="${o.glieder.map(poly).join("")}" fill="${gr}"/>`;
+    if (o.zehen) s += `<path d="${o.zehen.map(([x0, y0, x1, y1]) => `M${R(x0)} ${R(y0)}L${R(x1)} ${R(y1)}`).join("")}" stroke="${mittel}" stroke-width="${o.zehen[0][4]}" stroke-linecap="round"/>`;
+    return s + (o.krallen ? krallen(T, o.krallen, o.krallenFarbe || "#2a2418") : "");
+  }
   const glieder = o.glieder.map((p, i) => teil(T, p, gr, { rand: false, innen: (o.muster ? `<rect x="${R(T.box(p)[0] - 1)}" y="${R(T.box(p)[1] - 1)}" width="${R(T.box(p)[2] - T.box(p)[0] + 2)}" height="${R(T.box(p)[3] - T.box(p)[1] + 2)}" fill="${o.muster}"/>` : "") + ((o.innen && o.innen[i]) || "") }));
   if (o.maske) {
     const id = T.id("bm" + o.n);
@@ -346,7 +361,7 @@ const reptilBein = (T, o) => {
       d += `M${R(x0)} ${R(y0)}L${R(x1)} ${R(y1)}`;
       dS += `M${R(x0)} ${R(y0 + b * 0.25)}L${R(x1)} ${R(y1 + b * 0.2)}`;
       dL += `M${R(x0 + 0.3)} ${R(y0 - b * 0.28)}L${R(x1 - b * 0.4)} ${R(y1 - b * 0.24)}`;
-      if (T.fein) { const n = Math.max(2, Math.round(Math.hypot(x1 - x0, y1 - y0) / (b * 0.75))); for (let i = 1; i < n; i++) { const u = i / n, x = x0 + (x1 - x0) * u, y = y0 + (y1 - y0) * u; dQ += `M${R(x)} ${R(y - b * 0.45)}l${R(-b * 0.12)} ${R(b * 0.5)}`; } }
+      if (T.fein && o.ticks !== false) { const n = Math.max(2, Math.round(Math.hypot(x1 - x0, y1 - y0) / (b * 0.75))); for (let i = 1; i < n; i++) { const u = i / n, x = x0 + (x1 - x0) * u, y = y0 + (y1 - y0) * u; dQ += `M${R(x)} ${R(y - b * 0.45)}l${R(-b * 0.12)} ${R(b * 0.5)}`; } }
     }
     const b0 = o.zehen[0][4];
     s += `<g fill="none" stroke-linecap="round"><path d="${d}" stroke="${mittel}" stroke-width="${b0}"/><path d="${dS}" stroke="${dunkel}" stroke-width="${R2(b0 * 0.5)}" stroke-opacity=".8"/>` +
@@ -426,60 +441,60 @@ function krokodil(T) {
   const Rr = rohr(sp, 5);
   const tx = (x) => { let lo = 0, hi = 1; for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; if (Rr.P(m, 0)[0] < x) lo = m; else hi = m; } return (lo + hi) / 2; };
   const tH = tx(147), tS = tx(237);
-  const umriss = Rr.zug(-1, 0, 1, 28).concat(Rr.zug(1, 0, 1, 28).reverse());
+  const umriss = Rr.zug(-1, 0, 1, 22).concat(Rr.zug(1, 0, 1, 22).reverse());
 
   /* ---------- ferne Beine: gleiche Bauart, im Körperton ~25 % dunkler, Schuppen sichtbar ---------- */
-  const mB = F ? musterBeulen(T, "bu", 1.15, { rot: 5, grund: 0.1, hell: 0.18, dunkel: 0.26 }) : "";
+  const mB = "";
   const fernF = ["#5a5640", "#47442f", "#2f2c1f"];
-  h += reptilBein(T, { n: "fv", ton: "f", farben: fernF, muster: mB,
+  h += reptilBein(T, { n: "fv", ton: "f", ticks: false, farben: fernF, muster: mB,
     glieder: [[[235.4, -14.6], [240.4, -14.6], [242.4, -8], [243.6, -3.4], [240, -2.4], [238.6, -6.6], [236, -11]], [[239.4, -3.6], [243.6, -3.8], [246.4, -2.2], [247, -0.2, 1], [239, -0.2, 1], [238.8, -1.8]]],
-    zehen: [[244, -1.3, 249, -0.6, 0.9], [244.6, -1, 250.8, -0.5, 0.9], [244.4, -0.7, 249.4, -0.45, 0.9]],
-    krallen: [[249, -0.6, 1.3, 0.42, 14, 0.4], [250.8, -0.5, 1.4, 0.45, 10, 0.4]], falten: [[[238.6, -4], [240.8, -3.4], [243, -3.8]]] });
-  h += reptilBein(T, { n: "fh", ton: "f", farben: fernF, muster: mB,
+    zehen: [[244.6, -1.6, 248.8, -0.9, 1.2], [245.2, -1.2, 250.4, -0.66, 1.2], [245, -0.8, 249, -0.62, 1.2]],
+    krallen: [[248.8, -0.9, 1.4, 0.48, 16, 0.42], [250.4, -0.66, 1.5, 0.5, 12, 0.42]], falten: [[[238.6, -4], [240.8, -3.4], [243, -3.8]]] });
+  h += reptilBein(T, { n: "fh", ton: "f", ticks: false, farben: fernF, muster: mB,
     glieder: [[[134.4, -14], [140, -13.6], [138.6, -8], [136.4, -3.8], [132.4, -3.2], [133.4, -8]], [[131, -3.8], [136.4, -3.6], [139.6, -2.2], [140.2, -0.2, 1], [130.4, -0.2, 1], [130.2, -2]]],
-    zehen: [[139, -1.4, 145, -0.7, 0.95], [139.6, -1.1, 146.6, -0.55, 0.95], [139.4, -0.8, 144.4, -0.45, 0.95]],
-    krallen: [[145, -0.7, 1.3, 0.42, 14, 0.4], [146.6, -0.55, 1.4, 0.45, 10, 0.4]], falten: [[[132.6, -4], [135, -3.4], [137.4, -3.8]]] });
+    zehen: [[139.4, -1.7, 144.6, -1, 1.3], [140, -1.3, 146.2, -0.7, 1.3], [139.8, -0.9, 144.4, -0.66, 1.3]],
+    krallen: [[144.6, -1, 1.5, 0.5, 16, 0.42], [146.2, -0.7, 1.6, 0.52, 12, 0.42]], falten: [[[132.6, -4], [135, -3.4], [137.4, -3.8]]] });
 
   /* ---------- Körper: Farbzonen, Binden, Flecken, Licht, Schuppen ---------- */
   let inn = "";
-  const nZ = F ? 10 : 6;
+  const nZ = 8;
   inn += `<g filter="${weich(T, "z", 1.5)}">` +
-    T.form(Rr.band(-1.3, -0.42, 0, 1, nZ), "#36352a") +
-    T.form(Rr.band(-0.15, 0.45, 0.12, 1, nZ), "#857e58", ' opacity=".85"') +
-    T.form(Rr.band(0.45, 1.3, 0.1, 1, nZ), "#cbc4a2") +
-    T.form(Rr.band(0.2, 1.3, 0, 0.14, 4), "#736d4c", ' opacity=".8"') + "</g>";
+    form(T, poly(Rr.band(-1.3, -0.42, 0, 1, nZ)), "#36352a") +
+    form(T, poly(Rr.band(-0.15, 0.45, 0.12, 1, nZ)), "#857e58", ' opacity=".85"') +
+    form(T, poly(Rr.band(0.45, 1.3, 0.1, 1, nZ)), "#cbc4a2") +
+    form(T, poly(Rr.band(0.2, 1.3, 0, 0.14, 4)), "#736d4c", ' opacity=".8"') + "</g>";
   let bd = "";
   for (const b of [0.03, 0.085, 0.14, 0.195, 0.25, 0.305, 0.36, 0.415, 0.465]) { const w = 0.016 + b * 0.012; bd += T.glatt([Rr.P(b, -1.3), Rr.P(b + w, -1.3), Rr.P(b + w * 1.2, 0.1), Rr.P(b + w * 0.8, 0.6), Rr.P(b - w * 0.1, 0.5), Rr.P(b - w * 0.25, 0)]); }
-  for (const [t, v, w, hh] of [[0.56, -0.2, 0.011, 0.5], [0.6, 0.12, 0.009, 0.32], [0.64, -0.28, 0.012, 0.55], [0.685, 0.05, 0.011, 0.4], [0.725, -0.22, 0.01, 0.48], [0.77, -0.3, 0.012, 0.5], [0.81, 0.02, 0.01, 0.38], [0.85, -0.24, 0.011, 0.46], [0.53, 0.15, 0.009, 0.3], [0.9, -0.1, 0.01, 0.4]].filter((_, i) => F || i % 2 === 0))
-    bd += T.glatt([Rr.P(t - w, v - hh * 0.5), Rr.P(t + w, v - hh * 0.55), Rr.P(t + w * 1.7, v + hh * 0.5), Rr.P(t - w * 0.3, v + hh * 0.45)]);
+  [[0.56, -0.2, 0.011, 0.5], [0.6, 0.12, 0.009, 0.32], [0.64, -0.28, 0.012, 0.55], [0.685, 0.05, 0.011, 0.4], [0.725, -0.22, 0.01, 0.48], [0.77, -0.3, 0.012, 0.5], [0.81, 0.02, 0.01, 0.38], [0.85, -0.24, 0.011, 0.46], [0.53, 0.15, 0.009, 0.3], [0.9, -0.1, 0.01, 0.4]]
+    .filter((_, i) => F || i % 2 === 0).forEach(([t, v, w, hh], i) => { const [x, y] = Rr.P(t, v), rx = w * Rr.len * 1.3, ry = hh * 6; bd += `M${R(x - rx)} ${R(y)}a${R(rx)} ${R(ry)} ${12 + (i % 3) * 14} 1 0 ${R(2 * rx)} 0a${R(rx)} ${R(ry)} ${12 + (i % 3) * 14} 1 0 ${R(-2 * rx)} 0`; });
   inn += `<path d="${bd}" fill="#1c1b12" opacity=".5" filter="${weich(T, "b", 0.6)}"/>`;
   inn += `<g filter="${weich(T, "l", 1.3)}">` +
-    T.form(Rr.band(-1.1, -0.62, 0.02, 0.98, nZ), "#fff3d0", ' opacity=".14"') +
-    T.form(Rr.band(0.3, 0.8, 0.04, 0.98, nZ), "#000", ' opacity=".3"') +
-    T.form(Rr.band(0.9, 1.1, 0.5, 0.97, 6), "#f6edcc", ' opacity=".28"') + "</g>";
+    form(T, poly(Rr.band(-1.1, -0.62, 0.02, 0.98, nZ)), "#fff3d0", ' opacity=".14"') +
+    form(T, poly(Rr.band(0.3, 0.8, 0.04, 0.98, nZ)), "#000", ' opacity=".3"') +
+    form(T, poly(Rr.band(0.9, 1.1, 0.5, 0.97, 6)), "#f6edcc", ' opacity=".28"') + "</g>";
   const tsR = []; for (let i = 0; i <= 17; i++) tsR.push(tH + (tS - tH) * i / 17);
   const tsS = []; { let t = 0.014; while (t < tH - 0.012) { tsS.push(t); t += 0.0108 + t * 0.012; } tsS.push(tH); }
-  const vR = [-1.02, -0.86, -0.66, -0.42], vS = [-1.02, -0.68, -0.35, -0.03, 0.3, 0.62, 0.88, 1.04];
+  const vR = [-1.02, -0.86, -0.66, -0.42], vS = [-1.02, -0.68, -0.35, -0.03, 0.36, 0.76, 1.04];
   /* Schuppen: Fugen dunkel, darauf Platten/Beulen mit eigenem Licht */
   if (F) {
     const pG = plattenGrad(T, "g", false, 0.9), pG2 = plattenGrad(T, "g2", false, 1.2);
     const bN = beulenGrad(T, "n", 0.2, 0.26), bH = beulenGrad(T, "h", 0.3, 0.2), bD = T.rg("beuled", [[0, "#d8cfa0", 0.12], [0.4, "#1a170c", 0.22], [1, "#000", 0.42]], 0.36, 0.3, 0.78);
     /* Rückenschild: drei sichtbare Längsreihen gekielter Osteoderme (Knochenplatten) über dunklen Fugen */
-    inn += T.form(Rr.band(-1.05, -0.41, tH - 0.004, tS + 0.004, 8), "#000", ' opacity=".3"');
-    inn += plattenG(T, Rr, tsR, vR, { jit: 0.16, sw: 0.35, fuge: 0.12, fugeV: 0.1, kiel: [0, 1, 2], kw: 0.42, opK: 0.32, opKL: 0.4, grad: (j, z) => z < 0.35 ? pG2 : pG });
+    inn += form(T, poly(Rr.band(-1.05, -0.41, tH - 0.004, tS + 0.004, 16)), "#000", ' opacity=".3"');
+    inn += plattenG(T, Rr, tsR, vR, { jit: 0.16, sw: 0.35, fuge: 0.12, fugeV: 0.1, kiel: [0, 1], kw: 0.42, opK: 0.32, opKL: 0.4, grad: (j, z) => z < 0.35 ? pG2 : pG });
     /* Flanke: gewölbte ovale Schuppen in lockeren Reihen, nach unten kleiner, manche dunkel (Fleckung) */
-    inn += T.form(Rr.band(-0.41, 0.5, tH, tS + 0.01, 8), "#000", ' opacity=".12"');
-    inn += T.form(Rr.band(-0.42, 0.12, tH, tS + 0.01, 8), musterBeulen(T, "fl", 2.2, { flach: 0.66, grund: 0.12, hell: 0.24, dunkel: 0.3, rot: -1 }));
-    inn += T.form(Rr.band(0.12, 0.52, tH, tS + 0.01, 8), musterBeulen(T, "fu", 1.6, { flach: 0.62, grund: 0.1, hell: 0.2, dunkel: 0.26, rot: -1 }));
+    inn += form(T, poly(Rr.band(-0.41, 0.5, tH, tS + 0.01, 16)), "#000", ' opacity=".12"');
+    inn += form(T, Rr.band(-0.42, 0.12, tH, tS + 0.01, 8), musterBeulen(T, "fl", 2.2, { flach: 0.66, grund: 0.12, hell: 0.24, dunkel: 0.3, rot: -1 }));
+    inn += form(T, Rr.band(0.12, 0.52, tH, tS + 0.01, 8), musterBeulen(T, "fl", 2.2));
     /* Hals: Nackenschilde seitlich, dazwischen kleinere Höcker */
     inn += beulen(T, Rr.band(-0.95, 0.4, tS + 0.008, 1, 4), 1.7, { flach: 0.7, dichte: 0.9, grads: [bN, bN, bD] });
     /* Bauchschilde in Querreihen */
-    const tsB = []; for (let t = tH; t < 1; t += 0.0098) tsB.push(t);
+    const tsB = []; for (let t = tH; t < 1; t += 0.015) tsB.push(t);
     inn += gitter(T, Rr, tsB, [0.5, 0.7, 0.9], { versatz: true, w: 0.16, g: 0.2, opS: 0.34, opL: 0.26, hell: "#fff6da", schritt: 40, lichtQuer: false });
     /* Schwanzringe: Fugen, obere vier Reihen als Platten (drei gekielt), untere glatte Rechtecke */
-    inn += T.form(Rr.band(-1.05, 0.3, 0, tH, 14), "#000", ' opacity=".22"');
+    inn += form(T, poly(Rr.band(-1.05, 0.3, 0, tH, 24)), "#000", ' opacity=".22"');
     inn += gitter(T, Rr, tsS, vS, { licht: false, w: 0.4, opS: 0.55, dunkel: "#0e0d08", schritt: 30 });
-    inn += plattenG(T, Rr, tsS, vS.slice(0, 3), { sw: 0.35, fuge: 0.1, kiel: [0, 1], kw: 0.34, opK: 0.3, opKL: 0.3, grad: (j, z) => z < 0.35 ? pG2 : pG });
+    inn += plattenG(T, Rr, tsS.filter((t) => t > 0.1), vS.slice(0, 3), { sw: 0.35, fuge: 0.1, kiel: [0], kw: 0.34, opK: 0.3, opKL: 0.3, grad: (j, z) => z < 0.35 ? pG2 : pG });
   } else {
     inn += gitter(T, Rr, tsR.filter((_, i) => i % 2 === 0), [-1.02, -0.8, -0.45], { w: 0.5, opS: 0.45, licht: false, schritt: 40 });
     inn += gitter(T, Rr, tsS.filter((_, i) => i % 2 === 0), [-0.55, 0.45], { w: 0.5, opS: 0.35, licht: false, schritt: 40 });
@@ -488,13 +503,13 @@ function krokodil(T) {
 
   /* ---------- Schwanzkamm (zwei Reihen, ab der Mitte eine) und Rückenkiele ---------- */
   let kam = "", kamL = "", kamF = "";
-  for (let i = 0; i < tsS.length - 1; i++) {
-    const t0 = tsS[i], t1 = tsS[i + 1], [, , nx, ny] = Rr.at(t0);
+  for (let i = 0; i < tsS.length - 1; i += F ? 1 : 2) {
+    const t0 = tsS[i], t1 = tsS[Math.min(tsS.length - 1, i + (F ? 1 : 2))], [, , nx, ny] = Rr.at(t0);
     const Hh = (0.7 + 2.2 * Math.sin(Math.PI * Math.min(1, (t0 / tH) * 0.85 + 0.08))) * Math.min(1, 0.45 + t0 * 6);
     const a = Rr.P(t0, -1), b = Rr.P(t1, -1), m = Rr.P(t0 + (t1 - t0) * 0.6, -1);
     const s2 = [m[0] + nx * Hh - 0.25, m[1] + ny * Hh];
-    kam += `M${R(a[0])} ${R(a[1] + 0.5)}Q${R(a[0] + (s2[0] - a[0]) * 0.55 - 0.3)} ${R(a[1] + (s2[1] - a[1]) * 0.6)} ${R(s2[0])} ${R(s2[1])}L${R(b[0])} ${R(b[1] + 0.5)}Z`;
-    if (F) kamL += `M${R(a[0] + 0.35)} ${R(a[1] - 0.1)}L${R(s2[0] - 0.05)} ${R(s2[1] + 0.25)}`;
+    kam += F ? `M${R(a[0])} ${R(a[1] + 0.5)}Q${R(a[0] + (s2[0] - a[0]) * 0.55 - 0.3)} ${R(a[1] + (s2[1] - a[1]) * 0.6)} ${R(s2[0])} ${R(s2[1])}L${R(b[0])} ${R(b[1] + 0.5)}Z` : `M${R(a[0])} ${R(a[1] + 0.5)}L${R(s2[0])} ${R(s2[1])}L${R(b[0])} ${R(b[1] + 0.5)}Z`;
+    if (F && t0 > 0.08) kamL += `M${R(a[0] + 0.35)} ${R(a[1] - 0.1)}L${R(s2[0] - 0.05)} ${R(s2[1] + 0.25)}`;
     if (F && t0 > 0.23) { const mm = Rr.P(t0 + (t1 - t0) * 0.1, -1); kamF += `M${R(a[0] - 0.9)} ${R(a[1] + 0.5)}L${R(mm[0] + nx * Hh * 0.82 - 0.5)} ${R(mm[1] + ny * Hh * 0.82)}L${R(mm[0] + 0.7)} ${R(mm[1] + 0.5)}Z`; }
   }
   for (let i = 0; i < tsR.length - 1; i++) {
@@ -515,20 +530,20 @@ function krokodil(T) {
   h += reptilBein(T, { n: "nh", ton: "n", farben: nahF, muster: mO, maske: [-24.6, -19.6],
     glieder: [[[139.6, -22.6], [150, -24.4], [158, -21.6], [163.6, -15.2], [165, -11.6], [163.2, -9.2], [159.4, -9.6], [154, -12.4], [146.4, -14.8], [140.6, -17.4]],
       [[158.4, -12.6], [164.6, -11.4], [163.4, -7.2], [161, -4.4], [160.4, -2.6], [155.2, -2.4], [154.4, -4.6], [155.4, -8.4], [156.6, -11.2]],
-      [[153.4, -3.8], [160.6, -3.4], [164.6, -2.4], [166.2, -1], [165.4, -0.2, 1], [152.8, -0.2, 1], [152.2, -1.8]]],
+      [[153.4, -3.8], [158.6, -3.6], [162.6, -2.8], [166, -2], [167.4, -0.9], [166.6, -0.2, 1], [152.8, -0.2, 1], [152.2, -1.8]]],
     innen: [fleck(T, "l", 154, -20, 6, 2.6, -25, 0.35) + fleck(T, "d", 150, -14.4, 7, 2, -15, 0.45), fleck(T, "l", 160.6, -9, 1.4, 2.8, 25, 0.3), fleck(T, "d", 158, -0.8, 7, 0.9, 0, 0.45)],
-    schwimm: [[165, -1.9], [171, -1.4], [175.4, -1], [177, -0.7], [173, -0.4], [166, -0.5]],
-    zehen: [[164, -1.8, 171.6, -1.1, 1.1], [164.6, -1.5, 175.6, -0.75, 1.1], [165, -1.1, 177.4, -0.6, 1.1], [164.6, -0.75, 173.4, -0.55, 1.1]],
-    krallen: [[171.6, -1.1, 1.5, 0.5, 15, 0.4], [175.6, -0.75, 1.7, 0.55, 12, 0.4], [177.4, -0.6, 1.8, 0.6, 8, 0.4]],
+    schwimm: [[165, -2.2], [170, -1.7], [173.4, -1.2], [175, -0.9], [172, -0.6], [166, -0.6]],
+    zehen: [[165, -2, 170.4, -1.4, 1.45], [165.6, -1.6, 173.6, -1.05, 1.45], [166, -1.2, 175, -0.8, 1.45], [165.6, -0.8, 171.2, -0.72, 1.45]],
+    krallen: [[170.4, -1.4, 1.6, 0.55, 18, 0.45], [173.6, -1.05, 1.8, 0.6, 14, 0.45], [175, -0.8, 1.9, 0.62, 10, 0.45]],
     kanten: [[[158, -21.6], [163.6, -15.2], [165, -11.6], [163.2, -9.2]], [[164.6, -11.4], [163.4, -7.2], [161, -4.4], [160.4, -2.8]], [[155.4, -8.4], [154.4, -4.6], [153, -3.4]]],
     falten: [[[159.4, -11], [161.8, -10.2], [164.2, -10.8]], [[155.6, -4], [158, -3.4], [160.6, -3.8]], [[141, -17.2], [146.4, -15], [152, -13.2]]] });
   h += reptilBein(T, { n: "nv", ton: "n", farben: nahF, muster: mO, maske: [-23.6, -19.2],
     glieder: [[[221.6, -23], [229.4, -22.6], [229.6, -18.4], [227, -14], [224.4, -10.4], [220.4, -9], [219.2, -11.6], [220.2, -16.4], [221, -20.4]],
       [[219.4, -11.2], [224.6, -11.8], [227.4, -8], [228.8, -4.6], [229.2, -2.8], [224.8, -2], [223.6, -4], [221.4, -7]],
-      [[223.8, -3.6], [229, -3.8], [231.8, -2.6], [232.6, -1], [231.6, -0.2, 1], [223.6, -0.2, 1], [223.2, -1.8]]],
+      [[223.8, -3.6], [228.4, -3.8], [231.4, -2.8], [233.2, -1.6], [233.4, -0.6], [232.4, -0.2, 1], [223.6, -0.2, 1], [223.2, -1.8]]],
     innen: [fleck(T, "l", 225, -18.6, 3.6, 2.6, -30, 0.35) + fleck(T, "d", 222, -10.6, 3, 1.6, 0, 0.4), fleck(T, "l", 223.6, -9, 1.2, 2.4, -30, 0.3), fleck(T, "d", 228, -0.8, 5, 0.9, 0, 0.45)],
-    zehen: [[229.6, -1.9, 233.8, -1.1, 0.95], [230.4, -1.6, 236.6, -0.75, 0.95], [231, -1.25, 238.4, -0.55, 0.95], [231, -0.9, 237.4, -0.5, 0.95], [230.6, -0.6, 234.4, -0.45, 0.95]],
-    krallen: [[233.8, -1.1, 1.3, 0.45, 18, 0.4], [236.6, -0.75, 1.5, 0.5, 14, 0.4], [238.4, -0.55, 1.6, 0.5, 10, 0.4]],
+    zehen: [[230.6, -2.2, 234.4, -1.5, 1.25], [231.4, -1.8, 236.6, -1.05, 1.25], [232, -1.4, 238, -0.8, 1.25], [232, -1, 237, -0.68, 1.25], [231.6, -0.7, 234.8, -0.63, 1.25]],
+    krallen: [[234.4, -1.5, 1.4, 0.5, 20, 0.45], [236.6, -1.05, 1.6, 0.55, 16, 0.45], [238, -0.8, 1.7, 0.55, 12, 0.45]],
     kanten: [[[229.6, -18.4], [227, -14], [225.6, -12]], [[224.6, -11.8], [227.4, -8], [228.8, -4.6], [229.2, -2.8]], [[219.2, -11.6], [221.4, -7], [223.6, -4]]],
     falten: [[[221, -10.6], [223.6, -9.4], [226.2, -10.4]], [[224.4, -3.8], [226.6, -3.2], [229, -3.6]]] });
 
@@ -539,13 +554,13 @@ function krokodil(T) {
   /* Unterkiefer: vorn schlank, hinten tief, geht in die Kehle über; Seite mittelhell, dunkel gefleckt, Unterkante hell */
   const uk = [[300.2, -22.2], [300.5, -21], [299.6, -19.9], [296.6, -19.2], [290, -18.8], [282, -18.3], [274, -17.8], [266, -17.4], [260, -17.2], [254, -17.2], [248, -17.4], [244, -18], [243.6, -21], [246.6, -24.4], [251, -25.8], [255, -25.8], [258, -24.6], [266, -23.4], [276, -23], [286, -23.2], [292, -24.4], [297, -23.6]];
   let ui = "";
-  ui += `<g filter="${weich(T, "k", 0.6)}">` + T.form([[243, -17.4], [262, -17.4], [280, -18.4], [298, -19.6], [298, -20.4], [280, -19.8], [262, -19.6], [250, -20.6], [243, -20.4]], "#d6ceaa", ' opacity=".6"') + T.form([[243, -21], [252, -25], [256, -24.8], [252, -21]], "#000", ' opacity=".25"') + "</g>";
+  ui += `<g filter="${weich(T, "k", 0.6)}">` + form(T, [[243, -17.4], [262, -17.4], [280, -18.4], [298, -19.6], [298, -20.4], [280, -19.8], [262, -19.6], [250, -20.6], [243, -20.4]], "#d6ceaa", ' opacity=".6"') + form(T, [[243, -21], [252, -25], [256, -24.8], [252, -21]], "#000", ' opacity=".25"') + "</g>";
   ui += fleck(T, "d", 264, -23, 14, 1.3, 0, 0.5) + fleck(T, "l", 254.6, -21.6, 3.2, 2.2, 0, 0.3);
-  ui += flecken([[258, -21.2, 0.9], [263.6, -20.6, 0.7], [268.4, -21.4, 1], [274, -20.8, 0.75], [279.4, -21.3, 0.95], [285, -20.7, 0.7], [290.4, -21.1, 0.85], [295.6, -20.8, 0.6]], "#2b2816", 0.55);
+  if (F) ui += flecken([[258, -21.2, 0.9], [263.6, -20.6, 0.7], [268.4, -21.4, 1], [274, -20.8, 0.75], [279.4, -21.3, 0.95], [285, -20.7, 0.7], [290.4, -21.1, 0.85], [295.6, -20.8, 0.6]], "#2b2816", 0.55);
   if (F) {
     ui += `<rect x="243" y="-26" width="58" height="9" fill="${musterBeulen(T, "kg", 1.45, { flach: 0.62, grund: 0.04, hell: 0.09, dunkel: 0.12 })}"/>`;
-    ui += reihe(T, [[253, -24.6], [262, -23.2], [274, -22.2], [288, -21.8], [299.6, -22.2]], 26, 2.2, "#18140a", 0.12, 0.34, -0.2);
-    ui += punkte(T, [[256, -23.4], [298, -22.2], [298, -20.2], [256, -19.4]], 55, 0.12, "#1a160a", 0.6);
+
+    ui += punkte(T, [[256, -23.4], [298, -22.2], [298, -20.2], [256, -19.4]], 32, 0.12, "#1a160a", 0.6);
   }
   /* Kopf geht hinten weich in den Hals über (Maske statt harter Kante) */
   const mid = T.id("kmask");
@@ -558,16 +573,16 @@ function krokodil(T) {
   let ki = "";
   /* große Licht- und Schattenformen: Schnauzenrücken hell, Kieferseite unten dunkel, Mulde unter dem Auge,
      Kaumuskel hinter dem Maulwinkel gewölbt, Augenwulst */
-  ki += `<g filter="${weich(T, "h", 0.9)}">` + T.form([[250, -34.4], [262, -35.2], [272, -35], [284, -30], [296, -27.2], [299, -26], [292, -26.4], [280, -29.6], [268, -32], [256, -32.6]], "#ece2bb", ' opacity=".26"') +
-    T.form([[257, -25.4], [264, -23.4], [280, -22.6], [296, -22.8], [296, -24], [280, -24.4], [264, -26], [258, -28]], "#000", ' opacity=".24"') +
-    T.form([[260, -31.6], [266, -32.6], [274, -32], [280, -29.4], [276, -28.4], [266, -29.6]], "#000", ' opacity=".2"') + "</g>";
+  ki += `<g filter="${weich(T, "h", 0.9)}">` + form(T, [[250, -34.4], [262, -35.2], [272, -35], [284, -30], [296, -27.2], [299, -26], [292, -26.4], [280, -29.6], [268, -32], [256, -32.6]], "#ece2bb", ' opacity=".26"') +
+    form(T, [[257, -25.4], [264, -23.4], [280, -22.6], [296, -22.8], [296, -24], [280, -24.4], [264, -26], [258, -28]], "#000", ' opacity=".24"') +
+    form(T, [[260, -31.6], [266, -32.6], [274, -32], [280, -29.4], [276, -28.4], [266, -29.6]], "#000", ' opacity=".2"') + "</g>";
   ki += fleck(T, "l", 254, -29.4, 3, 3.2, 0, 0.32) + fleck(T, "l", 287, -26.4, 9, 1.4, -14, 0.22) + fleck(T, "l", 268.6, -37.2, 3.4, 1.3, -4, 0.45);
-  ki += flecken([[262.4, -26.8, 0.8], [267.4, -27.6, 0.95], [273, -26.4, 0.7], [278, -27.6, 0.9], [282.6, -25.6, 0.7], [287.4, -26.2, 0.8], [292, -25.2, 0.6], [270.8, -24.8, 0.6], [259.6, -29, 0.8], [276.4, -24.6, 0.6]], "#22200f", 0.45);
+  if (F) ki += flecken([[262.4, -26.8, 0.8], [267.4, -27.6, 0.95], [273, -26.4, 0.7], [278, -27.6, 0.9], [282.6, -25.6, 0.7], [287.4, -26.2, 0.8], [292, -25.2, 0.6], [270.8, -24.8, 0.6], [259.6, -29, 0.8], [276.4, -24.6, 0.6]], "#22200f", 0.45);
   if (F) {
     /* fein gekörnte Haut (gezeichnete Körnchen, schwach), Schädeldach gröber; Lippenschuppen; Sinnesorgane */
-    ki += `<g filter="${weich(T, "sd", 0.5)}">` + T.form([[248, -34.4], [262, -35.3], [265, -33.8], [262, -31.4], [255, -30.6], [250, -31.4]], musterBeulen(T, "sd", 1.3, { flach: 0.8, grund: 0.08, hell: 0.16, dunkel: 0.22 }), ' opacity=".9"') + "</g>";
+    ki += fleck(T, "d", 256, -32.6, 7, 2, 0, 0.25);
     ki += `<rect x="243" y="-38" width="58" height="17" fill="${musterBeulen(T, "kg", 1.45, { flach: 0.62, grund: 0.04, hell: 0.09, dunkel: 0.12 })}"/>`;
-    ki += punkte(T, [[262, -27.4], [298, -25.4], [298, -23.4], [262, -24.2]], 70, 0.11, "#14120a", 0.6);
+    ki += punkte(T, [[262, -27.4], [298, -25.4], [298, -23.4], [262, -24.2]], 38, 0.11, "#14120a", 0.6);
     ki += reihe(T, [[257.4, -25], [265, -23.2], [275, -22.4], [286.4, -22], [289.6, -22.8], [291.6, -23.8], [293.6, -23.8], [297.6, -22.4]], 30, -1.1, "#16130a", 0.12, 0.36, 0.25);
   }
   ki += fleck(T, "d", 292.4, -23.8, 1.6, 1.1, 0, 0.5);
@@ -596,7 +611,7 @@ function krokodil(T) {
   /* Nasenscheibe (erhabener Ring) mit Nasenloch */
   k += fleck(T, "l", 297.8, -27.9, 1.6, 0.7, 0, 0.5) + `<path d="M296.9 -27.7Q297.9 -28.4 298.9 -27.7Q297.9 -27.4 296.9 -27.7Z" fill="#0f0d07"/>` + (F ? linien(T, [[[296.4, -28.1], [297.9, -28.8], [299.4, -28.1]]], "#f4ead0", 0.14, 0.5) : "");
   h += `<g transform="translate(0 2)">${k}</g>`;
-  return fertig(1.5, h, [0, -36.6, 301, 0], [140, 165, 234, 248], [243, -38, 302, -14]);
+  return fertig(1.5, h, [0, -36.6, 301, 0], [138, 162, 228, 245], [243, -38, 302, -14]);
 }
 
 module.exports = [

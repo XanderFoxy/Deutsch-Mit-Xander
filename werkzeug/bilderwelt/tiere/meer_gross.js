@@ -203,6 +203,41 @@ function mach(T, dez = 1) {
     }
     return H.L(z, farbe, w, op);
   };
+  /* Knoten (Tuberkel) auf der Haut: runde Beule, Licht oben links, Schatten unten rechts, mittig ein Tasthaar.
+     Einmal als Vorlage (Einheitskreis) angelegt, je Knoten nur <use>. liste: [[x, y, r], …] */
+  const vorlage = {};
+  const r2 = (n) => String(Math.round(n * 100) / 100);
+  H.knoten = (liste, haut = "#2a3036") => {
+    const id = T.id("kn" + haut.slice(1));
+    if (!vorlage[id]) {
+      vorlage[id] = 1;
+      /* ohne eigene Füllfarbe: nur Licht (oben links) und Schatten (unten rechts) – die Beule wächst aus der Haut */
+      T.def(`<g id="${id}"><ellipse cx=".3" cy=".42" rx="1.25" ry="1" fill="${T.rg("knS", [[0, "#000", 0.55], [0.6, "#000", 0.26], [1, "#000", 0]])}"/>` +
+        `<ellipse cx="-.12" cy="-.16" rx="1" ry=".86" fill="${T.rg("knL", [[0, haut, 0.9], [0.4, haut, 0.5], [1, haut, 0]], 0.45, 0.45, 0.5)}"/>` +
+        `<ellipse cx="-.22" cy="-.3" rx=".7" ry=".55" fill="${T.rg("knH", [[0, "#ffffff", 0.42], [1, "#ffffff", 0]])}"/>` +
+        (F ? `<path d="M.05 -.05q.18 -.35 .5 -.62" fill="none" stroke="#cfc8b8" stroke-width=".05" stroke-opacity=".6"/>` : "") + `</g>`);
+    }
+    return liste.map(([x, y, r]) => `<use href="#${id}" transform="translate(${f(x)} ${f(y)}) scale(${r2(r)})"/>`).join("");
+  };
+  /* Seepocken (Coronula): Kranz aus Kalkplatten mit dunkler Öffnung, Schatten unten rechts. liste: [[x, y, r], …] */
+  H.seepocken = (liste) => {
+    const id = T.id("sp");
+    if (!vorlage[id]) {
+      vorlage[id] = 1;
+      /* Krone: sechs Kalkplatten als unregelmäßiger Wellenkranz; Öffnung dunkel, eingesunken */
+      const kr = [], mi = [];
+      for (let i = 0; i < 18; i++) { const w = i / 18 * Math.PI * 2, rr = 1 + (i % 3 === 0 ? 0.1 : -0.04) + Math.sin(i * 2.7) * 0.04; kr.push([Math.cos(w) * rr, Math.sin(w) * rr * 0.92]); }
+      for (let i = 0; i < 9; i++) { const w = i / 9 * Math.PI * 2, rr = 0.3 + (i % 2 ? 0.07 : -0.03); mi.push([Math.cos(w) * rr * 1.2 + 0.04, Math.sin(w) * rr * 0.7 + 0.03]); }
+      const pfad = (pts) => "M" + pts.map((p) => r2(p[0]) + " " + r2(p[1])).join(" ") + "Z";
+      let pl = "";
+      for (let i = 0; i < 6; i++) { const w = i / 6 * Math.PI * 2 + 0.3; pl += `M${r2(Math.cos(w) * 0.48)} ${r2(Math.sin(w) * 0.44)}L${r2(Math.cos(w) * 0.92)} ${r2(Math.sin(w) * 0.85)}`; }
+      T.def(`<g id="${id}"><ellipse cx=".28" cy=".38" rx="1.2" ry="1.05" fill="${T.rg("spS", [[0, "#000", 0.5], [0.75, "#000", 0.2], [1, "#000", 0]])}"/>` +
+        `<path d="${pfad(kr)}" fill="${T.rg("spG", [[0, "#dcd8cc"], [0.55, "#bdb6a4"], [1, "#7b7363"]], 0.36, 0.3, 0.75)}"/>` +
+        (F ? `<path d="${pl}" stroke="#8a806b" stroke-width=".07" stroke-opacity=".6" fill="none"/>` : "") +
+        `<path d="${pfad(mi)}" fill="#3a3630"/><path d="M-.36 -.12A.4 .36 0 0 1 .3 -.26" fill="none" stroke="#000" stroke-opacity=".5" stroke-width=".1"/></g>`);
+    }
+    return liste.map(([x, y, r]) => `<use href="#${id}" transform="translate(${f(x)} ${f(y)}) scale(${r2(r)}) rotate(${Math.round(x * 7 % 60)})"/>`).join("");
+  };
   /* Walauge (Seitenansicht): kleine Lidspalte, Hautfalten, dunkle Iris, Pupille, nasser Glanz.
      x, y = Mitte, r = halbe Breite, o: { winkel, iris, haut (Farbe der Falten), hell (Faltenlicht) } */
   H.walAuge = (x, y, rr, o = {}) => {
@@ -550,6 +585,114 @@ function weisser_hai(T) {
   return H.ende(s, [2, -200.5, 450, -12.6], [372, -136, 452, -56]);
 }
 
+/* =====================================================================
+   BUCKELWAL
+   ===================================================================== */
+/* RECHERCHE Buckelwal (Megaptera novaeangliae):
+   12–16 m (hier 14 m), massig; Kopf flach, von oben gesehen schmal-rund, ~¼ der Länge; Oberseite der Schnauze,
+   Oberkieferrand und Unterkiefer mit faustgroßen KNOTEN (Tuberkel, je ein Tasthaar), am Unterkieferende ein
+   runder Kinnhöcker mit Seepocken. Maullinie stark gewölbt, Auge knapp hinter/über dem Mundwinkel. 14–35 breite
+   KEHLFURCHEN vom Kinn bis zum Nabel (~½ der Länge), dazwischen oft weiß. BRUSTFLOSSEN riesig, ~⅓ der Länge,
+   schmal, Vorderkante mit großen Höckern, im Atlantik meist weiß. Kleine Rückenfinne auf einem Buckel bei ~⅔ der
+   Länge, dahinter eine Reihe Höcker („Knöchel“) auf dem Schwanzstiel. Fluke bis ⅓ der Länge breit, Hinterrand
+   unregelmäßig gezackt, Unterseite individuell schwarz-weiß. Oberseite schwarz bis dunkelgrau, Bauch/Kehle weiß
+   gefleckt. SEEPOCKEN (Coronula) an Kinn, Kehle, Flossenkanten, Fluke, Genitalregion; helle Narben. */
+function buckelwal(T) {
+  const H = mach(T, 0), { G, L, teil, weichF, weichL, F, f } = H;
+  const DUNKEL = "#22272d", WEISS = "#e6e7e2";
+  const R = H.rumpf(
+    [[1398, -226], [1395, -234], [1382, -242], [1352, -252], [1302, -264], [1242, -276], [1182, -287], [1124, -296], [1092, -303], [1074, -306], [1040, -311], [980, -320], [910, -329], [830, -336], [750, -339], [670, -338], [600, -335], [548, -336], [512, -337], [470, -330], [420, -320], [370, -306], [318, -289], [262, -270], [206, -252], [156, -237], [116, -228], [84, -222]],
+    [[1398, -226], [1401, -213], [1397, -199], [1385, -186], [1364, -174], [1330, -160], [1280, -143], [1220, -127], [1160, -114], [1090, -103], [1010, -97], [940, -94], [860, -95], [780, -100], [700, -110], [620, -124], [540, -142], [460, -161], [380, -178], [300, -191], [226, -196], [160, -194], [116, -190], [84, -187]],
+    [[62, -226], [36, -232], [10, -239], [-16, -246], [-38, -251], [-50, -252, 1], [-43, -246], [-37, -241], [-35, -236], [-27, -230], [-26, -225], [-17, -219], [-14, -213], [-7, -207], [-3, -204, 1], [-9, -199], [-16, -193], [-16, -188], [-26, -181], [-27, -176], [-38, -168], [-40, -162], [-51, -154], [-60, -148, 1], [-46, -150], [-20, -158], [10, -167], [40, -176], [64, -182]]);
+  const P = R.P;
+  let s = "";
+  /* Rückenfinne: klein, auf einem Buckel */
+  const rf = [[548, -334], [536, -344], [520, -356], [504, -366], [491, -371], [484, -369, 1], [486, -361], [484, -350], [476, -339], [466, -332]];
+  s += teil(G(rf.concat([[510, -320]])), DUNKEL, { innen: weichF([[540, -342], [520, -356], [500, -367], [490, -370], [506, -360], [526, -348]], "#b4c4d0", 0.4, 2) + weichF([[490, -362], [484, -348], [474, -336], [486, -340]], "#000", 0.4, 3), randD: G(rf, false), randA: 0.25, rw: 1.2 });
+  /* ---- Rumpf ---- */
+  let k = "";
+  /* weiße, gefleckte Kehle/Bauch (Kehlfurchenfeld), Grenze unregelmäßig */
+  const bauch = [[1390, 0.8], [1360, 0.78], [1320, 0.74], [1280, 0.72], [1240, 0.73], [1200, 0.7], [1160, 0.71], [1120, 0.68], [1080, 0.7], [1040, 0.72], [1000, 0.7], [960, 0.73], [920, 0.75], [880, 0.74], [840, 0.77], [800, 0.8], [760, 0.84], [720, 0.88], [680, 0.92], [640, 0.98], [600, 1.2]];
+  k += `<path d="${G(bauch.map((q) => P(q[0], q[1])).concat([[590, -60, 1], [1420, -60, 1]]))}" fill="${WEISS}" filter="${H.weich(2, [580, -260, 1420, -60])}"/>`;
+  /* dunkle Flecken im Weiß (individuelles Muster) */
+  if (F) k += [[1300, 0.86, 22, 8], [1210, 0.82, 30, 7], [1120, 0.9, 18, 6], [1010, 0.8, 26, 9], [930, 0.86, 16, 6], [860, 0.92, 22, 6], [760, 0.9, 14, 5]].map(([x, t, rx, ry]) => { const [px, py] = P(x, t); return weichF([[px - rx, py], [px - rx * 0.3, py - ry], [px + rx, py - ry * 0.2], [px + rx * 0.2, py + ry]], DUNKEL, 0.7, 2); }).join("");
+  /* Kehlfurchen: lange Furchen vom Kinn bis zum Nabel (dunkle Rinne + helle Kante) */
+  const furchen = [];
+  for (let i = 0; i < 10; i += F ? 1 : 2) {
+    const t = 0.7 + i * 0.03, xe = 760 + i * 6 - (i % 3) * 14;
+    const z = [];
+    for (let j = 0; j <= 8; j++) { const x = 1372 - (1372 - xe) * j / 8; z.push(P(x, t + (1 - t) * 0.08 * Math.sin(j / 8 * Math.PI) + (T.rnd() - 0.5) * 0.008 - (j === 0 ? 0.06 : 0))); }
+    furchen.push(z);
+  }
+  k += L(furchen, "#2d3238", 2.4, 0.4) + (F ? L(furchen.map((z) => z.map((p) => [p[0], p[1] + 2.4])), "#ffffff", 1.6, 0.28) + weichL(furchen.filter((z, i) => i % 2).map((z) => z.map((p) => [p[0], p[1] + 5])), "#000", 4, 0.08, 2) : "");
+  /* Licht von oben: Himmelslicht, Kernschatten im unteren Drittel, Reflexlicht am Bauch */
+  k += H.rampe(R, 84, 1398, [-0.1, -0.1, -0.1], 0.2, "#c4d4e0", 0.09, 12) + H.rampe(R, 84, 1398, [-0.1, -0.1], 0.42, "#c4d4e0", 0.06, 22);
+  k += H.rampe(R, 84, 1390, [0.45, 0.55, 0.64, 0.72], 0.96, "#0d151d", 0.08, 14);
+  k += weichF(R.band(400, 1360, 0.94, 1.06), "#cfd8dd", 0.3, 6);
+  /* Glanz: Kopfoberseite, Rücken, Buckel */
+  k += weichF(R.saum(1040, 1398, 5, 16), "#eef5f9", 0.5, 3);
+  k += weichF(R.linse(620, 1000, 0.06, 0.018), "#eef5f9", 0.55, 3);
+  k += weichF(R.linse(380, 560, 0.07, 0.02), "#eef5f9", 0.45, 3);
+  k += weichF(R.linse(130, 360, 0.09, 0.025), "#eef5f9", 0.4, 3);
+  k += H.kaustik([84, -345, 1400, -240], R.band(84, 1400, -0.1, 0.32), { op: 0.06, fx: 0.012, fy: 0.02, seed: 31, blur: 2, exp: 4, mblur: 30 });
+  /* Fluke: Kante am Stiel, Licht auf den Vorderkanten */
+  k += weichF([[96, -228], [64, -226], [40, -212], [36, -204], [40, -196], [64, -184], [96, -186], [80, -205]], "#000", 0.45, 9);
+  k += weichF([[80, -226], [30, -234], [-20, -246], [-48, -252], [-10, -242], [40, -230]], "#b9c8d2", 0.35, 3);
+  k += weichF([[80, -185], [30, -172], [-20, -158], [-58, -149], [-24, -160], [40, -178]], "#b9c8d2", 0.35, 3);
+  k += weichF([[-50, -251], [-30, -236], [-10, -214], [-3, -205], [-14, -214], [-34, -232]], "#000", 0.4, 4);
+  /* Knöchel (Höckerreihe) auf dem Schwanzstiel, hinter der Finne */
+  if (F) {
+    const kn = [];
+    for (let i = 0; i < 7; i++) { const x = 440 - i * 36; kn.push([x, R.yo(x) + 6, 6 - i * 0.4]); }
+    k += kn.map(([x, y, r]) => weichF([[x - r * 2, y + r], [x, y - r * 0.8], [x + r * 2, y + r]], "#c4d4e0", 0.3, 2.5) + weichF([[x - r * 2, y + r * 1.6], [x + r * 2, y + r * 1.2], [x + r * 1.5, y + r * 2.5], [x - r * 1.5, y + r * 2.6]], "#000", 0.25, 3)).join("");
+  }
+  /* helle Narbenflecken und graue Marmorierung an der Flanke (typisch für ältere Tiere) */
+  if (F) k += [[880, 0.62, 30, 8, -6], [700, 0.7, 22, 6, 10], [1150, 0.6, 18, 5, -4], [520, 0.55, 26, 6, 8], [380, 0.6, 16, 5, 4]].map(([x, t, rx, ry, w]) => { const [px, py] = P(x, t); return `<ellipse cx="${f(px)}" cy="${f(py)}" rx="${rx}" ry="${ry}" transform="rotate(${w} ${f(px)} ${f(py)})" fill="#8d979e" opacity=".35" filter="${H.weich(3, [px - rx - 4, py - rx - 4, px + rx + 4, py + rx + 4])}"/>`; }).join("");
+  /* Narben (hell), einzelne Kratzer */
+  if (F) k += H.narbenG([[820, -280, -6, 60, 3, 4, 0.6], [640, -300, 8, 50, 2, 4, -0.4], [300, -240, -14, 40, 3, 3.5, 0.5], [1180, -230, 4, 34, 2, 3, 0.4]], "#cfd6da", 1.1, 0.35);
+  /* Maullinie (stark gewölbt) mit Lippenlicht; Unterkieferwulst; Blasloch mit Spritzschutz */
+  const maul = [[1395, -233], [1362, -242], [1306, -251], [1240, -256], [1176, -255], [1118, -248], [1078, -236], [1054, -222], [1046, -212]];
+  k += L([maul], "#0b0e11", 3.4, 0.9) + L([maul.slice(0, 7).map((p) => [p[0], p[1] + 3.4])], "#c8d6df", 1.6, 0.35);
+  k += weichF([[1390, -228], [1300, -246], [1200, -250], [1120, -242], [1080, -226], [1110, -224], [1200, -236], [1300, -236]], "#000", 0.2, 8);
+  k += weichL([[[1100, -304], [1086, -306], [1070, -305]]], "#000", 3, 0.6, 1) + weichL([[[1108, -310], [1090, -312], [1068, -310]]], "#e4edf2", 3, 0.35, 1.5);
+  /* Knoten: Reihe auf dem Oberkiefer über der Lippe, Reihe auf der Schnauzenoberseite, verstreut am Unterkiefer */
+  const kn = [];
+  for (let i = 0; i < 11; i++) { const x = 1376 - i * 30, y = G ? maul.reduce((a, p) => (Math.abs(p[0] - x) < Math.abs(a[0] - x) ? p : a))[1] : 0; kn.push([x + (T.rnd() - 0.5) * 6, y - 13 - (i % 2) * 4, 4.6 + T.rnd() * 1.4]); }
+  for (let i = 0; i < 8; i++) { const x = 1368 - i * 40; kn.push([x, R.yo(x) + 9 + (i % 2) * 3, 4.4 + T.rnd()]); }
+  for (let i = 0; i < 9; i++) { const x = 1370 - i * 32 + (T.rnd() - 0.5) * 10, [px, py] = P(x, 0.62 + T.rnd() * 0.1); kn.push([px, py, 4.2 + T.rnd() * 1.2]); }
+  k += H.knoten(F ? kn : kn.filter((q, i) => i % 2 === 0), "#3a434b");
+  /* Seepocken: Kinnhöcker, Kehle vorn, Genitalregion */
+  const sp = [];
+  const haufen = (n, x, y, rx, ry, r0) => { for (let i = 0; i < n; i++) sp.push([x + (T.rnd() - 0.5) * 2 * rx, y + (T.rnd() - 0.5) * 2 * ry, r0 * (0.6 + T.rnd() * 0.6)]); };
+  haufen(F ? 9 : 4, 1386, -205, 10, 12, 5); haufen(F ? 6 : 3, 1352, -182, 14, 8, 4.4); haufen(F ? 5 : 2, 520, -150, 16, 6, 4);
+  k += H.seepocken(sp);
+  s += teil(R.d, DUNKEL, { innen: k, randA: 0.25, rw: 1.4 });
+  /* Brustflosse: riesig (~⅓ der Länge), schmal, weiß, Vorderkante (unten) mit großen Höckern und Seepocken */
+  const B = [985, -128], E = [570, 48], dx = E[0] - B[0], dy = E[1] - B[1], Lg = Math.hypot(dx, dy), ux = dx / Lg, uy = dy / Lg, nx = -uy, ny = ux;
+  const breite = (u) => (u < 0.25 ? 70 + (u / 0.25) * 12 : 82 * Math.pow(1 - (u - 0.25) / 0.75, 0.75));
+  const vorn = [], hinten = [];
+  for (let i = 0; i <= 40; i++) {
+    const u = i / 40, w = breite(u), hoeck = u > 0.06 && u < 0.92 ? 5.5 * (1 - u * 0.5) * Math.pow(Math.abs(Math.sin(u * Math.PI * 9.5)), 0.6) : 0;
+    const cx = B[0] + dx * u, cy = B[1] + dy * u;
+    vorn.push([cx - nx * (w * 0.42 + hoeck), cy - ny * (w * 0.42 + hoeck)]);
+    hinten.push([cx + nx * w * 0.58, cy + ny * w * 0.58]);
+  }
+  const flo = vorn.concat(hinten.slice().reverse());
+  let fo = "";
+  fo += weichF(hinten.slice(0, 36).map((p, i) => [p[0] - nx * 14 * (1 - i / 40), p[1] - ny * 14 * (1 - i / 40)]).concat(hinten.slice(0, 36).reverse()), "#000", 0.22, 6);
+  fo += weichF(vorn.slice(2, 38).map((p, i) => [p[0] + nx * 10, p[1] + ny * 10]).concat(vorn.slice(2, 38).reverse()), "#ffffff", 0.45, 4);
+  fo += weichF([[1010, -160], [960, -150], [940, -118], [980, -104], [1000, -120]], "#000", 0.35, 14);
+  /* Schatten des Körpers auf der Flossenwurzel, dunkle Marmorierung nur an der Wurzel */
+  fo += weichF([hinten[0], hinten[6], hinten[10], vorn[8], vorn[3], vorn[0]].map((p) => [p[0], p[1]]), "#1c232a", 0.55, 10);
+  if (F) fo += [[0.2, 0.25, 26, 7, -24], [0.27, -0.1, 14, 5, -22], [0.33, 0.3, 10, 4, -20]].map(([u, v, rx, ry, w]) => { const cx = B[0] + dx * u + nx * v * 80, cy = B[1] + dy * u + ny * v * 80; return `<ellipse cx="${f(cx)}" cy="${f(cy)}" rx="${rx}" ry="${ry}" transform="rotate(${w} ${f(cx)} ${f(cy)})" fill="#3c454c" opacity=".55" filter="${H.weich(1.5, [cx - rx - 2, cy - rx - 2, cx + rx + 2, cy + rx + 2])}"/>`; }).join("");
+  const sp2 = [];
+  for (let i = 0; i < (F ? 7 : 3); i++) { const u = 0.55 + i * 0.05, p = vorn[Math.round(u * 40)]; sp2.push([p[0] + nx * 4, p[1] + ny * 4, 3.4 + T.rnd() * 1.6]); }
+  s += teil(G(flo), "#dfe2e0", { innen: fo + H.seepocken(sp2), randA: 0.3, rw: 1.2 });
+  /* Auge knapp über/hinter dem Mundwinkel */
+  s += H.walAuge(1028, -229, 5.2, { winkel: -10, hell: "#b4c4d0" });
+  return H.ende(s, [-60, -371, 1400, 48], [1010, -330, 1402, -160]);
+}
+
 module.exports = [
   { id: "orca", de: "der Orca", syl: "OR-ca", it: "l'orca", itSyl: "OR-ca", en: "orca",
     gruppe: "Meer", lebensraum: "Meer", laenge: 7.64, hoehe: 3.95, schwimmt: true, zeichne: orca },
@@ -557,4 +700,6 @@ module.exports = [
     gruppe: "Meer", lebensraum: "Meer", laenge: 3.06, hoehe: 0.98, schwimmt: true, zeichne: delfin },
   { id: "weisser_hai", de: "der Weiße Hai", syl: "WEI-ße HAI", it: "lo squalo bianco", itSyl: "SQUA-lo BIAN-co", en: "great white shark",
     gruppe: "Meer", lebensraum: "Meer", laenge: 4.52, hoehe: 1.88, schwimmt: true, zeichne: weisser_hai },
+  { id: "buckelwal", de: "der Buckelwal", syl: "BU-ckel-wal", it: "la megattera", itSyl: "me-GAT-te-ra", en: "humpback whale",
+    gruppe: "Meer", lebensraum: "Meer", laenge: 14.6, hoehe: 4.19, schwimmt: true, zeichne: buckelwal },
 ];

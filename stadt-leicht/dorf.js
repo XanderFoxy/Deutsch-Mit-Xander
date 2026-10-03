@@ -842,7 +842,8 @@
     const DING_NAME = { d_laterne: "eine Laterne", d_bank: "eine Bank", d_bruecke: "eine Brücke", d_zaun: "ein Zaun", d_brunnen: "der Brunnen" };
     D.feldPruefen = function (nr, um, vm) {
       const s = D.FELD_STANDARD[nr]; if (!s || !isFinite(um) || !isFinite(vm)) return "kein Acker";
-      const bu = s[2], bv = s[3], u0 = um - bu / 2, u1 = um + bu / 2, v0 = vm - bv / 2, v1 = vm + bv / 2, R = 1.5;   // Feldrain (korn.js 1,3) und Luft
+      /* R: halbe Einheit Luft zu Weg und Wasser (am Ackerplatz liegt ein Weg eine Einheit neben dem Acker, unter dem Feldrain) */
+      const bu = s[2], bv = s[3], u0 = um - bu / 2, u1 = um + bu / 2, v0 = vm - bv / 2, v1 = vm + bv / 2, R = 0.5;
       const geh = (ST.tiere && ST.tiere.gehege) || [];
       for (let u = u0 - R; u <= u1 + R + 1e-6; u += 1) for (let v = v0 - R; v <= v1 + R + 1e-6; v += 1) {
         const x = (u + v) / 2, y = (v - u) / 2;
@@ -854,7 +855,7 @@
         for (const g of geh) if (g.frei && g.frei(x, y)) return "dort ist eine Weide";
       }
       for (const f of D.FELD_ORTE) if (f.nr !== nr && f.u0 != null && u0 < f.u1 + 3 && u1 > f.u0 - 3 && v0 < f.v1 + 3 && v1 > f.v0 - 3) return "dort liegt schon ein Acker";
-      const acker = [[u0 - R, v0 - R], [u1 + R, v0 - R], [u1 + R, v1 + R], [u0 - R, v1 + R]];
+      const acker = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]];
       const uv = (pts) => pts.map(([x, y]) => [x - y, x + y]);
       /* Bauplätze (auch leere: dort kommt das Haus hin, wenn es gebaut wird) */
       for (const k in P) {
@@ -865,7 +866,7 @@
       for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) punkte.push([u0 + (i + 0.5) * bu / n, v0 + (j + 0.5) * bv / n]);
       for (const o of SZ.objekte) {
         if (o.geist || o.art === "feld" || SZ.flach(o) || (o.art === "natur" && !o.versetzt) || o.jahr || o.nurWinter || !o.fuss) continue;
-        const ec = uv(SZ.ecken(o, o.art === "natur" ? 0.5 : 1));
+        const ec = uv(SZ.ecken(o, 0));   // (am Ackerplatz 92 steht eine Laterne genau an der Kante – das darf sein)
         const name = o.name || DING_NAME[o.bild] || (o.art === "eigen" ? "dein Schmuck" : o.art === "natur" ? "ein Baum" : "etwas");
         if (!getrennt(ec, acker)) return "dort steht " + name;
         /* steht es davor (im Bild darunter) und ist hoch? Wie viel seines Bildes liegt über dem Acker? */
