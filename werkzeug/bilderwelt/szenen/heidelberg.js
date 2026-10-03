@@ -97,10 +97,10 @@ const pfad = (pts, zu = true) => { const q = zu ? randClip(pts) : linieClip(pts)
 /* Figuren klein im Bild: Pfaddaten auf ganze Einheiten runden (unsichtbar, halbiert die Datei) */
 const rundeFigur = (svg) => svg.replace(/ (d|x1|y1|x2|y2|cx|cy|r|rx|ry|x|y|width|height|points)="([^"]*)"/g, (m, a, d) => ` ${a}="${d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n)))}"`);
 
-S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.2"/></filter>`);
-S.def(`<filter id="${S.id("spiegel")}" x="-10%" y="-30%" width="120%" height="160%"><feGaussianBlur stdDeviation=".7 1.1"/></filter>`);
-S.def(`<filter id="${S.id("dunst")}" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.2"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("spiegel")}" x="-10%" y="-30%" width="120%" height="160%"><feGaussianBlur stdDeviation=".7 1.1"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("dunst")}" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>`);
 /* roter Neckartäler Sandstein: Nordseiten im Schatten, Westseiten in der Abendsonne */
 const ROT_N = S.lg("rotn", [[0, "#7e3628"], [0.6, "#94432f"], [1, "#a24d37"]], 0, 0, 1, 0);
 const ROT_W = S.lg("rotw", [[0, "#d27454"], [1, "#efa47a"]], 0, 0, 1, 0);
@@ -163,7 +163,7 @@ const kammY = (x) => { for (let i = 1; i < kamm.length; i++) if (x <= kamm[i][0]
   S.def(`<clipPath id="${S.id("berg")}"><path d="${d}"/></clipPath>`);
   let g = "";
   /* Hangrippen fächern vom Gipfel aus nach unten; Licht von rechts, Rinnen dazwischen (weich) */
-  S.def(`<filter id="${S.id("weichberg")}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3.2"/></filter>`);
+  S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("weichberg")}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3.2"/></filter>`);
   let rip = "";
   for (const [x0, x1, w, hell] of [[60, 18, 9, 1], [74, 46, 6, 0], [112, 84, 10, 1], [128, 112, 6, 0], [205, 222, 9, 1], [222, 248, 6, 0], [262, 296, 10, 1], [282, 318, 6, 0], [168, 160, 7, 0]]) {
     const y0 = kammY(x0) + 3;

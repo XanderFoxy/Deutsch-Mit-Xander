@@ -96,8 +96,8 @@ const rundeFigur = (svg) => svg.replace(/ d="([^"]*)"/g, (m, d) => ` d="${d.repl
 /* Maßstab (Einheiten je Meter) und Fußpunkt eines Dings am Boden */
 const fuss = (x, y) => { const p = pr(x, y, 0); return { x: p[0], y: p[1], s: FOC / tief(x, y) }; };
 
-S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
 /* roter Buntsandstein des Münsters — Sonne von links hinten (Süden) */
 const SAND = S.lg("sand", [[0, "#c27a62"], [0.5, "#b4644d"], [1, "#9c5240"]], 0, 0, 1, 0);
 const SAND_L = S.lg("sandl", [[0, "#d9937a"], [1, "#c27a62"]], 0, 0, 1, 0);

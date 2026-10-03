@@ -177,6 +177,8 @@ const ZB = (c) => c === " " ? 0.5 : "il.·,'|".includes(c) ? 0.32 : "fjrt".inclu
 const fsFit = (txt, span, maxFs) => Math.min(maxFs, 0.9 * span / [...txt].reduce((a2, c) => a2 + ZB(c) * 1.12, 0));
 /* Lage jedes Buchstabens entlang der Wand (m): Vorschub = Zeichenbreite × Schriftgröße, mittig zwischen dA und dB */
 const zeichenD = (txt, dA, dB, fsM) => { const w = [...txt].map((c) => ZB(c) * 1.12 * fsM), tot = w.reduce((a2, b2) => a2 + b2, 0), sg = Math.sign(dB - dA); let acc = (Math.abs(dB - dA) - tot) / 2; return w.map((b2) => { const m = dA + sg * (acc + b2 / 2); acc += b2; return m; }); };
+/* Verkürzung der Schrift auf der fluchtenden Wand: Breite × (Bildlänge je Meter längs der Wand) / (Bildhöhe je Meter) */
+const kurz = (X, d, h) => { const a2 = P(X, d, h), b2 = P(X, d + 0.1, h); return Math.round(Math.hypot(b2[0] - a2[0], b2[1] - a2[1]) / 0.1 / (F / d) * 100) / 100; };
 const zeichenLage = (txt) => { const w = [...txt].map(ZB), sum = w.reduce((a, b) => a + b, 0); let acc = 0; return w.map((b) => { const m = (acc + b / 2) / sum; acc += b; return m; }); };
 const wandFenster = (X, d0, d1, h0, h1, opt) => fensterQ(P(X, d0, h1), P(X, d1, h1), P(X, d1, h0), P(X, d0, h0), opt);
 
@@ -736,7 +738,7 @@ const LL = -8;
     for (let i = 0; i < n; i++) {
       const fsM = fsFit(txt, d1 - d0 - 0.3, 0.32), d = zeichenD(txt, d0 + 0.15, d1 - 0.15, fsM)[i], [x, y] = P(LL, d, 2.98), fs = fsM * F / d;
       const [, yt] = P(LL, d, 3.24), sk = Math.atan2((P(LL, d + 0.1, 2.98)[1] - y), (P(LL, d + 0.1, 2.98)[0] - x)) * 180 / Math.PI;
-      if (txt[i] !== " ") k += `<text x="${r(x)}" y="${r(y)}" font-size="${r(fs)}" text-anchor="middle" fill="#e8c56a" font-family="Georgia,serif" font-weight="bold" transform="rotate(${r(sk)} ${r(x)} ${r(y)})">${txt[i]}</text>`;
+      if (txt[i] !== " ") k += `<text x="0" y="0" font-size="${r(fs)}" text-anchor="middle" fill="#e8c56a" font-family="Georgia,serif" font-weight="bold" transform="translate(${r(x)} ${r(y)}) rotate(${r(sk)}) scale(${kurz(LL, d, 2.98)} 1)">${txt[i]}</text>`;
       void yt;
     }
   }
@@ -835,7 +837,7 @@ const LL = -8;
   k += `<path d="${poly(P(L, d1, h1), P(Li, d1, h1), P(Li, d1, h0), P(L, d1, h0))}" fill="#4e1418"/>`;
   /* Schild über dem Fenster, Schrift perspektivisch */
   k += `<path d="${poly(P(L, d0, 3.4), P(L, d1, 3.4), P(L, d1, 3.0), P(L, d0, 3.0))}" fill="#6e1e22"/>`;
-  { const txt = "Weihnachten", n = txt.length, lage = zeichenLage(txt); for (let i = 0; i < n; i++) { const fsM = fsFit(txt, d1 - d0 - 0.4, 0.27), d = zeichenD(txt, d1 - 0.2, d0 + 0.2, fsM)[i], [x, y] = P(L, d, 3.08), fs = fsM * F / d; const nx = P(L, d - 0.1, 3.08), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="${r(x)}" y="${r(y)}" font-size="${r(fs)}" text-anchor="middle" fill="#f2d27a" font-family="Georgia,serif" font-weight="bold" transform="rotate(${r(sk)} ${r(x)} ${r(y)})">${txt[i]}</text>`; } }
+  { const txt = "Weihnachten", n = txt.length, lage = zeichenLage(txt); for (let i = 0; i < n; i++) { const fsM = fsFit(txt, d1 - d0 - 0.4, 0.27), d = zeichenD(txt, d1 - 0.2, d0 + 0.2, fsM)[i], [x, y] = P(L, d, 3.08), fs = fsM * F / d; const nx = P(L, d - 0.1, 3.08), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="0" y="0" font-size="${r(fs)}" text-anchor="middle" fill="#f2d27a" font-family="Georgia,serif" font-weight="bold" transform="translate(${r(x)} ${r(y)}) rotate(${r(sk)}) scale(${kurz(L, d, 3.08)} 1)">${txt[i]}</text>`; } }
   const [ax, ay] = P(L, d0 - 0.2, h1 + 0.5), [bx, by] = P(L, d1 + 0.2, h0 - 0.1);
   void ax; void ay; void bx; void by;
   S.teil({ id: "schaufenster", de: "das Schaufenster", syl: "SCHAU-fens-ter", it: "la vetrina", itSyl: "ve-TRI-na", en: "shop window", x: 0, y: 0, kunst: k,
@@ -862,7 +864,7 @@ const LL = -8;
   k += `<path d="${poly(P(L, ta - 0.3, 0.2), P(L, tb + 0.3, 0.2), P(L - 0.45, tb + 0.3, 0.2), P(L - 0.45, ta - 0.3, 0.2))}" fill="#a8916c"/><path d="M${pt(P(L - 0.45, ta - 0.3, 0.2))} L${pt(P(L - 0.45, tb + 0.3, 0.2))}" stroke="#7a6a50" stroke-width=".6"/>`;
   /* Schriftzug über der Tür, Buchstabe für Buchstabe auf der Wand (Leserichtung von hinten nach vorn) */
   { const txt = "Zum Hirschen", n = txt.length, lage = zeichenLage(txt), da = 9.35, db = 7.0;
-    for (let i = 0; i < n; i++) { if (txt[i] === " ") continue; const fsM = fsFit(txt, da - db, 0.24), d = zeichenD(txt, da, db, fsM)[i], [x, y] = P(L, d, 2.95), fs = fsM * F / d, nx = P(L, d - 0.1, 2.95), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="${r(x)}" y="${r(y)}" font-size="${r(fs)}" text-anchor="middle" fill="#3a2a14" font-family="Georgia,serif" font-weight="bold" transform="rotate(${r(sk)} ${r(x)} ${r(y)})">${txt[i]}</text>`; } }
+    for (let i = 0; i < n; i++) { if (txt[i] === " ") continue; const fsM = fsFit(txt, da - db, 0.24), d = zeichenD(txt, da, db, fsM)[i], [x, y] = P(L, d, 2.95), fs = fsM * F / d, nx = P(L, d - 0.1, 2.95), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="0" y="0" font-size="${r(fs)}" text-anchor="middle" fill="#3a2a14" font-family="Georgia,serif" font-weight="bold" transform="translate(${r(x)} ${r(y)}) rotate(${r(sk)}) scale(${kurz(L, d, 2.95)} 1)">${txt[i]}</text>`; } }
   /* Speisekarte an der Wand */
   k += `<path d="${poly(P(L, 8.3, 2.1), P(L, 8.9, 2.1), P(L, 8.9, 1.2), P(L, 8.3, 1.2))}" fill="#2e3a2a" stroke="#7a5a38" stroke-width=".5"/>`;
   for (let i = 0; i < 4; i++) k += `<path d="M${pt(P(L, 8.36, 1.95 - i * 0.18))} L${pt(P(L, 8.84, 1.95 - i * 0.18))}" stroke="#f4efe4" stroke-width=".35"/>`;
