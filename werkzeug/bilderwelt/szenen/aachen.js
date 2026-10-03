@@ -607,7 +607,7 @@ const KB = { x: 206, y: 146.4 };
 /* =====================================================================
    9 — DER SONNENSCHIRM, DER STUHL, DER TISCH (Lupe: Printe, Tasse) und DER GAST — Café links vorn
    ===================================================================== */
-const TISCH = { x: 52, y: 186 }, SCHIRM_X = 9;
+const TISCH = { x: 52, y: 186 }, SCHIRM_X = 13;
 {
   const s = km(182);
   let k = "";
