@@ -373,7 +373,9 @@ function weichForm(T, pts, farbe, op, sd) {
   const w = 0.5 * Math.atan2(2 * sxy, sxx - syy), c = Math.cos(w), si = Math.sin(w);
   let a = 0, b = 0;
   for (const [x, y] of pts) { a = Math.max(a, Math.abs((x - mx) * c + (y - my) * si)); b = Math.max(b, Math.abs(-(x - mx) * si + (y - my) * c)); }
-  return fleck(T, mx, my, a + sd, b + sd, farbe, op * 0.85, Math.round(w * 180 / Math.PI));
+  /* Szene: Farbe auf ein grobes Raster runden → wenige gemeinsame Verläufe (kleine Datei, klein unsichtbar) */
+  const q = "#" + [1, 3, 5].map((i) => Math.min(255, Math.round(parseInt(farbe.slice(i, i + 2), 16) / 51) * 51).toString(16).padStart(2, "0")).join("");
+  return fleck(T, mx, my, a + sd, b + sd, q, op * 0.85, Math.round(w * 180 / Math.PI));
 }
 /* weiches Verwischen (nur fein benutzen) */
 const BLUR_STUFEN = [0.06, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1, 1.2, 1.6, 2, 2.4, 3, 4, 5, 6, 8, 10, 12, 16];
@@ -595,7 +597,7 @@ function pinguin(T) {
 function walross(T) {
   let s = "";
   const F = T.fein !== false;
-  const weich = (pts, farbe, op, sd) => weichForm(T, pts, farbe, op, sd);
+  const weich = (pts, farbe, op, sd) => (F || op >= 0.4 ? weichForm(T, pts, farbe, op, sd) : "");
   /* spindelförmige Fläche entlang einer Mittellinie: Breite w·sin(πt) → läuft an beiden Enden spitz aus (keine Kugelenden) */
   const spindel = (pts, w, dx = 0, dy = 0) => {
     const n = pts.length, L = [], Rr = [];
@@ -750,7 +752,7 @@ function walross(T) {
   /* Tuberkel (Bossen) 3–6 cm an Hals und Schulter: runder Buckel, Licht links oben, eigener Schatten rechts unten, Glanzpunkt */
   if (F) {
     const bossen = [[214, -112, 2.6], [224, -100, 3], [233, -90, 2.6], [240, -110, 2.4], [247, -100, 2.2], [229, -76, 2.6], [242, -76, 2.2], [208, -96, 2.8], [217, -84, 2.4],
-      [252, -118, 2], [254, -88, 2], [246, -62, 2.2], [202, -108, 2.2], [232, -120, 2.2], [212, -70, 2.2], [198, -86, 2], [236, -60, 2], [222, -126, 2], [190, -100, 1.8], [194, -116, 1.6]];
+      [252, -118, 2], [254, -88, 2], [246, -62, 2.2], [202, -108, 2.2], [232, -120, 2.2], [212, -70, 2.2], [198, -86, 2], [236, -60, 2], [222, -126, 2]];
     let gl = "";
     for (const [x, y, r] of bossen) {
       const f = Math.max(0.35, 1 - Math.abs(x - 236) / 50);
@@ -759,10 +761,8 @@ function walross(T) {
     }
     n += `<path d="${gl}" stroke="#ffe8da" stroke-width=".7" stroke-linecap="round" stroke-opacity=".35"/>`;
   }
-  /* Narben */
-  n += zart(T, [[216, -104], [224, -97], [229, -94]], "#e8c0aa", 0.5, 0.35) + zart(T, [[250, -92], [252.6, -83]], "#e8c0aa", 0.4, 0.3);
   /* spärliche kurze helle Haare (0,6–1,2 cm) in Wuchsrichtung, auf der Lichtseite */
-  n += haare(T, [[50, -54], [100, -98], [170, -126], [236, -138], [272, -132], [262, -116], [200, -112], [130, -94], [70, -62]], 150, (x, y) => 168 + (x - 150) * 0.04, 0.9,
+  n += haare(T, [[50, -54], [100, -98], [170, -126], [236, -138], [272, -132], [262, -116], [200, -112], [130, -94], [70, -62]], 100, (x, y) => 168 + (x - 150) * 0.04, 0.9,
     [["#ecbca3", 1, 0.08, 0.5], ["#f6d6c2", 0.4, 0.07, 0.45]], 22, 0.3, 0.03);
   /* Kopf: eigene Rundung mit Stirnglanz, Nackensenke im Halbschatten, Augenhöhle fleischig */
   n += weich([[262, -129], [272, -131], [280, -127], [272, -124], [262, -125]], "#eab49b", 0.55, 1.4);
@@ -792,8 +792,8 @@ function walross(T) {
   const vorne = (y) => 297.4 - Math.pow((y + 104) / 15, 2) * 3.2;
   if (F) {
     let d = "";
-    for (let r = 0; r < 13; r++) for (let i = 0; i < 10; i++) {
-      const y = -121 + (i + 0.3 + T.rnd() * 0.4) / 10 * 29 + r * 0.2, x = vorne(y) - 0.9 - r * 1.25 + (T.rnd() - 0.5) * 0.5;
+    for (let r = 0; r < 12; r++) for (let i = 0; i < 9; i++) {
+      const y = -121 + (i + 0.3 + T.rnd() * 0.4) / 9 * 29 + r * 0.2, x = vorne(y) - 0.9 - r * 1.25 + (T.rnd() - 0.5) * 0.5;
       if (inPoly(x, y, polster)) d += `M${J(x, y)}h.01`;
     }
     const fid = T.id("fol");
@@ -810,16 +810,16 @@ function walross(T) {
       const t = (i + 0.3 + T.rnd() * 0.4) / per, y = -110 + t * 19 + r * 0.2, x = vorne(y) - 0.9 - r * (F ? 1.25 : 3.4) + (T.rnd() - 0.5) * 0.3;
       if (!inPoly(x, y, polster)) continue;
       const rr = r / (rows - 1), L = (2.2 + rr * 3.6 + t * 3.2 + T.rnd() * 1.6) * (rr < 0.2 && t < 0.5 ? 0.7 : 1);
-      const a = (36 + t * 62 - rr * 10 + (T.rnd() - 0.5) * 14) * Math.PI / 180, w = 0.66 - rr * 0.16;
+      const a = (36 + t * 62 - rr * 10 + (T.rnd() - 0.5) * 14) * Math.PI / 180, w = 0.8 - rr * 0.18;
       const ca = Math.cos(a), sa = Math.sin(a), nx = -sa, ny = ca, bg = (0.12 + T.rnd() * 0.08) * L;
       const ex = x + ca * L, ey = y + sa * L, mx = x + ca * L * 0.5 - nx * bg, my = y + sa * L * 0.5 - ny * bg;
-      const borste = (o) => `M${J(x - nx * w / 2 + o, y - ny * w / 2 + o)}Q${J(mx - nx * w * 0.3 + o, my - ny * w * 0.3 + o, ex + o, ey + o)}Q${J(mx + nx * w * 0.3 + o, my + ny * w * 0.3 + o, x + nx * w / 2 + o, y + ny * w / 2 + o)}z`;
+      const borste = (o) => `M${J(x - nx * w / 2 + o, y - ny * w / 2 + o)}Q${J(mx - nx * w * 0.45 + o, my - ny * w * 0.45 + o, ex + o, ey + o)}Q${J(mx + nx * w * 0.45 + o, my + ny * w * 0.45 + o, x + nx * w / 2 + o, y + ny * w / 2 + o)}z`;
       dB += borste(0);
       if (F) { if (T.rnd() < 0.5) dH += `M${J(x - nx * w * 0.2, y - ny * w * 0.2)}Q${J(mx - nx * w * 0.1, my - ny * w * 0.1, x + ca * L * 0.75 - nx * bg * 0.6, y + sa * L * 0.75 - ny * bg * 0.6)}`; }
     }
-    const vid = T.id("vib");
+    const vid = T.id("vibp");
     T.def(`<path id="${vid}" d="${dB}"/>`);
-    s += (F ? `<use href="#${vid}" fill="#3a1d12" fill-opacity=".35" transform="translate(.2 .25)"/>` : "") + `<use href="#${vid}" fill="${verlauf(T, "vib", 0, -112, 0, -82, [[[0, -112], "#b89a74"], [[0, -104], "#e6d9b9"], [[0, -82], "#efe5cc"]])}"/>` +
+    s += (F ? `<use href="#${vid}" fill="#3a1d12" fill-opacity=".35" transform="translate(.2 .25)"/>` : "") + `<use href="#${vid}" fill="${verlauf(T, "vib", 0, -112, 0, -82, [[[0, -111], "#c9ae88"], [[0, -106], "#efe4c8"], [[0, -82], "#f6eedb"]])}"/>` +
       (dH ? `<path d="${dH}" fill="none" stroke="#fffaf0" stroke-width=".1" stroke-opacity=".75"/>` : "");
   }
 
@@ -845,7 +845,7 @@ function walross(T) {
   /* Beckenwulst: dicker Hautwulst legt sich über den Flossenansatz (Flosse teils verdeckt), mit Schlagschatten */
   const wulst = [[30, -26], [36, -24], [46, -21.4], [56, -19.6], [64, -17], [58, -14.2], [46, -13.4], [36, -12.6], [31.4, -18]];
   s += weich([[38, -13.4], [52, -14], [64, -15.4], [54, -11.6], [40, -10.6]], "#1a0d08", 0.5, 1);
-  s += `<g filter="${vol(T, "wulst", { weich: 2.2, tiefe: 4, schatten: "#2a1008" })}">${silhouette(T, G(wulst), haut, weich([[34, -23], [48, -20.6], [60, -18], [48, -18], [36, -20]], "#d09079", 0.3, 1.2))}</g>`;
+  s += `<g filter="${vol(T, "wulst", { weich: 2.2, tiefe: 4, schatten: "#2a1008" })}">${silhouette(T, G(wulst), verlauf(T, "wulst", 0, -26, 0, -12, [[[0, -26], "#a06650"], [[0, -12], "#7a4a3a"]]), weich([[34, -23], [48, -20.6], [60, -18], [48, -18], [36, -20]], "#d09079", 0.3, 1.2))}</g>`;
 
   /* ---- nahe Vorderflosse: kommt unter der Brust hervor, kurz, breit, dick; Zehen als flache Wölbungen, 5 kurze Nägel
           vor den Zehenenden, raue Sohle mit dunklem Bodenkontakt; Fettfalte über dem Ansatz (siehe Achselfalte) ---- */

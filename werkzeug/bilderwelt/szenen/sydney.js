@@ -120,8 +120,8 @@ S.hinten(`<rect width="400" height="${HOR + 6}" fill="${S.lg("himmel", [[0, "#35
     let d = `M${r(pts[0][0])} ${y}`;
     for (let i = 1; i < pts.length; i++) { const q = pts[i], p0 = pts[i - 1], rr = Math.hypot(q[0] - p0[0], q[1] - p0[1]) * 0.56; d += ` A${r(rr)} ${r(rr)} 0 0 1 ${r(q[0])} ${r(q[1])}`; }
     w += `<path d="${d} Z" fill="${WL}"/>`;
-    for (let i = 1; i < pts.length - 1; i++) li += `M${r(pts[i][0])} ${r(pts[i][1])}q${r(b * 0.02)} ${r(b * 0.06)} ${r(b * 0.07)} ${r(b * 0.09)}`;
-    li += `M${r(x - b * 0.42)} ${r(y - 0.6)}h${r(b * 0.84)}`;
+    for (let i = 1; i < pts.length - 1; i++) li += `M${r(pts[i][0])} ${r(pts[i][1])}q${r(b * 0.01)} ${r(b * 0.03)} ${r(b * 0.035)} ${r(b * 0.05)}`;
+    li += `M${r(x - b * 0.36)} ${r(y - 0.6)}h${r(b * 0.72)}`;
   };
   wolke(62, 38, 40, [0.12, 0.22, 0.27, 0.16, 0.07]);
   wolke(262, 27, 50, [0.1, 0.2, 0.24, 0.2, 0.13, 0.06]);
@@ -439,22 +439,22 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
    ===================================================================== */
 {
   let b = "";
-  /* Ufermauer von Farm Cove (Sandsteinquader, hell) */
-  b += `<path d="M0 146.6 L78 147.2 L78 149.6 L0 149.6 Z" fill="#d9caa8"/><path d="M0 146.6 L78 147.2" stroke="#f2e6c8" stroke-width=".4"/>`;
-  for (let x = 2; x < 78; x += 3.4) b += `<line x1="${x}" y1="147" x2="${x}" y2="149.4" stroke="#a89878" stroke-width=".15"/>`;
-  /* Feigen: kurze, dicke Stämme, breite gewölbte Kronen mit unregelmäßigem Rand; Licht oben rechts */
+  /* Ufermauer von Farm Cove (Sandsteinquader, hell, mit dunklem Gezeitenstreifen) */
+  b += `<path d="M0 146.6 L78 147.2 L78 149.6 L0 149.6 Z" fill="#d9caa8"/><path d="M0 146.6 L78 147.2" stroke="#f2e6c8" stroke-width=".4"/><rect x="0" y="146.8" width="78" height="2.6" fill="url(#${S.id("quaderk")})"/><path d="M0 149.3 L78 149.3" stroke="#4a4a36" stroke-width=".6"/>`;
+  S.def(`<pattern id="${S.id("quaderk")}" width="3.4" height="1.3" patternUnits="userSpaceOnUse" patternTransform="translate(0 146.8)"><path d="M.1 0v1.3M1.8 1.3v1.3M0 1.3h3.4" stroke="#a89878" stroke-width=".15"/></pattern>`);
+  /* Moreton-Bay-Feigen: kurze, dicke Stämme, sehr breite, flach gewölbte Kronen mit gebuckeltem Rand;
+     Licht oben rechts, Blattmuster */
   const KRONE = S.rg("krone", [[0, "#5f8f48"], [0.5, "#355f30"], [1, "#1f3d22"]], 0.62, 0.25, 0.8);
   const feige = (x, y, w, h) => {
-    let g = `<path d="M${r(x - w * 0.07)} ${y} L${r(x - w * 0.04)} ${r(y - h * 0.42)} L${r(x + w * 0.04)} ${r(y - h * 0.42)} L${r(x + w * 0.08)} ${y} Z" fill="#6b5e4e"/>`;
+    let g = `<path d="M${r(x - w * 0.06)} ${y} L${r(x - w * 0.035)} ${r(y - h * 0.4)} L${r(x + w * 0.035)} ${r(y - h * 0.4)} L${r(x + w * 0.07)} ${y} Z" fill="#6b5e4e"/>`;
     g += `<path d="M${r(x - w * 0.14)} ${y} Q${r(x - w * 0.06)} ${r(y - h * 0.12)} ${r(x - w * 0.04)} ${r(y - h * 0.1)} M${r(x + w * 0.14)} ${y} Q${r(x + w * 0.06)} ${r(y - h * 0.12)} ${r(x + w * 0.05)} ${r(y - h * 0.1)}" stroke="#6b5e4e" stroke-width=".6" fill="none"/>`;
-    const n = 11; let d = `M${r(x - w / 2)} ${r(y - h * 0.38)}`;
-    for (let i = 1; i <= n; i++) { const t = i / n, px = x - w / 2 + w * t, py = y - h * (0.38 + 0.6 * Math.sin(t * Math.PI)) - rnd() * h * 0.08; d += ` Q${r(px - w / n * 0.5)} ${r(py - h * 0.12)} ${r(px)} ${r(py)}`; }
-    d += ` Q${r(x + w * 0.3)} ${r(y - h * 0.3)} ${r(x)} ${r(y - h * 0.34)} Q${r(x - w * 0.3)} ${r(y - h * 0.3)} ${r(x - w / 2)} ${r(y - h * 0.38)} Z`;
-    g += `<path d="${d}" fill="${KRONE}"/>`;
-    for (let i = 0; i < 14; i++) { const t = rnd(), bx = x - w * 0.45 + w * 0.9 * t, by = y - h * (0.45 + 0.4 * Math.sin(t * Math.PI) * rnd()); g += `<ellipse cx="${r(bx)}" cy="${r(by)}" rx="${r(w * 0.05)}" ry="${r(w * 0.03)}" fill="${t > 0.5 ? "#6f9a52" : "#1d381f"}" opacity=".7"/>`; }
+    const n = 9; let d = `M${r(x - w / 2)} ${r(y - h * 0.34)}`;
+    for (let i = 1; i <= n; i++) { const t = i / n, px = x - w / 2 + w * t, py = y - h * (0.34 + 0.62 * Math.pow(Math.sin(t * Math.PI), 0.6)) - rnd() * h * 0.06; d += ` Q${r(px - w / n * 0.5)} ${r(py - h * 0.14)} ${r(px)} ${r(py)}`; }
+    d += ` Q${r(x + w * 0.3)} ${r(y - h * 0.26)} ${r(x)} ${r(y - h * 0.3)} Q${r(x - w * 0.3)} ${r(y - h * 0.26)} ${r(x - w / 2)} ${r(y - h * 0.34)} Z`;
+    g += `<path d="${d}" fill="${KRONE}"/><path d="${d}" fill="url(#${S.id("blatt")})" opacity=".3"/>`;
     return g;
   };
-  b += feige(12, 147, 26, 19) + feige(40, 147.4, 22, 16) + feige(64, 147.6, 18, 12);
+  b += feige(14, 147, 30, 16) + feige(44, 147.4, 26, 13) + feige(68, 147.6, 18, 10);
   /* einzelne Palmen (Kohlpalmen) */
   for (const [x, h] of [[27, 22], [54, 18], [74, 13]]) {
     b += `<path d="M${x} 147.4 Q${x + 0.5} ${147.4 - h * 0.5} ${x + 0.2} ${r(147.4 - h)}" stroke="#7a6a52" stroke-width=".8" fill="none"/>`;
@@ -499,7 +499,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   });
   mk += `<rect x="0" y="146" width="400" height="50" fill="${S.lg("spfade", [[0, "#000", 0], [1, "#000", 1]], 0, 146, 0, 192, ' gradientUnits="userSpaceOnUse"')}"/>`;
   S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="0" y="146" width="400" height="50">${mk}</mask>`);
-  k += `<g mask="url(#${S.id("spmaske")})" opacity=".5"><g filter="url(#${S.id("spiegel")})">${sp}</g></g>`;
+  k += `<g mask="url(#${S.id("spmaske")})" opacity=".72"><g filter="url(#${S.id("spiegel")})">${sp}</g></g>`;
   /* Wellen: Musterkachel in drei Tiefenbändern (vorn größer), dazu wenige Glanzlichter */
   const welle = (n, sc) => { S.def(`<pattern id="${S.id("w" + n)}" width="26" height="4" patternUnits="userSpaceOnUse" patternTransform="scale(${sc})"><path d="M1 1q2-.7 4 0M12 3q2.5-.8 5 0M19 .8q1.6-.5 3.2 0" stroke="#dcecf3" stroke-width=".35" fill="none" opacity=".75"/><path d="M6 2.6q2-.6 4 0M21 3.2q2-.6 4 0" stroke="#163e56" stroke-width=".4" fill="none" opacity=".6"/></pattern>`); return `url(#${S.id("w" + n)})`; };
   k += `<rect x="0" y="149" width="400" height="9" fill="${welle(1, 0.45)}"/><rect x="0" y="158" width="400" height="14" fill="${welle(2, 0.8)}"/><rect x="0" y="172" width="400" height="22" fill="${welle(3, 1.35)}"/>`;
@@ -534,7 +534,10 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   /* First-Fleet-Fähre: Doppelender, grüner Rumpf, goldgelbes Deckshaus, Steuerhaus in der Mitte */
   const { X, Y, s } = FAEHRE;
   let k = schatten(0, 0.2, 18 * s, 0.9, 0.25);
-  k += `<path d="M${-22 * s} 0 q${-6 * s} .5 ${-12 * s} -.2 M${18 * s} .2 q${8 * s} .6 ${14 * s} -.1" stroke="#e8f2f6" stroke-width=".6" fill="none" opacity=".85"/>`;
+  /* Fahrt nach rechts (Osten): Bugwelle vorn, schäumendes Heckwasser und ein V-förmiges Kielwasser nach links */
+  k += `<path d="M${r(-15 * s)} .2 L${r(-44 * s)} ${r(-1.4 * s)} M${r(-15 * s)} .5 L${r(-46 * s)} ${r(2.6 * s)}" stroke="#e8f2f6" stroke-width=".45" opacity=".75"/>`;
+  k += `<path d="M${r(-14 * s)} -.2 q${r(-6 * s)} -.4 ${r(-14 * s)} .3 q${r(6 * s)} 1 ${r(14 * s)} .3 Z" fill="#f4f9fb" opacity=".85"/>`;
+  k += `<path d="M${r(13.6 * s)} .3 q${r(2.4 * s)} ${r(-1.3 * s)} ${r(4.6 * s)} ${r(-0.2 * s)} q${r(1.6 * s)} ${r(0.7 * s)} ${r(3.4 * s)} ${r(0.3 * s)} q${r(-3.6 * s)} ${r(0.9 * s)} ${r(-8 * s)} ${r(0.2 * s)} Z" fill="#ffffff"/>`;
   k += `<path d="M${-17 * s} ${-3.2 * s} L${17 * s} ${-3.2 * s} Q${16 * s} 0 ${14 * s} .3 L${-14 * s} .3 Q${-16 * s} 0 ${-17 * s} ${-3.2 * s} Z" fill="${S.lg("faehrrumpf", [[0, "#2f7a4a"], [1, "#1b4f2f"]])}"/>`;
   k += `<rect x="${-16.6 * s}" y="${-3.9 * s}" width="${33.2 * s}" height="${0.7 * s}" fill="#f2f0e4"/>`;
   k += `<path d="M${-14.6 * s} ${-3.9 * s} L${-14 * s} ${-8 * s} L${14 * s} ${-8 * s} L${14.6 * s} ${-3.9 * s} Z" fill="${S.lg("deckshaus", [[0, "#f6dc7e"], [1, "#e0b84a"]])}"/>`;
@@ -613,7 +616,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
   const massen = [[16, -182, 24, 21, 11], [46, -193, 28, 12, 10], [58, -172, 22, 13, 10], [90, -189, 25, 13, 10], [120, -180, 20, 12, 9], [148, -171, 14, 9, 8], [22, -148, 18, 13, 9], [84, -163, 16, 9, 8], [128, -158, 12, 7, 7], [104, -199, 30, 7, 9], [159, -178, 7, 6, 6]];
   S.def(`<g id="${S.id("laubdach")}">${massen.map((m) => masse(...m)).join("")}</g>`);
   const LAUB0 = S.rg("laub", [[0, "#6f9f50"], [0.45, "#30602d"], [1, "#152d17"]], 0.68, 0.25, 0.8);
-  k += `<use href="#${S.id("laubdach")}" fill="${LAUB0}"/><use href="#${S.id("laubdach")}" fill="url(#${S.id("blatt")})" opacity=".55"/>`;
+  k += `<use href="#${S.id("laubdach")}" fill="${LAUB0}"/><use href="#${S.id("laubdach")}" fill="url(#${S.id("blatt")})" opacity=".38"/>`;
   /* Eigenschatten unten in jeder Masse (dunkle Unterkante) und Himmelslöcher verschiedener Größe */
   let lo = "";
   for (const [hx, hy, w] of [[50, -177, 2.6], [87, -192, 1.6], [16, -167, 1.2], [116, -186, 3.2], [68, -186, 1], [140, -176, 1.4], [33, -196, 2], [100, -170, 1.1]]) lo += `M${r(hx - w)} ${hy}q${r(w * 0.3)} ${r(-w * 0.9)} ${r(w)} ${r(-w * 0.7)}q${r(w * 0.9)} ${r(w * 0.1)} ${r(w)} ${r(w * 0.8)}q${r(-w * 0.6)} ${r(w * 0.7)} ${r(-w * 1.2)} ${r(w * 0.5)}z`;
@@ -649,7 +652,7 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
     for (let x = rnd() * 12; x < 236; x += 9 + rnd() * 10) { const y = wav(x) + 0.6; kr += `M${r(x)} ${r(y + h * 0.15)} q${r(h * 0.9)} ${r(h * 0.25)} ${r(h * 1.8)} ${r(h * 0.75)}`; }
     k += `<path d="${kr}" stroke="#9a6d3c" stroke-width=".25" fill="none" opacity=".5"/>`;
     /* Waben (Tafoni) in der Stirn */
-    for (let j = 0; j < 4 + i * 2; j++) { const x = rnd() * 220, y = wav(x) + h * (0.3 + rnd() * 0.45), w = (0.6 + rnd() * 0.8) * (1 + i * 0.35); k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(w)}" ry="${r(w * 0.62)}" fill="#7a5530" opacity=".6"/><path d="M${r(x - w)} ${r(y - w * 0.3)} q${r(w)} ${r(-w * 0.6)} ${r(w * 2)} 0" stroke="#f3dcae" stroke-width=".25" fill="none" opacity=".8"/>`; }
+    for (let j = 0; j < 2 + i; j++) { const x = 12 + rnd() * 200; k += taf(x, wav(x) + h * 0.55, r(0.5 + i * 0.25)); }
   });
   /* rostrote Eisenbänder: breite, weiche Schlieren in den Trittflächen */
   const EISEN = S.lg("eisenband", [[0, "#b0521f", 0], [0.5, "#b0521f", 0.32], [1, "#b0521f", 0]], 0, 0, 0, 1);
@@ -659,22 +662,37 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
     k += `<path d="M${x} ${y0} l1 ${r((y1 - y0) * 0.5)} l-.6 ${r((y1 - y0) * 0.5)}" stroke="#5e3f20" stroke-width=".8" fill="none" opacity=".6"/>`;
     k += `<path d="M${x} ${y0 + 1} l-1.6 -2.6 M${x + 0.4} ${y0 + 1} l.4 -3 M${x + 0.6} ${y0 + 1} l1.8 -2.2" stroke="#6f9a40" stroke-width=".45"/>`;
   }
-  /* Ufermauer: Deckquader aus behauenem Sandstein entlang der Kante */
-  let mauer = "";
-  for (let x = 0; x < 391; x += 9 + (x % 3)) {
-    const y0 = KANTE(x), y1 = KANTE(x + 9);
-    mauer += `<path d="M${r(x + 0.25)} ${r(y0 - 0.8)} L${r(x + 8.8)} ${r(y1 - 0.8)} L${r(x + 8.8)} ${r(y1 + 1.4)} L${r(x + 0.25)} ${r(y0 + 1.4)} Z" fill="${["#e6cf9f", "#dcc28d", "#e9d6aa"][Math.round(x) % 3]}"/>`;
-  }
-  k += mauer + `<path d="M0 ${r(KANTE(0) + 1.5)} ${kantePfad.replace(/L(\d+) ([\d.]+)/g, (m, x, y) => `L${x} ${r(Number(y) + 1.5)}`)}" stroke="#9f7f52" stroke-width=".4" fill="none"/>`;
+  /* Regenpfütze in einer Mulde der Felsplatte: spiegelt den Himmel; oben Schattenkante, unten Lichtkante */
+  k += `<ellipse cx="132" cy="247.6" rx="25" ry="4.4" fill="#6a4a28" opacity=".35"/><ellipse cx="132" cy="248" rx="23.6" ry="3.7" fill="${S.lg("pfuetze", [[0, "#4f86bd"], [0.6, "#86b2d9"], [1, "#c9dcea"]])}"/>`;
+  k += `<path d="M110 248.8q22 3.6 45 0" stroke="#f6e3b8" stroke-width=".6" fill="none"/><path d="M120 246.6h9M136 248.2h12" stroke="#e8f2f8" stroke-width=".35" opacity=".8"/>`;
+  k += taf(28, 236, 1.3) + taf(196, 251, 1.5) + taf(62, 255, 1.7) + taf(176, 228, 1);
+  /* Ufermauer aus behauenen Sandsteinquadern entlang der Wasserkante: Deckplatte (hell), Stirn mit
+     Fugen, Kontaktschatten darunter; an der Wasserseite ein dunkler, nasser Gezeitenstreifen */
+  S.def(`<pattern id="${S.id("quader")}" width="9.4" height="4" patternUnits="userSpaceOnUse"><path d="M.2 0v4M4.9 1.6v2.4" stroke="#8f7046" stroke-width=".3"/><path d="M0 1.6h9.4" stroke="#8f7046" stroke-width=".25"/></pattern>`);
+  const kanteO = [...Array(41)].map((_, i) => `${i * 10} ${r(KANTE(i * 10) - 0.9)}`), kanteU = [...Array(41)].map((_, i) => `${400 - i * 10} ${r(KANTE(400 - i * 10) + 3.4)}`);
+  const mauerD = `M${kanteO.join(" L")} L${kanteU.join(" L")} Z`;
+  k += `<path d="${mauerD}" fill="${S.lg("mauer", [[0, "#efdcae"], [0.4, "#e2c78f"], [1, "#c9a56b"]])}"/><path d="${mauerD}" fill="url(#${S.id("quader")})"/>`;
+  k += `<path d="M${kanteO.join(" L")}" stroke="#3c4a3a" stroke-width=".7" fill="none" opacity=".7"/>`;
+  k += `<path d="M${kanteU.join(" L")}" stroke="#5e4022" stroke-width=".9" fill="none" opacity=".55"/>`;
   /* Bordsteine am Rasen, Gras wächst darüber */
   let bord = "";
   for (let i = 0; i < rand.length - 1; i++) bord += `<path d="M${rand[i][0]} ${rand[i][1]} L${rand[i + 1][0]} ${rand[i + 1][1]}" stroke="#d9bf8c" stroke-width="2.4" stroke-linecap="round"/>`;
   bord += `<path d="M272 202 ${rasenRand.map((x) => `L${x} ${r(RASEN(x))}`).join(" ")}" stroke="#d9bf8c" stroke-width="2" fill="none"/>`;
-  for (let i = 0; i < 60; i++) { const t = rnd(), j = Math.min(rand.length - 2, Math.floor(t * (rand.length - 1))), u = t * (rand.length - 1) - j; const x = rand[j][0] + (rand[j + 1][0] - rand[j][0]) * u, y = rand[j][1] + (rand[j + 1][1] - rand[j][1]) * u; bord += `<path d="M${r(x + 0.8)} ${r(y + 0.6)} l${r(-0.8 - rnd() * 1.6)} ${r(-1 - rnd() * 1.4)}" stroke="${rnd() < 0.5 ? "#6f9a40" : "#4d7a2a"}" stroke-width=".4"/>`; }
+  bord += `<path d="M${rand.map(([x, y]) => `${x + 1} ${y + 0.4}`).join(" L")} L${rand.slice().reverse().map(([x, y]) => `${x - 1.4} ${y - 3}`).join(" L")} Z" fill="url(#${S.id("gras")})"/>`;
   k += bord;
   /* Rasen (Kulisse, liegt unter dem Fels-Teil) */
   let ra = `<path d="M272 202 ${rasenRand.map((x) => `L${x} ${r(RASEN(x))}`).join(" ")} L400 260 L214 260 ${rand.slice(1, -1).map(([x, y]) => `L${x} ${y}`).join(" ")} Z" fill="${S.lg("rasen", [[0, "#82ad4f"], [1, "#4f7f2e"]])}"/>`;
-  for (let i = 0; i < 200; i++) { const x = 214 + rnd() * 186, y = 204 + rnd() * 56; ra += `<path d="M${r(x)} ${r(y)} l${r(-0.4 + rnd() * 0.8)} ${r(-1 - (y - 200) * 0.03)}" stroke="${rnd() < 0.5 ? "#a6cc6e" : "#3f6b25"}" stroke-width=".35"/>`; }
+  const rasenD = `M272 202 ${rasenRand.map((x) => `L${x} ${r(RASEN(x))}`).join(" ")} L400 260 L214 260 ${rand.slice(1, -1).map(([x, y]) => `L${x} ${y}`).join(" ")} Z`;
+  S.def(`<pattern id="${S.id("gras2")}" href="#${S.id("gras")}" patternTransform="scale(1.7)"/>`);
+  ra += `<path d="${rasenD}" fill="url(#${S.id("gras")})" opacity=".45"/><path d="M222 233 L400 233 L400 260 L214 260 L217 246 Z" fill="url(#${S.id("gras2")})" opacity=".4"/>`;
+  /* Fußweg (0,7 m breit) zwischen Fels und Rasen, mit Querfugen: gibt dem Vordergrund den Maßstab */
+  const wb = (y) => 0.7 * vorn(y);
+  const innen = [...rand, ...rasenRand.slice(1).map((x) => [x, RASEN(x)])];
+  const aussen = innen.map(([x, y], i) => i < rand.length ? [x + wb(y) * 0.92, y + wb(y) * 0.1] : [x, y + wb(y) * 0.24]);
+  ra += `<path d="M${innen.map(([x, y]) => `${r(x)} ${r(y)}`).join(" L")} L${aussen.slice().reverse().map(([x, y]) => `${r(x)} ${r(y)}`).join(" L")} Z" fill="${S.lg("weg", [[0, "#ddd3bf"], [1, "#c4b79c"]])}"/>`;
+  let fu = "";
+  for (let i = 0; i < innen.length; i++) fu += `M${r(innen[i][0])} ${r(innen[i][1])}L${r(aussen[i][0])} ${r(aussen[i][1])}`;
+  ra += `<path d="${fu}" stroke="#9c8f74" stroke-width=".35"/><path d="M${aussen.map(([x, y]) => `${r(x)} ${r(y)}`).join(" L")}" stroke="#6f8f3c" stroke-width=".8" fill="none"/>`;
   S.hinten(ra);
   S.teil({ id: "sandstein", de: "der Sandstein", syl: "SAND-stein", it: "l'arenaria", itSyl: "a-re-NA-ria", en: "sandstone", x: 0, y: 0, kunst: k,
     tipp: "Sydney steht auf gelbem Sandstein. Auch viele alte Häuser und die Ufermauern sind daraus gebaut." });
@@ -1005,5 +1023,11 @@ S.teil({ id: "picknickdecke", de: "die Picknickdecke", syl: "PICK-nick-de-cke", 
     tipp: "Der Molukkenibis (Australischer Weißer Ibis) holt sich gern Reste aus dem Picknick – darum heißt er in Sydney „Bin Chicken“." });
 }
 
+/* Kleiner Ausgabe: SVG-Attribute mit einfachen Anführungszeichen (spart im JSON die Rückstriche) */
+{
+  const q = (t) => { if (t.includes("'")) throw new Error("Apostroph im SVG: " + t.slice(t.indexOf("'") - 40, t.indexOf("'") + 10)); return t.replace(/"/g, "'"); };
+  S.defs = S.defs.map(q); S.kulisse = S.kulisse.map(q);
+  for (const t of S.teile) { t.kunst = q(t.kunst); for (const u of t.unter || []) u.kunst = q(u.kunst); }
+}
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/sydney.js"));
 console.log(aus);

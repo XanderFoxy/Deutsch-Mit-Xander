@@ -454,7 +454,7 @@ function elefant(T) {
   k += teil(sk.pts, haut, { fell: rissB, ov: [lichtX], vol: [2, 4, 0.4], innen: wf([[26, -262], [14, -200], [8, -140]], "#fff", 0.15, 1.5, false) }) +
     H.straehnen(sw, 11, 30, (x, y, t) => 88 + (t - 0.5) * 30, [["#16110d", 3, 1.2, 0.95], ["#3d342c", 1, 1, 0.9]], { streu: 16, welle: 0.08, szene: 0.5 });
   /* Rumpf: Schulter (Widerrist) am höchsten, Sattel, Kruppe tiefer; Bauch hinter dem Vorderbein am tiefsten, zur Flanke ansteigend */
-  const rumpf = [[24, -262], [40, -292], [76, -314], [118, -318], [165, -305], [200, -314], [222, -332], [240, -342], [258, -341], [286, -332], [326, -314],
+  const rumpf = [[24, -262], [40, -292], [76, -314], [118, -318], [165, -309], [200, -320], [224, -334], [242, -340], [260, -339], [286, -332], [326, -314],
     [352, -264], [357, -214], [350, -176], [330, -152], [290, -142], [274, -136], [254, -140], [232, -143], [196, -150], [158, -160], [128, -168], [96, -172], [58, -176], [30, -192], [14, -220], [12, -244]];
   /* Ohr: Umriss wie Afrika – oben breit, hinten Ausbuchtung mit Golf und Kerben, unten ein nach vorn zeigender Lappen */
   const ohr = [[358, -322], [340, -327], [322, -325], [304, -329], [284, -326], [262, -322], [246, -310], [236, -290], [238, -270], [244, -262], [241, -254], [248, -238], [244, -230], [254, -212],
@@ -501,7 +501,7 @@ function elefant(T) {
   s += teil(schP, haut, { fell: rissK, ov: [lichtK, lichtX], rim: 5, rimD: G(schP.slice(2, 7), false),
     innen: wf([[388, -184], [400, -179], [410, -182]], "#000", 0.35, 2, false) + wf([[394, -207], [404, -202], [412, -196]], "#fff", 0.08, 1.6, false) +
       falte([[[398, -206], [402, -196], [400, -184]]], 1.2, 0.28) + wf([[414, -197], [417, -189], [411, -181]], "#fff", 0.18, 0.8, false) });
-  s += L([[[413, -198], [417.5, -189.5], [411.5, -180.5], [401, -176]]], "#140d08", 1.1, 0.6);
+  s += L([[[411, -194], [415, -189], [411, -183.5]]], "#140d08", 0.9, 0.4);
   /* Auge: tief in der Höhle, schwerer Oberlidwulst, lange Wimpern hängen nach vorn-unten */
   s += H.auge(388, -256, 3, { iris: "#3a2416", iris2: "#140a05", offen: 0.55, pupille: "rund", wimpern: 12, wl: 2.4, lid: "#21180f", lidHaut: "#3a3027", hoehleA: 0.3, winkel: 8, feucht: "#b7867a", wimpernFarbe: "#3a332c" });
   /* Ohr: Rand oben und vorn als gerollter Wulst (heller Streif, darunter dunkler Saum), Adern, fast glatte Haut */
@@ -512,7 +512,7 @@ function elefant(T) {
     fell: rissO, vol: [10, 3, 0.45], rim: 12,
     innen: wf([[352, -250], [356, -210], [346, -190]], "#000", 0.25, 8, false) + wf([[266, -292], [300, -300], [330, -296]], "#fff", 0.18, 10, false) +
       wf([[260, -190], [282, -170], [300, -158]], "#000", 0.35, 6, false) +
-      wf(adern.map((z) => G(z.map((p) => [p[0] - 0.8, p[1] - 0.8]), false)).join(""), "#fff", 0.12, 0.6, false, 2) + wf(adern.map((z) => G(z.map((p) => [p[0] + 0.9, p[1] + 1]), false)).join(""), "#2a2018", 0.14, 0.6, false, 1.6) +
+      wf(adern.map((z) => G(z.map((p) => [p[0] - 0.8, p[1] - 0.8]), false)).join(""), "#fff", 0.08, 0.6, false, 2) + wf(adern.map((z) => G(z.map((p) => [p[0] + 0.9, p[1] + 1]), false)).join(""), "#2a2018", 0.08, 0.6, false, 1.6) +
       wf([[300, -290], [284, -262], [278, -230]], "#000", 0.1, 2, false) + wf([[302, -292], [287, -263], [281, -231]], "#fff", 0.08, 1.5, false) + wf([[340, -270], [338, -236], [330, -204]], "#000", 0.1, 2, false) +
       /* gerollter Rand oben/vorn */
       wf([[358, -320], [340, -325], [322, -323], [304, -327], [284, -324], [262, -320], [248, -308]], "#fff", 0.32, 1.4, false, 7) + wf([[356, -313], [340, -317], [322, -315], [304, -319], [284, -316], [264, -313]], "#000", 0.34, 1.6, false, 3) +

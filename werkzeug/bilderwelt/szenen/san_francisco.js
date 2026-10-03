@@ -262,10 +262,15 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
   let k = "";
   /* Felsen und Steilküste (Südost-Ende zu uns, Länge verkürzt) */
   k += `<path d="M-180 0 L-170 -18 Q-140 -34 -90 -38 L60 -40 Q120 -40 150 -30 L176 -14 L186 0 Z" fill="${S.lg("fels", [[0, "#a59a86"], [0.5, "#8a7f6c"], [1, "#6c6455"]], 0, 0, 1, 0)}"/>`;
-  for (let i = 0; i < 16; i++) k += `<path d="M${-170 + i * 22} ${r(-2 - rnd() * 3)} l${r(3 + rnd() * 5)} ${r(-8 - rnd() * 14)}" stroke="#5c5548" stroke-width="1.6" opacity=".55"/>`;
+  /* Felsklippen: Facetten mit Schattenfugen (Licht von links) */
+  for (let i = 0; i < 15; i++) { const x0 = -172 + i * 23 + rnd() * 4, w = 10 + rnd() * 9, h = 14 + rnd() * 16, sp = 3 + rnd() * 4;
+    k += `<path d="M${r(x0)} 0 L${r(x0 + sp)} ${r(-h)} L${r(x0 + w * 0.6)} ${r(-h - 3)} L${r(x0 + w)} 0 Z" fill="${rnd() < 0.5 ? "#9d927d" : "#857a66"}"/><path d="M${r(x0 + w * 0.6)} ${r(-h - 3)} L${r(x0 + w)} 0 L${r(x0 + w * 0.8)} 0 Z" fill="#5a5245" opacity=".75"/>`; }
   /* Plateau von oben (Grün, Parade Ground), Ruine Warden's House, Power House mit Schornstein */
   k += `<path d="M-160 -22 Q-130 -36 -90 -40 L60 -42 Q118 -42 146 -32 L164 -22 Q60 -30 -20 -28 Q-100 -26 -160 -22 Z" fill="#7f8b5e"/>`;
-  k += `<rect x="-120" y="-50" width="24" height="12" fill="#b5a892"/><rect x="-118" y="-48" width="4" height="5" fill="#5a5048"/><rect x="-108" y="-48" width="4" height="5" fill="#5a5048"/>`;
+  /* Ruine des Warden's House neben dem Leuchtturm: Mauern ohne Dach, hohle Fensteröffnungen */
+  k += `<rect x="-116" y="-56" width="28" height="16" fill="#b8ab94"/><rect x="-113" y="-53" width="22" height="10" fill="#6f7457"/>`;
+  for (const x of [-114, -107, -100, -93]) k += `<rect x="${x}" y="-50" width="3.4" height="6" fill="#d9dccf"/>`;
+  k += `<path d="M-116 -56 L-114 -60 L-110 -56 M-98 -56 L-95 -61 L-92 -56" stroke="#b8ab94" stroke-width="2.4" fill="none"/>`;
   k += `<rect x="96" y="-56" width="30" height="16" fill="#cfc6b4"/><rect x="118" y="-86" width="5" height="30" fill="#a49884"/>`;
   /* das Zellenhaus: langer Betonbau (verkürzt), Fensterreihen */
   k += `<rect x="-60" y="-66" width="120" height="26" fill="${S.lg("zellen", [[0, "#f3ede0"], [1, "#cfc6b4"]], 0, 0, 1, 0)}"/>`;
@@ -284,7 +289,10 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
   for (let i = 0; i < 7; i++) { k += `<rect x="${100 + i * 9}" y="-22" width="4.4" height="5" fill="#4a4a48"/><rect x="${100 + i * 9}" y="-13" width="4.4" height="5" fill="#4a4a48"/>`; }
   k += `<text x="129" y="-25.6" font-size="4.4" text-anchor="middle" fill="#5a4a3c" font-family="Arial,sans-serif" font-weight="bold">UNITED STATES PENITENTIARY</text>`;
   k += `<rect x="86" y="-5" width="96" height="5" fill="#6d665a"/>`;
-  for (const [x, y] of [[-140, -28], [-126, -34], [140, -30], [10, -42], [-30, -41]]) k += `<circle cx="${x}" cy="${y}" r="8" fill="#5d6f45"/>`;
+  for (const [x, y] of [[-142, -28], [-128, -34], [10, -42], [-30, -41], [78, -40]]) k += `<circle cx="${x}" cy="${y}" r="7" fill="#5d6f45"/>`;
+  /* Anleger mit Mole vor Gebäude 64 */
+  k += `<path d="M150 -2 L232 -2 L234 2 L150 2 Z" fill="#8d877b"/><path d="M150 2 L234 2" stroke="#4d4a44" stroke-width="1.4"/>`;
+  for (let x = 156; x < 232; x += 9) k += `<rect x="${x}" y="2" width="1.8" height="3" fill="#4d4a44"/>`;
   k += `<rect x="-186" y="-130" width="372" height="130" fill="${S.lg("alicht", [[0, "#ffe9c4", 0.16], [0.5, "#fff", 0], [1, "#000", 0.1]], 0, 0, 1, 0)}"/>`;
   const L = (x, y) => [X + x * s, Y + y * s];
   S.teil({ id: "alcatraz", de: "die Insel Alcatraz", syl: "IN-sel AL-ca-traz", it: "l'isola di Alcatraz", itSyl: "I-so-la di AL-ca-traz", en: "Alcatraz Island", x: X, y: Y,
@@ -358,24 +366,33 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
    ===================================================================== */
 {
   const D = 1083, s = F / D, X = XM(47.8), Y = FY(D, 0);
+  const rp = zufall(39);
   let k = "";
-  k += `<rect x="-62" y="-4" width="124" height="4" fill="#6f5a43"/>`;
-  for (let x = -60; x < 62; x += 5) k += `<line x1="${x}" y1="0" x2="${x}" y2="2.6" stroke="#4e3d2c" stroke-width=".9"/>`;
-  for (const [x0, w, h, c] of [[-56, 26, 12, "#9c8468"], [-26, 30, 14, "#8f775c"], [8, 24, 11, "#a08a6c"], [36, 20, 9, "#93795d"]]) {
-    k += `<rect x="${x0}" y="${-4 - h}" width="${w}" height="${h}" fill="${c}"/><path d="M${x0 - 1} ${-4 - h} L${x0 + w / 2} ${-4 - h - 4} L${x0 + w + 1} ${-4 - h} Z" fill="#5d6a6e"/>`;
-    for (let i = 0; i < Math.floor(w / 5); i++) k += `<rect x="${x0 + 1.6 + i * 5}" y="${-4 - h + 3}" width="2.6" height="3" fill="#f3e3b5" opacity=".85"/>`;
+  /* Deck auf Pfählen */
+  k += `<rect x="-66" y="-4" width="136" height="4" fill="#6f5a43"/>`;
+  { let pf = ""; for (let x = -64; x < 70; x += 4) pf += `M${x} 0 V2.6 `; k += `<path d="${pf}" stroke="#4e3d2c" stroke-width=".9"/>`; }
+  /* zweigeschossige, verwitterte Holzbauten mit Satteldächern und Galerie */
+  for (const [x0, w, h, c] of [[-58, 20, 13, "#94836d"], [-36, 24, 15, "#8a7962"], [-10, 18, 13, "#9b8a72"], [10, 22, 14, "#867560"]]) {
+    k += `<rect x="${x0}" y="${-4 - h}" width="${w}" height="${h}" fill="${c}"/><rect x="${x0}" y="${-4 - h * 0.52}" width="${w}" height="1.2" fill="#6b5c4a"/>`;
+    k += `<path d="M${x0 - 1.2} ${-4 - h} L${x0 + w / 2} ${-4 - h - 5} L${x0 + w + 1.2} ${-4 - h} Z" fill="#5f6a6c"/>`;
+    for (let i = 0; i < Math.floor(w / 4.5); i++) for (const fy of [-4 - h + 2.5, -4 - h * 0.45]) k += `<rect x="${x0 + 1.4 + i * 4.5}" y="${r(fy)}" width="2.4" height="3" fill="#f1dfae" opacity=".9"/>`;
   }
-  k += `<rect x="-11" y="-28" width="22" height="6" fill="#1f4f7a"/><text x="0" y="-23.4" font-size="4.6" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-weight="bold">PIER 39</text>`;
-  for (const x of [-46, -16, 18, 44]) k += `<line x1="${x}" y1="-18" x2="${x}" y2="-32" stroke="#ddd" stroke-width=".5"/><rect x="${x}" y="-32" width="4.4" height="2.6" fill="${x < 0 ? "#c0392b" : "#2a6fb3"}"/>`;
-  /* die Schwimmstege (K-Dock) an der Westseite, Seelöwen (≈ 2 m) */
-  for (const [x0, y0] of [[-96, 1], [-80, 4], [-110, 5]]) k += `<rect x="${x0}" y="${y0}" width="24" height="2.6" rx=".5" fill="#b8b1a2"/>`;
+  /* das Karussell am Ende des Piers: zweistöckig, gestreiftes Dach */
+  k += `<rect x="40" y="-14" width="18" height="10" fill="#efe6d2"/><rect x="40" y="-9.5" width="18" height="1" fill="#c9a24a"/>`;
+  k += `<path d="M38 -14 L49 -21 L60 -14 Z" fill="#c0392b"/><path d="M41.5 -14 L49 -21 L45 -14 Z M48 -14 L49 -21 L52 -14 Z M55 -14 L49 -21 L58.5 -14 Z" fill="#f6f1e6"/><circle cx="49" cy="-21.6" r="1" fill="#d9b44a"/>`;
+  /* Eingangsschild PIER 39 am Landende */
+  k += `<rect x="-72" y="-27" width="1.6" height="23" fill="#3c3a36"/><rect x="-64" y="-27" width="1.6" height="23" fill="#3c3a36"/><rect x="-76" y="-33" width="18" height="7" fill="#1f4f7a"/><text x="-67" y="-27.8" font-size="5" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-weight="bold">PIER 39</text>`;
+  /* viele Fahnen entlang der Dächer */
+  { let st = "", fl = ["#c0392b", "#2a6fb3", "#f2c230", "#2e8b57", "#ffffff"]; for (let x = -56; x <= 56; x += 7) { const top = -4 - 15 - 9 - rp() * 3; st += `M${x} -12 V${r(top)} `; k += `<rect x="${x}" y="${r(top)}" width="3.4" height="2.2" fill="${fl[Math.floor(rp() * 5)]}"/>`; } k += `<path d="${st}" stroke="#ddd" stroke-width=".45"/>`; }
+  /* K-Dock vor der Westseite: Schwimmstege, dicht an dicht Seelöwen (≈ 2 m) */
+  for (const [x0, y0] of [[-112, 1.5], [-96, 5], [-120, 7.5], [-84, 2]]) k += `<rect x="${x0}" y="${y0}" width="22" height="2.4" rx=".5" fill="#b8b1a2"/>`;
   const LF = S.lg("loewe", [[0, "#9a7756"], [1, "#4f3a26"]]);
-  const loewe = (x, y, dir, hoch) => { const X2 = (v) => r(x + v * dir), Y2 = (v) => r(y - v); return `<path d="M${X2(-2)} ${Y2(0)} Q${X2(-2.3)} ${Y2(0.5)} ${X2(-1.5)} ${Y2(0.6)} Q${X2(0)} ${Y2(0.9)} ${X2(0.9)} ${Y2(hoch ? 1.4 : 0.8)} L${X2(1.3)} ${Y2(hoch ? 2 : 0.9)} Q${X2(1.8)} ${Y2(hoch ? 2.2 : 0.9)} ${X2(2)} ${Y2(hoch ? 1.9 : 0.6)} L${X2(1.5)} ${Y2(hoch ? 1.2 : 0.3)} L${X2(1.2)} ${Y2(0)} Z" fill="${LF}"/>`; };
-  for (const [x, y, d, h] of [[-91, 1, 1, true], [-86, 1, -1, false], [-81, 1, 1, false], [-75, 4, -1, true], [-70, 4, 1, false], [-104, 5, 1, false], [-99, 5, -1, true]]) k += loewe(x, y, d, h);
+  const loewe = (x, y, dir, hoch) => { const X2 = (v) => r(x + v * dir), Y2 = (v) => r(y - v); return `M${X2(-2)} ${Y2(0)} Q${X2(-2.3)} ${Y2(0.5)} ${X2(-1.5)} ${Y2(0.6)} Q${X2(0)} ${Y2(0.9)} ${X2(0.9)} ${Y2(hoch ? 1.4 : 0.8)} L${X2(1.3)} ${Y2(hoch ? 2 : 0.9)} Q${X2(1.8)} ${Y2(hoch ? 2.2 : 0.9)} ${X2(2)} ${Y2(hoch ? 1.9 : 0.6)} L${X2(1.5)} ${Y2(hoch ? 1.2 : 0.3)} L${X2(1.2)} ${Y2(0)} Z`; };
+  { let lw = ""; for (const [x0, y0] of [[-112, 1.5], [-96, 5], [-120, 7.5], [-84, 2]]) for (let x = x0 + 2; x < x0 + 21; x += 2.6 + rp() * 1.2) lw += loewe(x, y0 + 0.2, rp() < 0.5 ? 1 : -1, rp() < 0.3); k += `<path d="${lw}" fill="${LF}"/>`; }
   S.teil({ id: "pier_39", de: "der Pier 39", syl: "PIER NEUN-und-DREI-ßig", it: "il Pier 39", itSyl: "PIER TREN-ta-NO-ve", en: "Pier 39", x: X, y: Y,
     kunst: `<g ${fern(2)} transform="scale(${r(s * 1000) / 1000})">${k}</g>` + flaeche(-36 * s * 3.4, -36 * s, 190 * s, 44 * s, 0.4),
     tipp: "Am Pier 39 gibt es Läden und Restaurants — und Hunderte Seelöwen.",
-    zoom: { x: r(X - 36 * s * 3.2), y: r(Y - 10), w: 21, h: 14 },
+    zoom: { x: r(X - 126 * s), y: r(Y - 21), w: 54, h: 36 },
     unter: [
       { id: "seeloewe", de: "der Seelöwe", syl: "SEE-lö-we", it: "il leone marino", itSyl: "le-O-ne ma-RI-no", en: "sea lion", x: X - 90 * s, y: Y + 3 * s, kunst: flaeche(-22 * s, -4 * s, 44 * s, 7 * s, 0.2),
         tipp: "Seit 1990 liegen die Seelöwen auf den Schwimmstegen am Pier 39 in der Sonne." },
@@ -605,15 +622,15 @@ const HAUS = {};
   const freiN = (a0, a1, d0, d1) => (a0 < 30 && d0 < 60) || d0 < 40 || VN + F * a0 / d1 > 262;
   const maxN = (a0, a1, d0, d1) => { const x0 = VN + F * a0 / d1, x1 = VN + F * a1 / d0; if (x1 < 170 || x0 > 228) return 99; return E - 13 * d0 / F - Math.max(gzN(a0, d0), gzN(a1, d0), gzN(a0, d1), gzN(a1, d1)); };
   const LN = bloecke(PN, gzN, [[2, 126], [147, 273]], [[15, 135], [150, 272], [287, 410], [425, 550], [565, 690]], freiN, 125,
-    { vorn: (f) => f, seite: (f) => misch(f, "#000000", 0.1) }, rnd2, maxN, (a0, a1, d0) => a0 === 2 && d0 < 135 ? 18 : a1);
+    { vorn: (f) => misch(f, "#3e5070", 0.1), seite: (f) => misch(f, "#fff4e0", 0.1) }, rnd2, maxN, (a0, a1, d0) => a0 === 2 && d0 < 135 ? 18 : a1);
   for (let d = 45; d < 690; d += d < 150 ? 10 : 20) { const d1 = Math.min(690, d + (d < 150 ? 10 : 20)), xs = [2, 60, 126, 210, 330]; LN.push({ t: d1 - 0.01, V: [{ p: rahmen([...xs.map((X) => PN(X, d, gzN(X, d))), ...xs.slice().reverse().map((X) => PN(X, d1, gzN(X, d1)))]), f: dunst("#8b897f", d) }] }); }
   /* Ostblick: nördlich und südlich der Lombard Street, Blöcke bis zur Mason Street (≈ 0,7 km) */
   const freiE = (a0, a1, d0, d1) => (a1 <= 0 ? VO + F * a1 / d1 < 230 : VO + F * a0 / d1 > 405) || d1 > 715 || (a0 >= -39.2 && a1 <= -14.9 && d1 <= 126.1) || (a1 <= 0 && d0 < 30);
   const reihenE = [[2, 126], [147, 273], [294, 420], [441, 567], [588, 714]];
   KLIP[0] = SEAM;
   const LE = [
-    ...bloecke(PO, gzE, [[-272, -150], [-135, -15]], reihenE, freiE, 105, { vorn: (f) => misch(f, "#000000", 0.08), seite: (f) => f }, rnd2, () => 99),
-    ...bloecke(PO, gzE, [[5, 125]], reihenE, freiE, 140, { vorn: (f) => misch(f, "#000000", 0.08), seite: (f) => misch(f, "#000000", 0.34) }, rnd2, (a0, a1, d0) => d0 < 130 ? 10.5 : 99),
+    ...bloecke(PO, gzE, [[-272, -150], [-135, -15]], reihenE, freiE, 105, { vorn: (f) => misch(f, "#fff4e0", 0.1), seite: (f) => misch(f, "#3e5070", 0.08) }, rnd2, () => 99),
+    ...bloecke(PO, gzE, [[5, 125]], reihenE, freiE, 140, { vorn: (f) => misch(f, "#fff4e0", 0.1), seite: (f) => misch(f, "#3e5070", 0.36) }, rnd2, (a0, a1, d0) => d0 < 130 ? 10.5 : 99),
   ];
   for (let d = 20; d < 714; d += d < 126 ? 12 : 22) { const d1 = Math.min(714, d + (d < 126 ? 12 : 22)), ls = [-330, -135, -15, 5, 60]; LE.push({ t: d1 - 0.01, V: [{ p: rahmen([...ls.map((l) => PO(l, d, gzE(l, d))), ...ls.slice().reverse().map((l) => PO(l, d1, gzE(l, d1)))]), f: dunst("#8b897f", d) }] }); }
   KLIP[0] = -2.5;
@@ -770,7 +787,7 @@ const LOMB = {};
   const versatz = (p, o) => p.map((q, i) => { const a = p[Math.max(0, i - 1)], b = p[Math.min(p.length - 1, i + 1)], dd = b[0] - a[0], dl = b[1] - a[1], l = Math.hypot(dd, dl) || 1; return [q[0] - dl / l * o, q[1] + dd / l * o]; });
   const ZIEGEL = S.lg("brick", [[0, "#a64a35"], [1, "#c25c42"]]);
   const farbenH = ["#ec8fb8", "#c28be0", "#8fb0ea", "#f4f0f6", "#e46f9d", "#b58be6"];
-  const busch = (d, lat, gr = 1) => { const [x, y] = PO(lat, d, zL(d) + 0.2), s = F * 0.62 * gr / d; if (y > 257 || x < SEAM + 3 || x > 397) return "";
+  const busch = (d, lat, gr = 1) => { const [x, y] = PO(lat, d, zL(d) + 0.2), s = F * 0.62 * gr / d; if (y > 257 || x - 1.9 * s < SEAM || x + 1.9 * s > 399.5) return "";
     let g = `<path d="M${r(x - 1.9 * s)} ${r(y)} Q${r(x - 1.9 * s)} ${r(y - 1.3 * s)} ${r(x - 0.6 * s)} ${r(y - 1.5 * s)} Q${r(x)} ${r(y - 2 * s)} ${r(x + 0.7 * s)} ${r(y - 1.5 * s)} Q${r(x + 1.9 * s)} ${r(y - 1.3 * s)} ${r(x + 1.9 * s)} ${r(y)} Z" fill="#2f4d24"/>`;
     const fb = farbenH[Math.floor(rnd() * 6)];
     for (let i = 0; i < (d < 50 ? 11 : 5); i++) { const a = rnd() * Math.PI, rr = 1.45 * s * Math.sqrt(rnd()), c = rnd() < 0.7 ? fb : farbenH[Math.floor(rnd() * 6)]; g += `<circle cx="${r(x + Math.cos(a) * rr)}" cy="${r(y - 0.45 * s - Math.sin(a) * rr * 0.75)}" r="${r(s * (0.2 + rnd() * 0.1))}" fill="${c}"/>`; }
