@@ -156,23 +156,26 @@ const DOMT = { nord: 124, sued: 136, breite: 15 };
     /* der durchbrochene Maßwerkhelm: Rippen, Bänder, Maßwerk — der Himmel scheint durch */
     const hb = hw * 0.86, hy = oben - 2.4, L = hy - spitze;
     const xr = (y, sx) => cx + sx * hb * (y - spitze) / L;
-    const ST = hinten ? "#7c8090" : "#8a8e9a";
-    let lat = `<path d="M${r(xr(hy, -1))} ${r(hy)} L${cx} ${r(spitze)} L${r(xr(hy, 1))} ${r(hy)} Z" fill="${ST}" opacity=".42"/>`;
-    for (const sx of [-1, 1]) lat += `<line x1="${r(xr(hy, sx))}" y1="${r(hy)}" x2="${cx}" y2="${r(spitze)}" stroke="${ST}" stroke-width="1.2"/>`;
-    lat += `<line x1="${cx}" y1="${r(hy)}" x2="${cx}" y2="${r(spitze)}" stroke="${ST}" stroke-width=".55"/>`;
-    for (let i = 1; i < 9; i++) {
-      const y = hy - i * L / 9.3, y2 = hy - (i - 1) * L / 9.3;
-      lat += `<line x1="${r(xr(y, -1))}" y1="${r(y)}" x2="${r(xr(y, 1))}" y2="${r(y)}" stroke="${ST}" stroke-width=".6"/>`;
-      /* Maßwerk zwischen den Bändern: zwei Spitzbögen und ein Vierpass je Seite */
-      for (const sx of [-1, 1]) {
-        const xa = cx, xb = (xr(y, sx) + xr(y2, sx)) / 2, xm = (xa + xb) / 2, ym = (y + y2) / 2, ww = Math.abs(xb - xa);
-        if (ww < 0.8) continue;
-        lat += `<path d="M${r(xa + sx * 0.2)} ${r(y2)} L${r(xa + sx * 0.2)} ${r(ym)} Q${r(xm)} ${r(y + 0.2)} ${r(xb - sx * 0.2)} ${r(ym)} L${r(xb - sx * 0.2)} ${r(y2)}" stroke="${ST}" stroke-width=".38" fill="none"/>`;
-        lat += `<circle cx="${r(xm)}" cy="${r(ym - (y2 - y) * 0.05)}" r="${r(Math.min(ww * 0.2, (y2 - y) * 0.22))}" fill="none" stroke="${ST}" stroke-width=".3"/>`;
+    const ST = hinten ? "#8a8278" : "#a49a8a";            /* warmes Grau des Sandsteins */
+    const xf = (y, f) => cx + f * hb * (y - spitze) / L;
+    let lat = `<path d="M${r(xr(hy, -1))} ${r(hy)} L${cx} ${r(spitze)} L${r(xr(hy, 1))} ${r(hy)} Z" fill="${ST}" opacity=".36"/>`;
+    /* die Grate des achteckigen Helms: kräftige Rippen */
+    for (const fr of [-1, -0.42, 0.42, 1]) lat += `<line x1="${r(xf(hy, fr))}" y1="${r(hy)}" x2="${cx}" y2="${r(spitze)}" stroke="${ST}" stroke-width="${Math.abs(fr) === 1 ? 1.1 : 0.8}"/>`;
+    /* Bänder und dazwischen Reihen aus Spitzbögen und Vierpässen */
+    const nb = 8;
+    for (let i = 1; i <= nb; i++) {
+      const y = hy - i * L / (nb + 0.6), y2 = hy - (i - 1) * L / (nb + 0.6), ym = (y + y2) / 2;
+      lat += `<line x1="${r(xf(y, -1))}" y1="${r(y)}" x2="${r(xf(y, 1))}" y2="${r(y)}" stroke="${ST}" stroke-width=".5"/>`;
+      for (const [f0, f1] of [[-1, -0.42], [-0.42, 0.42], [0.42, 1]]) {
+        const xa = xf(ym, f0), xb = xf(ym, f1), xm = (xa + xb) / 2, ww = xb - xa, hh = y2 - y;
+        if (ww < 1.1) continue;
+        lat += `<path d="M${r(xa + 0.3)} ${r(y2)} L${r(xa + 0.3)} ${r(y + hh * 0.55)} Q${r(xm)} ${r(y + hh * 0.18)} ${r(xb - 0.3)} ${r(y + hh * 0.55)} L${r(xb - 0.3)} ${r(y2)}" stroke="${ST}" stroke-width=".3" fill="none"/>`;
+        const rr = Math.min(ww * 0.12, hh * 0.12), qy = y + hh * 0.5;
+        if (rr > 0.18) for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) lat += `<circle cx="${r(xm + dx * rr)}" cy="${r(qy + dy * rr)}" r="${r(rr)}" fill="none" stroke="${ST}" stroke-width=".2"/>`;
       }
     }
     /* Krabben an den Kanten, Kreuzblume oben */
-    for (let i = 1; i < 11; i++) { const y = hy - i * L / 11.2; lat += `<path d="M${r(xr(y, -1))} ${r(y)} l-.8 -.5 M${r(xr(y, 1))} ${r(y)} l.8 -.5" stroke="${ST}" stroke-width=".5" stroke-linecap="round"/>`; }
+    for (let i = 1; i < 13; i++) { const y = hy - i * L / 13.2; lat += `<path d="M${r(xr(y, -1) - 0.2)} ${r(y)} q-.9 -.1 -.9 -.9 M${r(xr(y, 1) + 0.2)} ${r(y)} q.9 -.1 .9 -.9" stroke="${ST}" stroke-width=".55" fill="none" stroke-linecap="round"/>`; }
     lat += `<path d="M${r(cx + 0.5)} ${r(spitze + 0.8)} L${r(xr(hy, 1))} ${r(hy)}" stroke="${RAND}" stroke-width=".45" opacity="${hinten ? 0.4 : 0.85}"/>`;
     lat += `<path d="M${cx} ${r(spitze)} l-1.4 .6 l1.4 -3.6 l1.4 3.6 Z" fill="${ST}"/><path d="M${cx} ${r(spitze - 3)} l0 -1.8 M${r(cx - 0.9)} ${r(spitze - 4)} l1.8 0" stroke="#8a8a84" stroke-width=".4"/>`;
     g += lat;
@@ -203,10 +206,12 @@ const DOMT = { nord: 124, sued: 136, breite: 15 };
   k += glas(95, DY(15), DY(32), 4.6);
   for (const x of [87.4, 101.6]) k += `<rect x="${x - 0.7}" y="${r(DY(40))}" width="1.4" height="${r(DY(14) - DY(40))}" fill="#7a7e8a"/><path d="M${x - 0.7} ${r(DY(40))} l.7 -3.6 l.7 3.6 Z" fill="#7a7e8a"/>`;
   /* polygonaler Ostchor (links) mit hohen Fenstern und Strebepfeilern */
-  const chor = [[46, 0.5], [52, 0], [62, 0], [68, 0.5]];
-  k += `<path d="M44 ${r(DY(14))} L44 ${r(DY(32))} L50 ${r(DY(34))} L64 ${r(DY(34))} L70 ${r(DY(32))} L70 ${r(DY(14))} Z" fill="${DOMSTEIN_H}"/>`;
+  const chor = [[44.4], [50], [64], [69.6]];
+  k += `<path d="M44 ${r(DY(14))} L44 ${r(DY(32))} L50 ${r(DY(34))} L50 ${r(DY(14))} Z" fill="#6c7080"/>`;
+  k += `<path d="M50 ${r(DY(14))} L50 ${r(DY(34))} L64 ${r(DY(34))} L64 ${r(DY(14))} Z" fill="${S.lg("chormitte", [[0, "#8e909c"], [1, "#a4a2a6"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M64 ${r(DY(14))} L64 ${r(DY(34))} L70 ${r(DY(32))} L70 ${r(DY(14))} Z" fill="#7a7c8a"/><path d="M69.6 ${r(DY(14))} L69.6 ${r(DY(32))}" stroke="${RAND}" stroke-width=".4" opacity=".55"/>`;
   for (const [x0, x1] of [[44, 50], [50, 64], [64, 70]]) k += glas((x0 + x1) / 2, DY(16), DY(31), Math.min(3.6, (x1 - x0) * 0.55));
-  for (const [x] of chor) k += `<rect x="${x - 0.7}" y="${r(DY(36))}" width="1.4" height="${r(DY(14) - DY(36))}" fill="#6e7282"/><path d="M${x - 0.7} ${r(DY(36))} l.7 -3 l.7 3 Z" fill="#6e7282"/>`;
+  for (const [x] of chor) k += `<path d="M${r(x - 0.9)} ${r(DY(14))} L${r(x - 0.9)} ${r(DY(30))} L${r(x - 0.6)} ${r(DY(33))} L${r(x - 0.6)} ${r(DY(36))} L${r(x + 0.6)} ${r(DY(36))} L${r(x + 0.6)} ${r(DY(33))} L${r(x + 0.9)} ${r(DY(30))} L${r(x + 0.9)} ${r(DY(14))} Z" fill="#5e6272"/><path d="M${r(x - 0.6)} ${r(DY(36))} l.6 -3 l.6 3 Z" fill="#5e6272"/><path d="M${r(x + 0.9)} ${r(DY(14))} L${r(x + 0.9)} ${r(DY(30))}" stroke="#9a9aa2" stroke-width=".25"/>`;
   k += `<path d="M43 ${r(DY(32))} L50 ${r(DY(34))} L64 ${r(DY(34))} L71 ${r(DY(32))} L66 ${r(DY(47))} L57 ${r(DY(50))} L48 ${r(DY(47))} Z" fill="${PATINA}"/><path d="M57 ${r(DY(50))} L71 ${r(DY(32))}" stroke="${RAND}" stroke-width=".4" opacity=".6"/>`;
   /* Nordturm (vorne) */
   k += turm(DOMT.nord, false);

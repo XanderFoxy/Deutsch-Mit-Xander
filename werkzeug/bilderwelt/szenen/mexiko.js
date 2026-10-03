@@ -1059,7 +1059,7 @@ S.davor(`<rect width="320" height="200" fill="${S.rg("abendlicht", [[0, "#ffcf86
 /* der Reliefstein liegt über den langen Bodenschatten (sie fallen nicht durch ihn hindurch) */
 S.hinten(STEIN);
 /* Silbenschreibung einheitlich: nur die betonten Silben groß, alles andere klein */
-const silben = (t) => { if (!t) return t; const st = t.split(/([- ])/); const gross = (x) => x.length && x === x.toUpperCase() && x !== x.toLowerCase(); const lang = st.some((x) => gross(x) && x.length > 1); g += `<path d="${umriss(1)}" fill="${c2}"/><path d="${umriss(0.9)}" fill="url(#${S.id("sohle")})"/><ellipse cx="${r(0.36 * l)}" cy="${r(-0.08 * l)}" rx="${r(0.07 * l)}" ry="${r(0.05 * l)}" fill="#14653a"/><ellipse cx="${r(-0.28 * l)}" cy="0" rx="${r(0.13 * l)}" ry="${r(0.08 * l)}" fill="#14653a" opacity=".6"/>`;
+const silben = (t) => { if (!t) return t; const st = t.split(/([- ])/); const gross = (x) => x.length && x === x.toUpperCase() && x !== x.toLowerCase(); const lang = st.some((x) => gross(x) && x.length > 1); return st.map((x) => (/^[- ]$/.test(x) ? x : (gross(x) && (x.length > 1 || !lang || /[À-ÖÙ-Ý]/.test(x)) ? x : x.toLowerCase()))).join(""); };
 for (const t of S.teile) for (const u of [t, ...(t.unter || [])]) { u.syl = silben(u.syl); u.itSyl = silben(u.itSyl); }
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/mexiko.js"));
 console.log(aus);

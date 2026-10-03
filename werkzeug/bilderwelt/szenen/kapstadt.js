@@ -143,11 +143,11 @@ S.def(`<mask id="${S.id("mfern")}" maskContentUnits="objectBoundingBox"><rect wi
 const fynbos = (x0, x1, y0, y1, n, op = 0.5) => `<rect x="${x0}" y="${r(y0)}" width="${x1 - x0}" height="${r(y1 - y0)}" fill="url(#${S.id("fynbosfern")})" opacity="${r(op * 0.75)}" mask="url(#${S.id("mfern")})"/><rect x="${x0}" y="${r(y0)}" width="${x1 - x0}" height="${r(y1 - y0)}" fill="url(#${S.id("fynbos")})" opacity="${op}" mask="url(#${S.id("mnah")})"/>`;
 const wald = (x0, x1, y0, y1) => { let d = `M${x0} ${r(y1)}`; for (let x = x0; x <= x1; x += 8) d += `L${x} ${r(y0 + 2 + Math.sin(x * 0.37) * 1.6 + Math.sin(x * 0.13) * 1.2)}`; return `<path d="${d}L${x1} ${r(y1)}Z" fill="url(#${S.id("wald")})" opacity=".9"/>`; };
 const rinne = (x0, y0, x1, y1, w) => {
-  /* gewundene Kerbe: S-Kurve, oben schmal, unten breit; links Schattenseite, rechts Lichtkante */
-  const mx = (x0 + x1) / 2, my = (y0 + y1) / 2, sw = (x1 - x0) * 0.5 + w * 1.5;
-  const li = `M${r(x0 - w * 0.4)} ${r(y0)}C${r(mx - sw)} ${r(my - 4)} ${r(mx + sw * 0.6 - w * 2)} ${r(my + 4)} ${r(x1 - w * 2.4)} ${r(y1)}`;
-  const re = `L${r(x1 + w * 2.4)} ${r(y1)}C${r(mx + sw * 0.6 + w * 2)} ${r(my + 4)} ${r(mx - sw + w)} ${r(my - 4)} ${r(x0 + w * 0.4)} ${r(y0)}Z`;
-  return `<path d="${li}${re}" fill="#2f3826" opacity=".32"/><path d="M${r(x0 + w * 0.4)} ${r(y0)}C${r(mx - sw + w)} ${r(my - 4)} ${r(mx + sw * 0.6 + w * 2)} ${r(my + 4)} ${r(x1 + w * 2.4)} ${r(y1)}" stroke="#e2d2a2" stroke-width=".45" fill="none" opacity=".45"/>`;
+  /* schmaler, dunkler Keil (Schattenseite links), nach unten breiter, endet in einem kleinen Schuttfächer;
+     nur auf der Lichtseite eine feine helle Kante */
+  const mx = (x0 + x1) / 2 + (x1 - x0) * 0.2, my = (y0 + y1) / 2;
+  const keil = `M${r(x0 - w * 0.3)} ${r(y0)}Q${r(mx - w)} ${r(my)} ${r(x1 - w * 1.8)} ${r(y1)}L${r(x1 + w * 0.6)} ${r(y1)}Q${r(mx + w * 0.3)} ${r(my)} ${r(x0 + w * 0.3)} ${r(y0)}Z`;
+  return `<path d="${keil}" fill="#26301e" opacity=".35"/><path d="M${r(x0 + w * 0.3)} ${r(y0)}Q${r(mx + w * 0.3)} ${r(my)} ${r(x1 + w * 0.6)} ${r(y1)}" stroke="#e6d6a6" stroke-width=".3" fill="none" opacity=".5"/><path d="M${r(x1 - w * 1.8)} ${r(y1)}q${r(w * 1.2)} ${r(w * 1.6)} ${r(w * 2.4)} 0z" fill="#8d8878" opacity=".55"/>`;
 };
 const bergUnter = [];
 {
@@ -220,8 +220,15 @@ const bergUnter = [];
     k += `<path d="M${r(x - 1)} ${r(yb)}L${r(x - 7 * f)} ${r(yb + 11 * f)}Q${x} ${r(yb + 13 * f)} ${r(x + 7 * f)} ${r(yb + 11 * f)}L${r(x + 1.4)} ${r(yb)}Z" fill="${S.lg("schutt", [[0, "#8d8878", 0.85], [0.6, "#6b7350", 0.5], [1, "#6b7350", 0]])}"/>`;
   }
   let bro = "";
-  for (let i = 0; i < 34; i++) { const x = 106 + rnd() * 186, y = TOP + H(x) + 1 + rnd() * 6, w = 0.5 + rnd() * 1.2; bro += `M${r(x - w)} ${r(y)}l${r(w * 0.3)} ${r(-w * 0.8)} ${r(w * 1.1)} ${r(-w * 0.2)} ${r(w * 0.6)} ${r(w * 0.7)}z`; }
-  k += `<path d="${bro}" fill="#a39c88"/><path d="${bro}" fill="none" stroke="#5f5848" stroke-width=".18"/>`;
+  /* liegende, unregelmäßige Brocken: oben hell, unten dunkle Unterseite, Kontaktschatten */
+  let unter2 = "", kontakt = "";
+  for (let i = 0; i < 30; i++) {
+    const x = 106 + rnd() * 186, y = TOP + H(x) + 2 + rnd() * 6, w = [0.6, 1, 1.6][i % 3] * (0.7 + rnd() * 0.5);
+    bro += `M${r(x - w)} ${r(y)}q${r(w * 0.1)} ${r(-w * 0.55)} ${r(w * 0.7)} ${r(-w * 0.6)}l${r(w * 0.8)} ${r(w * 0.05)}q${r(w * 0.5)} ${r(w * 0.2)} ${r(w * 0.5)} ${r(w * 0.55)}z`;
+    unter2 += `M${r(x - w)} ${r(y)}h${r(w * 2)}l${r(-w * 0.2)} ${r(-w * 0.2)}h${r(-w * 1.6)}z`;
+    kontakt += `M${r(x - w * 1.3)} ${r(y + 0.2)}h${r(w * 2.4)}`;
+  }
+  k += `<path d="${kontakt}" stroke="#2a2a1c" stroke-width=".5" opacity=".35"/><path d="${bro}" fill="#b0a892"/><path d="${unter2}" fill="#5f5848" opacity=".8"/>`;
   k += `</g>`;
   /* Lichtkante der Plateaukante */
   k += `<path d="${glatt(kamm(109, 284))}" stroke="#f6e7c4" stroke-width=".7" fill="none" opacity=".8"/>`;
