@@ -41,7 +41,7 @@
      DARÜBER das MÄNNLEINLAUFEN von 1509 (nach unserer Kenntnis: Uhr unten,
      Figurenbühne oben — unsicher) — nur um 12 Uhr ziehen die sieben
      Kurfürsten am Kaiser vorbei; jetzt (15:30) sind die Türchen zu, nur
-     der Kaiser thront in der Mitte; darüber die Mondkugel und das
+     der Kaiser thront in der Mitte, seitlich zwei Herolde; darüber das
      Maßwerktürmchen. Die Uhr zeigt halb vier.
    - SCHÖNER BRUNNEN (1385–96, Kopie): rund 19 m, gotische Turmspitze aus
      hellem Sandstein, 40 farbig gefasste Figuren, vergoldete
@@ -351,10 +351,10 @@ const BURG = { x: 118, y: 76, s: 0.72 };
     k += `<path d="M${r(x0)} ${r(Y(31))} L${r(x1)} ${r(Y(31))}" stroke="#a07c6c" stroke-width=".25"/>`;
   }
   for (const x of [59, 76]) k += `<path d="M${x - 1.1} ${r(Y(24))} L${x - 1.1} ${r(Y(37.5))} L${x - 0.6} ${r(Y(39.6))} L${x} ${r(Y(44))} L${x + 0.6} ${r(Y(39.6))} L${x + 1.1} ${r(Y(37.5))} L${x + 1.1} ${r(Y(24))} Z" fill="#b48a74"/><path d="M${x - 1.1} ${r(Y(24))} L${x - 1.1} ${r(Y(37.5))} L${x - 0.6} ${r(Y(39.6))} L${x} ${r(Y(44))}" stroke="#ffd0a8" stroke-width=".3" fill="none" opacity=".7"/>`;
-  k += `<path d="M53.4 ${r(Y(39))} L58 ${r(Y(56))} L68 ${r(Y(56))} L81.6 ${r(Y(39))} Z" fill="${ZIEGEL}"/>`;
-  k += `<path d="M68 ${r(Y(56))} L81.6 ${r(Y(39))} L75.6 ${r(Y(39.4))} Z" fill="#000" opacity=".18"/><path d="M58 ${r(Y(56))} L53.4 ${r(Y(39))} L59 ${r(Y(39.4))} Z" fill="#ffd0a8" opacity=".2"/>`;
+  k += `<path d="M53.4 ${r(Y(39))} L58 ${r(Y(53))} L68 ${r(Y(53))} L81.6 ${r(Y(39))} Z" fill="${ZIEGEL}"/>`;
+  k += `<path d="M68 ${r(Y(53))} L81.6 ${r(Y(39))} L75.6 ${r(Y(39.4))} Z" fill="#000" opacity=".18"/><path d="M58 ${r(Y(53))} L53.4 ${r(Y(39))} L59 ${r(Y(39.4))} Z" fill="#ffd0a8" opacity=".2"/>`;
   for (const [x, v] of [[60, 43], [64.4, 43], [68.8, 43], [62.2, 48.5], [66.6, 48.5]]) k += `<path d="M${x} ${r(Y(v))} l.8 -1.5 l.8 1.5 Z" fill="#7a3424"/>`;
-  k += `<path d="M53.4 ${r(Y(39))} L58 ${r(Y(56))} L68 ${r(Y(56))}" stroke="#ffb08a" stroke-width=".5" fill="none"/><path d="M63 ${r(Y(56))} L63 ${r(Y(59))}" stroke="${DUNKEL}" stroke-width=".3"/>`;
+  k += `<path d="M53.4 ${r(Y(39))} L58 ${r(Y(53))} L68 ${r(Y(53))}" stroke="#ffb08a" stroke-width=".5" fill="none"/><path d="M63 ${r(Y(53))} L63 ${r(Y(56))}" stroke="${DUNKEL}" stroke-width=".3"/>`;
   k += turm(36, 0.95, true) + turm(27, 1, false);
   const AX = 34, AY = 50;
   S.teil({ id: "sebalduskirche", de: "die Sebalduskirche", syl: "se-BAL-dus-kir-che", it: "la chiesa di San Sebaldo", itSyl: "KIE-sa di san se-BAL-do", en: "St. Sebald's Church",
@@ -453,6 +453,8 @@ let choerleinPunkt = null;
   for (let xx = 106; xx < x; xx += 9 + rnd() * 8) { const hgt = grenze + (rnd() - 0.5) * 8; zack += ` L${r(xx + 2)} ${r(hgt)} L${r(xx + 5)} ${r(hgt - 3 - rnd() * 3)} L${r(xx + 8)} ${r(hgt)}`; }
   zack += ` L${r(x)} ${r(grenze)} L${r(x)} ${r(fuss)} Z`;
   nord += `<path d="${zack}" fill="#4a4470" opacity=".33"/>` + lichter;
+  /* hinter dem Schönen Brunnen eine dunklere Zone der Platzwand (Arkade im Schatten): so setzt sich der Brunnen ab */
+  nord += `<rect x="128" y="86" width="44" height="${r(fuss - 86)}" fill="${S.lg("brunnengrund", [[0, "#2a2440", 0], [0.5, "#2a2440", 0.32], [1, "#2a2440", 0]], 0, 0, 1, 0)}"/>`;
   /* Westseite: traufständige Häuser, Fassaden schauen nach Osten (ganz im Schatten), sie fluchten zum Augpunkt */
   let west = "";
   const Lw = -30;
@@ -592,12 +594,16 @@ const kreis = (uc, vc, rr, p = 0, n = 20) => Array.from({ length: n }, (_, i) =>
   k += `<path d="${pfad([[8.6, MV, 0.3], [13.4, MV, 0.3], [13.4, MV + 2.6, 0.3], [8.6, MV + 2.6, 0.3]])}" fill="#e0c4a2"/>`;
   k += `<path d="${pfad(spitz(10.2, 11.8, MV + 0.2, MV + 2.4, 0.3, 3))}" fill="#2a2420"/>`;
   {
-    const [kx, ky] = P3(11, MV + 0.3, 0.3), s = em(104);
+    const [kx, ky] = P3(11, MV + 0.3, 0.3), s = em(104) * 1.3;
     k += `<rect x="${r(kx - 0.5 * s)}" y="${r(ky - 1.2 * s)}" width="${r(1 * s)}" height="${r(1.2 * s)}" fill="${GOLD}"/><circle cx="${r(kx)}" cy="${r(ky - 1.5 * s)}" r="${r(0.32 * s)}" fill="#f1c74a"/><path d="M${r(kx - 0.3 * s)} ${r(ky - 1.8 * s)} l${r(0.15 * s)} ${r(-0.4 * s)} l${r(0.15 * s)} ${r(0.25 * s)} l${r(0.15 * s)} ${r(-0.3 * s)} l${r(0.15 * s)} ${r(0.3 * s)} l${r(0.15 * s)} ${r(-0.25 * s)} l0 ${r(0.4 * s)} Z" fill="#ffe27a"/>`;
   }
   for (const [ua, ub] of [[8.9, 10], [12, 13.1]]) k += `<path d="${pfad([[ua, MV + 0.2, 0.3], [ub, MV + 0.2, 0.3], [ub, MV + 2, 0.3], [ua, MV + 2, 0.3]])}" fill="#6a4a30"/><path d="${pfad([[(ua + ub) / 2, MV + 0.2, 0.3], [(ua + ub) / 2, MV + 2, 0.3]], false)}" stroke="#3a2a1e" stroke-width=".2" fill="none"/>`;
-  /* die Mondkugel, halb blau, halb golden */
-  k += `<path d="${pfad(kreis(11, 24.05, 0.4, 0.25, 12))}" fill="#1c2f66"/><path d="${pfad([[11, 24.45, 0.25], [11.4, 24.05, 0.25], [11, 23.65, 0.25]])}" fill="#f1c74a"/>`;
+  /* zwei Herolde mit Posaunen stehen vorn auf der Bühne */
+  for (const [u, sx, c] of [[9.45, -1, "#b8232a"], [12.55, 1, "#2f5a9a"]]) {
+    k += `<path d="${pfad([[u - 0.28, MV + 0.15, 0.6], [u - 0.18, MV + 1.15, 0.6], [u + 0.18, MV + 1.15, 0.6], [u + 0.28, MV + 0.15, 0.6]])}" fill="${c}"/>`;
+    k += `<path d="${pfad(kreis(u, MV + 1.35, 0.17, 0.6, 8))}" fill="#e8c8a0"/><path d="${pfad([[u - 0.2, MV + 1.48, 0.6], [u, MV + 1.62, 0.6], [u + 0.2, MV + 1.48, 0.6]])}" fill="${GOLD}"/>`;
+    k += `<path d="${pfad([[u + sx * 0.1, MV + 1.3, 0.6], [u + sx * 0.75, MV + 1.75, 0.6]], false)}" stroke="#f1c74a" stroke-width=".35" fill="none"/><path d="${pfad([[u + sx * 0.75, MV + 1.6, 0.6], [u + sx * 0.75, MV + 1.92, 0.6], [u + sx * 0.92, MV + 1.85, 0.6]])}" fill="#f1c74a"/>`;
+  }
   /* Maßwerktürmchen mit Spitze, Krabben und goldener Kreuzblume */
   k += `<path d="${pfad([[10, 24.6, 0], [10, 31, 0], [12, 31, 0], [12, 24.6, 0]])}" fill="${ST}"/>`;
   for (const v of [25.2, 27.6]) k += `<path d="${pfad(spitz(10.35, 11.65, v, v + 2))}" fill="${GLAS}"/>`;
@@ -615,7 +621,7 @@ const kreis = (uc, vc, rr, p = 0, n = 20) => Array.from({ length: n }, (_, i) =>
     zoom: { x: 224, y: 56, w: 34, h: 70 },
     unter: [
       { id: "uhr", de: "die Uhr", syl: "UHR", it: "l'orologio", itSyl: "o-ro-LO-gio", en: "clock", x: uhr[0], y: uhr[1] + 4, kunst: flaeche(-4.2, -8.6, 8.4, 8.6),
-        tipp: "Das Zifferblatt ist 2,5 Meter groß. Die Kugel darüber zeigt den Mond. Jetzt ist es halb vier." },
+        tipp: "Das Zifferblatt ist 2,5 Meter groß. Jetzt ist es halb vier." },
       { id: "maennleinlaufen", de: "das Männleinlaufen", syl: "MÄNN-lein-lau-fen", it: "la sfilata delle statuine", itSyl: "sfi-LA-ta del-le sta-tu-I-ne", en: "Männleinlaufen (clock figures)",
         x: mann[0], y: mann[1] + 0.4, kunst: flaeche(-7, -6.4, 14, 6.4), tipp: "Um zwölf Uhr gehen die Türchen auf: Die sieben Kurfürsten ziehen am Kaiser vorbei und verneigen sich." },
       { id: "giebel", de: "der Giebel", syl: "GIE-bel", it: "il frontone", itSyl: "fron-TO-ne", en: "gable", x: giebelP[0], y: giebelP[1], kunst: flaeche(-6, -26, 12, 24),
@@ -673,15 +679,15 @@ const SB = { x: 150, d: 75 };
   const FARBEN = ["#b8232a", "#2f5a9a", "#2f7a4a", "#7a3a8a", "#c8701a"];
   const KERN_SONNE = S.lg("brunnenkern", [[0, "#e8c8a0"], [0.5, "#c8a47e"], [1, "#9a7c62"]], 0, 0, 1, 0);
   const STEIN_SONNE = S.lg("brunnensonne", [[0, "#ffe8c4"], [0.45, "#f2d2a6"], [1, "#c09a74"]], 0, 0, 1, 0);
-  const KERN_S = S.lg("brunnenkerns", [[0, "#a49480"], [0.5, "#86786a"], [1, "#665a50"]], 0, 0, 1, 0);
-  const STEIN_S = S.lg("brunnensteins", [[0, "#cfc2aa"], [0.5, "#b4a48c"], [1, "#857664"]], 0, 0, 1, 0);
+  const KERN_S = S.lg("brunnenkerns", [[0, "#c8b8a4"], [0.5, "#b8aa9a"], [1, "#94846e"]], 0, 0, 1, 0);
+  const STEIN_S = S.lg("brunnensteins", [[0, "#e6d8c0"], [0.5, "#d0c0a2"], [1, "#a8967a"]], 0, 0, 1, 0);
   const etage = (y0, y1, hw, n, fh, sonne) => {
     const STEIN = sonne ? STEIN_SONNE : STEIN_S, KERN = sonne ? KERN_SONNE : KERN_S;
     let g = `<path d="M${r(-hw * 0.7)} ${r(y0)} L${r(-hw * 0.6)} ${r(y1)} L${r(hw * 0.6)} ${r(y1)} L${r(hw * 0.7)} ${r(y0)} Z" fill="${KERN}"/>`;
     const d = 2 * hw / n;
     for (let i = 0; i <= n; i++) {
       const x = -hw + i * d, w = i === 0 || i === n ? 0.28 : 0.2;
-      g += `<rect x="${r(x - w / 2)}" y="${r(y1)}" width="${w}" height="${r(y0 - y1)}" fill="${STEIN}"/>`;
+      g += `<rect x="${r(x - w / 2)}" y="${r(y1)}" width="${w}" height="${r(y0 - y1)}" fill="${STEIN}"/><rect x="${r(x + w / 2 - 0.05)}" y="${r(y1)}" width=".05" height="${r(y0 - y1)}" fill="${GOLD}"/>`;
       g += `<path d="M${r(x - 0.12)} ${r(y1)} L${r(x)} ${r(y1 - (y0 - y1) * 0.4)} L${r(x + 0.12)} ${r(y1)} Z" fill="${STEIN}"/><circle cx="${r(x)}" cy="${r(y1 - (y0 - y1) * 0.4)}" r=".07" fill="${GOLD}"/>`;
     }
     for (let i = 0; i < n; i++) {
@@ -804,8 +810,8 @@ const MARKT = { bude: null, lichter: null, leute: null, wurst: null, christkind:
       /* der Bratwurststand: Rost mit Würsten auf der Theke, drei helle Rauchschwaden vom Buchenholz */
       if (ri === 3 && !MARKT.wurst && x > 98 && x < 116) {
         MARKT.wurst = [x + bw / 2, fuss, s];
-        g += `<rect x="${r(x + 0.3 * s)}" y="${r(fuss - h + 1.32 * s)}" width="${r(bw - 0.6 * s)}" height="${r(0.2 * s)}" fill="#2a2420"/><rect x="${r(x + 0.3 * s)}" y="${r(fuss - h + 1.48 * s)}" width="${r(bw - 0.6 * s)}" height="${r(0.06 * s)}" fill="#ff8a3a"/>`;
-        for (let i = 0; i < 7; i++) g += `<rect x="${r(x + (0.4 + i * 0.36) * s)}" y="${r(fuss - h + 1.26 * s)}" width="${r(0.28 * s)}" height="${r(0.08 * s)}" rx=".2" fill="#8a4a1e"/>`;
+        g += `<rect x="${r(x + 0.25 * s)}" y="${r(fuss - h + 0.95 * s)}" width="${r(bw - 0.5 * s)}" height="${r(0.4 * s)}" fill="#2a2420"/><rect x="${r(x + 0.25 * s)}" y="${r(fuss - h + 1.15 * s)}" width="${r(bw - 0.5 * s)}" height="${r(0.2 * s)}" fill="${S.lg("glut", [[0, "#ffd060"], [1, "#e8501a"]])}"/>`;
+        for (let i = 0; i < 5; i++) g += `<rect x="${r(x + (0.4 + i * 0.48) * s)}" y="${r(fuss - h + 0.96 * s)}" width="${r(0.38 * s)}" height="${r(0.13 * s)}" rx="${r(0.065 * s)}" fill="#8a4a1e"/>`;
         g += `<g filter="url(#${S.id("glimm")})" opacity=".7">`;
         for (const [dx, hh, w] of [[-0.6, 5.2, 0.9], [0.3, 6.6, 1.1], [1.1, 4.6, 0.8]]) g += `<path d="M${r(x + bw / 2 + dx * s)} ${r(yF)} q${r(-0.9 * s)} ${r(-hh * 0.35 * s)} ${r(0.3 * s)} ${r(-hh * 0.6 * s)} q${r(1.2 * s)} ${r(-hh * 0.25 * s)} ${r(0.2 * s)} ${r(-hh * 0.4 * s)}" stroke="#eeeaf4" stroke-width="${r(w * s)}" fill="none" stroke-linecap="round"/>`;
         g += `</g>`;
@@ -937,6 +943,7 @@ const DS = 190;        /* Einheiten je Meter für die Dinge */
   k += `<ellipse cx="0" cy="${r(-h)}" rx="${r(w / 2)}" ry="1.8" fill="#4a0e14"/><ellipse cx="0" cy="${r(-h + 0.3)}" rx="${r(w / 2 - 0.8)}" ry="1.2" fill="#6a1a20"/>`;
   k += `<path d="M${r(w / 2 - 0.4)} ${r(-h * 0.75)} q6 .4 5.4 6 q-.6 4.6 -5.6 4.2" stroke="#9a2430" stroke-width="2.2" fill="none"/>`;
   k += `<rect x="${r(-w * 0.32)}" y="${r(-h * 0.62)}" width="${r(w * 0.64)}" height="${r(h * 0.36)}" rx="1" fill="#f4e8c8"/><text x="0" y="${r(-h * 0.36)}" font-size="2.6" text-anchor="middle" fill="#7a1a28" font-family="Georgia,serif" font-weight="bold">2026</text>`;
+  k += `<path d="M-2.6 ${r(-h * 0.66)} L-2.6 ${r(-h * 0.74)} L-1.8 ${r(-h * 0.74)} L-1.8 ${r(-h * 0.79)} L-1 ${r(-h * 0.79)} L-1 ${r(-h * 0.84)} L-.3 ${r(-h * 0.84)} L0 ${r(-h * 0.93)} L.3 ${r(-h * 0.84)} L1 ${r(-h * 0.84)} L1 ${r(-h * 0.79)} L1.8 ${r(-h * 0.79)} L1.8 ${r(-h * 0.74)} L2.6 ${r(-h * 0.74)} L2.6 ${r(-h * 0.66)} Z" fill="#f6e8d8"/>`;
   k += `<path d="M${r(-w * 0.4)} ${r(-h + 1)} L${r(-w * 0.36)} -1" stroke="#fff" stroke-width=".9" opacity=".25"/>`;
   k += `<g filter="url(#${S.id("glimm")})" opacity=".55"><path d="M-2 ${r(-h - 2)} q-3 -5 1 -9 q4 -4 0 -9 M3 ${r(-h - 2)} q3 -4 -1 -8" stroke="#ffffff" stroke-width="1.6" fill="none" stroke-linecap="round"/></g>`;
   S.teil({ oben: true, id: "gluehwein", de: "der Glühwein", syl: "GLÜH-wein", it: "il vin brulé", itSyl: "vin bru-LÈ", en: "mulled wine", x: X, y: BANK, steht: true, kunst: k,
@@ -948,17 +955,15 @@ const DS = 190;        /* Einheiten je Meter für die Dinge */
   let k = schatten(0, 0.6, 26, 2.4, 0.3);
   k += `<ellipse cx="0" cy="-2" rx="25" ry="5.6" fill="#f6f2ea"/><ellipse cx="0" cy="-2.6" rx="21" ry="4.4" fill="#ece6da"/>`;
   const BR = S.lg("weggla", [[0, "#f2c882"], [0.5, "#dc9e4e"], [1, "#a86a2a"]]);
-  /* das Weggla: rund (≈ 10 cm), aufgeschnitten — unten die Hälfte mit den drei Würstchen, daneben der Deckel */
-  k += `<ellipse cx="-9" cy="-3.6" rx="10.6" ry="3.4" fill="${BR}"/><ellipse cx="-9" cy="-5" rx="10" ry="2.9" fill="#f8e4bc"/>`;
+  /* „Drei im Weggla“: ein rundes Brötchen (≈ 10 cm), zugeklappt — rechts schauen die drei Wurstenden heraus, darauf Senf */
+  k += `<path d="M-20 -3.8 Q-20 -1 -9 -1 Q2 -1 2 -3.8 Z" fill="${BR}"/><path d="M-20 -3.8 L2 -3.8 L2 -4.6 L-20 -4.6 Z" fill="#f8e4bc"/>`;
   const W1 = S.lg("wurst", [[0, "#c8864a"], [0.5, "#9a5426"], [1, "#6a3412"]]);
-  for (const [y, dx] of [[-7.4, 0.6], [-6.1, -0.4], [-4.8, 0.3]]) {
-    k += `<rect x="${r(-16 + dx)}" y="${y}" width="14" height="2.1" rx="1.05" fill="${W1}"/>`;
-    for (let j = 0; j < 3; j++) k += `<path d="M${r(-13 + dx + j * 3.8)} ${r(y + 0.3)} l1.1 1.4" stroke="#3a1806" stroke-width=".4" opacity=".75"/>`;
-    k += `<path d="M${r(-15 + dx)} ${r(y + 0.45)} l12 0" stroke="#f0b880" stroke-width=".35" opacity=".5"/>`;
+  for (const [y, x1] of [[-7.8, 7.6], [-6.2, 8.6], [-4.6, 9.4]]) {
+    k += `<rect x="-8" y="${y}" width="${r(x1 + 8)}" height="1.8" rx=".9" fill="${W1}"/><path d="M${r(x1 - 2.6)} ${r(y + 0.3)} l.9 1.2 M${r(x1 - 1.2)} ${r(y + 0.3)} l.9 1.2" stroke="#3a1806" stroke-width=".35" opacity=".75"/><path d="M${r(x1 - 3)} ${r(y + 0.4)} l2.4 0" stroke="#f0b880" stroke-width=".3" opacity=".5"/>`;
   }
-  k += `<path d="M-15 -6.6 q1.6 .9 3.2 0 t3.2 0 t3.2 0 t3.2 0" stroke="#e8b830" stroke-width=".9" fill="none" stroke-linecap="round"/>`;
-  k += `<path d="M1.6 -3 Q2 -9.6 7.4 -9.8 Q12.8 -9.6 13.2 -3 Q7.4 -1.8 1.6 -3 Z" fill="${BR}"/><path d="M3.6 -7.6 Q6 -9.2 9 -8.8" stroke="#fff0c8" stroke-width=".6" fill="none" opacity=".6"/>`;
-  for (let i = 0; i < 5; i++) k += `<circle cx="${r(4 + rnd() * 7)}" cy="${r(-8.2 + rnd() * 3)}" r=".3" fill="#f6e2b8"/>`;
+  k += `<path d="M-20.4 -4.6 Q-21.2 -13.6 -9 -13.9 Q3.2 -13.6 2.4 -4.6 Q-9 -3.4 -20.4 -4.6 Z" fill="${BR}"/><path d="M-16 -11 Q-12 -13 -6 -12.6" stroke="#fff0c8" stroke-width=".7" fill="none" opacity=".55"/>`;
+  for (let i = 0; i < 6; i++) k += `<circle cx="${r(-17 + rnd() * 15)}" cy="${r(-12 + rnd() * 4)}" r=".3" fill="#f6e2b8"/>`;
+  k += `<path d="M-13 -13.4 q2 -1.4 4.2 -.4 q2.4 -.6 3.6 .8 q-1 .9 -2.6 .5 q-.6 1.4 -1.4 .2 q-1.6 .5 -3.8 -1.1 Z" fill="#e8b830"/><path d="M-11.6 -13.6 q1.4 -.6 2.6 0" stroke="#fff0a0" stroke-width=".35" fill="none"/>`;
   /* ein Schälchen Sauerkraut */
   k += `<path d="M14 -5.6 Q14 -.8 19 -.8 Q24 -.8 24 -5.6 Z" fill="${S.lg("schale", [[0, "#ffffff"], [1, "#c8c2b8"]], 0, 0, 1, 0)}"/><ellipse cx="19" cy="-5.6" rx="5" ry="1.4" fill="#e8dc9a"/>`;
   for (let i = 0; i < 9; i++) k += `<path d="M${r(15 + rnd() * 7)} ${r(-5.4 - rnd() * 1.6)} q1 ${r(-0.6 + rnd())} 2 0" stroke="#c8b860" stroke-width=".35" fill="none"/>`;
