@@ -959,6 +959,10 @@ function kobra(T) {
   hood += linien(T, [hs.slice(3, 8).map(([x, y]) => [x - 1.2, y])], "#f0dcae", 0.8, 0.16);
   h += `<g filter="${rund(T, "kh", { weich: 6, tiefe: 4, umgebung: 0.38 })}"><g transform="translate(120 -124) rotate(4)">${hood}</g></g>`;
 
+  /* Hals schiebt sich vorn über den unteren Schildansatz (kein „Flaschenhals“) */
+  { const mk = T.id("hm");
+    T.def(`<linearGradient id="${mk}g" gradientUnits="userSpaceOnUse" x1="0" y1="-94" x2="0" y2="-84"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${mk}" maskUnits="userSpaceOnUse" x="100" y="-100" width="45" height="40"><rect x="100" y="-100" width="45" height="40" fill="url(#${mk}g)"/></mask>`);
+    h += `<g mask="url(#${mk})"><g filter="${rund(T, "kw", { weich: 2.2, tiefe: 3.5 })}">` + schlangenRohr(T, [[136, -68, 4.9], [122, -74, 4.5], [115.6, -80, 4.3], [114.6, -88, 4.4], [115, -95, 4.8]], opt({ farbe: "#9a7444", bauchSeite: 1, licht: -1, schilde: 0.05, randA: 0 })).svg + "</g></g>"; }
   /* 5) Kopf im Profil nach rechts über der Schildoberkante (lokal: x 0…15 = Hinterkopf…Schnauze) */
   const kp = [[0, -2.2], [1.6, -3.3], [4, -3.8], [7, -3.9], [10, -3.5], [12.6, -2.7], [14.4, -1.5], [15.1, 0], [14.7, 1.2], [13, 1.9], [10, 2.3], [6, 2.7], [2.4, 2.9], [0, 2.3]];
   let ki = `<g filter="${weich(T, "kk", 0.4)}">` + form(T, poly([[0.6, -2.6], [4, -3.6], [10, -3.3], [14, -1.4], [10, -2], [4, -2.2], [1, -1.4]]), "#f2ddae", ' opacity=".3"') +

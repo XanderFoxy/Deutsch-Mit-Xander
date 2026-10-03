@@ -1032,7 +1032,7 @@ function hyaene(T) {
      dicker Hals, Kopf unter Schulterhöhe; Schädel mit durchgehend konvexem Profil bis zum Scheitelkamm, breite stumpfe Schnauze,
      lange Maulspalte; Flecken ohne Hof, dicht an Flanke/Keule, spärlich an Schulter/Hals, keine im Gesicht; kurze, raue Strähnen;
      Mähne flach nach hinten; Quaste als Haarpinsel; Sprunggelenk-Spitze, Handwurzel; Füße mit 4 Zehen, stumpfe Krallen. */
-  T.dichte = 0.85;
+  T.dichte = 0.72;
   const rumpf = [
     [36, -60], [38.4, -66], [46, -69.6], [60, -72.4], [74, -76], [88, -80.4], [100, -84.2], [110, -85.8], [117, -84.4],   // kurze Kruppe, Rücken steigt zum Höcker
     [124, -80.6], [131, -75.6], [137, -70.4], [143, -66], [146, -60], [143.6, -53],                                    // dicker Hals mit Mähne (unter den Kopf)
@@ -1057,22 +1057,23 @@ function hyaene(T) {
   /* Tüpfel: unregelmäßige Kleckse ohne Hof; Rand von Haaren verzahnt (Haare werden darübergelegt); Größe/Dichte nach Ort (g) */
   const flecken = (pts, n, rMin, rMax, farbe, op, g = () => 1) => {
     const [x0, y0, x1, y1] = T.box(pts);
-    if (T.fein === false) n = Math.round(n * 0.6);
     let d = "";
     const klecks = (x, y, r, e, rad, dreh) => {
-      const P = rad.map((q, i) => { const a = i / 6 * Math.PI * 2; const px = Math.cos(a) * r * q, py = Math.sin(a) * r * q * e; return [x + px * Math.cos(dreh) - py * Math.sin(dreh), y + px * Math.sin(dreh) + py * Math.cos(dreh)]; });
-      const M = (i) => [(P[i % 6][0] + P[(i + 1) % 6][0]) / 2, (P[i % 6][1] + P[(i + 1) % 6][1]) / 2];
-      let t = `M${R(M(0)[0])} ${R(M(0)[1])}`;
-      for (let i = 1; i <= 6; i++) t += `Q${R(P[i % 6][0])} ${R(P[i % 6][1])} ${R(M(i)[0])} ${R(M(i)[1])}`;
+      /* in Zehntel-cm, relativ – kurz */
+      const P = rad.map((q, i) => { const a = i / 6 * Math.PI * 2; const px = Math.cos(a) * r * q, py = Math.sin(a) * r * q * e; return [G(x + px * Math.cos(dreh) - py * Math.sin(dreh)), G(y + px * Math.sin(dreh) + py * Math.cos(dreh))]; });
+      const M = (i) => [Math.round((P[i % 6][0] + P[(i + 1) % 6][0]) / 2), Math.round((P[i % 6][1] + P[(i + 1) % 6][1]) / 2)];
+      let c = M(0), t = `M${c[0]} ${c[1]}`;
+      for (let i = 1; i <= 6; i++) { const q = P[i % 6], m = M(i); t += `q${q[0] - c[0]} ${q[1] - c[1]} ${m[0] - c[0]} ${m[1] - c[1]}`; c = m; }
       return t + "z";
     };
+    if (T.fein === false) n = Math.round(n * 0.55);
     for (const [x, y] of streuPunkte(T, pts, n * 1.6)) {
       const gg = g(x, y);
       if (T.rnd() > gg) continue;
       const r = (rMin + Math.pow(T.rnd(), 1.4) * (rMax - rMin)) * (0.7 + gg * 0.3), e = 0.7 + T.rnd() * 0.35, rad = [0, 1, 2, 3, 4, 5].map(() => 0.72 + T.rnd() * 0.5);
       d += klecks(x, y, r, e, rad, T.rnd() * 3);
     }
-    return `<path d="${d}" fill="${farbe}" fill-opacity="${op}"/>`;
+    return fein10(d, `fill="${farbe}" fill-opacity="${op}"`);
   };
 
   let s = "";

@@ -151,7 +151,8 @@ Die fünf Raubsaurier bekamen in Runde 1 nur 2–7 von 10. Fast alle Mängel wie
     Kritiken): Jeder Körperteil kommt in eine eigene Gruppe mit `filter="${T.volumen("<teil>", { weich })}"` – Rumpf,
     Hals, Kopf, jedes Bein (Ober- und Unterschenkel dürfen eine Gruppe sein), Schwanz, Ohr. Der Filter blurrt die
     eigene Silhouette und beleuchtet sie von links oben: Rundung, Kernschatten zur Unterkante, Licht zur Oberkante
-    entstehen automatisch und passen zueinander. `weich` (cm) ≈ 20–30 % der Dicke des Teils (Rumpf eines Löwen ≈ 12,
+    entstehen automatisch und passen zueinander (stufenlos: Innen-Schatten/Innen-Glanz aus der verschobenen
+    Silhouette, keine Höhenlinien-Streifen). `weich` (cm) ≈ 20–30 % der Dicke des Teils (Rumpf eines Löwen ≈ 12,
     Bein ≈ 3), `tiefe` 3–7, `umgebung` 0,25–0,45. Deine gemalten Verläufe bleiben (Farbe, Muster, Fell) – nur die
     groben Airbrush-Schattenflecken fallen weg. Haare, die über den Rand ragen, gehören in dieselbe Gruppe. In Szenen
     (`T.fein = false`) liefert der Helfer `"none"` – also kein Leistungsverlust. Ergebnis immer im Großbild prüfen:

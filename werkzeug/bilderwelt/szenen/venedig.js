@@ -79,7 +79,6 @@ const F = 765;               /* 1,7 je Meter in 450 m; Auge 5 m über dem Wasser
 const wl = (d) => r(HOR + 5 * F / d);
 
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
 S.def(`<filter id="${S.id("spiegel")}" x="-10%" y="-20%" width="120%" height="140%"><feGaussianBlur stdDeviation=".9 .35"/></filter>`);
 S.def(`<filter id="${S.id("dunst")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".35"/></filter>`);
 /* Stoffe */
@@ -106,11 +105,11 @@ S.hinten(`<rect width="400" height="${WASSER + 2}" fill="${S.rg("sonne", [[0, "#
 {
   /* Haufenwolken im Abendlicht: links von der tiefen Sonne angestrahlt,
      rechts kühler im Schatten, die Unterseite warm */
-  S.def(`<filter id="${S.id("wolke")}" x="-20%" y="-30%" width="140%" height="160%"><feGaussianBlur stdDeviation=".6"/></filter>`);
+  S.def(`<filter id="${S.id("wolke")}" x="-20%" y="-30%" width="140%" height="160%"><feGaussianBlur stdDeviation=".3"/></filter>`);
   const wolke = (x, y, s, buckel) => {
     let g = `<g filter="url(#${S.id("wolke")})">`;
-    for (const [dx, dy, rr] of buckel) g += `<circle cx="${r(x + (dx + 1.6) * s)}" cy="${r(y + (dy + 1.2) * s)}" r="${r(rr * s)}" fill="#c3b3c4"/>`;
-    for (const [dx, dy, rr] of buckel) g += `<circle cx="${r(x + dx * s)}" cy="${r(y + dy * s)}" r="${r(rr * s)}" fill="${S.rg("wolkelicht", [[0, "#fffaf0"], [0.55, "#fdecd6"], [1, "#e2cdd2"]], 0.22, 0.3, 0.85)}"/>`;
+    for (const [dx, dy, rr] of buckel) g += `<circle cx="${r(x + (dx + 1.6) * s)}" cy="${r(y + (dy + 1.2) * s)}" r="${r(rr * s)}" fill="#c9bfc6"/>`;
+    for (const [dx, dy, rr] of buckel) g += `<circle cx="${r(x + dx * s)}" cy="${r(y + dy * s)}" r="${r(rr * s)}" fill="${S.rg("wolkelicht", [[0, "#ffffff"], [0.55, "#fff3e2"], [1, "#e6d8da"]], 0.22, 0.3, 0.85)}"/>`;
     g += `<ellipse cx="${r(x + 2 * s)}" cy="${r(y + 5.8 * s)}" rx="${r(23 * s)}" ry="${r(2.4 * s)}" fill="${S.lg("wolkeboden", [[0, "#f3c9a6"], [1, "#d9a98e"]], 0, 0, 1, 0)}"/>`;
     return g + `</g>`;
   };
@@ -766,10 +765,10 @@ const PF = { x: 42, y: wl(48), s: r(F / 48 / 19.5) };   /* gezeichnet mit 19,5 j
 }
 
 /* =====================================================================
-   14b — DIE HALTESTELLE: Ponton der Vaporetto-Linie 2 „San Giorgio“ (in 42 m)
+   14b — DIE HALTESTELLE: Ponton der Vaporetto-Linie 2 „San Giorgio“ (in 46 m)
    ===================================================================== */
 {
-  const d = 42, sc = F / d, Y = wl(d), X0 = 296;
+  const d = 46, sc = F / d, Y = wl(d), X0 = 316;
   const m = (v) => r(v * sc);
   const L = 400 - X0;
   let k = `<g filter="url(#${S.id("spiegel")})" opacity=".5"><rect x="0" y="0" width="${L}" height="6" fill="#1d3436"/></g>`;
@@ -780,10 +779,8 @@ const PF = { x: 42, y: wl(48), s: r(F / 48 / 19.5) };   /* gezeichnet mit 19,5 j
   /* Steg zum Ufer (nach vorn links, mit Geländer) */
   k += `<path d="M-2 ${m(-0.8)} L10 ${m(-0.8)} L-6 ${r(UFER - Y)} L-26 ${r(UFER - Y)} Z" fill="#8e8a84"/><path d="M-2 ${r(m(-0.8) - 6)} L-26 ${r(UFER - Y - 9)} M10 ${r(m(-0.8) - 6)} L-6 ${r(UFER - Y - 9)}" stroke="#4b5357" stroke-width=".6"/>`;
   /* Wartehäuschen: Pfosten, Glas, Dach, gelbes Schild */
-  const dach = m(-3.4);
+  const dach = m(-3.1);
   k += `<rect x="4" y="${dach}" width="${L - 4}" height="${r(m(-0.8) - dach)}" fill="${S.lg("glasbox", [[0, "#cfe3e8", 0.5], [1, "#a9c4cc", 0.35]])}"/>`;
-  /* zwei Wartende hinter dem Glas */
-  for (const [x, c] of [[26, "#3d4f6b"], [38, "#7a3b3b"]]) k += `<path d="M${x - 2.6} ${m(-0.8)} L${x - 2.4} ${r(m(-0.8) - 18)} Q${x} ${r(m(-0.8) - 21)} ${x + 2.4} ${r(m(-0.8) - 18)} L${x + 2.6} ${m(-0.8)} Z" fill="${c}" opacity=".75"/><circle cx="${x}" cy="${r(m(-0.8) - 23.4)}" r="2.4" fill="#c99a7a" opacity=".85"/>`;
   for (let x = 4; x < L; x += 22) k += `<rect x="${x}" y="${dach}" width="1.4" height="${r(m(-0.8) - dach)}" fill="#7d878c"/>`;
   k += `<path d="M2 ${r(dach + 0.4)} L${L} ${r(dach + 0.4)} L${L} ${r(dach - 2.4)} L0 ${r(dach - 2.4)} Z" fill="#eef0ef"/>`;
   k += `<rect x="14" y="${r(dach - 9.6)}" width="${L - 14}" height="7" fill="#f2c230"/><rect x="14" y="${r(dach - 9.6)}" width="${L - 14}" height=".8" fill="#1d1d1d"/>`;

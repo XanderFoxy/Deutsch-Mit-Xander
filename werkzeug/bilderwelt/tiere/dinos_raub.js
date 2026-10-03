@@ -622,7 +622,7 @@ function velociraptor(T) {
   um += flaeche(T, hose, hoseF) + (F ? federn(T, [[106, -26], [112, -27], [109, -19], [105, -16.4], [102, -17]], 40, 105, 1.6, [["#2a1d12", 1, 0.16, 0.08]]) : "");
   um += weichG(T, 0.7, [97, -32, 114, -14], L([[[103, -28], [101, -22], [100.6, -18]]], LI, 1.4, 0.36) + L([[[111.4, -28], [109.4, -21], [106, -17]]], SC, 1.8, 0.5));
   ubIn += geklippt(T, [iU], um);
-  ubIn += spitzen([[111.6, -21.6], [109, -17.8], [106, -16], [103, -15.8], [100.6, -16.6]], 7, 1.1, 118, hoseF, 1, { breit: 0.34 });
+
   ubIn += teil(T, z4, "#62584a", { klein: 1, mal: L([[[101.2, -0.4], [105, -0.4], [108.6, -0.3]]], SC, 0.5, 0.8) + L([[[101.2, -2.5], [104.6, -2.3], [108.4, -1.2]]], LI, 0.35, 0.5), weich: 0.25,
     oben: F ? reihe(T, z4.slice(0, 5), 6, 1.4, "#0e0a06", 0.08, 0.5, -0.05) : "" });
   /* Sichelkralle: Basis 3, seitlich flach, stark gebogen, dunkles Horn mit heller Spitze; Zehenkrallen */
@@ -680,13 +680,15 @@ function velociraptor(T) {
 
   /* ---------- Zusammensetzen ---------- */
   let h = `<use href="#${iUB}" transform="rotate(12 104 -40) translate(-1.4 -.4)" filter="${dunkler(T, 0.68)}"/>` + `<use href="#${iW}" transform="translate(2 -1.6)" filter="${dunkler(T, 0.62)}"/>`;
+  h += volZonen(T, "wedel", tw, [-12, -58, 64, -38], [[0, 0, "a", { weich: 1.2, tiefe: 2.5, umgebung: 0.45 }]]);
   const iL = pfad(T, leib), iK = pfad(T, kiefer), iH = pfad(T, kopf);
   let k = fuell(iL, kleid) + fuell(iK, "#a08868");
   const uz = [[178.4, 0.5], [176.2, 0.6], [173.4, 0.5], [170.8, 0.65], [168.2, 0.55], [166, 0.4]];
   if (F) k += zaehne(T, uz.map(([x, Lz]) => [x, yBei(lippe.slice().reverse())(x) - 0.2, Lz + 0.25, (Lz + 0.25) * 0.5, 0.35]), 1);
   k += fuell(iH, kleid);
   const yO = yBei(sOben.slice().reverse().concat(ruecken.slice(1))), yU = yBei(sUnten.concat(unten.slice().reverse())), band = (v, x0, x1) => { const p = []; for (let x = x0; x <= x1; x += 4) p.push([x, yO(x) + (yU(x) - yO(x)) * v]); return p; };
-  let inn = "";
+  /* Schwanzbänder auf dem Schwanzkern, deckungsgleich mit dem Fächer */
+  let inn = weichG(T, 0.6, [-10, -58, 70, -38], `<path d="M46 -56q-1.2 7.2 0 16h3.6q-1.2-8.8 0-16zM34 -56q-1.2 7.2 0 16h3.6q-1.2-8.8 0-16zM22 -56q-1.2 7.2 0 16h3.6q-1.2-8.8 0-16zM10 -56q-1.2 7.2 0 16h3.6q-1.2-8.8 0-16zM58 -56q-1.2 7.2 0 16h3.4q-1.2-8.8 0-16z" fill="${DK}" opacity="${OP(F ? 0.4 : 0.24)}"/>`);
   /* Gegenschattierung + EIN Licht oben links: Rücken/Nacken dunkler im Ton, aber im Licht; Terminator auf 55 %; Bauch, Kehle hell mit warmem Reflex */
   let mal = L([band(0.1, 92, 162)], LI, 2.6, 0.4) + L([band(0.8, 96, 160)], SC, 5, 0.42) + L([band(0.96, 100, 160)], RF, 1, 0.45) + L([band(0.15, 4, 94)], LI, 1.2, 0.3) + L([band(0.85, 4, 94)], SC, 1.6, 0.35);
   mal += L([[[154, -46], [158, -50.6], [162, -53.6]]], SC, 2.2, 0.45) + ell(100.6, -40, 4, 4, 0, SC, 0.3) + ell(146, -37, 3, 2, 0, SC, 0.35);
@@ -727,7 +729,6 @@ function velociraptor(T) {
 
   let s = h + volZonen(T, "leib", k, [-4, -66, 184, -24], [[0, 0, "r", { weich: 3.6, tiefe: 4, umgebung: 0.35 }], [-10, 92, "s", { weich: 1.2, tiefe: 3, umgebung: 0.35 }],
     [150, 160, "h", { weich: 2.2, tiefe: 3.5, umgebung: 0.35 }], [160, 190, "k", { weich: 1.2, tiefe: 3, umgebung: 0.4 }]], 6);
-  s += volZonen(T, "wedel", tw, [-12, -58, 56, -38], [[0, 0, "a", { weich: 1.2, tiefe: 2.5, umgebung: 0.45 }]]);
   s += `<use href="#${iUB}"/>` + `<use href="#${iW}"/>`;
   s += kontakt(T, [[100.6, 103.6], [104, 107], [107.6, 110.8], [109.4, 112], [98, 103]]);
   s += reptilAuge(T, 164.4, -59.9, 1.38, { n: "v", hell: "#f0c85a", iris: "#c8902e" });

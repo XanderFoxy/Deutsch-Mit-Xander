@@ -186,15 +186,24 @@ function werkzeug(S, praefix, seed = 4711) {
      umgebung = Anteil ohne Licht (Standard 0,3 – höher = sanfter). In Szenen (T.fein = false) ohne Filter. */
   T.volumen = (n, o = {}) => {
     if (!T.fein) return "none";
-    const w = o.weich || 6, el = o.hoehe || 50, amb = o.umgebung != null ? o.umgebung : 0.3;
+    /* Stufenlos (Zeichner Hof-Säuger: „feDiffuseLighting erzeugt auf großen Teilen Höhenlinien-Streifen wie
+       Holzmaserung" – Ableitung aus 8-Bit-Alpha): Innen-Schatten zur Unterkante rechts, Innen-Glanz zur Oberkante
+       links, beide aus der weich verschobenen eigenen Silhouette. */
+    const w = o.weich || 6, st = Math.min(1, 0.09 * (o.tiefe || 5)), amb = o.umgebung != null ? o.umgebung : 0.3;
+    const d = w * 0.9, sch = r4(st * (1 - amb) * 0.95), gl = r4(st * (1 - amb) * 0.38);
     const id = T.id("vol" + n + "_" + String(w).replace(".", "_"));
     if (!filterSchon.has(id)) {
       filterSchon.add(id);
       T.def(`<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">` +
         `<feGaussianBlur in="SourceAlpha" stdDeviation="${w}" result="b"/>` +
-        `<feDiffuseLighting in="b" surfaceScale="${o.tiefe || 5}" diffuseConstant="1" lighting-color="#fff" result="d"><feDistantLight azimuth="${o.azimut || 225}" elevation="${el}"/></feDiffuseLighting>` +
-        `<feComposite in="d" in2="SourceGraphic" operator="arithmetic" k1="${r4((1 - amb) / Math.sin(el * Math.PI / 180))}" k2="0" k3="${amb}" k4="0" result="m"/>` +
-        `<feComposite in="m" in2="SourceGraphic" operator="in"/></filter>`);
+        `<feOffset in="b" dx="${r4(-d)}" dy="${r4(-d)}" result="bu"/>` +
+        `<feOffset in="b" dx="${r4(d * 0.8)}" dy="${r4(d * 0.8)}" result="bo"/>` +
+        `<feComposite in="SourceAlpha" in2="bu" operator="out" result="ms"/>` +
+        `<feComposite in="SourceAlpha" in2="bo" operator="out" result="mg"/>` +
+        `<feFlood flood-color="#1a1008" flood-opacity="${sch}"/><feComposite in2="ms" operator="in" result="s"/>` +
+        `<feFlood flood-color="#fff6e6" flood-opacity="${gl}"/><feComposite in2="mg" operator="in" result="g"/>` +
+        `<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="s"/><feMergeNode in="g"/></feMerge>` +
+        `<feComposite in2="SourceGraphic" operator="in"/></filter>`);
     }
     return `url(#${id})`;
   };
