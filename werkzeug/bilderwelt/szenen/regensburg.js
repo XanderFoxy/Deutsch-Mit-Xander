@@ -583,7 +583,7 @@ const BRUECKE_LEUTE = [];
    ===================================================================== */
 {
   const X = 18, Y = 190;
-  let k = langschatten(X + 2, Y, 22, 30, 0.3);
+  let k = langschatten(2, 0, 22, 30, 0.3);
   k += `<path d="M-14 0 Q-9 -4 -8.4 -18 Q-7.4 -40 -8 -64 Q-8.6 -80 -9 -96 L3 -98 Q3 -84 4.6 -70 Q7 -46 7 -24 Q8 -6 15 0 Z" fill="${S.lg("stamm", [[0, "#24180e"], [0.55, "#3e2c1e"], [1, "#7a5a40"]], 0, 0, 1, 0)}"/>`;
   for (let i = 0; i < 12; i++) { const y = -4 - i * 7.6, x = -5 + rnd() * 9; k += `<path d="M${r(x)} ${r(y)} q${r(-0.6 + rnd() * 1.2)} -2 ${r(-0.3 + rnd() * 0.6)} -4" stroke="#140c06" stroke-width=".5" fill="none" opacity=".55"/>`; }
   k += `<ellipse cx="-2" cy="-36" rx="2.6" ry="3.4" fill="#2a1c10"/><path d="M-3.6 -38 q1.6 -1.6 3.2 0" stroke="#5a4232" stroke-width=".5" fill="none"/>`;
@@ -645,7 +645,7 @@ const Q = 1.45;                            /* Maßstab der Dinge auf dem Tisch *
 }
 {
   const L = 1.1 * TS, T = 7;               /* halbe Länge (Tisch 2,2 m); Tiefe der Platte im Bild */
-  let k = langschatten(0, 0.5, 2 * L, 70, 0.32);
+  let k = langschatten(0, 0.5, 2 * L, 30, 0.32);
   const HOLZ = S.lg("tischholz", [[0, "#7a4e2a"], [0.5, "#9a6a3c"], [1, "#d8a46a"]], 0, 0, 1, 0);
   for (const sx of [-1, 1]) k += `<path d="M${r(sx * (L - 12))} 0 L${r(sx * (L - 4))} ${r(PL - TI.y + 1.5)} M${r(sx * (L - 4))} 0 L${r(sx * (L - 12))} ${r(PL - TI.y + 1.5)}" stroke="#3a3e44" stroke-width="1.5"/>`;
   k += `<path d="M${r(-L)} ${r(PL - TI.y)} L${r(L)} ${r(PL - TI.y)} L${r(L - 3)} ${r(PL - TI.y - T)} L${r(-L + 3)} ${r(PL - TI.y - T)} Z" fill="${HOLZ}"/>`;

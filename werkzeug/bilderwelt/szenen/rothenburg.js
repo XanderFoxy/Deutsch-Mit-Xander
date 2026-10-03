@@ -275,23 +275,25 @@ const ST = { d: 45, L0: -3.6, L1: 3.6, traufe: 21, spitze: 29 };
         tipp: "Die Wetterfahne dreht sich mit dem Wind." },
     ] });
   /* DER TORBOGEN: spitzbogige Durchfahrt mit tiefer Laibung, hinten die Spitalgasse im Licht */
-  /* Durchfahrt als echter Tunnel: Außenbogen in der Front (D 45), Innenbogen 6,5 m tiefer; man sieht beide
-     Laibungen, das Gewölbe und hinten die Spitalgasse im Abendlicht */
-  const T = (X, D, H) => P(X, D, H, g0), DA = ST.d, DI = ST.d + 6.5;
-  const bogenPkt = (D, w, n = 10) => { const out = []; for (let i = 0; i <= n; i++) { const t2 = i / n; out.push(T(-w + 2 * w * t2, D, 3.5 + 2.1 * (1 - Math.pow(Math.abs(2 * t2 - 1), 1.7)))); } return out; };
-  const aussen = bogenPkt(DA, 1.8), innen = bogenPkt(DI, 1.8), gewaende = bogenPkt(DA - 0.02, 2.2);
+  /* Durchfahrt: mehrere Meter tiefes Gewölbe im Abendschatten. Am fernen Ende (Innentor, schmaler) leuchtet nur
+     ein kleiner Ausschnitt der Spitalgasse; davor fällt ein dunkler Schattenkeil aus der Durchfahrt aufs Pflaster */
+  const T = (X, D, H) => P(X, D, H, g0), DA = ST.d, DI = ST.d + 7;
+  const bogenPkt = (D, w, h0, hb, n = 10) => { const out = []; for (let i = 0; i <= n; i++) { const t2 = i / n; out.push(T(-w + 2 * w * t2, D, h0 + hb * (1 - Math.pow(Math.abs(2 * t2 - 1), 1.7)))); } return out; };
+  const aussen = bogenPkt(DA, 1.8, 3.5, 2.1), tief = bogenPkt(DI, 1.8, 3.5, 2.1), innen = bogenPkt(DI + 0.05, 0.8, 2.3, 1.1), gewaende = bogenPkt(DA - 0.02, 2.2, 3.5, 2.5);
   const [ax, ay] = T(-1.8, DA, 0), [bx] = T(1.8, DA, 0);
   let t = `<path d="${poly(T(-2.2, DA - 0.02, 0), ...gewaende, T(2.2, DA - 0.02, 0))}" fill="#cdb48a"/><path d="${poly(T(-2.2, DA - 0.02, 0), ...gewaende, T(2.2, DA - 0.02, 0))}" fill="${SCHATTEN}" opacity=".25"/>`;
   for (let i = 1; i < 10; i += 2) t += `<path d="M${pt(aussen[i])} L${pt(gewaende[i])}" stroke="#9c8462" stroke-width=".25"/>`;
-  /* hinten: helle Spitalgasse mit Hausfronten */
-  t += `<path d="${poly(T(-1.8, DI, 0), ...innen, T(1.8, DI, 0))}" fill="${S.lg("spital", [[0, "#ffd9a0"], [1, "#e9b878"]])}"/>`;
-  t += `<path d="${poly(T(-1.2, DI + 8, 0), T(-1.2, DI + 8, 4.4), T(0.4, DI + 8, 5.4), T(1.6, DI + 8, 4.6), T(1.6, DI + 8, 0))}" fill="#d9a06a" opacity=".8"/>`;
-  /* Gewölbe, Laibungen, Boden: dunkel, zur Mitte hin am dunkelsten; Licht von hinten auf dem Boden */
-  t += `<path d="${poly(...aussen, ...innen.slice().reverse())}" fill="#1a1512"/>`;
-  t += `<path d="${poly(T(-1.8, DA, 0), T(-1.8, DA, 3.5), T(-1.8, DI, 3.5), T(-1.8, DI, 0))}" fill="#3a3028"/><path d="${poly(T(1.8, DA, 0), T(1.8, DA, 3.5), T(1.8, DI, 3.5), T(1.8, DI, 0))}" fill="#4a3d32"/>`;
-  t += `<path d="${poly(T(-1.8, DA, 0), T(1.8, DA, 0), T(1.8, DI, 0), T(-1.8, DI, 0))}" fill="${S.lg("tunnelboden", [[0, "#3a3028"], [1, "#a8804e"]])}"/>`;
-  t += `<path d="M${pt(T(-1.8, DA, 3.5))} L${pt(T(-1.8, DI, 3.5))} M${pt(T(1.8, DA, 3.5))} L${pt(T(1.8, DI, 3.5))}" stroke="#6a5a48" stroke-width=".35"/>`;
+  /* Rückwand des Gewölbes (dunkel) mit dem kleinen hellen Innentor */
+  t += `<path d="${poly(T(-1.8, DI, 0), ...tief, T(1.8, DI, 0))}" fill="#2a221c"/>`;
+  t += `<path d="${poly(T(-0.8, DI + 0.05, 0), ...innen, T(0.8, DI + 0.05, 0))}" fill="${S.lg("spital", [[0, "#ffd9a0"], [1, "#e9b878"]])}"/><path d="${poly(T(-0.5, DI + 9, 0), T(-0.5, DI + 9, 2.6), T(0.7, DI + 9, 3.1), T(0.7, DI + 9, 0))}" fill="#d9a06a"/><path d="${poly(T(-0.8, DI + 0.05, 0), T(0.8, DI + 0.05, 0), T(0.8, DI + 9, 0), T(-0.8, DI + 9, 0))}" fill="#c89a62"/>`;
+  /* Laibungen und Gewölbe, Boden mit schwachem Lichtschein vom Innentor */
+  t += `<path d="${poly(...aussen, ...tief.slice().reverse())}" fill="#15110e"/>`;
+  t += `<path d="${poly(T(-1.8, DA, 0), T(-1.8, DA, 3.5), T(-1.8, DI, 3.5), T(-1.8, DI, 0))}" fill="#2c241e"/><path d="${poly(T(1.8, DA, 0), T(1.8, DA, 3.5), T(1.8, DI, 3.5), T(1.8, DI, 0))}" fill="#3a3028"/>`;
+  t += `<path d="${poly(T(-1.8, DA, 0), T(1.8, DA, 0), T(1.8, DI, 0), T(-1.8, DI, 0))}" fill="${S.lg("tunnelboden", [[0, "#2a231d"], [1, "#6e5638"]])}"/>`;
+  t += `<path d="M${pt(T(-1.8, DA, 3.5))} L${pt(T(-1.8, DI, 3.5))} M${pt(T(1.8, DA, 3.5))} L${pt(T(1.8, DI, 3.5))}" stroke="#4a3e32" stroke-width=".35"/>`;
   t += `<path d="M${aussen.map(pt).join(" L")}" stroke="#0e0b09" stroke-width=".9" fill="none" opacity=".7"/>`;
+  /* Schattenkeil vor dem Tor */
+  t += `<path d="${poly(T(-2.2, DA - 0.05, 0), T(2.2, DA - 0.05, 0), T(3.0, DA - 6, 0), T(-1.4, DA - 7, 0))}" fill="#1c1a24" opacity=".3"/>`;
   void ax; void ay; void bx;
   S.teil({ oben: true, id: "torbogen", de: "der Torbogen", syl: "TOR-bo-gen", it: "l'arco della porta", itSyl: "AR-co DEL-la POR-ta", en: "archway", x: 0, y: 0, kunst: t,
     tipp: "Durch diesen Torbogen fuhren früher die Fuhrwerke.",
