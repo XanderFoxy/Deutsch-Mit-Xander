@@ -458,30 +458,71 @@ const fm = (a, g, laeden) => {
 };
 
 /* =====================================================================
-   5 — DAS UFER (Neuenheim: Uferstraße, Baumreihe, Villen, Gärten)
+   5 — DAS UFER (Neuenheim): Ufermauer und Neuenheimer Landstraße, dahinter — von oben gesehen —
+       die großen Dächer der Villen mit Gärten. Sie liegen viel näher als die Altstadt und sind darum
+       zwei- bis dreimal so groß; nach unten (zur Mauer hin) werden sie größer.
    ===================================================================== */
 {
   const oben = NORD.map(([x, y]) => [x, y]);
-  let k = `<path d="${pfad([...oben, [321, 190], [-1, 190]])}" fill="${S.lg("ufergrund", [[0, "#7c8a5a"], [1, "#5c6c42"]])}"/>`;
-  /* Ufermauer (Krone) und die Neuenheimer Landstraße */
-  k += `<path d="${pfad(oben, false)}" stroke="#d9cdb8" stroke-width="1.1" fill="none"/>`;
-  k += `<path d="${pfad(oben.map(([x, y]) => [x, y + 1.5]), false)}" stroke="#8f8a84" stroke-width="1.8" fill="none"/>`;
-  k += `<path d="${pfad(oben.map(([x, y]) => [x, y + 2.7]), false)}" stroke="#c9bfae" stroke-width=".5" fill="none"/>`;
-  /* Autos auf der Uferstraße */
-  for (const [x, c] of [[34, "#c8302a"], [96, "#e8e4da"], [150, "#2f4f7a"], [232, "#3a3a3a"], [290, "#d8ad3a"]]) { const y = nordY(x) + 1.3; k += `<rect x="${x}" y="${r(y - .6)}" width="2.6" height="1" rx=".4" fill="${c}"/><rect x="${x + .5}" y="${r(y - .9)}" width="1.4" height=".5" rx=".2" fill="#9fb8c8"/>`; }
-  /* Villen und Dächer zwischen den Gärten, Platanen an der Straße (von hinten nach vorn) */
-  const villen = [];
-  for (let x = -2; x < 316; x += 9 + rnd() * 7) villen.push([x, nordY(x) + 8 + rnd() * 5]);
-  for (let x = 2; x < 140; x += 14 + rnd() * 8) villen.push([x, nordY(x) + 14 + rnd() * 3]);
-  villen.sort((a, b) => a[1] - b[1]).forEach(([x, y]) => {
-    const w = 7 + rnd() * 4, h = 3.4 + rnd() * 1.8, f = ["#efe4cc", "#e6d4b0", "#f4efe4", "#e8c8b4", "#d9d4c8"][Math.floor(rnd() * 5)], d = ["#8a442e", "#5e6168", "#9c4f35", "#a65a3c"][Math.floor(rnd() * 4)];
-    k += `<rect x="${r(x)}" y="${r(y - h)}" width="${r(w)}" height="${r(h)}" fill="${f}"/><rect x="${r(x + w * .75)}" y="${r(y - h)}" width="${r(w * .25)}" height="${r(h)}" fill="#fff4dc" opacity=".35"/>`;
-    k += `<path d="M${r(x - .4)} ${r(y - h)} L${r(x + 1.4)} ${r(y - h - 2.8)} L${r(x + w - 1.4)} ${r(y - h - 2.8)} L${r(x + w + .4)} ${r(y - h)} Z" fill="${d}"/><path d="M${r(x + w - 1.4)} ${r(y - h - 2.8)} L${r(x + w + .4)} ${r(y - h)} L${r(x + w - .6)} ${r(y - h)} Z" fill="#ffd8a0" opacity=".3"/>`;
-    k += `<rect x="${r(x + .3)}" y="${r(y - h + .3)}" width="${r(w - .6)}" height="${r(h - .5)}" fill="${fm(Math.max(2, Math.min(5, Math.round(w / 1.8))), 2, "")}"/>`;
-  });
-  for (let x = 1; x < 320; x += 7 + rnd() * 3) { const y = nordY(x) + 4.6, s = .9 + rnd() * .4; k += `<circle cx="${r(x)}" cy="${r(y - 1.6 * s)}" r="${r(2.3 * s)}" fill="#4a6a36"/><circle cx="${r(x + .8)}" cy="${r(y - 2.4 * s)}" r="${r(1.3 * s)}" fill="#6f8f48"/><circle cx="${r(x + 1.1)}" cy="${r(y - 2.8 * s)}" r="${r(.6 * s)}" fill="#c8b45a" opacity=".6"/><path d="M${r(x)} ${r(y)} v${r(-1 * s)}" stroke="#6a5a48" stroke-width=".4"/>`; }
+  let k = `<path d="${pfad([...oben, [321, 190], [-1, 190]])}" fill="${S.lg("ufergrund", [[0, "#6f8a52"], [1, "#4f6a3a"]])}"/>`;
+  /* Ufermauer (Krone mit Licht) und die Neuenheimer Landstraße */
+  k += `<path d="${pfad(oben.map(([x, y]) => [x, y + .3]), false)}" stroke="#e2d6c0" stroke-width=".8" fill="none"/>`;
+  k += `<path d="${pfad(oben.map(([x, y]) => [x, y + 1.6]), false)}" stroke="#8f8a84" stroke-width="2" fill="none"/>`;
+  k += `<path d="${pfad(oben.map(([x, y]) => [x, y + 1.6]), false)}" stroke="#f2ead8" stroke-width=".12" stroke-dasharray="1.6 1.4" fill="none"/>`;
+  k += `<path d="${pfad(oben.map(([x, y]) => [x, y + 2.8]), false)}" stroke="#c9bfae" stroke-width=".6" fill="none"/>`;
+  for (const [x, c] of [[34, "#c8302a"], [96, "#e8e4da"], [150, "#2f4f7a"], [232, "#3a3a3a"], [290, "#d8ad3a"]]) { const y = nordY(x) + 1.3; k += `<rect x="${x}" y="${r(y - .7)}" width="3" height="1.2" rx=".45" fill="${c}"/><rect x="${x + .6}" y="${r(y - 1.05)}" width="1.6" height=".6" rx=".2" fill="#9fb8c8"/><rect x="${x}" y="${r(y + .3)}" width="3" height=".35" fill="#2a2a2a" opacity=".3"/>`; }
+  /* Baum als gelappte Krone: Schattenseite links unten, Licht von rechts oben (Westsonne) */
+  const baum = (x, y, g, herbst) => {
+    const R = 2.4 * g, f = herbst ? ["#7a6a2a", "#b0863a", "#e0b860"] : ["#3c5a2e", "#5a7a3e", "#9ab060"];
+    let b = `<path d="M${r(x)} ${r(y)} v${r(-1.4 * g)}" stroke="#5a4838" stroke-width="${r(.35 * g)}"/>`;
+    const lap = (cx, cy, rr, c) => { let d = ""; for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2, q = rr * (.82 + ((i * 37) % 5) * .05); d += `M${r(cx + Math.cos(a) * rr * .5 - q * .55)} ${r(cy + Math.sin(a) * rr * .5)}a${r(q * .55)} ${r(q * .55)} 0 1 0 ${r(q * 1.1)} 0a${r(q * .55)} ${r(q * .55)} 0 1 0 ${r(-q * 1.1)} 0`; } return `<path d="${d}" fill="${c}"/>`; };
+    b += lap(x, y - 2 * g - R * .2, R, f[0]) + lap(x + R * .2, y - 2.2 * g - R * .4, R * .7, f[1]) + lap(x + R * .35, y - 2.4 * g - R * .6, R * .35, f[2]);
+    return b;
+  };
+  /* Villa von oben gesehen (Walmdach): Rückdach, Front (zu uns, Nordseite), Westwand in der Sonne,
+     Vorderdach, Walm nach Westen im Licht, Gauben, Kamin */
+  const villa = (cx, by, g, w, d, h, rh, wand, dach) => {
+    const Q = (u, v, hh) => [cx + g * (u + .28 * v), by + g * (.04 * u - .62 * hh - .66 * v)];
+    const pp = (...pts) => pfad(pts.map((p) => Q(...p)));
+    const a = w / 2, e = Math.min(d / 2, a - .5);
+    let v = `<path d="${pp([-a, 0, 0], [a, 0, 0], [a, d, 0], [a + 3, d + 2, 0], [-a + 2, d + 2, 0])}" fill="#2a3a20" opacity=".25"/>`;
+    v += `<path d="${pp([-a, d, h], [a, d, h], [a - e, d / 2, h + rh], [-a + e, d / 2, h + rh])}" fill="${dach[1]}"/>`;
+    v += `<path d="${pp([-a, 0, 0], [a, 0, 0], [a, 0, h], [-a, 0, h])}" fill="${wand[0]}"/>`;
+    v += `<path d="${pp([a, 0, 0], [a, d, 0], [a, d, h], [a, 0, h])}" fill="${wand[1]}"/>`;
+    const fw = Math.max(2, Math.round(w / 3.2));
+    let fe = "";
+    for (let i = 0; i < fw; i++) for (const z of [1.2, 4.2]) { if (z + 1.6 > h) continue; const u = -a + (i + .5) * w / fw; fe += pp([u - .5, 0, z], [u + .5, 0, z], [u + .5, 0, z + 1.6], [u - .5, 0, z + 1.6]); }
+    for (const vv of [d * .3, d * .7]) for (const z of [1.2, 4.2]) { if (z + 1.6 > h) continue; fe += pp([a, vv - .5, z], [a, vv + .5, z], [a, vv + .5, z + 1.6], [a, vv - .5, z + 1.6]); }
+    v += `<path d="${fe}" fill="#3a3e46"/>`;
+    v += `<path d="${pp([-a - .3, -.3, h], [a + .3, -.3, h], [a - e, d / 2, h + rh], [-a + e, d / 2, h + rh])}" fill="${dach[0]}"/>`;
+    v += `<path d="${pp([a + .3, -.3, h], [a + .3, d + .3, h], [a - e, d / 2, h + rh])}" fill="${dach[2]}"/>`;
+    v += `<path d="${pfad([Q(-a + e, d / 2, h + rh), Q(a - e, d / 2, h + rh), Q(a + .3, -.3, h)], false)}" stroke="#ffd8b0" stroke-width="${r(.12 * g)}" fill="none" opacity=".7"/>`;
+    /* Gauben im Vorderdach */
+    const ng = Math.max(1, Math.round(w / 5) - 1);
+    for (let i = 0; i < ng; i++) {
+      const u = -a + (i + 1) * w / (ng + 1), hz = h + rh * .35, vz = d * .17;
+      v += `<path d="${pp([u - .9, vz, hz - .4], [u + .9, vz, hz - .4], [u + .9, vz, hz + 1.1], [u, vz, hz + 1.8], [u - .9, vz, hz + 1.1])}" fill="${wand[0]}"/><path d="${pp([u - .45, vz - .05, hz - .1], [u + .45, vz - .05, hz - .1], [u + .45, vz - .05, hz + .9], [u - .45, vz - .05, hz + .9])}" fill="#3a3e46"/>`;
+    }
+    const ku = a * .4;
+    v += `<path d="${pp([ku - .4, d * .45, h + rh * .5], [ku + .4, d * .45, h + rh * .5], [ku + .4, d * .45, h + rh + 1.4], [ku - .4, d * .45, h + rh + 1.4])}" fill="#8a4a36"/>`;
+    return v;
+  };
+  const WAND = [["#e8dcc4", "#fff0d6"], ["#e4d0aa", "#ffe4b8"], ["#efe8de", "#fff6ea"], ["#dcc4b4", "#f8dcc8"], ["#d8d2c4", "#f6eedc"], ["#e6c89a", "#ffdcaa"]];
+  const DACH = [["#4c5560", "#3a414a", "#8a93a0"], ["#8a3e2a", "#6e3020", "#d47a56"], ["#9c4a32", "#7a3a26", "#e08a62"], ["#565e68", "#40464e", "#9aa2ac"]];
+  /* drei Reihen: hinten (an der Straße) kleiner, vorn größer; dazwischen Gärten und Bäume */
+  const dinge = [];
+  for (const [y0, g0, dx] of [[5.4, 1.35, 21], [10.5, 1.8, 26], [16.5, 2.35, 33]]) {
+    for (let x = -12 + rnd() * 10; x < 330; x += dx + rnd() * 9) {
+      const by = Math.min(nordY(x) + y0 + rnd() * 1.6, 186), g = g0 * (1 + (by - 176) * .015);
+      dinge.push({ y: by, f: () => villa(x, by, g, 10 + rnd() * 5, 9 + rnd() * 4, 7 + rnd() * 3, 4 + rnd() * 2, WAND[Math.floor(rnd() * WAND.length)], DACH[Math.floor(rnd() * DACH.length)]) });
+      for (let t = 0; t < 2; t++) { const bx = Math.min(316, Math.max(4, x + dx * (.55 + rnd() * .35))), bb = by - 1 + rnd() * 3; dinge.push({ y: bb, f: () => baum(bx, bb, g * (.8 + rnd() * .4), rnd() < .3) }); }
+    }
+  }
+  dinge.sort((p, q) => p.y - q.y).forEach((o) => { k += o.f(); });
+  /* Platanen an der Uferstraße */
+  for (let x = 3; x < 317; x += 8 + rnd() * 3) k += baum(x, nordY(x) + 4.2, .75 + rnd() * .2, rnd() < .2);
   S.teil({ id: "ufer", de: "das Ufer", syl: "U-fer", it: "la riva", itSyl: "RI-va", en: "riverbank", x: 0, y: 0, kunst: k,
-    tipp: "Hier am Nordufer liegt der Stadtteil Neuenheim." });
+    tipp: "Hier am Nordufer liegt der Stadtteil Neuenheim. Von oben sieht man die Dächer der Villen und ihre Gärten." });
 }
 
 /* =====================================================================
@@ -868,41 +909,37 @@ const ZB = 12.2, ZP = 13.6;
 }
 
 /* =====================================================================
-   12 — DER WEINBERG direkt unter der Mauer (Pfähle, Drähte, Stöcke, Laub) — Lupe: Weintraube
+   12 — DER WEINBERG: ein Streifen direkt unter der Mauer. Die Rebzeilen laufen hangab (vom Betrachter
+        weg, im Bild nach oben) und werden kleiner; Pfähle, Drähte, Stöcke, Herbstlaub — Lupe: Weintraube
    ===================================================================== */
 const WT = {};
 {
-  let m = "";
-  for (let i = 0; i < 11; i++) { const cx = rnd() * 3.2, cy = rnd() * 2.2; m += `<ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${r(0.45 + rnd() * 0.3)}" ry="${r(0.35 + rnd() * 0.2)}" fill="${["#6d8b3a", "#93a040", "#c2a43e", "#5d7a33", "#b8762e", "#7f9a3c"][Math.floor(rnd() * 6)]}"/>`; }
-  S.def(`<pattern id="${S.id("laub")}" width="3.2" height="2.2" patternUnits="userSpaceOnUse"><rect width="3.2" height="2.2" fill="#5f7a34"/>${m}</pattern>`);
-  const LAUB = `url(#${S.id("laub")})`;
-  /* steiler Hang: Rebzeilen laufen hangab in die Tiefe (zum Fluchtpunkt über der Mauer) */
-  const top = (x) => 175.6 - (x - 140) * 0.012, VP = [236, 132];
-  let k = `<path d="M136 189 L136 ${r(top(136))} L320 ${r(top(320))} L320 189 Z" fill="${S.lg("weinboden", [[0, "#8f7c55"], [1, "#6e5a3a"]])}"/>`;
-  for (let i = 0; i < 22; i++) {
-    const B0 = [124 + i * 9.4, 190], mitte = [];
-    for (let t = 0; t <= 1; t += 0.065) {
-      const x = B0[0] + (VP[0] - B0[0]) * t, y = B0[1] + (VP[1] - B0[1]) * t;
-      if (y < top(x) + .4 || x < 138 || x > 319.5) { if (y < top(x) + .4) break; continue; }
-      mitte.push([x, y, (y - VP[1]) / (B0[1] - VP[1])]);
-    }
-    if (mitte.length < 2) continue;
-    const L = [], R = [];
-    for (const [x, y, sk] of mitte) { const w = 2.6 * sk + .45, wob = (rnd() - .5) * .4 * sk; L.push([x - w + wob, y - 3 * sk]); R.push([x + w + wob, y - 2.4 * sk]); }
-    /* Drahtrahmen und Pfähle */
-    k += `<path d="${pfad(mitte.map(([x, y, sk]) => [x, y - 1.2 * sk]), false)}" stroke="#d8d0c0" stroke-width=".12" fill="none"/><path d="${pfad(mitte.map(([x, y, sk]) => [x, y - 2.3 * sk]), false)}" stroke="#d8d0c0" stroke-width=".12" fill="none"/>`;
-    mitte.forEach(([x, y, sk], j) => { if (j % 2 === 0) k += `<path d="M${r(x)} ${r(y + .2)} V${r(y - 3.1 * sk)}" stroke="#8a7458" stroke-width="${r(.16 + .14 * sk)}"/>`; });
-    k += `<path d="${pfad([...L, ...R.reverse()])}" fill="#3a2e1c" opacity=".3" transform="translate(-.8 .6)"/>`;
-    k += `<path d="${pfad([...L, ...R.slice().reverse()])}" fill="${LAUB}"/><path d="${pfad([...L, ...R.slice().reverse()])}" fill="${S.lg("rebenlicht", [[0, "#000", 0.2], [0.6, "#000", 0], [1, "#fff2b0", 0.2]], 0, 0, 1, 0)}"/>`;
-    /* knorrige Stöcke unter dem Laub, blaue Trauben */
-    mitte.forEach(([x, y, sk], j) => {
-      if (j % 2 === 1) k += `<path d="M${r(x)} ${r(y + .1)} q${r(.3 * sk)} ${r(-.6 * sk)} 0 ${r(-1.2 * sk)}" stroke="#5a4028" stroke-width="${r(.2 + .2 * sk)}" fill="none"/>`;
-      if (rnd() < 0.6) k += `<path d="M${r(x + (rnd() - .5) * 1.6 * sk)} ${r(y - 1.1 * sk)} l${r(.3 * sk)} ${r(.6 * sk)} l${r(-.6 * sk)} 0 Z" fill="#3d2c52"/>`;
+  const OB = 177.2, UN = 186.5, VP = [170, 150];
+  let k = `<path d="M-1 ${UN} L-1 ${OB + 1.2} Q80 ${OB - .6} 160 ${OB} Q240 ${OB + .5} 321 ${OB - .4} L321 ${UN} Z" fill="${S.lg("weinboden", [[0, "#8f7c55"], [1, "#6e5a3a"]])}"/>`;
+  const LF = ["#6d8b3a", "#93a040", "#c2a43e", "#5d7a33", "#b8762e", "#7f9a3c", "#d8a840"];
+  let draht = "", pf = "", stock = "", tr = "";
+  const laub = ["", "", "", "", "", "", ""];
+  for (let i = -2; i < 36; i++) {
+    const B0 = [i * 9.6, UN + .5];
+    const pts = [];
+    for (let t = 0; t <= 1; t += .07) { const x = B0[0] + (VP[0] - B0[0]) * t, y = B0[1] + (VP[1] - B0[1]) * t; if (y < OB + .6) break; if (x < -1 || x > 321) continue; pts.push([x, y, (y - VP[1]) / (B0[1] - VP[1])]); }
+    if (pts.length < 2) continue;
+    draht += pfad(pts.map(([x, y, sk]) => [x, y - 1.3 * sk]), false) + " " + pfad(pts.map(([x, y, sk]) => [x, y - 2.4 * sk]), false) + " ";
+    pts.forEach(([x, y, sk], j) => {
+      if (j % 2 === 0) pf += `M${r(x)} ${r(y + .2)}V${r(y - 2.9 * sk)} `;
+      stock += `M${r(x)} ${r(y)}q${r(.3 * sk)} ${r(-.6 * sk)} 0 ${r(-1.2 * sk)} `;
+      for (let b = 0; b < 3; b++) { const c = Math.floor(rnd() * LF.length), rr = (.5 + rnd() * .5) * sk * 1.1, bx = x + (rnd() - .4) * 1.8 * sk, byy = y - (1.4 + rnd() * 1.2) * sk; laub[c] += `M${r(bx - rr)} ${r(byy)}a${r(rr)} ${r(rr * .8)} 0 1 0 ${r(2 * rr)} 0a${r(rr)} ${r(rr * .8)} 0 1 0 ${r(-2 * rr)} 0`; }
+      if (rnd() < .5) tr += `M${r(x + (rnd() - .5) * 1.4 * sk)} ${r(y - 1.1 * sk)}l${r(.3 * sk)} ${r(.6 * sk)}l${r(-.6 * sk)} 0Z`;
     });
   }
+  k += `<path d="${draht}" stroke="#d8d0c0" stroke-width=".1" fill="none"/><path d="${pf}" stroke="#8a7458" stroke-width=".22"/><path d="${stock}" stroke="#5a4028" stroke-width=".3" fill="none"/>`;
+  laub.forEach((d, c) => { if (d) k += `<path d="${d}" fill="${LF[c]}"/>`; });
+  k += `<path d="${tr}" fill="#3d2c52"/>`;
+  /* Licht von rechts über den Hang, Dunst nach oben */
+  k += `<path d="M-1 ${UN} L-1 ${OB + 1.2} Q80 ${OB - .6} 160 ${OB} Q240 ${OB + .5} 321 ${OB - .4} L321 ${UN} Z" fill="${S.lg("rebenlicht", [[0, "#2a1e10", 0.18], [0.6, "#000", 0], [1, "#ffd890", 0.18]], 0, 0, 1, 0)}"/>`;
   /* die große Traube am vordersten Stock (rechts an der Mauer) */
   {
-    const tx = 286, ty = 181;
+    const tx = 270, ty = 180.5;
     let g = `<path d="M${tx - 9} ${ty + 4} Q${tx - 4} ${ty - 3} ${tx + 2} ${ty - 4} Q${tx + 6} ${ty - 5} ${tx + 9} ${ty - 2}" stroke="#6a4a2a" stroke-width=".8" fill="none"/>`;
     for (const [x, y, rot, f] of [[-6, 0, -20, "#7a9a3a"], [-1, -4, 10, "#c2a43e"], [5, -4.4, -30, "#b8762e"], [8, -2.4, 20, "#8a9a3a"]]) g += `<path d="M${tx + x} ${ty + y} q-2.2 -2.2 0 -4.2 q2.2 2 0 4.2 Z" fill="${f}" transform="rotate(${rot} ${tx + x} ${ty + y})"/>`;
     for (const [x, y] of [[0, 0], [-1.2, .4], [1.2, .4], [-.6, 1.5], [.6, 1.5], [-1.4, 1.8], [1.4, 1.7], [0, 2.6], [-.9, 3.2], [.9, 3.2], [0, 4.3], [-.4, 5.2], [.4, 5.9]]) g += `<circle cx="${r(tx + x)}" cy="${r(ty + y)}" r=".9" fill="${S.rg("beere", [[0, "#8a7aa8"], [0.5, "#4a3a6a"], [1, "#2a1e3e"]], 0.35, 0.3, 0.7)}"/><circle cx="${r(tx + x - .3)}" cy="${r(ty + y - .3)}" r=".22" fill="#d8d0e8" opacity=".7"/>`;
@@ -912,7 +949,7 @@ const WT = {};
   }
   S.teil({ id: "weinberg", de: "der Weinberg", syl: "WEIN-berg", it: "il vigneto", itSyl: "vi-GNE-to", en: "vineyard", x: 0, y: 0, kunst: k,
     tipp: "Der Philosophenweg führte früher durch Weinberge. Im Oktober ist Weinlese.",
-    zoom: { x: 246, y: 160, w: 66, h: 44 },
+    zoom: { x: 232, y: 158, w: 66, h: 44 },
     unter: [
       { id: "weintraube", de: "die Weintraube", syl: "WEIN-trau-be", it: "il grappolo d'uva", itSyl: "GRAP-po-lo DU-va", en: "bunch of grapes", x: WT.x, y: WT.y, kunst: flaeche(-2.4, -3, 4.8, 6.6, 0.6),
         tipp: "Aus den Trauben vom Neckarhang wird Wein gemacht." },

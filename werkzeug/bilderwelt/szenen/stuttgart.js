@@ -378,16 +378,27 @@ const FT = { x: 306, y: 85, s: 31 / 86.4 };
   for (const [rz, f, i] of reihen) k += `<path d="M${kurve(rz).join(" L")}" stroke="${i % 3 === 1 ? "#5e6a2e" : "#4c6430"}" stroke-width="${r(0.35 * f)}" stroke-dasharray="${r(4 * f)} ${r(0.35 * f)}" opacity="${r(0.55 + i * 0.05)}" fill="none"/>`;
   /* Wald auf der Kuppe: Kronen ungleicher Größe, Licht von rechts hinten */
   {
-    const xw = xs.filter((x) => x <= 78);
-    k += `<path d="M${xw.map((x) => `${x} ${r(rand(x) - 0.4)}`).join(" L")} L${xw.slice().reverse().map((x) => `${x} ${r(rand(x) + 1.4)}`).join(" L")} Z" fill="#43603a"/>`;
-    let w1 = "", w2 = "";
-    for (let x = 0.5; x < 77;) {
-      const rx = 0.8 + wz() * 1.6, ry = rx * (0.7 + wz() * 0.5), cy = rand(x) - ry * 0.55;
-      w1 += `<ellipse cx="${r(x)}" cy="${r(cy)}" rx="${r(rx)}" ry="${r(ry)}" fill="${wz() < 0.5 ? "#3d5834" : "#4a663c"}"/>`;
-      w2 += `<ellipse cx="${r(x + rx * 0.3)}" cy="${r(cy - ry * 0.25)}" rx="${r(rx * 0.55)}" ry="${r(ry * 0.5)}" fill="${wz() < 0.25 ? "#a49a48" : "#6f8a50"}"/>`;
-      x += rx * (0.9 + wz() * 0.9);
+    /* Grundfläche, zum Stäffele hin dünner auslaufend (keine Kante) */
+    const xw = [...xs.filter((x) => x <= 72), 76, 79], dick = (x) => Math.min(1, (79 - x) / 13);
+    k += `<path d="M${xw.map((x) => `${x} ${r(rand(x) - 0.4 * dick(x))}`).join(" L")} L${xw.slice().reverse().map((x) => `${x} ${r(rand(x) + 1.4 * dick(x))}`).join(" L")} Z" fill="#43603a"/>`;
+    /* drei gestaffelte Reihen überlappender Kronen (hinten blasser); je Reihe eine Lichtkante als Sichel oben rechts,
+       einzelne Kronenränder schon gelblich */
+    for (const [ro, dy, xe, dk, li] of [[0, 1.9, 70, "#6a8160", "#93a37a"], [1, 1, 75, "#4d683f", "#7f9a58"], [2, 0.1, 78.5, "#3c5633", "#6f8a4c"]]) {
+      let d = "", gelb = "", x = 26 + ro * 1.3;
+      const yb = (x) => rand(x) - dy * dick(x);
+      d = `M${r(x)} ${r(yb(x) + 1)}`;
+      while (x < xe) {
+        const R = (0.8 + wz() * 1.1) * (0.5 + 0.5 * dick(x)), w = R * (1.5 + wz() * 0.5), x2 = Math.min(xe, x + w), h = R * (0.75 + wz() * 0.3);
+        const yt = yb((x + x2) / 2) - 1.4 * h, y2 = yb(x2) - 0.3 * h;
+        d += ` C${r(x - 0.1 * w)} ${r(yt)} ${r(x2 + 0.1 * w)} ${r(yt)} ${r(x2)} ${r(y2)}`;
+        if (ro && wz() < 0.2) gelb += `<ellipse cx="${r(x + 0.62 * w)}" cy="${r(yb(x2) - 0.75 * h)}" rx="${r(0.28 * w)}" ry="${r(0.32 * h)}"/>`;
+        x = x2;
+      }
+      for (let q = xe + 0.5; q > 22; q -= 6) d += ` L${r(q)} ${r(yb(q) + 1.4)}`;
+      d += " Z";
+      k += `<path d="${d}" fill="${li}" transform="translate(.4 -.4)"/><path d="${d}" fill="${dk}"/>`;
+      if (gelb) k += `<g fill="#a99e4a" opacity=".85">${gelb}</g>`;
     }
-    k += w1 + w2;
   }
   /* Stäffele: ein gerader, steiler Lauf den Hang hinauf, mit zwei Absätzen und Geländer */
   {
