@@ -459,10 +459,10 @@ const WEGRAND = -140.6;
        Stiel), Borke, Wurzelanlauf, Schatten nach rechts hinten
    ===================================================================== */
 {
-  const Y = -141, p = pr(4.6, Y, 0), m = mass(Y);
-  let k = bodenSchatten(4.6, Y, .9, 9, .28);
+  const Y = -141, p = pr(4.2, Y, 0), m = mass(Y);
+  let k = bodenSchatten(4.2, Y, .9, 9, .28).replace(/(-?\d+\.?\d*) (-?\d+\.?\d*)/g, (q, x, y) => `${Math.min(+x, BR + 4)} ${y}`);
   /* Stamm mit Längsrissen und Wurzelanlauf */
-  k += `<path d="M${r(p[0] - 1.1 * m)} ${r(p[1] + .2)} Q${r(p[0] - .5 * m)} ${r(p[1] - .4 * m)} ${r(p[0] - .42 * m)} ${r(p[1] - 1.4 * m)} C${r(p[0] - .3 * m)} ${r(p[1] - 4 * m)} ${r(p[0] - .4 * m)} ${r(p[1] - 6 * m)} ${r(p[0] - .2 * m)} 40 L${r(p[0] + .5 * m)} 40 C${r(p[0] + .45 * m)} ${r(p[1] - 6 * m)} ${r(p[0] + .38 * m)} ${r(p[1] - 4 * m)} ${r(p[0] + .48 * m)} ${r(p[1] - 1.4 * m)} Q${r(p[0] + .6 * m)} ${r(p[1] - .4 * m)} ${r(p[0] + 1.2 * m)} ${r(p[1] + .2)} Z" fill="${S.lg("stamm", [[0, "#8a7462"], [0.45, "#5a4838"], [1, "#2e241c"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M${r(p[0] - .9 * m)} ${r(p[1] + .2)} Q${r(p[0] - .5 * m)} ${r(p[1] - .4 * m)} ${r(p[0] - .42 * m)} ${r(p[1] - 1.4 * m)} C${r(p[0] - .3 * m)} ${r(p[1] - 4 * m)} ${r(p[0] - .4 * m)} ${r(p[1] - 6 * m)} ${r(p[0] - .2 * m)} 40 L${r(p[0] + .5 * m)} 40 C${r(p[0] + .45 * m)} ${r(p[1] - 6 * m)} ${r(p[0] + .38 * m)} ${r(p[1] - 4 * m)} ${r(p[0] + .48 * m)} ${r(p[1] - 1.4 * m)} Q${r(p[0] + .6 * m)} ${r(p[1] - .4 * m)} ${r(p[0] + .95 * m)} ${r(p[1] + .2)} Z" fill="${S.lg("stamm", [[0, "#8a7462"], [0.45, "#5a4838"], [1, "#2e241c"]], 0, 0, 1, 0)}"/>`;
   { let d = ""; for (let i = 0; i < 9; i++) { const x = p[0] + (-.32 + i * .09) * m, y0 = p[1] - (1 + rnd() * 2) * m, y1 = 44 + rnd() * 40; d += `M${r(x)} ${r(y0)} C${r(x + 1)} ${r((y0 + y1) / 2)} ${r(x - 1)} ${r((y0 + y1) / 2)} ${r(x + .4)} ${r(y1)} `; } k += `<path d="${d}" stroke="#2a1f17" stroke-width=".55" fill="none" opacity=".55"/>`; }
   /* Äste in die Krone */
   k += `<path d="M${r(p[0])} 64 Q${r(p[0] - 26)} 46 ${r(p[0] - 50)} 36 M${r(p[0] + 2)} 48 Q${r(p[0] - 12)} 28 ${r(p[0] - 30)} 18 M${r(p[0] + 4)} 56 Q${r(p[0] + 6)} 34 ${r(p[0] + 4)} 22" stroke="#3a2c22" stroke-width="2.6" fill="none"/>`;

@@ -108,8 +108,9 @@ S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0
   /* Kumulus aus runden Ballen: kühle Schattenseite links unten, Sonne von rechts */
   const WS = S.lg("wks", [[0, "#aeb8cf"], [1, "#c9d0e0"]]), WL = S.lg("wkl", [[0, "#eef1f7"], [0.6, "#ffffff"], [1, "#fff6e8"]], 0, 0, 1, 0);
   const wolke = (x, y, w, h, seed) => {
-    const z = zufall(seed), n = 5 + Math.floor(z() * 3), ball = [];
-    for (let i = 0; i < n; i++) { const t = (i + 0.5) / n, rr = h * (0.35 + 0.45 * Math.sin(Math.PI * t)) * (0.8 + z() * 0.4); ball.push([x - w / 2 + t * w, y - rr * 0.75, rr]); }
+    const z = zufall(seed), n = 7 + Math.floor(z() * 4), ball = [];
+    for (let i = 0; i < n; i++) { const t = (i + 0.5) / n, rr = h * (0.22 + 0.5 * Math.pow(Math.sin(Math.PI * t), 1.5)) * (0.7 + z() * 0.6); ball.push([x - w / 2 + t * w + (z() - 0.5) * 2, y - rr * (0.6 + z() * 0.4), rr]); }
+    for (let i = 0; i < 3; i++) { const t = 0.3 + z() * 0.4, rr = h * (0.3 + z() * 0.25); ball.push([x - w / 2 + t * w, y - h * 0.55 - rr * 0.5, rr]); }
     const kreise = (dx, dy, f) => ball.map(([cx, cy, rr]) => `M${r(cx + dx - rr * f)} ${r(cy + dy)} a${r(rr * f)} ${r(rr * f)} 0 1 0 ${r(2 * rr * f)} 0 a${r(rr * f)} ${r(rr * f)} 0 1 0 ${r(-2 * rr * f)} 0`).join("");
     let g = `<path d="${kreise(0, 0, 1)}M${r(x - w / 2)} ${r(y - h * 0.3)} h${w} v${r(h * 0.3)} h${-w}Z" fill="${WS}"/>`;
     g += `<path d="${kreise(h * 0.12, -h * 0.12, 0.86)}" fill="${WL}"/>`;
@@ -185,8 +186,6 @@ S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0
   k += `<path d="${st}" stroke="#9a97a0" stroke-width=".35" opacity=".35"/>`;
   /* Glanz der nassen Steine zur Sonne hin (rechts) */
   k += `<path d="M200 ${HOR + 4} L400 ${HOR + 30} L400 260 L230 260 Z" fill="${S.lg("glanz", [[0, "#ffe9c8", 0], [1, "#ffe9c8", 0.16]], 0, 0, 1, 0)}"/>`;
-  /* Spiegelung der Kuppeln und Türme im feuchten Pflaster (weich, kurz) */
-  k += `<g filter="url(#${S.id("dunst")})" opacity=".2"><rect x="150" y="176" width="10" height="9" fill="#e7863a"/><rect x="161" y="176" width="9" height="11" fill="#2f61a8"/><rect x="170" y="176" width="10" height="13" fill="#b5523a"/><rect x="186" y="176" width="9" height="10" fill="#3f7f4f"/><rect x="196" y="176" width="10" height="11" fill="#f0c43c"/><rect x="267" y="176" width="22" height="16" fill="#9a4538"/><rect x="274" y="186" width="6" height="6" fill="#d03a34"/></g>`;
   /* Schatten der Kremlmauer (12 m, Sonne 20° hoch → 33 m nach links) */
   k += poly([P(20, 5), P(288.5, 5), P(288.5, 38), P(20, 38)], "#1b2247", ` opacity=".3"`);
   /* Zinnen-Zähne am Schattenrand (nur nah sichtbar) */
@@ -202,7 +201,7 @@ S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0
     const pt = (f) => { const p = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, rr = (0.7 + (((i + s0) * 7919) % 13) / 30) * f; p.push(P(d + Math.sin(a) * t * rr, l + Math.cos(a) * w * rr)); } return p; };
     return `<path d="M${pt(1).join(" L")}Z" fill="#c9d4e6" filter="url(#${S.id("weichs")})"/><path d="M${pt(0.82).join(" L")}Z" fill="${SCHNEE}" opacity=".9" filter="url(#${S.id("weichs")})"/>`;
   };
-  k += fleck(13, -6, 3, 0.8) + fleck(15.5, 9.5, 2.4, 0.7) + fleck(24, -11, 4, 1.4) + fleck(30, 12, 3, 1.6) + fleck(46, -22, 5, 3) + fleck(70, 20, 4, 4) + fleck(12, 2.5, 1.2, 0.35);
+  k += fleck(12.6, -5.5, 3.2, 1.2) + fleck(15.5, 10, 2.6, 1.1) + fleck(25, -13, 4.5, 2.2) + fleck(31, 13, 3.4, 2.4) + fleck(46, -24, 5, 4) + fleck(70, 21, 4, 6) + fleck(11.8, 3.2, 1.4, 0.5) + fleck(38, -1, 2, 2);
   /* Schlagschatten der Dinge im Vordergrund (zur Bodenfläche) — Sonne rechts, knapp hinten */
   const schlag = (d, l, breite, lang, a = 0.32) => poly([P(d - 0.15, l + breite / 2), P(d + 0.15, l + breite / 2), P(d + 0.5, l - lang), P(d + 0.2, l - lang - 0.3), P(d - 0.15, l - breite / 2)], "#1b2247", ` opacity="${a}" filter="url(#bw_weich)"`);
   k += poly([P(21, -4.5), P(23.6, -4.5), P(24.6, -14), P(21, -14)], "#1b2247", ` opacity=".3"`);    /* Marktstand */
@@ -480,6 +479,10 @@ const unterKathedrale = [];
   k += achteck(0, 8, 42.5, 51, ZIEGEL_S, ZIEGEL_M, ZIEGEL_L);
   k += `<path d="M-1.2 -43.5 V-48.6 Q0 -50.2 1.2 -48.6 V-43.5 Z M-3.75 -43.5 V-48.4 Q-3.1 -49.6 -2.5 -48.4 V-43.5 Z M2.5 -43.5 V-48.4 Q3.1 -49.6 3.75 -48.4 V-43.5 Z" fill="#2a1a22"/>`;
   k += `<path d="M-1.66 -42.5 V-51 M1.66 -42.5 V-51 M-4 -42.5 V-51 M4 -42.5 V-51" stroke="${WEISS_L}" stroke-width=".45"/>`;
+  /* weiße Bogenrahmen über den Öffnungen, Glocken im Dunkel, Zierspitzen am Achteck */
+  k += `<path d="M-1.45 -48.3 Q0 -50.6 1.45 -48.3 M-3.85 -48.2 Q-3.1 -49.9 -2.4 -48.2 M2.4 -48.2 Q3.1 -49.9 3.85 -48.2" stroke="${WEISS_L}" stroke-width=".3" fill="none"/>`;
+  k += `<path d="M-.7 -45.6 Q0 -47.2 .7 -45.6 Z" fill="#b08a3a"/><rect x="-1.66" y="-43.6" width="3.32" height=".35" fill="${WEISS_M}"/>`;
+  for (const u of [-4, -1.66, 1.66, 4]) k += `<path d="M${u - 0.35} -51 L${u} -52.8 L${u + 0.35} -51 Z" fill="${WEISS_L}"/>`;
   k += `<rect x="-4.3" y="-51.6" width="8.6" height=".7" fill="${WEISS_L}"/><rect x="-4.3" y="-51.8" width="8.6" height=".3" fill="${SCHNEE}"/>`;
   /* Zweites Achteck (51,6–55 m) */
   k += achteck(0, 6.4, 51.6, 55, "#c9c0b8", WEISS_M, WEISS_L);
@@ -510,7 +513,7 @@ const unterKathedrale = [];
   const P0 = SP(0, 0);
   S.teil({ id: "spasski_turm", de: "der Spasski-Turm", syl: "SPAS-ski-turm", it: "la Torre del Salvatore", itSyl: "TOR-re del sal-va-TO-re", en: "Spasskaya Tower",
     x: ox, y: oy, steht: true, kunst: `<g transform="scale(${s.toFixed(4)})">${k}</g>`,
-    zoom: { x: 222, y: 34, w: 111, h: 74 },
+    zoom: { x: 214, y: 34, w: 127, h: 85 },
     unter: [
       { id: "uhr", de: "die Uhr", syl: "UHR", it: "l'orologio", itSyl: "o-ro-LO-gio", en: "clock", x: P0.x, y: r(oy - 34.5 * s),
         kunst: flaecheEllipse(0, 0, 3.6 * s, 3.6 * s), tipp: "Die Uhr am Spasski-Turm zeigt die Moskauer Zeit. Ihr Zifferblatt ist sechs Meter groß." },
@@ -778,7 +781,7 @@ const STAND = { d: 21, l0: -7.6, l1: -4.4, theke: 1.05 };
    ===================================================================== */
 {
   const d = 22.2, l = -6.3, x = r(X(d, l)), y = r(Y(d));
-  const m = B.mensch({ id: "msk_verk", geschlecht: "w", blick: 28, neigung: 3, frisur: "dutt", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true, pose: "servieren",
+  const m = B.mensch({ id: "msk_verk", geschlecht: "w", blick: 38, neigung: 3, frisur: "dutt", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true, pose: "servieren",
     kleidung: { oberteil: { stueck: "pullover", farbe: "#e9e1cf" }, jacke: { stueck: "weste", farbe: "#6a2a2a" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "kopftuch", farbe: "#b8272a" } } }, r(1.64 * F / d));
   const theke = Y(STAND.d, STAND.theke) - y;
   const clip = S.id("verkclip");

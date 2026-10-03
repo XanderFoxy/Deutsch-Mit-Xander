@@ -330,17 +330,20 @@ const denkmalUnter = [];
   const BRZ = S.lg("brz", [[0, "#9a9466"], [0.3, "#66633f"], [0.7, "#3c3c27"], [1, "#25251a"]], 0, 0, 1, 0);
   const BRZ_H = S.lg("brzh", [[0, "#b0aa78"], [0.5, "#7a7650"], [1, "#4a4a31"]], 0, 0, 1, 0);
   const ARM_L = "#6f6b45", ARM_D = "#3f3f29", DUNKEL = "#1f1f16";
-  const bein = (x0, x1, kx, fx, w) => `<path d="M${x0} -50 L${x1} -50 L${x1 - 0.6 + kx} -29 Q${x1 - 0.2 + kx} -27 ${x1 - 0.8 + kx} -24 L${fx + w / 2} -4 L${fx - w / 2} -4 L${x0 + 0.8 + kx} -24 Q${x0 + kx} -27 ${x0 + 0.4 + kx} -29 Z" fill="${BRZ}"/>` +
-    `<rect x="${x0 + 0.2 + kx}" y="-30" width="${r(x1 - x0 - 0.6)}" height="1.6" fill="${ARM_D}"/>`;
+  /* Bein: Kniehose bis unter das Knie, Strumpf mit Wade, schmale Fessel */
+  const bein = (x0, x1, kc, fx) => `<path d="M${x0} -50 L${x1} -50 L${r(kc + 2.7)} -29 Q${r(kc + 3.1)} -19 ${r(fx + 1.6)} -5 L${r(fx - 1.6)} -5 Q${r(kc - 3.1)} -19 ${r(kc - 2.7)} -29 Z" fill="${BRZ}"/>` +
+    `<path d="M${r(kc - 2.8)} -29.6 L${r(kc + 2.8)} -29.6 L${r(kc + 2.7)} -28.2 L${r(kc - 2.7)} -28.2 Z" fill="${ARM_D}"/><circle cx="${r(kc + 2)}" cy="-28.9" r=".45" fill="#a49e6c"/>`;
   const schuh = (fx, dir) => `<path d="M${fx - 2.4} -4 L${fx + 2.4} -4 Q${fx + 2.4 + dir * 2.4} -1.6 ${fx + dir * 3.6} 0 L${fx - 2.6 + Math.min(0, dir) * 1.4} 0 Q${fx - 3} -2 ${fx - 2.4} -4 Z" fill="${DUNKEL}"/><rect x="${fx - 1}" y="-3.6" width="2" height="1" fill="#8a8458"/>`;
   const arm = (pts, w, farbe) => `<path d="M${pts.map((p2) => p2.join(" ")).join(" L")}" stroke="${farbe}" stroke-width="${w}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` +
     `<path d="M${pts.map((p2) => (p2[0] - w * 0.22) + " " + (p2[1] - w * 0.1)).join(" L")}" stroke="#a49e6c" stroke-width="${r(w * 0.22)}" fill="none" stroke-linecap="round" opacity=".55"/>`;
   const hand = (x, y, rot) => `<ellipse cx="${x}" cy="${y}" rx="2" ry="2.6" fill="${BRZ_H}" transform="rotate(${rot} ${x} ${y})"/><path d="M${x - 1.2} ${y + 1.6} q1.2 1 2.4 0" stroke="${ARM_D}" stroke-width=".4" fill="none"/>`;
   const GO = -13, SC = 13;
   let fig = "";
-  /* --- Schiller (hinten im Bild nicht verdeckt, wird zuerst gezeichnet) --- */
+  /* Goethes linker Arm geht hinter Schillers Schulter (zuerst gezeichnet) */
+  fig += `<g transform="translate(${GO} 0)">${arm([[10.4, -80.6], [13.4, -71], [16.2, -81]], 5.4, ARM_D)}</g>`;
+  /* --- Schiller --- */
   {
-    let g = bein(-8, -2, -0.8, -5.6, 4.4) + bein(1.2, 7, 0.4, 4.6, 4.2) + schuh(-5.6, -1) + schuh(4.6, 1);
+    let g = bein(-8, -1.6, -5.4, -5.8) + bein(1.4, 7.6, 4.8, 5) + schuh(-5.8, -1) + schuh(5, 1);
     /* Weste und Hemd mit offenem Kragen */
     g += `<path d="M-5 -82 L5 -82 L5.6 -54 Q0 -51 -5.6 -54 Z" fill="#4c4b31"/>`;
     for (let y = -78; y > -56; y -= 4.4) g += `<circle cx="0" cy="${y}" r=".55" fill="#a49e6c"/>`;
@@ -357,13 +360,13 @@ const denkmalUnter = [];
     /* Kopf: Blick nach oben in die Ferne, langes welliges Haar, kräftige Nase */
     g += `<rect x="-2" y="-90" width="4" height="4.6" fill="#5d5b3a"/>`;
     g += `<ellipse cx="-.3" cy="-94.2" rx="4.7" ry="6.1" fill="${BRZ_H}" transform="rotate(-6 -.3 -94.2)"/>`;
-    g += `<path d="M-5.2 -95 Q-6.4 -101.6 -.6 -101.4 Q4.6 -101.2 5 -96 Q5.6 -92 4.4 -88.2 Q6.6 -88.6 6.2 -85.6 Q4.2 -86.6 3.6 -88.2 Q4.2 -92.4 3 -96.4 Q-1.4 -97.6 -4.2 -95.4 Q-4.6 -91 -3.8 -88 Q-6.4 -88.6 -6.6 -86 Q-7 -90.6 -5.2 -95 Z" fill="${BRZ}"/>`;
+    g += `<path d="M-5.4 -94 Q-6.2 -101.8 -.4 -101.6 Q5.4 -101.4 5.4 -95 Q5.8 -90 5.4 -86.6 Q4.2 -85.8 3.4 -87 Q4.2 -91.8 3.2 -96 Q-1 -98.4 -4 -95.8 Q-4.8 -91.4 -3.6 -87.2 Q-4.6 -85.8 -5.8 -86.6 Q-6.2 -90 -5.4 -94 Z" fill="${BRZ}"/><path d="M-5 -92 q.6 2 .2 4 M4.8 -92 q-.4 2 0 4" stroke="#8a8458" stroke-width=".4" fill="none"/>`;
     g += `<path d="M-2.6 -95.4 q.9 -.6 1.8 0 M.8 -95.6 q.9 -.6 1.8 0" stroke="${DUNKEL}" stroke-width=".5" fill="none"/><path d="M-.6 -95 Q-1.6 -92 -.4 -91.2" stroke="${ARM_D}" stroke-width=".7" fill="none"/><path d="M-1.8 -89.4 q1.2 .5 2.4 0" stroke="${ARM_D}" stroke-width=".45" fill="none"/>`;
     fig += `<g transform="translate(${SC} 0)">${g}</g>`;
   }
   /* --- Goethe --- */
   {
-    let g = bein(-7.6, -1.8, 0, -4.8, 4.2) + bein(1.4, 7.2, 0.6, 5.4, 4.2) + schuh(-4.8, -1) + schuh(5.4, 1);
+    let g = bein(-7.6, -1.4, -4.6, -4.6) + bein(1.4, 7.6, 5.4, 6.2) + schuh(-4.6, -1) + schuh(6.2, 1);
     /* Weste mit Knöpfen, Halsbinde */
     g += `<path d="M-4.8 -82 L4.8 -82 L5.2 -55 Q0 -52 -5.2 -55 Z" fill="#4c4b31"/>`;
     for (let y = -79; y > -57; y -= 3.6) g += `<circle cx=".2" cy="${y}" r=".5" fill="#a49e6c"/>`;
@@ -376,26 +379,26 @@ const denkmalUnter = [];
     /* Ordensstern auf der linken Brust */
     g += `<path d="M7 -74.6 L7.5 -73.1 L9 -72.6 L7.5 -72.1 L7 -70.6 L6.5 -72.1 L5 -72.6 L6.5 -73.1 Z" fill="#c9c08a"/>`;
     /* rechter Arm (links im Bild): hält den Kranz vor dem Körper */
-    g += arm([[-10.8, -80.5], [-12.4, -63.5], [-4.6, -51]], 5.8, ARM_L);
-    g += hand(-2.8, -49.6, 40);
+    g += arm([[-10.8, -80.5], [-11.6, -63.5], [2.4, -50.4]], 5.8, ARM_L);
+    g += hand(4.2, -49.2, 60);
     /* Kopf: ruhig nach vorn, hohe Stirn, Haar nach hinten mit Locken über den Ohren */
     g += `<rect x="-2" y="-90" width="4" height="4.4" fill="#5d5b3a"/>`;
     g += `<ellipse cx=".2" cy="-93.6" rx="4.8" ry="6.2" fill="${BRZ_H}"/>`;
     g += `<path d="M-4.9 -94.6 Q-5.4 -100.6 0 -100.6 Q5.4 -100.6 5 -94.6 Q4.2 -97.8 0 -98.2 Q-4 -97.8 -4.9 -94.6 Z" fill="${BRZ}"/>`;
-    g += `<ellipse cx="-4.9" cy="-93.2" rx="1.3" ry="1.8" fill="${BRZ}"/><ellipse cx="5.2" cy="-93.2" rx="1.3" ry="1.8" fill="${BRZ}"/>`;
+    g += `<path d="M-4.9 -96 Q-6.2 -94 -5 -91.6 Q-4.2 -92.8 -4.4 -95.4 Z M5.1 -96 Q6.4 -94 5.2 -91.6 Q4.4 -92.8 4.6 -95.4 Z" fill="#4a4a31"/>`;
     g += `<path d="M-2.6 -94.4 q.9 -.5 1.8 0 M.9 -94.4 q.9 -.5 1.8 0" stroke="${DUNKEL}" stroke-width=".5" fill="none"/><path d="M.2 -94 Q-.6 -91.6 .4 -90.8" stroke="${ARM_D}" stroke-width=".6" fill="none"/><path d="M-1.2 -89.2 q1.3 .4 2.6 0" stroke="${ARM_D}" stroke-width=".45" fill="none"/>`;
     fig += `<g transform="translate(${GO} 0)">${g}</g>`;
   }
   /* Schillers rechter Arm greift über Goethes Rock zum Kranz */
-  fig += `<g transform="translate(${SC} 0)">${arm([[-10.6, -80.5], [-15.2, -64.5], [-18.6, -51.6]], 5.6, ARM_L)}${hand(-19.6, -49.6, -30)}</g>`;
+  fig += `<g transform="translate(${SC} 0)">${arm([[-10.6, -80.5], [-13.6, -64.5], [-14.2, -51.6]], 5.6, ARM_L)}${hand(-14.6, -49.4, -10)}</g>`;
   /* der Lorbeerkranz zwischen beiden Händen */
-  const KX = -11.2, KY = -46.4;
+  const KX = -4.6, KY = -45.6;
   let kranz = `<ellipse cx="${KX}" cy="${KY}" rx="5.2" ry="5" fill="none" stroke="#3f3f29" stroke-width="1.6"/>`;
   for (let i = 0; i < 18; i++) { const w = i / 18 * Math.PI * 2, x = KX + Math.cos(w) * 5.2, y = KY + Math.sin(w) * 5; kranz += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="1.5" ry=".7" fill="${i % 2 ? "#8a8458" : "#5d5b3a"}" transform="rotate(${Math.round(w * 57.3 + 50)} ${r(x)} ${r(y)})"/>`; }
   kranz += `<path d="M${KX - 1.6} ${KY + 5} l-.8 2.6 M${KX + 1.6} ${KY + 5} l.8 2.6" stroke="#5d5b3a" stroke-width=".6"/>`;
   fig += kranz;
-  /* Goethes linker Arm liegt auf Schillers Schulter (ganz vorn) */
-  fig += `<g transform="translate(${GO} 0)">${arm([[10.4, -80.6], [15.2, -70.4], [19.2, -79.2]], 5.4, ARM_D)}${hand(20.2, -80.6, 70)}</g>`;
+  /* Goethes Hand liegt auf Schillers Schulter */
+  fig += `<g transform="translate(${GO} 0)">${hand(16.6, -82.4, 80)}</g>`;
   /* Patina: grünliche Laufspuren */
   fig += `<path d="M-20 -78 Q-20.4 -60 -21 -40 M-6 -70 Q-6.4 -55 -7 -42 M18 -76 Q18.6 -58 19.4 -36 M6 -60 Q6.2 -48 6.6 -38" stroke="#7d9a78" stroke-width=".7" fill="none" opacity=".45"/>`;
   k += `<g transform="translate(0 ${r(fussY)}) scale(${FS.toFixed(5)})">${fig}</g>`;
