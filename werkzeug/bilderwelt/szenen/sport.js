@@ -509,7 +509,7 @@ const TISCH = { x0: -1.35, x1: 1.0, d0: 8.6, d1: 9.3, h: 0.76 };
   const pent = (cx, cy, rr) => "M" + [0, 1, 2, 3, 4].map((i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; return `${r(cx + Math.cos(a) * rr)} ${r(cy + Math.sin(a) * rr)}`; }).join(" L") + " Z";
   k += `<path d="${pent(0, -R, R * 0.32)}" fill="#1d1f22"/>`;
   for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; k += `<path d="${pent(Math.cos(a) * R * 0.78, -R + Math.sin(a) * R * 0.78, R * 0.2)}" fill="#1d1f22" opacity=".9"/>`; }
-  S.teil({ id: "fussball", de: "der Fußball", syl: "FUSS-ball", it: "il pallone", itSyl: "pal-LO-ne", en: "football", x, y, steht: true, kunst: k });
+  S.teil({ id: "fussball", de: "der Fußball", syl: "FUß-ball", it: "il pallone", itSyl: "pal-LO-ne", en: "football", x, y, steht: true, kunst: k });
 }
 
 /* =====================================================================

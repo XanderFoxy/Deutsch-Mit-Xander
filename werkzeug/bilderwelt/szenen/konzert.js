@@ -142,7 +142,7 @@ const ALU = S.lg("alu", [[0, "#cfd4d8"], [1, "#8a9096"]]);
   S.def(`<pattern id="${S.id("pixel")}" width="1.6" height="1.6" patternUnits="userSpaceOnUse"><rect width="1.6" height="1.6" fill="none" stroke="#000" stroke-width=".25" opacity=".45"/></pattern>`);
   k += `<rect x="${a[0]}" y="${a[1]}" width="${r(w)}" height="${r(h)}" fill="url(#${S.id("pixel")})"/>`;
   const cx = a[0] + w / 2;
-  S.teil({ id: "kz_videowand", de: "die Videowand", syl: "VI-de-o-wand", it: "il videowall", itSyl: "vi-de-o-UOLL", en: "video wall", x: r(cx), y: b[1], kunst: um(cx, b[1], k),
+  S.teil({ id: "kz_videowand", de: "die Videowand", syl: "VI-de-o-wand", it: "lo schermo LED", itSyl: "SCHER-mo LED", en: "video wall", x: r(cx), y: b[1], kunst: um(cx, b[1], k),
     tipp: "Die Videowand besteht aus vielen kleinen LED-Lämpchen." });
 }
 

@@ -77,7 +77,7 @@ const baum = (x, y, g, f = "#4f8a46") => `<rect x="${r(x - g * 0.08)}" y="${r(y 
   for (let i = -5; i <= 5; i++) pf += `M${pt(i * 0.68, 45)} L${pt(i * 1.1, 7.2)}`;
   k += `<path d="${pf}" stroke="#a8946e" stroke-width=".3" opacity=".7"/>`;
   /* Gleis der Parkeisenbahn quer über den Weg (Bahnübergang) */
-  const dG = 22.5;
+  const dG = 26;
   k += `<path d="M0 ${r(Y(dG + 0.6))} H320 M0 ${r(Y(dG - 0.6))} H320" stroke="#8a7a62" stroke-width="1.2"/>`;
   let sw = "";
   for (let xm = -14; xm <= 14; xm += 0.6) sw += `M${pt(xm, dG + 0.7)} L${pt(xm, dG - 0.7)}`;
@@ -162,7 +162,7 @@ const baum = (x, y, g, f = "#4f8a46") => `<rect x="${r(x - g * 0.08)}" y="${r(y 
    4 — DER PARKPLAN (große Tafel am Weg)
    ===================================================================== */
 {
-  const d = 31, sc = s(d), x0 = 4.0, x1 = 7.4, [ax, yb] = P((x0 + x1) / 2, d);
+  const d = 38, sc = s(d), x0 = 4.8, x1 = 8.4, [ax, yb] = P((x0 + x1) / 2, d);
   const xa = X(x0, d), xe = X(x1, d), y0 = Y(d, 3.1), y1 = Y(d, 1.1);
   let k = `<path d="M${r(xa + 2)} ${r(yb)} V${r(y1)} M${r(xe - 2)} ${r(yb)} V${r(y1)}" stroke="#6b4a2a" stroke-width="1.2"/>`;
   k += `<rect x="${r(xa)}" y="${r(y0)}" width="${r(xe - xa)}" height="${r(y1 - y0)}" rx=".6" fill="#6b4a2a"/><rect x="${r(xa + 0.8)}" y="${r(y0 + 0.8)}" width="${r(xe - xa - 1.6)}" height="${r(y1 - y0 - 1.6)}" fill="#cfe7b0"/>`;
@@ -181,36 +181,44 @@ const baum = (x, y, g, f = "#4f8a46") => `<rect x="${r(x - g * 0.08)}" y="${r(y 
    5 — DIE WILDWASSERBAHN (Abfahrt im Profil, links) mit Platschbecken
    ===================================================================== */
 {
-  const d = 28, sc = s(d), yb = Y(d);
-  const bahnP = (t) => { /* t 0…1 von oben links nach unten rechts */ const xm = -15.5 + t * 9.5, h = 9.6 * Math.pow(1 - t, 1.6) + 0.6; return P(xm, d, h); };
+  const d = 30, sc = s(d), yb = Y(d);
+  /* t = 0 oben rechts an der Station, t = 1 unten links im Becken */
+  const bahnP = (t) => { const xm = -6.3 - t * 7.4, h = 8.8 * Math.pow(1 - t, 1.5) + 0.6; return P(xm, d, h); };
   let k = "";
-  /* Felsen und Platschbecken */
-  const [bx, by] = P(-5.2, d);
-  k += `<ellipse cx="${r(bx)}" cy="${r(by)}" rx="${r(3.6 * sc)}" ry="${r(0.7 * sc)}" fill="${WASSER}"/>`;
-  k += `<path d="M${r(bx - 3.8 * sc)} ${r(by)} q${r(1 * sc)} ${r(-1.2 * sc)} ${r(2.2 * sc)} ${r(-0.6 * sc)} q${r(0.6 * sc)} ${r(-0.8 * sc)} ${r(1.4 * sc)} 0" fill="#8a7a68"/><path d="M${r(bx + 2.6 * sc)} ${r(by)} q${r(0.6 * sc)} ${r(-1.4 * sc)} ${r(1.6 * sc)} ${r(-0.4 * sc)} L${r(bx + 4 * sc)} ${r(by)} Z" fill="#7a6a58"/>`;
-  /* Stützen unter der Rinne */
+  /* Platschbecken mit Felsen */
+  const [bx, by] = P(-14.2, d);
+  k += `<ellipse cx="${r(bx)}" cy="${r(by)}" rx="${r(2.7 * sc)}" ry="${r(0.55 * sc)}" fill="${WASSER}"/>`;
+  k += `<path d="M${r(bx - 2.8 * sc)} ${r(by + 1)} q${r(0.4 * sc)} ${r(-1.1 * sc)} ${r(1.2 * sc)} ${r(-0.5 * sc)} q${r(0.4 * sc)} ${r(-0.5 * sc)} ${r(0.9 * sc)} ${r(0.5 * sc)} Z" fill="#8a7a68"/>`;
+  k += `<path d="M${r(bx + 1.6 * sc)} ${r(by + 1)} q${r(0.5 * sc)} ${r(-1.3 * sc)} ${r(1.3 * sc)} ${r(-0.3 * sc)} L${r(bx + 2.8 * sc)} ${r(by + 1)} Z" fill="#7a6a58"/>`;
+  /* Holzstützen mit Kreuzverband */
   let st = "";
-  for (let t = 0.04; t < 0.8; t += 0.09) { const [x, y] = bahnP(t); st += `M${r(x)} ${r(y + 1.5)} V${r(yb)} M${r(x - 1.6)} ${r(yb)} L${r(x)} ${r(y + 4)} L${r(x + 1.6)} ${r(yb)}`; }
-  k += `<path d="${st}" stroke="#7d4f2a" stroke-width=".7"/>`;
-  /* Rinne (Holzoptik) mit Wasser */
+  for (let t = 0.05; t < 0.86; t += 0.1) { const [x, y] = bahnP(t); st += `M${r(x)} ${r(y + 2.5)} V${r(yb)}`; if (y + 6 < yb) st += `M${r(x - 2.6)} ${r(yb)} L${r(x)} ${r(y + 5)} L${r(x + 2.6)} ${r(yb)}`; }
+  k += `<path d="${st}" stroke="#7d4f2a" stroke-width=".75"/>`;
+  /* Rinne: Außenwand und Wasser mit Gischt */
   let o = "", u = "";
-  for (let i = 0; i <= 30; i++) { const [x, y] = bahnP(i / 30); o += (i ? " L" : "M") + `${r(x)} ${r(y - 1.6)}`; u = ` L${r(x)} ${r(y + 1.8)}` + u; }
-  k += `<path d="${o}${u} Z" fill="${HOLZ}"/>`;
+  for (let i = 0; i <= 30; i++) { const [x, y] = bahnP(i / 30); o += (i ? " L" : "M") + `${r(x)} ${r(y - 2)}`; u = ` L${r(x)} ${r(y + 2.4)}` + u; }
+  k += `<path d="${o}${u} Z" fill="${S.lg("rinne", [[0, "#3f9a9a"], [1, "#2a6a6a"]])}"/>`;
   let wl = "";
-  for (let i = 0; i <= 30; i++) { const [x, y] = bahnP(i / 30); wl += (i ? " L" : "M") + `${r(x)} ${r(y - 1.2)}`; }
-  k += `<path d="${wl}" stroke="#9fe0f2" stroke-width=".9" fill="none"/>`;
+  for (let i = 0; i <= 30; i++) { const [x, y] = bahnP(i / 30); wl += (i ? " L" : "M") + `${r(x)} ${r(y - 2)}`; }
+  k += `<path d="${wl}" stroke="#8fe0f5" stroke-width="1.4" fill="none"/><path d="${wl}" stroke="#ffffff" stroke-width=".5" fill="none" stroke-dasharray="2 3" opacity=".9"/>`;
   /* Station oben (Holzhütte) */
   const [sx, sy] = bahnP(0);
-  k += `<path d="M${r(sx - 12)} ${r(sy + 2)} L${r(sx + 4)} ${r(sy + 2)} L${r(sx + 4)} ${r(sy - 6)} L${r(sx - 4)} ${r(sy - 11)} L${r(sx - 12)} ${r(sy - 6)} Z" fill="#8a5a2e"/><path d="M${r(sx - 13.5)} ${r(sy - 5.6)} L${r(sx - 4)} ${r(sy - 12)} L${r(sx + 5.5)} ${r(sy - 5.6)}" stroke="#5a3418" stroke-width="1.4" fill="none"/>`;
-  /* Baumstamm-Boot unten im Wasser, Gischt */
+  k += `<path d="M${r(sx - 3)} ${r(sy + 2.4)} L${r(sx + 16)} ${r(sy + 2.4)} L${r(sx + 16)} ${r(sy - 7)} L${r(sx + 6.5)} ${r(sy - 13)} L${r(sx - 3)} ${r(sy - 7)} Z" fill="#9a6234"/>`;
+  k += `<path d="M${r(sx - 4.5)} ${r(sy - 6.4)} L${r(sx + 6.5)} ${r(sy - 14)} L${r(sx + 17.5)} ${r(sy - 6.4)}" stroke="#5a3418" stroke-width="1.6" fill="none"/>`;
+  for (let i = 0; i < 4; i++) k += `<path d="M${r(sx - 3)} ${r(sy - 5 + i * 2)} H${r(sx + 16)}" stroke="#7d4f2a" stroke-width=".3"/>`;
+  k += `<path d="M${r(sx + 6.5)} ${r(sy + 2.4)} V${r(yb)} M${r(sx + 14)} ${r(sy + 2.4)} V${r(yb)}" stroke="#7d4f2a" stroke-width="1"/>`;
+  /* Baumstamm-Boot in der Abfahrt */
+  const boot = (t, sk) => { const [x, y] = bahnP(t), [x2, y2] = bahnP(t + 0.03), w = Math.atan2(y2 - y, x2 - x) * 180 / Math.PI + 180;
+    return `<g transform="rotate(${r(w)} ${r(x)} ${r(y)})"><path d="M${r(x - 6 * sk)} ${r(y - 1)} Q${r(x - 6 * sk)} ${r(y - 4 * sk)} ${r(x - 2 * sk)} ${r(y - 4 * sk)} L${r(x + 4 * sk)} ${r(y - 4 * sk)} Q${r(x + 6.5 * sk)} ${r(y - 3.4 * sk)} ${r(x + 6 * sk)} ${r(y - 1)} Z" fill="${S.lg("stamm", [[0, "#c08a50"], [1, "#7d4f2a"]])}"/><ellipse cx="${r(x - 5.6 * sk)}" cy="${r(y - 2.5 * sk)}" rx="${r(1.1 * sk)}" ry="${r(1.5 * sk)}" fill="#e2b47a" stroke="#7d4f2a" stroke-width=".3"/></g>`; };
+  k += boot(0.42, 1);
+  /* Gischt unten */
   const [ex, ey] = bahnP(1);
-  k += `<path d="M${r(ex - 7)} ${r(ey + 0.5)} Q${r(ex - 7)} ${r(ey - 2.6)} ${r(ex - 3)} ${r(ey - 2.6)} L${r(ex + 5)} ${r(ey - 2.6)} Q${r(ex + 7.5)} ${r(ey - 2)} ${r(ex + 7)} ${r(ey + 0.5)} Z" fill="${S.lg("stamm", [[0, "#b07a44"], [1, "#7d4f2a"]])}"/>`;
-  k += `<ellipse cx="${r(ex + 6)}" cy="${r(ey - 1)}" rx="1.3" ry="1.7" fill="#d9a870" stroke="#7d4f2a" stroke-width=".3"/>`;
-  for (let i = 0; i < 16; i++) { const a = -Math.PI * (0.1 + 0.8 * rnd()), l = 4 + rnd() * 9; k += `<path d="M${r(ex - 3)} ${r(ey - 1)} q${r(Math.cos(a) * l * 0.5)} ${r(Math.sin(a) * l)} ${r(Math.cos(a) * l)} ${r(Math.sin(a) * l * 0.6)}" stroke="#ffffff" stroke-width="${r(0.6 + rnd() * 0.8)}" opacity=".8" fill="none" stroke-linecap="round"/>`; }
-  for (let i = 0; i < 12; i++) k += `<circle cx="${r(ex - 10 + rnd() * 14)}" cy="${r(ey - 4 - rnd() * 9)}" r="${r(0.4 + rnd() * 0.8)}" fill="#ffffff" opacity=".85"/>`;
-  /* Schild */
-  k += `<rect x="${r(bx - 13)}" y="${r(by - 0.9 * sc - 5)}" width="26" height="5" rx=".6" fill="#6b4a2a"/><text x="${r(bx)}" y="${r(by - 0.9 * sc - 1.4)}" font-size="3" text-anchor="middle" fill="#ffe9a8" font-family="Georgia,serif" font-weight="bold">Wildwasserbahn</text><path d="M${r(bx - 9)} ${r(by - 0.9 * sc)} V${r(by)} M${r(bx + 9)} ${r(by - 0.9 * sc)} V${r(by)}" stroke="#6b4a2a" stroke-width=".8"/>`;
-  const [ax, ay] = P(-8, d);
+  for (let i = 0; i < 18; i++) { const a = -Math.PI * (0.15 + 0.7 * rnd()), l = 4 + rnd() * 10; k += `<path d="M${r(ex + 1)} ${r(ey - 1)} q${r(Math.cos(a) * l * 0.5)} ${r(Math.sin(a) * l)} ${r(Math.cos(a) * l)} ${r(Math.sin(a) * l * 0.6)}" stroke="#ffffff" stroke-width="${r(0.6 + rnd() * 0.9)}" opacity=".85" fill="none" stroke-linecap="round"/>`; }
+  for (let i = 0; i < 12; i++) k += `<circle cx="${r(ex - 7 + rnd() * 16)}" cy="${r(ey - 3 - rnd() * 11)}" r="${r(0.4 + rnd() * 0.8)}" fill="#ffffff" opacity=".85"/>`;
+  /* Schild am Fuß */
+  const [qx, qy] = P(-9.6, d);
+  k += `<rect x="${r(qx - 12)}" y="${r(qy - 9)}" width="24" height="4.6" rx=".6" fill="#6b4a2a"/><text x="${r(qx)}" y="${r(qy - 5.6)}" font-size="2.9" text-anchor="middle" fill="#ffe9a8" font-family="Georgia,serif" font-weight="bold">Wildwasserbahn</text><path d="M${r(qx - 9)} ${r(qy - 4.4)} V${r(qy)} M${r(qx + 9)} ${r(qy - 4.4)} V${r(qy)}" stroke="#6b4a2a" stroke-width=".8"/>`;
+  const [ax, ay] = P(-10, d);
   S.teil({ id: "wildwasserbahn", de: "die Wildwasserbahn", syl: "WILD-was-ser-bahn", it: "la discesa sull'acqua", itSyl: "di-SCE-sa sul-l'AC-qua", en: "log flume", x: ax, y: ay, steht: true, kunst: abs(ax, ay, k),
     tipp: "Unten schlägt das Boot ins Wasser — und alle werden nass." });
 }
@@ -219,7 +227,7 @@ const baum = (x, y, g, f = "#4f8a46") => `<rect x="${r(x - g * 0.08)}" y="${r(y 
    6 — DIE PARKEISENBAHN (Dampflok mit zwei Wagen, links auf dem Gleis)
    ===================================================================== */
 {
-  const d = 22.5, sc = s(d), [x0, yb] = P(-9.4, d), L = 7.2 * sc;
+  const d = 26, sc = s(d), [x0, yb] = P(-5.6, d), L = 7.2 * sc;
   let k = schatten(L / 2, 0, L / 2, 1, 0.3);
   /* Wagen (offen, mit Dach) */
   for (let i = 0; i < 2; i++) {
@@ -264,7 +272,7 @@ const baum = (x, y, g, f = "#4f8a46") => `<rect x="${r(x - g * 0.08)}" y="${r(y 
 }
 {
   /* DIE MESSLATTE — Holzfigur mit ausgestrecktem Arm bei 1,10 m */
-  const d = 16.4, sc = s(d), [x, y] = P(-10.3, d), h = 1.1 * sc;
+  const d = 17.6, sc = s(d), [x, y] = P(-9.1, d), h = 1.1 * sc;
   let k = schatten(0, 0, 3, 0.6, 0.3);
   k += `<rect x="-1.4" y="${r(-h - 2)}" width="2.8" height="${r(h + 2)}" rx=".8" fill="#f2c230" stroke="#b8860b" stroke-width=".3"/>`;
   for (let i = 1; i < 6; i++) k += `<path d="M-1.4 ${r(-h * i / 5)} h1.2" stroke="#7a5a08" stroke-width=".25"/>`;
@@ -319,16 +327,16 @@ const baum = (x, y, g, f = "#4f8a46") => `<rect x="${r(x - g * 0.08)}" y="${r(y 
    9 — DER WEGWEISER (an der Weggabelung vorne links)
    ===================================================================== */
 {
-  const d = 9.2, sc = s(d), [x, y] = P(-3.0, d), hP = 3.0 * sc;
+  const d = 7.9, sc = s(d), [x, y] = P(-3.45, d), hP = 3.75 * sc;
   let k = schatten(0, 0, 3, 0.8, 0.35);
   k += `<rect x="-.9" y="${r(-hP)}" width="1.8" height="${r(hP)}" fill="${S.lg("pfosten", [[0, "#8a5a2e"], [0.5, "#a8703f"], [1, "#6b4322"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M-1.6 ${r(-hP)} L0 ${r(-hP - 2.4)} L1.6 ${r(-hP)} Z" fill="#c8402e"/>`;
-  const schilder = [["Wildwasserbahn", -1, "#2f86d0", 0.0], ["Achterbahn", 1, "#e8453c", 0.36], ["Riesenrad", -1, "#38c172", 0.72], ["Imbiss", 1, "#f2a01a", 1.08]];
+  const schilder = [["Wildwasserbahn", -1, "#2f86d0", 0.0], ["Achterbahn", 1, "#e8453c", 0.0], ["Riesenrad", -1, "#38c172", 0.36], ["Imbiss", 1, "#f2a01a", 0.36]];
   schilder.forEach(([t, dir, f, dy]) => {
-    const yy = -hP + 3 + dy * sc * 0.42 * 2, w = 0.95 * sc, hh = 0.32 * sc;
+    const yy = -hP + 2.5 + dy * sc, w = 0.72 * sc, hh = 0.26 * sc, fs = Math.min(hh * 0.5, w / (t.length * 0.56));
     const x0 = dir > 0 ? 0.6 : -0.6 - w, xs = dir > 0 ? x0 + w : x0;
     k += `<path d="M${r(x0)} ${r(yy)} H${r(x0 + w)} ${dir > 0 ? `L${r(xs + hh * 0.6)} ${r(yy + hh / 2)}` : ""} L${r(x0 + w)} ${r(yy + hh)} H${r(x0)} ${dir < 0 ? `L${r(xs - hh * 0.6)} ${r(yy + hh / 2)}` : ""} Z" fill="${f}" stroke="#ffffff" stroke-width=".35"/>`;
-    k += `<text x="${r(x0 + w / 2)}" y="${r(yy + hh * 0.68)}" font-size="${r(hh * 0.5)}" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">${t}</text>`;
+    k += `<text x="${r(x0 + w / 2)}" y="${r(yy + hh / 2 + fs * 0.36)}" font-size="${r(fs)}" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">${t}</text>`;
   });
   S.teil({ id: "wegweiser", de: "der Wegweiser", syl: "WEG-wei-ser", it: "il cartello indicatore", itSyl: "car-TEL-lo in-di-ca-TO-re", en: "signpost", x, y, steht: true, kunst: k,
     tipp: "Der Wegweiser zeigt, wo es zur Achterbahn oder zum Imbiss geht." });
@@ -338,7 +346,7 @@ const baum = (x, y, g, f = "#4f8a46") => `<rect x="${r(x - g * 0.08)}" y="${r(y 
    10 — DIE BANK und DER MÜLLEIMER (vorne rechts)
    ===================================================================== */
 {
-  const d = 8.4, x0 = 3.4, x1 = 5.2, [ax, ay] = P((x0 + x1) / 2, d);
+  const d = 8.4, x0 = 3.0, x1 = 4.55, [ax, ay] = P((x0 + x1) / 2, d);
   let k = schatten(ax, ay, (X(x1, d) - X(x0, d)) / 2 + 2, 1.4, 0.3);
   for (const xm of [x0 + 0.12, x1 - 0.12]) k += `<path d="M${pt(xm, d - 0.1)} L${pt(xm, d - 0.1, 0.45)} L${pt(xm, d + 0.25, 0.9)} M${pt(xm, d + 0.3)} L${pt(xm, d + 0.3, 0.45)}" stroke="#2b3a2b" stroke-width="1.4" fill="none"/>`;
   for (let i = 0; i < 3; i++) k += `<path d="${poly([P(x0, d - 0.15 + i * 0.15, 0.45), P(x1, d - 0.15 + i * 0.15, 0.45), P(x1, d - 0.05 + i * 0.15, 0.45), P(x0, d - 0.05 + i * 0.15, 0.45)])}" fill="#a8703f" stroke="#7d4f2a" stroke-width=".2"/>`;
@@ -346,7 +354,7 @@ const baum = (x, y, g, f = "#4f8a46") => `<rect x="${r(x - g * 0.08)}" y="${r(y 
   S.teil({ id: "bank", de: "die Bank", syl: "BANK", it: "la panchina", itSyl: "pan-CHI-na", en: "bench", x: ax, y: ay, steht: true, kunst: abs(ax, ay, k) });
 }
 {
-  const d = 8.0, sc = s(d), [x, y] = P(2.55, d), w = 0.5 * sc, hh = 0.9 * sc;
+  const d = 8.0, sc = s(d), [x, y] = P(2.25, d), w = 0.5 * sc, hh = 0.9 * sc;
   let k = schatten(0, 0, w / 2 + 1, 1, 0.35);
   k += `<path d="M${r(-w / 2)} ${r(-hh)} L${r(w / 2)} ${r(-hh)} L${r(w * 0.44)} 0 L${r(-w * 0.44)} 0 Z" fill="${S.lg("muell", [[0, "#3f7a3a"], [0.5, "#5a9a52"], [1, "#2f5a2a"]], 0, 0, 1, 0)}"/>`;
   k += `<rect x="${r(-w / 2 - 0.6)}" y="${r(-hh - 2)}" width="${r(w + 1.2)}" height="2.4" rx=".8" fill="#2f5a2a"/><rect x="${r(-w * 0.3)}" y="${r(-hh - 1.4)}" width="${r(w * 0.6)}" height="1.2" fill="#1d2a1d"/>`;
@@ -359,7 +367,7 @@ const baum = (x, y, g, f = "#4f8a46") => `<rect x="${r(x - g * 0.08)}" y="${r(y 
    11 — DAS MASKOTTCHEN (Bär im Kostüm, winkt), BESUCHER, KIND mit EIS
    ===================================================================== */
 {
-  const d = 11.6, sc = s(d), [x, y] = P(1.75, d), hh = 2.0 * sc, g = hh / 100;
+  const d = 11.4, sc = s(d), [x, y] = P(2.05, d), hh = 2.0 * sc, g = hh / 100;
   const pelz = S.rg("pelz", [[0, "#c98a4a"], [0.7, "#a8682e"], [1, "#7d4a1e"]], 0.4, 0.35, 0.75);
   let k = schatten(0, 0, 22 * g, 4 * g, 0.35);
   /* Schuhe, Beine (Latzhose), Körper im Park-Shirt */
@@ -384,7 +392,7 @@ const baum = (x, y, g, f = "#4f8a46") => `<rect x="${r(x - g * 0.08)}" y="${r(y 
 const hand = (m) => { const h = [m.z.handL, m.z.handR].filter(Boolean).sort((a, b) => (a.y != null ? a.y : a[1]) - (b.y != null ? b.y : b[1]))[0]; return [(h.x != null ? h.x : h[0]) * m.k, (h.y != null ? h.y : h[1]) * m.k]; };
 let EIS = null;
 {
-  const d = 9.5, sc = s(d), [x, y] = P(-0.7, d);
+  const d = 9.6, sc = s(d), [x, y] = P(-0.5, d);
   const m = mensch({ id: "b14e_bes", geschlecht: "m", pose: "gehen", blick: 30, frisur: "kurz", haarfarbe: "braun", haut: "oliv",
     kleidung: { oberteil: { stueck: "tshirt", farbe: "#38a0a0" }, unterteil: { stueck: "shorts", farbe: "beige" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "#e2662f" }, kopf: { stueck: "kappe", farbe: "#2f5f95" } } }, 1.8 * sc);
   S.teil({ id: "besucher_fp", de: "der Besucher", syl: "Be-SU-cher", it: "il visitatore", itSyl: "vi-si-ta-TO-re", en: "visitor", x, y, kunst: schatten(0, 0, 7, 1.4, 0.35) + m.svg });

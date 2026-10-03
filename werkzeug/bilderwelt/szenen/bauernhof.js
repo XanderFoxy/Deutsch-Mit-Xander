@@ -602,8 +602,10 @@ function baue() {
     for (let i = 0; i < 40; i++) k += `<ellipse cx="${r(-47 + rnd() * 94)}" cy="${r(-8.5 + rnd() * 7.5)}" rx="${r(1.8 + rnd() * 1.6)}" ry="${r(1 + rnd() * 0.6)}" fill="${rnd() < 0.5 ? "#a39d90" : "#787266"}" stroke="#5e594f" stroke-width=".2"/>`;
     /* Heuboden-Luke mit Heu, Aufzugsbalken mit Rolle */
     k += `<rect x="-9" y="-86" width="18" height="16" fill="#22140c"/>`;
-    k += `<path d="M-9 -70 Q-6 -78 0 -77 Q6 -79 9 -70 Z" fill="${HEU}"/>` + heuStriche(-9, -78, 9, -70, 14);
-    k += `<path d="M-8 -70 l-2 3 M-4 -70 l-1 3.4 M2 -70 l1 3 M6 -70 l2 2.6" stroke="#d4b25a" stroke-width=".6"/>`;
+    k += `<path d="M-9 -70 L-9 -74 Q-7.5 -76.5 -5 -75.6 Q-3 -79 0 -77.4 Q2.4 -79.6 4.6 -76.6 Q7.4 -77 9 -74 L9 -70 Z" fill="${HEU}"/>` + heuStriche(-9, -78, 9, -70, 22);
+    let halme = "";
+    for (let i = 0; i < 16; i++) { const x = -9 + rnd() * 18, l = 1.2 + rnd() * 2.6, a = -0.8 + rnd() * 1.6; halme += `M${r(x)} -70.2 q${r(a * 0.6)} ${r(l * 0.5)} ${r(a)} ${r(l)}`; }
+    k += `<path d="${halme}" stroke="#d9bc62" stroke-width=".35" fill="none"/>`;
     k += `<path d="M9 -86 L16 -84 L16 -68 L9 -70 Z" fill="#7a3624"/>`;
     k += `<rect x="-2" y="-98" width="4" height="3" fill="#4a2c1a"/><rect x="-1.2" y="-95" width="2.4" height="2" fill="#3a2214"/><circle cx="0" cy="-92.4" r="1.2" fill="#555"/><line x1="0" y1="-91.4" x2="0" y2="-86" stroke="#c9b48a" stroke-width=".3"/>`;
     /* Tor: rechter Flügel zu, linker offen (innen Heu) */
@@ -617,17 +619,17 @@ function baue() {
     k += `<path d="M-22 -42 L-35 -44.5 M-22 -5 L-35 -2" stroke="#a65236" stroke-width="2.2"/>`;
     k += `<rect x="-22" y="-48" width="44" height="2.4" fill="#4a2a1a"/>`;
     /* Werkzeug an der Wand rechts vom Tor: Rechen und Sense; Hufeisen über dem Tor */
-    k += `<rect x="27.4" y="-43" width="1.2" height="31" rx=".5" fill="#c9a26a"/><rect x="23" y="-45" width="10" height="2" rx=".5" fill="#a27a48"/>`;
-    for (let i = 0; i < 7; i++) k += `<rect x="${r(23.4 + i * 1.5)}" y="-43" width=".5" height="2.6" fill="#8c6838"/>`;
-    k += `<circle cx="28" cy="-46" r=".6" fill="#333"/>`;
-    k += `<path d="M38 -12 Q36 -28 38.5 -44" stroke="#b48a54" stroke-width="1.3" fill="none"/><path d="M36.6 -26 l3 0" stroke="#8c6838" stroke-width="1"/><path d="M38.5 -44 Q30 -46 25 -40 Q31 -43 38.5 -42 Z" fill="${S.lg("sensblatt", [[0, "#e6eaec"], [1, "#8d969c"]])}"/><circle cx="38.5" cy="-45" r=".6" fill="#333"/>`;
+    k += `<rect x="25.4" y="-43" width="1.2" height="31" rx=".5" fill="#c9a26a"/><rect x="21" y="-45" width="10" height="2" rx=".5" fill="#a27a48"/>`;
+    for (let i = 0; i < 7; i++) k += `<rect x="${r(21.4 + i * 1.5)}" y="-43" width=".5" height="2.6" fill="#8c6838"/>`;
+    k += `<circle cx="26" cy="-46" r=".6" fill="#333"/>`;
+    k += `<path d="M42 -12 Q40 -28 42.5 -44" stroke="#b48a54" stroke-width="1.3" fill="none"/><path d="M40.6 -26 l3 0" stroke="#8c6838" stroke-width="1"/><path d="M42.5 -44 Q37 -46 33 -41 Q37.4 -43 42.5 -42 Z" fill="${S.lg("sensblatt", [[0, "#e6eaec"], [1, "#8d969c"]])}"/><circle cx="42.5" cy="-45" r=".6" fill="#333"/>`;
     k += `<path d="M-2.4 -55 Q-2.6 -51 0 -50.6 Q2.6 -51 2.4 -55" stroke="#6b6b6b" stroke-width="1.1" fill="none"/>`;
     for (const [x, y] of [[-2.2, -53.6], [2.2, -53.6], [-1.4, -51.4], [1.4, -51.4]]) k += `<circle cx="${x}" cy="${y}" r=".22" fill="#222"/>`;
     const u = [
       { id: "heu", de: "das Heu", syl: "HEU", it: "il fieno", itSyl: "FIE-no", en: "hay", x: SCH.x, y: SCH.y - 70, kunst: flaeche(-9, -9, 18, 10), tipp: "Heu ist getrocknetes Gras. Es ist das Winterfutter für Kühe und Pferde." },
       { id: "hufeisen", de: "das Hufeisen", syl: "HUF-ei-sen", it: "il ferro di cavallo", itSyl: "FER-ro di ca-VAL-lo", en: "horseshoe", x: SCH.x, y: SCH.y - 50, kunst: flaeche(-3.6, -6, 7.2, 6.4), tipp: "Über der Tür soll das Hufeisen Glück bringen." },
-      { id: "rechen", de: "der Rechen", syl: "RE-chen", it: "il rastrello", itSyl: "ra-STREL-lo", en: "rake", x: SCH.x + 28, y: SCH.y - 12, kunst: flaeche(-5.4, -34, 10.8, 34), tipp: "Mit dem Rechen zieht man Heu und Laub zusammen." },
-      { id: "sense", de: "die Sense", syl: "SEN-se", it: "la falce", itSyl: "FAL-ce", en: "scythe", x: SCH.x + 36, y: SCH.y - 12, kunst: flaeche(-11.5, -34.5, 15, 34.5) },
+      { id: "rechen", de: "der Rechen", syl: "RE-chen", it: "il rastrello", itSyl: "ra-STREL-lo", en: "rake", x: SCH.x + 26, y: SCH.y - 12, kunst: flaeche(-5.4, -34, 10.8, 34), tipp: "Mit dem Rechen zieht man Heu und Laub zusammen." },
+      { id: "sense", de: "die Sense", syl: "SEN-se", it: "la falce", itSyl: "FAL-ce", en: "scythe", x: SCH.x + 41, y: SCH.y - 12, kunst: flaeche(-9, -34.5, 12, 34.5) },
     ];
     S.teil({ id: "scheune", de: "die Scheune", syl: "SCHEU-ne", it: "il granaio", itSyl: "gra-NA-io", en: "barn", x: SCH.x, y: SCH.y, steht: true, kunst: k,
       zoom: { x: 0, y: 30, w: 99, h: 66 }, unter: u, tipp: "In der Scheune lagern Heu, Stroh und Maschinen." });
@@ -664,7 +666,11 @@ function baue() {
     k += `<rect x="34" y="-30" width="16" height="30" fill="#5a3a24"/><rect x="35" y="-29" width="14" height="13" fill="#140e0a"/>`;
     k += `<rect x="35" y="-15.6" width="14" height="15.6" fill="${S.lg("stalltuer", [[0, "#3f6b45"], [1, "#2c4f33"]], 0, 0, 1, 0)}"/><path d="M36 -14 L48 -2 M48 -14 L36 -2" stroke="#2a4530" stroke-width=".8"/><rect x="35" y="-16" width="14" height="1.2" fill="#2a4530"/>`;
     k += `<path d="M49 -29 L56 -27 L56 -17 L49 -16 Z" fill="${S.lg("tuerauf", [[0, "#2c4f33"], [1, "#4a7a50"]], 0, 0, 1, 0)}"/>`;
-    k += `<ellipse cx="42" cy="-20" rx="5" ry="3" fill="#000" opacity=".4"/>`;
+    /* eine Kuh schaut aus der Stalltür */
+    k += `<path d="M38 -17 Q37 -24 40 -26 Q43 -27.4 46 -26 Q48.6 -24 47.6 -17 Z" fill="#1d1b1c"/><path d="M41.6 -25.6 Q42.6 -21 42.2 -17 L44.4 -17 Q44 -21 43.4 -25.6 Z" fill="#f2f0ea"/>`;
+    k += `<ellipse cx="43" cy="-17.4" rx="3.4" ry="1.8" fill="#d9a49a"/><ellipse cx="41.8" cy="-17.6" rx=".5" ry=".35" fill="#5a2a22"/><ellipse cx="44.2" cy="-17.6" rx=".5" ry=".35" fill="#5a2a22"/>`;
+    k += `<path d="M38.6 -24.6 L34.6 -25.4 L35 -23.4 L38.4 -23 Z M47.4 -24.6 L51.4 -25.4 L51 -23.4 L47.6 -23 Z" fill="#1d1b1c"/><rect x="35.4" y="-25.2" width="1.2" height="1.4" fill="#f2c318"/><rect x="49.4" y="-25.2" width="1.2" height="1.4" fill="#f2c318"/>`;
+    k += `<circle cx="40.4" cy="-22.4" r=".55" fill="#3a2a20"/><circle cx="45.6" cy="-22.4" r=".55" fill="#3a2a20"/>`;
     S.teil({ id: "stall", de: "der Stall", syl: "STALL", it: "la stalla", itSyl: "STAL-la", en: "stable", x: cx, y: yb, steht: true, kunst: k,
       tipp: "Im Stall schlafen die Kühe. Morgens und abends werden sie gemolken." });
   }
@@ -815,19 +821,19 @@ function baue() {
     const loch = P(X0, 0.6, Z0 + 0.55);
     k += `<path d="M${loch[0]} ${loch[1]} l0 -4.6 l-.8 -.2 l0 4.8 Z" fill="#140c08"/>`;
     /* Küken am Fuß der Leiter (im ganzen Bild winzig) */
-    const kk = sk(gy + 4) / 100;
+    const kk = sk(gy + 4) / 100 * 1.2;
     let kue = "";
-    for (const [dx, dy, d] of [[-4, 4, 1], [-1, 5, -1], [2, 4.4, 1]]) kue += `<g transform="translate(${r(l1[0] + dx)} ${r(l1[1] + dy)})">${T.kueken(kk, d)}</g>`;
+    for (const [dx, dy, d] of [[-7, 3.2, 1], [-3.4, 4.2, -1], [0.6, 3.6, 1], [4, 4.6, -1]]) kue += `<g transform="translate(${r(gx + dx)} ${r(gy + dy)})">${T.kueken(kk, d)}</g>`;
     k += kue;
     const cx = (P(X0, 0, Z0)[0] + P(X1, 0, Z0)[0]) / 2, cy = P(Xc, 0, Z0)[1];
     const unter = [
       { id: "ei", de: "das Ei", syl: "EI", it: "l'uovo", itSyl: "UO-vo", en: "egg", x: r(n0[0] + nw * 0.5), y: r(n0[1] + nh * 0.92), kunst: flaeche(-nw * 0.3, -nh * 0.3, nw * 0.6, nh * 0.32),
         tipp: "Ein Huhn legt fast jeden Tag ein Ei." },
       { id: "nest", de: "das Nest", syl: "NEST", it: "il nido", itSyl: "NI-do", en: "nest", x: r(n0[0] + nw * 0.5), y: r(n1[1]), kunst: flaeche(-nw * 0.5, -nh * 0.3, nw, nh * 0.3) + flaeche(-nw * 0.5 - 1, 0, nw + 2, 3.4) },
-      { id: "kueken", de: "das Küken", syl: "KÜ-ken", it: "il pulcino", itSyl: "pul-CI-no", en: "chick", x: r(l1[0]), y: r(l1[1] + 5), kunst: flaeche(-6, -4, 11, 5) },
+      { id: "kueken", de: "das Küken", syl: "KÜ-ken", it: "il pulcino", itSyl: "pul-CI-no", en: "chick", x: r(gx - 1.5), y: r(gy + 4.6), kunst: flaeche(-7.5, -4.5, 14, 5.4), tipp: "Das Küken schlüpft nach 21 Tagen aus dem Ei." },
     ];
     S.teil({ id: "huehnerstall", de: "der Hühnerstall", syl: "HÜH-ner-stall", it: "il pollaio", itSyl: "pol-LA-io", en: "henhouse", x: r(cx), y: r(cy), steht: true, kunst: um(cx, cy, k),
-      zoom: { x: 246, y: 108, w: 54, h: 36 }, unter: unter.map((t) => Object.assign(t, { x: t.x, y: t.y })),
+      zoom: { x: 232, y: 110, w: 63, h: 42 }, unter: unter.map((t) => Object.assign(t, { x: t.x, y: t.y })),
       tipp: "Über die Hühnerleiter gehen die Hühner abends in den Stall." });
   }
 
@@ -914,7 +920,7 @@ function baue() {
     k += `<path d="M${r(t[0] - 3)} ${r(t[1] + 5)} h6" stroke="#f2e6c8" stroke-width="2.2"/><text x="${t[0]}" y="${r(t[1] + 5.8)}" font-size="2" text-anchor="middle" fill="#5a3a1a" font-family="Georgia" font-style="italic">Rex</text>`;
     S.teil({ id: "hundehuette", de: "die Hundehütte", syl: "HUN-de-hüt-te", it: "la cuccia", itSyl: "CUC-cia", en: "kennel", x: r(gp[0]), y: yb, steht: true, kunst: um(gp[0], yb, k) });
   }
-  S.teil({ id: "ente", de: "die Ente", syl: "EN-te", it: "l'anatra", itSyl: "A-na-tra", en: "duck", x: 200, y: 192, kunst: T.ente(sk(189) / 100, -1, { art: "peking" }),
+  S.teil({ id: "ente", de: "die Ente", syl: "EN-te", it: "l'anatra", itSyl: "A-na-tra", en: "duck", x: 200, y: 192, kunst: T.ente(sk(192) / 100 * 1.3, -1, { art: "peking" }),
     tipp: "Auf dem Hof watschelt sie über den Platz; schwimmen kann sie trotzdem — sie hat Schwimmhäute zwischen den Zehen." });
 
   /* =====================================================================
