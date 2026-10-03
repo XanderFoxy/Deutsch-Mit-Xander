@@ -842,13 +842,18 @@ const DOMM = {};
   }
   /* Oktogon (Durchmesser 16 m): Fenster unter Wimpergen, Wimperge ragen in den Kuppelfuß */
   const okto = (z, R) => { const p = []; for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + Math.PI / 8; p.push([cx + Math.cos(a) * R, cy + Math.sin(a) * R]); } return p; };
-  const O0 = G + 42.4, O1 = G + 66;
+  const O0 = G + 42.4, O1 = G + 66, WIMP = [];
   k += turmSeiten(okto(0, 8.2), O0, O1, S.lg("oktol", [[0, "#d99886"], [1, "#c27a66"]]), S.lg("oktos", [[0, "#9a5446"], [1, "#834436"]]), (sd) => {
     let g = `<path d="M${P(sd.at(0, O0))} L${P(sd.at(1, O0))} L${P(sd.at(1, O1))} L${P(sd.at(0, O1))} Z" fill="${QUADER}"/>`;
     g += `<path d="M${P(sd.at(0.22, O0 + 3))} L${P(sd.at(0.22, O1 - 6))} Q${P(sd.at(0.24, O1 - 3))} ${P(sd.at(0.5, O1 - 2))} Q${P(sd.at(0.76, O1 - 3))} ${P(sd.at(0.78, O1 - 6))} L${P(sd.at(0.78, O0 + 3))} Z" fill="#2f2a2a"/>`;
     g += `<path d="M${P(sd.at(0.5, O0 + 3))} L${P(sd.at(0.5, O1 - 4))}" stroke="${sd.sonne > 0 ? "#f0b6a2" : "#b46a5a"}" stroke-width="${r(0.3 * s)}"/>`;
     const tc = sd.at(0.5, O1 - 4.4); g += `<circle cx="${r(tc[0])}" cy="${r(tc[1])}" r="${r(0.75 * s)}" fill="none" stroke="${sd.sonne > 0 ? "#f0b6a2" : "#b46a5a"}" stroke-width="${r(0.2 * s)}"/>`;
     /* Wimperg: spitzer Ziergiebel mit Krabben, ragt über die Traufe */
+    WIMP.push(sd);
+    return g;
+  });
+  const wimperg = (sd) => {
+    let g = "";
     const hell = sd.sonne > 0;
     g += `<path d="M${P(sd.at(0.12, O1 - 3.5))} L${P(sd.at(0.5, O1 + 6.5))} L${P(sd.at(0.88, O1 - 3.5))} Z" fill="${hell ? "#df9c86" : "#9a5446"}"/>`;
     g += `<path d="M${P(sd.at(0.26, O1 - 2.4))} L${P(sd.at(0.5, O1 + 3.8))} L${P(sd.at(0.74, O1 - 2.4))} Z" fill="${hell ? "#a85a4a" : "#6e3529"}"/>`;
@@ -856,7 +861,7 @@ const DOMM = {};
     for (let i = 1; i < 7; i++) for (const sg of [-1, 1]) { const q = sd.at(0.5 + sg * (0.38 - i * 0.054), O1 - 3.5 + i * 1.43); g += `<circle cx="${r(q[0] + sg * 0.15 * s)}" cy="${r(q[1] - 0.2 * s)}" r="${r(0.2 * s)}" fill="#c98472"/>`; }
     const kb = sd.at(0.5, O1 + 6.8); g += `<circle cx="${r(kb[0])}" cy="${r(kb[1])}" r="${r(0.35 * s)}" fill="#c98472"/>`;
     return g;
-  });
+  };
   /* Fialen an den Oktogon-Ecken */
   for (const [px, py] of okto(0, 8.6)) {
     if (tief(px, py) > tief(cx, cy) + 4) continue;
@@ -878,6 +883,7 @@ const DOMM = {};
       let kr = ""; for (let i = 2; i < 14; i += 2) { const q = pr(...rib[i]); kr += `M${r(q[0])} ${r(q[1])} q${r(0.45 * s)} ${r(-0.1 * s)} ${r(0.35 * s)} ${r(-0.55 * s)} `; }
       k += `<path d="${kr}" stroke="#d48b77" stroke-width="${r(0.22 * s)}" fill="none"/>`;
     }
+    for (const sd of WIMP) k += wimperg(sd);
     /* Kranz kleiner Fialen am Kuppelfuß */
     for (let j = 0; j < 16; j++) { const a = j / 16 * Math.PI * 2, px = cx + Math.cos(a) * 7, py = cy + Math.sin(a) * 7; if (tief(px, py) > tief(cx, cy) + 1) continue; const b = pr(px, py, K0), t = pr(px, py, K0 + 2.6); k += `<path d="M${r(b[0] - 0.3 * s)} ${r(b[1])} L${P(t)} L${r(b[0] + 0.3 * s)} ${r(b[1])} Z" fill="#b8695a"/>`; }
     /* Laterne: achteckig, mit Fialen und schlanker Spitze */
@@ -1208,10 +1214,11 @@ const KELLNER = (() => { const th = -95.5 * Math.PI / 180, d = 9; return [CAM[0]
   /* über uns: die Krone eines Baums im Apfelweingarten (Stamm links außerhalb des Bilds) */
   {
     k += `<path d="M-1 46 L8 30 L22 16 L26 18 L12 32 L1 50 Z" fill="#5a4a38"/><path d="M14 26 L34 10 L36 12 L18 28 Z" fill="#5a4a38"/>`;
-    k += lappen(16, 4, 36, "#3a5130", 12);
-    for (const [lx, ly, lr, f] of [[4, 18, 9, "#4e6a38"], [20, 24, 8, "#6f8c46"], [36, 14, 9, "#4e6a38"], [48, 6, 7, "#6f8c46"], [10, 4, 10, "#5f7c40"], [28, 2, 9, "#b39a3c"], [42, 22, 6, "#5f7c40"], [2, 30, 6, "#6f8c46"]]) {
-      k += lappen(lx, ly, lr, f);
-      if (lx < 30) k += lappen(lx - lr * 0.25, ly - lr * 0.2, lr * 0.5, f === "#b39a3c" ? "#d9bf5a" : "#a3bc66");
+    k += lappen(16, 4, 36, "#33482a", 12);
+    for (const [lx, ly, lr, f] of [[4, 18, 9, 0], [20, 24, 8, 1], [36, 14, 9, 0], [48, 6, 7, 1], [10, 4, 10, 0], [28, 2, 9, 2], [42, 22, 6, 1], [2, 30, 6, 1], [30, 22, 5, 0], [14, 14, 6, 2]]) {
+      const zw = lappen(lx, ly, lr, LAUB, 10);
+      k += zw;
+      if (f) k += zw.replace(LAUB, f === 2 ? "#d2b54a" : "#cfe08e").replace("/>", ` opacity="${f === 2 ? 0.55 : 0.3}"/>`);
     }
     for (const [lx, ly] of [[30, 16], [44, 12], [16, 12]]) k += lappen(lx, ly, 1.2, "#b9cfe2", 5);
   }
@@ -1283,9 +1290,10 @@ const BANK_K = (() => {
   const HELL = "#b98a57", DUNK = "#7a5228", BEIN = "#4a3018";
   const garnitur = (gx, gy) => {
     let g = "";
-    const bank = (dy) => { let b = ""; for (const dx of [-0.85, 0.85]) b += kiste(gx + dx - 0.03, gx + dx + 0.03, gy + dy - 0.1, gy + dy + 0.1, PROM, PROM + 0.42, BEIN, BEIN); return b + kiste(gx - 1.1, gx + 1.1, gy + dy - 0.13, gy + dy + 0.13, PROM + 0.42, PROM + 0.46, "#a8763f", DUNK); };
+    const bein = (x, y, z1) => kiste(x - 0.025, x + 0.025, y - 0.025, y + 0.025, PROM, z1, "#6a6f72", "#3e4346");
+    const bank = (dy) => { let b = ""; for (const dx of [-0.85, 0.85]) for (const e of [-0.08, 0.08]) b += bein(gx + dx, gy + dy + e, PROM + 0.42); return b + kiste(gx - 1.1, gx + 1.1, gy + dy - 0.13, gy + dy + 0.13, PROM + 0.42, PROM + 0.46, "#a8763f", DUNK); };
     g += bank(0.62);
-    for (const dx of [-0.85, 0.85]) g += kiste(gx + dx - 0.03, gx + dx + 0.03, gy - 0.22, gy + 0.22, PROM, PROM + 0.72, BEIN, BEIN);
+    for (const dx of [-0.85, 0.85]) for (const e of [-0.2, 0.2]) g += bein(gx + dx, gy + e, PROM + 0.72);
     g += kiste(gx - 1.1, gx + 1.1, gy - 0.3, gy + 0.3, PROM + 0.72, PROM + 0.76, HELL, DUNK);
     g += bank(-0.62);
     return g;
@@ -1329,13 +1337,13 @@ const BANK_K = (() => {
     const R = 0.23 * ks, zz = zufall(4242);
     k += `<ellipse cx="${r(kz[0])}" cy="${r(kz[1])}" rx="${r(R)}" ry="${r(R * 0.95)}" fill="none" stroke="#1f3a1e" stroke-width="${r(0.15 * ks)}"/>`;
     let z1 = "", z2 = "", z3 = "";
-    for (let i = 0; i < 44; i++) {
-      const a = i / 44 * Math.PI * 2 + zz() * 0.1, rr = R + (zz() - 0.5) * 0.12 * ks, x0 = kz[0] + Math.cos(a) * rr, y0 = kz[1] + Math.sin(a) * rr * 0.95;
-      const aus = (zz() < 0.5 ? 1 : -1) * (0.07 + zz() * 0.06) * ks, wi = a + (zz() - 0.5) * 0.9;
+    for (let i = 0; i < 80; i++) {
+      const a = i / 80 * Math.PI * 2 + zz() * 0.1, rr = R + (zz() - 0.5) * 0.12 * ks, x0 = kz[0] + Math.cos(a) * rr, y0 = kz[1] + Math.sin(a) * rr * 0.95;
+      const aus = (zz() < 0.5 ? 1 : -1) * (0.03 + zz() * 0.035) * ks, wi = a + (zz() - 0.5) * 0.9;
       const seg = `M${r(x0)} ${r(y0)} l${r(Math.cos(wi) * aus)} ${r(Math.sin(wi) * aus)} `;
       if (i % 3 === 0) z1 += seg; else if (i % 3 === 1) z2 += seg; else z3 += seg;
     }
-    k += `<path d="${z1}" stroke="#2f5a2c" stroke-width="${r(0.05 * ks)}" stroke-linecap="round"/><path d="${z2}" stroke="#3f6e36" stroke-width="${r(0.04 * ks)}" stroke-linecap="round"/><path d="${z3}" stroke="#5f8f4c" stroke-width="${r(0.03 * ks)}" stroke-linecap="round"/>`;
+    k += `<path d="${z1}" stroke="#24461f" stroke-width="${r(0.022 * ks)}" stroke-linecap="round"/><path d="${z2}" stroke="#35602e" stroke-width="${r(0.018 * ks)}" stroke-linecap="round"/><path d="${z3}" stroke="#5f8f4c" stroke-width="${r(0.014 * ks)}" stroke-linecap="round"/>`;
     const bx = kz[0], by = kz[1] + R * 0.95;
     k += `<path d="M${r(bx)} ${r(by)} l${r(-0.1 * ks)} ${r(-0.05 * ks)} l0 ${r(0.1 * ks)} Z M${r(bx)} ${r(by)} l${r(0.1 * ks)} ${r(-0.05 * ks)} l0 ${r(0.1 * ks)} Z" fill="#c62d2a"/><path d="M${r(bx - 0.02 * ks)} ${r(by)} q${r(-0.04 * ks)} ${r(0.08 * ks)} ${r(-0.02 * ks)} ${r(0.16 * ks)} M${r(bx + 0.02 * ks)} ${r(by)} q${r(0.04 * ks)} ${r(0.08 * ks)} ${r(0.02 * ks)} ${r(0.16 * ks)}" stroke="#f4f1ea" stroke-width="${r(0.03 * ks)}" fill="none"/>`;
   }

@@ -124,22 +124,29 @@ S.hinten(`<rect width="400" height="${WASSER + 2}" fill="${S.rg("sonne", [[0, "#
   /* Abend-Cumuli: unregelmäßige, ausgefranste Ränder (Wellenverschiebung),
      flache, kühl-violette Unterseite, die Sonnenseite links golden.
      Am Horizont lange, ausgefranste Altostratus-Bänder und zarte Schleier. */
-  S.def(`<filter id="${S.id("wolke")}" x="-20%" y="-40%" width="140%" height="180%"><feTurbulence type="fractalNoise" baseFrequency=".3" numOctaves="3" seed="3"/><feDisplacementMap in="SourceGraphic" scale="3.6" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".35"/></filter>`);
+  S.def(`<filter id="${S.id("wolke")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".45"/></filter>`);
   S.def(`<filter id="${S.id("band")}" x="-10%" y="-300%" width="120%" height="700%"><feTurbulence type="fractalNoise" baseFrequency=".05 .6" numOctaves="2" seed="5"/><feDisplacementMap in="SourceGraphic" scale="5" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".6"/></filter>`);
   const LICHT = S.lg("wolkelicht", [[0, "#ffe8c4"], [0.45, "#fbeee4"], [1, "#e8e2ec"]], 0, 0, 400, 0, ' gradientUnits="userSpaceOnUse"');
   let wz = 0;
+  const WF = ["#b4a3bd", "#e8d6d2", LICHT];
   const wolke = (x, y, w, h, seed) => {
+    /* unregelmäßige Türme, flache Basis; drei scharfe Tonstufen: kühle
+       Unterseite (innen, an der Schattenseite weich), Halbton, Licht links oben */
     const z = B.zufall(seed), c = [];
-    const n = Math.round(w / 5);
-    for (let i = 0; i < n; i++) { const t = i / (n - 1), top = Math.pow(Math.sin(t * Math.PI), 0.7); c.push([x - w / 2 + t * w + (z() - 0.5) * 3, y - top * h * 0.35 + (z() - 0.5) * 2, 2 + z() * 2.5 + top * h * 0.45]); }
-    for (let i = 0; i < n * 0.6; i++) { const t = 0.2 + z() * 0.6; c.push([x - w / 2 + t * w, y - h * (0.3 + z() * 0.4), 2 + z() * h * 0.3]); }
-    for (const [a, b, rr] of c.slice()) for (let k = 0; k < 2; k++) { const an = -Math.PI * (0.15 + z() * 0.7); c.push([a + Math.cos(an) * rr * 0.85, b + Math.sin(an) * rr * 0.85, rr * (0.25 + z() * 0.2)]); }
-    const kr = (dx, dy, f) => c.map(([a, b, rr]) => `<circle cx="${r(a + dx)}" cy="${r(b + dy)}" r="${r(rr * f)}"/>`).join("");
-    const id = S.id("wk" + wz++);
-    S.def(`<clipPath id="${id}"><rect x="${r(x - w)}" y="${r(y - h * 2)}" width="${r(w * 2)}" height="${r(h * 2 + 1.5)}"/></clipPath>`);
-    return `<g filter="url(#${S.id("wolke")})"><g clip-path="url(#${id})"><g fill="#b4a6bf">${kr(0, 0, 1)}</g><g fill="#d8c8d0">${kr(-0.5, -0.8, 0.92)}</g><g fill="${LICHT}">${kr(-0.8, -1.8, 0.86)}</g></g></g>`;
+    const tuerme = Array.from({ length: 2 + Math.floor(z() * 2) }, () => [z() * 0.8 + 0.1, 0.55 + z() * 0.45, 0.12 + z() * 0.12]);
+    const hoehe = (t) => Math.max(0.28, ...tuerme.map(([m, a, s]) => a * Math.exp(-((t - m) ** 2) / (2 * s * s)))) * Math.pow(Math.sin(Math.PI * Math.min(1, Math.max(0, t))), 0.35);
+    const n = Math.max(3, Math.round(w / 2.4));
+    for (let i = 0; i < n; i++) { const t = (i + 0.5) / n, hh = hoehe(t) * h, rr = Math.max(1.1, hh * (0.24 + z() * 0.1)); c.push([x - w / 2 + t * w + (z() - 0.5) * 1.2, y - hh + rr, rr]); }
+    for (let i = 0; i < n; i += 2) { const t = (i + 0.5) / n, hh = hoehe(t) * h; c.push([x - w / 2 + t * w, y - hh * 0.45, hh * 0.45]); }
+    const mm = Math.max(3, Math.round(w / (h * 0.32))); for (let i = 0; i < mm; i++) { const t = (i + 0.5) / mm, rr = h * (0.2 + 0.12 * Math.sin(Math.PI * t)); c.push([x - w / 2 + t * w, y - rr * 0.55, rr]); }
+    for (const [a, b, rr] of c.slice(0, n)) for (let k = 0; k < 2; k++) { const an = -Math.PI * (0.2 + z() * 0.6); c.push([a + Math.cos(an) * rr * 0.8, b + Math.sin(an) * rr * 0.8, rr * (0.3 + z() * 0.25)]); }
+    const id = S.id("wk" + wz++), cy0 = y - h * 0.5;
+    S.def(`<clipPath id="${id}c"><rect x="${r(x - w)}" y="${r(y - h * 3)}" width="${r(w * 2)}" height="${r(h * 3)}"/></clipPath><g id="${id}">${c.map(([a, b, rr]) => `<circle cx="${r(a)}" cy="${r(b)}" r="${r(rr)}"/>`).join("")}</g>`);
+    const lage = (dx, dy, f, fill, extra = "") => `<use href="#${id}" fill="${fill}" transform="translate(${r(x + dx)} ${r(cy0 + dy)}) scale(${f}) translate(${r(-x)} ${r(-cy0)})"${extra}/>`;
+    return `<g clip-path="url(#${id}c)">${lage(0, 0, 1, WF[0], ` filter="url(#${S.id("wolke")})"`)}${lage(-0.4, -1.8, 0.93, WF[1])}${lage(-1.2, -3.6, 0.8, WF[2])}</g>`;
   };
-  S.hinten(wolke(62, 36, 54, 24, 11) + wolke(222, 24, 32, 15, 23) + wolke(338, 50, 46, 21, 37) + wolke(156, 72, 22, 10, 41));
+
+  S.hinten(wolke(64, 42, 58, 30, 11) + wolke(336, 54, 48, 25, 37) + wolke(230, 78, 22, 7, 23) + wolke(152, 86, 16, 5, 41) + wolke(292, 90, 12, 3.6, 53));
   /* flache, ausgefranste Bänder über dem Horizont: links golden, rechts kühl */
   let band = "";
   for (const [x, y, w, h, c] of [[46, 112, 84, 1.7, "#ffe2b8"], [126, 119, 52, 1.2, "#fbe0c4"], [252, 108, 96, 1.6, "#ecdcd8"], [338, 117, 64, 1.3, "#dcd6e2"], [196, 125, 42, 0.9, "#f4dccb"]]) band += `<path d="M${x - w / 2} ${y} Q${x - w / 4} ${r(y - h)} ${x} ${r(y - h * 0.6)} Q${x + w / 4} ${r(y - h)} ${x + w / 2} ${y} Q${x} ${r(y + h * 0.9)} ${x - w / 2} ${y} Z" fill="${c}" opacity=".8"/>`;

@@ -95,7 +95,7 @@ const linie = (pts) => {
 };
 /* Menschen klein im Bild: Pfaddaten auf ganze Zentimeter runden (unsichtbar, halbiert die Datei) */
 const rundeFigur = (svg, unten) => {
-  const k = +((svg.match(/scale\(([\d.]+)\)/) || [0, 1])[1]), lim = .07 / k;
+  const k = +((svg.match(/scale\(([\d.]+)\)/) || [0, 1])[1]), lim = .12 / k;
   /* hinter einer Theke: Teile, die ganz unterhalb der Kante (Bildeinheiten, relativ zum Fuß) liegen, sieht niemand */
   if (unten != null) {
     const yc = unten / k + 8;
@@ -454,7 +454,7 @@ const TM = {};
     TM.kb = { x: TX(0), y: TY(112.2), h: TS * 5 };
   }
   TM.uhr = { x: uhr[0], y: uhr[1], r: ur };
-  const zx = 212, zy = 12;
+  const zx = 220, zy = 16;
   S.teil({ id: "muensterturm", de: "der Münsterturm", syl: "MÜNS-ter-turm", it: "il campanile del duomo", itSyl: "cam-pa-NI-le del DUO-mo", en: "Minster tower", x: 0, y: 0, kunst: t.join(""),
     tipp: "Der Turm ist 116 Meter hoch und war schon um 1330 fertig — als einziger großer gotischer Kirchturm Deutschlands noch im Mittelalter. Jacob Burckhardt nannte ihn „den schönsten Turm auf Erden“.",
     zoom: { x: zx, y: zy, w: 320 - zx, h: r((320 - zx) / 1.5) },
@@ -737,6 +737,7 @@ const CAFE = {};
   k += stuhl(50.8, -69.4, 1) + stuhl(44.8, -71.4, -1);
   const t1 = tisch(50, -70), t2 = tisch(44, -72);
   k += t1.g + t2.g;
+  { const f = fuss(50, -70), s = f.s; k += `<path d="M${r(f.x - .02 * s)} ${r(f.y - .8 * s)} V${r(f.y - 2.45 * s)}" stroke="#d8d2c4" stroke-width="${r(.05 * s)}"/>`; }
   /* Kaffeetassen */
   for (const [t, dx] of [[t1, -.15], [t2, .1]]) { const { f } = t, s = f.s; k += `<path d="M${r(f.x + dx * s - .05 * s)} ${r(f.y - .78 * s)} h${r(.1 * s)} v${r(-.06 * s)} h${r(-.1 * s)} Z" fill="#fbfaf6"/><ellipse cx="${r(f.x + dx * s)}" cy="${r(f.y - .78 * s)}" rx="${r(.08 * s)}" ry="${r(.02 * s)}" fill="#f2f0ea"/>`; }
   /* die Schwarzwälder Kirschtorte auf dem Tortenständer: Schokoböden, Sahne, Schokoraspel, Sahnetupfen mit Kirschen */
@@ -759,7 +760,6 @@ const CAFE = {};
   /* der große Sonnenschirm über dem vorderen Tisch */
   {
     const f = fuss(50, -70), s = f.s;
-    k += `<path d="M${r(f.x - .02 * s)} ${r(f.y - .8 * s)} V${r(f.y - 2.45 * s)}" stroke="#d8d2c4" stroke-width="${r(.05 * s)}"/>`;
     let g = "";
     for (let i = 0; i < 8; i++) { const a = -1.5 + i * .375, b = a + .375; g += `<path d="M${r(f.x)} ${r(f.y - 2.9 * s)} L${r(f.x + a * s)} ${r(f.y - 2.28 * s)} Q${r(f.x + (a + b) / 2 * s)} ${r(f.y - 2.18 * s)} ${r(f.x + b * s)} ${r(f.y - 2.28 * s)} Z" fill="${i % 2 ? "#f4ecd8" : "#7a2a2a"}"/>`; }
     k += g + `<path d="M${r(f.x - 1.5 * s)} ${r(f.y - 2.28 * s)} L${r(f.x)} ${r(f.y - 2.9 * s)} L${r(f.x + 1.5 * s)} ${r(f.y - 2.28 * s)}" stroke="#000" stroke-opacity=".15" stroke-width="${r(.04 * s)}" fill="none"/>`;
@@ -1110,7 +1110,7 @@ const MANN = { w: [54.4, -46.4] };
    ===================================================================== */
 {
   const W = neben(52, -41, 1.1, .9), f = fuss(...W), s = f.s;
-  const m = B.mensch({ id: "fbg_kundin", geschlecht: "w", pose: "stehen", blick: 140, frisur: "zopf", haarfarbe: "hellbraun", haut: "hell",
+  const m = B.mensch({ id: "fbg_kundin", geschlecht: "w", pose: "stehen", blick: 220, frisur: "zopf", haarfarbe: "hellbraun", haut: "hell",
     kleidung: { oberteil: { stueck: "bluse", farbe: "hellblau" }, unterteil: { stueck: "rock_knie", farbe: "beige" }, schuhe: { stueck: "sandale", farbe: "braun" } } }, 1.68 * s);
   S.teil({ id: "kundin", de: "die Kundin", syl: "KUN-din", it: "la cliente", itSyl: "cli-EN-te", en: "customer", x: f.x, y: f.y, kunst: schlagLokal(f, ...W, .5, 1.7, .3) + rundeFigur(m.svg),
     tipp: "Sie kauft auf dem Markt ein: Spargel, Kirschen und Erdbeeren." });
@@ -1123,7 +1123,7 @@ const MANN = { w: [54.4, -46.4] };
   k += `<path d="M${r(-bw / 2)} ${r(oy)} L${r(-bw * .4)} ${r(oy + bh)} H${r(bw * .4)} L${r(bw / 2)} ${r(oy)} Z" fill="#c09050"/>`;
   for (let j = 1; j < 4; j++) k += `<path d="M${r(-bw / 2 + j * .01 * s)} ${r(oy + j * bh / 4)} H${r(bw / 2 - j * .01 * s)}" stroke="#8a6030" stroke-width="${r(.012 * s)}"/>`;
   for (let j = -2; j <= 2; j++) k += `<path d="M${r(j * bw * .19)} ${r(oy)} L${r(j * bw * .16)} ${r(oy + bh)}" stroke="#a87a40" stroke-width="${r(.008 * s)}"/>`;
-  S.teil({ oben: true, id: "korb", de: "der Korb", syl: "KORB", it: "il cestino", itSyl: "ce-STI-no", en: "basket", x: f.x + hx, y: f.y + hy, kunst: k + flaeche(-bw / 2 - .3, -.02 * s, bw + .6, oy + bh + .04 * s, 0.3),
+  S.teil({ id: "korb", de: "der Korb", syl: "KORB", it: "il cestino", itSyl: "ce-STI-no", en: "basket", x: f.x + hx, y: f.y + hy, kunst: k + flaeche(-bw / 2 - .3, -.02 * s, bw + .6, oy + bh + .04 * s, 0.3),
     tipp: "Im Korb trägt sie ihren Einkauf nach Hause." });
 }
 function sw2(s) { return r(.02 * s); }

@@ -675,7 +675,13 @@ const haus = (lat, lon, H, W, art, muster, extra, dx = 0) => {
   };
   /* Seitenfelder: an den Pfeilern so hoch wie das Hauptfeld (≈ 36–38 m), fallen erst zur Verankerung hin */
   const deckZ = (t) => (t >= 0 && t <= 1) ? 36 + 5 * Math.sin(Math.PI * t) : t > 1 ? 37.5 - 7.5 * Math.min(1, (t - 1) / 0.6) : 36 - 6 * Math.min(1, -t / 0.6);
-  const kabZ = (t) => (t >= 0 && t <= 1) ? 44 + 38 * Math.pow(2 * t - 1, 2) : t > 1 ? 82 - 56 * Math.pow(Math.min(1, (t - 1) / 0.592), 1.25) : 82 - 56 * Math.min(1, -t / 0.592) - 5 * Math.sin(Math.PI * Math.min(1, -t / 0.592));
+/* Kabelhöhe. Die Richtungen sind gestaucht, darum wird die Spannweite an den Pfeilern eng; damit die
+     Kabel den Pfeiler — wie echt — knapp unter dem Gesims verlassen (≈ 79–80 m), bleibt die Kettenlinie
+     auf der Breite des Pfeilers fast waagrecht und hängt erst danach durch. */
+  const sacht = (t, t0, dt) => (t - t0) < dt ? t0 + (t - t0) * 0.25 : t0 + 0.25 * dt + ((t - t0) - dt) * (1 - 0.25 * dt) / (1 - dt);
+  const kabZ = (t) => { if (t >= 0 && t <= 1) { const tt = t < 0.5 ? sacht(t, 0, 0.07) : 1 - sacht(1 - t, 0, 0.05); return 44 + 38 * Math.pow(2 * tt - 1, 2); }
+    const u = t > 1 ? Math.min(1, (t - 1) / 0.592) : Math.min(1, -t / 0.592), uu = u < 0.08 ? u * 0.3 : 0.024 + (u - 0.08) * (0.976 / 0.92);
+    return 82 - 48 * uu - 8 * uu * uu; };
   let k = "";
   const linie = (t0, t1, n, f) => { let s = ""; for (let i = 0; i <= n; i++) { const t = t0 + (t1 - t0) * i / n; s += `${s ? "L" : "M"}${pr(f(t))} `; } return s; };
   /* Fahrbahn mit Versteifungsträger (vordere Kante q = −13), von der Manhattan-Rampe bis zum Brooklyn-Seitenfeld */
@@ -716,11 +722,13 @@ const haus = (lat, lon, H, W, art, muster, extra, dx = 0) => {
     /* sichtbare Flächen: Schmalseite Südwest (q = −21,5) und Breitseite Südost (Brooklyn-Seite, l = −9) */
     const sw = [A(-9, -21.5, 0), A(9, -21.5, 0), A(9, -21.5, 84), A(-9, -21.5, 84)];
     const se = [A(-9, -21.5, 0), A(-9, 21.5, 0), A(-9, 21.5, 84), A(-9, -21.5, 84)];
-    s += `<path d="${poly(se)}" fill="${STEIN}"/>`;
+    /* sonnige Breitseite: beim nahen Pfeiler nur ein schmaler, gleich breiter Streifen an der rechten Kante */
+    if (istM) s += `<path d="${poly(se)}" fill="${STEIN}"/>`;
+    else { const o1 = A(-9, -21.5, 84), u1 = A(-9, -21.5, 0); s += `<path d="M${pr(o1)} L${r(o1[0] + 0.6)} ${r(o1[1])} L${r(u1[0] + 0.6)} ${r(u1[1])} L${pr(u1)} Z" fill="${STEIN}"/>`; }
     s += `<path d="${poly(sw)}" fill="${STEIN_S}"/>`;
     /* Steinlagen */
     let lg = "";
-    for (let z = 6; z < 80; z += 4.2) { lg += `M${pr(A(-9, -21.5, z))} L${pr(A(9, -21.5, z))} M${pr(A(-9, -21.5, z))} L${pr(A(-9, 21.5, z))} `; }
+    for (let z = 6; z < 80; z += 4.2) { lg += `M${pr(A(-9, -21.5, z))} L${pr(A(9, -21.5, z))} ` + (istM ? `M${pr(A(-9, -21.5, z))} L${pr(A(-9, 21.5, z))} ` : ""); }
     s += `<path d="${lg}" stroke="#9c8869" stroke-width=".1" opacity=".55" fill="none"/>`;
     /* Spitzbögen in der Breitseite (q = ±10,5, 10,4 m breit, Scheitel 72 m): Leibung, Durchblick, Fahrbahn */
     for (const qc of istM ? [-10.5, 10.5] : []) {
@@ -739,8 +747,8 @@ const haus = (lat, lon, H, W, art, muster, extra, dx = 0) => {
     for (const [z0, z1] of [[40, 74], [8, 30]]) s += `<path d="${poly([A(-5, -21.6, z0), A(5, -21.6, z0), A(5, -21.6, z1), A(-5, -21.6, z1)])}" fill="#8e7c62" opacity=".35"/><path d="${poly([A(-5, -21.6, z1), A(5, -21.6, z1), A(5, -21.6, z1 - 0.8), A(-5, -21.6, z1 - 0.8)])}" fill="#5e5140" opacity=".35"/>`;
     s += `<path d="${poly([A(-9, -21.5, 0), A(-9, -21.5, 84), A(-7.6, -21.5, 84), A(-7.6, -21.5, 0)])}" fill="#fff" opacity=".12"/>`;
     /* Gesims oben, Sockel im Wasser */
-    s += `<path d="${poly([A(-9.6, -22, 78), A(-9.6, 22, 78), A(-9.6, 22, 81), A(-9.6, -22, 81)])}" fill="#f6ecdb"/><path d="${poly([A(-9.6, -22, 78), A(9.6, -22, 78), A(9.6, -22, 81), A(-9.6, -22, 81)])}" fill="#e2d4bd"/>`;
-    s += `<path d="${poly([A(-9, -21.5, 81), A(9, -21.5, 81), A(9, -21.5, 84), A(-9, -21.5, 84)])}" fill="#cdb999"/><path d="${poly([A(-9, -21.5, 81), A(-9, 21.5, 81), A(-9, 21.5, 84), A(-9, -21.5, 84)])}" fill="#dccbab"/>`;
+    s += `${istM ? `<path d="${poly([A(-9.6, -22, 78), A(-9.6, 22, 78), A(-9.6, 22, 81), A(-9.6, -22, 81)])}" fill="#f6ecdb"/>` : ""}<path d="${poly([A(-9.6, -22, 78), A(9.6, -22, 78), A(9.6, -22, 81), A(-9.6, -22, 81)])}" fill="#e2d4bd"/>`;
+    s += `<path d="${poly([A(-9, -21.5, 81), A(9, -21.5, 81), A(9, -21.5, 84), A(-9, -21.5, 84)])}" fill="#cdb999"/>${istM ? `<path d="${poly([A(-9, -21.5, 81), A(-9, 21.5, 81), A(-9, 21.5, 84), A(-9, -21.5, 84)])}" fill="#dccbab"/>` : ""}`;
     s += `<path d="${poly([A(-11, -24, 0), A(11, -24, 0), A(11, -24, 5), A(-11, -24, 5)])}" fill="#b9a888"/><path d="${poly([A(-11, -24, 0), A(-11, 24, 0), A(-11, 24, 5), A(-11, -24, 5)])}" fill="#cbbb9c"/>`;
     /* Fahnenmast mit US-Flagge (die Kabelsättel liegen im Mauerwerk, man sieht sie nicht) */
     const f0 = A(0, 0, 84), f1 = A(0, 0, 96), fh = K * 3.6 / L.d, fw2 = K * 6 / L.d;

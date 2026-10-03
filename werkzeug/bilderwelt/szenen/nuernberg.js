@@ -128,7 +128,7 @@ const BURG = { x: 118, y: 76, s: 0.72 };
      nur die Dächer des Burgviertels und eine kurze, steile Felswand unter dem Palas */
   const wo = (x) => -44 + (x + 73) * 0.0625, wu = (x) => wo(x) + 9;
   /* dunkler Grund unter den Dächern, damit keine Lücke zum Himmel bleibt */
-  k += `<path d="M-26 ${r(wu(-26))} L92 ${r(wu(92))} L92 16 L-80 16 L-80 ${r(wu(-80) + 13)} L-26 ${r(wu(-26) + 12)} Z" fill="#6e5450"/>`;
+  k += `<path d="M-80 ${r(wu(-80) + 4)} L-26 ${r(wu(-26))} L92 ${r(wu(92))} L92 16 L-80 16 Z" fill="#6e5450"/>`;
   /* Dächer des Burgviertels: drei, vier Reihen, nach oben kleiner und dichter, Giebel hell im Streiflicht */
   const dachReihe = (x0, x1, unten, b, hw, hd) => {
     let g = "", x = x0;
@@ -835,7 +835,7 @@ const MARKT = { bude: null, lichter: null, leute: null, wurst: null, christkind:
     ] });
 }
 
-S.teil({ id: "hauptmarkt", de: "der Hauptmarkt", syl: "HAUPT-markt", it: "la piazza del mercato", itSyl: "PIAZ-za del mer-CA-to", en: "main market square", x: 186, y: 170, kunst: flaeche(-14, -14, 28, 18),
+S.teil({ id: "hauptmarkt", de: "der Hauptmarkt", syl: "HAUPT-markt", it: "la piazza del mercato", itSyl: "PIAZ-za del mer-CA-to", en: "main market square", x: 140, y: 158, kunst: flaeche(-10, -12, 20, 14),
   tipp: "Der Hauptmarkt ist der größte Platz der Altstadt. Im Advent steht hier der Christkindlesmarkt." });
 
 /* =====================================================================
@@ -854,7 +854,7 @@ S.teil({ id: "hauptmarkt", de: "der Hauptmarkt", syl: "HAUPT-markt", it: "la pia
   let deko = `<path d="M7 5 L19 5 L19 52 Q17.5 55 16 52 Q14.5 56 13 52 Q11.5 55 10 52 Q8.5 56 7 53 Z" fill="#fbf8f2" opacity=".38"/>`;
   for (let y = 9; y < 50; y += 4) for (let x = 8.5 + ((y / 4) % 2) * 1.4; x < 18.5; x += 2.8) deko += `<circle cx="${r(x)}" cy="${y}" r=".7" fill="none" stroke="#fff" stroke-width=".25" opacity=".55"/>`;
   deko += `<path d="M7 51 Q10 55 13 52 Q16 55.5 19 52" stroke="#fff" stroke-width=".4" fill="none" opacity=".6"/>`;
-  deko += `<ellipse cx="10" cy="182" rx="30" ry="16" fill="${S.rg("beschlag", [[0, "#ffffff", 0.16], [1, "#ffffff", 0]])}"/><ellipse cx="312" cy="182" rx="30" ry="16" fill="${S.rg("beschlag", [[0, "#ffffff", 0.16], [1, "#ffffff", 0]])}"/>`;
+  deko += `<rect x="7" y="152" width="40" height="30" fill="${S.rg("beschlagl", [[0, "#ffffff", 0.18], [1, "#ffffff", 0]], 0, 1, 1)}"/><rect x="274" y="152" width="40" height="30" fill="${S.rg("beschlagr", [[0, "#ffffff", 0.18], [1, "#ffffff", 0]], 1, 1, 1)}"/>`;
   deko += `<path d="M196 5 L224 5 L120 182 L92 182 Z" fill="${S.lg("spiegelung", [[0, "#ffffff", 0], [0.5, "#ffffff", 0.07], [1, "#ffffff", 0]], 0, 0, 1, 0)}"/>`;
   k += `<g pointer-events="none">${deko}</g>`;
   S.teil({ id: "fenster", de: "das Fenster", syl: "FENS-ter", it: "la finestra", itSyl: "fi-NE-stra", en: "window", x: 160, y: 3, kunst: anker(160, 3, k),
