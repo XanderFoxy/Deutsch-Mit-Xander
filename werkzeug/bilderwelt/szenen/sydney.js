@@ -281,8 +281,9 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
   let k = "";
   /* --- der Sockel --- */
   const GRANIT = S.lg("opgranit", [[0, "#dcb8a4"], [0.5, "#c99f88"], [1, "#a97f6b"]]);
-  /* Vorplatz-Kante (Süden) */
+  /* Vorplatz-Kante (Süden) und Sockel unter dem Restaurant (Südwest, gleicher Granit, an die Treppe angeschlossen) */
   k += `<path d="M${P(op(0, 0, 0))} L${P(op(0, 120, 0))} L${P(op(0, 120, 4))} L${P(op(0, 0, 4))} Z" fill="#b99c8a"/>`;
+  k += `<path d="M${P(op(8, 0, 4))} L${P(op(8, 26, 4))} L${P(op(8, 26, SOCKEL_Z))} L${P(op(8, 0, SOCKEL_Z))} Z" fill="#c79d87"/><path d="M${P(op(8, 0, SOCKEL_Z - 1))} L${P(op(8, 26, SOCKEL_Z - 1))}" stroke="#f1e3d6" stroke-width=".6"/>`;
   /* Freitreppe: Setzstufen (nach Süden, im Schatten) treppauf nach Norden, dann die Ostwange mit Stufenprofil */
   const N_ST = 11, stS = (i) => i * TREPPE_S / N_ST, stZ = (i) => 4 + i * (SOCKEL_Z - 4) / N_ST;
   let stu = "";
@@ -313,89 +314,75 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
   const len = (u, v) => Math.hypot(v[0] - u[0], v[1] - u[1]);
   const lerp = (u, v, t) => [u[0] + (v[0] - u[0]) * t, u[1] + (v[1] - u[1]) * t];
   const qb = (a, c, b, t) => [(1 - t) * (1 - t) * a[0] + 2 * t * (1 - t) * c[0] + t * t * b[0], (1 - t) * (1 - t) * a[1] + 2 * t * (1 - t) * c[1] + t * t * b[1]];
-  const schale = (e, b, t, p, rueck, warm = 1) => {
+  /* Fliesen-Muster: glänzend weiße Chevron-Bänder auf matt cremefarbenem Grund (eine Kachel, gedreht je Schale) */
+  S.def(`<pattern id="${S.id("chev")}" width="2.6" height="2" patternUnits="userSpaceOnUse"><path d="M0 0L1.3 .9L2.6 0V.6L1.3 1.5L0 .6Z" fill="#fffdf7" opacity=".85"/><path d="M0 .6L1.3 1.5L2.6 .6" stroke="#d6c8aa" stroke-width=".1" fill="none"/></pattern>`);
+  const schale = (e, b, t, p, rueck, hinten = 0) => {
     const B0 = op(b[0], e, b[1]), T = op(t[0], e, t[1]), Pp = op(p[0], e, SOCKEL_Z), B0f = op(b[0] + (rueck ? 5 : -5), e, SOCKEL_Z);
     const dir = rueck ? -1 : 1;
     const gL = len(B0, T), gN = [(T[1] - B0[1]) / gL * dir, -(T[0] - B0[0]) / gL * dir];
     const cg = [(B0[0] + T[0]) / 2 + gN[0] * 0.15 * gL, (B0[1] + T[1]) / 2 + gN[1] * 0.15 * gL];
     const lL = len(T, Pp);
     const cl = [(T[0] + Pp[0]) / 2 - dir * 0.12 * lL, (T[1] + Pp[1]) / 2];
-    /* stumpfe Spitze: kurz vor T auf dem Grat abbiegen, über T gerundet zur Lippe */
-    const Ta = qb(B0, cg, T, 0.955), Tb = qb(T, cl, Pp, 0.05);
-    const cg2 = lerp(B0, cg, 0.97);
+    /* stumpfe, dicke Spitze: ≈ 1,6 Einheiten vor T abbiegen, über T gerundet (r ≈ 0,8) */
+    const uA = 1 - 1.6 / gL, uB = 1.6 / lL;
+    const Ta = qb(B0, cg, T, uA), Tb = qb(T, cl, Pp, uB), cg2 = lerp(B0, cg, uA);
     const d = `M${P(Pp)} L${P(B0f)} L${P(B0)} Q${P(cg2)} ${P(Ta)} Q${P(T)} ${P(Tb)} Q${P(cl)} ${P(Pp)} Z`;
-    SPIEGEL_OP.push([b, t, p, e]);
-    const id = S.id("sch" + schalenNr++);
+    SPIEGEL_OP.push({ B0, T, Pp, e, b, t, p });
+    const id = S.id("s" + schalenNr++);
     S.def(`<clipPath id="${id}"><path d="${d}"/></clipPath>`);
-    const mx = T[0] - (T[0] - B0[0]) * 0.25, my = T[1] + (Pp[1] - T[1]) * 0.3, rr = Math.max(gL, lL) * 1.15;
-    S.def(`<radialGradient id="${id}g" gradientUnits="userSpaceOnUse" cx="${r(mx)}" cy="${r(my)}" r="${r(rr)}" fx="${r(mx + dir * 2)}" fy="${r(my - 2)}"><stop offset="0" stop-color="${warm ? "#fffbef" : "#fbfaf6"}"/><stop offset=".45" stop-color="${warm ? "#f6eedc" : "#f1eee6"}"/><stop offset="1" stop-color="${rueck ? "#cfc5b2" : "#d8cdb7"}"/></radialGradient>`);
-    let g = `<path d="M${P(T)} Q${P(cl)} ${P(Pp)}" stroke="#6f6a60" stroke-width="2.2" fill="none" opacity=".25" filter="url(#${S.id("dunst")})" transform="translate(${-dir * 0.9} .3)"/>`;
-    g += `<path d="${d}" fill="url(#${id}g)"/>`;
-    g += `<g clip-path="url(#${id})">`;
-    /* Rippen und Chevrons */
-    const NB = 12, ridge = (u) => qb(B0, cg, T, u);
-    let rip = "", chev = "", band = "";
-    for (let i = 1; i < NB; i++) rip += `M${P(Pp)} L${P(ridge(i / NB))}`;
-    for (let i = 0; i < NB; i++) {
-      const R0 = ridge(i / NB), R1 = ridge((i + 1) / NB), RM = ridge((i + 0.5) / NB);
-      if (i % 2) band += `M${P(Pp)} L${P(R0)} L${P(R1)} Z`;
-      for (let f = 0.22; f < 0.97; f += 0.105) {
-        const c = lerp(Pp, RM, f), a0 = lerp(Pp, R0, f + 0.06), a1 = lerp(Pp, R1, f + 0.06);
-        chev += `M${P(a0)} L${P(c)} L${P(a1)}`;
-      }
-    }
-    g += `<path d="${band}" fill="#eadfc6" opacity=".16"/>`;
-    g += `<path d="${chev}" stroke="#e4d8bd" stroke-width=".12" fill="none" opacity=".75"/>`;
-    g += `<path d="${rip}" stroke="#d2c6ad" stroke-width=".16" fill="none" opacity=".8"/>`;
-    /* Licht: Grat-Kante hell; Lippe: helles Rippenband mit Schattenlinie innen */
-    g += `<path d="M${P(B0)} Q${P(cg2)} ${P(Ta)} Q${P(T)} ${P(Tb)}" stroke="#fffdf6" stroke-width=".9" fill="none"/>`;
-    g += `<path d="M${P(Tb)} Q${P(cl)} ${P(Pp)}" stroke="#fdf8ec" stroke-width="1.5" fill="none"/>`;
-    g += `<path d="M${P(Tb)} Q${P(cl)} ${P(Pp)}" stroke="#b7ac97" stroke-width=".3" fill="none" transform="translate(${-dir * 0.75} 0)"/>`;
-    g += `</g>`;
-    g += `<path d="M${P(B0)} Q${P(cg2)} ${P(Ta)} Q${P(T)} ${P(Tb)} Q${P(cl)} ${P(Pp)}" fill="none" stroke="#9d9686" stroke-width=".2"/>`;
+    /* Kugelverlauf: oben rechts (Sonne Nordost) warm-hell, zum Fuß und zur linken Flanke kühles Grau */
+    const mx = T[0] - (T[0] - B0[0]) * 0.2 + 3, my = T[1] + (Pp[1] - T[1]) * 0.22, rr = Math.max(gL, lL) * 1.05;
+    S.def(`<radialGradient id="${id}g" gradientUnits="userSpaceOnUse" cx="${r(mx)}" cy="${r(my)}" r="${r(rr)}"><stop offset="0" stop-color="${hinten ? "#fbf6ea" : "#fff8e6"}"/><stop offset=".5" stop-color="${hinten ? "#ece6da" : "#f3ead6"}"/><stop offset="1" stop-color="${rueck ? "#b9b6b0" : "#c7c5c0"}"/></radialGradient>`);
+    let g = `<path d="${d}" fill="url(#${id}g)"/>`;
+    const ang = Math.atan2(T[1] - Pp[1], T[0] - Pp[0]) * 180 / Math.PI + 90;
+    g += `<g clip-path="url(#${id})"><rect x="${r(Pp[0] - 40)}" y="${r(Pp[1] - 60)}" width="80" height="70" fill="url(#${S.id("chev")})" opacity="${hinten ? 0.55 : 0.75}" transform="rotate(${r(ang)} ${P(Pp)})"/>`;
+    let rip = "";
+    for (const u of [0.2, 0.42, 0.62, 0.82]) rip += `M${P(Pp)} L${P(qb(B0, cg, T, u))}`;
+    g += `<path d="${rip}" stroke="#cfc3a8" stroke-width=".18" fill="none"/>`;
+    /* Lippe als helles Band (Schalenstärke ≈ 0,6), Grat mit Lichtkante */
+    g += `<path d="M${P(B0)} Q${P(cg2)} ${P(Ta)}" stroke="#fffdf6" stroke-width=".8" fill="none"/>`;
+    g += `<path d="M${P(Ta)} Q${P(T)} ${P(Tb)} Q${P(cl)} ${P(Pp)}" stroke="#fffaf0" stroke-width="1.3" fill="none"/></g>`;
     return { svg: g, T, Pp, B0, cl, Tb, cg };
   };
-  /* Unterseite einer Rückschale (Süden): beschattete Schalen-Innenseite, grau-creme mit Rippen */
+  /* Innenseite einer Rückschale (Süden): deutlich dunkler, kühles Grau mit Rippen */
   const unterseite = (sch, e, sFuss) => {
     const F0 = op(sFuss, e, SOCKEL_Z);
-    let g = `<path d="M${P(sch.Tb)} Q${P(sch.cl)} ${P(sch.Pp)} L${P(F0)} Z" fill="${S.lg("schalenschatten", [[0, "#e2dccf"], [1, "#c4bcae"]], 0, 0, 1, 1)}"/>`;
-    for (let i = 1; i < 5; i++) g += `<path d="M${P(F0)} L${P(qb(sch.Tb, sch.cl, sch.Pp, i / 5))}" stroke="#958d80" stroke-width=".18" opacity=".7"/>`;
+    let g = `<path d="M${P(sch.Tb)} Q${P(sch.cl)} ${P(sch.Pp)} L${P(F0)} Z" fill="${S.lg("innen", [[0, "#a8a39a"], [1, "#d3cdc1"]], 0, 0, 1, 0)}"/>`;
+    let ri = "";
+    for (let i = 1; i < 5; i++) ri += `M${P(F0)} L${P(qb(sch.Tb, sch.cl, sch.Pp, i / 5))}`;
+    return g + `<path d="${ri}" stroke="#8f887c" stroke-width=".18"/>`;
+  };
+  /* Nord-Glaswand: halbtransparentes Topasglas, unter der Lippe dunkler, in drei Facetten nach außen geknickt,
+     diagonaler Spiegelglanz des Himmels */
+  const GLAS = S.lg("glas", [[0, "#5a3e24", 0.92], [0.45, "#a9773c", 0.7], [1, "#d9b077", 0.6]], 0, 0, 0, 1);
+  const glasvorhang = (sch, e, sFuss, auf) => {
+    const F0 = op(sFuss, e, SOCKEL_Z), F1 = op(sFuss - 4, e + auf, SOCKEL_Z), K = qb(sch.Tb, sch.cl, sch.Pp, 0.45);
+    let g = `<path d="M${P(sch.Tb)} L${P(F0)} L${P(F1)} L${P(K)} Q${P(lerp(sch.cl, sch.Tb, 0.3))} ${P(sch.Tb)} Z" fill="${GLAS}"/>`;
+    g += `<path d="M${P(K)} L${P(F1)} L${P(sch.Pp)} Q${P(lerp(sch.cl, sch.Pp, 0.4))} ${P(K)} Z" fill="${GLAS}" opacity=".85"/>`;
+    let sp = `M${P(sch.Tb)} L${P(F0)} M${P(K)} L${P(F1)}`;
+    for (const f of [0.25, 0.5, 0.75]) sp += `M${P(lerp(sch.Tb, K, f))} L${P(lerp(F0, F1, f))}`;
+    g += `<path d="${sp}" stroke="#f0d9a8" stroke-width=".22" opacity=".85"/>`;
+    const gl = [lerp(sch.Tb, F0, 0.25), lerp(sch.Tb, F0, 0.45), lerp(K, F1, 0.75), lerp(K, F1, 0.5)];
+    g += `<path d="M${gl.map(P).join(" L")} Z" fill="#e8f2f8" opacity=".35"/>`;
     return g;
   };
-  /* Nord-Glasvorhang: hängt schräg von der Lippe der vordersten Schale bis zum Sockel, Topasglas mit Sprossen */
-  const GLAS = S.lg("glas", [[0, "#d7ab68"], [0.35, "#9a6e3c"], [0.7, "#6a4a2c"], [1, "#4a3828"]], 0, 0, 1, 1);
-  const glasvorhang = (sch, e, sFuss) => {
-    const F0 = op(sFuss, e, SOCKEL_Z), lip = [0, 0.2, 0.4, 0.6, 0.8, 1].map((t) => qb(sch.Tb, sch.cl, sch.Pp, t));
-    let g = `<path d="M${P(sch.Tb)} L${P(F0)} L${P(sch.Pp)} Q${P(sch.cl)} ${P(sch.Tb)} Z" fill="${GLAS}"/>`;
-    /* Sprossen: von der Lippe senkrecht zum Sockel; zwei Querriegel */
-    let sp = "";
-    for (let i = 1; i < 6; i++) { const q = lerp(sch.Tb, F0, i / 6); sp += `M${P(q)} L${P([q[0], sch.Pp[1]])}`; }
-    for (const f of [0.35, 0.68]) sp += `M${P(lerp(lip[0], F0, f * 0.02))} L${P(lerp(sch.Pp, F0, f))}`;
-    for (const f of [0.4, 0.75]) { const a = lerp(sch.Tb, F0, f); sp += `M${P(qb(sch.Tb, sch.cl, sch.Pp, f))} L${P(a)}`; }
-    g += `<path d="${sp}" stroke="#e6c88f" stroke-width=".22" opacity=".8"/>`;
-    /* Spiegelglanz des Morgenhimmels */
-    const gl0 = lerp(sch.Tb, F0, 0.3), gl1 = lerp(sch.Tb, F0, 0.5);
-    g += `<path d="M${P(gl0)} L${P(gl1)} L${P([gl1[0] - 1.6, sch.Pp[1]])} L${P([gl0[0] - 2.4, sch.Pp[1]])} Z" fill="#fff4d8" opacity=".22"/>`;
-    g += `<path d="M${P(sch.Tb)} L${P(F0)}" stroke="#f3e4c4" stroke-width=".35"/>`;
-    return g;
-  };
-  /* Restaurant (Südwest, klein, ganz hinten links) */
-  const rB = schale(10, [30, 22], [14, 30], [22], true, 0), rA = schale(10, [24, 21], [40, 29], [33], false, 0);
-  k += rA.svg + unterseite(rB, 10, 12) + rB.svg;
+  /* Restaurant (Südwest, klein, an der Freitreppe) */
+  const rB = schale(14, [32, 22], [17, 30], [25], true, 1), rA = schale(14, [27, 21], [42, 29], [36], false, 1);
+  k += rA.svg + unterseite(rB, 14, 15) + rB.svg;
   /* Westgruppe: Konzertsaal (hinten) — die höchste Schale, 67 m */
   const CH = 30, JS = 88;
-  const chA1 = schale(CH, [128, 35], [160, 45], [151], false, 0);
-  const chA2 = schale(CH, [102, 42], [136, 56], [125], false, 0);
-  const chB = schale(CH, [76, 30], [44, 47], [57], true, 0);
-  const chA3 = schale(CH, [68, 29], [112, 67], [100], false, 0);
-  k += glasvorhang(chA1, CH, 170) + chA1.svg + chA2.svg + unterseite(chB, CH, 42) + chB.svg + chA3.svg;
+  const chA1 = schale(CH, [128, 35], [160, 45], [151], false, 1);
+  const chA2 = schale(CH, [102, 42], [136, 56], [125], false, 1);
+  const chB = schale(CH, [76, 30], [44, 47], [57], true, 1);
+  const chA3 = schale(CH, [68, 29], [112, 67], [100], false, 1);
+  k += glasvorhang(chA1, CH, 172, 10) + chA1.svg + chA2.svg + unterseite(chB, CH, 42) + chB.svg + chA3.svg;
   /* Ostgruppe: Joan Sutherland Theatre (vorn) */
   const jA1 = schale(JS, [124, 31], [156, 39], [148]);
   const jA2 = schale(JS, [99, 38], [132, 50], [122]);
   const jB = schale(JS, [74, 27], [47, 41], [59], true);
   const jA3 = schale(JS, [68, 26], [110, 60], [99]);
-  const gwFuss = op(168, JS, SOCKEL_Z);
-  k += glasvorhang(jA1, JS, 168) + jA1.svg + jA2.svg + unterseite(jB, JS, 45) + jB.svg + jA3.svg;
+  const gwFuss = op(170, JS, SOCKEL_Z);
+  k += glasvorhang(jA1, JS, 170, 14) + jA1.svg + jA2.svg + unterseite(jB, JS, 45) + jB.svg + jA3.svg;
   /* Menschen auf dem Sockel und auf der Freitreppe (winzig, 1,7 m) */
   let leute = "";
   const farben = ["#c0392b", "#2f6fb6", "#f2c62f", "#ffffff", "#2a2a2a", "#3c8f5a", "#e58fa1"];
@@ -460,34 +447,41 @@ const SPIEGEL_OP = [];   // Umrisse der Schalen für das Spiegelbild
    ===================================================================== */
 const KANTE = (x) => 190.5 + Math.sin(x / 23) * 1.2 + (x < 130 ? -1.5 : 0);
 const BOOTE = [[262, 157.6, 1], [372, 151.6, 0.55]];
-const FAEHRE = { X: 298, Y: 155.4, s: 1.12 };
+const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
 {
   let k = `<path d="M0 147.5 L400 147.5 L400 ${r(KANTE(400))} ${[...Array(21)].map((_, i) => `L${400 - i * 20} ${r(KANTE(400 - i * 20))}`).join(" ")} Z" fill="${S.lg("wasser", [[0, "#6f9ab5"], [0.2, "#3a789c"], [1, "#1b4d69"]])}"/>`;
-  /* Spiegelbilder: gleiche Projektion mit negativer Höhe, zerlegt in Wellenstreifen */
+  /* Spiegelbilder: gleiche Projektion mit negativer Höhe (gestaucht, nach unten), in unregelmäßige
+     Wellenstreifen zerlegt und nach vorn ausblendend */
   let sp = "";
-  /* Opernhaus: Sockel (rosa) und Schalen (weiß) */
   sp += `<path d="M${P(op(0, 120, -0.5))} L${P(op(183, 120, -0.5))} L${P(op(183, 120, -SOCKEL_Z))} L${P(op(0, 120, -SOCKEL_Z))} Z" fill="#c9a08c"/>`;
-  for (const [b, t, p, e] of SPIEGEL_OP) {
-    const B0 = op(b[0], e, -b[1]), T = op(t[0], e, -t[1]), Pp = op(p[0], e, -SOCKEL_Z);
-    sp += `<path d="M${P(Pp)} L${P(B0)} L${P(T)} Z" fill="${e === 88 ? "#fbf6ea" : "#ece6da"}"/>`;
+  for (const o of SPIEGEL_OP) {
+    const B0 = op(o.b[0], o.e, -o.b[1]), T = op(o.t[0], o.e, -o.t[1]), Pp = op(o.p[0], o.e, -SOCKEL_Z);
+    sp += `<path d="M${P(Pp)} L${P(B0)} Q${P([B0[0] + (T[0] - B0[0]) * 0.3, T[1] - (T[1] - B0[1]) * 0.25])} ${P(T)} Q${P([(T[0] + Pp[0]) / 2 - 1, (T[1] + Pp[1]) / 2])} ${P(Pp)} Z" fill="${o.e === 88 ? "#fdf7ea" : "#ebe5d8"}"/>`;
   }
-  /* Brücke: Pylone und Bogen (unteres Stück) */
-  for (const [a, c] of [[-15, 31], [518, 31], [518, -31]]) sp += `<path d="M${P(bp(a - 10, c + 7, -0.5))} L${P(bp(a + 10, c + 7, -0.5))} L${P(bp(a + 10, c + 7, -89))} L${P(bp(a - 10, c + 7, -89))} Z" fill="#c9c1ae"/>`;
-  sp += `<path d="M${[300, 340, 380, 420, 460, 503].map((a) => P(bp(a, 15, -zU(a)))).join(" L")}" stroke="#7f8a90" stroke-width="1.6" fill="none"/>`;
-  sp += `<path d="M${P(bp(250, 24, -49))} L${P(bp(560, 24, -49))}" stroke="#7d878d" stroke-width="2.2"/>`;
-  /* Fähre und Segelboote */
-  sp += `<rect x="${r(FAEHRE.X - 16 * FAEHRE.s)}" y="${r(FAEHRE.Y + 0.4)}" width="${r(32 * FAEHRE.s)}" height="${r(4 * FAEHRE.s)}" fill="#2f7a4a"/><rect x="${r(FAEHRE.X - 14 * FAEHRE.s)}" y="${r(FAEHRE.Y + 4)}" width="${r(28 * FAEHRE.s)}" height="${r(5 * FAEHRE.s)}" fill="#e8c860"/>`;
+  for (const [a, c] of [[-15, 31], [518, 31], [518, -31]]) sp += `<path d="M${P(bp(a - 10, c + 7, -0.5))} L${P(bp(a + 10, c + 7, -0.5))} L${P(bp(a + 10, c + 7, -89))} L${P(bp(a - 10, c + 7, -89))} Z" fill="#d2cab6"/>`;
+  const bo = [280, 320, 360, 400, 440, 480, 503].map((a) => bp(a, 15, -zO(a))), bu = [503, 480, 440, 400, 360, 320, 280].map((a) => bp(a, 15, -zU(a)));
+  sp += `<path d="M${bo.map(P).join(" L")} L${bu.map(P).join(" L")} Z" fill="#8d979d" opacity=".6"/>`;
+  sp += `<path d="M${P(bp(250, 24, -49))} L${P(bp(560, 24, -49))}" stroke="#7d878d" stroke-width="2"/>`;
+  sp += `<rect x="${r(FAEHRE.X - 16 * FAEHRE.s)}" y="${r(FAEHRE.Y + 0.4)}" width="${r(32 * FAEHRE.s)}" height="${r(3.2 * FAEHRE.s)}" fill="#2f7a4a"/><rect x="${r(FAEHRE.X - 14 * FAEHRE.s)}" y="${r(FAEHRE.Y + 3.4)}" width="${r(28 * FAEHRE.s)}" height="${r(4 * FAEHRE.s)}" fill="#e8c860"/>`;
   for (const [x, y, s] of BOOTE) sp += `<path d="M${r(x)} ${r(y + 1)} L${r(x + 6 * s)} ${r(y + 1)} L${r(x + 0.3)} ${r(y + 16 * s)} Z" fill="#ffffff"/>`;
-  /* Feigen des Botanischen Gartens (dunkelgrün) */
-  sp += `<rect x="0" y="148.6" width="76" height="9" fill="#24432a"/>`;
-  k += `<g mask="url(#${S.id("wellenmaske")})" opacity=".32"><g filter="url(#${S.id("spiegel")})">${sp}</g></g>`;
-  /* Glitzern und Wellen */
-  let wl = "";
-  for (let i = 0; i < 200; i++) {
-    const y = 149 + Math.pow(rnd(), 0.8) * 40, w = 1 + (y - 148) * 0.22 * (0.5 + rnd());
-    wl += `<path d="M${r(rnd() * (398 - w))} ${r(y)} q${r(w / 2)} -.5 ${r(w)} 0" stroke="${rnd() < 0.6 ? "#d6e8f1" : "#163e56"}" stroke-width="${r(0.15 + (y - 148) * 0.012)}" fill="none" opacity="${r(0.3 + rnd() * 0.45)}"/>`;
+  sp += `<rect x="0" y="148.6" width="76" height="8" fill="#24432a"/>`;
+  /* Streifenmaske: zufällige Längen, nach unten breiter und lückiger */
+  let st = "";
+  for (let y = 148; y < 192;) {
+    const h = 0.5 + (y - 148) * 0.03, gap = 0.4 + (y - 148) * 0.035;
+    for (let x = -rnd() * 10; x < 400;) { const l = 3 + rnd() * (8 + (y - 148) * 0.3); st += `M${r(x)} ${r(y)}h${r(l)}v${r(h)}h${r(-l)}z`; x += l + 1 + rnd() * (2 + (y - 148) * 0.25); }
+    y += h + gap;
   }
-  k += wl;
+  S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="0" y="146" width="400" height="50"><path d="${st}" fill="${S.lg("spfade", [[0, "#fff"], [1, "#000"]], 0, 146, 0, 192, ' gradientUnits="userSpaceOnUse"')}"/></mask>`);
+  k += `<g mask="url(#${S.id("spmaske")})" opacity=".5"><g filter="url(#${S.id("spiegel")})">${sp}</g></g>`;
+  /* Wellen: Musterkachel in drei Tiefenbändern (vorn größer), dazu wenige Glanzlichter */
+  const welle = (n, sc) => { S.def(`<pattern id="${S.id("w" + n)}" width="26" height="4" patternUnits="userSpaceOnUse" patternTransform="scale(${sc})"><path d="M1 1q2-.7 4 0M12 3q2.5-.8 5 0M19 .8q1.6-.5 3.2 0" stroke="#dcecf3" stroke-width=".35" fill="none" opacity=".75"/><path d="M6 2.6q2-.6 4 0M21 3.2q2-.6 4 0" stroke="#163e56" stroke-width=".4" fill="none" opacity=".6"/></pattern>`); return `url(#${S.id("w" + n)})`; };
+  k += `<rect x="0" y="149" width="400" height="9" fill="${welle(1, 0.45)}"/><rect x="0" y="158" width="400" height="14" fill="${welle(2, 0.8)}"/><rect x="0" y="172" width="400" height="22" fill="${welle(3, 1.35)}"/>`;
+  let gl = "";
+  for (let i = 0; i < 22; i++) { const y = 152 + rnd() * 36, w = 1.5 + (y - 148) * 0.15; gl += `M${r(rnd() * 390)} ${r(y)}q${r(w / 2)} -.5 ${r(w)} 0`; }
+  k += `<path d="${gl}" stroke="#ffffff" stroke-width=".5" fill="none" opacity=".75"/>`;
+  /* Dunst über dem Wasser am Horizont */
+  k += `<rect x="0" y="147.5" width="400" height="6" fill="${S.lg("wdunst", [[0, "#e6eef2", 0.55], [1, "#e6eef2", 0]])}"/>`;
   S.teil({ id: "hafen", de: "der Hafen", syl: "HA-fen", it: "il porto", itSyl: "POR-to", en: "harbour", x: 0, y: 0, kunst: k,
     tipp: "Der Hafen von Sydney (Port Jackson) gilt als einer der schönsten Naturhäfen der Welt." });
 }

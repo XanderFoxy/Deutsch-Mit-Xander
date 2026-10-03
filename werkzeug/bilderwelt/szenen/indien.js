@@ -477,7 +477,7 @@ const schattenWest = (s, d, hoehe, breite) => { const u = uAt(d), y = yAt(d); re
     for (const d of [270, 230, 195, 165, 140, 118, 100, 85, 72, 61, 52, 44, 37, 31, 26, 22, 19, 16]) k += `<path d="M${r(Math.max(0, Math.min(400, xAt(sd * 8.2, d))))} ${r(yAt(d))} L${sd < 0 ? 0 : 400} ${r(yAt(d))}" stroke="${d % 2 ? "#7aa05a" : "#5a8040"}" stroke-width="${r(Math.min(2.4, 26 / d))}" opacity=".3"/>`;
   }
   k += `<rect x="0" y="${r(yAt(151))}" width="400" height="${r(yAt(149) - yAt(151))}" fill="#9fb6c6"/>`;
-  S.teil({ anker: [14, 152], id: "rasen", de: "der Rasen", syl: "RA-sen", it: "il prato", itSyl: "PRA-to", en: "lawn", x: 0, y: 0, kunst: k,
+  S.teil({ anker: [388, 161], id: "rasen", de: "der Rasen", syl: "RA-sen", it: "il prato", itSyl: "PRA-to", en: "lawn", x: 0, y: 0, kunst: k,
     tipp: "Der Rasen wird jeden Tag gegossen – im heißen Agra bleibt er so grün." });
 }
 {

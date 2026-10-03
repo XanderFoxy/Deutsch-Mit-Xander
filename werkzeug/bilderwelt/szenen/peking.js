@@ -188,7 +188,7 @@ const linie = (pts, dy = 0) => pts.map(([x, y], i) => (i ? "L" : "M") + r(x) + "
       k += `<path d="M${r(x - 1.4)} ${r(y + 1.2)} Q${r(x - 7)} ${r(y + 13)} ${r(x - 16)} ${r(y + 34)}" stroke="#f3ead2" stroke-width="1.2" opacity=".28" fill="none" filter="url(#${S.id("weich1")})"/>`;
     }
     /* Dunst: 60–70 km Luft dazwischen */
-    k += `<path d="${umriss}" fill="${S.lg("bergdunst", [[0, "#c9d6e2", 0.2], [0.6, "#d6e0e8", 0.36], [1, "#e6e4dc", 0.7]])}"/>`;
+    k += `<path d="${umriss}" fill="${S.lg("bergdunst", [[0, "#c9d6e2", 0.3], [0.6, "#d6e0e8", 0.46], [1, "#e6e4dc", 0.78]])}"/>`;
   }
   S.teil({ anker: [16, 84], id: "berg", de: "der Berg", syl: "BERG", it: "la montagna", itSyl: "mon-TA-gna", en: "mountain", x: 0, y: 0, kunst: k,
     tipp: "Im Norden von Peking liegen die Yanshan-Berge. Auf ihren Kämmen läuft die Große Mauer." });
@@ -414,8 +414,7 @@ const X = (m) => CX + m;
     tipp: "Auf dem Grat sitzen ein Reiter auf dem Phönix und neun Tiere. Je mehr Tiere, desto wichtiger das Gebäude." });
   torUnter.push({ id: "dachziegel", de: "der Dachziegel", syl: "DACH-zie-gel", it: "la tegola", itSyl: "TE-go-la", en: "roof tile", x: X(-30), y: r(yTrauf2 - 1), kunst: flaeche(-16, -10, 32, 9.4),
     tipp: "Gelb glasierte Ziegel durfte nur der Kaiser benutzen." });
-  torUnter.push({ id: "palastlaterne", de: "die Palastlaterne", syl: "pa-LAST-la-ter-ne", it: "la lanterna di palazzo", itSyl: "lan-TER-na di pa-LAZ-zo", en: "palace lantern", x: X(0), y: latY + 5.6, kunst: flaeche(-66, -9.4, 132, 10.6),
-    tipp: "Acht große rote Laternen hängen am Tor — seit 1949. Das mittlere Feld bleibt frei." });
+  /* „die Palastlaterne“ entfällt (Runde 2): mit „die Laterne“ vorn sonst drei Laternen-Wörter und 36 statt höchstens 35 Wörter */
 }
 {
   /* DER TORBOGEN: alle fünf Durchgänge (eigenes Teil, liegt vor dem Torbau) */

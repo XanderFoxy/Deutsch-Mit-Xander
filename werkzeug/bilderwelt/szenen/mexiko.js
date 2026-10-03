@@ -158,8 +158,8 @@ const KT = { x: 108, z: -46, h: 20, stufen: 4, sh: 3, tw: 10 };   /* Tempel der 
   k += `<rect x="0" y="${HY}" width="320" height="${200 - HY}" fill="${S.lg("rasen", [[0, "#e6d29a", 0.5], [0.3, "#a8b35e", 0.15], [1, "#3f6a24", 0.25]])}"/>`;
   for (let i = 0; i < 12; i++) { const y = HY + 3 + Math.pow(rnd(), 1.3) * 62, x = rnd() * 320, s = sy(y); k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.7 * s)}" ry="${r(0.1 * s)}" fill="#b8a76a" opacity=".22"/>`; }
   /* festgetretener Kalkboden (Sascab) unter den Händlerständen am Wegrand – dort steht auch der Esstisch */
-  k += `<path d="M178 200 Q182 182 206 176 Q236 171 270 172 Q306 173 322 178 L322 200 Z" fill="${S.lg("sascab", [[0, "#d2bf94", 0.55], [1, "#c4ad7c", 0.85]])}" filter="${DUNST}"/>`;
-  for (let i = 0; i < 26; i++) { const x = 186 + rnd() * 134, y = 176 + rnd() * 24; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.25 + rnd() * 0.4)}" ry=".18" fill="#9c8a62" opacity=".5"/>`; }
+  k += `<path d="M164 200 Q168 184 192 178 Q226 170 270 171 Q306 173 322 178 L322 200 Z" fill="${S.lg("sascab", [[0, "#dccaa0", 0.75], [1, "#cdb486", 0.95]])}" filter="${DUNST}"/>`;
+  for (let i = 0; i < 26; i++) { const x = 176 + rnd() * 144, y = 177 + rnd() * 23; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.25 + rnd() * 0.4)}" ry=".18" fill="#9c8a62" opacity=".5"/>`; }
   /* Schatten der Pyramide: Hülle aus Fuß und den Schattenpunkten von Plattform und Tempel */
   const sp = [];
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) { sp.push([sx * W0, 0, sz * W0], schattenAuf(sx * WT, HT, sz * WT), schattenAuf(sx * 6, 30, sz * 6)); }
@@ -615,12 +615,14 @@ const tischUnter = [];
     const x = 3, y = y0 + 0.4;
     let g = `<ellipse cx="${x}" cy="${y - 0.4}" rx="6" ry="1.5" fill="#f4f1ea" stroke="#5b8fd6" stroke-width=".35"/>`;
     for (const dx of [-3.2, 0, 3.2]) {
-      /* dünne Tortilla, U-förmig gefaltet; hinten sieht man die Füllung */
-      g += `<path d="M${x + dx - 2.4} ${y - 0.9} Q${x + dx - 2.2} ${y - 3.6} ${x + dx} ${y - 3.9} Q${x + dx + 2.2} ${y - 3.6} ${x + dx + 2.4} ${y - 0.9} Q${x + dx} ${y - 0.4} ${x + dx - 2.4} ${y - 0.9} Z" fill="#b45a2c"/>`;
-      for (let i = 0; i < 6; i++) g += `<path d="M${r(x + dx - 1.6 + i * 0.6)} ${r(y - 3.3 + (i % 2) * 0.3)} l.3 .9" stroke="#8a3c1a" stroke-width=".2"/>`;
-      g += `<path d="M${x + dx - 1.4} ${y - 3.3} q.5 -.4 1 0 M${x + dx + 0.2} ${y - 3.5} q.5 -.4 1 0 M${x + dx - 0.6} ${y - 2.9} q.5 -.4 1 0" stroke="#f08cb8" stroke-width=".3" fill="none"/>`;
-      g += `<path d="M${x + dx - 2.4} ${y - 0.9} Q${x + dx - 2.6} ${y - 2.6} ${x + dx - 1.6} ${y - 2.6} Q${x + dx} ${y - 1.6} ${x + dx + 1.6} ${y - 2.6} Q${x + dx + 2.6} ${y - 2.6} ${x + dx + 2.4} ${y - 0.9} Q${x + dx} ${y - 0.2} ${x + dx - 2.4} ${y - 0.9} Z" fill="#efd8a0" stroke="#d2b06c" stroke-width=".12"/>`;
-      for (let i = 0; i < 4; i++) g += `<circle cx="${r(x + dx - 1.4 + i * 0.9)}" cy="${r(y - 1.3 - (i % 2) * 0.5)}" r=".18" fill="#b98a46" opacity=".8"/>`;
+      /* Füllung (Cochinita pibil, Fleischfasern) quillt oben aus der gefalteten Tortilla */
+      g += `<path d="M${x + dx - 2.3} ${y - 2.6} Q${x + dx - 2.1} ${y - 3.9} ${x + dx} ${y - 3.8} Q${x + dx + 2.1} ${y - 3.9} ${x + dx + 2.3} ${y - 2.6} Z" fill="#b45a2c"/>`;
+      for (let i = 0; i < 6; i++) g += `<path d="M${r(x + dx - 1.7 + i * 0.65)} ${r(y - 3.6 + (i % 2) * 0.2)} l.35 .8" stroke="#7e3416" stroke-width=".18"/>`;
+      g += `<path d="M${x + dx - 1.5} ${y - 3.4} q.5 -.4 1 0 M${x + dx + 0.3} ${y - 3.6} q.5 -.4 1 0 M${x + dx - 0.5} ${y - 3.1} q.5 -.4 1 0" stroke="#f08cb8" stroke-width=".3" fill="none"/>`;
+      /* dünne, weiche Maistortilla: von der Seite ein Halbmond, oben offen */
+      g += `<path d="M${x + dx - 2.5} ${y - 2.7} A2.5 1.9 0 0 0 ${x + dx + 2.5} ${y - 2.7} L${x + dx + 2.2} ${y - 2.5} A2.2 1.5 0 0 1 ${x + dx - 2.2} ${y - 2.5} Z" fill="#e2c486"/>`;
+      g += `<path d="M${x + dx - 2.2} ${y - 2.5} A2.2 1.5 0 0 0 ${x + dx + 2.2} ${y - 2.5} Z" fill="#f0dca8"/>`;
+      for (let i = 0; i < 4; i++) g += `<circle cx="${r(x + dx - 1.3 + i * 0.85)}" cy="${r(y - 1.5 - (i % 2) * 0.45)}" r=".16" fill="#b98a46" opacity=".8"/>`;
     }
     k += g;
     tischUnter.push({ id: "taco", de: "der Taco", syl: "TA-co", it: "il taco", itSyl: "TA-co", en: "taco", x: TI.x + x, y: TI.y + y, kunst: flaeche(-6.2, -5, 12.4, 5.4, 0.4),
@@ -640,7 +642,7 @@ const tischUnter = [];
   }
   /* DIE AVOCADO — eine halbe mit Kern und eine ganze, ganz auf der Platte */
   {
-    const x = -15.4, y = y0 - 3;
+    const x = -15.2, y = y0 + 1;
     let g = `<ellipse cx="${x - 2.4}" cy="${y - 1.4}" rx="1.6" ry="2" fill="#2f4a1c" transform="rotate(-30 ${x - 2.4} ${y - 1.4})"/>`;
     g += `<path d="M${x} ${y} Q${x - 2.2} ${y - 0.4} ${x - 2} ${y - 2.6} Q${x - 1.4} ${y - 4.4} ${x + 0.2} ${y - 4.2} Q${x + 2} ${y - 3.8} ${x + 2} ${y - 1.6} Q${x + 1.8} ${y + 0.2} ${x} ${y} Z" fill="#355e1e"/>`;
     g += `<path d="M${x} ${y - 0.5} Q${x - 1.6} ${y - 0.8} ${x - 1.4} ${y - 2.6} Q${x - 1} ${y - 3.8} ${x + 0.2} ${y - 3.6} Q${x + 1.5} ${y - 3.3} ${x + 1.4} ${y - 1.6} Q${x + 1.3} ${y - 0.4} ${x} ${y - 0.5} Z" fill="#d8e88a"/>`;
@@ -651,7 +653,7 @@ const tischUnter = [];
   }
   /* DIE LIMETTE — halbiert und ganz, auf der Platte neben dem Mörser */
   {
-    const x = 7.2, y = y0 - 4.6;
+    const x = 7.9, y = y0 + 1.5;
     let g = `<circle cx="${x + 1.8}" cy="${y - 1.1}" r="1.15" fill="${S.rg("limette", [[0, "#94d82d"], [1, "#4c8a1a"]], 0.35, 0.3)}"/>`;
     g += `<ellipse cx="${x - 0.6}" cy="${y - 0.75}" rx="1.35" ry=".75" fill="#5c940d"/><ellipse cx="${x - 0.6}" cy="${y - 0.95}" rx="1.1" ry=".55" fill="#d8f5a2"/>`;
     for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; g += `<line x1="${x - 0.6}" y1="${y - 0.95}" x2="${r(x - 0.6 + Math.cos(a) * 0.9)}" y2="${r(y - 0.95 + Math.sin(a) * 0.45)}" stroke="#a9e34b" stroke-width=".15"/>`; }

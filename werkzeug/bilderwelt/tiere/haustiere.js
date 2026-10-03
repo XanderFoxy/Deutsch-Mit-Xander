@@ -1727,105 +1727,125 @@ module.exports = [
      GOLDFISCH — Komet (Carassius auratus)
      RECHERCHE: FishBase (Carassius auratus), Animal Diversity Web, about-goldfish.com „Comet“, Animal-World,
      Morphometrie-Studie: Körper wie die Giebel, aber schlanker (Höhe ≈ 32 % SL), Rücken- und Bauchlinie gleichmäßig
-     gewölbt; Kopf ≈ 28 % SL, Schnauze länger als das Auge (Auge ≈ 27 % der Kopflänge), endständiges kleines Maul
-     ohne Barteln, Doppel-Nasenloch; 25–31 Rundschuppen entlang der Seitenlinie in schrägen Reihen, zum Rücken, Bauch
-     und Schwanzstiel kleiner; Seitenlinie als Porenreihe (eine Pore je Schuppe); lange Rückenflosse (> 15 Strahlen,
-     vorn ein gesägter Hartstrahl), Beginn bei ≈ 48 % SL; Afterflosse mit Hartstrahl; Bauchflossen unter dem Rücken-
-     flossenbeginn, Brustflossen tief hinter dem Kiemendeckel; Komet: einfache, tief gegabelte, lange Schwanzflosse
-     (≈ 60 % SL und mehr), Lappen schmal und spitz; Farbe metallisch orange-gold, Rücken dunkler rot-orange, Bauch
-     heller, Flossen durchscheinend orange; Auge mit goldener Iris.
+     gewölbt; Kopf ≈ 28 % SL, Schnauze länger als das Auge (Auge ≈ 25 % der Kopflänge), endständiges kleines Maul
+     ohne Barteln, Doppel-Nasenloch; 25–31 Rundschuppen entlang der Seitenlinie in schrägen, versetzten Reihen
+     (Rautengitter), zu Rücken, Bauch und Schwanzstiel kleiner, Stiel bis kurz vor die Flosse beschuppt; sichtbar ist
+     nur der freie Hinterrand jeder Schuppe; Seitenlinie als Porenreihe (eine Pore je Schuppe), leicht nach unten
+     gebogen; lange Rückenflosse (> 15 Strahlen, vorn am höchsten, Rand leicht konkav, vorn ein gesägter Hartstrahl),
+     Beginn bei ≈ 48 % SL; Afterflosse mit Hartstrahl; Weichstrahlen im äußeren Drittel gegabelt; Bauchflossen unter
+     dem Rückenflossenbeginn, Brustflossen tief (≈ 80 % der Körperhöhe) direkt hinter dem Kiemendeckel, fächerförmig;
+     Komet: einfache, tief gegabelte, lange Schwanzflosse (≈ 60 % SL und mehr), Lappen schmal, leicht S-förmig,
+     oberer Lappen etwas länger; Farbe metallisch orange-gold: durchgehendes Glanzband auf der oberen Flanke, an
+     jeder Schuppe gebrochen, Kernschatten unten, Reflexlicht an der Bauchkante; Flossen an der Basis satt, zum Rand
+     durchscheinend; Auge mit goldener Iris, Goldring um die Pupille, dunkler Limbus, Hautrand oben.
+     Runde 3: Schuppen als Rautengitter (26 auf der Seitenlinie), Glanzband statt Noppen, Stiel ohne Kappe, Auge
+     kleiner und metallisch, Gesicht ohne Nähte, Volumen, Flossen mit gegabelten Strahlen und gesägtem Hartstrahl.
      ================================================================= */
   { id: "goldfisch", de: "der Goldfisch", syl: "GOLD-fisch", it: "il pesce rosso", itSyl: "PE-sce ROS-so", en: "goldfish",
     gruppe: "Haustiere", lebensraum: "Zuhause", schwimmt: true,
     laenge: 0.155, hoehe: 0.06,
     zeichne(T) {
       T.dez = 2;
+      const V = (n, w, t, u) => vol(T, n, { weich: w, tiefe: t, umgebung: u });
       let s = `<g transform="translate(0 .75)">`;
-      /* Flosse: eigener Verlauf Basis → Rand, Strahlen verjüngt und außen Y-gegabelt, Saum dunkler */
+      /* Flosse: Verlauf Basis (satt) → Rand (durchscheinend), Strahlen verjüngt (innen kräftig, außen fein) und im äußeren Drittel Y-gegabelt */
       const flosse = (pts, basis, rand, n, o = {}) => {
         const [bx0, by0, bx1, by1] = T.box(pts);
-        const g = T.lg("fl" + (T._fn = (T._fn || 0) + 1), [[0, "#f07a1a", 0.9], [0.65, "#f39a40", 0.6], [1, "#f6b870", 0.35]],
+        const g = T.lg("fl" + (T._fn = (T._fn || 0) + 1), [[0, "#ee7418", 0.9], [0.6, "#f39a40", 0.6], [1, "#f6b870", 0.35]],
           zahl((basis[0][0] - bx0) / ((bx1 - bx0) || 1)), zahl((basis[0][1] - by0) / ((by1 - by0) || 1)), zahl((rand[0][0] - bx0) / ((bx1 - bx0) || 1)), zahl((rand[0][1] - by0) / ((by1 - by0) || 1)));
         let st = "", st2 = "";
-        if (T.fein) for (let i = 0; i <= n; i++) {
+        for (let i = 0; i <= n; i++) {
+          if (!T.fein && i % 2) continue;
           const t = i / n, ax = basis[0][0] + (basis[1][0] - basis[0][0]) * t, ay = basis[0][1] + (basis[1][1] - basis[0][1]) * t;
           const ex = rand[0][0] + (rand[1][0] - rand[0][0]) * t, ey = rand[0][1] + (rand[1][1] - rand[0][1]) * t;
-          const mx = ax + (ex - ax) * 0.66, my = ay + (ey - ay) * 0.66, k = o.kr || 0;
+          const mx = ax + (ex - ax) * 0.66, my = ay + (ey - ay) * 0.66, k = (o.kr || 0) * Math.sin(Math.PI * t);
           st += `M${folge([ax, ay])}Q${folge([(ax + mx) / 2 + k, (ay + my) / 2 - k, mx, my])}`;
           const nx = -(ey - ay) * 0.035, ny = (ex - ax) * 0.035;
           st2 += `M${folge([mx, my])}L${folge([ex + nx, ey + ny])}M${folge([mx, my])}L${folge([ex - nx, ey - ny])}`;
         }
         return teil(T, pts, g, {
-          innen: (st ? `<path d="${st}" fill="none" stroke="#c0500e" stroke-width=".04" stroke-opacity=".5"/><path d="${st2}" fill="none" stroke="#c0500e" stroke-width=".018" stroke-opacity=".45"/>` : "") + (o.extra || ""),
-          ueber: `<use href="#${T.id("t" + T._n)}" fill="none" stroke="#b8500e" stroke-width=".02" stroke-opacity=".35"/>`,
+          innen: `<path d="${st}" fill="none" stroke="#c0500e" stroke-width=".045" stroke-opacity=".45"/>` + (T.fein ? `<path d="${st2}" fill="none" stroke="#c0500e" stroke-width=".016" stroke-opacity=".4"/>` : "") + (o.extra || ""),
         });
       };
-      /* ferne Brustflosse (nach vorn versetzt, blass) */
-      s += `<g opacity=".35">` + flosse([[4.1, -2.6], [3.4, -2.1], [2.7, -1.5], [3.1, -2.2], [3.7, -2.75]], [[4.05, -2.65], [3.75, -2.8]], [[2.75, -1.55], [3.2, -2.25]], 6) + "</g>";
-      /* Schwanzflosse (Komet): lang, tief gegabelt (≈ 66 %), schmale spitze Lappen, S-förmig, oberer Lappen etwas länger */
-      const schwanz = [[-2.6, -4.02], [-3.8, -4.7], [-5.4, -5.45], [-7, -6.05], [-8.75, -6.6, 1], [-7.6, -5.55], [-6.3, -4.6], [-4.85, -3.62, 1], [-6.2, -2.75], [-7.4, -1.85], [-8.45, -0.95, 1], [-6.9, -1.3], [-5.3, -2.0], [-3.8, -2.55], [-2.6, -3.12]];
-      s += flosse(schwanz, [[-2.7, -4.15], [-2.7, -3.05]], [[-8.6, -6.5], [-8.3, -1.0]], 18, { kr: 0.05 });
-      /* Rückenflosse: Basis auf der Rückenkontur ab ≈ 48 % SL, vorn am höchsten (≈ 50 % Körperhöhe), Hartstrahl gesägt */
-      const ruecken = [[2.05, -5.15], [1.75, -6.0], [1.5, -6.62, 1], [0.6, -6.25], [-0.2, -5.65], [-0.75, -4.95], [-0.95, -4.45, 1], [0.4, -4.76], [1.3, -4.98]];
-      s += flosse(ruecken, [[1.95, -5.1], [-0.85, -4.5]], [[1.5, -6.6], [-0.9, -4.55]], 17, { extra: T.fein ? `<path d="M2 -5.12L1.52 -6.58" stroke="#9a3a0a" stroke-width=".07"/><path d="M1.9 -5.5l.07 -.03M1.8 -5.8l.07 -.03M1.7 -6.1l.07 -.03M1.6 -6.38l.06 -.03" stroke="#9a3a0a" stroke-width=".03"/>` : "" });
+      /* gesägter Hartstrahl: feine Zähne an der Hinterkante alle ≈ 0,07 cm */
+      const hart = (a, b) => {
+        let z = "";
+        if (T.fein) { const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.floor(L / 0.07); for (let i = 1; i < n; i++) { const t = i / n, x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t; z += `M${folge([x, y])}l${folge([-0.03, 0.015])}`; } }
+        return `<path d="M${folge(a)}L${folge(b)}" stroke="#9a3a0a" stroke-width=".07"/>` + (z ? `<path d="${z}" stroke="#9a3a0a" stroke-width=".025"/>` : "");
+      };
+      /* ferne Brustflosse: 0,25 cm nach vorn, verkürzt, 35 % */
+      s += `<g opacity=".35">` + flosse([[4.3, -2.35], [3.75, -1.95], [3.25, -1.6], [3.4, -2.05], [3.95, -2.45]], [[4.25, -2.38], [3.95, -2.48]], [[3.3, -1.62], [3.45, -2.05]], 6) + "</g>";
+      /* Schwanzflosse (Komet): Lappen leicht S-förmig, Saum leicht wellig, oberer Lappen 5 % länger, Strahlen beginnen unter der letzten Schuppenreihe */
+      const schwanz = [[-2.4, -4.0], [-3.8, -4.75], [-5.3, -5.4], [-6.9, -6.15], [-8.85, -6.75, 1], [-7.85, -5.8], [-6.5, -4.85], [-4.95, -3.62, 1], [-6.3, -2.68], [-7.5, -1.82], [-8.45, -0.9, 1], [-7.2, -1.12], [-5.45, -1.95], [-3.85, -2.6], [-2.4, -3.1]];
+      /* Rückenflosse: Basis ab ≈ 48 % SL, vorn am höchsten (≈ 50 % der Körperhöhe), Rand leicht konkav, Hartstrahl gesägt */
+      const ruecken = [[2.05, -5.15], [1.78, -6.0], [1.55, -6.62, 1], [0.8, -5.98], [0.0, -5.42], [-0.6, -4.95], [-0.95, -4.45, 1], [0.4, -4.76], [1.3, -4.98]];
+      s += flosse(ruecken, [[1.95, -5.1], [-0.85, -4.5]], [[1.52, -6.58], [-0.9, -4.55]], 17, { extra: hart([2.0, -5.12], [1.55, -6.6]) });
       /* Afterflosse mit Hartstrahl, Bauchflosse unter dem Rückenflossenbeginn */
-      s += flosse([[-0.35, -2.8], [-0.8, -2.1], [-1.25, -1.55, 1], [-1.3, -2.3], [-1.25, -3.02]], [[-0.4, -2.78], [-1.2, -3]], [[-1.2, -1.6], [-1.28, -2.4]], 6, { extra: T.fein ? `<path d="M-.38 -2.8L-1.2 -1.62" stroke="#9a3a0a" stroke-width=".06"/>` : "" });
+      s += flosse([[-0.35, -2.8], [-0.8, -2.1], [-1.25, -1.55, 1], [-1.3, -2.3], [-1.25, -3.02]], [[-0.4, -2.78], [-1.2, -3]], [[-1.2, -1.6], [-1.28, -2.4]], 6, { extra: hart([-0.38, -2.8], [-1.2, -1.62]) });
       s += flosse([[2.25, -2.15], [1.8, -1.4], [1.25, -0.75, 1], [1.4, -1.4], [1.6, -2.05]], [[2.2, -2.12], [1.65, -2.05]], [[1.3, -0.8], [1.4, -1.35]], 7);
-      /* Körper */
-      const leib = [[6.6, -3.7], [6.45, -4.15], [6, -4.55], [5, -4.95], [3.8, -5.15], [2.9, -5.2], [1.6, -5.1], [0.4, -4.75], [-0.8, -4.25], [-1.7, -3.97], [-2.5, -3.95], [-2.95, -4.05],
-        [-2.95, -3.1], [-2.5, -3.2], [-1.7, -3.2], [-0.8, -2.85], [0.4, -2.4], [1.6, -2.1], [2.9, -2.05], [3.8, -2.1], [5, -2.35], [5.9, -2.75], [6.35, -3.15], [6.58, -3.48]];
+      /* Körper: Stiel läuft oben und unten konkav in die Flosse aus (keine Kappe) */
+      const leib = [[6.6, -3.7], [6.45, -4.15], [6, -4.55], [5, -4.95], [3.8, -5.15], [2.9, -5.2], [1.6, -5.1], [0.4, -4.75], [-0.8, -4.25], [-1.7, -3.97], [-2.45, -3.93], [-2.95, -4.08], [-3.2, -4.22],
+        [-3.2, -2.86], [-2.95, -3.0], [-2.45, -3.17], [-1.7, -3.2], [-0.8, -2.85], [0.4, -2.4], [1.6, -2.1], [2.9, -2.05], [3.8, -2.1], [5, -2.35], [5.9, -2.75], [6.35, -3.15], [6.58, -3.48]];
       const leibId = pfad(T, leib);
-      const oben = (x) => { const k = kurve(leib.slice(0, 13), 4); let b = k[0]; for (const p of k) if (Math.abs(p[0] - x) < Math.abs(b[0] - x)) b = p; return b[1]; };
-      const unten = (x) => { const k = kurve(leib.slice(12).concat([leib[0]]), 4); let b = k[0]; for (const p of k) if (Math.abs(p[0] - x) < Math.abs(b[0] - x)) b = p; return b[1]; };
-      /* Schuppen: nur der freie Hinterrand als feiner Bogen + helle Innenkante, schräge Reihen, zu Rücken/Bauch/Stiel kleiner;
-         Glanzband auf der oberen Flanke an jeder Schuppe gebrochen; Seitenlinie: eine Pore je Schuppe */
-      let rand = "", innen = "", glanz = "", poren = "";
-      if (T.fein) for (let c = 0; c < 21; c++) {
-        const x = 3.75 - c * 0.335;
-        const o = oben(x), u = unten(x), h = u - o;
-        const zeilen = Math.round(h / 0.3);
-        for (let r = -2; r <= zeilen + 2; r++) {
-          const y = o + ((r + (c % 2) * 0.5) / Math.max(1, zeilen)) * h + c * 0.07, v = (y - o) / h;
-          if (v > 1.05 || v < -0.05) continue;
-          const kante = Math.abs(v - 0.45) * 2, stiel = x < -1.6 ? 0.75 : 1;
-          const k = 0.21 * (1 - 0.3 * kante) * stiel, st = v < 0.3 ? 0.45 : v > 0.72 ? 0.3 : 1;
-          rand += `M${folge([x, y - k])}Q${folge([x - k * 1.15, y, x, y + k])}`;
-          if (st > 0.5) innen += `M${folge([x + 0.035, y - k * 0.8])}Q${folge([x - k * 0.95 + 0.035, y, x + 0.035, y + k * 0.8])}`;
-          if (v > 0.22 && v < 0.42) glanz += `<ellipse cx="${zahl(x + k * 0.5)}" cy="${zahl(y)}" rx="${zahl(k * 0.38)}" ry="${zahl(k * 0.6)}"/>`;
-        }
-        const lv = 0.42 + (c / 20) * 0.08, ly = o + lv * h;
-        if (x > -2.3) poren += `M${folge([x + 0.12, ly])}h.08`;
+      const kO = kurve(leib.slice(0, 13), 5), kU = kurve(leib.slice(13).concat([leib[0]]), 5);
+      const naechst = (k, x) => { let b = k[0]; for (const p of k) if (Math.abs(p[0] - x) < Math.abs(b[0] - x)) b = p; return b[1]; };
+      const oben = (x) => naechst(kO, x), unten = (x) => naechst(kU, x);
+      /* Schuppen als Rautengitter: 13 Reihen, versetzt, ≈ 0,26 cm Abstand (26 auf der Seitenlinie); nur freier Hinterrand + helle Innenkante;
+         im Glanzband heller (an jeder Schuppe gebrochen); eine Pore je Schuppe auf der leicht gebogenen Seitenlinie */
+      let rand = "", innen = "", glanzK = "", poren = "";
+      const nR = 13, sx = 0.26;
+      const vSL = (x) => 0.42 + 0.06 * Math.sin(Math.PI * klemm((3.8 - x) / 6.9));
+      if (T.fein) for (let j = 0; j < nR; j++) for (let i = 0; i < 30; i++) {
+        const x = 3.62 - (i + (j % 2) * 0.5) * sx;
+        if (x < -2.95) break;
+        const o = oben(x), u = unten(x), h = u - o, v = (j + 0.5) / nR, y = o + v * h;
+        const kante = Math.abs(v - 0.45) * 2, k = Math.min(sx * 0.62, (h / nR) * 1.25) * (1 - 0.3 * kante * kante);
+        rand += `M${folge([x, y - k])}Q${folge([x - k * 1.1, y, x, y + k])}`;
+        const band = v > 0.27 && v < 0.43;
+        (band ? glanzK : (innen += "", null));
+        if (band) glanzK += `M${folge([x + 0.04, y - k * 0.75])}Q${folge([x - k * 0.9 + 0.04, y, x + 0.04, y + k * 0.75])}`;
+        else if (v < 0.75) innen += `M${folge([x + 0.035, y - k * 0.75])}Q${folge([x - k * 0.9 + 0.035, y, x + 0.035, y + k * 0.75])}`;
       }
+      if (T.fein) for (let i = 0; i < 28; i++) { const x = 3.62 - i * sx - sx * 0.35; if (x < -2.9) break; const o = oben(x), u = unten(x); poren += `M${folge([x, o + vSL(x) * (u - o)])}h.035`; }
       const lf = feld(leib, 1.4);
-      s += teil(T, "#" + leibId, T.lg("gold", [[0, "#c0420e"], [0.3, "#e0661a"], [0.55, "#ef7a12"], [0.82, "#f6b260"], [1, "#f8cf8a"]]), {
-        form: { a: 0.6, w: 0.8, b: 0.22, s: ["#b8551a", 0.35], l: ["#ffe2a8", 0.3], al: 0.15, wl: 0.5, r: ["#ffd8a0", 0.35], ar: 0.05, wr: 0.18 },
+      s += `<g filter="${V("leib", 0.65, 5, 0.3)}">` + teil(T, "#" + leibId, T.lg("gold", [[0, "#c0420e"], [0.28, "#e0661a"], [0.5, "#ef7a12"], [0.72, "#d8641a"], [0.86, "#f2a050"], [1, "#f8cf8a"]]), {
         innen:
-          /* Glanzband: weich darunter, an jeder Schuppe gebrochen darüber */
-          mal(T, 0.25, `<path d="M4.4 -4.55Q1.2 -4.75 -2.2 -3.85L-2.2 -3.62Q1.2 -4.25 4.4 -4.05Z" fill="#ffe9b0" opacity=".35"/>`) +
-          (glanz ? `<g fill="#ffe9b0" opacity=".22" filter="${weich(T, 0.03)}">${glanz}</g>` : "") +
-          (rand ? `<path d="${rand}" fill="none" stroke="#8a2e08" stroke-width=".025" stroke-opacity=".3"/><path d="${innen}" fill="none" stroke="#ffe2a8" stroke-width=".03" stroke-opacity=".3"/>` : "") +
-          (poren ? `<path d="${poren}" stroke="#6a2006" stroke-width=".035" stroke-opacity=".45"/><path d="${poren}" stroke="#ffe6c0" stroke-width=".02" stroke-opacity=".45" transform="translate(0 .035)"/>` : "") +
-          /* Kopf ohne Schuppen; Kiemendeckel als konvexer Bogen (verjüngt), heller Hautsaum, Schlagschatten auf die erste Schuppenreihe; Präoperculum */
+          /* Glanzband auf der oberen Flanke (30–40 % von oben), Kernschatten bei 70–80 %, Reflexlicht an der Bauchkante */
+          mal(T, 0.18, `<path d="M4.2 -4.62Q1.2 -4.86 -2.3 -3.86L-2.3 -3.7Q1.2 -4.42 4.2 -4.2Z" fill="#ffe9b0" opacity=".4"/>`) +
+          mal(T, 0.22, `<path d="M4.2 -2.75Q1.2 -2.55 -2.3 -3.3L-2.3 -3.22Q1.2 -2.3 4.2 -2.45Z" fill="#b8551a" opacity=".35"/>`) +
+          (rand ? `<path d="${rand}" fill="none" stroke="#8a2e08" stroke-width=".022" stroke-opacity=".24"/><path d="${innen}" fill="none" stroke="#ffe2a8" stroke-width=".026" stroke-opacity=".3"/><path d="${glanzK}" fill="none" stroke="#fff2c8" stroke-width=".032" stroke-opacity=".42"/>` : "") +
+          (poren ? `<path d="${poren}" stroke="#6a2006" stroke-width=".03" stroke-opacity=".45"/><path d="${poren}" stroke="#ffe6c0" stroke-width=".018" stroke-opacity=".45" transform="translate(0 .03)"/>` : "") +
+          /* Kopf ohne Schuppen; Wange über Licht und Schatten; Kiemendeckel-Hinterrand als ein konvexer, sich verjüngender Bogen,
+             dahinter heller Hautsaum und Schlagschatten auf die erste Schuppenreihe; Präoperculum als schwache L-Kurve */
           form(T, [[6.6, -3.7], [6.45, -4.15], [6, -4.55], [5, -4.95], [4.05, -5.1], [3.85, -4.2], [3.85, -3.2], [4.15, -2.2], [5, -2.35], [5.9, -2.75], [6.35, -3.15]], T.lg("fkopf", [[0, "#cc5214"], [0.45, "#ef7f1e"], [0.85, "#f6b468"], [1, "#f8cc8c"]])) +
-          wulst(T, [[4.3, -4.6], [5.9, -4.4], [6.4, -3.5], [5.6, -2.6], [4.4, -2.6]], { a: 0.3, w: 0.4, b: 0.2, m: 0.45, s: ["#a8400c", 0.22], l: ["#fff0c8", 0.3], al: 0.1, wl: 0.3 }) +
-          mal(T, 0.08, `<path d="M4.02 -4.95Q3.55 -3.7 4.12 -2.25L3.9 -2.3Q3.35 -3.7 3.82 -4.9Z" fill="#8a2e08" opacity=".3"/>`) +
-          `<path d="M4.1 -4.95Q3.62 -3.7 4.18 -2.25" fill="none" stroke="#9a3a0a" stroke-width=".05" stroke-linecap="round" stroke-opacity=".7"/><path d="M4.16 -4.85Q3.72 -3.7 4.24 -2.35" fill="none" stroke="#ffd8a0" stroke-width=".03" stroke-opacity=".6"/>` +
-          `<path d="M4.85 -4.5Q4.65 -3.6 4.95 -2.75" fill="none" stroke="#9a3a0a" stroke-width=".03" stroke-opacity=".25"/>`,
-        ueber: `<use href="#${leibId}" fill="none" stroke="${T.lg("fkontur", [[0, "#8a2e08", 0], [0.5, "#8a2e08", 0.05], [1, "#8a2e08", 0.4]], 0, 0, 0.3, 1)}" stroke-width=".03"/>`,
-      });
-      /* Maul: endständig, Oberlippe als heller Wulst, Spalt nach vorn leicht steigend; Doppel-Nasenloch */
-      s += `<path d="M6.62 -3.62Q6.45 -3.55 6.3 -3.56" fill="none" stroke="#6a2006" stroke-width=".04" stroke-opacity=".65" stroke-linecap="round"/><path d="M6.6 -3.74Q6.45 -3.72 6.32 -3.66" fill="none" stroke="#f7b060" stroke-width=".05" stroke-opacity=".8"/>`;
+          weichform(T, [[4.6, -4.7], [5.8, -4.6], [6.2, -4.1], [5.4, -4.0], [4.7, -4.2]], "#fff0c8", 0.35, 0.2) +
+          weichform(T, [[4.6, -3.55], [5.6, -3.6], [5.8, -3.1], [4.9, -2.85]], "#a8400c", 0.25, 0.2) +
+          mal(T, 0.05, `<path d="M3.98 -4.95Q3.55 -3.7 4.08 -2.25L3.84 -2.3Q3.3 -3.7 3.76 -4.9Z" fill="#8a2e08" opacity=".3"/>`) +
+          `<path d="M4.1 -4.98Q3.6 -3.7 4.16 -2.22" fill="none" stroke="#9a3a0a" stroke-width=".045" stroke-linecap="round" stroke-opacity=".65"/><path d="M4.15 -4.9Q3.68 -3.7 4.2 -2.3" fill="none" stroke="#ffd8a0" stroke-width=".015" stroke-opacity=".6"/>` +
+          `<path d="M4.95 -4.3Q4.78 -3.6 5.0 -3.15Q5.15 -3.05 5.35 -3.08" fill="none" stroke="#9a3a0a" stroke-width=".02" stroke-opacity=".13"/>`,
+        /* Kontur: auf der Schattenseite unten eine dunklere Orange-Braun-Kante, auf der Lichtseite verliert sie sich */
+        ueber: `<use href="#${leibId}" fill="none" stroke="${T.lg("fkontur", [[0, "#8a2e08", 0], [0.55, "#8a2e08", 0], [1, "#8a2e08", 0.35]], 0, 0, 0, 1)}" stroke-width=".02"/>`,
+      }) + "</g>";
+      /* Schwanzflosse über dem Stielende: Basis blendet weich ein (keine Kappe, die Strahlen beginnen unter der letzten Schuppenreihe) */
+      s += `<g mask="url(#${T.id("fsm")})">` + flosse(schwanz, [[-2.45, -4.05], [-2.45, -3.05]], [[-8.75, -6.6], [-8.35, -0.98]], 20, { kr: 0.12 }) + "</g>";
+      T.def(`<mask id="${T.id("fsm")}" maskUnits="userSpaceOnUse" x="-10" y="-8" width="10" height="9"><rect x="-10" y="-8" width="10" height="9" fill="${T.lg("fsmv", [[0, "#fff"], [0.8, "#fff"], [0.93, "#000"]], 0, 0, 1, 0)}"/></mask>`);
+      /* Maul endständig: Oberlippe als hellerer Wulst, dünner sich verjüngender Spalt nach vorn leicht steigend, Unterlippe mit hellem Rand */
+      s += weichform(T, [[6.12, -3.8], [6.48, -3.78], [6.52, -3.68], [6.16, -3.66]], "#f7b060", 0.8, 0.012);
+      s += `<path d="M6.6 -3.62L6.45 -3.585Q6.36 -3.57 6.3 -3.57" fill="none" stroke="#6a2006" stroke-width=".025" stroke-opacity=".6" stroke-linecap="round"/><path d="M6.55 -3.53Q6.42 -3.5 6.32 -3.52" fill="none" stroke="#ffd09a" stroke-width=".02" stroke-opacity=".6"/>`;
       s += `<ellipse cx="6.12" cy="-4.27" rx=".07" ry=".05" fill="#4a1604"/><ellipse cx="6.12" cy="-4.24" rx=".07" ry=".03" fill="none" stroke="#ffd0a0" stroke-width=".015" opacity=".7"/>`;
-      /* Auge: Hautrand (oben 15 % über der Iris), Iris flach metallisch, Goldring um die Pupille, dunkler Limbus, Fensterlicht, Hornhaut-Sichel */
-      const ex = 5.5, ey = -4.05, er = 0.42;
-      s += `<circle cx="${ex}" cy="${ey}" r="${zahl(er + 0.06)}" fill="#b04a10" opacity=".5" filter="${weich(T, 0.04)}"/>`;
-      s += `<circle cx="${ex}" cy="${ey}" r="${er}" fill="#c8902a"/><circle cx="${ex}" cy="${ey}" r="${zahl(er - 0.02)}" fill="none" stroke="#6a3a0a" stroke-width=".04"/>`;
-      s += `<circle cx="${ex}" cy="${ey}" r=".24" fill="#f2d27a"/><circle cx="${ex}" cy="${ey}" r=".19" fill="${T.rg("fpup", [[0, "#0a1418"], [1, "#020304"]])}"/>`;
-      s += `<path d="M${zahl(ex - er * 0.9)} ${zahl(ey - er * 0.35)}A${er} ${er} 0 0 1 ${zahl(ex + er * 0.9)} ${zahl(ey - er * 0.35)}" fill="none" stroke="#a8400c" stroke-width=".13" opacity=".55" filter="${weich(T, 0.04)}"/>`;
-      s += `<rect x="${zahl(ex - 0.22)}" y="${zahl(ey - 0.22)}" width=".14" height=".1" rx=".03" fill="#fff" opacity=".9"/><path d="M${zahl(ex + 0.05)} ${zahl(ey + 0.33)}Q${zahl(ex + 0.32)} ${zahl(ey + 0.2)} ${zahl(ex + 0.36)} ${zahl(ey - 0.05)}" fill="none" stroke="#fff" stroke-width=".05" opacity=".15"/>`;
-      /* nahe Brustflosse: tief hinter dem Kiemendeckel, fächerförmige Strahlen, durchscheinend */
-      s += `<g opacity=".8">` + flosse([[3.75, -2.6], [3.1, -2.05], [2.4, -1.45], [2.85, -2.2], [3.45, -2.75]], [[3.72, -2.62], [3.45, -2.72]], [[2.42, -1.5], [2.85, -2.2]], 7) + "</g>";
+      /* Auge (−15 %): Hautrand weich, deckt oben 15 % der Iris; Iris metallisch mit Goldring um die Pupille und dunklem Limbus;
+         Fensterlicht bei 10–11 Uhr über der Grenze Iris/Pupille, Hornhaut-Reflexsichel unten rechts */
+      const ex = 5.5, ey = -4.05, er = 0.36;
+      s += `<circle cx="${ex}" cy="${ey}" r="${zahl(er + 0.05)}" fill="#b04a10" opacity=".5" filter="${weich(T, 0.03)}"/>`;
+      s += `<circle cx="${ex}" cy="${ey}" r="${er}" fill="${T.rg("firis", [[0, "#e0b050"], [0.55, "#c8902a"], [0.85, "#a8701e"], [1, "#6a3a0a"]])}"/><circle cx="${ex}" cy="${ey}" r="${zahl(er - 0.015)}" fill="none" stroke="#6a3a0a" stroke-width=".03"/>`;
+      s += `<circle cx="${ex}" cy="${ey}" r=".2" fill="#f2d27a"/><circle cx="${ex}" cy="${ey}" r=".16" fill="${T.rg("fpup", [[0, "#0a1418"], [1, "#020304"]])}"/>`;
+      if (T.fein) s += `<path d="M${zahl(ex - 0.29)} ${zahl(ey - 0.1)}Q${zahl(ex - 0.2)} ${zahl(ey - 0.3)} ${zahl(ex - 0.02)} ${zahl(ey - 0.33)}" fill="none" stroke="#f6dc90" stroke-width=".05" opacity=".45"/>`;
+      s += `<path d="M${zahl(ex - er * 0.95)} ${zahl(ey - er * 0.45)}A${er} ${er} 0 0 1 ${zahl(ex + er * 0.95)} ${zahl(ey - er * 0.45)}" fill="#b04a10" opacity=".45" filter="${weich(T, 0.03)}"/>`;
+      s += mal(T, 0.012, `<path d="M${folge([ex - 0.2, ey - 0.06])}Q${folge([ex - 0.18, ey - 0.17, ex - 0.07, ey - 0.19])}L${folge([ex - 0.05, ey - 0.12])}Q${folge([ex - 0.13, ey - 0.11, ex - 0.14, ey - 0.04])}Z" fill="#fff" opacity=".9"/>`);
+      s += `<path d="M${zahl(ex + 0.05)} ${zahl(ey + 0.29)}Q${zahl(ex + 0.27)} ${zahl(ey + 0.18)} ${zahl(ex + 0.31)} ${zahl(ey - 0.04)}" fill="none" stroke="#fff" stroke-width=".045" opacity=".15"/>`;
+      /* nahe Brustflosse: tief (≈ 80 % der Körperhöhe) direkt hinter der Unterkante des Kiemendeckels, Fächer, runder Rand, endet vor der Bauchflosse */
+      s += `<g opacity=".85">` + flosse([[4.05, -2.55], [3.4, -2.2], [2.75, -1.75], [2.55, -1.45], [2.85, -1.4], [3.5, -1.85], [4.0, -2.35]], [[4.02, -2.56], [3.98, -2.38]], [[2.6, -1.48], [2.9, -1.42]], 8) + "</g>";
       s += "</g>";
-      return { svg: s, box: [-8.85, -5.95, 6.65, 0], kopf: [3.6, -4.65, 6.8, -1.25] };
+      return { svg: s, box: [-8.95, -6.05, 6.65, 0], kopf: [3.6, -4.65, 6.8, -1.25] };
     } },
 ];

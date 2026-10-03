@@ -91,7 +91,8 @@ function zuschnitt(pts, x0 = -1, y0 = -1, x1 = 401, y1 = 261) {
 }
 /* Kobolzeller Steige: von der linken Vorderecke des Plönleinhauses schräg nach links vorn, fällt 14 % */
 const SD = [-0.5, 0.866], SN = [0.866, 0.5], S0 = [-9.5, 22];
-const steigeG = (t) => -0.18 * Math.max(0, t - 2);
+/* Steige: ab der Platzkante (t = −6) erst 6,5 %, ab der Kante (t = 6) kippt sie auf 21 % weg */
+const steigeG = (t) => t < -6 ? 0 : t < 6 ? -0.065 * (t + 6) : -0.78 - 0.21 * (t - 6);
 const SX = (t, w) => [S0[0] + SD[0] * t - SN[0] * w, S0[1] + SD[1] * t - SN[1] * w];   /* w: 0 Südseite … 5 Nordseite */
 const PS = (t, w, H) => { const [X, D] = SX(t, w); return P(X, D, H, steigeG(t)); };
 
@@ -306,7 +307,7 @@ const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 2.5); return { X, D, g: ste
   k += `<rect x="${r(v0)}" y="${r(vt)}" width="${r(v1 - v0)}" height="${r(vb - vt)}" fill="${BRUCH}"/><rect x="${r(v0)}" y="${r(vt)}" width="${r(v1 - v0)}" height="${r(vb - vt)}" fill="#000" opacity=".08"/>`;
   k += `<path d="M${r(v0 - 1)} ${r(vt)} L${r(vm)} ${r(vs)} L${r(v1 + 1)} ${r(vt)} Z" fill="${DACHZ}"/>`;
   /* innerer Torturm: Bruchstein, Spitzbogen, kleine Fenster, steiles Zeltdach */
-  const w = 3.2, [x0] = Q(-w, 0), [x1] = Q(w, 0), [, yb] = Q(0, 0), [, yt] = Q(0, 19), [xm, ys] = Q(0, 27);
+  const w = 3.2, [x0] = Q(-w, 0), [x1] = Q(w, 0), [, yb] = Q(0, 0), [, yt] = Q(0, 17), [xm, ys] = Q(0, 25);
   k += `<rect x="${r(x0)}" y="${r(yt)}" width="${r(x1 - x0)}" height="${r(yb - yt)}" fill="${BRUCH}"/>`;
   k += `<rect x="${r(x1 - 3)}" y="${r(yt)}" width="3" height="${r(yb - yt)}" fill="#000" opacity=".18"/><rect x="${r(x0)}" y="${r(yt)}" width="2" height="${r(yb - yt)}" fill="#ffd6a0" opacity=".2"/>`;
   for (const [H, dx] of [[11, -0.6], [14.5, 0.8], [17, -0.2]]) { const [fx, fy] = Q(dx, H); k += `<rect x="${r(fx - 0.7)}" y="${r(fy)}" width="1.4" height="2.4" fill="#2e261e"/>`; }
@@ -316,8 +317,8 @@ const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 2.5); return { X, D, g: ste
   const [, ab] = Q(0, 4.2);
   k += `<path d="M${r(xm - 4)} ${r(yb)} L${r(xm - 4)} ${r(ab + 3)} Q${r(xm - 4)} ${r(ab - 1)} ${r(xm)} ${r(ab - 2)} Q${r(xm + 4)} ${r(ab - 1)} ${r(xm + 4)} ${r(ab + 3)} L${r(xm + 4)} ${r(yb)} Z" fill="#2a221c"/>`;
   /* Schießscharten oben, Dunst aus dem Taubertal legt sich über den fernen Turm */
-  for (const dx of [-1.8, 1.8]) { const [fx, fy] = Q(dx, 17.6); k += `<rect x="${r(fx - 0.3)}" y="${r(fy)}" width=".6" height="1.6" fill="#2e261e"/>`; }
-  k += `<rect x="${r(x0 - 2)}" y="${r(ys - 3)}" width="${r(x1 - x0 + 4)}" height="${r(yb - ys + 3)}" fill="${S.lg("taldunst2", [[0, "#f6d6b4", 0.08], [1, "#f6d6b4", 0.4]])}"/>`;
+  for (const dx of [-1.8, 1.8]) { const [fx, fy] = Q(dx, 15.4); k += `<rect x="${r(fx - 0.3)}" y="${r(fy)}" width=".6" height="1.6" fill="#2e261e"/>`; }
+  k += `<rect x="${r(x0 - 2)}" y="${r(ys - 3)}" width="${r(x1 - x0 + 4)}" height="${r(yb - ys + 3)}" fill="${S.lg("taldunst2", [[0, "#f6d6b4", 0.2], [1, "#f6d6b4", 0.5]])}"/>`;
   S.teil({ id: "kobolzellertor", de: "das Kobolzeller Tor", syl: "KO-bol-zel-ler TOR", it: "la porta Kobolzell", itSyl: "POR-ta KO-bol-zell", en: "Kobolzell Gate", x: 0, y: 0, kunst: k,
     tipp: "Das Kobolzeller Tor (1360) ist ein Tor in der Stadtmauer. Hinter ihm geht es steil hinunter ins Taubertal." });
 }
@@ -353,13 +354,13 @@ const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 2.5); return { X, D, g: ste
   for (const [t0, t1, tr, fi, f, fw] of [[30, 40, 9, 14, "#e8d8b8", 0], [20, 30, 10, 15, "#d8a898", 1], [10, 20, 9.6, 15, "#ede0c2", 0], [-2, 10, 10.4, 16, "#e2c890", 1], [-12.4, -2, 11, 16.6, "#f0dcc0", 0]]) k += haus(t0, t1, 5, tr, fi, f, fw, true);
   /* Querhaus an der Biegung der Steige: verdeckt den unteren Teil des Kobolzeller Tors */
   {
-    const tq = 40, gq = steigeG(tq), Qq = (w, H, dt = 0) => PSh(tq + dt, w, H, gq);
-    k += `<path d="${pz(Qq(-2, 0), Qq(7, 0), Qq(7, 7.2), Qq(-2, 7.2))}" fill="#e9d6b4"/><path d="${pz(Qq(-2, 0), Qq(7, 0), Qq(7, 7.2), Qq(-2, 7.2))}" fill="${PUTZ}"/>`;
-    k += `<path d="${pz(Qq(-2.3, 7.2), Qq(7.3, 7.2), Qq(7.3, 11.6, 4.2), Qq(-2.3, 11.6, 4.2))}" fill="${DACHZ}"/><path d="${pz(Qq(-2.3, 7.2), Qq(7.3, 7.2), Qq(7.3, 11.6, 4.2), Qq(-2.3, 11.6, 4.2))}" fill="#ffb060" opacity=".12"/>`;
-    for (const w of [-0.8, 1.2, 3.4, 5.4]) for (const [h0, h1] of [[1.4, 2.6], [4.2, 5.5]]) k += fensterQ(Qq(w, h1), Qq(w + 0.9, h1), Qq(w + 0.9, h0), Qq(w, h0), { rb: 0.3, licht: rnd() < 0.35, abend: rnd() < 0.3 });
-    k += `<path d="${pz(Qq(-2, 0), Qq(7, 0), Qq(7, 7.2), Qq(-2, 7.2))}" fill="${SCHATTEN}" opacity=".22"/>`;
+    const tq = 46, gq = steigeG(tq), Qq = (w, H, dt = 0) => PSh(tq + dt, w, H, gq);
+    k += `<path d="${pz(Qq(-2, 0), Qq(7, 0), Qq(7, 6.5), Qq(-2, 6.5))}" fill="#e9d6b4"/><path d="${pz(Qq(-2, 0), Qq(7, 0), Qq(7, 6.5), Qq(-2, 6.5))}" fill="${PUTZ}"/>`;
+    k += `<path d="${pz(Qq(-2.3, 6.5), Qq(7.3, 6.5), Qq(7.3, 10.5, 4), Qq(-2.3, 10.5, 4))}" fill="${DACHZ}"/><path d="${pz(Qq(-2.3, 6.5), Qq(7.3, 6.5), Qq(7.3, 10.5, 4), Qq(-2.3, 10.5, 4))}" fill="#ffb060" opacity=".12"/>`;
+    for (const w of [-0.8, 1.2, 3.4, 5.4]) for (const [h0, h1] of [[1.2, 2.3], [3.8, 5.0]]) k += fensterQ(Qq(w, h1), Qq(w + 0.9, h1), Qq(w + 0.9, h0), Qq(w, h0), { rb: 0.3, licht: rnd() < 0.35, abend: rnd() < 0.3 });
+    k += `<path d="${pz(Qq(-2, 0), Qq(7, 0), Qq(7, 6.5), Qq(-2, 6.5))}" fill="${SCHATTEN}" opacity=".22"/>`;
     /* Dunst aus dem Tal über dem Dach */
-    k += `<path d="${pz(Qq(-6, 7), Qq(11, 7), Qq(11, 14, 6), Qq(-6, 14, 6))}" fill="#f6d8b6" opacity=".14"/>`;
+    k += `<path d="${pz(Qq(-6, 0), Qq(11, 0), Qq(11, 14, 6), Qq(-6, 14, 6))}" fill="#f6d8b6" opacity=".3"/>`;
   }
   S.teil({ id: "haus", de: "das Haus", syl: "HAUS", it: "la casa", itSyl: "CA-sa", en: "house", x: 0, y: 0, kunst: k,
     tipp: "Die Häuser an der Kobolzeller Steige stehen immer weiter unten – die Gasse ist sehr steil." });
@@ -586,7 +587,7 @@ const LL = -8;
      Pfad über die Bögen; die Steine sind Striche mit Strichmuster (Länge ∝ 1/Abstand) — stufenlos, ohne Nähte. */
   const RH = 0.15, PER = 1.7, AMP = 0.15;
   const yD = (D) => HOR + EYE * F / D;
-  const flaecheP = zuschnitt([[-1, 262], P(LL, 3.4, 0), P(LL, 9.3, 0), PS(-11.7, 5, 0), PS(2.4, 5, 0), PS(2.4, 0, 0), P(PH.L0, PH.d, 0), P(PH.L1, PH.d, 0), P(PH.L1, 21.05, 0, 0), P(4, 21.05, 0, 0), P(4, 3.3, 0), [401, 262]]);
+  const flaecheP = zuschnitt([[-1, 262], P(LL, 3.4, 0), P(LL, 9.3, 0), PS(-11.7, 5, 0), PS(-6, 5, 0), PS(-6, 0, 0), P(PH.L0, PH.d, 0), P(PH.L1, PH.d, 0), P(PH.L1, 21.05, 0, 0), P(4, 21.05, 0, 0), P(4, 3.3, 0), [401, 262]]);
   S.def(`<clipPath id="${S.id("pflclip")}"><path d="${poly(...flaecheP)}"/></clipPath>`);
   const reihe = (Dc) => {
     const xa = Math.max(-15, -255 * Dc / F), xb = Math.min(4.2, 124 * Dc / F), X0 = Math.floor(xa / PER) * PER;
@@ -646,17 +647,21 @@ const LL = -8;
    5 — DIE GASSE (Kobolzeller Steige: fällt hinter der Kante sichtbar ab)
    ===================================================================== */
 {
-  /* Die Steige ist ab der Kuppe (t ≈ 2) verdeckt: man sieht nur den Anfang und die Kante, dahinter fallen Häuser und Tor weg */
-  const TK = 2.4, L = [], R = [];
-  for (let t = -11.7; t <= TK + 0.01; t += (TK + 11.7) / 6) { L.push(PS(t, 5, 0)); R.push(PS(t, 0, 0)); }
-  let k = `<path d="${poly(...L, ...R.slice().reverse())}" fill="${S.lg("steige", [[0, "#4a4038", 0.28], [1, "#6a5e50", 0.12]], 0, 0, 0, 1)}"/>`;
-  /* Pflasterbögen quer zur Steige, zur Kuppe hin enger */
-  for (let t = -11; t < TK; t += Math.max(0.5, (TK - t) * 0.16)) { const a2 = PS(t, 0.1, 0), b2 = PS(t, 4.9, 0), m2 = PS(t + 0.25, 2.5, 0); k += `<path d="M${pt(a2)} Q${pt(m2)} ${pt(b2)}" stroke="#6e6457" stroke-width="${r(Math.max(0.15, 0.5 * 12 / (SX(t, 2.5)[1])))}" fill="none" opacity=".75"/>`; }
-  /* Rinne in der Mitte und Bordsteine, die zur Kuppe laufen */
-  k += `<path d="M${pt(PS(-11.7, 2.5, 0))} L${pt(PS(TK, 2.5, 0))}" stroke="#5a5248" stroke-width="1.1" opacity=".55"/>`;
-  k += `<path d="M${L.map(pt).join(" L")}" stroke="#c9b898" stroke-width=".6" fill="none"/><path d="M${R.map(pt).join(" L")}" stroke="#c9b898" stroke-width=".6" fill="none"/>`;
-  /* die Kuppe: heller Grat, dahinter fällt die Gasse steil ab (warmer Dunst aus dem Tal) */
-  k += `<path d="M${pt(PS(TK, 5, 0))} L${pt(PS(TK, 0, 0))}" stroke="#d8c8a8" stroke-width=".7"/>`;
+  /* Die Steige: ab der Platzkante fällt sie; Bordsteine und Pflasterbögen fluchten auf einen Punkt UNTER dem
+     Horizont. An der Kante (t = 20) kippt sie steil weg — dahinter tauchen nur noch Dächer und der Torturm auf. */
+  const TK = 6, L = [], R = [];
+  for (let t = -6; t <= TK + 0.01; t += 1) { L.push(PS(t, 5, 0)); R.push(PS(t, 0, 0)); }
+  let k = `<path d="${poly(...L, ...R.slice().reverse())}" fill="${S.lg("steige", [[0, "#837868"], [1, "#9a8d7a"]], 0, 0, 0, 1)}"/>`;
+  /* Pflasterbögen quer zur Steige: so dicht, wie das Auge sie trennt */
+  { let d = "", yAlt = 999; for (let t = -6; t < TK; t += 0.15) { const y = PS(t, 2.5, 0)[1]; if (yAlt - y < 0.7) continue; yAlt = y; d += `M${pt(PS(t, 0.1, 0))} Q${pt(PS(t - 0.35, 2.5, 0))} ${pt(PS(t, 4.9, 0))} `; } k += `<path d="${d}" stroke="#5f564b" stroke-width=".28" fill="none" opacity=".8"/>`; }
+  /* Rinne in der Mitte, Bordsteine — alle fluchten abwärts */
+  k += `<path d="M${pt(PS(-6, 2.5, 0))} L${pt(PS(TK, 2.5, 0))}" stroke="#575046" stroke-width=".9" opacity=".7"/>`;
+  k += `<path d="M${L.map(pt).join(" L")}" stroke="#cdbb98" stroke-width=".7" fill="none"/><path d="M${R.map(pt).join(" L")}" stroke="#cdbb98" stroke-width=".7" fill="none"/>`;
+  /* Mäuerchen an der Platzkante rechts: der Platz bleibt eben, die Steige sinkt daneben ab */
+  k += `<path d="${poly(PS(-6, 0, 0), PS(0, 0, 0), PS(0, 0, 0.39 + 0.5), PS(-6, 0, 0.5))}" fill="#bfa982"/><path d="M${pt(PS(-6, 0, 0.5))} L${pt(PS(0, 0, 0.89))}" stroke="#e2d2b2" stroke-width=".5"/>`;
+  /* die Kante: heller Grat, dahinter warmer Dunst aus dem Tal */
+  k += `<path d="M${pt(PS(TK, 5, 0))} L${pt(PS(TK, 0, 0))}" stroke="#ddcdaa" stroke-width=".8"/>`;
+  k += `<path d="${poly(...L, ...R.slice().reverse())}" fill="${SCHATTEN}" opacity=".26"/>`;
   S.teil({ id: "gasse", de: "die Gasse", syl: "GAS-se", it: "il vicolo", itSyl: "VI-co-lo", en: "lane", x: 0, y: 0, kunst: k,
     tipp: "Die Kobolzeller Steige ist eine steile Gasse. Sie führt hinunter zum Kobolzeller Tor." });
 }
