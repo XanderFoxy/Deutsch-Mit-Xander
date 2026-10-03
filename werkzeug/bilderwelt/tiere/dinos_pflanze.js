@@ -244,6 +244,12 @@ const strich = (T, listen, farbe, w, op, sd) => (!T.fein && op < 0.3) ? "" : `<p
 const oval = (T, cx, cy, rx, ry, rot, farbe, op, sd) => (!T.fein && op < 0.3) ? "" :
   `<ellipse cx="${n1(cx)}" cy="${n1(cy)}" rx="${n1(rx)}" ry="${n1(ry)}"${rot ? ` transform="rotate(${rot} ${n1(cx)} ${n1(cy)})"` : ""} fill="${farbe}" opacity="${op}" filter="${weich(T, sd || Math.max(0.3, Math.min(rx, ry) * 0.6))}"/>`;
 const HELL = "#fff3d6", DUNKEL = "#0a0703";
+/* Volumen (kern.js T.volumen, ANLEITUNG 13): Gruppe mit Rundungs-Licht aus der eigenen Silhouette (links oben Licht,
+   Kernschatten zur Unterkante). weich in Zeicheneinheiten (≈ 20–30 % der Teildicke). In Szenen ohne Filter. */
+const vol = (T, name, inhalt, weichE, tiefe = 5, umgebung = 0.32) => {
+  const f = T.volumen ? T.volumen(name, { weich: weichE, tiefe, umgebung }) : "none";
+  return f === "none" ? inhalt : `<g filter="${f}">${inhalt}</g>`;
+};
 /* Körpermasse: Formen (Punktlisten oder Pfade) als gemeinsamer Clip; Grundfarbe als Rechteck; innen = Licht/Haut */
 function masse(T, formen, fill, innen) {
   T._m = (T._m || 0) + 1;
@@ -491,7 +497,7 @@ function triceratops(T) {
     [27.4, -19.6, 0.5], [34, -20.4, 0.56], [40.4, -19.8, 0.56], [46.4, -18.6, 0.52], [52, -16.8, 0.46], [38, -16, 0.44], [44, -15.4, 0.42],
     [21, -20.6, 0.44], [32.6, -22.2, 0.5], [39.4, -22.4, 0.52], [45.8, -21, 0.5], [51.4, -19.4, 0.44], [30.6, -17.6, 0.4], [36, -18.4, 0.42], [42.4, -17.6, 0.42], [48.8, -16.6, 0.4]]
     .map(([x, y, R]) => [x + (T.rnd() - 0.5) * 1.2, y + (T.rnd() - 0.5) * 0.8, R * (1 + T.rnd() * 0.5)]), "#9a8460");
-  s += masse(T, [RUMPF, HB, VB], grund, k);
+  s += vol(T, "rumpf", masse(T, [RUMPF, HB, VB], grund, k), 2.4, 5);
   s += hufe(T, [[34.8, 2.2, 1.25, 0.2], [37.1, 2.4, 1.4, 0.3], [39.4, 2.2, 1.3, 0.3]]) + hufe(T, [[55.3, 1.9, 1.2], [57.3, 2, 1.3], [59.2, 1.8, 1.15]]);
   s += kontakt(T, 37, 7) + kontakt(T, 57, 5.6);
 
@@ -550,7 +556,7 @@ function triceratops(T) {
     /* Gesichtsschuppen: Platten auf dem Nasenrücken, zum Kiefer hin feiner */
     haut(T, tub(T, "tN", 0.26), [[74, -20], [78, -17.8], [83.4, -14.8], [82.4, -13], [77, -15.2], [73.6, -17]], 0.7) +
     haut(T, tub(T, "tG", 0.13), [[70.4, -19], [76, -16], [84, -12.4], [84, -8.4], [74, -8.6], [70.2, -12]], 0.6);
-  s += masse(T, [K], kopfF, kk);
+  s += vol(T, "kopf", masse(T, [K], kopfF, kk), 1.4, 4);
   /* Hakenschnabel: Rostrale schmal mit Haken über dem Prädentale; mattes Braun-Grau, abgenutzte hellere Schneide,
      erhabener beschuppter Hautrand */
   const ROS = [[83.6, -14.4], [84.6, -13.4], [85.3, -12.3], [85.9, -10.8], [85.9, -8.7, 1], [85.2, -9.5], [84.3, -10.3], [83.4, -11.2], [82.8, -12.8]];

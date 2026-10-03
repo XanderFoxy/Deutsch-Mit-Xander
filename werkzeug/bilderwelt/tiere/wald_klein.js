@@ -126,7 +126,14 @@ function volumen(T, sd, ss = sd * 0.85, el = 50, k = 1.3) {
     `<feComposite in="b" in2="SourceGraphic" operator="arithmetic" k1="${k}" result="m"/><feComposite in="m" in2="SourceAlpha" operator="in"/>`,
     `x="-12%" y="-12%" width="124%" height="124%"`);
 }
-const licht = (T, v, inhalt) => (v ? `<g filter="${volumen(T, ...v)}">${inhalt}</g>` : inhalt);
+/* Volumen je Körperteil über T.volumen (kern.js, ANLEITUNG Punkt 13); in Szenen liefert er "none" → ohne Filter.
+   v = [weich (cm), tiefe, lichthöhe, umgebung] */
+const licht = (T, v, inhalt) => {
+  if (!v) return inhalt;
+  const [sd, ss, el = 50, amb = 0.3] = v;
+  const url = T.volumen ? T.volumen("w" + kz(sd) + "_" + kz(ss) + "_" + el + "_" + kz(amb), { weich: sd, tiefe: ss, hoehe: el, umgebung: amb }) : volumen(T, sd, ss, el);
+  return url === "none" ? inhalt : `<g filter="${url}">${inhalt}</g>`;
+};
 /* Kanten in Wuchsrichtung aufrauen (Haarspitzen an Zeichnung/Farbgrenzen); nur fein */
 function zottel(T, f, k) {
   if (!T.fein) return "";
@@ -228,42 +235,42 @@ function feld(pts, R, extra) {
    Zwei Arten: (1) spitz zulaufende, leicht gebogene Strähnen (Wurzel breit → Spitze) für lange Haare;
    (2) Strichhaare (o.strich = Strichbreite) für kurzes Deckhaar – billig. Je Farbe EIN Pfad, nach Zeilen sortiert
    und relativ verkettet (klein). Eimer: [farbe, deckkraft]. */
-function ausgabe(eimer, listen, dez, strich) {
+function ausgabe(eimer, listen, q, strich) {
+  /* Koordinaten in ganzen Vielfachen von q (cm) und relativ → sehr kurz; Pfad mit scale(q) */
+  const ganz = (zs) => zs.map((n, i) => (i && n >= 0 ? " " : "") + n).join("");
   return listen.map((h, i) => {
     if (!h.length) return "";
     h.sort((a, b) => (Math.round(a[1] * 2) - Math.round(b[1] * 2)) || (a[0] - b[0]));
     /* Stift: relative Schritte werden gegen die GERUNDETE Stiftposition gerechnet → keine Drift */
     let d = "", px = 0, py = 0;
-    const zu = (x, y, cmd) => {
-      const dx = +zahl(x - px, dez), dy = +zahl(y - py, dez);
-      px += dx; py += dy;
-      return [dx, dy];
-    };
+    const zu = (x, y) => { const dx = Math.round(x / q) - px, dy = Math.round(y / q) - py; px += dx; py += dy; return [dx, dy]; };
+    const rel = (x, y) => [Math.round(x / q) - px, Math.round(y / q) - py];
     for (const [x0, y0, x1, y1, w, k] of h) {
       if (strich) {
-        d += d ? "m" + folge(zu(x0, y0), dez) : (px = +zahl(x0, dez), py = +zahl(y0, dez), "M" + folge([px, py], dez));
+        d += (d ? "m" : "M") + ganz(zu(x0, y0));
         if (k) {
-          const l = Math.hypot(x1 - x0, y1 - y0), sx = px, sy = py;
-          const cx = (x0 + x1) / 2 - (y1 - y0) / l * k * l, cy = (y0 + y1) / 2 + (x1 - x0) / l * k * l;
-          const c = [+zahl(cx - sx, dez), +zahl(cy - sy, dez)], e = zu(x1, y1);
-          d += "q" + folge(c.concat(e), dez);
-        } else d += "l" + folge(zu(x1, y1), dez);
+          const l = Math.hypot(x1 - x0, y1 - y0);
+          const c = rel((x0 + x1) / 2 - (y1 - y0) / l * k * l, (y0 + y1) / 2 + (x1 - x0) / l * k * l);
+          d += "q" + ganz(c.concat(zu(x1, y1)));
+        } else d += "l" + ganz(zu(x1, y1));
         continue;
       }
       const l = Math.hypot(x1 - x0, y1 - y0) || 1, nx = -(y1 - y0) / l * w / 2, ny = (x1 - x0) / l * w / 2;
-      d += d ? "m" + folge(zu(x0 + nx, y0 + ny), dez) : (px = +zahl(x0 + nx, dez), py = +zahl(y0 + ny, dez), "M" + folge([px, py], dez));
+      d += (d ? "m" : "M") + ganz(zu(x0 + nx, y0 + ny));
       if (k) {
         /* gebogen: Kontrollpunkt seitlich versetzt (k = Biegung in Anteilen der Länge) */
         const mx = (x0 + x1) / 2 + nx / w * 2 * k * l, my = (y0 + y1) / 2 + ny / w * 2 * k * l;
-        const c1 = [+zahl(mx - px, dez), +zahl(my - py, dez)], e1 = zu(x1, y1);
-        const c2 = [+zahl(mx - px, dez), +zahl(my - py, dez)], e2 = zu(x0 - nx, y0 - ny);
-        d += "q" + folge(c1.concat(e1), dez) + "q" + folge(c2.concat(e2), dez);
-      } else d += "l" + folge(zu(x1, y1).concat(zu(x0 - nx, y0 - ny)), dez);
+        const c1 = rel(mx, my), e1 = zu(x1, y1), c2 = rel(mx, my), e2 = zu(x0 - nx, y0 - ny);
+        d += "q" + ganz(c1.concat(e1)) + "q" + ganz(c2.concat(e2));
+      } else { const e1 = zu(x1, y1); d += "l" + ganz(e1.concat(zu(x0 - nx, y0 - ny))); }
     }
-    if (strich) return `<path d="${d}" fill="none" stroke="${eimer[i][0]}" stroke-width="${zahl(strich * (eimer[i][2] || 1), 3)}"${eimer[i][1] < 1 ? ` stroke-opacity="${eimer[i][1]}"` : ""} stroke-linecap="round"/>`;
-    return `<path d="${d}" fill="${eimer[i][0]}"${eimer[i][1] < 1 ? ` fill-opacity="${eimer[i][1]}"` : ""}/>`;
+    const sc = ` transform="scale(${zahl(q, 3)})"`;
+    if (strich) return `<path${sc} d="${d}" fill="none" stroke="${eimer[i][0]}" stroke-width="${zahl(strich * (eimer[i][2] || 1) / q, 2)}"${eimer[i][1] < 1 ? ` stroke-opacity="${eimer[i][1]}"` : ""} stroke-linecap="round"/>`;
+    return `<path${sc} d="${d}" fill="${eimer[i][0]}"${eimer[i][1] < 1 ? ` fill-opacity="${eimer[i][1]}"` : ""}/>`;
   }).join("");
 }
+/* Haar-Raster: T.hq (cm) je Art, in der Szene doppelt so grob */
+const hq = (T, o) => (o.q || T.hq || 0.04) * (T.fein ? 1 : 2);
 /* Haare in einer Fläche. o: { n, L, w (Wurzelbreite) | strich, flow(x, y) Grad, streu, kr (Biegung), lf(x, y) Längenfaktor,
    wo(x, y), eimer, wahl(x, y, z) → Index, dez, szene (Anteil in der Szene) } */
 function haar(T, pts, o) {
@@ -284,7 +291,7 @@ function haar(T, pts, o) {
     listen[idx].push([x - ca * L * 0.15, y - sa * L * 0.15, x + ca * L, y + sa * L, (o.w || L * 0.08) * (0.7 + T.rnd() * 0.6) * (T.fein ? 1 : 1.6), k]);
     g++;
   }
-  return ausgabe(o.eimer, listen, o.dez || 2, o.strich ? o.strich * (T.fein ? 1 : 1.7) : 0);
+  return ausgabe(o.eimer, listen, hq(T, o), o.strich ? o.strich * (T.fein ? 1 : 1.7) : 0);
 }
 /* Haare über die Kontur hinaus (weicher Fellrand). o wie haar, dazu ab (Anteil nach außen 0–1), offen (Linie statt Umriss) */
 function randhaar(T, pts, o) {
@@ -307,7 +314,7 @@ function randhaar(T, pts, o) {
     const kk = o.kr ? o.kr * (T.rnd() - 0.5) * 2 : 0;
     listen[idx].push([sx, sy, sx + dx * l, sy + dy * l, (o.w || l * 0.08) * (0.7 + T.rnd() * 0.6) * (T.fein ? 1 : 1.6), kk]);
   }
-  return ausgabe(o.eimer, listen, o.dez || 2, o.strich ? o.strich * (T.fein ? 1 : 1.7) : 0);
+  return ausgabe(o.eimer, listen, hq(T, o), o.strich ? o.strich * (T.fein ? 1 : 1.7) : 0);
 }
 /* Fellstruktur (Rauschen, in Wuchsrichtung gestreckt) – nur fein, schwach. b = Box, winkel = Wuchsrichtung */
 function fellgrund(T, n, b, winkel, op, o = {}) {
@@ -345,7 +352,7 @@ function schweif(T, c, hb, o) {
       listen[idx].push([sx, sy, sx + (ex - sx) * tl, sy + (ey - sy) * tl, (o.w || 0.12) * (0.7 + T.rnd() * 0.6) * (T.fein ? 1 : 1.8), kk]);
     }
   }
-  return ausgabe(o.eimer, listen, o.dez || 2, o.strich ? o.strich * (T.fein ? 1 : 1.8) : 0);
+  return ausgabe(o.eimer, listen, hq(T, o), o.strich ? o.strich * (T.fein ? 1 : 1.8) : 0);
 }
 
 /* ---------- Auge ----------

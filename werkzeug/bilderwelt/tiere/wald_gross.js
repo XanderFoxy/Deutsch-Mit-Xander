@@ -26,7 +26,8 @@ function kit(T, box = [-60, -320, 620, 40], grob = 0.5) {
     }
     return d + (zu ? "Z" : "");
   };
-  const H = { F, f, G, US: ' gradientUnits="userSpaceOnUse"' };
+  const f2 = (n) => String(Math.round(n * 100) / 100);
+  const H = { F, f, f2, G, US: ' gradientUnits="userSpaceOnUse"' };
   let nr = 0;
   const RAD = Math.PI / 180;
   /* lokales System (Kopf, Ohr, Geweih) → Tier: drehen um grad, skalieren, verschieben */
@@ -41,7 +42,7 @@ function kit(T, box = [-60, -320, 620, 40], grob = 0.5) {
   H.blur = (sd) => {
     sd = [0.12, 0.25, 0.45, 0.8, 1.3, 2, 3].reduce((b, v) => (Math.abs(v - sd) < Math.abs(b - sd) ? v : b), 0.12);
     const id = T.id("b" + String(sd).replace(".", "_"));
-    if (!bl.has(id)) { bl.add(id); T.def(`<filter id="${id}" filterUnits="userSpaceOnUse" x="${box[0]}" y="${box[1]}" width="${box[2] - box[0]}" height="${box[3] - box[1]}"><feGaussianBlur stdDeviation="${sd}"/></filter>`); }
+    if (!bl.has(id)) { bl.add(id); T.def(`<filter id="${id}" filterUnits="userSpaceOnUse" x="${box[0]}" y="${box[1]}" width="${box[2] - box[0]}" height="${box[3] - box[1]}" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${sd}"/></filter>`); }
     return `url(#${id})`;
   };
   /* Fläche: Pfad EINMAL in defs, Füllung/Innenzeichnung/Rand per <use> */
@@ -94,7 +95,7 @@ function kit(T, box = [-60, -320, 620, 40], grob = 0.5) {
     const wf = typeof winkel === "function" ? winkel : () => winkel;
     const lf = typeof laenge === "function" ? laenge : () => laenge;
     const summe = farben.reduce((s, c) => s + c[1], 0);
-    const eimer = farben.map(() => []);
+    const eimer = farben.map(() => []), tips = [];
     const streu = o.streu != null ? o.streu : 16, kr = o.krumm != null ? o.krumm : 0.18;
     let v = 0, g = 0;
     while (g < ziel && v < ziel * 14) {
@@ -109,9 +110,14 @@ function kit(T, box = [-60, -320, 620, 40], grob = 0.5) {
       let u = T.rnd() * summe, i = 0;
       while (i < farben.length - 1 && u > farben[i][1]) { u -= farben[i][1]; i++; }
       eimer[i].push([Math.round(x * 10), Math.round(y * 10), Math.round((ex / 2 - Math.sin(a) * k) * 10), Math.round((ey / 2 + Math.cos(a) * k) * 10), Math.round(ex * 10), Math.round(ey * 10)]);
+      /* helle Haarspitze (zweiter Ton) auf dem letzten Drittel desselben Haars – im Licht häufiger */
+      if (o.spitze && T.rnd() < (typeof o.spitze[1] === "function" ? o.spitze[1](x, y) : o.spitze[1])) {
+        const sx = x + ex * 0.6 + Math.sin(a) * k * 0.3, sy = y + ey * 0.6 - Math.cos(a) * k * 0.3;
+        tips.push([Math.round(sx * 10), Math.round(sy * 10), Math.round(ex * 2), Math.round(ey * 2), Math.round(ex * 4), Math.round(ey * 4)]);
+      }
       g++;
     }
-    return haarPfade(eimer, farben);
+    return haarPfade(eimer, farben) + (tips.length ? haarPfade([tips], [o.spitze]) : "");
   };
   H.haare = (poly, n, winkel, laenge, farben, o = {}) => {
     const [x0, y0, x1, y1] = T.box(poly);
@@ -167,25 +173,74 @@ function kit(T, box = [-60, -320, 620, 40], grob = 0.5) {
   /* mehrere offene Linien in EINEM Pfad */
   H.L = (zuege, farbe, w, op = 1, extra = "") =>
     `<path d="${zuege.map((p) => G(p, false)).join("")}" fill="none" stroke="${farbe}" stroke-width="${f(w)}"${op < 1 ? ` stroke-opacity="${op}"` : ""} stroke-linecap="round" stroke-linejoin="round"${extra}/>`;
-  /* Paarhufer-Schale (Seitenansicht): Ballen hinten bei xb, Spitze vorn bei xs, Kronrand-Höhe h, Neigung der Vorderwand.
-     Zwei Klauen: ferne (dunkler, leicht versetzt) und nahe; Kronrand mit Haarsaum, Glanz an der Wand. */
+  /* Paarhufer-Schale (Seitenansicht): Ballen hinten bei xb, Spitze vorn bei xs, Kronrand-Höhe h, Vorderwand ≈ 52°.
+     Zwei Klauen: die ferne ragt als schmaler Streifen vor/über der nahen hervor, dazwischen der dunkle Spalt; Glanz nur als
+     feiner Streifen. o.stumpf: rundliche Rinderklaue (Wisent). */
   H.schale = (xb, xs, h, o = {}) => {
-    const fa = o.farbe || "#2a2220", L = xs - xb;
-    const kl = (dx, dy, farbe, op) => {
+    const fa = o.farbe || "#2a2220", L = xs - xb, st = o.stumpf ? 1 : 0, vw = 1 - h * (o.stumpf ? 0.6 : 0.78) / L;
+    const kl = (dx, dy) => {
       const X = (u) => f(xb + dx + L * u), Y = (v) => f(-h * v + dy);
-      const d = `M${X(0.08)} ${Y(0.62)}Q${X(-0.04)} ${Y(0.3)} ${X(0.12)} ${f(dy)}L${f(xs + dx)} ${f(dy)}Q${X(0.86)} ${Y(0.3)} ${X(0.58)} ${Y(0.86)}Q${X(0.5)} ${Y(1.04)} ${X(0.3)} ${Y(0.95)}Z`;
-      const A = H.flaeche(d);
-      return H.teil(A, farbe, H.fl(xb + dx + L * 0.55, -h * 0.75 + dy, L * 0.3, h * 0.35, -35, "#fff", 0.3 * op) +
-        (F ? H.L([[[xs + dx - L * 0.5, -h * 0.82 + dy], [xs + dx - L * 0.22, -h * 0.4 + dy], [xs + dx - L * 0.05, -h * 0.08 + dy]]], "#fff", L * 0.05, 0.35 * op) +
-          H.L([[[xb + dx + L * 0.35, -h * 0.85 + dy], [xb + dx + L * 0.75, -h * 0.25 + dy]], [[xb + dx + L * 0.5, -h * 0.9 + dy], [xb + dx + L * 0.88, -h * 0.3 + dy]]], "#000", L * 0.02, 0.35) : "") +
-        H.fl(xb + dx + L * 0.2, -h * 0.2 + dy, L * 0.3, h * 0.4, 0, "#000", 0.35), { rw: L * 0.025, randA: 0.6 });
+      return `M${X(0.06)} ${Y(0.55)}Q${X(-0.02)} ${Y(0.18)} ${X(0.1)} ${Y(0.02)}L${X(0.9 - st * 0.1)} ${f(dy)}Q${X(1)} ${f(dy)} ${X(0.98 - st * 0.06)} ${Y(0.14 + st * 0.16)}` +
+        `L${X(vw)} ${Y(1)}Q${X(vw * 0.6)} ${Y(1.08)} ${X(0.22)} ${Y(0.92)}Z`;
     };
-    let s = (F ? kl(L * 0.1, -h * 0.07, o.fern || "#141010", 0.5) : "") + kl(0, 0, fa, 1);
-    /* Spalt zwischen den Klauen */
-    s += H.L([[[xb + L * 0.62, -h * 0.98], [xs - L * 0.05, -h * 0.12]]], "#050303", L * 0.035, 0.55);
-    /* Kronrand: Haarsaum über der Klaue */
-    if (o.saum) s += o.saum;
+    const A = H.flaeche(kl(0, 0)), B = F ? H.flaeche(kl(L * 0.08, -h * 0.05)) : null;
+    let s = B ? H.teil(B, o.fern || "#0e0b0a", "", { rw: L * 0.02, randA: 0.6 }) : "";
+    s += H.teil(A, fa, H.fl(xb + L * 0.62, -h * 0.62, L * 0.26, h * 0.3, -50, "#fff", 0.2) + H.fl(xb + L * 0.2, -h * 0.25, L * 0.28, h * 0.4, 0, "#000", 0.4) +
+      (F ? H.L([[[xb + L * vw + L * 0.05, -h * 0.9], [xs - L * 0.16, -h * 0.4], [xs - L * 0.05, -h * 0.12]]], "#fff", L * 0.022, 0.38) +
+        H.L([[[xb + L * vw - L * 0.04, -h * 0.98], [xs - L * 0.24, -h * 0.4], [xs - L * 0.1, -h * 0.04]]], "#000", L * 0.028, 0.6) : ""), { rw: L * 0.02, randA: 0.6 });
+    /* Kronrand mit Haarsaum */
+    if (F) s += H.saum([[xb + L * 0.18, -h * 0.9], [xb + L * 0.5, -h * 1.02], [xb + L * vw + L * 0.02, -h * 0.98]], 20, 72, h * 0.3, [[o.haar || "#3a2a20", 1, L * 0.012, 0.7]], { offen: true, streu: 30, szene: 0 });
     return s;
+  };
+  /* Afterklaue: klein, spitz, nach hinten-unten, über dem Fesselgelenk */
+  H.after = (x, y, g = 1, farbe = "#2a2220") => H.teil(H.flaeche([[x + 0.25 * g, y - 0.8 * g], [x + 0.5 * g, y + 0.1 * g], [x - 0.25 * g, y + 1.0 * g, 1], [x - 0.5 * g, y + 0.1 * g], [x - 0.3 * g, y - 0.5 * g]]),
+    farbe, H.fl(x - 0.1 * g, y - 0.2 * g, 0.3 * g, 0.3 * g, 0, "#fff", 0.35), { rw: 0.05 * g, randA: 0.6 });
+  /* Lauf als Zylinder: Lichtkante links, Kernschatten rechts, schmaler Reflex außen (gemeinsamer Verlauf, objektbezogen) */
+  H.zyl = (pts, op = 1) => `<path d="${G(pts)}" fill="${T.lg("zyl", [[0, "#fff", 0.2], [0.22, "#fff", 0.04], [0.55, "#000", 0.1], [0.84, "#000", 0.32], [1, "#fff", 0.06]], 0, 0, 1, 0)}"${op < 1 ? ` opacity="${op}"` : ""}/>`;
+  /* Volumen je Körperteil (kern.js T.volumen): Rundung, Kernschatten, Reflex aus der eigenen Silhouette */
+  H.vol = (n, weich, inn, o = {}) => (F ? `<g filter="${T.volumen(n, Object.assign({ weich }, o))}">${inn}</g>` : inn);
+  /* Maske: unterhalb y1 voll, oberhalb y0 unsichtbar (weicher Übergang Bein → Rumpf) */
+  H.maskeY = (n, y0, y1) => {
+    const id = T.id("mk" + n);
+    T.def(`<mask id="${id}" maskUnits="userSpaceOnUse" x="${box[0]}" y="${box[1]}" width="${box[2] - box[0]}" height="${box[3] - box[1]}"><rect x="${box[0]}" y="${box[1]}" width="${box[2] - box[0]}" height="${box[3] - box[1]}" fill="${T.lg("mg" + n, [[0, "#fff", 0], [1, "#fff", 1]], 0, y0, 0, y1, H.US)}"/></mask>`);
+    return `url(#${id})`;
+  };
+  /* Auge eines Säugers (Seitenansicht): Augenhöhle mit Brauenwulst-Schatten, große Iris, Pupille, Oberlid-Schatten, dicker
+     Lidrand, feuchter Unterlid-Saum, Glanzfenster + schwacher Zweitreflex, Wimpern nur am Oberlid (nach vorn-außen). */
+  H.auge = (x, y, rr, o = {}) => {
+    const w = o.winkel || 0, off = o.offen != null ? o.offen : 0.72, W = rr * 1.3, Ho = rr * off, Hu = rr * off * 0.78;
+    const P = (t, a, b, c, d) => { const u = 1 - t; return u * u * u * a + 3 * u * u * t * b + 3 * u * t * t * c + t * t * t * d; };
+    const ob = [[-W, 0], [-W * 0.5, -Ho * 1.2], [W * 0.4, -Ho * 1.25], [W, -Ho * 0.05]];
+    const oben = `M${f2(-W)} 0C${f2(-W * 0.5)} ${f2(-Ho * 1.2)} ${f2(W * 0.4)} ${f2(-Ho * 1.25)} ${f2(W)} ${f2(-Ho * 0.05)}`;
+    const sp = oben + `C${f2(W * 0.55)} ${f2(Hu * 1.15)} ${f2(-W * 0.4)} ${f2(Hu * 1.2)} ${f2(-W)} 0Z`;
+    const A = H.flaeche(sp);
+    const ir = T.rg("ir" + (o.iris || "#2a170b").slice(1), [[0, o.iris2 || "#5a3418"], [0.5, o.iris || "#2a170b"], [0.85, "#140a05"], [1, "#050302"]], 0.42, 0.5, 0.6);
+    let s = `<g transform="translate(${f2(x)} ${f2(y)})${w ? ` rotate(${Math.round(w)})` : ""}">`;
+    if (o.hoehle !== false) s += H.fl(0, -rr * 0.25, W * 1.8, rr * 1.6, 0, o.hoehle || "#1a0e06", 0.5) + H.fl(-rr * 0.1, -rr * 1.8, W * 1.3, rr * 0.55, 0, o.braue || "#e8c8a0", 0.28);
+    s += A.use(`fill="#0a0604"`) + A.clip(
+      `<circle cx="${f2(rr * 0.06)}" cy="${f2(rr * 0.04)}" r="${f2(rr)}" fill="${ir}"/>` +
+      (o.pupille === "rund" ? `<circle cx="${f2(rr * 0.1)}" cy="0" r="${f2(rr * 0.36)}" fill="#030201"/>` : `<ellipse cx="${f2(rr * 0.08)}" cy="${f2(rr * 0.05)}" rx="${f2(rr * 0.52)}" ry="${f2(rr * 0.2)}" fill="#030201"/>`) +
+      `<rect x="${f2(-W)}" y="${f2(-rr * 1.3)}" width="${f2(2 * W)}" height="${f2(rr * 1.3)}" fill="${T.lg("ls", [[0, "#000", 0.8], [0.6, "#000", 0.3], [1, "#000", 0]])}"/>` +
+      `<rect x="${f2(rr * 0.16)}" y="${f2(-rr * 0.54)}" width="${f2(rr * 0.34)}" height="${f2(rr * 0.22)}" rx="${f2(rr * 0.05)}" fill="#fff" opacity=".9" transform="rotate(-8 ${f2(rr * 0.33)} ${f2(-rr * 0.43)})"/>` +
+      `<ellipse cx="${f2(-rr * 0.42)}" cy="${f2(rr * 0.34)}" rx="${f2(rr * 0.2)}" ry="${f2(rr * 0.08)}" fill="#fff" opacity=".22"/>`);
+    /* Lidrand: oben kräftig (Wulst), unten fein; feuchter Saum unter dem Unterlid; Lidfalte darüber */
+    s += A.use(`fill="none" stroke="${o.lid || "#120a06"}" stroke-width="${f2(rr * 0.14)}"`) +
+      `<path d="${oben}" fill="none" stroke="${o.lid || "#120a06"}" stroke-width="${f2(rr * 0.22)}" stroke-linecap="round"/>` +
+      `<path d="M${f2(W * 0.75)} ${f2(Hu * 0.62)}C${f2(W * 0.2)} ${f2(Hu * 1.34)} ${f2(-W * 0.4)} ${f2(Hu * 1.34)} ${f2(-W * 0.85)} ${f2(Hu * 0.47)}" fill="none" stroke="#fff" stroke-opacity=".38" stroke-width="${f2(rr * 0.06)}"/>` +
+      (F ? `<path d="M${f2(-W * 1.05)} ${f2(-Ho * 0.4)}C${f2(-W * 0.4)} ${f2(-Ho * 2)} ${f2(W * 0.5)} ${f2(-Ho * 1.95)} ${f2(W * 1.1)} ${f2(-Ho * 0.75)}" fill="none" stroke="#000" stroke-opacity=".25" stroke-width="${f2(rr * 0.09)}"/>` : "");
+    /* Wimpern: nur Oberlid, dunkelbraun, nach vorn-außen geneigt */
+    const n = F ? (o.wimpern || 0) : 0;
+    if (n) {
+      let d = "";
+      const Lw = rr * (o.wimpernLaenge || 0.6);
+      for (let i = 0; i < n; i++) {
+        const t = 0.32 + 0.6 * i / Math.max(1, n - 1), bx = P(t, ob[0][0], ob[1][0], ob[2][0], ob[3][0]), by = P(t, ob[0][1], ob[1][1], ob[2][1], ob[3][1]);
+        const a = (-112 + 62 * t) * Math.PI / 180, l = Lw * (0.75 + 0.5 * Math.sin(Math.PI * t));
+        d += `M${f2(bx)} ${f2(by)}q${f2(Math.cos(a) * l * 0.4)} ${f2(Math.sin(a) * l * 0.6)} ${f2(Math.cos(a) * l + l * 0.25)} ${f2(Math.sin(a) * l * 0.85)}`;
+      }
+      s += `<path d="${d}" fill="none" stroke="${o.wimpernFarbe || "#2a1a10"}" stroke-width="${f2(rr * 0.05)}" stroke-linecap="round"/>`;
+    }
+    return s + `</g>`;
   };
   /* Bodenkontakt */
   H.kontakt = (xs, rx, ry) => xs.map((x) => `<ellipse cx="${f(x)}" cy="0" rx="${f(rx)}" ry="${f(ry)}" fill="#000" opacity=".28"/>`).join("");

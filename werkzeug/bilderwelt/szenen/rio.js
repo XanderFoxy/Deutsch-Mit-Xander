@@ -120,142 +120,173 @@ const DUNST = `url(#${S.id("dunst")})`;
 }
 
 /* =====================================================================
-   1 — DER REGENWALD (Tijuca-Massiv hinter der Copacabana)
+   1 — DER REGENWALD (Tijuca-Massiv hinter der Copacabana) — weiter weg
+   als der Corcovado: bläulich verschleiert, durch ein Tal getrennt
    ===================================================================== */
 {
   const umriss = [[18, 104], [24, 70], [34, 58], [46, 50], [60, 44], [72, 40], [86, 33], [96, 36], [108, 44], [118, 48], [130, 47], [142, 52], [152, 60], [160, 68], [168, 76], [174, 86], [178, 104]];
   let k = `<path d="M${pts(umriss)} Z" fill="${WALD}"/>`;
-  /* Luftperspektive: oben bläulicher, Licht von rechts */
-  k += `<path d="M${pts(umriss)} Z" fill="${S.lg("waldluft", [[0, "#9cc0c8", 0.45], [0.5, "#7fa8a6", 0.22], [1, "#3c6a4a", 0.05]])}"/>`;
-  k += `<path d="M${pts(umriss)} Z" fill="${S.lg("waldlicht", [[0, "#000", 0.12], [0.6, "#000", 0], [1, "#f6f0c8", 0.12]], 0, 0, 1, 0)}"/>`;
-  /* Baumkronen am Grat */
+  /* Luftperspektive: deutlich bläulicher als der nähere Corcovado */
+  k += `<path d="M${pts(umriss)} Z" fill="${S.lg("waldluft", [[0, "#a9c8d4", 0.62], [0.5, "#93b8c0", 0.42], [1, "#6f9a98", 0.25]])}"/>`;
+  /* Baumkronen am Grat (nur oben, wo der Grat frei steht) */
   for (let i = 0; i < umriss.length - 1; i++) {
     const [x1, y1] = umriss[i], [x2, y2] = umriss[i + 1];
-    for (let t = 0; t < 1; t += 0.34) k += `<circle cx="${r(x1 + (x2 - x1) * t)}" cy="${r(y1 + (y2 - y1) * t + 0.5)}" r="${r(0.9 + rnd() * 0.7)}" fill="${rnd() < 0.5 ? "#4d8059" : "#3d7049"}"/>`;
+    for (let t = 0; t < 1; t += 0.34) { const y = y1 + (y2 - y1) * t; if (y > 80) continue; k += `<circle cx="${r(x1 + (x2 - x1) * t)}" cy="${r(y + 0.5)}" r="${r(0.8 + rnd() * 0.6)}" fill="${rnd() < 0.5 ? "#6f9a8c" : "#628e80"}"/>`; }
   }
-  /* Granitplatten an steilen Stellen */
-  for (const [x, y, w, h] of [[121, 52, 3, 9], [139, 57, 2.4, 7], [146, 62, 2, 5]]) k += `<path d="M${x} ${y} q${r(w * 0.6)} ${r(h * 0.4)} ${w} ${h} q${r(-w * 0.5)} -.6 ${r(-w * 0.9)} -.2 q-.2 ${r(-h * 0.5)} ${r(-w * 0.1)} ${r(-h * 0.8)} Z" fill="#8f938f" opacity=".55"/>`;
-  S.teil({ id: "regenwald", de: "der Regenwald", syl: "RE-gen-wald", it: "la foresta pluviale", itSyl: "fo-RE-sta plu-VIA-le", en: "rainforest", x: 98, y: 104, kunst: um(98, 104, k),
+  /* Tallinien (Schatten der Seitentäler) */
+  k += `<path d="M118 48 Q124 60 128 76 M142 52 Q146 62 148 74" stroke="#4f7a72" stroke-width=".8" fill="none" opacity=".35"/>`;
+  S.teil({ id: "regenwald", de: "der Regenwald", syl: "RE-gen-wald", it: "la foresta pluviale", itSyl: "fo-RE-sta plu-VIA-le", en: "rainforest", x: 120, y: 50, kunst: um(120, 50, k),
     tipp: "Mitten in Rio wächst der Tijuca-Wald. Er ist einer der größten Stadtwälder der Welt." });
 }
 
 /* =====================================================================
-   2 — DER BERG (Corcovado: links bewaldet, rechts die Granitwand)
+   2 — DER BERG (Corcovado: links bewaldet, rechts die Granitwand) —
+   näher, dunkler, mit mehr Fels; die Gipfelkuppe trägt die Plattform
    ===================================================================== */
-const CX = 88, CY = 26.5;   /* Gipfelplattform */
+const CX = 88, CY = 27;   /* Oberkante der Aussichtsplattform = Fuß des Sockels */
 {
-  const um1 = [[50, 76], [58, 64], [66, 52], [74, 41], [80, 32], [84, 27.4], [92, 27.4], [95, 31], [98, 40], [100, 52], [102, 62], [106, 70], [114, 76]];
-  let k = `<path d="M${pts(um1)} Z" fill="${WALD}"/>`;
-  k += `<path d="M${pts(um1)} Z" fill="${S.lg("corcluft", [[0, "#a9c9cf", 0.38], [1, "#3c6a4a", 0.05]])}"/>`;
+  const um1 = [[48, 78], [56, 66], [64, 54], [72, 43], [78, 35], [82, 30], [84.2, 28.2], [91.8, 28.2], [94, 30.6], [97, 37], [99.6, 48], [101.6, 58], [104, 66], [110, 74], [116, 78]];
+  /* Tal zwischen Corcovado und Massiv: dunkler Schattensaum */
+  let k = `<path d="M${pts(um1.map(([x, y]) => [x + (x < CX ? -1.6 : 1.6), y + 1.2]))} Z" fill="#2c4f3f" opacity=".45"/>`;
+  k += `<path d="M${pts(um1)} Z" fill="${WALD}"/>`;
+  k += `<path d="M${pts(um1)} Z" fill="${S.lg("corcluft", [[0, "#8fb2ba", 0.28], [1, "#1f3f2a", 0.12]])}"/>`;
   /* die Felswand nach Osten (rechts), von der Morgensonne beschienen */
-  const wand = [[86, 28], [92, 27.6], [95, 31], [98, 40], [100, 52], [102, 62], [100, 66], [97, 56], [94, 44], [90, 34]];
-  k += `<path d="M${pts(wand)} Z" fill="${S.lg("granit", [[0, "#8d8a84"], [0.55, "#b9b3a6"], [1, "#d8d0bf"]], 0, 0, 1, 0)}"/>`;
-  for (let i = 0; i < 9; i++) { const x = 89.5 + i * 1.2, y = 31 + i * 1.6; k += `<path d="M${r(x)} ${r(y)} q.6 ${r(6 + rnd() * 6)} ${r(0.4 + rnd())} ${r(12 + rnd() * 8)}" stroke="#6d6a64" stroke-width="${r(0.25 + rnd() * 0.3)}" fill="none" opacity=".55"/>`; }
-  /* Wald an der linken Flanke etwas dunkler (Schatten) */
-  k += `<path d="M50 76 L58 64 L66 52 L74 41 L80 32 L84 27.4 L86 28 L90 34 L88 50 L84 76 Z" fill="#1f3f2a" opacity=".22"/>`;
-  for (let i = 0; i < 16; i++) { const t = rnd(), x = 52 + t * 34, y = 75 - t * 46 + rnd() * 5; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.8 + rnd() * 0.6)}" fill="#4a7d55" opacity=".8"/>`; }
-  S.teil({ id: "berg", de: "der Berg", syl: "BERG", it: "la montagna", itSyl: "mon-TA-gna", en: "mountain", x: CX, y: 76, kunst: um(CX, 76, k),
+  const wand = [[86.5, 28.6], [91.8, 28.4], [94, 30.6], [97, 37], [99.6, 48], [101.6, 58], [103.2, 64], [100.4, 66], [97.6, 57], [94.6, 45], [91, 35]];
+  k += `<path d="M${pts(wand)} Z" fill="${S.lg("granit", [[0, "#7f7c76"], [0.55, "#aaa498"], [1, "#d0c8b6"]], 0, 0, 1, 0)}"/>`;
+  for (let i = 0; i < 9; i++) { const x = 90 + i * 1.2, y = 31 + i * 1.6; k += `<path d="M${r(x)} ${r(y)} q.6 ${r(6 + rnd() * 6)} ${r(0.4 + rnd())} ${r(12 + rnd() * 8)}" stroke="#5f5c56" stroke-width="${r(0.25 + rnd() * 0.3)}" fill="none" opacity=".55"/>`; }
+  /* Felsplatten an der linken Flanke und unter dem Gipfel */
+  k += `<path d="M79.5 33 L84 29.4 L86 31 L83.6 38 L80.6 39 Z" fill="${S.lg("granit2", [[0, "#6d6c68"], [1, "#9a958a"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M70 47 L73.6 44 L75 47.6 L72 52 Z M64.6 56 L67 54 L68 57.4 L65.6 60 Z" fill="#7a7871" opacity=".85"/>`;
+  /* Gipfelfels, auf dem die Terrassenmauer sitzt; Bäume an der Kante */
+  k += `<path d="M82.6 31 Q84 27.8 88 27.4 Q92 27.8 93.6 31 Z" fill="#8c877d"/>`;
+  for (const [x, y, rr] of [[83.4, 28.6, 0.8], [82.4, 29.8, 0.9], [92.9, 28.8, 0.7], [93.6, 30, 0.8]]) k += `<circle cx="${x}" cy="${y}" r="${rr}" fill="#2f5a3a"/>`;
+  /* Wald an der linken Flanke im Schatten */
+  k += `<path d="M48 78 L56 66 L64 54 L72 43 L78 35 L82 30 L84.2 28.2 L86.5 28.6 L90 36 L88 52 L84 78 Z" fill="#14301f" opacity=".3"/>`;
+  for (let i = 0; i < 16; i++) { const t = rnd(), x = 52 + t * 34, y = 77 - t * 46 + rnd() * 5; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.8 + rnd() * 0.6)}" fill="#3a6a46" opacity=".8"/>`; }
+  S.teil({ id: "berg", de: "der Berg", syl: "BERG", it: "la montagna", itSyl: "mon-TA-gna", en: "mountain", x: 76, y: 44, kunst: um(76, 44, k),
     tipp: "Der Berg heißt Corcovado – „der Bucklige“. Er ist 710 Meter hoch." });
 }
 
 /* =====================================================================
    3 — DIE CHRISTUSSTATUE (Cristo Redentor) — Lupe: Arm, Sockel,
-       Mosaik, Aussichtsplattform
+       Mosaik, Aussichtsplattform. Maße in Metern, q = Einheiten je Meter
+       (doppelt so groß wie in Wirklichkeit, damit man sie erkennt).
    ===================================================================== */
 {
-  const L = S.lg("cristoL", [[0, "#cfc9ba"], [0.45, "#ebe7dc"], [1, "#fbf9f2"]], 0, 0, 1, 0);
+  const q = 5.5 / 30, M = (v) => r(v * q * 100) / 100;
+  const L = S.lg("cristoL", [[0, "#c4beaf"], [0.45, "#e6e2d6"], [1, "#fbf9f2"]], 0, 0, 1, 0);
+  S.def(`<pattern id="${S.id("mosaik2")}" width=".16" height=".14" patternUnits="userSpaceOnUse"><rect width=".16" height=".14" fill="#ece8dc"/><path d="M0 .14 L.08 0 L.16 .14 Z" fill="#d9d2c1"/></pattern>`);
   let k = "";
-  /* Aussichtsplattform auf dem Gipfel: Terrassenmauer, Geländer, Besucher */
-  k += `<path d="M-6 1.6 L-5.4 0 L5.6 0 L6.4 1.6 Z" fill="${S.lg("terrasse", [[0, "#d8d2c4"], [1, "#a8a294"]])}"/>`;
-  k += `<rect x="-5.4" y="-.5" width="11" height=".5" fill="#efece3"/>`;
-  for (let x = -5.2; x <= 5.4; x += 0.7) k += `<rect x="${r(x)}" y="-.5" width=".12" height=".5" fill="#9a958a"/>`;
-  for (const [x, c] of [[-4.4, "#d24a3c"], [-3.6, "#2f6fb0"], [3.4, "#f0c040"], [4.2, "#3a8a4a"], [-2.6, "#ffffff"]]) k += `<rect x="${x}" y="-.95" width=".32" height=".75" rx=".1" fill="${c}"/><circle cx="${r(x + 0.16)}" cy="-1.1" r=".16" fill="#6b4a32"/>`;
-  /* Sockel: Art-déco-Block, oben gestuft, senkrechte Rillen, Kapellentür */
-  k += `<path d="M-1.4 0 L-1.2 -2.7 L1.2 -2.7 L1.4 0 Z" fill="${L}"/>`;
-  k += `<rect x="-1.45" y="-3.2" width="2.9" height=".55" fill="#f4f1e8"/><rect x="-1.25" y="-3.5" width="2.5" height=".32" fill="#e3ded1"/>`;
-  for (const x of [-0.8, -0.4, 0.4, 0.8]) k += `<line x1="${x}" y1="-2.5" x2="${r(x * 1.08)}" y2="-.2" stroke="#b4ad9d" stroke-width=".07"/>`;
-  k += `<path d="M-.25 0 L-.25 -.9 Q0 -1.15 .25 -.9 L.25 0 Z" fill="#5a5144"/>`;
-  /* Gewand: schmal, unten etwas weiter, senkrechte Falten (leicht nach rechts gedreht) */
-  const robe = `M-1.05 -3.5 L-1.2 -7.6 Q-1.25 -10.4 -1.05 -11.2 L1.25 -11.2 Q1.35 -10.4 1.3 -7.6 L1.15 -3.5 Z`;
-  k += `<path d="${robe}" fill="${L}"/><path d="${robe}" fill="${MOSAIK}" opacity=".55"/>`;
-  for (const x of [-0.6, -0.15, 0.35, 0.8]) k += `<path d="M${x} -3.6 Q${r(x + 0.08)} -7 ${r(x * 0.9)} -10.6" stroke="#c4bdac" stroke-width=".09" fill="none"/>`;
-  /* Kordel um die Taille, Enden hängen herab */
-  k += `<path d="M-1.18 -7.9 Q0 -7.6 1.28 -7.9" stroke="#bdb6a4" stroke-width=".14" fill="none"/><path d="M.1 -7.75 L.05 -5.6 M.32 -7.75 L.36 -5.9" stroke="#bdb6a4" stroke-width=".1"/>`;
-  /* Arme waagrecht (der linke im Bild ist näher, darum etwas länger); die weiten
-     Ärmel hängen vom Unterarm schräg zur Brust herab */
-  const armL = -4.55, armR = 3.85;
-  k += `<path d="M-1.1 -11.35 L${armL + 0.5} -11.5 L${armL + 0.5} -10.95 L-1.1 -10.55 Z" fill="${S.lg("armL", [[0, "#ebe7dc"], [1, "#d3cdbf"]])}"/>`;
-  k += `<path d="M-1.1 -10.7 L${r(armL * 0.62)} -11.0 Q${r(armL * 0.5)} -10.2 -1.12 -9.35 Z" fill="#d2ccbd"/>`;
-  k += `<path d="M1.25 -11.35 L${armR - 0.45} -11.45 L${armR - 0.45} -10.95 L1.25 -10.55 Z" fill="#faf8f1"/>`;
-  k += `<path d="M1.25 -10.7 L${r(armR * 0.6)} -11.0 Q${r(armR * 0.5)} -10.2 1.28 -9.4 Z" fill="#ece8de"/>`;
-  k += `<path d="M-1.1 -10.62 L${r(armL * 0.62)} -10.98" stroke="#bcb5a4" stroke-width=".07"/>`;
+  /* Aussichtsplattform von unten: nur die Außenmauer mit dem Geländer */
+  k += `<path d="M${M(-16)} ${M(3.2)} L${M(-15.4)} 0 L${M(15.4)} 0 L${M(16)} ${M(3.2)} Z" fill="${S.lg("terrasse", [[0, "#d6d0c2"], [1, "#a39d8f"]])}"/>`;
+  k += `<path d="M${M(-15.4)} 0 L${M(15.4)} 0" stroke="#8f897c" stroke-width=".06"/>`;
+  k += `<path d="M${M(-15.2)} ${M(-1.1)} L${M(15.2)} ${M(-1.1)}" stroke="#7f7a70" stroke-width=".05"/>`;
+  for (let x = -15; x <= 15; x += 2.5) k += `<line x1="${M(x)}" y1="0" x2="${M(x)}" y2="${M(-1.1)}" stroke="#7f7a70" stroke-width=".035"/>`;
+  /* Sockel (8 m): Art-déco-Block, oben gestuft, senkrechte Rillen, Kapellentür */
+  k += `<path d="M${M(-3.6)} 0 L${M(-3.2)} ${M(-6.6)} L${M(3.2)} ${M(-6.6)} L${M(3.6)} 0 Z" fill="${L}"/>`;
+  k += `<rect x="${M(-3.5)}" y="${M(-7.4)}" width="${M(7)}" height="${M(0.8)}" fill="#f2efe6"/><rect x="${M(-3)}" y="${M(-8)}" width="${M(6)}" height="${M(0.6)}" fill="#dcd7ca"/>`;
+  for (const x of [-2, -1, 1, 2]) k += `<line x1="${M(x)}" y1="${M(-6.3)}" x2="${M(x * 1.08)}" y2="${M(-0.4)}" stroke="#b0a998" stroke-width=".03"/>`;
+  k += `<path d="M${M(-0.7)} 0 L${M(-0.7)} ${M(-2.2)} Q0 ${M(-2.8)} ${M(0.7)} ${M(-2.2)} L${M(0.7)} 0 Z" fill="#5a5144"/>`;
+  /* Gewand (8–31 m): unten 5 m breit, Schultern 6 m, glatte senkrechte Falten */
+  const yb = -8, ys = -8 - 22.6;
+  const robe = `M${M(-2.5)} ${M(yb)} L${M(-2.7)} ${M(yb - 11)} Q${M(-2.9)} ${M(ys + 2)} ${M(-2.8)} ${M(ys)} L${M(3.0)} ${M(ys)} Q${M(3.1)} ${M(ys + 2)} ${M(2.9)} ${M(yb - 11)} L${M(2.7)} ${M(yb)} Z`;
+  k += `<path d="${robe}" fill="${L}"/><path d="${robe}" fill="url(#${S.id("mosaik2")})" opacity=".5"/>`;
+  for (const x of [-1.6, -0.5, 0.7, 1.8]) k += `<path d="M${M(x)} ${M(yb - 0.3)} Q${M(x + 0.2)} ${M(yb - 10)} ${M(x * 0.9)} ${M(ys + 1.4)}" stroke="#bdb6a4" stroke-width=".035" fill="none"/>`;
+  /* Kordel um die Taille, zwei Enden hängen herab */
+  k += `<path d="M${M(-2.75)} ${M(yb - 10.6)} Q0 ${M(yb - 10)} ${M(2.95)} ${M(yb - 10.6)}" stroke="#b5ad9a" stroke-width=".05" fill="none"/><path d="M${M(0.2)} ${M(yb - 10.3)} L${M(0.1)} ${M(yb - 5.4)} M${M(0.7)} ${M(yb - 10.3)} L${M(0.8)} ${M(yb - 6)}" stroke="#b5ad9a" stroke-width=".035"/>`;
+  /* Arme waagrecht; schräg gesehen (die Statue schaut nach Osten) wirken sie kürzer.
+     Der linke im Bild ist näher und etwas länger. Weite Ärmel hängen darunter. */
+  const aL = -10.4, aR = 9.4, ya = ys - 0.3, yd = ya + 2.2;
+  k += `<path d="M${M(-2.6)} ${M(ya)} L${M(aL + 1.2)} ${M(ya - 0.3)} L${M(aL + 1.2)} ${M(yd - 0.5)} L${M(-2.6)} ${M(yd + 0.6)} Z" fill="${S.lg("armL", [[0, "#e6e2d6"], [1, "#cdc7b8"]])}"/>`;
+  k += `<path d="M${M(-2.6)} ${M(yd)} L${M(aL * 0.6)} ${M(yd - 0.4)} Q${M(aL * 0.45)} ${M(yd + 2.4)} ${M(-2.65)} ${M(yd + 4.6)} Z" fill="#d0c9ba"/>`;
+  k += `<path d="M${M(2.8)} ${M(ya)} L${M(aR - 1.1)} ${M(ya - 0.25)} L${M(aR - 1.1)} ${M(yd - 0.5)} L${M(2.8)} ${M(yd + 0.6)} Z" fill="#faf8f1"/>`;
+  k += `<path d="M${M(2.8)} ${M(yd)} L${M(aR * 0.6)} ${M(yd - 0.4)} Q${M(aR * 0.45)} ${M(yd + 2.3)} ${M(2.85)} ${M(yd + 4.5)} Z" fill="#ebe7dc"/>`;
   /* Hände: flach, Finger geschlossen, Handflächen nach vorn */
-  k += `<path d="M${armL + 0.55} -11.48 L${armL - 0.05} -11.42 Q${armL - 0.32} -11.2 ${armL - 0.05} -10.98 L${armL + 0.55} -10.98 Z" fill="#e2ddd0"/>`;
-  k += `<path d="M${armR - 0.5} -11.44 L${armR + 0.02} -11.4 Q${armR + 0.26} -11.2 ${armR + 0.02} -11 L${armR - 0.5} -10.98 Z" fill="#fbf9f3"/>`;
-  /* Kopf (leicht nach vorn geneigt), Haar fällt bis auf die Schultern, Bart; Herz auf der Brust */
-  k += `<path d="M-.6 -11.15 Q-.72 -12.1 -.46 -12.9 Q.08 -13.42 .62 -12.9 Q.86 -12.1 .76 -11.15 Q.1 -11.45 -.6 -11.15 Z" fill="#d6d0c1"/>`;
-  k += `<path d="M-.3 -12.85 Q.12 -13.12 .48 -12.85 L.5 -12.1 Q.36 -11.55 .1 -11.5 Q-.16 -11.55 -.3 -12.1 Z" fill="${S.lg("gesicht", [[0, "#e4dfd2"], [1, "#fdfbf5"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M-.22 -12.35 h.18 M.16 -12.35 h.18" stroke="#b7b09f" stroke-width=".06"/><path d="M.06 -12.3 L.08 -11.95" stroke="#cfc8b8" stroke-width=".06"/>`;
-  k += `<path d="M-.26 -11.95 Q.1 -11.4 .46 -11.95" stroke="#c3bcab" stroke-width=".07" fill="none"/>`;
-  k += `<path d="M-.15 -9.95 q-.18 -.3 0 -.42 q.12 -.06 .17 .07 q.05 -.13 .17 -.07 q.18 .12 0 .42 l-.17 .2 Z" fill="none" stroke="#b9b1a0" stroke-width=".07"/>`;
+  k += `<path d="M${M(aL + 1.25)} ${M(ya - 0.3)} L${M(aL)} ${M(ya - 0.2)} Q${M(aL - 0.6)} ${M(ya + 0.8)} ${M(aL)} ${M(yd - 0.4)} L${M(aL + 1.25)} ${M(yd - 0.5)} Z" fill="#ddd8ca"/>`;
+  k += `<path d="M${M(aR - 1.15)} ${M(ya - 0.25)} L${M(aR)} ${M(ya - 0.15)} Q${M(aR + 0.55)} ${M(ya + 0.8)} ${M(aR)} ${M(yd - 0.4)} L${M(aR - 1.15)} ${M(yd - 0.5)} Z" fill="#fbf9f3"/>`;
+  /* Kopf (3,75 m = 1/8), 10° nach vorn geneigt: Haar mit Mittelscheitel bis auf die
+     Schultern, Bart, ernstes Gesicht mit gesenktem Blick, gerader Mund */
+  const kh = ys - 0.5;
+  k += `<path d="M${M(-1.35)} ${M(kh + 0.6)} Q${M(-1.6)} ${M(kh - 2.2)} ${M(-0.9)} ${M(kh - 3.6)} Q${M(0.1)} ${M(kh - 4.3)} ${M(1.1)} ${M(kh - 3.6)} Q${M(1.8)} ${M(kh - 2.2)} ${M(1.55)} ${M(kh + 0.6)} Q${M(0.1)} ${M(kh + 0.1)} ${M(-1.35)} ${M(kh + 0.6)} Z" fill="#cfc9b9"/>`;
+  k += `<path d="M${M(0.1)} ${M(kh - 4.2)} L${M(0.15)} ${M(kh - 3.2)}" stroke="#a9a290" stroke-width=".03"/>`;
+  k += `<path d="M${M(-0.75)} ${M(kh - 3.2)} Q${M(0.15)} ${M(kh - 3.7)} ${M(1.05)} ${M(kh - 3.2)} L${M(1.05)} ${M(kh - 1.2)} Q${M(0.15)} ${M(kh + 0.1)} ${M(-0.75)} ${M(kh - 1.2)} Z" fill="${S.lg("gesicht", [[0, "#dfd9cb"], [1, "#fbf9f3"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M${M(-0.45)} ${M(kh - 2.35)} h${M(0.45)} M${M(0.35)} ${M(kh - 2.35)} h${M(0.45)}" stroke="#a49d8b" stroke-width=".03"/><path d="M${M(0.15)} ${M(kh - 2.3)} L${M(0.2)} ${M(kh - 1.55)}" stroke="#c4bdab" stroke-width=".03"/>`;
+  k += `<path d="M${M(-0.2)} ${M(kh - 1.15)} h${M(0.7)}" stroke="#a49d8b" stroke-width=".03"/>`;
+  k += `<path d="M${M(-0.7)} ${M(kh - 1.3)} Q${M(0.15)} ${M(kh + 0.4)} ${M(1.0)} ${M(kh - 1.3)}" stroke="#bdb6a4" stroke-width=".035" fill="none"/>`;
+  /* Herz auf der Brust */
+  k += `<path d="M${M(-0.35)} ${M(ys + 3.2)} q${M(-0.5)} ${M(-0.7)} 0 ${M(-1)} q${M(0.3)} ${M(-0.15)} ${M(0.42)} ${M(0.18)} q${M(0.12)} ${M(-0.33)} ${M(0.42)} ${M(-0.18)} q${M(0.5)} ${M(0.3)} 0 ${M(1)} l${M(-0.42)} ${M(0.5)} Z" fill="none" stroke="#b3ab98" stroke-width=".03"/>`;
   /* Lichtkante rechts (Morgensonne von Osten) */
-  k += `<path d="M1.2 -11 Q1.32 -7.6 1.12 -3.6" stroke="#ffffff" stroke-width=".18" fill="none" opacity=".8"/>`;
+  k += `<path d="M${M(2.95)} ${M(ys + 0.5)} Q${M(3.05)} ${M(yb - 11)} ${M(2.65)} ${M(yb - 0.5)}" stroke="#ffffff" stroke-width=".07" fill="none" opacity=".85"/>`;
+  /* Besucher auf der Plattform (0,55 Einheiten) — nur in der Lupe */
+  let besucher = "";
+  for (const [x, c] of [[-13, "#d24a3c"], [-11.6, "#2f6fb0"], [-9.8, "#f0c040"], [8.8, "#3a8a4a"], [10.6, "#ffffff"], [12.4, "#c43a8a"]]) besucher += `<rect x="${M(x)}" y="${M(-2.6)}" width="${M(0.9)}" height="${M(2)}" rx="${M(0.3)}" fill="${c}"/><circle cx="${M(x + 0.45)}" cy="${M(-2.95)}" r="${M(0.4)}" fill="#6b4a32"/>`;
   const unterC = [
-    { id: "arm", de: "der Arm", syl: "ARM", it: "il braccio", itSyl: "BRAC-cio", en: "arm", x: CX - 3, y: CY - 9.6, kunst: flaeche(-1.9, -2.2, 3.8, 2.6, 0.4),
+    { id: "arm", de: "der Arm", syl: "ARM", it: "il braccio", itSyl: "BRAC-cio", en: "arm", x: CX + M(aL * 0.55), y: CY + M(yd + 1.6), kunst: flaeche(M(aL * 0.5 - 0.7), M(-4.6), M(-aL * 0.9), M(5), 0.15),
       tipp: "Von einer Hand bis zur anderen sind es 28 Meter." },
-    { id: "sockel", de: "der Sockel", syl: "SO-ckel", it: "il piedistallo", itSyl: "pie-di-STAL-lo", en: "pedestal", x: CX, y: CY, kunst: flaeche(-1.5, -3.5, 3, 3.5, 0.3),
+    { id: "sockel", de: "der Sockel", syl: "SO-ckel", it: "il piedistallo", itSyl: "pie-di-STAL-lo", en: "pedestal", x: CX, y: CY, kunst: flaeche(M(-3.7), M(-8.1), M(7.4), M(8.1), 0.1),
       tipp: "Der Sockel ist 8 Meter hoch. Innen ist eine kleine Kapelle." },
-    { id: "mosaik", de: "das Mosaik", syl: "Mo-sa-IK", it: "il mosaico", itSyl: "mo-SAI-co", en: "mosaic", x: CX, y: CY - 3.6, kunst: flaeche(-1.15, -4.2, 2.35, 4.2, 0.3),
+    { id: "mosaik", de: "das Mosaik", syl: "Mo-sa-IK", it: "il mosaico", itSyl: "mo-SAI-co", en: "mosaic", x: CX, y: CY + M(yb), kunst: flaeche(M(-2.7), M(-10), M(5.6), M(10), 0.1),
       tipp: "Die Statue ist mit Tausenden kleiner Dreiecke aus Speckstein beklebt." },
-    { id: "aussichtsplattform", de: "die Aussichtsplattform", syl: "AUS-sichts-platt-form", it: "la terrazza panoramica", itSyl: "ter-RAZ-za pa-no-RA-mi-ca", en: "viewing platform", x: CX, y: CY + 1.6, kunst: flaeche(-6, -2.8, 12, 2.8, 0.3) + flaeche(2, -2.8, 4, 2.8, 0.3),
+    { id: "aussichtsplattform", de: "die Aussichtsplattform", syl: "AUS-sichts-platt-form", it: "la terrazza panoramica", itSyl: "ter-RAZ-za pa-no-RA-mi-ca", en: "viewing platform", x: CX, y: CY + M(3.2), kunst: `<g transform="translate(0 ${-M(3.2)})">${besucher}</g>` + flaeche(M(-16), M(-6.4), M(11.5), M(6.4), 0.1) + flaeche(M(4.5), M(-6.4), M(11.5), M(6.4), 0.1),
       tipp: "Von der Plattform sieht man ganz Rio." },
   ];
   S.teil({ oben: true, id: "christusstatue", de: "die Christusstatue", syl: "CHRIS-tus-sta-tu-e", it: "il Cristo Redentore", itSyl: "CRI-sto re-den-TO-re", en: "Christ the Redeemer", x: CX, y: CY, kunst: k,
-    zoom: { x: CX - 12, y: CY - 15, w: 24, h: 16 },
+    zoom: { x: CX - 6.9, y: CY - 7.9, w: 13.8, h: 9.2 },
     unter: unterC,
     tipp: "Die Christusstatue ist 30 Meter hoch. Sie steht seit 1931 auf dem Corcovado." });
 }
 
 /* =====================================================================
-   4 — DER ZUCKERHUT (nur die Kuppe über Babilônia und Leme)
+   4 — DER ZUCKERHUT (nur die Kuppe über Babilônia und Leme; 5,3 km
+   entfernt: blasser und bläulicher als die Hügel davor)
    ===================================================================== */
 const HUEGEL = [[140, 104], [146, 96], [152, 89], [160, 82], [170, 77], [181, 74], [192, 74.6], [200, 78], [205, 82], [209, 83.4], [214, 82], [221, 79.2], [229, 77.6], [236, 78.4], [242, 81.4], [246, 86], [249, 92], [252.5, 100.6], [140, 100.6]];
 {
-  const X = 212;
-  const um1 = [[196, 100], [197.5, 78], [200.5, 64], [204.5, 55], [209, 50], [213, 48.6], [217.5, 49.6], [221.5, 54], [225, 62], [227.5, 74], [229, 100]];
-  let k = `<path d="M${pts(um1)} Z" fill="${S.lg("zh", [[0, "#6f6f71"], [0.5, "#8d8a84"], [0.85, "#b9b2a4"], [1, "#d6ccb8"]], 0, 0, 1, 0)}"/>`;
+  const X = 214;
+  const um1 = [[203.5, 100], [204.6, 82], [206.6, 73.4], [209.4, 67.4], [212.6, 64.4], [215.6, 64], [218.6, 65.6], [221.4, 69.6], [223.4, 76], [224.8, 86], [225.4, 100]];
+  let k = `<path d="M${pts(um1)} Z" fill="${S.lg("zh", [[0, "#7f858d"], [0.5, "#9a9da0"], [0.85, "#bdbab2"], [1, "#d3cfc3"]], 0, 0, 1, 0)}"/>`;
   /* dunkle Regenstreifen im Granit */
-  for (let i = 0; i < 12; i++) { const x = 201 + i * 2.1 + rnd(); const y0 = 52 + Math.abs(i - 5.5) * 1.6; k += `<path d="M${r(x)} ${r(y0)} q${r(-0.3 + rnd() * 0.6)} 9 ${r(-0.4 + rnd() * 0.8)} ${r(18 + rnd() * 10)}" stroke="#4f4e4c" stroke-width="${r(0.3 + rnd() * 0.4)}" opacity=".45" fill="none"/>`; }
-  /* bewachsene Kuppe und Bänder */
-  k += `<path d="M206.5 52.6 Q213 46.6 219.6 51.6 Q216 50.4 213 51 Q209.6 51 206.5 52.6 Z" fill="#4a6f4c"/>`;
-  k += `<path d="M199 70 q4 -2 7 1 q-3 1 -7 2 Z M222 66 q2.4 1 3.6 4 q-2.4 -.6 -3.6 -1.6 Z" fill="#4a6f4c" opacity=".8"/>`;
+  for (let i = 0; i < 10; i++) { const x = 206 + i * 1.8 + rnd() * 0.6; const y0 = 66 + Math.abs(i - 4.5) * 0.9; k += `<path d="M${r(x)} ${r(y0)} q${r(-0.2 + rnd() * 0.4)} 5 ${r(-0.3 + rnd() * 0.6)} ${r(10 + rnd() * 6)}" stroke="#5f6064" stroke-width="${r(0.22 + rnd() * 0.3)}" opacity=".45" fill="none"/>`; }
+  /* bewachsene Kuppe */
+  k += `<path d="M209.6 67.2 Q214.4 62.8 219.4 66 Q216.6 65.4 214.4 65.6 Q211.8 65.8 209.6 67.2 Z" fill="#647e6a"/>`;
+  k += `<path d="M205.4 79 q2.6 -1.4 4.6 .6 q-2 .8 -4.6 1.2 Z" fill="#647e6a" opacity=".8"/>`;
   /* Gegenlicht: Lichtsaum rechts, Dunst der Ferne */
-  k += `<path d="M217.5 49.6 Q221.5 54 225 62 Q227 70 227.6 76" stroke="#fff3d8" stroke-width=".6" fill="none" opacity=".75"/>`;
-  k += `<path d="M${pts(um1)} Z" fill="#cfe2ea" opacity=".2"/>`;
-  /* sichtbar nur über den Hügeln */
+  k += `<path d="M218.6 65.6 Q221.4 69.6 223.4 76" stroke="#fff3d8" stroke-width=".5" fill="none" opacity=".7"/>`;
+  k += `<path d="M${pts(um1)} Z" fill="#d3e4ec" opacity=".3"/>`;
   const cid = S.id("zhclip");
   S.def(`<clipPath id="${cid}"><path d="M0 0 L320 0 L320 ${HUEGEL[17][1]} L${pts(HUEGEL.slice(0, 18).reverse())} L0 104 Z"/></clipPath>`);
-  S.teil({ id: "zuckerhut", de: "der Zuckerhut", syl: "ZU-cker-hut", it: "il Pan di Zucchero", itSyl: "PAN di ZUC-che-ro", en: "Sugarloaf Mountain", x: X, y: 84, kunst: um(X, 84, `<g clip-path="url(#${cid})">${k}</g>`),
-    tipp: "Der Zuckerhut ist ein Felsen aus Granit, 396 Meter hoch. Eine Seilbahn fährt hinauf." });
+  S.teil({ id: "zuckerhut", de: "der Zuckerhut", syl: "ZU-cker-hut", it: "il Pan di Zucchero", itSyl: "PAN di ZUC-che-ro", en: "Sugarloaf Mountain", x: X, y: 72, kunst: um(X, 72, `<g clip-path="url(#${cid})">${k}</g>`),
+    tipp: "Der Zuckerhut ist ein Felsen aus Granit, 396 Meter hoch. Auf der anderen Seite fährt eine Seilbahn hinauf." });
 }
 
 /* =====================================================================
-   5 — DAS MEER (Atlantik) — vom Horizont bis zur Brandung
+   5 — DAS MEER (Atlantik) — vom Horizont bis zur Brandung (kräftiger
+   Shorebreak: rollende Wellen mit weißen Kämmen, nach rechts höher)
    ===================================================================== */
 const WASSER_R = 110;   /* Wasserlinie am rechten Bildrand */
 const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Fluchtpunkt */
 {
   let k = `<path d="M196 100 L320 100 L320 ${WASSER_R} L${VX} 100.3 Z" fill="${S.lg("meer", [[0, "#1c5a8e"], [0.45, "#2878a6"], [0.8, "#3d9fb4"], [1, "#77c8c2"]])}"/>`;
   /* Sonnenglitzern Richtung Sonne (rechts) */
-  for (let i = 0; i < 46; i++) { const x = 238 + rnd() * 82, y = 100.2 + rnd() * (wy(x, WASSER_R) - 100.6) * 0.7; k += `<rect x="${r(x)}" y="${r(y)}" width="${r(0.8 + rnd() * 2.2 * (x - 230) / 90)}" height=".22" fill="#fffbe8" opacity="${r(0.35 + 0.5 * (x - 230) / 90)}"/>`; }
-  /* Wellenkämme und die weiße Brandung vor dem Sand */
-  for (const yr of [102.4, 103.8, 105.2]) k += `<path d="M${VX + 8} ${r(wy(VX + 8, yr))} L320 ${yr}" stroke="#ecf8f6" stroke-width="${r((yr - 101) * 0.18)}" opacity=".7" stroke-dasharray="${r((yr - 101) * 3)} ${r((yr - 101) * 1.6)}"/>`;
-  k += `<path d="M${VX + 2} 100.5 L320 ${WASSER_R - 1.2} L320 ${WASSER_R} L${VX} 100.4 Z" fill="#f4fbf8" opacity=".9"/>`;
+  for (let i = 0; i < 40; i++) { const x = 238 + rnd() * 82, y = 100.2 + rnd() * (wy(x, 104) - 100.4); k += `<rect x="${r(x)}" y="${r(y)}" width="${r(0.8 + rnd() * 2.2 * (x - 230) / 90)}" height=".2" fill="#fffbe8" opacity="${r(0.35 + 0.5 * (x - 230) / 90)}"/>`; }
+  /* rollende Wellen: dunkle Wellenfront, darüber der weiße Schaumkamm */
+  for (const [yr, st] of [[103.4, 0.55], [105.6, 0.8], [108.3, 1.15]]) {
+    const ob = [], un = [], fr = [];
+    for (let x = VX + 6; x <= 320.1; x += 2.5) {
+      const y = wy(x, yr), h = (y - 100) * 0.2 * st * (0.75 + 0.25 * Math.sin(x * 0.31 + yr));
+      ob.push([x, y - h * (0.8 + 0.4 * rnd())]); un.push([x, y]); fr.push([x, y + h * 1.3]);
+    }
+    k += `<path d="M${pts(un)} L${pts(fr.slice().reverse())} Z" fill="#1d6c86" opacity=".55"/>`;
+    k += `<path d="M${pts(ob)} L${pts(un.slice().reverse())} Z" fill="#f6fbf9"/>`;
+    k += `<path d="M${pts(un)}" stroke="#cfe9ea" stroke-width="${r(0.25 * st)}" fill="none" opacity=".8"/>`;
+  }
+  /* auslaufendes Wasser auf dem Sand */
+  k += `<path d="M${VX + 2} 100.5 L320 ${WASSER_R - 1} L320 ${WASSER_R} L${VX} 100.4 Z" fill="#f4fbf8" opacity=".85"/>`;
   /* Insel Cotunduba vor Leme und ein Frachter auf dem Weg in die Bucht */
-  k += `<path d="M262 100.2 Q264 97.6 267 97.4 Q270 97.6 272.4 100.2 Z" fill="#5b7a5c"/><path d="M262 100.2 L272.4 100.2" stroke="#e8f4f2" stroke-width=".3"/>`;
+  k += `<path d="M262 100.2 Q264 97.6 267 97.4 Q270 97.6 272.4 100.2 Z" fill="#6a8a72"/><path d="M262 100.2 L272.4 100.2" stroke="#e8f4f2" stroke-width=".3"/>`;
   k += `<path d="M291 99.7 L301 99.7 L300 100.4 L292 100.4 Z" fill="#40454c"/><rect x="298" y="98.5" width="1.6" height="1.2" fill="#e8e6e0"/><rect x="293" y="99.1" width="4.4" height=".6" fill="#b34a3a"/>`;
-  S.teil({ id: "meer", de: "das Meer", syl: "MEER", it: "il mare", itSyl: "MA-re", en: "sea", x: 266, y: 104, kunst: um(266, 104, k),
-    tipp: "Das ist der Atlantische Ozean. Das Wasser ist oft kühler, als man denkt." });
+  S.teil({ id: "meer", de: "das Meer", syl: "MEER", it: "il mare", itSyl: "MA-re", en: "sea", x: 266, y: 103, kunst: um(266, 103, k),
+    tipp: "Das ist der Atlantische Ozean. Die Wellen brechen an der Copacabana oft kräftig am Strand." });
 }
 
 /* =====================================================================
@@ -264,46 +295,49 @@ const wy = (x, yr) => HY + (yr - HY) * (x - VX) / (320 - VX);   /* Linie zum Flu
 {
   let k = `<path d="M${pts(HUEGEL)} Z" fill="${WALD}"/>`;
   k += `<path d="M${pts(HUEGEL)} Z" fill="${S.lg("huegelluft", [[0, "#9fc3c6", 0.4], [1, "#2f5a3c", 0.08]])}"/>`;
-  /* kahle Felswand von Leme zum Meer (rechts, besonnt) und Felsplatten */
+  /* kahle Felswand von Leme zum Meer (rechts, besonnt) */
   k += `<path d="M242 81.4 L246 86 L249 92 L252.5 100.6 L246.6 100.6 L245 93 L242.6 86 Z" fill="${S.lg("lemefels", [[0, "#8f8a80"], [1, "#c9c0ae"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M186 77 q2.4 2.4 1.6 6.4 q-1.6 -2 -3.2 -3 Z" fill="#8e918b" opacity=".5"/>`;
   /* das Fort Duque de Caxias oben auf Leme */
   k += `<path d="M226.5 77.9 L227 75.6 L233.6 75.4 L234 77.8 Z" fill="#c9c4b6"/><rect x="228.4" y="74.4" width="3.6" height="1.2" fill="#d9d4c6"/><line x1="232.8" y1="75.4" x2="232.8" y2="71.8" stroke="#555" stroke-width=".15"/><rect x="232.85" y="71.8" width="1.6" height="1" fill="#2f8a4a"/>`;
   k += `<path d="M${pts(HUEGEL.slice(0, 18))}" stroke="#5e8f66" stroke-width=".5" fill="none" opacity=".6"/>`;
-  S.teil({ id: "huegel", de: "der Hügel", syl: "HÜ-gel", it: "la collina", itSyl: "col-LI-na", en: "hill", x: 196, y: 100, kunst: um(196, 100, k),
+  S.teil({ id: "huegel", de: "der Hügel", syl: "HÜ-gel", it: "la collina", itSyl: "col-LI-na", en: "hill", x: 236, y: 88, kunst: um(236, 88, k),
     tipp: "Am Ende der Copacabana liegt der Hügel Leme. Oben steht ein altes Fort." });
 }
 
 /* =====================================================================
-   7 — DIE FAVELA (Babilônia und Chapéu Mangueira am Hang)
+   7 — DIE FAVELA (Babilônia und Chapéu Mangueira oben am Hang, hinter
+   den Hochhäusern). Häuser 3–6 m breit (≈ 0,6–1,2 Einheiten auf 3 km),
+   dicht gestaffelt; je Farbe ein einziger Pfad (klein und schnell).
    ===================================================================== */
 {
-  const farben = ["#c9653f", "#dca56b", "#ece4d2", "#b44c3b", "#86a9b9", "#e4c35c", "#a06e50", "#da8a72", "#f1ede2", "#c97f4a"];
-  const hang = (x) => { /* Oberkante des Hügels bei x */
+  const farben = ["#c9653f", "#dca56b", "#ece4d2", "#b44c3b", "#9fb8c2", "#e4c35c", "#a06e50", "#da8a72", "#f1ede2"];
+  const hang = (x) => {
     for (let i = 0; i < HUEGEL.length - 2; i++) { const [x1, y1] = HUEGEL[i], [x2, y2] = HUEGEL[i + 1]; if (x >= x1 && x <= x2) return y1 + (y2 - y1) * (x - x1) / (x2 - x1); }
     return 100;
   };
-  let k = "";
-  const haeuser = [];
-  for (let row = 0; row < 7; row++) {
-    for (let x = 151 + (row % 2) * 1.6; x < 214; x += 2.7 + rnd() * 1.4) {
-      const top = hang(x) + 3 + row * 2.1 + rnd() * 1.2;
-      if (top > 97 || (x > 199 && row < 2) || (x > 206 && row < 3)) continue;
-      if (rnd() < 0.18) continue;
-      haeuser.push([x, top, 2.2 + rnd() * 1.6, 1.8 + rnd() * 1.2, farben[Math.floor(rnd() * farben.length)]]);
+  const wege = farben.map(() => []), fenster = [], tanks = [], schatten2 = [];
+  for (let y = 80; y < 92; y += 0.85) {
+    for (let x = 150 + rnd(); x < 212; x += 0.7 + rnd() * 0.6) {
+      if (y < hang(x) + 1.6) continue;
+      /* Babilônia (links) dichter, Chapéu Mangueira (rechts unten) lockerer, dazwischen Wald */
+      const dicht = x < 196 ? 0.78 : (x > 203 && y > 84 ? 0.6 : 0.25);
+      if (rnd() > dicht) continue;
+      const w = 0.6 + rnd() * 0.6, h = 0.5 + rnd() * 0.35, c = Math.floor(rnd() * farben.length);
+      wege[c].push(`M${r(x)} ${r(y)}h${r(w)}v${r(h)}h${r(-w)}z`);
+      schatten2.push(`M${r(x + w - 0.18)} ${r(y)}h.18v${r(h)}h-.18z`);
+      if (rnd() < 0.5) fenster.push(`M${r(x + 0.15)} ${r(y + 0.2)}h.18v.18h-.18z`);
+      if (rnd() < 0.3) tanks.push(`M${r(x + w * 0.4)} ${r(y - 0.22)}h.3v.22h-.3z`);
     }
   }
-  haeuser.sort((a, b) => a[1] - b[1]);
-  for (const [x, y, w, h, c] of haeuser) {
-    k += `<rect x="${r(x)}" y="${r(y)}" width="${r(w)}" height="${r(h)}" fill="${c}"/>`;
-    k += `<rect x="${r(x)}" y="${r(y)}" width="${r(w)}" height=".35" fill="#fff" opacity=".35"/><rect x="${r(x + w - 0.5)}" y="${r(y)}" width=".5" height="${r(h)}" fill="#000" opacity=".12"/>`;
-    k += `<rect x="${r(x + 0.4)}" y="${r(y + 0.7)}" width=".5" height=".6" fill="#3a2f2a"/>`;
-    if (w > 3) k += `<rect x="${r(x + 1.6)}" y="${r(y + 0.7)}" width=".5" height=".6" fill="#3a2f2a"/>`;
-    if (rnd() < 0.35) k += `<rect x="${r(x + w * 0.5)}" y="${r(y - 0.7)}" width=".9" height=".7" rx=".2" fill="#2f6fb5"/>`;
-  }
-  /* Bäume zwischen den Häusern */
-  for (let i = 0; i < 10; i++) { const x = 152 + rnd() * 58, y = hang(x) + 4 + rnd() * 10; if (y < 96) k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.9 + rnd() * 0.7)}" fill="#3f7148"/>`; }
-  S.teil({ id: "favela", de: "die Favela", syl: "Fa-VE-la", it: "la favela", itSyl: "fa-VE-la", en: "favela", x: 182, y: 96, kunst: um(182, 96, k),
+  let k = "";
+  farben.forEach((c, i) => { if (wege[i].length) k += `<path d="${wege[i].join("")}" fill="${c}"/>`; });
+  k += `<path d="${schatten2.join("")}" fill="#000" opacity=".18"/><path d="${fenster.join("")}" fill="#3a2f2a"/><path d="${tanks.join("")}" fill="#2f6fb5"/>`;
+  /* Bäume zwischen den Häusern und Luftdunst */
+  for (let i = 0; i < 14; i++) { const x = 152 + rnd() * 58, y = Math.max(hang(x) + 2, 80) + rnd() * 10; if (y < 92) k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.6 + rnd() * 0.5)}" fill="#46754e"/>`; }
+  k += `<rect x="150" y="79" width="64" height="14" fill="#cfe2ea" opacity=".16"/>`;
+  const cid = S.id("favclip");
+  S.def(`<clipPath id="${cid}"><path d="M${pts(HUEGEL.slice(0, 18))} L252 100 L140 100 Z"/></clipPath>`);
+  S.teil({ id: "favela", de: "die Favela", syl: "Fa-VE-la", it: "la favela", itSyl: "fa-VE-la", en: "favela", x: 175, y: 86, kunst: um(175, 86, `<g clip-path="url(#${cid})">${k}</g>`),
     tipp: "In der Favela wohnen viele Familien. Ihre Häuser am Hang haben sie oft selbst gebaut." });
 }
 
