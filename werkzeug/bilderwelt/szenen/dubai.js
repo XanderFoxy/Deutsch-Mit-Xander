@@ -190,15 +190,15 @@ let burjKlick = "";
   burjKlick = k;
 }
 const burjUnter = [
-  { id: "spitze", de: "die Spitze", syl: "SPIT-ze", it: "la guglia", itSyl: "GU-glia", en: "spire", x: BX, y: r(by(592)), kunst: flaeche(-2.6, -(by(592) - by(830)), 5.2, by(592) - by(830)),
+  { id: "spitze", de: "die Spitze", syl: "SPIT-ze", it: "la guglia", itSyl: "GU-glia", en: "spire", x: BX, y: r(by(640)), kunst: flaeche(-2.6, -(by(640) - by(830)), 5.2, by(640) - by(830)),
     tipp: "Die Spitze ist aus Stahl und allein rund 240 Meter lang. Sie wurde von innen nach oben geschoben." },
-  { id: "aussichtsplattform", de: "die Aussichtsplattform", syl: "AUS-sichts-platt-form", it: "la terrazza panoramica", itSyl: "ter-RAZ-za pa-no-RA-mi-ca", en: "observation deck", x: BX, y: r(by(548)), kunst: flaeche(-4.2, -5.2, 8.4, 5.6),
+  { id: "aussichtsplattform", de: "die Aussichtsplattform", syl: "AUS-sichts-platt-form", it: "la terrazza panoramica", itSyl: "ter-RAZ-za pa-no-RA-mi-ca", en: "observation deck", x: BX, y: r(by(546)), kunst: flaeche(-4.6, -(by(546) - by(574)), 9.2, by(546) - by(574)),
     tipp: "Die Aussichtsplattform „At the Top“ liegt 555 Meter hoch. Von dort sieht man das Meer und die Wüste." },
-  { id: "fassade", de: "die Fassade", syl: "fas-SA-de", it: "la facciata", itSyl: "fac-CIA-ta", en: "facade", x: BX, y: r(by(470)), kunst: flaeche(-5.5, -(by(470) - by(530)), 11, by(470) - by(530)),
+  { id: "fassade", de: "die Fassade", syl: "fas-SA-de", it: "la facciata", itSyl: "fac-CIA-ta", en: "facade", x: BX, y: r(by(578)), kunst: flaeche(-3.4, -(by(578) - by(636)), 6.8, by(578) - by(636)),
     tipp: "Die Fassade hat Tausende Glasscheiben mit Rippen aus Edelstahl. Das Glas hält die Hitze draußen." },
 ];
 S.teil({ anker: [BX, 120], id: "burj_khalifa", de: "der Burj Khalifa", syl: "burdsch ka-LI-fa", it: "il Burj Khalifa", itSyl: "burj ka-LI-fa", en: "Burj Khalifa", x: 0, y: 0, kunst: burjKlick,
-  zoom: { x: 177, y: 10, w: 99, h: 66 }, unter: burjUnter,
+  zoom: { x: 184, y: 10, w: 84, h: 56 }, unter: burjUnter,
   tipp: "Der Burj Khalifa ist mit 828 Metern das höchste Gebäude der Welt. Er hat über 160 Stockwerke." });
 
 /* =====================================================================
@@ -428,6 +428,11 @@ const FIG = {
   }
   k += `<path d="${fu}" stroke="#b89f7c" stroke-width=".35" fill="none" opacity=".75"/>`;
   k += `<path d="${fu}" stroke="#fffaf0" stroke-width=".25" fill="none" opacity=".5" transform="translate(.35 .35)"/>`;
+  /* Spiegelungen im polierten Stein: Pfosten, Menschen */
+  const SP = S.lg("bodenspiegel", [[0, "#ffffff", 0.5], [1, "#ffffff", 0]]);
+  for (let s = -7.5; s <= 7.6; s += 1.5) { const x = klemm(xAt(s, 4), 0.9, 399.1); k += `<rect x="${r(x - 0.9)}" y="${r(Y_KANTE)}" width="1.8" height="7" fill="#8d969c" opacity=".22"/>`; }
+  for (const [n, c, b] of [["tourist", "#3f7fae", 4], ["mann", "#ffffff", 4], ["frau", "#1c1c21", 3.4]]) { const f = FIG[n], y = yAt(f.d, DECK); k += `<rect x="${r(f.x - b)}" y="${r(y + 0.6)}" width="${2 * b}" height="9" fill="${c}" opacity=".12" ${W05}/>`; }
+  k += `<rect x="0" y="${r(Y_KANTE)}" width="400" height="10" fill="${SP}" opacity=".35"/>`;
   /* Schlagschatten nach rechts (Sonne links): Pflanzkübel, Menschen, Tisch, Stühle */
   const sch = (x, y, l, b, a = 0.3) => `<path d="M${r(x - 2)} ${r(y)} Q${r(x + l * 0.5)} ${r(y - b)} ${r(x + l)} ${r(y - b * 0.3)} Q${r(x + l * 0.5)} ${r(y + b * 0.8)} ${r(x - 2)} ${r(y + 0.6)} Z" fill="#5a4630" opacity="${a}" ${W05}/>`;
   for (const [n, l] of [["tourist", 46], ["mann", 38], ["frau", 24]]) { const f = FIG[n]; k += sch(f.x, yAt(f.d, DECK), l, 2.4); }
