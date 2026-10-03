@@ -144,7 +144,7 @@ function saum(linie, s, schritt, anteilNadel = 0.45) {
 /* Große Farbflecken im Wald (Buchengruppen, Fichtenhorste) — gibt dem
    Muster eine ruhige, natürliche Verteilung statt Streusel. */
 S.def(`<filter id="${S.id("flecken")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
-function waldflaeche(name, poly, skala, n, grund, deckung = 0.6) {
+function waldflaeche(name, poly, skala, n, grund, deckung = 0.6, muster = null, farben = null) {
   const d = pfad(poly);
   S.def(`<clipPath id="${S.id(name)}"><path d="${d}"/></clipPath>`);
   const xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]);
@@ -154,9 +154,10 @@ function waldflaeche(name, poly, skala, n, grund, deckung = 0.6) {
     const x = x0 + rnd() * (x1 - x0), y = y0 + rnd() * (y1 - y0);
     const w = Math.min((8 + rnd() * 16) * skala * 1.4, x - x0, x1 - x), h = Math.min(w * 0.55, y - y0, y1 - y);
     if (w < 2 || h < 1) continue;
-    f += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(w)}" ry="${r(h)}" fill="${["#c58a2c", "#d9a640", "#2f4a32", "#9a5a24", "#3b5a3a", "#b98a34", "#e2b85a"][Math.floor(rnd() * 7)]}"/>`;
+    const pal = farben || ["#c58a2c", "#d9a640", "#2f4a32", "#9a5a24", "#3b5a3a", "#b98a34", "#e2b85a"];
+    f += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(w)}" ry="${r(h)}" fill="${pal[Math.floor(rnd() * pal.length)]}"/>`;
   }
-  return `<path d="${d}" fill="${grund}"/><g clip-path="url(#${S.id(name)})"><g filter="url(#${S.id("flecken")})">${f}</g></g><path d="${d}" fill="${HERBST(skala)}" opacity="${deckung}"/>`;
+  return `<path d="${d}" fill="${grund}"/><g clip-path="url(#${S.id(name)})"><g filter="url(#${S.id("flecken")})">${f}</g></g><path d="${d}" fill="${(muster || HERBST)(skala)}" opacity="${deckung}"/>`;
 }
 
 /* =====================================================================
@@ -221,13 +222,13 @@ S.hinten(`<path d="M90 ${HOR + 1} Q160 67.4 240 68.6 Q320 66.8 400 68.2 L400 ${H
   k += facette([[30, 16.2], [34, 13.4], [38, 11.8], [36, 26], [34, 40], [30, 54], [22, 58], [14, 54], [22, 44], [28, 30]], MITTE);
   k += facette([[38, 11.8], [42, 13], [46, 12.4], [50, 15], [54, 19.4], [58, 24], [61, 30], [65, 34], [70, 40], [66, 50], [56, 58], [44, 62], [34, 58], [30, 54], [34, 40], [36, 26]], SCHATT);
   /* Rinnen (dunkel) mit hellen Schuttkegeln darunter, Felsbänder als Kanten */
-  for (const [x, y0, y1, w] of [[26, 26, 52, 1.4], [36, 20, 56, 1.8], [47, 22, 54, 1.4], [57, 30, 52, 1.2], [14, 36, 54, 1.1]]) {
-    k += `<path d="M${x - w / 2} ${y0} Q${x - w} ${(y0 + y1) / 2} ${x - w * 0.3} ${y1} L${x + w * 0.6} ${y1} Q${x + w * 0.4} ${(y0 + y1) / 2} ${x + w / 2} ${y0} Z" fill="${x < 34 ? "#9d9486" : "#5e646c"}" opacity=".4"/>`;
-    k += `<path d="M${x - 3.4} ${y1 + 4} Q${x} ${y1 - 3} ${x + 3.4} ${y1 + 4} Z" fill="#e2dccf" opacity=".4"/>`;
+  for (const [x, y0, y1, w] of [[26, 26, 50, 1.6], [36, 20, 54, 2], [47, 22, 52, 1.6], [57, 30, 50, 1.3], [14, 36, 52, 1.2]]) {
+    const m = (y0 + y1) / 2;
+    k += `<path d="M${x - w * 0.3} ${y0} Q${x - w * 1.2} ${m - 4} ${x - w * 0.6} ${m} Q${x - w * 1.4} ${m + 6} ${x - w} ${y1} L${x + w} ${y1} Q${x + w * 0.5} ${m + 5} ${x + w * 0.8} ${m} Q${x + w * 0.4} ${m - 5} ${x + w * 0.3} ${y0} Z" fill="${x < 34 ? "#a59b8a" : "#666c74"}" opacity=".35"/>`;
   }
   /* Bergwald (Fichten, gelbe Lärchen) bis zur Waldgrenze */
   const BW = [[-3, 64], [4, 61], [14, 57], [22, 60], [30, 56], [38, 60], [46, 63], [56, 59], [66, 51], [72, 46], [80, 54], [90, 63], [106, 82], [126, 112], [128, 120], [-3, 120]];
-  k += `<path d="${pfad(BW)}" fill="${BERGWALD(0.42)}"/>`;
+  k += waldflaeche("bwclip", BW, 0.5, 30, "#2e3d2c", 0.5, BERGWALD, ["#2c4632", "#36553a", "#4a5e34", "#c9a23e", "#25402d", "#5a6a3a"]);
   k += saum(BW.slice(0, 12), 0.95, 2, 0.8);
   for (let i = 0; i < 26; i++) { const x = rnd() * 110, y = 64 + rnd() * 40; if (drin(x, y, BW)) k += `<path d="M${r(x - 0.7)} ${r(y + 0.8)} L${r(x)} ${r(y - 1.8)} L${r(x + 0.7)} ${r(y + 0.8)} Z" fill="#d9b23e" opacity=".85"/>`; }
   k += `<path d="${pfad(BW)}" fill="${S.lg("bwlicht", [[0, "#fff4cc", 0.12], [0.5, "#000", 0], [1, "#0e1a10", 0.25]], 0, 0, 1, 0)}"/>`;
@@ -542,7 +543,7 @@ const PAL = { x0: 178, x1: 262, knick: 222, fuss: 152, traufe: 94, first: 71 };
   for (let x = 290; x < 300; x += 2.2) k += `<rect x="${x}" y="139.4" width="1.3" height="1.8" fill="${KALK}"/>`;
   /* Sonne von links: Eigenschatten rechts an den Vorsprüngen, Schlagschatten am Fuß */
   k += `<path d="M${x0 - 11} ${fuss + 3} L300 155 L300 157 L${x0 - 8} ${fuss + 5} Z" fill="#5e5442" opacity=".22"/>`;
-  S.teil({ id: "neuschwanstein", de: "das Schloss Neuschwanstein", syl: "SCHLOSS neu-SCHWAN-stein", it: "il castello di Neuschwanstein", itSyl: "ca-STEL-lo di noi-SCHWAN-stain", en: "Neuschwanstein Castle",
+  S.teil({ id: "neuschwanstein", de: "das Schloss Neuschwanstein", syl: "SCHLOSS neu-SCHWAN-stein", it: "il castello di Neuschwanstein", itSyl: "ca-STEL-lo di neu-SCHWAN-stein", en: "Neuschwanstein Castle",
     x: 0, y: 0, kunst: k, tipp: "König Ludwig II. ließ das Schloss ab 1869 bauen – wie eine Ritterburg aus dem Märchen.",
     zoom: { x: 152, y: 30, w: 150, h: 100 },
     unter: [

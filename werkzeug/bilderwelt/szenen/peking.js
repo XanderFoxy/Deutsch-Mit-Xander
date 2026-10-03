@@ -131,8 +131,8 @@ S.hinten(`<path d="M0 78 Q40 66 80 74 Q120 62 160 70 Q200 60 240 68 Q290 58 330 
 /* =====================================================================
    1 — DIE BERGE und 2 — DIE GROSSE MAUER (Lupe: Wachturm, Zinne, Treppe)
    ===================================================================== */
-const KAMM_L = [[-2, 72], [6, 66], [11, 63], [16, 64], [22, 55], [28, 49], [33, 44], [38, 38], [43, 34.5], [47, 34], [51, 36], [56, 41], [61, 47], [66, 50], [70, 54], [74, 56.5], [80, 59], [86, 63], [92, 66], [98, 70], [106, 76], [116, 82], [128, 90]];
-const KAMM_R = [[248, 94], [258, 90], [266, 86], [272, 82], [278, 78.5], [285, 76], [292, 71], [299, 66], [306, 62.5], [312, 60], [318, 58.5], [324, 60], [330, 63], [337, 67], [343, 69], [349, 68], [356, 65.5], [363, 62], [370, 60.5], [377, 62], [384, 63.5], [392, 66], [402, 70]];
+const KAMM_L = [[0, 70.5], [6, 66], [11, 63], [16, 64], [22, 55], [28, 49], [33, 44], [38, 38], [43, 34.5], [47, 34], [51, 36], [56, 41], [61, 47], [66, 50], [70, 54], [74, 56.5], [80, 59], [86, 63], [92, 66], [98, 70], [106, 76], [116, 82], [128, 90]];
+const KAMM_R = [[248, 94], [258, 90], [266, 86], [272, 82], [278, 78.5], [285, 76], [292, 71], [299, 66], [306, 62.5], [312, 60], [318, 58.5], [324, 60], [330, 63], [337, 67], [343, 69], [349, 68], [356, 65.5], [363, 62], [370, 60.5], [377, 62], [384, 63.5], [392, 66], [400, 69]];
 /* geglätteter Kamm als Punktfolge (quadratische Bögen durch die Mittelpunkte) */
 const kurve = (pts) => {
   const out = [pts[0]];
@@ -160,7 +160,7 @@ const linie = (pts, dy = 0) => pts.map(([x, y], i) => (i ? "L" : "M") + r(x) + "
       k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(5 + rnd() * 7)}" ry="${r(2.5 + rnd() * 3)}" fill="${["#b0563a", "#c88a3a", "#a0482e", "#d0a040"][i % 4]}" opacity=".38" filter="url(#${S.id("weich2")})"/>`;
     }
     /* Grate und Rinnen: weiche Licht- und Schattenbahnen */
-    for (let i = 3; i < pts.length - 3; i += 6) {
+    for (let i = 6; i < pts.length - 6; i += 6) {
       const [x, y] = pts[i];
       k += `<path d="M${r(x)} ${r(y + 1.5)} Q${r(x - 4)} ${r(y + 16)} ${r(x - 12)} ${r(y + 40)}" stroke="#2f3d38" stroke-width="3" opacity=".22" fill="none" filter="url(#${S.id("weich2")})"/>`;
       k += `<path d="M${r(x + 2)} ${r(y + 1.5)} Q${r(x + 4)} ${r(y + 16)} ${r(x + 10)} ${r(y + 40)}" stroke="#f3ead2" stroke-width="2" opacity=".18" fill="none" filter="url(#${S.id("weich2")})"/>`;
@@ -389,7 +389,7 @@ const BAU = { podL: -150, podR: 150, hPod: 13, sauleL: -71, sauleR: 71, joch: 14
   k += `<rect x="${X(-57)}" y="${r(yFirst - 1.4)}" width="114" height="1.6" rx=".4" fill="#c88a10"/><rect x="${X(-57)}" y="${r(yFirst - 1.4)}" width="114" height=".5" fill="#f6d36a"/>`;
   for (const sd of [-1, 1]) k += `<path d="M${X(sd * 57)} ${r(yFirst)} L${X(sd * 57)} ${r(yChi + 0.4)} Q${X(sd * 57.8)} ${r(yChi - 1.4)} ${X(sd * 59.4)} ${r(yChi - 0.6)} Q${X(sd * 60.2)} ${r(yChi + 0.8)} ${X(sd * 59.2)} ${r(yChi + 1.2)} Q${X(sd * 60.6)} ${r(yFirst - 0.6)} ${X(sd * 58.8)} ${r(yFirst)} Z" fill="#c88a10" stroke="#8a5a06" stroke-width=".25"/>`;
   /* Schatten unter den Traufen */
-  k += `<rect x="${X(-80)}" y="${r(yTrauf1 + 2)}" width="160" height="2.4" fill="#000" opacity=".18"/>`;
+  k += `<rect x="${X(-71)}" y="${r(yTrauf1 + 2)}" width="142" height="2.4" fill="#000" opacity=".18"/>`;
   S.teil({ anker: [180, 62], id: "tor", de: "das Tor des Himmlischen Friedens", syl: "TOR des HIMM-li-schen FRIE-dens", it: "la Porta della Pace Celeste", itSyl: "POR-ta del-la PA-ce ce-LE-ste", en: "Gate of Heavenly Peace", x: 0, y: 0, kunst: k,
     zoom: { x: 92, y: 38, w: 96, h: 64 }, unter: torUnter,
     tipp: "Auf Chinesisch heißt das Tor „Tian'anmen“. Es ist 35 Meter hoch und führt zur Verbotenen Stadt." });
@@ -508,9 +508,16 @@ const KANTE = (y) => 180 - 0.3125 * (y - HOR);     /* Terrassenkante s = −0,5 
   k += `<path d="M${r(-W / 2 + 4)} ${r(-H + 6)} h${r(W - 8)} M${r(-W / 2 + 4)} ${r(-H + 12)} h${r(W - 8)}" stroke="#a9a397" stroke-width=".4"/>`;
   /* Blütenhügel: gelbe und rote Chrysanthemen mit Blättern */
   k += `<path d="M${r(-W / 2 - 1)} ${r(-H - 1.6)} Q${r(-W / 2)} ${r(-H - 13)} 0 ${r(-H - 15)} Q${r(W / 2)} ${r(-H - 13)} ${r(W / 2 + 1)} ${r(-H - 1.6)} Z" fill="#3f6a32"/>`;
-  for (let i = 0; i < 46; i++) {
-    const t = rnd() * 2 - 1, x = t * (W / 2 - 1), y = -H - 2.6 - rnd() * (12 * (1 - t * t) + 0.6), rr = 1.5 + rnd() * 0.9, f = rnd() < 0.62 ? ["#f6c21e", "#e8a810"] : ["#d8302a", "#a81a16"];
-    k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(rr)}" fill="${f[1]}"/><circle cx="${r(x - 0.2)}" cy="${r(y - 0.2)}" r="${r(rr * 0.7)}" fill="${f[0]}"/><circle cx="${r(x)}" cy="${r(y)}" r="${r(rr * 0.25)}" fill="#8a5a10"/>`;
+  /* Chrysanthemen als Rosetten (eine Blüte, oft wiederverwendet) */
+  for (const [n, a, b] of [["chg", "#f6c21e", "#d99a0c"], ["chr", "#d8302a", "#a01a14"]]) {
+    let bl = `<circle r="1.7" fill="${b}"/>`;
+    for (let i = 0; i < 12; i++) { const w = i * Math.PI / 6; bl += `<ellipse cx="${r(Math.cos(w) * 1.05)}" cy="${r(Math.sin(w) * 1.05)}" rx=".75" ry=".32" fill="${a}" transform="rotate(${Math.round(w * 180 / Math.PI)} ${r(Math.cos(w) * 1.05)} ${r(Math.sin(w) * 1.05)})"/>`; }
+    bl += `<circle r=".55" fill="${b}"/><circle r=".28" fill="#7a4a08"/>`;
+    S.def(`<g id="${S.id(n)}">${bl}</g>`);
+  }
+  for (let i = 0; i < 95; i++) {
+    const t = rnd() * 2 - 1, x = t * (W / 2 - 1.2), y = -H - 2.2 - Math.sqrt(rnd()) * (12.4 * (1 - t * t) + 0.4), sc = 0.8 + rnd() * 0.35;
+    k += `<use href="#${S.id(rnd() < 0.62 ? "chg" : "chr")}" transform="translate(${r(x)} ${r(y)}) scale(${r(sc * 100) / 100} ${r(sc * 88) / 100})"/>`;
   }
   S.teil({ id: "chrysantheme", de: "die Chrysantheme", syl: "chry-san-THE-me", it: "il crisantemo", itSyl: "cri-SAN-te-mo", en: "chrysanthemum", x: 20, y: Y, steht: true, kunst: k,
     tipp: "Zum Nationalfeiertag am 1. Oktober schmücken Peking Tausende Chrysanthemen – in China eine Blume des Herbstes." });
@@ -650,8 +657,8 @@ const enteUnter = [];
   ente += `<path d="M-15 -1 Q-16 -10 -4 -12.4 Q8 -13 13 -6 Q14 -1 9 0 Z" fill="${D}"/>`;
   ente += `<path d="M10 -5 Q17 -9 19 -4 Q18 -1 13 -1.6 Z" fill="${D}"/>`;
   /* Hals und Kopf (die Ente wird im Ganzen gezeigt, bevor der Koch sie aufschneidet) */
-  ente += `<path d="M-13 -5 Q-19 -9 -19.5 -14 Q-19.6 -17.6 -17 -18" stroke="${D}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
-  ente += `<path d="M-18.6 -19.6 Q-15.4 -21 -14.2 -18.4 Q-14.6 -16.6 -17 -16.4 Q-19.4 -16.8 -18.6 -19.6 Z" fill="#8a3a12"/><path d="M-14.6 -18.6 L-11 -17.8 L-14.4 -17" fill="#5a2a10"/><circle cx="-16" cy="-18.8" r=".35" fill="#2a1408"/>`;
+  ente += `<path d="M-13 -4 Q-18 -6.4 -20 -3.6 Q-21 -2 -21.6 -1.6" stroke="${D}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  ente += `<path d="M-21 -3.4 Q-24.6 -4 -25.4 -1.8 Q-24.6 -.2 -21.6 -.4 Q-20.2 -1.4 -21 -3.4 Z" fill="#8a3a12"/><path d="M-25 -2.2 L-28 -1.4 L-25 -.8" fill="#5a2a10"/><circle cx="-23.2" cy="-2.4" r=".3" fill="#2a1408"/>`;
   ente += `<path d="M-9 -10 Q-1 -12.6 8 -9.4" stroke="#ffd9a0" stroke-width="1.2" fill="none" opacity=".75"/><ellipse cx="-4" cy="-9.6" rx="3" ry="1" fill="#fff" opacity=".45"/>`;
   for (let i = 0; i < 4; i++) ente += `<path d="M${-10 + i * 5} 1.6 q2.4 -2 4.6 -.4 l-.6 1 Z" fill="#c76a26" stroke="#f3e2c8" stroke-width=".35"/>`;
   let k = schatten(px + 4, py + 1, 26 * q, 2.4 * q, 0.3) + g(px, py, q, ente);

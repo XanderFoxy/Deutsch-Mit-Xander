@@ -62,6 +62,9 @@ const rnd = zufall(1886);
 const r = B.r;
 const HOR = 150;
 const um = (y) => (y - HOR) / 5;   /* Einheiten je Meter auf der Promenade */
+/* Schlagschatten: die Vormittagssonne steht links hinter uns (Südosten),
+   die Schatten fallen nach hinten rechts (Nordwesten) auf die Promenade */
+const wurf = (x0, x1, hU, op = 0.22) => `<path d="M${r(x0)} 0 L${r(x1)} 0 L${r(x1 + hU * 0.6)} ${r(-hU * 0.24)} L${r(x0 + hU * 0.6)} ${r(-hU * 0.24)} Z" fill="#1b120a" opacity="${op}" filter="url(#bw_weich)"/>`;
 
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
@@ -254,7 +257,7 @@ S.hinten(`<ellipse cx="40" cy="20" rx="160" ry="90" fill="${S.rg("hell", [[0, "#
         tipp: "Die Flamme der Fackel ist mit echtem Gold überzogen." },
       { id: "krone", de: "die Krone", syl: "KRO-ne", it: "la corona", itSyl: "co-RO-na", en: "crown", x: SX - 0.1, y: SY - 51.4, kunst: flaeche(-2.8, -3, 5.6, 3.4, 0.6),
         tipp: "Die Krone hat sieben Strahlen — für die sieben Meere und Kontinente." },
-      { id: "tafel", de: "die Tafel", syl: "TA-fel", it: "la tavola", itSyl: "TA-vo-la", en: "tablet", x: SX + 2.9, y: SY - 39.3, kunst: flaeche(-1.7, -6.6, 3.4, 6.8, 0.5),
+      { id: "tafel", de: "die Tafel", syl: "TA-fel", it: "la tavoletta", itSyl: "ta-vo-LET-ta", en: "tablet", x: SX + 2.9, y: SY - 39.3, kunst: flaeche(-1.7, -6.6, 3.4, 6.8, 0.5),
         tipp: "Auf der Tafel steht „JULY IV MDCCLXXVI“ — der 4. Juli 1776, der Tag der Unabhängigkeit." },
       { id: "sockel", de: "der Sockel", syl: "SO-ckel", it: "il piedistallo", itSyl: "pie-di-STAL-lo", en: "pedestal", x: SX, y: SY - 12.4, kunst: flaeche(-4.4, -16.8, 8.8, 16.6, 0.6),
         tipp: "Der Sockel aus Granit wurde mit Spenden aus ganz Amerika bezahlt." },
@@ -310,6 +313,9 @@ function block(x, base, w, h, art, muster) {
   for (let y = -3; y > top; y -= 2.4) { const t = -y / Hr, hw = wB + (wT - wB) * t; k += `<line x1="${r(-hw)}" y1="${r(y)}" x2="${r(hw)}" y2="${r(y)}" stroke="#36506a" stroke-width=".12" opacity=".5"/>`; }
   /* Spiegelung des Himmels und eine Wolke im Glas */
   k += `<path d="M${P(-6.6, -20)} L${P(-3.2, -70)} L${P(-1.2, -70)} L${P(-4.4, -20)} Z" fill="#fff" opacity=".28"/>`;
+  /* die Morgensonne spiegelt sich in den Glasflächen */
+  k += `<path d="M${P(-6.9, -26)} L${P(-4.9, -66)} L${P(-4.2, -66)} L${P(-6, -26)} Z" fill="#fffbe8" opacity=".75"/>`;
+  k += `<ellipse cx="-5.4" cy="-46" rx="2.6" ry="9" fill="${S.rg("glint", [[0, "#fffbe8", 0.55], [1, "#fffbe8", 0]])}"/>`;
   /* Sockelgeschosse (Glaslamellen) */
   k += `<rect x="${-wB}" y="-9" width="${2 * wB}" height="9" fill="${S.lg("owsock", [[0, "#dfe8ee"], [1, "#a9b9c4"]], 0, 0, 1, 0)}"/>`;
   for (let x = -wB + 0.6; x < wB; x += 0.8) k += `<line x1="${r(x)}" y1="-9" x2="${r(x)}" y2="0" stroke="#7e93a3" stroke-width=".12"/>`;
@@ -387,6 +393,7 @@ function block(x, base, w, h, art, muster) {
   }
   /* 4 WTC und 3 WTC (links neben dem One WTC) */
   k += block(140, BASE, 9, 74, "glas", "glasr");
+  k += `<rect x="141" y="${BASE - 60}" width="1.6" height="22" fill="#fff8e0" opacity=".5"/>`;
   k += `<path d="M140 ${BASE - 74} L149 ${BASE - 74} L149 ${BASE - 76} L141.6 ${BASE - 76} Z" fill="#c9d8e3"/>`;
   k += block(171, BASE, 8.6, 80, "dunkel", "glasr");
   k += `<path d="M171 ${BASE - 80} L179.6 ${BASE - 80} L179.6 ${BASE - 84} L172.4 ${BASE - 84} Z" fill="#4b5560"/>`;
@@ -601,7 +608,7 @@ function block(x, base, w, h, art, muster) {
     s += `<path d="M${xl} ${BT + 1} L${xl + 0.4} ${BT} L${BX} ${BT} L${xr} ${r(ytr - 1)} L${xr} ${r(ytr - 0.2)} L${BX} ${BT + 1} Z" fill="#cdb999"/>`;
     s += `<path d="M${xl - 1.6} ${BW + 0.2} L${xl - 1.2} ${BW - 5} L${BX} ${BW - 5.2} L${xr + 1.4} ${r(ybr - 5)} L${xr + 1.6} ${r(ybr + 0.2)} Z" fill="#c9b797" opacity=".9"/>`;
     /* Kabelsättel oben: die Kabel liegen in Sätteln auf dem Pfeiler */
-    for (const [x, y] of [[xl + 2, BT + 0.2], [BX - 1, BT + 0.2], [BX + 4, BT + 0.6], [xr - 2, ytr - 0.6]]) s += `<path d="M${r(x - 1.6)} ${r(y)} Q${r(x)} ${r(y - 2)} ${r(x + 1.6)} ${r(y)} Z" fill="#4b4943"/>`;
+    for (const [x, y] of [[xl + 1.6, BT + 3.4], [BX - 1.4, BT + 3.4], [BX + 3, BT + 4], [xr - 2.4, ytr + 2.6]]) s += `<ellipse cx="${r(x)}" cy="${r(y)}" rx=".9" ry=".7" fill="#3f3d38"/>`;
     s += `<path d="M${BX} ${BT + 1} L${BX} ${BW}" stroke="#fff6e4" stroke-width=".4" opacity=".7"/>`;
     s += flagge(BX - 1, BT, 9.4);
     k += s;
@@ -712,7 +719,7 @@ const HAUS = { x0: 350, x1: 404, base: 201, top: 72 };
 {
   /* DIE LATERNE: gusseiserner Parkleuchter, 3,8 m, mit Laterne aus Glas */
   const Y = 241, s = um(Y), h = 3.8 * s;
-  let k = schatten(0, 0.3, 5, 1, 0.3);
+  let k = wurf(-0.8, 0.8, h, 0.2) + `<ellipse cx="${r(h * 0.58)}" cy="${r(-h * 0.235)}" rx="3.2" ry="1.4" fill="#1b120a" opacity=".16" filter="url(#bw_weich)"/>` + schatten(0, 0.3, 5, 1, 0.3);
   k += `<path d="M-3 0 L-2.4 -4 L2.4 -4 L3 0 Z" fill="${EISEN}"/><rect x="-1.9" y="-6.6" width="3.8" height="2.6" rx=".6" fill="${EISEN}"/>`;
   k += `<path d="M-1.1 -6.6 L-.6 ${r(-h + 9)} L.6 ${r(-h + 9)} L1.1 -6.6 Z" fill="${EISEN}"/>`;
   for (const x of [-0.5, 0, 0.5]) k += `<line x1="${x * 1.4}" y1="-7" x2="${x}" y2="${r(-h + 10)}" stroke="#6c736f" stroke-width=".14"/>`;
@@ -739,14 +746,14 @@ const WAGEN = { x: 112, y: 238 };
 {
   const s = um(WAGEN.y);   /* ≈ 17,6 Einheiten je Meter */
   const L2 = 0.9 * s, OB = 0.95 * s;
-  let k = schatten(0, 0.4, L2 + 4, 1.6, 0.35);
+  let k = wurf(-L2, L2, 20, 0.2) + `<ellipse cx="${r(0.6 * 40)}" cy="${r(-0.24 * 40)}" rx="${r(1 * s)}" ry="3" fill="#1b120a" opacity=".16" filter="url(#bw_weich)"/>` + schatten(0, 0.4, L2 + 4, 1.6, 0.35);
   /* Räder und Deichsel */
   for (const x of [-L2 + 4, L2 - 4]) k += `<circle cx="${r(x)}" cy="-2.8" r="2.8" fill="#202224"/><circle cx="${r(x)}" cy="-2.8" r="1.4" fill="${STAHL}"/><circle cx="${r(x)}" cy="-2.8" r=".45" fill="#555"/>`;
   k += `<path d="M${r(-L2)} -6 L${r(-L2 - 4)} -3.2 L${r(-L2 - 4.6)} -3.2" stroke="#8d969d" stroke-width=".6" fill="none"/><rect x="${r(-L2 - 5.4)}" y="-3.4" width="1.6" height="3.4" fill="#5b6268"/>`;
   /* Edelstahlkasten mit Klappen, blaues Band mit Aufschrift */
   k += `<rect x="${r(-L2)}" y="${r(-OB + 1.2)}" width="${r(2 * L2)}" height="${r(OB - 6.2)}" fill="${STAHL}"/>`;
   for (const x of [-L2 + 2, -4.4, L2 - 10.8]) k += `<rect x="${r(x)}" y="${r(-OB + 6.2)}" width="8.8" height="${r(OB - 13)}" rx=".6" fill="none" stroke="#9aa3aa" stroke-width=".35"/><rect x="${r(x + 3.1)}" y="${r(-OB / 2 + 2)}" width="2.6" height=".7" rx=".3" fill="#7d868d"/>`;
-  k += `<rect x="${r(-L2)}" y="${r(-OB + 1.6)}" width="${r(2 * L2)}" height="3.2" fill="#1d5fae"/><text x="0" y="${r(-OB + 4)}" font-size="2.2" text-anchor="middle" fill="#ffe14d" font-family="Arial,sans-serif" font-weight="bold" letter-spacing=".2">HOT DOGS · PRETZELS · SODA</text>`;
+  k += `<rect x="${r(-L2)}" y="${r(-OB + 1.6)}" width="${r(2 * L2)}" height="3.2" fill="#1d5fae"/><text x="${r(-L2 + 1.2)}" y="${r(-OB + 4)}" font-size="2.1" textLength="${r(2 * L2 - 2.4)}" lengthAdjust="spacingAndGlyphs" fill="#ffe14d" font-family="Arial,sans-serif" font-weight="bold">HOT DOGS · PRETZELS · SODA</text>`;
   k += `<rect x="${r(-L2)}" y="-6.4" width="${r(2 * L2)}" height="1.2" fill="#8d969d"/>`;
   /* Arbeitsfläche: Glaskasten mit Brezeln, Wasserbad, Hotdog, Senf und Ketchup */
   k += `<rect x="${r(-L2 - 0.6)}" y="${r(-OB)}" width="${r(2 * L2 + 1.2)}" height="1.4" rx=".4" fill="#c9cfd4"/>`;
@@ -770,14 +777,14 @@ const WAGEN = { x: 112, y: 238 };
   }
   k += `<path d="M0 ${r(top)} L${r(-R)} ${r(top + 7.4)} L${r(R)} ${r(top + 7.4)} Z" fill="${S.lg("schirml", [[0, "#fff", 0.22], [0.5, "#fff", 0], [1, "#000", 0.18]], 0, 0, 1, 0)}"/>`;
   k += `<circle cx="0" cy="${r(top - 0.4)}" r=".7" fill="#e9eef0"/>`;
-  S.teil({ id: "imbisswagen", de: "der Imbisswagen", syl: "IM-biss-wa-gen", it: "il carretto dei panini", itSyl: "car-RET-to dei pa-NI-ni", en: "food cart", x: WAGEN.x, y: WAGEN.y, kunst: k,
+  S.teil({ id: "imbisswagen", de: "der Imbisswagen", syl: "IM-biss-wa-gen", it: "il carretto ambulante", itSyl: "car-RET-to am-bu-LAN-te", en: "food cart", x: WAGEN.x, y: WAGEN.y, kunst: k,
     tipp: "An den Imbisswagen kauft man in New York schnell einen Hotdog oder eine Brezel.",
     zoom: { x: WAGEN.x - 24, y: WAGEN.y - OB - 18, w: 48, h: 32 },
     unter: [
       { id: "hotdog", de: "der Hotdog", syl: "HOT-dog", it: "l'hot dog", itSyl: "hot DOG", en: "hot dog", x: WAGEN.x + 10.9, y: WAGEN.y + T, kunst: flaeche(-4, -3.2, 8, 3.6, 0.5),
         tipp: "Ein Hotdog ist ein Würstchen in einem weichen Brötchen — oft mit Senf." },
       { id: "brezel", de: "die Brezel", syl: "BRE-zel", it: "il pretzel", itSyl: "PRET-zel", en: "pretzel", x: WAGEN.x - 9.1, y: WAGEN.y + T, kunst: flaeche(-5.6, -6.2, 11.2, 6.2, 0.5),
-        tipp: "Die großen weichen Brezeln kamen mit deutschen Einwanderern nach New York." },
+        tipp: "Die großen weichen Brezeln kamen mit deutschen Einwanderern nach Amerika." },
     ] });
 }
 
@@ -787,7 +794,7 @@ const WAGEN = { x: 112, y: 238 };
 {
   const X = 214, Y = 244, s = um(Y);   /* 18,8 Einheiten je Meter */
   const L = 1.8 * s, sitz = 0.45 * s, lehne = 0.85 * s;
-  let k = schatten(0, 0.4, L / 2 + 2, 1.4, 0.3);
+  let k = wurf(-L / 2, L / 2, 15, 0.18) + schatten(0, 0.4, L / 2 + 2, 1.4, 0.3);
   /* Gusseisenfüße (Parkbank) und Holzlatten */
   for (const x of [-L / 2 + 3, L / 2 - 3]) k += `<path d="M${r(x - 1.4)} 0 L${r(x - 0.4)} ${r(-sitz)} L${r(x + 0.6)} ${r(-lehne)} L${r(x + 1.4)} ${r(-lehne)} L${r(x + 0.8)} ${r(-sitz)} L${r(x + 1.6)} 0 Z" fill="#26302b"/>`;
   for (let i = 0; i < 3; i++) k += `<rect x="${r(-L / 2)}" y="${r(-sitz - 0.4 - i * 1.3)}" width="${r(L)}" height="1.1" rx=".3" fill="${S.lg("latte" + i, [[0, "#c79a63"], [1, "#8f6538"]])}"/>`;
@@ -809,9 +816,9 @@ const WAGEN = { x: 112, y: 238 };
   S.teil({ id: "bank", de: "die Bank", syl: "BANK", it: "la panchina", itSyl: "pan-CHI-na", en: "bench", x: X, y: Y, kunst: k,
     zoom: { x: X - 15, y: Y - 21, w: 30, h: 20 },
     unter: [
-      { id: "bagel", de: "der Bagel", syl: "BAGEL", it: "il bagel", itSyl: "BA-gel", en: "bagel", x: X + gx, y: Y + gy + 0.2, kunst: flaeche(-2.4, -1.8, 4.8, 2, 0.4),
+      { id: "bagel", de: "der Bagel", syl: "BA-gel", it: "il bagel", itSyl: "BA-gel", en: "bagel", x: X + gx, y: Y + gy + 0.2, kunst: flaeche(-2.4, -1.8, 4.8, 2, 0.4),
         tipp: "Der Bagel wird erst gekocht und dann gebacken. Mit Frischkäse ist er das typische Frühstück in New York." },
-      { id: "kaffeebecher", de: "der Kaffeebecher", syl: "KAF-fee-be-cher", it: "il bicchiere di caffè", itSyl: "bic-CHIE-re di caf-FÈ", en: "coffee cup", x: X + bx, y: Y + by, kunst: flaeche(-1.3, -3, 2.6, 3.1, 0.4),
+      { id: "kaffeebecher", de: "der Kaffeebecher", syl: "KAF-fee-be-cher", it: "il bicchiere da caffè", itSyl: "bic-CHIE-re da caf-FÈ", en: "coffee cup", x: X + bx, y: Y + by, kunst: flaeche(-1.3, -3, 2.6, 3.1, 0.4),
         tipp: "Der blau-weiße Pappbecher mit dem griechischen Muster ist ein Symbol von New York." },
     ] });
 }
@@ -822,7 +829,7 @@ const WAGEN = { x: 112, y: 238 };
 {
   const Y = 238, s = um(Y);   /* 17,6 je Meter; Hydrant 0,75 m */
   const h = 0.75 * s;
-  let k = schatten(0, 0.3, 4, 0.8, 0.3);
+  let k = wurf(-2.4, 2.4, 13, 0.2) + schatten(0, 0.3, 4, 0.8, 0.3);
   const ROT = S.lg("hydr", [[0, "#ff6b55"], [0.45, "#d9342a"], [1, "#8f1d17"]], 0, 0, 1, 0);
   k += `<rect x="-3.2" y="-1.4" width="6.4" height="1.4" rx=".4" fill="#a32a22"/>`;
   k += `<path d="M-2.4 -1.4 L-2.2 ${r(-h * 0.72)} L2.2 ${r(-h * 0.72)} L2.4 -1.4 Z" fill="${ROT}"/>`;
@@ -843,7 +850,7 @@ const WAGEN = { x: 112, y: 238 };
 {
   const X = 328, Y = 248, s = um(Y);     /* ≈ 19,6 Einheiten je Meter */
   const L = 4.0 * s * 0.92, Hk = 1.47 * s, R = 0.34 * s;
-  let k = schatten(2, 0.2, L / 2 + 6, 2.2, 0.45);
+  let k = wurf(-L / 2, L / 2, 24, 0.2) + schatten(2, 0.2, L / 2 + 6, 2.2, 0.45);
   /* Seite: Karosserie (Limousine), Front links */
   const x0 = -L / 2, x1 = L / 2;
   const body = `M${r(x0 + 2)} ${r(-R * 0.6)} L${r(x0 - 0.4)} ${r(-R * 0.9)} Q${r(x0 - 1.4)} ${r(-Hk * 0.48)} ${r(x0 + 3)} ${r(-Hk * 0.58)} L${r(x0 + L * 0.27)} ${r(-Hk * 0.64)} Q${r(x0 + L * 0.36)} ${r(-Hk * 0.98)} ${r(x0 + L * 0.44)} ${r(-Hk)} L${r(x0 + L * 0.72)} ${r(-Hk)} Q${r(x0 + L * 0.8)} ${r(-Hk * 0.96)} ${r(x0 + L * 0.88)} ${r(-Hk * 0.66)} L${r(x1 + 0.8)} ${r(-Hk * 0.6)} Q${r(x1 + 1.6)} ${r(-Hk * 0.4)} ${r(x1)} ${r(-R * 0.7)} L${r(x1 - 2)} ${r(-R * 0.6)} Z`;

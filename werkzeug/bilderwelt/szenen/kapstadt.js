@@ -101,8 +101,8 @@ const FUSS = 136;   // Unterkante der Berge hinter der Stadt
 const bergUnter = [];
 /* Rippen (helle Grate) mit Schluchten (dunkel, links daneben) vom Kamm zum Fuß */
 const rippen = (liste, hell, dunkel) => liste.map(([x0, y0, x1, y1]) =>
-  `<path d="M${x0 - 0.8} ${y0 + 1} Q${r((x0 + x1) / 2 - 2.4)} ${r((y0 + y1) / 2)} ${x1 - 2} ${y1}" stroke="${dunkel}" stroke-width="2.4" fill="none" opacity=".2" stroke-linecap="round"/>` +
-  `<path d="M${x0} ${y0} Q${r((x0 + x1) / 2 - 1)} ${r((y0 + y1) / 2)} ${x1} ${y1}" stroke="${hell}" stroke-width=".7" fill="none" opacity=".32" stroke-linecap="round"/>`).join("");
+  `<path d="M${x0 - 0.8} ${y0 + 1} Q${r((x0 + x1) / 2 - 2.4)} ${r((y0 + y1) / 2)} ${x1 - 2} ${y1}" stroke="${dunkel}" stroke-width="2.6" fill="none" opacity=".14" stroke-linecap="round"/>` +
+  `<path d="M${x0} ${y0} Q${r((x0 + x1) / 2 - 1)} ${r((y0 + y1) / 2)} ${x1} ${y1}" stroke="${hell}" stroke-width=".8" fill="none" opacity=".2" stroke-linecap="round"/>`).join("");
 const fynbos = (x0, x1, y0, y1, n) => { let g = ""; for (let i = 0; i < n; i++) { const x = x0 + rnd() * (x1 - x0), y = y0 + rnd() * (y1 - y0); g += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.8 + rnd() * 1.4)}" ry="${r(0.4 + rnd() * 0.5)}" fill="${["#4f5a3a", "#99956f", "#6b7350", "#3f4a30"][i % 4]}" opacity=".5"/>`; } return g; };
 {
   /* Der Tafelberg: Plateau, Felswand aus Sandstein mit Pfeilern und Klüften, Platteklip-Schlucht, Seilbahn; Lupe */
@@ -113,22 +113,22 @@ const fynbos = (x0, x1, y0, y1, n) => { let g = ""; for (let i = 0; i < n; i++) 
   S.def(`<clipPath id="${S.id("tafel")}"><path d="${umriss}"/></clipPath>`);
   k += `<path d="${umriss}" fill="${S.lg("hangt", [[0, "#7f8160"], [1, "#5f6a46"]])}"/>`;
   k += `<g clip-path="url(#${S.id("tafel")})">`;
-  /* Felswand: unten unregelmäßig (Pfeiler reichen tiefer hinab) */
-  let wu = `M90 ${r(TOP - 4)} L320 ${r(TOP - 4)} L320 ${r(TOP + 16)}`;
-  for (let x = 320; x >= 90; x -= 4) wu += ` L${x} ${r(TOP + 14 + Math.sin(x * 0.7) * 2 + (rnd() * 4))}`;
-  k += `<path d="${wu} Z" fill="${S.lg("wand", [[0, "#cdbf9d"], [0.45, "#b6a888"], [1, "#9a8f78"]])}"/>`;
-  /* Pfeiler: hell (Licht von rechts) und Rinnen (dunkel), unregelmäßig breit */
-  let hellP = "", dunkP = "";
-  for (let x = 100; x < 296;) {
-    const w = 2 + rnd() * 4.5, l = 10 + rnd() * 8;
-    dunkP += `M${r(x)} ${r(TOP)} l${r(-0.3)} ${r(l)} l${r(0.9)} 0 l${r(0.2)} ${r(-l)} Z`;
-    hellP += `M${r(x + 1.2)} ${r(TOP + 0.4)} l0 ${r(l - 3)} l${r(w * 0.45)} ${r(1.2)} l0 ${r(-l + 2)} Z`;
-    x += w + 1.2;
+  /* Felswand: Pfeiler (Buttresses) aus Tafelberg-Sandstein, unterschiedlich breit und hoch,
+     die rechte Seite jedes Pfeilers im Nachmittagslicht, dazwischen dunkle Rinnen */
+  k += `<rect x="90" y="${r(TOP - 3)}" width="230" height="17" fill="#a29479"/>`;
+  const TONE = ["#d3c4a2", "#c2b391", "#b1a383", "#9e927a"];
+  let gul = "", lit = "", bed = "";
+  for (let x = 96; x < 300;) {
+    const w = 3 + rnd() * 6, yb = TOP + 12 + rnd() * 7, t = TONE[Math.floor(rnd() * 4)];
+    k += `<path d="M${r(x)} ${r(TOP - 1)} L${r(x + w)} ${r(TOP - 1)} L${r(x + w - 0.3)} ${r(yb - 2)} Q${r(x + w * 0.5)} ${r(yb + 1.4)} ${r(x + 0.3)} ${r(yb - 1)} Z" fill="${t}"/>`;
+    lit += `M${r(x + w - 1.1)} ${r(TOP)} L${r(x + w - 0.3)} ${r(TOP)} L${r(x + w - 0.5)} ${r(yb - 2.4)} L${r(x + w - 1.2)} ${r(yb - 2)} Z`;
+    gul += `M${r(x - 0.5)} ${r(TOP - 0.5)} L${r(x + 0.5)} ${r(TOP - 0.5)} L${r(x + 0.3)} ${r(yb - 0.5)} L${r(x - 0.2)} ${r(yb - 1)} Z`;
+    for (let j = 0; j < 3; j++) { const yy = TOP + 2.5 + j * 3.6 + rnd() * 1.2; if (yy < yb - 2) bed += `M${r(x + 0.6)} ${r(yy)} l${r(w - 1.2)} ${r(-0.2 + rnd() * 0.4)}`; }
+    x += w + 0.6;
   }
-  k += `<path d="${dunkP}" fill="#6a604f" opacity=".6"/><path d="${hellP}" fill="#e2d5b4" opacity=".3"/>`;
-  k += `<rect x="90" y="${r(TOP - 2)}" width="230" height="22" fill="${S.lg("wandtiefe", [[0, "#fff", 0.12], [0.4, "#fff", 0], [1, "#3a3426", 0.3]])}"/>`;
-  for (const x of [128, 151, 176, 238, 262]) k += `<path d="M${x - 1.6} ${r(TOP + 0.5)} Q${x - 0.4} ${r(TOP + 8)} ${x - 1} ${r(TOP + 17)} L${x + 0.6} ${r(TOP + 17)} Q${x + 1} ${r(TOP + 8)} ${x + 1.6} ${r(TOP + 0.5)} Z" fill="#544c3e" opacity=".55"/>`;
-  for (const f of [0.15, 0.32, 0.5, 0.7]) k += `<path d="M90 ${r(TOP + f * 16)} Q200 ${r(TOP + f * 16 - 0.6)} 320 ${r(TOP + f * 16 + 0.4)}" stroke="#7d735f" stroke-width=".3" opacity=".55"/>`;
+  k += `<path d="${lit}" fill="#efe3c2" opacity=".55"/><path d="${gul}" fill="#4f4839" opacity=".75"/>`;
+  k += `<path d="${bed}" stroke="#7a6f5b" stroke-width=".3" opacity=".6"/>`;
+  k += `<rect x="90" y="${r(TOP - 2)}" width="230" height="22" fill="${S.lg("wandtiefe", [[0, "#fff", 0.1], [0.45, "#fff", 0], [1, "#2f2a20", 0.25]])}"/>`;
   /* Geröll und Fynbos unter der Wand, Rippen und Schluchten, Wald am Fuß */
   k += `<path d="M90 ${r(TOP + 17)} Q200 ${r(TOP + 21)} 320 ${r(TOP + 17)} L320 ${r(TOP + 22)} Q200 ${r(TOP + 25)} 90 ${r(TOP + 22)} Z" fill="#9c9784" opacity=".45"/>`;
   k += fynbos(92, 316, TOP + 18, FUSS, 110);
@@ -203,12 +203,14 @@ const fynbos = (x0, x1, y0, y1, n) => { let g = ""; for (let i = 0; i < n; i++) 
   S.def(`<clipPath id="${S.id("loewec")}"><path d="${um}"/></clipPath>`);
   k += `<path d="${um}" fill="${S.lg("loewe", [[0, "#636a4c"], [0.45, "#7f8360"], [1, "#8a8c69"]], 0, 0, 1, 0)}"/>`;
   k += `<g clip-path="url(#${S.id("loewec")})">`;
-  /* Felskopf: nackter grauer Sandstein, links im Schatten, rechts im Licht, Pflanzen in den Ritzen */
-  k += `<path d="M353 118 Q355 110 358.5 105 Q362 100 368 99.6 Q374 100.4 377.6 106 Q380.6 112 382.4 119 Q376 116.6 370 118.4 Q362 117 353 118 Z" fill="${S.lg("loewekopf", [[0, "#7c7466"], [0.5, "#a29984"], [1, "#c3b99f"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M356.4 111 Q366 108.6 380 111.6 M355 115 Q363 113.6 371 115.4" stroke="#6a6254" stroke-width=".35" fill="none" opacity=".6"/>`;
-  k += `<path d="M362 104 l-.6 6 M369 103 l.4 7 M374.6 106 l.8 6" stroke="#6a6254" stroke-width=".3" opacity=".55"/>`;
-  for (const [x, y] of [[358, 113.4], [364, 111.4], [372, 113], [377, 115.6], [361, 116.4]]) k += `<ellipse cx="${x}" cy="${y}" rx="1.6" ry=".6" fill="#6b7350" opacity=".7"/>`;
-  k += `<path d="M370.6 99.8 Q376 102.4 378.6 107.6 Q380.8 112.6 382.2 118" stroke="#efe4c8" stroke-width=".8" fill="none" opacity=".75"/>`;
+  /* Felskopf: nackter grauer Sandstein, unten ausgefranst (Fynbos wächst hinauf), links im Schatten */
+  let kopf = `M352 119 Q354.6 110 358.4 104.6 Q362 100 368 99.6 Q374 100.4 377.6 106 Q380.6 112 383 119.6`;
+  for (let x = 383; x >= 352; x -= 2.2) kopf += ` L${r(x)} ${r(116.6 + Math.sin(x * 1.7) * 1.6 + rnd() * 1.8 - (x > 362 && x < 374 ? 1.4 : 0))}`;
+  k += `<path d="${kopf} Z" fill="${S.lg("loewekopf", [[0, "#6f6a5c"], [0.45, "#958d7a"], [1, "#b9af95"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M362 103.6 l-.8 6 l.6 4 M368.6 102.4 l.4 5 l-.6 5 M374.6 105.6 l.9 5 M357.6 109 l-.4 5" stroke="#5a5448" stroke-width=".35" fill="none" opacity=".6"/>`;
+  k += `<path d="M357 112.4 Q366 110.6 380.6 113.6" stroke="#5f594c" stroke-width=".3" fill="none" opacity=".45"/>`;
+  for (const [x, y] of [[360, 114.6], [366.6, 113.6], [373, 114.6], [378.4, 116.2], [355.4, 116.6]]) k += `<ellipse cx="${x}" cy="${y}" rx="1.5" ry=".55" fill="#68704c" opacity=".75"/>`;
+  k += `<path d="M370.6 99.8 Q376 102.4 378.6 107.6 Q380.8 112.6 382.6 118.6" stroke="#e2d6b8" stroke-width=".6" fill="none" opacity=".5"/>`;
   k += fynbos(316, 404, 112, FUSS, 50);
   /* der Wanderweg windet sich um den Berg */
   k += `<path d="M328 130 Q346 121 362 120.4 Q376 120 388 116 M352 124 Q366 124.6 380 121" stroke="#d1c39c" stroke-width=".35" fill="none" stroke-dasharray="1 .9" opacity=".45"/>`;
@@ -236,6 +238,8 @@ const fynbos = (x0, x1, y0, y1, n) => { let g = ""; for (let i = 0; i < n; i++) 
    ===================================================================== */
 {
   let k = "";
+  /* Dunst über dem Fuß der Berge (Luftperspektive) */
+  k += `<rect x="-2" y="${FUSS - 22}" width="404" height="26" fill="${S.lg("dunstband", [[0, "#dbe7ee", 0], [0.7, "#dbe7ee", 0.32], [1, "#dbe7ee", 0.1]])}"/>`;
   /* Hänge mit Häusern (Gardens, Tamboerskloof, Bo-Kaap) */
   k += `<path d="M-2 ${FUSS - 6} Q60 ${FUSS - 4} 100 ${FUSS - 2} Q200 ${FUSS - 1} 300 ${FUSS} Q330 ${FUSS - 6} 360 ${FUSS - 4} Q390 ${FUSS - 6} 402 ${FUSS - 8} L402 ${HOR0 + 2} L-2 ${HOR0 + 2} Z" fill="${S.lg("hang", [[0, "#7d8460"], [1, "#9a9a7c"]])}"/>`;
   const farben = ["#f1ede2", "#e8dcc2", "#f4f0e8", "#d9cbb0", "#e9e2d3", "#c8b9a0", "#f6f2ea"];
@@ -285,7 +289,8 @@ const fynbos = (x0, x1, y0, y1, n) => { let g = ""; for (let i = 0; i < n; i++) 
   k += `<rect x="0" y="${r(Y0 - 5)}" width="96" height="4.4" fill="#d8d0c2"/>`;
   for (let fx = 2; fx < 94; fx += 3) k += `<rect x="${fx}" y="${r(Y0 - 4)}" width="1.4" height="2" fill="#5c6670" opacity=".6"/>`;
   k += `<rect x="0" y="${Y0 + 1.6}" width="180" height="1" fill="#4c4a44"/>`;
-  S.hinten(k);
+  S.teil({ id: "lagerhaus", de: "das Lagerhaus", syl: "LA-ger-haus", it: "il magazzino", itSyl: "ma-gaz-ZI-no", en: "warehouse", x: 0, y: 0, kunst: k,
+    tipp: "In den alten Lagerhäusern am Hafen sind heute Läden, Restaurants und Hotels." });
 }
 const TURM = { x: 118, y: HOR + 5.4, d: 130 };
 const turmUnter = [];
@@ -337,7 +342,7 @@ const turmUnter = [];
   k += `<rect x="${g(2.6)}" y="${g(-13.4)}" width="${g(0.4)}" height="${g(12.2)}" fill="#fff" opacity=".18"/>`;
   turmUnter.push(
     { id: "uhr", de: "die Uhr", syl: "UHR", it: "l'orologio", itSyl: "o-ro-LO-gio", en: "clock", x: TURM.x, y: TURM.y + Number(g(UY)) + Number(g(1.3)),
-      kunst: flaeche(-Number(g(1.4)), -Number(g(2.6)), Number(g(2.8)), Number(g(2.6)), 0.6), tipp: "Die Uhr kam 1882 aus Edinburgh in Schottland." },
+      kunst: flaeche(-Number(g(1.4)), -Number(g(2.6)), Number(g(2.8)), Number(g(2.6)), 0.6), tipp: "Die Uhr kam aus Edinburgh in Schottland." },
     { id: "fenster", de: "das Fenster", syl: "FENS-ter", it: "la finestra", itSyl: "fi-NE-stra", en: "window", x: TURM.x, y: TURM.y + Number(g(-5.8)),
       kunst: flaeche(-Number(g(0.7)), -Number(g(3.3)), Number(g(1.4)), Number(g(3.4)), 0.4), tipp: "Die spitzen Bogenfenster sind typisch für die Neugotik." },
     { id: "dach", de: "das Dach", syl: "DACH", it: "il tetto", itSyl: "TET-to", en: "roof", x: TURM.x, y: TURM.y + Number(g(-13.9)),
@@ -356,12 +361,12 @@ const KAI = 214;   // Vorderkante des Kais, auf dem der Betrachter steht
   /* Spiegelungen: Uhrturm (rot), Hallen, Berge */
   k += `<g filter="url(#${S.id("spiegel")})" opacity=".55">`;
   for (let i = 0; i < 12; i++) k += `<rect x="${r(TURM.x - 7 + (i % 2) * 1.4)}" y="${r(HOR + 5 + i * 2.6)}" width="${r(14 - i * 0.5)}" height="1.7" fill="#b23a2b" opacity="${r(0.55 - i * 0.03)}"/>`;
-  k += `<rect x="186" y="${HOR + 5}" width="216" height="9" fill="#e8e0cf" opacity=".35"/><rect x="0" y="${HOR + 5}" width="96" height="6" fill="#d8d0c2" opacity=".3"/>`;
+  k += `<rect x="186" y="${HOR + 5}" width="216" height="6" fill="#d9d2c2" opacity=".18"/><rect x="0" y="${HOR + 5}" width="96" height="4" fill="#d8d0c2" opacity=".15"/>`;
   k += `</g>`;
   let wl = "";
   for (let i = 0; i < 200; i++) {
     const y = HOR + 6 + Math.pow(rnd(), 0.85) * (KAI - HOR - 8), w = 1 + (y - HOR) * 0.25 * (0.5 + rnd());
-    wl += `<path d="M${r(rnd() * 400)} ${r(y)} q${r(w / 2)} -.5 ${r(w)} 0" stroke="${rnd() < 0.55 ? "#cfe6e8" : "#123a44"}" stroke-width="${r(0.15 + (y - HOR) * 0.011)}" fill="none" opacity="${r(0.3 + rnd() * 0.45)}"/>`;
+    wl += `<path d="M${r(rnd() * (398 - w))} ${r(y)} q${r(w / 2)} -.5 ${r(w)} 0" stroke="${rnd() < 0.55 ? "#cfe6e8" : "#123a44"}" stroke-width="${r(0.15 + (y - HOR) * 0.011)}" fill="none" opacity="${r(0.3 + rnd() * 0.45)}"/>`;
   }
   k += wl;
   S.teil({ id: "hafen", de: "der Hafen", syl: "HA-fen", it: "il porto", itSyl: "POR-to", en: "harbour", x: 0, y: 0, kunst: k,
@@ -400,7 +405,7 @@ const KAI = 214;   // Vorderkante des Kais, auf dem der Betrachter steht
   for (const [x, y] of [[-8.6, -4.4], [-7.4, -4.6], [9.4, -6]]) k += `<circle cx="${g(x)}" cy="${g(y)}" r="${g(0.5)}" fill="#f07a1e"/>`;
   k += `<path d="M${g(-11)} ${g(0.3)} q${g(11)} ${g(0.6)} ${g(22)} 0" stroke="#e8f0f0" stroke-width="${g(0.2)}" fill="none" opacity=".6"/>`;
   S.teil({ id: "fischerboot", de: "das Fischerboot", syl: "FI-scher-boot", it: "il peschereccio", itSyl: "pe-sche-REC-cio", en: "fishing boat", x: X, y: Y, kunst: k,
-    tipp: "Am Kai laden die Fischer ihren Fang aus – oft Snoek und Hake." });
+    tipp: "Am Kai laden die Fischer ihren Fang aus – oft Seehecht und Snoek." });
 }
 
 /* =====================================================================

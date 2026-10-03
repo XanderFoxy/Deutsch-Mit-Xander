@@ -6,9 +6,13 @@
    Arten: Triceratops, Brachiosaurus, Diplodocus, Stegosaurus, Ankylosaurus,
    Parasaurolophus. Gruppe „Dinosaurier", Lebensraum „Urzeit".
 
-   Zeichnen in DEZIMETERN (eine <g transform="scale(10)"> macht daraus
-   Zentimeter, wie kern.js es will) – so bleiben die Pfade kurz.
-   Blick nach rechts, Boden y = 0, Licht von links oben.
+   Zeichnen in Einheiten von ~1 dm (eine <g transform="scale(k)">, k = 10–11,4,
+   macht daraus Zentimeter, wie kern.js es will) – so bleiben die Pfade kurz.
+   Blick nach rechts, Boden y = 0, EIN Licht oben links (Rückenkante hell,
+   Kernschatten im unteren Rumpfdrittel, Bodenreflex). Keine Rausch-Textur:
+   Schuppen als gezeichnete Felder in Zonen (Rücken grob, Bauch fein).
+   Köpfe an echten Schädellängen gemessen (skal()). zeichne() liefert
+   fuesse (Bodenschatten) und kopf (Ausschnitt für -kopf.png).
    ===================================================================== */
 "use strict";
 
@@ -186,6 +190,178 @@ function teil(T, pts, fill, o = {}) {
 /* Fläche innerhalb eines Körperteils (z. B. Schnabel): Füllung + Volumenlicht, ohne eigenen Clip */
 function teilInnen(T, pts, fill) {
   return T.form(pts, fill) + T.form(pts, T.VOL());
+}
+
+/* =====================================================================
+   WERKZEUG RUNDE 2 (Kritik Runde 1: „Sack auf Säulen", „Fischschuppen-Tapete", „Aufkleber-Kanten", „kein Licht")
+   - masse(): EIN Körper aus mehreren Formen (Rumpf + nahe Beine + Hals + Kopf) als gemeinsamer Clip – keine Nähte,
+     keine halbtransparenten Teile, keine Umrisslinien. Füllung mit Verlauf in Nutzerkoordinaten.
+   - Licht: EIN Licht oben links. Glanzband an der Rückenkante, Schattengrenze bei ~60 % der Höhe, Kernschatten
+     im unteren Drittel (−40 %), schmaler warmer Bodenreflex; Okklusion an allen Ansätzen. Alles weichgezeichnet.
+   - Haut: nicht überlappende, gefüllte Vieleck-Tuberkel (Licht oben links, dunkle Fuge unten rechts) als
+     kachelbares Muster in Zonen (Rücken grob, Flanke mittel, Bauch/Gelenke/Gesicht fein), im Kernschatten
+     ausgeblendet; in Szenen (T.fein = false) keine Textur.
+   ===================================================================== */
+/* kompakte Zahl: 0,1 genau, ohne führende Null */
+const n1 = (v) => { const a = Math.round(v * 10) / 10; return (a < 0 ? "-" : "") + String(Math.abs(a)).replace(/^0\./, "."); };
+const zug = (arr) => arr.map(n1).join(" ").replace(/ -/g, "-");
+/* Weichzeichner (mit sRGB-Farbraum, sonst Farbstich) – sd in Zeicheneinheiten */
+function weich(T, sd) {
+  const k = String(sd).replace(".", "_"), id = T.id("w" + k);
+  if (!T["_w" + k]) {
+    T["_w" + k] = 1;
+    T.def(`<filter id="${id}" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${sd}"/></filter>`);
+  }
+  return `url(#${id})`;
+}
+/* Verlauf in Nutzerkoordinaten (für mehrere Formen derselbe Farbverlauf) */
+const ulg = (T, name, stops, x1, y1, x2, y2) => T.lg(name, stops, x1, y1, x2, y2, ` gradientUnits="userSpaceOnUse"`);
+/* weiche Fläche (Licht, Schatten, Farbzone) */
+const blob = (T, pts, farbe, op, sd) => `<path d="${T.glatt(pts)}" fill="${farbe}" opacity="${op}"${T.fein || sd > 1 ? ` filter="${weich(T, sd || 0.8)}"` : ""}/>`;
+/* weiche Linie (Muskelkante, Falte, Glanzgrat) */
+const strich = (T, listen, farbe, w, op, sd) => `<path d="${listen.map((p) => T.glatt(p, false)).join("")}" fill="none" stroke="${farbe}" stroke-width="${w}" stroke-opacity="${op}" stroke-linecap="round"${sd ? ` filter="${weich(T, sd)}"` : ""}/>`;
+/* weiche Ellipse (Muskelpaket, Okklusion) */
+const oval = (T, cx, cy, rx, ry, rot, farbe, op, sd) =>
+  `<ellipse cx="${n1(cx)}" cy="${n1(cy)}" rx="${n1(rx)}" ry="${n1(ry)}"${rot ? ` transform="rotate(${rot} ${n1(cx)} ${n1(cy)})"` : ""} fill="${farbe}" opacity="${op}" filter="${weich(T, sd || Math.max(0.3, Math.min(rx, ry) * 0.6))}"/>`;
+const HELL = "#fff3d6", DUNKEL = "#0a0703";
+/* Körpermasse: Formen (Punktlisten oder Pfade) als gemeinsamer Clip; Grundfarbe als Rechteck; innen = Licht/Haut */
+function masse(T, formen, fill, innen) {
+  T._m = (T._m || 0) + 1;
+  const id = T.id("m" + T._m), alle = [];
+  const ds = formen.map((f) => { if (typeof f === "string") return f; alle.push(...f); return T.glatt(f); });
+  T.def(`<clipPath id="${id}">${ds.map((d) => `<path d="${d}"/>`).join("")}</clipPath>`);
+  const [x0, y0, x1, y1] = T.box(alle);
+  return `<g clip-path="url(#${id})"><rect x="${n1(x0 - 2)}" y="${n1(y0 - 2)}" width="${n1(x1 - x0 + 4)}" height="${n1(y1 - y0 + 4)}" fill="${fill}"/>${innen || ""}</g>`;
+}
+/* Licht eines liegenden Zylinders (Rumpf, Hals, Schwanz) zwischen Oberkante und Unterkante (Polylinien, x aufsteigend) */
+function rumpfLicht(T, oben, unten, x0, x1, o = {}) {
+  const xs = [];
+  const st = T.fein ? 22 : 9;
+  for (let i = 0; i <= st; i++) xs.push(x0 + (x1 - x0) * i / st);
+  const band = (t0, t1) => [...xs.map((x) => { const a = yBei(oben, x), b = yBei(unten, x); return [x, a + (b - a) * t0]; }),
+    ...xs.slice().reverse().map((x) => { const a = yBei(oben, x), b = yBei(unten, x); return [x, a + (b - a) * t1]; })];
+  const tief = o.tiefe || 10, sd = Math.max(0.5, tief * 0.07);
+  return blob(T, band(-0.1, 0.2), HELL, o.glanz != null ? o.glanz : 0.3, sd) +
+    blob(T, band(0.62, 1.1), DUNKEL, o.kern != null ? o.kern : 0.48, sd * 1.3) +
+    (T.fein ? blob(T, band(0.9, 1.08), "#c9a874", o.reflex != null ? o.reflex : 0.2, sd * 0.5) : "");
+}
+/* Licht eines stehenden Zylinders (Bein): Achse von oben nach unten [[x, y, breite], …]; Licht oben links */
+function beinLicht(T, achse, o = {}) {
+  const lin = (u) => achse.map(([x, y, w]) => [x + u * w, y]);
+  const w = achse.reduce((a, q) => a + q[2], 0) / achse.length;
+  return strich(T, [lin(-0.12)], HELL, w * 0.32, o.glanz != null ? o.glanz : 0.28, w * 0.14) +
+    strich(T, [lin(0.42)], DUNKEL, w * 0.38, o.kern != null ? o.kern : 0.5, w * 0.12) +
+    strich(T, [lin(-0.5)], DUNKEL, w * 0.12, 0.25, w * 0.06);
+}
+/* Hautfalten als Paar: dunkle Kerbe + Lichtkante darunter */
+function falten2(T, listen, w, op = 1) {
+  if (!T.fein) return "";
+  const unter = listen.map((p) => p.map(([x, y]) => [x + w * 0.3, y + w * 1.1]));
+  return strich(T, listen, DUNKEL, w, 0.42 * op, w * 0.35) + strich(T, unter, HELL, w * 0.7, 0.22 * op, w * 0.3);
+}
+/* kachelbares Tuberkel-Muster (Einheitskachel, Zellradius 1): Sechseck-Raster mit Zufall, je Zelle gefüllt (heller),
+   Lichtkante oben links, dunkle Fuge unten rechts. EINMAL je Art in den defs; Zonen leiten davon ab (href) und
+   skalieren/drehen nur – so kostet jede weitere Zone ein paar Bytes. */
+function tub(T, name, R, o = {}) {
+  const basis = T.id("tubK");
+  if (!T._tubK) {
+    T._tubK = 1;
+    const sp = 9, ze = 8, dx = Math.sqrt(3), dy = 1.5, W = sp * dx, H = ze * dy, zellen = [];
+    for (let j = 0; j < ze; j++) for (let i = 0; i < sp; i++) {
+      const g = 0.8 + T.rnd() * 0.28, cx = i * dx + (j % 2) * dx / 2 + (T.rnd() - 0.5) * 0.25, cy = j * dy + (T.rnd() - 0.5) * 0.25;
+      zellen.push([cx, cy, Array.from({ length: 6 }, (_, k) => { const a = (k * 60 - 90 + (T.rnd() - 0.5) * 20) * Math.PI / 180, q = g * (0.84 + T.rnd() * 0.2); return [Math.cos(a) * q, Math.sin(a) * q]; })]);
+    }
+    let fz = "", lk = "", fu = "";
+    const rel = (P) => P.slice(1).map((q, k) => zug([q[0] - P[k][0], q[1] - P[k][1]])).join(" ");
+    for (const [cx, cy, v] of zellen) for (const ox of [-W, 0, W]) for (const oy of [-H, 0, H]) {
+      const x = cx + ox, y = cy + oy;
+      if (x < -1.2 || x > W + 1.2 || y < -1.2 || y > H + 1.2) continue;
+      const P = v.map(([a2, b2]) => [x + a2, y + b2]);
+      fz += "M" + zug(P[0]) + "l" + rel(P) + "z";
+      const L = [P[3], P[4], P[5], P[0]], U = [P[0], P[1], P[2], P[3]];
+      lk += "M" + zug(L[0]) + "l" + rel(L);
+      fu += "M" + zug(U[0]) + "l" + rel(U);
+    }
+    T.def(`<pattern id="${basis}" patternUnits="userSpaceOnUse" width="${n1(W)}" height="${n1(H)}">` +
+      `<path d="${fz}" fill="#fff1d0" fill-opacity=".2"/>` +
+      `<path d="${fu}" fill="none" stroke="#0a0703" stroke-opacity=".6" stroke-width=".2" stroke-linejoin="round"/>` +
+      `<path d="${lk}" fill="none" stroke="#fff1d0" stroke-opacity=".38" stroke-width=".12" stroke-linejoin="round"/></pattern>`);
+  }
+  const id = T.id(name);
+  if (!T["_p" + name]) {
+    T["_p" + name] = 1;
+    T.def(`<pattern id="${id}" href="#${basis}" patternTransform="${o.drehung ? `rotate(${o.drehung}) ` : ""}scale(${n1(R * 100) / 100}${o.sy ? " " + Math.round(R * o.sy * 100) / 100 : ""})"/>`);
+  }
+  return `url(#${id})`;
+}
+/* Textur in eine Zone legen: weiche Maske aus der Zonenform (Deckkraft op), optional Schattenzone, in der die Textur
+   ausgeblendet wird (Kernschatten). Nur bei voller Feinheit. */
+function haut(T, muster, zone, op, o = {}) {
+  if (!T.fein) return "";
+  T._h = (T._h || 0) + 1;
+  const id = T.id("h" + T._h), [x0, y0, x1, y1] = T.box(zone), sd = o.sd || 0.6;
+  T.def(`<mask id="${id}" maskUnits="userSpaceOnUse" x="${n1(x0 - 3)}" y="${n1(y0 - 3)}" width="${n1(x1 - x0 + 6)}" height="${n1(y1 - y0 + 6)}">` +
+    `<path d="${T.glatt(zone)}" fill="#fff" fill-opacity="${op}" filter="${weich(T, sd)}"/>` +
+    (o.schatten ? `<path d="${T.glatt(o.schatten)}" fill="#000" fill-opacity="${o.schattenOp || 0.75}" filter="${weich(T, sd * 2)}"/>` : "") + `</mask>`);
+  return `<rect x="${n1(x0 - 1)}" y="${n1(y0 - 1)}" width="${n1(x1 - x0 + 2)}" height="${n1(y1 - y0 + 2)}" fill="${muster}" mask="url(#${id})"/>`;
+}
+/* Band zwischen zwei Leitlinien (für Zonen): t0..t1 der Höhe, x0..x1 */
+function zoneBand(oben, unten, x0, x1, t0, t1, n = 12) {
+  const xs = Array.from({ length: n + 1 }, (_, i) => x0 + (x1 - x0) * i / n);
+  return [...xs.map((x) => { const a = yBei(oben, x), b = yBei(unten, x); return [x, a + (b - a) * t0]; }),
+    ...xs.slice().reverse().map((x) => { const a = yBei(oben, x), b = yBei(unten, x); return [x, a + (b - a) * t1]; })];
+}
+/* Merkmals-Schuppen (Rosetten): große Kegelschuppe mit Kranz kleiner Schuppen, Licht oben links. Nur fein. */
+function rosetten(T, liste, farbe) {
+  if (!T.fein) return "";
+  let kr = "", kz = "", kl = "", ks = "";
+  for (const [x, y, R] of liste) {
+    kz += `M${n1(x - R)} ${n1(y)}a${n1(R)} ${n1(R * 0.85)} 0 1 0 ${n1(2 * R)} 0a${n1(R)} ${n1(R * 0.85)} 0 1 0 ${n1(-2 * R)} 0`;
+    ks += `M${n1(x - R * 0.9)} ${n1(y + R * 0.2)}a${n1(R)} ${n1(R * 0.85)} 0 0 0 ${n1(R * 1.8)} ${n1(-R * 0.2)}`;
+    kl += `M${n1(x - R * 0.55)} ${n1(y - R * 0.3)}a${n1(R * 0.6)} ${n1(R * 0.5)} 0 0 1 ${n1(R * 0.75)} ${n1(-R * 0.3)}`;
+    for (let i = 0; i < 7; i++) {
+      const a = i / 7 * Math.PI * 2 + 0.3, rr = R * 0.42, cx = x + Math.cos(a) * R * 1.45, cy = y + Math.sin(a) * R * 1.3;
+      kr += `M${n1(cx - rr)} ${n1(cy)}a${n1(rr)} ${n1(rr * 0.85)} 0 1 0 ${n1(2 * rr)} 0a${n1(rr)} ${n1(rr * 0.85)} 0 1 0 ${n1(-2 * rr)} 0`;
+      ks += `M${n1(cx - rr)} ${n1(cy + rr * 0.1)}a${n1(rr)} ${n1(rr * 0.85)} 0 0 0 ${n1(2 * rr)} 0`;
+    }
+  }
+  return `<path d="${kr}" fill="${farbe}" opacity=".35"/><path d="${kz}" fill="${T.rg("rosette", [[0, "#e8d8b0", 0.9], [0.45, farbe, 0.6], [1, farbe, 0.2]], 0.35, 0.3, 0.7)}"/>` +
+    `<path d="${ks}" fill="none" stroke="${DUNKEL}" stroke-opacity=".45" stroke-width="${n1(liste[0][2] * 0.16) || 0.1}"/>` +
+    `<path d="${kl}" fill="none" stroke="${HELL}" stroke-opacity=".45" stroke-width="${n1(liste[0][2] * 0.12) || 0.1}" stroke-linecap="round"/>`;
+}
+/* Hufe: breite, flache, gerundet-dreieckige Hornkappen, matt; hellere abgenutzte Unterkante, dunkler Hautwulst oben,
+   Kontaktschatten. liste: [x (Mitte), breite, höhe, neigung]  */
+function hufe(T, liste, horn = "#5a4e3c") {
+  let d = "", k = "", h = "";
+  for (const [x, b, hh, ng = 0] of liste) {
+    d += `M${n1(x - b / 2)} 0C${n1(x - b * 0.5)} ${n1(-hh * 0.7)} ${n1(x - b * 0.15 + ng)} ${n1(-hh)} ${n1(x + ng)} ${n1(-hh)}C${n1(x + b * 0.25 + ng)} ${n1(-hh)} ${n1(x + b * 0.52)} ${n1(-hh * 0.5)} ${n1(x + b * 0.55)} 0Z`;
+    k += `M${n1(x - b * 0.42)} ${n1(-hh * 0.12)}L${n1(x + b * 0.48)} ${n1(-hh * 0.1)}`;
+    h += `M${n1(x - b * 0.42)} ${n1(-hh * 0.82)}Q${n1(x + ng)} ${n1(-hh * 1.18)} ${n1(x + b * 0.4)} ${n1(-hh * 0.75)}`;
+  }
+  const w0 = liste[0][2];
+  return `<path d="${d}" fill="${horn}"/>` + (T.fein ? `<path d="${d}" fill="${T.lg("hufL", [[0, "#000", 0.35], [0.45, "#000", 0], [0.8, "#fff", 0.06], [1, "#d9c9a6", 0.3]])}"/>` : "") +
+    `<path d="${k}" stroke="#c8b796" stroke-opacity=".4" stroke-width="${n1(w0 * 0.14) || 0.1}"/>` +
+    `<path d="${h}" fill="none" stroke="${DUNKEL}" stroke-opacity=".45" stroke-width="${n1(w0 * 0.22) || 0.1}" stroke-linecap="round"/>`;
+}
+/* Kontaktschatten unter einem Fuß (eng, dunkel, weich) */
+const kontakt = (T, x, b) => `<ellipse cx="${n1(x)}" cy="0" rx="${n1(b * 0.6)}" ry="${n1(Math.max(0.15, b * 0.07))}" fill="#000" opacity=".55" filter="${weich(T, Math.max(0.12, b * 0.05))}"/>`;
+/* Auge in der Augenhöhle: dunkler Höhlenring, knöcherner Brauenwulst mit Lichtkante, Schlagschatten auf das
+   obere Drittel, dicke beschuppte Lider, Reptilienauge (T.augeReal), Lidschuppen-Kranz. */
+function auge2(T, x, y, rr, o = {}) {
+  const w = o.winkel || 0, rot = w ? ` transform="rotate(${w} ${n1(x)} ${n1(y)})"` : "";
+  let s = oval(T, x, y + rr * 0.1, rr * 2.3, rr * 1.8, w, DUNKEL, 0.42, rr * 0.5);
+  /* Brauenwulst: helle Oberkante, darunter tiefer Schatten */
+  s += `<path d="M${n1(x - rr * 2)} ${n1(y - rr * 0.6)}Q${n1(x - rr * 0.2)} ${n1(y - rr * 2.4)} ${n1(x + rr * 2.1)} ${n1(y - rr * 0.9)}"${rot} fill="none" stroke="${HELL}" stroke-opacity=".45" stroke-width="${n1(rr * 0.5)}" stroke-linecap="round" filter="${weich(T, rr * 0.18)}"/>`;
+  s += T.augeReal ? T.augeReal(x, y, rr, Object.assign({ iris: "#b07a2e", iris2: "#3e240c", offen: 0.56, lid: "#1a130b" }, o)) : T.auge(x, y, rr, o.iris || "#6b4a1c");
+  s += `<ellipse cx="${n1(x)}" cy="${n1(y - rr * 0.62)}" rx="${n1(rr * 1.5)}" ry="${n1(rr * 0.42)}"${rot} fill="#000" opacity=".5" filter="${weich(T, rr * 0.16)}"/>`;
+  /* dicke Lidwülste */
+  s += `<path d="M${n1(x - rr * 1.5)} ${n1(y - rr * 0.1)}Q${n1(x)} ${n1(y - rr * 1.3)} ${n1(x + rr * 1.55)} ${n1(y - rr * 0.05)}M${n1(x - rr * 1.4)} ${n1(y + rr * 0.15)}Q${n1(x)} ${n1(y + rr * 1.05)} ${n1(x + rr * 1.45)} ${n1(y + rr * 0.1)}"${rot} fill="none" stroke="#2a2014" stroke-opacity=".55" stroke-width="${n1(rr * 0.32)}" stroke-linecap="round"/>`;
+  if (T.fein) {
+    let d = "";
+    for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, px = x + Math.cos(a) * rr * 1.75, py = y + Math.sin(a) * rr * 1.35; d += `M${n1(px - rr * 0.16)} ${n1(py)}a${n1(rr * 0.16)} ${n1(rr * 0.14)} 0 1 0 ${n1(rr * 0.32)} 0a${n1(rr * 0.16)} ${n1(rr * 0.14)} 0 1 0 ${n1(-rr * 0.32)} 0`; }
+    s += `<path d="${d}"${rot} fill="none" stroke="${DUNKEL}" stroke-opacity=".3" stroke-width="${n1(rr * 0.06) || 0.1}"/>`;
+  }
+  return s;
 }
 
 /* =====================================================================

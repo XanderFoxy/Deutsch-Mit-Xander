@@ -88,7 +88,10 @@ S.hinten(`<circle cx="330" cy="70" r="90" fill="${S.rg("sonne", [[0, "#fff1c8", 
   }
   S.hinten(w);
 }
-/* Markt-Pflaster (Kopfsteinpflaster) in Fluchtperspektive — liegt in der Kulisse unter allem */
+
+/* =====================================================================
+   0 — DER MARKTPLATZ (Kopfsteinpflaster in Fluchtperspektive) — liegt unter allem
+   ===================================================================== */
 {
   let f = `<rect x="0" y="${HOR}" width="320" height="${200 - HOR}" fill="${S.lg("pflaster", [[0, "#a59a88"], [0.4, "#968b79"], [1, "#857a69"]])}"/>`;
   /* Pflasterreihen: quer, nach vorn weiter auseinander */
@@ -108,7 +111,8 @@ S.hinten(`<circle cx="330" cy="70" r="90" fill="${S.rg("sonne", [[0, "#fff1c8", 
   /* Rinne aus Blaustein quer über den Platz und Abendlicht */
   f += `<path d="M0 166 Q160 162.6 320 165.4" stroke="#5f656b" stroke-width="1.6" fill="none" opacity=".55"/>`;
   f += `<rect x="0" y="${HOR}" width="320" height="${200 - HOR}" fill="${S.lg("pflasterlicht", [[0, "#000", 0.12], [0.55, "#000", 0], [1, "#ffd99a", 0.14]], 0, 0, 1, 0)}"/>`;
-  S.hinten(f);
+  S.teil({ id: "marktplatz", de: "der Marktplatz", syl: "MARKT-platz", it: "la piazza del mercato", itSyl: "PIAZ-za del mer-CA-to", en: "market square", x: 0, y: 0, kunst: f,
+    tipp: "Auf dem Marktplatz vor dem Rathaus und rund um den Dom ist im Advent der Weihnachtsmarkt." });
 }
 
 /* =====================================================================
@@ -182,7 +186,7 @@ const DOM = { x: 4, y: 137, u: 1.45 };
   k += `<rect x="0" y="${H(33)}" width="${CX1 + 2}" height="${r(33 * u)}" fill="${ABEND}"/><rect x="${OX - OW}" y="${H(34.6)}" width="${2 * OW}" height="${r(34.6 * u)}" fill="${ABEND}"/>`;
   S.teil({ id: "dom", de: "der Aachener Dom", syl: "AA-che-ner DOM", it: "il Duomo di Aquisgrana", itSyl: "DUO-mo di a-qui-SGRA-na", en: "Aachen Cathedral",
     x: DOM.x, y: DOM.y, kunst: k, tipp: "Karl der Große hat den Dom um das Jahr 800 bauen lassen. Er war das erste Welterbe in Deutschland.",
-    zoom: { x: 0, y: 46, w: 87, h: 58 },
+    zoom: { x: 18, y: 46, w: 87, h: 58 },
     unter: [
       { id: "fenster", de: "das Fenster", syl: "FENS-ter", it: "la finestra", itSyl: "fi-NE-stra", en: "window", x: DOM.x + 21.4, y: DOM.y - 4 * DOM.u, kunst: flaeche(-5.2, -(28 * DOM.u), 10.4, 28 * DOM.u, 0.5),
         tipp: "Die Fenster der Chorhalle sind über 25 Meter hoch. Die Aachener nennen sie das „Glashaus“." },
@@ -291,7 +295,7 @@ const konig = [];
   /* Abendsonne von rechts färbt die Fassade */
   k += `<path d="M${FP(0, 0)} L${FP(70, 0)} L${FP(70, 30)} L${FP(61, 30)} L${FP(61, 22.6)} L${FP(9.4, 22.6)} L${FP(9.4, 22.6)} L${FP(9.4, 0)} Z" fill="${ABEND}"/>`;
   S.teil({ id: "rathaus", de: "das Rathaus", syl: "RAT-haus", it: "il municipio", itSyl: "mu-ni-CI-pio", en: "town hall",
-    x: 0, y: 0, kunst: k, tipp: "Das Rathaus steht auf den Mauern der Königshalle Karls des Großen. Im Krönungssaal feierten 31 Könige ihre Krönung.",
+    x: 0, y: 0, kunst: k, tipp: "Das Rathaus steht auf den Mauern der Königshalle Karls des Großen. Nach der Krönung im Dom feierten die Könige hier im Krönungssaal ein großes Fest.",
     zoom: { x: 112, y: 90, w: 78, h: 52 },
     unter: [
       { id: "koenig", de: "der König", syl: "KÖ-nig", it: "il re", itSyl: "RE", en: "king", x: fx(21.6), y: fy(21.6, 9.4), kunst: flaeche(-1.8, -6.6, 3.6, 6.8, 0.4),
@@ -391,27 +395,44 @@ const KB = { x: 206, y: 147 };
   for (const x of [-12.4, 12.4]) k += `<path d="M${x} -14.4 Q${r(x * 1.25)} -12 ${r(x * 1.34)} -6.8" stroke="#dcecef" stroke-width=".55" fill="none" opacity=".85"/>`;
   /* Säule und Sockel der Figur */
   k += `<path d="M-1.6 -15.4 L-1.3 -23 L1.3 -23 L1.6 -15.4 Z" fill="${BRONZE}"/><rect x="-2.4" y="-24.4" width="4.8" height="1.6" rx=".4" fill="#4b6a5a"/>`;
-  /* KARL DER GROSSE: Mantel, Krone, Zepter (rechts), Reichsapfel (links) */
+  /* KARL DER GROSSE: langes Gewand, Mantel mit Schließe, Vollbart, Krone; rechts das Zepter, links der Reichsapfel */
   const KY = -24.4;
-  k += `<path d="M-2.2 ${KY} L-2.6 ${KY - 5} Q-2.4 ${KY - 8.6} -1.3 ${KY - 9.4} L1.3 ${KY - 9.4} Q2.4 ${KY - 8.6} 2.6 ${KY - 5} L2.2 ${KY} Z" fill="${S.lg("karl", [[0, "#2f4a3d"], [0.5, "#5f8270"], [1, "#3b5a4b"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M-2.4 ${KY - 0.2} L-1 ${KY - 7.6} L.6 ${KY - 7.6} L2.4 ${KY - 0.2} Z" fill="#3e5e4e" opacity=".8"/>`;
-  k += `<path d="M-1.4 ${KY - 9.4} Q0 ${KY - 8.6} 1.4 ${KY - 9.4}" stroke="#7ea08c" stroke-width=".3" fill="none"/>`;
-  k += `<circle cx="0" cy="${KY - 10.3}" r="1" fill="#55786a"/><path d="M-.7 ${KY - 9.8} Q0 ${KY - 8.8} .7 ${KY - 9.8}" fill="#4a6b5c"/>`;
-  k += `<path d="M-1.1 ${KY - 11} L-1.1 ${KY - 12.3} L-.55 ${KY - 11.7} L0 ${KY - 12.5} L.55 ${KY - 11.7} L1.1 ${KY - 12.3} L1.1 ${KY - 11} Z" fill="${GOLD}"/>`;
-  k += `<path d="M2.1 ${KY - 7} L2.9 ${KY - 7.6} L3.3 ${KY - 13.4}" stroke="#4f725f" stroke-width=".55" fill="none"/><path d="M3.3 ${KY - 13.4} l-.5 -.8 .5 -.6 .5 .6 Z" fill="${GOLD}"/>`;
-  k += `<path d="M-2.2 ${KY - 6.4} L-3 ${KY - 6}" stroke="#4f725f" stroke-width=".6"/><circle cx="-3.3" cy="${KY - 6.6}" r=".75" fill="${GOLD}"/><path d="M-3.3 ${KY - 7.3} L-3.3 ${KY - 8.2} M-3.7 ${KY - 7.8} L-2.9 ${KY - 7.8}" stroke="#d9b24a" stroke-width=".22"/>`;
-  k += `<path d="M1 ${KY - 9} Q2.2 ${KY - 6} 1.8 ${KY - 1}" stroke="#a9c8b6" stroke-width=".35" fill="none" opacity=".7"/>`;
+  const BR = S.lg("karl", [[0, "#22362d"], [0.45, "#4f7363"], [0.7, "#7fa391"], [1, "#2e463b"]], 0, 0, 1, 0);
+  const REGAL = S.lg("regal", [[0, "#7a6a3a"], [0.5, "#c9b06a"], [1, "#8a7640"]], 0, 0, 1, 1);
+  /* Mantel hinten (breiter, bis fast zum Boden) */
+  k += `<path d="M-2.1 ${KY - 7.4} Q-3.2 ${KY - 4} -2.9 ${KY - 0.3} L2.9 ${KY - 0.3} Q3.2 ${KY - 4} 2.1 ${KY - 7.4} Z" fill="#2a4237"/>`;
+  /* Gewand mit Falten, Füße */
+  k += `<path d="M-1.5 ${KY - 5.2} L-2.1 ${KY - 0.4} L2.1 ${KY - 0.4} L1.5 ${KY - 5.2} Z" fill="${BR}"/>`;
+  for (const x of [-1, 0, 1]) k += `<path d="M${x * 0.8} ${KY - 4.8} Q${r(x * 1.05)} ${KY - 2.4} ${r(x * 1.3)} ${KY - 0.5}" stroke="#1f3329" stroke-width=".16" fill="none"/>`;
+  k += `<ellipse cx="-.8" cy="${KY - 0.3}" rx=".6" ry=".25" fill="#2a4237"/><ellipse cx=".8" cy="${KY - 0.3}" rx=".6" ry=".25" fill="#2a4237"/>`;
+  /* Oberkörper mit Gürtel, Mantel über den Schultern */
+  k += `<path d="M-1.6 ${KY - 5.2} L-1.7 ${KY - 7.6} Q0 ${KY - 8.2} 1.7 ${KY - 7.6} L1.6 ${KY - 5.2} Z" fill="${BR}"/>`;
+  k += `<rect x="-1.6" y="${KY - 5.5}" width="3.2" height=".4" fill="#1f3329"/><circle cx="0" cy="${KY - 5.3}" r=".25" fill="${REGAL}"/>`;
+  k += `<path d="M-2.2 ${KY - 7.5} Q-1 ${KY - 8.3} 0 ${KY - 8.1} Q1 ${KY - 8.3} 2.2 ${KY - 7.5} L2 ${KY - 7} Q0 ${KY - 7.6} -2 ${KY - 7} Z" fill="#355445"/><circle cx="1.5" cy="${KY - 7.5}" r=".3" fill="${REGAL}"/>`;
+  /* linker Arm (im Bild links) hält den Reichsapfel vor der Brust */
+  k += `<path d="M-1.8 ${KY - 7.3} Q-2.6 ${KY - 6} -2 ${KY - 5.3} L-1.3 ${KY - 5.6}" stroke="#3e5e4e" stroke-width=".75" fill="none" stroke-linecap="round"/>`;
+  k += `<circle cx="-1.6" cy="${KY - 6.1}" r=".72" fill="${REGAL}"/><path d="M-1.6 ${KY - 6.8} L-1.6 ${KY - 7.7} M-2 ${KY - 7.35} L-1.2 ${KY - 7.35}" stroke="#a8914f" stroke-width=".2"/><path d="M-2.3 ${KY - 6.1} L-.9 ${KY - 6.1}" stroke="#7a6a3a" stroke-width=".12"/>`;
+  /* rechter Arm hält das Zepter hoch */
+  k += `<path d="M1.8 ${KY - 7.3} Q2.7 ${KY - 6.4} 2.6 ${KY - 5.6}" stroke="#3e5e4e" stroke-width=".75" fill="none" stroke-linecap="round"/><circle cx="2.6" cy="${KY - 5.6}" r=".35" fill="#4f7363"/>`;
+  k += `<path d="M2.7 ${KY - 4.4} L2.5 ${KY - 11.6}" stroke="${REGAL}" stroke-width=".32"/><path d="M2.5 ${KY - 11.6} l-.45 -.5 .45 -.8 .45 .8 Z" fill="${REGAL}"/>`;
+  /* Kopf mit Vollbart und Krone */
+  k += `<rect x="-.35" y="${KY - 8.6}" width=".7" height=".6" fill="#3e5e4e"/>`;
+  k += `<ellipse cx="0" cy="${KY - 9.5}" rx=".85" ry="1" fill="#55786a"/><path d="M-.8 ${KY - 9.3} Q-.85 ${KY - 8} 0 ${KY - 7.7} Q.85 ${KY - 8} .8 ${KY - 9.3} Q0 ${KY - 8.8} -.8 ${KY - 9.3} Z" fill="#3a594a"/>`;
+  k += `<path d="M-.35 ${KY - 9.7} h.2 M.15 ${KY - 9.7} h.2" stroke="#1f3329" stroke-width=".12"/><path d="M.5 ${KY - 10} Q.8 ${KY - 9.4} .55 ${KY - 8.9}" stroke="#9cc0ad" stroke-width=".12" fill="none"/>`;
+  k += `<path d="M-.95 ${KY - 10.2} L-.95 ${KY - 11.2} L-.3 ${KY - 11.45} L.3 ${KY - 11.45} L.95 ${KY - 11.2} L.95 ${KY - 10.2} Z" fill="${REGAL}"/><path d="M-.3 ${KY - 11.45} L-.3 ${KY - 10.2} M.3 ${KY - 11.45} L.3 ${KY - 10.2}" stroke="#7a6a3a" stroke-width=".1"/>`;
+  k += `<path d="M0 ${KY - 11.45} L0 ${KY - 12.3} M-.3 ${KY - 12} L.3 ${KY - 12}" stroke="${REGAL}" stroke-width=".18"/><path d="M-.95 ${KY - 11.2} Q0 ${KY - 12.5} .95 ${KY - 11.2}" stroke="#a8914f" stroke-width=".16" fill="none"/>`;
+  k += `<path d="M1.4 ${KY - 7.2} Q2 ${KY - 4} 1.9 ${KY - 0.8}" stroke="#a9c8b6" stroke-width=".25" fill="none" opacity=".6"/>`;
   void s;
   S.teil({ id: "karlsbrunnen", de: "der Karlsbrunnen", syl: "KARLS-brun-nen", it: "la fontana di Carlo Magno", itSyl: "fon-TA-na di CAR-lo MA-gno", en: "Charlemagne Fountain",
     x: KB.x, y: KB.y, kunst: k, tipp: "Die Aachener nennen den Brunnen „Karl in de Eäzekomp“ — Karl in der Erbsenschüssel.",
-    zoom: { x: KB.x - 15, y: KB.y - 40, w: 30, h: 20 },
+    zoom: { x: KB.x - 12, y: KB.y - 39, w: 24, h: 16 },
     unter: [
-      { id: "kaiser", de: "der Kaiser", syl: "KAI-ser", it: "l'imperatore", itSyl: "im-pe-ra-TO-re", en: "emperor", x: KB.x, y: KB.y + KY, kunst: flaeche(-2.4, -9.6, 4.8, 9.6, 0.4),
+      { id: "kaiser", de: "der Kaiser", syl: "KAI-ser", it: "l'imperatore", itSyl: "im-pe-ra-TO-re", en: "emperor", x: KB.x, y: KB.y + KY, kunst: flaeche(-2.2, -8.2, 3.6, 8.2, 0.4),
         tipp: "Karl der Große war Kaiser. Er lebte sehr gern in Aachen — wegen der warmen Quellen." },
-      { id: "krone", de: "die Krone", syl: "KRO-ne", it: "la corona", itSyl: "co-RO-na", en: "crown", x: KB.x, y: KB.y + KY - 11, kunst: flaeche(-1.3, -1.7, 2.6, 1.9, 0.3) },
-      { id: "reichsapfel", de: "der Reichsapfel", syl: "REICHS-ap-fel", it: "il globo imperiale", itSyl: "GLO-bo im-pe-RIA-le", en: "imperial orb", x: KB.x - 3.3, y: KB.y + KY - 6.6, kunst: flaeche(-1.1, -1.8, 2.2, 2.8, 0.3),
+      { id: "krone", de: "die Krone", syl: "KRO-ne", it: "la corona", itSyl: "co-RO-na", en: "crown", x: KB.x, y: KB.y + KY - 10.2, kunst: flaeche(-1.1, -2.2, 2.2, 2.2, 0.3) },
+      { id: "reichsapfel", de: "der Reichsapfel", syl: "REICHS-ap-fel", it: "il globo imperiale", itSyl: "GLO-bo im-pe-RIA-le", en: "imperial orb", x: KB.x - 1.6, y: KB.y + KY - 6.1, kunst: flaeche(-0.9, -1.8, 1.8, 2.6, 0.3),
         tipp: "Den Reichsapfel trägt der Kaiser in der Hand: Er zeigt die Herrschaft über die Welt." },
-      { id: "zepter", de: "das Zepter", syl: "ZEP-ter", it: "lo scettro", itSyl: "SCET-tro", en: "sceptre", x: KB.x + 3, y: KB.y + KY - 10, kunst: flaeche(-0.8, -4.2, 1.6, 6, 0.3) },
+      { id: "zepter", de: "das Zepter", syl: "ZEP-ter", it: "lo scettro", itSyl: "SCET-tro", en: "sceptre", x: KB.x + 2.6, y: KB.y + KY - 8, kunst: flaeche(-0.7, -4.6, 1.5, 7.2, 0.3) },
     ] });
 }
 
@@ -420,16 +441,17 @@ const KB = { x: 206, y: 147 };
    ===================================================================== */
 const TISCH = { x: 48, y: 186 };
 {
-  const s = km(176);
+  const s = km(182);
   let k = "";
-  const H = 2.6 * s, W = 2.6 * s;
-  k += `<rect x="-.5" y="${r(-H)}" width="1" height="${r(H)}" fill="#d8d2c4"/>`;
-  k += `<path d="M${r(-W / 2)} ${r(-H + 6)} L0 ${r(-H - 2)} L${r(W / 2)} ${r(-H + 6)} Q0 ${r(-H + 8)} ${r(-W / 2)} ${r(-H + 6)} Z" fill="${S.lg("schirm", [[0, "#efe7d6"], [0.6, "#fbf6ec"], [1, "#d8cdb6"]], 0, 0, 1, 0)}"/>`;
-  for (let i = 0; i < 8; i++) { const x = -W / 2 + (i + 0.5) * W / 8; k += `<path d="M${r(x - W / 16)} ${r(-H + 6 + Math.abs(x) * 0.02)} q${r(W / 16)} 1.6 ${r(W / 8)} 0" fill="#f6efe1" stroke="#cfc4ad" stroke-width=".2"/>`; }
-  for (const t of [-0.5, -0.25, 0, 0.25, 0.5]) k += `<line x1="0" y1="${r(-H - 2)}" x2="${r(t * W)}" y2="${r(-H + 6.4)}" stroke="#d2c7b0" stroke-width=".3"/>`;
-  k += `<text x="0" y="${r(-H + 7.6)}" font-size="2.2" text-anchor="middle" fill="#7a2a28" font-family="Georgia,serif" font-style="italic">Café am Markt</text>`;
-  k += `<rect x="-3" y="-1" width="6" height="1" rx=".4" fill="#9a958a"/>`;
-  S.teil({ id: "sonnenschirm", de: "der Sonnenschirm", syl: "SON-nen-schirm", it: "l'ombrellone", itSyl: "om-brel-LO-ne", en: "parasol", x: 30, y: 176, steht: true, kunst: k });
+  const H = 2.7 * s;
+  /* am Abend zugeklappt: schmaler Stoffkegel am Mast */
+  k += `<rect x="-.55" y="${r(-H - 3)}" width="1.1" height="${r(H + 3)}" fill="#d8d2c4"/><circle cx="0" cy="${r(-H - 3.4)}" r=".8" fill="#cfc6b4"/>`;
+  k += `<path d="M-.6 ${r(-H - 2)} Q-3.2 ${r(-H + 10)} -2.2 ${r(-H + 26)} L2.2 ${r(-H + 26)} Q3.2 ${r(-H + 10)} .6 ${r(-H - 2)} Z" fill="${S.lg("schirm", [[0, "#d8cdb6"], [0.55, "#fbf6ec"], [1, "#e2d8c3"]], 0, 0, 1, 0)}"/>`;
+  for (const x of [-1.2, 0, 1.2]) k += `<path d="M${r(x * 0.3)} ${r(-H)} Q${r(x * 1.4)} ${r(-H + 14)} ${r(x * 1.5)} ${r(-H + 26)}" stroke="#c9bea6" stroke-width=".3" fill="none"/>`;
+  k += `<path d="M-2.4 ${r(-H + 25.6)} q2.4 1.6 4.8 0" stroke="#7a2a28" stroke-width=".9" fill="none"/><rect x="-1.4" y="${r(-H + 14)}" width="2.8" height=".9" rx=".3" fill="#7a2a28"/>`;
+  k += `<path d="M-3 -1 L3 -1 L3.6 0 L-3.6 0 Z" fill="#7d786d"/>`;
+  S.teil({ id: "sonnenschirm", de: "der Sonnenschirm", syl: "SON-nen-schirm", it: "l'ombrellone", itSyl: "om-brel-LO-ne", en: "parasol", x: 24, y: 182, steht: true, kunst: schatten(0, 0.3, 4, 1, 0.3) + k,
+    tipp: "Am Abend klappt das Café die Sonnenschirme zu." });
 }
 {
   /* Stuhl hinter dem Tisch (Bistrostuhl) */
@@ -473,8 +495,8 @@ const TISCH = { x: 48, y: 186 };
   k += `<path d="M${r(-W / 2 - 1)} 0 L${r(-W / 2 + 1.6)} ${r(-H)} L${r(W / 2 - 1.6)} ${r(-H)} L${r(W / 2 + 1)} 0" stroke="#5b3a1f" stroke-width="1.2" fill="none"/>`;
   k += `<path d="M${r(-W / 2 + 0.2)} -3 L${r(-W / 2 + 1.9)} ${r(-H + 2)} L${r(W / 2 - 1.9)} ${r(-H + 2)} L${r(W / 2 - 0.2)} -3 Z" fill="${S.lg("tafel", [[0, "#2e3a33"], [1, "#212a25"]])}"/>`;
   const t = (y, f, txt, c = "#f4f0e6", w = "normal") => `<text x="0" y="${r(y)}" font-size="${f}" text-anchor="middle" fill="${c}" font-family="'Comic Sans MS','Segoe Print',cursive" font-weight="${w}">${txt}</text>`;
-  k += t(-H + 6.6, 3.2, "Wellkomm!", "#f6e7a1", "bold");
-  k += t(-H + 11, 2.5, "Öcher Printe");
+  k += t(-H + 6.6, 2.9, "Willkommen!", "#f6e7a1", "bold");
+  k += t(-H + 11, 2.5, "Öcher Printen");
   k += t(-H + 14.2, 2.5, "+ Kaffee 3,90");
   k += t(-H + 18.6, 2.9, "Oche Alaaf!", "#ffb8a8", "bold");
   k += `<path d="M${r(-W / 2 + 3)} ${r(-H + 7.8)} L${r(W / 2 - 3)} ${r(-H + 7.8)}" stroke="#f6e7a1" stroke-width=".3" stroke-dasharray="1 .7"/>`;
@@ -505,6 +527,26 @@ const TISCH = { x: 48, y: 186 };
   k += `<line x1="0" y1="${r(-H + 2)}" x2="0" y2="${r(-H + 8.4)}" stroke="#23292c" stroke-width=".3"/>`;
   k += `<path d="M-4.2 ${r(-H + 2)} L4.2 ${r(-H + 2)} L1.2 ${r(-H - 1.2)} L-1.2 ${r(-H - 1.2)} Z" fill="#23292c"/><circle cx="0" cy="${r(-H - 1.8)}" r=".8" fill="#23292c"/>`;
   S.teil({ id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "il lampione", itSyl: "lam-PIO-ne", en: "street lamp", x: 248, y: Y, steht: true, kunst: k });
+}
+{
+  /* DAS FAHRRAD — an die Laterne gelehnt (Aachen ist eine Studentenstadt) */
+  const Y = 172, s = km(Y), R = 0.34 * s;
+  let k = schatten(0, 0.4, 20, 1.6, 0.3);
+  const ra = (cx) => `<circle cx="${r(cx)}" cy="${r(-R)}" r="${r(R)}" fill="none" stroke="#22262a" stroke-width="1.1"/><circle cx="${r(cx)}" cy="${r(-R)}" r="${r(R - 0.9)}" fill="none" stroke="#a9b0b5" stroke-width=".25"/>` + [...Array(12)].map((_, i) => { const a = i * Math.PI / 6; return `<line x1="${r(cx)}" y1="${r(-R)}" x2="${r(cx + Math.cos(a) * (R - 1))}" y2="${r(-R + Math.sin(a) * (R - 1))}" stroke="#b7bec3" stroke-width=".12"/>`; }).join("") + `<circle cx="${r(cx)}" cy="${r(-R)}" r=".7" fill="#7f878d"/>`;
+  const hx = -0.55 * s, vx = 0.5 * s;
+  k += ra(hx) + ra(vx);
+  /* Rahmen (Trapez), Sattel, Lenker, Gepäckträger, Schutzbleche */
+  const T = { x: -0.12 * s, y: -R - 0.36 * s }, L = { x: 0.36 * s, y: -R - 0.42 * s }, P = { x: -0.06 * s, y: -R };
+  const F = S.lg("rahmen", [[0, "#1f5f8a"], [1, "#2f86b8"]]);
+  k += `<path d="M${r(hx)} ${r(-R)} L${r(P.x)} ${r(P.y)} L${r(L.x - 1)} ${r(L.y + 2)} M${r(hx)} ${r(-R)} L${r(T.x)} ${r(T.y)} L${r(P.x)} ${r(P.y)} M${r(T.x)} ${r(T.y)} L${r(L.x - 1)} ${r(L.y + 1)} L${r(vx)} ${r(-R)}" stroke="${F}" stroke-width=".9" fill="none" stroke-linejoin="round"/>`;
+  k += `<path d="M${r(T.x - 0.6)} ${r(T.y - 2.6)} L${r(T.x)} ${r(T.y)}" stroke="#22262a" stroke-width=".7"/><path d="M${r(T.x - 3)} ${r(T.y - 2.8)} Q${r(T.x)} ${r(T.y - 3.6)} ${r(T.x + 1.8)} ${r(T.y - 2.6)} L${r(T.x - 2.6)} ${r(T.y - 2.2)} Z" fill="#2a2420"/>`;
+  k += `<path d="M${r(L.x - 1)} ${r(L.y + 1)} L${r(L.x)} ${r(L.y - 2.4)} Q${r(L.x - 2.6)} ${r(L.y - 3.4)} ${r(L.x - 3.4)} ${r(L.y - 1.8)}" stroke="#30363a" stroke-width=".7" fill="none"/>`;
+  k += `<path d="M${r(hx - R * 0.9)} ${r(-R * 1.55)} Q${r(hx)} ${r(-R * 2.15)} ${r(hx + R * 0.95)} ${r(-R * 1.5)}" stroke="#30363a" stroke-width=".6" fill="none"/><path d="M${r(hx - R * 0.8)} ${r(-R * 1.95)} L${r(T.x - 1)} ${r(-R * 1.95)}" stroke="#30363a" stroke-width=".6"/>`;
+  k += `<path d="M${r(vx - R * 0.9)} ${r(-R * 1.5)} Q${r(vx)} ${r(-R * 2.1)} ${r(vx + R * 0.9)} ${r(-R * 1.55)}" stroke="#30363a" stroke-width=".6" fill="none"/>`;
+  k += `<path d="M${r(P.x)} ${r(P.y)} L${r(P.x - 2.4)} 0" stroke="#4a5055" stroke-width=".45"/>`;
+  k += `<circle cx="${r(P.x)}" cy="${r(P.y)}" r="1.3" fill="none" stroke="#5a6166" stroke-width=".4"/><path d="M${r(P.x)} ${r(P.y)} L${r(P.x + 1.6)} ${r(P.y + 1.4)}" stroke="#5a6166" stroke-width=".4"/>`;
+  S.teil({ id: "fahrrad", de: "das Fahrrad", syl: "FAHR-rad", it: "la bicicletta", itSyl: "bi-ci-CLET-ta", en: "bicycle", x: 228, y: Y, steht: true, kunst: k,
+    tipp: "In Aachen studieren sehr viele junge Leute — viele fahren mit dem Fahrrad." });
 }
 {
   const Y = 194, s = km(Y), H = 2.6 * s;

@@ -109,6 +109,8 @@ S.hinten(`<path d="M0 108 Q40 101 90 104 T180 103 T260 100 T320 104 L320 ${W} L0
   let fl = "";
   for (let i = 0; i < 26; i++) { const x = rnd() * 150, y = 166 + rnd() * 32; fl += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(4 + rnd() * 8)}" ry="${r(1 + rnd() * 1.8)}" fill="#3a3020" opacity="${r(0.08 + rnd() * 0.08)}"/>`; }
   f += `<g filter="url(#${S.id("rauch")})">${fl}</g>`;
+  /* lange Abendschatten nach vorne links (Sonne tief im Westnordwesten, hinter der Brücke) */
+  f += `<g filter="url(#bw_weich)"><path d="M157 196 L243 196 L214 200 L120 200 Z" fill="#2a1c10" opacity=".22"/><path d="M285 187 L299 187 L280 196 L262 196 Z" fill="#2a1c10" opacity=".2"/><path d="M74 181 L134 181 L118 186 L56 186 Z" fill="#2a1c10" opacity=".16"/></g>`;
   /* ein zweiter Biertisch weiter hinten, leer bis auf zwei Gläser */
   {
     const X0 = 104, y0 = 181, sk = km(y0), L = 1.1 * sk, h = 0.77 * sk;
@@ -187,14 +189,14 @@ const DOM = { x: 100, y: 114 };
   for (let i = 0; i < 14; i++) { const x = -44 + rnd() * 72, y = -48 + rnd() * 30; k += `<rect x="${r(x)}" y="${r(y)}" width=".5" height="${r(2 + rnd() * 5)}" fill="#6e6c62" opacity=".18"/>`; }
   S.teil({ id: "dom", de: "der Dom", syl: "DOM", it: "il duomo", itSyl: "DUO-mo", en: "cathedral",
     x: DOM.x, y: DOM.y, kunst: k, tipp: "Der Dom St. Peter ist gotisch. Seine zwei Türme sind 105 Meter hoch.",
-    zoom: { x: 62, y: 6, w: 78, h: 94 },
+    zoom: { x: 62, y: 12, w: 78, h: 76 },
     unter: [
-      { id: "turm", de: "der Turm", syl: "TURM", it: "la torre", itSyl: "TOR-re", en: "tower", x: DOM.x + 22, y: DOM.y - 60, kunst: flaeche(-6, -42, 12, 42),
+      { id: "turm", de: "der Turm", syl: "TURM", it: "la torre", itSyl: "TOR-re", en: "tower", x: DOM.x + 22, y: DOM.y - 60, kunst: flaeche(-6, -41, 12, 41),
         tipp: "Die Turmspitzen sind aus Stein und durchbrochen wie Spitze. Fertig wurden sie erst 1869." },
-      { id: "kirchenfenster", de: "das Kirchenfenster", syl: "KIR-chen-fens-ter", it: "la vetrata", itSyl: "ve-TRA-ta", en: "church window", x: DOM.x - 19, y: DOM.y - 18, kunst: flaeche(-3.8, -36, 7.6, 36),
+      { id: "kirchenfenster", de: "das Kirchenfenster", syl: "KIR-chen-fens-ter", it: "la vetrata", itSyl: "ve-TRA-ta", en: "church window", x: DOM.x - 19, y: DOM.y - 30, kunst: flaeche(-3.8, -26, 7.6, 26),
         tipp: "Die bunten Glasfenster im Dom sind zum Teil über 700 Jahre alt." },
-      { id: "dach", de: "das Dach", syl: "DACH", it: "il tetto", itSyl: "TET-to", en: "roof", x: DOM.x - 30, y: DOM.y - 50, kunst: flaeche(-10, -12, 20, 12),
-        tipp: "Das Dach ist mit Kupfer gedeckt – darum ist es grün." },
+      { id: "dach", de: "das Dach", syl: "DACH", it: "il tetto", itSyl: "TET-to", en: "roof", x: DOM.x - 28, y: DOM.y - 50, kunst: flaeche(-10, -12, 20, 12),
+        tipp: "Unter dem steilen Dach liegt das Gewölbe des Doms – es ist 32 Meter hoch." },
     ] });
 }
 
@@ -237,6 +239,9 @@ const DOM = { x: 100, y: 114 };
   };
   /* hinter der Brücke: Dächer der westlichen Altstadt, im Dunst */
   for (let x = 194; x < 314;) { let w = 7 + rnd() * 6; if (x + w > 320) w = 320 - x; k += haus(x, w, 110, 6 + rnd() * 4, 5 + rnd() * 3, 0.32, rnd() < 0.5); x += w + 0.3; }
+  /* ein zweiter Geschlechterturm zwischen Dom und Salzstadel, im Dunst */
+  k += `<rect x="137" y="78" width="6.4" height="34" fill="#dccdb0"/><rect x="141.6" y="78" width="1.8" height="34" fill="${RAND}" opacity=".45"/><path d="M136.6 78.6 L140.2 75.4 L143.8 78.6 Z" fill="#b8826a"/>`;
+  for (let i = 0; i < 6; i++) k += `<rect x="138.6" y="${81 + i * 4.6}" width="1" height="1.6" fill="#6a6260"/><rect x="141" y="${81 + i * 4.6}" width="1" height="1.6" fill="#6a6260"/>`;
   /* zweite Reihe am Donaumarkt (unter dem Dom) */
   for (let x = 0; x < 150;) { const w = 8 + rnd() * 6; k += haus(x, w, 112, 8 + rnd() * 5, 6 + rnd() * 3, 0.22, rnd() < 0.5); x += w + 0.3; }
   /* vordere Reihe direkt an der Donau: sie spiegelt sich */
@@ -278,7 +283,11 @@ const SZ = { x: 164, y: W - 1 };
    ===================================================================== */
 const BT = { x: 189, y: 112 };
 {
-  let k = `<rect x="-7" y="-42" width="14" height="44" fill="${S.lg("turmputz", [[0, "#cbbd9e"], [0.65, "#e6d8b8"], [1, "#f8e8c4"]], 0, 0, 1, 0)}"/>`;
+  /* Brückenkopf: Ufermauer unter dem Turm, links das Haus mit dem großen Rundbogen der alten Straßenbahn */
+  let k = `<path d="M-13 9.4 L-13 -16 L-7 -16 L-7 9.4 Z" fill="#e2d6ba"/><path d="M-12.4 9.4 L-12.4 -1 Q-10 -7.4 -7.6 -1 L-7.6 9.4 Z" fill="#3a3430"/><path d="M-13.4 -16 L-10 -19 L-7 -16 Z" fill="${ZIEGEL_D}"/>`;
+  k += `<rect x="-14" y="2" width="22" height="7.6" fill="${S.lg("kopfmauer", [[0, "#8e8a78"], [1, "#c4bca2"]], 0, 0, 1, 0)}"/>`;
+  for (let y = 3.6; y < 9; y += 1.8) k += `<line x1="-14" y1="${r(y)}" x2="8" y2="${r(y)}" stroke="#6e6a5c" stroke-width=".15" opacity=".6"/>`;
+  k += `<rect x="-7" y="-42" width="14" height="44" fill="${S.lg("turmputz", [[0, "#cbbd9e"], [0.65, "#e6d8b8"], [1, "#f8e8c4"]], 0, 0, 1, 0)}"/>`;
   for (let y = -40; y < 0; y += 3.4) for (const sx of [-1, 1]) k += `<rect x="${sx < 0 ? -7 : 5}" y="${y}" width="2" height="1.7" fill="${sx < 0 ? "#b4a888" : "#fff0d0"}" opacity=".7"/>`;
   /* Torbogen zur Brücke (Nordseite) */
   k += `<path d="M-3.4 2 L-3.4 -5 Q0 -9.4 3.4 -5 L3.4 2 Z" fill="#2a2420"/><path d="M-3.4 -5 Q0 -9.4 3.4 -5" stroke="#f2e2c0" stroke-width=".5" fill="none"/>`;
@@ -297,7 +306,7 @@ const BT = { x: 189, y: 112 };
   k += `<rect x="5.6" y="-42" width="1.4" height="44" fill="${RAND}" opacity=".55"/>`;
   S.teil({ id: "brueckturm", de: "der Brückturm", syl: "BRÜCK-turm", it: "la torre del ponte", itSyl: "TOR-re del PON-te", en: "bridge tower",
     x: BT.x, y: BT.y, kunst: gruppe("brueckturm", BT.x, BT.y, k), tipp: "Am Brückturm musste man früher Zoll bezahlen. Heute ist darin ein Museum.",
-    zoom: { x: BT.x - 22, y: BT.y - 68, w: 44, h: 76 },
+    zoom: { x: BT.x - 22, y: BT.y - 68, w: 44, h: 78 },
     unter: [
       { id: "uhr", de: "die Uhr", syl: "UHR", it: "l'orologio", itSyl: "o-ro-LO-gio", en: "clock", x: BT.x, y: BT.y - 27, kunst: flaeche(-4.2, -8, 8.4, 8.4), tipp: "Die Turmuhr stammt aus dem 17. Jahrhundert." },
       { id: "tor", de: "das Tor", syl: "TOR", it: "la porta", itSyl: "POR-ta", en: "gate", x: BT.x, y: BT.y + 1, kunst: flaeche(-4, -10, 8, 10), tipp: "Durch das Tor geht man von der Brücke in die Altstadt." },
@@ -406,10 +415,10 @@ S.def(`<linearGradient id="${S.id("bogenlicht")}" x1="0" y1="0" x2="0" y2="1"><s
 {
   /* DIE STEINERNE BRÜCKE */
   const k = brueckenKoerper(false);
-  const pj = 3, pp = (pj + 1) / N, bj = 4, bm = (bogen[bj][0] + bogen[bj][1]) / 2;
+  const pj = 1, pp = (pj + 1) / N, bj = 3, bm = (bogen[bj][0] + bogen[bj][1]) / 2;
   S.teil({ id: "bruecke", de: "die Steinerne Brücke", syl: "STEI-ner-ne BRÜ-cke", it: "il Ponte di Pietra", itSyl: "PON-te di PIE-tra", en: "Stone Bridge",
     x: 0, y: 0, kunst: k, tipp: "Die Steinerne Brücke ist fast 900 Jahre alt (1135–1146). Sie ist über 300 Meter lang.",
-    zoom: { x: 224, y: 84, w: 96, h: 64 },
+    zoom: { x: 206, y: 84, w: 94, h: 64 },
     unter: [
       { id: "bogen", de: "der Bogen", syl: "BO-gen", it: "l'arco", itSyl: "AR-co", en: "arch", x: BX(bm), y: WAS(bm), kunst: flaeche(-(BX(bogen[bj][1]) - BX(bogen[bj][0])) / 2, -(WAS(bm) - DECK(bm) - 3.4 * BK(bm)), BX(bogen[bj][1]) - BX(bogen[bj][0]), WAS(bm) - DECK(bm) - 3.4 * BK(bm)),
         tipp: "Die Brücke hatte 16 runde Bögen aus Stein." },
@@ -502,8 +511,8 @@ S.def(`<linearGradient id="${S.id("bogenlicht")}" x1="0" y1="0" x2="0" y2="1"><s
   for (const [x, y, g, d, t] of buesch) k += blatt(x, y, g, d, t);
   /* stachelige grüne Kastanienfrüchte */
   for (const [x, y] of [[22, 30], [38, 24], [8, 36]]) { const yy = KY + y; k += `<circle cx="${x}" cy="${r(yy)}" r="1.9" fill="#94bc56"/>`; for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5; k += `<line x1="${r(x + Math.cos(a) * 1.7)}" y1="${r(yy + Math.sin(a) * 1.7)}" x2="${r(x + Math.cos(a) * 2.6)}" y2="${r(yy + Math.sin(a) * 2.6)}" stroke="#6a8a34" stroke-width=".25"/>`; } }
-  S.teil({ id: "kastanie", de: "die Kastanie", syl: "kas-TA-nie", it: "il castagno", itSyl: "ca-STA-gno", en: "chestnut tree", x: X, y: Y, steht: true, kunst: k,
-    tipp: "Im Biergarten spenden Kastanien Schatten. Ihre Wurzeln halten den Keller darunter kühl." });
+  S.teil({ id: "kastanie", de: "die Kastanie", syl: "kas-TA-nie", it: "l'ippocastano", itSyl: "ip-po-CA-sta-no", en: "horse chestnut tree", x: X, y: Y, steht: true, kunst: k,
+    tipp: "Früher pflanzte man Kastanien über die Bierkeller – ihr Schatten hielt das Bier kühl." });
 }
 
 /* =====================================================================
@@ -513,7 +522,7 @@ S.def(`<linearGradient id="${S.id("bogenlicht")}" x1="0" y1="0" x2="0" y2="1"><s
 const TI = { x: 200, y: 197 };
 const TS = km(TI.y);                       /* ≈ 34,6 Einheiten je Meter */
 const PL = TI.y - 0.77 * TS;               /* Tischplatte vorne (0,77 m) */
-const Q = TS / 34.6 * 0.72;                /* Maßstab der Dinge auf dem Tisch */
+const Q = TS / 34.6 * 0.86;                /* Maßstab der Dinge auf dem Tisch */
 {
   const L = 1.25 * TS, T = 6;              /* halbe Länge (Tisch 2,5 m); Tiefe der Platte im Bild */
   let k = schatten(0, 0.6, L + 4, 2.4, 0.35);
@@ -556,7 +565,7 @@ const Q = TS / 34.6 * 0.72;                /* Maßstab der Dinge auf dem Tisch *
   k += ding(14, gy, glas()) + ding(20, gy - 0.6, glas());
   S.teil({ id: "tisch", de: "der Tisch", syl: "TISCH", it: "il tavolo", itSyl: "TA-vo-lo", en: "table", x: TI.x, y: TI.y, steht: true, kunst: k,
     tipp: "Im Biergarten sitzt man an langen Holztischen unter Kastanien.",
-    zoom: { x: TI.x - 36, y: PL - 16, w: 66, h: 44 },
+    zoom: { x: TI.x - 36, y: PL - 20, w: 66, h: 44 },
     unter: [
       { id: "bratwurst", de: "die Bratwurst", syl: "BRAT-wurst", it: "la salsiccia", itSyl: "sal-SIC-cia", en: "sausage", x: TI.x + tx, y: PL - 2.4 - 1.2 * Q, kunst: flaeche(-5.4 * Q, -2.8 * Q, 10.8 * Q, 2.8 * Q),
         tipp: "In Regensburg isst man „sechs auf Kraut“: sechs kleine Bratwürste auf Sauerkraut." },
@@ -596,7 +605,7 @@ const Q = TS / 34.6 * 0.72;                /* Maßstab der Dinge auf dem Tisch *
 }
 
 /* Abendlicht von rechts, leichter Rand */
-S.davor(`<rect width="320" height="200" fill="${S.lg("abendlicht", [[0, "#1a2a40", 0.06], [0.55, "#ffd08a", 0], [1, "#ffd08a", 0.16]], 0, 0, 1, 0)}"/><rect width="320" height="200" fill="${S.rg("vignette", [[0, "#000", 0], [0.72, "#000", 0], [1, "#0a0c14", 0.22]], 0.5, 0.48, 0.78)}"/>`);
+S.davor(`<rect width="320" height="200" fill="${S.lg("abendlicht", [[0, "#1a2a40", 0.08], [0.5, "#ffd08a", 0.02], [1, "#ffc878", 0.22]], 0, 0, 1, 0)}"/><circle cx="330" cy="40" r="90" fill="${S.rg("blendung", [[0, "#fff4d8", 0.35], [1, "#fff4d8", 0]])}"/><rect width="320" height="200" fill="${S.rg("vignette", [[0, "#000", 0], [0.72, "#000", 0], [1, "#0a0c14", 0.22]], 0.5, 0.48, 0.78)}"/>`);
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/regensburg.js"));
 console.log(aus);

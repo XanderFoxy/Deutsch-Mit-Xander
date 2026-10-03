@@ -9,6 +9,66 @@
 const ExerciseData = (function () {
   "use strict";
 
+  /* =========================================================
+     FASSUNG 876 — XANDER (Funk 271): „alles insgesamt nur zehn
+     Mal schneller".
+     In der verkleinerten Kopie min/data-exercises.js fehlen die
+     großen Datenblöcke, die beim Start niemand liest (Deutschland-
+     Quiz, Wortschatz-Themen, Lückentexte …, Liste in
+     werkzeug/app-teile.json → „daten"); sie stehen in
+     min/data-exercises-teil.js. Jede Stelle, die so einen Block
+     liest, fragt dort vorher dmaUebTeil(): ist der Teil noch nicht
+     eingesetzt, wird er sofort eingesetzt (vorgeladen in der
+     Ruhepause, sonst sofort geholt). Der Bau (werkzeug/
+     teile-bauen.js) füllt DMA_UEB_BAU; hier in der Quelle bleibt
+     es null, dann tut nichts davon etwas.
+     ========================================================= */
+  var DMA_UEB_BAU = null;
+  var dmaUebDa = false;
+  var dmaUebText = null;
+  function dmaUebAuswerten(dmaUebQuelltext) { eval(dmaUebQuelltext); }
+  function dmaUebPasst(kennung) {
+    if (!DMA_UEB_BAU || kennung !== DMA_UEB_BAU.id) throw new Error("data-exercises-teil " + kennung + " passt nicht");
+  }
+  function dmaUebAdresse() {
+    const d = DMA_UEB_BAU.datei;
+    return d + (window.DMA_V ? window.DMA_V(d) : "?v=" + (window.DMA_VERSION || "1"));
+  }
+  function dmaUebEinsetzen(t) {
+    if (dmaUebDa) return;
+    dmaUebAuswerten(t);
+    dmaUebDa = true;
+    dmaUebText = null;
+  }
+  function dmaUebTeil() {
+    if (dmaUebDa || !DMA_UEB_BAU) return;
+    if (typeof dmaUebText === "string") { dmaUebEinsetzen(dmaUebText); return; }
+    try { (window.DMA_TEIL_SOFORT = window.DMA_TEIL_SOFORT || []).push("uebung " + String(new Error().stack || "").split("\n").slice(2, 3).join("").trim()); } catch (x) {}
+    const x = new XMLHttpRequest();
+    x.open("GET", dmaUebAdresse(), false);
+    x.send(null);
+    if (x.status !== 200 || !x.responseText) {
+      try { (window.DMA_TEIL_FEHLER = window.DMA_TEIL_FEHLER || []).push("uebung: " + x.status); } catch (e) {}
+      throw new Error("data-exercises-teil nicht geladen (" + x.status + ")");
+    }
+    dmaUebEinsetzen(x.responseText);
+  }
+  /* Vorladen: nach dem Start in einer Ruhepause holen und einsetzen (wie die Teile von app.js). */
+  if (DMA_UEB_BAU) {
+    try {
+      window.addEventListener("load", () => {
+        const ruhig = (f, ms) => (window.requestIdleCallback ? requestIdleCallback(f, { timeout: ms }) : setTimeout(f, 200));
+        ruhig(() => {
+          fetch(dmaUebAdresse()).then((a) => (a.ok ? a.text() : null)).then((t) => {
+            if (!t || dmaUebDa) return;
+            dmaUebText = t;
+            ruhig(() => { try { dmaUebEinsetzen(dmaUebText); } catch (e) { try { (window.DMA_TEIL_FEHLER = window.DMA_TEIL_FEHLER || []).push("uebung: " + e.message); } catch (x) {} } }, 3000);
+          }).catch(() => {});
+        }, 2000);
+      });
+    } catch (e) {}
+  }
+
   /* ---------------------------------------------------------
      1) ARTIKEL (der/die/das) — Wortliste -> Fragen generiert
      --------------------------------------------------------- */

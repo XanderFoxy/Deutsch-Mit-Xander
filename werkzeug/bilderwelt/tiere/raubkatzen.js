@@ -414,7 +414,7 @@ function loewe(T) {
     ],
   };
   K.ohrInnen = `<path d="M50 -40q1 -9 4 -14q3 3 3 13z" fill="#a87a48"/>` + haare(T, [[50, -40], [54, -54], [57, -42]], 14, 285, 5, [["#f2e2c4", 1, 0.45, 0.8]], { streu: 30 }) +
-    `<path d="M44 -42q0 -10 5 -13q4 -1 7 2" fill="none" stroke="#0e0804" stroke-width="2.2" stroke-linecap="round"/>`;
+    `<path d="M44.5 -42q0 -9.5 5 -12.5q3.5 -1 6 1.5" fill="none" stroke="#0e0804" stroke-opacity=".75" stroke-width="1.2" stroke-linecap="round"/>`;
   K.zeichnung = weich(T, "kz", [
     [[[42, -38], [60, -40], [70, -38], [62, -35], [46, -34]], "#a06c36", 0.35],
     [[[80, -32], [90, -27], [99, -21], [98, -14], [86, -19], [78, -26]], "#93602e", 0.5],
@@ -493,10 +493,10 @@ function loewe(T) {
 /* Grundriss einer Großkatze (Tiger-Maße, Schulterhöhe 100): Rumpf, Rückenlinie, Bauch, Läufe, Schwanz, Muskelformen.
    bau(G, s, sx, bf) skaliert ihn für andere Arten (s = Höhe, sx = Länge, bf = Beinlänge unterhalb y = −50). */
 const GROSS = {
-  koerper: [[8, -88], [16, -94], [28, -97], [44, -95], [62, -91], [80, -89], [98, -91], [110, -96], [120, -101], [128, -99], [136, -94], [146, -88],
+  koerper: [[8, -88], [16, -94], [28, -97], [44, -95], [62, -92], [80, -90], [98, -92], [110, -95], [120, -98.5], [128, -97], [136, -93], [146, -88],
     [156, -84], [164, -80], [166, -70], [160, -63], [152, -60], [146, -57], [142, -50], [134, -45], [122, -43], [106, -45], [90, -48], [76, -52],
     [64, -56], [54, -57], [46, -61], [38, -67], [20, -70], [4, -71], [-2, -78], [0, -85]],
-  ruecken: [[2, -84], [16, -93], [28, -96], [44, -94], [62, -90], [80, -88], [98, -90], [110, -95], [120, -100], [128, -98], [136, -93], [146, -87]],
+  ruecken: [[2, -84], [16, -93], [28, -96], [44, -94], [62, -91], [80, -89], [98, -91], [110, -94], [120, -97.5], [128, -96], [136, -92], [146, -87]],
   bauch: [[50, -58], [64, -55], [76, -51], [90, -47], [106, -44], [122, -42]],
   hn: { V: [[36, -84], [41, -74], [43, -63], [42, -55], [36, -51], [28, -47], [22, -42], [18, -37], [16, -31], [15.5, -22], [16, -12.5]],
     H: [[0, -82], [-3, -73], [-3, -64], [-1, -56], [1, -49], [2, -42], [1, -36], [0, -32], [3, -28], [5.5, -22], [7.5, -12.5]] },
@@ -853,11 +853,11 @@ function leopard(T) {
   A.schwanzBein = true;
   const fl = (pts, g, art, d) => [feldSkal(pts, s, sx), g, art, d];
   A.muster = (T, A, { vn, hn }) => {
-    const f = flecken(T, [fl(FELD.ruecken, 1, "rosette"), fl(FELD.hals, 0.55, "punkt"), fl(FELD.bauch, 0.9, "punkt", 0.7),
-      [vn.pts.filter((p) => p[1] > -34), 0.42, "punkt"], [hn.pts.filter((p) => p[1] > -38), 0.42, "punkt"]], 6);
+    const f = flecken(T, [fl(FELD.ruecken, 1, "rosette"), fl(FELD.hals, 0.45, "punkt"), fl(FELD.bauch, 0.75, "punkt", 0.7),
+      [vn.pts.filter((p) => p[1] > -34), 0.32, "punkt"], [hn.pts.filter((p) => p[1] > -38), 0.32, "punkt"]], 6);
     return weich(T, "fl", [fleckenSvg(f, "#17110b", "#b8782c")], 0.18);
   };
-  A.musterFern = (T, b) => fleckenSvg(flecken(T, [[b.pts.filter((p) => p[1] > -36), 0.42, "punkt"]], 6), "#17110b");
+  A.musterFern = (T, b) => fleckenSvg(flecken(T, [[b.pts.filter((p) => p[1] > -36), 0.32, "punkt"]], 6), "#17110b");
   A.schwanzMuster = (T, A) => {
     const P = schwanzPunkt(A.schwanz);
     let d = "";
@@ -875,7 +875,7 @@ function leopard(T) {
     traene: 0.6, traeneB: 1.3,
     muster: (M) => {
       const f = flecken(T, [[M([[24, -36], [62, -40], [72, -36], [70, -30], [58, -30], [44, -26], [26, -24]]), 0.6, "punkt"],
-        [M([[22, -18], [52, -12], [64, -4], [70, 10], [54, 22], [30, 20], [20, 4]]), 0.7, "punkt"],
+        [M([[22, -18], [52, -12], [64, -4], [70, 10], [54, 22], [30, 20], [20, 4]]), 0.8, "punkt", 0.6],
         [M([[80, -28], [92, -24], [96, -18], [86, -16], [78, -20]]), 0.4, "punkt"]], 5);
       return weich(T, "kf", [fleckenSvg(f, "#17110b")], 0.25);
     },
@@ -1133,11 +1133,11 @@ module.exports = [
   { id: "loewe", de: "der Löwe", syl: "LÖ-we", it: "il leone", itSyl: "le-O-ne", en: "lion", gruppe: "Raubtiere", lebensraum: "Savanne",
     laenge: 2.41, hoehe: 1.33, zeichne: loewe },
   { id: "loewin", de: "die Löwin", syl: "LÖ-win", it: "la leonessa", itSyl: "le-o-NES-sa", en: "lioness", gruppe: "Raubtiere", lebensraum: "Savanne",
-    laenge: 2.1, hoehe: 1.01, zeichne: loewin },
+    laenge: 2.1, hoehe: 0.99, zeichne: loewin },
   { id: "tiger", de: "der Tiger", syl: "TI-ger", it: "la tigre", itSyl: "TI-gre", en: "tiger", gruppe: "Raubtiere", lebensraum: "Dschungel",
-    laenge: 2.23, hoehe: 1.01, zeichne: tiger },
+    laenge: 2.23, hoehe: 0.98, zeichne: tiger },
   { id: "leopard", de: "der Leopard", syl: "le-o-PARD", it: "il leopardo", itSyl: "le-o-PAR-do", en: "leopard", gruppe: "Raubtiere", lebensraum: "Savanne",
-    laenge: 1.58, hoehe: 0.67, zeichne: leopard },
+    laenge: 1.58, hoehe: 0.65, zeichne: leopard },
   { id: "jaguar", de: "der Jaguar", syl: "JA-gu-ar", it: "il giaguaro", itSyl: "gia-GUA-ro", en: "jaguar", gruppe: "Raubtiere", lebensraum: "Regenwald",
     laenge: 1.67, hoehe: 0.7, zeichne: jaguar },
   { id: "gepard", de: "der Gepard", syl: "ge-PARD", it: "il ghepardo", itSyl: "ghe-PAR-do", en: "cheetah", gruppe: "Raubtiere", lebensraum: "Savanne",

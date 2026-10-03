@@ -88,6 +88,7 @@ function falscherKlient() {
   STIL_DATEIEN.forEach((d) => stilRegeln[d].forEach((r) => { waehler[r.key] = r.sel; }));
 
   const fnPhase = {};          /* "start,end" -> früheste Phase (Index) über alle Lagen */
+  const uebPhase = {};         /* dasselbe für data-exercises.js */
   const stilFrueh = new Set(); /* Schlüssel, die bis „reiter" greifen */
   const animNamen = new Set();
   const lagenBericht = [];
@@ -111,10 +112,12 @@ function falscherKlient() {
       const ph = PHASEN.indexOf(phase);
       const { result } = await cdp.send("Profiler.takePreciseCoverage");
       for (const s of result) {
-        if (!/\/app\.js(\?|$)/.test(s.url) || /min\//.test(s.url)) continue;
+        if (/min\//.test(s.url)) continue;
+        const ziel = /\/app\.js(\?|$)/.test(s.url) ? fnPhase : /\/data-exercises\.js(\?|$)/.test(s.url) ? uebPhase : null;
+        if (!ziel) continue;
         for (const f of s.functions) {
           const r = f.ranges[0];
-          if (r.count > 0) { const k = r.startOffset + "," + r.endOffset; if (!(k in fnPhase) || fnPhase[k] > ph) fnPhase[k] = ph; }
+          if (r.count > 0) { const k = r.startOffset + "," + r.endOffset; if (!(k in ziel) || ziel[k] > ph) ziel[k] = ph; }
         }
       }
       const cd = await cdp.send("CSS.takeCoverageDelta");
@@ -212,6 +215,29 @@ function falscherKlient() {
   });
   console.log("app.js: Kern-Funktionen " + Math.round(groesse.kern / 1024) + " KB, raum " + raum.length + " (" + Math.round(groesse.raum / 1024) + " KB), rest " + rest.length + " (" + Math.round(groesse.rest / 1024) + " KB) Quelltext");
 
+  /* ---- data-exercises.js: Datenblöcke, die nur Funktionen lesen, die bis „reiter" nie liefen ---- */
+  const uebQuelle = fs.readFileSync(path.join(WURZEL, "data-exercises.js"), "utf8");
+  const uebAst = acorn.parse(uebQuelle, { ecmaVersion: "latest" });
+  const uebHuelle = uebAst.body.map((st) => (st.type === "VariableDeclaration" ? st.declarations[0].init : st.expression)).find((c) => c && c.type === "CallExpression" && c.callee.type === "FunctionExpression").callee;
+  const liefFrueh = (fnKnoten) => Object.entries(uebPhase).some(([k, ph]) => { const [a, b] = k.split(",").map(Number); return ph <= PHASEN.indexOf("reiter") && Math.abs(a - fnKnoten.start) <= 64 && Math.abs(b - fnKnoten.end) <= 2; });
+  const uebDaten = {};
+  uebHuelle.body.body.forEach((st) => {
+    if (st.type === "VariableDeclaration" && st.kind === "const" && st.declarations.length === 1 && st.declarations[0].id.type === "Identifier"
+      && st.end - st.start > 1500) uebDaten[st.declarations[0].id.name] = { ok: true, decl: st.declarations[0].id };
+  });
+  (function gehe(k, fns) {
+    if (!k || typeof k.type !== "string") return;
+    if (/Function/.test(k.type)) fns = fns.concat(k);
+    if (k.type === "Identifier" && uebDaten[k.name] && k !== uebDaten[k.name].decl) {
+      const innen = fns[fns.length - 1];
+      if (!innen || liefFrueh(innen)) uebDaten[k.name].ok = false;
+    }
+    for (const f in k) { if (f === "type") continue; const w = k[f];
+      if (Array.isArray(w)) w.forEach((x) => x && typeof x.type === "string" && gehe(x, fns)); else if (w && typeof w.type === "string") gehe(w, fns); }
+  })(uebHuelle.body, []);
+  const uebSpaet = Object.keys(uebDaten).filter((n) => uebDaten[n].ok).sort();
+  console.log("data-exercises.js: " + uebSpaet.length + " Datenblöcke nur in späten Funktionen");
+
   /* ---- Stilblätter: was nie früh greift ---- */
   const spaet = {};
   STIL_DATEIEN.forEach((d) => {
@@ -223,7 +249,7 @@ function falscherKlient() {
   if (process.argv[2] === "--nur-zeigen") return;
   fs.writeFileSync(teile.LISTE, JSON.stringify({
     erklaerung: "FASSUNG 876 — Funktionen von app.js, die nur in min/ ausgelagert werden (werkzeug/teile-bauen.js). Erzeugt von werkzeug/teile-messen.js.",
-    teile: { raum, rest } }, null, 0).replace(/\],"/g, "],\n\"") + "\n");
+    teile: { raum, rest }, daten: { "data-exercises.js": uebSpaet } }, null, 0).replace(/\],"/g, "],\n\"") + "\n");
   fs.writeFileSync(stil.LISTE, JSON.stringify({
     erklaerung: "FASSUNG 876 — Regeln, die beim Start nicht greifen (Prüfsummen, werkzeug/stil-bauen.js). Erzeugt von werkzeug/teile-messen.js. Unbekannte Regeln kommen ins Startblatt.",
     immer: [...animNamen].sort(), spaet }, null, 0).replace(/\],"/g, "],\n\"") + "\n");

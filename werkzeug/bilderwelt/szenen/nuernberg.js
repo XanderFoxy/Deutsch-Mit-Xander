@@ -116,6 +116,9 @@ S.hinten(`<rect x="0" y="${W - 3}" width="320" height="4" fill="${S.lg("kai", [[
   for (let i = 0; i < 150; i++) f += `<circle cx="${r(rnd() * 320)}" cy="${r(WU + 2 + rnd() * 40)}" r="${r(0.15 + rnd() * 0.3)}" fill="${rnd() < 0.5 ? "#e6d6c2" : "#8a7562"}" opacity=".5"/>`;
   f += `<rect x="0" y="${WU - 0.6}" width="320" height="2.4" fill="${S.lg("kante", [[0, "#e2caae"], [1, "#9a8068"]])}"/>`;
   f += `<rect x="0" y="${WU}" width="320" height="${200 - WU}" fill="${S.lg("pfl", [[0, "#ffd9a0", 0.16], [0.5, "#000", 0], [1, "#000", 0.12]], 0, 0, 1, 0)}"/>`;
+  /* lange Abendschatten nach rechts (Sonne tief im Südwesten) und warmes Licht vor der Bude */
+  f += `<g filter="url(#bw_weich)"><path d="M28 183 L46 183 L118 170 L104 168 Z" fill="#2a1c10" opacity=".18"/><path d="M232 194 L300 194 L320 186 L320 178 Z" fill="#2a1c10" opacity=".14"/></g>`;
+  f += `<ellipse cx="262" cy="196" rx="48" ry="7" fill="${S.rg("budenschein", [[0, "#ffd88a", 0.35], [1, "#ffd88a", 0]])}"/>`;
   S.hinten(f);
 }
 
@@ -234,10 +237,10 @@ const BURG = { x: 118, y: 94 };
   k += `<line x1="-46" y1="-66" x2="-46" y2="-72" stroke="#3a3a36" stroke-width=".3"/><path d="M-46 -72 q1.6 .4 3.2 0 l0 1.2 q-1.6 .4 -3.2 0 Z" fill="#f4f1ea"/><path d="M-46 -70.8 q1.6 .4 3.2 0 l0 1.2 q-1.6 .4 -3.2 0 Z" fill="#c8232c"/>`;
   S.teil({ id: "kaiserburg", de: "die Kaiserburg", syl: "KAI-ser-burg", it: "il castello imperiale", itSyl: "ca-STEL-lo im-pe-RIA-le", en: "Imperial Castle",
     x: BURG.x, y: BURG.y, kunst: k, tipp: "Auf der Kaiserburg wohnten im Mittelalter die Kaiser, wenn sie nach Nürnberg kamen.",
-    zoom: { x: 30, y: 8, w: 132, h: 88 },
+    zoom: { x: 30, y: 13.6, w: 132, h: 86 },
     unter: [
       { id: "sinwellturm", de: "der Sinwellturm", syl: "SIN-well-turm", it: "la torre Sinwell", itSyl: "TOR-re SIN-well", en: "Sinwell Tower",
-        x: BURG.x + SW, y: BURG.y - 34, kunst: flaeche(-7, -48, 14, 48), tipp: "„Sinwell“ heißt im alten Deutsch „rund“. Von oben sieht man über die ganze Stadt." },
+        x: BURG.x + SW, y: BURG.y - 34, kunst: flaeche(-7, -46, 14, 46), tipp: "„Sinwell“ heißt im alten Deutsch „rund“. Von oben sieht man über die ganze Stadt." },
       { id: "mauer", de: "die Mauer", syl: "MAU-er", it: "il muro", itSyl: "MU-ro", en: "wall",
         x: BURG.x - 40, y: BURG.y - 30, kunst: flaeche(-28, -9, 56, 9) },
       { id: "felsen", de: "der Felsen", syl: "FEL-sen", it: "la roccia", itSyl: "ROC-cia", en: "rock",
@@ -472,7 +475,7 @@ const FK = { x: 266, y: W - 2 };
   k += `<path d="M0 -82 L31 -30 L31 0 L11 0 L11 -27 L9 -31 L9 -44 L3 -64 Z" fill="#3a2a40" opacity=".09"/>`;
   S.teil({ id: "frauenkirche", de: "die Frauenkirche", syl: "FRAU-en-kir-che", it: "la Frauenkirche (chiesa di Nostra Signora)", itSyl: "FRAU-en-kir-che", en: "Church of Our Lady",
     x: FK.x, y: FK.y, kunst: gruppe("frauenkirche", FK.x, FK.y, k), tipp: "Die Frauenkirche steht am Hauptmarkt. Kaiser Karl IV. ließ sie im 14. Jahrhundert bauen.",
-    zoom: { x: FK.x - 24, y: FK.y - 98, w: 48, h: 72 },
+    zoom: { x: 200, y: FK.y - 98, w: 88, h: 72 },
     unter: [
       { id: "uhr", de: "die Uhr", syl: "UHR", it: "l'orologio", itSyl: "o-ro-LO-gio", en: "clock", x: FK.x, y: FK.y - 51.6, kunst: flaeche(-4.6, -12.6, 9.2, 12.6),
         tipp: "Das Zifferblatt ist 2,5 Meter groß. Die Kugel darüber zeigt den Mond." },

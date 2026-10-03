@@ -124,13 +124,18 @@ function verkleinern() {
      was Start und Klassenzimmer nicht brauchen, steht in min/app-teil-*.js (werkzeug/teile-bauen.js erklärt es).
      Die Prüfsumme für app.js umfasst deshalb auch die Liste und das Bauwerkzeug. Geht das Teilen nicht,
      entsteht min/app.js wie bisher ganz. */
-  let teile = null;
+  let teile = null, stil = null, stilListe = null;
   try { teile = require("./teile-bauen.js"); } catch (e) { teile = null; }
+  /* FASSUNG 876 — dazu für korrekturen.css, app-styles.css und spiel.css ein kleines Startblatt
+     min/<name>-start.css (werkzeug/stil-bauen.js erklärt es); das ganze Blatt kommt gleich danach. */
+  try { stil = require("./stil-bauen.js"); stilListe = stil.listeLesen(); } catch (e) { stil = null; }
+  const mitStart = (n) => Boolean(stil && stilListe && stilListe.spaet && stilListe.spaet[n] && /\.css$/.test(n));
   quellen.forEach((n) => {
     const roh = fs.readFileSync(path.join(WURZEL, n), "utf8");
-    const h = n === "app.js" && teile ? teile.bauSumme(roh) : crypto.createHash("sha1").update(roh).digest("hex");
+    const h = (n === "app.js" || n === "data-exercises.js") && teile ? teile.bauSumme(roh)
+      : mitStart(n) ? stil.bauSumme(roh) : crypto.createHash("sha1").update(roh).digest("hex");
     const ziel = path.join(MIN_ORDNER, n);
-    if (merk[n] === h && fs.existsSync(ziel)) return;
+    if (merk[n] === h && fs.existsSync(ziel) && (!mitStart(n) || fs.existsSync(path.join(MIN_ORDNER, stil.startName(n))))) return;
     if (!ebGesucht) { eb = esbuildHolen(); ebGesucht = true; }
     delete merk[n];
     try {
@@ -140,21 +145,36 @@ function verkleinern() {
         if (t) { teile.schreiben(MIN_ORDNER, t); merk[n] = h; neu++; return; }
         teile.teileLoeschen(MIN_ORDNER);
       }
+      if (n === "data-exercises.js" && teile) {
+        const u = teile.uebungTeilen(roh, eb, (m) => console.error("  " + m));
+        const tz = path.join(MIN_ORDNER, "data-exercises-teil.js");
+        if (u) { teile.ersetzen(ziel, u.kern); teile.ersetzen(tz, u.teil); merk[n] = h; neu++; return; }
+        if (fs.existsSync(tz)) fs.unlinkSync(tz);
+      }
       const r = eb.transformSync(roh, { loader: n.endsWith(".css") ? "css" : "js", minify: true,
         legalComments: "none", charset: "utf8" });
       if (!r.code || r.code.length >= roh.length) throw new Error("nicht kleiner");
       fs.writeFileSync(ziel, r.code);
+      if (stil && /\.css$/.test(n)) {
+        const sz = path.join(MIN_ORDNER, stil.startName(n));
+        let start = null;
+        try { start = mitStart(n) ? stil.startBlattMin(n, roh, eb) : null; } catch (e) { start = null; }
+        if (start != null) fs.writeFileSync(sz, start); else if (fs.existsSync(sz)) fs.unlinkSync(sz);
+      }
       merk[n] = h;
       neu++;
     } catch (e) {
       if (fs.existsSync(ziel)) { fs.unlinkSync(ziel); weg++; }
+      if (stil && /\.css$/.test(n) && fs.existsSync(path.join(MIN_ORDNER, stil.startName(n)))) fs.unlinkSync(path.join(MIN_ORDNER, stil.startName(n)));
       if (n === "app.js" && teile) teile.teileLoeschen(MIN_ORDNER);
       console.error("  min/" + n + " nicht verkleinert (" + (e.message || e).toString().split("\n")[0] + ") — die Seite lädt die Quelle");
     }
   });
   /* Kopien, deren Quelle es nicht mehr gibt, fliegen raus (die Teile von app.js gehören zu app.js). */
   fs.readdirSync(MIN_ORDNER).filter((n) => /\.(js|css)$/.test(n) && quellen.indexOf(n) < 0
-    && !(teile && teile.istTeil(n) && fs.existsSync(path.join(MIN_ORDNER, "app.js")))).forEach((n) => {
+    && !(teile && teile.istTeil(n) && fs.existsSync(path.join(MIN_ORDNER, "app.js")))
+    && !(teile && n === "data-exercises-teil.js" && fs.existsSync(path.join(MIN_ORDNER, "data-exercises.js")))
+    && !(stil && stil.istStart(n) && quellen.indexOf(n.replace(/-start\.css$/, ".css")) >= 0 && mitStart(n.replace(/-start\.css$/, ".css")))).forEach((n) => {
     fs.unlinkSync(path.join(MIN_ORDNER, n)); delete merk[n]; weg++;
   });
   fs.writeFileSync(merkPfad, JSON.stringify(merk, null, 1) + "\n");

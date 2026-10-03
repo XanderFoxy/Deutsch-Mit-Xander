@@ -64,20 +64,41 @@
       }).catch(() => {});
     } catch (x) {}
   }
+  /* Eingesetzt wird in Ruhepausen, ein Stück je Pause (jedes nur ein paar Dutzend Millisekunden Rechnen), die
+     Stücke fürs Klassenzimmer zuerst. Wird vorher eine Funktion daraus gebraucht, setzt dmaTeilRuf ihr Stück
+     sofort ein – geholt ist es dann meist schon, es wartet nichts auf die Leitung. */
+  var dmaTeilSchlange = [];
+  var dmaTeilSchlangeLaeuft = false;
+  function dmaTeilSchlangeWeiter() {
+    if (dmaTeilSchlangeLaeuft || !dmaTeilSchlange.length) return;
+    dmaTeilSchlangeLaeuft = true;
+    const los = () => {
+      dmaTeilSchlangeLaeuft = false;
+      const i = Math.max(0, dmaTeilSchlange.findIndex((x) => /^raum/.test(x.teil)));
+      const x = dmaTeilSchlange.splice(i, 1)[0];
+      if (x) { try { dmaTeilEinsetzen(x.teil); x.fertig(true); } catch (e) { dmaTeilFehler(x.teil, e); x.fertig(false); } }
+      dmaTeilSchlangeWeiter();
+    };
+    if (window.requestIdleCallback) requestIdleCallback(los, { timeout: 2500 }); else setTimeout(los, 40);
+  }
   function dmaTeilHolen(teil) {
     if (!DMA_TEILE_BAU || dmaTeilDa[teil] || DMA_TEILE_BAU.teile.indexOf(teil) < 0) return Promise.resolve(true);
     if (dmaTeilWeg[teil]) return dmaTeilWeg[teil];
     dmaTeilWeg[teil] = fetch(dmaTeilAdresse(teil))
       .then((a) => { if (!a.ok) throw new Error("HTTP " + a.status); return a.text(); })
       .then((t) => new Promise((fertig) => {
-        if (!dmaTeilDa[teil]) dmaTeilText[teil] = t;
-        /* Erst zeichnen lassen, dann einsetzen: das Einsetzen rechnet, und das soll kein Bild aufhalten. */
-        const los = () => { try { dmaTeilEinsetzen(teil); fertig(true); } catch (e) { dmaTeilFehler(teil, e); fertig(false); } };
-        const spaeter = () => (window.requestIdleCallback ? requestIdleCallback(los, { timeout: 1200 }) : setTimeout(los, 50));
-        if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(spaeter, 0)); else spaeter();
+        if (dmaTeilDa[teil]) { fertig(true); return; }
+        dmaTeilText[teil] = t;
+        dmaTeilSchlange.push({ teil, fertig });
+        dmaTeilSchlangeWeiter();
       }))
       .catch((e) => { dmaTeilWeg[teil] = null; dmaTeilFehler(teil, e); return false; });
     return dmaTeilWeg[teil];
+  }
+  /* Alle Stücke einer Gruppe („raum" oder „rest") */
+  function dmaTeilGruppe(gruppe) {
+    if (!DMA_TEILE_BAU) return Promise.resolve(true);
+    return Promise.all(DMA_TEILE_BAU.teile.filter((t) => t.replace(/\d+$/, "") === gruppe).map((t) => dmaTeilHolen(t)));
   }
   function dmaTeilSofort(teil) {
     if (dmaTeilEinsetzen(teil)) return;
@@ -101,12 +122,31 @@
   function dmaTeilRufA(i, self, args) {
     try { return dmaTeilRuf(i, self, args); } catch (e) { return Promise.reject(e); }
   }
+  /* Wer ins Klassenzimmer geht (Tipp, Einladungslink, Rückkehr nach dem Neuladen), braucht bald den Teil „raum",
+     spiel.js und die ganzen Stilblätter (index.html: dmaSpielLaden, dmaStileVoll). Geholt wird sofort; was
+     rechnet, wartet, bis das Bild steht. */
+  function raumVorbereiten() {
+    dmaTeilGruppe("raum");
+    const weiter = () => {
+      try { if (window.dmaStileVoll) window.dmaStileVoll(); } catch (e) {}
+      try { if (window.dmaSpielLaden) window.dmaSpielLaden(); } catch (e) {}
+    };
+    if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(weiter, 0)); else setTimeout(weiter, 0);
+  }
+  /* Zum Nachsehen (werkzeug/pruefe-876-start-schlank.js): welche Teile es gibt, welche eingesetzt sind und ob ein
+     Platzhalter je sofort nachladen musste. */
+  window.DMA_TEILE = {
+    stand: () => ({ gebaut: Boolean(DMA_TEILE_BAU), teile: DMA_TEILE_BAU ? DMA_TEILE_BAU.teile.slice() : [],
+      da: Object.assign({}, dmaTeilDa), geholt: Object.keys(dmaTeilWeg).filter((t) => dmaTeilWeg[t]),
+      sofort: (window.DMA_TEIL_SOFORT || []).slice(), fehler: (window.DMA_TEIL_FEHLER || []).slice() }),
+    holen: (t) => dmaTeilHolen(t), gruppe: (g) => dmaTeilGruppe(g)
+  };
   /* Nach dem Start in der ersten Ruhepause: erst der Teil fürs Klassenzimmer, dann der Rest. Früh, damit
      beim zweiten Öffnen alles aus dem Zwischenspeicher (sw.js) kommt und ein Tipp fast nie warten muss. */
   if (DMA_TEILE_BAU) {
     try {
       window.addEventListener("load", () => {
-        const los = () => { dmaTeilHolen("raum").then(() => DMA_TEILE_BAU.teile.forEach((t) => dmaTeilHolen(t))); };
+        const los = () => { dmaTeilGruppe("raum"); dmaTeilGruppe("rest"); };
         if (window.requestIdleCallback) requestIdleCallback(los, { timeout: 2000 }); else setTimeout(los, 200);
       });
     } catch (e) {}
@@ -69469,6 +69509,7 @@
        gewünscht war: „bleibt man dann auch im Klassenzimmer?" */
     const zurueck = LiveChat.rueckkehrOffen && LiveChat.rueckkehrOffen();
     if (zurueck) {
+      raumVorbereiten();   /* FASSUNG 876 — gleich wieder im Raum: Effekte, Spiel und Blätter sofort holen */
       LiveChat.betreten(zurueck.raum, { name: zurueck.name || livechatName(),
         /* FASSUNG 841 — auch bei der Rückkehr nach dem Neuladen das Konto mitgeben (sonst Zufallskennung, siehe livechat.js) */
         konto: (Backend.currentUser() || {}).id || "",
@@ -69482,10 +69523,10 @@
      seinem unteren Ende soll in einem Bild auf dem Bildschirm zu sehen
      sein." */
   document.querySelector('#knowledgeSubnav [data-sub="sub-livechat"]')?.addEventListener("click", () => {
-    /* FASSUNG 876 — XANDER (Funk 271): „die Verbindung zu den anderen haben oberste Priorität". Der Teil mit
-       den Chat-Effekten kommt jetzt schon beim Öffnen des Klassenzimmers (nicht erst in der Ruhepause), damit
-       beim Betreten und bei jedem Effekt alles da ist. Eingesetzt wird er erst nach dem Zeichnen. */
-    dmaTeilHolen("raum");
+    /* FASSUNG 876 — XANDER (Funk 271): „die Verbindung zu den anderen haben oberste Priorität". Was der Raum
+       braucht (Chat-Effekte, spiel.js, die ganzen Stilblätter), kommt jetzt schon beim Öffnen des Klassenzimmers,
+       nicht erst in der Ruhepause – beim Betreten und bei jedem Effekt ist alles da. */
+    raumVorbereiten();
     renderLiveChat();
     /* RUNDE 87 — HIER und nur hier darf das Vollbild anfangen: dieser
        Ruf steht in einer echten Fingerbewegung, und nur daraus laesst

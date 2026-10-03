@@ -156,9 +156,45 @@ function startBlatt(datei, text, liste, immerNamen) {
   return ausgeben(knoten, []);
 }
 
-module.exports = { zerlegen, regeln, schluessel, startBlatt, listeLesen, LISTE, rein };
+/* Für fassung-setzen.js: das verkleinerte Startblatt (oder null, wenn es für die Datei keines gibt). */
+function startBlattMin(datei, roh, eb) {
+  const liste = listeLesen();
+  const s = startBlatt(datei, roh, liste, (liste && liste.immer) || []);
+  if (s == null) return null;
+  return eb.transformSync(s, { loader: "css", minify: true, legalComments: "none", charset: "utf8" }).code;
+}
+/* Prüfsumme über alles, was das Startblatt bestimmt (für min/.quelle.json). */
+function bauSumme(roh) {
+  const h = crypto.createHash("sha1").update(roh);
+  try { h.update(fs.readFileSync(LISTE)); } catch (e) {}
+  h.update(fs.readFileSync(__filename));
+  return h.digest("hex");
+}
+const startName = (d) => d.replace(/\.css$/, "-start.css");
+const istStart = (n) => /-start\.css$/.test(n);
 
-if (require.main === module) {
+module.exports = { zerlegen, regeln, schluessel, startBlatt, startBlattMin, bauSumme, startName, istStart, listeLesen, LISTE, rein };
+
+if (require.main === module && process.argv[2] === "--bauen") {
+  /* Startblätter in min/ bauen (sonst macht das fassung-setzen.js): node werkzeug/stil-bauen.js --bauen */
+  const WURZEL = path.dirname(__dirname), MIN = path.join(WURZEL, "min");
+  const eb = require("./teile-bauen.js").esbuildHolen();
+  const liste = listeLesen() || { spaet: {} };
+  const merkPfad = path.join(MIN, ".quelle.json");
+  let merk = {};
+  try { merk = JSON.parse(fs.readFileSync(merkPfad, "utf8")); } catch (e) {}
+  Object.keys(liste.spaet || {}).forEach((d) => {
+    const roh = fs.readFileSync(path.join(WURZEL, d), "utf8");
+    const voll = eb.transformSync(roh, { loader: "css", minify: true, legalComments: "none", charset: "utf8" }).code;
+    const ersetzen = require("./teile-bauen.js").ersetzen;
+    ersetzen(path.join(MIN, d), voll);
+    const s = startBlattMin(d, roh, eb);
+    if (s != null) ersetzen(path.join(MIN, startName(d)), s);
+    merk[d] = bauSumme(roh);
+    console.log("min/" + startName(d) + " " + (s == null ? "–" : Math.round(s.length / 1024) + " KB"));
+  });
+  fs.writeFileSync(merkPfad, JSON.stringify(merk, null, 1) + "\n");
+} else if (require.main === module) {
   /* Zum Nachsehen: node werkzeug/stil-bauen.js korrekturen.css → Größen des Startblatts */
   const zlib = require("zlib");
   const WURZEL = path.dirname(__dirname);

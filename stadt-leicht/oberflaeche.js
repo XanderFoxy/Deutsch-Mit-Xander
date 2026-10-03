@@ -1021,6 +1021,29 @@
           if (c.x + c.w / 2 > W - 2) c.x = W - 2 - c.w / 2;
           for (let j = i + 1; j < sicht.length; j++) if (deckt(c, sicht[j])) c.x = Math.min(c.x, sicht[j].x - (c.w + sicht[j].w) / 2 - 1);
         }
+        /* FASSUNG 874 — XANDER (Funk 255): „das Feld auf der rechten Seite ist auch noch nicht in einer geeigneten Position wo
+           ich locker drauf zugreifen kann innerhalb des Bildausschnitts". Im kleinen Rahmen 280 × 175 lag das Zeichen des Sees
+           („Fisch 2:10“) fast ganz über dem rechten Acker: ein Tipp dorthin angelte, statt zu ernten (360 × 225: über seiner
+           linken Kante). Jetzt liegt kein Zeichen mehr über einem Acker – auch nicht über einem selbst versetzten. Es rückt
+           unter, über oder neben den Acker, wohin es am wenigsten weit hat und wo es nichts zudeckt; nur das Zeichen des
+           Ackers selbst darf auf ihm stehen (ein Tipp darauf erntet ihn ja). */
+        const aecker = feldKaesten(W, K.H / K.dpr);
+        if (aecker.length) for (const q of sicht) {
+          const fremd = aecker.filter((a) => q.b.dataset.g !== "feld" + a.nr);
+          const flaeche = (x, y, a) => Math.max(0, Math.min(x + q.w / 2, a.r) - Math.max(x - q.w / 2, a.l)) * Math.max(0, Math.min(y, a.u) - Math.max(y - q.h, a.o));
+          if (!fremd.some((a) => flaeche(q.x, q.y, a) > 4)) continue;
+          const knoepfe = [lupeK, vollK, pinK].filter((k) => k && k.isConnected && getComputedStyle(k).display !== "none").map((k) => { const r = k.getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: r.bottom, w: r.width + 4, h: r.height + 4 }; });
+          let best = null, bw = Infinity;
+          for (const a of fremd) for (const [x, y] of [[q.x, a.u + 2 + q.h], [q.x, a.o - 2], [a.l - 2 - q.w / 2, q.y], [a.r + 2 + q.w / 2, q.y]]) {
+            if (x - q.w / 2 < 2 || x + q.w / 2 > W - 2 || y < 62 || y > K.H / K.dpr - 2 || fremd.some((b) => flaeche(x, y, b) > 4)) continue;
+            const c = { x: x, y: y, w: q.w, h: q.h };
+            let w = Math.hypot(x - q.x, y - q.y);
+            for (const s of sicht) if (s !== q && deckt(c, s)) w += 1000;
+            for (const k of knoepfe) if (deckt(c, k)) w += 1000;
+            if (w < bw) { bw = w; best = c; }
+          }
+          if (best) { q.x = best.x; q.y = best.y; }
+        }
         /* die kleine Auswahl über einem Haus (Brot/Kuchen/Torte) liegt oben: was sie verdeckt, ruht so lange */
         const wr = wahlEl && wahlEl.getBoundingClientRect();
         for (const q of liste) {
@@ -1705,6 +1728,9 @@
          erntet ein Tipp irgendwo auf dem gemalten Feld (Häuser und Bäume davor gehen weiter vor, siehe oben). */
       { const f = feldBei(a[0], a[1]); if (f && (f.u0 != null || ST.boden.wert(a[0], a[1], 2) > 0.4)) { O.stationTun("feld" + f.nr); return; } }
       const nb = baumNahe(px, py);
+      /* FASSUNG 874 — knapp neben dem Acker zählt der Acker (feldNahe), außer ein Baum liegt näher */
+      const fn = feldNahe(px, py);
+      if (fn && (!nb || fn.d <= baumNahe.d)) { O.stationTun("feld" + fn.f.nr); return; }
       if (nb) { baumTun(nb); auswahlWeg(); return; }
       /* (FASSUNG 817: der Doppeltipp wird jetzt schon in O.tippen erkannt, für jede Stelle im Bild) */
     } else {
@@ -1733,6 +1759,41 @@
       const m = e.meta, x0 = e.X - m.ax * e.k, y0 = e.Y - m.ay * e.k, x1 = x0 + m.w * e.k, y1 = y0 + m.h * e.k;
       const d = Math.hypot(Math.max(x0 - px, 0, px - x1), Math.max(y0 - py, 0, py - y1));
       if (d < bd) { bd = d; best = e.o; }
+    }
+    baumNahe.d = bd;   // FASSUNG 874 — Abstand des nächsten Baums (für feldNahe)
+    return best;
+  }
+  /* FASSUNG 874 — die sichtbaren Äcker als Kästen im Bild (CSS-px; oben samt Kornhöhe) – die Zeichen weichen ihnen aus */
+  function feldKaesten(W, H) {
+    const aus = [];
+    for (const f of D.FELD_ORTE || []) {
+      if (f.u0 == null) continue;
+      let l = 1e9, r = -1e9, o = 1e9, u = -1e9;
+      for (const [a, b] of [[f.u0, f.v0], [f.u1, f.v0], [f.u1, f.v1], [f.u0, f.v1]]) for (const z of [0, 1]) {
+        const P = ST.proj((a + b) / 2, (b - a) / 2, z); l = Math.min(l, P[0]); r = Math.max(r, P[0]); o = Math.min(o, P[1]); u = Math.max(u, P[1]);
+      }
+      l /= K.dpr; r /= K.dpr; o /= K.dpr; u /= K.dpr;
+      if (r > 0 && u > 0 && l < W && o < H) aus.push({ nr: f.nr, l: l, r: r, o: o, u: u });
+    }
+    return aus;
+  }
+  /* FASSUNG 874 — XANDER (Funk 255): „wo ich locker drauf zugreifen kann". Im Überblick des kleinen Rahmens ist ein Acker
+     nur gut 20 × 15 Bildpunkte groß: ein Tipp bis 10 px daneben (auf Wiese, nichts anderes getroffen) zählt auch – ist ein
+     Baum näher, gilt der Baum. Gibt den Acker und den Abstand (Leinwand-px) zurück. */
+  function feldNahe(px, py) {
+    const grenze = 10 * K.dpr; let best = null;
+    for (const f of D.FELD_ORTE || []) {
+      if (f.u0 == null) continue;
+      const q = [[f.u0, f.v0], [f.u1, f.v0], [f.u1, f.v1], [f.u0, f.v1]].map(([a, b]) => ST.proj((a + b) / 2, (b - a) / 2, 0));
+      let innen = true, d = Infinity;
+      for (let i = 0; i < 4; i++) {
+        const A = q[i], B2 = q[(i + 1) % 4], ex = B2[0] - A[0], ey = B2[1] - A[1], l2 = ex * ex + ey * ey || 1;
+        if (ex * (py - A[1]) - ey * (px - A[0]) < 0) innen = false;
+        const t = Math.max(0, Math.min(1, ((px - A[0]) * ex + (py - A[1]) * ey) / l2));
+        d = Math.min(d, Math.hypot(px - A[0] - ex * t, py - A[1] - ey * t));
+      }
+      if (innen) d = 0;
+      if (d <= grenze && (!best || d < best.d)) best = { f: f, d: d };
     }
     return best;
   }

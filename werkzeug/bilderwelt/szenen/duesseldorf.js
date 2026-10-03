@@ -216,12 +216,12 @@ const RT = { x: 176, y: 114.6, u: 0.45 };
   k += `<path d="M-3.9 0 L-1.55 ${H(157)} L-.6 ${H(157)} L-2.2 0 Z" fill="#000" opacity=".1"/>`;
   S.teil({ id: "rheinturm", de: "der Rheinturm", syl: "RHEIN-turm", it: "la torre sul Reno", itSyl: "TOR-re sul RE-no", en: "Rhine Tower",
     x: RT.x, y: RT.y, kunst: k, tipp: "Der Rheinturm ist 240 Meter hoch. Oben dreht sich ein Restaurant.",
-    zoom: { x: RT.x - 54, y: 3, w: 108, h: 72 },
+    zoom: { x: RT.x - 54, y: 12, w: 108, h: 72 },
     unter: [
       { id: "uhr", de: "die Uhr", syl: "UHR", it: "l'orologio", itSyl: "o-ro-LO-gio", en: "clock", x: RT.x, y: RT.y - 36 * RT.u, kunst: flaeche(-2.2, -(118 * RT.u), 4.4, 118 * RT.u, 0.6),
         tipp: "Die Lichter am Schaft sind eine Uhr: oben die Stunden, dann die Minuten, unten die Sekunden." },
       { id: "restaurant", de: "das Restaurant", syl: "res-tau-RANT", it: "il ristorante", itSyl: "ri-sto-RAN-te", en: "restaurant", x: RT.x, y: RT.y - 165 * RT.u, kunst: flaeche(-8.6, -(10.6 * RT.u), 17.2, 10.6 * RT.u, 0.6),
-        tipp: "Das Restaurant dreht sich in einer Stunde einmal ganz herum." },
+        tipp: "Vom Restaurant oben im Rheinturm sieht man über die ganze Stadt." },
       { id: "antenne", de: "die Antenne", syl: "an-TEN-ne", it: "l'antenna", itSyl: "an-TEN-na", en: "antenna", x: RT.x, y: RT.y - 197 * RT.u, kunst: flaeche(-1.6, -(44 * RT.u), 3.2, 44 * RT.u, 0.5) },
     ] });
 }

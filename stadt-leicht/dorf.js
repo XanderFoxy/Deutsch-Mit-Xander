@@ -818,8 +818,8 @@
     /* Darf der Acker nr mit der Mitte (um, vm) dort liegen? null = ja, sonst der Grund (kurz, für die Ansage).
        Nur auf freier Wiese: ganz auf dem Plateau, vor der Bahn, kein Weg, kein Wasser, kein Vorgarten, keine Weide, kein
        anderer Acker, nichts darauf (Haus, Bauplatz, Wahrzeichen, Bahnhof, Bootsverleih, Brücke, Laterne, eigener Schmuck,
-       ein selbst versetzter Baum) und nichts Hohes davor, dessen Bild mehr als 15 % des Ackers zudeckt (so misst auch Sonde
-       844 die Ackerplätze). Gewachsene Bäume stören nicht: auf und vor einem Acker wächst keiner (D.feldNah, D.kulisse).
+       ein selbst versetzter Baum) und nichts Hohes davor, dessen Bild mehr als ein Fünftel des Ackers zudeckt (Bildpunkt
+       genau wie Sonde 844). Gewachsene Bäume auf und dicht vor dem Acker stören nicht: dort wächst keiner (D.feldNah, D.kulisse).
        Hat das Dorf eine Mühle, muss der Kornwagen hinkommen (fuhrwerk.js, dieselbe Regel wie beim Aufbau). */
     const SPANNE = (ec, u) => {   // v-Bereich eines konvexen Vielecks (u, v) auf der Senkrechten u, sonst null
       let a = Infinity, b = -Infinity;
@@ -840,6 +840,24 @@
       return false;
     };
     const DING_NAME = { d_laterne: "eine Laterne", d_bank: "eine Bank", d_bruecke: "eine Brücke", d_zaun: "ein Zaun", d_brunnen: "der Brunnen" };
+    /* das geladene Bild eines Dings im Blick nach Norden (irgendeine schon geladene Größe), sonst null */
+    function feldBild(o) {
+      const LB = ST.bilder; if (!LB || !LB.vz || !SZ.basis) return null;
+      const basis = SZ.basis(o, "tag", ST.drehMod(Math.round((o.dreh || 0) * 2) / 2) * 90);
+      for (const gr of ["_k", "_z", "_g", "_m", "_n"]) {
+        const m = LB.vz[basis + gr];
+        if (m && LB.fertig(basis + gr)) { const img = LB.bild(basis + gr); if (img) return { m: m, img: img }; }
+      }
+      return null;
+    }
+    feldBild.alpha = (function () {
+      let c = null, g = null;
+      return function (img, sx, sy) {
+        if (!c) { c = document.createElement("canvas"); c.width = c.height = 1; g = c.getContext("2d", { willReadFrequently: true }); }
+        g.clearRect(0, 0, 1, 1); g.drawImage(img, sx, sy, 1, 1, 0, 0, 1, 1);
+        return g.getImageData(0, 0, 1, 1).data[3];
+      };
+    })();
     D.feldPruefen = function (nr, um, vm) {
       const s = D.FELD_STANDARD[nr]; if (!s || !isFinite(um) || !isFinite(vm)) return "kein Acker";
       /* R: halbe Einheit Luft zu Weg und Wasser (am Ackerplatz liegt ein Weg eine Einheit neben dem Acker, unter dem Feldrain) */
@@ -862,26 +880,50 @@
         const b = D.BILD[k], m = (D.MASS || {})[k] || 1, ec = uv(SZ.ecken({ x: P[k].x, y: P[k].y, dreh: P[k].dreh, fuss: [b[2][0] * m, b[2][1] * m] }, 1));
         if (!getrennt(ec, acker)) return "dort ist der Bauplatz " + (k === "muehle" ? "der Mühle" : "für " + (D.GEBAEUDE[k] ? D.GEBAEUDE[k][0] : k));
       }
-      const n = 8, punkte = [], gedeckt = new Uint8Array(n * n), HV = ST.KZ / ST.KY * 0.8;   // 1 m Höhe deckt im Bild so viele v-Einheiten (Dach schmaler)
+      /* Was davor steht und hoch ist, deckt mit seinem Bild den Acker zu – gezählt an 8 × 8 Prüfpunkten wie Sonde 844
+         (Bildpunkt genau wie SZ.treffer), aber im Blick nach Norden und unabhängig von der Kamera: jeder Prüfpunkt wird in
+         das Bild des Dings umgerechnet (feldBild). Ist sein Bild noch nicht geladen, zählt ein vorsichtiger Umriss
+         (Grundfläche, nach oben so hoch wie das Ding). Gewachsene Bäume auf und dicht vor dem Acker zählen nicht: sie fallen
+         dort weg (D.feldNah). */
+      const n = 8, punkte = [], gedeckt = new Uint8Array(n * n), HV = ST.KZ / ST.KY;   // 1 m Höhe deckt im Bild so viele v-Einheiten
       for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) punkte.push([u0 + (i + 0.5) * bu / n, v0 + (j + 0.5) * bv / n]);
       for (const o of SZ.objekte) {
-        if (o.geist || o.art === "feld" || SZ.flach(o) || (o.art === "natur" && !o.versetzt) || o.jahr || o.nurWinter || !o.fuss) continue;
-        const ec = uv(SZ.ecken(o, 0));   // (am Ackerplatz 92 steht eine Laterne genau an der Kante – das darf sein)
-        const name = o.name || DING_NAME[o.bild] || (o.art === "eigen" ? "dein Schmuck" : o.art === "natur" ? "ein Baum" : "etwas");
-        if (!getrennt(ec, acker)) return "dort steht " + name;
-        /* steht es davor (im Bild darunter) und ist hoch? Wie viel seines Bildes liegt über dem Acker? */
-        const H = (o.hoehe || 4) * (o.art === "wunder" ? 1 : (o.stufe || 1));
-        let a0 = Infinity, a1 = -Infinity, b1 = -Infinity;
-        for (const [u, v] of ec) { a0 = Math.min(a0, u); a1 = Math.max(a1, u); b1 = Math.max(b1, v); }
-        if (H < 2.5 || b1 < v0 || a1 < u0 || a0 > u1) continue;
-        const rand = (a1 - a0) * 0.12, hv = H * HV;
-        for (let k = 0; k < punkte.length; k++) {
-          const [u, v] = punkte[k]; if (gedeckt[k] || u < a0 + rand || u > a1 - rand) continue;
-          const sp = SPANNE(ec, u); if (sp && v <= sp[1] && v >= sp[0] - hv) gedeckt[k] = 1;
+        if (o.geist || o.art === "feld" || o.versteckt || SZ.flach(o) || o.jahr || o.nurWinter || !o.fuss || o.umland || o.hinten) continue;
+        const ou = o.x - o.y, ov = o.x + o.y, H = (o.hoehe || 4) * (o.art === "wunder" ? 1 : (o.stufe || 1));
+        if (o.art === "natur" && !o.versetzt) {
+          if (ou > u0 - 4 && ou < u1 + 4 && ov > v0 - 4 && ov < v1 + 12) continue;   // fällt weg (D.feldNah am neuen Platz)
+        } else {
+          const ec = uv(SZ.ecken(o, 0));   // (am Ackerplatz 92 steht eine Laterne genau an der Kante – das darf sein)
+          if (!getrennt(ec, acker)) return "dort steht " + (o.name || DING_NAME[o.bild] || (o.art === "eigen" ? "dein Schmuck" : o.art === "natur" ? "ein Baum" : "etwas"));
+        }
+        /* grob: kann sein Bild überhaupt bis zum Acker reichen? (Bild höchstens doppelt so breit wie die Grundfläche) */
+        const r = Math.hypot(o.fuss[0], o.fuss[1]) * Math.SQRT2 * (o.art === "wunder" ? 1 : (o.stufe || 1));
+        if (H < 2.5 || ou + r < u0 || ou - r > u1 || ov + r < v0 || ov - r - H * HV > v1) continue;
+        const b = feldBild(o);
+        if (b) {
+          const m = b.m, k = m.s / (o.stufe || 1), ku = ST.KX * k, kv = ST.KY * k, kz = ST.KZ * k;
+          for (let q = 0; q < punkte.length; q++) {
+            if (gedeckt[q]) continue;
+            const sx = (punkte[q][0] - ou) * ku + m.ax, sy = (punkte[q][1] - ov) * kv - 0.5 * kz + m.ay;   // auf halber Kornhöhe
+            if (sx < 0 || sy < 0 || sx >= m.w || sy >= m.h) continue;
+            if (feldBild.alpha(b.img, sx, sy) > 30) gedeckt[q] = 1;
+          }
+        } else if (o.art !== "natur") {
+          const ec = uv(SZ.ecken(o, 0));
+          let a0 = Infinity, a1 = -Infinity, b1 = -Infinity;
+          for (const [u, v] of ec) { a0 = Math.min(a0, u); a1 = Math.max(a1, u); b1 = Math.max(b1, v); }
+          if (b1 < v0) continue;
+          const rand = (a1 - a0) * 0.12, hv = H * HV * 0.8;
+          for (let q = 0; q < punkte.length; q++) {
+            const [u, v] = punkte[q]; if (gedeckt[q] || u < a0 + rand || u > a1 - rand) continue;
+            const sp = SPANNE(ec, u); if (sp && v <= sp[1] && v >= sp[0] - hv) gedeckt[q] = 1;
+          }
         }
       }
       let zu = 0; for (const z of gedeckt) zu += z;
-      if (zu > punkte.length * 0.15) return "ein Haus davor verdeckt ihn";
+      /* mehr als ein Fünftel zugedeckt: zu viel (der Schaft des Fernsehturms vor Acker 92 deckt 10 von 64 Punkten – der Acker
+         bleibt gut zu sehen und anzutippen; ein Schloss davor deckt ihn fast ganz) */
+      if (zu > punkte.length * 0.2) return "etwas Hohes davor verdeckt ihn";
       /* der Kornwagen muss hinkommen (nur wenn eine Mühle steht; sonst fährt keiner) */
       const FW = ST.fuhrwerk;
       if (FW && FW.feldErreichbar && FW.muehle) {

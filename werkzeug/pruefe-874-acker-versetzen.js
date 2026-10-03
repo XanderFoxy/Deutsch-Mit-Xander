@@ -173,8 +173,13 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
       const m91 = await mitte(pg, 91), m92 = await mitte(pg, 92);
       const gleichStd = (m, nr) => !!m && Math.abs(m[0] - STANDARD[nr][0]) < 0.01 && Math.abs(m[1] - STANDARD[nr][1]) < 0.01 && Math.abs(m[2] - STANDARD[nr][2]) < 0.01 && Math.abs(m[3] - STANDARD[nr][3]) < 0.01;
       sage(gleichStd(m91, 91) && gleichStd(m92, 92), "ohne Speicherstand: Acker 91 hinter der Bäckerei (u −58, v −14, 16 × 24), Acker 92 auf seinem Ackerplatz (u " + STANDARD[92][0] + ", v " + STANDARD[92][1] + ")", JSON.stringify({ m91, m92 }));
-      const std = await pg.evaluate(() => { const D = STADT.dorf; if (!D.feldPruefen) return null; return D.FELD_ORTE.map((f) => [f.nr, D.feldPruefen(f.nr, (f.u0 + f.u1) / 2, (f.v0 + f.v1) / 2)]); });
-      sage(!!std && std.every((x) => x[1] === null), "beide Ackerplätze gelten als frei (dorf.js D.feldPruefen)", JSON.stringify(std));
+      /* (erst hinschauen: die Bilder davor sind dann geladen und werden Bildpunkt genau gezählt) */
+      const std = [];
+      for (const [nr, m] of [[91, m91], [92, m92]]) {
+        await blick(pg, [[m[0], m[1] + 12]], 5); await tick(pg, 1500); await ruhig(pg, pg);
+        std.push(await pg.evaluate(([nr, m]) => { const D = STADT.dorf; return D.feldPruefen ? [nr, D.feldPruefen(nr, m[0], m[1])] : [nr, "keine Prüfung"]; }, [nr, m]));
+      }
+      sage(std.every((x) => x[1] === null), "beide Ackerplätze gelten als frei (dorf.js D.feldPruefen)", JSON.stringify(std));
       const wagenAn = (nr) => pg.evaluate((nr) => { const f = STADT.dorf.FELD_ORTE.find((q) => q.nr === nr), FW = STADT.fuhrwerk;
         const drin = (p) => { const u = p[0] - p[1], v = p[0] + p[1]; return u > f.u0 - 1 && u < f.u1 + 1 && v > f.v0 - 1 && v < f.v1 + 1; };
         return { feld: (FW.felder || []).some((q) => drin(q.mitte)), wagen: (FW.wagen || []).some((w) => w.feld && drin(w.feld.mitte)) }; }, nr);
@@ -235,12 +240,7 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
         const tipp = await pg.evaluate(([neu, alt]) => { const O = STADT.oberflaeche, P = (u, v) => STADT.proj((u + v) / 2, (v - u) / 2, 0);
           const a = O.feldUnter ? O.feldUnter(...P(neu[0], neu[1])) : null, b = O.feldUnter ? O.feldUnter(...P(alt[0], alt[1])) : null; return { neu: a && a.nr, alt: b && b.nr }; }, [neu, m91]);
         sage(tipp.neu === 91 && tipp.alt == null, "die Tippfläche zum Ernten liegt am neuen Platz (am alten trifft der Finger keinen Acker mehr)", JSON.stringify(tipp));
-        await pg.evaluate(() => window.postMessage({ typ: "leicht-zeichen", z: { feld91: ["fertig", "2 Getreide", "getreide"] } }, location.origin)); await tick(pg, 900);
-        const zei = await pg.evaluate(([neu, alt]) => { const b = document.querySelector('.lk-zeichen[data-g="feld91"]'); if (!b || getComputedStyle(b).display === "none") return null; const r = b.getBoundingClientRect(), K = STADT.kamera;
-          const P = (u, v) => { const p = STADT.proj((u + v) / 2, (v - u) / 2, 0); return [p[0] / K.dpr, p[1] / K.dpr]; }, x = (r.left + r.right) / 2, y = r.bottom;
-          return { neu: Math.round(Math.hypot(x - P(neu[0], neu[1])[0], y - P(neu[0], neu[1])[1])), alt: Math.round(Math.hypot(x - P(alt[0], alt[1])[0], y - P(alt[0], alt[1])[1])) }; }, [neu, m91]);
-        sage(!!zei && zei.neu < 60 && zei.neu < zei.alt, "das Zeichen „Getreide reif“ steht am neuen Platz", JSON.stringify(zei));
-        await pg.evaluate(() => window.postMessage({ typ: "leicht-zeichen", z: {} }, location.origin));
+        /* (die Zeichen gibt es nur im Spiel – geprüft in Teil B) */
         const lade = await pg.evaluate(([neu, alt]) => { const D = STADT.dorf, B = STADT.boden; return { neu: D.ladestellen(91, neu[0], neu[1]).map(([x, y]) => +B.wert(x, y, 2).toFixed(2)), alt: D.ladestellen(91, alt[0], alt[1]).map(([x, y]) => +B.wert(x, y, 2).toFixed(2)) }; }, [neu, m91]);
         sage(lade.neu.every((x) => x > 0.9) && lade.alt.every((x) => x < 0.1), "die Ladestellen des Kornwagens liegen unter dem neuen Acker, am alten Platz keine mehr", JSON.stringify(lade));
         const w1 = await wagenAn(91);
@@ -255,7 +255,7 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
         sage(gem.rufe.every((n) => /^spiel_(ich|stadt_leicht_holen|stadt_leicht_speichern|autos)$/.test(n)), "kein anderer Serveraufruf (keine neue Tabelle)", JSON.stringify(gem.rufe));
 
         /* A5 Halten und Ziehen wie bei einem Haus */
-        const ziel2 = await freieStelle(pg, 91, neu[0], neu[1], 8, 30);
+        const ziel2 = await freieStelle(pg, 91, neu[0], neu[1], 8, 60);
         let hz = null;
         if (ziel2) {
           await blick(pg, [[neu[0], neu[1]], ziel2], 6); await tick(pg, 900); await ruhig(pg, pg);
@@ -282,6 +282,7 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
             }
           }
         }
+        if (!hz) console.log("    (Halten: " + JSON.stringify({ ziel2 }) + ")");
         sage(!!hz && hz.offen && hz.oben.geh && hz.oben.brumm.length > 0, "Menü offen, Finger ruhig auf dem Acker: kurzes Brummen, der Acker ist angehoben (wie ein Haus)", JSON.stringify(hz && { offen: hz.offen, oben: hz.oben }));
         sage(!!hz && /Gesetzt/.test(hz.ans5) && !!hz.neu2 && Math.hypot(hz.neu2[0] - ziel2[0], hz.neu2[1] - ziel2[1]) < 3 && !!hz.menue && hz.menue.am && /Getreidefeld/.test(hz.menue.titel),
           "… ziehen und loslassen: „Gesetzt“ am neuen Platz, danach das Menü am Acker", JSON.stringify(hz && { ans5: hz.ans5, neu2: hz.neu2, ziel2, menue: hz.menue && hz.menue.titel }));
@@ -336,6 +337,7 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
           const fr = await (await pg.$("#f")).contentFrame();
           await fr.waitForFunction(() => window.__fertig, null, { timeout: 120000 });
           await fr.waitForFunction(() => !!window.STADT.korn, null, { timeout: 20000 }).catch(() => {});
+          await fr.waitForFunction(() => !document.getElementById("lLade") && !document.querySelector(".lk-vorhang"), null, { timeout: 30000 }).catch(() => {});
           await tick(pg, 2500);
           return fr;
         };
@@ -343,17 +345,19 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
         await fr.evaluate(() => { try { localStorage.removeItem("leicht_verwalten_v1"); } catch (e) {} });
         fr = await oeffnen();
         const off = await pg.evaluate(() => { const r = document.getElementById("f").getBoundingClientRect(); return { l: r.left, t: r.top }; });
-        /* bequem: der Acker ganz im Bild, die größte freie Tippfläche (Quadrat ganz auf dem Acker, kein Knopf, kein Zeichen, kein Haus) */
+        /* bequem: der Acker ganz im Bild, die größte freie Tippfläche – ein Quadrat, in dem jeder Tipp den Acker trifft: auf dem
+           Acker oder bis 10 px daneben (FASSUNG 874), dort kein Knopf, kein Zeichen, kein Haus, kein Baum */
         const bequem = (nr) => fr.evaluate((nr) => {
           const K = STADT.kamera, SZ = STADT.szene, f = STADT.dorf.FELD_ORTE.find((q) => q.nr === nr), W = innerWidth, H = innerHeight;
           const P = (u, v) => { const p = STADT.proj((u + v) / 2, (v - u) / 2, 0); return [p[0] / K.dpr, p[1] / K.dpr]; };
           const ecken = [P(f.u0, f.v0), P(f.u1, f.v0), P(f.u1, f.v1), P(f.u0, f.v1)];
           const ganz = ecken.every((e) => e[0] >= 2 && e[1] >= 2 && e[0] <= W - 2 && e[1] <= H - 2);
-          const auf = (x, y) => { const a = STADT.aufBoden(x * K.dpr, y * K.dpr), u = a[0] - a[1], v = a[0] + a[1]; return u >= f.u0 && u <= f.u1 && v >= f.v0 && v <= f.v1; };
-          const frei = (x, y) => { if (x < 0 || y < 0 || x > W || y > H || !auf(x, y)) return false; const e = document.elementFromPoint(x, y); if (!e || e.id !== "lDinge") return false; return !SZ.treffer(x * K.dpr, y * K.dpr, (o) => o.art !== "natur"); };
+          const abst = (x, y) => { let innen = true, d = 1e9; for (let i = 0; i < 4; i++) { const A = ecken[i], B = ecken[(i + 1) % 4], ex = B[0] - A[0], ey = B[1] - A[1], l2 = ex * ex + ey * ey || 1;
+            if (ex * (y - A[1]) - ey * (x - A[0]) < 0) innen = false; const t = Math.max(0, Math.min(1, ((x - A[0]) * ex + (y - A[1]) * ey) / l2)); d = Math.min(d, Math.hypot(x - A[0] - ex * t, y - A[1] - ey * t)); } return innen ? 0 : d; };
+          const frei = (x, y) => { if (x < 0 || y < 0 || x > W || y > H || abst(x, y) > 9) return false; const e = document.elementFromPoint(x, y); if (!e || e.id !== "lDinge") return false; return !SZ.treffer(x * K.dpr, y * K.dpr); };
           let best = null;
           const xs = ecken.map((e) => e[0]), ys = ecken.map((e) => e[1]);
-          for (let y = Math.min(...ys); y <= Math.max(...ys); y += 1) for (let x = Math.min(...xs); x <= Math.max(...xs); x += 1) {
+          for (let y = Math.min(...ys) - 8; y <= Math.max(...ys) + 8; y += 1) for (let x = Math.min(...xs) - 8; x <= Math.max(...xs) + 8; x += 1) {
             if (!frei(x, y)) continue;
             let r = 0; for (let k = 1; k < 30; k++) { let ok = true; for (let t = -k; t <= k && ok; t += Math.max(1, k / 3)) ok = frei(x + t, y - k) && frei(x + t, y + k) && frei(x - k, y + t) && frei(x + k, y + t); if (!ok) break; r = k; }
             if (!best || r > best.r) best = { x: Math.round(x), y: Math.round(y), r: r };
@@ -362,7 +366,7 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
         }, nr);
         for (const nr of [92, 91]) {
           const bq = await bequem(nr);
-          sage(bq.ganz && bq.seite >= 18, "Überblick: Acker " + nr + " liegt ganz im Bild, mit freier Tippfläche (Quadrat " + bq.seite + " px, frei von Knöpfen, Zeichen und Häusern)", JSON.stringify(bq));
+          sage(bq.ganz && bq.seite >= 24, "Überblick: Acker " + nr + " liegt ganz im Bild, mit freier Tippfläche (Quadrat " + bq.seite + " px ≥ 24 px, frei von Knöpfen, Zeichen, Häusern und Bäumen)", JSON.stringify(bq));
           await pg.evaluate(() => { window.__msgs.length = 0; });
           if (bq.punkt) { await pg.touchscreen.tap(off.l + bq.punkt.x, off.t + bq.punkt.y); await tick(pg, 900); }
           const ms = await pg.evaluate(() => window.__msgs.filter((m) => m && /^leicht-(feld|haus|baum)$/.test(m.typ)).map((m) => m.typ + ":" + (m.nr || m.g || "")));

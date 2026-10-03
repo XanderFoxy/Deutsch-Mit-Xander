@@ -287,7 +287,10 @@ function setze(S, art, x, y, epm, o = {}) {
     const sx = ((a + b) / 2 - mx) * k * dir, L = Math.max((b - a) * k / 2 + (x1 - x0) * k * 0.12, (x1 - x0) * k * 0.3);
     const g = S._tschatten || (S._tschatten = S.rg("tschatten", [[0, "#000", 0.3], [0.55, "#000", 0.16], [1, "#000", 0]]));
     svg += `<ellipse cx="${r(sx)}" cy="${r((x1 - x0) * k * 0.004)}" rx="${r(L)}" ry="${r(Math.max(0.6, L * 0.16))}" fill="${g}"/>`;
-    if (fu) for (const f of fu) svg += `<ellipse cx="${r((f - mx) * k * dir)}" cy="${r((x1 - x0) * k * 0.002)}" rx="${r(Math.max(0.5, (x1 - x0) * k * 0.035))}" ry="${r(Math.max(0.25, (x1 - x0) * k * 0.008))}" fill="#000" opacity=".38"/>`;
+    /* Kontaktkern nach der kleineren Abmessung (Länge oder Höhe) – Zeichner Reptilien: „bei langen, flachen Tieren
+       (Krokodil, Alligator, Python) entstehen große dunkle Scheiben unter dem Boden" */
+    const kern = Math.min((x1 - x0) * 0.035, Math.abs(y1 - y0) * 0.09) * k;
+    if (fu) for (const f of fu) svg += `<ellipse cx="${r((f - mx) * k * dir)}" cy="${r((x1 - x0) * k * 0.002)}" rx="${r(Math.max(0.5, kern))}" ry="${r(Math.max(0.25, kern * 0.23))}" fill="#000" opacity=".38"/>`;
   }
   svg += `<g transform="scale(${r4(dir * k)} ${r4(k)}) translate(${r(-mx)} 0)">${z.svg}</g>`;
   const box = [(dir === 1 ? x0 - mx : -(x1 - mx)) * k, y0 * k, (dir === 1 ? x1 - mx : -(x0 - mx)) * k, y1 * k];

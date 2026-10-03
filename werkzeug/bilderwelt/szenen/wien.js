@@ -73,7 +73,7 @@ S.def(`<pattern id="${S.id("zickzack")}" patternUnits="userSpaceOnUse" width="6"
    KULISSE — Sommerhimmel, Dächer der Stadt
    ===================================================================== */
 S.hinten(`<rect width="400" height="${HOR + 14}" fill="${S.lg("himmel", [[0, "#4f8cc9"], [0.5, "#93bfe3"], [0.85, "#dbe9ef"], [1, "#eef1e6"]])}"/>`);
-S.hinten(`<rect width="400" height="${HOR + 14}" fill="${S.rg("sonne", [[0, "#fff6d8", 0.7], [0.4, "#fff6d8", 0.15], [1, "#fff6d8", 0]], 0, 0.05, 0.7)}"/>`);
+S.hinten(`<rect width="400" height="${HOR + 14}" fill="${S.rg("sonne", [[0, "#fff6d8", 0.45], [0.4, "#fff6d8", 0.1], [1, "#fff6d8", 0]], 0, 0.05, 0.6)}"/>`);
 {
   let w = "";
   for (const [x, y, s] of [[70, 30, 1.2], [180, 16, 0.8], [300, 26, 1.1], [255, 60, 0.6], [30, 70, 0.7]]) {

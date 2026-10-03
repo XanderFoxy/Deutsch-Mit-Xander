@@ -333,7 +333,7 @@ const opUnter = [];
     { id: "sockel", de: "der Sockel", syl: "SO-ckel", it: "il basamento", itSyl: "ba-sa-MEN-to", en: "podium", x: op(120, 120, 0)[0], y: op(120, 120, 0)[1],
       kunst: flaeche(-26, -12, 52, 12), tipp: "Der Sockel ist mit Platten aus rosa Granit verkleidet." });
   const oz = op(90, 60, 30);
-  S.teil({ id: "opernhaus", de: "das Opernhaus", syl: "O-pern-haus", it: "il teatro dell'opera", itSyl: "te-A-tro del-L'O-pe-ra", en: "Sydney Opera House",
+  S.teil({ id: "opernhaus", de: "das Opernhaus", syl: "O-pern-haus", it: "il teatro dell'opera", itSyl: "te-A-tro del-LO-pe-ra", en: "Sydney Opera House",
     x: 0, y: 0, kunst: k, tipp: "Das Sydney Opera House wurde 1973 eröffnet. Seine Dächer sehen aus wie Segel im Wind.",
     zoom: { x: r(oz[0] - 72), y: 90, w: 150, h: 98 }, unter: opUnter });
 }
