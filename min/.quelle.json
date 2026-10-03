@@ -49,11 +49,11 @@
  "backend.js": "c6b366da16e1a5ec6e9a4f97c52686c9c151c7ed",
  "korrekturen.css": "c1456e499871381e8578d99582982bfe530a02ee",
  "data-lesetexte.js": "3896db02514c24a24d57d055e51b388a8730fd3b",
- "livechat.js": "bd311610c24aa6e49f027177690e9e46a435e82b",
  "spiel.js": "3ed8ffe780b33b144ad8b6c790955341fc899769",
  "data-exercises.js": "e21006849b6c9ad63a952d939d5c85bff9d0d9d5",
  "data-italienisch.js": "705ae2d7e61ddf90c9fd83e7c653602b299bd710",
  "data-tutor.js": "8ac5d581188aabfe22784be7260db93d01265aba",
  "data-werkstatt.js": "6fe9e8418affb18891038bc7fc6ebadb52b4acd5",
- "app.js": "16eb8e9013a5fdf5415bf20ebdecad7bca45054c"
+ "app.js": "16eb8e9013a5fdf5415bf20ebdecad7bca45054c",
+ "livechat.js": "bc5a211006ff3ef1e13d98b2ff19503697d4aa29"
 }

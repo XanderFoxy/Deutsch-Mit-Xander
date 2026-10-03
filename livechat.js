@@ -6968,10 +6968,39 @@ window.LiveChat = (function () {
       k.rpc("spiel_diagnose_senden", { p_art: "leitung", p_daten: d }).then(function () {}, function () {});
     } catch (e) {}
   }
+  /* FASSUNG 852 — XANDER (Funk 286): „dann machst du kontinuierlich weiter mit den restlichen Verbindung Sachen".
+     Lag ein Handy im Hintergrund, hält Android Zeitgeber und Websocket an; die Leitung zum Supabase-Server gilt danach
+     noch als „verbunden", ist aber tot. Der Herzschlag (alle 10 s) merkt das erst nach 10–20 s – so lange kam bei den
+     anderen kein „hallo" an und kein Angebot zurück (Messung: Angebot 8–21 s nach dem Betreten). Jetzt: sofort einen
+     Herzschlag schicken; kommt in 2,5 s keine Antwort, löst ein zweiter den eingebauten Neuaufbau aus (Kanäle treten
+     danach selbst wieder bei, das „hallo wieder" geht hinaus). Bei gesunder Leitung kostet das eine winzige Meldung. */
+  var verstecktSeit = 0, frischProbeUm = 0;
+  function leitungFrischPruefen(grund) {
+    try {
+      var k = klient(), rt = k && k.realtime;
+      if (!rt || typeof rt.sendHeartbeat !== "function") return;
+      if (rt.isConnected && !rt.isConnected()) { if (rt.connect) rt.connect(); return; }
+      if (Date.now() - frischProbeUm < 4000) return;
+      frischProbeUm = Date.now();
+      rt.sendHeartbeat();
+      var ref = rt.pendingHeartbeatRef;
+      if (!ref) return;
+      setTimeout(function () {
+        if (rt.pendingHeartbeatRef !== ref) return;            // Antwort kam: Leitung lebt
+        if (aufbau) aufbau.wsTot = (aufbau.wsTot || 0) + 1;
+        rt.sendHeartbeat();                                     // noch offen → Bibliothek baut neu auf
+      }, 2500);
+    } catch (e) {}
+  }
   document.addEventListener("visibilitychange", function () {
     var v = document.visibilityState;
     Object.keys(leitungMess).forEach(function (id) { if (!leitungMess[id].gesendet) leitungMerk(id, "seite", v); });
-    if (v === "visible") zurueckImVordergrund();
+    if (v === "hidden") verstecktSeit = Date.now();
+    if (v === "visible") {
+      if (verstecktSeit && Date.now() - verstecktSeit > 8000) leitungFrischPruefen("vordergrund");
+      verstecktSeit = 0;
+      zurueckImVordergrund();
+    }
   });
   /* FASSUNG 848 — wer aus dem Hintergrund zurückkommt und zu jemandem keine stehende Leitung hat, sagt „hallo" – mit
      „wieder", damit drüben stehende Leitungen bleiben und nur die hängenden neu aufgebaut werden (siehe „hallo"). Die
@@ -6998,7 +7027,8 @@ window.LiveChat = (function () {
       var be = (typeof Backend !== "undefined" && Backend) || window.Backend;
       var k = be && be.zugang && be.zugang();
       if (!k || !k.rpc) return;
-      var d = { raum: a.raum, ua: a.ua, relais: a.relais, kanal: a.kanal, kanalOffen: a.kanalOffen, je: a.je, fassung: (window.DMA_VERSION || "") };
+      var d = { raum: a.raum, ua: a.ua, relais: a.relais, kanal: a.kanal, kanalOffen: a.kanalOffen, je: a.je, fassung: (window.DMA_VERSION || ""),
+                joinTO: a.joinTO || 0, wsTot: a.wsTot || 0, halloNochmal: a.halloNochmal || 0 };   // FASSUNG 852 — was beim Aufbau nachhelfen musste
       k.rpc("spiel_diagnose_senden", { p_art: "verbindung", p_daten: d }).then(function () {}, function () {});
     } catch (e) {}
   }
@@ -7191,18 +7221,24 @@ window.LiveChat = (function () {
        auch beides da ist (das „hallo" braucht den eigenen Ton). Was im Raum in der Zwischenzeit gesendet wird, wird
        gesammelt und danach verarbeitet – vorher kam es gar nicht an. */
     var vorabKanal = klient().channel("dma-raum-" + zustand.raum, { config: { broadcast: { self: false } } });
-    var vorabPakete = [], vorabStand = null, kanalHandler = null;
+    var vorabPakete = [], vorabStand = null, kanalHandler = null, kanalTimeouts = 0, vorabGehoert = false;   // FASSUNG 852: kanalTimeouts, vorabGehoert
     kanalVorab = vorabKanal;
     vorabKanal.on("broadcast", { event: "raum" }, function (nachricht) {
       var nutz = nachricht && nachricht.payload;
       if (kanalHandler) { empfangen(nutz); return; }
-      vorabPakete.push(nutz);
+      vorabPakete.push(nutz); vorabGehoert = true;   // FASSUNG 852: jemand hat schon gesendet
       if (vorabPakete.length > 300) vorabPakete.shift();
     });
+    /* FASSUNG 852 — XANDER (Funk 286): „dann machst du kontinuierlich weiter mit den restlichen Verbindung Sachen".
+       Die Messung (spiel_diagnose „verbindung", 839–842) zeigt „kanal" = 11,1 s und 16,8 s: der Beitritt ging in eine
+       tote Leitung, und die Bibliothek wartet dann 10 s, bevor sie neu beitritt. Jetzt 4 s – sie tritt danach selbst
+       neu bei (Phoenix: rejoinTimer), wir zählen nur mit. */
+    leitungFrischPruefen("betreten");
     vorabKanal.subscribe(function (stand) {
       if (stand === "SUBSCRIBED" && aufbau && aufbau.kanalOffen == null) aufbau.kanalOffen = Date.now() - aufbau.t0;
+      if (stand === "TIMED_OUT" && aufbau) aufbau.joinTO = (aufbau.joinTO || 0) + 1;
       if (kanalHandler) kanalHandler(stand); else vorabStand = stand;
-    });
+    }, 4000);
     stromWeg.then(function (s) { if (stromZuSpaet && s) stromNachreichen(s); }, function () {});
     return Promise.all([
       Promise.race([stromWeg, new Promise(function (r) { setTimeout(function () { stromZuSpaet = true; r(null); }, 2000); })]),
@@ -7249,13 +7285,14 @@ window.LiveChat = (function () {
                Jetzt faehrt sie schon dort mit, und zwar in beide
                Richtungen (auch in der Antwort weiter unten). Damit
                stimmt es vom ersten Herzschlag an. */
-            senden({ art: "hallo", auftritt: eigenerAuftritt(), name: zustand.ichName, bild: zustand.ichBild,
+            var halloNutz = { art: "hallo", auftritt: eigenerAuftritt(), name: zustand.ichName, bild: zustand.ichBild,
                      tonAn: zustand.tonAn, bildAn: zustand.bildAn,
                      seit: zustand.seit, buehne: zustand.buehne,
                      sprechbild: zustand.sprechbild || "",
                      spricht: Boolean(zustand.spricht),
                      geschlecht: zustand.geschlecht || "", konto: kontoId || "",
-                     wieder: kanalWieder || undefined });
+                     wieder: kanalWieder || undefined };
+            senden(Object.assign({}, halloNutz));   // FASSUNG 852: als Vorlage für das Nachfassen unten aufgehoben
             /* FASSUNG 687 — den eigenen Auftritt sieht man auch selbst, einmal je Betreten. */
             if (zustand.auftrittRaum !== zustand.raum) { zustand.auftrittRaum = zustand.raum; auftrittZeigen(zustand.ichId, eigenerAuftritt(), "rein"); }
             /* Und alles, was waehrend der Funkstille geschrieben
@@ -7323,22 +7360,34 @@ window.LiveChat = (function () {
                Sekunden von niemandem gehört haben, geht der Gruss
                noch einmal. Das kostet einen Rundruf und erspart das
                „ich sehe die anderen nicht". */
-            setTimeout(function () {
-              if (zustand.lage !== "drin") return;
-              if (Object.keys(zustand.leute).length) return;
-              var andereDa = false;
-              Object.keys(praesenzDa).forEach(function (k) {
-                var e = praesenzDa[k];
-                if (e && e.raum === zustand.raum && k !== praesenzIch) andereDa = true;
-              });
-              if (!andereDa) return;
-              senden({ art: "hallo", auftritt: eigenerAuftritt(), name: zustand.ichName, bild: zustand.ichBild,
-                       tonAn: zustand.tonAn, bildAn: zustand.bildAn,
-                       seit: zustand.seit, buehne: zustand.buehne,
-                       geschlecht: zustand.geschlecht || "", konto: kontoId || "" });
-            }, 2200);
+            /* FASSUNG 852 — XANDER (Funk 286): „… restlichen Verbindung Sachen". Statt einmal nach 2,2 s jetzt nach
+               1,2 s und 3 s – und auch dann, wenn man die anderen schon kennt, aber noch keine Leitung zu ihnen im Aufbau
+               ist (vorher wartete man dann auf den Puls, bis zu 6 s). Gleiche Sitzung: drüben ist das bei einer jungen
+               Leitung nur eine Erinnerung (siehe „hallo", FASSUNG 841) – kein neues Angebot, kein Sturm. */
+            [1200, 3000].forEach(function (nach) {
+              setTimeout(function () {
+                if (zustand.lage !== "drin" || kanal !== vorabKanal) return;
+                var andere = Object.keys(zustand.leute).filter(function (id) { return id !== zustand.ichId && !istPuppe(id); });
+                if (andere.length) {
+                  if (andere.some(function (id) { return brueckeJe[id]; })) return;   // ein Aufbau läuft schon
+                } else {
+                  var andereDa = false;
+                  Object.keys(praesenzDa).forEach(function (k) {
+                    var e = praesenzDa[k];
+                    if (e && e.raum === zustand.raum && k !== praesenzIch) andereDa = true;
+                  });
+                  if (!andereDa && !vorabGehoert) return;
+                }
+                if (aufbau) aufbau.halloNochmal = (aufbau.halloNochmal || 0) + 1;
+                senden(Object.assign({}, halloNutz, { auftritt: eigenerAuftritt(), tonAn: zustand.tonAn, bildAn: zustand.bildAn,
+                                                       buehne: zustand.buehne, wieder: undefined }));
+              }, nach);
+            });
             fertig(lage());
           } else if (stand === "CHANNEL_ERROR" || stand === "TIMED_OUT") {
+            /* FASSUNG 852 — ein abgelaufener Beitritt (4 s) ist noch kein Fehler: die Bibliothek tritt selbst neu bei.
+               Erst nach dem dritten Mal sagen wir es. */
+            if (stand === "TIMED_OUT" && kanalTimeouts++ < 2) return;
             zustand.lage = "fehler";
             zustand.fehler = "Der Raum liess sich nicht öffnen. Netz prüfen und noch einmal versuchen.";
             melden();
@@ -17107,6 +17156,7 @@ window.LiveChat = (function () {
        Kamera fragt: beim Tipp auf „hinein" muss der Raumkanal dann nur noch beitreten, nicht erst verbinden. */
     kanalVorwaermen: function () {
       try { var k = klient(); if (k && k.realtime && k.realtime.connect && !(k.realtime.isConnected && k.realtime.isConnected())) k.realtime.connect(); } catch (e) {}
+      leitungFrischPruefen("tor");   // FASSUNG 852 — gilt sie als verbunden, ist sie auch lebendig? (siehe dort)
     },
     relaisRufen: relaisRufen,
     verlassen: verlassen,
