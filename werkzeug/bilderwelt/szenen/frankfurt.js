@@ -187,7 +187,7 @@ const imRahmen = (svg0) => {
 };
 
 /* Figuren: Pfaddaten auf ganze Zahlen runden (unsichtbar klein, halbiert die Datei) */
-const rundeFigurFein = (svg) => svg.replace(/ d="([^"]*)"/g, (m, d) => ` d="${d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n * 2) / 2))}"`).replace(/<path[^>]*fill="none"[^>]*opacity="\.[0-4][0-9]*"[^>]*\/>/g, "");
+const rundeFigurFein = (svg) => svg.replace(/<path[^>]*fill="none"[^>]*opacity="[^"]*"[^>]*\/>/g, "").replace(/ d="([^"]*)"/g, (m, d) => ` d="${d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n * 2) / 2))}"`);
 const rundeFigur = (svg) => svg.replace(/ d="([^"]*)"/g, (m, d) => {
   let q = d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n)));
   q = q.replace(/(L-?\d+ -?\d+)(?:\1)+/g, "$1");                                   /* doppelte Punkte */

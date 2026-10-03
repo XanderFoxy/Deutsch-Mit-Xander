@@ -77,7 +77,11 @@ const B = require("../bau");
 const BR = 400, HO = 260;
 const S = neueSzene({ id: "bremen", titel: "Bremen", emoji: "🐓", thema: "Deutschland", kuerzel: "hbr", fassung: 854, breite: BR, hoehe: HO });
 const rnd = zufall(1404);
+{ const lg = S.lg, rg = S.rg, da = {};
+  S.lg = (n, ...a) => da["l" + n] || (da["l" + n] = lg(n, ...a));
+  S.rg = (n, ...a) => da["r" + n] || (da["r" + n] = rg(n, ...a)); }
 const r = B.r;
+const t2 = (n) => (+n).toFixed(2);
 
 /* ---------- Kamera: Zylinder-Panorama (Meter: x Ost, y Nord, z Höhe) ---------- */
 const GRAD = Math.PI / 180;
@@ -136,9 +140,9 @@ const bogen = (sm, w, z0, zK, n = 8) => {
 };
 const pfad = (d, f, extra = "") => d ? `<path d="${d}" fill="${f}"${extra}/>` : "";
 
-S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
-S.def(`<filter id="${S.id("dunst")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".35"/></filter>`);
+S.def(`<filter id="bw_weich" color-interpolation-filters="sRGB" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+S.def(`<filter id="${S.id("wolke")}" color-interpolation-filters="sRGB" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
+S.def(`<filter id="${S.id("dunst")}" color-interpolation-filters="sRGB" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".35"/></filter>`);
 
 /* ---------- Stoffe (Sonne von rechts hinten, Südsüdwest) ---------- */
 const SAND = S.lg("sand", [[0, "#efe3c6"], [1, "#e2d2b0"]]);                 // Sandstein in der Sonne
@@ -506,7 +510,7 @@ const rhTeile = {};
     /* Wappen: der Bremer Schlüssel auf Rot */
     {
       const c = pr(...Ek(sm, 24)), mk = mass(sm, 0);
-      k += `<g transform="translate(${r(c[0])} ${r(c[1])}) scale(${r(mk * 10) / 100})"><path d="M-6 -8 H6 V2 Q6 8 0 10 Q-6 8 -6 2 Z" fill="#c4202c" stroke="#e9dcbd" stroke-width=".8"/><circle cx="0" cy="-3.2" r="2.4" fill="none" stroke="#f2f2f2" stroke-width="1.2"/><path d="M0 -.8 V7 M0 4 H2.4 M0 6 H2" stroke="#f2f2f2" stroke-width="1.2"/></g>`;
+      k += `<g transform="translate(${t2(c[0])} ${t2(c[1])}) scale(${(mk / 10).toFixed(4)})"><path d="M-6 -8 H6 V2 Q6 8 0 10 Q-6 8 -6 2 Z" fill="#c4202c" stroke="#e9dcbd" stroke-width=".8"/><circle cx="0" cy="-3.2" r="2.4" fill="none" stroke="#f2f2f2" stroke-width="1.2"/><path d="M0 -.8 V7 M0 4 H2.4 M0 6 H2" stroke="#f2f2f2" stroke-width="1.2"/></g>`;
     }
     rhTeile.erker = pr(...Ek(sm, 10));
     rhTeile.giebel = pr(...Ek(sm, 22));
@@ -594,7 +598,7 @@ const SM = { x: -1.5, y: 6 };
   t += `<path d="M-8 -182 C-2 -188 6 -186 9 -179 C2 -176 -4 -176 -8 -182 Z" fill="${BZ_L}" opacity=".7"/>`;
   t += `<path d="M-20 -203 Q-21 -209 -18 -207.4 Q-17 -211 -14.4 -207 Q-12 -209 -12 -204 Z" fill="${BZ}"/><ellipse cx="-19.6" cy="-195" rx="1.6" ry="2.4" fill="${BZ_D}"/><circle cx="-16.6" cy="-200.6" r=".9" fill="#15120b"/>`;
   g += `<g transform="translate(0 ${Z}) scale(${k9})">${t}</g>`;
-  const k = `<g transform="translate(${r(fu[0])} ${r(fu[1])}) scale(${sk.toFixed(4)})">${g}</g>` + flaeche(fu[0] - 4, fu[1] - 8.6, 8, 9.4, 0.6);
+  const k = `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(4)})">${g}</g>` + flaeche(fu[0] - 4, fu[1] - 8.6, 8, 9.4, 0.6);
   const U = (cx, cy) => [fu[0] + cx * sk, fu[1] + (Z + cy * k9) * sk];
   const ue = U(-24, -70), uh = U(-18, -128), uk = U(-10, -150), ug = U(-6, -186);
   S.teil({ id: "stadtmusikanten", de: "die Stadtmusikanten", syl: "STADT-mu-si-kan-ten", it: "i musicanti di Brema", itSyl: "mu-si-CAN-ti di BRE-ma", en: "Town Musicians of Bremen", x: 0, y: 0, kunst: k, oben: true,
@@ -667,7 +671,7 @@ const RO = { x: 30, y: -14 };
   for (const x of [-9, 9]) g += `<path d="M${x - 1} -85 L${x - .6} -92 L${x} -95 L${x + .6} -92 L${x + 1} -85 Z" fill="#d8d0bd"/>`;
   g += `<path d="M-1 -100 L1 -100 L0 -103.6 Z" fill="#d8d0bd"/><circle cx="0" cy="-101.4" r="1" fill="#e6dfd0"/>`;
   for (let i = 1; i < 5; i++) g += `<path d="M${r(-8 + i * 1.6)} ${r(-85 - i * 3)} l-1 -.8" stroke="#a59c86" stroke-width=".5"/>`;
-  const k = `<g transform="translate(${r(fu[0])} ${r(fu[1])}) scale(${sk.toFixed(4)})">${g}</g>`;
+  const k = `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(4)})">${g}</g>`;
   const U = (cx, cy) => [fu[0] + cx * sk, fu[1] + cy * sk];
   const us = U(7, -66), ub = U(0, -88);
   S.teil({ id: "roland", de: "der Roland", syl: "RO-land", it: "il Roland (statua)", itSyl: "RO-land", en: "Roland statue", x: 0, y: 0, kunst: k,
@@ -801,7 +805,7 @@ const figur = (X, Y, spec, h) => { const fu = pr(X, Y, 0), mk = mass(X, Y); cons
 {
   const taube = (x, y, s, spiegel) => {
     const p = pr(x, y, 0), k = mass(x, y) * s;
-    return `<g transform="translate(${r(p[0])} ${r(p[1])}) scale(${spiegel ? -k.toFixed(3) : k.toFixed(3)} ${k.toFixed(3)})"><ellipse cx="0" cy=".3" rx="2.4" ry=".5" fill="#1b140c" opacity=".25"/><path d="M-2.6 -1.4 Q-1.6 -2.8 .6 -2.6 L2 -2.2 Q2.6 -2.6 3 -3.4 Q3.4 -4 4 -3.6 L4.4 -3.4 L4 -3 Q3.6 -2 3 -1.4 Q1.6 -.4 -.6 -.6 L-2.8 -1 Z" fill="#8a8f98"/><path d="M-1.8 -1.8 Q0 -2.6 1.6 -2 Q.2 -1.2 -1.8 -1.8 Z" fill="#6c717a"/><path d="M2.6 -2.2 Q3 -2.8 3.6 -2.6 Q3.4 -1.8 2.8 -1.6 Z" fill="#6f9a86"/><circle cx="3.8" cy="-3.4" r=".18" fill="#c46a2a"/><path d="M.6 -.6 V0 M1.4 -.7 V0" stroke="#c96a6a" stroke-width=".25"/></g>`;
+    return `<g transform="translate(${t2(p[0])} ${t2(p[1])}) scale(${spiegel ? -k.toFixed(3) : k.toFixed(3)} ${k.toFixed(3)})"><ellipse cx="0" cy=".3" rx="2.4" ry=".5" fill="#1b140c" opacity=".25"/><path d="M-2.6 -1.4 Q-1.6 -2.8 .6 -2.6 L2 -2.2 Q2.6 -2.6 3 -3.4 Q3.4 -4 4 -3.6 L4.4 -3.4 L4 -3 Q3.6 -2 3 -1.4 Q1.6 -.4 -.6 -.6 L-2.8 -1 Z" fill="#8a8f98"/><path d="M-1.8 -1.8 Q0 -2.6 1.6 -2 Q.2 -1.2 -1.8 -1.8 Z" fill="#6c717a"/><path d="M2.6 -2.2 Q3 -2.8 3.6 -2.6 Q3.4 -1.8 2.8 -1.6 Z" fill="#6f9a86"/><circle cx="3.8" cy="-3.4" r=".18" fill="#c46a2a"/><path d="M.6 -.6 V0 M1.4 -.7 V0" stroke="#c96a6a" stroke-width=".25"/></g>`;
   };
   const T1 = [CAM[0] + 5.2 * Math.sin(40 * GRAD), CAM[1] + 5.2 * Math.cos(40 * GRAD)], T2 = [CAM[0] + 6.4 * Math.sin(46 * GRAD), CAM[1] + 6.4 * Math.cos(46 * GRAD)];
   const a = pr(T1[0], T1[1], 0), b = pr(T2[0], T2[1], 0);
@@ -881,7 +885,7 @@ const TI = { b: 19.5, d: 1.6, z: .74, R: .36 };
   g += `<path d="M${TX - .6} ${TY - 8} q-1.4 -2.2 0 -4.2 q1.4 -2 0 -4 M${TX + 1.4} ${TY - 8} q-1.2 -1.8 0 -3.6" stroke="#fff" stroke-width=".45" fill="none" opacity=".6"/>`;
   /* Zuckertütchen mit dem Bremer Schlüssel */
   g += `<g transform="translate(${TX - 9} ${TY + 4}) rotate(-12)"><rect x="-2.2" y="-.9" width="4.4" height="1.8" rx=".3" fill="#fff" stroke="#c4202c" stroke-width=".25"/><path d="M-.9 0 h1.6 M.4 0 v.6" stroke="#c4202c" stroke-width=".3"/><circle cx="-1.1" cy="0" r=".4" fill="none" stroke="#c4202c" stroke-width=".25"/></g>`;
-  const k = `<g transform="translate(${r(c[0])} ${r(c[1])}) scale(${sk.toFixed(4)})">${g}</g>`;
+  const k = `<g transform="translate(${t2(c[0])} ${t2(c[1])}) scale(${sk.toFixed(4)})">${g}</g>`;
   const U = (x, y) => [c[0] + x * sk, c[1] + y * sk];
   const uL = U(LX, LY - 2), uK = U(KX, KY - 4), uT = U(TX, TY - 3);
   const zw = 2 * R * sk + 10, zh = zw * 2 / 3;

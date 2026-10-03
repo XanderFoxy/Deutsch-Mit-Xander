@@ -79,12 +79,19 @@ const GOLD = S.lg("gold", [[0, "#fff1a8"], [0.4, "#f1c74a"], [1, "#a8781a"]], 0,
 const BRONZE = S.lg("bronze", [[0, "#2f4a3d"], [0.45, "#5f8270"], [0.75, "#8fb09c"], [1, "#4b6a5a"]], 0, 0, 1, 0);
 const DOMSTEIN = S.lg("domstein", [[0, "#9c9381"], [0.5, "#c9bfa9"], [1, "#ddd2b9"]], 0, 0, 1, 0);
 const GOLDLICHT = "#ffc977";                     /* Abendsonne, als Lasur über den Fassaden */
-const LANG = S.lg("lang", [[0, "#1d2224", 0], [0.55, "#1d2224", 0.16], [1, "#1d2224", 0.36]], 0, 0, 1, 0);
-/* langer Abendschatten nach links (etwas nach hinten): Länge ≈ 3,2 × Höhe */
-const schlag = (x, y, w, h, a = 1, ax = 999) => {
-  const L = Math.min(3.2 * h, ax + x - w * 0.4 - 1);
-  return `<path d="M${r(x + w / 2)} ${r(y)} L${r(x - w / 2)} ${r(y)} L${r(x - L)} ${r(y - 0.05 * L)} L${r(x - L + w * 0.4)} ${r(y - 0.05 * L - w * 0.18)} L${r(x + w * 0.3)} ${r(y - w * 0.12)} Z" fill="${LANG}" opacity="${a}" filter="url(#${S.id("schw")})"/>`;
+const LANG = S.lg("lang", [[0, "#2b2420", 0.2], [0.55, "#2b2420", 0.75], [1, "#2b2420", 1]], 0, 0, 1, 0);
+/* Lange Abendschatten: Die Sonne steht tief im WNW (rechts, leicht hinter uns). Jeder Schatten fällt nach links und etwas
+   vom Betrachter weg: dx ≈ −0,95·L, dy ≈ −0,12·L (hinten flacher), Länge ≈ 4,5 × Höhe. Die Schatten liegen auf dem Pflaster
+   (Teil „Marktplatz“), damit sie keine Trefferfläche vergrößern. X, Y absolut; „bis“ = wo der Schatten spätestens endet. */
+const SCHATTEN = [];
+const schlag = (X, Y, w, h, a = 0.5, bis = -4, spitz = 0.55) => {
+  const L = Math.max(0, Math.min(4.5 * h, (X - w * spitz / 2 - bis) / 0.95)), dx = -0.95 * L, dy = -0.12 * L * Math.min(1, (Y - HOR) / 50);
+  SCHATTEN.push(`<path d="M${r(X + w / 2)} ${r(Y)} L${r(X - w / 2)} ${r(Y)} L${r(X - w * spitz / 2 + dx)} ${r(Y + dy)} L${r(X + w * spitz / 2 + dx)} ${r(Y + dy - w * 0.04)} Z" fill="${LANG}" opacity="${a}"/>`);
+  return "";
 };
+/* Streiflicht von rechts: warme Lichtkante rechts, links ein weicher Eigenschatten */
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("licht")}" x="-10%" y="-5%" width="120%" height="110%"><feOffset in="SourceAlpha" dx="-.22" result="o"/><feComposite in="SourceAlpha" in2="o" operator="out" result="rk"/><feFlood flood-color="#ffd9a0" flood-opacity=".9"/><feComposite in2="rk" operator="in" result="kante"/><feOffset in="SourceAlpha" dx=".7" result="o2"/><feComposite in="SourceAlpha" in2="o2" operator="out" result="lk"/><feGaussianBlur in="lk" stdDeviation=".25" result="lk2"/><feFlood flood-color="#1f1a24" flood-opacity=".3"/><feComposite in2="lk2" operator="in" result="eigen"/><feComposite in="eigen" in2="SourceAlpha" operator="in" result="eigen2"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="eigen2"/><feMergeNode in="kante"/></feMerge></filter>`);
+const licht = (svg) => `<g filter="url(#${S.id("licht")})">${svg}</g>`;
 /* Mensch aus dem Baukasten, ohne runden Bodenschatten, feine Linien weg, Pfade gerundet (Ladezeit) */
 function figur(spec, hoehe, fein = 1) {
   const m = B.mensch(spec, hoehe);
@@ -149,10 +156,8 @@ S.hinten(wolke(160, 18, 0.9, 7) + wolke(262, 30, 1.05, 19) + wolke(40, 12, 0.7, 
       f += `<line x1="0" y1="${r(ym - h * 0.22)}" x2="320" y2="${r(ym - h * 0.22)}" stroke="#d2c8b4" stroke-width="${r(h * 0.16)}" stroke-dasharray="${r(st * 0.6)} ${r(st * 0.4 + gap)}" stroke-dashoffset="${r(off - st * 0.2)}" opacity="${r(a * 0.55)}"/>`;
     } else f += `<line x1="0" y1="${r(y0)}" x2="320" y2="${r(y0)}" stroke="#6f6556" stroke-width="${r(Math.max(0.08, h * 0.25))}" opacity=".45"/>`;
   }
-  /* Rinne aus Blaustein quer über den Platz, Abendlicht von rechts */
-  f += `<path d="M0 ${r(bodenY(16))} L320 ${r(bodenY(16) - 0.6)}" stroke="#5f656b" stroke-width="1.4" opacity=".5"/>`;
   f += `<rect x="0" y="${HOR}" width="320" height="${200 - HOR}" fill="${S.lg("pflasterlicht", [[0, "#000", 0.14], [0.55, "#000", 0], [1, "#ffcf8a", 0.16]], 0, 0, 1, 0)}"/>`;
-  S.teil({ id: "marktplatz", de: "der Marktplatz", syl: "MARKT-platz", it: "la piazza del mercato", itSyl: "PIAZ-za del mer-CA-to", en: "market square", x: 0, y: 0, kunst: f,
+  var MARKT = S.teil({ id: "marktplatz", de: "der Marktplatz", syl: "MARKT-platz", it: "la piazza del mercato", itSyl: "PIAZ-za del mer-CA-to", en: "market square", x: 0, y: 0, kunst: f,
     tipp: "Auf dem Marktplatz vor dem Rathaus ist im Advent der Weihnachtsmarkt." });
 }
 
@@ -179,7 +184,7 @@ const DOM_SICHT = 104;                 /* bis hierhin (y) ist der Dom über den 
     for (let i = 1; i < 3; i++) k += `<line x1="${r(a + i * w / 3)}" y1="${H(3)}" x2="${r(a + i * w / 3)}" y2="${H(29.5)}" stroke="#d6ccb6" stroke-width=".3"/>`;
     for (let h = 7; h < 29; h += 4.3) k += `<line x1="${a}" y1="${H(h)}" x2="${b}" y2="${H(h)}" stroke="#d6ccb6" stroke-width=".22"/>`;
     k += `<circle cx="${r(m)}" cy="${H(30.6)}" r="${r(w * 0.18)}" fill="none" stroke="#d6ccb6" stroke-width=".3"/>`;
-    k += `<path d="M${r(a + 0.6)} ${H(12)} L${r(a + w * 0.45)} ${H(24)} L${r(a + w * 0.7)} ${H(24)} L${r(a + 2)} ${H(12)} Z" fill="#ffe2b0" opacity=".25"/>`;
+    k += `<path d="M${r(a + 0.6)} ${H(12)} L${r(a + w * 0.45)} ${H(24)} L${r(a + w * 0.7)} ${H(24)} L${r(a + 2)} ${H(12)} Z" fill="#ffe2b0" opacity=".12"/>`;
     k += `<path d="M${r(a - 0.3)} ${H(33.6)} L${r(m)} ${H(39.4)} L${r(b + 0.3)} ${H(33.6)}" stroke="#c2b8a3" stroke-width=".6" fill="none"/><path d="M${r(m - 0.4)} ${H(39.4)} L${r(m)} ${H(40.8)} L${r(m + 0.4)} ${H(39.4)} Z" fill="#c2b8a3"/>`;
   }
   for (const x of [0, 9.4, 18.8, 28.2, 37.6]) {
@@ -212,10 +217,10 @@ const DOM_SICHT = 104;                 /* bis hierhin (y) ist der Dom über den 
   k += `<rect x="0" y="${H(34)}" width="${CX1 + 2}" height="${r(34 * u)}" fill="${GOLDLICHT}" opacity=".16"/><rect x="${OX - OW}" y="${H(33.6)}" width="${2 * OW}" height="${r(33.6 * u)}" fill="${GOLDLICHT}" opacity=".16"/>`;
   const sicht = DOM_SICHT - DOM.y;
   S.teil({ id: "dom", de: "der Aachener Dom", syl: "AA-che-ner DOM", it: "il Duomo di Aquisgrana", itSyl: "DUO-mo di a-qui-SGRA-na", en: "Aachen Cathedral",
-    x: DOM.x, y: DOM.y, kunst: k, tipp: "Karl der Große hat den Dom um das Jahr 800 bauen lassen. Er war das erste Welterbe in Deutschland.",
+    x: DOM.x, y: DOM.y, kunst: k, tipp: "Karl der Große hat den Dom um das Jahr 800 bauen lassen. Der Dom war das erste Welterbe in Deutschland.",
     zoom: { x: 17, y: 48, w: 81, h: 54 },
     unter: [
-      { id: "kirchenfenster", de: "das Kirchenfenster", syl: "KIR-chen-fens-ter", it: "la vetrata", itSyl: "ve-TRA-ta", en: "church window", x: DOM.x + 14.7, y: DOM.y + sicht, kunst: flaeche(-3.4, -(33 * DOM.u) - sicht, 6.8, 33 * DOM.u + sicht - 0.5 * DOM.u, 0.5),
+      { id: "kirchenfenster", de: "das Kirchenfenster", syl: "KIR-chen-fens-ter", it: "la vetrata", itSyl: "ve-TRA-ta", en: "church window", x: DOM.x + 19.8, y: DOM_SICHT, kunst: flaeche(-18.05, -13, 36.2, 13, 0.5),
         tipp: "Die Fenster der Chorhalle sind über 25 Meter hoch. Darum nennen die Aachener die Chorhalle „Glashaus“." },
       { id: "kuppel", de: "die Kuppel", syl: "KUP-pel", it: "la cupola", itSyl: "CU-po-la", en: "dome", x: DOM.x + OX, y: DOM.y - 33.6 * DOM.u, kunst: flaeche(-OW, -(25 * DOM.u), Math.min(2 * OW, 71.5 - DOM.x - OX + OW), 25 * DOM.u, 1),
         tipp: "Unter der Kuppel liegt das Oktogon, ein Raum mit acht Ecken. Es ist über 1200 Jahre alt." },
@@ -275,7 +280,7 @@ const figur1 = (m, h, z, var1) => {
 const FENSTER = []; for (let i = 0; i < 9; i++) FENSTER.push(12 + i * 5.45);
 const PFEILER = []; for (let i = 0; i <= 9; i++) PFEILER.push(11 + i * 5.45 - 0.3);
 const FIGUR_H = [8.9, 14.2];
-const TREPPE = { m0: 22.6, m1: 47.4, pa: 32.4, pb: 37.6, h: 6.6 };
+const TREPPE = { m0: 22.6, m1: 47.4, pa: 31.6, pb: 38.4, h: 6.6 };
 {
   let k = "";
   /* --- Dach des Saalbaus: steiles Schieferdach, zwei Reihen kleiner Gauben, Dachreiter --- */
@@ -295,30 +300,41 @@ const TREPPE = { m0: 22.6, m1: 47.4, pa: 32.4, pb: 37.6, h: 6.6 };
     if (m > TREPPE.m0 - 1 && m < TREPPE.m1) continue;
     k += `<path d="M${FP(m - 0.2, 1.6)} L${FP(m + 1.8, 1.6)} L${FP(m + 1.8, 4.6)} Q${FP(m + 1.8, 5.6)} ${FP(m + 0.8, 5.9)} Q${FP(m - 0.2, 5.6)} ${FP(m - 0.2, 4.6)} Z" fill="#d2c6ab"/>`;
     k += `<path d="M${FP(m, 1.8)} L${FP(m + 1.6, 1.8)} L${FP(m + 1.6, 4.6)} Q${FP(m + 1.6, 5.4)} ${FP(m + 0.8, 5.6)} Q${FP(m, 5.4)} ${FP(m, 4.6)} Z" fill="${S.lg("egfenster", [[0, "#3c4a56"], [1, "#6d8293"]])}"/>`;
-    k += `<path d="M${FP(m + 0.8, 1.8)} L${FP(m + 0.8, 5.5)}" stroke="#cfc5b0" stroke-width=".25"/><path d="M${FP(m, 1.8)} L${FP(m + 0.25, 1.8)} L${FP(m + 0.25, 4.8)} L${FP(m, 4.6)} Z" fill="#2b343c"/>`;
+    k += `<path d="M${FP(m + 0.8, 1.8)} L${FP(m + 0.8, 5.5)}" stroke="#cfc5b0" stroke-width=".25"/><path d="M${FP(m + 1.6, 1.8)} L${FP(m + 1.3, 1.8)} L${FP(m + 1.3, 4.8)} L${FP(m + 1.6, 4.6)} Z" fill="#2b343c"/><path d="M${FP(m - 0.6, 1.4)} L${FP(m - 0.2, 1.4)} L${FP(m - 0.2, 5.6)} L${FP(m - 0.6, 5.2)} Z" fill="#5d5444" opacity=".3"/>`;
     k += quad(m - 0.35, m + 1.95, 1.4, 1.65, "#e2d8c2");
   }
   /* Krönungssaal: neun hohe Maßwerkfenster mit tiefer Laibung */
   for (const m of FENSTER) {
     k += `<path d="M${FP(m - 0.25, 8.4)} L${FP(m + 3.05, 8.4)} L${FP(m + 3.05, 17.2)} Q${FP(m + 3.05, 19.8)} ${FP(m + 1.4, 20.2)} Q${FP(m - 0.25, 19.8)} ${FP(m - 0.25, 17.2)} Z" fill="#d6cab0"/>`;
     k += `<path d="M${FP(m, 8.6)} L${FP(m + 2.8, 8.6)} L${FP(m + 2.8, 17.2)} Q${FP(m + 2.8, 19.4)} ${FP(m + 1.4, 19.8)} Q${FP(m, 19.4)} ${FP(m, 17.2)} Z" fill="${S.lg("rfenster", [[0, "#536879"], [0.55, "#2c3a47"], [1, "#7a8fa0"]], 0, 0, 1, 0)}"/>`;
-    k += `<path d="M${FP(m, 8.6)} L${FP(m + 0.35, 8.6)} L${FP(m + 0.35, 17.6)} L${FP(m, 17.2)} Z" fill="#26313a"/>`;
+    k += `<path d="M${FP(m + 2.8, 8.6)} L${FP(m + 2.35, 8.6)} L${FP(m + 2.35, 17.6)} L${FP(m + 2.8, 17.2)} Z" fill="#26313a"/><path d="M${FP(m, 8.6)} L${FP(m + 0.2, 8.6)} L${FP(m + 0.2, 17.6)} L${FP(m, 17.2)} Z" fill="#f2e2bf" opacity=".55"/>`;
     k += `<path d="M${FP(m + 1.4, 8.6)} L${FP(m + 1.4, 19.4)} M${FP(m, 13.2)} L${FP(m + 2.8, 13.2)}" stroke="#d6ccb6" stroke-width=".3"/>`;
     k += `<path d="M${FP(m + 0.5, 17.6)} Q${FP(m + 1.4, 19)} ${FP(m + 2.3, 17.6)}" stroke="#d6ccb6" stroke-width=".22" fill="none"/>`;
-    k += `<path d="M${FP(m + 0.45, 9.6)} L${FP(m + 1.15, 15)} L${FP(m + 1.35, 15)} L${FP(m + 0.75, 9.6)} Z" fill="#ffe3b2" opacity=".35"/>`;
+    k += `<path d="M${FP(m + 0.2, 17)} L${FP(m + 2.3, 17)} L${FP(m + 2.3, 18.6)} Q${FP(m + 1.4, 19.6)} ${FP(m + 0.2, 18.6)} Z" fill="#ffe3b2" opacity=".14"/>`;
     k += quad(m - 0.4, m + 3.2, 8.15, 8.4, "#e6dcc6");
   }
   /* Pfeiler zwischen den Fenstern: je zwei Herrscherfiguren übereinander, jede in einer flachen Nische */
   PFEILER.forEach((m, i) => {
+    k += `<path d="M${FP(m - 1.55, 7.3)} L${FP(m - 0.95, 7.3)} L${FP(m - 0.95, 21.2)} L${FP(m - 1.55, 20.9)} Z" fill="#4a4136" opacity=".28"/>`;
     k += `<path d="M${FP(m - 0.95, 7.3)} L${FP(m + 0.95, 7.3)} L${FP(m + 0.95, 21.2)} L${FP(m - 0.95, 21.2)} Z" fill="${S.lg("pfeiler", [[0, "#9e937d"], [0.6, "#bdb197"], [1, "#d3c7ab"]], 0, 0, 1, 0)}"/>`;
     for (const h of FIGUR_H) {
       k += `<path d="M${FP(m - 0.6, h - 0.3)} L${FP(m + 0.6, h - 0.3)} L${FP(m + 0.6, h + 2.6)} L${FP(m - 0.6, h + 2.6)} Z" fill="#6e6553" opacity=".55"/>`;
+      k += `<path d="M${FP(m - 0.55, h + 2.6)} L${FP(m - 0.95, h + 2.2)} L${FP(m - 0.95, h + 4.2)} L${FP(m - 0.3, h + 4.6)} Z" fill="#4a4136" opacity=".3"/>`;
       k += figur1(m, h, 0.95, i + h) + baldachin(m, h + 2.65, 0.95);
+      k += `<path d="M${FP(m + 0.48, h + 2.7)} L${FP(m + 0.6, h + 2.7)} L${FP(m + 0.6, h + 3.2)} L${FP(m, h + 4.4)} L${FP(m, h + 4.1)} Z" fill="#ffe2ad" opacity=".55"/>`;
     }
   });
   /* Gesims, Maßwerkbrüstung mit Vierpässen, Fialen über den Pfeilern */
   k += quad(9, 61, 20.6, 21.2, "#e2d8c2") + quad(9, 61, 21.2, 22.7, "#c9bea6");
-  for (let m = 9.8; m < 60.5; m += 1.25) k += `<circle cx="${fx(m + 0.6)}" cy="${fy(m + 0.6, 21.95)}" r="${r(0.42 * fs(m))}" fill="#6e6553" opacity=".7"/><circle cx="${fx(m + 0.6)}" cy="${fy(m + 0.6, 21.95)}" r="${r(0.2 * fs(m))}" fill="#c9bea6"/>`;
+  {
+    let v = "";
+    for (let m = 9.8; m < 60.5; m += 1.25) {
+      const x = +fx(m + 0.6), y = +fy(m + 0.6, 21.95), a = 0.19 * fs(m);
+      for (const [ox, oy] of [[-a, 0], [a, 0], [0, -a], [0, a]]) v += `M${r(x + ox - a)} ${r(y + oy)}a${r(a)} ${r(a)} 0 1 0 ${r(2 * a)} 0a${r(a)} ${r(a)} 0 1 0 ${r(-2 * a)} 0`;
+      k += `<path d="M${fx(m + 0.05)} ${fy(m + 0.05, 21.35)} L${fx(m + 1.15)} ${fy(m + 1.15, 21.35)} L${fx(m + 1.15)} ${fy(m + 1.15, 22.55)} L${fx(m + 0.05)} ${fy(m + 0.05, 22.55)} Z" fill="#b5aa92"/>`;
+    }
+    k += `<path d="${v}" fill="#5f5646" opacity=".8"/>`;
+  }
   k += quad(9, 61, 22.6, 22.9, "#e6dcc6");
   for (const m of PFEILER) k += `<path d="M${FP(m - 0.4, 22.9)} L${FP(m, 25.6)} L${FP(m + 0.4, 22.9)} Z" fill="#d6cbb2"/><circle cx="${fx(m)}" cy="${fy(m, 25.75)}" r=".3" fill="#d6cbb2"/>`;
   /* --- barocke Freitreppe: zwei Läufe parallel zur Fassade, Podest vor dem Portal --- */
@@ -352,8 +368,10 @@ const TREPPE = { m0: 22.6, m1: 47.4, pa: 32.4, pb: 37.6, h: 6.6 };
       for (let i = 0; i <= 8; i++) { const m = mOut + (mIn - mOut) * i / 8, h = 0.6 + (T.h - 0.6) * i / 8; k += `<path d="M${FP(m, h)} L${FP(m, h + 1.1)}" stroke="#23272a" stroke-width=".18"/>`; }
       k += `<path d="M${FP(mOut, 0.6)} L${FP(mOut, 1.9)}" stroke="#23272a" stroke-width=".35"/><circle cx="${fx(mOut)}" cy="${fy(mOut, 2)}" r=".3" fill="#c9a24a"/>`;
     }
-    k += `<path d="M${FP(T.pa, T.h + 1.1)} L${FP(T.pb, T.h + 1.1)}" stroke="#23272a" stroke-width=".4"/>`;
-    for (let i = 0; i <= 5; i++) { const m = T.pa + (T.pb - T.pa) * i / 5; k += `<path d="M${FP(m, T.h + 0.1)} L${FP(m, T.h + 1.1)}" stroke="#23272a" stroke-width=".18"/>`; }
+    /* steinerne Brüstung an der Vorderkante des Podests: Sockel, Balustersäulchen, Deckplatte */
+    k += quad(T.pa - 0.3, T.pb + 0.3, T.h + 0.1, T.h + 0.35, "#8a9196");
+    for (let m = T.pa; m <= T.pb + 0.01; m += (T.pb - T.pa) / 9) k += `<path d="M${FP(m - 0.17, T.h + 0.35)} L${FP(m + 0.17, T.h + 0.35)} L${FP(m + 0.1, T.h + 0.75)} L${FP(m + 0.2, T.h + 1.05)} L${FP(m - 0.2, T.h + 1.05)} L${FP(m - 0.1, T.h + 0.75)} Z" fill="#9aa1a6"/>`;
+    k += quad(T.pa - 0.35, T.pb + 0.35, T.h + 1.05, T.h + 1.35, "#b9c0c4") + `<path d="M${FP(T.pa - 0.35, T.h + 1.35)} L${FP(T.pb + 0.35, T.h + 1.35)}" stroke="#ffe2ad" stroke-width=".22"/>`;
   }
   /* Abendsonne: goldene Lasur auf der Fassade */
   k += `<path d="M${FP(9, 0)} L${FP(61, 0)} L${FP(61, 22.9)} L${FP(9, 22.9)} Z" fill="${GOLDLICHT}" opacity=".2"/>`;
@@ -392,9 +410,9 @@ const TREPPE = { m0: 22.6, m1: 47.4, pa: 32.4, pb: 37.6, h: 6.6 };
   k += `<path d="M${FP(mm - 1.15, 42.1)} C${FP(mm - 1.2, 44)} ${FP(mm - 0.3, 47)} ${FP(mm, 53)} C${FP(mm + 0.3, 47)} ${FP(mm + 1.2, 44)} ${FP(mm + 1.15, 42.1)} Z" fill="${SCHIEFER}"/>`;
   k += `<circle cx="${fx(mm)}" cy="${fy(mm, 53.3)}" r=".55" fill="${GOLD}"/><path d="M${fx(mm)} ${fy(mm, 53.6)} L${fx(mm)} ${fy(mm, 56)}" stroke="#7a6a3a" stroke-width=".3"/><path d="M${fx(mm)} ${fy(mm, 55.6)} l1.8 .25 l-.2 .55 l-1.6 -.1 Z" fill="#c9a24a"/>`;
   /* Abendlicht von rechts */
-  k += `<path d="M${FP(m1 - 1.6, 0)} L${FP(m1, 0)} L${FP(m1, 33)} L${FP(m1 - 1.6, 33)} Z" fill="#ffe0a8" opacity=".25"/><path d="M${FP(m0, 0)} L${FP(m1, 0)} L${FP(m1, 33)} L${FP(m0, 33)} Z" fill="${GOLDLICHT}" opacity=".15"/>`;
+  k += `<path d="M${FP(m1 - 2.4, 0)} L${FP(m1, 0)} L${FP(m1, 33)} L${FP(m1 - 2.4, 33)} Z" fill="#ffc977" opacity=".42"/><path d="M${FP(m0, 0)} L${FP(m0 + 2.4, 0)} L${FP(m0 + 2.4, 33)} L${FP(m0, 33)} Z" fill="#4c5a6c" opacity=".28"/><path d="M${FP(m0, 0)} L${FP(m1, 0)} L${FP(m1, 33)} L${FP(m0, 33)} Z" fill="${GOLDLICHT}" opacity=".15"/>`;
   S.teil({ id: "granusturm", de: "der Granusturm", syl: "GRA-nus-turm", it: "la torre Granus", itSyl: "TOR-re GRA-nus", en: "Granus Tower", x: fx(mm), y: fy(mm, 20),
-    kunst: `<g transform="translate(${-fx(mm)} ${-fy(mm, 20)})">${k}</g>`, tipp: "Der Granusturm ist über 1200 Jahre alt — er stammt noch aus der Zeit Karls des Großen." });
+    kunst: `<g transform="translate(${-fx(mm)} ${-fy(mm, 20)})">${k}</g>`, tipp: "Der Granusturm ist ein Turm aus der Zeit Karls des Großen. Er ist über 1200 Jahre alt." });
 }
 
 /* =====================================================================
@@ -420,9 +438,9 @@ const TREPPE = { m0: 22.6, m1: 47.4, pa: 32.4, pb: 37.6, h: 6.6 };
   k += `<path d="M${FP(mm - 1.2, 37.4)} L${FP(mm - 1.2, 39.8)} L${FP(mm + 1.2, 39.8)} L${FP(mm + 1.2, 37.4)} Z" fill="#3e4750"/><path d="M${FP(mm - 0.45, 37.8)} L${FP(mm - 0.45, 39.4)} L${FP(mm + 0.45, 39.4)} L${FP(mm + 0.45, 37.8)} Z" fill="#f0d79a" opacity=".7"/>`;
   k += `<path d="M${FP(mm - 1.1, 39.8)} C${FP(mm - 2, 41)} ${FP(mm - 0.8, 42.4)} ${FP(mm - 0.2, 42.8)} L${FP(mm + 0.2, 42.8)} C${FP(mm + 0.8, 42.4)} ${FP(mm + 2, 41)} ${FP(mm + 1.1, 39.8)} Z" fill="${SCHIEFER}"/>`;
   k += `<path d="M${FP(mm - 0.2, 42.8)} L${FP(mm, 45)} L${FP(mm + 0.2, 42.8)} Z" fill="#323a42"/><circle cx="${fx(mm)}" cy="${fy(mm, 45.3)}" r=".5" fill="${GOLD}"/><path d="M${fx(mm)} ${fy(mm, 45.6)} L${fx(mm)} ${fy(mm, 47.4)}" stroke="#7a6a3a" stroke-width=".28"/><path d="M${fx(mm)} ${fy(mm, 47.1)} l1.6 .22 l-.2 .5 l-1.4 -.1 Z" fill="#c9a24a"/>`;
-  k += `<path d="M${FP(m1 - 2, 0)} L${FP(m1, 0)} L${FP(m1, 30)} L${FP(m1 - 2, 30)} Z" fill="#ffe2ad" opacity=".3"/><path d="M${FP(m0, 0)} L${FP(m1, 0)} L${FP(m1, 30)} L${FP(m0, 30)} Z" fill="${GOLDLICHT}" opacity=".16"/>`;
+  k += `<path d="M${FP(m1 - 2.6, 0)} L${FP(m1, 0)} L${FP(m1, 30)} L${FP(m1 - 2.6, 30)} Z" fill="#ffc977" opacity=".45"/><path d="M${FP(m0, 0)} L${FP(m0 + 2.4, 0)} L${FP(m0 + 2.4, 30)} L${FP(m0, 30)} Z" fill="#4c5a6c" opacity=".26"/><path d="M${FP(m0, 0)} L${FP(m1, 0)} L${FP(m1, 30)} L${FP(m0, 30)} Z" fill="${GOLDLICHT}" opacity=".16"/>`;
   S.teil({ id: "marktturm", de: "der Marktturm", syl: "MARKT-turm", it: "la torre del mercato", itSyl: "TOR-re del mer-CA-to", en: "Market Tower", x: fx(mm), y: fy(mm, 18),
-    kunst: `<g transform="translate(${-fx(mm)} ${-fy(mm, 18)})">${k}</g>`, tipp: "Der Marktturm ist halbrund. Sein unterer Teil ist noch aus der Zeit Karls des Großen." });
+    kunst: `<g transform="translate(${-fx(mm)} ${-fy(mm, 18)})">${k}</g>`, tipp: "Der Marktturm ist ein halbrunder Turm an der Westseite des Rathauses. Oben hat er eine barocke Haube." });
 }
 
 /* =====================================================================
@@ -450,6 +468,7 @@ const TREPPE = { m0: 22.6, m1: 47.4, pa: 32.4, pb: 37.6, h: 6.6 };
     k += `<rect x="${x0}" y="${yB - 8.6}" width="${w}" height="8.6" fill="#5f656b"/><rect x="${x0 + 1}" y="${yB - 7.6}" width="${w - 2}" height="7.6" fill="${S.lg("laden", [[0, "#e9d9b0"], [1, "#9a8a6c"]])}"/>`;
     k += `<path d="M${x0} ${yB - 7.6} L${x1} ${yB - 7.6} L${x1 + 1.4} ${yB - 3.8} L${x0 - 1.4} ${yB - 3.8} Z" fill="#2f5d47"/>`;
     for (let x = x0; x < x1; x += 2.4) k += `<path d="M${r(x)} ${yB - 3.8} q1.2 1.2 2.4 0" fill="#2f5d47"/>`;
+    k += `<path d="M${x0} ${yB - 8.6} L${x0} ${yB - h} Q${r(x0 + w * 0.12)} ${yB - h - 4} ${r(x0 + w * 0.3)} ${yB - h - 5} L${r(x0 + w * 0.3)} ${yB - h - 9} Q${r(x0 + w / 2)} ${yB - h - 13} ${r(x1 - w * 0.3)} ${yB - h - 9} L${r(x1 - w * 0.3)} ${yB - h - 5} Q${r(x1 - w * 0.12)} ${yB - h - 4} ${x1} ${yB - h} L${x1} ${yB - 8.6} Z" fill="${GOLDLICHT}" opacity=".14"/><rect x="${x1 - 2.2}" y="${yB - h}" width="2.2" height="${h - 8.6}" fill="#ffd9a0" opacity=".25"/>`;
   }
   /* (2) schmales Putzhaus mit Traufe und zwei Gauben */
   {
@@ -458,6 +477,7 @@ const TREPPE = { m0: 22.6, m1: 47.4, pa: 32.4, pb: 37.6, h: 6.6 };
     k += `<path d="M${x0 - 0.6} ${yB - h} L${x0 + 2.4} ${yB - h - 7} L${x1 - 2.4} ${yB - h - 7} L${x1 + 0.6} ${yB - h} Z" fill="${DACH}"/>`;
     for (const x of [x0 + 4.4, x1 - 6.4]) k += `<path d="M${x} ${yB - h - 1} L${x} ${yB - h - 3.6} L${x + 1} ${yB - h - 4.6} L${x + 2} ${yB - h - 3.6} L${x + 2} ${yB - h - 1} Z" fill="#4a545e"/><rect x="${x + 0.4}" y="${yB - h - 3.4}" width="1.2" height="2" fill="#93a9b8"/>`;
     k += fenster(x0, x1, yB, h, 2, "#e8e0cc", glas);
+    k += `<path d="M${x0} ${yB - 8} L${x0} ${yB - h} L${x1} ${yB - h} L${x1} ${yB - 8} Z" fill="${GOLDLICHT}" opacity=".14"/>`;
     k += `<rect x="${x0}" y="${yB - 8}" width="${w}" height="8" fill="#7a6a54"/><rect x="${x0 + 1.4}" y="${yB - 7}" width="${w - 2.8}" height="7" fill="${S.lg("laden2", [[0, "#f0dcae"], [1, "#a8916a"]])}"/>`;
   }
   /* (3) Backsteinhaus mit Treppengiebel, dunkler */
@@ -469,8 +489,8 @@ const TREPPE = { m0: 22.6, m1: 47.4, pa: 32.4, pb: 37.6, h: 6.6 };
     k += `<rect x="${x0}" y="${yB - 8.6}" width="${w}" height="8.6" fill="#5f656b"/><rect x="${x0 + 1}" y="${yB - 7.6}" width="${w - 2}" height="7.6" fill="${S.lg("laden3", [[0, "#e9d9b0"], [1, "#9a8a6c"]])}"/>`;
     k += `<path d="M${x0} ${yB - 7.6} L${x1} ${yB - 7.6} L${x1 + 1.4} ${yB - 3.8} L${x0 - 1.4} ${yB - 3.8} Z" fill="#7a2a28"/>`;
     for (let x = x0; x < x1; x += 2.4) k += `<path d="M${r(x)} ${yB - 3.8} q1.2 1.2 2.4 0" fill="#7a2a28"/>`;
+    k += `<path d="M${x0} ${yB - 8.6} L${x0} ${yB - h} L${x0 + 1} ${yB - h} L${x0 + 1} ${yB - h - 10.4} L${x1} ${yB - h - 10.4} L${x1} ${yB - 8.6} Z" fill="${GOLDLICHT}" opacity=".12"/>`;
   }
-  k += `<path d="M252 141 L252 98 L279 98 L279 112 L296 110 L296 97 L321 97 L321 141.8 Z" fill="${GOLDLICHT}" opacity=".14"/>`;
   /* links: Bürgerhaus mit dem Café (Markise) und ein Eckhaus */
   k += `<path d="M18 141 L18 112 L44 110.4 L44 141 Z" fill="${S.lg("haus1", [[0, "#8e4a35"], [1, "#a85c41"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M16.6 112.4 L22 104.4 L42 103.4 L45 110.6 Z" fill="${DACH}"/>`;
@@ -481,8 +501,8 @@ const TREPPE = { m0: 22.6, m1: 47.4, pa: 32.4, pb: 37.6, h: 6.6 };
   k += `<rect x="0" y="132.4" width="44" height="8.6" fill="#4a3a2c"/><rect x="1.2" y="133.6" width="15" height="7.4" fill="${S.lg("cafe", [[0, "#ffd894"], [1, "#b07a3c"]])}"/><rect x="19.6" y="133.6" width="22" height="7.4" fill="${S.lg("cafe2", [[0, "#ffd894"], [1, "#b07a3c"]])}"/><rect x="17" y="133.6" width="2.2" height="7.4" fill="#2e2219"/>`;
   k += `<path d="M0 131.6 L44 131.6 L46 136 L-2 136 Z" fill="#7a2a28"/>`;
   for (let x = -2; x < 46; x += 2.4) k += `<path d="M${r(x)} 136 q1.2 1.3 2.4 0" fill="#7a2a28"/>`;
-  k += `<text x="22" y="134.6" font-size="2" text-anchor="middle" fill="#f6e7c4" font-family="Georgia,serif" font-style="italic">Café am Markt</text>`;
-  k += `<path d="M0 110.6 L44 103.4 L44 141 L0 141 Z" fill="${GOLDLICHT}" opacity=".12"/>`;
+  k += `<text x="31" y="134.6" font-size="2" text-anchor="middle" fill="#f6e7c4" font-family="Georgia,serif" font-style="italic">Café am Markt</text>`;
+  k += `<path d="M18 141 L18 112 L44 110.4 L44 132 L18 132 Z M0 141 L0 117 L18.4 117 L18.4 132 L0 132 Z" fill="${GOLDLICHT}" opacity=".13"/>`;
   S.teil({ id: "haus", de: "das Haus", syl: "HAUS", it: "la casa", itSyl: "CA-sa", en: "house", x: 0, y: 0, kunst: k,
     tipp: "Viele alte Häuser in Aachen sind aus Backstein. Die Fensterrahmen sind aus grauem Blaustein." });
 }
