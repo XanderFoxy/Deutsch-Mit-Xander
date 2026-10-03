@@ -71,7 +71,6 @@ const FALTEN = S.lg("falten", [[0, "#000", 0.22], [0.18, "#fff", 0.2], [0.38, "#
    KULISSE — Decke mit Downlights, Rückwand, Seitenwände, Steinboden
    ===================================================================== */
 const XL = -3.95, XR = 3.95, HD = 3.0;
-const zRandL = D * (1 - S0 * 1 / (VX / -XL) / 1), zRandR = zRandL;
 {
   const WO = WY(HD), WU = WY(0);
   /* Decke */
@@ -161,7 +160,7 @@ const WW = { x0: WX(-3.07), x1: WX(-1.12), y0: WY(2.44), y1: WY(1.2) };
     k += T(fx + 7.5, y + 5.2, 2.6, frist, "#ffd166", 'text-anchor="middle" font-weight="bold"');
   });
   /* Wandhalter */
-  for (const x of [x0 + 4, x1 - 4]) k += `<circle cx="${x}" cy="${y0 + 1.6}" r=".55" fill="#c9cfd4"/>`;
+  for (const x of [x0 + 1.3, x1 - 1.3]) k += `<circle cx="${x}" cy="${y0 + 1.3}" r=".55" fill="#c9cfd4"/>`;
   const unter = [
     ["wg_buergeramt", "das Bürgeramt", "BÜR-ger-amt", "l'ufficio anagrafe", "uf-FI-cio a-NA-gra-fe", "citizens' office", "In Deutschland meldet man sich beim Bürgeramt an."],
     ["wg_meldeamt", "das Meldeamt", "MEL-de-amt", "l'ufficio di registrazione", "uf-FI-cio di re-gi-stra-ZIO-ne", "registration office", "In Österreich heißt es Meldeamt oder Meldeservice."],
@@ -430,11 +429,11 @@ const SK = { x0: WX(0.95), x1: WX(2.08), y0: WY(2.44), y1: WY(1.76) };
 /* =====================================================================
    11 — DIE INFOTHEKE (Empfangstheke mit erhöhter Ablage)
    ===================================================================== */
-const TH = { X0: 0.78, X1: 3.3, z0: 1.02, z1: 1.46, H: 1.08 };
+const TH = { X0: 0.78, X1: 3.08, z0: 1.02, z1: 1.46, H: 1.08 };
 {
   const { X0, X1, z0, z1, H } = TH;
   const [ax, ay] = P((X0 + X1) / 2, 0, z1);
-  let k = schatten(ax, ay, 66, 2.2, 0.22);
+  let k = schatten(ax, ay, 52, 2, 0.22);
   /* Seitenfläche (links sichtbar) */
   k += poly([P(X0, 0, z1), P(X0, 0, z0), P(X0, H - 0.04, z0), P(X0, H - 0.04, z1)], "#c9cdd1");
   /* Front: weißer Mineralwerkstoff, unten Eichen-Sockel */
@@ -461,7 +460,7 @@ const TH = { X0: 0.78, X1: 3.3, z0: 1.02, z1: 1.46, H: 1.08 };
    ===================================================================== */
 {
   /* Bildschirm (zur Beraterin gedreht: wir sehen ihn schräg von hinten-links) */
-  const [ax, ay] = P(2.9, TH.H, 1.18);
+  const [ax, ay] = P(2.78, TH.H, 1.18);
   let k = schatten(0, 0, 7, .8, .3);
   k += `<ellipse cx="0" cy="-.5" rx="4.4" ry=".9" fill="#2a2e33"/><rect x="-.8" y="-6" width="1.6" height="5.6" fill="#3a3f45"/>`;
   k += `<path d="M-9 -22 L8 -23.5 L8.6 -6.6 L-8.6 -5.6 Z" fill="#1c1f23"/>`;
