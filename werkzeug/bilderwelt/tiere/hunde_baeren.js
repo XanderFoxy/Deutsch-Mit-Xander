@@ -1240,15 +1240,18 @@ function hyaene(T) {
   let s = "";
   /* ---- Ohren: groß, rund, hoch am Scheitel; außen zum Rand dunkelbraun; innen helle Sichel am Vorderrand mit Haarbüscheln ---- */
   const ohrF = [[143.8, -79], [143.6, -84.6], [145.6, -88.6], [148.8, -88.8], [150.8, -85.4], [150.6, -79.6]];
-  s += teil(T, "hohrF", ohrF, T.lg("hohrF", [[0, "#2a1f14"], [0.5, "#4e3e2a"], [1, "#6a5838"]]), haare(T, ohrF, 24, -95, 1, [["#1e160e", 1, 0.1, 0.5]], 20),
+  let o = teil(T, "hohrF", ohrF, T.lg("hohrF", [[0, "#2a1f14"], [0.5, "#4e3e2a"], [1, "#6a5838"]]), haare(T, ohrF, 24, -95, 1, [["#1e160e", 1, 0.1, 0.5]], 20),
     fellKante(T, [[143.6, -84.6], [145.6, -88.6], [148.8, -88.8], [150.8, -85.4]], 18, -0.2, -0.7, "#1e160e", 0.09, 0.6), { weich: 1.2 });
   const ohr = [[140.2, -77.4], [139.4, -82.6], [140.6, -87.4], [143.4, -90.2], [146.6, -89.8], [148.6, -86.6], [148.8, -81.6], [147.8, -77.6]];
   const sichel = [[146.4, -89.4], [148.2, -86.4], [148.4, -81.8], [147.4, -79.4], [146.8, -83.6], [145.6, -88]];
-  s += teil(T, "hohr", ohr, T.lg("hohr", [[0, "#2a1e12"], [0.3, "#4e3c26"], [0.7, "#7a6646"], [1, "#94805c"]]),
+  o += teil(T, "hohr", ohr, T.lg("hohr", [[0, "#2a1e12"], [0.3, "#4e3c26"], [0.7, "#7a6646"], [1, "#94805c"]]),
     T.form(sichel, T.lg("hohrI", [[0, "#e8dcbe"], [1, "#a8946e"]])) + haare(T, sichel, 26, -60, 1.3, [["#f6ecd4", 1, 0.08, 0.85]], 24, 0.3) +
     haare(T, ohr, 40, -95, 1, [["#2a1e12", 1, 0.09, 0.55], ["#b49e78", 0.6, 0.08, 0.5]], 24),
     fellKante(T, [[139.6, -81], [140.6, -87.4], [143.4, -90.2], [146.4, -89.8]], 22, -0.4, -0.7, "#1a120a", 0.09, 0.7) +
     fellKante(T, [[146.6, -89.4], [148.4, -86.2], [148.8, -81.4]], 16, 0.9, -0.3, "#efe2c4", 0.07, 0.85), { weich: 1.4 });
+
+  /* Kopf wird 14° gesenkt getragen (Nase tiefer, Stirn steiler) – Ohren folgen dem Scheitel */
+  s += `<g transform="translate(2.4 1.2)">${o}</g>`;
 
   /* ---- ferne Läufe: 15 % dunkler und kühler, oben Schlagschatten des Rumpfs, Füße dunkel ohne Flecken ---- */
   const fuss = (x0, x1) => `<rect x="${x0}" y="-12" width="${x1 - x0}" height="12" fill="${hoehenVerlauf(T, "hFuss", -11, -3, [[-11, "#2a1e10", 0], [-3, "#2a1e10", 0.35]])}"/>`;
@@ -1318,7 +1321,7 @@ function hyaene(T) {
   k += fleck(T, "!", 166, -70.6, 7, 2.4, "#fff4dc", 0.2, 26);   // Nasenrücken etwas heller (Licht von oben)
   k += haare(T, [[156, -66], [160, -72], [164, -71], [164, -56], [158, -56], [155, -60]], 50, 196, 1.1, [["#1a120a", 1, 0.1, 0.6], ["#c8b48e", 0.4, 0.08, 0.45]], 14);
   /* Stirn und Scheitel bräunlicher, Augenumgebung dunkler */
-  k += fleck(T, "!", 149, -78.6, 8, 2.6, "#5a4428", 0.35, 8) + fleck(T, "!", 157.4, -73, 4.6, 3, "#2a1c0e", 0.5, 20);
+  k += fleck(T, "!", 149, -78.6, 8, 2.6, "#5a4428", 0.35, 8) + fleck(T, "!", 158, -72.4, 5.4, 3.4, "#2a1c0e", 0.6, 24);
   /* Jochbogen: Lichtkante vom Auge zum Ohr; darunter KAUMUSKEL als große runde Wölbung: Licht oben, Kernschatten unten */
   k += fleck(T, "!", 150, -73.6, 6, 1.2, "#fff4dc", 0.3, -8);
   k += fleck(T, "!", 148, -66.4, 5.4, 3.2, "#fff4dc", 0.2, -12);
@@ -1336,9 +1339,9 @@ function hyaene(T) {
   ka += augeTier(T, 157.4, -73.2, 1.32, { iris: "#4a2c14", iris2: "#1a0e06", offen: 0.66, winkel: 10, wimpern: 9, lidstrich: 0.5, haut: 0.4 });
   if (T.fein !== false) ka += `<path d="M164.4 -60.6h.01M165.9 -60.8h.01M167.4 -61h.01M165.2 -61.8h.01M166.7 -62h.01" stroke="#000" stroke-width=".34" stroke-linecap="round" opacity=".5"/>`;
   ka += T.schnurrhaare ? T.schnurrhaare(165.8, -60.8, 5, 5, 12, 24, "#120d08", 0.08) : "";
-  s += teil(T, "hkopf", kopf, hoehenVerlauf(T, "hkopfF", -81, -54, [[-81, "#94805c"], [-70, "#ae976e"], [-60, "#b6a07a"], [-54, "#a08a66"]]), k, ka,
-    { weich: 3.6, einblendenX: [136.4, 141] });
-  return { svg: s, box: [26.6, -91, 173.2, 0], fuesse: [44, 57, 108, 124], kopf: [132, -92, 175, -50] };
+  s += `<g transform="rotate(14 140 -68)">` + teil(T, "hkopf", kopf, hoehenVerlauf(T, "hkopfF", -81, -54, [[-81, "#94805c"], [-70, "#ae976e"], [-60, "#b6a07a"], [-54, "#a08a66"]]), k, ka,
+    { weich: 3.6, einblendenX: [136.4, 141] }) + "</g>";
+  return { svg: s, box: [26.6, -90, 172, 0], fuesse: [44, 57, 108, 124], kopf: [132, -91, 174, -46] };
 }
 
 module.exports = [

@@ -155,6 +155,33 @@ function haarSaum(T, pts, n, len, farben, seite = 1, zug = 0, sz = 0.1) {
   }
   return eimer.map((d, i) => (d ? `<path d="${d}" fill="none" stroke="${farben[i][0]}" stroke-width="${farben[i][2]}" stroke-opacity="${farben[i][3]}" stroke-linecap="round"/>` : "")).join("");
 }
+/* Strähnen: Bündel aus m feinen, leicht gewellten, parallelen Haaren, die zur Spitze zusammenlaufen (Lanugo, Langhaar).
+   Pfad EINMAL in defs, zweimal benutzt: Schattenseite (versetzt) und Lichtseite. o: { m, ab (Haarabstand), welle,
+   streu, licht:[farbe,op,w], schatten:[farbe,op,w], dx, dy (Schattenversatz), sz (Anteil Szene) } */
+function straehnen(T, pts, n, winkel, len, o = {}) {
+  const m = o.m || 4, ab = o.ab || 0.06, we = o.welle ?? 0.12;
+  const ziel = Math.round(n * (T.fein === false ? (o.sz ?? 0.06) : 1));
+  if (ziel < 4) return "";
+  const [x0, y0, x1, y1] = T.box(pts), wf = typeof winkel === "function" ? winkel : () => winkel;
+  let d = "";
+  for (let got = 0, v = 0; got < ziel && v < ziel * 14; v++) {
+    const x = x0 + T.rnd() * (x1 - x0), y = y0 + T.rnd() * (y1 - y0);
+    if (!inPoly(x, y, pts)) continue;
+    const a = (wf(x, y) + (T.rnd() - 0.5) * (o.streu ?? 12)) * Math.PI / 180, L = len * (0.6 + T.rnd() * 0.8);
+    const c = Math.cos(a), si = Math.sin(a), nx = -si, ny = c, w = (T.rnd() - 0.5) * 2 * we * L;
+    const mm = Math.max(2, Math.round(m * (0.7 + T.rnd() * 0.6)));
+    for (let j = 0; j < mm; j++) {
+      const q = j - (mm - 1) / 2, off = q * ab * (0.7 + T.rnd() * 0.6), l = L * (1 - Math.abs(q) / mm * 0.6) * (0.9 + T.rnd() * 0.2);
+      const sx = x + nx * off, sy = y + ny * off;
+      d += `M${J(sx, sy)}c${J(c * l / 3 + nx * w, si * l / 3 + ny * w, c * l * 2 / 3 - nx * (w * 0.5 + off * 0.3), si * l * 2 / 3 - ny * (w * 0.5 + off * 0.3), c * l - nx * off * 0.7, si * l - ny * off * 0.7)}`;
+    }
+    got++;
+  }
+  const id = T.id("st" + (T._st = (T._st || 0) + 1));
+  T.def(`<path id="${id}" d="${d}"/>`);
+  const u = (f, dx, dy) => `<use href="#${id}" fill="none" stroke="${f[0]}" stroke-opacity="${f[1]}" stroke-width="${f[2]}" stroke-linecap="round"${dx || dy ? ` transform="translate(${Z2(dx)} ${Z2(dy)})"` : ""}/>`;
+  return (o.schatten ? u(o.schatten, o.dx ?? 0.04, o.dy ?? 0.07) : "") + (o.licht ? u(o.licht, 0, 0) : "");
+}
 /* Federschuppen: versetzte Reihen kleiner Bögen (Federspitzen) in der Fläche pts.
    o: { b (Breite), h (Reihenabstand), t (Wölbung), farbe, w (Strich), op, winkel f(x,y) (Neigung, Grad),
         p f(x,y) → Wahrscheinlichkeit 0..1, sz (Anteil in der Szene, Standard 0) } */
@@ -954,10 +981,9 @@ function robbeBaby(T) {
   n += weich([[22, -9], [44, -11.6], [62, -10], [72, -11.4], [64, -5], [44, -3.6], [24, -4]], "#b5c2d3", 0.65, 2.6);
   n += weich([[30, -1.6], [50, -1.8], [64, -4.6], [50, -0.6], [30, -0.4]], "#dce6f0", 0.75, 0.8);
   /* Fettring hinter dem Kopf: Kerbe kühl (AO), darüber Glanzwulst; zwei weiche Querwülste an der Flanke */
-  n += weich([[67.6, -38], [70, -33], [72.6, -26], [74, -18], [71.6, -22], [69.4, -29], [67.6, -34]], "#9fb0c4", 0.55, 1.2);
-  n += weich([[65, -37.6], [67.6, -32], [69.6, -25], [70.6, -18], [68.4, -22], [66.4, -29]], "#ffffff", 0.55, 1);
-  n += weich([[44, -30.4], [46.6, -22], [47.6, -13], [45.6, -19], [44.2, -26]], "#b8c4d3", 0.45, 1.2) + weich([[41.6, -30], [44, -22], [45.2, -13], [43.4, -19]], "#ffffff", 0.5, 1);
-  n += weich([[30, -26], [32.4, -18], [33, -10], [31.4, -15]], "#b8c4d3", 0.35, 1.2);
+  n += weich([[68, -39], [70.4, -33], [72.8, -26], [74, -18], [71.6, -22], [69.4, -29], [67.8, -34]], "#9fb0c4", 0.5, 1.6);
+  n += weich([[64.4, -37.6], [67, -32], [69, -25], [70, -18], [67.6, -22], [65.6, -29]], "#ffffff", 0.45, 1.6);
+  n += weich([[44, -30.4], [47, -22], [48, -13], [45, -19], [43.6, -26]], "#b8c4d3", 0.3, 2.4) + weich([[40, -30], [43, -22], [44, -13], [41, -19]], "#ffffff", 0.35, 2.4);
   /* AO unter der Vorderflosse und am Übergang zur Hinterflosse */
   n += weich([[60, -12], [70, -10.4], [74, -6], [62, -6]], "#8fa0b6", 0.5, 1.6) + weich([[12, -12], [18, -15], [20, -8], [14, -6]], "#8fa0b6", 0.5, 1.4);
   /* Kopf: Stirnwölbung im Licht, Augenmulde kühl, Kinnschatten, Schnurrhaarpolster wulstig mit Glanz */
@@ -969,10 +995,9 @@ function robbeBaby(T) {
   /* Lanugo: weiche Strähnen in Bündeln (Wuchs: Schnauze → Kopf → hinten, um den Fettring, Flanke nach hinten unten);
      Lichtseite zart, Schattenseite deutlicher */
   const wuchs = (x, y) => (x > 84 ? 192 : x > 70 ? 182 + (y + 34) * 1.6 : x > 62 ? 132 - (y + 30) * 1.2 : 170 - (y + 18) * 0.9);
-  const unten = rumpf.filter((p) => p[1] > -24 || p[0] < 24);
-  n += buschel(T, rumpf.filter((p) => p[0] < 86), 130, wuchs, 2.6, 0.28, ["#c9d3df", 0.3], ["#ffffff", 0.55], 18, 0.03);
-  n += haare(T, rumpf.filter((p) => p[0] < 88), 700, wuchs, 1.6, [["#ffffff", 1, 0.055, 0.5], ["#e7ebf0", 0.6, 0.055, 0.35]], 24, 0.4, 0.02);
-  n += haare(T, [[14, -6], [30, -10], [50, -12], [70, -12], [80, -20], [76, -12], [62, -3.6], [40, -0.6], [20, -2]], 300, wuchs, 1.6, [["#b9c5d3", 1, 0.06, 0.45]], 24, 0.4, 0.03);
+  const unten = [[14, -6], [30, -10], [50, -12], [66, -12], [76, -17], [78, -12], [62, -3.2], [40, -0.4], [20, -1.6]];
+  n += straehnen(T, rumpf.filter((p) => p[0] < 88), 200, wuchs, 1.9, { m: 4, ab: 0.07, licht: ["#ffffff", 0.7, 0.05], schatten: ["#b9c6d5", 0.32, 0.055], sz: 0.07 });
+  n += straehnen(T, unten, 70, wuchs, 1.8, { m: 4, ab: 0.07, licht: ["#e2e8ef", 0.35, 0.05], schatten: ["#8b9db3", 0.35, 0.055], sz: 0.07 });
   s += `<g filter="${vol(T, "rrumpf", { weich: 4.5, tiefe: 5, umgebung: 0.38, schatten: "#20304a" })}">${silhouette(T, kD, fell, n)}</g>`;
   /* Fellsaum: oben fast weiß in den Hintergrund, unten kühl grau – keine glatte Vektorkante */
   s += haarSaum(T, rumpf.slice(0, 14), 220, 1.2, [["#ffffff", 1, 0.06, 0.85], ["#e6eaef", 0.6, 0.06, 0.8]], -1, -0.5);

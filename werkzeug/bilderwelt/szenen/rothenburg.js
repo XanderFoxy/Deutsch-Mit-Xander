@@ -318,7 +318,8 @@ const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 2.5); return { X, D, g: ste
   k += `<path d="M${r(xm - 4)} ${r(yb)} L${r(xm - 4)} ${r(ab + 3)} Q${r(xm - 4)} ${r(ab - 1)} ${r(xm)} ${r(ab - 2)} Q${r(xm + 4)} ${r(ab - 1)} ${r(xm + 4)} ${r(ab + 3)} L${r(xm + 4)} ${r(yb)} Z" fill="#2a221c"/>`;
   /* Schießscharten oben, Dunst aus dem Taubertal legt sich über den fernen Turm */
   for (const dx of [-1.8, 1.8]) { const [fx, fy] = Q(dx, 15.4); k += `<rect x="${r(fx - 0.3)}" y="${r(fy)}" width=".6" height="1.6" fill="#2e261e"/>`; }
-  k += `<rect x="${r(x0 - 2)}" y="${r(ys - 3)}" width="${r(x1 - x0 + 4)}" height="${r(yb - ys + 3)}" fill="${S.lg("taldunst2", [[0, "#f6d6b4", 0.2], [1, "#f6d6b4", 0.5]])}"/>`;
+  S.def(`<clipPath id="${S.id("kbclip")}"><rect x="${r(x0)}" y="${r(yt)}" width="${r(x1 - x0)}" height="${r(yb - yt)}"/><path d="M${r(x0 - 1.6)} ${r(yt)} L${r(xm)} ${r(ys)} L${r(x1 + 1.6)} ${r(yt)} Z"/></clipPath>`);
+  k += `<rect clip-path="url(#${S.id("kbclip")})" x="${r(x0 - 2)}" y="${r(ys - 3)}" width="${r(x1 - x0 + 4)}" height="${r(yb - ys + 3)}" fill="${S.lg("taldunst2", [[0, "#f6d6b4", 0.25], [1, "#f6d6b4", 0.55]])}"/>`;
   S.teil({ id: "kobolzellertor", de: "das Kobolzeller Tor", syl: "KO-bol-zel-ler TOR", it: "la porta Kobolzell", itSyl: "POR-ta KO-bol-zell", en: "Kobolzell Gate", x: 0, y: 0, kunst: k,
     tipp: "Das Kobolzeller Tor (1360) ist ein Tor in der Stadtmauer. Hinter ihm geht es steil hinunter ins Taubertal." });
 }
@@ -360,7 +361,9 @@ const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 2.5); return { X, D, g: ste
     for (const w of [-0.8, 1.2, 3.4, 5.4]) for (const [h0, h1] of [[1.2, 2.3], [3.8, 5.0]]) k += fensterQ(Qq(w, h1), Qq(w + 0.9, h1), Qq(w + 0.9, h0), Qq(w, h0), { rb: 0.3, licht: rnd() < 0.35, abend: rnd() < 0.3 });
     k += `<path d="${pz(Qq(-2, 0), Qq(7, 0), Qq(7, 6.5), Qq(-2, 6.5))}" fill="${SCHATTEN}" opacity=".22"/>`;
     /* Dunst aus dem Tal über dem Dach */
-    k += `<path d="${pz(Qq(-6, 0), Qq(11, 0), Qq(11, 14, 6), Qq(-6, 14, 6))}" fill="#f6d8b6" opacity=".3"/>`;
+    k += `<path d="${pz(Qq(-2.3, 6.5), Qq(7.3, 6.5), Qq(7.3, 10.5, 4), Qq(-2.3, 10.5, 4))}" fill="#f6d8b6" opacity=".3"/>`;
+    { let d = ""; for (let i = 1; i < 6; i++) { const H = 6.5 + 4 * i / 6, dt = 4 * i / 6, q = strecke(Qq(-2.3, H, dt), Qq(7.3, H, dt)); if (q) d += `M${pt(q[0])} L${pt(q[1])} `; } k += `<path d="${d}" stroke="#7a3a24" stroke-width=".3" opacity=".5"/>`; }
+    { const q = strecke(Qq(-2.3, 10.5, 4), Qq(7.3, 10.5, 4)); if (q) k += `<path d="M${pt(q[0])} L${pt(q[1])}" stroke="#6e2a18" stroke-width=".7"/>`; }
   }
   S.teil({ id: "haus", de: "das Haus", syl: "HAUS", it: "la casa", itSyl: "CA-sa", en: "house", x: 0, y: 0, kunst: k,
     tipp: "Die Häuser an der Kobolzeller Steige stehen immer weiter unten – die Gasse ist sehr steil." });
@@ -658,7 +661,7 @@ const LL = -8;
   k += `<path d="M${pt(PS(-6, 2.5, 0))} L${pt(PS(TK, 2.5, 0))}" stroke="#575046" stroke-width=".9" opacity=".7"/>`;
   k += `<path d="M${L.map(pt).join(" L")}" stroke="#cdbb98" stroke-width=".7" fill="none"/><path d="M${R.map(pt).join(" L")}" stroke="#cdbb98" stroke-width=".7" fill="none"/>`;
   /* Mäuerchen an der Platzkante rechts: der Platz bleibt eben, die Steige sinkt daneben ab */
-  k += `<path d="${poly(PS(-6, 0, 0), PS(0, 0, 0), PS(0, 0, 0.39 + 0.5), PS(-6, 0, 0.5))}" fill="#bfa982"/><path d="M${pt(PS(-6, 0, 0.5))} L${pt(PS(0, 0, 0.89))}" stroke="#e2d2b2" stroke-width=".5"/>`;
+  k += `<path d="${poly(PS(-6, 0, 0), PS(0, 0, 0), PS(0, 0, 0.39 + 0.22), PS(-6, 0, 0.22))}" fill="#9c8a6c"/><path d="M${pt(PS(-6, 0, 0.22))} L${pt(PS(0, 0, 0.61))}" stroke="#cdbb98" stroke-width=".5"/>`;
   /* die Kante: heller Grat, dahinter warmer Dunst aus dem Tal */
   k += `<path d="M${pt(PS(TK, 5, 0))} L${pt(PS(TK, 0, 0))}" stroke="#ddcdaa" stroke-width=".8"/>`;
   k += `<path d="${poly(...L, ...R.slice().reverse())}" fill="${SCHATTEN}" opacity=".26"/>`;
@@ -717,14 +720,22 @@ const LL = -8;
   }
   /* Bäckerzeichen: schmiedeeiserner Ausleger mit vergoldeter Brezel unter einer Krone */
   {
-    const [x0, y0] = P(LL, 6.5, 3.9), [x1] = P(-6.6, 6.5, 3.9);
-    k += `<rect x="${r(x0 - 1)}" y="${r(y0 - 5)}" width="2.2" height="10" fill="${EISEN}"/><path d="M${r(x0)} ${r(y0)} L${r(x1)} ${r(y0)}" stroke="${EISEN}" stroke-width="1.2"/>`;
-    k += `<path d="M${r(x0)} ${r(y0 + 5)} Q${r((x0 + x1) / 2)} ${r(y0 + 4)} ${r(x1 - 3)} ${r(y0 + 0.5)}" stroke="${EISEN}" stroke-width=".7" fill="none"/>`;
-    for (const t of [0.3, 0.6]) { const x = x0 + (x1 - x0) * t; k += `<path d="M${r(x)} ${r(y0)} q-2.4 -3.6 0 -5.2 q2.4 1.2 .5 3" stroke="${EISEN}" stroke-width=".55" fill="none"/>`; }
-    const cx = x1 - 4, cy = y0 + 13, q = (dx, dy) => `${r(cx + dx * 4.6)} ${r(cy + dy * 4.6)}`;
-    k += `<line x1="${r(cx)}" y1="${r(y0)}" x2="${r(cx)}" y2="${r(cy - 11)}" stroke="${EISEN}" stroke-width=".5"/>`;
-    k += `<path d="M${r(cx - 4)} ${r(cy - 7)} L${r(cx - 4)} ${r(cy - 11)} L${r(cx - 2)} ${r(cy - 8.6)} L${r(cx)} ${r(cy - 11.6)} L${r(cx + 2)} ${r(cy - 8.6)} L${r(cx + 4)} ${r(cy - 11)} L${r(cx + 4)} ${r(cy - 7)} Z" fill="${GOLD}" stroke="#8a6a2a" stroke-width=".3"/>`;
-    k += `<path d="M${q(-1.5, -0.4)} C${q(-2.1, -1.6)} ${q(-1.2, -2.6)} ${q(-0.2, -2.1)} L${q(0.5, -0.9)} M${q(1.5, -0.4)} C${q(2.1, -1.6)} ${q(1.2, -2.6)} ${q(0.2, -2.1)} L${q(-0.5, -0.9)} M${q(-1.5, -0.4)} Q${q(0, 0.5)} ${q(1.5, -0.4)}" stroke="${GOLD}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+    /* Ausleger knapp über dem Ladenschild (nicht hinter Laden und Blumenkasten), Zeichen hängt an zwei Ketten am Ende */
+    const [x0, y0] = P(LL, 6.5, 3.62), [x1] = P(-6.5, 6.5, 3.62);
+    k += `<rect x="${r(x0 - 0.9)}" y="${r(y0 - 3.5)}" width="1.8" height="8" fill="${EISEN}"/><path d="M${r(x0)} ${r(y0)} L${r(x1)} ${r(y0)}" stroke="${EISEN}" stroke-width="1.1"/>`;
+    k += `<path d="M${r(x0)} ${r(y0 + 4.2)} Q${r(x0 + (x1 - x0) * 0.45)} ${r(y0 + 3.4)} ${r(x1 - 6)} ${r(y0 + 0.4)}" stroke="${EISEN}" stroke-width=".7" fill="none"/>`;
+    for (const t of [0.28, 0.55]) { const x = x0 + (x1 - x0) * t; k += `<path d="M${r(x)} ${r(y0)} q-2 -3 0 -4.4 q2 1 .4 2.6" stroke="${EISEN}" stroke-width=".5" fill="none"/>`; }
+    k += `<circle cx="${r(x1)}" cy="${r(y0)}" r=".8" fill="${EISEN}"/>`;
+    const cx = x1 - 2.6, sc = 3.3, top = y0 + 2.2, q = (dx, dy) => `${r(cx + dx * sc)} ${r(top + 4.4 + 9 + dy * sc)}`;
+    /* Ketten */
+    k += `<path d="M${r(cx - 2.6)} ${r(y0 + 0.4)} L${r(cx - 2.6)} ${r(top + 0.6)} M${r(cx + 2.6)} ${r(y0 + 0.4)} L${r(cx + 2.6)} ${r(top + 0.6)}" stroke="#3a3530" stroke-width=".35" stroke-dasharray=".5 .3"/>`;
+    /* Krone (vergoldet) und darunter die Brezel; dunkler Abdruck dahinter für Tiefe */
+    const krone = (dx, dy, f, st) => `<path d="M${r(cx - 3 + dx)} ${r(top + 4.2 + dy)} L${r(cx - 3.2 + dx)} ${r(top + 0.8 + dy)} L${r(cx - 1.5 + dx)} ${r(top + 2.6 + dy)} L${r(cx + dx)} ${r(top + dy)} L${r(cx + 1.5 + dx)} ${r(top + 2.6 + dy)} L${r(cx + 3.2 + dx)} ${r(top + 0.8 + dy)} L${r(cx + 3 + dx)} ${r(top + 4.2 + dy)} Z" fill="${f}"${st}/>`;
+    const brezelD = `M${q(-1.5, -0.4)} C${q(-2.1, -1.6)} ${q(-1.2, -2.6)} ${q(-0.2, -2.1)} L${q(0.5, -0.9)} M${q(1.5, -0.4)} C${q(2.1, -1.6)} ${q(1.2, -2.6)} ${q(0.2, -2.1)} L${q(-0.5, -0.9)} M${q(-1.5, -0.4)} Q${q(0, 0.5)} ${q(1.5, -0.4)}`;
+    k += `<g transform="translate(.8 .6)" opacity=".35">${krone(0, 0, "#1a140c", "")}<path d="${brezelD}" stroke="#1a140c" stroke-width="2" fill="none" stroke-linecap="round"/></g>`;
+    k += krone(0, 0, GOLD, ` stroke="#8a6a2a" stroke-width=".25"`) + `<circle cx="${r(cx)}" cy="${r(top - 0.3)}" r=".5" fill="${GOLD}"/>`;
+    k += `<path d="M${r(cx)} ${r(top + 4.2)} L${r(cx)} ${r(top + 6)}" stroke="#3a3530" stroke-width=".35"/>`;
+    k += `<path d="${brezelD}" stroke="${GOLD}" stroke-width="2" fill="none" stroke-linecap="round"/><path d="${brezelD}" stroke="#fff3c0" stroke-width=".4" fill="none" stroke-linecap="round" opacity=".5" transform="translate(-.3 -.4)"/>`;
   }
   const sb = pos.find((p2) => p2[0] === "schneeball"), br = pos.find((p2) => p2[0] === "brezel");
   S.teil({ id: "baeckerei", de: "die Bäckerei", syl: "bä-cke-REI", it: "il panificio", itSyl: "pa-ni-FI-cio", en: "bakery", x: 0, y: 0, kunst: k,

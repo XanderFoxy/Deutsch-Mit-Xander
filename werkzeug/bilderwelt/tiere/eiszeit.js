@@ -1051,10 +1051,10 @@ function wollnashorn(T) {
 function riesenhirsch(T) {
   const fein = T.fein !== false;
   GEN = fein ? 10 : 1;
-  SZ = !fein; SZMIN = 0.3; FLMIN = 0.25;
+  SZ = !fein; SZMIN = 0.36; FLMIN = 0.3;
   const S0 = "#000", HL = "#fff4e0", DUNKEL = "#4a3524", ELF = "#ddcfa8";
   /* Fell: Kachelmuster (dunkle + helle Haare) je Wuchsrichtung, Strähnen mit Einzelhaaren, Töne dunkel → hell */
-  const MD = [["r_d", 9, 12, 34, 3.2, [["#3a2816", 1, 0.2, 0.34], ["#5a4228", 1, 0.18, 0.3]]]];
+  const MD = [["r_d", 9, 12, 30, 3.2, [["#3a2816", 1, 0.2, 0.34], ["#5a4228", 1, 0.18, 0.3]]]];
   const MH = [["r_h", 11, 11, 16, 3, [["#f2e0bc", 1, 0.17, 0.34]]]];
   const MDk = [[...MD[0].slice(0, 6), 0.45]], MHk = [[...MH[0].slice(0, 6), 0.45]];
   const TON = ["#2a1c10", "#3e2c1c", "#56402a", "#6e5638", "#8a6e4a", "#a8885e", "#c4a67a", "#dcc49c"];
@@ -1093,7 +1093,7 @@ function riesenhirsch(T) {
   const hinterbein = (dx) => [[118, -186], [112, -164], [107, -142], [103.6, -128], [102, -120], [101.6, -116], [100.6, -108], [97, -102], [90, -97], [82, -92.6], [74, -88.6], [68.8, -85.4], [66.6, -81], [66.2, -74],
     [67.6, -60], [69, -44], [70.6, -30], [71.4, -25], [73, -20.6], [75.6, -15.6], [78, -11], [78.8, -9.6], [85.4, -0.6], [84.8, 0, 1], [71.4, 0, 1], [70.2, -2.8],
     [69.4, -6.6], [66.8, -11], [63.8, -16.6], [62.4, -20.6], [61.8, -27], [60.6, -40], [58.6, -58], [57, -70], [55.6, -76], [52.6, -79.8], [49.4, -81.8],
-    [47.2, -84.6], [46.6, -89], [45.6, -96], [43.4, -105], [40.2, -114.6], [36.4, -124], [31, -135], [25, -147], [20, -159], [17.4, -170], [18.6, -180], [26, -190], [60, -194]].map(([x, y, h]) => [x + dx, y, h]);
+    [47.2, -84.6], [46.6, -90], [45.6, -97], [43.4, -107], [40, -117], [35.6, -127], [30.4, -137], [25, -147], [20.4, -158], [17.4, -170], [18.6, -180], [26, -190], [60, -194]].map(([x, y, h]) => [x + dx, y, h]);
   const VN = vorderbein(0), HN = hinterbein(0);
 
   /* Spalthuf: Vorderwand mit Hornstreifen und Glanz, Tragrand heller, V-Spalt mit Eigenschatten, Ballen */
@@ -1187,7 +1187,7 @@ function riesenhirsch(T) {
     return `<path d="${dr}" fill="none" stroke="#1c140c" stroke-width=".3" opacity="${dunkel ? 0.1 : 0.13}"/>` +
       `<path d="${dl}" fill="none" stroke="#120c06" stroke-width=".45" opacity=".22"/>` +
       `<path d="${dr.replace(/M([\d.-]+)/g, (m0, v) => "M" + R(+v + 0.9))}" fill="none" stroke="#f6ead0" stroke-width=".3" opacity="${dunkel ? 0.05 : 0.1}"/>` +
-      `<path d="${dp}" stroke="#20160c" stroke-width="1.1" stroke-linecap="round" opacity=".35"/><path d="${dq}" stroke="#e8dcc0" stroke-width=".8" stroke-linecap="round" opacity=".35"/>`;
+      `<path d="${dp}" stroke="#20160c" stroke-width=".9" stroke-linecap="round" opacity=".22"/><path d="${dq}" stroke="#e8dcc0" stroke-width=".7" stroke-linecap="round" opacity=".22"/>`;
   };
   /* polierte Enden: Elfenbein nach außen (radial um den Schaufelansatz) */
   const spitzenElf = (G, op) => `<rect x="${R(G.P[0][0] - 130)}" y="${R(G.P[0][1] - 110)}" width="140" height="112" fill="${T.rg("elf", [[0, ELF, 0], [0.62, ELF, 0], [0.86, ELF, 0.75], [1, "#efe6cc"]], 0.82, 0.98, 0.95)}" opacity="${op}"/>`;
@@ -1261,7 +1261,7 @@ function riesenhirsch(T) {
   const top = (x) => bei(ruecken, Math.max(26, Math.min(279, x)));
   const lr = (x, y) => (x > 172 && x < 252 && y < -194 ? 0.05 : Math.max(0, Math.min(1, zyl(Math.max(0, (y - top(x)) / (-120 - top(x)))) * 0.82)));
   const flussR = (x, y) => (x > 236 ? 96 : x > 200 ? 128 : x > 60 ? 150 + (y + 200) * 0.2 : 108);
-  k += LOCKEN(T, [[30, -192], [100, -196], [170, -200], [200, -194], [236, -196], [250, -200], [234, -126], [150, -122], [100, -126], [60, -116], [36, -128], [22, -170]], 26,
+  k += LOCKEN(T, [[30, -192], [100, -196], [170, -200], [200, -194], [236, -196], [250, -200], [234, -126], [150, -122], [100, -126], [60, -116], [36, -128], [22, -170]], 22,
     flussR, 4, 0.9, lr, TON, { streuung: 12, kruemmung: 0.14, szene: 0.08, szeneB: 2, haare: 2, hb: 0.16, jitter: 0.5 });
   /* Buckel: Haar 2–3× länger, nach hinten anliegend, 3 Töne geschichtet; Kontur nur durch weiche Spitzen gebrochen */
   k += LOCKEN(T, buckel, 12, 172, 9, 0.8, (x, y) => Math.max(0, Math.min(1, (-196 - y) / 30)), TONB, { streuung: 8, kruemmung: 0.12, szene: 0.15, haare: 2, hb: 0.2 });
@@ -1269,23 +1269,23 @@ function riesenhirsch(T) {
   /* Kehlmähne (Winterfell): 8–15 cm, hängend, geschichtet, Wurzeln dunkler */
   const mane = [[kw([4, 16])[0], kw([4, 16])[1]], [292, -232], [296, -210], [294, -190], [288, -170], [282, -176], [284, -200], [280, -224]];
   GEN = 1;
-  k += FELL(T, mane, 38, (x, y) => 96 - (x - 286) * 1.2, 10, (x, y) => 0.4 + (296 - x) / 40 + (y + 200) / 120, [["#5a4430", 0.55, 0.3], ["#8a6e4e", 0.5, 0.28], ["#b49a74", 0.5, 0.26], ["#dcc8a4", 0.5, 0.24]], { streuung: 8, kruemmung: 0.12, szene: 0.1 });
+  k += FELL(T, mane, 32, (x, y) => 96 - (x - 286) * 1.2, 10, (x, y) => 0.4 + (296 - x) / 40 + (y + 200) / 120, [["#5a4430", 0.55, 0.3], ["#8a6e4e", 0.5, 0.28], ["#b49a74", 0.5, 0.26], ["#dcc8a4", 0.5, 0.24]], { streuung: 8, kruemmung: 0.12, szene: 0.1 });
   GEN = fein ? 10 : 1;
   k += LOCKEN(T, mane, 12, (x, y) => 98 - (x - 286) * 1.4, (x, y) => 9 + (y + 230) * -0.06, 2, (x, y) => 0.45 + (296 - x) / 40 + (y + 200) / 120, TON.slice(2), { streuung: 8, kruemmung: 0.18, szene: 0.15, szeneB: 1.8, haare: 2, hb: 0.22 });
   /* Konturen gebrochen: Rücken, Bauch, Keule, Brust */
   k += LOCKENLINIE(T, ruecken.slice(0, 10), 14, [-0.4, 0.8], (x) => (x < 60 ? 130 : 168), 2.2, 0.5, () => 0.85, TON.slice(4), { streuung: 12, szene: 0.1 });
-  k += LOCKENLINIE(T, bauch.slice(1, 12), 15, [-1.6, 0.2], 94, 2.4, 0.55, () => 0.3, TON.slice(0, 5), { streuung: 14, szene: 0.1 });
+  k += LOCKENLINIE(T, bauch.slice(1, 12), 12, [-1.6, 0.2], 94, 2.4, 0.55, () => 0.3, TON.slice(0, 5), { streuung: 14, szene: 0.1 });
   /* Präputialpinsel: aus einem kleinen Hautwulst, 10–13 cm, braunschwarz, gebündelt, unten aufgefächert */
   k += F([[146, -121], [151, -116.6], [156, -118.4], [157, -121]], "#4a3828");
   k += LOCKEN(T, [[148.6, -118.6], [153.6, -118], [152.6, -116.4], [149.6, -116.6]], 6, (x) => 92 + (x - 151) * 5, 11, 1, () => 0.3, TONB, { streuung: 6, kruemmung: 0.2, szene: 0.4, haare: 2, hb: 0.18 });
   s += `<g filter="${T.volumen("rumpf", { weich: 20, tiefe: 5, umgebung: 0.3 })}">${k}</g>`;
 
   /* ---------- nahe Beine: nach dem Rumpf, oben weich ausgeblendet ---------- */
-  s += bein(HN, false, false, WEICH(T,
+  s += bein(HN, false, false, WEICH(T, FO([[39.4, -180], [41.4, -180], [44.6, -150], [45.4, -130], [43.6, -130], [42.4, -150]], S0, 0.4) +
+    FO([[42, -180], [44, -180], [46.8, -150], [47.4, -132], [46, -132], [44.8, -150]], HL, 0.16), 0.8) + WEICH(T,
     /* Keule: runde Lichtform oben hinten, Muskelfurche (Bizeps / Halbsehnenmuskel), Unterkante des Bizeps als weicher Schatten,
        Kniescheibe hell, Unterschenkel im Schatten */
-    FO([[37, -178], [41, -178], [44, -150], [45, -128], [41.4, -128], [38, -152]], S0, 0.26) + FO([[42, -178], [45, -176], [47.4, -150], [48, -130], [46, -130], [44.6, -152]], HL, 0.14) +
-    FO([[46, -128], [70, -126], [100, -118], [96, -108], [70, -112], [48, -116]], S0, 0.26) + FO([[96, -128], [103, -124], [102, -112], [96, -116]], HL, 0.22) +
+    FO([[46, -128], [70, -124], [98, -118], [94, -112], [70, -116], [48, -120]], S0, 0.16) + FO([[97, -126], [102, -123], [101, -116], [97, -118]], HL, 0.18) +
     FO([[60, -112], [96, -108], [92, -98], [70, -90], [52, -98]], S0, 0.2), 2.2) + sehnenH);
   s += bein(VN, true, false, WEICH(T, FO([[228, -124], [256, -124], [256, -112], [232, -108]], S0, 0.35), 2.2) + sehnenV);
   /* Schwanz: 14 cm, in die Rückenlinie gesetzt, behaart mit Haarspitzen, hellere Unterseite; heller Spiegel */
@@ -1296,19 +1296,20 @@ function riesenhirsch(T) {
 
   /* ---------- Kopf (eigene Volumengruppe) ---------- */
   const dK = glatt(kopfL);
-  const kopfG = T.lg("kopf", [[0, "#dcc8a4"], [0.4, "#c8b08a"], [0.75, "#a68a66"], [1, "#8a7052"]], 0, -4, 0, 24, UB);
+  const kopfG = T.lg("kopf", [[0, "#d4be98"], [0.35, "#bea47c"], [0.7, "#987c5a"], [1, "#7a6248"]], 0, -4, 0, 24, UB);
   const kl = WEICH(T,
     /* Nasenrücken gerade mit Glanzlinie; Gesichtsleiste helle Kante + Schattenrinne; Masseter rund; Stirn hell; Maul grauer */
     FO([[24, -1.4], [40, 1.8], [51, 4.8], [51, 6.6], [40, 3.6], [24, 0.6]], HL, 0.45) + FO([[16, 10.4], [28, 10.6], [38, 12.2], [38, 13.6], [26, 12.6], [16, 12.4]], HL, 0.32) +
     FO([[16, 13], [28, 13.2], [40, 14.4], [40, 16], [26, 15], [16, 15]], S0, 0.24) + FO([[6, 13], [14, 11.6], [21, 14], [21, 20], [14, 22], [7, 19]], HL, 0.2) +
     FO([[-2, 2], [8, -2], [18, -2], [14, 2], [4, 6]], HL, 0.3) + FO([[44, 8], [56, 9], [59, 16], [54, 21], [44, 20]], "#4a3c30", 0.3) +
-    FO([[24, 20], [44, 21], [52, 22.6], [44, 23.2], [24, 23.4]], S0, 0.25) + FO([[2, 14], [10, 18], [16, 22], [8, 20]], S0, 0.24), 0.8);
+    FO([[24, 18], [44, 19.6], [52, 21.6], [44, 23.2], [24, 23.4]], S0, 0.3) + FO([[2, 14], [10, 18], [16, 22], [8, 20]], S0, 0.24) +
+    FO([[15, 1], [27, 2], [28, 8], [20, 10.4], [14, 7]], S0, 0.2) + FO([[34, 3], [52, 6.6], [54, 10], [38, 9]], "#6a5a4a", 0.3), 0.8);
   let kk = K(T, dK, kopfG, { rand: false, vol: false, innen: kl +
     HAARZONEN(T, null, [[[[-10, -10], [62, -10], [62, 30], [-10, 30]], 182, 0.75]], [[...MD[0].slice(0, 6), 0.4]]) +
     HAARZONEN(T, null, [[[[-10, -10], [62, -10], [62, 12], [-10, 12]], 182, 0.6]], [[...MH[0].slice(0, 6), 0.4]]) });
   /* Haarstrom im Gesicht: kurz, von der Nase nach hinten; um das Auge herum strahlenförmig */
   const ax = 21.4, ay = 4.2;
-  kk += FELL(T, kopfL.slice(1, 26), 54, (x, y) => (Math.hypot(x - ax, y - ay) < 8 ? Math.atan2(y - ay, x - ax) * 180 / Math.PI : y > 18 ? 186 : 178), 1.6,
+  kk += FELL(T, kopfL.slice(1, 26), 48, (x, y) => (Math.hypot(x - ax, y - ay) < 8 ? Math.atan2(y - ay, x - ax) * 180 / Math.PI : y > 18 ? 186 : 178), 1.6,
     (x, y) => Math.max(0, Math.min(1, 0.92 - (y + 3) / 32)), [["#5a4430", 0.5, 0.18], ["#8a6e4e", 0.45, 0.16], ["#c8b08c", 0.5, 0.15], ["#f0e2c4", 0.5, 0.14]], { streuung: 12, szene: 0.1 });
   kk += LOCKENLINIE(T, kopfL.slice(22, 29), 15, [-0.8, 0.4], 150, 3, 0.5, () => 0.55, TON.slice(3), { streuung: 12, szene: 0 });
   s += `<g filter="${T.volumen("kopf", { weich: 4, tiefe: 5, umgebung: 0.32 })}">${KG}${kk}</g></g>`;
@@ -1348,7 +1349,7 @@ function riesenhirsch(T) {
   /* Schlagschatten des Geweihs auf Hals und Buckel */
   s += K(T, GN.P, gewG("gwn", 0), { rand: false, vol: false, innen: textur(GN, burr[0], burr[1], 1, 0) + spitzenElf(GN, 0.85) + WEICH(T,
     /* gewölbte Schaufel: dunkler Kern innen, heller Randsaum oben; runde Stange mit Lichtgrat */
-    FO([[burr[0] - 6, burr[1] - 40], [burr[0] - 24, burr[1] - 56], [burr[0] - 56, burr[1] - 58], [burr[0] - 84, burr[1] - 50], [burr[0] - 56, burr[1] - 40], [burr[0] - 20, burr[1] - 34]], S0, 0.3) +
+    FO([[burr[0] - 6, burr[1] - 40], [burr[0] - 24, burr[1] - 56], [burr[0] - 56, burr[1] - 58], [burr[0] - 84, burr[1] - 50], [burr[0] - 56, burr[1] - 40], [burr[0] - 20, burr[1] - 34]], S0, 0.18) +
     FO([[burr[0] - 0.4, burr[1] - 2], [burr[0] - 1, burr[1] - 34], [burr[0] + 1.6, burr[1] - 34], [burr[0] + 2.4, burr[1] - 2]], HL, 0.42) +
     FO([[burr[0] - 6, burr[1] - 60], [burr[0] - 40, burr[1] - 70], [burr[0] - 84, burr[1] - 62], [burr[0] - 80, burr[1] - 58], [burr[0] - 40, burr[1] - 64]], HL, 0.3), 1.5) });
   GEN = fein ? 10 : 1;
@@ -1361,7 +1362,7 @@ function riesenhirsch(T) {
   let rose = fleck(T, burr[0] + 1, burr[1] + 2.6, 7, 2.2, S0, 0.5) + F([[burr[0] - 5.2, burr[1] + 0.8], [burr[0] - 4.6, burr[1] - 1.8], [burr[0], burr[1] - 2.8], [burr[0] + 4.8, burr[1] - 1.8], [burr[0] + 5.6, burr[1] + 0.8], [burr[0], burr[1] + 2.2]],
     T.lg("rose", [[0, "#9c866a"], [0.45, "#6e5a40"], [1, "#2e2418"]], 0, 0, 0, 1));
   if (fein) { let d1 = "", d2 = ""; for (let i = 0; i < 11; i++) { const a = Math.PI * (0.04 + 0.92 * i / 10), x = burr[0] - Math.cos(a) * 4.8, y = burr[1] - Math.sin(a) * 1.8 + 0.5; d1 += "M" + zf(x, y + 0.3) + "h0"; d2 += "M" + zf(x - 0.3, y - 0.3) + "h0"; }
-    rose += `<path d="${d1}" stroke="#2e2216" stroke-width="1.1" stroke-linecap="round" opacity=".8"/><path d="${d2}" stroke="#e0d0ac" stroke-width=".6" stroke-linecap="round" opacity=".7"/>`; }
+    rose += `<path d="${d1}" stroke="#2e2216" stroke-width=".9" stroke-linecap="round" opacity=".6"/><path d="${d2}" stroke="#e0d0ac" stroke-width=".5" stroke-linecap="round" opacity=".55"/>`; }
   rose += FELL(T, [[burr[0] - 7, burr[1] + 4], [burr[0] + 7, burr[1] + 4], [burr[0] + 6, burr[1] + 1.6], [burr[0] - 6, burr[1] + 1.6]], 12, -84, 2, () => 0.7,
     [["#a88c66", 0.7, 0.18], ["#dcc8a4", 0.7, 0.16]], { szene: 0 });
   s += rose;

@@ -1828,7 +1828,7 @@ module.exports = [
       }) + "</g>";
       /* Schwanzflosse über dem Stielende: Basis blendet weich ein (keine Kappe, die Strahlen beginnen unter der letzten Schuppenreihe) */
       s += `<g mask="url(#${T.id("fsm")})">` + flosse(schwanz, [[-2.45, -4.05], [-2.45, -3.05]], [[-8.75, -6.6], [-8.35, -0.98]], 20, { kr: 0.12 }) + "</g>";
-      T.def(`<mask id="${T.id("fsm")}" maskUnits="userSpaceOnUse" x="-10" y="-8" width="10" height="9"><rect x="-10" y="-8" width="10" height="9" fill="${T.lg("fsmv", [[0, "#fff"], [0.8, "#fff"], [0.93, "#000"]], 0, 0, 1, 0)}"/></mask>`);
+      T.def(`<mask id="${T.id("fsm")}" maskUnits="userSpaceOnUse" x="-10" y="-8" width="10" height="9"><rect x="-10" y="-8" width="10" height="9" fill="${T.lg("fsmv", [[0, "#fff"], [0.7, "#fff"], [0.76, "#000"]], 0, 0, 1, 0)}"/></mask>`);
       /* Maul endständig: Oberlippe als hellerer Wulst, dünner sich verjüngender Spalt nach vorn leicht steigend, Unterlippe mit hellem Rand */
       s += weichform(T, [[6.12, -3.8], [6.48, -3.78], [6.52, -3.68], [6.16, -3.66]], "#f7b060", 0.8, 0.012);
       s += `<path d="M6.6 -3.62L6.45 -3.585Q6.36 -3.57 6.3 -3.57" fill="none" stroke="#6a2006" stroke-width=".025" stroke-opacity=".6" stroke-linecap="round"/><path d="M6.55 -3.53Q6.42 -3.5 6.32 -3.52" fill="none" stroke="#ffd09a" stroke-width=".02" stroke-opacity=".6"/>`;
