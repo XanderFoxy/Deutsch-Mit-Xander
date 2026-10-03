@@ -219,7 +219,7 @@ const SEE_Y0 = HOR + 0.7, SEE_Y1 = 201;
   let wl = "";
   for (let i = 0; i < 190; i++) {
     const t = Math.pow(rnd(), 1.5), y = SEE_Y0 + 0.6 + t * (SEE_Y1 - SEE_Y0 - 1), q = (y - HOR) / (SEE_Y1 - HOR);
-    const x = rnd() * 400, l = 1.5 + q * 16 * (0.5 + rnd()), hell = rnd() < 0.55;
+    const l = 1.5 + q * 16 * (0.5 + rnd()), x = rnd() * (400 - l), hell = rnd() < 0.55;
     wl += `<path d="M${r(x)} ${r(y)} q${r(l / 2)} ${r(-0.35 - q * 0.6)} ${r(l)} 0" stroke="${hell ? "#eaf3f2" : "#21495a"}" stroke-width="${r(0.2 + q * 0.55)}" fill="none" opacity="${hell ? 0.55 : 0.4}"/>`;
   }
   k += wl;
@@ -268,9 +268,10 @@ const SEE_Y0 = HOR + 0.7, SEE_Y1 = 201;
     for (let t = 0; t <= 1.001; t += 0.1) pts.push([x + lean * H * t, yb - H * t]);
     const tx = x + lean * H, ty = yb - H;
     k += `<path d="M${r(tx - 3)} ${r(ty + 4)} Q${r(tx - 10)} ${r(ty + 10)} ${r(tx - 9)} ${r(ty + H * 0.55)} L${r(tx - 5)} ${r(ty + H * 0.5)} Q${r(tx - 5)} ${r(ty + 12)} ${r(tx)} ${r(ty + 6)} Q${r(tx + 5)} ${r(ty + 12)} ${r(tx + 5)} ${r(ty + H * 0.5)} L${r(tx + 9)} ${r(ty + H * 0.55)} Q${r(tx + 10)} ${r(ty + 10)} ${r(tx + 3)} ${r(ty + 4)} Z" fill="#ffffff" opacity=".28" ${W12}/>`;
-    k += strom(pts, 1.4, 4.2, 1);
-    for (const [ox, oy, rx, ry, o] of [[0, 1, 6.5, 4.2, 0.7], [-3.5, 3.5, 4.5, 3.5, 0.55], [3.8, 3, 4.5, 3.4, 0.5], [0, -1.6, 3.6, 2.6, 0.85]]) k += `<ellipse cx="${r(tx + ox)}" cy="${r(ty + oy)}" rx="${rx}" ry="${ry}" fill="#ffffff" opacity="${o}" ${W12}/>`;
-    k += `<ellipse cx="${r(tx - 0.6)}" cy="${r(ty + 0.4)}" rx="2.6" ry="1.8" fill="#ffffff" opacity=".9" ${W05}/>`;
+    k += strom(pts, 2, 5.6, 1);
+    /* Nebelkrone: steigt weiter und treibt mit dem Wind etwas nach rechts */
+    for (let j = 0; j < 6; j++) k += `<ellipse cx="${r(tx + j * 1.6 - 0.5)}" cy="${r(ty + 2 - j * 2.6)}" rx="${r(3.4 + j * 0.9)}" ry="${r(2.6 + j * 0.7)}" fill="#ffffff" opacity="${r(0.75 - j * 0.11)}" ${W12}/>`;
+    k += `<path d="M${r(tx - 2.6)} ${r(ty + 3)} Q${r(tx - 1)} ${r(ty - 3)} ${r(tx + 1.4)} ${r(ty - 4.5)} Q${r(tx + 3)} ${r(ty - 1)} ${r(tx + 2.8)} ${r(ty + 3)} Z" fill="#ffffff" opacity=".9" ${W05}/>`;
   }
   /* aufgewühltes Wasser und Spiegelung der Strahlen */
   for (let i = 0; i < 60; i++) { const x = xL + rnd() * (xR - xL), y = ybase(x) + 0.2 + rnd() * 1.4; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(1 + rnd() * 2.4)}" ry=".45" fill="#ffffff" opacity=".85"/>`; }
@@ -294,8 +295,10 @@ const basarUnter = [];
   /* Abschnitte: [s0, s1, Höhe Dach] */
   const AB = [[-152, -112, 13.5], [-112, -72, 18], [-72, -35, 15.5]];
   /* rechte Seitenwand von Abschnitt C (fluchtet nach hinten, im Schatten) */
-  { const s = -35, d1 = 100, h = 15.5; k += `<path d="M${r(sx(s))} ${r(sy(h))} L${r(xAt(s, d1))} ${r(yAt(d1, h))} L${r(xAt(s, d1))} ${r(yAt(d1, 1.5))} L${r(sx(s))} ${r(yQ)} Z" fill="${STEIN2}"/>`;
-    k += `<path d="M${r(sx(s))} ${r(sy(h))} L${r(xAt(s, d1))} ${r(yAt(d1, h))}" stroke="#e9d3ad" stroke-width=".4"/>`; }
+  { const s = -35, d1 = 104, h = 15.5;
+    k += `<path d="M${r(sx(s))} ${r(sy(h))} L${r(xAt(s, d1))} ${r(yAt(d1, h))} L${r(xAt(s, d1))} ${r(yAt(d1, 1.5))} L${r(sx(s))} ${r(yQ)} Z" fill="${S.lg("soukseite", [[0, "#a9875c"], [1, "#8d6c45"]], 0, 0, 1, 0)}"/>`;
+    for (const d of [84, 89, 94, 99]) { const x0 = xAt(s, d), x1 = xAt(s, d + 3.4); k += `<path d="M${r(x0)} ${r(yAt(d, 1.5))} L${r(x0)} ${r(yAt(d, 5.4))} Q${r((x0 + x1) / 2)} ${r(yAt(d + 1.7, 7))} ${r(x1)} ${r(yAt(d + 3.4, 5.4))} L${r(x1)} ${r(yAt(d + 3.4, 1.5))} Z" fill="#5a3a24"/>`; k += `<rect x="${r((x0 + x1) / 2 - 0.5)}" y="${r(yAt(d + 1.7, 12))}" width="1" height="${r(yAt(d, 9) - yAt(d, 12))}" fill="#4a2f1c"/>`; }
+    k += `<path d="M${r(sx(s))} ${r(sy(h))} L${r(xAt(s, d1))} ${r(yAt(d1, h))}" stroke="#e9d3ad" stroke-width=".45"/><path d="M${r(sx(s))} ${r(sy(7.6))} L${r(xAt(s, d1))} ${r(yAt(d1, 7.6))}" stroke="#c9a676" stroke-width=".6"/>`; }
   for (const [s0, s1, h] of AB) {
     const x0 = sx(s0), x1 = sx(s1), yt = sy(h);
     k += `<rect x="${r(x0)}" y="${r(yt)}" width="${r(x1 - x0)}" height="${r(yQ - yt)}" fill="${STEIN}"/>`;
@@ -365,7 +368,7 @@ const basarUnter = [];
    6 — DAS HOLZBOOT (Abra, 45 m, fährt nach links)
    ===================================================================== */
 {
-  const u = uAt(45), X = 118, yW = yAt(45, 0), L = 8.5 * u, x0 = X - L / 2, x1 = X + L / 2;
+  const u = uAt(45), X = 116, yW = yAt(45, 0), L = 10 * u, x0 = X - L / 2, x1 = X + L / 2;
   const yG = yAt(45, 0.9), yD = yAt(45, 2.5);
   let k = "";
   /* Kielwasser hinter dem Heck (rechts) */
@@ -404,8 +407,22 @@ const FIG = {
   k += `<rect x="0" y="${r(Y_KANTE)}" width="400" height="14" fill="${S.lg("steinglanz", [[0, "#ffffff", 0.45], [1, "#ffffff", 0]])}"/>`;
   /* Fugen: Längsfugen zum Fluchtpunkt, Querfugen in der Tiefe */
   let fu = "";
-  for (let s = -12; s <= 12; s += 1.2) { const a = [xAt(s, 4), Y_KANTE], b = [xAt(s, 1.6), yAt(1.6, DECK)]; fu += `M${r(a[0])} ${r(a[1])} L${r(b[0])} ${r(b[1])} `; }
+  const kante = (a, b) => { /* Strecke auf 0 ≤ x ≤ 400 kürzen */
+    let [x0, y0] = a, [x1, y1] = b;
+    const cut = (xa, ya, xb, yb, X) => [X, ya + (yb - ya) * (X - xa) / (xb - xa)];
+    if (x1 < 0) [x1, y1] = cut(x0, y0, x1, y1, 0); if (x1 > 400) [x1, y1] = cut(x0, y0, x1, y1, 400);
+    return (x0 < 0 || x0 > 400) ? "" : `M${r(x0)} ${r(y0)} L${r(x1)} ${r(Math.min(y1, 260))} `;
+  };
+  for (let s = -12; s <= 12; s += 1.2) fu += kante([xAt(s, 4), Y_KANTE], [xAt(s, 1.6), yAt(1.6, DECK)]);
   for (const d of [3.4, 2.85, 2.4, 2.05, 1.76]) { const y = yAt(d, DECK); fu += `M0 ${r(y)} H400 `; }
+  /* einzelne Platten etwas heller oder dunkler (Naturstein) */
+  const ds = [4, 3.4, 2.85, 2.4, 2.05, 1.76, 1.55];
+  for (let j = 0; j < ds.length - 1; j++) for (let s = -12; s < 12; s += 1.2) {
+    if (rnd() > 0.32) continue;
+    const q = [[xAt(s, ds[j]), yAt(ds[j], DECK)], [xAt(s + 1.2, ds[j]), yAt(ds[j], DECK)], [xAt(s + 1.2, ds[j + 1]), yAt(ds[j + 1], DECK)], [xAt(s, ds[j + 1]), yAt(ds[j + 1], DECK)]];
+    if (q.every((p) => p[0] < 0) || q.every((p) => p[0] > 400)) continue;
+    k += `<path d="${P(q.map(([x, y]) => [klemm(x, 0, 400), Math.min(y, 260)]))}" fill="${rnd() < 0.5 ? "#c9b08a" : "#fbf4e6"}" opacity=".2"/>`;
+  }
   k += `<path d="${fu}" stroke="#b89f7c" stroke-width=".35" fill="none" opacity=".75"/>`;
   k += `<path d="${fu}" stroke="#fffaf0" stroke-width=".25" fill="none" opacity=".5" transform="translate(.35 .35)"/>`;
   /* Schlagschatten nach rechts (Sonne links): Pflanzkübel, Menschen, Tisch, Stühle */
@@ -426,7 +443,7 @@ const FIG = {
   for (let i = 0; i < 9; i++) { const x = 18 + i * 46 + (i % 3) * 5; k += `<path d="M${r(x)} ${r(yU)} L${r(x + 9)} ${r(yO)} L${r(x + 13)} ${r(yO)} L${r(x + 4)} ${r(yU)} Z" fill="#ffffff" opacity=".13"/>`; }
   k += `</g>`;
   /* Pfosten (alle 1,5 m), Bodenschiene, Handlauf aus Edelstahl */
-  for (let s = -7.5; s <= 7.6; s += 1.5) { const x = xAt(s, 4); k += `<rect x="${r(x - 0.9)}" y="${r(yO)}" width="1.8" height="${r(yU - yO)}" fill="${S.lg("pfosten", [[0, "#f2f4f5"], [0.5, "#a9b2b8"], [1, "#6c757c"]], 0, 0, 1, 0)}"/>`; }
+  for (let s = -7.5; s <= 7.6; s += 1.5) { const x = klemm(xAt(s, 4), 0.9, 399.1); k += `<rect x="${r(x - 0.9)}" y="${r(yO)}" width="1.8" height="${r(yU - yO)}" fill="${S.lg("pfosten", [[0, "#f2f4f5"], [0.5, "#a9b2b8"], [1, "#6c757c"]], 0, 0, 1, 0)}"/>`; }
   k += `<rect x="0" y="${r(yU - 2.2)}" width="400" height="2.2" fill="#8d969c"/><rect x="0" y="${r(yU - 2.2)}" width="400" height=".5" fill="#d9dee1"/>`;
   k += `<rect x="0" y="${r(yO - 1.6)}" width="400" height="2.2" rx="1" fill="${S.lg("handlauf", [[0, "#ffffff"], [0.35, "#c8d0d5"], [1, "#6d777e"]])}"/>`;
   S.teil({ anker: [200, yO], id: "gelaender", de: "das Geländer", syl: "ge-LÄN-der", it: "la ringhiera", itSyl: "rin-GHIE-ra", en: "railing", x: 0, y: 0, kunst: k });
@@ -472,10 +489,10 @@ const FIG = {
     w += `<path d="${glatt(pts, false)}" stroke="${dunkel ? "#5d5a3e" : "#d6cf9c"}" stroke-width="${dunkel ? 0.6 : 0.75}" fill="none"/>`;
     return w;
   };
-  for (const [a, L, h] of [[-150, 78, 0.45], [-112, 70, 0.15], [-78, 72, 0.12], [-35, 86, 0.38], [8, 80, 0.62], [168, 64, 0.75]]) k += wedel(a, L, h, "#4c6440", true);
-  for (const [a, L, h] of [[-170, 84, 0.62], [-132, 84, 0.3], [-95, 66, 0.05], [-58, 82, 0.22], [-16, 88, 0.5], [22, 66, 0.85], [150, 58, 0.95], [52, 50, 1.0]]) k += wedel(a, L, h, "#7a9660", false);
+  for (const [a, L, h] of [[-150, 66, 0.45], [-112, 60, 0.15], [-78, 62, 0.12], [-35, 72, 0.38], [8, 68, 0.62], [168, 56, 0.75]]) k += wedel(a, L, h, "#3f5a37", true);
+  for (const [a, L, h] of [[-170, 72, 0.62], [-132, 72, 0.3], [-95, 58, 0.05], [-58, 70, 0.22], [-16, 76, 0.5], [22, 58, 0.85], [150, 50, 0.95], [52, 44, 1.0]]) k += wedel(a, L, h, "#62804c", false);
   /* Licht von links oben auf den oberen Wedeln */
-  for (const [a, L, h] of [[-124, 60, 0.2], [-70, 56, 0.12]]) k += wedel(a, L, h, "#9db47a", false);
+  for (const [a, L, h] of [[-124, 52, 0.2], [-70, 48, 0.12]]) k += wedel(a, L, h, "#8aa868", false);
   k += `<ellipse cx="${r(kx)}" cy="${r(ky + 1)}" rx="4.5" ry="3" fill="#5e4a30"/>`;
   S.teil({ anker: [55, 120], id: "palme", de: "die Palme", syl: "PAL-me", it: "la palma", itSyl: "PAL-ma", en: "palm tree", x: 0, y: 0, kunst: k,
     tipp: "Die Dattelpalme wächst gut in der Hitze der Wüste. Ihre Früchte heißen Datteln." });

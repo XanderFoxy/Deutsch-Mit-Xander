@@ -327,11 +327,11 @@ const denkmalUnter = [];
      Figurenmaß: 100 Einheiten = 3,55 m; Ursprung = Mitte der Bronzeplatte. */
   const FS = 3.55 * DU / 100;
   const fussY = -3.45 * DU;
-  const BRZ = S.lg("brz", [[0, "#9a9466"], [0.3, "#66633f"], [0.7, "#3c3c27"], [1, "#25251a"]], 0, 0, 1, 0);
+  const BRZ = S.lg("brz", [[0, "#aca577"], [0.28, "#6e6b44"], [0.68, "#3a3a26"], [1, "#1d1d14"]], 0, 0, 1, 0);
   const BRZ_H = S.lg("brzh", [[0, "#b0aa78"], [0.5, "#7a7650"], [1, "#4a4a31"]], 0, 0, 1, 0);
   const ARM_L = "#6f6b45", ARM_D = "#3f3f29", DUNKEL = "#1f1f16";
   /* Bein: Kniehose bis unter das Knie, Strumpf mit Wade, schmale Fessel */
-  const bein = (x0, x1, kc, fx) => `<path d="M${x0} -50 L${x1} -50 L${r(kc + 2.7)} -29 Q${r(kc + 3.1)} -19 ${r(fx + 1.6)} -5 L${r(fx - 1.6)} -5 Q${r(kc - 3.1)} -19 ${r(kc - 2.7)} -29 Z" fill="${BRZ}"/>` +
+  const bein = (x0, x1, kc, fx) => `<path d="M${x0} -56 L${x1} -56 L${r(kc + 2.7)} -29 Q${r(kc + 3.1)} -19 ${r(fx + 1.6)} -5 L${r(fx - 1.6)} -5 Q${r(kc - 3.1)} -19 ${r(kc - 2.7)} -29 Z" fill="${BRZ}"/>` +
     `<path d="M${r(kc - 2.8)} -29.6 L${r(kc + 2.8)} -29.6 L${r(kc + 2.7)} -28.2 L${r(kc - 2.7)} -28.2 Z" fill="${ARM_D}"/><circle cx="${r(kc + 2)}" cy="-28.9" r=".45" fill="#a49e6c"/>`;
   const schuh = (fx, dir) => `<path d="M${fx - 2.4} -4 L${fx + 2.4} -4 Q${fx + 2.4 + dir * 2.4} -1.6 ${fx + dir * 3.6} 0 L${fx - 2.6 + Math.min(0, dir) * 1.4} 0 Q${fx - 3} -2 ${fx - 2.4} -4 Z" fill="${DUNKEL}"/><rect x="${fx - 1}" y="-3.6" width="2" height="1" fill="#8a8458"/>`;
   const arm = (pts, w, farbe) => `<path d="M${pts.map((p2) => p2.join(" ")).join(" L")}" stroke="${farbe}" stroke-width="${w}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` +
@@ -400,7 +400,6 @@ const denkmalUnter = [];
   /* Goethes Hand liegt auf Schillers Schulter */
   fig += `<g transform="translate(${GO} 0)">${hand(16.6, -82.4, 80)}</g>`;
   /* Patina: grünliche Laufspuren */
-  fig += `<path d="M-20 -78 Q-20.4 -60 -21 -40 M-6 -70 Q-6.4 -55 -7 -42 M18 -76 Q18.6 -58 19.4 -36 M6 -60 Q6.2 -48 6.6 -38" stroke="#7d9a78" stroke-width=".7" fill="none" opacity=".45"/>`;
   k += `<g transform="translate(0 ${r(fussY)}) scale(${FS.toFixed(5)})">${fig}</g>`;
   const P = (x, y) => ({ x: x * FS, y: fussY + y * FS });
   const GX = GO * FS;
